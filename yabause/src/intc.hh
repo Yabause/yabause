@@ -60,6 +60,8 @@ private:
         /* FRT */
         unsigned long ccleftover;
         unsigned long frcdiv;
+        unsigned short ocra;
+        unsigned short ocrb;
 
         /* WDT */
         unsigned long wdtdiv;

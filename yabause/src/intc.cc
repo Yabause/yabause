@@ -61,8 +61,8 @@ void __del_highest_int()	{
 #define FTCSR   0x11
 #define FRCH    0x12
 #define FRCL    0x13
-#define ORCH    0x14
-#define ORCL    0x15
+#define OCRH    0x14
+#define OCRL    0x15
 #define TCR     0x16
 #define TOCR    0x17
 #define ICRH    0x18
@@ -123,8 +123,8 @@ void Onchip::reset(void) {
         Memory::setByte(FTCSR, 0x00);
         Memory::setByte(FRCH, 0x00);
         Memory::setByte(FRCL, 0x00);
-        Memory::setByte(ORCH, 0xFF);
-        Memory::setByte(ORCL, 0xFF);
+        Memory::setByte(OCRH, 0xFF);
+        Memory::setByte(OCRL, 0xFF);
         Memory::setByte(TCR, 0x00);
         Memory::setByte(TOCR, 0xE0);
         Memory::setByte(ICRH, 0x00);
@@ -133,6 +133,8 @@ void Onchip::reset(void) {
 	timing = 0;
         ccleftover = 0;
         frcdiv = 8;
+        ocra = 0xFFFF;
+        ocrb = 0xFFFF;
 
         // Initialize Watchdog Timer registers
         Memory::setByte(WTCSR, 0x18);
@@ -172,6 +174,26 @@ void Onchip::setByte(unsigned long addr, unsigned char val) {
   case FTCSR: {
     // the only thing you can do to bits 1-7 is clear them
     Memory::setByte(addr, (Memory::getByte(addr) & (val & 0xFE)) | (val & 0x1));
+    break;
+  }
+  case OCRH:
+  {
+    if (!(Memory::getByte(TOCR) & 0x10))
+       ocra = (ocra & 0xFF) | (val << 8);
+    else
+       ocrb = (ocrb & 0xFF) | (val << 8);
+    break;
+  }
+  case OCRL:
+  {
+    if (!(Memory::getByte(TOCR) & 0x10))
+       ocra = (ocra & 0xFF00) | val;
+    else
+       ocrb = (ocrb & 0xFF00) | val;
+    break;
+  }
+  case TOCR: {
+    Memory::setByte(addr, val | 0xE0);
     break;
   }
   case ICRH:
@@ -444,16 +466,52 @@ void Onchip::runDMA(void) {
 
 void Onchip::runFRT(unsigned long cc) {
    unsigned long frctemp;
+   unsigned long frcold;
 
-   frctemp = (unsigned long)Memory::getWord(FRCH);
+   frcold = frctemp = (unsigned long)Memory::getWord(FRCH);
 
    // Increment FRC
    frctemp += ((cc + ccleftover) / frcdiv);
    ccleftover = (cc + ccleftover) % frcdiv;
 
+   // Check to see if there is or was a Output Compare A match
+   if (frctemp >= ocra && frcold < ocra)
+   {
+      char ftcsrreg=Memory::getByte(FTCSR);
+
+      // Do we need to trigger an interrupt?
+      if (Memory::getByte(TIER) & 0x8)  {
+         shparent->send(Interrupt((Memory::getWord(IPRB) & 0xF00) >> 8, Memory::getWord(VCRC) & 0x7F));
+      }
+
+      // Do we need to clear the FRC?
+      if (ftcsrreg & 0x1) {
+         frctemp = 0;
+         ccleftover = 0;
+      }
+
+      // Set OCFA flag
+      Memory::setByte(FTCSR, ftcsrreg | 0x8);
+   }
+
+   // Check to see if there is or was a Output Compare B match
+   if (frctemp >= ocrb && frcold < ocrb)
+   {
+      // Do we need to trigger an interrupt?
+      if (Memory::getByte(TIER) & 0x4)  {
+         shparent->send(Interrupt((Memory::getWord(IPRB) & 0xF00) >> 8, Memory::getWord(VCRC) & 0x7F)); 
+      }
+
+      // Set OCFB flag
+      Memory::setByte(FTCSR, Memory::getByte(FTCSR) | 0x4);
+   }
+
    // If FRC overflows, set overflow flag
    if (frctemp > 0xFFFF) {
       // Do we need to trigger an interrupt?
+      if (Memory::getByte(TIER) & 0x2)  {
+         shparent->send(Interrupt((Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRD) >> 8) & 0x7F)); 
+      }
 
       Memory::setByte(FTCSR, Memory::getByte(FTCSR) | 2);
    }
@@ -512,9 +570,9 @@ void Onchip::inputCaptureSignal(void) {
    // Generate an Interrupt?
    if (Memory::getByte(TIER) & 0x80)  {
 //#if DEBUG
-//      fprintf(stderr, "onchip\t: ICI interrupt: level = %d vector = %d\n", (Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) & 0x7F00) >> 8);
+//      fprintf(stderr, "onchip\t: ICI interrupt: level = %d vector = %d\n", (Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) >> 8) & 0x7F);
 //#endif
-        shparent->send(Interrupt((Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) & 0x7F) >> 8));
+        shparent->send(Interrupt((Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) >> 8) & 0x7F));
    }
 }
 
