@@ -382,6 +382,7 @@ void Cs2::run(Cs2 *cd) {
             break;
          case CDB_STAT_PLAY:
          {
+
             if (cd->ctrladdr & 0x40)
             {
                // read data
@@ -530,7 +531,7 @@ void Cs2::execute(void) {
       break;
     case 0x30:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: setCDDeviceConnection\n");
+      fprintf(stderr, "cs2\t: Command: setCDDeviceConnection %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       setCDDeviceConnection();
       break;
@@ -580,7 +581,7 @@ void Cs2::execute(void) {
       break;
     case 0x51:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getSectorNumber\n");
+      fprintf(stderr, "cs2\t: Command: getSectorNumber %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       getSectorNumber();
 
@@ -930,35 +931,45 @@ void Cs2::playDisc(void) {
 
   if ((getCR1() & 0xFF) != 0 && getCR2() != 0xFFFF)
   {
-     if ((getCR1() & 0x80) && (getCR3() >> 8) != 0xFF)
+     if ((getCR1() & 0x80))
      {
-        // fad mode
-        unsigned long pdFAD;
-        unsigned long pdsize;
-
-        pdFAD = ((getCR1() & 0xF) << 16) + getCR2();
-        pdsize = getCR4();
-        
-        SetupDefaultPlayStats(FADToTrack(FAD));
-
-        playFAD = FAD = pdFAD;
-        playendFAD = pdFAD + pdsize;
-
-        if ((curpartition = GetPartition()) != NULL)
+        if ((getCR3() >> 8) != 0xFF)
         {
-          curpartition->size = 0;
+           // fad mode
+           unsigned long pdFAD;
+           unsigned long pdsize;
+
+           pdFAD = ((getCR1() & 0xF) << 16) + getCR2();
+           pdsize = getCR4();
+        
+           SetupDefaultPlayStats(FADToTrack(pdFAD));
+
+           playFAD = FAD = pdFAD;
+           playendFAD = pdFAD + pdsize;
+
+           if ((curpartition = GetPartition()) != NULL)
+           {
+             curpartition->size = 0;
+           }
+
+           isonesectorstored = true;
+           setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+
+           status = CDB_STAT_PERI | CDB_STAT_PLAY;
+
+           setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+           setCR2((ctrladdr << 8) | (track & 0xFF));
+           setCR3((index << 8) | ((FAD >> 16) &0xFF));
+           setCR4((unsigned short) FAD);
         }
-
-        isonesectorstored = true;
-        setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
-
-        status = CDB_STAT_PERI | CDB_STAT_PLAY;
-
-        setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-        setCR2((ctrladdr << 8) | (track & 0xFF));
-        setCR3((index << 8) | ((FAD >> 16) &0xFF));
-        setCR4((unsigned short) FAD);
      }
+  }
+  else
+  {
+     // Track mode
+#if CDDEBUG
+     fprintf(stderr, "playdisc Track Mode is not implemented\n");
+#endif
   }
 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
@@ -1014,9 +1025,13 @@ void Cs2::getSubcodeQRW(void) {
 }
 
 void Cs2::setCDDeviceConnection(void) {
-  if ((getCR3() >> 8) != 0xFF && (getCR3() >> 8) < 0x24)
+  unsigned long scdcfilternum;
+
+  scdcfilternum = (getCR3() >> 8);
+
+  if (scdcfilternum != 0xFF && scdcfilternum < 0x24)
   {
-     curfilter = filter + (getCR3() >> 8);
+     curfilter = filter + scdcfilternum;
   }
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
@@ -1119,7 +1134,7 @@ void Cs2::resetSelector(void) {
   {
      // reset true condition connections
      for (i = 0; i < MAX_SELECTORS; i++)
-        filter[i].condtrue = 0;
+        filter[i].condtrue = i;
   }
 
   if (getCR1() & 0x10)
