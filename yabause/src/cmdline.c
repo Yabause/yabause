@@ -43,6 +43,7 @@ cmdline_parser_print_help (void)
   printf("   -V         --version      Print version and exit\n");
   printf("   -bSTRING   --bios=STRING  bios file\n");
   printf("   -fSTRING   --bin=STRING   bin file\n");
+  printf("   -cSTRING   --cdrom=STRING path to cdrom\n");
   printf("   -d         --debug        show debugger\n");
 }
 
@@ -71,10 +72,12 @@ cmdline_parser (int argc, char * const *argv, struct gengetopt_args_info *args_i
   args_info->version_given = 0 ;
   args_info->bios_given = 0 ;
   args_info->bin_given = 0 ;
+  args_info->cdrom_given = 0 ;
   args_info->debug_given = 0 ;
 #define clear_args() { \
   args_info->bios_arg = NULL; \
   args_info->bin_arg = NULL; \
+  args_info->cdrom_arg = NULL; \
 }
 
   clear_args();
@@ -94,12 +97,13 @@ cmdline_parser (int argc, char * const *argv, struct gengetopt_args_info *args_i
         { "version",	0, NULL, 'V' },
         { "bios",	1, NULL, 'b' },
         { "bin",	1, NULL, 'f' },
+        { "cdrom",      1, NULL, 'c' },
         { "debug",	0, NULL, 'd' },
         { NULL,	0, NULL, 0 }
       };
 
       stop_char = 0;
-      c = getopt_long (argc, argv, "hVb:f:d", long_options, &option_index);
+      c = getopt_long (argc, argv, "hVb:f:c:d", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -135,6 +139,17 @@ cmdline_parser (int argc, char * const *argv, struct gengetopt_args_info *args_i
             }
           args_info->bin_given = 1;
           args_info->bin_arg = gengetopt_strdup (optarg);
+          break;
+
+        case 'c':       /* cdrom file.  */
+          if (args_info->cdrom_given)
+            {
+              fprintf (stderr, "%s: `--cdrom' (`-c') option given more than once\n", CMDLINE_PARSER_PACKAGE);
+              clear_args ();
+              exit (EXIT_FAILURE);
+            }
+          args_info->cdrom_given = 1;
+          args_info->cdrom_arg = gengetopt_strdup (optarg);
           break;
 
         case 'd':	/* show debugger.  */

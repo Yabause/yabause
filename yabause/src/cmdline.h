@@ -26,11 +26,13 @@ struct gengetopt_args_info
 {
   char * bios_arg;	/* bios file.  */
   char * bin_arg;	/* bin file.  */
+  char * cdrom_arg;     /* cdrom path.  */
 
   int help_given ;	/* Whether help was given.  */
   int version_given ;	/* Whether version was given.  */
   int bios_given ;	/* Whether bios was given.  */
   int bin_given ;	/* Whether bin was given.  */
+  int cdrom_given ;     /* Whether cdrom was given.  */
   int debug_given ;	/* Whether debug was given.  */
 
 } ;
