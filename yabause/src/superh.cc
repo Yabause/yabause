@@ -60,7 +60,6 @@ SuperH::~SuperH(void) {
   delete adressArray;
   delete dataArray;
   delete modeSdram;
-
 }
 
 void SuperH::reset(void) {
@@ -87,7 +86,7 @@ void SuperH::reset(void) {
 
 void SuperH::setMemory(Memory *mem) {
          memoire = mem;
-         PC = memoire->getLong(VBR) + 4;
+         PC = memoire->getLong(VBR);
          R[15] = memoire->getLong(VBR + 4);
 }
 
@@ -122,7 +121,7 @@ void SuperH::executer(void) {
         R[15] -= 4;
         memoire->setLong(R[15], PC);
         SR.partie.I = interrupt.level();
-        PC = memoire->getLong(VBR + (interrupt.vector() << 2)) + 4;
+        PC = memoire->getLong(VBR + (interrupt.vector() << 2));
       }
     }
 #ifdef _arch_dreamcast
@@ -138,7 +137,7 @@ void SuperH::executer(void) {
 
 void SuperH::_executer(void) {
 //        if (isslave) cerr << "PC=" << PC << endl;
-	instruction = memoire->getWord(PC - 4);
+        instruction = memoire->getWord(PC);
 	(this->*opcodes[instruction])();
 }
 
@@ -155,8 +154,8 @@ void SuperH::runCycles(unsigned long cc) {
         while(cycleCount < cc) {
            // Make sure it isn't one of our breakpoints
            for (int i=0; i < numcodebreakpoints; i++) {
-              if ((PC - 4 == codebreakpoint[i].addr ||
-                  _delai - 4 == codebreakpoint[i].addr) &&
+              if (PC == codebreakpoint[i].addr ||
+                  _delai == codebreakpoint[i].addr &&
                   !inbreakpoint) {
                  inbreakpoint = true;
                  if (BreakpointCallBack) BreakpointCallBack(isslave, codebreakpoint[i].addr);
@@ -373,8 +372,7 @@ void SuperH::braf(void) {
   long m = Instruction::b(instruction);
 
   temp = PC;
-  PC += R[m] + 4; /* FIXME : Correction trouvée dans semu, est-ce bon ?
-		     Hyperion est d'accord ! */
+  PC += R[m] + 4; 
 
   _delai = temp + 2;
   cycleCount += 2;
@@ -384,17 +382,17 @@ void SuperH::bsr(void) {
   long disp = Instruction::bcd(instruction);
 
   if ((disp&0x800) != 0) disp |= 0xFFFFF000;
-  PR = PC;
+  PR = PC + 4;
+  _delai = PC + 2;
   PC = PC+(disp<<1) + 4;
 
-  _delai = PR + 2;
   cycleCount += 2;
 }
 
 void SuperH::bsrf(void) {
-  PR = PC;
-  PC += R[Instruction::b(instruction)] + 4; // correction donnée par Hyperion
+  PR = PC + 4;
   _delai = PR + 2;
+  PC += R[Instruction::b(instruction)] + 4;
   cycleCount += 2;
 }
 
@@ -774,16 +772,16 @@ void SuperH::jmp(void) {
   long m = Instruction::b(instruction);
 
   temp=PC;
-  PC = R[m] + 4;
+  PC = R[m];
   _delai = temp + 2;
   cycleCount += 2;
 }
 
 void SuperH::jsr(void) {
   long m = Instruction::b(instruction);
-  PR = PC;
-  PC = R[m] + 4;
-  _delai = PR + 2;
+  PR = PC + 4;
+  _delai = PC + 2;
+  PC = R[m];
   cycleCount += 2;
 }
 
@@ -1003,7 +1001,7 @@ void SuperH::mov(void) {
 void SuperH::mova(void) {
   long disp = Instruction::cd(instruction);
 
-  R[0]=(PC&0xFFFFFFFC)+(disp<<2);
+  R[0]=((PC+4)&0xFFFFFFFC)+(disp<<2);
   PC+=2;
   cycleCount++;
 }
@@ -1108,7 +1106,7 @@ void SuperH::movli(void) {
   long disp = Instruction::cd(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = memoire->getLong((PC & 0xFFFFFFFC) + (disp << 2));
+  R[n] = memoire->getLong(((PC + 4) & 0xFFFFFFFC) + (disp << 2));
   PC += 2;
   cycleCount++;
 }
@@ -1207,7 +1205,7 @@ void SuperH::movwi(void) {
   long disp = Instruction::cd(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = (long)(signed short)memoire->getWord(PC + (disp<<1));
+  R[n] = (long)(signed short)memoire->getWord(PC + (disp<<1) + 4);
   PC+=2;
   cycleCount++;
 }
@@ -1439,9 +1437,8 @@ void SuperH::rotr(void) {
 
 void SuperH::rte() {
   unsigned long temp;
-
   temp=PC;
-  PC = memoire->getLong(R[15]); // + 4;
+  PC = memoire->getLong(R[15]);
   R[15] += 4;
   SR.tout = memoire->getLong(R[15]) & 0x000003F3;
   R[15] += 4;
@@ -1453,7 +1450,7 @@ void SuperH::rts() {
   unsigned long temp;
   
   temp = PC;
-  PC = PR + 4;
+  PC = PR;
 
   _delai = temp + 2;
   cycleCount += 2;
@@ -1727,8 +1724,8 @@ void SuperH::trapa(void) {
   R[15]-=4;
   memoire->setLong(R[15],SR.tout);
   R[15]-=4;
-  memoire->setLong(R[15],PC - 2);
-  PC = memoire->getLong(VBR+(imm<<2)) + 4;
+  memoire->setLong(R[15],PC + 2);
+  PC = memoire->getLong(VBR+(imm<<2));
   cycleCount += 8;
 }
 
@@ -2112,7 +2109,7 @@ void SuperH::GetRegisters(sh2regs_struct *regs) {
     regs->MACH = MACH;
     regs->MACL = MACL;
     regs->PR = PR;
-    regs->PC = PC - 4;
+    regs->PC = PC;
     regs->delay = _delai;
   }
 }
@@ -2126,7 +2123,7 @@ void SuperH::SetRegisters(sh2regs_struct *regs) {
     MACH = regs->MACH;
     MACL = regs->MACL;
     PR = regs->PR;
-    PC = regs->PC + 4;
+    PC = regs->PC;
     _delai = regs->delay;
   }
 }
