@@ -100,6 +100,9 @@ void SuperH::setMemory(Memory *mem) {
   memoire = mem;
   PC = memoire->getLong(VBR) + 4;
   R[15] = memoire->getLong(VBR + 4);
+
+  // onchip should be cpu specific
+  onchip = (Onchip *) ((SaturnMemory *)memoire)->getOnchip();
 }
 
 Memory *SuperH::getMemory(void) {
@@ -210,13 +213,12 @@ void SuperH::executer(void) {
     _delai = 0;
   }
   else {
-    Onchip * oc = (Onchip *) ((SaturnMemory *) memoire)->getOnchip();
-    if ( !oc->interrupts.empty() ) {
-      Interrupt interrupt = oc->interrupts.top();
+    if ( !onchip->interrupts.empty() ) {
+      Interrupt interrupt = onchip->interrupts.top();
       if (interrupt.level() > SR.partie.I) {
 	_level = interrupt.level();
 	_vector = interrupt.vector();
-        oc->interrupts.pop();
+        onchip->interrupts.pop();
 
         R[15] -= 4;
         memoire->setLong(R[15], SR.tout);

@@ -180,9 +180,14 @@ void Onchip::setLong(unsigned long addr, unsigned long val) {
     }
     break;
   }
-  case 0x1B0:
+  case CHCR0:
+  case CHCR1:
     Memory::setLong(addr, val);
-    runDMA();
+
+    // If the DMAOR DME bit is set and the CHRCR DE bit is set
+    // do a dma transfer
+    if (Memory::getLong(DMAOR) & 1 && val & 0x1)
+       runDMA();
     break;
   default:
     Memory::setLong(addr, val);
@@ -255,7 +260,8 @@ inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)
 #endif
    }
 
-   setLong(CHCR0+reg_offset, chcr | 0x2);
+   // Set Transfer End bit
+   setLong(CHCR0+reg_offset, chcr & 0xFFFFFFFE | 0x2);
 }
 
 void Onchip::runDMA(void) {

@@ -120,6 +120,7 @@ protected:
   Memory *adressArray;	// 60000000 - 600003FF
   Memory *dataArray;	// C0000000 - C0001000
   Memory *modeSdram;	// FFFF8000 - FFFFBFFF
+  Onchip *onchip;
 
   typedef void (SuperH::*opcode)(void);
   opcode opcodes[0xFFFF];
