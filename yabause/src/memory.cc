@@ -445,8 +445,16 @@ void SaturnMemory::setLong(unsigned long adr, unsigned long valeur) {
   mapMem->setLong(mapAdr, valeur);
 }
 
-void SaturnMemory::loadBios(const char *fichier) {
-  rom->load(fichier, 0);
+void SaturnMemory::loadBios(const char *filename) {
+  rom->load(filename, 0);
+}
+
+void SaturnMemory::loadExec(const char *filename, unsigned long PC) {
+  sh2regs_struct sh2regs;
+  load(filename, PC);
+  msh->GetRegisters(&sh2regs);
+  sh2regs.PC = PC;
+  msh->SetRegisters(&sh2regs);
 }
 
 void SaturnMemory::FormatBackupRam() {
