@@ -68,9 +68,7 @@ void Scu::sendInterrupt(void) {
 #endif
   }
   else {
-#if 0
-    cerr << "interrupt masked " << (int) V << endl;
-#endif
+    if (V == 0x47) cerr << "sm interrupt masked " << endl;
   }
 }
 

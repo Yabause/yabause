@@ -100,6 +100,20 @@ protected:
   int alpha;
   int colorOffset;
   bool transparencyEnable;
+
+	float Xst, Yst, Zst;
+	float deltaXst, deltaYst;
+	float deltaX, deltaY;
+	float A, B, C, D, E, F;
+	short Px, Py, Pz;
+	short Cx, Cy, Cz;
+	float Mx, My;
+	float kx, ky;
+	/*
+	float KAst;
+	float deltaKAst;
+	float deltaKAx;
+	*/
 public:
   Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, unsigned long *);
 
@@ -117,6 +131,10 @@ public:
   void drawCell(void);
   static void drawPixel(unsigned long *, Sint16, Sint16, Uint32);
   void toggleDisplay(void);
+
+  void readRotationTable(unsigned long addr);
+  virtual int getX(int, int);
+  virtual int getY(int, int);
 };
 
 class RBG0 : public Vdp2Screen {
@@ -128,6 +146,8 @@ public:
   int getPriority(void);
   int getInnerPriority(void);
   void debugStats(char *, bool *);
+  int getX(int, int);
+  int getY(int, int);
 };
 
 class NBG0 : public Vdp2Screen {

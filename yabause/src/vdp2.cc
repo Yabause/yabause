@@ -50,10 +50,12 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
       break;
 #if DEBUG
     case 0x20:
+      /*
       if (val & 0x10)
         cerr << "vdp2\t: RBG0 screen needs to be tested" << endl;
       else if (val & 0x20)
         cerr << "vdp2\t: RBG1 screen not implemented" << endl;
+	*/
       Memory::setWord(addr, val);
       break;
 #endif
@@ -198,7 +200,8 @@ void Vdp2Screen::drawMap(void) {
 		x = X;
 		//for(int j = 0;j < mapWH;j++) {
 			y = Y;
-			planeAddr(0); //planeAddr(mapWH * i + j);
+			planeAddr(0);
+			//planeAddr(mapWH * i + j);
 			drawPlane();
 		//}
 	//}
@@ -352,19 +355,19 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  if (!(dot & 0xF000) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), alpha, colorOffset);
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF00) >> 8), alpha, colorOffset);
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF0) >> 4), alpha, colorOffset);
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | (dot & 0xF), alpha, colorOffset);
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -380,11 +383,11 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  if (!(dot & 0xFF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), alpha, colorOffset);
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xFF) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | (dot & 0xFF), alpha, colorOffset);
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -400,7 +403,7 @@ void Vdp2Screen::drawCell(void) {
 	  if ((dot == 0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor(dot, alpha, colorOffset);
 	  charAddr += 2;
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -416,7 +419,7 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
           if (!(dot & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB1(0xFF, dot);
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -434,7 +437,7 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
           if (!(dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB2(alpha, dot1, dot2);
-	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -453,16 +456,191 @@ void Vdp2Screen::toggleDisplay(void) {
    disptoggle ^= true;
 }
 
+void Vdp2Screen::readRotationTable(unsigned long addr) {
+	long i;
+
+	i = vram->getLong(addr);
+	cerr << hex << "Xst" << '\t' << addr << '\t';
+	Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+	cerr << Xst << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "Yst" << '\t' << addr << '\t';
+	Yst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+	cerr << Yst << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "Zst" << '\t' << addr << '\t';
+	Zst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+	cerr << Zst << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "deltaXst" << '\t' << addr << '\t';
+	deltaXst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+	cerr << deltaXst << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "deltaYst" << '\t' << addr << '\t';
+	deltaYst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+	cerr << deltaYst << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "deltaX" << '\t' << addr << '\t';
+	deltaX = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+	cerr << deltaX << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "deltaY" << '\t' << addr << '\t';
+	deltaY = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+	cerr << deltaY << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "A" << '\t' << addr << '\t';
+	A = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+	cerr << A << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "B" << '\t' << addr << '\t';
+	B = (float) (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000)) / 65536;
+	cerr << B << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "C" << '\t' << addr << '\t';
+	C = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+	cerr << C << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "D" << '\t' << addr << '\t';
+	D = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+	cerr << D << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "E" << '\t' << addr << '\t';
+	E = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+	cerr << E << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "F" << '\t' << addr << '\t';
+	F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+	cerr << F << endl;
+	addr += 4;
+
+	i = vram->getWord(addr);
+	cerr << hex << "Px" << '\t' << addr << '\t';
+	Px = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+	cerr << Px << endl;
+	addr += 2;
+
+	i = vram->getWord(addr);
+	cerr << hex << "Py" << '\t' << addr << '\t';
+	Py = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+	cerr << Py << endl;
+	addr += 2;
+
+	i = vram->getWord(addr);
+	cerr << hex << "Pz" << '\t' << addr << '\t';
+	Pz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+	cerr << Pz << endl;
+	addr += 4;
+
+	i = vram->getWord(addr);
+	cerr << hex << "Cx" << '\t' << addr << '\t';
+	Cx = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+	cerr << Cx << endl;
+	addr += 2;
+
+	i = vram->getWord(addr);
+	cerr << hex << "Cy" << '\t' << addr << '\t';
+	Cy = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+	cerr << Cy << endl;
+	addr += 2;
+
+	i = vram->getWord(addr);
+	cerr << hex << "Cz" << '\t' << addr << '\t';
+	Cz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+	cerr << Cz << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "Mx" << '\t' << addr << '\t';
+	Mx = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
+	cerr << Mx << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "My" << '\t' << addr << '\t';
+	My = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
+	cerr << My << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "kx" << '\t' << addr << '\t';
+	kx = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
+	cerr << kx << endl;
+	addr += 4;
+
+	i = vram->getLong(addr);
+	cerr << hex << "ky" << '\t' << addr << '\t';
+	ky = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
+	cerr << ky << endl;
+	addr += 4;
+}
+
+int Vdp2Screen::getX(int Hcnt, int Vcnt) {
+	return Hcnt;
+}
+
+int Vdp2Screen::getY(int Hcnt, int Vcnt) {
+	return Vcnt;
+}
+
+int RBG0::getX(int Hcnt, int Vcnt) {
+	float ret;
+	float Xsp = A * ((Xst + deltaXst * Vcnt) - Px) + B * ((Yst + deltaYst * Vcnt) - Py) + C * (Zst - Pz);
+	float Xp = A * (Px - Cx) + B * (Py - Cy) + C * (Pz - Cz) /*+ Cx + Mx*/;
+	float dX = A * deltaX + B * deltaY;
+	ret = (kx * (Xsp + dX * Hcnt) + Xp);
+	return (int) ret;
+}
+
+int RBG0::getY(int Hcnt, int Vcnt) {
+	float ret;
+	float Ysp = D * ((Xst + deltaXst * Vcnt) - Px) + E * ((Yst + deltaYst * Vcnt) - Py) + F * (Zst - Pz);
+	float Yp = D * (Px - Cx) + E * (Py - Cy) + F * (Pz - Cz) /*+ Cy + My*/;
+	float dY = D * deltaX + E * deltaY;
+	ret = (ky * (Ysp + dY * Hcnt) + Yp);
+	return (int) ret;
+}
+
 void RBG0::init(void) {
         // For now, let's treat it like a regular scroll screen
         unsigned short patternNameReg = reg->getWord(0x38);
         unsigned short patternReg = reg->getWord(0x2A);
-        unsigned long rotParaReg = reg->getLong(0xBC);
+	unsigned long rotTableAddressA;
+	unsigned long rotTableAddressB;
+	rotTableAddressA = rotTableAddressB = reg->getLong(0xBC) << 1;
+	rotTableAddressA &= 0x000FFF7C;
+	rotTableAddressB = (rotTableAddressB & 0x000FFFFC) | 0x00000080;
+
+	readRotationTable(rotTableAddressA);
 
         enable = reg->getWord(0x20) & 0x10;
         transparencyEnable = !(reg->getWord(0x20) & 0x1000);
 
         // Figure out which Rotation parameter to use here(or use both)
+        unsigned long rotParaModeReg = reg->getLong(0xB0) & 0x3;
 
         x = 0; // this is obviously wrong
         y = 0; // this is obviously wrong
@@ -484,8 +662,40 @@ void RBG0::init(void) {
                 specialFunction = 0;
         }
         else {
-                // fix me
+		mapWH = 4;
+		unsigned char planeSize;
+		switch(rotParaModeReg) {
+			case 0:
+				planeSize = (reg->getWord(0x3A) & 0x300) >> 8;
+				break;
+			case 1:
+				planeSize = (reg->getWord(0x3A) & 0x3000) >> 12;
+				break;
+			default:
+				cerr << "RGB0\t: don't know what to do with plane size" << endl;
+				break;
+		}
+  		switch(planeSize) {
+  			case 0: planeW = planeH = 1; break;
+  			case 1: planeW = 2; planeH = 1; break;
+  			case 2: planeW = planeH = 2; break;
+  		}
+  		if(patternNameReg & 0x8000) patternDataSize = 1;
+  		else patternDataSize = 2;
+  		if(patternReg & 0x1) patternWH = 2;
+  		else patternWH = 1;
+  		pageWH = 64/patternWH;
+  		cellW = cellH = 8;
+  		supplementData = patternNameReg & 0x3FF;
+  		auxMode = (patternNameReg & 0x4000) >> 14;
         }
+	unsigned short colorCalc = reg->getWord(0xEC);
+	if (colorCalc & 0x1000) {
+		alpha = ((~reg->getWord(0x108) & 0x1F) << 3) + 0x7;
+	}
+	else {
+		alpha = 0xFF;
+	}
 
         colorOffset = reg->getWord(0xE6) & 0x7;
 	if (reg->getWord(0x110) & 0x10) { // color offset enable
@@ -512,7 +722,38 @@ void RBG0::init(void) {
 }
 
 void RBG0::planeAddr(int i) {
-	addr = 0;
+	// works only for parameter A for time being
+	unsigned long offset = (reg->getWord(0x3E) & 0x7) << 6;
+	unsigned long tmp;
+  	switch(i) {
+    		case 0: tmp = offset | reg->getByte(0x51); break;
+    		case 1: tmp = offset | reg->getByte(0x50); break;
+    		case 2: tmp = offset | reg->getByte(0x53); break;
+   		case 3: tmp = offset | reg->getByte(0x52); break;
+    		case 4: tmp = offset | reg->getByte(0x55); break;
+    		case 5: tmp = offset | reg->getByte(0x54); break;
+    		case 6: tmp = offset | reg->getByte(0x57); break;
+   		case 7: tmp = offset | reg->getByte(0x56); break;
+    		case 8: tmp = offset | reg->getByte(0x59); break;
+    		case 9: tmp = offset | reg->getByte(0x58); break;
+    		case 10: tmp = offset | reg->getByte(0x6B); break;
+   		case 11: tmp = offset | reg->getByte(0x6A); break;
+    		case 12: tmp = offset | reg->getByte(0x6D); break;
+    		case 13: tmp = offset | reg->getByte(0x6C); break;
+    		case 14: tmp = offset | reg->getByte(0x6F); break;
+   		case 15: tmp = offset | reg->getByte(0x6E); break;
+  	}
+  	int deca = planeH + planeW - 2;
+  	int multi = planeH * planeW;
+
+  	if (patternDataSize == 1) {
+		if (patternWH == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
+	  	else addr = (tmp >> deca) * (multi * 0x800);
+  	}
+  	else {
+		if (patternWH == 1) addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
+	  	else addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
+  	}
 }
 
 int RBG0::getPriority(void) {
