@@ -1080,7 +1080,7 @@ void Vdp2::executer(void) {
   glDisable( GL_TEXTURE_2D );
 
   vdp1->execute(0);
-  //glFlush();
+  glFlush();
   SDL_GL_SwapBuffers();
   //colorOffset();
   //SDL_Flip(surface);
