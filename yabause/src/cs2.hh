@@ -150,6 +150,7 @@ private:
   unsigned long mpegintmask;
 
   bool _command;
+  SDL_mutex  *_lock;
   char *cdrom;
 public:
   Cs2(void);

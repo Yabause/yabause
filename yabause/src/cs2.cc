@@ -173,9 +173,21 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
     case 0x90020: Memory::setWord(addr, val);
 		  break;
     case 0x90024: Memory::setWord(addr, val);
+                  if (SDL_mutexP(_lock) != 0)
+                  {
+#if CDDEBUG
+                     fprintf(stderr, "cs2\t: couldn't lock mutex\n");
+#endif
+                  }
                   _command = true;
                   execute();
                   _command = false;
+                  if (SDL_mutexV(_lock) != 0)
+                  {
+#if CDDEBUG
+                     fprintf(stderr, "cs2\t: couldn't unlock mutex\n");
+#endif
+                  }
 		  break;
     default: Memory::setWord(addr, val);
   }
@@ -194,7 +206,8 @@ unsigned long Cs2::getLong(unsigned long addr) {
     case 0x18000:
                   // transfer data
                   switch (datatranstype) {
-                    case 0: // get sector
+                    case 0:
+                            // get sector
                             if (databytestotrans > 0)
                             {
                                // fix me
@@ -205,6 +218,9 @@ unsigned long Cs2::getLong(unsigned long addr) {
                                cdwnum += 4;
                                databytestotrans -= 4;
                             }
+//#if CDDEBUG
+//                            fprintf(stderr, "cs2\t: getsectordata read long = %08x\n", val);
+//#endif
 
                             break;
                     case 2:
@@ -358,14 +374,17 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   numfiles = 0;
 
   _command = false;
+  _lock = SDL_CreateMutex();
   SDL_CreateThread((int (*)(void*)) &run, this);
 }
 
 Cs2::~Cs2(void) {
    _stop = true;
-	if (cdrom != NULL)
-		CDDeInit();
    SDL_WaitThread(cdThread, NULL);
+   SDL_DestroyMutex(_lock);
+
+   if (cdrom != NULL)
+      CDDeInit();
 }
 
 void Cs2::run(Cs2 *cd) {
@@ -376,6 +395,12 @@ void Cs2::run(Cs2 *cd) {
     }
     else {
       unsigned short val=0;
+      if (SDL_mutexP(cd->_lock) != 0)
+      {
+#if CDDEBUG
+         fprintf(stderr, "cs2\t: couldn't lock mutex\n");
+#endif
+      }
 
       switch (cd->status & 0xF) {
          case CDB_STAT_PAUSE:
@@ -442,6 +467,13 @@ void Cs2::run(Cs2 *cd) {
       cd->status |= CDB_STAT_PERI;
 
       // adjust command registers appropriately here(fix me)
+
+      if (SDL_mutexV(cd->_lock) != 0)
+      {
+#if CDDEBUG
+         fprintf(stderr, "cs2\t: couldn't unlock mutex\n");
+#endif
+      }
 
       // somehow I doubt this is correct
       t.wait(50);
@@ -1183,7 +1215,7 @@ void Cs2::getSectorNumber(void) {
   if (partition[gsnbufno].size == -1)
      setCR4(0);
   else
-     setCR4(partition[getCR3() >> 8].size / getsectsize);
+     setCR4(partition[gsnbufno].size / getsectsize);
 
   setCR1(status << 8);
   setCR2(0);
@@ -1304,7 +1336,7 @@ void Cs2::deleteSectorData(void) {
      }
 
      // sort remaining blocks
-     SortBlocks(curpartition);
+     SortBlocks(&partition[dsdbufno]);
 
      partition[dsdbufno].size -= (getsectsize * dsdsectnum);
      partition[dsdbufno].numblocks -= dsdsectnum;
