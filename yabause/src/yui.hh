@@ -26,7 +26,7 @@ char *	yui_cdrom(void);
 /* returns the region of system or 0 if autodetection is used */
 unsigned char yui_region(void);
 
-/* returns a save ram filename, not currently used */
+/* returns a save ram filename. Can be set to NULL if not present */
 char * yui_saveram(void);
 
 /* returns a mpeg rom filename. Can be set to NULL if not present */

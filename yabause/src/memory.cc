@@ -1,4 +1,5 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2003,2004 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -321,6 +322,18 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 			exit(1);
 		}
 	}
+
+        // Load Backup Ram file
+        char *backupram;
+
+        backupram = yui_saveram();
+        if (backupram != NULL)
+        {
+           // it doesn't really matter if the load succeeds(we'll create
+           // the file instead)
+           ram->load(backupram, 0);
+        }
+
 /*
 	if (exe != NULL) {
 		ramHigh->load(exe, 0x4000);

@@ -169,10 +169,10 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
 	          break;
     case 0x9000C:
     case 0x90018:
-                  if (SDL_mutexP(_lock) != 0)
+                  while (SDL_mutexP(_lock) == -1)
                   {
 #if CDDEBUG
-                     fprintf(stderr, "cs2\t: couldn't lock mutex\n");
+                     fprintf(stderr, "cs2\t: couldn't lock mutex: %s\n", SDL_GetError());
 #endif
                   }
     case 0x9001C:
@@ -182,10 +182,10 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
                   _command = true;
                   execute();
                   _command = false;
-                  if (SDL_mutexV(_lock) != 0)
+                  while (SDL_mutexV(_lock) == -1)
                   {
 #if CDDEBUG
-                     fprintf(stderr, "cs2\t: couldn't unlock mutex\n");
+                     fprintf(stderr, "cs2\t: couldn't unlock mutex: %s\n", SDL_GetError());
 #endif
                   }
 		  break;
@@ -453,10 +453,10 @@ void Cs2::run(Cs2 *cd) {
     }
     else {
       unsigned short val=0;
-      if (SDL_mutexP(cd->_lock) != 0)
+      while (SDL_mutexP(cd->_lock) == -1)
       {
 #if CDDEBUG
-         fprintf(stderr, "cs2\t: couldn't lock mutex\n");
+         fprintf(stderr, "cs2\t: couldn't lock mutex: %s\n", SDL_GetError());
 #endif
       }
 
@@ -532,10 +532,10 @@ void Cs2::run(Cs2 *cd) {
 
       // adjust command registers appropriately here(fix me)
 
-      if (SDL_mutexV(cd->_lock) != 0)
+      while (SDL_mutexV(cd->_lock) == -1)
       {
 #if CDDEBUG
-         fprintf(stderr, "cs2\t: couldn't unlock mutex\n");
+         fprintf(stderr, "cs2\t: couldn't unlock mutex: %s\n", SDL_GetError());
 #endif
       }
 
@@ -1095,12 +1095,30 @@ void Cs2::seekDisc(void) {
   if (getCR1() & 0x80)
   {
      // Seek by FAD
+#if CDDEBUG
+     fprintf(stderr, "cs2\t: seekDisc - FAD Mode not supported\n");
+#endif
   }
   else
   {
-     // Seek by index
-     SetupDefaultPlayStats((getCR2() >> 8) + 1);
-     index = getCR2() & 0xFF;
+     // Were we given a valid track number?
+     if (getCR2() >> 8)
+     {
+        // Seek by index
+        SetupDefaultPlayStats((getCR2() >> 8));
+        index = getCR2() & 0xFF;
+     }
+     else
+     {
+        // Error
+        status = CDB_STAT_STANDBY | CDB_STAT_PERI;
+        options = 0xFF;
+        repcnt = 0xFF;
+        ctrladdr = 0xFF;
+        track = 0xFF;
+        index = 0xFF;
+        FAD = 0xFFFFFFFF;
+     }
   }
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
@@ -2435,10 +2453,10 @@ unsigned char Cs2::GetRegionID() {
    partition_struct *gripartition;
    char ret=0;
 
-   if (SDL_mutexP(_lock) != 0)
+   while (SDL_mutexP(_lock) == -1)
    {
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: couldn't lock mutex\n");
+      fprintf(stderr, "cs2\t: couldn't lock mutex: %s\n", SDL_GetError());
 #endif
    }
 
@@ -2491,11 +2509,11 @@ unsigned char Cs2::GetRegionID() {
       gripartition->numblocks -= 1;
    }
 
-   if (SDL_mutexV(_lock) != 0)
+   while (SDL_mutexV(_lock) == -1)
    {
 
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: couldn't unlock mutex\n");
+      fprintf(stderr, "cs2\t: couldn't unlock mutex: %s\n", SDL_GetError());
 #endif
    }
 
