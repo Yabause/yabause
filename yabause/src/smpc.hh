@@ -75,6 +75,7 @@ public:
   void SNDON(void);
   void SNDOFF(void);
   void SETSMEM(void);
+  void SSHOFF(void);
   void SSHON(void);
 };
 

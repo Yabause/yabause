@@ -110,15 +110,6 @@ void Smpc::setTiming(void) {
 #endif
 			timing = 30;
                         break;
-                case 0x2:
-			timing = 30;
-                        break;
-                case 0x3:
-#if DEBUG
-                        cerr << "smpc\t: SSHOFF not implemented\n";
-#endif
-			timing = 30;
-                        break;
                 case 0x8:
 #if DEBUG
                         cerr << "smpc\t: CDON not implemented\n";
@@ -151,11 +142,10 @@ void Smpc::setTiming(void) {
 			else timing = 3000;
 			break;
                 case 0x17:
-//#if DEBUG
-//                        cerr << "smpc\t: SETSMEM not implemented\n";
-//#endif
                         timing = 40;
                         break;
+                case 0x2:
+                case 0x3:
 		case 0x6:
 		case 0x7:
 		case 0x19:
@@ -185,15 +175,16 @@ void Smpc::execute(Smpc *smpc) {
 #endif
     break;
   case 0x2:
-#if 1
+#if DEBUG
     cerr << "smpc\t: SSHON\n";
 #endif
     smpc->SSHON();
     break;
   case 0x3:
 #if DEBUG
-    cerr << "smpc\t: SSHOFF not implemented\n";
+    cerr << "smpc\t: SSHOFF\n";
 #endif
+    smpc->SSHOFF();
     break;
   case 0x6:
 #if DEBUG
@@ -419,6 +410,11 @@ void Smpc::INTBACKPeripheral(void) {
 void Smpc::SETSMEM(void) {
   for(int i = 0;i < 4;i++) SMEM[i] = getIREG(i);
   setOREG(31, 0x17);
+}
+
+void Smpc::SSHOFF(void) {
+        cerr << "stopping slave" << endl;
+        sm->stopSlave();
 }
 
 void Smpc::SSHON(void) {
