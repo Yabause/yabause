@@ -569,9 +569,6 @@ void Onchip::inputCaptureSignal(void) {
 
    // Generate an Interrupt?
    if (Memory::getByte(TIER) & 0x80)  {
-//#if DEBUG
-//      fprintf(stderr, "onchip\t: ICI interrupt: level = %d vector = %d\n", (Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) >> 8) & 0x7F);
-//#endif
         shparent->send(Interrupt((Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) >> 8) & 0x7F));
    }
 }
