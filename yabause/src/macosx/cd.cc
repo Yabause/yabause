@@ -33,7 +33,7 @@
 
 #define NEWCDINTERFACE
 char cdPath[1024];
-FILE *hCDROM;
+int hCDROM;
 CDTOC *cdTOC = NULL;
 
 int getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize )
@@ -109,7 +109,7 @@ int CDInit(char *cdrom_name)
 int CDDeInit()
 {
 	if (hCDROM != NULL) {
-		fclose(hCDROM);
+		close(hCDROM);
 		free((void*)cdTOC);
 		printf("CDDeInit OK\n");
 	}
@@ -161,12 +161,13 @@ long CDReadToc(unsigned long *TOC)
 	return (0xCC * 2);
 }
 
+/* Deprecated */
 unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
 {
-	if (hCDROM != NULL) {
-		fseek(hCDROM, (lba * size) + 16, SEEK_SET);
-		return fread(buffer, 1, size, hCDROM);
-	}
+	int blockSize;
+	if (hCDROM != -1)
+				ioctl(hCDROM, DKIOCGETBLOCKSIZE, &blockSize);
+                return pread(hCDROM, buffer, blockSize, lba * blockSize);
     return 0;
 }
 
