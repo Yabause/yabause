@@ -121,7 +121,7 @@ void SuperH::synchroStart(void) {
     }
     while((cycleCount < decilineStop) && _pause) {
       SDL_mutexP(mutex[4]);
-      SDL_CondWait(cond[4], mutex[4]);
+      if (SDL_CondWaitTimeout(cond[4], mutex[4], 2000) == SDL_MUTEX_TIMEDOUT) cerr << "TIMEOUT" << endl;
       SDL_mutexV(mutex[4]);
       executer();
     }
@@ -232,7 +232,7 @@ void SuperH::microsleep(unsigned long nbusec) {
   unsigned long tmp = nbusec / 10;
   while (tmp--) {
     SDL_mutexP(mutex[0]);
-    SDL_CondWait(cond[0], mutex[0]);
+    if (SDL_CondWaitTimeout(cond[0], mutex[0], 2000) == SDL_MUTEX_TIMEDOUT) cerr << "TIMEOUT" << endl;
     SDL_mutexV(mutex[0]);
   }
 }
@@ -240,35 +240,35 @@ void SuperH::microsleep(unsigned long nbusec) {
 void SuperH::waitHBlankIN(void) {
   if (_stop) return;
   SDL_mutexP(mutex[5]);
-  SDL_CondWait(cond[5], mutex[5]);
+  if (SDL_CondWaitTimeout(cond[5], mutex[5], 2000) == SDL_MUTEX_TIMEDOUT) cerr << "TIMEOUT" << endl;
   SDL_mutexV(mutex[5]);
 }
 
 void SuperH::waitHBlankOUT(void) {
   if (_stop) return;
   SDL_mutexP(mutex[6]);
-  SDL_CondWait(cond[6], mutex[6]);
+  if (SDL_CondWaitTimeout(cond[6], mutex[6], 2000) == SDL_MUTEX_TIMEDOUT) cerr << "TIMEOUT" << endl;
   SDL_mutexV(mutex[6]);
 }
 
 void SuperH::waitVBlankIN(void) {
   if (_stop) return;
   SDL_mutexP(mutex[1]);
-  SDL_CondWait(cond[1], mutex[1]);
+  if (SDL_CondWaitTimeout(cond[1], mutex[1], 2000) == SDL_MUTEX_TIMEDOUT) cerr << "TIMEOUT" << endl;
   SDL_mutexV(mutex[1]);
 }
 
 void SuperH::waitVBlankOUT(void) {
   if (_stop) return;
   SDL_mutexP(mutex[2]);
-  SDL_CondWait(cond[2], mutex[2]);
+  if (SDL_CondWaitTimeout(cond[2], mutex[2], 2000) == SDL_MUTEX_TIMEDOUT) cerr << "TIMEOUT" << endl;
   SDL_mutexV(mutex[2]);
 }
 
 void SuperH::waitInterruptEnd(void) {
   if (_stop) return;
   SDL_mutexP(mutex[3]);
-  SDL_CondWait(cond[3], mutex[3]);
+  if (SDL_CondWaitTimeout(cond[3], mutex[3], 2000) == SDL_MUTEX_TIMEDOUT) cerr << "TIMEOUT" << endl;
   SDL_mutexV(mutex[3]);
 }
 

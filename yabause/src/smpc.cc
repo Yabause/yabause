@@ -58,11 +58,13 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
   Memory::setByte(addr, value);
 
   if (addr == 1) {  // Maybe an INTBACK continue/break request
-    SDL_CreateThread((int (*)(void*)) &Smpc::intcont, this);
+    SDL_WaitThread(smpcThread, NULL);
+    smpcThread = SDL_CreateThread((int (*)(void*)) &Smpc::intcont, this);
   }
 
   if (addr == 0x1F) {
-    SDL_CreateThread((int (*)(void*)) &Smpc::execute, this);
+    SDL_WaitThread(smpcThread, NULL);
+    smpcThread = SDL_CreateThread((int (*)(void*)) &Smpc::execute, this);
   }
 }
 
@@ -79,6 +81,8 @@ Smpc::Smpc(SaturnMemory *sm) : Memory(0x80) {
   firstPeri = false;
 
   this->sm = sm;
+
+  smpcThread = NULL;
 }
 
 void Smpc::execute(Smpc *smpc) {

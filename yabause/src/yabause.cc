@@ -166,6 +166,7 @@ void keyUp(int key)
 
 void handleEvents(SaturnMemory *mem) {
     bool stop = false;
+    bool paused = false;
     SDL_Event event;
     Vdp2 *vdp2 = (Vdp2 *) mem->getVdp2();
     while (!stop) {
@@ -181,12 +182,14 @@ void handleEvents(SaturnMemory *mem) {
 			mem->stop();
 			break;
 		case SDLK_p:
+			paused = true;
 #ifdef DEBUG
 			cerr << "Pause" << endl;
 #endif
 			mem->getMasterSH()->pause();
 			break;
 		case SDLK_r:
+			paused = false;
 #ifdef DEBUG
 			cerr << "Run" << endl;
 #endif
@@ -213,7 +216,8 @@ void handleEvents(SaturnMemory *mem) {
 	}
       }
       else {
-	vdp2->executer();
+	if (paused) SDL_Delay(1);
+	else vdp2->executer();
       }
     }
 }

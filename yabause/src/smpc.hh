@@ -41,6 +41,7 @@ private:
   bool firstPeri;
 
   SaturnMemory *sm;
+  SDL_Thread *smpcThread;
 public:
   Smpc(SaturnMemory *);
 
