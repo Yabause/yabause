@@ -462,19 +462,6 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   return FALSE;
                }
 
-               if (SendMessage(GetDlgItem(hDlg, IDC_CHECKBOX1), BM_GETCHECK, 0, 0) == BST_CHECKED)
-               {
-                  SuperH *proc=yabausemem->getMasterSH();
-                  sh2regs_struct sh2regs;
-                  proc->GetRegisters(&sh2regs);
-                  sh2regs.PC = mtrnssaddress;
-                  proc->SetRegisters(&sh2regs);
-
-                  mtrnssetpc = true;
-               }
-               else
-                  mtrnssetpc = false;
-
                if (SendMessage(GetDlgItem(hDlg, IDC_DOWNLOADMEM), BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
                   // Let's do a ram dump
@@ -488,9 +475,15 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                   // Is this a program?
                   if (SendMessage(GetDlgItem(hDlg, IDC_CHECKBOX1), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                  {
                      yabausemem->loadExec(mtrnsfilename, mtrnssaddress);
+                     mtrnssetpc = true;
+                  }
                   else
+                  {
                      yabausemem->load(mtrnsfilename, mtrnssaddress);
+                     mtrnssetpc = false;
+                  }
                }
 
                EndDialog(hDlg, TRUE);
