@@ -59,7 +59,7 @@ private:
   bool ste;
   bool resd;
 
-  SmpcRegisters *memoire;
+  SmpcRegisters *registers;
   bool intback;
   unsigned char intbackIreg0;
   bool firstPeri;
@@ -69,8 +69,8 @@ private:
 public:
   Smpc(SmpcRegisters *, Scu *, SaturnMemory *);
 
-  static void executer(Smpc *);
-  static void lancer(Smpc *);
+  static void execute(Smpc *);
+  static void intcont(Smpc *);
 
   void INTBACK(void);
   void INTBACKStatus(void);

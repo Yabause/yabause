@@ -27,7 +27,6 @@
 
 Vdp1Registers::Vdp1Registers(Memory *mem, Scu *scu) : Memory(0x18) {
   vdp1 = new Vdp1(this, mem, scu);
-  //vdp1Thread = SDL_CreateThread((int (*)(void*)) &Vdp1::lancer, vdp1);
 }
 
 Vdp1Registers::~Vdp1Registers(void) {
@@ -35,7 +34,6 @@ Vdp1Registers::~Vdp1Registers(void) {
   cerr << "stopping vdp1\n";
 #endif
   vdp1->stop();
-  //SDL_WaitThread(vdp1Thread, NULL);
 #if DEBUG
   cerr << "vdp1 stopped\n";
 #endif
@@ -46,46 +44,21 @@ Vdp1 *Vdp1Registers::getVdp1(void) {
   return vdp1;
 }
 
-unsigned short Vdp1Registers::getEDSR(void) {
-  return Memory::getWord(0x10);
-} 
-
-void Vdp1Registers::setEDSR(unsigned short val) {
-  Memory::setWord(0x10, val);
-}
-
-unsigned short Vdp1Registers::getPTMR(void) {
-  return Memory::getWord(0x4);
-}
-
-void Vdp1Registers::setPTMR(unsigned short val) {
-  Memory::setWord(0x4, val);
-}
-
 Vdp1::Vdp1(Vdp1Registers *reg, Memory *mem, Scu *s) {
-  memoire = mem;
-  registres = reg;
+  memory = mem;
+  registers = reg;
   scu = s;
 
   _stop = false;
-  registres->setPTMR(0);
+  registers->setWord(0x4, 0);
 }
 
 void Vdp1::stop(void) {
   _stop = true;
 }
 
-void Vdp1::lancer(Vdp1 *vdp1) {
-  Timer t;
-  while(!vdp1->_stop) {
-    t.waitVBlankOUT();
-    vdp1->executer(0);
-  }
-}
-
 void Vdp1::setSurface(SDL_Surface *s) {
 	vdp2Surface = s;
-	//vdp1Surface = SDL_ConvertSurface(vdp2Surface, vdp2Surface->format, SDL_HWSURFACE | SDL_SRCALPHA);
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 	vdp1Surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 400, 400, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
 #else
@@ -94,45 +67,41 @@ void Vdp1::setSurface(SDL_Surface *s) {
 
 }
 
-void Vdp1::executer(unsigned long adr) {
-  unsigned short commande = memoire->getWord(adr);
-  unsigned long suivante;
-  int nbcom = 0;
+void Vdp1::execute(unsigned long addr) {
+  unsigned short command = memory->getWord(addr);
+  unsigned long next;
 
-  if (!registres->getPTMR()) return;
+  if (!registers->getWord(0x4)) return;
 
   // beginning of a frame (ST-013-R3-061694 page 53)
   // BEF <- CEF
   // CEF <- 0
-  registres->setEDSR((registres->getEDSR() & 2) >> 1);
+  registers->setWord(0x10, (registers->getWord(0x10) & 2) >> 1);
 
   SDL_Rect cleanRect;
-  cleanRect.x = registres->getWord(0x8) >> 8;
-  cleanRect.y = registres->getWord(0x8) & 0xFF;
-  cleanRect.w = (registres->getWord(0xA) >> 5) - cleanRect.x;
-  cleanRect.h = (registres->getWord(0xA) & 0xFF) - cleanRect.y;
+  cleanRect.x = registers->getWord(0x8) >> 8;
+  cleanRect.y = registers->getWord(0x8) & 0xFF;
+  cleanRect.w = (registers->getWord(0xA) >> 5) - cleanRect.x;
+  cleanRect.h = (registers->getWord(0xA) & 0xFF) - cleanRect.y;
 
   SDL_FillRect(vdp1Surface, &cleanRect, SDL_MapRGBA(vdp1Surface->format, 0xFF, 0xFF, 0xFF, 0));
   
-  while ((!(commande & 0x8000)) /*&& (nbcom++ < 10000)*/) { // FIXME
-
-    //cerr << "vdp1 : commande = " << commande << '\n';
-    //cerr << "vdp1 :   | mode de saut = " << ((commande & 0x7000) >> 12) << '\n';
+  while ((!(command & 0x8000))) { // FIXME
 
     // First, process the command
-    if (!(commande & 0x4000)) { // if (!skip)
-      switch (commande & 0x001F) {
+    if (!(command & 0x4000)) { // if (!skip)
+      switch (command & 0x001F) {
 	case 0: //cerr << "vdp1\t: normal sprite draw" << endl;
-	  normalSpriteDraw(adr);
+	  normalSpriteDraw(addr);
 	  break;
 	case 1: //cerr << "vdp1\t:  scaled sprite draw" << endl;
 	  scaledSpriteDraw();
 	  break;
 	case 2: // distorted sprite draw
-	  distortedSpriteDraw(adr);
+	  distortedSpriteDraw(addr);
 	  break;
 	case 4: // polygon draw
-	  polygonDraw(adr);
+	  polygonDraw(addr);
 	  break;
 	case 5: // polyline draw
 	  polylineDraw();
@@ -144,53 +113,53 @@ void Vdp1::executer(unsigned long adr) {
 	  userClipping();
 	  break;
 	case 9: // system clipping coordinates
-	  systemClipping(adr);
+	  systemClipping(addr);
 	  break;
 	case 10: // local coordinate
-	  localCoordinate(adr);
+	  localCoordinate(addr);
 	  break;
 	case 0x10: // draw end
 	  drawEnd();
 	  break;
 	default:
-	  //cerr << "vdp1\t: Mauvaise commande : "
-	  //     << hex << setw(10) << commande << endl;
+#ifdef DEBUG
+	  cerr << "vdp1\t: Bad command : " << hex << setw(10) << command << endl;
+#endif
 	  break;
       }
     }
 
     // Next, determine where to go next
-    switch ((commande & 0x3000) >> 12) {
+    switch ((command & 0x3000) >> 12) {
     case 0: // NEXT, jump to following table
-      adr += 0x20;
+      addr += 0x20;
       break;
     case 1: // ASSIGN, jump to CMDLINK
-      adr = memoire->getWord(adr + 2) * 8;
+      addr = memory->getWord(addr + 2) * 8;
       break;
     case 2: // CALL, call a subroutine
-      returnAddr = adr;
-      adr = memoire->getWord(adr + 2) * 8;
+      returnAddr = addr;
+      addr = memory->getWord(addr + 2) * 8;
 #ifdef DEBUG
-	  cerr << "CALL " << adr << endl;
+	  cerr << "CALL " << addr << endl;
 #endif
       break;
     case 3: // RETURN, return from subroutine
-      adr = returnAddr;
+      addr = returnAddr;
 #ifdef DEBUG
       cerr << "RET" << endl;
 #endif
       break;
     }
-    //cerr << "vdp1 :   | table suivante = " << adr << '\n';
 #ifndef _arch_dreamcast
-    try { commande = memoire->getWord(adr); }
+    try { command = memory->getWord(addr); }
     catch (BadMemoryAccess ma) { return; }
 #else
-    commande = memoire->getWord(adr);
+    command = memory->getWord(addr);
 #endif
   }
-  // FIXME : on a fini, on place deux bits à 1 dans un registre
-  registres->setEDSR(registres->getEDSR() | 2);
+  // drawing is finished, we set two bits at 1
+  registers->setWord(0x10, registers->getWord(0x10) | 2);
 #if DEBUG
   //cerr << "vdp1 : draw end\n";
 #endif
@@ -199,11 +168,11 @@ void Vdp1::executer(unsigned long adr) {
 }
 
 void Vdp1::normalSpriteDraw(unsigned long addr) {
-  unsigned short xy = memoire->getWord(addr + 0xA);
+  unsigned short xy = memory->getWord(addr + 0xA);
 
   SDL_Rect rect;
-  rect.x = localX + memoire->getWord(addr + 0xC);
-  rect.y = localY + memoire->getWord(addr + 0xE);
+  rect.x = localX + memory->getWord(addr + 0xC);
+  rect.y = localY + memory->getWord(addr + 0xE);
   rect.w = ((xy >> 8) & 0x3F) * 8;
   rect.h = xy & 0xFF;
 
@@ -223,24 +192,14 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	Sint16 X[4];
 	Sint16 Y[4];
 	
-	/*
-	X[0] = localX + (memoire->getWord(addr + 0x0C) & 0x7FF);
-	Y[0] = localY + (memoire->getWord(addr + 0x0E) & 0x7FF);
-	X[1] = localX + (memoire->getWord(addr + 0x10) & 0x7FF);
-	Y[1] = localY + (memoire->getWord(addr + 0x12) & 0x7FF);
-	X[2] = localX + (memoire->getWord(addr + 0x14) & 0x7FF);
-	Y[2] = localY + (memoire->getWord(addr + 0x16) & 0x7FF);
-	X[3] = localX + (memoire->getWord(addr + 0x18) & 0x7FF);
-	Y[3] = localY + (memoire->getWord(addr + 0x1A) & 0x7FF);
-	*/
-	X[0] = localX + (memoire->getWord(addr + 0x0C) );
-	Y[0] = localY + (memoire->getWord(addr + 0x0E) );
-	X[1] = localX + (memoire->getWord(addr + 0x10) );
-	Y[1] = localY + (memoire->getWord(addr + 0x12) );
-	X[2] = localX + (memoire->getWord(addr + 0x14) );
-	Y[2] = localY + (memoire->getWord(addr + 0x16) );
-	X[3] = localX + (memoire->getWord(addr + 0x18) );
-	Y[3] = localY + (memoire->getWord(addr + 0x1A) );
+	X[0] = localX + (memory->getWord(addr + 0x0C) );
+	Y[0] = localY + (memory->getWord(addr + 0x0E) );
+	X[1] = localX + (memory->getWord(addr + 0x10) );
+	Y[1] = localY + (memory->getWord(addr + 0x12) );
+	X[2] = localX + (memory->getWord(addr + 0x14) );
+	Y[2] = localY + (memory->getWord(addr + 0x16) );
+	X[3] = localX + (memory->getWord(addr + 0x18) );
+	Y[3] = localY + (memory->getWord(addr + 0x1A) );
 
 	if ((X[0] & 0x400) ||(Y[0] & 0x400) ||(X[1] & 0x400) ||(Y[1] & 0x400) ||(X[2] & 0x400) ||(Y[2] & 0x400) ||(X[3] & 0x400) ||(Y[3] & 0x400)) {
 		//cerr << "don't know what to do" << endl;
@@ -248,30 +207,23 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	else {
 		filledPolygonColor(vdp1Surface, X, Y, 4, 0xFFFFFFFF);
 	}
-#if 0
-  cerr << "vdp1\t: distorted sprite draw"
-	  << " X0=" << X[0] << " Y0=" << Y[0]
-	  << " X1=" << X[1] << " Y1=" << Y[1]
-	  << " X2=" << X[2] << " Y2=" << Y[2]
-	  << " X3=" << X[3] << " Y3=" << Y[3] << endl;
-#endif
 }
 
 void Vdp1::polygonDraw(unsigned short addr) {
 	Sint16 X[4];
 	Sint16 Y[4];
 	
-	X[0] = localX + (memoire->getWord(addr + 0x0C) );
-	Y[0] = localY + (memoire->getWord(addr + 0x0E) );
-	X[1] = localX + (memoire->getWord(addr + 0x10) );
-	Y[1] = localY + (memoire->getWord(addr + 0x12) );
-	X[2] = localX + (memoire->getWord(addr + 0x14) );
-	Y[2] = localY + (memoire->getWord(addr + 0x16) );
-	X[3] = localX + (memoire->getWord(addr + 0x18) );
-	Y[3] = localY + (memoire->getWord(addr + 0x1A) );
+	X[0] = localX + (memory->getWord(addr + 0x0C) );
+	Y[0] = localY + (memory->getWord(addr + 0x0E) );
+	X[1] = localX + (memory->getWord(addr + 0x10) );
+	Y[1] = localY + (memory->getWord(addr + 0x12) );
+	X[2] = localX + (memory->getWord(addr + 0x14) );
+	Y[2] = localY + (memory->getWord(addr + 0x16) );
+	X[3] = localX + (memory->getWord(addr + 0x18) );
+	Y[3] = localY + (memory->getWord(addr + 0x1A) );
 
-	unsigned short color = memoire->getWord(addr + 0x6);
-	unsigned short CMDPMOD = memoire->getWord(addr + 0x4);
+	unsigned short color = memory->getWord(addr + 0x6);
+	unsigned short CMDPMOD = memory->getWord(addr + 0x4);
 
 	unsigned char alpha = 0xFF;
 	if ((CMDPMOD & 0x7) == 0x3) alpha = 0x80;
@@ -283,14 +235,7 @@ void Vdp1::polygonDraw(unsigned short addr) {
 		filledPolygonRGBA(vdp1Surface, X, Y, 4, (color & 0x1F) << 3, (color & 0x3E0) >> 2, (color & 0x7C00) >> 7, alpha);
 	}
 
-	unsigned short cmdpmod = memoire->getWord(addr + 0x4);
-#if 0
-	cerr << "vdp1\t: polygon draw (pmod=" << hex << cmdpmod << ")"
-	  << " X0=" << X[0] << " Y0=" << Y[0]
-	  << " X1=" << X[1] << " Y1=" << Y[1]
-	  << " X2=" << X[2] << " Y2=" << Y[2]
-	  << " X3=" << X[3] << " Y3=" << Y[3] << endl;
-#endif
+	unsigned short cmdpmod = memory->getWord(addr + 0x4);
 }
 
 void Vdp1::polylineDraw(void) {
@@ -312,16 +257,16 @@ void Vdp1::userClipping(void) {
 }
 
 void Vdp1::systemClipping(unsigned short addr) {
-  unsigned short CMDXC = memoire->getWord(addr + 0x14);
-  unsigned short CMDYC = memoire->getWord(addr + 0x16);
+  unsigned short CMDXC = memory->getWord(addr + 0x14);
+  unsigned short CMDYC = memory->getWord(addr + 0x16);
 #if DEBUG
   //cerr << "vdp1\t: system clipping x=" << CMDXC << " y=" << CMDYC << endl;
 #endif
 }
 
 void Vdp1::localCoordinate(unsigned short addr) {
-  localX = memoire->getWord(addr + 0xC);
-  localY = memoire->getWord(addr + 0xE);
+  localX = memory->getWord(addr + 0xC);
+  localY = memory->getWord(addr + 0xE);
 #if DEBUG
   //cerr << "vdp1\t: local coordinate x=" << CMDXA << " y=" << CMDYA << endl;
 #endif

@@ -34,17 +34,12 @@ public:
   Vdp1Registers(Memory *, Scu *);
   ~Vdp1Registers(void);
   Vdp1 *getVdp1(void);
-
-  unsigned short getEDSR(void);
-  void setEDSR(unsigned short);
-  unsigned short getPTMR(void);
-  void setPTMR(unsigned short);
 };
 
 class Vdp1 : public Cpu {
 private:
-  Memory *memoire;
-  Vdp1Registers *registres;
+  Memory *memory;
+  Vdp1Registers *registers;
   Scu *scu;
   SDL_Surface *vdp1Surface;
   SDL_Surface *vdp2Surface;
@@ -55,8 +50,7 @@ private:
   unsigned short returnAddr;
 public:
   Vdp1(Vdp1Registers *, Memory *, Scu *);
-  void executer(unsigned long = 0);
-  static void lancer(Vdp1 *);
+  void execute(unsigned long = 0);
   void stop(void);
 
   void setSurface(SDL_Surface *);

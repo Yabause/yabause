@@ -66,17 +66,16 @@ void SmpcRegisters::setByte(unsigned long adr, unsigned char valeur) {
   Memory::setByte(adr, valeur);
 
   if (adr == 1) {  // Maybe an INTBACK continue/break request
-    SDL_CreateThread((int (*)(void*)) &Smpc::lancer, smpc);
+    SDL_CreateThread((int (*)(void*)) &Smpc::intcont, smpc);
   }
 
   if (adr == 0x1F) {
-    //kill(Reveil<Smpc>::pid(), SIGUSR1);
-    SDL_CreateThread((int (*)(void*)) &Smpc::executer, smpc);
+    SDL_CreateThread((int (*)(void*)) &Smpc::execute, smpc);
   }
 }
 
-Smpc::Smpc(SmpcRegisters *mem, Scu *s, SaturnMemory *sm) {
-  memoire = mem;
+Smpc::Smpc(SmpcRegisters *reg, Scu *s, SaturnMemory *sm) {
+  registers = reg;
   dotsel = false;
   mshnmi = false;
   sndres = false;
@@ -92,8 +91,8 @@ Smpc::Smpc(SmpcRegisters *mem, Scu *s, SaturnMemory *sm) {
   this->sm = sm;
 }
 
-void Smpc::executer(Smpc *smpc) {
-  switch(smpc->memoire->getCOMREG()) {
+void Smpc::execute(Smpc *smpc) {
+  switch(smpc->registers->getCOMREG()) {
   case 0x6:
 #if DEBUG
     cerr << "smpc\t: CDON\n";
@@ -126,27 +125,27 @@ void Smpc::executer(Smpc *smpc) {
     break;
   default:
 #if DEBUG
-    cerr << "smpc\t: " << ((int) smpc->memoire->getCOMREG())
+    cerr << "smpc\t: " << ((int) smpc->registers->getCOMREG())
 	 << " commande non implantée\n";
 #endif
     break;
   }
   
-  smpc->memoire->setSF(0);
+  smpc->registers->setSF(0);
 }
 
-void Smpc::lancer(Smpc *smpc) {
+void Smpc::intcont(Smpc *smpc) {
   if (smpc->intback) {
-    if ((smpc->intbackIreg0 & 0x40) != (smpc->memoire->getIREG(0) & 0x40)) {
+    if ((smpc->intbackIreg0 & 0x40) != (smpc->registers->getIREG(0) & 0x40)) {
 #if DEBUG
       //cerr << "BREAK\n";
 #endif
       smpc->intback = false;
-      smpc->memoire->setSR(smpc->memoire->getSR() & 0x0F);
+      smpc->registers->setSR(smpc->registers->getSR() & 0x0F);
       smpc->scu->sendSystemManager();
       return;
     }
-    if ((smpc->intbackIreg0 & 0x80) != (smpc->memoire->getIREG(0) & 0x80)) {
+    if ((smpc->intbackIreg0 & 0x80) != (smpc->registers->getIREG(0) & 0x80)) {
 #if DEBUG
       //cerr << "CONTINUE\n";
 #endif
@@ -158,7 +157,7 @@ void Smpc::lancer(Smpc *smpc) {
 }
 
 void Smpc::INTBACK(void) {
-  memoire->setSF(1);
+  registers->setSF(1);
   if (intback) {
 #ifdef DEBUG
     cerr << "don't really know how I can get here..." << endl;
@@ -168,18 +167,18 @@ void Smpc::INTBACK(void) {
     scu->sendSystemManager();
     return;
   }
-  if (intbackIreg0 = memoire->getIREG(0)) {
+  if (intbackIreg0 = registers->getIREG(0)) {
     firstPeri = true;
-    intback = memoire->getIREG(1) & 0x8;
-    memoire->setSR(0x40 | (intback << 5));
+    intback = registers->getIREG(1) & 0x8;
+    registers->setSR(0x40 | (intback << 5));
     INTBACKStatus();
     scu->sendSystemManager();
     return;
   }
-  if (memoire->getIREG(1) & 0x8) {
+  if (registers->getIREG(1) & 0x8) {
     firstPeri = true;
     intback = true;
-    memoire->setSR(0x40);
+    registers->setSR(0x40);
     INTBACKPeripheral();
     scu->sendSystemManager();
     return;
@@ -188,19 +187,16 @@ void Smpc::INTBACK(void) {
 
 void Smpc::INTBACKStatus(void) {
   Timer t;
-  t.wait(3000); //ne pas se fier a cette valeur !!!
+  t.wait(3000);
 #if DEBUG
   //cerr << "INTBACK status\n";
 #endif
-    // renvoyer les données d'heure, code cartouche, code de zone, ...
-    // Ecrire les données dans SR
+    // return time, cartidge, zone, etc. data
     
-    // Ecrire les données dans OREG0
-    memoire->setOREG(0, 0x80);
-    //memoire->setOREG(0, 0x0);
+    registers->setOREG(0, 0x80);	// goto normal startup
+    //registers->setOREG(0, 0x0);	// goto setclock/setlanguage screen
     
-    // Ecrire les données dans OREG1-7
-
+    // write time data in OREG1-7
     time_t tmp = time(NULL);
     struct tm times;
 #ifdef WIN32
@@ -208,38 +204,35 @@ void Smpc::INTBACKStatus(void) {
 #else
     localtime_r(&tmp, &times);
 #endif
-    unsigned char annee[4] = {
+    unsigned char year[4] = {
       (1900 + times.tm_year) / 1000,
       ((1900 + times.tm_year) % 1000) / 100,
       (((1900 + times.tm_year) % 1000) % 100) / 10,
       (((1900 + times.tm_year) % 1000) % 100) % 10 };
-    memoire->setOREG(1, (annee[0] << 4) | annee[1]);
-    memoire->setOREG(2, (annee[2] << 4) | annee[3]);
-    memoire->setOREG(3, (times.tm_wday << 4) | (times.tm_mon + 1));
-    memoire->setOREG(4, ((times.tm_mday / 10) << 4) | (times.tm_mday % 10));
-    memoire->setOREG(5, ((times.tm_hour / 10) << 4) | (times.tm_hour % 10));
-    memoire->setOREG(6, ((times.tm_min / 10) << 4) | (times.tm_min % 10));
-    memoire->setOREG(7, ((times.tm_sec / 10) << 4) | (times.tm_sec % 10));
+    registers->setOREG(1, (year[0] << 4) | year[1]);
+    registers->setOREG(2, (year[2] << 4) | year[3]);
+    registers->setOREG(3, (times.tm_wday << 4) | (times.tm_mon + 1));
+    registers->setOREG(4, ((times.tm_mday / 10) << 4) | (times.tm_mday % 10));
+    registers->setOREG(5, ((times.tm_hour / 10) << 4) | (times.tm_hour % 10));
+    registers->setOREG(6, ((times.tm_min / 10) << 4) | (times.tm_min % 10));
+    registers->setOREG(7, ((times.tm_sec / 10) << 4) | (times.tm_sec % 10));
 
-    // Ecrire le code cartouche dans OREG8, bit 0 et 1
+    // write cartidge data in OREG8
+    registers->setOREG(8, 0); // FIXME : random value
     
-    memoire->setOREG(8, 0); // FIXME : du vrai hasard :)
+    // write zone data in OREG9 bits 0-7
+    // 1 -> japan
+    // 2 -> asia/ntsc
+    // 4 -> north america
+    // 5 -> central/south america/ntsc
+    // 6 -> corea
+    // A -> asia/pal
+    // C -> europe + others/pal
+    // D -> central/south america/pal
+    registers->setOREG(9, 0);
     
-    // Ecrire le code de zone dans OREG9, bit 0-7
-    // 1 -> japon
-    // 2 -> asie ntsc
-    // 4 -> amérique du nord
-    // 5 -> amérique du sud/centrale ntsc
-    // 6 -> corée
-    // A -> asie pal
-    // C -> europe + divers pal
-    // D -> amérique du sud/centrale pal
-    
-    //memoire->setOREG(9, 0xC);
-    memoire->setOREG(9, 0);
-    
-    // Etat du système, première partie dans OREG10, bit 0-7
-    // bit | valeur | commentaires
+    // system state, first part in OREG10, bits 0-7
+    // bit | value  | comment
     // ---------------------------
     // 7   | 0      |
     // 6   | DOTSEL |
@@ -249,39 +242,27 @@ void Smpc::INTBACKStatus(void) {
     // 2   | 1      |
     // 1   | SYSRES | 
     // 0   | SNDRES |
-    
-    // FIXME
-    memoire->setOREG(10, 0x34|(dotsel<<6)|(mshnmi<<3)|(sysres<<1)|sndres);
+    registers->setOREG(10, 0x34|(dotsel<<6)|(mshnmi<<3)|(sysres<<1)|sndres);
     
     // Etat du système, deuxième partie dans OREG11, bit 6
+    // system state, second part in OREG11, bit 6
     // bit 6 -> CDRES
+    registers->setOREG(11, cdres << 6); // FIXME
     
-    memoire->setOREG(11, cdres << 6); // FIXME
+    // backups in OREG12-15
+    for(int i = 0;i < 4;i++) registers->setOREG(12, 0);
     
-    // Les sauvegardes vont dans OREG12-15
-
-    for(int i = 0;i < 4;i++) memoire->setOREG(12, 0);
-    
-    // Ecrire les données dans OREG31
-
-    //t.wait(3000); //ne pas se fier a cette valeur !!!
-    memoire->setOREG(31, 0);
-    
-  /*}
-  else {
-    // ne pas renvoyer les données d'heure, code cartouche, code de zone, ...
-  }*/
-  //Scu::sendSystemManager();
+    registers->setOREG(31, 0);
 }
 
 void Smpc::RESENAB(void) {
   resd = false;
-  memoire->setOREG(31, 0x19);
+  registers->setOREG(31, 0x19);
 }
 
 void Smpc::RESDISA(void) {
   resd = true;
-  memoire->setOREG(31, 0x1A);
+  registers->setOREG(31, 0x1A);
 }
 
 void Smpc::CDON(void) {
@@ -295,9 +276,9 @@ void Smpc::INTBACKPeripheral(void) {
   //cerr << "INTBACK peripheral\n";
 #endif
   if (firstPeri)
-    memoire->setSR(0xC0 | (memoire->getIREG(1) >> 4));
+    registers->setSR(0xC0 | (registers->getIREG(1) >> 4));
   else
-    memoire->setSR(0x80 | (memoire->getIREG(1) >> 4));
+    registers->setSR(0x80 | (registers->getIREG(1) >> 4));
 
   Timer t;
   t.wait(20);
@@ -311,14 +292,13 @@ void Smpc::INTBACKPeripheral(void) {
   0x2E - Mega Drive 6-Button Pad
   0x3E - Saturn Mouse */
   
-  memoire->setOREG(0, 0xF1);  //PeripheralID
-  memoire->setOREG(1, 0x02);
-  memoire->setOREG(2, buttonbits >> 8);   //First Data
-  memoire->setOREG(3, buttonbits & 0xFF);  //Second Data
-  memoire->setOREG(4, 0xF1);
-  memoire->setOREG(5, 0x02);
-  memoire->setOREG(6, 0xFF);
-  memoire->setOREG(7, 0xFF);
-  for(int i = 8;i < 32;i++) memoire->setOREG(i, 0);
-  //t.wait(20); //ne pas se fier a cette valeur !!!
+  registers->setOREG(0, 0xF1);  //PeripheralID
+  registers->setOREG(1, 0x02);
+  registers->setOREG(2, buttonbits >> 8);   //First Data
+  registers->setOREG(3, buttonbits & 0xFF);  //Second Data
+  registers->setOREG(4, 0xF1);
+  registers->setOREG(5, 0x02);
+  registers->setOREG(6, 0xFF);
+  registers->setOREG(7, 0xFF);
+  for(int i = 8;i < 32;i++) registers->setOREG(i, 0);
 }

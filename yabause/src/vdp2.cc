@@ -1049,7 +1049,7 @@ void Vdp2::executer(void) {
     screens[4]->draw();
     if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
   }
-  vdp1->executer(0);
+  vdp1->execute(0);
   //colorOffset();
   SDL_Flip(surface);
   scu->sendVBlankOUT();
