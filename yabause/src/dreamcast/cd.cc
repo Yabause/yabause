@@ -20,26 +20,12 @@
 */
 
 #include <dc/cdrom.h>
+#include <stdio.h>
 #include <string.h>
 
-/* Not sure if this part has to be in C mode, but just to be safe... */
 extern "C"	{
-/* This bit was copied out of KOS's cdrom.c file */
-/* GD-Rom BIOS calls... named mostly after Marcus' code. None have more
-   than two parameters; R7 (fourth parameter) needs to describe
-   which syscall we want. */
-
-#define MAKE_SYSCALL(rs, p1, p2, idx) \
-	uint32 *syscall_bc = (uint32*)0x8c0000bc; \
-	int (*syscall)() = (int (*)())(*syscall_bc); \
-	rs syscall((p1), (p2), 0, (idx));
-
-/* Check drive status and get disc type */
-static int gdc_get_drv_stat(void *param) { MAKE_SYSCALL(return, param, 0, 4); }
-
-/* Set disc access mode */
-static int gdc_change_data_type(void *param) { MAKE_SYSCALL(return, param, 0, 10); }
-/* End copied KOS code */
+	int __yaba_gdc_get_drv_stat(void *param);
+	int __yaba_gdc_change_data_type(void *param);
 }
 
 int CDInit(char *cdrom_name)	{
@@ -69,13 +55,16 @@ bool CDIsCDPresent()	{
 
 long CDReadToc(unsigned long *TOC)	{
 	CDROM_TOC dctoc;
+	uint32 i;
+	
 	memset(TOC, 0xFF, 0xCC * 2);
 	cdrom_read_toc(&dctoc, 0);
 	
-	printf("cd:\t TOC info: First Track = %d, Last Track = %d\n", dctoc.first, dctoc.last);
+	printf("cd:\t TOC info: First Track = %d, Last Track = %d\n", dctoc.entry[0], dctoc.last);
 	
-	for(i = 0; i < dctoc.last; i++)	{
+	for(i = 0; i < 99; i++)	{
 		TOC[i] = dctoc.entry[i] + 150;
+		printf("TOC[i] = %d\n", TOC[i]);
 	}
 	
 	/* This *should* be right, but I'm not quite sure... */
@@ -87,6 +76,7 @@ long CDReadToc(unsigned long *TOC)	{
 }
 
 unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)	{
+#if 0
 	/* WARNING! Its probably not technically safe to do this without locking the cdrom mutex and all first, but
 	   I have no access to said mutex, so, we'll just see what happens ;) */
 	/* Borrowed from KOS again :) (Isn't low level access fun!) */
@@ -94,16 +84,18 @@ unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)	
 	int cdxa;
 	int rv;
 	
-	gdc_get_drv_stat(params);
+	__yaba_gdc_get_drv_stat(params);
 	cdxa = params[1] == 32;
 	params[0] = 0;				/* 0 = set, 1 = get */
 	params[1] = 8192;			/* ? */
 	params[2] = cdxa ? 2048 : 1024;		/* CD-XA mode 1/2 */
 	params[3] = size;			/* sector size */
-	if (gdc_change_data_type(params) < 0) { return 0; }
+	if (__yaba_gdc_change_data_type(params) < 0) { return 0; }
 	/* This ends the code borrowed from KOS */
 		
 	cdrom_read_sectors(buffer, lba, 1);
+#endif
+	cdrom_read_sectors(buffer, lba - 150, 1);
 	
 	return size;	
 }

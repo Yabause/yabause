@@ -22,22 +22,51 @@
 
 #include "memory.hh"
 #include "cpu.hh"
+#include "tree.h"
 #ifdef WORDS_BIGENDIAN
 #include <OpenGL/gl.h>
 #else
+#ifdef __WIN32
+#include <windows.h>
+#endif
 #include <GL/gl.h>
 #endif
+
+#include <vector>
 
 class Scu;
 class Vdp2;
 class Vdp2ColorRam;
+
+typedef struct {
+	int vdp1_loc;
+	bool dirty;
+	GLuint txr;
+} vdp1Sprite;
+
+class Vdp1VRAM : public Memory	{
+	private:
+		/*tree_t sprTree;
+		tree_node_t *__treeSearchFunc(unsigned long l, tree_node_t *p);*/
+		vector<vdp1Sprite> sprites;		
+		
+	public:
+		Vdp1VRAM(unsigned long m, unsigned long size);
+		~Vdp1VRAM();
+		
+		void setByte(unsigned long l, unsigned char d);
+		void setWord(unsigned long l, unsigned short d);
+		void setLong(unsigned long l, unsigned long d);
+		vdp1Sprite getSprite(unsigned long l);
+		void addSprite(vdp1Sprite &sp);
+};
 
 class Vdp1 : public Cpu, public Memory {
 private:
   SDL_Surface *surface;
   GLuint texture[1];
   SaturnMemory *satmem;
-  Memory *vram;
+  Vdp1VRAM *vram;
   Vdp2 *vdp2regs;
   Vdp2ColorRam *cram;
 

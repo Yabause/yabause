@@ -24,12 +24,13 @@
 #include "scu.hh"
 #include "timer.hh"
 #include "vdp2.hh"
+#include "tree.h"
 
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
 	_stop = false;
 	setWord(0x4, 0);
-	vram = new Memory(0xFFFFF, 0xC0000);
+	vram = new Vdp1VRAM(0xFFFFF, 0xC0000);
 }
 
 void Vdp1::stop(void) {
@@ -85,7 +86,9 @@ void Vdp1::execute(unsigned long addr) {
 	  drawEnd(addr);
 	  break;
 	default:
+#ifdef DEBUG
 	  cerr << "vdp1\t: Bad command: " << hex << setw(10) << command << endl;
+#endif
 	  break;
       }
     }
@@ -99,12 +102,16 @@ void Vdp1::execute(unsigned long addr) {
       addr = vram->getWord(addr + 2) * 8;
       break;
     case 2: // CALL, call a subroutine
+#ifdef DEBUG
       cerr << "CALL" << endl;
+#endif
       returnAddr = addr;
       addr = vram->getWord(addr + 2) * 8;
       break;
     case 3: // RETURN, return from subroutine
+#ifdef DEBUG
       cerr << "RETURN" << endl;
+#endif
       addr = returnAddr;
     }
 #ifndef _arch_dreamcast
@@ -160,21 +167,34 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	unsigned short ww = power_of_two(w);
 	unsigned short hh = power_of_two(h);
 
-	unsigned long textdata[hh][ww];
+#ifndef _arch_dreamcast
+	unsigned long textdata[hh * ww];
+#else
+	unsigned char *_textdata = (unsigned char *)memalign(32, (ww * hh) << 1);
+	unsigned short *textdata = (unsigned short *)_textdata;
+#endif
 
 	unsigned short tx = 0;
 	unsigned short ty = 0;
 	unsigned short TX;
 	short txinc = 1;
 	short tyinc = 1;
+	GLfloat u1 = 0.0f;
+	GLfloat u2 = (GLfloat)w / ww;
+	GLfloat v1 = 0.0f;
+	GLfloat v2 = (GLfloat)h / hh;
 	unsigned char dir = (vram->getWord(addr) & 0x30) >> 4;
 	if (dir & 0x1) {
-		tx = w - 1;
-		txinc = -1;
+		//tx = w - 1;
+		//txinc = -1;
+		u1 = (GLfloat)w / ww;
+		u2 = 0.0f;
 	}
 	if (dir & 0x2) {
-		ty = h - 1;
-		tyinc = -1;
+		//ty = h - 1;
+		//tyinc = -1;
+		v1 = (GLfloat)h / hh;
+		v2 = 0.0f;
 	}
 
 	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
@@ -183,9 +203,18 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
 	unsigned short colorBank = vram->getWord(addr + 0x6);
+	vdp1Sprite sp = vram->getSprite(charAddr);
+	unsigned long ca1 = charAddr;
+	
+	if(sp.vdp1_loc == 0)	{
+#ifdef DEBUG
+	cerr << "Making new sprite " << hex << charAddr << endl;
+#endif
 	switch(colorMode) {
 	case 0:
-		cerr << "color mode 0 not implemented" << endl; break;
+#ifdef DEBUG
+		cerr << "color mode 0 not implemented" << endl;
+#endif
 		break;
 	case 1:
 		colorBank *= 8;
@@ -196,14 +225,22 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
 				temp = vram->getWord((dot >> 4) * 2 + colorBank);
+#ifndef _arch_dreamcast
 				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-				if (((dot >> 4) == 0) && !SPD) textdata[ty][tx] = 0;
-				else textdata[ty][tx] = color;
+#else
+				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
+#endif
+				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
+				else textdata[ty * ww + tx] = color;
 				tx += txinc;
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+#ifndef _arch_dreamcast
 				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-				if (((dot & 0xF) == 0) && !SPD) textdata[ty][tx] = 0;
-				else textdata[ty][tx] = color;
+#else
+				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
+#endif
+				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
+				else textdata[ty * ww + tx] = color;
 				tx += txinc;
 				charAddr += 1;
 			}
@@ -211,11 +248,20 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 		}
 		break;
 	case 2:
-		cerr << "color mode 2 not implemented" << endl; break;
+#ifdef DEBUG
+		cerr << "color mode 2 not implemented" << endl;
+#endif
+		break;
 	case 3:
-		cerr << "color mode 3 not implemented" << endl; break;
+#ifdef DEBUG
+		cerr << "color mode 3 not implemented" << endl;
+#endif
+		break;
 	case 4:
-		cerr << "color mode 4 not implemented" << endl; break;
+#ifdef DEBUG
+		cerr << "color mode 4 not implemented" << endl;
+#endif
+		break;
 	case 5:
 		TX = tx;
 		for(unsigned short i = 0;i < h;i++) {
@@ -223,34 +269,53 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j++) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
+#ifndef _arch_dreamcast
 				color = 0xFF000000 | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
-				if ((dot == 0) && !SPD) textdata[ty][tx] = 0;
-				else textdata[ty][tx] = color;
+#else
+				color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
+#endif
+				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
+				else textdata[ty * ww + tx] = color;
 				tx += txinc;
 			}
 			ty += tyinc;
 		}
 	}
-
-	if (*texture == 0) glGenTextures(1, &texture[0] );
-	glBindTexture(GL_TEXTURE_2D, texture[0] );
+	
+	if (sp.txr == 0) glGenTextures(1, &sp.txr);
+	glBindTexture(GL_TEXTURE_2D, sp.txr);
+	
+#ifndef _arch_dreamcast
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
-
+	
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+#else
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB1555, ww, hh, 0, GL_ARGB1555, GL_UNSIGNED_BYTE, textdata);
+#endif
+	
+	sp.vdp1_loc = ca1;
+	vram->addSprite(sp);
+
+#ifdef DEBUG
+	cerr << "Created new sprite at " << hex << ca1 << endl;
+	cerr << "tex = " << dec << sp.txr << endl;
+#endif
+	}		
 
 	glEnable( GL_TEXTURE_2D );
-	glBindTexture( GL_TEXTURE_2D, texture[0] );
+	glBindTexture(GL_TEXTURE_2D, sp.txr);
 	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0); glVertex2f((float) x/160 - 1, 1 - (float) y/112);
-	glTexCoord2f((float) w / ww, 0); glVertex2f((float) (x + w)/160 - 1, 1 - (float) y/112);
-	glTexCoord2f((float) w / ww, (float) h / hh); glVertex2f((float) (x + w)/160 - 1, 1 - (float) (y + h)/112);
-	glTexCoord2f(0, (float) h /  hh); glVertex2f((float) x/160 - 1, 1 - (float) (y + h)/112);
+	glTexCoord2f(u1, v1); glVertex2f((float) x/160 - 1, 1 - (float) y/112);
+	glTexCoord2f(u2, v1); glVertex2f((float) (x + w)/160 - 1, 1 - (float) y/112);
+	glTexCoord2f(u2, v2); glVertex2f((float) (x + w)/160 - 1, 1 - (float) (y + h)/112);
+	glTexCoord2f(u1, v2); glVertex2f((float) x/160 - 1, 1 - (float) (y + h)/112);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
 }
 
 void Vdp1::scaledSpriteDraw(unsigned long addr) {
+#ifndef _arch_dreamcast
 	unsigned short xy = vram->getWord(addr + 0xA);
 
 	unsigned short x = localX + vram->getWord(addr + 0xC);
@@ -307,7 +372,9 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	unsigned short colorBank = vram->getWord(addr + 0x6);
 	switch(colorMode) {
 	case 0:
-		cerr << "color mode 0 not implemented" << endl; break;
+#ifdef DEBUG
+		cerr << "color mode 0 not implemented" << endl;
+#endif
 		break;
 	case 1:
 		colorBank *= 8;
@@ -333,11 +400,20 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 		}
 		break;
 	case 2:
-		cerr << "color mode 2 not implemented" << endl; break;
+#ifdef DEBUG
+		cerr << "color mode 2 not implemented" << endl;
+#endif
+		break;
 	case 3:
-		cerr << "color mode 3 not implemented" << endl; break;
+#ifdef DEBUG
+		cerr << "color mode 3 not implemented" << endl;
+#endif
+		break;
 	case 4:
-		cerr << "color mode 4 not implemented" << endl; break;
+#ifdef DEBUG
+		cerr << "color mode 4 not implemented" << endl;
+#endif
+		break;
 	case 5:
 		TX = tx;
 		for(unsigned short i = 0;i < h;i++) {
@@ -356,10 +432,14 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 
 	if (*texture == 0) glGenTextures(1, &texture[0] );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
+#ifndef _arch_dreamcast
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
-
+	
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+#else
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, ww, hh, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, textdata);
+#endif
 
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, texture[0] );
@@ -370,6 +450,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	glTexCoord2f(0, (float) h /  hh); glVertex2f((float) x/160 - 1, 1 - (float) (y + rh)/112);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
+#endif
 }
 
 void Vdp1::distortedSpriteDraw(unsigned long addr) {
@@ -492,4 +573,121 @@ void Vdp1::drawEnd(unsigned long addr) {
   cerr << "vdp1\t: graaaaaaaaaaaaaa draw end" << endl;
 #endif
   //Scu::sendDrawEnd();
+}
+
+Vdp1VRAM::Vdp1VRAM(unsigned long m, unsigned long size) : Memory(m, size)	{
+	//sprTree = create_tree(spr_cmp_func);
+}
+
+Vdp1VRAM::~Vdp1VRAM()	{
+	/*while(get_lowest_data(&sprTree))	{
+		remove_lowest_node(&sprTree);
+	}*/
+}
+
+/*tree_node_t *Vdp1VRAM::__treeSearchFunc(unsigned long l, tree_node_t *p)	{
+	if(p == NULL)	{
+		return NULL;
+	}
+	
+	if(l > ((vdp1Sprite *)p->data)->vdp1_loc)	{
+		return __treeSearchFunc(l, p->right);
+	}
+	else if(l < ((vdp1Sprite *)p->data)->vdp1_loc)	{
+		return __treeSearchFunc(l, p->left);
+	}
+	else	{
+		return p;
+	}
+}*/
+
+void Vdp1VRAM::setByte(unsigned long l, unsigned char d)	{
+	//tree_node_t * tn;
+	//tn = __treeSearchFunc(l, sprTree.root);
+	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
+		if(i->vdp1_loc == l)	{
+#ifdef DEBUG
+			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
+#endif
+			glDeleteTextures(1, &i->txr);
+			sprites.erase(i);
+			break;
+		}
+	}
+	
+	/*
+	if(tn != NULL)	{
+		((vdp1Sprite *)tn->data)->dirty = true;
+	}*/
+	
+	Memory::setByte(l, d);
+}
+
+void Vdp1VRAM::setWord(unsigned long l, unsigned short d)	{
+	//tree_node_t * tn;
+	//tn = __treeSearchFunc(l, sprTree.root);
+	
+	//if(tn != NULL)	{
+	//	((vdp1Sprite *)tn->data)->dirty = true;
+	//}
+	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
+		if(i->vdp1_loc == l)	{
+#ifdef DEBUG
+			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
+#endif
+			glDeleteTextures(1, &i->txr);
+			sprites.erase(i);
+			break;
+		}
+	}
+	
+	Memory::setWord(l, d);
+}
+
+
+void Vdp1VRAM::setLong(unsigned long l, unsigned long d)	{
+	//tree_node_t * tn;
+	//tn = __treeSearchFunc(l, sprTree.root);
+	
+	//if(tn != NULL)	{
+	//	((vdp1Sprite *)tn->data)->dirty = true;
+	//}
+	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
+		if(i->vdp1_loc == l)	{
+#ifdef DEBUG
+			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
+#endif
+			glDeleteTextures(1, &i->txr);
+			sprites.erase(i);
+			break;
+		}
+	}
+	
+	Memory::setLong(l, d);
+}
+
+vdp1Sprite Vdp1VRAM::getSprite(unsigned long l)	{
+	vdp1Sprite blank = { 0, 0, 0 };
+	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
+		if(i->vdp1_loc == l)	{
+#ifdef DEBUG
+			cerr << "Vdp1VRAM: getSprite: Found sprite at " << hex << l << endl;
+			cerr << "tex = " << dec << l << endl;
+#endif
+			return *i;
+			break;
+		}
+	}
+#ifdef DEBUG
+	cerr << "Vdp1VRAM: getSprite: Didn't find sprite at " << hex << l << endl;
+#endif
+	return blank;
+}
+
+void Vdp1VRAM::addSprite(vdp1Sprite &spr)	{
+#ifdef DEBUG
+	cerr << "Vdp1VRAM: addSprite: " << hex << spr.vdp1_loc << endl;
+#endif
+	//add_to_tree(&sprTree, spr);
+	sprites.push_back(spr);
 }

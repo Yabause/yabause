@@ -28,7 +28,8 @@
 #include "superh.hh"
 #include "timer.hh"
 
-Memory::Memory(unsigned long size) {
+Memory::Memory(unsigned long m, unsigned long size) {
+  mask = m;
   this->size = size;
   if (size == 0) return;
   memory = new unsigned char[size];
@@ -106,7 +107,7 @@ void Memory::load(const char *filename, unsigned long adr) {
   fs_close(file);
 }
 
-LoggedMemory::LoggedMemory(const char *n, Memory *mem, bool d) : Memory(0) {
+LoggedMemory::LoggedMemory(const char *n, Memory *mem, bool d) : Memory(0, 0) {
   strcpy(nom, n);
   this->mem = mem;
   destroy = d;
@@ -179,39 +180,32 @@ void LoggedMemory::setLong(unsigned long adr, unsigned long val) {
 /*********************/
 
 
-SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0) {
+SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0, 0) {
   msh = new SuperH();
 
   Timer::initSuperH(msh);
 
-  rom         = new Memory(0x80000);
-  onchip      = new OnchipRegisters(msh);
-
-  Intc * intc = ((OnchipRegisters *) onchip)->getIntc();
-  
-  ram         = new Memory(0x10000);
-  ramLow      = new Memory(0x100000);
-  cs0	      = new LoggedMemory("cs0", new Dummy(), 1);
-  cs1         = new LoggedMemory("cs1", new Cs1(), 1);
+  rom         = new Memory(0xFFFFF, 0x80000);
+  onchip      = new Onchip(this);
+  ram         = new Memory(0xFFFF, 0x10000);
+  ramLow      = new Memory(0xFFFFF, 0x100000);
+  cs0	      = new Dummy(0xFFFFFF);
+  cs1         = new Cs1();
   cs2         = new Cs2();
   sound       = new ScspRam(); //Memory(0x7FFFF);
-  soundr      = new LoggedMemory("soundr", new Memory(0xEE4), 1);
-  scu         = new ScuRegisters(intc);
-
-  Scu * scup = ((ScuRegisters *) scu)->getScu();
-  
-  vdp1_1      = new Memory(0xC0000);
-  vdp1_2      = new Vdp1Registers(vdp1_1, scup);
-  vdp2_1      = new Vdp2Ram();
-  vdp2_2      = new Vdp2ColorRam();
-  vdp2_3      = new LoggedMemory("vdp2", new Vdp2Registers((Vdp2Ram *) vdp2_1,
-			  	    (Vdp2ColorRam *) vdp2_2, scup,
-				    ((Vdp1Registers *)vdp1_2)->getVdp1()), 1);
-  smpc        = new SmpcRegisters(scup, this);
-  ramHigh     = new Memory(0x100000);
-  purgeArea   = new Dummy();
-  adressArray = new Memory(0x3FF);
-  modeSdram   = new Memory(0x4FFF);
+  soundr      = new Memory(0xFFF, 0xEE4);
+  scu         = new Scu(this);
+  vdp1_2      = new Vdp1(this);
+  vdp1_1      = ((Vdp1*) vdp1_2)->getVRam();
+  vdp2_3      = new Vdp2(this);
+  vdp2_1      = ((Vdp2 *) vdp2_3)->getVRam();
+  vdp2_2      = ((Vdp2 *) vdp2_3)->getCRam();
+  smpc        = new Smpc(this);
+  ramHigh     = new Memory(0xFFFFF, 0x100000);
+  purgeArea   = new Dummy(0xFFFFFFFF);
+  adressArray = new Memory(0xFFF, 0x3FF);
+  modeSdram   = new Memory(0xFFF, 0x4FFF);
+	initMemoryMap();
 
   if (bios != NULL) rom->load(bios, 0);
   if (exe != NULL) {
@@ -222,7 +216,22 @@ SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0) {
 
   msh->setMemory(this);
 
-  mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+  //mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+  //vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, vdp2_3);
+  //Vdp2::lancer((Vdp2 *) vdp2_3);
+}
+
+void SaturnMemory::start(void) {
+	mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+	//Vdp2::lancer((Vdp2 *) vdp2_3);
+	/*
+	Vdp2 * vdp2 = (Vdp2 *) vdp2_3;
+	while(!_stop) vdp2->executer();
+	*/
+}
+
+void SaturnMemory::stop(void) {
+	_stop = true;
 }
 
 SaturnMemory::~SaturnMemory(void) {
@@ -244,11 +253,15 @@ SaturnMemory::~SaturnMemory(void) {
   delete cs2;
   delete sound;
   delete soundr;
+  ((Vdp2 *) vdp2_3)->stop();
+  SDL_WaitThread(vdp2Thread, NULL);
   delete vdp2_3;
+/*
   delete vdp2_1;
   delete vdp2_2;
+*/
   delete vdp1_2;
-  delete vdp1_1;
+  //delete vdp1_1;
   delete scu;
   delete ramHigh;
   delete purgeArea;
@@ -257,6 +270,143 @@ SaturnMemory::~SaturnMemory(void) {
   delete onchip;
 
   delete msh;
+}
+
+unsigned char SaturnMemory::getByte(unsigned long adr) {
+  mappage2(adr);
+  return mapMem->getByte(mapAdr);
+}
+
+void SaturnMemory::setByte(unsigned long adr, unsigned char valeur) {
+  mappage2(adr);
+  mapMem->setByte(mapAdr, valeur);
+}
+
+unsigned short SaturnMemory::getWord(unsigned long addr) {
+  mappage2(addr);
+  return mapMem->getWord(mapAdr);
+}
+
+void SaturnMemory::setWord(unsigned long adr, unsigned short valeur) {
+  mappage2(adr);
+  mapMem->setWord(mapAdr, valeur);
+}
+
+unsigned long SaturnMemory::getLong(unsigned long adr) {
+  mappage2(adr);
+  return mapMem->getLong(mapAdr);
+}
+
+void SaturnMemory::setLong(unsigned long adr, unsigned long valeur) {
+  mappage2(adr);
+  mapMem->setLong(mapAdr, valeur);
+}
+
+void SaturnMemory::loadBios(const char *fichier) {
+  rom->load(fichier, 0);
+}
+
+void SaturnMemory::load(const char *fichier, unsigned long adr) {
+  mappage2(adr);
+  mapMem->load(fichier, mapAdr);
+}
+
+SuperH *SaturnMemory::getMasterSH(void) {
+	return msh;
+}
+
+Memory *SaturnMemory::getOnchip(void) {
+	return onchip;
+}
+
+Memory *SaturnMemory::getVdp1Ram(void) {
+	return vdp1_1;
+}
+
+Memory *SaturnMemory::getVdp1(void) {
+	return vdp1_2;
+}
+
+Memory *SaturnMemory::getScu(void) {
+	return scu;
+}
+
+Memory *SaturnMemory::getVdp2(void) {
+	return vdp2_3;
+}
+
+void SaturnMemory::initMemoryHandler(int begin, int end, Memory * m) {
+	for(int i = begin;i < end;i++)
+		memoryMap[i] = m;
+}
+
+void SaturnMemory::initMemoryMap() {
+	/*
+	for(int i = 0;i < 0x800;i++)
+		memory_map[i] = &unhandled;
+		*/
+	initMemoryHandler(    0,   0x8, rom);
+	initMemoryHandler( 0x10,  0x11, smpc);
+	initMemoryHandler( 0x18,  0x19, ram);
+	initMemoryHandler( 0x20,  0x30, ramLow);
+	/*
+	initMemoryHandler(0x100, 0x101, minit);
+	initMemoryHandler(0x180, 0x181, sinit);
+	*/
+	initMemoryHandler(0x200, 0x400, cs0);
+	initMemoryHandler(0x400, 0x500, cs1);
+	initMemoryHandler(0x580, 0x590, cs2);
+	initMemoryHandler(0x5A0, 0x5A8, sound);
+	initMemoryHandler(0x5B0, 0x5B1, soundr);
+	initMemoryHandler(0x5C0, 0x5CC, vdp1_1);
+	initMemoryHandler(0x5D0, 0x5D1, vdp1_2);
+	initMemoryHandler(0x5E0, 0x5E8, vdp2_1);
+	initMemoryHandler(0x5F0, 0x5F1, vdp2_2);
+	initMemoryHandler(0x5F8, 0x5F9, vdp2_3);
+	initMemoryHandler(0x5FE, 0x5FF, scu);
+	initMemoryHandler(0x600, 0x610, ramHigh);
+}
+
+void SaturnMemory::mappage2(unsigned long adr) {
+  switch (adr >> 29) {
+  case 0:
+  case 1: {
+    unsigned long nadr = adr & 0x1FFFFFFF;
+    mapMem = memoryMap[nadr >> 16]; mapAdr = adr & mapMem->mask; // FIXME
+    //if ((mapMem->mask & mapAdr2) != mapAdr) cerr << hex << "mapAdr2=" << mapAdr2 << " mapAdr=" << mapAdr << endl;
+    return;
+    }
+#ifndef _arch_dreamcast
+    throw BadMemoryAccess(adr);
+#else
+    printf("Bad memory access: %8x", adr);
+#endif
+  case 2:
+    mapMem = purgeArea; mapAdr = adr & mapMem->mask; return; // FIXME
+  case 3: {
+    unsigned long nadr = adr & 0x1FFFFFFF;
+    if (nadr < 0x3FF) { mapMem = adressArray; mapAdr = nadr & mapMem->mask; return;} // FIXME
+#ifndef _arch_dreamcast
+    throw BadMemoryAccess(adr);
+#else
+    printf("Bad memory access: %8x", adr);
+#endif
+  }
+  case 7:
+    if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = modeSdram; mapAdr = adr & 0x00000FFF; return;}
+    if (adr >= 0xFFFFFE00) { mapMem = onchip; mapAdr = adr & 0x000001FF; return;}
+#ifndef _arch_dreamcast
+    throw BadMemoryAccess(adr);
+#else
+    printf("Bad memory access: %8x", adr);
+#endif
+  default:
+#ifndef _arch_dreamcast
+    throw BadMemoryAccess(adr);
+#else
+    printf("Bad memory access: %8x", adr);
+#endif
+  }
 }
 
 void SaturnMemory::mappage(unsigned long adr) {
@@ -296,47 +446,4 @@ void SaturnMemory::mappage(unsigned long adr) {
   default:
     printf("Bad memory access: %8x", adr);
   }
-}
-
-unsigned char SaturnMemory::getByte(unsigned long adr) {
-  mappage(adr);
-  return mapMem->getByte(mapAdr);
-}
-
-void SaturnMemory::setByte(unsigned long adr, unsigned char valeur) {
-  mappage(adr);
-  mapMem->setByte(mapAdr, valeur);
-}
-
-unsigned short SaturnMemory::getWord(unsigned long adr) {
-  mappage(adr);
-  return mapMem->getWord(mapAdr);
-}
-
-void SaturnMemory::setWord(unsigned long adr, unsigned short valeur) {
-  mappage(adr);
-  mapMem->setWord(mapAdr, valeur);
-}
-
-unsigned long SaturnMemory::getLong(unsigned long adr) {
-  mappage(adr);
-  return mapMem->getLong(mapAdr);
-}
-
-void SaturnMemory::setLong(unsigned long adr, unsigned long valeur) {
-  mappage(adr);
-  mapMem->setLong(mapAdr, valeur);
-}
-
-void SaturnMemory::loadBios(const char *fichier) {
-  rom->load(fichier, 0);
-}
-
-void SaturnMemory::load(const char *fichier, unsigned long adr) {
-  mappage(adr);
-  mapMem->load(fichier, mapAdr);
-}
-
-SuperH *SaturnMemory::getMasterSH(void) {
-  return msh;
 }

@@ -955,13 +955,20 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
 	GLSurface = SDL_SetVideoMode(320,224,32, SDL_OPENGL);
+#endif
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glGenTextures(1, texture );
-#endif
+	
   //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
+#ifndef _arch_dreamcast
   surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+#else
+  surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 16, 0x000f, 0x00f0, 0x0f00, 0xf000);
+  free(surface->pixels);
+  surface->pixels = memalign(32, 256 * 512 * 2);
+#endif
   //vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, this);
   	screens[4] = new RBG0(this, vram, cram, surface);
   	screens[3] = new NBG0(this, vram, cram, surface);
@@ -1054,13 +1061,21 @@ void Vdp2::executer(void) {
     screens[4]->draw();
     if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
   }
+  
+#ifdef _arch_dreamcast
+  glKosBeginFrame();
+#endif
 
   if (*texture ==0) glGenTextures(1, texture );
   glBindTexture(GL_TEXTURE_2D, texture[0] );
+#ifndef _arch_dreamcast
   glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
-
+  
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+#else
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface->pixels);
+#endif
 
   glEnable( GL_TEXTURE_2D );
   glBindTexture( GL_TEXTURE_2D, texture[0] );
@@ -1074,7 +1089,11 @@ void Vdp2::executer(void) {
 
   ((Vdp1 *) satmem->getVdp1())->execute(0);
   glFlush();
+#ifndef _arch_dreamcast
   SDL_GL_SwapBuffers();
+#else
+  glKosFinishFrame();
+#endif
   //colorOffset();
   //SDL_Flip(surface);
   ((Scu *) satmem->getScu())->sendVBlankOUT();

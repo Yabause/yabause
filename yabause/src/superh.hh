@@ -35,7 +35,7 @@ public:
 };
 
 class SuperH : public Cpu {
-private:
+protected:
   unsigned long R[16];
 
 #ifdef WORDS_BIGENDIAN

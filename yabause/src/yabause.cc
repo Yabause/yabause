@@ -224,6 +224,21 @@ void handleEvents(SaturnMemory *mem) {
     }
 }
 
+#ifdef _arch_dreamcast
+static pvr_init_params_t params = {
+        /* Enable opaque and translucent polygons with size 16 */
+        { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0 },
+
+        /* Vertex buffer size 512K */
+        512*1024,
+        
+        /* DMA Enabled */
+        1
+};
+
+uint8 dmabuffers[2][1024*1024] __attribute__((aligned(32)));
+#endif
+
 int main(int argc, char **argv) {
 #if DEBUG
   cerr << hex;
@@ -240,6 +255,7 @@ int main(int argc, char **argv) {
 
   SDL_Init(SDL_INIT_EVENTTHREAD);
 
+#ifndef _arch_dreamcast
   if (args_info.cdrom_given)
   {
      if (CDInit(args_info.cdrom_arg) != 0)
@@ -248,10 +264,20 @@ int main(int argc, char **argv) {
         return 1;
      }
   }
+#else
+  CDInit("blah");
+#endif
 
 #ifndef _arch_dreamcast
   SaturnMemory *mem = new SaturnMemory(args_info.bios_arg, args_info.bin_arg);
 #else
+  pvr_init(&params);
+  glKosInit();
+  glKosEnableDma();
+  
+  pvr_set_vertbuf(PVR_LIST_OP_POLY, dmabuffers[0], 1024*1024);
+  pvr_set_vertbuf(PVR_LIST_TR_POLY, dmabuffers[1], 1024*1024);
+  
   SaturnMemory *mem = new SaturnMemory("/cd/saturn.bin", NULL);
 #endif
 
@@ -280,7 +306,9 @@ int main(int argc, char **argv) {
 
   delete(mem);
 
+#ifndef _arch_dreamcast
   if (args_info.cdrom_given)
+#endif
      CDDeInit();
 
   SDL_Quit();

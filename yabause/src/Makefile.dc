@@ -22,14 +22,15 @@ all: yabause.bin
 
 include $(KOS_BASE)/Makefile.rules
 
-KOS_LOCAL_CFLAGS=-I$(KOS_BASE)/addons/include -DPACKAGE=\"yabause-dc\" -DVERSION=\"0.0.5\" -DHAVE_LIBSDL
+KOS_CFLAGS += -I.
 
-OBJS = cs1.o cs2.o exception.o intc.o memory-dc.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o sh2d.o timer.o tree.o
+OBJS = cs1.o cs2.o exception.o intc.o vdp1.o vdp2.o memory-dc.o cpu.o scu.o smpc.o superh.o monitor.o yabause.o sh2d.o timer.o tree.o dreamcast/cd.o \
+ dreamcast/cd_low.o
 
 yabause.elf: $(OBJS)
 	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LOCAL_CFLAGS) $(KOS_LDFLAGS) \
 	-o $@ $(KOS_START) $^ \
-	-lSDL -lSDL_gfx -lk++ -lm $(KOS_LIBS)
+	-lSDL -lgl -lk++ -lm $(KOS_LIBS)
 
 yabause.bin: yabause.elf
 	$(KOS_OBJCOPY) -O binary yabause.elf output.bin

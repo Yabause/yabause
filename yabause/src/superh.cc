@@ -150,7 +150,9 @@ void SuperH::synchroStart(void) {
 	  lineCount = 0;
           frameCount++;
 	  if(SDL_GetTicks() >= ticks + 1000) {
+#ifndef _arch_dreamcast
 	    cerr << dec << frameCount << " fps" << endl;
+#endif
 	    frameCount = 0;
 	    ticks = SDL_GetTicks();
 	  }
