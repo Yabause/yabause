@@ -245,7 +245,7 @@ void Smpc::INTBACKStatus(void) {
     setOREG(11, cdres << 6); // FIXME
     
     // backups in OREG12-15
-    for(int i = 0;i < 4;i++) setOREG(12, 0);
+    for(int i = 0;i < 4;i++) setOREG(12+i, 0);
     
     setOREG(31, 0);
 }
