@@ -103,7 +103,7 @@ unsigned short Cs2::getWord(unsigned long addr) {
     case 0x9000C:
     case 0x90018:
     case 0x9001C:
-    case 0x90020: 
+    case 0x90020:
     case 0x90024: val = Memory::getWord(addr);
 		  break;
     case 0x98000:
@@ -169,16 +169,16 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
 	          break;
     case 0x9000C:
     case 0x90018:
-    case 0x9001C:
-    case 0x90020: Memory::setWord(addr, val);
-		  break;
-    case 0x90024: Memory::setWord(addr, val);
                   if (SDL_mutexP(_lock) != 0)
                   {
 #if CDDEBUG
                      fprintf(stderr, "cs2\t: couldn't lock mutex\n");
 #endif
                   }
+    case 0x9001C:
+    case 0x90020: Memory::setWord(addr, val);
+		  break;
+    case 0x90024: Memory::setWord(addr, val);
                   _command = true;
                   execute();
                   _command = false;
@@ -2431,3 +2431,73 @@ partition_struct *Cs2::ReadFilteredSector(unsigned long rfsFAD) {
 }
 #endif
 
+unsigned char Cs2::GetRegionID() {
+   partition_struct *gripartition;
+   char ret=0;
+
+   if (SDL_mutexP(_lock) != 0)
+   {
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: couldn't lock mutex\n");
+#endif
+   }
+
+   outconcddev = filter + 0;
+
+   // read in lba 0/FAD 150
+   if ((gripartition = ReadUnFilteredSector(150)) != NULL)
+   {
+      // Make sure we're dealing with a saturn game
+      if (memcmp(gripartition->block[gripartition->numblocks - 1]->data,
+          "SEGA SEGASATURN", 15) == 0)
+      {
+         // read offset 0x40 and convert region character to number
+         switch (gripartition->block[gripartition->numblocks - 1]->data[0x40])
+         {
+            case 'J':
+                      ret = 1;
+                      break;
+            case 'T':
+                      ret = 2;
+                      break;
+            case 'U':
+                      ret = 4;
+                      break;
+            case 'B':
+                      ret = 5;
+                      break;
+            case 'K':
+                      ret = 6;
+                      break;
+            case 'A':
+                      ret = 0xA;
+                      break;
+            case 'E':
+                      ret = 0xC;
+                      break;
+            case 'L':
+                      ret = 0xD;
+                      break;
+            default: break;
+         }
+      }
+
+      // Free Block
+      gripartition->size -= gripartition->block[gripartition->numblocks - 1]->size;
+      FreeBlock(gripartition->block[gripartition->numblocks - 1]);
+
+      // Sort remaining blocks
+      SortBlocks(gripartition);
+      gripartition->numblocks -= 1;
+   }
+
+   if (SDL_mutexV(_lock) != 0)
+   {
+
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: couldn't unlock mutex\n");
+#endif
+   }
+
+   return ret;
+}

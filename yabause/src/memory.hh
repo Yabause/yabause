@@ -143,6 +143,7 @@ public:
   Uint8 *keys;
 
   Memory *getOnchip(void);
+  Memory *getCS2(void);
   Memory *getVdp1Ram(void);
   Memory *getVdp1(void);
   Memory *getScu(void);

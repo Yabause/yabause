@@ -21,6 +21,7 @@
 #include "cs2.hh"
 #include "scu.hh"
 #include "timer.hh"
+#include "yui.hh"
 #include <time.h>
 
 unsigned char Smpc::getIREG(int i) {
@@ -79,6 +80,15 @@ Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
   resd = false;
   intback = false;
   firstPeri = false;
+
+  // get region
+  regionid = yui_region();
+
+  if (regionid == 0)
+  {
+     // Time to autodetect the region using the cd block
+     regionid = ((Cs2 *)sm->getCS2())->GetRegionID();          
+  }
 
   this->sm = sm;
 
@@ -263,9 +273,8 @@ void Smpc::INTBACKStatus(void) {
     // A -> asia/pal
     // C -> europe + others/pal
     // D -> central/south america/pal
-    // this should be setup via command line option or config file option
-    setOREG(9, 1);
-    
+    setOREG(9, regionid);
+
     // system state, first part in OREG10, bits 0-7
     // bit | value  | comment
     // ---------------------------

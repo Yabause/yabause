@@ -40,6 +40,8 @@ private:
   unsigned char intbackIreg0;
   bool firstPeri;
 
+  unsigned char regionid;
+
   SaturnMemory *sm;
   SDL_Thread *smpcThread;
 public:

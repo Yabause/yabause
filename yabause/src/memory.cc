@@ -422,6 +422,10 @@ Memory *SaturnMemory::getOnchip(void) {
 	return onchip;
 }
 
+Memory *SaturnMemory::getCS2(void) {
+        return cs2;
+}
+
 Memory *SaturnMemory::getVdp1Ram(void) {
 	return vdp1_1;
 }

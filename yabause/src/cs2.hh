@@ -242,6 +242,7 @@ public:
   void SetupFileInfoTransfer(unsigned long fid);
   partition_struct *ReadUnFilteredSector(unsigned long rufsFAD);
   partition_struct *ReadFilteredSector(unsigned long rfsFAD);
+  unsigned char GetRegionID();
 };
 
 #endif

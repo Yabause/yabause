@@ -23,6 +23,9 @@ char *	yui_bios(void);
 /* returns a cd device name or NULL if no cd device is used */
 char *	yui_cdrom(void);
 
+/* returns the region of system or 0 if autodetection is used */
+unsigned char yui_region(void);
+
 /* returns a save ram filename, not currently used */
 char * yui_saveram(void);
 
