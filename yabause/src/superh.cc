@@ -2011,11 +2011,8 @@ void SuperH::xtrct(void) {
   cycleCount++;
 }
 
-/********************************* NON IMPLEMENTE **************/
 void SuperH::sleep(void) {
-#ifndef _arch_dreamcast
-	throw UnimplementedOpcode("sleep");
-#endif
+  cycleCount += 3;
 }
 
 SuperH::opcode SuperH::decode(void) {
