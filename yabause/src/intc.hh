@@ -65,6 +65,7 @@ public:
 	~Onchip(void);
 
         void setByte(unsigned long addr, unsigned char val);
+	void setWord(unsigned long, unsigned short);
 	void setLong(unsigned long, unsigned long);
 
 	/* DMAC */

@@ -19,6 +19,7 @@
 
 #include "intc.hh"
 #include "superh.hh"
+#include "timer.hh"
 
 #ifdef _arch_dreamcast
 /* No STL for the dreamcast, use my tree implementation instead of a priority queue */
@@ -139,6 +140,16 @@ void Onchip::setByte(unsigned long addr, unsigned char val) {
   default:
     Memory::setByte(addr, val);
   }
+}
+
+void Onchip::setWord(unsigned long addr, unsigned short val) {
+	switch(addr) {
+		case ICR:
+			if (val & 0x8000) {
+				SDL_CreateThread(&Timer::call<Onchip, &Onchip::sendNMI, 100>, this); // random value
+			}
+	}
+	Memory::setWord(addr, val);
 }
 
 void Onchip::setLong(unsigned long addr, unsigned long val) {

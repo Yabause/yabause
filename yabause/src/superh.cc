@@ -26,6 +26,7 @@
 #include <kos.h>
 #endif
 #include "yui.hh"
+#include "sh2d.hh"
 
 SuperH::SuperH(bool slave) {
   SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
@@ -215,7 +216,9 @@ void SuperH::_executer(void) {
   instruction = memoire->getWord(PC - 4);
 #ifdef DEBUG
   if(verbose > 0) {
-	  cerr << "instruction = " << hex << instruction << " (PC=" << PC << ")" << endl;
+	  char chaine[100];
+	  SH2Disasm(PC - 4, instruction, 0, chaine);
+	  cerr << hex << PC << ' ' << chaine << endl;
 	  verbose--;
   }
 #endif
@@ -2014,6 +2017,7 @@ void SuperH::xtrct(void) {
 }
 
 void SuperH::sleep(void) {
+  cerr << "SLEEP" << endl;
   cycleCount += 3;
 }
 

@@ -56,8 +56,8 @@ public:
 
 template<unsigned char V, unsigned char L, unsigned short M>
 void Scu::sendInterrupt(void) {
-  if (!(Memory::getWord(0xA2) & M)) {
     Memory::setLong(0xA4, M);
+  if (!(Memory::getWord(0xA2) & M)) {
     ((Onchip *) satmem->getOnchip())->send(Interrupt(L, V));
 #if 0
     cerr << "interrupt send " << (int) V << endl;

@@ -81,7 +81,7 @@ public:
   int getColorOffset(void);
   SDL_Surface *getSurface(void);
   Memory *getVRam(void);
-
+  
   void normalSpriteDraw(unsigned long);
   void scaledSpriteDraw(unsigned long);
   void distortedSpriteDraw(unsigned long);

@@ -85,7 +85,7 @@ install_sh = @install_sh@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
 bin_PROGRAMS = yabause
-yabause_SOURCES = cs1.cc cs2.cc exception.cc intc.cc memory.cc cpu.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh cpu.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc timer.hh timer.cc scsp.hh $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc
+yabause_SOURCES = cs1.cc cs2.cc exception.cc intc.cc memory.cc cpu.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh cpu.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc timer.hh timer.cc scsp.hh $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc sh2d.hh sh2d.cc
 EXTRA_DIST = logo.png logo.bmp Makefile.dc tree.h tree.c yabause.ggo
 subdir = src
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -96,7 +96,8 @@ PROGRAMS = $(bin_PROGRAMS)
 am_yabause_OBJECTS = cs1.$(OBJEXT) cs2.$(OBJEXT) exception.$(OBJEXT) \
 	intc.$(OBJEXT) memory.$(OBJEXT) cpu.$(OBJEXT) scu.$(OBJEXT) \
 	smpc.$(OBJEXT) superh.$(OBJEXT) vdp1.$(OBJEXT) vdp2.$(OBJEXT) \
-	yabause.$(OBJEXT) timer.$(OBJEXT) cd.$(OBJEXT) yui.$(OBJEXT)
+	yabause.$(OBJEXT) timer.$(OBJEXT) cd.$(OBJEXT) yui.$(OBJEXT) \
+	sh2d.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
 yabause_LDADD = $(LDADD)
 yabause_DEPENDENCIES =
@@ -113,10 +114,10 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/cs1.Po ./$(DEPDIR)/cs2.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/exception.Po ./$(DEPDIR)/intc.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/memory.Po ./$(DEPDIR)/scu.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/smpc.Po ./$(DEPDIR)/superh.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/timer.Po ./$(DEPDIR)/vdp1.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vdp2.Po ./$(DEPDIR)/yabause.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/yui.Po
+@AMDEP_TRUE@	./$(DEPDIR)/sh2d.Po ./$(DEPDIR)/smpc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/superh.Po ./$(DEPDIR)/timer.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/vdp1.Po ./$(DEPDIR)/vdp2.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause.Po ./$(DEPDIR)/yui.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -185,6 +186,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sh2d.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/smpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/superh.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Po@am__quote@

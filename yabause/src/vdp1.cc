@@ -26,6 +26,14 @@
 #include "timer.hh"
 #include "vdp2.hh"
 
+#ifdef _arch_dreamcast
+#define SAT2YAB(alpha,temp)     ((0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10)
+#elif defined WORDS_BIGENDIAN
+#define SAT2YAB(alpha,temp)     (alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
+#else
+#define SAT2YAB(alpha,temp)     (alpha << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
+#endif
+
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
 	_stop = false;
@@ -147,8 +155,7 @@ Memory *Vdp1::getVRam(void) {
 	return vram;
 }
 
-static int power_of_two(int input)
-{
+static int power_of_two(int input) {
 	int value = 1;
 
 	while ( value < input ) {
@@ -204,10 +211,10 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	unsigned long alpha;
 	switch(CMDPMOD & 0x7) {
 		case 0:
-			alpha = 0xFF000000;
+			alpha = 0xFF;
 			break;
 		case 3:
-			alpha = 0x80000000;
+			alpha = 0x80;
 			break;
 		default:
 			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
@@ -237,21 +244,29 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
 				temp = vram->getWord((dot >> 4) * 2 + colorBank);
+#if 0
 #ifndef _arch_dreamcast
-				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
 #else
 				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
+#endif
+				color = SAT2YAB(alpha, temp);
+
 				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
 
 				tx += txinc;
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+#if 0
 #ifndef _arch_dreamcast
-				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
 #else
 				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
+#endif
+				color = SAT2YAB(alpha, temp);
+
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
 
@@ -283,11 +298,15 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j++) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
+#if 0
 #ifndef _arch_dreamcast
-				color = 0xFF000000 | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
+				color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
 #else
 				color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
 #endif
+#endif
+				color = SAT2YAB(alpha, dot);
+
 				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
 
@@ -391,10 +410,10 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	unsigned long alpha;
 	switch(CMDPMOD & 0x7) {
 		case 0:
-			alpha = 0xFF000000;
+			alpha = 0xFF;
 			break;
 		case 3:
-			alpha = 0x80000000;
+			alpha = 0x80;
 			break;
 		default:
 			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
@@ -421,14 +440,16 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
 				temp = vram->getWord((dot >> 4) * 2 + colorBank);
-				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				//color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				color = SAT2YAB(alpha, temp);
 				if (((dot >> 4) == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
 					textdata[ty][tx] = color;
 				}
 				tx += txinc;
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
-				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				//color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				color = SAT2YAB(alpha, temp);
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
 					textdata[ty][tx] = color;
@@ -461,7 +482,8 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j++) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
-				color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
+				//color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
+				color = SAT2YAB(alpha, dot);
 				if ((dot == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
 					textdata[ty][tx] = color;
@@ -539,7 +561,24 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 		v1 = (GLfloat)h / hh;
 		v2 = 0.0f;
 	}
-	
+
+	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
+	unsigned long alpha = 0xFF;
+	switch(CMDPMOD & 0x7) {
+		case 0:
+			alpha = 0xFF;
+			break;
+		case 3:
+			alpha = 0x80;
+			break;
+		case 4:
+#ifdef DEBUG
+			cerr << "gouraud shading unimplemented" << endl;
+#endif
+			break;
+		default:
+			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
+	}	
 	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
 	unsigned long dot, color;
 
@@ -568,20 +607,28 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
 				temp = vram->getWord((dot >> 4) * 2 + colorBank);
+#if 0
 #ifndef _arch_dreamcast
-				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
 #else
 				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
+#endif
+				color = SAT2YAB(alpha, temp);
+				
 				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
 				tx += txinc;
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+#if 0
 #ifndef _arch_dreamcast
-				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
 #else
 				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
+#endif
+				color = SAT2YAB(alpha, temp);
+
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
 				tx += txinc;
@@ -612,11 +659,15 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j++) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
+#if 0
 #ifndef _arch_dreamcast
-				color = 0xFF000000 | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
+				color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
 #else
 				color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
 #endif
+#endif
+				color = SAT2YAB(alpha, dot);
+				
 				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
 				tx += txinc;

@@ -201,7 +201,7 @@ int handleEvents(SaturnMemory *mem) {
 			break;
 #ifdef DEBUG
 		case SDLK_v:
-			msh->verbose = 10;
+			msh->verbose = 200;
 			break;
 #endif
 		default:
