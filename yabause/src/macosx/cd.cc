@@ -32,7 +32,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 
 char cdPath[1024];
-int hCDROM;
+int hCDROM = -1;
 CDTOC *cdTOC = NULL;
 
 int getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize )
@@ -98,7 +98,7 @@ int CDInit(char *cdrom_name)
 		
 	getCDPath(mediaIterator, cdPath, sizeof(cdPath));
 	
-	if ((hCDROM = open(cdPath, O_RDONLY | O_NONBLOCK)) == -1)
+	if ((hCDROM = open(cdPath, O_RDONLY)) == -1)
 		return -1;
 	printf("CDInit OK\n");
 	return 0;
@@ -124,11 +124,11 @@ bool CDIsCDPresent()
 
 long CDReadToc(unsigned long *TOC)
 {
-    int add150 = 0;
+	int add150 = 0, tracks = 0;
 	u_char track;
-    int i, lba = 0; 
-    CDTOCDescriptor *pTrackDescriptors;
-    pTrackDescriptors = cdTOC->descriptors;
+	int i, lba = 0; 
+	CDTOCDescriptor *pTrackDescriptors;
+	pTrackDescriptors = cdTOC->descriptors;
 	
 	memset(TOC, 0xFF, 0xCC * 2);
 	
@@ -136,31 +136,36 @@ long CDReadToc(unsigned long *TOC)
 	TOC[0] = (pTrackDescriptors[3].control << 28 |
 		pTrackDescriptors[3].adr << 24 | CDConvertMSFToLBA(pTrackDescriptors[3].p));
 		
-	if (CDConvertMSFToLBA(pTrackDescriptors[3].p) == 0) add150 = 150;
-		
 	/* Convert TOC to Saturn format */
-	for( i = 0; i < CDTOCGetDescriptorCount(cdTOC); i++ ) {
+	for( i = 4; i < CDTOCGetDescriptorCount(cdTOC); i++ ) {
         track = pTrackDescriptors[i].point;
-		lba = CDConvertMSFToLBA(pTrackDescriptors[i].p) + add150;
+		lba = CDConvertMSFToLBA(pTrackDescriptors[i].p);
 		
         if ((track > 99) || (track < 1))
             continue;
-		TOC[i] = (pTrackDescriptors[3].control << 28 | 
-			pTrackDescriptors[3].adr << 24 | CDConvertMSFToLBA(pTrackDescriptors[3].p));
+		TOC[i-3] = (pTrackDescriptors[i].control << 28 | 
+			pTrackDescriptors[i].adr << 24 | lba);
+		tracks++;
     }
 	
 	/* Do first, last, and lead out */
-	for( i = 0; i < 3; i++ ) {
-	TOC[99+i] = (pTrackDescriptors[i].control << 28 | 
-			pTrackDescriptors[i].adr << 24 | CDConvertMSFToLBA(pTrackDescriptors[i].p));
-	}
+	TOC[99] = (pTrackDescriptors[0].control << 28 | 
+			pTrackDescriptors[0].adr << 24 | 1 << 16);
+	TOC[100] = (pTrackDescriptors[1].control << 28 | 
+			pTrackDescriptors[1].adr << 24 | tracks << 16);
+	TOC[101] = (pTrackDescriptors[2].control << 28 | 
+			pTrackDescriptors[2].adr << 24 | CDConvertMSFToLBA(pTrackDescriptors[2].p));
 	
 	return (0xCC * 2);
 }
 
 unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
 {
-    if (hCDROM != -1)
-		return pread(hCDROM, buffer, size, lba * 2048);
+    int blockSize;
+	
+	if (hCDROM != -1) {
+		ioctl(hCDROM, DKIOCGETBLOCKSIZE, &blockSize);
+		return pread(hCDROM, buffer, blockSize, lba * blockSize);
+	}
     return 0;
 }
