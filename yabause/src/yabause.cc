@@ -218,8 +218,13 @@ int handleEvents(SaturnMemory *mem) {
 	}
       }
       else {
+/*
 	if (msh->paused());
-	else ((Vdp2 *) mem->getVdp2())->executer();
+	//else ((Vdp2 *) mem->getVdp2())->executer();
+	else {
+*/
+		mem->synchroStart();
+//	}
       }
       return 1;
 }

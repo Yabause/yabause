@@ -134,10 +134,6 @@ void SuperH::synchroStart(void) {
   unsigned long cycleCountII = 0;
 
   while(!_stop) {
-	  /*
-    for(int coin=300;coin > 0;coin--) executer();
-    exit(1);
-    */
     while((cycleCount < decilineStop) && _run) {
       executer();
     }
@@ -277,6 +273,7 @@ void SuperH::step(void) {
 }
 
 void SuperH::microsleep(unsigned long nbusec) {
+/*
   if (_stop) return;
   unsigned long tmp = nbusec / 10;
   while (tmp--) {
@@ -284,41 +281,52 @@ void SuperH::microsleep(unsigned long nbusec) {
     SDL_CondWait(cond[0], mutex[0]);
     SDL_mutexV(mutex[0]);
   }
+*/
 }
 
 void SuperH::waitHBlankIN(void) {
+/*
   if (_stop) return;
   SDL_mutexP(mutex[5]);
   SDL_CondWait(cond[5], mutex[5]);
   SDL_mutexV(mutex[5]);
+*/
 }
 
 void SuperH::waitHBlankOUT(void) {
+/*
   if (_stop) return;
   SDL_mutexP(mutex[6]);
   SDL_CondWait(cond[6], mutex[6]);
   SDL_mutexV(mutex[6]);
+*/
 }
 
 void SuperH::waitVBlankIN(void) {
+/*
   if (_stop) return;
   SDL_mutexP(mutex[1]);
   SDL_CondWait(cond[1], mutex[1]);
   SDL_mutexV(mutex[1]);
+*/
 }
 
 void SuperH::waitVBlankOUT(void) {
+/*
   if (_stop) return;
   SDL_mutexP(mutex[2]);
   SDL_CondWait(cond[2], mutex[2]);
   SDL_mutexV(mutex[2]);
+*/
 }
 
 void SuperH::waitInterruptEnd(void) {
+/*
   if (_stop) return;
   SDL_mutexP(mutex[3]);
   SDL_CondWait(cond[3], mutex[3]);
   SDL_mutexV(mutex[3]);
+*/
 }
 
 #ifndef _arch_dreamcast

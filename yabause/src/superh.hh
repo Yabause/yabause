@@ -132,7 +132,6 @@ protected:
   unsigned short instruction; // current opcode
 
   void _executer(void);
-  unsigned long cycleCount;
 
   SDL_mutex *mutex[7];
   SDL_cond *cond[7];
@@ -142,6 +141,7 @@ protected:
 
   bool isslave;
 public:
+  unsigned long cycleCount;
   friend class Onchip;
   friend void monitor(SuperH *);
   friend int main(int, char **);

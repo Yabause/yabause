@@ -121,6 +121,13 @@ private:
   bool _stop;
 
   char *cdrom;
+	int decilineCount;
+	int lineCount;
+	int frameCount;
+	int decilineStop;
+	int duf;
+	unsigned long ticks;
+	unsigned long cycleCountII;
 public:
   SaturnMemory(void);
   ~SaturnMemory(void);
@@ -148,6 +155,8 @@ public:
   Memory *getScu(void);
   Memory *getVdp2(void);
   Memory *getSmpc(void);
+
+  void synchroStart(void);
 
   /*
   bool start(void);

@@ -165,7 +165,9 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 		        alpha = 0x80;
 			break;
 		default:
+#ifdef VDP1_DEBUG
 			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
+#endif
 			break;
 	}
 #ifndef _arch_dreamcast

@@ -340,19 +340,20 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	}
 */
 
+	decilineCount = 0;
+	lineCount = 0;
+	frameCount = 0;
+	decilineStop = 170;
+	duf = 268;
+	ticks = 0;
+	cycleCountII = 0;
+
+
 	msh->setMemory(this);
-	mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+	//mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
 //        sshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, ssh);
-	msh->run();
+	//msh->run();
 }
-
-/*
-bool SaturnMemory::start(void) {
-}
-
-void SaturnMemory::stop(void) {
-}
-*/
 
 SaturnMemory::~SaturnMemory(void) {
 #if DEBUG
@@ -608,8 +609,63 @@ void SaturnMemory::mappage(unsigned long adr) {
   }
 }
 
+void SaturnMemory::synchroStart(void) {
 /*
-bool SaturnMemory::running(void) {
-	return (mshThread != NULL);
-}
+	int decilineCount = 0;
+	int lineCount = 0;
+	int frameCount = 0;
+	int decilineStop = 170;
+	int duf = 268;
+	unsigned long ticks = 0;
+	unsigned long cycleCount = 0;
+	unsigned long cycleCountII = 0;
 */
+
+	while(msh->cycleCount < decilineStop) {
+		msh->executer();
+	}
+
+	decilineCount++;
+	switch(decilineCount) {
+		case 9:
+			//SDL_CondBroadcast(cond[5]);
+			// HBlankIN
+			break;
+		case 10:
+			// HBlankOUT
+			//SDL_CondBroadcast(cond[6]);
+			decilineCount = 0;
+			lineCount++;
+			switch(lineCount) {
+				case 224:
+					// VBlankIN
+					//SDL_CondBroadcast(cond[1]);
+					break;
+				case 263:
+					// VBlankOUT
+					((Vdp2 *) vdp2_3)->executer();
+					//SDL_CondBroadcast(cond[2]);
+					lineCount = 0;
+					frameCount++;
+					if(SDL_GetTicks() >= ticks + 1000) {
+						yui_fps(frameCount);
+						frameCount = 0;
+						ticks = SDL_GetTicks();
+					}
+					break;
+			}
+			break;
+	}
+	cycleCountII += msh->cycleCount;
+
+	while (cycleCountII > duf) {
+		((Smpc *) smpc)->execute2(10);
+		((Onchip *) onchip)->run(10);
+		//SDL_CondBroadcast(cond[0]);
+		cycleCountII %= duf;
+	}
+
+	Cs2::run((Cs2 *) cs2);
+
+	msh->cycleCount %= decilineStop;
+}
