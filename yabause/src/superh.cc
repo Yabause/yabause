@@ -131,9 +131,9 @@ void SuperH::run(int t) {
 }
 
 void SuperH::runCycles(unsigned long cc) {
-	for(unsigned long i = 0;i < cc;i++) {
-		executer();
-	}
+        while(cycleCount < cc) {
+                executer();
+        }
 
         ((Onchip *)onchip)->runFRT(cc);
 }
