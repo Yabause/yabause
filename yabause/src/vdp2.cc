@@ -1,4 +1,5 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2003-2004 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -39,6 +40,15 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
       Memory::setWord(addr, val);
       updateRam();
       break;
+#if DEBUG
+    case 0x20:
+      if (val & 0x10)
+        cerr << "vdp2\t: RBG0 screen needs to be tested" << endl;
+      else if (val & 0x20)
+        cerr << "vdp2\t: RBG1 screen not implemented" << endl;
+      Memory::setWord(addr, val);
+      break;
+#endif
     case 0xE0:
       Memory::setWord(addr, val);
 #ifdef DEBUG
@@ -100,7 +110,7 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha, int colorOff
     return SAT2YAB1(alpha, tmp);
   }
   case 2: {
-    addr *= 2; // thanks Runik!
+    addr *= 4;
     addr += colorOffset * 0x400;
     unsigned long tmp1 = getWord(addr);
     unsigned long tmp2 = getWord(addr + 2);
@@ -429,7 +439,40 @@ void Vdp2Screen::drawPixel(unsigned long *surface, Sint16 x, Sint16 y, Uint32 tm
 }
 
 void RBG0::init(void) {
-	enable = false;
+        // For now, let's treat it like a regular scroll screen
+        unsigned short patternNameReg = reg->getWord(0x38);
+        unsigned short patternReg = reg->getWord(0x2A);
+        unsigned long rotParaReg = reg->getLong(0xBC);
+
+        enable = reg->getWord(0x20) & 0x10;
+        transparencyEnable = !(reg->getWord(0x20) & 0x1000);
+
+        // Figure out which Rotation parameter to use here(or use both)
+
+        x = 0; // this is obviously wrong
+        y = 0; // this is obviously wrong
+
+        colorNumber = (patternReg & 0x7000) >> 12;
+        if(bitmap = patternReg & 0x200) {
+                switch((patternReg & 0x400) >> 10) {
+                        case 0: cellW = 512;
+                                cellH = 256;
+                                break;
+                        case 1: cellW = 512;
+                                cellH = 512;
+                                break;
+                }
+
+                charAddr = (reg->getWord(0x3E) & 0x7) * 0x20000; // this is obviously wrong
+                palAddr = (reg->getWord(0x2E) & 0x7) << 4;
+                flipFunction = 0;
+                specialFunction = 0;
+        }
+        else {
+                // fix me
+        }
+
+        colorOffset = reg->getWord(0xE6) & 0x7;
 }
 
 void RBG0::planeAddr(int i) {
