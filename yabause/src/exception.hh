@@ -54,7 +54,7 @@ private:
 	unsigned short _opcode;
 	unsigned long _address;
 public:
-	IllegalOpcode(unsigned short, unsigned long);
+        IllegalOpcode(char *, unsigned short, unsigned long);
 	unsigned short opcode(void);
 	unsigned long address(void);
 };

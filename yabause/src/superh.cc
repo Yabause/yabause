@@ -183,7 +183,10 @@ ostream& operator<<(ostream& os, const SuperH& sh) {
 
 void SuperH::undecoded(void) {
 #ifndef _arch_dreamcast
-	throw IllegalOpcode(instruction, PC);
+        if (isslave) 
+           throw IllegalOpcode("SSH2", instruction, PC);
+        else
+           throw IllegalOpcode("MSH2", instruction, PC);
 #else
 	printf("Illegal Opcode: 0x%8x, PC: 0x%8x\n", instruction, PC);
 	exit(-1);

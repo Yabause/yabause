@@ -42,10 +42,10 @@ UnimplementedOpcode::UnimplementedOpcode(const char *opcode) {
 	strcpy(exc, opcode);
 }
 
-IllegalOpcode::IllegalOpcode(unsigned short o, unsigned long a) {
+IllegalOpcode::IllegalOpcode(char *cpu_name, unsigned short o, unsigned long a) {
   _opcode = o;
   _address = a;
-  sprintf(exc, "Illegal opcode: %8X @ %8X", o, a);
+  sprintf(exc, "%s Illegal opcode: %8X @ %8X", cpu_name, o, a);
 }
 
 unsigned short IllegalOpcode::opcode(void) {
