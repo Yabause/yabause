@@ -1419,11 +1419,6 @@ void Cs2::setFilterMode(void) {
      filter[sfmfilternum].cival = 0;
   }
 
-#if CDDEBUG
-  if (filter[sfmfilternum].mode & 0x1F)
-     cerr << "cs2\t: Filter Subheader conditions not implemented" << endl;
-#endif
-
   doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
@@ -2372,32 +2367,32 @@ partition_struct *Cs2::FilterData(filter_struct *curfilter, bool isaudio)
         if (curfilter->mode & 0x01)
         {
            // File Number Check
-           if (workblock.data[0x10] != curfilter->fid)
+           if (workblock.fn != curfilter->fid)
               condresults = false;
         }
-   
+
         if (curfilter->mode & 0x02)
         {
            // Channel Number Check
-#if CDDEBUG
-           fprintf(stderr, "cs2\t: FilterData: Channel Number Check\n");
-#endif
+           if (workblock.cn != curfilter->chan)
+              condresults = false;
         }
 
         if (curfilter->mode & 0x04)
         {
            // Sub Mode Check
-#if CDDEBUG
-           fprintf(stderr, "cs2\t: FilterData: Sub Mode Check\n");
-#endif
+           if ((workblock.sm & curfilter->smmask) != curfilter->smval)
+              condresults = false;
         }
 
         if (curfilter->mode & 0x08)
         {
            // Coding Information Check
 #if CDDEBUG
-           fprintf(stderr, "cs2\t: FilterData: Coding Information Check\n");
+           fprintf(stderr, "cs2\t: FilterData: Coding Information Check. Coding Information = %02X. Filter's Coding Information Mask = %02X, Coding Information Value = %02X\n", workblock.ci, curfilter->cimask, curfilter->cival);
 #endif
+           if ((workblock.ci & curfilter->cimask) != curfilter->cival)
+              condresults = false;
         }
 
         if (curfilter->mode & 0x10)
