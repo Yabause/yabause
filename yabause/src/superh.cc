@@ -43,6 +43,14 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
     opcodes[i] = decode();
   }
 
+  for (int i = 0; i < MAX_BREAKPOINTS; i++) {
+     codebreakpoint[i].addr = 0xFFFFFFFF;
+     codebreakpoint[i].oldopcode = 0xFFFF;
+  }
+  numcodebreakpoints = 0;
+  BreakpointCallBack=NULL;
+  inbreakpoint=false;
+
   isslave = slave;
 }
 
@@ -145,7 +153,18 @@ void SuperH::run(int t) {
 
 void SuperH::runCycles(unsigned long cc) {
         while(cycleCount < cc) {
-                executer();
+           // Make sure it isn't one of our breakpoints
+           for (int i=0; i < numcodebreakpoints; i++) {
+              if ((PC - 4 == codebreakpoint[i].addr ||
+                  _delai - 4 == codebreakpoint[i].addr) &&
+                  !inbreakpoint) {
+                 inbreakpoint = true;
+                 if (BreakpointCallBack) BreakpointCallBack(isslave, codebreakpoint[i].addr);
+                 inbreakpoint = false;
+              }
+           }
+
+           executer();
         }
 
         ((Onchip *)onchip)->runFRT(cc);
@@ -1001,7 +1020,6 @@ void SuperH::movbl(void) {
 void SuperH::movbl0(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
-  long temp;
 
   R[n] = (long)(signed char)memoire->getByte(R[m] + R[0]);
   PC += 2;
@@ -1019,7 +1037,6 @@ void SuperH::movbl4(void) {
 
 void SuperH::movblg(void) {
   long disp = Instruction::cd(instruction);
-  long temp;
   
   R[0] = (long)(signed char)memoire->getByte(GBR + disp);
   PC+=2;
@@ -2114,3 +2131,84 @@ void SuperH::SetRegisters(sh2regs_struct *regs) {
   }
 }
 
+void SuperH::SetBreakpointCallBack(void (*func)(bool, unsigned long)) {
+   BreakpointCallBack = func;
+}
+
+int SuperH::AddCodeBreakpoint(unsigned long addr) {
+  if (numcodebreakpoints < MAX_BREAKPOINTS) {
+     codebreakpoint[numcodebreakpoints].addr = addr;
+//     // backup old opcode
+//     codebreakpoint[numcodebreakpoints].oldopcode = memoire->getWord(addr);
+//     // set opcode to an invalid opcode(so there's no extra overhead)
+//     memoire->setWord(addr, 0x8383); 
+     numcodebreakpoints++;
+
+     return 0;
+  }
+
+  return -1;
+}
+
+int SuperH::DelCodeBreakpoint(unsigned long addr) {
+  if (numcodebreakpoints > 0) {
+     for (int i = 0; i < numcodebreakpoints; i++) {
+        if (codebreakpoint[i].addr == addr)
+        {
+//           // Return opcode to old opcode(first make sure our invalid opcode
+//           // wasn't replaced)
+//           if (memoire->getWord(addr) == 0x8383)
+//              memoire->setWord(addr, codebreakpoint[i].oldopcode);
+
+           codebreakpoint[i].addr = 0xFFFFFFFF;
+           codebreakpoint[i].oldopcode = 0xFFFF;
+           SortCodeBreakpoints();
+           numcodebreakpoints--;
+           return 0;
+        }
+     }
+  }
+
+  return -1;
+}
+
+codebreakpoint_struct *SuperH::GetBreakpointList() {
+  return codebreakpoint;
+}
+
+void SuperH::ClearCodeBreakpoints() {
+     for (int i = 0; i < MAX_BREAKPOINTS; i++) {
+//        // Return opcode to old opcode(first make sure our invalid opcode
+//        // wasn't replaced)
+//        if (memoire->getWord(addr) == 0x8383)
+//           memoire->setWord(addr, codebreakpoints[i].oldopcode);
+
+        codebreakpoint[i].addr = 0xFFFFFFFF;
+        codebreakpoint[i].oldopcode = 0xFFFF;
+     }
+
+     numcodebreakpoints = 0;
+}
+
+void SuperH::SortCodeBreakpoints() {
+  int i, i2;
+  unsigned long tmp;
+
+  for (i = 0; i < (MAX_BREAKPOINTS-1); i++)
+  {
+     for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
+     {
+        if (codebreakpoint[i].addr == 0xFFFFFFFF &&
+            codebreakpoint[i2].addr != 0xFFFFFFFF)
+        {
+           tmp = codebreakpoint[i].addr;
+           codebreakpoint[i].addr = codebreakpoint[i2].addr;
+           codebreakpoint[i2].addr = tmp;
+
+           tmp = codebreakpoint[i].oldopcode;
+           codebreakpoint[i].oldopcode = codebreakpoint[i2].oldopcode;
+           codebreakpoint[i2].oldopcode = tmp;
+        }
+     }
+  }
+}

@@ -66,6 +66,16 @@ typedef struct
   unsigned long delay;
 } sh2regs_struct;
 
+typedef struct
+{
+  unsigned long addr;
+  unsigned oldopcode;
+} codebreakpoint_struct;
+
+#define MAX_BREAKPOINTS 10
+
+//typedef void (*BpCBFunc)(unsigned long addr);
+
 class Instruction {
 public:
   static inline unsigned long a   (unsigned long ul) { return ((ul & 0xF000) >> 12); }
@@ -134,6 +144,11 @@ protected:
   bool isslave;
   priority_queue<Interrupt> interrupts;
 
+  codebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
+  int numcodebreakpoints;
+  void (*BreakpointCallBack)(bool, unsigned long);
+  void SortCodeBreakpoints();
+  bool inbreakpoint;
 public:
   int timing;
   unsigned long cycleCount;
@@ -166,6 +181,12 @@ public:
   Memory *SuperH::GetOnchip();
   void GetRegisters(sh2regs_struct *regs);
   void SetRegisters(sh2regs_struct *regs);
+
+  void SetBreakpointCallBack(void (*func)(bool, unsigned long));
+  int AddCodeBreakpoint(unsigned long addr);
+  int DelCodeBreakpoint(unsigned long addr);
+  codebreakpoint_struct *GetBreakpointList();
+  void ClearCodeBreakpoints();
 
 #ifndef _arch_dreamcast
   friend ostream& operator<<(ostream&, const SuperH&);
