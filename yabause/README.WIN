@@ -32,22 +32,13 @@ libraries runtime and development packages:
 Once these libraries installed, you should be ready to
 install Yabause.
 
-The following steps will be different depending on what
-compiler you're using. If you're using gnu-based compilers
-such as cygwin or mingw, you just have to uncompress the
-Yabause source archive, move to the newly created
-directory, type "./configure", then "make", it will generate
-one program: "yabause.exe" in the "src" directory.
-For other compilers, you're on your own at this point.
+Unfortunately, I've been having some trouble getting configure
+working properly with mingw and cygwin, so instead I've written
+a makefile(src\makefile.mng) for compiling using mingw. 
 
-You can also pass the --enable-debug, --enable-vdp1-debug,
---enable-cd-debug options to the configure script, Yabause
-will then print debug messages on the error standard output.
-
-You can even type "make install" to install that program on
-your system (in /usr/local/ by default), then uninstalling is
-done by typing "make uninstall".
-
+Note: If anyone feels like fixing this, let me know. Also, if
+      anyone feels like tackling Microsoft Visual C++ support,
+      feel free to.
 
 2 How to use Yabause__________________________________________
 
