@@ -9,13 +9,14 @@
    - there should be synchro between smpc INTBACK and VBlank
    - check that dma operation is correct
    - finish intc, add others sources of interrupt
-   - add slave sh
    - finish SCU
    - finish DMAC emulation
    - change sh2 interpreter into a dynamic recompiler
    - add SCI emulation
-   - finish FRT emulation
    - finish sleep/standby mode and implement the clock change pins
+   - add vdp2 coefficient table emulation
+   - add vdp2 line screen emulation
+   - add mpeg decoding
 
  (3) MONITOR/DEBUGGER
 
@@ -24,6 +25,7 @@
    - implement a method to trace emulation
    - implement a rewind
    - add ability to set code and memory breakpoints
+   - Each cpu should have some ability to return debugging information(e.g. VDP1 should return current commands as text, VDP2 should return screen info, etc.)
 
  (4) CODE
 
@@ -31,4 +33,3 @@
 
  (5) OTHER
 
-   - Rewrite documentation based on the recent interface changes
