@@ -2472,6 +2472,10 @@ struct sounddata {
 unsigned short *stereodata16;
 
 u32 FASTCALL c68k_byte_read(const u32 adr) {
+#ifdef WORDS_BIGENDIAN
+  adr ^= 2;
+#endif
+
   if (adr < 0x100000)
   {
 #ifdef WORDS_BIGENDIAN
@@ -2485,6 +2489,10 @@ u32 FASTCALL c68k_byte_read(const u32 adr) {
 }
 
 void FASTCALL c68k_byte_write(const u32 adr, u32 data) {
+#ifdef WORDS_BIGENDIAN
+  adr ^= 2;
+#endif
+
   if (adr < 0x100000)
   {
 #ifdef WORDS_BIGENDIAN
@@ -2498,6 +2506,10 @@ void FASTCALL c68k_byte_write(const u32 adr, u32 data) {
 }
 
 u32 FASTCALL c68k_word_read(const u32 adr) {
+#ifdef WORDS_BIGENDIAN
+  adr ^= 2;
+#endif
+
   if (adr < 0x100000)
   {
 #ifdef WORDS_BIGENDIAN
@@ -2511,6 +2523,9 @@ u32 FASTCALL c68k_word_read(const u32 adr) {
 }
 
 void FASTCALL c68k_word_write(const u32 adr, u32 data) {
+#ifdef WORDS_BIGENDIAN
+  adr ^= 2;
+#endif
   if (adr < 0x100000)
   {
 #ifdef WORDS_BIGENDIAN
