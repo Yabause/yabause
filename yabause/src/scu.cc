@@ -21,7 +21,8 @@
 #include "superh.hh"
 
 unsigned long Scu::getLong(unsigned long addr) {
-	if (addr == 0x80) return 0;
+	if (addr == 0x80) return 0;        
+        if (addr == 0xA4) return (Memory::getWord(0xA4) | 2); // bad hack, this has to be fixed
 	return Memory::getLong(addr);
 }
 
