@@ -253,6 +253,8 @@ void yui_init(int (*yab_main)(void*)) {
         mem = new SaturnMemory();
         yabausemem = mem;
         while (!stop) yab_main(mem);
+	delete(mem);
+
 }
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
