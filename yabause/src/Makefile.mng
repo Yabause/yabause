@@ -1,0 +1,40 @@
+#       Makefile.mng
+#       Mingw makefile
+#	Copyright (C) 2002, 2003, 2004 Lawrence Sebald
+#       Copyright (C) 2004 Theo Berkau
+#	Based on KOS makefiles (C) by Dan Potter
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+TARGET = yabause.exe
+CC = g++
+#CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL
+CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG
+LDFLAGS=-lmingw32 -lSDLmain -lSDL -lSDLgfx -lkernel32 -mconsole
+OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o sh2d.o timer.o tree.o cmdline.o
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+.cc.o:
+	$(CC) $(CFLAGS) -c $<
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+clean:
+	rm -f $(OBJS)
+	rm -f $(TARGET)
+
