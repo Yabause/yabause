@@ -1,6 +1,9 @@
 Games using SCU dsp
 --------------------
+Blast Wind
 Dead or Alive
+Cotton Boomerang
+Death Crimson
 Grandia
 IronMan X-O Manowar in Heavy Metal
 Shienryu
