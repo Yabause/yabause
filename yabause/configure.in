@@ -28,8 +28,6 @@ LIBS="$LIBS $SDL_LIBS"
 
 AC_CHECK_LIB(SDL_image, IMG_Load)
 
-AC_CHECK_LIB(SDL_gfx, pixelColor)
-
 AC_CHECK_LIB(GL, glEnable)
 
 dnl Usage: YAB_CXX_STL_LEFT_RIGHT : checks whether the C++ compiler

@@ -23,7 +23,7 @@
 #include "exception.hh"
 #include "scu.hh"
 #include "timer.hh"
-#include "SDL_gfxPrimitives.h"
+//#include "SDL_gfxPrimitives.h"
 #include "vdp2.hh"
 
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0x18) {
@@ -160,7 +160,8 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	unsigned short hh = power_of_two(h);
 
         surface = SDL_CreateRGBSurface(SDL_SWSURFACE, ww, hh, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
-	//SDL_SetAlpha(surface,SDL_SRCALPHA,0xFF);
+
+	if ((vram->getWord(addr) & 0x30) != 0) cerr << "flip not implemented" << endl;
 
 	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
 	unsigned long dot, color;
@@ -173,9 +174,9 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
 				color = cram->getColor((colorBank & 0xF0) + (dot >> 4), (Vdp2Screen *) this);
-				pixelColor(surface, j, i, color);
+				Vdp2Screen::drawPixel(surface, j, i, color);
 				color = cram->getColor((colorBank & 0xF0) + (dot & 0xF), (Vdp2Screen *) this);
-				pixelColor(surface, j + 1, i, color);
+				Vdp2Screen::drawPixel(surface, j + 1, i, color);
 				charAddr += 1;
 			}
 		}
@@ -188,12 +189,12 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 				dot = vram->getByte(charAddr);
 				temp = vram->getWord((dot >> 4) * 2 + colorBank);
 				color = (temp & 0x1F) << 27 | (temp & 0x7E0) << 14 | (temp & 0x7C00) << 1 | 0xFF;
-				if ((dot >> 4) != 0) pixelColor(surface, j, i, color);
-				else pixelColor(surface, j, i, 0);
+				if ((dot >> 4) != 0) Vdp2Screen::drawPixel(surface, j, i, color);
+				else Vdp2Screen::drawPixel(surface, j, i, 0);
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
 				color = (temp & 0x1F) << 27 | (temp & 0x7E0) << 14 | (temp & 0x7C00) << 1 | 0xFF;
-				if ((dot & 0xF) != 0) pixelColor(surface, j + 1, i, color);
-				else pixelColor(surface, j, i, 0);
+				if ((dot & 0xF) != 0) Vdp2Screen::drawPixel(surface, j + 1, i, color);
+				else Vdp2Screen::drawPixel(surface, j, i, 0);
 				charAddr += 1;
 			}
 		}
@@ -210,8 +211,8 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
 				color = (dot & 0x1F) << 27 | (dot & 0x7E0) << 14 | (dot & 0x7C00) << 1 | 0xFF;
-				if (dot != 0) pixelColor(surface, j, i, color);
-				else pixelColor(surface, j, i, 0);
+				if (dot != 0) Vdp2Screen::drawPixel(surface, j, i, color);
+				else Vdp2Screen::drawPixel(surface, j, i, 0);
 			}
 		}
 	}
@@ -248,6 +249,8 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	unsigned short rw = vram->getWord(addr + 0x10);
 	unsigned short rh = vram->getWord(addr + 0x12);
 
+	if ((vram->getWord(addr) & 0x30) != 0) cerr << "flip not implemented" << endl;
+
 	unsigned short ZP = (vram->getWord(addr) & 0xF00) >> 8;
 	unsigned short tmp;
 
@@ -282,9 +285,9 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
 				color = cram->getColor((colorBank & 0xF0) + (dot >> 4), (Vdp2Screen *) this);
-				pixelColor(surface, j, i, color);
+				Vdp2Screen::drawPixel(surface, j, i, color);
 				color = cram->getColor((colorBank & 0xF0) + (dot & 0xF), (Vdp2Screen *) this);
-				pixelColor(surface, j + 1, i, color);
+				Vdp2Screen::drawPixel(surface, j + 1, i, color);
 				charAddr += 1;
 			}
 		}
@@ -297,12 +300,12 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 				dot = vram->getByte(charAddr);
 				temp = vram->getWord((dot >> 4) * 2 + colorBank);
 				color = (temp & 0x1F) << 27 | (temp & 0x7E0) << 14 | (temp & 0x7C00) << 1 | 0xFF;
-				if ((dot >> 4) != 0) pixelColor(surface, j, i, color);
-				else pixelColor(surface, j, i, 0);
+				if ((dot >> 4) != 0) Vdp2Screen::drawPixel(surface, j, i, color);
+				else Vdp2Screen::drawPixel(surface, j, i, 0);
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
 				color = (temp & 0x1F) << 27 | (temp & 0x7E0) << 14 | (temp & 0x7C00) << 1 | 0xFF;
-				if ((dot & 0xF) != 0) pixelColor(surface, j + 1, i, color);
-				else pixelColor(surface, j, i, 0);
+				if ((dot & 0xF) != 0) Vdp2Screen::drawPixel(surface, j + 1, i, color);
+				else Vdp2Screen::drawPixel(surface, j, i, 0);
 				charAddr += 1;
 			}
 		}
@@ -319,8 +322,8 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
 				color = (dot & 0x1F) << 27 | (dot & 0x7E0) << 14 | (dot & 0x7C00) << 1 | 0xFF;
-				if (dot != 0) pixelColor(surface, j, i, color);
-				else pixelColor(surface, j, i, 0);
+				if (dot != 0) Vdp2Screen::drawPixel(surface, j, i, color);
+				else Vdp2Screen::drawPixel(surface, j, i, 0);
 			}
 		}
 	}
@@ -369,6 +372,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 		glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
 		glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
 		glEnd();
+		glColor4f(1, 1, 1, 1);
 	}
 }
 

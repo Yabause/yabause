@@ -25,8 +25,10 @@
 #if HAVE_LIBSDL_IMAGE
 #include <SDL/SDL_image.h>
 #endif
+/*
 #include "SDL_gfxPrimitives.h"
 #include "SDL_imageFilter.h"
+*/
 
 /****************************************/
 /*					*/
@@ -405,13 +407,13 @@ void Vdp2Screen::drawCell(void) {
 #define clip_ymin(surface) surface->clip_rect.y
 #define clip_ymax(surface) surface->clip_rect.y+surface->clip_rect.h-1
 
-void Vdp2Screen::drawPixel(SDL_Surface *dst, Sint16 x, Sint16 y, Uint32 tmpcolor) {
+void Vdp2Screen::drawPixel(SDL_Surface *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
 	Uint8 alpha;
 	Uint32 color;
 	int result = 0;
 	
 	alpha = tmpcolor & 0x000000ff;
-	color = SDL_MapRGBA(dst->format, (tmpcolor & 0xff000000) >> 24, (tmpcolor & 0x00ff0000) >> 16, (tmpcolor & 0x0000ff00) >> 8, alpha);
+	color = SDL_MapRGBA(surface->format, (tmpcolor & 0xff000000) >> 24, (tmpcolor & 0x00ff0000) >> 16, (tmpcolor & 0x0000ff00) >> 8, alpha);
 	
 	Uint32 Rmask = surface->format->Rmask,
 	       Gmask = surface->format->Gmask,
@@ -1038,7 +1040,7 @@ void Vdp2::executer(void) {
   setWord(0x4, getWord(0x4) & 0xFFF7);
 
   glClear(GL_COLOR_BUFFER_BIT);
-  drawBackScreen();
+  //drawBackScreen();
   if (getWord(0) & 0x8000) {
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
     screens[0]->draw();
@@ -1086,6 +1088,7 @@ void Vdp2::updateRam(void) {
   cram->setMode(getWord(0xE) & 0xC000);
 }
 
+/*
 void Vdp2::drawBackScreen(void) {
 	unsigned long BKTAU = getWord(0xAC);
 	unsigned long BKTAL = getWord(0xAE);
@@ -1109,6 +1112,7 @@ void Vdp2::drawBackScreen(void) {
 		}
 	}
 }
+*/
 
 void Vdp2::priorityFunction(void) {
 }

@@ -183,8 +183,8 @@ void Smpc::INTBACKStatus(void) {
 #endif
     // return time, cartidge, zone, etc. data
     
-    setOREG(0, 0x80);	// goto normal startup
-    //setOREG(0, 0x0);	// goto setclock/setlanguage screen
+    //setOREG(0, 0x80);	// goto normal startup
+    setOREG(0, 0x0);	// goto setclock/setlanguage screen
     
     // write time data in OREG1-7
     time_t tmp = time(NULL);

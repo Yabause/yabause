@@ -86,7 +86,7 @@ public:
   void drawPage(void);
   void drawPattern(void);
   void drawCell(void);
-  void drawPixel(SDL_Surface *, Sint16, Sint16, Uint32);
+  static void drawPixel(SDL_Surface *, Sint16, Sint16, Uint32);
 };
 
 class RBG0 : public Vdp2Screen {
