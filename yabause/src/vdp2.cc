@@ -767,6 +767,7 @@ void RBG0::init(void) {
 #if VDP2_DEBUG
 				cerr << "RGB0\t: don't know what to do with plane size" << endl;
 #endif
+                                planeSize = 0;
 				break;
 		}
   		switch(planeSize) {
@@ -818,7 +819,7 @@ void RBG0::init(void) {
 void RBG0::planeAddr(int i) {
 	// works only for parameter A for time being
 	unsigned long offset = (reg->getWord(0x3E) & 0x7) << 6;
-	unsigned long tmp;
+        unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x51); break;
     		case 1: tmp = offset | reg->getByte(0x50); break;
@@ -943,7 +944,7 @@ void NBG0::init(void) {
 
 void NBG0::planeAddr(int i) {
 	unsigned long offset = (reg->getWord(0x3C) & 0x7) << 6;
-	unsigned long tmp;
+        unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x41); break;
     		case 1: tmp = offset | reg->getByte(0x40); break;
@@ -1143,7 +1144,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
 
      if (screenDisplayReg & 0x20)
      {
-        unsigned short mapOffsetReg=(reg->getWord(0x3E) & 0x70) << 2;
+//        unsigned short mapOffsetReg=(reg->getWord(0x3E) & 0x70) << 2;
         unsigned short rotParaControlReg=reg->getWord(0xB2);
 
         // RBG1
@@ -1179,7 +1180,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
      }
      else
      {
-        unsigned short mapOffsetReg=(reg->getWord(0x3C) & 0x7) << 6;
+//        unsigned short mapOffsetReg=(reg->getWord(0x3C) & 0x7) << 6;
 
         // NBG0
 
@@ -1364,7 +1365,7 @@ void NBG1::init(void) {
 
 void NBG1::planeAddr(int i) {
   	unsigned long offset = (reg->getWord(0x3C) & 0x70) << 2;
-  	unsigned long tmp;
+        unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x45); break;
     		case 1: tmp = offset | reg->getByte(0x44); break;
@@ -1466,7 +1467,7 @@ void NBG2::init(void) {
 
 void NBG2::planeAddr(int i) {
 	unsigned long offset = (reg->getWord(0x3C) & 0x700) >> 2;
-  	unsigned long tmp;
+        unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x49); break;
     		case 1: tmp = offset | reg->getByte(0x48); break;
@@ -1581,7 +1582,7 @@ void NBG3::init(void) {
 
 void NBG3::planeAddr(int i) {
 	unsigned long offset = (reg->getWord(0x3C) & 0x7000) >> 6;
-  	unsigned long tmp;
+        unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x4D); break;
     		case 1: tmp = offset | reg->getByte(0x4C); break;
