@@ -1757,7 +1757,7 @@ void Vdp2::setSaturnResolution(int width, int height) {
    ((NBG1 *)nbg1)->setTextureRatio(widthRatio, heightRatio);
    ((NBG2 *)nbg2)->setTextureRatio(widthRatio, heightRatio);
    ((NBG3 *)nbg3)->setTextureRatio(widthRatio, heightRatio);
-   ((Vdp1 *) satmem->getVdp1())->setTextureRatio(width, height);
+   ((Vdp1 *) satmem->getVdp1())->setTextureSize(width, height);
 }
 
 void Vdp2::setActualResolution(int width, int height) {

@@ -85,7 +85,8 @@ private:
   unsigned short localX;
   unsigned short localY;
 
-  unsigned short returnAddr;
+  unsigned long returnAddr;
+  unsigned long commandCounter;
   unsigned short  CMDCTRL;
   unsigned short  CMDLINK;
   unsigned short  CMDPMOD;
@@ -138,7 +139,7 @@ public:
   int getPriority(void);
   int getInnerPriority(void);
   void toggleDisplay(void);
-  void setTextureRatio(int width, int height);
+  void setTextureSize(int width, int height);
 };
 
 #endif

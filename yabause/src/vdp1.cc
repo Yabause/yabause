@@ -1,6 +1,6 @@
 /*  Copyright 2003-2004 Guillaume Duhamel
     Copyright 2004 Lawrence Sebald
-    Copyright 2004 Theo Berkau
+    Copyright 2004-2005 Theo Berkau
 
     This file is part of Yabause.
 
@@ -51,6 +51,9 @@ void Vdp1::reset(void) {
 void Vdp1::execute(unsigned long addr) {
   unsigned short command = vram->getWord(addr);
 
+  returnAddr = 0xFFFFFFFF;
+  commandCounter = 0;
+
   if (!getWord(0x4)) return;
   // If TVMD's DISP isn't set, don't render
   if (!(((Vdp2 *)satmem->getVdp2())->getWord(0) & 0x8000)) return;
@@ -61,28 +64,28 @@ void Vdp1::execute(unsigned long addr) {
   // CEF <- 0
   setWord(0x10, (getWord(0x10) & 2) >> 1);
 
-  while (!(command & 0x8000)) {
+  while (!(command & 0x8000) && commandCounter < 2000) { // fix me
 
     // First, process the command
     if (!(command & 0x4000)) { // if (!skip)
       switch (command & 0x000F) {
 	case 0: // normal sprite draw
-	  normalSpriteDraw(addr);
+          normalSpriteDraw(addr);
 	  break;
 	case 1: // scaled sprite draw
-	  scaledSpriteDraw(addr);
+          scaledSpriteDraw(addr);
 	  break;
-	case 2: // distorted sprite draw
-	  distortedSpriteDraw(addr);
+        case 2: // distorted sprite draw
+          distortedSpriteDraw(addr);
 	  break;
 	case 4: // polygon draw
-	  polygonDraw(addr);
+          polygonDraw(addr);
 	  break;
 	case 5: // polyline draw
-	  polylineDraw(addr);
+          polylineDraw(addr);
 	  break;
 	case 6: // line draw
-	  lineDraw(addr);
+          lineDraw(addr);
 	  break;
 	case 8: // user clipping coordinates
 	  userClipping(addr);
@@ -110,17 +113,19 @@ void Vdp1::execute(unsigned long addr) {
       addr = vram->getWord(addr + 2) * 8;
       break;
     case 2: // CALL, call a subroutine
-#ifdef VDP1_DEBUG
-      cerr << "vdp1\t: CALL" << endl;
-#endif
-      returnAddr = addr;
+      if (returnAddr == 0xFFFFFFFF)
+         returnAddr = addr+0x20;
+
       addr = vram->getWord(addr + 2) * 8;
       break;
     case 3: // RETURN, return from subroutine
-#ifdef VDP1_DEBUG
-      cerr << "vdp1\t: RETURN" << endl;
-#endif
-      addr = returnAddr;
+      if (returnAddr != 0xFFFFFFFF) {
+         addr = returnAddr;
+         returnAddr = 0xFFFFFFFF;
+      }
+      else
+         addr += 0x20;
+      break;
     }
 #ifndef _arch_dreamcast
     try { command = vram->getWord(addr); }
@@ -128,6 +133,7 @@ void Vdp1::execute(unsigned long addr) {
 #else
     command = vram->getWord(addr);
 #endif
+    commandCounter++;    
   }
   // we set two bits to 1
   setWord(0x10, getWord(0x10) | 2);
@@ -430,8 +436,8 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
         // Setup Zoom Point
         switch ((CMDCTRL & 0xF00) >> 8) {
            case 0x0: // Only two coordinates
-                     rw = w;
-                     rh = h;
+                     rw = CMDXC - x;
+                     rh = CMDYC - y;
                      break;
            case 0x5: // Upper-left
                      rw = CMDXB;
@@ -569,15 +575,65 @@ void Vdp1::polygonDraw(unsigned long addr) {
 }
 
 void Vdp1::polylineDraw(unsigned long addr) {
-#if VDP1_DEBUG
-  cerr << "vdp1\t: polyline draw" << endl;
-#endif
+	short X[4];
+	short Y[4];
+	
+	X[0] = localX + (vram->getWord(addr + 0x0C) );
+	Y[0] = localY + (vram->getWord(addr + 0x0E) );
+	X[1] = localX + (vram->getWord(addr + 0x10) );
+	Y[1] = localY + (vram->getWord(addr + 0x12) );
+	X[2] = localX + (vram->getWord(addr + 0x14) );
+	Y[2] = localY + (vram->getWord(addr + 0x16) );
+	X[3] = localX + (vram->getWord(addr + 0x18) );
+	Y[3] = localY + (vram->getWord(addr + 0x1A) );
+
+	unsigned short color = vram->getWord(addr + 0x6);
+	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
+
+	float alpha = 1;
+	if ((CMDPMOD & 0x7) == 0x3) alpha = 0.5;
+
+        if ((color & 0x8000) == 0) alpha = 0;
+
+	int priority = ((Vdp2*) satmem->getVdp2())->getWord(0xF0) & 0x7;
+
+	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
+        glBegin(GL_LINE_STRIP);
+        glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
+        glVertex3f((float) X[1]/satwidthhalf - 1, 1 - (float) Y[1]/satheighthalf, priority);
+        glVertex3f((float) X[2]/satwidthhalf - 1, 1 - (float) Y[2]/satheighthalf, priority);
+        glVertex3f((float) X[3]/satwidthhalf - 1, 1 - (float) Y[3]/satheighthalf, priority);
+        glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
+	glEnd();
+	glColor4f(1, 1, 1, 1);
 }
 
 void Vdp1::lineDraw(unsigned long addr) {
-#if VDP1_DEBUG
-  cerr << "vdp1\t: line draw" << endl;
-#endif
+        short X[2];
+        short Y[2];
+	
+	X[0] = localX + (vram->getWord(addr + 0x0C) );
+	Y[0] = localY + (vram->getWord(addr + 0x0E) );
+	X[1] = localX + (vram->getWord(addr + 0x10) );
+	Y[1] = localY + (vram->getWord(addr + 0x12) );
+
+	unsigned short color = vram->getWord(addr + 0x6);
+	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
+
+	float alpha = 1;
+	if ((CMDPMOD & 0x7) == 0x3) alpha = 0.5;
+
+        if ((color & 0x8000) == 0) alpha = 0;
+
+	int priority = ((Vdp2*) satmem->getVdp2())->getWord(0xF0) & 0x7;
+
+
+	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
+        glBegin(GL_LINES);
+        glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
+        glVertex3f((float) X[1]/satwidthhalf - 1, 1 - (float) Y[1]/satheighthalf, priority);
+	glEnd();
+	glColor4f(1, 1, 1, 1);
 }
 
 void Vdp1::userClipping(unsigned long addr) {
@@ -691,7 +747,7 @@ void Vdp1::toggleDisplay(void) {
    disptoggle ^= true;
 }
 
-void Vdp1::setTextureRatio(int width, int height) {
+void Vdp1::setTextureSize(int width, int height) {
    satwidthhalf = width / 2;
    satheighthalf = height / 2;
 }
