@@ -29,11 +29,15 @@ int stop;
 char SDL_windowhack[32];
 HINSTANCE y_hInstance;
 
+char biosfilename[MAX_PATH] = "\0";
+char cdromdriveletter=0;
+
 unsigned long mtrnssaddress=0x06000000;
 unsigned long mtrnseaddress=0x06100000;
 char mtrnsfilename[MAX_PATH] = "\0";
 char mtrnsreadwrite=0;
 bool mtrnssetpc=true;
+
 SaturnMemory *yabausemem;
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
@@ -91,29 +95,16 @@ void yui_init(int (*yab_main)(void*)) {
           return;
 
         // get program pathname
-//        INIFileNameSize = GetModuleFileName(hInstance, INIFileName, MAX_PATH);
+        INIFileNameSize = GetModuleFileName(hInstance, INIFileName, MAX_PATH);
 
         // set pointer to start of extension
-//        pINIFileName = INIFileName + INIFileNameSize - 4;
+        pINIFileName = INIFileName + INIFileNameSize - 4;
 
-//      // replace .exe with .ini
-//      sprintf(pINIFileName, ".ini\0");
+        // replace .exe with .ini
+        sprintf(pINIFileName, ".ini\0");
 
-/*
-        GetPrivateProfileString("GeneralSection", "TilePath", "", gszInitialDir, MAX_PATH, INIFileName);
-        GetPrivateProfileString("GeneralSection", "PalettePath", "", gszPaletteInitialDir, MAX_PATH, INIFileName);
-        GetPrivateProfileString("GeneralSection", "BitmapPath", "", gszBitmapInitialDir, MAX_PATH, INIFileName);
-
-        bpp = GetPrivateProfileInt("VisualsSection","DefaultBPPMode", 4, INIFileName);
-
-        tile_width = GetPrivateProfileInt("VisualsSection","DefaultTileWidth", MAX_WIDTH, INIFileName);
-        tile_height = GetPrivateProfileInt("VisualsSection","DefaultTileHeight", MAX_HEIGHT, INIFileName);
-
-        auto_col = GetPrivateProfileInt("VisualsSection","AutoAdjustColumns", TRUE, INIFileName);
-        num_col = GetPrivateProfileInt("VisualsSection","DefaultNumberOfColumns", 1, INIFileName);
-        usr_col = num_col;
-        num_row = GetPrivateProfileInt("VisualsSection","DefaultNumberOfRows", 1, INIFileName);
-*/
+        GetPrivateProfileString("GeneralSection", "BiosPath", "", biosfileame, MAX_PATH, INIFileName);
+        GetPrivateProfileString("GeneralSection", "CDROMDrive", "", &cdromdriveletter, 1, INIFileName);
 
         cx = 320 + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
         cy = 224 + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);
@@ -300,9 +291,6 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                GetDlgItemText(hDlg, IDC_EDITTEXT3, tempstr, 9);
                sscanf(tempstr, "%08x", &mtrnseaddress);
-
-               sprintf(tempstr, "Start address = %08x\nEnd address = %08x\n", mtrnssaddress, mtrnseaddress);
-               MessageBox (hDlg, tempstr, "Notice",  MB_OK | MB_ICONINFORMATION);
 
                if ((mtrnseaddress - mtrnssaddress) < 0)
                {
