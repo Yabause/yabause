@@ -298,14 +298,10 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
         msh = new SuperH(false, this);
         ssh = new SuperH(true, this);
 
-	//Timer::initSuperH(msh);
-
 	rom         = new Memory(0xFFFFF, 0x80000);
 	ram         = new Memory(0xFFFF, 0x10000);
 	ramLow      = new Memory(0xFFFFF, 0x100000);
-//        minit       = new LoggedMemory("minit", new Dummy(0x7FFFFF), 1);
         minit = new InputCaptureSignal(ssh);
-//        sinit       = new LoggedMemory("sinit", new Dummy(0x7FFFFF), 1);
         sinit = new InputCaptureSignal(msh);
 	cs0	      = new Dummy(0xFFFFFF);
 	cs1         = new Cs1();
@@ -371,9 +367,6 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
         changeTiming(26846587, false);
 
 	msh->setMemory(this);
-	//mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
-//        sshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, ssh);
-	//msh->run();
 	sshRunning = false;
 }
 
@@ -382,19 +375,9 @@ SaturnMemory::~SaturnMemory(void) {
 #if DEBUG
   cerr << "stopping master sh2\n";
 #endif
-  //msh->stop();
 #if DEBUG
   cerr << "master sh2 stopped\n";
 #endif
-
-//#if DEBUG
-//  cerr << "stopping slave sh2\n";
-//#endif
-//  ssh->stop();
-//  SDL_WaitThread(sshThread, NULL);
-//#if DEBUG
-//  cerr << "slave sh2 stopped\n";
-//#endif
 
   // Save Backup Ram file
   backupram = yui_saveram();
@@ -411,14 +394,8 @@ SaturnMemory::~SaturnMemory(void) {
   delete cs1;
   delete cs2;
   delete soundr;
-  //((Vdp2 *) vdp2_3)->stop();
   delete vdp2_3;
-/*
-  delete vdp2_1;
-  delete vdp2_2;
-*/
   delete vdp1_2;
-  //delete vdp1_1;
   delete scu;
   delete ramHigh;
 
@@ -506,36 +483,6 @@ SuperH *SaturnMemory::getCurrentSH(void) {
 SuperH *SaturnMemory::getSlaveSH(void) {
         return ssh;
 }
-
-/*
-Memory *SaturnMemory::getCS2(void) {
-        return cs2;
-}
-
-Memory *SaturnMemory::getVdp1Ram(void) {
-	return vdp1_1;
-}
-
-Memory *SaturnMemory::getVdp1(void) {
-	return vdp1_2;
-}
-
-Memory *SaturnMemory::getScu(void) {
-	return scu;
-}
-
-Memory *SaturnMemory::getScsp(void) {
-   return soundr;
-}
-
-Memory *SaturnMemory::getVdp2(void) {
-	return vdp2_3;
-}
-
-Memory *SaturnMemory::getSmpc(void) {
-	return smpc;
-}
-*/
 
 void SaturnMemory::initMemoryHandler(int begin, int end, Memory * m) {
 	for(int i = begin;i < end;i++)
@@ -657,27 +604,23 @@ void SaturnMemory::synchroStart(void) {
 	decilineCount++;
 	switch(decilineCount) {
 		case 9:
-			//SDL_CondBroadcast(cond[5]);
 			// HBlankIN
 			((Vdp2 *) vdp2_3)->HBlankIN();
 			break;
 		case 10:
 			// HBlankOUT
 			((Vdp2 *) vdp2_3)->HBlankOUT();
-			//SDL_CondBroadcast(cond[6]);
                         ((Scsp *)soundr)->run();
 			decilineCount = 0;
 			lineCount++;
 			switch(lineCount) {
 				case 224:
 					// VBlankIN
-					//SDL_CondBroadcast(cond[1]);
 					((Vdp2 *) vdp2_3)->VBlankIN();
 					break;
 				case 263:
 					// VBlankOUT
 					((Vdp2 *) vdp2_3)->VBlankOUT();
-					//SDL_CondBroadcast(cond[2]);
 					lineCount = 0;
 					break;
 			}

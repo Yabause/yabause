@@ -1711,9 +1711,9 @@ void Vdp2::drawBackScreen(void) {
 	unsigned long scrAddr;
 
 	if (getWord(0x6) & 0x8000)
-		scrAddr = ((BKTAU & 0x7 << 16) | BKTAL) * 2;
+		scrAddr = (((BKTAU & 0x7) << 16) | BKTAL) * 2;
 	else
-		scrAddr = ((BKTAU & 0x3 << 16) | BKTAL) * 2;
+		scrAddr = (((BKTAU & 0x3) << 16) | BKTAL) * 2;
 
 	unsigned short dot;
 	if (BKTAU & 0x8000) {
@@ -1722,23 +1722,23 @@ void Vdp2::drawBackScreen(void) {
 		for(y = -112;y < 112;y++) {
 			dot = vram->getWord(scrAddr);
 			scrAddr += 2;
-			glColor3f((float) ((dot & 0x1F) << 3) / 0xFF, (float) ((dot & 0x3E0) >> 2) / 0xFF, (float) ((dot & 0x7C00) >> 7) / 0xFF);
+			glColor3ub(((dot & 0x1F) << 3), ((dot & 0x3E0) >> 2), ((dot & 0x7C00) >> 7));
 			glVertex2f(-1, (float) y / 112);
 			glVertex2f(1, (float) y / 112);
 		}
 		glEnd();
-		glColor3f(1, 1, 1);
+		glColor3ub(0xFF, 0xFF, 0xFF);
 	}
 	else {
 		dot = vram->getWord(scrAddr);
-		glColor3f((float) ((dot & 0x1F) << 3) / 0xFF, (float) ((dot & 0x3E0) >> 2) / 0xFF, (float) ((dot & 0x7C00) >> 7) / 0xFF);
+		glColor3ub(((dot & 0x1F) << 3), ((dot & 0x3E0) >> 2), ((dot & 0x7C00) >> 7));
 		glBegin(GL_QUADS);
 		glVertex2f(-1, 1);
 		glVertex2f(1, 1);
 		glVertex2f(1, -1);
 		glVertex2f(-1, -1);
 		glEnd();
-		glColor3f(1, 1, 1);
+		glColor3ub(0xFF, 0xFF, 0xFF);
 	}
 }
 

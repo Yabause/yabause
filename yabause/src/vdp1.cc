@@ -542,14 +542,14 @@ void Vdp1::polygonDraw(unsigned long addr) {
 	unsigned short color = vram->getWord(addr + 0x6);
 	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
 
-	float alpha = 1;
-	if ((CMDPMOD & 0x7) == 0x3) alpha = 0.5;
+	unsigned char alpha = 0xFF;
+	if ((CMDPMOD & 0x7) == 0x3) alpha = 0x80;
 
         if ((color & 0x8000) == 0) alpha = 0;
 
         int priority = vdp2reg->getWord(0xF0) & 0x7;
 
-	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
+	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
 	glBegin(GL_QUADS);
 
         glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
@@ -557,7 +557,7 @@ void Vdp1::polygonDraw(unsigned long addr) {
         glVertex3f((float) X[2]/satwidthhalf - 1, 1 - (float) Y[2]/satheighthalf, priority);
         glVertex3f((float) X[3]/satwidthhalf - 1, 1 - (float) Y[3]/satheighthalf, priority);
 	glEnd();
-	glColor4f(1, 1, 1, 1);
+	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
 }
 
 void Vdp1::polylineDraw(unsigned long addr) {
@@ -576,14 +576,14 @@ void Vdp1::polylineDraw(unsigned long addr) {
 	unsigned short color = vram->getWord(addr + 0x6);
 	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
 
-	float alpha = 1;
-	if ((CMDPMOD & 0x7) == 0x3) alpha = 0.5;
+	unsigned char alpha = 0xFF;
+	if ((CMDPMOD & 0x7) == 0x3) alpha = 0x80;
 
         if ((color & 0x8000) == 0) alpha = 0;
 
         int priority = vdp2reg->getWord(0xF0) & 0x7;
 
-	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
+	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
         glBegin(GL_LINE_STRIP);
         glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
         glVertex3f((float) X[1]/satwidthhalf - 1, 1 - (float) Y[1]/satheighthalf, priority);
@@ -591,7 +591,7 @@ void Vdp1::polylineDraw(unsigned long addr) {
         glVertex3f((float) X[3]/satwidthhalf - 1, 1 - (float) Y[3]/satheighthalf, priority);
         glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
 	glEnd();
-	glColor4f(1, 1, 1, 1);
+	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
 }
 
 void Vdp1::lineDraw(unsigned long addr) {
@@ -606,20 +606,20 @@ void Vdp1::lineDraw(unsigned long addr) {
 	unsigned short color = vram->getWord(addr + 0x6);
 	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
 
-	float alpha = 1;
-	if ((CMDPMOD & 0x7) == 0x3) alpha = 0.5;
+	unsigned char alpha = 0xFF;
+	if ((CMDPMOD & 0x7) == 0x3) alpha = 0x80;
 
         if ((color & 0x8000) == 0) alpha = 0;
 
         int priority = vdp2reg->getWord(0xF0) & 0x7;
 
 
-	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
+	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
         glBegin(GL_LINES);
         glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
         glVertex3f((float) X[1]/satwidthhalf - 1, 1 - (float) Y[1]/satheighthalf, priority);
 	glEnd();
-	glColor4f(1, 1, 1, 1);
+	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
 }
 
 void Vdp1::userClipping(unsigned long addr) {
