@@ -1,4 +1,5 @@
-/*  Copyright 2004 Theo Berkau
+/*  Copyright 2004-2005 Theo Berkau
+    Copyright 2005 Joost Peters
 
     This file is part of Yabause.
 
@@ -18,15 +19,20 @@
 */
 
 #include <windows.h>
-#include <ddk/ntddcdrm.h>
-#include <ddk/ntddscsi.h>
 #include <stdio.h>
+#include "cd.hh"
 
-HANDLE hCDROM;
-SCSI_PASS_THROUGH_DIRECT sptd;
+WindowsCDDrive::WindowsCDDrive(const char *cdrom_name) {
+        init(cdrom_name);
+}
 
-int CDInit(char *cdrom_name)
-{
+WindowsCDDrive::~WindowsCDDrive() {
+	deinit();
+}
+
+const char *WindowsCDDrive::deviceName() { return "Windows SPTI driver"; }
+
+int WindowsCDDrive::init(const char *cdrom_name) {
    char pipe_name[7];
 
    sprintf(pipe_name, "\\\\.\\?:\0");
@@ -48,15 +54,13 @@ int CDInit(char *cdrom_name)
    return 0;
 }
 
-int CDDeInit()
-{
+int WindowsCDDrive::deinit() {
    CloseHandle(hCDROM);
 
    return 0;
 }
 
-int CDGetStatus()
-{
+int WindowsCDDrive::getStatus(void) {
    // This function is called periodically to see what the status of the
    // drive is.
    //
@@ -130,8 +134,8 @@ int CDGetStatus()
 
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
-long CDReadToc(unsigned long *TOC)
-{
+long WindowsCDDrive::readTOC(unsigned long *TOC) {
+//   FILE *debugfp;
    CDROM_TOC ctTOC;
    DWORD dwNotUsed;
    int i;
@@ -170,14 +174,17 @@ long CDReadToc(unsigned long *TOC)
                  (ctTOC.TrackData[ctTOC.LastTrack].Adr << 24) |
                   MSF_TO_FAD(ctTOC.TrackData[ctTOC.LastTrack].Address[1], ctTOC.TrackData[ctTOC.LastTrack].Address[2], ctTOC.TrackData[ctTOC.LastTrack].Address[3]);
 
+//      debugfp = fopen("cot2toc.bin", "wb");
+//      fwrite((void *)TOC, 1, 0xCC * 2, debugfp);
+//      fclose(debugfp);
+
       return (0xCC * 2);
    }
 
    return 0;
 }
 
-bool CDReadSectorFAD(unsigned long FAD, void *buffer)
-{
+bool WindowsCDDrive::readSectorFAD(unsigned long FAD, void *buffer) {
    // This function is supposed to read exactly 1 -RAW- 2352-byte sector at
    // the specified FAD address to buffer. Should return true if successful,
    // false if there was an error.
@@ -236,4 +243,3 @@ bool CDReadSectorFAD(unsigned long FAD, void *buffer)
 
    return true;
 }
-

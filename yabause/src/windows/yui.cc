@@ -1,5 +1,6 @@
 /*  Copyright 2004 Guillaume Duhamel
-    Copyright 2004 Theo Berkau
+    Copyright 2004-2005 Theo Berkau
+    Copyright 2005 Joost Peters
 
     This file is part of Yabause.
 
@@ -27,7 +28,7 @@
 #include "../yui.hh"
 #include "resource.h"
 #include "settings.hh"
-//#include "cd.hh"
+#include "cd.hh"
 
 int stop;
 int yabwinw;
@@ -77,7 +78,7 @@ char vdp2bmsizestr[4][10]=
 "1024x512"
 };
 
-//CDInterface *cd = 0;
+CDInterface *cd = 0;
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -94,13 +95,9 @@ char * yui_bios(void) {
         return biosfilename;
 }
 
-char * yui_cdrom(void) {
-        return cdrompath; 
+CDInterface *yui_cd(void) {
+        return cd;
 }
-
-//CDInterface *yui_cd(void) {
-//        return cd;
-//}
 
 char * yui_saveram(void) {
         return backupramfilename;
@@ -261,7 +258,7 @@ void yui_init(int (*yab_main)(void*)) {
 
 	stop = 0;
 //        cd = new DummyCDDrive();
-//        cd = new WindowsCDDrive(cdrompath);
+        cd = new WindowsCDDrive(cdrompath);
         mem = new SaturnMemory();
         yabausemem = mem;
         while (!stop) { yab_main(mem); }
