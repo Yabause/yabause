@@ -87,6 +87,21 @@ Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
 
 void Smpc::execute(Smpc *smpc) {
   switch(smpc->getCOMREG()) {
+  case 0x0:
+#if DEBUG
+    cerr << "smpc\t: MSHON not implemented\n";
+#endif
+    break;
+  case 0x2:
+#if DEBUG
+    cerr << "smpc\t: SSHON not implemented\n";
+#endif
+    break;
+  case 0x3:
+#if DEBUG
+    cerr << "smpc\t: SSHOFF not implemented\n";
+#endif
+    break;
   case 0x6:
 #if DEBUG
     cerr << "smpc\t: SNDON\n";
@@ -98,6 +113,31 @@ void Smpc::execute(Smpc *smpc) {
     cerr << "smpc\t: SNDOFF\n";
 #endif
     smpc->SNDOFF();
+    break;
+  case 0x8:
+#if DEBUG
+    cerr << "smpc\t: CDON not implemented\n";
+#endif
+    break;
+  case 0x9:
+#if DEBUG
+    cerr << "smpc\t: CDOFF not implemented\n";
+#endif
+    break;
+  case 0xD:
+#if DEBUG
+    cerr << "smpc\t: SYSRES not implemented\n";
+#endif
+    break;
+  case 0xE:
+#if DEBUG
+    cerr << "smpc\t: CKCHG352 not implemented\n";
+#endif
+    break;
+  case 0xF:
+#if DEBUG
+    cerr << "smpc\t: CKCHG320 not implemented\n";
+#endif
     break;
   case 0x10:
 #if DEBUG
