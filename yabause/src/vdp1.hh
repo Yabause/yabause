@@ -32,6 +32,7 @@
 #endif
 
 #include <vector>
+#include "vdp2.hh"
 
 #ifdef _arch_dreamcast
 #define SAT2YAB1(alpha,temp)		((0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10)
@@ -73,7 +74,7 @@ class Vdp1VRAM : public Memory	{
 		void addSprite(vdp1Sprite &sp);
 };
 
-class Vdp1 : public Cpu, public Memory {
+class Vdp1 : public Cpu, public Memory, public VdpScreen {
 private:
   GLuint texture[1];
   SaturnMemory *satmem;
@@ -127,6 +128,10 @@ public:
   void userClipping(unsigned long);
   void systemClipping(unsigned long);
   void localCoordinate(unsigned long);
+
+  void draw(void);
+  int getPriority(void);
+  int getInnerPriority(void);
 };
 
 #endif

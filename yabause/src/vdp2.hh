@@ -20,7 +20,19 @@
 #ifndef VDP2_HH
 #define VDP2_HH
 
+#if 0
 #include "vdp1.hh"
+#endif
+#include "memory.hh"
+#include "cpu.hh"
+#ifdef WORDS_BIGENDIAN
+#include <OpenGL/gl.h>
+#else
+#ifdef __WIN32
+#include <windows.h>
+#endif
+#include <GL/gl.h>
+#endif
 
 class Scu;
 class Vdp2;
@@ -30,7 +42,7 @@ public:
   Vdp2Ram(void) : Memory(0x7FFFF, 0x80000) {}
 };
 
-class Vdp2Screen;
+//class Vdp2Screen;
 
 class Vdp2ColorRam : public Memory {
 private:
@@ -43,9 +55,17 @@ public:
 
   void setMode(int);
   unsigned long getColor(unsigned long addr, int alpha, int colorOffset);
-};                                                                        
+};
 
-class Vdp2Screen {
+class VdpScreen {
+public:
+	virtual void draw(void) = 0;
+	virtual int getPriority(void) = 0;
+	virtual int getInnerPriority(void) = 0;
+	static int comparePriority(const void *, const void *);
+};
+
+class Vdp2Screen : public VdpScreen {
 protected:
   unsigned long *surface;
   GLuint texture[1];
@@ -77,9 +97,11 @@ protected:
 public:
   Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, unsigned long *);
 
+  /*
   virtual int getPriority(void) = 0;
   virtual int getInnerPriority(void) = 0;
   static int comparePriority(const void *, const void *);
+  */
 
   void draw(void);
   void drawMap(void);
@@ -147,7 +169,7 @@ private:
   unsigned long *surface;
   //GLuint texture[1];
 
-  Vdp2Screen *screens[5];
+  VdpScreen *screens[6];
   SaturnMemory *satmem;
 
 public:
@@ -162,7 +184,7 @@ public:
   static void lancer(Vdp2 *);
   void executer(void);
 
-  Vdp2Screen *getScreen(int);
+  VdpScreen *getScreen(int);
   void sortScreens(void);
   void updateRam(void);
 

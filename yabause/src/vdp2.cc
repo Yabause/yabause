@@ -18,6 +18,7 @@
 */
 
 #include "vdp2.hh"
+#include "vdp1.hh"
 #include "saturn.hh"
 #include "scu.hh"
 #include "timer.hh"
@@ -40,7 +41,10 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
       break;
     case 0xE0:
       Memory::setWord(addr, val);
+#ifdef DEBUG
       cerr << "sprite type modified" << endl;
+#endif
+      sortScreens();
       break;
     case 0xF8:
       Memory::setWord(addr, val);
@@ -121,9 +125,9 @@ Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, unsigned long *s) {
     surface = s;
 }
 
-int Vdp2Screen::comparePriority(const void *arg1, const void *arg2) {
-  Vdp2Screen **screen1 = (Vdp2Screen **) arg1;
-  Vdp2Screen **screen2 = (Vdp2Screen **) arg2;
+int VdpScreen::comparePriority(const void *arg1, const void *arg2) {
+  VdpScreen **screen1 = (VdpScreen **) arg1;
+  VdpScreen **screen2 = (VdpScreen **) arg2;
   int s1 = (*screen1)->getPriority();
   int is1 = (*screen1)->getInnerPriority();
   int s2 = (*screen2)->getPriority();
@@ -844,6 +848,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   free(surface->pixels);
   surface->pixels = memalign(32, 256 * 512 * 2);
 #endif
+  	screens[5] = (Vdp1 *) satmem->getVdp1();
   	screens[4] = new RBG0(this, vram, cram, surface);
   	screens[3] = new NBG0(this, vram, cram, surface);
   	screens[2] = new NBG1(this, vram, cram, surface);
@@ -852,7 +857,10 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
 }
 
 Vdp2::~Vdp2(void) {
-    for(int i = 0;i < 5;i++) delete screens[i];
+    for(int i = 0;i < 6;i++) {
+	    if (screens[i] != (Vdp1 *) satmem->getVdp1())
+	    	delete screens[i];
+    }
     delete [] surface;
     delete vram;
     delete cram;
@@ -894,13 +902,14 @@ void Vdp2::VBlankOUT(void) {
     screens[2]->draw();
     screens[3]->draw();
     screens[4]->draw();
+    screens[5]->draw();
   }
   
 #ifdef _arch_dreamcast
   glKosBeginFrame();
 #endif
 
-  ((Vdp1 *) satmem->getVdp1())->execute(0);
+  //((Vdp1 *) satmem->getVdp1())->execute(0);
   glFlush();
 #ifndef _arch_dreamcast
   SDL_GL_SwapBuffers();
@@ -911,12 +920,12 @@ void Vdp2::VBlankOUT(void) {
   ((Scu *) satmem->getScu())->sendVBlankOUT();
 }
 
-Vdp2Screen *Vdp2::getScreen(int i) {
+VdpScreen *Vdp2::getScreen(int i) {
   return screens[i];
 }
 
 void Vdp2::sortScreens(void) {
-  qsort(screens, 5, sizeof(Vdp2Screen *), &Vdp2Screen::comparePriority);
+  qsort(screens, 6, sizeof(VdpScreen *), &VdpScreen::comparePriority);
 }
 
 void Vdp2::updateRam(void) {

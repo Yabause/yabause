@@ -506,12 +506,14 @@ void Vdp1::polygonDraw(unsigned long addr) {
 
         if ((color & 0x8000) == 0) alpha = 0;
 
+	int priority = ((Vdp2*) satmem->getVdp2())->getWord(0xF0) & 0x7;
+
 	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
 	glBegin(GL_QUADS);
-	glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
-	glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);
-	glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
-	glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
+	glVertex3f((float) X[0]/160 - 1, 1 - (float) Y[0]/112, priority);
+	glVertex3f((float) X[1]/160 - 1, 1 - (float) Y[1]/112, priority);
+	glVertex3f((float) X[2]/160 - 1, 1 - (float) Y[2]/112, priority);
+	glVertex3f((float) X[3]/160 - 1, 1 - (float) Y[3]/112, priority);
 	glEnd();
 	glColor4f(1, 1, 1, 1);
 }
@@ -621,4 +623,16 @@ vdp1Sprite Vdp1VRAM::getSprite(unsigned long l)	{
 
 void Vdp1VRAM::addSprite(vdp1Sprite &spr)	{
 	sprites.push_back(spr);
+}
+
+void Vdp1::draw(void) {
+	execute(0);
+}
+
+int Vdp1::getPriority(void) {
+	return ((Vdp2*) satmem->getVdp2())->getWord(0xF0) & 0x7; //FIXME
+}
+
+int Vdp1::getInnerPriority(void) {
+	return 5;
 }
