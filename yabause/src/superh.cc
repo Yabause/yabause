@@ -312,16 +312,12 @@ void SuperH::bfs(void) { // FIXME peut être amélioré
 }
 
 void SuperH::bra(void) {
-  unsigned long temp;
-  long d = Instruction::bcd(instruction);
+  long disp = Instruction::bcd(instruction);
 
-  long disp;
-  if ((d&0x800)==0) disp=(0x00000FFF & d);
-  else disp=(0xFFFFF000 | d);
-  temp=PC;
+  if ((disp&0x800) != 0) disp |= 0xFFFFF000;
+  _delai = PC + 2;
   PC = PC + (disp<<1) + 4;
 
-  _delai = temp + 2;
   cycleCount += 2;
 }
 
@@ -338,11 +334,9 @@ void SuperH::braf(void) {
 }
 
 void SuperH::bsr(void) {
-  long disp;
-  long d = Instruction::bcd(instruction);
+  long disp = Instruction::bcd(instruction);
 
-  if ((d&0x800)==0) disp = (0x00000FFF & d);
-  else disp = (0xFFFFF000 | d);
+  if ((disp&0x800) != 0) disp |= 0xFFFFF000;
   PR = PC;
   PC = PC+(disp<<1) + 4;
 
