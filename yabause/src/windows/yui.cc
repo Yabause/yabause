@@ -920,14 +920,14 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             SendMessage(GetDlgItem(hDlg, IDC_NBG0ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
          }
 
+         ((NBG1 *)proc->getNBG1())->debugStats(tempstr, &isscrenabled);
+
          // is NBG1 enabled?
-         if (proc->getWord(0x20) & 0x2)
+         if (isscrenabled)
          {
             // enabled
             SendMessage(GetDlgItem(hDlg, IDC_NBG1ENABCB), BM_SETCHECK, BST_CHECKED, 0);
-
-            // Generate Info for NBG1
-            DisplayScreenCCRInfo(GetDlgItem(hDlg, IDC_NBG1LB), proc->getWord(0x28) >> 8);
+            SetDlgItemText(hDlg, IDC_NBG1LB, tempstr);
          }
          else
          {
@@ -935,21 +935,14 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             SendMessage(GetDlgItem(hDlg, IDC_NBG1ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
          }
 
+         ((NBG2 *)proc->getNBG2())->debugStats(tempstr, &isscrenabled);
+
          // is NBG2 enabled?
-         if (proc->getWord(0x20) & 0x4)
+         if (isscrenabled)
          {
             // enabled
             SendMessage(GetDlgItem(hDlg, IDC_NBG2ENABCB), BM_SETCHECK, BST_CHECKED, 0);
-
-            // Generate Info for NBG1
-            reg = proc->getWord(0x2A) & 0x3;
-
-            // bpp            
-            SendMessage(GetDlgItem(hDlg, IDC_NBG2LB), LB_ADDSTRING, 0, (LPARAM)vdp2bppstr[reg >> 1]);
-
-            // Tile size
-            sprintf(tempstr, "Tile(%s)", vdp2charsizestr[reg & 1]);
-            SendMessage(GetDlgItem(hDlg, IDC_NBG2LB), LB_ADDSTRING, 0, (LPARAM)tempstr);
+            SetDlgItemText(hDlg, IDC_NBG2LB, tempstr);
          }
          else
          {
@@ -957,21 +950,14 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             SendMessage(GetDlgItem(hDlg, IDC_NBG2ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
          }
 
+         ((NBG3 *)proc->getNBG3())->debugStats(tempstr, &isscrenabled);
+
          // is NBG3 enabled?
-         if (proc->getWord(0x20) & 0x8)
+         if (isscrenabled)
          {
             // enabled
             SendMessage(GetDlgItem(hDlg, IDC_NBG3ENABCB), BM_SETCHECK, BST_CHECKED, 0);
-
-            // Generate Info for NBG1
-            reg = (proc->getWord(0x2A) >> 4) & 0x3;
-
-            // bpp            
-            SendMessage(GetDlgItem(hDlg, IDC_NBG3LB), LB_ADDSTRING, 0, (LPARAM)vdp2bppstr[reg >> 1]);
-
-            // Tile size
-            sprintf(tempstr, "Tile(%s)", vdp2charsizestr[reg & 1]);
-            SendMessage(GetDlgItem(hDlg, IDC_NBG3LB), LB_ADDSTRING, 0, (LPARAM)tempstr);
+            SetDlgItemText(hDlg, IDC_NBG3LB, tempstr);
          }
          else
          {
@@ -1144,7 +1130,8 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                m68kregs_struct m68kregs;
 
-               // execute instruction here
+               // execute instruction
+               ((Scsp*)yabausemem->soundr)->step68k();
 
                ((Scsp*)yabausemem->soundr)->Get68kRegisters(&m68kregs);
                M68KUpdateRegList(hDlg, &m68kregs);
