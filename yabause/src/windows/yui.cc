@@ -121,11 +121,13 @@ void yui_init(int (*yab_main)(void*)) {
         int                         i, i2;
         DWORD inifilenamesize=0;
         char *pinifilename;
-        static char szAppName[] = "Yabause 0.0.6";
+        static char szAppName[128] = "Yabause 0.0.6";
         static char szClassName[] = "Yabause";
         RECT                        workarearect;
         DWORD ret;
         char tempstr[MAX_PATH];
+
+        sprintf(szAppName, "Yabause %s\0", VERSION);
 
         y_hInstance = GetModuleHandle(NULL);
 
