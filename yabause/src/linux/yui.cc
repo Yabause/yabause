@@ -122,8 +122,10 @@ void yui_init(int (*fonction)(void *)) {
 	GtkWidget *vbox;
 	GtkItemFactory *gif;
 	char *text;
+        int fake_argc = 0;
+        char ** fake_argv = NULL;
 
-	gtk_init (NULL, NULL);
+	gtk_init (&fake_argc, &fake_argv);
 
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	g_signal_connect(G_OBJECT (window), "key_press_event", G_CALLBACK (key_press), NULL);
