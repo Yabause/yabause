@@ -879,20 +879,20 @@ void Vdp2::lancer(Vdp2 *vdp2) {
 }
 
 void Vdp2::VBlankIN(void) {
-	setWord(0x4, getWord(0x4) | 0x0008);
+        setWord(0x4, getWord(0x4) | 0x0008);
 	((Scu *) satmem->getScu())->sendVBlankIN();
 }
 
 void Vdp2::HBlankIN(void) {
-	setWord(0x4, getWord(0x4) | 0x0004);
+        setWord(0x4, getWord(0x4) | 0x0004);
 }
 
 void Vdp2::HBlankOUT(void) {
-	setWord(0x4, getWord(0x4) & 0xFFFB);
+        setWord(0x4, getWord(0x4) & 0xFFFB);
 }
 
 void Vdp2::VBlankOUT(void) {
-  setWord(0x4, getWord(0x4) & 0xFFF7);
+  setWord(0x4, getWord(0x4) & 0xFFF7 | 0x0002);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   drawBackScreen();

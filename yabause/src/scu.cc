@@ -28,7 +28,7 @@ unsigned long Scu::getLong(unsigned long addr) {
 
 void Scu::setLong(unsigned long addr, unsigned long val) {
 	switch(addr) {
-		case 0x10: if (val & 0x1) DMA(0);
+                case 0x10: if (val & 0x1) DMA(0);
 			   Memory::setLong(addr, val);
 			   break;
                 case 0x14: if ((val & 0x7) != 7) {
@@ -48,7 +48,7 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
                            }
 			   Memory::setLong(addr, val);
                            break;
-                case 0x50: if (val & 0x1) DMA(2); 
+                case 0x50: if (val & 0x1) DMA(2);
 			   Memory::setLong(addr, val);
 			   break;
                 case 0x54: if ((val & 0x7) != 7) {
@@ -86,8 +86,6 @@ void Scu::DMA(int mode) {
 	unsigned long addValue = getLong(i + 0xC);
 	unsigned char readAdd, writeAdd;
 
-        if (mode > 0) transferNumber &= 0xFFF;
-
 	if (addValue & 0x100) readAdd = 4;
 	else readAdd = 0;
 	switch(addValue & 0x7) {
@@ -101,13 +99,59 @@ void Scu::DMA(int mode) {
 		case 0x7: writeAdd = 128; break;
 	}
 	if (getLong(i + 0x14) & 0x1000000) {
+                unsigned long tempreadAddress;
+                unsigned long tempwriteAddress;
+                unsigned long temptransferNumber;
+                unsigned long test, test2;
+
+                for (;;) {
+                   unsigned long counter = 0;
+
+                   temptransferNumber=satmem->getLong(writeAddress);
+                   tempwriteAddress=satmem->getLong(writeAddress+4);
+                   tempreadAddress=satmem->getLong(writeAddress+8);
+                   test = tempwriteAddress & 0x1FFFFFFF;
+                   test2 = tempreadAddress & 0x80000000;
+
+                   if (mode > 0) temptransferNumber &= 0xFFF;
+
+                   tempreadAddress &= 0x7FFFFFFF;
+    
+                   if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
+                        while(counter < temptransferNumber) {
+                                unsigned long tmp = satmem->getLong(tempreadAddress);
+                                satmem->setWord(tempwriteAddress, tmp >> 16);
+                                tempwriteAddress += writeAdd;
+                                satmem->setWord(tempwriteAddress, tmp & 0xFFFF);
+                                tempwriteAddress += writeAdd;
+                                tempreadAddress += readAdd;
+				counter += 4;
+			}
+                   }
+                   else {
 #if DEBUG
-		cerr << "indirect DMA not implemented" << endl;
+                        cerr << "indirect DMA, A Bus, not implemented" << endl;
 #endif
+                   }
+
+
+                   if (test2) break;
+
+                   writeAddress+= 0xC;
+                }
+
+		switch(mode) {
+			case 0: sendLevel0DMAEnd(); break;
+			case 1: sendLevel1DMAEnd(); break;
+			case 2: sendLevel2DMAEnd(); break;
+		}
 	}
 	else {
 		unsigned long counter = 0;
 		unsigned long test = writeAddress & 0x1FFFFFFF;
+
+                if (mode > 0) transferNumber &= 0xFFF;
+
 		if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
 			while(counter < transferNumber) {
 				unsigned long tmp = satmem->getLong(readAddress);

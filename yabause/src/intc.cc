@@ -390,9 +390,6 @@ void Onchip::run(unsigned long t) {
 */
 
 void Onchip::inputCaptureSignal(void) {
-#if DEBUG
-   cerr << "Input Capture Signal Received" << endl;
-#endif
    // Set Input Capture Flag
    Memory::setByte(FTCSR, Memory::getByte(FTCSR) | 0x80);
 
