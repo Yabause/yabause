@@ -164,20 +164,20 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha, int colorOff
   case 0: {
     addr *= 2; // thanks Runik!
     addr += colorOffset * 0x200;
-    unsigned long tmp = getWord(addr);
+    unsigned long tmp = readWord(this, addr);
     return SAT2YAB1(alpha, tmp);
   }
   case 1: {
     addr *= 2; // thanks Runik!
     addr += colorOffset * 0x200;
-    unsigned long tmp = getWord(addr);
+    unsigned long tmp = readWord(this, addr);
     return SAT2YAB1(alpha, tmp);
   }
   case 2: {
     addr *= 4;
     addr += colorOffset * 0x400;
-    unsigned long tmp1 = getWord(addr);
-    unsigned long tmp2 = getWord(addr + 2);
+    unsigned long tmp1 = readWord(this, addr);
+    unsigned long tmp2 = readWord(this, addr + 2);
     return SAT2YAB2(alpha, tmp1, tmp2);
   }
   default: break;
@@ -218,13 +218,12 @@ void Vdp2Screen::draw(void) {
         if (!(enable & disptoggle) || (getPriority() == 0)) return;
 
 	if (bitmap) {
-
 		drawCell();
 	}
 	else {
 		drawMap();
 	}
-        
+
 	if (*texture ==0) glGenTextures(1, texture );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
 #ifndef _arch_dreamcast
@@ -235,7 +234,6 @@ void Vdp2Screen::draw(void) {
 #else
         glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 1024, 512, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
 #endif
-
 	int p = getPriority();
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, texture[0] );
@@ -295,7 +293,8 @@ void Vdp2Screen::drawPage(void) {
 void Vdp2Screen::patternAddr(void) {
 	switch(patternDataSize) {
 	case 1: {
-		unsigned short tmp = vram->getWord(addr);
+                unsigned short tmp = readWord(vram, addr);
+
 		addr += 2;
 		specialFunction = supplementData & 0x300 >> 8;
     		switch(colorNumber) {
@@ -333,9 +332,10 @@ void Vdp2Screen::patternAddr(void) {
     		break;
 	}
   	case 2: {
-    		unsigned short tmp1 = vram->getWord(addr);
+                unsigned short tmp1 = readWord(vram, addr);
+
     		addr += 2;
-    		unsigned short tmp2 = vram->getWord(addr);
+                unsigned short tmp2 = readWord(vram, addr);
     		addr += 2;
     		charAddr = tmp2 & 0x7FFF;
     		flipFunction = (tmp1 & 0xC000) >> 14;
@@ -344,7 +344,8 @@ void Vdp2Screen::patternAddr(void) {
     		break;
 	}
 	}
-	if (!(reg->getWord(0x6) & 0x8000)) charAddr &= 0x3FFF;
+        if (!(readWord(reg, 0x6) & 0x8000)) charAddr &= 0x3FFF;
+
 	charAddr *= 0x20; // selon Runik
 }
 
@@ -407,7 +408,8 @@ void Vdp2Screen::drawCell(void) {
       for(int i = 0;i < cellH;i++) {
 	x = X;
 	for(int j = 0;j < cellW;j+=4) {
-	  unsigned short dot = vram->getWord(charAddr);
+          unsigned short dot = readWord(vram, charAddr);
+
 	  charAddr += 2;
 	  if (!(dot & 0xF000) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), alpha, colorOffset);
@@ -435,7 +437,8 @@ void Vdp2Screen::drawCell(void) {
       for(int i = 0;i < cellH;i++) {
 	x = X;
 	for(int j = 0;j < cellW;j+=2) {
-	  unsigned short dot = vram->getWord(charAddr);
+          unsigned short dot = readWord(vram, charAddr);
+
 	  charAddr += 2;
 	  if (!(dot & 0xFF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), alpha, colorOffset);
@@ -455,7 +458,7 @@ void Vdp2Screen::drawCell(void) {
       for(int i = 0;i < cellH;i++) {
 	x = X;
 	for(int j = 0;j < cellW;j++) {
-	  unsigned short dot = vram->getWord(charAddr);
+          unsigned short dot = readWord(vram, charAddr);
 	  if ((dot == 0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor(dot, alpha, colorOffset);
 	  charAddr += 2;
@@ -471,7 +474,7 @@ void Vdp2Screen::drawCell(void) {
       for(int i = 0;i < cellH;i++) {
 	x = X;
 	for(int j = 0;j < cellW;j++) {
-	  unsigned short dot = vram->getWord(charAddr);
+          unsigned short dot = readWord(vram, charAddr);
 	  charAddr += 2;
           if (!(dot & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB1(0xFF, dot);
@@ -487,9 +490,9 @@ void Vdp2Screen::drawCell(void) {
       for(int i = 0;i < cellH;i++) {
 	x = X;
 	for(int j = 0;j < cellW;j++) {
-	  unsigned short dot1 = vram->getWord(charAddr);
+          unsigned short dot1 = readWord(vram, charAddr);
 	  charAddr += 2;
-	  unsigned short dot2 = vram->getWord(charAddr);
+          unsigned short dot2 = readWord(vram, charAddr);
 	  charAddr += 2;
           if (!(dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB2(alpha, dot1, dot2);
@@ -517,7 +520,7 @@ void Vdp2Screen::toggleDisplay(void) {
 void Vdp2Screen::readRotationTable(unsigned long addr) {
 	long i;
 
-	i = vram->getLong(addr);
+        i = vram->getLong(addr);
 	Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
 	addr += 4;
 
@@ -569,27 +572,28 @@ void Vdp2Screen::readRotationTable(unsigned long addr) {
 	F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
 	addr += 4;
 
-	i = vram->getWord(addr);
+        i = readWord(vram, addr);
+
 	Px = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
 	addr += 2;
 
-	i = vram->getWord(addr);
+        i = readWord(vram, addr);
 	Py = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
 	addr += 2;
 
-	i = vram->getWord(addr);
+        i = readWord(vram, addr);
 	Pz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
 	addr += 4;
 
-	i = vram->getWord(addr);
+        i = readWord(vram, addr);
 	Cx = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
 	addr += 2;
 
-	i = vram->getWord(addr);
+        i = readWord(vram, addr);
 	Cy = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
 	addr += 2;
 
-	i = vram->getWord(addr);
+        i = readWord(vram, addr);
 	Cz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
 	addr += 4;
 
@@ -643,8 +647,8 @@ int RBG0::getY(int Hcnt, int Vcnt) {
 
 void RBG0::init(void) {
         // For now, let's treat it like a regular scroll screen
-        unsigned short patternNameReg = reg->getWord(0x38);
-        unsigned short patternReg = reg->getWord(0x2A);
+        unsigned short patternNameReg = readWord(reg, 0x38);
+        unsigned short patternReg = readWord(reg, 0x2A);
 	unsigned long rotTableAddressA;
 	unsigned long rotTableAddressB;
 	rotTableAddressA = rotTableAddressB = reg->getLong(0xBC) << 1;
@@ -653,8 +657,8 @@ void RBG0::init(void) {
 
 	readRotationTable(rotTableAddressA);
 
-        enable = reg->getWord(0x20) & 0x10;
-        transparencyEnable = !(reg->getWord(0x20) & 0x1000);
+        enable = readWord(reg, 0x20) & 0x10;
+        transparencyEnable = !(readWord(reg, 0x20) & 0x1000);
 
         // Figure out which Rotation parameter to use here(or use both)
         unsigned long rotParaModeReg = reg->getLong(0xB0) & 0x3;
@@ -673,8 +677,8 @@ void RBG0::init(void) {
                                 break;
                 }
 
-                charAddr = (reg->getWord(0x3E) & 0x7) * 0x20000; // this is obviously wrong
-                palAddr = (reg->getWord(0x2E) & 0x7) << 4;
+                charAddr = (readWord(reg, 0x3E) & 0x7) * 0x20000;
+                palAddr = (readWord(reg, 0x2E) & 0x7) << 4;
                 flipFunction = 0;
                 specialFunction = 0;
         }
@@ -683,10 +687,10 @@ void RBG0::init(void) {
 		unsigned char planeSize;
 		switch(rotParaModeReg) {
 			case 0:
-				planeSize = (reg->getWord(0x3A) & 0x300) >> 8;
+                                planeSize = (readWord(reg, 0x3A) & 0x300) >> 8;
 				break;
 			case 1:
-				planeSize = (reg->getWord(0x3A) & 0x3000) >> 12;
+                                planeSize = (readWord(reg, 0x3A) & 0x3000) >> 12;
 				break;
 			default:
 #if VDP2_DEBUG
@@ -709,31 +713,31 @@ void RBG0::init(void) {
   		supplementData = patternNameReg & 0x3FF;
   		auxMode = (patternNameReg & 0x4000) >> 14;
         }
-	unsigned short colorCalc = reg->getWord(0xEC);
+        unsigned short colorCalc = readWord(reg, 0xEC);
 	if (colorCalc & 0x1000) {
-		alpha = ((~reg->getWord(0x108) & 0x1F) << 3) + 0x7;
+                alpha = ((~readWord(reg, 0x108) & 0x1F) << 3) + 0x7;
 	}
 	else {
 		alpha = 0xFF;
 	}
 
-        colorOffset = reg->getWord(0xE6) & 0x7;
-	if (reg->getWord(0x110) & 0x10) { // color offset enable
-		if (reg->getWord(0x112) & 0x10) { // color offset B
-			cor = reg->getWord(0x11A) & 0xFF;
-			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x11C) & 0xFF;
-			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x11E) & 0xFF;
-			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+        colorOffset = readWord(reg, 0xE6) & 0x7;
+        if (readWord(reg, 0x110) & 0x10) { // color offset enable
+                if (readWord(reg, 0x112) & 0x10) { // color offset B
+                        cor = readWord(reg, 0x11A) & 0xFF;
+                        if (readWord(reg, 0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x11C) & 0xFF;
+                        if (readWord(reg, 0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x11E) & 0xFF;
+                        if (readWord(reg, 0x11E) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 		else { // color offset A
-			cor = reg->getWord(0x114) & 0xFF;
-			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x116) & 0xFF;
-			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x118) & 0xFF;
-			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+                        cor = readWord(reg, 0x114) & 0xFF;
+                        if (readWord(reg, 0x114) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x116) & 0xFF;
+                        if (readWord(reg, 0x116) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x118) & 0xFF;
+                        if (readWord(reg, 0x118) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 	}
 	else { // color offset disable
@@ -743,7 +747,7 @@ void RBG0::init(void) {
 
 void RBG0::planeAddr(int i) {
 	// works only for parameter A for time being
-	unsigned long offset = (reg->getWord(0x3E) & 0x7) << 6;
+        unsigned long offset = (readWord(reg, 0x3E) & 0x7) << 6;
         unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x51); break;
@@ -777,7 +781,7 @@ void RBG0::planeAddr(int i) {
 }
 
 int RBG0::getPriority(void) {
-	return (reg->getWord(0xFC) & 0x7);
+        return (readWord(reg, 0xFC) & 0x7);
 }
 
 int RBG0::getInnerPriority(void) {
@@ -788,15 +792,15 @@ void RBG0::debugStats(char *outstring, bool *isenabled) {
 }
 
 void NBG0::init(void) {
-	unsigned short patternNameReg = reg->getWord(0x30);
-	unsigned short patternReg = reg->getWord(0x28);
+        unsigned short patternNameReg = readWord(reg, 0x30);
+        unsigned short patternReg = readWord(reg, 0x28);
 	/* FIXME should start by checking if it's a normal
 	 * or rotate scroll screen
 	*/
-	enable = reg->getWord(0x20) & 0x1;
-	transparencyEnable = !(reg->getWord(0x20) & 0x100);
-	x = - reg->getWord(0x70);
-	y = - reg->getWord(0x74);
+        enable = readWord(reg, 0x20) & 0x1;
+        transparencyEnable = !(readWord(reg, 0x20) & 0x100);
+        x = - readWord(reg, 0x70);
+        y = - readWord(reg, 0x74);
 
   	colorNumber = (patternReg & 0x70) >> 4;
 	if(bitmap = patternReg & 0x2) {
@@ -814,14 +818,14 @@ void NBG0::init(void) {
 				cellH = 512;
                                 break;                                                           
 		}
-		charAddr = (reg->getWord(0x3C) & 0x7) * 0x20000;
-		palAddr = (reg->getWord(0x2C) & 0x7) << 4;
+                charAddr = (readWord(reg, 0x3C) & 0x7) * 0x20000;
+                palAddr = (readWord(reg, 0x2C) & 0x7) << 4;
 		flipFunction = 0;
 		specialFunction = 0;
   	}
   	else {
 		mapWH = 2;
-  		switch(reg->getWord(0x3A) & 0x3) {
+                switch(readWord(reg, 0x3A) & 0x3) {
   			case 0: planeW = planeH = 1; break;
   			case 1: planeW = 2; planeH = 1; break;
   			case 2: planeW = planeH = 2; break;
@@ -835,31 +839,31 @@ void NBG0::init(void) {
   		supplementData = patternNameReg & 0x3FF;
   		auxMode = (patternNameReg & 0x4000) >> 14;
   	}
-	unsigned short colorCalc = reg->getWord(0xEC);
+        unsigned short colorCalc = readWord(reg, 0xEC);
 	if (colorCalc & 0x1) {
-		alpha = ((~reg->getWord(0x108) & 0x1F) << 3) + 0x7;
+                alpha = ((~readWord(reg, 0x108) & 0x1F) << 3) + 0x7;
 	}
 	else {
 		alpha = 0xFF;
 	}
 
-	colorOffset = reg->getWord(0xE4) & 0x7;
-	if (reg->getWord(0x110) & 0x1) { // color offset enable
-		if (reg->getWord(0x112) & 0x1) { // color offset B
-			cor = reg->getWord(0x11A) & 0xFF;
-			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x11C) & 0xFF;
-			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x11E) & 0xFF;
-			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+        colorOffset = readWord(reg, 0xE4) & 0x7;
+        if (readWord(reg, 0x110) & 0x1) { // color offset enable
+                if (readWord(reg, 0x112) & 0x1) { // color offset B
+                        cor = readWord(reg, 0x11A) & 0xFF;
+                        if (readWord(reg, 0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x11C) & 0xFF;
+                        if (readWord(reg, 0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x11E) & 0xFF;
+                        if (readWord(reg, 0x11E) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 		else { // color offset A
-			cor = reg->getWord(0x114) & 0xFF;
-			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x116) & 0xFF;
-			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x118) & 0xFF;
-			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+                        cor = readWord(reg, 0x114) & 0xFF;
+                        if (readWord(reg, 0x114) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x116) & 0xFF;
+                        if (readWord(reg, 0x116) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x118) & 0xFF;
+                        if (readWord(reg, 0x118) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 	}
 	else { // color offset disable
@@ -868,7 +872,7 @@ void NBG0::init(void) {
 }
 
 void NBG0::planeAddr(int i) {
-	unsigned long offset = (reg->getWord(0x3C) & 0x7) << 6;
+        unsigned long offset = (readWord(reg, 0x3C) & 0x7) << 6;
         unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x41); break;
@@ -878,7 +882,7 @@ void NBG0::planeAddr(int i) {
   	}
   	int deca = planeH + planeW - 2;
   	int multi = planeH * planeW;
-	//if (reg->getWord(0x6) & 0x8000) {
+        //if (readWord(reg, 0x6) & 0x8000) {
   		if (patternDataSize == 1) {
 	  		if (patternWH == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
 	  		else addr = (tmp >> deca) * (multi * 0x800);
@@ -909,13 +913,13 @@ int NBG0::getInnerPriority(void) {
 }
 
 void NBG0::debugStats(char *outstring, bool *isenabled) {
-  unsigned short screenDisplayReg = reg->getWord(0x20);
-  unsigned short mosaicReg = reg->getWord(0x22);
-//  unsigned short specialFunctionReg = reg->getWord(0x24);
-  unsigned short patternReg = reg->getWord(0x28);
-  unsigned short patternNameReg = reg->getWord(0x30);
-//  unsigned short mapOffsetReg = reg->getWord(0x3C);
-  unsigned short lineVerticalScrollReg = reg->getWord(0x9A) & 0x3F;
+  unsigned short screenDisplayReg = readWord(reg, 0x20);
+  unsigned short mosaicReg = readWord(reg, 0x22);
+//  unsigned short specialFunctionReg = readWord(reg, 0x24);
+  unsigned short patternReg = readWord(reg, 0x28);
+  unsigned short patternNameReg = readWord(reg, 0x30);
+//  unsigned short mapOffsetReg = readWord(reg, 0x3C);
+  unsigned short lineVerticalScrollReg = readWord(reg, 0x9A) & 0x3F;
   unsigned char planeSize;
 
   // is NBG0/RBG1 enabled?
@@ -968,7 +972,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
      // Bitmap or Tile mode?(RBG1 can only do Tile mode)
      if (patternReg & 0x0002 && !(screenDisplayReg & 0x20))
      {
-        unsigned short bmpPalNumberReg = reg->getWord(0x2C);
+        unsigned short bmpPalNumberReg = readWord(reg, 0x2C);
 
         // Bitmap
         switch((patternReg & 0xC) >> 2) {
@@ -1031,9 +1035,9 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
      if (screenDisplayReg & 0x20)
      {
         // RBG1 plane size
-        planeSize = (reg->getWord(0x3A) >> 12) & 0x3;
+        planeSize = (readWord(reg, 0x3A) >> 12) & 0x3;
 
-        switch(reg->getWord(0x3A) >> 14)
+        switch(readWord(reg, 0x3A) >> 14)
         {
            case 0: sprintf(outstring, "Screen-over process = Repeated Mode\r\n");
                    break;
@@ -1050,7 +1054,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
      else
      {
         // NBG0 plane size
-        planeSize = reg->getWord(0x3A) & 0x3;
+        planeSize = readWord(reg, 0x3A) & 0x3;
      }
      
      switch(planeSize)
@@ -1069,8 +1073,8 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
 
      if (screenDisplayReg & 0x20)
      {
-//        unsigned short mapOffsetReg=(reg->getWord(0x3E) & 0x70) << 2;
-        unsigned short rotParaControlReg=reg->getWord(0xB2);
+//        unsigned short mapOffsetReg=(readWord(reg, 0x3E) & 0x70) << 2;
+        unsigned short rotParaControlReg=readWord(reg, 0xB2);
 
         // RBG1
 
@@ -1105,7 +1109,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
      }
      else
      {
-//        unsigned short mapOffsetReg=(reg->getWord(0x3C) & 0x7) << 6;
+//        unsigned short mapOffsetReg=(readWord(reg, 0x3C) & 0x7) << 6;
 
         // NBG0
 
@@ -1116,7 +1120,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
         // Coordinate Increments
 
         // Reduction Enable
-        switch ((reg->getWord(0x3C) >> 8) & 3)
+        switch ((readWord(reg, 0x3C) >> 8) & 3)
         {
            case 1:
                    sprintf(outstring, "Horizontal Reduction = 1/2\r\n");
@@ -1170,7 +1174,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
         {
            sprintf(outstring, "Line Scroll Enabled\r\n");
            outstring += strlen(outstring);
-           sprintf(outstring, "Line Scroll Table Address = %08X\r\n", 0x05E00000 + ((((reg->getWord(0xA0) & 0x7) << 16) | (reg->getWord(0xA2) & 0xFFFE)) << 1));
+           sprintf(outstring, "Line Scroll Table Address = %08X\r\n", 0x05E00000 + ((((readWord(reg, 0xA0) & 0x7) << 16) | (readWord(reg, 0xA2) & 0xFFFE)) << 1));
            outstring += strlen(outstring);
         }
 
@@ -1178,7 +1182,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
         {
            sprintf(outstring, "Vertical Cell Scroll enabled\r\n");
            outstring += strlen(outstring);
-           sprintf(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", 0x05E00000 + ((((reg->getWord(0x9C) & 0x7) << 16) | (reg->getWord(0x9E) & 0xFFFE)) << 1));
+           sprintf(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", 0x05E00000 + ((((readWord(reg, 0x9C) & 0x7) << 16) | (readWord(reg, 0x9E) & 0xFFFE)) << 1));
            outstring += strlen(outstring);
         }
      }
@@ -1210,13 +1214,13 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
 }
 
 void NBG1::init(void) {
-  	unsigned short patternNameReg = reg->getWord(0x32);
-  	unsigned short patternReg = reg->getWord(0x28);
+        unsigned short patternNameReg = readWord(reg, 0x32);
+        unsigned short patternReg = readWord(reg, 0x28);
 
-  	enable = reg->getWord(0x20) & 0x2;
-	transparencyEnable = !(reg->getWord(0x20) & 0x200);
-	x = - reg->getWord(0x80);
-	y = - reg->getWord(0x84);
+        enable = readWord(reg, 0x20) & 0x2;
+        transparencyEnable = !(readWord(reg, 0x20) & 0x200);
+        x = - readWord(reg, 0x80);
+        y = - readWord(reg, 0x84);
 	
   	colorNumber = (patternReg & 0x3000) >> 12;
   	if(bitmap = patternReg & 0x200) {
@@ -1234,14 +1238,14 @@ void NBG1::init(void) {
 				cellH = 512;
 				break;
 		}
-		charAddr = ((reg->getWord(0x3C) & 0x70) >> 4) * 0x20000;
-		palAddr = (reg->getWord(0x2C) & 0x700) >> 4;
+                charAddr = ((readWord(reg, 0x3C) & 0x70) >> 4) * 0x20000;
+                palAddr = (readWord(reg, 0x2C) & 0x700) >> 4;
 		flipFunction = 0;
 		specialFunction = 0;
   	}
   	else {
   		mapWH = 2;
-  		switch((reg->getWord(0x3A) & 0xC) >> 2) {
+                switch((readWord(reg, 0x3A) & 0xC) >> 2) {
   			case 0: planeW = planeH = 1; break;
   			case 1: planeW = 2; planeH = 1; break;
   			case 2: planeW = planeH = 2; break;
@@ -1256,31 +1260,31 @@ void NBG1::init(void) {
   		auxMode = (patternNameReg & 0x4000) >> 14;
 	}
 
-	unsigned short colorCalc = reg->getWord(0xEC);
+        unsigned short colorCalc = readWord(reg, 0xEC);
 	if (colorCalc & 0x2) {
-		alpha = ((~reg->getWord(0x108) & 0x1F00) >> 5) + 0x7;
+                alpha = ((~readWord(reg, 0x108) & 0x1F00) >> 5) + 0x7;
 	}
 	else {
 		alpha = 0xFF;
 	}
 
-	colorOffset = (reg->getWord(0xE4) & 0x70) >> 4;
-	if (reg->getWord(0x110) & 0x2) { // color offset enable
-		if (reg->getWord(0x112) & 0x2) { // color offset B
-			cor = reg->getWord(0x11A) & 0xFF;
-			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x11C) & 0xFF;
-			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x11E) & 0xFF;
-			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+        colorOffset = (readWord(reg, 0xE4) & 0x70) >> 4;
+        if (readWord(reg, 0x110) & 0x2) { // color offset enable
+                if (readWord(reg, 0x112) & 0x2) { // color offset B
+                        cor = readWord(reg, 0x11A) & 0xFF;
+                        if (readWord(reg, 0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x11C) & 0xFF;
+                        if (readWord(reg, 0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x11E) & 0xFF;
+                        if (readWord(reg, 0x11E) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 		else { // color offset A
-			cor = reg->getWord(0x114) & 0xFF;
-			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x116) & 0xFF;
-			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x118) & 0xFF;
-			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+                        cor = readWord(reg, 0x114) & 0xFF;
+                        if (readWord(reg, 0x114) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x116) & 0xFF;
+                        if (readWord(reg, 0x116) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x118) & 0xFF;
+                        if (readWord(reg, 0x118) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 	}
 	else { // color offset disable
@@ -1289,7 +1293,7 @@ void NBG1::init(void) {
 }
 
 void NBG1::planeAddr(int i) {
-  	unsigned long offset = (reg->getWord(0x3C) & 0x70) << 2;
+        unsigned long offset = (readWord(reg, 0x3C) & 0x70) << 2;
         unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x45); break;
@@ -1299,7 +1303,7 @@ void NBG1::planeAddr(int i) {
   	}
   	int deca = planeH + planeW - 2;
   	int multi = planeH * planeW;
-	//if (reg->getWord(0x6) & 0x8000) {
+        //if (readWord(reg, 0x6) & 0x8000) {
   		if (patternDataSize == 1) {
 	  		if (patternWH == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
 	  		else addr = (tmp >> deca) * (multi * 0x800);
@@ -1333,19 +1337,19 @@ void NBG1::debugStats(char *outstring, bool *isenabled) {
 }
 
 void NBG2::init(void) {
-	unsigned short patternNameReg = reg->getWord(0x34);
-	unsigned short patternReg = reg->getWord(0x2A);
+        unsigned short patternNameReg = readWord(reg, 0x34);
+        unsigned short patternReg = readWord(reg, 0x2A);
 
-	enable = reg->getWord(0x20) & 0x4;
-	transparencyEnable = !(reg->getWord(0x20) & 0x400);
-	x = - reg->getWord(0x90);
-	y = - reg->getWord(0x92);
+        enable = readWord(reg, 0x20) & 0x4;
+        transparencyEnable = !(readWord(reg, 0x20) & 0x400);
+        x = - readWord(reg, 0x90);
+        y = - readWord(reg, 0x92);
 
   	colorNumber = (patternReg & 0x2) >> 1;
 	bitmap = false; // NBG2 can only use cell mode
 	
 	mapWH = 2;
-  	switch((reg->getWord(0x3A) & 0x30) >> 4) {
+        switch((readWord(reg, 0x3A) & 0x30) >> 4) {
   		case 0: planeW = planeH = 1; break;
   		case 1: planeW = 2; planeH = 1; break;
   		case 2: planeW = planeH = 2; break;
@@ -1358,31 +1362,31 @@ void NBG2::init(void) {
   	cellW = cellH = 8;
   	supplementData = patternNameReg & 0x3FF;
   	auxMode = (patternNameReg & 0x4000) >> 14;
-	unsigned short colorCalc = reg->getWord(0xEC);
+        unsigned short colorCalc = readWord(reg, 0xEC);
 	if (colorCalc & 0x4) {
-		alpha = ((~reg->getWord(0x10A) & 0x1F) << 3) + 0x7;
+                alpha = ((~readWord(reg, 0x10A) & 0x1F) << 3) + 0x7;
 	}
 	else {
 		alpha = 0xFF;
 	}
 
-	colorOffset = (reg->getWord(0xE4) & 0x700) >> 8;
-	if (reg->getWord(0x110) & 0x4) { // color offset enable
-		if (reg->getWord(0x112) & 0x4) { // color offset B
-			cor = reg->getWord(0x11A) & 0xFF;
-			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x11C) & 0xFF;
-			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x11E) & 0xFF;
-			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+        colorOffset = (readWord(reg, 0xE4) & 0x700) >> 8;
+        if (readWord(reg, 0x110) & 0x4) { // color offset enable
+                if (readWord(reg, 0x112) & 0x4) { // color offset B
+                        cor = readWord(reg, 0x11A) & 0xFF;
+                        if (readWord(reg, 0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x11C) & 0xFF;
+                        if (readWord(reg, 0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x11E) & 0xFF;
+                        if (readWord(reg, 0x11E) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 		else { // color offset A
-			cor = reg->getWord(0x114) & 0xFF;
-			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x116) & 0xFF;
-			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x118) & 0xFF;
-			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+                        cor = readWord(reg, 0x114) & 0xFF;
+                        if (readWord(reg, 0x114) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x116) & 0xFF;
+                        if (readWord(reg, 0x116) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x118) & 0xFF;
+                        if (readWord(reg, 0x118) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 	}
 	else { // color offset disable
@@ -1391,7 +1395,7 @@ void NBG2::init(void) {
 }
 
 void NBG2::planeAddr(int i) {
-	unsigned long offset = (reg->getWord(0x3C) & 0x700) >> 2;
+        unsigned long offset = (readWord(reg, 0x3C) & 0x700) >> 2;
         unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x49); break;
@@ -1402,7 +1406,7 @@ void NBG2::planeAddr(int i) {
   	int deca = planeH + planeW - 2;
   	int multi = planeH * planeW;
 
-	//if (reg->getWord(0x6) & 0x8000) {
+        //if (readWord(reg, 0x6) & 0x8000) {
   		if (patternDataSize == 1) {
 	  		if (patternWH == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
 	  		else addr = (tmp >> deca) * (multi * 0x800);
@@ -1448,19 +1452,19 @@ void NBG2::debugStats(char *outstring, bool *isenabled) {
 }
 
 void NBG3::init(void) {
-	unsigned short patternNameReg = reg->getWord(0x36);
-	unsigned short patternReg = reg->getWord(0x2A);
+        unsigned short patternNameReg = readWord(reg, 0x36);
+        unsigned short patternReg = readWord(reg, 0x2A);
 
-	enable = reg->getWord(0x20) & 0x8;
-	transparencyEnable = !(reg->getWord(0x20) & 0x800);
-	x = - reg->getWord(0x94);
-	y = - reg->getWord(0x96);
+        enable = readWord(reg, 0x20) & 0x8;
+        transparencyEnable = !(readWord(reg, 0x20) & 0x800);
+        x = - readWord(reg, 0x94);
+        y = - readWord(reg, 0x96);
 
   	colorNumber = (patternReg & 0x20) >> 5;
 	bitmap = false; // NBG2 can only use cell mode
 	
 	mapWH = 2;
-  	switch((reg->getWord(0x3A) & 0xC0) >> 6) {
+        switch((readWord(reg, 0x3A) & 0xC0) >> 6) {
   		case 0: planeW = planeH = 1; break;
   		case 1: planeW = 2; planeH = 1; break;
   		case 2: planeW = planeH = 2; break;
@@ -1473,31 +1477,31 @@ void NBG3::init(void) {
   	cellW = cellH = 8;
   	supplementData = patternNameReg & 0x3FF;
   	auxMode = (patternNameReg & 0x4000) >> 14;
-	unsigned short colorCalc = reg->getWord(0xEC);
+        unsigned short colorCalc = readWord(reg, 0xEC);
 	if (colorCalc & 0x8) {
-		alpha = ((~reg->getWord(0x10A) & 0x1F00) >> 5) + 0x7;
+                alpha = ((~readWord(reg, 0x10A) & 0x1F00) >> 5) + 0x7;
 	}
 	else {
 		alpha = 0xFF;
 	}
 
-	colorOffset = (reg->getWord(0xE4) & 0x7000) >> 12;
-	if (reg->getWord(0x110) & 0x8) { // color offset enable
-		if (reg->getWord(0x112) & 0x8) { // color offset B
-			cor = reg->getWord(0x11A) & 0xFF;
-			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x11C) & 0xFF;
-			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x11E) & 0xFF;
-			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+        colorOffset = (readWord(reg, 0xE4) & 0x7000) >> 12;
+        if (readWord(reg, 0x110) & 0x8) { // color offset enable
+                if (readWord(reg, 0x112) & 0x8) { // color offset B
+                        cor = readWord(reg, 0x11A) & 0xFF;
+                        if (readWord(reg, 0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x11C) & 0xFF;
+                        if (readWord(reg, 0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x11E) & 0xFF;
+                        if (readWord(reg, 0x11E) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 		else { // color offset A
-			cor = reg->getWord(0x114) & 0xFF;
-			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
-			cog = reg->getWord(0x116) & 0xFF;
-			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
-			cob = reg->getWord(0x118) & 0xFF;
-			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+                        cor = readWord(reg, 0x114) & 0xFF;
+                        if (readWord(reg, 0x114) & 0x100) cor = cor | 0xFFFFFF00;
+                        cog = readWord(reg, 0x116) & 0xFF;
+                        if (readWord(reg, 0x116) & 0x100) cog = cog | 0xFFFFFF00;
+                        cob = readWord(reg, 0x118) & 0xFF;
+                        if (readWord(reg, 0x118) & 0x100) cob = cob | 0xFFFFFF00;
 		}
 	}
 	else { // color offset disable
@@ -1506,7 +1510,7 @@ void NBG3::init(void) {
 }
 
 void NBG3::planeAddr(int i) {
-	unsigned long offset = (reg->getWord(0x3C) & 0x7000) >> 6;
+        unsigned long offset = (readWord(reg, 0x3C) & 0x7000) >> 6;
         unsigned long tmp=0;
   	switch(i) {
     		case 0: tmp = offset | reg->getByte(0x4D); break;
@@ -1517,7 +1521,7 @@ void NBG3::planeAddr(int i) {
   	int deca = planeH + planeW - 2;
   	int multi = planeH * planeW;
 
-	//if (reg->getWord(0x6) & 0x8000) {
+        //if (readWord(reg, 0x6) & 0x8000) {
   		if (patternDataSize == 1) {
 	  		if (patternWH == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
 	  		else addr = (tmp >> deca) * (multi * 0x800);
