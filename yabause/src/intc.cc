@@ -75,7 +75,9 @@ void __del_highest_int()	{
 #define TCR0	0x188
 #define CHCR0	0x18C
 #define CHCR1	0x19C
-#define DMAOR	0x1B0
+#define VCRDMA0 0x1A0
+#define VCRDMA1 0x1A8
+#define DMAOR   0x1B0
 
 Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
 	memory = sm;
@@ -268,10 +270,11 @@ inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)
 #if DEBUG
       cerr << "FIXME should launch an interrupt\n";
 #endif
+//        sh->send(Interrupt(getByte(IPRA) & 0xF, VCRDMA0+(reg_offset / 2)));
    }
 
    // Set Transfer End bit
-   setLong(CHCR0+reg_offset, chcr & 0xFFFFFFFE | 0x2);
+   Memory::setLong(CHCR0+reg_offset, chcr & 0xFFFFFFFE | 0x2);
 }
 
 void Onchip::runDMA(void) {
