@@ -52,22 +52,22 @@ public:
 class YCD : public Cpu {
 private:
   unsigned long FAD;
-  unsigned char statut;
+  unsigned char status;
   unsigned char options;
   unsigned char repcnt;
   unsigned char ctrladdr;
-  unsigned char piste;
+  unsigned char track;
   unsigned char index;
 
   unsigned long cdwnum;
 
   bool _command;
-  Cs2 *memoire;
+  Cs2 *memory;
 public:
   YCD(Cs2 *);
 
-  static void lancer(YCD *);
-  void executer(void);
+  static void run(YCD *);
+  void execute(void);
 #if 0
   void command(void);
   void periodicUpdate(void);
@@ -76,13 +76,15 @@ public:
   //   command name                command code
   void getStatus(void);		// 0x00
   void getHardwareInfo(void);	// 0x01
+  void getToc(void);            // 0x02
+  void getSessionInfo();        // 0x03
   void initializeCDSystem(void);// 0x04
   void endDataTransfer(void);	// 0x06
   void resetSelector(void);	// 0x48
   void setSectorLength(void);	// 0x60
   void getCopyError(void);	// 0x67
   void abortFile(void);		// 0x75
-  void mpegInit(void);		// 0x93
+  void mpegInit(void);          // 0x93
 };
 
 #endif

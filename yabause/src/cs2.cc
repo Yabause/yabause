@@ -20,6 +20,37 @@
 #include "cs2.hh"
 #include "timer.hh"
 
+#define CDB_HIRQ_CMOK      0x0001
+#define CDB_HIRQ_DRDY      0x0002
+#define CDB_HIRQ_CSCT      0x0004
+#define CDB_HIRQ_BFUL      0x0008
+#define CDB_HIRQ_PEND      0x0010
+#define CDB_HIRQ_DCHG      0x0020
+#define CDB_HIRQ_ESEL      0x0040
+#define CDB_HIRQ_EHST      0x0080
+#define CDB_HIRQ_ECPY      0x0100
+#define CDB_HIRQ_EFLS      0x0200
+#define CDB_HIRQ_SCDQ      0x0400
+#define CDB_HIRQ_MPED      0x0800
+#define CDB_HIRQ_MPCM      0x1000
+#define CDB_HIRQ_MPST      0x2000
+
+#define CDB_STAT_BUSY      0x00
+#define CDB_STAT_PAUSE     0x01
+#define CDB_STAT_STANDBY   0x02
+#define CDB_STAT_PLAY      0x03
+#define CDB_STAT_SEEK      0x04
+#define CDB_STAT_SCAN      0x05
+#define CDB_STAT_OPEN      0x06
+#define CDB_STAT_NODISC    0x07
+#define CDB_STAT_RETRY     0x08
+#define CDB_STAT_ERROR     0x09
+#define CDB_STAT_FATAL     0x0A
+#define CDB_STAT_PERI      0x20
+#define CDB_STAT_TRNS      0x40
+#define CDB_STAT_WAIT      0x80
+#define CDB_STAT_REJECT    0xFF
+
 Cs2::Cs2(void) : Memory(0x100000) {
   cd = new YCD(this);
   cdThread = NULL;
@@ -58,9 +89,9 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
     case 0x90024: Memory::setWord(addr, val);
 		  /*SDL_mutexP(cdMutex);
 		  SDL_WaitThread(cdThread, NULL);
-		  cdThread = SDL_CreateThread((int (*)(void*)) &YCD::lancer, cd);
+                  cdThread = SDL_CreateThread((int (*)(void*)) &YCD::run, cd);
 		  SDL_mutexV(cdMutex);*/
-		  YCD::lancer(cd);
+                  YCD::run(cd);
 		  break;
     default: Memory::setWord(addr, val);
   }
@@ -68,30 +99,31 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
 
 YCD::YCD(Cs2 *cs2) {
   _stop = false;
-  memoire = cs2;
+  memory = cs2;
   FAD = 150;
-  statut = 0x77; //statut = 0x26;
+  status = CDB_STAT_PERI | CDB_STAT_PAUSE; // Still not 100% correct, but better
+
   options = 0;
   repcnt = 0;
   ctrladdr = 0x41;
-  piste = 1;
+  track = 1;
   index = 1;
 
-  memoire->setCR1(( 0 <<8) | 'C');
-  memoire->setCR2(('D'<<8) | 'B');
-  memoire->setCR3(('L'<<8) | 'O');
-  memoire->setCR4(('C'<<8) | 'K');
-  memoire->setHIRQ(0x07D3);
-  memoire->setHIRQMask(0x7FF);
+  memory->setCR1(( 0 <<8) | 'C');
+  memory->setCR2(('D'<<8) | 'B');
+  memory->setCR3(('L'<<8) | 'O');
+  memory->setCR4(('C'<<8) | 'K');
+  memory->setHIRQ(0x07D3);
+  memory->setHIRQMask(0x7FF);
 }
 
 #if 0
-void YCD::lancer(YCD *cd) {
+void YCD::run(YCD *cd) {
   Timer t;
   while(!cd->_stop) {
     if (cd->_command) {
       cd->_command = false;
-      cd->executer();
+      cd->execute();
     }
     else {
       //t.waitVBlankOUT();
@@ -106,18 +138,18 @@ void YCD::command(void) {
 }
 
 void YCD::periodicUpdate(void) {
-  if ((memoire->getCR1() >> 8) != 0 ) return;
-  statut |= 0x20;
+  if ((memory->getCR1() >> 8) != 0 ) return;
+  status |= CDB_STAT_PERI;
 }
 #endif
 
-void YCD::lancer(YCD *cd) {
-  cd->executer();
+void YCD::run(YCD *cd) {
+  cd->execute();
 }
 
-void YCD::executer(void) {
-  memoire->setHIRQ(memoire->getHIRQ() & 0XFFFE);
-  unsigned short instruction = memoire->getCR1() >> 8;
+void YCD::execute(void) {
+  memory->setHIRQ(memory->getHIRQ() & 0XFFFE);
+  unsigned short instruction = memory->getCR1() >> 8;
 
   switch (instruction) {
     case 0x00:
@@ -132,6 +164,20 @@ void YCD::executer(void) {
 #endif
       getHardwareInfo();
       break;
+    case 0x02:
+#if DEBUG
+      cerr << "cs2\t: getToc\n";
+#endif
+      getToc();
+      break;
+    case 0x03:
+    {
+#if DEBUG
+      cerr << "cs2\t: getSessionInfo\n";
+#endif
+       getSessionInfo();
+       break;
+    }
     case 0x04:
 #if DEBUG
       cerr << "cs2\t: initializeCDSystem\n";
@@ -178,93 +224,115 @@ void YCD::executer(void) {
     default:
 #if DEBUG
       cerr << "cs2\t: " << hex << setw(10) << instruction
-                  << "command not implemented" << endl;
+                  << " command not implemented" << endl;
 #endif
       break;
   }
 }
 
 void YCD::getStatus(void) {
-  memoire->setCR1((statut << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  memoire->setCR2((ctrladdr << 8) | piste);
-  memoire->setCR3((index << 8) | ((FAD >> 16) & 0xFF));
-  memoire->setCR4((unsigned short) FAD);
-  memoire->setHIRQ(memoire->getHIRQ() | 0x0001);
+  memory->setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  memory->setCR2((ctrladdr << 8) | track);
+  memory->setCR3((index << 8) | ((FAD >> 16) & 0xFF));
+  memory->setCR4((unsigned short) FAD);
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK);
 }
 
 void YCD::getHardwareInfo(void) {
-  memoire->setCR1(statut << 8);
-  // hardware flags
-  memoire->setCR2(0x01); // mpeg card exists
+  memory->setCR1(status << 8);
+  // hardware flags/CD Version
+  memory->setCR2(0x0201); // mpeg card exists
   // mpeg version, doesn't have to be used
-  memoire->setCR3(0x0);
-  memoire->setCR4(0x0400);
-  memoire->setHIRQ(memoire->getHIRQ() | 0x0001);
+  memory->setCR3(0x0);
+  // drive info/revision
+  memory->setCR4(0x0400); 
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK);
+}
+
+void YCD::getToc(void) {
+  // Read in Toc to 0x25898000 here
+
+  cdwnum = 0xCC;
+
+  memory->setCR1(status << 8);
+  memory->setCR2(0xCC);
+  memory->setCR3(0x0);
+  memory->setCR4(0x0); 
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+}
+
+void YCD::getSessionInfo(void) {
+  memory->setCR1(status << 8);
+  memory->setCR2(0);
+  memory->setCR3(0); // session info
+  memory->setCR4(0); // session info
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
 }
 
 void YCD::initializeCDSystem(void) {
   FAD = 150;
-  memoire->setCR1((statut << 8) | (repcnt & 0xF));
-  memoire->setCR2((ctrladdr << 8) | (piste & 0xFF));
-  memoire->setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  memoire->setCR4((unsigned short) FAD);
-  // FIXME manque une partie...
-  memoire->setHIRQ(memoire->getHIRQ() | 0x0001);
+  memory->setCR1((status << 8) | (repcnt & 0xF));
+  memory->setCR2((ctrladdr << 8) | (track & 0xFF));
+  memory->setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  memory->setCR4((unsigned short) FAD);
+  // FIXME Something missing here...
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK);
 }
 
 void YCD::endDataTransfer(void) {
-  memoire->setCR1((statut << 8) | (cdwnum >> 16)); // FIXME
-  memoire->setCR2((unsigned short) cdwnum);
-  memoire->setCR3(0);
-  memoire->setCR4(0);
-  memoire->setHIRQ(memoire->getHIRQ() | 0x0003);
+  memory->setCR1((status << 8) | ((cdwnum >> 16) & 0xFF)); // FIXME
+  memory->setCR2((unsigned short) cdwnum);
+  memory->setCR3(0);
+  memory->setCR4(0);
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
 }
 
 void YCD::resetSelector(void) {
-  memoire->setCR1((statut << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  memoire->setCR2((ctrladdr << 8) | (piste & 0xFF));
-  memoire->setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  memoire->setCR4((unsigned short) FAD);
-  memoire->setHIRQ(memoire->getHIRQ() | 0x0041);
+  memory->setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  memory->setCR2((ctrladdr << 8) | (track & 0xFF));
+  memory->setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  memory->setCR4((unsigned short) FAD);
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
 void YCD::setSectorLength(void) {
-  memoire->setCR1((statut << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  memoire->setCR2((ctrladdr << 8) | (piste & 0xFF));
-  memoire->setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  memoire->setCR4((unsigned short) FAD);
-  memoire->setHIRQ(memoire->getHIRQ() | 0x0041);
+  memory->setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  memory->setCR2((ctrladdr << 8) | (track & 0xFF));
+  memory->setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  memory->setCR4((unsigned short) FAD);
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
 void YCD::getCopyError(void) {
-  memoire->setCR1(statut << 8);
-  memoire->setCR2(0);
-  memoire->setCR3(0);
-  memoire->setCR4(0);
-  memoire->setHIRQ(memoire->getHIRQ() | 0x0001);
+  memory->setCR1(status << 8);
+  memory->setCR2(0);
+  memory->setCR3(0);
+  memory->setCR4(0);
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK);
 }
 
 void YCD::abortFile(void) {
-  //statut = 0x26;
+  //status = 0x26;
   cdwnum = 0xFFFFFFFF;
-  memoire->setCR1((statut << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  memoire->setCR2((ctrladdr << 8) | (piste & 0xFF));
-  memoire->setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  memoire->setCR4((unsigned short) FAD);
-  memoire->setHIRQ(memoire->getHIRQ() | 0x0203);
+  memory->setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  memory->setCR2((ctrladdr << 8) | (track & 0xFF));
+  memory->setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  memory->setCR4((unsigned short) FAD);
+  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL | CDB_HIRQ_EFLS);
 }
 
 void YCD::mpegInit(void) {
-	memoire->setCR1(statut << 8);
+  memory->setCR1(status << 8);
 
-	if (memoire->getCR2() == 0x0001) // software timer?
-		memoire->setHIRQ(memoire->getHIRQ() | 0x0001 | 0x1000 | 0x0800 | 0x2000); 
-	else
-		memoire->setHIRQ(memoire->getHIRQ() | 0x0001 | 0x0800 | 0x2000); 
+  if (memory->getCR2() == 0x0001) // software timer?
+     memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
+  else
+     memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
 
-	memoire->setCR2(0);
-	memoire->setCR3(0);
-	memoire->setCR4(0);
+  memory->setCR2(0);
+  memory->setCR3(0);
+  memory->setCR4(0);
 
-	// future mpeg-related variables should be initialized here
+  // future mpeg-related variables should be initialized here
 }
+
