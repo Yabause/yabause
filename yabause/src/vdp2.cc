@@ -251,7 +251,7 @@ void Vdp2Screen::patternAddr(void) {
     		addr += 2;
     		charAddr = tmp2 & 0x7FFF;
     		flipFunction = (tmp1 & 0xC000) >> 14;
-    		palAddr = (tmp1 & 0x7F) << 4;
+                palAddr = (tmp1 & 0x7F);
     		specialFunction = (tmp1 & 0x3000) >> 12;
     		break;
 	}
@@ -314,6 +314,7 @@ void Vdp2Screen::drawCell(void) {
 
   switch(colorNumber) {
     case 0:
+      // 4-bit Mode(16 colors)
       X = x;
       for(int i = 0;i < cellH;i++) {
 	x = X;
@@ -341,6 +342,7 @@ void Vdp2Screen::drawCell(void) {
       }
       break;
     case 1:
+      // 8-bit Mode(256 colors)
       X = x;
       for(int i = 0;i < cellH;i++) {
 	x = X;
@@ -360,6 +362,7 @@ void Vdp2Screen::drawCell(void) {
       }
       break;
     case 2:
+      // 16-bit Mode(2048 colors)
       X = x;
       for(int i = 0;i < cellH;i++) {
 	x = X;
@@ -375,6 +378,7 @@ void Vdp2Screen::drawCell(void) {
       }
       break;
     case 3:
+      // 16-bit Mode(32,786 colors)
       X = x;
       for(int i = 0;i < cellH;i++) {
 	x = X;
@@ -391,6 +395,7 @@ void Vdp2Screen::drawCell(void) {
       }
       break;
     case 4:
+      // 32-bit Mode(16,770,000 colors)
       X = x;
       for(int i = 0;i < cellH;i++) {
 	x = X;
