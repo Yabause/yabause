@@ -66,8 +66,8 @@ public:
   void INTBACKPeripheral(void);
   void RESENAB(void);
   void RESDISA(void);
-  void CDON(void);
-  void CDOFF(void);
+  void SNDON(void);
+  void SNDOFF(void);
 };
 
 #endif
