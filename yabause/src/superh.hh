@@ -38,6 +38,20 @@ class SuperH : public Cpu {
 private:
   unsigned long R[16];
 
+#ifdef WORDS_BIGENDIAN
+  union {
+    struct {
+      unsigned long inutile1:22;
+      unsigned long M:1;
+      unsigned long Q:1;
+      unsigned long I:4;
+      unsigned long inutile2:2;
+      unsigned long S:1;
+      unsigned long T:1;
+    } partie;
+    unsigned long tout;
+  } SR;
+#else
   union {
     struct {
       unsigned long T:1;
@@ -50,6 +64,7 @@ private:
     } partie;
     unsigned long tout;
   } SR;
+#endif
   unsigned long GBR;
   unsigned long VBR;
 
