@@ -26,7 +26,7 @@
 
 #define MAX_BLOCKS      200
 #define MAX_SELECTORS   24
-#define MAX_FILES       1024
+#define MAX_FILES       256
 
 typedef struct
 {
@@ -124,6 +124,7 @@ private:
   unsigned long playFAD;
   unsigned long playendFAD;
   unsigned long getsectsize;
+  unsigned long putsectsize;
   unsigned long calcsize;
   long infotranstype;
   long datatranstype;
@@ -134,16 +135,26 @@ private:
   unsigned char transfileinfo[12];
 
   filter_struct filter[MAX_SELECTORS];
-  filter_struct *curfilter;
+//  filter_struct *curfilter;
+  filter_struct *outconcddev;
+  filter_struct *outconmpegfb;
+  filter_struct *outconmpegbuf;
+  filter_struct *outconmpegrom;
+  filter_struct *outconhost;
 
   partition_struct partition[MAX_SELECTORS];
-  partition_struct *curpartition;
 
-  unsigned long databytestotrans;
+  partition_struct *datatranspartition;
+  unsigned long datatransoffset;
+  unsigned long datanumsecttrans;
+  unsigned short datatranssectpos;
+  unsigned short datasectstotrans;
 
   unsigned long blockfreespace;
   block_struct block[MAX_BLOCKS];
+  block_struct workblock;
 
+  unsigned long curdirsect;
   dirrec_struct fileinfo[MAX_FILES];
   unsigned long numfiles;
 
@@ -224,10 +235,13 @@ public:
   block_struct *AllocateBlock();
   void FreeBlock(block_struct *blk);
   void SortBlocks(partition_struct *part);
-  partition_struct *GetPartition();
+  partition_struct *GetPartition(filter_struct *curfilter);
+  partition_struct *FilterData(filter_struct *curfilter, bool isaudio);
   int CopyDirRecord(unsigned char *buffer, dirrec_struct *dirrec);
-  int ReadFileSystem();
+  int ReadFileSystem(filter_struct *curfilter, unsigned long fid, bool isoffset);
   void SetupFileInfoTransfer(unsigned long fid);
+  partition_struct *ReadUnFilteredSector(unsigned long rufsFAD);
+  partition_struct *ReadFilteredSector(unsigned long rfsFAD);
 };
 
 #endif

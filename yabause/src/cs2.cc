@@ -208,53 +208,74 @@ unsigned long Cs2::getLong(unsigned long addr) {
                   switch (datatranstype) {
                     case 0:
                             // get sector
-                            if (databytestotrans > 0)
+
+                            // Make sure we still have sectors to transfer
+                            if (datanumsecttrans < datasectstotrans)
                             {
-                               // fix me
-                               val = (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize)] << 24) +
-                                     (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 1] << 16) +
-                                     (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 2] << 8) +
-                                      curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 3];
+                               // Transfer Data
+                               val = (datatranspartition->block[datanumsecttrans]->data[datatransoffset] << 24) +
+                                     (datatranspartition->block[datanumsecttrans]->data[datatransoffset + 1] << 16) +
+                                     (datatranspartition->block[datanumsecttrans]->data[datatransoffset + 2] << 8) +
+                                      datatranspartition->block[datanumsecttrans]->data[datatransoffset + 3];
+
+                               // increment datatransoffset/cdwnum
                                cdwnum += 4;
-                               databytestotrans -= 4;
+                               datatransoffset += 4;
+
+                               // Make sure we're not beyond the sector size boundry
+                               if (datatransoffset >= datatranspartition->block[datanumsecttrans]->size)
+                               {
+                                  datatransoffset = 0;
+                                  datanumsecttrans++;
+                               }
                             }
-//#if CDDEBUG
-//                            fprintf(stderr, "cs2\t: getsectordata read long = %08x\n", val);
-//#endif
 
                             break;
                     case 2:
                             // get then delete sector
-                            if (databytestotrans > 0)
-                            {
-                               // fix me
-                               val = (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize)] << 24) +
-                                     (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 1] << 16) +
-                                     (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 2] << 8) +
-                                      curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 3];
-                               cdwnum += 4;
-                               databytestotrans -= 4;
-                            }
 
-                            if (databytestotrans == 0)
+                            // Make sure we still have sectors to transfer
+                            if (datanumsecttrans < datasectstotrans)
                             {
+                               // Transfer Data
+                               val = (datatranspartition->block[datatranssectpos+datanumsecttrans]->data[datatransoffset] << 24) +
+                                     (datatranspartition->block[datatranssectpos+datanumsecttrans]->data[datatransoffset + 1] << 16) +
+                                     (datatranspartition->block[datatranssectpos+datanumsecttrans]->data[datatransoffset + 2] << 8) +
+                                      datatranspartition->block[datatranssectpos+datanumsecttrans]->data[datatransoffset + 3];
+
+                               // increment datatransoffset/cdwnum
+                               cdwnum += 4;
+                               datatransoffset += 4;
+
+                               // Make sure we're not beyond the sector size boundry
+                               if (datatransoffset >= datatranspartition->block[datanumsecttrans]->size)
+                               {
+                                  datatransoffset = 0;
+                                  datanumsecttrans++;
+                               }
+                            }
+                            else
+                            {
+                               // Ok, so we don't have any more sectors to
+                               // transfer, might as well delete them all.
+
                                datatranstype = -1;
 
                                // free blocks
-                               for (unsigned long i = 0; i < (cdwnum / getsectsize); i++)
+                               for (unsigned long i = datatranssectpos; i < (datatranssectpos+datasectstotrans); i++)
                                {
-                                  FreeBlock(curpartition->block[i]);
-                                  curpartition->block[i] = NULL;
+                                  FreeBlock(datatranspartition->block[i]);
+                                  datatranspartition->block[i] = NULL;
                                }
 
-                               // sort remaining blocks here
-                               SortBlocks(curpartition);
+                               // sort remaining blocks
+                               SortBlocks(datatranspartition);
 
-                               curpartition->size -= cdwnum;
-                               curpartition->numblocks -= (cdwnum / getsectsize); // fix me
+                               datatranspartition->size -= cdwnum;
+                               datatranspartition->numblocks -= datasectstotrans;
 
 #if CDDEBUG
-                               fprintf(stderr, "cs2\t: curpartition->size = %x\n", curpartition->size);
+                               fprintf(stderr, "cs2\t: datatranspartition->size = %x\n", datatranspartition->size);
 #endif
                             }
                             break;
@@ -345,7 +366,7 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   datatranstype = -1;
   transfercount = 0;
   cdwnum = 0;
-  getsectsize = 2048;
+  getsectsize = putsectsize = 2048;
   isonesectorstored = false;
   isdiskchanged = true;
   issubcodeqdecoded = true;
@@ -381,8 +402,6 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
      filter[i].condfalse = 0xFF;
   }
 
-  curfilter = filter + 0;
-
   // clear partitions
   for (i = 0; i < MAX_SELECTORS; i++)
   {
@@ -408,6 +427,7 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   memset(TOC, 0xFF, sizeof(TOC));
 
   // clear filesystem stuff
+  curdirsect = 0;
   memset(&fileinfo, 0, sizeof(fileinfo));
   numfiles = 0;
 
@@ -471,50 +491,30 @@ void Cs2::run(Cs2 *cd) {
             break;
          case CDB_STAT_PLAY:
          {
+            partition_struct *playpartition;
 
-            if (cd->ctrladdr & 0x40)
+#if NEWCDINTERFACE
+            playpartition = cd->ReadFilteredSector(cd->FAD);
+#else
+            playpartition = cd->ReadUnFilteredSector(cd->FAD);
+#endif
+            if (playpartition != NULL)
             {
-               // read data
-
-               if ((cd->curpartition = cd->GetPartition()) != NULL && !cd->isbufferfull)
-               {
-                  cd->curpartition->block[cd->curpartition->numblocks] = cd->AllocateBlock();
-
-                  if (cd->curpartition->block[cd->curpartition->numblocks] != NULL) {
-                     if (CDReadSector(cd->FAD - 150, cd->getsectsize, cd->curpartition->block[cd->curpartition->numblocks]->data) != cd->getsectsize) {
+               cd->FAD++;
 #if CDDEBUG
-                        fprintf(stderr, "Error Reading FAD %x\n", cd->FAD);
+               fprintf(stderr, "blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", playpartition->numblocks, cd->blockfreespace, cd->FAD, playpartition->size, cd->isbufferfull);
 #endif
-                     }   
+               cd->isonesectorstored = true;
+               cd->setHIRQ(cd->getHIRQ() | CDB_HIRQ_CSCT);
 
-                     // fix me(in fact, I should probably rewrite the whole sector read process)
-                     cd->curpartition->block[cd->curpartition->numblocks]->FAD = cd->FAD;
-                     cd->curpartition->block[cd->curpartition->numblocks]->cn = 0;
-                     cd->curpartition->block[cd->curpartition->numblocks]->fn = 0;
-                     cd->curpartition->block[cd->curpartition->numblocks]->sm = 0;
-                     cd->curpartition->block[cd->curpartition->numblocks]->ci = 0;
-
-                     cd->curpartition->numblocks++;
-                     cd->curpartition->size += cd->getsectsize;
-                     cd->FAD++;
-
-#if CDDEBUG
-                     fprintf(stderr, "blocks = %d blockfreespace = %d fad = %x curpartition->size = %x isbufferfull = %x\n", cd->curpartition->numblocks, cd->blockfreespace, cd->FAD, cd->curpartition->size, cd->isbufferfull);
-#endif
-                     cd->isonesectorstored = true;
-                     cd->setHIRQ(cd->getHIRQ() | CDB_HIRQ_CSCT);
-
-                     if (cd->FAD >= cd->playendFAD) {
-                        // we're done
-                        cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
-//                        cd->setHIRQ(cd->getHIRQ() | HIRQ_DRDY | CDB_HIRQ_PEND);
-                        cd->setHIRQ(cd->getHIRQ() | CDB_HIRQ_PEND);
-                     }
-                  }
-
-//                  if (cd->isbufferfull)
-//                     cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+               if (cd->FAD >= cd->playendFAD) {
+                  // we're done
+                  cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+//                  cd->setHIRQ(cd->getHIRQ() | HIRQ_DRDY | CDB_HIRQ_PEND);
+                  cd->setHIRQ(cd->getHIRQ() | CDB_HIRQ_PEND);
                }
+//               if (cd->isbufferfull)
+//                  cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
             }
 
             break;
@@ -936,6 +936,7 @@ void Cs2::getSessionInfo(void) {
 
 void Cs2::initializeCDSystem(void) {
   unsigned short val=0;
+  unsigned char initflag = getCR1() & 0xFF;
 
   if (status & 0xF != CDB_STAT_OPEN && status & 0xF != CDB_STAT_NODISC)
   {
@@ -943,6 +944,31 @@ void Cs2::initializeCDSystem(void) {
      isonesectorstored = false;
      issubcodeqdecoded = true;
      FAD = 150;
+  }
+
+  if (initflag & 0x1)
+  {
+     // Reset CD block software
+  }
+
+  if (initflag & 0x2)
+  {
+     // Decode RW subcode
+  }
+
+  if (initflag & 0x4)
+  {
+     // Don't confirm Mode 2 subheader
+  }
+
+  if (initflag & 0x8)
+  {
+     // Retry reading Form 2 sectors
+  }
+
+  if (initflag & 0x10)
+  {
+     // Set drive speed to 1x
   }
 
   val = getHIRQ() & 0xFFE5;
@@ -986,31 +1012,30 @@ void Cs2::endDataTransfer(void) {
      setCR4(0);
   }
 
-  // stop any transfers that may be going(this is still probably wrong
+  // stop any transfers that may be going(this is still probably wrong)
 
   switch (datatranstype) {    
      case 2: {
         // Get Then Delete Sector
-        unsigned long numblockstofree=0;
+
+        // Make sure we actually have to free something
+        if (datatranspartition->size <= 0) break;
+
         datatranstype = -1;
 
-        numblockstofree = (cdwnum / getsectsize);
-
-        if ((cdwnum % getsectsize) != 0)
-           numblockstofree++;
-
         // free blocks
-        for (unsigned long i = 0; i < numblockstofree; i++)
+        for (unsigned long i = datatranssectpos; i < (datatranssectpos+datasectstotrans); i++)
         {
-           FreeBlock(curpartition->block[i]);
-           curpartition->block[i] = NULL;
+           FreeBlock(datatranspartition->block[i]);
+           datatranspartition->block[i] = NULL;
         }
 
         // sort remaining blocks
-        SortBlocks(curpartition);
+        SortBlocks(datatranspartition);
 
-        curpartition->size = 0;
-        curpartition->numblocks = 0;
+        datatranspartition->size -= cdwnum;
+        datatranspartition->numblocks -= datasectstotrans;
+
         break;
      }
      default: break;
@@ -1042,11 +1067,6 @@ void Cs2::playDisc(void) {
 
            playFAD = FAD = pdFAD;
            playendFAD = pdFAD + pdsize;
-
-           if ((curpartition = GetPartition()) != NULL)
-           {
-             curpartition->size = 0;
-           }
 
            isonesectorstored = true;
            setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
@@ -1125,10 +1145,10 @@ void Cs2::setCDDeviceConnection(void) {
 
   scdcfilternum = (getCR3() >> 8);
 
-  if (scdcfilternum != 0xFF && scdcfilternum < 0x24)
-  {
-     curfilter = filter + scdcfilternum;
-  }
+  if (scdcfilternum == 0xFF)
+     outconcddev = NULL;
+  else if (scdcfilternum < 0x24)
+     outconcddev = filter + scdcfilternum;
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
@@ -1177,9 +1197,20 @@ void Cs2::setFilterMode(void) {
 
   sfmfilternum = getCR3() >> 8;
 
-  filter[sfmfilternum].mode = getCR1() & 0x7F;
-  filter[sfmfilternum].FAD = 0;
-  filter[sfmfilternum].range = 0xFFFFFFFF;
+  filter[sfmfilternum].mode = getCR1() & 0xFF;
+
+  if (filter[sfmfilternum].mode & 0x80)
+  {
+     // Initialize filter conditions
+     filter[sfmfilternum].mode = 0;
+     filter[sfmfilternum].FAD = 0;
+     filter[sfmfilternum].range = 0;
+     filter[sfmfilternum].chan = 0;
+     filter[sfmfilternum].smmask = 0;
+     filter[sfmfilternum].cimask = 0;
+     filter[sfmfilternum].smval = 0;
+     filter[sfmfilternum].cival = 0;
+  }
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
@@ -1214,21 +1245,21 @@ void Cs2::setFilterConnection(void) {
 
 void Cs2::resetSelector(void) {
   // still needs a bit of work
-  unsigned long i;
+  unsigned long i, i2;
 
   isbufferfull = false;
 
   // parse flags and reset the specified area(fix me)
   if (getCR1() & 0x80)
   {
-     // reset false condition connections
+     // reset false filter output connections
      for (i = 0; i < MAX_SELECTORS; i++)
         filter[i].condfalse = 0xFF;
   }
 
   if (getCR1() & 0x40)
   {
-     // reset true condition connections
+     // reset true filter output connections
      for (i = 0; i < MAX_SELECTORS; i++)
         filter[i].condtrue = i;
   }
@@ -1250,9 +1281,33 @@ void Cs2::resetSelector(void) {
      }
   }
 
+  if (getCR1() & 0x8)
+  {
+     // reset partition output connectors
+  }
+
   if (getCR1() & 0x4)
   {
-     // reset partitions
+     // reset partitions buffer data
+
+     // clear partitions
+     for (i = 0; i < MAX_SELECTORS; i++)
+     {
+        partition[i].size = -1;
+        partition[i].numblocks = 0;
+
+        for (i2 = 0; i2 < MAX_BLOCKS; i2++)
+        {
+           partition[i].block[i2] = NULL;
+        }
+     }
+
+     // clear blocks
+     for (i = 0; i < MAX_BLOCKS; i++)
+     {
+        block[i].size = -1;
+        memset(block[i].data, 0, 2352);
+     }
   }
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
@@ -1275,11 +1330,10 @@ void Cs2::getSectorNumber(void) {
 
   gsnbufno = getCR3() >> 8;
 
-  // somehow, I don't think this is right
   if (partition[gsnbufno].size == -1)
      setCR4(0);
   else
-     setCR4(partition[gsnbufno].size / getsectsize);
+     setCR4(partition[gsnbufno].numblocks);
 
   setCR1(status << 8);
   setCR2(0);
@@ -1363,6 +1417,22 @@ void Cs2::setSectorLength(void) {
     default: break;
   }
 
+  switch (getCR2() >> 8) {
+    case 0:
+            putsectsize = 2048;
+            break;
+    case 1:
+            putsectsize = 2336;
+            break;
+    case 2:
+            putsectsize = 2340;
+            break;
+    case 3:
+            putsectsize = 2352;
+            break;
+    default: break;
+  }
+
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
@@ -1371,15 +1441,35 @@ void Cs2::setSectorLength(void) {
 }
 
 void Cs2::getSectorData(void) {
-  cdwnum = 0;
-  datatranstype = 0;
-  databytestotrans = getsectsize * getCR4();
+  unsigned long gsdbufno;
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+  gsdbufno = getCR3() >> 8;
+
+  if (gsdbufno < MAX_SELECTORS)
+  {
+     // Setup Data Transfer
+     cdwnum = 0;
+     datatranstype = 0;
+     datatranspartition = partition + gsdbufno;
+     datatransoffset = 0;
+     datanumsecttrans = 0;
+     datatranssectpos = getCR2();
+     datasectstotrans = getCR4();
+
+     setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+     setCR2((ctrladdr << 8) | (track & 0xFF));
+     setCR3((index << 8) | ((FAD >> 16) &0xFF));
+     setCR4((unsigned short) FAD);
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+  }
+  else
+  {
+     setCR1((CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+     setCR2((ctrladdr << 8) | (track & 0xFF));
+     setCR3((index << 8) | ((FAD >> 16) &0xFF));
+     setCR4((unsigned short) FAD);
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+  }
 }
 
 void Cs2::deleteSectorData(void) {
@@ -1391,10 +1481,11 @@ void Cs2::deleteSectorData(void) {
   dsdbufno = getCR3() >> 8;
   dsdsectnum = getCR4();
 
-  if (dsdbufno >= 0 && dsdbufno < MAX_SELECTORS)
+  if (dsdbufno < MAX_SELECTORS)
   {
-     for (unsigned long i = dsdsectoffset; i < dsdsectnum; i++)
+     for (unsigned long i = dsdsectoffset; i < (dsdsectoffset+dsdsectnum); i++)
      {
+        partition[dsdbufno].size -= partition[dsdbufno].block[i]->size;
         FreeBlock(partition[dsdbufno].block[i]);
         partition[dsdbufno].block[i] = NULL;
      }
@@ -1402,27 +1493,54 @@ void Cs2::deleteSectorData(void) {
      // sort remaining blocks
      SortBlocks(&partition[dsdbufno]);
 
-     partition[dsdbufno].size -= (getsectsize * dsdsectnum);
      partition[dsdbufno].numblocks -= dsdsectnum;
-  }
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+     setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+     setCR2((ctrladdr << 8) | (track & 0xFF));
+     setCR3((index << 8) | ((FAD >> 16) &0xFF));
+     setCR4((unsigned short) FAD);
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+  }
+  else
+  {
+     setCR1((CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+     setCR2((ctrladdr << 8) | (track & 0xFF));
+     setCR3((index << 8) | ((FAD >> 16) &0xFF));
+     setCR4((unsigned short) FAD);
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+  }
 }
 
 void Cs2::getThenDeleteSectorData(void) {
-  cdwnum = 0;
-  datatranstype = 2;
-  databytestotrans = getsectsize * getCR4();
+  unsigned long gtdsdbufno;
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+  gtdsdbufno = getCR3() >> 8;
+
+  if (gtdsdbufno < MAX_SELECTORS)
+  {
+     // Setup Data Transfer
+     cdwnum = 0;
+     datatranstype = 2;
+     datatranspartition = partition + gtdsdbufno;
+     datatransoffset = 0;
+     datanumsecttrans = 0;
+     datatranssectpos = getCR2();
+     datasectstotrans = getCR4();
+
+     setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+     setCR2((ctrladdr << 8) | (track & 0xFF));
+     setCR3((index << 8) | ((FAD >> 16) &0xFF));
+     setCR4((unsigned short) FAD);
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+  }
+  else
+  {
+     setCR1((CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+     setCR2((ctrladdr << 8) | (track & 0xFF));
+     setCR3((index << 8) | ((FAD >> 16) &0xFF));
+     setCR4((unsigned short) FAD);
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+  }
 }
 
 void Cs2::getCopyError(void) {
@@ -1434,7 +1552,25 @@ void Cs2::getCopyError(void) {
 }
 
 void Cs2::changeDirectory(void) {
-  // fix me
+  unsigned long cdfilternum;
+
+  cdfilternum = (getCR3() >> 8);
+
+  if (cdfilternum == 0xFF)
+  {
+     // fix me
+  }
+  else if (cdfilternum < 0x24)
+  {
+     if (ReadFileSystem(filter + cdfilternum, ((getCR3() & 0xFF) << 16) | getCR4(), false) != 0)
+     {
+        // fix me
+#if CDDEBUG
+        fprintf(stderr, "cs2\t: ReadFileSystem failed\n");
+#endif
+     }
+  }
+
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
@@ -1443,7 +1579,25 @@ void Cs2::changeDirectory(void) {
 }
 
 void Cs2::readDirectory(void) {
-  // fix me
+  unsigned long rdfilternum;
+
+  rdfilternum = (getCR3() >> 8);
+
+  if (rdfilternum == 0xFF)
+  {
+     // fix me
+  }
+  else if (rdfilternum < 0x24)
+  {
+     if (ReadFileSystem(filter + rdfilternum, ((getCR3() & 0xFF) << 8) | getCR4(), true) != 0)
+     {
+        // fix me
+#if CDDEBUG
+        fprintf(stderr, "cs2\t: ReadFileSystem failed\n");
+#endif
+     }
+  }
+
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
@@ -1452,25 +1606,11 @@ void Cs2::readDirectory(void) {
 }
 
 void Cs2::getFileSystemScope(void) {
-  if (ReadFileSystem() != 0)
-  {
-#if CDDEBUG
-     fprintf(stderr, "cs2\t: Error Reading file system\n");
-#endif
-     // may need to change this
-     
-     setCR1(CDB_STAT_ERROR << 8);
-     setCR2(0x0000);
-     setCR3(0x0000);
-     setCR4(0x0000);
-  }
-  else
-  {
-     setCR1(status << 8);
-     setCR2(numfiles - 2);
-     setCR3(0x0100);
-     setCR4(0x0002);
-  }
+  // may need to fix this
+  setCR1(status << 8);
+  setCR2(numfiles - 2);
+  setCR3(0x0100);
+  setCR4(0x0002);
 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
 }
@@ -1515,11 +1655,6 @@ void Cs2::readFile(void) {
 
   playFAD = FAD = fileinfo[rffid].lba + rfoffset;
   playendFAD = playFAD + rfsize;
-
-  if ((curpartition = GetPartition()) != NULL)
-  {
-     curpartition->size = 0;
-  }
 
   options = 0x8;
   issubcodeqdecoded = true;
@@ -1683,9 +1818,12 @@ void Cs2::cmdE1(void) {
 
 void Cs2::cmdE2(void) {
   FILE *mpgfp;
+  partition_struct *mpgpartition;
 
   // fix me
   mpgauth |= 0x300;
+
+  outconmpegrom = filter + 0;
 
   if ((mpgfp = fopen(yui_mpegrom(), "rb")) != NULL)
   {
@@ -1693,20 +1831,20 @@ void Cs2::cmdE2(void) {
      unsigned short readsize = getCR4();
 
      fseek(mpgfp, readoffset * getsectsize, SEEK_SET);
-     if ((curpartition = GetPartition()) != NULL && !isbufferfull)
+     if ((mpgpartition = GetPartition(outconmpegrom)) != NULL && !isbufferfull)
      {
-        curpartition->size = 0;
+        mpgpartition->size = 0;
 
         for (int i=0; i < readsize; i++)
         {
-           curpartition->block[curpartition->numblocks] = AllocateBlock();
+           mpgpartition->block[mpgpartition->numblocks] = AllocateBlock();
 
-           if (curpartition->block[curpartition->numblocks] != NULL) {
+           if (mpgpartition->block[mpgpartition->numblocks] != NULL) {
               // read data
-              fread((void *)curpartition->block[curpartition->numblocks]->data, 1, getsectsize, mpgfp);
+              fread((void *)mpgpartition->block[mpgpartition->numblocks]->data, 1, getsectsize, mpgfp);
 
-              curpartition->numblocks++;
-              curpartition->size += getsectsize;
+              mpgpartition->numblocks++;
+              mpgpartition->size += getsectsize;
            }
         }
 
@@ -1794,12 +1932,99 @@ void Cs2::SortBlocks(partition_struct *part) {
   }
 }
 
-partition_struct *Cs2::GetPartition()
+partition_struct *Cs2::GetPartition(filter_struct *curfilter)
 {
   // go through various filter conditions here(fix me)
 
   return &partition[curfilter->condtrue];
 }
+
+partition_struct *Cs2::FilterData(filter_struct *curfilter, bool isaudio)
+{
+  bool condresults=true;
+  partition_struct *fltpartition = NULL;
+
+  // fix me, this is pretty bad. Though I guess it's a start
+
+  // detect which type of sector we're dealing with
+  // If it's not mode 2, ignore the subheader conditions
+  if (workblock.data[0xF] == 0x02 && !isaudio)
+  {
+     // Mode 2
+     // go through various subheader filter conditions here(fix me)
+  }
+
+  if (curfilter->mode & 0x40)
+  {
+     // FAD Range Check
+     if (workblock.FAD < curfilter->FAD ||
+         workblock.FAD > (curfilter->FAD+curfilter->range))
+         condresults = false;
+  }
+
+  if (condresults == true)
+  {
+     fltpartition = &partition[curfilter->condtrue];
+  }
+  else
+  {
+     if (curfilter->condfalse == 0xFF)
+        return NULL;
+     // loop and try filter that was connected to the false connector
+  }
+
+  // Allocate block
+  fltpartition->block[fltpartition->numblocks] = AllocateBlock();
+
+  if (fltpartition->block[fltpartition->numblocks] == NULL)
+    return NULL;
+
+  // Copy workblock settings to allocated block
+  fltpartition->block[fltpartition->numblocks]->size = workblock.size;
+  fltpartition->block[fltpartition->numblocks]->FAD = workblock.FAD;
+  fltpartition->block[fltpartition->numblocks]->cn = workblock.cn;
+  fltpartition->block[fltpartition->numblocks]->fn = workblock.fn;
+  fltpartition->block[fltpartition->numblocks]->sm = workblock.sm;
+  fltpartition->block[fltpartition->numblocks]->ci = workblock.ci;
+
+  // convert raw sector to type specified in getsectsize
+  switch(workblock.size)
+  {
+     case 2048: // user data only
+                if (workblock.data[0xF] == 0x02)
+                   // m2f1
+                   memcpy(fltpartition->block[fltpartition->numblocks]->data,
+                          workblock.data + 24, workblock.size);
+                else
+                   // m1
+                   memcpy(fltpartition->block[fltpartition->numblocks]->data,
+                             workblock.data + 16, workblock.size);
+                break;
+     case 2324: // m2f2 user data only
+                memcpy(fltpartition->block[fltpartition->numblocks]->data,
+                       workblock.data + 24, workblock.size);
+                break;
+     case 2336: // m2f2 skip sync+header data
+                memcpy(fltpartition->block[fltpartition->numblocks]->data,
+                workblock.data + 16, workblock.size);
+                break;
+     case 2340: // m2f2 skip sync data
+                memcpy(fltpartition->block[fltpartition->numblocks]->data,
+                workblock.data + 12, workblock.size);
+                break;
+     case 2352: // no conversion needed
+                break;
+     default: break;
+  }
+
+  // Modify Partition values
+  if (fltpartition->size == -1) fltpartition->size = 0;
+  fltpartition->size += fltpartition->block[fltpartition->numblocks]->size;
+  fltpartition->numblocks++;
+
+  return fltpartition;
+}
+
 
 int Cs2::CopyDirRecord(unsigned char *buffer, dirrec_struct *dirrec)
 {
@@ -1902,37 +2127,101 @@ int Cs2::CopyDirRecord(unsigned char *buffer, dirrec_struct *dirrec)
   return 0;
 }
 
-
-int Cs2::ReadFileSystem()
+int Cs2::ReadFileSystem(filter_struct *curfilter, unsigned long fid, bool isoffset)
 {
-#if NEWCDINTERFACE
-  unsigned char tempsect[2352];
-#else
-  unsigned char tempsect[2048];
+   unsigned long fid_offset=0;
+   unsigned char *workbuffer;
+   unsigned long i;
+   dirrec_struct dirrec;
+   unsigned char numsectorsleft=0;
+   unsigned long curdirlba=0;
+   partition_struct *rfspartition;
+   unsigned long blocksectsize=getsectsize;
+ 
+   outconcddev = curfilter;
+
+   if (isoffset)
+   {
+      // readDirectory operation
+
+      // make sure we have a valid current directory
+      if (curdirsect == 0) return -1;
+
+//      rfspartition = ReadUnFilteredSector(??);
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: fix me: readDirectory not working\n");
 #endif
-  unsigned char *workbuffer;
-  unsigned long i;
-  dirrec_struct dirrec;
-  unsigned char numsectorsleft=0;
+      return -1;
 
-  // fix me (this function should support more than just the root directory)
+      fid_offset = fid;
+   }
+   else
+   {
+      // changeDirectory operation
 
-  // read sector 16
-  if (CDReadSector(16, 2048, tempsect) != 2048)
-     return -1;
+      if (fid == 0xFFFFFF)
+      {
+         // Figure out root directory's location
 
-  // retrieve directory record's lba
-  CopyDirRecord(tempsect + 0x9C, &dirrec);
+         // Read sector 16
+         if ((rfspartition = ReadUnFilteredSector(166)) == NULL)
+            return -2;
 
-  // now read sector using lba grabbed from above and start parsing
-  if (CDReadSector(dirrec.lba, 2048, tempsect) != 2048)
-     return -1;
+         blocksectsize = rfspartition->block[rfspartition->numblocks - 1]->size;
 
-  numsectorsleft = (dirrec.size / 2048) - 1;
-  dirrec.lba++;
-  workbuffer = tempsect;
+         // Retrieve directory record's lba
+         CopyDirRecord(rfspartition->block[rfspartition->numblocks - 1]->data + 0x9C, &dirrec);
 
-  for (i = 0; i < MAX_FILES; i++)
+         // Free Block
+         rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
+         FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+
+         // Sort remaining blocks
+         SortBlocks(rfspartition);
+         rfspartition->numblocks -= 1;
+
+         curdirlba = curdirsect = dirrec.lba;
+         numsectorsleft = (dirrec.size / blocksectsize) - 1;
+      }
+      else
+      {
+         // Read in new directory record of specified directory
+#if CDDEBUG
+         fprintf(stderr, "cs2\t: fix me: only root directory supported for changeDirectory\n");
+#endif
+         return -1;
+      }
+   }
+
+  // now read in first sector of directory record
+  if ((rfspartition = ReadUnFilteredSector(curdirlba+150)) == NULL)
+        return -2;
+
+  curdirlba++;
+  workbuffer = rfspartition->block[rfspartition->numblocks - 1]->data;
+
+  // Fill in first two entries of fileinfo
+  for (i = 0; i < 2; i++)
+  {
+     CopyDirRecord(workbuffer, fileinfo + i);
+     fileinfo[i].lba += 150;
+     workbuffer+=fileinfo[i].recordsize;
+
+     if (workbuffer[0] == 0)
+     {
+        numfiles = i;
+        break;
+     }
+  }
+
+  // If fid_offset != 0, parse sector entries until we've found the fid that
+  // matches fid_offset
+
+  // implement me
+
+  // Now generate the last 254 entries(the first two should've already been
+  // generated earlier)
+  for (i = 2; i < MAX_FILES; i++)
   {
      CopyDirRecord(workbuffer, fileinfo + i);
      fileinfo[i].lba += 150;
@@ -1942,11 +2231,20 @@ int Cs2::ReadFileSystem()
      {
         if (numsectorsleft > 0)
         {
-           if (CDReadSector(dirrec.lba, 2048, tempsect) != 2048)
-              return -1;
+           // Free previous read sector
+           rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
+           FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+
+           // Sort remaining blocks
+           SortBlocks(rfspartition);
+           rfspartition->numblocks -= 1;
+
+           // Read in next sector of directory record
+           if ((rfspartition = ReadUnFilteredSector(dirrec.lba+150)) == NULL)
+              return -2;
            dirrec.lba++;
            numsectorsleft--;
-           workbuffer = tempsect;
+           workbuffer = rfspartition->block[rfspartition->numblocks - 1]->data;
         }
         else
         {
@@ -1955,6 +2253,21 @@ int Cs2::ReadFileSystem()
         }
      }
   }
+
+  // Free the remaining sector
+  rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
+  FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+
+  // Sort remaining blocks
+  SortBlocks(rfspartition);
+  rfspartition->numblocks -= 1;
+
+//#if CDDEBUG
+//  for (i = 0; i < MAX_FILES; i++)
+//  {
+//     fprintf(stderr, "fileinfo[%d].name = %s\n", i, fileinfo[i].name);
+//  }
+//#endif
 
   return 0;
 }
@@ -1975,3 +2288,146 @@ void Cs2::SetupFileInfoTransfer(unsigned long fid) {
   transfileinfo[10] = (unsigned char)fid;
   transfileinfo[11] = fileinfo[fid].flags;
 }
+
+partition_struct *Cs2::ReadUnFilteredSector(unsigned long rufsFAD) {
+  partition_struct *rufspartition;
+  char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                          0xFF, 0xFF, 0xFF, 0x00};
+
+  if ((rufspartition = GetPartition(outconcddev)) != NULL && !isbufferfull)
+  {
+     // Allocate Block
+     rufspartition->block[rufspartition->numblocks] = AllocateBlock();
+
+     if (rufspartition->block[rufspartition->numblocks] == NULL)
+        return NULL;
+
+     // read a sector using cd interface function
+#if NEWCDINTERFACE
+     if (!CDReadSectorFAD(rufsFAD, workblock.data))
+        return NULL;
+
+     // convert raw sector to type specified in getsectsize
+     switch(getsectsize)
+     {
+        case 2048: // user data only
+                   if (workblock.data[0xF] == 0x02)
+                   {
+                      // is it form1/form2 data?
+                      if (!(workblock.data[0x12] & 0x20))
+                      {
+                         // form 1
+                         memcpy(rufspartition->block[rufspartition->numblocks]->data,
+                                workblock.data + 24, 2048);
+                         workblock.size = getsectsize;
+                      }
+                      else
+                      {
+                         // form 2
+                         memcpy(rufspartition->block[rufspartition->numblocks]->data,
+                                workblock.data + 24, 2324);
+                         workblock.size = 2324;
+                      }
+                   }
+                   else
+                   {
+                      memcpy(rufspartition->block[rufspartition->numblocks]->data,
+                             workblock.data + 16, 2048);
+                      workblock.size = getsectsize;
+                   }
+                   break;
+        case 2336: // skip sync+header data
+                   memcpy(rufspartition->block[rufspartition->numblocks]->data,
+                   workblock.data + 16, 2336);
+                   workblock.size = getsectsize;
+                   break;
+        case 2340: // skip sync data
+                   memcpy(rufspartition->block[rufspartition->numblocks]->data,
+                   workblock.data + 12, 2340);
+                   workblock.size = getsectsize;
+                   break;
+        case 2352: // no conversion needed
+                   workblock.size = getsectsize;
+                   break;
+        default: break;
+     }
+
+     // if mode 2 track, setup the subheader values
+     if (memcmp(syncheader, workblock.data, 12) == 0 &&
+         workblock.data[0xF] == 0x02)
+     {
+        rufspartition->block[rufspartition->numblocks]->fn = workblock.data[0x10];
+        rufspartition->block[rufspartition->numblocks]->cn = workblock.data[0x11];
+        rufspartition->block[rufspartition->numblocks]->sm = workblock.data[0x12];
+        rufspartition->block[rufspartition->numblocks]->ci = workblock.data[0x13];
+     }
+#else
+     if (CDReadSector(rufsFAD - 150, getsectsize, rufspartition->block[rufspartition->numblocks]->data) != getsectsize)
+        return NULL;
+
+#if CDDEBUG
+     fprintf(stderr, "cs2\t: RUFS: Sector read in fine\n");
+#endif
+
+     // setup/change the partition values
+     workblock.size = getsectsize;
+     rufspartition->block[rufspartition->numblocks]->FAD = rufsFAD;
+     rufspartition->block[rufspartition->numblocks]->cn = 0;
+     rufspartition->block[rufspartition->numblocks]->fn = 0;
+     rufspartition->block[rufspartition->numblocks]->sm = 0;
+     rufspartition->block[rufspartition->numblocks]->ci = 0;
+#endif
+
+     workblock.FAD = rufsFAD;
+
+     // Modify Partition values
+     if (rufspartition->size == -1) rufspartition->size = 0;
+     rufspartition->size += rufspartition->block[rufspartition->numblocks]->size;
+     rufspartition->numblocks++;
+
+     return rufspartition;
+  }
+
+  return NULL;
+}
+
+#if NEWCDINTERFACE
+partition_struct *Cs2::ReadFilteredSector(unsigned long rfsFAD) {
+  char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                          0xFF, 0xFF, 0xFF, 0x00};
+  bool isaudio=false;
+
+  if (outconcddev != NULL && !isbufferfull)
+  {     
+     // read a sector using cd interface function to workblock.data
+     if (!CDReadSectorFAD(rfsFAD, workblock.data))
+        return NULL;
+
+     workblock.size = getsectsize;
+     workblock.FAD = rfsFAD;
+
+     if (memcmp(syncheader, workblock.data, 12) != 0) isaudio=true;
+
+     // if mode 2 track, setup the subheader values
+     if (!isaudio &&
+         workblock.data[0xF] == 0x02)
+     {
+        // if it's form 2 data the sector size should be 2324
+        if (workblock.data[0x12] & 0x20) workblock.size = 2324;
+
+        workblock.fn = workblock.data[0x10];
+        workblock.cn = workblock.data[0x11];
+        workblock.sm = workblock.data[0x12];
+        workblock.ci = workblock.data[0x13];
+     }
+
+     // pass workblock to filter function(after it identifies partition,
+     // it should allocate the partition block, setup/change the partition
+     // values, and copy workblock to the allocated block)
+     return FilterData(outconcddev, isaudio);
+  }
+
+  return NULL;
+}
+#endif
+
