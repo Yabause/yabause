@@ -163,8 +163,9 @@ static int power_of_two(int input)
 void Vdp1::normalSpriteDraw(unsigned long addr) {
 	unsigned short xy = vram->getWord(addr + 0xA);
 
-	unsigned short x = localX + vram->getWord(addr + 0xC);
-	unsigned short y = localY + vram->getWord(addr + 0xE);
+	short x = localX + vram->getWord(addr + 0xC);
+	short y = localY + vram->getWord(addr + 0xE);
+	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
 	unsigned short w = ((xy >> 8) & 0x3F) * 8;
 	unsigned short h = xy & 0xFF;
 	unsigned short ww = power_of_two(w);
@@ -203,7 +204,6 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
 	unsigned long dot, color;
 
-	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
 	unsigned long alpha;
 	switch(CMDPMOD & 0x7) {
 		case 0:
@@ -741,8 +741,12 @@ void Vdp1::lineDraw(unsigned long addr) {
 }
 
 void Vdp1::userClipping(unsigned long addr) {
+  unsigned short CMDXA = vram->getWord(addr + 0xC);
+  unsigned short CMDYA = vram->getWord(addr + 0xE);
+  unsigned short CMDXC = vram->getWord(addr + 0x14);
+  unsigned short CMDYC = vram->getWord(addr + 0x16);
 #if DEBUG
-  cerr << "vdp1\t: user clipping" << endl;
+  cerr << hex << "vdp1\t: user clipping xa=" << CMDXA << " ya=" << CMDYA << " xc=" << CMDXC << " yc=" << CMDYC << endl;
 #endif
 }
 
