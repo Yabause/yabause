@@ -1016,10 +1016,16 @@ void Vdp2::lancer(Vdp2 *vdp2) {
 void Vdp2::VBlankIN(void) {
         setWord(0x4, getWord(0x4) | 0x0008);
 	((Scu *) satmem->getScu())->sendVBlankIN();
+
+        if (satmem->sshRunning)
+           ((SuperH *) satmem->getSlaveSH())->send(Interrupt(0x6, 0x43));
 }
 
 void Vdp2::HBlankIN(void) {
         setWord(0x4, getWord(0x4) | 0x0004);
+
+        if (satmem->sshRunning)
+           ((SuperH *) satmem->getSlaveSH())->send(Interrupt(0x2, 0x41));
 }
 
 void Vdp2::HBlankOUT(void) {

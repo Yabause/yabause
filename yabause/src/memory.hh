@@ -116,7 +116,6 @@ private:
   SuperH *msh;
   SuperH *ssh;
   SuperH *cursh;
-  bool sshRunning;
 
   bool _stop;
 
@@ -147,6 +146,7 @@ public:
 
   SuperH *getMasterSH(void);
   SuperH *getSlaveSH(void);
+  bool sshRunning;
 
   Uint8 *keys;
 

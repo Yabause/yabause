@@ -314,8 +314,8 @@ inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)
 #if DEBUG
       cerr << "FIXME should launch an interrupt\n";
 #endif
-//        shparent->send(Interrupt(Memory::getByte(IPRA) & 0xF, Memory::getLong(VCRDMA0+(reg_offset / 2))));
-   }
+        shparent->send(Interrupt((Memory::getWord(IPRA) & 0xF00) >> 8, Memory::getLong(VCRDMA0+(reg_offset / 2))));
+   }                                                                    
 
    // Set Transfer End bit
    Memory::setLong(CHCR0+reg_offset, chcr & 0xFFFFFFFE | 0x2);
