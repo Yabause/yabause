@@ -499,9 +499,14 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
                else
                {
-                  // upload to ram
-                  yabausemem->load(mtrnsfilename, mtrnssaddress);
+                  // upload to ram and possibly execute
                   mtrnsreadwrite = 1;
+
+                  // Is this a program?
+                  if (SendMessage(GetDlgItem(hDlg, IDC_CHECKBOX1), BM_GETCHECK, 0, 0) == BST_CHECKED)
+                     yabausemem->loadExec(mtrnsfilename, mtrnssaddress);
+                  else
+                     yabausemem->load(mtrnsfilename, mtrnssaddress);
                }
 
                EndDialog(hDlg, TRUE);
@@ -956,13 +961,6 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             // disabled
             SendMessage(GetDlgItem(hDlg, IDC_RBG0ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
          }
-
-//char vdp2bppstr[8][10]=
-
-//char vdp2charsizestr[2][10]=
-
-//char vdp2bmsizestr[4][10]=
-
 
          return TRUE;
       }
