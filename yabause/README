@@ -97,13 +97,13 @@ version)
 | or r3, r14                          | | @(delay)      2E3B |
 +-------------------------------------+ +--------------------+
 
-The upper frame display the master sh2 registers, for the SR
-register, the description of each part is give.
+The upper frame displays the master sh2 registers, for the SR
+register, the description of each part is given.
 
-The down-left frame display the desassembled opcode (using
+The down-left frame displays the desassembled opcode (using
 Bart Trzynadlowski's disassembler).
 
-The down-right frame display the current opcode.
+The down-right frame displays the current opcode.
 
 There are five commands to control yabause, each command is
 issued by typing its initial letter:
@@ -143,7 +143,7 @@ Thanks to:
   * Chuck Mason (author of semu),
     for releasing semu sources and for his handy debugger.
     
-  * Romain Vallet (some guy),
+  * Romain Vallet
     for winning the "Find a name for my emu" contest, for
     his contribution to this README and for this nice web
     site he did.
@@ -152,7 +152,7 @@ Thanks to:
   * Stefano and all of segadev for their help.
 
   * Josquin Debaz
-    for writting the man page.
+    for writing the man page.
 
   * Bart Trzynadlowski
     for his disassembler.
