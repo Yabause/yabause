@@ -52,6 +52,8 @@ class Onchip : public Memory {
 private:
 	SaturnMemory *memory;
 	unsigned long timing;
+        unsigned long ccleftover;
+        unsigned long frcdiv;
 
         /* DMAC */
         inline void DMATransfer(unsigned long chcr, unsigned long reg_offset);
@@ -81,6 +83,18 @@ public:
 	void send(const Interrupt&);
 */
 	//void sendOnChip(...);
+
+        void runFRT(unsigned long cc);
+
+        void inputCaptureSignal(void);
+};
+
+class InputCaptureSignal : public Memory {
+private:
+        Onchip *onchip;
+public:
+        InputCaptureSignal(SuperH *icsh);
+	void setWord(unsigned long, unsigned short);
 };
 
 #endif

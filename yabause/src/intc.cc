@@ -106,15 +106,35 @@ Onchip::Onchip(bool slave, SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
 #endif
 
 	timing = 0;
+        ccleftover = 0;
+        frcdiv = 8;
 }
 
 void Onchip::setByte(unsigned long addr, unsigned char val) {
   switch(addr) {
   case TCR: {
 #if DEBUG
-    fprintf(stderr, "MSH2 onchip register TCR write: %02x\n", val);
+    fprintf(stderr, "onchip register TCR write: %02x\n", val);
 #endif
     Memory::setByte(addr, val);
+
+    switch (val & 3) {
+       case 0:
+               frcdiv = 8;
+               break;
+       case 1:
+               frcdiv = 32;
+               break;
+       case 2:
+               frcdiv = 128;
+               break;
+       case 3:
+#if DEBUG
+               cerr << "onchip\t: FRT external input clock not implemented" << endl;
+#endif
+               break;
+    }
+
     break;
   }
   case FTCSR: {
@@ -313,6 +333,22 @@ void Onchip::runDMA(void) {
 	}
 }
 
+void Onchip::runFRT(unsigned long cc) {
+   unsigned long frctemp;
+
+   frctemp = (unsigned long)Memory::getWord(FRCH);
+
+   // Increment FRC
+   frctemp += ((cc + ccleftover) / frcdiv);
+   ccleftover = (cc + ccleftover) % frcdiv;
+
+   // If FRC overflows, set overflow flag
+   if (frctemp > 0xFFFF)  Memory::setByte(FTCSR, Memory::getByte(FTCSR) | 2);
+
+   // Write new FRC value
+   Memory::setWord(FRCH, (unsigned short)frctemp);
+}
+
 Interrupt::Interrupt(unsigned char l, unsigned char v) {
   _level = l;
   _vect = v;
@@ -352,3 +388,25 @@ void Onchip::run(unsigned long t) {
 	}
 }
 */
+
+void Onchip::inputCaptureSignal(void) {
+#if DEBUG
+   cerr << "Input Capture Signal Received" << endl;
+#endif
+   // Set Input Capture Flag
+   Memory::setByte(FTCSR, Memory::getByte(FTCSR) | 0x80);
+
+   // Copy FRC registers to Input Capture Registers
+   Memory::setWord(ICRH, Memory::getWord(FRCH));
+
+   // Generate an Interrupt?(fix me)
+}
+
+InputCaptureSignal::InputCaptureSignal(SuperH *icsh) : Memory(0, 4) {
+   onchip = (Onchip *)icsh->GetOnchip();
+}
+
+void InputCaptureSignal::setWord(unsigned long addr, unsigned short val) {
+   onchip->inputCaptureSignal();
+}
+

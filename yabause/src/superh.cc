@@ -134,6 +134,8 @@ void SuperH::runCycles(unsigned long cc) {
 	for(unsigned long i = 0;i < cc;i++) {
 		executer();
 	}
+
+        ((Onchip *)onchip)->runFRT(cc);
 }
 
 #ifndef _arch_dreamcast

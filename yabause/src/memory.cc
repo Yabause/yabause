@@ -292,8 +292,10 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	rom         = new Memory(0xFFFFF, 0x80000);
 	ram         = new Memory(0xFFFF, 0x10000);
 	ramLow      = new Memory(0xFFFFF, 0x100000);
-	minit       = new LoggedMemory("minit", new Dummy(0x10000), 1);
-	sinit       = new LoggedMemory("sinit", new Dummy(0x10000), 1);
+//        minit       = new LoggedMemory("minit", new Dummy(0x7FFFFF), 1);
+        minit = new InputCaptureSignal(ssh);
+//        sinit       = new LoggedMemory("sinit", new Dummy(0x7FFFFF), 1);
+        sinit = new InputCaptureSignal(msh);
 	cs0	      = new Dummy(0xFFFFFF);
 	cs1         = new Cs1();
 	cs2         = new Cs2();
@@ -536,8 +538,8 @@ void SaturnMemory::initMemoryMap() {
 	initMemoryHandler( 0x10,  0x11, smpc);
 	initMemoryHandler( 0x18,  0x19, ram);
 	initMemoryHandler( 0x20,  0x30, ramLow);
-	initMemoryHandler(0x100, 0x101, minit);
-	initMemoryHandler(0x180, 0x181, sinit);
+        initMemoryHandler(0x100, 0x17F, minit);
+        initMemoryHandler(0x180, 0x1FF, sinit);
 	initMemoryHandler(0x200, 0x400, cs0);
 	initMemoryHandler(0x400, 0x500, cs1);
 	initMemoryHandler(0x580, 0x590, cs2);
