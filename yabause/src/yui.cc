@@ -1,3 +1,4 @@
+#include "cdbase.hh"
 #include "yui.hh"
 
 int stop;
@@ -10,8 +11,10 @@ char * yui_bios(void) {
 	return "jap.rom";
 }
 
-char * yui_cdrom(void) {
-	return NULL;
+CDInterface *yui_cd(void) {
+        CDInterface *cd = 0;
+        cd = new DummyCDDrive();
+        return cd;
 }
 
 char * yui_saveram(void) {
