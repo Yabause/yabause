@@ -1,0 +1,132 @@
+        _   _
+       / \_/ \            ___  _      ____ 
+       \     /___  ___   /   || | __ /    \ ____
+        \   //   ||   \ /    || | \ \\  \_//    \
+        /  //    ||   //  _  || |__\ \\  \    __/
+        \_//  _  ||   \\_/ \_||______/ \  \\  \__
+           \_/ \_||___/              \____/ \____\
+     Yet Another Buggy And Uncomplete Saturn Emulator
+
+        _________________________________________
+        Copyright (c) 2002-2004 Guillaume Duhamel
+
+
+1) Compiling instructions...................................20
+2) How to use Yabause.......................................52
+3) Contact information.....................................101
+4) Disclaimer..............................................115
+
+
+1 Compiling instructions______________________________________
+
+Yabause is written in C++ using the SDL and OpenGL libraries,
+so you need a working C++ compiler, as g++ and the above
+libraries runtime and development packages:
+
+  * you can find SDL at http://www.libsdl.org/index.php in
+    the download section.
+
+  * OpenGL should be included with your compiler, if it isn't,
+    check on your compiler's website for links.
+
+Once these libraries installed, you should be ready to
+install Yabause.
+
+The following steps will be different depending on what
+compiler you're using. If you're using gnu-based compilers
+such as cygwin or mingw, you just have to uncompress the
+Yabause source archive, move to the newly created
+directory, type "./configure", then "make", it will generate
+one program: "yabause.exe" in the "src" directory.
+For other compilers, you're on your own at this point.
+
+You can also pass the --enable-debug, --enable-vdp1-debug,
+--enable-cd-debug options to the configure script, Yabause
+will then print debug messages on the error standard output.
+
+You can even type "make install" to install that program on
+your system (in /usr/local/ by default), then uninstalling is
+done by typing "make uninstall".
+
+
+2 How to use Yabause__________________________________________
+
+The first requirement is a Saturn ROM BIOS image (hence a Sega
+Saturn). Please don't ask us where to get one. 
+
+Execute "yabause". The program will open a settings window.
+
+The Drive Letter setting is for you to be able to choose which
+cdrom drive you want yabause to use when trying to boot a game.
+
+The Region setting allows you to choose which region of game
+you'll be booting. In most cases, it's best to leave it as
+"Auto-detect".
+
+The Bios ROM File setting allows you to specify the location
+of your Saturn ROM BIOS image. This setting -must- be set to a
+valid Saturn ROM BIOS in order for yabause to operate
+correctly.
+
+The Backup RAM File setting allows you to specify the location
+of the Backup RAM file. This file allows yabause to store and
+load save games.
+
+The MPEG ROM File setting allows you to specify the location 
+of a MPEG Card's ROM image. While not necessary, it does allow
+you to test out the saturn's vcd capabilities.
+
+When you're done, just click on the "OK" button. If the bios
+location was specified correctly, emulation should start and
+you will see a bit of a brief animation of the saturn logo
+being formed. 
+
+Here are the current key mappings(they may be subject to change):
+e - Up
+s - Left
+d - Down
+f - Right
+k - A button
+l - B button
+m - C button
+u - X button
+i - Y button
+o - Z button
+x - Left Trigger
+z - Right Trigger
+j - Start button
+q - Quit program
+
+
+3 Contact information_________________________________________
+
+General inquiries should go to:
+E-mail:	guillaume.duhamel@gmail.com
+
+Windows Port-related inquiries should go to:
+E-mail: cwx@cyberwarriorx.com
+
+Web:	http://yabause.sourceforge.net
+
+Please don't ask for roms, bios files or any other
+copyrighted stuff.
+
+
+4 Disclaimer__________________________________________________
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as 
+published by the Free Software Foundation; either version 2 of 
+the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be
+useful,but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+MA  02111-1307  USA
+
+See the GNU General Public License details in COPYING.
