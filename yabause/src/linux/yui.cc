@@ -184,3 +184,7 @@ void yui_coin_coin(void) {
 	saturn->start();
 	g_idle_add((gboolean (*)(void*)) yab_main, saturn);
 }
+
+char * yui_mpegrom(void) {
+	return NULL;
+}

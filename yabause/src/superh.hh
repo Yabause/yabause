@@ -137,6 +137,9 @@ public:
   friend class Onchip;
   friend void monitor(SuperH *);
   friend int main(int, char **);
+#ifdef DEBUG
+  int verbose;
+#endif
 
   SuperH(void);
   ~SuperH(void);

@@ -103,6 +103,7 @@ private:
   Memory *ramHigh;	//  6000000 -  6100000
   Memory *purgeArea;	// 40000000 - 50000000
   Memory *adressArray;	// 60000000 - 600003FF
+  Memory *dataArray;	// C0000000 - C0001000
   Memory *modeSdram;	// FFFF8000 - FFFFBFFF
   Memory *onchip;	// FFFFFE00 - FFFFFFFF
 

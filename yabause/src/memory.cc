@@ -303,6 +303,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
   ramHigh     = new Memory(0xFFFFF, 0x100000);
   purgeArea   = new Dummy(0xFFFFFFFF);
   adressArray = new Memory(0xFFF, 0x3FF);
+  dataArray   = new Memory(0xFFF, 0x1000);
   modeSdram   = new Memory(0xFFF, 0x4FFF);
   initMemoryMap();
 
@@ -496,8 +497,8 @@ void SaturnMemory::mappage2(unsigned long adr) {
 #endif
   }
   case 4:
-  case 6: // cache data access
-    cerr << "Cache R/W unsupported: " << adr << "\n"; return;     
+  case 6:
+	  mapMem = dataArray; mapAdr = adr & 0x1000; return;
   case 7:
     if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = modeSdram; mapAdr = adr & 0x00000FFF; return;}
     if (adr >= 0xFFFFFE00) { mapMem = onchip; mapAdr = adr & 0x000001FF; return;}
@@ -553,6 +554,8 @@ void SaturnMemory::mappage(unsigned long adr) {
     printf("Bad memory access: %8x", adr);
 #endif
   }
+  case 6:
+	  mapMem = dataArray; mapAdr = adr & 0x1000; return;
   case 7:
     if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = modeSdram; mapAdr = adr & 0x00000FFF; return;}
     if (adr >= 0xFFFFFE00) { mapMem = onchip; mapAdr = adr & 0x000001FF; return;}

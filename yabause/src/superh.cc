@@ -48,6 +48,9 @@ SuperH::SuperH(void) {
     mutex[i] = SDL_CreateMutex();
     cond[i] = SDL_CreateCond();
   }
+#ifdef DEBUG
+  verbose = 0;
+#endif
 }
 
 SuperH::~SuperH(void) {
@@ -117,6 +120,10 @@ void SuperH::synchroStart(void) {
   unsigned long cycleCountII = 0;
 
   while(!_stop) {
+	  /*
+    for(int coin=300;coin > 0;coin--) executer();
+    exit(1);
+    */
     while((cycleCount < decilineStop) && _run) {
       executer();
     }
@@ -204,6 +211,12 @@ void SuperH::executer(void) {
 
 void SuperH::_executer(void) {
   instruction = memoire->getWord(PC - 4);
+#ifdef DEBUG
+  if(verbose > 0) {
+	  cerr << "instruction = " << hex << instruction << " (PC=" << PC << ")" << endl;
+	  verbose--;
+  }
+#endif
 
   (this->*opcodes[instruction])();
 }

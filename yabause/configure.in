@@ -36,6 +36,7 @@ esac
 
 AC_CHECK_LIB(GL, glEnable)
 
+yabause_yui="."
 PKG_CHECK_MODULES(GTK, gtk+-2.0, yabause_yui="linux", [yabause_yui="."])
 AC_SUBST(yabause_yui)
 

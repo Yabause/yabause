@@ -199,6 +199,11 @@ int handleEvents(SaturnMemory *mem) {
 				mem->start();
 			}
 			break;
+#ifdef DEBUG
+		case SDLK_v:
+			msh->verbose = 10;
+			break;
+#endif
 		default:
 			keyDown(event.key.keysym.sym);
 			break;
