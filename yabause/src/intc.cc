@@ -55,7 +55,7 @@ void __del_highest_int()	{
 }
 #endif
 
-Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF) {
+Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
 	memory = sm;
 	setByte(4, 0x84);
 

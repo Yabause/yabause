@@ -27,7 +27,7 @@ class Vdp2;
 
 class Vdp2Ram : public Memory {
 public:
-  Vdp2Ram(void) : Memory(0x80000) {}
+  Vdp2Ram(void) : Memory(0xFFFFF, 0x80000) {}
 };
 
 class Vdp2Screen;
@@ -36,7 +36,7 @@ class Vdp2ColorRam : public Memory {
 private:
   int mode;
 public:
-  Vdp2ColorRam(void) : Memory(0x1000) {}
+  Vdp2ColorRam(void) : Memory(0xFFFF, 0x1000) {}
 
   void setMode(int);
   unsigned long getColor(unsigned long, Vdp2Screen *);

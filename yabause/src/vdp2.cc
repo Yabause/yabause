@@ -927,7 +927,7 @@ int NBG3::getInnerPriority(void) {
 /*					*/
 /****************************************/
 
-Vdp2::Vdp2(SaturnMemory *v) : Memory(0x120) {
+Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   satmem = v;
   _stop = false;
   vram = new Vdp2Ram;
@@ -1044,7 +1044,7 @@ void Vdp2::executer(void) {
   setWord(0x4, getWord(0x4) & 0xFFF7);
 
   glClear(GL_COLOR_BUFFER_BIT);
-  //drawBackScreen();
+  drawBackScreen();
   if (getWord(0) & 0x8000) {
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
     screens[0]->draw();
@@ -1092,7 +1092,6 @@ void Vdp2::updateRam(void) {
   cram->setMode(getWord(0xE) & 0xC000);
 }
 
-/*
 void Vdp2::drawBackScreen(void) {
 	unsigned long BKTAU = getWord(0xAC);
 	unsigned long BKTAL = getWord(0xAE);
@@ -1109,14 +1108,17 @@ void Vdp2::drawBackScreen(void) {
 		SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, (dot & 0x1F) << 3, (dot & 0xCE0) >> 2, (dot & 0x7C00) >> 7));
 	}
 	else {
-		for(int y = 0;y < 240;y++) {
+		SDL_Rect rect;
+		rect.x = 0;
+		rect.w = 320;
+		rect.h = 1;
+		for(rect.y = 0;rect.y < 240;rect.y++) {
 			dot = vram->getWord(scrAddr);
 			scrAddr += 2;
-			hlineRGBA(surface, 0, 320, y, (dot & 0x1F) << 3, (dot & 0xCE0) >> 2, (dot & 0x7C00) >> 7, 0xFF);
+			SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, (dot & 0x1F) << 3, (dot & 0xCE0) >> 2, (dot & 0x7C00) >> 7));
 		}
 	}
 }
-*/
 
 void Vdp2::priorityFunction(void) {
 }

@@ -19,7 +19,7 @@
 
 #include "cs1.hh"
 
-Cs1::Cs1(void) : Dummy() {} //Memory(0x1000000) {}
+Cs1::Cs1(void) : Dummy(0xFFFFFF) {} //Memory(0x1000000) {}
 
 unsigned char Cs1::getByte(unsigned long addr) { // merci satonem !!!
 	return 0xFF;

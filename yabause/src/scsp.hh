@@ -2,7 +2,7 @@
 
 class ScspRam : public Memory {
 public:
-	ScspRam(void) : Memory(0x7FFFF) {}
+	ScspRam(void) : Memory(0xFFFF, 0x7FFFF) {}
 
 	unsigned char getByte(unsigned long addr) {
 		switch(addr) {

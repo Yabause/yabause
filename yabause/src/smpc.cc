@@ -68,7 +68,7 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
   }
 }
 
-Smpc::Smpc(SaturnMemory *sm) : Memory(0x80) {
+Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
   dotsel = false;
   mshnmi = false;
   sndres = false;

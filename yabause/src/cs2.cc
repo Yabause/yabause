@@ -240,7 +240,7 @@ unsigned long Cs2::getLong(unsigned long addr) {
 }
 
 
-Cs2::Cs2(void) : Memory(0x100000) {
+Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   unsigned long i, i2;
 
   _stop = false;

@@ -25,11 +25,11 @@
 #include "timer.hh"
 #include "vdp2.hh"
 
-Vdp1::Vdp1(SaturnMemory *mem) : Memory(0x18) {
+Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
 	_stop = false;
 	setWord(0x4, 0);
-	vram = new Memory(0xC0000);
+	vram = new Memory(0xFFFFF, 0xC0000);
 }
 
 void Vdp1::stop(void) {

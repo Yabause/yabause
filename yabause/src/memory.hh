@@ -29,7 +29,8 @@ private:
 protected:
   unsigned long size;
 public:
-  Memory(unsigned long);
+  unsigned long mask;
+  Memory(unsigned long, unsigned long);
   virtual ~Memory(void);
 
   virtual unsigned char  getByte (unsigned long);
@@ -66,7 +67,7 @@ public:
 
 class Dummy : public Memory {
 public:
-  Dummy(void) : Memory(0) {}
+  Dummy(unsigned long m) : Memory(m, 0) {}
   ~Dummy(void) {}
   unsigned char getByte(unsigned long) { return 0; }
   void setByte(unsigned long, unsigned char) {}
@@ -105,8 +106,14 @@ private:
   Memory *onchip;	// FFFFFE00 - FFFFFFFF
 
   Memory *mapMem;
+  Memory *mapMem2;
   unsigned long mapAdr;
+  unsigned long mapAdr2;
   void mappage(unsigned long);
+  void mappage2(unsigned long);
+  void initMemoryMap(void);
+  void initMemoryHandler(int, int, Memory *);
+  Memory * memoryMap[0x800];
 
   SuperH *msh;
   SDL_Thread *mshThread;
