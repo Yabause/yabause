@@ -31,14 +31,14 @@ int CDInit(char *cdrom_name) {
 	if ((hCDROM = open(cdrom_name, O_RDONLY | O_NONBLOCK)) == -1) {
 		return -1;
 	}
-	printf("CDInit OK\n");
+	fprintf(stderr, "CDInit OK\n");
 	return 0;
 }
 
 int CDDeInit() {
 	close(hCDROM);
 
-	printf("CDDeInit OK\n");
+	fprintf(stderr, "CDDeInit OK\n");
 
 	return 0;
 }
@@ -47,7 +47,6 @@ int CDDeInit() {
 bool CDIsCDPresent()
 {
 	int ret = ioctl(hCDROM, CDROM_DRIVE_STATUS, CDSL_CURRENT);
-	printf("CDIsCDPresent=%d\n", (ret == CDS_DISC_OK));
 	return (ret == CDS_DISC_OK);
 }
 
@@ -58,7 +57,7 @@ long CDReadToc(unsigned long *TOC)
    bool success;
    struct cdrom_tochdr ctTOC;
    struct cdrom_tocentry ctTOCent;
-   int i;
+   int i, j;
    int add150 = 0;
 
    ctTOCent.cdte_format = CDROM_LBA;
@@ -68,48 +67,53 @@ long CDReadToc(unsigned long *TOC)
       memset(TOC, 0xFF, 0xCC * 2);
       memset(&ctTOC, 0xFF, sizeof(struct cdrom_tochdr));
 
-      if (ioctl(hCDROM, CDROMREADTOCHDR, &ctTOC) == 0) {
+      if (ioctl(hCDROM, CDROMREADTOCHDR, &ctTOC) == -1) {
 	return 0;
       }
 
-      printf("cd:\tToc info: First Track = %d Last Track = %d\n", ctTOC.cdth_trk0, ctTOC.cdth_trk1);
+      fprintf(stderr, "cd:\tToc info: First Track = %d Last Track = %d\n", ctTOC.cdth_trk0, ctTOC.cdth_trk1);
 
-      ctTOCent.cdte_track = 0;
-      ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent);
+      ctTOCent.cdte_track = ctTOC.cdth_trk0;
+      if (ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent) == -1)
+	      printf("graaaaaaaa\n");
+      if (ctTOCent.cdte_addr.lba == 0) add150 = 150;
       TOC[0] = ((ctTOCent.cdte_ctrl << 28) |
 	          (ctTOCent.cdte_adr << 24) |
-	           ctTOCent.cdte_addr.lba);
-      if (ctTOCent.cdte_addr.lba == 0) add150 = 150;
+	           ctTOCent.cdte_addr.lba + add150);
 
       // convert TOC to saturn format
-      for (i = 1; i < ctTOC.cdth_trk1; i++)
+      for (i = ctTOC.cdth_trk0 + 1; i <= ctTOC.cdth_trk1; i++)
       {      
 	      ctTOCent.cdte_track = i;
 	      ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent);
-	      TOC[i] = (ctTOCent.cdte_ctrl << 28) |
+	      TOC[i - 1] = (ctTOCent.cdte_ctrl << 28) |
                   (ctTOCent.cdte_adr << 24) |
 		  (ctTOCent.cdte_addr.lba + add150);
       }
 
       // Do First, Last, and Lead out sections here
 
-      ctTOCent.cdte_track = i;
+      ctTOCent.cdte_track = ctTOC.cdth_trk0;
       ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent);
       TOC[99] = (ctTOCent.cdte_ctrl << 28) |
                 (ctTOCent.cdte_adr << 24) |
                 (ctTOC.cdth_trk0 << 16);
 
-      ctTOCent.cdte_track = ctTOC.cdth_trk1 - 1;
+      ctTOCent.cdte_track = ctTOC.cdth_trk1;
       ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent);
       TOC[100] = (ctTOCent.cdte_ctrl << 28) |
                  (ctTOCent.cdte_adr << 24) |
                  (ctTOC.cdth_trk1 << 16);
 
-      ctTOCent.cdte_track = ctTOC.cdth_trk1;
+      ctTOCent.cdte_track = CDROM_LEADOUT;
       ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent);
       TOC[101] = (ctTOCent.cdte_ctrl << 28) |
                  (ctTOCent.cdte_adr << 24) |
 		 (ctTOCent.cdte_addr.lba + add150);
+
+      fprintf(stderr, "BEGIN TOC\n");
+      for(i = 0;i < 102;i++) fprintf(stderr, "%x\n", TOC[i]);
+      fprintf(stderr, "END TOC\n");
 
       return (0xCC * 2);
    }
@@ -132,10 +136,11 @@ unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
       position.msf.cdmsf_sec0 = (lba % 4500) / 75;
       position.msf.cdmsf_frame0 = (lba % 4500) % 75;
 
-      dwBytesReturned = ioctl(hCDROM, CDROMREADMODE1, &position);
+      if (ioctl(hCDROM, CDROMREADMODE1, &position) == -1)
+	      return 0;
       memcpy(buffer, position.bigbuf, 2048);
 
-      return dwBytesReturned;
+      return 2048;
    }
 
    return 0;

@@ -69,6 +69,7 @@ protected:
   int x, y;
   int alpha;
   int colorOffset;
+  bool transparencyEnable;
 public:
   Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, SDL_Surface *);
 

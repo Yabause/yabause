@@ -300,22 +300,22 @@ void Vdp2Screen::drawCell(void) {
 	for(int j = 0;j < cellW;j+=4) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  charAddr += 2;
-	  if (!(dot & 0xF000)) color = 0x00000000;
+	  if (!(dot & 0xF000) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), this);
 	  //pixelColor(surface, x, y, color);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
-	  if (!(dot & 0xF00)) color = 0x00000000;
+	  if (!(dot & 0xF00) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF00) >> 8), this);
 	  //pixelColor(surface, x, y, color);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
-	  if (!(dot & 0xF0)) color = 0x00000000;
+	  if (!(dot & 0xF0) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF0) >> 4), this);
 	  //pixelColor(surface, x, y, color);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
-	  if (!(dot & 0xF)) color = 0x00000000;
+	  if (!(dot & 0xF) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | (dot & 0xF), this);
 	  //pixelColor(surface, x, y, color);
 	  drawPixel(surface, x, y, color);
@@ -331,12 +331,12 @@ void Vdp2Screen::drawCell(void) {
 	for(int j = 0;j < cellW;j+=2) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  charAddr += 2;
-	  if (!(dot & 0xFF00)) color = 0x00000000;
+	  if (!(dot & 0xFF00) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), this);
 	  drawPixel(surface, x, y, color);
 	  //pixelColor(surface, x, y, color);
 	  x += xInc;
-	  if (!(dot & 0xFF)) color = 0x00000000;
+	  if (!(dot & 0xFF) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | (dot & 0xFF), this);
 	  drawPixel(surface, x, y, color);
 	  //pixelColor(surface, x, y, color);
@@ -351,7 +351,7 @@ void Vdp2Screen::drawCell(void) {
 	x = X;
 	for(int j = 0;j < cellW;j++) {
 	  unsigned short dot = vram->getWord(charAddr);
-	  if (dot == 0) color = 0x00000000;
+	  if ((dot == 0) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor(dot, this);
 	  charAddr += 2;
 	  drawPixel(surface, x, y, color);
@@ -368,7 +368,7 @@ void Vdp2Screen::drawCell(void) {
 	for(int j = 0;j < cellW;j++) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  charAddr += 2;
-	  if (dot & 0x8000) color = 0x00000000; //pixelRGBA(surface, x, y, 0, 0, 0, 0);
+	  if ((dot & 0x8000) && transparencyEnable) color = 0x00000000; //pixelRGBA(surface, x, y, 0, 0, 0, 0);
 	  else color = (dot & 0x1F) << 27 | (dot & 0xCE0) << 14 | (dot & 0x7C00) << 1 | 0xFF;
 		  //pixelRGBA(surface, x, y, (dot & 0x1F) << 3, (dot & 0xCE0) >> 2, (dot & 0x7C00) >> 7, 0xFF);
 	  drawPixel(surface, x, y, color);
@@ -387,7 +387,7 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  unsigned short dot2 = vram->getWord(charAddr);
 	  charAddr += 2;
-	  if (dot1 & 0x8000) color = 0x00000000; //pixelRGBA(surface, x, y, 0, 0, 0, 0);
+	  if ((dot1 & 0x8000) && transparencyEnable) color = 0x00000000; //pixelRGBA(surface, x, y, 0, 0, 0, 0);
 	  else color = ((dot2 & 0xFF) << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | 0xFF;
 		  //pixelRGBA(surface, x, y, dot2 & 0xFF, (dot2 & 0xFF00) >> 8, dot1 & 0xFF, 0xFF);
 	  drawPixel(surface, x, y, color);
@@ -559,6 +559,7 @@ void NBG0::init(void) {
 	 * or rotate scroll screen
 	*/
 	enable = reg->getWord(0x20) & 0x1;
+	transparencyEnable = !(reg->getWord(0x20) & 0x100);
 	x = - reg->getWord(0x70);
 	y = - reg->getWord(0x74);
 
@@ -656,6 +657,7 @@ void NBG1::init(void) {
   	unsigned short patternReg = reg->getWord(0x28);
 
   	enable = reg->getWord(0x20) & 0x2;
+	transparencyEnable = !(reg->getWord(0x20) & 0x200);
 	x = - reg->getWord(0x80);
 	y = - reg->getWord(0x84);
 	
@@ -754,6 +756,7 @@ void NBG2::init(void) {
 	unsigned short patternReg = reg->getWord(0x2A);
 
 	enable = reg->getWord(0x20) & 0x4;
+	transparencyEnable = !(reg->getWord(0x20) & 0x400);
 	x = - reg->getWord(0x90);
 	y = - reg->getWord(0x92);
 
@@ -844,6 +847,7 @@ void NBG3::init(void) {
 	unsigned short patternReg = reg->getWord(0x2A);
 
 	enable = reg->getWord(0x20) & 0x8;
+	transparencyEnable = !(reg->getWord(0x20) & 0x800);
 	x = - reg->getWord(0x94);
 	y = - reg->getWord(0x96);
 
