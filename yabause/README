@@ -8,15 +8,15 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
         _________________________________________
-        Copyright (c) 2002-2003 Guillaume Duhamel
+        Copyright (c) 2002-2004 Guillaume Duhamel
 
 
 1) Introduction.............................................22
-2) Installation instructions................................32
-3) How to use Yabause.......................................57
-4) Staff/Thanks............................................109
-5) Contact information.....................................140
-6) Disclaimer..............................................149
+2) Installation instructions................................35
+3) How to use Yabause.......................................60
+4) Staff/Thanks............................................112
+5) Contact information.....................................145
+6) Disclaimer..............................................154
 
 
 1 Introduction________________________________________________
@@ -27,6 +27,9 @@ Be aware that this is an early alpha version. Don't expect to
 play commercial games on your PC. This software is released
 for testing purposes only, and is essentially aimed to
 developers.
+
+For more information on the dreamcast port, check the
+README.DC file
 
 
 2 Installation instructions___________________________________
@@ -109,6 +112,8 @@ same address (the bios is also loaded, but ignored).
 4 Staff/Thanks________________________________________________
 
 Lead Programmer: Guillaume Duhamel
+Mac OS X port: Adam Green
+Dreamcast port: Lawrence Sebald
 
 Thanks to:
 
@@ -139,7 +144,7 @@ Thanks to:
 
 5 Contact information_________________________________________
 
-E-mail:	guillaume.duhamel@univ-rouen.fr
+E-mail:	guillaume.duhamel@gmail.com
 Web:	http://yabause.sourceforge.net
 
 Please don't ask for roms, bios files or any other
