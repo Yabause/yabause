@@ -223,7 +223,8 @@ void Smpc::INTBACKStatus(void) {
     // A -> asia/pal
     // C -> europe + others/pal
     // D -> central/south america/pal
-    setOREG(9, 0);
+    // this should be setup via command line option or config file option
+    setOREG(9, 1);
     
     // system state, first part in OREG10, bits 0-7
     // bit | value  | comment
