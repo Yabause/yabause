@@ -1,5 +1,5 @@
 /*  Copyright 2003,2004 Guillaume Duhamel
-    Copyright 2004 Theo Berkau
+    Copyright 2004-2005 Theo Berkau
 
     This file is part of Yabause.
 
@@ -316,6 +316,8 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	vdp2_2      = ((Vdp2 *) vdp2_3)->getCRam();
 	smpc        = new Smpc(this);
 	ramHigh     = new Memory(0xFFFFF, 0x100000);
+        unhandled   = new UnHandled();
+
 	initMemoryMap();
 
 	char *bios;
@@ -398,6 +400,7 @@ SaturnMemory::~SaturnMemory(void) {
   delete vdp1_2;
   delete scu;
   delete ramHigh;
+  delete unhandled;
 
   delete msh;
   delete ssh;
@@ -490,22 +493,21 @@ void SaturnMemory::initMemoryHandler(int begin, int end, Memory * m) {
 }
 
 void SaturnMemory::initMemoryMap() {
-	/*
 	for(int i = 0;i < 0x800;i++)
-		memory_map[i] = &unhandled;
-		*/
+                memoryMap[i] = unhandled;
+
 	initMemoryHandler(    0,   0x8, rom);
 	initMemoryHandler( 0x10,  0x11, smpc);
 	initMemoryHandler( 0x18,  0x19, ram);
 	initMemoryHandler( 0x20,  0x30, ramLow);
-        initMemoryHandler(0x100, 0x17F, minit);
-        initMemoryHandler(0x180, 0x1FF, sinit);
+        initMemoryHandler(0x100, 0x180, minit);
+        initMemoryHandler(0x180, 0x200, sinit);
 	initMemoryHandler(0x200, 0x400, cs0);
 	initMemoryHandler(0x400, 0x500, cs1);
 	initMemoryHandler(0x580, 0x590, cs2);
 	initMemoryHandler(0x5A0, 0x5A8, sound);
 	initMemoryHandler(0x5B0, 0x5B1, soundr);
-	initMemoryHandler(0x5C0, 0x5CC, vdp1_1);
+        initMemoryHandler(0x5C0, 0x5CC, vdp1_1);
 	initMemoryHandler(0x5D0, 0x5D1, vdp1_2);
 	initMemoryHandler(0x5E0, 0x5E8, vdp2_1);
 	initMemoryHandler(0x5F0, 0x5F1, vdp2_2);
@@ -653,3 +655,4 @@ void SaturnMemory::stopSlave(void) {
         ssh->reset();
 	sshRunning = false;
 }
+

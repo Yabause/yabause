@@ -94,9 +94,6 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 
-void yui_fps(int i) {
-}
-
 char * yui_bios(void) {
         return biosfilename;
 }
@@ -122,6 +119,11 @@ void yui_hide_show(void) {
 
 void yui_quit(void) {
 	stop = 1;
+}
+
+void yui_errormsg(Exception error, SuperH sh2opcodes) {
+   cerr << error << endl;
+   cerr << sh2opcodes << endl;
 }
 
 void yui_init(int (*yab_main)(void*)) {

@@ -1,5 +1,5 @@
 /*  Copyright 2003-2004 Guillaume Duhamel
-    Copyright 2004 Theo Berkau
+    Copyright 2004-2005 Theo Berkau
 
     This file is part of Yabause.
 
@@ -88,6 +88,18 @@ public:
   void setWord(unsigned long, unsigned short) {}
   unsigned long getLong(unsigned long) { return 0; }
   void setLong(unsigned long, unsigned long) {}
+};
+
+class UnHandled : public Dummy {
+public:
+  UnHandled(void) : Dummy(0xFFFFFFFF) {}
+  ~UnHandled(void) {}
+  unsigned char getByte(unsigned long addr) { throw BadMemoryAccess(addr); return 0; }
+  void setByte(unsigned long addr, unsigned char) { throw BadMemoryAccess(addr); }
+  unsigned short getWord(unsigned long addr) { throw BadMemoryAccess(addr); return 0; }
+  void setWord(unsigned long addr, unsigned short) { throw BadMemoryAccess(addr); }
+  unsigned long getLong(unsigned long addr) { throw BadMemoryAccess(addr); return 0; }
+  void setLong(unsigned long addr, unsigned long) { throw BadMemoryAccess(addr); }
 };
 
 #endif

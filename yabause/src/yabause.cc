@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include "yui.hh"
 
+#include "profile.h"
+
 unsigned short buttonbits = 0xFFFF;
 
 void keyDown(int key)
@@ -245,8 +247,7 @@ int handleEvents(SaturnMemory *mem) {
 		mem->synchroStart();
 	}
 	catch (Exception e) {
-		cerr << e << endl;
-                cerr << *mem->getCurrentSH() << endl;
+                yui_errormsg(e, *mem->getCurrentSH());
 		exit(1);
 	}
       }
@@ -258,6 +259,8 @@ int main(int argc, char **argv) {
 	//SDL_Init(SDL_INIT_EVENTTHREAD);
 
 	yui_init((int (*)(void*)) &handleEvents);
+
+        PROFILE_PRINT();
 
 	SDL_Quit();
         return 0;

@@ -305,3 +305,9 @@ unsigned char yui_region(void) {
 char * yui_saveram(void) {
 	return NULL;
 }
+
+void yui_errormsg(Exception error, SuperH sh2opcodes) {
+   cerr << error << endl;
+   cerr << sh2opcodes << endl;
+}
+

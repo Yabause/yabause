@@ -3,10 +3,6 @@
 
 int stop;
 
-void yui_fps(int i) {
-	fprintf(stderr, "%d\n", i);
-}
-
 char * yui_bios(void) {
 	return "jap.rom";
 }
@@ -55,3 +51,9 @@ void yui_init(int (*yab_main)(void*)) {
 	while (!stop) yab_main(mem);
 	delete(mem);
 }
+
+void yui_errormsg(Exception error, SuperH sh2opcodes) {
+   cerr << error << endl;
+   cerr << sh2opcodes << endl;
+}
+

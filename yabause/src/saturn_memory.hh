@@ -46,6 +46,7 @@ public:
   Vdp2 *vdp2_3;	//  5F80000 -  5F80120
   Scu *scu;		//  5FE0000 -  5FE00D0
   Memory *ramHigh;	//  6000000 -  6100000
+  Memory *unhandled;    //  Anything Not specified
 
   Memory *mapMem;
   unsigned long mapAddr;

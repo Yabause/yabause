@@ -13,9 +13,6 @@ void	yui_init(int (*)(void *));
 /* quit yui_init */
 void	yui_quit(void);
 
-/* display the frame per secound, can be ignored */
-void	yui_fps(int);
-
 /* hide or show the interface */
 void	yui_hide_show(void);
 
@@ -36,4 +33,7 @@ char * yui_saveram(void);
 
 /* returns a mpeg rom filename. Can be set to NULL if not present */
 char * yui_mpegrom(void);
+
+/* If Yabause encounters any fatal errors, it sends the error text to this function */
+void yui_errormsg(Exception error, SuperH sh2opcodes);
 
