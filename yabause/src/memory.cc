@@ -352,10 +352,8 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 /*
 	decilineCount = 0;
 	lineCount = 0;
-	frameCount = 0;
 	decilineStop = 170;
 	duf = 268;
-	ticks = 0;
 	cycleCountII = 0;
 */
         // Set the sh2 timing to the default
@@ -623,7 +621,6 @@ void SaturnMemory::changeTiming(unsigned long sh2freq, bool pal) {
 
    decilineCount = 0;
    lineCount = 0;
-   frameCount = 0;
 
    if (pal)
       decilineStop = sh2freq / 312 / 10 / 50; // I'm guessing this is wrong
@@ -632,7 +629,6 @@ void SaturnMemory::changeTiming(unsigned long sh2freq, bool pal) {
 
    duf = sh2freq / 100000;
 
-   ticks = 0;
    cycleCountII = 0;
 }
 
@@ -670,12 +666,6 @@ void SaturnMemory::synchroStart(void) {
 					((Vdp2 *) vdp2_3)->VBlankOUT();
 					//SDL_CondBroadcast(cond[2]);
 					lineCount = 0;
-					frameCount++;
-					if(SDL_GetTicks() >= ticks + 1000) {
-						yui_fps(frameCount);
-						frameCount = 0;
-						ticks = SDL_GetTicks();
-					}
 					break;
 			}
 			break;

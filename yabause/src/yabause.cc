@@ -171,6 +171,10 @@ int handleEvents(SaturnMemory *mem) {
 		break;
 	case SDL_KEYDOWN:
 	  switch(event.key.keysym.sym) {
+                case SDLK_F1:
+                        ((Vdp2 *)mem->getVdp2())->toggleFPS();
+                        break;
+
                 case SDLK_1:
                         ((NBG0 *)(((Vdp2 *)mem->getVdp2())->getNBG0()))->toggleDisplay();
                         break;

@@ -211,6 +211,11 @@ private:
   VdpScreen *nbg3;
   SaturnMemory *satmem;
 
+  int fps;
+  int frameCount;
+  unsigned long ticks;
+  bool fpstoggle;
+
 public:
   Vdp2(SaturnMemory *);
   ~Vdp2(void);
@@ -244,6 +249,8 @@ public:
   VdpScreen *getNBG3(void);
   void setSaturnResolution(int width, int height);
   void setActualResolution(int width, int height);
+  void onScreenDebugMessage(float x, float y, char *string, ...);
+  void toggleFPS(void);
 };
 
 #endif

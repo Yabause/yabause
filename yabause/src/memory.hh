@@ -120,10 +120,8 @@ private:
   char *cdrom;
 	int decilineCount;
 	int lineCount;
-	int frameCount;
 	int decilineStop;
 	int duf;
-	unsigned long ticks;
 	unsigned long cycleCountII;
 public:
   SaturnMemory(void);

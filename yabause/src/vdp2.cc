@@ -24,6 +24,7 @@
 #include "scu.hh"
 #include "timer.hh"
 #include "yui.hh"
+#include <gl\glut.h>
 
 #define COLOR_ADDt(b)		(b>0xFF?0xFF:(b<0?0:b))
 #define COLOR_ADDb(b1,b2)	COLOR_ADDt((signed) (b1) + (b2))
@@ -1583,6 +1584,11 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
   setSaturnResolution(320, 224);
 
   reset();
+
+  fps = 0;
+  frameCount = 0;
+  ticks = 0;
+  fpstoggle = false;
 }
 
 Vdp2::~Vdp2(void) {
@@ -1627,6 +1633,7 @@ void Vdp2::VBlankIN(void) {
 
 void Vdp2::HBlankIN(void) {
         setWord(0x4, getWord(0x4) | 0x0004);
+        ((Scu *) satmem->getScu())->sendHBlankIN();
 
         if (satmem->sshRunning)
            ((SuperH *) satmem->getSlaveSH())->send(Interrupt(0x2, 0x41));
@@ -1649,7 +1656,18 @@ void Vdp2::VBlankOUT(void) {
     screens[4]->draw();
     screens[5]->draw();
   }
-  
+
+  if (fpstoggle) {
+     onScreenDebugMessage(-0.9, -0.85, "%02d/60 FPS", fps);
+
+     frameCount++;
+     if(SDL_GetTicks() >= ticks + 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        ticks = SDL_GetTicks();
+     }
+  }
+
 #ifdef _arch_dreamcast
   glKosBeginFrame();
 #endif
@@ -1767,3 +1785,31 @@ void Vdp2::setSaturnResolution(int width, int height) {
 void Vdp2::setActualResolution(int width, int height) {
 }
 
+void Vdp2::onScreenDebugMessage(float x, float y, char *string, ...) {
+  va_list arglist;
+  char tempstr[512];
+
+  va_start(arglist, string);
+  vsprintf(tempstr, string, arglist);
+  va_end(arglist);
+
+#ifndef _arch_dreamcast
+  glColor3f(0.01f, 0.01f, 0.01f);
+  glRasterPos2f(x+0.012, y-0.0145);
+  for (int i=0; i < strlen(tempstr); i++) {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, tempstr[i]);
+  }
+
+  glColor3f(1.0f, 0.0f, 0.0f);
+  glRasterPos2f(x, y);
+  for (int i=0; i < strlen(tempstr); i++) {
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, tempstr[i]);
+  }
+
+  glColor3f(1.0f, 1.0f, 1.0f);
+#endif
+}
+
+void Vdp2::toggleFPS(void) {
+   fpstoggle ^= true;
+}
