@@ -27,6 +27,7 @@
 #include "../yui.hh"
 #include "resource.h"
 #include "settings.hh"
+//#include "cd.hh"
 
 int stop;
 int yabwinw;
@@ -34,6 +35,7 @@ int yabwinh;
 
 char SDL_windowhack[32];
 HINSTANCE y_hInstance;
+HWND YabWin;
 
 unsigned long mtrnssaddress=0x06000000;
 unsigned long mtrnseaddress=0x06100000;
@@ -75,6 +77,8 @@ char vdp2bmsizestr[4][10]=
 "1024x512"
 };
 
+//CDInterface *cd = 0;
+
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
@@ -93,6 +97,10 @@ char * yui_bios(void) {
 char * yui_cdrom(void) {
         return cdrompath; 
 }
+
+//CDInterface *yui_cd(void) {
+//        return cd;
+//}
 
 char * yui_saveram(void) {
         return backupramfilename;
@@ -116,16 +124,13 @@ void yui_quit(void) {
 void yui_init(int (*yab_main)(void*)) {
 	SaturnMemory *mem;
         WNDCLASS                    MyWndClass;
-        HRESULT                     hRet;
         HWND                        hWnd;
-        MSG                         msg;
-        int                         i, i2;
         DWORD inifilenamesize=0;
         char *pinifilename;
         static char szAppName[128];
         static char szClassName[] = "Yabause";
-        RECT                        workarearect;
-        DWORD ret;
+//        RECT                        workarearect;
+//        DWORD ret;
         char tempstr[MAX_PATH];
 
         sprintf(szAppName, "Yabause %s\0", VERSION);
@@ -252,19 +257,20 @@ void yui_init(int (*yab_main)(void*)) {
         sprintf(SDL_windowhack,"SDL_WINDOWID=%ld", hWnd);
 	putenv(SDL_windowhack);
 
+        YabWin = hWnd;
+
 	stop = 0;
+//        cd = new DummyCDDrive();
+//        cd = new WindowsCDDrive(cdrompath);
         mem = new SaturnMemory();
         yabausemem = mem;
-        while (!stop) yab_main(mem);
+        while (!stop) { yab_main(mem); }
 	delete(mem);
 
 }
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
-   HRESULT hRet;
-   HMENU hMenu;
-
    switch (uMsg)
    {
       case WM_COMMAND:
@@ -424,8 +430,6 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDOK:
             {
-               HANDLE hFile;
-
                GetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename, MAX_PATH);
 
                GetDlgItemText(hDlg, IDC_EDITTEXT2, tempstr, 9);
@@ -564,9 +568,7 @@ void UpdateRegList(HWND hDlg, sh2regs_struct *regs)
 
 void UpdateCodeList(HWND hDlg, unsigned long addr)
 {
-   unsigned long buf_size;
-   unsigned long buf_addr;
-   int i, i2;
+   int i;
    char buf[60];
    unsigned long offset;
 //   SuperH *proc=yabausemem->getSH();
@@ -632,6 +634,24 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+void BreakpointHandler (bool slave, unsigned long addr)
+{
+   MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
+
+   if (!slave)
+   {
+      debugsh = yabausemem->getMasterSH();
+      DialogBox(y_hInstance, "SH2DebugDlg", YabWin, (DLGPROC)SH2DebugDlgProc);
+   }
+   else
+   {
+      debugsh = yabausemem->getSlaveSH();
+      DialogBox(y_hInstance, "SH2DebugDlg", YabWin, (DLGPROC)SH2DebugDlgProc);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
@@ -639,8 +659,20 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         unsigned long i;
          sh2regs_struct sh2regs;
+         codebreakpoint_struct *cbp;
+         char tempstr[10];
+
+         cbp = debugsh->GetBreakpointList();
+
+         for (int i = 0; i < MAX_BREAKPOINTS; i++)
+         {
+            if (cbp[i].addr != 0xFFFFFFFF)
+            {
+               sprintf(tempstr, "%08X", cbp[i].addr);
+               SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)tempstr);
+            }
+         }
 
 //         if (proc->paused())
 //         {
@@ -648,6 +680,8 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             UpdateRegList(hDlg, &sh2regs);
             UpdateCodeList(hDlg, sh2regs.PC);
 //         }
+
+         debugsh->SetBreakpointCallBack(&BreakpointHandler);
 
          return TRUE;
       }
@@ -682,6 +716,40 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                debugsh->GetRegisters(&sh2regs);
                UpdateRegList(hDlg, &sh2regs);
                UpdateCodeList(hDlg, sh2regs.PC);
+               break;
+            }
+            case IDC_ADDBP1:
+            {
+               char bptext[10];
+               unsigned long addr=0;
+               memset(bptext, 0, 10);
+               GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 10);
+
+               if (bptext[0] != 0)
+               {
+                  sscanf(bptext, "%X", &addr);
+                  sprintf(bptext, "%08X", addr);
+
+                  if (debugsh->AddCodeBreakpoint(addr) == 0)
+                     SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
+               }
+
+               break;
+            }
+            case IDC_DELBP1:
+            {
+               LRESULT ret;
+               char bptext[10];
+               unsigned long addr=0;
+
+               if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
+               {
+                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
+                  sscanf(bptext, "%X", &addr);
+                  debugsh->DelCodeBreakpoint(addr);
+                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
+               }
+
                break;
             }
             case IDC_LISTBOX1:
@@ -824,25 +892,19 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          Vdp2 *proc=(Vdp2 *)yabausemem->getVdp2();
          unsigned long reg;
-         char tempstr[256];
+         char tempstr[1024];
+         bool isscrenabled;
 
          // is NBG0/RBG1 enabled?
-         if (proc->getWord(0x20) & 0x1 || proc->getWord(0x20) & 0x20)
+         ((NBG0 *)proc->getNBG0())->debugStats(tempstr, &isscrenabled);
+
+         if (isscrenabled)
          {
-            // enabled
             SendMessage(GetDlgItem(hDlg, IDC_NBG0ENABCB), BM_SETCHECK, BST_CHECKED, 0);
-
-            // Generate Info for NBG0/RBG1
-            if (proc->getWord(0x20) & 0x20)
-               SendMessage(GetDlgItem(hDlg, IDC_NBG0LB), LB_ADDSTRING, 0, (LPARAM)"RBG1 mode");
-            else
-               SendMessage(GetDlgItem(hDlg, IDC_NBG0LB), LB_ADDSTRING, 0, (LPARAM)"NBG0 mode");
-
-            DisplayScreenCCRInfo(GetDlgItem(hDlg, IDC_NBG0LB), proc->getWord(0x28) & 0xFF);
+            SetDlgItemText(hDlg, IDC_NBG0LB, tempstr);
          }
          else
          {
-            // disabled
             SendMessage(GetDlgItem(hDlg, IDC_NBG0ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
          }
 
