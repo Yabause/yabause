@@ -69,7 +69,6 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
       setSR(getSR() & 0x0F);
     }
   }
-
   if (addr == 0x1F) {
     setTiming();
   }
@@ -394,24 +393,50 @@ void Smpc::INTBACKPeripheral(void) {
   //Timer t;
   //t.wait(20);
 
+  /* Port Status:
+  0x04 - Sega-tap is connected
+  0x16 - Multi-tap is connected
+  0x21-0x2F - Clock serial peripheral is connected
+  0xF0 - Not Connected or Unknown Device
+  0xF1 - Peripheral is directly connected */
+
   /* PeripheralID:
-  0xF0 - Digital Device Standard Format
-  0xF1 - Analog Device Standard Format
-  0xF2 - Pointing Device Standard Format
-  0xF3 - Keyboard Device Standard Format
-  0x1E - Mega Drive 3-Button Pad
-  0x2E - Mega Drive 6-Button Pad
-  0x3E - Saturn Mouse */
-  
-  setOREG(0, 0xF1);  //PeripheralID
-  setOREG(1, 0x02);
+  0x02 - Digital Device Standard Format
+  0x13 - Racing Device Standard Format
+  0x15 - Analog Device Standard Format
+  0x23 - Pointing Device Standard Format
+  0x23 - Shooting Device Standard Format
+  0x34 - Keyboard Device Standard Format
+  0xE1 - Mega Drive 3-Button Pad
+  0xE2 - Mega Drive 6-Button Pad
+  0xE3 - Saturn Mouse
+  0xFF - Not Connected */
+
+  // Port 1
+  setOREG(0, 0xF1); //Port Status(Directly Connected)
+  setOREG(1, 0x02); //PeripheralID(Standard Pad)
   setOREG(2, buttonbits >> 8);   //First Data
   setOREG(3, buttonbits & 0xFF);  //Second Data
-  setOREG(4, 0xF1);
-  setOREG(5, 0x02);
-  setOREG(6, 0xFF);
-  setOREG(7, 0xFF);
-  for(int i = 8;i < 32;i++) setOREG(i, 0);
+
+  // Port 2
+  setOREG(4, 0xF0); //Port Status(Not Connected)
+  setOREG(5, 0xFF); //PeripheralID(Not Connected)
+  for(int i = 6;i < 32;i++) setOREG(i, 0);
+
+/*
+  Use this as a reference for implementing other peripherals
+  // Port 1
+  setOREG(0, 0xF1); //Port Status(Directly Connected)
+  setOREG(1, 0xE3); //PeripheralID(Shuttle Mouse)
+  setOREG(2, 0x00); //First Data
+  setOREG(3, 0x00); //Second Data
+  setOREG(4, 0x00); //Third Data
+
+  // Port 2
+  setOREG(5, 0xF0); //Port Status(Not Connected)
+  setOREG(6, 0xFF); //PeripheralID(Not Connected)
+  for(int i = 7;i < 32;i++) setOREG(i, 0);
+*/
 }
 
 void Smpc::SETSMEM(void) {
