@@ -90,11 +90,6 @@ unsigned short Cs2::getWord(unsigned long addr) {
                   else
                     val &= ~CDB_HIRQ_DCHG;
 
-                  if (issubcodeqdecoded)
-                    val |= CDB_HIRQ_SCDQ;
-                  else
-                    val &= ~CDB_HIRQ_SCDQ;
-
                   Memory::setWord(addr, val);
 #if CDDEBUG
                   fprintf(stderr, "cs2\t: Hirq read - ret: %x\n", val);
@@ -360,9 +355,7 @@ void Cs2::reset(void) {
   transfercount = 0;
   cdwnum = 0;
   getsectsize = putsectsize = 2048;
-  isonesectorstored = false;
   isdiskchanged = true;
-  issubcodeqdecoded = true;
   isbufferfull = false;
 
   setCR1(( 0 <<8) | 'C');
@@ -480,7 +473,6 @@ void Cs2::run(unsigned long cycles) {
 #if CDDEBUG
                fprintf(stderr, "blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", playpartition->numblocks, blockfreespace, FAD, playpartition->size, isbufferfull);
 #endif
-               isonesectorstored = true;
                setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
 
                if (FAD >= playendFAD) {
@@ -506,7 +498,8 @@ void Cs2::run(unsigned long cycles) {
 
       status |= CDB_STAT_PERI;
 
-      // adjust command registers appropriately here(fix me)
+      // adjust registers appropriately here(fix me)
+      setHIRQ(getHIRQ() | CDB_HIRQ_SCDQ);
 
       //periodicUpdate();
     }
@@ -1001,8 +994,6 @@ void Cs2::initializeCDSystem(void) {
   if (status & 0xF != CDB_STAT_OPEN && status & 0xF != CDB_STAT_NODISC)
   {
      status = CDB_STAT_PERI | CDB_STAT_PAUSE;
-     isonesectorstored = false;
-     issubcodeqdecoded = true;
      FAD = 150;
   }
 
@@ -1034,20 +1025,10 @@ void Cs2::initializeCDSystem(void) {
   val = getHIRQ() & 0xFFE5;
   isbufferfull = false;
 
-  if (isonesectorstored)
-     val |= CDB_HIRQ_CSCT;
-  else
-     val &= ~CDB_HIRQ_CSCT;
-
   if (isdiskchanged)
      val |= CDB_HIRQ_DCHG;
   else
      val &= ~CDB_HIRQ_DCHG;
-
-  if (issubcodeqdecoded)
-     val |= CDB_HIRQ_SCDQ;
-  else
-     val &= ~CDB_HIRQ_SCDQ;
 
   setCR1((status << 8) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
@@ -1101,7 +1082,6 @@ void Cs2::endDataTransfer(void) {
      default: break;
   }
 
-  isonesectorstored = false;
   cdwnum = 0;
 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
@@ -1175,7 +1155,6 @@ void Cs2::playDisc(void) {
      fprintf(stderr, "cs2\t: playDisc: Unsupported play mode = %02X\n", pdpmode);
 #endif
 
-  isonesectorstored = true;
   setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
 
   status = CDB_STAT_PERI | CDB_STAT_PLAY;
@@ -1888,7 +1867,6 @@ void Cs2::readFile(void) {
   playendFAD = playFAD + rfsize;
 
   options = 0x8;
-  issubcodeqdecoded = true;
 
   status = CDB_STAT_PERI | CDB_STAT_PLAY;
 
@@ -1903,7 +1881,7 @@ void Cs2::abortFile(void) {
   if ((status & 0xF) != CDB_STAT_OPEN &&
       (status & 0xF) != CDB_STAT_NODISC)
      status = CDB_STAT_PERI | CDB_STAT_PAUSE;
-  isonesectorstored = false;
+//  isonesectorstored = false;
   datatranstype = -1;
   cdwnum = 0;
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
@@ -2118,7 +2096,7 @@ void Cs2::cmdE0(void) {
      else
      {     
         // if authentication passes(obviously it always does), CDB_HIRQ_CSCT is set
-        isonesectorstored = true;
+//        isonesectorstored = true;
         setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
         satauth = 4;
      }
@@ -2188,7 +2166,7 @@ void Cs2::cmdE2(void) {
            }
         }
 
-        isonesectorstored = true;
+//        isonesectorstored = true;
         setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
      }
 

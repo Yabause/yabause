@@ -128,7 +128,6 @@ private:
   long datatranstype;
   bool isonesectorstored;
   bool isdiskchanged;
-  bool issubcodeqdecoded;
   bool isbufferfull;
   unsigned char transfileinfo[12];
   unsigned char lastbuffer;
