@@ -280,7 +280,7 @@ void LoggedMemory::setLong(unsigned long addr, unsigned long val) {
 
 SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
   mshThread = NULL;
-  msh = new SuperH();
+  msh = new SuperH(false);
 
   Timer::initSuperH(msh);
 

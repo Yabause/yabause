@@ -27,7 +27,7 @@
 #endif
 #include "yui.hh"
 
-SuperH::SuperH(void) {
+SuperH::SuperH(bool slave) {
   SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
   SR.partie.I = 0xF;
   SR.partie.inutile1 = 0;
@@ -43,6 +43,8 @@ SuperH::SuperH(void) {
   _stop = false;
   _pause = true;
   _run = false;
+
+  isslave = slave;
 
   for(int i = 0;i < 7;i++) {
     mutex[i] = SDL_CreateMutex();

@@ -133,6 +133,8 @@ protected:
 
   bool _pause;
   bool _run;
+
+  bool isslave;
 public:
   friend class Onchip;
   friend void monitor(SuperH *);
@@ -141,8 +143,8 @@ public:
   int verbose;
 #endif
 
-  SuperH(void);
-  ~SuperH(void);
+  SuperH(bool);
+ ~SuperH(void);
 
   bool processingInterrupt(void);
   void interrupt(void);
