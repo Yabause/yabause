@@ -23,49 +23,54 @@
 #include <time.h>
 
 unsigned char Smpc::getIREG(int i) {
-  return getByte(1 + 2 * i);
+  return Memory::getByte(1 + 2 * i);
 }
 unsigned char Smpc::getCOMREG(void) {
-  return getByte(0x1F);
+  return Memory::getByte(0x1F);
 }
 unsigned char Smpc::getOREG(int i) {
-  return getByte(0x21 + 2 * i);
+  return Memory::getByte(0x21 + 2 * i);
 }
 unsigned char Smpc::getSR(void) {
-  return getByte(0x61);
+  return Memory::getByte(0x61);
 }
 unsigned char Smpc::getSF(void) {
-  return getByte(0x63);
+  return Memory::getByte(0x63);
 }
 void Smpc::setIREG(int i, unsigned char val) {
-  setByte(i + 2 * i, val);
+  Memory::setByte(i + 2 * i, val);
 }
 void Smpc::setCOMREG(unsigned char val) {
-  setByte(0x1F, val);
+  Memory::setByte(0x1F, val);
 }
 void Smpc::setOREG(int i, unsigned char val) {
-  setByte(0x21 + 2 * i, val);
+  Memory::setByte(0x21 + 2 * i, val);
 }
 void Smpc::setSR(unsigned char val) {
-  setByte(0x61, val);
+  Memory::setByte(0x61, val);
 }
 void Smpc::setSF(unsigned char val) {
-  setByte(0x63, val);
+  Memory::setByte(0x63, val);
 }
 
 void Smpc::setByte(unsigned long addr, unsigned char value) {
   switch (addr) {
     case 0x01: // Maybe an INTBACK continue/break request
                Memory::setByte(addr, value);
-               if ((intbackIreg0 & 0x80) != (getIREG(0) & 0x80)) {
-                 // Continue
-                 setTiming();
-                 setSF(1);
-               }
-                 if ((intbackIreg0 & 0x40) != (getIREG(0) & 0x40)) {
-                 // Break
-                 intback = false;
-                 setSR(getSR() & 0x0F);
+
+               if (intback)
+               {
+                  if (getIREG(0) & 0x40) {
+                    // Break
+                    intback = false;
+                    setSR(getSR() & 0x0F);
+                    break;
+                  }
+                  else if (getIREG(0) & 0x80) {
+                    // Continue
+                    setTiming();
+                    setSF(1);
+                  }
                }
                break;
     case 0x75:
@@ -106,7 +111,7 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
     case 0x1F:
                Memory::setByte(addr, value);
                setTiming();
-               break;               
+               break;
     default:   Memory::setByte(addr, value);
                break;
   }
@@ -309,7 +314,6 @@ void Smpc::INTBACK(void) {
   setSF(1);
   if (intback) {
     INTBACKPeripheral();
-    //intback = false;
     sm->scu->sendSystemManager();
     return;
   }
@@ -317,8 +321,8 @@ void Smpc::INTBACK(void) {
     // Return non-peripheral data
     firstPeri = true;
     intback = getIREG(1) & 0x8; // does the program want peripheral data too?
-    setSR(0x40 | (intback << 5));
     INTBACKStatus();
+    setSR(0x4F | (intback << 5)); // the low nibble is undefined(or 0xF)
     sm->scu->sendSystemManager();
     return;
   }
@@ -327,6 +331,7 @@ void Smpc::INTBACK(void) {
     intback = true;
     setSR(0x40);
     INTBACKPeripheral();
+    setOREG(31, 0x10); // may need to be changed
     sm->scu->sendSystemManager();
     return;
   }
@@ -399,7 +404,7 @@ void Smpc::INTBACKStatus(void) {
     // SMEM
     for(int i = 0;i < 4;i++) setOREG(12+i, SMEM[i]);
     
-    setOREG(31, 0);
+    setOREG(31, 0x10); // set to intback command
 }
 
 void Smpc::RESENAB(void) {
@@ -432,6 +437,8 @@ void Smpc::INTBACKPeripheral(void) {
   else
     setSR(0x80 | (getIREG(1) >> 4));
 
+  firstPeri = false;
+
   //Timer t;
   //t.wait(20);
 
@@ -454,6 +461,21 @@ void Smpc::INTBACKPeripheral(void) {
   0xE3 - Saturn Mouse
   0xFF - Not Connected */
 
+  /* Special Notes(for potential future uses):
+
+  If a peripheral is disconnected from a port, you only return 1 byte for
+  that port(which is the port status 0xF0), at the next OREG you then return
+  the port status of the next port.
+
+  e.g. If Port 1 has nothing connected, and Port 2 has a controller
+       connected:
+
+  OREG0 = 0xF0
+  OREG1 = 0xF1
+  OREG2 = 0x02
+  etc.
+  */
+
   // Port 1
   setOREG(0, 0xF1); //Port Status(Directly Connected)
   setOREG(1, 0x02); //PeripheralID(Standard Pad)
@@ -462,9 +484,6 @@ void Smpc::INTBACKPeripheral(void) {
 
   // Port 2
   setOREG(4, 0xF0); //Port Status(Not Connected)
-  setOREG(5, 0xFF); //PeripheralID(Not Connected)
-  for(int i = 6;i < 32;i++) setOREG(i, 0);
-
 /*
   Use this as a reference for implementing other peripherals
   // Port 1
@@ -476,9 +495,11 @@ void Smpc::INTBACKPeripheral(void) {
 
   // Port 2
   setOREG(5, 0xF0); //Port Status(Not Connected)
-  setOREG(6, 0xFF); //PeripheralID(Not Connected)
-  for(int i = 7;i < 32;i++) setOREG(i, 0);
 */
+}
+
+void Smpc::INTBACKEnd(void) {
+  intback = false;
 }
 
 void Smpc::SETSMEM(void) {

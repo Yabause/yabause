@@ -72,6 +72,7 @@ public:
   void INTBACK(void);
   void INTBACKStatus(void);
   void INTBACKPeripheral(void);
+  void INTBACKEnd(void);
   void RESENAB(void);
   void RESDISA(void);
   void SNDON(void);

@@ -618,6 +618,7 @@ void SaturnMemory::synchroStart(void) {
 			switch(lineCount) {
 				case 224:
 					// VBlankIN
+                                        ((Smpc *) smpc)->INTBACKEnd();
 					((Vdp2 *) vdp2_3)->VBlankIN();
 					break;
 				case 263:
