@@ -22,10 +22,12 @@
 TARGET = yabause.exe
 CC = g++
 RC = windres
-#CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL 
-CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG -DCDDEBUG -O2
-LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lkernel32 -lgdi32 -lcomdlg32 -mconsole -mthreads -O2
-OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o timer.o windows/cd.o windows/yui.o windows/resource.o
+CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG -DCDDEBUG -DVDP1_DEBUG -DNEWCDINTERFACE -O2
+#CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG -DCDDEBUG -DVDP1_DEBUG -DNEWCDINTERFACE -O2 -march=athlon-xp
+#CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG -DCDDEBUG -DVDP1_DEBUG -DNEWCDINTERFACE -g
+#CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DNEWCDINTERFACE -O2 -march=athlon-xp -pg
+LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -mwindows -mthreads
+OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o timer.o windows/cd.o windows/yui.o windows/resource.o windows/settings.o sh2d.o
 
 all: $(TARGET)
 
@@ -41,4 +43,24 @@ windows/resource.o: windows/resource.rc windows/resource.h
 clean:
 	rm -f $(OBJS)
 	rm -f $(TARGET)
+
+cpu.o: cpu.hh
+cs1.o: cs1.hh
+cs2.o: cs2.hh timer.hh cd.hh yui.hh
+exception.o: exception.hh
+intc.o: intc.hh superh.hh timer.hh
+memory.o: registres.hh superh.hh timer.hh yui.hh cd.hh
+monitor.o: superh.hh sh2d.hh monitor.hh
+scu.o: scu.hh superh.hh
+sh2d.o: sh2d.hh
+smpc.o: smpc.hh cs2.hh scu.hh timer.hh yui.hh
+superh.o: vdp1.hh vdp2.hh exception.hh superh.hh yui.hh sh2d.hh
+timer.o: timer.hh superh.hh
+vdp1.o: saturn.hh vdp1.hh intc.hh exception.hh scu.hh timer.hh vdp2.hh
+vdp2.o: vdp2.hh saturn.hh scu.hh timer.hh yui.hh
+yabause.o: superh.cc smpc.hh cs2.hh intc.hh vdp1.hh vdp2.hh cd.hh yui.hh
+windows/cd.o: cd.hh
+windows/yui.o: superh.hh sh2d.hh vdp2.hh yui.hh windows/resource.h windows/settings.hh
+windows/resource.o: windows/resource.h
+windows/settings.o: windows/resource.h
 

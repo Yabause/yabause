@@ -81,8 +81,8 @@
 #define IDC_BIOSEDIT                    1007
 #define IDC_BIOSBROWSE                  1008
 
-#define IDC_SAVERAMEDIT                 1009
-#define IDC_SAVERAMBROWSE               1010
+#define IDC_BACKUPRAMEDIT               1009
+#define IDC_BACKUPRAMBROWSE             1010
 
 #define IDC_MPEGROMEDIT                 1011
 #define IDC_MPEGROMBROWSE               1012

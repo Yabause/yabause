@@ -94,7 +94,7 @@ char * yui_cdrom(void) {
 }
 
 char * yui_saveram(void) {
-        return saveramfilename;
+        return backupramfilename;
 }
 
 char * yui_mpegrom(void) {
@@ -165,7 +165,7 @@ void yui_init(int (*yab_main)(void*)) {
            }
         }
 
-        GetPrivateProfileString("General", "SaveRamPath", "", saveramfilename, MAX_PATH, inifilename);
+        GetPrivateProfileString("General", "BackupRamPath", "", backupramfilename, MAX_PATH, inifilename);
         GetPrivateProfileString("General", "MpegRomPath", "", mpegromfilename, MAX_PATH, inifilename);
 
         // Grab Bios Language Settings
@@ -251,11 +251,12 @@ void yui_init(int (*yab_main)(void*)) {
 
 	stop = 0;
 	mem = new SaturnMemory();
-	mem->start();
+        mem->start();
         yabausemem = mem;
 
         while (!stop) yab_main(mem);
-	delete(mem);
+
+        delete(mem);
 }
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)

@@ -24,7 +24,7 @@
 
 char biosfilename[MAX_PATH] = "\0";
 char cdrompath[MAX_PATH]="\0";
-char saveramfilename[MAX_PATH] = "\0";
+char backupramfilename[MAX_PATH] = "\0";
 char mpegromfilename[MAX_PATH] = "\0";
 char inifilename[MAX_PATH];
 
@@ -159,6 +159,9 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // Set Selected Bios Language
          SendDlgItemMessage(hDlg, IDC_BIOSLANGCB, CB_SETCURSEL, bioslang, 0);
 
+         // Since it's not fully working, let's disable it
+         EnableWindow(HWND(GetDlgItem(hDlg, IDC_BIOSLANGCB)), FALSE);
+
          // Setup Region Combo box
          SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_RESETCONTENT, 0, 0);
          SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Auto-detect");
@@ -205,8 +208,8 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // Set Default Bios ROM File
          SetDlgItemText(hDlg, IDC_BIOSEDIT, biosfilename);
 
-         // Set Default Save ROM File
-         SetDlgItemText(hDlg, IDC_SAVERAMEDIT, saveramfilename);
+         // Set Default Backup RAM File
+         SetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, backupramfilename);
 
          // Set Default MPEG ROM File
          SetDlgItemText(hDlg, IDC_MPEGROMEDIT, mpegromfilename);
@@ -289,7 +292,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                return TRUE;
             }
-            case IDC_SAVERAMBROWSE:
+            case IDC_BACKUPRAMBROWSE:
             {
 /*
                OPENFILENAME ofn;
@@ -306,7 +309,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if (GetSaveFileName(&ofn))
                {
                   // adjust appropriate edit box
-                  SetDlgItemText(hDlg, IDC_SAVERAMEDIT, saveramfilename);
+                  SetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, backupramfilename);
                }
 */
                return TRUE;
@@ -352,12 +355,12 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // Convert Dialog items back to variables
                GetDlgItemText(hDlg, IDC_BIOSEDIT, biosfilename, MAX_PATH);
-               GetDlgItemText(hDlg, IDC_SAVERAMEDIT, saveramfilename, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, backupramfilename, MAX_PATH);
                GetDlgItemText(hDlg, IDC_MPEGROMEDIT, mpegromfilename, MAX_PATH);
 
                // write path/filenames
                WritePrivateProfileString("General", "BiosPath", biosfilename, inifilename);
-               WritePrivateProfileString("General", "SaveRamPath", saveramfilename, inifilename);
+               WritePrivateProfileString("General", "BackupRamPath", backupramfilename, inifilename);
                WritePrivateProfileString("General", "MpegRomPath", mpegromfilename, inifilename);
 
                imagebool = (BOOL)SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_GETCURSEL, 0, 0);
@@ -402,7 +405,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   default:break;
                }
 
-               WritePrivateProfileString("General", "BiosLanguage", tempstr, inifilename);
+//               WritePrivateProfileString("General", "BiosLanguage", tempstr, inifilename);
 
                // Convert Combo Box ID to Region ID
                regionid = (char)SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_GETCURSEL, 0, 0);

@@ -24,7 +24,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 extern char biosfilename[MAX_PATH];
 extern char cdrompath[MAX_PATH];
-extern char saveramfilename[MAX_PATH];
+extern char backupramfilename[MAX_PATH];
 extern char mpegromfilename[MAX_PATH];
 extern char inifilename[MAX_PATH];
 
