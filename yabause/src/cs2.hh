@@ -294,6 +294,7 @@ public:
   void cmdE2(void);                       // 0xE2
 
   unsigned char FADToTrack(unsigned long fad);
+  unsigned long TrackToFad(unsigned short trackandindex);
   void SetupDefaultPlayStats(unsigned char track_number);
   block_struct *AllocateBlock();
   void FreeBlock(block_struct *blk);

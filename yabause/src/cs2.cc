@@ -504,7 +504,8 @@ void Cs2::run(unsigned long timing) {
       _periodiccycles -= _periodictiming; 
 
       // Get Drive's current status and compare with old status
-      switch(cd->getStatus())
+//      switch(cd->getStatus()) // this shouldn't be called every periodic response
+      switch(0)
       {
          case 0:
          case 1:
@@ -1238,17 +1239,12 @@ void Cs2::playDisc(void) {
   else if (pdepos != 0)
   {
      // Track Mode
-     unsigned long pdtrack=(pdepos & 0xFF00) >> 8;
-
-     if (pdtrack != 0xFF)
-        playendFAD = (TOC[pdtrack - 1] & 0x00FFFFFF) + (pdepos & 0xFF); // is this right?
+     playendFAD = TrackToFad(pdepos);
   }
   else
   {
      // Default Mode
-#if CDDEBUG
-     fprintf(stderr, "playdisc Default Mode is not implemented\n");
-#endif
+     playendFAD = TrackToFad(0xFFFF);
   }
 
   // setup play mode here
@@ -2277,6 +2273,18 @@ unsigned char Cs2::FADToTrack(unsigned long val) {
         return (i+1);
   }
 
+  return 0;
+}
+
+unsigned long Cs2::TrackToFad(unsigned short trackandindex) {
+  if (trackandindex == 0xFFFF)
+     // leadout position
+     return (TOC[101] & 0x00FFFFFF); 
+  if (trackandindex != 0x0000)
+     // regular track
+     return (TOC[(trackandindex >> 8) - 1] & 0x00FFFFFF) + (trackandindex & 0xFF);
+
+  // assume it's leadin
   return 0;
 }
 
