@@ -2353,74 +2353,79 @@ partition_struct *Cs2::FilterData(filter_struct *curfilter, bool isaudio)
 
   // fix me, this is pretty bad. Though I guess it's a start
 
-  // detect which type of sector we're dealing with
-  // If it's not mode 2, ignore the subheader conditions
-  if (workblock.data[0xF] == 0x02 && !isaudio)
+  for (;;)
   {
-     // Mode 2
-     // go through various subheader filter conditions here(fix me)
-
-     if (curfilter->mode & 0x01)
+     // detect which type of sector we're dealing with
+     // If it's not mode 2, ignore the subheader conditions
+     if (workblock.data[0xF] == 0x02 && !isaudio)
      {
-        // File Number Check
-        if (workblock.data[0x10] != curfilter->fid)
-           condresults = false;
-     }
-
-     if (curfilter->mode & 0x02)
-     {
-        // Channel Number Check
+        // Mode 2
+        // go through various subheader filter conditions here(fix me)
+   
+        if (curfilter->mode & 0x01)
+        {
+           // File Number Check
+           if (workblock.data[0x10] != curfilter->fid)
+              condresults = false;
+        }
+   
+        if (curfilter->mode & 0x02)
+        {
+           // Channel Number Check
 #if CDDEBUG
-        fprintf(stderr, "cs2\t: FilterData: Channel Number Check\n");
+           fprintf(stderr, "cs2\t: FilterData: Channel Number Check\n");
 #endif
-     }
+        }
 
-     if (curfilter->mode & 0x04)
-     {
-        // Sub Mode Check
+        if (curfilter->mode & 0x04)
+        {
+           // Sub Mode Check
 #if CDDEBUG
-        fprintf(stderr, "cs2\t: FilterData: Sub Mode Check\n");
+           fprintf(stderr, "cs2\t: FilterData: Sub Mode Check\n");
 #endif
-     }
+        }
 
-     if (curfilter->mode & 0x08)
-     {
-        // Coding Information Check
+        if (curfilter->mode & 0x08)
+        {
+           // Coding Information Check
 #if CDDEBUG
-        fprintf(stderr, "cs2\t: FilterData: Coding Information Check\n");
+           fprintf(stderr, "cs2\t: FilterData: Coding Information Check\n");
 #endif
-     }
+        }
 
-     if (curfilter->mode & 0x10)
-     {
-        // Reverse Subheader Conditions
+        if (curfilter->mode & 0x10)
+        {
+           // Reverse Subheader Conditions
 #if CDDEBUG
-        fprintf(stderr, "cs2\t: FilterData: Reverse Subheader Conditions\n");
+           fprintf(stderr, "cs2\t: FilterData: Reverse Subheader Conditions\n");
 #endif
-        condresults ^= true;
+           condresults ^= true;
+        }
      }
-  }
 
-  if (curfilter->mode & 0x40)
-  {
-     // FAD Range Check
-     if (workblock.FAD < curfilter->FAD ||
-         workblock.FAD > (curfilter->FAD+curfilter->range))
-         condresults = false;
-  }
+     if (curfilter->mode & 0x40)
+     {
+        // FAD Range Check
+        if (workblock.FAD < curfilter->FAD ||
+            workblock.FAD > (curfilter->FAD+curfilter->range))
+            condresults = false;
+     }
 
-  if (condresults == true)
-  {
-     lastbuffer = curfilter->condtrue;
-     fltpartition = &partition[curfilter->condtrue];
-  }
-  else
-  {
-     lastbuffer = curfilter->condfalse;
+     if (condresults == true)
+     {
+        lastbuffer = curfilter->condtrue;
+        fltpartition = &partition[curfilter->condtrue];
+        break;
+     }
+     else
+     {
+        lastbuffer = curfilter->condfalse;
 
-     if (curfilter->condfalse == 0xFF)
-        return NULL;
-     // loop and try filter that was connected to the false connector
+        if (curfilter->condfalse == 0xFF)
+           return NULL;
+        // loop and try filter that was connected to the false connector
+        curfilter = &filter[curfilter->condfalse];
+     }
   }
 
   // Allocate block
