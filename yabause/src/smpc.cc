@@ -160,7 +160,9 @@ void Smpc::lancer(Smpc *smpc) {
 void Smpc::INTBACK(void) {
   memoire->setSF(1);
   if (intback) {
+#ifdef DEBUG
     cerr << "don't really know how I can get here..." << endl;
+#endif
     INTBACKPeripheral();
     //intback = false;
     scu->sendSystemManager();

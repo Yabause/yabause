@@ -170,11 +170,16 @@ void Vdp1::executer(unsigned long adr) {
     case 2: // CALL, call a subroutine
       returnAddr = adr;
       adr = memoire->getWord(adr + 2) * 8;
-      cerr << "CALL " << adr << endl;
+#ifdef DEBUG
+	  cerr << "CALL " << adr << endl;
+#endif
       break;
     case 3: // RETURN, return from subroutine
       adr = returnAddr;
+#ifdef DEBUG
       cerr << "RET" << endl;
+#endif
+      break;
     }
     //cerr << "vdp1 :   | table suivante = " << adr << '\n';
 #ifndef _arch_dreamcast

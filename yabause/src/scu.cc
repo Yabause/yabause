@@ -71,9 +71,12 @@ void Scu::DMA(int mode) {
 		case 0x7: writeAdd = 128; break;
 	}
 	if (registres->getLong(i + 0x14) & 0x1000000) {
+#if DEBUG
 		cerr << "indirect DMA not implemented" << endl;
+#endif
 	}
 	else {
+#if DEBUG
 		cerr << hex;
 		cerr << "direct DMA" << endl;
 		cerr << "\tread address = " << readAddress << endl;
@@ -81,10 +84,13 @@ void Scu::DMA(int mode) {
 		cerr << "\ttransfer number = " << transferNumber << endl;
 		cerr << "\tread add = " << (int) readAdd << endl;
 		cerr << "\twrite add = " << (int) writeAdd << endl;
+#endif
 		unsigned long counter = 0;
 		unsigned long test = writeAddress & 0x1FFFFFFF;
 		if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
+#ifdef DEBUG
 			cerr << "B Bus" << endl;
+#endif
 			while(counter < transferNumber) {
 				Memory *saturnMem = intc->getSH()->getMemory();
 				unsigned long tmp = saturnMem->getLong(readAddress);
@@ -97,7 +103,9 @@ void Scu::DMA(int mode) {
 			}
 		}
 		else {
+#if DEBUG
 			cerr << "A Bus" << endl;
+#endif
 			while(counter < transferNumber) {
 				Memory *saturnMem = intc->getSH()->getMemory();
 				saturnMem->setLong(writeAddress, saturnMem->getLong(readAddress));

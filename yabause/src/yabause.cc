@@ -36,55 +36,81 @@ void keyDown(int key)
   switch (key) {
 	case SDLK_f:
 		buttonbits &= 0x7FFF;
+#ifdef DEBUG
 		cerr << "Right" << endl;
+#endif
 		break;
 	case SDLK_s:
 		buttonbits &= 0xBFFF;
+#ifdef DEBUG
 		cerr << "Left" << endl;
+#endif
 		break;
 	case SDLK_d:
 		buttonbits &= 0xDFFF;
+#ifdef DEBUG
 		cerr << "Down" << endl;
+#endif
 		break;
 	case SDLK_e:
 		buttonbits &= 0xEFFF;
+#ifdef DEBUG
 		cerr << "Up" << endl;
+#endif
 		break;
 	case SDLK_j:
 		buttonbits &= 0xF7FF;
+#ifdef DEBUG
 		cerr << "Start" << endl;
+#endif
 		break;
 	case SDLK_k:
 		buttonbits &= 0xFBFF;
+#ifdef DEBUG
 		cerr << "A" << endl;
+#endif
 		break;
 	case SDLK_m:
 		buttonbits &= 0xFDFF;
+#ifdef DEBUG
 		cerr << "C" << endl;
+#endif
 		break;
 	case SDLK_l:
 		buttonbits &= 0xFEFF;
+#ifdef DEBUG
 		cerr << "B" << endl;
+#endif
 		break;
 	case SDLK_z:
 		buttonbits &= 0xFF7F;
+#ifdef DEBUG
 		cerr << "Right Trigger" << endl;
+#endif
 		break;
 	case SDLK_u:
 		buttonbits &= 0xFFBF;
+#ifdef DEBUG
 		cerr << "X" << endl;
+#endif
 		break;
 	case SDLK_i:
 		buttonbits &= 0xFFDF;
+#ifdef DEBUG
 		cerr << "Y" << endl;
+#endif
 		break;
 	case SDLK_o:
 		buttonbits &= 0xFFEF;
+#ifdef DEBUG
 		cerr << "Z" << endl;
+#endif
 		break;
 	case SDLK_x:
 		buttonbits &= 0xFFF7;
+#ifdef DEBUG
 		cerr << "LTrig" << endl;
+#endif
 		break;
 	default:
 		break;
@@ -172,17 +198,24 @@ int main(int argc, char **argv) {
     while (!stop) {
       if (SDL_PollEvent(&event)) {
 	switch(event.type) {
+	case SDL_QUIT:
+		stop = true;
+		break;
 	case SDL_KEYDOWN:
 	  switch(event.key.keysym.sym) {
 		case SDLK_q:
 			stop = true;
 			break;
 		case SDLK_p:
-			cerr << "pause" << endl;
+#ifdef DEBUG
+			cerr << "Pause" << endl;
+#endif
 			mem->getMasterSH()->pause();
 			break;
 		case SDLK_r:
-			cerr << "run" << endl;
+#ifdef DEBUG
+			cerr << "Run" << endl;
+#endif
 			mem->getMasterSH()->run();
 			break;
 		default:
