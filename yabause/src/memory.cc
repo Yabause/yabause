@@ -418,33 +418,33 @@ SaturnMemory::~SaturnMemory(void) {
 }
 
 unsigned char SaturnMemory::getByte(unsigned long adr) {
-  mappage2(adr);
-  return mapMem->getByte(mapAdr);
+  mapping(adr);
+  return mapMem->getByte(mapAddr);
 }
 
 void SaturnMemory::setByte(unsigned long adr, unsigned char valeur) {
-  mappage2(adr);
-  mapMem->setByte(mapAdr, valeur);
+  mapping(adr);
+  mapMem->setByte(mapAddr, valeur);
 }
 
 unsigned short SaturnMemory::getWord(unsigned long addr) {
-  mappage2(addr);
-  return mapMem->getWord(mapAdr);
+  mapping(addr);
+  return mapMem->getWord(mapAddr);
 }
 
 void SaturnMemory::setWord(unsigned long adr, unsigned short valeur) {
-  mappage2(adr);
-  mapMem->setWord(mapAdr, valeur);
+  mapping(adr);
+  mapMem->setWord(mapAddr, valeur);
 }
 
 unsigned long SaturnMemory::getLong(unsigned long adr) {
-  mappage2(adr);
-  return mapMem->getLong(mapAdr);
+  mapping(adr);
+  return mapMem->getLong(mapAddr);
 }
 
 void SaturnMemory::setLong(unsigned long adr, unsigned long valeur) {
-  mappage2(adr);
-  mapMem->setLong(mapAdr, valeur);
+  mapping(adr);
+  mapMem->setLong(mapAddr, valeur);
 }
 
 void SaturnMemory::loadBios(const char *filename) {
@@ -482,8 +482,8 @@ void SaturnMemory::FormatBackupRam() {
 }
 
 void SaturnMemory::load(const char *fichier, unsigned long adr) {
-  mappage2(adr);
-  mapMem->load(fichier, mapAdr);
+  mapping(adr);
+  mapMem->load(fichier, mapAddr);
 }
 
 SuperH *SaturnMemory::getMasterSH(void) {
@@ -556,107 +556,66 @@ void SaturnMemory::initMemoryMap() {
 	initMemoryHandler(0x600, 0x610, ramHigh);
 }
 
-void SaturnMemory::mappage2(unsigned long adr) {
-  switch (adr >> 29) {
-  case 0: // cache used
-  case 1: // cache not used
-  case 5:  { // cache not used
-    unsigned long nadr = adr & 0x1FFFFFFF;
-    mapMem = memoryMap[nadr >> 16]; mapAdr = adr & mapMem->mask; // FIXME
-    //if ((mapMem->mask & mapAdr2) != mapAdr) cerr << hex << "mapAdr2=" << mapAdr2 << " mapAdr=" << mapAdr << endl;
-    return;
-    }
+void SaturnMemory::mapping(unsigned long addr) {
+	switch (addr >> 29) {
+		case 0: // cache used
+		case 1: // cache not used
+		case 5:  { // cache not used
+			unsigned long naddr = addr & 0x1FFFFFFF;
+			mapMem = memoryMap[naddr >> 16];
+			mapAddr = addr & mapMem->mask;
+			return;
+			}
 #ifndef _arch_dreamcast
-    throw BadMemoryAccess(adr);
+			throw BadMemoryAccess(addr);
 #else
-    printf("Bad memory access: %8x", adr);
+			printf("Bad memory access: %8x", addr);
 #endif
-  case 2: // purge area
-    mapMem = cursh->GetPurgeArea(); mapAdr = adr & mapMem->mask; return; // FIXME
-  case 3: { // direct access to cache addresses
-    unsigned long nadr = adr & 0x1FFFFFFF;
-    if (nadr < 0x3FF) { mapMem = cursh->GetAddressArray(); mapAdr = nadr & mapMem->mask; return;} // FIXME
+		case 2: // purge area
+			mapMem = cursh->GetPurgeArea();
+			mapAddr = addr & mapMem->mask;
+			return;
+		case 3: { // direct access to cache addresses
+			unsigned long naddr = addr & 0x1FFFFFFF;
+			if (naddr < 0x3FF) {
+				mapMem = cursh->GetAddressArray();
+				mapAddr = naddr & mapMem->mask;
+				return;
+			}
 #ifndef _arch_dreamcast
-    throw BadMemoryAccess(adr);
+			throw BadMemoryAccess(addr);
 #else
-    printf("Bad memory access: %8x", adr);
+			printf("Bad memory access: %8x", addr);
 #endif
-  }
-  case 4:
-  case 6:
-          mapMem = cursh->GetDataArray(); mapAdr = adr & 0x00000FFF; return;
-  case 7:
-    if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = cursh->GetSdramMode(); mapAdr = adr & 0x00000FFF; return;}
-    if (adr >= 0xFFFFFE00) { mapMem = cursh->GetOnchip(); mapAdr = adr & 0x000001FF; return;}
+			}
+		case 4:
+		case 6:
+			mapMem = cursh->GetDataArray();
+			mapAddr = addr & 0x00000FFF;
+			return;
+		case 7:
+			if ((addr >= 0xFFFF8000) && (addr < 0xFFFFC000)) {
+				mapMem = cursh->GetSdramMode();
+				mapAddr = addr & 0x00000FFF;
+				return;
+			}
+			if (addr >= 0xFFFFFE00) {
+				mapMem = cursh->GetOnchip();
+				mapAddr = addr & 0x000001FF;
+				return;
+			}
 #ifndef _arch_dreamcast
-    throw BadMemoryAccess(adr);
+			throw BadMemoryAccess(addr);
 #else
-    printf("Bad memory access: %8x", adr);
+			printf("Bad memory access: %8x", addr);
 #endif
-  default:
+		default:
 #ifndef _arch_dreamcast
-    throw BadMemoryAccess(adr);
+			throw BadMemoryAccess(addr);
 #else
-    printf("Bad memory access: %8x", adr);
+			printf("Bad memory access: %8x", addr);
 #endif
-  }
-}
-
-void SaturnMemory::mappage(unsigned long adr) {
-  switch (adr >> 29) {
-  case 0:
-  case 1: {
-    unsigned long nadr = adr & 0x1FFFFFFF;
-    if (nadr < 0x80000) { mapMem = rom; mapAdr = nadr; return; }
-    if ((nadr >=  0x100000) && (nadr <  0x100080)) { mapMem = smpc;    mapAdr = nadr & 0x000000FF; return;}
-    if ((nadr >=  0x180000) && (nadr <  0x190000)) { mapMem = ram;     mapAdr = nadr & 0x0000FFFF; return;}
-    if ((nadr >=  0x200000) && (nadr <  0x300000)) { mapMem = ramLow;  mapAdr = nadr & 0x000FFFFF; return;}
-    if ((nadr >= 0x2000000) && (nadr < 0x4000000)) { mapMem = cs0;     mapAdr = nadr & 0x00FFFFFF; return;}
-    if ((nadr >= 0x4000000) && (nadr < 0x5000000)) { mapMem = cs1;     mapAdr = nadr & 0x00FFFFFF; return;}
-    if ((nadr >= 0x5800000) && (nadr < 0x5900000)) { mapMem = cs2;     mapAdr = nadr & 0x000FFFFF; return;}
-    if ((nadr >= 0x5A00000) && (nadr < 0x5A80000)) { mapMem = sound;   mapAdr = nadr & 0x0000FFFF; return;}
-    if ((nadr >= 0x5B00000) && (nadr < 0x5B00EE4)) { mapMem = soundr;  mapAdr = nadr & 0x00000FFF; return;}
-    if ((nadr >= 0x5C00000) && (nadr < 0x5CC0000)) { mapMem = vdp1_1;  mapAdr = nadr & 0x000FFFFF; return;}
-    if ((nadr >= 0x5D00000) && (nadr < 0x5D00018)) { mapMem = vdp1_2;  mapAdr = nadr & 0x000000FF; return;}
-    if ((nadr >= 0x5E00000) && (nadr < 0x5E80000)) { mapMem = vdp2_1;  mapAdr = nadr & 0x000FFFFF; return;}
-    if ((nadr >= 0x5F00000) && (nadr < 0x5F01000)) { mapMem = vdp2_2;  mapAdr = nadr & 0x0000FFFF; return;}
-    if ((nadr >= 0x5F80000) && (nadr < 0x5F80120)) { mapMem = vdp2_3;  mapAdr = nadr & 0x00000FFF; return;}
-    if ((nadr >= 0x5FE0000) && (nadr < 0x5FE00D0)) { mapMem = scu;     mapAdr = nadr & 0x000000FF; return;}
-    if ((nadr >= 0x6000000) && (nadr < 0x6100000)) { mapMem = ramHigh; mapAdr = nadr & 0x000FFFFF; return;}
-    }
-#ifndef _arch_dreamcast
-    throw BadMemoryAccess(adr);
-#else
-    printf("Bad memory access: %8x", adr);
-#endif
-  case 2:
-    mapMem = cursh->GetPurgeArea(); mapAdr = adr; return;
-  case 3: {                     
-    unsigned long nadr = adr & 0x1FFFFFFF;
-    if (nadr < 0x3FF) { mapMem = cursh->GetAddressArray(); mapAdr = nadr; return;}
-#ifndef _arch_dreamcast
-    throw BadMemoryAccess(adr);
-#else
-    printf("Bad memory access: %8x", adr);
-#endif
-  }
-  case 6:
-          mapMem = cursh->GetDataArray(); mapAdr = adr & 0x00000FFF; return;
-  case 7:
-    if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = cursh->GetSdramMode(); mapAdr = adr & 0x00000FFF; return;}
-    if (adr >= 0xFFFFFE00) { mapMem = cursh->GetOnchip(); mapAdr = adr & 0x000001FF; return;}
-#ifndef _arch_dreamcast
-    throw BadMemoryAccess(adr);
-#else
-    printf("Bad memory access: %8x", adr);
-#endif
-  default:
-#ifndef _arch_dreamcast
-    throw BadMemoryAccess(adr);
-#else
-    printf("Bad memory access: %8x", adr);
-#endif
-  }
+	}
 }
 
 void SaturnMemory::changeTiming(unsigned long sh2freq, bool pal) {

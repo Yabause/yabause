@@ -52,6 +52,7 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
   inbreakpoint=false;
 
   isslave = slave;
+  cycleCount = 0;
 }
 
 SuperH::~SuperH(void) {

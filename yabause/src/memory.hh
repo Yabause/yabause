@@ -105,11 +105,8 @@ private:
   Memory *ramHigh;	//  6000000 -  6100000
 
   Memory *mapMem;
-  Memory *mapMem2;
-  unsigned long mapAdr;
-  unsigned long mapAdr2;
-  void mappage(unsigned long);
-  void mappage2(unsigned long);
+  unsigned long mapAddr;
+  void mapping(unsigned long);
   void initMemoryMap(void);
   void initMemoryHandler(int, int, Memory *);
   Memory * memoryMap[0x800];
@@ -149,8 +146,6 @@ public:
   SuperH *getCurrentSH(void);
   SuperH *getSlaveSH(void);
   bool sshRunning;
-
-  Uint8 *keys;
 
   Memory *getCS2(void);
   Memory *getVdp1Ram(void);
