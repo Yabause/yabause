@@ -55,17 +55,6 @@ int CDDeInit()
    return 0;
 }
 
-
-bool CDIsCDPresent()
-{
-   DWORD dwBytesReturned;
-   BOOL success;
-
-   success = DeviceIoControl(hCDROM, IOCTL_STORAGE_CHECK_VERIFY,
-                             NULL, 0, NULL, 0, &dwBytesReturned, NULL);
-   return success;
-}
-
 int CDGetStatus()
 {
    // This function is called periodically to see what the status of the
@@ -183,60 +172,11 @@ long CDReadToc(unsigned long *TOC)
                  (ctTOC.TrackData[ctTOC.LastTrack].Adr << 24) |
                   MSF_TO_FAD(ctTOC.TrackData[ctTOC.LastTrack].Address[1], ctTOC.TrackData[ctTOC.LastTrack].Address[2], ctTOC.TrackData[ctTOC.LastTrack].Address[3]);
 
+//   debugfp = fopen("c:\\lunartoc.bin", "wb");
+//   fwrite((void *)TOC, 1, 4 * 102, debugfp);
+//   fclose(debugfp);
+
       return (0xCC * 2);
-   }
-
-   return 0;
-}
-
-unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
-{
-   BOOL success;
-   DWORD dwBytesReturned;
-
-   if (hCDROM != INVALID_HANDLE_VALUE)
-   {
-      sptd.Length=sizeof(sptd);
-      sptd.PathId=0;   // Don't need these, they're automatically generated
-      sptd.TargetId=0;
-      sptd.Lun=0;     
-      sptd.CdbLength=12; 
-      sptd.SenseInfoLength=0; // No sense data
-      sptd.DataIn=SCSI_IOCTL_DATA_IN;
-      sptd.TimeOutValue=60;  // may need to be changed
-      sptd.DataBuffer=(PVOID)buffer;
-      sptd.SenseInfoOffset=0;
-      sptd.DataTransferLength=size; 
-
-      sptd.Cdb[0]=0xBE; // CDB12 code
-      // fix me
-      sptd.Cdb[1]=0;
-      sptd.Cdb[2]=(unsigned char)((lba & 0xFF000000) >> 24); // lba(byte 1)
-      sptd.Cdb[3]=(unsigned char)((lba & 0x00FF0000) >> 16); // lba(byte 2)
-      sptd.Cdb[4]=(unsigned char)((lba & 0x0000FF00) >> 8);  // lba(byte 3)
-      sptd.Cdb[5]=(unsigned char)(lba & 0x000000FF);         // lba(byte 4)
-      // fix me
-      sptd.Cdb[6]=0; // number of sectors(byte 1)
-      sptd.Cdb[7]=0; // number of sectors(byte 2)
-      sptd.Cdb[8]=1; // number of sectors(byte 3)
-      // fix me
-      sptd.Cdb[9]=0x10;  // user data only
-      sptd.Cdb[10]=0;
-      sptd.Cdb[11]=0;
-      sptd.Cdb[12]=0;
-      sptd.Cdb[13]=0;
-      sptd.Cdb[14]=0;
-      sptd.Cdb[15]=0;
-
-      success=DeviceIoControl(hCDROM,
-                              IOCTL_SCSI_PASS_THROUGH_DIRECT,
-                              (PVOID)&sptd, (DWORD)sizeof(SCSI_PASS_THROUGH_DIRECT),
-                              NULL, 0,
-                              &dwBytesReturned,
-                              NULL);
-
-      // fix me
-      return 2048;
    }
 
    return 0;
