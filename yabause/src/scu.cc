@@ -29,13 +29,16 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
 	switch(addr) {
 		case 0x10: if (val & 0x1) DMA(0);
 			   break;
+		case 0xA4 : val &= Memory::getWord(0xA4);
+			    break;
 	}
 	Memory::setLong(addr, val);
 }
 
 Scu::Scu(SaturnMemory *i) : Memory(0xD0) {
-  setLong(0xA0, 0x0000BFFF);
-  satmem = i;
+	Memory::setLong(0xA0, 0x0000BFFF);
+	Memory::setLong(0xA4, 0);
+ 	satmem = i;
 }
 
 void Scu::DMA(int mode) {

@@ -3,7 +3,13 @@ AC_INIT(src/yabause.cc)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
+case $target in
+	*linux*) yabause_arch=linux;;
+esac
+AC_SUBST(yabause_arch)
+
 AM_INIT_AUTOMAKE(yabause, 0.0.6)
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
