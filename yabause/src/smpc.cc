@@ -296,7 +296,16 @@ void Smpc::INTBACKPeripheral(void) {
   Timer t;
   t.wait(20);
 
-  memoire->setOREG(0, 0xF1);  //Peripheral ID - Standard Analog Device
+  /* PeripheralID:
+  0xF0 - Digital Device Standard Format
+  0xF1 - Analog Device Standard Format
+  0xF2 - Pointing Device Standard Format
+  0xF3 - Keyboard Device Standard Format
+  0x1E - Mega Drive 3-Button Pad
+  0x2E - Mega Drive 6-Button Pad
+  0x3E - Saturn Mouse */
+  
+  memoire->setOREG(0, 0xF1);  //PeripheralID
   memoire->setOREG(1, 0x02);
 
   /*
