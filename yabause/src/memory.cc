@@ -325,9 +325,20 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
         backupram = yui_saveram();
         if (backupram != NULL)
         {
-           // it doesn't really matter if the load succeeds(we'll create
-           // the file instead)
-           ram->load(backupram, 0);
+           // it doesn't really matter if the load succeeds
+           try
+           {
+              ram->load(backupram, 0);
+           }
+           catch (Exception e)
+           {
+              // Format Ram then
+              FormatBackupRam();
+           }
+        }
+        else
+        {
+           FormatBackupRam();
         }
 
 /*
@@ -354,6 +365,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 }
 
 SaturnMemory::~SaturnMemory(void) {
+  char *backupram;
 #if DEBUG
   cerr << "stopping master sh2\n";
 #endif
@@ -370,6 +382,11 @@ SaturnMemory::~SaturnMemory(void) {
 //#if DEBUG
 //  cerr << "slave sh2 stopped\n";
 //#endif
+
+  // Save Backup Ram file
+  backupram = yui_saveram();
+  if (backupram != NULL)
+     ram->save(backupram, 0, 0x10000);
 
   delete rom;
   delete smpc;
@@ -430,6 +447,28 @@ void SaturnMemory::setLong(unsigned long adr, unsigned long valeur) {
 
 void SaturnMemory::loadBios(const char *fichier) {
   rom->load(fichier, 0);
+}
+
+void SaturnMemory::FormatBackupRam() {
+  int i, i2;
+  unsigned char header[32] = {
+  0xFF, 'B', 0xFF, 'a', 0xFF, 'c', 0xFF, 'k',
+  0xFF, 'U', 0xFF, 'p', 0xFF, 'R', 0xFF, 'a',
+  0xFF, 'm', 0xFF, ' ', 0xFF, 'F', 0xFF, 'o',
+  0xFF, 'r', 0xFF, 'm', 0xFF, 'a', 0xFF, 't'
+  };
+
+  // Fill in header
+  for(i2 = 0; i2 < 4; i2++) {
+     for(i = 0; i < 32; i++)
+        ram->setByte((i2 * 32) + i, header[i]);
+  }
+
+  // Clear the rest
+  for(i = 0x80; i < 0x10000; i+=2) {
+     ram->setByte(i, 0xFF);
+     ram->setByte(i+1, 0x00);
+  }
 }
 
 void SaturnMemory::load(const char *fichier, unsigned long adr) {

@@ -140,6 +140,7 @@ public:
   void           load    (const char *,unsigned long);
 
   void loadBios(const char *);
+  void FormatBackupRam();
 
   SuperH *getMasterSH(void);
   SuperH *getSlaveSH(void);
