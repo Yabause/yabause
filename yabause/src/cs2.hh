@@ -108,6 +108,7 @@ private:
   unsigned long playFAD;
   unsigned long playendFAD;
   unsigned long getsectsize;
+  unsigned long calcsize;
   long infotranstype;
   long datatranstype;
   bool isonesectorstored;
@@ -172,11 +173,17 @@ public:
   void setFilterMode(void);               // 0x44
   void setFilterConnection(void);         // 0x46
   void resetSelector(void);               // 0x48
+  void getBufferSize(void);               // 0x50
   void getSectorNumber(void);             // 0x51
+  void calculateActualSize(void);         // 0x52
+  void getActualSize(void);               // 0x53
   void setSectorLength(void);             // 0x60
+  void getSectorData(void);               // 0x61
+  void deleteSectorData(void);            // 0x62
   void getThenDeleteSectorData(void);     // 0x63
   void getCopyError(void);                // 0x67
   void changeDirectory(void);             // 0x70
+  void readDirectory(void);               // 0x71
   void getFileSystemScope(void);          // 0x72
   void getFileInfo(void);                 // 0x73
   void readFile(void);                    // 0x74

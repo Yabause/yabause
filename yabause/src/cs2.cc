@@ -194,7 +194,20 @@ unsigned long Cs2::getLong(unsigned long addr) {
     case 0x18000:
                   // transfer data
                   switch (datatranstype) {
-                    case 0:
+                    case 0: // get sector
+                            if (databytestotrans > 0)
+                            {
+                               // fix me
+                               val = (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize)] << 24) +
+                                     (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 1] << 16) +
+                                     (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 2] << 8) +
+                                      curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 3];
+                               cdwnum += 4;
+                               databytestotrans -= 4;
+                            }
+
+                            break;
+                    case 2:
                             // get then delete sector
                             if (databytestotrans > 0)
                             {
@@ -203,7 +216,6 @@ unsigned long Cs2::getLong(unsigned long addr) {
                                      (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 1] << 16) +
                                      (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 2] << 8) +
                                       curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 3];
-                               // get then delete sector
                                cdwnum += 4;
                                databytestotrans -= 4;
                             }
@@ -226,7 +238,7 @@ unsigned long Cs2::getLong(unsigned long addr) {
                                curpartition->numblocks -= (cdwnum / getsectsize); // fix me
 
 #if CDDEBUG
-                               fprintf(stderr, "cs2\t: curpartition->size = %x\n", val);
+                               fprintf(stderr, "cs2\t: curpartition->size = %x\n", curpartition->size);
 #endif
                             }
                             break;
@@ -360,8 +372,7 @@ void Cs2::run(Cs2 *cd) {
   Timer t;
   while(!cd->_stop) {
     if (cd->_command) {
-      t.waitVBlankOUT();
-      t.wait(1);
+      t.wait(100);
     }
     else {
       unsigned short val=0;
@@ -420,8 +431,7 @@ void Cs2::run(Cs2 *cd) {
       // adjust command registers appropriately here(fix me)
 
       // somehow I doubt this is correct
-      t.waitVBlankOUT();
-      t.wait(1);
+      t.wait(50);
       //cd->periodicUpdate();
     }
   }
@@ -539,6 +549,16 @@ void Cs2::execute(void) {
       fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
+    case 0x50:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: getBufferSize\n");
+#endif
+      getBufferSize();
+
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      break;
     case 0x51:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: getSectorNumber\n");
@@ -549,11 +569,46 @@ void Cs2::execute(void) {
       fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
+    case 0x52:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: calculateActualSize %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      calculateActualSize();
+
+      break;
+    case 0x53:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: getActualSize\n");
+#endif
+      getActualSize();
+
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      break;
     case 0x60:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: setSectorLength\n");
 #endif
       setSectorLength();
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      break;
+    case 0x61:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: getSectorData %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      getSectorData();
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      break;
+    case 0x62:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: deleteSectorData %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      deleteSectorData();
 #if CDDEBUG
       fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
@@ -584,6 +639,13 @@ void Cs2::execute(void) {
 #if CDDEBUG
       fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
+      break;
+    case 0x71:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: readDirectory %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      readDirectory();
+
       break;
     case 0x72:
 #if CDDEBUG
@@ -771,6 +833,36 @@ void Cs2::endDataTransfer(void) {
      setCR4(0);
   }
 
+  // stop any transfers that may be going(this is still probably wrong
+
+  switch (datatranstype) {    
+     case 2: {
+        // Get Then Delete Sector
+        unsigned long numblockstofree=0;
+        datatranstype = -1;
+
+        numblockstofree = (cdwnum / getsectsize);
+
+        if ((cdwnum % getsectsize) != 0)
+           numblockstofree++;
+
+        // free blocks
+        for (unsigned long i = 0; i < numblockstofree; i++)
+        {
+           FreeBlock(curpartition->block[i]);
+           curpartition->block[i] = NULL;
+        }
+
+        // sort remaining blocks
+        SortBlocks(curpartition);
+
+        curpartition->size = 0;
+        curpartition->numblocks = 0;
+        break;
+     }
+     default: break;
+  }
+
   isonesectorstored = false;
   cdwnum = 0;
 
@@ -805,13 +897,14 @@ void Cs2::playDisc(void) {
 
         status = CDB_STAT_PERI | CDB_STAT_PLAY;
 
-        setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
         setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
         setCR2((ctrladdr << 8) | (track & 0xFF));
         setCR3((index << 8) | ((FAD >> 16) &0xFF));
         setCR4((unsigned short) FAD);
      }
   }
+
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
 void Cs2::seekDisc(void) {
@@ -985,6 +1078,20 @@ void Cs2::resetSelector(void) {
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
+void Cs2::getBufferSize(void) {
+  unsigned long gbssize=0;
+  unsigned long i;
+
+  for (i = 0; i < MAX_SELECTORS; i++)
+     gbssize += partition[i].size;
+
+  setCR1(status << 8);
+  setCR2(MAX_BLOCKS - (gbssize / getsectsize));
+  setCR3(MAX_SELECTORS << 8);
+  setCR4(MAX_BLOCKS);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+}
+
 void Cs2::getSectorNumber(void) {
   // somehow, I don't think this is right
   setCR4(partition[getCR3() >> 8].size / getsectsize);
@@ -993,6 +1100,44 @@ void Cs2::getSectorNumber(void) {
   setCR2(0);
   setCR3(0);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+}
+
+void Cs2::calculateActualSize(void) {
+  unsigned long i;
+  unsigned short casbufno;
+  unsigned short cassectoffset;
+  unsigned short casnumsect;
+
+  cassectoffset = getCR2();
+  casbufno = getCR3() >> 8;
+  casnumsect = getCR4();
+
+  if (partition[casbufno].size != 0)
+  {
+     calcsize = 0;
+
+     for (i = 0; i < casnumsect; i++)
+     {
+        if (partition[casbufno].block[cassectoffset])
+           calcsize += (partition[casbufno].block[cassectoffset]->size / 2);
+     }
+  }
+  else
+     calcsize = 0;
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+}
+
+void Cs2::getActualSize(void) {
+  setCR1((status << 8) | ((calcsize >> 16) & 0xFF));
+  setCR2(calcsize & 0xFFFF);
+  setCR3(0);
+  setCR4(0);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
 void Cs2::setSectorLength(void) {
@@ -1019,9 +1164,52 @@ void Cs2::setSectorLength(void) {
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
-void Cs2::getThenDeleteSectorData(void) {
+void Cs2::getSectorData(void) {
   cdwnum = 0;
   datatranstype = 0;
+  databytestotrans = getsectsize * getCR4();
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+}
+
+void Cs2::deleteSectorData(void) {
+  unsigned long dsdsectoffset=0;
+  unsigned long dsdbufno=0;
+  unsigned long dsdsectnum=0;
+
+  dsdsectoffset = getCR2();
+  dsdbufno = getCR3() >> 8;
+  dsdsectnum = getCR4();
+
+  if (dsdbufno >= 0 && dsdbufno < MAX_SELECTORS)
+  {
+     for (unsigned long i = dsdsectoffset; i < dsdsectnum; i++)
+     {
+        FreeBlock(partition[dsdbufno].block[i]);
+        partition[dsdbufno].block[i] = NULL;
+     }
+
+     // sort remaining blocks
+     SortBlocks(curpartition);
+
+     partition[dsdbufno].size -= (getsectsize * dsdsectnum);
+     partition[dsdbufno].size -= dsdsectnum;
+  }
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+}
+
+void Cs2::getThenDeleteSectorData(void) {
+  cdwnum = 0;
+  datatranstype = 2;
   databytestotrans = getsectsize * getCR4();
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
@@ -1040,6 +1228,15 @@ void Cs2::getCopyError(void) {
 }
 
 void Cs2::changeDirectory(void) {
+  // fix me
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+}
+
+void Cs2::readDirectory(void) {
   // fix me
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
@@ -1205,9 +1402,7 @@ void Cs2::cmdE2(void) {
   // fix me
   mpgauth |= 0x300;
 
-/*
-  // very hackish code
-  if ((mpgfp = fopen("rgvc2rom.bin", "rb")) != NULL)
+  if ((mpgfp = fopen(yui_mpegrom(), "rb")) != NULL)
   {
      unsigned long readoffset = ((getCR1() & 0xFF) << 8) | getCR2();
      unsigned short readsize = getCR4();
@@ -1237,7 +1432,6 @@ void Cs2::cmdE2(void) {
 
      fclose(mpgfp);
   }
-*/
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
