@@ -227,11 +227,27 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 #endif
 		break;
 	case 4:
+        {
                 // 8 bpp(256 color) Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "readTexture: color mode 4 not implemented" << endl;
-#endif
+                // fix me
+                Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
+
+//#ifdef VDP1_DEBUG
+//                cerr << "readTexture: color mode 4 not implemented" << endl;
+//#endif
+
+		for(unsigned short i = 0;i < h;i++) {
+                        for(unsigned short j = 0;j < w;j++) {
+                                dot = vram->getByte(charAddr);
+                                charAddr++;
+
+                                if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
+                                else textdata[i * ww + j] = cram->getColor(dot + (colorBank >> 1), alpha, 0);
+                        }
+                }
+
 		break;
+        }
 	case 5:
                 // 16 bpp Bank mode
 		for(unsigned short i = 0;i < h;i++) {
