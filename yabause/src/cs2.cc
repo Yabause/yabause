@@ -128,7 +128,7 @@ unsigned short Cs2::getWord(unsigned long addr) {
                              }
                              break;
                      case 1:
-                             // Get File Info
+                             // Get File Info(1 file info)
                              val = (transfileinfo[transfercount] << 8) |
                                     transfileinfo[transfercount + 1];
                              transfercount += 2;
@@ -139,9 +139,28 @@ unsigned short Cs2::getWord(unsigned long addr) {
                                 transfercount = 0;
                                 infotranstype = -1;
                              }
-#if CDDEBUG
-                             fprintf(stderr, "cs2\t: getfileinfo data: %x\n", val);
-#endif
+
+                             break;
+                     case 2:
+                             // Get File Info(254 file info)
+
+                             // Do we need to retrieve the next file info?
+                             if (transfercount % (0x6 * 2) == 0) {
+                               // yes we do
+                               SetupFileInfoTransfer(2 + (transfercount / (0x6 * 2)));
+                             }
+
+                             val = (transfileinfo[transfercount % (0x6 * 2)] << 8) |
+                                    transfileinfo[transfercount % (0x6 * 2) + 1];
+
+                             transfercount += 2;
+                             cdwnum += 2;
+
+                             if (transfercount > (254 * (0x6 * 2)))
+                             {
+                                transfercount = 0;
+                                infotranstype = -1;
+                             }
 
                              break;
                      default: break;
@@ -754,9 +773,12 @@ void Cs2::execute(void) {
       break;
     case 0x73:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getFileInfo\n");
+      fprintf(stderr, "cs2\t: Command: getFileInfo %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       getFileInfo();
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
       break;
     case 0x74:
 #if CDDEBUG
@@ -1786,15 +1808,21 @@ void Cs2::getFileInfo(void) {
 
   if (gfifid == 0xFFFFFF)
   {
-     // fix me
+     transfercount = 0;
+     infotranstype = 2;
+
      setCR1(status << 8);
-     setCR2(0x0600);
+     setCR2(0x05F4);
      setCR3(0);
      setCR4(0);
   }
   else
   {
      SetupFileInfoTransfer(gfifid);
+
+     transfercount = 0;
+     infotranstype = 1;
+
      setCR1(status << 8);
      setCR2(0x06);
      setCR3(0);
@@ -1803,8 +1831,6 @@ void Cs2::getFileInfo(void) {
 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
 
-  transfercount = 0;
-  infotranstype = 1;
 }
 
 void Cs2::readFile(void) {
