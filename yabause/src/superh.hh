@@ -120,6 +120,7 @@ protected:
   Memory *adressArray;	// 60000000 - 600003FF
   Memory *dataArray;	// C0000000 - C0001000
   Memory *modeSdram;	// FFFF8000 - FFFFBFFF
+  Memory *onchip;	// FFFFFE00 - FFFFFFFF
 
   typedef void (SuperH::*opcode)(void);
   opcode opcodes[0xFFFF];
@@ -143,7 +144,7 @@ public:
   int verbose;
 #endif
 
-  SuperH(bool);
+  SuperH(bool, SaturnMemory *);
  ~SuperH(void);
 
   void setMemory(Memory *);
@@ -160,6 +161,7 @@ public:
   Memory *GetPurgeArea();
   Memory *GetAddressArray();
   Memory *GetDataArray();
+  Memory *SuperH::GetOnchip();
   void GetRegisters(sh2regs_struct *regs);
   void SetRegisters(sh2regs_struct *regs);
 

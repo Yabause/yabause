@@ -28,13 +28,14 @@
 #include "yui.hh"
 #include "registres.hh"
 
-SuperH::SuperH(bool slave) {
+SuperH::SuperH(bool slave, SaturnMemory *sm) {
   SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
   SR.partie.I = 0xF;
   SR.partie.inutile1 = 0;
   SR.partie.inutile2 = 0;
   VBR = 0;
 
+  onchip = new Onchip(slave, sm);
   purgeArea   = new Dummy(0xFFFFFFFF);
   adressArray = new Memory(0xFFF, 0x3FF);
   dataArray   = new Memory(0xFFF, 0x1000);
@@ -55,6 +56,7 @@ SuperH::SuperH(bool slave) {
 }
 
 SuperH::~SuperH(void) {
+  delete onchip;
   delete purgeArea;
   delete adressArray;
   delete dataArray;
@@ -63,18 +65,9 @@ SuperH::~SuperH(void) {
 }
 
 void SuperH::setMemory(Memory *mem) {
-	if (isslave) {
-		memoire = mem;
-		VBR = 0x6000400;
-		PC = memoire->getLong(VBR) + 4;
-		cerr << hex << "init PC=" << PC << endl;
-		R[15] = 0x6001000;
-	}
-	else {
-		memoire = mem;
-		PC = memoire->getLong(VBR) + 4;
-		R[15] = memoire->getLong(VBR + 4);
-	}
+         memoire = mem;
+         PC = memoire->getLong(VBR) + 4;
+         R[15] = memoire->getLong(VBR + 4);
 }
 
 Memory *SuperH::getMemory(void) {
@@ -123,7 +116,7 @@ void SuperH::executer(void) {
 }
 
 void SuperH::_executer(void) {
-	if (isslave) cerr << "PC=" << PC << endl;
+//        if (isslave) cerr << "PC=" << PC << endl;
 	instruction = memoire->getWord(PC - 4);
 	(this->*opcodes[instruction])();
 }
@@ -2062,6 +2055,10 @@ Memory *SuperH::GetAddressArray() {
 
 Memory *SuperH::GetDataArray() {
    return dataArray;
+}
+
+Memory *SuperH::GetOnchip() {
+   return onchip;
 }
 
 // pending approval
