@@ -23,7 +23,7 @@ TARGET = yabause.exe
 CC = g++
 #CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL
 CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG
-LDFLAGS=-lmingw32 -lSDLmain -lSDL -lSDLgfx -lopengl32 -lkernel32 -mconsole
+LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lkernel32 -mconsole
 OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o sh2d.o timer.o tree.o cmdline.o
 
 all: $(TARGET)
