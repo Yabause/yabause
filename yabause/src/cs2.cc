@@ -183,13 +183,16 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
 #endif
                   Memory::setWord(addr, Memory::getWord(addr) & val);
 	          break;
-    case 0x9000C:
-    case 0x90018:
+    case 0x9000C: Memory::setWord(addr, val);
+		  break;
+    case 0x90018: //status &= ~CDB_STAT_PERI;
+                  _command = true;
+                  Memory::setWord(addr, val);
+		  break;
     case 0x9001C:
     case 0x90020: Memory::setWord(addr, val);
 		  break;
     case 0x90024: Memory::setWord(addr, val);
-                  _command = true;
                   execute();
 		  break;
     default: Memory::setWord(addr, val);
@@ -319,7 +322,7 @@ void Cs2::reset(void) {
   {
      case 0:
      case 1:
-             status = CDB_STAT_PERI | CDB_STAT_PAUSE; // Still not 100% correct, but better
+             status = CDB_STAT_PAUSE;
              FAD = 150;
              options = 0;
              repcnt = 0;
@@ -328,7 +331,7 @@ void Cs2::reset(void) {
              index = 1;
              break;
      case 2:
-             status = CDB_STAT_PERI | CDB_STAT_NODISC;
+             status = CDB_STAT_NODISC;
 
              FAD = 0xFFFFFFFF;
              options = 0xFF;
@@ -338,7 +341,7 @@ void Cs2::reset(void) {
              index = 0xFF;
              break;
      case 3:
-             status = CDB_STAT_PERI | CDB_STAT_OPEN;
+             status = CDB_STAT_OPEN;
 
              FAD = 0xFFFFFFFF;
              options = 0xFF;
@@ -427,12 +430,13 @@ void Cs2::reset(void) {
 void Cs2::run(unsigned long timing) {
     _periodiccycles+=timing;
 
-    if (_command) {
-	    return;
-    }
-    else if (_periodiccycles >= _periodictiming)
+    if (_periodiccycles >= _periodictiming)
     {
       _periodiccycles -= _periodictiming; 
+
+      if (_command) {
+         return;
+      }
 
       // Get Drive's current status and compare with old status
       switch(CDGetStatus())
@@ -442,26 +446,31 @@ void Cs2::run(unsigned long timing) {
                  if ((status & 0xF) == CDB_STAT_NODISC ||
                      (status & 0xF) == CDB_STAT_OPEN)
                  {
-                    status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+                    status = CDB_STAT_PAUSE;
                     isdiskchanged = true;
                  }
                  break;
          case 2:
                  // may need to change this
                  if ((status & 0xF) != CDB_STAT_NODISC)
-                    status = CDB_STAT_PERI | CDB_STAT_NODISC;
+                    status = CDB_STAT_NODISC;
                  break;
          case 3:
                  // may need to change this
                  if ((status & 0xF) != CDB_STAT_OPEN)
-                    status = CDB_STAT_PERI | CDB_STAT_OPEN;
+                    status = CDB_STAT_OPEN;
                  break;
          default: break;
       }
 
       switch (status & 0xF) {
          case CDB_STAT_PAUSE:
-            break;
+         {
+//            if (FAD >= playFAD && FAD < playendFAD)
+//               status = CDB_STAT_PLAY;
+//            else
+               break;
+         }
          case CDB_STAT_PLAY:
          {
             partition_struct *playpartition;
@@ -477,12 +486,16 @@ void Cs2::run(unsigned long timing) {
 
                if (FAD >= playendFAD) {
                   // we're done
-                  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+                  status = CDB_STAT_PAUSE;
                   SetTiming(false);
                   setHIRQ(getHIRQ() | CDB_HIRQ_PEND);
                }
-//               if (isbufferfull)
-//                  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+               if (isbufferfull) {
+#if CDDEBUG
+                  fprintf(stderr, "BUFFER IS FULL\n");
+#endif
+//                status = CDB_STAT_PAUSE;
+               }
             }
 
             break;
@@ -499,9 +512,11 @@ void Cs2::run(unsigned long timing) {
       status |= CDB_STAT_PERI;
 
       // adjust registers appropriately here(fix me)
+      setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+      setCR2((ctrladdr << 8) | track);
+      setCR3((index << 8) | ((FAD >> 16) & 0xFF));
+      setCR4((unsigned short) FAD);
       setHIRQ(getHIRQ() | CDB_HIRQ_SCDQ);
-
-      //periodicUpdate();
     }
 }
 
@@ -1188,7 +1203,7 @@ void Cs2::seekDisc(void) {
      sdFAD = ((getCR1() & 0xFF) << 16) | getCR2();
 
      if (sdFAD == 0xFFFFFF)
-        status = CDB_STAT_PAUSE | CDB_STAT_PERI;
+        status = CDB_STAT_PERI | CDB_STAT_PAUSE;
      else
      {
 #if CDDEBUG
@@ -1202,14 +1217,14 @@ void Cs2::seekDisc(void) {
      if (getCR2() >> 8)
      {
         // Seek by index
-        status = CDB_STAT_PAUSE | CDB_STAT_PERI;
+        status = CDB_STAT_PERI | CDB_STAT_PAUSE;
         SetupDefaultPlayStats((getCR2() >> 8));
         index = getCR2() & 0xFF;
      }
      else
      {
         // Error
-        status = CDB_STAT_STANDBY | CDB_STAT_PERI;
+        status = CDB_STAT_PERI | CDB_STAT_STANDBY;
         options = 0xFF;
         repcnt = 0xFF;
         ctrladdr = 0xFF;
