@@ -1,8 +1,6 @@
  (1) (KNOWN) BUGS
 
-   - freeze when exiting
    - logo will not show if yabause is installed
-   - random freezing on the win32 port
 
  (2) EMULATION
 
@@ -18,6 +16,7 @@
    - add SCI emulation
    - finish FRT emulation
    - finish sleep/standby mode and implement the clock change pins
+   - add 68k, SCSP cores.
 
  (3) MONITOR/DEBUGGER
 
