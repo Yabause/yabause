@@ -154,28 +154,31 @@ public:
   void command(void);
   void periodicUpdate(void);
                                   
-  //   command name                     command code
-  void getStatus(void);              // 0x00
-  void getHardwareInfo(void);        // 0x01
-  void getToc(void);                 // 0x02
-  void getSessionInfo();             // 0x03
-  void initializeCDSystem(void);     // 0x04
-  void endDataTransfer(void);        // 0x06
-  void playDisc(void);               // 0x10
-  void setCDDeviceConnection(void);  // 0x30
-  void resetSelector(void);          // 0x48
-  void getSectorNumber(void);        // 0x51
-  void setSectorLength(void);        // 0x60
-  void getThenDeleteSectorData(void);// 0x63
-  void getCopyError(void);           // 0x67
-  void changeDirectory(void);        // 0x70
-  void getFileSystemScope(void);     // 0x72
-  void getFileInfo(void);            // 0x73
-  void readFile(void);               // 0x74
-  void abortFile(void);              // 0x75
-  void mpegInit(void);               // 0x93
-  void cmdE0(void);                  // 0xE0
-  void cmdE1(void);                  // 0xE1
+  //   command name                          command code
+  void getStatus(void);                   // 0x00
+  void getHardwareInfo(void);             // 0x01
+  void getToc(void);                      // 0x02
+  void getSessionInfo();                  // 0x03
+  void initializeCDSystem(void);          // 0x04
+  void endDataTransfer(void);             // 0x06
+  void playDisc(void);                    // 0x10
+  void setCDDeviceConnection(void);       // 0x30
+  void setFilterSubheaderConditions(void);// 0x42
+  void setFilterMode(void);               // 0x44
+  void setFilterConnection(void);         // 0x46
+  void resetSelector(void);               // 0x48
+  void getSectorNumber(void);             // 0x51
+  void setSectorLength(void);             // 0x60
+  void getThenDeleteSectorData(void);     // 0x63
+  void getCopyError(void);                // 0x67
+  void changeDirectory(void);             // 0x70
+  void getFileSystemScope(void);          // 0x72
+  void getFileInfo(void);                 // 0x73
+  void readFile(void);                    // 0x74
+  void abortFile(void);                   // 0x75
+  void mpegInit(void);                    // 0x93
+  void cmdE0(void);                       // 0xE0
+  void cmdE1(void);                       // 0xE1
 
   unsigned char FADToTrack(unsigned long fad);
   void SetupDefaultPlayStats(unsigned char track_number);
