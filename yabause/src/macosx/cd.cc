@@ -38,14 +38,14 @@ CDTOC *cdTOC = NULL;
 int getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize )
 {
     io_object_t nextMedia;
-	CFDictionaryRef properties;
+	CFMutableDictionaryRef properties;
     CFDataRef data;
     *devPath = '\0';
     
     nextMedia = IOIteratorNext( mediaIterator );
     if (nextMedia) {
 		CFTypeRef devPathAsCFString;
-        devPathAsCFString = IORegistryEntryCreateCFProperty(nextMedia, CFSTR(kIOBSDNameKey), kCFAllocatorDefault, 0);
+        devPathAsCFString = IORegistryEntryCreateCFProperty(nextMedia, CFSTR(kIOBSDNameKey), kCFAllocatorDefault, kNilOptions);
         if (devPathAsCFString) {
             size_t devPathLength;
             strcpy(devPath, "/dev/r");
@@ -124,7 +124,7 @@ bool CDIsCDPresent()
 
 long CDReadToc(unsigned long *TOC)
 {
-	int add150 = 0, tracks = 0;
+	int tracks = 0;
 	u_char track;
 	int i, lba = 0; 
 	CDTOCDescriptor *pTrackDescriptors;

@@ -5,8 +5,6 @@ AC_CANONICAL_TARGET
 
 case $target in
 	*darwin*) yabause_arch=macosx;;
-esac
-case $target in
 	*linux*) yabause_arch=linux;;
 esac
 AC_SUBST(yabause_arch)
@@ -34,6 +32,9 @@ fi
 
 CXXFLAGS="$CXXFLAGS $SDL_CXXFLAGS"
 LIBS="$LIBS $SDL_LIBS"
+case $target in
+	*darwin*) LIBS="$LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation";;
+esac
 
 AC_CHECK_LIB(SDL_image, IMG_Load)
 
