@@ -2473,69 +2473,101 @@ unsigned short *stereodata16;
 
 u32 FASTCALL c68k_byte_read(const u32 adr) {
 #ifdef WORDS_BIGENDIAN
-  adr ^= 2;
+  u32 adr2 = adr^2;
 #endif
 
+#ifdef WORDS_BIGENDIAN
+  if (adr2 < 0x100000)
+#else
   if (adr < 0x100000)
+#endif
   {
 #ifdef WORDS_BIGENDIAN
-     return (basetruescspram + (adr & 0x7FFFF))[0];
+     return (basetruescspram + (adr2 & 0x7FFFF))[0];
 #else
      return (basetruescspram + ((adr & 0x7FFFF) ^ 1))[0];
 #endif
   }
   else
+#ifdef WORDS_BIGENDIAN
+	return scsp_r_b(adr2);
+#else
      return scsp_r_b(adr);
+#endif
 }
 
 void FASTCALL c68k_byte_write(const u32 adr, u32 data) {
-#ifdef WORDS_BIGENDIAN
-  adr ^= 2;
-#endif
 
+	u32 adr2 = adr^2;
+
+#ifdef WORDS_BIGENDIAN
+  if ((adr2) < 0x100000)
+#else
   if (adr < 0x100000)
+#endif
   {
 #ifdef WORDS_BIGENDIAN
-     (basetruescspram + (adr & 0x7FFFF))[0] = data;
+     (basetruescspram + ((adr2) & 0x7FFFF))[0] = data;
 #else
      (basetruescspram + ((adr & 0x7FFFF) ^ 1))[0] = data;
 #endif
   }
   else
+#ifdef WORDS_BIGENDIAN
+	scsp_w_b((adr2), data);
+#else
      scsp_w_b(adr, data);
+#endif
 }
 
 u32 FASTCALL c68k_word_read(const u32 adr) {
 #ifdef WORDS_BIGENDIAN
-  adr ^= 2;
+  u32 adr2 = adr^2;
 #endif
 
+#ifdef WORDS_BIGENDIAN
+  if (adr2 < 0x100000)
+#else
   if (adr < 0x100000)
+#endif
   {
 #ifdef WORDS_BIGENDIAN
-     return ((unsigned short *) (basetruescspram + (adr & 0x7FFFF)))[0];
+     return ((unsigned short *) (basetruescspram + (adr2 & 0x7FFFF)))[0];
 #else
      return ((unsigned short *) (basetruescspram + (adr & 0x7FFFF)))[0];
 #endif
   }
   else
+#ifdef WORDS_BIGENDIAN
+     return scsp_r_w(adr2);
+#else
      return scsp_r_w(adr);
+#endif
 }
 
 void FASTCALL c68k_word_write(const u32 adr, u32 data) {
 #ifdef WORDS_BIGENDIAN
-  adr ^= 2;
+  u32 adr2 = adr^2;
 #endif
+
+#ifdef WORDS_BIGENDIAN
+  if (adr2 < 0x100000)
+#else
   if (adr < 0x100000)
+#endif
   {
 #ifdef WORDS_BIGENDIAN
-     ((unsigned short *) (basetruescspram + (adr & 0x7FFFF)))[0] = data;
+     ((unsigned short *) (basetruescspram + (adr2 & 0x7FFFF)))[0] = data;
 #else
      ((unsigned short *) (basetruescspram + (adr & 0x7FFFF)))[0] = data;
 #endif
   }
   else
+#ifdef WORDS_BIGENDIAN
+     scsp_w_w(adr2, data);
+#else  
      scsp_w_w(adr, data);
+#endif
 }
 
 void c68k_interrupt_handler(u32 level) {
