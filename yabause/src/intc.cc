@@ -68,8 +68,14 @@ void __del_highest_int()	{
 #define ICRL    0x19
 
 #define IPRB	0x60
+#define VCRA    0x62
+#define VCRB    0x64
+#define VCRC    0x66
+#define VCRD    0x68
 #define ICR	0xE0
 #define IPRA	0xE2
+#define VCRWDT  0xE4
+#define VCRDIV  0x10C
 #define SAR0	0x180
 #define DAR0	0x184
 #define TCR0	0x188
@@ -81,8 +87,9 @@ void __del_highest_int()	{
 #define BCR1    0x1E0
 #define BCR2    0x1E4
 
-Onchip::Onchip(bool slave, SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
+Onchip::Onchip(bool slave, SaturnMemory *sm, SuperH *sh) : Memory(0x1FF, 0x1FF) {
 	memory = sm;
+        shparent = sh;
         Memory::setByte(4, 0x84);
 
         // Initialize Bus Control registers(needed for Slave SH2 emulation)
@@ -113,9 +120,6 @@ Onchip::Onchip(bool slave, SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
 void Onchip::setByte(unsigned long addr, unsigned char val) {
   switch(addr) {
   case TCR: {
-#if DEBUG
-    fprintf(stderr, "onchip register TCR write: %02x\n", val);
-#endif
     Memory::setByte(addr, val);
 
     switch (val & 3) {
@@ -148,6 +152,20 @@ void Onchip::setByte(unsigned long addr, unsigned char val) {
     // don't allow data to be written to them
     break;
   }
+#if DEBUG
+  case TIER:
+    if (val & 0x80)
+      cerr << "onchip\t: WARNING: Input Capture Flag Interrupts enabled" << endl;
+    else if (val & 0x8)
+      cerr << "onchip\t: WARNING: Output Compare A Interrupts enabled" << endl;
+    else if (val & 0x4)
+      cerr << "onchip\t: WARNING: Output Compare B Interrupts enabled" << endl;
+    else if (val & 0x2)
+      cerr << "onchip\t: WARNING: Timer overflow Interrupts enabled" << endl;
+       
+    Memory::setByte(addr, val);
+    break;
+#endif
   default:
     Memory::setByte(addr, val);
   }
@@ -296,7 +314,7 @@ inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)
 #if DEBUG
       cerr << "FIXME should launch an interrupt\n";
 #endif
-//        cursh->send(Interrupt(getByte(IPRA) & 0xF, VCRDMA0+(reg_offset / 2)));
+//        shparent->send(Interrupt(Memory::getByte(IPRA) & 0xF, Memory::getLong(VCRDMA0+(reg_offset / 2))));
    }
 
    // Set Transfer End bit
@@ -343,10 +361,15 @@ void Onchip::runFRT(unsigned long cc) {
    ccleftover = (cc + ccleftover) % frcdiv;
 
    // If FRC overflows, set overflow flag
-   if (frctemp > 0xFFFF)  Memory::setByte(FTCSR, Memory::getByte(FTCSR) | 2);
+   if (frctemp > 0xFFFF) {
+      // Do we need to trigger an interrupt?
+
+      Memory::setByte(FTCSR, Memory::getByte(FTCSR) | 2);
+   }
 
    // Write new FRC value
    Memory::setWord(FRCH, (unsigned short)frctemp);
+
 }
 
 Interrupt::Interrupt(unsigned char l, unsigned char v) {
@@ -396,7 +419,13 @@ void Onchip::inputCaptureSignal(void) {
    // Copy FRC registers to Input Capture Registers
    Memory::setWord(ICRH, Memory::getWord(FRCH));
 
-   // Generate an Interrupt?(fix me)
+   // Generate an Interrupt?
+   if (Memory::getByte(TIER) & 0x80)  {
+//#if DEBUG
+//      fprintf(stderr, "onchip\t: ICI interrupt: level = %d vector = %d\n", (Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) & 0x7F00) >> 8);
+//#endif
+        shparent->send(Interrupt((Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) & 0x7F) >> 8));
+   }
 }
 
 InputCaptureSignal::InputCaptureSignal(SuperH *icsh) : Memory(0, 4) {

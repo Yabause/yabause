@@ -35,7 +35,7 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
   SR.partie.inutile2 = 0;
   VBR = 0;
 
-  onchip = new Onchip(slave, sm);
+  onchip = new Onchip(slave, sm, this);
   purgeArea   = new Dummy(0xFFFFFFFF);
   adressArray = new Memory(0xFFF, 0x3FF);
   dataArray   = new Memory(0xFFF, 0x1000);

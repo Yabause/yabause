@@ -51,6 +51,7 @@ public:
 class Onchip : public Memory {
 private:
 	SaturnMemory *memory;
+        SuperH *shparent;
 	unsigned long timing;
         unsigned long ccleftover;
         unsigned long frcdiv;
@@ -65,8 +66,7 @@ public:
 	//priority_queue<Interrupt> interrupts;
 #endif
 
-        Onchip(bool, SaturnMemory *);
-
+        Onchip(bool, SaturnMemory *, SuperH *);
         void setByte(unsigned long addr, unsigned char val);
 	void setWord(unsigned long, unsigned short);
 	void setLong(unsigned long, unsigned long);
