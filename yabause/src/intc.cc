@@ -59,7 +59,6 @@ Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF) {
 	memory = sm;
 	setByte(4, 0x84);
 
-	intcThread = SDL_CreateThread((int (*)(void*)) &Onchip::startINTC, this);
 #ifdef _arch_dreamcast
 	__init_tree();
 #endif
@@ -67,6 +66,7 @@ Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF) {
 	mutex_cond = SDL_CreateMutex();
 	cond = SDL_CreateCond();
 	_stop = false;
+	intcThread = SDL_CreateThread((int (*)(void*)) &Onchip::startINTC, this);
 }
 
 Onchip::~Onchip(void) {
