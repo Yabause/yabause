@@ -21,16 +21,23 @@
 
 int CDInit(char *cdrom_name)
 {
+   // Initialization function. cdrom_name can be whatever you want it to be.
+   // Obviously with some ports(e.g. the dreamcast port) you probably won't
+   // even use it.
    return 0;
 }
 
 int CDDeInit()
 {
+   // Cleanup function. Enough said.
    return 0;
 }
 
 bool CDIsCDPresent()
 {
+   // This is where it checks to see if a disc is present. It should be
+   // pretty straight forward. Eventually I may change this so it returns
+   // the general drive status.
    return false;
 }
 
@@ -67,6 +74,11 @@ long CDReadToc(unsigned long *TOC)
 
 unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
 {
-   return 0;
+   // lba is obviously LBA, as opposed to FAD.
+   // You should return the amount of data you read. Which under normally
+   // circumstances should be equal to size. Obviously if there's a read
+   // error or something you'd return 0.
+
+   return size;
 }
 
