@@ -30,7 +30,7 @@ Vdp1::Vdp1(SaturnMemory *mem) : Memory(0x18) {
 	satmem = mem;
 	_stop = false;
 	setWord(0x4, 0);
-	glGenTextures(1, &texture[0] );
+	//glGenTextures(1, &texture[0] );
 	vram = new Memory(0xC0000);
 }
 
@@ -216,6 +216,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 		}
 	}
 
+	if (*texture == 0) glGenTextures(1, &texture[0] );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 

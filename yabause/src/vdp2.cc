@@ -952,7 +952,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x120) {
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glGenTextures(1, texture );
+	//glGenTextures(1, texture );
 #endif
   //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
   surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
@@ -1049,6 +1049,7 @@ void Vdp2::executer(void) {
     if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
   }
 
+  if (*texture ==0) glGenTextures(1, texture );
   glBindTexture(GL_TEXTURE_2D, texture[0] );
   glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 
