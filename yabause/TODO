@@ -5,7 +5,6 @@
  (2) EMULATION
 
    - what's happening at onchip address 4 ?
-   - there should be synchro between smpc INTBACK and VBlank
    - check that dma operation is correct
    - finish intc, add others sources of interrupt
    - finish SCU
