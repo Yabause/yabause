@@ -1010,7 +1010,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
         outstring += strlen(outstring);
 
         // Pattern Name Control stuff
-        if (patternNameReg & 0x8000) 
+        if ((patternNameReg & 0x8000) == 0) 
         {
            sprintf(outstring, "Pattern Name data size = 2 words\r\n");
            outstring += strlen(outstring);
@@ -1657,8 +1657,8 @@ void Vdp2::VBlankOUT(void) {
   setWord(0x4, getWord(0x4) & 0xFFF7 | 0x0002);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  drawBackScreen();
   if (getWord(0) & 0x8000) {
+    drawBackScreen();
     screens[0]->draw();
     screens[1]->draw();
     screens[2]->draw();
