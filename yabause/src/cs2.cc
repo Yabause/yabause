@@ -431,6 +431,8 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   memset(&fileinfo, 0, sizeof(fileinfo));
   numfiles = 0;
 
+  lastbuffer = 0xFF;
+
   _command = false;
   _lock = SDL_CreateMutex();
   SDL_CreateThread((int (*)(void*)) &run, this);
@@ -631,12 +633,20 @@ void Cs2::execute(void) {
 #endif
       setCDDeviceConnection();
       break;
+    case 0x32:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: getLastBufferDestination %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      getLastBufferDestination();
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      break;
     case 0x40:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: setFilterRange\n");
 #endif
       setFilterRange();
-
       break;
     case 0x42:
 #if CDDEBUG
@@ -644,11 +654,29 @@ void Cs2::execute(void) {
 #endif
       setFilterSubheaderConditions();
       break;
+    case 0x43:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: getFilterSubheaderConditions\n");
+#endif
+      getFilterSubheaderConditions();
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      break;
     case 0x44:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: setFilterMode\n");
 #endif
       setFilterMode();
+      break;
+    case 0x45:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: getFilterMode\n");
+#endif
+      getFilterMode();
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
       break;
     case 0x46:
 #if CDDEBUG
@@ -714,12 +742,9 @@ void Cs2::execute(void) {
       break;
     case 0x60:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: setSectorLength\n");
+      fprintf(stderr, "cs2\t: Command: setSectorLength %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       setSectorLength();
-#if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
-#endif
       break;
     case 0x61:
 #if CDDEBUG
@@ -747,6 +772,12 @@ void Cs2::execute(void) {
 #if CDDEBUG
       fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
+      break;
+    case 0x64:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: putSectorData %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      putSectorData();
       break;
     case 0x67:
 #if CDDEBUG
@@ -810,6 +841,15 @@ void Cs2::execute(void) {
 #endif
       mpegGetStatus();
       break;
+    case 0x91:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegGetInterrupt\n");
+#endif
+       mpegGetInterrupt();
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      break;
     case 0x92:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: mpegSetInterruptMask\n");
@@ -829,6 +869,24 @@ void Cs2::execute(void) {
       mpegSetMode();
 
       break;
+    case 0x95:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegPlay\n");
+#endif
+      mpegPlay();
+      break;
+    case 0x96:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetDecodingMethod\n");
+#endif
+       mpegSetDecodingMethod();
+       break;
+    case 0x9A:      
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetConnection\n");
+#endif
+       mpegSetConnection();
+       break;
     case 0x9B:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: mpegGetConnection\n");
@@ -841,7 +899,42 @@ void Cs2::execute(void) {
       fprintf(stderr, "cs2\t: Command: mpegGetStream\n");
 #endif
       mpegGetStream();
-
+      break;
+    case 0xA0:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegDisplay\n");
+#endif
+      mpegDisplay();
+      break;
+    case 0xA1:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetWindow\n");
+#endif
+       mpegSetWindow();
+       break;
+    case 0xA2:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetBorderColor\n");
+#endif
+      mpegSetBorderColor();
+      break;
+    case 0xA3:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetFade\n");
+#endif
+      mpegSetFade();
+      break;
+    case 0xA4:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetVideoEffects\n");
+#endif
+      mpegSetVideoEffects();
+      break;
+    case 0xAF:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetLSI\n");
+#endif
+      mpegSetLSI();
       break;
     case 0xE0:
 #if CDDEBUG
@@ -1095,9 +1188,18 @@ void Cs2::seekDisc(void) {
   if (getCR1() & 0x80)
   {
      // Seek by FAD
+     unsigned long sdFAD;
+
+     sdFAD = ((getCR1() & 0xFF) << 16) | getCR2();
+
+     if (sdFAD == 0xFFFFFF)
+        status = CDB_STAT_PAUSE | CDB_STAT_PERI;
+     else
+     {
 #if CDDEBUG
-     fprintf(stderr, "cs2\t: seekDisc - FAD Mode not supported\n");
+        fprintf(stderr, "cs2\t: seekDisc - FAD Mode not supported\n");
 #endif
+     }
   }
   else
   {
@@ -1105,6 +1207,7 @@ void Cs2::seekDisc(void) {
      if (getCR2() >> 8)
      {
         // Seek by index
+        status = CDB_STAT_PAUSE | CDB_STAT_PERI;
         SetupDefaultPlayStats((getCR2() >> 8));
         index = getCR2() & 0xFF;
      }
@@ -1175,6 +1278,14 @@ void Cs2::setCDDeviceConnection(void) {
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
+void Cs2::getLastBufferDestination(void) {
+  setCR1((status << 8));
+  setCR2(0);
+  setCR3(lastbuffer << 8); 
+  setCR4(0);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+}
+
 void Cs2::setFilterRange(void) {
   unsigned char sfrfilternum;
 
@@ -1210,6 +1321,18 @@ void Cs2::setFilterSubheaderConditions(void) {
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
+void Cs2::getFilterSubheaderConditions(void) {
+  unsigned char gfscfilternum;
+
+  gfscfilternum = getCR3() >> 8;
+
+  setCR1((status << 8) | filter[gfscfilternum].chan);
+  setCR2((filter[gfscfilternum].smmask << 8) | filter[gfscfilternum].cimask);
+  setCR3(filter[gfscfilternum].fid);
+  setCR4((filter[gfscfilternum].smval << 8) | filter[gfscfilternum].cival);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+}
+
 void Cs2::setFilterMode(void) {
   unsigned char sfmfilternum;
 
@@ -1234,6 +1357,18 @@ void Cs2::setFilterMode(void) {
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
   setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+}
+
+void Cs2::getFilterMode(void) {
+  unsigned char gfmfilternum;
+
+  gfmfilternum = getCR3() >> 8;
+
+  setCR1((status << 8) | filter[gfmfilternum].mode);
+  setCR2(0);
+  setCR3(0);
+  setCR4(0);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1501,6 +1636,25 @@ void Cs2::deleteSectorData(void) {
 
   if (dsdbufno < MAX_SELECTORS)
   {
+     if (dsdsectoffset == 0xFFFF)
+     {
+        // delete last sector 
+#if CDDEBUG
+        fprintf(stderr, "cs2\t:deleteSectorData: FIXME - sector offset of 0xFFFF not supported\n");
+#endif
+     }
+     else if (dsdsectnum == 0xFFFF)
+     {
+        // delete sector x sectors from last?
+#if CDDEBUG
+        fprintf(stderr, "cs2\t:deleteSectorData: FIXME - sector number of 0xFFFF not supported\n");
+#endif
+        // calculate which sector we want to delete
+        dsdsectoffset = partition[dsdbufno].numblocks - dsdsectoffset - 1;
+        // I think this is right
+        dsdsectnum = 1; 
+     }
+
      for (unsigned long i = dsdsectoffset; i < (dsdsectoffset+dsdsectnum); i++)
      {
         partition[dsdbufno].size -= partition[dsdbufno].block[i]->size;
@@ -1550,6 +1704,26 @@ void Cs2::getThenDeleteSectorData(void) {
      setCR3((index << 8) | ((FAD >> 16) &0xFF));
      setCR4((unsigned short) FAD);
      setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+  }
+  else
+  {
+     setCR1((CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+     setCR2((ctrladdr << 8) | (track & 0xFF));
+     setCR3((index << 8) | ((FAD >> 16) &0xFF));
+     setCR4((unsigned short) FAD);
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+  }
+}
+
+void Cs2::putSectorData(void) {
+  unsigned long psdfiltno;
+
+  psdfiltno = getCR3() >> 8;
+
+  if (psdfiltno < MAX_SELECTORS)
+  {
+     // I'm not really sure what I'm supposed to really be doing or returning
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
   }
   else
   {
@@ -1709,6 +1883,21 @@ void Cs2::mpegGetStatus(void) {
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
+void Cs2::mpegGetInterrupt(void) {
+   unsigned long mgiworkinterrupt;
+
+   // mpeg interrupt should be retrieved here
+
+   // mask interupt
+   mgiworkinterrupt &= mpegintmask;
+
+   setCR1((status << 8) | ((mgiworkinterrupt >> 16) & 0xFF));
+   setCR2((unsigned short)mgiworkinterrupt);
+   setCR3(0);                                              
+   setCR4(0);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
 void Cs2::mpegSetInterruptMask(void) {
    mpegintmask = ((getCR1() & 0xFF) << 16) | getCR2();
 
@@ -1751,6 +1940,39 @@ void Cs2::mpegSetMode(void) {
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
+void Cs2::mpegPlay(void) {
+   // fix me
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetDecodingMethod(void) {
+   // fix me
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetConnection(void) {
+   // fix me
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
 void Cs2::mpegGetConnection(void) {
 
    // fix me(should be returning the connection variables)
@@ -1768,6 +1990,66 @@ void Cs2::mpegGetStream(void) {
    setCR2(0);
    setCR3(0);
    setCR4(0);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegDisplay(void) {
+   // fix me(should be setting display setting)
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetWindow(void) {
+   // fix me(should be setting windows settings)
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetBorderColor() {
+   // fix me(should be setting border color)
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetFade() {
+   // fix me(should be setting fade setting)
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetVideoEffects(void) {
+   // fix me(should be setting video effects settings)
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetLSI() {
+   // fix me(should be setting the LSI, among other things)
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
@@ -1982,10 +2264,13 @@ partition_struct *Cs2::FilterData(filter_struct *curfilter, bool isaudio)
 
   if (condresults == true)
   {
+     lastbuffer = curfilter->condtrue;
      fltpartition = &partition[curfilter->condtrue];
   }
   else
   {
+     lastbuffer = curfilter->condfalse;
+
      if (curfilter->condfalse == 0xFF)
         return NULL;
      // loop and try filter that was connected to the false connector

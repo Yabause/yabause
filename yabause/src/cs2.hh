@@ -133,6 +133,7 @@ private:
   bool issubcodeqdecoded;
   bool isbufferfull;
   unsigned char transfileinfo[12];
+  unsigned char lastbuffer;
 
   filter_struct filter[MAX_SELECTORS];
 //  filter_struct *curfilter;
@@ -194,15 +195,23 @@ public:
   void getToc(void);                      // 0x02
   void getSessionInfo();                  // 0x03
   void initializeCDSystem(void);          // 0x04
+  // Open Tray                            // 0x05
   void endDataTransfer(void);             // 0x06
   void playDisc(void);                    // 0x10
   void seekDisc(void);                    // 0x11
+  // Scan Disc                            // 0x12
   void getSubcodeQRW(void);               // 0x20
   void setCDDeviceConnection(void);       // 0x30
+  // get CD Device Connection             // 0x31
+  void getLastBufferDestination(void);    // 0x32
   void setFilterRange(void);              // 0x40
+  // get Filter Range                     // 0x41
   void setFilterSubheaderConditions(void);// 0x42
+  void getFilterSubheaderConditions(void);// 0x43
   void setFilterMode(void);               // 0x44
+  void getFilterMode(void);               // 0x45
   void setFilterConnection(void);         // 0x46
+  // Get Filter Connection                // 0x47
   void resetSelector(void);               // 0x48
   void getBufferSize(void);               // 0x50
   void getSectorNumber(void);             // 0x51
@@ -213,6 +222,9 @@ public:
   void getSectorData(void);               // 0x61
   void deleteSectorData(void);            // 0x62
   void getThenDeleteSectorData(void);     // 0x63
+  void putSectorData(void);               // 0x64
+  // Copy Sector Data                     // 0x65
+  // Move Sector Data                     // 0x66
   void getCopyError(void);                // 0x67
   void changeDirectory(void);             // 0x70
   void readDirectory(void);               // 0x71
@@ -221,11 +233,34 @@ public:
   void readFile(void);                    // 0x74
   void abortFile(void);                   // 0x75
   void mpegGetStatus(void);               // 0x90
+  void mpegGetInterrupt(void);            // 0x91
   void mpegSetInterruptMask(void);        // 0x92
   void mpegInit(void);                    // 0x93
   void mpegSetMode(void);                 // 0x94
+  void mpegPlay(void);                    // 0x95
+  void mpegSetDecodingMethod(void);       // 0x96
+  // MPEG Out Decoding Sync               // 0x97
+  // MPEG Get Timecode                    // 0x98
+  // MPEG Get Pts                         // 0x99
+  void mpegSetConnection(void);           // 0x9A
   void mpegGetConnection(void);           // 0x9B
+  // MPEG Change Connection               // 0x9C
+  // MPEG Set Stream                      // 0x9D
   void mpegGetStream(void);               // 0x9E
+  // MPEG Get Picture Size                // 0x9F
+  void mpegDisplay(void);                 // 0xA0
+  void mpegSetWindow(void);               // 0xA1
+  void mpegSetBorderColor(void);          // 0xA2
+  void mpegSetFade(void);                 // 0xA3
+  void mpegSetVideoEffects(void);         // 0xA4
+  // MPEG Get Image                       // 0xA5
+  // MPEG Set Image                       // 0xA6
+  // MPEG Read Image                      // 0xA7
+  // MPEG Write Image                     // 0xA8
+  // MPEG Read Sector                     // 0xA9
+  // MPEG Write Sector                    // 0xAA
+  // MPEG Get LSI                         // 0xAE
+  void mpegSetLSI(void);                  // 0xAF
   void cmdE0(void);                       // 0xE0
   void cmdE1(void);                       // 0xE1
   void cmdE2(void);                       // 0xE2
