@@ -401,6 +401,9 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 }
 
 void Vdp1::scaledSpriteDraw(unsigned long addr) {
+        short rw;
+        short rh;
+
 	readCommand(addr);
 
 	short x = CMDXA + localX;
@@ -409,14 +412,12 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	h = CMDSIZE & 0xFF;
 	ww = power_of_two(w);
 	hh = power_of_two(h);
-	short rw = vram->getWord(addr + 0x10);
-	short rh = vram->getWord(addr + 0x12);
 
 	GLfloat u1 = 0.0f;
 	GLfloat u2 = (GLfloat)w / ww;
 	GLfloat v1 = 0.0f;
 	GLfloat v2 = (GLfloat)h / hh;
-	unsigned char dir = (vram->getWord(addr) & 0x30) >> 4;
+        unsigned char dir = (CMDCTRL & 0x30) >> 4;
 	if (dir & 0x1) {
 		u1 = (GLfloat)w / ww;
 		u2 = 0.0f;
@@ -425,25 +426,64 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 		v1 = (GLfloat)h / hh;
 		v2 = 0.0f;
 	}
-	unsigned short ZP = (vram->getWord(addr) & 0xF00) >> 8;
 
-	switch(ZP & 0xC) {
-		case 0x4: 
-			  break;
-		case 0x8: y = y - rh/2;
-			  break;
-		case 0xC: y = y - rh;
-			  break;
-	}
-	switch(ZP & 0x3) {
-		case 1: 
-			break;
-		case 2: x = x - rw/2;
-			break;
-		case 3: x = x - rw;
-			break;
-	}
-			
+        // Setup Zoom Point
+        switch ((CMDCTRL & 0xF00) >> 8) {
+           case 0x0: // Only two coordinates
+                     rw = w;
+                     rh = h;
+                     break;
+           case 0x5: // Upper-left
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     break;
+           case 0x6: // Upper-Center
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     x = x - rw/2;
+                     break;
+           case 0x7: // Upper-Right
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     x = x - rw;
+                     break;
+           case 0x9: // Center-left
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     y = y - rh/2;
+                     break;
+           case 0xA: // Center-center
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     x = x - rw/2;
+                     y = y - rh/2;
+                     break;
+           case 0xB: // Center-right
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     x = x - rw;
+                     y = y - rh/2;
+                     break;
+           case 0xC: // Lower-left
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     y = y - rh;
+                     break;
+           case 0xE: // Lower-center
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     x = x - rw/2;
+                     y = y - rh;
+                     break;
+           case 0xF: // Lower-right
+                     rw = CMDXB;
+                     rh = CMDYB;
+                     x = x - rw;
+                     y = y - rh;
+                     break;
+           default: break;
+        }
+
 	vdp1Sprite sp;
 	readTexture(&sp);
 
@@ -460,7 +500,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 
 void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	readCommand(addr);
-	
+
 	w = ((CMDSIZE >> 8) & 0x3F) * 8;
 	h = CMDSIZE & 0xFF;
 	ww = power_of_two(w);
