@@ -181,7 +181,23 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 		}
 		break;
 	case 1:
-		cerr << "color mode 1 not implemented" << endl; break;
+		colorBank *= 8;
+		unsigned long temp;
+		for(unsigned short i = 0;i < h;i++) {
+			for(unsigned short j = 0;j < w;j += 2) {
+				dot = vram->getByte(charAddr);
+				temp = vram->getWord((dot >> 4) * 2 + colorBank);
+				color = (temp & 0x1F) << 27 | (temp & 0x7E0) << 14 | (temp & 0x7C00) << 1 | 0xFF;
+				if ((dot >> 4) != 0) pixelColor(surface, j, i, color);
+				else pixelColor(surface, j, i, 0);
+				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+				color = (temp & 0x1F) << 27 | (temp & 0x7E0) << 14 | (temp & 0x7C00) << 1 | 0xFF;
+				if ((dot & 0xF) != 0) pixelColor(surface, j + 1, i, color);
+				else pixelColor(surface, j, i, 0);
+				charAddr += 1;
+			}
+		}
+		break;
 	case 2:
 		cerr << "color mode 2 not implemented" << endl; break;
 	case 3:
