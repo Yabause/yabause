@@ -172,10 +172,6 @@ long CDReadToc(unsigned long *TOC)
                  (ctTOC.TrackData[ctTOC.LastTrack].Adr << 24) |
                   MSF_TO_FAD(ctTOC.TrackData[ctTOC.LastTrack].Address[1], ctTOC.TrackData[ctTOC.LastTrack].Address[2], ctTOC.TrackData[ctTOC.LastTrack].Address[3]);
 
-//   debugfp = fopen("c:\\lunartoc.bin", "wb");
-//   fwrite((void *)TOC, 1, 4 * 102, debugfp);
-//   fclose(debugfp);
-
       return (0xCC * 2);
    }
 
