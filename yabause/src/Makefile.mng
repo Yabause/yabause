@@ -33,7 +33,7 @@ CFLAGS=$(VDEFINES) $(DDEFINES) -O2
 #CFLAGS=$(VDEFINES) $(DDEFINES) -O2 -march=athlon-xp -Wall -pg
 #CFLAGS=$(VDEFINES) $(DDEFINES)
 LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -mwindows -mthreads
-OBJS = cdbase.o cs1.o cs2.o exception.o intc.o memory.o scu.o scsp.o smpc.o superh.o vdp1.o vdp2.o yabause.o c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o windows/cd.o windows/yui.o windows/resource.o windows/settings.o sh2d.o
+OBJS = cdbase.o cs0.o cs1.o cs2.o exception.o intc.o memory.o scu.o scsp.o smpc.o superh.o vdp1.o vdp2.o yabause.o c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o windows/cd.o windows/yui.o windows/resource.o windows/settings.o sh2d.o profile.o
 
 all: $(TARGET)
 
@@ -50,7 +50,8 @@ clean:
 	rm -f $(OBJS)
 	rm -f $(TARGET)
 
-cs1.o: cs1.hh
+cs0.o: cs0.hh
+cs1.o: cs0.hh cs1.hh
 cs2.o: cs2.hh cdbase.hh yui.hh
 exception.o: exception.hh
 intc.o: intc.hh superh.hh 

@@ -21,6 +21,7 @@
 #include "scu.hh"
 #include "vdp1.hh"
 #include "vdp2.hh"
+#include "cs0.hh"
 #include "cs1.hh"
 #include "cs2.hh"
 #include "scsp.hh"

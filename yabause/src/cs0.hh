@@ -1,4 +1,4 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -17,26 +17,34 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef CS1_HH
-#define CS1_HH
+#ifndef CS0_HH
+#define CS0_HH
 
 #include "memory.hh"
 
-class Cs1 : public Dummy {
-  int cartid;
-  int carttype;
-  char *cartfile;
-  Memory *sramarea;
-public:
-  Cs1(char *file, int type);
-  ~Cs1(void);
+#define CART_NONE               0
+#define CART_PAR                1
+#define CART_BACKUPRAM4MBIT     2
+#define CART_BACKUPRAM8MBIT     3
+#define CART_BACKUPRAM16MBIT    4
+#define CART_BACKUPRAM32MBIT    5
+#define CART_DRAM8MBIT          6
+#define CART_DRAM32MBIT         7
 
-  unsigned char getByte(unsigned long);
-  unsigned short getWord(unsigned long);
-  unsigned long getLong(unsigned long);
-  void Cs1::setByte(unsigned long addr, unsigned char val);
-  void Cs1::setWord(unsigned long addr, unsigned short val);
-  void Cs1::getLong(unsigned long addr, unsigned long val);
+class Cs0 : public Dummy {
+private:
+  int carttype;
+  Memory *biosarea;
+  Memory *dramarea;
+public:
+  Cs0(char *file, int type);
+  ~Cs0(void);
+  void setByte(unsigned long addr, unsigned char val);
+  unsigned char getByte(unsigned long addr);
+  void setWord(unsigned long addr, unsigned short val);
+  unsigned short getWord(unsigned long addr);
+  void setLong(unsigned long addr, unsigned long val);
+  unsigned long getLong(unsigned long addr);
 };
 
 #endif

@@ -303,8 +303,8 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	ramLow      = new Memory(0xFFFFF, 0x100000);
         minit = new InputCaptureSignal(ssh);
         sinit = new InputCaptureSignal(msh);
-	cs0	      = new Dummy(0xFFFFFF);
-	cs1         = new Cs1();
+        cs0         = new Cs0(NULL, CART_NONE);
+        cs1         = new Cs1(NULL, CART_NONE);
 	cs2         = new Cs2();
         soundr      = new Scsp(this);
         sound       = ((Scsp *)soundr)->getSRam();
@@ -595,7 +595,7 @@ void SaturnMemory::changeTiming(unsigned long sh2freq, bool pal) {
 
 void SaturnMemory::synchroStart(void) {
         cursh = msh;
-	msh->runCycles(decilineStop);
+        msh->runCycles(decilineStop);
         if (sshRunning) {
            cursh = ssh;
            ssh->runCycles(decilineStop);

@@ -33,7 +33,7 @@ public:
   Memory *ramLow;	//   200000 -   300000
   InputCaptureSignal * minit;	//  1000000 -  1000004
   InputCaptureSignal * sinit;	//  1800000 -  1800004
-  Dummy *cs0;		//  2000000 -  4000000
+  Cs0 *cs0;           //  2000000 -  4000000
   Cs1 *cs1;		//  4000000 -  5000000
   Dummy *dummy;	//  5000000 -  5800000
   Cs2 *cs2;		//  5800000 -  5900000
