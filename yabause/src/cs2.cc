@@ -522,6 +522,13 @@ void Cs2::execute(void) {
 #endif
       setCDDeviceConnection();
       break;
+    case 0x40:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: setFilterRange\n");
+#endif
+      setFilterRange();
+
+      break;
     case 0x42:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: setFilterSubheaderConditions\n");
@@ -585,6 +592,13 @@ void Cs2::execute(void) {
 #if CDDEBUG
       fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
+      break;
+    case 0x54:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: getSectorInfo\n");
+#endif
+      getSectorInfo();
+
       break;
     case 0x60:
 #if CDDEBUG
@@ -680,34 +694,63 @@ void Cs2::execute(void) {
       fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
-    case 0x93: {
+    case 0x90:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegGetStatus\n");
+#endif
+      mpegGetStatus();
+      break;
+    case 0x92:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetInterruptMask\n");
+#endif
+      mpegSetInterruptMask();
+      break;
+    case 0x93: 
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: mpegInit\n");
 #endif
       mpegInit();
       break;
-    }
-    case 0xE0: {
+    case 0x94:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetMode\n");
+#endif
+      mpegSetMode();
+
+      break;
+    case 0x9B:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegGetConnection\n");
+#endif
+      mpegGetConnection();
+
+      break;
+    case 0x9E:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegGetStream\n");
+#endif
+      mpegGetStream();
+
+      break;
+    case 0xE0:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: cmdE0 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       cmdE0();
       break;
-    }
-    case 0xE1: {
+    case 0xE1:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: cmdE1 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif 
       cmdE1();
       break;
-    }
-    case 0xE2: {
+    case 0xE2:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: cmdE2 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif 
       cmdE2();
       break;
-    }
     default:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command %02x not implemented\n", instruction);
@@ -969,6 +1012,22 @@ void Cs2::setCDDeviceConnection(void) {
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
+void Cs2::setFilterRange(void) {
+  unsigned char sfrfilternum;
+
+  sfrfilternum = getCR3() >> 8;
+
+  filter[sfrfilternum].FAD = ((getCR1() & 0xFF) << 16) | getCR2();
+  filter[sfrfilternum].range = ((getCR3() & 0xFF) << 16) | getCR4();
+
+  // return default cd stats
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+}
+
 void Cs2::setFilterSubheaderConditions(void) {
   unsigned char sfscfilternum;
 
@@ -1079,22 +1138,23 @@ void Cs2::resetSelector(void) {
 }
 
 void Cs2::getBufferSize(void) {
-  unsigned long gbssize=0;
-  unsigned long i;
-
-  for (i = 0; i < MAX_SELECTORS; i++)
-     gbssize += partition[i].size;
-
   setCR1(status << 8);
-  setCR2(MAX_BLOCKS - (gbssize / getsectsize));
+  setCR2(blockfreespace);
   setCR3(MAX_SELECTORS << 8);
   setCR4(MAX_BLOCKS);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
 void Cs2::getSectorNumber(void) {
+  unsigned char gsnbufno;
+
+  gsnbufno = getCR3() >> 8;
+
   // somehow, I don't think this is right
-  setCR4(partition[getCR3() >> 8].size / getsectsize);
+  if (partition[gsnbufno].size == -1)
+     setCR4(0);
+  else
+     setCR4(partition[getCR3() >> 8].size / getsectsize);
 
   setCR1(status << 8);
   setCR2(0);
@@ -1135,6 +1195,16 @@ void Cs2::calculateActualSize(void) {
 void Cs2::getActualSize(void) {
   setCR1((status << 8) | ((calcsize >> 16) & 0xFF));
   setCR2(calcsize & 0xFFFF);
+  setCR3(0);
+  setCR4(0);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+}
+
+void Cs2::getSectorInfo(void) {
+  // fix me(I should be returning proper sector info)
+
+  setCR1((status << 8) | 0);
+  setCR2(0);
   setCR3(0);
   setCR4(0);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
@@ -1197,7 +1267,7 @@ void Cs2::deleteSectorData(void) {
      SortBlocks(curpartition);
 
      partition[dsdbufno].size -= (getsectsize * dsdsectnum);
-     partition[dsdbufno].size -= dsdsectnum;
+     partition[dsdbufno].numblocks -= dsdsectnum;
   }
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
@@ -1327,6 +1397,26 @@ void Cs2::abortFile(void) {
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
 }
 
+void Cs2::mpegGetStatus(void) {
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetInterruptMask(void) {
+   mpegintmask = ((getCR1() & 0xFF) << 16) | getCR2();
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
 void Cs2::mpegInit(void) {
 
   if (mpgauth)
@@ -1335,7 +1425,7 @@ void Cs2::mpegInit(void) {
      setCR1(0xFF00);
 
   // double-check this
-  if (getCR2() == 0x0001) // software timer?
+  if (getCR2() == 0x0001) // software timer/reset?
      setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
   else
      setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
@@ -1345,6 +1435,37 @@ void Cs2::mpegInit(void) {
   setCR4(0);
 
   // future mpeg-related variables should be initialized here
+}
+
+void Cs2::mpegSetMode(void) {
+   // fix me
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegGetConnection(void) {
+
+   // fix me(should be returning the connection variables)
+   setCR1((status << 8) | 0);
+   setCR2(0);
+   setCR3(0);
+   setCR4(0);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegGetStream(void) {
+
+   // fix me(should be returning the stream variables)
+   setCR1((status << 8) | 0);
+   setCR2(0);
+   setCR3(0);
+   setCR4(0);
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
 void Cs2::cmdE0(void) {

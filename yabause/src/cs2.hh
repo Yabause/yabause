@@ -94,11 +94,22 @@ private:
   SDL_mutex *cdMutex;
   unsigned long FAD;
   unsigned char status;
+
+  // cd specific stats
   unsigned char options;
   unsigned char repcnt;
   unsigned char ctrladdr;
   unsigned char track;
   unsigned char index;
+
+  // mpeg specific stats
+  unsigned char actionstatus;
+  unsigned char pictureinfo;
+  unsigned char mpegaudiostatus;
+  unsigned short mpegvideostatus;
+  unsigned short vcounter;
+
+  // authentication variables
   unsigned short satauth;
   unsigned short mpgauth;
 
@@ -130,6 +141,8 @@ private:
 
   dirrec_struct fileinfo[MAX_FILES];
   unsigned long numfiles;
+
+  unsigned long mpegintmask;
 
   bool _command;
   char *cdrom;
@@ -169,6 +182,7 @@ public:
   void seekDisc(void);                    // 0x11
   void getSubcodeQRW(void);               // 0x20
   void setCDDeviceConnection(void);       // 0x30
+  void setFilterRange(void);              // 0x40
   void setFilterSubheaderConditions(void);// 0x42
   void setFilterMode(void);               // 0x44
   void setFilterConnection(void);         // 0x46
@@ -177,6 +191,7 @@ public:
   void getSectorNumber(void);             // 0x51
   void calculateActualSize(void);         // 0x52
   void getActualSize(void);               // 0x53
+  void getSectorInfo(void);               // 0x54
   void setSectorLength(void);             // 0x60
   void getSectorData(void);               // 0x61
   void deleteSectorData(void);            // 0x62
@@ -188,7 +203,12 @@ public:
   void getFileInfo(void);                 // 0x73
   void readFile(void);                    // 0x74
   void abortFile(void);                   // 0x75
+  void mpegGetStatus(void);               // 0x90
+  void mpegSetInterruptMask(void);        // 0x92
   void mpegInit(void);                    // 0x93
+  void mpegSetMode(void);                 // 0x94
+  void mpegGetConnection(void);           // 0x9B
+  void mpegGetStream(void);               // 0x9E
   void cmdE0(void);                       // 0xE0
   void cmdE1(void);                       // 0xE1
   void cmdE2(void);                       // 0xE2
