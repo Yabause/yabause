@@ -226,7 +226,7 @@ public:
   void SortBlocks(partition_struct *part);
   partition_struct *GetPartition();
   int CopyDirRecord(unsigned char *buffer, dirrec_struct *dirrec);
-  void ReadFileSystem();
+  int ReadFileSystem();
   void SetupFileInfoTransfer(unsigned long fid);
 };
 

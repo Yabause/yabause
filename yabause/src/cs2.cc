@@ -1388,12 +1388,26 @@ void Cs2::readDirectory(void) {
 }
 
 void Cs2::getFileSystemScope(void) {
-  ReadFileSystem();
+  if (ReadFileSystem() != 0)
+  {
+#if CDDEBUG
+     fprintf(stderr, "cs2\t: Error Reading file system\n");
+#endif
+     // may need to change this
+     
+     setCR1(CDB_STAT_ERROR << 8);
+     setCR2(0x0000);
+     setCR3(0x0000);
+     setCR4(0x0000);
+  }
+  else
+  {
+     setCR1(status << 8);
+     setCR2(numfiles - 2);
+     setCR3(0x0100);
+     setCR4(0x0002);
+  }
 
-  setCR1(status << 8);
-  setCR2(numfiles - 2);
-  setCR3(0x0100);
-  setCR4(0x0002);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
 }
 
@@ -1812,7 +1826,7 @@ int Cs2::CopyDirRecord(unsigned char *buffer, dirrec_struct *dirrec)
 }
 
 
-void Cs2::ReadFileSystem()
+int Cs2::ReadFileSystem()
 {
   unsigned char tempsect[2048];
   unsigned char *workbuffer;
@@ -1824,14 +1838,14 @@ void Cs2::ReadFileSystem()
 
   // read sector 16
   if (CDReadSector(16, 2048, tempsect) != 2048)
-     return;
+     return -1;
 
   // retrieve directory record's lba
   CopyDirRecord(tempsect + 0x9C, &dirrec);
 
   // now read sector using lba grabbed from above and start parsing
   if (CDReadSector(dirrec.lba, 2048, tempsect) != 2048)
-     return;
+     return -1;
 
   numsectorsleft = (dirrec.size / 2048) - 1;
   dirrec.lba++;
@@ -1848,7 +1862,7 @@ void Cs2::ReadFileSystem()
         if (numsectorsleft > 0)
         {
            if (CDReadSector(dirrec.lba, 2048, tempsect) != 2048)
-              return;
+              return -1;
            dirrec.lba++;
            numsectorsleft--;
            workbuffer = tempsect;
@@ -1860,6 +1874,8 @@ void Cs2::ReadFileSystem()
         }
      }
   }
+
+  return 0;
 }
 
 void Cs2::SetupFileInfoTransfer(unsigned long fid) {
