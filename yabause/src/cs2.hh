@@ -146,7 +146,7 @@ private:
   partition_struct partition[MAX_SELECTORS];
 
   partition_struct *datatranspartition;
-  unsigned long datatransoffset;
+  long datatransoffset;
   unsigned long datanumsecttrans;
   unsigned short datatranssectpos;
   unsigned short datasectstotrans;
@@ -162,7 +162,7 @@ private:
   unsigned long mpegintmask;
 
   bool _command;
-  SDL_mutex  *_lock;
+  unsigned long _periodiccycles;
   char *cdrom;
 public:
   Cs2(void);
@@ -184,7 +184,7 @@ public:
   void setWord(unsigned long, unsigned short);
   unsigned long getLong(unsigned long);
 
-  static void run(Cs2 *);
+  void run(unsigned long);
   void execute(void);
   void command(void);
   void periodicUpdate(void);

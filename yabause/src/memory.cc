@@ -665,7 +665,7 @@ void SaturnMemory::synchroStart(void) {
 		cycleCountII %= duf;
 	}
 
-	Cs2::run((Cs2 *) cs2);
+        ((Cs2 *)cs2)->run(msh->cycleCount);
 
 	msh->cycleCount %= decilineStop;
 }

@@ -185,7 +185,7 @@ void SuperH::synchroStart(void) {
 	duf = deciufreq.nextValue();
       }
 
-      Cs2::run(((Cs2 *) ((SaturnMemory *)memoire)->getCS2()));
+      ((Cs2 *) ((SaturnMemory *)memoire)->getCS2())->run(cycleCount);
 
       cycleCount %= decilineStop;
       decilineStop = deciline.nextValue();

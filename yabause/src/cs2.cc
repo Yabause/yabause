@@ -103,8 +103,10 @@ unsigned short Cs2::getWord(unsigned long addr) {
     case 0x9000C:
     case 0x90018:
     case 0x9001C:
-    case 0x90020:
+    case 0x90020: val = Memory::getWord(addr);
+		  break;
     case 0x90024: val = Memory::getWord(addr);
+                  _command = false;
 		  break;
     case 0x98000:
                   // transfer info
@@ -169,25 +171,12 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
 	          break;
     case 0x9000C:
     case 0x90018:
-                  while (SDL_mutexP(_lock) == -1)
-                  {
-#if CDDEBUG
-                     fprintf(stderr, "cs2\t: couldn't lock mutex: %s\n", SDL_GetError());
-#endif
-                  }
     case 0x9001C:
     case 0x90020: Memory::setWord(addr, val);
 		  break;
     case 0x90024: Memory::setWord(addr, val);
                   _command = true;
                   execute();
-                  _command = false;
-                  while (SDL_mutexV(_lock) == -1)
-                  {
-#if CDDEBUG
-                     fprintf(stderr, "cs2\t: couldn't unlock mutex: %s\n", SDL_GetError());
-#endif
-                  }
 		  break;
     default: Memory::setWord(addr, val);
   }
@@ -262,7 +251,7 @@ unsigned long Cs2::getLong(unsigned long addr) {
                                datatranstype = -1;
 
                                // free blocks
-                               for (unsigned long i = datatranssectpos; i < (datatranssectpos+datasectstotrans); i++)
+                               for (long i = datatranssectpos; i < (datatranssectpos+datasectstotrans); i++)
                                {
                                   FreeBlock(datatranspartition->block[i]);
                                   datatranspartition->block[i] = NULL;
@@ -434,10 +423,12 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   lastbuffer = 0xFF;
 
   _command = false;
-  _lock = SDL_CreateMutex();
+//  _lock = SDL_CreateMutex();
   /* attempt to remove cs2 thread
   SDL_CreateThread((int (*)(void*)) &run, this);
   */
+
+  _periodiccycles = 0;
 }
 
 Cs2::~Cs2(void) {
@@ -451,83 +442,70 @@ Cs2::~Cs2(void) {
       CDDeInit();
 }
 
-void Cs2::run(Cs2 *cd) {
-	/* attempt to remove cs2 thread
-  Timer t;
-  while(!cd->_stop) {
-  */
-    if (cd->_command) {
-	    return;
-	    /* attempt to remove cs2 thread
-      t.wait(100);
-      */
-    }
-    else {
-      unsigned short val=0;
-      /* attempt to remove cs2 thread
-      while (SDL_mutexP(cd->_lock) == -1)
-      {
-#if CDDEBUG
-         fprintf(stderr, "cs2\t: couldn't lock mutex: %s\n", SDL_GetError());
-#endif
-      }
-      */
+void Cs2::run(unsigned long cycles) {
+//    _periodiccycles+=cycles;
+    _periodiccycles++;
 
+    if (_command) {
+	    return;
+    }
+    else if (_periodiccycles >= 500) // this is obviously wrong, but I have to work out the timings
+    {
+      _periodiccycles -= 500; 
 #if NEWCDINTERFACE
       // Get Drive's current status and compare with old status
       switch(CDGetStatus())
       {
          case 0:
          case 1:
-                 if ((cd->status & 0xF) == CDB_STAT_NODISC ||
-                     (cd->status & 0xF) == CDB_STAT_OPEN)
+                 if ((status & 0xF) == CDB_STAT_NODISC ||
+                     (status & 0xF) == CDB_STAT_OPEN)
                  {
-                    cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
-                    cd->isdiskchanged = true;
+                    status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+                    isdiskchanged = true;
                  }
                  break;
          case 2:
                  // may need to change this
-                 if ((cd->status & 0xF) != CDB_STAT_NODISC)
-                    cd->status = CDB_STAT_PERI | CDB_STAT_NODISC;
+                 if ((status & 0xF) != CDB_STAT_NODISC)
+                    status = CDB_STAT_PERI | CDB_STAT_NODISC;
                  break;
          case 3:
                  // may need to change this
-                 if ((cd->status & 0xF) != CDB_STAT_OPEN)
-                    cd->status = CDB_STAT_PERI | CDB_STAT_OPEN;
+                 if ((status & 0xF) != CDB_STAT_OPEN)
+                    status = CDB_STAT_PERI | CDB_STAT_OPEN;
                  break;
          default: break;
       }
 #endif
-      switch (cd->status & 0xF) {
+      switch (status & 0xF) {
          case CDB_STAT_PAUSE:
             break;
          case CDB_STAT_PLAY:
          {
             partition_struct *playpartition;
-
 #if NEWCDINTERFACE
-            playpartition = cd->ReadFilteredSector(cd->FAD);
+            playpartition = ReadFilteredSector(FAD);
 #else
-            playpartition = cd->ReadUnFilteredSector(cd->FAD);
+            playpartition = ReadUnFilteredSector(FAD);
 #endif
             if (playpartition != NULL)
             {
-               cd->FAD++;
+               FAD++;
 #if CDDEBUG
-               fprintf(stderr, "blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", playpartition->numblocks, cd->blockfreespace, cd->FAD, playpartition->size, cd->isbufferfull);
+               fprintf(stderr, "blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", playpartition->numblocks, blockfreespace, FAD, playpartition->size, isbufferfull);
 #endif
-               cd->isonesectorstored = true;
-               cd->setHIRQ(cd->getHIRQ() | CDB_HIRQ_CSCT);
+               isonesectorstored = true;
+               setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
 
-               if (cd->FAD >= cd->playendFAD) {
+               if (FAD >= playendFAD) {
                   // we're done
-                  cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
-//                  cd->setHIRQ(cd->getHIRQ() | HIRQ_DRDY | CDB_HIRQ_PEND);
-                  cd->setHIRQ(cd->getHIRQ() | CDB_HIRQ_PEND);
+                  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+//                  setHIRQ(getHIRQ() | HIRQ_DRDY | CDB_HIRQ_PEND);
+                  setHIRQ(getHIRQ() | CDB_HIRQ_PEND);
                }
-//               if (cd->isbufferfull)
-//                  cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+//               if (isbufferfull)
+//                  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
             }
 
             break;
@@ -541,28 +519,12 @@ void Cs2::run(Cs2 *cd) {
          default: break;
       }
 
-      cd->status |= CDB_STAT_PERI;
+      status |= CDB_STAT_PERI;
 
       // adjust command registers appropriately here(fix me)
 
-      /* attempt to remove cs2 thread
-      while (SDL_mutexV(cd->_lock) == -1)
-      {
-#if CDDEBUG
-         fprintf(stderr, "cs2\t: couldn't unlock mutex: %s\n", SDL_GetError());
-#endif
-      }
-      */
-
-      // somehow I doubt this is correct
-      /* attempt to remove cs2 thread
-      t.wait(50);
-      */
-      //cd->periodicUpdate();
+      //periodicUpdate();
     }
-    /* attempt to remove cs2 thread
-  }
-  */
 }
 
 void Cs2::command(void) {
@@ -1134,7 +1096,7 @@ void Cs2::endDataTransfer(void) {
         datatranstype = -1;
 
         // free blocks
-        for (unsigned long i = datatranssectpos; i < (datatranssectpos+datasectstotrans); i++)
+        for (long i = datatranssectpos; i < (datatranssectpos+datasectstotrans); i++)
         {
            FreeBlock(datatranspartition->block[i]);
            datatranspartition->block[i] = NULL;
@@ -1935,6 +1897,7 @@ void Cs2::mpegGetInterrupt(void) {
    unsigned long mgiworkinterrupt;
 
    // mpeg interrupt should be retrieved here
+   mgiworkinterrupt = 0;
 
    // mask interupt
    mgiworkinterrupt &= mpegintmask;
@@ -2786,12 +2749,14 @@ unsigned char Cs2::GetRegionID() {
    partition_struct *gripartition;
    char ret=0;
 
+/*
    while (SDL_mutexP(_lock) == -1)
    {
 #if CDDEBUG
       fprintf(stderr, "cs2\t: couldn't lock mutex: %s\n", SDL_GetError());
 #endif
    }
+*/
 
    outconcddev = filter + 0;
 
@@ -2842,6 +2807,7 @@ unsigned char Cs2::GetRegionID() {
       gripartition->numblocks -= 1;
    }
 
+/*
    while (SDL_mutexV(_lock) == -1)
    {
 
@@ -2849,6 +2815,7 @@ unsigned char Cs2::GetRegionID() {
       fprintf(stderr, "cs2\t: couldn't unlock mutex: %s\n", SDL_GetError());
 #endif
    }
+*/
 
    return ret;
 }
