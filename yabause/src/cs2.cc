@@ -20,7 +20,7 @@
 
 #include "cs2.hh"
 #include "timer.hh"
-#include "cd.h"
+#include "cd.hh"
 
 #define CDB_HIRQ_CMOK      0x0001
 #define CDB_HIRQ_DRDY      0x0002
@@ -224,6 +224,10 @@ unsigned long Cs2::getLong(unsigned long addr) {
 	          break;
     default: val = Memory::getLong(addr);
   }
+
+#if DEBUG
+   fprintf(stderr, "ReadLong 0x25898000: Returned data = %08x\n", val);
+#endif
 
   return val;
 }
@@ -494,7 +498,7 @@ void Cs2::execute(void) {
       break;
     case 0x73:
 #if CDDEBUG
-      cerr << "cs2\t: getFileSystemScope\n";
+      cerr << "cs2\t: getFileInfo\n";
 #endif
       getFileInfo();
       break;
@@ -818,6 +822,9 @@ void Cs2::getFileInfo(void) {
   }
 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+
+  transfercount = 0;
+  infotranstype = 1;
 }
 
 void Cs2::readFile(void) {
