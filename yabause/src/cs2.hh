@@ -99,7 +99,8 @@ private:
   unsigned char ctrladdr;
   unsigned char track;
   unsigned char index;
-  unsigned short authval;
+  unsigned short satauth;
+  unsigned short mpgauth;
 
   unsigned long transfercount;
   unsigned long cdwnum;

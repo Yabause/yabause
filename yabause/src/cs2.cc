@@ -297,8 +297,9 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   playFAD = 0xFFFFFFFF;
   playendFAD = 0xFFFFFFFF;
 
-  // set cd authentication variable to 0(not authenticated)
-  authval = 0;
+  // set authentication variables to 0(not authenticated)
+  satauth = 0;
+  mpgauth = 0;
 
   // clear filter conditions
   for (i = 0; i < MAX_SELECTORS; i++)
@@ -669,7 +670,12 @@ void Cs2::getHardwareInfo(void) {
   // hardware flags/CD Version
   setCR2(0x0201); // mpeg card exists
   // mpeg version, it actually is required(at least by the bios)
-  setCR3(0x1);
+
+  if (mpgauth)
+     setCR3(0x1);
+  else
+     setCR3(0);
+
   // drive info/revision
   setCR4(0x0400); 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
@@ -1125,8 +1131,13 @@ void Cs2::abortFile(void) {
 }
 
 void Cs2::mpegInit(void) {
-  setCR1(status << 8);
 
+  if (mpgauth)
+     setCR1(status << 8);
+  else
+     setCR1(0xFF00);
+
+  // double-check this
   if (getCR2() == 0x0001) // software timer?
      setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
   else
@@ -1156,14 +1167,14 @@ void Cs2::cmdE0(void) {
   if (mpegauth == 1)
   {
      setHIRQ(getHIRQ() | CDB_HIRQ_MPED);
-     authval = 2;
+     mpgauth = 2;
   }
   else
   {
      // if authentication passes(obviously it always does), CDB_HIRQ_CSCT is set
      isonesectorstored = true;
      setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
-     authval = 4;
+     satauth = 4;
   }
 
   // Set registers all back to normal values
@@ -1179,15 +1190,55 @@ void Cs2::cmdE0(void) {
 
 void Cs2::cmdE1(void) {
   setCR1((status << 8));
-  setCR2(authval);
+  if (getCR2())
+     setCR2(mpgauth);
+  else
+     setCR2(satauth);
   setCR3(0);
   setCR4(0);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
 void Cs2::cmdE2(void) {
+  FILE *mpgfp;
+
   // fix me
-  authval |= 0x300;
+  mpgauth |= 0x300;
+
+/*
+  // very hackish code
+  if ((mpgfp = fopen("rgvc2rom.bin", "rb")) != NULL)
+  {
+     unsigned long readoffset = ((getCR1() & 0xFF) << 8) | getCR2();
+     unsigned short readsize = getCR4();
+
+     fseek(mpgfp, readoffset * getsectsize, SEEK_SET);
+
+     if ((curpartition = GetPartition()) != NULL && !isbufferfull)
+     {
+        curpartition->size = 0;
+
+        for (int i=0; i < readsize; i++)
+        {
+           curpartition->block[curpartition->numblocks] = AllocateBlock();
+
+           if (curpartition->block[curpartition->numblocks] != NULL) {
+              // read data
+              fread((void *)curpartition->block[curpartition->numblocks]->data, 1, getsectsize, mpgfp);
+
+              curpartition->numblocks++;
+              curpartition->size += getsectsize;
+           }
+        }
+
+        isonesectorstored = true;
+        setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+     }
+
+     fclose(mpgfp);
+  }
+*/
+
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
