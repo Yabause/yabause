@@ -1,3 +1,38 @@
+0.0.6 -> 0.0.7
+ cd block:
+  - added cd interface for porters.
+  - whole bunch of cd commands were added. Most games should now
+    start to boot.
+  - added region auto-detection.
+ mpeg card:
+  - added basic emulation.
+  - added mpeg rom loading suport. 
+ scsp:
+  - bug fixes
+ scu:
+  - bug fixes
+ smpc:
+  - bug fixes
+ superh:
+  - fixed dma
+  - lots of other bugfixes
+  - opcode optimizations
+ vdp1:
+  - added sprite caching
+  - added scaled sprites
+  - added sprite color modes 0, 1, 2, 3, 4
+  - macosx color bug fixed
+  - bug fixes
+ vdp2:
+  - macosx color bug fixed
+  - bug fixes
+ general:
+  - added fps counter
+  - switched to OpenGL, removed SDL_gfx.
+  - yui interface added. Now each port should be able to provide
+    a nice custom ui.
+  - threads removed, program should be more stable now.
+  - added save ram loading ability
 0.0.5 -> 0.0.6
  scu
   - added direct dma
