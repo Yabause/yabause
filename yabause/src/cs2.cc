@@ -1,5 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
-    Copyright 2004 Theo Berkau
+    Copyright 2004-2005 Theo Berkau
 
     This file is part of Yabause.
 
@@ -54,6 +54,18 @@
 #define CDB_STAT_WAIT      0x80
 #define CDB_STAT_REJECT    0xFF
 
+#define doCDReport() \
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF)); \
+  setCR2((ctrladdr << 8) | track); \
+  setCR3((index << 8) | ((FAD >> 16) & 0xFF)); \
+  setCR4((unsigned short) FAD); 
+
+#define doMPEGReport() \
+  setCR1((status << 8) | actionstatus); \
+  setCR2(vcounter); \
+  setCR3((pictureinfo << 8) | mpegaudiostatus); \
+  setCR4(mpegvideostatus); 
+
 unsigned short Cs2::getHIRQ(void) {return Memory::getWord(0x90008);}
 unsigned short Cs2::getHIRQMask(void) {return Memory::getWord(0x9000C);}
 unsigned short Cs2::getCR1(void) {return Memory::getWord(0x90018);}
@@ -104,9 +116,16 @@ unsigned short Cs2::getWord(unsigned long addr) {
                   else
                     val &= ~CDB_HIRQ_DCHG;
 
+                  if (isonesectorstored)
+                    val |= CDB_HIRQ_CSCT;
+                  else
+                    val &= ~CDB_HIRQ_CSCT;
+
                   Memory::setWord(addr, val);
+
+                  val &= Memory::getWord(0x9000C);
 //#if CDDEBUG
-//                  fprintf(stderr, "cs2\t: Hirq read - ret: %x\n", val);
+//                  fprintf(stderr, "cs2\t: Hirq read, Hirq mask = %x - ret: %x\n", Memory::getWord(0x9000C), val);
 //#endif
 	          break;
     case 0x9000C:
@@ -203,10 +222,10 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
 	          break;
     case 0x9000C: Memory::setWord(addr, val);
 		  break;
-    case 0x90018: //status &= ~CDB_STAT_PERI;
+    case 0x90018: status &= ~CDB_STAT_PERI;
                   _command = true;
                   Memory::setWord(addr, val);
-		  break;
+                  break;
     case 0x9001C:
     case 0x90020: Memory::setWord(addr, val);
 		  break;
@@ -394,6 +413,7 @@ void Cs2::reset(void) {
   getsectsize = putsectsize = 2048;
   isdiskchanged = true;
   isbufferfull = false;
+  isonesectorstored = false;
 
   setCR1(( 0 <<8) | 'C');
   setCR2(('D'<<8) | 'B');
@@ -509,6 +529,10 @@ void Cs2::run(unsigned long timing) {
          default: break;
       }
 
+      if (_command) {
+         return;
+      }
+
       switch (status & 0xF) {
          case CDB_STAT_PAUSE:
          {
@@ -529,6 +553,7 @@ void Cs2::run(unsigned long timing) {
                fprintf(stderr, "blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", playpartition->numblocks, blockfreespace, FAD, playpartition->size, isbufferfull);
 #endif
                setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+               isonesectorstored = true;
 
                if (FAD >= playendFAD) {
                   // we're done
@@ -558,17 +583,10 @@ void Cs2::run(unsigned long timing) {
          default: break;
       }
 
-      if (_command) {
-         return;
-      }
-
       status |= CDB_STAT_PERI;
 
       // adjust registers appropriately here(fix me)
-      setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-      setCR2((ctrladdr << 8) | track);
-      setCR3((index << 8) | ((FAD >> 16) & 0xFF));
-      setCR4((unsigned short) FAD);
+      doCDReport();
       setHIRQ(getHIRQ() | CDB_HIRQ_SCDQ);
     }
 }
@@ -1009,10 +1027,7 @@ void Cs2::execute(void) {
 }
 
 void Cs2::getStatus(void) {
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | track);
-  setCR3((index << 8) | ((FAD >> 16) & 0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
@@ -1046,7 +1061,7 @@ void Cs2::getToc(void) {
   setCR3(0x0);
   setCR4(0x0); 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
-  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+  status = CDB_STAT_PAUSE;
 }
 
 void Cs2::getSessionInfo(void) {
@@ -1066,7 +1081,7 @@ void Cs2::getSessionInfo(void) {
             break;
   }
 
-  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+  status = CDB_STAT_PAUSE;
   setCR1(status << 8);
   setCR2(0);
 
@@ -1079,7 +1094,7 @@ void Cs2::initializeCDSystem(void) {
 
   if (status & 0xF != CDB_STAT_OPEN && status & 0xF != CDB_STAT_NODISC)
   {
-     status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+     status = CDB_STAT_PAUSE;
      FAD = 150;
   }
 
@@ -1163,6 +1178,8 @@ void Cs2::endDataTransfer(void) {
         datatranspartition->size -= cdwnum;
         datatranspartition->numblocks -= datasectstotrans;
 
+        if (blockfreespace == 200) isonesectorstored = false;
+
         break;
      }
      default: break;
@@ -1241,15 +1258,11 @@ void Cs2::playDisc(void) {
      fprintf(stderr, "cs2\t: playDisc: Unsupported play mode = %02X\n", pdpmode);
 #endif
 
-  setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
   SetTiming(true);
 
-  status = CDB_STAT_PERI | CDB_STAT_PLAY;
+  status = CDB_STAT_PLAY;
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
@@ -1262,7 +1275,7 @@ void Cs2::seekDisc(void) {
      sdFAD = ((getCR1() & 0xFF) << 16) | getCR2();
 
      if (sdFAD == 0xFFFFFF)
-        status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+        status = CDB_STAT_PAUSE;
      else
      {
 #if CDDEBUG
@@ -1276,14 +1289,14 @@ void Cs2::seekDisc(void) {
      if (getCR2() >> 8)
      {
         // Seek by index
-        status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+        status = CDB_STAT_PAUSE;
         SetupDefaultPlayStats((getCR2() >> 8));
         index = getCR2() & 0xFF;
      }
      else
      {
         // Error
-        status = CDB_STAT_PERI | CDB_STAT_STANDBY;
+        status = CDB_STAT_STANDBY;
         options = 0xFF;
         repcnt = 0xFF;
         ctrladdr = 0xFF;
@@ -1295,11 +1308,7 @@ void Cs2::seekDisc(void) {
 
   SetTiming(false);
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
-
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
@@ -1342,10 +1351,7 @@ void Cs2::setCDDeviceConnection(void) {
   else if (scdcfilternum < 0x24)
      outconcddev = filter + scdcfilternum;
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1366,10 +1372,7 @@ void Cs2::setFilterRange(void) {
   filter[sfrfilternum].range = ((getCR3() & 0xFF) << 16) | getCR4();
 
   // return default cd stats
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1385,10 +1388,7 @@ void Cs2::setFilterSubheaderConditions(void) {
   filter[sfscfilternum].smval = getCR4() >> 8;
   filter[sfscfilternum].cival = getCR4() & 0xFF;
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1429,10 +1429,7 @@ void Cs2::setFilterMode(void) {
      cerr << "cs2\t: Filter Subheader conditions not implemented" << endl;
 #endif
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1465,10 +1462,7 @@ void Cs2::setFilterConnection(void) {
      filter[sfcfilternum].condfalse = getCR2() & 0xFF;
   }
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1495,10 +1489,9 @@ void Cs2::resetSelector(void) {
         }
      }
 
-     setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-     setCR2((ctrladdr << 8) | (track & 0xFF));
-     setCR3((index << 8) | ((FAD >> 16) &0xFF));
-     setCR4((unsigned short) FAD);
+     if (blockfreespace == 200) isonesectorstored = false;
+
+     doCDReport();
      setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
      return;
   }
@@ -1563,12 +1556,11 @@ void Cs2::resetSelector(void) {
         block[i].size = -1;
         memset(block[i].data, 0, 2352);
      }
+
+     isonesectorstored = false;
   }
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1619,10 +1611,7 @@ void Cs2::calculateActualSize(void) {
   else
      calcsize = 0;
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1694,10 +1683,7 @@ void Cs2::setSectorLength(void) {
     default: break;
   }
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
@@ -1717,10 +1703,7 @@ void Cs2::getSectorData(void) {
      datatranssectpos = getCR2();
      datasectstotrans = getCR4();
 
-     setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-     setCR2((ctrladdr << 8) | (track & 0xFF));
-     setCR3((index << 8) | ((FAD >> 16) &0xFF));
-     setCR4((unsigned short) FAD);
+     doCDReport();
      setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
   }
   else
@@ -1775,10 +1758,9 @@ void Cs2::deleteSectorData(void) {
 
      partition[dsdbufno].numblocks -= dsdsectnum;
 
-     setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-     setCR2((ctrladdr << 8) | (track & 0xFF));
-     setCR3((index << 8) | ((FAD >> 16) &0xFF));
-     setCR4((unsigned short) FAD);
+     if (blockfreespace == 200) isonesectorstored = false;
+
+     doCDReport();
      setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
   }
   else
@@ -1807,10 +1789,7 @@ void Cs2::getThenDeleteSectorData(void) {
      datatranssectpos = getCR2();
      datasectstotrans = getCR4();
 
-     setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-     setCR2((ctrladdr << 8) | (track & 0xFF));
-     setCR3((index << 8) | ((FAD >> 16) &0xFF));
-     setCR4((unsigned short) FAD);
+     doCDReport();
      setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
   }
   else
@@ -1871,10 +1850,7 @@ void Cs2::changeDirectory(void) {
      }
   }
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
 }
 
@@ -1898,10 +1874,7 @@ void Cs2::readDirectory(void) {
      }
   }
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
 }
 
@@ -1964,35 +1937,25 @@ void Cs2::readFile(void) {
 
   SetTiming(true);
 
-  status = CDB_STAT_PERI | CDB_STAT_PLAY;
+  status = CDB_STAT_PLAY;
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
 }
 
 void Cs2::abortFile(void) {
   if ((status & 0xF) != CDB_STAT_OPEN &&
       (status & 0xF) != CDB_STAT_NODISC)
-     status = CDB_STAT_PERI | CDB_STAT_PAUSE;
-//  isonesectorstored = false;
+     status = CDB_STAT_PAUSE;
+  isonesectorstored = false;
   datatranstype = -1;
   cdwnum = 0;
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
 }
 
 void Cs2::mpegGetStatus(void) {
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
@@ -2015,11 +1978,7 @@ void Cs2::mpegGetInterrupt(void) {
 void Cs2::mpegSetInterruptMask(void) {
    mpegintmask = ((getCR1() & 0xFF) << 16) | getCR2();
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
@@ -2046,33 +2005,21 @@ void Cs2::mpegInit(void) {
 void Cs2::mpegSetMode(void) {
    // fix me
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
 void Cs2::mpegPlay(void) {
    // fix me
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
 void Cs2::mpegSetDecodingMethod(void) {
    // fix me
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
@@ -2100,11 +2047,7 @@ void Cs2::mpegSetConnection(void) {
       mpegcon[1].vidbufdivnum = getCR4() & 0xFF;
    }
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
@@ -2155,11 +2098,7 @@ void Cs2::mpegSetStream(void) {
       mpegstm[1].vidchannum = getCR4() & 0xFF;
    }
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
@@ -2189,11 +2128,7 @@ void Cs2::mpegGetStream(void) {
 void Cs2::mpegDisplay(void) {
    // fix me(should be setting display setting)
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
@@ -2201,43 +2136,28 @@ void Cs2::mpegSetWindow(void) {
    // fix me(should be setting windows settings)
 
    // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
 void Cs2::mpegSetBorderColor() {
    // fix me(should be setting border color)
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
 void Cs2::mpegSetFade() {
    // fix me(should be setting fade setting)
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
 void Cs2::mpegSetVideoEffects(void) {
    // fix me(should be setting video effects settings)
 
-   // return default mpeg stats
-   setCR1((status << 8) | actionstatus);
-   setCR2(vcounter);
-   setCR3((pictureinfo << 8) | mpegaudiostatus);
-   setCR4(mpegvideostatus);
+   doMPEGReport();
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
@@ -2256,7 +2176,7 @@ void Cs2::cmdE0(void) {
       (status & 0xF) != CDB_STAT_OPEN)
   {
      // Set registers all to invalid values(aside from status)
-     status = CDB_STAT_PERI | CDB_STAT_BUSY;
+     status = CDB_STAT_BUSY;
 
      setCR1((status << 8) | 0xFF);
      setCR2(0xFFFF);
@@ -2271,14 +2191,14 @@ void Cs2::cmdE0(void) {
      else
      {     
         // if authentication passes(obviously it always does), CDB_HIRQ_CSCT is set
-//        isonesectorstored = true;
+        isonesectorstored = true;
         setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
         satauth = 4;
      }
 
      // Set registers all back to normal values
 
-     status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+     status = CDB_STAT_PAUSE;
   }
   else
   {
@@ -2291,10 +2211,7 @@ void Cs2::cmdE0(void) {
         setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
   }
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
@@ -2341,17 +2258,14 @@ void Cs2::cmdE2(void) {
            }
         }
 
-//        isonesectorstored = true;
+        isonesectorstored = true;
         setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
      }
 
      fclose(mpgfp);
   }
 
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
+  doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPED);
 }
 
@@ -2445,6 +2359,46 @@ partition_struct *Cs2::FilterData(filter_struct *curfilter, bool isaudio)
   {
      // Mode 2
      // go through various subheader filter conditions here(fix me)
+
+     if (curfilter->mode & 0x01)
+     {
+        // File Number Check
+        if (workblock.data[0x10] != curfilter->fid)
+           condresults = false;
+     }
+
+     if (curfilter->mode & 0x02)
+     {
+        // Channel Number Check
+#if CDDEBUG
+        fprintf(stderr, "cs2\t: FilterData: Channel Number Check\n");
+#endif
+     }
+
+     if (curfilter->mode & 0x04)
+     {
+        // Sub Mode Check
+#if CDDEBUG
+        fprintf(stderr, "cs2\t: FilterData: Sub Mode Check\n");
+#endif
+     }
+
+     if (curfilter->mode & 0x08)
+     {
+        // Coding Information Check
+#if CDDEBUG
+        fprintf(stderr, "cs2\t: FilterData: Coding Information Check\n");
+#endif
+     }
+
+     if (curfilter->mode & 0x10)
+     {
+        // Reverse Subheader Conditions
+#if CDDEBUG
+        fprintf(stderr, "cs2\t: FilterData: Reverse Subheader Conditions\n");
+#endif
+        condresults ^= true;
+     }
   }
 
   if (curfilter->mode & 0x40)
