@@ -41,7 +41,6 @@ void Vdp1::stop(void) {
 
 void Vdp1::execute(unsigned long addr) {
   unsigned short command = vram->getWord(addr);
-  int nbcom = 0;
 
   if (!getWord(0x4)) return;
   // If TVMD's DISP isn't set, don't render
@@ -53,7 +52,6 @@ void Vdp1::execute(unsigned long addr) {
   setWord(0x10, (getWord(0x10) & 2) >> 1);
 
   while (!(command & 0x8000)) {
-    nbcom++;
 
     // First, process the command
     if (!(command & 0x4000)) { // if (!skip)
@@ -84,9 +82,6 @@ void Vdp1::execute(unsigned long addr) {
 	  break;
 	case 10: // local coordinate
 	  localCoordinate(addr);
-	  break;
-	case 0x10: // draw end
-	  drawEnd(addr);
 	  break;
 	default:
 #ifdef VDP1_DEBUG
@@ -129,21 +124,148 @@ void Vdp1::execute(unsigned long addr) {
   ((Scu *) satmem->getScu())->sendDrawEnd();
 }
 
-void Vdp1::setVdp2Ram(Vdp2 *r, Vdp2ColorRam *c) {
-	vdp2regs = r;
-	cram = c;
+void Vdp1::readCommand(unsigned long addr) {
+	CMDCTRL = vram->getWord(addr);
+	CMDLINK = vram->getWord(addr + 0x2);
+	CMDPMOD = vram->getWord(addr + 0x4);
+	CMDCOLR = vram->getWord(addr + 0x6);
+	CMDSRCA = vram->getWord(addr + 0x8);
+	CMDSIZE = vram->getWord(addr + 0xA);
+	CMDXA = vram->getWord(addr + 0xC);
+	CMDYA = vram->getWord(addr + 0xE);
+	CMDXB = vram->getWord(addr + 0x10);
+	CMDYB = vram->getWord(addr + 0x12);
+	CMDXC = vram->getWord(addr + 0x14);
+	CMDYC = vram->getWord(addr + 0x16);
+	CMDXD = vram->getWord(addr + 0x18);
+	CMDYD = vram->getWord(addr + 0x1A);
+	CMDGRDA = vram->getWord(addr + 0x1B);
 }
 
-int Vdp1::getAlpha(void) {
-	return 0xFF;
-}
+#ifndef _arch_dreamcast
+void Vdp1::readTexture(vdp1Sprite *sp) {
+#else
+#endif
+	unsigned long dot;
+	bool SPD = ((CMDPMOD & 0x40) != 0);
+	unsigned long colorBank = CMDCOLR * 8;
+	unsigned long alpha = 0xFF;
+	switch(CMDPMOD & 0x7) {
+		case 0:
+			alpha = 0xFF;
+			break;
+		case 3:
+		        alpha = 0x80;
+			break;
+		default:
+			//cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
+			break;
+	}
+#ifndef _arch_dreamcast
+        unsigned long textdata[hh * ww];
+#else
+        unsigned char *_textdata = (unsigned char *)memalign(32, (ww * hh) << 1);
+        unsigned short *textdata = (unsigned short *)_textdata;
+#endif
 
-int Vdp1::getColorOffset(void) {
-	return (vdp2regs->getWord(0xE6) & 0x70) >> 4;
-}
+        unsigned long charAddr = CMDSRCA * 8;
 
-SDL_Surface *Vdp1::getSurface(void) {
-	return surface;
+        *sp = vram->getSprite(charAddr);
+
+        unsigned long ca1 = charAddr;
+
+        if(sp->vdp1_loc == 0) {
+#ifdef VDP1_DEBUG
+                cerr << "Making new sprite " << hex << charAddr << endl;
+#endif
+
+	switch((CMDPMOD & 0x38) >> 3) {
+	case 0:
+                // 4 bpp Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "readTexture: color mode 0 not implemented" << endl;
+#endif
+		break;
+	case 1:
+                // 4 bpp LUT mode
+		unsigned long temp;
+		for(unsigned short i = 0;i < h;i++) {
+			unsigned short j;
+			j = 0;
+			while(j < w) {
+				dot = vram->getByte(charAddr);
+
+				if (((dot >> 4) == 0) && !SPD) textdata[i * ww + j] = 0;
+                                else {
+                                   temp = vram->getWord((dot >> 4) * 2 + colorBank);
+                                   textdata[i * ww + j] = SAT2YAB1(alpha, temp);
+                                }
+
+				j += 1;
+
+				if (((dot & 0xF) == 0) && !SPD) textdata[i * ww + j] = 0;
+                                else {
+                                   temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+                                   textdata[i * ww + j] = SAT2YAB1(alpha, temp);
+                                }
+
+				j += 1;
+				charAddr += 1;
+			}
+		}
+		break;
+	case 2:
+                // 8 bpp(64 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "readTexture: color mode 2 not implemented" << endl;
+#endif
+		break;
+	case 3:
+                // 8 bpp(128 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "readTexture: color mode 3 not implemented" << endl;
+#endif
+		break;
+	case 4:
+                // 8 bpp(256 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "readTexture: color mode 4 not implemented" << endl;
+#endif
+		break;
+	case 5:
+                // 16 bpp Bank mode
+		for(unsigned short i = 0;i < h;i++) {
+			for(unsigned short j = 0;j < w;j++) {
+				dot = vram->getWord(charAddr);
+				charAddr += 2;
+
+				if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
+                                else textdata[i * ww + j] = SAT2YAB1(alpha, dot);
+			}
+		}
+                break;
+	}
+                if (sp->txr == 0) glGenTextures(1, &sp->txr);
+
+                glBindTexture(GL_TEXTURE_2D, sp->txr);
+
+#ifndef _arch_dreamcast
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
+
+                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+#else
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB1555, ww, hh, 0, GL_ARGB1555, GL_UNSIGNED_BYTE, textdata);
+#endif
+
+                sp->vdp1_loc = ca1;
+                vram->addSprite(*sp);
+
+#ifdef VDP1_DEBUG
+                cerr << "Created new sprite at " << hex << ca1 << endl;
+#endif
+        }
+
 }
 
 Memory *Vdp1::getVRam(void) {
@@ -160,198 +282,31 @@ static int power_of_two(int input) {
 }
 
 void Vdp1::normalSpriteDraw(unsigned long addr) {
-	unsigned short xy = vram->getWord(addr + 0xA);
+	readCommand(addr);
 
-	short x = localX + vram->getWord(addr + 0xC);
-	short y = localY + vram->getWord(addr + 0xE);
-	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
-	unsigned short w = ((xy >> 8) & 0x3F) * 8;
-	unsigned short h = xy & 0xFF;
-	unsigned short ww = power_of_two(w);
-	unsigned short hh = power_of_two(h);
+	short x = CMDXA + localX;
+	short y = CMDYA + localY;
+	w = ((CMDSIZE >> 8) & 0x3F) * 8;
+	h = CMDSIZE & 0xFF;
+	ww = power_of_two(w);
+	hh = power_of_two(h);
 
-#ifndef _arch_dreamcast
-	unsigned long textdata[hh * ww];
-#else
-	unsigned char *_textdata = (unsigned char *)memalign(32, (ww * hh) << 1);
-	unsigned short *textdata = (unsigned short *)_textdata;
-#endif
-
-	unsigned short tx = 0;
-	unsigned short ty = 0;
-	unsigned short TX;
-	short txinc = 1;
-	short tyinc = 1;
 	GLfloat u1 = 0.0f;
 	GLfloat u2 = (GLfloat)w / ww;
 	GLfloat v1 = 0.0f;
 	GLfloat v2 = (GLfloat)h / hh;
-	unsigned char dir = (vram->getWord(addr) & 0x30) >> 4;
+	unsigned char dir = (CMDCTRL & 0x30) >> 4;
 	if (dir & 0x1) {
-		//tx = w - 1;
-		//txinc = -1;
 		u1 = (GLfloat)w / ww;
 		u2 = 0.0f;
 	}
 	if (dir & 0x2) {
-		//ty = h - 1;
-		//tyinc = -1;
 		v1 = (GLfloat)h / hh;
 		v2 = 0.0f;
 	}
 
-	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
-	unsigned long dot, color;
-
-	unsigned long alpha;
-	switch(CMDPMOD & 0x7) {
-		case 0:
-			alpha = 0xFF;
-			break;
-		case 3:
-			alpha = 0x80;
-			break;
-		default:
-			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
-	}
-	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
-	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
-        unsigned long colorBank = vram->getWord(addr + 0x6);
-        
-	vdp1Sprite sp = vram->getSprite(charAddr);
-        
-	unsigned long ca1 = charAddr;
-
-	if(sp.vdp1_loc == 0)	{
-#ifdef VDP1_DEBUG
-        cerr << "Making new sprite " << hex << charAddr << endl;
-#endif
-	switch(colorMode) {
-	case 0:
-                // 4 bpp Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "normalSpriteDraw: color mode 0 not implemented" << endl;
-#endif
-		break;
-	case 1:
-                // 4 bpp LUT mode
-		colorBank *= 8;
-		unsigned long temp;
-		TX = tx;
-		for(unsigned short i = 0;i < h;i++) {
-			tx = TX;
-			for(unsigned short j = 0;j < w;j += 2) {
-				dot = vram->getByte(charAddr);
-
-				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
-                                else
-                                {
-                                   temp = vram->getWord((dot >> 4) * 2 + colorBank);
-#if 0
-#ifndef _arch_dreamcast
-                                   color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-#else
-                                   color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
-#endif
-#endif
-                                   color = SAT2YAB1(alpha, temp);
-
-                                   textdata[ty * ww + tx] = color;
-                                }
-
-				tx += txinc;
-
-				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
-                                else
-                                {
-                                   temp = vram->getWord((dot & 0xF) * 2 + colorBank);
-#if 0
-#ifndef _arch_dreamcast
-                                   color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-#else
-                                   color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
-#endif
-#endif
-                                   color = SAT2YAB1(alpha, temp);
-
-                                   textdata[ty * ww + tx] = color;
-                                }
-
-				tx += txinc;
-				charAddr += 1;
-			}
-			ty += tyinc;
-		}
-		break;
-	case 2:
-                // 8 bpp(64 color) Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "normalSpriteDraw: color mode 2 not implemented" << endl;
-#endif
-		break;
-	case 3:
-                // 8 bpp(128 color) Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "normalSpriteDraw: color mode 3 not implemented" << endl;
-#endif
-		break;
-	case 4:
-                // 8 bpp(256 color) Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "normalSpriteDraw: color mode 4 not implemented" << endl;
-#endif
-		break;
-	case 5:
-                // 16 bpp Bank mode
-		TX = tx;
-		for(unsigned short i = 0;i < h;i++) {
-			tx = TX;
-			for(unsigned short j = 0;j < w;j++) {
-				dot = vram->getWord(charAddr);
-				charAddr += 2;
-
-				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
-                                else
-                                {
-#if 0
-#ifndef _arch_dreamcast
-                                   color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
-#else
-                                   color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
-#endif
-#endif
-                                   color = SAT2YAB1(alpha, dot);
-
-                                   textdata[ty * ww + tx] = color;
-                                }
-
-				tx += txinc;
-			}
-			ty += tyinc;
-		}
-                break;
-	}
-	
-	if (sp.txr == 0) glGenTextures(1, &sp.txr);
-	
-        glBindTexture(GL_TEXTURE_2D, sp.txr);
-	
-#ifndef _arch_dreamcast
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
-	
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-#else
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB1555, ww, hh, 0, GL_ARGB1555, GL_UNSIGNED_BYTE, textdata);
-#endif
-	
-	sp.vdp1_loc = ca1;
-	vram->addSprite(sp);
-
-#ifdef VDP1_DEBUG
-        cerr << "Created new sprite at " << hex << ca1 << endl;
-#endif
-	}
+	vdp1Sprite sp;
+	readTexture(&sp);
 
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture(GL_TEXTURE_2D, sp.txr);
@@ -365,36 +320,27 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 }
 
 void Vdp1::scaledSpriteDraw(unsigned long addr) {
-	unsigned short xy = vram->getWord(addr + 0xA);
+	readCommand(addr);
 
-	short x = localX + vram->getWord(addr + 0xC);
-	short y = localY + vram->getWord(addr + 0xE);
-	unsigned short w = ((xy >> 8) & 0x3F) * 8;
-	unsigned short h = xy & 0xFF;
-	unsigned short ww = power_of_two(w);
-	unsigned short hh = power_of_two(h);
+	short x = CMDXA + localX;
+	short y = CMDYA + localY;
+	w = ((CMDSIZE >> 8) & 0x3F) * 8;
+	h = CMDSIZE & 0xFF;
+	ww = power_of_two(w);
+	hh = power_of_two(h);
 	short rw = vram->getWord(addr + 0x10);
 	short rh = vram->getWord(addr + 0x12);
 
-	unsigned short tx = 0;
-	unsigned short ty = 0;
-	unsigned short TX;
-	short txinc = 1;
-	short tyinc = 1;
 	GLfloat u1 = 0.0f;
 	GLfloat u2 = (GLfloat)w / ww;
 	GLfloat v1 = 0.0f;
 	GLfloat v2 = (GLfloat)h / hh;
 	unsigned char dir = (vram->getWord(addr) & 0x30) >> 4;
 	if (dir & 0x1) {
-		//tx = w - 1;
-		//txinc = -1;
 		u1 = (GLfloat)w / ww;
 		u2 = 0.0f;
 	}
 	if (dir & 0x2) {
-		//ty = h - 1;
-		//tyinc = -1;
 		v1 = (GLfloat)h / hh;
 		v2 = 0.0f;
 	}
@@ -418,125 +364,9 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			break;
 	}
 			
-	unsigned long textdata[hh][ww];
+	vdp1Sprite sp;
+	readTexture(&sp);
 
-	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
-	unsigned long dot, color;
-
-	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
-	unsigned long alpha;
-	switch(CMDPMOD & 0x7) {
-		case 0:
-			alpha = 0xFF;
-			break;
-		case 3:
-			alpha = 0x80;
-			break;
-		default:
-			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
-	}
-	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
-	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
-        unsigned long colorBank = vram->getWord(addr + 0x6);
-	vdp1Sprite sp = vram->getSprite(charAddr);
-	unsigned long ca1 = charAddr;
-	
-	if(sp.vdp1_loc == 0)	{
-	switch(colorMode) {
-	case 0:
-                // 4 bpp Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "scaledSpriteDraw: color mode 0 not implemented" << endl;
-#endif
-		break;
-	case 1:
-                // 4 bpp LUT mode
-		colorBank *= 8;
-		unsigned long temp;
-		TX = tx;
-		for(unsigned short i = 0;i < h;i++) {
-			tx = TX;
-			for(unsigned short j = 0;j < w;j += 2) {
-				dot = vram->getByte(charAddr);
-				if (((dot >> 4) == 0) && !SPD) textdata[ty][tx] = 0;
-				else {
-                                        temp = vram->getWord((dot >> 4) * 2 + colorBank);
-                                        //color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-                                        color = SAT2YAB1(alpha, temp);
-					textdata[ty][tx] = color;
-				}
-				tx += txinc;
-				if (((dot & 0xF) == 0) && !SPD) textdata[ty][tx] = 0;
-				else {
-                                        temp = vram->getWord((dot & 0xF) * 2 + colorBank);
-                                        //color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-                                        color = SAT2YAB1(alpha, temp);
-					textdata[ty][tx] = color;
-				}
-				tx += txinc;
-				charAddr += 1;
-			}
-			ty += tyinc;
-		}
-		break;
-	case 2:
-                // 8 bpp(64 color) Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "scaledSpriteDraw: color mode 2 not implemented" << endl;
-#endif
-		break;
-	case 3:
-                // 8 bpp(128 color) Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "scaledSpriteDraw: color mode 3 not implemented" << endl;
-#endif
-		break;
-	case 4:
-                // 8 bpp(256 color) Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "scaledSpriteDraw: color mode 4 not implemented" << endl;
-#endif
-		break;
-	case 5:
-		TX = tx;
-		for(unsigned short i = 0;i < h;i++) {
-			tx = TX;
-			for(unsigned short j = 0;j < w;j++) {
-				dot = vram->getWord(charAddr);
-				charAddr += 2;
-				if ((dot == 0) && !SPD) textdata[ty][tx] = 0;
-				else {
-                                        //color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
-                                        color = SAT2YAB1(alpha, dot);
-					textdata[ty][tx] = color;
-				}
-				tx += txinc;
-			}
-			ty += tyinc;
-		}
-                break;
-	}
-	
-	if (sp.txr == 0) glGenTextures(1, &sp.txr);
-        glBindTexture(GL_TEXTURE_2D, sp.txr);
-	
-#ifndef _arch_dreamcast
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
-	
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-#else
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB1555, ww, hh, 0, GL_ARGB1555, GL_UNSIGNED_BYTE, textdata);
-#endif
-	
-	sp.vdp1_loc = ca1;
-	vram->addSprite(sp);
-
-#ifdef VDP1_DEBUG
-        cerr << "Created new scaled sprite at " << hex << ca1 << endl;
-#endif
-	}
-	
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, sp.txr );
 	glBegin(GL_QUADS);
@@ -549,33 +379,18 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 }
 
 void Vdp1::distortedSpriteDraw(unsigned long addr) {
-	short X[4];
-	short Y[4];
+	readCommand(addr);
 	
-	unsigned short xy = vram->getWord(addr + 0xA);
-
-	unsigned short w = ((xy >> 8) & 0x3F) * 8;
-	unsigned short h = xy & 0xFF;
-	unsigned short ww = power_of_two(w);
-	unsigned short hh = power_of_two(h);
+	w = ((CMDSIZE >> 8) & 0x3F) * 8;
+	h = CMDSIZE & 0xFF;
+	ww = power_of_two(w);
+	hh = power_of_two(h);
 	
-#ifndef _arch_dreamcast
-	unsigned long textdata[hh * ww];
-#else
-	unsigned char *_textdata = (unsigned char *)memalign(32, (ww * hh) << 1);
-	unsigned short *textdata = (unsigned short *)_textdata;
-#endif
-	
-	unsigned short tx = 0;
-	unsigned short ty = 0;
-	unsigned short TX;
-	short txinc = 1;
-	short tyinc = 1;
 	GLfloat u1 = 0.0f;
 	GLfloat u2 = (GLfloat)w / ww;
 	GLfloat v1 = 0.0f;
 	GLfloat v2 = (GLfloat)h / hh;
-	unsigned char dir = (vram->getWord(addr) & 0x30) >> 4;
+	unsigned char dir = (CMDCTRL & 0x30) >> 4;
 	if (dir & 0x1) {
 		u1 = (GLfloat)w / ww;
 		u2 = 0.0f;
@@ -585,171 +400,23 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 		v2 = 0.0f;
 	}
 
-	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
-	unsigned long alpha = 0xFF;
-	switch(CMDPMOD & 0x7) {
-		case 0:
-			alpha = 0xFF;
-			break;
-		case 3:
-			alpha = 0x80;
-			break;
-		case 4:
-#ifdef VDP1_DEBUG
-			//cerr << "gouraud shading unimplemented" << endl;
-#endif
-			break;
-		default:
-			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
-	}	
-	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
-	unsigned long dot, color, color2;
+	vdp1Sprite sp;
+	readTexture(&sp);
 
-	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
-	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
-	unsigned short colorBank = vram->getWord(addr + 0x6);
-	vdp1Sprite sp = vram->getSprite(charAddr);
-	unsigned long ca1 = charAddr;
-	
-	if(sp.vdp1_loc == 0)	{
-#ifdef VDP1_DEBUG
-	cerr << "Making new sprite " << hex << charAddr << endl;
-#endif
-	switch(colorMode) {
-	case 0:
-#ifdef VDP1_DEBUG
-		cerr << "color mode 0 not implemented" << endl;
-#endif
-		break;
-	case 1:
-		colorBank *= 8;
-		unsigned long temp;
-		TX = tx;
-		for(unsigned short i = 0;i < h;i++) {
-			tx = TX;
-			for(unsigned short j = 0;j < w;j += 2) {
-				dot = vram->getByte(charAddr);
-				temp = vram->getWord((dot >> 4) * 2 + colorBank);
-#if 0
-#ifndef _arch_dreamcast
-				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-#else
-				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
-#endif
-#endif
-				color = SAT2YAB1(alpha, temp);
-				
-				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
-				else textdata[ty * ww + tx] = color;
-				tx += txinc;
-				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
-#if 0
-#ifndef _arch_dreamcast
-				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-#else
-				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
-#endif
-#endif
-				color = SAT2YAB1(alpha, temp);
-
-				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
-				else textdata[ty * ww + tx] = color;
-				tx += txinc;
-				charAddr += 1;
-			}
-			ty += tyinc;
-		}
-		break;
-	case 2:
-#ifdef VDP1_DEBUG
-		cerr << "color mode 2 not implemented" << endl;
-#endif
-		break;
-	case 3:
-#ifdef VDP1_DEBUG
-		cerr << "color mode 3 not implemented" << endl;
-#endif
-		break;
-	case 4:
-#ifdef VDP1_DEBUG
-		cerr << "color mode 4 not implemented" << endl;
-#endif
-		break;
-	case 5:
-		TX = tx;
-		for(unsigned short i = 0;i < h;i++) {
-			tx = TX;
-			for(unsigned short j = 0;j < w;j++) {
-				dot = vram->getWord(charAddr);
-				charAddr += 2;
-#if 0
-#ifndef _arch_dreamcast
-				color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
-#else
-				color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
-#endif
-#endif
-				color = SAT2YAB1(alpha, dot);
-				
-				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
-				else textdata[ty * ww + tx] = color;
-				tx += txinc;
-			}
-			ty += tyinc;
-		}
-                break;
-	}
-	
-	if (sp.txr == 0) glGenTextures(1, &sp.txr);
-        glBindTexture(GL_TEXTURE_2D, sp.txr);
-	
-#ifndef _arch_dreamcast
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
-	
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-#else
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB1555, ww, hh, 0, GL_ARGB1555, GL_UNSIGNED_BYTE, textdata);
-#endif
-	
-	sp.vdp1_loc = ca1;
-	vram->addSprite(sp);
-
-#ifdef VDP1_DEBUG
-	cerr << "Created new distorted sprite at " << hex << ca1 << endl;
-#endif
-	}
-	
-	X[0] = localX + (vram->getWord(addr + 0x0C) );
-	Y[0] = localY + (vram->getWord(addr + 0x0E) );
-	X[1] = localX + (vram->getWord(addr + 0x10) );
-	Y[1] = localY + (vram->getWord(addr + 0x12) );
-	X[2] = localX + (vram->getWord(addr + 0x14) );
-	Y[2] = localY + (vram->getWord(addr + 0x16) );
-	X[3] = localX + (vram->getWord(addr + 0x18) );
-	Y[3] = localY + (vram->getWord(addr + 0x1A) );
-
-	/*
-	if ((X[0] & 0x400) ||(Y[0] & 0x400) ||(X[1] & 0x400) ||(Y[1] & 0x400) ||(X[2] & 0x400) ||(Y[2] & 0x400) ||(X[3] & 0x400) ||(Y[3] & 0x400)) {
-		//cerr << "don't know what to do" << endl;
-	}
-	else {
-	*/
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, sp.txr);
-		glBegin(GL_QUADS);
-		glTexCoord2f(u1, v1); glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
-		glTexCoord2f(u2, v1); glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);
-		glTexCoord2f(u2, v2); glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
-		glTexCoord2f(u1, v2); glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
-		glEnd();
-		glDisable(GL_TEXTURE_2D);
-	//}
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, sp.txr);
+	glBegin(GL_QUADS);
+	glTexCoord2f(u1, v1); glVertex2f((float) (CMDXA + localX)/160 - 1, 1 - (float) (CMDYA + localY)/112);
+	glTexCoord2f(u2, v1); glVertex2f((float) (CMDXB + localX)/160 - 1, 1 - (float) (CMDYB + localY)/112);
+	glTexCoord2f(u2, v2); glVertex2f((float) (CMDXC + localX)/160 - 1, 1 - (float) (CMDYC + localY)/112);
+	glTexCoord2f(u1, v2); glVertex2f((float) (CMDXD + localX)/160 - 1, 1 - (float) (CMDYD + localY)/112);
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
 }
 
 void Vdp1::polygonDraw(unsigned long addr) {
-	unsigned short X[4];
-	unsigned short Y[4];
+	short X[4];
+	short Y[4];
 	
 	X[0] = localX + (vram->getWord(addr + 0x0C) );
 	Y[0] = localY + (vram->getWord(addr + 0x0E) );
@@ -768,38 +435,14 @@ void Vdp1::polygonDraw(unsigned long addr) {
 
         if ((color & 0x8000) == 0) alpha = 0;
 
-	if ((X[0] & 0x400) ||(Y[0] & 0x400) ||(X[1] & 0x400) ||(Y[1] & 0x400) ||(X[2] & 0x400) ||(Y[2] & 0x400) ||(X[3] & 0x400) ||(Y[3] & 0x400)) {
-		//cerr << "don't know what to do" << endl;
-	}
-	else {
-		/*
-		if (((X[0] < X[1]) and (X[2] < X[3]) and (Y[0] < Y[2]) and (Y[1] < Y[3])) ||
-				((X[0] > X[1]) and (X[2] > X[3]) and (Y[0] < Y[2]) and (Y[1] < Y[3])) ||
-				((X[0] < X[1]) and (X[2] < X[3]) and (Y[0] > Y[2]) and (Y[1] > Y[3])) ||
-				((X[0] > X[1]) and (X[2] > X[3]) and (Y[0] > Y[2]) and (Y[1] > Y[3])))
-			cerr << "OK\n";
-		else cerr << "NOK\n";
-		*/
-
-		glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
-		//glColor3f(.5, .5, .5);
-		glBegin(GL_QUADS);
-		glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
-		glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);
-		glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
-		glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
-		glEnd();
-		glColor4f(1, 1, 1, 1);
-	}
-
-	unsigned short cmdpmod = vram->getWord(addr + 0x4);
-#if 0
-	cerr << "vdp1\t: polygon draw (pmod=" << hex << cmdpmod << ")"
-	  << " X0=" << X[0] << " Y0=" << Y[0]
-	  << " X1=" << X[1] << " Y1=" << Y[1]
-	  << " X2=" << X[2] << " Y2=" << Y[2]
-	  << " X3=" << X[3] << " Y3=" << Y[3] << endl;
-#endif
+	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
+	glBegin(GL_QUADS);
+	glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
+	glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);
+	glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
+	glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
+	glEnd();
+	glColor4f(1, 1, 1, 1);
 }
 
 void Vdp1::polylineDraw(unsigned long addr) {
@@ -815,20 +458,14 @@ void Vdp1::lineDraw(unsigned long addr) {
 }
 
 void Vdp1::userClipping(unsigned long addr) {
-  unsigned short CMDXA = vram->getWord(addr + 0xC);
-  unsigned short CMDYA = vram->getWord(addr + 0xE);
-  unsigned short CMDXC = vram->getWord(addr + 0x14);
-  unsigned short CMDYC = vram->getWord(addr + 0x16);
 #if VDP1_DEBUG
-  cerr << hex << "vdp1\t: user clipping xa=" << CMDXA << " ya=" << CMDYA << " xc=" << CMDXC << " yc=" << CMDYC << endl;
+  cerr << "vdp1\t: user clipping (unimplemented)" << endl;
 #endif
 }
 
 void Vdp1::systemClipping(unsigned long addr) {
-  unsigned short CMDXC = vram->getWord(addr + 0x14);
-  unsigned short CMDYC = vram->getWord(addr + 0x16);
 #if VDP1_DEBUG
-  //cerr << "vdp1\t: system clipping x=" << CMDXC << " y=" << CMDYC << endl;
+  //cerr << "vdp1\t: system clipping (unimplemented)" << endl;
 #endif
 }
 
@@ -838,13 +475,6 @@ void Vdp1::localCoordinate(unsigned long addr) {
 #if VDP1_DEBUG
   //cerr << "vdp1\t: local coordinate x=" << CMDXA << " y=" << CMDYA << endl;
 #endif
-}
-
-void Vdp1::drawEnd(unsigned long addr) {
-#if VDP1_DEBUG
-  cerr << "vdp1\t: graaaaaaaaaaaaaa draw end" << endl;
-#endif
-  //Scu::sendDrawEnd();
 }
 
 Vdp1VRAM::Vdp1VRAM(unsigned long m, unsigned long size) : Memory(m, size)	{

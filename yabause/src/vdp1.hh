@@ -75,27 +75,48 @@ class Vdp1VRAM : public Memory	{
 
 class Vdp1 : public Cpu, public Memory {
 private:
-  SDL_Surface *surface;
   GLuint texture[1];
   SaturnMemory *satmem;
   Vdp1VRAM *vram;
-  Vdp2 *vdp2regs;
-  Vdp2ColorRam *cram;
 
   unsigned short localX;
   unsigned short localY;
 
   unsigned short returnAddr;
+  	unsigned short	CMDCTRL;
+	unsigned short	CMDLINK;
+	unsigned short	CMDPMOD;
+	unsigned short	CMDCOLR;
+	unsigned short	CMDSRCA;
+	unsigned short	CMDSIZE;
+	short	CMDXA;
+	short	CMDYA;
+	short	CMDXB;
+	short	CMDYB;
+	short	CMDXC;
+	short	CMDYC;
+	short	CMDXD;
+	short	CMDYD;
+	unsigned short	CMDGRDA;
+	unsigned short w;
+	unsigned short h;
+	unsigned short ww;
+	unsigned short hh;
+
 public:
   Vdp1(SaturnMemory *);
   void execute(unsigned long = 0);
   void stop(void);
 
+  /*
   void setVdp2Ram(Vdp2 *, Vdp2ColorRam *);
   int getAlpha(void);
   int getColorOffset(void);
-  SDL_Surface *getSurface(void);
+  */
   Memory *getVRam(void);
+
+  void readCommand(unsigned long);
+  void readTexture(vdp1Sprite *);
   
   void normalSpriteDraw(unsigned long);
   void scaledSpriteDraw(unsigned long);
@@ -106,7 +127,6 @@ public:
   void userClipping(unsigned long);
   void systemClipping(unsigned long);
   void localCoordinate(unsigned long);
-  void drawEnd(unsigned long); // FIXME useless...
 };
 
 #endif

@@ -981,7 +981,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   	screens[2] = new NBG1(this, vram, cram, surface);
   	screens[1] = new NBG2(this, vram, cram, surface);
   	screens[0] = new NBG3(this, vram, cram, surface);
-	((Vdp1 *) satmem->getVdp1())->setVdp2Ram(this, cram);
+	//((Vdp1 *) satmem->getVdp1())->setVdp2Ram(this, cram);
 }
 
 Vdp2::~Vdp2(void) {
