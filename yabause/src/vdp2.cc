@@ -204,9 +204,11 @@ int VdpScreen::comparePriority(const void *arg1, const void *arg2) {
 
 void Vdp2Screen::draw(void) {
 	init();
+
         if (!(enable & disptoggle) || (getPriority() == 0)) return;
 
 	if (bitmap) {
+
 		drawCell();
 	}
 	else {
@@ -798,7 +800,7 @@ void NBG0::init(void) {
 				break;
 			case 3: cellW = 1024;
 				cellH = 512;
-				break;
+                                break;                                                           
 		}
 		charAddr = (reg->getWord(0x3C) & 0x7) * 0x20000;
 		palAddr = (reg->getWord(0x2C) & 0x7) << 4;
@@ -1542,11 +1544,13 @@ void NBG3::debugStats(char *outstring, bool *isenabled) {
 /*					*/
 /****************************************/
 
-Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
+Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
   satmem = v;
   _stop = false;
   vram = new Vdp2Ram;
   cram = new Vdp2ColorRam;
+
+  ((Vdp1 *)satmem->getVdp1())->setVdp2Ram(this, cram);
 
   SDL_InitSubSystem(SDL_INIT_VIDEO);
 
