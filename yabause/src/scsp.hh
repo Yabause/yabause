@@ -23,6 +23,14 @@
 #include "cpu.hh"
 #include "c68k/types.h"
 
+typedef struct
+{
+   unsigned long D[8];
+   unsigned long A[8];
+   unsigned long SR;
+   unsigned long PC;
+} m68kregs_struct;
+
 class ScspRam : public Memory {
 private:
   unsigned char *base_mem;
@@ -57,6 +65,7 @@ public:
   void reset68k(void);
   void reset(void);
   void run68k(unsigned long);
+  void step68k(void);
   void run(void);
 
   bool is68kOn;
@@ -67,6 +76,9 @@ public:
   void setWord(unsigned long addr, unsigned short val);
   unsigned long getLong(unsigned long addr);
   void setLong(unsigned long addr, unsigned long val);
+
+  void Get68kRegisters(m68kregs_struct *regs);
+  void Set68kRegisters(m68kregs_struct *regs);
 };
 
 #ifdef __GNUC__

@@ -2743,6 +2743,10 @@ void Scsp::run68k(unsigned long cycles) {
      C68k_Exec(&C68K, cycles / 3); // fix me
 }
 
+void Scsp::step68k() {
+  // fix me
+}
+
 void Scsp::run() {
   scsp_update_timer(3); // fix me
   scsptiming1++;
@@ -2809,3 +2813,32 @@ unsigned long Scsp::getLong(unsigned long addr) {
 void Scsp::setLong(unsigned long addr, unsigned long val) {
    scsp_w_d(addr, val);
 }
+
+void Scsp::Get68kRegisters(m68kregs_struct *regs) {
+   int i;
+
+   if (regs != NULL) {
+      for (i = 0; i < 8; i++) {
+         regs->D[i] = C68k_Get_DReg(&C68K, i);
+         regs->A[i] = C68k_Get_AReg(&C68K, i);
+      }
+
+      regs->SR = C68k_Get_SR(&C68K);
+      regs->PC = C68k_Get_PC(&C68K);
+   }
+}
+
+void Scsp::Set68kRegisters(m68kregs_struct *regs) {
+   int i;
+
+   if (regs != NULL) {
+      for (i = 0; i < 8; i++) {
+         C68k_Set_DReg(&C68K, i, regs->D[i]);
+         C68k_Set_AReg(&C68K, i, regs->A[i]);
+      }
+
+      C68k_Set_SR(&C68K, regs->SR);
+      C68k_Set_PC(&C68K, regs->PC);
+   }
+}
+
