@@ -69,17 +69,17 @@
 
 #ifdef C68K_BIG_ENDIAN
     #define READ_LONG_F(A, D)           \
-    D = CPU->Read_Word((A)) << 16;   \
-    D |= CPU->Read_Word((A) + 2) & 0xFFFF;
+    D = CPU->Read_Word((A)) & 0xFFFF;   \
+    D |= CPU->Read_Word((A) + 2) << 16;
 
-//    D = CPU->Read_Word((A)) & 0xFFFF;   \
-//    D |= CPU->Read_Word((A) + 2) << 16;
+//    D = CPU->Read_Word((A)) << 16;   \
+//    D |= CPU->Read_Word((A) + 2) & 0xFFFF;
 
     #define READ_LONG_DEC_F(A, D)       \
-    D = CPU->Read_Word((A) + 2) & 0xFFFF;  \
-    D |= CPU->Read_Word((A)) << 16;
-//    D = CPU->Read_Word((A) + 2) << 16;  \
-//    D |= CPU->Read_Word((A)) & 0xFFFF;
+    D = CPU->Read_Word((A) + 2) << 16;  \
+    D |= CPU->Read_Word((A)) & 0xFFFF;
+//    D = CPU->Read_Word((A) + 2) & 0xFFFF;  \
+//    D |= CPU->Read_Word((A)) << 16;
 #else
     #define READ_LONG_F(A, D)               \
     D = CPU->Read_Word((A)) << 16;          \
@@ -98,16 +98,16 @@
     
 #ifdef C68K_BIG_ENDIAN
     #define READSX_LONG_F(A, D)         \
-    D = CPU->Read_Word((A)) << 16;   \
-    D |= CPU->Read_Word((A) + 2) & 0xFFFF;
-//    D = CPU->Read_Word((A)) & 0xFFFF;   \
-//    D |= CPU->Read_Word((A) + 2) << 16;
+    D = CPU->Read_Word((A)) & 0xFFFF;   \
+    D |= CPU->Read_Word((A) + 2) << 16;
+//    D = CPU->Read_Word((A)) << 16;   \
+//    D |= CPU->Read_Word((A) + 2) & 0xFFFF;
 
     #define READSX_LONG_DEC_F(A, D)     \
-    D = CPU->Read_Word((A) + 2) & 0xFFFF;  \
-    D |= CPU->Read_Word((A)) << 16;
-//    D = CPU->Read_Word((A) + 2) << 16;  \
-//    D |= CPU->Read_Word((A)) & 0xFFFF;
+    D = CPU->Read_Word((A) + 2) << 16;  \
+    D |= CPU->Read_Word((A)) & 0xFFFF;
+//    D = CPU->Read_Word((A) + 2) & 0xFFFF;  \
+//    D |= CPU->Read_Word((A)) << 16;
 #else
     #define READSX_LONG_F(A, D)             \
     D = CPU->Read_Word((A)) << 16;          \
@@ -126,16 +126,16 @@
 
 #ifdef C68K_BIG_ENDIAN
     #define WRITE_LONG_F(A, D)              \
-    CPU->Write_Word((A), (D) >> 16);     \
-    CPU->Write_Word((A) + 2, (D) & 0xFFFF);
-//    CPU->Write_Word((A), (D) & 0xFFFF);     \
-//    CPU->Write_Word((A) + 2, (D) >> 16);
+    CPU->Write_Word((A), (D) & 0xFFFF);     \
+    CPU->Write_Word((A) + 2, (D) >> 16);
+//    CPU->Write_Word((A), (D) >> 16);     \
+//    CPU->Write_Word((A) + 2, (D) & 0xFFFF);
 
     #define WRITE_LONG_DEC_F(A, D)          \
-    CPU->Write_Word((A) + 2, (D) & 0xFFFF);    \
-    CPU->Write_Word((A), (D) >> 16);
-//    CPU->Write_Word((A) + 2, (D) >> 16);    \
-//    CPU->Write_Word((A), (D) & 0xFFFF);
+    CPU->Write_Word((A) + 2, (D) >> 16);    \
+    CPU->Write_Word((A), (D) & 0xFFFF);
+//    CPU->Write_Word((A) + 2, (D) & 0xFFFF);    \
+//    CPU->Write_Word((A), (D) >> 16);
 #else
     #define WRITE_LONG_F(A, D)              \
     CPU->Write_Word((A), (D) >> 16);        \
@@ -156,17 +156,17 @@
 #ifdef C68K_BIG_ENDIAN
     #define PUSH_32_F(D)                        \
     CPU->A[7] -= 4;                             \
-    CPU->Write_Word(CPU->A[7] + 2, (D) & 0xFFFF);  \
-    CPU->Write_Word(CPU->A[7], (D) >> 16);
-//    CPU->Write_Word(CPU->A[7] + 2, (D) >> 16);  \
-//    CPU->Write_Word(CPU->A[7], (D) & 0xFFFF);
+    CPU->Write_Word(CPU->A[7] + 2, (D) >> 16);  \
+    CPU->Write_Word(CPU->A[7], (D) & 0xFFFF);
+//    CPU->Write_Word(CPU->A[7] + 2, (D) & 0xFFFF);  \
+//    CPU->Write_Word(CPU->A[7], (D) >> 16);
     
     #define POP_32_F(D)                         \
-    D = CPU->Read_Word(CPU->A[7]) << 16;     \
-    D |= CPU->Read_Word(CPU->A[7] + 2) & 0xFFFF;   \
+    D = CPU->Read_Word(CPU->A[7]) & 0xFFFF;     \
+    D |= CPU->Read_Word(CPU->A[7] + 2) << 16;   \
     CPU->A[7] += 4;
-//    D = CPU->Read_Word(CPU->A[7]) & 0xFFFF;     \
-//    D |= CPU->Read_Word(CPU->A[7] + 2) << 16;   \
+//    D = CPU->Read_Word(CPU->A[7]) << 16;     \
+//    D |= CPU->Read_Word(CPU->A[7] + 2) & 0xFFFF;   \
 //    CPU->A[7] += 4;
 #else
     #define PUSH_32_F(D)                            \
