@@ -257,12 +257,15 @@ void Onchip::setLong(unsigned long addr, unsigned long val) {
 
 inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)
 {
+   int size;
+
    if (!(chcr & 0x2)) { // TE is not set
       int srcInc;
       switch(chcr & 0x3000) {
          case 0x0000: srcInc = 0; break;
          case 0x1000: srcInc = 1; break;
          case 0x2000: srcInc = -1; break;
+         default: srcInc = 0; break;
       }
 
       int destInc;
@@ -270,11 +273,8 @@ inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)
          case 0x0000: destInc = 0; break;
          case 0x4000: destInc = 1; break;
          case 0x8000: destInc = -1; break;
+         default: destInc = 0; break;
       }
-
-      unsigned long source = getLong(SAR0+reg_offset);
-      unsigned long destination = getLong(DAR0+reg_offset);
-      int size;
 
       switch (size = ((chcr & 0x0C00) >> 10)) {
          case 0:
