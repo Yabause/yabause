@@ -288,6 +288,7 @@ void SuperH::runCycles(unsigned long cc) {
         }
 
         ((Onchip *)onchip)->runFRT(cc);
+        ((Onchip *)onchip)->runWDT(cc);
 }
 
 void SuperH::step(void) {
