@@ -61,7 +61,7 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
 #endif
     case 0xE0:
       Memory::setWord(addr, val);
-#ifdef DEBUG
+#ifdef VDP2_DEBUG
       cerr << "sprite type modified" << endl;
 #endif
       sortScreens();
@@ -460,141 +460,233 @@ void Vdp2Screen::readRotationTable(unsigned long addr) {
 	long i;
 
 	i = vram->getLong(addr);
-	cerr << hex << "Xst" << '\t' << addr << '\t';
+#if VDP2_DEBUG
+        cerr << hex << "Xst" << '\t' << addr << '\t';
+#endif
 	Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << Xst << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Yst" << '\t' << addr << '\t';
+#endif
 	Yst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << Yst << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Zst" << '\t' << addr << '\t';
+#endif
 	Zst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << Zst << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "deltaXst" << '\t' << addr << '\t';
+#endif
 	deltaXst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << deltaXst << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "deltaYst" << '\t' << addr << '\t';
+#endif
 	deltaYst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << deltaYst << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "deltaX" << '\t' << addr << '\t';
+#endif
 	deltaX = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << deltaX << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "deltaY" << '\t' << addr << '\t';
+#endif
 	deltaY = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << deltaY << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "A" << '\t' << addr << '\t';
+#endif
 	A = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << A << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "B" << '\t' << addr << '\t';
+#endif
 	B = (float) (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << B << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "C" << '\t' << addr << '\t';
+#endif
 	C = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << C << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "D" << '\t' << addr << '\t';
+#endif
 	D = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << D << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "E" << '\t' << addr << '\t';
+#endif
 	E = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << E << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "F" << '\t' << addr << '\t';
+#endif
 	F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << F << endl;
+#endif
 	addr += 4;
 
 	i = vram->getWord(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Px" << '\t' << addr << '\t';
+#endif
 	Px = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+#if VDP2_DEBUG
 	cerr << Px << endl;
+#endif
 	addr += 2;
 
 	i = vram->getWord(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Py" << '\t' << addr << '\t';
+#endif
 	Py = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+#if VDP2_DEBUG
 	cerr << Py << endl;
+#endif
 	addr += 2;
 
 	i = vram->getWord(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Pz" << '\t' << addr << '\t';
+#endif
 	Pz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+#if VDP2_DEBUG
 	cerr << Pz << endl;
+#endif
 	addr += 4;
 
 	i = vram->getWord(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Cx" << '\t' << addr << '\t';
+#endif
 	Cx = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+#if VDP2_DEBUG
 	cerr << Cx << endl;
+#endif
 	addr += 2;
 
 	i = vram->getWord(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Cy" << '\t' << addr << '\t';
+#endif
 	Cy = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+#if VDP2_DEBUG
 	cerr << Cy << endl;
+#endif
 	addr += 2;
 
 	i = vram->getWord(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Cz" << '\t' << addr << '\t';
+#endif
 	Cz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+#if VDP2_DEBUG
 	cerr << Cz << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "Mx" << '\t' << addr << '\t';
+#endif
 	Mx = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
-	cerr << Mx << endl;
+#if VDP2_DEBUG
+        cerr << Mx << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "My" << '\t' << addr << '\t';
+#endif
 	My = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << My << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
+#if VDP2_DEBUG
 	cerr << hex << "kx" << '\t' << addr << '\t';
+#endif
 	kx = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << kx << endl;
+#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-	cerr << hex << "ky" << '\t' << addr << '\t';
+#if VDP2_DEBUG
+        cerr << hex << "ky" << '\t' << addr << '\t';
+#endif
 	ky = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
+#if VDP2_DEBUG
 	cerr << ky << endl;
+#endif
 	addr += 4;
 }
 
@@ -672,7 +764,9 @@ void RBG0::init(void) {
 				planeSize = (reg->getWord(0x3A) & 0x3000) >> 12;
 				break;
 			default:
+#if VDP2_DEBUG
 				cerr << "RGB0\t: don't know what to do with plane size" << endl;
+#endif
 				break;
 		}
   		switch(planeSize) {
@@ -890,38 +984,44 @@ int NBG0::getInnerPriority(void) {
 
 void NBG0::debugStats(char *outstring, bool *isenabled) {
   unsigned short screenDisplayReg = reg->getWord(0x20);
-//  unsigned short mosaicReg = reg->getWord(0x22);
+  unsigned short mosaicReg = reg->getWord(0x22);
 //  unsigned short specialFunctionReg = reg->getWord(0x24);
   unsigned short patternReg = reg->getWord(0x28);
-//  unsigned short bmpPalNumberReg = reg->getWord(0x2C);
-//  unsigned short patternNameReg = reg->getWord(0x30);
-//  unsigned short planeSizeReg = reg->getWord(0x3A);
+  unsigned short patternNameReg = reg->getWord(0x30);
 //  unsigned short mapOffsetReg = reg->getWord(0x3C);
+  unsigned short lineVerticalScrollReg = reg->getWord(0x9A) & 0x3F;
 
   // is NBG0/RBG1 enabled?
   if (screenDisplayReg & 0x1 || screenDisplayReg & 0x20) {
      // enabled
      *isenabled = true;
 
+     // Mosaic
+     if (mosaicReg & 0x1)
+     {
+        sprintf(outstring, "Mosaic Size = width %d height %d\r\n", (mosaicReg >> 8) & 0xf + 1, (mosaicReg >> 12) + 1);
+        outstring += strlen(outstring);        
+     }
+
      // bpp
      switch ((patternReg & 0x0070) >> 4) {
         case 0:
-                sprintf(outstring, "4-bit(16 colors)\n");
+                sprintf(outstring, "4-bit(16 colors)\r\n");
                 break;
         case 1:
-                sprintf(outstring, "8-bit(256 colors)\n");
+                sprintf(outstring, "8-bit(256 colors)\r\n");
                 break;
         case 2:
-                sprintf(outstring, "16-bit(2048 colors)\n");
+                sprintf(outstring, "16-bit(2048 colors)\r\n");
                 break;
         case 3:
-                sprintf(outstring, "16-bit(32,768 colors)\n");
+                sprintf(outstring, "16-bit(32,768 colors)\r\n");
                 break;
         case 4:
-                sprintf(outstring, "32-bit(16.7 mil colors)\n");
+                sprintf(outstring, "32-bit(16.7 mil colors)\r\n");
                 break;
         default:
-                sprintf(outstring, "Unsupported BPP\n");
+                sprintf(outstring, "Unsupported BPP\r\n");
                 break;
      }
      outstring += strlen(outstring);
@@ -929,36 +1029,126 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
      // Bitmap or Tile mode?
      if (patternReg & 0x0002)
      {
+        unsigned short bmpPalNumberReg = reg->getWord(0x2C);
+
         // Bitmap
         switch((patternReg & 0xC) >> 2) {
-           case 0: sprintf(outstring, "Bitmap(512x256)\n");
+           case 0: sprintf(outstring, "Bitmap(512x256)\r\n");
                    break;
-           case 1: sprintf(outstring, "Bitmap(512x512)\n");
+           case 1: sprintf(outstring, "Bitmap(512x512)\r\n");
                    break;
-           case 2: sprintf(outstring, "Bitmap(1024x256)\n");
+           case 2: sprintf(outstring, "Bitmap(1024x256)\r\n");
                    break;
-           case 3: sprintf(outstring, "Bitmap(1024x512)\n");
+           case 3: sprintf(outstring, "Bitmap(1024x512)\r\n");
                    break;
         }
+        outstring += strlen(outstring);
+
+        sprintf(outstring, "Bitmap Palette Number = %x\r\n", bmpPalNumberReg & 0x7);
         outstring += strlen(outstring);
      }
      else
      {
         // Tile
-        if(patternReg & 0x1) sprintf(outstring, "Tile(1H x 1V)\n");
-        else sprintf(outstring, "Tile(1H x 1V)\n");
+        if(patternReg & 0x1) sprintf(outstring, "Tile(2H x 2V)\r\n");
+        else sprintf(outstring, "Tile(1H x 1V)\r\n");
+        outstring += strlen(outstring);
+
+        // Pattern Name Control stuff
+        if (patternNameReg & 0x8000) 
+        {
+           sprintf(outstring, "Pattern Name data size = 2 words\r\n");
+           outstring += strlen(outstring);
+        }
+        else
+        {
+           sprintf(outstring, "Pattern Name data size = 1 word\r\n");
+           outstring += strlen(outstring);
+           sprintf(outstring, "Character Number Supplement bit = %d\r\n", (patternNameReg >> 16));
+           outstring += strlen(outstring);
+           sprintf(outstring, "Special Priority bit = %d\r\n", (patternNameReg >> 9) & 0x1);
+           outstring += strlen(outstring);
+           sprintf(outstring, "Special Color Calculation bit = %d\r\n", (patternNameReg >> 8) & 0x1);
+           outstring += strlen(outstring);
+           sprintf(outstring, "Supplementary Palette number = %d\r\n", (patternNameReg >> 5) & 0x7);
+           outstring += strlen(outstring);
+           sprintf(outstring, "Supplementary Color number = %d\r\n", patternNameReg & 0x1f);
+           outstring += strlen(outstring);
+        }
+     }
+
+     switch(reg->getWord(0x3A) & 0x3)
+     {
+        case 0: sprintf(outstring, "Plane Size = 1H x 1V\r\n");
+                break;
+        case 1: sprintf(outstring, "Plane Size = 2H x 1V\r\n");
+                break;
+        case 3: sprintf(outstring, "Plane Size = 2H x 2V\r\n");
+                break;
+        default: sprintf(outstring, "Plane Size = Invalid\r\n");
+                 break;
+     }
+
+     outstring += strlen(outstring);
+
+     switch (lineVerticalScrollReg >> 4)
+     {
+        case 0:
+                sprintf(outstring, "Line Scroll Interval = Each Line\r\n");
+                break;
+        case 1:
+                sprintf(outstring, "Line Scroll Interval = Every 2 Lines\r\n");
+                break;
+        case 2:
+                sprintf(outstring, "Line Scroll Interval = Every 4 Lines\r\n");
+                break;
+        case 3:
+                sprintf(outstring, "Line Scroll Interval = Every 8 Lines\r\n");
+                break;
+     }
+
+     outstring += strlen(outstring);
+
+     if (lineVerticalScrollReg & 0x8)
+     {
+        sprintf(outstring, "Line Zoom enabled\r\n");
+        outstring += strlen(outstring);
+     }
+
+     if (lineVerticalScrollReg & 0x4)
+     {
+        sprintf(outstring, "Line Scroll Vertical enabled\r\n");
+        outstring += strlen(outstring);
+     }
+
+     if (lineVerticalScrollReg & 0x2)
+     {
+        sprintf(outstring, "Line Scroll Horizontal enabled\r\n");
+        outstring += strlen(outstring);
+     }
+
+     if (lineVerticalScrollReg & 0x6) 
+     {
+        sprintf(outstring, "Line Scroll Table Address = %08X\r\n", 0x05E00000 + ((((reg->getWord(0xA0) & 0x7) << 16) | (reg->getWord(0xA2) & 0xFFFE)) << 1));
+        outstring += strlen(outstring);
+     }
+
+     if (lineVerticalScrollReg & 0x1)
+     {
+        sprintf(outstring, "Vertical Cell Scroll enabled\r\n");
+        sprintf(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", 0x05E00000 + ((((reg->getWord(0x9C) & 0x7) << 16) | (reg->getWord(0x9E) & 0xFFFE)) << 1));
         outstring += strlen(outstring);
      }
 
      // Generate specific Info for NBG0/RBG1
      if (screenDisplayReg & 0x20)
      {
-         sprintf(outstring, "RBG1 mode\n");
+         sprintf(outstring, "RBG1 mode\r\n");
          outstring += strlen(outstring);
      }
      else
      {
-         sprintf(outstring, "NBG0 mode\n");
+         sprintf(outstring, "NBG0 mode\r\n");
          outstring += strlen(outstring);
      }
   }
