@@ -22,9 +22,6 @@
 
 #include "memory.hh"
 #include "cpu.hh"
-#ifdef _arch_dreamcast
-#include "tree.h"
-#endif
 #ifdef WORDS_BIGENDIAN
 #include <OpenGL/gl.h>
 #else
@@ -48,8 +45,6 @@ typedef struct {
 
 class Vdp1VRAM : public Memory	{
 	private:
-		/*tree_t sprTree;
-		tree_node_t *__treeSearchFunc(unsigned long l, tree_node_t *p);*/
 		vector<vdp1Sprite> sprites;		
 		
 	public:

@@ -1,5 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
-	Copyright 2004 Lawrence Sebald
+    Copyright 2004 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -25,9 +25,6 @@
 #include "scu.hh"
 #include "timer.hh"
 #include "vdp2.hh"
-#ifdef _arch_dreamcast
-#include "tree.h"
-#endif
 
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
@@ -318,7 +315,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 #ifdef DEBUG
 	cerr << "Created new sprite at " << hex << ca1 << endl;
 #endif
-	}		
+	}
 
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture(GL_TEXTURE_2D, sp.txr);
@@ -332,7 +329,6 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 }
 
 void Vdp1::scaledSpriteDraw(unsigned long addr) {
-#ifndef _arch_dreamcast
 	unsigned short xy = vram->getWord(addr + 0xA);
 
 	short x = localX + vram->getWord(addr + 0xC);
@@ -505,7 +501,6 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	glTexCoord2f(u1, v2); glVertex2f((float) x/160 - 1, 1 - (float) (y + rh)/112);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
-#endif
 }
 
 void Vdp1::distortedSpriteDraw(unsigned long addr) {

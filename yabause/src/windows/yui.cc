@@ -95,7 +95,7 @@ void yui_init(int (*yab_main)(void*)) {
           return;
 
         // get program pathname
-        INIFileNameSize = GetModuleFileName(hInstance, INIFileName, MAX_PATH);
+        INIFileNameSize = GetModuleFileName(y_hInstance, INIFileName, MAX_PATH);
 
         // set pointer to start of extension
         pINIFileName = INIFileName + INIFileNameSize - 4;
@@ -103,7 +103,7 @@ void yui_init(int (*yab_main)(void*)) {
         // replace .exe with .ini
         sprintf(pINIFileName, ".ini\0");
 
-        GetPrivateProfileString("GeneralSection", "BiosPath", "", biosfileame, MAX_PATH, INIFileName);
+        GetPrivateProfileString("GeneralSection", "BiosPath", "", biosfilename, MAX_PATH, INIFileName);
         GetPrivateProfileString("GeneralSection", "CDROMDrive", "", &cdromdriveletter, 1, INIFileName);
 
         cx = 320 + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
