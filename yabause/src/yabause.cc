@@ -165,7 +165,6 @@ void keyUp(int key)
 
 int handleEvents(SaturnMemory *mem) {
     SDL_Event event;
-    //SuperH *msh = mem->getMasterSH();
       if (SDL_PollEvent(&event)) {
 	switch(event.type) {
 	case SDL_QUIT:
@@ -184,17 +183,14 @@ int handleEvents(SaturnMemory *mem) {
 #ifdef DEBUG
 			cerr << "Pause" << endl;
 #endif
-			//msh->pause();
 			break;
 		case SDLK_r:
 #ifdef DEBUG
 			cerr << "Run" << endl;
 #endif
-			//msh->run();
 			break;
 #ifdef DEBUG
 		case SDLK_v:
-			//msh->verbose = 200;
 			break;
 #endif
 		default:
@@ -218,13 +214,14 @@ int handleEvents(SaturnMemory *mem) {
 	}
       }
       else {
-/*
-	if (msh->paused());
-	//else ((Vdp2 *) mem->getVdp2())->executer();
-	else {
-*/
+	try {
 		mem->synchroStart();
-//	}
+	}
+	catch (Exception e) {
+		cerr << e << endl;
+		cerr << *mem->getMasterSH() << endl;
+		exit(1);
+	}
       }
       return 1;
 }
@@ -234,10 +231,6 @@ int main(int argc, char **argv) {
 	//SDL_Init(SDL_INIT_EVENTTHREAD);
 
 	yui_init((int (*)(void*)) &handleEvents);
-
-#if DEBUG
-	cerr << "stopping yabause\n";
-#endif
 
 	SDL_Quit();
 }

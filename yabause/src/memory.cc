@@ -280,9 +280,7 @@ void LoggedMemory::setLong(unsigned long addr, unsigned long val) {
 
 
 SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
-	mshThread = NULL;
 	msh = new SuperH(false);
-	sshThread = NULL;
 	ssh = new SuperH(true);
 
 	//Timer::initSuperH(msh);
@@ -360,7 +358,6 @@ SaturnMemory::~SaturnMemory(void) {
   cerr << "stopping master sh2\n";
 #endif
   msh->stop();
-  SDL_WaitThread(mshThread, NULL);
 #if DEBUG
   cerr << "master sh2 stopped\n";
 #endif
@@ -610,17 +607,6 @@ void SaturnMemory::mappage(unsigned long adr) {
 }
 
 void SaturnMemory::synchroStart(void) {
-/*
-	int decilineCount = 0;
-	int lineCount = 0;
-	int frameCount = 0;
-	int decilineStop = 170;
-	int duf = 268;
-	unsigned long ticks = 0;
-	unsigned long cycleCount = 0;
-	unsigned long cycleCountII = 0;
-*/
-
 	while(msh->cycleCount < decilineStop) {
 		msh->executer();
 	}
@@ -664,7 +650,6 @@ void SaturnMemory::synchroStart(void) {
 	while (cycleCountII > duf) {
 		((Smpc *) smpc)->execute2(10);
 		msh->run(10);
-		//SDL_CondBroadcast(cond[0]);
 		cycleCountII %= duf;
 	}
 

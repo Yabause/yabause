@@ -115,8 +115,6 @@ private:
 
   SuperH *msh;
   SuperH *ssh;
-  SDL_Thread *mshThread;
-  SDL_Thread *sshThread;
 
   bool _stop;
 

@@ -95,8 +95,6 @@ typedef struct
 
 class Cs2 : public Cpu, public Memory {
 private:
-  SDL_Thread *cdThread;
-  SDL_mutex *cdMutex;
   unsigned long FAD;
   unsigned char status;
 

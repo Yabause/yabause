@@ -38,46 +38,5 @@ using namespace std;
 #include <string.h>
 #include <stdlib.h>
 #include "SDL.h"
-#include "SDL_thread.h"
-
-template<unsigned long A, unsigned long B> unsigned long div(void) {
-  return A / B;
-}
-
-template<unsigned long A> unsigned long div(unsigned long b) {
-  return b / A;
-}
-
-template<unsigned long A, unsigned long B>
-class Div {
-private:
-  unsigned long q;
-  unsigned long r;
-  unsigned long p;
-  unsigned long i;
-public:
-  Div(void);
-  unsigned long nextValue(void);
-};
-
-template<unsigned long A, unsigned long B>
-Div<A, B>::Div(void) {
-  q = A / B;
-  r = A % B;
-  p = 0;
-  i = 0;
-}
-
-template<unsigned long A, unsigned long B>
-unsigned long Div<A, B>::nextValue(void) {
-  unsigned long d = 0;
-  if (((((long long) p) * B) / r) == i) {
-    p++;
-    d = 1;
-  }
-  i++;
-  if (i == B) i = 0;
-  return q + d;
-}
 
 #endif
