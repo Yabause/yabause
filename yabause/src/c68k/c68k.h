@@ -48,6 +48,10 @@ extern "C" {
 //#define C68K_CONST_JUMP_TABLE
 //#define C68K_AUTOVECTOR_CALLBACK
 
+#ifndef FASTCALL
+#define FASTCALL
+#endif
+
 // 68K core types definitions
 //////////////////////////////
 
