@@ -78,12 +78,18 @@ void __del_highest_int()	{
 #define VCRDMA0 0x1A0
 #define VCRDMA1 0x1A8
 #define DMAOR   0x1B0
+#define BCR1    0x1E0
+#define BCR2    0x1E4
 
-Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
+Onchip::Onchip(bool slave, SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
 	memory = sm;
         Memory::setByte(4, 0x84);
 
-        // initialize the Free-running Timer registers
+        // Initialize Bus Control registers(needed for Slave SH2 emulation)
+        Memory::setLong(BCR1, 0x03F0 | (slave << 15));
+        Memory::setLong(BCR2, 0x00FC);
+
+        // Initialize the Free-running Timer registers
         Memory::setByte(TIER, 0x01);
         Memory::setByte(FTCSR, 0x00);
         Memory::setByte(FRCH, 0x00);
@@ -270,7 +276,7 @@ inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)
 #if DEBUG
       cerr << "FIXME should launch an interrupt\n";
 #endif
-//        sh->send(Interrupt(getByte(IPRA) & 0xF, VCRDMA0+(reg_offset / 2)));
+//        cursh->send(Interrupt(getByte(IPRA) & 0xF, VCRDMA0+(reg_offset / 2)));
    }
 
    // Set Transfer End bit

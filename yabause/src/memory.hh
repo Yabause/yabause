@@ -102,7 +102,6 @@ private:
   Memory *vdp2_3;	//  5F80000 -  5F80120
   Memory *scu;		//  5FE0000 -  5FE00D0
   Memory *ramHigh;	//  6000000 -  6100000
-  Memory *onchip;	// FFFFFE00 - FFFFFFFF
 
   Memory *mapMem;
   Memory *mapMem2;
@@ -116,6 +115,7 @@ private:
 
   SuperH *msh;
   SuperH *ssh;
+  SuperH *cursh;
   bool sshRunning;
 
   bool _stop;
@@ -150,7 +150,6 @@ public:
 
   Uint8 *keys;
 
-  Memory *getOnchip(void);
   Memory *getCS2(void);
   Memory *getVdp1Ram(void);
   Memory *getVdp1(void);

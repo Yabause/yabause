@@ -63,7 +63,7 @@ public:
 	//priority_queue<Interrupt> interrupts;
 #endif
 
-	Onchip(SaturnMemory *);
+        Onchip(bool, SaturnMemory *);
 
         void setByte(unsigned long addr, unsigned char val);
 	void setWord(unsigned long, unsigned short);
