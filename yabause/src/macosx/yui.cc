@@ -26,8 +26,27 @@ void set_bios(char *file) {
 	strcpy(bios, file);
 }
 
+void yui_init(int (*yab_main)(void*)) {
+	SaturnMemory *mem;
+
+	stop = 0;
+	mem = new SaturnMemory();
+	mem->start();
+
+	while (!stop) yab_main(mem);
+	delete(mem);
+}
+
+void yui_quit(void) {
+	stop = 1;
+}
+
 void yui_fps(int i) {
+	//Uncomment for fps display
 	//fprintf(stderr, "%d\n", i);
+}
+
+void yui_hide_show(void) {
 }
 
 char * yui_bios(void) {
@@ -38,28 +57,14 @@ char * yui_cdrom(void) {
 	return NULL;
 }
 
+unsigned char yui_region(void) {
+	return 0;
+}
+
 char * yui_saveram(void) {
 	return NULL;
 }
 
 char * yui_mpegrom(void) {
 	return NULL;
-}
-
-void yui_hide_show(void) {
-}
-
-void yui_quit(void) {
-	stop = 1;
-}
-
-void yui_init(int (*yab_main)(void*)) {
-	SaturnMemory *mem;
-
-	stop = 0;
-	mem = new SaturnMemory();
-	mem->start();
-
-	while (!stop) yab_main(mem);
-	delete(mem);
 }

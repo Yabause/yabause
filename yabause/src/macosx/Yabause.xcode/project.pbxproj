@@ -161,6 +161,7 @@
 				A0E0B3D906F77D94009B3042,
 				A0E0B3E006F77D94009B3042,
 				A0E0B3DA06F77D94009B3042,
+				A0A9CC6C0747E8BE005118CD,
 				A0E0B3DC06F77D94009B3042,
 				A0E0B3D506F77D94009B3042,
 				A0E0B3D806F77D94009B3042,
@@ -279,6 +280,7 @@
 				A0E0B4DB06F785C1009B3042,
 				A0E0B4DC06F785C1009B3042,
 				A0E0B4E806F785E7009B3042,
+				A0A9CC6F0747E8CA005118CD,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -312,6 +314,7 @@
 				A0E0B3F006F77D94009B3042,
 				A0E0B41C06F77E32009B3042,
 				A0E0B42206F77E36009B3042,
+				A0A9CC6D0747E8BE005118CD,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -368,6 +371,36 @@
 //A02
 //A03
 //A04
+		A0A9CC6C0747E8BE005118CD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			name = sh2d.cc;
+			path = /Users/pismo/yabause/src/sh2d.cc;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		A0A9CC6D0747E8BE005118CD = {
+			fileRef = A0A9CC6C0747E8BE005118CD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		A0A9CC6E0747E8CA005118CD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.h;
+			name = sh2d.hh;
+			path = /Users/pismo/yabause/src/sh2d.hh;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		A0A9CC6F0747E8CA005118CD = {
+			fileRef = A0A9CC6E0747E8CA005118CD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		A0E0B3D306F77D94009B3042 = {
 			fileEncoding = 30;
 			isa = PBXFileReference;
@@ -900,6 +933,7 @@
 				A0E0B4C106F785C0009B3042,
 				A0E0B4C606F785C1009B3042,
 				A0E0B4C406F785C0009B3042,
+				A0A9CC6E0747E8CA005118CD,
 				A0E0B4CB06F785C1009B3042,
 				A0E0B4C906F785C1009B3042,
 				A0E0B4BE06F785C0009B3042,

@@ -31,6 +31,7 @@
 #include <IOKit/storage/IOCDTypes.h>
 #include <CoreFoundation/CoreFoundation.h>
 
+#define NEWCDINTERFACE
 char cdPath[1024];
 FILE *hCDROM;
 CDTOC *cdTOC = NULL;
@@ -99,7 +100,7 @@ int CDInit(char *cdrom_name)
 		printf("IOServiceGetMatchingServices Failed!\n");
 		
 	getCDPath(mediaIterator, cdPath, sizeof(cdPath));
-	if ((hCDROM = fopen(cdPath, "rb")) == NULL)
+	if ((hCDROM = open(cdPath, O_RDONLY)) == -1)
 		return -1;
 	printf("CDInit OK\n");
 	return 0;
@@ -124,6 +125,11 @@ bool CDIsCDPresent()
 		return 0;
 }
 
+int CDGetStatus()
+{
+	//Return that disc is present and spinning.  Fix this evetnually.
+	return 0;
+}
 long CDReadToc(unsigned long *TOC)
 {
 	int add150 = 150, tracks = 0;
@@ -162,4 +168,16 @@ unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
 		return fread(buffer, 1, size, hCDROM);
 	}
     return 0;
+}
+
+bool CDReadSectorFAD(unsigned long FAD, void *buffer)
+{
+	int blockSize;
+	
+	if (hCDROM != -1) {
+		ioctl(hCDROM, DKIOCGETBLOCKSIZE, &blockSize);
+		if (pread(hCDROM, buffer, blockSize, FAD * blockSize))
+			return true;
+	}
+	return false;
 }
