@@ -1,4 +1,5 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2003-2004 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -158,6 +159,7 @@ public:
   Memory *getSmpc(void);
   Memory *getScsp(void);
 
+  void changeTiming(unsigned long, bool);
   void synchroStart(void);
 
   void startSlave(void);

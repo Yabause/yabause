@@ -129,11 +129,11 @@ private:
   bool isonesectorstored;
   bool isdiskchanged;
   bool isbufferfull;
+  bool speed1x;
   unsigned char transfileinfo[12];
   unsigned char lastbuffer;
 
   filter_struct filter[MAX_SELECTORS];
-//  filter_struct *curfilter;
   filter_struct *outconcddev;
   filter_struct *outconmpegfb;
   filter_struct *outconmpegbuf;
@@ -160,6 +160,7 @@ private:
 
   bool _command;
   unsigned long _periodiccycles;
+  unsigned long _periodictiming;
   char *cdrom;
 public:
   Cs2(void);
@@ -184,6 +185,7 @@ public:
   void run(unsigned long);
   void execute(void);
   void reset(void);
+  void SetTiming(bool);
   void command(void);
   void periodicUpdate(void);
                                   

@@ -421,18 +421,18 @@ void Cs2::reset(void) {
 
   _command = false;
   _periodiccycles = 0;
+  SetTiming(false);
 }
 
-void Cs2::run(unsigned long cycles) {
-//    _periodiccycles+=cycles;
-    _periodiccycles++;
+void Cs2::run(unsigned long timing) {
+    _periodiccycles+=timing;
 
     if (_command) {
 	    return;
     }
-    else if (_periodiccycles >= 500) // this is obviously wrong, but I have to work out the timings
+    else if (_periodiccycles >= _periodictiming)
     {
-      _periodiccycles -= 500; 
+      _periodiccycles -= _periodictiming; 
 
       // Get Drive's current status and compare with old status
       switch(CDGetStatus())
@@ -478,7 +478,7 @@ void Cs2::run(unsigned long cycles) {
                if (FAD >= playendFAD) {
                   // we're done
                   status = CDB_STAT_PERI | CDB_STAT_PAUSE;
-//                  setHIRQ(getHIRQ() | HIRQ_DRDY | CDB_HIRQ_PEND);
+                  SetTiming(false);
                   setHIRQ(getHIRQ() | CDB_HIRQ_PEND);
                }
 //               if (isbufferfull)
@@ -507,6 +507,18 @@ void Cs2::run(unsigned long cycles) {
 
 void Cs2::command(void) {
   _command = true;
+}
+
+void Cs2::SetTiming(bool playing) {
+  if (playing) {
+     if (speed1x == false) // should also verify to make sure it's not reading cd audio
+        _periodictiming = 13300;
+     else
+        _periodictiming = 6700;
+  }
+  else {
+     _periodictiming = 16700;
+  }
 }
 
 void Cs2::periodicUpdate(void) {
@@ -1018,9 +1030,9 @@ void Cs2::initializeCDSystem(void) {
   }
 
   if (initflag & 0x10)
-  {
-     // Set drive speed to 1x
-  }
+     speed1x = true;
+  else
+     speed1x = false;
 
   val = getHIRQ() & 0xFFE5;
   isbufferfull = false;
@@ -1156,6 +1168,7 @@ void Cs2::playDisc(void) {
 #endif
 
   setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+  SetTiming(true);
 
   status = CDB_STAT_PERI | CDB_STAT_PLAY;
 
@@ -1205,6 +1218,8 @@ void Cs2::seekDisc(void) {
         FAD = 0xFFFFFFFF;
      }
   }
+
+  SetTiming(false);
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
@@ -1867,6 +1882,8 @@ void Cs2::readFile(void) {
   playendFAD = playFAD + rfsize;
 
   options = 0x8;
+
+  SetTiming(true);
 
   status = CDB_STAT_PERI | CDB_STAT_PLAY;
 

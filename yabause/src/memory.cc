@@ -347,13 +347,6 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
         }
 
 /*
-	if (exe != NULL) {
-		ramHigh->load(exe, 0x4000);
-		rom->setLong(0, 0x06004000);
-		rom->setLong(4, 0x06002000);
-	}
-*/
-
 	decilineCount = 0;
 	lineCount = 0;
 	frameCount = 0;
@@ -361,7 +354,9 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	duf = 268;
 	ticks = 0;
 	cycleCountII = 0;
-
+*/
+        // Set the sh2 timing to the default
+        changeTiming(26846587, false);
 
 	msh->setMemory(this);
 	//mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
@@ -657,6 +652,25 @@ void SaturnMemory::mappage(unsigned long adr) {
   }
 }
 
+void SaturnMemory::changeTiming(unsigned long sh2freq, bool pal) {
+   // Setup all the variables related to timing
+
+   decilineCount = 0;
+   lineCount = 0;
+   frameCount = 0;
+
+   if (pal)
+      decilineStop = sh2freq / 312 / 10 / 50; // I'm guessing this is wrong
+   else
+      decilineStop = sh2freq / 263 / 10 / 60; // I'm guessing this is wrong
+
+   duf = sh2freq / 100000;
+
+   ticks = 0;
+   cycleCountII = 0;
+}
+
+
 void SaturnMemory::synchroStart(void) {
         cursh = msh;
 	msh->runCycles(decilineStop);
@@ -704,11 +718,12 @@ void SaturnMemory::synchroStart(void) {
 
 	while (cycleCountII > duf) {
 		((Smpc *) smpc)->execute2(10);
+                ((Cs2 *)cs2)->run(10);
 		msh->run(10);
+                ssh->run(10);
 		cycleCountII %= duf;
 	}
 
-        ((Cs2 *)cs2)->run(msh->cycleCount);
         ((Scsp *)soundr)->run68k(170);
 
 	msh->cycleCount %= decilineStop;
