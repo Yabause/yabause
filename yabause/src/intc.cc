@@ -184,9 +184,19 @@ void Onchip::setLong(unsigned long addr, unsigned long val) {
   case CHCR1:
     Memory::setLong(addr, val);
 
-    // If the DMAOR DME bit is set and the CHRCR DE bit is set
+    // If the DMAOR DME bit is set and AE and NMIF bits are cleared,
+    // and CHCR's DE bit is set and TE bit is cleared,
     // do a dma transfer
-    if (Memory::getLong(DMAOR) & 1 && val & 0x1)
+    if ((Memory::getLong(DMAOR) & 7) == 1 && (val & 0x3) == 1)
+       runDMA();
+    break;
+  case DMAOR:
+    Memory::setLong(addr, val);
+
+    // If the DMAOR DME bit is set and AE and NMIF bits are cleared,
+    // and CHCR's DE bit is set and TE bit is cleared,
+    // do a dma transfer
+    if ((val & 7) == 1)
        runDMA();
     break;
   default:

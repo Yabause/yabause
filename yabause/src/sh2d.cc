@@ -191,7 +191,8 @@ i_descr tab[] =
 void SH2Disasm(unsigned v_addr, unsigned short op, int mode, char *chaine)
 {
 	int i;
-        sprintf(chaine,"0x%08X: 0x%04X \t", v_addr, op);
+        sprintf(chaine,"0x%08X: ", v_addr);
+        chaine+=strlen(chaine);
         
         for (i = 0; tab[i].mnem != NULL; i++)   /* 0 format */
         {
@@ -246,6 +247,7 @@ void SH2Disasm(unsigned v_addr, unsigned short op, int mode, char *chaine)
                                                 sprintf(chaine,tab[i].mnem,
                                                        (op & 0xff) *
                                                        tab[i].dat + 4);
+                                                chaine+=strlen(chaine);
                                                 sprintf(chaine," ; 0x%08X",
                                                        (op & 0xff) *
                                                        tab[i].dat + 4 +
@@ -286,6 +288,7 @@ void SH2Disasm(unsigned v_addr, unsigned short op, int mode, char *chaine)
                                         sprintf(chaine,tab[i].mnem,
                                                (op & 0xff) * tab[i].dat + 4,
                                                (op >> 8) & 0xf);
+                                        chaine+=strlen(chaine);
                                         sprintf(chaine," ; 0x%08X",
                                                (op & 0xff) * tab[i].dat + 4 +
                                                v_addr);
@@ -295,6 +298,7 @@ void SH2Disasm(unsigned v_addr, unsigned short op, int mode, char *chaine)
                                         sprintf(chaine,tab[i].mnem,
                                                (op & 0xff) * tab[i].dat + 4,
                                                (op >> 8) & 0xf);
+                                        chaine+=strlen(chaine);
                                         sprintf(chaine," ; 0x%08X",
                                                (op & 0xff) * tab[i].dat + 4 +
                                                (v_addr & 0xfffffffc));

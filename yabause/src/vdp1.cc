@@ -101,14 +101,14 @@ void Vdp1::execute(unsigned long addr) {
       break;
     case 2: // CALL, call a subroutine
 #ifdef VDP1_DEBUG
-      cerr << "CALL" << endl;
+      cerr << "vdp1\t: CALL" << endl;
 #endif
       returnAddr = addr;
       addr = vram->getWord(addr + 2) * 8;
       break;
     case 3: // RETURN, return from subroutine
 #ifdef VDP1_DEBUG
-      cerr << "RETURN" << endl;
+      cerr << "vdp1\t: RETURN" << endl;
 #endif
       addr = returnAddr;
     }
