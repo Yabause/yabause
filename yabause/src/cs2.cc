@@ -96,7 +96,7 @@ unsigned short Cs2::getWord(unsigned long addr) {
 
                   Memory::setWord(addr, val);
 #if CDDEBUG
-                  cerr << "cs2\t: Hirq read - ret: " << val << "\n";
+                  fprintf(stderr, "cs2\t: Hirq read - ret: %x\n", val);
 #endif
 	          break;
     case 0x9000C:
@@ -137,7 +137,7 @@ unsigned short Cs2::getWord(unsigned long addr) {
                                 infotranstype = -1;
                              }
 #if CDDEBUG
-                             cerr << "getfileinfo data: " << val << "\n";
+                             fprintf(stderr, "cs2\t: getfileinfo data: %x\n", val);
 #endif
 
                              break;
@@ -162,7 +162,7 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
   switch(addr) {
     case 0x90008:
 #if CDDEBUG
-                  cerr << "cs2\t: WriteWord hirq = " << val << "\n";
+                  fprintf(stderr, "cs2\t: WriteWord hirq = %x\n", val);
 #endif
                   Memory::setWord(addr, Memory::getWord(addr) & val);
 	          break;
@@ -225,7 +225,7 @@ unsigned long Cs2::getLong(unsigned long addr) {
                                curpartition->numblocks -= (cdwnum / getsectsize); // fix me
 
 #if CDDEBUG
-                               cerr << "curpartition->size = " << curpartition->size << " curpartition->numblocks = " << curpartition->numblocks << "\n";
+                               fprintf(stderr, "cs2\t: curpartition->size = %x\n", val);
 #endif
                             }
                             break;
@@ -429,194 +429,193 @@ void Cs2::execute(void) {
   switch (instruction) {
     case 0x00:
 #if CDDEBUG
-      cerr << "cs2\t: getStatus\n";
+      fprintf(stderr, "cs2\t: Command: getStatus\n");
 #endif
       getStatus();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x01:
 #if CDDEBUG
-      cerr << "cs2\t: getHardwareInfo\n";
+      fprintf(stderr, "cs2\t: Command: getHardwareInfo\n");
 #endif
       getHardwareInfo();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x02:
 #if CDDEBUG
-      cerr << "cs2\t: getToc\n";
+      fprintf(stderr, "cs2\t: Command: getToc\n");
 #endif
       getToc();
       break;
     case 0x03:
     {
 #if CDDEBUG
-      cerr << "cs2\t: getSessionInfo\n";
+      fprintf(stderr, "cs2\t: Command: getSessionInfo\n");
 #endif
        getSessionInfo();
        break;
     }
     case 0x04:
 #if CDDEBUG
-      cerr << "cs2\t: initializeCDSystem\n";
+      fprintf(stderr, "cs2\t: Command: initializeCDSystem\n");
 #endif
       initializeCDSystem();
       break;
     case 0x06:
 #if CDDEBUG
-      cerr << "cs2\t: endDataTransfer " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: Command: endDataTransfer %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       endDataTransfer();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x10:
 #if CDDEBUG
-      cerr << "cs2\t: playDisc " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: Command: playDisc %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       playDisc();
       break;
     case 0x30:
 #if CDDEBUG
-      cerr << "cs2\t: setCDDeviceConnection\n";
+      fprintf(stderr, "cs2\t: Command: setCDDeviceConnection\n");
 #endif
       setCDDeviceConnection();
       break;
     case 0x42:
 #if CDDEBUG
-      cerr << "cs2\t: setFilterSubheaderConditions\n";
+      fprintf(stderr, "cs2\t: Command: setFilterSubheaderConditions\n");
 #endif
       setFilterSubheaderConditions();
       break;
     case 0x44:
 #if CDDEBUG
-      cerr << "cs2\t: setFilterMode\n";
+      fprintf(stderr, "cs2\t: Command: setFilterMode\n");
 #endif
       setFilterMode();
       break;
     case 0x46:
 #if CDDEBUG
-      cerr << "cs2\t: setFilterConnection\n";
+      fprintf(stderr, "cs2\t: Command: setFilterConnection\n");
 #endif
       setFilterConnection();
       break;
     case 0x48:
 #if CDDEBUG
-      cerr << "cs2\t: resetSelector\n";
+      fprintf(stderr, "cs2\t: Command: resetSelector\n");
 #endif
       resetSelector();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x51:
 #if CDDEBUG
-      cerr << "cs2\t: getSectorNumber\n";
+      fprintf(stderr, "cs2\t: Command: getSectorNumber\n");
 #endif
       getSectorNumber();
 
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x60:
 #if CDDEBUG
-      cerr << "cs2\t: setSectorLength\n";
+      fprintf(stderr, "cs2\t: Command: setSectorLength\n");
 #endif
       setSectorLength();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x63:
 #if CDDEBUG
-      cerr << "cs2\t: getThenDeleteSectorData " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: Command: getThenDeleteSectorData %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       getThenDeleteSectorData();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x67:
 #if CDDEBUG
-      cerr << "cs2\t: getCopyError\n";
+      fprintf(stderr, "cs2\t: Command: getCopyError\n");
 #endif
       getCopyError();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x70:
 #if CDDEBUG
-      cerr << "cs2\t: changeDirectory\n";
+      fprintf(stderr, "cs2\t: Command: changeDirectory\n");
 #endif
       changeDirectory();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x72:
 #if CDDEBUG
-      cerr << "cs2\t: getFileSystemScope\n";
+      fprintf(stderr, "cs2\t: Command: getFileSystemScope\n");
 #endif
       getFileSystemScope();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x73:
 #if CDDEBUG
-      cerr << "cs2\t: getFileInfo\n";
+      fprintf(stderr, "cs2\t: Command: getFileInfo\n");
 #endif
       getFileInfo();
       break;
     case 0x74:
 #if CDDEBUG
-      cerr << "cs2\t: readFile\n";
+      fprintf(stderr, "cs2\t: Command: readFile\n");
 #endif
       readFile();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x75:
 #if CDDEBUG
-      cerr << "cs2\t: abortFile\n";
+      fprintf(stderr, "cs2\t: Command: abortFile\n");
 #endif
       abortFile();
 #if CDDEBUG
-      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       break;
     case 0x93: {
 #if CDDEBUG
-      cerr << "cs2\t: mpegInit\n";
+      fprintf(stderr, "cs2\t: Command: mpegInit\n");
 #endif
       mpegInit();
       break;
     }
     case 0xE0: {
 #if CDDEBUG
-      cerr << "cs2\t: cmdE0\n";
+      fprintf(stderr, "cs2\t: Command: cmdE0 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       cmdE0();
       break;
     }
     case 0xE1: {
 #if CDDEBUG
-      cerr << "cs2\t: cmdE1\n";
+      fprintf(stderr, "cs2\t: Command: cmdE1 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif 
       cmdE1();
       break;
     }
     default:
 #if CDDEBUG
-      cerr << "cs2\t: " << hex << setw(10) << "command "
-              << instruction << " not implemented" << endl;
+      fprintf(stderr, "cs2\t: Command %02x not implemented\n", instruction);
 #endif
       break;
   }
@@ -637,8 +636,8 @@ void Cs2::getHardwareInfo(void) {
   setCR1(status << 8);
   // hardware flags/CD Version
   setCR2(0x0201); // mpeg card exists
-  // mpeg version, doesn't have to be used
-  setCR3(0x0);
+  // mpeg version, it actually is required(at least by the bios)
+  setCR3(0x1);
   // drive info/revision
   setCR4(0x0400); 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
