@@ -120,6 +120,7 @@ public:
   RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
+  void debugStats(char *, bool *);
 };
 
 class NBG0 : public Vdp2Screen {
@@ -130,6 +131,7 @@ public:
   NBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
+  void debugStats(char *, bool *);
 };
 
 class NBG1 : public Vdp2Screen {
@@ -140,6 +142,7 @@ public:
   NBG1(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
+  void debugStats(char *, bool *);
 };
 
 class NBG2 : public Vdp2Screen {
@@ -150,6 +153,7 @@ public:
   NBG2(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
+  void debugStats(char *, bool *);
 };
 
 class NBG3 : public Vdp2Screen {
@@ -160,6 +164,7 @@ public:
   NBG3(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
+  void debugStats(char *, bool *);
 };
 
 class Vdp2 : public Cpu, public Memory {

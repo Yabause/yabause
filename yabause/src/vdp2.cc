@@ -395,7 +395,7 @@ void Vdp2Screen::drawCell(void) {
 	for(int j = 0;j < cellW;j++) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  charAddr += 2;
-	  if ((dot & 0x8000) && transparencyEnable) color = 0x00000000;
+          if (!(dot & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB1(0xFF, dot);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
@@ -413,7 +413,7 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  unsigned short dot2 = vram->getWord(charAddr);
 	  charAddr += 2;
-	  if ((dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
+          if (!(dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB2(alpha, dot1, dot2);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
@@ -442,6 +442,9 @@ int RBG0::getPriority(void) {
 
 int RBG0::getInnerPriority(void) {
 	return 4;
+}
+
+void RBG0::debugStats(char *outstring, bool *isenabled) {
 }
 
 void NBG0::init(void) {
@@ -544,6 +547,86 @@ int NBG0::getInnerPriority(void) {
   return 3;
 }
 
+void NBG0::debugStats(char *outstring, bool *isenabled) {
+  unsigned short screenDisplayReg = reg->getWord(0x20);
+//  unsigned short mosaicReg = reg->getWord(0x22);
+//  unsigned short specialFunctionReg = reg->getWord(0x24);
+  unsigned short patternReg = reg->getWord(0x28);
+//  unsigned short bmpPalNumberReg = reg->getWord(0x2C);
+//  unsigned short patternNameReg = reg->getWord(0x30);
+//  unsigned short planeSizeReg = reg->getWord(0x3A);
+//  unsigned short mapOffsetReg = reg->getWord(0x3C);
+
+  // is NBG0/RBG1 enabled?
+  if (screenDisplayReg & 0x1 || screenDisplayReg & 0x20) {
+     // enabled
+     *isenabled = true;
+
+     // bpp
+     switch ((patternReg & 0x0070) >> 4) {
+        case 0:
+                sprintf(outstring, "4-bit(16 colors)\n");
+                break;
+        case 1:
+                sprintf(outstring, "8-bit(256 colors)\n");
+                break;
+        case 2:
+                sprintf(outstring, "16-bit(2048 colors)\n");
+                break;
+        case 3:
+                sprintf(outstring, "16-bit(32,768 colors)\n");
+                break;
+        case 4:
+                sprintf(outstring, "32-bit(16.7 mil colors)\n");
+                break;
+        default:
+                sprintf(outstring, "Unsupported BPP\n");
+                break;
+     }
+     outstring += strlen(outstring);
+
+     // Bitmap or Tile mode?
+     if (patternReg & 0x0002)
+     {
+        // Bitmap
+        switch((patternReg & 0xC) >> 2) {
+           case 0: sprintf(outstring, "Bitmap(512x256)\n");
+                   break;
+           case 1: sprintf(outstring, "Bitmap(512x512)\n");
+                   break;
+           case 2: sprintf(outstring, "Bitmap(1024x256)\n");
+                   break;
+           case 3: sprintf(outstring, "Bitmap(1024x512)\n");
+                   break;
+        }
+        outstring += strlen(outstring);
+     }
+     else
+     {
+        // Tile
+        if(patternReg & 0x1) sprintf(outstring, "Tile(1H x 1V)\n");
+        else sprintf(outstring, "Tile(1H x 1V)\n");
+        outstring += strlen(outstring);
+     }
+
+     // Generate specific Info for NBG0/RBG1
+     if (screenDisplayReg & 0x20)
+     {
+         sprintf(outstring, "RBG1 mode\n");
+         outstring += strlen(outstring);
+     }
+     else
+     {
+         sprintf(outstring, "NBG0 mode\n");
+         outstring += strlen(outstring);
+     }
+  }
+  else {
+     // disabled
+     *isenabled = false;
+  }
+}
+
 void NBG1::init(void) {
   	unsigned short patternNameReg = reg->getWord(0x32);
   	unsigned short patternReg = reg->getWord(0x28);
@@ -643,6 +726,9 @@ int NBG1::getInnerPriority(void) {
   return 2;
 }
 
+void NBG1::debugStats(char *outstring, bool *isenabled) {
+}
+
 void NBG2::init(void) {
 	unsigned short patternNameReg = reg->getWord(0x34);
 	unsigned short patternReg = reg->getWord(0x2A);
@@ -734,6 +820,9 @@ int NBG2::getInnerPriority(void) {
   return 1;
 }
 
+void NBG2::debugStats(char *outstring, bool *isenabled) {
+}
+
 void NBG3::init(void) {
 	unsigned short patternNameReg = reg->getWord(0x36);
 	unsigned short patternReg = reg->getWord(0x2A);
@@ -811,6 +900,9 @@ int NBG3::getPriority(void) {
 
 int NBG3::getInnerPriority(void) {
 	return 0;
+}
+
+void NBG3::debugStats(char *outstring, bool *isenabled) {
 }
 
 /****************************************/
