@@ -487,6 +487,10 @@ SuperH *SaturnMemory::getMasterSH(void) {
 	return msh;
 }
 
+SuperH *SaturnMemory::getCurrentSH(void) {
+        return cursh;
+}
+
 SuperH *SaturnMemory::getSlaveSH(void) {
         return ssh;
 }
@@ -737,5 +741,6 @@ void SaturnMemory::startSlave(void) {
 }
 
 void SaturnMemory::stopSlave(void) {
+        ssh->reset();
 	sshRunning = false;
 }

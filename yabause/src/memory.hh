@@ -146,6 +146,7 @@ public:
   void FormatBackupRam();
 
   SuperH *getMasterSH(void);
+  SuperH *getCurrentSH(void);
   SuperH *getSlaveSH(void);
   bool sshRunning;
 

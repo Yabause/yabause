@@ -243,7 +243,7 @@ int handleEvents(SaturnMemory *mem) {
 	}
 	catch (Exception e) {
 		cerr << e << endl;
-		cerr << *mem->getMasterSH() << endl;
+                cerr << *mem->getCurrentSH() << endl;
 		exit(1);
 	}
       }

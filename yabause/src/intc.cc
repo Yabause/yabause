@@ -93,8 +93,6 @@ Onchip::Onchip(bool slave, SaturnMemory *sm, SuperH *sh) : Memory(0x1FF, 0x1FF) 
         shparent = sh;
         isslave = slave;
 
-        reset();
-
 #ifdef _arch_dreamcast
 	__init_tree();
 #endif
@@ -162,7 +160,7 @@ void Onchip::setByte(unsigned long addr, unsigned char val) {
 #if DEBUG
   case TIER:
     if (val & 0x80)
-      cerr << "onchip\t: WARNING: Input Capture Flag Interrupts enabled" << endl;
+      cerr << "onchip\t: WARNING: Input Capture Flag Interrupts enabled on " << (isslave ? "Slave SH2" : "Master SH2") << endl;
     else if (val & 0x8)
       cerr << "onchip\t: WARNING: Output Compare A Interrupts enabled" << endl;
     else if (val & 0x4)

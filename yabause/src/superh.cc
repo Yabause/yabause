@@ -30,30 +30,20 @@
 #include "registres.hh"
 
 SuperH::SuperH(bool slave, SaturnMemory *sm) {
-  SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
-  SR.partie.I = 0xF;
-  SR.partie.inutile1 = 0;
-  SR.partie.inutile2 = 0;
-  VBR = 0;
-
   onchip = new Onchip(slave, sm, this);
   purgeArea   = new Dummy(0xFFFFFFFF);
   adressArray = new Memory(0xFFF, 0x3FF);
   dataArray   = new Memory(0xFFF, 0x1000);
   modeSdram = new Memory(0xFFF, 0x4FFF);
 
-  _delai = 0;
+  reset();
+
   for(unsigned short i = 0;i < 0xFFFF;i++) {
     instruction = i;
     opcodes[i] = decode();
   }
 
   isslave = slave;
-
-#ifdef DEBUG
-  verbose = 0;
-#endif
-  timing = 0;
 }
 
 SuperH::~SuperH(void) {
@@ -66,7 +56,25 @@ SuperH::~SuperH(void) {
 }
 
 void SuperH::reset(void) {
-   // implement me
+  SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
+  SR.partie.I = 0xF;
+  SR.partie.inutile1 = 0;
+  SR.partie.inutile2 = 0;
+  VBR = 0;
+
+  // reset interrupts
+  while ( !interrupts.empty() ) {
+        interrupts.pop();
+  }
+
+  ((Onchip*)onchip)->reset();
+ 
+  _delai = 0;
+
+#ifdef DEBUG
+  verbose = 0;
+#endif
+  timing = 0;
 }
 
 void SuperH::setMemory(Memory *mem) {
@@ -200,7 +208,7 @@ ostream& operator<<(ostream& os, const SuperH& sh) {
 
 void SuperH::undecoded(void) {
 #ifndef _arch_dreamcast
-        if (isslave) 
+        if (isslave)
            throw IllegalOpcode("SSH2", instruction, PC);
         else
            throw IllegalOpcode("MSH2", instruction, PC);
