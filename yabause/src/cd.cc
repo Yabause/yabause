@@ -33,16 +33,6 @@ int CDDeInit()
    return 0;
 }
 
-// Obsolete - use CDGetStatus instead
-bool CDIsCDPresent()
-{
-   // This is where it checks to see if a disc is present. It should be
-   // pretty straight forward. Eventually I may change this so it returns
-   // the general drive status.
-   return false;
-}
-
-// Prototype function for replacement of CDIsCDPresent
 int CDGetStatus()
 {
    // This function is called periodically to see what the status of the
@@ -99,18 +89,6 @@ long CDReadToc(unsigned long *TOC)
    return 0;
 }
 
-// Obsolete - use CDReadSector instead
-unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
-{
-   // lba is obviously LBA, as opposed to FAD.
-   // You should return the amount of data you read. Which under normally
-   // circumstances should be equal to size. Obviously if there's a read
-   // error or something you'd return 0.
-
-   return size;
-}
-
-// Prototype function for replacement of CDReadSector
 bool CDReadSectorFAD(unsigned long FAD, void *buffer)
 {
    // This function is supposed to read exactly 1 -RAW- 2352-byte sector at

@@ -290,7 +290,6 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
 		}
 	}
 
-#if NEWCDINTERFACE
   switch (CDGetStatus())
   {
      case 0:
@@ -325,31 +324,6 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
              break;
      default: break;
   }
-#else
-  if (CDIsCDPresent())
-  {
-     status = CDB_STAT_PERI | CDB_STAT_PAUSE; // Still not 100% correct, but better
-
-     FAD = 150;
-     options = 0;
-     repcnt = 0;
-     ctrladdr = 0x41;
-     track = 1;
-     index = 1;
-  }
-  else
-  {
-     status = CDB_STAT_PERI | CDB_STAT_NODISC;
-//     status = CDB_STAT_PERI | CDB_STAT_OPEN;
-
-     FAD = 0xFFFFFFFF;
-     options = 0xFF;
-     repcnt = 0xFF;
-     ctrladdr = 0xFF;
-     track = 0xFF;
-     index = 0xFF;
-  }
-#endif
 
   infotranstype = -1;
   datatranstype = -1;
@@ -423,20 +397,11 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   lastbuffer = 0xFF;
 
   _command = false;
-//  _lock = SDL_CreateMutex();
-  /* attempt to remove cs2 thread
-  SDL_CreateThread((int (*)(void*)) &run, this);
-  */
-
   _periodiccycles = 0;
 }
 
 Cs2::~Cs2(void) {
    _stop = true;
-   /* attempt to remove cs2 thread
-   SDL_WaitThread(cdThread, NULL);
-   SDL_DestroyMutex(_lock);
-   */
 
    if (cdrom != NULL)
       CDDeInit();
@@ -452,7 +417,7 @@ void Cs2::run(unsigned long cycles) {
     else if (_periodiccycles >= 500) // this is obviously wrong, but I have to work out the timings
     {
       _periodiccycles -= 500; 
-#if NEWCDINTERFACE
+
       // Get Drive's current status and compare with old status
       switch(CDGetStatus())
       {
@@ -477,18 +442,15 @@ void Cs2::run(unsigned long cycles) {
                  break;
          default: break;
       }
-#endif
+
       switch (status & 0xF) {
          case CDB_STAT_PAUSE:
             break;
          case CDB_STAT_PLAY:
          {
             partition_struct *playpartition;
-#if NEWCDINTERFACE
             playpartition = ReadFilteredSector(FAD);
-#else
-            playpartition = ReadUnFilteredSector(FAD);
-#endif
+
             if (playpartition != NULL)
             {
                FAD++;
@@ -2617,7 +2579,6 @@ partition_struct *Cs2::ReadUnFilteredSector(unsigned long rufsFAD) {
         return NULL;
 
      // read a sector using cd interface function
-#if NEWCDINTERFACE
      if (!CDReadSectorFAD(rufsFAD, workblock.data))
         return NULL;
 
@@ -2675,22 +2636,6 @@ partition_struct *Cs2::ReadUnFilteredSector(unsigned long rufsFAD) {
         rufspartition->block[rufspartition->numblocks]->sm = workblock.data[0x12];
         rufspartition->block[rufspartition->numblocks]->ci = workblock.data[0x13];
      }
-#else
-     if (CDReadSector(rufsFAD - 150, getsectsize, rufspartition->block[rufspartition->numblocks]->data) != getsectsize)
-        return NULL;
-
-#if CDDEBUG
-     fprintf(stderr, "cs2\t: RUFS: Sector read in fine\n");
-#endif
-
-     // setup/change the partition values
-     workblock.size = getsectsize;
-     rufspartition->block[rufspartition->numblocks]->FAD = rufsFAD;
-     rufspartition->block[rufspartition->numblocks]->cn = 0;
-     rufspartition->block[rufspartition->numblocks]->fn = 0;
-     rufspartition->block[rufspartition->numblocks]->sm = 0;
-     rufspartition->block[rufspartition->numblocks]->ci = 0;
-#endif
 
      workblock.FAD = rufsFAD;
 
@@ -2705,7 +2650,6 @@ partition_struct *Cs2::ReadUnFilteredSector(unsigned long rufsFAD) {
   return NULL;
 }
 
-#if NEWCDINTERFACE
 partition_struct *Cs2::ReadFilteredSector(unsigned long rfsFAD) {
   char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                           0xFF, 0xFF, 0xFF, 0x00};
@@ -2743,20 +2687,10 @@ partition_struct *Cs2::ReadFilteredSector(unsigned long rfsFAD) {
 
   return NULL;
 }
-#endif
 
 unsigned char Cs2::GetRegionID() {
    partition_struct *gripartition;
    char ret=0;
-
-/*
-   while (SDL_mutexP(_lock) == -1)
-   {
-#if CDDEBUG
-      fprintf(stderr, "cs2\t: couldn't lock mutex: %s\n", SDL_GetError());
-#endif
-   }
-*/
 
    outconcddev = filter + 0;
 
@@ -2806,16 +2740,6 @@ unsigned char Cs2::GetRegionID() {
       SortBlocks(gripartition);
       gripartition->numblocks -= 1;
    }
-
-/*
-   while (SDL_mutexV(_lock) == -1)
-   {
-
-#if CDDEBUG
-      fprintf(stderr, "cs2\t: couldn't unlock mutex: %s\n", SDL_GetError());
-#endif
-   }
-*/
 
    return ret;
 }
