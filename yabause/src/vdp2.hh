@@ -32,6 +32,8 @@ public:
   Vdp2Ram(void) : Memory(0x80000) {}
 };
 
+class Vdp2Screen;
+
 class Vdp2ColorRam : public Memory {
 private:
   int mode;
@@ -39,7 +41,7 @@ public:
   Vdp2ColorRam(void) : Memory(0x1000) {}
 
   void setMode(int);
-  unsigned long getColor(unsigned long, int);
+  unsigned long getColor(unsigned long, Vdp2Screen *);
 };
 
 class Vdp2Registers : public Memory {
@@ -91,12 +93,16 @@ protected:
   bool enable;
   int x, y;
   int alpha;
+  int colorOffset;
 public:
   Vdp2Screen(Vdp2Registers *, Vdp2Ram *, Vdp2ColorRam *, SDL_Surface *);
 
   virtual int getPriority(void) = 0;
   virtual int getInnerPriority(void) = 0;
   static int comparePriority(const void *, const void *);
+
+  int getAlpha(void);
+  int getColorOffset(void);
   
   void draw(void);
   void drawMap(void);
