@@ -41,31 +41,7 @@ public:
 
   Intc *getIntc(void);
   
-  unsigned short	getIPRA(void);
-  unsigned short	getIPRB(void);
-  unsigned short	getVCRA(void);
-  unsigned short	getVCRB(void);
-  unsigned short	getVCRC(void);
-  unsigned short	getVCRD(void);
-  unsigned short	getVCRWDT(void);
-  unsigned long		getVCRDIV(void);
-  unsigned long		getVCRDMA(int);
-  unsigned short	getICR(void);
-  unsigned long		getDMAOR(void);
-  unsigned long		getCHCR0(void);
-  unsigned long		getCHCR1(void);
-  unsigned long		getSAR0(void);
-  unsigned long		getDAR0(void);
-  unsigned long		getTCR0(void);
-  void			setCHCR0(unsigned long);
-  void			setSAR0(unsigned long);
-  void			setDAR0(unsigned long);
-  void			setTCR0(unsigned long);
-  void			setSSR(unsigned char);
   void setLong(unsigned long, unsigned long);
-#ifndef _arch_dreamcast
-  friend ostream& operator<<(ostream&, OnchipRegisters&);
-#endif
 };
 
 class Dmac : public Cpu {
