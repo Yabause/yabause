@@ -1110,12 +1110,12 @@ void Cs2::endDataTransfer(void) {
 void Cs2::playDisc(void) {
   unsigned long pdspos;
   unsigned long pdepos;
-  unsigned long pdptype;
+  unsigned long pdpmode;
 
   // Get all the arguments
   pdspos = ((getCR1() & 0xFF) << 16) | getCR2();
   pdepos = ((getCR3() & 0xFF) << 16) | getCR4();
-  pdptype = getCR3() >> 8;
+  pdpmode = getCR3() >> 8;
 
   // Convert Start Position to playFAD
   if (pdspos == 0xFFFFFF)
@@ -1126,13 +1126,14 @@ void Cs2::playDisc(void) {
   {
      // FAD Mode
      playFAD = (pdspos & 0xFFFFF);
+     SetupDefaultPlayStats(FADToTrack(playFAD));
+     FAD = playFAD;
   }
   else if (pdspos != 0)
   {
      // Track Mode
-#if CDDEBUG
-     fprintf(stderr, "playdisc Track Mode is not implemented\n");
-#endif
+     SetupDefaultPlayStats((pdspos & 0xFF00) >> 8);
+     FAD = playFAD = FAD + (pdspos & 0xFF); // is this right?
   }
   else
   {
@@ -1155,9 +1156,10 @@ void Cs2::playDisc(void) {
   else if (pdepos != 0)
   {
      // Track Mode
-#if CDDEBUG
-     fprintf(stderr, "playdisc Track Mode is not implemented\n");
-#endif
+     unsigned long pdtrack=(pdepos & 0xFF00) >> 8;
+
+     if (pdtrack != 0xFF)
+        playendFAD = (TOC[pdtrack - 1] & 0x00FFFFFF) + (pdepos & 0xFF); // is this right?
   }
   else
   {
@@ -1167,8 +1169,11 @@ void Cs2::playDisc(void) {
 #endif
   }
 
-  SetupDefaultPlayStats(FADToTrack(playFAD));
-  FAD = playFAD;
+  // setup play mode here
+#if CDDEBUG
+  if (pdpmode != 0)
+     fprintf(stderr, "cs2\t: playDisc: Unsupported play mode = %02X\n", pdpmode);
+#endif
 
   isonesectorstored = true;
   setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
