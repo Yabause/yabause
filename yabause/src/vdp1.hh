@@ -22,7 +22,9 @@
 
 #include "memory.hh"
 #include "cpu.hh"
+#ifdef _arch_dreamcast
 #include "tree.h"
+#endif
 #ifdef WORDS_BIGENDIAN
 #include <OpenGL/gl.h>
 #else

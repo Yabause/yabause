@@ -25,7 +25,9 @@
 #include "scu.hh"
 #include "timer.hh"
 #include "vdp2.hh"
+#ifdef _arch_dreamcast
 #include "tree.h"
+#endif
 
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
