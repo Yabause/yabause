@@ -27,7 +27,8 @@
 #define IDM_SETTINGS    10007
 #define IDM_EXIT        10008
 #define IDM_MSH2DEBUG   10009
-#define IDM_VDP2DEBUG   10010
+#define IDM_SSH2DEBUG   10010
+#define IDM_VDP2DEBUG   10011
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002
