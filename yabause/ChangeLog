@@ -1,3 +1,6 @@
+0.0.7 -> 0.0.8
+ general:
+  - binary execution added
 0.0.6 -> 0.0.7
  cd block:
   - added cd interface for porters.
@@ -6,7 +9,7 @@
   - added region auto-detection.
  mpeg card:
   - added basic emulation.
-  - added mpeg rom loading suport. 
+  - added mpeg rom loading support. 
  scsp:
   - bug fixes
  scu:
