@@ -3659,10 +3659,10 @@ fi
 CXXFLAGS="$CXXFLAGS $SDL_CXXFLAGS"
 LIBS="$LIBS $SDL_LIBS"
 case $target in
-	*darwin*) LIBS="$LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT";;
-esac
-
-case $target in
+	*darwin*)
+		LIBS="$LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
+		yabause_yui="."
+		;;
         *cygwin*)  LIBS="$LIBS -lopengl32 -lglut32"
                    yabause_yui="."
                    ;;

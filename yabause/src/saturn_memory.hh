@@ -106,4 +106,19 @@ public:
   void stopSlave(void);
 };
 
+unsigned char inline readByte(SaturnMemory * mem , unsigned long addr) {
+	mem->mapping(addr);
+	return mem->mapMem->getByte(mem->mapAddr);
+}
+
+unsigned short inline readWord(SaturnMemory * mem, unsigned long addr) {
+	mem->mapping(addr);
+	return mem->mapMem->getWord(mem->mapAddr);
+}
+
+unsigned long inline readLong(SaturnMemory * mem, unsigned long addr) {
+	mem->mapping(addr);
+	return mem->mapMem->getLong(mem->mapAddr);
+}
+
 #endif
