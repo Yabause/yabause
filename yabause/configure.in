@@ -4,6 +4,9 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 case $target in
+	*darwin*) yabause_arch=macosx;;
+esac
+case $target in
 	*linux*) yabause_arch=linux;;
 esac
 AC_SUBST(yabause_arch)
