@@ -267,7 +267,7 @@ SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0) {
   cs0	      = new Dummy();
   cs1         = new Cs1();
   cs2         = new Cs2();
-  sound       = new ScspRam(); //Memory(0x7FFFF);
+  sound       = new LoggedMemory("scsp", new ScspRam(), 1); //Memory(0x7FFFF);
   soundr      = new Memory(0xEE4);
   scu         = new Scu(this);
   vdp1_2      = new Vdp1(this);

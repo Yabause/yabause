@@ -16,6 +16,10 @@ public:
 		case 0x770:
 			return 0;
 			break;
+		case 0x790:
+		case 0x792:
+			return 0;
+			break;
 		default:
 			return Memory::getByte(addr);
 		}
@@ -30,6 +34,10 @@ public:
 		case 0x750:
 		case 0x760:
 		case 0x770:
+			return 0;
+			break;
+		case 0x790:
+		case 0x792:
 			return 0;
 			break;
 		default:
