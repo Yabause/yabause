@@ -13,10 +13,10 @@
 
 1) Introduction.............................................22
 2) Installation instructions................................35
-3) How to use Yabause.......................................60
-4) Staff/Thanks............................................112
-5) Contact information.....................................145
-6) Disclaimer..............................................154
+3) How to use Yabause.......................................63
+4) Staff/Thanks............................................126
+5) Contact information.....................................161
+6) Disclaimer..............................................170
 
 
 1 Introduction________________________________________________
@@ -34,14 +34,17 @@ README.DC file
 
 2 Installation instructions___________________________________
 
-Yabause is written in C++ using the SDL librairy,
+Yabause is written in C++ using the SDL and SDL_gfx libraries,
 so you need a working C++ compiler, as g++ and the above
-librairies runtime and development packages:
+libraries runtime and development packages:
 
   * you can find SDL at http://www.libsdl.org/index.php in
     the download section.
 
-Once these library installed, you should be ready to
+  * you can find SDL_gfx at
+    http://www.ferzkopp.net/~aschiffler/Software/SDL_gfx-2.0
+
+Once these libraries installed, you should be ready to
 install Yabause.
 
 Uncompress the Yabause archive, move to the newly created
@@ -63,12 +66,23 @@ The first requirement is a Saturn ROM BIOS image (hence a Sega
 Saturn).
 
 Execute "yabause -b /path/to/bios.bin". The program will open
-a window, if you wait long enough, you will see the "set clock"
-screen of the bios appear, that's all for time being.
+a window, after some time, you should see the logo assembly
+animation.
+
+If you wait long enough, you can reach the main screen of the
+BIOS. Here are the key mappings:
+e - up
+s - left
+d - down
+f - right
+k - a
+l - b
+m - c
 
 If you want to see what's going inside, execute yabause with
 the -d option and it will show a monitoring/control window
-from which you can control yabause
+from which you can control yabause (don't work on the windows
+version)
 
 +------------------------------------------------------------+
 | R0   FFFF97F2  R1       97F2  R2          7  R3         7F |
@@ -91,8 +105,8 @@ Bart Trzynadlowski's disassembler).
 
 The down-right frame display the current opcode.
 
-There is five command to control yabause, each command is
-issued by typing it's initial letter:
+There are five commands to control yabause, each command is
+issued by typing its initial letter:
 
   * m - memory dump
   * p - pause the emulator
@@ -112,14 +126,15 @@ same address (the bios is also loaded, but ignored).
 4 Staff/Thanks________________________________________________
 
 Lead Programmer: Guillaume Duhamel
-Windows port: Theo Berkau
-Mac OS X port: Adam Green
-Dreamcast port: Lawrence Sebald
+Windows port: Theo Berkau (http://s89133014.onlinehome.us/)
+Mac OS X port: Adam Green (http://victoly.com/~adam/)
+Dreamcast port: Lawrence Sebald (http://ljsdcdev.sunsite.dk/)
 
 Thanks to:
 
   * Rnuik (author of Saturnin), for all his help, especially
     on the vdp2.
+    http://saturnin.consollection.com
 
   * Fabien Autrel (author of Satourne),
     for letting me browse his sources.
