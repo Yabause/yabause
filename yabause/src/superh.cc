@@ -94,9 +94,6 @@ int SuperH::lancer(SuperH *sh) {
 		cerr << "PC=" << hex << sh->PC << endl;
 		cerr << "opcode=" << hex << sh->instruction << endl;
 		cerr << e << endl;
-                // dump wram to file
-                mem = sh->getMemory();
-                mem->save("errwrm.dmp", 0x06000000, 0x100000);
 	}
 #else
 	sh->synchroStart<26874100, 60, 9, 1, 224, 39>();
@@ -123,6 +120,7 @@ void SuperH::synchroStart(void) {
     while((cycleCount < decilineStop) && _run) {
       executer();
     }
+
     while((cycleCount < decilineStop) && _pause) {
       SDL_mutexP(mutex[4]);
       SDL_CondWait(cond[4], mutex[4]);
