@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+                 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<chapter>
+<title>Using Yabause</title>
+
+<para>The first requirement is a Saturn ROM BIOS image (hence a Sega
+Saturn). Please don't ask us where to get one. </para>
+
+<para os="win">
+<para>Execute "yabause". The program will open a settings window.</para>
+
+<para>The Drive Letter setting is for you to be able to choose which
+cdrom drive you want yabause to use when trying to boot a game.</para>
+
+<para>The Region setting allows you to choose which region of game
+you'll be booting. In most cases, it's best to leave it as
+"Auto-detect".</para>
+
+<para>The Bios ROM File setting allows you to specify the location
+of your Saturn ROM BIOS image. This setting -must- be set to a
+valid Saturn ROM BIOS in order for yabause to operate
+correctly.</para>
+
+<para>The Backup RAM File setting allows you to specify the location
+of the Backup RAM file. This file allows yabause to store and
+load save games.</para>
+
+<para>The MPEG ROM File setting allows you to specify the location 
+of a MPEG Card's ROM image. While not necessary, it does allow
+you to test out the saturn's vcd capabilities.</para>
+
+<para>When you're done, just click on the "OK" button. If the bios
+location was specified correctly, emulation should start and
+you will see a bit of a brief animation of the saturn logo
+being formed. </para>
+</para>
+
+<para os="linux">
+<para>Execute "yabause". If yabause was compiled with gtk, the
+program should open a window with a menu. Use the
+"Open BIOS..." menu entry to choose your bios file.</para>
+
+<para>You can also set a cdrom device with the "Open CDROM..." entry.</para>
+
+<para>Once the BIOS file is choosen, you can start emulation with
+the "run" entry.</para>
+</para>
+
+<para>Here are the current key mappings(they may be subject to change):
+
+<simplelist type="horiz" columns="2">
+	<member><keycap>e</keycap></member><member>Up</member>
+	<member><keycap>s</keycap></member><member>Left</member>
+	<member><keycap>d</keycap></member><member>Down</member>
+	<member><keycap>f</keycap></member><member>Right</member>
+	<member><keycap>k</keycap></member><member>A button</member>
+	<member><keycap>l</keycap></member><member>B button</member>
+	<member><keycap>m</keycap></member><member>C button</member>
+	<member><keycap>u</keycap></member><member>X button</member>
+	<member><keycap>i</keycap></member><member>Y button</member>
+	<member><keycap>o</keycap></member><member>Z button</member>
+	<member><keycap>x</keycap></member><member>Left Trigger</member>
+	<member><keycap>z</keycap></member><member>Right Trigger</member>
+	<member><keycap>j</keycap></member><member>Start button</member>
+	<member os="linux"><keycap>h</keycap></member><member>Hide/show gtk interface</member>
+	<member><keycap>q</keycap></member><member>Quit program</member>
+</simplelist>
+
+</para>
+
+</chapter>

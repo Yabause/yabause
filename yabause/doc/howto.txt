@@ -1,0 +1,32 @@
+Here's some info about how to build the Yabause documentation
+(ie. export docbook files to some other format like HTML)
+
+You'll need the following tools:
+
+* An XSLT processor - I personally use xsltproc:
+    http://xmlsoft.org/XSLT/
+
+* XSL stylesheets - I use these:
+    http://docbook.sourceforge.net/projects/xsl/
+
+
+... more to come ...
+
+
+
+Useful links:
+
+* DocBook: The Definitive Guide by Norman Walsh and Leonard Muellner
+    http://www.docbook.org/tdg/en/html/
+
+* DocBook XSL: The Complete Guide by Bob Stayton
+    http://www.sagehill.net/docbookxsl/
+
+* DocBook Open Repository
+    http://docbook.sourceforge.net/
+
+* DocBook Technical Committee Document Repository (official specs)
+    http://www.oasis-open.org/docbook/
+
+____________________
+Romain Vallet - 2004
