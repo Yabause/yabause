@@ -114,8 +114,8 @@ void SuperH::executer(void) {
 }
 
 void SuperH::_executer(void) {
-  instruction = memoire->getWord(PC - 4);
-  (this->*opcodes[instruction])();
+	instruction = memoire->getWord(PC - 4);
+	(this->*opcodes[instruction])();
 }
 
 void SuperH::run(int t) {

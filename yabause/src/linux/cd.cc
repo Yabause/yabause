@@ -50,8 +50,6 @@ bool CDIsCDPresent()
 	return (ret == CDS_DISC_OK);
 }
 
-#define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
-
 long CDReadToc(unsigned long *TOC)
 {
    bool success;
@@ -115,27 +113,44 @@ long CDReadToc(unsigned long *TOC)
    return 0;
 }
 
-unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
-{
-   unsigned long dwBytesReturned;
-   union {
-	   struct cdrom_msf msf;
-	   char bigbuf[2048];
-   } position;
+int CDGetStatus(void) {
+	// 0 - CD Present, disc spinning
+	// 1 - CD Present, disc not spinning
+	// 2 - CD not present
+	// 3 - Tray open
+	// see ../windows/cd.cc for more info
 
-   if (hCDROM != -1)
-   {
-      lba += 150;
-      position.msf.cdmsf_min0 = lba / 4500;
-      position.msf.cdmsf_sec0 = (lba % 4500) / 75;
-      position.msf.cdmsf_frame0 = (lba % 4500) % 75;
+	int ret = ioctl(hCDROM, CDROM_DRIVE_STATUS, CDSL_CURRENT);
+	switch(ret) {
+		case CDS_DISC_OK:
+			return 0;
+		case CDS_NO_DISC:
+			return 2;
+		case CDS_TRAY_OPEN:
+			return 3;
+	}
+}
 
-      if (ioctl(hCDROM, CDROMREADMODE1, &position) == -1)
-	      return 0;
-      memcpy(buffer, position.bigbuf, 2048);
+bool CDReadSectorFAD(unsigned long FAD, void *buffer) {
+	unsigned long dwBytesReturned;
+	union {
+		struct cdrom_msf msf;
+		char bigbuf[2352];
+	} position;
 
-      return 2048;
-   }
+	if (hCDROM != -1)
+	{
+		position.msf.cdmsf_min0 = FAD / 4500;
+		position.msf.cdmsf_sec0 = (FAD % 4500) / 75;
+		position.msf.cdmsf_frame0 = FAD % 75;
 
-   return 0;
+		if (ioctl(hCDROM, CDROMREADRAW, &position) == -1) {
+			return false;
+		}
+		memcpy(buffer, position.bigbuf, 2352);
+
+		return true;
+	}
+
+	return false;
 }

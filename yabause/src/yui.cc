@@ -48,7 +48,6 @@ void yui_init(int (*yab_main)(void*)) {
 
 	stop = 0;
 	mem = new SaturnMemory();
-	mem->start();
 
 	while (!stop) yab_main(mem);
 	delete(mem);

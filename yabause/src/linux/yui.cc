@@ -194,5 +194,5 @@ unsigned char yui_region(void) {
 }
 
 char * yui_saveram(void) {
-	return NULL;
+	return "bakup.ram";
 }

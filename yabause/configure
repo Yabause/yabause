@@ -1381,6 +1381,8 @@ test -n "$target_alias" &&
 case $target in
 	*darwin*) yabause_arch=macosx;;
 	*linux*) yabause_arch=linux;;
+	*cygwin*) yabause_arch=windows;;
+	*mingw32*) yabause_arch=windows;;
 esac
 
 
@@ -1615,7 +1617,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=yabause
- VERSION=0.0.6
+ VERSION=0.0.7
 
 
 cat >>confdefs.h <<_ACEOF

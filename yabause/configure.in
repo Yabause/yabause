@@ -6,10 +6,12 @@ AC_CANONICAL_TARGET
 case $target in
 	*darwin*) yabause_arch=macosx;;
 	*linux*) yabause_arch=linux;;
+	*cygwin*) yabause_arch=windows;;
+	*mingw32*) yabause_arch=windows;;
 esac
 AC_SUBST(yabause_arch)
 
-AM_INIT_AUTOMAKE(yabause, 0.0.6)
+AM_INIT_AUTOMAKE(yabause, 0.0.7)
 
 AC_PROG_CC
 AC_PROG_CXX
