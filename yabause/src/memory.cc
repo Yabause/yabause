@@ -581,7 +581,7 @@ void SaturnMemory::mappage2(unsigned long adr) {
   }
   case 4:
   case 6:
-          mapMem = cursh->GetDataArray(); mapAdr = adr & 0x1000; return;
+          mapMem = cursh->GetDataArray(); mapAdr = adr & 0x00000FFF; return;
   case 7:
     if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = cursh->GetSdramMode(); mapAdr = adr & 0x00000FFF; return;}
     if (adr >= 0xFFFFFE00) { mapMem = cursh->GetOnchip(); mapAdr = adr & 0x000001FF; return;}
@@ -638,7 +638,7 @@ void SaturnMemory::mappage(unsigned long adr) {
 #endif
   }
   case 6:
-          mapMem = cursh->GetDataArray(); mapAdr = adr & 0x1000; return;
+          mapMem = cursh->GetDataArray(); mapAdr = adr & 0x00000FFF; return;
   case 7:
     if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = cursh->GetSdramMode(); mapAdr = adr & 0x00000FFF; return;}
     if (adr >= 0xFFFFFE00) { mapMem = cursh->GetOnchip(); mapAdr = adr & 0x000001FF; return;}
