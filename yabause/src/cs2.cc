@@ -95,7 +95,9 @@ unsigned short Cs2::getWord(unsigned long addr) {
                     val &= ~CDB_HIRQ_SCDQ;
 
                   Memory::setWord(addr, val);
+#if CDDEBUG
                   cerr << "cs2\t: Hirq read - ret: " << val << "\n";
+#endif
 	          break;
     case 0x9000C:
     case 0x90018:
@@ -159,7 +161,9 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
   }
   switch(addr) {
     case 0x90008:
+#if CDDEBUG
                   cerr << "cs2\t: WriteWord hirq = " << val << "\n";
+#endif
                   Memory::setWord(addr, Memory::getWord(addr) & val);
 	          break;
     case 0x9000C:
