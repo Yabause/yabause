@@ -610,7 +610,7 @@ void Cs2::run(unsigned long timing) {
 #if CDDEBUG
                   fprintf(stderr, "BUFFER IS FULL\n");
 #endif
-//                status = CDB_STAT_PAUSE;
+//                  status = CDB_STAT_PAUSE;
                }
             }
 
@@ -1510,20 +1510,21 @@ void Cs2::resetSelector(void) {
      // Reset specified partition buffer only
      unsigned long rsbufno=getCR3() >> 8;
 
-     isbufferfull = false;
-
+     // sort remaining blocks
      if (rsbufno < MAX_SELECTORS)
      {
         // clear partition
-        partition[rsbufno].size = -1;
-        partition[rsbufno].numblocks = 0;
-
-        for (i = 0; i < MAX_BLOCKS; i++)
+        for (i = 0; i < partition[rsbufno].numblocks; i++)
         {
+           FreeBlock(partition[rsbufno].block[i]);
            partition[rsbufno].block[i] = NULL;
         }
+
+        partition[rsbufno].size = -1;
+        partition[rsbufno].numblocks = 0;
      }
 
+     if (blockfreespace > 0) isbufferfull = false;
      if (blockfreespace == 200) isonesectorstored = false;
 
      doCDReport();
