@@ -31,6 +31,57 @@ private:
   SaturnMemory *satmem;
   unsigned long timer0;
   unsigned long timer1;
+
+  unsigned long dspProgramRam[256];
+  unsigned long dspMD[4][64];
+  unsigned char dsppc;
+  unsigned char dspDataRamPage;
+  unsigned char dspDataRamReadAddress;
+
+#ifdef WORDS_BIGENDIAN
+  union {
+    struct {
+       unsigned long unused1:5;
+       unsigned long PR:1; // Pause cancel flag
+       unsigned long EP:1; // Temporary stop execution flag
+       unsigned long unused2:1;
+       unsigned long T0:1; // D0 bus use DMA execute flag
+       unsigned long S:1;  // Sine flag
+       unsigned long Z:1;  // Zero flag
+       unsigned long C:1;  // Carry flag
+       unsigned long V:1;  // Overflow flag
+       unsigned long E:1;  // Program end interrupt flag
+       unsigned long ES:1; // Program step execute control bit
+       unsigned long EX:1; // Program execute control bit
+       unsigned long LE:1; // Program counter load enable bit
+       unsigned long unused3:7;
+       unsigned long P:8;  // Program Ram Address
+    } part;
+    unsigned long all;
+  } dspProgControlPort;
+#else
+  union {
+    struct {
+       unsigned long P:8;  // Program Ram Address
+       unsigned long unused3:7;
+       unsigned long LE:1; // Program counter load enable bit
+       unsigned long EX:1; // Program execute control bit
+       unsigned long ES:1; // Program step execute control bit
+       unsigned long E:1;  // Program end interrupt flag
+       unsigned long V:1;  // Overflow flag
+       unsigned long C:1;  // Carry flag
+       unsigned long Z:1;  // Zero flag
+       unsigned long S:1;  // Sine flag
+       unsigned long T0:1; // D0 bus use DMA execute flag
+       unsigned long unused2:1;
+       unsigned long EP:1; // Temporary stop execution flag
+       unsigned long PR:1; // Pause cancel flag
+       unsigned long unused1:5;
+    } part;
+    unsigned long all;
+  } dspProgControlPort;
+#endif
+
 public:
   Scu(SaturnMemory *);
   void reset(void);
@@ -39,6 +90,9 @@ public:
   void setLong(unsigned long, unsigned long);
 
   void DMA(int);
+
+  void run(unsigned long timing);
+
 					//source|vector | level | mask
 					//------------------------------
   void sendVBlankIN(void);	// VDP2	| 40	| F	| 0x0001

@@ -22,8 +22,22 @@
 #include "registres.hh"
 
 unsigned long Scu::getLong(unsigned long addr) {
-	if (addr == 0x80) return 0;        
-	return Memory::getLong(addr);
+  unsigned long val=0;
+  switch(addr) {
+     case 0x80: // DSP Program Control Port
+                val = dspProgControlPort.all & 0x00FD00FF;
+                break;
+     case 0x8C: // DSP Data Ram Data Port
+                if (!dspProgControlPort.part.EX) {
+                  val = dspMD[dspDataRamPage][dspDataRamReadAddress];
+                  dspDataRamReadAddress++;                           
+                }
+                else val = 0;
+                break;
+     default: val = Memory::getLong(addr);
+  }
+
+  return val;
 }
 
 void Scu::setLong(unsigned long addr, unsigned long val) {
@@ -58,16 +72,39 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
                            }
 			   Memory::setLong(addr, val);
                            break;
-                case 0x80: if (val & 0x10000) {                           
-#if DEBUG
-                             cerr << "scu\t: DSP execution not implemented" << endl;
-#endif
+                case 0x80: // DSP Program Control Port
+                           dspProgControlPort.all = (dspProgControlPort.all & 0x00FC0000) | (val & 0x060380FF);
+
+                           if (dspProgControlPort.part.LE) {
+                              // set pc
+                              dsppc = (unsigned char)dspProgControlPort.part.P;
+//#if DEBUG
+//                              fprintf(stderr, "scu\t: DSP set pc = %02X\n", dsppc);
+//#endif
                            }
-			   Memory::setLong(addr, val);
+
                            break;
-                case 0x90: 
+                case 0x84: // DSP Program Ram Data Port
+//#if DEBUG
+//                           fprintf(stderr, "scu\t: wrote %08X to DSP Program ram offset %02X\n", val, dsppc);
+//#endif
+
+                           dspProgramRam[dsppc] = val;
+                           dsppc++;
+                           break;
+                case 0x88: // DSP Data Ram Address Port
+                           dspDataRamPage = (val >> 6) & 3;
+                           dspDataRamReadAddress = val & 0x3F;
+                           break;
+                case 0x8C: // DSP Data Ram Data Port
+                           if (!dspProgControlPort.part.EX) {
+                              dspMD[dspDataRamPage][dspDataRamReadAddress] = val;
+                              dspDataRamReadAddress++;
+                           }
+                           break;
+                case 0x90:
 #if DEBUG
-                             cerr << "scu\t: Timer 0 Compare Register set to " << hex << val << endl;
+                           cerr << "scu\t: Timer 0 Compare Register set to " << hex << val << endl;
 #endif
 			   Memory::setLong(addr, val);
                            break;
@@ -88,6 +125,7 @@ void Scu::reset(void) {
 	Memory::setLong(0xA0, 0x0000BFFF);
 	Memory::setLong(0xA4, 0);
         timer0 = timer1 = 0;
+        dspProgControlPort.all=false;
 }
 
 void Scu::DMA(int mode) {
@@ -111,6 +149,7 @@ void Scu::DMA(int mode) {
 		case 0x7: writeAdd = 128; break;
 	}
 	if (getLong(i + 0x14) & 0x1000000) {
+                // Indirect DMA
                 unsigned long tempreadAddress;
                 unsigned long tempwriteAddress;
                 unsigned long temptransferNumber;
@@ -124,6 +163,11 @@ void Scu::DMA(int mode) {
                    tempreadAddress=satmem->getLong(writeAddress+8);
                    test = tempwriteAddress & 0x1FFFFFFF;
                    test2 = tempreadAddress & 0x80000000;
+
+#if DEBUG
+                   if (temptransferNumber == 0)
+                      cerr << "scu\t:indirect dma transfer number equals 0" << endl;
+#endif
 
                    if (mode > 0) temptransferNumber &= 0xFFF;
 
@@ -159,8 +203,14 @@ void Scu::DMA(int mode) {
 		}
 	}
 	else {
+                // Direct DMA
 		unsigned long counter = 0;
 		unsigned long test = writeAddress & 0x1FFFFFFF;
+
+#if DEBUG
+                if (transferNumber == 0)
+                   cerr << "scu\t:direct dma transfer number equals 0" << endl;
+#endif
 
                 if (mode > 0) transferNumber &= 0xFFF;
 
@@ -187,11 +237,62 @@ void Scu::DMA(int mode) {
 			}
 		}
 		switch(mode) {
-			case 0: sendLevel0DMAEnd(); break;
-			case 1: sendLevel1DMAEnd(); break;
-			case 2: sendLevel2DMAEnd(); break;
+                        case 0: sendLevel0DMAEnd(); break;
+                        case 1: sendLevel1DMAEnd(); break;
+                        case 2: sendLevel2DMAEnd(); break;
 		}
 	}
+}
+
+void Scu::run(unsigned long timing) {
+   // timing needs work
+
+   // is dsp executing?
+   if (dspProgControlPort.part.EX) {
+      unsigned long instruction;
+
+      instruction = dspProgramRam[dsppc];
+
+      // execute here
+      switch (instruction >> 30) {
+         case 0x00: // Operation Commands
+         case 0x02: // Load Immediate Commands
+#if DEBUG
+                    fprintf(stderr, "scu\t: Unimplemented DSP opcode %08X at offset %02X\n", instruction, dsppc);
+#endif
+                    break;
+         case 0x03: // Other
+                    switch((instruction >> 28) & 0x3) {
+                       case 0x00: // DMA Commands
+                       case 0x01: // Jump Commands
+                       case 0x02: // Loop bottom Commands
+#if DEBUG
+                                  fprintf(stderr, "scu\t: Unimplemented DSP opcode %08X at offset %02X\n", instruction, dsppc);
+#endif
+                                  break;
+                       case 0x03: // End Commands
+
+                                  dspProgControlPort.part.EX = false;
+
+                                  if (instruction & 0x8000000) {
+                                     // End with Interrupt(send dsp interrupt here?)
+                                     dspProgControlPort.part.E = true;
+                                     sendDSPEnd();
+                                  }
+
+                                  break;
+                       default: break;
+                    }
+                    break;
+         default: 
+#if DEBUG
+                    fprintf(stderr, "scu\t: Invalid DSP opcode %08X at offset %02X\n", instruction, dsppc);
+#endif
+                    break;
+      }
+
+      dsppc++;
+   }
 }
 
 void Scu::sendVBlankIN(void)      { sendInterrupt<0x40, 0xF, 0x0001>(); }
@@ -203,7 +304,7 @@ void Scu::sendHBlankIN(void) {
    sendInterrupt<0x42, 0xD, 0x0004>();
    timer0++;
    // if timer0 equals timer 0 compare register, do an interrupt
-   if (timer0 == Memory::getLong(0x90)) sendTimer0(); 
+   if (timer0 == Memory::getLong(0x90)) sendTimer0();
 }
 void Scu::sendTimer0(void)        { sendInterrupt<0x43, 0xC, 0x0008>(); }
 void Scu::sendTimer1(void)        { sendInterrupt<0x44, 0xB, 0x0010>(); }

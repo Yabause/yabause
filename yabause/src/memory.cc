@@ -677,6 +677,7 @@ void SaturnMemory::synchroStart(void) {
                 ((Cs2 *)cs2)->run(10);
 		msh->run(10);
                 ssh->run(10);
+                ((Scu *)scu)->run(10);
 		cycleCountII %= duf;
 	}
 
