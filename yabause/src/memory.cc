@@ -314,8 +314,10 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	char *bios;
 
 	bios = yui_bios();
-	if (bios == NULL) exit(1);
-	else {
+	if (bios == NULL) {
+		printf("BIOS not found!\n");
+		exit(1);
+	} else {
 		try {
 			rom->load(bios, 0);
 		}
