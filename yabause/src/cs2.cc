@@ -480,6 +480,18 @@ void Cs2::execute(void) {
 #endif
       playDisc();
       break;
+    case 0x11:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: seekDisc %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      seekDisc();
+      break;
+    case 0x20:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: getSubcodeQRW %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
+      getSubcodeQRW();
+      break;
     case 0x30:
 #if CDDEBUG
       fprintf(stderr, "cs2\t: Command: setCDDeviceConnection\n");
@@ -774,6 +786,55 @@ void Cs2::playDisc(void) {
         setCR4((unsigned short) FAD);
      }
   }
+}
+
+void Cs2::seekDisc(void) {
+  if (getCR1() & 0x80)
+  {
+     // Seek by FAD
+  }
+  else
+  {
+     // Seek by index
+     SetupDefaultPlayStats((getCR2() >> 8) + 1);
+     index = getCR2() & 0xFF;
+  }
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+}
+
+void Cs2::getSubcodeQRW(void) {
+  // According to Tyranid's doc, the subcode type is stored in the low byte
+  // of CR2. However, Sega's CDC library writes the type to the low byte
+  // of CR1. Somehow I'd sooner believe Sega is right.
+  switch(getCR1() & 0xFF) {
+     case 0:
+             // Get Q Channel
+             setCR1((status << 8) | 0);
+             setCR2(5);
+             setCR3(0);
+             setCR4(0);
+
+             // setup transfer here(fix me)
+             break;
+     case 1:
+             // Get RW Channel
+             setCR1((status << 8) | 0);
+             setCR2(12);
+             setCR3(0);
+             setCR4(0);
+
+             // setup transfer here(fix me)
+             break;
+     default: break;
+  }
+
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
 }
 
 void Cs2::setCDDeviceConnection(void) {

@@ -162,6 +162,8 @@ public:
   void initializeCDSystem(void);          // 0x04
   void endDataTransfer(void);             // 0x06
   void playDisc(void);                    // 0x10
+  void seekDisc(void);                    // 0x11
+  void getSubcodeQRW(void);               // 0x20
   void setCDDeviceConnection(void);       // 0x30
   void setFilterSubheaderConditions(void);// 0x42
   void setFilterMode(void);               // 0x44
