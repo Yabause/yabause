@@ -650,7 +650,7 @@ void Cs2::execute(void) {
       break;
     case 0x48:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: resetSelector\n");
+      fprintf(stderr, "cs2\t: Command: resetSelector %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       resetSelector();
 #if CDDEBUG
@@ -1398,7 +1398,32 @@ void Cs2::resetSelector(void) {
   // still needs a bit of work
   unsigned long i, i2;
 
-  isbufferfull = false;
+  if ((getCR1() & 0xFF) == 0)
+  {
+     // Reset specified partition buffer only
+     unsigned long rsbufno=getCR3() >> 8;
+
+     isbufferfull = false;
+
+     if (rsbufno < MAX_SELECTORS)
+     {
+        // clear partition
+        partition[rsbufno].size = -1;
+        partition[rsbufno].numblocks = 0;
+
+        for (i = 0; i < MAX_BLOCKS; i++)
+        {
+           partition[rsbufno].block[i] = NULL;
+        }
+     }
+
+     setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+     setCR2((ctrladdr << 8) | (track & 0xFF));
+     setCR3((index << 8) | ((FAD >> 16) &0xFF));
+     setCR4((unsigned short) FAD);
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+     return;
+  }
 
   // parse flags and reset the specified area(fix me)
   if (getCR1() & 0x80)
@@ -1440,6 +1465,7 @@ void Cs2::resetSelector(void) {
   if (getCR1() & 0x4)
   {
      // reset partitions buffer data
+     isbufferfull = false;
 
      // clear partitions
      for (i = 0; i < MAX_SELECTORS; i++)
@@ -1477,7 +1503,7 @@ void Cs2::getBufferSize(void) {
 }
 
 void Cs2::getSectorNumber(void) {
-  unsigned char gsnbufno;
+  unsigned long gsnbufno;
 
   gsnbufno = getCR3() >> 8;
 
@@ -1494,7 +1520,7 @@ void Cs2::getSectorNumber(void) {
 
 void Cs2::calculateActualSize(void) {
   unsigned long i;
-  unsigned short casbufno;
+  unsigned long casbufno;
   unsigned short cassectoffset;
   unsigned short casnumsect;
 
@@ -1544,6 +1570,12 @@ void Cs2::getSectorInfo(void) {
         setCR4((partition[gsibufno].block[gsisctnum]->sm << 8) | partition[gsibufno].block[gsisctnum]->ci);
         setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
         return;
+     }
+     else
+     {
+#if CDDEBUG
+        fprintf(stderr, "cs2\t: getSectorInfo: Unsupported Partition Number\n");
+#endif
      }
   }
 
