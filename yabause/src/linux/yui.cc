@@ -180,7 +180,13 @@ char * yui_cdrom(void) {
 }
 
 void yui_coin_coin(void) {
-	saturn = new SaturnMemory();
+	try {
+		saturn = new SaturnMemory();
+	}
+	catch(Exception e) {
+		cerr << e << endl;
+		exit(1);
+	}
 	//saturn->start();
 	g_idle_add((gboolean (*)(void*)) yab_main, saturn);
 }
@@ -194,5 +200,5 @@ unsigned char yui_region(void) {
 }
 
 char * yui_saveram(void) {
-	return "bakup.ram";
+	return NULL;
 }

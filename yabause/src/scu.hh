@@ -22,6 +22,7 @@
 
 #include "memory.hh"
 #include "intc.hh"
+#include "superh.hh"
 
 class Scu : public Memory {
 private:
