@@ -96,6 +96,8 @@ Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
 #ifdef _arch_dreamcast
 	__init_tree();
 #endif
+
+	timing = 0;
 }
 
 void Onchip::setByte(unsigned long addr, unsigned char val) {
@@ -127,7 +129,8 @@ void Onchip::setWord(unsigned long addr, unsigned short val) {
 	switch(addr) {
 		case ICR:
 			if (val & 0x8000) {
-				SDL_CreateThread(&Timer::call<Onchip, &Onchip::sendNMI, 100>, this); // random value
+				//SDL_CreateThread(&Timer::call<Onchip, &Onchip::sendNMI, 100>, this); // random value
+				timing = 100;
 			}
 	}
 	Memory::setWord(addr, val);
@@ -313,3 +316,12 @@ void Onchip::sendNMI(void) {
 void Onchip::sendUserBreak(void) {
   send(Interrupt(15, 12));
 } 
+
+void Onchip::run(unsigned long t) {
+	if (timing > 0) {
+		timing -= t;
+		if (timing <= 0) {
+			sendNMI();
+		}
+	}
+}

@@ -51,6 +51,7 @@ public:
 class Onchip : public Memory {
 private:
 	SaturnMemory *memory;
+	unsigned long timing;
 
         /* DMAC */
         inline void DMATransfer(unsigned long chcr, unsigned long reg_offset);
@@ -67,6 +68,8 @@ public:
         void setByte(unsigned long addr, unsigned char val);
 	void setWord(unsigned long, unsigned short);
 	void setLong(unsigned long, unsigned long);
+
+	void run(unsigned long);
 
 	/* DMAC */
 	void runDMA(void);

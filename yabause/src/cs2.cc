@@ -435,32 +435,43 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
 
   _command = false;
   _lock = SDL_CreateMutex();
+  /* attempt to remove cs2 thread
   SDL_CreateThread((int (*)(void*)) &run, this);
+  */
 }
 
 Cs2::~Cs2(void) {
    _stop = true;
-//      SDL_WaitThread(cdThread, NULL);
+   /* attempt to remove cs2 thread
+   SDL_WaitThread(cdThread, NULL);
    SDL_DestroyMutex(_lock);
+   */
 
    if (cdrom != NULL)
       CDDeInit();
 }
 
 void Cs2::run(Cs2 *cd) {
+	/* attempt to remove cs2 thread
   Timer t;
   while(!cd->_stop) {
+  */
     if (cd->_command) {
+	    return;
+	    /* attempt to remove cs2 thread
       t.wait(100);
+      */
     }
     else {
       unsigned short val=0;
+      /* attempt to remove cs2 thread
       while (SDL_mutexP(cd->_lock) == -1)
       {
 #if CDDEBUG
          fprintf(stderr, "cs2\t: couldn't lock mutex: %s\n", SDL_GetError());
 #endif
       }
+      */
 
 #if NEWCDINTERFACE
       // Get Drive's current status and compare with old status
@@ -534,18 +545,24 @@ void Cs2::run(Cs2 *cd) {
 
       // adjust command registers appropriately here(fix me)
 
+      /* attempt to remove cs2 thread
       while (SDL_mutexV(cd->_lock) == -1)
       {
 #if CDDEBUG
          fprintf(stderr, "cs2\t: couldn't unlock mutex: %s\n", SDL_GetError());
 #endif
       }
+      */
 
       // somehow I doubt this is correct
+      /* attempt to remove cs2 thread
       t.wait(50);
+      */
       //cd->periodicUpdate();
     }
+    /* attempt to remove cs2 thread
   }
+  */
 }
 
 void Cs2::command(void) {

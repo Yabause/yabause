@@ -183,10 +183,13 @@ void SuperH::synchroStart(void) {
 
       while (cycleCountII > duf) {
         ((Smpc *) ((SaturnMemory *)memoire)->getSmpc())->execute2(10); // yurk :(
+        ((Onchip *) ((SaturnMemory *)memoire)->getOnchip())->run(10); // yurk :(
 	SDL_CondBroadcast(cond[0]);
 	cycleCountII %= duf;
 	duf = deciufreq.nextValue();
       }
+
+      Cs2::run(((Cs2 *) ((SaturnMemory *)memoire)->getCS2()));
 
       cycleCount %= decilineStop;
       decilineStop = deciline.nextValue();
