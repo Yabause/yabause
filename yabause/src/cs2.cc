@@ -19,8 +19,8 @@
 */
 
 #include "cs2.hh"
+#include "cdbase.hh"
 #include "timer.hh"
-#include "cd.hh"
 #include "yui.hh"
 
 #define CDB_HIRQ_CMOK      0x0001
@@ -351,29 +351,28 @@ void Cs2::setLong(unsigned long addr, unsigned long val) {
 
 Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   _stop = false;
-	cdrom = yui_cdrom();
-	if (cdrom != NULL) {
-		if (CDInit(cdrom) != 0) {
-			cerr << "Unable to initialize cdrom: " << cdrom << "\n";
-		}
-	}
-
+  cd = yui_cd();
+  if (cd == NULL) {
+	cerr << "Unable to initialize cdrom!\n";
+  }
   reset();
 }
 
 Cs2::~Cs2(void) {
    _stop = true;
 
-   if (cdrom != NULL)
-      CDDeInit();
+   if (cd != NULL) {
+      delete cd;
+      cd = 0;
+   }
 }
 
 void Cs2::reset(void) {
   unsigned long i, i2;
 
-  switch (CDGetStatus())
+  switch (cd->getStatus())
   {
-     case 0:
+     case 0:   
      case 1:
              status = CDB_STAT_PAUSE;
              FAD = 150;
@@ -505,7 +504,7 @@ void Cs2::run(unsigned long timing) {
       _periodiccycles -= _periodictiming; 
 
       // Get Drive's current status and compare with old status
-      switch(CDGetStatus())
+      switch(cd->getStatus())
       {
          case 0:
          case 1:
@@ -1051,7 +1050,7 @@ void Cs2::getHardwareInfo(void) {
 }
 
 void Cs2::getToc(void) {
-  CDReadToc(TOC);
+  cd->readTOC(TOC);
 
   transfercount = 0;
   infotranstype = 0;
@@ -2758,7 +2757,7 @@ partition_struct *Cs2::ReadUnFilteredSector(unsigned long rufsFAD) {
         return NULL;
 
      // read a sector using cd interface function
-     if (!CDReadSectorFAD(rufsFAD, workblock.data))
+     if (!cd->readSectorFAD(rufsFAD, workblock.data))
         return NULL;
 
      // convert raw sector to type specified in getsectsize
@@ -2837,7 +2836,7 @@ partition_struct *Cs2::ReadFilteredSector(unsigned long rfsFAD) {
   if (outconcddev != NULL && !isbufferfull)
   {     
      // read a sector using cd interface function to workblock.data
-     if (!CDReadSectorFAD(rfsFAD, workblock.data))
+     if (!cd->readSectorFAD(rfsFAD, workblock.data))
         return NULL;
 
      workblock.size = getsectsize;

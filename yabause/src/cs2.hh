@@ -24,6 +24,8 @@
 #include "memory.hh"
 #include "cpu.hh"
 
+class CDInterface;
+
 #define MAX_BLOCKS      200
 #define MAX_SELECTORS   24
 #define MAX_FILES       256
@@ -184,7 +186,7 @@ private:
   bool _command;
   unsigned long _periodiccycles;
   unsigned long _periodictiming;
-  char *cdrom;
+  CDInterface *cd;
 public:
   Cs2(void);
   ~Cs2(void);

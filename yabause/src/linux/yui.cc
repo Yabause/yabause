@@ -1,3 +1,23 @@
+/*  Copyright 2004 Guillaume Duhamel
+    Copyright 2005 Joost Peters
+
+    This file is part of Yabause.
+
+    Yabause is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    Yabause is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Yabause; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 #include "../yui.hh"
 #include <gtk/gtk.h>
 #include <stdio.h>
@@ -5,11 +25,14 @@
 #include <gdk/gdkx.h>
 #include <SDL/SDL.h>
 #include "../memory.hh"
+#include "cd.hh"
 
 void yui_choose_bios(void);
 void yui_choose_cdrom(void);
 void yui_choose_binary(void);
+void yui_choose_iso(void);
 void yui_coin_coin(void);
+
 
 static GtkItemFactoryEntry entries[] = {
 	{ "/_Yabause",			NULL,		NULL,			0, "<Branch>" },
@@ -17,6 +40,7 @@ static GtkItemFactoryEntry entries[] = {
 	{ "/Yabause/_Open BIOS...",	"<CTRL>B",	yui_choose_bios,	1, "<Item>" },
 	{ "/Yabause/_Open Binary...",	NULL,		yui_choose_binary,	1, "<Item>" },
 	{ "/Yabause/_Open CDROM...",	"<CTRL>C",	yui_choose_cdrom,	1, "<Item>" },
+	{ "/Yabause/_Open ISO...",	"<CTRL>I",	yui_choose_iso,		1, "<Item>" },
 	{ "/Yabause/sep1",		NULL,		NULL,			0, "<Separator>" },
 	{ "/Yabause/_Quit",		"<CTRL>Q",	yui_quit,		0, "<StockItem>", GTK_STOCK_QUIT },
 	{ "/Emulation",			NULL,		NULL,			0, "<Branch>" },
@@ -32,7 +56,7 @@ GtkWidget *menu_bar;
 gboolean hide;
 
 char *bios;
-char *cdrom;
+CDInterface *cd = 0;
 char *binary;
 SaturnMemory *saturn;
 int (*yab_main)(void *);
@@ -105,7 +129,8 @@ void yui_init(int (*fonction)(void *)) {
 
 	bios = NULL;
 	saturn = NULL;
-
+	cd = new DummyCDDrive();
+	
 	/*
 	saturn = new SaturnMemory();
 	g_idle_add((gboolean (*)(void*)) fonction, saturn);
@@ -165,21 +190,33 @@ void yui_choose_bios(void) {
 	gtk_widget_show (filew);
 }
 
-static void set_cdrom( GtkWidget        *w, GtkFileSelection *fs ) {
-	cdrom = g_strdup(gtk_file_selection_get_filename (GTK_FILE_SELECTION (fs)));
+static void set_cdrom(GtkWidget *w, GtkFileSelection *fs ) {
+	delete cd;
+	cd = new LinuxCDDrive(g_strdup(gtk_file_selection_get_filename (GTK_FILE_SELECTION (fs))));
 	gtk_widget_destroy( GTK_WIDGET(fs) );
 }
 
+static void set_iso(GtkWidget *w, GtkFileSelection *fs) {
+	delete cd;
+	cd = new ISOCDDrive(g_strdup(gtk_file_selection_get_filename (GTK_FILE_SELECTION (fs))));
+	gtk_widget_destroy(GTK_WIDGET(fs));
+}
+
 void yui_choose_cdrom(void) {
-	GtkWidget *filew;
-	    
-	filew = gtk_file_selection_new ("File selection");
+	GtkWidget *filew = gtk_file_selection_new ("File selection");
 		    
 	g_signal_connect (G_OBJECT (GTK_FILE_SELECTION (filew)->ok_button), "clicked", G_CALLBACK (set_cdrom), (gpointer) filew);
 			    
 	g_signal_connect_swapped (G_OBJECT (GTK_FILE_SELECTION (filew)->cancel_button), "clicked", G_CALLBACK (gtk_widget_destroy), G_OBJECT (filew));
 			        
 	gtk_widget_show (filew);
+}
+
+void yui_choose_iso(void) {
+	GtkWidget *filew = gtk_file_selection_new("File selection");
+	g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(filew)->ok_button), "clicked", G_CALLBACK(set_iso), (gpointer)filew);
+	g_signal_connect_swapped(G_OBJECT(GTK_FILE_SELECTION(filew)->cancel_button), "clicked", G_CALLBACK(gtk_widget_destroy), G_OBJECT(filew));
+	gtk_widget_show(filew);
 }
 
 static void set_binary( GtkWidget * w, GtkFileSelection * fs ) {
@@ -200,8 +237,8 @@ void yui_choose_binary(void) {
 	gtk_widget_show (filew);
 }
 
-char * yui_cdrom(void) {
-	return cdrom;
+CDInterface *yui_cd(void) {
+	return cd;
 }
 
 void yui_coin_coin(void) {

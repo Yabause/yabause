@@ -25,7 +25,6 @@
 #include "vdp1.hh"
 #include "vdp2.hh"
 #include <sys/types.h>
-#include "cd.hh"
 #include "yui.hh"
 
 unsigned short buttonbits = 0xFFFF;

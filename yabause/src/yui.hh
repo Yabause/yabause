@@ -1,5 +1,7 @@
 #include "memory.hh"
 
+class CDInterface;
+
 /* this function should be the "main" function of the program,
  * the parameter is a function pointer, this function wants a
  * SaturnMemory as parameter, the interface must create it
@@ -22,6 +24,9 @@ char *	yui_bios(void);
 
 /* returns a cd device name or NULL if no cd device is used */
 char *	yui_cdrom(void);
+
+/* returns an instance derived from CDInterface, NULL if nothing instantiated */
+CDInterface *yui_cd(void);
 
 /* returns the region of system or 0 if autodetection is used */
 unsigned char yui_region(void);

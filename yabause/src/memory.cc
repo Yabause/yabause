@@ -22,7 +22,7 @@
 #include "superh.hh"
 #include "timer.hh"
 #include "yui.hh"
-#include "cd.hh"
+#include "cdbase.hh"
 
 Memory::Memory(unsigned long m, unsigned long size) {
   mask = m;

@@ -1,4 +1,6 @@
-/*  Copyright 2004 Theo Berkau
+/*  Copyright 2004-2005 Theo Berkau
+    Copyright 2004 Guillaume Duhamel
+    Copyright 2005 Joost Peters
 
     This file is part of Yabause.
 
@@ -25,9 +27,19 @@
 #include <string.h>
 #include <stdio.h>
 
-int hCDROM;
+#include "cd.hh"
 
-int CDInit(char *cdrom_name) {
+LinuxCDDrive::LinuxCDDrive(const char *cdrom_name) {
+	init(cdrom_name);
+}
+
+LinuxCDDrive::~LinuxCDDrive() {
+	deinit();
+}
+
+const char *LinuxCDDrive::deviceName() { return "linux ioctl() driver"; }
+
+int LinuxCDDrive::init(const char *cdrom_name) {
 	if ((hCDROM = open(cdrom_name, O_RDONLY | O_NONBLOCK)) == -1) {
 		return -1;
 	}
@@ -35,7 +47,7 @@ int CDInit(char *cdrom_name) {
 	return 0;
 }
 
-int CDDeInit() {
+int LinuxCDDrive::deinit() {
 	close(hCDROM);
 
 	fprintf(stderr, "CDDeInit OK\n");
@@ -44,13 +56,7 @@ int CDDeInit() {
 }
 
 
-bool CDIsCDPresent()
-{
-	int ret = ioctl(hCDROM, CDROM_DRIVE_STATUS, CDSL_CURRENT);
-	return (ret == CDS_DISC_OK);
-}
-
-long CDReadToc(unsigned long *TOC)
+long LinuxCDDrive::readTOC(unsigned long *TOC)
 {
    bool success;
    struct cdrom_tochdr ctTOC;
@@ -113,7 +119,7 @@ long CDReadToc(unsigned long *TOC)
    return 0;
 }
 
-int CDGetStatus(void) {
+int LinuxCDDrive::getStatus(void) {
 	// 0 - CD Present, disc spinning
 	// 1 - CD Present, disc not spinning
 	// 2 - CD not present
@@ -131,7 +137,7 @@ int CDGetStatus(void) {
 	}
 }
 
-bool CDReadSectorFAD(unsigned long FAD, void *buffer) {
+bool LinuxCDDrive::readSectorFAD(unsigned long FAD, void *buffer) {
 	unsigned long dwBytesReturned;
 	union {
 		struct cdrom_msf msf;
@@ -147,6 +153,7 @@ bool CDReadSectorFAD(unsigned long FAD, void *buffer) {
 		if (ioctl(hCDROM, CDROMREADRAW, &position) == -1) {
 			return false;
 		}
+		
 		memcpy(buffer, position.bigbuf, 2352);
 
 		return true;
