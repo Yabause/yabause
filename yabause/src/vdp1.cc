@@ -84,7 +84,14 @@ void Vdp1::lancer(Vdp1 *vdp1) {
 }
 
 void Vdp1::setSurface(SDL_Surface *s) {
-	surface = s;
+	vdp2Surface = s;
+	//vdp1Surface = SDL_ConvertSurface(vdp2Surface, vdp2Surface->format, SDL_HWSURFACE | SDL_SRCALPHA);
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	vdp1Surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 400, 400, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+#else
+	vdp1Surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 400, 400, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+#endif
+
 }
 
 void Vdp1::executer(unsigned long adr) {
@@ -102,10 +109,10 @@ void Vdp1::executer(unsigned long adr) {
   SDL_Rect cleanRect;
   cleanRect.x = registres->getWord(0x8) >> 8;
   cleanRect.y = registres->getWord(0x8) & 0xFF;
-  cleanRect.w = (registres->getWord(0xA) >> 8) - cleanRect.x;
+  cleanRect.w = (registres->getWord(0xA) >> 5) - cleanRect.x;
   cleanRect.h = (registres->getWord(0xA) & 0xFF) - cleanRect.y;
 
-  //SDL_FillRect(surface, /*&cleanRect*/ NULL, 0);
+  SDL_FillRect(vdp1Surface, &cleanRect, SDL_MapRGBA(vdp1Surface->format, 0xFF, 0xFF, 0xFF, 0));
   
   while ((!(commande & 0x8000)) /*&& (nbcom++ < 10000)*/) { // FIXME
 
@@ -113,7 +120,7 @@ void Vdp1::executer(unsigned long adr) {
     //cerr << "vdp1 :   | mode de saut = " << ((commande & 0x7000) >> 12) << '\n';
 
     // First, process the command
-    if (!(commande & 0x7000)) { // if (!skip)
+    if (!(commande & 0x4000)) { // if (!skip)
       switch (commande & 0x001F) {
 	case 0: //cerr << "vdp1\t: normal sprite draw" << endl;
 	  normalSpriteDraw(adr);
@@ -161,11 +168,13 @@ void Vdp1::executer(unsigned long adr) {
       adr = memoire->getWord(adr + 2) * 8;
       break;
     case 2: // CALL, call a subroutine
-      executer(adr + 0x20);
+      returnAddr = adr;
       adr = memoire->getWord(adr + 2) * 8;
+      cerr << "CALL " << adr << endl;
       break;
     case 3: // RETURN, return from subroutine
-      return;
+      adr = returnAddr;
+      cerr << "RET" << endl;
     }
     //cerr << "vdp1 :   | table suivante = " << adr << '\n';
 #ifndef _arch_dreamcast
@@ -180,6 +189,7 @@ void Vdp1::executer(unsigned long adr) {
 #if DEBUG
   //cerr << "vdp1 : draw end\n";
 #endif
+  SDL_BlitSurface(vdp1Surface, NULL, vdp2Surface, NULL);
   scu->sendDrawEnd();
 }
 
@@ -192,7 +202,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
   rect.w = ((xy >> 8) & 0x3F) * 8;
   rect.h = xy & 0xFF;
 
-  SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, 0xFF, 0, 0));
+  SDL_FillRect(vdp1Surface, &rect, SDL_MapRGBA(vdp1Surface->format, 0xFF, 0, 0, 0xFF));
 #if DEBUG
   //cerr << "vdp1\t: normal sprite draw" << endl;
 #endif
@@ -231,7 +241,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 		//cerr << "don't know what to do" << endl;
 	}
 	else {
-		filledPolygonColor(surface, X, Y, 4, 0xFFFFFFFF);
+		filledPolygonColor(vdp1Surface, X, Y, 4, 0xFFFFFFFF);
 	}
 #if 0
   cerr << "vdp1\t: distorted sprite draw"
@@ -256,13 +266,16 @@ void Vdp1::polygonDraw(unsigned short addr) {
 	Y[3] = localY + (memoire->getWord(addr + 0x1A) );
 
 	unsigned short color = memoire->getWord(addr + 0x6);
+	unsigned short CMDPMOD = memoire->getWord(addr + 0x4);
+
+	unsigned char alpha = 0xFF;
+	if ((CMDPMOD & 0x7) == 0x3) alpha = 0x80;
 
 	if ((X[0] & 0x400) ||(Y[0] & 0x400) ||(X[1] & 0x400) ||(Y[1] & 0x400) ||(X[2] & 0x400) ||(Y[2] & 0x400) ||(X[3] & 0x400) ||(Y[3] & 0x400)) {
 		//cerr << "don't know what to do" << endl;
 	}
 	else {
-		filledPolygonRGBA(surface, X, Y, 4, (color & 0x1F) << 3, (color & 0x3E0) >> 2, (color & 0x7C00) >> 7, 0xFF);
-		//filledPolygonColor(surface, X, Y, 4, 0xFFFFFFFF);
+		filledPolygonRGBA(vdp1Surface, X, Y, 4, (color & 0x1F) << 3, (color & 0x3E0) >> 2, (color & 0x7C00) >> 7, alpha);
 	}
 
 	unsigned short cmdpmod = memoire->getWord(addr + 0x4);

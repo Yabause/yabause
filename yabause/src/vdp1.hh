@@ -46,10 +46,13 @@ private:
   Memory *memoire;
   Vdp1Registers *registres;
   Scu *scu;
-  SDL_Surface *surface;
+  SDL_Surface *vdp1Surface;
+  SDL_Surface *vdp2Surface;
 
   unsigned short localX;
   unsigned short localY;
+
+  unsigned short returnAddr;
 public:
   Vdp1(Vdp1Registers *, Memory *, Scu *);
   void executer(unsigned long = 0);
