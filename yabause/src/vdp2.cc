@@ -26,6 +26,7 @@
 #include <SDL/SDL_image.h>
 #endif
 #include "SDL_gfxPrimitives.h"
+#include "SDL_imageFilter.h"
 
 /****************************************/
 /*					*/
@@ -127,7 +128,6 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha) {
   addr *= 2; // merci Runik !
   switch(mode) {
   case 0: {
-    //addr &= 0x3FF;
     unsigned long tmp = getWord(addr);
     return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
 	  }
@@ -175,41 +175,39 @@ void Vdp2Screen::draw(void) {
 	if (!enable || (getPriority() == 0)) return;
 
 	if (bitmap) {
-		cerr << "VDP2 screen " << getInnerPriority() << " drawing bitmap mode, color mode : " << colorNumber << endl;
 		drawCell();
 	}
 	else {
-		cerr << "VDP2 screen " << getInnerPriority() << " drawing cell mode, color mode " << colorNumber << endl;
 		drawMap();
 	}
 }
 
 void Vdp2Screen::drawMap(void) {
-  int X, Y;
-  X = x;
-  for(int i = 0;i < mapWH;i++) {
-    Y = y;
-    x = X;
-    for(int j = 0;j < mapWH;j++) {
-      y = Y;
-      planeAddr(mapWH * i + j);
-      drawPlane();
-    }
-  }
+	int X, Y;
+	X = x;
+	for(int i = 0;i < mapWH;i++) {
+		Y = y;
+		x = X;
+		for(int j = 0;j < mapWH;j++) {
+			y = Y;
+			planeAddr(mapWH * i + j);
+			drawPlane();
+		}
+	}
 }
 
 void Vdp2Screen::drawPlane(void) {
-  int X, Y;
+	int X, Y;
 
-  X = x;
-  for(int i = 0;i < planeH;i++) {
-    Y = y;
-    x = X;
-    for(int j = 0;j < planeW;j++) {
-      y = Y;
-      drawPage();
-    }
-  }
+	X = x;
+	for(int i = 0;i < planeH;i++) {
+		Y = y;
+		x = X;
+		for(int j = 0;j < planeW;j++) {
+			y = Y;
+			drawPage();
+		}
+	}
 }
 
 void Vdp2Screen::drawPage(void) {
@@ -228,67 +226,64 @@ void Vdp2Screen::drawPage(void) {
 }
 
 void Vdp2Screen::patternAddr(void) {
-  switch(patternDataSize) {
-  case 1: {
-    unsigned short tmp = vram->getWord(addr);
-    addr += 2;
-    specialFunction = supplementData & 0x300 >> 8;
-    switch(colorNumber) {
-      case 0: // in 16 colors
-	palAddr = ((tmp & 0xF000) >> 12) | ((supplementData & 0xE0) >> 1);
-        break;
-      default: // not in 16 colors
-	palAddr = (tmp & 0x7000) >> 8;
-	break;
-    }
-    switch(auxMode) {
-    case 0:
-      flipFunction = (tmp & 0xC00) >> 10;
-      switch(patternWH) {
-      case 1:
-	charAddr = (tmp & 0x3FF) | ((supplementData & 0x1F) << 10);
-	break;
-      case 2:
-	charAddr = ((tmp & 0x3FF) << 2) |  (supplementData & 0x3) | ((supplementData & 0x1C) << 10);
-	//if (tmp != 0) cerr << "POLOM tmp=" << tmp << " supplementData=" << supplementData << endl;
-	break;
-      }
-      break;
-    case 1:
-      flipFunction = 0;
-      switch(patternWH) {
-      case 1:
-	charAddr = (tmp & 0xFFF) | ((supplementData & 0x1C) << 10);
-	break;
-      case 4:
-	charAddr = ((tmp & 0xFFF) << 2) |  (supplementData & 0x3) | ((supplementData & 0x10) << 10);
-	break;
-      }
-      break;
-    }
-    break;
-	  }
-  case 2: {
-    unsigned short tmp1 = vram->getWord(addr);
-    addr += 2;
-    unsigned short tmp2 = vram->getWord(addr);
-    addr += 2;
-    charAddr = tmp2 & 0x7FFF;
-    flipFunction = (tmp1 & 0xC000) >> 14;
-    palAddr = tmp1 & 0x7F;
-    specialFunction = (tmp1 & 0x3000) >> 12;
-    break;
-	  }
-  }
-  if (!(reg->getWord(0x6) & 0x8000)) charAddr &= 0x3FFF;
-  charAddr *= 0x20; // selon Runik
+	switch(patternDataSize) {
+	case 1: {
+		unsigned short tmp = vram->getWord(addr);
+		addr += 2;
+		specialFunction = supplementData & 0x300 >> 8;
+    		switch(colorNumber) {
+      		case 0: // in 16 colors
+			palAddr = ((tmp & 0xF000) >> 12) | ((supplementData & 0xE0) >> 1);
+        		break;
+      		default: // not in 16 colors
+			palAddr = (tmp & 0x7000) >> 8;
+			break;
+    		}
+    		switch(auxMode) {
+    		case 0:
+      			flipFunction = (tmp & 0xC00) >> 10;
+      			switch(patternWH) {
+      			case 1:
+				charAddr = (tmp & 0x3FF) | ((supplementData & 0x1F) << 10);
+				break;
+      			case 2:
+				charAddr = ((tmp & 0x3FF) << 2) |  (supplementData & 0x3) | ((supplementData & 0x1C) << 10);
+				break;
+      			}
+      			break;
+    		case 1:
+      			flipFunction = 0;
+      			switch(patternWH) {
+      			case 1:
+				charAddr = (tmp & 0xFFF) | ((supplementData & 0x1C) << 10);
+				break;
+      			case 4:
+				charAddr = ((tmp & 0xFFF) << 2) |  (supplementData & 0x3) | ((supplementData & 0x10) << 10);
+				break;
+      			}
+      			break;
+    		}
+    		break;
+	}
+  	case 2: {
+    		unsigned short tmp1 = vram->getWord(addr);
+    		addr += 2;
+    		unsigned short tmp2 = vram->getWord(addr);
+    		addr += 2;
+    		charAddr = tmp2 & 0x7FFF;
+    		flipFunction = (tmp1 & 0xC000) >> 14;
+    		palAddr = tmp1 & 0x7F;
+    		specialFunction = (tmp1 & 0x3000) >> 12;
+    		break;
+	}
+	}
+	if (!(reg->getWord(0x6) & 0x8000)) charAddr &= 0x3FFF;
+	charAddr *= 0x20; // selon Runik
 }
 
 void Vdp2Screen::drawPattern(void) {
 	int X, Y;
 	int xEnd, yEnd;
-
-	//flipFunction = 0;
 
 	if(flipFunction & 0x1) { // vertical flip
 		x += patternWH * 8 - 1;
@@ -814,7 +809,7 @@ void NBG2::init(void) {
   	auxMode = (patternNameReg & 0x4000) >> 14;
 	unsigned short colorCalc = reg->getWord(0xEC);
 	if (colorCalc & 0x4) {
-		alpha = ((~reg->getWord(0x10A) & 0x1F00) << 3) + 0x7;
+		alpha = ((~reg->getWord(0x10A) & 0x1F) << 3) + 0x7;
 	}
 	else {
 		alpha = 0xFF;
@@ -864,11 +859,69 @@ int NBG2::getInnerPriority(void) {
 }
 
 void NBG3::init(void) {
-	enable = false;
+	unsigned short patternNameReg = reg->getWord(0x36);
+	unsigned short patternReg = reg->getWord(0x2A);
+
+	enable = reg->getWord(0x20) & 0x8;
+
+  	colorNumber = (patternReg & 0x20) >> 5;
+	bitmap = false; // NBG2 can only use cell mode
+	
+	mapWH = 2;
+  	switch((reg->getWord(0x3A) & 0xC0) >> 6) {
+  		case 0: planeW = planeH = 1; break;
+  		case 1: planeW = 2; planeH = 1; break;
+  		case 2: planeW = planeH = 2; break;
+  	}
+  	if(patternNameReg & 0x8000) patternDataSize = 1;
+  	else patternDataSize = 2;
+  	if(patternReg & 0x10) patternWH = 2;
+  	else patternWH = 1;
+  	pageWH = 64/patternWH;
+  	cellW = cellH = 8;
+  	supplementData = patternNameReg & 0x3FF;
+  	auxMode = (patternNameReg & 0x4000) >> 14;
+	unsigned short colorCalc = reg->getWord(0xEC);
+	if (colorCalc & 0x8) {
+		alpha = ((~reg->getWord(0x10A) & 0x1F00) >> 5) + 0x7;
+	}
+	else {
+		alpha = 0xFF;
+	}
 }
 
 void NBG3::planeAddr(int i) {
-	addr = 0;
+	unsigned long offset = (reg->getWord(0x3C) & 0x7000) >> 6;
+  	unsigned long tmp;
+  	switch(i) {
+    		case 0: tmp = offset | reg->getByte(0x49); break;
+    		case 1: tmp = offset | reg->getByte(0x48); break;
+    		case 2: tmp = offset | reg->getByte(0x4B); break;
+    		case 3: tmp = offset | reg->getByte(0x4A); break;
+  	}
+  	int deca = planeH + planeW - 2;
+  	int multi = planeH * planeW;
+
+	if (reg->getWord(0x6) & 0x8000) {
+  		if (patternDataSize == 1) {
+	  		if (patternWH == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
+	  		else addr = (tmp >> deca) * (multi * 0x800);
+  		}
+  		else {
+	  		if (patternWH == 1) addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
+	  		else addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
+  		}
+	}
+	else {
+  		if (patternDataSize == 1) {
+	  		if (patternWH == 1) addr = ((tmp & 0x1F) >> deca) * (multi * 0x2000);
+	  		else addr = ((tmp & 0xEF) >> deca) * (multi * 0x800);
+  		}
+  		else {
+	  		if (patternWH == 1) addr = ((tmp & 0xF) >> deca) * (multi * 0x4000);
+	  		else addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
+  		}
+	}
 }
 
 int NBG3::getPriority(void) {
