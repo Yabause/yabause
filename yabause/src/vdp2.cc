@@ -990,11 +990,24 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
   unsigned short patternNameReg = reg->getWord(0x30);
 //  unsigned short mapOffsetReg = reg->getWord(0x3C);
   unsigned short lineVerticalScrollReg = reg->getWord(0x9A) & 0x3F;
+  unsigned char planeSize;
 
   // is NBG0/RBG1 enabled?
   if (screenDisplayReg & 0x1 || screenDisplayReg & 0x20) {
      // enabled
      *isenabled = true;
+
+     // Generate specific Info for NBG0/RBG1
+     if (screenDisplayReg & 0x20)
+     {
+         sprintf(outstring, "RBG1 mode\r\n");
+         outstring += strlen(outstring);
+     }
+     else
+     {
+         sprintf(outstring, "NBG0 mode\r\n");
+         outstring += strlen(outstring);
+     }
 
      // Mosaic
      if (mosaicReg & 0x1)
@@ -1026,8 +1039,8 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
      }
      outstring += strlen(outstring);
 
-     // Bitmap or Tile mode?
-     if (patternReg & 0x0002)
+     // Bitmap or Tile mode?(RBG1 can only do Tile mode)
+     if (patternReg & 0x0002 && !(screenDisplayReg & 0x20))
      {
         unsigned short bmpPalNumberReg = reg->getWord(0x2C);
 
@@ -1044,7 +1057,19 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
         }
         outstring += strlen(outstring);
 
-        sprintf(outstring, "Bitmap Palette Number = %x\r\n", bmpPalNumberReg & 0x7);
+        if (bmpPalNumberReg & 0x200)
+        {
+           sprintf(outstring, "Bitmap Special Priority enabled\r\n");
+           outstring += strlen(outstring);
+        }
+
+        if (bmpPalNumberReg & 0x100)
+        {
+           sprintf(outstring, "Bitmap Special Color Calculation enabled\r\n");
+           outstring += strlen(outstring);
+        }
+
+        sprintf(outstring, "Bitmap Palette Number = %X\r\n", bmpPalNumberReg & 0x7);
         outstring += strlen(outstring);
      }
      else
@@ -1077,7 +1102,32 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
         }
      }
 
-     switch(reg->getWord(0x3A) & 0x3)
+     if (screenDisplayReg & 0x20)
+     {
+        // RBG1 plane size
+        planeSize = (reg->getWord(0x3A) >> 12) & 0x3;
+
+        switch(reg->getWord(0x3A) >> 14)
+        {
+           case 0: sprintf(outstring, "Screen-over process = Repeated Mode\r\n");
+                   break;
+           case 1: sprintf(outstring, "Screen-over process = Character Pattern Repeated Mode\r\n");
+                   break;
+           case 2: sprintf(outstring, "Screen-over process = Transparent Mode\r\n");
+                   break;
+           case 3: sprintf(outstring, "Screen-over process = Clip to 512x512 Mode\r\n");
+                   break;
+        }
+ 
+        outstring += strlen(outstring);
+     }
+     else
+     {
+        // NBG0 plane size
+        planeSize = reg->getWord(0x3A) & 0x3;
+     }
+     
+     switch(planeSize)
      {
         case 0: sprintf(outstring, "Plane Size = 1H x 1V\r\n");
                 break;
@@ -1091,66 +1141,141 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
 
      outstring += strlen(outstring);
 
-     switch (lineVerticalScrollReg >> 4)
-     {
-        case 0:
-                sprintf(outstring, "Line Scroll Interval = Each Line\r\n");
-                break;
-        case 1:
-                sprintf(outstring, "Line Scroll Interval = Every 2 Lines\r\n");
-                break;
-        case 2:
-                sprintf(outstring, "Line Scroll Interval = Every 4 Lines\r\n");
-                break;
-        case 3:
-                sprintf(outstring, "Line Scroll Interval = Every 8 Lines\r\n");
-                break;
-     }
-
-     outstring += strlen(outstring);
-
-     if (lineVerticalScrollReg & 0x8)
-     {
-        sprintf(outstring, "Line Zoom enabled\r\n");
-        outstring += strlen(outstring);
-     }
-
-     if (lineVerticalScrollReg & 0x4)
-     {
-        sprintf(outstring, "Line Scroll Vertical enabled\r\n");
-        outstring += strlen(outstring);
-     }
-
-     if (lineVerticalScrollReg & 0x2)
-     {
-        sprintf(outstring, "Line Scroll Horizontal enabled\r\n");
-        outstring += strlen(outstring);
-     }
-
-     if (lineVerticalScrollReg & 0x6) 
-     {
-        sprintf(outstring, "Line Scroll Table Address = %08X\r\n", 0x05E00000 + ((((reg->getWord(0xA0) & 0x7) << 16) | (reg->getWord(0xA2) & 0xFFFE)) << 1));
-        outstring += strlen(outstring);
-     }
-
-     if (lineVerticalScrollReg & 0x1)
-     {
-        sprintf(outstring, "Vertical Cell Scroll enabled\r\n");
-        sprintf(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", 0x05E00000 + ((((reg->getWord(0x9C) & 0x7) << 16) | (reg->getWord(0x9E) & 0xFFFE)) << 1));
-        outstring += strlen(outstring);
-     }
-
-     // Generate specific Info for NBG0/RBG1
      if (screenDisplayReg & 0x20)
      {
-         sprintf(outstring, "RBG1 mode\r\n");
-         outstring += strlen(outstring);
+        unsigned short mapOffsetReg=(reg->getWord(0x3E) & 0x70) << 2;
+        unsigned short rotParaControlReg=reg->getWord(0xB2);
+
+        // RBG1
+
+        // Map Planes A-P here
+
+        // Rotation Parameter Read Control
+        if (rotParaControlReg & 0x400)
+           sprintf(outstring, "Read KAst Parameter = TRUE\r\n");
+        else
+           sprintf(outstring, "Read KAst Parameter = FALSE\r\n");
+        outstring += strlen(outstring);
+
+        if (rotParaControlReg & 0x200)
+           sprintf(outstring, "Read Yst Parameter = TRUE\r\n");
+        else
+           sprintf(outstring, "Read Yst Parameter = FALSE\r\n");
+        outstring += strlen(outstring);
+
+        if (rotParaControlReg & 0x100)
+           sprintf(outstring, "Read Xst Parameter = TRUE\r\n");
+        else
+           sprintf(outstring, "Read Xst Parameter = FALSE\r\n");
+        outstring += strlen(outstring);
+
+        // Coefficient Table Control
+
+        // Coefficient Table Address Offset
+
+        // Screen Over Pattern Name(should this be moved?)
+
+        // Rotation Parameter Table Address
      }
      else
      {
-         sprintf(outstring, "NBG0 mode\r\n");
-         outstring += strlen(outstring);
+        unsigned short mapOffsetReg=(reg->getWord(0x3C) & 0x7) << 6;
+
+        // NBG0
+
+        // Map Planes A-D here
+
+        // Scroll screen values
+
+        // Coordinate Increments
+
+        // Reduction Enable
+        switch ((reg->getWord(0x3C) >> 8) & 3)
+        {
+           case 1:
+                   sprintf(outstring, "Horizontal Reduction = 1/2\r\n");
+                   outstring += strlen(outstring);
+                   break;
+           case 2:
+           case 3:
+                   sprintf(outstring, "Horizontal Reduction = 1/4\r\n");
+                   outstring += strlen(outstring);
+                   break;
+           default: break;
+        }
+
+        switch (lineVerticalScrollReg >> 4)
+        {
+           case 0:
+                   sprintf(outstring, "Line Scroll Interval = Each Line\r\n");
+                   break;
+           case 1:
+                   sprintf(outstring, "Line Scroll Interval = Every 2 Lines\r\n");
+                   break;
+           case 2:
+                   sprintf(outstring, "Line Scroll Interval = Every 4 Lines\r\n");
+                   break;
+           case 3:
+                   sprintf(outstring, "Line Scroll Interval = Every 8 Lines\r\n");
+                   break;
+        }
+
+        outstring += strlen(outstring);
+   
+        if (lineVerticalScrollReg & 0x8)
+        {
+           sprintf(outstring, "Line Zoom enabled\r\n");
+           outstring += strlen(outstring);
+        }
+
+        if (lineVerticalScrollReg & 0x4)
+        {
+           sprintf(outstring, "Line Scroll Vertical enabled\r\n");
+           outstring += strlen(outstring);
+        }
+   
+        if (lineVerticalScrollReg & 0x2)
+        {
+           sprintf(outstring, "Line Scroll Horizontal enabled\r\n");
+           outstring += strlen(outstring);
+        }
+
+        if (lineVerticalScrollReg & 0x6) 
+        {
+           sprintf(outstring, "Line Scroll Enabled\r\n");
+           outstring += strlen(outstring);
+           sprintf(outstring, "Line Scroll Table Address = %08X\r\n", 0x05E00000 + ((((reg->getWord(0xA0) & 0x7) << 16) | (reg->getWord(0xA2) & 0xFFFE)) << 1));
+           outstring += strlen(outstring);
+        }
+
+        if (lineVerticalScrollReg & 0x1)
+        {
+           sprintf(outstring, "Vertical Cell Scroll enabled\r\n");
+           outstring += strlen(outstring);
+           sprintf(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", 0x05E00000 + ((((reg->getWord(0x9C) & 0x7) << 16) | (reg->getWord(0x9E) & 0xFFFE)) << 1));
+           outstring += strlen(outstring);
+        }
      }
+
+     // Window Control here
+
+     // Shadow Control here
+
+     // Color Ram Address Offset here
+
+     // Special Priority Mode here
+
+     // Color Calculation Control here
+
+     // Special Color Calculation Mode here
+
+     // Priority Number here
+
+     // Color Calculation here
+
+     // Color Offset Enable here
+
+     // Color Offset Select here
   }
   else {
      // disabled
