@@ -64,6 +64,7 @@ public:
 	Onchip(SaturnMemory *);
 	~Onchip(void);
 
+        void setByte(unsigned long addr, unsigned char val);
 	void setLong(unsigned long, unsigned long);
 
 	/* DMAC */

@@ -55,9 +55,42 @@ void __del_highest_int()	{
 }
 #endif
 
+#define TIER    0x10
+#define FTCSR   0x11
+#define FRCH    0x12
+#define FRCL    0x13
+#define ORCH    0x14
+#define ORCL    0x15
+#define TCR     0x16
+#define TOCR    0x17
+#define ICRH    0x18
+#define ICRL    0x19
+
+#define IPRB	0x60
+#define ICR	0xE0
+#define IPRA	0xE2
+#define SAR0	0x180
+#define DAR0	0x184
+#define TCR0	0x188
+#define CHCR0	0x18C
+#define CHCR1	0x19C
+#define DMAOR	0x1B0
+
 Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
 	memory = sm;
-	setByte(4, 0x84);
+        Memory::setByte(4, 0x84);
+
+        // initialize the Free-running Timer registers
+        Memory::setByte(TIER, 0x01);
+        Memory::setByte(FTCSR, 0x00);
+        Memory::setByte(FRCH, 0x00);
+        Memory::setByte(FRCL, 0x00);
+        Memory::setByte(ORCH, 0xFF);
+        Memory::setByte(ORCL, 0xFF);
+        Memory::setByte(TCR, 0x00);
+        Memory::setByte(TOCR, 0xE0);
+        Memory::setByte(ICRH, 0x00);
+        Memory::setByte(ICRL, 0x00);
 
 #ifdef _arch_dreamcast
 	__init_tree();
@@ -83,15 +116,30 @@ Onchip::~Onchip(void) {
   SDL_DestroyMutex(mutex);
 }
 
-#define IPRB	0x60
-#define ICR	0xE0
-#define IPRA	0xE2
-#define SAR0	0x180
-#define DAR0	0x184
-#define TCR0	0x188
-#define CHCR0	0x18C
-#define CHCR1	0x19C
-#define DMAOR	0x1B0
+void Onchip::setByte(unsigned long addr, unsigned char val) {
+  switch(addr) {
+  case TCR: {
+#if DEBUG
+    fprintf(stderr, "MSH2 onchip register TCR write: %02x\n", val);
+#endif
+    Memory::setByte(addr, val);
+    break;
+  }
+  case FTCSR: {
+    // the only thing you can do to bits 1-7 is clear them
+    Memory::setByte(addr, (Memory::getByte(addr) & (val & 0xFE)) | (val & 0x1));
+    break;
+  }
+  case ICRH:
+  case ICRL:
+  {
+    // don't allow data to be written to them
+    break;
+  }
+  default:
+    Memory::setByte(addr, val);
+  }
+}
 
 void Onchip::setLong(unsigned long addr, unsigned long val) {
   switch(addr) {
