@@ -1,4 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -28,7 +29,7 @@
 #endif
 #include <sys/types.h>
 #include "cmdline.h"
-#include "cd.h"
+#include "cd.hh"
 
 unsigned short buttonbits = 0xFFFF;
 
