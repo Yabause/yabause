@@ -24,6 +24,46 @@
 #include "intc.hh"
 #include "cpu.hh"
 
+typedef struct
+{
+  unsigned long R[16];
+
+#ifdef WORDS_BIGENDIAN
+  union {
+    struct {
+      unsigned long useless1:22;
+      unsigned long M:1;
+      unsigned long Q:1;
+      unsigned long I:4;
+      unsigned long useless2:2;
+      unsigned long S:1;
+      unsigned long T:1;
+    } part;
+    unsigned long all;
+  } SR;
+#else
+  union {
+    struct {
+      unsigned long T:1;
+      unsigned long S:1;
+      unsigned long useless2:2;
+      unsigned long I:4;
+      unsigned long Q:1;
+      unsigned long M:1;
+      unsigned long useless1:22;
+    } part;
+    unsigned long all;
+  } SR;
+#endif
+  unsigned long GBR;
+  unsigned long VBR;
+
+  unsigned long MACH;
+  unsigned long MACL;
+  unsigned long PR;
+  unsigned long PC;
+} sh2regs_struct;
+
 class Instruction {
 public:
   static inline unsigned long a   (unsigned long ul) { return ((ul & 0xF000) >> 12); }
@@ -125,6 +165,9 @@ public:
   void waitVBlankIN(void);
   void waitVBlankOUT(void);
   void waitInterruptEnd(void);
+
+  void GetRegisters(sh2regs_struct *regs);
+  void SetRegisters(sh2regs_struct *regs);
 
 #ifndef _arch_dreamcast
   friend ostream& operator<<(ostream&, const SuperH&);

@@ -89,10 +89,14 @@ int SuperH::lancer(SuperH *sh) {
 		sh->synchroStart<26874100, 60, 9, 1, 224, 39>();
 	}
 	catch(Exception e) {
+                Memory *mem; 
 		cerr << "KABOOOOM" << endl;
 		cerr << "PC=" << hex << sh->PC << endl;
 		cerr << "opcode=" << hex << sh->instruction << endl;
 		cerr << e << endl;
+                // dump wram to file
+                mem = sh->getMemory();
+                mem->save("errwrm.dmp", 0x06000000, 0x100000);
 	}
 #else
 	sh->synchroStart<26874100, 60, 9, 1, 224, 39>();
@@ -2279,3 +2283,31 @@ SuperH::opcode SuperH::decode(void) {
   default: return &SuperH::undecoded;
   }
 }
+
+// pending approval
+void SuperH::GetRegisters(sh2regs_struct *regs) {
+  if (regs != NULL) {
+    memcpy(regs->R, R, sizeof(R));
+    regs->SR.all = SR.tout;
+    regs->GBR = GBR;
+    regs->VBR = VBR;
+    regs->MACH = MACH;
+    regs->MACL = MACL;
+    regs->PR = PR;
+    regs->PC = PC;
+  }
+}
+
+void SuperH::SetRegisters(sh2regs_struct *regs) {
+  if (regs != NULL) {
+    memcpy(R, regs->R, sizeof(R));
+    SR.tout = regs->SR.all;
+    GBR = regs->GBR;
+    VBR = regs->VBR;
+    MACH = regs->MACH;
+    MACL = regs->MACL;
+    PR = regs->PR;
+    PC = regs->PC;
+  }
+}
+
