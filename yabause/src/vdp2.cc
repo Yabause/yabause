@@ -41,24 +41,33 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
   switch(addr) {
     case 0:
       int width, height;
+      int wratio, hratio;
 
       // Horizontal Resolution
       switch (val & 0x7) {
          case 0: width = 320;
+                 wratio = 1;
                  break;
          case 1: width = 352;
+                 wratio = 1;
                  break;
          case 2: width = 640;
+                 wratio = 2;
                  break;
          case 3: width = 704;
+                 wratio = 2;
                  break;
          case 4: width = 320;
+                 wratio = 1;
                  break;
          case 5: width = 352;
+                 wratio = 1;
                  break;
          case 6: width = 640;
+                 wratio = 2;
                  break;
          case 7: width = 704;
+                 wratio = 2;
                  break;
       }
 
@@ -73,17 +82,21 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
          default: break;
       }
 
+      hratio = 1;
+
       // Check for interlace
       switch ((val >> 6) & 0x3) {
          case 2: // Single-density Interlace
          case 3: // Double-density Interlace
                  height *= 2;
+                 hratio = 2;
                  break;
          case 0: // Non-interlace
          default: break;
       }
 
       setSaturnResolution(width, height);
+      satmem->vdp1_2->setTextureRatio(wratio, hratio);
 
       Memory::setWord(addr, val);
       break;
@@ -2104,6 +2117,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
   /*screens[0] =*/ nbg3 = new NBG3(this, vram, cram, surface);
 
   setSaturnResolution(320, 224);
+  satmem->vdp1_2->setTextureRatio(1, 1);
 
   reset();
 
@@ -2302,7 +2316,6 @@ void Vdp2::setSaturnResolution(int width, int height) {
    ((NBG1 *)nbg1)->setTextureRatio(width, height);
    ((NBG2 *)nbg2)->setTextureRatio(width, height);
    ((NBG3 *)nbg3)->setTextureRatio(width, height);
-   satmem->vdp1_2->setTextureSize(width, height);
 }
 
 void Vdp2::setActualResolution(int width, int height) {

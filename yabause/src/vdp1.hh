@@ -100,8 +100,8 @@ private:
   unsigned short ww;
   unsigned short hh;
 
-  int satwidthhalf;
-  int satheighthalf;
+  float vdp1wratio;
+  float vdp1hratio;
 
   int priority;
 public:
@@ -136,7 +136,7 @@ public:
   int getPriority(void);
   int getInnerPriority(void);
   void toggleDisplay(void);
-  void setTextureSize(int width, int height);
+  void setTextureRatio(int, int);
 };
 
 #endif

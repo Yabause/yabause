@@ -344,8 +344,13 @@ void Vdp1::readPriority(void) {
 				sprite_register = ((CMDCOLR & 0x6000) | (~CMDCOLR & 0x1000)) >> 12;
 				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
 				break;
+                        case 7:
+				sprite_register = ((CMDCOLR & 0x6000) | (~CMDCOLR & 0x1000)) >> 12;
+				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
+                                break;
 			default:
-				cerr << "sprite type " << ((int) sprite_type) << " not implemented" << endl;
+                                cerr << "sprite type " << ((int) sprite_type) << " not implemented" << endl;
+                                break;
 		}
 	}
 }
@@ -373,20 +378,21 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	ww = power_of_two(w);
 	hh = power_of_two(h);
 
+
 	unsigned char dir = (CMDCTRL & 0x30) >> 4;
 
 	unsigned int * textdata;
 	int vertices[8];
 	unsigned int z;
 
-	vertices[0] = x;
-	vertices[1] = y;
-	vertices[2] = x + w;
-	vertices[3] = y;
-	vertices[4] = x + w;
-	vertices[5] = y + h;
-	vertices[6] = x;
-	vertices[7] = y + h;
+        vertices[0] = (int)((float)x * vdp1wratio);
+        vertices[1] = (int)((float)y * vdp1hratio);
+        vertices[2] = (int)((float)(x + w) * vdp1wratio);
+        vertices[3] = (int)((float)y * vdp1hratio);
+        vertices[4] = (int)((float)(x + w) * vdp1wratio);
+        vertices[5] = (int)((float)(y + h) * vdp1hratio);
+        vertices[6] = (int)((float)x * vdp1wratio);
+        vertices[7] = (int)((float)(y + h) * vdp1hratio);
 
 	readPriority();
 	int * c;
@@ -482,14 +488,14 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	int vertices[8];
 	unsigned int z;
 
-	vertices[0] = x;
-	vertices[1] = y;
-	vertices[2] = x + rw;
-	vertices[3] = y;
-	vertices[4] = x + rw;
-	vertices[5] = y + rh;
-	vertices[6] = x;
-	vertices[7] = y + rh;
+        vertices[0] = (int)((float)x * vdp1wratio);
+        vertices[1] = (int)((float)y * vdp1hratio);
+        vertices[2] = (int)((float)(x + rw) * vdp1wratio);
+        vertices[3] = (int)((float)y * vdp1hratio);
+        vertices[4] = (int)((float)(x + rw) * vdp1wratio);
+        vertices[5] = (int)((float)(y + rh) * vdp1hratio);
+        vertices[6] = (int)((float)x * vdp1wratio);
+        vertices[7] = (int)((float)(y + rh) * vdp1hratio);
 
 	readPriority();
 
@@ -524,14 +530,14 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	int vertices[8];
 	unsigned int z;
 
-	vertices[0] = CMDXA + localX;
-	vertices[1] = CMDYA + localY;
-	vertices[2] = CMDXB + localX;
-	vertices[3] = CMDYB + localY;
-	vertices[4] = CMDXC + localX;
-	vertices[5] = CMDYC + localY;
-	vertices[6] = CMDXD + localX;
-	vertices[7] = CMDYD + localY;
+        vertices[0] = (int)((float)(CMDXA + localX) * vdp1wratio);
+        vertices[1] = (int)((float)(CMDYA + localY) * vdp1hratio);
+        vertices[2] = (int)((float)(CMDXB + localX) * vdp1wratio);
+        vertices[3] = (int)((float)(CMDYB + localY) * vdp1hratio);
+        vertices[4] = (int)((float)(CMDXC + localX) * vdp1wratio);
+        vertices[5] = (int)((float)(CMDYC + localY) * vdp1hratio);
+        vertices[6] = (int)((float)(CMDXD + localX) * vdp1wratio);
+        vertices[7] = (int)((float)(CMDYD + localY) * vdp1hratio);
 
 	readPriority();
 
@@ -579,14 +585,14 @@ void Vdp1::polygonDraw(unsigned long addr) {
         int vertices[8];
         unsigned int z;
 
-        vertices[0] = X[0];
-        vertices[1] = Y[0];
-        vertices[2] = X[1];
-        vertices[3] = Y[1];
-        vertices[4] = X[2];
-        vertices[5] = Y[2];
-        vertices[6] = X[3];
-        vertices[7] = Y[3];
+        vertices[0] = (int)((float)X[0] * vdp1wratio);
+        vertices[1] = (int)((float)Y[0] * vdp1hratio);
+        vertices[2] = (int)((float)X[1] * vdp1wratio);
+        vertices[3] = (int)((float)Y[1] * vdp1hratio);
+        vertices[4] = (int)((float)X[2] * vdp1wratio);
+        vertices[5] = (int)((float)Y[2] * vdp1hratio);
+        vertices[6] = (int)((float)X[3] * vdp1wratio);
+        vertices[7] = (int)((float)Y[3] * vdp1hratio);
 
         satmem->vdp2_3->ygl.quad(priority, vertices, &textdata, 1, 1, &z, 0);
 
@@ -717,9 +723,35 @@ void Vdp1::toggleDisplay(void) {
    disptoggle ^= true;
 }
 
-void Vdp1::setTextureSize(int width, int height) {
-   satwidthhalf = width / 2;
-   satheighthalf = height / 2;
+void Vdp1::setTextureRatio(int vdp2widthratio, int vdp2heightratio) {
+   float vdp1w;
+   float vdp1h;
+
+   // may need some tweaking
+
+   // Figure out which vdp1 screen mode to use
+   switch (Memory::getWord(0) & 7)
+   {
+      case 0:
+      case 2:
+      case 3:
+          vdp1w=1;
+          break;
+      case 1:
+          vdp1w=2;
+          break;
+      default:
+          vdp1w=1;
+          vdp1h=1;
+          break;
+   }
+
+   // Is double-interlace enabled?
+   if (Memory::getWord(2) & 0x8)
+      vdp1h=2;
+
+   vdp1wratio = (float)vdp2widthratio / vdp1w;
+   vdp1hratio = (float)vdp2heightratio / vdp1w;
 }
 
 void Vdp1::setVdp2Ram(Vdp2 *v, Vdp2ColorRam *c) {
