@@ -28,14 +28,12 @@
 
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
-	_stop = false;
 	vram = new Vdp1VRAM(0xFFFFF, 0xC0000);
         disptoggle = true;
         reset();
 }
 
 void Vdp1::stop(void) {
-	_stop = true;
 	delete vram;
 }
 

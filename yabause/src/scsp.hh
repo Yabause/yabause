@@ -23,7 +23,6 @@
 #define SCSP_HH
 
 #include "memory.hh"
-#include "cpu.hh"
 #include "c68k/types.h"
 
 class SaturnMemory;
@@ -53,7 +52,7 @@ public:
   void setLong(unsigned long addr, unsigned long val);
 };
 
-class Scsp : public Cpu, public Dummy {
+class Scsp : public Dummy {
 private:
   ScspRam *sram;
   SaturnMemory *satmem;

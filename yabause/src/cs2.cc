@@ -349,7 +349,6 @@ void Cs2::setLong(unsigned long addr, unsigned long val) {
 }
 
 Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
-  _stop = false;
   cd = yui_cd();
   if (cd == NULL) {
 	cerr << "Unable to initialize cdrom!\n";
@@ -358,7 +357,6 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
 }
 
 Cs2::~Cs2(void) {
-   _stop = true;
 
    if (cd != NULL) {
       delete cd;

@@ -21,7 +21,6 @@
 #define INTC_HH
 
 #include "memory.hh"
-#include "cpu.hh"
 
 #ifndef _arch_dreamcast
 #include <queue>

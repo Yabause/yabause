@@ -1558,7 +1558,6 @@ void NBG3::debugStats(char *outstring, bool *isenabled) {
 
 Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
   satmem = v;
-  _stop = false;
   vram = new Vdp2Ram;
   cram = new Vdp2ColorRam;
 
@@ -1628,10 +1627,6 @@ Vdp2ColorRam *Vdp2::getCRam(void) {
 
 Vdp2Ram *Vdp2::getVRam(void) {
 	return vram;
-}
-
-void Vdp2::lancer(Vdp2 *vdp2) {
-	//while(!vdp2->_stop) vdp2->executer();
 }
 
 void Vdp2::VBlankIN(void) {

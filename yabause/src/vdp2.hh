@@ -25,7 +25,6 @@
 #include "vdp1.hh"
 #endif
 #include "memory.hh"
-#include "cpu.hh"
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
@@ -197,7 +196,7 @@ public:
   void debugStats(char *, bool *);
 };
 
-class Vdp2 : public Cpu, public Memory {
+class Vdp2 : public Memory {
 private:
   Vdp2Ram *vram;
   Vdp2ColorRam *cram;
@@ -227,9 +226,6 @@ public:
   Vdp2Ram *getVRam(void);
 
   void setWord(unsigned long, unsigned short);
-
-  static void lancer(Vdp2 *);
-  void executer(void);
 
   VdpScreen *getScreen(int);
   void sortScreens(void);

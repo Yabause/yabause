@@ -21,7 +21,6 @@
 #define VDP1_HH
 
 #include "memory.hh"
-#include "cpu.hh"
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
@@ -74,7 +73,7 @@ class Vdp1VRAM : public Memory	{
 		void addSprite(vdp1Sprite &sp);
 };
 
-class Vdp1 : public Cpu, public Memory, public VdpScreen {
+class Vdp1 : public Memory, public VdpScreen {
 private:
   GLuint texture[1];
   SaturnMemory *satmem;

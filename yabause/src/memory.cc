@@ -382,7 +382,7 @@ SaturnMemory::~SaturnMemory(void) {
 #if DEBUG
   cerr << "stopping master sh2\n";
 #endif
-  msh->stop();
+  //msh->stop();
 #if DEBUG
   cerr << "master sh2 stopped\n";
 #endif
@@ -411,7 +411,7 @@ SaturnMemory::~SaturnMemory(void) {
   delete cs1;
   delete cs2;
   delete soundr;
-  ((Vdp2 *) vdp2_3)->stop();
+  //((Vdp2 *) vdp2_3)->stop();
   delete vdp2_3;
 /*
   delete vdp2_1;

@@ -21,7 +21,6 @@
 #define SUPERH_HH
 
 #include "saturn_memory.hh"
-#include "cpu.hh"
 
 typedef struct
 {
@@ -85,7 +84,7 @@ public:
   static inline unsigned long bcd (unsigned long ul) { return (ul & 0x0FFF); }
 };
 
-class SuperH : public Cpu {
+class SuperH {
 public:
   unsigned long R[16];
 

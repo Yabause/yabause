@@ -21,13 +21,12 @@
 #define SMPC_HH
 
 #include "memory.hh"
-#include "cpu.hh"
 
 class SaturnMemory;
 
 extern unsigned short buttonbits;
 
-class Smpc : public Cpu, public Memory {
+class Smpc : public Memory {
 private:
   bool dotsel; // 0 -> 320 | 1 -> 352
   bool mshnmi;

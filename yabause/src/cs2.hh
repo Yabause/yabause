@@ -22,7 +22,6 @@
 #define CS2_HH
 
 #include "memory.hh"
-#include "cpu.hh"
 
 class CDInterface;
 
@@ -115,7 +114,7 @@ typedef struct
    unsigned char vidchannum;
 } mpegstm_struct;
 
-class Cs2 : public Cpu, public Memory {
+class Cs2 : public Memory {
 private:
   unsigned long FAD;
   unsigned char status;
