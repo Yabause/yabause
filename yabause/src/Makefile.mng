@@ -33,7 +33,7 @@ CFLAGS=$(VDEFINES) $(DDEFINES) -O2
 #CFLAGS=$(VDEFINES) $(DDEFINES) -O2 -march=athlon-xp -Wall -pg
 #CFLAGS=$(VDEFINES) $(DDEFINES)
 LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -mwindows -mthreads
-OBJS = cdbase.o cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o scsp.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o timer.o c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o windows/cd.o windows/yui.o windows/resource.o windows/settings.o sh2d.o profile.o
+OBJS = cdbase.o cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o scsp.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o timer.o c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o windows/cd.o windows/yui.o windows/resource.o windows/settings.o sh2d.o
 
 all: $(TARGET)
 
@@ -69,10 +69,10 @@ yabause.o: superh.hh smpc.hh intc.hh vdp1.hh vdp2.hh yui.hh
 c68k/c68k.o: c68k/c68k.h
 c68k/c68kexec.o: c68k/c68k.h c68k/c68k_ini.inc
 	$(CC) $(DDEFINES) $(VDEFINES) -c c68k/c68kexec.c -o $@
-c68k/c68k_ini.inc: c68k\gen68k.exe
-c68k/gen68k.exe: c68k\c68kexec.c c68k\c68k.c c68k\gen68k.c
+c68k/c68k_ini.inc: c68k/gen68k.exe
+c68k/gen68k.exe: c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c
 	$(CC) $(CFLAGS) -DC68K_GEN -o $@ $^
-	c68k\gen68k.exe
+	cd c68k && gen68k
 windows/cd.o: windows/cd.hh
 windows/yui.o: superh.hh sh2d.hh vdp2.hh yui.hh windows/resource.h windows/settings.hh
 windows/resource.o: windows/resource.h
