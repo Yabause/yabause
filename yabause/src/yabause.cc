@@ -257,4 +257,5 @@ int main(int argc, char **argv) {
 	yui_init((int (*)(void*)) &handleEvents);
 
 	SDL_Quit();
+        return 0;
 }
