@@ -23,6 +23,8 @@
 #include "memory.hh"
 #include "cpu.hh"
 
+extern unsigned short buttonbits;
+
 class Smpc;
 class Scu;
 

@@ -311,74 +311,8 @@ void Smpc::INTBACKPeripheral(void) {
   
   memoire->setOREG(0, 0xF1);  //PeripheralID
   memoire->setOREG(1, 0x02);
-
-  /*
-             Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0
-  1st Data   Right    Left    Down     Up    Start     A       C       B
-  2nd Data   RTrig     X        Y       Z    LTrig
-
-  */
-  sm->keys = SDL_GetKeyState(NULL);
-  int firstbits = 0xFF, secondbits = 0xFF;
-  
-  //First Data
-  if (sm->keys[SDLK_f] == SDL_PRESSED) {
-    firstbits &= 0x7F;
-    cerr << "Right" << endl;
-  }
-  if (sm->keys[SDLK_s] == SDL_PRESSED) {
-    firstbits &= 0xBF;
-    cerr << "Left" << endl;
-  }
-  if (sm->keys[SDLK_d] == SDL_PRESSED) {
-    firstbits &= 0xDF;
-    cerr << "Down" << endl;
-  }
-  if (sm->keys[SDLK_e] == SDL_PRESSED) {
-    firstbits &= 0xEF;
-    cerr << "Up" << endl;
-  }
-  if (sm->keys[SDLK_j] == SDL_PRESSED) {
-    firstbits &= 0xF7;
-    cerr << "Start" << endl;
-  }
-  if (sm->keys[SDLK_k] == SDL_PRESSED) {
-    firstbits &= 0xFB;
-    cerr << "A" << endl;
-  }
-  if (sm->keys[SDLK_m] == SDL_PRESSED) {
-    firstbits &= 0xFD;
-    cerr << "C" << endl;
-  }
-  if (sm->keys[SDLK_l] == SDL_PRESSED) {
-    firstbits &= 0xFE;
-    cerr << "B" << endl;
-  }
-  
-  //Second Data
-  if (sm->keys[SDLK_z] == SDL_PRESSED) {
-    secondbits &= 0x7F;
-    cerr << "Right Trigger" << endl;
-  }
-  if (sm->keys[SDLK_i] == SDL_PRESSED) {
-    secondbits &= 0xBF;
-    cerr << "X" << endl;
-  }
-  if (sm->keys[SDLK_o] == SDL_PRESSED) {
-    secondbits &= 0xDF;
-    cerr << "Y" << endl;
-  }
-  if (sm->keys[SDLK_p] == SDL_PRESSED) {
-    secondbits &= 0xEF;
-    cerr << "Z" << endl;
-  }
-  if (sm->keys[SDLK_x] == SDL_PRESSED) {
-    secondbits &= 0xF7;
-    cerr << "LTrig" << endl;
-  }
-  
-  memoire->setOREG(2, firstbits);   //First Data
-  memoire->setOREG(3, secondbits);  //Second Data
+  memoire->setOREG(2, buttonbits >> 8);   //First Data
+  memoire->setOREG(3, buttonbits & 0xFF);  //Second Data
   memoire->setOREG(4, 0xF1);
   memoire->setOREG(5, 0x02);
   memoire->setOREG(6, 0xFF);
