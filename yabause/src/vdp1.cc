@@ -341,8 +341,8 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	unsigned short h = xy & 0xFF;
 	unsigned short ww = power_of_two(w);
 	unsigned short hh = power_of_two(h);
-	unsigned short rw = vram->getWord(addr + 0x10);
-	unsigned short rh = vram->getWord(addr + 0x12);
+	short rw = vram->getWord(addr + 0x10);
+	short rh = vram->getWord(addr + 0x12);
 
 	unsigned short tx = 0;
 	unsigned short ty = 0;
