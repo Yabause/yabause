@@ -101,6 +101,51 @@ Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
 
 void Smpc::setTiming(void) {
 	switch(getCOMREG()) {
+                case 0x0:
+#if DEBUG
+                        cerr << "smpc\t: MSHON not implemented\n";
+#endif
+			timing = 30;
+                        break;
+                case 0x2:
+#if DEBUG
+                        cerr << "smpc\t: SSHON not implemented\n";
+#endif
+			timing = 30;
+                        break;
+                case 0x3:
+#if DEBUG
+                        cerr << "smpc\t: SSHOFF not implemented\n";
+#endif
+			timing = 30;
+                        break;
+                case 0x8:
+#if DEBUG
+                        cerr << "smpc\t: CDON not implemented\n";
+#endif
+                        timing = 40;
+                        break;
+                case 0x9:
+#if DEBUG
+                        cerr << "smpc\t: CDOFF not implemented\n";
+#endif
+                        timing = 40;
+                        break;
+                case 0xD:
+#if DEBUG
+                        cerr << "smpc\t: SYSRES not implemented\n";
+#endif
+                        break;
+                case 0xE:
+#if DEBUG
+                        cerr << "smpc\t: CKCHG352 not implemented\n";
+#endif
+                        break;
+                case 0xF:
+#if DEBUG
+                        cerr << "smpc\t: CKCHG320 not implemented\n";
+#endif
+                        break;
 		case 0x10:
 			if (intback) timing = 20;
 			else timing = 3000;
@@ -112,7 +157,7 @@ void Smpc::setTiming(void) {
 			timing = 30;
 			break;
 		default:
-			cerr << "unimplemented command: " << hex << (int) getCOMREG() << endl;
+                        cerr << "smpc\t: unimplemented command: " << hex << (int) getCOMREG() << endl;
 			break;
 	}
 }
