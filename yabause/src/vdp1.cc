@@ -1,5 +1,6 @@
 /*  Copyright 2003 Guillaume Duhamel
     Copyright 2004 Lawrence Sebald
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -86,7 +87,7 @@ void Vdp1::execute(unsigned long addr) {
 	  drawEnd(addr);
 	  break;
 	default:
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 	  cerr << "vdp1\t: Bad command: " << hex << setw(10) << command << endl;
 #endif
 	  break;
@@ -102,14 +103,14 @@ void Vdp1::execute(unsigned long addr) {
       addr = vram->getWord(addr + 2) * 8;
       break;
     case 2: // CALL, call a subroutine
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
       cerr << "CALL" << endl;
 #endif
       returnAddr = addr;
       addr = vram->getWord(addr + 2) * 8;
       break;
     case 3: // RETURN, return from subroutine
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
       cerr << "RETURN" << endl;
 #endif
       addr = returnAddr;
@@ -213,23 +214,25 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	}
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
-	unsigned short colorBank = vram->getWord(addr + 0x6);
+        unsigned long colorBank = vram->getWord(addr + 0x6);
         
 	vdp1Sprite sp = vram->getSprite(charAddr);
         
 	unsigned long ca1 = charAddr;
 	
 	if(sp.vdp1_loc == 0)	{
-#ifdef DEBUG
-	cerr << "Making new sprite " << hex << charAddr << endl;
+#ifdef VDP1_DEBUG
+        cerr << "Making new sprite " << hex << charAddr << endl;
 #endif
 	switch(colorMode) {
 	case 0:
-#ifdef DEBUG
-		cerr << "color mode 0 not implemented" << endl;
+                // 4 bpp Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "normalSpriteDraw: color mode 0 not implemented" << endl;
 #endif
 		break;
 	case 1:
+                // 4 bpp LUT mode
 		colorBank *= 8;
 		unsigned long temp;
 		TX = tx;
@@ -237,32 +240,40 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 			tx = TX;
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
-				temp = vram->getWord((dot >> 4) * 2 + colorBank);
-#if 0
-#ifndef _arch_dreamcast
-				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-#else
-				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
-#endif
-#endif
-				color = SAT2YAB1(alpha, temp);
 
 				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
-				else textdata[ty * ww + tx] = color;
-
-				tx += txinc;
-				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+                                else
+                                {
+                                   temp = vram->getWord((dot >> 4) * 2 + colorBank);
 #if 0
 #ifndef _arch_dreamcast
-				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+                                   color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
 #else
-				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
+                                   color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
 #endif
-				color = SAT2YAB1(alpha, temp);
+                                   color = SAT2YAB1(alpha, temp);
+
+                                   textdata[ty * ww + tx] = color;
+                                }
+
+				tx += txinc;
 
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
-				else textdata[ty * ww + tx] = color;
+                                else
+                                {
+                                   temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+#if 0
+#ifndef _arch_dreamcast
+                                   color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+#else
+                                   color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
+#endif
+#endif
+                                   color = SAT2YAB1(alpha, temp);
+
+                                   textdata[ty * ww + tx] = color;
+                                }
 
 				tx += txinc;
 				charAddr += 1;
@@ -271,43 +282,52 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 		}
 		break;
 	case 2:
-#ifdef DEBUG
-		cerr << "color mode 2 not implemented" << endl;
+                // 8 bpp(64 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "normalSpriteDraw: color mode 2 not implemented" << endl;
 #endif
 		break;
 	case 3:
-#ifdef DEBUG
-		cerr << "color mode 3 not implemented" << endl;
+                // 8 bpp(128 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "normalSpriteDraw: color mode 3 not implemented" << endl;
 #endif
 		break;
 	case 4:
-#ifdef DEBUG
-		cerr << "color mode 4 not implemented" << endl;
+                // 8 bpp(256 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "normalSpriteDraw: color mode 4 not implemented" << endl;
 #endif
 		break;
 	case 5:
+                // 16 bpp Bank mode
 		TX = tx;
 		for(unsigned short i = 0;i < h;i++) {
 			tx = TX;
 			for(unsigned short j = 0;j < w;j++) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
-#if 0
-#ifndef _arch_dreamcast
-				color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
-#else
-				color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
-#endif
-#endif
-				color = SAT2YAB1(alpha, dot);
 
 				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
-				else textdata[ty * ww + tx] = color;
+                                else
+                                {
+#if 0
+#ifndef _arch_dreamcast
+                                   color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
+#else
+                                   color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
+#endif
+#endif
+                                   color = SAT2YAB1(alpha, dot);
+
+                                   textdata[ty * ww + tx] = color;
+                                }
 
 				tx += txinc;
 			}
 			ty += tyinc;
 		}
+                break;
 	}
 	
 	if (sp.txr == 0) glGenTextures(1, &sp.txr);
@@ -326,8 +346,8 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	sp.vdp1_loc = ca1;
 	vram->addSprite(sp);
 
-#ifdef DEBUG
-	cerr << "Created new sprite at " << hex << ca1 << endl;
+#ifdef VDP1_DEBUG
+        cerr << "Created new sprite at " << hex << ca1 << endl;
 #endif
 	}
 
@@ -415,18 +435,20 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	}
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
-	unsigned short colorBank = vram->getWord(addr + 0x6);
+        unsigned long colorBank = vram->getWord(addr + 0x6);
 	vdp1Sprite sp = vram->getSprite(charAddr);
 	unsigned long ca1 = charAddr;
 	
 	if(sp.vdp1_loc == 0)	{
 	switch(colorMode) {
 	case 0:
-#ifdef DEBUG
-		cerr << "color mode 0 not implemented" << endl;
+                // 4 bpp Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "scaledSpriteDraw: color mode 0 not implemented" << endl;
 #endif
 		break;
 	case 1:
+                // 4 bpp LUT mode
 		colorBank *= 8;
 		unsigned long temp;
 		TX = tx;
@@ -434,19 +456,19 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			tx = TX;
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
-				temp = vram->getWord((dot >> 4) * 2 + colorBank);
-				//color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-				color = SAT2YAB1(alpha, temp);
 				if (((dot >> 4) == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
+                                        temp = vram->getWord((dot >> 4) * 2 + colorBank);
+                                        //color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+                                        color = SAT2YAB1(alpha, temp);
 					textdata[ty][tx] = color;
 				}
 				tx += txinc;
-				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
-				//color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-				color = SAT2YAB1(alpha, temp);
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
+                                        temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+                                        //color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+                                        color = SAT2YAB1(alpha, temp);
 					textdata[ty][tx] = color;
 				}
 				tx += txinc;
@@ -456,18 +478,21 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 		}
 		break;
 	case 2:
-#ifdef DEBUG
-		cerr << "color mode 2 not implemented" << endl;
+                // 8 bpp(64 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "scaledSpriteDraw: color mode 2 not implemented" << endl;
 #endif
 		break;
 	case 3:
-#ifdef DEBUG
-		cerr << "color mode 3 not implemented" << endl;
+                // 8 bpp(128 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "scaledSpriteDraw: color mode 3 not implemented" << endl;
 #endif
 		break;
 	case 4:
-#ifdef DEBUG
-		cerr << "color mode 4 not implemented" << endl;
+                // 8 bpp(256 color) Bank mode
+#ifdef VDP1_DEBUG
+                cerr << "scaledSpriteDraw: color mode 4 not implemented" << endl;
 #endif
 		break;
 	case 5:
@@ -477,16 +502,17 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j++) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
-				//color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
-				color = SAT2YAB1(alpha, dot);
 				if ((dot == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
+                                        //color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
+                                        color = SAT2YAB1(alpha, dot);
 					textdata[ty][tx] = color;
 				}
 				tx += txinc;
 			}
 			ty += tyinc;
 		}
+                break;
 	}
 	
 	if (sp.txr == 0) glGenTextures(1, &sp.txr);
@@ -504,8 +530,8 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	sp.vdp1_loc = ca1;
 	vram->addSprite(sp);
 
-#ifdef DEBUG
-	cerr << "Created new scaled sprite at " << hex << ca1 << endl;
+#ifdef VDP1_DEBUG
+        cerr << "Created new scaled sprite at " << hex << ca1 << endl;
 #endif
 	}
 	
@@ -567,7 +593,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 			alpha = 0x80;
 			break;
 		case 4:
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 			//cerr << "gouraud shading unimplemented" << endl;
 #endif
 			break;
@@ -584,12 +610,12 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	unsigned long ca1 = charAddr;
 	
 	if(sp.vdp1_loc == 0)	{
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 	cerr << "Making new sprite " << hex << charAddr << endl;
 #endif
 	switch(colorMode) {
 	case 0:
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 		cerr << "color mode 0 not implemented" << endl;
 #endif
 		break;
@@ -633,17 +659,17 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 		}
 		break;
 	case 2:
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 		cerr << "color mode 2 not implemented" << endl;
 #endif
 		break;
 	case 3:
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 		cerr << "color mode 3 not implemented" << endl;
 #endif
 		break;
 	case 4:
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 		cerr << "color mode 4 not implemented" << endl;
 #endif
 		break;
@@ -669,6 +695,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 			}
 			ty += tyinc;
 		}
+                break;
 	}
 	
 	if (sp.txr == 0) glGenTextures(1, &sp.txr);
@@ -686,7 +713,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	sp.vdp1_loc = ca1;
 	vram->addSprite(sp);
 
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 	cerr << "Created new distorted sprite at " << hex << ca1 << endl;
 #endif
 	}
@@ -737,6 +764,8 @@ void Vdp1::polygonDraw(unsigned long addr) {
 	float alpha = 1;
 	if ((CMDPMOD & 0x7) == 0x3) alpha = 0.5;
 
+        if ((color & 0x8000) == 0) alpha = 0;
+
 	if ((X[0] & 0x400) ||(Y[0] & 0x400) ||(X[1] & 0x400) ||(Y[1] & 0x400) ||(X[2] & 0x400) ||(Y[2] & 0x400) ||(X[3] & 0x400) ||(Y[3] & 0x400)) {
 		//cerr << "don't know what to do" << endl;
 	}
@@ -772,13 +801,13 @@ void Vdp1::polygonDraw(unsigned long addr) {
 }
 
 void Vdp1::polylineDraw(unsigned long addr) {
-#if DEBUG
+#if VDP1_DEBUG
   cerr << "vdp1\t: polyline draw" << endl;
 #endif
 }
 
 void Vdp1::lineDraw(unsigned long addr) {
-#if DEBUG
+#if VDP1_DEBUG
   cerr << "vdp1\t: line draw" << endl;
 #endif
 }
@@ -788,7 +817,7 @@ void Vdp1::userClipping(unsigned long addr) {
   unsigned short CMDYA = vram->getWord(addr + 0xE);
   unsigned short CMDXC = vram->getWord(addr + 0x14);
   unsigned short CMDYC = vram->getWord(addr + 0x16);
-#if DEBUG
+#if VDP1_DEBUG
   cerr << hex << "vdp1\t: user clipping xa=" << CMDXA << " ya=" << CMDYA << " xc=" << CMDXC << " yc=" << CMDYC << endl;
 #endif
 }
@@ -796,7 +825,7 @@ void Vdp1::userClipping(unsigned long addr) {
 void Vdp1::systemClipping(unsigned long addr) {
   unsigned short CMDXC = vram->getWord(addr + 0x14);
   unsigned short CMDYC = vram->getWord(addr + 0x16);
-#if DEBUG
+#if VDP1_DEBUG
   //cerr << "vdp1\t: system clipping x=" << CMDXC << " y=" << CMDYC << endl;
 #endif
 }
@@ -804,13 +833,13 @@ void Vdp1::systemClipping(unsigned long addr) {
 void Vdp1::localCoordinate(unsigned long addr) {
   localX = vram->getWord(addr + 0xC);
   localY = vram->getWord(addr + 0xE);
-#if DEBUG
+#if VDP1_DEBUG
   //cerr << "vdp1\t: local coordinate x=" << CMDXA << " y=" << CMDYA << endl;
 #endif
 }
 
 void Vdp1::drawEnd(unsigned long addr) {
-#if DEBUG
+#if VDP1_DEBUG
   cerr << "vdp1\t: graaaaaaaaaaaaaa draw end" << endl;
 #endif
   //Scu::sendDrawEnd();
@@ -830,7 +859,7 @@ void Vdp1VRAM::setByte(unsigned long l, unsigned char d)	{
 	
 	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
 		if(i->vdp1_loc == l)	{
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
 #endif
                         //glDeleteTextures(1, &i->txr);
@@ -845,7 +874,7 @@ void Vdp1VRAM::setByte(unsigned long l, unsigned char d)	{
 void Vdp1VRAM::setWord(unsigned long l, unsigned short d)	{
 	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
 		if(i->vdp1_loc == l)	{
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
 #endif
 			//glDeleteTextures(1, &i->txr);
@@ -861,7 +890,7 @@ void Vdp1VRAM::setWord(unsigned long l, unsigned short d)	{
 void Vdp1VRAM::setLong(unsigned long l, unsigned long d)	{
 	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
 		if(i->vdp1_loc == l)	{
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
 #endif
 			//glDeleteTextures(1, &i->txr);
@@ -881,7 +910,7 @@ vdp1Sprite Vdp1VRAM::getSprite(unsigned long l)	{
 			break;
 		}
 	}
-#ifdef DEBUG
+#ifdef VDP1_DEBUG
 	cerr << "Vdp1VRAM: getSprite: Didn't find sprite at " << hex << l << endl;
 #endif
 	return blank;
