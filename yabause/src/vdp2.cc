@@ -22,7 +22,6 @@
 #include "vdp1.hh"
 #include "saturn.hh"
 #include "scu.hh"
-#include "timer.hh"
 #include "yui.hh"
 #ifndef _arch_dreamcast
 #ifdef __APPLE__

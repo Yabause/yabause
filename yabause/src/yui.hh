@@ -1,4 +1,4 @@
-#include "memory.hh"
+#include "saturn_memory.hh"
 
 class CDInterface;
 

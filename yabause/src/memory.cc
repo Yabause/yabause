@@ -20,7 +20,6 @@
 
 #include "saturn_memory.hh"
 #include "superh.hh"
-#include "timer.hh"
 #include "yui.hh"
 #include "cdbase.hh"
 

@@ -20,7 +20,6 @@
 
 #include "intc.hh"
 #include "superh.hh"
-#include "timer.hh"
 #include "saturn_memory.hh"
 
 #ifdef _arch_dreamcast

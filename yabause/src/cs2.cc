@@ -20,7 +20,6 @@
 
 #include "cs2.hh"
 #include "cdbase.hh"
-#include "timer.hh"
 #include "yui.hh"
 
 #define CDB_HIRQ_CMOK      0x0001

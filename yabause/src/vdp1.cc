@@ -24,7 +24,6 @@
 #include "intc.hh"
 #include "exception.hh"
 #include "scu.hh"
-#include "timer.hh"
 #include "vdp2.hh"
 
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
