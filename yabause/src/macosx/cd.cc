@@ -17,21 +17,84 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-// cd.cc For Mac OS X - To Be Written
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <IOKit/IOKitLib.h>
+#include <IOKit/IOBSD.h>
+#include <IOKit/storage/IOMediaBSDClient.h>
+#include <IOKit/storage/IOMedia.h>
+#include <IOKit/storage/IOCDMedia.h>
+#include <IOKit/storage/IOCDTypes.h>
+#include <CoreFoundation/CoreFoundation.h>
+
+char cdPath[1024];
+int hCDROM;
+
+int GetBSDPath( io_iterator_t mediaIterator, char *bsdPath, CFIndex maxPathSize )
+{
+    io_object_t nextMedia;
+    *bsdPath = '\0';
+    
+    nextMedia = IOIteratorNext( mediaIterator );
+    if (nextMedia) {
+        CFTypeRef bsdPathAsCFString;
+        bsdPathAsCFString = IORegistryEntryCreateCFProperty(nextMedia, CFSTR(kIOBSDNameKey), kCFAllocatorDefault, 0);
+        if (bsdPathAsCFString) {
+            size_t devPathLength;
+            strcpy(bsdPath, "/dev/r");
+            devPathLength = strlen(bsdPath);
+            CFStringGetCString(bsdPathAsCFString,  bsdPath + devPathLength, maxPathSize - devPathLength, kCFStringEncodingASCII);
+            CFRelease(bsdPathAsCFString);
+        }
+        IOObjectRelease(nextMedia);
+    }
+}
 
 int CDInit(char *cdrom_name)
 {
-   return 0;
+	io_iterator_t mediaIterator;
+	mach_port_t masterPort;
+	CFMutableDictionaryRef classesToMatch;
+	
+	if (IOMasterPort(MACH_PORT_NULL, &masterPort) != 0)
+		printf("IOMasterPort Failed!\n");
+		
+	classesToMatch = IOServiceMatching(kIOCDMediaClass); 
+
+	if (classesToMatch == NULL)
+		printf("IOServiceMatching returned a NULL dictionary.\n");
+    else
+		CFDictionarySetValue(classesToMatch, CFSTR(kIOMediaEjectableKey), kCFBooleanTrue);
+	
+	if (IOServiceGetMatchingServices(masterPort, classesToMatch, &mediaIterator) != 0)
+		printf("IOServiceGetMatchingServices Failed!\n");
+		
+	GetBSDPath(mediaIterator, cdPath, sizeof(cdPath));
+	
+	if ((hCDROM = open(cdPath, O_RDONLY | O_NONBLOCK)) == -1)
+		return -1;
+	printf("CDInit OK\n");
+	return 0;
 }
 
 int CDDeInit()
 {
-   return 0;
+	if (hCDROM != -1) {
+		close(hCDROM);
+		printf("CDDeInit OK\n");
+	}
+	return 0;
 }
 
 bool CDIsCDPresent()
 {
-   return false;
+	if (cdPath[0] != '\0')
+		return 1;
+	else
+		return 0;
 }
 
 long CDReadToc(unsigned long *TOC)
@@ -43,4 +106,3 @@ unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
 {
    return 0;
 }
-
