@@ -178,9 +178,12 @@ public:
   void setCR3(unsigned short val);
   void setCR4(unsigned short val);
 
+  unsigned char getByte(unsigned long);
+  void setByte(unsigned long, unsigned char);
   unsigned short getWord(unsigned long);
   void setWord(unsigned long, unsigned short);
   unsigned long getLong(unsigned long);
+  void setLong(unsigned long, unsigned long);
 
   void run(unsigned long);
   void execute(void);

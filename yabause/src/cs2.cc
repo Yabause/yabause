@@ -67,6 +67,20 @@ void Cs2::setCR2(unsigned short val) {Memory::setWord(0x9001C, val);}
 void Cs2::setCR3(unsigned short val) {Memory::setWord(0x90020, val);}
 void Cs2::setCR4(unsigned short val) {Memory::setWord(0x90024, val);}
 
+unsigned char Cs2::getByte(unsigned long addr) {
+#if CDDEBUG
+   fprintf(stderr, "cs2\t: Byte reading isn't implemented\n");
+#endif
+   return Memory::getByte(addr);
+}
+
+void Cs2::setByte(unsigned long addr, unsigned char val) {
+#if CDDEBUG
+   fprintf(stderr, "cs2\t: Byte writing isn't implemented\n");
+#endif
+   Memory::setByte(addr, val);
+}
+
 unsigned short Cs2::getWord(unsigned long addr) {
   unsigned short val=0;
   if (addr >= size) { 
@@ -91,9 +105,9 @@ unsigned short Cs2::getWord(unsigned long addr) {
                     val &= ~CDB_HIRQ_DCHG;
 
                   Memory::setWord(addr, val);
-#if CDDEBUG
-                  fprintf(stderr, "cs2\t: Hirq read - ret: %x\n", val);
-#endif
+//#if CDDEBUG
+//                  fprintf(stderr, "cs2\t: Hirq read - ret: %x\n", val);
+//#endif
 	          break;
     case 0x9000C:
     case 0x90018:
@@ -161,7 +175,11 @@ unsigned short Cs2::getWord(unsigned long addr) {
                      default: break;
                   }
                   break;
-    default: val = Memory::getWord(addr);
+    default:
+#if DEBUG
+             cerr << "cs2\t:Undocumented register read " << hex << addr << endl;
+#endif
+             val = Memory::getWord(addr);
              break;
   }
 
@@ -178,9 +196,9 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
   }
   switch(addr) {
     case 0x90008:
-#if CDDEBUG
-                  fprintf(stderr, "cs2\t: WriteWord hirq = %x\n", val);
-#endif
+//#if CDDEBUG
+//                  fprintf(stderr, "cs2\t: WriteWord hirq = %x\n", val);
+//#endif
                   Memory::setWord(addr, Memory::getWord(addr) & val);
 	          break;
     case 0x9000C: Memory::setWord(addr, val);
@@ -195,7 +213,12 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
     case 0x90024: Memory::setWord(addr, val);
                   execute();
 		  break;
-    default: Memory::setWord(addr, val);
+    default:
+#if DEBUG
+             cerr << "cs2\t:Undocumented register write " << hex << addr << endl;
+#endif
+                  Memory::setWord(addr, val);
+                  break;
   }
 }
 
@@ -289,12 +312,23 @@ unsigned long Cs2::getLong(unsigned long addr) {
                   }
 
 	          break;
-    default: val = Memory::getLong(addr);
+    default:
+#if DEBUG
+             cerr << "cs2\t:Undocumented register read " << hex << addr << endl;
+#endif
+             val = Memory::getLong(addr);
+             break;
   }
 
   return val;
 }
 
+void Cs2::setLong(unsigned long addr, unsigned long val) {
+#if CDDEBUG
+   fprintf(stderr, "cs2\t: Long writing isn't implemented\n");
+#endif
+   Memory::setLong(addr, val);
+}
 
 Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   _stop = false;
@@ -434,10 +468,6 @@ void Cs2::run(unsigned long timing) {
     {
       _periodiccycles -= _periodictiming; 
 
-      if (_command) {
-         return;
-      }
-
       // Get Drive's current status and compare with old status
       switch(CDGetStatus())
       {
@@ -489,6 +519,9 @@ void Cs2::run(unsigned long timing) {
                   status = CDB_STAT_PAUSE;
                   SetTiming(false);
                   setHIRQ(getHIRQ() | CDB_HIRQ_PEND);
+#if CDDEBUG
+                  fprintf(stderr, "PLAY HAS ENDED\n");
+#endif
                }
                if (isbufferfull) {
 #if CDDEBUG
@@ -507,6 +540,10 @@ void Cs2::run(unsigned long timing) {
          case CDB_STAT_RETRY:
             break;
          default: break;
+      }
+
+      if (_command) {
+         return;
       }
 
       status |= CDB_STAT_PERI;
@@ -688,14 +725,14 @@ void Cs2::execute(void) {
 #endif
       break;
     case 0x51:
-#if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getSectorNumber %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
-#endif
+//#if CDDEBUG
+//      fprintf(stderr, "cs2\t: Command: getSectorNumber %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+//#endif
       getSectorNumber();
 
-#if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
-#endif
+//#if CDDEBUG
+//      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+//#endif
       break;
     case 0x52:
 #if CDDEBUG
@@ -1364,6 +1401,11 @@ void Cs2::setFilterMode(void) {
      filter[sfmfilternum].smval = 0;
      filter[sfmfilternum].cival = 0;
   }
+
+#if CDDEBUG
+  if (filter[sfmfilternum].mode & 0x1F)
+     cerr << "cs2\t: Filter Subheader conditions not implemented" << endl;
+#endif
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
