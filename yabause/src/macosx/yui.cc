@@ -31,7 +31,6 @@ void yui_init(int (*yab_main)(void*)) {
 
 	stop = 0;
 	mem = new SaturnMemory();
-	mem->start();
 
 	while (!stop) yab_main(mem);
 	delete(mem);
@@ -54,7 +53,7 @@ char * yui_bios(void) {
 }
 
 char * yui_cdrom(void) {
-	return NULL;
+	return "Saturn CDRom";
 }
 
 unsigned char yui_region(void) {
