@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="src/yabause.cc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os yabause_arch INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM AWK SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE HAVE_LIBSDL ac_ct_HAVE_LIBSDL PKG_CONFIG GTK_CFLAGS GTK_LIBS yabause_yui LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os yabause_arch INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM AWK SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE HAVE_LIBSDL ac_ct_HAVE_LIBSDL HAVE_PKG ac_ct_HAVE_PKG yabause_yui LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3658,14 +3658,25 @@ fi
 
 CXXFLAGS="$CXXFLAGS $SDL_CXXFLAGS"
 LIBS="$LIBS $SDL_LIBS"
+
+
+# Check whether --with-gtk or --without-gtk was given.
+if test "${with_gtk+set}" = set; then
+  withval="$with_gtk"
+  use_gtk=$withval
+fi;
+
 case $target in
 	*darwin*)
 		LIBS="$LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
 		yabause_yui="."
+		use_gtk=no
 		;;
-        *cygwin*)  LIBS="$LIBS -lopengl32 -lglut32"
-                   yabause_yui="."
-                   ;;
+        *cygwin*)
+		LIBS="$LIBS -lopengl32 -lglut32"
+		yabause_yui="."
+		use_gtk=no
+		;;
         *mingw32*)
 
 echo "$as_me:$LINENO: checking for glEnable in -lopengl32" >&5
@@ -3815,8 +3826,9 @@ _ACEOF
 
 fi
 
-                   yabause_yui="."
-                   ;;
+		yabause_yui="."
+		use_gtk=no
+		;;
 	*linux*)
 
 echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
@@ -3968,110 +3980,6 @@ fi
 
 		yabause_yui="."
 		use_gtk=yes
-
-# Check whether --with-gtk or --without-gtk was given.
-if test "${with_gtk+set}" = set; then
-  withval="$with_gtk"
-  use_gtk=$withval
-fi;
-		if test $use_gtk = yes ; then
-
-  succeeded=no
-
-  if test -z "$PKG_CONFIG"; then
-    # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-
-if test -n "$PKG_CONFIG"; then
-  echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
-echo "${ECHO_T}$PKG_CONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  fi
-
-  if test "$PKG_CONFIG" = "no" ; then
-     echo "*** The pkg-config script could not be found. Make sure it is"
-     echo "*** in your path, or set the PKG_CONFIG environment variable"
-     echo "*** to the full path to pkg-config."
-     echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
-  else
-     PKG_CONFIG_MIN_VERSION=0.9.0
-     if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
-        echo "$as_me:$LINENO: checking for gtk+-2.0" >&5
-echo $ECHO_N "checking for gtk+-2.0... $ECHO_C" >&6
-
-        if $PKG_CONFIG --exists "gtk+-2.0" ; then
-            echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-            succeeded=yes
-
-            echo "$as_me:$LINENO: checking GTK_CFLAGS" >&5
-echo $ECHO_N "checking GTK_CFLAGS... $ECHO_C" >&6
-            GTK_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0"`
-            echo "$as_me:$LINENO: result: $GTK_CFLAGS" >&5
-echo "${ECHO_T}$GTK_CFLAGS" >&6
-
-            echo "$as_me:$LINENO: checking GTK_LIBS" >&5
-echo $ECHO_N "checking GTK_LIBS... $ECHO_C" >&6
-            GTK_LIBS=`$PKG_CONFIG --libs "gtk+-2.0"`
-            echo "$as_me:$LINENO: result: $GTK_LIBS" >&5
-echo "${ECHO_T}$GTK_LIBS" >&6
-        else
-            GTK_CFLAGS=""
-            GTK_LIBS=""
-            ## If we have a custom action on failure, don't print errors, but
-            ## do set a variable so people can do so.
-            GTK_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "gtk+-2.0"`
-
-        fi
-
-
-
-     else
-        echo "*** Your version of pkg-config is too old. You need version $PKG_CONFIG_MIN_VERSION or newer."
-        echo "*** See http://www.freedesktop.org/software/pkgconfig"
-     fi
-  fi
-
-  if test $succeeded = yes; then
-     yabause_yui="linux"
-  else
-     yabause_yui="."
-  fi
-
-		fi
 		;;
         *)
 echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
@@ -4225,9 +4133,96 @@ fi
 
 esac
 
+if test x$use_gtk = xyes ; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_HAVE_PKG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$HAVE_PKG"; then
+  ac_cv_prog_HAVE_PKG="$HAVE_PKG" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_HAVE_PKG="${ac_tool_prefix}pkg-config"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+HAVE_PKG=$ac_cv_prog_HAVE_PKG
+if test -n "$HAVE_PKG"; then
+  echo "$as_me:$LINENO: result: $HAVE_PKG" >&5
+echo "${ECHO_T}$HAVE_PKG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_HAVE_PKG"; then
+  ac_ct_HAVE_PKG=$HAVE_PKG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_HAVE_PKG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_HAVE_PKG"; then
+  ac_cv_prog_ac_ct_HAVE_PKG="$ac_ct_HAVE_PKG" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_HAVE_PKG="pkg-config"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+ac_ct_HAVE_PKG=$ac_cv_prog_ac_ct_HAVE_PKG
+if test -n "$ac_ct_HAVE_PKG"; then
+  echo "$as_me:$LINENO: result: $ac_ct_HAVE_PKG" >&5
+echo "${ECHO_T}$ac_ct_HAVE_PKG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  HAVE_PKG=$ac_ct_HAVE_PKG
+else
+  HAVE_PKG="$ac_cv_prog_HAVE_PKG"
+fi
 
 
-CXXFLAGS="$CXXFLAGS $GTK_CFLAGS"
+	if test ! x$HAVE_PKG = x ; then
+		GTK_CXXFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
+		GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
+	fi
+fi
+
+
+
+CXXFLAGS="$CXXFLAGS $GTK_CXXFLAGS"
 LIBS="$LIBS $GTK_LIBS"
 CFLAGS=$CXXFLAGS
 
@@ -5040,9 +5035,8 @@ s,@ac_ct_CXX@,$ac_ct_CXX,;t t
 s,@CXXDEPMODE@,$CXXDEPMODE,;t t
 s,@HAVE_LIBSDL@,$HAVE_LIBSDL,;t t
 s,@ac_ct_HAVE_LIBSDL@,$ac_ct_HAVE_LIBSDL,;t t
-s,@PKG_CONFIG@,$PKG_CONFIG,;t t
-s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
-s,@GTK_LIBS@,$GTK_LIBS,;t t
+s,@HAVE_PKG@,$HAVE_PKG,;t t
+s,@ac_ct_HAVE_PKG@,$ac_ct_HAVE_PKG,;t t
 s,@yabause_yui@,$yabause_yui,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
