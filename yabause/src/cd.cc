@@ -44,7 +44,7 @@ bool CDIsCDPresent()
 // Prototype function for replacement of CDIsCDPresent
 int CDGetStatus()
 {
-   // This function is called periodically to see the what the status of the
+   // This function is called periodically to see what the status of the
    // drive is.
    //
    // Should return one of the following values:

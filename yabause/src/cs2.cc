@@ -280,7 +280,42 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
 		}
 	}
 
+#if NEWCDINTERFACE
+  switch (CDGetStatus())
+  {
+     case 0:
+     case 1:
+             status = CDB_STAT_PERI | CDB_STAT_PAUSE; // Still not 100% correct, but better
+             FAD = 150;
+             options = 0;
+             repcnt = 0;
+             ctrladdr = 0x41;
+             track = 1;
+             index = 1;
+             break;
+     case 2:
+             status = CDB_STAT_PERI | CDB_STAT_NODISC;
 
+             FAD = 0xFFFFFFFF;
+             options = 0xFF;
+             repcnt = 0xFF;
+             ctrladdr = 0xFF;
+             track = 0xFF;
+             index = 0xFF;
+             break;
+     case 3:
+             status = CDB_STAT_PERI | CDB_STAT_OPEN;
+
+             FAD = 0xFFFFFFFF;
+             options = 0xFF;
+             repcnt = 0xFF;
+             ctrladdr = 0xFF;
+             track = 0xFF;
+             index = 0xFF;
+             break;
+     default: break;
+  }
+#else
   if (CDIsCDPresent())
   {
      status = CDB_STAT_PERI | CDB_STAT_PAUSE; // Still not 100% correct, but better
@@ -304,6 +339,7 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
      track = 0xFF;
      index = 0xFF;
   }
+#endif
 
   infotranstype = -1;
   datatranstype = -1;
@@ -344,6 +380,8 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
      filter[i].condtrue = 0;
      filter[i].condfalse = 0xFF;
   }
+
+  curfilter = filter + 0;
 
   // clear partitions
   for (i = 0; i < MAX_SELECTORS; i++)
@@ -402,6 +440,32 @@ void Cs2::run(Cs2 *cd) {
 #endif
       }
 
+#if NEWCDINTERFACE
+      // Get Drive's current status and compare with old status
+      switch(CDGetStatus())
+      {
+         case 0:
+         case 1:
+                 if ((cd->status & 0xF) == CDB_STAT_NODISC ||
+                     (cd->status & 0xF) == CDB_STAT_OPEN)
+                 {
+                    cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+                    cd->isdiskchanged = true;
+                 }
+                 break;
+         case 2:
+                 // may need to change this
+                 if ((cd->status & 0xF) != CDB_STAT_NODISC)
+                    cd->status = CDB_STAT_PERI | CDB_STAT_NODISC;
+                 break;
+         case 3:
+                 // may need to change this
+                 if ((cd->status & 0xF) != CDB_STAT_OPEN)
+                    cd->status = CDB_STAT_PERI | CDB_STAT_OPEN;
+                 break;
+         default: break;
+      }
+#endif
       switch (cd->status & 0xF) {
          case CDB_STAT_PAUSE:
             break;
@@ -1559,31 +1623,45 @@ void Cs2::cmdE0(void) {
 
   mpegauth = getCR2() & 0xFF;
 
-  // Set registers all to invalid values(aside from status)
 
-  status = CDB_STAT_PERI | CDB_STAT_BUSY;
-
-  setCR1((status << 8) | 0xFF);
-  setCR2(0xFFFF);
-  setCR3(0xFFFF);
-  setCR4(0xFFFF);
-
-  if (mpegauth == 1)
+  if ((status & 0xF) != CDB_STAT_NODISC &&
+      (status & 0xF) != CDB_STAT_OPEN)
   {
-     setHIRQ(getHIRQ() | CDB_HIRQ_MPED);
-     mpgauth = 2;
+     // Set registers all to invalid values(aside from status)
+     status = CDB_STAT_PERI | CDB_STAT_BUSY;
+
+     setCR1((status << 8) | 0xFF);
+     setCR2(0xFFFF);
+     setCR3(0xFFFF);
+     setCR4(0xFFFF);
+
+     if (mpegauth == 1)
+     {
+        setHIRQ(getHIRQ() | CDB_HIRQ_MPED);
+        mpgauth = 2;
+     }
+     else
+     {     
+        // if authentication passes(obviously it always does), CDB_HIRQ_CSCT is set
+        isonesectorstored = true;
+        setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
+        satauth = 4;
+     }
+
+     // Set registers all back to normal values
+
+     status = CDB_STAT_PERI | CDB_STAT_PAUSE;
   }
   else
   {
-     // if authentication passes(obviously it always does), CDB_HIRQ_CSCT is set
-     isonesectorstored = true;
-     setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
-     satauth = 4;
+     if (mpegauth == 1)
+     {
+        setHIRQ(getHIRQ() | CDB_HIRQ_MPED);
+        mpgauth = 2;
+     }
+     else
+        setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
   }
-
-  // Set registers all back to normal values
-
-  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
@@ -1615,7 +1693,6 @@ void Cs2::cmdE2(void) {
      unsigned short readsize = getCR4();
 
      fseek(mpgfp, readoffset * getsectsize, SEEK_SET);
-
      if ((curpartition = GetPartition()) != NULL && !isbufferfull)
      {
         curpartition->size = 0;
@@ -1828,7 +1905,11 @@ int Cs2::CopyDirRecord(unsigned char *buffer, dirrec_struct *dirrec)
 
 int Cs2::ReadFileSystem()
 {
+#if NEWCDINTERFACE
+  unsigned char tempsect[2352];
+#else
   unsigned char tempsect[2048];
+#endif
   unsigned char *workbuffer;
   unsigned long i;
   dirrec_struct dirrec;
