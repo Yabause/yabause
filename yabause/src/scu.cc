@@ -22,18 +22,19 @@
 
 unsigned long Scu::getLong(unsigned long addr) {
 	if (addr == 0x80) return 0;        
-        if (addr == 0xA4) return (Memory::getWord(0xA4) | 2); // bad hack, this has to be fixed
 	return Memory::getLong(addr);
 }
 
 void Scu::setLong(unsigned long addr, unsigned long val) {
 	switch(addr) {
 		case 0x10: if (val & 0x1) DMA(0);
+			   Memory::setLong(addr, val);
 			   break;
-		case 0xA4 : val &= Memory::getWord(0xA4);
+		case 0xA4 : // writting prohibited
 			    break;
+		default:
+			    Memory::setLong(addr, val);
 	}
-	Memory::setLong(addr, val);
 }
 
 Scu::Scu(SaturnMemory *i) : Memory(0xD0) {
