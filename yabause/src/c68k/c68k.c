@@ -182,8 +182,7 @@ u32 C68k_Read_Word(c68k_struc *cpu, u32 adr)
 u32 C68k_Read_Long(c68k_struc *cpu, u32 adr)
 {
 #ifdef C68K_BIG_ENDIAN
-    return (cpu->Read_Word(adr) & 0xFFFF) | (cpu->Read_Word(adr + 2) << 16);
-//    return (cpu->Read_Word(adr) << 16) | (cpu->Read_Word(adr + 2) & 0xFFFF);
+    return (cpu->Read_Word(adr) << 16) | (cpu->Read_Word(adr + 2) & 0xFFFF);
 #else
     return (cpu->Read_Word(adr) << 16) | (cpu->Read_Word(adr + 2) & 0xFFFF);
 #endif
@@ -202,10 +201,8 @@ void C68k_Write_Word(c68k_struc *cpu, u32 adr, u32 data)
 void C68k_Write_Long(c68k_struc *cpu, u32 adr, u32 data)
 {
 #ifdef C68K_BIG_ENDIAN
-    cpu->Write_Word(adr, data & 0xFFFF);
-    cpu->Write_Word(adr + 2, data >> 16);
-//    cpu->Write_Word(adr, data >> 16);
-//    cpu->Write_Word(adr + 2, data & 0xFFFF);
+    cpu->Write_Word(adr, data >> 16);
+    cpu->Write_Word(adr + 2, data & 0xFFFF);
 #else
     cpu->Write_Word(adr, data >> 16);
     cpu->Write_Word(adr + 2, data & 0xFFFF);
