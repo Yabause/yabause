@@ -27,7 +27,6 @@
 #endif
 #include "SDL_gfxPrimitives.h"
 #include "SDL_imageFilter.h"
-#include <GL/gl.h>
 
 /****************************************/
 /*					*/
@@ -985,7 +984,7 @@ Vdp2::Vdp2(Vdp2Registers *r, Vdp2Ram *vr, Vdp2ColorRam *c, Scu *s, Vdp1 *v) {
   reg->setTVSTAT(0); //reg->setTVSTAT(0x302);
   reg->setWord(0x20, 0);
 
-  SDL_InitSubSystem(SDL_INIT_VIDEO);
+  SDL_Init(SDL_INIT_VIDEO);
 
 #if HAVE_LIBSDL_IMAGE
   logo = IMG_Load("logo.png");
@@ -1063,7 +1062,7 @@ void Vdp2::executer(void) {
     if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
   }
   GLuint texture[1];
-  glGenTextures(1, texture );
+  glGenTextures(1, &texture[0] );
   glBindTexture(GL_TEXTURE_2D, texture[0] );
   glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 
@@ -1081,7 +1080,7 @@ void Vdp2::executer(void) {
   glDisable( GL_TEXTURE_2D );
 
   vdp1->execute(0);
-  glFlush();
+  //glFlush();
   SDL_GL_SwapBuffers();
   //colorOffset();
   //SDL_Flip(surface);

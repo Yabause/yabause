@@ -22,7 +22,11 @@
 
 #include "memory.hh"
 #include "cpu.hh"
+#ifdef WORDS_BIGENDIAN
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 class Vdp1;
 class Scu;

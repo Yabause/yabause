@@ -20,8 +20,6 @@
 #ifndef VDP2_HH
 #define VDP2_HH
 
-#include "memory.hh"
-#include "cpu.hh"
 #include "vdp1.hh"
 
 class Scu;

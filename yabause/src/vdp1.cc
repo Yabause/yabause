@@ -24,7 +24,6 @@
 #include "scu.hh"
 #include "timer.hh"
 #include "SDL_gfxPrimitives.h"
-#include <GL/gl.h>
 #include "vdp2.hh"
 
 Vdp1Registers::Vdp1Registers(Memory *mem, Scu *scu) : Memory(0x18) {
@@ -53,7 +52,6 @@ Vdp1::Vdp1(Vdp1Registers *reg, Memory *mem, Scu *s) {
 
 	_stop = false;
 	registers->setWord(0x4, 0);
-	glGenTextures(1, texture );
 }
 
 void Vdp1::stop(void) {
@@ -217,6 +215,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 		}
 	}
 
+	glGenTextures(1, &texture[0] );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 
