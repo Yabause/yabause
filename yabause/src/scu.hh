@@ -31,6 +31,7 @@ private:
   SaturnMemory *satmem;
 public:
   Scu(SaturnMemory *);
+  void reset(void);
 
   unsigned long getLong(unsigned long);
   void setLong(unsigned long, unsigned long);

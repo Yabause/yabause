@@ -1,4 +1,5 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2003-2004 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -95,11 +96,15 @@ Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
      regionid = ((Cs2 *)sm->getCS2())->GetRegionID();          
   }
   
-  memset(SMEM, 0, 4); // This should be loaded from file
-
   this->sm = sm;
+  reset();
+}
 
+void Smpc::reset(void) {
+  memset(SMEM, 0, 4); // This should be loaded from file
   timing = 0;
+
+  // SMPC registers should be initialized here
 }
 
 void Smpc::setTiming(void) {
@@ -217,11 +222,13 @@ void Smpc::execute(Smpc *smpc) {
 #if DEBUG
     cerr << "smpc\t: CKCHG352 not implemented\n";
 #endif
+    smpc->CKCHG352();
     break;
   case 0xF:
 #if DEBUG
     cerr << "smpc\t: CKCHG320 not implemented\n";
 #endif
+    smpc->CKCHG320();
     break;
   case 0x10:
 #if DEBUG
@@ -420,4 +427,30 @@ void Smpc::SSHOFF(void) {
 void Smpc::SSHON(void) {
 	cerr << "starting slave" << endl;
 	sm->startSlave();
+}
+
+void Smpc::CKCHG352(void) {
+  // Reset VDP1, VDP2, SCU, and SCSP
+  ((Scsp *) sm->getVdp1())->reset();  
+  ((Scsp *) sm->getVdp2())->reset();  
+  ((Scsp *) sm->getScu())->reset();  
+  ((Scsp *) sm->getScsp())->reset();  
+
+  // Clear VDP1/VDP2 ram
+
+  // Turn off Slave SH2
+
+  // change clock
+}
+
+void Smpc::CKCHG320(void) {
+  // Reset VDP1, VDP2, SCU, and SCSP
+  ((Scsp *) sm->getVdp1())->reset();  
+  ((Scsp *) sm->getVdp2())->reset();  
+  ((Scsp *) sm->getScu())->reset();  
+  ((Scsp *) sm->getScsp())->reset();  
+
+  // Turn off Slave SH2
+
+  // change clock
 }

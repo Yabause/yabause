@@ -108,6 +108,7 @@ public:
   Vdp1(SaturnMemory *);
   void execute(unsigned long = 0);
   void stop(void);
+  void reset(void);
 
   /*
   void setVdp2Ram(Vdp2 *, Vdp2ColorRam *);

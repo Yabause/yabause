@@ -1,4 +1,5 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2003-2004 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -62,6 +63,10 @@ SuperH::~SuperH(void) {
   delete dataArray;
   delete modeSdram;
 
+}
+
+void SuperH::reset(void) {
+   // implement me
 }
 
 void SuperH::setMemory(Memory *mem) {

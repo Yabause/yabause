@@ -55,6 +55,7 @@ private:
 	unsigned long timing;
         unsigned long ccleftover;
         unsigned long frcdiv;
+        bool isslave;
 
         /* DMAC */
         inline void DMATransfer(unsigned long chcr, unsigned long reg_offset);
@@ -67,6 +68,8 @@ public:
 #endif
 
         Onchip(bool, SaturnMemory *, SuperH *);
+        void reset(void);
+
         void setByte(unsigned long addr, unsigned char val);
 	void setWord(unsigned long, unsigned short);
 	void setLong(unsigned long, unsigned long);

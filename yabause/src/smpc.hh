@@ -48,6 +48,7 @@ private:
   long timing;
 public:
   Smpc(SaturnMemory *);
+  void reset(void);
 
   unsigned char  getIREG    (int);
   unsigned char  getCOMREG  (void);
@@ -77,6 +78,8 @@ public:
   void SETSMEM(void);
   void SSHOFF(void);
   void SSHON(void);
+  void CKCHG352(void);
+  void CKCHG320(void);
 };
 
 #endif

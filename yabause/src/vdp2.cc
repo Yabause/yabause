@@ -959,8 +959,6 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   _stop = false;
   vram = new Vdp2Ram;
   cram = new Vdp2ColorRam;
-  setWord(0x4, 0); //setWord(0x4, 0x302);
-  setWord(0x20, 0);
 
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 
@@ -989,6 +987,8 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   	screens[2] = new NBG1(this, vram, cram, surface);
   	screens[1] = new NBG2(this, vram, cram, surface);
   	screens[0] = new NBG3(this, vram, cram, surface);
+
+        reset();
 }
 
 Vdp2::~Vdp2(void) {
@@ -999,6 +999,16 @@ Vdp2::~Vdp2(void) {
     delete [] surface;
     delete vram;
     delete cram;
+}
+
+void Vdp2::reset(void) {
+  setWord(0x0, 0);
+  setWord(0x4, 0); //setWord(0x4, 0x302);
+  setWord(0x6, 0);
+  setWord(0xE, 0);
+  setWord(0x20, 0);
+
+  // clear Vram here
 }
 
 Memory *Vdp2::getCRam(void) {

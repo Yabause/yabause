@@ -1,4 +1,5 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2003-2004 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -90,10 +91,20 @@ void __del_highest_int()	{
 Onchip::Onchip(bool slave, SaturnMemory *sm, SuperH *sh) : Memory(0x1FF, 0x1FF) {
 	memory = sm;
         shparent = sh;
+        isslave = slave;
+
+        reset();
+
+#ifdef _arch_dreamcast
+	__init_tree();
+#endif
+}
+
+void Onchip::reset(void) {
         Memory::setByte(4, 0x84);
 
         // Initialize Bus Control registers(needed for Slave SH2 emulation)
-        Memory::setLong(BCR1, 0x03F0 | (slave << 15));
+        Memory::setLong(BCR1, 0x03F0 | (isslave << 15));
         Memory::setLong(BCR2, 0x00FC);
 
         // Initialize the Free-running Timer registers
@@ -107,10 +118,6 @@ Onchip::Onchip(bool slave, SaturnMemory *sm, SuperH *sh) : Memory(0x1FF, 0x1FF) 
         Memory::setByte(TOCR, 0xE0);
         Memory::setByte(ICRH, 0x00);
         Memory::setByte(ICRL, 0x00);
-
-#ifdef _arch_dreamcast
-	__init_tree();
-#endif
 
 	timing = 0;
         ccleftover = 0;

@@ -184,6 +184,7 @@ public:
 
   void run(unsigned long);
   void execute(void);
+  void reset(void);
   void command(void);
   void periodicUpdate(void);
                                   

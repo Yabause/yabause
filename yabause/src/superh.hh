@@ -146,6 +146,7 @@ public:
 
   SuperH(bool, SaturnMemory *);
  ~SuperH(void);
+  void reset(void);
 
   void setMemory(Memory *);
   Memory *getMemory(void);

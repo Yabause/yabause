@@ -73,9 +73,13 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
 }
 
 Scu::Scu(SaturnMemory *i) : Memory(0xFF, 0xD0) {
+ 	satmem = i;
+        reset();
+}
+
+void Scu::reset(void) {
 	Memory::setLong(0xA0, 0x0000BFFF);
 	Memory::setLong(0xA4, 0);
- 	satmem = i;
 }
 
 void Scu::DMA(int mode) {

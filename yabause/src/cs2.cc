@@ -299,8 +299,6 @@ unsigned long Cs2::getLong(unsigned long addr) {
 
 
 Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
-  unsigned long i, i2;
-
   _stop = false;
 	cdrom = yui_cdrom();
 	if (cdrom != NULL) {
@@ -308,6 +306,19 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
 			cerr << "Unable to initialize cdrom: " << cdrom << "\n";
 		}
 	}
+
+  reset();
+}
+
+Cs2::~Cs2(void) {
+   _stop = true;
+
+   if (cdrom != NULL)
+      CDDeInit();
+}
+
+void Cs2::reset(void) {
+  unsigned long i, i2;
 
   switch (CDGetStatus())
   {
@@ -417,13 +428,6 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
 
   _command = false;
   _periodiccycles = 0;
-}
-
-Cs2::~Cs2(void) {
-   _stop = true;
-
-   if (cdrom != NULL)
-      CDDeInit();
 }
 
 void Cs2::run(unsigned long cycles) {

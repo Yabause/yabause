@@ -181,6 +181,8 @@ public:
   Vdp2(SaturnMemory *);
   ~Vdp2(void);
 
+  void reset(void);
+
   Memory *getCRam(void);
   Memory *getVRam(void);
 

@@ -1,4 +1,4 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2003-2004 Guillaume Duhamel
     Copyright 2004 Lawrence Sebald
     Copyright 2004 Theo Berkau
 
@@ -30,13 +30,21 @@
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
 	_stop = false;
-	setWord(0x4, 0);
 	vram = new Vdp1VRAM(0xFFFFF, 0xC0000);
+        reset();
 }
 
 void Vdp1::stop(void) {
 	_stop = true;
 	delete vram;
+}
+
+void Vdp1::reset(void) {
+  setWord(0x0, 0);
+  setWord(0x2, 0);
+  setWord(0x4, 0);
+
+  // Clear Vram here
 }
 
 void Vdp1::execute(unsigned long addr) {
@@ -152,7 +160,6 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 #ifdef VDP1_DEBUG
                 cerr << "Making new sprite " << hex << charAddr << endl;
 #endif
-
 	unsigned long dot;
 	bool SPD = ((CMDPMOD & 0x40) != 0);
 	unsigned long alpha = 0xFF;
