@@ -36,10 +36,23 @@ case $target in
 	*darwin*) LIBS="$LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation";;
 esac
 
-AC_CHECK_LIB(GL, glEnable)
+case $target in
+        *cygwin*)  LIBS="$LIBS -lopengl32 -lglut32"
+                   yabause_yui="."
+                   ;;
+        *mingw32*)
+                   AC_CHECK_LIB(opengl32, glEnable)
+                   AC_CHECK_LIB(glut, glutGetModifiers)
+                   yabause_yui="."
+                   ;;
+        *) AC_CHECK_LIB(GL, glEnable)
+           AC_CHECK_LIB(glut, glutGetModifiers)
+           yabause_yui="."
+           PKG_CHECK_MODULES(GTK, gtk+-2.0, yabause_yui="linux", [yabause_yui="."])
+           ;;
 
-yabause_yui="."
-PKG_CHECK_MODULES(GTK, gtk+-2.0, yabause_yui="linux", [yabause_yui="."])
+esac
+
 AC_SUBST(yabause_yui)
 
 CXXFLAGS="$CXXFLAGS $GTK_CFLAGS"
