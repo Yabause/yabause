@@ -309,6 +309,98 @@ void Scu::run(unsigned long timing) {
    }
 }
 
+void Scu::DSPDisasm(unsigned char addr, char *outstring){
+   unsigned long instruction;
+
+   instruction = dspProgramRam[addr];
+
+   sprintf(outstring, "%08X: \0", addr);
+   outstring+=strlen(outstring);
+
+   switch (instruction >> 30) {
+      case 0x00: // Operation Commands
+                 sprintf(outstring, "Unimplemented DSP opcode %08X\0", instruction);
+                 break;
+      case 0x02: // Load Immediate Commands
+                 sprintf(outstring, "MVI ??, ??\0");
+//                 sprintf(outstring, "Unimplemented DSP opcode %08X\0", instruction);
+                 break;
+      case 0x03: // Other
+                 switch((instruction >> 28) & 0x3) {
+                    case 0x00: // DMA Commands
+                               sprintf(outstring, "DMA/DMAH ??, ??, ??\0");
+                               break;
+                    case 0x01: // Jump Commands
+                               switch ((instruction >> 19) & 0x7F) {
+                                  case 0x00:
+                                             sprintf(outstring, "JMP %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x41:
+                                             sprintf(outstring, "JMP NZ, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x42:
+                                             sprintf(outstring, "JMP NS, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x43:
+                                             sprintf(outstring, "JMP NZS, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x44:
+                                             sprintf(outstring, "JMP NC, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x48:
+                                             sprintf(outstring, "JMP NT0, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x61:
+                                             sprintf(outstring, "JMP Z, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x62:
+                                             sprintf(outstring, "JMP S, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x63:
+                                             sprintf(outstring, "JMP ZS, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x64:
+                                             sprintf(outstring, "JMP C, %02X\0", instruction & 0xFF);
+                                             break;
+                                  case 0x68:
+                                             sprintf(outstring, "JMP T0, %02X\0", instruction & 0xFF);
+                                             break;
+                                  default:
+                                             sprintf(outstring, "Unknown JMP\0");
+                                             break;
+                               }
+                               break;
+                    case 0x02: // Loop bottom Commands
+                               sprintf(outstring, "BTM/LPS\0");
+                               break;
+                    case 0x03: // End Commands
+                               if (instruction & 0x8000000)
+                                  sprintf(outstring, "ENDI\0");
+                               else
+                                  sprintf(outstring, "END\0");
+
+                               break;
+                    default: break;
+                 }
+                 break;
+      default: 
+                 sprintf(outstring, "Invalid opcode\0", instruction, dsppc);
+                 break;
+   }
+}
+
+void Scu::GetDSPRegisters(scudspregs_struct *regs) {
+  if (regs != NULL) {
+     regs->dspProgControlPort.all = dspProgControlPort.all;
+  }
+}
+
+void Scu::SetDSPRegisters(scudspregs_struct *regs) {
+  if (regs != NULL) {
+     dspProgControlPort.all = regs->dspProgControlPort.all;
+  }
+}
+
 void Scu::sendVBlankIN(void)      { sendInterrupt<0x40, 0xF, 0x0001>(); }
 void Scu::sendVBlankOUT(void) {
    sendInterrupt<0x41, 0xE, 0x0002>();
