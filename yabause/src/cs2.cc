@@ -122,7 +122,7 @@ void YCD::executer(void) {
   switch (instruction) {
     case 0x00:
 #if DEBUG
-      //cerr << "cs2\t: getStatus\n";
+      cerr << "cs2\t: getStatus\n";
 #endif
       getStatus();
       break;
@@ -168,10 +168,17 @@ void YCD::executer(void) {
 #endif
       abortFile();
       break;
+    case 0x93: {
+#if DEBUG
+      cerr << "cs2\t: mpegInit\n";
+#endif
+      mpegInit();
+      break;
+    }
     default:
 #if DEBUG
       cerr << "cs2\t: " << hex << setw(10) << instruction
-                  << "commande non implantée" << endl;
+                  << "command not implemented" << endl;
 #endif
       break;
   }
@@ -187,7 +194,9 @@ void YCD::getStatus(void) {
 
 void YCD::getHardwareInfo(void) {
   memoire->setCR1(statut << 8);
-  memoire->setCR2(0x01);
+  // hardware flags
+  memoire->setCR2(0x01); // mpeg card exists
+  // mpeg version, doesn't have to be used
   memoire->setCR3(0x0);
   memoire->setCR4(0x0400);
   memoire->setHIRQ(memoire->getHIRQ() | 0x0001);
@@ -243,4 +252,19 @@ void YCD::abortFile(void) {
   memoire->setCR3((index << 8) | ((FAD >> 16) &0xFF));
   memoire->setCR4((unsigned short) FAD);
   memoire->setHIRQ(memoire->getHIRQ() | 0x0203);
+}
+
+void YCD::mpegInit(void) {
+	memoire->setCR1(statut << 8);
+
+	if (memoire->getCR2() == 0x0001) // software timer?
+		memoire->setHIRQ(memoire->getHIRQ() | 0x0001 | 0x1000 | 0x0800 | 0x2000); 
+	else
+		memoire->setHIRQ(memoire->getHIRQ() | 0x0001 | 0x0800 | 0x2000); 
+
+	memoire->setCR2(0);
+	memoire->setCR3(0);
+	memoire->setCR4(0);
+
+	// future mpeg-related variables should be initialized here
 }

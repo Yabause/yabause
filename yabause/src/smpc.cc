@@ -201,7 +201,11 @@ void Smpc::INTBACKStatus(void) {
 
     time_t tmp = time(NULL);
     struct tm times;
+#ifdef WIN32
+    memcpy(&times, localtime(&tmp), sizeof(times));
+#else
     localtime_r(&tmp, &times);
+#endif
     unsigned char annee[4] = {
       (1900 + times.tm_year) / 1000,
       ((1900 + times.tm_year) % 1000) / 100,

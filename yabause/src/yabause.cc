@@ -54,7 +54,9 @@ int main(int argc, char **argv) {
   bool stop = false;
 
   if (args_info.debug_given) {
+#if HAVE_LIBCURSES
     monitor(mem->getMasterSH());
+#endif
   }
   else {
     SDL_Event event;

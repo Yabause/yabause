@@ -19,7 +19,7 @@
 #endif
 
 #ifndef _arch_dreamcast
-#include "getopt.h"
+#include <getopt.h>
 #endif
 
 #include "cmdline.h"

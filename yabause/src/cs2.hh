@@ -82,6 +82,7 @@ public:
   void setSectorLength(void);	// 0x60
   void getCopyError(void);	// 0x67
   void abortFile(void);		// 0x75
+  void mpegInit(void);		// 0x93
 };
 
 #endif
