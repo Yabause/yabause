@@ -12,11 +12,9 @@
 
 
 1) Introduction.............................................22
-2) Installation instructions................................35
-3) How to use Yabause.......................................63
-4) Staff/Thanks............................................126
-5) Contact information.....................................161
-6) Disclaimer..............................................170
+2) Staff/Thanks.............................................37
+3) Contact information......................................72
+4) Disclaimer...............................................81
 
 
 1 Introduction________________________________________________
@@ -28,102 +26,15 @@ play commercial games on your PC. This software is released
 for testing purposes only, and is essentially aimed to
 developers.
 
-For more information on the dreamcast port, check the
-README.DC file
+For installation/how to use informations, check the ports
+specific README files:
+
+  * README.DC for the dreamcast port
+  * README.LIN for the linux port
+  * README.WIN for the windows port
 
 
-2 Installation instructions___________________________________
-
-Yabause is written in C++ using the SDL and SDL_gfx libraries,
-so you need a working C++ compiler, as g++ and the above
-libraries runtime and development packages:
-
-  * you can find SDL at http://www.libsdl.org/index.php in
-    the download section.
-
-  * you can find SDL_gfx at
-    http://www.ferzkopp.net/~aschiffler/Software/SDL_gfx-2.0
-
-Once these libraries installed, you should be ready to
-install Yabause.
-
-Uncompress the Yabause archive, move to the newly created
-directory, type "./configure", then "make" , it will generate
-one program: "yabause" in the "src" directory.
-
-You can pass the --enable-debug option to the configure
-script, Yabause will then print debug messages on the
-error standard output.
-
-You can even type "make install" to install that program on
-your system (in /usr/local/ by default), then uninstalling is
-done by typing "make uninstall".
-
-
-3 How to use Yabause__________________________________________
-
-The first requirement is a Saturn ROM BIOS image (hence a Sega
-Saturn).
-
-Execute "yabause -b /path/to/bios.bin". The program will open
-a window, after some time, you should see the logo assembly
-animation.
-
-If you wait long enough, you can reach the main screen of the
-BIOS. Here are the key mappings:
-e - up
-s - left
-d - down
-f - right
-k - a
-l - b
-m - c
-
-If you want to see what's going inside, execute yabause with
-the -d option and it will show a monitoring/control window
-from which you can control yabause (don't work on the windows
-version)
-
-+------------------------------------------------------------+
-| R0   FFFF97F2  R1       97F2  R2          7  R3         7F |
-| R4      1C7A0  R5          8  R6          0  R7    601527C |
-| R8         FF  R9          7  R10   6001FD4  R11   604FFFF |
-| R12         6  R13   6001FF8  R14       87F  R15   6001FA4 |
-| SR   M       0  Q       0  I       0  S       0  T       0 |
-| GBR       25D00000  MACH             0  PR            1FE2 |
-| VBR        6000000  MACL             0  PC            1FC2 |
-+------------------------------------------------------------+
-+-------------------------------------+ +--------------------+
-| or r3, r14                          | | @(delay)      2E3B |
-+-------------------------------------+ +--------------------+
-
-The upper frame displays the master sh2 registers, for the SR
-register, the description of each part is given.
-
-The down-left frame displays the desassembled opcode (using
-Bart Trzynadlowski's disassembler).
-
-The down-right frame displays the current opcode.
-
-There are five commands to control yabause, each command is
-issued by typing its initial letter:
-
-  * m - memory dump
-  * p - pause the emulator
-  * q - quit the emulator
-  * r - run (or resume) the emulator
-  * s - step instruction one by one
-
-For the memory dump, you can give the address to dump by
-using the '0' to '9' and 'a' to 'f' letters.
-
-You can load binaries with the -f or --bin option:
-"yabause -b bios.bin -f demo.bin". In this case, yabause will
-load "demo.bin" at address 0x06004000 and move the PC at this
-same address (the bios is also loaded, but ignored).
-
-
-4 Staff/Thanks________________________________________________
+2 Staff/Thanks________________________________________________
 
 Lead Programmer: Guillaume Duhamel
 Windows port: Theo Berkau (http://s89133014.onlinehome.us/)
@@ -132,7 +43,7 @@ Dreamcast port: Lawrence Sebald (http://ljsdcdev.sunsite.dk/)
 
 Thanks to:
 
-  * Rnuik (author of Saturnin), for all his help, especially
+  * Runik (author of Saturnin), for all his help, especially
     on the vdp2.
     http://saturnin.consollection.com
 
@@ -158,7 +69,7 @@ Thanks to:
     for his disassembler.
 
 
-5 Contact information_________________________________________
+3 Contact information_________________________________________
 
 E-mail:	guillaume.duhamel@gmail.com
 Web:	http://yabause.sourceforge.net
@@ -167,7 +78,7 @@ Please don't ask for roms, bios files or any other
 copyrighted stuff.
 
 
-6 Disclaimer__________________________________________________
+4 Disclaimer__________________________________________________
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as 

@@ -1,0 +1,111 @@
+        _   _
+       / \_/ \            ___  _      ____ 
+       \     /___  ___   /   || | __ /    \ ____
+        \   //   ||   \ /    || | \ \\  \_//    \
+        /  //    ||   //  _  || |__\ \\  \    __/
+        \_//  _  ||   \\_/ \_||______/ \  \\  \__
+           \_/ \_||___/              \____/ \____\
+     Yet Another Buggy And Uncomplete Saturn Emulator
+
+        _________________________________________
+        Copyright (c) 2002-2004 Guillaume Duhamel
+
+
+1) Compiling instructions...................................20
+2) How to use Yabause.......................................53
+3) Contact information......................................85
+4) Disclaimer...............................................94
+
+
+1 Compiling instructions______________________________________
+
+Yabause is written in C++ using the SDL and OpenGL libraries,
+so you need a working C++ compiler, as g++ and the above
+libraries runtime and development packages:
+
+  * you can find SDL at http://www.libsdl.org/index.php in
+    the download section.
+
+  * OpenGL should be included with your compiler, if it isn't,
+    check on your distribution's website for links.
+
+Yabause can also use the gtk library:
+
+  * http://www.gtk.org
+
+Once these libraries installed, you should be ready to
+install Yabause.
+
+Uncompress the Yabause source archive, move to the newly
+created directory, type "./configure", then "make",
+it will generate one program: "yabause" in the "src"
+directory.
+
+You can also pass the --enable-debug, --enable-vdp1-debug,
+--enable-cd-debug options to the configure script, Yabause
+will then print debug messages on the error standard output.
+
+You can even type "make install" to install that program on
+your system (in /usr/local/ by default), then uninstalling is
+done by typing "make uninstall".
+
+
+2 How to use Yabause__________________________________________
+
+The first requirement is a Saturn ROM BIOS image (hence a Sega
+Saturn). Please don't ask us where to get one. 
+
+Execute "yabause". If yabause was compiled with gtk, the
+program should open a window with a menu. Use the
+"Open BIOS..." menu entry to choose your bios file.
+
+You can also set a cdrom device with the "Open CDROM..." entry.
+
+Once the BIOS file is choosen, you can start emulation with
+the "run" entry.
+
+Here are the current key mappings(they may be subject to change):
+e - Up
+s - Left
+d - Down
+f - Right
+k - A button
+l - B button
+m - C button
+u - X button
+i - Y button
+o - Z button
+x - Left Trigger
+z - Right Trigger
+j - Start button
+h - Hide/show gtk interface
+q - Quit program
+
+
+3 Contact information_________________________________________
+
+E-mail:	guillaume.duhamel@gmail.com
+Web:	http://yabause.sourceforge.net
+
+Please don't ask for roms, bios files or any other
+copyrighted stuff.
+
+
+4 Disclaimer__________________________________________________
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as 
+published by the Free Software Foundation; either version 2 of 
+the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be
+useful,but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+MA  02111-1307  USA
+
+See the GNU General Public License details in COPYING.
