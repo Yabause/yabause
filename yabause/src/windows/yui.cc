@@ -21,10 +21,12 @@
 
 #include <windows.h>
 #include <commctrl.h>
-#include <SDL/SDL.h>
+#include "SDL.h"
 #include "../superh.hh"
 #include "../sh2d.hh"
 #include "../vdp2.hh"
+#include "../scsp.hh"
+#include "../scu.hh"
 #include "../yui.hh"
 #include "resource.h"
 #include "settings.hh"
@@ -38,10 +40,10 @@ char SDL_windowhack[32];
 HINSTANCE y_hInstance;
 HWND YabWin;
 
-unsigned long mtrnssaddress=0x06000000;
+unsigned long mtrnssaddress=0x06004000;
 unsigned long mtrnseaddress=0x06100000;
 char mtrnsfilename[MAX_PATH] = "\0";
-char mtrnsreadwrite=0;
+char mtrnsreadwrite=1;
 bool mtrnssetpc=true;
 
 unsigned long memaddr=0;
@@ -86,7 +88,11 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam);
 LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
-                                 LPARAM lParam);
+                                  LPARAM lParam);
+LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam);
+LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam);
 
 void yui_fps(int i) {
 }
@@ -219,6 +225,7 @@ void yui_init(int (*yab_main)(void*)) {
            // Since we can't retrieve it, use a default values
            yabwinw = 320 + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
            yabwinh = 224 + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);
+
 //        }
 //        else
 //        {
@@ -258,7 +265,8 @@ void yui_init(int (*yab_main)(void*)) {
 
 	stop = 0;
 //        cd = new DummyCDDrive();
-        cd = new WindowsCDDrive(cdrompath);
+        cd = new SPTICDDrive(cdrompath);
+//        cd = new ASPICDDrive(cdrompath);
         mem = new SaturnMemory();
         yabausemem = mem;
         while (!stop) { yab_main(mem); }
@@ -303,6 +311,16 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_VDP2DEBUG:
             {
                DialogBox(y_hInstance, "VDP2DebugDlg", hWnd, (DLGPROC)VDP2DebugDlgProc);
+               break;
+            }
+            case IDM_M68KDEBUG:
+            {
+               DialogBox(y_hInstance, "M68KDebugDlg", hWnd, (DLGPROC)M68KDebugDlgProc);
+               break;
+            }
+            case IDM_SCUDSPDEBUG:
+            {
+               DialogBox(y_hInstance, "SCUDSPDebugDlg", hWnd, (DLGPROC)SCUDSPDebugDlgProc);
                break;
             }
             case IDM_EXIT:
@@ -513,7 +531,7 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    return FALSE;
 }
 
-void UpdateRegList(HWND hDlg, sh2regs_struct *regs)
+void SH2UpdateRegList(HWND hDlg, sh2regs_struct *regs)
 {
    char tempstr[128];
    int i;
@@ -563,7 +581,7 @@ void UpdateRegList(HWND hDlg, sh2regs_struct *regs)
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 }
 
-void UpdateCodeList(HWND hDlg, unsigned long addr)
+void SH2UpdateCodeList(HWND hDlg, unsigned long addr)
 {
    int i;
    char buf[60];
@@ -674,8 +692,8 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 //         if (proc->paused())
 //         {
             debugsh->GetRegisters(&sh2regs);
-            UpdateRegList(hDlg, &sh2regs);
-            UpdateCodeList(hDlg, sh2regs.PC);
+            SH2UpdateRegList(hDlg, &sh2regs);
+            SH2UpdateCodeList(hDlg, sh2regs.PC);
 //         }
 
          debugsh->SetBreakpointCallBack(&BreakpointHandler);
@@ -697,22 +715,17 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                sh2regs_struct sh2regs;
                debugsh->step();
                debugsh->GetRegisters(&sh2regs);
-               UpdateRegList(hDlg, &sh2regs);
-               UpdateCodeList(hDlg, sh2regs.PC);
+               SH2UpdateRegList(hDlg, &sh2regs);
+               SH2UpdateCodeList(hDlg, sh2regs.PC);
                break;
             }
-            case IDC_RUN:
+            case IDC_STEPOVER:
             {
-//               proc->run();
                break;
             }
-            case IDC_PAUSE:
+            case IDC_MEMTRANSFER:
             {
-               sh2regs_struct sh2regs;
-//               proc->pause();
-               debugsh->GetRegisters(&sh2regs);
-               UpdateRegList(hDlg, &sh2regs);
-               UpdateCodeList(hDlg, sh2regs.PC);
+               DialogBox(y_hInstance, "MemTransferDlg", hDlg, (DLGPROC)MemTransferDlgProc);
                break;
             }
             case IDC_ADDBP1:
@@ -829,12 +842,12 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         else if (cursel == 22)
                         {
                            sh2regs.PC = memaddr;
-                           UpdateCodeList(hDlg, sh2regs.PC);
+                           SH2UpdateCodeList(hDlg, sh2regs.PC);
                         }
                      }
 
                      debugsh->SetRegisters(&sh2regs);
-                     UpdateRegList(hDlg, &sh2regs);
+                     SH2UpdateRegList(hDlg, &sh2regs);
 
                      break;
                   }
@@ -887,7 +900,7 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         Vdp2 *proc=(Vdp2 *)yabausemem->getVdp2();
+         Vdp2 *proc=yabausemem->vdp2_3;
          unsigned long reg;
          char tempstr[1024];
          bool isscrenabled;
@@ -990,6 +1003,412 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                EndDialog(hDlg, TRUE);
 
                return TRUE;
+            }
+
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
+{
+   char tempstr[128];
+   int i;
+
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_RESETCONTENT, 0, 0);
+
+   // Data registers
+   for (i = 0; i < 8; i++)
+   {
+      sprintf(tempstr, "D%d =   %08x\0", i, regs->D[i]);
+      strupr(tempstr);
+      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   }
+
+   // Address registers
+   for (i = 0; i < 8; i++)
+   {
+      sprintf(tempstr, "A%d =   %08x\0", i, regs->A[i]);
+      strupr(tempstr);
+      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   }
+
+   // SR
+   sprintf(tempstr, "SR =   %08x\0", regs->SR);
+   strupr(tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   // PC
+   sprintf(tempstr, "PC =   %08x\0", regs->PC);
+   strupr(tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void M68KUpdateCodeList(HWND hDlg, unsigned long addr)
+{
+/*
+   unsigned long buf_size;
+   unsigned long buf_addr;
+   int i, i2;
+   char buf[60];
+   unsigned long offset;
+   char op[64], inst[32], arg[24];
+   unsigned char *buffer;
+   unsigned long op_size;
+
+   buffer = ((ScspRam *)((Scsp *)mem->soundr)->getSRam())->getBuffer();
+        
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_RESETCONTENT, 0, 0);
+
+//   offset = addr - (12 * 2);
+   offset = addr;
+
+   for (i = 0; i < 24; i++)
+   {
+      op_size += Dis68000One(offset, &buffer[offset], op, inst, arg);
+      sprintf(buf, "%06x: %s %s\0", offset, inst, arg);
+      offset += op_size;
+
+      SendMessage(HWND(GetDlgItem(hDlg, IDC_LISTBOX2)), LB_ADDSTRING, 0,
+                  (long)buf);
+   }
+
+//   SendMessage(HWND(GetDlgItem(hDlg, IDC_LISTBOX2)), LB_SETCURSEL,12,0);
+   SendMessage(HWND(GetDlgItem(hDlg, IDC_LISTBOX2)), LB_SETCURSEL,0,0);
+*/
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         m68kregs_struct m68kregs;
+
+/*
+         SendMessage(GetDlgItem(hDlg, IDC_CHKREAD), BM_SETCHECK, BST_UNCHECKED, 0);
+         SendMessage(GetDlgItem(hDlg, IDC_CHKWRITE), BM_SETCHECK, BST_UNCHECKED, 0);
+         SendMessage(GetDlgItem(hDlg, IDC_CHKBYTE), BM_SETCHECK, BST_UNCHECKED, 0);
+         SendMessage(GetDlgItem(hDlg, IDC_CHKWORD), BM_SETCHECK, BST_UNCHECKED, 0);
+         SendMessage(GetDlgItem(hDlg, IDC_CHKDWORD), BM_SETCHECK, BST_UNCHECKED, 0);
+*/
+
+         EnableWindow(HWND(GetDlgItem(hDlg, IDC_STEP)), TRUE);
+//         EnableWindow(HWND(GetDlgItem(hDlg, IDC_STEPOVER)), TRUE);
+
+         ((Scsp*)yabausemem->soundr)->Get68kRegisters(&m68kregs);
+         M68KUpdateRegList(hDlg, &m68kregs);
+         M68KUpdateCodeList(hDlg, m68kregs.PC);
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+/*
+               if (scsprunthreadhandle != INVALID_HANDLE_VALUE)
+               {
+                  killScspRunThread=1;
+
+                  // wait for thread to end(should really set it to timeout after a
+                  // certain time so I can test for keypresses)
+                  WaitForSingleObject(scsprunthreadhandle,INFINITE);
+                  CloseHandle(scsprunthreadhandle);                                           
+                  scsprunthreadhandle = INVALID_HANDLE_VALUE;
+               }
+*/
+
+               EndDialog(hDlg, TRUE);
+
+               return TRUE;
+            }
+            case IDC_STEP:
+            {
+               m68kregs_struct m68kregs;
+
+               // execute instruction here
+
+               ((Scsp*)yabausemem->soundr)->Get68kRegisters(&m68kregs);
+               M68KUpdateRegList(hDlg, &m68kregs);
+               M68KUpdateCodeList(hDlg, m68kregs.PC);
+
+               break;
+            }
+            case IDC_ADDBP1:
+            {
+               // add a code breakpoint
+               break;
+            }
+            case IDC_DELBP1:
+            {
+               // delete a code breakpoint
+               break;
+            }
+/*
+            case IDC_ADDBP2:
+            {
+               // add a memory breakpoint
+               break;
+            }
+*/
+            case IDC_LISTBOX1:
+            {
+               switch (HIWORD(wParam))
+               {
+                  case LBN_DBLCLK:
+                  {
+                     // dialogue for changing register values
+                     int cursel;
+                     m68kregs_struct m68kregs;
+
+                     cursel = SendMessage(HWND(GetDlgItem(hDlg, IDC_LISTBOX1)), LB_GETCURSEL,0,0);
+
+                     ((Scsp*)yabausemem->soundr)->Get68kRegisters(&m68kregs);
+
+                     switch (cursel)
+                     {
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 5:
+                        case 6:
+                        case 7:
+                           memaddr = m68kregs.D[cursel];                           
+                           break;
+                        case 8:
+                        case 9:
+                        case 10:
+                        case 11:
+                        case 12:
+                        case 13:
+                        case 14:
+                        case 15:
+                           memaddr = m68kregs.A[cursel - 8];
+                           break;
+                        case 16:
+                           memaddr = m68kregs.SR;
+                           break;
+                        case 17:
+                           memaddr = m68kregs.PC;
+                           break;
+                        default: break;
+                     }
+
+                     if (DialogBox(y_hInstance, "MemDlg", hDlg, (DLGPROC)MemDlgProc) == TRUE)
+                     {
+                        switch (cursel)
+                        {
+                           case 0:
+                           case 1:
+                           case 2:
+                           case 3:
+                           case 4:
+                           case 5:
+                           case 6:
+                           case 7:
+                              m68kregs.D[cursel] = memaddr;
+                              break;
+                           case 8:
+                           case 9:
+                           case 10:
+                           case 11:
+                           case 12:
+                           case 13:
+                           case 14:
+                           case 15:
+                              m68kregs.A[cursel - 8] = memaddr;
+                              break;
+                           case 16:
+                              m68kregs.SR = memaddr;
+                              break;
+                           case 17:
+                              m68kregs.PC = memaddr;
+                              M68KUpdateCodeList(hDlg, m68kregs.PC);
+                              break;
+                           default: break;
+                        }
+
+                        ((Scsp*)yabausemem->soundr)->Set68kRegisters(&m68kregs);
+                     }
+
+                     M68KUpdateRegList(hDlg, &m68kregs);
+
+                     break;
+                  }
+                  default: break;
+               }
+
+               break;
+            }
+
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
+{
+   char tempstr[128];
+   int i;
+
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_RESETCONTENT, 0, 0);
+
+   sprintf(tempstr, "PR =          %d\0", regs->dspProgControlPort.part.PR);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "EP =          %d\0", regs->dspProgControlPort.part.EP);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "T0 =          %d\0", regs->dspProgControlPort.part.T0);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "S =           %d\0", regs->dspProgControlPort.part.S);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "Z =           %d\0", regs->dspProgControlPort.part.Z);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "C =           %d\0", regs->dspProgControlPort.part.C);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "V =           %d\0", regs->dspProgControlPort.part.V);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "E =           %d\0", regs->dspProgControlPort.part.E);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "ES =          %d\0", regs->dspProgControlPort.part.ES);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "EX =          %d\0", regs->dspProgControlPort.part.EX);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "LE =          %d\0", regs->dspProgControlPort.part.LE);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "P =          %02X\0", regs->dspProgControlPort.part.P);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+/*       unsigned long unused1:5;
+       unsigned long PR:1; // Pause cancel flag
+       unsigned long EP:1; // Temporary stop execution flag
+       unsigned long unused2:1;
+       unsigned long T0:1; // D0 bus use DMA execute flag
+       unsigned long S:1;  // Sine flag
+       unsigned long Z:1;  // Zero flag
+       unsigned long C:1;  // Carry flag
+       unsigned long V:1;  // Overflow flag
+       unsigned long E:1;  // Program end interrupt flag
+       unsigned long ES:1; // Program step execute control bit
+       unsigned long EX:1; // Program execute control bit
+       unsigned long LE:1; // Program counter load enable bit
+       unsigned long unused3:7;
+       unsigned long P:8;  // Program Ram Address
+    } part;
+    unsigned long all;
+  } dspProgControlPort;
+*/
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SCUDSPUpdateCodeList(HWND hDlg, unsigned long addr)
+{
+   int i;
+   char buf[60];
+   unsigned long offset;
+
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_RESETCONTENT, 0, 0);
+
+   offset = addr;
+
+   for (i = 0; i < 24; i++)
+   {
+      ((Scu*)yabausemem->scu)->DSPDisasm(offset, buf);
+      offset++;
+
+      SendMessage(HWND(GetDlgItem(hDlg, IDC_LISTBOX2)), LB_ADDSTRING, 0,
+                  (long)buf);
+   }
+
+   SendMessage(HWND(GetDlgItem(hDlg, IDC_LISTBOX2)), LB_SETCURSEL,0,0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         scudspregs_struct dspregs;
+
+         EnableWindow(HWND(GetDlgItem(hDlg, IDC_STEP)), TRUE);
+
+         ((Scu*)yabausemem->scu)->GetDSPRegisters(&dspregs);
+         SCUDSPUpdateRegList(hDlg, &dspregs);
+         SCUDSPUpdateCodeList(hDlg, dspregs.dspProgControlPort.part.P);
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+
+               return TRUE;
+            }
+            case IDC_STEP:
+            {
+               scudspregs_struct dspregs;
+
+               // execute instruction here
+
+               ((Scu*)yabausemem->scu)->GetDSPRegisters(&dspregs);
+               SCUDSPUpdateRegList(hDlg, &dspregs);
+               SCUDSPUpdateCodeList(hDlg, dspregs.dspProgControlPort.part.P);
+
+               break;
+            }
+            case IDC_ADDBP1:
+            {
+               // add a code breakpoint
+               break;
+            }
+            case IDC_DELBP1:
+            {
+               // delete a code breakpoint
+               break;
             }
 
             default: break;

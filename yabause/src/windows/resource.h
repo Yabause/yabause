@@ -29,6 +29,8 @@
 #define IDM_MSH2DEBUG   10009
 #define IDM_SSH2DEBUG   10010
 #define IDM_VDP2DEBUG   10011
+#define IDM_M68KDEBUG   10012
+#define IDM_SCUDSPDEBUG 10013
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002
@@ -48,8 +50,8 @@
 #define IDC_STATUSBAR                   1020
 
 #define IDC_STEP                        1025
-#define IDC_RUN                         1026
-#define IDC_PAUSE                       1027
+#define IDC_STEPOVER                    1026
+#define IDC_MEMTRANSFER                 1027
 
 #define IDC_ADDBP1                      1028
 #define IDC_DELBP1                      1029
