@@ -250,13 +250,9 @@ void yui_init(int (*yab_main)(void*)) {
 	putenv(SDL_windowhack);
 
 	stop = 0;
-	mem = new SaturnMemory();
-        mem->start();
+        mem = new SaturnMemory();
         yabausemem = mem;
-
         while (!stop) yab_main(mem);
-
-        delete(mem);
 }
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
