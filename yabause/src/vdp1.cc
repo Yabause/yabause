@@ -246,18 +246,41 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
         {
                 // 8 bpp(64 color) Bank mode
                 unsigned long colorBank = CMDCOLR & 0xFFC0;
-#ifdef VDP1_DEBUG
-                cerr << "readTexture: color mode 2 not implemented" << endl;
-#endif
+                // fix me
+                Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
+                // fix me
+                int colorOffset = (((Vdp2 *)satmem->getVdp2())->getWord(0xE6) >> 4) & 0x7;
+
+		for(unsigned short i = 0;i < h;i++) {
+                        for(unsigned short j = 0;j < w;j++) {
+                                dot = vram->getByte(charAddr) & 0x3F;
+                                charAddr++;
+
+                                if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
+                                else textdata[i * ww + j] = cram->getColor(dot + colorBank, alpha, colorOffset);
+                        }
+                }
+
 		break;
         }
 	case 3:
         {
                 // 8 bpp(128 color) Bank mode
                 unsigned long colorBank = CMDCOLR & 0xFF80;
-#ifdef VDP1_DEBUG
-                cerr << "readTexture: color mode 3 not implemented" << endl;
-#endif
+                // fix me
+                Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
+                // fix me
+                int colorOffset = (((Vdp2 *)satmem->getVdp2())->getWord(0xE6) >> 4) & 0x7;
+
+		for(unsigned short i = 0;i < h;i++) {
+                        for(unsigned short j = 0;j < w;j++) {
+                                dot = vram->getByte(charAddr) & 0x7F;
+                                charAddr++;
+
+                                if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
+                                else textdata[i * ww + j] = cram->getColor(dot + colorBank, alpha, colorOffset);
+                        }
+                }
 		break;
         }
 	case 4:
