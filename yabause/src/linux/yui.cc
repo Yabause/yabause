@@ -290,12 +290,10 @@ void yui_coin_coin(void) {
 		cerr << e << endl;
 		exit(1);
 	}
-	//saturn->start();
 	g_idle_add((gboolean (*)(void*)) yab_main, saturn);
 }
 
 char * yui_mpegrom(void) {
-	//return "/home/guillaume/mpeg_rom/rgvc2rom.bin";
 	return NULL;
 }
 

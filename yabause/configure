@@ -819,7 +819,15 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking Speeds up one-time builds
   --enable-dependency-tracking  Do not reject slow dependency extractors
+  --enable-debug          enable general debug information
+  --enable-vdp1-debug     enable vdp1 debug information
+  --enable-vdp2-debug     enable vdp2 debug information
+  --enable-cd-debug       enable cdblock debug information
 
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-gtk              use a gtk interface
 
 Some influential environment variables:
   CC          C compiler command
@@ -3959,6 +3967,14 @@ _ACEOF
 fi
 
 		yabause_yui="."
+		use_gtk=yes
+
+# Check whether --with-gtk or --without-gtk was given.
+if test "${with_gtk+set}" = set; then
+  withval="$with_gtk"
+  use_gtk=$withval
+fi;
+		if test $use_gtk = yes ; then
 
   succeeded=no
 
@@ -4055,6 +4071,7 @@ echo "${ECHO_T}$GTK_LIBS" >&6
      yabause_yui="."
   fi
 
+		fi
 		;;
         *)
 echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
@@ -4296,6 +4313,14 @@ if test "${enable_vdp1_debug+set}" = set; then
   enableval="$enable_vdp1_debug"
   cat >>confdefs.h <<\_ACEOF
 #define VDP1_DEBUG 1
+_ACEOF
+
+fi;
+# Check whether --enable-vdp2-debug or --disable-vdp2-debug was given.
+if test "${enable_vdp2_debug+set}" = set; then
+  enableval="$enable_vdp2_debug"
+  cat >>confdefs.h <<\_ACEOF
+#define VDP2_DEBUG 1
 _ACEOF
 
 fi;
