@@ -149,9 +149,11 @@ public:
   Memory *getVdp2(void);
   Memory *getSmpc(void);
 
+  /*
   bool start(void);
   void stop(void);
-  bool running(void);
+  */
+  //bool running(void);
 };
 
 #endif

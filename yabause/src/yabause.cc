@@ -178,7 +178,6 @@ int handleEvents(SaturnMemory *mem) {
 			break;
 			
 		case SDLK_q:
-			mem->stop();
 			yui_quit();
 			break;
 		case SDLK_p:
@@ -186,18 +185,12 @@ int handleEvents(SaturnMemory *mem) {
 			cerr << "Pause" << endl;
 #endif
 			msh->pause();
-
 			break;
 		case SDLK_r:
 #ifdef DEBUG
 			cerr << "Run" << endl;
 #endif
-			if (mem->running()) {
-				msh->run();
-			}
-			else {
-				mem->start();
-			}
+			msh->run();
 			break;
 #ifdef DEBUG
 		case SDLK_v:

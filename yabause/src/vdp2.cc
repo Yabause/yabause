@@ -76,14 +76,12 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha, int colorOff
     addr *= 2; // thanks Runik!
     addr += colorOffset * 0x200;
     unsigned long tmp = getWord(addr);
-    //return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
     return SAT2YAB1(alpha, tmp);
   }
   case 1: {
     addr *= 2; // thanks Runik!
     addr += colorOffset * 0x400;
     unsigned long tmp = getWord(addr);
-    //return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
     return SAT2YAB1(alpha, tmp);
   }
   case 2: {
@@ -91,8 +89,6 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha, int colorOff
     addr += colorOffset * 0x200;
     unsigned long tmp1 = getWord(addr);
     unsigned long tmp2 = getWord(addr + 2);
-    //return  ((tmp2 & 0xFF) << 24) | ((tmp1 & 0xFF00) << 8) | ((tmp1 & 0xFF) << 8) | alpha;
-    //return alpha << 24 | ((tmp1 & 0xFF) << 16) | (tmp1 & 0xFF00) | (tmp2 & 0xFF);
     return SAT2YAB2(alpha, tmp1, tmp2);
   }
   }
@@ -104,7 +100,6 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha, int colorOff
 /*					*/
 /****************************************/
 
-//Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, SDL_Surface *s) {
 Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, unsigned long *s) {
     reg = r;
     vram = v;
@@ -135,30 +130,27 @@ void Vdp2Screen::draw(void) {
 		drawMap();
 	}
         
-  if (*texture ==0) glGenTextures(1, texture );
-  glBindTexture(GL_TEXTURE_2D, texture[0] );
+	if (*texture ==0) glGenTextures(1, texture );
+	glBindTexture(GL_TEXTURE_2D, texture[0] );
 #ifndef _arch_dreamcast
-//  glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
   
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 #else
-//  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface->pixels);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
 #endif
 
-  int p = getPriority();
-  glEnable( GL_TEXTURE_2D );
-  glBindTexture( GL_TEXTURE_2D, texture[0] );
-  glBegin(GL_QUADS);
-  glTexCoord2f(0, 0); glVertex3f(-1, 1, p);
-  glTexCoord2f(0.625, 0); glVertex3f(1, 1, p);
-  glTexCoord2f(0.625, 0.875); glVertex3f(1, -1, p);
-  glTexCoord2f(0, 0.875); glVertex3f(-1, -1, p);
-  glEnd();
-  glDisable( GL_TEXTURE_2D );
-
+	int p = getPriority();
+	glEnable( GL_TEXTURE_2D );
+	glBindTexture( GL_TEXTURE_2D, texture[0] );
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0); glVertex3f(-1, 1, p);
+	glTexCoord2f(0.625, 0); glVertex3f(1, 1, p);
+	glTexCoord2f(0.625, 0.875); glVertex3f(1, -1, p);
+	glTexCoord2f(0, 0.875); glVertex3f(-1, -1, p);
+	glEnd();
+	glDisable( GL_TEXTURE_2D );
 }
 
 void Vdp2Screen::drawMap(void) {
@@ -386,7 +378,6 @@ void Vdp2Screen::drawCell(void) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  charAddr += 2;
 	  if ((dot & 0x8000) && transparencyEnable) color = 0x00000000;
-	  //else color = (dot & 0x1F) << 27 | (dot & 0xCE0) << 14 | (dot & 0x7C00) << 1 | 0xFF;
 	  else color = SAT2YAB1(0xFF, dot);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
@@ -405,8 +396,6 @@ void Vdp2Screen::drawCell(void) {
 	  unsigned short dot2 = vram->getWord(charAddr);
 	  charAddr += 2;
 	  if ((dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
-	  //else color = ((dot2 & 0xFF) << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | 0xFF;
-	  //else color = alpha << 24 | ((dot1 & 0xFF) << 16) | (dot1 & 0xFF00) | (dot2 & 0xFF);
 	  else color = SAT2YAB2(alpha, dot1, dot2);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
@@ -417,147 +406,9 @@ void Vdp2Screen::drawCell(void) {
   }
 }
 
-// The drawPixel function comes from SDL_gfx
-
-#define clip_xmin(surface) surface->clip_rect.x
-#define clip_xmax(surface) surface->clip_rect.x+surface->clip_rect.w-1
-#define clip_ymin(surface) surface->clip_rect.y
-#define clip_ymax(surface) surface->clip_rect.y+surface->clip_rect.h-1
-
-//void Vdp2Screen::drawPixel(SDL_Surface *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
 void Vdp2Screen::drawPixel(unsigned long *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
     if ((x >= 0) && (y >= 0) && (x < 512) && (y < 256)) surface[y * 512 + x] = tmpcolor;
-/*
-	Uint8 alpha;
-	Uint32 color;
-	int result = 0;
-	
-	alpha = tmpcolor & 0x000000ff;
-	color = SDL_MapRGBA(surface->format, (tmpcolor & 0xff000000) >> 24, (tmpcolor & 0x00ff0000) >> 16, (tmpcolor & 0x0000ff00) >> 8, alpha);
-	
-	Uint32 Rmask = surface->format->Rmask,
-	       Gmask = surface->format->Gmask,
-	       Bmask = surface->format->Bmask,
-	       Amask = surface->format->Amask;
-	Uint32 R, G, B, A = 0;
-	                                                                                                                                                  
-	if (x >= clip_xmin(surface) && x <= clip_xmax(surface) && y >= clip_ymin(surface) && y <= clip_ymax(surface)) {
-		switch (surface->format->BytesPerPixel) {
-			case 1:{
-				if (alpha == 255) {
-					*((Uint8 *) surface->pixels + y * surface->pitch + x) = color;
-				} else {
-				        Uint8 *pixel = (Uint8 *) surface->pixels + y * surface->pitch + x;
-
-				        Uint8 dR = surface->format->palette->colors[*pixel].r;
-				        Uint8 dG = surface->format->palette->colors[*pixel].g;
-				        Uint8 dB = surface->format->palette->colors[*pixel].b;
-				        Uint8 sR = surface->format->palette->colors[color].r;
-				        Uint8 sG = surface->format->palette->colors[color].g;
-				        Uint8 sB = surface->format->palette->colors[color].b;
-				                         
-				        dR = dR + ((sR - dR) * alpha >> 8);
-				        dG = dG + ((sG - dG) * alpha >> 8);
-				        dB = dB + ((sB - dB) * alpha >> 8);
-														                                                                                                                                                 
-				        *pixel = SDL_MapRGB(surface->format, dR, dG, dB);
-				}
-			}
-			break;
-			case 2:{
-				if (alpha == 255) {
-					*((Uint16 *) surface->pixels + y * surface->pitch / 2 + x) = color;
-				 } else {
-				        Uint16 *pixel = (Uint16 *) surface->pixels + y * surface->pitch / 2 + x;
-				        Uint32 dc = *pixel;
-									                                                                                                                                                 
-				        R = ((dc & Rmask) + (((color & Rmask) - (dc & Rmask)) * alpha >> 8)) & Rmask;
-				        G = ((dc & Gmask) + (((color & Gmask) - (dc & Gmask)) * alpha >> 8)) & Gmask;
-				        B = ((dc & Bmask) + (((color & Bmask) - (dc & Bmask)) * alpha >> 8)) & Bmask;
-				        if (Amask)
-						A = ((dc & Amask) + (((color & Amask) - (dc & Amask)) * alpha >> 8)) & Amask;
-				                                                                                   
-					*pixel = R | G | B | A;
-				}
-			}
-			break;
-			case 3:{
-				Uint8 *pix = (Uint8 *) surface->pixels + y * surface->pitch + x * 3;
-				Uint8 rshift8 = surface->format->Rshift / 8;
-				Uint8 gshift8 = surface->format->Gshift / 8;
-				Uint8 bshift8 = surface->format->Bshift / 8;
-				Uint8 ashift8 = surface->format->Ashift / 8;
-
-
-				if (alpha == 255) {
-		    			*(pix + rshift8) = color >> surface->format->Rshift;
-		    			*(pix + gshift8) = color >> surface->format->Gshift;
-		    			*(pix + bshift8) = color >> surface->format->Bshift;
-		    			*(pix + ashift8) = color >> surface->format->Ashift;
-				} else {
-		    			Uint8 dR, dG, dB, dA = 0;
-		    			Uint8 sR, sG, sB, sA = 0;
-
-		    			pix = (Uint8 *) surface->pixels + y * surface->pitch + x * 3;
-
-		    			dR = *((pix) + rshift8);
-		    			dG = *((pix) + gshift8);
-		    			dB = *((pix) + bshift8);
-		    			dA = *((pix) + ashift8);
-
-		    			sR = (color >> surface->format->Rshift) & 0xff;
-		    			sG = (color >> surface->format->Gshift) & 0xff;
-		    			sB = (color >> surface->format->Bshift) & 0xff;
-		    			sA = (color >> surface->format->Ashift) & 0xff;
-
-		    			dR = dR + ((sR - dR) * alpha >> 8);
-		    			dG = dG + ((sG - dG) * alpha >> 8);
-		    			dB = dB + ((sB - dB) * alpha >> 8);
-		    			dA = dA + ((sA - dA) * alpha >> 8);
-
-		    			*((pix) + rshift8) = dR;
-		    			*((pix) + gshift8) = dG;
-		    			*((pix) + bshift8) = dB;
-		    			*((pix) + ashift8) = dA;
-				}
-	    		}
-	    		break;
-
-			case 4:{
-				if (alpha == 255) {
-		    			*((Uint32 *) surface->pixels + y * surface->pitch / 4 + x) = color;
-				} else {
-		    			Uint32 *pixel = (Uint32 *) surface->pixels + y * surface->pitch / 4 + x;
-		    			Uint32 dc = *pixel;
-
-		    			R = ((dc & Rmask) + (((color & Rmask) - (dc & Rmask)) * alpha >> 8)) & Rmask;
-		    			G = ((dc & Gmask) + (((color & Gmask) - (dc & Gmask)) * alpha >> 8)) & Gmask;
-		    			B = ((dc & Bmask) + (((color & Bmask) - (dc & Bmask)) * alpha >> 8)) & Bmask;
-		    			if (Amask)
-						A = ((dc & Amask) + (((color & Amask) - (dc & Amask)) * alpha >> 8)) & Amask;
-
-		    			*pixel = R | G | B | A;
-				}
-	    		}
-	   	 	break;
-		}
-    	}
-*/
 }
-
-int Vdp2Screen::getAlpha(void) {
-	return alpha;
-}
-
-int Vdp2Screen::getColorOffset(void) {
-	return colorOffset;
-}
-
-/*
-SDL_Surface *Vdp2Screen::getSurface(void) {
-	return surface;
-}
-*/
 
 void RBG0::init(void) {
 	enable = false;
@@ -972,10 +823,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glOrtho(-1, 1, -1, 1, -10, 10);
-	//glGenTextures(1, texture );
-  //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
 #ifndef _arch_dreamcast
-  //surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
   surface = new unsigned long [512 * 256];
 #else
   surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 16, 0x000f, 0x00f0, 0x0f00, 0xf000);
@@ -987,12 +835,10 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   	screens[2] = new NBG1(this, vram, cram, surface);
   	screens[1] = new NBG2(this, vram, cram, surface);
   	screens[0] = new NBG3(this, vram, cram, surface);
-	//((Vdp1 *) satmem->getVdp1())->setVdp2Ram(this, cram);
 }
 
 Vdp2::~Vdp2(void) {
     for(int i = 0;i < 5;i++) delete screens[i];
-    //SDL_FreeSurface(surface);
     delete [] surface;
     delete vram;
     delete cram;
@@ -1033,42 +879,15 @@ void Vdp2::executer(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   drawBackScreen();
   if (getWord(0) & 0x8000) {
-//    if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
     screens[0]->draw();
     screens[1]->draw();
     screens[2]->draw();
     screens[3]->draw();
     screens[4]->draw();
-//    if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
   }
   
 #ifdef _arch_dreamcast
   glKosBeginFrame();
-#endif
-
-#if 0
-  if (*texture ==0) glGenTextures(1, texture );
-  glBindTexture(GL_TEXTURE_2D, texture[0] );
-#ifndef _arch_dreamcast
-//  glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
-  
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-#else
-//  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface->pixels);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
-#endif
-
-  glEnable( GL_TEXTURE_2D );
-  glBindTexture( GL_TEXTURE_2D, texture[0] );
-  glBegin(GL_QUADS);
-  glTexCoord2f(0, 0); glVertex2f(-1, 1);
-  glTexCoord2f(0.625, 0); glVertex2f(1, 1);
-  glTexCoord2f(0.625, 0.875); glVertex2f(1, -1);
-  glTexCoord2f(0, 0.875); glVertex2f(-1, -1);
-  glEnd();
-  glDisable( GL_TEXTURE_2D );
 #endif
 
   ((Vdp1 *) satmem->getVdp1())->execute(0);
@@ -1079,7 +898,6 @@ void Vdp2::executer(void) {
   glKosFinishFrame();
 #endif
   //colorOffset();
-  //SDL_Flip(surface);
   ((Scu *) satmem->getScu())->sendVBlankOUT();
 }
 

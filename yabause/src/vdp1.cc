@@ -146,6 +146,13 @@ void Vdp1::readCommand(unsigned long addr) {
 void Vdp1::readTexture(vdp1Sprite *sp) {
 #else
 #endif
+        unsigned long charAddr = CMDSRCA * 8;
+        *sp = vram->getSprite(charAddr);
+        if(sp->vdp1_loc == 0) {
+#ifdef VDP1_DEBUG
+                cerr << "Making new sprite " << hex << charAddr << endl;
+#endif
+
 	unsigned long dot;
 	bool SPD = ((CMDPMOD & 0x40) != 0);
 	unsigned long colorBank = CMDCOLR * 8;
@@ -158,7 +165,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 		        alpha = 0x80;
 			break;
 		default:
-			//cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
+			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
 			break;
 	}
 #ifndef _arch_dreamcast
@@ -168,16 +175,10 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
         unsigned short *textdata = (unsigned short *)_textdata;
 #endif
 
-        unsigned long charAddr = CMDSRCA * 8;
 
-        *sp = vram->getSprite(charAddr);
 
         unsigned long ca1 = charAddr;
 
-        if(sp->vdp1_loc == 0) {
-#ifdef VDP1_DEBUG
-                cerr << "Making new sprite " << hex << charAddr << endl;
-#endif
 
 	switch((CMDPMOD & 0x38) >> 3) {
 	case 0:
@@ -361,7 +362,6 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 		v2 = 0.0f;
 	}
 	unsigned short ZP = (vram->getWord(addr) & 0xF00) >> 8;
-	unsigned short tmp;
 
 	switch(ZP & 0xC) {
 		case 0x4: 

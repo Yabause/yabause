@@ -181,7 +181,7 @@ char * yui_cdrom(void) {
 
 void yui_coin_coin(void) {
 	saturn = new SaturnMemory();
-	saturn->start();
+	//saturn->start();
 	g_idle_add((gboolean (*)(void*)) yab_main, saturn);
 }
 

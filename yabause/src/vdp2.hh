@@ -44,7 +44,6 @@ public:
 
 class Vdp2Screen {
 protected:
-  //SDL_Surface *surface;
   unsigned long *surface;
   GLuint texture[1];
   Vdp2 *reg;
@@ -73,24 +72,18 @@ protected:
   int colorOffset;
   bool transparencyEnable;
 public:
-  //Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, SDL_Surface *);
   Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, unsigned long *);
 
   virtual int getPriority(void) = 0;
   virtual int getInnerPriority(void) = 0;
   static int comparePriority(const void *, const void *);
 
-  int getAlpha(void);
-  int getColorOffset(void);
-  //SDL_Surface *getSurface(void);
-  
   void draw(void);
   void drawMap(void);
   void drawPlane(void);
   void drawPage(void);
   void drawPattern(void);
   void drawCell(void);
-  //static void drawPixel(SDL_Surface *, Sint16, Sint16, Uint32);
   static void drawPixel(unsigned long *, Sint16, Sint16, Uint32);
 };
 
@@ -99,7 +92,6 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  //RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
@@ -110,7 +102,6 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  //NBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   NBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
@@ -121,7 +112,6 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  //NBG1(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   NBG1(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
@@ -132,7 +122,6 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  //NBG2(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   NBG2(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
@@ -152,7 +141,6 @@ class Vdp2 : public Cpu, public Memory {
 private:
   Vdp2Ram *vram;
   Vdp2ColorRam *cram;
-  //SDL_Surface *surface;
   unsigned long *surface;
   //GLuint texture[1];
 

@@ -280,33 +280,33 @@ void LoggedMemory::setLong(unsigned long addr, unsigned long val) {
 
 
 SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
-  mshThread = NULL;
-  msh = new SuperH(false);
-  sshThread = NULL;
-  ssh = new SuperH(true);
+	mshThread = NULL;
+	msh = new SuperH(false);
+	sshThread = NULL;
+	ssh = new SuperH(true);
 
-  Timer::initSuperH(msh);
+	Timer::initSuperH(msh);
 
-  rom         = new Memory(0xFFFFF, 0x80000);
-  onchip      = new Onchip(this);
-  ram         = new Memory(0xFFFF, 0x10000);
-  ramLow      = new Memory(0xFFFFF, 0x100000);
-  minit       = new Dummy(0x10000);
-  sinit       = new Dummy(0x10000);
-  cs0	      = new Dummy(0xFFFFFF);
-  cs1         = new Cs1();
-  cs2         = new Cs2();
-  sound       = new ScspRam(); //Memory(0x7FFFF);
-  soundr      = new Memory(0xFFF, 0xEE4);
-  scu         = new Scu(this);
-  vdp1_2      = new Vdp1(this);
-  vdp1_1      = ((Vdp1*) vdp1_2)->getVRam();
-  vdp2_3      = new Vdp2(this);
-  vdp2_1      = ((Vdp2 *) vdp2_3)->getVRam();
-  vdp2_2      = ((Vdp2 *) vdp2_3)->getCRam();
-  smpc        = new Smpc(this);
-  ramHigh     = new Memory(0xFFFFF, 0x100000);
-  initMemoryMap();
+	rom         = new Memory(0xFFFFF, 0x80000);
+	onchip      = new Onchip(this);
+	ram         = new Memory(0xFFFF, 0x10000);
+	ramLow      = new Memory(0xFFFFF, 0x100000);
+	minit       = new Dummy(0x10000);
+	sinit       = new Dummy(0x10000);
+	cs0	      = new Dummy(0xFFFFFF);
+	cs1         = new Cs1();
+	cs2         = new Cs2();
+	sound       = new ScspRam(); //Memory(0x7FFFF);
+	soundr      = new Memory(0xFFF, 0xEE4);
+	scu         = new Scu(this);
+	vdp1_2      = new Vdp1(this);
+	vdp1_1      = ((Vdp1*) vdp1_2)->getVRam();
+	vdp2_3      = new Vdp2(this);
+	vdp2_1      = ((Vdp2 *) vdp2_3)->getVRam();
+	vdp2_2      = ((Vdp2 *) vdp2_3)->getCRam();
+	smpc        = new Smpc(this);
+	ramHigh     = new Memory(0xFFFFF, 0x100000);
+	initMemoryMap();
 
 	char *bios;
 
@@ -346,11 +346,13 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	msh->run();
 }
 
+/*
 bool SaturnMemory::start(void) {
 }
 
 void SaturnMemory::stop(void) {
 }
+*/
 
 SaturnMemory::~SaturnMemory(void) {
 #if DEBUG
@@ -606,6 +608,8 @@ void SaturnMemory::mappage(unsigned long adr) {
   }
 }
 
+/*
 bool SaturnMemory::running(void) {
 	return (mshThread != NULL);
 }
+*/

@@ -53,7 +53,7 @@ class Vdp2;
 class Vdp2ColorRam;
 
 typedef struct {
-	int vdp1_loc;
+	unsigned long vdp1_loc;
 	bool dirty;
 	GLuint txr;
 } vdp1Sprite;
