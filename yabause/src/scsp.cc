@@ -754,7 +754,7 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 {
 	slot_t *slot = &(scsp.slot[s]);
 
-	slog("slot %d : reg %.2X = %.4X\n", s, a & 0x1E, d);
+        slog("slot %d : reg %.2X = %.4X\n", s, a & 0x1E, d);
 
 	*(u16 *)&scsp_isr[a ^ 2] = d;
 
@@ -1400,7 +1400,7 @@ static void scsp_slot_update_8B_LR(slot_t *slot)
 	
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
-		SCSP_GET_OUT_8B
+                SCSP_GET_OUT_8B
 		SCSP_GET_ENV
 
 		SCSP_OUT_8B_LR
@@ -2459,17 +2459,20 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 
 // Yabause specific start
 
+#define SOUNDBLOCKSIZE  735
+#define NUMSOUNDBLOCKS  8
+
 static unsigned char *basetruescspram;
 Scu *scuint;
 
 struct sounddata {
   unsigned long *data32;
-  unsigned short *data16;
-  unsigned long pos;
-  unsigned long len;
 } scspchannel[2];
 
 unsigned short *stereodata16;
+unsigned long soundpos;
+unsigned long soundbufnum;
+unsigned long soundlen;
 
 u32 FASTCALL c68k_byte_read(const u32 adr) {
   if (adr < 0x100000)
@@ -2537,13 +2540,17 @@ void scspMixAudio(void *userdata, Uint8 *stream, int len) {
    int i;
    unsigned long size;
 
-   for (i = 0; i < 2; i++) {
-      size = (scspchannel[i].len - scspchannel[i].pos) * 2;
+   for (i = 0; i < 1; i++) {
+      size = ((SOUNDBLOCKSIZE * NUMSOUNDBLOCKS * 2) - soundpos) * 2;
+
       if (size > len) {
          size = len ;
-      }
-//      SDL_MixAudio(stream, (unsigned char *)&scspchannel[i].data16[scspchannel[i].pos], size, SDL_MIX_MAXVOLUME);
-      scspchannel[i].pos += (size / 2);
+      }      
+
+      SDL_MixAudio(stream, (unsigned char *)&stereodata16[soundpos], size, SDL_MIX_MAXVOLUME);
+      soundpos += (size / 2);
+
+      if (soundpos >= soundlen) soundpos = 0;
    }
 }
 
@@ -2697,16 +2704,16 @@ Scsp::Scsp(SaturnMemory *v) : Dummy(0xFFF) {
   memset(&scspchannel, 0, sizeof(scspchannel));
 
   // Allocate enough memory for each channel buffer(may have to change)
-  scspchannel[0].data16 = new unsigned short[735];
-  scspchannel[0].data32 = new unsigned long[735];
-  scspchannel[1].data16 = new unsigned short[735];
-  scspchannel[1].data32 = new unsigned long[735];
-  stereodata16 = new unsigned short[735 * 2];
-  memset(scspchannel[0].data16, 0, 735 * 2);
-  memset(scspchannel[0].data32, 0, 735 * 4);
-  memset(scspchannel[1].data16, 0, 735 * 2);
-  memset(scspchannel[1].data32, 0, 735 * 4);
-  memset(stereodata16, 0, 735 * 2 * 2);
+  scspchannel[0].data32 = new unsigned long[SOUNDBLOCKSIZE];
+  scspchannel[1].data32 = new unsigned long[SOUNDBLOCKSIZE];
+  stereodata16 = new unsigned short[SOUNDBLOCKSIZE * 2 * NUMSOUNDBLOCKS];
+  memset(scspchannel[0].data32, 0, SOUNDBLOCKSIZE * 4);
+  memset(scspchannel[1].data32, 0, SOUNDBLOCKSIZE * 4);
+  memset(stereodata16, 0, SOUNDBLOCKSIZE * 2 * 2 * NUMSOUNDBLOCKS);
+
+  soundpos = 0;
+  soundbufnum = 0;
+  soundlen = 0;
 
   SDL_PauseAudio(0);
 
@@ -2716,9 +2723,7 @@ Scsp::Scsp(SaturnMemory *v) : Dummy(0xFFF) {
 Scsp::~Scsp(void) {
   SDL_CloseAudio();
 
-  delete [] scspchannel[0].data16;
   delete [] scspchannel[0].data32;
-  delete [] scspchannel[1].data16;
   delete [] scspchannel[1].data32;
   delete [] stereodata16;
 
@@ -2755,16 +2760,19 @@ void Scsp::run() {
   if (scsptiming1 >= 263) // fix me
   {
      SDL_LockAudio();
+     memset(scspchannel[0].data32, 0, 4 * SOUNDBLOCKSIZE);
+     memset(scspchannel[1].data32, 0, 4 * SOUNDBLOCKSIZE);
+
      scsp_update((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, 735); // fix me
 
-//     scspchannel[0].pos = 0;
-//     scspchannel[0].len = 735;
-//     scspchannel[1].pos = 0;
-//     scspchannel[1].len = 735;
+     soundlen = SOUNDBLOCKSIZE * NUMSOUNDBLOCKS * 2;
+     Convert32to16s((long *)scspchannel[0].data32, (long *)scspchannel[1].data32, ((short *)stereodata16 + (soundbufnum * SOUNDBLOCKSIZE * 2)), SOUNDBLOCKSIZE);
 
-     // Convert 32-bit to 16-bit samples
-     Convert32to16s((long *)scspchannel[0].data32, (long *)scspchannel[1].data32, (short *)stereodata16, scspchannel[0].len);
-//     if (debugfp) fwrite((void *)stereodata16, 1, 735 * 2 * 2, debugfp);
+     soundbufnum++;
+     soundbufnum &= (NUMSOUNDBLOCKS - 1);
+
+//     if (debugfp) fwrite((void *)stereodata16, 1, SOUNDBLOCKSIZE * 2 * NUMSOUNDBLOCKS, debugfp);
+
      SDL_UnlockAudio();
 
      scsptiming1 -= 263;
