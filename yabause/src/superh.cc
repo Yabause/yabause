@@ -242,9 +242,10 @@ void SuperH::runCycles(unsigned long cc) {
         while(cycleCount < cc) {
            // Make sure it isn't one of our breakpoints
            for (int i=0; i < numcodebreakpoints; i++) {
-              if (PC == codebreakpoint[i].addr ||
-                  _delai == codebreakpoint[i].addr &&
-                  !inbreakpoint) {
+              if ((PC == codebreakpoint[i].addr ||
+                  _delai == codebreakpoint[i].addr) &&
+                  inbreakpoint == false) {
+
                  inbreakpoint = true;
                  if (BreakpointCallBack) BreakpointCallBack(isslave, codebreakpoint[i].addr);
                  inbreakpoint = false;
@@ -2219,29 +2220,6 @@ SuperH::opcode SuperH::decode(void) {
   }
 }
 
-/*
-Memory *SuperH::GetSdramMode() {
-   return modeSdram;
-}
-
-Memory *SuperH::GetPurgeArea() {
-   return purgeArea;
-}
-
-Memory *SuperH::GetAddressArray() {
-   return adressArray;
-}
-
-Memory *SuperH::GetDataArray() {
-   return dataArray;
-}
-
-Memory *SuperH::GetOnchip() {
-   return onchip;
-}
-*/
-
-// pending approval
 void SuperH::GetRegisters(sh2regs_struct *regs) {
   if (regs != NULL) {
     memcpy(regs->R, R, sizeof(R));
@@ -2277,10 +2255,6 @@ void SuperH::SetBreakpointCallBack(void (*func)(bool, unsigned long)) {
 int SuperH::AddCodeBreakpoint(unsigned long addr) {
   if (numcodebreakpoints < MAX_BREAKPOINTS) {
      codebreakpoint[numcodebreakpoints].addr = addr;
-//     // backup old opcode
-//     codebreakpoint[numcodebreakpoints].oldopcode = memoire->getWord(addr);
-//     // set opcode to an invalid opcode(so there's no extra overhead)
-//     memoire->setWord(addr, 0x8383); 
      numcodebreakpoints++;
 
      return 0;
@@ -2294,11 +2268,6 @@ int SuperH::DelCodeBreakpoint(unsigned long addr) {
      for (int i = 0; i < numcodebreakpoints; i++) {
         if (codebreakpoint[i].addr == addr)
         {
-//           // Return opcode to old opcode(first make sure our invalid opcode
-//           // wasn't replaced)
-//           if (memoire->getWord(addr) == 0x8383)
-//              memoire->setWord(addr, codebreakpoint[i].oldopcode);
-
            codebreakpoint[i].addr = 0xFFFFFFFF;
            codebreakpoint[i].oldopcode = 0xFFFF;
            SortCodeBreakpoints();
@@ -2317,11 +2286,6 @@ codebreakpoint_struct *SuperH::GetBreakpointList() {
 
 void SuperH::ClearCodeBreakpoints() {
      for (int i = 0; i < MAX_BREAKPOINTS; i++) {
-//        // Return opcode to old opcode(first make sure our invalid opcode
-//        // wasn't replaced)
-//        if (memoire->getWord(addr) == 0x8383)
-//           memoire->setWord(addr, codebreakpoints[i].oldopcode);
-
         codebreakpoint[i].addr = 0xFFFFFFFF;
         codebreakpoint[i].oldopcode = 0xFFFF;
      }
