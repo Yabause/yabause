@@ -11,7 +11,7 @@ case $target in
 esac
 AC_SUBST(yabause_arch)
 
-AM_INIT_AUTOMAKE(yabause, 0.0.7)
+AM_INIT_AUTOMAKE(yabause, 0.5)
 
 AC_PROG_CC
 AC_PROG_CXX

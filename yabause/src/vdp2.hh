@@ -190,7 +190,7 @@ private:
   bool fpstoggle;
 
 public:
-  Ygl<1024,512,8,40000> ygl;
+  Ygl<1024,1024,8,40000> ygl;
   YglCache cache;
 
   Vdp2(SaturnMemory *);

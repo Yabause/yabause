@@ -1625,7 +1625,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=yabause
- VERSION=0.0.7
+ VERSION=0.5
 
 
 cat >>confdefs.h <<_ACEOF
