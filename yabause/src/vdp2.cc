@@ -70,11 +70,7 @@ void Vdp2ColorRam::setMode(int v) {
 	mode = v;
 }
 
-unsigned long Vdp2ColorRam::getColor(unsigned long addr, Vdp2Screen *screen) {
-  int alpha, colorOffset;
-  alpha = screen->getAlpha();
-  colorOffset = screen->getColorOffset();
-
+unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha, int colorOffset) {
   switch(mode) {
   case 0: {
     addr *= 2; // thanks Runik!
@@ -325,19 +321,19 @@ void Vdp2Screen::drawCell(void) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  charAddr += 2;
 	  if (!(dot & 0xF000) && transparencyEnable) color = 0x00000000;
-	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), this);
+          else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), alpha, colorOffset);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	  if (!(dot & 0xF00) && transparencyEnable) color = 0x00000000;
-	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF00) >> 8), this);
+          else color = cram->getColor((palAddr << 4) | ((dot & 0xF00) >> 8), alpha, colorOffset);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	  if (!(dot & 0xF0) && transparencyEnable) color = 0x00000000;
-	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF0) >> 4), this);
+          else color = cram->getColor((palAddr << 4) | ((dot & 0xF0) >> 4), alpha, colorOffset);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	  if (!(dot & 0xF) && transparencyEnable) color = 0x00000000;
-	  else color = cram->getColor((palAddr << 4) | (dot & 0xF), this);
+          else color = cram->getColor((palAddr << 4) | (dot & 0xF), alpha, colorOffset);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	}
@@ -352,11 +348,11 @@ void Vdp2Screen::drawCell(void) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  charAddr += 2;
 	  if (!(dot & 0xFF00) && transparencyEnable) color = 0x00000000;
-	  else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), this);
+          else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), alpha, colorOffset);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	  if (!(dot & 0xFF) && transparencyEnable) color = 0x00000000;
-	  else color = cram->getColor((palAddr << 4) | (dot & 0xFF), this);
+          else color = cram->getColor((palAddr << 4) | (dot & 0xFF), alpha, colorOffset);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	}
@@ -370,7 +366,7 @@ void Vdp2Screen::drawCell(void) {
 	for(int j = 0;j < cellW;j++) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  if ((dot == 0) && transparencyEnable) color = 0x00000000;
-	  else color = cram->getColor(dot, this);
+          else color = cram->getColor(dot, alpha, colorOffset);
 	  charAddr += 2;
 	  drawPixel(surface, x, y, color);
 	  x += xInc;

@@ -39,8 +39,8 @@ public:
   Vdp2ColorRam(void) : Memory(0xFFFF, 0x1000) {}
 
   void setMode(int);
-  unsigned long getColor(unsigned long, Vdp2Screen *);
-};
+  unsigned long getColor(unsigned long addr, int alpha, int colorOffset);
+};                                                                        
 
 class Vdp2Screen {
 protected:
@@ -143,7 +143,6 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  //NBG3(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   NBG3(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
