@@ -89,15 +89,15 @@ void Smpc::execute(Smpc *smpc) {
   switch(smpc->getCOMREG()) {
   case 0x6:
 #if DEBUG
-    cerr << "smpc\t: CDON\n";
+    cerr << "smpc\t: SNDON\n";
 #endif
-    smpc->CDON();
+    smpc->SNDON();
     break;
   case 0x7:
 #if DEBUG
-    cerr << "smpc\t: CDOFF\n";
+    cerr << "smpc\t: SNDOFF\n";
 #endif
-    smpc->CDOFF();
+    smpc->SNDOFF();
     break;
   case 0x10:
 #if DEBUG
@@ -119,8 +119,8 @@ void Smpc::execute(Smpc *smpc) {
     break;
   default:
 #if DEBUG
-    cerr << "smpc\t: " << ((int) smpc->getCOMREG())
-	 << " commande non implantée\n";
+    cerr << "smpc\t: command " << ((int) smpc->getCOMREG())
+         << " not implemented\n";
 #endif
     break;
   }
@@ -260,10 +260,10 @@ void Smpc::RESDISA(void) {
   setOREG(31, 0x1A);
 }
 
-void Smpc::CDON(void) {
+void Smpc::SNDON(void) {
 }
 
-void Smpc::CDOFF(void) {
+void Smpc::SNDOFF(void) {
 }
 
 void Smpc::INTBACKPeripheral(void) {
