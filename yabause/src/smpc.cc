@@ -62,6 +62,7 @@ void Smpc::setSF(unsigned char val) {
 void Smpc::setByte(unsigned long addr, unsigned char value) {
   switch (addr) {
     case 0x01: // Maybe an INTBACK continue/break request
+               Memory::setByte(addr, value);
                if ((intbackIreg0 & 0x80) != (getIREG(0) & 0x80)) {
                  // Continue
                  setTiming();
@@ -72,7 +73,6 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
                  intback = false;
                  setSR(getSR() & 0x0F);
                }
-               Memory::setByte(addr, value);
                break;
     case 0x75:
                // FIX ME (should support other peripherals)
@@ -110,8 +110,8 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
 
                break;
     case 0x1F:
-               setTiming();
                Memory::setByte(addr, value);
+               setTiming();
                break;               
     default:   Memory::setByte(addr, value);
                break;
