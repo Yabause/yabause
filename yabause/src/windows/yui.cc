@@ -664,7 +664,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDC_STEP:
             {
                sh2regs_struct sh2regs;
-//               proc->step();
+               debugsh->step();
                debugsh->GetRegisters(&sh2regs);
                UpdateRegList(hDlg, &sh2regs);
                UpdateCodeList(hDlg, sh2regs.PC);

@@ -143,6 +143,18 @@ void SuperH::runCycles(unsigned long cc) {
         ((Onchip *)onchip)->runFRT(cc);
 }
 
+void SuperH::step(void) {
+   unsigned long tmp = PC;
+
+   // Execute 1 instruction
+   runCycles(cycleCount+1);
+
+   // Sometimes it doesn't always seem to execute one instruction,
+   // let's make sure it did
+   if (tmp == PC)
+      runCycles(cycleCount+1);
+}
+
 #ifndef _arch_dreamcast
 ostream& operator<<(ostream& os, const SuperH& sh) {
   for(int j = 0;j < 4;j++) {

@@ -157,6 +157,7 @@ public:
   void sendNMI(void);
   void run(int);
   void runCycles(unsigned long);
+  void step(void);
 
   Memory *GetSdramMode();
   Memory *GetPurgeArea();
