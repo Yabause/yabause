@@ -30,9 +30,9 @@ void Scu::sendInterrupt(void) {
     cerr << "interrupt send " << (int) V << endl;
 #endif
   }
-  else {
-    if (V == 0x47) cerr << "sm interrupt masked " << endl;
-  }
+//  else {
+//    if (V == 0x47) cerr << "sm interrupt masked " << endl;
+//  }
 }
 
 unsigned long Scu::getLong(unsigned long addr) {
@@ -178,15 +178,17 @@ void Scu::DMA(int mode) {
                    test = tempwriteAddress & 0x1FFFFFFF;
                    test2 = tempreadAddress & 0x80000000;
 
-#if DEBUG
-                   if (temptransferNumber == 0)
-                      cerr << "scu\t:indirect dma transfer number equals 0" << endl;
-#endif
+                   if (mode > 0) {
+                      temptransferNumber &= 0xFFF;
 
-                   if (mode > 0) temptransferNumber &= 0xFFF;
+                      if (temptransferNumber == 0) temptransferNumber = 0x1000;
+                   }
+                   else {
+                      if (temptransferNumber == 0) temptransferNumber = 0x100000;
+                   }
 
                    tempreadAddress &= 0x7FFFFFFF;
-    
+
                    if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
                         while(counter < temptransferNumber) {
                                 unsigned long tmp = satmem->getLong(tempreadAddress);
@@ -221,12 +223,14 @@ void Scu::DMA(int mode) {
 		unsigned long counter = 0;
 		unsigned long test = writeAddress & 0x1FFFFFFF;
 
-#if DEBUG
-                if (transferNumber == 0)
-                   cerr << "scu\t:direct dma transfer number equals 0" << endl;
-#endif
+                if (mode > 0) {
+                   transferNumber &= 0xFFF;
 
-                if (mode > 0) transferNumber &= 0xFFF;
+                   if (transferNumber == 0) transferNumber = 0x1000;
+                }
+                else {
+                   if (transferNumber == 0) transferNumber = 0x100000;
+                }
 
 		if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
 			while(counter < transferNumber) {
