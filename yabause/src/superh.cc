@@ -203,15 +203,22 @@ void SuperH::executer(void) {
     _delai = 0;
   }
   else {
-    if (_interrupt) {
-      R[15] -= 4;
-      memoire->setLong(R[15], SR.tout);
-      R[15] -= 4;
-      memoire->setLong(R[15], PC);
-      SR.partie.I = _level;
-      PC = memoire->getLong(VBR + (_vector << 2)) + 4;
-      _interrupt = false;
-      SDL_CondSignal(cond[3]);
+    Onchip * oc = (Onchip *) ((SaturnMemory *) memoire)->getOnchip();
+    if ( !oc->interrupts.empty() ) {
+      Interrupt interrupt = oc->interrupts.top();
+      if (interrupt.level() > SR.partie.I) {
+	_level = interrupt.level();
+	_vector = interrupt.vector();
+        oc->interrupts.pop();
+
+        R[15] -= 4;
+        memoire->setLong(R[15], SR.tout);
+        R[15] -= 4;
+        memoire->setLong(R[15], PC);
+        SR.partie.I = _level;
+        PC = memoire->getLong(VBR + (_vector << 2)) + 4;
+        _interrupt = false;
+      }
     }
 #ifdef _arch_dreamcast
     cont_cond_t cond;

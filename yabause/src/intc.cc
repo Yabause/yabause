@@ -96,25 +96,6 @@ Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF, 0x1FF) {
 #ifdef _arch_dreamcast
 	__init_tree();
 #endif
-	mutex = SDL_CreateMutex();
-	mutex_cond = SDL_CreateMutex();
-	cond = SDL_CreateCond();
-	_stop = false;
-	intcThread = SDL_CreateThread((int (*)(void*)) &Onchip::startINTC, this);
-}
-
-Onchip::~Onchip(void) {
-#if DEBUG
-  cerr << "stopping intc\n";
-#endif
-  send(Interrupt(255, 0));
-  SDL_WaitThread(intcThread, NULL);
-#if DEBUG
-  cerr << "intc stopped\n";
-#endif
-  SDL_DestroyCond(cond);
-  SDL_DestroyMutex(mutex_cond);
-  SDL_DestroyMutex(mutex);
 }
 
 void Onchip::setByte(unsigned long addr, unsigned char val) {
@@ -322,69 +303,12 @@ unsigned char Interrupt::vector(void) const {
 }
 
 void Onchip::send(const Interrupt& i) {
-  bool empty = false;
-
-  SDL_mutexP(mutex);
-  
 #ifndef _arch_dreamcast
-  empty = interrupts.empty();
   interrupts.push(i);
 #else
-  empty = int_tree.root == NULL;
   __add_interrupt(&i);
 #endif
-  
-  SDL_mutexV(mutex);
-
-  if (empty) SDL_CondSignal(cond);
 };
-
-void Onchip::startINTC(Onchip *onchip) {
-	onchip->runINTC();
-}
-
-void Onchip::runINTC(void) {
-  SuperH * proc = memory->getMasterSH();
-  while(!_stop) {
-    while(proc->processingInterrupt()) proc->waitInterruptEnd();
-
-    SDL_mutexP(mutex_cond);
-#ifndef _arch_dreamcast
-    while(interrupts.empty()) SDL_CondWait(cond, mutex_cond);
-#else
-    while(int_tree.root == NULL) SDL_CondWait(cond, mutex_cond);
-#endif
-    SDL_mutexV(mutex_cond);
-
-    SDL_mutexP(mutex);
-#ifndef _arch_dreamcast
-    Interrupt interrupt = interrupts.top();
-#else
-    Interrupt interrupt = * __get_highest_int();
-#endif
-    SDL_mutexV(mutex);
-
-    if (interrupt.level() == 255) return;
-
-    if (interrupt.level() > proc->SR.partie.I) {
-      proc->level() = interrupt.level();
-      proc->vector() = interrupt.vector();
-      proc->interrupt();
-
-      SDL_mutexP(mutex);
-#ifndef _arch_dreamcast
-      interrupts.pop();
-#else
-      __del_highest_int();
-#endif
-      SDL_mutexV(mutex);
-    }
-  }
-};
-
-void Onchip::stopINTC(void) {
-  _stop = true;
-}
 
 void Onchip::sendNMI(void) {
   send(Interrupt(16, 11));

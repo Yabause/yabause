@@ -56,17 +56,13 @@ private:
         inline void DMATransfer(unsigned long chcr, unsigned long reg_offset);
 
 	/* INTC */
-	SDL_Thread *intcThread;
-	SDL_mutex *mutex, *mutex_cond;
-	SDL_cond *cond;
-	bool _stop;
 
+public:
 #ifndef _arch_dreamcast
 	priority_queue<Interrupt> interrupts;
 #endif
-public:
+
 	Onchip(SaturnMemory *);
-	~Onchip(void);
 
         void setByte(unsigned long addr, unsigned char val);
 	void setWord(unsigned long, unsigned short);
@@ -77,10 +73,6 @@ public:
 	void runDMA(void);
 
 	/* INTC */
-	static void startINTC(Onchip *);
-	void runINTC(void);
-	void stopINTC(void);
-
 	void sendNMI(void);
 	void sendUserBreak(void);
 	void send(const Interrupt&);
