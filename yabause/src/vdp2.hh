@@ -58,6 +58,10 @@ public:
 };
 
 class VdpScreen {
+protected:
+	int cor;
+	int cog;
+	int cob;
 public:
 	virtual void draw(void) = 0;
 	virtual int getPriority(void) = 0;

@@ -80,6 +80,7 @@
 #include "scu.hh"
 #include "c68k/c68k.h"
 #include "SDL.h"
+#include <math.h>
 
 ////////////////////////////////////////////////////////////////
 

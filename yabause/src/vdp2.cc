@@ -25,6 +25,14 @@
 #include "timer.hh"
 #include "yui.hh"
 
+#define COLOR_ADDt(b)		(b>0xFF?0xFF:(b<0?0:b))
+#define COLOR_ADDb(b1,b2)	COLOR_ADDt((signed) (b1) + (b2))
+#define COLOR_ADD(l,r,g,b)	COLOR_ADDb((l & 0xFF), r) | \
+				(COLOR_ADDb((l >> 8 ) & 0xFF, g) << 8) | \
+				(COLOR_ADDb((l >> 16 ) & 0xFF, b) << 16) | \
+				(l & 0xFF000000)
+
+
 /****************************************/
 /*					*/
 /*		VDP2 Registers		*/
@@ -343,19 +351,19 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  if (!(dot & 0xF000) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), alpha, colorOffset);
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF00) >> 8), alpha, colorOffset);
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF0) >> 4), alpha, colorOffset);
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | (dot & 0xF), alpha, colorOffset);
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -371,11 +379,11 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  if (!(dot & 0xFF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), alpha, colorOffset);
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xFF) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | (dot & 0xFF), alpha, colorOffset);
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -391,7 +399,7 @@ void Vdp2Screen::drawCell(void) {
 	  if ((dot == 0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor(dot, alpha, colorOffset);
 	  charAddr += 2;
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -407,7 +415,7 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
           if (!(dot & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB1(0xFF, dot);
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -425,7 +433,7 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
           if (!(dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB2(alpha, dot1, dot2);
-	  drawPixel(surface, x, y, color);
+	  drawPixel(surface, x, y, COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -435,7 +443,9 @@ void Vdp2Screen::drawCell(void) {
 }
 
 void Vdp2Screen::drawPixel(unsigned long *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
-    if ((x >= 0) && (y >= 0) && (x < 512) && (y < 256)) surface[y * 512 + x] = tmpcolor;
+	if ((x >= 0) && (y >= 0) && (x < 512) && (y < 256)) {
+		surface[y * 512 + x] = tmpcolor;
+	}
 }
 
 void RBG0::init(void) {
@@ -473,6 +483,27 @@ void RBG0::init(void) {
         }
 
         colorOffset = reg->getWord(0xE6) & 0x7;
+	if (reg->getWord(0x110) & 0x10) { // color offset enable
+		if (reg->getWord(0x112) & 0x10) { // color offset B
+			cor = reg->getWord(0x11A) & 0xFF;
+			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x11C) & 0xFF;
+			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x11E) & 0xFF;
+			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+		else { // color offset A
+			cor = reg->getWord(0x114) & 0xFF;
+			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x116) & 0xFF;
+			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x118) & 0xFF;
+			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+	}
+	else { // color offset disable
+		cor = cog = cob = 0;
+	}
 }
 
 void RBG0::planeAddr(int i) {
@@ -547,6 +578,27 @@ void NBG0::init(void) {
 	}
 
 	colorOffset = reg->getWord(0xE4) & 0x7;
+	if (reg->getWord(0x110) & 0x1) { // color offset enable
+		if (reg->getWord(0x112) & 0x1) { // color offset B
+			cor = reg->getWord(0x11A) & 0xFF;
+			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x11C) & 0xFF;
+			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x11E) & 0xFF;
+			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+		else { // color offset A
+			cor = reg->getWord(0x114) & 0xFF;
+			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x116) & 0xFF;
+			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x118) & 0xFF;
+			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+	}
+	else { // color offset disable
+		cor = cog = cob = 0;
+	}
 }
 
 void NBG0::planeAddr(int i) {
@@ -726,6 +778,27 @@ void NBG1::init(void) {
 	}
 
 	colorOffset = (reg->getWord(0xE4) & 0x70) >> 4;
+	if (reg->getWord(0x110) & 0x2) { // color offset enable
+		if (reg->getWord(0x112) & 0x2) { // color offset B
+			cor = reg->getWord(0x11A) & 0xFF;
+			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x11C) & 0xFF;
+			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x11E) & 0xFF;
+			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+		else { // color offset A
+			cor = reg->getWord(0x114) & 0xFF;
+			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x116) & 0xFF;
+			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x118) & 0xFF;
+			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+	}
+	else { // color offset disable
+		cor = cog = cob = 0;
+	}
 }
 
 void NBG1::planeAddr(int i) {
@@ -807,6 +880,27 @@ void NBG2::init(void) {
 	}
 
 	colorOffset = (reg->getWord(0xE4) & 0x700) >> 8;
+	if (reg->getWord(0x110) & 0x4) { // color offset enable
+		if (reg->getWord(0x112) & 0x4) { // color offset B
+			cor = reg->getWord(0x11A) & 0xFF;
+			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x11C) & 0xFF;
+			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x11E) & 0xFF;
+			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+		else { // color offset A
+			cor = reg->getWord(0x114) & 0xFF;
+			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x116) & 0xFF;
+			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x118) & 0xFF;
+			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+	}
+	else { // color offset disable
+		cor = cog = cob = 0;
+	}
 }
 
 void NBG2::planeAddr(int i) {
@@ -901,6 +995,27 @@ void NBG3::init(void) {
 	}
 
 	colorOffset = (reg->getWord(0xE4) & 0x7000) >> 12;
+	if (reg->getWord(0x110) & 0x8) { // color offset enable
+		if (reg->getWord(0x112) & 0x8) { // color offset B
+			cor = reg->getWord(0x11A) & 0xFF;
+			if (reg->getWord(0x11A) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x11C) & 0xFF;
+			if (reg->getWord(0x11C) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x11E) & 0xFF;
+			if (reg->getWord(0x11E) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+		else { // color offset A
+			cor = reg->getWord(0x114) & 0xFF;
+			if (reg->getWord(0x114) & 0x100) cor = cor | 0xFFFFFF00;
+			cog = reg->getWord(0x116) & 0xFF;
+			if (reg->getWord(0x116) & 0x100) cog = cog | 0xFFFFFF00;
+			cob = reg->getWord(0x118) & 0xFF;
+			if (reg->getWord(0x118) & 0x100) cob = cob | 0xFFFFFF00;
+		}
+	}
+	else { // color offset disable
+		cor = cog = cob = 0;
+	}
 }
 
 void NBG3::planeAddr(int i) {
