@@ -8,16 +8,21 @@
 
 void yui_choose_bios(void);
 void yui_choose_cdrom(void);
+void yui_choose_binary(void);
 void yui_coin_coin(void);
 
 static GtkItemFactoryEntry entries[] = {
-	{ "/_Yabause", NULL,      NULL,         0, "<Branch>" },
-	{ "/Yabause/tear1", NULL,      NULL,         0, "<Tearoff>" },
-	{ "/Yabause/_Open BIOS...",     "<CTRL>B", yui_choose_bios,     1, "<Item>" },
-	{ "/Yabause/_Open CDROM...", "<CTRL>C", yui_choose_cdrom,    1, "<Item>" },
-	{ "/Yabause/_Run...", "<CTRL>R", yui_coin_coin,    1, "<Item>" },
-	{ "/Yabause/sep1",     NULL,      NULL,         0, "<Separator>" },
-	{ "/Yabause/_Quit",    "<CTRL>Q", yui_quit, 0, "<StockItem>", GTK_STOCK_QUIT } };
+	{ "/_Yabause",			NULL,		NULL,			0, "<Branch>" },
+	{ "/Yabause/tear1",		NULL,		NULL,			0, "<Tearoff>" },
+	{ "/Yabause/_Open BIOS...",	"<CTRL>B",	yui_choose_bios,	1, "<Item>" },
+	{ "/Yabause/_Open Binary...",	NULL,		yui_choose_binary,	1, "<Item>" },
+	{ "/Yabause/_Open CDROM...",	"<CTRL>C",	yui_choose_cdrom,	1, "<Item>" },
+	{ "/Yabause/sep1",		NULL,		NULL,			0, "<Separator>" },
+	{ "/Yabause/_Quit",		"<CTRL>Q",	yui_quit,		0, "<StockItem>", GTK_STOCK_QUIT },
+	{ "/Emulation",			NULL,		NULL,			0, "<Branch>" },
+	{ "/Emulation/tear2",		NULL,		NULL,			0, "<Tearoff>" },
+	{ "/Emulation/_Run",		"r",		yui_coin_coin,		1, "<Item>" }
+};
 
 GtkWidget *status_bar;
 gint context_id;
@@ -28,6 +33,7 @@ gboolean hide;
 
 char *bios;
 char *cdrom;
+char *binary;
 SaturnMemory *saturn;
 int (*yab_main)(void *);
 
@@ -69,7 +75,7 @@ void yui_init(int (*fonction)(void *)) {
 	g_free(text);
 
 	gif = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<YabauseMain>", NULL);
-	gtk_item_factory_create_items(gif, 7, entries, NULL);
+	gtk_item_factory_create_items(gif, sizeof(entries)/sizeof(entries[0]), entries, NULL);
 
 	menu_bar = gtk_item_factory_get_widget(gif, "<YabauseMain>");
 	gtk_box_pack_start(GTK_BOX (vbox), menu_bar, FALSE, FALSE, 0);
@@ -172,6 +178,24 @@ void yui_choose_cdrom(void) {
 			    
 	g_signal_connect_swapped (G_OBJECT (GTK_FILE_SELECTION (filew)->cancel_button), "clicked", G_CALLBACK (gtk_widget_destroy), G_OBJECT (filew));
 			        
+	gtk_widget_show (filew);
+}
+
+static void set_binary( GtkWidget * w, GtkFileSelection * fs ) {
+	binary = g_strdup(gtk_file_selection_get_filename (GTK_FILE_SELECTION (fs)));
+	saturn->loadExec(binary, 0x6004000);
+	gtk_widget_destroy( GTK_WIDGET(fs) );
+}
+
+void yui_choose_binary(void) {
+	 GtkWidget *filew;
+
+	filew = gtk_file_selection_new ("File selection");
+
+	g_signal_connect (G_OBJECT (GTK_FILE_SELECTION (filew)->ok_button), "clicked", G_CALLBACK (set_binary), (gpointer) filew);
+
+	g_signal_connect_swapped (G_OBJECT (GTK_FILE_SELECTION (filew)->cancel_button), "clicked", G_CALLBACK (gtk_widget_destroy), G_OBJECT (filew));
+
 	gtk_widget_show (filew);
 }
 
