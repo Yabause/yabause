@@ -188,3 +188,11 @@ void yui_coin_coin(void) {
 char * yui_mpegrom(void) {
 	return NULL;
 }
+
+unsigned char yui_region(void) {
+	return 0;
+}
+
+char * yui_saveram(void) {
+	return NULL;
+}
