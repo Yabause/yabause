@@ -26,6 +26,7 @@
 #include <SDL/SDL.h>
 #include "../memory.hh"
 #include "cd.hh"
+#include <gdk/gdkkeysyms.h>
 
 void yui_choose_bios(void);
 void yui_choose_cdrom(void);
@@ -67,7 +68,23 @@ static gboolean key_press( GtkWidget *widget, GdkEvent *event, gpointer data) {
 	SDL_Event eve;
 	eve.type = eve.key.type = SDL_KEYDOWN;
 	eve.key.state = SDL_PRESSED;
-	eve.key.keysym.sym = (SDLKey) event->key.keyval;
+	switch(event->key.keyval) {
+		case GDK_Up:
+			eve.key.keysym.sym = SDLK_UP;
+			break;
+		case GDK_Right:
+			eve.key.keysym.sym = SDLK_RIGHT;
+			break;
+		case GDK_Down:
+			eve.key.keysym.sym = SDLK_DOWN;
+			break;
+		case GDK_Left:
+			eve.key.keysym.sym = SDLK_LEFT;
+			break;
+		default:
+			eve.key.keysym.sym = (SDLKey) event->key.keyval;
+			break;
+	}
 	SDL_PushEvent(&eve);
 }
 
@@ -75,7 +92,23 @@ static gboolean key_release( GtkWidget *widget, GdkEvent *event, gpointer data) 
 	SDL_Event eve;
 	eve.type = eve.key.type = SDL_KEYUP;
 	eve.key.state = SDL_RELEASED;
-	eve.key.keysym.sym = (SDLKey) event->key.keyval;
+	switch(event->key.keyval) {
+		case GDK_Up:
+			eve.key.keysym.sym = SDLK_UP;
+			break;
+		case GDK_Right:
+			eve.key.keysym.sym = SDLK_RIGHT;
+			break;
+		case GDK_Down:
+			eve.key.keysym.sym = SDLK_DOWN;
+			break;
+		case GDK_Left:
+			eve.key.keysym.sym = SDLK_LEFT;
+			break;
+		default:
+			eve.key.keysym.sym = (SDLKey) event->key.keyval;
+			break;
+	}
 	SDL_PushEvent(&eve);
 }
 
