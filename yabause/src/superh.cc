@@ -26,7 +26,6 @@
 #include <kos.h>
 #endif
 #include "yui.hh"
-#include "sh2d.hh"
 #include "registres.hh"
 
 SuperH::SuperH(bool slave) {
@@ -41,27 +40,18 @@ SuperH::SuperH(bool slave) {
   dataArray   = new Memory(0xFFF, 0x1000);
   modeSdram = new Memory(0xFFF, 0x4FFF);
 
-  _interrupt = false;
   _delai = 0;
   for(unsigned short i = 0;i < 0xFFFF;i++) {
     instruction = i;
     opcodes[i] = decode();
   }
-  _stop = false;
-  _pause = true;
-  _run = false;
 
   isslave = slave;
 
-  /*
-  for(int i = 0;i < 7;i++) {
-    mutex[i] = SDL_CreateMutex();
-    cond[i] = SDL_CreateCond();
-  }
-  */
 #ifdef DEBUG
   verbose = 0;
 #endif
+  timing = 0;
 }
 
 SuperH::~SuperH(void) {
@@ -70,139 +60,25 @@ SuperH::~SuperH(void) {
   delete dataArray;
   delete modeSdram;
 
-  /*
-  for(int i = 0;i < 7;i++) {
-    SDL_DestroyCond(cond[i]);
-    SDL_DestroyMutex(mutex[i]);
-  }
-  */
 }
-
-/*
-bool SuperH::processingInterrupt(void) {
-  return _interrupt && !_stop;
-}
-
-void SuperH::interrupt(void) {
-  _interrupt = true;
-}
-
-unsigned char& SuperH::level(void) {
-  return _level;
-}
-
-unsigned char& SuperH::vector(void) {
-  return _vector;
-}
-*/
 
 void SuperH::setMemory(Memory *mem) {
   memoire = mem;
   PC = memoire->getLong(VBR) + 4;
   R[15] = memoire->getLong(VBR + 4);
-
-  // onchip should be cpu specific
-  onchip = (Onchip *) ((SaturnMemory *)memoire)->getOnchip();
 }
 
 Memory *SuperH::getMemory(void) {
   return memoire;
 }
 
-/*
-int SuperH::lancer(SuperH *sh) {
-#ifndef _arch_dreamcast
-	try {
-		sh->synchroStart<26874100, 60, 9, 1, 224, 39>();
-	}
-	catch(Exception e) {
-                Memory *mem; 
-		cerr << "KABOOOOM" << endl;
-		cerr << "PC=" << hex << sh->PC << endl;
-		cerr << "opcode=" << hex << sh->instruction << endl;
-		cerr << e << endl;
-	}
-#else
-	sh->synchroStart<26874100, 60, 9, 1, 224, 39>();
-#endif
+void SuperH::send(const Interrupt& i) {
+	interrupts.push(i);
 }
 
-template<int FREQ, int FRAME, int HIN, int HOUT, int VIN, int VOUT>
-void SuperH::synchroStart(void) {
-  Div<FREQ, FRAME * (HIN + HOUT) * (VIN + VOUT)> deciline;
-  Div<FREQ, 100000> deciufreq;
-
-  int decilineCount = 0;
-  int lineCount = 0;
-  int frameCount = 0;
-  int decilineStop = deciline.nextValue();
-  int duf = deciufreq.nextValue();
-
-  unsigned long ticks = 0;
-
-  cycleCount = 0;
-  unsigned long cycleCountII = 0;
-
-  while(!_stop) {
-    while((cycleCount < decilineStop) && _run) {
-      executer();
-    }
-
-    while((cycleCount < decilineStop) && _pause) {
-      SDL_mutexP(mutex[4]);
-      SDL_CondWait(cond[4], mutex[4]);
-      SDL_mutexV(mutex[4]);
-      executer();
-    }
-    if (!_stop) {
-      decilineCount++;
-      switch(decilineCount) {
-      case HIN:
-	SDL_CondBroadcast(cond[5]);
-	// HBlankIN
-        break;
-      case HIN + HOUT:
-	// HBlankOUT
-	SDL_CondBroadcast(cond[6]);
-	decilineCount = 0;
-	lineCount++;
-	switch(lineCount) {
-	case VIN:
-	  // VBlankIN
-	  SDL_CondBroadcast(cond[1]);
-	  break;
-	case VIN + VOUT:
-	  // VBlankOUT
-	  SDL_CondBroadcast(cond[2]);
-	  lineCount = 0;
-          frameCount++;
-	  if(SDL_GetTicks() >= ticks + 1000) {
-	    yui_fps(frameCount);
-	    frameCount = 0;
-	    ticks = SDL_GetTicks();
-	  }
-	  break;
-	}
-	break;
-      }
-      cycleCountII += cycleCount;
-
-      while (cycleCountII > duf) {
-        ((Smpc *) ((SaturnMemory *)memoire)->getSmpc())->execute2(10); // yurk :(
-        ((Onchip *) ((SaturnMemory *)memoire)->getOnchip())->run(10); // yurk :(
-	SDL_CondBroadcast(cond[0]);
-	cycleCountII %= duf;
-	duf = deciufreq.nextValue();
-      }
-
-      ((Cs2 *) ((SaturnMemory *)memoire)->getCS2())->run(cycleCount);
-
-      cycleCount %= decilineStop;
-      decilineStop = deciline.nextValue();
-    }
-  }
+void SuperH::sendNMI(void) {
+	send(Interrupt(16, 11));
 }
-*/
 
 void SuperH::executer(void) {
   if (_delai) {
@@ -213,20 +89,17 @@ void SuperH::executer(void) {
     _delai = 0;
   }
   else {
-    if ( !onchip->interrupts.empty() ) {
-      Interrupt interrupt = onchip->interrupts.top();
+    if ( !interrupts.empty() ) {
+      Interrupt interrupt = interrupts.top();
       if (interrupt.level() > SR.partie.I) {
-	_level = interrupt.level();
-	_vector = interrupt.vector();
-        onchip->interrupts.pop();
+        interrupts.pop();
 
         R[15] -= 4;
         memoire->setLong(R[15], SR.tout);
         R[15] -= 4;
         memoire->setLong(R[15], PC);
-        SR.partie.I = _level;
-        PC = memoire->getLong(VBR + (_vector << 2)) + 4;
-        _interrupt = false;
+        SR.partie.I = interrupt.level();
+        PC = memoire->getLong(VBR + (interrupt.vector() << 2)) + 4;
       }
     }
 #ifdef _arch_dreamcast
@@ -242,103 +115,16 @@ void SuperH::executer(void) {
 
 void SuperH::_executer(void) {
   instruction = memoire->getWord(PC - 4);
-#ifdef DEBUG
-  if(verbose > 0) {
-	  char chaine[100];
-	  SH2Disasm(PC - 4, instruction, 0, chaine);
-	  cerr << hex << PC << ' ' << chaine << endl;
-	  verbose--;
-  }
-#endif
-
   (this->*opcodes[instruction])();
 }
 
-void SuperH::stop(void) {
-  _stop = true;
-  _run = false;
-  _pause = false;
-  /*
-  for(int i = 0;i < 7;i++) {
-	  SDL_CondBroadcast(cond[i]);
-  }
-  */
-}
-
-void SuperH::pause(void) {
-  _pause = true;
-  _run = false;
-}
-
-bool SuperH::paused(void) {
-	return _pause;
-}
-
-void SuperH::run(void) {
-  _run = true;
-  _pause = false;
-  //SDL_CondBroadcast(cond[4]);
-}
-
-void SuperH::step(void) {
-  //SDL_CondBroadcast(cond[4]);
-}
-
-void SuperH::microsleep(unsigned long nbusec) {
-/*
-  if (_stop) return;
-  unsigned long tmp = nbusec / 10;
-  while (tmp--) {
-    SDL_mutexP(mutex[0]);
-    SDL_CondWait(cond[0], mutex[0]);
-    SDL_mutexV(mutex[0]);
-  }
-*/
-}
-
-void SuperH::waitHBlankIN(void) {
-/*
-  if (_stop) return;
-  SDL_mutexP(mutex[5]);
-  SDL_CondWait(cond[5], mutex[5]);
-  SDL_mutexV(mutex[5]);
-*/
-}
-
-void SuperH::waitHBlankOUT(void) {
-/*
-  if (_stop) return;
-  SDL_mutexP(mutex[6]);
-  SDL_CondWait(cond[6], mutex[6]);
-  SDL_mutexV(mutex[6]);
-*/
-}
-
-void SuperH::waitVBlankIN(void) {
-/*
-  if (_stop) return;
-  SDL_mutexP(mutex[1]);
-  SDL_CondWait(cond[1], mutex[1]);
-  SDL_mutexV(mutex[1]);
-*/
-}
-
-void SuperH::waitVBlankOUT(void) {
-/*
-  if (_stop) return;
-  SDL_mutexP(mutex[2]);
-  SDL_CondWait(cond[2], mutex[2]);
-  SDL_mutexV(mutex[2]);
-*/
-}
-
-void SuperH::waitInterruptEnd(void) {
-/*
-  if (_stop) return;
-  SDL_mutexP(mutex[3]);
-  SDL_CondWait(cond[3], mutex[3]);
-  SDL_mutexV(mutex[3]);
-*/
+void SuperH::run(int t) {
+	if (timing > 0) {
+		timing -= t;
+		if (timing <= 0) {
+			sendNMI();
+		}
+	}
 }
 
 #ifndef _arch_dreamcast

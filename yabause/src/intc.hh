@@ -60,7 +60,7 @@ private:
 
 public:
 #ifndef _arch_dreamcast
-	priority_queue<Interrupt> interrupts;
+	//priority_queue<Interrupt> interrupts;
 #endif
 
 	Onchip(SaturnMemory *);
@@ -75,9 +75,11 @@ public:
 	void runDMA(void);
 
 	/* INTC */
+/*
 	void sendNMI(void);
 	void sendUserBreak(void);
 	void send(const Interrupt&);
+*/
 	//void sendOnChip(...);
 };
 

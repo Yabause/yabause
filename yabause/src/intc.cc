@@ -130,7 +130,7 @@ void Onchip::setWord(unsigned long addr, unsigned short val) {
 		case ICR:
 			if (val & 0x8000) {
 				//SDL_CreateThread(&Timer::call<Onchip, &Onchip::sendNMI, 100>, this); // random value
-				timing = 100;
+				memory->getMasterSH()->timing = 100;
 			}
 	}
 	Memory::setWord(addr, val);
@@ -307,6 +307,7 @@ unsigned char Interrupt::vector(void) const {
   return _vect;
 }
 
+/*
 void Onchip::send(const Interrupt& i) {
 #ifndef _arch_dreamcast
   interrupts.push(i);
@@ -331,3 +332,4 @@ void Onchip::run(unsigned long t) {
 		}
 	}
 }
+*/

@@ -165,7 +165,7 @@ void keyUp(int key)
 
 int handleEvents(SaturnMemory *mem) {
     SDL_Event event;
-    SuperH *msh = mem->getMasterSH();
+    //SuperH *msh = mem->getMasterSH();
       if (SDL_PollEvent(&event)) {
 	switch(event.type) {
 	case SDL_QUIT:
@@ -184,17 +184,17 @@ int handleEvents(SaturnMemory *mem) {
 #ifdef DEBUG
 			cerr << "Pause" << endl;
 #endif
-			msh->pause();
+			//msh->pause();
 			break;
 		case SDLK_r:
 #ifdef DEBUG
 			cerr << "Run" << endl;
 #endif
-			msh->run();
+			//msh->run();
 			break;
 #ifdef DEBUG
 		case SDLK_v:
-			msh->verbose = 200;
+			//msh->verbose = 200;
 			break;
 #endif
 		default:

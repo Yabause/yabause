@@ -120,30 +120,21 @@ protected:
   Memory *adressArray;	// 60000000 - 600003FF
   Memory *dataArray;	// C0000000 - C0001000
   Memory *modeSdram;	// FFFF8000 - FFFFBFFF
-  Onchip *onchip;
 
   typedef void (SuperH::*opcode)(void);
   opcode opcodes[0xFFFF];
   opcode decode(void);
 
-  bool _interrupt;
-  unsigned char _level;
-  unsigned char _vector;
   unsigned long _delai;
   unsigned short instruction; // current opcode
 
   void _executer(void);
 
-  /*
-  SDL_mutex *mutex[7];
-  SDL_cond *cond[7];
-  */
-
-  bool _pause;
-  bool _run;
-
   bool isslave;
+  priority_queue<Interrupt> interrupts;
+
 public:
+  int timing;
   unsigned long cycleCount;
   friend class Onchip;
   friend void monitor(SuperH *);
@@ -155,32 +146,14 @@ public:
   SuperH(bool);
  ~SuperH(void);
 
- /*
-  //bool processingInterrupt(void);
-  void interrupt(void);
-  unsigned char& level(void);
-  unsigned char& vector(void);
-  */
-
   void setMemory(Memory *);
   Memory *getMemory(void);
 
   void executer(void);
-  static int lancer(SuperH *);
-  void stop(void);
-  void pause(void);
-  bool paused(void);
-  void run(void);
-  void step(void);
-  template<int FREQ, int FRAME, int HIN, int HOUT, int VIN, int VOUT>
-    void synchroStart(void);
 
-  void microsleep(unsigned long);
-  void waitHBlankIN(void);
-  void waitHBlankOUT(void);
-  void waitVBlankIN(void);
-  void waitVBlankOUT(void);
-  void waitInterruptEnd(void);
+  void send(const Interrupt&);
+  void sendNMI(void);
+  void run(int);
 
   Memory *GetSdramMode();
   Memory *GetPurgeArea();

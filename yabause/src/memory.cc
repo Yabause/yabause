@@ -663,7 +663,7 @@ void SaturnMemory::synchroStart(void) {
 
 	while (cycleCountII > duf) {
 		((Smpc *) smpc)->execute2(10);
-		((Onchip *) onchip)->run(10);
+		msh->run(10);
 		//SDL_CondBroadcast(cond[0]);
 		cycleCountII %= duf;
 	}
