@@ -21,10 +21,11 @@
 
 TARGET = yabause.exe
 CC = g++
+RC = windres
 #CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL 
 CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG -DCDDEBUG -O2
-LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lkernel32 -mconsole -O2
-OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o sh2d.o timer.o tree.o cmdline.o windows/cd.o
+LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lkernel32 -lgdi32 -lcomdlg32 -mwindows -O2
+OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o timer.o tree.o windows/cd.o windows/yui.o windows/resource.o
 
 all: $(TARGET)
 
@@ -34,6 +35,9 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -c $< -o $@
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
+
+windows/resource.o: windows/resource.rc windows/resource.h
+	$(RC) $< -o $@
 clean:
 	rm -f $(OBJS)
 	rm -f $(TARGET)
