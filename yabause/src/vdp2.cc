@@ -40,6 +40,9 @@
 				(COLOR_ADDb((l >> 16 ) & 0xFF, b) << 16) | \
 				(l & 0xFF000000)
 
+#define drawPixel(s,x,y,c)	if ((x >= 0) && (y >= 0) && (x < 1024) && (y < 512)) s[y * 1024 + x] = c;
+
+
 /****************************************/
 /*					*/
 /*		VDP2 Registers		*/
@@ -500,11 +503,13 @@ void Vdp2Screen::drawCell(void) {
   }
 }
 
+/*
 void Vdp2Screen::drawPixel(unsigned long *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
         if ((x >= 0) && (y >= 0) && (x < 1024) && (y < 512)) {
                 surface[y * 1024 + x] = tmpcolor;
 	}
 }
+*/
 
 void Vdp2Screen::toggleDisplay(void) {
    disptoggle ^= true;
@@ -1558,7 +1563,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
   vram = new Vdp2Ram;
   cram = new Vdp2ColorRam;
 
-  ((Vdp1 *)satmem->getVdp1())->setVdp2Ram(this, cram);
+  satmem->vdp1_2->setVdp2Ram(this, cram);
 
   SDL_InitSubSystem(SDL_INIT_VIDEO);
 
@@ -1581,7 +1586,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
   free(surface->pixels);
   surface->pixels = memalign(32, 512 * 1024 * 2);
 #endif
-  screens[5] = (Vdp1 *) satmem->getVdp1();
+  screens[5] = satmem->vdp1_2;
   screens[4] = rbg0 = new RBG0(this, vram, cram, surface);
   screens[3] = nbg0 = new NBG0(this, vram, cram, surface);
   screens[2] = nbg1 = new NBG1(this, vram, cram, surface);
@@ -1600,7 +1605,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
 
 Vdp2::~Vdp2(void) {
     for(int i = 0;i < 6;i++) {
-	    if (screens[i] != (Vdp1 *) satmem->getVdp1())
+	    if (screens[i] != satmem->vdp1_2)
 	    	delete screens[i];
     }
     delete [] surface;
@@ -1618,11 +1623,11 @@ void Vdp2::reset(void) {
   // clear Vram here
 }
 
-Memory *Vdp2::getCRam(void) {
+Vdp2ColorRam *Vdp2::getCRam(void) {
 	return cram;
 }
 
-Memory *Vdp2::getVRam(void) {
+Vdp2Ram *Vdp2::getVRam(void) {
 	return vram;
 }
 
@@ -1632,7 +1637,7 @@ void Vdp2::lancer(Vdp2 *vdp2) {
 
 void Vdp2::VBlankIN(void) {
         setWord(0x4, getWord(0x4) | 0x0008);
-	((Scu *) satmem->getScu())->sendVBlankIN();
+	satmem->scu->sendVBlankIN();
 
         if (satmem->sshRunning)
            ((SuperH *) satmem->getSlaveSH())->send(Interrupt(0x6, 0x43));
@@ -1640,7 +1645,7 @@ void Vdp2::VBlankIN(void) {
 
 void Vdp2::HBlankIN(void) {
         setWord(0x4, getWord(0x4) | 0x0004);
-        ((Scu *) satmem->getScu())->sendHBlankIN();
+        satmem->scu->sendHBlankIN();
 
         if (satmem->sshRunning)
            ((SuperH *) satmem->getSlaveSH())->send(Interrupt(0x2, 0x41));
@@ -1687,7 +1692,7 @@ void Vdp2::VBlankOUT(void) {
   glKosFinishFrame();
 #endif
   //colorOffset();
-  ((Scu *) satmem->getScu())->sendVBlankOUT();
+  satmem->scu->sendVBlankOUT();
 }
 
 VdpScreen *Vdp2::getScreen(int i) {
@@ -1786,7 +1791,7 @@ void Vdp2::setSaturnResolution(int width, int height) {
    ((NBG1 *)nbg1)->setTextureRatio(widthRatio, heightRatio);
    ((NBG2 *)nbg2)->setTextureRatio(widthRatio, heightRatio);
    ((NBG3 *)nbg3)->setTextureRatio(widthRatio, heightRatio);
-   ((Vdp1 *) satmem->getVdp1())->setTextureSize(width, height);
+   satmem->vdp1_2->setTextureSize(width, height);
 }
 
 void Vdp2::setActualResolution(int width, int height) {

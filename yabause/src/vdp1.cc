@@ -138,7 +138,7 @@ void Vdp1::execute(unsigned long addr) {
   }
   // we set two bits to 1
   setWord(0x10, getWord(0x10) | 2);
-  ((Scu *) satmem->getScu())->sendDrawEnd();
+  satmem->scu->sendDrawEnd();
 }
 
 void Vdp1::readCommand(unsigned long addr) {
@@ -344,7 +344,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 
 }
 
-Memory *Vdp1::getVRam(void) {
+Vdp1VRAM *Vdp1::getVRam(void) {
 	return vram;
 }
 

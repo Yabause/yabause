@@ -48,6 +48,9 @@ public:
 }
 #endif
 
+class SaturnMemory;
+class SuperH;
+
 class Onchip : public Memory {
 private:
 	SaturnMemory *memory;

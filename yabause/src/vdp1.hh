@@ -123,7 +123,7 @@ public:
   int getAlpha(void);
   int getColorOffset(void);
   */
-  Memory *getVRam(void);
+  Vdp1VRAM *getVRam(void);
 
   void readCommand(unsigned long);
   void readTexture(vdp1Sprite *);

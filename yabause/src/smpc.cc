@@ -18,13 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "smpc.hh"
-#include "cs2.hh"
-#include "scsp.hh"
-#include "scu.hh"
-#include "timer.hh"
-#include "vdp1.hh"
-#include "vdp2.hh"
+#include "saturn_memory.hh"
 #include "yui.hh"
 #include <time.h>
 
@@ -136,7 +130,7 @@ Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
   if (regionid == 0)
   {
      // Time to autodetect the region using the cd block
-     regionid = ((Cs2 *)sm->getCS2())->GetRegionID();          
+     regionid = sm->cs2->GetRegionID();          
   }
   
   this->sm = sm;
@@ -304,7 +298,7 @@ void Smpc::INTBACK(void) {
   if (intback) {
     INTBACKPeripheral();
     //intback = false;
-    ((Scu *) sm->getScu())->sendSystemManager();
+    sm->scu->sendSystemManager();
     return;
   }
   if (intbackIreg0 = getIREG(0)) {
@@ -313,7 +307,7 @@ void Smpc::INTBACK(void) {
     intback = getIREG(1) & 0x8; // does the program want peripheral data too?
     setSR(0x40 | (intback << 5));
     INTBACKStatus();
-    ((Scu *) sm->getScu())->sendSystemManager();
+    sm->scu->sendSystemManager();
     return;
   }
   if (getIREG(1) & 0x8) {
@@ -321,7 +315,7 @@ void Smpc::INTBACK(void) {
     intback = true;
     setSR(0x40);
     INTBACKPeripheral();
-    ((Scu *) sm->getScu())->sendSystemManager();
+    sm->scu->sendSystemManager();
     return;
   }
 }
@@ -407,13 +401,13 @@ void Smpc::RESDISA(void) {
 }
 
 void Smpc::SNDON(void) {
-    ((Scsp *) sm->getScsp())->reset68k();  
-    ((Scsp *) sm->getScsp())->is68kOn = true;
+    sm->soundr->reset68k();  
+    sm->soundr->is68kOn = true;
     setOREG(31, 0x6);
 }
 
 void Smpc::SNDOFF(void) {
-    ((Scsp *) sm->getScsp())->is68kOn = false;
+    sm->soundr->is68kOn = false;
     setOREG(31, 0x7);
 }
 
@@ -490,9 +484,9 @@ void Smpc::SSHON(void) {
 
 void Smpc::CKCHG352(void) {
   // Reset VDP1, VDP2, SCU, and SCSP
-  ((Vdp1 *) sm->getVdp1())->reset();  
-  ((Vdp2 *) sm->getVdp2())->reset();  
-  ((Scu *) sm->getScu())->reset();  
+  sm->vdp1_2->reset();  
+  sm->vdp2_3->reset();  
+  sm->scu->reset();  
 //  ((Scsp *) sm->getScsp())->reset();  
 
   // Clear VDP1/VDP2 ram
@@ -504,9 +498,9 @@ void Smpc::CKCHG352(void) {
 
 void Smpc::CKCHG320(void) {
   // Reset VDP1, VDP2, SCU, and SCSP
-  ((Vdp1 *) sm->getVdp1())->reset();  
-  ((Vdp2 *) sm->getVdp2())->reset();  
-  ((Scu *) sm->getScu())->reset();  
+  sm->vdp1_2->reset();  
+  sm->vdp2_3->reset();  
+  sm->scu->reset();  
 //  ((Scsp *) sm->getScsp())->reset();  
 
   // Clear VDP1/VDP2 ram

@@ -19,7 +19,21 @@
 
 #include "scu.hh"
 #include "superh.hh"
-#include "registres.hh"
+#include "saturn_memory.hh"
+
+template<unsigned char V, unsigned char L, unsigned short M>
+void Scu::sendInterrupt(void) {
+    Memory::setLong(0xA4, Memory::getLong(0xA4)|M);
+  if (!(Memory::getWord(0xA2) & M)) {
+    ((SuperH *) satmem->getMasterSH())->send(Interrupt(L, V));
+#if 0
+    cerr << "interrupt send " << (int) V << endl;
+#endif
+  }
+  else {
+    if (V == 0x47) cerr << "sm interrupt masked " << endl;
+  }
+}
 
 unsigned long Scu::getLong(unsigned long addr) {
   unsigned long val=0;

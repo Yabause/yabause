@@ -37,6 +37,7 @@
 
 class Scu;
 class Vdp2;
+class SaturnMemory;
 
 class Vdp2Ram : public Memory {
 public:
@@ -130,7 +131,7 @@ public:
   void drawPage(void);
   void drawPattern(void);
   void drawCell(void);
-  static void drawPixel(unsigned long *, Sint16, Sint16, Uint32);
+  //static void drawPixel(unsigned long *, Sint16, Sint16, Uint32);
   void toggleDisplay(void);
   void setTextureRatio(float, float);
 
@@ -222,8 +223,8 @@ public:
 
   void reset(void);
 
-  Memory *getCRam(void);
-  Memory *getVRam(void);
+  Vdp2ColorRam *getCRam(void);
+  Vdp2Ram *getVRam(void);
 
   void setWord(unsigned long, unsigned short);
 

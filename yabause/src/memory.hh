@@ -26,10 +26,10 @@
 class Memory {
 private:
   unsigned char *base_mem;
-  unsigned char *memory;
 protected:
   unsigned long size;
 public:
+  unsigned char *memory;
   unsigned long mask;
   Memory(unsigned long, unsigned long);
   virtual ~Memory(void);
@@ -50,6 +50,16 @@ public:
   friend ostream& operator<<(ostream&, const Memory&);
 #endif
 };
+
+//unsigned short __attribute__((regparm(2))) readWord(Memory *, unsigned long);
+unsigned short inline readWord(Memory * mem, unsigned long addr) {
+  addr &= mem->mask;
+#ifdef WORDS_BIGENDIAN
+  return ((unsigned short *) (mem->memory + addr))[0];
+#else
+  return ((unsigned short *) (mem->memory - addr - 2))[0];
+#endif
+}
 
 class LoggedMemory : public Memory {
 protected:
@@ -80,10 +90,11 @@ public:
   void setLong(unsigned long, unsigned long) {}
 };
 
+/*
 class SuperH;
 
 class SaturnMemory : public Memory {
-private:
+public:
   Memory *rom;		//        0 -    80000
   Memory *smpc;		//   100000 -   100080
   Memory *ram;		//   180000 -   190000
@@ -123,7 +134,7 @@ private:
 	int decilineStop;
 	int duf;
 	unsigned long cycleCountII;
-public:
+//public:
   SaturnMemory(void);
   ~SaturnMemory(void);
 
@@ -159,5 +170,6 @@ public:
   void startSlave(void);
   void stopSlave(void);
 };
+*/
 
 #endif

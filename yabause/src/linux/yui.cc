@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <gdk/gdkx.h>
 #include <SDL/SDL.h>
-#include "../memory.hh"
+#include "../saturn_memory.hh"
 #include "cd.hh"
 #include <gdk/gdkkeysyms.h>
 

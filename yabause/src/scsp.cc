@@ -81,6 +81,7 @@
 #include "c68k/c68k.h"
 #include "SDL.h"
 #include <math.h>
+#include "saturn_memory.hh"
 
 ////////////////////////////////////////////////////////////////
 
@@ -2648,7 +2649,7 @@ Scsp::Scsp(SaturnMemory *v) : Dummy(0xFFF) {
   SDL_AudioSpec fmt;
 
   satmem = v;
-  scuint = (Scu *)satmem->getScu();
+  scuint = satmem->scu;
 
   sram = new ScspRam;
   basetruescspram = sram->getBuffer();
@@ -2726,7 +2727,7 @@ Scsp::~Scsp(void) {
 //  if (debugfp) fclose(debugfp);
 }
 
-Memory *Scsp::getSRam(void) {
+ScspRam *Scsp::getSRam(void) {
   return sram;
 }
 

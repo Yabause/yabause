@@ -172,31 +172,31 @@ int handleEvents(SaturnMemory *mem) {
 	case SDL_KEYDOWN:
 	  switch(event.key.keysym.sym) {
                 case SDLK_F1:
-                        ((Vdp2 *)mem->getVdp2())->toggleFPS();
+                        mem->vdp2_3->toggleFPS();
                         break;
 
                 case SDLK_1:
-                        ((NBG0 *)(((Vdp2 *)mem->getVdp2())->getNBG0()))->toggleDisplay();
+                        ((NBG0 *)(mem->vdp2_3->getNBG0()))->toggleDisplay();
                         break;
 
                 case SDLK_2:
-                        ((NBG1 *)(((Vdp2 *)mem->getVdp2())->getNBG1()))->toggleDisplay();
+                        ((NBG1 *)(mem->vdp2_3->getNBG1()))->toggleDisplay();
 			break;
 
                 case SDLK_3:
-                        ((NBG2 *)(((Vdp2 *)mem->getVdp2())->getNBG2()))->toggleDisplay();
+                        ((NBG2 *)(mem->vdp2_3->getNBG2()))->toggleDisplay();
 			break;
 
                 case SDLK_4:
-                        ((NBG3 *)(((Vdp2 *)mem->getVdp2())->getNBG3()))->toggleDisplay();
+                        ((NBG3 *)(mem->vdp2_3->getNBG3()))->toggleDisplay();
 			break;
 
                 case SDLK_5:
-                        ((RBG0 *)(((Vdp2 *)mem->getVdp2())->getRBG0()))->toggleDisplay();
+                        ((RBG0 *)(mem->vdp2_3->getRBG0()))->toggleDisplay();
 			break;
 
                 case SDLK_6:
-                        ((Vdp1 *)(mem->getVdp1()))->toggleDisplay();
+                        mem->vdp1_2->toggleDisplay();
 			break;
 
 		case SDLK_h:

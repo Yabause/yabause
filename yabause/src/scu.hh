@@ -24,6 +24,8 @@
 #include "intc.hh"
 #include "superh.hh"
 
+class SaturnMemory;
+
 class Scu : public Memory {
 private:
   template<unsigned char V, unsigned char L, unsigned short M>
@@ -111,20 +113,6 @@ public:
   void sendDrawEnd(void);	// VDP1	| 4D	| 2	| 0x2000
   //template<unsigned char E> static void sendExternalInterrupt(void);
 };
-
-template<unsigned char V, unsigned char L, unsigned short M>
-void Scu::sendInterrupt(void) {
-    Memory::setLong(0xA4, Memory::getLong(0xA4)|M);
-  if (!(Memory::getWord(0xA2) & M)) {
-    ((SuperH *) satmem->getMasterSH())->send(Interrupt(L, V));
-#if 0
-    cerr << "interrupt send " << (int) V << endl;
-#endif
-  }
-  else {
-    if (V == 0x47) cerr << "sm interrupt masked " << endl;
-  }
-}
 
 /*
 template<unsigned char E>

@@ -19,9 +19,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifndef SCSP_HH
+#define SCSP_HH
+
 #include "memory.hh"
 #include "cpu.hh"
 #include "c68k/types.h"
+
+class SaturnMemory;
 
 typedef struct
 {
@@ -60,7 +65,7 @@ public:
   Scsp(SaturnMemory *);
   ~Scsp(void);
 
-  Memory *getSRam(void);
+  ScspRam *getSRam(void);
 
   void reset68k(void);
   void reset(void);
@@ -121,3 +126,5 @@ extern void		scsp_update_timer(u32 len);
 extern void		sound_init(void);
 extern void		sound_reset(void);
 extern void		sound_shutdown(void);
+
+#endif

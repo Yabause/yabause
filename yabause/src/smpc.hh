@@ -23,6 +23,8 @@
 #include "memory.hh"
 #include "cpu.hh"
 
+class SaturnMemory;
+
 extern unsigned short buttonbits;
 
 class Smpc : public Cpu, public Memory {

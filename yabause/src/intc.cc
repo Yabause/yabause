@@ -21,6 +21,7 @@
 #include "intc.hh"
 #include "superh.hh"
 #include "timer.hh"
+#include "saturn_memory.hh"
 
 #ifdef _arch_dreamcast
 /* No STL for the dreamcast, use my tree implementation instead of a priority queue */
@@ -434,7 +435,7 @@ void Onchip::inputCaptureSignal(void) {
 }
 
 InputCaptureSignal::InputCaptureSignal(SuperH *icsh) : Memory(0, 4) {
-   onchip = (Onchip *)icsh->GetOnchip();
+   onchip = icsh->onchip;
 }
 
 void InputCaptureSignal::setWord(unsigned long addr, unsigned short val) {

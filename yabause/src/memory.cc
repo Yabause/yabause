@@ -18,7 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "registres.hh"
+#include "saturn_memory.hh"
 #include "superh.hh"
 #include "timer.hh"
 #include "yui.hh"
@@ -44,6 +44,7 @@ Memory::~Memory(void) {
 
 unsigned char Memory::getByte(unsigned long addr) {
 	addr &= mask;
+/*
 	if (addr >= size) {
 #ifndef _arch_dreamcast
 		throw BadMemoryAccess(addr);
@@ -51,6 +52,7 @@ unsigned char Memory::getByte(unsigned long addr) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+*/
 #ifdef WORDS_BIGENDIAN
 	return (memory + addr)[0];
 #else
@@ -60,6 +62,7 @@ unsigned char Memory::getByte(unsigned long addr) {
 
 void Memory::setByte(unsigned long addr, unsigned char val) {
 	addr &= mask;
+/*
 	if (addr >= size) {
 #ifndef _arch_dreamcast
 		throw BadMemoryAccess(addr);
@@ -67,6 +70,7 @@ void Memory::setByte(unsigned long addr, unsigned char val) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+*/
 #ifdef WORDS_BIGENDIAN
 	(memory + addr)[0] = val;
 #else
@@ -76,6 +80,7 @@ void Memory::setByte(unsigned long addr, unsigned char val) {
 
 unsigned short Memory::getWord(unsigned long addr) {
 	addr &= mask;
+/*
 	if (addr >= size) {
 #ifndef _arch_dreamcast
 		throw BadMemoryAccess(addr);
@@ -83,6 +88,7 @@ unsigned short Memory::getWord(unsigned long addr) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+*/
 #ifdef WORDS_BIGENDIAN
   return ((unsigned short *) (memory + addr))[0];
 #else
@@ -92,6 +98,7 @@ unsigned short Memory::getWord(unsigned long addr) {
 
 void Memory::setWord(unsigned long addr, unsigned short val) {
 	addr &= mask;
+/*
 	if (addr >= size) {
 #ifndef _arch_dreamcast
 		throw BadMemoryAccess(addr);
@@ -99,6 +106,7 @@ void Memory::setWord(unsigned long addr, unsigned short val) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+*/
 #ifdef WORDS_BIGENDIAN
 	((unsigned short *) (memory + addr))[0] = val;
 #else
@@ -108,6 +116,7 @@ void Memory::setWord(unsigned long addr, unsigned short val) {
 
 unsigned long Memory::getLong(unsigned long addr) {
 	addr &= mask;
+/*
 	if (addr >= size) {
 #ifndef _arch_dreamcast
 		throw BadMemoryAccess(addr);
@@ -115,6 +124,7 @@ unsigned long Memory::getLong(unsigned long addr) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+*/
 #ifdef WORDS_BIGENDIAN
 	return ((unsigned long *) (memory + addr))[0];
 #else
@@ -124,6 +134,7 @@ unsigned long Memory::getLong(unsigned long addr) {
 
 void Memory::setLong(unsigned long addr, unsigned long val) {
 	addr &= mask;
+/*
 	if (addr >= size) {
 #ifndef _arch_dreamcast
 		throw BadMemoryAccess(addr);
@@ -131,6 +142,7 @@ void Memory::setLong(unsigned long addr, unsigned long val) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+*/
 #ifdef WORDS_BIGENDIAN
   ((unsigned long *) (memory + addr))[0] = val;
 #else
@@ -496,6 +508,7 @@ SuperH *SaturnMemory::getSlaveSH(void) {
         return ssh;
 }
 
+/*
 Memory *SaturnMemory::getCS2(void) {
         return cs2;
 }
@@ -523,6 +536,7 @@ Memory *SaturnMemory::getVdp2(void) {
 Memory *SaturnMemory::getSmpc(void) {
 	return smpc;
 }
+*/
 
 void SaturnMemory::initMemoryHandler(int begin, int end, Memory * m) {
 	for(int i = begin;i < end;i++)
@@ -570,13 +584,13 @@ void SaturnMemory::mapping(unsigned long addr) {
 			printf("Bad memory access: %8x", addr);
 #endif
 		case 2: // purge area
-			mapMem = cursh->GetPurgeArea();
+			mapMem = cursh->purgeArea;
 			mapAddr = addr & mapMem->mask;
 			return;
 		case 3: { // direct access to cache addresses
 			unsigned long naddr = addr & 0x1FFFFFFF;
 			if (naddr < 0x3FF) {
-				mapMem = cursh->GetAddressArray();
+				mapMem = cursh->adressArray;
 				mapAddr = naddr & mapMem->mask;
 				return;
 			}
@@ -588,17 +602,17 @@ void SaturnMemory::mapping(unsigned long addr) {
 			}
 		case 4:
 		case 6:
-			mapMem = cursh->GetDataArray();
+			mapMem = cursh->dataArray;
 			mapAddr = addr & 0x00000FFF;
 			return;
 		case 7:
 			if ((addr >= 0xFFFF8000) && (addr < 0xFFFFC000)) {
-				mapMem = cursh->GetSdramMode();
+				mapMem = cursh->modeSdram;
 				mapAddr = addr & 0x00000FFF;
 				return;
 			}
 			if (addr >= 0xFFFFFE00) {
-				mapMem = cursh->GetOnchip();
+				mapMem = cursh->onchip;
 				mapAddr = addr & 0x000001FF;
 				return;
 			}
