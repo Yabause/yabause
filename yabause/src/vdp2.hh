@@ -25,7 +25,7 @@
 #endif
 #include "memory.hh"
 #include "cpu.hh"
-#ifdef WORDS_BIGENDIAN
+#ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
 #ifdef __WIN32
