@@ -32,7 +32,6 @@
 				(COLOR_ADDb((l >> 16 ) & 0xFF, b) << 16) | \
 				(l & 0xFF000000)
 
-
 /****************************************/
 /*					*/
 /*		VDP2 Registers		*/
@@ -42,13 +41,58 @@
 void Vdp2::setWord(unsigned long addr, unsigned short val) {
   switch(addr) {
     case 0:
+      int width, height;
+
+      // Horizontal Resolution
+      switch (val & 0x7) {
+         case 0: width = 320;
+                 break;
+         case 1: width = 352;
+                 break;
+         case 2: width = 640;
+                 break;
+         case 3: width = 704;
+                 break;
+         case 4: width = 320;
+                 break;
+         case 5: width = 352;
+                 break;
+         case 6: width = 640;
+                 break;
+         case 7: width = 704;
+                 break;
+      }
+
+      // Vertical Resolution
+      switch ((val >> 4) & 0x3) {
+         case 0: height = 224;
+                 break;
+         case 1: height = 240;
+                 break;
+         case 2: height = 256;
+                 break;
+         default: break;
+      }
+
+      setSaturnResolution(width, height);
+
+      // Check for interlace
+      switch ((val >> 6) & 0x3) {
+         case 2: // Single-density Interlace
+         case 3: // Double-density Interlace
+                 height *= 2;
+                 break;
+         case 0: // Non-interlace
+         default: break;
+      }
+
       Memory::setWord(addr, val);
       break;
     case 0xE:
       Memory::setWord(addr, val);
       updateRam();
       break;
-#if DEBUG
+#if VDP2_DEBUG
     case 0x20:
       /*
       if (val & 0x10)
@@ -172,22 +216,22 @@ void Vdp2Screen::draw(void) {
 	if (*texture ==0) glGenTextures(1, texture );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
 #ifndef _arch_dreamcast
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
   
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 #else
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 1024, 512, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
 #endif
 
 	int p = getPriority();
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, texture[0] );
 	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0); glVertex3f(-1, 1, p);
-	glTexCoord2f(0.625, 0); glVertex3f(1, 1, p);
-	glTexCoord2f(0.625, 0.875); glVertex3f(1, -1, p);
-	glTexCoord2f(0, 0.875); glVertex3f(-1, -1, p);
+        glTexCoord2f(0, 0); glVertex3f(-1, 1, p);
+        glTexCoord2f(widthRatio, 0); glVertex3f(1, 1, p);
+        glTexCoord2f(widthRatio, heightRatio); glVertex3f(1, -1, p);
+        glTexCoord2f(0, heightRatio); glVertex3f(-1, -1, p);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
 }
@@ -447,8 +491,8 @@ void Vdp2Screen::drawCell(void) {
 }
 
 void Vdp2Screen::drawPixel(unsigned long *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
-	if ((x >= 0) && (y >= 0) && (x < 512) && (y < 256)) {
-		surface[y * 512 + x] = tmpcolor;
+        if ((x >= 0) && (y >= 0) && (x < 1024) && (y < 512)) {
+                surface[y * 1024 + x] = tmpcolor;
 	}
 }
 
@@ -460,233 +504,95 @@ void Vdp2Screen::readRotationTable(unsigned long addr) {
 	long i;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-        cerr << hex << "Xst" << '\t' << addr << '\t';
-#endif
 	Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << Xst << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Yst" << '\t' << addr << '\t';
-#endif
 	Yst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << Yst << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Zst" << '\t' << addr << '\t';
-#endif
 	Zst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << Zst << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "deltaXst" << '\t' << addr << '\t';
-#endif
 	deltaXst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << deltaXst << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "deltaYst" << '\t' << addr << '\t';
-#endif
 	deltaYst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << deltaYst << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "deltaX" << '\t' << addr << '\t';
-#endif
 	deltaX = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << deltaX << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "deltaY" << '\t' << addr << '\t';
-#endif
 	deltaY = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << deltaY << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "A" << '\t' << addr << '\t';
-#endif
 	A = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << A << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "B" << '\t' << addr << '\t';
-#endif
 	B = (float) (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << B << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "C" << '\t' << addr << '\t';
-#endif
 	C = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << C << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "D" << '\t' << addr << '\t';
-#endif
 	D = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << D << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "E" << '\t' << addr << '\t';
-#endif
 	E = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << E << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "F" << '\t' << addr << '\t';
-#endif
 	F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << F << endl;
-#endif
 	addr += 4;
 
 	i = vram->getWord(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Px" << '\t' << addr << '\t';
-#endif
 	Px = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-#if VDP2_DEBUG
-	cerr << Px << endl;
-#endif
 	addr += 2;
 
 	i = vram->getWord(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Py" << '\t' << addr << '\t';
-#endif
 	Py = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-#if VDP2_DEBUG
-	cerr << Py << endl;
-#endif
 	addr += 2;
 
 	i = vram->getWord(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Pz" << '\t' << addr << '\t';
-#endif
 	Pz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-#if VDP2_DEBUG
-	cerr << Pz << endl;
-#endif
 	addr += 4;
 
 	i = vram->getWord(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Cx" << '\t' << addr << '\t';
-#endif
 	Cx = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-#if VDP2_DEBUG
-	cerr << Cx << endl;
-#endif
 	addr += 2;
 
 	i = vram->getWord(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Cy" << '\t' << addr << '\t';
-#endif
 	Cy = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-#if VDP2_DEBUG
-	cerr << Cy << endl;
-#endif
 	addr += 2;
 
 	i = vram->getWord(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Cz" << '\t' << addr << '\t';
-#endif
 	Cz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-#if VDP2_DEBUG
-	cerr << Cz << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "Mx" << '\t' << addr << '\t';
-#endif
 	Mx = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-        cerr << Mx << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "My" << '\t' << addr << '\t';
-#endif
 	My = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << My << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-	cerr << hex << "kx" << '\t' << addr << '\t';
-#endif
 	kx = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << kx << endl;
-#endif
 	addr += 4;
 
 	i = vram->getLong(addr);
-#if VDP2_DEBUG
-        cerr << hex << "ky" << '\t' << addr << '\t';
-#endif
 	ky = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
-#if VDP2_DEBUG
-	cerr << ky << endl;
-#endif
 	addr += 4;
 }
 
@@ -696,6 +602,11 @@ int Vdp2Screen::getX(int Hcnt, int Vcnt) {
 
 int Vdp2Screen::getY(int Hcnt, int Vcnt) {
 	return Vcnt;
+}
+
+void Vdp2Screen::setTextureRatio(float widthR, float heightR) {
+   widthRatio = widthR;
+   heightRatio = heightR;
 }
 
 int RBG0::getX(int Hcnt, int Vcnt) {
@@ -1637,35 +1548,37 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   vram = new Vdp2Ram;
   cram = new Vdp2ColorRam;
 
-	SDL_InitSubSystem(SDL_INIT_VIDEO);
+  SDL_InitSubSystem(SDL_INIT_VIDEO);
 
-	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+  SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
+  SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
+  SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
+  SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4 );
+  SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
+  SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
-	SDL_SetVideoMode(320,224,32, SDL_OPENGL);
+  SDL_SetVideoMode(320,224,32, SDL_OPENGL);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glOrtho(-1, 1, -1, 1, -10, 10);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glOrtho(-1, 1, -1, 1, -10, 10);
 #ifndef _arch_dreamcast
-  surface = new unsigned long [512 * 256];
+  surface = new unsigned long [1024 * 512];
 #else
-  surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 16, 0x000f, 0x00f0, 0x0f00, 0xf000);
+  surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 1024, 512, 16, 0x000f, 0x00f0, 0x0f00, 0xf000);
   free(surface->pixels);
-  surface->pixels = memalign(32, 256 * 512 * 2);
+  surface->pixels = memalign(32, 512 * 1024 * 2);
 #endif
-  	screens[5] = (Vdp1 *) satmem->getVdp1();
-        screens[4] = rbg0 = new RBG0(this, vram, cram, surface);
-        screens[3] = nbg0 = new NBG0(this, vram, cram, surface);
-        screens[2] = nbg1 = new NBG1(this, vram, cram, surface);
-        screens[1] = nbg2 = new NBG2(this, vram, cram, surface);
-        screens[0] = nbg3 = new NBG3(this, vram, cram, surface);
+  screens[5] = (Vdp1 *) satmem->getVdp1();
+  screens[4] = rbg0 = new RBG0(this, vram, cram, surface);
+  screens[3] = nbg0 = new NBG0(this, vram, cram, surface);
+  screens[2] = nbg1 = new NBG1(this, vram, cram, surface);
+  screens[1] = nbg2 = new NBG2(this, vram, cram, surface);
+  screens[0] = nbg3 = new NBG3(this, vram, cram, surface);
 
-        reset();
+  setSaturnResolution(320, 224);
+
+  reset();
 }
 
 Vdp2::~Vdp2(void) {
@@ -1832,5 +1745,21 @@ VdpScreen *Vdp2::getNBG2(void) {
 
 VdpScreen *Vdp2::getNBG3(void) {
    return nbg3;
+}
+
+void Vdp2::setSaturnResolution(int width, int height) {
+   float widthRatio, heightRatio;
+   widthRatio = (float)width / 1024;
+   heightRatio = (float)height / 512;
+
+   ((RBG0 *)rbg0)->setTextureRatio(widthRatio, heightRatio);
+   ((NBG0 *)nbg0)->setTextureRatio(widthRatio, heightRatio);
+   ((NBG1 *)nbg1)->setTextureRatio(widthRatio, heightRatio);
+   ((NBG2 *)nbg2)->setTextureRatio(widthRatio, heightRatio);
+   ((NBG3 *)nbg3)->setTextureRatio(widthRatio, heightRatio);
+   ((Vdp1 *) satmem->getVdp1())->setTextureRatio(width, height);
+}
+
+void Vdp2::setActualResolution(int width, int height) {
 }
 

@@ -392,10 +392,10 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture(GL_TEXTURE_2D, sp.txr);
 	glBegin(GL_QUADS);
-	glTexCoord2f(u1, v1); glVertex2f((float) x/160 - 1, 1 - (float) y/112);
-	glTexCoord2f(u2, v1); glVertex2f((float) (x + w)/160 - 1, 1 - (float) y/112);
-	glTexCoord2f(u2, v2); glVertex2f((float) (x + w)/160 - 1, 1 - (float) (y + h)/112);
-	glTexCoord2f(u1, v2); glVertex2f((float) x/160 - 1, 1 - (float) (y + h)/112);
+        glTexCoord2f(u1, v1); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) y/satheighthalf);
+        glTexCoord2f(u2, v1); glVertex2f((float) (x + w)/satwidthhalf - 1, 1 - (float) y/satheighthalf);
+        glTexCoord2f(u2, v2); glVertex2f((float) (x + w)/satwidthhalf - 1, 1 - (float) (y + h)/satheighthalf);
+        glTexCoord2f(u1, v2); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) (y + h)/satheighthalf);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
 }
@@ -450,10 +450,10 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, sp.txr );
 	glBegin(GL_QUADS);
-	glTexCoord2f(u1, v1); glVertex2f((float) x/160 - 1, 1 - (float) y/112);
-	glTexCoord2f(u2, v1); glVertex2f((float) (x + rw)/160 - 1, 1 - (float) y/112);
-	glTexCoord2f(u2, v2); glVertex2f((float) (x + rw)/160 - 1, 1 - (float) (y + rh)/112);
-	glTexCoord2f(u1, v2); glVertex2f((float) x/160 - 1, 1 - (float) (y + rh)/112);
+        glTexCoord2f(u1, v1); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) y/satheighthalf);
+        glTexCoord2f(u2, v1); glVertex2f((float) (x + rw)/satwidthhalf - 1, 1 - (float) y/satheighthalf);
+        glTexCoord2f(u2, v2); glVertex2f((float) (x + rw)/satwidthhalf - 1, 1 - (float) (y + rh)/satheighthalf);
+        glTexCoord2f(u1, v2); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) (y + rh)/satheighthalf);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
 }
@@ -486,10 +486,10 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, sp.txr);
 	glBegin(GL_QUADS);
-	glTexCoord2f(u1, v1); glVertex2f((float) (CMDXA + localX)/160 - 1, 1 - (float) (CMDYA + localY)/112);
-	glTexCoord2f(u2, v1); glVertex2f((float) (CMDXB + localX)/160 - 1, 1 - (float) (CMDYB + localY)/112);
-	glTexCoord2f(u2, v2); glVertex2f((float) (CMDXC + localX)/160 - 1, 1 - (float) (CMDYC + localY)/112);
-	glTexCoord2f(u1, v2); glVertex2f((float) (CMDXD + localX)/160 - 1, 1 - (float) (CMDYD + localY)/112);
+        glTexCoord2f(u1, v1); glVertex2f((float) (CMDXA + localX)/satwidthhalf - 1, 1 - (float) (CMDYA + localY)/satheighthalf);
+        glTexCoord2f(u2, v1); glVertex2f((float) (CMDXB + localX)/satwidthhalf - 1, 1 - (float) (CMDYB + localY)/satheighthalf);
+        glTexCoord2f(u2, v2); glVertex2f((float) (CMDXC + localX)/satwidthhalf - 1, 1 - (float) (CMDYC + localY)/satheighthalf);
+        glTexCoord2f(u1, v2); glVertex2f((float) (CMDXD + localX)/satwidthhalf - 1, 1 - (float) (CMDYD + localY)/satheighthalf);
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
 }
@@ -519,10 +519,11 @@ void Vdp1::polygonDraw(unsigned long addr) {
 
 	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
 	glBegin(GL_QUADS);
-	glVertex3f((float) X[0]/160 - 1, 1 - (float) Y[0]/112, priority);
-	glVertex3f((float) X[1]/160 - 1, 1 - (float) Y[1]/112, priority);
-	glVertex3f((float) X[2]/160 - 1, 1 - (float) Y[2]/112, priority);
-	glVertex3f((float) X[3]/160 - 1, 1 - (float) Y[3]/112, priority);
+
+        glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
+        glVertex3f((float) X[1]/satwidthhalf - 1, 1 - (float) Y[1]/satheighthalf, priority);
+        glVertex3f((float) X[2]/satwidthhalf - 1, 1 - (float) Y[2]/satheighthalf, priority);
+        glVertex3f((float) X[3]/satwidthhalf - 1, 1 - (float) Y[3]/satheighthalf, priority);
 	glEnd();
 	glColor4f(1, 1, 1, 1);
 }
@@ -650,3 +651,7 @@ void Vdp1::toggleDisplay(void) {
    disptoggle ^= true;
 }
 
+void Vdp1::setTextureRatio(int width, int height) {
+   satwidthhalf = width / 2;
+   satheighthalf = height / 2;
+}

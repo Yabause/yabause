@@ -86,26 +86,28 @@ private:
   unsigned short localY;
 
   unsigned short returnAddr;
-  	unsigned short	CMDCTRL;
-	unsigned short	CMDLINK;
-	unsigned short	CMDPMOD;
-	unsigned short	CMDCOLR;
-	unsigned short	CMDSRCA;
-	unsigned short	CMDSIZE;
-	short	CMDXA;
-	short	CMDYA;
-	short	CMDXB;
-	short	CMDYB;
-	short	CMDXC;
-	short	CMDYC;
-	short	CMDXD;
-	short	CMDYD;
-	unsigned short	CMDGRDA;
-	unsigned short w;
-	unsigned short h;
-	unsigned short ww;
-	unsigned short hh;
+  unsigned short  CMDCTRL;
+  unsigned short  CMDLINK;
+  unsigned short  CMDPMOD;
+  unsigned short  CMDCOLR;
+  unsigned short  CMDSRCA;
+  unsigned short  CMDSIZE;
+  short   CMDXA;
+  short   CMDYA;
+  short   CMDXB;
+  short   CMDYB;
+  short   CMDXC;
+  short   CMDYC;
+  short   CMDXD;
+  short   CMDYD;
+  unsigned short  CMDGRDA;
+  unsigned short w;
+  unsigned short h;
+  unsigned short ww;
+  unsigned short hh;
 
+  int satwidthhalf;
+  int satheighthalf;
 public:
   Vdp1(SaturnMemory *);
   void execute(unsigned long = 0);
@@ -136,6 +138,7 @@ public:
   int getPriority(void);
   int getInnerPriority(void);
   void toggleDisplay(void);
+  void setTextureRatio(int width, int height);
 };
 
 #endif

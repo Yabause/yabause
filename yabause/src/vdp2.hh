@@ -101,19 +101,20 @@ protected:
   int colorOffset;
   bool transparencyEnable;
 
-	float Xst, Yst, Zst;
-	float deltaXst, deltaYst;
-	float deltaX, deltaY;
-	float A, B, C, D, E, F;
-	short Px, Py, Pz;
-	short Cx, Cy, Cz;
-	float Mx, My;
-	float kx, ky;
-	/*
-	float KAst;
-	float deltaKAst;
-	float deltaKAx;
-	*/
+  float Xst, Yst, Zst;
+  float deltaXst, deltaYst;
+  float deltaX, deltaY;
+  float A, B, C, D, E, F;
+  short Px, Py, Pz;
+  short Cx, Cy, Cz;
+  float Mx, My;
+  float kx, ky;
+  /*
+  float KAst;
+  float deltaKAst;
+  float deltaKAx;
+  */
+  float widthRatio, heightRatio;
 public:
   Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, unsigned long *);
 
@@ -131,6 +132,7 @@ public:
   void drawCell(void);
   static void drawPixel(unsigned long *, Sint16, Sint16, Uint32);
   void toggleDisplay(void);
+  void setTextureRatio(float, float);
 
   void readRotationTable(unsigned long addr);
   virtual int getX(int, int);
@@ -240,6 +242,8 @@ public:
   VdpScreen *getNBG1(void);
   VdpScreen *getNBG2(void);
   VdpScreen *getNBG3(void);
+  void setSaturnResolution(int width, int height);
+  void setActualResolution(int width, int height);
 };
 
 #endif
