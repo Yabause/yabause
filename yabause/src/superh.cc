@@ -53,10 +53,12 @@ SuperH::SuperH(bool slave) {
 
   isslave = slave;
 
+  /*
   for(int i = 0;i < 7;i++) {
     mutex[i] = SDL_CreateMutex();
     cond[i] = SDL_CreateCond();
   }
+  */
 #ifdef DEBUG
   verbose = 0;
 #endif
@@ -68,12 +70,15 @@ SuperH::~SuperH(void) {
   delete dataArray;
   delete modeSdram;
 
+  /*
   for(int i = 0;i < 7;i++) {
     SDL_DestroyCond(cond[i]);
     SDL_DestroyMutex(mutex[i]);
   }
+  */
 }
 
+/*
 bool SuperH::processingInterrupt(void) {
   return _interrupt && !_stop;
 }
@@ -89,6 +94,7 @@ unsigned char& SuperH::level(void) {
 unsigned char& SuperH::vector(void) {
   return _vector;
 }
+*/
 
 void SuperH::setMemory(Memory *mem) {
   memoire = mem;
@@ -100,6 +106,7 @@ Memory *SuperH::getMemory(void) {
   return memoire;
 }
 
+/*
 int SuperH::lancer(SuperH *sh) {
 #ifndef _arch_dreamcast
 	try {
@@ -192,6 +199,7 @@ void SuperH::synchroStart(void) {
     }
   }
 }
+*/
 
 void SuperH::executer(void) {
   if (_delai) {
@@ -248,9 +256,11 @@ void SuperH::stop(void) {
   _stop = true;
   _run = false;
   _pause = false;
+  /*
   for(int i = 0;i < 7;i++) {
 	  SDL_CondBroadcast(cond[i]);
   }
+  */
 }
 
 void SuperH::pause(void) {
@@ -265,11 +275,11 @@ bool SuperH::paused(void) {
 void SuperH::run(void) {
   _run = true;
   _pause = false;
-  SDL_CondBroadcast(cond[4]);
+  //SDL_CondBroadcast(cond[4]);
 }
 
 void SuperH::step(void) {
-  SDL_CondBroadcast(cond[4]);
+  //SDL_CondBroadcast(cond[4]);
 }
 
 void SuperH::microsleep(unsigned long nbusec) {

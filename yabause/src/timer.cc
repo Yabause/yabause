@@ -1,5 +1,6 @@
 #include "timer.hh"
 #include "superh.hh"
+/*
 
 SuperH *Timer::sh;
 
@@ -26,3 +27,5 @@ void Timer::waitVBlankIN(void) {
 void Timer::waitVBlankOUT(void) {
   sh->waitVBlankOUT();
 }
+
+*/

@@ -166,6 +166,10 @@ public:
   void drawBackScreen(void);
   void priorityFunction(void);
   //void colorOffset(void);
+  void VBlankIN(void);
+  void VBlankOUT(void);
+  void HBlankIN(void);
+  void HBlankOUT(void);
 };
 
 #endif

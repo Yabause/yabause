@@ -853,27 +853,23 @@ Memory *Vdp2::getVRam(void) {
 }
 
 void Vdp2::lancer(Vdp2 *vdp2) {
-	while(!vdp2->_stop) vdp2->executer();
+	//while(!vdp2->_stop) vdp2->executer();
 }
 
-void Vdp2::executer(void) {
-  Timer t;
-  for(int i = 0;i < 224;i++) { // FIXME depends on SuperH::synchroStart
-    t.waitHBlankIN();
-    setWord(0x4, getWord(0x4) | 0x0004);
-    t.waitHBlankOUT();
-    setWord(0x4, getWord(0x4) & 0xFFFB);
-  }
-  t.waitVBlankIN();
-  setWord(0x4, getWord(0x4) | 0x0008);
-  ((Scu *) satmem->getScu())->sendVBlankIN();
-  for(int i = 0;i < 39;i++) { // FIXME depends on SuperH::synchroStart
-    t.waitHBlankIN();
-    setWord(0x4, getWord(0x4) | 0x0004);
-    t.waitHBlankOUT();
-    setWord(0x4, getWord(0x4) & 0xFFFB);
-  }
-  t.waitVBlankOUT();
+void Vdp2::VBlankIN(void) {
+	setWord(0x4, getWord(0x4) | 0x0008);
+	((Scu *) satmem->getScu())->sendVBlankIN();
+}
+
+void Vdp2::HBlankIN(void) {
+	setWord(0x4, getWord(0x4) | 0x0004);
+}
+
+void Vdp2::HBlankOUT(void) {
+	setWord(0x4, getWord(0x4) & 0xFFFB);
+}
+
+void Vdp2::VBlankOUT(void) {
   setWord(0x4, getWord(0x4) & 0xFFF7);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

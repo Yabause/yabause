@@ -281,7 +281,7 @@ void Smpc::INTBACK(void) {
 }
 
 void Smpc::INTBACKStatus(void) {
-  Timer t;
+  //Timer t;
   //t.wait(3000);
 #if DEBUG
   //cerr << "INTBACK status\n";
@@ -375,7 +375,7 @@ void Smpc::INTBACKPeripheral(void) {
   else
     setSR(0x80 | (getIREG(1) >> 4));
 
-  Timer t;
+  //Timer t;
   //t.wait(20);
 
   /* PeripheralID:

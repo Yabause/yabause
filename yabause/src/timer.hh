@@ -1,6 +1,7 @@
 #ifndef TIMER_HH
 #define TIMER_HH
 
+/*
 class SuperH;
 
 class Timer {
@@ -21,5 +22,6 @@ template<class C, void (C::*function)(void), int I> int Timer::call(void * c) {
 	wait(I);
 	(((C *) c)->*function)();
 }
+*/
 
 #endif

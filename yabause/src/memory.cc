@@ -285,7 +285,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	sshThread = NULL;
 	ssh = new SuperH(true);
 
-	Timer::initSuperH(msh);
+	//Timer::initSuperH(msh);
 
 	rom         = new Memory(0xFFFFF, 0x80000);
 	onchip      = new Onchip(this);
@@ -630,9 +630,11 @@ void SaturnMemory::synchroStart(void) {
 		case 9:
 			//SDL_CondBroadcast(cond[5]);
 			// HBlankIN
+			((Vdp2 *) vdp2_3)->HBlankIN();
 			break;
 		case 10:
 			// HBlankOUT
+			((Vdp2 *) vdp2_3)->HBlankOUT();
 			//SDL_CondBroadcast(cond[6]);
 			decilineCount = 0;
 			lineCount++;
@@ -640,10 +642,11 @@ void SaturnMemory::synchroStart(void) {
 				case 224:
 					// VBlankIN
 					//SDL_CondBroadcast(cond[1]);
+					((Vdp2 *) vdp2_3)->VBlankIN();
 					break;
 				case 263:
 					// VBlankOUT
-					((Vdp2 *) vdp2_3)->executer();
+					((Vdp2 *) vdp2_3)->VBlankOUT();
 					//SDL_CondBroadcast(cond[2]);
 					lineCount = 0;
 					frameCount++;

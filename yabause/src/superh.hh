@@ -133,8 +133,10 @@ protected:
 
   void _executer(void);
 
+  /*
   SDL_mutex *mutex[7];
   SDL_cond *cond[7];
+  */
 
   bool _pause;
   bool _run;
@@ -152,10 +154,12 @@ public:
   SuperH(bool);
  ~SuperH(void);
 
-  bool processingInterrupt(void);
+ /*
+  //bool processingInterrupt(void);
   void interrupt(void);
   unsigned char& level(void);
   unsigned char& vector(void);
+  */
 
   void setMemory(Memory *);
   Memory *getMemory(void);
