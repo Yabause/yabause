@@ -21,19 +21,19 @@
 
 TARGET = yabause.exe
 CC = g++
-#CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL
-CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG
-LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lkernel32 -mconsole
-OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o sh2d.o timer.o tree.o cmdline.o
+#CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL 
+CFLAGS=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.0.6\" -DHAVE_LIBSDL -DDEBUG -DCDDEBUG -g
+LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lkernel32 -mconsole -g
+OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o sh2d.o timer.o tree.o cmdline.o windows/cd.o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 .cc.o:
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -c $< -o $@
 .c.o:
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -c $< -o $@
 clean:
 	rm -f $(OBJS)
 	rm -f $(TARGET)

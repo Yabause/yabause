@@ -1,4 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -19,6 +20,7 @@
 
 #include "cs2.hh"
 #include "timer.hh"
+#include "cd.h"
 
 #define CDB_HIRQ_CMOK      0x0001
 #define CDB_HIRQ_DRDY      0x0002
@@ -64,6 +66,86 @@ void Cs2::setCR2(unsigned short val) {Memory::setWord(0x9001C, val);}
 void Cs2::setCR3(unsigned short val) {Memory::setWord(0x90020, val);}
 void Cs2::setCR4(unsigned short val) {Memory::setWord(0x90024, val);}
 
+unsigned short Cs2::getWord(unsigned long addr) {
+  unsigned short val=0;
+  if (addr >= size) { 
+#ifndef _arch_dreamcast
+	throw BadMemoryAccess(addr);
+#else
+	printf("Bad Memory Access: %x\n", addr);
+#endif
+  }
+  switch(addr) {
+    case 0x90008:
+                  val = Memory::getWord(addr);
+
+                  if (isbufferfull)
+                    val |= CDB_HIRQ_BFUL;
+                  else
+                    val &= ~CDB_HIRQ_BFUL;
+
+                  if (isdiskchanged)
+                    val |= CDB_HIRQ_DCHG;
+                  else
+                    val &= ~CDB_HIRQ_DCHG;
+
+                  if (issubcodeqdecoded)
+                    val |= CDB_HIRQ_SCDQ;
+                  else
+                    val &= ~CDB_HIRQ_SCDQ;
+
+                  Memory::setWord(addr, val);
+                  cerr << "cs2\t: Hirq read - ret: " << val << "\n";
+	          break;
+    case 0x9000C:
+    case 0x90018:
+    case 0x9001C:
+    case 0x90020: 
+    case 0x90024: val = Memory::getWord(addr);
+		  break;
+    case 0x98000:
+                  // transfer info
+                  switch (infotranstype) {
+                     case 0:
+                             // Get Toc Data
+                             if (transfercount % 4 == 0)
+                                val = (TOC[transfercount >> 2] & 0xFFFF0000) >> 16;
+                             else
+                                val = TOC[transfercount >> 2] & 0x0000FFFF;
+
+                             transfercount += 2;
+                             cdwnum += 2;
+
+                             if (transfercount > (0xCC * 2))
+                             {
+                                transfercount = 0;
+                                infotranstype = -1;
+                             }
+                             cerr << "Get Toc data = " << val << "\n";
+                             break;
+                     case 1:
+                             // Get File Info
+                             val = (transfileinfo[transfercount] << 8) |
+                                    transfileinfo[transfercount + 1];
+                             transfercount += 2;
+                             cdwnum += 2;
+
+                             if (transfercount > (0x6 * 2))
+                             {
+                                transfercount = 0;
+                                infotranstype = -1;
+                             }
+                             break;
+                     default: break;
+                  }
+                  break;
+    default: val = Memory::getWord(addr);
+             break;
+  }
+
+  return val;
+}
+
 void Cs2::setWord(unsigned long addr, unsigned short val) {
   if (addr >= size) { 
 #ifndef _arch_dreamcast
@@ -74,7 +156,8 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
   }
   switch(addr) {
     case 0x90008:
-	    	  Memory::setWord(addr, (getHIRQ() & val) | 0x402);
+                  cerr << "cs2\t: WriteWord hirq = " << val << "\n";
+                  Memory::setWord(addr, Memory::getWord(addr) & val);
 	          break;
     case 0x9000C:
     case 0x90018:
@@ -82,42 +165,206 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
     case 0x90020: Memory::setWord(addr, val);
 		  break;
     case 0x90024: Memory::setWord(addr, val);
-                  run(this);
+                  _command = true;
+                  execute();
+                  _command = false;
 		  break;
     default: Memory::setWord(addr, val);
   }
 }
 
+unsigned long Cs2::getLong(unsigned long addr) {
+  unsigned long val=0;
+  if (addr >= size) { 
+#ifndef _arch_dreamcast
+	throw BadMemoryAccess(addr);
+#else
+	printf("Bad Memory Access: %x\n", addr);
+#endif
+  }
+  switch(addr) {
+    case 0x18000:
+                  // transfer data
+                  switch (datatranstype) {
+                    case 0:
+                            // get then delete sector
+                            if (databytestotrans > 0)
+                            {
+                               // fix me
+                               val = (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize)] << 24) +
+                                     (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 1] << 16) +
+                                     (curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 2] << 8) +
+                                      curpartition->block[cdwnum / getsectsize]->data[(cdwnum % getsectsize) + 3];
+                               // get then delete sector
+                               cdwnum += 4;
+                               databytestotrans -= 4;
+                            }
+
+                            if (databytestotrans == 0)
+                            {
+                               datatranstype = -1;
+
+                               // free blocks
+                               for (unsigned long i = 0; i < (cdwnum / getsectsize); i++)
+                               {
+                                  FreeBlock(curpartition->block[i]);
+                                  curpartition->block[i] = NULL;
+                               }
+
+                               // sort remaining blocks here
+                               SortBlocks(curpartition);
+
+                               curpartition->size -= cdwnum;
+                               curpartition->numblocks -= (cdwnum / getsectsize); // fix me
+                            }
+                            break;
+                    default: break;
+                  }
+
+	          break;
+    default: val = Memory::getLong(addr);
+  }
+
+  return val;
+}
+
+
 Cs2::Cs2(void) : Memory(0x100000) {
+  unsigned long i, i2;
+
   _stop = false;
   FAD = 150;
-  status = CDB_STAT_PERI | CDB_STAT_PAUSE; // Still not 100% correct, but better
+
+  if (CDIsCDPresent())
+     status = CDB_STAT_PERI | CDB_STAT_PAUSE; // Still not 100% correct, but better
+  else
+     status = CDB_STAT_PERI | CDB_STAT_NODISC;
 
   options = 0;
   repcnt = 0;
   ctrladdr = 0x41;
   track = 1;
   index = 1;
+  infotranstype = -1;
+  datatranstype = -1;
+  transfercount = 0;
+  cdwnum = 0;
+  getsectsize = 2048;
+  isonesectorstored = false;
+  isdiskchanged = true;
+  issubcodeqdecoded = true;
+  isbufferfull = false;
 
   setCR1(( 0 <<8) | 'C');
   setCR2(('D'<<8) | 'B');
   setCR3(('L'<<8) | 'O');
   setCR4(('C'<<8) | 'K');
-  setHIRQ(0x07D3);
-  setHIRQMask(0x7FF);
+  setHIRQ(0xFFFF);
+  setHIRQMask(0xFFFF);
+
+  // clear partitions
+  for (i = 0; i < MAX_SELECTORS; i++)
+  {
+     partition[i].size = -1;
+     partition[i].numblocks = 0;
+
+     for (i2 = 0; i2 < MAX_BLOCKS; i2++)
+     {
+        partition[i].block[i2] = NULL;
+     }
+  }
+
+  // clear blocks
+  for (i = 0; i < MAX_BLOCKS; i++)
+  {
+     block[i].size = -1;
+     memset(block[i].data, 0, 2352);
+  }
+
+  blockfreespace = 200;
+
+  // initialize TOC
+  memset(TOC, 0xFF, sizeof(TOC));
+
+  // clear filesystem stuff
+  memset(&fileinfo, 0, sizeof(fileinfo));
+  numfiles = 0;
+
+  _command = false;
+  SDL_CreateThread((int (*)(void*)) &run, this);
 }
 
-#if 0
+Cs2::~Cs2(void) {
+   _stop = true;
+   SDL_WaitThread(cdThread, NULL);
+}
+
 void Cs2::run(Cs2 *cd) {
   Timer t;
   while(!cd->_stop) {
     if (cd->_command) {
-      cd->_command = false;
-      cd->execute();
+      t.waitVBlankOUT();
+      t.wait(1);
     }
     else {
-      //t.waitVBlankOUT();
-      //t.wait(1);
+      unsigned short val=0;
+
+      switch (cd->status & 0xF) {
+         case CDB_STAT_PAUSE:
+            break;
+         case CDB_STAT_PLAY:
+         {
+            if (cd->ctrladdr & 0x40)
+            {
+               // read data
+
+               if ((cd->curpartition = cd->GetPartition()) != NULL && !cd->isbufferfull)
+               {
+                  cd->curpartition->block[cd->curpartition->numblocks] = cd->AllocateBlock();
+
+                  if (cd->curpartition->block[cd->curpartition->numblocks] != NULL) {
+                     CDReadSector(cd->FAD - 150, cd->getsectsize, cd->curpartition->block[cd->curpartition->numblocks]->data);
+                     cd->curpartition->numblocks++;
+                     cd->curpartition->size += cd->getsectsize;
+                     cd->FAD++;
+
+#if CDDEBUG
+                     fprintf(stderr, "blocks = %d blockfreespace = %d fad = %x curpartition->size = %x isbufferfull = %x\n", cd->curpartition->numblocks, cd->blockfreespace, cd->FAD, cd->curpartition->size, cd->isbufferfull);
+#endif
+                     cd->isonesectorstored = true;
+                     cd->setHIRQ(cd->getHIRQ() | CDB_HIRQ_CSCT);
+
+                     if (cd->FAD >= cd->playendFAD) {
+                        // we're done
+                        cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+//                        cd->setHIRQ(cd->getHIRQ() | HIRQ_DRDY | CDB_HIRQ_PEND);
+                        cd->setHIRQ(cd->getHIRQ() | CDB_HIRQ_PEND);
+                     }
+                  }
+
+//                  if (cd->isbufferfull)
+//                     cd->status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+               }
+            }
+
+            break;
+         }
+         case CDB_STAT_SEEK:
+            break;
+         case CDB_STAT_SCAN:
+            break;
+         case CDB_STAT_RETRY:
+            break;
+         default: break;
+      }
+
+      cd->status |= CDB_STAT_PERI;
+
+      // adjust command registers appropriately here(fix me)
+
+      // somehow I doubt this is correct
+      t.waitVBlankOUT();
+      t.wait(1);
       //cd->periodicUpdate();
     }
   }
@@ -131,11 +378,6 @@ void Cs2::periodicUpdate(void) {
   if ((getCR1() >> 8) != 0 ) return;
   status |= CDB_STAT_PERI;
 }
-#endif
-
-void Cs2::run(Cs2 *cd) {
-  cd->execute();
-}
 
 void Cs2::execute(void) {
   setHIRQ(getHIRQ() & 0XFFFE);
@@ -143,78 +385,159 @@ void Cs2::execute(void) {
 
   switch (instruction) {
     case 0x00:
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: getStatus\n";
 #endif
       getStatus();
       break;
     case 0x01:
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: getHardwareInfo\n";
 #endif
       getHardwareInfo();
       break;
     case 0x02:
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: getToc\n";
 #endif
       getToc();
       break;
     case 0x03:
     {
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: getSessionInfo\n";
 #endif
        getSessionInfo();
        break;
     }
     case 0x04:
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: initializeCDSystem\n";
 #endif
       initializeCDSystem();
       break;
     case 0x06:
-#if DEBUG
-      cerr << "cs2\t: endDataTransfer\n";
+#if CDDEBUG
+      cerr << "cs2\t: endDataTransfer " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
 #endif
       endDataTransfer();
+#if CDDEBUG
+      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+#endif
+      break;
+    case 0x10:
+#if CDDEBUG
+      cerr << "cs2\t: playDisc " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+#endif
+      playDisc();
+      break;
+    case 0x30:
+#if CDDEBUG
+      cerr << "cs2\t: setCDDeviceConnection\n";
+#endif
+      setCDDeviceConnection();
       break;
     case 0x48:
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: resetSelector\n";
 #endif
       resetSelector();
       break;
+    case 0x51:
+#if CDDEBUG
+      cerr << "cs2\t: getSectorNumber\n";
+#endif
+      getSectorNumber();
+
+#if CDDEBUG
+      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+#endif
+      break;
     case 0x60:
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: setSectorLength\n";
 #endif
       setSectorLength();
       break;
+    case 0x63:
+#if CDDEBUG
+      cerr << "cs2\t: getThenDeleteSectorData\n";
+#endif
+      getThenDeleteSectorData();
+#if CDDEBUG
+      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+#endif
+      break;
     case 0x67:
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: getCopyError\n";
 #endif
       getCopyError();
       break;
+    case 0x70:
+#if CDDEBUG
+      cerr << "cs2\t: changeDirectory\n";
+#endif
+      changeDirectory();
+#if CDDEBUG
+      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+#endif
+      break;
+    case 0x72:
+#if CDDEBUG
+      cerr << "cs2\t: getFileSystemScope\n";
+#endif
+      getFileSystemScope();
+#if CDDEBUG
+      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+#endif
+      break;
+    case 0x73:
+#if CDDEBUG
+      cerr << "cs2\t: getFileSystemScope\n";
+#endif
+      getFileInfo();
+      break;
+    case 0x74:
+#if CDDEBUG
+      cerr << "cs2\t: readFile\n";
+#endif
+      readFile();
+#if CDDEBUG
+      cerr << "cs2\t: ret: " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
+#endif
+      break;
     case 0x75:
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: abortFile\n";
 #endif
       abortFile();
       break;
     case 0x93: {
-#if DEBUG
+#if CDDEBUG
       cerr << "cs2\t: mpegInit\n";
 #endif
       mpegInit();
       break;
     }
+    case 0xE0: {
+#if CDDEBUG
+      cerr << "cs2\t: cmdE0\n";
+#endif
+      cmdE0();
+      break;
+    }
+    case 0xE1: {
+#if CDDEBUG
+      cerr << "cs2\t: cmdE1\n";
+#endif 
+      cmdE1();
+      break;
+    }
     default:
-#if DEBUG
-      cerr << "cs2\t: " << hex << setw(10) << instruction
-                  << " command not implemented" << endl;
+#if CDDEBUG
+      cerr << "cs2\t: " << hex << setw(10) << "command "
+              << instruction << " not implemented" << endl;
 #endif
       break;
   }
@@ -229,6 +552,8 @@ void Cs2::getStatus(void) {
 }
 
 void Cs2::getHardwareInfo(void) {
+  isdiskchanged = false;
+
   setCR1(status << 8);
   // hardware flags/CD Version
   setCR2(0x0201); // mpeg card exists
@@ -240,44 +565,156 @@ void Cs2::getHardwareInfo(void) {
 }
 
 void Cs2::getToc(void) {
-  // Read in Toc to 0x25898000 here
+  CDReadToc(TOC);
 
-  cdwnum = 0xCC;
+  transfercount = 0;
+  infotranstype = 0;
 
   setCR1(status << 8);
   setCR2(0xCC);
   setCR3(0x0);
   setCR4(0x0); 
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
 }
 
 void Cs2::getSessionInfo(void) {
+
+  switch (getCR1() & 0xFF) {
+    case 0:
+            setCR3(0x0100 | ((TOC[101] & 0xFF0000) >> 16));
+            setCR4(TOC[101] & 0x00FFFF);
+            break;
+    case 1:
+            setCR3(0x0100);
+            setCR4(0);
+            break;
+    default:
+            setCR3(0xFFFF);
+            setCR4(0xFFFF);
+            break;
+  }
+
+  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
   setCR1(status << 8);
   setCR2(0);
-  setCR3(0); // session info
-  setCR4(0); // session info
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
 void Cs2::initializeCDSystem(void) {
-  FAD = 150;
+  unsigned short val=0;
+
+  if (status & 0xF != CDB_STAT_OPEN && status & 0xF != CDB_STAT_NODISC)
+  {
+     status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+     isonesectorstored = false;
+     issubcodeqdecoded = true;
+     FAD = 150;
+  }
+
+  val = getHIRQ() & 0xFFE5;
+  isbufferfull = false;
+
+  if (isonesectorstored)
+     val |= CDB_HIRQ_CSCT;
+  else
+     val &= ~CDB_HIRQ_CSCT;
+
+  if (isdiskchanged)
+     val |= CDB_HIRQ_DCHG;
+  else
+     val &= ~CDB_HIRQ_DCHG;
+
+  if (issubcodeqdecoded)
+     val |= CDB_HIRQ_SCDQ;
+  else
+     val &= ~CDB_HIRQ_SCDQ;
+
   setCR1((status << 8) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
   setCR4((unsigned short) FAD);
-  // FIXME Something missing here...
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  setHIRQ(val | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
 void Cs2::endDataTransfer(void) {
-  setCR1((status << 8) | ((cdwnum >> 16) & 0xFF)); // FIXME
-  setCR2((unsigned short) cdwnum);
-  setCR3(0);
-  setCR4(0);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+  if (cdwnum)
+  {
+     setCR1((status << 8) | ((cdwnum >> 17) & 0xFF));
+     setCR2((unsigned short)(cdwnum >> 1));
+     setCR3(0);
+     setCR4(0);
+  }
+  else
+  {
+     setCR1((status << 8) | 0xFF); // FIXME
+     setCR2(0xFFFF);
+     setCR3(0);
+     setCR4(0);
+  }
+
+  isonesectorstored = false;
+  cdwnum = 0;
+
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+}
+
+void Cs2::playDisc(void) {
+  // This obviously is going to need alot of work
+
+  if ((getCR1() & 0xFF) != 0 && getCR2() != 0xFFFF)
+  {
+     if ((getCR1() & 0x80) && (getCR3() >> 8) != 0xFF)
+     {
+        // fad mode
+        unsigned long size;
+
+        FAD = ((getCR1() & 0xF) << 16) + getCR2();
+        size = getCR4();
+        
+        SetupDefaultPlayStats(FADToTrack(FAD));
+
+        playFAD = FAD;
+        playendFAD = FAD + size;
+
+        if ((curpartition = GetPartition()) != NULL)
+        {
+          curpartition->size = 0;
+        }
+
+        isonesectorstored = true;
+        setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+
+        status = CDB_STAT_PERI | CDB_STAT_PLAY;
+
+        setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+        setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+        setCR2((ctrladdr << 8) | (track & 0xFF));
+        setCR3((index << 8) | ((FAD >> 16) &0xFF));
+        setCR4((unsigned short) FAD);
+     }
+  }
+}
+
+void Cs2::setCDDeviceConnection(void) {
+  if ((getCR3() >> 8) != 0xFF && (getCR3() >> 8) < 0x24)
+  {
+     curfilter = filter + (getCR3() >> 8);
+  }
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
 void Cs2::resetSelector(void) {
+  // still needs a bit of work
+
+  isbufferfull = false;
+
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
@@ -285,12 +722,50 @@ void Cs2::resetSelector(void) {
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
+void Cs2::getSectorNumber(void) {
+  // somehow, I don't think this is right
+  setCR4(partition[getCR3() >> 8].size / getsectsize);
+
+  setCR1(status << 8);
+  setCR2(0);
+  setCR3(0);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+}
+
 void Cs2::setSectorLength(void) {
+  switch (getCR1() & 0xFF) {
+    case 0:
+            getsectsize = 2048;
+            break;
+    case 1:
+            getsectsize = 2336;
+            break;
+    case 2:
+            getsectsize = 2340;
+            break;
+    case 3:
+            getsectsize = 2352;
+            break;
+    default: break;
+  }
+
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
   setCR4((unsigned short) FAD);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+}
+
+void Cs2::getThenDeleteSectorData(void) {
+  cdwnum = 0;
+  datatranstype = 0;
+  databytestotrans = getsectsize * getCR4();
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
 }
 
 void Cs2::getCopyError(void) {
@@ -301,14 +776,92 @@ void Cs2::getCopyError(void) {
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
-void Cs2::abortFile(void) {
-  //status = 0x26;
-  cdwnum = 0xFFFFFFFF;
+void Cs2::changeDirectory(void) {
+  // fix me
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
   setCR3((index << 8) | ((FAD >> 16) &0xFF));
   setCR4((unsigned short) FAD);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL | CDB_HIRQ_EFLS);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+}
+
+void Cs2::getFileSystemScope(void) {
+  ReadFileSystem();
+
+  setCR1(status << 8);
+  setCR2(numfiles - 2);
+  setCR3(0x0100);
+  setCR4(0x0002);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+}
+
+void Cs2::getFileInfo(void) {
+  unsigned long gfifid;
+
+  gfifid = ((getCR3() & 0xFF) << 16) | getCR4();
+
+  if (gfifid == 0xFFFFFF)
+  {
+     // fix me
+     setCR1(status << 8);
+     setCR2(0x0600);
+     setCR3(0);
+     setCR4(0);
+  }
+  else
+  {
+     SetupFileInfoTransfer(gfifid);
+     setCR1(status << 8);
+     setCR2(0x06);
+     setCR3(0);
+     setCR4(0);
+  }
+
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+}
+
+void Cs2::readFile(void) {
+  unsigned long rffid, rfoffset, rfsize;
+
+  rffid = ((getCR3() & 0xFF) << 8) | getCR4();
+  rfoffset = ((getCR1() & 0xFF) << 8) | getCR2();
+  rfsize = ((fileinfo[rffid].size + getsectsize - 1) /
+           getsectsize) - rfoffset;
+
+  SetupDefaultPlayStats(FADToTrack(fileinfo[rffid].lba + rfoffset));
+
+  playFAD = FAD = fileinfo[rffid].lba + rfoffset;
+  playendFAD = playFAD + rfsize;
+
+  if ((curpartition = GetPartition()) != NULL)
+  {
+     curpartition->size = 0;
+  }
+
+  options = 0x8;
+  issubcodeqdecoded = true;
+
+  status = CDB_STAT_PERI | CDB_STAT_PLAY;
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+}
+
+void Cs2::abortFile(void) {
+  if ((status & 0xF) != CDB_STAT_OPEN &&
+      (status & 0xF) != CDB_STAT_NODISC)
+     status = CDB_STAT_PERI | CDB_STAT_PAUSE;
+  isonesectorstored = false;
+  datatranstype = -1;
+  cdwnum = 0;
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
 }
 
 void Cs2::mpegInit(void) {
@@ -326,3 +879,266 @@ void Cs2::mpegInit(void) {
   // future mpeg-related variables should be initialized here
 }
 
+void Cs2::cmdE0(void) {
+  isonesectorstored = true;
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
+}
+
+void Cs2::cmdE1(void) {
+  setCR1((status << 8));
+  setCR2(0x0004);
+  setCR3(0);
+  setCR4(0);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+}
+
+unsigned char Cs2::FADToTrack(unsigned long val) {
+  for (int i = 0; i < 99; i++)
+  {
+     if (TOC[i] == 0xFFFFFFFF) return 0xFF;
+
+     if (val >= (TOC[i] & 0xFFFFFF) && val < (TOC[i+1] & 0xFFFFFF))
+        return (i+1);
+  }
+
+  return 0;
+}
+
+void Cs2::SetupDefaultPlayStats(unsigned char track_number) {
+  if (track_number != 0xFF)
+  {
+     options = 0;
+     repcnt = 0;
+     ctrladdr = (TOC[track_number - 1] & 0xFF000000) >> 24;
+     index = 1;
+     track = track_number;
+     FAD = TOC[track_number - 1] & 0x00FFFFFF;
+  }
+}
+
+block_struct *Cs2::AllocateBlock() {
+  // find a free block
+  for(unsigned long i = 0; i < 200; i++)
+  {
+     if (block[i].size == -1)
+     {
+        blockfreespace--;
+
+        if (blockfreespace <= 0) isbufferfull = true;
+
+        block[i].size = getsectsize;
+
+        return (block + i);
+     }
+  }
+
+  isbufferfull = true;
+
+  return NULL;
+}
+
+void Cs2::FreeBlock(block_struct *blk) {
+  blk->size = -1;
+  blockfreespace++;
+  isbufferfull = false;
+  setHIRQ(getHIRQ() & ~CDB_HIRQ_BFUL);
+}
+
+void Cs2::SortBlocks(partition_struct *part) {
+  unsigned long i, i2;
+  block_struct *blktmp;
+
+  for (i = 0; i < (MAX_BLOCKS-1); i++)
+  {
+     for (i2 = i+1; i2 < MAX_BLOCKS; i2++)
+     {
+        if (part->block[i] == NULL && part->block[i2] != NULL)
+        {
+           blktmp = part->block[i];
+           part->block[i] = part->block[i2];
+           part->block[i2] = blktmp;
+        }
+     }
+  }
+}
+
+partition_struct *Cs2::GetPartition()
+{
+  // go through various filter conditions here(fix me)
+
+  return &partition[curfilter->condtrue];
+}
+
+int Cs2::CopyDirRecord(unsigned char *buffer, dirrec_struct *dirrec)
+{
+  unsigned char *temp_pointer;
+
+  temp_pointer = buffer;
+
+  memcpy(&dirrec->recordsize, buffer, sizeof(dirrec->recordsize));
+  buffer += sizeof(dirrec->recordsize);
+
+  memcpy(&dirrec->xarecordsize, buffer, sizeof(dirrec->xarecordsize));
+  buffer += sizeof(dirrec->xarecordsize);
+
+#ifdef WORDS_BIGENDIAN
+  buffer += sizeof(dirrec->lba);
+  memcpy(&dirrec->lba, buffer, sizeof(dirrec->lba));
+  buffer += sizeof(dirrec->lba);
+#else
+  memcpy(&dirrec->lba, buffer, sizeof(dirrec->lba));
+  buffer += (sizeof(dirrec->lba) * 2);
+#endif
+
+#ifdef WORDS_BIGENDIAN
+  buffer += sizeof(dirrec->size);
+  memcpy(&dirrec->size, buffer, sizeof(dirrec->size));
+  buffer += sizeof(dirrec->size);
+#else
+  memcpy(&dirrec->size, buffer, sizeof(dirrec->size));
+  buffer += (sizeof(dirrec->size) * 2);
+#endif
+
+  dirrec->dateyear = buffer[0];
+  dirrec->datemonth = buffer[1];
+  dirrec->dateday = buffer[2];
+  dirrec->datehour = buffer[3];
+  dirrec->dateminute = buffer[4];
+  dirrec->datesecond = buffer[5];
+  dirrec->gmtoffset = buffer[6];
+  buffer += 7;
+
+  dirrec->flags = buffer[0];
+  buffer += sizeof(dirrec->flags);
+
+  dirrec->fileunitsize = buffer[0];
+  buffer += sizeof(dirrec->fileunitsize);
+
+  dirrec->interleavegapsize = buffer[0];
+  buffer += sizeof(dirrec->interleavegapsize);
+
+#ifdef WORDS_BIGENDIAN
+  buffer += sizeof(dirrec->volumesequencenumber);
+  memcpy(&dirrec->volumesequencenumber, buffer, sizeof(dirrec->volumesequencenumber));
+  buffer += sizeof(dirrec->volumesequencenumber);
+#else
+  memcpy(&dirrec->volumesequencenumber, buffer, sizeof(dirrec->volumesequencenumber));
+  buffer += (sizeof(dirrec->volumesequencenumber) * 2);
+#endif
+
+  dirrec->namelength = buffer[0];
+  buffer += sizeof(dirrec->namelength);
+
+  memset(dirrec->name, 0, sizeof(dirrec->name));
+  memcpy(dirrec->name, buffer, dirrec->namelength);
+  buffer += dirrec->namelength;
+
+  // handle padding
+  buffer += (1 - dirrec->namelength % 2);
+
+  memset(&dirrec->xarecord, 0, sizeof(dirrec->xarecord));
+
+  // sadily, this is the best way I can think of for detecting XA records
+
+  if ((dirrec->recordsize - (buffer - temp_pointer)) == 14)
+  {
+     memcpy(&dirrec->xarecord.groupid, buffer, sizeof(dirrec->xarecord.groupid));
+     buffer += sizeof(dirrec->xarecord.groupid);
+
+     memcpy(&dirrec->xarecord.userid, buffer, sizeof(dirrec->xarecord.userid));
+     buffer += sizeof(dirrec->xarecord.userid);
+
+     memcpy(&dirrec->xarecord.attributes, buffer, sizeof(dirrec->xarecord.attributes));
+     buffer += sizeof(dirrec->xarecord.attributes);
+
+#ifndef WORDS_BIGENDIAN
+     // byte swap it
+     dirrec->xarecord.attributes = ((dirrec->xarecord.attributes & 0xFF00) >> 8) +
+                                   ((dirrec->xarecord.attributes & 0x00FF) << 8);
+#endif
+
+     memcpy(&dirrec->xarecord.signature, buffer, sizeof(dirrec->xarecord.signature));
+     buffer += sizeof(dirrec->xarecord.signature);
+
+     memcpy(&dirrec->xarecord.filenumber, buffer, sizeof(dirrec->xarecord.filenumber));
+     buffer += sizeof(dirrec->xarecord.filenumber);
+
+     memcpy(dirrec->xarecord.reserved, buffer, sizeof(dirrec->xarecord.reserved));
+     buffer += sizeof(dirrec->xarecord.reserved);
+  }
+
+  return 0;
+}
+
+
+void Cs2::ReadFileSystem()
+{
+  unsigned char tempsect[2048];
+  unsigned char *workbuffer;
+  unsigned long i;
+  dirrec_struct dirrec;
+  unsigned char numsectorsleft=0;
+
+  // fix me (this function should support more than just the root directory)
+
+  // read sector 16
+  if (CDReadSector(16, 2048, tempsect) != 2048)
+     return;
+
+  // retrieve directory record's lba
+  CopyDirRecord(tempsect + 0x9C, &dirrec);
+
+  // now read sector using lba grabbed from above and start parsing
+  if (CDReadSector(dirrec.lba, 2048, tempsect) != 2048)
+     return;
+
+  numsectorsleft = (dirrec.size / 2048) - 1;
+  dirrec.lba++;
+  workbuffer = tempsect;
+
+  for (i = 0; i < MAX_FILES; i++)
+  {
+     CopyDirRecord(workbuffer, fileinfo + i);
+     fileinfo[i].lba += 150;
+     workbuffer+=fileinfo[i].recordsize;
+
+     if (workbuffer[0] == 0)
+     {
+        if (numsectorsleft > 0)
+        {
+           if (CDReadSector(dirrec.lba, 2048, tempsect) != 2048)
+              return;
+           dirrec.lba++;
+           numsectorsleft--;
+           workbuffer = tempsect;
+        }
+        else
+        {
+           numfiles = i;
+           break;
+        }
+     }
+  }
+}
+
+void Cs2::SetupFileInfoTransfer(unsigned long fid) {
+  transfileinfo[0] = (fileinfo[fid].lba & 0xFF000000) >> 24;
+  transfileinfo[1] = (fileinfo[fid].lba & 0x00FF0000) >> 16;
+  transfileinfo[2] = (fileinfo[fid].lba & 0x0000FF00) >> 8;
+  transfileinfo[3] =  fileinfo[fid].lba & 0x000000FF;
+
+  transfileinfo[4] = (fileinfo[fid].lba & 0xFF000000) >> 24;
+  transfileinfo[5] = (fileinfo[fid].lba & 0x00FF0000) >> 16;
+  transfileinfo[6] = (fileinfo[fid].lba & 0x0000FF00) >> 8;
+  transfileinfo[7] =  fileinfo[fid].lba & 0x000000FF;
+
+  transfileinfo[8] = fileinfo[fid].interleavegapsize;
+  transfileinfo[9] = fileinfo[fid].fileunitsize;
+  transfileinfo[10] = (unsigned char)fid;
+  transfileinfo[11] = fileinfo[fid].flags;
+}

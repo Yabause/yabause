@@ -28,6 +28,7 @@
 #endif
 #include <sys/types.h>
 #include "cmdline.h"
+#include "cd.h"
 
 unsigned short buttonbits = 0xFFFF;
 
@@ -238,6 +239,14 @@ int main(int argc, char **argv) {
 
   SDL_Init(SDL_INIT_EVENTTHREAD);
 
+  if (args_info.cdrom_given)
+  {
+     if (CDInit(args_info.cdrom_arg) != 0)
+     {
+        cerr << "Unable to initialize cdrom: " << args_info.cdrom_arg << "\n";
+        return 1;
+     }
+  }
 
 #ifndef _arch_dreamcast
   SaturnMemory *mem = new SaturnMemory(args_info.bios_arg, args_info.bin_arg);
@@ -269,6 +278,9 @@ int main(int argc, char **argv) {
 #endif
 
   delete(mem);
+
+  if (args_info.cdrom_given)
+     CDDeInit();
 
   SDL_Quit();
 }
