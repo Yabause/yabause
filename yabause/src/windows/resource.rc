@@ -30,7 +30,13 @@ BEGIN
     MENUITEM "&Run", IDM_RUN
     MENUITEM "&Pause", IDM_PAUSE
     MENUITEM SEPARATOR
+    MENUITEM "&Settings", IDM_SETTINGS
+    MENUITEM SEPARATOR
     MENUITEM "&Quit", IDM_EXIT
+  END
+  POPUP "&Debug"
+  BEGIN
+    MENUITEM "Master SH2", IDM_MSH2DEBUG
   END
 END
 
@@ -53,6 +59,96 @@ BEGIN
     AUTORADIOBUTTON "Download",  IDC_DOWNLOADMEM,  42, 46, 42, 10
     AUTORADIOBUTTON "Upload", IDC_UPLOADMEM, 92, 46, 42, 10
     CHECKBOX "Set PC to start address", IDC_CHECKBOX1, 34, 58, 104, 10
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+MEMDLG DIALOG FIXED PURE  6, 21, 116, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Register Modification"
+FONT 8, "Courier New"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,16,42,40,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,60,42,40,14
+    CTEXT           "Enter New Register Value:", 63, 18, 5, 88, 10
+    EDITTEXT        IDC_EDITTEXT1,36,20,44,11
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+SH2DEBUGDLG DIALOG FIXED PURE  0, 0, 386, 217
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "SH2 Debug"
+FONT 8, "Courier New"
+BEGIN
+    DEFPUSHBUTTON   "&Close",IDOK, 3, 203, 40, 14
+    PUSHBUTTON      "&Step",IDC_STEP,60,203,40,14
+//    PUSHBUTTON      "S&kip",IDC_SKIP,110,203,40,14
+    PUSHBUTTON      "&Run",IDC_RUN,160,203,40,14
+    PUSHBUTTON      "&Pause",IDC_PAUSE,210,203,40,14
+//    COMBOBOX        IDC_COMBOBOX, 202, 150, 36, 51, CBS_DROPDOWNLIST |
+//                    WS_VSCROLL | WS_TABSTOP
+    GROUPBOX "SH2 Registers", -1, 2, 0, 70, 199, WS_CHILD | WS_VISIBLE
+    LISTBOX IDC_LISTBOX1, 5, 10, 65, 195
+    GROUPBOX "Disassembled Code", -1, 74, 0, 210, 199, WS_CHILD | WS_VISIBLE
+    LISTBOX IDC_LISTBOX2,77, 10, 206, 195
+    GROUPBOX "Code Breakpoints", -1, 288, 0, 94, 84, WS_CHILD | WS_VISIBLE
+    EDITTEXT IDC_EDITTEXT1, 290, 10, 44, 11, ES_NUMBER
+    LISTBOX IDC_LISTBOX3,290, 20, 65, 66
+    PUSHBUTTON      "&Add",IDC_ADDBP1,358, 10, 20, 10
+    PUSHBUTTON      "&Del",IDC_DELBP1,358, 24, 20, 10
+//    GROUPBOX "Memory Breakpoints", -1, 288, 86, 94, 113, WS_CHILD | WS_VISIBLE
+//    EDITTEXT IDC_EDITTEXT2, 290, 95, 44, 11, ES_NUMBER
+//    LISTBOX IDC_LISTBOX4, 290, 105, 65, 66
+//    PUSHBUTTON      "&Add",IDC_ADDBP2,358, 97, 20, 10
+//    PUSHBUTTON      "&Del",IDC_DELBP2,358, 110, 20, 10
+//    CHECKBOX "&Read", IDC_CHKREAD, 290, 167, 36, 10
+//    CHECKBOX "&Write", IDC_CHKWRITE, 290, 177, 36, 10
+//    CHECKBOX "&Byte", IDC_CHKBYTE, 336, 167, 36, 10
+//    CHECKBOX "&Word", IDC_CHKWORD, 336, 177, 36, 10
+//    CHECKBOX "&Dword", IDC_CHKDWORD, 336, 187, 36, 10
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+SETTINGSDLG DIALOG DISCARDABLE  0, 0, 220, 225
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "Settings"
+FONT 8, "Courier New"
+BEGIN
+    GROUPBOX "Yabause Basic Settings", -1, 6, 6, 208, 169, WS_CHILD | WS_VISIBLE
+    LTEXT           "Disc Type", -1, 10, 19, 40, 10
+    COMBOBOX        IDC_DISCTYPECB, 49, 18, 55, 33, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Drive Letter", -1, 112, 19, 56, 10
+    COMBOBOX        IDC_DRIVELETTERCB, 163, 18, 46, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT           "Cue File", -1, 10, 35, 41, 10
+    EDITTEXT        IDC_IMAGEEDIT, 10, 47, 162, 13
+    PUSHBUTTON      "Browse",IDC_IMAGEBROWSE, 176, 47, 33, 12
+
+    LTEXT           "Bios Language", -1, 10, 65, 60, 10
+    COMBOBOX        IDC_BIOSLANGCB, 10, 77, 66, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT           "Region", -1, 88, 65, 115, 10
+    COMBOBOX        IDC_REGIONCB, 88, 77, 121, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT           "Bios ROM File", -1, 10, 95, 73, 10
+    EDITTEXT        IDC_BIOSEDIT, 10, 107, 162, 13
+    PUSHBUTTON      "Browse",IDC_BIOSBROWSE, 176, 107, 33, 13
+
+    LTEXT           "Save RAM File", -1, 10, 120, 73, 10
+    EDITTEXT        IDC_SAVERAMEDIT, 10, 132, 162, 13 
+    PUSHBUTTON      "Browse",IDC_SAVERAMBROWSE, 176, 132, 33, 13
+
+    LTEXT           "MPEG ROM File", -1, 10, 145, 73, 10
+    EDITTEXT        IDC_MPEGROMEDIT, 10, 157, 162, 13 
+    PUSHBUTTON      "Browse",IDC_MPEGROMBROWSE, 176, 157, 33, 13
+
+    PUSHBUTTON      "&Video Settings",IDC_VIDEOSETTINGS, 38, 183, 62, 16, WS_DISABLED
+    PUSHBUTTON      "&Input Settings",IDC_INPUTSETTINGS, 118, 183, 62, 16, WS_DISABLED
+
+    DEFPUSHBUTTON   "&OK",IDOK,128,207,40,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,173,207,40,14
 END
 
 //////////////////////////////////////////////////////////////////////////////
