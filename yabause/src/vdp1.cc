@@ -335,8 +335,8 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 #ifndef _arch_dreamcast
 	unsigned short xy = vram->getWord(addr + 0xA);
 
-	unsigned short x = localX + vram->getWord(addr + 0xC);
-	unsigned short y = localY + vram->getWord(addr + 0xE);
+	short x = localX + vram->getWord(addr + 0xC);
+	short y = localY + vram->getWord(addr + 0xE);
 	unsigned short w = ((xy >> 8) & 0x3F) * 8;
 	unsigned short h = xy & 0xFF;
 	unsigned short ww = power_of_two(w);
@@ -509,8 +509,8 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 }
 
 void Vdp1::distortedSpriteDraw(unsigned long addr) {
-	unsigned short X[4];
-	unsigned short Y[4];
+	short X[4];
+	short Y[4];
 	
 	unsigned short xy = vram->getWord(addr + 0xA);
 
@@ -659,10 +659,12 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	X[3] = localX + (vram->getWord(addr + 0x18) );
 	Y[3] = localY + (vram->getWord(addr + 0x1A) );
 
+	/*
 	if ((X[0] & 0x400) ||(Y[0] & 0x400) ||(X[1] & 0x400) ||(Y[1] & 0x400) ||(X[2] & 0x400) ||(Y[2] & 0x400) ||(X[3] & 0x400) ||(Y[3] & 0x400)) {
 		//cerr << "don't know what to do" << endl;
 	}
 	else {
+	*/
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, sp.txr);
 		glBegin(GL_QUADS);
@@ -672,7 +674,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 		glTexCoord2f(u1, v2); glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
 		glEnd();
 		glDisable(GL_TEXTURE_2D);
-	}
+	//}
 }
 
 void Vdp1::polygonDraw(unsigned long addr) {
