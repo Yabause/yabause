@@ -2,6 +2,7 @@
 
    - freeze when exiting
    - logo will not show if yabause is installed
+   - random freezing on the win32 port
 
  (2) EMULATION
 
@@ -15,6 +16,8 @@
    - finish DMAC emulation
    - change sh2 interpreter into a dynamic recompiler
    - add SCI emulation
+   - finish FRT emulation
+   - finish sleep/standby mode and implement the clock change pins
 
  (3) MONITOR/DEBUGGER
 
@@ -22,7 +25,12 @@
    - add a command to execute N instructions
    - implement a method to trace emulation
    - implement a rewind
+   - add ability to set code and memory breakpoints
 
  (4) CODE
 
    - finish translation
+
+ (5) OTHER
+
+   - Rewrite documentation based on the recent interface changes
