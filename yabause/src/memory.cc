@@ -471,8 +471,9 @@ void SaturnMemory::initMemoryMap() {
 
 void SaturnMemory::mappage2(unsigned long adr) {
   switch (adr >> 29) {
-  case 0:
-  case 1: {
+  case 0: // cache used
+  case 1: // cache not used
+  case 5:  { // cache not used
     unsigned long nadr = adr & 0x1FFFFFFF;
     mapMem = memoryMap[nadr >> 16]; mapAdr = adr & mapMem->mask; // FIXME
     //if ((mapMem->mask & mapAdr2) != mapAdr) cerr << hex << "mapAdr2=" << mapAdr2 << " mapAdr=" << mapAdr << endl;
@@ -483,9 +484,9 @@ void SaturnMemory::mappage2(unsigned long adr) {
 #else
     printf("Bad memory access: %8x", adr);
 #endif
-  case 2:
+  case 2: // purge area
     mapMem = purgeArea; mapAdr = adr & mapMem->mask; return; // FIXME
-  case 3: {
+  case 3: { // direct access to cache addresses
     unsigned long nadr = adr & 0x1FFFFFFF;
     if (nadr < 0x3FF) { mapMem = adressArray; mapAdr = nadr & mapMem->mask; return;} // FIXME
 #ifndef _arch_dreamcast
@@ -494,6 +495,9 @@ void SaturnMemory::mappage2(unsigned long adr) {
     printf("Bad memory access: %8x", adr);
 #endif
   }
+  case 4:
+  case 6: // cache data access
+    cerr << "Cache R/W unsupported: " << adr << "\n"; return;     
   case 7:
     if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = modeSdram; mapAdr = adr & 0x00000FFF; return;}
     if (adr >= 0xFFFFFE00) { mapMem = onchip; mapAdr = adr & 0x000001FF; return;}
