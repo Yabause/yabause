@@ -477,6 +477,144 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	unsigned short X[4];
 	unsigned short Y[4];
 	
+	unsigned short xy = vram->getWord(addr + 0xA);
+
+	unsigned short w = ((xy >> 8) & 0x3F) * 8;
+	unsigned short h = xy & 0xFF;
+	unsigned short ww = power_of_two(w);
+	unsigned short hh = power_of_two(h);
+	
+#ifndef _arch_dreamcast
+	unsigned long textdata[hh * ww];
+#else
+	unsigned char *_textdata = (unsigned char *)memalign(32, (ww * hh) << 1);
+	unsigned short *textdata = (unsigned short *)_textdata;
+#endif
+	
+	unsigned short tx = 0;
+	unsigned short ty = 0;
+	unsigned short TX;
+	short txinc = 1;
+	short tyinc = 1;
+	GLfloat u1 = 0.0f;
+	GLfloat u2 = (GLfloat)w / ww;
+	GLfloat v1 = 0.0f;
+	GLfloat v2 = (GLfloat)h / hh;
+	unsigned char dir = (vram->getWord(addr) & 0x30) >> 4;
+	if (dir & 0x1) {
+		u1 = (GLfloat)w / ww;
+		u2 = 0.0f;
+	}
+	if (dir & 0x2) {
+		v1 = (GLfloat)h / hh;
+		v2 = 0.0f;
+	}
+	
+	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
+	unsigned long dot, color;
+
+	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
+	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
+	unsigned short colorBank = vram->getWord(addr + 0x6);
+	vdp1Sprite sp = vram->getSprite(charAddr);
+	unsigned long ca1 = charAddr;
+	
+	if(sp.vdp1_loc == 0)	{
+#ifdef DEBUG
+	cerr << "Making new sprite " << hex << charAddr << endl;
+#endif
+	switch(colorMode) {
+	case 0:
+#ifdef DEBUG
+		cerr << "color mode 0 not implemented" << endl;
+#endif
+		break;
+	case 1:
+		colorBank *= 8;
+		unsigned long temp;
+		TX = tx;
+		for(unsigned short i = 0;i < h;i++) {
+			tx = TX;
+			for(unsigned short j = 0;j < w;j += 2) {
+				dot = vram->getByte(charAddr);
+				temp = vram->getWord((dot >> 4) * 2 + colorBank);
+#ifndef _arch_dreamcast
+				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+#else
+				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
+#endif
+				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
+				else textdata[ty * ww + tx] = color;
+				tx += txinc;
+				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+#ifndef _arch_dreamcast
+				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+#else
+				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
+#endif
+				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
+				else textdata[ty * ww + tx] = color;
+				tx += txinc;
+				charAddr += 1;
+			}
+			ty += tyinc;
+		}
+		break;
+	case 2:
+#ifdef DEBUG
+		cerr << "color mode 2 not implemented" << endl;
+#endif
+		break;
+	case 3:
+#ifdef DEBUG
+		cerr << "color mode 3 not implemented" << endl;
+#endif
+		break;
+	case 4:
+#ifdef DEBUG
+		cerr << "color mode 4 not implemented" << endl;
+#endif
+		break;
+	case 5:
+		TX = tx;
+		for(unsigned short i = 0;i < h;i++) {
+			tx = TX;
+			for(unsigned short j = 0;j < w;j++) {
+				dot = vram->getWord(charAddr);
+				charAddr += 2;
+#ifndef _arch_dreamcast
+				color = 0xFF000000 | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
+#else
+				color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
+#endif
+				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
+				else textdata[ty * ww + tx] = color;
+				tx += txinc;
+			}
+			ty += tyinc;
+		}
+	}
+	
+	if (sp.txr == 0) glGenTextures(1, &sp.txr);
+	glBindTexture(GL_TEXTURE_2D, sp.txr);
+	
+#ifndef _arch_dreamcast
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
+	
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+#else
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB1555, ww, hh, 0, GL_ARGB1555, GL_UNSIGNED_BYTE, textdata);
+#endif
+	
+	sp.vdp1_loc = ca1;
+	vram->addSprite(sp);
+
+#ifdef DEBUG
+	cerr << "Created new distorted sprite at " << hex << ca1 << endl;
+#endif
+	}
+	
 	X[0] = localX + (vram->getWord(addr + 0x0C) );
 	Y[0] = localY + (vram->getWord(addr + 0x0E) );
 	X[1] = localX + (vram->getWord(addr + 0x10) );
@@ -490,14 +628,15 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 		//cerr << "don't know what to do" << endl;
 	}
 	else {
-		glColor4f(1, 1, 1, 1);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, sp.txr);
 		glBegin(GL_QUADS);
-		glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
-		glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);
-		glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
-		glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
+		glTexCoord2f(u1, v1); glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
+		glTexCoord2f(u2, v1); glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);
+		glTexCoord2f(u2, v2); glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
+		glTexCoord2f(u1, v2); glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
 		glEnd();
-		glColor4f(1, 1, 1, 1);
+		glDisable(GL_TEXTURE_2D);
 	}
 }
 
