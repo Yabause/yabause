@@ -85,7 +85,7 @@ install_sh = @install_sh@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
 bin_PROGRAMS = yabause
-yabause_SOURCES = cdbase.cc cs1.cc cs2.cc exception.cc intc.cc memory.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh saturn_memory.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc scsp.hh scsp.cc $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc
+yabause_SOURCES = cdbase.cc cs0.cc cs1.cc cs2.cc exception.cc intc.cc memory.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh saturn_memory.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc scsp.hh scsp.cc $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc
 BUILT_SOURCES = c68k/c68k_ini.inc
 EXTRA_DIST = logo.png logo.bmp Makefile.dc tree.h tree.c
 subdir = src
@@ -94,11 +94,11 @@ CONFIG_CLEAN_FILES =
 bin_PROGRAMS = yabause$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
-am_yabause_OBJECTS = cdbase.$(OBJEXT) cs1.$(OBJEXT) cs2.$(OBJEXT) \
-	exception.$(OBJEXT) intc.$(OBJEXT) memory.$(OBJEXT) \
-	scu.$(OBJEXT) smpc.$(OBJEXT) superh.$(OBJEXT) vdp1.$(OBJEXT) \
-	vdp2.$(OBJEXT) yabause.$(OBJEXT) scsp.$(OBJEXT) cd.$(OBJEXT) \
-	yui.$(OBJEXT) c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
+am_yabause_OBJECTS = cdbase.$(OBJEXT) cs0.$(OBJEXT) cs1.$(OBJEXT) \
+	cs2.$(OBJEXT) exception.$(OBJEXT) intc.$(OBJEXT) \
+	memory.$(OBJEXT) scu.$(OBJEXT) smpc.$(OBJEXT) superh.$(OBJEXT) \
+	vdp1.$(OBJEXT) vdp2.$(OBJEXT) yabause.$(OBJEXT) scsp.$(OBJEXT) \
+	cd.$(OBJEXT) yui.$(OBJEXT) c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
 	gen68k.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
 yabause_LDADD = $(LDADD)
@@ -114,13 +114,14 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/c68k.Po ./$(DEPDIR)/c68kexec.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/cd.Po ./$(DEPDIR)/cdbase.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/cs1.Po ./$(DEPDIR)/cs2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/exception.Po ./$(DEPDIR)/gen68k.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/intc.Po ./$(DEPDIR)/memory.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/scsp.Po ./$(DEPDIR)/scu.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/smpc.Po ./$(DEPDIR)/superh.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vdp1.Po ./$(DEPDIR)/vdp2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/yabause.Po ./$(DEPDIR)/yui.Po
+@AMDEP_TRUE@	./$(DEPDIR)/cs0.Po ./$(DEPDIR)/cs1.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/cs2.Po ./$(DEPDIR)/exception.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/gen68k.Po ./$(DEPDIR)/intc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/memory.Po ./$(DEPDIR)/scsp.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/scu.Po ./$(DEPDIR)/smpc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/superh.Po ./$(DEPDIR)/vdp1.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/vdp2.Po ./$(DEPDIR)/yabause.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yui.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -189,6 +190,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c68kexec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cdbase.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cs0.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cs1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cs2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exception.Po@am__quote@

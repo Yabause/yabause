@@ -39,7 +39,10 @@
 				(COLOR_ADDb((l >> 16 ) & 0xFF, b) << 16) | \
 				(l & 0xFF000000)
 
+#if 0
 #define drawPixel(s,x,y,c)	if ((x >= 0) && (y >= 0) && (x < 1024) && (y < 512)) s[y * 1024 + x] = c;
+#endif
+#define drawPixel(s,x,y,c)	if ((x >= 0) && (y >= 0) && (x < width) && (y < height)) s[y * width + x] = c;
 
 
 /****************************************/
@@ -197,7 +200,22 @@ Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, unsigned long *s) {
     vram = v;
     cram = c;
     surface = s;
+    //surface = new unsigned long [ 1024 * 512 ];
     disptoggle = true;
+    getX = Vdp2Screen_getX;
+    getY = Vdp2Screen_getY;
+
+	if (*texture ==0) glGenTextures(1, texture );
+	glBindTexture(GL_TEXTURE_2D, texture[0] );
+#ifndef _arch_dreamcast
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
+  
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+#else
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 1024, 512, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
+#endif
+
 }
 
 int VdpScreen::comparePriority(const void *arg1, const void *arg2) {
@@ -226,22 +244,25 @@ void Vdp2Screen::draw(void) {
 		drawMap();
 	}
 
-        calcwidthRatio = widthRatio * coordIncX;
-        calcheightRatio = heightRatio * coordIncY;
+        calcwidthRatio = (width * coordIncX) / 1024;
+        calcheightRatio = (height * coordIncY) / 512;
 
+/*
 	if (*texture ==0) glGenTextures(1, texture );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
 #ifndef _arch_dreamcast
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
   
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 #else
         glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 1024, 512, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
 #endif
+*/
 	int p = getPriority();
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, texture[0] );
+	glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, surface);
 	glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex3f(-1, 1, p);
         glTexCoord2f(calcwidthRatio, 0); glVertex3f(1, 1, p);
@@ -419,19 +440,19 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  if (!(dot & 0xF000) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), alpha, colorOffset);
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF00) >> 8), alpha, colorOffset);
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF0) >> 4), alpha, colorOffset);
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xF) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | (dot & 0xF), alpha, colorOffset);
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -448,11 +469,11 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  if (!(dot & 0xFF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), alpha, colorOffset);
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	  if (!(dot & 0xFF) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | (dot & 0xFF), alpha, colorOffset);
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -468,7 +489,7 @@ void Vdp2Screen::drawCell(void) {
 	  if ((dot == 0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor(dot, alpha, colorOffset);
 	  charAddr += 2;
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -484,7 +505,7 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
           if (!(dot & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB1(0xFF, dot);
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -502,7 +523,7 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
           if (!(dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB2(alpha, dot1, dot2);
-	  drawPixel(surface, getX(x,y), getY(x,y), COLOR_ADD(color,cor,cog,cob));
+	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
 	  x += xInc;
 	}
 	y += yInc;
@@ -620,34 +641,41 @@ void Vdp2Screen::readRotationTable(unsigned long addr) {
 	addr += 4;
 }
 
-int Vdp2Screen::getX(int Hcnt, int Vcnt) {
+int Vdp2Screen_getX(Vdp2Screen * screen, int Hcnt, int Vcnt) {
 	return Hcnt;
 }
 
-int Vdp2Screen::getY(int Hcnt, int Vcnt) {
+int Vdp2Screen_getY(Vdp2Screen * screen, int Hcnt, int Vcnt) {
 	return Vcnt;
 }
 
-void Vdp2Screen::setTextureRatio(float widthR, float heightR) {
-   widthRatio = widthR;
-   heightRatio = heightR;
+void Vdp2Screen::setTextureRatio(unsigned long widthR, unsigned long heightR) {
+   width = widthR;
+   height = heightR;
 }
 
-int RBG0::getX(int Hcnt, int Vcnt) {
+RBG0::RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {
+	getX = RBG0_getX;
+	getY = RBG0_getY;
+}
+
+int RBG0_getX(Vdp2Screen * tmp, int Hcnt, int Vcnt) {
+	RBG0 * screen = (RBG0 *) tmp;
 	float ret;
-	float Xsp = A * ((Xst + deltaXst * Vcnt) - Px) + B * ((Yst + deltaYst * Vcnt) - Py) + C * (Zst - Pz);
-	float Xp = A * (Px - Cx) + B * (Py - Cy) + C * (Pz - Cz) /*+ Cx + Mx*/;
-	float dX = A * deltaX + B * deltaY;
-	ret = (kx * (Xsp + dX * Hcnt) + Xp);
+	float Xsp = screen->A * ((screen->Xst + screen->deltaXst * Vcnt) - screen->Px) + screen->B * ((screen->Yst + screen->deltaYst * Vcnt) - screen->Py) + screen->C * (screen->Zst - screen->Pz);
+	float Xp = screen->A * (screen->Px - screen->Cx) + screen->B * (screen->Py - screen->Cy) + screen->C * (screen->Pz - screen->Cz) /*+ Cx + Mx*/;
+	float dX = screen->A * screen->deltaX + screen->B * screen->deltaY;
+	ret = (screen->kx * (Xsp + dX * Hcnt) + Xp);
 	return (int) ret;
 }
 
-int RBG0::getY(int Hcnt, int Vcnt) {
+int RBG0_getY(Vdp2Screen * tmp, int Hcnt, int Vcnt) {
+	RBG0 * screen = (RBG0 *) tmp;
 	float ret;
-	float Ysp = D * ((Xst + deltaXst * Vcnt) - Px) + E * ((Yst + deltaYst * Vcnt) - Py) + F * (Zst - Pz);
-	float Yp = D * (Px - Cx) + E * (Py - Cy) + F * (Pz - Cz) /*+ Cy + My*/;
-	float dY = D * deltaX + E * deltaY;
-	ret = (ky * (Ysp + dY * Hcnt) + Yp);
+	float Ysp = screen->D * ((screen->Xst + screen->deltaXst * Vcnt) - screen->Px) + screen->E * ((screen->Yst + screen->deltaYst * Vcnt) - screen->Py) + screen->F * (screen->Zst - screen->Pz);
+	float Yp = screen->D * (screen->Px - screen->Cx) + screen->E * (screen->Py - screen->Cy) + screen->F * (screen->Pz - screen->Cz) /*+ Cy + My*/;
+	float dY = screen->D * screen->deltaX + screen->E * screen->deltaY;
+	ret = (screen->ky * (Ysp + dY * Hcnt) + Yp);
 	return (int) ret;
 }
 
@@ -1596,6 +1624,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
 
   SDL_SetVideoMode(320,224,32, SDL_OPENGL);
 
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glOrtho(-1, 1, -1, 1, -10, 10);
@@ -1604,7 +1633,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
 #else
   surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 1024, 512, 16, 0x000f, 0x00f0, 0x0f00, 0xf000);
   free(surface->pixels);
-  surface->pixels = memalign(32, 512 * 1024 * 2);
+  surface->pixels = memalign(32, 1024 * 512 * 2);
 #endif
   screens[5] = satmem->vdp1_2;
   screens[4] = rbg0 = new RBG0(this, vram, cram, surface);
@@ -1805,15 +1834,11 @@ VdpScreen *Vdp2::getNBG3(void) {
 }
 
 void Vdp2::setSaturnResolution(int width, int height) {
-   float widthRatio, heightRatio;
-   widthRatio = (float)width / 1024;
-   heightRatio = (float)height / 512;
-
-   ((RBG0 *)rbg0)->setTextureRatio(widthRatio, heightRatio);
-   ((NBG0 *)nbg0)->setTextureRatio(widthRatio, heightRatio);
-   ((NBG1 *)nbg1)->setTextureRatio(widthRatio, heightRatio);
-   ((NBG2 *)nbg2)->setTextureRatio(widthRatio, heightRatio);
-   ((NBG3 *)nbg3)->setTextureRatio(widthRatio, heightRatio);
+   ((RBG0 *)rbg0)->setTextureRatio(width, height);
+   ((NBG0 *)nbg0)->setTextureRatio(width, height);
+   ((NBG1 *)nbg1)->setTextureRatio(width, height);
+   ((NBG2 *)nbg2)->setTextureRatio(width, height);
+   ((NBG3 *)nbg3)->setTextureRatio(width, height);
    satmem->vdp1_2->setTextureSize(width, height);
 }
 

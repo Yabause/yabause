@@ -101,6 +101,7 @@ protected:
   int colorOffset;
   bool transparencyEnable;
 
+public:
   float Xst, Yst, Zst;
   float deltaXst, deltaYst;
   float deltaX, deltaY;
@@ -116,8 +117,9 @@ protected:
   */
   float coordIncX, coordIncY;
 
-  float widthRatio, heightRatio;
-public:
+  //float widthRatio, heightRatio;
+  unsigned long width, height;
+
   Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, unsigned long *);
 
   /*
@@ -134,25 +136,37 @@ public:
   void drawCell(void);
   //static void drawPixel(unsigned long *, Sint16, Sint16, Uint32);
   void toggleDisplay(void);
-  void setTextureRatio(float, float);
+  void setTextureRatio(unsigned long, unsigned long);
 
   void readRotationTable(unsigned long addr);
+/*
   virtual int getX(int, int);
   virtual int getY(int, int);
+*/
+  int (*getX)(Vdp2Screen *, int, int);
+  int (*getY)(Vdp2Screen *, int, int);
 };
+
+int Vdp2Screen_getX(Vdp2Screen *, int, int);
+int Vdp2Screen_getY(Vdp2Screen *, int, int);
 
 class RBG0 : public Vdp2Screen {
 private:
   void init(void);
   void planeAddr(int);
 public:
-  RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
+  RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s);
   int getPriority(void);
   int getInnerPriority(void);
   void debugStats(char *, bool *);
+/*
   int getX(int, int);
   int getY(int, int);
+*/
 };
+
+int RBG0_getX(Vdp2Screen *, int, int);
+int RBG0_getY(Vdp2Screen *, int, int);
 
 class NBG0 : public Vdp2Screen {
 private:
