@@ -31,6 +31,40 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
 		case 0x10: if (val & 0x1) DMA(0);
 			   Memory::setLong(addr, val);
 			   break;
+                case 0x14: if ((val & 0x7) != 7) {
+#if DEBUG
+                             cerr << "scu\t: DMA mode 0 interrupt start factor not implemented" << endl;
+#endif
+                           }
+			   Memory::setLong(addr, val);
+                           break;
+                case 0x30: if (val & 0x1) DMA(1);
+			   Memory::setLong(addr, val);
+			   break;
+                case 0x34: if ((val & 0x7) != 7) {
+#if DEBUG
+                             cerr << "scu\t: DMA mode 1 interrupt start factor not implemented" << endl;
+#endif
+                           }
+			   Memory::setLong(addr, val);
+                           break;
+                case 0x50: if (val & 0x1) DMA(2); 
+			   Memory::setLong(addr, val);
+			   break;
+                case 0x54: if ((val & 0x7) != 7) {
+#if DEBUG
+                             cerr << "scu\t: DMA mode 2 interrupt start factor not implemented" << endl;
+#endif
+                           }
+			   Memory::setLong(addr, val);
+                           break;
+                case 0x80: if (val & 0x10000) {                           
+#if DEBUG
+                             cerr << "scu\t: DSP execution not implemented" << endl;
+#endif
+                           }
+			   Memory::setLong(addr, val);
+                           break;
 		case 0xA4 : // writting prohibited
 			    break;
 		default:
@@ -51,6 +85,9 @@ void Scu::DMA(int mode) {
 	unsigned long transferNumber = getLong(i + 0x8);
 	unsigned long addValue = getLong(i + 0xC);
 	unsigned char readAdd, writeAdd;
+
+        if (mode > 0) transferNumber &= 0xFFF;
+
 	if (addValue & 0x100) readAdd = 4;
 	else readAdd = 0;
 	switch(addValue & 0x7) {
@@ -84,7 +121,7 @@ void Scu::DMA(int mode) {
 		}
 		else {
 #if DEBUG
-			cerr << "direct DMA, A Bus, not tested yet" << endl;
+                        cerr << "direct DMA, A Bus, not tested yet" << endl;
 #endif
 			while(counter < transferNumber) {
 				satmem->setLong(writeAddress, satmem->getLong(readAddress));
