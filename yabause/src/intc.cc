@@ -280,7 +280,7 @@ void Onchip::runDMA(void) {
 #if DEBUG
 					cerr << "FIXME should launch an interrupt\n";
 #endif
-				setLong(chcr0, chcr0 | 0x2);
+                                setLong(CHCR0, chcr0 | 0x2);
 			}
 			if (chcr1 & 0x1) { // DMA for channel 1
 			}
