@@ -131,30 +131,22 @@ void SuperH::synchroStart(void) {
       decilineCount++;
       switch(decilineCount) {
       case HIN:
-	      SDL_mutexP(mutex[5]);
 	SDL_CondBroadcast(cond[5]);
-	      SDL_mutexV(mutex[5]);
 	// HBlankIN
         break;
       case HIN + HOUT:
 	// HBlankOUT
-	SDL_mutexP(mutex[6]);
 	SDL_CondBroadcast(cond[6]);
-	SDL_mutexV(mutex[6]);
 	decilineCount = 0;
 	lineCount++;
 	switch(lineCount) {
 	case VIN:
 	  // VBlankIN
-	  SDL_mutexP(mutex[1]);
 	  SDL_CondBroadcast(cond[1]);
-	  SDL_mutexV(mutex[1]);
 	  break;
 	case VIN + VOUT:
 	  // VBlankOUT
-	  SDL_mutexP(mutex[2]);
 	  SDL_CondBroadcast(cond[2]);
-	  SDL_mutexV(mutex[2]);
 	  lineCount = 0;
           frameCount++;
 	  if(SDL_GetTicks() >= ticks + 1000) {
@@ -169,9 +161,7 @@ void SuperH::synchroStart(void) {
       cycleCountII += cycleCount;
 
       while (cycleCountII > duf) {
-	SDL_mutexP(mutex[0]);
 	SDL_CondBroadcast(cond[0]);
-	SDL_mutexV(mutex[0]);
 	cycleCountII %= duf;
 	duf = deciufreq.nextValue();
       }
@@ -223,9 +213,7 @@ void SuperH::stop(void) {
   _run = false;
   _pause = false;
   for(int i = 0;i < 7;i++) {
-	  SDL_mutexP(mutex[i]);
 	  SDL_CondBroadcast(cond[i]);
-	  SDL_mutexV(mutex[i]);
   }
 }
 
@@ -237,15 +225,11 @@ void SuperH::pause(void) {
 void SuperH::run(void) {
   _run = true;
   _pause = false;
-  SDL_mutexP(mutex[4]);
   SDL_CondBroadcast(cond[4]);
-  SDL_mutexV(mutex[4]);
 }
 
 void SuperH::step(void) {
-  SDL_mutexP(mutex[4]);
   SDL_CondBroadcast(cond[4]);
-  SDL_mutexV(mutex[4]);
 }
 
 void SuperH::microsleep(unsigned long nbusec) {
