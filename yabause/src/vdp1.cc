@@ -52,6 +52,7 @@ Vdp1::Vdp1(Vdp1Registers *reg, Memory *mem, Scu *s) {
 
 	_stop = false;
 	registers->setWord(0x4, 0);
+	glGenTextures(1, &texture[0] );
 }
 
 void Vdp1::stop(void) {
@@ -215,7 +216,6 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 		}
 	}
 
-	glGenTextures(1, &texture[0] );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 
@@ -284,14 +284,15 @@ void Vdp1::polygonDraw(unsigned short addr) {
 	unsigned short color = memory->getWord(addr + 0x6);
 	unsigned short CMDPMOD = memory->getWord(addr + 0x4);
 
-	unsigned char alpha = 0xFF;
-	if ((CMDPMOD & 0x7) == 0x3) alpha = 0x80;
+	float alpha = 1;
+	if ((CMDPMOD & 0x7) == 0x3) alpha = 0.5;
 
 	if ((X[0] & 0x400) ||(Y[0] & 0x400) ||(X[1] & 0x400) ||(Y[1] & 0x400) ||(X[2] & 0x400) ||(Y[2] & 0x400) ||(X[3] & 0x400) ||(Y[3] & 0x400)) {
 		//cerr << "don't know what to do" << endl;
 	}
 	else {
-		glColor3f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF);
+		glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
+		//glColor3f(.5, .5, .5);
 		glBegin(GL_QUADS);
 		glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
 		glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);

@@ -1019,6 +1019,7 @@ void Vdp2::lancer(Vdp2 *vdp2) {
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glGenTextures(1, vdp2->texture );
 	
   	vdp2->screens[4] = new RBG0(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
   	vdp2->screens[3] = new NBG0(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
@@ -1061,8 +1062,7 @@ void Vdp2::executer(void) {
     screens[4]->draw();
     if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
   }
-  GLuint texture[1];
-  glGenTextures(1, &texture[0] );
+
   glBindTexture(GL_TEXTURE_2D, texture[0] );
   glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 

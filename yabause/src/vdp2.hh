@@ -171,6 +171,7 @@ private:
   SDL_Surface *surface;
   SDL_Surface *GLSurface;
   SDL_Surface *logo;
+  GLuint texture[1];
 
   Vdp2Screen *screens[5];
   Vdp1 *vdp1;
