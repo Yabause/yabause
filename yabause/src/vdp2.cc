@@ -291,12 +291,13 @@ void Vdp2Screen::patternAddr(void) {
       			case 1:
 				charAddr = (tmp & 0xFFF) | ((supplementData & 0x1C) << 10);
 				break;
-      			case 4:
+                        case 2:
 				charAddr = ((tmp & 0xFFF) << 2) |  (supplementData & 0x3) | ((supplementData & 0x10) << 10);
 				break;
       			}
       			break;
     		}
+
     		break;
 	}
   	case 2: {
