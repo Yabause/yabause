@@ -69,9 +69,8 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         char tempstr[128];
          DWORD fflags;
-         BOOL imagebool;
+         BOOL imagebool=FALSE;
          char current_drive=0;
          int i;
 

@@ -132,8 +132,6 @@ int CDGetStatus()
 
 long CDReadToc(unsigned long *TOC)
 {
-   BOOL success;
-   FILE *debugfp;
    CDROM_TOC ctTOC;
    DWORD dwNotUsed;
    int i;
