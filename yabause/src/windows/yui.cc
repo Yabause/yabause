@@ -23,6 +23,7 @@
 #include <SDL/SDL.h>
 #include "../superh.hh"
 #include "../sh2d.hh"
+#include "../vdp2.hh"
 #include "../yui.hh"
 #include "resource.h"
 #include "settings.hh"
@@ -46,10 +47,39 @@ SaturnMemory *yabausemem;
 
 bool shwaspaused=true;
 
+// vdp2 related
+char vdp2bppstr[8][10]=
+{
+"4-bit",
+"8-bit",
+"11-bit",
+"16-bit",
+"24-bit",
+"Invalid",
+"Invalid",
+"Invalid"
+};
+
+char vdp2charsizestr[2][10]=
+{
+"1Hx1V",
+"2Hx2V"
+};
+
+char vdp2bmsizestr[4][10]=
+{
+"512x256",
+"512x512",
+"1024x256",
+"1024x512"
+};
+
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                 LPARAM lParam);
+LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam);
 
 void yui_fps(int i) {
@@ -307,6 +337,20 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                if (!shwaspaused) msh->pause();
 
                DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
+
+               if (!shwaspaused) msh->run();
+
+               break;
+            }
+            case IDM_VDP2DEBUG:
+            {
+               SuperH *msh = yabausemem->getMasterSH();
+
+               shwaspaused = msh->paused();
+
+               if (!shwaspaused) msh->pause();
+
+               DialogBox(y_hInstance, "VDP2DebugDlg", hWnd, (DLGPROC)VDP2DebugDlgProc);
 
                if (!shwaspaused) msh->run();
 
@@ -809,3 +853,165 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    return FALSE;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
+void DisplayScreenCCRInfo(HWND hControl, unsigned char reg_data)
+{
+   char tempstr[256];
+
+   // bpp
+   SendMessage(hControl, LB_ADDSTRING, 0, (LPARAM)vdp2bppstr[(reg_data & 0x0070) >> 4]);
+
+   // Bitmap or Tile mode?
+   if (reg_data & 0x0002)
+   {
+      // Bitmap
+      sprintf(tempstr, "Bitmap(%s)", vdp2bmsizestr[(reg_data & 0x000C) >> 2]);
+      SendMessage(hControl, LB_ADDSTRING, 0, (LPARAM)tempstr);
+   }
+   else
+   {
+      // Tile
+      sprintf(tempstr, "Tile(%s)", vdp2charsizestr[reg_data & 1]);
+      SendMessage(hControl, LB_ADDSTRING, 0, (LPARAM)tempstr);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                 LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         Vdp2 *proc=(Vdp2 *)yabausemem->getVdp2();
+         unsigned long reg;
+         char tempstr[256];
+
+         // is NBG0/RBG1 enabled?
+         if (proc->getWord(0x20) & 0x1 || proc->getWord(0x20) & 0x20)
+         {
+            // enabled
+            SendMessage(GetDlgItem(hDlg, IDC_NBG0ENABCB), BM_SETCHECK, BST_CHECKED, 0);
+
+            // Generate Info for NBG0/RBG1
+            if (proc->getWord(0x20) & 0x20)
+               SendMessage(GetDlgItem(hDlg, IDC_NBG0LB), LB_ADDSTRING, 0, (LPARAM)"RBG1 mode");
+            else
+               SendMessage(GetDlgItem(hDlg, IDC_NBG0LB), LB_ADDSTRING, 0, (LPARAM)"NBG0 mode");
+
+            DisplayScreenCCRInfo(GetDlgItem(hDlg, IDC_NBG0LB), proc->getWord(0x28) & 0xFF);
+         }
+         else
+         {
+            // disabled
+            SendMessage(GetDlgItem(hDlg, IDC_NBG0ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
+         }
+
+         // is NBG1 enabled?
+         if (proc->getWord(0x20) & 0x2)
+         {
+            // enabled
+            SendMessage(GetDlgItem(hDlg, IDC_NBG1ENABCB), BM_SETCHECK, BST_CHECKED, 0);
+
+            // Generate Info for NBG1
+            DisplayScreenCCRInfo(GetDlgItem(hDlg, IDC_NBG1LB), proc->getWord(0x28) >> 8);
+         }
+         else
+         {
+            // disabled
+            SendMessage(GetDlgItem(hDlg, IDC_NBG1ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
+         }
+
+         // is NBG2 enabled?
+         if (proc->getWord(0x20) & 0x4)
+         {
+            // enabled
+            SendMessage(GetDlgItem(hDlg, IDC_NBG2ENABCB), BM_SETCHECK, BST_CHECKED, 0);
+
+            // Generate Info for NBG1
+            reg = proc->getWord(0x2A) & 0x3;
+
+            // bpp            
+            SendMessage(GetDlgItem(hDlg, IDC_NBG2LB), LB_ADDSTRING, 0, (LPARAM)vdp2bppstr[reg >> 1]);
+
+            // Tile size
+            sprintf(tempstr, "Tile(%s)", vdp2charsizestr[reg & 1]);
+            SendMessage(GetDlgItem(hDlg, IDC_NBG2LB), LB_ADDSTRING, 0, (LPARAM)tempstr);
+         }
+         else
+         {
+            // disabled
+            SendMessage(GetDlgItem(hDlg, IDC_NBG2ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
+         }
+
+         // is NBG3 enabled?
+         if (proc->getWord(0x20) & 0x8)
+         {
+            // enabled
+            SendMessage(GetDlgItem(hDlg, IDC_NBG3ENABCB), BM_SETCHECK, BST_CHECKED, 0);
+
+            // Generate Info for NBG1
+            reg = (proc->getWord(0x2A) >> 4) & 0x3;
+
+            // bpp            
+            SendMessage(GetDlgItem(hDlg, IDC_NBG3LB), LB_ADDSTRING, 0, (LPARAM)vdp2bppstr[reg >> 1]);
+
+            // Tile size
+            sprintf(tempstr, "Tile(%s)", vdp2charsizestr[reg & 1]);
+            SendMessage(GetDlgItem(hDlg, IDC_NBG3LB), LB_ADDSTRING, 0, (LPARAM)tempstr);
+         }
+         else
+         {
+            // disabled
+            SendMessage(GetDlgItem(hDlg, IDC_NBG3ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
+         }
+
+         // is RBG0 enabled?
+         if (proc->getWord(0x20) & 0x10)
+         {
+            // enabled
+            SendMessage(GetDlgItem(hDlg, IDC_RBG0ENABCB), BM_SETCHECK, BST_CHECKED, 0);
+
+            // Generate Info for RBG0
+            DisplayScreenCCRInfo(GetDlgItem(hDlg, IDC_RBG0LB), proc->getWord(0x2A) >> 8);
+         }
+         else
+         {
+            // disabled
+            SendMessage(GetDlgItem(hDlg, IDC_RBG0ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
+         }
+
+//char vdp2bppstr[8][10]=
+
+//char vdp2charsizestr[2][10]=
+
+//char vdp2bmsizestr[4][10]=
+
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+
+               return TRUE;
+            }
+
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////

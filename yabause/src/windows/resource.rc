@@ -37,6 +37,7 @@ BEGIN
   POPUP "&Debug"
   BEGIN
     MENUITEM "Master SH2", IDM_MSH2DEBUG
+    MENUITEM "VDP2", IDM_VDP2DEBUG
   END
 END
 
@@ -107,6 +108,36 @@ BEGIN
 //    CHECKBOX "&Byte", IDC_CHKBYTE, 336, 167, 36, 10
 //    CHECKBOX "&Word", IDC_CHKWORD, 336, 177, 36, 10
 //    CHECKBOX "&Dword", IDC_CHKDWORD, 336, 187, 36, 10
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+VDP2DEBUGDLG DIALOG FIXED PURE  0, 0, 454, 206
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "VDP2 Debug"
+FONT 8, "Courier New"
+BEGIN
+    DEFPUSHBUTTON   "&Close",IDOK, 4, 188, 40, 14
+
+    LTEXT           "NBG0/RBG1 Info", -1, 4,   4,  70, 10
+    CHECKBOX "Screen Enabled", IDC_NBG0ENABCB, 4, 14, 70, 10
+    LISTBOX IDC_NBG0LB,            4,   24, 86, 160
+
+    LTEXT           "NBG1 Info", -1, 94,  4,  70, 10
+    CHECKBOX "Screen Enabled", IDC_NBG1ENABCB, 94, 14, 70, 10
+    LISTBOX IDC_NBG1LB,            94,  24, 86, 160
+
+    LTEXT           "NBG2 Info", -1, 184, 4,  70, 10
+    CHECKBOX "Screen Enabled", IDC_NBG2ENABCB, 184, 14, 70, 10
+    LISTBOX IDC_NBG2LB,            184, 24, 86, 160
+
+    LTEXT           "NBG3 Info", -1, 274, 4,  70, 10
+    CHECKBOX "Screen Enabled", IDC_NBG3ENABCB, 274, 14, 70, 10
+    LISTBOX IDC_NBG3LB,            274, 24, 86, 160
+
+    LTEXT           "RBG0 Info", -1, 364, 4,  70, 10
+    CHECKBOX "Screen Enabled", IDC_RBG0ENABCB, 364, 14, 70, 10
+    LISTBOX IDC_RBG0LB,            364, 24, 86, 160
 END
 
 //////////////////////////////////////////////////////////////////////////////

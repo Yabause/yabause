@@ -27,6 +27,7 @@
 #define IDM_SETTINGS    10007
 #define IDM_EXIT        10008
 #define IDM_MSH2DEBUG   10009
+#define IDM_VDP2DEBUG   10010
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002
@@ -88,6 +89,24 @@
 
 #define IDC_VIDEOSETTINGS               1013
 #define IDC_INPUTSETTINGS               1014
+
+//////////////////////////////////////////////////////////////////////////////
+// VDP2 debug stuff
+
+#define IDC_NBG0ENABCB                  1001
+#define IDC_NBG0LB                      1002
+
+#define IDC_NBG1ENABCB                  1003
+#define IDC_NBG1LB                      1004
+
+#define IDC_NBG2ENABCB                  1005
+#define IDC_NBG2LB                      1006
+
+#define IDC_NBG3ENABCB                  1007
+#define IDC_NBG3LB                      1008
+
+#define IDC_RBG0ENABCB                  1009
+#define IDC_RBG0LB                      1010
 
 //////////////////////////////////////////////////////////////////////////////
 
