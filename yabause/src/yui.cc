@@ -18,7 +18,6 @@ char * yui_saveram(void) {
         return NULL;
 }
 
-
 char * yui_mpegrom(void) {
 	return NULL;
 }

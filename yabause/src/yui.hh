@@ -24,12 +24,8 @@ char *	yui_bios(void);
 char *	yui_cdrom(void);
 
 /* returns a save ram filename, not currently used */
-char * yui_saveram(void) {
-        return NULL;
-}
+char * yui_saveram(void);
 
 /* returns a mpeg rom filename. Can be set to NULL if not present */
-char * yui_mpegrom(void) {
-	return NULL;
-}
+char * yui_mpegrom(void);
 
