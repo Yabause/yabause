@@ -55,9 +55,17 @@ private:
 	SaturnMemory *memory;
         SuperH *shparent;
 	unsigned long timing;
+        bool isslave;
+
+        /* FRT */
         unsigned long ccleftover;
         unsigned long frcdiv;
-        bool isslave;
+
+        /* WDT */
+        unsigned long wdtdiv;
+        bool wdtenable;
+        bool wdtinterval;
+        unsigned long wdtleftover;
 
         /* DMAC */
         inline void DMATransfer(unsigned long chcr, unsigned long reg_offset);
@@ -89,9 +97,12 @@ public:
 */
 	//void sendOnChip(...);
 
+        /* FRT */
         void runFRT(unsigned long cc);
-
         void inputCaptureSignal(void);
+
+        /* WDT */
+        void runWDT(unsigned long cc);
 };
 
 class InputCaptureSignal : public Memory {

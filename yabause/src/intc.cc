@@ -73,6 +73,10 @@ void __del_highest_int()	{
 #define VCRB    0x64
 #define VCRC    0x66
 #define VCRD    0x68
+#define WTCSR   0x80
+#define WTCNT   0x81
+#define RSTCSR1 0x82
+#define RSTCSR2 0x83
 #define ICR	0xE0
 #define IPRA	0xE2
 #define VCRWDT  0xE4
@@ -105,6 +109,15 @@ void Onchip::reset(void) {
         Memory::setLong(BCR1, 0x03F0 | (isslave << 15));
         Memory::setLong(BCR2, 0x00FC);
 
+        // Initialize Interrupt Controller registers
+        Memory::setWord(IPRA, 0x0000);
+        Memory::setWord(IPRB, 0x0000);
+        Memory::setWord(VCRA, 0x0000);
+        Memory::setWord(VCRB, 0x0000);
+        Memory::setWord(VCRC, 0x0000);
+        Memory::setWord(VCRD, 0x0000);
+        Memory::setWord(VCRWDT, 0x0000);
+
         // Initialize the Free-running Timer registers
         Memory::setByte(TIER, 0x01);
         Memory::setByte(FTCSR, 0x00);
@@ -120,6 +133,16 @@ void Onchip::reset(void) {
 	timing = 0;
         ccleftover = 0;
         frcdiv = 8;
+
+        // Initialize Watchdog Timer registers
+        Memory::setByte(WTCSR, 0x18);
+        Memory::setByte(WTCNT, 0x00);
+        Memory::setByte(RSTCSR2, 0x1F);
+
+        wdtenable = false;
+        wdtinterval = true;
+        wdtdiv = 2;
+        wdtleftover = 0;
 }
 
 void Onchip::setByte(unsigned long addr, unsigned char val) {
@@ -167,10 +190,14 @@ void Onchip::setByte(unsigned long addr, unsigned char val) {
       cerr << "onchip\t: WARNING: Output Compare B Interrupts enabled" << endl;
     else if (val & 0x2)
       cerr << "onchip\t: WARNING: Timer overflow Interrupts enabled" << endl;
-       
+
     Memory::setByte(addr, val);
     break;
 #endif
+  case WTCSR:
+  case WTCNT:
+  case RSTCSR2:
+    break;
   default:
     Memory::setByte(addr, val);
   }
@@ -183,8 +210,67 @@ void Onchip::setWord(unsigned long addr, unsigned short val) {
 				//SDL_CreateThread(&Timer::call<Onchip, &Onchip::sendNMI, 100>, this); // random value
 				memory->getMasterSH()->timing = 100;
 			}
+                   Memory::setWord(addr, val);
+                   break;
+                case WTCSR:
+                   // This and RSTCSR have got to be the most wackiest register
+                   // mappings I've ever seen
+                   if (val >> 8 == 0xA5) {
+                      // WTCSR
+                      switch (val & 7) {
+                         case 0:
+                                 wdtdiv = 2;
+                                 break;
+                         case 1:
+                                 wdtdiv = 64;
+                                 break;
+                         case 2:
+                                 wdtdiv = 128;
+                                 break;
+                         case 3:
+                                 wdtdiv = 256;
+                                 break;
+                         case 4:
+                                 wdtdiv = 512;
+                                 break;
+                         case 5:
+                                 wdtdiv = 1024;
+                                 break;
+                         case 6:
+                                 wdtdiv = 4096;
+                                 break;
+                         case 7:
+                                 wdtdiv = 8192;
+                                 break;
+                      }
+
+                      wdtenable = (val & 0x20);
+                      wdtinterval = (~val & 0x40);
+
+#if DEBUG
+                      fprintf(stderr, "WTCSR write = %02X. Timer Enabled = %s, Timer Mode = %s, wdtdiv = %d\n", val & 0xFF, wdtenable ? "true" : "false", wdtinterval ? "Interval Timer" : "Watchdog Timer", wdtdiv);
+#endif
+                      Memory::setByte(WTCSR, (unsigned char)val | 0x18);
+                   }
+                   else if (val >> 8 == 0x5A) {
+                      // WTCNT
+                      Memory::setByte(WTCNT, (unsigned char)val);
+                   }
+                   break;
+                case RSTCSR1:
+                   if (val == 0xA500) {
+                      // clear WOVF bit
+                      Memory::setByte(RSTCSR2, Memory::getByte(RSTCSR2) & 0x7F);
+                   }
+                   else if (val >> 8 == 0x5A) {
+                      // RSTE and RSTS bits
+                      Memory::setByte(RSTCSR2, (Memory::getByte(RSTCSR2) & 0x80) | (val & 0x60) | 0x1F);
+                   }
+                   break;
+                default:
+                   Memory::setWord(addr, val);
+                   break;
 	}
-	Memory::setWord(addr, val);
 }
 
 void Onchip::setLong(unsigned long addr, unsigned long val) {
@@ -374,7 +460,6 @@ void Onchip::runFRT(unsigned long cc) {
 
    // Write new FRC value
    Memory::setWord(FRCH, (unsigned short)frctemp);
-
 }
 
 Interrupt::Interrupt(unsigned char l, unsigned char v) {
@@ -432,6 +517,42 @@ void Onchip::inputCaptureSignal(void) {
         shparent->send(Interrupt((Memory::getWord(IPRB) & 0xF00) >> 8, (Memory::getWord(VCRC) & 0x7F) >> 8));
    }
 }
+
+void Onchip::runWDT(unsigned long cc) {
+   unsigned long wdttemp;
+
+   if (!wdtenable || Memory::getByte(WTCSR) & 0x80 || Memory::getByte(RSTCSR2) & 0x80) return;
+
+   wdttemp = (unsigned long)Memory::getByte(WTCNT);
+   wdttemp += ((cc + wdtleftover) / wdtdiv);
+   wdtleftover = (cc + wdtleftover) % wdtdiv;
+
+   // Are we overflowing?
+   if (wdttemp > 0xFF) {
+      // Obviously depending on whether or not we're in Watchdog or Interval
+      // Modes, they'll handle an overflow differently.
+
+      if (wdtinterval) {
+         // Interval Timer Mode
+
+         // Set OVF flag
+         Memory::setByte(WTCSR, Memory::getByte(WTCSR) | 0x80);
+
+         // Trigger interrupt
+         shparent->send(Interrupt((Memory::getWord(IPRA) >> 4) & 0xF, (Memory::getWord(VCRWDT) >> 8) & 0x7F));
+      }
+      else {
+         // Watchdog Timer Mode(untested)
+#if DEBUG
+         cerr << "onchip\t: watchdog timer(WDT mode) overflow not implemented" << endl;
+#endif
+      }
+   }
+
+   // Write new WTCNT value
+   Memory::setByte(WTCNT, (unsigned char)wdttemp);
+}
+
 
 InputCaptureSignal::InputCaptureSignal(SuperH *icsh) : Memory(0, 4) {
    onchip = icsh->onchip;
