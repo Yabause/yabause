@@ -712,6 +712,8 @@ void SaturnMemory::synchroStart(void) {
         ((Scsp *)soundr)->run68k(170);
 
 	msh->cycleCount %= decilineStop;
+        if (sshRunning) 
+          ssh->cycleCount %= decilineStop;
 }
 
 void SaturnMemory::startSlave(void) {
