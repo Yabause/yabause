@@ -440,7 +440,7 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
 
 Cs2::~Cs2(void) {
    _stop = true;
-   SDL_WaitThread(cdThread, NULL);
+//      SDL_WaitThread(cdThread, NULL);
    SDL_DestroyMutex(_lock);
 
    if (cdrom != NULL)
@@ -1141,46 +1141,77 @@ void Cs2::endDataTransfer(void) {
 }
 
 void Cs2::playDisc(void) {
-  // This obviously is going to need alot of work
+  unsigned long pdspos;
+  unsigned long pdepos;
+  unsigned long pdptype;
 
-  if ((getCR1() & 0xFF) != 0 && getCR2() != 0xFFFF)
+  // Get all the arguments
+  pdspos = ((getCR1() & 0xFF) << 16) | getCR2();
+  pdepos = ((getCR3() & 0xFF) << 16) | getCR4();
+  pdptype = getCR3() >> 8;
+
+  // Convert Start Position to playFAD
+  if (pdspos == 0xFFFFFF)
   {
-     if ((getCR1() & 0x80))
-     {
-        if ((getCR3() >> 8) != 0xFF)
-        {
-           // fad mode
-           unsigned long pdFAD;
-           unsigned long pdsize;
-
-           pdFAD = ((getCR1() & 0xF) << 16) + getCR2();
-           pdsize = getCR4();
-        
-           SetupDefaultPlayStats(FADToTrack(pdFAD));
-
-           playFAD = FAD = pdFAD;
-           playendFAD = pdFAD + pdsize;
-
-           isonesectorstored = true;
-           setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
-
-           status = CDB_STAT_PERI | CDB_STAT_PLAY;
-
-           setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-           setCR2((ctrladdr << 8) | (track & 0xFF));
-           setCR3((index << 8) | ((FAD >> 16) &0xFF));
-           setCR4((unsigned short) FAD);
-        }
-     }
+     // No Change
   }
-  else
+  else if (pdspos & 0x800000)
   {
-     // Track mode
+     // FAD Mode
+     playFAD = (pdspos & 0xFFFFF);
+  }
+  else if (pdspos != 0)
+  {
+     // Track Mode
 #if CDDEBUG
      fprintf(stderr, "playdisc Track Mode is not implemented\n");
 #endif
   }
+  else
+  {
+     // Default Mode
+#if CDDEBUG
+     fprintf(stderr, "playdisc Default Mode is not implemented\n");
+#endif
+  }
 
+  // Convert End Position to playendFAD
+  if (pdepos == 0xFFFFFF)
+  {
+     // No Change
+  }
+  else if (pdepos & 0x800000)
+  {
+     // FAD Mode
+     playendFAD = playFAD+(pdepos & 0xFFFFF);
+  }
+  else if (pdepos != 0)
+  {
+     // Track Mode
+#if CDDEBUG
+     fprintf(stderr, "playdisc Track Mode is not implemented\n");
+#endif
+  }
+  else
+  {
+     // Default Mode
+#if CDDEBUG
+     fprintf(stderr, "playdisc Default Mode is not implemented\n");
+#endif
+  }
+
+  SetupDefaultPlayStats(FADToTrack(playFAD));
+  FAD = playFAD;
+
+  isonesectorstored = true;
+  setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+
+  status = CDB_STAT_PERI | CDB_STAT_PLAY;
+
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
