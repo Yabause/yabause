@@ -18,11 +18,9 @@
 */
 
 #include <windows.h>
-#include <winioctl.h>
-#include "ntddcdrm.h"
-#include "ntddscsi.h"
+#include <ddk/ntddcdrm.h>
+#include <ddk/ntddscsi.h>
 #include <stdio.h>
-//#include "main.h"
 
 HANDLE hCDROM;
 SCSI_PASS_THROUGH_DIRECT sptd;
@@ -114,7 +112,7 @@ long CDReadToc(unsigned long *TOC)
                  (ctTOC.TrackData[ctTOC.LastTrack].Adr << 24) |
                   MSF_TO_FAD(ctTOC.TrackData[ctTOC.LastTrack].Address[1], ctTOC.TrackData[ctTOC.LastTrack].Address[2], ctTOC.TrackData[ctTOC.LastTrack].Address[3]);
 
-//      if ((debugfp = fopen("test.out", "wb")) != NULL)
+//      if ((debugfp = fopen("toc.out", "wb")) != NULL)
 //      {
 //        fwrite((void *)TOC, 1, 2 * 0xCC, debugfp);
 //        fclose(debugfp);
