@@ -58,7 +58,7 @@ BEGIN
     EDITTEXT        IDC_EDITTEXT3, 52, 32, 36, 10, ES_UPPERCASE
     AUTORADIOBUTTON "Download",  IDC_DOWNLOADMEM,  42, 46, 42, 10
     AUTORADIOBUTTON "Upload", IDC_UPLOADMEM, 92, 46, 42, 10
-    CHECKBOX "Set PC to start address", IDC_CHECKBOX1, 34, 58, 104, 10
+    AUTOCHECKBOX "Set PC to start address", IDC_CHECKBOX1, 34, 58, 104, 10
 END
 
 //////////////////////////////////////////////////////////////////////////////

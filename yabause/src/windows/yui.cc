@@ -33,7 +33,6 @@ int yabwinh;
 
 char SDL_windowhack[32];
 HINSTANCE y_hInstance;
-HWND hWndStatusBar;
 
 unsigned long mtrnssaddress=0x06000000;
 unsigned long mtrnseaddress=0x06100000;
@@ -47,7 +46,6 @@ SaturnMemory *yabausemem;
 
 bool shwaspaused=true;
 
-HWND AddStatusBar(HWND hParent);
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
@@ -55,10 +53,6 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam);
 
 void yui_fps(int i) {
-   char tempstr[128];
-   sprintf(tempstr, "%d");
-//   SendMessage(hWndStatusBar, SB_SETTEXT, SB_SIMPLEID, (LPARAM)tempstr);
-   SendMessage(hWndStatusBar, SB_SETTEXT, 255, (LPARAM)tempstr);
 }
 
 char * yui_bios(void) {
@@ -234,26 +228,6 @@ void yui_init(int (*yab_main)(void*)) {
 	delete(mem);
 }
 
-HWND AddStatusBar(HWND hParent)
-{
-   HWND hStatus;
-
-   hStatus = CreateWindow(STATUSCLASSNAME, 
-                          NULL,                            
-                          WS_CHILD | WS_BORDER | WS_VISIBLE,
-//                            0, 0, 0, 0,
-                          -100, -100, 10, 10,
-                          hParent,
-                          (HMENU)IDC_STATUSBAR,
-//                          (HINSTANCE)GetWindowLong(hParent, GWL_HINSTANCE),
-                          y_hInstance,
-                          NULL);
-
-   SendMessage(hWndStatusBar, SB_SETTEXT, 255, (LPARAM)"0 fps");
-
-   return hStatus;
-}
-
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
    HRESULT hRet;
@@ -261,11 +235,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
    switch (uMsg)
    {
-      case WM_CREATE:
-      {
-         InitCommonControls();
-         hWndStatusBar = AddStatusBar(hWnd);
-      }
       case WM_COMMAND:
       {
          switch (LOWORD(wParam))
@@ -370,7 +339,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       case WM_SIZE:
       {
          SetWindowPos(hWnd, HWND_TOP, 0, 0, yabwinw, yabwinh, SWP_NOREPOSITION);
-         SendMessage(hWndStatusBar, WM_SIZE, 0, 0);
          return 0L;
       }
       case WM_PAINT:
@@ -494,7 +462,15 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
 
                if (SendMessage(GetDlgItem(hDlg, IDC_CHECKBOX1), BM_GETCHECK, 0, 0) == BST_CHECKED)
+               {
+                  SuperH *proc=yabausemem->getMasterSH();
+                  sh2regs_struct sh2regs;
+                  proc->GetRegisters(&sh2regs);
+                  sh2regs.PC = mtrnssaddress;
+                  proc->SetRegisters(&sh2regs);
+
                   mtrnssetpc = true;
+               }
                else
                   mtrnssetpc = false;
 
@@ -538,6 +514,7 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   EnableWindow(HWND(GetDlgItem(hDlg, IDC_EDITTEXT3)), TRUE);
                   EnableWindow(HWND(GetDlgItem(hDlg, IDC_CHECKBOX1)), FALSE);
                }
+               break;
             }
             default: break;
          }
@@ -595,7 +572,6 @@ void UpdateRegList(HWND hDlg, sh2regs_struct *regs)
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // PC
-//   sprintf(tempstr, "PC =   %08x\0", regs->PC - 4);
    sprintf(tempstr, "PC =   %08x\0", regs->PC);
    strupr(tempstr);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
