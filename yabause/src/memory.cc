@@ -290,7 +290,20 @@ SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0) {
 
   msh->setMemory(this);
 
-  mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+  //mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+  //vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, vdp2_3);
+  //Vdp2::lancer((Vdp2 *) vdp2_3);
+}
+
+void SaturnMemory::start(void) {
+	mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+	//Vdp2::lancer((Vdp2 *) vdp2_3);
+	Vdp2 * vdp2 = (Vdp2 *) vdp2_3;
+	while(!_stop) vdp2->executer();
+}
+
+void SaturnMemory::stop(void) {
+	_stop = true;
 }
 
 SaturnMemory::~SaturnMemory(void) {
@@ -312,6 +325,8 @@ SaturnMemory::~SaturnMemory(void) {
   delete cs2;
   delete sound;
   delete soundr;
+  ((Vdp2 *) vdp2_3)->stop();
+  SDL_WaitThread(vdp2Thread, NULL);
   delete vdp2_3;
 /*
   delete vdp2_1;

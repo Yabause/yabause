@@ -944,15 +944,33 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x120) {
 #endif
   //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
   surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
-  vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, this);
+  //vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, this);
+  	screens[4] = new RBG0(this, vram, cram, surface);
+  	screens[3] = new NBG0(this, vram, cram, surface);
+  	screens[2] = new NBG1(this, vram, cram, surface);
+  	screens[1] = new NBG2(this, vram, cram, surface);
+  	screens[0] = new NBG3(this, vram, cram, surface);
+	((Vdp1 *) satmem->getVdp1())->setVdp2Ram(this, cram);
+	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
+	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
+	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
+	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4 );
+	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
+	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+
+	GLSurface = SDL_SetVideoMode(320,224,32, SDL_OPENGL);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glGenTextures(1, texture );
 }
 
 Vdp2::~Vdp2(void) {
 #if DEBUG
   cerr << "stopping vdp2\n";
 #endif
-  stop();
-  SDL_WaitThread(vdp2Thread, NULL);
+  //stop();
+  //SDL_WaitThread(vdp2Thread, NULL);
 #if DEBUG
   cerr << "vdp2 stopped\n";
 #endif
@@ -972,6 +990,7 @@ Memory *Vdp2::getVRam(void) {
 }
 
 void Vdp2::lancer(Vdp2 *vdp2) {
+	/*
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
@@ -984,13 +1003,16 @@ void Vdp2::lancer(Vdp2 *vdp2) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glGenTextures(1, vdp2->texture );
+	*/
 	
+	/*
   	vdp2->screens[4] = new RBG0(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
   	vdp2->screens[3] = new NBG0(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
   	vdp2->screens[2] = new NBG1(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
   	vdp2->screens[1] = new NBG2(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
   	vdp2->screens[0] = new NBG3(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
 	((Vdp1 *) vdp2->satmem->getVdp1())->setVdp2Ram(vdp2, vdp2->cram);
+	*/
 
 	while(!vdp2->_stop) vdp2->executer();
 }

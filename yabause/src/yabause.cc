@@ -164,39 +164,8 @@ void keyUp(int key)
   }
 }
 
-int main(int argc, char **argv) {
-#if DEBUG
-  cerr << hex;
-#endif
-
-#ifndef _arch_dreamcast
-  gengetopt_args_info args_info;
-
-  if (cmdline_parser(argc, argv, &args_info) != 0) {
-    cmdline_parser_print_help();
-    return 1;
-  }
-#endif
-
-  SDL_Init(SDL_INIT_EVENTTHREAD);
-
-#ifndef _arch_dreamcast
-  SaturnMemory *mem = new SaturnMemory(args_info.bios_arg, args_info.bin_arg);
-#else
-  SaturnMemory *mem = new SaturnMemory("/cd/saturn.bin", NULL);
-#endif
-
-  bool stop = false;
-#ifndef _arch_dreamcast
-  if (args_info.debug_given) {
-#if HAVE_LIBCURSES
-    monitor(mem->getMasterSH());
-#endif
-  }
-#else
-  if(0)	{	}
-#endif
-  else {
+void handleEvents(SaturnMemory *mem) {
+    bool stop = false;
     SDL_Event event;
     while (!stop) {
       if (SDL_PollEvent(&event)) {
@@ -208,6 +177,7 @@ int main(int argc, char **argv) {
 	  switch(event.key.keysym.sym) {
 		case SDLK_q:
 			stop = true;
+			mem->stop();
 			break;
 		case SDLK_p:
 #ifdef DEBUG
@@ -245,7 +215,47 @@ int main(int argc, char **argv) {
 	SDL_Delay(1);
       }
     }
+}
+
+int main(int argc, char **argv) {
+#if DEBUG
+  cerr << hex;
+#endif
+
+#ifndef _arch_dreamcast
+  gengetopt_args_info args_info;
+
+  if (cmdline_parser(argc, argv, &args_info) != 0) {
+    cmdline_parser_print_help();
+    return 1;
   }
+#endif
+
+  SDL_Init(SDL_INIT_EVENTTHREAD);
+
+
+#ifndef _arch_dreamcast
+  SaturnMemory *mem = new SaturnMemory(args_info.bios_arg, args_info.bin_arg);
+#else
+  SaturnMemory *mem = new SaturnMemory("/cd/saturn.bin", NULL);
+#endif
+
+  SDL_CreateThread((int (*)(void*)) handleEvents, mem);
+
+  mem->start();
+
+  /*
+#ifndef _arch_dreamcast
+  if (args_info.debug_given) {
+#if HAVE_LIBCURSES
+    monitor(mem->getMasterSH());
+#endif
+  }
+#else
+  if(0)	{	}
+#endif
+  else 
+  */
 
 #if DEBUG
   cerr << "stopping yabause\n";
