@@ -454,7 +454,7 @@ void Smpc::CKCHG352(void) {
   ((Vdp1 *) sm->getVdp1())->reset();  
   ((Vdp2 *) sm->getVdp2())->reset();  
   ((Scu *) sm->getScu())->reset();  
-  ((Scsp *) sm->getScsp())->reset();  
+//  ((Scsp *) sm->getScsp())->reset();  
 
   // Clear VDP1/VDP2 ram
 
@@ -468,7 +468,7 @@ void Smpc::CKCHG320(void) {
   ((Vdp1 *) sm->getVdp1())->reset();  
   ((Vdp2 *) sm->getVdp2())->reset();  
   ((Scu *) sm->getScu())->reset();  
-  ((Scsp *) sm->getScsp())->reset();  
+//  ((Scsp *) sm->getScsp())->reset();  
 
   // Clear VDP1/VDP2 ram
 
