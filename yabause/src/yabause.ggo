@@ -1,0 +1,4 @@
+purpose "This program is intended to be a Sega Saturn emulator"
+option "bios" b "bios file" string yes
+option "bin" f "bin file" string no
+option "debug" d "show debugger" no

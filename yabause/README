@@ -1,0 +1,166 @@
+        _   _          
+       / \_/ \            ___  _      ____ 
+       \     /___  ___   /   || | __ /    \ ____
+        \   //   ||   \ /    || | \ \\  \_//    \
+        /  //    ||   //  _  || |__\ \\  \    __/
+        \_//  _  ||   \\_/ \_||______/ \  \\  \__
+           \_/ \_||___/              \____/ \____\
+     Yet Another Buggy And Uncomplete Saturn Emulator
+
+        _________________________________________
+        Copyright (c) 2002-2003 Guillaume Duhamel
+
+
+1) Introduction.............................................22
+2) Installation instructions................................32
+3) How to use Yabause.......................................57
+4) Staff/Thanks............................................109
+5) Contact information.....................................140
+6) Disclaimer..............................................149
+
+
+1 Introduction________________________________________________
+
+Yabause is a Sega Saturn emulator under GNU GPL.
+
+Be aware that this is an early alpha version. Don't expect to
+play commercial games on your PC. This software is released
+for testing purposes only, and is essentially aimed to
+developers.
+
+
+2 Installation instructions___________________________________
+
+Yabause is written in C++ using the SDL librairy,
+so you need a working C++ compiler, as g++ and the above
+librairies runtime and development packages:
+
+  * you can find SDL at http://www.libsdl.org/index.php in
+    the download section.
+
+Once these library installed, you should be ready to
+install Yabause.
+
+Uncompress the Yabause archive, move to the newly created
+directory, type "./configure", then "make" , it will generate
+one program: "yabause" in the "src" directory.
+
+You can pass the --enable-debug option to the configure
+script, Yabause will then print debug messages on the
+error standard output.
+
+You can even type "make install" to install that program on
+your system (in /usr/local/ by default), then uninstalling is
+done by typing "make uninstall".
+
+
+3 How to use Yabause__________________________________________
+
+The first requirement is a Saturn ROM BIOS image (hence a Sega
+Saturn).
+
+Execute "yabause -b /path/to/bios.bin". The program will open
+a window, if you wait long enough, you will see the "set clock"
+screen of the bios appear, that's all for time being.
+
+If you want to see what's going inside, execute yabause with
+the -d option and it will show a monitoring/control window
+from which you can control yabause
+
++------------------------------------------------------------+
+| R0   FFFF97F2  R1       97F2  R2          7  R3         7F |
+| R4      1C7A0  R5          8  R6          0  R7    601527C |
+| R8         FF  R9          7  R10   6001FD4  R11   604FFFF |
+| R12         6  R13   6001FF8  R14       87F  R15   6001FA4 |
+| SR   M       0  Q       0  I       0  S       0  T       0 |
+| GBR       25D00000  MACH             0  PR            1FE2 |
+| VBR        6000000  MACL             0  PC            1FC2 |
++------------------------------------------------------------+
++-------------------------------------+ +--------------------+
+| or r3, r14                          | | @(delay)      2E3B |
++-------------------------------------+ +--------------------+
+
+The upper frame display the master sh2 registers, for the SR
+register, the description of each part is give.
+
+The down-left frame display the desassembled opcode (using
+Bart Trzynadlowski's disassembler).
+
+The down-right frame display the current opcode.
+
+There is five command to control yabause, each command is
+issued by typing it's initial letter:
+
+  * m - memory dump
+  * p - pause the emulator
+  * q - quit the emulator
+  * r - run (or resume) the emulator
+  * s - step instruction one by one
+
+For the memory dump, you can give the address to dump by
+using the '0' to '9' and 'a' to 'f' letters.
+
+You can load binaries with the -f or --bin option:
+"yabause -b bios.bin -f demo.bin". In this case, yabause will
+load "demo.bin" at address 0x06004000 and move the PC at this
+same address (the bios is also loaded, but ignored).
+
+
+4 Staff/Thanks________________________________________________
+
+Lead Programmer: Guillaume Duhamel
+
+Thanks to:
+
+  * Rnuik (author of Saturnin), for all his help, especially
+    on the vdp2.
+
+  * Fabien Autrel (author of Satourne),
+    for letting me browse his sources.
+    http://satourne.consollection.com
+    
+  * Chuck Mason (author of semu),
+    for releasing semu sources and for his handy debugger.
+    
+  * Romain Vallet (some guy),
+    for winning the "Find a name for my emu" contest, for
+    his contribution to this README and for this nice web
+    site he did.
+    http://rom.jalix.org
+
+  * Stefano and all of segadev for their help.
+
+  * Josquin Debaz
+    for writting the man page.
+
+  * Bart Trzynadlowski
+    for his disassembler.
+
+
+5 Contact information_________________________________________
+
+E-mail:	guillaume.duhamel@univ-rouen.fr
+Web:	http://yabause.sourceforge.net
+
+Please don't ask for roms, bios files or any other
+copyrighted stuff.
+
+
+6 Disclaimer__________________________________________________
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as 
+published by the Free Software Foundation; either version 2 of 
+the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be
+useful,but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+MA  02111-1307  USA
+
+See the GNU General Public License details in COPYING.

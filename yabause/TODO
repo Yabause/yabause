@@ -1,0 +1,28 @@
+ (1) (KNOWN) BUGS
+
+   - freeze when exiting
+   - logo will not show if yabause is installed
+
+ (2) EMULATION
+
+   - what's happening at onchip address 4 ?
+   - add smpc timing
+   - there should be synchro between smpc INTBACK and VBlank
+   - check that dma operation is correct
+   - finish intc, add others sources of interrupt
+   - add slave sh
+   - finish SCU
+   - finish DMAC emulation
+   - change sh2 interpreter into a dynamic recompiler
+   - add SCI emulation
+
+ (3) MONITOR/DEBUGGER
+
+   - add a command to dump memory
+   - add a command to execute N instructions
+   - implement a method to trace emulation
+   - implement a rewind
+
+ (4) CODE
+
+   - finish translation

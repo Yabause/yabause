@@ -1,0 +1,16 @@
+README.DC -- Dreamcast Readme (0.0.5-dc)
+Okay, for anyone just getting this for the Dreamcast, here's some basic information:
+
+1. Sometimes GCC can be just plain annoying, keep that in mind if you decide to
+   compile this beast yourself.
+2. Do not bug the PC version author for problems with the Dreamcast port. Tell me if
+   you have any problems with it.
+3. I do not want to hear about you wanting a BIOS image or any ISOs. I won't give
+   them to you, and on a particularly bad day, I might forward your message to 
+   law enforcement.
+4. The Dreamcast version gets as far as showing the BIOS language select. No Farther!
+5. In order to show the BIOS, you need a BIOS image. Put it on the cd in the root
+   directory, named saturn.bin
+
+I think that's about it, so just have fun everyone!
+- Lawrence Sebald <bluecrab@gmail.com>

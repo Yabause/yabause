@@ -1,0 +1,47 @@
+#	Makefile.dc
+#	Dreamcast Makefile
+#	Copyright (C) 2002, 2003, 2004 Lawrence Sebald
+#	Based on KOS makefiles (C) by Dan Potter
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+all: yabause.bin
+
+include $(KOS_BASE)/Makefile.rules
+
+KOS_LOCAL_CFLAGS=-I$(KOS_BASE)/addons/include -DPACKAGE=\"yabause-dc\" -DVERSION=\"0.0.5\" -DHAVE_LIBSDL
+
+OBJS = cs1.o cs2.o exception.o intc.o memory.o cpu.o scu.o smpc.o superh.o vdp1.o vdp2.o monitor.o yabause.o sh2d.o timer.o tree.o
+
+yabause.elf: $(OBJS)
+	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LOCAL_CFLAGS) $(KOS_LDFLAGS) \
+	-o $@ $(KOS_START) $^ \
+	-lSDL -lk++ $(KOS_LIBS)
+
+yabause.bin: yabause.elf
+	$(KOS_OBJCOPY) -O binary yabause.elf output.bin
+	scramble output.bin yabause.bin
+
+run: yabause.elf
+	$(KOS_LOADER) yabause.elf -b 115200
+
+clean:
+	rm -f $(OBJS)
+	rm -f yabause.elf
+	rm -f output.bin
+
+distclean: clean
+	rm -f yabause.bin

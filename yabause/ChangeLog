@@ -1,0 +1,35 @@
+0.0.4 -> 0.0.5
+ vdp2:
+  - lot of work, the vdp2 is now capable of
+    displaying the set-clock screen of the
+    bios
+ monitor/debugger:
+  - added memory dump possibility
+
+0.0.2 -> 0.0.4
+ monitor/debugger:
+  - added debugging possibility, can now pause/resume emulation
+    and execute instructions step by step;
+  - opcodes are disassembled interactively.
+ general:
+  - early emulations of different cpu/onchip modules: scu, vdp1
+    and dmac;
+  - translate most of the code from french to english;
+  - added synchronisation between processors;
+  - yabause is now using SDL, remove all fork/ipc code and use
+    SDL_Thread instead.
+
+0.0.1 -> 0.0.2
+ sh2:
+  - "mull" is now decoded;
+  - changed the way the opcodes are decoded, now using a table with pointers
+    to function, should be faster.
+ intc:
+  - now tests if the interrupt level is correct before accepting one.
+ vdp2:
+  - early emulation, just throws an interrupt every half-frame.
+ general:
+  - vdp1 and vdp2 are now synchronized with the master sh;
+  - fixed some memory bug, all the shared memory allocated is de-allocated;
+  - now using configure/make, should be more portable;
+  - modified things to be more c++ and less linux/c.
