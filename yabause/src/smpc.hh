@@ -25,15 +25,25 @@
 
 extern unsigned short buttonbits;
 
-class Smpc;
-class Scu;
-
-class SmpcRegisters : public Memory {
+class Smpc : public Cpu, public Memory {
 private:
-  Smpc *smpc;
+  bool dotsel; // 0 -> 320 | 1 -> 352
+  bool mshnmi;
+  bool sndres;
+  bool cdres;
+  bool sysres;
+  bool resb;
+  bool ste;
+  bool resd;
+
+  bool intback;
+  unsigned char intbackIreg0;
+  bool firstPeri;
+
+  SaturnMemory *sm;
 public:
-  SmpcRegisters(Scu *, SaturnMemory *);
-  ~SmpcRegisters(void);
+  Smpc(SaturnMemory *);
+
   unsigned char  getIREG    (int);
   unsigned char  getCOMREG  (void);
   unsigned char  getOREG    (int);
@@ -46,28 +56,6 @@ public:
   void		 setSF      (unsigned char);
 
   void           setByte   (unsigned long, unsigned char);
-};
-
-class Smpc : public Cpu {
-private:
-  bool dotsel; // 0 -> 320 | 1 -> 352
-  bool mshnmi;
-  bool sndres;
-  bool cdres;
-  bool sysres;
-  bool resb;
-  bool ste;
-  bool resd;
-
-  SmpcRegisters *registers;
-  bool intback;
-  unsigned char intbackIreg0;
-  bool firstPeri;
-
-  Scu *scu;
-  SaturnMemory *sm;
-public:
-  Smpc(SmpcRegisters *, Scu *, SaturnMemory *);
 
   static void execute(Smpc *);
   static void intcont(Smpc *);

@@ -55,32 +55,32 @@ void __del_highest_int()	{
 }
 #endif
 
-OnchipRegisters::OnchipRegisters(SuperH *sh) : Memory(0x1FF) {
-  setByte(4, 0x84);
+Onchip::Onchip(SaturnMemory *sm) : Memory(0x1FF) {
+	memory = sm;
+	setByte(4, 0x84);
 
-  intc = new Intc(sh);
-  dmac = new Dmac(this, sh);
-  intcThread = SDL_CreateThread((int (*)(void*)) &Intc::lancer, intc);
+	intcThread = SDL_CreateThread((int (*)(void*)) &Onchip::startINTC, this);
 #ifdef _arch_dreamcast
-  __init_tree();
+	__init_tree();
 #endif
+	mutex = SDL_CreateMutex();
+	mutex_cond = SDL_CreateMutex();
+	cond = SDL_CreateCond();
+	_stop = false;
 }
 
-OnchipRegisters::~OnchipRegisters(void) {
+Onchip::~Onchip(void) {
 #if DEBUG
   cerr << "stopping intc\n";
 #endif
-  intc->send(Interrupt(255, 0));
+  send(Interrupt(255, 0));
   SDL_WaitThread(intcThread, NULL);
 #if DEBUG
   cerr << "intc stopped\n";
 #endif
-  delete intc;
-  delete dmac;
-}
-
-Intc *OnchipRegisters::getIntc(void) {
-  return intc;
+  SDL_DestroyCond(cond);
+  SDL_DestroyMutex(mutex_cond);
+  SDL_DestroyMutex(mutex);
 }
 
 #define IPRB	0x60
@@ -93,7 +93,7 @@ Intc *OnchipRegisters::getIntc(void) {
 #define CHCR1	0x19C
 #define DMAOR	0x1B0
 
-void OnchipRegisters::setLong(unsigned long addr, unsigned long val) {
+void Onchip::setLong(unsigned long addr, unsigned long val) {
   switch(addr) {
   case 0x104: {
     long divisor = (long) Memory::getLong(0x100);
@@ -139,104 +139,94 @@ void OnchipRegisters::setLong(unsigned long addr, unsigned long val) {
   }
   case 0x1B0:
     Memory::setLong(addr, val);
-    SDL_CreateThread((int (*)(void*)) &Dmac::lancer, dmac);
+    SDL_CreateThread((int (*)(void*)) &Onchip::startDMA, this);
     break;
   default:
     Memory::setLong(addr, val);
   }
 }
 
-Dmac::Dmac(OnchipRegisters *reg, SuperH *sh) {
-  registers = reg;
-  proc = sh;
+void Onchip::startDMA(Onchip *onchip) {
+	onchip->runDMA();
 }
 
-void Dmac::lancer(Dmac *dmac) {
-  dmac->executer();
-}
+void Onchip::runDMA(void) {
+	unsigned long dmaor = getLong(DMAOR);
 
-void Dmac::executer(void) {
-  unsigned long dmaor = registers->getLong(DMAOR);
-
-  if ((dmaor & 0x1) && !((dmaor & 0x4) || (dmaor & 0x2))) {
-    unsigned long chcr0 = registers->getLong(CHCR0);
-    unsigned long chcr1 = registers->getLong(CHCR1);
-    if ((chcr0 & 0x1) && (chcr1 & 0x1)) { // both channel wants DMA
-      if (dmaor & 0x8) { // round robin priority
-      }
-      else { // channel 0 > channel 1 priority
-      }
-    }
-    else { // only one channel wants DMA
-      if (chcr0 & 0x1) { // DMA for channel 0
-        if (!(chcr0 & 0x2)) { // TE is not set
-	  int srcInc;
-	  switch(chcr0 & 0x3000) {
-	  case 0x0000: srcInc = 0; break;
-	  case 0x1000: srcInc = 1; break;
-	  case 0x2000: srcInc = -1; break;
-	  }
-	  int destInc;
-	  switch(chcr0 & 0xC000) {
-	  case 0x0000: destInc = 0; break;
-	  case 0x4000: destInc = 1; break;
-	  case 0x8000: destInc = -1; break;
-	  }
-	  unsigned long source = registers->getLong(SAR0);
-	  unsigned long destination = registers->getLong(DAR0);
-	  int size;
-	  Memory *satmem = proc->getMemory();
-	  switch (size = ((chcr0 & 0x0C00) >> 10)) {
-	  case 0:
-	    while(registers->getLong(TCR0) & 0x00FFFFFF) {
-	      satmem->setByte(registers->getLong(DAR0),
-		 	      satmem->getByte(registers->getLong(SAR0)));
-	      registers->setLong(DAR0, registers->getLong(DAR0) + destInc);
-	      registers->setLong(SAR0, registers->getLong(SAR0) + srcInc);
-	      registers->setLong(TCR0, registers->getLong(TCR0) - 1);
-	    }
-	    break;
-	  case 1:
-	    while(registers->getLong(TCR0) & 0x00FFFFFF) {
-	      satmem->setWord(registers->getLong(DAR0),
-			    satmem->getWord(registers->getLong(SAR0)));
-	      registers->setLong(DAR0, registers->getLong(DAR0) + 2 * destInc);
-	      registers->setLong(SAR0, registers->getLong(SAR0) + 2 * srcInc);
-	      registers->setLong(TCR0, registers->getLong(TCR0) - 1);
-	    }
-	    break;
-	  case 2:
-	    while(registers->getLong(TCR0) & 0x00FFFFFF) {
-	      satmem->setLong(registers->getLong(DAR0),
-				 satmem->getLong(registers->getLong(SAR0)));
-	      registers->setLong(DAR0, registers->getLong(DAR0) + 4 * destInc);
-	      registers->setLong(SAR0, registers->getLong(SAR0) + 4 * srcInc);
-	      registers->setLong(TCR0, registers->getLong(TCR0) - 1);
-	    }
-	    break;
-	  case 3:
-	    while(registers->getLong(TCR0) & 0x00FFFFFF) {
-	      for(int i = 0;i < 4;i++) {
-	        satmem->setLong(registers->getLong(DAR0),
-		  		  satmem->getLong(registers->getLong(SAR0)));
-	        registers->setLong(DAR0, registers->getLong(DAR0) + 4 * destInc);
-	        registers->setLong(SAR0, registers->getLong(SAR0) + 4 * srcInc);
-	        registers->setLong(TCR0, registers->getLong(TCR0) - 1);
-	      }
-	    }
-	    break;
-	  }
-	}
-	if (chcr0 & 0x4)
+	if ((dmaor & 0x1) && !((dmaor & 0x4) || (dmaor & 0x2))) {
+		unsigned long chcr0 = getLong(CHCR0);
+		unsigned long chcr1 = getLong(CHCR1);
+		if ((chcr0 & 0x1) && (chcr1 & 0x1)) { // both channel wants DMA
+			if (dmaor & 0x8) { // round robin priority
+			}
+			else { // channel 0 > channel 1 priority
+			}
+		}
+		else { // only one channel wants DMA
+			if (chcr0 & 0x1) { // DMA for channel 0
+				if (!(chcr0 & 0x2)) { // TE is not set
+					int srcInc;
+					switch(chcr0 & 0x3000) {
+						case 0x0000: srcInc = 0; break;
+	  					case 0x1000: srcInc = 1; break;
+						case 0x2000: srcInc = -1; break;
+					}
+					int destInc;
+					switch(chcr0 & 0xC000) {
+						case 0x0000: destInc = 0; break;
+						case 0x4000: destInc = 1; break;
+						case 0x8000: destInc = -1; break;
+					}
+					unsigned long source = getLong(SAR0);
+					unsigned long destination = getLong(DAR0);
+					int size;
+					switch (size = ((chcr0 & 0x0C00) >> 10)) {
+						case 0:
+							while(getLong(TCR0) & 0x00FFFFFF) {
+								memory->setByte(getLong(DAR0), memory->getByte(getLong(SAR0)));
+								setLong(DAR0, getLong(DAR0) + destInc);
+								setLong(SAR0, getLong(SAR0) + srcInc);
+								setLong(TCR0, getLong(TCR0) - 1);
+							}
+							break;
+						case 1:
+							while(getLong(TCR0) & 0x00FFFFFF) {
+								memory->setWord(getLong(DAR0), memory->getWord(getLong(SAR0)));
+								setLong(DAR0, getLong(DAR0) + 2 * destInc);
+								setLong(SAR0, getLong(SAR0) + 2 * srcInc);
+								setLong(TCR0, getLong(TCR0) - 1);
+							}
+							break;
+						case 2:
+							while(getLong(TCR0) & 0x00FFFFFF) {
+								memory->setLong(getLong(DAR0), memory->getLong(getLong(SAR0)));
+								setLong(DAR0, getLong(DAR0) + 4 * destInc);
+								setLong(SAR0, getLong(SAR0) + 4 * srcInc);
+								setLong(TCR0, getLong(TCR0) - 1);
+							}
+							break;
+						case 3:
+							while(getLong(TCR0) & 0x00FFFFFF) {
+								for(int i = 0;i < 4;i++) {
+									memory->setLong(getLong(DAR0), memory->getLong(getLong(SAR0)));
+									setLong(DAR0, getLong(DAR0) + 4 * destInc);
+									setLong(SAR0, getLong(SAR0) + 4 * srcInc);
+									setLong(TCR0, getLong(TCR0) - 1);
+								}
+							}
+							break;
+					}
+				}
+				if (chcr0 & 0x4)
 #if DEBUG
-	  cerr << "FIXME should launch an interrupt\n";
+					cerr << "FIXME should launch an interrupt\n";
 #endif
-	registers->setLong(chcr0, chcr0 | 0x2);
-      }
-      if (chcr1 & 0x1) { // DMA for channel 1
-      }
-    }
-  }
+				setLong(chcr0, chcr0 | 0x2);
+			}
+			if (chcr1 & 0x1) { // DMA for channel 1
+			}
+		}
+	}
 }
 
 Interrupt::Interrupt(unsigned char l, unsigned char v) {
@@ -252,25 +242,7 @@ unsigned char Interrupt::vector(void) const {
   return _vect;
 }
 
-Intc::Intc(SuperH *sh) {
-  mutex = SDL_CreateMutex();
-  mutex_cond = SDL_CreateMutex();
-  cond = SDL_CreateCond();
-  _stop = false;
-  proc = sh;
-}
-
-Intc::~Intc(void) {
-  SDL_DestroyCond(cond);
-  SDL_DestroyMutex(mutex_cond);
-  SDL_DestroyMutex(mutex);
-}
-
-SuperH *Intc::getSH(void) {
-	return proc;
-}
-
-void Intc::send(const Interrupt& i) {
+void Onchip::send(const Interrupt& i) {
   bool empty = false;
 
   SDL_mutexP(mutex);
@@ -288,11 +260,12 @@ void Intc::send(const Interrupt& i) {
   if (empty) SDL_CondSignal(cond);
 };
 
-void Intc::lancer(Intc *intc) {
-	intc->run();
+void Onchip::startINTC(Onchip *onchip) {
+	onchip->runINTC();
 }
 
-void Intc::run(void) {
+void Onchip::runINTC(void) {
+  SuperH * proc = memory->getMasterSH();
   while(!_stop) {
     while(proc->processingInterrupt()) proc->waitInterruptEnd();
 
@@ -330,14 +303,14 @@ void Intc::run(void) {
   }
 };
 
-void Intc::stop(void) {
+void Onchip::stopINTC(void) {
   _stop = true;
 }
 
-void Intc::sendNMI(void) {
+void Onchip::sendNMI(void) {
   send(Interrupt(16, 11));
 }
 
-void Intc::sendUserBreak(void) {
+void Onchip::sendUserBreak(void) {
   send(Interrupt(15, 12));
 } 

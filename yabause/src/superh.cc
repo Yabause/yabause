@@ -120,10 +120,10 @@ void SuperH::synchroStart(void) {
       executer();
     }
     while((cycleCount < decilineStop) && _pause) {
-      executer();
       SDL_mutexP(mutex[4]);
       SDL_CondWait(cond[4], mutex[4]);
       SDL_mutexV(mutex[4]);
+      executer();
     }
     if (!_stop) {
       decilineCount++;

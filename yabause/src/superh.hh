@@ -94,7 +94,7 @@ private:
   bool _pause;
   bool _run;
 public:
-  friend class Intc;
+  friend class Onchip;
   friend void monitor(SuperH *);
   friend int main(int, char **);
 

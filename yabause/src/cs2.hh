@@ -23,16 +23,22 @@
 #include "memory.hh"
 #include "cpu.hh"
 
-class YCD;
-
-class Cs2 : public Memory {
+class Cs2 : public Cpu, public Memory {
 private:
-  YCD *cd;
-  SDL_Thread *cdThread;
-  SDL_mutex *cdMutex;
+  unsigned long FAD;
+  unsigned char status;
+  unsigned char options;
+  unsigned char repcnt;
+  unsigned char ctrladdr;
+  unsigned char track;
+  unsigned char index;
+
+  unsigned long cdwnum;
+
+  bool _command;
 public:
   Cs2(void);
-  ~Cs2(void);
+
   unsigned short getHIRQ(void);
   unsigned short getHIRQMask(void);
   unsigned short getCR1(void);
@@ -47,26 +53,8 @@ public:
   void setCR4(unsigned short val);
 
   void setWord(unsigned long, unsigned short);
-};
 
-class YCD : public Cpu {
-private:
-  unsigned long FAD;
-  unsigned char status;
-  unsigned char options;
-  unsigned char repcnt;
-  unsigned char ctrladdr;
-  unsigned char track;
-  unsigned char index;
-
-  unsigned long cdwnum;
-
-  bool _command;
-  Cs2 *memory;
-public:
-  YCD(Cs2 *);
-
-  static void run(YCD *);
+  static void run(Cs2 *);
   void execute(void);
 #if 0
   void command(void);

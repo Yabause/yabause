@@ -261,29 +261,21 @@ SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0) {
   Timer::initSuperH(msh);
 
   rom         = new Memory(0x80000);
-  onchip      = new OnchipRegisters(msh);
-
-  Intc * intc = ((OnchipRegisters *) onchip)->getIntc();
-  
+  onchip      = new Onchip(this);
   ram         = new Memory(0x10000);
   ramLow      = new Memory(0x100000);
-  cs0	      = new LoggedMemory("cs0", new Dummy(), 1);
-  cs1         = new LoggedMemory("cs1", new Cs1(), 1);
+  cs0	      = new Dummy();
+  cs1         = new Cs1();
   cs2         = new Cs2();
   sound       = new ScspRam(); //Memory(0x7FFFF);
-  soundr      = new LoggedMemory("soundr", new Memory(0xEE4), 1);
-  scu         = new ScuRegisters(intc);
-
-  Scu * scup = ((ScuRegisters *) scu)->getScu();
-  
-  vdp1_1      = new Memory(0xC0000);
-  vdp1_2      = new Vdp1Registers(vdp1_1, scup);
-  vdp2_1      = new Vdp2Ram();
-  vdp2_2      = new Vdp2ColorRam();
-  vdp2_3      = new LoggedMemory("vdp2", new Vdp2Registers((Vdp2Ram *) vdp2_1,
-			  	    (Vdp2ColorRam *) vdp2_2, scup,
-				    ((Vdp1Registers *)vdp1_2)->getVdp1()), 1);
-  smpc        = new SmpcRegisters(scup, this);
+  soundr      = new Memory(0xEE4);
+  scu         = new Scu(this);
+  vdp1_2      = new Vdp1(this);
+  vdp1_1      = ((Vdp1*) vdp1_2)->getVRam();
+  vdp2_3      = new Vdp2(this);
+  vdp2_1      = ((Vdp2 *) vdp2_3)->getVRam();
+  vdp2_2      = ((Vdp2 *) vdp2_3)->getCRam();
+  smpc        = new Smpc(this);
   ramHigh     = new Memory(0x100000);
   purgeArea   = new Dummy();
   adressArray = new Memory(0x3FF);
@@ -321,10 +313,12 @@ SaturnMemory::~SaturnMemory(void) {
   delete sound;
   delete soundr;
   delete vdp2_3;
+/*
   delete vdp2_1;
   delete vdp2_2;
+*/
   delete vdp1_2;
-  delete vdp1_1;
+  //delete vdp1_1;
   delete scu;
   delete ramHigh;
   delete purgeArea;
@@ -430,5 +424,21 @@ void SaturnMemory::load(const char *fichier, unsigned long adr) {
 }
 
 SuperH *SaturnMemory::getMasterSH(void) {
-  return msh;
+	return msh;
+}
+
+Memory *SaturnMemory::getOnchip(void) {
+	return onchip;
+}
+
+Memory *SaturnMemory::getVdp1Ram(void) {
+	return vdp1_1;
+}
+
+Memory *SaturnMemory::getVdp1(void) {
+	return vdp1_2;
+}
+
+Memory *SaturnMemory::getScu(void) {
+	return scu;
 }

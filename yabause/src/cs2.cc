@@ -51,17 +51,6 @@
 #define CDB_STAT_WAIT      0x80
 #define CDB_STAT_REJECT    0xFF
 
-Cs2::Cs2(void) : Memory(0x100000) {
-  cd = new YCD(this);
-  cdThread = NULL;
-  cdMutex = SDL_CreateMutex();
-}
-
-Cs2::~Cs2(void) {
-  SDL_DestroyMutex(cdMutex);
-  delete cd;
-}
-
 unsigned short Cs2::getHIRQ(void) {return Memory::getWord(0x90008);}
 unsigned short Cs2::getHIRQMask(void) {return Memory::getWord(0x9000C);}
 unsigned short Cs2::getCR1(void) {return Memory::getWord(0x90018);}
@@ -93,19 +82,14 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
     case 0x90020: Memory::setWord(addr, val);
 		  break;
     case 0x90024: Memory::setWord(addr, val);
-		  /*SDL_mutexP(cdMutex);
-		  SDL_WaitThread(cdThread, NULL);
-                  cdThread = SDL_CreateThread((int (*)(void*)) &YCD::run, cd);
-		  SDL_mutexV(cdMutex);*/
-                  YCD::run(cd);
+                  run(this);
 		  break;
     default: Memory::setWord(addr, val);
   }
 }
 
-YCD::YCD(Cs2 *cs2) {
+Cs2::Cs2(void) : Memory(0x100000) {
   _stop = false;
-  memory = cs2;
   FAD = 150;
   status = CDB_STAT_PERI | CDB_STAT_PAUSE; // Still not 100% correct, but better
 
@@ -115,16 +99,16 @@ YCD::YCD(Cs2 *cs2) {
   track = 1;
   index = 1;
 
-  memory->setCR1(( 0 <<8) | 'C');
-  memory->setCR2(('D'<<8) | 'B');
-  memory->setCR3(('L'<<8) | 'O');
-  memory->setCR4(('C'<<8) | 'K');
-  memory->setHIRQ(0x07D3);
-  memory->setHIRQMask(0x7FF);
+  setCR1(( 0 <<8) | 'C');
+  setCR2(('D'<<8) | 'B');
+  setCR3(('L'<<8) | 'O');
+  setCR4(('C'<<8) | 'K');
+  setHIRQ(0x07D3);
+  setHIRQMask(0x7FF);
 }
 
 #if 0
-void YCD::run(YCD *cd) {
+void Cs2::run(Cs2 *cd) {
   Timer t;
   while(!cd->_stop) {
     if (cd->_command) {
@@ -139,23 +123,23 @@ void YCD::run(YCD *cd) {
   }
 }
 
-void YCD::command(void) {
+void Cs2::command(void) {
   _command = true;
 }
 
-void YCD::periodicUpdate(void) {
-  if ((memory->getCR1() >> 8) != 0 ) return;
+void Cs2::periodicUpdate(void) {
+  if ((getCR1() >> 8) != 0 ) return;
   status |= CDB_STAT_PERI;
 }
 #endif
 
-void YCD::run(YCD *cd) {
+void Cs2::run(Cs2 *cd) {
   cd->execute();
 }
 
-void YCD::execute(void) {
-  memory->setHIRQ(memory->getHIRQ() & 0XFFFE);
-  unsigned short instruction = memory->getCR1() >> 8;
+void Cs2::execute(void) {
+  setHIRQ(getHIRQ() & 0XFFFE);
+  unsigned short instruction = getCR1() >> 8;
 
   switch (instruction) {
     case 0x00:
@@ -236,108 +220,108 @@ void YCD::execute(void) {
   }
 }
 
-void YCD::getStatus(void) {
-  memory->setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  memory->setCR2((ctrladdr << 8) | track);
-  memory->setCR3((index << 8) | ((FAD >> 16) & 0xFF));
-  memory->setCR4((unsigned short) FAD);
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK);
+void Cs2::getStatus(void) {
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | track);
+  setCR3((index << 8) | ((FAD >> 16) & 0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
-void YCD::getHardwareInfo(void) {
-  memory->setCR1(status << 8);
+void Cs2::getHardwareInfo(void) {
+  setCR1(status << 8);
   // hardware flags/CD Version
-  memory->setCR2(0x0201); // mpeg card exists
+  setCR2(0x0201); // mpeg card exists
   // mpeg version, doesn't have to be used
-  memory->setCR3(0x0);
+  setCR3(0x0);
   // drive info/revision
-  memory->setCR4(0x0400); 
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK);
+  setCR4(0x0400); 
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
-void YCD::getToc(void) {
+void Cs2::getToc(void) {
   // Read in Toc to 0x25898000 here
 
   cdwnum = 0xCC;
 
-  memory->setCR1(status << 8);
-  memory->setCR2(0xCC);
-  memory->setCR3(0x0);
-  memory->setCR4(0x0); 
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+  setCR1(status << 8);
+  setCR2(0xCC);
+  setCR3(0x0);
+  setCR4(0x0); 
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
 }
 
-void YCD::getSessionInfo(void) {
-  memory->setCR1(status << 8);
-  memory->setCR2(0);
-  memory->setCR3(0); // session info
-  memory->setCR4(0); // session info
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+void Cs2::getSessionInfo(void) {
+  setCR1(status << 8);
+  setCR2(0);
+  setCR3(0); // session info
+  setCR4(0); // session info
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
 }
 
-void YCD::initializeCDSystem(void) {
+void Cs2::initializeCDSystem(void) {
   FAD = 150;
-  memory->setCR1((status << 8) | (repcnt & 0xF));
-  memory->setCR2((ctrladdr << 8) | (track & 0xFF));
-  memory->setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  memory->setCR4((unsigned short) FAD);
+  setCR1((status << 8) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
   // FIXME Something missing here...
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
-void YCD::endDataTransfer(void) {
-  memory->setCR1((status << 8) | ((cdwnum >> 16) & 0xFF)); // FIXME
-  memory->setCR2((unsigned short) cdwnum);
-  memory->setCR3(0);
-  memory->setCR4(0);
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+void Cs2::endDataTransfer(void) {
+  setCR1((status << 8) | ((cdwnum >> 16) & 0xFF)); // FIXME
+  setCR2((unsigned short) cdwnum);
+  setCR3(0);
+  setCR4(0);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
 }
 
-void YCD::resetSelector(void) {
-  memory->setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  memory->setCR2((ctrladdr << 8) | (track & 0xFF));
-  memory->setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  memory->setCR4((unsigned short) FAD);
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+void Cs2::resetSelector(void) {
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
-void YCD::setSectorLength(void) {
-  memory->setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  memory->setCR2((ctrladdr << 8) | (track & 0xFF));
-  memory->setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  memory->setCR4((unsigned short) FAD);
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+void Cs2::setSectorLength(void) {
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
-void YCD::getCopyError(void) {
-  memory->setCR1(status << 8);
-  memory->setCR2(0);
-  memory->setCR3(0);
-  memory->setCR4(0);
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK);
+void Cs2::getCopyError(void) {
+  setCR1(status << 8);
+  setCR2(0);
+  setCR3(0);
+  setCR4(0);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
 }
 
-void YCD::abortFile(void) {
+void Cs2::abortFile(void) {
   //status = 0x26;
   cdwnum = 0xFFFFFFFF;
-  memory->setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-  memory->setCR2((ctrladdr << 8) | (track & 0xFF));
-  memory->setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  memory->setCR4((unsigned short) FAD);
-  memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL | CDB_HIRQ_EFLS);
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL | CDB_HIRQ_EFLS);
 }
 
-void YCD::mpegInit(void) {
-  memory->setCR1(status << 8);
+void Cs2::mpegInit(void) {
+  setCR1(status << 8);
 
-  if (memory->getCR2() == 0x0001) // software timer?
-     memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
+  if (getCR2() == 0x0001) // software timer?
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
   else
-     memory->setHIRQ(memory->getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
+     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
 
-  memory->setCR2(0);
-  memory->setCR3(0);
-  memory->setCR4(0);
+  setCR2(0);
+  setCR3(0);
+  setCR4(0);
 
   // future mpeg-related variables should be initialized here
 }

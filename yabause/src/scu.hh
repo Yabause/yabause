@@ -23,29 +23,16 @@
 #include "memory.hh"
 #include "intc.hh"
 
-class Scu;
-
-class ScuRegisters : public Memory {
-private:
-  Scu *scu;
-public:
-  ScuRegisters(Intc *);
-  ~ScuRegisters(void);
-
-  Scu *getScu(void);
-
-  unsigned long getLong(unsigned long);
-  void setLong(unsigned long, unsigned long);
-};
-
-class Scu {
+class Scu : public Memory {
 private:
   template<unsigned char V, unsigned char L, unsigned short M>
 	  void sendInterrupt(void);
-  ScuRegisters *registres;
-  Intc *intc;
+  SaturnMemory *satmem;
 public:
-  Scu(ScuRegisters *, Intc *);
+  Scu(SaturnMemory *);
+
+  unsigned long getLong(unsigned long);
+  void setLong(unsigned long, unsigned long);
 
   void DMA(int);
 					//source|vector | level | mask
@@ -69,8 +56,8 @@ public:
 
 template<unsigned char V, unsigned char L, unsigned short M>
 void Scu::sendInterrupt(void) {
-  if (!(registres->getWord(0xA2) & M)) {
-    intc->send(Interrupt(L, V));
+  if (!(getWord(0xA2) & M)) {
+    ((Onchip *) satmem->getOnchip())->send(Interrupt(L, V));
 #if 0
     cerr << "interrupt send " << (int) V << endl;
 #endif

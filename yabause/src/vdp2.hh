@@ -42,33 +42,10 @@ public:
   unsigned long getColor(unsigned long, Vdp2Screen *);
 };
 
-class Vdp2Registers : public Memory {
-private:
-  Vdp2 *vdp2;
-  SDL_Thread *vdp2Thread;
-public:
-  Vdp2Registers(Vdp2Ram *, Vdp2ColorRam *, Scu *, Vdp1 *);
-  ~Vdp2Registers(void);
-
-  Vdp2 *getVdp2(void);
-
-  void setWord(unsigned long, unsigned short);
-
-  unsigned short getTVSTAT(void);
-  void setTVSTAT(unsigned short);
-  unsigned short getCOAR(void);
-  unsigned short getCOAG(void);
-  unsigned short getCOAB(void);
-
-  unsigned short getPRINA(void);
-  unsigned short getPRINB(void);
-  unsigned short getPRIR(void);
-};
-
 class Vdp2Screen {
 protected:
   SDL_Surface *surface;
-  Vdp2Registers *reg;
+  Vdp2 *reg;
   Vdp2Ram *vram;
   Vdp2ColorRam *cram;
 
@@ -93,7 +70,7 @@ protected:
   int alpha;
   int colorOffset;
 public:
-  Vdp2Screen(Vdp2Registers *, Vdp2Ram *, Vdp2ColorRam *, SDL_Surface *);
+  Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, SDL_Surface *);
 
   virtual int getPriority(void) = 0;
   virtual int getInnerPriority(void) = 0;
@@ -117,7 +94,7 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  RBG0(Vdp2Registers *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
+  RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
 };
@@ -127,7 +104,7 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  NBG0(Vdp2Registers *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
+  NBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
 };
@@ -137,7 +114,7 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  NBG1(Vdp2Registers *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
+  NBG1(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
 };
@@ -147,7 +124,7 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  NBG2(Vdp2Registers *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
+  NBG2(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
 };
@@ -157,27 +134,33 @@ private:
   void init(void);
   void planeAddr(int);
 public:
-  NBG3(Vdp2Registers *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
+  NBG3(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, SDL_Surface *s) : Vdp2Screen(reg, vram, cram, s) {}
   int getPriority(void);
   int getInnerPriority(void);
 };
 
-class Vdp2 : public Cpu {
+class Vdp2 : public Cpu, public Memory {
 private:
-  Vdp2Registers *reg;
   Vdp2Ram *vram;
   Vdp2ColorRam *cram;
-  Scu *scu;
   SDL_Surface *surface;
   SDL_Surface *GLSurface;
   SDL_Surface *logo;
   GLuint texture[1];
 
   Vdp2Screen *screens[5];
-  Vdp1 *vdp1;
+  SaturnMemory *satmem;
+
+  SDL_Thread *vdp2Thread;
 public:
-  Vdp2(Vdp2Registers *, Vdp2Ram *, Vdp2ColorRam *, Scu *, Vdp1 *);
+  Vdp2(SaturnMemory *);
   ~Vdp2(void);
+
+  Memory *getCRam(void);
+  Memory *getVRam(void);
+
+  void setWord(unsigned long, unsigned short);
+
   static void lancer(Vdp2 *);
   void executer(void);
 

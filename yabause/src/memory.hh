@@ -129,6 +129,11 @@ public:
   SuperH *getMasterSH(void);
 
   Uint8 *keys;
+
+  Memory *getOnchip(void);
+  Memory *getVdp1Ram(void);
+  Memory *getVdp1(void);
+  Memory *getScu(void);
 };
 
 #endif

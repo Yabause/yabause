@@ -34,84 +34,31 @@
 /*					*/
 /****************************************/
 
-Vdp2Registers::Vdp2Registers(Vdp2Ram *vr, Vdp2ColorRam *c, Scu *scu, Vdp1 *vdp1) : Memory(0x120) {
-  vdp2 = new Vdp2(this, vr, c, scu, vdp1);
-  vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, vdp2);
-}
-
-Vdp2Registers::~Vdp2Registers(void) {
-#if DEBUG
-  cerr << "stopping vdp2\n";
-#endif
-  vdp2->stop();
-  SDL_WaitThread(vdp2Thread, NULL);
-#if DEBUG
-  cerr << "vdp2 stopped\n";
-#endif
-  delete vdp2;
-}
-
-Vdp2 *Vdp2Registers::getVdp2(void) {
-  return vdp2;
-}
-
-void Vdp2Registers::setWord(unsigned long addr, unsigned short val) {
+void Vdp2::setWord(unsigned long addr, unsigned short val) {
   switch(addr) {
     case 0:
       Memory::setWord(addr, val);
       break;
     case 0xE:
       Memory::setWord(addr, val);
-      vdp2->updateRam();
+      updateRam();
       break;
     case 0xF8:
       Memory::setWord(addr, val);
-      vdp2->sortScreens();
+      sortScreens();
       break;
     case 0xFA:
       Memory::setWord(addr, val);
-      vdp2->sortScreens();
+      sortScreens();
       break;
     case 0xFC:
       Memory::setWord(addr, val);
-      vdp2->sortScreens();
+      sortScreens();
       break;
     default:
       Memory::setWord(addr, val);
       break;
   }
-}
-
-unsigned short Vdp2Registers::getTVSTAT(void) {
-  return Memory::getWord(0x4);
-}
-
-void Vdp2Registers::setTVSTAT(unsigned short v) {
-  Memory::setWord(0x4, v);
-}
-
-unsigned short Vdp2Registers::getCOAR(void) {
-  return Memory::getWord(0x114);
-}
-
-unsigned short Vdp2Registers::getCOAG(void) {
-  return Memory::getWord(0x116);
-}
-
-unsigned short Vdp2Registers::getCOAB(void) {
-  return Memory::getWord(0x118);
-}
-
-unsigned short Vdp2Registers::getPRINA(void) {
-  return Memory::getWord(0xF8);
-}
-
-unsigned short Vdp2Registers::getPRINB(void) {
-  return Memory::getWord(0xFA);
-}
-
-unsigned short Vdp2Registers::getPRIR(void) {
-  return Memory::getWord(0xFC);
 }
 
 /****************************************/
@@ -161,7 +108,7 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, Vdp2Screen *screen) {
 /*					*/
 /****************************************/
 
-Vdp2Screen::Vdp2Screen(Vdp2Registers *r, Vdp2Ram *v, Vdp2ColorRam *c, SDL_Surface *s) {
+Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, SDL_Surface *s) {
   reg = r;
   vram = v;
   cram = c;
@@ -974,15 +921,13 @@ int NBG3::getInnerPriority(void) {
 /*					*/
 /****************************************/
 
-Vdp2::Vdp2(Vdp2Registers *r, Vdp2Ram *vr, Vdp2ColorRam *c, Scu *s, Vdp1 *v) {
-  scu = s;
-  vdp1 = v;
+Vdp2::Vdp2(SaturnMemory *v) : Memory(0x120) {
+  satmem = v;
   _stop = false;
-  reg = r;
-  vram = vr;
-  cram = c;
-  reg->setTVSTAT(0); //reg->setTVSTAT(0x302);
-  reg->setWord(0x20, 0);
+  vram = new Vdp2Ram;
+  cram = new Vdp2ColorRam;
+  setWord(0x4, 0); //setWord(0x4, 0x302);
+  setWord(0x20, 0);
 
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -999,12 +944,31 @@ Vdp2::Vdp2(Vdp2Registers *r, Vdp2Ram *vr, Vdp2ColorRam *c, Scu *s, Vdp1 *v) {
 #endif
   //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
   surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+  vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, this);
 }
 
 Vdp2::~Vdp2(void) {
+#if DEBUG
+  cerr << "stopping vdp2\n";
+#endif
+  stop();
+  SDL_WaitThread(vdp2Thread, NULL);
+#if DEBUG
+  cerr << "vdp2 stopped\n";
+#endif
   for(int i = 0;i < 5;i++) delete screens[i];
   SDL_FreeSurface(surface);
   SDL_FreeSurface(logo);
+	delete vram;
+	delete cram;
+}
+
+Memory *Vdp2::getCRam(void) {
+	return cram;
+}
+
+Memory *Vdp2::getVRam(void) {
+	return vram;
 }
 
 void Vdp2::lancer(Vdp2 *vdp2) {
@@ -1021,12 +985,12 @@ void Vdp2::lancer(Vdp2 *vdp2) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glGenTextures(1, vdp2->texture );
 	
-  	vdp2->screens[4] = new RBG0(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
-  	vdp2->screens[3] = new NBG0(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
-  	vdp2->screens[2] = new NBG1(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
-  	vdp2->screens[1] = new NBG2(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
-  	vdp2->screens[0] = new NBG3(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
-	vdp2->vdp1->setVdp2Ram(vdp2->reg, vdp2->cram);
+  	vdp2->screens[4] = new RBG0(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
+  	vdp2->screens[3] = new NBG0(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
+  	vdp2->screens[2] = new NBG1(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
+  	vdp2->screens[1] = new NBG2(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
+  	vdp2->screens[0] = new NBG3(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
+	((Vdp1 *) vdp2->satmem->getVdp1())->setVdp2Ram(vdp2, vdp2->cram);
 
 	while(!vdp2->_stop) vdp2->executer();
 }
@@ -1035,25 +999,25 @@ void Vdp2::executer(void) {
   Timer t;
   for(int i = 0;i < 224;i++) { // FIXME depends on SuperH::synchroStart
     t.waitHBlankIN();
-    reg->setTVSTAT(reg->getTVSTAT() | 0x0004);
+    setWord(0x4, getWord(0x4) | 0x0004);
     t.waitHBlankOUT();
-    reg->setTVSTAT(reg->getTVSTAT() & 0xFFFB);
+    setWord(0x4, getWord(0x4) & 0xFFFB);
   }
   t.waitVBlankIN();
-  reg->setTVSTAT(reg->getTVSTAT() | 0x0008);
-  scu->sendVBlankIN();
+  setWord(0x4, getWord(0x4) | 0x0008);
+  ((Scu *) satmem->getScu())->sendVBlankIN();
   for(int i = 0;i < 39;i++) { // FIXME depends on SuperH::synchroStart
     t.waitHBlankIN();
-    reg->setTVSTAT(reg->getTVSTAT() | 0x0004);
+    setWord(0x4, getWord(0x4) | 0x0004);
     t.waitHBlankOUT();
-    reg->setTVSTAT(reg->getTVSTAT() & 0xFFFB);
+    setWord(0x4, getWord(0x4) & 0xFFFB);
   }
   t.waitVBlankOUT();
-  reg->setTVSTAT(reg->getTVSTAT() & 0xFFF7);
+  setWord(0x4, getWord(0x4) & 0xFFF7);
 
   glClear(GL_COLOR_BUFFER_BIT);
   drawBackScreen();
-  if (reg->getWord(0) & 0x8000) {
+  if (getWord(0) & 0x8000) {
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
     screens[0]->draw();
     screens[1]->draw();
@@ -1079,12 +1043,12 @@ void Vdp2::executer(void) {
   glEnd();
   glDisable( GL_TEXTURE_2D );
 
-  vdp1->execute(0);
+  ((Vdp1 *) satmem->getVdp1())->execute(0);
   glFlush();
   SDL_GL_SwapBuffers();
   //colorOffset();
   //SDL_Flip(surface);
-  scu->sendVBlankOUT();
+  ((Scu *) satmem->getScu())->sendVBlankOUT();
 }
 
 Vdp2Screen *Vdp2::getScreen(int i) {
@@ -1096,15 +1060,15 @@ void Vdp2::sortScreens(void) {
 }
 
 void Vdp2::updateRam(void) {
-  cram->setMode(reg->getWord(0xE) & 0xC000);
+  cram->setMode(getWord(0xE) & 0xC000);
 }
 
 void Vdp2::drawBackScreen(void) {
-	unsigned long BKTAU = reg->getWord(0xAC);
-	unsigned long BKTAL = reg->getWord(0xAE);
+	unsigned long BKTAU = getWord(0xAC);
+	unsigned long BKTAL = getWord(0xAE);
 	unsigned long scrAddr;
 
-	if (reg->getWord(0x6) & 0x8000)
+	if (getWord(0x6) & 0x8000)
 		scrAddr = ((BKTAU & 0x7 << 16) | BKTAL) * 2;
 	else
 		scrAddr = ((BKTAU & 0x3 << 16) | BKTAL) * 2;
@@ -1133,9 +1097,9 @@ void Vdp2::colorOffset(void) {
   tmp1 = SDL_CreateRGBSurface(SDL_HWSURFACE, 400, 400, 16, 0, 0, 0, 0);
   tmp2 = SDL_CreateRGBSurface(SDL_HWSURFACE, 400, 400, 16, 0, 0, 0, 0);
 
-  SDL_FillRect(tmp2, NULL, SDL_MapRGB(tmp2->format, reg->getCOAR(),
-			  			    reg->getCOAG(),
-						    reg->getCOAB()));
+  SDL_FillRect(tmp2, NULL, SDL_MapRGB(tmp2->format, getWord(0x114),
+			  			    getWord(0x116),
+						    getWord(0x118)));
   SDL_BlitSurface(surface, NULL, tmp1, NULL);
 
   SDL_imageFilterAdd((unsigned char *) tmp1->pixels,

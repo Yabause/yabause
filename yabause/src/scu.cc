@@ -20,43 +20,30 @@
 #include "scu.hh"
 #include "superh.hh"
 
-ScuRegisters::ScuRegisters(Intc *i) : Memory(0xD0) {
-  scu = new Scu(this, i);
-}
-
-ScuRegisters::~ScuRegisters(void) {
-  delete scu;
-}
-
-Scu *ScuRegisters::getScu(void) {
-  return scu;
-}
-
-unsigned long ScuRegisters::getLong(unsigned long addr) {
+unsigned long Scu::getLong(unsigned long addr) {
 	if (addr == 0x80) return 0;
 	return Memory::getLong(addr);
 }
 
-void ScuRegisters::setLong(unsigned long addr, unsigned long val) {
+void Scu::setLong(unsigned long addr, unsigned long val) {
 	switch(addr) {
-		case 0x10: if (val & 0x1) scu->DMA(0);
+		case 0x10: if (val & 0x1) DMA(0);
 			   break;
 	}
 	Memory::setLong(addr, val);
 }
 
-Scu::Scu(ScuRegisters *reg, Intc *i) {
-  registres = reg;
-  registres->setLong(0xA0, 0x0000BFFF);
-  intc = i;
+Scu::Scu(SaturnMemory *i) : Memory(0xD0) {
+  setLong(0xA0, 0x0000BFFF);
+  satmem = i;
 }
 
 void Scu::DMA(int mode) {
 	int i = mode * 0x20;
-	unsigned long readAddress = registres->getLong(i);
-	unsigned long writeAddress = registres->getLong(i + 0x4);
-	unsigned long transferNumber = registres->getLong(i + 0x8);
-	unsigned long addValue = registres->getLong(i + 0xC);
+	unsigned long readAddress = getLong(i);
+	unsigned long writeAddress = getLong(i + 0x4);
+	unsigned long transferNumber = getLong(i + 0x8);
+	unsigned long addValue = getLong(i + 0xC);
 	unsigned char readAdd, writeAdd;
 	if (addValue & 0x100) readAdd = 4;
 	else readAdd = 0;
@@ -70,7 +57,7 @@ void Scu::DMA(int mode) {
 		case 0x6: writeAdd = 64; break;
 		case 0x7: writeAdd = 128; break;
 	}
-	if (registres->getLong(i + 0x14) & 0x1000000) {
+	if (getLong(i + 0x14) & 0x1000000) {
 #if DEBUG
 		cerr << "indirect DMA not implemented" << endl;
 #endif
@@ -92,11 +79,10 @@ void Scu::DMA(int mode) {
 			cerr << "B Bus" << endl;
 #endif
 			while(counter < transferNumber) {
-				Memory *saturnMem = intc->getSH()->getMemory();
-				unsigned long tmp = saturnMem->getLong(readAddress);
-				saturnMem->setWord(writeAddress, tmp >> 16);
+				unsigned long tmp = satmem->getLong(readAddress);
+				satmem->setWord(writeAddress, tmp >> 16);
 				writeAddress += writeAdd;
-				saturnMem->setWord(writeAddress, tmp & 0xFFFF);
+				satmem->setWord(writeAddress, tmp & 0xFFFF);
 				writeAddress += writeAdd;
 				readAddress += readAdd;
 				counter += 4;
@@ -107,8 +93,7 @@ void Scu::DMA(int mode) {
 			cerr << "A Bus" << endl;
 #endif
 			while(counter < transferNumber) {
-				Memory *saturnMem = intc->getSH()->getMemory();
-				saturnMem->setLong(writeAddress, saturnMem->getLong(readAddress));
+				satmem->setLong(writeAddress, satmem->getLong(readAddress));
 				readAddress += readAdd;
 				writeAddress += writeAdd;
 				counter += 4;

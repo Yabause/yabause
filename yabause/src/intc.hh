@@ -27,33 +27,6 @@
 #include <queue>
 #endif
 
-class Intc;
-class Dmac;
-
-class OnchipRegisters : public Memory {
-private:
-  Intc *intc;
-  Dmac *dmac;
-  SDL_Thread *intcThread;
-public:
-  OnchipRegisters(SuperH *);
-  ~OnchipRegisters(void);
-
-  Intc *getIntc(void);
-  
-  void setLong(unsigned long, unsigned long);
-};
-
-class Dmac : public Cpu {
-private:
-  OnchipRegisters *registers;
-  SuperH *proc;
-public:
-  Dmac(OnchipRegisters *, SuperH *);
-  static void lancer(Dmac *);
-  void executer(void);
-};
-
 class Interrupt {
 private:
   unsigned char _level;
@@ -75,32 +48,37 @@ public:
 }
 #endif
 
-class SuperH;
-
-class Intc {
+class Onchip : public Memory {
 private:
-  bool _stop;
+	SaturnMemory *memory;
+
+	/* INTC */
+	SDL_Thread *intcThread;
+	SDL_mutex *mutex, *mutex_cond;
+	SDL_cond *cond;
+	bool _stop;
 #ifndef _arch_dreamcast
-  priority_queue<Interrupt> interrupts;
+	priority_queue<Interrupt> interrupts;
 #endif
-  SuperH *proc;
-  SDL_mutex *mutex, *mutex_cond;
-  SDL_cond *cond;
-
 public:
-  Intc(SuperH *);
-  ~Intc(void);
+	Onchip(SaturnMemory *);
+	~Onchip(void);
 
-  SuperH *getSH(void);
+	void setLong(unsigned long, unsigned long);
 
-  void sendNMI(void);
-  void sendUserBreak(void);
-  void send(const Interrupt&);
-  //void sendOnChip(...);
-  void run(void);
-  void stop(void);
+	/* DMAC */
+	static void startDMA(Onchip *);
+	void runDMA(void);
 
-  static void lancer(Intc *);
+	/* INTC */
+	static void startINTC(Onchip *);
+	void runINTC(void);
+	void stopINTC(void);
+
+	void sendNMI(void);
+	void sendUserBreak(void);
+	void send(const Interrupt&);
+	//void sendOnChip(...);
 };
 
 #endif

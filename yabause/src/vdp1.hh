@@ -28,30 +28,17 @@
 #include <GL/gl.h>
 #endif
 
-class Vdp1;
 class Scu;
-
-class Vdp1Registers : public Memory {
-private:
-  Vdp1 *vdp1;
-  SDL_Thread *vdp1Thread;
-public:
-  Vdp1Registers(Memory *, Scu *);
-  ~Vdp1Registers(void);
-  Vdp1 *getVdp1(void);
-};
-
-class Vdp2Registers;
+class Vdp2;
 class Vdp2ColorRam;
 
-class Vdp1 : public Cpu {
+class Vdp1 : public Cpu, public Memory {
 private:
   SDL_Surface *surface;
   GLuint texture[1];
-  Memory *memory;
-  Vdp1Registers *registers;
-  Scu *scu;
-  Vdp2Registers *vdp2regs;
+  SaturnMemory *satmem;
+  Memory *vram;
+  Vdp2 *vdp2regs;
   Vdp2ColorRam *cram;
 
   unsigned short localX;
@@ -59,26 +46,26 @@ private:
 
   unsigned short returnAddr;
 public:
-
-  Vdp1(Vdp1Registers *, Memory *, Scu *);
+  Vdp1(SaturnMemory *);
   void execute(unsigned long = 0);
   void stop(void);
 
-  void setVdp2Ram(Vdp2Registers *, Vdp2ColorRam *);
+  void setVdp2Ram(Vdp2 *, Vdp2ColorRam *);
   int getAlpha(void);
   int getColorOffset(void);
   SDL_Surface *getSurface(void);
+  Memory *getVRam(void);
 
   void normalSpriteDraw(unsigned long);
-  void scaledSpriteDraw();
+  void scaledSpriteDraw(unsigned long);
   void distortedSpriteDraw(unsigned long);
-  void polygonDraw(unsigned short);
-  void polylineDraw();
-  void lineDraw();
-  void userClipping();
-  void systemClipping(unsigned short);
-  void localCoordinate(unsigned short);
-  void drawEnd();
+  void polygonDraw(unsigned long);
+  void polylineDraw(unsigned long);
+  void lineDraw(unsigned long);
+  void userClipping(unsigned long);
+  void systemClipping(unsigned long);
+  void localCoordinate(unsigned long);
+  void drawEnd(unsigned long); // FIXME useless...
 };
 
 #endif

@@ -3,7 +3,7 @@ AC_INIT(src/yabause.cc)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(yabause, 0.0.6-cvs)
+AM_INIT_AUTOMAKE(yabause, 0.0.6)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -29,6 +29,8 @@ LIBS="$LIBS $SDL_LIBS"
 AC_CHECK_LIB(SDL_image, IMG_Load)
 
 AC_CHECK_LIB(SDL_gfx, pixelColor)
+
+AC_CHECK_LIB(GL, glEnable)
 
 dnl Usage: YAB_CXX_STL_LEFT_RIGHT : checks whether the C++ compiler
 dnl   supports left and right functions
