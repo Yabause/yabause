@@ -16,7 +16,6 @@
    - add SCI emulation
    - finish FRT emulation
    - finish sleep/standby mode and implement the clock change pins
-   - add 68k, SCSP cores.
 
  (3) MONITOR/DEBUGGER
 
