@@ -42,6 +42,7 @@ public:
 
   unsigned long getSize() const;
   virtual void load(const char *, unsigned long);
+  virtual void save(const char *, unsigned long, unsigned long);
 
 #ifndef _arch_dreamcast
   friend ostream& operator<<(ostream&, const Memory&);

@@ -180,6 +180,20 @@ void Memory::load(const char *filename, unsigned long addr) {
 #endif
 }
 
+void Memory::save(const char *filename, unsigned long addr, unsigned long size) {
+#ifndef _arch_dreamcast
+	unsigned long i;
+	char buffer;
+
+        ofstream exe(filename, ios::out | ios::binary);
+        for(i = addr;i < (addr + size);i++) {
+                buffer = getByte(i);
+                exe.write(&buffer, 1);
+        }
+        exe.close();
+#endif
+}
+
 #ifndef _arch_dreamcast
 ostream& operator<<(ostream& os, const Memory& mem) {
   for(unsigned long i = 0;i < mem.size;i++) {
