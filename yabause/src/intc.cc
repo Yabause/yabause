@@ -179,15 +179,11 @@ void Onchip::setLong(unsigned long addr, unsigned long val) {
   }
   case 0x1B0:
     Memory::setLong(addr, val);
-    SDL_CreateThread((int (*)(void*)) &Onchip::startDMA, this);
+    runDMA();
     break;
   default:
     Memory::setLong(addr, val);
   }
-}
-
-void Onchip::startDMA(Onchip *onchip) {
-	onchip->runDMA();
 }
 
 inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)

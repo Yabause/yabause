@@ -62,6 +62,8 @@ fi])
 YAB_CXX_STL_LEFT_RIGHT
 
 AC_ARG_ENABLE(debug, , AC_DEFINE(DEBUG))
+AC_ARG_ENABLE(vdp1-debug, , AC_DEFINE(VDP1_DEBUG))
+AC_ARG_ENABLE(cd-debug, , AC_DEFINE(CDDEBUG))
 
 AC_OUTPUT(Makefile \
 	  src/Makefile \

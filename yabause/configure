@@ -3892,6 +3892,22 @@ if test "${enable_debug+set}" = set; then
 _ACEOF
 
 fi;
+# Check whether --enable-vdp1-debug or --disable-vdp1-debug was given.
+if test "${enable_vdp1_debug+set}" = set; then
+  enableval="$enable_vdp1_debug"
+  cat >>confdefs.h <<\_ACEOF
+#define VDP1_DEBUG 1
+_ACEOF
+
+fi;
+# Check whether --enable-cd-debug or --disable-cd-debug was given.
+if test "${enable_cd_debug+set}" = set; then
+  enableval="$enable_cd_debug"
+  cat >>confdefs.h <<\_ACEOF
+#define CDDEBUG 1
+_ACEOF
+
+fi;
 
                               ac_config_files="$ac_config_files Makefile src/Makefile doc/Makefile"
 cat >confcache <<\_ACEOF

@@ -69,7 +69,6 @@ public:
 	void setLong(unsigned long, unsigned long);
 
 	/* DMAC */
-        static void startDMA(Onchip *);
 	void runDMA(void);
 
 	/* INTC */
