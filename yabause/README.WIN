@@ -8,7 +8,7 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
         _________________________________________
-        Copyright (c) 2002-2004 Guillaume Duhamel
+        Copyright (c) 2002-2005 Guillaume Duhamel
 
 
 1) Compiling instructions...................................20
@@ -34,7 +34,9 @@ install Yabause.
 
 Unfortunately, I've been having some trouble getting configure
 working properly with mingw and cygwin, so instead I've written
-a makefile(src\makefile.mng) for compiling using mingw. 
+a makefile(src\makefile.mng) for compiling using mingw which
+can be called by typing: make -f makefile.mng in the src
+subdirectory.
 
 Note: If anyone feels like fixing this, let me know. Also, if
       anyone feels like tackling Microsoft Visual C++ support,
