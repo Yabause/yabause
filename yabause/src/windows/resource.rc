@@ -1,0 +1,61 @@
+/*  Copyright 2004 Theo Berkau
+
+    This file is part of Yabause.
+
+    Yabause is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    Yabause is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Yabause; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include <windows.h>
+#include "resource.h"
+
+IDR_MENU MENU
+BEGIN
+  POPUP "&File"
+  BEGIN
+    MENUITEM "Choose &BIOS", IDM_CHOOSEBIOS
+    MENUITEM "Choose &CDROM", IDM_CHOOSECDROM
+    MENUITEM "&Memory Transfer", IDM_MEMTRANSFER
+    MENUITEM "&Run", IDM_RUN
+    MENUITEM "&Pause", IDM_PAUSE
+    MENUITEM SEPARATOR
+    MENUITEM "&Quit", IDM_EXIT
+  END
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+MEMTRANSFERDLG DIALOG FIXED PURE  100, 100, 172, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Memory Transfer"
+FONT 8, "Courier New"
+BEGIN
+    DEFPUSHBUTTON   "&OK",    IDOK,       89,  72, 40, 14
+    PUSHBUTTON      "&Cancel",IDCANCEL,   43,  72, 40, 14
+    PUSHBUTTON      "&Browse",IDC_BROWSE, 140, 4,  30, 12
+    LTEXT           "File:",    -1, 4, 4,  16, 10
+    LTEXT           "Start Address:", -1, 4, 18, 46, 10
+    LTEXT           "End Address:", -1, 4, 32, 42, 10
+    EDITTEXT        IDC_EDITTEXT1, 52, 4,  86, 10, ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDITTEXT2, 52, 18, 36, 10, ES_UPPERCASE
+    EDITTEXT        IDC_EDITTEXT3, 52, 32, 36, 10, ES_UPPERCASE
+    AUTORADIOBUTTON "Download",  IDC_DOWNLOADMEM,  42, 46, 42, 10
+    AUTORADIOBUTTON "Upload", IDC_UPLOADMEM, 92, 46, 42, 10
+    CHECKBOX "Set PC to start address", IDC_CHECKBOX1, 34, 58, 104, 10
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+IDI_ICON        ICON    DISCARDABLE     "logo.ico"
+
