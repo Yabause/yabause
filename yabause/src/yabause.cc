@@ -167,6 +167,7 @@ void keyUp(int key)
 void handleEvents(SaturnMemory *mem) {
     bool stop = false;
     SDL_Event event;
+    Vdp2 *vdp2 = (Vdp2 *) mem->getVdp2();
     while (!stop) {
       if (SDL_PollEvent(&event)) {
 	switch(event.type) {
@@ -212,7 +213,7 @@ void handleEvents(SaturnMemory *mem) {
 	}
       }
       else {
-	SDL_Delay(1);
+	vdp2->executer();
       }
     }
 }
@@ -240,9 +241,11 @@ int main(int argc, char **argv) {
   SaturnMemory *mem = new SaturnMemory("/cd/saturn.bin", NULL);
 #endif
 
-  SDL_CreateThread((int (*)(void*)) handleEvents, mem);
+  //SDL_CreateThread((int (*)(void*)) handleEvents, mem);
 
   mem->start();
+
+  handleEvents(mem);
 
   /*
 #ifndef _arch_dreamcast

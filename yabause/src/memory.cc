@@ -298,8 +298,10 @@ SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0) {
 void SaturnMemory::start(void) {
 	mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
 	//Vdp2::lancer((Vdp2 *) vdp2_3);
+	/*
 	Vdp2 * vdp2 = (Vdp2 *) vdp2_3;
 	while(!_stop) vdp2->executer();
+	*/
 }
 
 void SaturnMemory::stop(void) {
@@ -456,4 +458,8 @@ Memory *SaturnMemory::getVdp1(void) {
 
 Memory *SaturnMemory::getScu(void) {
 	return scu;
+}
+
+Memory *SaturnMemory::getVdp2(void) {
+	return vdp2_3;
 }

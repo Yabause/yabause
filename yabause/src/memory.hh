@@ -136,6 +136,7 @@ public:
   Memory *getVdp1Ram(void);
   Memory *getVdp1(void);
   Memory *getScu(void);
+  Memory *getVdp2(void);
 
   void start(void);
   void stop(void);
