@@ -22,3 +22,14 @@ char *	yui_bios(void);
 
 /* returns a cd device name or NULL if no cd device is used */
 char *	yui_cdrom(void);
+
+/* returns a save ram filename, not currently used */
+char * yui_saveram(void) {
+        return NULL;
+}
+
+/* returns a mpeg rom filename. Can be set to NULL if not present */
+char * yui_mpegrom(void) {
+	return NULL;
+}
+
