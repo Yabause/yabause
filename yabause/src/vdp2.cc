@@ -247,27 +247,14 @@ void Vdp2Screen::draw(void) {
         calcwidthRatio = (width * coordIncX) / 1024;
         calcheightRatio = (height * coordIncY) / 512;
 
-/*
-	if (*texture ==0) glGenTextures(1, texture );
-	glBindTexture(GL_TEXTURE_2D, texture[0] );
-#ifndef _arch_dreamcast
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
-  
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-#else
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 1024, 512, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
-#endif
-*/
-	int p = getPriority();
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, texture[0] );
 	glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, surface);
 	glBegin(GL_QUADS);
-        glTexCoord2f(0, 0); glVertex3f(-1, 1, p);
-        glTexCoord2f(calcwidthRatio, 0); glVertex3f(1, 1, p);
-        glTexCoord2f(calcwidthRatio, calcheightRatio); glVertex3f(1, -1, p);
-        glTexCoord2f(0, calcheightRatio); glVertex3f(-1, -1, p);
+        glTexCoord2f(0, 0); glVertex2i(0, 0);
+        glTexCoord2f(calcwidthRatio, 0); glVertex2i(320, 0);
+        glTexCoord2f(calcwidthRatio, calcheightRatio); glVertex2i(320, 224);
+        glTexCoord2f(0, calcheightRatio); glVertex2i(0, 224);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
 }
@@ -1627,7 +1614,10 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glOrtho(-1, 1, -1, 1, -10, 10);
+  //glOrtho(-1, 1, -1, 1, -10, 10);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0, 320, 224, 0, 1, 0);
 #ifndef _arch_dreamcast
   surface = new unsigned long [1024 * 512];
 #else
@@ -1715,7 +1705,8 @@ void Vdp2::VBlankOUT(void) {
   }
 
   if (fpstoggle) {
-     onScreenDebugMessage(-0.9, -0.85, "%02d/60 FPS", fps);
+     //onScreenDebugMessage(-0.9, -0.85, "%02d/60 FPS", fps);
+     onScreenDebugMessage(10, 214, "%02d/60 FPS", fps);
 
      frameCount++;
      if(SDL_GetTicks() >= ticks + 1000) {
@@ -1770,8 +1761,8 @@ void Vdp2::drawBackScreen(void) {
 			dot = vram->getWord(scrAddr);
 			scrAddr += 2;
 			glColor3ub(((dot & 0x1F) << 3), ((dot & 0x3E0) >> 2), ((dot & 0x7C00) >> 7));
-			glVertex2f(-1, (float) y / 112);
-			glVertex2f(1, (float) y / 112);
+			glVertex2f(0, y);
+			glVertex2f(320, y);
 		}
 		glEnd();
 		glColor3ub(0xFF, 0xFF, 0xFF);
@@ -1780,10 +1771,10 @@ void Vdp2::drawBackScreen(void) {
 		dot = vram->getWord(scrAddr);
 		glColor3ub(((dot & 0x1F) << 3), ((dot & 0x3E0) >> 2), ((dot & 0x7C00) >> 7));
 		glBegin(GL_QUADS);
-		glVertex2f(-1, 1);
-		glVertex2f(1, 1);
-		glVertex2f(1, -1);
-		glVertex2f(-1, -1);
+		glVertex2i(0, 0);
+		glVertex2i(320, 0);
+		glVertex2i(320, 224);
+		glVertex2i(0, 224);
 		glEnd();
 		glColor3ub(0xFF, 0xFF, 0xFF);
 	}
@@ -1834,6 +1825,9 @@ VdpScreen *Vdp2::getNBG3(void) {
 }
 
 void Vdp2::setSaturnResolution(int width, int height) {
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(0, width, height, 0, 1, 0);
    ((RBG0 *)rbg0)->setTextureRatio(width, height);
    ((NBG0 *)nbg0)->setTextureRatio(width, height);
    ((NBG1 *)nbg1)->setTextureRatio(width, height);

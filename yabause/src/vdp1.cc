@@ -386,10 +386,10 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
            glEnable( GL_TEXTURE_2D );
            glBindTexture(GL_TEXTURE_2D, sp.txr);
            glBegin(GL_QUADS);
-           glTexCoord2f(u1, v1); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) y/satheighthalf);
-           glTexCoord2f(u2, v1); glVertex2f((float) (x + w)/satwidthhalf - 1, 1 - (float) y/satheighthalf);
-           glTexCoord2f(u2, v2); glVertex2f((float) (x + w)/satwidthhalf - 1, 1 - (float) (y + h)/satheighthalf);
-           glTexCoord2f(u1, v2); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) (y + h)/satheighthalf);
+           glTexCoord2f(u1, v1); glVertex2i(x, y);
+           glTexCoord2f(u2, v1); glVertex2i(x + w, y);
+           glTexCoord2f(u2, v2); glVertex2i(x + w, y + h);
+           glTexCoord2f(u1, v2); glVertex2i(x, y + h);
            glEnd();
            glDisable( GL_TEXTURE_2D );
         }
@@ -487,10 +487,10 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
            glEnable( GL_TEXTURE_2D );
            glBindTexture( GL_TEXTURE_2D, sp.txr );
            glBegin(GL_QUADS);
-           glTexCoord2f(u1, v1); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) y/satheighthalf);
-           glTexCoord2f(u2, v1); glVertex2f((float) (x + rw)/satwidthhalf - 1, 1 - (float) y/satheighthalf);
-           glTexCoord2f(u2, v2); glVertex2f((float) (x + rw)/satwidthhalf - 1, 1 - (float) (y + rh)/satheighthalf);
-           glTexCoord2f(u1, v2); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) (y + rh)/satheighthalf);
+           glTexCoord2f(u1, v1); glVertex2i(x, y);
+           glTexCoord2f(u2, v1); glVertex2i(x + rw, y);
+           glTexCoord2f(u2, v2); glVertex2i(x + rw, y + rh);
+           glTexCoord2f(u1, v2); glVertex2i(x, y + rh);
            glEnd();
            glDisable( GL_TEXTURE_2D );
         }
@@ -526,10 +526,10 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
            glEnable(GL_TEXTURE_2D);
            glBindTexture(GL_TEXTURE_2D, sp.txr);
            glBegin(GL_QUADS);
-           glTexCoord2f(u1, v1); glVertex2f((float) (CMDXA + localX)/satwidthhalf - 1, 1 - (float) (CMDYA + localY)/satheighthalf);
-           glTexCoord2f(u2, v1); glVertex2f((float) (CMDXB + localX)/satwidthhalf - 1, 1 - (float) (CMDYB + localY)/satheighthalf);
-           glTexCoord2f(u2, v2); glVertex2f((float) (CMDXC + localX)/satwidthhalf - 1, 1 - (float) (CMDYC + localY)/satheighthalf);
-           glTexCoord2f(u1, v2); glVertex2f((float) (CMDXD + localX)/satwidthhalf - 1, 1 - (float) (CMDYD + localY)/satheighthalf);
+           glTexCoord2f(u1, v1); glVertex2i(CMDXA + localX, CMDYA + localY);
+           glTexCoord2f(u2, v1); glVertex2i(CMDXB + localX, CMDYB + localY);
+           glTexCoord2f(u2, v2); glVertex2i(CMDXC + localX, CMDYC + localY);
+           glTexCoord2f(u1, v2); glVertex2i(CMDXD + localX, CMDYD + localY);
            glEnd();
            glDisable(GL_TEXTURE_2D);
         }
@@ -561,10 +561,10 @@ void Vdp1::polygonDraw(unsigned long addr) {
 	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
 	glBegin(GL_QUADS);
 
-        glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
-        glVertex3f((float) X[1]/satwidthhalf - 1, 1 - (float) Y[1]/satheighthalf, priority);
-        glVertex3f((float) X[2]/satwidthhalf - 1, 1 - (float) Y[2]/satheighthalf, priority);
-        glVertex3f((float) X[3]/satwidthhalf - 1, 1 - (float) Y[3]/satheighthalf, priority);
+        glVertex2i(X[0], Y[0]);
+        glVertex2i(X[1], Y[1]);
+        glVertex2i(X[2], Y[2]);
+        glVertex2i(X[3], Y[3]);
 	glEnd();
 	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
 }
@@ -594,11 +594,11 @@ void Vdp1::polylineDraw(unsigned long addr) {
 
 	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
         glBegin(GL_LINE_STRIP);
-        glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
-        glVertex3f((float) X[1]/satwidthhalf - 1, 1 - (float) Y[1]/satheighthalf, priority);
-        glVertex3f((float) X[2]/satwidthhalf - 1, 1 - (float) Y[2]/satheighthalf, priority);
-        glVertex3f((float) X[3]/satwidthhalf - 1, 1 - (float) Y[3]/satheighthalf, priority);
-        glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
+        glVertex2i(X[0], Y[0]);
+        glVertex2i(X[1], Y[1]);
+        glVertex2i(X[2], Y[2]);
+        glVertex2i(X[3], Y[3]);
+        glVertex2i(X[0], Y[0]);
 	glEnd();
 	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
 }
@@ -625,8 +625,8 @@ void Vdp1::lineDraw(unsigned long addr) {
 
 	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
         glBegin(GL_LINES);
-        glVertex3f((float) X[0]/satwidthhalf - 1, 1 - (float) Y[0]/satheighthalf, priority);
-        glVertex3f((float) X[1]/satwidthhalf - 1, 1 - (float) Y[1]/satheighthalf, priority);
+        glVertex2i(X[0], Y[0]);
+        glVertex2i(X[1], Y[1]);
 	glEnd();
 	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
 }
