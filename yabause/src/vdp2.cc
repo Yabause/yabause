@@ -941,16 +941,6 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x120) {
   string title("Yabause ");
   title += VERSION;
   SDL_WM_SetCaption(title.c_str(), NULL);
-#endif
-  //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
-  surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
-  //vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, this);
-  	screens[4] = new RBG0(this, vram, cram, surface);
-  	screens[3] = new NBG0(this, vram, cram, surface);
-  	screens[2] = new NBG1(this, vram, cram, surface);
-  	screens[1] = new NBG2(this, vram, cram, surface);
-  	screens[0] = new NBG3(this, vram, cram, surface);
-	((Vdp1 *) satmem->getVdp1())->setVdp2Ram(this, cram);
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
@@ -963,6 +953,16 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x120) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glGenTextures(1, texture );
+#endif
+  //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
+  surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+  //vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, this);
+  	screens[4] = new RBG0(this, vram, cram, surface);
+  	screens[3] = new NBG0(this, vram, cram, surface);
+  	screens[2] = new NBG1(this, vram, cram, surface);
+  	screens[1] = new NBG2(this, vram, cram, surface);
+  	screens[0] = new NBG3(this, vram, cram, surface);
+	((Vdp1 *) satmem->getVdp1())->setVdp2Ram(this, cram);
 }
 
 Vdp2::~Vdp2(void) {
