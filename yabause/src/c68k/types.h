@@ -41,8 +41,10 @@ typedef signed long int int32;
 #define __sh__
 #endif
 #else
+#ifndef WORDS_BIGENDIAN
 #ifndef __x86__
 #define __x86__
+#endif
 #endif
 #endif
 

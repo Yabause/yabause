@@ -136,8 +136,7 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
 //    u32 PC;
 //    s32 CCnt;
     u32 Opcode;
-#endif
-#ifdef __sh__
+#else
 //    register c68k_struc *CPU asm ("r10");
 //    register u32 PC asm ("r11");
 //    register s32 CCnt asm ("r12");

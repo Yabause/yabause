@@ -1930,7 +1930,8 @@ static void GenMULS()
     
     set_current_size(SIZE_LONG);
     // op
-    wf_op("\t(s32)res *= (s32)src;\n");
+    //wf_op("\t(s32)res *= (s32)src;\n");
+    wf_op("\tres *= (s32)src;\n"); // antime fix
     
     // flag calculation
    	wf_op("\tCPU->flag_N = res >> 24;\n");
