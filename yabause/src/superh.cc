@@ -358,13 +358,10 @@ void SuperH::add(void) {
 }
 
 void SuperH::addi(void) {
-  long source = Instruction::cd(instruction);
+  long source = (long)(signed char)Instruction::cd(instruction);
   long dest = Instruction::b(instruction);
 
-  if (source & 128)
-    R[dest] += (0xFFFFFF00 | (long) source);
-  else
-    R[dest] += (0x000000FF & (long) source);
+  R[dest] += source;
   PC += 2;
   cycleCount++;
 }
@@ -423,7 +420,7 @@ void SuperH::y_and(void) {
 }
 
 void SuperH::andi(void) {
-  R[0] &= (0x000000FF & (long) Instruction::cd(instruction));
+  R[0] &= Instruction::cd(instruction);
   PC += 2;
   cycleCount++;
 }
@@ -433,7 +430,7 @@ void SuperH::andm(void) {
   long source = Instruction::cd(instruction);
 
   temp = (long) memoire->getByte(GBR + R[0]);
-  temp &= (0x000000FF & (long) source);
+  temp &= source;
   memoire->setByte((GBR + R[0]),temp);
   PC += 2;
   cycleCount += 3;
@@ -443,10 +440,8 @@ void SuperH::bf(void) { // FIXME peut etre amelioré
   long disp;
   long d = Instruction::cd(instruction);
 
-  if ((d&0x80)==0)
-    disp=(0x000000FF & (long)d);
-  else
-    disp=(0xFFFFFF00 | (long)d);
+  disp = (long)(signed char)d;
+
   if (SR.partie.T == 0) {
     PC = PC+(disp<<1)+4;
     cycleCount += 3;
@@ -463,10 +458,8 @@ void SuperH::bfs(void) { // FIXME peut être amélioré
   long d = Instruction::cd(instruction);
 
   temp = PC;
-  if ((d & 0x80) == 0)
-    disp = (0x000000FF & (long) d);
-  else
-    disp = (0xFFFFFF00 | (long) d);
+  disp = (long)(signed char)d;
+
   if (SR.partie.T == 0) {
     PC = PC + (disp << 1) + 4;
 
@@ -529,10 +522,7 @@ void SuperH::bt(void) { // FIXME ya plus rapide
   long disp;
   long d = Instruction::cd(instruction);
 
-  if ((d&0x80)==0)
-    disp=(0x000000FF & (long)d);
-  else
-    disp=(0xFFFFFF00 | (long)d);
+  disp = (long)(signed char)d;
   if (SR.partie.T == 1) {
     PC = PC+(disp<<1)+4;
     cycleCount += 3;
@@ -550,8 +540,7 @@ void SuperH::bts(void) {
   
   if (SR.partie.T) {
     temp = PC;
-    if ((d & 0x80) == 0) disp = (0x000000FF & (long) d);
-    else disp = (0xFFFFFF00 | (long)d);
+    disp = (long)(signed char)d;
     PC += (disp << 1) + 4;
     _delai = temp + 2;
     cycleCount += 2;
@@ -627,10 +616,8 @@ void SuperH::cmpim(void) {
   long imm;
   long i = Instruction::cd(instruction);
 
-  if ((i&0x80)==0)
-    imm = (0x000000FF & (long) i);
-  else
-    imm=(0xFFFFFF00 | (long) i);
+  imm = (long)(signed char)i;
+
   if (R[0] == (unsigned long) imm) // FIXME: ouais ça doit être bon...
     SR.partie.T = 1;
   else
@@ -662,11 +649,10 @@ void SuperH::cmpstr(void) {
   long HH,HL,LH,LL;
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
-  
   temp=R[n]^R[m];
-  HH = (temp>>12) & 0x000000FF;
-  HL = (temp>>8) & 0x000000FF;
-  LH = (temp>>4) & 0x000000FF;
+  HH = (temp>>24) & 0x000000FF;
+  HL = (temp>>16) & 0x000000FF;
+  LH = (temp>>8) & 0x000000FF;
   LL = temp & 0x000000FF;
   HH = HH && HL && LH && LL;
   if (HH == 0)
@@ -871,9 +857,7 @@ void SuperH::extsb(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = R[m];
-  if ((R[m]&0x00000080)==0) R[n]&=0x000000FF;
-  else R[n]|=0xFFFFFF00;
+  R[n] = (unsigned long)(signed char)R[m];
   PC += 2;
   cycleCount++;
 }
@@ -882,9 +866,7 @@ void SuperH::extsw(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = R[m];
-  if ((R[m]&0x00008000)==0) R[n]&=0x0000FFFF;
-  else R[n]|=0xFFFF0000;
+  R[n] = (unsigned long)(signed short)R[m];
   PC += 2;
   cycleCount++;
 }
@@ -893,8 +875,7 @@ void SuperH::extub(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = R[m];
-  R[n] &= 0x000000FF;
+  R[n] = (unsigned long)(unsigned char)R[m];
   PC += 2;
   cycleCount++;
 }
@@ -903,8 +884,7 @@ void SuperH::extuw(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = R[m];
-  R[n] &= 0x0000FFFF;
+  R[n] = (unsigned long)(unsigned short)R[m];
   PC += 2;
   cycleCount++;
 }
@@ -1067,7 +1047,6 @@ void SuperH::macl(void) {
     if (MACH & 0x00008000);
     else Res2 += MACH | 0xFFFF0000;
     Res2+=(MACH&0x0000FFFF);
-
     if(((long)Res2<0)&&(Res2<0xFFFF8000)){
       Res2=0x00008000;
       Res0=0x00000000;
@@ -1142,10 +1121,8 @@ void SuperH::mov(void) {
 }
 
 void SuperH::mova(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
 
-  disp=(0x000000FF & (long)d);
   R[0]=(PC&0xFFFFFFFC)+(disp<<2);
   PC+=2;
   cycleCount++;
@@ -1155,11 +1132,7 @@ void SuperH::movbl(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = (long) memoire->getByte(R[m]);
-  if ((R[n] & 0x80) == 0)
-    R[n] &= 0x000000FF;
-  else
-    R[n] |= 0xFFFFFF00;
+  R[n] = (long)(signed char)memoire->getByte(R[m]);
   PC += 2;
   cycleCount++;
 }
@@ -1167,37 +1140,27 @@ void SuperH::movbl(void) {
 void SuperH::movbl0(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
+  long temp;
 
-  R[n]=(long) memoire->getByte(R[m] + R[0]);
-  if ((R[n]&0x80)==0)
-    R[n] &= 0x000000FF;
-  else
-    R[n] |= 0xFFFFFF00;
+  R[n] = (long)(signed char)memoire->getByte(R[m] + R[0]);
   PC += 2;
   cycleCount++;
 }
 
 void SuperH::movbl4(void) {
-  long disp;
   long m = Instruction::c(instruction);
-  long d = Instruction::d(instruction);
+  long disp = Instruction::d(instruction);
 
-  disp=(0x0000000F & (long)d);
-  R[0] = memoire->getByte(R[m] + disp);
-  if ((R[0]&0x80)==0) R[0]&=0x000000FF;
-  else R[0]|=0xFFFFFF00;
+  R[0] = (long)(signed char)memoire->getByte(R[m] + disp);
   PC+=2;
   cycleCount++;
 }
 
 void SuperH::movblg(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
+  long temp;
   
-  disp=(0x000000FF & (long)d);
-  R[0]=(long) memoire->getByte(GBR + disp);
-  if ((R[0]&0x80)==0) R[0]&=0x000000FF;
-  else R[0]|=0xFFFFFF00;
+  R[0] = (long)(signed char)memoire->getByte(GBR + disp);
   PC+=2;
   cycleCount++;
 }
@@ -1216,11 +1179,7 @@ void SuperH::movbp(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = (long) memoire->getByte(R[m]);
-  if ((R[n]&0x80)==0)
-    R[n] &= 0x000000FF;
-  else
-    R[n] |= 0xFFFFFF00;
+  R[n] = (long)(signed char)memoire->getByte(R[m]);
   if (n != m)
     R[m] += 1;
   PC += 2;
@@ -1242,21 +1201,17 @@ void SuperH::movbs0(void) {
 }
 
 void SuperH::movbs4(void) {
-  long disp;
-  long d = Instruction::d(instruction);
+  long disp = Instruction::d(instruction);
   long n = Instruction::c(instruction);
 
-  disp=(0x0000000F & (long)d);
   memoire->setByte(R[n]+disp,R[0]);
   PC+=2;
   cycleCount++;
 }
 
 void SuperH::movbsg(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
 
-  disp=(0x000000FF & (long)d);
   memoire->setByte(GBR + disp,R[0]);
   PC += 2;
   cycleCount++;
@@ -1266,20 +1221,15 @@ void SuperH::movi(void) {
   long i = Instruction::cd(instruction);
   long n = Instruction::b(instruction);
 
-  if ((i & 0x80) == 0)
-    R[n] = (0x000000FF & (long)i);
-  else
-    R[n] = (0xFFFFFF00 | (long)i);
+  R[n] = (long)(signed char)i;
   PC += 2;
   cycleCount++;
 }
 
 void SuperH::movli(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
   long n = Instruction::b(instruction);
 
-  disp=(0x000000FF & (long)d);
   R[n] = memoire->getLong((PC & 0xFFFFFFFC) + (disp << 2));
   PC += 2;
   cycleCount++;
@@ -1300,22 +1250,18 @@ void SuperH::movll0(void) {
 }
 
 void SuperH::movll4(void) {
-  long disp;
   long m = Instruction::c(instruction);
-  long d = Instruction::d(instruction);
+  long disp = Instruction::d(instruction);
   long n = Instruction::b(instruction);
 
-  disp=(0x0000000F & (long)d);
   R[n] = memoire->getLong(R[m] + (disp << 2));
   PC += 2;
   cycleCount++;
 }
 
 void SuperH::movllg(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
 
-  disp=(0x000000FF & (long)d);
   R[0] = memoire->getLong(GBR + (disp << 2));
   PC+=2;
   cycleCount++;
@@ -1356,22 +1302,18 @@ void SuperH::movls0(void) {
 }
 
 void SuperH::movls4(void) {
-  long disp;
   long m = Instruction::c(instruction);
-  long d = Instruction::d(instruction);
+  long disp = Instruction::d(instruction);
   long n = Instruction::b(instruction);
 
-  disp = (0x0000000F & (long) d);
   memoire->setLong(R[n]+(disp<<2),R[m]);
   PC += 2;
   cycleCount++;
 }
 
 void SuperH::movlsg(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
 
-  disp=(0x000000FF & (long)d);
   memoire->setLong(GBR+(disp<<2),R[0]);
   PC+=2;
   cycleCount++;
@@ -1384,14 +1326,10 @@ void SuperH::movt(void) {
 }
 
 void SuperH::movwi(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
   long n = Instruction::b(instruction);
 
-  disp=(0x000000FF & (long)d);
-  R[n]=(long) memoire->getWord(PC + (disp<<1));
-  if ((R[n]&0x8000)==0) R[n]&=0x0000FFFF;
-  else R[n]|=0xFFFF0000;
+  R[n] = (long)(signed short)memoire->getWord(PC + (disp<<1));
   PC+=2;
   cycleCount++;
 }
@@ -1400,11 +1338,7 @@ void SuperH::movwl(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n]=(long) memoire->getWord(R[m]);
-  if ((R[n] & 0x8000) == 0)
-    R[n] &= 0x0000FFFF;
-  else
-    R[n] |= 0xFFFF0000;
+  R[n] = (long)(signed short)memoire->getWord(R[m]);
   PC += 2;
   cycleCount++;
 }
@@ -1413,38 +1347,24 @@ void SuperH::movwl0(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n]=(long) memoire->getWord(R[m]+R[0]);
-  if ((R[n]&0x8000)==0) {
-    R[n] &= 0x0000FFFF;
-  }
-  else {
-    R[n] |= 0xFFFF0000;
-  }
+  R[n] = (long)(signed short)memoire->getWord(R[m]+R[0]);
   PC+=2;
   cycleCount++;
 }
 
 void SuperH::movwl4(void) {
-  long disp;
   long m = Instruction::c(instruction);
-  long d = Instruction::d(instruction);
+  long disp = Instruction::d(instruction);
 
-  disp=(0x0000000F & (long)d);
-  R[0] = memoire->getWord(R[m]+(disp<<1));
-  if ((R[0]&0x8000)==0) R[0]&=0x0000FFFF;
-  else R[0]|=0xFFFF0000;
+  R[0] = (long)(signed short)memoire->getWord(R[m]+(disp<<1));
   PC+=2;
   cycleCount++;
 }
 
 void SuperH::movwlg(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
 
-  disp=(0x000000FF & (long)d);
-  R[0]=(long) memoire->getWord(GBR+(disp<<1));
-  if ((R[0]&0x8000)==0) R[0]&=0x0000FFFF;
-  else R[0]|=0xFFFF0000;
+  R[0] = (long)(signed short)memoire->getWord(GBR+(disp<<1));
   PC += 2;
   cycleCount++;
 }
@@ -1463,11 +1383,7 @@ void SuperH::movwp(void) {
   long m = Instruction::c(instruction);
   long n = Instruction::b(instruction);
 
-  R[n] = (long) memoire->getWord(R[m]);
-  if ((R[n]&0x8000)==0)
-    R[n] &= 0x0000FFFF;
-  else
-    R[n] |= 0xFFFF0000;
+  R[n] = (long)(signed short)memoire->getWord(R[m]);
   if (n != m)
     R[m] += 2;
   PC += 2;
@@ -1491,21 +1407,17 @@ void SuperH::movws0(void) {
 }
 
 void SuperH::movws4(void) {
-  long disp;
-  long d = Instruction::d(instruction);
+  long disp = Instruction::d(instruction);
   long n = Instruction::c(instruction);
 
-  disp=(0x0000000F & (long)d);
   memoire->setWord(R[n]+(disp<<1),R[0]);
   PC+=2;
   cycleCount++;
 }
 
 void SuperH::movwsg(void) {
-  long disp;
-  long d = Instruction::cd(instruction);
+  long disp = Instruction::cd(instruction);
 
-  disp=(0x000000FF & (long)d);
   memoire->setWord(GBR+(disp<<1),R[0]);
   PC+=2;
   cycleCount++;
@@ -1577,7 +1489,7 @@ void SuperH::y_or(void) {
 }
 
 void SuperH::ori(void) {
-  R[0] |= (0x000000FF & (long) Instruction::cd(instruction));
+  R[0] |= Instruction::cd(instruction);
   PC += 2;
   cycleCount++;
 }
@@ -1587,7 +1499,7 @@ void SuperH::orm(void) {
   long source = Instruction::cd(instruction);
 
   temp = (long) memoire->getByte(GBR + R[0]);
-  temp |= (0x000000FF & (long) source);
+  temp |= source;
   memoire->setByte(GBR + R[0],temp);
   PC += 2;
   cycleCount += 3;
@@ -1733,7 +1645,6 @@ void SuperH::shlr(void) {
   if ((R[n]&0x00000001)==0) SR.partie.T=0;
   else SR.partie.T=1;
   R[n]>>=1;
-  R[n]&=0x7FFFFFFF;
   PC+=2;
   cycleCount++;
 }
@@ -1741,7 +1652,6 @@ void SuperH::shlr(void) {
 void SuperH::shlr2(void) {
   long n = Instruction::b(instruction);
   R[n]>>=2;
-  R[n]&=0x3FFFFFFF;
   PC+=2;
   cycleCount++;
 }
@@ -1749,7 +1659,6 @@ void SuperH::shlr2(void) {
 void SuperH::shlr8(void) {
   long n = Instruction::b(instruction);
   R[n]>>=8;
-  R[n]&=0x00FFFFFF;
   PC+=2;
   cycleCount++;
 }
@@ -1757,7 +1666,6 @@ void SuperH::shlr8(void) {
 void SuperH::shlr16(void) {
   long n = Instruction::b(instruction);
   R[n]>>=16;
-  R[n]&=0x0000FFFF;
   PC+=2;
   cycleCount++;
 }
@@ -1936,10 +1844,8 @@ void SuperH::tas(void) {
 }
 
 void SuperH::trapa(void) {
-  long imm;
-  long i = Instruction::cd(instruction);
+  long imm = Instruction::cd(instruction);
 
-  imm=(0x000000FF & i);
   R[15]-=4;
   memoire->setLong(R[15],SR.tout);
   R[15]-=4;
@@ -1961,7 +1867,7 @@ void SuperH::tsti(void) {
   long temp;
   long i = Instruction::cd(instruction);
 
-  temp=R[0]&(0x000000FF & (long)i);
+  temp=R[0]&i;
   if (temp==0) SR.partie.T = 1;
   else SR.partie.T = 0;
   PC+=2;
@@ -1973,7 +1879,7 @@ void SuperH::tstm(void) {
   long i = Instruction::cd(instruction);
 
   temp=(long) memoire->getByte(GBR+R[0]);
-  temp&=(0x000000FF & (long)i);
+  temp&=i;
   if (temp==0) SR.partie.T = 1;
   else SR.partie.T = 0;
   PC+=2;
@@ -1988,7 +1894,7 @@ void SuperH::y_xor(void) {
 
 void SuperH::xori(void) {
   long source = Instruction::cd(instruction);
-  R[0] ^= (0x000000FF & (long) source);
+  R[0] ^= source;
   PC += 2;
   cycleCount++;
 }
@@ -1998,7 +1904,7 @@ void SuperH::xorm(void) {
   long temp;
 
   temp = (long) memoire->getByte(GBR + R[0]);
-  temp ^= (0x000000FF & (long) source);
+  temp ^= source;
   memoire->setByte(GBR + R[0],temp);
   PC += 2;
   cycleCount += 3;
