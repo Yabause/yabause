@@ -116,6 +116,7 @@ private:
 
   SuperH *msh;
   SuperH *ssh;
+  bool sshRunning;
 
   bool _stop;
 
@@ -160,11 +161,8 @@ public:
 
   void synchroStart(void);
 
-  /*
-  bool start(void);
-  void stop(void);
-  */
-  //bool running(void);
+  void startSlave(void);
+  void stopSlave(void);
 };
 
 #endif

@@ -63,9 +63,18 @@ SuperH::~SuperH(void) {
 }
 
 void SuperH::setMemory(Memory *mem) {
-  memoire = mem;
-  PC = memoire->getLong(VBR) + 4;
-  R[15] = memoire->getLong(VBR + 4);
+	if (isslave) {
+		memoire = mem;
+		VBR = 0x6000400;
+		PC = memoire->getLong(VBR) + 4;
+		cerr << hex << "init PC=" << PC << endl;
+		R[15] = 0x6001000;
+	}
+	else {
+		memoire = mem;
+		PC = memoire->getLong(VBR) + 4;
+		R[15] = memoire->getLong(VBR + 4);
+	}
 }
 
 Memory *SuperH::getMemory(void) {
@@ -114,6 +123,7 @@ void SuperH::executer(void) {
 }
 
 void SuperH::_executer(void) {
+	if (isslave) cerr << "PC=" << PC << endl;
 	instruction = memoire->getWord(PC - 4);
 	(this->*opcodes[instruction])();
 }
@@ -124,6 +134,12 @@ void SuperH::run(int t) {
 		if (timing <= 0) {
 			sendNMI();
 		}
+	}
+}
+
+void SuperH::runCycles(unsigned long cc) {
+	for(unsigned long i = 0;i < cc;i++) {
+		executer();
 	}
 }
 
@@ -1751,7 +1767,7 @@ void SuperH::xtrct(void) {
 }
 
 void SuperH::sleep(void) {
-  cerr << "SLEEP" << endl;
+  //cerr << "SLEEP" << endl;
   cycleCount += 3;
 }
 

@@ -154,6 +154,7 @@ public:
   void send(const Interrupt&);
   void sendNMI(void);
   void run(int);
+  void runCycles(unsigned long);
 
   Memory *GetSdramMode();
   Memory *GetPurgeArea();

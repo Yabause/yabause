@@ -293,8 +293,8 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	onchip      = new Onchip(this);
 	ram         = new Memory(0xFFFF, 0x10000);
 	ramLow      = new Memory(0xFFFFF, 0x100000);
-	minit       = new Dummy(0x10000);
-	sinit       = new Dummy(0x10000);
+	minit       = new LoggedMemory("minit", new Dummy(0x10000), 1);
+	sinit       = new LoggedMemory("sinit", new Dummy(0x10000), 1);
 	cs0	      = new Dummy(0xFFFFFF);
 	cs1         = new Cs1();
 	cs2         = new Cs2();
@@ -366,6 +366,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	//mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
 //        sshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, ssh);
 	//msh->run();
+	sshRunning = false;
 }
 
 SaturnMemory::~SaturnMemory(void) {
@@ -661,9 +662,8 @@ void SaturnMemory::mappage(unsigned long adr) {
 }
 
 void SaturnMemory::synchroStart(void) {
-	while(msh->cycleCount < decilineStop) {
-		msh->executer();
-	}
+	msh->runCycles(decilineStop);
+	if (sshRunning) ssh->runCycles(decilineStop);
 
 	decilineCount++;
 	switch(decilineCount) {
@@ -712,4 +712,13 @@ void SaturnMemory::synchroStart(void) {
         ((Scsp *)soundr)->run68k(170);
 
 	msh->cycleCount %= decilineStop;
+}
+
+void SaturnMemory::startSlave(void) {
+	ssh->setMemory(this);
+	sshRunning = true;
+}
+
+void SaturnMemory::stopSlave(void) {
+	sshRunning = false;
 }

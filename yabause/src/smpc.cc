@@ -111,9 +111,6 @@ void Smpc::setTiming(void) {
 			timing = 30;
                         break;
                 case 0x2:
-#if DEBUG
-                        cerr << "smpc\t: SSHON not implemented\n";
-#endif
 			timing = 30;
                         break;
                 case 0x3:
@@ -188,9 +185,10 @@ void Smpc::execute(Smpc *smpc) {
 #endif
     break;
   case 0x2:
-#if DEBUG
-    cerr << "smpc\t: SSHON not implemented\n";
+#if 1
+    cerr << "smpc\t: SSHON\n";
 #endif
+    smpc->SSHON();
     break;
   case 0x3:
 #if DEBUG
@@ -423,3 +421,7 @@ void Smpc::SETSMEM(void) {
   setOREG(31, 0x17);
 }
 
+void Smpc::SSHON(void) {
+	cerr << "starting slave" << endl;
+	sm->startSlave();
+}
