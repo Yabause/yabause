@@ -459,6 +459,22 @@ void Cs2::reset(void) {
   _command = false;
   _periodiccycles = 0;
   SetTiming(false);
+
+  // MPEG specific stuff
+  mpegcon[0].audcon = mpegcon[0].vidcon = 0x00;
+  mpegcon[0].audlay = mpegcon[0].vidlay = 0x00;
+  mpegcon[0].audbufdivnum = mpegcon[0].vidbufdivnum = 0xFF;
+  mpegcon[1].audcon = mpegcon[1].vidcon = 0x00;
+  mpegcon[1].audlay = mpegcon[1].vidlay = 0x00;
+  mpegcon[1].audbufdivnum = mpegcon[1].vidbufdivnum = 0xFF;
+
+  // should verify the following
+  mpegstm[0].audstm = mpegstm[0].vidstm = 0x00; 
+  mpegstm[0].audstmid = mpegstm[0].vidstmid = 0x00; 
+  mpegstm[0].audchannum = mpegstm[0].vidchannum = 0x00; 
+  mpegstm[1].audstm = mpegstm[1].vidstm = 0x00;
+  mpegstm[1].audstmid = mpegstm[1].vidstmid = 0x00; 
+  mpegstm[1].audchannum = mpegstm[1].vidchannum = 0x00; 
 }
 
 void Cs2::run(unsigned long timing) {
@@ -917,6 +933,12 @@ void Cs2::execute(void) {
 #endif
       mpegGetConnection();
 
+      break;
+    case 0x9D:
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: mpegSetStream\n");
+#endif
+      mpegSetStream();
       break;
     case 0x9E:
 #if CDDEBUG
@@ -2055,7 +2077,28 @@ void Cs2::mpegSetDecodingMethod(void) {
 }
 
 void Cs2::mpegSetConnection(void) {
-   // fix me
+   bool mscnext = (getCR3() >> 8);
+
+   if (mscnext == false)
+   {
+      // Current
+      mpegcon[0].audcon = getCR1() & 0xFF;
+      mpegcon[0].audlay = getCR2() >> 8;
+      mpegcon[0].audbufdivnum = getCR2() & 0xFF;
+      mpegcon[0].vidcon = getCR3() & 0xFF;
+      mpegcon[0].vidlay = getCR4() >> 8;
+      mpegcon[0].vidbufdivnum = getCR4() & 0xFF;
+   }
+   else
+   {
+      // Next
+      mpegcon[1].audcon = getCR1() & 0xFF;
+      mpegcon[1].audlay = getCR2() >> 8;
+      mpegcon[1].audbufdivnum = getCR2() & 0xFF;
+      mpegcon[1].vidcon = getCR3() & 0xFF;
+      mpegcon[1].vidlay = getCR4() >> 8;
+      mpegcon[1].vidbufdivnum = getCR4() & 0xFF;
+   }
 
    // return default mpeg stats
    setCR1((status << 8) | actionstatus);
@@ -2066,22 +2109,80 @@ void Cs2::mpegSetConnection(void) {
 }
 
 void Cs2::mpegGetConnection(void) {
+   bool mgcnext = (getCR3() >> 8);
 
-   // fix me(should be returning the connection variables)
-   setCR1((status << 8) | 0);
-   setCR2(0);
-   setCR3(0);
-   setCR4(0);
+   if (mgcnext == false)
+   {
+      // Current
+      setCR1((status << 8) | mpegcon[0].audcon);
+      setCR2((mpegcon[0].audlay << 8) | mpegcon[0].audbufdivnum);
+      setCR3(mpegcon[0].vidcon);
+      setCR4((mpegcon[0].vidlay << 8) | mpegcon[0].vidbufdivnum);
+   }
+   else
+   {
+      // Next
+      setCR1((status << 8) | mpegcon[1].audcon);
+      setCR2((mpegcon[1].audlay << 8) | mpegcon[1].audbufdivnum);
+      setCR3(mpegcon[1].vidcon);
+      setCR4((mpegcon[1].vidlay << 8) | mpegcon[1].vidbufdivnum);
+   }
+
+   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+}
+
+void Cs2::mpegSetStream(void) {
+   bool mssnext = (getCR3() >> 8);
+
+   if (mssnext == false)
+   {
+      // Current
+      mpegstm[0].audstm = getCR1() & 0xFF;
+      mpegstm[0].audstmid = getCR2() >> 8;
+      mpegstm[0].audchannum = getCR2() & 0xFF;
+      mpegstm[0].vidstm = getCR3() & 0xFF;
+      mpegstm[0].vidstmid = getCR4() >> 8;
+      mpegstm[0].vidchannum = getCR4() & 0xFF;
+   }
+   else
+   {
+      // Next
+      mpegstm[1].audstm = getCR1() & 0xFF;
+      mpegstm[1].audstmid = getCR2() >> 8;
+      mpegstm[1].audchannum = getCR2() & 0xFF;
+      mpegstm[1].vidstm = getCR3() & 0xFF;
+      mpegstm[1].vidstmid = getCR4() >> 8;
+      mpegstm[1].vidchannum = getCR4() & 0xFF;
+   }
+
+   // return default mpeg stats
+   setCR1((status << 8) | actionstatus);
+   setCR2(vcounter);
+   setCR3((pictureinfo << 8) | mpegaudiostatus);
+   setCR4(mpegvideostatus);
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 
 void Cs2::mpegGetStream(void) {
+   bool mgsnext = (getCR3() >> 8);
 
-   // fix me(should be returning the stream variables)
-   setCR1((status << 8) | 0);
-   setCR2(0);
-   setCR3(0);
-   setCR4(0);
+   if (mgsnext == false)
+   {
+      // Current
+      setCR1((status << 8) | mpegstm[0].audstm);
+      setCR2((mpegstm[0].audstmid << 8) | mpegstm[0].audchannum);
+      setCR3(mpegstm[0].vidstm);
+      setCR4((mpegstm[0].vidstmid << 8) | mpegstm[0].vidchannum);
+   }
+   else
+   {
+      // Next
+      setCR1((status << 8) | mpegstm[1].audstm);
+      setCR2((mpegstm[1].audstmid << 8) | mpegstm[1].audchannum);
+      setCR3(mpegstm[1].vidstm);
+      setCR4((mpegstm[1].vidstmid << 8) | mpegstm[1].vidchannum);
+   }
+
    setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
 }
 

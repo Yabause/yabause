@@ -93,6 +93,26 @@ typedef struct
   xarec_struct xarecord;
 } dirrec_struct;
 
+typedef struct
+{
+   unsigned char audcon;
+   unsigned char audlay;
+   unsigned char audbufdivnum;
+   unsigned char vidcon;
+   unsigned char vidlay;
+   unsigned char vidbufdivnum;
+} mpegcon_struct;
+
+typedef struct
+{
+   unsigned char audstm;
+   unsigned char audstmid;
+   unsigned char audchannum;
+   unsigned char vidstm;
+   unsigned char vidstmid;
+   unsigned char vidchannum;
+} mpegstm_struct;
+
 class Cs2 : public Cpu, public Memory {
 private:
   unsigned long FAD;
@@ -157,6 +177,9 @@ private:
   unsigned long numfiles;
 
   unsigned long mpegintmask;
+
+  mpegcon_struct mpegcon[2];
+  mpegstm_struct mpegstm[2];
 
   bool _command;
   unsigned long _periodiccycles;
@@ -248,7 +271,7 @@ public:
   void mpegSetConnection(void);           // 0x9A
   void mpegGetConnection(void);           // 0x9B
   // MPEG Change Connection               // 0x9C
-  // MPEG Set Stream                      // 0x9D
+  void mpegSetStream(void);               // 0x9D
   void mpegGetStream(void);               // 0x9E
   // MPEG Get Picture Size                // 0x9F
   void mpegDisplay(void);                 // 0xA0
