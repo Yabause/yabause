@@ -69,10 +69,10 @@ public:
 
 class Vdp2Screen {
 protected:
+  SDL_Surface *surface;
   Vdp2Registers *reg;
   Vdp2Ram *vram;
   Vdp2ColorRam *cram;
-  SDL_Surface *surface;
 
   virtual void init(void) = 0;
   virtual void planeAddr(int) = 0;
@@ -103,6 +103,7 @@ public:
 
   int getAlpha(void);
   int getColorOffset(void);
+  SDL_Surface *getSurface(void);
   
   void draw(void);
   void drawMap(void);
@@ -170,6 +171,7 @@ private:
   Vdp2ColorRam *cram;
   Scu *scu;
   SDL_Surface *surface;
+  SDL_Surface *GLSurface;
   SDL_Surface *logo;
 
   Vdp2Screen *screens[5];

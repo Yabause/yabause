@@ -27,6 +27,7 @@
 #endif
 #include "SDL_gfxPrimitives.h"
 #include "SDL_imageFilter.h"
+#include <GL/gl.h>
 
 /****************************************/
 /*					*/
@@ -125,25 +126,32 @@ void Vdp2ColorRam::setMode(int v) {
 }
 
 unsigned long Vdp2ColorRam::getColor(unsigned long addr, Vdp2Screen *screen) {
+  int alpha, colorOffset;
+  alpha = screen->getAlpha();
+  colorOffset = screen->getColorOffset();
+
   switch(mode) {
   case 0: {
     addr *= 2; // merci Runik !
-    addr += screen->getColorOffset() * 0x200;
+    addr += colorOffset * 0x200;
     unsigned long tmp = getWord(addr);
-    return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | screen->getAlpha();
+    return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
+    //return SDL_MapRGBA(screen->getSurface()->format, (tmp & 0x1F) << 27, (tmp & 0x3E0) << 14, (tmp & 0x7C00) << 1, alpha);
   }
   case 1: {
     addr *= 2; // merci Runik !
-    addr += screen->getColorOffset() * 0x400;
+    addr += colorOffset * 0x400;
     unsigned long tmp = getWord(addr);
-    return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | screen->getAlpha();
+    return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
+    //return SDL_MapRGBA(screen->getSurface()->format, (tmp & 0x1F) << 27, (tmp & 0x3E0) << 14, (tmp & 0x7C00) << 1, alpha);
   }
   case 2: {
     addr *= 2; // merci Runik !
-    addr += screen->getColorOffset() * 0x200;
+    addr += colorOffset * 0x200;
     unsigned long tmp1 = getWord(addr);
     unsigned long tmp2 = getWord(addr + 2);
-    return  ((tmp2 & 0xFF) << 24) | ((tmp1 & 0xFF00) << 8) | ((tmp2 & 0xFF) << 8) | screen->getAlpha();
+    return  ((tmp2 & 0xFF) << 24) | ((tmp1 & 0xFF00) << 8) | ((tmp2 & 0xFF) << 8) | alpha;
+    //return SDL_MapRGBA(screen->getSurface()->format, (tmp2 & 0xFF) << 24, (tmp1 & 0xFF00) << 8, (tmp2 & 0xFF) << 8, alpha);
   }
   }
 }
@@ -456,14 +464,6 @@ void Vdp2Screen::drawPixel(SDL_Surface *dst, Sint16 x, Sint16 y, Uint32 tmpcolor
 	Uint32 color;
 	int result = 0;
 	
-	/*
-	if (SDL_MUSTLOCK(dst)) {
-		if (SDL_LockSurface(dst) < 0) {
-			return;
-		}
-	}
-	*/
-	
 	alpha = tmpcolor & 0x000000ff;
 	color = SDL_MapRGBA(dst->format, (tmpcolor & 0xff000000) >> 24, (tmpcolor & 0x00ff0000) >> 16, (tmpcolor & 0x0000ff00) >> 8, alpha);
 	
@@ -475,7 +475,7 @@ void Vdp2Screen::drawPixel(SDL_Surface *dst, Sint16 x, Sint16 y, Uint32 tmpcolor
 	                                                                                                                                                  
 	if (x >= clip_xmin(surface) && x <= clip_xmax(surface) && y >= clip_ymin(surface) && y <= clip_ymax(surface)) {
 		switch (surface->format->BytesPerPixel) {
-			case 1:{                /* Assuming 8-bpp */
+			case 1:{
 				if (alpha == 255) {
 					*((Uint8 *) surface->pixels + y * surface->pitch + x) = color;
 				} else {
@@ -496,7 +496,7 @@ void Vdp2Screen::drawPixel(SDL_Surface *dst, Sint16 x, Sint16 y, Uint32 tmpcolor
 				}
 			}
 			break;
-			case 2:{                /* Probably 15-bpp or 16-bpp */
+			case 2:{
 				if (alpha == 255) {
 					*((Uint16 *) surface->pixels + y * surface->pitch / 2 + x) = color;
 				 } else {
@@ -513,7 +513,7 @@ void Vdp2Screen::drawPixel(SDL_Surface *dst, Sint16 x, Sint16 y, Uint32 tmpcolor
 				}
 			}
 			break;
-			case 3:{		/* Slow 24-bpp mode, usually not used */
+			case 3:{
 				Uint8 *pix = (Uint8 *) surface->pixels + y * surface->pitch + x * 3;
 				Uint8 rshift8 = surface->format->Rshift / 8;
 				Uint8 gshift8 = surface->format->Gshift / 8;
@@ -555,7 +555,7 @@ void Vdp2Screen::drawPixel(SDL_Surface *dst, Sint16 x, Sint16 y, Uint32 tmpcolor
 	    		}
 	    		break;
 
-			case 4:{		/* Probably 32-bpp */
+			case 4:{
 				if (alpha == 255) {
 		    			*((Uint32 *) surface->pixels + y * surface->pitch / 4 + x) = color;
 				} else {
@@ -574,12 +574,6 @@ void Vdp2Screen::drawPixel(SDL_Surface *dst, Sint16 x, Sint16 y, Uint32 tmpcolor
 	   	 	break;
 		}
     	}
-	
-		/*
-	if (SDL_MUSTLOCK(dst)) {
-		SDL_UnlockSurface(dst);
-	}
-	*/
 }
 
 int Vdp2Screen::getAlpha(void) {
@@ -588,6 +582,10 @@ int Vdp2Screen::getAlpha(void) {
 
 int Vdp2Screen::getColorOffset(void) {
 	return colorOffset;
+}
+
+SDL_Surface *Vdp2Screen::getSurface(void) {
+	return surface;
 }
 
 void RBG0::init(void) {
@@ -1000,14 +998,8 @@ Vdp2::Vdp2(Vdp2Registers *r, Vdp2Ram *vr, Vdp2ColorRam *c, Scu *s, Vdp1 *v) {
   title += VERSION;
   SDL_WM_SetCaption(title.c_str(), NULL);
 #endif
-  surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
-  
-  screens[4] = new RBG0(reg, vram, cram, surface);
-  screens[3] = new NBG0(reg, vram, cram, surface);
-  screens[2] = new NBG1(reg, vram, cram, surface);
-  screens[1] = new NBG2(reg, vram, cram, surface);
-  screens[0] = new NBG3(reg, vram, cram, surface);
-  vdp1->setSurface(surface);
+  //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
+  surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
 }
 
 Vdp2::~Vdp2(void) {
@@ -1017,7 +1009,26 @@ Vdp2::~Vdp2(void) {
 }
 
 void Vdp2::lancer(Vdp2 *vdp2) {
-  while(!vdp2->_stop) vdp2->executer();
+	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
+	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
+	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
+	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4 );
+	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
+	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+
+	vdp2->GLSurface = SDL_SetVideoMode(320,224,32, SDL_OPENGL);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+  	vdp2->screens[4] = new RBG0(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
+  	vdp2->screens[3] = new NBG0(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
+  	vdp2->screens[2] = new NBG1(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
+  	vdp2->screens[1] = new NBG2(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
+  	vdp2->screens[0] = new NBG3(vdp2->reg, vdp2->vram, vdp2->cram, vdp2->surface);
+	vdp2->vdp1->setVdp2Ram(vdp2->reg, vdp2->cram);
+
+	while(!vdp2->_stop) vdp2->executer();
 }
 
 void Vdp2::executer(void) {
@@ -1039,6 +1050,8 @@ void Vdp2::executer(void) {
   }
   t.waitVBlankOUT();
   reg->setTVSTAT(reg->getTVSTAT() & 0xFFF7);
+
+  glClear(GL_COLOR_BUFFER_BIT);
   drawBackScreen();
   if (reg->getWord(0) & 0x8000) {
     if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
@@ -1049,9 +1062,29 @@ void Vdp2::executer(void) {
     screens[4]->draw();
     if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
   }
+  GLuint texture[1];
+  glGenTextures(1, texture );
+  glBindTexture(GL_TEXTURE_2D, texture[0] );
+  glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+  glEnable( GL_TEXTURE_2D );
+  glBindTexture( GL_TEXTURE_2D, texture[0] );
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0); glVertex2f(-1, 1);
+  glTexCoord2f(0.625, 0); glVertex2f(1, 1);
+  glTexCoord2f(0.625, 0.875); glVertex2f(1, -1);
+  glTexCoord2f(0, 0.875); glVertex2f(-1, -1);
+  glEnd();
+  glDisable( GL_TEXTURE_2D );
+
   vdp1->execute(0);
+  glFlush();
+  SDL_GL_SwapBuffers();
   //colorOffset();
-  SDL_Flip(surface);
+  //SDL_Flip(surface);
   scu->sendVBlankOUT();
 }
 

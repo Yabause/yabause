@@ -24,6 +24,8 @@
 #include "scu.hh"
 #include "timer.hh"
 #include "SDL_gfxPrimitives.h"
+#include <GL/gl.h>
+#include "vdp2.hh"
 
 Vdp1Registers::Vdp1Registers(Memory *mem, Scu *scu) : Memory(0x18) {
   vdp1 = new Vdp1(this, mem, scu);
@@ -45,31 +47,22 @@ Vdp1 *Vdp1Registers::getVdp1(void) {
 }
 
 Vdp1::Vdp1(Vdp1Registers *reg, Memory *mem, Scu *s) {
-  memory = mem;
-  registers = reg;
-  scu = s;
+	memory = mem;
+	registers = reg;
+	scu = s;
 
-  _stop = false;
-  registers->setWord(0x4, 0);
+	_stop = false;
+	registers->setWord(0x4, 0);
+	glGenTextures(1, texture );
 }
 
 void Vdp1::stop(void) {
   _stop = true;
 }
 
-void Vdp1::setSurface(SDL_Surface *s) {
-	vdp2Surface = s;
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-	vdp1Surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 400, 400, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
-#else
-	vdp1Surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 400, 400, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
-#endif
-
-}
-
 void Vdp1::execute(unsigned long addr) {
   unsigned short command = memory->getWord(addr);
-  unsigned long next;
+  int nbcom = 0;
 
   if (!registers->getWord(0x4)) return;
 
@@ -78,23 +71,15 @@ void Vdp1::execute(unsigned long addr) {
   // CEF <- 0
   registers->setWord(0x10, (registers->getWord(0x10) & 2) >> 1);
 
-  SDL_Rect cleanRect;
-  cleanRect.x = registers->getWord(0x8) >> 8;
-  cleanRect.y = registers->getWord(0x8) & 0xFF;
-  cleanRect.w = (registers->getWord(0xA) >> 5) - cleanRect.x;
-  cleanRect.h = (registers->getWord(0xA) & 0xFF) - cleanRect.y;
-
-  SDL_FillRect(vdp1Surface, &cleanRect, SDL_MapRGBA(vdp1Surface->format, 0xFF, 0xFF, 0xFF, 0));
-  
-  while ((!(command & 0x8000))) { // FIXME
+  while (!(command & 0x8000)) {
 
     // First, process the command
     if (!(command & 0x4000)) { // if (!skip)
       switch (command & 0x001F) {
-	case 0: //cerr << "vdp1\t: normal sprite draw" << endl;
+	case 0: // normal sprite draw
 	  normalSpriteDraw(addr);
 	  break;
-	case 1: //cerr << "vdp1\t:  scaled sprite draw" << endl;
+	case 1: // scaled sprite draw
 	  scaledSpriteDraw();
 	  break;
 	case 2: // distorted sprite draw
@@ -122,9 +107,7 @@ void Vdp1::execute(unsigned long addr) {
 	  drawEnd();
 	  break;
 	default:
-#ifdef DEBUG
-	  cerr << "vdp1\t: Bad command : " << hex << setw(10) << command << endl;
-#endif
+	  cerr << "vdp1\t: Bad command: " << hex << setw(10) << command << endl;
 	  break;
       }
     }
@@ -140,16 +123,9 @@ void Vdp1::execute(unsigned long addr) {
     case 2: // CALL, call a subroutine
       returnAddr = addr;
       addr = memory->getWord(addr + 2) * 8;
-#ifdef DEBUG
-	  cerr << "CALL " << addr << endl;
-#endif
       break;
     case 3: // RETURN, return from subroutine
       addr = returnAddr;
-#ifdef DEBUG
-      cerr << "RET" << endl;
-#endif
-      break;
     }
 #ifndef _arch_dreamcast
     try { command = memory->getWord(addr); }
@@ -158,28 +134,106 @@ void Vdp1::execute(unsigned long addr) {
     command = memory->getWord(addr);
 #endif
   }
-  // drawing is finished, we set two bits at 1
+  // we set two bits to 1
   registers->setWord(0x10, registers->getWord(0x10) | 2);
-#if DEBUG
-  //cerr << "vdp1 : draw end\n";
-#endif
-  SDL_BlitSurface(vdp1Surface, NULL, vdp2Surface, NULL);
   scu->sendDrawEnd();
 }
 
+void Vdp1::setVdp2Ram(Vdp2Registers *r, Vdp2ColorRam *c) {
+	vdp2regs = r;
+	cram = c;
+}
+
+int Vdp1::getAlpha(void) {
+	return 0xFF;
+}
+
+int Vdp1::getColorOffset(void) {
+	return (vdp2regs->getWord(0xE6) & 0x70) >> 4;
+}
+
+SDL_Surface *Vdp1::getSurface(void) {
+	return surface;
+}
+
+static int power_of_two(int input)
+{
+	int value = 1;
+
+	while ( value < input ) {
+		value <<= 1;
+	}
+	return value;
+}
+
 void Vdp1::normalSpriteDraw(unsigned long addr) {
-  unsigned short xy = memory->getWord(addr + 0xA);
+	unsigned short xy = memory->getWord(addr + 0xA);
 
-  SDL_Rect rect;
-  rect.x = localX + memory->getWord(addr + 0xC);
-  rect.y = localY + memory->getWord(addr + 0xE);
-  rect.w = ((xy >> 8) & 0x3F) * 8;
-  rect.h = xy & 0xFF;
+	unsigned short x = localX + memory->getWord(addr + 0xC);
+	unsigned short y = localY + memory->getWord(addr + 0xE);
+	unsigned short w = ((xy >> 8) & 0x3F) * 8;
+	unsigned short h = xy & 0xFF;
+	unsigned short ww = power_of_two(w);
+	unsigned short hh = power_of_two(h);
 
-  SDL_FillRect(vdp1Surface, &rect, SDL_MapRGBA(vdp1Surface->format, 0xFF, 0, 0, 0xFF));
-#if DEBUG
-  //cerr << "vdp1\t: normal sprite draw" << endl;
-#endif
+        surface = SDL_CreateRGBSurface(SDL_SWSURFACE, ww, hh, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+	//SDL_SetAlpha(surface,SDL_SRCALPHA,0xFF);
+
+	unsigned long charAddr = memory->getWord(addr + 0x8) * 8;
+	unsigned long dot, color;
+
+	unsigned short colorMode = (memory->getWord(addr + 0x4) & 0x38) >> 3;
+	unsigned short colorBank = memory->getWord(addr + 0x6);
+	switch(colorMode) {
+	case 0:
+		for(unsigned short i = 0;i < h;i++) {
+			for(unsigned short j = 0;j < w;j += 2) {
+				dot = memory->getByte(charAddr);
+				color = cram->getColor((colorBank & 0xF0) + (dot >> 4), (Vdp2Screen *) this);
+				pixelColor(surface, j, i, color);
+				color = cram->getColor((colorBank & 0xF0) + (dot & 0xF), (Vdp2Screen *) this);
+				pixelColor(surface, j + 1, i, color);
+				charAddr += 1;
+			}
+		}
+		break;
+	case 1:
+		cerr << "color mode 1 not implemented" << endl; break;
+	case 2:
+		cerr << "color mode 2 not implemented" << endl; break;
+	case 3:
+		cerr << "color mode 3 not implemented" << endl; break;
+	case 4:
+		cerr << "color mode 4 not implemented" << endl; break;
+	case 5:
+		for(unsigned short i = 0;i < h;i++) {
+			for(unsigned short j = 0;j < w;j++) {
+				dot = memory->getWord(charAddr);
+				charAddr += 2;
+				color = (dot & 0x1F) << 27 | (dot & 0x7E0) << 14 | (dot & 0x7C00) << 1 | 0xFF;
+				if (dot != 0) pixelColor(surface, j, i, color);
+				else pixelColor(surface, j, i, 0);
+			}
+		}
+	}
+
+	glBindTexture(GL_TEXTURE_2D, texture[0] );
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+	glEnable( GL_TEXTURE_2D );
+	glBindTexture( GL_TEXTURE_2D, texture[0] );
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0); glVertex2f((float) x/160 - 1, 1 - (float) y/112);
+	glTexCoord2f((float) w / ww, 0); glVertex2f((float) (x + w)/160 - 1, 1 - (float) y/112);
+	glTexCoord2f((float) w / ww, (float) h / hh); glVertex2f((float) (x + w)/160 - 1, 1 - (float) (y + h)/112);
+	glTexCoord2f(0, (float) h /  hh); glVertex2f((float) x/160 - 1, 1 - (float) (y + h)/112);
+	glEnd();
+	glDisable( GL_TEXTURE_2D );
+
+	SDL_FreeSurface(surface);
 }
 
 void Vdp1::scaledSpriteDraw(void) {
@@ -189,8 +243,8 @@ void Vdp1::scaledSpriteDraw(void) {
 }
 
 void Vdp1::distortedSpriteDraw(unsigned long addr) {
-	Sint16 X[4];
-	Sint16 Y[4];
+	unsigned short X[4];
+	unsigned short Y[4];
 	
 	X[0] = localX + (memory->getWord(addr + 0x0C) );
 	Y[0] = localY + (memory->getWord(addr + 0x0E) );
@@ -205,13 +259,19 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 		//cerr << "don't know what to do" << endl;
 	}
 	else {
-		filledPolygonColor(vdp1Surface, X, Y, 4, 0xFFFFFFFF);
+		glColor3f(1, 1, 1);
+		glBegin(GL_QUADS);
+		glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
+		glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);
+		glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
+		glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
+		glEnd();
 	}
 }
 
 void Vdp1::polygonDraw(unsigned short addr) {
-	Sint16 X[4];
-	Sint16 Y[4];
+	unsigned short X[4];
+	unsigned short Y[4];
 	
 	X[0] = localX + (memory->getWord(addr + 0x0C) );
 	Y[0] = localY + (memory->getWord(addr + 0x0E) );
@@ -232,10 +292,23 @@ void Vdp1::polygonDraw(unsigned short addr) {
 		//cerr << "don't know what to do" << endl;
 	}
 	else {
-		filledPolygonRGBA(vdp1Surface, X, Y, 4, (color & 0x1F) << 3, (color & 0x3E0) >> 2, (color & 0x7C00) >> 7, alpha);
+		glColor3f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF);
+		glBegin(GL_QUADS);
+		glVertex2f((float) X[0]/160 - 1, 1 - (float) Y[0]/112);
+		glVertex2f((float) X[1]/160 - 1, 1 - (float) Y[1]/112);
+		glVertex2f((float) X[2]/160 - 1, 1 - (float) Y[2]/112);
+		glVertex2f((float) X[3]/160 - 1, 1 - (float) Y[3]/112);
+		glEnd();
 	}
 
 	unsigned short cmdpmod = memory->getWord(addr + 0x4);
+#if 0
+	cerr << "vdp1\t: polygon draw (pmod=" << hex << cmdpmod << ")"
+	  << " X0=" << X[0] << " Y0=" << Y[0]
+	  << " X1=" << X[1] << " Y1=" << Y[1]
+	  << " X2=" << X[2] << " Y2=" << Y[2]
+	  << " X3=" << X[3] << " Y3=" << Y[3] << endl;
+#endif
 }
 
 void Vdp1::polylineDraw(void) {

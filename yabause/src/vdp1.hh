@@ -22,6 +22,7 @@
 
 #include "memory.hh"
 #include "cpu.hh"
+#include <GL/gl.h>
 
 class Vdp1;
 class Scu;
@@ -36,25 +37,34 @@ public:
   Vdp1 *getVdp1(void);
 };
 
+class Vdp2Registers;
+class Vdp2ColorRam;
+
 class Vdp1 : public Cpu {
 private:
+  SDL_Surface *surface;
+  GLuint texture[1];
   Memory *memory;
   Vdp1Registers *registers;
   Scu *scu;
-  SDL_Surface *vdp1Surface;
-  SDL_Surface *vdp2Surface;
+  Vdp2Registers *vdp2regs;
+  Vdp2ColorRam *cram;
 
   unsigned short localX;
   unsigned short localY;
 
   unsigned short returnAddr;
 public:
+
   Vdp1(Vdp1Registers *, Memory *, Scu *);
   void execute(unsigned long = 0);
   void stop(void);
 
-  void setSurface(SDL_Surface *);
-  
+  void setVdp2Ram(Vdp2Registers *, Vdp2ColorRam *);
+  int getAlpha(void);
+  int getColorOffset(void);
+  SDL_Surface *getSurface(void);
+
   void normalSpriteDraw(unsigned long);
   void scaledSpriteDraw();
   void distortedSpriteDraw(unsigned long);
