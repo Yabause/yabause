@@ -33,25 +33,25 @@ unsigned short buttonbits = 0xFFFF;
 void keyDown(int key)
 {
   switch (key) {
-	case SDLK_f:
+        case SDLK_RIGHT:
 		buttonbits &= 0x7FFF;
 #ifdef DEBUG
 		cerr << "Right" << endl;
 #endif
 		break;
-	case SDLK_s:
+        case SDLK_LEFT:
 		buttonbits &= 0xBFFF;
 #ifdef DEBUG
 		cerr << "Left" << endl;
 #endif
 		break;
-	case SDLK_d:
+        case SDLK_DOWN:
 		buttonbits &= 0xDFFF;
 #ifdef DEBUG
 		cerr << "Down" << endl;
 #endif
 		break;
-	case SDLK_e:
+        case SDLK_UP:
 		buttonbits &= 0xEFFF;
 #ifdef DEBUG
 		cerr << "Up" << endl;
@@ -119,16 +119,16 @@ void keyDown(int key)
 void keyUp(int key)
 {
   switch (key) {
-	case SDLK_f:
+        case SDLK_RIGHT:
 		buttonbits |= ~0x7FFF;
 		break;
-	case SDLK_s:
+        case SDLK_LEFT:
 		buttonbits |= ~0xBFFF;
 		break;
-	case SDLK_d:
+        case SDLK_DOWN:
 		buttonbits |= ~0xDFFF;
 		break;
-	case SDLK_e:
+        case SDLK_UP:
 		buttonbits |= ~0xEFFF;
 		break;
 	case SDLK_j:
