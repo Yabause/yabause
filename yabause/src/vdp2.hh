@@ -1,4 +1,5 @@
-/*  Copyright 2003 Guillaume Duhamel
+/*  Copyright 2003-2004 Guillaume Duhamel
+    Copyright 2004 Theo Berkau
 
     This file is part of Yabause.
 
@@ -94,6 +95,7 @@ protected:
   unsigned short supplementData;
   int auxMode;
   bool enable;
+  bool disptoggle;
   int x, y;
   int alpha;
   int colorOffset;
@@ -114,6 +116,7 @@ public:
   void drawPattern(void);
   void drawCell(void);
   static void drawPixel(unsigned long *, Sint16, Sint16, Uint32);
+  void toggleDisplay(void);
 };
 
 class RBG0 : public Vdp2Screen {
@@ -179,6 +182,11 @@ private:
   //GLuint texture[1];
 
   VdpScreen *screens[6];
+  VdpScreen *rbg0;
+  VdpScreen *nbg0;
+  VdpScreen *nbg1;
+  VdpScreen *nbg2;
+  VdpScreen *nbg3;
   SaturnMemory *satmem;
 
 public:
@@ -206,6 +214,12 @@ public:
   void VBlankOUT(void);
   void HBlankIN(void);
   void HBlankOUT(void);
+
+  VdpScreen *getRBG0(void);
+  VdpScreen *getNBG0(void);
+  VdpScreen *getNBG1(void);
+  VdpScreen *getNBG2(void);
+  VdpScreen *getNBG3(void);
 };
 
 #endif

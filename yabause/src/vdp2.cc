@@ -141,6 +141,7 @@ Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, unsigned long *s) {
     vram = v;
     cram = c;
     surface = s;
+    disptoggle = true;
 }
 
 int VdpScreen::comparePriority(const void *arg1, const void *arg2) {
@@ -157,7 +158,7 @@ int VdpScreen::comparePriority(const void *arg1, const void *arg2) {
 
 void Vdp2Screen::draw(void) {
 	init();
-	if (!enable || (getPriority() == 0)) return;
+        if (!(enable & disptoggle) || (getPriority() == 0)) return;
 
 	if (bitmap) {
 		drawCell();
@@ -446,6 +447,10 @@ void Vdp2Screen::drawPixel(unsigned long *surface, Sint16 x, Sint16 y, Uint32 tm
 	if ((x >= 0) && (y >= 0) && (x < 512) && (y < 256)) {
 		surface[y * 512 + x] = tmpcolor;
 	}
+}
+
+void Vdp2Screen::toggleDisplay(void) {
+   disptoggle ^= true;
 }
 
 void RBG0::init(void) {
@@ -1097,11 +1102,11 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   surface->pixels = memalign(32, 256 * 512 * 2);
 #endif
   	screens[5] = (Vdp1 *) satmem->getVdp1();
-  	screens[4] = new RBG0(this, vram, cram, surface);
-  	screens[3] = new NBG0(this, vram, cram, surface);
-  	screens[2] = new NBG1(this, vram, cram, surface);
-  	screens[1] = new NBG2(this, vram, cram, surface);
-  	screens[0] = new NBG3(this, vram, cram, surface);
+        screens[4] = rbg0 = new RBG0(this, vram, cram, surface);
+        screens[3] = nbg0 = new NBG0(this, vram, cram, surface);
+        screens[2] = nbg1 = new NBG1(this, vram, cram, surface);
+        screens[1] = nbg2 = new NBG2(this, vram, cram, surface);
+        screens[0] = nbg3 = new NBG3(this, vram, cram, surface);
 
         reset();
 }
@@ -1251,3 +1256,24 @@ void Vdp2::colorOffset(void) {
   SDL_FreeSurface(tmp2);
 }
 */
+
+VdpScreen *Vdp2::getRBG0(void) {
+   return rbg0;
+}
+
+VdpScreen *Vdp2::getNBG0(void) {
+   return nbg0;
+}
+
+VdpScreen *Vdp2::getNBG1(void) {
+   return nbg1;
+}
+
+VdpScreen *Vdp2::getNBG2(void) {
+   return nbg2;
+}            
+
+VdpScreen *Vdp2::getNBG3(void) {
+   return nbg3;
+}
+

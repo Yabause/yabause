@@ -80,6 +80,8 @@ private:
   SaturnMemory *satmem;
   Vdp1VRAM *vram;
 
+  bool disptoggle;
+
   unsigned short localX;
   unsigned short localY;
 
@@ -133,6 +135,7 @@ public:
   void draw(void);
   int getPriority(void);
   int getInnerPriority(void);
+  void toggleDisplay(void);
 };
 
 #endif

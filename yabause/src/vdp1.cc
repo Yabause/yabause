@@ -31,6 +31,7 @@ Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
 	_stop = false;
 	vram = new Vdp1VRAM(0xFFFFF, 0xC0000);
+        disptoggle = true;
         reset();
 }
 
@@ -53,6 +54,7 @@ void Vdp1::execute(unsigned long addr) {
   if (!getWord(0x4)) return;
   // If TVMD's DISP isn't set, don't render
   if (!(((Vdp2 *)satmem->getVdp2())->getWord(0) & 0x8000)) return;
+  if (!disptoggle) return;
 
   // beginning of a frame (ST-013-R3-061694 page 53)
   // BEF <- CEF
@@ -643,3 +645,8 @@ int Vdp1::getPriority(void) {
 int Vdp1::getInnerPriority(void) {
 	return 5;
 }
+
+void Vdp1::toggleDisplay(void) {
+   disptoggle ^= true;
+}
+

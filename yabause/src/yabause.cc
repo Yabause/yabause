@@ -172,6 +172,30 @@ int handleEvents(SaturnMemory *mem) {
 		break;
 	case SDL_KEYDOWN:
 	  switch(event.key.keysym.sym) {
+                case SDLK_1:
+                        ((NBG0 *)(((Vdp2 *)mem->getVdp2())->getNBG0()))->toggleDisplay();
+                        break;
+
+                case SDLK_2:
+                        ((NBG1 *)(((Vdp2 *)mem->getVdp2())->getNBG1()))->toggleDisplay();
+			break;
+
+                case SDLK_3:
+                        ((NBG2 *)(((Vdp2 *)mem->getVdp2())->getNBG2()))->toggleDisplay();
+			break;
+
+                case SDLK_4:
+                        ((NBG3 *)(((Vdp2 *)mem->getVdp2())->getNBG3()))->toggleDisplay();
+			break;
+
+                case SDLK_5:
+                        ((RBG0 *)(((Vdp2 *)mem->getVdp2())->getRBG0()))->toggleDisplay();
+			break;
+
+                case SDLK_6:
+                        ((Vdp1 *)(mem->getVdp1()))->toggleDisplay();
+			break;
+
 		case SDLK_h:
 			yui_hide_show();
 			break;
