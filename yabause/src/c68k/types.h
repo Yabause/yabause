@@ -59,7 +59,11 @@ typedef signed long int int32;
 
 #ifndef FASTCALL
 #ifdef __x86__
+#ifdef __linux__
+#define FASTCALL    __attribute__((__stdcall__))
+#else
 #define FASTCALL    __fastcall
+#endif
 #else
 #define FASTCALL
 #endif

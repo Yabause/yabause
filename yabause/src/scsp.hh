@@ -21,7 +21,7 @@
 
 #include "memory.hh"
 #include "cpu.hh"
-#include "c68k\types.h"
+#include "c68k/types.h"
 
 class ScspRam : public Memory {
 private:

@@ -17,6 +17,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <stdarg.h>
+
 #define	EA_DREG         0
 #define	EA_AREG         1
 #define	EA_AIND         2
