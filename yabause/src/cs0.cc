@@ -53,58 +53,38 @@ Cs0::~Cs0() {
 }
 
 void Cs0::setByte(unsigned long addr, unsigned char val) {
-
-   switch (addr >> 16) {
-      case 0x000:
-      case 0x001:
-      case 0x002:
-      case 0x003:
-      case 0x004:
-      case 0x005:
-      case 0x006:
-      case 0x007: // EEPROM
-//                 Memory::setByte(addr, val);                 
-                 biosarea->setByte(addr, val);
+   switch (addr >> 20) {
+      case 0x00:  
+                 if ((addr & 0x80000) == 0) // EEPROM
+                 {
+                    biosarea->setByte(addr, val);
 //                 fprintf(stderr, "EEPROM write to %08X = %02X\n", addr, val);
-                 break;
-      case 0x008:
-      case 0x009:
-      case 0x00A:
-      case 0x00B:
-      case 0x00C:
-      case 0x00D:
-      case 0x00E:
-      case 0x00F: // Outport for Commlink
+                 }
+                 else // Outport
+                 {   
 //                 Memory::setByte(addr, val);
 //                 fprintf(stderr, "Commlink Outport byte write\n");
+                 }
                  break;
-      case 0x010:
-      case 0x011:
-      case 0x012:
-      case 0x013:
-      case 0x014:
-      case 0x015:
-      case 0x016:
-      case 0x017: // Commlink Status flag
+      case 0x01:
+                 if ((addr & 0x80000) == 0) // Commlink Status flag
+                 {
 //                 Memory::setByte(addr, val);
 //                 fprintf(stderr, "Commlink Status Flag write\n");
-                 break;
-      case 0x018:
-      case 0x019:
-      case 0x01A:
-      case 0x01B:
-      case 0x01C:
-      case 0x01D:
-      case 0x01E:
-      case 0x01F: // Inport for Commlink
+                 }
+                 else // Inport for Commlink
+                 {   
 //                 Memory::setByte(addr, val);
 //                 fprintf(stderr, "Commlink Inport Byte write\n");
+                 }
                  break;
-      default:
-//                 Memory::setByte(addr, val);
-#if DEBUG
-                 fprintf(stderr, "CS0 Unsupported Byte write to %08X\n", addr);
-#endif
+      case 0x04:
+      case 0x05:
+      case 0x06:
+      case 0x07: // Ram cart area
+                 dramarea->setByte(addr, val);
+                 break;
+      default:   // The rest doesn't matter
                  break;
    }
 }
@@ -112,56 +92,49 @@ void Cs0::setByte(unsigned long addr, unsigned char val) {
 unsigned char Cs0::getByte(unsigned long addr) {
    unsigned char val=0xFF;
 
-   switch (addr >> 16) {
-      case 0x00:
+   switch (addr >> 20) {
+      case 0x00:  
+                 if ((addr & 0x80000) == 0) // EEPROM
+                 {
+                    val = biosarea->getByte(addr);
+//                    fprintf(stderr, "EEPROM read from %08X = %02X\n", addr, val);
+                 }
+                 else // Outport
+                 {   
+//                    val = Memory::getByte(addr);
+//                    fprintf(stderr, "Commlink Outport Byte read\n");
+                 }
+                 break;
       case 0x01:
-      case 0x02:
-      case 0x03:
+                 if ((addr & 0x80000) == 0) // Commlink Status flag
+                 {
+//                    val = Memory::getByte(addr);
+//                    fprintf(stderr, "Commlink Status Flag read\n");
+                 }
+                 else // Inport for Commlink
+                 {   
+//                    val = Memory::getByte(addr);
+//                    fprintf(stderr, "Commlink Inport Byte read\n");
+                 }
+                 break;
       case 0x04:
       case 0x05:
       case 0x06:
-      case 0x07: // EEPROM
+      case 0x07: // Ram cart area
+                 dramarea->setByte(addr, val);
                  val = biosarea->getByte(addr);
-//                 fprintf(stderr, "EEPROM read from %08X = %02X\n", addr, val);
                  break;
-      case 0x08:
-      case 0x09:
-      case 0x0A:
-      case 0x0B:
-      case 0x0C:
-      case 0x0D:
-      case 0x0E:
-      case 0x0F: // Outport for Commlink
-//                 val = Memory::getByte(addr);
-//                 fprintf(stderr, "Commlink Outport Byte read\n");
-                 break;
-      case 0x10:
-      case 0x11:
-      case 0x12:
-      case 0x13:
-      case 0x14:
-      case 0x15:
-      case 0x16:
-      case 0x17: // Commlink Status flag
-//                 val = Memory::getByte(addr);
-//                 fprintf(stderr, "Commlink Status Flag read\n");
-                 break;
-      case 0x18:
-      case 0x19:
-      case 0x1A:
-      case 0x1B:
-      case 0x1C:
-      case 0x1D:
-      case 0x1E:
-      case 0x1F: // Inport for Commlink
-//                 val = Memory::getByte(addr);
-//                 fprintf(stderr, "Commlink Inport Byte read\n");
-                 break;
-      default:
-//                 val = Memory::getByte(addr);
-#if DEBUG
-                 fprintf(stderr, "CS0 Unsupported Byte read from %08X\n", addr);
-#endif
+//      case 0x12:
+//      case 0x1E:
+//                 break;
+//      case 0x13:
+//      case 0x16:
+//      case 0x17:
+//      case 0x1A:
+//      case 0x1B:
+//      case 0x1F:
+//                 break;
+      default:   // The rest doesn't matter
                  break;
    }
 
@@ -170,64 +143,91 @@ unsigned char Cs0::getByte(unsigned long addr) {
 
 
 void Cs0::setWord(unsigned long addr, unsigned short val) {
-#if DEBUG
-   fprintf(stderr, "CS0 Unsupported Word Write to %08X\n", addr);
-#endif
+   switch (addr >> 20) {
+      case 0x00:  
+                 if ((addr & 0x80000) == 0) // EEPROM
+                 {
+                    biosarea->setWord(addr, val);
+//                 fprintf(stderr, "EEPROM write to %08X = %04X\n", addr, val);
+                 }
+                 else // Outport
+                 {   
+//                 Memory::setWord(addr, val);
+//                 fprintf(stderr, "Commlink Outport Word write\n");
+                 }
+                 break;
+      case 0x01:
+                 if ((addr & 0x80000) == 0) // Commlink Status flag
+                 {
+//                 Memory::setWord(addr, val);
+//                 fprintf(stderr, "Commlink Status Flag write\n");
+                 }
+                 else // Inport for Commlink
+                 {   
+//                 Memory::setWord(addr, val);
+//                 fprintf(stderr, "Commlink Inport Word write\n");
+                 }
+                 break;
+      case 0x04:
+      case 0x05:
+      case 0x06:
+      case 0x07: // Ram cart area
+                 dramarea->setWord(addr, val);
+                 break;
+      default:   // The rest doesn't matter
+                 break;
+   }
+
 }
 
 unsigned short Cs0::getWord(unsigned long addr) {
    unsigned short val=0xFFFF;
 
-   switch (addr >> 16) {
-      case 0x00:
+   switch (addr >> 20) {
+      case 0x00:  
+                 if ((addr & 0x80000) == 0) // EEPROM
+                 {
+                    val = biosarea->getWord(addr);
+//                    fprintf(stderr, "EEPROM read from %08X = %04X\n", addr, val);
+                 }
+                 else // Outport
+                 {   
+//                    val = Memory::getWord(addr);
+//                    fprintf(stderr, "Commlink Outport Word read\n");
+                 }
+                 break;
       case 0x01:
-      case 0x02:
-      case 0x03:
+                 if ((addr & 0x80000) == 0) // Commlink Status flag
+                 {
+//                    val = Memory::getWord(addr);
+//                    fprintf(stderr, "Commlink Status Flag read\n");
+                 }
+                 else // Inport for Commlink
+                 {   
+//                    val = Memory::getWord(addr);
+//                    fprintf(stderr, "Commlink Inport Word read\n");
+                 }
+                 break;
       case 0x04:
       case 0x05:
       case 0x06:
-      case 0x07: // EEPROM
-                 val = biosarea->getWord(addr);                 
-//                 fprintf(stderr, "EEPROM read from %08X = %04X\n", addr, val);
+      case 0x07: // Ram cart area
+                 val = dramarea->getWord(addr);
                  break;
-      case 0x08:
-      case 0x09:
-      case 0x0A:
-      case 0x0B:
-      case 0x0C:
-      case 0x0D:
-      case 0x0E:
-      case 0x0F: // Outport for Commlink
-//                 val = Memory::getWord(addr);
-//                 fprintf(stderr, "Commlink Outport Word read\n");
-                 break;
-      case 0x10:
-      case 0x11:
       case 0x12:
-      case 0x13:
-      case 0x14:
-      case 0x15:
-      case 0x16:
-      case 0x17: // Commlink Status flag
-//                 val = Memory::getWord(addr);
-//                 fprintf(stderr, "Commlink Status Flag read\n");
+      case 0x1E:
+                 if (0x80000)
+                    val = 0xFFFD;
                  break;
-      case 0x18:
-      case 0x19:
+      case 0x13:
+      case 0x16:
+      case 0x17:
       case 0x1A:
       case 0x1B:
-      case 0x1C:
-      case 0x1D:
-      case 0x1E:
-      case 0x1F: // Inport for Commlink
-//                 val = Memory::getWord(addr);
-//                 fprintf(stderr, "Commlink Inport Word read\n");
+      case 0x1F:
+                 val = 0xFFFD;
                  break;
-      default:
-//                 val = Memory::getWord(addr);
-#if DEBUG
-                 fprintf(stderr, "CS0 Unsupported Word read from %08X\n", addr);
-#endif
+      default:   // The rest doesn't matter
                  break;
    }
 
@@ -236,65 +236,90 @@ unsigned short Cs0::getWord(unsigned long addr) {
 }
 
 void Cs0::setLong(unsigned long addr, unsigned long val) {
-#if DEBUG
-   fprintf(stderr, "CS0 Unsupported Long Write to %08X\n", addr);
-#endif
+   switch (addr >> 20) {
+      case 0x00:  
+                 if ((addr & 0x80000) == 0) // EEPROM
+                 {
+                    biosarea->setLong(addr, val);
+//                 fprintf(stderr, "EEPROM write to %08X = %08X\n", addr, val);
+                 }
+                 else // Outport
+                 {   
+//                 Memory::setLong(addr, val);
+//                 fprintf(stderr, "Commlink Outport Long write\n");
+                 }
+                 break;
+      case 0x01:
+                 if ((addr & 0x80000) == 0) // Commlink Status flag
+                 {
+//                 Memory::setLong(addr, val);
+//                 fprintf(stderr, "Commlink Status Flag write\n");
+                 }
+                 else // Inport for Commlink
+                 {   
+//                 Memory::setLong(addr, val);
+//                 fprintf(stderr, "Commlink Inport Long write\n");
+                 }
+                 break;
+      case 0x04:
+      case 0x05:
+      case 0x06:
+      case 0x07: // Ram cart area
+                 dramarea->setLong(addr, val);
+                 break;
+      default:   // The rest doesn't matter
+                 break;
+   }
 }
 
 unsigned long Cs0::getLong(unsigned long addr) {
    unsigned long val=0xFFFFFFFF;
 
-   switch (addr >> 16) {
-      case 0x00:
+   switch (addr >> 20) {
+      case 0x00:  
+                 if ((addr & 0x80000) == 0) // EEPROM
+                 {
+                    val = biosarea->getLong(addr);
+//                    fprintf(stderr, "EEPROM read from %08X = %08X\n", addr, val);
+                 }
+                 else // Outport
+                 {   
+//                    val = Memory::getLong(addr);
+//                    fprintf(stderr, "Commlink Outport Long read\n");
+                 }
+                 break;
       case 0x01:
-      case 0x02:
-      case 0x03:
+                 if ((addr & 0x80000) == 0) // Commlink Status flag
+                 {
+//                    val = Memory::getLong(addr);
+//                    fprintf(stderr, "Commlink Status Flag read\n");
+                 }
+                 else // Inport for Commlink
+                 {   
+//                    val = Memory::getLong(addr);
+//                    fprintf(stderr, "Commlink Inport Long read\n");
+                 }
+                 break;
       case 0x04:
       case 0x05:
       case 0x06:
-      case 0x07: // EEPROM
-                 val = biosarea->getLong(addr);
+      case 0x07: // Ram cart area
+                 val = dramarea->getLong(addr);
                  break;
-      case 0x08:
-      case 0x09:
-      case 0x0A:
-      case 0x0B:
-      case 0x0C:
-      case 0x0D:
-      case 0x0E:
-      case 0x0F: // Outport for Commlink
-//                 val = Memory::getLong(addr);
-//                 fprintf(stderr, "Commlink Outport Long read\n");
-                 break;
-      case 0x10:
-      case 0x11:
       case 0x12:
-      case 0x13:
-      case 0x14:
-      case 0x15:
-      case 0x16:
-      case 0x17: // Commlink Status flag
-//                 val = Memory::getLong(addr);
-//                 fprintf(stderr, "Commlink Status Flag read\n");
+      case 0x1E:
+                 if (0x80000)
+                    val = 0xFFFDFFFD;
                  break;
-      case 0x18:
-      case 0x19:
+      case 0x13:
+      case 0x16:
+      case 0x17:
       case 0x1A:
       case 0x1B:
-      case 0x1C:
-      case 0x1D:
-      case 0x1E:
-      case 0x1F: // Inport for Commlink
-//                 val = Memory::getLong(addr);
-//                 fprintf(stderr, "Commlink Inport Long read\n");
+      case 0x1F:
+                 val = 0xFFFDFFFD;
                  break;
-      default:
-//                 val = Memory::getLong(addr);
-#if DEBUG
-                 fprintf(stderr, "CS0 Unsupported Long read from %08X\n", addr);
-#endif
-//                 if (addr == 0x01380000)// wrong
-//                    val = 0xFFFDFFFD;
+      default:   // The rest doesn't matter
                  break;
    }
 
