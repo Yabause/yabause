@@ -76,6 +76,7 @@ int getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize )
         }
         IOObjectRelease(nextMedia);
     }
+	return 0;
 }
 
 int CDInit(char *cdrom_name)
@@ -130,7 +131,6 @@ long CDReadToc(unsigned long *TOC)
 	int i, lba = 0; 
 	CDTOCDescriptor *pTrackDescriptors;
 	pTrackDescriptors = cdTOC->descriptors;
-	FILE *debugfp;
 	
 	memset(TOC, 0xFF, 0xCC * 2);
 		

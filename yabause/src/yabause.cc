@@ -232,7 +232,8 @@ int handleEvents(SaturnMemory *mem) {
 }
 
 int main(int argc, char **argv) {
-	SDL_Init(SDL_INIT_EVENTTHREAD);
+	//This function is deprecated according to Sam Latinga - it only works on X11
+	//SDL_Init(SDL_INIT_EVENTTHREAD);
 
 	yui_init((int (*)(void*)) &handleEvents);
 
