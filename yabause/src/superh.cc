@@ -391,7 +391,7 @@ void SuperH::bsr(void) {
 
 void SuperH::bsrf(void) {
   PR = PC + 4;
-  _delai = PR + 2;
+  _delai = PC + 2;
   PC += R[Instruction::b(instruction)] + 4;
   cycleCount += 2;
 }
