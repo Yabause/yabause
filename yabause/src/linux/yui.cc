@@ -65,6 +65,7 @@ void yui_init(int (*fonction)(void *)) {
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	g_signal_connect(G_OBJECT (window), "key_press_event", G_CALLBACK (key_press), NULL);
 	g_signal_connect(G_OBJECT (window), "key_release_event", G_CALLBACK (key_release), NULL);
+	g_signal_connect(G_OBJECT (window), "delete_event", GTK_SIGNAL_FUNC(yui_quit), NULL);
 	
 	vbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (window), vbox);
