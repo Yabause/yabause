@@ -76,7 +76,13 @@ void Cs2::setCR3(unsigned short val) {Memory::setWord(0x90020, val);}
 void Cs2::setCR4(unsigned short val) {Memory::setWord(0x90024, val);}
 
 void Cs2::setWord(unsigned long addr, unsigned short val) {
-  if (addr >= size) { throw BadMemoryAccess(addr); }
+  if (addr >= size) { 
+#ifndef _arch_dreamcast
+	throw BadMemoryAccess(addr);
+#else
+	printf("Bad Memory Access: %x\n", addr);
+#endif
+  }
   switch(addr) {
     case 0x90008:
 	    	  Memory::setWord(addr, (getHIRQ() & val) | 0x402);

@@ -187,12 +187,15 @@ int main(int argc, char **argv) {
 #endif
 
   bool stop = false;
-
+#ifndef _arch_dreamcast
   if (args_info.debug_given) {
 #if HAVE_LIBCURSES
     monitor(mem->getMasterSH());
 #endif
   }
+#else
+  if(0)	{	}
+#endif
   else {
     SDL_Event event;
     while (!stop) {

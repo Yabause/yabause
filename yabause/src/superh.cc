@@ -179,12 +179,6 @@ void SuperH::executer(void) {
   }
   else {
     if (_interrupt) {
-#ifdef _arch_dreamcast
-	/* something seems to happen to the code in here
-	 * if I don't have that.... */
-	    SDL_Delay(1);
-#endif
-
       R[15] -= 4;
       memoire->setLong(R[15], SR.tout);
       R[15] -= 4;
