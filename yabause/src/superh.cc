@@ -152,16 +152,38 @@ void SuperH::executer(void) {
 }
 
 void SuperH::delay(unsigned long addr) {
-	switch((addr >> 19) & 0xFF) {
-		case 0:
-			instruction = readWord(memoire->rom, addr);
-			break;
-		case 0xC0:
-			instruction = readWord(memoire->ramHigh, addr);
-			break;
-		default:
-			instruction = memoire->getWord(addr);
-	}
+        switch ((addr >> 20) & 0x0FF) {
+           case 0x000: // Bios              
+                       instruction = readWord(memoire->rom, addr);
+                       break;
+           case 0x002: // Low Work Ram
+                       instruction = readWord(memoire->ramLow, addr);
+                       break;
+           case 0x020: // CS0
+                       instruction = memoire->getWord(addr);
+                       break;
+           case 0x060: // High Work Ram
+           case 0x061: 
+           case 0x062: 
+           case 0x063: 
+           case 0x064: 
+           case 0x065: 
+           case 0x066: 
+           case 0x067: 
+           case 0x068: 
+           case 0x069: 
+           case 0x06A: 
+           case 0x06B: 
+           case 0x06C: 
+           case 0x06D: 
+           case 0x06E: 
+           case 0x06F:
+                       instruction = readWord(memoire->ramHigh, addr);
+                       break;
+           default:
+                       break;
+        }
+
         (*opcodes[instruction])(this);
         PC -= 2;
 }
@@ -230,16 +252,38 @@ void SuperH::runCycles(unsigned long cc) {
            }
 
            //_executer(this);
-	switch((PC >> 19) & 0xFF) {
-		case 0:
-			instruction = readWord(memoire->rom, PC);
-			break;
-		case 0xC0:
-			instruction = readWord(memoire->ramHigh, PC);
-			break;
-		default:
-			instruction = memoire->getWord(PC);
-	}
+        switch ((PC >> 20) & 0x0FF) {
+           case 0x000: // Bios              
+                       instruction = readWord(memoire->rom, PC);
+                       break;
+           case 0x002: // Low Work Ram
+                       instruction = readWord(memoire->ramLow, PC);
+                       break;
+           case 0x020: // CS0(fix me)
+                       instruction = memoire->getWord(PC);
+                       break;
+           case 0x060: // High Work Ram
+           case 0x061: 
+           case 0x062: 
+           case 0x063: 
+           case 0x064: 
+           case 0x065: 
+           case 0x066: 
+           case 0x067: 
+           case 0x068: 
+           case 0x069: 
+           case 0x06A: 
+           case 0x06B: 
+           case 0x06C: 
+           case 0x06D: 
+           case 0x06E: 
+           case 0x06F:
+                       instruction = readWord(memoire->ramHigh, PC);
+                       break;
+           default:
+                       break;
+        }
+
         (*opcodes[instruction])(this);
         }
 
