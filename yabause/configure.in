@@ -45,10 +45,14 @@ case $target in
                    AC_CHECK_LIB(glut, glutGetModifiers)
                    yabause_yui="."
                    ;;
+	*linux*)
+		AC_CHECK_LIB(GL, glEnable)
+		AC_CHECK_LIB(glut, glutGetModifiers)
+		yabause_yui="."
+		PKG_CHECK_MODULES(GTK, gtk+-2.0, yabause_yui="linux", [yabause_yui="."])
+		;;
         *) AC_CHECK_LIB(GL, glEnable)
            AC_CHECK_LIB(glut, glutGetModifiers)
-           yabause_yui="."
-           PKG_CHECK_MODULES(GTK, gtk+-2.0, yabause_yui="linux", [yabause_yui="."])
            ;;
 
 esac
