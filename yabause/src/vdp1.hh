@@ -79,6 +79,8 @@ private:
   GLuint texture[1];
   SaturnMemory *satmem;
   Vdp1VRAM *vram;
+  Vdp2 *vdp2reg;
+  Vdp2ColorRam *cram;
 
   bool disptoggle;
 
@@ -115,6 +117,7 @@ public:
   void stop(void);
   void reset(void);
 
+  void setVdp2Ram(Vdp2 *, Vdp2ColorRam *);
   /*
   void setVdp2Ram(Vdp2 *, Vdp2ColorRam *);
   int getAlpha(void);

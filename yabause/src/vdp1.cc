@@ -56,7 +56,8 @@ void Vdp1::execute(unsigned long addr) {
 
   if (!getWord(0x4)) return;
   // If TVMD's DISP isn't set, don't render
-  if (!(((Vdp2 *)satmem->getVdp2())->getWord(0) & 0x8000)) return;
+
+  if (!(vdp2reg->getWord(0) & 0x8000)) return;
   if (!disptoggle) return;
 
   // beginning of a frame (ST-013-R3-061694 page 53)
@@ -201,10 +202,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
         {
                 // 4 bpp Bank mode
                 unsigned long colorBank = CMDCOLR & 0xFFF0;
-                // fix me
-                Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
-                // fix me
-                int colorOffset = (((Vdp2 *)satmem->getVdp2())->getWord(0xE6) >> 4) & 0x7;
+                int colorOffset = (vdp2reg->getWord(0xE6) >> 4) & 0x7;
 
 		for(unsigned short i = 0;i < h;i++) {
 			unsigned short j;
@@ -261,10 +259,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
         {
                 // 8 bpp(64 color) Bank mode
                 unsigned long colorBank = CMDCOLR & 0xFFC0;
-                // fix me
-                Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
-                // fix me
-                int colorOffset = (((Vdp2 *)satmem->getVdp2())->getWord(0xE6) >> 4) & 0x7;
+                int colorOffset = (vdp2reg->getWord(0xE6) >> 4) & 0x7;
 
 		for(unsigned short i = 0;i < h;i++) {
                         for(unsigned short j = 0;j < w;j++) {
@@ -282,10 +277,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
         {
                 // 8 bpp(128 color) Bank mode
                 unsigned long colorBank = CMDCOLR & 0xFF80;
-                // fix me
-                Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
-                // fix me
-                int colorOffset = (((Vdp2 *)satmem->getVdp2())->getWord(0xE6) >> 4) & 0x7;
+                int colorOffset = (vdp2reg->getWord(0xE6) >> 4) & 0x7;
 
 		for(unsigned short i = 0;i < h;i++) {
                         for(unsigned short j = 0;j < w;j++) {
@@ -302,10 +294,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
         {
                 // 8 bpp(256 color) Bank mode
                 unsigned long colorBank = CMDCOLR & 0xFF00;
-                // fix me
-                Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
-                // fix me
-                int colorOffset = (((Vdp2 *)satmem->getVdp2())->getWord(0xE6) >> 4) & 0x7;
+                int colorOffset = (vdp2reg->getWord(0xE6) >> 4) & 0x7;
 
 		for(unsigned short i = 0;i < h;i++) {
                         for(unsigned short j = 0;j < w;j++) {
@@ -407,8 +396,8 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 }
 
 void Vdp1::scaledSpriteDraw(unsigned long addr) {
-        short rw;
-        short rh;
+        short rw=0;
+        short rh=0;
 
 	readCommand(addr);
 
@@ -561,7 +550,7 @@ void Vdp1::polygonDraw(unsigned long addr) {
 
         if ((color & 0x8000) == 0) alpha = 0;
 
-	int priority = ((Vdp2*) satmem->getVdp2())->getWord(0xF0) & 0x7;
+        int priority = vdp2reg->getWord(0xF0) & 0x7;
 
 	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
 	glBegin(GL_QUADS);
@@ -595,7 +584,7 @@ void Vdp1::polylineDraw(unsigned long addr) {
 
         if ((color & 0x8000) == 0) alpha = 0;
 
-	int priority = ((Vdp2*) satmem->getVdp2())->getWord(0xF0) & 0x7;
+        int priority = vdp2reg->getWord(0xF0) & 0x7;
 
 	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
         glBegin(GL_LINE_STRIP);
@@ -625,7 +614,7 @@ void Vdp1::lineDraw(unsigned long addr) {
 
         if ((color & 0x8000) == 0) alpha = 0;
 
-	int priority = ((Vdp2*) satmem->getVdp2())->getWord(0xF0) & 0x7;
+        int priority = vdp2reg->getWord(0xF0) & 0x7;
 
 
 	glColor4f((float) ((color & 0x1F) << 3) / 0xFF, (float) ((color & 0x3E0) >> 2) / 0xFF, (float) ((color & 0x7C00) >> 7) / 0xFF, alpha);
@@ -736,7 +725,7 @@ void Vdp1::draw(void) {
 }
 
 int Vdp1::getPriority(void) {
-	return ((Vdp2*) satmem->getVdp2())->getWord(0xF0) & 0x7; //FIXME
+        return vdp2reg->getWord(0xF0) & 0x7; //FIXME
 }
 
 int Vdp1::getInnerPriority(void) {
@@ -751,3 +740,9 @@ void Vdp1::setTextureSize(int width, int height) {
    satwidthhalf = width / 2;
    satheighthalf = height / 2;
 }
+
+void Vdp1::setVdp2Ram(Vdp2 *v, Vdp2ColorRam *c) {
+  vdp2reg = v;
+  cram = c;
+}
+
