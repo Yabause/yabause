@@ -168,6 +168,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	unsigned short colorBank = vram->getWord(addr + 0x6);
+	if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
 	switch(colorMode) {
 	case 0:
 		for(unsigned short i = 0;i < h;i++) {
@@ -216,6 +217,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 			}
 		}
 	}
+	if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
 
 	if (*texture == 0) glGenTextures(1, &texture[0] );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
@@ -279,6 +281,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	unsigned short colorBank = vram->getWord(addr + 0x6);
+	if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
 	switch(colorMode) {
 	case 0:
 		for(unsigned short i = 0;i < h;i++) {
@@ -327,6 +330,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			}
 		}
 	}
+	if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
 
 	if (*texture == 0) glGenTextures(1, &texture[0] );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );

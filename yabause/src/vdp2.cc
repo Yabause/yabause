@@ -98,7 +98,7 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, Vdp2Screen *screen) {
     addr += colorOffset * 0x200;
     unsigned long tmp1 = getWord(addr);
     unsigned long tmp2 = getWord(addr + 2);
-    return  ((tmp2 & 0xFF) << 24) | ((tmp1 & 0xFF00) << 8) | ((tmp2 & 0xFF) << 8) | alpha;
+    return  ((tmp2 & 0xFF) << 24) | ((tmp1 & 0xFF00) << 8) | ((tmp1 & 0xFF) << 8) | alpha;
     //return SDL_MapRGBA(screen->getSurface()->format, (tmp2 & 0xFF) << 24, (tmp1 & 0xFF00) << 8, (tmp2 & 0xFF) << 8, alpha);
   }
   }
