@@ -162,7 +162,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 #endif
         unsigned long charAddr = CMDSRCA * 8;
         *sp = vram->getSprite(charAddr);
-        if(sp->vdp1_loc == 0) {
+        if(sp->vdp1_loc == 0 && h > 1) {
 #ifdef VDP1_DEBUG
                 cerr << "Making new sprite " << hex << charAddr << endl;
 #endif
@@ -381,15 +381,18 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	vdp1Sprite sp;
 	readTexture(&sp);
 
-	glEnable( GL_TEXTURE_2D );
-	glBindTexture(GL_TEXTURE_2D, sp.txr);
-	glBegin(GL_QUADS);
-        glTexCoord2f(u1, v1); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) y/satheighthalf);
-        glTexCoord2f(u2, v1); glVertex2f((float) (x + w)/satwidthhalf - 1, 1 - (float) y/satheighthalf);
-        glTexCoord2f(u2, v2); glVertex2f((float) (x + w)/satwidthhalf - 1, 1 - (float) (y + h)/satheighthalf);
-        glTexCoord2f(u1, v2); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) (y + h)/satheighthalf);
-	glEnd();
-	glDisable( GL_TEXTURE_2D );
+        if (w > 0 && h > 1)
+        {
+           glEnable( GL_TEXTURE_2D );
+           glBindTexture(GL_TEXTURE_2D, sp.txr);
+           glBegin(GL_QUADS);
+           glTexCoord2f(u1, v1); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) y/satheighthalf);
+           glTexCoord2f(u2, v1); glVertex2f((float) (x + w)/satwidthhalf - 1, 1 - (float) y/satheighthalf);
+           glTexCoord2f(u2, v2); glVertex2f((float) (x + w)/satwidthhalf - 1, 1 - (float) (y + h)/satheighthalf);
+           glTexCoord2f(u1, v2); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) (y + h)/satheighthalf);
+           glEnd();
+           glDisable( GL_TEXTURE_2D );
+        }
 }
 
 void Vdp1::scaledSpriteDraw(unsigned long addr) {
@@ -479,15 +482,18 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	vdp1Sprite sp;
 	readTexture(&sp);
 
-	glEnable( GL_TEXTURE_2D );
-	glBindTexture( GL_TEXTURE_2D, sp.txr );
-	glBegin(GL_QUADS);
-        glTexCoord2f(u1, v1); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) y/satheighthalf);
-        glTexCoord2f(u2, v1); glVertex2f((float) (x + rw)/satwidthhalf - 1, 1 - (float) y/satheighthalf);
-        glTexCoord2f(u2, v2); glVertex2f((float) (x + rw)/satwidthhalf - 1, 1 - (float) (y + rh)/satheighthalf);
-        glTexCoord2f(u1, v2); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) (y + rh)/satheighthalf);
-	glEnd();
-	glDisable( GL_TEXTURE_2D );
+        if (w > 0 && h > 1)
+        {
+           glEnable( GL_TEXTURE_2D );
+           glBindTexture( GL_TEXTURE_2D, sp.txr );
+           glBegin(GL_QUADS);
+           glTexCoord2f(u1, v1); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) y/satheighthalf);
+           glTexCoord2f(u2, v1); glVertex2f((float) (x + rw)/satwidthhalf - 1, 1 - (float) y/satheighthalf);
+           glTexCoord2f(u2, v2); glVertex2f((float) (x + rw)/satwidthhalf - 1, 1 - (float) (y + rh)/satheighthalf);
+           glTexCoord2f(u1, v2); glVertex2f((float) x/satwidthhalf - 1, 1 - (float) (y + rh)/satheighthalf);
+           glEnd();
+           glDisable( GL_TEXTURE_2D );
+        }
 }
 
 void Vdp1::distortedSpriteDraw(unsigned long addr) {
@@ -515,15 +521,18 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	vdp1Sprite sp;
 	readTexture(&sp);
 
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, sp.txr);
-	glBegin(GL_QUADS);
-        glTexCoord2f(u1, v1); glVertex2f((float) (CMDXA + localX)/satwidthhalf - 1, 1 - (float) (CMDYA + localY)/satheighthalf);
-        glTexCoord2f(u2, v1); glVertex2f((float) (CMDXB + localX)/satwidthhalf - 1, 1 - (float) (CMDYB + localY)/satheighthalf);
-        glTexCoord2f(u2, v2); glVertex2f((float) (CMDXC + localX)/satwidthhalf - 1, 1 - (float) (CMDYC + localY)/satheighthalf);
-        glTexCoord2f(u1, v2); glVertex2f((float) (CMDXD + localX)/satwidthhalf - 1, 1 - (float) (CMDYD + localY)/satheighthalf);
-	glEnd();
-	glDisable(GL_TEXTURE_2D);
+        if (w > 0 && h > 1)
+        {
+           glEnable(GL_TEXTURE_2D);
+           glBindTexture(GL_TEXTURE_2D, sp.txr);
+           glBegin(GL_QUADS);
+           glTexCoord2f(u1, v1); glVertex2f((float) (CMDXA + localX)/satwidthhalf - 1, 1 - (float) (CMDYA + localY)/satheighthalf);
+           glTexCoord2f(u2, v1); glVertex2f((float) (CMDXB + localX)/satwidthhalf - 1, 1 - (float) (CMDYB + localY)/satheighthalf);
+           glTexCoord2f(u2, v2); glVertex2f((float) (CMDXC + localX)/satwidthhalf - 1, 1 - (float) (CMDYC + localY)/satheighthalf);
+           glTexCoord2f(u1, v2); glVertex2f((float) (CMDXD + localX)/satwidthhalf - 1, 1 - (float) (CMDYD + localY)/satheighthalf);
+           glEnd();
+           glDisable(GL_TEXTURE_2D);
+        }
 }
 
 void Vdp1::polygonDraw(unsigned long addr) {

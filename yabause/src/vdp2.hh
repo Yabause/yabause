@@ -114,6 +114,8 @@ protected:
   float deltaKAst;
   float deltaKAx;
   */
+  float coordIncX, coordIncY;
+
   float widthRatio, heightRatio;
 public:
   Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, unsigned long *);

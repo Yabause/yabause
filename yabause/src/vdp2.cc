@@ -84,8 +84,6 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
          default: break;
       }
 
-      setSaturnResolution(width, height);
-
       // Check for interlace
       switch ((val >> 6) & 0x3) {
          case 2: // Single-density Interlace
@@ -95,6 +93,8 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
          case 0: // Non-interlace
          default: break;
       }
+
+      setSaturnResolution(width, height);
 
       Memory::setWord(addr, val);
       break;
@@ -213,6 +213,8 @@ int VdpScreen::comparePriority(const void *arg1, const void *arg2) {
 }
 
 void Vdp2Screen::draw(void) {
+        float calcwidthRatio, calcheightRatio;
+
 	init();
 
         if (!(enable & disptoggle) || (getPriority() == 0)) return;
@@ -223,6 +225,9 @@ void Vdp2Screen::draw(void) {
 	else {
 		drawMap();
 	}
+
+        calcwidthRatio = widthRatio * coordIncX;
+        calcheightRatio = heightRatio * coordIncY;
 
 	if (*texture ==0) glGenTextures(1, texture );
 	glBindTexture(GL_TEXTURE_2D, texture[0] );
@@ -239,9 +244,9 @@ void Vdp2Screen::draw(void) {
 	glBindTexture( GL_TEXTURE_2D, texture[0] );
 	glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex3f(-1, 1, p);
-        glTexCoord2f(widthRatio, 0); glVertex3f(1, 1, p);
-        glTexCoord2f(widthRatio, heightRatio); glVertex3f(1, -1, p);
-        glTexCoord2f(0, heightRatio); glVertex3f(-1, -1, p);
+        glTexCoord2f(calcwidthRatio, 0); glVertex3f(1, 1, p);
+        glTexCoord2f(calcwidthRatio, calcheightRatio); glVertex3f(1, -1, p);
+        glTexCoord2f(0, calcheightRatio); glVertex3f(-1, -1, p);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
 }
@@ -249,7 +254,8 @@ void Vdp2Screen::draw(void) {
 void Vdp2Screen::drawMap(void) {
 	int X, Y;
 	X = x;
-	//for(int i = 0;i < mapWH;i++) {
+
+        //for(int i = 0;i < mapWH;i++) {
 		Y = y;
 		x = X;
 		//for(int j = 0;j < mapWH;j++) {
@@ -743,6 +749,8 @@ void RBG0::init(void) {
 	else { // color offset disable
 		cor = cog = cob = 0;
 	}
+ 
+        coordIncX = coordIncY = 1;
 }
 
 void RBG0::planeAddr(int i) {
@@ -869,6 +877,9 @@ void NBG0::init(void) {
 	else { // color offset disable
 		cor = cog = cob = 0;
 	}
+
+        coordIncX = (float)(reg->getLong(0x78) & 0x7FF00) / 65536;
+        coordIncY = (float)(reg->getLong(0x7C) & 0x7FF00) / 65536;
 }
 
 void NBG0::planeAddr(int i) {
@@ -1290,6 +1301,9 @@ void NBG1::init(void) {
 	else { // color offset disable
 		cor = cog = cob = 0;
 	}
+
+        coordIncX = (float)(reg->getLong(0x88) & 0x7FF00) / 65536;
+        coordIncY = (float)(reg->getLong(0x8C) & 0x7FF00) / 65536;
 }
 
 void NBG1::planeAddr(int i) {
@@ -1392,6 +1406,8 @@ void NBG2::init(void) {
 	else { // color offset disable
 		cor = cog = cob = 0;
 	}
+
+        coordIncX = coordIncY = 1;
 }
 
 void NBG2::planeAddr(int i) {
@@ -1507,6 +1523,8 @@ void NBG3::init(void) {
 	else { // color offset disable
 		cor = cog = cob = 0;
 	}
+
+        coordIncX = coordIncY = 1;
 }
 
 void NBG3::planeAddr(int i) {
