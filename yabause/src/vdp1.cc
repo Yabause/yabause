@@ -1,4 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
+	Copyright 2004 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -299,7 +300,6 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 
 #ifdef DEBUG
 	cerr << "Created new sprite at " << hex << ca1 << endl;
-	cerr << "tex = " << dec << sp.txr << endl;
 #endif
 	}		
 
@@ -332,16 +332,23 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	unsigned short TX;
 	short txinc = 1;
 	short tyinc = 1;
+	GLfloat u1 = 0.0f;
+	GLfloat u2 = (GLfloat)w / ww;
+	GLfloat v1 = 0.0f;
+	GLfloat v2 = (GLfloat)h / hh;
 	unsigned char dir = (vram->getWord(addr) & 0x30) >> 4;
 	if (dir & 0x1) {
-		tx = w - 1;
-		txinc = -1;
+		//tx = w - 1;
+		//txinc = -1;
+		u1 = (GLfloat)w / ww;
+		u2 = 0.0f;
 	}
 	if (dir & 0x2) {
-		ty = h - 1;
-		tyinc = -1;
+		//ty = h - 1;
+		//tyinc = -1;
+		v1 = (GLfloat)h / hh;
+		v2 = 0.0f;
 	}
-
 	unsigned short ZP = (vram->getWord(addr) & 0xF00) >> 8;
 	unsigned short tmp;
 
@@ -370,6 +377,10 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
 	unsigned short colorBank = vram->getWord(addr + 0x6);
+	vdp1Sprite sp = vram->getSprite(charAddr);
+	unsigned long ca1 = charAddr;
+	
+	if(sp.vdp1_loc == 0)	{
 	switch(colorMode) {
 	case 0:
 #ifdef DEBUG
@@ -429,25 +440,34 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			ty += tyinc;
 		}
 	}
-
-	if (*texture == 0) glGenTextures(1, &texture[0] );
-	glBindTexture(GL_TEXTURE_2D, texture[0] );
+	
+	if (sp.txr == 0) glGenTextures(1, &sp.txr);
+	glBindTexture(GL_TEXTURE_2D, sp.txr);
+	
 #ifndef _arch_dreamcast
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
 	
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 #else
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, ww, hh, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, textdata);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB1555, ww, hh, 0, GL_ARGB1555, GL_UNSIGNED_BYTE, textdata);
 #endif
+	
+	sp.vdp1_loc = ca1;
+	vram->addSprite(sp);
 
+#ifdef DEBUG
+	cerr << "Created new scaled sprite at " << hex << ca1 << endl;
+#endif
+	}
+	
 	glEnable( GL_TEXTURE_2D );
-	glBindTexture( GL_TEXTURE_2D, texture[0] );
+	glBindTexture( GL_TEXTURE_2D, sp.txr );
 	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0); glVertex2f((float) x/160 - 1, 1 - (float) y/112);
-	glTexCoord2f((float) w / ww, 0); glVertex2f((float) (x + rw)/160 - 1, 1 - (float) y/112);
-	glTexCoord2f((float) w / ww, (float) h / hh); glVertex2f((float) (x + rw)/160 - 1, 1 - (float) (y + rh)/112);
-	glTexCoord2f(0, (float) h /  hh); glVertex2f((float) x/160 - 1, 1 - (float) (y + rh)/112);
+	glTexCoord2f(u1, v1); glVertex2f((float) x/160 - 1, 1 - (float) y/112);
+	glTexCoord2f(u2, v1); glVertex2f((float) (x + rw)/160 - 1, 1 - (float) y/112);
+	glTexCoord2f(u2, v2); glVertex2f((float) (x + rw)/160 - 1, 1 - (float) (y + rh)/112);
+	glTexCoord2f(u1, v2); glVertex2f((float) x/160 - 1, 1 - (float) (y + rh)/112);
 	glEnd();
 	glDisable( GL_TEXTURE_2D );
 #endif
@@ -576,34 +596,16 @@ void Vdp1::drawEnd(unsigned long addr) {
 }
 
 Vdp1VRAM::Vdp1VRAM(unsigned long m, unsigned long size) : Memory(m, size)	{
-	//sprTree = create_tree(spr_cmp_func);
 }
 
 Vdp1VRAM::~Vdp1VRAM()	{
-	/*while(get_lowest_data(&sprTree))	{
-		remove_lowest_node(&sprTree);
-	}*/
+	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
+		glDeleteTextures(1, &i->txr);
+	}
+	sprites.clear();
 }
 
-/*tree_node_t *Vdp1VRAM::__treeSearchFunc(unsigned long l, tree_node_t *p)	{
-	if(p == NULL)	{
-		return NULL;
-	}
-	
-	if(l > ((vdp1Sprite *)p->data)->vdp1_loc)	{
-		return __treeSearchFunc(l, p->right);
-	}
-	else if(l < ((vdp1Sprite *)p->data)->vdp1_loc)	{
-		return __treeSearchFunc(l, p->left);
-	}
-	else	{
-		return p;
-	}
-}*/
-
 void Vdp1VRAM::setByte(unsigned long l, unsigned char d)	{
-	//tree_node_t * tn;
-	//tn = __treeSearchFunc(l, sprTree.root);
 	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
 		if(i->vdp1_loc == l)	{
 #ifdef DEBUG
@@ -615,21 +617,10 @@ void Vdp1VRAM::setByte(unsigned long l, unsigned char d)	{
 		}
 	}
 	
-	/*
-	if(tn != NULL)	{
-		((vdp1Sprite *)tn->data)->dirty = true;
-	}*/
-	
 	Memory::setByte(l, d);
 }
 
 void Vdp1VRAM::setWord(unsigned long l, unsigned short d)	{
-	//tree_node_t * tn;
-	//tn = __treeSearchFunc(l, sprTree.root);
-	
-	//if(tn != NULL)	{
-	//	((vdp1Sprite *)tn->data)->dirty = true;
-	//}
 	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
 		if(i->vdp1_loc == l)	{
 #ifdef DEBUG
@@ -646,12 +637,6 @@ void Vdp1VRAM::setWord(unsigned long l, unsigned short d)	{
 
 
 void Vdp1VRAM::setLong(unsigned long l, unsigned long d)	{
-	//tree_node_t * tn;
-	//tn = __treeSearchFunc(l, sprTree.root);
-	
-	//if(tn != NULL)	{
-	//	((vdp1Sprite *)tn->data)->dirty = true;
-	//}
 	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
 		if(i->vdp1_loc == l)	{
 #ifdef DEBUG
@@ -670,10 +655,6 @@ vdp1Sprite Vdp1VRAM::getSprite(unsigned long l)	{
 	vdp1Sprite blank = { 0, 0, 0 };
 	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
 		if(i->vdp1_loc == l)	{
-#ifdef DEBUG
-			cerr << "Vdp1VRAM: getSprite: Found sprite at " << hex << l << endl;
-			cerr << "tex = " << dec << l << endl;
-#endif
 			return *i;
 			break;
 		}
@@ -685,9 +666,5 @@ vdp1Sprite Vdp1VRAM::getSprite(unsigned long l)	{
 }
 
 void Vdp1VRAM::addSprite(vdp1Sprite &spr)	{
-#ifdef DEBUG
-	cerr << "Vdp1VRAM: addSprite: " << hex << spr.vdp1_loc << endl;
-#endif
-	//add_to_tree(&sprTree, spr);
 	sprites.push_back(spr);
 }
