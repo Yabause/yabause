@@ -44,6 +44,8 @@ void Vdp1::execute(unsigned long addr) {
   int nbcom = 0;
 
   if (!getWord(0x4)) return;
+  // If TVMD's DISP isn't set, don't render
+  if (!(((Vdp2 *)satmem->getVdp2())->getWord(0) & 0x8000)) return;
 
   // beginning of a frame (ST-013-R3-061694 page 53)
   // BEF <- CEF
@@ -219,7 +221,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	vdp1Sprite sp = vram->getSprite(charAddr);
         
 	unsigned long ca1 = charAddr;
-	
+
 	if(sp.vdp1_loc == 0)	{
 #ifdef VDP1_DEBUG
         cerr << "Making new sprite " << hex << charAddr << endl;

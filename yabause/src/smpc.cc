@@ -204,7 +204,7 @@ void Smpc::INTBACK(void) {
   setSF(1);
   if (intback) {
 #ifdef DEBUG
-    cerr << "don't really know how I can get here..." << endl;
+    cerr << "smpc\t: don't really know how I can get here..." << endl;
 #endif
     INTBACKPeripheral();
     //intback = false;

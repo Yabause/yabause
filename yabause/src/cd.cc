@@ -33,6 +33,7 @@ int CDDeInit()
    return 0;
 }
 
+// Obsolete - use CDGetStatus instead
 bool CDIsCDPresent()
 {
    // This is where it checks to see if a disc is present. It should be
@@ -98,6 +99,7 @@ long CDReadToc(unsigned long *TOC)
    return 0;
 }
 
+// Obsolete - use CDReadSector instead
 unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
 {
    // lba is obviously LBA, as opposed to FAD.
