@@ -15,7 +15,12 @@
    - add vdp2 coefficient table emulation
    - add vdp2 line screen emulation
    - add mpeg decoding
-   - add vdp1 sprite priorities
+   - add proper vdp1 command timing
+   - fix sound
+   - finish SCU dsp
+   - SMPC intback status should be returning correct reset flags
+   - add vdp2 windows
+   - add vdp1 clipping
 
  (3) MONITOR/DEBUGGER
 
