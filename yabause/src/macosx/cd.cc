@@ -27,14 +27,14 @@
 #include <IOKit/IOBSD.h>
 #include <IOKit/storage/IOMediaBSDClient.h>
 #include <IOKit/storage/IOMedia.h>
-#include <IOKit/storage/IOCDMedia.h>
 #include <IOKit/storage/IOCDTypes.h>
 #include <CoreFoundation/CoreFoundation.h>
 
-#define NEWCDINTERFACE
 char cdPath[1024];
-int hCDROM;
-CDTOC *cdTOC = NULL;
+static int hCDROM;
+static CDTOC *cdTOC = NULL;
+
+long CDReadToc(unsigned long *TOC);
 
 int getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize )
 {
@@ -52,13 +52,13 @@ int getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize )
             strcpy(devPath, "/dev/");
 			
             devPathLength = strlen(devPath);
-            CFStringGetCString(devPathAsCFString,  devPath + devPathLength, maxPathSize - devPathLength, kCFStringEncodingASCII);
+            CFStringGetCString(devPathAsCFString, devPath + devPathLength, maxPathSize - devPathLength, kCFStringEncodingASCII);
             CFRelease(devPathAsCFString);
 			
 			if((IORegistryEntryCreateCFProperties(nextMedia, &properties, kCFAllocatorDefault, kNilOptions)) != 0)
 				perror("IORegistryEntryCreateCFProperties Failed!");
 			
-			if((data = (CFDataRef) CFDictionaryGetValue(properties, CFSTR(kIOCDMediaTOCKey))) != NULL) {
+			if((data = (CFDataRef) CFDictionaryGetValue(properties, CFSTR("TOC"))) != NULL) {
 				CFRange range;
 				CFIndex buf_len;
 
@@ -89,7 +89,7 @@ int CDInit(char *cdrom_name)
 	if (IOMasterPort(MACH_PORT_NULL, &masterPort) != 0)
 		printf("IOMasterPort Failed!\n");
 		
-	classesToMatch = IOServiceMatching(kIOCDMediaClass); 
+	classesToMatch = IOServiceMatching("IOCDMedia"); 
 
 	if (classesToMatch == NULL)
 		printf("IOServiceMatching returned a NULL dictionary.\n");
@@ -134,41 +134,33 @@ long CDReadToc(unsigned long *TOC)
 {
 	int add150 = 150, tracks = 0;
 	u_char track;
-	int i, lba = 0; 
+	int i, fad = 0; 
 	CDTOCDescriptor *pTrackDescriptors;
 	pTrackDescriptors = cdTOC->descriptors;
 	
 	memset(TOC, 0xFF, 0xCC * 2);
 		
 	/* Convert TOC to Saturn format */
-	for( i = 0; i < CDTOCGetDescriptorCount(cdTOC); i++ ) {
+	for( i = 3; i < CDTOCGetDescriptorCount(cdTOC); i++ ) {
         track = pTrackDescriptors[i].point;
-		lba = CDConvertMSFToLBA(pTrackDescriptors[i].p) + add150;
-        if ((track > 99) || (track < 1))
+		fad = CDConvertMSFToLBA(pTrackDescriptors[i].p) + add150;
+		if ((track > 99) || (track < 1))
             continue;
-		TOC[i-3] = (pTrackDescriptors[i].control << 28 |
-			pTrackDescriptors[i].adr << 24 | lba);
+		TOC[i-3] = (pTrackDescriptors[i].control << 28 | pTrackDescriptors[i].adr << 24 | fad);
 		tracks++;
     }
-	/* Do first, last, and lead out */
-	TOC[99] = (pTrackDescriptors[0].control << 28 | 
-			pTrackDescriptors[0].adr << 24 | 1 << 16);
-	TOC[100] = (pTrackDescriptors[tracks + 2].control << 28 | 
-			pTrackDescriptors[tracks + 2].adr << 24 | tracks << 16);
-	TOC[101] = (pTrackDescriptors[tracks + 2].control << 28 |
-			pTrackDescriptors[tracks + 2].adr << 24 | (CDConvertMSFToLBA(pTrackDescriptors[2].p) + add150));
-
+	
+	/* First */
+	TOC[99] = pTrackDescriptors[0].control << 28 | pTrackDescriptors[0].adr << 24 | 1 << 16;
+	/* Last */
+	TOC[100] = pTrackDescriptors[1].adr << 24 | (tracks + 1) << 16;
+	/* Leadout */
+	TOC[101] = pTrackDescriptors[2].adr << 24 | fad;
+			
+	//hhhack for single track discs
+	TOC[1] = pTrackDescriptors[2].adr << 24 | fad + add150;
+	
 	return (0xCC * 2);
-}
-
-/* Deprecated */
-unsigned long CDReadSector(unsigned long lba, unsigned long size, void *buffer)
-{
-	int blockSize;
-	if (hCDROM != -1)
-				ioctl(hCDROM, DKIOCGETBLOCKSIZE, &blockSize);
-                return pread(hCDROM, buffer, blockSize, lba * blockSize);
-    return 0;
 }
 
 bool CDReadSectorFAD(unsigned long FAD, void *buffer)
@@ -177,7 +169,7 @@ bool CDReadSectorFAD(unsigned long FAD, void *buffer)
 	
 	if (hCDROM != -1) {
 		ioctl(hCDROM, DKIOCGETBLOCKSIZE, &blockSize);
-		if (pread(hCDROM, buffer, blockSize, FAD * blockSize))
+		if (pread(hCDROM, buffer, blockSize, (FAD - 150) * blockSize))
 			return true;
 	}
 	return false;
