@@ -271,9 +271,9 @@ void Onchip::runINTC(void) {
 
     SDL_mutexP(mutex_cond);
 #ifndef _arch_dreamcast
-    while(interrupts.empty()) SDL_CondWait(cond, mutex);
+    while(interrupts.empty()) SDL_CondWait(cond, mutex_cond);
 #else
-    while(int_tree.root == NULL) SDL_CondWait(cond, mutex);
+    while(int_tree.root == NULL) SDL_CondWait(cond, mutex_cond);
 #endif
     SDL_mutexV(mutex_cond);
 
