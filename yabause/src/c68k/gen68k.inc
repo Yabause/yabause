@@ -436,10 +436,10 @@ static u32 current_io_sav;
 
 static char current_cond_char[128];
 
-static char szc[4];
-static char szcs[8];
-static char szcf[8];
-static char szcsf[8];
+static char szc[20];
+static char szcs[20];
+static char szcf[20];
+static char szcsf[20];
 
 static u32  current_bits_mask;
 static u8   current_sft_mask;
@@ -1402,7 +1402,7 @@ static void _ea_read_sx_(u32 ea, u32 rsft, char dest[4])
             switch (current_size)
             {
                 case SIZE_BYTE:
-                    wf_op("\t%s = (s32)(%s(PC));\n", dest, szcsf);
+                    wf_op("\t%s = (s32)(%s(PC)));\n", dest, szcsf);
                     wf_op("\tPC += 2;\n");
                     break;
 
@@ -1452,7 +1452,8 @@ static void _ea_write(u32 ea, u32 rsft)
 	switch (ea)
 	{
 		case EA_DREG:
-            wf_op("\t%s(&CPU->D[(Opcode >> %d) & 7]) = res;\n", szcf, rsft);
+            wf_op("\t%s(&CPU->D[(Opcode >> %d) & 7])) = res;\n", szcf, 
+rsft);
 			break;
 
 		case EA_AREG:
@@ -1521,27 +1522,43 @@ static void set_current_size(u32 sz)
             current_bits_mask = 0xFF;
             current_sft_mask = 7;
             strcpy(szc, "u8");
-            strcpy(szcf, "*(u8*)");
+#ifdef C68K_BIG_ENDIAN
+            strcpy(szcf, "*(3 + (u8*)");
+#else
+            strcpy(szcf, "*((u8*)");
+#endif
             strcpy(szcs, "s8");
-            strcpy(szcsf, "*(s8*)");
+#ifdef C68K_BIG_ENDIAN
+            strcpy(szcsf, "*(3 + (s8*)");
+#else
+            strcpy(szcsf, "*((s8*)");
+#endif
             break;
 
         case SIZE_WORD:
             current_bits_mask = 0xFFFF;
             current_sft_mask = 15;
             strcpy(szc, "u16");
-            strcpy(szcf, "*(u16*)");
+#ifdef C68K_BIG_ENDIAN
+            strcpy(szcf, "*(1 + (u16*)");
+#else
+            strcpy(szcf, "*((u16*)");
+#endif
             strcpy(szcs, "s16");
-            strcpy(szcsf, "*(s16*)");
+#ifdef C68K_BIG_ENDIAN
+            strcpy(szcsf, "*(1 + (s16*)");
+#else
+            strcpy(szcsf, "*((s16*)");
+#endif
             break;
 
         case SIZE_LONG:
             current_bits_mask = 0xFFFFFFFF;
             current_sft_mask = 31;
             strcpy(szc, "u32");
-            strcpy(szcf, "*(u32*)");
+            strcpy(szcf, "*((u32*)");
             strcpy(szcs, "s32");
-            strcpy(szcsf, "*(s32*)");
+            strcpy(szcsf, "*((s32*)");
             break;
     }
 }
