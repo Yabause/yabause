@@ -62,6 +62,8 @@ typedef struct
   unsigned long MACL;
   unsigned long PR;
   unsigned long PC;
+
+  unsigned long delay;
 } sh2regs_struct;
 
 class Instruction {

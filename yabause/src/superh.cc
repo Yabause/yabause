@@ -2241,6 +2241,7 @@ void SuperH::GetRegisters(sh2regs_struct *regs) {
     regs->MACL = MACL;
     regs->PR = PR;
     regs->PC = PC - 4;
+    regs->delay = _delai;
   }
 }
 
@@ -2254,6 +2255,7 @@ void SuperH::SetRegisters(sh2regs_struct *regs) {
     MACL = regs->MACL;
     PR = regs->PR;
     PC = regs->PC + 4;
+    _delai = regs->delay;
   }
 }
 
