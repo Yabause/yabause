@@ -160,7 +160,6 @@ private:
   Vdp2Screen *screens[5];
   SaturnMemory *satmem;
 
-  SDL_Thread *vdp2Thread;
 public:
   Vdp2(SaturnMemory *);
   ~Vdp2(void);

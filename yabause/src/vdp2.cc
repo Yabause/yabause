@@ -38,6 +38,10 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
       Memory::setWord(addr, val);
       updateRam();
       break;
+    case 0xE0:
+      Memory::setWord(addr, val);
+      cerr << "sprite type modified" << endl;
+      break;
     case 0xF8:
       Memory::setWord(addr, val);
       sortScreens();
@@ -148,13 +152,14 @@ void Vdp2Screen::draw(void) {
   glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
 #endif
 
+  int p = getPriority();
   glEnable( GL_TEXTURE_2D );
   glBindTexture( GL_TEXTURE_2D, texture[0] );
   glBegin(GL_QUADS);
-  glTexCoord2f(0, 0); glVertex2f(-1, 1);
-  glTexCoord2f(0.625, 0); glVertex2f(1, 1);
-  glTexCoord2f(0.625, 0.875); glVertex2f(1, -1);
-  glTexCoord2f(0, 0.875); glVertex2f(-1, -1);
+  glTexCoord2f(0, 0); glVertex3f(-1, 1, p);
+  glTexCoord2f(0.625, 0); glVertex3f(1, 1, p);
+  glTexCoord2f(0.625, 0.875); glVertex3f(1, -1, p);
+  glTexCoord2f(0, 0.875); glVertex3f(-1, -1, p);
   glEnd();
   glDisable( GL_TEXTURE_2D );
 
@@ -965,6 +970,7 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glOrtho(-1, 1, -1, 1, -10, 10);
 	//glGenTextures(1, texture );
   //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
 #ifndef _arch_dreamcast
@@ -975,7 +981,6 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   free(surface->pixels);
   surface->pixels = memalign(32, 256 * 512 * 2);
 #endif
-  //vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, this);
   	screens[4] = new RBG0(this, vram, cram, surface);
   	screens[3] = new NBG0(this, vram, cram, surface);
   	screens[2] = new NBG1(this, vram, cram, surface);
@@ -1024,7 +1029,7 @@ void Vdp2::executer(void) {
   t.waitVBlankOUT();
   setWord(0x4, getWord(0x4) & 0xFFF7);
 
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   drawBackScreen();
   if (getWord(0) & 0x8000) {
 //    if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);

@@ -43,7 +43,7 @@ private:
   unsigned char regionid;
 
   SaturnMemory *sm;
-  SDL_Thread *smpcThread;
+  long timing;
 public:
   Smpc(SaturnMemory *);
 
@@ -62,6 +62,8 @@ public:
 
   static void execute(Smpc *);
   static void intcont(Smpc *);
+  void execute2(unsigned long);
+  void setTiming(void);
 
   void INTBACK(void);
   void INTBACKStatus(void);

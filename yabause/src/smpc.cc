@@ -59,13 +59,17 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
   Memory::setByte(addr, value);
 
   if (addr == 1) {  // Maybe an INTBACK continue/break request
-    SDL_WaitThread(smpcThread, NULL);
-    smpcThread = SDL_CreateThread((int (*)(void*)) &Smpc::intcont, this);
+    if ((intbackIreg0 & 0x80) != (getIREG(0) & 0x80)) {
+      setTiming();
+    }
+    if ((intbackIreg0 & 0x40) != (getIREG(0) & 0x40)) {
+      intback = false;
+      setSR(getSR() & 0x0F);
+    }
   }
 
   if (addr == 0x1F) {
-    SDL_WaitThread(smpcThread, NULL);
-    smpcThread = SDL_CreateThread((int (*)(void*)) &Smpc::execute, this);
+    setTiming();
   }
 }
 
@@ -92,7 +96,34 @@ Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
 
   this->sm = sm;
 
-  smpcThread = NULL;
+  timing = 0;
+}
+
+void Smpc::setTiming(void) {
+	switch(getCOMREG()) {
+		case 0x10:
+			if (intback) timing = 20;
+			else timing = 3000;
+			break;
+		case 0x6:
+		case 0x7:
+		case 0x19:
+		case 0x1A:
+			timing = 30;
+			break;
+		default:
+			cerr << "unimplemented command: " << hex << (int) getCOMREG() << endl;
+			break;
+	}
+}
+
+void Smpc::execute2(unsigned long t) {
+	if (timing > 0) {
+		timing -= t;
+		if (timing <= 0) {
+			execute(this);
+		}
+	}
 }
 
 void Smpc::execute(Smpc *smpc) {
@@ -178,34 +209,9 @@ void Smpc::execute(Smpc *smpc) {
   smpc->setSF(0);
 }
 
-void Smpc::intcont(Smpc *smpc) {
-  if (smpc->intback) {
-    if ((smpc->intbackIreg0 & 0x40) != (smpc->getIREG(0) & 0x40)) {
-#if DEBUG
-      //cerr << "BREAK\n";
-#endif
-      smpc->intback = false;
-      smpc->setSR(smpc->getSR() & 0x0F);
-      ((Scu *) smpc->sm->getScu())->sendSystemManager();
-      return;
-    }
-    if ((smpc->intbackIreg0 & 0x80) != (smpc->getIREG(0) & 0x80)) {
-#if DEBUG
-      //cerr << "CONTINUE\n";
-#endif
-      smpc->INTBACKPeripheral();
-      //smpc->intback = false;
-      ((Scu *) smpc->sm->getScu())->sendSystemManager();
-    }
-  }
-}
-
 void Smpc::INTBACK(void) {
   setSF(1);
   if (intback) {
-#ifdef DEBUG
-    cerr << "smpc\t: don't really know how I can get here..." << endl;
-#endif
     INTBACKPeripheral();
     //intback = false;
     ((Scu *) sm->getScu())->sendSystemManager();
@@ -231,7 +237,7 @@ void Smpc::INTBACK(void) {
 
 void Smpc::INTBACKStatus(void) {
   Timer t;
-  t.wait(3000);
+  //t.wait(3000);
 #if DEBUG
   //cerr << "INTBACK status\n";
 #endif
@@ -325,7 +331,7 @@ void Smpc::INTBACKPeripheral(void) {
     setSR(0x80 | (getIREG(1) >> 4));
 
   Timer t;
-  t.wait(20);
+  //t.wait(20);
 
   /* PeripheralID:
   0xF0 - Digital Device Standard Format

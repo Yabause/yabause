@@ -19,6 +19,7 @@
 
 #include "scu.hh"
 #include "superh.hh"
+#include "registres.hh"
 
 unsigned long Scu::getLong(unsigned long addr) {
 	if (addr == 0x80) return 0;        

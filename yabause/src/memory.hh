@@ -147,6 +147,7 @@ public:
   Memory *getVdp1(void);
   Memory *getScu(void);
   Memory *getVdp2(void);
+  Memory *getSmpc(void);
 
   bool start(void);
   void stop(void);

@@ -469,6 +469,10 @@ Memory *SaturnMemory::getVdp2(void) {
 	return vdp2_3;
 }
 
+Memory *SaturnMemory::getSmpc(void) {
+	return smpc;
+}
+
 void SaturnMemory::initMemoryHandler(int begin, int end, Memory * m) {
 	for(int i = begin;i < end;i++)
 		memoryMap[i] = m;

@@ -27,6 +27,7 @@
 #endif
 #include "yui.hh"
 #include "sh2d.hh"
+#include "registres.hh"
 
 SuperH::SuperH(bool slave) {
   SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
@@ -181,6 +182,7 @@ void SuperH::synchroStart(void) {
       cycleCountII += cycleCount;
 
       while (cycleCountII > duf) {
+        ((Smpc *) ((SaturnMemory *)memoire)->getSmpc())->execute2(10); // yurk :(
 	SDL_CondBroadcast(cond[0]);
 	cycleCountII %= duf;
 	duf = deciufreq.nextValue();
