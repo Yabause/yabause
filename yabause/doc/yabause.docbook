@@ -1,18 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
-<!ENTITY chLinux SYSTEM "linux.docbook">
-<!ENTITY chWindows SYSTEM "windows.docbook">
-<!ENTITY chDreamcast SYSTEM "dreamcast.docbook">
-]>
-<book id="bookYabause">
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+
+<book>
 <bookinfo>
 	<title>Yabause User Manual</title>
 	<authorgroup>
 	<author>
 		<firstname>Guillaume</firstname>
 		<surname>Duhamel</surname>
-		<affiliation><address><email>guillaume.duhamel@gmail.com</email></address></affiliation>
 	</author>
 	<author>
 		<firstname>Theo</firstname>
@@ -81,19 +77,24 @@ developers.</para>
 
 </chapter>
 
-<chapter id="chapterLinux">
-<title>GNU/Linux</title>
-&chLinux;
-</chapter>
+<xi:include os="win,linux" xmlns:xi="http://www.w3.org/2001/XInclude" href="compilation.docbook" /> 
 
-<chapter id="chapterWindows">
-<title>Microsoft Windows</title>
-&chWindows;
-</chapter>
+<xi:include os="win,linux" xmlns:xi="http://www.w3.org/2001/XInclude" href="using.docbook" /> 
 
-<chapter id="chapterDreamcast">
-<title>Dreamcast</title>
-&chDreamcast;
+<xi:include os="dreamcast" xmlns:xi="http://www.w3.org/2001/XInclude" href="dreamcast.docbook" /> 
+
+<chapter>
+<title>Other information</title>
+
+<section>
+<title>Contact</title>
+
+<para>Web: <ulink url="http://yabause.sourceforge.net/">http://yabause.sourceforge.net/</ulink></para>
+<para>E-mail: <email>guillaume.duhamel@gmail.com</email></para>
+<para>IRC: #yabause on <ulink url="http://www.freenode.org/">Freenode</ulink></para>
+
+</section>
+
 </chapter>
 
 </book>
