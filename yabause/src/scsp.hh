@@ -57,7 +57,7 @@ private:
   ScspRam *sram;
   SaturnMemory *satmem;
   unsigned long scsptiming1;
-  unsigned long scsptiming2;
+  float scsptiming2;
   FILE *debugfp;
   void Scsp::Convert32to16s(long *, long *, short *, unsigned long);
 public:

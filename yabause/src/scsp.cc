@@ -1239,7 +1239,7 @@ u16 scsp_get_w(u32 a)
 		return scsp_midi_out_read();
 
 	case 0x04:
-		return (scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0xF;
+                return ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
 	}
 
 	return *(u16 *)&scsp_ccr[a ^ 2];
@@ -2460,7 +2460,7 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 // Yabause specific start
 
 #define SOUNDBLOCKSIZE  735
-#define NUMSOUNDBLOCKS  8
+#define NUMSOUNDBLOCKS  2
 
 static unsigned char *basetruescspram;
 Scu *scuint;
@@ -2471,8 +2471,9 @@ struct sounddata {
 
 unsigned short *stereodata16;
 unsigned long soundpos;
-unsigned long soundbufnum;
+unsigned long soundblknum;
 unsigned long soundlen;
+unsigned long soundbufsize;
 
 u32 FASTCALL c68k_byte_read(const u32 adr) {
   if (adr < 0x100000)
@@ -2538,20 +2539,31 @@ void scu_interrupt_handler(void) {
 
 void scspMixAudio(void *userdata, Uint8 *stream, int len) {
    int i;
-   unsigned long size;
+   Uint8 *soundbuf=(Uint8 *)stereodata16;
 
-   for (i = 0; i < 1; i++) {
-      size = ((SOUNDBLOCKSIZE * NUMSOUNDBLOCKS * 2) - soundpos) * 2;
+   for (i = 0; i < len; i++)
+   {
+      if (soundpos >= soundbufsize)
+         soundpos = 0;
 
-      if (size > len) {
-         size = len ;
-      }      
-
-      SDL_MixAudio(stream, (unsigned char *)&stereodata16[soundpos], size, SDL_MIX_MAXVOLUME);
-      soundpos += (size / 2);
-
-      if (soundpos >= soundlen) soundpos = 0;
+      stream[i] = soundbuf[soundpos];
+      soundpos++;
    }
+/*
+   Uint8 *soundbuf=(Uint8 *)stereodata16;
+   int size;
+
+   size = len;
+
+   if (len > (soundbufsize - soundpos + len))
+      size = (soundbufsize - soundpos + len);
+   
+   SDL_MixAudio(stream, soundbuf+soundpos, size, 20);
+//   SDL_MixAudio(stream, soundbuf+soundpos, size, SDL_MIX_MAXVOLUME);
+
+   if (soundpos+size >= soundbufsize)
+      soundpos = 0;
+*/
 }
 
 unsigned char ScspRam::getByte(unsigned long addr) {
@@ -2563,6 +2575,7 @@ unsigned char ScspRam::getByte(unsigned long addr) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+
 #ifdef WORDS_BIGENDIAN
         return (base_mem + addr)[0];
 #else
@@ -2595,6 +2608,7 @@ unsigned short ScspRam::getWord(unsigned long addr) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+
 #ifdef WORDS_BIGENDIAN
   return ((unsigned short *) (base_mem + addr))[0];
 #else
@@ -2627,6 +2641,7 @@ unsigned long ScspRam::getLong(unsigned long addr) {
 		printf("Bad memory access: %8x", addr);
 #endif
 	}
+
 #ifdef WORDS_BIGENDIAN
         return ((unsigned long *) (base_mem + addr))[0];
 #else
@@ -2685,12 +2700,14 @@ Scsp::Scsp(SaturnMemory *v) : Dummy(0xFFF) {
   }
 
   fmt.freq = 44100;
-  fmt.format = AUDIO_S16SYS; // correct?
-//  fmt.format = AUDIO_U16SYS; // correct?
+  fmt.format = AUDIO_S16SYS;
   fmt.channels = 2;
-  fmt.samples = 735; // fix me
+  fmt.samples = 1024;
   fmt.callback = scspMixAudio;
   fmt.userdata = NULL;
+
+  soundlen = fmt.freq / 60; // or 50 for PAL
+  soundbufsize = soundlen * NUMSOUNDBLOCKS * 2 * 2;
 
   try {
     SDL_OpenAudio(&fmt, NULL);
@@ -2704,16 +2721,15 @@ Scsp::Scsp(SaturnMemory *v) : Dummy(0xFFF) {
   memset(&scspchannel, 0, sizeof(scspchannel));
 
   // Allocate enough memory for each channel buffer(may have to change)
-  scspchannel[0].data32 = new unsigned long[SOUNDBLOCKSIZE];
-  scspchannel[1].data32 = new unsigned long[SOUNDBLOCKSIZE];
-  stereodata16 = new unsigned short[SOUNDBLOCKSIZE * 2 * NUMSOUNDBLOCKS];
-  memset(scspchannel[0].data32, 0, SOUNDBLOCKSIZE * 4);
-  memset(scspchannel[1].data32, 0, SOUNDBLOCKSIZE * 4);
-  memset(stereodata16, 0, SOUNDBLOCKSIZE * 2 * 2 * NUMSOUNDBLOCKS);
+  scspchannel[0].data32 = new unsigned long[soundlen];
+  scspchannel[1].data32 = new unsigned long[soundlen];
+  stereodata16 = new unsigned short[soundbufsize / 2];
+  memset(scspchannel[0].data32, 0, soundlen * 4);
+  memset(scspchannel[1].data32, 0, soundlen * 4);
+  memset(stereodata16, 0, soundbufsize);
 
   soundpos = 0;
-  soundbufnum = 0;
-  soundlen = 0;
+  soundblknum = 0;
 
   SDL_PauseAudio(0);
 
@@ -2746,36 +2762,39 @@ void Scsp::reset(void) {
 
 void Scsp::run68k(unsigned long cycles) {
   if (is68kOn)
-     C68k_Exec(&C68K, cycles / 3); // fix me
+     C68k_Exec(&C68K, (unsigned long)((float)cycles / 2.5)); // almost correct
 }
 
 void Scsp::step68k() {
-  // fix me
+  C68k_Exec(&C68K, 1);
 }
 
 void Scsp::run() {
-  scsp_update_timer(3); // fix me
+  scsp_update_timer((unsigned long)(scsptiming2 + 2.7947)); // I should really be using integers, but oh well
+  scsptiming2 = (scsptiming2 + 2.7947) - (float)((unsigned long)(scsptiming2 + 2.7947)); 
   scsptiming1++;
 
   if (scsptiming1 >= 263) // fix me
   {
+     memset(scspchannel[0].data32, 0, 4 * soundlen);
+     memset(scspchannel[1].data32, 0, 4 * soundlen);
+
+     scsp_update((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, soundlen);
+
      SDL_LockAudio();
-     memset(scspchannel[0].data32, 0, 4 * SOUNDBLOCKSIZE);
-     memset(scspchannel[1].data32, 0, 4 * SOUNDBLOCKSIZE);
+     // check to see if we're falling behind/getting ahead
 
-     scsp_update((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, 735); // fix me
+     Convert32to16s((long *)scspchannel[0].data32, (long *)scspchannel[1].data32, ((short *)stereodata16 + (soundblknum * soundlen * 2)), soundlen);
 
-     soundlen = SOUNDBLOCKSIZE * NUMSOUNDBLOCKS * 2;
-     Convert32to16s((long *)scspchannel[0].data32, (long *)scspchannel[1].data32, ((short *)stereodata16 + (soundbufnum * SOUNDBLOCKSIZE * 2)), SOUNDBLOCKSIZE);
-
-     soundbufnum++;
-     soundbufnum &= (NUMSOUNDBLOCKS - 1);
+     soundblknum++;
+     soundblknum &= (NUMSOUNDBLOCKS - 1);
 
 //     if (debugfp) fwrite((void *)stereodata16, 1, SOUNDBLOCKSIZE * 2 * NUMSOUNDBLOCKS, debugfp);
 
      SDL_UnlockAudio();
 
      scsptiming1 -= 263;
+     scsptiming2 = 0;
   }
 }
 
