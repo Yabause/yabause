@@ -1,0 +1,97 @@
+<section>
+<title>Compilation</title>
+
+<para>Yabause is written in C++ using the SDL and OpenGL libraries,
+so you need a working C++ compiler (as g++) and the above
+libraries runtime and development packages:
+<itemizedlist mark="bullet">
+	<listitem>
+	<para>you can find SDL at <ulink url="http://www.libsdl.org/">http://www.libsdl.org/</ulink>
+	in the download section.</para>
+	</listitem>
+	<listitem>
+	<para>OpenGL should be included with your compiler, if it isn't,
+    check on your distribution's website for links.</para>
+	</listitem>
+	<listitem>
+	<para>Yabause can also use the <ulink url="http://www.gtk.org/">GTK library</ulink>.</para>
+	</listitem>
+</itemizedlist>
+</para>
+
+<para>Once these libraries installed, you should be ready to
+install Yabause.</para>
+
+<para>The following steps will be different depending on what
+compiler you're using. If you're using gnu-based compilers
+such as cygwin or mingw, you just have to uncompress the
+Yabause source archive, move to the newly created
+directory, type "./configure", then "make", it will generate
+one program: "yabause.exe" in the "src" directory.
+For other compilers, you're on your own at this point.</para>
+
+<para>You can also pass the --enable-debug, --enable-vdp1-debug,
+--enable-cd-debug options to the configure script, Yabause
+will then print debug messages on the error standard output.</para>
+
+<para>You can even type "make install" to install that program on
+your system (in /usr/local/ by default), then uninstalling is
+done by typing "make uninstall".</para>
+
+</section>
+
+<section>
+<title>Using Yabause</title>
+
+<para>The first requirement is a Saturn ROM BIOS image (hence a Sega
+Saturn). Please don't ask us where to get one. </para>
+
+<para>Execute "yabause". The program will open a settings window.</para>
+
+<para>The Drive Letter setting is for you to be able to choose which
+cdrom drive you want yabause to use when trying to boot a game.</para>
+
+<para>The Region setting allows you to choose which region of game
+you'll be booting. In most cases, it's best to leave it as
+"Auto-detect".</para>
+
+<para>The Bios ROM File setting allows you to specify the location
+of your Saturn ROM BIOS image. This setting -must- be set to a
+valid Saturn ROM BIOS in order for yabause to operate
+correctly.</para>
+
+<para>The Backup RAM File setting allows you to specify the location
+of the Backup RAM file. This file allows yabause to store and
+load save games.</para>
+
+<para>The MPEG ROM File setting allows you to specify the location 
+of a MPEG Card's ROM image. While not necessary, it does allow
+you to test out the saturn's vcd capabilities.</para>
+
+<para>When you're done, just click on the "OK" button. If the bios
+location was specified correctly, emulation should start and
+you will see a bit of a brief animation of the saturn logo
+being formed. </para>
+
+<para>Here are the current key mappings(they may be subject to change):
+
+<simplelist type="horiz" columns="2">
+	<member><keycap>e</keycap></member><member>Up</member>
+	<member><keycap>s</keycap></member><member>Left</member>
+	<member><keycap>d</keycap></member><member>Down</member>
+	<member><keycap>f</keycap></member><member>Right</member>
+	<member><keycap>k</keycap></member><member>A button</member>
+	<member><keycap>l</keycap></member><member>B button</member>
+	<member><keycap>m</keycap></member><member>C button</member>
+	<member><keycap>u</keycap></member><member>X button</member>
+	<member><keycap>i</keycap></member><member>Y button</member>
+	<member><keycap>o</keycap></member><member>Z button</member>
+	<member><keycap>x</keycap></member><member>Left Trigger</member>
+	<member><keycap>z</keycap></member><member>Right Trigger</member>
+	<member><keycap>j</keycap></member><member>Start button</member>
+	<member><keycap>q</keycap></member><member>Quit program</member>
+</simplelist>
+
+</para>
+
+</section>

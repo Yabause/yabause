@@ -1,0 +1,76 @@
+<section>
+<title>Compilation</title>
+
+<para>Yabause is written in C++ using the SDL and OpenGL libraries,
+so you need a working C++ compiler (as g++) and the above
+libraries runtime and development packages:
+<itemizedlist mark="bullet">
+	<listitem>
+	<para>you can find SDL at <ulink url="http://www.libsdl.org/">http://www.libsdl.org/</ulink>
+	in the download section.</para>
+	</listitem>
+	<listitem>
+	<para>OpenGL should be included with your compiler, if it isn't,
+    check on your distribution's website for links.</para>
+	</listitem>
+	<listitem>
+	<para>Yabause can also use the <ulink url="http://www.gtk.org/">GTK library</ulink>.</para>
+	</listitem>
+</itemizedlist>
+</para>
+
+<para>Once these libraries installed, you should be ready to
+install Yabause.</para>
+
+<para>Uncompress the Yabause source archive, move to the newly
+created directory, type "./configure", then "make",
+it will generate one program: "yabause" in the "src"
+directory.</para>
+
+<para>You can also pass the --enable-debug, --enable-vdp1-debug,
+--enable-cd-debug options to the configure script, Yabause
+will then print debug messages on the error standard output.</para>
+
+<para>You can even type "make install" to install that program on
+your system (in /usr/local/ by def</para>
+
+</section>
+
+<section>
+<title>Using Yabause</title>
+
+<para>The first requirement is a Saturn ROM BIOS image (hence a Sega
+Saturn). Please don't ask us where to get one.</para>
+
+<para>Execute "yabause". If yabause was compiled with gtk, the
+program should open a window with a menu. Use the
+"Open BIOS..." menu entry to choose your bios file.</para>
+
+<para>You can also set a cdrom device with the "Open CDROM..." entry.</para>
+
+<para>Once the BIOS file is choosen, you can start emulation with
+the "run" entry.</para>
+
+<para>Here are the current key mappings(they may be subject to change):
+
+<simplelist type="horiz" columns="2">
+	<member><keycap>e</keycap></member><member>Up</member>
+	<member><keycap>s</keycap></member><member>Left</member>
+	<member><keycap>d</keycap></member><member>Down</member>
+	<member><keycap>f</keycap></member><member>Right</member>
+	<member><keycap>k</keycap></member><member>A button</member>
+	<member><keycap>l</keycap></member><member>B button</member>
+	<member><keycap>m</keycap></member><member>C button</member>
+	<member><keycap>u</keycap></member><member>X button</member>
+	<member><keycap>i</keycap></member><member>Y button</member>
+	<member><keycap>o</keycap></member><member>Z button</member>
+	<member><keycap>x</keycap></member><member>Left Trigger</member>
+	<member><keycap>z</keycap></member><member>Right Trigger</member>
+	<member><keycap>j</keycap></member><member>Start button</member>
+	<member><keycap>h</keycap></member><member>Hide/show gtk interface</member>
+	<member><keycap>q</keycap></member><member>Quit program</member>
+</simplelist>
+
+</para>
+
+</section>
