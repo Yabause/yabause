@@ -24,6 +24,8 @@
 #include "memory.hh"
 
 class CDInterface;
+class SaturnMemory;
+class Scu;
 
 #define MAX_BLOCKS      200
 #define MAX_SELECTORS   24
@@ -186,8 +188,13 @@ private:
   unsigned long _periodiccycles;
   unsigned long _periodictiming;
   CDInterface *cd;
+
+  SaturnMemory *satmem;
+  Scu *scuint;
+
+  int carttype;
 public:
-  Cs2(void);
+  Cs2(SaturnMemory *, int);
   ~Cs2(void);
   unsigned short getHIRQ(void);
   unsigned short getHIRQMask(void);

@@ -30,6 +30,7 @@
 #define CART_BACKUPRAM32MBIT    5
 #define CART_DRAM8MBIT          6
 #define CART_DRAM32MBIT         7
+#define CART_NETLINK            8
 
 class Cs0 : public Dummy {
 private:

@@ -305,7 +305,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
         sinit = new InputCaptureSignal(msh);
         cs0         = new Cs0(NULL, CART_NONE);
         cs1         = new Cs1(NULL, CART_NONE);
-	cs2         = new Cs2();
+        cs2         = new Cs2(this, CART_NONE);
         soundr      = new Scsp(this);
         sound       = ((Scsp *)soundr)->getSRam();
 	scu         = new Scu(this);

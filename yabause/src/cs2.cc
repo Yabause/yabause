@@ -79,17 +79,45 @@ void Cs2::setCR3(unsigned short val) {Memory::setWord(0x90020, val);}
 void Cs2::setCR4(unsigned short val) {Memory::setWord(0x90024, val);}
 
 unsigned char Cs2::getByte(unsigned long addr) {
-#if CDDEBUG
-   fprintf(stderr, "cs2\t: Byte reading isn't implemented\n");
-#endif
-   return Memory::getByte(addr);
+
+  if(carttype == CART_NETLINK) {
+     switch (addr) {
+        case 0x95019: // Modem Status Register
+           // Send interrupt here?
+           return Memory::getByte(addr);
+        case 0x9501D: // Scratch
+           return Memory::getByte(addr);
+        default:
+           return Memory::getByte(addr);
+     }
+  }
+  else
+  {
+     return 0xFF; // only netlink seems to use byte-access
+//     return Memory::getByte(addr);
+  }
 }
 
 void Cs2::setByte(unsigned long addr, unsigned char val) {
-#if CDDEBUG
-   fprintf(stderr, "cs2\t: Byte writing isn't implemented\n");
-#endif
-   Memory::setByte(addr, val);
+  if(carttype == CART_NETLINK) {
+     switch (addr) {
+        case 0x2503D: // ???
+           Memory::setByte(addr, val);
+           break;
+        case 0x95019: // Modem Status Register(read-only)
+           break;
+        case 0x9501D: // Scratch
+           Memory::setByte(addr, val);
+           break;
+        default:
+           break;
+      }
+   }
+   else
+   {
+       // only netlink seems to use byte-access
+//      Memory::setByte(addr, val);
+   }
 }
 
 unsigned short Cs2::getWord(unsigned long addr) {
@@ -195,7 +223,7 @@ unsigned short Cs2::getWord(unsigned long addr) {
                   break;
     default:
 #if DEBUG
-             cerr << "cs2\t:Undocumented register read " << hex << addr << endl;
+             cerr << "cs2\t: Undocumented register read " << hex << addr << endl;
 #endif
              val = Memory::getWord(addr);
              break;
@@ -332,7 +360,7 @@ unsigned long Cs2::getLong(unsigned long addr) {
 	          break;
     default:
 #if DEBUG
-             cerr << "cs2\t:Undocumented register read " << hex << addr << endl;
+             cerr << "cs2\t: Undocumented register read " << hex << addr << endl;
 #endif
              val = Memory::getLong(addr);
              break;
@@ -348,12 +376,29 @@ void Cs2::setLong(unsigned long addr, unsigned long val) {
    Memory::setLong(addr, val);
 }
 
-Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
+Cs2::Cs2(SaturnMemory *v, int type) : Memory(0xFFFFF, 0x100000) {
+  satmem = v;
+  scuint = satmem->scu;
+  carttype = type;
+
   cd = yui_cd();
   if (cd == NULL) {
 	cerr << "Unable to initialize cdrom!\n";
   }
   reset();
+
+  // If Modem is connected, set the registers
+  if(carttype == CART_NETLINK)
+  {
+     Memory::setByte(0x95001, 0x00);
+     Memory::setByte(0x95005, 0x00);
+     Memory::setByte(0x95009, 0x01);
+     Memory::setByte(0x9500D, 0x00);
+     Memory::setByte(0x95011, 0x00);
+     Memory::setByte(0x95015, 0x60);
+     Memory::setByte(0x95019, 0x30);
+     Memory::setByte(0x9501D, 0x01);
+  }
 }
 
 Cs2::~Cs2(void) {
@@ -490,7 +535,7 @@ void Cs2::reset(void) {
   mpegstm[0].audchannum = mpegstm[0].vidchannum = 0x00; 
   mpegstm[1].audstm = mpegstm[1].vidstm = 0x00;
   mpegstm[1].audstmid = mpegstm[1].vidstmid = 0x00; 
-  mpegstm[1].audchannum = mpegstm[1].vidchannum = 0x00; 
+  mpegstm[1].audchannum = mpegstm[1].vidchannum = 0x00;
 }
 
 void Cs2::run(unsigned long timing) {
@@ -644,11 +689,14 @@ void Cs2::execute(void) {
       fprintf(stderr, "cs2\t: Command: getSessionInfo\n");
 #endif
        getSessionInfo();
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
        break;
     }
     case 0x04:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: initializeCDSystem\n");
+      fprintf(stderr, "cs2\t: Command: initializeCDSystem %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       initializeCDSystem();
       break;
@@ -1069,8 +1117,8 @@ void Cs2::getSessionInfo(void) {
             setCR4(TOC[101] & 0x00FFFF);
             break;
     case 1:
-            setCR3(0x0100);
-            setCR4(0);
+            setCR3(0x0100); // return Session number(high byte)/and first byte of Session lba
+            setCR4(0); // lower word of Session lba
             break;
     default:
             setCR3(0xFFFF);
