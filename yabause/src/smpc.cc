@@ -150,32 +150,43 @@ void Smpc::setTiming(void) {
 #if DEBUG
                         cerr << "smpc\t: MSHON not implemented\n";
 #endif
-			timing = 30;
+                        timing = 1;
                         break;
                 case 0x8:
 #if DEBUG
                         cerr << "smpc\t: CDON not implemented\n";
 #endif
-                        timing = 40;
+                        timing = 1;
                         break;
                 case 0x9:
 #if DEBUG
                         cerr << "smpc\t: CDOFF not implemented\n";
 #endif
-                        timing = 40;
+                        timing = 1;
                         break;
                 case 0xD:
                 case 0xE:
                 case 0xF:
-//                        timing = 1000;
-                        timing = 1; // this is obviously wrong, but if I don't do it, it never gets called
+                        timing = 1; // this has to be tested on a real saturn
                         break;
 		case 0x10:
-			if (intback) timing = 20;
-			else timing = 3000;
+                        if (intback) timing = 20; // this will need to be verified
+                        else {
+                           // Calculate timing based on what data is being retrieved
+
+                           timing = 1;
+
+                           // If retrieving non-peripheral data, add 0.2 milliseconds
+                           if (getIREG(0) == 0x01)
+                              timing += 2;
+
+                           // If retrieving peripheral data, add 15 milliseconds
+                           if (getIREG(1) & 0x8)
+                              timing += 150;
+                        }
 			break;
                 case 0x17:
-                        timing = 40;
+                        timing = 1;
                         break;
                 case 0x2:
                 case 0x3:
@@ -183,11 +194,12 @@ void Smpc::setTiming(void) {
 		case 0x7:
 		case 0x19:
 		case 0x1A:
-			timing = 30;
+                        timing = 1;
 			break;
 		default:
                         cerr << "smpc\t: unimplemented command: " << hex << (int) getCOMREG() << endl;
-			break;
+                        setSF(0);
+                        break;
 	}
 }
 
