@@ -94,6 +94,8 @@ Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
      // Time to autodetect the region using the cd block
      regionid = ((Cs2 *)sm->getCS2())->GetRegionID();          
   }
+  
+  memset(SMEM, 0, 4); // This should be loaded from file
 
   this->sm = sm;
 
@@ -151,6 +153,12 @@ void Smpc::setTiming(void) {
 			if (intback) timing = 20;
 			else timing = 3000;
 			break;
+                case 0x17:
+//#if DEBUG
+//                        cerr << "smpc\t: SETSMEM not implemented\n";
+//#endif
+                        timing = 40;
+                        break;
 		case 0x6:
 		case 0x7:
 		case 0x19:
@@ -231,6 +239,12 @@ void Smpc::execute(Smpc *smpc) {
     //cerr << "smpc\t: INTBACK\n";
 #endif
     smpc->INTBACK();
+    break;
+  case 0x17:
+#if DEBUG
+    cerr << "smpc\t: SETSMEM\n";
+#endif
+    smpc->SETSMEM();
     break;
   case 0x19:
 #if DEBUG
@@ -345,8 +359,8 @@ void Smpc::INTBACKStatus(void) {
     // bit 6 -> CDRES
     setOREG(11, cdres << 6); // FIXME
     
-    // backups in OREG12-15
-    for(int i = 0;i < 4;i++) setOREG(12+i, 0);
+    // SMEM
+    for(int i = 0;i < 4;i++) setOREG(12+i, SMEM[i]);
     
     setOREG(31, 0);
 }
@@ -364,10 +378,12 @@ void Smpc::RESDISA(void) {
 void Smpc::SNDON(void) {
     ((Scsp *) sm->getScsp())->reset68k();  
     ((Scsp *) sm->getScsp())->is68kOn = true;
+    setOREG(31, 0x6);
 }
 
 void Smpc::SNDOFF(void) {
     ((Scsp *) sm->getScsp())->is68kOn = false;
+    setOREG(31, 0x7);
 }
 
 void Smpc::INTBACKPeripheral(void) {
@@ -401,3 +417,9 @@ void Smpc::INTBACKPeripheral(void) {
   setOREG(7, 0xFF);
   for(int i = 8;i < 32;i++) setOREG(i, 0);
 }
+
+void Smpc::SETSMEM(void) {
+  for(int i = 0;i < 4;i++) SMEM[i] = getIREG(i);
+  setOREG(31, 0x17);
+}
+

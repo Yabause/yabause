@@ -77,6 +77,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "scsp.hh"
+#include "scu.hh"
 #include "c68k\c68k.h"
 #include "sdl.h"
 
@@ -2457,6 +2458,8 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 // Yabause specific start
 
 static unsigned char *basetruescspram;
+Scu *scuint;
+
 struct sounddata {
   unsigned long *data32;
   unsigned short *data16;
@@ -2525,6 +2528,7 @@ void c68k_interrupt_handler(u32 level) {
 
 void scu_interrupt_handler(void) {
   // send interrupt to scu
+  scuint->sendSoundRequest();
 }
 
 void scspMixAudio(void *userdata, Uint8 *stream, int len) {
@@ -2643,6 +2647,7 @@ Scsp::Scsp(SaturnMemory *v) : Dummy(0xFFF) {
   SDL_AudioSpec fmt;
 
   satmem = v;
+  scuint = (Scu *)satmem->getScu();
 
   sram = new ScspRam;
   basetruescspram = sram->getBuffer();

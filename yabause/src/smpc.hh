@@ -42,6 +42,8 @@ private:
 
   unsigned char regionid;
 
+  unsigned char SMEM[4];
+
   SaturnMemory *sm;
   long timing;
 public:
@@ -72,6 +74,7 @@ public:
   void RESDISA(void);
   void SNDON(void);
   void SNDOFF(void);
+  void SETSMEM(void);
 };
 
 #endif
