@@ -289,6 +289,9 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   playFAD = 0xFFFFFFFF;
   playendFAD = 0xFFFFFFFF;
 
+  // set cd authentication variable to 0(not authenticated)
+  authval = 0;
+
   // clear filter conditions
   for (i = 0; i < MAX_SELECTORS; i++)
   {
@@ -623,6 +626,13 @@ void Cs2::execute(void) {
       fprintf(stderr, "cs2\t: Command: cmdE1 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif 
       cmdE1();
+      break;
+    }
+    case 0xE2: {
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: Command: cmdE2 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif 
+      cmdE2();
       break;
     }
     default:
@@ -1120,13 +1130,35 @@ void Cs2::mpegInit(void) {
 }
 
 void Cs2::cmdE0(void) {
-  isonesectorstored = true;
-  setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+  bool mpegauth;
 
-  if ((getCR2() & 0xFF) == 1)
+  mpegauth = getCR2() & 0xFF;
+
+  // Set registers all to invalid values(aside from status)
+
+  status = CDB_STAT_PERI | CDB_STAT_BUSY;
+
+  setCR1((status << 8) | 0xFF);
+  setCR2(0xFFFF);
+  setCR3(0xFFFF);
+  setCR4(0xFFFF);
+
+  if (mpegauth == 1)
+  {
      setHIRQ(getHIRQ() | CDB_HIRQ_MPED);
+     authval = 2;
+  }
   else
-     setHIRQ(getHIRQ() | CDB_HIRQ_EFLS);
+  {
+     // if authentication passes(obviously it always does), CDB_HIRQ_CSCT is set
+     isonesectorstored = true;
+     setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
+     authval = 4;
+  }
+
+  // Set registers all back to normal values
+
+  status = CDB_STAT_PERI | CDB_STAT_PAUSE;
 
   setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
   setCR2((ctrladdr << 8) | (track & 0xFF));
@@ -1137,10 +1169,20 @@ void Cs2::cmdE0(void) {
 
 void Cs2::cmdE1(void) {
   setCR1((status << 8));
-  setCR2(0x0004);
+  setCR2(authval);
   setCR3(0);
   setCR4(0);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+}
+
+void Cs2::cmdE2(void) {
+  // fix me
+  authval |= 0x300;
+  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
+  setCR2((ctrladdr << 8) | (track & 0xFF));
+  setCR3((index << 8) | ((FAD >> 16) &0xFF));
+  setCR4((unsigned short) FAD);
+  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPED);
 }
 
 unsigned char Cs2::FADToTrack(unsigned long val) {

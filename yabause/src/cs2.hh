@@ -99,6 +99,7 @@ private:
   unsigned char ctrladdr;
   unsigned char track;
   unsigned char index;
+  unsigned short authval;
 
   unsigned long transfercount;
   unsigned long cdwnum;
@@ -181,6 +182,7 @@ public:
   void mpegInit(void);                    // 0x93
   void cmdE0(void);                       // 0xE0
   void cmdE1(void);                       // 0xE1
+  void cmdE2(void);                       // 0xE2
 
   unsigned char FADToTrack(unsigned long fad);
   void SetupDefaultPlayStats(unsigned char track_number);
