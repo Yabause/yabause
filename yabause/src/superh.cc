@@ -2305,7 +2305,7 @@ void SuperH::GetRegisters(sh2regs_struct *regs) {
     regs->MACH = MACH;
     regs->MACL = MACL;
     regs->PR = PR;
-    regs->PC = PC;
+    regs->PC = PC - 4;
   }
 }
 
@@ -2318,7 +2318,7 @@ void SuperH::SetRegisters(sh2regs_struct *regs) {
     MACH = regs->MACH;
     MACL = regs->MACL;
     PR = regs->PR;
-    PC = regs->PC;
+    PC = regs->PC + 4;
   }
 }
 
