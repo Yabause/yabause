@@ -237,9 +237,112 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 }
 
 void Vdp1::scaledSpriteDraw(unsigned long addr) {
-#if DEBUG
-  cerr << "vdp1\t:  scaled sprite draw" << endl;
-#endif
+	unsigned short xy = vram->getWord(addr + 0xA);
+
+	unsigned short x = localX + vram->getWord(addr + 0xC);
+	unsigned short y = localY + vram->getWord(addr + 0xE);
+	unsigned short w = ((xy >> 8) & 0x3F) * 8;
+	unsigned short h = xy & 0xFF;
+	unsigned short ww = power_of_two(w);
+	unsigned short hh = power_of_two(h);
+	unsigned short rw = vram->getWord(addr + 0x10);
+	unsigned short rh = vram->getWord(addr + 0x12);
+
+	unsigned short ZP = (vram->getWord(addr) & 0xF00) >> 8;
+	unsigned short tmp;
+
+	switch(ZP & 0xC) {
+		case 0x4: 
+			  break;
+		case 0x8: y = y - rh/2;
+			  break;
+		case 0xC: y = y - rh;
+			  break;
+	}
+	switch(ZP & 0x3) {
+		case 1: 
+			break;
+		case 2: x = x - rw/2;
+			break;
+		case 3: x = x - rw;
+			break;
+	}
+			
+        surface = SDL_CreateRGBSurface(SDL_SWSURFACE, ww, hh, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+	//SDL_SetAlpha(surface,SDL_SRCALPHA,0xFF);
+
+	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
+	unsigned long dot, color;
+
+	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
+	unsigned short colorBank = vram->getWord(addr + 0x6);
+	switch(colorMode) {
+	case 0:
+		for(unsigned short i = 0;i < h;i++) {
+			for(unsigned short j = 0;j < w;j += 2) {
+				dot = vram->getByte(charAddr);
+				color = cram->getColor((colorBank & 0xF0) + (dot >> 4), (Vdp2Screen *) this);
+				pixelColor(surface, j, i, color);
+				color = cram->getColor((colorBank & 0xF0) + (dot & 0xF), (Vdp2Screen *) this);
+				pixelColor(surface, j + 1, i, color);
+				charAddr += 1;
+			}
+		}
+		break;
+	case 1:
+		colorBank *= 8;
+		unsigned long temp;
+		for(unsigned short i = 0;i < h;i++) {
+			for(unsigned short j = 0;j < w;j += 2) {
+				dot = vram->getByte(charAddr);
+				temp = vram->getWord((dot >> 4) * 2 + colorBank);
+				color = (temp & 0x1F) << 27 | (temp & 0x7E0) << 14 | (temp & 0x7C00) << 1 | 0xFF;
+				if ((dot >> 4) != 0) pixelColor(surface, j, i, color);
+				else pixelColor(surface, j, i, 0);
+				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+				color = (temp & 0x1F) << 27 | (temp & 0x7E0) << 14 | (temp & 0x7C00) << 1 | 0xFF;
+				if ((dot & 0xF) != 0) pixelColor(surface, j + 1, i, color);
+				else pixelColor(surface, j, i, 0);
+				charAddr += 1;
+			}
+		}
+		break;
+	case 2:
+		cerr << "color mode 2 not implemented" << endl; break;
+	case 3:
+		cerr << "color mode 3 not implemented" << endl; break;
+	case 4:
+		cerr << "color mode 4 not implemented" << endl; break;
+	case 5:
+		for(unsigned short i = 0;i < h;i++) {
+			for(unsigned short j = 0;j < w;j++) {
+				dot = vram->getWord(charAddr);
+				charAddr += 2;
+				color = (dot & 0x1F) << 27 | (dot & 0x7E0) << 14 | (dot & 0x7C00) << 1 | 0xFF;
+				if (dot != 0) pixelColor(surface, j, i, color);
+				else pixelColor(surface, j, i, 0);
+			}
+		}
+	}
+
+	if (*texture == 0) glGenTextures(1, &texture[0] );
+	glBindTexture(GL_TEXTURE_2D, texture[0] );
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+	glEnable( GL_TEXTURE_2D );
+	glBindTexture( GL_TEXTURE_2D, texture[0] );
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0); glVertex2f((float) x/160 - 1, 1 - (float) y/112);
+	glTexCoord2f((float) w / ww, 0); glVertex2f((float) (x + rw)/160 - 1, 1 - (float) y/112);
+	glTexCoord2f((float) w / ww, (float) h / hh); glVertex2f((float) (x + rw)/160 - 1, 1 - (float) (y + rh)/112);
+	glTexCoord2f(0, (float) h /  hh); glVertex2f((float) x/160 - 1, 1 - (float) (y + rh)/112);
+	glEnd();
+	glDisable( GL_TEXTURE_2D );
+
+	SDL_FreeSurface(surface);
 }
 
 void Vdp1::distortedSpriteDraw(unsigned long addr) {

@@ -63,21 +63,9 @@ void Scu::DMA(int mode) {
 #endif
 	}
 	else {
-#if DEBUG
-		cerr << hex;
-		cerr << "direct DMA" << endl;
-		cerr << "\tread address = " << readAddress << endl;
-		cerr << "\twrite address = " << writeAddress << endl;
-		cerr << "\ttransfer number = " << transferNumber << endl;
-		cerr << "\tread add = " << (int) readAdd << endl;
-		cerr << "\twrite add = " << (int) writeAdd << endl;
-#endif
 		unsigned long counter = 0;
 		unsigned long test = writeAddress & 0x1FFFFFFF;
 		if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
-#ifdef DEBUG
-			cerr << "B Bus" << endl;
-#endif
 			while(counter < transferNumber) {
 				unsigned long tmp = satmem->getLong(readAddress);
 				satmem->setWord(writeAddress, tmp >> 16);
@@ -90,7 +78,7 @@ void Scu::DMA(int mode) {
 		}
 		else {
 #if DEBUG
-			cerr << "A Bus" << endl;
+			cerr << "direct DMA, A Bus, not tested yet" << endl;
 #endif
 			while(counter < transferNumber) {
 				satmem->setLong(writeAddress, satmem->getLong(readAddress));
