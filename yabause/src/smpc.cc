@@ -60,22 +60,61 @@ void Smpc::setSF(unsigned char val) {
 }
 
 void Smpc::setByte(unsigned long addr, unsigned char value) {
-  Memory::setByte(addr, value);
+  switch (addr) {
+    case 0x01: // Maybe an INTBACK continue/break request
+               if ((intbackIreg0 & 0x80) != (getIREG(0) & 0x80)) {
+                 // Continue
+                 setTiming();
+                 setSF(1);
+               }
+                 if ((intbackIreg0 & 0x40) != (getIREG(0) & 0x40)) {
+                 // Break
+                 intback = false;
+                 setSR(getSR() & 0x0F);
+               }
+               Memory::setByte(addr, value);
+               break;
+    case 0x75:
+               // FIX ME (should support other peripherals)
+               switch (Memory::getByte(0x79) & 0x7F) { // Which Control Method do we use?
+                 case 0x40:
+#if DEBUG
+                            cerr << "smpc\t: Peripheral TH Control Method not implemented" << endl;
+#endif
+                            break;
+                 case 0x60:
+                            switch (value & 0x60) {
+                               case 0x60: // 1st Data
+                                          value = (value & 0x80) | 0x14 | (buttonbits & 0x8);
+                                          break;
+                               case 0x20: // 2nd Data
+                                          value = (value & 0x80) | 0x10 | (buttonbits >> 12);
+                                          break;
+                               case 0x40: // 3rd Data
+                                          value = (value & 0x80) | 0x10 | ((buttonbits >> 8) & 0xF);
+                                          break;
+                               case 0x00: // 4th Data
+                                          value = (value & 0x80) | 0x10 | ((buttonbits >> 4) & 0xF);
+                                          break;
+                               default: break;
+                            }
 
-  if (addr == 1) {  // Maybe an INTBACK continue/break request
-    if ((intbackIreg0 & 0x80) != (getIREG(0) & 0x80)) {
-      // Continue
-      setTiming();
-      setSF(1);
-    }
-    if ((intbackIreg0 & 0x40) != (getIREG(0) & 0x40)) {
-      // Break
-      intback = false;
-      setSR(getSR() & 0x0F);
-    }
-  }
-  if (addr == 0x1F) {
-    setTiming();
+                            Memory::setByte(0x75, value);
+                            break;
+                 default:
+#if DEBUG
+                            cerr << "smpc\t: Peripheral Unknown Control Method not implemented" << endl;
+#endif
+                            break;
+               }
+
+               break;
+    case 0x1F:
+               setTiming();
+               Memory::setByte(addr, value);
+               break;               
+    default:   Memory::setByte(addr, value);
+               break;
   }
 }
 
