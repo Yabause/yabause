@@ -1,3 +1,13 @@
+0.0.5 -> 0.0.6
+ scu
+  - added direct dma
+ superh
+  - added division unit
+  - fixed endianess issue
+ vdp2
+  - added NBG3
+  - fixed color bug
+
 0.0.4 -> 0.0.5
  vdp2:
   - lot of work, the vdp2 is now capable of
