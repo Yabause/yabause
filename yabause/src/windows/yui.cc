@@ -45,7 +45,7 @@ unsigned long memaddr=0;
 
 SaturnMemory *yabausemem;
 
-bool shwaspaused=true;
+//bool shwaspaused=true;
 
 // vdp2 related
 char vdp2bppstr[8][10]=
@@ -266,90 +266,62 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       {
          switch (LOWORD(wParam))
          {
-            case IDM_CHOOSEBIOS:
-            {
-               OPENFILENAME ofn;
-
-               // setup ofn structure
-               ZeroMemory(&ofn, sizeof(OPENFILENAME));
-               ofn.lStructSize = sizeof(OPENFILENAME);
-               ofn.hwndOwner = hWnd;
-               ofn.lpstrFilter = "All Files\0*.*\0Binary Files\0*.BIN\0";
-               ofn.nFilterIndex = 1;
-               ofn.lpstrFile = biosfilename;
-               ofn.nMaxFile = MAX_PATH;
-               ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-               if (GetOpenFileName(&ofn))
-               {
-                  // should ungray run button at this point
-
-                  // write new settings to ini file
-                  WritePrivateProfileString("General", "BiosPath", biosfilename, inifilename);
-               }
-
-               break;
-            }
-            case IDM_CHOOSECDROM:
-            {
-               break;
-            }            
 //            case IDM_RUN:
 //            {
 //               break;
 //            }
             case IDM_MEMTRANSFER:
             {
-               SuperH *msh = yabausemem->getMasterSH();
+//               SuperH *msh = yabausemem->getMasterSH();
 
-               shwaspaused = msh->paused();
+//               shwaspaused = msh->paused();
 
-               if (!shwaspaused) msh->pause();
+//               if (!shwaspaused) msh->pause();
 
                DialogBox(y_hInstance, "MemTransferDlg", hWnd, (DLGPROC)MemTransferDlgProc);
 
-               if (!shwaspaused) msh->run();
+//               if (!shwaspaused) msh->run();
 
                break;
             }
             case IDM_SETTINGS:
             {
-               SuperH *msh = yabausemem->getMasterSH();
+//               SuperH *msh = yabausemem->getMasterSH();
 
-               shwaspaused = msh->paused();
+//               shwaspaused = msh->paused();
 
-               if (!shwaspaused) msh->pause();
+//               if (!shwaspaused) msh->pause();
 
                DialogBox(y_hInstance, "SettingsDlg", hWnd, (DLGPROC)SettingsDlgProc);
 
-               if (!shwaspaused) msh->run();
+//               if (!shwaspaused) msh->run();
                break;
             }
             case IDM_MSH2DEBUG:
             {
-               SuperH *msh = yabausemem->getMasterSH();
+//               SuperH *msh = yabausemem->getMasterSH();
 
-               shwaspaused = msh->paused();
+//               shwaspaused = msh->paused();
 
-               if (!shwaspaused) msh->pause();
+//               if (!shwaspaused) msh->pause();
 
                DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
 
-               if (!shwaspaused) msh->run();
+//               if (!shwaspaused) msh->run();
 
                break;
             }
             case IDM_VDP2DEBUG:
             {
-               SuperH *msh = yabausemem->getMasterSH();
+//               SuperH *msh = yabausemem->getMasterSH();
 
-               shwaspaused = msh->paused();
+//               shwaspaused = msh->paused();
 
-               if (!shwaspaused) msh->pause();
+//               if (!shwaspaused) msh->pause();
 
                DialogBox(y_hInstance, "VDP2DebugDlg", hWnd, (DLGPROC)VDP2DebugDlgProc);
 
-               if (!shwaspaused) msh->run();
+//               if (!shwaspaused) msh->run();
 
                break;
             }
@@ -361,19 +333,19 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       }
       case WM_ENTERMENULOOP:
       {
-         SuperH *msh = yabausemem->getMasterSH();
+//         SuperH *msh = yabausemem->getMasterSH();
 
-         shwaspaused = msh->paused();
+//         shwaspaused = msh->paused();
 
-         if (!shwaspaused) msh->pause();
+//         if (!shwaspaused) msh->pause();
 
          return 0L;
       }
       case WM_EXITMENULOOP:
       {
-         SuperH *msh = yabausemem->getMasterSH();
+//         SuperH *msh = yabausemem->getMasterSH();
 
-         if (!shwaspaused) msh->run();
+//         if (!shwaspaused) msh->run();
 
          return 0L;
       }
@@ -699,12 +671,12 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SuperH *proc=yabausemem->getMasterSH();
          sh2regs_struct sh2regs;
 
-         if (proc->paused())
-         {
+//         if (proc->paused())
+//         {
             proc->GetRegisters(&sh2regs);
             UpdateRegList(hDlg, &sh2regs);
             UpdateCodeList(hDlg, sh2regs.PC);
-         }
+//         }
 
          return TRUE;
       }
@@ -722,7 +694,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                SuperH *proc=yabausemem->getMasterSH();
                sh2regs_struct sh2regs;
-               proc->step();
+//               proc->step();
                proc->GetRegisters(&sh2regs);
                UpdateRegList(hDlg, &sh2regs);
                UpdateCodeList(hDlg, sh2regs.PC);
@@ -731,14 +703,14 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDC_RUN:
             {
                SuperH *proc=yabausemem->getMasterSH();
-               proc->run();
+//               proc->run();
                break;
             }
             case IDC_PAUSE:
             {
                SuperH *proc=yabausemem->getMasterSH();
                sh2regs_struct sh2regs;
-               proc->pause();
+//               proc->pause();
                proc->GetRegisters(&sh2regs);
                UpdateRegList(hDlg, &sh2regs);
                UpdateCodeList(hDlg, sh2regs.PC);
