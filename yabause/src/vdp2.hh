@@ -38,6 +38,9 @@ private:
 public:
   Vdp2ColorRam(void) : Memory(0xFFF, 0x1000) {}
 
+  unsigned short getWord(unsigned long);
+  void setWord(unsigned long, unsigned short);
+
   void setMode(int);
   unsigned long getColor(unsigned long addr, int alpha, int colorOffset);
 };                                                                        

@@ -155,7 +155,6 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 
 	unsigned long dot;
 	bool SPD = ((CMDPMOD & 0x40) != 0);
-	unsigned long colorBank = CMDCOLR * 8;
 	unsigned long alpha = 0xFF;
 	switch(CMDPMOD & 0x7) {
 		case 0:
@@ -184,14 +183,39 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 
 	switch((CMDPMOD & 0x38) >> 3) {
 	case 0:
+        {
                 // 4 bpp Bank mode
-#ifdef VDP1_DEBUG
-                cerr << "readTexture: color mode 0 not implemented" << endl;
-#endif
+                unsigned long colorBank = CMDCOLR & 0xFFF0;
+                // fix me
+                Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
+                // fix me
+                int colorOffset = (((Vdp2 *)satmem->getVdp2())->getWord(0xE6) >> 4) & 0x7;
+
+		for(unsigned short i = 0;i < h;i++) {
+			unsigned short j;
+			j = 0;
+			while(j < w) {
+				dot = vram->getByte(charAddr);
+
+                                // Pixel 1
+				if (((dot >> 4) == 0) && !SPD) textdata[i * ww + j] = 0;
+                                else textdata[i * ww + j] = cram->getColor((dot >> 4) + colorBank, alpha, colorOffset);
+				j += 1;
+
+                                // Pixel 2
+				if (((dot & 0xF) == 0) && !SPD) textdata[i * ww + j] = 0;
+                                else textdata[i * ww + j] = cram->getColor((dot & 0xF) + colorBank, alpha, colorOffset);
+				j += 1;
+				charAddr += 1;
+                        }
+                }
 		break;
+        }
 	case 1:
+        {
                 // 4 bpp LUT mode
 		unsigned long temp;
+                unsigned long colorLut = CMDCOLR * 8;
 		for(unsigned short i = 0;i < h;i++) {
 			unsigned short j;
 			j = 0;
@@ -200,7 +224,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 
 				if (((dot >> 4) == 0) && !SPD) textdata[i * ww + j] = 0;
                                 else {
-                                   temp = vram->getWord((dot >> 4) * 2 + colorBank);
+                                   temp = vram->getWord((dot >> 4) * 2 + colorLut);
                                    textdata[i * ww + j] = SAT2YAB1(alpha, temp);
                                 }
 
@@ -208,7 +232,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 
 				if (((dot & 0xF) == 0) && !SPD) textdata[i * ww + j] = 0;
                                 else {
-                                   temp = vram->getWord((dot & 0xF) * 2 + colorBank);
+                                   temp = vram->getWord((dot & 0xF) * 2 + colorLut);
                                    textdata[i * ww + j] = SAT2YAB1(alpha, temp);
                                 }
 
@@ -217,27 +241,33 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 			}
 		}
 		break;
+        }
 	case 2:
+        {
                 // 8 bpp(64 color) Bank mode
+                unsigned long colorBank = CMDCOLR & 0xFFC0;
 #ifdef VDP1_DEBUG
                 cerr << "readTexture: color mode 2 not implemented" << endl;
 #endif
 		break;
+        }
 	case 3:
+        {
                 // 8 bpp(128 color) Bank mode
+                unsigned long colorBank = CMDCOLR & 0xFF80;
 #ifdef VDP1_DEBUG
                 cerr << "readTexture: color mode 3 not implemented" << endl;
 #endif
 		break;
+        }
 	case 4:
         {
                 // 8 bpp(256 color) Bank mode
+                unsigned long colorBank = CMDCOLR & 0xFF00;
                 // fix me
                 Vdp2ColorRam *cram = (Vdp2ColorRam *)((Vdp2 *)satmem->getVdp2())->getCRam();
-
-//#ifdef VDP1_DEBUG
-//                cerr << "readTexture: color mode 4 not implemented" << endl;
-//#endif
+                // fix me
+                int colorOffset = (((Vdp2 *)satmem->getVdp2())->getWord(0xE6) >> 4) & 0x7;
 
 		for(unsigned short i = 0;i < h;i++) {
                         for(unsigned short j = 0;j < w;j++) {
@@ -245,7 +275,7 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
                                 charAddr++;
 
                                 if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
-                                else textdata[i * ww + j] = cram->getColor(dot + (colorBank >> 1), alpha, 0);
+                                else textdata[i * ww + j] = cram->getColor(dot + colorBank, alpha, colorOffset);
                         }
                 }
 

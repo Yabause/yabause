@@ -66,6 +66,17 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
 /*					*/
 /****************************************/
 
+void Vdp2ColorRam::setWord(unsigned long addr, unsigned short val) {
+      Memory::setWord(addr, val);
+
+      if (mode == 0)
+        Memory::setWord(addr + 0x800, val);
+}
+
+unsigned short Vdp2ColorRam::getWord(unsigned long addr) {
+      return Memory::getWord(addr);
+}
+
 void Vdp2ColorRam::setMode(int v) {
 	mode = v;
 }
@@ -80,18 +91,21 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha, int colorOff
   }
   case 1: {
     addr *= 2; // thanks Runik!
-    addr += colorOffset * 0x400;
+    addr += colorOffset * 0x200;
     unsigned long tmp = getWord(addr);
     return SAT2YAB1(alpha, tmp);
   }
   case 2: {
     addr *= 2; // thanks Runik!
-    addr += colorOffset * 0x200;
+    addr += colorOffset * 0x400;
     unsigned long tmp1 = getWord(addr);
     unsigned long tmp2 = getWord(addr + 2);
     return SAT2YAB2(alpha, tmp1, tmp2);
   }
+  default: break;
   }
+
+  return 0;
 }
 
 /****************************************/
@@ -906,7 +920,7 @@ void Vdp2::sortScreens(void) {
 }
 
 void Vdp2::updateRam(void) {
-  cram->setMode(getWord(0xE) & 0xC000);
+  cram->setMode((getWord(0xE) >> 12) & 0x3);
 }
 
 void Vdp2::drawBackScreen(void) {
