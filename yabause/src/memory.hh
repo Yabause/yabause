@@ -41,6 +41,7 @@ public:
   virtual void           setLong (unsigned long, unsigned long);
 
   unsigned long getSize() const;
+  unsigned char *getBuffer(void) const;
   virtual void load(const char *, unsigned long);
   virtual void save(const char *, unsigned long, unsigned long);
 
@@ -155,6 +156,7 @@ public:
   Memory *getScu(void);
   Memory *getVdp2(void);
   Memory *getSmpc(void);
+  Memory *getScsp(void);
 
   void synchroStart(void);
 

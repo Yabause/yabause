@@ -19,6 +19,7 @@
 
 #include "smpc.hh"
 #include "cs2.hh"
+#include "scsp.hh"
 #include "scu.hh"
 #include "timer.hh"
 #include "yui.hh"
@@ -361,9 +362,12 @@ void Smpc::RESDISA(void) {
 }
 
 void Smpc::SNDON(void) {
+    ((Scsp *) sm->getScsp())->reset68k();  
+    ((Scsp *) sm->getScsp())->is68kOn = true;
 }
 
 void Smpc::SNDOFF(void) {
+    ((Scsp *) sm->getScsp())->is68kOn = false;
 }
 
 void Smpc::INTBACKPeripheral(void) {

@@ -142,6 +142,10 @@ unsigned long Memory::getSize(void) const {
   return size;
 }
 
+unsigned char *Memory::getBuffer(void) const {
+  return base_mem;
+}
+
 void Memory::load(const char *filename, unsigned long addr) {
 #ifndef _arch_dreamcast
 	struct stat infos;
@@ -294,8 +298,8 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	cs0	      = new Dummy(0xFFFFFF);
 	cs1         = new Cs1();
 	cs2         = new Cs2();
-	sound       = new ScspRam(); //Memory(0x7FFFF);
-	soundr      = new Memory(0xFFF, 0xEE4);
+        soundr      = new Scsp(this);
+        sound       = ((Scsp *)soundr)->getSRam();
 	scu         = new Scu(this);
 	vdp1_2      = new Vdp1(this);
 	vdp1_1      = ((Vdp1*) vdp1_2)->getVRam();
@@ -397,7 +401,6 @@ SaturnMemory::~SaturnMemory(void) {
   delete cs0;
   delete cs1;
   delete cs2;
-  delete sound;
   delete soundr;
   ((Vdp2 *) vdp2_3)->stop();
   delete vdp2_3;
@@ -510,6 +513,10 @@ Memory *SaturnMemory::getVdp1(void) {
 
 Memory *SaturnMemory::getScu(void) {
 	return scu;
+}
+
+Memory *SaturnMemory::getScsp(void) {
+   return soundr;
 }
 
 Memory *SaturnMemory::getVdp2(void) {
@@ -669,6 +676,7 @@ void SaturnMemory::synchroStart(void) {
 			// HBlankOUT
 			((Vdp2 *) vdp2_3)->HBlankOUT();
 			//SDL_CondBroadcast(cond[6]);
+                        ((Scsp *)soundr)->run();
 			decilineCount = 0;
 			lineCount++;
 			switch(lineCount) {
@@ -701,6 +709,7 @@ void SaturnMemory::synchroStart(void) {
 	}
 
         ((Cs2 *)cs2)->run(msh->cycleCount);
+        ((Scsp *)soundr)->run68k(170);
 
 	msh->cycleCount %= decilineStop;
 }
