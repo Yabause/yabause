@@ -20,14 +20,12 @@
 #include "vdp1.hh"
 #include "vdp2.hh"
 #include <unistd.h>
-#if HAVE_LIBCURSES
-#include "monitor.hh"
-#endif
 #include "exception.hh"
 #include "superh.hh"
 #ifdef _arch_dreamcast
 #include <kos.h>
 #endif
+#include "yui.hh"
 
 SuperH::SuperH(void) {
   SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
@@ -43,8 +41,8 @@ SuperH::SuperH(void) {
     opcodes[i] = decode();
   }
   _stop = false;
-  _pause = false;
-  _run = true;
+  _pause = true;
+  _run = false;
 
   for(int i = 0;i < 7;i++) {
     mutex[i] = SDL_CreateMutex();
@@ -150,9 +148,7 @@ void SuperH::synchroStart(void) {
 	  lineCount = 0;
           frameCount++;
 	  if(SDL_GetTicks() >= ticks + 1000) {
-#ifndef _arch_dreamcast
-	    cerr << dec << frameCount << " fps" << endl;
-#endif
+	    yui_fps(frameCount);
 	    frameCount = 0;
 	    ticks = SDL_GetTicks();
 	  }
@@ -222,6 +218,10 @@ void SuperH::stop(void) {
 void SuperH::pause(void) {
   _pause = true;
   _run = false;
+}
+
+bool SuperH::paused(void) {
+	return _pause;
 }
 
 void SuperH::run(void) {

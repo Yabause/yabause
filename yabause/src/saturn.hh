@@ -37,8 +37,8 @@ using namespace std;
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_thread.h>
+#include "SDL.h"
+#include "SDL_thread.h"
 
 template<unsigned long A, unsigned long B> unsigned long div(void) {
   return A / B;

@@ -145,8 +145,6 @@ private:
   Vdp2Ram *vram;
   Vdp2ColorRam *cram;
   SDL_Surface *surface;
-  SDL_Surface *GLSurface;
-  SDL_Surface *logo;
   GLuint texture[1];
 
   Vdp2Screen *screens[5];

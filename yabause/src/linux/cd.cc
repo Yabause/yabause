@@ -31,7 +31,7 @@ int CDInit(char *cdrom_name) {
 	if ((hCDROM = open(cdrom_name, O_RDONLY | O_NONBLOCK)) == -1) {
 		return -1;
 	}
-	fprintf(stderr, "CDInit OK\n");
+	fprintf(stderr, "CDInit (%s) OK\n", cdrom_name);
 	return 0;
 }
 
@@ -71,8 +71,6 @@ long CDReadToc(unsigned long *TOC)
 	return 0;
       }
 
-      fprintf(stderr, "cd:\tToc info: First Track = %d Last Track = %d\n", ctTOC.cdth_trk0, ctTOC.cdth_trk1);
-
       ctTOCent.cdte_track = ctTOC.cdth_trk0;
       if (ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent) == -1)
 	      printf("graaaaaaaa\n");
@@ -110,10 +108,6 @@ long CDReadToc(unsigned long *TOC)
       TOC[101] = (ctTOCent.cdte_ctrl << 28) |
                  (ctTOCent.cdte_adr << 24) |
 		 (ctTOCent.cdte_addr.lba + add150);
-
-      fprintf(stderr, "BEGIN TOC\n");
-      for(i = 0;i < 102;i++) fprintf(stderr, "%x\n", TOC[i]);
-      fprintf(stderr, "END TOC\n");
 
       return (0xCC * 2);
    }

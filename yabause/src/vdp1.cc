@@ -201,6 +201,18 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
 	unsigned long dot, color;
 
+	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
+	unsigned long alpha;
+	switch(CMDPMOD & 0x7) {
+		case 0:
+			alpha = 0xFF000000;
+			break;
+		case 3:
+			alpha = 0x80000000;
+			break;
+		default:
+			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
+	}
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
 	unsigned short colorBank = vram->getWord(addr + 0x6);
@@ -233,6 +245,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 #endif
 				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
+
 				tx += txinc;
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
 #ifndef _arch_dreamcast
@@ -242,6 +255,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 #endif
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
+
 				tx += txinc;
 				charAddr += 1;
 			}
@@ -277,6 +291,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 #endif
 				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
+
 				tx += txinc;
 			}
 			ty += tyinc;
@@ -374,6 +389,18 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
 	unsigned long dot, color;
 
+	unsigned short CMDPMOD = vram->getWord(addr + 0x4);
+	unsigned long alpha;
+	switch(CMDPMOD & 0x7) {
+		case 0:
+			alpha = 0xFF000000;
+			break;
+		case 3:
+			alpha = 0x80000000;
+			break;
+		default:
+			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
+	}
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
 	unsigned short colorBank = vram->getWord(addr + 0x6);
@@ -396,14 +423,18 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j += 2) {
 				dot = vram->getByte(charAddr);
 				temp = vram->getWord((dot >> 4) * 2 + colorBank);
-				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
 				if (((dot >> 4) == 0) && !SPD) textdata[ty][tx] = 0;
-				else textdata[ty][tx] = color;
+				else {
+					textdata[ty][tx] = color;
+				}
 				tx += txinc;
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
-				color = 0xFF000000 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
+				color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty][tx] = 0;
-				else textdata[ty][tx] = color;
+				else {
+					textdata[ty][tx] = color;
+				}
 				tx += txinc;
 				charAddr += 1;
 			}
@@ -432,9 +463,11 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 			for(unsigned short j = 0;j < w;j++) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
-				color = 0xFF000000 | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
+				color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
 				if ((dot == 0) && !SPD) textdata[ty][tx] = 0;
-				else textdata[ty][tx] = color;
+				else {
+					textdata[ty][tx] = color;
+				}
 				tx += txinc;
 			}
 			ty += tyinc;

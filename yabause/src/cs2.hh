@@ -130,6 +130,7 @@ private:
   unsigned long numfiles;
 
   bool _command;
+  char *cdrom;
 public:
   Cs2(void);
   ~Cs2(void);

@@ -113,6 +113,7 @@ public:
   static int lancer(SuperH *);
   void stop(void);
   void pause(void);
+  bool paused(void);
   void run(void);
   void step(void);
   template<int FREQ, int FRAME, int HIN, int HOUT, int VIN, int VOUT>

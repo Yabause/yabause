@@ -21,14 +21,7 @@
 #include "saturn.hh"
 #include "scu.hh"
 #include "timer.hh"
-
-#if HAVE_LIBSDL_IMAGE
-#include <SDL/SDL_image.h>
-#endif
-/*
-#include "SDL_gfxPrimitives.h"
-#include "SDL_imageFilter.h"
-*/
+#include "yui.hh"
 
 /****************************************/
 /*					*/
@@ -935,18 +928,8 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
   setWord(0x4, 0); //setWord(0x4, 0x302);
   setWord(0x20, 0);
 
-  SDL_Init(SDL_INIT_VIDEO);
+	SDL_InitSubSystem(SDL_INIT_VIDEO);
 
-#if HAVE_LIBSDL_IMAGE
-  logo = IMG_Load("logo.png");
-#else
-  logo = SDL_LoadBMP("logo.bmp");
-#endif
-  SDL_WM_SetIcon(logo, NULL);
-#ifndef _arch_dreamcast
-  string title("Yabause ");
-  title += VERSION;
-  SDL_WM_SetCaption(title.c_str(), NULL);
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
@@ -954,13 +937,11 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
-	GLSurface = SDL_SetVideoMode(320,224,32, SDL_OPENGL);
-#endif
+	SDL_SetVideoMode(320,224,32, SDL_OPENGL);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glGenTextures(1, texture );
-	
   //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
 #ifndef _arch_dreamcast
   surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
@@ -989,7 +970,6 @@ Vdp2::~Vdp2(void) {
 #endif
   for(int i = 0;i < 5;i++) delete screens[i];
   SDL_FreeSurface(surface);
-  SDL_FreeSurface(logo);
 	delete vram;
 	delete cram;
 }

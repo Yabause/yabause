@@ -20,6 +20,8 @@
 #include "registres.hh"
 #include "superh.hh"
 #include "timer.hh"
+#include "yui.hh"
+#include "cd.hh"
 
 Memory::Memory(unsigned long m, unsigned long size) {
   mask = m;
@@ -276,7 +278,8 @@ void LoggedMemory::setLong(unsigned long addr, unsigned long val) {
 /*********************/
 
 
-SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0, 0) {
+SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
+  mshThread = NULL;
   msh = new SuperH();
 
   Timer::initSuperH(msh);
@@ -301,33 +304,37 @@ SaturnMemory::SaturnMemory(const char *bios, const char *exe) : Memory(0, 0) {
   purgeArea   = new Dummy(0xFFFFFFFF);
   adressArray = new Memory(0xFFF, 0x3FF);
   modeSdram   = new Memory(0xFFF, 0x4FFF);
-	initMemoryMap();
+  initMemoryMap();
 
-  if (bios != NULL) rom->load(bios, 0);
-  if (exe != NULL) {
-    ramHigh->load(exe, 0x4000);
-    rom->setLong(0, 0x06004000);
-    rom->setLong(4, 0x06002000);
-  }
+	char *bios;
 
-  msh->setMemory(this);
+	bios = yui_bios();
+	if (bios == NULL) exit(1);
+	else {
+		try {
+			rom->load(bios, 0);
+		}
+		catch (Exception e) {
+			exit(1);
+		}
+	}
+/*
+	if (exe != NULL) {
+		ramHigh->load(exe, 0x4000);
+		rom->setLong(0, 0x06004000);
+		rom->setLong(4, 0x06002000);
+	}
+*/
 
-  //mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
-  //vdp2Thread = SDL_CreateThread((int (*)(void*)) &Vdp2::lancer, vdp2_3);
-  //Vdp2::lancer((Vdp2 *) vdp2_3);
+	msh->setMemory(this);
+	mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+	msh->run();
 }
 
-void SaturnMemory::start(void) {
-	mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
-	//Vdp2::lancer((Vdp2 *) vdp2_3);
-	/*
-	Vdp2 * vdp2 = (Vdp2 *) vdp2_3;
-	while(!_stop) vdp2->executer();
-	*/
+bool SaturnMemory::start(void) {
 }
 
 void SaturnMemory::stop(void) {
-	_stop = true;
 }
 
 SaturnMemory::~SaturnMemory(void) {
@@ -350,7 +357,6 @@ SaturnMemory::~SaturnMemory(void) {
   delete sound;
   delete soundr;
   ((Vdp2 *) vdp2_3)->stop();
-  SDL_WaitThread(vdp2Thread, NULL);
   delete vdp2_3;
 /*
   delete vdp2_1;
@@ -558,4 +564,8 @@ void SaturnMemory::mappage(unsigned long adr) {
     printf("Bad memory access: %8x", adr);
 #endif
   }
+}
+
+bool SaturnMemory::running(void) {
+	return (mshThread != NULL);
 }

@@ -118,11 +118,12 @@ private:
 
   SuperH *msh;
   SDL_Thread *mshThread;
-  SDL_Thread *vdp2Thread;
 
   bool _stop;
+
+  char *cdrom;
 public:
-  SaturnMemory(const char * = NULL, const char * = NULL);
+  SaturnMemory(void);
   ~SaturnMemory(void);
 
   unsigned char  getByte (unsigned long);
@@ -146,8 +147,9 @@ public:
   Memory *getScu(void);
   Memory *getVdp2(void);
 
-  void start(void);
+  bool start(void);
   void stop(void);
+  bool running(void);
 };
 
 #endif

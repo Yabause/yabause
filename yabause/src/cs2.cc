@@ -21,6 +21,7 @@
 #include "cs2.hh"
 #include "timer.hh"
 #include "cd.hh"
+#include "yui.hh"
 
 #define CDB_HIRQ_CMOK      0x0001
 #define CDB_HIRQ_DRDY      0x0002
@@ -244,6 +245,13 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
   unsigned long i, i2;
 
   _stop = false;
+	cdrom = yui_cdrom();
+	if (cdrom != NULL) {
+		if (CDInit(cdrom) != 0) {
+			cerr << "Unable to initialize cdrom: " << cdrom << "\n";
+		}
+	}
+
 
   if (CDIsCDPresent())
   {
@@ -342,6 +350,8 @@ Cs2::Cs2(void) : Memory(0xFFFFF, 0x100000) {
 
 Cs2::~Cs2(void) {
    _stop = true;
+	if (cdrom != NULL)
+		CDDeInit();
    SDL_WaitThread(cdThread, NULL);
 }
 

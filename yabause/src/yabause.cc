@@ -24,12 +24,9 @@
 #include "intc.hh"
 #include "vdp1.hh"
 #include "vdp2.hh"
-#if HAVE_LIBCURSES
-#include "monitor.hh"
-#endif
 #include <sys/types.h>
-#include "cmdline.h"
 #include "cd.hh"
+#include "yui.hh"
 
 unsigned short buttonbits = 0xFFFF;
 
@@ -166,36 +163,41 @@ void keyUp(int key)
   }
 }
 
-void handleEvents(SaturnMemory *mem) {
-    bool stop = false;
-    bool paused = false;
+int handleEvents(SaturnMemory *mem) {
     SDL_Event event;
-    Vdp2 *vdp2 = (Vdp2 *) mem->getVdp2();
-    while (!stop) {
+    SuperH *msh = mem->getMasterSH();
       if (SDL_PollEvent(&event)) {
 	switch(event.type) {
 	case SDL_QUIT:
-		stop = true;
+		yui_quit();
 		break;
 	case SDL_KEYDOWN:
 	  switch(event.key.keysym.sym) {
+		case SDLK_h:
+			yui_hide_show();
+			break;
+			
 		case SDLK_q:
-			stop = true;
 			mem->stop();
+			yui_quit();
 			break;
 		case SDLK_p:
-			paused = true;
 #ifdef DEBUG
 			cerr << "Pause" << endl;
 #endif
-			mem->getMasterSH()->pause();
+			msh->pause();
+
 			break;
 		case SDLK_r:
-			paused = false;
 #ifdef DEBUG
 			cerr << "Run" << endl;
 #endif
-			mem->getMasterSH()->run();
+			if (mem->running()) {
+				msh->run();
+			}
+			else {
+				mem->start();
+			}
 			break;
 		default:
 			keyDown(event.key.keysym.sym);
@@ -218,98 +220,20 @@ void handleEvents(SaturnMemory *mem) {
 	}
       }
       else {
-	if (paused) SDL_Delay(1);
-	else vdp2->executer();
+	if (msh->paused());
+	else ((Vdp2 *) mem->getVdp2())->executer();
       }
-    }
+      return 1;
 }
 
-#ifdef _arch_dreamcast
-static pvr_init_params_t params = {
-        /* Enable opaque and translucent polygons with size 16 */
-        { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0 },
-
-        /* Vertex buffer size 512K */
-        512*1024,
-        
-        /* DMA Enabled */
-        1
-};
-
-uint8 dmabuffers[2][1024*1024] __attribute__((aligned(32)));
-#endif
-
 int main(int argc, char **argv) {
-#if DEBUG
-  cerr << hex;
-#endif
+	SDL_Init(SDL_INIT_EVENTTHREAD);
 
-#ifndef _arch_dreamcast
-  gengetopt_args_info args_info;
-
-  if (cmdline_parser(argc, argv, &args_info) != 0) {
-    cmdline_parser_print_help();
-    return 1;
-  }
-#endif
-
-  SDL_Init(SDL_INIT_EVENTTHREAD);
-
-#ifndef _arch_dreamcast
-  if (args_info.cdrom_given)
-  {
-     if (CDInit(args_info.cdrom_arg) != 0)
-     {
-        cerr << "Unable to initialize cdrom: " << args_info.cdrom_arg << "\n";
-        return 1;
-     }
-  }
-#else
-  CDInit("blah");
-#endif
-
-#ifndef _arch_dreamcast
-  SaturnMemory *mem = new SaturnMemory(args_info.bios_arg, args_info.bin_arg);
-#else
-  pvr_init(&params);
-  glKosInit();
-  glKosEnableDma();
-  
-  pvr_set_vertbuf(PVR_LIST_OP_POLY, dmabuffers[0], 1024*1024);
-  pvr_set_vertbuf(PVR_LIST_TR_POLY, dmabuffers[1], 1024*1024);
-  
-  SaturnMemory *mem = new SaturnMemory("/cd/saturn.bin", NULL);
-#endif
-
-  //SDL_CreateThread((int (*)(void*)) handleEvents, mem);
-
-  mem->start();
-
-  handleEvents(mem);
-
-  /*
-#ifndef _arch_dreamcast
-  if (args_info.debug_given) {
-#if HAVE_LIBCURSES
-    monitor(mem->getMasterSH());
-#endif
-  }
-#else
-  if(0)	{	}
-#endif
-  else 
-  */
+	yui_init((int (*)(void*)) &handleEvents);
 
 #if DEBUG
-  cerr << "stopping yabause\n";
+	cerr << "stopping yabause\n";
 #endif
 
-  delete(mem);
-
-#ifndef _arch_dreamcast
-  if (args_info.cdrom_given)
-#endif
-     CDDeInit();
-
-  SDL_Quit();
+	SDL_Quit();
 }
