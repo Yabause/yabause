@@ -78,8 +78,8 @@
 #include <stdarg.h>
 #include "scsp.hh"
 #include "scu.hh"
-#include "c68k\c68k.h"
-#include "sdl.h"
+#include "c68k/c68k.h"
+#include "SDL.h"
 
 ////////////////////////////////////////////////////////////////
 
