@@ -23,6 +23,8 @@
 #include "scsp.hh"
 #include "scu.hh"
 #include "timer.hh"
+#include "vdp1.hh"
+#include "vdp2.hh"
 #include "yui.hh"
 #include <time.h>
 
@@ -130,19 +132,10 @@ void Smpc::setTiming(void) {
                         timing = 40;
                         break;
                 case 0xD:
-#if DEBUG
-                        cerr << "smpc\t: SYSRES not implemented\n";
-#endif
-                        break;
                 case 0xE:
-#if DEBUG
-                        cerr << "smpc\t: CKCHG352 not implemented\n";
-#endif
-                        break;
                 case 0xF:
-#if DEBUG
-                        cerr << "smpc\t: CKCHG320 not implemented\n";
-#endif
+//                        timing = 1000;
+                        timing = 1; // this is obviously wrong, but if I don't do it, it never gets called
                         break;
 		case 0x10:
 			if (intback) timing = 20;
@@ -222,13 +215,13 @@ void Smpc::execute(Smpc *smpc) {
     break;
   case 0xE:
 #if DEBUG
-    cerr << "smpc\t: CKCHG352 not implemented\n";
+    cerr << "smpc\t: CKCHG352\n";
 #endif
     smpc->CKCHG352();
     break;
   case 0xF:
 #if DEBUG
-    cerr << "smpc\t: CKCHG320 not implemented\n";
+    cerr << "smpc\t: CKCHG320\n";
 #endif
     smpc->CKCHG320();
     break;
@@ -449,37 +442,37 @@ void Smpc::SETSMEM(void) {
 }
 
 void Smpc::SSHOFF(void) {
-        cerr << "stopping slave" << endl;
         sm->stopSlave();
 }
 
 void Smpc::SSHON(void) {
-	cerr << "starting slave" << endl;
 	sm->startSlave();
 }
 
 void Smpc::CKCHG352(void) {
   // Reset VDP1, VDP2, SCU, and SCSP
-  ((Scsp *) sm->getVdp1())->reset();  
-  ((Scsp *) sm->getVdp2())->reset();  
-  ((Scsp *) sm->getScu())->reset();  
+  ((Vdp1 *) sm->getVdp1())->reset();  
+  ((Vdp2 *) sm->getVdp2())->reset();  
+  ((Scu *) sm->getScu())->reset();  
   ((Scsp *) sm->getScsp())->reset();  
 
   // Clear VDP1/VDP2 ram
 
-  // Turn off Slave SH2
+  sm->stopSlave();
 
   // change clock
 }
 
 void Smpc::CKCHG320(void) {
   // Reset VDP1, VDP2, SCU, and SCSP
-  ((Scsp *) sm->getVdp1())->reset();  
-  ((Scsp *) sm->getVdp2())->reset();  
-  ((Scsp *) sm->getScu())->reset();  
+  ((Vdp1 *) sm->getVdp1())->reset();  
+  ((Vdp2 *) sm->getVdp2())->reset();  
+  ((Scu *) sm->getScu())->reset();  
   ((Scsp *) sm->getScsp())->reset();  
 
-  // Turn off Slave SH2
+  // Clear VDP1/VDP2 ram
+
+  sm->stopSlave();
 
   // change clock
 }
