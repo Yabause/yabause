@@ -1706,7 +1706,6 @@ void Vdp2::updateRam(void) {
 }
 
 void Vdp2::drawBackScreen(void) {
-/*
 	unsigned long BKTAU = getWord(0xAC);
 	unsigned long BKTAL = getWord(0xAE);
 	unsigned long scrAddr;
@@ -1718,21 +1717,29 @@ void Vdp2::drawBackScreen(void) {
 
 	unsigned short dot;
 	if (BKTAU & 0x8000) {
-		dot = vram->getWord(scrAddr);
-		SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, (dot & 0x1F) << 3, (dot & 0xCE0) >> 2, (dot & 0x7C00) >> 7));
-	}
-	else {
-		SDL_Rect rect;
-		rect.x = 0;
-		rect.w = 320;
-		rect.h = 1;
-		for(rect.y = 0;rect.y < 240;rect.y++) {
+		int y;
+		glBegin(GL_LINES);
+		for(y = -112;y < 112;y++) {
 			dot = vram->getWord(scrAddr);
 			scrAddr += 2;
-			SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, (dot & 0x1F) << 3, (dot & 0xCE0) >> 2, (dot & 0x7C00) >> 7));
+			glColor3f((float) ((dot & 0x1F) << 3) / 0xFF, (float) ((dot & 0x3E0) >> 2) / 0xFF, (float) ((dot & 0x7C00) >> 7) / 0xFF);
+			glVertex2f(-1, (float) y / 112);
+			glVertex2f(1, (float) y / 112);
 		}
+		glEnd();
+		glColor3f(1, 1, 1);
 	}
-*/
+	else {
+		dot = vram->getWord(scrAddr);
+		glColor3f((float) ((dot & 0x1F) << 3) / 0xFF, (float) ((dot & 0x3E0) >> 2) / 0xFF, (float) ((dot & 0x7C00) >> 7) / 0xFF);
+		glBegin(GL_QUADS);
+		glVertex2f(-1, 1);
+		glVertex2f(1, 1);
+		glVertex2f(1, -1);
+		glVertex2f(-1, -1);
+		glEnd();
+		glColor3f(1, 1, 1);
+	}
 }
 
 void Vdp2::priorityFunction(void) {
