@@ -35,6 +35,11 @@ SuperH::SuperH(bool slave) {
   SR.partie.inutile2 = 0;
   VBR = 0;
 
+  purgeArea   = new Dummy(0xFFFFFFFF);
+  adressArray = new Memory(0xFFF, 0x3FF);
+  dataArray   = new Memory(0xFFF, 0x1000);
+  modeSdram = new Memory(0xFFF, 0x4FFF);
+
   _interrupt = false;
   _delai = 0;
   for(unsigned short i = 0;i < 0xFFFF;i++) {
@@ -57,6 +62,11 @@ SuperH::SuperH(bool slave) {
 }
 
 SuperH::~SuperH(void) {
+  delete purgeArea;
+  delete adressArray;
+  delete dataArray;
+  delete modeSdram;
+
   for(int i = 0;i < 7;i++) {
     SDL_DestroyCond(cond[i]);
     SDL_DestroyMutex(mutex[i]);
@@ -2202,6 +2212,22 @@ SuperH::opcode SuperH::decode(void) {
   case 14: return &SuperH::movi;
   default: return &SuperH::undecoded;
   }
+}
+
+Memory *SuperH::GetSdramMode() {
+   return modeSdram;
+}
+
+Memory *SuperH::GetPurgeArea() {
+   return purgeArea;
+}
+
+Memory *SuperH::GetAddressArray() {
+   return adressArray;
+}
+
+Memory *SuperH::GetDataArray() {
+   return dataArray;
 }
 
 // pending approval

@@ -114,6 +114,10 @@ protected:
   unsigned long PC;
 
   Memory *memoire;
+  Memory *purgeArea;	// 40000000 - 50000000
+  Memory *adressArray;	// 60000000 - 600003FF
+  Memory *dataArray;	// C0000000 - C0001000
+  Memory *modeSdram;	// FFFF8000 - FFFFBFFF
 
   typedef void (SuperH::*opcode)(void);
   opcode opcodes[0xFFFF];
@@ -171,6 +175,10 @@ public:
   void waitVBlankOUT(void);
   void waitInterruptEnd(void);
 
+  Memory *GetSdramMode();
+  Memory *GetPurgeArea();
+  Memory *GetAddressArray();
+  Memory *GetDataArray();
   void GetRegisters(sh2regs_struct *regs);
   void SetRegisters(sh2regs_struct *regs);
 

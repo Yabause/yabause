@@ -101,10 +101,6 @@ private:
   Memory *vdp2_3;	//  5F80000 -  5F80120
   Memory *scu;		//  5FE0000 -  5FE00D0
   Memory *ramHigh;	//  6000000 -  6100000
-  Memory *purgeArea;	// 40000000 - 50000000
-  Memory *adressArray;	// 60000000 - 600003FF
-  Memory *dataArray;	// C0000000 - C0001000
-  Memory *modeSdram;	// FFFF8000 - FFFFBFFF
   Memory *onchip;	// FFFFFE00 - FFFFFFFF
 
   Memory *mapMem;
@@ -118,7 +114,9 @@ private:
   Memory * memoryMap[0x800];
 
   SuperH *msh;
+  SuperH *ssh;
   SDL_Thread *mshThread;
+  SDL_Thread *sshThread;
 
   bool _stop;
 
@@ -139,6 +137,7 @@ public:
   void loadBios(const char *);
 
   SuperH *getMasterSH(void);
+  SuperH *getSlaveSH(void);
 
   Uint8 *keys;
 

@@ -209,6 +209,75 @@ void Onchip::startDMA(Onchip *onchip) {
 	onchip->runDMA();
 }
 
+inline void Onchip::DMATransfer(unsigned long chcr, unsigned long reg_offset)
+{
+   if (!(chcr & 0x2)) { // TE is not set
+      int srcInc;
+      switch(chcr & 0x3000) {
+         case 0x0000: srcInc = 0; break;
+         case 0x1000: srcInc = 1; break;
+         case 0x2000: srcInc = -1; break;
+      }
+
+      int destInc;
+      switch(chcr & 0xC000) {
+         case 0x0000: destInc = 0; break;
+         case 0x4000: destInc = 1; break;
+         case 0x8000: destInc = -1; break;
+      }
+
+      unsigned long source = getLong(SAR0+reg_offset);
+      unsigned long destination = getLong(DAR0+reg_offset);
+      int size;
+
+      switch (size = ((chcr & 0x0C00) >> 10)) {
+         case 0:
+            while(getLong(TCR0+reg_offset) & 0x00FFFFFF) {
+               memory->setByte(getLong(DAR0+reg_offset), memory->getByte(getLong(SAR0+reg_offset)));
+               setLong(DAR0+reg_offset, getLong(DAR0+reg_offset) + destInc);
+               setLong(SAR0+reg_offset, getLong(SAR0+reg_offset) + srcInc);
+               setLong(TCR0+reg_offset, getLong(TCR0+reg_offset) - 1);
+            }
+            break;
+         case 1:
+            while(getLong(TCR0+reg_offset) & 0x00FFFFFF) {
+               memory->setWord(getLong(DAR0+reg_offset), memory->getWord(getLong(SAR0+reg_offset)));
+               setLong(DAR0+reg_offset, getLong(DAR0+reg_offset) + 2 * destInc);
+               setLong(SAR0+reg_offset, getLong(SAR0+reg_offset) + 2 * srcInc);
+               setLong(TCR0+reg_offset, getLong(TCR0+reg_offset) - 1);
+            }
+            break;
+         case 2:
+            while(getLong(TCR0+reg_offset) & 0x00FFFFFF) {
+               memory->setLong(getLong(DAR0+reg_offset), memory->getLong(getLong(SAR0+reg_offset)));
+               setLong(DAR0+reg_offset, getLong(DAR0+reg_offset) + 4 * destInc);
+               setLong(SAR0+reg_offset, getLong(SAR0+reg_offset) + 4 * srcInc);
+               setLong(TCR0+reg_offset, getLong(TCR0+reg_offset) - 1);
+            }
+            break;
+         case 3:
+            while(getLong(TCR0+reg_offset) & 0x00FFFFFF) {
+               for(int i = 0;i < 4;i++) {
+                  memory->setLong(getLong(DAR0+reg_offset), memory->getLong(getLong(SAR0+reg_offset)));
+                  setLong(DAR0+reg_offset, getLong(DAR0+reg_offset) + 4 * destInc);
+                  setLong(SAR0+reg_offset, getLong(SAR0+reg_offset) + 4 * srcInc);
+                  setLong(TCR0+reg_offset, getLong(TCR0+reg_offset) - 1);
+               }
+            }
+            break;
+      }
+   }
+
+   if (chcr & 0x4)
+   {
+#if DEBUG
+      cerr << "FIXME should launch an interrupt\n";
+#endif
+   }
+
+   setLong(CHCR0+reg_offset, chcr | 0x2);
+}
+
 void Onchip::runDMA(void) {
 	unsigned long dmaor = getLong(DMAOR);
 
@@ -217,72 +286,23 @@ void Onchip::runDMA(void) {
 		unsigned long chcr1 = getLong(CHCR1);
 		if ((chcr0 & 0x1) && (chcr1 & 0x1)) { // both channel wants DMA
 			if (dmaor & 0x8) { // round robin priority
+#if DEBUG
+                           cerr << "dma\t: FIXME: two channel dma - round robin priority not properly implemented\n";
+#endif
+                           DMATransfer(chcr0, 0);
+                           DMATransfer(chcr1, 0x10);
 			}
 			else { // channel 0 > channel 1 priority
-			}
+                           DMATransfer(chcr0, 0);
+                           DMATransfer(chcr1, 0x10);
+                        }
 		}
 		else { // only one channel wants DMA
 			if (chcr0 & 0x1) { // DMA for channel 0
-				if (!(chcr0 & 0x2)) { // TE is not set
-					int srcInc;
-					switch(chcr0 & 0x3000) {
-						case 0x0000: srcInc = 0; break;
-	  					case 0x1000: srcInc = 1; break;
-						case 0x2000: srcInc = -1; break;
-					}
-					int destInc;
-					switch(chcr0 & 0xC000) {
-						case 0x0000: destInc = 0; break;
-						case 0x4000: destInc = 1; break;
-						case 0x8000: destInc = -1; break;
-					}
-					unsigned long source = getLong(SAR0);
-					unsigned long destination = getLong(DAR0);
-					int size;
-					switch (size = ((chcr0 & 0x0C00) >> 10)) {
-						case 0:
-							while(getLong(TCR0) & 0x00FFFFFF) {
-								memory->setByte(getLong(DAR0), memory->getByte(getLong(SAR0)));
-								setLong(DAR0, getLong(DAR0) + destInc);
-								setLong(SAR0, getLong(SAR0) + srcInc);
-								setLong(TCR0, getLong(TCR0) - 1);
-							}
-							break;
-						case 1:
-							while(getLong(TCR0) & 0x00FFFFFF) {
-								memory->setWord(getLong(DAR0), memory->getWord(getLong(SAR0)));
-								setLong(DAR0, getLong(DAR0) + 2 * destInc);
-								setLong(SAR0, getLong(SAR0) + 2 * srcInc);
-								setLong(TCR0, getLong(TCR0) - 1);
-							}
-							break;
-						case 2:
-							while(getLong(TCR0) & 0x00FFFFFF) {
-								memory->setLong(getLong(DAR0), memory->getLong(getLong(SAR0)));
-								setLong(DAR0, getLong(DAR0) + 4 * destInc);
-								setLong(SAR0, getLong(SAR0) + 4 * srcInc);
-								setLong(TCR0, getLong(TCR0) - 1);
-							}
-							break;
-						case 3:
-							while(getLong(TCR0) & 0x00FFFFFF) {
-								for(int i = 0;i < 4;i++) {
-									memory->setLong(getLong(DAR0), memory->getLong(getLong(SAR0)));
-									setLong(DAR0, getLong(DAR0) + 4 * destInc);
-									setLong(SAR0, getLong(SAR0) + 4 * srcInc);
-									setLong(TCR0, getLong(TCR0) - 1);
-								}
-							}
-							break;
-					}
-				}
-				if (chcr0 & 0x4)
-#if DEBUG
-					cerr << "FIXME should launch an interrupt\n";
-#endif
-                                setLong(CHCR0, chcr0 | 0x2);
+                           DMATransfer(chcr0, 0);
 			}
 			if (chcr1 & 0x1) { // DMA for channel 1
+                           DMATransfer(chcr1, 0x10);
 			}
 		}
 	}

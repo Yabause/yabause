@@ -282,6 +282,8 @@ void LoggedMemory::setLong(unsigned long addr, unsigned long val) {
 SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
   mshThread = NULL;
   msh = new SuperH(false);
+  sshThread = NULL;
+  ssh = new SuperH(true);
 
   Timer::initSuperH(msh);
 
@@ -304,10 +306,6 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
   vdp2_2      = ((Vdp2 *) vdp2_3)->getCRam();
   smpc        = new Smpc(this);
   ramHigh     = new Memory(0xFFFFF, 0x100000);
-  purgeArea   = new Dummy(0xFFFFFFFF);
-  adressArray = new Memory(0xFFF, 0x3FF);
-  dataArray   = new Memory(0xFFF, 0x1000);
-  modeSdram   = new Memory(0xFFF, 0x4FFF);
   initMemoryMap();
 
 	char *bios;
@@ -344,6 +342,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 
 	msh->setMemory(this);
 	mshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, msh);
+//        sshThread = SDL_CreateThread((int (*)(void*)) &SuperH::lancer, ssh);
 	msh->run();
 }
 
@@ -362,6 +361,15 @@ SaturnMemory::~SaturnMemory(void) {
 #if DEBUG
   cerr << "master sh2 stopped\n";
 #endif
+
+//#if DEBUG
+//  cerr << "stopping slave sh2\n";
+//#endif
+//  ssh->stop();
+//  SDL_WaitThread(sshThread, NULL);
+//#if DEBUG
+//  cerr << "slave sh2 stopped\n";
+//#endif
 
   delete rom;
   delete smpc;
@@ -384,12 +392,10 @@ SaturnMemory::~SaturnMemory(void) {
   //delete vdp1_1;
   delete scu;
   delete ramHigh;
-  delete purgeArea;
-  delete adressArray;
-  delete modeSdram;
   delete onchip;
 
   delete msh;
+  delete ssh;
 }
 
 unsigned char SaturnMemory::getByte(unsigned long adr) {
@@ -433,6 +439,10 @@ void SaturnMemory::load(const char *fichier, unsigned long adr) {
 
 SuperH *SaturnMemory::getMasterSH(void) {
 	return msh;
+}
+
+SuperH *SaturnMemory::getSlaveSH(void) {
+        return ssh;
 }
 
 Memory *SaturnMemory::getOnchip(void) {
@@ -505,10 +515,10 @@ void SaturnMemory::mappage2(unsigned long adr) {
     printf("Bad memory access: %8x", adr);
 #endif
   case 2: // purge area
-    mapMem = purgeArea; mapAdr = adr & mapMem->mask; return; // FIXME
+    mapMem = msh->GetPurgeArea(); mapAdr = adr & mapMem->mask; return; // FIXME
   case 3: { // direct access to cache addresses
     unsigned long nadr = adr & 0x1FFFFFFF;
-    if (nadr < 0x3FF) { mapMem = adressArray; mapAdr = nadr & mapMem->mask; return;} // FIXME
+    if (nadr < 0x3FF) { mapMem = msh->GetAddressArray(); mapAdr = nadr & mapMem->mask; return;} // FIXME
 #ifndef _arch_dreamcast
     throw BadMemoryAccess(adr);
 #else
@@ -517,9 +527,9 @@ void SaturnMemory::mappage2(unsigned long adr) {
   }
   case 4:
   case 6:
-	  mapMem = dataArray; mapAdr = adr & 0x1000; return;
+          mapMem = msh->GetDataArray(); mapAdr = adr & 0x1000; return;
   case 7:
-    if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = modeSdram; mapAdr = adr & 0x00000FFF; return;}
+    if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = msh->GetSdramMode(); mapAdr = adr & 0x00000FFF; return;}
     if (adr >= 0xFFFFFE00) { mapMem = onchip; mapAdr = adr & 0x000001FF; return;}
 #ifndef _arch_dreamcast
     throw BadMemoryAccess(adr);
@@ -563,10 +573,10 @@ void SaturnMemory::mappage(unsigned long adr) {
     printf("Bad memory access: %8x", adr);
 #endif
   case 2:
-    mapMem = purgeArea; mapAdr = adr; return;
-  case 3: {
+    mapMem = msh->GetPurgeArea(); mapAdr = adr; return;
+  case 3: {                     
     unsigned long nadr = adr & 0x1FFFFFFF;
-    if (nadr < 0x3FF) { mapMem = adressArray; mapAdr = nadr; return;}
+    if (nadr < 0x3FF) { mapMem = msh->GetAddressArray(); mapAdr = nadr; return;}
 #ifndef _arch_dreamcast
     throw BadMemoryAccess(adr);
 #else
@@ -574,9 +584,9 @@ void SaturnMemory::mappage(unsigned long adr) {
 #endif
   }
   case 6:
-	  mapMem = dataArray; mapAdr = adr & 0x1000; return;
+          mapMem = msh->GetDataArray(); mapAdr = adr & 0x1000; return;
   case 7:
-    if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = modeSdram; mapAdr = adr & 0x00000FFF; return;}
+    if ((adr >= 0xFFFF8000) && (adr < 0xFFFFC000)) {mapMem = msh->GetSdramMode(); mapAdr = adr & 0x00000FFF; return;}
     if (adr >= 0xFFFFFE00) { mapMem = onchip; mapAdr = adr & 0x000001FF; return;}
 #ifndef _arch_dreamcast
     throw BadMemoryAccess(adr);

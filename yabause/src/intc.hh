@@ -52,11 +52,15 @@ class Onchip : public Memory {
 private:
 	SaturnMemory *memory;
 
+        /* DMAC */
+        inline void DMATransfer(unsigned long chcr, unsigned long reg_offset);
+
 	/* INTC */
 	SDL_Thread *intcThread;
 	SDL_mutex *mutex, *mutex_cond;
 	SDL_cond *cond;
 	bool _stop;
+
 #ifndef _arch_dreamcast
 	priority_queue<Interrupt> interrupts;
 #endif
@@ -69,7 +73,7 @@ public:
 	void setLong(unsigned long, unsigned long);
 
 	/* DMAC */
-	static void startDMA(Onchip *);
+        static void startDMA(Onchip *);
 	void runDMA(void);
 
 	/* INTC */
