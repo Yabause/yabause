@@ -24,7 +24,8 @@
 #include "scu.hh"
 #include "timer.hh"
 #include "yui.hh"
-#include <gl\glut.h>
+#include <GL/glut.h>
+#include <stdarg.h>
 
 #define COLOR_ADDt(b)		(b>0xFF?0xFF:(b<0?0:b))
 #define COLOR_ADDb(b1,b2)	COLOR_ADDt((signed) (b1) + (b2))

@@ -81,6 +81,9 @@ static gboolean key_press( GtkWidget *widget, GdkEvent *event, gpointer data) {
 		case GDK_Left:
 			eve.key.keysym.sym = SDLK_LEFT;
 			break;
+		case GDK_F1:
+			eve.key.keysym.sym = SDLK_F1;
+			break;
 		default:
 			eve.key.keysym.sym = (SDLKey) event->key.keyval;
 			break;
@@ -104,6 +107,9 @@ static gboolean key_release( GtkWidget *widget, GdkEvent *event, gpointer data) 
 			break;
 		case GDK_Left:
 			eve.key.keysym.sym = SDLK_LEFT;
+			break;
+		case GDK_F1:
+			eve.key.keysym.sym = SDLK_F1;
 			break;
 		default:
 			eve.key.keysym.sym = (SDLKey) event->key.keyval;

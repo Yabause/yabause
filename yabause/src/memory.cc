@@ -415,38 +415,38 @@ SaturnMemory::~SaturnMemory(void) {
   delete ssh;
 }
 
-unsigned char SaturnMemory::getByte(unsigned long adr) {
-  mapping(adr);
-  return mapMem->getByte(mapAddr);
+unsigned char SaturnMemory::getByte(unsigned long addr) {
+	mapping(addr);
+	return mapMem->getByte(mapAddr);
 }
 
-void SaturnMemory::setByte(unsigned long adr, unsigned char valeur) {
-  mapping(adr);
-  mapMem->setByte(mapAddr, valeur);
+void SaturnMemory::setByte(unsigned long addr, unsigned char val) {
+	mapping(addr);
+	mapMem->setByte(mapAddr, val);
 }
 
 unsigned short SaturnMemory::getWord(unsigned long addr) {
-  mapping(addr);
-  return mapMem->getWord(mapAddr);
+	mapping(addr);
+	return mapMem->getWord(mapAddr);
 }
 
-void SaturnMemory::setWord(unsigned long adr, unsigned short valeur) {
-  mapping(adr);
-  mapMem->setWord(mapAddr, valeur);
+void SaturnMemory::setWord(unsigned long addr, unsigned short val) {
+	mapping(addr);
+	mapMem->setWord(mapAddr, val);
 }
 
-unsigned long SaturnMemory::getLong(unsigned long adr) {
-  mapping(adr);
-  return mapMem->getLong(mapAddr);
+unsigned long SaturnMemory::getLong(unsigned long addr) {
+	mapping(addr);
+	return mapMem->getLong(mapAddr);
 }
 
-void SaturnMemory::setLong(unsigned long adr, unsigned long valeur) {
-  mapping(adr);
-  mapMem->setLong(mapAddr, valeur);
+void SaturnMemory::setLong(unsigned long addr, unsigned long val) {
+	mapping(addr);
+	mapMem->setLong(mapAddr, val);
 }
 
 void SaturnMemory::loadBios(const char *filename) {
-  rom->load(filename, 0);
+	rom->load(filename, 0);
 }
 
 void SaturnMemory::loadExec(const char *filename, unsigned long PC) {

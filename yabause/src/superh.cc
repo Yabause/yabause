@@ -69,6 +69,7 @@ void SuperH::reset(void) {
   SR.partie.inutile1 = 0;
   SR.partie.inutile2 = 0;
   VBR = 0;
+  for(int i = 0;i < 16;i++) R[i] = 0;
 
   // reset interrupts
   while ( !interrupts.empty() ) {
