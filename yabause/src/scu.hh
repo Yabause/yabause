@@ -29,6 +29,8 @@ private:
   template<unsigned char V, unsigned char L, unsigned short M>
 	  void sendInterrupt(void);
   SaturnMemory *satmem;
+  unsigned long timer0;
+  unsigned long timer1;
 public:
   Scu(SaturnMemory *);
   void reset(void);

@@ -62,9 +62,12 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
 
   if (addr == 1) {  // Maybe an INTBACK continue/break request
     if ((intbackIreg0 & 0x80) != (getIREG(0) & 0x80)) {
+      // Continue
       setTiming();
+      setSF(1);
     }
     if ((intbackIreg0 & 0x40) != (getIREG(0) & 0x40)) {
+      // Break
       intback = false;
       setSR(getSR() & 0x0F);
     }
@@ -273,8 +276,9 @@ void Smpc::INTBACK(void) {
     return;
   }
   if (intbackIreg0 = getIREG(0)) {
+    // Return non-peripheral data
     firstPeri = true;
-    intback = getIREG(1) & 0x8;
+    intback = getIREG(1) & 0x8; // does the program want peripheral data too?
     setSR(0x40 | (intback << 5));
     INTBACKStatus();
     ((Scu *) sm->getScu())->sendSystemManager();

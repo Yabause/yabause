@@ -65,10 +65,17 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
                            }
 			   Memory::setLong(addr, val);
                            break;
-		case 0xA4 : // writting prohibited
-			    break;
+                case 0x90: 
+#if DEBUG
+                             cerr << "scu\t: Timer 0 Compare Register set to " << hex << val << endl;
+#endif
+			   Memory::setLong(addr, val);
+                           break;
+                case 0xA4: 
+                           Memory::setLong(addr, Memory::getLong(addr) & val);
+                           break;
 		default:
-			    Memory::setLong(addr, val);
+                           Memory::setLong(addr, val);
 	}
 }
 
@@ -80,6 +87,7 @@ Scu::Scu(SaturnMemory *i) : Memory(0xFF, 0xD0) {
 void Scu::reset(void) {
 	Memory::setLong(0xA0, 0x0000BFFF);
 	Memory::setLong(0xA4, 0);
+        timer0 = timer1 = 0;
 }
 
 void Scu::DMA(int mode) {
@@ -187,8 +195,16 @@ void Scu::DMA(int mode) {
 }
 
 void Scu::sendVBlankIN(void)      { sendInterrupt<0x40, 0xF, 0x0001>(); }
-void Scu::sendVBlankOUT(void)     { sendInterrupt<0x41, 0xE, 0x0002>(); }
-void Scu::sendHBlankIN(void)      { sendInterrupt<0x42, 0xD, 0x0004>(); }
+void Scu::sendVBlankOUT(void) {
+   sendInterrupt<0x41, 0xE, 0x0002>();
+   timer0 = 0;
+}
+void Scu::sendHBlankIN(void) {
+   sendInterrupt<0x42, 0xD, 0x0004>();
+   timer0++;
+   // if timer0 equals timer 0 compare register, do an interrupt
+   if (timer0 == Memory::getLong(0x90)) sendTimer0(); 
+}
 void Scu::sendTimer0(void)        { sendInterrupt<0x43, 0xC, 0x0008>(); }
 void Scu::sendTimer1(void)        { sendInterrupt<0x44, 0xB, 0x0010>(); }
 void Scu::sendDSPEnd(void)        { sendInterrupt<0x45, 0xA, 0x0020>(); }
