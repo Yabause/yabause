@@ -31,6 +31,11 @@
 typedef struct
 {
    long size;
+   unsigned long FAD;
+   unsigned char cn;
+   unsigned char fn;
+   unsigned char sm;
+   unsigned char ci;
    unsigned char data[2352];
 } block_struct;
 

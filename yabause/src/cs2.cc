@@ -391,7 +391,19 @@ void Cs2::run(Cs2 *cd) {
                   cd->curpartition->block[cd->curpartition->numblocks] = cd->AllocateBlock();
 
                   if (cd->curpartition->block[cd->curpartition->numblocks] != NULL) {
-                     CDReadSector(cd->FAD - 150, cd->getsectsize, cd->curpartition->block[cd->curpartition->numblocks]->data);
+                     if (CDReadSector(cd->FAD - 150, cd->getsectsize, cd->curpartition->block[cd->curpartition->numblocks]->data) != cd->getsectsize) {
+#if CDDEBUG
+                        fprintf(stderr, "Error Reading FAD %x\n", cd->FAD);
+#endif
+                     }   
+
+                     // fix me(in fact, I should probably rewrite the whole sector read process)
+                     cd->curpartition->block[cd->curpartition->numblocks]->FAD = cd->FAD;
+                     cd->curpartition->block[cd->curpartition->numblocks]->cn = 0;
+                     cd->curpartition->block[cd->curpartition->numblocks]->fn = 0;
+                     cd->curpartition->block[cd->curpartition->numblocks]->sm = 0;
+                     cd->curpartition->block[cd->curpartition->numblocks]->ci = 0;
+
                      cd->curpartition->numblocks++;
                      cd->curpartition->size += cd->getsectsize;
                      cd->FAD++;
@@ -595,10 +607,13 @@ void Cs2::execute(void) {
       break;
     case 0x54:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getSectorInfo\n");
+      fprintf(stderr, "cs2\t: Command: getSectorInfo %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       getSectorInfo();
 
+#if CDDEBUG
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+#endif
       break;
     case 0x60:
 #if CDDEBUG
@@ -647,12 +662,10 @@ void Cs2::execute(void) {
       break;
     case 0x70:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: changeDirectory\n");
+      fprintf(stderr, "cs2\t: Command: changeDirectory %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
 #endif
       changeDirectory();
-#if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
-#endif
+
       break;
     case 0x71:
 #if CDDEBUG
@@ -920,15 +933,16 @@ void Cs2::playDisc(void) {
      if ((getCR1() & 0x80) && (getCR3() >> 8) != 0xFF)
      {
         // fad mode
-        unsigned long size;
+        unsigned long pdFAD;
+        unsigned long pdsize;
 
-        FAD = ((getCR1() & 0xF) << 16) + getCR2();
-        size = getCR4();
+        pdFAD = ((getCR1() & 0xF) << 16) + getCR2();
+        pdsize = getCR4();
         
         SetupDefaultPlayStats(FADToTrack(FAD));
 
-        playFAD = FAD;
-        playendFAD = FAD + size;
+        playFAD = FAD = pdFAD;
+        playendFAD = pdFAD + pdsize;
 
         if ((curpartition = GetPartition()) != NULL)
         {
@@ -1201,12 +1215,23 @@ void Cs2::getActualSize(void) {
 }
 
 void Cs2::getSectorInfo(void) {
-  // fix me(I should be returning proper sector info)
+  unsigned long gsisctnum;
+  unsigned long gsibufno;
 
-  setCR1((status << 8) | 0);
-  setCR2(0);
-  setCR3(0);
-  setCR4(0);
+  gsisctnum=getCR2() & 0xFF;
+  gsibufno=getCR3() >> 8;
+  if (gsibufno < MAX_SELECTORS) {
+     if (gsisctnum < partition[gsibufno].numblocks) {
+        setCR1((status << 8) | ((partition[gsibufno].block[gsisctnum]->FAD >> 16) & 0xFF));
+        setCR2(partition[gsibufno].block[gsisctnum]->FAD & 0xFFFF);
+        setCR3((partition[gsibufno].block[gsisctnum]->fn << 8) | partition[gsibufno].block[gsisctnum]->cn);
+        setCR4((partition[gsibufno].block[gsisctnum]->sm << 8) | partition[gsibufno].block[gsisctnum]->ci);
+        setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+        return;
+     }
+  }
+
+  setCR1((CDB_STAT_REJECT << 8) | getCR1() & 0xFF);
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
 
