@@ -121,7 +121,6 @@ unsigned short Cs2::getWord(unsigned long addr) {
                                 transfercount = 0;
                                 infotranstype = -1;
                              }
-                             cerr << "Get Toc data = " << val << "\n";
                              break;
                      case 1:
                              // Get File Info
@@ -224,10 +223,6 @@ unsigned long Cs2::getLong(unsigned long addr) {
 	          break;
     default: val = Memory::getLong(addr);
   }
-
-#if DEBUG
-   fprintf(stderr, "ReadLong 0x25898000: Returned data = %08x\n", val);
-#endif
 
   return val;
 }
@@ -465,7 +460,7 @@ void Cs2::execute(void) {
       break;
     case 0x63:
 #if CDDEBUG
-      cerr << "cs2\t: getThenDeleteSectorData\n";
+      cerr << "cs2\t: getThenDeleteSectorData " << getHIRQ() << " " << getCR1() << " " << getCR2() << " " << getCR3() << " " << getCR4() << "\n";
 #endif
       getThenDeleteSectorData();
 #if CDDEBUG
@@ -1139,10 +1134,10 @@ void Cs2::SetupFileInfoTransfer(unsigned long fid) {
   transfileinfo[2] = (fileinfo[fid].lba & 0x0000FF00) >> 8;
   transfileinfo[3] =  fileinfo[fid].lba & 0x000000FF;
 
-  transfileinfo[4] = (fileinfo[fid].lba & 0xFF000000) >> 24;
-  transfileinfo[5] = (fileinfo[fid].lba & 0x00FF0000) >> 16;
-  transfileinfo[6] = (fileinfo[fid].lba & 0x0000FF00) >> 8;
-  transfileinfo[7] =  fileinfo[fid].lba & 0x000000FF;
+  transfileinfo[4] = (fileinfo[fid].size & 0xFF000000) >> 24;
+  transfileinfo[5] = (fileinfo[fid].size & 0x00FF0000) >> 16;
+  transfileinfo[6] = (fileinfo[fid].size & 0x0000FF00) >> 8;
+  transfileinfo[7] =  fileinfo[fid].size & 0x000000FF;
 
   transfileinfo[8] = fileinfo[fid].interleavegapsize;
   transfileinfo[9] = fileinfo[fid].fileunitsize;
