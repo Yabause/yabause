@@ -23,14 +23,6 @@
 #include "saturn.hh"
 #include "scu.hh"
 #include "yui.hh"
-#ifndef _arch_dreamcast
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
-#endif
-#include <stdarg.h>
 
 #define COLOR_ADDt(b)		(b>0xFF?0xFF:(b<0?0:b))
 #define COLOR_ADDb(b1,b2)	COLOR_ADDt((signed) (b1) + (b2))
@@ -38,12 +30,6 @@
 				(COLOR_ADDb((l >> 8 ) & 0xFF, g) << 8) | \
 				(COLOR_ADDb((l >> 16 ) & 0xFF, b) << 16) | \
 				(l & 0xFF000000)
-
-#if 0
-#define drawPixel(s,x,y,c)	if ((x >= 0) && (y >= 0) && (x < 1024) && (y < 512)) s[y * 1024 + x] = c;
-#endif
-#define drawPixel(s,x,y,c)	if ((x >= 0) && (y >= 0) && (x < width) && (y < height)) s[y * width + x] = c;
-
 
 /****************************************/
 /*					*/
@@ -116,24 +102,19 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
       Memory::setWord(addr, val);
       break;
 #endif
-    case 0xE0:
-      Memory::setWord(addr, val);
-#ifdef VDP2_DEBUG
-      cerr << "sprite type modified" << endl;
-#endif
-      sortScreens();
-      break;
     case 0xF8:
+      nbg0->setPriority(val & 0x7);
+      nbg1->setPriority((val >> 8) & 0x7);
       Memory::setWord(addr, val);
-      sortScreens();
       break;
     case 0xFA:
+      nbg2->setPriority(val & 0x7);
+      nbg3->setPriority((val >> 8) & 0x7);
       Memory::setWord(addr, val);
-      sortScreens();
       break;
     case 0xFC:
+      rbg0->setPriority(val & 0x7);
       Memory::setWord(addr, val);
-      sortScreens();
       break;
     default:
       Memory::setWord(addr, val);
@@ -196,38 +177,14 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, int alpha, int colorOff
 /****************************************/
 
 Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, unsigned long *s) {
-    reg = r;
-    vram = v;
-    cram = c;
-    surface = s;
-    //surface = new unsigned long [ 1024 * 512 ];
-    disptoggle = true;
-    getX = Vdp2Screen_getX;
-    getY = Vdp2Screen_getY;
-
-	if (*texture ==0) glGenTextures(1, texture );
-	glBindTexture(GL_TEXTURE_2D, texture[0] );
-#ifndef _arch_dreamcast
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
-  
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-#else
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 1024, 512, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
-#endif
-
+	reg = r;
+	vram = v;
+	cram = c;
+	disptoggle = true;
 }
 
-int VdpScreen::comparePriority(const void *arg1, const void *arg2) {
-  VdpScreen **screen1 = (VdpScreen **) arg1;
-  VdpScreen **screen2 = (VdpScreen **) arg2;
-  int s1 = (*screen1)->getPriority();
-  int is1 = (*screen1)->getInnerPriority();
-  int s2 = (*screen2)->getPriority();
-  int is2 = (*screen2)->getInnerPriority();
-
-  if (s1 == s2) return is1 - is2;
-  else return s1 - s2;
+void Vdp2Screen::setPriority(int p) {
+	priority = p;
 }
 
 void Vdp2Screen::draw(void) {
@@ -235,44 +192,35 @@ void Vdp2Screen::draw(void) {
 
 	init();
 
-        if (!(enable & disptoggle) || (getPriority() == 0)) return;
+        if (!(enable & disptoggle) || (priority == 0)) return;
 
 	if (bitmap) {
+		int vertices [] = {
+			x * coordIncX , y * coordIncY,
+			(x + cellW) * coordIncX, y * coordIncY,
+			(x + cellW) * coordIncX, (y + cellH) * coordIncY,
+			x * coordIncX, (y + cellH) * coordIncY };
+		reg->ygl.quad(priority, vertices, &surface, cellW, cellH, &twidth, flipFunction);  
 		drawCell();
 	}
 	else {
 		drawMap();
 	}
-
-        calcwidthRatio = (width * coordIncX) / 1024;
-        calcheightRatio = (height * coordIncY) / 512;
-
-	glEnable( GL_TEXTURE_2D );
-	glBindTexture( GL_TEXTURE_2D, texture[0] );
-	glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, surface);
-	glBegin(GL_QUADS);
-        glTexCoord2f(0, 0); glVertex2i(0, 0);
-        glTexCoord2f(calcwidthRatio, 0); glVertex2i(width, 0);
-        glTexCoord2f(calcwidthRatio, calcheightRatio); glVertex2i(width, height);
-        glTexCoord2f(0, calcheightRatio); glVertex2i(0, height);
-	glEnd();
-	glDisable( GL_TEXTURE_2D );
 }
 
 void Vdp2Screen::drawMap(void) {
 	int X, Y;
 	X = x;
 
-        //for(int i = 0;i < mapWH;i++) {
+        for(int i = 0;i < mapWH;i++) {
 		Y = y;
 		x = X;
-		//for(int j = 0;j < mapWH;j++) {
+		for(int j = 0;j < mapWH;j++) {
 			y = Y;
-			planeAddr(0);
-			//planeAddr(mapWH * i + j);
+			planeAddr(mapWH * i + j);
 			drawPlane();
-		//}
-	//}
+		}
+	}
 }
 
 void Vdp2Screen::drawPlane(void) {
@@ -298,8 +246,14 @@ void Vdp2Screen::drawPage(void) {
 		x = X;
 		for(int j = 0;j < pageWH;j++) {
 			y = Y;
-			patternAddr();
-			drawPattern();
+			if ((x >= -(8 * patternWH)) and (y >= -(8 * patternWH)) and (x < width) and (y < height)) {
+				patternAddr();
+				drawPattern();
+			} else {
+				addr += patternDataSize * 2;
+				x += 8 * patternWH;
+				y += 8 * patternWH;
+			}
 		}
 	}
 }
@@ -367,142 +321,110 @@ void Vdp2Screen::drawPattern(void) {
 	int X, Y;
 	int xEnd, yEnd;
 
-	if(flipFunction & 0x1) { // vertical flip
-		x += patternWH * 8 - 1;
-    		xEnd = patternWH * 8 + 1;
-  	}
- 	else {
-    		xEnd = 0;
-  	}
+	int tmp = patternWH * 8;
+	unsigned long cacheAddr = (palAddr << 20) | charAddr;
 
-  	if(flipFunction & 0x2) { // horizontal flip
-    		y += patternWH * 8 - 1;
-    		yEnd = patternWH * 8 + 1;
-  	}
-  	else {
-    		yEnd = 0;
-  	}
-
-	X = x;
-	for(int i = 0;i < patternWH;i++) {
-		Y = y;
-		x = X;
-		for(int j = 0;j < patternWH;j++) {
-			y = Y;
-			drawCell();
-		}
+	int vertices [] = {
+		x * coordIncX , y * coordIncY,
+		(x + tmp) * coordIncX, y * coordIncY,
+		(x + tmp) * coordIncX, (y + tmp) * coordIncY,
+		x * coordIncX, (y + tmp) * coordIncY };
+	int * c;
+	if ((c = reg->cache.isCached(cacheAddr)) != NULL) {
+		reg->ygl.cachedQuad(priority, vertices, c, tmp, tmp, flipFunction);
+		x += tmp;
+		y += tmp;
+		return;
 	}
-	x += xEnd;
-	y += yEnd;
+	c = reg->ygl.quad(priority, vertices, &surface, tmp, tmp, &twidth, flipFunction);  
+	reg->cache.cache(cacheAddr, c);
+
+	switch(patternWH) {
+		case 1:
+			drawCell();
+			break;
+		case 2:
+			twidth += 8;
+			drawCell();
+			surface -= (twidth + 8) * 8 - 8;
+			drawCell();
+			surface -= 8;
+			drawCell();
+			surface -= (twidth + 8) * 8 - 8;
+			drawCell();
+	}
+	x += tmp;
+	y += tmp;
 }
 
 void Vdp2Screen::drawCell(void) {
   unsigned long color;
-  int X;
-  int xInc, yInc;
-
-  if(flipFunction & 0x1) { // vertical flip
-    xInc = -1;
-  }
-  else {
-    xInc = 1;
-  }
-
-  if(flipFunction & 0x2) { // horizontal flip
-    yInc = -1;
-  }
-  else {
-    yInc = 1;
-  }
 
   switch(colorNumber) {
     case 0:
-      // 4-bit Mode(16 colors)
-      X = x;
       for(int i = 0;i < cellH;i++) {
-	x = X;
 	for(int j = 0;j < cellW;j+=4) {
           unsigned short dot = readWord(vram, charAddr);
 
 	  charAddr += 2;
 	  if (!(dot & 0xF000) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), alpha, colorOffset);
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	  if (!(dot & 0xF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF00) >> 8), alpha, colorOffset);
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	  if (!(dot & 0xF0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xF0) >> 4), alpha, colorOffset);
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	  if (!(dot & 0xF) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | (dot & 0xF), alpha, colorOffset);
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	}
-	y += yInc;
+	surface += twidth;
       }
       break;
     case 1:
-      // 8-bit Mode(256 colors)
-      X = x;
       for(int i = 0;i < cellH;i++) {
-	x = X;
 	for(int j = 0;j < cellW;j+=2) {
           unsigned short dot = readWord(vram, charAddr);
 
 	  charAddr += 2;
 	  if (!(dot & 0xFF00) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), alpha, colorOffset);
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	  if (!(dot & 0xFF) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor((palAddr << 4) | (dot & 0xFF), alpha, colorOffset);
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	}
-	y += yInc;
+	surface += twidth;
       }
       break;
     case 2:
-      // 16-bit Mode(2048 colors)
-      X = x;
       for(int i = 0;i < cellH;i++) {
-	x = X;
 	for(int j = 0;j < cellW;j++) {
           unsigned short dot = readWord(vram, charAddr);
 	  if ((dot == 0) && transparencyEnable) color = 0x00000000;
           else color = cram->getColor(dot, alpha, colorOffset);
 	  charAddr += 2;
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	}
-	y += yInc;
+	surface += twidth;
       }
       break;
     case 3:
-      // 16-bit Mode(32,786 colors)
-      X = x;
       for(int i = 0;i < cellH;i++) {
-	x = X;
 	for(int j = 0;j < cellW;j++) {
           unsigned short dot = readWord(vram, charAddr);
 	  charAddr += 2;
           if (!(dot & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB1(0xFF, dot);
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	}
-	y += yInc;
+	surface += twidth;
       }
       break;
     case 4:
-      // 32-bit Mode(16,770,000 colors)
-      X = x;
       for(int i = 0;i < cellH;i++) {
-	x = X;
 	for(int j = 0;j < cellW;j++) {
           unsigned short dot1 = readWord(vram, charAddr);
 	  charAddr += 2;
@@ -510,22 +432,13 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
           if (!(dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
 	  else color = SAT2YAB2(alpha, dot1, dot2);
-	  drawPixel(surface, getX(this, x,y), getY(this, x,y), COLOR_ADD(color,cor,cog,cob));
-	  x += xInc;
+	  *surface++ = COLOR_ADD(color,cor,cog,cob);
 	}
-	y += yInc;
+	surface += twidth;
       }
       break;
   }
 }
-
-/*
-void Vdp2Screen::drawPixel(unsigned long *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
-        if ((x >= 0) && (y >= 0) && (x < 1024) && (y < 512)) {
-                surface[y * 1024 + x] = tmpcolor;
-	}
-}
-*/
 
 void Vdp2Screen::toggleDisplay(void) {
    disptoggle ^= true;
@@ -628,29 +541,20 @@ void Vdp2Screen::readRotationTable(unsigned long addr) {
 	addr += 4;
 }
 
-int Vdp2Screen_getX(Vdp2Screen * screen, int Hcnt, int Vcnt) {
-	return Hcnt;
-}
-
-int Vdp2Screen_getY(Vdp2Screen * screen, int Hcnt, int Vcnt) {
-	return Vcnt;
-}
-
 void Vdp2Screen::setTextureRatio(unsigned long widthR, unsigned long heightR) {
    width = widthR;
    height = heightR;
 }
 
 RBG0::RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {
-	getX = RBG0_getX;
-	getY = RBG0_getY;
 }
 
+/*
 int RBG0_getX(Vdp2Screen * tmp, int Hcnt, int Vcnt) {
 	RBG0 * screen = (RBG0 *) tmp;
 	float ret;
 	float Xsp = screen->A * ((screen->Xst + screen->deltaXst * Vcnt) - screen->Px) + screen->B * ((screen->Yst + screen->deltaYst * Vcnt) - screen->Py) + screen->C * (screen->Zst - screen->Pz);
-	float Xp = screen->A * (screen->Px - screen->Cx) + screen->B * (screen->Py - screen->Cy) + screen->C * (screen->Pz - screen->Cz) /*+ Cx + Mx*/;
+	float Xp = screen->A * (screen->Px - screen->Cx) + screen->B * (screen->Py - screen->Cy) + screen->C * (screen->Pz - screen->Cz); //+ Cx + Mx;
 	float dX = screen->A * screen->deltaX + screen->B * screen->deltaY;
 	ret = (screen->kx * (Xsp + dX * Hcnt) + Xp);
 	return (int) ret;
@@ -660,11 +564,12 @@ int RBG0_getY(Vdp2Screen * tmp, int Hcnt, int Vcnt) {
 	RBG0 * screen = (RBG0 *) tmp;
 	float ret;
 	float Ysp = screen->D * ((screen->Xst + screen->deltaXst * Vcnt) - screen->Px) + screen->E * ((screen->Yst + screen->deltaYst * Vcnt) - screen->Py) + screen->F * (screen->Zst - screen->Pz);
-	float Yp = screen->D * (screen->Px - screen->Cx) + screen->E * (screen->Py - screen->Cy) + screen->F * (screen->Pz - screen->Cz) /*+ Cy + My*/;
+	float Yp = screen->D * (screen->Px - screen->Cx) + screen->E * (screen->Py - screen->Cy) + screen->F * (screen->Pz - screen->Cz); //+ Cy + My
 	float dY = screen->D * screen->deltaX + screen->E * screen->deltaY;
 	ret = (screen->ky * (Ysp + dY * Hcnt) + Yp);
 	return (int) ret;
 }
+*/
 
 void RBG0::init(void) {
         // For now, let's treat it like a regular scroll screen
@@ -803,14 +708,6 @@ void RBG0::planeAddr(int i) {
   	}
 }
 
-int RBG0::getPriority(void) {
-        return (readWord(reg, 0xFC) & 0x7);
-}
-
-int RBG0::getInnerPriority(void) {
-	return 4;
-}
-
 void RBG0::debugStats(char *outstring, bool *isenabled) {
 }
 
@@ -822,8 +719,9 @@ void NBG0::init(void) {
 	*/
         enable = readWord(reg, 0x20) & 0x1;
         transparencyEnable = !(readWord(reg, 0x20) & 0x100);
-        x = - readWord(reg, 0x70);
-        y = - readWord(reg, 0x74);
+        x = - ((readWord(reg, 0x70) & 0x7FF) % 512);
+        y = - ((readWord(reg, 0x74) & 0x7FF) % 512);
+	//cerr << "x = " << x << ", y = " << y << endl;
 
   	colorNumber = (patternReg & 0x70) >> 4;
 	if(bitmap = patternReg & 0x2) {
@@ -893,8 +791,8 @@ void NBG0::init(void) {
 		cor = cog = cob = 0;
 	}
 
-        coordIncX = (float)(reg->getLong(0x78) & 0x7FF00) / 65536;
-        coordIncY = (float)(reg->getLong(0x7C) & 0x7FF00) / 65536;
+        coordIncX = (float) 65536 / (reg->getLong(0x78) & 0x7FF00);
+        coordIncY = (float) 65536 / (reg->getLong(0x7C) & 0x7FF00);
 }
 
 void NBG0::planeAddr(int i) {
@@ -928,14 +826,7 @@ void NBG0::planeAddr(int i) {
 	  		else addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
   		}
 	}*/
-}
-
-int NBG0::getPriority(void) {
-  return reg->getByte(0xF9) & 0x7;
-}
-
-int NBG0::getInnerPriority(void) {
-  return 3;
+	//cerr << "NBG0 plane " << i << " -> " << hex << addr << endl;
 }
 
 void NBG0::debugStats(char *outstring, bool *isenabled) {
@@ -1246,7 +1137,7 @@ void NBG0::debugStats(char *outstring, bool *isenabled) {
      // Special Color Calculation Mode here
 
      // Priority Number
-     sprintf(outstring, "Priority = %d\r\n", getPriority());
+     sprintf(outstring, "Priority = %d\r\n", priority);
      outstring += strlen(outstring);
 
      // Color Calculation here
@@ -1267,9 +1158,9 @@ void NBG1::init(void) {
 
         enable = readWord(reg, 0x20) & 0x2;
         transparencyEnable = !(readWord(reg, 0x20) & 0x200);
-        x = - readWord(reg, 0x80);
-        y = - readWord(reg, 0x84);
-	
+        x = - ((readWord(reg, 0x80) & 0x7FF) % 512);
+        y = - ((readWord(reg, 0x84) & 0x7FF) % 512);
+
   	colorNumber = (patternReg & 0x3000) >> 12;
   	if(bitmap = patternReg & 0x200) {
 		switch((patternReg & 0xC00) >> 10) {
@@ -1339,8 +1230,8 @@ void NBG1::init(void) {
 		cor = cog = cob = 0;
 	}
 
-        coordIncX = (float)(reg->getLong(0x88) & 0x7FF00) / 65536;
-        coordIncY = (float)(reg->getLong(0x8C) & 0x7FF00) / 65536;
+        coordIncX = (float) 65536 / (reg->getLong(0x88) & 0x7FF00);
+        coordIncY = (float) 65536 / (reg->getLong(0x8C) & 0x7FF00);
 }
 
 void NBG1::planeAddr(int i) {
@@ -1374,14 +1265,7 @@ void NBG1::planeAddr(int i) {
 	  		else addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
   		}
 	}*/
-}
-
-int NBG1::getPriority(void) {
-  return reg->getByte(0xF8) & 0x7;
-}
-
-int NBG1::getInnerPriority(void) {
-  return 2;
+	//cerr << "NBG1 plane " << i << " -> " << hex << addr << endl;
 }
 
 void NBG1::debugStats(char *outstring, bool *isenabled) {
@@ -1638,7 +1522,7 @@ void NBG1::debugStats(char *outstring, bool *isenabled) {
      // Special Color Calculation Mode here
 
      // Priority Number
-     sprintf(outstring, "Priority = %d\r\n", getPriority());
+     sprintf(outstring, "Priority = %d\r\n", priority);
      outstring += strlen(outstring);
 
      // Color Calculation here
@@ -1659,8 +1543,8 @@ void NBG2::init(void) {
 
         enable = readWord(reg, 0x20) & 0x4;
         transparencyEnable = !(readWord(reg, 0x20) & 0x400);
-        x = - readWord(reg, 0x90);
-        y = - readWord(reg, 0x92);
+        x = - ((readWord(reg, 0x90) & 0x7FF) % 512);
+        y = - ((readWord(reg, 0x92) & 0x7FF) % 512);
 
   	colorNumber = (patternReg & 0x2) >> 1;
 	bitmap = false; // NBG2 can only use cell mode
@@ -1757,14 +1641,7 @@ void NBG2::planeAddr(int i) {
 			}
   		}
 	}*/
-}
-
-int NBG2::getPriority(void) {
-  return reg->getByte(0xFB) & 0x7;
-}
-
-int NBG2::getInnerPriority(void) {
-  return 1;
+	//cerr << "NBG2 plane " << i << " -> " << hex << addr << endl;
 }
 
 void NBG2::debugStats(char *outstring, bool *isenabled) {
@@ -1918,7 +1795,7 @@ void NBG2::debugStats(char *outstring, bool *isenabled) {
      // Special Color Calculation Mode here
 
      // Priority Number
-     sprintf(outstring, "Priority = %d\r\n", getPriority());
+     sprintf(outstring, "Priority = %d\r\n", priority);
      outstring += strlen(outstring);
 
      // Color Calculation here
@@ -1939,8 +1816,8 @@ void NBG3::init(void) {
 
         enable = readWord(reg, 0x20) & 0x8;
         transparencyEnable = !(readWord(reg, 0x20) & 0x800);
-        x = - readWord(reg, 0x94);
-        y = - readWord(reg, 0x96);
+        x = - ((readWord(reg, 0x94) & 0x7FF) % 512);
+        y = - ((readWord(reg, 0x96) & 0x7FF) % 512);
 
   	colorNumber = (patternReg & 0x20) >> 5;
 	bitmap = false; // NBG2 can only use cell mode
@@ -2025,14 +1902,7 @@ void NBG3::planeAddr(int i) {
 	  		else addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
   		}
 	}*/
-}
-
-int NBG3::getPriority(void) {
-	return (reg->getByte(0xFA) & 0x7);
-}
-
-int NBG3::getInnerPriority(void) {
-	return 0;
+	//cerr << "NBG3 plane " << i << " -> " << hex << addr << endl;
 }
 
 void NBG3::debugStats(char *outstring, bool *isenabled) {
@@ -2186,7 +2056,7 @@ void NBG3::debugStats(char *outstring, bool *isenabled) {
      // Special Color Calculation Mode here
 
      // Priority Number
-     sprintf(outstring, "Priority = %d\r\n", getPriority());
+     sprintf(outstring, "Priority = %d\r\n", priority);
      outstring += strlen(outstring);
 
      // Color Calculation here
@@ -2214,24 +2084,9 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
 
   satmem->vdp1_2->setVdp2Ram(this, cram);
 
-  SDL_InitSubSystem(SDL_INIT_VIDEO);
+  ygl.init();
 
-  SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
-  SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
-  SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
-  SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4 );
-  SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
-  SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-
-  SDL_SetVideoMode(320,224,32, SDL_OPENGL);
-
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  //glOrtho(-1, 1, -1, 1, -10, 10);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0, 320, 224, 0, 1, 0);
+/*
 #ifndef _arch_dreamcast
   surface = new unsigned long [1024 * 512];
 #else
@@ -2239,12 +2094,13 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
   free(surface->pixels);
   surface->pixels = memalign(32, 1024 * 512 * 2);
 #endif
-  screens[5] = satmem->vdp1_2;
-  screens[4] = rbg0 = new RBG0(this, vram, cram, surface);
-  screens[3] = nbg0 = new NBG0(this, vram, cram, surface);
-  screens[2] = nbg1 = new NBG1(this, vram, cram, surface);
-  screens[1] = nbg2 = new NBG2(this, vram, cram, surface);
-  screens[0] = nbg3 = new NBG3(this, vram, cram, surface);
+*/
+  //screens[5] = satmem->vdp1_2;
+  /*screens[4] =*/ rbg0 = new RBG0(this, vram, cram, surface);
+  /*screens[3] =*/ nbg0 = new NBG0(this, vram, cram, surface);
+  /*screens[2] =*/ nbg1 = new NBG1(this, vram, cram, surface);
+  /*screens[1] =*/ nbg2 = new NBG2(this, vram, cram, surface);
+  /*screens[0] =*/ nbg3 = new NBG3(this, vram, cram, surface);
 
   setSaturnResolution(320, 224);
 
@@ -2257,13 +2113,13 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0x1FF, 0x200) {
 }
 
 Vdp2::~Vdp2(void) {
-    for(int i = 0;i < 6;i++) {
-	    if (screens[i] != satmem->vdp1_2)
-	    	delete screens[i];
-    }
-    delete [] surface;
-    delete vram;
-    delete cram;
+	delete nbg3;
+	delete nbg2;
+	delete nbg1;
+	delete nbg0;
+	delete rbg0;
+	delete vram;
+	delete cram;
 }
 
 void Vdp2::reset(void) {
@@ -2307,20 +2163,23 @@ void Vdp2::HBlankOUT(void) {
 void Vdp2::VBlankOUT(void) {
   setWord(0x4, getWord(0x4) & 0xFFF7 | 0x0002);
 
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  ygl.reset();
+  cache.reset();
+
+  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if (getWord(0) & 0x8000) {
     drawBackScreen();
-    screens[0]->draw();
-    screens[1]->draw();
-    screens[2]->draw();
-    screens[3]->draw();
-    screens[4]->draw();
-    screens[5]->draw();
+    nbg3->draw();
+    nbg2->draw();
+    nbg1->draw();
+    nbg0->draw();
+    rbg0->draw();
+    satmem->vdp1_2->draw();
   }
 
   if (fpstoggle) {
      //onScreenDebugMessage(-0.9, -0.85, "%02d/60 FPS", fps);
-     onScreenDebugMessage(10, 214, "%02d/60 FPS", fps);
+     ygl.onScreenDebugMessage("%02d/60 FPS", fps);
 
      frameCount++;
      if(SDL_GetTicks() >= ticks + 1000) {
@@ -2335,22 +2194,15 @@ void Vdp2::VBlankOUT(void) {
 #endif
 
   //((Vdp1 *) satmem->getVdp1())->execute(0);
-  glFlush();
+  //glFlush();
 #ifndef _arch_dreamcast
-  SDL_GL_SwapBuffers();
+  //SDL_GL_SwapBuffers();
+  ygl.render();
 #else
   glKosFinishFrame();
 #endif
   //colorOffset();
   satmem->scu->sendVBlankOUT();
-}
-
-VdpScreen *Vdp2::getScreen(int i) {
-  return screens[i];
-}
-
-void Vdp2::sortScreens(void) {
-  qsort(screens, 6, sizeof(VdpScreen *), &VdpScreen::comparePriority);
 }
 
 void Vdp2::updateRam(void) {
@@ -2370,6 +2222,7 @@ void Vdp2::drawBackScreen(void) {
 	unsigned short dot;
 	if (BKTAU & 0x8000) {
 		int y;
+/*
 		glBegin(GL_LINES);
 		for(y = -112;y < 112;y++) {
 			dot = vram->getWord(scrAddr);
@@ -2380,9 +2233,11 @@ void Vdp2::drawBackScreen(void) {
 		}
 		glEnd();
 		glColor3ub(0xFF, 0xFF, 0xFF);
+*/
 	}
 	else {
 		dot = vram->getWord(scrAddr);
+/*
 		glColor3ub(((dot & 0x1F) << 3), ((dot & 0x3E0) >> 2), ((dot & 0x7C00) >> 7));
 		glBegin(GL_QUADS);
 		glVertex2i(0, 0);
@@ -2391,6 +2246,7 @@ void Vdp2::drawBackScreen(void) {
 		glVertex2i(0, 224);
 		glEnd();
 		glColor3ub(0xFF, 0xFF, 0xFF);
+*/
 	}
 }
 
@@ -2439,9 +2295,7 @@ VdpScreen *Vdp2::getNBG3(void) {
 }
 
 void Vdp2::setSaturnResolution(int width, int height) {
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glOrtho(0, width, height, 0, 1, 0);
+   ygl.changeResolution(width, height);
    ((RBG0 *)rbg0)->setTextureRatio(width, height);
    ((NBG0 *)nbg0)->setTextureRatio(width, height);
    ((NBG1 *)nbg1)->setTextureRatio(width, height);
@@ -2451,31 +2305,6 @@ void Vdp2::setSaturnResolution(int width, int height) {
 }
 
 void Vdp2::setActualResolution(int width, int height) {
-}
-
-void Vdp2::onScreenDebugMessage(float x, float y, char *string, ...) {
-  va_list arglist;
-  char tempstr[512];
-
-  va_start(arglist, string);
-  vsprintf(tempstr, string, arglist);
-  va_end(arglist);
-
-#ifndef _arch_dreamcast
-  glColor3f(0.01f, 0.01f, 0.01f);
-  glRasterPos2f(x+0.012, y-0.0145);
-  for (int i=0; i < strlen(tempstr); i++) {
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, tempstr[i]);
-  }
-
-  glColor3f(1.0f, 0.0f, 0.0f);
-  glRasterPos2f(x, y);
-  for (int i=0; i < strlen(tempstr); i++) {
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, tempstr[i]);
-  }
-
-  glColor3f(1.0f, 1.0f, 1.0f);
-#endif
 }
 
 void Vdp2::toggleFPS(void) {

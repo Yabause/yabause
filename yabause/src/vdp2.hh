@@ -25,14 +25,7 @@
 #include "vdp1.hh"
 #endif
 #include "memory.hh"
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#else
-#ifdef __WIN32
-#include <windows.h>
-#endif
-#include <GL/gl.h>
-#endif
+#include "ygl.hh"
 
 class Scu;
 class Vdp2;
@@ -42,8 +35,6 @@ class Vdp2Ram : public Memory {
 public:
   Vdp2Ram(void) : Memory(0x7FFFF, 0x80000) {}
 };
-
-//class Vdp2Screen;
 
 class Vdp2ColorRam : public Memory {
 private:
@@ -65,15 +56,11 @@ protected:
 	int cob;
 public:
 	virtual void draw(void) = 0;
-	virtual int getPriority(void) = 0;
-	virtual int getInnerPriority(void) = 0;
-	static int comparePriority(const void *, const void *);
 };
 
 class Vdp2Screen : public VdpScreen {
 protected:
-  unsigned long *surface;
-  GLuint texture[1];
+  unsigned int *surface;
   Vdp2 *reg;
   Vdp2Ram *vram;
   Vdp2ColorRam *cram;
@@ -101,6 +88,7 @@ protected:
   int colorOffset;
   bool transparencyEnable;
 
+  int priority;
 public:
   float Xst, Yst, Zst;
   float deltaXst, deltaYst;
@@ -118,15 +106,10 @@ public:
   float coordIncX, coordIncY;
 
   //float widthRatio, heightRatio;
-  unsigned long width, height;
+  long width, height;
+  unsigned int twidth;
 
   Vdp2Screen(Vdp2 *, Vdp2Ram *, Vdp2ColorRam *, unsigned long *);
-
-  /*
-  virtual int getPriority(void) = 0;
-  virtual int getInnerPriority(void) = 0;
-  static int comparePriority(const void *, const void *);
-  */
 
   void draw(void);
   void drawMap(void);
@@ -139,16 +122,9 @@ public:
   void setTextureRatio(unsigned long, unsigned long);
 
   void readRotationTable(unsigned long addr);
-/*
-  virtual int getX(int, int);
-  virtual int getY(int, int);
-*/
-  int (*getX)(Vdp2Screen *, int, int);
-  int (*getY)(Vdp2Screen *, int, int);
-};
 
-int Vdp2Screen_getX(Vdp2Screen *, int, int);
-int Vdp2Screen_getY(Vdp2Screen *, int, int);
+  void setPriority(int);
+};
 
 class RBG0 : public Vdp2Screen {
 private:
@@ -156,17 +132,8 @@ private:
   void planeAddr(int);
 public:
   RBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s);
-  int getPriority(void);
-  int getInnerPriority(void);
   void debugStats(char *, bool *);
-/*
-  int getX(int, int);
-  int getY(int, int);
-*/
 };
-
-int RBG0_getX(Vdp2Screen *, int, int);
-int RBG0_getY(Vdp2Screen *, int, int);
 
 class NBG0 : public Vdp2Screen {
 private:
@@ -174,8 +141,6 @@ private:
   void planeAddr(int);
 public:
   NBG0(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
-  int getPriority(void);
-  int getInnerPriority(void);
   void debugStats(char *, bool *);
 };
 
@@ -185,8 +150,6 @@ private:
   void planeAddr(int);
 public:
   NBG1(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
-  int getPriority(void);
-  int getInnerPriority(void);
   void debugStats(char *, bool *);
 };
 
@@ -196,8 +159,6 @@ private:
   void planeAddr(int);
 public:
   NBG2(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
-  int getPriority(void);
-  int getInnerPriority(void);
   void debugStats(char *, bool *);
 };
 
@@ -207,8 +168,6 @@ private:
   void planeAddr(int);
 public:
   NBG3(Vdp2 *reg, Vdp2Ram *vram, Vdp2ColorRam *cram, unsigned long *s) : Vdp2Screen(reg, vram, cram, s) {}
-  int getPriority(void);
-  int getInnerPriority(void);
   void debugStats(char *, bool *);
 };
 
@@ -217,14 +176,12 @@ private:
   Vdp2Ram *vram;
   Vdp2ColorRam *cram;
   unsigned long *surface;
-  //GLuint texture[1];
 
-  VdpScreen *screens[6];
-  VdpScreen *rbg0;
-  VdpScreen *nbg0;
-  VdpScreen *nbg1;
-  VdpScreen *nbg2;
-  VdpScreen *nbg3;
+  Vdp2Screen *rbg0;
+  Vdp2Screen *nbg0;
+  Vdp2Screen *nbg1;
+  Vdp2Screen *nbg2;
+  Vdp2Screen *nbg3;
   SaturnMemory *satmem;
 
   int fps;
@@ -233,6 +190,9 @@ private:
   bool fpstoggle;
 
 public:
+  Ygl<1024,512,8,40000> ygl;
+  YglCache cache;
+
   Vdp2(SaturnMemory *);
   ~Vdp2(void);
 
@@ -243,8 +203,6 @@ public:
 
   void setWord(unsigned long, unsigned short);
 
-  VdpScreen *getScreen(int);
-  void sortScreens(void);
   void updateRam(void);
 
   void drawBackScreen(void);

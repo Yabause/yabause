@@ -210,6 +210,10 @@ int handleEvents(SaturnMemory *mem) {
 #ifdef DEBUG
 			cerr << "Pause" << endl;
 #endif
+			mem->vdp2_3->ygl.status();
+			break;
+		case SDLK_t:
+			mem->vdp2_3->ygl.showTexture();
 			break;
 		case SDLK_r:
 #ifdef DEBUG

@@ -21,6 +21,7 @@
 #define VDP1_HH
 
 #include "memory.hh"
+#if 0
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
@@ -28,6 +29,7 @@
 #include <windows.h>
 #endif
 #include <GL/gl.h>
+#endif
 #endif
 
 #include <vector>
@@ -52,16 +54,7 @@ class Scu;
 class Vdp2;
 class Vdp2ColorRam;
 
-typedef struct {
-	unsigned long vdp1_loc;
-	bool dirty;
-	GLuint txr;
-} vdp1Sprite;
-
 class Vdp1VRAM : public Memory	{
-	private:
-		vector<vdp1Sprite> sprites;		
-		
 	public:
 		Vdp1VRAM(unsigned long m, unsigned long size);
 		~Vdp1VRAM();
@@ -69,17 +62,16 @@ class Vdp1VRAM : public Memory	{
 		void setByte(unsigned long l, unsigned char d);
 		void setWord(unsigned long l, unsigned short d);
 		void setLong(unsigned long l, unsigned long d);
-		vdp1Sprite getSprite(unsigned long l);
-		void addSprite(vdp1Sprite &sp);
 };
 
 class Vdp1 : public Memory, public VdpScreen {
 private:
-  GLuint texture[1];
+  //GLuint texture[1];
   SaturnMemory *satmem;
   Vdp1VRAM *vram;
   Vdp2 *vdp2reg;
   Vdp2ColorRam *cram;
+  YglCache cache;
 
   bool disptoggle;
 
@@ -110,6 +102,8 @@ private:
 
   int satwidthhalf;
   int satheighthalf;
+
+  int priority;
 public:
   Vdp1(SaturnMemory *);
   void execute(unsigned long = 0);
@@ -125,7 +119,8 @@ public:
   Vdp1VRAM *getVRam(void);
 
   void readCommand(unsigned long);
-  void readTexture(vdp1Sprite *);
+  void readTexture(unsigned int *, unsigned int);
+  void readPriority(void);
   
   void normalSpriteDraw(unsigned long);
   void scaledSpriteDraw(unsigned long);

@@ -48,6 +48,8 @@ void Vdp1::reset(void) {
 void Vdp1::execute(unsigned long addr) {
   unsigned short command = vram->getWord(addr);
 
+  cache.reset();
+
   returnAddr = 0xFFFFFFFF;
   commandCounter = 0;
 
@@ -157,12 +159,10 @@ void Vdp1::readCommand(unsigned long addr) {
 }
 
 #ifndef _arch_dreamcast
-void Vdp1::readTexture(vdp1Sprite *sp) {
+void Vdp1::readTexture(unsigned int * textdata, unsigned int z) {
 #else
 #endif
         unsigned long charAddr = CMDSRCA * 8;
-        *sp = vram->getSprite(charAddr);
-        if(sp->vdp1_loc == 0 && h > 1) {
 #ifdef VDP1_DEBUG
                 cerr << "Making new sprite " << hex << charAddr << endl;
 #endif
@@ -182,17 +182,8 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 #endif
 			break;
 	}
-#ifndef _arch_dreamcast
-        unsigned long textdata[hh * ww];
-#else
-        unsigned char *_textdata = (unsigned char *)memalign(32, (ww * hh) << 1);
-        unsigned short *textdata = (unsigned short *)_textdata;
-#endif
-
-
 
         unsigned long ca1 = charAddr;
-
 
 	switch((CMDPMOD & 0x38) >> 3) {
 	case 0:
@@ -208,16 +199,17 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 				dot = vram->getByte(charAddr);
 
                                 // Pixel 1
-				if (((dot >> 4) == 0) && !SPD) textdata[i * ww + j] = 0;
-                                else textdata[i * ww + j] = cram->getColor((dot >> 4) + colorBank, alpha, colorOffset);
+				if (((dot >> 4) == 0) && !SPD) *textdata++ = 0;
+                                else *textdata++ = cram->getColor((dot >> 4) + colorBank, alpha, colorOffset);
 				j += 1;
 
                                 // Pixel 2
-				if (((dot & 0xF) == 0) && !SPD) textdata[i * ww + j] = 0;
-                                else textdata[i * ww + j] = cram->getColor((dot & 0xF) + colorBank, alpha, colorOffset);
+				if (((dot & 0xF) == 0) && !SPD) *textdata++ = 0;
+                                else *textdata++ = cram->getColor((dot & 0xF) + colorBank, alpha, colorOffset);
 				j += 1;
 				charAddr += 1;
                         }
+			textdata += z;
                 }
 		break;
         }
@@ -232,23 +224,24 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 			while(j < w) {
 				dot = vram->getByte(charAddr);
 
-				if (((dot >> 4) == 0) && !SPD) textdata[i * ww + j] = 0;
+				if (((dot >> 4) == 0) && !SPD) *textdata++ = 0;
                                 else {
                                    temp = vram->getWord((dot >> 4) * 2 + colorLut);
-                                   textdata[i * ww + j] = SAT2YAB1(alpha, temp);
+                                   *textdata++ = SAT2YAB1(alpha, temp);
                                 }
 
 				j += 1;
 
-				if (((dot & 0xF) == 0) && !SPD) textdata[i * ww + j] = 0;
+				if (((dot & 0xF) == 0) && !SPD) *textdata++ = 0;
                                 else {
                                    temp = vram->getWord((dot & 0xF) * 2 + colorLut);
-                                   textdata[i * ww + j] = SAT2YAB1(alpha, temp);
+                                   *textdata++ = SAT2YAB1(alpha, temp);
                                 }
 
 				j += 1;
 				charAddr += 1;
 			}
+			textdata += z;
 		}
 		break;
         }
@@ -263,9 +256,10 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
                                 dot = vram->getByte(charAddr) & 0x3F;
                                 charAddr++;
 
-                                if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
-                                else textdata[i * ww + j] = cram->getColor(dot + colorBank, alpha, colorOffset);
+                                if ((dot == 0) && !SPD) *textdata++ = 0;
+                                else *textdata++ = cram->getColor(dot + colorBank, alpha, colorOffset);
                         }
+			textdata += z;
                 }
 
 		break;
@@ -281,9 +275,10 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
                                 dot = vram->getByte(charAddr) & 0x7F;
                                 charAddr++;
 
-                                if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
-                                else textdata[i * ww + j] = cram->getColor(dot + colorBank, alpha, colorOffset);
+                                if ((dot == 0) && !SPD) *textdata++ = 0;
+                                else *textdata++ = cram->getColor(dot + colorBank, alpha, colorOffset);
                         }
+			textdata += z;
                 }
 		break;
         }
@@ -298,9 +293,10 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
                                 dot = vram->getByte(charAddr);
                                 charAddr++;
 
-                                if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
-                                else textdata[i * ww + j] = cram->getColor(dot + colorBank, alpha, colorOffset);
+                                if ((dot == 0) && !SPD) *textdata++ = 0;
+                                else *textdata++ = cram->getColor(dot + colorBank, alpha, colorOffset);
                         }
+			textdata += z;
                 }
 
 		break;
@@ -312,33 +308,46 @@ void Vdp1::readTexture(vdp1Sprite *sp) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
 
-				if ((dot == 0) && !SPD) textdata[i * ww + j] = 0;
-                                else textdata[i * ww + j] = SAT2YAB1(alpha, dot);
+				if ((dot == 0) && !SPD) *textdata++ = 0;
+                                else *textdata++ = SAT2YAB1(alpha, dot);
 			}
+			textdata += z;
 		}
                 break;
 	}
-                if (sp->txr == 0) glGenTextures(1, &sp->txr);
+}
 
-                glBindTexture(GL_TEXTURE_2D, sp->txr);
+void Vdp1::readPriority(void) {
+	unsigned char SPCLMD = vdp2reg->getWord(0xE0);
+	unsigned char sprite_register;
 
-#ifndef _arch_dreamcast
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
+	priority = 7; /* if we don't know what to do with a sprite, we put it on top */
 
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-#else
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB1555, ww, hh, 0, GL_ARGB1555, GL_UNSIGNED_BYTE, textdata);
-#endif
-
-                sp->vdp1_loc = ca1;
-                vram->addSprite(*sp);
-
-#ifdef VDP1_DEBUG
-                cerr << "Created new sprite at " << hex << ca1 << endl;
-#endif
-        }
-
+	if ((SPCLMD & 0x20) and (CMDCOLR & 0x8000)) { /* RGB data, use register 0 */
+		priority = vdp2reg->getWord(0xF0) & 0x7;
+	} else {
+		unsigned char sprite_type = SPCLMD & 0xF;
+		switch(sprite_type) {
+			case 0:
+				sprite_register = ((CMDCOLR & 0x8000) | (~CMDCOLR & 0x4000)) >> 14;
+				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
+				break;
+			case 1:
+				sprite_register = ((CMDCOLR & 0xC000) | (~CMDCOLR & 0x2000)) >> 13;
+				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
+				break;
+			case 3:
+				sprite_register = ((CMDCOLR & 0x4000) | (~CMDCOLR & 0x2000)) >> 13;
+				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
+				break;
+			case 5:
+				sprite_register = ((CMDCOLR & 0x6000) | (~CMDCOLR & 0x1000)) >> 12;
+				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
+				break;
+			default:
+				cerr << "sprite type " << ((int) sprite_type) << " not implemented" << endl;
+		}
+	}
 }
 
 Vdp1VRAM *Vdp1::getVRam(void) {
@@ -364,34 +373,36 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	ww = power_of_two(w);
 	hh = power_of_two(h);
 
-	GLfloat u1 = 0.0f;
-	GLfloat u2 = (GLfloat)w / ww;
-	GLfloat v1 = 0.0f;
-	GLfloat v2 = (GLfloat)h / hh;
 	unsigned char dir = (CMDCTRL & 0x30) >> 4;
-	if (dir & 0x1) {
-		u1 = (GLfloat)w / ww;
-		u2 = 0.0f;
-	}
-	if (dir & 0x2) {
-		v1 = (GLfloat)h / hh;
-		v2 = 0.0f;
-	}
 
-	vdp1Sprite sp;
-	readTexture(&sp);
+	unsigned int * textdata;
+	int vertices[8];
+	unsigned int z;
 
-        if (w > 0 && h > 1)
-        {
-           glEnable( GL_TEXTURE_2D );
-           glBindTexture(GL_TEXTURE_2D, sp.txr);
-           glBegin(GL_QUADS);
-           glTexCoord2f(u1, v1); glVertex2i(x, y);
-           glTexCoord2f(u2, v1); glVertex2i(x + w, y);
-           glTexCoord2f(u2, v2); glVertex2i(x + w, y + h);
-           glTexCoord2f(u1, v2); glVertex2i(x, y + h);
-           glEnd();
-           glDisable( GL_TEXTURE_2D );
+	vertices[0] = x;
+	vertices[1] = y;
+	vertices[2] = x + w;
+	vertices[3] = y;
+	vertices[4] = x + w;
+	vertices[5] = y + h;
+	vertices[6] = x;
+	vertices[7] = y + h;
+
+	readPriority();
+	int * c;
+	unsigned long tmp = CMDSRCA;
+	tmp <<= 16;
+	tmp |= CMDCOLR;
+
+        if (w > 0 && h > 1) {
+		if ((c = cache.isCached(tmp)) != NULL) {
+			satmem->vdp2_3->ygl.cachedQuad(priority, vertices, c, w, h, dir);
+			return;
+		} 
+		c = satmem->vdp2_3->ygl.quad(priority, vertices, &textdata, w, h, &z, dir);
+		cache.cache(tmp, c);
+
+		readTexture(textdata, z);
         }
 }
 
@@ -408,19 +419,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	ww = power_of_two(w);
 	hh = power_of_two(h);
 
-	GLfloat u1 = 0.0f;
-	GLfloat u2 = (GLfloat)w / ww;
-	GLfloat v1 = 0.0f;
-	GLfloat v2 = (GLfloat)h / hh;
         unsigned char dir = (CMDCTRL & 0x30) >> 4;
-	if (dir & 0x1) {
-		u1 = (GLfloat)w / ww;
-		u2 = 0.0f;
-	}
-	if (dir & 0x2) {
-		v1 = (GLfloat)h / hh;
-		v2 = 0.0f;
-	}
 
         // Setup Zoom Point
         switch ((CMDCTRL & 0xF00) >> 8) {
@@ -479,20 +478,35 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
            default: break;
         }
 
-	vdp1Sprite sp;
-	readTexture(&sp);
+	unsigned int * textdata;
+	int vertices[8];
+	unsigned int z;
 
-        if (w > 0 && h > 1)
-        {
-           glEnable( GL_TEXTURE_2D );
-           glBindTexture( GL_TEXTURE_2D, sp.txr );
-           glBegin(GL_QUADS);
-           glTexCoord2f(u1, v1); glVertex2i(x, y);
-           glTexCoord2f(u2, v1); glVertex2i(x + rw, y);
-           glTexCoord2f(u2, v2); glVertex2i(x + rw, y + rh);
-           glTexCoord2f(u1, v2); glVertex2i(x, y + rh);
-           glEnd();
-           glDisable( GL_TEXTURE_2D );
+	vertices[0] = x;
+	vertices[1] = y;
+	vertices[2] = x + rw;
+	vertices[3] = y;
+	vertices[4] = x + rw;
+	vertices[5] = y + rh;
+	vertices[6] = x;
+	vertices[7] = y + rh;
+
+	readPriority();
+
+	int * c;
+	unsigned long tmp = CMDSRCA;
+	tmp <<= 16;
+	tmp |= CMDCOLR;
+
+        if (w > 0 && h > 1) {
+		if ((c = cache.isCached(tmp)) != NULL) {
+			satmem->vdp2_3->ygl.cachedQuad(priority, vertices, c, w, h, dir);
+			return;
+		} 
+		c = satmem->vdp2_3->ygl.quad(priority, vertices, &textdata, w, h, &z, dir);
+		cache.cache(tmp, c);
+
+		readTexture(textdata, z);
         }
 }
 
@@ -504,34 +518,37 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	ww = power_of_two(w);
 	hh = power_of_two(h);
 	
-	GLfloat u1 = 0.0f;
-	GLfloat u2 = (GLfloat)w / ww;
-	GLfloat v1 = 0.0f;
-	GLfloat v2 = (GLfloat)h / hh;
 	unsigned char dir = (CMDCTRL & 0x30) >> 4;
-	if (dir & 0x1) {
-		u1 = (GLfloat)w / ww;
-		u2 = 0.0f;
-	}
-	if (dir & 0x2) {
-		v1 = (GLfloat)h / hh;
-		v2 = 0.0f;
-	}
 
-	vdp1Sprite sp;
-	readTexture(&sp);
+	unsigned int * textdata;
+	int vertices[8];
+	unsigned int z;
 
-        if (w > 0 && h > 1)
-        {
-           glEnable(GL_TEXTURE_2D);
-           glBindTexture(GL_TEXTURE_2D, sp.txr);
-           glBegin(GL_QUADS);
-           glTexCoord2f(u1, v1); glVertex2i(CMDXA + localX, CMDYA + localY);
-           glTexCoord2f(u2, v1); glVertex2i(CMDXB + localX, CMDYB + localY);
-           glTexCoord2f(u2, v2); glVertex2i(CMDXC + localX, CMDYC + localY);
-           glTexCoord2f(u1, v2); glVertex2i(CMDXD + localX, CMDYD + localY);
-           glEnd();
-           glDisable(GL_TEXTURE_2D);
+	vertices[0] = CMDXA + localX;
+	vertices[1] = CMDYA + localY;
+	vertices[2] = CMDXB + localX;
+	vertices[3] = CMDYB + localY;
+	vertices[4] = CMDXC + localX;
+	vertices[5] = CMDYC + localY;
+	vertices[6] = CMDXD + localX;
+	vertices[7] = CMDYD + localY;
+
+	readPriority();
+
+	int * c;
+	unsigned long tmp = CMDSRCA;
+	tmp <<= 16;
+	tmp |= CMDCOLR;
+
+        if (w > 0 && h > 1) {
+		if ((c = cache.isCached(tmp)) != NULL) {
+			satmem->vdp2_3->ygl.cachedQuad(priority, vertices, c, w, h, dir);
+			return;
+		} 
+		c = satmem->vdp2_3->ygl.quad(priority, vertices, &textdata, w, h, &z, dir);
+		cache.cache(tmp, c);
+
+		readTexture(textdata, z);
         }
 }
 
@@ -558,15 +575,23 @@ void Vdp1::polygonDraw(unsigned long addr) {
 
         int priority = vdp2reg->getWord(0xF0) & 0x7;
 
-	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
-	glBegin(GL_QUADS);
+        unsigned int * textdata;
+        int vertices[8];
+        unsigned int z;
 
-        glVertex2i(X[0], Y[0]);
-        glVertex2i(X[1], Y[1]);
-        glVertex2i(X[2], Y[2]);
-        glVertex2i(X[3], Y[3]);
-	glEnd();
-	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
+        vertices[0] = X[0];
+        vertices[1] = Y[0];
+        vertices[2] = X[1];
+        vertices[3] = Y[1];
+        vertices[4] = X[2];
+        vertices[5] = Y[2];
+        vertices[6] = X[3];
+        vertices[7] = Y[3];
+
+        satmem->vdp2_3->ygl.quad(priority, vertices, &textdata, 1, 1, &z, 0);
+
+	*textdata = SAT2YAB1(alpha,color);
+
 }
 
 void Vdp1::polylineDraw(unsigned long addr) {
@@ -592,6 +617,7 @@ void Vdp1::polylineDraw(unsigned long addr) {
 
         int priority = vdp2reg->getWord(0xF0) & 0x7;
 
+/*
 	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
         glBegin(GL_LINE_STRIP);
         glVertex2i(X[0], Y[0]);
@@ -601,6 +627,7 @@ void Vdp1::polylineDraw(unsigned long addr) {
         glVertex2i(X[0], Y[0]);
 	glEnd();
 	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
+*/
 }
 
 void Vdp1::lineDraw(unsigned long addr) {
@@ -622,13 +649,14 @@ void Vdp1::lineDraw(unsigned long addr) {
 
         int priority = vdp2reg->getWord(0xF0) & 0x7;
 
-
+/*
 	glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
         glBegin(GL_LINES);
         glVertex2i(X[0], Y[0]);
         glVertex2i(X[1], Y[1]);
 	glEnd();
 	glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
+*/
 }
 
 void Vdp1::userClipping(unsigned long addr) {
@@ -639,7 +667,7 @@ void Vdp1::userClipping(unsigned long addr) {
 
 void Vdp1::systemClipping(unsigned long addr) {
 #if VDP1_DEBUG
-  //cerr << "vdp1\t: system clipping (unimplemented)" << endl;
+  //cerr << "vdp1\t: system clipping (unimplemented) " << endl;
 #endif
 }
 
@@ -655,75 +683,22 @@ Vdp1VRAM::Vdp1VRAM(unsigned long m, unsigned long size) : Memory(m, size)	{
 }
 
 Vdp1VRAM::~Vdp1VRAM()	{
-	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
-		glDeleteTextures(1, &i->txr);
-	}
-	sprites.clear();
 }
 
 void Vdp1VRAM::setByte(unsigned long l, unsigned char d)	{
-	
-	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
-		if(i->vdp1_loc == l)	{
-#ifdef VDP1_DEBUG
-			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
-#endif
-                        //glDeleteTextures(1, &i->txr);
-                        sprites.erase(i);
-			break;
-		}
-	}
 	
 	Memory::setByte(l, d);
 }
 
 void Vdp1VRAM::setWord(unsigned long l, unsigned short d)	{
-	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
-		if(i->vdp1_loc == l)	{
-#ifdef VDP1_DEBUG
-			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
-#endif
-			//glDeleteTextures(1, &i->txr);
-			sprites.erase(i);
-			break;
-		}
-	}
 	
 	Memory::setWord(l, d);
 }
 
 
 void Vdp1VRAM::setLong(unsigned long l, unsigned long d)	{
-	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
-		if(i->vdp1_loc == l)	{
-#ifdef VDP1_DEBUG
-			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
-#endif
-			//glDeleteTextures(1, &i->txr);
-			sprites.erase(i);
-			break;
-		}
-	}
 	
 	Memory::setLong(l, d);
-}
-
-vdp1Sprite Vdp1VRAM::getSprite(unsigned long l)	{
-	vdp1Sprite blank = { 0, 0, 0 };
-	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
-		if(i->vdp1_loc == l)	{
-			return *i;
-			break;
-		}
-	}
-#ifdef VDP1_DEBUG
-	cerr << "Vdp1VRAM: getSprite: Didn't find sprite at " << hex << l << endl;
-#endif
-	return blank;
-}
-
-void Vdp1VRAM::addSprite(vdp1Sprite &spr)	{
-	sprites.push_back(spr);
 }
 
 void Vdp1::draw(void) {

@@ -295,6 +295,7 @@ void yui_coin_coin(void) {
 }
 
 char * yui_mpegrom(void) {
+	//return "/home/guillaume/mpeg_rom/rgvc2rom.bin";
 	return NULL;
 }
 
