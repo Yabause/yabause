@@ -33,6 +33,21 @@
 
 #include <vector>
 
+#ifdef _arch_dreamcast
+#define SAT2YAB1(alpha,temp)		((0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10)
+#elif defined WORDS_BIGENDIAN
+#define SAT2YAB1(alpha,temp)		(alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
+#else
+#define SAT2YAB1(alpha,temp)		(alpha << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
+#endif
+
+#ifdef _arch_dreamcast
+#elif defined WORDS_BIGENDIAN
+#define SAT2YAB2(alpha,dot1,dot2)	((dot2 & 0xFF << 24) | ((dot1 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | alpha)
+#else
+#define SAT2YAB2(alpha,dot1,dot2)	(alpha << 24 | ((dot1 & 0xFF) << 16) | (dot1 & 0xFF00) | (dot2 & 0xFF))
+#endif
+
 class Scu;
 class Vdp2;
 class Vdp2ColorRam;

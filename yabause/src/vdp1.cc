@@ -26,14 +26,6 @@
 #include "timer.hh"
 #include "vdp2.hh"
 
-#ifdef _arch_dreamcast
-#define SAT2YAB(alpha,temp)     ((0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10)
-#elif defined WORDS_BIGENDIAN
-#define SAT2YAB(alpha,temp)     (alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
-#else
-#define SAT2YAB(alpha,temp)     (alpha << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
-#endif
-
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
 	_stop = false;
@@ -222,7 +214,9 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
 	unsigned short colorBank = vram->getWord(addr + 0x6);
+        
 	vdp1Sprite sp = vram->getSprite(charAddr);
+        
 	unsigned long ca1 = charAddr;
 	
 	if(sp.vdp1_loc == 0)	{
@@ -251,7 +245,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
 #endif
-				color = SAT2YAB(alpha, temp);
+				color = SAT2YAB1(alpha, temp);
 
 				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
@@ -265,7 +259,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
 #endif
-				color = SAT2YAB(alpha, temp);
+				color = SAT2YAB1(alpha, temp);
 
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
@@ -305,7 +299,7 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 				color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
 #endif
 #endif
-				color = SAT2YAB(alpha, dot);
+				color = SAT2YAB1(alpha, dot);
 
 				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
@@ -317,7 +311,8 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	}
 	
 	if (sp.txr == 0) glGenTextures(1, &sp.txr);
-	glBindTexture(GL_TEXTURE_2D, sp.txr);
+	
+        glBindTexture(GL_TEXTURE_2D, sp.txr);
 	
 #ifndef _arch_dreamcast
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
@@ -441,7 +436,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 				dot = vram->getByte(charAddr);
 				temp = vram->getWord((dot >> 4) * 2 + colorBank);
 				//color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-				color = SAT2YAB(alpha, temp);
+				color = SAT2YAB1(alpha, temp);
 				if (((dot >> 4) == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
 					textdata[ty][tx] = color;
@@ -449,7 +444,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 				tx += txinc;
 				temp = vram->getWord((dot & 0xF) * 2 + colorBank);
 				//color = alpha | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9;
-				color = SAT2YAB(alpha, temp);
+				color = SAT2YAB1(alpha, temp);
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
 					textdata[ty][tx] = color;
@@ -483,7 +478,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 				dot = vram->getWord(charAddr);
 				charAddr += 2;
 				//color = alpha | (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;
-				color = SAT2YAB(alpha, dot);
+				color = SAT2YAB1(alpha, dot);
 				if ((dot == 0) && !SPD) textdata[ty][tx] = 0;
 				else {
 					textdata[ty][tx] = color;
@@ -495,7 +490,7 @@ void Vdp1::scaledSpriteDraw(unsigned long addr) {
 	}
 	
 	if (sp.txr == 0) glGenTextures(1, &sp.txr);
-	glBindTexture(GL_TEXTURE_2D, sp.txr);
+        glBindTexture(GL_TEXTURE_2D, sp.txr);
 	
 #ifndef _arch_dreamcast
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
@@ -573,14 +568,14 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 			break;
 		case 4:
 #ifdef DEBUG
-			cerr << "gouraud shading unimplemented" << endl;
+			//cerr << "gouraud shading unimplemented" << endl;
 #endif
 			break;
 		default:
 			cerr << "unimplemented color calculation: " << (CMDPMOD & 0x7) << endl;
 	}	
 	unsigned long charAddr = vram->getWord(addr + 0x8) * 8;
-	unsigned long dot, color;
+	unsigned long dot, color, color2;
 
 	unsigned short colorMode = (vram->getWord(addr + 0x4) & 0x38) >> 3;
 	bool SPD = ((vram->getWord(addr + 0x4) & 0x40) != 0);
@@ -614,7 +609,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
 #endif
-				color = SAT2YAB(alpha, temp);
+				color = SAT2YAB1(alpha, temp);
 				
 				if (((dot >> 4) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
@@ -627,7 +622,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 				color = (0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10;
 #endif
 #endif
-				color = SAT2YAB(alpha, temp);
+				color = SAT2YAB1(alpha, temp);
 
 				if (((dot & 0xF) == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
@@ -666,7 +661,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 				color = (0x8000) | (dot & 0x1F) << 10 | (dot & 0x3E0) | (dot & 0x7C00) >> 10;
 #endif
 #endif
-				color = SAT2YAB(alpha, dot);
+				color = SAT2YAB1(alpha, dot);
 				
 				if ((dot == 0) && !SPD) textdata[ty * ww + tx] = 0;
 				else textdata[ty * ww + tx] = color;
@@ -677,7 +672,7 @@ void Vdp1::distortedSpriteDraw(unsigned long addr) {
 	}
 	
 	if (sp.txr == 0) glGenTextures(1, &sp.txr);
-	glBindTexture(GL_TEXTURE_2D, sp.txr);
+        glBindTexture(GL_TEXTURE_2D, sp.txr);
 	
 #ifndef _arch_dreamcast
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ww, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, textdata);
@@ -832,13 +827,14 @@ Vdp1VRAM::~Vdp1VRAM()	{
 }
 
 void Vdp1VRAM::setByte(unsigned long l, unsigned char d)	{
+	
 	for(vector<vdp1Sprite>::iterator i = sprites.begin(); i != sprites.end(); i++)	{
 		if(i->vdp1_loc == l)	{
 #ifdef DEBUG
 			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
 #endif
-			glDeleteTextures(1, &i->txr);
-			sprites.erase(i);
+                        //glDeleteTextures(1, &i->txr);
+                        sprites.erase(i);
 			break;
 		}
 	}
@@ -852,7 +848,7 @@ void Vdp1VRAM::setWord(unsigned long l, unsigned short d)	{
 #ifdef DEBUG
 			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
 #endif
-			glDeleteTextures(1, &i->txr);
+			//glDeleteTextures(1, &i->txr);
 			sprites.erase(i);
 			break;
 		}
@@ -868,7 +864,7 @@ void Vdp1VRAM::setLong(unsigned long l, unsigned long d)	{
 #ifdef DEBUG
 			cerr << "Vdp1VRAM: Sprite at " << hex << l << " is modified." << endl;
 #endif
-			glDeleteTextures(1, &i->txr);
+			//glDeleteTextures(1, &i->txr);
 			sprites.erase(i);
 			break;
 		}

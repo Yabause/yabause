@@ -73,26 +73,27 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, Vdp2Screen *screen) {
 
   switch(mode) {
   case 0: {
-    addr *= 2; // merci Runik !
+    addr *= 2; // thanks Runik!
     addr += colorOffset * 0x200;
     unsigned long tmp = getWord(addr);
-    return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
-    //return SDL_MapRGBA(screen->getSurface()->format, (tmp & 0x1F) << 27, (tmp & 0x3E0) << 14, (tmp & 0x7C00) << 1, alpha);
+    //return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
+    return SAT2YAB1(alpha, tmp);
   }
   case 1: {
-    addr *= 2; // merci Runik !
+    addr *= 2; // thanks Runik!
     addr += colorOffset * 0x400;
     unsigned long tmp = getWord(addr);
-    return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
-    //return SDL_MapRGBA(screen->getSurface()->format, (tmp & 0x1F) << 27, (tmp & 0x3E0) << 14, (tmp & 0x7C00) << 1, alpha);
+    //return ((tmp & 0x1F) << 27) | ((tmp & 0x3E0) << 14) | (tmp & 0x7C00) << 1 | alpha;
+    return SAT2YAB1(alpha, tmp);
   }
   case 2: {
-    addr *= 2; // merci Runik !
+    addr *= 2; // thanks Runik!
     addr += colorOffset * 0x200;
     unsigned long tmp1 = getWord(addr);
     unsigned long tmp2 = getWord(addr + 2);
-    return  ((tmp2 & 0xFF) << 24) | ((tmp1 & 0xFF00) << 8) | ((tmp1 & 0xFF) << 8) | alpha;
-    //return SDL_MapRGBA(screen->getSurface()->format, (tmp2 & 0xFF) << 24, (tmp1 & 0xFF00) << 8, (tmp2 & 0xFF) << 8, alpha);
+    //return  ((tmp2 & 0xFF) << 24) | ((tmp1 & 0xFF00) << 8) | ((tmp1 & 0xFF) << 8) | alpha;
+    //return alpha << 24 | ((tmp1 & 0xFF) << 16) | (tmp1 & 0xFF00) | (tmp2 & 0xFF);
+    return SAT2YAB2(alpha, tmp1, tmp2);
   }
   }
 }
@@ -103,11 +104,12 @@ unsigned long Vdp2ColorRam::getColor(unsigned long addr, Vdp2Screen *screen) {
 /*					*/
 /****************************************/
 
-Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, SDL_Surface *s) {
-  reg = r;
-  vram = v;
-  cram = c;
-  surface = s;
+//Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, SDL_Surface *s) {
+Vdp2Screen::Vdp2Screen(Vdp2 *r, Vdp2Ram *v, Vdp2ColorRam *c, unsigned long *s) {
+    reg = r;
+    vram = v;
+    cram = c;
+    surface = s;
 }
 
 int Vdp2Screen::comparePriority(const void *arg1, const void *arg2) {
@@ -132,6 +134,30 @@ void Vdp2Screen::draw(void) {
 	else {
 		drawMap();
 	}
+        
+  if (*texture ==0) glGenTextures(1, texture );
+  glBindTexture(GL_TEXTURE_2D, texture[0] );
+#ifndef _arch_dreamcast
+//  glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
+  
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+#else
+//  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface->pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
+#endif
+
+  glEnable( GL_TEXTURE_2D );
+  glBindTexture( GL_TEXTURE_2D, texture[0] );
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0); glVertex2f(-1, 1);
+  glTexCoord2f(0.625, 0); glVertex2f(1, 1);
+  glTexCoord2f(0.625, 0.875); glVertex2f(1, -1);
+  glTexCoord2f(0, 0.875); glVertex2f(-1, -1);
+  glEnd();
+  glDisable( GL_TEXTURE_2D );
+
 }
 
 void Vdp2Screen::drawMap(void) {
@@ -295,22 +321,18 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  if (!(dot & 0xF000) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF000) >> 12), this);
-	  //pixelColor(surface, x, y, color);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	  if (!(dot & 0xF00) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF00) >> 8), this);
-	  //pixelColor(surface, x, y, color);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	  if (!(dot & 0xF0) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | ((dot & 0xF0) >> 4), this);
-	  //pixelColor(surface, x, y, color);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	  if (!(dot & 0xF) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | (dot & 0xF), this);
-	  //pixelColor(surface, x, y, color);
 	  drawPixel(surface, x, y, color);
 	  x += xInc;
 	}
@@ -327,12 +349,10 @@ void Vdp2Screen::drawCell(void) {
 	  if (!(dot & 0xFF00) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | ((dot & 0xFF00) >> 8), this);
 	  drawPixel(surface, x, y, color);
-	  //pixelColor(surface, x, y, color);
 	  x += xInc;
 	  if (!(dot & 0xFF) && transparencyEnable) color = 0x00000000;
 	  else color = cram->getColor((palAddr << 4) | (dot & 0xFF), this);
 	  drawPixel(surface, x, y, color);
-	  //pixelColor(surface, x, y, color);
 	  x += xInc;
 	}
 	y += yInc;
@@ -348,7 +368,6 @@ void Vdp2Screen::drawCell(void) {
 	  else color = cram->getColor(dot, this);
 	  charAddr += 2;
 	  drawPixel(surface, x, y, color);
-	  //pixelColor(surface, x, y, color);
 	  x += xInc;
 	}
 	y += yInc;
@@ -361,11 +380,10 @@ void Vdp2Screen::drawCell(void) {
 	for(int j = 0;j < cellW;j++) {
 	  unsigned short dot = vram->getWord(charAddr);
 	  charAddr += 2;
-	  if ((dot & 0x8000) && transparencyEnable) color = 0x00000000; //pixelRGBA(surface, x, y, 0, 0, 0, 0);
-	  else color = (dot & 0x1F) << 27 | (dot & 0xCE0) << 14 | (dot & 0x7C00) << 1 | 0xFF;
-		  //pixelRGBA(surface, x, y, (dot & 0x1F) << 3, (dot & 0xCE0) >> 2, (dot & 0x7C00) >> 7, 0xFF);
+	  if ((dot & 0x8000) && transparencyEnable) color = 0x00000000;
+	  //else color = (dot & 0x1F) << 27 | (dot & 0xCE0) << 14 | (dot & 0x7C00) << 1 | 0xFF;
+	  else color = SAT2YAB1(0xFF, dot);
 	  drawPixel(surface, x, y, color);
-	  //pixelColor(surface, x, y, color);
 	  x += xInc;
 	}
 	y += yInc;
@@ -380,11 +398,11 @@ void Vdp2Screen::drawCell(void) {
 	  charAddr += 2;
 	  unsigned short dot2 = vram->getWord(charAddr);
 	  charAddr += 2;
-	  if ((dot1 & 0x8000) && transparencyEnable) color = 0x00000000; //pixelRGBA(surface, x, y, 0, 0, 0, 0);
-	  else color = ((dot2 & 0xFF) << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | 0xFF;
-		  //pixelRGBA(surface, x, y, dot2 & 0xFF, (dot2 & 0xFF00) >> 8, dot1 & 0xFF, 0xFF);
+	  if ((dot1 & 0x8000) && transparencyEnable) color = 0x00000000;
+	  //else color = ((dot2 & 0xFF) << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | 0xFF;
+	  //else color = alpha << 24 | ((dot1 & 0xFF) << 16) | (dot1 & 0xFF00) | (dot2 & 0xFF);
+	  else color = SAT2YAB2(alpha, dot1, dot2);
 	  drawPixel(surface, x, y, color);
-	  //pixelColor(surface, x, y, color);
 	  x += xInc;
 	}
 	y += yInc;
@@ -400,7 +418,10 @@ void Vdp2Screen::drawCell(void) {
 #define clip_ymin(surface) surface->clip_rect.y
 #define clip_ymax(surface) surface->clip_rect.y+surface->clip_rect.h-1
 
-void Vdp2Screen::drawPixel(SDL_Surface *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
+//void Vdp2Screen::drawPixel(SDL_Surface *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
+void Vdp2Screen::drawPixel(unsigned long *surface, Sint16 x, Sint16 y, Uint32 tmpcolor) {
+    if ((x >= 0) && (y >= 0) && (x < 512) && (y < 256)) surface[y * 512 + x] = tmpcolor;
+/*
 	Uint8 alpha;
 	Uint32 color;
 	int result = 0;
@@ -515,6 +536,7 @@ void Vdp2Screen::drawPixel(SDL_Surface *surface, Sint16 x, Sint16 y, Uint32 tmpc
 	   	 	break;
 		}
     	}
+*/
 }
 
 int Vdp2Screen::getAlpha(void) {
@@ -525,9 +547,11 @@ int Vdp2Screen::getColorOffset(void) {
 	return colorOffset;
 }
 
+/*
 SDL_Surface *Vdp2Screen::getSurface(void) {
 	return surface;
 }
+*/
 
 void RBG0::init(void) {
 	enable = false;
@@ -944,7 +968,8 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
 	//glGenTextures(1, texture );
   //surface = SDL_SetVideoMode(320,224,16,SDL_DOUBLEBUF|SDL_HWSURFACE);
 #ifndef _arch_dreamcast
-  surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+  //surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+  surface = new unsigned long [512 * 256];
 #else
   surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 512, 256, 16, 0x000f, 0x00f0, 0x0f00, 0xf000);
   free(surface->pixels);
@@ -960,18 +985,11 @@ Vdp2::Vdp2(SaturnMemory *v) : Memory(0xFFF, 0x120) {
 }
 
 Vdp2::~Vdp2(void) {
-#if DEBUG
-  cerr << "stopping vdp2\n";
-#endif
-  //stop();
-  //SDL_WaitThread(vdp2Thread, NULL);
-#if DEBUG
-  cerr << "vdp2 stopped\n";
-#endif
-  for(int i = 0;i < 5;i++) delete screens[i];
-  SDL_FreeSurface(surface);
-	delete vram;
-	delete cram;
+    for(int i = 0;i < 5;i++) delete screens[i];
+    //SDL_FreeSurface(surface);
+    delete [] surface;
+    delete vram;
+    delete cram;
 }
 
 Memory *Vdp2::getCRam(void) {
@@ -983,30 +1001,6 @@ Memory *Vdp2::getVRam(void) {
 }
 
 void Vdp2::lancer(Vdp2 *vdp2) {
-	/*
-	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-
-	vdp2->GLSurface = SDL_SetVideoMode(320,224,32, SDL_OPENGL);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glGenTextures(1, vdp2->texture );
-	*/
-	
-	/*
-  	vdp2->screens[4] = new RBG0(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
-  	vdp2->screens[3] = new NBG0(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
-  	vdp2->screens[2] = new NBG1(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
-  	vdp2->screens[1] = new NBG2(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
-  	vdp2->screens[0] = new NBG3(vdp2, vdp2->vram, vdp2->cram, vdp2->surface);
-	((Vdp1 *) vdp2->satmem->getVdp1())->setVdp2Ram(vdp2, vdp2->cram);
-	*/
-
 	while(!vdp2->_stop) vdp2->executer();
 }
 
@@ -1033,28 +1027,31 @@ void Vdp2::executer(void) {
   glClear(GL_COLOR_BUFFER_BIT);
   drawBackScreen();
   if (getWord(0) & 0x8000) {
-    if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
+//    if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
     screens[0]->draw();
     screens[1]->draw();
     screens[2]->draw();
     screens[3]->draw();
     screens[4]->draw();
-    if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
+//    if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
   }
   
 #ifdef _arch_dreamcast
   glKosBeginFrame();
 #endif
 
+#if 0
   if (*texture ==0) glGenTextures(1, texture );
   glBindTexture(GL_TEXTURE_2D, texture[0] );
 #ifndef _arch_dreamcast
-  glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+//  glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface);
   
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 #else
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface->pixels);
+//  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface->pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB4444, 512, 256, 0, GL_ARGB4444, GL_UNSIGNED_BYTE, surface);
 #endif
 
   glEnable( GL_TEXTURE_2D );
@@ -1066,6 +1063,7 @@ void Vdp2::executer(void) {
   glTexCoord2f(0, 0.875); glVertex2f(-1, -1);
   glEnd();
   glDisable( GL_TEXTURE_2D );
+#endif
 
   ((Vdp1 *) satmem->getVdp1())->execute(0);
   glFlush();
@@ -1092,6 +1090,7 @@ void Vdp2::updateRam(void) {
 }
 
 void Vdp2::drawBackScreen(void) {
+/*
 	unsigned long BKTAU = getWord(0xAC);
 	unsigned long BKTAL = getWord(0xAE);
 	unsigned long scrAddr;
@@ -1117,6 +1116,7 @@ void Vdp2::drawBackScreen(void) {
 			SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, (dot & 0x1F) << 3, (dot & 0xCE0) >> 2, (dot & 0x7C00) >> 7));
 		}
 	}
+*/
 }
 
 void Vdp2::priorityFunction(void) {
