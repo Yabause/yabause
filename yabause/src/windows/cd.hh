@@ -20,15 +20,16 @@
 
 #include <ddk/ntddcdrm.h>
 #include <ddk/ntddscsi.h>
+#include <wnaspi32.h>
 #include "../cdbase.hh"
 
 #ifndef CD_HH
 #define CD_HH
 
-class WindowsCDDrive : public CDInterface {
+class SPTICDDrive : public CDInterface {
 public:
-        WindowsCDDrive(const char *cdrom_name);
-        virtual ~WindowsCDDrive();
+        SPTICDDrive(const char *cdrom_name);
+        virtual ~SPTICDDrive();
 
 	bool isCDPresent();
 	long readTOC(unsigned long *TOC);
@@ -36,6 +37,31 @@ public:
 	bool readSectorFAD(unsigned long FAD, void *buffer);
 	const char *deviceName();
 	
+private:
+	int init(const char *iso);
+	int deinit();
+	
+        HANDLE hCDROM;
+        SCSI_PASS_THROUGH_DIRECT sptd;
+};
+
+class ASPICDDrive : public CDInterface {
+public:
+        ASPICDDrive(const char *cdrom_name);
+        virtual ~ASPICDDrive();
+
+	bool isCDPresent();
+	long readTOC(unsigned long *TOC);
+	int getStatus();
+	bool readSectorFAD(unsigned long FAD, void *buffer);
+	const char *deviceName();
+        HINSTANCE aspidll;	
+        unsigned char scsiAdapterNumber;
+        unsigned char lun;
+        unsigned char targetId;
+
+        DWORD (*GetASPI32SupportInfo)(void);
+        DWORD (*SendASPI32Command)(LPSRB);
 private:
 	int init(const char *iso);
 	int deinit();

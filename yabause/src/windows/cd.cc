@@ -22,17 +22,17 @@
 #include <stdio.h>
 #include "cd.hh"
 
-WindowsCDDrive::WindowsCDDrive(const char *cdrom_name) {
+SPTICDDrive::SPTICDDrive(const char *cdrom_name) {
         init(cdrom_name);
 }
 
-WindowsCDDrive::~WindowsCDDrive() {
+SPTICDDrive::~SPTICDDrive() {
 	deinit();
 }
 
-const char *WindowsCDDrive::deviceName() { return "Windows SPTI driver"; }
+const char *SPTICDDrive::deviceName() { return "Windows SPTI driver"; }
 
-int WindowsCDDrive::init(const char *cdrom_name) {
+int SPTICDDrive::init(const char *cdrom_name) {
    char pipe_name[7];
 
    sprintf(pipe_name, "\\\\.\\?:\0");
@@ -46,21 +46,19 @@ int WindowsCDDrive::init(const char *cdrom_name) {
                        FILE_ATTRIBUTE_NORMAL,
                        NULL)) == INVALID_HANDLE_VALUE)
    {
-      // try loading aspi here
-
       return -1;
    }
 
    return 0;
 }
 
-int WindowsCDDrive::deinit() {
+int SPTICDDrive::deinit() {
    CloseHandle(hCDROM);
 
    return 0;
 }
 
-int WindowsCDDrive::getStatus(void) {
+int SPTICDDrive::getStatus(void) {
    // This function is called periodically to see what the status of the
    // drive is.
    //
@@ -134,7 +132,7 @@ int WindowsCDDrive::getStatus(void) {
 
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
-long WindowsCDDrive::readTOC(unsigned long *TOC) {
+long SPTICDDrive::readTOC(unsigned long *TOC) {
 //   FILE *debugfp;
    CDROM_TOC ctTOC;
    DWORD dwNotUsed;
@@ -184,7 +182,7 @@ long WindowsCDDrive::readTOC(unsigned long *TOC) {
    return 0;
 }
 
-bool WindowsCDDrive::readSectorFAD(unsigned long FAD, void *buffer) {
+bool SPTICDDrive::readSectorFAD(unsigned long FAD, void *buffer) {
    // This function is supposed to read exactly 1 -RAW- 2352-byte sector at
    // the specified FAD address to buffer. Should return true if successful,
    // false if there was an error.
@@ -243,3 +241,192 @@ bool WindowsCDDrive::readSectorFAD(unsigned long FAD, void *buffer) {
 
    return true;
 }
+
+ASPICDDrive::ASPICDDrive(const char *cdrom_name) {
+        init(cdrom_name);
+}
+
+ASPICDDrive::~ASPICDDrive() {
+	deinit();
+}
+
+const char *ASPICDDrive::deviceName() { return "Windows ASPI driver"; }
+
+int ASPICDDrive::init(const char *cdrom_name) {
+   OSVERSIONINFO osvi;
+   BOOL result;
+   SRB_GDEVBlock devtypecmd;
+
+   if (!(aspidll = LoadLibrary("WNASPI32.DLL")))
+      return -1;
+
+   fprintf(stderr, "ASPI dll loaded successfully\n");
+
+   GetASPI32SupportInfo = (DWORD (*)(void))GetProcAddress(aspidll, "GetASPI32SupportInfo");
+   SendASPI32Command = (DWORD (*)(LPSRB))GetProcAddress(aspidll, "SendASPI32Command");
+
+   if (GetASPI32SupportInfo == NULL || SendASPI32Command == NULL)
+   {
+      FreeLibrary(aspidll);
+      aspidll = NULL;
+      return -1;
+   }
+
+   fprintf(stderr, "ASPI functions retrieved succesfully\n");
+
+   // Figure out which OS we're using
+   ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+   result = GetVersionEx(&osvi);
+
+   // Use IOCTL_SCSI_GET_ADDRESS and registry on NT based platforms
+   if (result == TRUE && osvi.dwPlatformId == VER_PLATFORM_WIN32_NT)
+   {
+      HANDLE hCDROM;
+      char pipe_name[7];
+      BOOL success;
+      SCSI_ADDRESS saBuf;
+      DWORD dwBytesReturned;
+
+      fprintf(stderr, "Win NT platform detected\n");
+
+      sprintf(pipe_name, "\\\\.\\?:\0");
+      pipe_name[4] = cdrom_name[0];
+
+      if ((hCDROM = CreateFile(pipe_name,
+                          GENERIC_READ | GENERIC_WRITE,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE,
+                          NULL,
+                          OPEN_EXISTING,
+                          FILE_ATTRIBUTE_NORMAL,
+                          NULL)) == INVALID_HANDLE_VALUE)
+      {
+         FreeLibrary(aspidll);
+         aspidll = NULL;
+         return -1;
+      }
+
+      success=DeviceIoControl(hCDROM,
+                              IOCTL_SCSI_GET_ADDRESS,
+                              NULL, 0,
+                              (LPVOID)&saBuf, sizeof(SCSI_ADDRESS),
+                              &dwBytesReturned, NULL);
+
+      if (success)
+      {
+         fprintf(stderr, "IOCTL_SCSI_GET_ADDRESS successful: SCSI adapter number = %d, LUN = %d, Target ID = %d\n", saBuf.PortNumber, saBuf.Lun, saBuf.TargetId);
+
+         scsiAdapterNumber = saBuf.PortNumber;
+         lun = saBuf.Lun;
+         targetId = saBuf.TargetId;
+
+/*
+//         if(RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+//                         "Hardware\DeviceMap\SCSI",
+//                         0,
+//                         KEY_READ,
+//                         &hCDROMKey) != ERROR_SUCCESS)
+         {
+//          return ??;
+         }
+
+//         retCode = RegQueryInfoKey(hCDROMKey, achClass, &cchClassName, NULL,
+//                                   &cSubKeys, &cbMaxSubKey, &cchMaxClass,
+//                                   &cValues, &cchMaxValue, &cbMaxValueData,
+//                                   &cbSecurityDescriptor, &ftLastWriteTime);
+
+         for (int i = 0; i < cSubKeys; i++)
+         {
+            cbName = MAX_KEY_LENGTH;
+            retCode = RegEnumKeyEx(hKey, i, achKey, &cbName, NULL, NULL, NULL,
+                                   &ftLastWriteTime);
+            // Grab HardwareKey subkey
+            if (retCode == ERROR_SUCCESS)
+         }
+*/
+         CloseHandle(hCDROM);
+      }
+      else
+      {
+         fprintf(stderr, "IOCTL_SCSI_GET_ADDRESS failed\n");
+      }
+   }
+   else
+   {      
+      fprintf(stderr, "non-Win NT platform detected\n");
+/*
+      // Assume it's a Win9x platform, use registry only
+      HKEY hCDROMkey;
+
+      if(RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                      "Config Manager\\Enum",
+                      0,
+                      KEY_READ,
+                      &hCDROMKey) != ERROR_SUCCESS)
+      {
+//         return ??;
+      }
+
+//      retCode = RegQueryInfoKey(hCDROMKey, achClass, &cchClassName, NULL,
+//                                &cSubKeys, &cbMaxSubKey, &cchMaxClass,
+//                                &cValues, &cchMaxValue, &cbMaxValueData,
+//                                &cbSecurityDescriptor, &ftLastWriteTime);
+
+      for (int i = 0; i < cSubKeys; i++)
+      {
+         cbName = MAX_KEY_LENGTH;
+         retCode = RegEnumKeyEx(hKey, i, achKey, &cbName, NULL, NULL, NULL,
+                                &ftLastWriteTime);
+         // Grab HardwareKey subkey
+         if (retCode == ERROR_SUCCESS)
+
+      }
+*/
+   }
+
+   return 0;
+}
+
+int ASPICDDrive::deinit() {
+   if (aspidll)
+      FreeLibrary(aspidll);
+
+   fprintf(stderr, "ASPI dll freed successfully\n");
+
+   return 0;
+}
+
+int ASPICDDrive::getStatus(void) {
+   // This function is called periodically to see what the status of the
+   // drive is.
+   //
+   // Should return one of the following values:
+   // 0 - CD Present, disc spinning
+   // 1 - CD Present, disc not spinning
+   // 2 - CD not present
+   // 3 - Tray open
+   //
+   // If you really don't want to bother too much with this function, just
+   // return status 0. Though it is kind of nice when the bios's cd player,
+   // etc. recognizes when you've ejected the tray and popped in another disc.
+   return 2;
+}
+
+long ASPICDDrive::readTOC(unsigned long *TOC) {
+   return 0;
+}
+
+bool ASPICDDrive::readSectorFAD(unsigned long FAD, void *buffer) {
+   // This function is supposed to read exactly 1 -RAW- 2352-byte sector at
+   // the specified FAD address to buffer. Should return true if successful,
+   // false if there was an error.
+   //
+   // Special Note: To convert from FAD to LBA/LSN, minus 150.
+   //
+   // The whole process needed to be changed since I need more control over
+   // sector detection, etc. Not to mention it means less work for the porter
+   // since they only have to implement raw sector reading as opposed to
+   // implementing mode 1, mode 2 form1/form2, -and- raw sector reading.
+   return true;
+}
+
