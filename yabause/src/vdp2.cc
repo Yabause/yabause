@@ -24,7 +24,13 @@
 #include "scu.hh"
 #include "timer.hh"
 #include "yui.hh"
+#ifndef _arch_dreamcast
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
 #include <GL/glut.h>
+#endif
+#endif
 #include <stdarg.h>
 
 #define COLOR_ADDt(b)		(b>0xFF?0xFF:(b<0?0:b))
