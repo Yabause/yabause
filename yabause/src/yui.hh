@@ -17,10 +17,10 @@ void	yui_quit(void);
 void	yui_hide_show(void);
 
 /* returns a non NULL BIOS filename */
-char *	yui_bios(void);
+const char *	yui_bios(void);
 
 /* returns a cd device name or NULL if no cd device is used */
-char *	yui_cdrom(void);
+const char *	yui_cdrom(void);
 
 /* returns an instance derived from CDInterface, NULL if nothing instantiated */
 CDInterface *yui_cd(void);
@@ -29,11 +29,17 @@ CDInterface *yui_cd(void);
 unsigned char yui_region(void);
 
 /* returns a save ram filename. Can be set to NULL if not present */
-char * yui_saveram(void);
+const char * yui_saveram(void);
 
 /* returns a mpeg rom filename. Can be set to NULL if not present */
-char * yui_mpegrom(void);
+const char * yui_mpegrom(void);
 
 /* If Yabause encounters any fatal errors, it sends the error text to this function */
 void yui_errormsg(Exception error, SuperH sh2opcodes);
+
+/* Sets bios filename in the yui - used to specify bios from the commandline */
+void yui_set_bios_filename(const char *);
+
+/* Sets ISO filename in the yui - used to specify an ISO from the commandline */
+void yui_set_iso_filename(const char *);
 

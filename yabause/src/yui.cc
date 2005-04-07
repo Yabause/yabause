@@ -3,21 +3,35 @@
 
 int stop;
 
-char * yui_bios(void) {
-	return "jap.rom";
+const char *bios = "jap.rom";
+const char *iso = 0;
+
+void yui_set_bios_filename(const char *biosfilename) {
+	bios = biosfilename;
+}
+
+void yui_set_iso_filename(const char *isofilename) {
+	iso = isofilename;
+}
+
+const char *yui_bios(void) {
+	return bios;
 }
 
 CDInterface *yui_cd(void) {
         CDInterface *cd = 0;
-        cd = new DummyCDDrive();
+        if (iso)
+		cd = new ISOCDDrive(iso);
+	else
+		cd = new DummyCDDrive();
         return cd;
 }
 
-char * yui_saveram(void) {
+const char * yui_saveram(void) {
         return NULL;
 }
 
-char * yui_mpegrom(void) {
+const char * yui_mpegrom(void) {
 	return NULL;
 }
 

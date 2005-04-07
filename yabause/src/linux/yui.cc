@@ -31,6 +31,22 @@
 #include <glib/gi18n.h>
 #include "yabause_logo.xpm"
 
+
+const char *bios = 0;
+const char *iso = 0;
+CDInterface *cd = 0;
+const char *binary;
+SaturnMemory *saturn;
+int (*yab_main)(void *);
+
+
+void yui_set_bios_filename(const char *biosfilename) {
+	bios = biosfilename;
+}
+
+void yui_set_iso_filename(const char *isofilename) {
+	iso = isofilename;
+}
 void yui_choose_bios(void);
 void yui_choose_cdrom(void);
 void yui_choose_binary(void);
@@ -62,12 +78,6 @@ GtkWidget *window;
 GtkWidget *event_box;
 GtkWidget *menu_bar;
 gboolean hide;
-
-char *bios;
-CDInterface *cd = 0;
-char *binary;
-SaturnMemory *saturn;
-int (*yab_main)(void *);
 
 char SDL_windowhack[32];
 
@@ -175,7 +185,6 @@ void yui_init(int (*fonction)(void *)) {
 	sprintf(SDL_windowhack,"SDL_WINDOWID=%ld", GDK_WINDOW_XWINDOW(GTK_WIDGET(event_box)->window));
 	putenv(SDL_windowhack);
 
-	bios = NULL;
 	saturn = NULL;
 	cd = new DummyCDDrive();
 	
@@ -213,7 +222,7 @@ void yui_hide_show(void) {
 	}
 }
 
-char * yui_bios(void) {
+const char * yui_bios(void) {
 	return bios;
 }
 
@@ -296,7 +305,7 @@ void yui_coin_coin(void) {
 	g_idle_add((gboolean (*)(void*)) yab_main, saturn);
 }
 
-char * yui_mpegrom(void) {
+const char * yui_mpegrom(void) {
 	return NULL;
 }
 
@@ -304,7 +313,7 @@ unsigned char yui_region(void) {
 	return 0;
 }
 
-char * yui_saveram(void) {
+const char * yui_saveram(void) {
 	return NULL;
 }
 

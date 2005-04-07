@@ -320,7 +320,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 
 	initMemoryMap();
 
-	char *bios;
+	const char *bios;
 
 	bios = yui_bios();
 	if (bios == NULL) {
@@ -337,7 +337,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 	}
 
         // Load Backup Ram file
-        char *backupram;
+        const char *backupram;
 
         backupram = yui_saveram();
         if (backupram != NULL)
@@ -373,7 +373,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 }
 
 SaturnMemory::~SaturnMemory(void) {
-  char *backupram;
+  const char *backupram;
 #if DEBUG
   cerr << "stopping master sh2\n";
 #endif

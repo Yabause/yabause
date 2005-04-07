@@ -94,7 +94,15 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 
-char * yui_bios(void) {
+void yui_set_bios_filename(const char *bios) {
+	strcpy(biosfilename, bios);
+}
+
+void yui_set_iso_filename(const char *iso) {
+	//TODO: Does the win32 port even support it at the moment?
+}
+
+const char * yui_bios(void) {
         return biosfilename;
 }
 
@@ -102,11 +110,11 @@ CDInterface *yui_cd(void) {
         return cd;
 }
 
-char * yui_saveram(void) {
+const char * yui_saveram(void) {
         return backupramfilename;
 }
 
-char * yui_mpegrom(void) {
+const char * yui_mpegrom(void) {
         return mpegromfilename;
 }
 

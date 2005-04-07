@@ -256,10 +256,36 @@ int handleEvents(SaturnMemory *mem) {
       return 1;
 }
 
-int main(int argc, char **argv) {
+void print_usage(const char *program_name) {
+}
+
+int main(int argc, const char *argv[]) {
 	//This function is deprecated according to Sam Latinga - it only works on X11
 	//SDL_Init(SDL_INIT_EVENTTHREAD);
 
+	//handle command line arguments
+	for (int i = 1; i < argc; ++i) {
+		if (argv[i]) {
+			//show usage
+			//if (0 == strcmp(argv[i], "-h") || 0 == strcmp(argv[i], "-?") || 0 == strcmp(argv[i], "--help")) {
+			//	print_usage();
+			//	return 0;
+			//}
+			
+			//set bios
+			if (0 == strcmp(argv[i], "-b") && argv[i + 1])
+				yui_set_bios_filename(argv[i + 1]);
+			else if (strstr(argv[i], "--bios="))
+				yui_set_bios_filename(argv[i] + strlen("--bios="));
+	
+			//set iso
+			else if (0 == strcmp(argv[i], "-i") && argv[i + 1])
+				yui_set_iso_filename(argv[i + 1]);
+			else if (strstr(argv[i], "--iso="))
+				yui_set_iso_filename(argv[i] + strlen("--iso="));
+		}
+	}
+	
 	yui_init((int (*)(void*)) &handleEvents);
 
 	SDL_Quit();
