@@ -149,7 +149,7 @@ public:
   int timing;
   unsigned long cycleCount;
   friend class Onchip;
-  friend int main(int, const char *[]);
+  friend int main(int, char *[]);
 #ifdef DEBUG
   int verbose;
 #endif

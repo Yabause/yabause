@@ -259,7 +259,7 @@ int handleEvents(SaturnMemory *mem) {
 void print_usage(const char *program_name) {
 }
 
-int main(int argc, const char *argv[]) {
+int main(int argc, char *argv[]) {
 	//This function is deprecated according to Sam Latinga - it only works on X11
 	//SDL_Init(SDL_INIT_EVENTTHREAD);
 
