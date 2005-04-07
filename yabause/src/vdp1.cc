@@ -344,6 +344,10 @@ void Vdp1::readPriority(void) {
 				sprite_register = ((CMDCOLR & 0x6000) | (~CMDCOLR & 0x1000)) >> 12;
 				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
 				break;
+                        case 6:
+				sprite_register = ((CMDCOLR & 0x6000) | (~CMDCOLR & 0x1000)) >> 12;
+				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
+                                break;
                         case 7:
 				sprite_register = ((CMDCOLR & 0x6000) | (~CMDCOLR & 0x1000)) >> 12;
 				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
@@ -377,7 +381,6 @@ void Vdp1::normalSpriteDraw(unsigned long addr) {
 	h = CMDSIZE & 0xFF;
 	ww = power_of_two(w);
 	hh = power_of_two(h);
-
 
 	unsigned char dir = (CMDCTRL & 0x30) >> 4;
 
@@ -669,12 +672,20 @@ void Vdp1::userClipping(unsigned long addr) {
 #if VDP1_DEBUG
   cerr << "vdp1\t: user clipping (unimplemented)" << endl;
 #endif
+  userclipX1 = vram->getWord(addr + 0xC);
+  userclipY1 = vram->getWord(addr + 0xE);
+  userclipX2 = vram->getWord(addr + 0x14);
+  userclipY2 = vram->getWord(addr + 0x16);
 }
 
 void Vdp1::systemClipping(unsigned long addr) {
 #if VDP1_DEBUG
   //cerr << "vdp1\t: system clipping (unimplemented) " << endl;
 #endif
+  systemclipX1 = vram->getWord(addr + 0xC);
+  systemclipY1 = vram->getWord(addr + 0xE);
+  systemclipX2 = vram->getWord(addr + 0x14);
+  systemclipY2 = vram->getWord(addr + 0x16);
 }
 
 void Vdp1::localCoordinate(unsigned long addr) {

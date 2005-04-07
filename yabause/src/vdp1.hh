@@ -78,6 +78,16 @@ private:
   unsigned short localX;
   unsigned short localY;
 
+  unsigned short systemclipX1;
+  unsigned short systemclipY1;
+  unsigned short systemclipX2;
+  unsigned short systemclipY2;
+
+  unsigned short userclipX1;
+  unsigned short userclipY1;
+  unsigned short userclipX2;
+  unsigned short userclipY2;
+
   unsigned long returnAddr;
   unsigned long commandCounter;
   unsigned short  CMDCTRL;
