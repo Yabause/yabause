@@ -3671,13 +3671,6 @@ fi
 CXXFLAGS="$CXXFLAGS $SDL_CXXFLAGS"
 LIBS="$LIBS $SDL_LIBS"
 
-
-# Check whether --with-gtk or --without-gtk was given.
-if test "${with_gtk+set}" = set; then
-  withval="$with_gtk"
-  use_gtk=$withval
-fi;
-
 case $target in
 	*darwin*)
 		LIBS="$LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
@@ -3991,6 +3984,7 @@ _ACEOF
 fi
 
 		yabause_yui="."
+		use_gtk=yes
 		;;
         *)
 echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
@@ -4143,6 +4137,13 @@ fi
            ;;
 
 esac
+
+
+# Check whether --with-gtk or --without-gtk was given.
+if test "${with_gtk+set}" = set; then
+  withval="$with_gtk"
+  use_gtk=$withval
+fi;
 
 if test x$use_gtk = xyes ; then
 	if test -n "$ac_tool_prefix"; then

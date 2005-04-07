@@ -34,8 +34,6 @@ fi
 CXXFLAGS="$CXXFLAGS $SDL_CXXFLAGS"
 LIBS="$LIBS $SDL_LIBS"
 
-AC_ARG_WITH(gtk, AC_HELP_STRING(--with-gtk, use a gtk interface), [use_gtk=$withval])
-
 case $target in
 	*darwin*)
 		LIBS="$LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
@@ -57,12 +55,15 @@ case $target in
 		AC_CHECK_LIB(GL, glEnable)
 		AC_CHECK_LIB(glut, glutGetModifiers)
 		yabause_yui="."
+		use_gtk=yes
 		;;
         *) AC_CHECK_LIB(GL, glEnable)
            AC_CHECK_LIB(glut, glutGetModifiers)
            ;;
 
 esac
+
+AC_ARG_WITH(gtk, AC_HELP_STRING(--with-gtk, use a gtk interface), [use_gtk=$withval])
 
 if test x$use_gtk = xyes ; then
 	AC_CHECK_TOOL(HAVE_PKG, pkg-config)
