@@ -68,29 +68,35 @@ void __del_highest_int()	{
 #define ICRH    0x18
 #define ICRL    0x19
 
-#define IPRB	0x60
-#define VCRA    0x62
-#define VCRB    0x64
-#define VCRC    0x66
-#define VCRD    0x68
-#define WTCSR   0x80
-#define WTCNT   0x81
-#define RSTCSR1 0x82
-#define RSTCSR2 0x83
-#define ICR	0xE0
-#define IPRA	0xE2
-#define VCRWDT  0xE4
-#define VCRDIV  0x10C
-#define SAR0	0x180
-#define DAR0	0x184
-#define TCR0	0x188
-#define CHCR0	0x18C
-#define CHCR1	0x19C
-#define VCRDMA0 0x1A0
-#define VCRDMA1 0x1A8
-#define DMAOR   0x1B0
-#define BCR1    0x1E0
-#define BCR2    0x1E4
+#define IPRB            0x60
+#define VCRA            0x62
+#define VCRB            0x64
+#define VCRC            0x66
+#define VCRD            0x68
+#define WTCSR           0x80
+#define WTCNT           0x81
+#define RSTCSR1         0x82
+#define RSTCSR2         0x83
+#define ICR             0xE0
+#define IPRA            0xE2
+#define VCRWDT          0xE4
+#define DVDNT           0x104
+#define DVCR            0x108
+#define VCRDIV          0x10C
+#define DVDNTH          0x110
+#define DVDNTL          0x114
+#define DVDNTH_M        0x118
+#define DVDNTL_M        0x11C
+#define SAR0            0x180
+#define DAR0            0x184
+#define TCR0            0x188
+#define CHCR0           0x18C
+#define CHCR1           0x19C
+#define VCRDMA0         0x1A0
+#define VCRDMA1         0x1A8
+#define DMAOR           0x1B0
+#define BCR1            0x1E0
+#define BCR2            0x1E4
 
 Onchip::Onchip(bool slave, SaturnMemory *sm, SuperH *sh) : Memory(0x1FF, 0x1FF) {
 	memory = sm;
@@ -227,6 +233,11 @@ void Onchip::setByte(unsigned long addr, unsigned char val) {
 
 void Onchip::setWord(unsigned long addr, unsigned short val) {
 	switch(addr) {
+                case 0x1E0: // Not writeable
+                   break;
+                case 0x1E2: // BCR1
+                   Memory::setWord(addr, (val & 0x1FF7) | (isslave << 15));
+                   break;
 		case ICR:
 			if (val & 0x8000) {
 				//SDL_CreateThread(&Timer::call<Onchip, &Onchip::sendNMI, 100>, this); // random value
@@ -297,45 +308,54 @@ void Onchip::setWord(unsigned long addr, unsigned short val) {
 
 void Onchip::setLong(unsigned long addr, unsigned long val) {
   switch(addr) {
-  case 0x104: {
+  case BCR1:
+    Memory::setLong(addr, (val & 0x1FF7) | (isslave << 15));
+    break;
+  case DVDNT: {
     long divisor = (long) Memory::getLong(0x100);
     if (divisor == 0) {
-      Memory::setLong(0x104, val);
-      Memory::setLong(0x114, val);
-      Memory::setLong(0x108, 1);
+      Memory::setLong(DVDNT, val);
+      Memory::setLong(DVDNTL, val);
+      Memory::setLong(DVDNTL_M, val);
+      Memory::setLong(DVCR, 1);
     }
     else {
       long quotient = ((long) val) / divisor;
       long remainder = ((long) val) % divisor;
-      Memory::setLong(0x104, quotient);
-      Memory::setLong(0x114, quotient);
-      Memory::setLong(0x110, remainder);
+      Memory::setLong(DVDNT, quotient);
+      Memory::setLong(DVDNTL, quotient);
+      Memory::setLong(DVDNTL_M, quotient);
+      Memory::setLong(DVDNTH, remainder);
+      Memory::setLong(DVDNTH_M, remainder);
     }
     break;
   }
-  case 0x114: {
+  case DVDNTL: {
     unsigned long divi[2];
     
 #ifdef WORDS_BIGENDIAN
-    divi[0] = Memory::getLong(0x110);
+    divi[0] = Memory::getLong(DVDNTH);
     divi[1] = val;
 #else
     divi[0] = val;
-    divi[1] = Memory::getLong(0x110);
+    divi[1] = Memory::getLong(DVDNTH);
 #endif
     long long dividend = *((long long *) divi);
     long divisor = (long) Memory::getLong(0x100);
     if (divisor == 0) {
-      Memory::setLong(0x104, val);
-      Memory::setLong(0x114, val);
-      Memory::setLong(0x108, 1);
+      Memory::setLong(DVDNT, val);
+      Memory::setLong(DVDNTL, val);
+      Memory::setLong(DVDNTL_M, val);
+      Memory::setLong(DVCR, 1);
     }
     else {
       long quotient = dividend / divisor;
       long remainder = dividend % divisor;
-      Memory::setLong(0x104, quotient);
-      Memory::setLong(0x114, quotient);
-      Memory::setLong(0x110, remainder);
+      Memory::setLong(DVDNT, quotient);
+      Memory::setLong(DVDNTL, quotient);
+      Memory::setLong(DVDNTL_M, quotient);
+      Memory::setLong(DVDNTH, remainder);
+      Memory::setLong(DVDNTH_M, remainder);
     }
     break;
   }
@@ -613,7 +633,15 @@ InputCaptureSignal::InputCaptureSignal(SuperH *icsh) : Memory(0, 4) {
    onchip = icsh->onchip;
 }
 
+void InputCaptureSignal::setByte(unsigned long addr, unsigned char val) {
+   onchip->inputCaptureSignal();
+}
+
 void InputCaptureSignal::setWord(unsigned long addr, unsigned short val) {
+   onchip->inputCaptureSignal();
+}
+
+void InputCaptureSignal::setLong(unsigned long addr, unsigned long val) {
    onchip->inputCaptureSignal();
 }
 

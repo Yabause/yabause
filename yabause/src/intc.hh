@@ -112,7 +112,9 @@ private:
         Onchip *onchip;
 public:
         InputCaptureSignal(SuperH *icsh);
+        void setByte(unsigned long, unsigned char);
 	void setWord(unsigned long, unsigned short);
+        void setLong(unsigned long, unsigned long);
 };
 
 #endif
