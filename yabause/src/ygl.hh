@@ -200,6 +200,11 @@ template<int W, int H, int L, int V>
 void Ygl<W,H,L,V>::init(void) {
 	SDL_InitSubSystem( SDL_INIT_VIDEO );
 
+	//set the window title
+	char yab_version[64];
+	sprintf(yab_version, "Yabause %s", VERSION);
+	SDL_WM_SetCaption(yab_version, NULL);
+	
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 4 );
