@@ -22,6 +22,11 @@
 
 #include "saturn_memory.hh"
 
+#ifdef DYNAREC
+typedef struct {
+	unsigned long regs[23];
+} sh2regs_struct;
+#else
 typedef struct
 {
   unsigned long R[16];
@@ -63,6 +68,7 @@ typedef struct
 
   unsigned long delay;
 } sh2regs_struct;
+#endif
 
 typedef struct
 {
@@ -84,8 +90,24 @@ public:
   static inline unsigned long bcd (unsigned long ul) { return (ul & 0x0FFF); }
 };
 
+#ifdef DYNAREC
+enum sh2reg_names {
+	R0, R1, R2, R3, R4, R5, R6, R7,
+	R8, R9, RA, RB, RC, RD, RE, RF,
+	SR, GBR, VBR, MACH, MACL, PR, PC
+};
+
+struct Sh2reg {
+	int jitreg;
+	unsigned long value;
+};
+#endif
+
 class SuperH {
 public:
+#ifdef DYNAREC
+	Sh2reg sh2reg[23];
+#else
   unsigned long R[16];
 
 #ifdef WORDS_BIGENDIAN
@@ -122,6 +144,7 @@ public:
   unsigned long MACL;
   unsigned long PR;
   unsigned long PC;
+#endif
 
   SaturnMemory *memoire;
 
@@ -198,27 +221,27 @@ public:
   void add(SuperH *); // addition de deux registres                   1
   void addi(SuperH *); // addition d'un entier et d'un registre        2
   void addc(SuperH *); // addition de deux registres avec retenue      3
-  void addv(SuperH *); // addition de deux registres avec vérification 4
+  void addv(SuperH *); // addition de deux registres avec vï¿½ification 4
   void y_and(SuperH *); // fait le `et' logique entre deux registres    5
   void andi(SuperH *);      // fait le `et' logique entre un entier et R0   6
   void andm(SuperH *);      // fait le `et' logique entre un entier et R0   7
   /**** B ******************************************************************/
   void bf(SuperH *);      // branchement si T == 0                        8
-  void bfs(SuperH *);      // branchement si T == 0 avec délai             9
-  void bra(SuperH *);      // branchement inconditionnel (avec délai)     10
-  void braf(SuperH *);      // bra inconditionnel éloigné (avec délai)     11
+  void bfs(SuperH *);      // branchement si T == 0 avec dï¿½ai             9
+  void bra(SuperH *);      // branchement inconditionnel (avec dï¿½ai)     10
+  void braf(SuperH *);      // bra inconditionnel ï¿½oignï¿½(avec dï¿½ai)     11
   void bsr(SuperH *);      // branchement vers un sous-programme          12
-  void bsrf(SuperH *);      // branchement vers un sous-programme éloigné  13
+  void bsrf(SuperH *);      // branchement vers un sous-programme ï¿½oignï¿½ 13
   void bt(SuperH *);      // branchement si T == 1                       14
-  void bts(SuperH *);      // branchement si T == 1 avec délai            15
+  void bts(SuperH *);      // branchement si T == 1 avec dï¿½ai            15
   /**** C ******************************************************************/
   void clrmac(SuperH *);      // vide les registres MACH et MACL             16
-  void clrt(SuperH *);      // place le bit T à 0                          17
+  void clrt(SuperH *);      // place le bit T ï¿½0                          17
   void cmpeq(SuperH *); // ==                                          18
-  void cmpge(SuperH *); // >= signé                                    19
-  void cmpgt(SuperH *); // > signé                                     20
-  void cmphi(SuperH *); // > non signé                                 21
-  void cmphs(SuperH *); // >= signé                                    22
+  void cmpge(SuperH *); // >= signï¿½                                   19
+  void cmpgt(SuperH *); // > signï¿½                                    20
+  void cmphi(SuperH *); // > non signï¿½                                21
+  void cmphs(SuperH *); // >= signï¿½                                   22
   void cmpim(SuperH *);      // ==                                          23
   void cmppl(SuperH *);      // > 0                                         24
   void cmppz(SuperH *);      // >= 0                                        25
@@ -229,14 +252,14 @@ public:
   void div1(SuperH *); // /                                           29
   void dmuls(SuperH *); // multiplication                              30
   void dmulu(SuperH *); // multiplication                              31
-  void dt(SuperH *);      // décrement et test                           32
+  void dt(SuperH *);      // dï¿½rement et test                           32
   /**** E ******************************************************************/
-  void extsb(SuperH *); // étend                                       33
-  void extsw(SuperH *); // étend aussi    :-)                          34
-  void extub(SuperH *); // étend toujours :-|                          35
-  void extuw(SuperH *); // étend encore   :-(                          36
+  void extsb(SuperH *); // ï¿½end                                       33
+  void extsw(SuperH *); // ï¿½end aussi    :-)                          34
+  void extub(SuperH *); // ï¿½end toujours :-|                          35
+  void extuw(SuperH *); // ï¿½end encore   :-(                          36
   /**** J ******************************************************************/
-  void jmp(SuperH *);      // saut avec délai                             37
+  void jmp(SuperH *);      // saut avec dï¿½ai                             37
   void jsr(SuperH *);      // saut vers un sous-programme                 38
   /**** L ******************************************************************/
   void ldcgbr(SuperH *);      // charge le registre gbr                      39
@@ -294,10 +317,10 @@ public:
   void muls(SuperH *); //                                             91
   void mulu(SuperH *); //                                             92
   /**** N ******************************************************************/
-  void neg(SuperH *); // négation                                    93
-  void negc(SuperH *); // négation avec retenue                       94
+  void neg(SuperH *); // nï¿½ation                                    93
+  void negc(SuperH *); // nï¿½ation avec retenue                       94
   void nop(SuperH *);      // rien                                        95
-  void y_not(SuperH *); // complément logique                          96
+  void y_not(SuperH *); // complï¿½ent logique                          96
   /**** O ******************************************************************/
   void y_or(SuperH *); // ou                                          97
   void ori(SuperH *);      //                                             98
@@ -311,16 +334,16 @@ public:
   void rts(SuperH *);      //                                            105
   /**** S ******************************************************************/
   void sett(SuperH *);      // T <- 1                                     106
-  void shal(SuperH *);      // décalage gauche                            107
-  void shar(SuperH *);      // décalage droite                            108
-  void shll(SuperH *);      // décalage gauche                            109
-  void shll2(SuperH *);      // décalage gauche                            110
-  void shll8(SuperH *);      // décalage gauche                            111
-  void shll16(SuperH *);      // décalage gauche                            112
-  void shlr(SuperH *);      // décalage droite                            113
-  void shlr2(SuperH *);      // décalage droite                            114
-  void shlr8(SuperH *);      // décalage droite                            115
-  void shlr16(SuperH *);      // décalage droite                            116
+  void shal(SuperH *);      // dï¿½alage gauche                            107
+  void shar(SuperH *);      // dï¿½alage droite                            108
+  void shll(SuperH *);      // dï¿½alage gauche                            109
+  void shll2(SuperH *);      // dï¿½alage gauche                            110
+  void shll8(SuperH *);      // dï¿½alage gauche                            111
+  void shll16(SuperH *);      // dï¿½alage gauche                            112
+  void shlr(SuperH *);      // dï¿½alage droite                            113
+  void shlr2(SuperH *);      // dï¿½alage droite                            114
+  void shlr8(SuperH *);      // dï¿½alage droite                            115
+  void shlr16(SuperH *);      // dï¿½alage droite                            116
   void sleep(SuperH *);      // fait dodo...                               117
   void stcgbr(SuperH *);      //                                            118
   void stcmgbr(SuperH *);      //                                            119
@@ -336,7 +359,7 @@ public:
   void stspr(SuperH *);      //                                            130
   void sub(SuperH *); // soustraction                               131
   void subc(SuperH *); // soustraction avec retenue                  132
-  void subv(SuperH *); // soustraction avec vérification             133
+  void subv(SuperH *); // soustraction avec vï¿½ification             133
   void swapb(SuperH *); //                                            134
   void swapw(SuperH *); //                                            135
   /**** T ******************************************************************/
@@ -346,7 +369,7 @@ public:
   void tsti(SuperH *);      //                                            139
   void tstm(SuperH *);      //                                            140
   /**** X ******************************************************************/
-  void y_xor(SuperH *); // le shérif de l'espace                      141
+  void y_xor(SuperH *); // le shï¿½if de l'espace                      141
   void xori(SuperH *);      //                                            142
   void xorm(SuperH *);      //                                            143
   void xtrct(SuperH *); //                                            144

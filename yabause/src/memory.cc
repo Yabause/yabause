@@ -440,12 +440,20 @@ void SaturnMemory::loadBios(const char *filename) {
 	rom->load(filename, 0);
 }
 
-void SaturnMemory::loadExec(const char *filename, unsigned long PC) {
+void SaturnMemory::loadExec(const char *filename, unsigned long pc) {
+#ifdef DYNAREC
   sh2regs_struct sh2regs;
-  load(filename, PC);
+  load(filename, pc);
   msh->GetRegisters(&sh2regs);
-  sh2regs.PC = PC;
+  sh2regs.regs[PC] = pc;
   msh->SetRegisters(&sh2regs);
+#else
+  sh2regs_struct sh2regs;
+  load(filename, pc);
+  msh->GetRegisters(&sh2regs);
+  sh2regs.PC = pc;
+  msh->SetRegisters(&sh2regs);
+#endif
 }
 
 void SaturnMemory::FormatBackupRam() {

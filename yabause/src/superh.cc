@@ -64,32 +64,43 @@ SuperH::~SuperH(void) {
 }
 
 void SuperH::reset(void) {
-  SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
-  SR.partie.I = 0xF;
-  SR.partie.inutile1 = 0;
-  SR.partie.inutile2 = 0;
-  VBR = 0;
-  for(int i = 0;i < 16;i++) R[i] = 0;
+#ifdef DYNAREC
+	sh2reg[SR].value = 0xF0;
+	sh2reg[VBR].value = 0;
+	for(int i = 0;i < 16;i++) sh2reg[i].value = 0;
+#else
+	SR.partie.T = SR.partie.S = SR.partie.Q = SR.partie.M = 0;
+	SR.partie.I = 0xF;
+	SR.partie.inutile1 = 0;
+	SR.partie.inutile2 = 0;
+	VBR = 0;
+	for(int i = 0;i < 16;i++) R[i] = 0;
+#endif
 
-  // reset interrupts
-  while ( !interrupts.empty() ) {
-        interrupts.pop();
-  }
+	// reset interrupts
+	while ( !interrupts.empty() ) {
+		interrupts.pop();
+	}
 
-  ((Onchip*)onchip)->reset();
+	((Onchip*)onchip)->reset();
  
-  _delai = 0;
+	_delai = 0;
 
 #ifdef DEBUG
-  verbose = 0;
+	verbose = 0;
 #endif
-  timing = 0;
+	timing = 0;
 }
 
 void SuperH::setMemory(SaturnMemory *mem) {
-         memoire = mem;
-         PC = memoire->getLong(VBR);
-         R[15] = memoire->getLong(VBR + 4);
+	memoire = mem;
+#ifdef DYNAREC
+	sh2reg[PC].value = memoire->getLong(sh2reg[VBR].value);
+	sh2reg[15].value = memoire->getLong(sh2reg[VBR].value + 4);
+#else
+	PC = memoire->getLong(VBR);
+	R[15] = memoire->getLong(VBR + 4);
+#endif
 }
 
 Memory *SuperH::getMemory(void) {
@@ -105,12 +116,21 @@ void SuperH::sendNMI(void) {
 }
 
 void /*inline*/ _executer(SuperH * sh) {
+#ifdef DYNAREC
+	if (sh->sh2reg[PC].value & 0x6000000) {
+		sh->instruction = readWord(sh->memoire->ramHigh, sh->sh2reg[PC].value);
+	}
+	else {
+                sh->instruction = readWord(sh->memoire->rom, sh->sh2reg[PC].value);
+	}
+#else
 	if (sh->PC & 0x6000000) {
 		sh->instruction = readWord(sh->memoire->ramHigh, sh->PC);
 	}
 	else {
                 sh->instruction = readWord(sh->memoire->rom, sh->PC);
 	}
+#endif
         (*sh->opcodes[sh->instruction])(sh);
 }
 
@@ -185,7 +205,11 @@ void SuperH::delay(unsigned long addr) {
         }
 
         (*opcodes[instruction])(this);
-        PC -= 2;
+#ifdef DYNAREC
+        sh2reg[PC].value -= 2;
+#else
+	PC -= 2;
+#endif
 }
 
 /*
@@ -228,6 +252,21 @@ void SuperH::run(int t) {
 void SuperH::runCycles(unsigned long cc) {
     if ( !interrupts.empty() ) {
       Interrupt interrupt = interrupts.top();
+#ifdef DYNAREC
+      if (interrupt.level() > ((sh2reg[SR].value >> 4) & 0xF)) {
+        interrupts.pop();
+
+        sh2reg[15].value -= 4;
+        memoire->setLong(sh2reg[15].value, sh2reg[SR].value);
+        sh2reg[15].value -= 4;
+        memoire->setLong(sh2reg[15].value, sh2reg[PC].value);
+	unsigned long tmp = interrupt.level();
+	tmp = (tmp << 4);
+        sh2reg[SR].value &= 0xFFFFFF0F;
+	sh2reg[SR].value |= tmp;
+        sh2reg[PC].value = memoire->getLong(sh2reg[VBR].value + (interrupt.vector() << 2));
+      }
+#else
       if (interrupt.level() > SR.partie.I) {
         interrupts.pop();
 
@@ -238,13 +277,17 @@ void SuperH::runCycles(unsigned long cc) {
         SR.partie.I = interrupt.level();
         PC = memoire->getLong(VBR + (interrupt.vector() << 2));
       }
+#endif
     }
+
         while(cycleCount < cc) {
            // Make sure it isn't one of our breakpoints
            for (int i=0; i < numcodebreakpoints; i++) {
-              if ((PC == codebreakpoint[i].addr ||
-                  _delai == codebreakpoint[i].addr) &&
-                  inbreakpoint == false) {
+#ifdef DYNAREC
+              if ((sh2reg[PC].value == codebreakpoint[i].addr || _delai == codebreakpoint[i].addr) && inbreakpoint == false) {
+#else
+              if ((PC == codebreakpoint[i].addr || _delai == codebreakpoint[i].addr) && inbreakpoint == false) {
+#endif
 
                  inbreakpoint = true;
                  if (BreakpointCallBack) BreakpointCallBack(isslave, codebreakpoint[i].addr);
@@ -253,15 +296,31 @@ void SuperH::runCycles(unsigned long cc) {
            }
 
            //_executer(this);
+#ifdef DYNAREC
+        switch ((sh2reg[PC].value >> 20) & 0x0FF) {
+#else
         switch ((PC >> 20) & 0x0FF) {
-           case 0x000: // Bios              
+#endif
+           case 0x000: // Bios
+#ifdef DYNAREC
+                       instruction = readWord(memoire->rom, sh2reg[PC].value);
+#else
                        instruction = readWord(memoire->rom, PC);
+#endif
                        break;
            case 0x002: // Low Work Ram
+#ifdef DYNAREC
+                       instruction = readWord(memoire->ramLow, sh2reg[PC].value);
+#else
                        instruction = readWord(memoire->ramLow, PC);
+#endif
                        break;
            case 0x020: // CS0(fix me)
+#ifdef DYNAREC
+                       instruction = memoire->getWord(sh2reg[PC].value);
+#else
                        instruction = memoire->getWord(PC);
+#endif
                        break;
            case 0x060: // High Work Ram
            case 0x061: 
@@ -279,12 +338,23 @@ void SuperH::runCycles(unsigned long cc) {
            case 0x06D: 
            case 0x06E: 
            case 0x06F:
+#ifdef DYNAREC
+                       instruction = readWord(memoire->ramHigh, sh2reg[PC].value);
+#else
                        instruction = readWord(memoire->ramHigh, PC);
+#endif
                        break;
            default:
                        break;
         }
 
+#if 0
+#ifdef DYNAREC
+	cerr << "PC (" << isslave << ") = " << hex << sh2reg[PC].value << ", opcode = " << instruction << endl;
+#else
+	cerr << "PC (" << isslave << ") = " << hex << PC << ", opcode = " << instruction << endl;
+#endif
+#endif
         (*opcodes[instruction])(this);
         }
 
@@ -293,19 +363,27 @@ void SuperH::runCycles(unsigned long cc) {
 }
 
 void SuperH::step(void) {
+#ifdef DYNAREC
+   unsigned long tmp = sh2reg[PC].value;
+#else
    unsigned long tmp = PC;
+#endif
 
    // Execute 1 instruction
    runCycles(cycleCount+1);
 
    // Sometimes it doesn't always seem to execute one instruction,
    // let's make sure it did
+#ifdef DYNAREC
+   if (tmp == sh2reg[PC].value)
+#else
    if (tmp == PC)
+#endif
       runCycles(cycleCount+1);
 }
 
-#ifndef _arch_dreamcast
 ostream& operator<<(ostream& os, const SuperH& sh) {
+#if 0
   for(int j = 0;j < 4;j++) {
     os << "\t";
     for(int i = 4*j;i < 4 * (j + 1);i++) {
@@ -317,7 +395,7 @@ ostream& operator<<(ostream& os, const SuperH& sh) {
 #ifdef STL_LEFT_RIGHT
 		<< right
 #endif
-		<< setw(10) << sh.R[i] << "  ";
+		<< setw(10) << sh.sh2reg[i].value << "  ";
     }
     os << "\n";
   }
@@ -343,11 +421,22 @@ ostream& operator<<(ostream& os, const SuperH& sh) {
                      << "\tMACL\t" << setw(10) << sh.MACL
                      << "\tPC\t" << setw(10) << sh.PC << endl;
 
+#endif
   return os;
 }
-#endif
 
 void undecoded(SuperH * sh) {
+#ifdef DYNAREC
+#ifndef _arch_dreamcast
+        if (sh->isslave)
+           throw IllegalOpcode("SSH2", sh->instruction, sh->sh2reg[PC].value);
+        else
+           throw IllegalOpcode("MSH2", sh->instruction, sh->sh2reg[PC].value);
+#else
+	printf("Illegal Opcode: 0x%8x, PC: 0x%8x\n", sh->instruction, sh->sh2reg[PC].value);
+	exit(-1);
+#endif
+#else
 #ifndef _arch_dreamcast
         if (sh->isslave)
            throw IllegalOpcode("SSH2", sh->instruction, sh->PC);
@@ -357,1590 +446,2683 @@ void undecoded(SuperH * sh) {
 	printf("Illegal Opcode: 0x%8x, PC: 0x%8x\n", sh->instruction, sh->PC);
 	exit(-1);
 #endif
+#endif
 }
 
 void add(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] += sh->R[Instruction::c(sh->instruction)];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value += sh->sh2reg[Instruction::c(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] += sh->R[Instruction::c(sh->instruction)];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void addi(SuperH * sh) {
-  long source = (long)(signed char)Instruction::cd(sh->instruction);
-  long dest = Instruction::b(sh->instruction);
+	long src = (long)(signed char)Instruction::cd(sh->instruction);
+	long dest = Instruction::b(sh->instruction);
 
-  sh->R[dest] += source;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[dest].value += src;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[dest] += src;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void addc(SuperH * sh) {
-  unsigned long tmp0, tmp1;
-  long source = Instruction::c(sh->instruction);
-  long dest = Instruction::b(sh->instruction);
+	unsigned long tmp0, tmp1;
+	long source = Instruction::c(sh->instruction);
+	long dest = Instruction::b(sh->instruction);
 
-  tmp1 = sh->R[source] + sh->R[dest];
-  tmp0 = sh->R[dest];
+#ifdef DYNAREC
+	tmp1 = sh->sh2reg[source].value + sh->sh2reg[dest].value;
+	tmp0 = sh->sh2reg[dest].value;
 
-  sh->R[dest] = tmp1 + sh->SR.partie.T;
-  if (tmp0 > tmp1)
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  if (tmp1 > sh->R[dest])
-    sh->SR.partie.T = 1;
-  sh->PC += 2;
-  sh->cycleCount++;
+	sh->sh2reg[dest].value = tmp1 + (sh->sh2reg[SR].value & 1);
+	if (tmp0 > tmp1)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	if (tmp1 > sh->sh2reg[dest].value)
+		sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	tmp1 = sh->R[source] + sh->R[dest];
+	tmp0 = sh->R[dest];
+
+	sh->R[dest] = tmp1 + sh->SR.partie.T;
+	if (tmp0 > tmp1)
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	if (tmp1 > sh->R[dest])
+		sh->SR.partie.T = 1;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void addv(SuperH * sh) {
-  long i,j,k;
-  long source = Instruction::c(sh->instruction);
-  long dest = Instruction::b(sh->instruction);
+	long i,j,k;
+	long source = Instruction::c(sh->instruction);
+	long dest = Instruction::b(sh->instruction);
 
-  if ((long) sh->R[dest] >= 0) i = 0; else i = 1;
-  //i = ((long) R[dest] < 0);
-  
-  if ((long) sh->R[source] >= 0) j = 0; else j = 1;
-  //j = ((long) R[source] < 0);
-  
-  j += i;
-  sh->R[dest] += sh->R[source];
+#ifdef DYNAREC
+	if ((long) sh->sh2reg[dest].value >= 0) i = 0; else i = 1;
+	if ((long) sh->sh2reg[source].value >= 0) j = 0; else j = 1;
+	j += i;
 
-  if ((long) sh->R[dest] >= 0) k = 0; else k = 1;
-  //k = ((long) R[dest] < 0);
+	sh->sh2reg[dest].value += sh->sh2reg[source].value;
 
-  k += j;
+	if ((long) sh->sh2reg[dest].value >= 0) k = 0; else k = 1;
+	k += j;
   
-  if (j == 0 || j == 2)
-    if (k == 1) sh->SR.partie.T = 1;
-    else sh->SR.partie.T = 0;
-  else sh->SR.partie.T = 0;
-  //SR.partie.T = ((j == 0 || j == 2) && (k == 1));
-  sh->PC += 2;
-  sh->cycleCount++;
+	if (j == 0 || j == 2)
+		if (k == 1) sh->sh2reg[SR].value |= 1;
+		else sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	else sh->sh2reg[SR].value = 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((long) sh->R[dest] >= 0) i = 0; else i = 1;
+	if ((long) sh->R[source] >= 0) j = 0; else j = 1;
+	j += i;
+
+	sh->R[dest] += sh->R[source];
+
+	if ((long) sh->R[dest] >= 0) k = 0; else k = 1;
+	k += j;
+  
+	if (j == 0 || j == 2)
+		if (k == 1) sh->SR.partie.T = 1;
+		else sh->SR.partie.T = 0;
+	else sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void y_and(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] &= sh->R[Instruction::c(sh->instruction)];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value &= sh->sh2reg[Instruction::c(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] &= sh->R[Instruction::c(sh->instruction)];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void andi(SuperH * sh) {
-  sh->R[0] &= Instruction::cd(sh->instruction);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[0].value &= Instruction::cd(sh->instruction);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0] &= Instruction::cd(sh->instruction);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void andm(SuperH * sh) {
-  long temp;
-  long source = Instruction::cd(sh->instruction);
+	long temp;
+	long source = Instruction::cd(sh->instruction);
 
-  temp = (long) sh->memoire->getByte(sh->GBR + sh->R[0]);
-  temp &= source;
-  sh->memoire->setByte((sh->GBR + sh->R[0]),temp);
-  sh->PC += 2;
-  sh->cycleCount += 3;
+#ifdef DYNAREC
+	temp = (long) sh->memoire->getByte(sh->sh2reg[GBR].value + sh->sh2reg[0].value);
+	temp &= source;
+	sh->memoire->setByte((sh->sh2reg[GBR].value + sh->sh2reg[0].value),temp);
+	sh->sh2reg[PC].value += 2;
+#else
+	temp = (long) sh->memoire->getByte(sh->GBR + sh->R[0]);
+	temp &= source;
+	sh->memoire->setByte((sh->GBR + sh->R[0]),temp);
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 3;
 }
  
-void bf(SuperH * sh) { // FIXME peut etre amelioré
-  long disp;
-  long d = Instruction::cd(sh->instruction);
+void bf(SuperH * sh) {
+	long disp;
+	long d = Instruction::cd(sh->instruction);
 
-  disp = (long)(signed char)d;
+	disp = (long)(signed char) d;
 
-  if (sh->SR.partie.T == 0) {
-    sh->PC = sh->PC+(disp<<1)+4;
-    sh->cycleCount += 3;
-  }
-  else {
-    sh->PC+=2;
-    sh->cycleCount++;
-  }
+#ifdef DYNAREC
+	if ((sh->sh2reg[SR].value & 1) == 0) {
+		sh->sh2reg[PC].value += (disp << 1) + 4;
+		sh->cycleCount += 3;
+	} else {
+		sh->sh2reg[PC].value += 2;
+		sh->cycleCount++;
+	}
+#else
+	if (sh->SR.partie.T == 0) {
+		sh->PC = sh->PC+(disp << 1) + 4;
+		sh->cycleCount += 3;
+	} else {
+		sh->PC += 2;
+		sh->cycleCount++;
+	}
+#endif
 }
 
-void bfs(SuperH * sh) { // FIXME peut être amélioré
-  long disp;
-  unsigned long temp;
-  long d = Instruction::cd(sh->instruction);
+void bfs(SuperH * sh) {
+	long disp;
+	unsigned long temp;
+	long d = Instruction::cd(sh->instruction);
 
-  temp = sh->PC;
-  disp = (long)(signed char)d;
+#ifdef DYNAREC
+	temp = sh->sh2reg[PC].value;
+	disp = (long)(signed char) d;
 
-  if (sh->SR.partie.T == 0) {
-    sh->PC = sh->PC + (disp << 1) + 4;
+	if ((sh->sh2reg[SR].value & 1) == 0) {
+		sh->sh2reg[PC].value += (disp << 1) + 4;
 
-    //sh->_delai = temp + 2;
-    sh->cycleCount += 2;
-    sh->delay(temp + 2);
-  }
-  else {
-    sh->PC += 2;
-    sh->cycleCount++;
-  }
+		sh->cycleCount += 2;
+		sh->delay(temp + 2);
+	} else {
+		sh->sh2reg[PC].value += 2;
+		sh->cycleCount++;
+	}
+#else
+	temp = sh->PC;
+	disp = (long)(signed char) d;
+
+	if (sh->SR.partie.T == 0) {
+		sh->PC = sh->PC + (disp << 1) + 4;
+
+		sh->cycleCount += 2;
+		sh->delay(temp + 2);
+	} else {
+		sh->PC += 2;
+		sh->cycleCount++;
+	}
+#endif
 }
 
 void bra(SuperH * sh) {
-  long disp = Instruction::bcd(sh->instruction);
-  unsigned long temp;
+	long disp = Instruction::bcd(sh->instruction);
+	unsigned long temp;
 
-  temp = sh->PC;
-  if ((disp&0x800) != 0) disp |= 0xFFFFF000;
-  //sh->_delai = sh->PC + 2;
-  sh->PC = sh->PC + (disp<<1) + 4;
+	if ((disp & 0x800) != 0) disp |= 0xFFFFF000;
 
-  sh->cycleCount += 2;
-  sh->delay(temp + 2);
+#ifdef DYNAREC
+	temp = sh->sh2reg[PC].value;
+
+	sh->sh2reg[PC].value += (disp << 1) + 4;
+#else
+	temp = sh->PC;
+
+	sh->PC = sh->PC + (disp << 1) + 4;
+#endif
+
+	sh->cycleCount += 2;
+	sh->delay(temp + 2);
 }
 
 void braf(SuperH * sh) {
-  unsigned long temp;
-  long m = Instruction::b(sh->instruction);
+	unsigned long temp;
+	long m = Instruction::b(sh->instruction);
 
-  temp = sh->PC;
-  sh->PC += sh->R[m] + 4; 
+#ifdef DYNAREC
+	temp = sh->sh2reg[PC].value;
+	sh->sh2reg[PC].value += sh->sh2reg[m].value + 4; 
+#else
+	temp = sh->PC;
+	sh->PC += sh->R[m] + 4; 
+#endif
 
-  //sh->_delai = temp + 2;
-  sh->cycleCount += 2;
-  sh->delay(temp + 2);
+	sh->cycleCount += 2;
+	sh->delay(temp + 2);
 }
 
 void bsr(SuperH * sh) {
-  unsigned long temp;
-  long disp = Instruction::bcd(sh->instruction);
+	unsigned long temp;
+	long disp = Instruction::bcd(sh->instruction);
 
-  temp = sh->PC;
-  if ((disp&0x800) != 0) disp |= 0xFFFFF000;
-  sh->PR = sh->PC + 4;
-  //sh->_delai = sh->PC + 2;
-  sh->PC = sh->PC+(disp<<1) + 4;
+	if ((disp & 0x800) != 0) disp |= 0xFFFFF000;
 
-  sh->cycleCount += 2;
-  sh->delay(temp + 2);
+#ifdef DYNAREC
+	temp = sh->sh2reg[PC].value;
+	sh->sh2reg[PR].value = sh->sh2reg[PC].value + 4;
+
+	sh->sh2reg[PC].value += (disp << 1) + 4;
+#else
+	temp = sh->PC;
+	sh->PR = sh->PC + 4;
+
+	sh->PC = sh->PC+(disp<<1) + 4;
+#endif
+
+	sh->cycleCount += 2;
+	sh->delay(temp + 2);
 }
 
 void bsrf(SuperH * sh) {
-  unsigned long temp = sh->PC;
-  sh->PR = sh->PC + 4;
-  sh->_delai = sh->PC + 2;
-  sh->PC += sh->R[Instruction::b(sh->instruction)] + 4;
-  sh->cycleCount += 2;
-  sh->delay(temp + 2);
+#ifdef DYNAREC
+	unsigned long temp = sh->sh2reg[PC].value;
+	sh->sh2reg[PR].value = sh->sh2reg[PC].value + 4;
+
+	sh->sh2reg[PC].value += sh->sh2reg[Instruction::b(sh->instruction)].value + 4;
+#else
+	unsigned long temp = sh->PC;
+	sh->PR = sh->PC + 4;
+	//sh->_delai = sh->PC + 2;
+	sh->PC += sh->R[Instruction::b(sh->instruction)] + 4;
+#endif
+	sh->cycleCount += 2;
+	sh->delay(temp + 2);
 }
 
-void bt(SuperH * sh) { // FIXME ya plus rapide
-  long disp;
-  long d = Instruction::cd(sh->instruction);
+void bt(SuperH * sh) {
+	long disp;
+	long d = Instruction::cd(sh->instruction);
 
-  disp = (long)(signed char)d;
-  if (sh->SR.partie.T == 1) {
-    sh->PC = sh->PC+(disp<<1)+4;
-    sh->cycleCount += 3;
-  }
-  else {
-    sh->PC += 2;
-    sh->cycleCount++;
-  }
+	disp = (long)(signed char) d;
+
+#ifdef DYNAREC
+	if ((sh->sh2reg[SR].value & 1) == 1) {
+		sh->sh2reg[PC].value += (disp << 1) + 4;
+		sh->cycleCount += 3;
+	} else {
+		sh->sh2reg[PC].value += 2;
+		sh->cycleCount++;
+	}
+#else
+	if (sh->SR.partie.T == 1) {
+		sh->PC = sh->PC+(disp<<1)+4;
+		sh->cycleCount += 3;
+	} else {
+		sh->PC += 2;
+		sh->cycleCount++;
+	}
+#endif
 }
 
 void bts(SuperH * sh) {
-  long disp;
-  unsigned long temp;
-  long d = Instruction::cd(sh->instruction);
+	long disp;
+	unsigned long temp;
+	long d = Instruction::cd(sh->instruction);
   
-  if (sh->SR.partie.T) {
-    temp = sh->PC;
-    disp = (long)(signed char)d;
-    sh->PC += (disp << 1) + 4;
-    //sh->_delai = temp + 2;
-    sh->cycleCount += 2;
-    sh->delay(temp + 2);
-  }
-  else {
-    sh->PC+=2;
-    sh->cycleCount++;
-  }
+#ifdef DYNAREC
+	if (sh->sh2reg[SR].value & 1) {
+		temp = sh->sh2reg[PC].value;
+		disp = (long)(signed char) d;
+		sh->sh2reg[PC].value += (disp << 1) + 4;
+
+		sh->cycleCount += 2;
+		sh->delay(temp + 2);
+	} else {
+		sh->sh2reg[PC].value += 2;
+		sh->cycleCount++;
+	}
+#else
+	if (sh->SR.partie.T) {
+		temp = sh->PC;
+		disp = (long)(signed char)d;
+		sh->PC += (disp << 1) + 4;
+
+		sh->cycleCount += 2;
+		sh->delay(temp + 2);
+	} else {
+		sh->PC+=2;
+		sh->cycleCount++;
+	}
+#endif
 }
 
 void clrmac(SuperH * sh) {
-  sh->MACH = 0;
-  sh->MACL = 0;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[MACH].value = 0;
+	sh->sh2reg[MACL].value = 0;
+	sh->sh2reg[PC].value += 2;
+	sh->cycleCount++;
+#else
+	sh->MACH = 0;
+	sh->MACL = 0;
+	sh->PC += 2;
+	sh->cycleCount++;
+#endif
 }
 
 void clrt(SuperH * sh) {
-  sh->SR.partie.T = 0;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+	sh->cycleCount++;
+#else
+	sh->SR.partie.T = 0;
+	sh->PC += 2;
+	sh->cycleCount++;
+#endif
 }
 
 void cmpeq(SuperH * sh) {
-  if (sh->R[Instruction::b(sh->instruction)] == sh->R[Instruction::c(sh->instruction)])
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if (sh->sh2reg[Instruction::b(sh->instruction)].value == sh->sh2reg[Instruction::c(sh->instruction)].value)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if (sh->R[Instruction::b(sh->instruction)] == sh->R[Instruction::c(sh->instruction)])
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void cmpge(SuperH * sh) {
-  if ((long)sh->R[Instruction::b(sh->instruction)] >=
-		  (long)sh->R[Instruction::c(sh->instruction)])
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((long)sh->sh2reg[Instruction::b(sh->instruction)].value >= (long)sh->sh2reg[Instruction::c(sh->instruction)].value)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((long)sh->R[Instruction::b(sh->instruction)] >= (long)sh->R[Instruction::c(sh->instruction)])
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void cmpgt(SuperH * sh) {
-  if ((long)sh->R[Instruction::b(sh->instruction)]>(long)sh->R[Instruction::c(sh->instruction)])
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((long)sh->sh2reg[Instruction::b(sh->instruction)].value > (long)sh->sh2reg[Instruction::c(sh->instruction)].value)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((long)sh->R[Instruction::b(sh->instruction)]>(long)sh->R[Instruction::c(sh->instruction)])
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void cmphi(SuperH * sh) {
-  if ((unsigned long)sh->R[Instruction::b(sh->instruction)]>
-		  (unsigned long)sh->R[Instruction::c(sh->instruction)])
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((unsigned long)sh->sh2reg[Instruction::b(sh->instruction)].value > (unsigned long)sh->sh2reg[Instruction::c(sh->instruction)].value)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((unsigned long)sh->R[Instruction::b(sh->instruction)] > (unsigned long)sh->R[Instruction::c(sh->instruction)])
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void cmphs(SuperH * sh) {
-  if ((unsigned long)sh->R[Instruction::b(sh->instruction)]>=
-		  (unsigned long)sh->R[Instruction::c(sh->instruction)])
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((unsigned long)sh->sh2reg[Instruction::b(sh->instruction)].value >= (unsigned long)sh->sh2reg[Instruction::c(sh->instruction)].value)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((unsigned long)sh->R[Instruction::b(sh->instruction)] >= (unsigned long)sh->R[Instruction::c(sh->instruction)])
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void cmpim(SuperH * sh) {
-  long imm;
-  long i = Instruction::cd(sh->instruction);
+	long imm;
+	long i = Instruction::cd(sh->instruction);
 
-  imm = (long)(signed char)i;
+	imm = (long)(signed char) i;
 
-  if (sh->R[0] == (unsigned long) imm) // FIXME: ouais ça doit être bon...
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if (sh->sh2reg[0].value == (unsigned long) imm)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if (sh->R[0] == (unsigned long) imm)
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void cmppl(SuperH * sh) {
-  if ((long)sh->R[Instruction::b(sh->instruction)]>0)
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((long)sh->sh2reg[Instruction::b(sh->instruction)].value > 0)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((long)sh->R[Instruction::b(sh->instruction)]>0)
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void cmppz(SuperH * sh) {
-  if ((long)sh->R[Instruction::b(sh->instruction)]>=0)
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((long)sh->sh2reg[Instruction::b(sh->instruction)].value >= 0)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((long)sh->R[Instruction::b(sh->instruction)]>=0)
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void cmpstr(SuperH * sh) {
-  unsigned long temp;
-  long HH,HL,LH,LL;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  temp=sh->R[n]^sh->R[m];
-  HH = (temp>>24) & 0x000000FF;
-  HL = (temp>>16) & 0x000000FF;
-  LH = (temp>>8) & 0x000000FF;
-  LL = temp & 0x000000FF;
-  HH = HH && HL && LH && LL;
-  if (HH == 0)
-    sh->SR.partie.T = 1;
-  else
-    sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount++;
+	unsigned long temp;
+	long HH, HL, LH, LL;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+
+#ifdef DYNAREC
+	temp = sh->sh2reg[n].value ^ sh->sh2reg[m].value;
+#else
+	temp = sh->R[n] ^ sh->R[m];
+#endif
+
+	HH = (temp >> 24) & 0x000000FF;
+	HL = (temp >> 16) & 0x000000FF;
+	LH = (temp >> 8) & 0x000000FF;
+	LL = temp & 0x000000FF;
+	HH = HH && HL && LH && LL;
+
+#ifdef DYNAREC
+	if (HH == 0)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if (HH == 0)
+		sh->SR.partie.T = 1;
+	else
+		sh->SR.partie.T = 0;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void div0s(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  if ((sh->R[n]&0x80000000)==0)
-    sh->SR.partie.Q = 0;
-  else
-    sh->SR.partie.Q = 1;
-  if ((sh->R[m]&0x80000000)==0)
-    sh->SR.partie.M = 0;
-  else
-    sh->SR.partie.M = 1;
-  sh->SR.partie.T = !(sh->SR.partie.M == sh->SR.partie.Q);
-  sh->PC += 2;
-  sh->cycleCount++;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x80000000) == 0)
+		sh->sh2reg[SR].value &= 0xFFFFFEFF;
+	else
+		sh->sh2reg[SR].value |= 0x100;
+	if ((sh->sh2reg[m].value & 0x80000000) == 0)
+		sh->sh2reg[SR].value &= 0xFFFFFDFF;
+	else
+		sh->sh2reg[SR].value |= 0x200;
+	if (((sh->sh2reg[SR].value >> 8) & 1) == ((sh->sh2reg[SR].value >> 9) & 1))
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	else
+		sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n] & 0x80000000) == 0)
+		sh->SR.partie.Q = 0;
+	else
+		sh->SR.partie.Q = 1;
+	if ((sh->R[m] & 0x80000000) == 0)
+		sh->SR.partie.M = 0;
+	else
+		sh->SR.partie.M = 1;
+	sh->SR.partie.T = !(sh->SR.partie.M == sh->SR.partie.Q);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void div0u(SuperH * sh) {
-  sh->SR.partie.M = sh->SR.partie.Q = sh->SR.partie.T = 0;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[SR].value &= 0xFFFFFCFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->SR.partie.M = sh->SR.partie.Q = sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void div1(SuperH * sh) {
-  unsigned long tmp0;
-  unsigned char old_q, tmp1;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	unsigned long tmp0;
+	unsigned char old_q, tmp1;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
   
-  old_q = sh->SR.partie.Q;
-  sh->SR.partie.Q = (unsigned char)((0x80000000 & sh->R[n])!=0);
-  sh->R[n] <<= 1;
-  sh->R[n]|=(unsigned long) sh->SR.partie.T;
-  switch(old_q){
-  case 0:
-    switch(sh->SR.partie.M){
-    case 0:
-      tmp0 = sh->R[n];
-      sh->R[n] -= sh->R[m];
-      tmp1 = (sh->R[n] > tmp0);
-      switch(sh->SR.partie.Q){
-      case 0:
-	sh->SR.partie.Q = tmp1;
-	break;
-      case 1:
-	sh->SR.partie.Q = (unsigned char) (tmp1 == 0);
-	break;
-      }
-      break;
-    case 1:
-      tmp0 = sh->R[n];
-      sh->R[n] += sh->R[m];
-      tmp1 = (sh->R[n] < tmp0);
-      switch(sh->SR.partie.Q){
-      case 0:
-	sh->SR.partie.Q = (unsigned char) (tmp1 == 0);
-	break;
-      case 1:
-	sh->SR.partie.Q = tmp1;
-	break;
-      }
-      break;
-    }
-    break;
-  case 1:switch(sh->SR.partie.M){
-  case 0:
-    tmp0 = sh->R[n];
-    sh->R[n] += sh->R[m];
-    tmp1 = (sh->R[n] < tmp0);
-    switch(sh->SR.partie.Q){
-    case 0:
-      sh->SR.partie.Q = tmp1;
-      break;
-    case 1:
-      sh->SR.partie.Q = (unsigned char) (tmp1 == 0);
-      break;
-    }
-    break;
-  case 1:
-    tmp0 = sh->R[n];
-    sh->R[n] -= sh->R[m];
-    tmp1 = (sh->R[n] > tmp0);
-    switch(sh->SR.partie.Q){
-    case 0:
-      sh->SR.partie.Q = (unsigned char) (tmp1 == 0);
-      break;
-    case 1:
-      sh->SR.partie.Q = tmp1;
-      break;
-    }
-    break;
-  }
-  break;
-  }
-  sh->SR.partie.T = (sh->SR.partie.Q == sh->SR.partie.M);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	old_q = (sh->sh2reg[SR].value >> 8) & 1;
+	if (0x80000000 & sh->sh2reg[n].value)
+		sh->sh2reg[SR].value |= 0x100;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFEFF;
+	sh->sh2reg[n].value <<= 1;
+	sh->sh2reg[n].value |= (unsigned long) sh->sh2reg[SR].value & 1;
+	switch(old_q) {
+	case 0:
+		switch((sh->sh2reg[SR].value >> 9) & 1) {
+		case 0:
+			tmp0 = sh->sh2reg[n].value;
+			sh->sh2reg[n].value -= sh->sh2reg[m].value;
+			switch((sh->sh2reg[SR].value >> 8) & 1) {
+			case 0:
+				if (sh->sh2reg[n].value > tmp0)
+					sh->sh2reg[SR].value |= 0x100;
+				else
+					sh->sh2reg[SR].value &= 0xFFFFFEFF;
+				break;
+			case 1:
+				if (sh->sh2reg[n].value > tmp0)
+					sh->sh2reg[SR].value &= 0xFFFFFEFF;
+				else
+					sh->sh2reg[SR].value |= 0x100;
+				break;
+			}
+			break;
+		case 1:
+			tmp0 = sh->sh2reg[n].value;
+			sh->sh2reg[n].value += sh->sh2reg[m].value;
+			switch((sh->sh2reg[SR].value >> 8) & 1) {
+			case 0:
+				if (sh->sh2reg[n].value < tmp0)
+					sh->sh2reg[SR].value &= 0xFFFFFEFF;
+				else
+					sh->sh2reg[SR].value |= 0x100;
+				break;
+			case 1:
+				if (sh->sh2reg[n].value < tmp0)
+					sh->sh2reg[SR].value |= 0x100;
+				else
+					sh->sh2reg[SR].value &= 0xFFFFFEFF;
+				break;
+			}
+			break;
+		}
+		break;
+	case 1:
+		switch((sh->sh2reg[SR].value >> 9) & 1) {
+		case 0:
+			tmp0 = sh->sh2reg[n].value;
+			sh->sh2reg[n].value += sh->sh2reg[m].value;
+			switch((sh->sh2reg[SR].value >> 8) & 1) {
+			case 0:
+				if (sh->sh2reg[n].value < tmp0)
+					sh->sh2reg[SR].value |= 0x100;
+				else
+					sh->sh2reg[SR].value &= 0xFFFFFEFF;
+				break;
+			case 1:
+				if (sh->sh2reg[n].value < tmp0)
+					sh->sh2reg[SR].value &= 0xFFFFFEFF;
+				else
+					sh->sh2reg[SR].value |= 0x100;
+				break;
+			}
+			break;
+		case 1:
+			tmp0 = sh->sh2reg[n].value;
+			sh->sh2reg[n].value -= sh->sh2reg[m].value;
+			switch((sh->sh2reg[SR].value >> 8) & 1) {
+			case 0:
+				if (sh->sh2reg[n].value > tmp0)
+					sh->sh2reg[SR].value &= 0xFFFFFEFF;
+				else
+					sh->sh2reg[SR].value |= 0x100;
+				break;
+			case 1:
+				if (sh->sh2reg[n].value > tmp0)
+					sh->sh2reg[SR].value |= 0x100;
+				else
+					sh->sh2reg[SR].value &= 0xFFFFFEFF;
+				break;
+			}
+			break;
+		}
+		break;
+	}
+	if (((sh->sh2reg[SR].value >> 8) & 1) == ((sh->sh2reg[SR].value >> 9) & 1))
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value = 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	old_q = sh->SR.partie.Q;
+	sh->SR.partie.Q = (unsigned char)((0x80000000 & sh->R[n]) != 0);
+	sh->R[n] <<= 1;
+	sh->R[n] |= (unsigned long) sh->SR.partie.T;
+	switch(old_q) {
+	case 0:
+		switch(sh->SR.partie.M) {
+		case 0:
+			tmp0 = sh->R[n];
+			sh->R[n] -= sh->R[m];
+			tmp1 = (sh->R[n] > tmp0);
+			switch(sh->SR.partie.Q) {
+			case 0:
+				sh->SR.partie.Q = tmp1;
+				break;
+			case 1:
+				sh->SR.partie.Q = (unsigned char) (tmp1 == 0);
+				break;
+			}
+			break;
+		case 1:
+			tmp0 = sh->R[n];
+			sh->R[n] += sh->R[m];
+			tmp1 = (sh->R[n] < tmp0);
+			switch(sh->SR.partie.Q) {
+			case 0:
+				sh->SR.partie.Q = (unsigned char) (tmp1 == 0);
+				break;
+			case 1:
+				sh->SR.partie.Q = tmp1;
+				break;
+			}
+			break;
+		}
+		break;
+	case 1:
+		switch(sh->SR.partie.M) {
+		case 0:
+			tmp0 = sh->R[n];
+			sh->R[n] += sh->R[m];
+			tmp1 = (sh->R[n] < tmp0);
+			switch(sh->SR.partie.Q) {
+			case 0:
+				sh->SR.partie.Q = tmp1;
+				break;
+			case 1:
+				sh->SR.partie.Q = (unsigned char) (tmp1 == 0);
+				break;
+			}
+			break;
+		case 1:
+			tmp0 = sh->R[n];
+			sh->R[n] -= sh->R[m];
+			tmp1 = (sh->R[n] > tmp0);
+			switch(sh->SR.partie.Q) {
+			case 0:
+				sh->SR.partie.Q = (unsigned char) (tmp1 == 0);
+				break;
+			case 1:
+				sh->SR.partie.Q = tmp1;
+				break;
+			}
+			break;
+		}
+		break;
+	}
+	sh->SR.partie.T = (sh->SR.partie.Q == sh->SR.partie.M);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 
 void dmuls(SuperH * sh) {
-  unsigned long RnL,RnH,RmL,RmH,Res0,Res1,Res2;
-  unsigned long temp0,temp1,temp2,temp3;
-  long tempm,tempn,fnLmL;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  
-  tempn = (long)sh->R[n];
-  tempm = (long)sh->R[m];
-  if (tempn < 0) tempn = 0 - tempn;
-  if (tempm < 0) tempm = 0 - tempm;
-  if ((long) (sh->R[n] ^ sh->R[m]) < 0) fnLmL = -1;
-  else fnLmL = 0;
-  
-  temp1 = (unsigned long) tempn;
-  temp2 = (unsigned long) tempm;
+	unsigned long RnL, RnH, RmL, RmH, Res0, Res1, Res2;
+	unsigned long temp0, temp1, temp2, temp3;
+	long tempm, tempn, fnLmL;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  RnL = temp1 & 0x0000FFFF;
-  RnH = (temp1 >> 16) & 0x0000FFFF;
-  RmL = temp2 & 0x0000FFFF;
-  RmH = (temp2 >> 16) & 0x0000FFFF;
-  
-  temp0 = RmL * RnL;
-  temp1 = RmH * RnL;
-  temp2 = RmL * RnH;
-  temp3 = RmH * RnH;
+#ifdef DYNAREC
+	if ((long) (sh->sh2reg[n].value ^ sh->sh2reg[m].value) < 0) fnLmL = -1;
+	else fnLmL = 0;
+	tempn = (long) sh->sh2reg[n].value;
+	tempm = (long) sh->sh2reg[m].value;
+#else
+	if ((long) (sh->R[n] ^ sh->R[m]) < 0) fnLmL = -1;
+	else fnLmL = 0;
+	tempn = (long) sh->R[n];
+	tempm = (long) sh->R[m];
+#endif
+	if (tempn < 0) tempn = 0 - tempn;
+	if (tempm < 0) tempm = 0 - tempm;
 
-  Res2 = 0;
-  Res1 = temp1 + temp2;
-  if (Res1 < temp1) Res2 += 0x00010000;
+	temp1 = (unsigned long) tempn;
+	temp2 = (unsigned long) tempm;
 
-  temp1 = (Res1 << 16) & 0xFFFF0000;
-  Res0 = temp0 + temp1;
-  if (Res0 < temp0) Res2++;
-  
-  Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+	RnL = temp1 & 0x0000FFFF;
+	RnH = (temp1 >> 16) & 0x0000FFFF;
+	RmL = temp2 & 0x0000FFFF;
+	RmH = (temp2 >> 16) & 0x0000FFFF;
 
-  if (fnLmL < 0) {
-    Res2 = ~Res2;
-    if (Res0 == 0)
-      Res2++;
-    else
-      Res0 =(~Res0) + 1;
-  }
-  sh->MACH = Res2;
-  sh->MACL = Res0;
-  sh->PC += 2;
-  sh->cycleCount += 2;
+	temp0 = RmL * RnL;
+	temp1 = RmH * RnL;
+	temp2 = RmL * RnH;
+	temp3 = RmH * RnH;
+
+	Res2 = 0;
+	Res1 = temp1 + temp2;
+	if (Res1 < temp1) Res2 += 0x00010000;
+
+	temp1 = (Res1 << 16) & 0xFFFF0000;
+	Res0 = temp0 + temp1;
+	if (Res0 < temp0) Res2++;
+
+	Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+
+	if (fnLmL < 0) {
+		Res2 = ~Res2;
+		if (Res0 == 0)
+			Res2++;
+		else
+			Res0 =(~Res0) + 1;
+	}
+#ifdef DYNAREC
+	sh->sh2reg[MACH].value = Res2;
+	sh->sh2reg[MACL].value = Res0;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACH = Res2;
+	sh->MACL = Res0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 2;
 }
 
 void dmulu(SuperH * sh) {
-  unsigned long RnL,RnH,RmL,RmH,Res0,Res1,Res2;
-  unsigned long temp0,temp1,temp2,temp3;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	unsigned long RnL, RnH, RmL, RmH, Res0, Res1, Res2;
+	unsigned long temp0, temp1, temp2, temp3;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  RnL = sh->R[n] & 0x0000FFFF;
-  RnH = (sh->R[n] >> 16) & 0x0000FFFF;
-  RmL = sh->R[m] & 0x0000FFFF;
-  RmH = (sh->R[m] >> 16) & 0x0000FFFF;
+#ifdef DYNAREC
+	RnL = sh->sh2reg[n].value & 0x0000FFFF;
+	RnH = (sh->sh2reg[n].value >> 16) & 0x0000FFFF;
+	RmL = sh->sh2reg[m].value & 0x0000FFFF;
+	RmH = (sh->sh2reg[m].value >> 16) & 0x0000FFFF;
+#else
+	RnL = sh->R[n] & 0x0000FFFF;
+	RnH = (sh->R[n] >> 16) & 0x0000FFFF;
+	RmL = sh->R[m] & 0x0000FFFF;
+	RmH = (sh->R[m] >> 16) & 0x0000FFFF;
+#endif
 
-  temp0 = RmL * RnL;
-  temp1 = RmH * RnL;
-  temp2 = RmL * RnH;
-  temp3 = RmH * RnH;
-  
-  Res2 = 0;
-  Res1 = temp1 + temp2;
-  if (Res1 < temp1) Res2 += 0x00010000;
-  
-  temp1 = (Res1 << 16) & 0xFFFF0000;
-  Res0 = temp0 + temp1;
-  if (Res0 < temp0) Res2++;
-  
-  Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+	temp0 = RmL * RnL;
+	temp1 = RmH * RnL;
+	temp2 = RmL * RnH;
+	temp3 = RmH * RnH;
 
-  sh->MACH = Res2;
-  sh->MACL = Res0;
-  sh->PC += 2;
-  sh->cycleCount += 2;
+	Res2 = 0;
+	Res1 = temp1 + temp2;
+	if (Res1 < temp1) Res2 += 0x00010000;
+
+	temp1 = (Res1 << 16) & 0xFFFF0000;
+	Res0 = temp0 + temp1;
+	if (Res0 < temp0) Res2++;
+
+	Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+
+#ifdef DYNAREC
+	sh->sh2reg[MACH].value = Res2;
+	sh->sh2reg[MACL].value = Res0;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACH = Res2;
+	sh->MACL = Res0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 2;
 }
 
 void dt(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]--;
-  if (sh->R[n] == 0) sh->SR.partie.T = 1;
-  else sh->SR.partie.T = 0;
-  sh->PC += 2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+
+#ifdef DYNAREC
+	sh->sh2reg[n].value--;
+	if (sh->sh2reg[n].value == 0)	
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]--;
+	if (sh->R[n] == 0) sh->SR.partie.T = 1;
+	else sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void extsb(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (unsigned long)(signed char)sh->R[m];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (unsigned long)(signed char) sh->sh2reg[m].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (unsigned long)(signed char) sh->R[m];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void extsw(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (unsigned long)(signed short)sh->R[m];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (unsigned long)(signed short) sh->sh2reg[m].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (unsigned long)(signed short) sh->R[m];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void extub(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (unsigned long)(unsigned char)sh->R[m];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (unsigned long)(unsigned char) sh->sh2reg[m].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (unsigned long)(unsigned char)sh->R[m];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void extuw(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (unsigned long)(unsigned short)sh->R[m];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (unsigned long)(unsigned short) sh->sh2reg[m].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (unsigned long)(unsigned short)sh->R[m];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void jmp(SuperH * sh) {
-  unsigned long temp;
-  long m = Instruction::b(sh->instruction);
+	unsigned long temp;
+	long m = Instruction::b(sh->instruction);
 
-  temp=sh->PC;
-  sh->PC = sh->R[m];
-  //sh->_delai = temp + 2;
-  sh->cycleCount += 2;
-  sh->delay(temp + 2);
+#ifdef DYNAREC
+	temp = sh->sh2reg[PC].value;
+	sh->sh2reg[PC].value = sh->sh2reg[m].value;
+#else
+	temp = sh->PC;
+	sh->PC = sh->R[m];
+#endif
+
+	sh->cycleCount += 2;
+	sh->delay(temp + 2);
 }
 
 void jsr(SuperH * sh) {
-  unsigned long temp;
-  long m = Instruction::b(sh->instruction);
+	unsigned long temp;
+	long m = Instruction::b(sh->instruction);
 
-  temp = sh->PC;
-  sh->PR = sh->PC + 4;
-  //sh->_delai = sh->PC + 2;
-  sh->PC = sh->R[m];
-  sh->cycleCount += 2;
-  sh->delay(temp + 2);
+#ifdef DYNAREC
+	temp = sh->sh2reg[PC].value;
+	sh->sh2reg[PR].value = sh->sh2reg[PC].value + 4;
+	sh->sh2reg[PC].value = sh->sh2reg[m].value;
+#else
+	temp = sh->PC;
+	sh->PR = sh->PC + 4;
+	sh->PC = sh->R[m];
+#endif
+
+	sh->cycleCount += 2;
+	sh->delay(temp + 2);
 }
 
 void ldcgbr(SuperH * sh) {
-  sh->GBR = sh->R[Instruction::b(sh->instruction)];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[GBR].value = sh->sh2reg[Instruction::b(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->GBR = sh->R[Instruction::b(sh->instruction)];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void ldcmgbr(SuperH * sh) {
-  long m = Instruction::b(sh->instruction);
+	long m = Instruction::b(sh->instruction);
 
-  sh->GBR = sh->memoire->getLong(sh->R[m]);
-  sh->R[m] += 4;
-  sh->PC += 2;
-  sh->cycleCount += 3;
+#ifdef DYNAREC
+	sh->sh2reg[GBR].value = sh->memoire->getLong(sh->sh2reg[m].value);
+	sh->sh2reg[m].value += 4;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->GBR = sh->memoire->getLong(sh->R[m]);
+	sh->R[m] += 4;
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 3;
 }
 
 void ldcmsr(SuperH * sh) {
-  long m = Instruction::b(sh->instruction);
+	long m = Instruction::b(sh->instruction);
 
-  sh->SR.tout = sh->memoire->getLong(sh->R[m]) & 0x000003F3;
-  sh->R[m] += 4;
-  sh->PC += 2;
-  sh->cycleCount += 3;
+#ifdef DYNAREC
+	sh->sh2reg[SR].value = sh->memoire->getLong(sh->sh2reg[m].value) & 0x000003F3;
+	sh->sh2reg[m].value += 4;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->SR.tout = sh->memoire->getLong(sh->R[m]) & 0x000003F3;
+	sh->R[m] += 4;
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 3;
 }
 
 void ldcmvbr(SuperH * sh) {
-  long m = Instruction::b(sh->instruction);
+	long m = Instruction::b(sh->instruction);
 
-  sh->VBR = sh->memoire->getLong(sh->R[m]);
-  sh->R[m] += 4;
-  sh->PC += 2;
-  sh->cycleCount += 3;
+#ifdef DYNAREC
+	sh->sh2reg[VBR].value = sh->memoire->getLong(sh->sh2reg[m].value);
+	sh->sh2reg[m].value += 4;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->VBR = sh->memoire->getLong(sh->R[m]);
+	sh->R[m] += 4;
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 3;
 }
 
 void ldcsr(SuperH * sh) {
-  sh->SR.tout = sh->R[Instruction::b(sh->instruction)]&0x000003F3;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[SR].value = sh->sh2reg[Instruction::b(sh->instruction)].value & 0x000003F3;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->SR.tout = sh->R[Instruction::b(sh->instruction)]&0x000003F3;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void ldcvbr(SuperH * sh) {
-  long m = Instruction::b(sh->instruction);
+	long m = Instruction::b(sh->instruction);
 
-  sh->VBR = sh->R[m];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[VBR].value = sh->sh2reg[m].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->VBR = sh->R[m];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void ldsmach(SuperH * sh) {
-  sh->MACH = sh->R[Instruction::b(sh->instruction)];
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[MACH].value = sh->sh2reg[Instruction::b(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACH = sh->R[Instruction::b(sh->instruction)];
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void ldsmacl(SuperH * sh) {
-  sh->MACL = sh->R[Instruction::b(sh->instruction)];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[MACL].value = sh->sh2reg[Instruction::b(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACL = sh->R[Instruction::b(sh->instruction)];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void ldsmmach(SuperH * sh) {
-  long m = Instruction::b(sh->instruction);
-  sh->MACH = sh->memoire->getLong(sh->R[m]);
-  sh->R[m] += 4;
-  sh->PC += 2;
-  sh->cycleCount++;
+	long m = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[MACH].value = sh->memoire->getLong(sh->sh2reg[m].value);
+	sh->sh2reg[m].value += 4;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACH = sh->memoire->getLong(sh->R[m]);
+	sh->R[m] += 4;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void ldsmmacl(SuperH * sh) {
-  long m = Instruction::b(sh->instruction);
-  sh->MACL = sh->memoire->getLong(sh->R[m]);
-  sh->R[m] += 4;
-  sh->PC += 2;
-  sh->cycleCount++;
+	long m = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[MACL].value = sh->memoire->getLong(sh->sh2reg[m].value);
+	sh->sh2reg[m].value += 4;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACL = sh->memoire->getLong(sh->R[m]);
+	sh->R[m] += 4;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void ldsmpr(SuperH * sh) {
-  long m = Instruction::b(sh->instruction);
-  sh->PR = sh->memoire->getLong(sh->R[m]);
-  sh->R[m] += 4;
-  sh->PC += 2;
-  sh->cycleCount++;
+	long m = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[PR].value = sh->memoire->getLong(sh->sh2reg[m].value);
+	sh->sh2reg[m].value += 4;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->PR = sh->memoire->getLong(sh->R[m]);
+	sh->R[m] += 4;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void ldspr(SuperH * sh) {
-  sh->PR = sh->R[Instruction::b(sh->instruction)];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[PR].value = sh->sh2reg[Instruction::b(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->PR = sh->R[Instruction::b(sh->instruction)];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void macl(SuperH * sh) {
-  unsigned long RnL,RnH,RmL,RmH,Res0,Res1,Res2;
-  unsigned long temp0,temp1,temp2,temp3;
-  long tempm,tempn,fnLmL;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  
-  tempn = (long) sh->memoire->getLong(sh->R[n]);
-  sh->R[n] += 4;
-  tempm = (long) sh->memoire->getLong(sh->R[m]);
-  sh->R[m] += 4;
+	unsigned long RnL,RnH,RmL,RmH,Res0,Res1,Res2;
+	unsigned long temp0,temp1,temp2,temp3;
+	long tempm,tempn,fnLmL;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  if ((long) (tempn^tempm) < 0) fnLmL =- 1;
-  else fnLmL = 0;
-  if (tempn < 0) tempn = 0 - tempn;
-  if (tempm < 0) tempm = 0 - tempm;
+#ifdef DYNAREC
+	tempn = (long) sh->memoire->getLong(sh->sh2reg[n].value);
+	sh->sh2reg[n].value += 4;
+	tempm = (long) sh->memoire->getLong(sh->sh2reg[m].value);
+	sh->sh2reg[m].value += 4;
+#else
+	tempn = (long) sh->memoire->getLong(sh->R[n]);
+	sh->R[n] += 4;
+	tempm = (long) sh->memoire->getLong(sh->R[m]);
+	sh->R[m] += 4;
+#endif
 
-  temp1 = (unsigned long) tempn;
-  temp2 = (unsigned long) tempm;
+	if ((long) (tempn^tempm) < 0) fnLmL =- 1;
+	else fnLmL = 0;
+	if (tempn < 0) tempn = 0 - tempn;
+	if (tempm < 0) tempm = 0 - tempm;
 
-  RnL = temp1 & 0x0000FFFF;
-  RnH = (temp1 >> 16) & 0x0000FFFF;
-  RmL = temp2 & 0x0000FFFF;
-  RmH = (temp2 >> 16) & 0x0000FFFF;
+	temp1 = (unsigned long) tempn;
+	temp2 = (unsigned long) tempm;
 
-  temp0 = RmL * RnL;
-  temp1 = RmH * RnL;
-  temp2 = RmL * RnH;
-  temp3 = RmH * RnH;
-     
-  Res2 = 0;
-  Res1 = temp1 + temp2;
-  if (Res1 < temp1) Res2 += 0x00010000;
+	RnL = temp1 & 0x0000FFFF;
+	RnH = (temp1 >> 16) & 0x0000FFFF;
+	RmL = temp2 & 0x0000FFFF;
+	RmH = (temp2 >> 16) & 0x0000FFFF;
 
-  temp1 = (Res1 << 16) & 0xFFFF0000;
-  Res0 = temp0 + temp1;
-  if (Res0 < temp0) Res2++;
+	temp0 = RmL * RnL;
+	temp1 = RmH * RnL;
+	temp2 = RmL * RnH;
+	temp3 = RmH * RnH;
 
-  Res2=Res2+((Res1>>16)&0x0000FFFF)+temp3;
+	Res2 = 0;
+	Res1 = temp1 + temp2;
+	if (Res1 < temp1) Res2 += 0x00010000;
 
-  if(fnLmL < 0){
-    Res2=~Res2;
-    if (Res0==0) Res2++;
-    else Res0=(~Res0)+1;
-  }
-  if(sh->SR.partie.S == 1){
-    Res0=sh->MACL+Res0;
-    if (sh->MACL>Res0) Res2++;
-    if (sh->MACH & 0x00008000);
-    else Res2 += sh->MACH | 0xFFFF0000;
-    Res2+=(sh->MACH&0x0000FFFF);
-    if(((long)Res2<0)&&(Res2<0xFFFF8000)){
-      Res2=0x00008000;
-      Res0=0x00000000;
-    }
-    if(((long)Res2>0)&&(Res2>0x00007FFF)){
-      Res2=0x00007FFF;
-      Res0=0xFFFFFFFF;
-    };
-    
-    sh->MACH=Res2;
-    sh->MACL=Res0;
-  }
-  else {
-    Res0=sh->MACL+Res0;
-    if (sh->MACL>Res0) Res2++;
-    Res2+=sh->MACH;
+	temp1 = (Res1 << 16) & 0xFFFF0000;
+	Res0 = temp0 + temp1;
+	if (Res0 < temp0) Res2++;
 
-    sh->MACH=Res2;
-    sh->MACL=Res0;
-  }
-  
-  sh->PC+=2;
-  sh->cycleCount += 3;
+	Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+
+	if(fnLmL < 0) {
+		Res2 = ~Res2;
+		if (Res0 == 0) Res2++;
+		else Res0 = (~Res0) + 1;
+	}
+#ifdef DYNAREC
+	if((sh->sh2reg[SR].value >> 1) & 1) {
+		Res0 = sh->sh2reg[MACL].value + Res0;
+		if (sh->sh2reg[MACL].value > Res0) Res2++;
+		if (sh->sh2reg[MACH].value & 0x00008000);
+		else Res2 += sh->sh2reg[MACH].value | 0xFFFF0000;
+		Res2 += (sh->sh2reg[MACH].value & 0x0000FFFF);
+		if(((long)Res2 < 0) && (Res2 < 0xFFFF8000)) {
+			Res2=0x00008000;
+			Res0=0x00000000;
+		}
+		if(((long)Res2 > 0) && (Res2 > 0x00007FFF)) {
+			Res2=0x00007FFF;
+			Res0=0xFFFFFFFF;
+		}
+	
+		sh->sh2reg[MACH].value = Res2;
+		sh->sh2reg[MACL].value = Res0;
+	} else {
+		Res0 = sh->sh2reg[MACL].value + Res0;
+		if (sh->sh2reg[MACL].value > Res0) Res2++;
+		Res2 += sh->sh2reg[MACH].value;
+
+		sh->sh2reg[MACH].value = Res2;
+		sh->sh2reg[MACL].value = Res0;
+	}
+
+	sh->sh2reg[PC].value += 2;
+#else
+	if(sh->SR.partie.S == 1) {
+		Res0 = sh->MACL+Res0;
+		if (sh->MACL > Res0) Res2++;
+		if (sh->MACH & 0x00008000);
+		else Res2 += sh->MACH | 0xFFFF0000;
+		Res2+=(sh->MACH&0x0000FFFF);
+		if(((long)Res2<0)&&(Res2<0xFFFF8000)){
+			Res2=0x00008000;
+			Res0=0x00000000;
+		}
+		if(((long)Res2 > 0) && (Res2 > 0x00007FFF)) {
+			Res2=0x00007FFF;
+			Res0=0xFFFFFFFF;
+		};
+	
+		sh->MACH=Res2;
+		sh->MACL=Res0;
+	} else {
+		Res0 = sh->MACL + Res0;
+		if (sh->MACL>Res0) Res2++;
+		Res2 += sh->MACH;
+
+		sh->MACH=Res2;
+		sh->MACL=Res0;
+	}
+
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 3;
 }
 
 void macw(SuperH * sh) {
-  long tempm,tempn,dest,src,ans;
-  unsigned long templ;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long tempm,tempn,dest,src,ans;
+	unsigned long templ;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  tempn=(long) sh->memoire->getWord(sh->R[n]);
-  sh->R[n]+=2;
-  tempm=(long) sh->memoire->getWord(sh->R[m]);
-  sh->R[m]+=2;
-  templ=sh->MACL;
-  tempm=((long)(short)tempn*(long)(short)tempm);
+#ifdef DYNAREC
+	tempn = (long) sh->memoire->getWord(sh->sh2reg[n].value);
+	sh->sh2reg[n].value += 2;
+	tempm = (long) sh->memoire->getWord(sh->sh2reg[m].value);
+	sh->sh2reg[m].value += 2;
+	templ = sh->sh2reg[MACL].value;
+	tempm = ((long)(short)tempn*(long)(short)tempm);
 
-  if ((long)sh->MACL>=0) dest=0;
-  else dest=1;
-  if ((long)tempm>=0) {
-    src=0;
-    tempn=0;
-  }
-  else {
-    src=1;
-    tempn=0xFFFFFFFF;
-  }
-  src+=dest;
-  sh->MACL+=tempm;
-  if ((long)sh->MACL>=0) ans=0;
-  else ans=1;
-  ans+=dest;
-  if (sh->SR.partie.S == 1) {
-    if (ans==1) {
-      if (src==0) sh->MACL=0x7FFFFFFF;
-      if (src==2) sh->MACL=0x80000000;
-    }
-  }
-  else {
-    sh->MACH+=tempn;
-    if (templ>sh->MACL) sh->MACH+=1;
-  }
-  sh->PC+=2;
-  sh->cycleCount += 3;
+	if ((long)sh->sh2reg[MACL].value >= 0) dest = 0;
+	else dest = 1;
+	if ((long) tempm >= 0) {
+		src=0;
+		tempn=0;
+	} else {
+		src=1;
+		tempn=0xFFFFFFFF;
+	}
+	src+=dest;
+	sh->sh2reg[MACL].value += tempm;
+	if ((long)sh->sh2reg[MACL].value >= 0) ans = 0;
+	else ans = 1;
+	ans += dest;
+	if ((sh->sh2reg[SR].value >> 1) & 1) {
+		if (ans==1) {
+			if (src==0) sh->sh2reg[MACL].value = 0x7FFFFFFF;
+			if (src==2) sh->sh2reg[MACL].value = 0x80000000;
+		}
+	} else {
+		sh->sh2reg[MACH].value += tempn;
+		if (templ > sh->sh2reg[MACL].value) sh->sh2reg[MACH].value += 1;
+	}
+	sh->sh2reg[PC].value += 2;
+#else
+	tempn=(long) sh->memoire->getWord(sh->R[n]);
+	sh->R[n]+=2;
+	tempm=(long) sh->memoire->getWord(sh->R[m]);
+	sh->R[m]+=2;
+	templ=sh->MACL;
+	tempm=((long)(short)tempn*(long)(short)tempm);
+
+	if ((long)sh->MACL>=0) dest=0;
+	else dest=1;
+	if ((long)tempm>=0) {
+		src=0;
+		tempn=0;
+	} else {
+		src=1;
+		tempn=0xFFFFFFFF;
+	}
+	src+=dest;
+	sh->MACL+=tempm;
+	if ((long)sh->MACL>=0) ans=0;
+	else ans=1;
+	ans+=dest;
+	if (sh->SR.partie.S == 1) {
+		if (ans==1) {
+			if (src==0) sh->MACL=0x7FFFFFFF;
+			if (src==2) sh->MACL=0x80000000;
+		}
+	} else {
+		sh->MACH+=tempn;
+		if (templ>sh->MACL) sh->MACH+=1;
+	}
+	sh->PC+=2;
+#endif
+	sh->cycleCount += 3;
 }
 
 void mov(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)]=sh->R[Instruction::c(sh->instruction)];
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value = sh->sh2reg[Instruction::c(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)]=sh->R[Instruction::c(sh->instruction)];
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void mova(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
+	long disp = Instruction::cd(sh->instruction);
 
-  sh->R[0]=((sh->PC+4)&0xFFFFFFFC)+(disp<<2);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[0].value = ((sh->sh2reg[PC].value + 4) & 0xFFFFFFFC) + (disp << 2);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0]=((sh->PC+4)&0xFFFFFFFC)+(disp<<2);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbl(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (long)(signed char)sh->memoire->getByte(sh->R[m]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (long)(signed char)sh->memoire->getByte(sh->sh2reg[m].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (long)(signed char)sh->memoire->getByte(sh->R[m]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbl0(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (long)(signed char)sh->memoire->getByte(sh->R[m] + sh->R[0]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (long)(signed char)sh->memoire->getByte(sh->sh2reg[m].value + sh->sh2reg[0].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (long)(signed char)sh->memoire->getByte(sh->R[m] + sh->R[0]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbl4(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long disp = Instruction::d(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long disp = Instruction::d(sh->instruction);
 
-  sh->R[0] = (long)(signed char)sh->memoire->getByte(sh->R[m] + disp);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[0].value = (long)(signed char)sh->memoire->getByte(sh->sh2reg[m].value + disp);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0] = (long)(signed char)sh->memoire->getByte(sh->R[m] + disp);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movblg(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
-  
-  sh->R[0] = (long)(signed char)sh->memoire->getByte(sh->GBR + disp);
-  sh->PC+=2;
-  sh->cycleCount++;
+	long disp = Instruction::cd(sh->instruction);
+
+#ifdef DYNAREC
+	sh->sh2reg[0].value = (long)(signed char)sh->memoire->getByte(sh->sh2reg[GBR].value + disp);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0] = (long)(signed char)sh->memoire->getByte(sh->GBR + disp);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbm(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->memoire->setByte((sh->R[n] - 1),sh->R[m]);
-  sh->R[n] -= 1;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setByte((sh->sh2reg[n].value - 1), sh->sh2reg[m].value);
+	sh->sh2reg[n].value -= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setByte((sh->R[n] - 1),sh->R[m]);
+	sh->R[n] -= 1;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbp(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (long)(signed char)sh->memoire->getByte(sh->R[m]);
-  if (n != m)
-    sh->R[m] += 1;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (long)(signed char)sh->memoire->getByte(sh->sh2reg[m].value);
+	if (n != m)
+		sh->sh2reg[m].value += 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (long)(signed char)sh->memoire->getByte(sh->R[m]);
+	if (n != m)
+		sh->R[m] += 1;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbs(SuperH * sh) {
-  sh->memoire->setByte(sh->R[Instruction::b(sh->instruction)],
-	sh->R[Instruction::c(sh->instruction)]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setByte(sh->sh2reg[Instruction::b(sh->instruction)].value,
+		sh->sh2reg[Instruction::c(sh->instruction)].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setByte(sh->R[Instruction::b(sh->instruction)], sh->R[Instruction::c(sh->instruction)]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbs0(SuperH * sh) {
-  sh->memoire->setByte(sh->R[Instruction::b(sh->instruction)] + sh->R[0],
-	sh->R[Instruction::c(sh->instruction)]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setByte(sh->sh2reg[Instruction::b(sh->instruction)].value + sh->sh2reg[0].value,
+		sh->sh2reg[Instruction::c(sh->instruction)].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setByte(sh->R[Instruction::b(sh->instruction)] + sh->R[0],
+		sh->R[Instruction::c(sh->instruction)]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbs4(SuperH * sh) {
-  long disp = Instruction::d(sh->instruction);
-  long n = Instruction::c(sh->instruction);
+	long disp = Instruction::d(sh->instruction);
+	long n = Instruction::c(sh->instruction);
 
-  sh->memoire->setByte(sh->R[n]+disp,sh->R[0]);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setByte(sh->sh2reg[n].value + disp, sh->sh2reg[0].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setByte(sh->R[n]+disp,sh->R[0]);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movbsg(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
+	long disp = Instruction::cd(sh->instruction);
 
-  sh->memoire->setByte(sh->GBR + disp,sh->R[0]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setByte(sh->sh2reg[GBR].value + disp, sh->sh2reg[0].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setByte(sh->GBR + disp,sh->R[0]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movi(SuperH * sh) {
-  long i = Instruction::cd(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long i = Instruction::cd(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (long)(signed char)i;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (long)(signed char) i;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (long)(signed char)i;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movli(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long disp = Instruction::cd(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = sh->memoire->getLong(((sh->PC + 4) & 0xFFFFFFFC) + (disp << 2));
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->memoire->getLong(((sh->sh2reg[PC].value + 4) & 0xFFFFFFFC) + (disp << 2));
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = sh->memoire->getLong(((sh->PC + 4) & 0xFFFFFFFC) + (disp << 2));
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movll(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] =
-	sh->memoire->getLong(sh->R[Instruction::c(sh->instruction)]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value =
+		sh->memoire->getLong(sh->sh2reg[Instruction::c(sh->instruction)].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] =
+		sh->memoire->getLong(sh->R[Instruction::c(sh->instruction)]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movll0(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] =
-	sh->memoire->getLong(sh->R[Instruction::c(sh->instruction)] + sh->R[0]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value =
+		sh->memoire->getLong(sh->sh2reg[Instruction::c(sh->instruction)].value + sh->sh2reg[0].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] =
+		sh->memoire->getLong(sh->R[Instruction::c(sh->instruction)] + sh->R[0]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movll4(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long disp = Instruction::d(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long disp = Instruction::d(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = sh->memoire->getLong(sh->R[m] + (disp << 2));
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->memoire->getLong(sh->sh2reg[m].value + (disp << 2));
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = sh->memoire->getLong(sh->R[m] + (disp << 2));
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movllg(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
+	long disp = Instruction::cd(sh->instruction);
 
-  sh->R[0] = sh->memoire->getLong(sh->GBR + (disp << 2));
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[0].value = sh->memoire->getLong(sh->sh2reg[GBR].value + (disp << 2));
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0] = sh->memoire->getLong(sh->GBR + (disp << 2));
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movlm(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->memoire->setLong(sh->R[n] - 4,sh->R[m]);
-  sh->R[n] -= 4;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setLong(sh->sh2reg[n].value - 4, sh->sh2reg[m].value);
+	sh->sh2reg[n].value -= 4;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setLong(sh->R[n] - 4,sh->R[m]);
+	sh->R[n] -= 4;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movlp(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = sh->memoire->getLong(sh->R[m]);
-  if (n != m) sh->R[m] += 4;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->memoire->getLong(sh->sh2reg[m].value);
+	if (n != m) sh->sh2reg[m].value += 4;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = sh->memoire->getLong(sh->R[m]);
+	if (n != m) sh->R[m] += 4;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movls(SuperH * sh) {
-  sh->memoire->setLong(sh->R[Instruction::b(sh->instruction)],
-	sh->R[Instruction::c(sh->instruction)]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setLong(sh->sh2reg[Instruction::b(sh->instruction)].value,
+		sh->sh2reg[Instruction::c(sh->instruction)].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setLong(sh->R[Instruction::b(sh->instruction)],
+		sh->R[Instruction::c(sh->instruction)]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movls0(SuperH * sh) {
-  sh->memoire->setLong(sh->R[Instruction::b(sh->instruction)] + sh->R[0],
-	sh->R[Instruction::c(sh->instruction)]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setLong(sh->sh2reg[Instruction::b(sh->instruction)].value + sh->sh2reg[0].value,
+		sh->sh2reg[Instruction::c(sh->instruction)].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setLong(sh->R[Instruction::b(sh->instruction)] + sh->R[0],
+		sh->R[Instruction::c(sh->instruction)]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movls4(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long disp = Instruction::d(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long disp = Instruction::d(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->memoire->setLong(sh->R[n]+(disp<<2),sh->R[m]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setLong(sh->sh2reg[n].value + (disp << 2), sh->sh2reg[m].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setLong(sh->R[n]+(disp<<2),sh->R[m]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movlsg(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
+	long disp = Instruction::cd(sh->instruction);
 
-  sh->memoire->setLong(sh->GBR+(disp<<2),sh->R[0]);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setLong(sh->sh2reg[GBR].value + (disp << 2), sh->sh2reg[0].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setLong(sh->GBR+(disp<<2),sh->R[0]);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movt(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] = (0x00000001 & sh->SR.tout);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value = (0x00000001 & sh->sh2reg[SR].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] = (0x00000001 & sh->SR.tout);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movwi(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long disp = Instruction::cd(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (long)(signed short)sh->memoire->getWord(sh->PC + (disp<<1) + 4);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (long)(signed short)sh->memoire->getWord(sh->sh2reg[PC].value + (disp << 1) + 4);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (long)(signed short)sh->memoire->getWord(sh->PC + (disp<<1) + 4);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movwl(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (long)(signed short)sh->memoire->getWord(sh->R[m]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (long)(signed short)sh->memoire->getWord(sh->sh2reg[m].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (long)(signed short)sh->memoire->getWord(sh->R[m]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movwl0(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (long)(signed short)sh->memoire->getWord(sh->R[m]+sh->R[0]);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (long)(signed short)sh->memoire->getWord(sh->sh2reg[m].value + sh->sh2reg[0].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (long)(signed short)sh->memoire->getWord(sh->R[m]+sh->R[0]);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movwl4(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long disp = Instruction::d(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long disp = Instruction::d(sh->instruction);
 
-  sh->R[0] = (long)(signed short)sh->memoire->getWord(sh->R[m]+(disp<<1));
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[0].value = (long)(signed short)sh->memoire->getWord(sh->sh2reg[m].value + (disp << 1));
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0] = (long)(signed short)sh->memoire->getWord(sh->R[m]+(disp<<1));
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movwlg(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
+	long disp = Instruction::cd(sh->instruction);
 
-  sh->R[0] = (long)(signed short)sh->memoire->getWord(sh->GBR+(disp<<1));
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[0].value = (long)(signed short)sh->memoire->getWord(sh->sh2reg[GBR].value + (disp << 1));
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0] = (long)(signed short)sh->memoire->getWord(sh->GBR+(disp<<1));
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movwm(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->memoire->setWord(sh->R[n] - 2,sh->R[m]);
-  sh->R[n] -= 2;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setWord(sh->sh2reg[n].value - 2, sh->sh2reg[m].value);
+	sh->sh2reg[n].value -= 2;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setWord(sh->R[n] - 2,sh->R[m]);
+	sh->R[n] -= 2;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movwp(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->R[n] = (long)(signed short)sh->memoire->getWord(sh->R[m]);
-  if (n != m)
-    sh->R[m] += 2;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[n].value = (long)(signed short)sh->memoire->getWord(sh->sh2reg[m].value);
+	if (n != m)
+		sh->sh2reg[m].value += 2;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = (long)(signed short)sh->memoire->getWord(sh->R[m]);
+	if (n != m)
+		sh->R[m] += 2;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movws(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->memoire->setWord(sh->R[n],sh->R[m]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setWord(sh->sh2reg[n].value, sh->sh2reg[m].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setWord(sh->R[n],sh->R[m]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void movws0(SuperH * sh) {
-  sh->memoire->setWord(sh->R[Instruction::b(sh->instruction)] + sh->R[0],
-	sh->R[Instruction::c(sh->instruction)]);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setWord(sh->sh2reg[Instruction::b(sh->instruction)].value + sh->sh2reg[0].value,
+		sh->sh2reg[Instruction::c(sh->instruction)].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setWord(sh->R[Instruction::b(sh->instruction)] + sh->R[0],
+		sh->R[Instruction::c(sh->instruction)]);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movws4(SuperH * sh) {
-  long disp = Instruction::d(sh->instruction);
-  long n = Instruction::c(sh->instruction);
+	long disp = Instruction::d(sh->instruction);
+	long n = Instruction::c(sh->instruction);
 
-  sh->memoire->setWord(sh->R[n]+(disp<<1),sh->R[0]);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setWord(sh->sh2reg[n].value + (disp << 1), sh->sh2reg[0].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setWord(sh->R[n]+(disp<<1),sh->R[0]);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void movwsg(SuperH * sh) {
-  long disp = Instruction::cd(sh->instruction);
+	long disp = Instruction::cd(sh->instruction);
 
-  sh->memoire->setWord(sh->GBR+(disp<<1),sh->R[0]);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->memoire->setWord(sh->sh2reg[GBR].value + (disp << 1), sh->sh2reg[0].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->memoire->setWord(sh->GBR+(disp<<1),sh->R[0]);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void mull(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->MACL = sh->R[n] * sh->R[m];
-  sh->PC+=2;
-  sh->cycleCount += 2;
+#ifdef DYNAREC
+	sh->sh2reg[MACL].value = sh->sh2reg[n].value * sh->sh2reg[m].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACL = sh->R[n] * sh->R[m];
+	sh->PC+=2;
+#endif
+	sh->cycleCount += 2;
 }
 
 void muls(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->MACL = ((long)(short)sh->R[n]*(long)(short)sh->R[m]);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[MACL].value = ((long)(short)sh->sh2reg[n].value * (long)(short)sh->sh2reg[m].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACL = ((long)(short)sh->R[n]*(long)(short)sh->R[m]);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void mulu(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  sh->MACL = ((unsigned long)(unsigned short)sh->R[n]
-	*(unsigned long)(unsigned short)sh->R[m]);
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[MACL].value = ((unsigned long)(unsigned short)sh->sh2reg[n].value
+		*(unsigned long)(unsigned short)sh->sh2reg[m].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->MACL = ((unsigned long)(unsigned short)sh->R[n]
+		*(unsigned long)(unsigned short)sh->R[m]);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void neg(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)]=0-sh->R[Instruction::c(sh->instruction)];
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value = 0 - sh->sh2reg[Instruction::c(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)]=0-sh->R[Instruction::c(sh->instruction)];
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void negc(SuperH * sh) {
-  unsigned long temp;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  
-  temp=0-sh->R[m];
-  sh->R[n] = temp - sh->SR.partie.T;
-  if (0 < temp) sh->SR.partie.T=1;
-  else sh->SR.partie.T=0;
-  if (temp < sh->R[n]) sh->SR.partie.T=1;
-  sh->PC+=2;
-  sh->cycleCount++;
+	unsigned long temp;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+
+#ifdef DYNAREC
+	temp = 0 - sh->sh2reg[m].value;
+	sh->sh2reg[n].value = temp - (sh->sh2reg[SR].value & 1);
+	if (0 < temp) sh->sh2reg[SR].value |= 1;
+	else sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	if (temp < sh->sh2reg[n].value) sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	temp=0-sh->R[m];
+	sh->R[n] = temp - sh->SR.partie.T;
+	if (0 < temp) sh->SR.partie.T=1;
+	else sh->SR.partie.T=0;
+	if (temp < sh->R[n]) sh->SR.partie.T=1;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void nop(SuperH * sh) {
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void y_not(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] = ~sh->R[Instruction::c(sh->instruction)];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value = ~sh->sh2reg[Instruction::c(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] = ~sh->R[Instruction::c(sh->instruction)];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void y_or(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] |= sh->R[Instruction::c(sh->instruction)];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value |= sh->sh2reg[Instruction::c(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] |= sh->R[Instruction::c(sh->instruction)];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void ori(SuperH * sh) {
-  sh->R[0] |= Instruction::cd(sh->instruction);
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[0].value |= Instruction::cd(sh->instruction);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0] |= Instruction::cd(sh->instruction);
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void orm(SuperH * sh) {
-  long temp;
-  long source = Instruction::cd(sh->instruction);
+	long temp;
+	long source = Instruction::cd(sh->instruction);
 
-  temp = (long) sh->memoire->getByte(sh->GBR + sh->R[0]);
-  temp |= source;
-  sh->memoire->setByte(sh->GBR + sh->R[0],temp);
-  sh->PC += 2;
-  sh->cycleCount += 3;
+#ifdef DYNAREC
+	temp = (long) sh->memoire->getByte(sh->sh2reg[GBR].value + sh->sh2reg[0].value);
+	temp |= source;
+	sh->memoire->setByte(sh->sh2reg[GBR].value + sh->sh2reg[0].value, temp);
+	sh->sh2reg[PC].value += 2;
+#else
+	temp = (long) sh->memoire->getByte(sh->GBR + sh->R[0]);
+	temp |= source;
+	sh->memoire->setByte(sh->GBR + sh->R[0],temp);
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 3;
 }
 
 void rotcl(SuperH * sh) {
-  long temp;
-  long n = Instruction::b(sh->instruction);
+	long temp;
+	long n = Instruction::b(sh->instruction);
 
-  if ((sh->R[n]&0x80000000)==0) temp=0;
-  else temp=1;
-  sh->R[n]<<=1;
-  if (sh->SR.partie.T == 1) sh->R[n]|=0x00000001;
-  else sh->R[n]&=0xFFFFFFFE;
-  if (temp==1) sh->SR.partie.T=1;
-  else sh->SR.partie.T=0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x80000000) == 0) temp = 0;
+	else temp = 1;
+	sh->sh2reg[n].value <<= 1;
+	if (sh->sh2reg[SR].value & 1) sh->sh2reg[n].value |= 0x00000001;
+	else sh->sh2reg[n].value &= 0xFFFFFFFE;
+	if (temp == 1) sh->sh2reg[SR].value |= 1;
+	else sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n]&0x80000000)==0) temp=0;
+	else temp=1;
+	sh->R[n]<<=1;
+	if (sh->SR.partie.T == 1) sh->R[n]|=0x00000001;
+	else sh->R[n]&=0xFFFFFFFE;
+	if (temp==1) sh->SR.partie.T=1;
+	else sh->SR.partie.T=0;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void rotcr(SuperH * sh) {
-  long temp;
-  long n = Instruction::b(sh->instruction);
+	long temp;
+	long n = Instruction::b(sh->instruction);
 
-  if ((sh->R[n]&0x00000001)==0) temp=0;
-  else temp=1;
-  sh->R[n]>>=1;
-  if (sh->SR.partie.T == 1) sh->R[n]|=0x80000000;
-  else sh->R[n]&=0x7FFFFFFF;
-  if (temp==1) sh->SR.partie.T=1;
-  else sh->SR.partie.T=0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x00000001) == 0) temp = 0;
+	else temp = 1;
+	sh->sh2reg[n].value >>= 1;
+	if (sh->sh2reg[SR].value & 1) sh->sh2reg[n].value |= 0x80000000;
+	else sh->sh2reg[n].value &= 0x7FFFFFFF;
+	if (temp == 1) sh->sh2reg[SR].value |= 1;
+	else sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n]&0x00000001)==0) temp=0;
+	else temp=1;
+	sh->R[n]>>=1;
+	if (sh->SR.partie.T == 1) sh->R[n]|=0x80000000;
+	else sh->R[n]&=0x7FFFFFFF;
+	if (temp==1) sh->SR.partie.T=1;
+	else sh->SR.partie.T=0;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void rotl(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  if ((sh->R[n]&0x80000000)==0) sh->SR.partie.T=0;
-  else sh->SR.partie.T=1;
-  sh->R[n]<<=1;
-  if (sh->SR.partie.T==1) sh->R[n]|=0x00000001;
-  else sh->R[n]&=0xFFFFFFFE;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x80000000) == 0) sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	else sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[n].value <<= 1;
+	if (sh->sh2reg[SR].value & 1) sh->sh2reg[n].value |= 0x00000001;
+	else sh->sh2reg[n].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n]&0x80000000)==0) sh->SR.partie.T=0;
+	else sh->SR.partie.T=1;
+	sh->R[n]<<=1;
+	if (sh->SR.partie.T==1) sh->R[n]|=0x00000001;
+	else sh->R[n]&=0xFFFFFFFE;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void rotr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  if ((sh->R[n]&0x00000001)==0) sh->SR.partie.T = 0;
-  else sh->SR.partie.T = 1;
-  sh->R[n]>>=1;
-  if (sh->SR.partie.T == 1) sh->R[n]|=0x80000000;
-  else sh->R[n]&=0x7FFFFFFF;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x00000001) == 0) sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	else sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[n].value >>= 1;
+	if (sh->sh2reg[SR].value & 1) sh->sh2reg[n].value |= 0x80000000;
+	else sh->sh2reg[n].value &= 0x7FFFFFFF;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n]&0x00000001)==0) sh->SR.partie.T = 0;
+	else sh->SR.partie.T = 1;
+	sh->R[n]>>=1;
+	if (sh->SR.partie.T == 1) sh->R[n]|=0x80000000;
+	else sh->R[n]&=0x7FFFFFFF;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void rte(SuperH * sh) {
-  unsigned long temp;
-  temp=sh->PC;
-  sh->PC = sh->memoire->getLong(sh->R[15]);
-  sh->R[15] += 4;
-  sh->SR.tout = sh->memoire->getLong(sh->R[15]) & 0x000003F3;
-  sh->R[15] += 4;
-  //sh->_delai = temp + 2;
-  sh->cycleCount += 4;
-  sh->delay(temp + 2);
+	unsigned long temp;
+#ifdef DYNAREC
+	temp = sh->sh2reg[PC].value;
+	sh->sh2reg[PC].value = sh->memoire->getLong(sh->sh2reg[15].value);
+	sh->sh2reg[15].value += 4;
+	sh->sh2reg[SR].value = sh->memoire->getLong(sh->sh2reg[15].value) & 0x000003F3;
+	sh->sh2reg[15].value += 4;
+#else
+	temp=sh->PC;
+	sh->PC = sh->memoire->getLong(sh->R[15]);
+	sh->R[15] += 4;
+	sh->SR.tout = sh->memoire->getLong(sh->R[15]) & 0x000003F3;
+	sh->R[15] += 4;
+#endif
+	sh->cycleCount += 4;
+	sh->delay(temp + 2);
 }
 
 void rts(SuperH * sh) {
-  unsigned long temp;
-  
-  temp = sh->PC;
-  sh->PC = sh->PR;
+	unsigned long temp;
+	
+#ifdef DYNAREC
+	temp = sh->sh2reg[PC].value;
+	sh->sh2reg[PC].value = sh->sh2reg[PR].value;
+#else
+	temp = sh->PC;
+	sh->PC = sh->PR;
+#endif
 
-  //sh->_delai = temp + 2;
-  sh->cycleCount += 2;
-  sh->delay(temp + 2);
+	sh->cycleCount += 2;
+	sh->delay(temp + 2);
 }
 
 void sett(SuperH * sh) {
-  sh->SR.partie.T = 1;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->SR.partie.T = 1;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void shal(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  if ((sh->R[n] & 0x80000000) == 0) sh->SR.partie.T = 0;
-  else sh->SR.partie.T = 1;
-  sh->R[n] <<= 1;
-  sh->PC += 2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x80000000) == 0) sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	else sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[n].value <<= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n] & 0x80000000) == 0) sh->SR.partie.T = 0;
+	else sh->SR.partie.T = 1;
+	sh->R[n] <<= 1;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void shar(SuperH * sh) {
-  long temp;
-  long n = Instruction::b(sh->instruction);
+	long temp;
+	long n = Instruction::b(sh->instruction);
 
-  if ((sh->R[n]&0x00000001)==0) sh->SR.partie.T = 0;
-  else sh->SR.partie.T = 1;
-  if ((sh->R[n]&0x80000000)==0) temp = 0;
-  else temp = 1;
-  sh->R[n] >>= 1;
-  if (temp == 1) sh->R[n] |= 0x80000000;
-  else sh->R[n] &= 0x7FFFFFFF;
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x00000001) == 0) sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	else sh->sh2reg[SR].value |= 1;
+	if ((sh->sh2reg[n].value & 0x80000000) == 0) temp = 0;
+	else temp = 1;
+	sh->sh2reg[n].value >>= 1;
+	if (temp == 1) sh->sh2reg[n].value |= 0x80000000;
+	else sh->sh2reg[n].value &= 0x7FFFFFFF;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n]&0x00000001)==0) sh->SR.partie.T = 0;
+	else sh->SR.partie.T = 1;
+	if ((sh->R[n]&0x80000000)==0) temp = 0;
+	else temp = 1;
+	sh->R[n] >>= 1;
+	if (temp == 1) sh->R[n] |= 0x80000000;
+	else sh->R[n] &= 0x7FFFFFFF;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void shll(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  if ((sh->R[n]&0x80000000)==0) sh->SR.partie.T=0;
-  else sh->SR.partie.T=1;
-  sh->R[n]<<=1;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x80000000) == 0) sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	else sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[n].value <<= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n]&0x80000000)==0) sh->SR.partie.T=0;
+	else sh->SR.partie.T=1;
+	sh->R[n]<<=1;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void shll2(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] <<= 2;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value <<= 2;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] <<= 2;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void shll8(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)]<<=8;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value <<= 8;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)]<<=8;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void shll16(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)]<<=16;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value <<= 16;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)]<<=16;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void shlr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  if ((sh->R[n]&0x00000001)==0) sh->SR.partie.T=0;
-  else sh->SR.partie.T=1;
-  sh->R[n]>>=1;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & 0x00000001) == 0) sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	else sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[n].value >>= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n]&0x00000001)==0) sh->SR.partie.T=0;
+	else sh->SR.partie.T=1;
+	sh->R[n]>>=1;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void shlr2(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]>>=2;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value >>= 2;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]>>=2;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void shlr8(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]>>=8;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value >>= 8;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]>>=8;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void shlr16(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]>>=16;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value >>= 16;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]>>=16;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stcgbr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]=sh->GBR;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->sh2reg[GBR].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]=sh->GBR;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stcmgbr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]-=4;
-  sh->memoire->setLong(sh->R[n],sh->GBR);
-  sh->PC+=2;
-  sh->cycleCount += 2;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value -= 4;
+	sh->memoire->setLong(sh->sh2reg[n].value, sh->sh2reg[GBR].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]-=4;
+	sh->memoire->setLong(sh->R[n],sh->GBR);
+	sh->PC+=2;
+#endif
+	sh->cycleCount += 2;
 }
 
 void stcmsr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]-=4;
-  sh->memoire->setLong(sh->R[n],sh->SR.tout);
-  sh->PC+=2;
-  sh->cycleCount += 2;
+	long n = Instruction::b(sh->instruction);
+
+#ifdef DYNAREC
+	sh->sh2reg[n].value -= 4;
+	sh->memoire->setLong(sh->sh2reg[n].value, sh->sh2reg[SR].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]-=4;
+	sh->memoire->setLong(sh->R[n],sh->SR.tout);
+	sh->PC+=2;
+#endif
+	sh->cycleCount += 2;
 }
 
 void stcmvbr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]-=4;
-  sh->memoire->setLong(sh->R[n],sh->VBR);
-  sh->PC+=2;
-  sh->cycleCount += 2;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value -= 4;
+	sh->memoire->setLong(sh->sh2reg[n].value, sh->sh2reg[VBR].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]-=4;
+	sh->memoire->setLong(sh->R[n],sh->VBR);
+	sh->PC+=2;
+#endif
+	sh->cycleCount += 2;
 }
 
 void stcsr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n] = sh->SR.tout;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->sh2reg[SR].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = sh->SR.tout;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stcvbr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]=sh->VBR;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->sh2reg[VBR].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]=sh->VBR;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stsmach(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]=sh->MACH;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->sh2reg[MACH].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]=sh->MACH;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stsmacl(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]=sh->MACL;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->sh2reg[MACL].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]=sh->MACL;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stsmmach(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n] -= 4;
-  sh->memoire->setLong(sh->R[n],sh->MACH); 
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value -= 4;
+	sh->memoire->setLong(sh->sh2reg[n].value, sh->sh2reg[MACH].value); 
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] -= 4;
+	sh->memoire->setLong(sh->R[n],sh->MACH); 
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stsmmacl(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n] -= 4;
-  sh->memoire->setLong(sh->R[n],sh->MACL);
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value -= 4;
+	sh->memoire->setLong(sh->sh2reg[n].value, sh->sh2reg[MACL].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] -= 4;
+	sh->memoire->setLong(sh->R[n],sh->MACL);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stsmpr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n] -= 4;
-  sh->memoire->setLong(sh->R[n],sh->PR);
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value -= 4;
+	sh->memoire->setLong(sh->sh2reg[n].value, sh->sh2reg[PR].value);
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] -= 4;
+	sh->memoire->setLong(sh->R[n],sh->PR);
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void stspr(SuperH * sh) {
-  long n = Instruction::b(sh->instruction);
-  sh->R[n] = sh->PR;
-  sh->PC+=2;
-  sh->cycleCount++;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value = sh->sh2reg[PR].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n] = sh->PR;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void sub(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  sh->R[n]-=sh->R[m];
-  sh->PC+=2;
-  sh->cycleCount++;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[n].value -= sh->sh2reg[m].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[n]-=sh->R[m];
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void subc(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  unsigned long tmp0,tmp1;
-  
-  tmp1 = sh->R[n] - sh->R[m];
-  tmp0 = sh->R[n];
-  sh->R[n] = tmp1 - sh->SR.partie.T;
-  if (tmp0 < tmp1) sh->SR.partie.T = 1;
-  else sh->SR.partie.T = 0;
-  if (tmp1 < sh->R[n]) sh->SR.partie.T = 1;
-  sh->PC += 2;
-  sh->cycleCount++;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+	unsigned long tmp0, tmp1;
+
+#ifdef DYNAREC
+	tmp1 = sh->sh2reg[n].value - sh->sh2reg[m].value;
+	tmp0 = sh->sh2reg[n].value;
+	sh->sh2reg[n].value = tmp1 - (sh->sh2reg[SR].value & 1);
+	if (tmp0 < tmp1)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	if (tmp1 < sh->sh2reg[n].value)
+		sh->sh2reg[SR].value |= 1;
+	sh->sh2reg[PC].value += 2;
+#else
+	tmp1 = sh->R[n] - sh->R[m];
+	tmp0 = sh->R[n];
+	sh->R[n] = tmp1 - sh->SR.partie.T;
+	if (tmp0 < tmp1) sh->SR.partie.T = 1;
+	else sh->SR.partie.T = 0;
+	if (tmp1 < sh->R[n]) sh->SR.partie.T = 1;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void subv(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  long dest,src,ans;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+	long dest, src, ans;
 
-  if ((long)sh->R[n]>=0) dest=0;
-  else dest=1;
-  if ((long)sh->R[m]>=0) src=0;
-  else src=1;
-  src+=dest;
-  sh->R[n]-=sh->R[m];
-  if ((long)sh->R[n]>=0) ans=0;
-  else ans=1;
-  ans+=dest;
-  if (src==1) {
-    if (ans==1) sh->SR.partie.T=1;
-    else sh->SR.partie.T=0;
-  }
-  else sh->SR.partie.T=0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	if ((long) sh->sh2reg[n].value >= 0)
+		dest = 0;
+	else
+		dest = 1;
+	if ((long) sh->sh2reg[m].value >= 0)
+		src = 0;
+	else
+		src = 1;
+	src += dest;
+	sh->sh2reg[n].value -= sh->sh2reg[m].value;
+	if ((long) sh->sh2reg[n].value >= 0)
+		ans = 0;
+	else
+		ans = 1;
+	ans += dest;
+	if (src == 1) {
+		if (ans == 1)
+			sh->sh2reg[SR].value |= 1;
+		else
+			sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	}
+	else sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((long) sh->R[n]>=0) dest=0;
+	else dest=1;
+	if ((long)sh->R[m]>=0) src=0;
+	else src=1;
+	src+=dest;
+	sh->R[n]-=sh->R[m];
+	if ((long)sh->R[n]>=0) ans=0;
+	else ans=1;
+	ans+=dest;
+	if (src==1) {
+		if (ans==1) sh->SR.partie.T=1;
+		else sh->SR.partie.T=0;
+	}
+	else sh->SR.partie.T=0;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void swapb(SuperH * sh) {
-  unsigned long temp0,temp1;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
+	unsigned long temp0,temp1;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
 
-  temp0=sh->R[m]&0xffff0000;
-  temp1=(sh->R[m]&0x000000ff)<<8;
-  sh->R[n]=(sh->R[m]>>8)&0x000000ff;
-  sh->R[n]=sh->R[n]|temp1|temp0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	temp0 = sh->sh2reg[m].value & 0xffff0000;
+	temp1 = (sh->sh2reg[m].value & 0x000000ff) << 8;
+	sh->sh2reg[n].value = (sh->sh2reg[m].value >> 8) & 0x000000ff;
+	sh->sh2reg[n].value = sh->sh2reg[n].value | temp1 | temp0;
+	sh->sh2reg[PC].value += 2;
+#else
+	temp0=sh->R[m]&0xffff0000;
+	temp1=(sh->R[m]&0x000000ff)<<8;
+	sh->R[n]=(sh->R[m]>>8)&0x000000ff;
+	sh->R[n]=sh->R[n]|temp1|temp0;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void swapw(SuperH * sh) {
-  unsigned long temp;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  temp=(sh->R[m]>>16)&0x0000FFFF;
-  sh->R[n]=sh->R[m]<<16;
-  sh->R[n]|=temp;
-  sh->PC+=2;
-  sh->cycleCount++;
+	unsigned long temp;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	temp = (sh->sh2reg[m].value >> 16) & 0x0000FFFF;
+	sh->sh2reg[n].value = sh->sh2reg[m].value << 16;
+	sh->sh2reg[n].value |= temp;
+	sh->sh2reg[PC].value += 2;
+#else
+	temp=(sh->R[m]>>16)&0x0000FFFF;
+	sh->R[n]=sh->R[m]<<16;
+	sh->R[n]|=temp;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void tas(SuperH * sh) {
-  long temp;
-  long n = Instruction::b(sh->instruction);
-
-  temp=(long) sh->memoire->getByte(sh->R[n]);
-  if (temp==0) sh->SR.partie.T=1;
-  else sh->SR.partie.T=0;
-  temp|=0x00000080;
-  sh->memoire->setByte(sh->R[n],temp);
-  sh->PC+=2;
-  sh->cycleCount += 4;
+	long temp;
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	temp = (long) sh->memoire->getByte(sh->sh2reg[n].value);
+	if (temp == 0)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	temp |= 0x00000080;
+	sh->memoire->setByte(sh->sh2reg[n].value, temp);
+	sh->sh2reg[PC].value += 2;
+#else
+	temp=(long) sh->memoire->getByte(sh->R[n]);
+	if (temp==0) sh->SR.partie.T=1;
+	else sh->SR.partie.T=0;
+	temp|=0x00000080;
+	sh->memoire->setByte(sh->R[n],temp);
+	sh->PC+=2;
+#endif
+	sh->cycleCount += 4;
 }
 
 void trapa(SuperH * sh) {
-  long imm = Instruction::cd(sh->instruction);
-
-  sh->R[15]-=4;
-  sh->memoire->setLong(sh->R[15],sh->SR.tout);
-  sh->R[15]-=4;
-  sh->memoire->setLong(sh->R[15],sh->PC + 2);
-  sh->PC = sh->memoire->getLong(sh->VBR+(imm<<2));
-  sh->cycleCount += 8;
+	long imm = Instruction::cd(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[15].value -= 4;
+	sh->memoire->setLong(sh->sh2reg[15].value, sh->sh2reg[SR].value);
+	sh->sh2reg[15].value -= 4;
+	sh->memoire->setLong(sh->sh2reg[15].value, sh->sh2reg[PC].value + 2);
+	sh->sh2reg[PC].value = sh->memoire->getLong(sh->sh2reg[VBR].value + (imm << 2));
+#else
+	sh->R[15]-=4;
+	sh->memoire->setLong(sh->R[15],sh->SR.tout);
+	sh->R[15]-=4;
+	sh->memoire->setLong(sh->R[15],sh->PC + 2);
+	sh->PC = sh->memoire->getLong(sh->VBR+(imm<<2));
+#endif
+	sh->cycleCount += 8;
 }
 
 void tst(SuperH * sh) {
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-  if ((sh->R[n]&sh->R[m])==0) sh->SR.partie.T = 1;
-  else sh->SR.partie.T = 0;
-  sh->PC += 2;
-  sh->cycleCount++;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	if ((sh->sh2reg[n].value & sh->sh2reg[m].value) == 0)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	if ((sh->R[n]&sh->R[m])==0) sh->SR.partie.T = 1;
+	else sh->SR.partie.T = 0;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void tsti(SuperH * sh) {
-  long temp;
-  long i = Instruction::cd(sh->instruction);
+	long temp;
+	long i = Instruction::cd(sh->instruction);
 
-  temp=sh->R[0]&i;
-  if (temp==0) sh->SR.partie.T = 1;
-  else sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	temp = sh->sh2reg[0].value & i;
+	if (temp == 0)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	temp=sh->R[0]&i;
+	if (temp==0) sh->SR.partie.T = 1;
+	else sh->SR.partie.T = 0;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void tstm(SuperH * sh) {
-  long temp;
-  long i = Instruction::cd(sh->instruction);
-
-  temp=(long) sh->memoire->getByte(sh->GBR+sh->R[0]);
-  temp&=i;
-  if (temp==0) sh->SR.partie.T = 1;
-  else sh->SR.partie.T = 0;
-  sh->PC+=2;
-  sh->cycleCount += 3;
+	long temp;
+	long i = Instruction::cd(sh->instruction);
+#ifdef DYNAREC
+	temp = (long) sh->memoire->getByte(sh->sh2reg[GBR].value + sh->sh2reg[0].value);
+	temp &= i;
+	if (temp == 0)
+		sh->sh2reg[SR].value |= 1;
+	else
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
+	sh->sh2reg[PC].value += 2;
+#else
+	temp=(long) sh->memoire->getByte(sh->GBR+sh->R[0]);
+	temp&=i;
+	if (temp==0) sh->SR.partie.T = 1;
+	else sh->SR.partie.T = 0;
+	sh->PC+=2;
+#endif
+	sh->cycleCount += 3;
 }
 
 void y_xor(SuperH * sh) {
-  sh->R[Instruction::b(sh->instruction)] ^= sh->R[Instruction::c(sh->instruction)];
-  sh->PC += 2;
-  sh->cycleCount++;
+#ifdef DYNAREC
+	sh->sh2reg[Instruction::b(sh->instruction)].value ^= sh->sh2reg[Instruction::c(sh->instruction)].value;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[Instruction::b(sh->instruction)] ^= sh->R[Instruction::c(sh->instruction)];
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void xori(SuperH * sh) {
-  long source = Instruction::cd(sh->instruction);
-  sh->R[0] ^= source;
-  sh->PC += 2;
-  sh->cycleCount++;
+	long source = Instruction::cd(sh->instruction);
+#ifdef DYNAREC
+	sh->sh2reg[0].value ^= source;
+	sh->sh2reg[PC].value += 2;
+#else
+	sh->R[0] ^= source;
+	sh->PC += 2;
+#endif
+	sh->cycleCount++;
 }
 
 void xorm(SuperH * sh) {
-  long source = Instruction::cd(sh->instruction);
-  long temp;
-
-  temp = (long) sh->memoire->getByte(sh->GBR + sh->R[0]);
-  temp ^= source;
-  sh->memoire->setByte(sh->GBR + sh->R[0],temp);
-  sh->PC += 2;
-  sh->cycleCount += 3;
+	long source = Instruction::cd(sh->instruction);
+	long temp;
+#ifdef DYNAREC
+	temp = (long) sh->memoire->getByte(sh->sh2reg[GBR].value + sh->sh2reg[0].value);
+	temp ^= source;
+	sh->memoire->setByte(sh->sh2reg[GBR].value + sh->sh2reg[0].value, temp);
+	sh->sh2reg[PC].value += 2;
+#else
+	temp = (long) sh->memoire->getByte(sh->GBR + sh->R[0]);
+	temp ^= source;
+	sh->memoire->setByte(sh->GBR + sh->R[0],temp);
+	sh->PC += 2;
+#endif
+	sh->cycleCount += 3;
 }
 
 void xtrct(SuperH * sh) {
-  unsigned long temp;
-  long m = Instruction::c(sh->instruction);
-  long n = Instruction::b(sh->instruction);
-
-  temp=(sh->R[m]<<16)&0xFFFF0000;
-  sh->R[n]=(sh->R[n]>>16)&0x0000FFFF;
-  sh->R[n]|=temp;
-  sh->PC+=2;
-  sh->cycleCount++;
+	unsigned long temp;
+	long m = Instruction::c(sh->instruction);
+	long n = Instruction::b(sh->instruction);
+#ifdef DYNAREC
+	temp = (sh->sh2reg[m].value << 16) & 0xFFFF0000;
+	sh->sh2reg[n].value = (sh->sh2reg[n].value >> 16) & 0x0000FFFF;
+	sh->sh2reg[n].value |= temp;
+	sh->sh2reg[PC].value += 2;
+#else
+	temp=(sh->R[m]<<16)&0xFFFF0000;
+	sh->R[n]=(sh->R[n]>>16)&0x0000FFFF;
+	sh->R[n]|=temp;
+	sh->PC+=2;
+#endif
+	sh->cycleCount++;
 }
 
 void sleep(SuperH * sh) {
-  //cerr << "SLEEP" << endl;
-  sh->cycleCount += 3;
+	sh->cycleCount += 3;
 }
 
 SuperH::opcode SuperH::decode(void) {
@@ -2220,32 +3402,45 @@ SuperH::opcode SuperH::decode(void) {
   }
 }
 
-void SuperH::GetRegisters(sh2regs_struct *regs) {
-  if (regs != NULL) {
-    memcpy(regs->R, R, sizeof(R));
-    regs->SR.all = SR.tout;
-    regs->GBR = GBR;
-    regs->VBR = VBR;
-    regs->MACH = MACH;
-    regs->MACL = MACL;
-    regs->PR = PR;
-    regs->PC = PC;
-    regs->delay = _delai;
-  }
+// pending approval
+void SuperH::GetRegisters(sh2regs_struct * regs) {
+#ifdef DYNAREC
+	for(int i = 0;i < sizeof(regs->regs);i++) {
+		regs->regs[i] = sh2reg[i].value;
+	}
+#else
+	if (regs != NULL) {
+		memcpy(regs->R, R, sizeof(R));
+		regs->SR.all = SR.tout;
+		regs->GBR = GBR;
+		regs->VBR = VBR;
+		regs->MACH = MACH;
+		regs->MACL = MACL;
+		regs->PR = PR;
+		regs->PC = PC;
+		regs->delay = _delai;
+	}
+#endif
 }
 
 void SuperH::SetRegisters(sh2regs_struct *regs) {
-  if (regs != NULL) {
-    memcpy(R, regs->R, sizeof(R));
-    SR.tout = regs->SR.all;
-    GBR = regs->GBR;
-    VBR = regs->VBR;
-    MACH = regs->MACH;
-    MACL = regs->MACL;
-    PR = regs->PR;
-    PC = regs->PC;
-    _delai = regs->delay;
-  }
+#ifdef DYNAREC
+	for(int i = 0;i < sizeof(regs->regs);i++) {
+		 sh2reg[i].value = regs->regs[i];
+	}
+#else
+	if (regs != NULL) {
+		memcpy(R, regs->R, sizeof(R));
+		SR.tout = regs->SR.all;
+		GBR = regs->GBR;
+		VBR = regs->VBR;
+		MACH = regs->MACH;
+		MACL = regs->MACL;
+		PR = regs->PR;
+		PC = regs->PC;
+		_delai = regs->delay;
+	}
+#endif
 }
 
 void SuperH::SetBreakpointCallBack(void (*func)(bool, unsigned long)) {
