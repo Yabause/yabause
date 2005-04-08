@@ -84,11 +84,6 @@ void SuperH::reset(void) {
 
 	((Onchip*)onchip)->reset();
  
-	_delai = 0;
-
-#ifdef DEBUG
-	verbose = 0;
-#endif
 	timing = 0;
 }
 
@@ -284,9 +279,9 @@ void SuperH::runCycles(unsigned long cc) {
            // Make sure it isn't one of our breakpoints
            for (int i=0; i < numcodebreakpoints; i++) {
 #ifdef DYNAREC
-              if ((sh2reg[PC].value == codebreakpoint[i].addr || _delai == codebreakpoint[i].addr) && inbreakpoint == false) {
+              if ((sh2reg[PC].value == codebreakpoint[i].addr) && inbreakpoint == false) {
 #else
-              if ((PC == codebreakpoint[i].addr || _delai == codebreakpoint[i].addr) && inbreakpoint == false) {
+              if ((PC == codebreakpoint[i].addr) && inbreakpoint == false) {
 #endif
 
                  inbreakpoint = true;
@@ -707,12 +702,10 @@ void bsrf(SuperH * sh) {
 #ifdef DYNAREC
 	unsigned long temp = sh->sh2reg[PC].value;
 	sh->sh2reg[PR].value = sh->sh2reg[PC].value + 4;
-
 	sh->sh2reg[PC].value += sh->sh2reg[Instruction::b(sh->instruction)].value + 4;
 #else
 	unsigned long temp = sh->PC;
 	sh->PR = sh->PC + 4;
-	//sh->_delai = sh->PC + 2;
 	sh->PC += sh->R[Instruction::b(sh->instruction)] + 4;
 #endif
 	sh->cycleCount += 2;
@@ -3418,7 +3411,6 @@ void SuperH::GetRegisters(sh2regs_struct * regs) {
 		regs->MACL = MACL;
 		regs->PR = PR;
 		regs->PC = PC;
-		regs->delay = _delai;
 	}
 #endif
 }
@@ -3438,7 +3430,6 @@ void SuperH::SetRegisters(sh2regs_struct *regs) {
 		MACL = regs->MACL;
 		PR = regs->PR;
 		PC = regs->PC;
-		_delai = regs->delay;
 	}
 #endif
 }

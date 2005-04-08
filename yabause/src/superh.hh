@@ -152,7 +152,6 @@ public:
   opcode opcodes[0xFFFF];
   opcode decode(void);
 
-  unsigned long _delai;
   unsigned short instruction; // current opcode
 
   bool isslave;
@@ -173,9 +172,6 @@ public:
   unsigned long cycleCount;
   friend class Onchip;
   friend int main(int, char *[]);
-#ifdef DEBUG
-  int verbose;
-#endif
 
   SuperH(bool, SaturnMemory *);
  ~SuperH(void);
