@@ -2228,41 +2228,42 @@ void Vdp2::drawBackScreen(void) {
 	unsigned long BKTAU = getWord(0xAC);
 	unsigned long BKTAL = getWord(0xAE);
 	unsigned long scrAddr;
+        int dot, y;
 
-	if (getWord(0x6) & 0x8000)
-		scrAddr = (((BKTAU & 0x7) << 16) | BKTAL) * 2;
-	else
-		scrAddr = (((BKTAU & 0x3) << 16) | BKTAL) * 2;
+        if (getWord(0x6) & 0x8000)
+                scrAddr = (((BKTAU & 0x7) << 16) | BKTAL) * 2;
+        else
+                scrAddr = (((BKTAU & 0x3) << 16) | BKTAL) * 2;
 
-	unsigned short dot;
-	if (BKTAU & 0x8000) {
-		int y;
-/*
-		glBegin(GL_LINES);
-		for(y = -112;y < 112;y++) {
-			dot = vram->getWord(scrAddr);
-			scrAddr += 2;
-			glColor3ub(((dot & 0x1F) << 3), ((dot & 0x3E0) >> 2), ((dot & 0x7C00) >> 7));
-			glVertex2f(0, y);
-			glVertex2f(320, y);
-		}
-		glEnd();
+        if (BKTAU & 0x8000) {
+                glBegin(GL_LINES);
+
+                for(y = 0; y < bsheight; y++)
+                {
+                   dot = vram->getWord(scrAddr);
+                   scrAddr += 2;
+
+                   glColor3ub((dot & 0x1F) << 3, (dot & 0x3E0) >> 2, (dot & 0x7C00) >> 7);
+
+                   glVertex2f(0, y);
+                   glVertex2f(bswidth, y);
+                }
+                glEnd();
 		glColor3ub(0xFF, 0xFF, 0xFF);
-*/
-	}
-	else {
-		dot = vram->getWord(scrAddr);
-/*
-		glColor3ub(((dot & 0x1F) << 3), ((dot & 0x3E0) >> 2), ((dot & 0x7C00) >> 7));
-		glBegin(GL_QUADS);
+        }
+        else {
+                dot = vram->getWord(scrAddr);
+
+                glColor3ub((dot & 0x1F) << 3, (dot & 0x3E0) >> 2, (dot & 0x7C00) >> 7);
+
+                glBegin(GL_QUADS);
 		glVertex2i(0, 0);
-		glVertex2i(320, 0);
-		glVertex2i(320, 224);
-		glVertex2i(0, 224);
-		glEnd();
+                glVertex2i(bswidth, 0);
+                glVertex2i(bswidth, bsheight);
+                glVertex2i(0, bsheight);
+                glEnd();
 		glColor3ub(0xFF, 0xFF, 0xFF);
-*/
-	}
+        }
 }
 
 void Vdp2::priorityFunction(void) {
@@ -2316,6 +2317,9 @@ void Vdp2::setSaturnResolution(int width, int height) {
    ((NBG1 *)nbg1)->setTextureRatio(width, height);
    ((NBG2 *)nbg2)->setTextureRatio(width, height);
    ((NBG3 *)nbg3)->setTextureRatio(width, height);
+
+   bswidth=width;
+   bsheight=height;
 }
 
 void Vdp2::setActualResolution(int width, int height) {

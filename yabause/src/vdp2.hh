@@ -188,7 +188,8 @@ private:
   int frameCount;
   unsigned long ticks;
   bool fpstoggle;
-
+  int bswidth;
+  int bsheight;
 public:
   Ygl<1024,1024,8,40000> ygl;
   YglCache cache;
