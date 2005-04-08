@@ -1,5 +1,5 @@
-/*  Copyright 2004 Lucas Newman
-    Copyright 2004 Theo Berkau
+/*  Copyright 2004-2005 Lucas Newman
+    Copyright 2004-2005 Theo Berkau
 
     This file is part of Yabause.
 
@@ -30,29 +30,71 @@
 #include <IOKit/storage/IOCDTypes.h>
 #include <CoreFoundation/CoreFoundation.h>
 
-char cdPath[1024];
-static int hCDROM;
-static CDTOC *cdTOC = NULL;
+#include "cd.hh"
 
-long CDReadToc(unsigned long *TOC);
 
-int getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize )
-{
+MacOSXCDDrive::MacOSXCDDrive(const char *cdrom_name) {
+	cdTOC = NULL;
+	init(cdrom_name);
+}
+
+MacOSXCDDrive::~MacOSXCDDrive() {
+	deinit();
+}
+
+const char *MacOSXCDDrive::deviceName() { return "MacOSX CD drive"; }
+
+int MacOSXCDDrive::init(const char *cdrom_name) {
+	io_iterator_t mediaIterator;
+	mach_port_t masterPort;
+	CFMutableDictionaryRef classesToMatch;
+	
+	if (IOMasterPort(MACH_PORT_NULL, &masterPort) != 0)
+		printf("IOMasterPort Failed!\n");
+		
+	classesToMatch = IOServiceMatching("IOCDMedia"); 
+
+	if (classesToMatch == NULL)
+		printf("IOServiceMatching returned a NULL dictionary.\n");
+	else
+		CFDictionarySetValue(classesToMatch, CFSTR(kIOMediaEjectableKey), kCFBooleanTrue);
+	
+	if (IOServiceGetMatchingServices(masterPort, classesToMatch, &mediaIterator) != 0)
+		printf("IOServiceGetMatchingServices Failed!\n");
+		
+	getCDPath(mediaIterator, cdPath, sizeof(cdPath));
+	if ((hCDROM = open(cdPath, O_RDONLY)) == -1)
+		return -1;
+	printf("CDInit OK\n");
+	return 0;
+}
+
+int MacOSXCDDrive::deinit() {
+	if (hCDROM != NULL) {
+		close(hCDROM);
+		free((void*)cdTOC);
+		printf("CDDeInit OK\n");
+	}
+	return 0;
+}
+
+
+int MacOSXCDDrive::getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize ) {
     io_object_t nextMedia;
-	CFMutableDictionaryRef properties;
+    CFMutableDictionaryRef properties;
     CFDataRef data;
     *devPath = '\0';
     
     nextMedia = IOIteratorNext( mediaIterator );
     if (nextMedia) {
-		CFTypeRef devPathAsCFString;
+	CFTypeRef devPathAsCFString;
         devPathAsCFString = IORegistryEntryCreateCFProperty(nextMedia, CFSTR(kIOBSDNameKey), kCFAllocatorDefault, kNilOptions);
         if (devPathAsCFString) {
             size_t devPathLength;
             strcpy(devPath, "/dev/");
 			
             devPathLength = strlen(devPath);
-            CFStringGetCString(devPathAsCFString, devPath + devPathLength, maxPathSize - devPathLength, kCFStringEncodingASCII);
+            CFStringGetCString((CFStringRef)devPathAsCFString, devPath + devPathLength, maxPathSize - devPathLength, kCFStringEncodingASCII);
             CFRelease(devPathAsCFString);
 			
 			if((IORegistryEntryCreateCFProperties(nextMedia, &properties, kCFAllocatorDefault, kNilOptions)) != 0)
@@ -77,62 +119,11 @@ int getCDPath( io_iterator_t mediaIterator, char *devPath, CFIndex maxPathSize )
         }
         IOObjectRelease(nextMedia);
     }
-	return 0;
+    return 0;
 }
 
-int CDInit(char *cdrom_name)
-{
-	io_iterator_t mediaIterator;
-	mach_port_t masterPort;
-	CFMutableDictionaryRef classesToMatch;
-	
-	if (IOMasterPort(MACH_PORT_NULL, &masterPort) != 0)
-		printf("IOMasterPort Failed!\n");
-		
-	classesToMatch = IOServiceMatching("IOCDMedia"); 
-
-	if (classesToMatch == NULL)
-		printf("IOServiceMatching returned a NULL dictionary.\n");
-    else
-		CFDictionarySetValue(classesToMatch, CFSTR(kIOMediaEjectableKey), kCFBooleanTrue);
-	
-	if (IOServiceGetMatchingServices(masterPort, classesToMatch, &mediaIterator) != 0)
-		printf("IOServiceGetMatchingServices Failed!\n");
-		
-	getCDPath(mediaIterator, cdPath, sizeof(cdPath));
-	if ((hCDROM = open(cdPath, O_RDONLY)) == -1)
-		return -1;
-	printf("CDInit OK\n");
-	return 0;
-}
-
-int CDDeInit()
-{
-	if (hCDROM != NULL) {
-		close(hCDROM);
-		free((void*)cdTOC);
-		printf("CDDeInit OK\n");
-	}
-	return 0;
-}
-
-bool CDIsCDPresent()
-{
-	
-	if (cdPath[0] != '\0')
-		return 1;
-	else
-		return 0;
-}
-
-int CDGetStatus()
-{
-	//Return that disc is present and spinning.  Fix this evetnually.
-	return 0;
-}
-long CDReadToc(unsigned long *TOC)
-{
-	int add150 = 150, tracks = 0;
+long MacOSXCDDrive::readTOC(unsigned long *TOC) {
+  	int add150 = 150, tracks = 0;
 	u_char track;
 	int i, fad = 0; 
 	CDTOCDescriptor *pTrackDescriptors;
@@ -148,7 +139,7 @@ long CDReadToc(unsigned long *TOC)
             continue;
 		TOC[i-3] = (pTrackDescriptors[i].control << 28 | pTrackDescriptors[i].adr << 24 | fad);
 		tracks++;
-    }
+	}
 	
 	/* First */
 	TOC[99] = pTrackDescriptors[0].control << 28 | pTrackDescriptors[0].adr << 24 | 1 << 16;
@@ -163,8 +154,18 @@ long CDReadToc(unsigned long *TOC)
 	return (0xCC * 2);
 }
 
-bool CDReadSectorFAD(unsigned long FAD, void *buffer)
-{
+int MacOSXCDDrive::getStatus(void) {
+	// 0 - CD Present, disc spinning
+	// 1 - CD Present, disc not spinning
+	// 2 - CD not present
+	// 3 - Tray open
+	// see ../windows/cd.cc for more info
+
+	//Return that disc is present and spinning.  Fix this eventually.
+	return 0;
+}
+
+bool MacOSXCDDrive::readSectorFAD(unsigned long FAD, void *buffer) {
 	int blockSize;
 	
 	if (hCDROM != -1) {
@@ -174,3 +175,4 @@ bool CDReadSectorFAD(unsigned long FAD, void *buffer)
 	}
 	return false;
 }
+
