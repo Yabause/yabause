@@ -34,7 +34,7 @@ public:
 	const char *deviceName();
 	
 private:
-	int init(const char *iso);
+	int init(const char *cdrom_name);
 	int deinit();
 	
 	int hCDROM;
