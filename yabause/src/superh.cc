@@ -343,13 +343,6 @@ void SuperH::runCycles(unsigned long cc) {
                        break;
         }
 
-#if 0
-#ifdef DYNAREC
-	cerr << "PC (" << isslave << ") = " << hex << sh2reg[PC].value << ", opcode = " << instruction << endl;
-#else
-	cerr << "PC (" << isslave << ") = " << hex << PC << ", opcode = " << instruction << endl;
-#endif
-#endif
         (*opcodes[instruction])(this);
         }
 
@@ -1113,7 +1106,7 @@ void div1(SuperH * sh) {
 	if (((sh->sh2reg[SR].value >> 8) & 1) == ((sh->sh2reg[SR].value >> 9) & 1))
 		sh->sh2reg[SR].value |= 1;
 	else
-		sh->sh2reg[SR].value = 0xFFFFFFFE;
+		sh->sh2reg[SR].value &= 0xFFFFFFFE;
 	sh->sh2reg[PC].value += 2;
 #else
 	old_q = sh->SR.partie.Q;
