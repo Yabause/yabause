@@ -38,7 +38,7 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
 
   reset();
 
-  for(unsigned short i = 0;i < 0xFFFF;i++) {
+  for(int i = 0;i < 0x10000;i++) {
     instruction = i;
     opcodes[i] = decode();
   }
@@ -425,15 +425,50 @@ void undecoded(SuperH * sh) {
 	exit(-1);
 #endif
 #else
-#ifndef _arch_dreamcast
         if (sh->isslave)
-           throw IllegalOpcode("SSH2", sh->instruction, sh->PC);
+        {
+           int vectnum;
+
+           fprintf(stderr, "Slave SH2 Illegal Opcode: %04X, PC: %08X. Jumping to Exception Service Routine.\n", sh->instruction, sh->PC);
+
+           // Save SR on stack
+           sh->R[15]-=4;
+           sh->memoire->setLong(sh->R[15],sh->SR.tout);
+
+           // Save PC on stack
+           sh->R[15]-=4;
+           sh->memoire->setLong(sh->R[15],sh->PC + 2);
+
+           // What caused the exception? The delay slot or a general instruction?
+           // 4 for General Instructions, 6 for delay slot
+           vectnum = 4; //  Fix me
+
+           // Jump to Exception service routine
+           sh->PC = sh->memoire->getLong(sh->VBR+(vectnum<<2));
+           sh->cycleCount++;
+        }
         else
-           throw IllegalOpcode("MSH2", sh->instruction, sh->PC);
-#else
-	printf("Illegal Opcode: 0x%8x, PC: 0x%8x\n", sh->instruction, sh->PC);
-	exit(-1);
-#endif
+        {
+           int vectnum;
+
+           fprintf(stderr, "Master SH2 Illegal Opcode: %04X, PC: %08X. Jumping to Exception Service Routine.\n", sh->instruction, sh->PC);
+
+           // Save SR on stack
+           sh->R[15]-=4;
+           sh->memoire->setLong(sh->R[15],sh->SR.tout);
+
+           // Save PC on stack
+           sh->R[15]-=4;
+           sh->memoire->setLong(sh->R[15],sh->PC + 2);
+
+           // What caused the exception? The delay slot or a general instruction?
+           // 4 for General Instructions, 6 for delay slot
+           vectnum = 4; //  Fix me
+
+           // Jump to Exception service routine
+           sh->PC = sh->memoire->getLong(sh->VBR+(vectnum<<2));
+           sh->cycleCount++;
+        }
 #endif
 }
 

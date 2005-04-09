@@ -149,7 +149,7 @@ public:
   SaturnMemory *memoire;
 
   typedef void (*opcode)(SuperH *);
-  opcode opcodes[0xFFFF];
+  opcode opcodes[0x10000];
   opcode decode(void);
 
   unsigned short instruction; // current opcode
