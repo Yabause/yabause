@@ -415,15 +415,50 @@ ostream& operator<<(ostream& os, const SuperH& sh) {
 
 void undecoded(SuperH * sh) {
 #ifdef DYNAREC
-#ifndef _arch_dreamcast
         if (sh->isslave)
-           throw IllegalOpcode("SSH2", sh->instruction, sh->sh2reg[PC].value);
+        {
+           int vectnum;
+
+           fprintf(stderr, "Slave SH2 Illegal Opcode: %04X, PC: %08X. Jumping to Exception Service Routine.\n", sh->instruction, sh->sh2reg[PC].value);
+
+           // Save SR on stack
+           sh->sh2reg[15].value -= 4;
+           sh->memoire->setLong(sh->sh2reg[15].value, sh->sh2reg[SR].value);
+
+           // Save PC on stack
+           sh->sh2reg[15].value -= 4;
+           sh->memoire->setLong(sh->sh2reg[15].value, sh->sh2reg[PC].value + 2);
+
+           // What caused the exception? The delay slot or a general instruction?
+           // 4 for General Instructions, 6 for delay slot
+           vectnum = 4; //  Fix me
+
+           // Jump to Exception service routine
+           sh->sh2reg[PC].value = sh->memoire->getLong(sh->sh2reg[VBR].value + (vectnum << 2));
+           sh->cycleCount++;
+        }
         else
-           throw IllegalOpcode("MSH2", sh->instruction, sh->sh2reg[PC].value);
-#else
-	printf("Illegal Opcode: 0x%8x, PC: 0x%8x\n", sh->instruction, sh->sh2reg[PC].value);
-	exit(-1);
-#endif
+        {
+           int vectnum;
+
+           fprintf(stderr, "Master SH2 Illegal Opcode: %04X, PC: %08X. Jumping to Exception Service Routine.\n", sh->instruction, sh->sh2reg[PC].value);
+
+           // Save SR on stack
+           sh->sh2reg[15].value-=4;
+           sh->memoire->setLong(sh->sh2reg[15].value, sh->sh2reg[SR].value);
+
+           // Save PC on stack
+           sh->sh2reg[15].value -= 4;
+           sh->memoire->setLong(sh->sh2reg[15].value, sh->sh2reg[PC].value + 2);
+
+           // What caused the exception? The delay slot or a general instruction?
+           // 4 for General Instructions, 6 for delay slot
+           vectnum = 4; //  Fix me
+
+           // Jump to Exception service routine
+           sh->sh2reg[PC].value = sh->memoire->getLong(sh->sh2reg[VBR].value + (vectnum<<2));
+           sh->cycleCount++;
+        }
 #else
         if (sh->isslave)
         {
