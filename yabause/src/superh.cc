@@ -53,6 +53,7 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
 
   isslave = slave;
   cycleCount = 0;
+
 }
 
 SuperH::~SuperH(void) {
@@ -583,7 +584,7 @@ void addv(SuperH * sh) {
 	if (j == 0 || j == 2)
 		if (k == 1) sh->sh2reg[SR].value |= 1;
 		else sh->sh2reg[SR].value &= 0xFFFFFFFE;
-	else sh->sh2reg[SR].value = 0xFFFFFFFE;
+	else sh->sh2reg[SR].value &= 0xFFFFFFFE;
 	sh->sh2reg[PC].value += 2;
 #else
 	if ((long) sh->R[dest] >= 0) i = 0; else i = 1;
@@ -1316,6 +1317,7 @@ void dmuls(SuperH * sh) {
 }
 
 void dmulu(SuperH * sh) {
+	
 	unsigned long RnL, RnH, RmL, RmH, Res0, Res1, Res2;
 	unsigned long temp0, temp1, temp2, temp3;
 	long m = Instruction::c(sh->instruction);
