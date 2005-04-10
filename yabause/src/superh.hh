@@ -22,11 +22,6 @@
 
 #include "saturn_memory.hh"
 
-#ifdef DYNAREC
-typedef struct {
-	unsigned long regs[23];
-} sh2regs_struct;
-#else
 typedef struct
 {
   unsigned long R[16];
@@ -68,7 +63,7 @@ typedef struct
 
   unsigned long delay;
 } sh2regs_struct;
-#endif
+
 
 typedef struct
 {
@@ -90,61 +85,12 @@ public:
   static inline unsigned long bcd (unsigned long ul) { return (ul & 0x0FFF); }
 };
 
-#ifdef DYNAREC
-enum sh2reg_names {
-	R0, R1, R2, R3, R4, R5, R6, R7,
-	R8, R9, RA, RB, RC, RD, RE, RF,
-	SR, GBR, VBR, MACH, MACL, PR, PC
-};
-
-struct Sh2reg {
-	int jitreg;
-	unsigned long value;
-};
-#endif
-
 class SuperH {
 public:
-#ifdef DYNAREC
-	Sh2reg sh2reg[23];
-#else
-  unsigned long R[16];
 
-#ifdef WORDS_BIGENDIAN
-  union {
-    struct {
-      unsigned long inutile1:22;
-      unsigned long M:1;
-      unsigned long Q:1;
-      unsigned long I:4;
-      unsigned long inutile2:2;
-      unsigned long S:1;
-      unsigned long T:1;
-    } partie;
-    unsigned long tout;
-  } SR;
-#else
-  union {
-    struct {
-      unsigned long T:1;
-      unsigned long S:1;
-      unsigned long inutile2:2;
-      unsigned long I:4;
-      unsigned long Q:1;
-      unsigned long M:1;
-      unsigned long inutile1:22;
-    } partie;
-    unsigned long tout;
-  } SR;
-#endif
-  unsigned long GBR;
-  unsigned long VBR;
+  unsigned long regs_array[23];
 
-  unsigned long MACH;
-  unsigned long MACL;
-  unsigned long PR;
-  unsigned long PC;
-#endif
+  sh2regs_struct * regs;
 
   SaturnMemory *memoire;
 
