@@ -54,21 +54,11 @@ class Scu;
 class Vdp2;
 class Vdp2ColorRam;
 
-class Vdp1VRAM : public Memory	{
-	public:
-		Vdp1VRAM(unsigned long m, unsigned long size);
-		~Vdp1VRAM();
-		
-		void setByte(unsigned long l, unsigned char d);
-		void setWord(unsigned long l, unsigned short d);
-		void setLong(unsigned long l, unsigned long d);
-};
-
 class Vdp1 : public Memory, public VdpScreen {
 private:
   //GLuint texture[1];
   SaturnMemory *satmem;
-  Vdp1VRAM *vram;
+  Memory *vram;
   Vdp2 *vdp2reg;
   Vdp2ColorRam *cram;
   YglCache cache;
@@ -126,7 +116,7 @@ public:
   int getAlpha(void);
   int getColorOffset(void);
   */
-  Vdp1VRAM *getVRam(void);
+  Memory *getVRam(void);
 
   void readCommand(unsigned long);
   void readTexture(unsigned int *, unsigned int);

@@ -28,7 +28,7 @@
 
 Vdp1::Vdp1(SaturnMemory *mem) : Memory(0xFF, 0x18) {
 	satmem = mem;
-	vram = new Vdp1VRAM(0xFFFFF, 0xC0000);
+	vram = new Memory(0xFFFFF, 0xC0000);
         disptoggle = true;
         reset();
 }
@@ -359,7 +359,7 @@ void Vdp1::readPriority(void) {
 	}
 }
 
-Vdp1VRAM *Vdp1::getVRam(void) {
+Memory *Vdp1::getVRam(void) {
 	return vram;
 }
 
@@ -694,28 +694,6 @@ void Vdp1::localCoordinate(unsigned long addr) {
 #if VDP1_DEBUG
   //cerr << "vdp1\t: local coordinate x=" << CMDXA << " y=" << CMDYA << endl;
 #endif
-}
-
-Vdp1VRAM::Vdp1VRAM(unsigned long m, unsigned long size) : Memory(m, size)	{
-}
-
-Vdp1VRAM::~Vdp1VRAM()	{
-}
-
-void Vdp1VRAM::setByte(unsigned long l, unsigned char d)	{
-	
-	Memory::setByte(l, d);
-}
-
-void Vdp1VRAM::setWord(unsigned long l, unsigned short d)	{
-	
-	Memory::setWord(l, d);
-}
-
-
-void Vdp1VRAM::setLong(unsigned long l, unsigned long d)	{
-	
-	Memory::setLong(l, d);
 }
 
 void Vdp1::draw(void) {

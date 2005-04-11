@@ -343,17 +343,6 @@ ostream& operator<<(ostream& os, const SuperH& sh) {
 #endif
 
 void undecoded(SuperH * sh) {
-#ifdef DYNAREC
-#ifndef _arch_dreamcast
-        if (sh->isslave)
-           throw IllegalOpcode("SSH2", sh->instruction, sh->sh2reg[regs->PC].value);
-        else
-           throw IllegalOpcode("MSH2", sh->instruction, sh->sh2reg[regs->PC].value);
-#else
-	printf("Illegal Opcode: 0x%8x, regs->PC: 0x%8x\n", sh->instruction, sh->sh2reg[regs->PC].value);
-	exit(-1);
-#endif
-#else
         if (sh->isslave)
         {
            int vectnum;
@@ -398,7 +387,6 @@ void undecoded(SuperH * sh) {
            sh->regs->PC = sh->memoire->getLong(sh->regs->VBR+(vectnum<<2));
            sh->cycleCount++;
         }
-#endif
 }
 
 void add(SuperH * sh) {

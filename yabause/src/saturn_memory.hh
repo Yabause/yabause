@@ -39,7 +39,7 @@ public:
   Cs2 *cs2;		//  5800000 -  5900000
   ScspRam *sound;	//  5A00000 -  5A80000
   Scsp *soundr;	//  5B00000 -  5B00EE4
-  Vdp1VRAM *vdp1_1;	//  5C00000 -  5CC0000
+  Memory *vdp1_1;	//  5C00000 -  5CC0000
   Vdp1 *vdp1_2;	//  5D00000 -  5D00018
   Vdp2Ram *vdp2_1;	//  5E00000 -  5E80000
   Vdp2ColorRam *vdp2_2;	//  5F00000 -  5F01000
