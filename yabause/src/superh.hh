@@ -126,7 +126,6 @@ public:
   void setMemory(SaturnMemory *);
   Memory *getMemory(void);
 
-  void executer(void);
   void delay(unsigned long);
 
   void send(const Interrupt&);
@@ -135,13 +134,6 @@ public:
   void runCycles(unsigned long);
   void step(void);
 
-/*
-  Memory *GetSdramMode();
-  Memory *GetPurgeArea();
-  Memory *GetAddressArray();
-  Memory *GetDataArray();
-  Memory *SuperH::GetOnchip();
-*/
   void GetRegisters(sh2regs_struct *regs);
   void SetRegisters(sh2regs_struct *regs);
 

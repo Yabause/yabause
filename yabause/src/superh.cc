@@ -101,53 +101,6 @@ void SuperH::sendNMI(void) {
 	send(Interrupt(16, 11));
 }
 
-void /*inline*/ _executer(SuperH * sh) {
-	if (sh->regs->PC & 0x6000000) {
-		sh->instruction = readWord(sh->memoire->ramHigh, sh->regs->PC);
-	}
-	else {
-                sh->instruction = readWord(sh->memoire->rom, sh->regs->PC);
-	}
-        (*sh->opcodes[sh->instruction])(sh);
-}
-
-void SuperH::executer(void) {
-/*
-  if (_delai) {
-    unsigned long tmp = regs->PC;
-    regs->PC = _delai;
-    _executer(this);
-    regs->PC = tmp;
-    _delai = 0;
-  }
-  else {
-*/
-/*
-    if ( !interrupts.empty() ) {
-      Interrupt interrupt = interrupts.top();
-      if (interrupt.level() > regs->SR.part.I) {
-        interrupts.pop();
-
-        R[15] -= 4;
-        memoire->setLong(R[15], regs->SR.all);
-        R[15] -= 4;
-        memoire->setLong(R[15], regs->PC);
-        regs->SR.part.I = interrupt.level();
-        regs->PC = memoire->getLong(regs->VBR + (interrupt.vector() << 2));
-      }
-    }
-*/
-#ifdef _arch_dreamcast
-    cont_cond_t cond;
-    cont_get_cond(maple_first_controller(), &cond);
-    if(!(cond.buttons & CONT_A)) {
-	    vid_screen_shot("/pc/saturn.raw");
-    }
-#endif
-    _executer(this);
-  //}
-}
-
 void SuperH::delay(unsigned long addr) {
         switch ((addr >> 20) & 0x0FF) {
            case 0x000: // Bios              
@@ -185,34 +138,6 @@ void SuperH::delay(unsigned long addr) {
         regs->PC -= 2;
 }
 
-/*
-void SuperH::_executer(void) {
-//        if (isslave) cerr << "regs->PC=" << regs->PC << endl;
-        unsigned long tmp = (regs->PC >> 19) & 0xFF;
-        switch(tmp) {
-                case 0:
-                        // rom
-                        instruction = readWord(memoire->rom, regs->PC);
-                        break;
-                case 0xC0:
-                        // work ram high
-                        instruction = readWord(memoire->ramHigh, regs->PC);
-                        break;
-                default:
-                        cerr << hex << "coin = " <<  tmp << endl;
-                        instruction = memoire->getWord(regs->PC);
-                        break;
-        }
-	if (regs->PC & 0x6000000) {
-		instruction = readWord(memoire->ramHigh, regs->PC);
-	}
-	else {
-                instruction = readWord(memoire->rom, regs->PC);
-	}
-        (*opcodes[instruction])(this);
-}
-*/
-
 void SuperH::run(int t) {
 	if (timing > 0) {
 		timing -= t;
@@ -247,7 +172,6 @@ void SuperH::runCycles(unsigned long cc) {
               }
            }
 
-           //_executer(this);
         switch ((regs->PC >> 20) & 0x0FF) {
            case 0x000: // Bios              
                        instruction = readWord(memoire->rom, regs->PC);
