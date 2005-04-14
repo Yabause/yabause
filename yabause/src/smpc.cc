@@ -117,7 +117,7 @@ void Smpc::setByte(unsigned long addr, unsigned char value) {
   }
 }
 
-Smpc::Smpc(SaturnMemory *sm) : Memory(0xFF, 0x80) {
+Smpc::Smpc(SaturnMemory *sm) : Memory(0x7F, 0x80) {
   dotsel = false;
   mshnmi = false;
   sndres = false;
@@ -541,4 +541,25 @@ void Smpc::CKCHG320(void) {
   sm->stopSlave();
 
   // change clock
+}
+
+int Smpc::saveState(FILE *fp) {
+   int offset;
+
+   offset = stateWriteHeader(fp, "SMPC", 1);
+
+   // Write registers
+   fwrite((void *)this->getBuffer(), 0x80, 1, fp);
+
+   return stateFinishHeader(fp, offset);
+}
+
+int Smpc::loadState(FILE *fp, int version, int size) {
+   // Read registers
+   fread((void *)this->getBuffer(), 0x80, 1, fp);
+
+   // May need to rework the following
+   timing = 0;
+
+   return size;
 }

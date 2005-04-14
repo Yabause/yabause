@@ -98,7 +98,7 @@ void __del_highest_int()	{
 #define BCR1            0x1E0
 #define BCR2            0x1E4
 
-Onchip::Onchip(bool slave, SaturnMemory *sm, SuperH *sh) : Memory(0x1FF, 0x1FF) {
+Onchip::Onchip(bool slave, SaturnMemory *sm, SuperH *sh) : Memory(0x1FF, 0x200) {
 	memory = sm;
         shparent = sh;
         isslave = slave;

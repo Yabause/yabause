@@ -82,6 +82,9 @@ public:
   void SSHON(void);
   void CKCHG352(void);
   void CKCHG320(void);
+
+  int saveState(FILE *fp);
+  int loadState(FILE *fp, int version, int size);
 };
 
 #endif
