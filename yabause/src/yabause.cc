@@ -175,6 +175,14 @@ int handleEvents(SaturnMemory *mem) {
                         mem->vdp2_3->toggleFPS();
                         break;
 
+                case SDLK_F2:
+                        mem->saveState("yabause.yss");
+                        break;
+
+                case SDLK_F4:
+                        mem->loadState("yabause.yss");
+                        break;
+
                 case SDLK_1:
                         ((NBG0 *)(mem->vdp2_3->getNBG0()))->toggleDisplay();
                         break;

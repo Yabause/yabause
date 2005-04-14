@@ -104,6 +104,9 @@ public:
 
   void startSlave(void);
   void stopSlave(void);
+
+  int saveState(const char *filename);
+  int loadState(const char *filename);
 };
 
 unsigned char inline readByte(SaturnMemory * mem , unsigned long addr) {

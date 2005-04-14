@@ -123,7 +123,7 @@ public:
  ~SuperH(void);
   void reset(void);
 
-  void setMemory(SaturnMemory *);
+  void PowerOn();
   Memory *getMemory(void);
 
   void delay(unsigned long);
@@ -142,6 +142,9 @@ public:
   int DelCodeBreakpoint(unsigned long addr);
   codebreakpoint_struct *GetBreakpointList();
   void ClearCodeBreakpoints();
+
+  int saveState(FILE *fp);
+  int loadState(FILE *fp, int version, int size);
 
 #ifndef _arch_dreamcast
   friend ostream& operator<<(ostream&, const SuperH&);

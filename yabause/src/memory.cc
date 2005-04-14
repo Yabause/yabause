@@ -298,8 +298,8 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
         msh = new SuperH(false, this);
         ssh = new SuperH(true, this);
 
-	rom         = new Memory(0xFFFFF, 0x80000);
-	ram         = new Memory(0xFFFF, 0x10000);
+        rom         = new Memory(0x7FFFF, 0x80000);
+        ram         = new Memory(0xFFFF, 0x10000);
 	ramLow      = new Memory(0xFFFFF, 0x100000);
         minit = new InputCaptureSignal(ssh);
         sinit = new InputCaptureSignal(msh);
@@ -368,7 +368,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
         // Set the sh2 timing to the default
         changeTiming(26846587, false);
 
-	msh->setMemory(this);
+        msh->PowerOn();
 	sshRunning = false;
 }
 
@@ -496,16 +496,16 @@ void SaturnMemory::initMemoryMap() {
 	for(int i = 0;i < 0x800;i++)
                 memoryMap[i] = unhandled;
 
-	initMemoryHandler(    0,   0x8, rom);
+        initMemoryHandler(    0,   0xF, rom);
 	initMemoryHandler( 0x10,  0x11, smpc);
 	initMemoryHandler( 0x18,  0x19, ram);
 	initMemoryHandler( 0x20,  0x30, ramLow);
-        initMemoryHandler(0x100, 0x180, minit);
+        initMemoryHandler(0x100, 0x17F, minit);
         initMemoryHandler(0x180, 0x200, sinit);
 	initMemoryHandler(0x200, 0x400, cs0);
 	initMemoryHandler(0x400, 0x500, cs1);
 	initMemoryHandler(0x580, 0x590, cs2);
-	initMemoryHandler(0x5A0, 0x5A8, sound);
+        initMemoryHandler(0x5A0, 0x5AF, sound);
 	initMemoryHandler(0x5B0, 0x5B1, soundr);
         initMemoryHandler(0x5C0, 0x5CC, vdp1_1);
 	initMemoryHandler(0x5D0, 0x5D1, vdp1_2);
@@ -607,11 +607,11 @@ void SaturnMemory::synchroStart(void) {
 	switch(decilineCount) {
 		case 9:
 			// HBlankIN
-			((Vdp2 *) vdp2_3)->HBlankIN();
+                        ((Vdp2 *) vdp2_3)->HBlankIN();
 			break;
 		case 10:
 			// HBlankOUT
-			((Vdp2 *) vdp2_3)->HBlankOUT();
+                        ((Vdp2 *) vdp2_3)->HBlankOUT();
                         ((Scsp *)soundr)->run();
 			decilineCount = 0;
 			lineCount++;
@@ -619,11 +619,11 @@ void SaturnMemory::synchroStart(void) {
 				case 224:
 					// VBlankIN
                                         ((Smpc *) smpc)->INTBACKEnd();
-					((Vdp2 *) vdp2_3)->VBlankIN();
+                                        ((Vdp2 *) vdp2_3)->VBlankIN();
 					break;
 				case 263:
 					// VBlankOUT
-					((Vdp2 *) vdp2_3)->VBlankOUT();
+                                        ((Vdp2 *) vdp2_3)->VBlankOUT();
 					lineCount = 0;
 					break;
 			}
@@ -632,9 +632,9 @@ void SaturnMemory::synchroStart(void) {
 	cycleCountII += msh->cycleCount;
 
 	while (cycleCountII > duf) {
-		((Smpc *) smpc)->execute2(10);
+                ((Smpc *) smpc)->execute2(10);
                 ((Cs2 *)cs2)->run(10);
-		msh->run(10);
+                msh->run(10);
                 ssh->run(10);
                 ((Scu *)scu)->run(10);
 		cycleCountII %= duf;
@@ -648,12 +648,231 @@ void SaturnMemory::synchroStart(void) {
 }
 
 void SaturnMemory::startSlave(void) {
-	ssh->setMemory(this);
+        ssh->PowerOn();
 	sshRunning = true;
 }
 
 void SaturnMemory::stopSlave(void) {
         ssh->reset();
 	sshRunning = false;
+}
+
+int SaturnMemory::saveState(const char *filename) {
+#ifndef _arch_dreamcast
+   unsigned long i;
+   FILE *fp;
+   int offset;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+      return -1;
+
+   // Write signature
+   fprintf(fp, "YSS");
+
+   // Write endianness byte
+#ifdef WORDS_BIGENDIAN
+   fputc(0x00, fp);
+#else
+   fputc(0x01, fp);
+#endif
+
+   // Write version(fix me)
+   i = 1;
+   fwrite((void *)&i, sizeof(i), 1, fp);
+
+   // Skip the next 4 bytes for now
+   i = 0;
+   fwrite((void *)&i, sizeof(i), 1, fp);
+
+   // Go through each area and write each state
+
+   i += cs0->saveState(fp);
+   i += cs1->saveState(fp);
+   i += cs2->saveState(fp);
+   i += msh->saveState(fp);
+   i += ssh->saveState(fp);
+   i += soundr->saveState(fp);
+   i += scu->saveState(fp);
+   i += smpc->saveState(fp);
+   i += vdp1_2->saveState(fp);
+   i += vdp2_3->saveState(fp);
+
+   offset = stateWriteHeader(fp, "OTHR", 1);
+
+   // Other data here
+   fwrite((void *)ram->getBuffer(), 0x10000, 1, fp);
+   fwrite((void *)ramHigh->getBuffer(), 0x100000, 1, fp);
+   fwrite((void *)ramLow->getBuffer(), 0x100000, 1, fp);
+
+   i += stateFinishHeader(fp, offset);
+
+   // Go back and update size
+   fseek(fp, 8, SEEK_SET);
+   fwrite((void *)&i, sizeof(i), 1, fp);
+
+   fclose(fp);
+#endif
+
+   return 0;
+}
+
+int SaturnMemory::loadState(const char *filename) {
+#ifndef _arch_dreamcast
+   FILE *fp;
+   char id[3];
+   unsigned char endian;
+   int version, size, chunksize;
+
+   if ((fp = fopen(filename, "rb")) == NULL)
+      return -1;
+
+   // Read signature
+   fread((void *)id, 1, 3, fp);
+
+   if (strncmp(id, "YSS", 3) != 0)
+   {
+      fclose(fp);
+      return -2;
+   }
+
+   // Read header
+   fread((void *)&endian, 1, 1, fp);
+   fread((void *)&version, 4, 1, fp);
+   fread((void *)&size, 4, 1, fp);
+
+#ifdef WORDS_BIGENDIAN
+   if (endian == 1)
+#else
+   if (endian == 0)
+#endif
+   {
+      // should setup reading so it's byte-swapped
+      cerr << "loadState byteswapping not supported" << endl;
+      fclose(fp);
+      return -3;
+   }
+
+   // Make sure size variable matches actual size minus header
+   fseek(fp, 0, SEEK_END);
+   if (size != (ftell(fp) - 0xC))
+   {
+      fclose(fp);
+      return -2;
+   }
+   fseek(fp, 0xC, SEEK_SET);
+
+   // Verify version here
+
+   soundr->muteAudio();
+   
+   if (stateCheckRetrieveHeader(fp, "CS0 ", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   cs0->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "CS1 ", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   cs1->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "CS2 ", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   cs2->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "MSH2", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   msh->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "SSH2", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   ssh->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "SCSP", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   soundr->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "SCU ", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   scu->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "SMPC", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   smpc->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "VDP1", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   vdp1_2->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "VDP2", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   vdp2_3->loadState(fp, version, chunksize);
+
+   if (stateCheckRetrieveHeader(fp, "OTHR", &version, &chunksize) != 0)
+   {
+      fclose(fp);
+      // Revert back to old state here
+      soundr->unmuteAudio();
+      return -3;
+   }
+   // Other data
+   fread((void *)ram->getBuffer(), 0x10000, 1, fp);
+   fread((void *)ramHigh->getBuffer(), 0x100000, 1, fp);
+   fread((void *)ramLow->getBuffer(), 0x100000, 1, fp);
+
+   fclose(fp);
+
+#endif
+
+   soundr->unmuteAudio();
+
+   return 0;
 }
 

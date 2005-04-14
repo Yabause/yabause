@@ -125,7 +125,7 @@ int inline stateCheckRetrieveHeader(FILE *fp, const char *name, int *version, in
    if ((ret = fread((void *)id, 1, 4, fp)) != 4)
      return -1;
 
-   if (memicmp(name, id, 4) != 0)
+   if (strncmp(name, id, 4) != 0)
      return -2;
 
    if ((ret = fread((void *)version, 4, 1, fp)) != 1)

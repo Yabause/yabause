@@ -36,6 +36,8 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
   dataArray   = new Memory(0xFFF, 0x1000);
   modeSdram = new Memory(0xFFF, 0x4FFF);
 
+  memoire = sm;
+
   regs = (sh2regs_struct *) &regs_array;
 
   reset();
@@ -83,10 +85,9 @@ void SuperH::reset(void) {
   timing = 0;
 }
 
-void SuperH::setMemory(SaturnMemory *mem) {
-         memoire = mem;
-         regs->PC = memoire->getLong(regs->VBR);
-         regs->R[15] = memoire->getLong(regs->VBR + 4);
+void SuperH::PowerOn() {
+  regs->PC = memoire->getLong(regs->VBR);
+  regs->R[15] = memoire->getLong(regs->VBR + 4);
 }
 
 Memory *SuperH::getMemory(void) {
@@ -2256,4 +2257,37 @@ void SuperH::SortCodeBreakpoints() {
         }
      }
   }
+}
+
+int SuperH::saveState(FILE *fp) {
+   int offset;
+
+   // Write header
+   if (isslave == false)
+      offset = stateWriteHeader(fp, "MSH2", 1);
+   else
+   {
+      offset = stateWriteHeader(fp, "SSH2", 1);
+      fwrite((void *)&memoire->sshRunning, 1, 1, fp);
+   }
+   // Write registers
+   fwrite((void *)regs_array, 4, 23, fp);
+
+   // Write onchip registers
+   fwrite((void *)onchip->getBuffer(), 0x200, 1, fp);
+
+   return stateFinishHeader(fp, offset);
+}
+
+int SuperH::loadState(FILE *fp, int version, int size) {
+   if (isslave == true)
+      fread((void *)&(memoire->sshRunning), 1, 1, fp);
+
+   // Read registers
+   fread((void *)regs_array, 4, 23, fp);
+
+   // Read onchip registers
+   fread((void *)onchip->getBuffer(), 0x200, 1, fp);
+
+   return size;
 }
