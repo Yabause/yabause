@@ -137,6 +137,9 @@ public:
   int getInnerPriority(void);
   void toggleDisplay(void);
   void setTextureRatio(int, int);
+
+  int saveState(FILE *fp);
+  int loadState(FILE *fp, int version, int size);
 };
 
 #endif

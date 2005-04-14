@@ -748,3 +748,26 @@ void Vdp1::setVdp2Ram(Vdp2 *v, Vdp2ColorRam *c) {
   cram = c;
 }
 
+int Vdp1::saveState(FILE *fp) {
+   int offset;
+
+   offset = stateWriteHeader(fp, "VDP1", 1);
+
+   // Write registers
+   fwrite((void *)this->getBuffer(), 0x18, 1, fp);
+
+   // Write VDP1 ram
+   fwrite((void *)vram->getBuffer(), 0xC0000, 1, fp);
+
+   return stateFinishHeader(fp, offset);
+}
+
+int Vdp1::loadState(FILE *fp, int version, int size) {
+   // Read registers
+   fread((void *)this->getBuffer(), 0x18, 1, fp);
+
+   // Read VDP1 ram
+   fread((void *)vram->getBuffer(), 0xC0000, 1, fp);
+
+   return size;
+}
