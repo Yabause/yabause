@@ -39,7 +39,7 @@ class ScspRam : public Memory {
 private:
   unsigned char *base_mem;
 public: 
-  ScspRam(void) : Memory(0x7FFFF, 0x80000) {
+  ScspRam(void) : Memory(0xFFFFF, 0x80000) {
   base_mem = Memory::getBuffer();
   }
   ~ScspRam(void) {}
@@ -83,6 +83,12 @@ public:
 
   void Get68kRegisters(m68kregs_struct *regs);
   void Set68kRegisters(m68kregs_struct *regs);
+
+  void muteAudio();
+  void unmuteAudio();
+
+  int saveState(FILE *fp);
+  int loadState(FILE *fp, int version, int size);
 };
 
 #ifdef __GNUC__
@@ -127,3 +133,4 @@ extern void		sound_reset(void);
 extern void		sound_shutdown(void);
 
 #endif
+

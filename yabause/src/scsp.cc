@@ -214,6 +214,7 @@ typedef struct slot_t
 
 typedef struct scsp_t
 {
+        u32     mem4b;                  // 4mbit memory
 	u32	mvol;			// master volume
 
 	u32	rbl;			// ring buffer lenght
@@ -290,7 +291,7 @@ static s32		* scsp_bufR;
 static u32		scsp_buf_len;
 static u32		scsp_buf_pos;
 
-static scsp_t	scsp;						// SCSP structure
+static scsp_t   scsp;                                           // SCSP structure
 
 
 ////////////////////////////////////////////////////////////////
@@ -966,6 +967,9 @@ void scsp_set_b(u32 a, u8 d)
 	scsp_ccr[a ^ 3] = d;
 
 	switch(a & 0x3F){
+        case 0x00:
+                scsp.mem4b = (d >> 1) & 0x1;
+                return;
 
 	case 0x01:
 		scsp.mvol = d & 0xF;
@@ -1102,6 +1106,7 @@ void scsp_set_w(u32 a, u16 d)
 	switch((a >> 1) & 0x1F){
 
 	case 0x00:
+                scsp.mem4b = (d >> 9) & 0x1;                
 		scsp.mvol = d & 0xF;
 		return;
 
@@ -2323,6 +2328,7 @@ void scsp_reset(void)
 	memset(scsp.scsp_ram,	0, SCSP_RAM_SIZE);
 	memset(scsp_reg,		0, 0x1000);
 
+        scsp.mem4b              = 0;
 	scsp.mvol		= 0;
 	scsp.rbl		= 0;
 	scsp.rbp		= 0;
@@ -2567,103 +2573,87 @@ void scspMixAudio(void *userdata, Uint8 *stream, int len) {
 }
 
 unsigned char ScspRam::getByte(unsigned long addr) {
-	addr &= mask;
-	if (addr >= size) {
-#ifndef _arch_dreamcast
-		throw BadMemoryAccess(addr);
-#else
-		printf("Bad memory access: %8x", addr);
-#endif
-	}
+   // If mem4b is set, mirror ram every 256k
+   if (scsp.mem4b == 0)
+      addr &= 0x3FFFF;
+   else if (addr > 0x7FFFF)
+      return 0xFF;
 
 #ifdef WORDS_BIGENDIAN
-        return (base_mem + addr)[0];
+   return (base_mem + addr)[0];
 #else
-        return (base_mem + (addr ^ 1))[0];
+   return (base_mem + (addr ^ 1))[0];
 #endif
 }
 
 void ScspRam::setByte(unsigned long addr, unsigned char val) {
-	addr &= mask;
-	if (addr >= size) {
-#ifndef _arch_dreamcast
-		throw BadMemoryAccess(addr);
-#else
-		printf("Bad memory access: %8x", addr);
-#endif
-	}
+   // If mem4b is set, mirror ram every 256k
+   if (scsp.mem4b == 0)
+      addr &= 0x3FFFF;
+   else if (addr > 0x7FFFF)
+      return;
+
 #ifdef WORDS_BIGENDIAN
-        (base_mem + addr)[0] = val;
+   (base_mem + addr)[0] = val;
 #else
-        (base_mem + (addr ^ 1))[0] = val;
+   (base_mem + (addr ^ 1))[0] = val;
 #endif
 }
 
 unsigned short ScspRam::getWord(unsigned long addr) {
-	addr &= mask;
-	if (addr >= size) {
-#ifndef _arch_dreamcast
-		throw BadMemoryAccess(addr);
-#else
-		printf("Bad memory access: %8x", addr);
-#endif
-	}
+   if (scsp.mem4b == 0)
+      addr &= 0x3FFFF;
+   else if (addr > 0x7FFFF)
+      return 0xFFFF;
 
 #ifdef WORDS_BIGENDIAN
-  return ((unsigned short *) (base_mem + addr))[0];
+   return ((unsigned short *) (base_mem + addr))[0];
 #else
-  return ((unsigned short *) (base_mem + addr))[0];
+   return ((unsigned short *) (base_mem + addr))[0];
 #endif
 }
 
 void ScspRam::setWord(unsigned long addr, unsigned short val) {
-	addr &= mask;
-	if (addr >= size) {
-#ifndef _arch_dreamcast
-		throw BadMemoryAccess(addr);
-#else
-		printf("Bad memory access: %8x", addr);
-#endif
-	}
+   // If mem4b is set, mirror ram every 256k
+   if (scsp.mem4b == 0)
+      addr &= 0x3FFFF;
+   else if (addr > 0x7FFFF)
+      return;
+
 #ifdef WORDS_BIGENDIAN
-        ((unsigned short *) (base_mem + addr))[0] = val;
+   ((unsigned short *) (base_mem + addr))[0] = val;
 #else
-        ((unsigned short *) (base_mem + addr))[0] = val;
+   ((unsigned short *) (base_mem + addr))[0] = val;
 #endif
 }
 
 unsigned long ScspRam::getLong(unsigned long addr) {
-	addr &= mask;
-	if (addr >= size) {
-#ifndef _arch_dreamcast
-		throw BadMemoryAccess(addr);
-#else
-		printf("Bad memory access: %8x", addr);
-#endif
-	}
+   // If mem4b is set, mirror ram every 256k
+   if (scsp.mem4b == 0)
+      addr &= 0x3FFFF;
+   else if (addr > 0x7FFFF)
+      return 0xFFFFFFFF;
 
 #ifdef WORDS_BIGENDIAN
-        return ((unsigned long *) (base_mem + addr))[0];
+   return ((unsigned long *) (base_mem + addr))[0];
 #else
-        return ((((unsigned short *)(base_mem + addr))[0] << 16) |
-               ((unsigned short *)(base_mem + addr + 2))[0]);
+   return ((((unsigned short *)(base_mem + addr))[0] << 16) |
+           ((unsigned short *)(base_mem + addr + 2))[0]);
 #endif
 }
 
 void ScspRam::setLong(unsigned long addr, unsigned long val) {
-	addr &= mask;
-	if (addr >= size) {
-#ifndef _arch_dreamcast
-		throw BadMemoryAccess(addr);
-#else
-		printf("Bad memory access: %8x", addr);
-#endif
-	}
+   // If mem4b is set, mirror ram every 256k
+   if (scsp.mem4b == 0)
+      addr &= 0x3FFFF;
+   else if (addr > 0x7FFFF)
+      return;
+
 #ifdef WORDS_BIGENDIAN
-  ((unsigned long *) (base_mem + addr))[0] = val;
+   ((unsigned long *) (base_mem + addr))[0] = val;
 #else
-  ((unsigned short *)(base_mem + addr))[0] = val >> 16;
-  ((unsigned short *)(base_mem + addr + 2))[0] = val & 0xFFFF;
+   ((unsigned short *)(base_mem + addr))[0] = val >> 16;
+   ((unsigned short *)(base_mem + addr + 2))[0] = val & 0xFFFF;
 #endif
 }
 
@@ -2868,5 +2858,78 @@ void Scsp::Set68kRegisters(m68kregs_struct *regs) {
       C68k_Set_SR(&C68K, regs->SR);
       C68k_Set_PC(&C68K, regs->PC);
    }
+}
+
+void Scsp::muteAudio() {
+   SDL_PauseAudio(1);
+}
+
+void Scsp::unmuteAudio() {
+   SDL_PauseAudio(0);
+}
+
+int Scsp::saveState(FILE *fp) {
+   int i;
+   unsigned long temp;
+   int offset;
+
+   offset = stateWriteHeader(fp, "SCSP", 1);
+
+   // Save 68k registers first
+   fwrite((void *)&is68kOn, 1, 1, fp);
+
+   for (i = 0; i < 8; i++) {
+      temp = C68k_Get_DReg(&C68K, i);
+      fwrite((void *)&temp, 4, 1, fp);
+   }
+
+   for (i = 0; i < 8; i++) {
+      temp =  C68k_Get_AReg(&C68K, i);
+      fwrite((void *)&temp, 4, 1, fp);
+   }
+
+   temp = C68k_Get_SR(&C68K);
+   fwrite((void *)&temp, 4, 1, fp);
+   temp = C68k_Get_PC(&C68K);
+   fwrite((void *)&temp, 4, 1, fp);
+
+   // Now for the SCSP registers
+   fwrite((void *)scsp_reg, 0x1000, 1, fp);
+
+   // Lastly, sound ram
+   fwrite((void *)sram->getBuffer(), 0x80000, 1, fp);
+
+   return stateFinishHeader(fp, offset);
+}
+
+int Scsp::loadState(FILE *fp, int version, int size) {
+   int i;
+   unsigned long temp;
+
+   // Read 68k registers first
+   fread((void *)&is68kOn, 1, 1, fp);
+
+   for (i = 0; i < 8; i++) {
+      fread((void *)&temp, 4, 1, fp);
+      C68k_Set_DReg(&C68K, i, temp);
+   }
+
+   for (i = 0; i < 8; i++) {
+      fread((void *)&temp, 4, 1, fp);
+      C68k_Set_AReg(&C68K, i, temp);
+   }
+
+   fread((void *)&temp, 4, 1, fp);
+   C68k_Set_SR(&C68K, temp);
+   fread((void *)&temp, 4, 1, fp);
+   C68k_Set_PC(&C68K, temp);
+
+   // Now for the SCSP registers
+   fread((void *)scsp_reg, 0x1000, 1, fp);
+
+   // Lastly, sound ram
+   fread((void *)sram->getBuffer(), 0x80000, 1, fp);
+
+   return size;
 }
 
