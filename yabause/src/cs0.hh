@@ -46,6 +46,9 @@ public:
   unsigned short getWord(unsigned long addr);
   void setLong(unsigned long addr, unsigned long val);
   unsigned long getLong(unsigned long addr);
+
+  int saveState(FILE *fp);
+  int loadState(FILE *fp, int version, int size);
 };
 
 #endif

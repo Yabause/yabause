@@ -34,9 +34,12 @@ public:
   unsigned char getByte(unsigned long);
   unsigned short getWord(unsigned long);
   unsigned long getLong(unsigned long);
-  void Cs1::setByte(unsigned long addr, unsigned char val);
-  void Cs1::setWord(unsigned long addr, unsigned short val);
-  void Cs1::getLong(unsigned long addr, unsigned long val);
+  void setByte(unsigned long addr, unsigned char val);
+  void setWord(unsigned long addr, unsigned short val);
+  void setLong(unsigned long addr, unsigned long val);
+
+  int saveState(FILE *fp);
+  int loadState(FILE *fp, int version, int size);
 };
 
 #endif

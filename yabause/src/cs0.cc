@@ -326,3 +326,28 @@ unsigned long Cs0::getLong(unsigned long addr) {
    return val;
 }
 
+int Cs0::saveState(FILE *fp) {
+   int offset;
+
+   offset = stateWriteHeader(fp, "CS0 ", 1);
+
+   // Write cart type
+   fwrite((void *)&carttype, 4, 1, fp);
+
+   // Write the areas associated with the cart type here
+
+   return stateFinishHeader(fp, offset);
+}
+
+int Cs0::loadState(FILE *fp, int version, int size) {
+   int oldtype = carttype;
+   // Read cart type
+   fread((void *)&carttype, 4, 1, fp);
+
+   // Check to see if old cart type and new cart type match, if they don't,
+   // reallocate memory areas
+
+   // Read the areas associated with the cart type here
+
+   return size;
+}

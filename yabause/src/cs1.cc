@@ -143,9 +143,34 @@ void Cs1::setWord(unsigned long addr, unsigned short val) {
    sramarea->setWord(addr, val);
 }
 
-void Cs1::getLong(unsigned long addr, unsigned long val) {
+void Cs1::setLong(unsigned long addr, unsigned long val) {
    if (addr == 0xFFFFFF)
       return;
    sramarea->setLong(addr, val);
 }
 
+int Cs1::saveState(FILE *fp) {
+   int offset;
+
+   offset = stateWriteHeader(fp, "CS1 ", 1);
+
+   // Write cart type
+   fwrite((void *)&carttype, 4, 1, fp);
+
+   // Write the areas associated with the cart type here
+
+   return stateFinishHeader(fp, offset);
+}
+
+int Cs1::loadState(FILE *fp, int version, int size) {
+   int oldtype = carttype;
+   // Read cart type
+   fread((void *)&carttype, 4, 1, fp);
+
+   // Check to see if old cart type and new cart type match, if they don't,
+   // reallocate memory areas
+
+   // Read the areas associated with the cart type here
+
+   return size;
+}
