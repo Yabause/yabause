@@ -341,6 +341,7 @@ unsigned long Cs2::getLong(unsigned long addr) {
                                {
                                   FreeBlock(datatranspartition->block[i]);
                                   datatranspartition->block[i] = NULL;
+                                  datatranspartition->blocknum[i] = 0xFF;
                                }
 
                                // sort remaining blocks
@@ -495,6 +496,7 @@ void Cs2::reset(void) {
      for (i2 = 0; i2 < MAX_BLOCKS; i2++)
      {
         partition[i].block[i2] = NULL;
+        partition[i].blocknum[i2] = 0xFF;
      }
   }
 
@@ -1215,6 +1217,7 @@ void Cs2::endDataTransfer(void) {
         {
            FreeBlock(datatranspartition->block[i]);
            datatranspartition->block[i] = NULL;
+           datatranspartition->blocknum[i] = 0xFF;
         }
 
         // sort remaining blocks
@@ -1391,6 +1394,8 @@ void Cs2::setCDDeviceConnection(void) {
   else if (scdcfilternum < 0x24)
      outconcddev = filter + scdcfilternum;
 
+  outconcddevnum = scdcfilternum;
+
   doCDReport();
   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
 }
@@ -1518,6 +1523,7 @@ void Cs2::resetSelector(void) {
         {
            FreeBlock(partition[rsbufno].block[i]);
            partition[rsbufno].block[i] = NULL;
+           partition[rsbufno].blocknum[i] = 0xFF;
         }
 
         partition[rsbufno].size = -1;
@@ -1583,6 +1589,7 @@ void Cs2::resetSelector(void) {
         for (i2 = 0; i2 < MAX_BLOCKS; i2++)
         {
            partition[i].block[i2] = NULL;
+           partition[i].blocknum[i2] = 0xFF;
         }
      }
 
@@ -1734,6 +1741,7 @@ void Cs2::getSectorData(void) {
      cdwnum = 0;
      datatranstype = 0;
      datatranspartition = partition + gsdbufno;
+     datatranspartitionnum = gsdbufno;
      datatransoffset = 0;
      datanumsecttrans = 0;
      datatranssectpos = getCR2();
@@ -1787,6 +1795,7 @@ void Cs2::deleteSectorData(void) {
         partition[dsdbufno].size -= partition[dsdbufno].block[i]->size;
         FreeBlock(partition[dsdbufno].block[i]);
         partition[dsdbufno].block[i] = NULL;
+        partition[dsdbufno].blocknum[i] = 0xFF;
      }
 
      // sort remaining blocks
@@ -2270,6 +2279,7 @@ void Cs2::cmdE2(void) {
   mpgauth |= 0x300;
 
   outconmpegrom = filter + 0;
+  outconmpegromnum = 0;
 
   if ((mpgfp = fopen(yui_mpegrom(), "rb")) != NULL)
   {
@@ -2283,7 +2293,7 @@ void Cs2::cmdE2(void) {
 
         for (int i=0; i < readsize; i++)
         {
-           mpgpartition->block[mpgpartition->numblocks] = AllocateBlock();
+           mpgpartition->block[mpgpartition->numblocks] = AllocateBlock(&mpgpartition->blocknum[mpgpartition->numblocks]);
 
            if (mpgpartition->block[mpgpartition->numblocks] != NULL) {
               // read data
@@ -2341,7 +2351,7 @@ void Cs2::SetupDefaultPlayStats(unsigned char track_number) {
   }
 }
 
-block_struct *Cs2::AllocateBlock() {
+block_struct *Cs2::AllocateBlock(unsigned char *blocknum) {
   // find a free block
   for(unsigned long i = 0; i < 200; i++)
   {
@@ -2353,6 +2363,7 @@ block_struct *Cs2::AllocateBlock() {
 
         block[i].size = getsectsize;
 
+        *blocknum = i;
         return (block + i);
      }
   }
@@ -2372,6 +2383,7 @@ void Cs2::FreeBlock(block_struct *blk) {
 void Cs2::SortBlocks(partition_struct *part) {
   unsigned long i, i2;
   block_struct *blktmp;
+  unsigned char blktmp2;
 
   for (i = 0; i < (MAX_BLOCKS-1); i++)
   {
@@ -2382,6 +2394,9 @@ void Cs2::SortBlocks(partition_struct *part) {
            blktmp = part->block[i];
            part->block[i] = part->block[i2];
            part->block[i2] = blktmp;
+           blktmp2 = part->blocknum[i];
+           part->blocknum[i] = part->blocknum[i2];
+           part->blocknum[i2] = blktmp2;
         }
      }
   }
@@ -2477,7 +2492,7 @@ partition_struct *Cs2::FilterData(filter_struct *curfilter, bool isaudio)
   }
 
   // Allocate block
-  fltpartition->block[fltpartition->numblocks] = AllocateBlock();
+  fltpartition->block[fltpartition->numblocks] = AllocateBlock(&fltpartition->blocknum[fltpartition->numblocks]);
 
   if (fltpartition->block[fltpartition->numblocks] == NULL)
     return NULL;
@@ -2678,6 +2693,7 @@ int Cs2::ReadFileSystem(filter_struct *curfilter, unsigned long fid, bool isoffs
          // Free Block
          rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
          FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+         rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
 
          // Sort remaining blocks
          SortBlocks(rfspartition);
@@ -2737,6 +2753,7 @@ int Cs2::ReadFileSystem(filter_struct *curfilter, unsigned long fid, bool isoffs
            // Free previous read sector
            rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
            FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+           rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
 
            // Sort remaining blocks
            SortBlocks(rfspartition);
@@ -2760,6 +2777,7 @@ int Cs2::ReadFileSystem(filter_struct *curfilter, unsigned long fid, bool isoffs
   // Free the remaining sector
   rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
   FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+  rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
 
   // Sort remaining blocks
   SortBlocks(rfspartition);
@@ -2800,7 +2818,7 @@ partition_struct *Cs2::ReadUnFilteredSector(unsigned long rufsFAD) {
   if ((rufspartition = GetPartition(outconcddev)) != NULL && !isbufferfull)
   {
      // Allocate Block
-     rufspartition->block[rufspartition->numblocks] = AllocateBlock();
+     rufspartition->block[rufspartition->numblocks] = AllocateBlock(&rufspartition->blocknum[rufspartition->numblocks]);
 
      if (rufspartition->block[rufspartition->numblocks] == NULL)
         return NULL;
@@ -2920,6 +2938,7 @@ unsigned char Cs2::GetRegionID() {
    char ret=0;
 
    outconcddev = filter + 0;
+   outconcddevnum = 0;
 
    // read in lba 0/FAD 150
    if ((gripartition = ReadUnFilteredSector(150)) != NULL)
@@ -2962,6 +2981,7 @@ unsigned char Cs2::GetRegionID() {
       // Free Block
       gripartition->size -= gripartition->block[gripartition->numblocks - 1]->size;
       FreeBlock(gripartition->block[gripartition->numblocks - 1]);
+      gripartition->blocknum[gripartition->numblocks - 1] = 0xFF;
 
       // Sort remaining blocks
       SortBlocks(gripartition);
@@ -2970,3 +2990,214 @@ unsigned char Cs2::GetRegionID() {
 
    return ret;
 }
+
+int Cs2::saveState(FILE *fp) {
+   int offset, i;
+   unsigned char tempbyte;
+
+   // This is mostly kludge, but it will have to do until I have time to rewrite it all
+
+   offset = stateWriteHeader(fp, "CS2 ", 1);
+
+   // Write cart type
+   fwrite((void *)&carttype, 4, 1, fp);
+
+   // Write cd block registers(fix me)
+
+   // Write current Status variables(needs a rewrite)
+   fwrite((void *)&FAD, 4, 1, fp);
+   fwrite((void *)&status, 1, 1, fp);
+   fwrite((void *)&options, 1, 1, fp);
+   fwrite((void *)&repcnt, 1, 1, fp);
+   fwrite((void *)&ctrladdr, 1, 1, fp);
+   fwrite((void *)&track, 1, 1, fp);
+   fwrite((void *)&index, 1, 1, fp);
+
+   // Write other cd block internal variables
+   fwrite((void *)&satauth, 2, 1, fp);
+   fwrite((void *)&mpgauth, 2, 1, fp);
+   fwrite((void *)&transfercount, 4, 1, fp);
+   fwrite((void *)&cdwnum, 4, 1, fp);
+   fwrite((void *)TOC, 4, 102, fp);
+   fwrite((void *)&playFAD, 4, 1, fp);
+   fwrite((void *)&playendFAD, 4, 1, fp);
+   fwrite((void *)&getsectsize, 4, 1, fp);
+   fwrite((void *)&putsectsize, 4, 1, fp);
+   fwrite((void *)&calcsize, 4, 1, fp);
+   fwrite((void *)&infotranstype, 4, 1, fp);
+   fwrite((void *)&datatranstype, 4, 1, fp);
+   fwrite((void *)&isonesectorstored, 1, 1, fp);
+   fwrite((void *)&isdiskchanged, 1, 1, fp);
+   fwrite((void *)&isbufferfull, 1, 1, fp);
+   fwrite((void *)&speed1x, 1, 1, fp);
+   fwrite((void *)&transfileinfo, 1, 12, fp);
+   fwrite((void *)&lastbuffer, 1, 1, fp);
+   fwrite((void *)&_command, 1, 1, fp);
+   fwrite((void *)&_periodictiming, 4, 1, fp);
+   fwrite((void *)&outconcddevnum, 1, 1, fp);
+   fwrite((void *)&outconmpegfbnum, 1, 1, fp);
+   fwrite((void *)&outconmpegbufnum, 1, 1, fp);
+   fwrite((void *)&outconmpegromnum, 1, 1, fp);
+   fwrite((void *)&outconhostnum, 1, 1, fp);
+   fwrite((void *)&datatranspartitionnum, 1, 1, fp);
+   fwrite((void *)&datatransoffset, 4, 1, fp);
+   fwrite((void *)&datanumsecttrans, 4, 1, fp);
+   fwrite((void *)&datatranssectpos, 2, 1, fp);
+   fwrite((void *)&datasectstotrans, 2, 1, fp);
+   fwrite((void *)&blockfreespace, 4, 1, fp);
+   fwrite((void *)&curdirsect, 4, 1, fp);
+
+   // Write CD buffer
+   fwrite((void *)block, sizeof(block_struct), MAX_BLOCKS, fp);
+
+   // Write partition data
+   for (i = 0; i < MAX_SELECTORS; i++)
+   {
+      fwrite((void *)&partition[i].size, 4, 1, fp);
+      fwrite((void *)partition[i].blocknum, 1, MAX_BLOCKS, fp);
+      fwrite((void *)&partition[i].numblocks, 1, 1, fp);
+   }
+
+   // Write filter data
+   fwrite((void *)filter, sizeof(filter_struct), MAX_SELECTORS, fp);
+
+   // Write File Info Table
+   fwrite((void *)fileinfo, sizeof(dirrec_struct), MAX_FILES, fp);
+
+   // Write MPEG card registers here
+
+   // Write current MPEG card status variables
+   fwrite((void *)&actionstatus, 1, 1, fp);
+   fwrite((void *)&pictureinfo, 1, 1, fp);
+   fwrite((void *)&mpegaudiostatus, 1, 1, fp);
+   fwrite((void *)&mpegvideostatus, 2, 1, fp);
+   fwrite((void *)&vcounter, 2, 1, fp);
+
+   // Write other MPEG card internal variables
+   fwrite((void *)&mpegintmask, 4, 1, fp);
+   fwrite((void *)mpegcon, sizeof(mpegcon_struct), 2, fp);
+   fwrite((void *)mpegstm, sizeof(mpegstm_struct), 2, fp);
+
+   return stateFinishHeader(fp, offset);
+}
+
+int Cs2::loadState(FILE *fp, int version, int size) {
+   int i, i2;
+
+   // This is mostly kludge, but it will have to do until I have time to rewrite it all
+
+   // Read cart type
+   fread((void *)&carttype, 4, 1, fp);
+
+   // Read cd block registers(fix me)
+
+   // Read current Status variables(needs a reRead)
+   fread((void *)&FAD, 4, 1, fp);
+   fread((void *)&status, 1, 1, fp);
+   fread((void *)&options, 1, 1, fp);
+   fread((void *)&repcnt, 1, 1, fp);
+   fread((void *)&ctrladdr, 1, 1, fp);
+   fread((void *)&track, 1, 1, fp);
+   fread((void *)&index, 1, 1, fp);
+
+   // Read other cd block internal variables
+   fread((void *)&satauth, 2, 1, fp);
+   fread((void *)&mpgauth, 2, 1, fp);
+   fread((void *)&transfercount, 4, 1, fp);
+   fread((void *)&cdwnum, 4, 1, fp);
+   fread((void *)TOC, 4, 102, fp);
+   fread((void *)&playFAD, 4, 1, fp);
+   fread((void *)&playendFAD, 4, 1, fp);
+   fread((void *)&getsectsize, 4, 1, fp);
+   fread((void *)&putsectsize, 4, 1, fp);
+   fread((void *)&calcsize, 4, 1, fp);
+   fread((void *)&infotranstype, 4, 1, fp);
+   fread((void *)&datatranstype, 4, 1, fp);
+   fread((void *)&isonesectorstored, 1, 1, fp);
+   fread((void *)&isdiskchanged, 1, 1, fp);
+   fread((void *)&isbufferfull, 1, 1, fp);
+   fread((void *)&speed1x, 1, 1, fp);
+   fread((void *)&transfileinfo, 1, 12, fp);
+   fread((void *)&lastbuffer, 1, 1, fp);
+   fread((void *)&_command, 1, 1, fp);
+   fread((void *)&_periodictiming, 4, 1, fp);
+   fread((void *)&outconcddevnum, 1, 1, fp);
+   if (outconcddevnum == 0xFF)
+      outconcddev = NULL;
+   else
+      outconcddev = filter + outconcddevnum;
+
+   fread((void *)&outconmpegfbnum, 1, 1, fp);
+   if (outconmpegfbnum == 0xFF)
+      outconmpegfb = NULL;
+   else
+      outconmpegfb = filter + outconmpegfbnum;
+
+   fread((void *)&outconmpegbufnum, 1, 1, fp);
+   if (outconmpegbufnum == 0xFF)
+      outconmpegbuf = NULL;
+   else
+      outconmpegbuf = filter + outconmpegbufnum;
+
+   fread((void *)&outconmpegromnum, 1, 1, fp);
+   if (outconmpegromnum == 0xFF)
+      outconmpegrom = NULL;
+   else
+      outconmpegrom = filter + outconmpegromnum;
+
+   fread((void *)&outconhostnum, 1, 1, fp);
+   if (outconhostnum == 0xFF)
+      outconhost = NULL;
+   else
+      outconhost = filter + outconhostnum;
+
+   fread((void *)&datatranspartitionnum, 1, 1, fp);
+   fread((void *)&datatransoffset, 4, 1, fp);
+   fread((void *)&datanumsecttrans, 4, 1, fp);
+   fread((void *)&datatranssectpos, 2, 1, fp);
+   fread((void *)&datasectstotrans, 2, 1, fp);
+   fread((void *)&blockfreespace, 4, 1, fp);
+   fread((void *)&curdirsect, 4, 1, fp);
+
+   // Read CD buffer
+   fread((void *)block, sizeof(block_struct), MAX_BLOCKS, fp);
+
+   // Read partition data
+   for (i = 0; i < MAX_SELECTORS; i++)
+   {
+      fread((void *)&partition[i].size, 4, 1, fp);
+      fread((void *)partition[i].blocknum, 1, MAX_BLOCKS, fp);
+      fread((void *)&partition[i].numblocks, 1, 1, fp);
+
+      for (i2 = 0; i2 < MAX_BLOCKS; i2++)
+      {
+         if (partition[i].blocknum[i2] == 0xFF)
+            partition[i].block[i2] = NULL;
+         else
+            partition[i].block[i2] = block + partition[i].blocknum[i2];
+      }
+   }
+
+   // Read filter data
+   fread((void *)filter, sizeof(filter_struct), MAX_SELECTORS, fp);
+
+   // Read File Info Table
+   fread((void *)fileinfo, sizeof(dirrec_struct), MAX_FILES, fp);
+
+   // Read MPEG card registers here
+
+   // Read current MPEG card status variables
+   fread((void *)&actionstatus, 1, 1, fp);
+   fread((void *)&pictureinfo, 1, 1, fp);
+   fread((void *)&mpegaudiostatus, 1, 1, fp);
+   fread((void *)&mpegvideostatus, 2, 1, fp);
+   fread((void *)&vcounter, 2, 1, fp);
+
+   // Read other MPEG card internal variables
+   fread((void *)&mpegintmask, 4, 1, fp);
+   fread((void *)mpegcon, sizeof(mpegcon_struct), 2, fp);
+   fread((void *)mpegstm, sizeof(mpegstm_struct), 2, fp);
+
+   return size;
+}
+

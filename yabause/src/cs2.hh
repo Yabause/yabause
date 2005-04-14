@@ -61,6 +61,7 @@ typedef struct
 {
    long size;
    block_struct *block[MAX_BLOCKS];
+   unsigned char blocknum[MAX_BLOCKS];
    unsigned char numblocks;
 } partition_struct;
 
@@ -162,10 +163,16 @@ private:
   filter_struct *outconmpegbuf;
   filter_struct *outconmpegrom;
   filter_struct *outconhost;
+  unsigned char outconcddevnum;
+  unsigned char outconmpegfbnum;
+  unsigned char outconmpegbufnum;
+  unsigned char outconmpegromnum;
+  unsigned char outconhostnum;
 
   partition_struct partition[MAX_SELECTORS];
 
   partition_struct *datatranspartition;
+  unsigned char datatranspartitionnum;
   long datatransoffset;
   unsigned long datanumsecttrans;
   unsigned short datatranssectpos;
@@ -302,7 +309,7 @@ public:
   unsigned char FADToTrack(unsigned long fad);
   unsigned long TrackToFad(unsigned short trackandindex);
   void SetupDefaultPlayStats(unsigned char track_number);
-  block_struct *AllocateBlock();
+  block_struct *AllocateBlock(unsigned char *blocknum);
   void FreeBlock(block_struct *blk);
   void SortBlocks(partition_struct *part);
   partition_struct *GetPartition(filter_struct *curfilter);
@@ -313,6 +320,9 @@ public:
   partition_struct *ReadUnFilteredSector(unsigned long rufsFAD);
   partition_struct *ReadFilteredSector(unsigned long rfsFAD);
   unsigned char GetRegionID();
+
+  int saveState(FILE *fp);
+  int loadState(FILE *fp, int version, int size);
 };
 
 #endif
