@@ -223,6 +223,9 @@ public:
   void setActualResolution(int width, int height);
   void onScreenDebugMessage(float x, float y, char *string, ...);
   void toggleFPS(void);
+
+  int saveState(FILE *fp);
+  int loadState(FILE *fp, int version, int size);
 };
 
 #endif

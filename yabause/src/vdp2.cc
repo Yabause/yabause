@@ -2328,3 +2328,50 @@ void Vdp2::setActualResolution(int width, int height) {
 void Vdp2::toggleFPS(void) {
    fpstoggle ^= true;
 }
+
+int Vdp2::saveState(FILE *fp) {
+   int offset;
+
+   offset = stateWriteHeader(fp, "VDP2", 1);
+
+   // Write registers
+   fwrite((void *)this->getBuffer(), 0x200, 1, fp);
+
+   // Write VDP2 ram
+   fwrite((void *)vram->getBuffer(), 0x80000, 1, fp);
+
+   // Write CRAM
+   fwrite((void *)cram->getBuffer(), 0x1000, 1, fp);
+
+   return stateFinishHeader(fp, offset);
+}
+
+int Vdp2::loadState(FILE *fp, int version, int size) {
+   unsigned short reg;
+
+   // Read registers
+   fread((void *)this->getBuffer(), 0x200, 1, fp);
+
+   // Read VDP2 ram
+   fread((void *)vram->getBuffer(), 0x80000, 1, fp);
+
+   // Read CRAM
+   fread((void *)cram->getBuffer(), 0x1000, 1, fp);
+
+   // Update internal variables
+   updateRam();
+
+   reg = Memory::getWord(0xF8);
+   nbg0->setPriority(reg & 0x7);
+   nbg1->setPriority((reg >> 8) & 0x7);
+
+   reg = Memory::getWord(0xFA);
+   nbg2->setPriority(reg & 0x7);
+   nbg3->setPriority((reg >> 8) & 0x7);
+
+   reg = Memory::getWord(0xFC);
+   rbg0->setPriority(reg & 0x7);
+
+   return size;
+}
+
