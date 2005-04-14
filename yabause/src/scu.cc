@@ -1,4 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
+    Copyright 2005 Theo Berkau
 
     This file is part of Yabause.
 
@@ -97,6 +98,11 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
 //#endif
                            }
 
+#if DEBUG
+                           if (dspProgControlPort.part.EX)
+                              fprintf(stderr, "scu\t: DSP executing\n");
+#endif
+
                            break;
                 case 0x84: // DSP Program Ram Data Port
 //#if DEBUG
@@ -111,6 +117,9 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
                            dspDataRamReadAddress = val & 0x3F;
                            break;
                 case 0x8C: // DSP Data Ram Data Port
+//#if DEBUG
+//                           fprintf(stderr, "scu\t: wrote %08X to DSP Data Ram Data Port Page %d offset %02X\n", val, dspDataRamPage, dspDataRamReadAddress);
+//#endif
                            if (!dspProgControlPort.part.EX) {
                               dspMD[dspDataRamPage][dspDataRamReadAddress] = val;
                               dspDataRamReadAddress++;
@@ -130,7 +139,7 @@ void Scu::setLong(unsigned long addr, unsigned long val) {
 	}
 }
 
-Scu::Scu(SaturnMemory *i) : Memory(0xFF, 0xD0) {
+Scu::Scu(SaturnMemory *i) : Memory(0xFF, 0x100) {
  	satmem = i;
         reset();
 }
@@ -274,6 +283,10 @@ void Scu::run(unsigned long timing) {
       // execute here
       switch (instruction >> 30) {
          case 0x00: // Operation Commands
+#if DEBUG
+                    fprintf(stderr, "scu\t: Unimplemented DSP opcode %08X at offset %02X\n", instruction, dsppc);
+#endif
+                    break;
          case 0x02: // Load Immediate Commands
 #if DEBUG
                     fprintf(stderr, "scu\t: Unimplemented DSP opcode %08X at offset %02X\n", instruction, dsppc);
@@ -313,6 +326,72 @@ void Scu::run(unsigned long timing) {
    }
 }
 
+char *disd1bussrc(unsigned char num)
+{
+   switch(num) { 
+      case 0x0:
+          return "M0";
+      case 0x1:
+          return "M1";
+      case 0x2:
+          return "M2";
+      case 0x3:
+          return "M3";
+      case 0x4:
+          return "MC0";
+      case 0x5:
+          return "MC1";
+      case 0x6:
+          return "MC2";
+      case 0x7:
+          return "MC3";
+      case 0x9:
+          return "ALL";
+      case 0xA:
+          return "ALH";
+      default: break;
+   }
+
+   return "??";
+}
+
+char *disd1busdest(unsigned char num)
+{
+   switch(num) { 
+      case 0x0:
+          return "MC0";
+      case 0x1:
+          return "MC1";
+      case 0x2:
+          return "MC2";
+      case 0x3:
+          return "MC3";
+      case 0x4:
+          return "RX";
+      case 0x5:
+          return "PL";
+      case 0x6:
+          return "RA0";
+      case 0x7:
+          return "WA0";
+      case 0xA:
+          return "LOP";
+      case 0xB:
+          return "TOP";
+      case 0xC:
+          return "CT0";
+      case 0xD:
+          return "CT1";
+      case 0xE:
+          return "CT2";
+      case 0xF:
+          return "CT3";
+      default: break;
+   }
+
+   return "??";
+}
+
 void Scu::DSPDisasm(unsigned char addr, char *outstring){
    unsigned long instruction;
 
@@ -321,13 +400,97 @@ void Scu::DSPDisasm(unsigned char addr, char *outstring){
    sprintf(outstring, "%08X: \0", addr);
    outstring+=strlen(outstring);
 
+   if (instruction == 0)
+   {
+      sprintf(outstring, "NOP\0");
+      return;
+   }
+
+   // Handle ALU commands here
+
    switch (instruction >> 30) {
       case 0x00: // Operation Commands
-                 sprintf(outstring, "Unimplemented DSP opcode %08X\0", instruction);
+                 // Y-bus
+                 if ((instruction >> 17) & 0x4)
+                 {
+                    sprintf(outstring, "MOV [??], Y\0");
+                    outstring+=strlen(outstring);
+                 }
+
+                 switch ((instruction >> 17) & 0x3)
+                 {
+                    case 1:
+                            sprintf(outstring, "CLR A\0");
+                            outstring+=strlen(outstring);
+                            break;
+                    case 2:
+                            sprintf(outstring, "MOV ALU, A\0");
+                            outstring+=strlen(outstring);
+                            break;
+                    case 3:
+                            sprintf(outstring, "MOV [??], A\0");
+                            outstring+=strlen(outstring);
+                            break;
+                    default: break;
+                 }
+
+                 // D1-bus
+                 switch ((instruction >> 12) & 0x3)
+                 {
+                    case 1:
+                            sprintf(outstring, "MOV #$%02X, %s\0", instruction & 0xFF, disd1busdest((instruction >> 8) & 0xF));
+                            outstring+=strlen(outstring);                             
+                            break;
+                    case 3:
+                            sprintf(outstring, "MOV %s, %s\0", disd1bussrc(instruction & 0xF), disd1busdest((instruction >> 8) & 0xF));
+                            outstring+=strlen(outstring);                             
+                            break;
+                    default: break;
+                 }
+
                  break;
       case 0x02: // Load Immediate Commands
-                 sprintf(outstring, "MVI ??, ??\0");
-//                 sprintf(outstring, "Unimplemented DSP opcode %08X\0", instruction);
+                 if ((instruction >> 25) & 1)
+                 {
+                    switch ((instruction >> 19) & 0x3F) {
+                         case 0x01:
+                                    sprintf(outstring, "MVI #$%05X,??,NZ\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x02:
+                                    sprintf(outstring, "MVI #$%05X,??,NS\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x03:
+                                    sprintf(outstring, "MVI #$%05X,??,NZS\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x04:
+                                    sprintf(outstring, "MVI #$%05X,??,NC\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x08:
+                                    sprintf(outstring, "MVI #$%05X,??,NT0\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x21:
+                                    sprintf(outstring, "MVI #$%05X,??,Z\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x22:
+                                    sprintf(outstring, "MVI #$%05X,??,S\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x23:
+                                    sprintf(outstring, "MVI #$%05X,??,ZS\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x24:
+                                    sprintf(outstring, "MVI #$%05X,??,C\0", instruction & 0x7FFFF);
+                                    break;
+                         case 0x28:
+                                    sprintf(outstring, "MVI #$%05X,??,T0\0", instruction & 0x7FFFF);
+                                    break;
+                         default: break;
+                    }
+                 }
+                 else
+                 {
+                    sprintf(outstring, "MVI #$%05X,??\0", instruction & 0x7FFFF);
+                 }
+
                  break;
       case 0x03: // Other
                  switch((instruction >> 28) & 0x3) {
@@ -427,3 +590,57 @@ void Scu::sendLevel1DMAEnd(void)  { sendInterrupt<0x4A, 0x6, 0x0400>(); }
 void Scu::sendLevel0DMAEnd(void)  { sendInterrupt<0x4B, 0x5, 0x0800>(); }
 void Scu::sendDMAIllegal(void)    { sendInterrupt<0x4C, 0x3, 0x1000>(); }
 void Scu::sendDrawEnd(void)       { sendInterrupt<0x4D, 0x2, 0x2000>(); }
+void Scu::sendExternalInterrupt00(void) { sendInterrupt<0x50, 0x7, 0x8000>(); }
+void Scu::sendExternalInterrupt01(void) { sendInterrupt<0x51, 0x7, 0x8000>(); }
+void Scu::sendExternalInterrupt02(void) { sendInterrupt<0x52, 0x7, 0x8000>(); }
+void Scu::sendExternalInterrupt03(void) { sendInterrupt<0x53, 0x7, 0x8000>(); }
+void Scu::sendExternalInterrupt04(void) { sendInterrupt<0x54, 0x4, 0x8000>(); }
+void Scu::sendExternalInterrupt05(void) { sendInterrupt<0x55, 0x4, 0x8000>(); }
+void Scu::sendExternalInterrupt06(void) { sendInterrupt<0x56, 0x4, 0x8000>(); }
+void Scu::sendExternalInterrupt07(void) { sendInterrupt<0x57, 0x4, 0x8000>(); }
+void Scu::sendExternalInterrupt08(void) { sendInterrupt<0x58, 0x1, 0x8000>(); }
+void Scu::sendExternalInterrupt09(void) { sendInterrupt<0x59, 0x1, 0x8000>(); }
+void Scu::sendExternalInterrupt10(void) { sendInterrupt<0x5A, 0x1, 0x8000>(); }
+void Scu::sendExternalInterrupt11(void) { sendInterrupt<0x5B, 0x1, 0x8000>(); }
+void Scu::sendExternalInterrupt12(void) { sendInterrupt<0x5C, 0x1, 0x8000>(); }
+void Scu::sendExternalInterrupt13(void) { sendInterrupt<0x5D, 0x1, 0x8000>(); }
+void Scu::sendExternalInterrupt14(void) { sendInterrupt<0x5E, 0x1, 0x8000>(); }
+void Scu::sendExternalInterrupt15(void) { sendInterrupt<0x5F, 0x1, 0x8000>(); }
+
+int Scu::saveState(FILE *fp) {
+   int offset;
+
+   offset = stateWriteHeader(fp, "SCU ", 1);
+
+   // Write registers
+   fwrite((void *)this->getBuffer(), 0x100, 1, fp);
+   fwrite((void *)&timer0, 4, 1, fp);
+   fwrite((void *)&timer1, 4, 1, fp);
+
+   // Write DSP area(needs more work)
+   fwrite((void *)dspProgramRam, 256, 4, fp);
+   fwrite((void *)dspMD, 4 * 64, 4, fp);
+   fwrite((void *)&dspProgControlPort.all, 4, 1, fp);
+   fwrite((void *)&dsppc, 1, 1, fp);
+   fwrite((void *)&dspDataRamPage, 1, 1, fp);
+   fwrite((void *)&dspDataRamReadAddress, 1, 1, fp);
+
+   return stateFinishHeader(fp, offset);
+}
+
+int Scu::loadState(FILE *fp, int version, int size) {
+   // Read registers
+   fread((void *)this->getBuffer(), 0x100, 1, fp);
+   fread((void *)&timer0, 4, 1, fp);
+   fread((void *)&timer1, 4, 1, fp);
+
+   // Read DSP area(needs more work)
+   fread((void *)dspProgramRam, 256, 4, fp);
+   fread((void *)dspMD, 4 * 64, 4, fp);
+   fread((void *)&dspProgControlPort.all, 4, 1, fp);
+   fread((void *)&dsppc, 1, 1, fp);
+   fread((void *)&dspDataRamPage, 1, 1, fp);
+   fread((void *)&dspDataRamReadAddress, 1, 1, fp);
+
+   return size;
+}
