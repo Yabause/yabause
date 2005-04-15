@@ -54,29 +54,16 @@
 #define CDB_STAT_REJECT    0xFF
 
 #define doCDReport() \
-  setCR1((status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF)); \
-  setCR2((ctrladdr << 8) | track); \
-  setCR3((index << 8) | ((FAD >> 16) & 0xFF)); \
-  setCR4((unsigned short) FAD); 
+  reg.CR1 = (status << 8) | ((options & 0xF) << 4) | (repcnt & 0xF); \
+  reg.CR2 = (ctrladdr << 8) | track; \
+  reg.CR3 = (index << 8) | ((FAD >> 16) & 0xFF); \
+  reg.CR4 = (unsigned short) FAD; 
 
 #define doMPEGReport() \
-  setCR1((status << 8) | actionstatus); \
-  setCR2(vcounter); \
-  setCR3((pictureinfo << 8) | mpegaudiostatus); \
-  setCR4(mpegvideostatus); 
-
-unsigned short Cs2::getHIRQ(void) {return Memory::getWord(0x90008);}
-unsigned short Cs2::getHIRQMask(void) {return Memory::getWord(0x9000C);}
-unsigned short Cs2::getCR1(void) {return Memory::getWord(0x90018);}
-unsigned short Cs2::getCR2(void) {return Memory::getWord(0x9001C);}
-unsigned short Cs2::getCR3(void) {return Memory::getWord(0x90020);}
-unsigned short Cs2::getCR4(void) {return Memory::getWord(0x90024);}
-void Cs2::setHIRQ(unsigned short val) {Memory::setWord(0x90008, val);}
-void Cs2::setHIRQMask(unsigned short val) {Memory::setWord(0x9000C, val);}
-void Cs2::setCR1(unsigned short val) {Memory::setWord(0x90018, val);}
-void Cs2::setCR2(unsigned short val) {Memory::setWord(0x9001C, val);}
-void Cs2::setCR3(unsigned short val) {Memory::setWord(0x90020, val);}
-void Cs2::setCR4(unsigned short val) {Memory::setWord(0x90024, val);}
+  reg.CR1 = (status << 8) | actionstatus; \
+  reg.CR2 = vcounter; \
+  reg.CR3 = (pictureinfo << 8) | mpegaudiostatus; \
+  reg.CR4 = mpegvideostatus; 
 
 unsigned char Cs2::getByte(unsigned long addr) {
 
@@ -131,7 +118,8 @@ unsigned short Cs2::getWord(unsigned long addr) {
   }
   switch(addr) {
     case 0x90008:
-                  val = Memory::getWord(addr);
+    case 0x9000A:
+                  val = reg.HIRQ;
 
                   if (isbufferfull)
                     val |= CDB_HIRQ_BFUL;
@@ -148,21 +136,26 @@ unsigned short Cs2::getWord(unsigned long addr) {
                   else
                     val &= ~CDB_HIRQ_CSCT;
 
-                  Memory::setWord(addr, val);
+                  reg.HIRQ = val;
 
-                  val &= Memory::getWord(0x9000C);
+                  val &= reg.HIRQMASK;
 //#if CDDEBUG
 //                  fprintf(stderr, "cs2\t: Hirq read, Hirq mask = %x - ret: %x\n", Memory::getWord(0x9000C), val);
 //#endif
-	          break;
-    case 0x9000C:
+                  return val;
+    case 0x9000C: 
+    case 0x9000E: return reg.HIRQMASK;
     case 0x90018:
+    case 0x9001A: return reg.CR1;
     case 0x9001C:
-    case 0x90020: val = Memory::getWord(addr);
-		  break;
-    case 0x90024: val = Memory::getWord(addr);
-                  _command = false;
-		  break;
+    case 0x9001E: return reg.CR2;
+    case 0x90020:
+    case 0x90022: return reg.CR3;
+    case 0x90024:
+    case 0x90026: _command = false;
+                  return reg.CR4;
+    case 0x90028:
+    case 0x9002A: return reg.MPEGRGB;
     case 0x98000:
                   // transfer info
                   switch (infotranstype) {
@@ -242,23 +235,30 @@ void Cs2::setWord(unsigned long addr, unsigned short val) {
   }
   switch(addr) {
     case 0x90008:
-//#if CDDEBUG
-//                  fprintf(stderr, "cs2\t: WriteWord hirq = %x\n", val);
-//#endif
-                  Memory::setWord(addr, Memory::getWord(addr) & val);
-	          break;
-    case 0x9000C: Memory::setWord(addr, val);
-		  break;
-    case 0x90018: status &= ~CDB_STAT_PERI;
+    case 0x9000A:
+                  reg.HIRQ &= val;
+                  return;
+    case 0x9000C: 
+    case 0x9000E: reg.HIRQMASK = val;
+                  return;
+    case 0x90018: 
+    case 0x9001A: status &= ~CDB_STAT_PERI;
                   _command = true;
-                  Memory::setWord(addr, val);
-                  break;
+                  reg.CR1 = val;
+                  return;
     case 0x9001C:
-    case 0x90020: Memory::setWord(addr, val);
-		  break;
-    case 0x90024: Memory::setWord(addr, val);
-                  execute();
-		  break;
+    case 0x9001E: reg.CR2 = val;
+                  return;
+    case 0x90020:
+    case 0x90022: reg.CR3 = val;
+                  return;
+    case 0x90024:
+    case 0x90026: reg.CR4 = val;
+                  setCommandTiming(reg.CR1 >> 8);
+                  return;
+    case 0x90028:
+    case 0x9002A: reg.MPEGRGB = val;
+                  return;
     default:
 #if DEBUG
              cerr << "cs2\t:Undocumented register write " << hex << addr << endl;
@@ -278,6 +278,36 @@ unsigned long Cs2::getLong(unsigned long addr) {
 #endif
   }
   switch(addr) {
+    case 0x90008:
+                  val = reg.HIRQ;
+
+                  if (isbufferfull)
+                    val |= CDB_HIRQ_BFUL;
+                  else
+                    val &= ~CDB_HIRQ_BFUL;
+
+                  if (isdiskchanged)
+                    val |= CDB_HIRQ_DCHG;
+                  else
+                    val &= ~CDB_HIRQ_DCHG;
+
+                  if (isonesectorstored)
+                    val |= CDB_HIRQ_CSCT;
+                  else
+                    val &= ~CDB_HIRQ_CSCT;
+
+                  reg.HIRQ = val;
+
+                  val &= reg.HIRQMASK;
+                  val |= (val << 16);
+                  return val;
+    case 0x9000C: return ((reg.HIRQMASK << 16) | reg.HIRQMASK);
+    case 0x90018: return ((reg.CR1 << 16) | reg.CR1);
+    case 0x9001C: return ((reg.CR2 << 16) | reg.CR2);
+    case 0x90020: return ((reg.CR3 << 16) | reg.CR3);
+    case 0x90024: _command = false;
+                  return ((reg.CR4 << 16) | reg.CR4);
+    case 0x90028: return ((reg.MPEGRGB << 16) | reg.MPEGRGB);
     case 0x18000:
                   // transfer data
                   switch (datatranstype) {
@@ -457,12 +487,12 @@ void Cs2::reset(void) {
   isbufferfull = false;
   isonesectorstored = false;
 
-  setCR1(( 0 <<8) | 'C');
-  setCR2(('D'<<8) | 'B');
-  setCR3(('L'<<8) | 'O');
-  setCR4(('C'<<8) | 'K');
-  setHIRQ(0xFFFF);
-  setHIRQMask(0xFFFF);
+  reg.CR1 = ( 0 <<8) | 'C';
+  reg.CR2 = ('D'<<8) | 'B';
+  reg.CR3 = ('L'<<8) | 'O';
+  reg.CR4 = ('C'<<8) | 'K';
+  reg.HIRQ = 0xFFFF;
+  reg.HIRQMASK = 0xFFFF;
 
   playFAD = 0xFFFFFFFF;
   playendFAD = 0xFFFFFFFF;
@@ -521,6 +551,7 @@ void Cs2::reset(void) {
 
   _command = false;
   _periodiccycles = 0;
+  _commandtiming = 0;
   SetTiming(false);
 
   // MPEG specific stuff
@@ -542,6 +573,16 @@ void Cs2::reset(void) {
 
 void Cs2::run(unsigned long timing) {
     _periodiccycles+=timing;
+
+    if (_commandtiming > 0) {
+       if (_commandtiming < timing)
+       {
+          execute();
+          _commandtiming = 0;
+       }
+       else
+          _commandtiming -= timing;
+    }
 
     if (_periodiccycles >= _periodictiming)
     {
@@ -596,14 +637,15 @@ void Cs2::run(unsigned long timing) {
 #if CDDEBUG
                fprintf(stderr, "blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", playpartition->numblocks, blockfreespace, FAD, playpartition->size, isbufferfull);
 #endif
-               setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+               reg.HIRQ |= CDB_HIRQ_CSCT;
                isonesectorstored = true;
 
                if (FAD >= playendFAD) {
                   // we're done
                   status = CDB_STAT_PAUSE;
                   SetTiming(false);
-                  setHIRQ(getHIRQ() | CDB_HIRQ_PEND);
+                  reg.HIRQ |= CDB_HIRQ_PEND;
+
 #if CDDEBUG
                   fprintf(stderr, "PLAY HAS ENDED\n");
 #endif
@@ -631,7 +673,7 @@ void Cs2::run(unsigned long timing) {
 
       // adjust registers appropriately here(fix me)
       doCDReport();
-      setHIRQ(getHIRQ() | CDB_HIRQ_SCDQ);
+      reg.HIRQ |= CDB_HIRQ_SCDQ;
     }
 }
 
@@ -651,14 +693,18 @@ void Cs2::SetTiming(bool playing) {
   }
 }
 
-void Cs2::periodicUpdate(void) {
-  if ((getCR1() >> 8) != 0 ) return;
-  status |= CDB_STAT_PERI;
+void Cs2::setCommandTiming(unsigned char cmd) {
+   switch(cmd) {
+      default:
+               _commandtiming = 1;
+               break;
+   }
 }
 
 void Cs2::execute(void) {
-  setHIRQ(getHIRQ() & 0XFFFE);
-  unsigned short instruction = getCR1() >> 8;
+  reg.HIRQ &= ~CDB_HIRQ_CMOK;
+
+  unsigned short instruction = reg.CR1 >> 8;
 
   switch (instruction) {
     case 0x00:
@@ -667,7 +713,7 @@ void Cs2::execute(void) {
 #endif
       getStatus();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x01:
@@ -676,7 +722,7 @@ void Cs2::execute(void) {
 #endif
       getHardwareInfo();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x02:
@@ -692,56 +738,56 @@ void Cs2::execute(void) {
 #endif
        getSessionInfo();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
        break;
     }
     case 0x04:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: initializeCDSystem %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: initializeCDSystem %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       initializeCDSystem();
       break;
     case 0x06:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: endDataTransfer %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: endDataTransfer %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       endDataTransfer();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x10:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: playDisc %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: playDisc %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       playDisc();
       break;
     case 0x11:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: seekDisc %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: seekDisc %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       seekDisc();
       break;
     case 0x20:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getSubcodeQRW %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: getSubcodeQRW %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       getSubcodeQRW();
       break;
     case 0x30:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: setCDDeviceConnection %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: setCDDeviceConnection %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       setCDDeviceConnection();
       break;
     case 0x32:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getLastBufferDestination %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: getLastBufferDestination %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       getLastBufferDestination();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x40:
@@ -762,7 +808,7 @@ void Cs2::execute(void) {
 #endif
       getFilterSubheaderConditions();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x44:
@@ -777,7 +823,7 @@ void Cs2::execute(void) {
 #endif
       getFilterMode();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x46:
@@ -788,11 +834,11 @@ void Cs2::execute(void) {
       break;
     case 0x48:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: resetSelector %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: resetSelector %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       resetSelector();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x50:
@@ -802,22 +848,22 @@ void Cs2::execute(void) {
       getBufferSize();
 
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x51:
 //#if CDDEBUG
-//      fprintf(stderr, "cs2\t: Command: getSectorNumber %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+//      fprintf(stderr, "cs2\t: Command: getSectorNumber %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 //#endif
       getSectorNumber();
 
 //#if CDDEBUG
-//      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+//      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 //#endif
       break;
     case 0x52:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: calculateActualSize %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: calculateActualSize %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       calculateActualSize();
 
@@ -829,55 +875,55 @@ void Cs2::execute(void) {
       getActualSize();
 
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x54:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getSectorInfo %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: getSectorInfo %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       getSectorInfo();
 
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x60:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: setSectorLength %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: setSectorLength %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       setSectorLength();
       break;
     case 0x61:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getSectorData %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: getSectorData %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       getSectorData();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x62:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: deleteSectorData %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: deleteSectorData %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       deleteSectorData();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x63:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getThenDeleteSectorData %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: getThenDeleteSectorData %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       getThenDeleteSectorData();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x64:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: putSectorData %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: putSectorData %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       putSectorData();
       break;
@@ -887,19 +933,19 @@ void Cs2::execute(void) {
 #endif
       getCopyError();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x70:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: changeDirectory %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: changeDirectory %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       changeDirectory();
 
       break;
     case 0x71:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: readDirectory %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: readDirectory %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       readDirectory();
 
@@ -910,16 +956,16 @@ void Cs2::execute(void) {
 #endif
       getFileSystemScope();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x73:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: getFileInfo %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: getFileInfo %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       getFileInfo();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x74:
@@ -928,7 +974,7 @@ void Cs2::execute(void) {
 #endif
       readFile();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x75:
@@ -937,7 +983,7 @@ void Cs2::execute(void) {
 #endif
       abortFile();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x90:
@@ -952,7 +998,7 @@ void Cs2::execute(void) {
 #endif
        mpegGetInterrupt();
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: ret: %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       break;
     case 0x92:
@@ -1049,19 +1095,19 @@ void Cs2::execute(void) {
       break;
     case 0xE0:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: cmdE0 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: cmdE0 %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif
       cmdE0();
       break;
     case 0xE1:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: cmdE1 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: cmdE1 %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif 
       cmdE1();
       break;
     case 0xE2:
 #if CDDEBUG
-      fprintf(stderr, "cs2\t: Command: cmdE2 %04x %04x %04x %04x %04x\n", getHIRQ(), getCR1(), getCR2(), getCR3(), getCR4());
+      fprintf(stderr, "cs2\t: Command: cmdE2 %04x %04x %04x %04x %04x\n", reg.HIRQ, reg.CR1, reg.CR2, reg.CR3, reg.CR4);
 #endif 
       cmdE2();
       break;
@@ -1075,26 +1121,26 @@ void Cs2::execute(void) {
 
 void Cs2::getStatus(void) {
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::getHardwareInfo(void) {
   if ((status & 0xF) != CDB_STAT_OPEN && (status & 0xF) != CDB_STAT_NODISC)
      isdiskchanged = false;
 
-  setCR1(status << 8);
+  reg.CR1 = status << 8;
   // hardware flags/CD Version
-  setCR2(0x0201); // mpeg card exists
+  reg.CR2 = 0x0201; // mpeg card exists
   // mpeg version, it actually is required(at least by the bios)
 
   if (mpgauth)
-     setCR3(0x1);
+     reg.CR3 = 0x1;
   else
-     setCR3(0);
+     reg.CR3 = 0;
 
   // drive info/revision
-  setCR4(0x0400); 
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.CR4 = 0x0400;
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::getToc(void) {
@@ -1103,41 +1149,41 @@ void Cs2::getToc(void) {
   transfercount = 0;
   infotranstype = 0;
 
-  setCR1(status << 8);
-  setCR2(0xCC);
-  setCR3(0x0);
-  setCR4(0x0); 
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+  reg.CR1 = status << 8;
+  reg.CR2 = 0xCC;
+  reg.CR3 = 0x0;
+  reg.CR4 = 0x0; 
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY;
   status = CDB_STAT_PAUSE;
 }
 
 void Cs2::getSessionInfo(void) {
 
-  switch (getCR1() & 0xFF) {
+  switch (reg.CR1 & 0xFF) {
     case 0:
-            setCR3(0x0100 | ((TOC[101] & 0xFF0000) >> 16));
-            setCR4(TOC[101] & 0x00FFFF);
+            reg.CR3 = 0x0100 | ((TOC[101] & 0xFF0000) >> 16);
+            reg.CR4 = TOC[101] & 0x00FFFF;
             break;
     case 1:
-            setCR3(0x0100); // return Session number(high byte)/and first byte of Session lba
-            setCR4(0); // lower word of Session lba
+            reg.CR3 = 0x0100; // return Session number(high byte)/and first byte of Session lba
+            reg.CR4 = 0; // lower word of Session lba
             break;
     default:
-            setCR3(0xFFFF);
-            setCR4(0xFFFF);
+            reg.CR3 = 0xFFFF;
+            reg.CR4 = 0xFFFF;
             break;
   }
 
   status = CDB_STAT_PAUSE;
-  setCR1(status << 8);
-  setCR2(0);
+  reg.CR1 = status << 8;
+  reg.CR2 = 0;
 
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::initializeCDSystem(void) {
   unsigned short val=0;
-  unsigned char initflag = getCR1() & 0xFF;
+  unsigned char initflag = reg.CR1 & 0xFF;
 
   if (status & 0xF != CDB_STAT_OPEN && status & 0xF != CDB_STAT_NODISC)
   {
@@ -1170,7 +1216,7 @@ void Cs2::initializeCDSystem(void) {
   else
      speed1x = false;
 
-  val = getHIRQ() & 0xFFE5;
+  val = reg.HIRQ & 0xFFE5;
   isbufferfull = false;
 
   if (isdiskchanged)
@@ -1178,27 +1224,27 @@ void Cs2::initializeCDSystem(void) {
   else
      val &= ~CDB_HIRQ_DCHG;
 
-  setCR1((status << 8) | (repcnt & 0xF));
-  setCR2((ctrladdr << 8) | (track & 0xFF));
-  setCR3((index << 8) | ((FAD >> 16) &0xFF));
-  setCR4((unsigned short) FAD);
-  setHIRQ(val | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.CR1 = (status << 8) | (repcnt & 0xF);
+  reg.CR2 = (ctrladdr << 8) | (track & 0xFF);
+  reg.CR3 = (index << 8) | ((FAD >> 16) &0xFF);
+  reg.CR4 = (unsigned short) FAD;
+  reg.HIRQ = val | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::endDataTransfer(void) {
   if (cdwnum)
   {
-     setCR1((status << 8) | ((cdwnum >> 17) & 0xFF));
-     setCR2((unsigned short)(cdwnum >> 1));
-     setCR3(0);
-     setCR4(0);
+     reg.CR1 = (status << 8) | ((cdwnum >> 17) & 0xFF);
+     reg.CR2 = (unsigned short)(cdwnum >> 1);
+     reg.CR3 = 0;
+     reg.CR4 = 0;
   }
   else
   {
-     setCR1((status << 8) | 0xFF); // FIXME
-     setCR2(0xFFFF);
-     setCR3(0);
-     setCR4(0);
+     reg.CR1 = (status << 8) | 0xFF; // FIXME
+     reg.CR2 = 0xFFFF;
+     reg.CR3 = 0;
+     reg.CR4 = 0;
   }
 
   // stop any transfers that may be going(this is still probably wrong)
@@ -1235,7 +1281,7 @@ void Cs2::endDataTransfer(void) {
 
   cdwnum = 0;
 
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::playDisc(void) {
@@ -1244,9 +1290,9 @@ void Cs2::playDisc(void) {
   unsigned long pdpmode;
 
   // Get all the arguments
-  pdspos = ((getCR1() & 0xFF) << 16) | getCR2();
-  pdepos = ((getCR3() & 0xFF) << 16) | getCR4();
-  pdpmode = getCR3() >> 8;
+  pdspos = ((reg.CR1 & 0xFF) << 16) | reg.CR2;
+  pdepos = ((reg.CR3 & 0xFF) << 16) | reg.CR4;
+  pdpmode = reg.CR3 >> 8;
 
   // Convert Start Position to playFAD
   if (pdspos == 0xFFFFFF)
@@ -1306,16 +1352,16 @@ void Cs2::playDisc(void) {
   status = CDB_STAT_PLAY;
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::seekDisc(void) {
-  if (getCR1() & 0x80)
+  if (reg.CR1 & 0x80)
   {
      // Seek by FAD
      unsigned long sdFAD;
 
-     sdFAD = ((getCR1() & 0xFF) << 16) | getCR2();
+     sdFAD = ((reg.CR1 & 0xFF) << 16) | reg.CR2;
 
      if (sdFAD == 0xFFFFFF)
         status = CDB_STAT_PAUSE;
@@ -1329,12 +1375,12 @@ void Cs2::seekDisc(void) {
   else
   {
      // Were we given a valid track number?
-     if (getCR2() >> 8)
+     if (reg.CR2 >> 8)
      {
         // Seek by index
         status = CDB_STAT_PAUSE;
-        SetupDefaultPlayStats((getCR2() >> 8));
-        index = getCR2() & 0xFF;
+        SetupDefaultPlayStats((reg.CR2 >> 8));
+        index = reg.CR2 & 0xFF;
      }
      else
      {
@@ -1352,42 +1398,42 @@ void Cs2::seekDisc(void) {
   SetTiming(false);
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::getSubcodeQRW(void) {
   // According to Tyranid's doc, the subcode type is stored in the low byte
   // of CR2. However, Sega's CDC library writes the type to the low byte
   // of CR1. Somehow I'd sooner believe Sega is right.
-  switch(getCR1() & 0xFF) {
+  switch(reg.CR1 & 0xFF) {
      case 0:
              // Get Q Channel
-             setCR1((status << 8) | 0);
-             setCR2(5);
-             setCR3(0);
-             setCR4(0);
+             reg.CR1 = (status << 8) | 0;
+             reg.CR2 = 5;
+             reg.CR3 = 0;
+             reg.CR4 = 0;
 
              // setup transfer here(fix me)
              break;
      case 1:
              // Get RW Channel
-             setCR1((status << 8) | 0);
-             setCR2(12);
-             setCR3(0);
-             setCR4(0);
+             reg.CR1 = (status << 8) | 0;
+             reg.CR2 = 12;
+             reg.CR3 = 0;
+             reg.CR4 = 0;
 
              // setup transfer here(fix me)
              break;
      default: break;
   }
 
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY;
 }
 
 void Cs2::setCDDeviceConnection(void) {
   unsigned long scdcfilternum;
 
-  scdcfilternum = (getCR3() >> 8);
+  scdcfilternum = (reg.CR3 >> 8);
 
   if (scdcfilternum == 0xFF)
      outconcddev = NULL;
@@ -1397,64 +1443,64 @@ void Cs2::setCDDeviceConnection(void) {
   outconcddevnum = scdcfilternum;
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::getLastBufferDestination(void) {
-  setCR1((status << 8));
-  setCR2(0);
-  setCR3(lastbuffer << 8); 
-  setCR4(0);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.CR1 = (status << 8);
+  reg.CR2 = 0;
+  reg.CR3 = lastbuffer << 8; 
+  reg.CR4 = 0;
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::setFilterRange(void) {
   unsigned char sfrfilternum;
 
-  sfrfilternum = getCR3() >> 8;
+  sfrfilternum = reg.CR3 >> 8;
 
-  filter[sfrfilternum].FAD = ((getCR1() & 0xFF) << 16) | getCR2();
-  filter[sfrfilternum].range = ((getCR3() & 0xFF) << 16) | getCR4();
+  filter[sfrfilternum].FAD = ((reg.CR1 & 0xFF) << 16) | reg.CR2;
+  filter[sfrfilternum].range = ((reg.CR3 & 0xFF) << 16) | reg.CR4;
 
   // return default cd stats
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::setFilterSubheaderConditions(void) {
   unsigned char sfscfilternum;
 
-  sfscfilternum = getCR3() >> 8;
+  sfscfilternum = reg.CR3 >> 8;
 
-  filter[sfscfilternum].chan = getCR1() & 0xFF;
-  filter[sfscfilternum].smmask = getCR2() >> 8;
-  filter[sfscfilternum].cimask = getCR2() & 0xFF;
-  filter[sfscfilternum].fid = getCR3() & 0xFF;;
-  filter[sfscfilternum].smval = getCR4() >> 8;
-  filter[sfscfilternum].cival = getCR4() & 0xFF;
+  filter[sfscfilternum].chan = reg.CR1 & 0xFF;
+  filter[sfscfilternum].smmask = reg.CR2 >> 8;
+  filter[sfscfilternum].cimask = reg.CR2 & 0xFF;
+  filter[sfscfilternum].fid = reg.CR3 & 0xFF;;
+  filter[sfscfilternum].smval = reg.CR4 >> 8;
+  filter[sfscfilternum].cival = reg.CR4 & 0xFF;
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::getFilterSubheaderConditions(void) {
   unsigned char gfscfilternum;
 
-  gfscfilternum = getCR3() >> 8;
+  gfscfilternum = reg.CR3 >> 8;
 
-  setCR1((status << 8) | filter[gfscfilternum].chan);
-  setCR2((filter[gfscfilternum].smmask << 8) | filter[gfscfilternum].cimask);
-  setCR3(filter[gfscfilternum].fid);
-  setCR4((filter[gfscfilternum].smval << 8) | filter[gfscfilternum].cival);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.CR1 = (status << 8) | filter[gfscfilternum].chan;
+  reg.CR2 = (filter[gfscfilternum].smmask << 8) | filter[gfscfilternum].cimask;
+  reg.CR3 = filter[gfscfilternum].fid;
+  reg.CR4 = (filter[gfscfilternum].smval << 8) | filter[gfscfilternum].cival;
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::setFilterMode(void) {
   unsigned char sfmfilternum;
 
-  sfmfilternum = getCR3() >> 8;
+  sfmfilternum = reg.CR3 >> 8;
 
-  filter[sfmfilternum].mode = getCR1() & 0xFF;
+  filter[sfmfilternum].mode = reg.CR1 & 0xFF;
 
   if (filter[sfmfilternum].mode & 0x80)
   {
@@ -1470,50 +1516,50 @@ void Cs2::setFilterMode(void) {
   }
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::getFilterMode(void) {
   unsigned char gfmfilternum;
 
-  gfmfilternum = getCR3() >> 8;
+  gfmfilternum = reg.CR3 >> 8;
 
-  setCR1((status << 8) | filter[gfmfilternum].mode);
-  setCR2(0);
-  setCR3(0);
-  setCR4(0);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.CR1 = (status << 8) | filter[gfmfilternum].mode;
+  reg.CR2 = 0;
+  reg.CR3 = 0;
+  reg.CR4 = 0;
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::setFilterConnection(void) {
   unsigned char sfcfilternum;
 
-  sfcfilternum = getCR3() >> 8;
+  sfcfilternum = reg.CR3 >> 8;
 
-  if (getCR1() & 0x1)
+  if (reg.CR1 & 0x1)
   {
      // Set connection for true condition
-     filter[sfcfilternum].condtrue = getCR2() >> 8;
+     filter[sfcfilternum].condtrue = reg.CR2 >> 8;
   }
 
-  if (getCR1() & 0x2)
+  if (reg.CR1 & 0x2)
   {
      // Set connection for false condition
-     filter[sfcfilternum].condfalse = getCR2() & 0xFF;
+     filter[sfcfilternum].condfalse = reg.CR2 & 0xFF;
   }
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::resetSelector(void) {
   // still needs a bit of work
   unsigned long i, i2;
 
-  if ((getCR1() & 0xFF) == 0)
+  if ((reg.CR1 & 0xFF) == 0)
   {
      // Reset specified partition buffer only
-     unsigned long rsbufno=getCR3() >> 8;
+     unsigned long rsbufno=reg.CR3 >> 8;
 
      // sort remaining blocks
      if (rsbufno < MAX_SELECTORS)
@@ -1534,26 +1580,26 @@ void Cs2::resetSelector(void) {
      if (blockfreespace == 200) isonesectorstored = false;
 
      doCDReport();
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
      return;
   }
 
   // parse flags and reset the specified area(fix me)
-  if (getCR1() & 0x80)
+  if (reg.CR1 & 0x80)
   {
      // reset false filter output connections
      for (i = 0; i < MAX_SELECTORS; i++)
         filter[i].condfalse = 0xFF;
   }
 
-  if (getCR1() & 0x40)
+  if (reg.CR1 & 0x40)
   {
      // reset true filter output connections
      for (i = 0; i < MAX_SELECTORS; i++)
         filter[i].condtrue = i;
   }
 
-  if (getCR1() & 0x10)
+  if (reg.CR1 & 0x10)
   {
      // reset filter conditions
      for (i = 0; i < MAX_SELECTORS; i++)
@@ -1570,12 +1616,12 @@ void Cs2::resetSelector(void) {
      }
   }
 
-  if (getCR1() & 0x8)
+  if (reg.CR1 & 0x8)
   {
      // reset partition output connectors
   }
 
-  if (getCR1() & 0x4)
+  if (reg.CR1 & 0x4)
   {
      // reset partitions buffer data
      isbufferfull = false;
@@ -1604,31 +1650,31 @@ void Cs2::resetSelector(void) {
   }
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::getBufferSize(void) {
-  setCR1(status << 8);
-  setCR2(blockfreespace);
-  setCR3(MAX_SELECTORS << 8);
-  setCR4(MAX_BLOCKS);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.CR1 = status << 8;
+  reg.CR2 = blockfreespace;
+  reg.CR3 = MAX_SELECTORS << 8;
+  reg.CR4 = MAX_BLOCKS;
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::getSectorNumber(void) {
   unsigned long gsnbufno;
 
-  gsnbufno = getCR3() >> 8;
+  gsnbufno = reg.CR3 >> 8;
 
   if (partition[gsnbufno].size == -1)
-     setCR4(0);
+     reg.CR4 = 0;
   else
-     setCR4(partition[gsnbufno].numblocks);
+     reg.CR4 = partition[gsnbufno].numblocks;
 
-  setCR1(status << 8);
-  setCR2(0);
-  setCR3(0);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+  reg.CR1 = status << 8;
+  reg.CR2 = 0;
+  reg.CR3 = 0;
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY;
 }
 
 void Cs2::calculateActualSize(void) {
@@ -1637,9 +1683,9 @@ void Cs2::calculateActualSize(void) {
   unsigned short cassectoffset;
   unsigned short casnumsect;
 
-  cassectoffset = getCR2();
-  casbufno = getCR3() >> 8;
-  casnumsect = getCR4();
+  cassectoffset = reg.CR2;
+  casbufno = reg.CR3 >> 8;
+  casnumsect = reg.CR4;
 
   if (partition[casbufno].size != 0)
   {
@@ -1655,30 +1701,30 @@ void Cs2::calculateActualSize(void) {
      calcsize = 0;
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::getActualSize(void) {
-  setCR1((status << 8) | ((calcsize >> 16) & 0xFF));
-  setCR2(calcsize & 0xFFFF);
-  setCR3(0);
-  setCR4(0);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.CR1 = (status << 8) | ((calcsize >> 16) & 0xFF);
+  reg.CR2 = calcsize & 0xFFFF;
+  reg.CR3 = 0;
+  reg.CR4 = 0;
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::getSectorInfo(void) {
   unsigned long gsisctnum;
   unsigned long gsibufno;
 
-  gsisctnum=getCR2() & 0xFF;
-  gsibufno=getCR3() >> 8;
+  gsisctnum=reg.CR2 & 0xFF;
+  gsibufno=reg.CR3 >> 8;
   if (gsibufno < MAX_SELECTORS) {
      if (gsisctnum < partition[gsibufno].numblocks) {
-        setCR1((status << 8) | ((partition[gsibufno].block[gsisctnum]->FAD >> 16) & 0xFF));
-        setCR2(partition[gsibufno].block[gsisctnum]->FAD & 0xFFFF);
-        setCR3((partition[gsibufno].block[gsisctnum]->fn << 8) | partition[gsibufno].block[gsisctnum]->cn);
-        setCR4((partition[gsibufno].block[gsisctnum]->sm << 8) | partition[gsibufno].block[gsisctnum]->ci);
-        setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+        reg.CR1 = (status << 8) | ((partition[gsibufno].block[gsisctnum]->FAD >> 16) & 0xFF);
+        reg.CR2 = partition[gsibufno].block[gsisctnum]->FAD & 0xFFFF;
+        reg.CR3 = (partition[gsibufno].block[gsisctnum]->fn << 8) | partition[gsibufno].block[gsisctnum]->cn;
+        reg.CR4 = (partition[gsibufno].block[gsisctnum]->sm << 8) | partition[gsibufno].block[gsisctnum]->ci;
+        reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
         return;
      }
      else
@@ -1689,12 +1735,12 @@ void Cs2::getSectorInfo(void) {
      }
   }
 
-  setCR1((CDB_STAT_REJECT << 8) | getCR1() & 0xFF);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.CR1 = (CDB_STAT_REJECT << 8) | reg.CR1 & 0xFF;
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::setSectorLength(void) {
-  switch (getCR1() & 0xFF) {
+  switch (reg.CR1 & 0xFF) {
     case 0:
             getsectsize = 2048;
             break;
@@ -1710,7 +1756,7 @@ void Cs2::setSectorLength(void) {
     default: break;
   }
 
-  switch (getCR2() >> 8) {
+  switch (reg.CR2 >> 8) {
     case 0:
             putsectsize = 2048;
             break;
@@ -1727,13 +1773,13 @@ void Cs2::setSectorLength(void) {
   }
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 void Cs2::getSectorData(void) {
   unsigned long gsdbufno;
 
-  gsdbufno = getCR3() >> 8;
+  gsdbufno = reg.CR3 >> 8;
 
   if (gsdbufno < MAX_SELECTORS)
   {
@@ -1744,19 +1790,19 @@ void Cs2::getSectorData(void) {
      datatranspartitionnum = gsdbufno;
      datatransoffset = 0;
      datanumsecttrans = 0;
-     datatranssectpos = getCR2();
-     datasectstotrans = getCR4();
+     datatranssectpos = reg.CR2;
+     datasectstotrans = reg.CR4;
 
      doCDReport();
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST;
   }
   else
   {
-     setCR1((CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-     setCR2((ctrladdr << 8) | (track & 0xFF));
-     setCR3((index << 8) | ((FAD >> 16) &0xFF));
-     setCR4((unsigned short) FAD);
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+     reg.CR1 = (CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF);
+     reg.CR2 = (ctrladdr << 8) | (track & 0xFF);
+     reg.CR3 = (index << 8) | ((FAD >> 16) &0xFF);
+     reg.CR4 = (unsigned short) FAD;
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
   }
 }
 
@@ -1765,9 +1811,9 @@ void Cs2::deleteSectorData(void) {
   unsigned long dsdbufno=0;
   unsigned long dsdsectnum=0;
 
-  dsdsectoffset = getCR2();
-  dsdbufno = getCR3() >> 8;
-  dsdsectnum = getCR4();
+  dsdsectoffset = reg.CR2;
+  dsdbufno = reg.CR3 >> 8;
+  dsdsectnum = reg.CR4;
 
   if (dsdbufno < MAX_SELECTORS)
   {
@@ -1806,22 +1852,22 @@ void Cs2::deleteSectorData(void) {
      if (blockfreespace == 200) isonesectorstored = false;
 
      doCDReport();
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
   }
   else
   {
-     setCR1((CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-     setCR2((ctrladdr << 8) | (track & 0xFF));
-     setCR3((index << 8) | ((FAD >> 16) &0xFF));
-     setCR4((unsigned short) FAD);
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+     reg.CR1 = (CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF);
+     reg.CR2 = (ctrladdr << 8) | (track & 0xFF);
+     reg.CR3 = (index << 8) | ((FAD >> 16) &0xFF);
+     reg.CR4 = (unsigned short) FAD;
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
   }
 }
 
 void Cs2::getThenDeleteSectorData(void) {
   unsigned long gtdsdbufno;
 
-  gtdsdbufno = getCR3() >> 8;
+  gtdsdbufno = reg.CR3 >> 8;
 
   if (gtdsdbufno < MAX_SELECTORS)
   {
@@ -1831,54 +1877,54 @@ void Cs2::getThenDeleteSectorData(void) {
      datatranspartition = partition + gtdsdbufno;
      datatransoffset = 0;
      datanumsecttrans = 0;
-     datatranssectpos = getCR2();
-     datasectstotrans = getCR4();
+     datatranssectpos = reg.CR2;
+     datasectstotrans = reg.CR4;
 
      doCDReport();
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST;
   }
   else
   {
-     setCR1((CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-     setCR2((ctrladdr << 8) | (track & 0xFF));
-     setCR3((index << 8) | ((FAD >> 16) &0xFF));
-     setCR4((unsigned short) FAD);
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+     reg.CR1 = (CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF);
+     reg.CR2 = (ctrladdr << 8) | (track & 0xFF);
+     reg.CR3 = (index << 8) | ((FAD >> 16) &0xFF);
+     reg.CR4 = (unsigned short) FAD;
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
   }
 }
 
 void Cs2::putSectorData(void) {
   unsigned long psdfiltno;
 
-  psdfiltno = getCR3() >> 8;
+  psdfiltno = reg.CR3 >> 8;
 
   if (psdfiltno < MAX_SELECTORS)
   {
      // I'm not really sure what I'm supposed to really be doing or returning
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
   }
   else
   {
-     setCR1((CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF));
-     setCR2((ctrladdr << 8) | (track & 0xFF));
-     setCR3((index << 8) | ((FAD >> 16) &0xFF));
-     setCR4((unsigned short) FAD);
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EHST);
+     reg.CR1 = (CDB_STAT_REJECT << 8) | ((options & 0xF) << 4) | (repcnt & 0xF);
+     reg.CR2 = (ctrladdr << 8) | (track & 0xFF);
+     reg.CR3 = (index << 8) | ((FAD >> 16) &0xFF);
+     reg.CR4 = (unsigned short) FAD;
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
   }
 }
 
 void Cs2::getCopyError(void) {
-  setCR1(status << 8);
-  setCR2(0);
-  setCR3(0);
-  setCR4(0);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.CR1 = status << 8;
+  reg.CR2 = 0;
+  reg.CR3 = 0;
+  reg.CR4 = 0;
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::changeDirectory(void) {
   unsigned long cdfilternum;
 
-  cdfilternum = (getCR3() >> 8);
+  cdfilternum = (reg.CR3 >> 8);
 
   if (cdfilternum == 0xFF)
   {
@@ -1886,7 +1932,7 @@ void Cs2::changeDirectory(void) {
   }
   else if (cdfilternum < 0x24)
   {
-     if (ReadFileSystem(filter + cdfilternum, ((getCR3() & 0xFF) << 16) | getCR4(), false) != 0)
+     if (ReadFileSystem(filter + cdfilternum, ((reg.CR3 & 0xFF) << 16) | reg.CR4, false) != 0)
      {
         // fix me
 #if CDDEBUG
@@ -1896,13 +1942,13 @@ void Cs2::changeDirectory(void) {
   }
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
 void Cs2::readDirectory(void) {
   unsigned long rdfilternum;
 
-  rdfilternum = (getCR3() >> 8);
+  rdfilternum = (reg.CR3 >> 8);
 
   if (rdfilternum == 0xFF)
   {
@@ -1910,7 +1956,7 @@ void Cs2::readDirectory(void) {
   }
   else if (rdfilternum < 0x24)
   {
-     if (ReadFileSystem(filter + rdfilternum, ((getCR3() & 0xFF) << 8) | getCR4(), true) != 0)
+     if (ReadFileSystem(filter + rdfilternum, ((reg.CR3 & 0xFF) << 8) | reg.CR4, true) != 0)
      {
         // fix me
 #if CDDEBUG
@@ -1920,33 +1966,33 @@ void Cs2::readDirectory(void) {
   }
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
 void Cs2::getFileSystemScope(void) {
   // may need to fix this
-  setCR1(status << 8);
-  setCR2(numfiles - 2);
-  setCR3(0x0100);
-  setCR4(0x0002);
+  reg.CR1 = status << 8;
+  reg.CR2 = numfiles - 2;
+  reg.CR3 = 0x0100;
+  reg.CR4 = 0x0002;
 
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
 void Cs2::getFileInfo(void) {
   unsigned long gfifid;
 
-  gfifid = ((getCR3() & 0xFF) << 16) | getCR4();
+  gfifid = ((reg.CR3 & 0xFF) << 16) | reg.CR4;
 
   if (gfifid == 0xFFFFFF)
   {
      transfercount = 0;
      infotranstype = 2;
 
-     setCR1(status << 8);
-     setCR2(0x05F4);
-     setCR3(0);
-     setCR4(0);
+     reg.CR1 = status << 8;
+     reg.CR2 = 0x05F4;
+     reg.CR3 = 0;
+     reg.CR4 = 0;
   }
   else
   {
@@ -1955,21 +2001,21 @@ void Cs2::getFileInfo(void) {
      transfercount = 0;
      infotranstype = 1;
 
-     setCR1(status << 8);
-     setCR2(0x06);
-     setCR3(0);
-     setCR4(0);
+     reg.CR1 = status << 8;
+     reg.CR2 = 0x06;
+     reg.CR3 = 0;
+     reg.CR4 = 0;
   }
 
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY;
 
 }
 
 void Cs2::readFile(void) {
   unsigned long rffid, rfoffset, rfsize;
 
-  rffid = ((getCR3() & 0xFF) << 8) | getCR4();
-  rfoffset = ((getCR1() & 0xFF) << 8) | getCR2();
+  rffid = ((reg.CR3 & 0xFF) << 8) | reg.CR4;
+  rfoffset = ((reg.CR1 & 0xFF) << 8) | reg.CR2;
   rfsize = ((fileinfo[rffid].size + getsectsize - 1) /
            getsectsize) - rfoffset;
 
@@ -1985,7 +2031,7 @@ void Cs2::readFile(void) {
   status = CDB_STAT_PLAY;
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
 void Cs2::abortFile(void) {
@@ -1996,12 +2042,12 @@ void Cs2::abortFile(void) {
   datatranstype = -1;
   cdwnum = 0;
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_EFLS);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
 void Cs2::mpegGetStatus(void) {
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegGetInterrupt(void) {
@@ -2013,36 +2059,36 @@ void Cs2::mpegGetInterrupt(void) {
    // mask interupt
    mgiworkinterrupt &= mpegintmask;
 
-   setCR1((status << 8) | ((mgiworkinterrupt >> 16) & 0xFF));
-   setCR2((unsigned short)mgiworkinterrupt);
-   setCR3(0);                                              
-   setCR4(0);
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.CR1 = (status << 8) | ((mgiworkinterrupt >> 16) & 0xFF);
+   reg.CR2 = (unsigned short)mgiworkinterrupt;
+   reg.CR3 = 0;
+   reg.CR4 = 0;
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetInterruptMask(void) {
-   mpegintmask = ((getCR1() & 0xFF) << 16) | getCR2();
+   mpegintmask = ((reg.CR1 & 0xFF) << 16) | reg.CR2;
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegInit(void) {
 
   if (mpgauth)
-     setCR1(status << 8);
+     reg.CR1 = status << 8;
   else
-     setCR1(0xFF00);
+     reg.CR1 = 0xFF00;
 
   // double-check this
-  if (getCR2() == 0x0001) // software timer/reset?
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
+  if (reg.CR2 == 0x0001) // software timer/reset?
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM | CDB_HIRQ_MPED | CDB_HIRQ_MPST; 
   else
-     setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPED | CDB_HIRQ_MPST); 
+     reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPED | CDB_HIRQ_MPST;
 
-  setCR2(0);
-  setCR3(0);
-  setCR4(0);
+  reg.CR2 = 0;
+  reg.CR3 = 0;
+  reg.CR4 = 0;
 
   // future mpeg-related variables should be initialized here
 }
@@ -2051,130 +2097,130 @@ void Cs2::mpegSetMode(void) {
    // fix me
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegPlay(void) {
    // fix me
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetDecodingMethod(void) {
    // fix me
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetConnection(void) {
-   bool mscnext = (getCR3() >> 8);
+   bool mscnext = (reg.CR3 >> 8);
 
    if (mscnext == false)
    {
       // Current
-      mpegcon[0].audcon = getCR1() & 0xFF;
-      mpegcon[0].audlay = getCR2() >> 8;
-      mpegcon[0].audbufdivnum = getCR2() & 0xFF;
-      mpegcon[0].vidcon = getCR3() & 0xFF;
-      mpegcon[0].vidlay = getCR4() >> 8;
-      mpegcon[0].vidbufdivnum = getCR4() & 0xFF;
+      mpegcon[0].audcon = reg.CR1 & 0xFF;
+      mpegcon[0].audlay = reg.CR2 >> 8;
+      mpegcon[0].audbufdivnum = reg.CR2 & 0xFF;
+      mpegcon[0].vidcon = reg.CR3 & 0xFF;
+      mpegcon[0].vidlay = reg.CR4 >> 8;
+      mpegcon[0].vidbufdivnum = reg.CR4 & 0xFF;
    }
    else
    {
       // Next
-      mpegcon[1].audcon = getCR1() & 0xFF;
-      mpegcon[1].audlay = getCR2() >> 8;
-      mpegcon[1].audbufdivnum = getCR2() & 0xFF;
-      mpegcon[1].vidcon = getCR3() & 0xFF;
-      mpegcon[1].vidlay = getCR4() >> 8;
-      mpegcon[1].vidbufdivnum = getCR4() & 0xFF;
+      mpegcon[1].audcon = reg.CR1 & 0xFF;
+      mpegcon[1].audlay = reg.CR2 >> 8;
+      mpegcon[1].audbufdivnum = reg.CR2 & 0xFF;
+      mpegcon[1].vidcon = reg.CR3 & 0xFF;
+      mpegcon[1].vidlay = reg.CR4 >> 8;
+      mpegcon[1].vidbufdivnum = reg.CR4 & 0xFF;
    }
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegGetConnection(void) {
-   bool mgcnext = (getCR3() >> 8);
+   bool mgcnext = (reg.CR3 >> 8);
 
    if (mgcnext == false)
    {
       // Current
-      setCR1((status << 8) | mpegcon[0].audcon);
-      setCR2((mpegcon[0].audlay << 8) | mpegcon[0].audbufdivnum);
-      setCR3(mpegcon[0].vidcon);
-      setCR4((mpegcon[0].vidlay << 8) | mpegcon[0].vidbufdivnum);
+      reg.CR1 = (status << 8) | mpegcon[0].audcon;
+      reg.CR2 = (mpegcon[0].audlay << 8) | mpegcon[0].audbufdivnum;
+      reg.CR3 = mpegcon[0].vidcon;
+      reg.CR4 = (mpegcon[0].vidlay << 8) | mpegcon[0].vidbufdivnum;
    }
    else
    {
       // Next
-      setCR1((status << 8) | mpegcon[1].audcon);
-      setCR2((mpegcon[1].audlay << 8) | mpegcon[1].audbufdivnum);
-      setCR3(mpegcon[1].vidcon);
-      setCR4((mpegcon[1].vidlay << 8) | mpegcon[1].vidbufdivnum);
+      reg.CR1 = (status << 8) | mpegcon[1].audcon;
+      reg.CR2 = (mpegcon[1].audlay << 8) | mpegcon[1].audbufdivnum;
+      reg.CR3 = mpegcon[1].vidcon;
+      reg.CR4 = (mpegcon[1].vidlay << 8) | mpegcon[1].vidbufdivnum;
    }
 
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetStream(void) {
-   bool mssnext = (getCR3() >> 8);
+   bool mssnext = (reg.CR3 >> 8);
 
    if (mssnext == false)
    {
       // Current
-      mpegstm[0].audstm = getCR1() & 0xFF;
-      mpegstm[0].audstmid = getCR2() >> 8;
-      mpegstm[0].audchannum = getCR2() & 0xFF;
-      mpegstm[0].vidstm = getCR3() & 0xFF;
-      mpegstm[0].vidstmid = getCR4() >> 8;
-      mpegstm[0].vidchannum = getCR4() & 0xFF;
+      mpegstm[0].audstm = reg.CR1 & 0xFF;
+      mpegstm[0].audstmid = reg.CR2 >> 8;
+      mpegstm[0].audchannum = reg.CR2 & 0xFF;
+      mpegstm[0].vidstm = reg.CR3 & 0xFF;
+      mpegstm[0].vidstmid = reg.CR4 >> 8;
+      mpegstm[0].vidchannum = reg.CR4 & 0xFF;
    }
    else
    {
       // Next
-      mpegstm[1].audstm = getCR1() & 0xFF;
-      mpegstm[1].audstmid = getCR2() >> 8;
-      mpegstm[1].audchannum = getCR2() & 0xFF;
-      mpegstm[1].vidstm = getCR3() & 0xFF;
-      mpegstm[1].vidstmid = getCR4() >> 8;
-      mpegstm[1].vidchannum = getCR4() & 0xFF;
+      mpegstm[1].audstm = reg.CR1 & 0xFF;
+      mpegstm[1].audstmid = reg.CR2 >> 8;
+      mpegstm[1].audchannum = reg.CR2 & 0xFF;
+      mpegstm[1].vidstm = reg.CR3 & 0xFF;
+      mpegstm[1].vidstmid = reg.CR4 >> 8;
+      mpegstm[1].vidchannum = reg.CR4 & 0xFF;
    }
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegGetStream(void) {
-   bool mgsnext = (getCR3() >> 8);
+   bool mgsnext = (reg.CR3 >> 8);
 
    if (mgsnext == false)
    {
       // Current
-      setCR1((status << 8) | mpegstm[0].audstm);
-      setCR2((mpegstm[0].audstmid << 8) | mpegstm[0].audchannum);
-      setCR3(mpegstm[0].vidstm);
-      setCR4((mpegstm[0].vidstmid << 8) | mpegstm[0].vidchannum);
+      reg.CR1 = (status << 8) | mpegstm[0].audstm;
+      reg.CR2 = (mpegstm[0].audstmid << 8) | mpegstm[0].audchannum;
+      reg.CR3 = mpegstm[0].vidstm;
+      reg.CR4 = (mpegstm[0].vidstmid << 8) | mpegstm[0].vidchannum;
    }
    else
    {
       // Next
-      setCR1((status << 8) | mpegstm[1].audstm);
-      setCR2((mpegstm[1].audstmid << 8) | mpegstm[1].audchannum);
-      setCR3(mpegstm[1].vidstm);
-      setCR4((mpegstm[1].vidstmid << 8) | mpegstm[1].vidchannum);
+      reg.CR1 = (status << 8) | mpegstm[1].audstm;
+      reg.CR2 = (mpegstm[1].audstmid << 8) | mpegstm[1].audchannum;
+      reg.CR3 = mpegstm[1].vidstm;
+      reg.CR4 = (mpegstm[1].vidstmid << 8) | mpegstm[1].vidchannum;
    }
 
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegDisplay(void) {
    // fix me(should be setting display setting)
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetWindow(void) {
@@ -2182,39 +2228,39 @@ void Cs2::mpegSetWindow(void) {
 
    // return default mpeg stats
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetBorderColor() {
    // fix me(should be setting border color)
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetFade() {
    // fix me(should be setting fade setting)
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetVideoEffects(void) {
    // fix me(should be setting video effects settings)
 
    doMPEGReport();
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::mpegSetLSI() {
    // fix me(should be setting the LSI, among other things)
-   setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPCM);
+   reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
 void Cs2::cmdE0(void) {
   bool mpegauth;
 
-  mpegauth = getCR2() & 0xFF;
+  mpegauth = reg.CR2 & 0xFF;
 
 
   if ((status & 0xF) != CDB_STAT_NODISC &&
@@ -2223,21 +2269,21 @@ void Cs2::cmdE0(void) {
      // Set registers all to invalid values(aside from status)
      status = CDB_STAT_BUSY;
 
-     setCR1((status << 8) | 0xFF);
-     setCR2(0xFFFF);
-     setCR3(0xFFFF);
-     setCR4(0xFFFF);
+     reg.CR1 = (status << 8) | 0xFF;
+     reg.CR2 = 0xFFFF;
+     reg.CR3 = 0xFFFF;
+     reg.CR4 = 0xFFFF;
 
      if (mpegauth == 1)
      {
-        setHIRQ(getHIRQ() | CDB_HIRQ_MPED);
+        reg.HIRQ |= CDB_HIRQ_MPED;
         mpgauth = 2;
      }
      else
      {     
         // if authentication passes(obviously it always does), CDB_HIRQ_CSCT is set
         isonesectorstored = true;
-        setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
+        reg.HIRQ |= CDB_HIRQ_EFLS | CDB_HIRQ_CSCT;
         satauth = 4;
      }
 
@@ -2249,26 +2295,26 @@ void Cs2::cmdE0(void) {
   {
      if (mpegauth == 1)
      {
-        setHIRQ(getHIRQ() | CDB_HIRQ_MPED);
+        reg.HIRQ |= CDB_HIRQ_MPED;
         mpgauth = 2;
      }
      else
-        setHIRQ(getHIRQ() | CDB_HIRQ_EFLS | CDB_HIRQ_CSCT);
+        reg.HIRQ |= CDB_HIRQ_EFLS | CDB_HIRQ_CSCT;
   }
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::cmdE1(void) {
-  setCR1((status << 8));
-  if (getCR2())
-     setCR2(mpgauth);
+  reg.CR1 = (status << 8);
+  if (reg.CR2)
+     reg.CR2 = mpgauth;
   else
-     setCR2(satauth);
-  setCR3(0);
-  setCR4(0);
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK);
+     reg.CR2 = satauth;
+  reg.CR3 = 0;
+  reg.CR4 = 0;
+  reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 void Cs2::cmdE2(void) {
@@ -2283,8 +2329,8 @@ void Cs2::cmdE2(void) {
 
   if ((mpgfp = fopen(yui_mpegrom(), "rb")) != NULL)
   {
-     unsigned long readoffset = ((getCR1() & 0xFF) << 8) | getCR2();
-     unsigned short readsize = getCR4();
+     unsigned long readoffset = ((reg.CR1 & 0xFF) << 8) | reg.CR2;
+     unsigned short readsize = reg.CR4;
 
      fseek(mpgfp, readoffset * getsectsize, SEEK_SET);
      if ((mpgpartition = GetPartition(outconmpegrom)) != NULL && !isbufferfull)
@@ -2305,14 +2351,14 @@ void Cs2::cmdE2(void) {
         }
 
         isonesectorstored = true;
-        setHIRQ(getHIRQ() | CDB_HIRQ_CSCT);
+        reg.HIRQ |= CDB_HIRQ_CSCT;
      }
 
      fclose(mpgfp);
   }
 
   doCDReport();
-  setHIRQ(getHIRQ() | CDB_HIRQ_CMOK | CDB_HIRQ_MPED);
+  reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPED;
 }
 
 unsigned char Cs2::FADToTrack(unsigned long val) {
@@ -2377,7 +2423,7 @@ void Cs2::FreeBlock(block_struct *blk) {
   blk->size = -1;
   blockfreespace++;
   isbufferfull = false;
-  setHIRQ(getHIRQ() & ~CDB_HIRQ_BFUL);
+  reg.HIRQ &= ~CDB_HIRQ_BFUL;
 }
 
 void Cs2::SortBlocks(partition_struct *part) {

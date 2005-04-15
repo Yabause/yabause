@@ -117,8 +117,22 @@ typedef struct
    unsigned char vidchannum;
 } mpegstm_struct;
 
+typedef struct
+{
+   unsigned long DTR;
+   unsigned short UNKNOWN;
+   unsigned short HIRQ;
+   unsigned short HIRQMASK;
+   unsigned short CR1;
+   unsigned short CR2;
+   unsigned short CR3;
+   unsigned short CR4;
+   unsigned short MPEGRGB;
+} blockregs_struct;
+
 class Cs2 : public Memory {
 private:
+  blockregs_struct reg;
   unsigned long FAD;
   unsigned char status;
 
@@ -140,6 +154,7 @@ private:
   unsigned short satauth;
   unsigned short mpgauth;
 
+  // internal varaibles
   unsigned long transfercount;
   unsigned long cdwnum;
   unsigned long TOC[102];
@@ -194,6 +209,7 @@ private:
   bool _command;
   unsigned long _periodiccycles;
   unsigned long _periodictiming;
+  unsigned long _commandtiming;
   CDInterface *cd;
 
   SaturnMemory *satmem;
@@ -203,18 +219,6 @@ private:
 public:
   Cs2(SaturnMemory *, int);
   ~Cs2(void);
-  unsigned short getHIRQ(void);
-  unsigned short getHIRQMask(void);
-  unsigned short getCR1(void);
-  unsigned short getCR2(void);
-  unsigned short getCR3(void);
-  unsigned short getCR4(void);
-  void setHIRQ(unsigned short val);
-  void setHIRQMask(unsigned short val);
-  void setCR1(unsigned short val);
-  void setCR2(unsigned short val);
-  void setCR3(unsigned short val);
-  void setCR4(unsigned short val);
 
   unsigned char getByte(unsigned long);
   void setByte(unsigned long, unsigned char);
@@ -228,7 +232,7 @@ public:
   void reset(void);
   void SetTiming(bool);
   void command(void);
-  void periodicUpdate(void);
+  void setCommandTiming(unsigned char cmd);
                                   
   //   command name                          command code
   void getStatus(void);                   // 0x00
