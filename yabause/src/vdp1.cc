@@ -340,6 +340,10 @@ void Vdp1::readPriority(void) {
 				sprite_register = ((CMDCOLR & 0x4000) | (~CMDCOLR & 0x2000)) >> 13;
 				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
 				break;
+                        case 4:
+				sprite_register = ((CMDCOLR & 0x4000) | (~CMDCOLR & 0x2000)) >> 13;
+				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
+				break;
 			case 5:
 				sprite_register = ((CMDCOLR & 0x6000) | (~CMDCOLR & 0x1000)) >> 12;
 				priority = vdp2reg->getByte(0xF0 + sprite_register) & 0x7;
