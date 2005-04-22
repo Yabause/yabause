@@ -3048,7 +3048,8 @@ int Cs2::saveState(FILE *fp) {
    // Write cart type
    fwrite((void *)&carttype, 4, 1, fp);
 
-   // Write cd block registers(fix me)
+   // Write cd block registers
+   fwrite((void *)&reg, sizeof(blockregs_struct), 1, fp);
 
    // Write current Status variables(needs a rewrite)
    fwrite((void *)&FAD, 4, 1, fp);
@@ -3080,6 +3081,7 @@ int Cs2::saveState(FILE *fp) {
    fwrite((void *)&lastbuffer, 1, 1, fp);
    fwrite((void *)&_command, 1, 1, fp);
    fwrite((void *)&_periodictiming, 4, 1, fp);
+   fwrite((void *)&_commandtiming, 4, 1, fp);
    fwrite((void *)&outconcddevnum, 1, 1, fp);
    fwrite((void *)&outconmpegfbnum, 1, 1, fp);
    fwrite((void *)&outconmpegbufnum, 1, 1, fp);
@@ -3135,7 +3137,8 @@ int Cs2::loadState(FILE *fp, int version, int size) {
    // Read cart type
    fread((void *)&carttype, 4, 1, fp);
 
-   // Read cd block registers(fix me)
+   // Read cd block registers
+   fread((void *)&reg, sizeof(blockregs_struct), 1, fp);
 
    // Read current Status variables(needs a reRead)
    fread((void *)&FAD, 4, 1, fp);
@@ -3167,6 +3170,7 @@ int Cs2::loadState(FILE *fp, int version, int size) {
    fread((void *)&lastbuffer, 1, 1, fp);
    fread((void *)&_command, 1, 1, fp);
    fread((void *)&_periodictiming, 4, 1, fp);
+   fread((void *)&_commandtiming, 4, 1, fp);
    fread((void *)&outconcddevnum, 1, 1, fp);
    if (outconcddevnum == 0xFF)
       outconcddev = NULL;
