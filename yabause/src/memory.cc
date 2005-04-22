@@ -306,9 +306,9 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
         cs0         = new Cs0(NULL, CART_NONE);
         cs1         = new Cs1(NULL, CART_NONE);
         cs2         = new Cs2(this, CART_NONE);
+	scu         = new Scu(this);
         soundr      = new Scsp(this);
         sound       = ((Scsp *)soundr)->getSRam();
-	scu         = new Scu(this);
 	vdp1_2      = new Vdp1(this);
 	vdp1_1      = ((Vdp1*) vdp1_2)->getVRam();
 	vdp2_3      = new Vdp2(this);
@@ -505,7 +505,7 @@ void SaturnMemory::initMemoryMap() {
 	initMemoryHandler(0x200, 0x400, cs0);
 	initMemoryHandler(0x400, 0x500, cs1);
 	initMemoryHandler(0x580, 0x590, cs2);
-        initMemoryHandler(0x5A0, 0x5AF, sound);
+        initMemoryHandler(0x5A0, 0x5B0, sound);
 	initMemoryHandler(0x5B0, 0x5B1, soundr);
         initMemoryHandler(0x5C0, 0x5CC, vdp1_1);
 	initMemoryHandler(0x5D0, 0x5D1, vdp1_2);
