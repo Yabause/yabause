@@ -364,7 +364,7 @@ static void scsp_sound_interrupt(u32 id)
 	if (scsp.scieb & id)
 	{
 		level = 0;
-		if (id > 0x80) id = 0x80;
+                if (id > 0x80) id = 0x80;
 
 		if (scsp.scilv0 & id) level |= 1;
 		if (scsp.scilv1 & id) level |= 2;
@@ -532,7 +532,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 
 	switch(a & 0x1F){
 
-	case 0x00:
+        case 0x00: // KX/KB/SBCTL/SSCTL(high bit)
 		slot->key = (d >> 3) & 1;
 		slot->sbctl = (d >> 1) & 3;
 		slot->ssctl = (slot->ssctl & 1) + ((d & 1) << 1);
@@ -540,7 +540,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		if (d & 0x10) scsp_slot_keyonoff();
 		return;
 
-	case 0x01:
+        case 0x01: // SSCTL(low bit)/LPCTL/8B/SA(highest 4 bits)
 		slot->ssctl = (slot->ssctl & 2) + ((d >> 7) & 1);
 		slot->lpctl = (d >> 5) & 3;
 		slot->pcm8b = d & 0x10;
@@ -548,33 +548,33 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		slot->sa &= SCSP_RAM_MASK;
 		return;
 
-	case 0x02:
+        case 0x02: // SA(next highest byte)
 		slot->sa = (slot->sa & 0xF00FF) + (d << 8);
 		slot->sa &= SCSP_RAM_MASK;
 		return;
 
-	case 0x03:
+        case 0x03: // SA(low byte)
 		slot->sa = (slot->sa & 0xFFF00) + d;
 		slot->sa &= SCSP_RAM_MASK;
 		return;
 
-	case 0x04:
+        case 0x04: // LSA(high byte)
 		slot->lsa = (slot->lsa & (0x00FF << SCSP_FREQ_LB)) + (d << (8 + SCSP_FREQ_LB));
 		return;
 
-	case 0x05:
+        case 0x05: // LSA(low byte)
 		slot->lsa = (slot->lsa & (0xFF00 << SCSP_FREQ_LB)) + (d << SCSP_FREQ_LB);
 		return;
 
-	case 0x06:
+        case 0x06: // LEA(high byte)
 		slot->lea = (slot->lea & (0x00FF << SCSP_FREQ_LB)) + (d << (8 + SCSP_FREQ_LB));
 		return;
 
-	case 0x07:
+        case 0x07: // LSA(low byte)
 		slot->lea = (slot->lea & (0xFF00 << SCSP_FREQ_LB)) + (d << SCSP_FREQ_LB);
 		return;
 
-	case 0x08:
+        case 0x08: // D2R/D1R(highest 3 bits)
 		slot->sr = (d >> 3) & 0x1F;
 		slot->dr = (slot->dr & 0x03) + ((d & 7) << 2);
 
@@ -587,7 +587,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		slot->eincd = slot->drp[(14 - slot->fsft) >> slot->krs];
 		return;
 
-	case 0x09:
+        case 0x09: // D1R(lowest 2 bits)/EGHOLD/AR
 		slot->dr = (slot->dr & 0x1C) + ((d >> 6) & 3);
 		slot->eghold = d & 0x20;
 		slot->ar = d & 0x1F;
@@ -601,7 +601,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		slot->einca = slot->arp[(14 - slot->fsft) >> slot->krs];
 		return;
 
-	case 0x0A:
+        case 0x0A: // LPSLNK/KRS/DL(highest 2 bits)
 		slot->lslnk = d & 0x40;
 		slot->krs = (d >> 2) & 0xF;
 		if (slot->krs == 0xF) slot->krs = 4;
@@ -611,7 +611,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		slot->sl += SCSP_ENV_DS;				// adjusted for enveloppe compare (ecmp)
 		return;
 
-	case 0x0B:
+        case 0x0B: // DL(lowest 3 bits)/RR
 		slot->sl &= 0x300 << SCSP_ENV_LB;
 		slot->sl += (d & 0xE0) << SCSP_ENV_LB;
 		slot->sl += SCSP_ENV_DS;				// adjusted for enveloppe compare (ecmp)
@@ -623,38 +623,38 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		slot->eincr = slot->rrp[(14 - slot->fsft) >> slot->krs];
 		return;
 
-	case 0x0C:
+        case 0x0C: // STWINH/SDIR
 		slot->sdir = d & 2;
 		slot->swe = d & 1;
 		return;
 
-	case 0x0D:
+        case 0x0D: // TL
 		slot->tl = (d & 0xFF) << 2;				// adjusted for enveloppe substract
 		return;
 
-	case 0x0E:
+        case 0x0E: // MDL/MDXSL(highest 4 bits)
 		slot->mdl = (d >> 4) & 0xF;				// need to adjust for correct shift
 		slot->mdx = (slot->mdx & 3) + ((d & 0xF) << 2);
 		return;
 
-	case 0x0F:
+        case 0x0F: // MDXSL(lowest 2 bits)/MDYSL
 		slot->mdx = (slot->mdx & 0x3C) + ((d >> 6) & 3);
 		slot->mdy = d & 0x3F;
 		return;
 
-	case 0x10:
+        case 0x10: // OCT/FNS(highest 2 bits)
 		if (d & 0x40) slot->fsft = 7 + ((-(d >> 3)) & 7);
 		else slot->fsft = ((d >> 3) & 7) ^ 7;
 		slot->finct = (slot->finct & 0x7F80) + ((d & 3) << (8 + 7));
 		slot->finc = (0x20000 + slot->finct) >> slot->fsft;
 		return;
 
-	case 0x11:
+        case 0x11: // FNS(low byte)
 		slot->finct = (slot->finct & 0x18000) + (d << 7);
 		slot->finc = (0x20000 + slot->finct) >> slot->fsft;
 		return;
 
-	case 0x12:
+        case 0x12: // LFORE/LFOF/PLFOWS
 		if (d & 0x80)
 		{
 			slot->lfoinc = -1;
@@ -682,7 +682,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 			return;
 		}
 
-	case 0x13:
+        case 0x13: // PLFOS/ALFOWS/ALFOS
 		if ((d >> 5) & 7) slot->lfofms = ((d >> 5) & 7) + 7;
 		else slot->lfofms = 31;
 		if (d & 7) slot->lfoems = ((d & 7) ^ 7) + 4;
@@ -706,12 +706,12 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 			return;
 		}
 
-	case 0x15:
+        case 0x15: // ISEL/OMXL
 		if (d & 7) slot->imxl = ((d & 7) ^ 7) + SCSP_ENV_HB;
 		else slot->imxl = 31;
 		return;
 
-	case 0x16:
+        case 0x16: // DISDL/DIPAN
 		if (d & 0xE0)
 		{
 			// adjusted for enveloppe calculation
@@ -731,7 +731,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		else slot->dislr = slot->disll = 31;
 		return;
 
-	case 0x17:
+        case 0x17: // EFSDL/EFPAN
 		if (d & 0xE0)
 		{
 			slot->efslr = slot->efsll = (((d >> 5) & 7) ^ 7) + SCSP_ENV_HB;
@@ -761,7 +761,7 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 
 	switch((a >> 1) & 0xF){
 
-	case 0x0:
+        case 0x0: // KYONEX/KYONB/SBCTL/SSCTL/LPCTL/PCM8B/SA(highest 4 bits)
 		slot->key = (d >> 11) & 1;
 		slot->sbctl = (d >> 9) & 3;
 		slot->ssctl = (d >> 7) & 3;
@@ -773,20 +773,20 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 		if (d & 0x1000) scsp_slot_keyonoff();
 		return;
 
-	case 0x1:
+        case 0x1: // SA(low word)
 		slot->sa = (slot->sa & 0xF0000) | d;
 		slot->sa &= SCSP_RAM_MASK;
 		return;
 
-	case 0x2:
+        case 0x2: // LSA
 		slot->lsa = d << SCSP_FREQ_LB;
 		return;
 
-	case 0x3:
+        case 0x3: // LEA
 		slot->lea = d << SCSP_FREQ_LB;
 		return;
 
-	case 0x4:
+        case 0x4: // D2R/D1R/EGHOLD/AR
 		slot->sr = (d >> 11) & 0x1F;
 		slot->dr = (d >> 6) & 0x1F;
 		slot->eghold = d & 0x20;
@@ -804,7 +804,7 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 		slot->eincs = slot->srp[(14 - slot->fsft) >> slot->krs];
 		return;
 
-	case 0x5:
+        case 0x5: // LPSLNK/KRS/DL/RR
 		slot->lslnk = (d >> 8) & 0x40;
 		slot->krs = (d >> 10) & 0xF;
 		if (slot->krs == 0xF) slot->krs = 4;
@@ -818,25 +818,25 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 		slot->eincr = slot->rrp[(14 - slot->fsft) >> slot->krs];
 		return;
 
-	case 0x6:
+        case 0x6: // STWINH/SDIR
 		slot->sdir = (d >> 8) & 2;
 		slot->swe = (d >> 8) & 1;
 		slot->tl = (d & 0xFF) << 2;				// adjusted for enveloppe substract
 		return;
 
-	case 0x7:
+        case 0x7: // MDL/MDXSL/MDYSL
 		slot->mdl = (d >> 12) & 0xF;				// need to adjust for correct shift
 		slot->mdx = (d >> 6) & 0x3F;
 		slot->mdy = d & 0x3F;
 		return;
 
-	case 0x8:
+        case 0x8: // OCT/FNS
 		if (d & 0x4000) slot->fsft = 7 + ((-(d >> 11)) & 7);
 		else slot->fsft = (((d >> 11) & 7) ^ 7);
 		slot->finc = ((0x400 + (d & 0x3FF)) << 7) >> slot->fsft;
 		return;
 
-	case 0x9:
+        case 0x9: // LFORE/LFOF/PLFOWS/PLFOS/ALFOWS/ALFOS
 		if (d & 0x8000)
 		{
 			slot->lfoinc = -1;
@@ -886,12 +886,12 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 			return;
 		}
 
-	case 0xA:
+        case 0xA: // ISEL/OMXL
 		if (d & 7) slot->imxl = ((d & 7) ^ 7) + SCSP_ENV_HB;
 		else slot->imxl = 31;
 		return;
 
-	case 0xB:
+        case 0xB: // DISDL/DIPAN/EFSDL/EFPAN
 		if (d & 0xE000)
 		{
 			// adjusted fr enveloppe calculation
@@ -967,130 +967,130 @@ void scsp_set_b(u32 a, u8 d)
 	scsp_ccr[a ^ 3] = d;
 
 	switch(a & 0x3F){
-        case 0x00:
+        case 0x00: // MEM4MB/DAC18B
                 scsp.mem4b = (d >> 1) & 0x1;
                 return;
 
-	case 0x01:
+        case 0x01: // VER/MVOL
 		scsp.mvol = d & 0xF;
 		return;
 
-	case 0x02:
+        case 0x02: // RBL(high bit)
 		scsp.rbl = (scsp.rbl & 1) + ((d & 1) << 1);
 		return;
 
-	case 0x03:
+        case 0x03: // RBL(low bit)/RBP
 		scsp.rbl = (scsp.rbl & 2) + ((d >> 7) & 1);
 		scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
 		return;
 
-	case 0x07:
+        case 0x07: // MOBUF
 		scsp_midi_out_send(d);
 		return;
 
-	case 0x08:
+        case 0x08: MSLC/CA
 		scsp.mslc = (d >> 3) & 0x1F;
 		return;
 
-	case 0x12:
+        case 0x12: // DMEAL(high byte)
 		scsp.dmea = (scsp.dmea & 0x700FE) + (d << 8);
 		return;
 
-	case 0x13:
+        case 0x13: // DMEAL(low byte)
 		scsp.dmea = (scsp.dmea & 0x7FF00) + (d & 0xFE);
 		return;
 
-	case 0x14:
+        case 0x14: // DMEAH(high byte)
 		scsp.dmea = (scsp.dmea & 0xFFFE) + ((d & 0x70) << 12);
 		scsp.drga = (scsp.drga & 0xFE) + ((d & 0xF) << 8);
 		return;
 
-	case 0x15:
+        case 0x15: // DMEAH(low byte)
 		scsp.drga = (scsp.drga & 0xF00) + (d & 0xFE);
 		return;
 
-	case 0x16:
+        case 0x16: // DGATE/DDIR/DEXE/DTLG(upper 4 bits)
 		scsp.dmlen = (scsp.dmlen & 0xFE) + ((d & 0xF) << 8);
 		if ((scsp.dmfl = d & 0xF0) & 0x10) scsp_dma();
 		return;
 
-	case 0x17:
+        case 0x17: // DTLG(lower byte)
 		scsp.dmlen = (scsp.dmlen & 0xF00) + (d & 0xFE);
 		return;
 
-	case 0x18:
+        case 0x18: // TACTL
 		scsp.timasd = d & 7;
 		return;
 
-	case 0x19:
+        case 0x19: // TIMA
 		scsp.timacnt = d << 8;
 		return;
 
-	case 0x1A:
+        case 0x1A: // TBCTL
 		scsp.timbsd = d & 7;
 		return;
 
-	case 0x1B:
+        case 0x1B: // TIMB
 		scsp.timbcnt = d << 8;
 		return;
 
-	case 0x1C:
+        case 0x1C: // TCCTL
 		scsp.timcsd = d & 7;
 		return;
 
-	case 0x1D:
+        case 0x1D: // TIMC
 		scsp.timccnt = d << 8;
 		return;
 
-	case 0x1E:
+        case 0x1E: // SCIEB(high byte)
 		scsp.scieb = (scsp.scieb & 0xFF) + (d << 8);
 		return;
 
-	case 0x1F:
+        case 0x1F: // SCIEB(low byte)
 		scsp.scieb = (scsp.scieb & 0x700) + d;
 		return;
 
-	case 0x21:
+        case 0x21: // SCIPD(low byte)
 		if (d & 0x20) scsp_sound_interrupt(0x20);
 		return;
 
-	case 0x22:
+        case 0x22: // SCIRE(high byte)
 		scsp.scipd &= ~(d << 8);
 		return;
 
-	case 0x23:
+        case 0x23: // SCIRE(low byte)
 		scsp.scipd &= ~(u32)d;
 		return;
 
-	case 0x25:
+        case 0x25: // SCILV0
 		scsp.scilv0 = d;
 		return;
 
-	case 0x27:
+        case 0x27: // SCILV1
 		scsp.scilv1 = d;
 		return;
 
-	case 0x29:
+        case 0x29: // SCILV2
 		scsp.scilv2 = d;
 		return;
 
-	case 0x2A:
+        case 0x2A: // MCIEB(high byte)
 		scsp.mcieb = (scsp.mcieb & 0xFF) + (d << 8);
 		return;
 
-	case 0x2B:
+        case 0x2B: // MCIEB(low byte)
 		scsp.mcieb = (scsp.mcieb & 0x700) + d;
 		return;
 
-	case 0x2D:
+        case 0x2D: // MCIPD(low byte)
 		if (d & 0x20) scsp_main_interrupt(0x20);
 		return;
 
-	case 0x2E:
+        case 0x2E: // MCIRE(high byte)
 		scsp.mcipd &= ~(d << 8);
 		return;
 
-	case 0x2F:
+        case 0x2F: // MCIRE(low byte)
 		scsp.mcipd &= ~(u32)d;
 		return;
 	}
@@ -1105,87 +1105,87 @@ void scsp_set_w(u32 a, u16 d)
 
 	switch((a >> 1) & 0x1F){
 
-	case 0x00:
+        case 0x00: // MEM4MB/DAC18B/VER/MVOL
                 scsp.mem4b = (d >> 9) & 0x1;                
 		scsp.mvol = d & 0xF;
 		return;
 
-	case 0x01:
+        case 0x01: // RBL/RBP
 		scsp.rbl = (d >> 7) & 3;
 		scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
 		return;
 
-	case 0x03:
+        case 0x03: // MOBUF
 		scsp_midi_out_send(d & 0xFF);
 		return;
 
-	case 0x04:
+        case 0x04: // MSLC/CA
 		scsp.mslc = (d >> 11) & 0x1F;
 		scsp.ca = (d >> 7) & 0xF;
 		return;
 
-	case 0x09:
+        case 0x09: // DMEAL
 		scsp.dmea = (scsp.dmea & 0x70000) + (d & 0xFFFE);
 		return;
 
-	case 0x0A:
+        case 0x0A: // DMEAH/DRGA
 		scsp.dmea = (scsp.dmea & 0xFFFE) + ((d & 0x7000) << 4);
 		scsp.drga = d & 0xFFE;
 		return;
 
-	case 0x0B:
+        case 0x0B: // DGATE/DDIR/DEXE/DTLG
 		scsp.dmlen = d & 0xFFE;
 		if ((scsp.dmfl = ((d >> 8) & 0xF0)) & 0x10) scsp_dma();
 		return;
 
-	case 0x0C:
+        case 0x0C: // TACTL/TIMA
 		scsp.timasd = (d >> 8) & 7;
 		scsp.timacnt = (d & 0xFF) << 8;
 		return;
 
-	case 0x0D:
+        case 0x0D: // TBCTL/TIMB
 		scsp.timbsd = (d >> 8) & 7;
 		scsp.timbcnt = (d & 0xFF) << 8;
 		return;
 
-	case 0x0E:
+        case 0x0E: // TCCTL/TIMC
 		scsp.timcsd = (d >> 8) & 7;
 		scsp.timccnt = (d & 0xFF) << 8;
 		return;
 
-	case 0x0F:
+        case 0x0F: // SCIEB
 		scsp.scieb = d;
 		return;
 
-	case 0x10:
+        case 0x10: // SCIPD
 		if (d & 0x20) scsp_sound_interrupt(0x20);
 		return;
 
-	case 0x11:
+        case 0x11: // SCIRE
 		scsp.scipd &= ~d;
 		return;
 
-	case 0x12:
+        case 0x12: // SCILV0
 		scsp.scilv0 = d;
 		return;
 
-	case 0x13:
+        case 0x13: // SCILV1
 		scsp.scilv1 = d;
 		return;
 
-	case 0x14:
+        case 0x14: // SCILV2
 		scsp.scilv2 = d;
 		return;
 
-	case 0x15:
+        case 0x15: // MCIEB
 		scsp.mcieb = d;
 		return;
 
-	case 0x16:
+        case 0x16: // MCIPD
 		if (d & 0x20) scsp_main_interrupt(0x20);
 		return;
 
-	case 0x18:
+        case 0x18: // MCIRE
 		scsp.mcipd &= ~d;
 		return;
 	}
@@ -1202,24 +1202,42 @@ u8 scsp_get_b(u32 a)
 
 	switch(a){
 
-	case 0x01:
+        case 0x01: // VER/MVOL
 		scsp_ccr[a ^ 3] &= 0x0F;
 		break;
 
-	case 0x04:
+        case 0x04: // Midi flags register
 		return scsp.midflag;
 
-	case 0x05:
+        case 0x05: // MIBUF
 		return scsp_midi_in_read();
 
-	case 0x07:
+        case 0x07: // MOBUF
 		return scsp_midi_out_read();
 
-	case 0x08:
+        case 0x08: // MSLC/CA(highest 3 bits)
 		return ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0xE) >> 1;
 
-	case 0x09:
+        case 0x09: // CA(lowest bit)
 		return ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0x1) << 7;
+
+        case 0x1E: // SCIEB(high byte)
+                return (scsp.scieb >> 8);
+
+        case 0x1F: // SCIEB(low byte)
+                return scsp.scieb;
+
+        case 0x20: // SCIPD(high byte)
+                return (scsp.scipd >> 8);
+
+        case 0x21: // SCIPD(low byte)
+                return scsp.scipd;
+
+        case 0x2C: // MCIPD(high byte)
+                return (scsp.mcipd >> 8);
+
+        case 0x2D: // MCIPD(low byte)
+                return scsp.mcipd;
 	}
 
 	return scsp_ccr[a ^ 3];
@@ -1233,18 +1251,27 @@ u16 scsp_get_w(u32 a)
 
 	switch(a){
 
-	case 0x00:
+        case 0x00: // MEM4MB/DAC18B/VER/MVOL
 		*(u16 *)&scsp_ccr[a ^ 2] &= 0xFF0F;
 		break;
 
-	case 0x02:
+        case 0x02: // Midi flags/MIBUF
 		return (scsp.midflag << 8) | scsp_midi_in_read();
 
-	case 0x03:
+        case 0x03: // MOBUF
 		return scsp_midi_out_read();
 
-	case 0x04:
+        case 0x04: // MSLC/CA
                 return ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
+
+        case 0x0F: // SCIEB
+                return scsp.scieb;
+
+        case 0x10: // SCIPD
+                return scsp.scipd;
+
+        case 0x16: // MCIPD
+                return scsp.mcipd;
 	}
 
 	return *(u16 *)&scsp_ccr[a ^ 2];
@@ -2681,6 +2708,12 @@ Scsp::Scsp(SaturnMemory *v) : Dummy(0xFFF) {
   scsptiming1 = 0;
   scsptiming2 = 0;
 
+  for (int i = 0; i < MAX_BREAKPOINTS; i++)
+     codebreakpoint[i].addr = 0xFFFFFFFF;
+  numcodebreakpoints = 0;
+  BreakpointCallBack=NULL;
+  inbreakpoint=false;
+
   try {
     SDL_InitSubSystem(SDL_INIT_AUDIO);
   }
@@ -2752,7 +2785,32 @@ void Scsp::reset(void) {
 
 void Scsp::run68k(unsigned long cycles) {
   if (is68kOn)
-     C68k_Exec(&C68K, (unsigned long)((float)cycles / 2.5)); // almost correct
+  {
+     if (numcodebreakpoints == 0)
+        C68k_Exec(&C68K, (unsigned long)((float)cycles / 2.5)); // almost correct
+     else
+     {
+        unsigned long cyclestoexec=(unsigned long)((float)cycles / 2.5);
+        unsigned long cyclesexecuted=0;
+
+        for (;;)
+        {
+           // Make sure it isn't one of our breakpoints
+           for (int i=0; i < numcodebreakpoints; i++) {
+              if ((C68k_Get_PC(&C68K) == codebreakpoint[i].addr) && inbreakpoint == false) {
+                 inbreakpoint = true;
+                 if (BreakpointCallBack) BreakpointCallBack(codebreakpoint[i].addr);
+                    inbreakpoint = false;
+              }
+           }
+
+           // execute instructions individually
+           cyclesexecuted += C68k_Exec(&C68K, 1);
+
+           if (cyclesexecuted >= cyclestoexec) break;
+        }
+     }
+  }
 }
 
 void Scsp::step68k() {
@@ -2867,6 +2925,68 @@ void Scsp::muteAudio() {
 void Scsp::unmuteAudio() {
    SDL_PauseAudio(0);
 }
+
+void Scsp::SetBreakpointCallBack(void (*func)(unsigned long)) {
+   BreakpointCallBack = func;
+}
+
+int Scsp::AddCodeBreakpoint(unsigned long addr) {
+  if (numcodebreakpoints < MAX_BREAKPOINTS) {
+     codebreakpoint[numcodebreakpoints].addr = addr;
+     numcodebreakpoints++;
+
+     return 0;
+  }
+
+  return -1;
+}
+
+int Scsp::DelCodeBreakpoint(unsigned long addr) {
+  if (numcodebreakpoints > 0) {
+     for (int i = 0; i < numcodebreakpoints; i++) {
+        if (codebreakpoint[i].addr == addr)
+        {
+           codebreakpoint[i].addr = 0xFFFFFFFF;
+           SortCodeBreakpoints();
+           numcodebreakpoints--;
+           return 0;
+        }
+     }
+  }
+
+  return -1;
+}
+
+m68kcodebreakpoint_struct *Scsp::GetBreakpointList() {
+  return codebreakpoint;
+}
+
+void Scsp::ClearCodeBreakpoints() {
+     for (int i = 0; i < MAX_BREAKPOINTS; i++)
+        codebreakpoint[i].addr = 0xFFFFFFFF;
+
+     numcodebreakpoints = 0;
+}
+
+void Scsp::SortCodeBreakpoints() {
+  int i, i2;
+  unsigned long tmp;
+
+  for (i = 0; i < (MAX_BREAKPOINTS-1); i++)
+  {
+     for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
+     {
+        if (codebreakpoint[i].addr == 0xFFFFFFFF &&
+            codebreakpoint[i2].addr != 0xFFFFFFFF)
+        {
+           tmp = codebreakpoint[i].addr;
+           codebreakpoint[i].addr = codebreakpoint[i2].addr;
+           codebreakpoint[i2].addr = tmp;
+        }
+     }
+  }
+}
+
 
 int Scsp::saveState(FILE *fp) {
    int i;

@@ -35,6 +35,13 @@ typedef struct
    unsigned long PC;
 } m68kregs_struct;
 
+typedef struct
+{
+  unsigned long addr;
+} m68kcodebreakpoint_struct;
+
+#define MAX_BREAKPOINTS 10
+
 class ScspRam : public Memory {
 private:
   unsigned char *base_mem;
@@ -86,6 +93,17 @@ public:
 
   void muteAudio();
   void unmuteAudio();
+
+  m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
+  int numcodebreakpoints;
+  void (*BreakpointCallBack)(unsigned long);
+  void SortCodeBreakpoints();
+  bool inbreakpoint;
+  void SetBreakpointCallBack(void (*func)(unsigned long));
+  int AddCodeBreakpoint(unsigned long addr);
+  int DelCodeBreakpoint(unsigned long addr);
+  m68kcodebreakpoint_struct *GetBreakpointList();
+  void ClearCodeBreakpoints();
 
   int saveState(FILE *fp);
   int loadState(FILE *fp, int version, int size);
