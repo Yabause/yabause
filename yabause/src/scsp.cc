@@ -988,7 +988,7 @@ void scsp_set_b(u32 a, u8 d)
 		scsp_midi_out_send(d);
 		return;
 
-        case 0x08: MSLC/CA
+        case 0x08: // MSLC/CA
 		scsp.mslc = (d >> 3) & 0x1F;
 		return;
 
