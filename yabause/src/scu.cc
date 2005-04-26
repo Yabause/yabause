@@ -308,9 +308,9 @@ unsigned long Scu::readgensrc(unsigned char num)
          dsp.CT[3]++;
          return val;
       case 0x9: // ALL
-         return dsp.ALL;
+         return dsp.ALU.part.L;
       case 0xA: // ALH
-         return dsp.ALH;
+         return dsp.ALU.part.H;
       default: break;
    }
 
@@ -340,8 +340,7 @@ void Scu::writed1busdest(unsigned char num, unsigned long val)
           dsp.RX = val;
           return;
       case 0x5:
-          dsp.PL = val;
-          dsp.PH = (0x10000 - (dsp.PL >> 31));
+          dsp.P.all = (signed)val;
           return;
       case 0x6:
           dsp.RA0 = val;
@@ -394,8 +393,7 @@ void Scu::writeloadimdest(unsigned char num, unsigned long val)
           dsp.RX = val;
           return;
       case 0x5: // PL
-          dsp.PL = val;
-          dsp.PH = (0x10000 - (dsp.PL >> 31));
+          dsp.P.all = (signed)val;
           return;
       case 0x6: // RA0
           dsp.RA0 = val;
@@ -492,14 +490,14 @@ void Scu::run(unsigned long timing) {
          case 0x0: // NOP
                    break;
          case 0x1: // AND
-                   dsp.ALL = dsp.ACL & dsp.PL;
+                   dsp.ALU.part.L = dsp.AC.part.L & dsp.P.part.L;
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
 
-                   if ((signed)dsp.ALL < 0)
+                   if ((signed)dsp.ALU.part.L < 0)
                       dsp.ProgControlPort.part.S = 1;
                    else
                       dsp.ProgControlPort.part.S = 0;
@@ -507,14 +505,14 @@ void Scu::run(unsigned long timing) {
                    dsp.ProgControlPort.part.C = 0;
                    break;
          case 0x2: // OR
-                   dsp.ALL = dsp.ACL | dsp.PL;
+                   dsp.ALU.part.L = dsp.AC.part.L | dsp.P.part.L;
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
 
-                   if ((signed)dsp.ALL < 0)
+                   if ((signed)dsp.ALU.part.L < 0)
                       dsp.ProgControlPort.part.S = 1;
                    else
                       dsp.ProgControlPort.part.S = 0;
@@ -522,14 +520,14 @@ void Scu::run(unsigned long timing) {
                    dsp.ProgControlPort.part.C = 0;
                    break;
          case 0x3: // XOR
-                   dsp.ALL = dsp.ACL ^ dsp.PL;
+                   dsp.ALU.part.L = dsp.AC.part.L ^ dsp.P.part.L;
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
 
-                   if ((signed)dsp.ALL < 0)
+                   if ((signed)dsp.ALU.part.L < 0)
                       dsp.ProgControlPort.part.S = 1;
                    else
                       dsp.ProgControlPort.part.S = 0;
@@ -537,114 +535,131 @@ void Scu::run(unsigned long timing) {
                    dsp.ProgControlPort.part.C = 0;
                    break;
          case 0x4: // ADD
-                   dsp.ALL = (unsigned)((signed)dsp.ACL + (signed)dsp.PL);
+                   dsp.ALU.part.L = (unsigned)((signed)dsp.AC.part.L + (signed)dsp.P.part.L);
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
 
-                   if ((signed)dsp.ALL < 0)
+                   if ((signed)dsp.ALU.part.L < 0)
                       dsp.ProgControlPort.part.S = 1;
                    else
                       dsp.ProgControlPort.part.S = 0;
 
-//                   if (dsp.ALL ??) // set carry flag
+//                   if (dsp.ALU.part.L ??) // set carry flag
 //                      dsp.ProgControlPort.part.C = 1;
 //                   else
 //                      dsp.ProgControlPort.part.C = 0;
 
-//                   if (dsp.ALL ??) // set overflow flag
+//                   if (dsp.ALU.part.L ??) // set overflow flag
 //                      dsp.ProgControlPort.part.V = 1;
 //                   else
 //                      dsp.ProgControlPort.part.V = 0;
 
                    break;
          case 0x5: // SUB
-                   dsp.ALL = (unsigned)((signed)dsp.ACL - (signed)dsp.PL);
+                   dsp.ALU.part.L = (unsigned)((signed)dsp.AC.part.L - (signed)dsp.P.part.L);
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
 
-                   if ((signed)dsp.ALL < 0)
+                   if ((signed)dsp.ALU.part.L < 0)
                       dsp.ProgControlPort.part.S = 1;
                    else
                       dsp.ProgControlPort.part.S = 0;
 
-//                   if (dsp.ALL ??) // set carry flag
+//                   if (dsp.ALU.part.L ??) // set carry flag
 //                      dsp.ProgControlPort.part.C = 1;
 //                   else
 //                      dsp.ProgControlPort.part.C = 0;
 
-//                   if (dsp.ALL ??) // set overflow flag
+//                   if (dsp.ALU.part.L ??) // set overflow flag
 //                      dsp.ProgControlPort.part.V = 1;
 //                   else
 //                      dsp.ProgControlPort.part.V = 0;
                    break;
          case 0x6: // AD2
-                   fprintf(stderr, "scu\t: AD2 instruction not implemented\n");
-                   break;
-         case 0x8: // SR
-//                   fprintf(stderr, "scu\t: SR instruction not implemented\n");
-                   dsp.ProgControlPort.part.C = dsp.ACL & 0x1;
-
-                   dsp.ALL = (dsp.ACL & 0x80000000) | (dsp.ACL >> 1);
-
-                   if (dsp.ALL == 0)
+                   dsp.ALU.all = (signed)dsp.AC.all + (signed)dsp.P.all;
+                   
+                   if (dsp.ALU.all == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
-                   dsp.ProgControlPort.part.S = dsp.ALL >> 31;
 
-//                   fprintf(stderr, "scu\t: SR: ACL = %08X ALL = %08X. C = %d, Z = %d, S = %d\n", dsp.ACL, dsp.ALL, dsp.ProgControlPort.part.C, dsp.ProgControlPort.part.Z, dsp.ProgControlPort.part.S);
+                   if ((signed)dsp.ALU.all < 0)
+                      dsp.ProgControlPort.part.S = 1;
+                   else
+                      dsp.ProgControlPort.part.S = 0;
+
+                   if (dsp.ALU.part.unused != 0)
+                      dsp.ProgControlPort.part.V = 1;
+                   else
+                      dsp.ProgControlPort.part.V = 0;
+
+                   // need carry test
+                   break;
+         case 0x8: // SR
+//                   fprintf(stderr, "scu\t: SR instruction not implemented\n");
+                   dsp.ProgControlPort.part.C = dsp.AC.part.L & 0x1;
+
+                   dsp.ALU.part.L = (dsp.AC.part.L & 0x80000000) | (dsp.AC.part.L >> 1);
+
+                   if (dsp.ALU.part.L == 0)
+                      dsp.ProgControlPort.part.Z = 1;
+                   else
+                      dsp.ProgControlPort.part.Z = 0;
+                   dsp.ProgControlPort.part.S = dsp.ALU.part.L >> 31;
+
+//                   fprintf(stderr, "scu\t: SR: ACL = %08X ALL = %08X. C = %d, Z = %d, S = %d\n", dsp.AC.part.L, dsp.ALU.part.L, dsp.ProgControlPort.part.C, dsp.ProgControlPort.part.Z, dsp.ProgControlPort.part.S);
                    break;
          case 0x9: // RR
-                   dsp.ProgControlPort.part.C = dsp.ACL & 0x1;
+                   dsp.ProgControlPort.part.C = dsp.AC.part.L & 0x1;
 
-                   dsp.ALL = (dsp.ProgControlPort.part.C << 31) | (dsp.ACL >> 1);
+                   dsp.ALU.part.L = (dsp.ProgControlPort.part.C << 31) | (dsp.AC.part.L >> 1);
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
                    dsp.ProgControlPort.part.S = dsp.ProgControlPort.part.C;
                    break;
          case 0xA: // SL
-                   dsp.ProgControlPort.part.C = dsp.ACL >> 31;
+                   dsp.ProgControlPort.part.C = dsp.AC.part.L >> 31;
 
-                   dsp.ALL = (dsp.ACL << 1);
+                   dsp.ALU.part.L = (dsp.AC.part.L << 1);
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
-                   dsp.ProgControlPort.part.S = dsp.ALL >> 31;
+                   dsp.ProgControlPort.part.S = dsp.ALU.part.L >> 31;
                    break;
          case 0xB: // RL
 //                   fprintf(stderr, "scu\t: RL instruction not implemented\n");
-                   dsp.ProgControlPort.part.C = dsp.ACL >> 31;
+                   dsp.ProgControlPort.part.C = dsp.AC.part.L >> 31;
 
-                   dsp.ALL = (dsp.ACL << 1) | dsp.ProgControlPort.part.C;
+                   dsp.ALU.part.L = (dsp.AC.part.L << 1) | dsp.ProgControlPort.part.C;
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
-                   dsp.ProgControlPort.part.S = dsp.ALL >> 31;
+                   dsp.ProgControlPort.part.S = dsp.ALU.part.L >> 31;
 
-//                   fprintf(stderr, "scu\t: RL: ACL = %08X ALL = %08X. C = %d, Z = %d, S = %d\n", dsp.ACL, dsp.ALL, dsp.ProgControlPort.part.C, dsp.ProgControlPort.part.Z, dsp.ProgControlPort.part.S);
+//                   fprintf(stderr, "scu\t: RL: ACL = %08X ALL = %08X. C = %d, Z = %d, S = %d\n", dsp.AC.part.L, dsp.ALU.part.L, dsp.ProgControlPort.part.C, dsp.ProgControlPort.part.Z, dsp.ProgControlPort.part.S);
                    break;
          case 0xF: // RL8
-                   dsp.ALL = (dsp.ACL << 8) | ((dsp.ACL >> 24) & 0xFF);
-                   dsp.ProgControlPort.part.C = dsp.ALL & 0x1;
+                   dsp.ALU.part.L = (dsp.AC.part.L << 8) | ((dsp.AC.part.L >> 24) & 0xFF);
+                   dsp.ProgControlPort.part.C = dsp.ALU.part.L & 0x1;
 
-                   if (dsp.ALL == 0)
+                   if (dsp.ALU.part.L == 0)
                       dsp.ProgControlPort.part.Z = 1;
                    else
                       dsp.ProgControlPort.part.Z = 0;
-                   dsp.ProgControlPort.part.S = dsp.ALL >> 31;
+                   dsp.ProgControlPort.part.S = dsp.ALU.part.L >> 31;
                    break;
          default: break;
       }
@@ -656,15 +671,15 @@ void Scu::run(unsigned long timing) {
                     if ((instruction >> 23) & 0x4)
                     {
                        // MOV [s], X
-                       fprintf(stderr, "scu\t: MOV [s], X instruction not implemented\n");
+                       dsp.RX = readgensrc((instruction >> 20) & 0x7);
                     }
                     switch ((instruction >> 23) & 0x3)
                     {
                        case 2: // MOV MUL, P
-                               fprintf(stderr, "scu\t: MOV MUL, P instruction not implemented\n");
+                               dsp.P.all = dsp.MUL.all;
                                break;
                        case 3: // MOV [s], P
-                               fprintf(stderr, "scu\t: MOV [s], P instruction not implemented\n");                                 
+                               dsp.P.all = readgensrc((instruction >> 20) & 0x7);
                                break;
                        default: break;
                     }
@@ -678,15 +693,13 @@ void Scu::run(unsigned long timing) {
                     switch ((instruction >> 17) & 0x3)
                     {
                        case 1: // CLR A
-                               dsp.ACL = dsp.ACH = 0;
+                               dsp.AC.all = 0;
                                break;
                        case 2: // MOV ALU,A
-                               dsp.ACH = dsp.ALH;
-                               dsp.ACL = dsp.ALL;
+                               dsp.AC.all = dsp.ALU.all;
                                break;
                        case 3: // MOV [s],A
-                               dsp.ACL = readgensrc((instruction >> 14) & 0x7);
-                               dsp.ACH = (0x10000 - (dsp.ACL >> 31));
+                               dsp.AC.all = (signed)readgensrc((instruction >> 14) & 0x7);                               
                                break;
                        default: break;
                     }
@@ -833,6 +846,9 @@ void Scu::run(unsigned long timing) {
                                   {
                                      unsigned long WA0temp=dsp.WA0;
 
+                                     // Looks like some bits are ignored on a real saturn(Grandia takes advantage of this)
+                                     dsp.WA0 &= 0x01FFFFFF;
+
                                      // DMA(H) [RAM], D0, ??
                                      for (i = 0; i < transferNumber; i++)
                                      {
@@ -845,6 +861,9 @@ void Scu::run(unsigned long timing) {
                                   else
                                   {
                                      unsigned long RA0temp=dsp.RA0;
+
+                                     // Looks like some bits are ignored on a real saturn(Grandia takes advantage of this)
+                                     dsp.RA0 &= 0x01FFFFFF;
 
                                      // DMA(H) D0,[RAM], ??
                                      for (i = 0; i < transferNumber; i++)
@@ -953,15 +972,20 @@ void Scu::run(unsigned long timing) {
 
                                   if (instruction & 0x8000000)
                                   {
-                                     // BTM
-                                     fprintf(stderr, "scu\t: BTM instruction not implemented\n");
-                                  }
-                                  else
-                                  {
                                      // LPS
                                      if (dsp.LOP != 0)
                                      {
                                         dsp.jmpaddr = dsp.PC;
+                                        dsp.delayed = false;
+                                        dsp.LOP--;
+                                     }
+                                  }
+                                  else
+                                  {
+                                     // BTM
+                                     if (dsp.LOP != 0)
+                                     {
+                                        dsp.jmpaddr = dsp.TOP;
                                         dsp.delayed = false;
                                         dsp.LOP--;
                                      }
@@ -978,6 +1002,10 @@ void Scu::run(unsigned long timing) {
                                      sendDSPEnd();
                                   }
 
+#if DEBUG
+                                  fprintf(stderr, "dsp has ended\n");
+#endif
+
                                   break;
                        default: break;
                     }
@@ -988,6 +1016,9 @@ void Scu::run(unsigned long timing) {
 #endif
                     break;
       }
+
+      // Do RX*RY multiplication
+      dsp.MUL.all = (signed)dsp.RX * (signed)dsp.RY;
 
       dsp.PC++;
 
@@ -1172,7 +1203,7 @@ void Scu::DSPDisasm(unsigned char addr, char *outstring){
       case 0x00: // Operation Commands
                  if ((instruction >> 23) & 0x4)
                  {
-                    sprintf(outstring, "MOV %s, X\0", disd1bussrc((instruction >> 14) & 0x7));
+                    sprintf(outstring, "MOV %s, X\0", disd1bussrc((instruction >> 20) & 0x7));
                     outstring+=strlen(outstring);
                  }
                  switch ((instruction >> 23) & 0x3)
@@ -1317,9 +1348,9 @@ void Scu::DSPDisasm(unsigned char addr, char *outstring){
                                break;
                     case 0x02: // Loop bottom Commands
                                if (instruction & 0x8000000)
-                                  sprintf(outstring, "BTM\0");
-                               else
                                   sprintf(outstring, "LPS\0");
+                               else
+                                  sprintf(outstring, "BTM\0");
 
                                break;
                     case 0x03: // End Commands

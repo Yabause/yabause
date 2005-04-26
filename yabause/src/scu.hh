@@ -47,7 +47,7 @@ typedef struct {
        unsigned long P:8;  // Program Ram Address
     } part;
     unsigned long all;
-  } dspProgControlPort;
+  } ProgControlPort;
 #else
   union {
     struct {
@@ -82,12 +82,80 @@ typedef struct {
   unsigned long RY;
   unsigned long RA0;
   unsigned long WA0;
-  unsigned long ACL;
-  unsigned short ACH;
-  unsigned long PL;
-  unsigned short PH;
-  unsigned long ALL;
-  unsigned short ALH;
+
+#ifdef WORDS_BIGENDIAN
+  union {
+    struct {
+       long long unused:16;
+       long long H:16;
+       long long L:32;
+    } part;
+    long long all;
+  } AC;
+
+  union {
+    struct {
+       long long unused:16;
+       long long H:16;
+       long long L:32;
+    } part;
+    long long all;
+  } P;
+
+  union {
+    struct {
+       long long unused:16;
+       long long H:16;
+       long long L:32;
+    } part;
+    long long all;
+  } ALU;
+
+  union {
+    struct {
+       long long unused:16;
+       long long H:16;
+       long long L:32;
+    } part;
+    long long all;
+  } MUL;
+#else
+  union {
+    struct {
+       long long L:32;
+       long long H:16;
+       long long unused:16;
+    } part;
+    long long all;
+  } AC;
+
+  union {
+    struct {
+       long long L:32;
+       long long H:16;
+       long long unused:16;
+    } part;
+    long long all;
+  } P;
+
+  union {
+    struct {
+       long long L:32;
+       long long H:16;
+       long long unused:16;
+    } part;
+    long long all;
+  } ALU;
+
+  union {
+    struct {
+       long long L:32;
+       long long H:16;
+       long long unused:16;
+    } part;
+    long long all;
+  } MUL;
+#endif
 
 } scudspregs_struct;
 
