@@ -78,6 +78,10 @@ public:
   unsigned long  getLong (unsigned long);
   void           setLong (unsigned long, unsigned long);
 
+#ifdef DYNAREC
+  bool isDirty(Uint32, int);
+#endif
+
   void           load    (const char *,unsigned long);
 
   void loadBios(const char *);
@@ -123,5 +127,11 @@ unsigned long inline readLong(SaturnMemory * mem, unsigned long addr) {
 	mem->mapping(addr);
 	return mem->mapMem->getLong(mem->mapAddr);
 }
+
+unsigned long satmemReadLong(SaturnMemory *, unsigned long addr);
+
+void satmemWriteByte(SaturnMemory *, unsigned long addr, unsigned char val);
+
+void satmemWriteLong(SaturnMemory *, unsigned long addr, unsigned long val);
 
 #endif

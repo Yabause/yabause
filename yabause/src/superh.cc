@@ -29,6 +29,8 @@
 #include "yui.hh"
 #include "registres.hh"
 
+#include <valgrind/valgrind.h>
+
 SuperH::SuperH(bool slave, SaturnMemory *sm) {
   onchip = new Onchip(slave, sm, this);
   purgeArea   = new Dummy(0xFFFFFFFF);
@@ -57,15 +59,90 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
 
   isslave = slave;
   cycleCount = 0;
+
+#ifdef DYNAREC
+  blockEnd = true;
+  lru = lru_new(6);
+  hash = hash_new(21);
+  block = (struct Block *) malloc(sizeof(struct Block) * 21);
+
+  for(int i = 0;i <  23;i++)
+    sh2reg_jit[i] = -1;
+
+  for(int i = 0;i < 6;i++) {
+    jitreg[i].sh2reg = -1;
+  }
+
+  jitreg[0].reg = JIT_R0;
+  jitreg[1].reg = JIT_R1;
+  jitreg[2].reg = JIT_R2;
+  jitreg[3].reg = JIT_V0;
+  jitreg[4].reg = JIT_V1;
+  jitreg[5].reg = JIT_V2;
+
+  verbose = true;
+  compile = false;
+#endif
 }
 
 SuperH::~SuperH(void) {
+#ifdef DYNAREC
+  free(block);
+  hash_delete(hash);
+  lru_delete(lru);
+#endif
   delete onchip;
   delete purgeArea;
   delete adressArray;
   delete dataArray;
   delete modeSdram;
 }
+
+#ifdef DYNAREC
+void SuperH::mapReg(int regNum) {
+        if (sh2reg_jit[regNum] != -1) {
+                lru_use_reg(lru, sh2reg_jit[regNum]);
+                return;
+        }
+        else {
+                int i = lru_new_reg(lru);
+                if (jitreg[i].sh2reg != -1) {
+                        jit_sti_ul(&regs_array[jitreg[i].sh2reg], jitreg[i].reg);
+                        sh2reg_jit[jitreg[i].sh2reg] = -1;
+                }
+                jitreg[i].sh2reg = regNum;
+                sh2reg_jit[regNum] = i;
+                jit_ldi_ul(jitreg[i].reg, &regs_array[regNum]);
+        }
+}
+
+void SuperH::flushRegs(void) {
+	for(int i = 0;i < 6;i++) {
+		if (jitreg[i].sh2reg != -1) {
+			jit_sti_i(&regs_array[jitreg[i].sh2reg], jitreg[i].reg);
+			sh2reg_jit[jitreg[i].sh2reg] = -1;
+			jitreg[i].sh2reg = -1;
+		}
+	}
+}
+
+int SuperH::reg(int i) {
+        return jitreg[sh2reg_jit[i]].reg;
+}
+
+void SuperH::beginBlock(void) {
+	block[currentBlock].execute = (pifi) (jit_set_ip(block[currentBlock].codeBuffer).iptr);
+	jit_prolog(0);
+	block[currentBlock].cycleCount = 0;
+	block[currentBlock].length = 0;
+}
+
+void SuperH::endBlock(void) {
+	flushRegs();
+	jit_ret();
+	jit_flush_code(block[currentBlock].codeBuffer, jit_get_ip().ptr);
+}
+#endif
 
 void SuperH::reset(void) {
   regs->SR.part.T = regs->SR.part.S = regs->SR.part.Q = regs->SR.part.M = 0;
@@ -103,6 +180,12 @@ void SuperH::sendNMI(void) {
 }
 
 void SuperH::delay(unsigned long addr) {
+#ifdef DYNAREC
+	if (compile && verbose && (block[currentBlock].status == BLOCK_FAILED)) {
+		cerr << "failed (delay) opcode = " << hex << instruction << endl;
+		verbose = false;
+	}
+#endif
         switch ((addr >> 20) & 0x0FF) {
            case 0x000: // Bios              
                        instruction = readWord(memoire->rom, addr);
@@ -149,67 +232,118 @@ void SuperH::run(int t) {
 }
 
 void SuperH::runCycles(unsigned long cc) {
-    if ( !interrupts.empty() ) {
-      Interrupt interrupt = interrupts.top();
-      if (interrupt.level() > regs->SR.part.I) {
-        interrupts.pop();
+	if ( !interrupts.empty() ) {
+		Interrupt interrupt = interrupts.top();
+		if (interrupt.level() > regs->SR.part.I) {
+			interrupts.pop();
 
-        regs->R[15] -= 4;
-        memoire->setLong(regs->R[15], regs->SR.all);
-        regs->R[15] -= 4;
-        memoire->setLong(regs->R[15], regs->PC);
-        regs->SR.part.I = interrupt.level();
-        regs->PC = memoire->getLong(regs->VBR + (interrupt.vector() << 2));
-      }
-    }
-        while(cycleCount < cc) {
-           // Make sure it isn't one of our breakpoints
-           for (int i=0; i < numcodebreakpoints; i++) {
-              if ((regs->PC == codebreakpoint[i].addr) && inbreakpoint == false) {
+			regs->R[15] -= 4;
+			memoire->setLong(regs->R[15], regs->SR.all);
+			regs->R[15] -= 4;
+			memoire->setLong(regs->R[15], regs->PC);
+			regs->SR.part.I = interrupt.level();
+			regs->PC = memoire->getLong(regs->VBR + (interrupt.vector() << 2));
+		}
+	}
 
-                 inbreakpoint = true;
-                 if (BreakpointCallBack) BreakpointCallBack(isslave, codebreakpoint[i].addr);
-                 inbreakpoint = false;
-              }
-           }
+	while(cycleCount < cc) {
+#ifdef DYNAREC
+		blockEnd = false;
+		if (hash_add_addr(hash, regs->PC, &currentBlock) == 1) {
+			//if (memoire->isDirty(regs->PC, block[currentBlock].length)) {
+			if (memoire->isDirty(regs->PC, 1)) {
+				block[currentBlock].status = BLOCK_FIRST;
+			} else {
+				if (block[currentBlock].status == BLOCK_FIRST) {
+					compile = true;
+				}
+			}
+		} else {
+			block[currentBlock].status = BLOCK_FIRST;
+		}
+		if (block[currentBlock].status == BLOCK_COMPILED) {
+			if (regs->PC == 0x180E) {
+				cerr << hex << "R[3] = " << regs->R[3] << endl;
+				block[currentBlock].execute();
+				cerr << hex << "R[3] = " << regs->R[3] << endl;
+			} else {
+				block[currentBlock].execute();
+			}
+			cycleCount += block[currentBlock].cycleCount;
+		}
+		else {
+		if (compile) {
+			beginBlock();
+		}
+		while(!blockEnd) {
+#endif
+		// Make sure it isn't one of our breakpoints
+		for (int i=0; i < numcodebreakpoints; i++) {
+			if ((regs->PC == codebreakpoint[i].addr) && inbreakpoint == false) {
 
-        switch ((regs->PC >> 20) & 0x0FF) {
-           case 0x000: // Bios              
-                       instruction = readWord(memoire->rom, regs->PC);
-                       break;
-           case 0x002: // Low Work Ram
-                       instruction = readWord(memoire->ramLow, regs->PC);
-                       break;
-           case 0x020: // CS0(fix me)
-                       instruction = memoire->getWord(regs->PC);
-                       break;
-           case 0x060: // High Work Ram
-           case 0x061: 
-           case 0x062: 
-           case 0x063: 
-           case 0x064: 
-           case 0x065: 
-           case 0x066: 
-           case 0x067: 
-           case 0x068: 
-           case 0x069: 
-           case 0x06A: 
-           case 0x06B: 
-           case 0x06C: 
-           case 0x06D: 
-           case 0x06E: 
-           case 0x06F:
-                       instruction = readWord(memoire->ramHigh, regs->PC);
-                       break;
-           default:
-                       break;
-        }
+				inbreakpoint = true;
+				if (BreakpointCallBack) BreakpointCallBack(isslave, codebreakpoint[i].addr);
+				inbreakpoint = false;
+			}
+		}
 
-        (*opcodes[instruction])(this);
-        }
+		switch ((regs->PC >> 20) & 0x0FF) {
+		case 0x000: // Bios
+			instruction = readWord(memoire->rom, regs->PC);
+			break;
+		case 0x002: // Low Work Ram
+			instruction = readWord(memoire->ramLow, regs->PC);
+			break;
+		case 0x020: // CS0(fix me)
+			instruction = memoire->getWord(regs->PC);
+			break;
+		case 0x060: // High Work Ram
+		case 0x061: 
+		case 0x062: 
+		case 0x063: 
+		case 0x064: 
+		case 0x065: 
+		case 0x066: 
+		case 0x067: 
+		case 0x068: 
+		case 0x069: 
+		case 0x06A: 
+		case 0x06B: 
+		case 0x06C: 
+		case 0x06D: 
+		case 0x06E: 
+		case 0x06F:
+			instruction = readWord(memoire->ramHigh, regs->PC);
+			break;
+		default:
+			break;
+		}
 
-        ((Onchip *)onchip)->runFRT(cc);
-        ((Onchip *)onchip)->runWDT(cc);
+		(*opcodes[instruction])(this);
+#ifdef DYNAREC
+		if (compile && verbose && (block[currentBlock].status == BLOCK_FAILED)) {
+			cerr << "failed opcode = " << hex << instruction << endl;
+			verbose = false;
+		}
+		}
+		if (compile) {
+			if (block[currentBlock].status != BLOCK_FAILED) {
+				cerr << "we compiled a block ! \\o/ " << hex << regs->PC << endl;
+				block[currentBlock].status = BLOCK_COMPILED;
+				endBlock();
+			}
+			else {
+				endBlock();
+				verbose = false;
+			}
+			compile = false;
+		}
+		}
+#endif
+	}
+
+	((Onchip *)onchip)->runFRT(cc);
+	((Onchip *)onchip)->runWDT(cc);
 }
 
 void SuperH::step(void) {
@@ -318,15 +452,32 @@ void add(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)] += sh->regs->R[Instruction::c(sh->instruction)];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void addi(SuperH * sh) {
-  long source = (long)(signed char)Instruction::cd(sh->instruction);
-  long dest = Instruction::b(sh->instruction);
+  long cd = (long)(signed char)Instruction::cd(sh->instruction);
+  long b = Instruction::b(sh->instruction);
 
-  sh->regs->R[dest] += source;
+  sh->regs->R[b] += cd;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].cycleCount += 1;
+
+    sh->mapReg(b);
+    jit_addi_ul(sh->reg(b), sh->reg(b), cd);
+    sh->mapReg(R_PC);
+    jit_addi_i(sh->reg(R_PC), sh->reg(R_PC), 2);
+  }
+#endif
 }
 
 void addc(SuperH * sh) {
@@ -346,6 +497,12 @@ void addc(SuperH * sh) {
     sh->regs->SR.part.T = 1;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void addv(SuperH * sh) {
@@ -374,18 +531,36 @@ void addv(SuperH * sh) {
   //regs->SR.part.T = ((j == 0 || j == 2) && (k == 1));
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void y_and(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)] &= sh->regs->R[Instruction::c(sh->instruction)];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void andi(SuperH * sh) {
   sh->regs->R[0] &= Instruction::cd(sh->instruction);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void andm(SuperH * sh) {
@@ -397,9 +572,15 @@ void andm(SuperH * sh) {
   sh->memoire->setByte((sh->regs->GBR + sh->regs->R[0]),temp);
   sh->regs->PC += 2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
- 
-void bf(SuperH * sh) { // FIXME peut etre amelioré
+
+void bf(SuperH * sh) {
   long disp;
   long d = Instruction::cd(sh->instruction);
 
@@ -413,15 +594,38 @@ void bf(SuperH * sh) { // FIXME peut etre amelioré
     sh->regs->PC+=2;
     sh->cycleCount++;
   }
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
-void bfs(SuperH * sh) { // FIXME peut être amélioré
+void bfs(SuperH * sh) {
   long disp;
   unsigned long temp;
   long d = Instruction::cd(sh->instruction);
 
   temp = sh->regs->PC;
   disp = (long)(signed char)d;
+
+#ifdef DYNAREC
+  jit_insn  *ref_true, *ref_quit;
+  if (sh->compile) {
+    sh->block[sh->currentBlock].cycleCount += 1;
+
+    sh->mapReg(R_SR);
+    sh->mapReg(R_PC);
+    ref_true = jit_bmsi_ul(jit_forward(), sh->reg(R_SR), 1);
+
+    jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), (disp << 1) + 4);
+
+    jit_pushr_ul(sh->reg(R_PC));
+  }
+#endif
 
   if (sh->regs->SR.part.T == 0) {
     sh->regs->PC = sh->regs->PC + (disp << 1) + 4;
@@ -433,6 +637,21 @@ void bfs(SuperH * sh) { // FIXME peut être amélioré
     sh->regs->PC += 2;
     sh->cycleCount++;
   }
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->mapReg(R_PC);
+    jit_popr_ul(sh->reg(R_PC));
+    ref_quit = jit_jmpi(jit_forward());
+
+    jit_patch(ref_true);
+    jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), 2);
+
+    jit_patch(ref_quit);
+  }
+
+  sh->blockEnd = true;
+#endif
 }
 
 void bra(SuperH * sh) {
@@ -445,6 +664,14 @@ void bra(SuperH * sh) {
 
   sh->cycleCount += 2;
   sh->delay(temp + 2);
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void braf(SuperH * sh) {
@@ -456,6 +683,14 @@ void braf(SuperH * sh) {
 
   sh->cycleCount += 2;
   sh->delay(temp + 2);
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void bsr(SuperH * sh) {
@@ -469,6 +704,14 @@ void bsr(SuperH * sh) {
 
   sh->cycleCount += 2;
   sh->delay(temp + 2);
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void bsrf(SuperH * sh) {
@@ -477,6 +720,14 @@ void bsrf(SuperH * sh) {
   sh->regs->PC += sh->regs->R[Instruction::b(sh->instruction)] + 4;
   sh->cycleCount += 2;
   sh->delay(temp + 2);
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void bt(SuperH * sh) { // FIXME ya plus rapide
@@ -492,13 +743,21 @@ void bt(SuperH * sh) { // FIXME ya plus rapide
     sh->regs->PC += 2;
     sh->cycleCount++;
   }
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void bts(SuperH * sh) {
   long disp;
   unsigned long temp;
   long d = Instruction::cd(sh->instruction);
-  
+
   if (sh->regs->SR.part.T) {
     temp = sh->regs->PC;
     disp = (long)(signed char)d;
@@ -510,6 +769,14 @@ void bts(SuperH * sh) {
     sh->regs->PC+=2;
     sh->cycleCount++;
   }
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void clrmac(SuperH * sh) {
@@ -517,12 +784,24 @@ void clrmac(SuperH * sh) {
   sh->regs->MACL = 0;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void clrt(SuperH * sh) {
   sh->regs->SR.part.T = 0;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmpeq(SuperH * sh) {
@@ -532,6 +811,12 @@ void cmpeq(SuperH * sh) {
     sh->regs->SR.part.T = 0;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmpge(SuperH * sh) {
@@ -542,6 +827,12 @@ void cmpge(SuperH * sh) {
     sh->regs->SR.part.T = 0;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmpgt(SuperH * sh) {
@@ -551,6 +842,12 @@ void cmpgt(SuperH * sh) {
     sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmphi(SuperH * sh) {
@@ -561,6 +858,12 @@ void cmphi(SuperH * sh) {
     sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmphs(SuperH * sh) {
@@ -571,6 +874,12 @@ void cmphs(SuperH * sh) {
     sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmpim(SuperH * sh) {
@@ -579,12 +888,18 @@ void cmpim(SuperH * sh) {
 
   imm = (long)(signed char)i;
 
-  if (sh->regs->R[0] == (unsigned long) imm) // FIXME: ouais ça doit être bon...
+  if (sh->regs->R[0] == (unsigned long) imm) // FIXME: ouais ï¿½ doit ï¿½re bon...
     sh->regs->SR.part.T = 1;
   else
     sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmppl(SuperH * sh) {
@@ -594,6 +909,12 @@ void cmppl(SuperH * sh) {
     sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmppz(SuperH * sh) {
@@ -603,6 +924,12 @@ void cmppz(SuperH * sh) {
     sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void cmpstr(SuperH * sh) {
@@ -622,6 +949,12 @@ void cmpstr(SuperH * sh) {
     sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void div0s(SuperH * sh) {
@@ -638,12 +971,24 @@ void div0s(SuperH * sh) {
   sh->regs->SR.part.T = !(sh->regs->SR.part.M == sh->regs->SR.part.Q);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void div0u(SuperH * sh) {
   sh->regs->SR.part.M = sh->regs->SR.part.Q = sh->regs->SR.part.T = 0;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void div1(SuperH * sh) {
@@ -720,6 +1065,12 @@ void div1(SuperH * sh) {
   sh->regs->SR.part.T = (sh->regs->SR.part.Q == sh->regs->SR.part.M);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 
@@ -771,6 +1122,12 @@ void dmuls(SuperH * sh) {
   sh->regs->MACL = Res0;
   sh->regs->PC += 2;
   sh->cycleCount += 2;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void dmulu(SuperH * sh) {
@@ -803,6 +1160,12 @@ void dmulu(SuperH * sh) {
   sh->regs->MACL = Res0;
   sh->regs->PC += 2;
   sh->cycleCount += 2;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void dt(SuperH * sh) {
@@ -812,6 +1175,31 @@ void dt(SuperH * sh) {
   else sh->regs->SR.part.T = 0;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    jit_insn  *ref_true, *ref_quit;
+
+    sh->block[sh->currentBlock].cycleCount += 1;
+
+
+    sh->mapReg(n);
+    sh->mapReg(R_SR);
+
+    jit_subi_ul(sh->reg(n), sh->reg(n), 1);
+    ref_true = jit_beqi_ul(jit_forward(), sh->reg(n), 0);
+
+    jit_andi_ul(sh->reg(R_SR), sh->reg(R_SR), 0xFFFFFFFE);
+    ref_quit = jit_jmpi(jit_forward());
+
+    jit_patch(ref_true);
+    jit_ori_ul(sh->reg(R_SR), sh->reg(R_SR), 1);
+
+    jit_patch(ref_quit);
+    sh->mapReg(R_PC);
+    jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), 2);
+  }
+#endif
 }
 
 void extsb(SuperH * sh) {
@@ -821,6 +1209,12 @@ void extsb(SuperH * sh) {
   sh->regs->R[n] = (unsigned long)(signed char)sh->regs->R[m];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void extsw(SuperH * sh) {
@@ -830,6 +1224,12 @@ void extsw(SuperH * sh) {
   sh->regs->R[n] = (unsigned long)(signed short)sh->regs->R[m];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void extub(SuperH * sh) {
@@ -839,6 +1239,12 @@ void extub(SuperH * sh) {
   sh->regs->R[n] = (unsigned long)(unsigned char)sh->regs->R[m];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void extuw(SuperH * sh) {
@@ -848,6 +1254,12 @@ void extuw(SuperH * sh) {
   sh->regs->R[n] = (unsigned long)(unsigned short)sh->regs->R[m];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void jmp(SuperH * sh) {
@@ -858,6 +1270,14 @@ void jmp(SuperH * sh) {
   sh->regs->PC = sh->regs->R[m];
   sh->cycleCount += 2;
   sh->delay(temp + 2);
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void jsr(SuperH * sh) {
@@ -869,12 +1289,26 @@ void jsr(SuperH * sh) {
   sh->regs->PC = sh->regs->R[m];
   sh->cycleCount += 2;
   sh->delay(temp + 2);
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldcgbr(SuperH * sh) {
   sh->regs->GBR = sh->regs->R[Instruction::b(sh->instruction)];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldcmgbr(SuperH * sh) {
@@ -884,6 +1318,12 @@ void ldcmgbr(SuperH * sh) {
   sh->regs->R[m] += 4;
   sh->regs->PC += 2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldcmsr(SuperH * sh) {
@@ -893,6 +1333,12 @@ void ldcmsr(SuperH * sh) {
   sh->regs->R[m] += 4;
   sh->regs->PC += 2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldcmvbr(SuperH * sh) {
@@ -902,12 +1348,24 @@ void ldcmvbr(SuperH * sh) {
   sh->regs->R[m] += 4;
   sh->regs->PC += 2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldcsr(SuperH * sh) {
   sh->regs->SR.all = sh->regs->R[Instruction::b(sh->instruction)]&0x000003F3;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldcvbr(SuperH * sh) {
@@ -916,18 +1374,36 @@ void ldcvbr(SuperH * sh) {
   sh->regs->VBR = sh->regs->R[m];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldsmach(SuperH * sh) {
   sh->regs->MACH = sh->regs->R[Instruction::b(sh->instruction)];
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldsmacl(SuperH * sh) {
   sh->regs->MACL = sh->regs->R[Instruction::b(sh->instruction)];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldsmmach(SuperH * sh) {
@@ -936,6 +1412,12 @@ void ldsmmach(SuperH * sh) {
   sh->regs->R[m] += 4;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldsmmacl(SuperH * sh) {
@@ -944,6 +1426,12 @@ void ldsmmacl(SuperH * sh) {
   sh->regs->R[m] += 4;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldsmpr(SuperH * sh) {
@@ -952,12 +1440,24 @@ void ldsmpr(SuperH * sh) {
   sh->regs->R[m] += 4;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ldspr(SuperH * sh) {
   sh->regs->PR = sh->regs->R[Instruction::b(sh->instruction)];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void macl(SuperH * sh) {
@@ -966,7 +1466,7 @@ void macl(SuperH * sh) {
   long tempm,tempn,fnLmL;
   long m = Instruction::c(sh->instruction);
   long n = Instruction::b(sh->instruction);
-  
+
   tempn = (long) sh->memoire->getLong(sh->regs->R[n]);
   sh->regs->R[n] += 4;
   tempm = (long) sh->memoire->getLong(sh->regs->R[m]);
@@ -989,7 +1489,7 @@ void macl(SuperH * sh) {
   temp1 = RmH * RnL;
   temp2 = RmL * RnH;
   temp3 = RmH * RnH;
-     
+
   Res2 = 0;
   Res1 = temp1 + temp2;
   if (Res1 < temp1) Res2 += 0x00010000;
@@ -1019,7 +1519,7 @@ void macl(SuperH * sh) {
       Res2=0x00007FFF;
       Res0=0xFFFFFFFF;
     };
-    
+
     sh->regs->MACH=Res2;
     sh->regs->MACL=Res0;
   }
@@ -1031,9 +1531,15 @@ void macl(SuperH * sh) {
     sh->regs->MACH=Res2;
     sh->regs->MACL=Res0;
   }
-  
+
   sh->regs->PC+=2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void macw(SuperH * sh) {
@@ -1076,12 +1582,24 @@ void macw(SuperH * sh) {
   }
   sh->regs->PC+=2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void mov(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)]=sh->regs->R[Instruction::c(sh->instruction)];
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void mova(SuperH * sh) {
@@ -1090,6 +1608,12 @@ void mova(SuperH * sh) {
   sh->regs->R[0]=((sh->regs->PC+4)&0xFFFFFFFC)+(disp<<2);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movbl(SuperH * sh) {
@@ -1099,6 +1623,12 @@ void movbl(SuperH * sh) {
   sh->regs->R[n] = (long)(signed char)sh->memoire->getByte(sh->regs->R[m]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movbl0(SuperH * sh) {
@@ -1108,6 +1638,12 @@ void movbl0(SuperH * sh) {
   sh->regs->R[n] = (long)(signed char)sh->memoire->getByte(sh->regs->R[m] + sh->regs->R[0]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movbl4(SuperH * sh) {
@@ -1117,6 +1653,12 @@ void movbl4(SuperH * sh) {
   sh->regs->R[0] = (long)(signed char)sh->memoire->getByte(sh->regs->R[m] + disp);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movblg(SuperH * sh) {
@@ -1125,6 +1667,12 @@ void movblg(SuperH * sh) {
   sh->regs->R[0] = (long)(signed char)sh->memoire->getByte(sh->regs->GBR + disp);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movbm(SuperH * sh) {
@@ -1135,6 +1683,12 @@ void movbm(SuperH * sh) {
   sh->regs->R[n] -= 1;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movbp(SuperH * sh) {
@@ -1146,13 +1700,43 @@ void movbp(SuperH * sh) {
     sh->regs->R[m] += 1;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movbs(SuperH * sh) {
-  sh->memoire->setByte(sh->regs->R[Instruction::b(sh->instruction)],
-	sh->regs->R[Instruction::c(sh->instruction)]);
+  int b = Instruction::b(sh->instruction);
+  int c = Instruction::c(sh->instruction);
+
+  sh->memoire->setByte(sh->regs->R[b], sh->regs->R[c]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+
+    sh->block[sh->currentBlock].cycleCount += 1;
+
+    sh->flushRegs();
+    jit_ldi_ul(JIT_R0, &sh->regs_array[c]);
+    jit_ldi_ul(JIT_R1, &sh->regs_array[b]);
+    jit_movi_p(JIT_R2, sh->memoire);
+
+    jit_prepare(3);
+    jit_pusharg_ul(JIT_R0);
+    jit_pusharg_ul(JIT_R1);
+    jit_pusharg_p(JIT_R2);
+
+    jit_finish(satmemWriteByte);
+
+    sh->mapReg(R_PC);
+    jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), 2);
+  }
+#endif
 }
 
 void movbs0(SuperH * sh) {
@@ -1160,6 +1744,12 @@ void movbs0(SuperH * sh) {
 	sh->regs->R[Instruction::c(sh->instruction)]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movbs4(SuperH * sh) {
@@ -1169,6 +1759,12 @@ void movbs4(SuperH * sh) {
   sh->memoire->setByte(sh->regs->R[n]+disp,sh->regs->R[0]);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movbsg(SuperH * sh) {
@@ -1177,6 +1773,12 @@ void movbsg(SuperH * sh) {
   sh->memoire->setByte(sh->regs->GBR + disp,sh->regs->R[0]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movi(SuperH * sh) {
@@ -1186,6 +1788,12 @@ void movi(SuperH * sh) {
   sh->regs->R[n] = (long)(signed char)i;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movli(SuperH * sh) {
@@ -1195,6 +1803,36 @@ void movli(SuperH * sh) {
   sh->regs->R[n] = sh->memoire->getLong(((sh->regs->PC + 4) & 0xFFFFFFFC) + (disp << 2));
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].cycleCount += 1;
+
+#if 0
+    sh->flushRegs();
+
+    jit_ldi_ul(JIT_R0, &sh->regs_array[R_PC]);
+    jit_andi_ul(JIT_R0, JIT_R0, 0xFFFFFFFC);
+    jit_addi_ul(JIT_R0, JIT_R0, (disp << 2));
+
+    jit_movi_p(JIT_R1, sh->memoire);
+
+    jit_prepare(2);
+    jit_pusharg_ul(JIT_R0);
+    jit_pusharg_p(JIT_R1);
+
+    jit_finish(satmemReadLong);
+    jit_retval(JIT_R0);
+
+    jit_sti_ul(&sh->regs_array[n], JIT_R0);
+
+    sh->mapReg(R_PC);
+    jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), 2);
+#endif
+
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movll(SuperH * sh) {
@@ -1202,6 +1840,12 @@ void movll(SuperH * sh) {
 	sh->memoire->getLong(sh->regs->R[Instruction::c(sh->instruction)]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movll0(SuperH * sh) {
@@ -1209,6 +1853,12 @@ void movll0(SuperH * sh) {
 	sh->memoire->getLong(sh->regs->R[Instruction::c(sh->instruction)] + sh->regs->R[0]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movll4(SuperH * sh) {
@@ -1219,6 +1869,12 @@ void movll4(SuperH * sh) {
   sh->regs->R[n] = sh->memoire->getLong(sh->regs->R[m] + (disp << 2));
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movllg(SuperH * sh) {
@@ -1227,6 +1883,12 @@ void movllg(SuperH * sh) {
   sh->regs->R[0] = sh->memoire->getLong(sh->regs->GBR + (disp << 2));
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movlm(SuperH * sh) {
@@ -1237,6 +1899,12 @@ void movlm(SuperH * sh) {
   sh->regs->R[n] -= 4;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movlp(SuperH * sh) {
@@ -1247,13 +1915,44 @@ void movlp(SuperH * sh) {
   if (n != m) sh->regs->R[m] += 4;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movls(SuperH * sh) {
-  sh->memoire->setLong(sh->regs->R[Instruction::b(sh->instruction)],
-	sh->regs->R[Instruction::c(sh->instruction)]);
+  int b = Instruction::b(sh->instruction);
+  int c = Instruction::c(sh->instruction);
+
+  sh->memoire->setLong(sh->regs->R[b], sh->regs->R[c]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].cycleCount += 1;
+
+    sh->flushRegs();
+
+    jit_ldi_ul(JIT_R0, &sh->regs_array[c]);
+    jit_ldi_ul(JIT_R1, &sh->regs_array[b]);
+    jit_movi_p(JIT_R2, sh->memoire);
+
+    jit_prepare(3);
+    jit_pusharg_ul(JIT_R0);
+    jit_pusharg_ul(JIT_R1);
+    jit_pusharg_p(JIT_R2);
+
+    jit_finish(satmemWriteLong);
+
+    sh->mapReg(R_PC);
+    jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), 2);
+  }
+#endif
+
 }
 
 void movls0(SuperH * sh) {
@@ -1261,6 +1960,12 @@ void movls0(SuperH * sh) {
 	sh->regs->R[Instruction::c(sh->instruction)]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movls4(SuperH * sh) {
@@ -1271,6 +1976,12 @@ void movls4(SuperH * sh) {
   sh->memoire->setLong(sh->regs->R[n]+(disp<<2),sh->regs->R[m]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movlsg(SuperH * sh) {
@@ -1279,12 +1990,24 @@ void movlsg(SuperH * sh) {
   sh->memoire->setLong(sh->regs->GBR+(disp<<2),sh->regs->R[0]);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movt(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)] = (0x00000001 & sh->regs->SR.all);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movwi(SuperH * sh) {
@@ -1294,6 +2017,12 @@ void movwi(SuperH * sh) {
   sh->regs->R[n] = (long)(signed short)sh->memoire->getWord(sh->regs->PC + (disp<<1) + 4);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movwl(SuperH * sh) {
@@ -1303,6 +2032,12 @@ void movwl(SuperH * sh) {
   sh->regs->R[n] = (long)(signed short)sh->memoire->getWord(sh->regs->R[m]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movwl0(SuperH * sh) {
@@ -1312,6 +2047,12 @@ void movwl0(SuperH * sh) {
   sh->regs->R[n] = (long)(signed short)sh->memoire->getWord(sh->regs->R[m]+sh->regs->R[0]);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movwl4(SuperH * sh) {
@@ -1321,6 +2062,12 @@ void movwl4(SuperH * sh) {
   sh->regs->R[0] = (long)(signed short)sh->memoire->getWord(sh->regs->R[m]+(disp<<1));
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movwlg(SuperH * sh) {
@@ -1329,6 +2076,12 @@ void movwlg(SuperH * sh) {
   sh->regs->R[0] = (long)(signed short)sh->memoire->getWord(sh->regs->GBR+(disp<<1));
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movwm(SuperH * sh) {
@@ -1339,6 +2092,12 @@ void movwm(SuperH * sh) {
   sh->regs->R[n] -= 2;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movwp(SuperH * sh) {
@@ -1350,6 +2109,12 @@ void movwp(SuperH * sh) {
     sh->regs->R[m] += 2;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movws(SuperH * sh) {
@@ -1359,6 +2124,12 @@ void movws(SuperH * sh) {
   sh->memoire->setWord(sh->regs->R[n],sh->regs->R[m]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movws0(SuperH * sh) {
@@ -1366,6 +2137,12 @@ void movws0(SuperH * sh) {
 	sh->regs->R[Instruction::c(sh->instruction)]);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movws4(SuperH * sh) {
@@ -1375,6 +2152,12 @@ void movws4(SuperH * sh) {
   sh->memoire->setWord(sh->regs->R[n]+(disp<<1),sh->regs->R[0]);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void movwsg(SuperH * sh) {
@@ -1383,6 +2166,12 @@ void movwsg(SuperH * sh) {
   sh->memoire->setWord(sh->regs->GBR+(disp<<1),sh->regs->R[0]);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void mull(SuperH * sh) {
@@ -1392,6 +2181,12 @@ void mull(SuperH * sh) {
   sh->regs->MACL = sh->regs->R[n] * sh->regs->R[m];
   sh->regs->PC+=2;
   sh->cycleCount += 2;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void muls(SuperH * sh) {
@@ -1401,6 +2196,12 @@ void muls(SuperH * sh) {
   sh->regs->MACL = ((long)(short)sh->regs->R[n]*(long)(short)sh->regs->R[m]);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void mulu(SuperH * sh) {
@@ -1411,12 +2212,24 @@ void mulu(SuperH * sh) {
 	*(unsigned long)(unsigned short)sh->regs->R[m]);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void neg(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)]=0-sh->regs->R[Instruction::c(sh->instruction)];
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void negc(SuperH * sh) {
@@ -1431,29 +2244,59 @@ void negc(SuperH * sh) {
   if (temp < sh->regs->R[n]) sh->regs->SR.part.T=1;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void nop(SuperH * sh) {
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void y_not(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)] = ~sh->regs->R[Instruction::c(sh->instruction)];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void y_or(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)] |= sh->regs->R[Instruction::c(sh->instruction)];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void ori(SuperH * sh) {
   sh->regs->R[0] |= Instruction::cd(sh->instruction);
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void orm(SuperH * sh) {
@@ -1465,6 +2308,12 @@ void orm(SuperH * sh) {
   sh->memoire->setByte(sh->regs->GBR + sh->regs->R[0],temp);
   sh->regs->PC += 2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void rotcl(SuperH * sh) {
@@ -1480,6 +2329,12 @@ void rotcl(SuperH * sh) {
   else sh->regs->SR.part.T=0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void rotcr(SuperH * sh) {
@@ -1495,6 +2350,12 @@ void rotcr(SuperH * sh) {
   else sh->regs->SR.part.T=0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void rotl(SuperH * sh) {
@@ -1507,6 +2368,12 @@ void rotl(SuperH * sh) {
   else sh->regs->R[n]&=0xFFFFFFFE;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void rotr(SuperH * sh) {
@@ -1519,6 +2386,12 @@ void rotr(SuperH * sh) {
   else sh->regs->R[n]&=0x7FFFFFFF;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void rte(SuperH * sh) {
@@ -1530,22 +2403,44 @@ void rte(SuperH * sh) {
   sh->regs->R[15] += 4;
   sh->cycleCount += 4;
   sh->delay(temp + 2);
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void rts(SuperH * sh) {
   unsigned long temp;
-  
+
   temp = sh->regs->PC;
   sh->regs->PC = sh->regs->PR;
 
   sh->cycleCount += 2;
   sh->delay(temp + 2);
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void sett(SuperH * sh) {
   sh->regs->SR.part.T = 1;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shal(SuperH * sh) {
@@ -1555,6 +2450,12 @@ void shal(SuperH * sh) {
   sh->regs->R[n] <<= 1;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shar(SuperH * sh) {
@@ -1570,6 +2471,12 @@ void shar(SuperH * sh) {
   else sh->regs->R[n] &= 0x7FFFFFFF;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shll(SuperH * sh) {
@@ -1580,24 +2487,48 @@ void shll(SuperH * sh) {
   sh->regs->R[n]<<=1;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shll2(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)] <<= 2;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shll8(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)]<<=8;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shll16(SuperH * sh) {
   sh->regs->R[Instruction::b(sh->instruction)]<<=16;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shlr(SuperH * sh) {
@@ -1608,6 +2539,12 @@ void shlr(SuperH * sh) {
   sh->regs->R[n]>>=1;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shlr2(SuperH * sh) {
@@ -1615,6 +2552,12 @@ void shlr2(SuperH * sh) {
   sh->regs->R[n]>>=2;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shlr8(SuperH * sh) {
@@ -1622,6 +2565,12 @@ void shlr8(SuperH * sh) {
   sh->regs->R[n]>>=8;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void shlr16(SuperH * sh) {
@@ -1629,6 +2578,12 @@ void shlr16(SuperH * sh) {
   sh->regs->R[n]>>=16;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stcgbr(SuperH * sh) {
@@ -1636,6 +2591,12 @@ void stcgbr(SuperH * sh) {
   sh->regs->R[n]=sh->regs->GBR;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stcmgbr(SuperH * sh) {
@@ -1644,6 +2605,12 @@ void stcmgbr(SuperH * sh) {
   sh->memoire->setLong(sh->regs->R[n],sh->regs->GBR);
   sh->regs->PC+=2;
   sh->cycleCount += 2;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stcmsr(SuperH * sh) {
@@ -1652,6 +2619,12 @@ void stcmsr(SuperH * sh) {
   sh->memoire->setLong(sh->regs->R[n],sh->regs->SR.all);
   sh->regs->PC+=2;
   sh->cycleCount += 2;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stcmvbr(SuperH * sh) {
@@ -1660,6 +2633,12 @@ void stcmvbr(SuperH * sh) {
   sh->memoire->setLong(sh->regs->R[n],sh->regs->VBR);
   sh->regs->PC+=2;
   sh->cycleCount += 2;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stcsr(SuperH * sh) {
@@ -1667,6 +2646,12 @@ void stcsr(SuperH * sh) {
   sh->regs->R[n] = sh->regs->SR.all;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stcvbr(SuperH * sh) {
@@ -1674,6 +2659,12 @@ void stcvbr(SuperH * sh) {
   sh->regs->R[n]=sh->regs->VBR;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stsmach(SuperH * sh) {
@@ -1681,6 +2672,12 @@ void stsmach(SuperH * sh) {
   sh->regs->R[n]=sh->regs->MACH;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stsmacl(SuperH * sh) {
@@ -1688,6 +2685,12 @@ void stsmacl(SuperH * sh) {
   sh->regs->R[n]=sh->regs->MACL;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stsmmach(SuperH * sh) {
@@ -1696,6 +2699,12 @@ void stsmmach(SuperH * sh) {
   sh->memoire->setLong(sh->regs->R[n],sh->regs->MACH); 
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stsmmacl(SuperH * sh) {
@@ -1704,6 +2713,12 @@ void stsmmacl(SuperH * sh) {
   sh->memoire->setLong(sh->regs->R[n],sh->regs->MACL);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stsmpr(SuperH * sh) {
@@ -1712,6 +2727,12 @@ void stsmpr(SuperH * sh) {
   sh->memoire->setLong(sh->regs->R[n],sh->regs->PR);
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void stspr(SuperH * sh) {
@@ -1719,6 +2740,12 @@ void stspr(SuperH * sh) {
   sh->regs->R[n] = sh->regs->PR;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void sub(SuperH * sh) {
@@ -1727,6 +2754,12 @@ void sub(SuperH * sh) {
   sh->regs->R[n]-=sh->regs->R[m];
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void subc(SuperH * sh) {
@@ -1742,6 +2775,12 @@ void subc(SuperH * sh) {
   if (tmp1 < sh->regs->R[n]) sh->regs->SR.part.T = 1;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void subv(SuperH * sh) {
@@ -1765,6 +2804,12 @@ void subv(SuperH * sh) {
   else sh->regs->SR.part.T=0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void swapb(SuperH * sh) {
@@ -1778,6 +2823,12 @@ void swapb(SuperH * sh) {
   sh->regs->R[n]=sh->regs->R[n]|temp1|temp0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void swapw(SuperH * sh) {
@@ -1789,6 +2840,12 @@ void swapw(SuperH * sh) {
   sh->regs->R[n]|=temp;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void tas(SuperH * sh) {
@@ -1802,6 +2859,12 @@ void tas(SuperH * sh) {
   sh->memoire->setByte(sh->regs->R[n],temp);
   sh->regs->PC+=2;
   sh->cycleCount += 4;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void trapa(SuperH * sh) {
@@ -1813,6 +2876,14 @@ void trapa(SuperH * sh) {
   sh->memoire->setLong(sh->regs->R[15],sh->regs->PC + 2);
   sh->regs->PC = sh->memoire->getLong(sh->regs->VBR+(imm<<2));
   sh->cycleCount += 8;
+
+#ifdef DYNAREC
+  sh->blockEnd = true;
+
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void tst(SuperH * sh) {
@@ -1822,6 +2893,12 @@ void tst(SuperH * sh) {
   else sh->regs->SR.part.T = 0;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void tsti(SuperH * sh) {
@@ -1833,6 +2910,12 @@ void tsti(SuperH * sh) {
   else sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void tstm(SuperH * sh) {
@@ -1845,12 +2928,34 @@ void tstm(SuperH * sh) {
   else sh->regs->SR.part.T = 0;
   sh->regs->PC+=2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void y_xor(SuperH * sh) {
-  sh->regs->R[Instruction::b(sh->instruction)] ^= sh->regs->R[Instruction::c(sh->instruction)];
+  int b = Instruction::b(sh->instruction);
+  int c = Instruction::c(sh->instruction);
+
+  sh->regs->R[b] ^= sh->regs->R[c];
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].cycleCount += 1;
+
+    sh->mapReg(b);
+    sh->mapReg(c);
+    jit_xorr_ul(sh->reg(b), sh->reg(b), sh->reg(c));
+
+    sh->mapReg(R_PC);
+    jit_addi_i(sh->reg(R_PC), sh->reg(R_PC), 2);
+  }
+#endif
 }
 
 void xori(SuperH * sh) {
@@ -1858,6 +2963,12 @@ void xori(SuperH * sh) {
   sh->regs->R[0] ^= source;
   sh->regs->PC += 2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void xorm(SuperH * sh) {
@@ -1869,6 +2980,12 @@ void xorm(SuperH * sh) {
   sh->memoire->setByte(sh->regs->GBR + sh->regs->R[0],temp);
   sh->regs->PC += 2;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void xtrct(SuperH * sh) {
@@ -1881,11 +2998,23 @@ void xtrct(SuperH * sh) {
   sh->regs->R[n]|=temp;
   sh->regs->PC+=2;
   sh->cycleCount++;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 void sleep(SuperH * sh) {
   //cerr << "SLEEP" << endl;
   sh->cycleCount += 3;
+
+#ifdef DYNAREC
+  if (sh->compile) {
+    sh->block[sh->currentBlock].status = BLOCK_FAILED;
+  }
+#endif
 }
 
 SuperH::opcode SuperH::decode(void) {

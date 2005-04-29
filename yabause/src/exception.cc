@@ -30,6 +30,7 @@ FileNotFound::FileNotFound(const char *filename) {
 }
 
 BadMemoryAccess::BadMemoryAccess(unsigned long ul) {
+  cerr << "new bad memory access, addr = " << hex << ul << endl;
   addr = ul;
   sprintf(exc, "Bad memory access: %8X", ul);
 }

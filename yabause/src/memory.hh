@@ -26,6 +26,10 @@
 class Memory {
 private:
   unsigned char *base_mem;
+#ifdef DYNAREC
+  Uint32 checker_size;
+  Uint16 *checker;
+#endif
 protected:
   unsigned long size;
 public:
@@ -45,6 +49,10 @@ public:
   unsigned char *getBuffer(void) const;
   virtual void load(const char *, unsigned long);
   virtual void save(const char *, unsigned long, unsigned long);
+
+#ifdef DYNAREC
+  virtual bool isDirty(Uint32, int);
+#endif
 
 #ifndef _arch_dreamcast
   friend ostream& operator<<(ostream&, const Memory&);
@@ -94,12 +102,12 @@ class UnHandled : public Dummy {
 public:
   UnHandled(void) : Dummy(0xFFFFFFFF) {}
   ~UnHandled(void) {}
-  unsigned char getByte(unsigned long addr) { throw BadMemoryAccess(addr); return 0; }
-  void setByte(unsigned long addr, unsigned char) { throw BadMemoryAccess(addr); }
-  unsigned short getWord(unsigned long addr) { throw BadMemoryAccess(addr); return 0; }
-  void setWord(unsigned long addr, unsigned short) { throw BadMemoryAccess(addr); }
-  unsigned long getLong(unsigned long addr) { throw BadMemoryAccess(addr); return 0; }
-  void setLong(unsigned long addr, unsigned long) { throw BadMemoryAccess(addr); }
+  unsigned char getByte(unsigned long addr) { cerr << "ici" << endl; throw BadMemoryAccess(addr); return 0; }
+  void setByte(unsigned long addr, unsigned char) { cerr << "ici" << endl;throw BadMemoryAccess(addr); }
+  unsigned short getWord(unsigned long addr) { cerr << "ici" << endl;throw BadMemoryAccess(addr); return 0; }
+  void setWord(unsigned long addr, unsigned short) { cerr << "ici" << endl;throw BadMemoryAccess(addr); }
+  unsigned long getLong(unsigned long addr) { cerr << "ici" << endl;throw BadMemoryAccess(addr); return 0; }
+  void setLong(unsigned long addr, unsigned long) { cerr << "ici" << endl;throw BadMemoryAccess(addr); }
 };
 
 int inline stateWriteHeader(FILE *fp, const char *name, int version) {

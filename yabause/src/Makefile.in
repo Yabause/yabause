@@ -85,7 +85,8 @@ install_sh = @install_sh@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
 bin_PROGRAMS = yabause
-yabause_SOURCES = cdbase.cc cs0.cc cs1.cc cs2.cc exception.cc intc.cc memory.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh saturn_memory.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc scsp.hh scsp.cc $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc ygl.cc ygl.hh
+@DYNAREC_TRUE@yabause_SOURCES = cdbase.cc cs0.cc cs1.cc cs2.cc exception.cc intc.cc memory.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh saturn_memory.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc scsp.hh scsp.cc $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc ygl.cc ygl.hh jit/hash.hh jit/hash.cc jit/lru2.hh jit/lru2.cc
+@DYNAREC_FALSE@yabause_SOURCES = cdbase.cc cs0.cc cs1.cc cs2.cc exception.cc intc.cc memory.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh saturn_memory.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc scsp.hh scsp.cc $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc ygl.cc ygl.hh
 BUILT_SOURCES = c68k/c68k_ini.inc
 EXTRA_DIST = logo.png logo.bmp Makefile.dc tree.h tree.c
 subdir = src
@@ -94,12 +95,21 @@ CONFIG_CLEAN_FILES =
 bin_PROGRAMS = yabause$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
-am_yabause_OBJECTS = cdbase.$(OBJEXT) cs0.$(OBJEXT) cs1.$(OBJEXT) \
-	cs2.$(OBJEXT) exception.$(OBJEXT) intc.$(OBJEXT) \
-	memory.$(OBJEXT) scu.$(OBJEXT) smpc.$(OBJEXT) superh.$(OBJEXT) \
-	vdp1.$(OBJEXT) vdp2.$(OBJEXT) yabause.$(OBJEXT) scsp.$(OBJEXT) \
-	cd.$(OBJEXT) yui.$(OBJEXT) c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
-	gen68k.$(OBJEXT) ygl.$(OBJEXT)
+@DYNAREC_TRUE@am_yabause_OBJECTS = cdbase.$(OBJEXT) cs0.$(OBJEXT) \
+@DYNAREC_TRUE@	cs1.$(OBJEXT) cs2.$(OBJEXT) exception.$(OBJEXT) \
+@DYNAREC_TRUE@	intc.$(OBJEXT) memory.$(OBJEXT) scu.$(OBJEXT) \
+@DYNAREC_TRUE@	smpc.$(OBJEXT) superh.$(OBJEXT) vdp1.$(OBJEXT) \
+@DYNAREC_TRUE@	vdp2.$(OBJEXT) yabause.$(OBJEXT) scsp.$(OBJEXT) \
+@DYNAREC_TRUE@	cd.$(OBJEXT) yui.$(OBJEXT) c68kexec.$(OBJEXT) \
+@DYNAREC_TRUE@	c68k.$(OBJEXT) gen68k.$(OBJEXT) ygl.$(OBJEXT) \
+@DYNAREC_TRUE@	hash.$(OBJEXT) lru2.$(OBJEXT)
+@DYNAREC_FALSE@am_yabause_OBJECTS = cdbase.$(OBJEXT) cs0.$(OBJEXT) \
+@DYNAREC_FALSE@	cs1.$(OBJEXT) cs2.$(OBJEXT) exception.$(OBJEXT) \
+@DYNAREC_FALSE@	intc.$(OBJEXT) memory.$(OBJEXT) scu.$(OBJEXT) \
+@DYNAREC_FALSE@	smpc.$(OBJEXT) superh.$(OBJEXT) vdp1.$(OBJEXT) \
+@DYNAREC_FALSE@	vdp2.$(OBJEXT) yabause.$(OBJEXT) scsp.$(OBJEXT) \
+@DYNAREC_FALSE@	cd.$(OBJEXT) yui.$(OBJEXT) c68kexec.$(OBJEXT) \
+@DYNAREC_FALSE@	c68k.$(OBJEXT) gen68k.$(OBJEXT) ygl.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
 yabause_LDADD = $(LDADD)
 yabause_DEPENDENCIES =
@@ -116,7 +126,8 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/cd.Po ./$(DEPDIR)/cdbase.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/cs0.Po ./$(DEPDIR)/cs1.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/cs2.Po ./$(DEPDIR)/exception.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/gen68k.Po ./$(DEPDIR)/intc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/gen68k.Po ./$(DEPDIR)/hash.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/intc.Po ./$(DEPDIR)/lru2.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/memory.Po ./$(DEPDIR)/scsp.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/scu.Po ./$(DEPDIR)/smpc.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/superh.Po ./$(DEPDIR)/vdp1.Po \
@@ -176,6 +187,8 @@ yui.$(OBJEXT): $(yabause_yui)/yui.cc
 c68kexec.$(OBJEXT): c68k/c68kexec.c
 c68k.$(OBJEXT): c68k/c68k.c
 gen68k.$(OBJEXT): c68k/gen68k.c
+hash.$(OBJEXT): jit/hash.cc
+lru2.$(OBJEXT): jit/lru2.cc
 yabause$(EXEEXT): $(yabause_OBJECTS) $(yabause_DEPENDENCIES) 
 	@rm -f yabause$(EXEEXT)
 	$(CXXLINK) $(yabause_LDFLAGS) $(yabause_OBJECTS) $(yabause_LDADD) $(LIBS)
@@ -195,7 +208,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cs2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exception.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gen68k.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lru2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scsp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scu.Po@am__quote@
@@ -294,6 +309,30 @@ yui.obj: $(yabause_yui)/yui.cc
 @AMDEP_TRUE@	depfile='$(DEPDIR)/yui.Po' tmpdepfile='$(DEPDIR)/yui.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o yui.obj `cygpath -w $(yabause_yui)/yui.cc`
+
+hash.o: jit/hash.cc
+@AMDEP_TRUE@	source='jit/hash.cc' object='hash.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/hash.Po' tmpdepfile='$(DEPDIR)/hash.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o hash.o `test -f 'jit/hash.cc' || echo '$(srcdir)/'`jit/hash.cc
+
+hash.obj: jit/hash.cc
+@AMDEP_TRUE@	source='jit/hash.cc' object='hash.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/hash.Po' tmpdepfile='$(DEPDIR)/hash.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o hash.obj `cygpath -w jit/hash.cc`
+
+lru2.o: jit/lru2.cc
+@AMDEP_TRUE@	source='jit/lru2.cc' object='lru2.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/lru2.Po' tmpdepfile='$(DEPDIR)/lru2.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o lru2.o `test -f 'jit/lru2.cc' || echo '$(srcdir)/'`jit/lru2.cc
+
+lru2.obj: jit/lru2.cc
+@AMDEP_TRUE@	source='jit/lru2.cc' object='lru2.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/lru2.Po' tmpdepfile='$(DEPDIR)/lru2.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o lru2.obj `cygpath -w jit/lru2.cc`
 CXXDEPMODE = @CXXDEPMODE@
 uninstall-info-am:
 

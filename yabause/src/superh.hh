@@ -21,6 +21,10 @@
 #define SUPERH_HH
 
 #include "saturn_memory.hh"
+#ifdef DYNAREC
+#include "jit/hash.hh"
+#include "../lightning/lightning.h"
+#endif
 
 typedef struct
 {
@@ -60,8 +64,6 @@ typedef struct
   unsigned long MACL;
   unsigned long PR;
   unsigned long PC;
-
-  unsigned long delay;
 } sh2regs_struct;
 
 
@@ -85,14 +87,58 @@ public:
   static inline unsigned long bcd (unsigned long ul) { return (ul & 0x0FFF); }
 };
 
+#ifdef DYNAREC
+typedef int (*pifi)(void);
+
+enum { BLOCK_FIRST , BLOCK_COMPILED , BLOCK_FAILED };
+
+
+struct Block {
+	int status;
+	unsigned long cycleCount;
+	unsigned long length;
+	jit_insn codeBuffer[1024];
+	pifi execute;
+};
+
+struct Jitreg {
+        int reg;
+        int sh2reg;
+};
+
+enum sh2reg_names {
+        R0, R1, R2, R3, R4, R5, R6, R7,
+        R8, R9, RA, RB, RC, RD, RE, RF,
+        R_SR, R_GBR, R_VBR, R_MACH, R_MACL, R_PR, R_PC
+};
+#endif
+
 class SuperH {
 public:
+#ifdef DYNAREC
+  bool blockEnd;
+  LRU * lru;
+  Hash * hash;
+  int currentBlock;
+  struct Block * block;
+  bool compile;
+  struct Jitreg jitreg[6];
+  int sh2reg_jit[23];
+
+  void mapReg(int);
+  void flushRegs(void);
+  int reg(int);
+  void beginBlock(void);
+  void endBlock(void);
+
+  bool verbose;
+#endif
 
   unsigned long regs_array[23];
 
   sh2regs_struct * regs;
 
-  SaturnMemory *memoire;
+  SaturnMemory * memoire;
 
   typedef void (*opcode)(SuperH *);
   opcode opcodes[0x10000];

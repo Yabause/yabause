@@ -34,11 +34,22 @@ Memory::Memory(unsigned long m, unsigned long size) {
 #else
   memory = base_mem + size;
 #endif
+
+#ifdef DYNAREC
+  checker_size = size / 16;
+  //if (size % 16) checker_size++;
+  checker_size += 5;
+  checker = new Uint16[checker_size];
+  memset(checker, 0, checker_size);
+#endif
 }
 
 Memory::~Memory(void) {
 	if (size == 0) return;
 	delete [] base_mem;
+#ifdef DYNAREC
+	delete [] checker;
+#endif
 }
 
 unsigned char Memory::getByte(unsigned long addr) {
@@ -74,6 +85,10 @@ void Memory::setByte(unsigned long addr, unsigned char val) {
 	(memory + addr)[0] = val;
 #else
 	(memory - addr - 1)[0] = val;
+#endif
+
+#ifdef DYNAREC
+	*((Uint32 *) (checker + (addr / 16))) |= (0x1 << (addr % 16));
 #endif
 }
 
@@ -111,6 +126,10 @@ void Memory::setWord(unsigned long addr, unsigned short val) {
 #else
 	((unsigned short *) (memory - addr - 2))[0] = val;
 #endif
+
+#ifdef DYNAREC
+	*((Uint32 *) (checker + (addr / 16))) |= (0x3 << (addr % 16));
+#endif
 }
 
 unsigned long Memory::getLong(unsigned long addr) {
@@ -147,7 +166,31 @@ void Memory::setLong(unsigned long addr, unsigned long val) {
 #else
   ((unsigned long *) (memory - addr - 4))[0] = val;
 #endif
+
+#ifdef DYNAREC
+	*((Uint32 *) (checker + (addr / 16))) |= (0xF << (addr % 16));
+#endif
 }
+
+#ifdef DYNAREC
+bool Memory::isDirty(Uint32 addr, int length) {
+	addr &= mask;
+        int dirty = 0;
+        while (length > 0) {
+                if (length < 32) {
+                        dirty |= (*((Uint32 *) (checker + (addr / 16))) >> (addr % 16)) & ((1 << length) - 1);
+                        *((Uint32 *) (checker + (addr / 16))) &= ~(((1 << length) - 1) << (addr % 16));
+                }
+                else {
+                        dirty |= (*((Uint32 *) (checker + (addr / 16))) >> (addr % 16));
+                        *((Uint32 *) (checker + (addr / 16))) = 0;
+                }
+                length -= 32;
+                addr += 32;
+        }
+        return dirty;
+}
+#endif
 
 unsigned long Memory::getSize(void) const {
   return size;
@@ -436,6 +479,28 @@ void SaturnMemory::setLong(unsigned long addr, unsigned long val) {
 	mapMem->setLong(mapAddr, val);
 }
 
+unsigned long satmemReadLong(SaturnMemory * mem, unsigned long addr) {
+	mem->mapping(addr);
+	return mem->mapMem->getLong(mem->mapAddr);
+}
+
+void satmemWriteByte(SaturnMemory * mem, unsigned long addr, unsigned char val) {
+	mem->mapping(addr);
+	mem->mapMem->setByte(mem->mapAddr, val);
+}
+
+void satmemWriteLong(SaturnMemory * mem, unsigned long addr, unsigned long val) {
+	mem->mapping(addr);
+	mem->mapMem->setLong(mem->mapAddr, val);
+}
+
+#ifdef DYNAREC
+bool SaturnMemory::isDirty(Uint32 addr, int length) {
+	mapping(addr);
+	return mapMem->isDirty(mapAddr, length);
+}
+#endif
+
 void SaturnMemory::loadBios(const char *filename) {
 	rom->load(filename, 0);
 }
@@ -527,6 +592,7 @@ void SaturnMemory::mapping(unsigned long addr) {
 			return;
 			}
 #ifndef _arch_dreamcast
+			cerr << "ici 1" << endl;
 			throw BadMemoryAccess(addr);
 #else
 			printf("Bad memory access: %8x", addr);
@@ -543,6 +609,7 @@ void SaturnMemory::mapping(unsigned long addr) {
 				return;
 			}
 #ifndef _arch_dreamcast
+			cerr << "ici 2" << endl;
 			throw BadMemoryAccess(addr);
 #else
 			printf("Bad memory access: %8x", addr);
@@ -565,12 +632,14 @@ void SaturnMemory::mapping(unsigned long addr) {
 				return;
 			}
 #ifndef _arch_dreamcast
+			cerr << "ici 3" << endl;
 			throw BadMemoryAccess(addr);
 #else
 			printf("Bad memory access: %8x", addr);
 #endif
 		default:
 #ifndef _arch_dreamcast
+			cerr << "ici 4" << endl;
 			throw BadMemoryAccess(addr);
 #else
 			printf("Bad memory access: %8x", addr);

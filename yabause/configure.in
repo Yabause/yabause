@@ -102,7 +102,16 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug informa
 AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug information) , AC_DEFINE(VDP1_DEBUG))
 AC_ARG_ENABLE(vdp2-debug, AC_HELP_STRING(--enable-vdp2-debug, enable vdp2 debug information) , AC_DEFINE(VDP2_DEBUG))
 AC_ARG_ENABLE(cd-debug, AC_HELP_STRING(--enable-cd-debug, enable cdblock debug information) , AC_DEFINE(CDDEBUG))
-AC_ARG_ENABLE(dynarec, AC_HELP_STRING(--enable-dynarec, [enable dynarec (does nothing for now)]) , AC_DEFINE(DYNAREC))
+AC_ARG_ENABLE(dynarec, AC_HELP_STRING(--enable-dynarec, [enable dynarec (does nothing for now)]),
+     [case "${enableval}" in
+       yes) dynarec=true ;;
+       no)  dynarec=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-dynarec) ;;
+     esac],[dynarec=false])
+AM_CONDITIONAL(DYNAREC, test x$dynarec = xtrue)
+if test x$dynarec = xtrue ; then
+  AC_DEFINE(DYNAREC)
+fi
 
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile])
 AC_OUTPUT
