@@ -363,7 +363,7 @@ SaturnMemory::SaturnMemory(void) : Memory(0, 0) {
 
 	initMemoryMap();
 
-	const char *bios;
+        const char *bios=NULL;
 
 	bios = yui_bios();
 	if (bios == NULL) {
@@ -561,24 +561,24 @@ void SaturnMemory::initMemoryMap() {
 	for(int i = 0;i < 0x800;i++)
                 memoryMap[i] = unhandled;
 
-        initMemoryHandler(    0,   0xF, rom);
-	initMemoryHandler( 0x10,  0x11, smpc);
-	initMemoryHandler( 0x18,  0x19, ram);
+        initMemoryHandler(    0,  0x10, rom);
+        initMemoryHandler( 0x10,  0x18, smpc);
+        initMemoryHandler( 0x18,  0x20, ram);
 	initMemoryHandler( 0x20,  0x30, ramLow);
-        initMemoryHandler(0x100, 0x17F, minit);
+        initMemoryHandler(0x100, 0x180, minit);
         initMemoryHandler(0x180, 0x200, sinit);
 	initMemoryHandler(0x200, 0x400, cs0);
 	initMemoryHandler(0x400, 0x500, cs1);
 	initMemoryHandler(0x580, 0x590, cs2);
         initMemoryHandler(0x5A0, 0x5B0, sound);
-	initMemoryHandler(0x5B0, 0x5B1, soundr);
+        initMemoryHandler(0x5B0, 0x5C0, soundr);
         initMemoryHandler(0x5C0, 0x5CC, vdp1_1);
 	initMemoryHandler(0x5D0, 0x5D1, vdp1_2);
-	initMemoryHandler(0x5E0, 0x5E8, vdp2_1);
-	initMemoryHandler(0x5F0, 0x5F1, vdp2_2);
-	initMemoryHandler(0x5F8, 0x5F9, vdp2_3);
+        initMemoryHandler(0x5E0, 0x5F0, vdp2_1);
+        initMemoryHandler(0x5F0, 0x5F8, vdp2_2);
+        initMemoryHandler(0x5F8, 0x5FC, vdp2_3);
 	initMemoryHandler(0x5FE, 0x5FF, scu);
-	initMemoryHandler(0x600, 0x610, ramHigh);
+        initMemoryHandler(0x600, 0x800, ramHigh);
 }
 
 void SaturnMemory::mapping(unsigned long addr) {
@@ -601,24 +601,14 @@ void SaturnMemory::mapping(unsigned long addr) {
 			mapMem = cursh->purgeArea;
 			mapAddr = addr & mapMem->mask;
 			return;
-		case 3: { // direct access to cache addresses
-			unsigned long naddr = addr & 0x1FFFFFFF;
-			if (naddr < 0x3FF) {
-				mapMem = cursh->adressArray;
-				mapAddr = naddr & mapMem->mask;
-				return;
-			}
-#ifndef _arch_dreamcast
-			cerr << "ici 2" << endl;
-			throw BadMemoryAccess(addr);
-#else
-			printf("Bad memory access: %8x", addr);
-#endif
-			}
+                case 3: // direct access to cache addresses
+                        mapMem = cursh->adressArray;
+                        mapAddr = addr & mapMem->mask;
+                        return;
 		case 4:
 		case 6:
 			mapMem = cursh->dataArray;
-			mapAddr = addr & 0x00000FFF;
+                        mapAddr = addr & mapMem->mask;
 			return;
 		case 7:
 			if ((addr >= 0xFFFF8000) && (addr < 0xFFFFC000)) {

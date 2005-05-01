@@ -29,12 +29,10 @@
 #include "yui.hh"
 #include "registres.hh"
 
-#include <valgrind/valgrind.h>
-
 SuperH::SuperH(bool slave, SaturnMemory *sm) {
   onchip = new Onchip(slave, sm, this);
   purgeArea   = new Dummy(0xFFFFFFFF);
-  adressArray = new Memory(0xFFF, 0x3FF);
+  adressArray = new Memory(0x3FF, 0x400);
   dataArray   = new Memory(0xFFF, 0x1000);
   modeSdram = new Memory(0xFFF, 0x4FFF);
 
