@@ -641,9 +641,11 @@ void bfs(SuperH * sh) {
     sh->regs->PC += 2;
     sh->cycleCount++;
 #ifdef DYNAREC
-    sh->compile_only = true;
-    sh->delay(temp + 2);
-    sh->compile_only = false;
+    if (sh->compile) {
+      sh->compile_only = true;
+      sh->delay(temp + 2);
+      sh->compile_only = false;
+    }
 #endif
   }
 
