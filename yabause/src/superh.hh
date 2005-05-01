@@ -122,6 +122,7 @@ public:
   int currentBlock;
   struct Block * block;
   bool compile;
+  bool compile_only;
   struct Jitreg jitreg[6];
   int sh2reg_jit[23];
 

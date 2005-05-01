@@ -80,6 +80,7 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
 
   verbose = true;
   compile = false;
+  compile_only = false;
 #endif
 }
 
@@ -462,11 +463,16 @@ void addi(SuperH * sh) {
   long cd = (long)(signed char)Instruction::cd(sh->instruction);
   long b = Instruction::b(sh->instruction);
 
+#ifdef DYNAREC
+  if (!sh->compile_only) {
+#endif
+
   sh->regs->R[b] += cd;
   sh->regs->PC += 2;
   sh->cycleCount++;
 
 #ifdef DYNAREC
+  }
   if (sh->compile) {
     sh->block[sh->currentBlock].cycleCount += 1;
 
@@ -634,6 +640,11 @@ void bfs(SuperH * sh) {
   else {
     sh->regs->PC += 2;
     sh->cycleCount++;
+#ifdef DYNAREC
+    sh->compile_only = true;
+    sh->delay(temp + 2);
+    sh->compile_only = false;
+#endif
   }
 
 #ifdef DYNAREC
@@ -1168,6 +1179,10 @@ void dmulu(SuperH * sh) {
 
 void dt(SuperH * sh) {
   long n = Instruction::b(sh->instruction);
+
+#ifdef DYNAREC
+  if(!sh->compile_only) {
+#endif
   sh->regs->R[n]--;
   if (sh->regs->R[n] == 0) sh->regs->SR.part.T = 1;
   else sh->regs->SR.part.T = 0;
@@ -1175,11 +1190,11 @@ void dt(SuperH * sh) {
   sh->cycleCount++;
 
 #ifdef DYNAREC
+  }
   if (sh->compile) {
     jit_insn  *ref_true, *ref_quit;
 
     sh->block[sh->currentBlock].cycleCount += 1;
-
 
     sh->mapReg(n);
     sh->mapReg(R_SR);
@@ -1710,11 +1725,16 @@ void movbs(SuperH * sh) {
   int b = Instruction::b(sh->instruction);
   int c = Instruction::c(sh->instruction);
 
+#ifdef DYNAREC
+  if(!sh->compile_only) {
+#endif
+
   sh->memoire->setByte(sh->regs->R[b], sh->regs->R[c]);
   sh->regs->PC += 2;
   sh->cycleCount++;
 
 #ifdef DYNAREC
+  }
   if (sh->compile) {
 
     sh->block[sh->currentBlock].cycleCount += 1;
@@ -1798,15 +1818,19 @@ void movli(SuperH * sh) {
   long disp = Instruction::cd(sh->instruction);
   long n = Instruction::b(sh->instruction);
 
+#ifdef DYNAREC
+  if(!sh->compile_only) {
+#endif
+
   sh->regs->R[n] = sh->memoire->getLong(((sh->regs->PC + 4) & 0xFFFFFFFC) + (disp << 2));
   sh->regs->PC += 2;
   sh->cycleCount++;
 
 #ifdef DYNAREC
+  }
   if (sh->compile) {
     sh->block[sh->currentBlock].cycleCount += 1;
 
-#if 0
     sh->flushRegs();
 
     jit_ldi_ul(JIT_R0, &sh->regs_array[R_PC]);
@@ -1826,9 +1850,6 @@ void movli(SuperH * sh) {
 
     sh->mapReg(R_PC);
     jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), 2);
-#endif
-
-    sh->block[sh->currentBlock].status = BLOCK_FAILED;
   }
 #endif
 }
@@ -1925,11 +1946,16 @@ void movls(SuperH * sh) {
   int b = Instruction::b(sh->instruction);
   int c = Instruction::c(sh->instruction);
 
+#ifdef DYNAREC
+  if(!sh->compile_only) {
+#endif
+
   sh->memoire->setLong(sh->regs->R[b], sh->regs->R[c]);
   sh->regs->PC += 2;
   sh->cycleCount++;
 
 #ifdef DYNAREC
+  }
   if (sh->compile) {
     sh->block[sh->currentBlock].cycleCount += 1;
 
@@ -2938,11 +2964,16 @@ void y_xor(SuperH * sh) {
   int b = Instruction::b(sh->instruction);
   int c = Instruction::c(sh->instruction);
 
+#ifdef DYNAREC
+  if(!sh->compile_only) {
+#endif
+
   sh->regs->R[b] ^= sh->regs->R[c];
   sh->regs->PC += 2;
   sh->cycleCount++;
 
 #ifdef DYNAREC
+  }
   if (sh->compile) {
     sh->block[sh->currentBlock].cycleCount += 1;
 
