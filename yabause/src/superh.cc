@@ -621,10 +621,11 @@ void bfs(SuperH * sh) {
   if (sh->compile) {
     sh->block[sh->currentBlock].cycleCount += 1;
 
-    sh->mapReg(R_SR);
-    sh->mapReg(R_PC);
-    ref_true = jit_bmsi_ul(jit_forward(), sh->reg(R_SR), 1);
+    sh->flushRegs();
+    jit_ldi_ul(JIT_R0, &sh->regs_array[R_SR]);
+    ref_true = jit_bmsi_ul(jit_forward(), JIT_R0, 1);
 
+    sh->mapReg(R_PC);
     jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), (disp << 1) + 4);
 
     jit_pushr_ul(sh->reg(R_PC));
@@ -653,11 +654,14 @@ void bfs(SuperH * sh) {
   if (sh->compile) {
     sh->mapReg(R_PC);
     jit_popr_ul(sh->reg(R_PC));
+    sh->flushRegs();
     ref_quit = jit_jmpi(jit_forward());
 
     jit_patch(ref_true);
+    sh->mapReg(R_PC);
     jit_addi_ul(sh->reg(R_PC), sh->reg(R_PC), 2);
 
+    sh->flushRegs();
     jit_patch(ref_quit);
   }
 
