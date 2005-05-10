@@ -61,8 +61,8 @@ SuperH::SuperH(bool slave, SaturnMemory *sm) {
 #ifdef DYNAREC
   blockEnd = true;
   lru = lru_new(6);
-  hash = hash_new(21);
-  block = (struct Block *) malloc(sizeof(struct Block) * 21);
+  hash = hash_new(7);
+  block = (struct Block *) malloc(sizeof(struct Block) * 7);
 
   for(int i = 0;i <  23;i++)
     sh2reg_jit[i] = -1;
@@ -131,6 +131,7 @@ int SuperH::reg(int i) {
 
 void SuperH::beginBlock(void) {
 	block[currentBlock].execute = (pifi) (jit_set_ip(block[currentBlock].codeBuffer).iptr);
+	startAddress = jit_get_ip().ptr;
 	jit_prolog(0);
 	block[currentBlock].cycleCount = 0;
 	block[currentBlock].length = 0;
@@ -261,13 +262,7 @@ void SuperH::runCycles(unsigned long cc) {
 			block[currentBlock].status = BLOCK_FIRST;
 		}
 		if (block[currentBlock].status == BLOCK_COMPILED) {
-			if (regs->PC == 0x180E) {
-				cerr << hex << "R[3] = " << regs->R[3] << endl;
-				block[currentBlock].execute();
-				cerr << hex << "R[3] = " << regs->R[3] << endl;
-			} else {
-				block[currentBlock].execute();
-			}
+			block[currentBlock].execute();
 			cycleCount += block[currentBlock].cycleCount;
 		}
 		else {
@@ -330,6 +325,10 @@ void SuperH::runCycles(unsigned long cc) {
 				cerr << "we compiled a block ! \\o/ " << hex << regs->PC << endl;
 				block[currentBlock].status = BLOCK_COMPILED;
 				endBlock();
+				unsigned long longueur = jit_get_ip().ptr - startAddress;
+				for(int i = 0;i < longueur;i++)
+					cerr << hex << setw(2) << (int) block[currentBlock].codeBuffer[i];
+				cerr << endl;
 			}
 			else {
 				endBlock();

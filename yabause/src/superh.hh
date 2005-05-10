@@ -132,6 +132,7 @@ public:
   void beginBlock(void);
   void endBlock(void);
 
+  char * startAddress;
   bool verbose;
 #endif
 
