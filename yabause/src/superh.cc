@@ -509,29 +509,25 @@ void addc(SuperH * sh) {
 }
 
 void addv(SuperH * sh) {
-  long i,j,k;
-  long source = Instruction::c(sh->instruction);
-  long dest = Instruction::b(sh->instruction);
+  long dest,src,ans;
+  long n = Instruction::b(sh->instruction);
+  long m = Instruction::c(sh->instruction);
 
-  if ((long) sh->regs->R[dest] >= 0) i = 0; else i = 1;
-  //i = ((long) R[dest] < 0);
+  if ((long) sh->regs->R[n] >= 0) dest = 0; else dest = 1;
   
-  if ((long) sh->regs->R[source] >= 0) j = 0; else j = 1;
-  //j = ((long) R[source] < 0);
+  if ((long) sh->regs->R[m] >= 0) src = 0; else src = 1;
   
-  j += i;
-  sh->regs->R[dest] += sh->regs->R[source];
+  src += dest;
+  sh->regs->R[n] += sh->regs->R[m];
 
-  if ((long) sh->regs->R[dest] >= 0) k = 0; else k = 1;
-  //k = ((long) R[dest] < 0);
+  if ((long) sh->regs->R[n] >= 0) ans = 0; else ans = 1;
 
-  k += j;
+  ans += dest;
   
-  if (j == 0 || j == 2)
-    if (k == 1) sh->regs->SR.part.T = 1;
+  if (src == 0 || src == 2)
+    if (ans == 1) sh->regs->SR.part.T = 1;
     else sh->regs->SR.part.T = 0;
   else sh->regs->SR.part.T = 0;
-  //regs->SR.part.T = ((j == 0 || j == 2) && (k == 1));
   sh->regs->PC += 2;
   sh->cycleCount++;
 
