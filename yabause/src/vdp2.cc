@@ -100,6 +100,9 @@ void Vdp2::setWord(unsigned long addr, unsigned short val) {
 
       Memory::setWord(addr, val);
       break;
+    case 0x4:
+      // TVSTAT is read-only
+      break;
     case 0xE:
       Memory::setWord(addr, val);
       updateRam();
@@ -2139,7 +2142,7 @@ Vdp2::~Vdp2(void) {
 
 void Vdp2::reset(void) {
   setWord(0x0, 0);
-  setWord(0x4, 0); //setWord(0x4, 0x302);
+  Memory::setWord(0x4, 0); //setWord(0x4, 0x302);
   setWord(0x6, 0);
   setWord(0xE, 0);
   setWord(0x20, 0);
@@ -2156,7 +2159,7 @@ Vdp2Ram *Vdp2::getVRam(void) {
 }
 
 void Vdp2::VBlankIN(void) {
-        setWord(0x4, getWord(0x4) | 0x0008);
+        Memory::setWord(0x4, Memory::getWord(0x4) | 0x0008);
 	satmem->scu->sendVBlankIN();
 
         if (satmem->sshRunning)
@@ -2164,7 +2167,7 @@ void Vdp2::VBlankIN(void) {
 }
 
 void Vdp2::HBlankIN(void) {
-        setWord(0x4, getWord(0x4) | 0x0004);
+        Memory::setWord(0x4, Memory::getWord(0x4) | 0x0004);
         satmem->scu->sendHBlankIN();
 
         if (satmem->sshRunning)
@@ -2172,11 +2175,11 @@ void Vdp2::HBlankIN(void) {
 }
 
 void Vdp2::HBlankOUT(void) {
-        setWord(0x4, getWord(0x4) & 0xFFFB);
+        Memory::setWord(0x4, Memory::getWord(0x4) & 0xFFFB);
 }
 
 void Vdp2::VBlankOUT(void) {
-  setWord(0x4, getWord(0x4) & 0xFFF7 | 0x0002);
+  Memory::setWord(0x4, Memory::getWord(0x4) & 0xFFF7 | 0x0002);
 
   ygl.reset();
   cache.reset();
