@@ -45,24 +45,27 @@ private:
 
   unsigned char SMEM[4];
 
+  struct
+  {
+     unsigned char IREG[7];
+     unsigned char COMREG;
+     unsigned char OREG[32];
+     unsigned char SR;
+     bool SF;
+     unsigned char PDR[2];
+     unsigned char DDR[2];
+     unsigned char IOSEL;
+     unsigned char EXLE;
+  } reg;
+
   SaturnMemory *sm;
   long timing;
 public:
   Smpc(SaturnMemory *);
   void reset(void);
 
-  unsigned char  getIREG    (int);
-  unsigned char  getCOMREG  (void);
-  unsigned char  getOREG    (int);
-  unsigned char  getSR      (void);
-  unsigned char  getSF      (void);
-  void		 setIREG    (int, unsigned char);
-  void		 setCOMREG  (unsigned char);
-  void		 setOREG    (int, unsigned char);
-  void		 setSR      (unsigned char);
-  void		 setSF      (unsigned char);
-
-  void           setByte   (unsigned long, unsigned char);
+  void setByte(unsigned long, unsigned char);
+  unsigned char getByte(unsigned long);
 
   static void execute(Smpc *);
   static void intcont(Smpc *);
