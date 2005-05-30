@@ -50,12 +50,79 @@ public:
 class SaturnMemory;
 class SuperH;
 
-class Onchip : public Memory {
+typedef struct
+{
+   unsigned char SMR;
+   unsigned char BRR;
+   unsigned char SCR;
+   unsigned char TDR;
+   unsigned char SSR;
+   unsigned char RDR;
+   unsigned char TIER;
+   unsigned char FTCSR;
+   unsigned short FRC;
+   unsigned short OCRA;
+   unsigned short OCRB;
+   unsigned char TCR;
+   unsigned char TOCR;
+   unsigned short FICR;
+   unsigned short IPRB;
+   unsigned short VCRA;
+   unsigned short VCRB;
+   unsigned short VCRC;
+   unsigned short VCRD;
+   unsigned char DRCR0;
+   unsigned char DRCR1;
+   unsigned char WTCSR;
+   unsigned char WTCNT;
+   unsigned char RSTCSR;
+   unsigned char SBYCR;
+   unsigned char CCR;
+   unsigned short ICR;
+   unsigned short IPRA;
+   unsigned short VCRWDT;
+   unsigned long DVSR;
+   unsigned long DVCR;
+   unsigned long VCRDIV;
+   unsigned long DVDNTH;
+   unsigned long DVDNTL;
+   unsigned long BARA;
+   unsigned long BAMRA;
+   unsigned short BBRA;
+   unsigned long BARB;
+   unsigned long BAMRB;
+   unsigned short BBRB;
+   unsigned long BDRB;
+   unsigned long BDMRB;
+   unsigned short BRCR;
+   unsigned long SAR0;
+   unsigned long DAR0;
+   unsigned long TCR0;
+   unsigned long CHCR0;
+   unsigned long SAR1;
+   unsigned long DAR1;
+   unsigned long TCR1;
+   unsigned long CHCR1;
+   unsigned long VCRDMA0;
+   unsigned long VCRDMA1;
+   unsigned long DMAOR;
+   unsigned short BCR1;
+   unsigned short BCR2;
+   unsigned short WCR;
+   unsigned short MCR;
+   unsigned short RTCSR;
+   unsigned short RTCNT;
+   unsigned short RTCOR;
+} onchipregs_struct;
+
+class Onchip : public Dummy {
 private:
 	SaturnMemory *memory;
         SuperH *shparent;
 	unsigned long timing;
         bool isslave;
+
+        onchipregs_struct reg;
 
         /* FRT */
         unsigned long ccleftover;
@@ -70,7 +137,9 @@ private:
         unsigned long wdtleftover;
 
         /* DMAC */
-        inline void DMATransfer(unsigned long chcr, unsigned long reg_offset);
+       inline void DMATransfer(unsigned long *CHCR, unsigned long *SAR,
+                               unsigned long *DAR, unsigned long *TCR,
+                               unsigned long *VCRDMA);
 
 	/* INTC */
 
@@ -82,9 +151,12 @@ public:
         Onchip(bool, SaturnMemory *, SuperH *);
         void reset(void);
 
-        void setByte(unsigned long addr, unsigned char val);
+        void setByte(unsigned long, unsigned char);
+        unsigned char getByte(unsigned long);
 	void setWord(unsigned long, unsigned short);
+        unsigned short getWord(unsigned long);
 	void setLong(unsigned long, unsigned long);
+        unsigned long getLong(unsigned long);
 
 	void run(unsigned long);
 
