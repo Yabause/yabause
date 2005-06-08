@@ -25,7 +25,7 @@ AC_C_BIGENDIAN
 AC_CHECK_TOOL(HAVE_LIBSDL, sdl-config)
 
 if test x$HAVE_LIBSDL = x ; then
-	AC_MSG_ERROR([You need SDL])
+	AC_MSG_ERROR([You need to install SDL])
 else
 	SDL_CXXFLAGS=`$HAVE_LIBSDL --cflags`
 	SDL_LIBS=`$HAVE_LIBSDL --libs`
@@ -40,26 +40,27 @@ case $target in
 		yabause_yui="."
 		use_gtk=no
 		;;
-        *cygwin*)
+	*cygwin*)
 		LIBS="$LIBS -lopengl32 -lglut32"
 		yabause_yui="."
 		use_gtk=no
 		;;
-        *mingw32*)
-		AC_CHECK_LIB(opengl32, glEnable)
-		AC_CHECK_LIB(glut, glutGetModifiers)
+	*mingw32*)
+		AC_CHECK_LIB(opengl32, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL")])
+		AC_CHECK_LIB(glut, glutGetModifiers, [], [AC_MSG_ERROR("You need to install GLUT")])
 		yabause_yui="."
 		use_gtk=no
 		;;
 	*linux*)
-		AC_CHECK_LIB(GL, glEnable)
-		AC_CHECK_LIB(glut, glutGetModifiers)
+		AC_CHECK_LIB(GL, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL") ])
+		AC_CHECK_LIB(glut, glutGetModifiers, [], [AC_MSG_ERROR("You need to install GLUT")])
 		yabause_yui="."
 		use_gtk=yes
 		;;
-        *) AC_CHECK_LIB(GL, glEnable)
-           AC_CHECK_LIB(glut, glutGetModifiers)
-           ;;
+	*) 
+		AC_CHECK_LIB(GL, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL") ])
+		AC_CHECK_LIB(glut, glutGetModifiers, [], [AC_MSG_ERROR("You need to install GLUT")])
+		;;
 
 esac
 
@@ -83,8 +84,8 @@ CFLAGS=$CXXFLAGS
 
 dnl Usage: YAB_CXX_STL_LEFT_RIGHT : checks whether the C++ compiler
 dnl   supports left and right functions
-AC_DEFUN(YAB_CXX_STL_LEFT_RIGHT,[
-AC_CACHE_CHECK(for left and right in STL streams,yab_cv_left_right,
+ AC_DEFUN(YAB_CXX_STL_LEFT_RIGHT,[
+ AC_CACHE_CHECK(for left and right in STL streams,yab_cv_left_right,
  [AC_TRY_COMPILE([
 #include <iostream>
 ],[

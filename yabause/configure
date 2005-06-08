@@ -3660,8 +3660,8 @@ fi
 
 
 if test x$HAVE_LIBSDL = x ; then
-	{ { echo "$as_me:$LINENO: error: You need SDL" >&5
-echo "$as_me: error: You need SDL" >&2;}
+	{ { echo "$as_me:$LINENO: error: You need to install SDL" >&5
+echo "$as_me: error: You need to install SDL" >&2;}
    { (exit 1); exit 1; }; }
 else
 	SDL_CXXFLAGS=`$HAVE_LIBSDL --cflags`
@@ -3677,12 +3677,12 @@ case $target in
 		yabause_yui="."
 		use_gtk=no
 		;;
-        *cygwin*)
+	*cygwin*)
 		LIBS="$LIBS -lopengl32 -lglut32"
 		yabause_yui="."
 		use_gtk=no
 		;;
-        *mingw32*)
+	*mingw32*)
 
 echo "$as_me:$LINENO: checking for glEnable in -lopengl32" >&5
 echo $ECHO_N "checking for glEnable in -lopengl32... $ECHO_C" >&6
@@ -3755,6 +3755,10 @@ _ACEOF
 
   LIBS="-lopengl32 $LIBS"
 
+else
+  { { echo "$as_me:$LINENO: error: \"You need to install OpenGL\"" >&5
+echo "$as_me: error: \"You need to install OpenGL\"" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 
@@ -3829,6 +3833,10 @@ _ACEOF
 
   LIBS="-lglut $LIBS"
 
+else
+  { { echo "$as_me:$LINENO: error: \"You need to install GLUT\"" >&5
+echo "$as_me: error: \"You need to install GLUT\"" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 		yabause_yui="."
@@ -3907,6 +3915,10 @@ _ACEOF
 
   LIBS="-lGL $LIBS"
 
+else
+  { { echo "$as_me:$LINENO: error: \"You need to install OpenGL\"" >&5
+echo "$as_me: error: \"You need to install OpenGL\"" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 
@@ -3981,12 +3993,17 @@ _ACEOF
 
   LIBS="-lglut $LIBS"
 
+else
+  { { echo "$as_me:$LINENO: error: \"You need to install GLUT\"" >&5
+echo "$as_me: error: \"You need to install GLUT\"" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 		yabause_yui="."
 		use_gtk=yes
 		;;
-        *)
+	*)
+
 echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
 echo $ECHO_N "checking for glEnable in -lGL... $ECHO_C" >&6
 if test "${ac_cv_lib_GL_glEnable+set}" = set; then
@@ -4058,6 +4075,10 @@ _ACEOF
 
   LIBS="-lGL $LIBS"
 
+else
+  { { echo "$as_me:$LINENO: error: \"You need to install OpenGL\"" >&5
+echo "$as_me: error: \"You need to install OpenGL\"" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 
@@ -4132,9 +4153,13 @@ _ACEOF
 
   LIBS="-lglut $LIBS"
 
+else
+  { { echo "$as_me:$LINENO: error: \"You need to install GLUT\"" >&5
+echo "$as_me: error: \"You need to install GLUT\"" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
-           ;;
+		;;
 
 esac
 
@@ -4242,7 +4267,7 @@ CFLAGS=$CXXFLAGS
 
 
 
-echo "$as_me:$LINENO: checking for left and right in STL streams" >&5
+ echo "$as_me:$LINENO: checking for left and right in STL streams" >&5
 echo $ECHO_N "checking for left and right in STL streams... $ECHO_C" >&6
 if test "${yab_cv_left_right+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
