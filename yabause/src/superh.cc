@@ -219,7 +219,10 @@ void SuperH::delay(unsigned long addr) {
         }
 
         (*opcodes[instruction])(this);
-        regs->PC -= 2;
+#ifdef DYNAREC
+        if (!compile_only)
+#endif
+	regs->PC -= 2;
 }
 
 void SuperH::run(int t) {
@@ -325,10 +328,6 @@ void SuperH::runCycles(unsigned long cc) {
 				cerr << "we compiled a block ! \\o/ " << hex << regs->PC << endl;
 				block[currentBlock].status = BLOCK_COMPILED;
 				endBlock();
-				unsigned long longueur = jit_get_ip().ptr - startAddress;
-				for(int i = 0;i < longueur;i++)
-					cerr << hex << setw(2) << (int) block[currentBlock].codeBuffer[i];
-				cerr << endl;
 			}
 			else {
 				endBlock();
