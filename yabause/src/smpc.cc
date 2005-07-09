@@ -399,7 +399,7 @@ void Smpc::execute(Smpc *smpc) {
     break;
   default:
 #if DEBUG
-    cerr << "smpc\t: command " << ((int) smpc->getCOMREG())
+    cerr << "smpc\t: command " << ((int) reg.COMREG)
          << " not implemented\n";
 #endif
     break;
