@@ -737,7 +737,7 @@ static void GenMOVEMaR()
     if (current_ea == EA_AINC) wf_op("\tadr = CPU->A[(Opcode >> %d) & 7];\n", current_op->reg_sft);
     else if (current_ea == EA_AINC7) wf_op("\tadr = CPU->A[7];\n");
     else _ea_calc(current_ea, current_op->reg_sft);
-    wf_op("\tsrc = (u32)(&CPU->D[0]);\n");
+    wf_op("\tsrc = (pointer)(&CPU->D[0]);\n");
 
     wf_op("\tdst = adr;\n");
     do_pre_io();
@@ -780,8 +780,8 @@ static void GenMOVEMRa()
     if (current_ea == EA_ADEC) wf_op("\tadr = CPU->A[(Opcode >> %d) & 7];\n", current_op->reg_sft);
     else if (current_ea == EA_ADEC7) wf_op("\tadr = CPU->A[7];\n");
     else _ea_calc(current_ea, current_op->reg_sft);
-    if ((current_ea == EA_ADEC) || (current_ea == EA_ADEC7)) wf_op("\tsrc = (u32)(&CPU->A[7]);\n");
-    else wf_op("\tsrc = (u32)(&CPU->D[0]);\n");
+    if ((current_ea == EA_ADEC) || (current_ea == EA_ADEC7)) wf_op("\tsrc = (pointer)(&CPU->A[7]);\n");
+    else wf_op("\tsrc = (pointer)(&CPU->D[0]);\n");
 
     wf_op("\tdst = adr;\n");
     do_pre_io();

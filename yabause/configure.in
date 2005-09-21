@@ -9,110 +9,89 @@ case $target in
 	*linux*) yabause_arch=linux;;
 	*cygwin*) yabause_arch=windows;;
 	*mingw32*) yabause_arch=windows;;
+	*freebsd*) yabause_arch=freebsd;;
+	*) yabause_arch=".";;
 esac
 AC_SUBST(yabause_arch)
 
 AM_INIT_AUTOMAKE(yabause, 0.5)
 
 AC_PROG_CC
-AC_PROG_CXX
 AC_PROG_INSTALL
 
-AC_LANG(C++)
+AC_LANG(C)
 
 AC_C_BIGENDIAN
 
-AC_CHECK_TOOL(HAVE_LIBSDL, sdl-config)
+AC_PATH_PROGS(HAVE_LIBSDL, [sdl-config sdl11-config])
 
 if test x$HAVE_LIBSDL = x ; then
 	AC_MSG_ERROR([You need to install SDL])
 else
-	SDL_CXXFLAGS=`$HAVE_LIBSDL --cflags`
+	SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
 	SDL_LIBS=`$HAVE_LIBSDL --libs`
 fi
 
-CXXFLAGS="$CXXFLAGS $SDL_CXXFLAGS"
-LIBS="$LIBS $SDL_LIBS"
+YAB_CFLAGS="$YAB_CFLAGS $SDL_CFLAGS"
+YAB_LIBS="$YAB_LIBS $SDL_LIBS"
 
 case $target in
 	*darwin*)
-		LIBS="$LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
+		YAB_LIBS="$YAB_LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
 		yabause_yui="."
-		use_gtk=no
 		;;
 	*cygwin*)
-		LIBS="$LIBS -lopengl32 -lglut32"
+		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
 		yabause_yui="."
-		use_gtk=no
 		;;
 	*mingw32*)
-		AC_CHECK_LIB(opengl32, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL")])
-		AC_CHECK_LIB(glut, glutGetModifiers, [], [AC_MSG_ERROR("You need to install GLUT")])
+		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
 		yabause_yui="."
-		use_gtk=no
 		;;
-	*linux*)
-		AC_CHECK_LIB(GL, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL") ])
-		AC_CHECK_LIB(glut, glutGetModifiers, [], [AC_MSG_ERROR("You need to install GLUT")])
+	*linux* | *freebsd*)
+		AC_PATH_XTRA
+		YAB_LIBS="$YAB_LIBS $X_LIBS"
+		YAB_CFLAGS="$YAB_CFLAGS $X_CFLAGS"
+		AC_CHECK_LIB(GL, glEnable, [
+			YAB_LIBS="$YAB_LIBS -lGL"
+			AC_DEFINE(HAVE_LIBGL)
+			], [AC_MSG_ERROR("You need to install OpenGL") ])
+		AC_CHECK_LIB(glut, glutGetModifiers,[
+			YAB_LIBS="$YAB_LIBS -lglut"
+			AC_DEFINE(HAVE_LIBGLUT)])
 		yabause_yui="."
-		use_gtk=yes
 		;;
 	*) 
 		AC_CHECK_LIB(GL, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL") ])
-		AC_CHECK_LIB(glut, glutGetModifiers, [], [AC_MSG_ERROR("You need to install GLUT")])
+		AC_CHECK_LIB(glut, glutGetModifiers)
+		yabause_yui="."
 		;;
 
 esac
 
-AC_ARG_WITH(gtk, AC_HELP_STRING(--with-gtk, use a gtk interface), [use_gtk=$withval])
+AC_ARG_WITH(gtk, AC_HELP_STRING(--with-gtk, use a gtk interface), [use_gtk=$withval], [use_gtk=no])
 
 if test x$use_gtk = xyes ; then
 	AC_CHECK_TOOL(HAVE_PKG, pkg-config)
 
 	if test ! x$HAVE_PKG = x ; then
 		yabause_yui="linux"
-		GTK_CXXFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
+		GTK_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
 		GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
 	fi
 fi
 
 AC_SUBST(yabause_yui)
 
-CXXFLAGS="$CXXFLAGS $GTK_CXXFLAGS"
-LIBS="$LIBS $GTK_LIBS"
-CFLAGS=$CXXFLAGS
-
-dnl Usage: YAB_CXX_STL_LEFT_RIGHT : checks whether the C++ compiler
-dnl   supports left and right functions
- AC_DEFUN(YAB_CXX_STL_LEFT_RIGHT,[
- AC_CACHE_CHECK(for left and right in STL streams,yab_cv_left_right,
- [AC_TRY_COMPILE([
-#include <iostream>
-],[
- std::cout << std::left;
-],yab_cv_left_right=yes,yab_cv_left_right=no)
-])
-if test $yab_cv_left_right = yes ; then
-AC_DEFINE(STL_LEFT_RIGHT, 1,
-[Define if you have left and right functions in your STL streams])
-fi])
-
-YAB_CXX_STL_LEFT_RIGHT
+YAB_CFLAGS="$YAB_CFLAGS $GTK_CFLAGS"
+YAB_LIBS="$YAB_LIBS $GTK_LIBS"
+AC_SUBST(YAB_CFLAGS)
+AC_SUBST(YAB_LIBS)
 
 AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug information) , AC_DEFINE(DEBUG))
 AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug information) , AC_DEFINE(VDP1_DEBUG))
 AC_ARG_ENABLE(vdp2-debug, AC_HELP_STRING(--enable-vdp2-debug, enable vdp2 debug information) , AC_DEFINE(VDP2_DEBUG))
 AC_ARG_ENABLE(cd-debug, AC_HELP_STRING(--enable-cd-debug, enable cdblock debug information) , AC_DEFINE(CDDEBUG))
-AC_ARG_ENABLE(dynarec, AC_HELP_STRING(--enable-dynarec, [enable dynarec (does nothing for now)]),
-     [case "${enableval}" in
-       yes) dynarec=true ;;
-       no)  dynarec=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-dynarec) ;;
-     esac],[dynarec=false])
-AM_CONDITIONAL(DYNAREC, test x$dynarec = xtrue)
-if test x$dynarec = xtrue ; then
-  AC_DEFINE(DYNAREC)
-fi
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile src/freebsd/Makefile src/linux/Makefile src/c68k/Makefile])
 AC_OUTPUT

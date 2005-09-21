@@ -1,39 +1,33 @@
  (1) (KNOWN) BUGS
 
-   - logo will not show if yabause is installed
+   - Logo will not show if yabause is installed
 
  (2) EMULATION
 
-   - what's happening at onchip address 4 ?
-   - check that dma operation is correct
-   - finish intc, add others sources of interrupt
-   - finish SCU
-   - finish DMAC emulation
-   - add sh2 dynamic recompiler in addition to sh2 interpreter
-   - add SCI emulation
-   - finish sleep/standby mode and implement the clock change pins
-   - add vdp2 coefficient table emulation
-   - add vdp2 line screen emulation
-   - add mpeg decoding
-   - add proper vdp1 command timing
-   - fix sound
-   - finish SCU dsp
+   - Add sh2 dynamic recompiler in addition to sh2 interpreter
+   - Add SCI emulation
+   - Finish sleep/standby mode and implement the clock change pins
+   - Redo vdp2 rotation screens
+   - Add vdp2 coefficient table emulation
+   - Add vdp2 line screen emulation
+   - Add mpeg decoding
+   - Add proper vdp1 command timing
+   - Fix sound
    - SMPC intback status should be returning correct reset flags
-   - add vdp2 windows
-   - add vdp1 clipping
+   - Add vdp2 windows
+   - Add vdp1 clipping/windows
+   - Fix SMPC timing
 
  (3) MONITOR/DEBUGGER
 
-   - add a command to dump memory
-   - add a command to execute N instructions
-   - implement a method to trace emulation
-   - add ability to set memory breakpoints
+   - Add a command to dump memory
+   - Add a command to execute N instructions
+   - Implement a method to trace emulation
+   - Add ability to set memory breakpoints
    - Each cpu should have some ability to return debugging information(e.g. VDP1 should return current commands as text, VDP2 should return screen info, etc.)
 
- (4) CODE
-
-   - finish translation
-
- (5) OTHER
+ (4) OTHER
 
    - Get configure working with cygwin and mingw
+   - Finalize Save State format
+   - Finish rewriting C++ that's missing

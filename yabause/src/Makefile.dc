@@ -24,23 +24,31 @@ include $(KOS_BASE)/Makefile.rules
 
 KOS_CFLAGS += -I.
 
-OBJS = cs1.o cs2.o exception.o intc.o vdp1.o vdp2.o memory-dc.o cpu.o scu.o smpc.o superh.o monitor.o yabause.o sh2d.o timer.o tree.o dreamcast/cd.o \
- dreamcast/cd_low.o
+OBJS = cdbase.o cs0.o cs1.o cs2.o debug.o memory.o peripheral.o profile.o scsp.o scu.o sh2core.o sh2int.o sh2d.o smpc.o vdp1.o vdp2.o yabause.o c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o dreamcast/yui.o
 
-yabause.elf: $(OBJS)
-	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LOCAL_CFLAGS) $(KOS_LDFLAGS) \
+ARCH_OBJS = dreamcast/yui.o dreamcast/perdc.o
+
+# OBJS += persdl.o sndsdl.o vdsdlgl.o vidsdlglsoft ygl.o
+
+c68k/c68kexec.o: c68k/gen68k
+
+c68k/gen68k: c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c
+	$(CC) $(CFLAGS) -DC68K_GEN -o $@ $^
+	cd c68k && ./gen68k
+
+yabause.elf: $(OBJS) $(ARCH_OBJS)
+	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) \
 	-o $@ $(KOS_START) $^ \
-	-lSDL -lgl -lk++ -lm $(KOS_LIBS)
+	-lm $(KOS_LIBS)
 
 yabause.bin: yabause.elf
-	$(KOS_OBJCOPY) -O binary yabause.elf output.bin
-	scramble output.bin yabause.bin
+	$(KOS_OBJCOPY) -R .stack -O binary yabause.elf yabause.bin
 
-run: yabause.elf
-	$(KOS_LOADER) yabause.elf
+run: yabause.bin
+	$(KOS_LOADER) yabause.bin
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(ARCH_OBJS)
 	rm -f yabause.elf
 	rm -f output.bin
 

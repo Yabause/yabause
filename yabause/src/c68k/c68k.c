@@ -85,7 +85,8 @@ void C68k_Init(c68k_struc *cpu, C68K_INT_CALLBACK *int_cb)
 
 s32 FASTCALL C68k_Reset(c68k_struc *cpu)
 {
-    memset(cpu, 0, (u32)(&(cpu->dirty1)) - (u32)(&(cpu->D[0])));
+    //memset(cpu, 0, (u32)(&(cpu->dirty1)) - (u32)(&(cpu->D[0])));
+    memset(cpu, 0, (&(cpu->dirty1)) - (&(cpu->D[0])));
     
     cpu->flag_I = 7;
     cpu->flag_S = C68K_SR_S;
@@ -212,7 +213,7 @@ void C68k_Write_Long(c68k_struc *cpu, u32 adr, u32 data)
 // setting core functions
 //////////////////////////
 
-void C68k_Set_Fetch(c68k_struc *cpu, u32 low_adr, u32 high_adr, u32 fetch_adr)
+void C68k_Set_Fetch(c68k_struc *cpu, u32 low_adr, u32 high_adr, pointer fetch_adr)
 {
     u32 i, j;
 

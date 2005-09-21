@@ -23,13 +23,23 @@
 #ifdef _arch_dreamcast
 #include <arch/types.h>
 #else
+#if defined(__LP64__)
 typedef unsigned char uint8;
-typedef unsigned short int uint16;
-typedef unsigned long int uint32;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
 
 typedef signed char int8;
-typedef signed short int int16;
-typedef signed long int int32;
+typedef signed short int16;
+typedef signed int int32;
+#else
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned long uint32;
+
+typedef signed char int8;
+typedef signed short int16;
+typedef signed long int32;
+#endif
 #endif
 
 
@@ -78,9 +88,11 @@ typedef signed long int int32;
 #define NULL 0
 #endif
 
+#if defined(__LP64__)
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
+typedef unsigned long pointer;
 typedef signed char s8;
 typedef signed short s16;
 typedef signed int s32;
@@ -91,7 +103,22 @@ typedef unsigned int U32;
 typedef signed char S8;
 typedef signed short S16;
 typedef signed int S32;
+#else
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned long u32;
+typedef unsigned int pointer;
+typedef signed char s8;
+typedef signed short s16;
+typedef signed long s32;
 
+typedef unsigned char U8;
+typedef unsigned short U16;
+typedef unsigned long U32;
+typedef signed char S8;
+typedef signed short S16;
+typedef signed long S32;
+#endif
 
 #endif /* _TYPES_H_ */
 

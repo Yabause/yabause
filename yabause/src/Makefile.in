@@ -68,7 +68,6 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 AMTAR = @AMTAR@
 AWK = @AWK@
 CC = @CC@
-CXX = @CXX@
 DEPDIR = @DEPDIR@
 HAVE_LIBSDL = @HAVE_LIBSDL@
 HAVE_PKG = @HAVE_PKG@
@@ -79,41 +78,57 @@ SDL_CONFIG = @SDL_CONFIG@
 SDL_LIBS = @SDL_LIBS@
 STRIP = @STRIP@
 VERSION = @VERSION@
+X_CFLAGS = @X_CFLAGS@
+X_EXTRA_LIBS = @X_EXTRA_LIBS@
+X_LIBS = @X_LIBS@
+X_PRE_LIBS = @X_PRE_LIBS@
+YAB_CFLAGS = @YAB_CFLAGS@
+YAB_LIBS = @YAB_LIBS@
 am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
+SUBDIRS = freebsd linux c68k
 bin_PROGRAMS = yabause
-@DYNAREC_TRUE@yabause_SOURCES = cdbase.cc cs0.cc cs1.cc cs2.cc exception.cc intc.cc memory.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh saturn_memory.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc scsp.hh scsp.cc $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc ygl.cc ygl.hh jit/hash.hh jit/hash.cc jit/lru2.hh jit/lru2.cc
-@DYNAREC_FALSE@yabause_SOURCES = cdbase.cc cs0.cc cs1.cc cs2.cc exception.cc intc.cc memory.cc scu.cc smpc.cc superh.cc vdp1.cc vdp2.cc cs1.hh intc.hh vdp1.hh cs2.hh memory.hh saturn_memory.hh saturn.hh smpc.hh vdp2.hh exception.hh registres.hh scu.hh superh.hh yabause.cc scsp.hh scsp.cc $(yabause_arch)/cd.cc $(yabause_yui)/yui.cc c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc ygl.cc ygl.hh
-BUILT_SOURCES = c68k/c68k_ini.inc
-EXTRA_DIST = logo.png logo.bmp Makefile.dc tree.h tree.c
+yabause_SOURCES = \
+	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc \
+	$(yabause_arch)/cd.c \
+	cdbase.c cdbase.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h \
+	debug.c debug.h error.c error.h memory.c memory.h \
+	peripheral.h peripheral.c \
+	persdl.c persdl.h profile.c profile.h \
+	scu.c scu.h sh2core.c sh2core.h sh2d.c sh2d.h sh2int.c sh2int.h \
+	smpc.c smpc.h scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
+	vdp2.c vdp2.h vidsdlgl.c vidsdlgl.h vidsdlsoft.c vidsdlsoft.h \
+	yabause.c yabause.h ygl.h ygl.c \
+	$(yabause_yui)/yui.c yui.h
+
+yabause_CFLAGS = $(YAB_CFLAGS)
+yabause_LDFLAGS = $(YAB_LIBS)
 subdir = src
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
 bin_PROGRAMS = yabause$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
-@DYNAREC_TRUE@am_yabause_OBJECTS = cdbase.$(OBJEXT) cs0.$(OBJEXT) \
-@DYNAREC_TRUE@	cs1.$(OBJEXT) cs2.$(OBJEXT) exception.$(OBJEXT) \
-@DYNAREC_TRUE@	intc.$(OBJEXT) memory.$(OBJEXT) scu.$(OBJEXT) \
-@DYNAREC_TRUE@	smpc.$(OBJEXT) superh.$(OBJEXT) vdp1.$(OBJEXT) \
-@DYNAREC_TRUE@	vdp2.$(OBJEXT) yabause.$(OBJEXT) scsp.$(OBJEXT) \
-@DYNAREC_TRUE@	cd.$(OBJEXT) yui.$(OBJEXT) c68kexec.$(OBJEXT) \
-@DYNAREC_TRUE@	c68k.$(OBJEXT) gen68k.$(OBJEXT) ygl.$(OBJEXT) \
-@DYNAREC_TRUE@	hash.$(OBJEXT) lru2.$(OBJEXT)
-@DYNAREC_FALSE@am_yabause_OBJECTS = cdbase.$(OBJEXT) cs0.$(OBJEXT) \
-@DYNAREC_FALSE@	cs1.$(OBJEXT) cs2.$(OBJEXT) exception.$(OBJEXT) \
-@DYNAREC_FALSE@	intc.$(OBJEXT) memory.$(OBJEXT) scu.$(OBJEXT) \
-@DYNAREC_FALSE@	smpc.$(OBJEXT) superh.$(OBJEXT) vdp1.$(OBJEXT) \
-@DYNAREC_FALSE@	vdp2.$(OBJEXT) yabause.$(OBJEXT) scsp.$(OBJEXT) \
-@DYNAREC_FALSE@	cd.$(OBJEXT) yui.$(OBJEXT) c68kexec.$(OBJEXT) \
-@DYNAREC_FALSE@	c68k.$(OBJEXT) gen68k.$(OBJEXT) ygl.$(OBJEXT)
+am_yabause_OBJECTS = yabause-c68kexec.$(OBJEXT) yabause-c68k.$(OBJEXT) \
+	yabause-gen68k.$(OBJEXT) yabause-cd.$(OBJEXT) \
+	yabause-cdbase.$(OBJEXT) yabause-cs0.$(OBJEXT) \
+	yabause-cs1.$(OBJEXT) yabause-cs2.$(OBJEXT) \
+	yabause-debug.$(OBJEXT) yabause-error.$(OBJEXT) \
+	yabause-memory.$(OBJEXT) yabause-peripheral.$(OBJEXT) \
+	yabause-persdl.$(OBJEXT) yabause-profile.$(OBJEXT) \
+	yabause-scu.$(OBJEXT) yabause-sh2core.$(OBJEXT) \
+	yabause-sh2d.$(OBJEXT) yabause-sh2int.$(OBJEXT) \
+	yabause-smpc.$(OBJEXT) yabause-scsp.$(OBJEXT) \
+	yabause-sndsdl.$(OBJEXT) yabause-vdp1.$(OBJEXT) \
+	yabause-vdp2.$(OBJEXT) yabause-vidsdlgl.$(OBJEXT) \
+	yabause-vidsdlsoft.$(OBJEXT) yabause-yabause.$(OBJEXT) \
+	yabause-ygl.$(OBJEXT) yabause-yui.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
 yabause_LDADD = $(LDADD)
 yabause_DEPENDENCIES =
-yabause_LDFLAGS =
 
 DEFS = @DEFS@
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
@@ -122,37 +137,53 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/c68k.Po ./$(DEPDIR)/c68kexec.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/cd.Po ./$(DEPDIR)/cdbase.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/cs0.Po ./$(DEPDIR)/cs1.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/cs2.Po ./$(DEPDIR)/exception.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/gen68k.Po ./$(DEPDIR)/hash.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/intc.Po ./$(DEPDIR)/lru2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/memory.Po ./$(DEPDIR)/scsp.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/scu.Po ./$(DEPDIR)/smpc.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/superh.Po ./$(DEPDIR)/vdp1.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vdp2.Po ./$(DEPDIR)/yabause.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ygl.Po ./$(DEPDIR)/yui.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/yabause-c68k.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-c68kexec.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-cd.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-cdbase.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-cs0.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-cs1.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-cs2.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-debug.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-error.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-gen68k.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-memory.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-peripheral.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-persdl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-profile.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-scsp.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-scu.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-sh2core.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-sh2d.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-sh2int.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-smpc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-sndsdl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-vdp1.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-vdp2.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-vidsdlgl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-vidsdlsoft.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-yabause.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-ygl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-yui.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 CFLAGS = @CFLAGS@
-CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLD = $(CXX)
-CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
-	-o $@
-CXXFLAGS = @CXXFLAGS@
 DIST_SOURCES = $(yabause_SOURCES)
+
+RECURSIVE_TARGETS = info-recursive dvi-recursive install-info-recursive \
+	uninstall-info-recursive all-recursive install-data-recursive \
+	install-exec-recursive installdirs-recursive install-recursive \
+	uninstall-recursive check-recursive installcheck-recursive
 DIST_COMMON = Makefile.am Makefile.in
+DIST_SUBDIRS = $(SUBDIRS)
 SOURCES = $(yabause_SOURCES)
 
-all: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+all: all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .c .cc .o .obj
+.SUFFIXES: .c .o .obj
 $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
 	  $(AUTOMAKE) --gnu  src/Makefile
@@ -182,16 +213,37 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-cd.$(OBJEXT): $(yabause_arch)/cd.cc
-yui.$(OBJEXT): $(yabause_yui)/yui.cc
-c68kexec.$(OBJEXT): c68k/c68kexec.c
-c68k.$(OBJEXT): c68k/c68k.c
-gen68k.$(OBJEXT): c68k/gen68k.c
-hash.$(OBJEXT): jit/hash.cc
-lru2.$(OBJEXT): jit/lru2.cc
+yabause-c68kexec.$(OBJEXT): c68k/c68kexec.c
+yabause-c68k.$(OBJEXT): c68k/c68k.c
+yabause-gen68k.$(OBJEXT): c68k/gen68k.c
+yabause-cd.$(OBJEXT): $(yabause_arch)/cd.c
+yabause-cdbase.$(OBJEXT): cdbase.c
+yabause-cs0.$(OBJEXT): cs0.c
+yabause-cs1.$(OBJEXT): cs1.c
+yabause-cs2.$(OBJEXT): cs2.c
+yabause-debug.$(OBJEXT): debug.c
+yabause-error.$(OBJEXT): error.c
+yabause-memory.$(OBJEXT): memory.c
+yabause-peripheral.$(OBJEXT): peripheral.c
+yabause-persdl.$(OBJEXT): persdl.c
+yabause-profile.$(OBJEXT): profile.c
+yabause-scu.$(OBJEXT): scu.c
+yabause-sh2core.$(OBJEXT): sh2core.c
+yabause-sh2d.$(OBJEXT): sh2d.c
+yabause-sh2int.$(OBJEXT): sh2int.c
+yabause-smpc.$(OBJEXT): smpc.c
+yabause-scsp.$(OBJEXT): scsp.c
+yabause-sndsdl.$(OBJEXT): sndsdl.c
+yabause-vdp1.$(OBJEXT): vdp1.c
+yabause-vdp2.$(OBJEXT): vdp2.c
+yabause-vidsdlgl.$(OBJEXT): vidsdlgl.c
+yabause-vidsdlsoft.$(OBJEXT): vidsdlsoft.c
+yabause-yabause.$(OBJEXT): yabause.c
+yabause-ygl.$(OBJEXT): ygl.c
+yabause-yui.$(OBJEXT): $(yabause_yui)/yui.c
 yabause$(EXEEXT): $(yabause_OBJECTS) $(yabause_DEPENDENCIES) 
 	@rm -f yabause$(EXEEXT)
-	$(CXXLINK) $(yabause_LDFLAGS) $(yabause_OBJECTS) $(yabause_LDADD) $(LIBS)
+	$(LINK) $(yabause_LDFLAGS) $(yabause_OBJECTS) $(yabause_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -199,28 +251,34 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c68k.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c68kexec.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cdbase.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cs0.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cs1.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cs2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exception.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gen68k.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lru2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scsp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scu.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/smpc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/superh.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vdp1.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vdp2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ygl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yui.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-c68k.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-c68kexec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cdbase.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cs0.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cs1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cs2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-debug.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-error.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-gen68k.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-memory.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-peripheral.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-persdl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-profile.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-scsp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-scu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-sh2core.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-sh2d.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-sh2int.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-smpc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-sndsdl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-vdp1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-vdp2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-vidsdlgl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-vidsdlsoft.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yabause.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-ygl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yui.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
@@ -237,104 +295,398 @@ distclean-depend:
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(COMPILE) -c `cygpath -w $<`
 
-c68kexec.o: c68k/c68kexec.c
-@AMDEP_TRUE@	source='c68k/c68kexec.c' object='c68kexec.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/c68kexec.Po' tmpdepfile='$(DEPDIR)/c68kexec.TPo' @AMDEPBACKSLASH@
+yabause-c68kexec.o: c68k/c68kexec.c
+@AMDEP_TRUE@	source='c68k/c68kexec.c' object='yabause-c68kexec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-c68kexec.Po' tmpdepfile='$(DEPDIR)/yabause-c68kexec.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o c68kexec.o `test -f 'c68k/c68kexec.c' || echo '$(srcdir)/'`c68k/c68kexec.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-c68kexec.o `test -f 'c68k/c68kexec.c' || echo '$(srcdir)/'`c68k/c68kexec.c
 
-c68kexec.obj: c68k/c68kexec.c
-@AMDEP_TRUE@	source='c68k/c68kexec.c' object='c68kexec.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/c68kexec.Po' tmpdepfile='$(DEPDIR)/c68kexec.TPo' @AMDEPBACKSLASH@
+yabause-c68kexec.obj: c68k/c68kexec.c
+@AMDEP_TRUE@	source='c68k/c68kexec.c' object='yabause-c68kexec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-c68kexec.Po' tmpdepfile='$(DEPDIR)/yabause-c68kexec.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o c68kexec.obj `cygpath -w c68k/c68kexec.c`
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-c68kexec.obj `cygpath -w c68k/c68kexec.c`
 
-c68k.o: c68k/c68k.c
-@AMDEP_TRUE@	source='c68k/c68k.c' object='c68k.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/c68k.Po' tmpdepfile='$(DEPDIR)/c68k.TPo' @AMDEPBACKSLASH@
+yabause-c68k.o: c68k/c68k.c
+@AMDEP_TRUE@	source='c68k/c68k.c' object='yabause-c68k.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-c68k.Po' tmpdepfile='$(DEPDIR)/yabause-c68k.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o c68k.o `test -f 'c68k/c68k.c' || echo '$(srcdir)/'`c68k/c68k.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-c68k.o `test -f 'c68k/c68k.c' || echo '$(srcdir)/'`c68k/c68k.c
 
-c68k.obj: c68k/c68k.c
-@AMDEP_TRUE@	source='c68k/c68k.c' object='c68k.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/c68k.Po' tmpdepfile='$(DEPDIR)/c68k.TPo' @AMDEPBACKSLASH@
+yabause-c68k.obj: c68k/c68k.c
+@AMDEP_TRUE@	source='c68k/c68k.c' object='yabause-c68k.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-c68k.Po' tmpdepfile='$(DEPDIR)/yabause-c68k.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o c68k.obj `cygpath -w c68k/c68k.c`
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-c68k.obj `cygpath -w c68k/c68k.c`
 
-gen68k.o: c68k/gen68k.c
-@AMDEP_TRUE@	source='c68k/gen68k.c' object='gen68k.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/gen68k.Po' tmpdepfile='$(DEPDIR)/gen68k.TPo' @AMDEPBACKSLASH@
+yabause-gen68k.o: c68k/gen68k.c
+@AMDEP_TRUE@	source='c68k/gen68k.c' object='yabause-gen68k.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-gen68k.Po' tmpdepfile='$(DEPDIR)/yabause-gen68k.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gen68k.o `test -f 'c68k/gen68k.c' || echo '$(srcdir)/'`c68k/gen68k.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-gen68k.o `test -f 'c68k/gen68k.c' || echo '$(srcdir)/'`c68k/gen68k.c
 
-gen68k.obj: c68k/gen68k.c
-@AMDEP_TRUE@	source='c68k/gen68k.c' object='gen68k.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/gen68k.Po' tmpdepfile='$(DEPDIR)/gen68k.TPo' @AMDEPBACKSLASH@
+yabause-gen68k.obj: c68k/gen68k.c
+@AMDEP_TRUE@	source='c68k/gen68k.c' object='yabause-gen68k.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-gen68k.Po' tmpdepfile='$(DEPDIR)/yabause-gen68k.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gen68k.obj `cygpath -w c68k/gen68k.c`
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-gen68k.obj `cygpath -w c68k/gen68k.c`
+
+yabause-cd.o: $(yabause_arch)/cd.c
+@AMDEP_TRUE@	source='$(yabause_arch)/cd.c' object='yabause-cd.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cd.Po' tmpdepfile='$(DEPDIR)/yabause-cd.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cd.o `test -f '$(yabause_arch)/cd.c' || echo '$(srcdir)/'`$(yabause_arch)/cd.c
+
+yabause-cd.obj: $(yabause_arch)/cd.c
+@AMDEP_TRUE@	source='$(yabause_arch)/cd.c' object='yabause-cd.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cd.Po' tmpdepfile='$(DEPDIR)/yabause-cd.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cd.obj `cygpath -w $(yabause_arch)/cd.c`
+
+yabause-cdbase.o: cdbase.c
+@AMDEP_TRUE@	source='cdbase.c' object='yabause-cdbase.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cdbase.Po' tmpdepfile='$(DEPDIR)/yabause-cdbase.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cdbase.o `test -f 'cdbase.c' || echo '$(srcdir)/'`cdbase.c
+
+yabause-cdbase.obj: cdbase.c
+@AMDEP_TRUE@	source='cdbase.c' object='yabause-cdbase.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cdbase.Po' tmpdepfile='$(DEPDIR)/yabause-cdbase.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cdbase.obj `cygpath -w cdbase.c`
+
+yabause-cs0.o: cs0.c
+@AMDEP_TRUE@	source='cs0.c' object='yabause-cs0.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cs0.Po' tmpdepfile='$(DEPDIR)/yabause-cs0.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cs0.o `test -f 'cs0.c' || echo '$(srcdir)/'`cs0.c
+
+yabause-cs0.obj: cs0.c
+@AMDEP_TRUE@	source='cs0.c' object='yabause-cs0.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cs0.Po' tmpdepfile='$(DEPDIR)/yabause-cs0.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cs0.obj `cygpath -w cs0.c`
+
+yabause-cs1.o: cs1.c
+@AMDEP_TRUE@	source='cs1.c' object='yabause-cs1.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cs1.Po' tmpdepfile='$(DEPDIR)/yabause-cs1.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cs1.o `test -f 'cs1.c' || echo '$(srcdir)/'`cs1.c
+
+yabause-cs1.obj: cs1.c
+@AMDEP_TRUE@	source='cs1.c' object='yabause-cs1.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cs1.Po' tmpdepfile='$(DEPDIR)/yabause-cs1.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cs1.obj `cygpath -w cs1.c`
+
+yabause-cs2.o: cs2.c
+@AMDEP_TRUE@	source='cs2.c' object='yabause-cs2.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cs2.Po' tmpdepfile='$(DEPDIR)/yabause-cs2.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cs2.o `test -f 'cs2.c' || echo '$(srcdir)/'`cs2.c
+
+yabause-cs2.obj: cs2.c
+@AMDEP_TRUE@	source='cs2.c' object='yabause-cs2.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cs2.Po' tmpdepfile='$(DEPDIR)/yabause-cs2.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cs2.obj `cygpath -w cs2.c`
+
+yabause-debug.o: debug.c
+@AMDEP_TRUE@	source='debug.c' object='yabause-debug.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-debug.Po' tmpdepfile='$(DEPDIR)/yabause-debug.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-debug.o `test -f 'debug.c' || echo '$(srcdir)/'`debug.c
+
+yabause-debug.obj: debug.c
+@AMDEP_TRUE@	source='debug.c' object='yabause-debug.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-debug.Po' tmpdepfile='$(DEPDIR)/yabause-debug.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-debug.obj `cygpath -w debug.c`
+
+yabause-error.o: error.c
+@AMDEP_TRUE@	source='error.c' object='yabause-error.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-error.Po' tmpdepfile='$(DEPDIR)/yabause-error.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-error.o `test -f 'error.c' || echo '$(srcdir)/'`error.c
+
+yabause-error.obj: error.c
+@AMDEP_TRUE@	source='error.c' object='yabause-error.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-error.Po' tmpdepfile='$(DEPDIR)/yabause-error.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-error.obj `cygpath -w error.c`
+
+yabause-memory.o: memory.c
+@AMDEP_TRUE@	source='memory.c' object='yabause-memory.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-memory.Po' tmpdepfile='$(DEPDIR)/yabause-memory.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-memory.o `test -f 'memory.c' || echo '$(srcdir)/'`memory.c
+
+yabause-memory.obj: memory.c
+@AMDEP_TRUE@	source='memory.c' object='yabause-memory.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-memory.Po' tmpdepfile='$(DEPDIR)/yabause-memory.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-memory.obj `cygpath -w memory.c`
+
+yabause-peripheral.o: peripheral.c
+@AMDEP_TRUE@	source='peripheral.c' object='yabause-peripheral.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-peripheral.Po' tmpdepfile='$(DEPDIR)/yabause-peripheral.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-peripheral.o `test -f 'peripheral.c' || echo '$(srcdir)/'`peripheral.c
+
+yabause-peripheral.obj: peripheral.c
+@AMDEP_TRUE@	source='peripheral.c' object='yabause-peripheral.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-peripheral.Po' tmpdepfile='$(DEPDIR)/yabause-peripheral.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-peripheral.obj `cygpath -w peripheral.c`
+
+yabause-persdl.o: persdl.c
+@AMDEP_TRUE@	source='persdl.c' object='yabause-persdl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-persdl.Po' tmpdepfile='$(DEPDIR)/yabause-persdl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-persdl.o `test -f 'persdl.c' || echo '$(srcdir)/'`persdl.c
+
+yabause-persdl.obj: persdl.c
+@AMDEP_TRUE@	source='persdl.c' object='yabause-persdl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-persdl.Po' tmpdepfile='$(DEPDIR)/yabause-persdl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-persdl.obj `cygpath -w persdl.c`
+
+yabause-profile.o: profile.c
+@AMDEP_TRUE@	source='profile.c' object='yabause-profile.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-profile.Po' tmpdepfile='$(DEPDIR)/yabause-profile.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-profile.o `test -f 'profile.c' || echo '$(srcdir)/'`profile.c
+
+yabause-profile.obj: profile.c
+@AMDEP_TRUE@	source='profile.c' object='yabause-profile.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-profile.Po' tmpdepfile='$(DEPDIR)/yabause-profile.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-profile.obj `cygpath -w profile.c`
+
+yabause-scu.o: scu.c
+@AMDEP_TRUE@	source='scu.c' object='yabause-scu.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-scu.Po' tmpdepfile='$(DEPDIR)/yabause-scu.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-scu.o `test -f 'scu.c' || echo '$(srcdir)/'`scu.c
+
+yabause-scu.obj: scu.c
+@AMDEP_TRUE@	source='scu.c' object='yabause-scu.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-scu.Po' tmpdepfile='$(DEPDIR)/yabause-scu.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-scu.obj `cygpath -w scu.c`
+
+yabause-sh2core.o: sh2core.c
+@AMDEP_TRUE@	source='sh2core.c' object='yabause-sh2core.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-sh2core.Po' tmpdepfile='$(DEPDIR)/yabause-sh2core.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-sh2core.o `test -f 'sh2core.c' || echo '$(srcdir)/'`sh2core.c
+
+yabause-sh2core.obj: sh2core.c
+@AMDEP_TRUE@	source='sh2core.c' object='yabause-sh2core.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-sh2core.Po' tmpdepfile='$(DEPDIR)/yabause-sh2core.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-sh2core.obj `cygpath -w sh2core.c`
+
+yabause-sh2d.o: sh2d.c
+@AMDEP_TRUE@	source='sh2d.c' object='yabause-sh2d.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-sh2d.Po' tmpdepfile='$(DEPDIR)/yabause-sh2d.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-sh2d.o `test -f 'sh2d.c' || echo '$(srcdir)/'`sh2d.c
+
+yabause-sh2d.obj: sh2d.c
+@AMDEP_TRUE@	source='sh2d.c' object='yabause-sh2d.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-sh2d.Po' tmpdepfile='$(DEPDIR)/yabause-sh2d.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-sh2d.obj `cygpath -w sh2d.c`
+
+yabause-sh2int.o: sh2int.c
+@AMDEP_TRUE@	source='sh2int.c' object='yabause-sh2int.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-sh2int.Po' tmpdepfile='$(DEPDIR)/yabause-sh2int.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-sh2int.o `test -f 'sh2int.c' || echo '$(srcdir)/'`sh2int.c
+
+yabause-sh2int.obj: sh2int.c
+@AMDEP_TRUE@	source='sh2int.c' object='yabause-sh2int.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-sh2int.Po' tmpdepfile='$(DEPDIR)/yabause-sh2int.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-sh2int.obj `cygpath -w sh2int.c`
+
+yabause-smpc.o: smpc.c
+@AMDEP_TRUE@	source='smpc.c' object='yabause-smpc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-smpc.Po' tmpdepfile='$(DEPDIR)/yabause-smpc.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-smpc.o `test -f 'smpc.c' || echo '$(srcdir)/'`smpc.c
+
+yabause-smpc.obj: smpc.c
+@AMDEP_TRUE@	source='smpc.c' object='yabause-smpc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-smpc.Po' tmpdepfile='$(DEPDIR)/yabause-smpc.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-smpc.obj `cygpath -w smpc.c`
+
+yabause-scsp.o: scsp.c
+@AMDEP_TRUE@	source='scsp.c' object='yabause-scsp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-scsp.Po' tmpdepfile='$(DEPDIR)/yabause-scsp.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-scsp.o `test -f 'scsp.c' || echo '$(srcdir)/'`scsp.c
+
+yabause-scsp.obj: scsp.c
+@AMDEP_TRUE@	source='scsp.c' object='yabause-scsp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-scsp.Po' tmpdepfile='$(DEPDIR)/yabause-scsp.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-scsp.obj `cygpath -w scsp.c`
+
+yabause-sndsdl.o: sndsdl.c
+@AMDEP_TRUE@	source='sndsdl.c' object='yabause-sndsdl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-sndsdl.Po' tmpdepfile='$(DEPDIR)/yabause-sndsdl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-sndsdl.o `test -f 'sndsdl.c' || echo '$(srcdir)/'`sndsdl.c
+
+yabause-sndsdl.obj: sndsdl.c
+@AMDEP_TRUE@	source='sndsdl.c' object='yabause-sndsdl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-sndsdl.Po' tmpdepfile='$(DEPDIR)/yabause-sndsdl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-sndsdl.obj `cygpath -w sndsdl.c`
+
+yabause-vdp1.o: vdp1.c
+@AMDEP_TRUE@	source='vdp1.c' object='yabause-vdp1.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-vdp1.Po' tmpdepfile='$(DEPDIR)/yabause-vdp1.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-vdp1.o `test -f 'vdp1.c' || echo '$(srcdir)/'`vdp1.c
+
+yabause-vdp1.obj: vdp1.c
+@AMDEP_TRUE@	source='vdp1.c' object='yabause-vdp1.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-vdp1.Po' tmpdepfile='$(DEPDIR)/yabause-vdp1.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-vdp1.obj `cygpath -w vdp1.c`
+
+yabause-vdp2.o: vdp2.c
+@AMDEP_TRUE@	source='vdp2.c' object='yabause-vdp2.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-vdp2.Po' tmpdepfile='$(DEPDIR)/yabause-vdp2.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-vdp2.o `test -f 'vdp2.c' || echo '$(srcdir)/'`vdp2.c
+
+yabause-vdp2.obj: vdp2.c
+@AMDEP_TRUE@	source='vdp2.c' object='yabause-vdp2.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-vdp2.Po' tmpdepfile='$(DEPDIR)/yabause-vdp2.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-vdp2.obj `cygpath -w vdp2.c`
+
+yabause-vidsdlgl.o: vidsdlgl.c
+@AMDEP_TRUE@	source='vidsdlgl.c' object='yabause-vidsdlgl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-vidsdlgl.Po' tmpdepfile='$(DEPDIR)/yabause-vidsdlgl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-vidsdlgl.o `test -f 'vidsdlgl.c' || echo '$(srcdir)/'`vidsdlgl.c
+
+yabause-vidsdlgl.obj: vidsdlgl.c
+@AMDEP_TRUE@	source='vidsdlgl.c' object='yabause-vidsdlgl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-vidsdlgl.Po' tmpdepfile='$(DEPDIR)/yabause-vidsdlgl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-vidsdlgl.obj `cygpath -w vidsdlgl.c`
+
+yabause-vidsdlsoft.o: vidsdlsoft.c
+@AMDEP_TRUE@	source='vidsdlsoft.c' object='yabause-vidsdlsoft.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-vidsdlsoft.Po' tmpdepfile='$(DEPDIR)/yabause-vidsdlsoft.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-vidsdlsoft.o `test -f 'vidsdlsoft.c' || echo '$(srcdir)/'`vidsdlsoft.c
+
+yabause-vidsdlsoft.obj: vidsdlsoft.c
+@AMDEP_TRUE@	source='vidsdlsoft.c' object='yabause-vidsdlsoft.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-vidsdlsoft.Po' tmpdepfile='$(DEPDIR)/yabause-vidsdlsoft.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-vidsdlsoft.obj `cygpath -w vidsdlsoft.c`
+
+yabause-yabause.o: yabause.c
+@AMDEP_TRUE@	source='yabause.c' object='yabause-yabause.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yabause.Po' tmpdepfile='$(DEPDIR)/yabause-yabause.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yabause.o `test -f 'yabause.c' || echo '$(srcdir)/'`yabause.c
+
+yabause-yabause.obj: yabause.c
+@AMDEP_TRUE@	source='yabause.c' object='yabause-yabause.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yabause.Po' tmpdepfile='$(DEPDIR)/yabause-yabause.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yabause.obj `cygpath -w yabause.c`
+
+yabause-ygl.o: ygl.c
+@AMDEP_TRUE@	source='ygl.c' object='yabause-ygl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-ygl.Po' tmpdepfile='$(DEPDIR)/yabause-ygl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-ygl.o `test -f 'ygl.c' || echo '$(srcdir)/'`ygl.c
+
+yabause-ygl.obj: ygl.c
+@AMDEP_TRUE@	source='ygl.c' object='yabause-ygl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-ygl.Po' tmpdepfile='$(DEPDIR)/yabause-ygl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-ygl.obj `cygpath -w ygl.c`
+
+yabause-yui.o: $(yabause_yui)/yui.c
+@AMDEP_TRUE@	source='$(yabause_yui)/yui.c' object='yabause-yui.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yui.Po' tmpdepfile='$(DEPDIR)/yabause-yui.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yui.o `test -f '$(yabause_yui)/yui.c' || echo '$(srcdir)/'`$(yabause_yui)/yui.c
+
+yabause-yui.obj: $(yabause_yui)/yui.c
+@AMDEP_TRUE@	source='$(yabause_yui)/yui.c' object='yabause-yui.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yui.Po' tmpdepfile='$(DEPDIR)/yabause-yui.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yui.obj `cygpath -w $(yabause_yui)/yui.c`
 CCDEPMODE = @CCDEPMODE@
-
-.cc.o:
-@AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXXCOMPILE) -c -o $@ `test -f '$<' || echo '$(srcdir)/'`$<
-
-.cc.obj:
-@AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXXCOMPILE) -c -o $@ `cygpath -w $<`
-
-cd.o: $(yabause_arch)/cd.cc
-@AMDEP_TRUE@	source='$(yabause_arch)/cd.cc' object='cd.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/cd.Po' tmpdepfile='$(DEPDIR)/cd.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o cd.o `test -f '$(yabause_arch)/cd.cc' || echo '$(srcdir)/'`$(yabause_arch)/cd.cc
-
-cd.obj: $(yabause_arch)/cd.cc
-@AMDEP_TRUE@	source='$(yabause_arch)/cd.cc' object='cd.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/cd.Po' tmpdepfile='$(DEPDIR)/cd.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o cd.obj `cygpath -w $(yabause_arch)/cd.cc`
-
-yui.o: $(yabause_yui)/yui.cc
-@AMDEP_TRUE@	source='$(yabause_yui)/yui.cc' object='yui.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/yui.Po' tmpdepfile='$(DEPDIR)/yui.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o yui.o `test -f '$(yabause_yui)/yui.cc' || echo '$(srcdir)/'`$(yabause_yui)/yui.cc
-
-yui.obj: $(yabause_yui)/yui.cc
-@AMDEP_TRUE@	source='$(yabause_yui)/yui.cc' object='yui.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/yui.Po' tmpdepfile='$(DEPDIR)/yui.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o yui.obj `cygpath -w $(yabause_yui)/yui.cc`
-
-hash.o: jit/hash.cc
-@AMDEP_TRUE@	source='jit/hash.cc' object='hash.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/hash.Po' tmpdepfile='$(DEPDIR)/hash.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o hash.o `test -f 'jit/hash.cc' || echo '$(srcdir)/'`jit/hash.cc
-
-hash.obj: jit/hash.cc
-@AMDEP_TRUE@	source='jit/hash.cc' object='hash.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/hash.Po' tmpdepfile='$(DEPDIR)/hash.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o hash.obj `cygpath -w jit/hash.cc`
-
-lru2.o: jit/lru2.cc
-@AMDEP_TRUE@	source='jit/lru2.cc' object='lru2.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/lru2.Po' tmpdepfile='$(DEPDIR)/lru2.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o lru2.o `test -f 'jit/lru2.cc' || echo '$(srcdir)/'`jit/lru2.cc
-
-lru2.obj: jit/lru2.cc
-@AMDEP_TRUE@	source='jit/lru2.cc' object='lru2.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/lru2.Po' tmpdepfile='$(DEPDIR)/lru2.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o lru2.obj `cygpath -w jit/lru2.cc`
-CXXDEPMODE = @CXXDEPMODE@
 uninstall-info-am:
+
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run `make' without going through this Makefile.
+# To change the values of `make' variables: instead of editing Makefiles,
+# (1) if the variable is set in `config.status', edit `config.status'
+#     (which will cause the Makefiles to be regenerated when you run `make');
+# (2) otherwise, pass the desired values on the `make' command line.
+$(RECURSIVE_TARGETS):
+	@set fnord $$MAKEFLAGS; amf=$$2; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
+mostlyclean-recursive clean-recursive distclean-recursive \
+maintainer-clean-recursive:
+	@set fnord $$MAKEFLAGS; amf=$$2; \
+	dot_seen=no; \
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	rev=''; for subdir in $$list; do \
+	  if test "$$subdir" = "."; then :; else \
+	    rev="$$subdir $$rev"; \
+	  fi; \
+	done; \
+	rev="$$rev ."; \
+	target=`echo $@ | sed s/-recursive//`; \
+	for subdir in $$rev; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+tags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
+	done
 
 ETAGS = etags
 ETAGSFLAGS =
@@ -350,10 +702,15 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	       END { for (i in files) print i; }'`; \
 	mkid -fID $$unique
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test -f $$subdir/TAGS && tags="$$tags -i $$here/$$subdir/TAGS"; \
+	  fi; \
+	done; \
 	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
@@ -397,22 +754,35 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test -d $(distdir)/$$subdir \
+	    || mkdir $(distdir)/$$subdir \
+	    || exit 1; \
+	    (cd $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$(top_distdir)" \
+	        distdir=../$(distdir)/$$subdir \
+	        distdir) \
+	      || exit 1; \
+	  fi; \
+	done
 check-am: all-am
-check: check-am
+check: check-recursive
 all-am: Makefile $(PROGRAMS)
-
-installdirs:
+installdirs: installdirs-recursive
+installdirs-am:
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
-install: install-am
-install-exec: install-exec-am
-install-data: install-data-am
-uninstall: uninstall-am
+install: install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
 	  INSTALL_STRIP_FLAG=-s \
@@ -428,21 +798,20 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
-clean: clean-am
+clean: clean-recursive
 
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
-distclean: distclean-am
+distclean: distclean-recursive
 
 distclean-am: clean-am distclean-compile distclean-depend \
 	distclean-generic distclean-tags
 
-dvi: dvi-am
+dvi: dvi-recursive
 
 dvi-am:
 
-info: info-am
+info: info-recursive
 
 info-am:
 
@@ -450,37 +819,43 @@ install-data-am:
 
 install-exec-am: install-binPROGRAMS
 
-install-info: install-info-am
+install-info: install-info-recursive
 
 install-man:
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-am
+maintainer-clean: maintainer-clean-recursive
 
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic
 
 uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 
-.PHONY: GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic distclean distclean-compile distclean-depend \
-	distclean-generic distclean-tags distdir dvi dvi-am info \
-	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic tags uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-info-am
+uninstall-info: uninstall-info-recursive
 
-c68k/c68k_ini.inc: c68k/gen68k
+.PHONY: $(RECURSIVE_TARGETS) GTAGS all all-am check check-am clean \
+	clean-binPROGRAMS clean-generic clean-recursive distclean \
+	distclean-compile distclean-depend distclean-generic \
+	distclean-recursive distclean-tags distdir dvi dvi-am \
+	dvi-recursive info info-am info-recursive install install-am \
+	install-binPROGRAMS install-data install-data-am \
+	install-data-recursive install-exec install-exec-am \
+	install-exec-recursive install-info install-info-am \
+	install-info-recursive install-man install-recursive \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am installdirs-recursive maintainer-clean \
+	maintainer-clean-generic maintainer-clean-recursive mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-recursive \
+	tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am \
+	uninstall-info-recursive uninstall-recursive
+
+c68k/c68k_ini.inc:
 	cd c68k && ./gen68k
-c68k/gen68k: c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c
-	$(COMPILE) -DC68K_GEN c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c -o c68k/gen68k
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

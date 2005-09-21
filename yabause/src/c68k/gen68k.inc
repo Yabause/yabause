@@ -630,7 +630,7 @@ static void start_op(u32 op)
     wf_op("OP_0x%.4X:\n", op & 0xFFFF);
     wf_op("{\n");
     wf_op("\tu32 adr, res;\n");
-    wf_op("\tu32 src, dst;\n\n");
+    wf_op("\tpointer src, dst;\n\n");
 }
 
 static void add_CCnt(u32 cycle)
