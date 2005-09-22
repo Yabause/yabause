@@ -1,7 +1,7 @@
 /*******************************************************************************
   CDTEST - Yabause CD interface tester
 
-  (c) Copyright 2004 Theo Berkau(cwx@softhome.net)
+  (c) Copyright 2004-2005 Theo Berkau(cwx@softhome.net)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,127 +25,23 @@
 // Once it's compiled, run it with the cdrom path as your argument
 // example: cdtest g:
 
-// SPECIAL NOTE: You need to use the Sega Boot CD as your test cd to have
-// accurate test results. I hope to change this in the future.
+// SPECIAL NOTE: You need to use a regular saturn disc as your test cd to have
+// accurate test results.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../core.h"
 #include "../cdbase.h"
 
 #define PROG_NAME "CDTEST"
 #define VER_NAME "1.01"
-#define COPYRIGHT_YEAR "2004"
+#define COPYRIGHT_YEAR "2004-2005"
 
 int testspassed=0;
 
-unsigned char cdbuffer[2352];
-unsigned long cdTOC[102];
-
-unsigned long bootcdTOC[102] = {
-0x41000096,
-0x010002F2,
-0x010004B4,
-0x01000678,
-0x0100083C,
-0x01000A00,
-0x01000BC4,
-0x01000D88,
-0x01000F4C,
-0x01001110,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0xFFFFFFFF,
-0x41010000,
-0x010A0000,
-0x0100123F
-};
+u8 cdbuffer[2352];
+u32 cdTOC[102];
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -172,10 +68,70 @@ void cleanup(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int IsTOCValid(u32 *TOC)
+{
+   u8 lasttrack=1;
+   int i;
+
+   // Make sure first track's FAD is 150
+   if ((TOC[0] & 0xFFFFFF) != 150)
+      return 0;
+
+   // Go through each track and make sure they start at FAD that's higher
+   // than the previous track
+   for (i = 1; i < 99; i++)
+   {
+      if (TOC[i] == 0xFFFFFFFF)
+         break;
+
+      lasttrack++;
+
+      if ((TOC[i-1] & 0xFFFFFF) >= (TOC[i] & 0xFFFFFF))
+         return 0;
+   }
+
+   // Check Point A0 information
+   if (TOC[99] & 0xFF) // PFRAME - Should always be 0
+      return 0;
+
+   if (TOC[99] & 0xFF00) // PSEC - Saturn discs will be 0
+      return 0;
+
+   if (((TOC[99] & 0xFF0000) >> 16) != 0x01) // PMIN - First track's number
+      return 0;
+
+   if ((TOC[99] & 0xFF000000) != (TOC[0] & 0xFF000000)) // First track's addr/ctrl
+      return 0;
+
+   // Check Point A1 information
+   if (TOC[100] & 0xFF) // PFRAME - Should always be 0
+      return 0;
+
+   if (TOC[100] & 0xFF00) // PSEC - Saturn discs will be 0
+      return 0;
+
+   if (((TOC[100] & 0xFF0000) >> 16) != lasttrack) // PMIN - Last track's number
+      return 0;
+
+   if ((TOC[100] & 0xFF000000) != (TOC[lasttrack-1] & 0xFF000000)) // Last track's addr/ctrl
+      return 0;
+
+   // Check Point A2 information
+   if ((TOC[101] & 0xFFFFFF) <= (TOC[lasttrack-1] & 0xFFFFFF)) // Lead out FAD should be larger than last track's FAD
+      return 0;
+
+   if ((TOC[101] & 0xFF000000) != (TOC[lasttrack-1] & 0xFF000000)) // Lead out's addr/ctrl should be the same as last track's
+      return 0;
+
+   return 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char *argv[])
 {
    char *cdrom_name;
-   unsigned long f_size=0;
+   u32 f_size=0;
    int status;
    char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                            0xFF, 0xFF, 0xFF, 0x00};
@@ -212,10 +168,10 @@ int main(int argc, char *argv[])
       }
       else testspassed++;
 
-      // Make sure TOC matches Sega boot CD
-      if (memcmp(cdTOC, bootcdTOC, 0xCC * 2) != 0)
+      // Make sure TOC is valid          
+      if (!IsTOCValid(cdTOC))
       {
-         printf("CDReadToc error: TOC data doesn't match Sega Boot CD's. If you did indeed test with the Sega Boot CD, check your code again.\n");
+         printf("CDReadToc error: TOC data has some issues\n");
       }
       else testspassed++;
 
@@ -268,3 +224,4 @@ int main(int argc, char *argv[])
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
