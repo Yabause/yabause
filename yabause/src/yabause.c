@@ -42,8 +42,20 @@ const char *bupfilename = NULL;
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifndef NO_CLI
 void print_usage(const char *program_name) {
+   printf("Yabause v" VERSION "\n");
+   printf("\n"
+          "Purpose:\n"
+          "  This program is intended to be a Sega Saturn emulator\n"
+          "\n"
+          "Usage: %s [OPTIONS]...\n", program_name);
+   printf("   -h         --help                 Print help and exit\n");
+   printf("   -b STRING  --bios=STRING          bios file\n");
+   printf("   -i STRING  --iso=STRING           iso file\n");
+   printf("   -c STRING  --cdrom=STRING         cdrom path\n");
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -159,7 +171,7 @@ int YabauseInit(yabauseinit_struct *init)
 
    if (LoadBios(init->biospath) != 0)
    {
-      YabSetError(YAB_ERR_FILENOTFOUND, init->biospath);
+      YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->biospath);
       return -2;
    }
 
@@ -185,7 +197,7 @@ void YabauseDeInit() {
    if (BupRam)
    {
       if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
-         YabSetError(YAB_ERR_FILEWRITE, bupfilename);
+         YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
 
       T1MemoryDeInit(BupRam);
    }
@@ -318,14 +330,15 @@ int main(int argc, char *argv[]) {
    int i;
    LogStart();
 
+#ifndef NO_CLI
    //handle command line arguments
    for (i = 1; i < argc; ++i) {
       if (argv[i]) {
          //show usage
-         //if (0 == strcmp(argv[i], "-h") || 0 == strcmp(argv[i], "-?") || 0 == strcmp(argv[i], "--help")) {
-         //   print_usage();
-         //   return 0;
-         //}
+         if (0 == strcmp(argv[i], "-h") || 0 == strcmp(argv[i], "-?") || 0 == strcmp(argv[i], "--help")) {
+            print_usage(argv[0]);
+            return 0;
+         }
 			
          //set bios
          if (0 == strcmp(argv[i], "-b") && argv[i + 1])
@@ -346,6 +359,7 @@ int main(int argc, char *argv[]) {
             YuiSetCdromFilename(argv[i] + strlen("--cdrom="));
       }
    }
+#endif
 
    if (YuiInit() != 0)
       fprintf(stderr, "Error running Yabause\n");

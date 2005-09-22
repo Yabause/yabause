@@ -24,7 +24,7 @@ CC = gcc
 RC = windres
 #DDEFINES=-DDEBUG
 DDEFINES=
-VDEFINES=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.5.0\" -DHAVE_LIBSDL -DHAVE_LIBGLUT
+VDEFINES=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.5.0\" -DHAVE_LIBSDL -DHAVE_LIBGLUT -DNO_CLI
 CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -Wall
 #CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -Wall -g
 CFLAGS2= -fomit-frame-pointer -Wall
