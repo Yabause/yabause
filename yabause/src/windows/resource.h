@@ -90,9 +90,13 @@
 #define IDC_MPEGROMEDIT                 1011
 #define IDC_MPEGROMBROWSE               1012
 
-#define IDC_VIDEOSETTINGS               1013
-#define IDC_SOUNDSETTINGS               1014
-#define IDC_INPUTSETTINGS               1015
+#define IDC_CARTTYPECB                  1013
+#define IDC_CARTEDIT                    1014
+#define IDC_CARTBROWSE                  1015
+
+#define IDC_VIDEOSETTINGS               1016
+#define IDC_SOUNDSETTINGS               1017
+#define IDC_INPUTSETTINGS               1018
 
 //////////////////////////////////////////////////////////////////////////////
 // VDP2 debug stuff
