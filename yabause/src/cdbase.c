@@ -19,6 +19,7 @@
 */
 
 #include <string.h>
+#include <stdlib.h>
 #include <assert.h>
 #include "cdbase.h"
 
@@ -152,26 +153,219 @@ static const s8 syncHdr[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 static FILE *isofile=NULL;
 static int isofilesize=0;
 static int bytesPerSector = 0;
+static int isbincue = 0;
+static u32 isoTOC[102];
+
+#define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
+
+//////////////////////////////////////////////////////////////////////////////
+
+int InitBinCue(const char *cuefilename)
+{
+   u32 size;
+   char *tempbuffer, *tempbuffer2;
+   unsigned int tracknum;
+   unsigned int indexnum, min, sec, frame;
+   unsigned int pregap=0;
+   char *p, *p2;
+
+   fseek(isofile, 0, SEEK_END);
+   size = ftell(isofile);
+   fseek(isofile, 0, SEEK_SET);
+
+   // Allocate buffer with enough space for reading cue
+   if ((tempbuffer = (char *)calloc(size, 1)) == NULL)
+      return -1;
+
+   // Skip image filename
+   if (fscanf(isofile, "FILE \"%*[^\"]\" %*s\r\n") == EOF)
+   {
+      free(tempbuffer);
+      return -1;
+   }
+
+   // Time to generate TOC
+   for (;;)
+   {
+      // Retrieve a line in cue
+      if (fscanf(isofile, "%s", tempbuffer) == EOF)
+         break;
+
+      // Figure out what it is
+      if (strncmp(tempbuffer, "TRACK", 5) == 0)
+      {
+         // Handle accordingly
+         if (fscanf(isofile, "%d %[^\r\n]\r\n", &tracknum, tempbuffer) == EOF)
+            break;
+
+         if (strncmp(tempbuffer, "MODE1", 5) == 0 ||
+             strncmp(tempbuffer, "MODE2", 5) == 0)
+         {
+            // Figure out the track sector size
+            bytesPerSector = atoi(tempbuffer + 6);
+
+            // Update toc entry
+            isoTOC[tracknum-1] = 0x41000000;
+         }
+         else if (strncmp(tempbuffer, "AUDIO", 5) == 0)
+         {
+            // fix me
+            // Update toc entry
+            isoTOC[tracknum-1] = 0x01000000;
+         }
+      }
+      else if (strncmp(tempbuffer, "INDEX", 5) == 0)
+      {
+         // Handle accordingly
+
+         if (fscanf(isofile, "%d %d:%d:%d\r\n", &indexnum, &min, &sec, &frame) == EOF)
+            break;
+
+         if (indexnum == 1)
+            // Update toc entry
+            isoTOC[tracknum-1] = (isoTOC[tracknum-1] & 0xFF000000) | (MSF_TO_FAD(min, sec, frame) + pregap + 150);
+      }
+      else if (strncmp(tempbuffer, "PREGAP", 5) == 0)
+      {
+         if (fscanf(isofile, "%d:%d:%d\r\n", &min, &sec, &frame) == EOF)
+            break;
+
+         pregap += MSF_TO_FAD(min, sec, frame);
+      }
+      else if (strncmp(tempbuffer, "POSTGAP", 5) == 0)
+      {
+         if (fscanf(isofile, "%d:%d:%d\r\n", &min, &sec, &frame) == EOF)
+            break;
+      }
+   }
+
+   // Go back, retrieve image filename
+   fseek(isofile, 0, SEEK_SET);
+   fscanf(isofile, "FILE \"%[^\"]\" %*s\r\n", tempbuffer);
+   fclose(isofile);
+
+   // Now go and open up the image file, figure out its size, etc.
+   if ((isofile = fopen(tempbuffer, "rb")) == NULL)
+   {
+      // Ok, exact path didn't work. Let's trim the path and try opening the
+      // file from the same directory as the cue.
+
+      // find the start of filename
+      p = tempbuffer;
+
+      for (;;)
+      {
+         if (strcspn(p, "/\\") == strlen(p))
+         break;
+
+         p += strcspn(p, "/\\") + 1;
+      }
+
+      // append directory of cue file with bin filename
+      if ((tempbuffer2 = (char *)calloc(strlen(cuefilename) + strlen(p) + 1, 1)) == NULL)
+      {
+         free(tempbuffer);
+         return -1;
+      }
+
+      // find end of path
+      p2 = (char *)cuefilename;
+
+      for (;;)
+      {
+         if (strcspn(p2, "/\\") == strlen(p2))
+            break;
+         p2 += strcspn(p2, "/\\") + 1;
+      }
+
+      // Make sure there was at least some kind of path, otherwise our
+      // second check is pretty useless
+      if (cuefilename == p2 && tempbuffer == p)
+      {
+         free(tempbuffer);
+         free(tempbuffer2);
+         return -1;
+      }
+
+      strncpy(tempbuffer2, cuefilename, p2 - cuefilename);
+      strcat(tempbuffer2, p);
+
+      // Let's give it another try
+      isofile = fopen(tempbuffer2, "rb");
+      free(tempbuffer2);
+
+      if (isofile == NULL)
+      {
+         free(tempbuffer);
+         return -1;
+      }
+   }
+
+   // buffer is no longer needed
+   free(tempbuffer);
+
+   fseek(isofile, 0, SEEK_END);
+   isofilesize = ftell(isofile);
+   fseek(isofile, 0, SEEK_SET);
+
+   // Now then, generate rest of TOC
+   isoTOC[99] = (isoTOC[0] & 0xFF000000) | 0x010000;
+   isoTOC[100] = (isoTOC[tracknum - 1] & 0xFF000000) | (tracknum << 16);
+   isoTOC[101] = (isoTOC[tracknum - 1] & 0xFF000000) | ((isofilesize / bytesPerSector) + pregap + 150);
+
+   return 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
 int ISOCDInit(const char * iso) {
-        if (!(isofile = fopen(iso, "rb")))
-                return -1;
+   char header[6];
 
-        fseek(isofile, 0, SEEK_END);
-        isofilesize = ftell(isofile);
+   memset(isoTOC, 0xFF, 0xCC * 2);
+
+   if (!(isofile = fopen(iso, "rb")))
+      return -1;
+
+   fread((void *)header, 1, 6, isofile);
+
+   // Figure out what kind of image format we're dealing with
+   if (strncmp(header, "FILE \"", 6) == 0)
+   {
+      // It's a BIN/CUE
+      isbincue = 1;
+
+      // Generate TOC for bin file
+      if (InitBinCue(iso) != 0)
+      {
+         if (isofile)
+            free(isofile);
+         return -1;
+      }   
+   }
+   else
+   {
+      // Assume it's an ISO file
+      isbincue = 0;
+
+      fseek(isofile, 0, SEEK_END);
+      isofilesize = ftell(isofile);
 	
-	if (0 == (isofilesize % 2048)) {
-		bytesPerSector = 2048;
-	} else if (0 == (isofilesize % 2352)) {
-		bytesPerSector = 2352;
-	} else {
-		printf("Unsupported CD image!\n");
-		return -1;
-	}
-	
-        return 0;
+      if (0 == (isofilesize % 2048))
+         bytesPerSector = 2048;
+      else if (0 == (isofilesize % 2352))
+         bytesPerSector = 2352;
+      else
+         printf("Unsupported CD image!\n");
+         return -1;
+
+      // Generate TOC
+      isoTOC[0] = 0x41000096;
+      isoTOC[99] = 0x41010000; 
+      isoTOC[100] = 0x41010000;
+      isoTOC[101] = (0x41 << 24) | (isofilesize / bytesPerSector);       //this isn't fully correct, but it does the job for now.
+   }
+
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -190,17 +384,9 @@ int ISOCDGetStatus() {
 //////////////////////////////////////////////////////////////////////////////
 
 s32 ISOCDReadTOC(u32 * TOC) {
-        if (isofile) {
-		memset(TOC, 0xFF, 0xCC * 2);
+   memcpy(TOC, isoTOC, 0xCC * 2);
 
-		TOC[99] = 0x41010000;
-		TOC[100] = 0x01010000;
-                TOC[101] = (0x41 << 24) | (isofilesize / bytesPerSector);       //this isn't fully correct, but it does the job for now.
-      
-		return (0xCC * 2);
-	}
-
-	return 0;
+   return (0xCC * 2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
