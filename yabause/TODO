@@ -16,7 +16,6 @@
    - SMPC intback status should be returning correct reset flags
    - Add vdp2 windows
    - Add vdp1 clipping/windows
-   - Fix SMPC timing
 
  (3) MONITOR/DEBUGGER
 
