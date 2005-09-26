@@ -628,7 +628,6 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
             CurrentSH2->wdt.isenable = (val & 0x20);
             CurrentSH2->wdt.isinterval = (~val & 0x40);
 
-            LOG("WTCSR write = %02X. Timer Enabled = %s, Timer Mode = %s, wdtdiv = %d\n", val & 0xFF, CurrentSH2->wdt.isenable ? "true" : "false", CurrentSH2->wdt.isinterval ? "Interval Timer" : "Watchdog Timer", CurrentSH2->wdt.div);
             CurrentSH2->onchip.WTCSR = (u8)val | 0x18;
          }
          else if (val >> 8 == 0x5A)
