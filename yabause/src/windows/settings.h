@@ -22,12 +22,16 @@
 LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam);
 
+extern BOOL IsPathCdrom(const char *path);
+
 extern char biosfilename[MAX_PATH];
 extern char cdrompath[MAX_PATH];
 extern char backupramfilename[MAX_PATH];
 extern char mpegromfilename[MAX_PATH];
+extern char cartfilename[MAX_PATH];
 extern char inifilename[MAX_PATH];
 
 extern char bioslang;
-extern unsigned char regionid;
-
+extern u8 regionid;
+extern int disctype;
+extern int carttype;

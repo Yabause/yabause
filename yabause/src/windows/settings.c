@@ -20,18 +20,22 @@
 #include <windows.h>
 #include <stdio.h>
 #include <ctype.h>
+#include "../cs0.h"
 #include "resource.h"
 
 char biosfilename[MAX_PATH] = "\0";
 char cdrompath[MAX_PATH]="\0";
 char backupramfilename[MAX_PATH] = "\0";
 char mpegromfilename[MAX_PATH] = "\0";
+char cartfilename[MAX_PATH] = "\0";
 char inifilename[MAX_PATH];
 
 int num_cdroms=0;
 char drive_list[24];
 char bioslang=0;
-unsigned char regionid=0;
+u8 regionid=0;
+int disctype;
+int carttype;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -62,6 +66,29 @@ void GenerateCDROMList(HWND hWnd)
 
 //////////////////////////////////////////////////////////////////////////////
 
+BOOL IsPathCdrom(const char *path)
+{
+   DWORD fflags;
+
+   fflags = GetFileAttributes(path);
+
+   if (fflags != INVALID_FILE_ATTRIBUTES)
+   {
+      if ((fflags & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_DIRECTORY)) ==
+          (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_DIRECTORY))
+      {
+         // Almost sure this is a cdrom drive path, need to do
+         // a few more checks
+         if (GetDriveType(cdrompath) == DRIVE_CDROM)
+            return TRUE;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
@@ -69,7 +96,6 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         DWORD fflags;
          BOOL imagebool=FALSE;
          char current_drive=0;
          int i;
@@ -77,8 +103,6 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // Setup Combo Boxes
 
          // Disc Type Box
-         // Disabled for now
-         EnableWindow(GetDlgItem(hDlg, IDC_DISCTYPECB), FALSE);
          SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_RESETCONTENT, 0, 0);
          SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (long)"CD");
          SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (long)"Image");
@@ -90,26 +114,16 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          GenerateCDROMList(hDlg);
 
          // Set Disc Type Selection
-         fflags = GetFileAttributes(cdrompath);
-
-         if (fflags != INVALID_FILE_ATTRIBUTES)
+         if (IsPathCdrom(cdrompath))
          {
-            if ((fflags & FILE_ATTRIBUTE_READONLY & FILE_ATTRIBUTE_DIRECTORY) ==
-                (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_DIRECTORY))
-            {
-               // Almost sure this is a cdrom drive path, need to do
-               // a few more checks
-//               if (GetDriveType(cdrompath)
-               current_drive = cdrompath[0];
-               imagebool = FALSE; // FIX ME
-            }
-            else
-            {
-               // Assume it's a file
-
-               current_drive = 0;
-               imagebool = FALSE; // FIX ME
-            }
+            current_drive = cdrompath[0];
+            imagebool = FALSE;
+         }
+         else
+         {
+            // Assume it's a file
+            current_drive = 0;
+            imagebool = TRUE;
          }
 
          if (current_drive != 0)
@@ -132,6 +146,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // image is selected
          if (imagebool == FALSE)
          {
+            SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_SETCURSEL, 0, 0);
             EnableWindow(GetDlgItem(hDlg, IDC_IMAGEEDIT), FALSE);
             EnableWindow(GetDlgItem(hDlg, IDC_IMAGEBROWSE), FALSE);
 
@@ -139,6 +154,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
          else
          {
+            SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_SETCURSEL, 1, 0);
             EnableWindow(GetDlgItem(hDlg, IDC_IMAGEEDIT), TRUE);
             EnableWindow(GetDlgItem(hDlg, IDC_IMAGEBROWSE), TRUE);
             SetDlgItemText(hDlg, IDC_IMAGEEDIT, cdrompath);
@@ -213,6 +229,47 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // Set Default MPEG ROM File
          SetDlgItemText(hDlg, IDC_MPEGROMEDIT, mpegromfilename);
 
+         // Setup Cart Type Combo box
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"None");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"Pro Action Replay");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"4 Mbit Backup Ram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"8 Mbit Backup Ram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"16 Mbit Backup Ram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"32 Mbit Backup Ram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"8 Mbit Dram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"32 Mbit Dram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"Netlink");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"16 Mbit Rom");
+
+         // Set Selected Cart Type
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_SETCURSEL, carttype, 0);
+
+         // Set Default Cart File
+         SetDlgItemText(hDlg, IDC_CARTEDIT, cartfilename);
+
+         // Set Cart File window status
+         switch (carttype)
+         {
+            case CART_NONE:
+            case CART_DRAM8MBIT:
+            case CART_DRAM32MBIT:
+            case CART_NETLINK:
+               EnableWindow(GetDlgItem(hDlg, IDC_CARTEDIT), FALSE);
+               EnableWindow(GetDlgItem(hDlg, IDC_CARTBROWSE), FALSE);
+               break;
+            case CART_PAR:
+            case CART_BACKUPRAM4MBIT:
+            case CART_BACKUPRAM8MBIT:
+            case CART_BACKUPRAM16MBIT:
+            case CART_BACKUPRAM32MBIT:
+            case CART_ROM16MBIT:
+               EnableWindow(GetDlgItem(hDlg, IDC_CARTEDIT), TRUE);
+               EnableWindow(GetDlgItem(hDlg, IDC_CARTBROWSE), TRUE);
+               break;
+            default: break;
+         }
+
          return TRUE;
       }
       case WM_COMMAND:
@@ -225,9 +282,9 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   case CBN_SELCHANGE:
                   {
-                     unsigned char cursel=0;
+                     u8 cursel=0;
 
-                     cursel = (unsigned char)SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_GETCURSEL, 0, 0);
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_GETCURSEL, 0, 0);
 
                      if (cursel == 0)
                      {
@@ -251,22 +308,63 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                return TRUE;
             }
+            case IDC_CARTTYPECB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case CBN_SELCHANGE:
+                  {
+                     u8 cursel=0;
+
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_GETCURSEL, 0, 0);
+
+                     switch (cursel)
+                     {
+                        case CART_NONE:
+                        case CART_DRAM8MBIT:
+                        case CART_DRAM32MBIT:
+                        case CART_NETLINK:
+                           EnableWindow(GetDlgItem(hDlg, IDC_CARTEDIT), FALSE);
+                           EnableWindow(GetDlgItem(hDlg, IDC_CARTBROWSE), FALSE);
+                           break;
+                        case CART_PAR:
+                        case CART_BACKUPRAM4MBIT:
+                        case CART_BACKUPRAM8MBIT:
+                        case CART_BACKUPRAM16MBIT:
+                        case CART_BACKUPRAM32MBIT:
+                        case CART_ROM16MBIT:
+                           EnableWindow(GetDlgItem(hDlg, IDC_CARTEDIT), TRUE);
+                           EnableWindow(GetDlgItem(hDlg, IDC_CARTBROWSE), TRUE);
+                           break;
+                        default: break;
+                     }
+
+                     return TRUE;
+                  }
+                  default: break;
+               }
+
+               return TRUE;
+            }
             case IDC_IMAGEBROWSE:
             {
                OPENFILENAME ofn;
+               char tempstr[MAX_PATH];
+
                // setup ofn structure
                ZeroMemory(&ofn, sizeof(OPENFILENAME));
                ofn.lStructSize = sizeof(OPENFILENAME);
                ofn.hwndOwner = hDlg;
                ofn.lpstrFilter = "Cue files (*.cue)\0*.cue\0Iso files (*.iso)\0*.iso\0All Files (*.*)\0*.*\0";
-               ofn.lpstrFile = cdrompath;
-               ofn.nMaxFile = sizeof(cdrompath);
+               GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempstr, MAX_PATH);
+               ofn.lpstrFile = tempstr;
+               ofn.nMaxFile = sizeof(tempstr);
                ofn.Flags = OFN_FILEMUSTEXIST;
 
                if (GetOpenFileName(&ofn))
                {
                   // adjust appropriate edit box
-                  SetDlgItemText(hDlg, IDC_IMAGEEDIT, cdrompath);
+                  SetDlgItemText(hDlg, IDC_IMAGEEDIT, tempstr);
                }
 
                return TRUE;
@@ -359,27 +457,46 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                GetDlgItemText(hDlg, IDC_BIOSEDIT, biosfilename, MAX_PATH);
                GetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, backupramfilename, MAX_PATH);
                GetDlgItemText(hDlg, IDC_MPEGROMEDIT, mpegromfilename, MAX_PATH);
+               carttype = SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_GETCURSEL, 0, 0);
+               GetDlgItemText(hDlg, IDC_CARTEDIT, cartfilename, MAX_PATH);
 
                // write path/filenames
                WritePrivateProfileString("General", "BiosPath", biosfilename, inifilename);
                WritePrivateProfileString("General", "BackupRamPath", backupramfilename, inifilename);
                WritePrivateProfileString("General", "MpegRomPath", mpegromfilename, inifilename);
 
+               sprintf(tempstr, "%d", carttype);
+               WritePrivateProfileString("General", "CartType", tempstr, inifilename);
+
+               // figure out cart type, write cartfilename if necessary
+               switch (carttype)
+               {
+                  case CART_PAR:
+                  case CART_BACKUPRAM4MBIT:
+                  case CART_BACKUPRAM8MBIT:
+                  case CART_BACKUPRAM16MBIT:
+                  case CART_BACKUPRAM32MBIT:
+                  case CART_ROM16MBIT:
+                     WritePrivateProfileString("General", "CartPath", cartfilename, inifilename);
+                     break;
+                  default: break;
+               }
+
                imagebool = (BOOL)SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_GETCURSEL, 0, 0);
 
-//               if (imagebool == FALSE)
-//               {
+               if (imagebool == FALSE)
+               {
                   // convert drive letter to string
                   current_drive = (char)SendDlgItemMessage(hDlg, IDC_DRIVELETTERCB, CB_GETCURSEL, 0, 0);
                   sprintf(cdrompath, "%c:", toupper(drive_list[current_drive]));
                   WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
-//               }
-//               else
-//               {
-//                  // retrieve image filename string instead
-//                  GetDlgItemText(hDlg, IDC_IMAGEEDIT, cdrompath, MAX_PATH);
-//                  WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
-//               }
+               }
+               else
+               {
+                  // retrieve image filename string instead
+                  GetDlgItemText(hDlg, IDC_IMAGEEDIT, cdrompath, MAX_PATH);
+                  WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
+               }
 
                // Convert ID to language string
                bioslang = (char)SendDlgItemMessage(hDlg, IDC_BIOSLANGCB, CB_GETCURSEL, 0, 0);

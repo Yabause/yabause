@@ -54,35 +54,6 @@ int mtrnssetpc=TRUE;
 
 u32 memaddr=0;
 
-//bool shwaspaused=true;
-
-// vdp2 related
-char vdp2bppstr[8][10]=
-{
-"4-bit",
-"8-bit",
-"11-bit",
-"16-bit",
-"24-bit",
-"Invalid",
-"Invalid",
-"Invalid"
-};
-
-char vdp2charsizestr[2][10]=
-{
-"1Hx1V",
-"2Hx2V"
-};
-
-char vdp2bmsizestr[4][10]=
-{
-"512x256",
-"512x512",
-"1024x256",
-"1024x512"
-};
-
 SH2_struct *debugsh;
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
@@ -162,7 +133,6 @@ void YuiErrorMsg(const char *string)
 
 //////////////////////////////////////////////////////////////////////////////
 
-
 int YuiInit(void) {
    WNDCLASS                    MyWndClass;
    HWND                        hWnd;
@@ -217,6 +187,24 @@ int YuiInit(void) {
 
    GetPrivateProfileString("General", "BackupRamPath", "", backupramfilename, MAX_PATH, inifilename);
    GetPrivateProfileString("General", "MpegRomPath", "", mpegromfilename, MAX_PATH, inifilename);
+
+   GetPrivateProfileString("General", "CartType", "", tempstr, MAX_PATH, inifilename);
+
+   // figure out cart type here, grab cartfilename if necessary
+   carttype = atoi(tempstr);
+
+   switch (carttype)
+   {
+      case CART_PAR:
+      case CART_BACKUPRAM4MBIT:
+      case CART_BACKUPRAM8MBIT:
+      case CART_BACKUPRAM16MBIT:
+      case CART_BACKUPRAM32MBIT:
+      case CART_ROM16MBIT:
+         GetPrivateProfileString("General", "CartPath", "", cartfilename, MAX_PATH, inifilename);
+         break;
+      default: break;
+   }
 
    // Grab Bios Language Settings
 //   GetPrivateProfileString("General", "BiosLanguage", "", tempstr, MAX_PATH, inifilename);
@@ -309,14 +297,17 @@ int YuiInit(void) {
    yinit.vidcoretype = VIDCORE_SDLGL;
 //   yinit.vidcoretype = VIDCORE_SDLSOFT;
    yinit.sndcoretype = SNDCORE_SDL;
-   yinit.cdcoretype = CDCORE_SPTI;
-   yinit.carttype = CART_NONE; // fix me
+   if (IsPathCdrom(cdrompath))
+      yinit.cdcoretype = CDCORE_SPTI;
+   else
+      yinit.cdcoretype = CDCORE_ISO;
+   yinit.carttype = carttype;
    yinit.regionid = regionid;
    yinit.biospath = biosfilename;
    yinit.cdpath = cdrompath;
    yinit.buppath = backupramfilename;
    yinit.mpegpath = mpegromfilename;
-   yinit.cartpath = NULL;
+   yinit.cartpath = cartfilename;
 
    if (YabauseInit(&yinit) == -1)
       return -1;
@@ -745,7 +736,9 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             SH2UpdateRegList(hDlg, &sh2regs);
             SH2UpdateCodeList(hDlg, sh2regs.PC);
 //         }
-         SH2SetBreakpointCallBack(debugsh, &BreakpointHandler);
+
+
+         SH2SetBreakpointCallBack(debugsh, (void (*)(void *, u32))&BreakpointHandler);
          return TRUE;
       }
       case WM_COMMAND:
@@ -921,7 +914,6 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         u32 reg;
          char tempstr[1024];
          int isscrenabled;
 
@@ -1023,7 +1015,7 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
    // Data registers
    for (i = 0; i < 8; i++)
    {
-      sprintf(tempstr, "D%d =   %08x", i, regs->D[i]);
+      sprintf(tempstr, "D%d =   %08x", i, (int)regs->D[i]);
       strupr(tempstr);
       SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
    }
@@ -1031,18 +1023,18 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
    // Address registers
    for (i = 0; i < 8; i++)
    {
-      sprintf(tempstr, "A%d =   %08x", i, regs->A[i]);
+      sprintf(tempstr, "A%d =   %08x", i, (int)regs->A[i]);
       strupr(tempstr);
       SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
    }
 
    // SR
-   sprintf(tempstr, "SR =   %08x", regs->SR);
+   sprintf(tempstr, "SR =   %08x", (int)regs->SR);
    strupr(tempstr);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // PC
-   sprintf(tempstr, "PC =   %08x", regs->PC);
+   sprintf(tempstr, "PC =   %08x", (int)regs->PC);
    strupr(tempstr);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 }
