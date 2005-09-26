@@ -1,6 +1,59 @@
-0.0.7 -> 0.0.8
- general:
-  - binary execution added
+0.0.8 -> 0.5.0
+cd block:
+  - bug fixes
+  - improved timing
+cart:
+  - added Action Replay emulation
+  - added 8/32 Mbit dram emulation
+  - added 4/8/32 Mbit backup ram emulation
+  - added 16 Mbit rom emulation
+  - added very early Netlink emulation
+scsp:
+  - added Stephane Dallongeville's SCSP's core. Thanks again Stef!
+  - fixed a couple of bugs that were causing movies to lock up.
+68k:
+  - added Stephane Dallongeville's 68k's core. Thanks again Stef!
+  - fixed a few endian related bugs
+  - added debugger(still need disassembler though)
+scu:
+  - added dsp emulation
+  - added dsp debugger
+  - added indirect dma emulation
+  - added timer0 emulation
+  - bug fixes
+smpc:
+  - added very basic SH2 direct peripheral mode
+  - added clock change commands
+  - added slave sh2 off/on commands
+  - fixed intback command timing
+  - bug fixes
+sh2:
+  - added FRT, WDT, and partial UBC emulation
+  - fixed a couple of opcode bugs
+  - re-added debugger
+  - added some early dynarec code
+vdp1:
+  - added sprite priorities
+  - added color offset
+  - bug fixes
+vdp2:
+  - added basic rbg0 emulation(no rotation, etc.)
+  - added backscreen emulation
+  - added caching
+  - added color offset
+  - added video mode changing
+  - added screen scrolling
+  - fix caching bug
+  - other bug fixes
+  - added early software video rendering. It's still pretty much unuseable at this point
+general:
+  - added binary execution
+  - rewrote entire code in C for portability and speed
+  - fixed a number of configure bugs, added a few more command-line options
+  - fixed code so it's 64-bit friendly
+  - added iso and bin/cue files support
+  - changed several parts of yabause to allow for multiple implementations of video, sound, and peripheral code.
+  - added save states(currently broken unfortunately)
 0.0.6 -> 0.0.7
  cd block:
   - added cd interface for porters.
