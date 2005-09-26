@@ -199,7 +199,7 @@ int * YglQuad(YglSprite * input, YglTexture * output) {
       level->maxQuad += 8;
       level->quads = (int *) realloc(level->quads, level->maxQuad * sizeof(int));
       level->textcoords = (int *) realloc(level->textcoords, level->maxQuad * sizeof(int));
-      YglTMReset();
+      YglCacheReset();
    }
 
    tmp = level->textcoords + level->currentQuad;
@@ -252,7 +252,7 @@ void YglCachedQuad(YglSprite * input, int * cache) {
       level->maxQuad += 8;
       level->quads = (int *) realloc(level->quads, level->maxQuad * sizeof(int));
       level->textcoords = (int *) realloc(level->textcoords, level->maxQuad * sizeof(int));
-      YglTMReset();
+      YglCacheReset();
    }
 
    tmp = level->textcoords + level->currentQuad;
@@ -365,7 +365,6 @@ void YglOnScreenDebugMessage(char *string, ...) {
 //////////////////////////////////////////////////////////////////////////////
 
 int * YglIsCached(u32 addr) {
-#ifdef YGL_CACHE_CHECK
    int i = 0;
 
    for (i = 0; i < cachelistsize; i++)
@@ -373,7 +372,6 @@ int * YglIsCached(u32 addr) {
       if (addr == cachelist[i].id)
          return cachelist[i].textdata;
    }
-#endif
 
    return NULL;
 }
@@ -381,11 +379,9 @@ int * YglIsCached(u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglCache(u32 addr, int * val) {
-#ifdef YGL_CACHE_CHECK
    cachelist[cachelistsize].id = addr;
    cachelist[cachelistsize].textdata = val;
    cachelistsize++;
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
