@@ -54,71 +54,79 @@
 #define CDB_STAT_WAIT      0x80
 #define CDB_STAT_REJECT    0xFF
 
-#define doCDReport() \
-  Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF); \
-  Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | Cs2Area->track; \
-  Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) & 0xFF); \
-  Cs2Area->reg.CR4 = (u16) Cs2Area->FAD; 
-
-#define doMPEGReport() \
-  Cs2Area->reg.CR1 = (Cs2Area->status << 8) | Cs2Area->actionstatus; \
-  Cs2Area->reg.CR2 = Cs2Area->vcounter; \
-  Cs2Area->reg.CR3 = (Cs2Area->pictureinfo << 8) | Cs2Area->mpegaudiostatus; \
-  Cs2Area->reg.CR4 = Cs2Area->mpegvideostatus; 
-
 Cs2 * Cs2Area = NULL;
 
 extern CDInterface *CDCoreList[];
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Cs2ReadByte(u32 addr) {
-  addr &= 0xFFFFF; // fix me(I should really have proper mapping)
-
-  if(Cs2Area->carttype == CART_NETLINK) {
-/*
-     switch (addr) {
-        case 0x95019: // Modem Status Register
-           // Send interrupt here?
-           return T3ReadByte(Cs2Area->mem, addr);
-        case 0x9501D: // Scratch
-           return T3ReadByte(Cs2Area->mem, addr);
-        default:
-           return T3ReadByte(Cs2Area->mem, addr);
-
-     }
-*/
-  }
-
-  return 0xFF; // only netlink seems to use byte-access
+static inline void doCDReport(void)
+{
+   Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
+   Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | Cs2Area->track;
+   Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) & 0xFF);
+   Cs2Area->reg.CR4 = (u16) Cs2Area->FAD; 
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Cs2WriteByte(u32 addr, u8 val) {
-  addr &= 0xFFFFF; // fix me(I should really have proper mapping)
+static inline void doMPEGReport(void)
+{
+   Cs2Area->reg.CR1 = (Cs2Area->status << 8) | Cs2Area->actionstatus;
+   Cs2Area->reg.CR2 = Cs2Area->vcounter;
+   Cs2Area->reg.CR3 = (Cs2Area->pictureinfo << 8) | Cs2Area->mpegaudiostatus;
+   Cs2Area->reg.CR4 = Cs2Area->mpegvideostatus; 
+}
 
-  if(Cs2Area->carttype == CART_NETLINK) {
-/*
-     switch (addr) {
-        case 0x2503D: // ???
-           T3WriteByte(Cs2Area->mem, addr, val);
-           break;
-        case 0x95019: // Modem Status Register(read-only)
-           break;
-        case 0x9501D: // Scratch
-           T3WriteByte(Cs2Area->mem, addr, val);
-           break;
-        default:
-           break;
-      }
-*/
-   }
-   else
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL Cs2ReadByte(u32 addr)
+{
+   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
+
+   if(Cs2Area->carttype == CART_NETLINK)
    {
-       // only netlink seems to use byte-access
-//      Memory::setByte(addr, val);
+      switch (addr)
+      {
+         case 0x95019: // Modem Status Register
+            // Send interrupt here?
+            return Cs2Area->nlreg.MSR;
+            
+         case 0x9501D: // Scratch
+            return Cs2Area->nlreg.SCR;
+         default:
+            break;
+      }
    }
+
+   LOG("Unimplemented cs2 byte read: %08X\n", addr);
+   return 0xFF; // only netlink seems to use byte-access
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Cs2WriteByte(u32 addr, u8 val)
+{
+   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
+
+   if(Cs2Area->carttype == CART_NETLINK)
+   {
+      switch (addr)
+      {
+         case 0x2503D: // ???
+            return;
+         case 0x95019: // Modem Status Register(read-only)
+            return;
+         case 0x9501D: // Scratch
+            Cs2Area->nlreg.SCR = val;
+            return;
+         default:
+            break;
+      }
+   }
+
+   // only netlink seems to use byte-access
+   LOG("Unimplemented cs2 byte write: %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
