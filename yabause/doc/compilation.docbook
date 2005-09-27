@@ -2,11 +2,11 @@
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<chapter>
+<chapter os="win;linux">
 <title>Compilation</title>
 
-<para>Yabause is written in C++ using the SDL and OpenGL libraries,
-so you need a working C++ compiler (as g++) and the above
+<para>Yabause is written in C using the SDL and OpenGL libraries,
+so you need a working C compiler (such as gcc) and these
 libraries runtime and development packages:
 <itemizedlist>
 	<listitem>
@@ -14,7 +14,9 @@ libraries runtime and development packages:
         <ulink url="http://www.libsdl.org/">SDL web site</ulink>.</para>
 	</listitem>
 	<listitem>
-	<para>OpenGL should be included with your compiler, if it isn't,
+	<para os="win">OpenGL should be included with your compiler, if it isn't,
+    check on your compiler's website for links.</para>
+	<para os="linux">OpenGL should be included with your distribution, if it isn't,
     check on your distribution's website for links.</para>
 	</listitem>
 	<listitem os="linux">
@@ -27,20 +29,32 @@ libraries runtime and development packages:
 <para>Once these libraries installed, you should be ready to
 install Yabause.</para>
 
-<para><phrase os="win">The following steps will be different depending on what
-compiler you're using. We'll be assuming you're using gnu-based compilers
-such as cygwin or mingw. </phrase>You just have to uncompress the
-Yabause source archive, move to the newly created
-directory, type "./configure", then "make", it will generate
-one program: "yabause<phrase os="win">.exe</phrase>" in the "src" directory.
-<phrase os="win">For other compilers, you're on your own at this point.</phrase></para>
+<para os="win">
+Unfortunately, I've been having some trouble getting configure
+working properly with mingw and cygwin, so instead I've written
+a makefile (<filename>src\makefile.mng</filename>) for compiling using mingw which
+can be called by typing: <command>make -f makefile.mng</command> in the src
+subdirectory.</para>
+<note os="win">If anyone feels like fixing this, let me know. Visual C++
+support should be available soon.</note>
 
-<para>You can also pass the --enable-debug, --enable-vdp1-debug,
---enable-cd-debug options to the configure script, Yabause
+<para os="linux"> You just have to uncompress the Yabause source archive,
+move to the newly created directory, type <command>./configure</command>,
+then <command>make</command>, it will generate
+one program: <filename>yabause</filename> in the <filename>src</filename> directory.
+</para>
+
+<para os="linux">You can also pass the <command>--enable-debug</command>,
+<command>--enable-vdp1-debug</command>,
+<command>--enable-cd-debug</command> options to the configure script, Yabause
 will then print debug messages on the error standard output.</para>
 
-<para>You can even type "make install" to install that program on
-your system (in /usr/local/ by default), then uninstalling is
-done by typing "make uninstall".</para>
+<para os="linux">If you want to use the optionnal gtk interface, you have to
+pass the <command>--with-gtk</command> option to the configure script. The
+gtk interface can cause flickering and other random behaviors.</para>
+
+<para os="linux">You can even type <command>make install</command> to install that program on
+your system (in <filename>/usr/local/</filename> by default), then uninstalling is
+done by typing <command>make uninstall</command>.</para>
 
 </chapter>

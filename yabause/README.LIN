@@ -12,15 +12,15 @@
 
 
 1) Compiling instructions...................................20
-2) How to use Yabause.......................................53
-3) Contact information......................................85
-4) Disclaimer...............................................94
+2) How to use Yabause.......................................57
+3) Contact information.....................................108
+4) Disclaimer..............................................117
 
 
 1 Compiling instructions______________________________________
 
-Yabause is written in C++ using the SDL and OpenGL libraries,
-so you need a working C++ compiler, as g++ and the above
+Yabause is written in C using the SDL and OpenGL libraries,
+so you need a working C compiler, as gcc and the above
 libraries runtime and development packages:
 
   * you can find SDL at http://www.libsdl.org/index.php in
@@ -45,6 +45,10 @@ You can also pass the --enable-debug, --enable-vdp1-debug,
 --enable-cd-debug options to the configure script, Yabause
 will then print debug messages on the error standard output.
 
+If you want to use the optionnal gtk interface, you have to
+pass the --with-gtk option to the configure script. The gtk
+interface can cause flickering and other random behaviors.
+
 You can even type "make install" to install that program on
 your system (in /usr/local/ by default), then uninstalling is
 done by typing "make uninstall".
@@ -55,6 +59,9 @@ done by typing "make uninstall".
 The first requirement is a Saturn ROM BIOS image (hence a Sega
 Saturn). Please don't ask us where to get one. 
 
+
+2.1 Graphical user interface__________________________________
+
 Execute "yabause". If yabause was compiled with gtk, the
 program should open a window with a menu. Use the
 "Open BIOS..." menu entry to choose your bios file.
@@ -64,22 +71,38 @@ You can also set a cdrom device with the "Open CDROM..." entry.
 Once the BIOS file is choosen, you can start emulation with
 the "run" entry.
 
+
+2.2 Command line interface____________________________________
+
+-b
+    Specify bios file.
+-c
+    Specify cd device. You can know which file is used as cd
+    device by looking in /etc/fstab. It is commonly something
+    like /dev/hdc or /dev/hdd for IDE devices and /dev/scd0
+    for SCSI devices.
+-i
+    Specify iso file.
+
+
+2.3 Keys______________________________________________________
+
 Here are the current key mappings(they may be subject to change):
-e - Up
-s - Left
-d - Down
-f - Right
-k - A button
-l - B button
-m - C button
-u - X button
-i - Y button
-o - Z button
-x - Left Trigger
-z - Right Trigger
-j - Start button
-h - Hide/show gtk interface
-q - Quit program
+Up arrow    - Up
+Left arrow  - Left
+Down arrow  - Down
+Right arrow - Right
+k           - A button
+l           - B button
+m           - C button
+u           - X button
+i           - Y button
+o           - Z button
+x           - Left Trigger
+z           - Right Trigger
+j           - Start button
+h           - Hide/show gtk interface
+q           - Quit program
 
 
 3 Contact information_________________________________________

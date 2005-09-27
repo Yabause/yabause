@@ -49,13 +49,20 @@
 	<year>2002</year>
 	<year>2003</year>
 	<year>2004</year>
+	<year>2005</year>
 	<holder>Guillaume Duhamel</holder>
 </copyright>
-<pubdate>6 December 2004</pubdate>
+<pubdate>27 September 2005</pubdate>
 <abstract>
 	<para>This document is the user manual of Yabause, a Sega Saturn emulator.</para>
 </abstract>
 <revhistory>
+	<revision>
+	<revnumber>0.2</revnumber>
+	<date>27 September 2005</date>
+	<authorinitials>GD</authorinitials>
+	<revremark>Update for the 0.5 release</revremark>
+	</revision>
 	<revision>
 	<revnumber>0.1</revnumber>
 	<date>6 December 2004</date>
@@ -77,11 +84,11 @@ developers.</para>
 
 </chapter>
 
-<xi:include os="win,linux" xmlns:xi="http://www.w3.org/2001/XInclude" href="compilation.docbook" /> 
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="compilation.docbook" /> 
 
-<xi:include os="win,linux" xmlns:xi="http://www.w3.org/2001/XInclude" href="using.docbook" /> 
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="using.docbook" /> 
 
-<xi:include os="dreamcast" xmlns:xi="http://www.w3.org/2001/XInclude" href="dreamcast.docbook" /> 
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dreamcast.docbook" /> 
 
 <chapter>
 <title>Other information</title>
@@ -89,8 +96,18 @@ developers.</para>
 <section>
 <title>Contact</title>
 
-<para>Web: <ulink url="http://yabause.sourceforge.net/">http://yabause.sourceforge.net/</ulink></para>
+<para>General inquiries should go to:</para>
 <para>E-mail: <email>guillaume.duhamel@gmail.com</email></para>
+
+<para>Ports-related inquiries should go to:
+<simplelist type="horiz" columns="2">
+<member>Dreamcast</member><member><email>bluecrab@gmail.com</email></member>
+<member>FreeBSD/Linux</member><member><email>guillaume.duhamel@gmail.com</email></member>
+<member>Windows</member><member><email>cwx@cyberwarriorx.com</email></member>
+</simplelist>
+</para>
+
+<para>Web: <ulink url="http://yabause.sourceforge.net/">http://yabause.sourceforge.net/</ulink></para>
 <para>IRC: #yabause on <ulink url="http://www.freenode.org/">Freenode</ulink></para>
 
 </section>
