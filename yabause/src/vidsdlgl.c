@@ -133,6 +133,7 @@ int rbg0priority=0;
 static int sdlglfps;
 static int sdlglframecount;
 static u32 sdlglticks;
+static int fpstoggle=0;
 
 typedef struct
 {
@@ -1447,10 +1448,17 @@ void VIDSDLGLVdp2DrawStart(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ToggleFPS(void)
+{
+   fpstoggle ^= 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void VIDSDLGLVdp2DrawEnd(void)
 {
-//   if (fpstoggle)
-//   {
+   if (fpstoggle)
+   {
       YglOnScreenDebugMessage("%02d/60 FPS", sdlglfps);
 
       sdlglframecount++;
@@ -1460,7 +1468,7 @@ void VIDSDLGLVdp2DrawEnd(void)
          sdlglframecount = 0;
          sdlglticks = SDL_GetTicks();
       }
-//   }
+   }
 
    YglRender();
 }

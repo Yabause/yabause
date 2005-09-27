@@ -39,6 +39,8 @@ PERSDLHandleEvents
 void (*PERSDLKeyPressed[SDLK_LAST])(void);
 void (*PERSDLKeyReleased[SDLK_LAST])(void);
 
+void ToggleFPS (); // This should probably be changed
+
 //////////////////////////////////////////////////////////////////////////////
 
 static inline void PERSDLSetBoth(SDLKey key, void (*fct_ptr1)(void), void (*fct_ptr2)(void)) {
@@ -120,6 +122,8 @@ int PERSDLInit(void) {
         PERSDLKeyPressed[SDLK_4] = ToggleNBG3;
         PERSDLKeyPressed[SDLK_5] = ToggleRBG0;
         PERSDLKeyPressed[SDLK_6] = ToggleVDP1;
+
+        PERSDLKeyPressed[SDLK_F1] = ToggleFPS;
 
 	return 0;
 }
