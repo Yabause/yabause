@@ -19,8 +19,8 @@
 
 1 Compiling instructions______________________________________
 
-Yabause is written in C++ using the SDL and OpenGL libraries,
-so you need a working C++ compiler, as g++ and the above
+Yabause is written in C using the SDL and OpenGL libraries,
+so you need a working C compiler(such as gcc) and these
 libraries runtime and development packages:
 
   * you can find SDL at http://www.libsdl.org/index.php in
@@ -38,9 +38,8 @@ a makefile(src\makefile.mng) for compiling using mingw which
 can be called by typing: make -f makefile.mng in the src
 subdirectory.
 
-Note: If anyone feels like fixing this, let me know. Also, if
-      anyone feels like tackling Microsoft Visual C++ support,
-      feel free to.
+Note: If anyone feels like fixing this, let me know. Visual C++
+      support should be available soon.
 
 2 How to use Yabause__________________________________________
 
@@ -48,6 +47,13 @@ The first requirement is a Saturn ROM BIOS image (hence a Sega
 Saturn). Please don't ask us where to get one. 
 
 Execute "yabause". The program will open a settings window.
+
+The Disc Type setting allows you to be choose whether you'd
+like to use a real cdrom or a cdrom image of the game you're
+trying to run.
+
+The Cue/Iso File setting allows you to specify the location
+of your Saturn game's cdrom image. 
 
 The Drive Letter setting is for you to be able to choose which
 cdrom drive you want yabause to use when trying to boot a game.
@@ -69,10 +75,16 @@ The MPEG ROM File setting allows you to specify the location
 of a MPEG Card's ROM image. While not necessary, it does allow
 you to test out the saturn's vcd capabilities.
 
+The Cartridge Type setting allows you to be choose which type
+of external cartridge to emulate. Some carts also require you
+to supply a rom filename, or a new filename for the emulator to
+write to. You can enter that information in the field below it.
+
 When you're done, just click on the "OK" button. If the bios
 location was specified correctly, emulation should start and
-you will see a bit of a brief animation of the saturn logo
-being formed. 
+you will see a brief animation of the saturn logo being formed. 
+
+Special Note: Some settings require a restart of the program.
 
 Here are the current key mappings(they may be subject to change):
 e - Up
@@ -89,7 +101,7 @@ x - Left Trigger
 z - Right Trigger
 j - Start button
 q - Quit program
-
+F1 - Toggle FPS display
 
 3 Contact information_________________________________________
 
