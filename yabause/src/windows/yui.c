@@ -246,22 +246,21 @@ int YuiInit(void) {
    else if (stricmp(tempstr, "AUTO") == 0)
       regionid = 0;
 
-        // Figure out how much of the screen is useable
-//        if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workarearect, 0) == FALSE)
-//        {
-           // Since we can't retrieve it, use a default values
-           yabwinw = 320 + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
-           yabwinh = 224 + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);
+   // Figure out how much of the screen is useable
+//   if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workarearect, 0) == FALSE)
+//   {
+      // Since we can't retrieve it, use a default values
+      yabwinw = 320 + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
+      yabwinh = 224 + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);
+//   }
+//   else
+//   {
+//      // Calculate sizes that fit in the work area
+//      yabwinw = workarearect.right - workarearect.left;
+//      yabwinh = workarearect.bottom - workarearect.top;
+//   }
 
-//        }
-//        else
-//        {
-//           // Calculate sizes that fit in the work area
-//           yabwinw = workarearect.right - workarearect.left - (GetSystemMetrics(SM_CXSIZEFRAME) * 2);
-//           yabwinh = workarearect.bottom - workarearect.top - ((GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION));
-//        }
-
-        // Create a window
+   // Create a window
    hWnd = CreateWindow(szClassName,        // class
                        szAppName,          // caption
                        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
