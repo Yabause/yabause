@@ -87,10 +87,10 @@ you will see a brief animation of the saturn logo being formed.
 Special Note: Some settings require a restart of the program.
 
 Here are the current key mappings(they may be subject to change):
-e - Up
-s - Left
-d - Down
-f - Right
+Up arrow - Up
+Left arrow - Left
+Down arrow - Down
+right arrow - Right
 k - A button
 l - B button
 m - C button
