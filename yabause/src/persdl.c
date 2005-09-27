@@ -123,6 +123,14 @@ int PERSDLInit(void) {
         PERSDLKeyPressed[SDLK_5] = ToggleRBG0;
         PERSDLKeyPressed[SDLK_6] = ToggleVDP1;
 
+	/* for french keyboards */
+        PERSDLKeyPressed[SDLK_AMPERSAND] = ToggleNBG0;
+        PERSDLKeyPressed[SDLK_WORLD_73]  = ToggleNBG1;
+        PERSDLKeyPressed[SDLK_QUOTEDBL]  = ToggleNBG2;
+        PERSDLKeyPressed[SDLK_QUOTE]     = ToggleNBG3;
+        PERSDLKeyPressed[SDLK_LEFTPAREN] = ToggleRBG0;
+        PERSDLKeyPressed[SDLK_MINUS]     = ToggleVDP1;
+
         PERSDLKeyPressed[SDLK_F1] = ToggleFPS;
 
 	return 0;
