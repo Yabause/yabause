@@ -149,30 +149,49 @@ void PERSDLNothing(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int PERSDLHandleEvents(void) {
-	SDL_Event event;
+   SDL_Event event;
+   int i;
 
-	if (SDL_PollEvent(&event)) {
-		switch(event.type) {
-		case SDL_QUIT:
-			YuiQuit();
-			break;
-		case SDL_KEYDOWN:
-			PERSDLKeyPressed[event.key.keysym.sym]();
-			break;
-		case SDL_KEYUP:
-			PERSDLKeyReleased[event.key.keysym.sym]();
-			break;
-		case SDL_VIDEORESIZE:
-			VIDCore->Resize(event.resize.w, event.resize.h);
-			break;
-		default:
-			break;
-		}
-	} else {
-		if (YabauseExec() != 0)
-			return -1;
-	}
-	return 0;
+   while (SDL_PollEvent(&event))
+   {
+      switch(event.type)
+      {
+         case SDL_QUIT:
+            YuiQuit();
+            break;
+         case SDL_KEYDOWN:
+            PERSDLKeyPressed[event.key.keysym.sym]();
+            break;
+         case SDL_KEYUP:
+            PERSDLKeyReleased[event.key.keysym.sym]();
+            break;
+         case SDL_VIDEORESIZE:
+            VIDCore->Resize(event.resize.w, event.resize.h);
+            break;
+         default:
+            break;
+      }
+   }
+
+   // I may end up changing this depending on people's results
+   if (YabauseExec() != 0)
+      return -1;
+   if (YabauseExec() != 0)
+      return -1;
+   if (YabauseExec() != 0)
+      return -1;
+   if (YabauseExec() != 0)
+      return -1;
+   if (YabauseExec() != 0)
+      return -1;
+   if (YabauseExec() != 0)
+      return -1;
+   if (YabauseExec() != 0)
+      return -1;
+   if (YabauseExec() != 0)
+      return -1;
+
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
