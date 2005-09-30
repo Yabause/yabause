@@ -415,6 +415,351 @@ int Vdp1LoadState(FILE *fp, int version, int size)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+u32 Vdp1DebugGetCommandNumberAddr(u32 number)
+{
+   u32 addr = 0;
+   u32 returnAddr = 0xFFFFFFFF;
+   u32 commandCounter = 0;
+   u16 command;
+
+   command = T1ReadWord(Vdp1Ram, addr);
+
+   while (!(command & 0x8000) && commandCounter != number)
+   {
+      // Determine where to go next
+      switch ((command & 0x3000) >> 12)
+      {
+         case 0: // NEXT, jump to following table
+            addr += 0x20;
+            break;
+         case 1: // ASSIGN, jump to CMDLINK
+            addr = T1ReadWord(Vdp1Ram, addr + 2) * 8;
+            break;
+         case 2: // CALL, call a subroutine
+            if (returnAddr == 0xFFFFFFFF)
+               returnAddr = addr + 0x20;
+	
+            addr = T1ReadWord(Vdp1Ram, addr + 2) * 8;
+            break;
+         case 3: // RETURN, return from subroutine
+            if (returnAddr != 0xFFFFFFFF) {
+               addr = returnAddr;
+               returnAddr = 0xFFFFFFFF;
+            }
+            else
+               addr += 0x20;
+            break;
+      }
+
+      command = T1ReadWord(Vdp1Ram, addr);
+      commandCounter++;    
+   }
+
+   if (commandCounter == number)
+      return addr;
+   else
+      return 0xFFFFFFFF;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+char *Vdp1DebugGetCommandNumberName(u32 number)
+{
+   u32 addr;
+   u16 command;
+
+   if ((addr = Vdp1DebugGetCommandNumberAddr(number)) != 0xFFFFFFFF)
+   {
+      command = T1ReadWord(Vdp1Ram, addr);
+
+      if (command & 0x8000)
+         return "Draw End";
+
+      // Figure out command name
+      switch (command & 0x000F)
+      {
+         case 0:
+            return "Normal Sprite";
+         case 1:
+            return "Scaled Sprite";
+         case 2:
+            return "Distorted Sprite";
+         case 4:
+            return "Polygon";
+         case 5:
+            return "Polyline";
+         case 6:
+            return "Line";
+         case 8:
+            return "User Clipping Coordinates";
+         case 9:
+            return "System Clipping Coordinates";
+         case 10:
+            return "Local Coordinates";
+         default:
+             return "Bad command";
+      }
+   }
+   else
+      return NULL;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+// Terrible, but I'm not sure how to do the equivalent in inline
+#define AddString(s, r...) \
+   sprintf(s, ## r); \
+   s += strlen(s)
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp1DebugCommand(u32 number, char *outstring)
+{
+   u16 command;
+   vdp1cmd_struct cmd;
+   u32 addr;
+
+   if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
+      return;
+
+   command = T1ReadWord(Vdp1Ram, addr);
+
+   if (command & 0x8000)
+   {
+      // Draw End
+      outstring[0] = 0x00;
+      return;
+   }
+
+   if (command & 0x4000)
+   {
+      AddString(outstring, "Command is skipped\r\n");
+      return;
+   }
+
+   Vdp1ReadCommand(&cmd, addr);
+
+   switch (cmd.CMDCTRL & 0x000F)
+   {
+      case 0:
+         AddString(outstring, "Normal Sprite\r\n");
+         AddString(outstring, "x = %d, y = %d\r\n", cmd.CMDXA, cmd.CMDYA);
+         break;
+      case 1:
+         AddString(outstring, "Scaled Sprite\r\n");
+
+         AddString(outstring, "Zoom Point: ");
+
+         switch ((cmd.CMDCTRL >> 8) & 0xF)
+         {
+            case 0x0:
+               AddString(outstring, "Only two coordinates\r\n");
+               break;
+            case 0x5:
+               AddString(outstring, "Upper-left\r\n");
+               break;
+            case 0x6:
+               AddString(outstring, "Upper-center\r\n");
+               break;
+            case 0x7:
+               AddString(outstring, "Upper-right\r\n");
+               break;
+            case 0x9:
+               AddString(outstring, "Center-left\r\n");
+               break;
+            case 0xA:
+               AddString(outstring, "Center-center\r\n");
+               break;
+            case 0xB:
+               AddString(outstring, "Center-right\r\n");
+               break;
+            case 0xC:
+               AddString(outstring, "Lower-left\r\n");
+               break;
+            case 0xE:
+               AddString(outstring, "Lower-center\r\n");
+               break;
+            case 0xF:
+               AddString(outstring, "Lower-right\r\n");
+               break;
+            default: break;
+         }
+
+         AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
+         AddString(outstring, "x3 = %d, y3 = %d, x4 = %d, y4 = %d\r\n", cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
+
+         break;
+      case 2:
+         AddString(outstring, "Distorted Sprite\r\n");
+         AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
+         AddString(outstring, "x3 = %d, y3 = %d, x4 = %d, y4 = %d\r\n", cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
+         break;
+      case 4:
+         AddString(outstring, "Polygon\r\n");
+         AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
+         AddString(outstring, "x3 = %d, y3 = %d, x4 = %d, y4 = %d\r\n", cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
+         break;
+      case 5:
+         AddString(outstring, "Polyline\r\n");
+         AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
+         AddString(outstring, "x3 = %d, y3 = %d, x4 = %d, y4 = %d\r\n", cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
+         break;
+      case 6:
+         AddString(outstring, "Line\r\n");
+         AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
+         break;
+      case 8:
+         AddString(outstring, "User Clipping\r\n");
+         AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXC, cmd.CMDYC);
+         break;
+      case 9:
+         AddString(outstring, "System Clipping\r\n");
+         AddString(outstring, "x1 = 0, y1 = 0, x2 = %d, y2 = %d\r\n", cmd.CMDXC, cmd.CMDYC);
+         break;
+      case 10:
+         AddString(outstring, "Local Coordinates\r\n");
+         AddString(outstring, "x = %d, y = %d\r\n", cmd.CMDXA, cmd.CMDYA);
+         break;
+      default:
+         AddString(outstring, "Invalid command\r\n");
+         break;
+   }
+
+   // Only Sprite commands use CMDSRCA, CMDSIZE
+   if (!(cmd.CMDCTRL & 0x000C))
+   {
+      AddString(outstring, "Texture address = %08X\r\n", ((unsigned int)cmd.CMDSRCA) << 3);
+      AddString(outstring, "Texture width = %d, height = %d\r\n", (cmd.CMDSIZE & 0x3F00) >> 5, cmd.CMDSIZE & 0xFF);
+      AddString(outstring, "Texture read direction: ");
+
+      switch ((cmd.CMDCTRL >> 4) & 0x3)
+      {
+         case 0:
+            AddString(outstring, "Normal\r\n");
+            break;
+         case 1:
+            AddString(outstring, "Reversed horizontal\r\n");
+            break;
+         case 2:
+            AddString(outstring, "Reversed vertical\r\n");
+            break;
+         case 3:
+            AddString(outstring, "Reversed horizontal and vertical\r\n");
+            break;
+         default: break;
+      }      
+   }
+
+   // Only draw commands use CMDPMOD
+   if (!(cmd.CMDCTRL & 0x0008))
+   {
+      if (cmd.CMDPMOD & 0x8000)
+      {
+         AddString(outstring, "MSB set\r\n");
+      }
+
+      if (cmd.CMDPMOD & 0x1000)
+      {
+         AddString(outstring, "High Speed Shrink Enabled\r\n");
+      }
+
+      if (!(cmd.CMDPMOD & 0x0800))
+      {
+         AddString(outstring, "Pre-clipping Enabled\r\n");
+      }
+
+      if (cmd.CMDPMOD & 0x0400)
+      {
+         AddString(outstring, "User Clipping Enabled\r\n");
+         AddString(outstring, "Clipping Mode = %d\r\n", (cmd.CMDPMOD >> 9) & 0x1);
+      }
+
+      if (cmd.CMDPMOD & 0x0100)
+      {
+         AddString(outstring, "Mesh Enabled\r\n");
+      }
+
+      if (!(cmd.CMDPMOD & 0x0080))
+      {
+         AddString(outstring, "End Code Enabled\r\n");
+      }
+
+      if (!(cmd.CMDPMOD & 0x0040))
+      {
+         AddString(outstring, "Transparent Pixel Enabled\r\n");
+      }
+
+      AddString(outstring, "Color mode: ");
+
+      switch ((cmd.CMDPMOD >> 3) & 0x7)
+      {
+         case 0:
+            AddString(outstring, "4 BPP(16 color bank)\r\n");
+            AddString(outstring, "Color bank: %08X", (cmd.CMDCOLR << 3));
+            break;
+         case 1:
+            AddString(outstring, "4 BPP(16 color LUT)\r\n");
+            AddString(outstring, "Color lookup table: %08X", (cmd.CMDCOLR << 3));
+            break;
+         case 2:
+            AddString(outstring, "8 BPP(64 color bank)\r\n");
+            AddString(outstring, "Color bank: %08X", (cmd.CMDCOLR << 3));
+            break;
+         case 3:
+            AddString(outstring, "8 BPP(128 color bank)\r\n");
+            AddString(outstring, "Color bank: %08X", (cmd.CMDCOLR << 3));
+            break;
+         case 4:
+            AddString(outstring, "8 BPP(256 color bank)\r\n");
+            AddString(outstring, "Color bank: %08X", (cmd.CMDCOLR << 3));
+            break;
+         case 5:
+            AddString(outstring, "15 BPP(RGB)\r\n");
+
+            // Only non-textured commands
+            if (!(cmd.CMDCTRL & 0x0004))
+            {
+               AddString(outstring, "Non-textured color: %04X\r\n", cmd.CMDCOLR);
+            }
+            break;
+         default: break;
+      }
+
+      AddString(outstring, "Color Calc. mode: ");
+
+      switch (cmd.CMDPMOD & 0x7)
+      {
+         case 0:
+            AddString(outstring, "Replace\r\n");
+            break;
+         case 1:
+            AddString(outstring, "Cannot overwrite/Shadow\r\n");
+            break;
+         case 2:
+            AddString(outstring, "Half-luminance\r\n");
+            break;
+         case 3:
+            AddString(outstring, "Replace/Half-transparent\r\n");
+            break;
+         case 4:
+            AddString(outstring, "Gouraud Shading\r\n");
+            AddString(outstring, "Gouraud Shading Table = %08X\r\n", ((unsigned int)cmd.CMDGRDA) << 3);
+            break;
+         case 6:
+            AddString(outstring, "Gouraud Shading + Half-luminance\r\n");
+            AddString(outstring, "Gouraud Shading Table = %08X\r\n", ((unsigned int)cmd.CMDGRDA) << 3);
+            break;
+         case 7:
+            AddString(outstring, "Gouraud Shading/Gouraud Shading + Half-transparent\r\n");
+            AddString(outstring, "Gouraud Shading Table = %08X\r\n", ((unsigned int)cmd.CMDGRDA) << 3);
+            break;
+         default: break;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // Dummy Video Interface
 //////////////////////////////////////////////////////////////////////////////
 
