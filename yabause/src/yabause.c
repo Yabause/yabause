@@ -32,6 +32,9 @@
 #include "smpc.h"
 #include "vdp2.h"
 #include "yui.h"
+#ifdef __APPLE__
+#include "SDL.h"
+#endif
 
 #define DONT_PROFILE
 #include "profile.h"
