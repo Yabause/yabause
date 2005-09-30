@@ -2533,10 +2533,10 @@ void VIDSDLGLVdp2DrawScreens(void)
 {
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
-   Vdp2DrawNBG0();
-   Vdp2DrawNBG1();
-   Vdp2DrawNBG2();
    Vdp2DrawNBG3();
+   Vdp2DrawNBG2();
+   Vdp2DrawNBG1();
+   Vdp2DrawNBG0();
    Vdp2DrawRBG0();
 }
 
