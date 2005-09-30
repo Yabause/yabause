@@ -158,6 +158,7 @@ typedef struct
    int alpha;
    int coloroffset;
    int transparencyenable;
+   int specialprimode;
 
    int cor;
    int cog;
@@ -636,7 +637,10 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
 
    tile.w = tile.h = info->patternpixelwh;   
    tile.flip = info->flipfunction;
-   tile.priority = info->priority;
+   if (info->specialprimode == 1)
+      tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
+   else
+      tile.priority = info->priority;
    tile.vertices[0] = info->x * info->coordincx;
    tile.vertices[1] = info->y * info->coordincy;
    tile.vertices[2] = (info->x + tile.w) * info->coordincx;
@@ -721,7 +725,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
          u16 tmp = T1ReadWord(Vdp2Ram, info->addr);         
 
          info->addr += 2;
-         info->specialfunction = info->supplementdata & 0x300 >> 8;
+         info->specialfunction = info->supplementdata & 0x200 >> 9;
 
          switch(info->colornumber)
          {
@@ -772,7 +776,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
          info->charaddr = tmp2 & 0x7FFF;
          info->flipfunction = (tmp1 & 0xC000) >> 14;
          info->paladdr = (tmp1 & 0x7F);
-         info->specialfunction = (tmp1 & 0x3000) >> 12;
+         info->specialfunction = (tmp1 & 0x2000) >> 13;
          break;
       }
    }
@@ -1598,6 +1602,7 @@ static void Vdp2DrawNBG0(void)
     */
    info.enable = Vdp2Regs->BGON & 0x1;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x100);
+   info.specialprimode = Vdp2Regs->SFPRMD & 0x3;
 
    info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % 512);
    info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % 512);
@@ -1806,6 +1811,7 @@ static void Vdp2DrawNBG1(void)
 
    info.enable = Vdp2Regs->BGON & 0x2;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x200);
+   info.specialprimode = (Vdp2Regs->SFPRMD >> 2) & 0x3;
    info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % 512);
    info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % 512);
 
@@ -2010,6 +2016,7 @@ static void Vdp2DrawNBG2(void)
 
    info.enable = Vdp2Regs->BGON & 0x4;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x400);
+   info.specialprimode = (Vdp2Regs->SFPRMD >> 4) & 0x3;
    info.x = - ((Vdp2Regs->SCXN2 & 0x7FF) % 512);
    info.y = - ((Vdp2Regs->SCYN2 & 0x7FF) % 512);
 
@@ -2165,6 +2172,7 @@ static void Vdp2DrawNBG3(void)
 
    info.enable = Vdp2Regs->BGON & 0x8;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x800);
+   info.specialprimode = (Vdp2Regs->SFPRMD >> 6) & 0x3;
    info.x = - ((Vdp2Regs->SCXN3 & 0x7FF) % 512);
    info.y = - ((Vdp2Regs->SCYN3 & 0x7FF) % 512);
 
@@ -2381,6 +2389,7 @@ static void Vdp2DrawRBG0(void)
 
    info.enable = Vdp2Regs->BGON & 0x10;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x1000);
+   info.specialprimode = (Vdp2Regs->SFPRMD >> 8) & 0x3;
 
    info.x = 0; // this is obviously wrong
    info.y = 0; // this is obviously wrong
