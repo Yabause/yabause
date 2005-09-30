@@ -430,6 +430,11 @@ u32 Vdp1DebugGetCommandNumberAddr(u32 number)
 
    while (!(command & 0x8000) && commandCounter != number)
    {
+      // Make sure we're still dealing with a valid command
+      if ((command & 0x000C) == 0x000C)
+         // Invalid, abort
+         return 0xFFFFFFFF;
+
       // Determine where to go next
       switch ((command & 0x3000) >> 12)
       {
