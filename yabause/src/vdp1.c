@@ -324,9 +324,12 @@ void Vdp1Draw(void) {
             case 10: // local coordinate
                VIDCore->Vdp1LocalCoordinate();
                break;
-            default:
+            default: // Abort
                VDP1LOG("vdp1\t: Bad command: %x\n",  command);
-               break;
+               VIDCore->Vdp1DrawEnd();
+               Vdp1Regs->LOPR = Vdp1Regs->addr >> 3;
+               Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+               return;
          }
       }
 
