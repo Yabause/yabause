@@ -61,6 +61,8 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam);
+LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam);
 LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam);
 LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -354,6 +356,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             {
                debugsh = SSH2;
                DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
+               break;
+            }
+            case IDM_VDP1DEBUG:
+            {
+               DialogBox(y_hInstance, "VDP1DebugDlg", hWnd, (DLGPROC)VDP1DebugDlgProc);
                break;
             }
             case IDM_VDP2DEBUG:
@@ -892,6 +899,83 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
 
                break;
+            }
+
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                 LPARAM lParam)
+{
+   char tempstr[1024];
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         char *string;
+         u32 i=0;
+
+         // execute yabause until vblank-out
+         while (yabsys.LineCount != 262)
+         {
+            if (YabauseExec() != 0)
+               return FALSE;
+         }
+
+         // Build command list
+         SendMessage(GetDlgItem(hDlg, IDC_VDP1CMDLB), LB_RESETCONTENT, 0, 0);
+
+         for (;;)
+         {
+            if ((string = Vdp1DebugGetCommandNumberName(i)) == NULL)
+               break;
+
+            SendMessage(GetDlgItem(hDlg, IDC_VDP1CMDLB), LB_ADDSTRING, 0, (LPARAM)string);
+
+            i++;
+         }
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_VDP1CMDLB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case LBN_SELCHANGE:
+                  {
+                     u8 cursel=0;
+
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_VDP1CMDLB, LB_GETCURSEL, 0, 0);
+
+                     Vdp1DebugCommand(cursel, tempstr);
+                     SetDlgItemText(hDlg, IDC_VDP1CMDET, tempstr);
+
+                     return TRUE;
+                  }
+                  default: break;
+               }
+
+               return TRUE;
+            }
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+
+               return TRUE;
             }
 
             default: break;

@@ -36,6 +36,7 @@ BEGIN
   BEGIN
     MENUITEM "Master SH2", IDM_MSH2DEBUG
     MENUITEM "Slave SH2", IDM_SSH2DEBUG
+    MENUITEM "VDP1", IDM_VDP1DEBUG
     MENUITEM "VDP2", IDM_VDP2DEBUG
     MENUITEM "68K", IDM_M68KDEBUG
     MENUITEM "SCU DSP", IDM_SCUDSPDEBUG
@@ -106,6 +107,20 @@ BEGIN
 //    CHECKBOX "&Byte", IDC_CHKBYTE, 339, 167, 36, 10
 //    CHECKBOX "&Word", IDC_CHKWORD, 339, 177, 36, 10
 //    CHECKBOX "&Dword", IDC_CHKDWORD, 339, 187, 36, 10
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+VDP1DEBUGDLG DIALOG FIXED PURE  0, 0, 306, 200
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "VDP1 Debug"
+FONT 8, "Courier New"
+BEGIN
+    LTEXT           "VDP1 Command List", -1, 4, 4, 70, 10
+    LISTBOX         IDC_VDP1CMDLB, 4, 14, 124, 168, WS_VSCROLL
+    LTEXT           "VDP1 Command Info", -1, 150, 4, 70, 10
+    EDITTEXT        IDC_VDP1CMDET, 132, 14, 170, 162, ES_MULTILINE | ES_READONLY | WS_HSCROLL | WS_VSCROLL
+    DEFPUSHBUTTON   "&Close", IDOK, 4, 182, 40, 14
 END
 
 //////////////////////////////////////////////////////////////////////////////

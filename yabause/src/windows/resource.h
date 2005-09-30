@@ -28,9 +28,10 @@
 #define IDM_EXIT        10008
 #define IDM_MSH2DEBUG   10009
 #define IDM_SSH2DEBUG   10010
-#define IDM_VDP2DEBUG   10011
-#define IDM_M68KDEBUG   10012
-#define IDM_SCUDSPDEBUG 10013
+#define IDM_VDP1DEBUG   10011
+#define IDM_VDP2DEBUG   10012
+#define IDM_M68KDEBUG   10013
+#define IDM_SCUDSPDEBUG 10014
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002
@@ -97,6 +98,12 @@
 #define IDC_VIDEOSETTINGS               1016
 #define IDC_SOUNDSETTINGS               1017
 #define IDC_INPUTSETTINGS               1018
+
+//////////////////////////////////////////////////////////////////////////////
+// VDP1 debug stuff
+
+#define IDC_VDP1CMDLB                   1001
+#define IDC_VDP1CMDET                   1002
 
 //////////////////////////////////////////////////////////////////////////////
 // VDP2 debug stuff
