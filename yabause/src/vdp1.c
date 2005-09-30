@@ -696,23 +696,23 @@ void Vdp1DebugCommand(u32 number, char *outstring)
       {
          case 0:
             AddString(outstring, "4 BPP(16 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X", (cmd.CMDCOLR << 3));
+            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
             break;
          case 1:
             AddString(outstring, "4 BPP(16 color LUT)\r\n");
-            AddString(outstring, "Color lookup table: %08X", (cmd.CMDCOLR << 3));
+            AddString(outstring, "Color lookup table: %08X\r\n", (cmd.CMDCOLR << 3));
             break;
          case 2:
             AddString(outstring, "8 BPP(64 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X", (cmd.CMDCOLR << 3));
+            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
             break;
          case 3:
             AddString(outstring, "8 BPP(128 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X", (cmd.CMDCOLR << 3));
+            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
             break;
          case 4:
             AddString(outstring, "8 BPP(256 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X", (cmd.CMDCOLR << 3));
+            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
             break;
          case 5:
             AddString(outstring, "15 BPP(RGB)\r\n");
