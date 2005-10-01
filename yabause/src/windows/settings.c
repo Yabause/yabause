@@ -355,7 +355,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                ZeroMemory(&ofn, sizeof(OPENFILENAME));
                ofn.lStructSize = sizeof(OPENFILENAME);
                ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "Cue files (*.cue)\0*.cue\0Iso files (*.iso)\0*.iso\0All Files (*.*)\0*.*\0";
+               ofn.lpstrFilter = "Supported image files (*.cue, *.iso)\0*.cue;*.iso\0Cue files (*.cue)\0*.cue\0Iso files (*.iso)\0*.iso\0All Files (*.*)\0*.*\0";
                GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempstr, MAX_PATH);
                ofn.lpstrFile = tempstr;
                ofn.nMaxFile = sizeof(tempstr);
@@ -428,7 +428,38 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                return TRUE;
             }
+            case IDC_CARTBROWSE:
+            {
+               OPENFILENAME ofn;
+               u8 cursel=0;
 
+               // setup ofn structure
+               ZeroMemory(&ofn, sizeof(OPENFILENAME));
+               ofn.lStructSize = sizeof(OPENFILENAME);
+               ofn.hwndOwner = hDlg;
+               ofn.lpstrFilter = "Binaries (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
+               ofn.lpstrFile = cartfilename;
+               ofn.nMaxFile = sizeof(cartfilename);
+
+               cursel = (u8)SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_GETCURSEL, 0, 0);
+
+               switch (cursel)
+               {
+                  case CART_PAR:
+                  case CART_ROM16MBIT:
+                     ofn.Flags = OFN_FILEMUSTEXIST;
+                     break;
+                  default: break;
+               }
+
+               if (GetOpenFileName(&ofn))
+               {
+                  // adjust appropriate edit box
+                  SetDlgItemText(hDlg, IDC_CARTEDIT, cartfilename);
+               }
+
+               return TRUE;
+            }
             case IDC_VIDEOSETTINGS:
             {
 //               DialogBox(g_hInstance, "VideoSettingsDlg", hDlg, (DLGPROC)VideoSettingsDlgProc);
