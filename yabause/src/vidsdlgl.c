@@ -378,7 +378,8 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
    // if we don't know what to do with a sprite, we put it on top
    sprite->priority = 7;
 
-   if ((SPCLMD & 0x20) && (cmd->CMDCOLR & 0x8000))
+   // is the sprite is RGB or LUT (in fact, LUT can use bank color, we just hope it won't...)
+   if (((SPCLMD & 0x20) && (cmd->CMDCOLR & 0x8000)) || (((cmd->CMDPMOD >> 3) & 0x7) == 1))
    {
       // RGB data, use register 0
       sprite->priority = Vdp2Regs->PRISA & 0x7;
