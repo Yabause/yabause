@@ -405,6 +405,14 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
             break;
+         case 2:
+            sprite_register = (cmd->CMDCOLR >> 14) & 0x1;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            break;
          case 3:
             sprite_register = (cmd->CMDCOLR & 0x6000) >> 13;
 #ifdef WORDS_BIGENDIAN
