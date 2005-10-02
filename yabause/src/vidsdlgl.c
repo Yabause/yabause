@@ -201,7 +201,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       case 0:
       {
          // 4 bpp Bank mode
-         u32 colorBank = cmd->CMDCOLR & 0xFFF0;
+         u32 colorBank = cmd->CMDCOLR;
          u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
          u16 i;
 
@@ -215,12 +215,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
                // Pixel 1
                if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor((dot >> 4) + colorBank + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
+               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
                j += 1;
 
                // Pixel 2
                if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor((dot & 0xF) + colorBank + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
+               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
                j += 1;
 
                charAddr += 1;
@@ -279,7 +279,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       case 2:
       {
          // 8 bpp(64 color) Bank mode
-         u32 colorBank = cmd->CMDCOLR & 0xFFC0;
+         u32 colorBank = cmd->CMDCOLR;
          u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
 
          u16 i, j;
@@ -292,7 +292,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(dot + colorBank + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
+               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
             }
             texture->textdata += texture->w;
          }
@@ -302,7 +302,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       case 3:
       {
          // 8 bpp(128 color) Bank mode
-         u32 colorBank = cmd->CMDCOLR & 0xFF80;
+         u32 colorBank = cmd->CMDCOLR;
          u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
          u16 i, j;
 
@@ -314,7 +314,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(dot + colorBank + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
+               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
             }
             texture->textdata += texture->w;
          }
@@ -323,7 +323,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       case 4:
       {
          // 8 bpp(256 color) Bank mode
-         u32 colorBank = cmd->CMDCOLR & 0xFF00;
+         u32 colorBank = cmd->CMDCOLR;
          u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
          u16 i, j;
 
@@ -335,7 +335,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(dot + colorBank + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
+               else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha), vdp1cor, vdp1cog, vdp1cob);
             }
             texture->textdata += texture->w;
          }
@@ -375,9 +375,6 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
    u8 sprite_register;
    u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
 
-   // if we don't know what to do with a sprite, we put it on top
-   sprite->priority = 7;
-
    // is the sprite is RGB or LUT (in fact, LUT can use bank color, we just hope it won't...)
    if (((SPCLMD & 0x20) && (cmd->CMDCOLR & 0x8000)) || (((cmd->CMDPMOD >> 3) & 0x7) == 1))
    {
@@ -396,6 +393,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
+            cmd->CMDCOLR &= 0x7FF;
             break;
          case 1:
             sprite_register = (cmd->CMDCOLR & 0xE000) >> 13;
@@ -404,6 +402,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
+            cmd->CMDCOLR &= 0x7FF;
             break;
          case 2:
             sprite_register = (cmd->CMDCOLR >> 14) & 0x1;
@@ -412,6 +411,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
+            cmd->CMDCOLR &= 0x7FF;
             break;
          case 3:
             sprite_register = (cmd->CMDCOLR & 0x6000) >> 13;
@@ -420,6 +420,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
+            cmd->CMDCOLR &= 0x7FF;
             break;
          case 4:
             sprite_register = (cmd->CMDCOLR & 0x6000) >> 13;
@@ -428,6 +429,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
+            cmd->CMDCOLR &= 0x3FF;
             break;
          case 5:
             sprite_register = (cmd->CMDCOLR & 0x7000) >> 12;
@@ -436,6 +438,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
+            cmd->CMDCOLR &= 0x7FF;
             break;
          case 6:
             sprite_register = (cmd->CMDCOLR & 0x7000) >> 12;
@@ -444,6 +447,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
+            cmd->CMDCOLR &= 0x3FF;
             break;
          case 7:
             sprite_register = (cmd->CMDCOLR & 0x7000) >> 12;
@@ -452,9 +456,13 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
+            cmd->CMDCOLR &= 0x1FF;
             break;
          default:
             VDP1LOG("sprite type %d not implemented\n", sprite_type);
+
+            // if we don't know what to do with a sprite, we put it on top
+            sprite->priority = 7;
             break;
       }
    }
@@ -1095,11 +1103,11 @@ void VIDSDLGLVdp1NormalSpriteDraw(void)
    sprite.vertices[6] = (int)((float)x * vdp1wratio);
    sprite.vertices[7] = (int)((float)(y + sprite.h) * vdp1hratio);
 
-   Vdp1ReadPriority(&cmd, &sprite);
-
    tmp = cmd.CMDSRCA;
    tmp <<= 16;
    tmp |= cmd.CMDCOLR;
+
+   Vdp1ReadPriority(&cmd, &sprite);
 
    if (sprite.w > 0 && sprite.h > 1)
    {
@@ -1203,11 +1211,11 @@ void VIDSDLGLVdp1ScaledSpriteDraw(void)
    sprite.vertices[6] = (int)((float)x * vdp1wratio);
    sprite.vertices[7] = (int)((float)(y + rh) * vdp1hratio);
 
-   Vdp1ReadPriority(&cmd, &sprite);
-
    tmp = cmd.CMDSRCA;
    tmp <<= 16;
    tmp |= cmd.CMDCOLR;
+
+   Vdp1ReadPriority(&cmd, &sprite);
 
    if (sprite.w > 0 && sprite.h > 1)
    {
@@ -1250,12 +1258,12 @@ void VIDSDLGLVdp1DistortedSpriteDraw(void)
    sprite.vertices[6] = (s32)((float)(cmd.CMDXD + Vdp1Regs->localX) * vdp1wratio);
    sprite.vertices[7] = (s32)((float)(cmd.CMDYD + Vdp1Regs->localY) * vdp1hratio);
 
-   Vdp1ReadPriority(&cmd, &sprite);
-
    tmp = cmd.CMDSRCA;
 
    tmp <<= 16;
    tmp |= cmd.CMDCOLR;
+
+   Vdp1ReadPriority(&cmd, &sprite);
 
    if (sprite.w > 0 && sprite.h > 1)
    {
