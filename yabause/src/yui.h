@@ -32,6 +32,9 @@ void YuiSetIsoFilename(const char *);
 /* Sets CDROM filename in the yui - used to specify the CDROM from the commandline */
 void YuiSetCdromFilename(const char *);
 
+/* Tells the yui to enable, or disable sound. By default it should be assumed that sound is enabled */
+void YuiSetSoundEnable(int enablesound);
+
 //////////////////////////////////////////////////////////////////////////////
 // Helper functions(you can use these in your own port)
 //////////////////////////////////////////////////////////////////////////////

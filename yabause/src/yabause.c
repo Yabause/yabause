@@ -360,6 +360,10 @@ int main(int argc, char *argv[]) {
             YuiSetCdromFilename(argv[i + 1]);
          else if (strstr(argv[i], "--cdrom="))
             YuiSetCdromFilename(argv[i] + strlen("--cdrom="));
+
+         // Set sound
+         else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0)
+            YuiSetSoundEnable(0);
       }
    }
 #endif

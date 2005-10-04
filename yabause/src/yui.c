@@ -42,6 +42,7 @@ const char * bios = "jap.rom";
 const char * iso_or_cd = 0;
 const char * backup_ram = "backup.ram";
 int cdcore = CDCORE_DEFAULT;
+int soundenable = 1;
 
 void YuiSetBiosFilename(const char * biosfilename) {
         bios = biosfilename;
@@ -55,6 +56,11 @@ void YuiSetIsoFilename(const char * isofilename) {
 void YuiSetCdromFilename(const char * cdromfilename) {
 	cdcore = CDCORE_ARCH;
 	iso_or_cd = cdromfilename;
+}
+
+void YuiSetSoundEnable(int enablesound)
+{
+   soundenable = enablesound;
 }
 
 void YuiHideShow(void) {
@@ -74,7 +80,10 @@ int YuiInit(void) {
    yinit.percoretype = PERCORE_SDL;
    yinit.sh2coretype = SH2CORE_DEFAULT;
    yinit.vidcoretype = VIDCORE_SDLGL;
-   yinit.sndcoretype = SNDCORE_SDL;
+   if (soundenable)
+      yinit.sndcoretype = SNDCORE_SDL;
+   else
+      yinit.sndcoretype = SNDCORE_DUMMY;
    yinit.cdcoretype = cdcore;
    yinit.carttype = CART_NONE; // fix me
    yinit.regionid = REGION_AUTODETECT;
