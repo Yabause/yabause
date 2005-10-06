@@ -39,6 +39,12 @@ void LogStop(void);
 #define CDLOG(f, r...)
 #endif
 
+#ifdef SCSP_DEBUG
+#define SCSPLOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
+#else
+#define SCSPLOG(f, r...)
+#endif
+
 #ifdef VDP1_DEBUG
 #define VDP1LOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
 #else

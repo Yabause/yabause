@@ -81,6 +81,7 @@
 #include "scsp.h"
 
 #include "c68k/c68k.h"
+#include "debug.h"
 #include "memory.h"
 #include "scu.h"
 #include "yabause.h"
@@ -90,8 +91,6 @@
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
-
-//#define SCSP_LOG
 
 #define SCSP_FREQ			44100				// SCSP frequency
 
@@ -305,25 +304,6 @@ static void scsp_decay_next(slot_t *slot);
 static void scsp_attack_next(slot_t *slot);
 
 ////////////////////////////////////////////////////////////////
-// Debug
-
-#ifdef SCSP_LOG
-
-void slog(char * out, ...){
-	va_list list;
-	char temp[1024];
-
-        va_start(list, out);
-        vsprintf(temp, out, list);
-        va_end(list);
-        fprintf(stderr, temp);
-}
-
-#else
-#define slog(f, r...)
-#endif
-
-////////////////////////////////////////////////////////////////
 // Misc
 
 static int scsp_round(double val)
@@ -340,13 +320,13 @@ static void scsp_main_interrupt(u32 id)
 {
 //	if (scsp.mcipd & id) return;
 	
-//	if (id != 0x400) slog("scsp main interrupt %.4X\n", id);
+//      if (id != 0x400) SCSPLOG("scsp main interrupt %.4X\n", id);
 
 	scsp.mcipd |= id;
 
 	if (scsp.mcieb & id)
 	{
-		slog("scsp main interrupt accepted %.4X\n", id);
+                SCSPLOG("scsp main interrupt accepted %.4X\n", id);
 
 		if (scsp.mintf != NULL) scsp.mintf();
 	}
@@ -358,7 +338,7 @@ static void scsp_sound_interrupt(u32 id)
 	
 //	if (scsp.scipd & id) return;
 
-//	slog("scsp sound interrupt %.4X\n", id);
+//      SCSPLOG("scsp sound interrupt %.4X\n", id);
 
 	scsp.scipd |= id;
 	
@@ -371,7 +351,7 @@ static void scsp_sound_interrupt(u32 id)
 		if (scsp.scilv1 & id) level |= 2;
 		if (scsp.scilv2 & id) level |= 4;
 
-		if (id == 0x8) slog("scsp sound interrupt accepted %.2X lev=%d\n", id, level);
+                if (id == 0x8) SCSPLOG("scsp sound interrupt accepted %.2X lev=%d\n", id, level);
 
 		if (scsp.sintf != NULL) scsp.sintf(level);
 	}
@@ -385,12 +365,12 @@ static void scsp_dma(void)
 	if (scsp.dmfl & 0x20)
 	{
 		// dsp -> scsp_ram
-		slog("scsp dma: scsp_ram(%08lx) <- reg(%08lx) * %08lx\n", scsp.dmea, scsp.drga, scsp.dmlen);
+                SCSPLOG("scsp dma: scsp_ram(%08lx) <- reg(%08lx) * %08lx\n", scsp.dmea, scsp.drga, scsp.dmlen);
 	}
 	else
 	{
 		// scsp_ram -> dsp
-		slog("scsp dma: scsp_ram(%08lx) -> reg(%08lx) * %08lx\n", scsp.dmea, scsp.drga, scsp.dmlen);
+                SCSPLOG("scsp dma: scsp_ram(%08lx) -> reg(%08lx) * %08lx\n", scsp.dmea, scsp.drga, scsp.dmlen);
 	}
 
 	scsp_ccr[0x16 ^ 3] &= 0xE0;
@@ -407,7 +387,7 @@ static void scsp_slot_keyon(slot_t *slot)
 	// key need to be released before being pressed ;)
 	if (slot->ecurp == SCSP_ENV_RELEASE)
 	{
-                slog("key on slot %d. 68K PC = %08X slot->sa = %08X slot->lsa = %08X slot->lea = %08X\n", slot - &(scsp.slot[0]), C68k_Get_PC(&C68K), slot->sa, slot->lsa, slot->lea >> SCSP_FREQ_LB);
+                SCSPLOG("key on slot %d. 68K PC = %08X slot->sa = %08X slot->lsa = %08X slot->lea = %08X\n", slot - &(scsp.slot[0]), C68k_Get_PC(&C68K), slot->sa, slot->lsa, slot->lea >> SCSP_FREQ_LB);
 
 		// set buffer, loop start/end address of the slot
 		if (slot->pcm8b)
@@ -441,7 +421,7 @@ static void scsp_slot_keyoff(slot_t *slot)
 	// key need to be pressed before being released ;)
 	if (slot->ecurp != SCSP_ENV_RELEASE)
 	{
-		slog("key off slot %d\n", slot - &(scsp.slot[0]));
+                SCSPLOG("key off slot %d\n", slot - &(scsp.slot[0]));
 
 		// if we still are in attack phase at release time, convert attack to decay
 		if (slot->ecurp == SCSP_ENV_ATTACK) slot->ecnt = SCSP_ENV_DE - slot->ecnt;
@@ -527,7 +507,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 {
 	slot_t *slot = &(scsp.slot[s]);
 
-	slog("slot %d : reg %.2X = %.2X\n", s, a & 0x1F, d);
+        SCSPLOG("slot %d : reg %.2X = %.2X\n", s, a & 0x1F, d);
 
 	scsp_isr[a ^ 3] = d;
 
@@ -756,7 +736,7 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 {
 	slot_t *slot = &(scsp.slot[s]);
 
-        slog("slot %d : reg %.2X = %.4X\n", s, a & 0x1E, d);
+        SCSPLOG("slot %d : reg %.2X = %.4X\n", s, a & 0x1E, d);
 
 	*(u16 *)&scsp_isr[a ^ 2] = d;
 
@@ -936,7 +916,7 @@ u8 scsp_slot_get_b(u32 s, u32 a)
 
 	a &= 0x1F;
 
-	slog("r_b slot %d : reg %.2X\n", s, a);
+        SCSPLOG("r_b slot %d : reg %.2X\n", s, a);
 
 	if (a == 0x00) return scsp_isr[a ^ 3] & 0xEF;
 
@@ -949,7 +929,7 @@ u16 scsp_slot_get_w(u32 s, u32 a)
 
 	a = (a >> 1) & 0xF;
 
-	slog("r_w slot %d : reg %.2X\n", s, a * 2);
+        SCSPLOG("r_w slot %d : reg %.2X\n", s, a * 2);
 
 	if (a == 0x00) return *(u16 *)&scsp_isr[a ^ 2] & 0xEFFF;
 
@@ -961,9 +941,9 @@ u16 scsp_slot_get_w(u32 s, u32 a)
 
 void scsp_set_b(u32 a, u8 d)
 {
-//	if (a != 0x41D) slog("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
-	if ((a != 0x408) && (a != 0x41D)) slog("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
-//	slog("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
+//      if (a != 0x41D) SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
+        if ((a != 0x408) && (a != 0x41D)) SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
+//      SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
 
 	scsp_ccr[a ^ 3] = d;
 
@@ -1099,8 +1079,8 @@ void scsp_set_b(u32 a, u8 d)
 
 void scsp_set_w(u32 a, u16 d)
 {
-	if ((a != 0x418) && (a != 0x41A) && (a != 0x422)) slog("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
-//	slog("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
+        if ((a != 0x418) && (a != 0x41A) && (a != 0x422)) SCSPLOG("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
+//      SCSPLOG("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
 
 	*(u16 *)&scsp_ccr[a ^ 2] = d;
 
@@ -1196,10 +1176,10 @@ u8 scsp_get_b(u32 a)
 {
 	a &= 0x3F;
 
-//	if (a != 0x21) slog("r_b scsp : reg %.2X\n", a);
-	if ((a != 0x09) && (a != 0x21)) slog("r_b scsp : reg %.2X\n", a);
-//	if (a == 0x09) slog("r_b scsp 09 = %.2X\n", ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0x1) << 7);
-//	slog("r_b scsp : reg %.2X\n", a);
+//      if (a != 0x21) SCSPLOG("r_b scsp : reg %.2X\n", a);
+        if ((a != 0x09) && (a != 0x21)) SCSPLOG("r_b scsp : reg %.2X\n", a);
+//      if (a == 0x09) SCSPLOG("r_b scsp 09 = %.2X\n", ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0x1) << 7);
+//      SCSPLOG("r_b scsp : reg %.2X\n", a);
 
 	switch(a){
 
@@ -1248,7 +1228,7 @@ u16 scsp_get_w(u32 a)
 {
 	a = (a >> 1) & 0x1F;
 
-	if (a != 0x10) slog("r_w scsp : reg %.2X\n", a * 2);
+        if (a != 0x10) SCSPLOG("r_w scsp : reg %.2X\n", a * 2);
 
 	switch(a){
 
@@ -1281,7 +1261,7 @@ u16 scsp_get_w(u32 a)
 ////////////////////////////////////////////////////////////////
 // Synth Slot
 //
-//	slog("outL=%.8X bufL=%.8X disll=%d\n", outL, scsp_bufL[scsp_buf_pos], slot->disll);
+//      SCSPLOG("outL=%.8X bufL=%.8X disll=%d\n", outL, scsp_bufL[scsp_buf_pos], slot->disll);
 
 ////////////////////////////////////////////////////////////////
 
@@ -1969,7 +1949,7 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
 			slot->dislr = slot->efslr;
 		}
 
-//		slog("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
+//              SCSPLOG("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
 
 		scsp_slot_update_p[(slot->lfofms == 31)?0:1][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
 	}
@@ -2165,7 +2145,7 @@ void FASTCALL scsp_w_b(u32 a, u8 d)
 		scsp_dcr[a ^ 3] = d;
 	}
 
-	slog("WARNING: scsp w_b to %08lx w/ %02x\n", a, d);
+        SCSPLOG("WARNING: scsp w_b to %08lx w/ %02x\n", a, d);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -2174,7 +2154,7 @@ void FASTCALL scsp_w_w(u32 a, u16 d)
 {
 	if (a & 1)
 	{
-		slog("ERROR: scsp w_w misaligned : %.8X\n", a);
+                SCSPLOG("ERROR: scsp w_w misaligned : %.8X\n", a);
 	}
 
 	a &= 0xFFE;
@@ -2202,7 +2182,7 @@ void FASTCALL scsp_w_w(u32 a, u16 d)
 		*(u16 *)&scsp_dcr[a ^ 2] = d;
 	}
 
-	slog("WARNING: scsp w_w to %08lx w/ %04x\n", a, d);
+        SCSPLOG("WARNING: scsp w_w to %08lx w/ %04x\n", a, d);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -2211,7 +2191,7 @@ void FASTCALL scsp_w_d(u32 a, u32 d)
 {
 	if (a & 3)
 	{
-		slog("ERROR: scsp w_d misaligned : %.8X\n", a);
+                SCSPLOG("ERROR: scsp w_d misaligned : %.8X\n", a);
 	}
 
 	a &= 0xFFC;
@@ -2241,7 +2221,7 @@ void FASTCALL scsp_w_d(u32 a, u32 d)
 		*(u32 *)&scsp_dcr[a] = d;
 	}
 
-	slog("WARNING: scsp w_d to %08lx w/ %08lx\n", a, d);
+        SCSPLOG("WARNING: scsp w_d to %08lx w/ %08lx\n", a, d);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -2267,7 +2247,7 @@ u8 FASTCALL scsp_r_b(u32 a)
 
 	}
 
-	slog("WARNING: scsp r_b to %08lx\n", a);
+        SCSPLOG("WARNING: scsp r_b to %08lx\n", a);
 
 	return 0;
 }
@@ -2278,7 +2258,7 @@ u16 FASTCALL scsp_r_w(u32 a)
 {
 	if (a & 1)
 	{
-		slog("ERROR: scsp r_w misaligned : %.8X\n", a);
+                SCSPLOG("ERROR: scsp r_w misaligned : %.8X\n", a);
 	}
 
 	a &= 0xFFE;
@@ -2300,7 +2280,7 @@ u16 FASTCALL scsp_r_w(u32 a)
 
 	}
 
-	slog("WARNING: scsp r_w to %08lx\n", a);
+        SCSPLOG("WARNING: scsp r_w to %08lx\n", a);
 
 	return 0;
 }
@@ -2311,7 +2291,7 @@ u32 FASTCALL scsp_r_d(u32 a)
 {
 	if (a & 3)
 	{
-		slog("ERROR: scsp r_d misaligned : %.8X\n", a);
+                SCSPLOG("ERROR: scsp r_d misaligned : %.8X\n", a);
 	}
 
 	a &= 0xFFC;
@@ -2333,7 +2313,7 @@ u32 FASTCALL scsp_r_d(u32 a)
 
 	}
 
-	slog("WARNING: scsp r_d to %08lx\n", a);
+        SCSPLOG("WARNING: scsp r_d to %08lx\n", a);
 
 	return 0;
 }
@@ -2482,8 +2462,8 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 
 	for(i = 0; i < 96; i++)
 	{
-		slog("attack rate[%d] = %.8X -> %.8X\n", i, scsp_attack_rate[i], scsp_attack_rate[i] >> SCSP_ENV_LB);
-		slog("decay rate[%d] = %.8X -> %.8X\n", i, scsp_decay_rate[i], scsp_decay_rate[i] >> SCSP_ENV_LB);
+                SCSPLOG("attack rate[%d] = %.8X -> %.8X\n", i, scsp_attack_rate[i], scsp_attack_rate[i] >> SCSP_ENV_LB);
+                SCSPLOG("decay rate[%d] = %.8X -> %.8X\n", i, scsp_decay_rate[i], scsp_decay_rate[i] >> SCSP_ENV_LB);
 	}
 
 	scsp_reset();
@@ -2955,8 +2935,8 @@ void M68KClearCodeBreakpoints() {
 
 int SoundSaveState(FILE *fp)
 {
-   int i;
-   u32 temp;
+//   int i;
+//   u32 temp;
    int offset;
 
    offset = StateWriteHeader(fp, "SCSP", 1);

@@ -150,7 +150,6 @@ void PERSDLNothing(void) {
 
 int PERSDLHandleEvents(void) {
    SDL_Event event;
-   int i;
 
    while (SDL_PollEvent(&event))
    {

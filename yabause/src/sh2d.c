@@ -189,7 +189,7 @@ i_descr tab[] = {
 void SH2Disasm(u32 v_addr, u16 op, int mode, char *string)
 {
    int i;
-   sprintf(string,"0x%08X: ", v_addr);
+   sprintf(string,"0x%08X: ", (unsigned int)v_addr);
    string+=strlen(string);
         
    for (i = 0; tab[i].mnem != NULL; i++)   /* 0 format */
@@ -237,7 +237,7 @@ void SH2Disasm(u32 v_addr, u16 op, int mode, char *string)
                {
                   sprintf(string,tab[i].mnem, (op & 0xff) * tab[i].dat + 4);
                   string+=strlen(string);
-                  sprintf(string," ; 0x%08X", (op & 0xff) * tab[i].dat + 4 + v_addr);
+                  sprintf(string," ; 0x%08X", (op & 0xff) * tab[i].dat + 4 + (unsigned int)v_addr);
                }
                else
                   sprintf(string,tab[i].mnem, (op & 0xff) * tab[i].dat);
@@ -263,7 +263,7 @@ void SH2Disasm(u32 v_addr, u16 op, int mode, char *string)
             {
                sprintf(string,tab[i].mnem, (op & 0xff) * tab[i].dat + 4, (op >> 8) & 0xf);
                string+=strlen(string);
-               sprintf(string," ; 0x%08X", (op & 0xff) * tab[i].dat + 4 + v_addr);
+               sprintf(string," ; 0x%08X", (op & 0xff) * tab[i].dat + 4 + (unsigned int)v_addr);
             }
             else                            /* .L */
             {
@@ -271,7 +271,7 @@ void SH2Disasm(u32 v_addr, u16 op, int mode, char *string)
                        (op >> 8) & 0xf);
                string+=strlen(string);
                sprintf(string," ; 0x%08X", (op & 0xff) * tab[i].dat + 4 +
-                       (v_addr & 0xfffffffc));
+                       ((unsigned int)v_addr & 0xfffffffc));
             }
          }
          else if (tab[i].format == I_F)
