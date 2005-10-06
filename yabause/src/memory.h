@@ -9,12 +9,12 @@
 u8 * T1MemoryInit(u32);
 void T1MemoryDeInit(u8 *);
 
-static inline u8 T1ReadByte(u8 * mem, u32 addr)
+static INLINE u8 T1ReadByte(u8 * mem, u32 addr)
 {
    return mem[addr];
 }
 
-static inline u16 T1ReadWord(u8 * mem, u32 addr)
+static INLINE u16 T1ReadWord(u8 * mem, u32 addr)
 {
 #ifdef WORDS_BIGENDIAN
    return *((u16 *) (mem + addr));
@@ -23,7 +23,7 @@ static inline u16 T1ReadWord(u8 * mem, u32 addr)
 #endif
 }
 
-static inline u32 T1ReadLong(u8 * mem, u32 addr)
+static INLINE u32 T1ReadLong(u8 * mem, u32 addr)
 {
 #ifdef WORDS_BIGENDIAN
    return *((u32 *) (mem + addr));
@@ -33,12 +33,12 @@ static inline u32 T1ReadLong(u8 * mem, u32 addr)
 #endif
 }
 
-static inline void T1WriteByte(u8 * mem, u32 addr, u8 val)
+static INLINE void T1WriteByte(u8 * mem, u32 addr, u8 val)
 {
    mem[addr] = val;
 }
 
-static inline void T1WriteWord(u8 * mem, u32 addr, u16 val)
+static INLINE void T1WriteWord(u8 * mem, u32 addr, u16 val)
 {
 #ifdef WORDS_BIGENDIAN
    *((u16 *) (mem + addr)) = val;
@@ -48,7 +48,7 @@ static inline void T1WriteWord(u8 * mem, u32 addr, u16 val)
 #endif
 }
 
-static inline void T1WriteLong(u8 * mem, u32 addr, u32 val)
+static INLINE void T1WriteLong(u8 * mem, u32 addr, u32 val)
 {
 #ifdef WORDS_BIGENDIAN
    *((u32 *) (mem + addr)) = val;
@@ -65,7 +65,7 @@ static inline void T1WriteLong(u8 * mem, u32 addr, u32 val)
 #define T2MemoryInit(x) (T1MemoryInit(x))
 #define T2MemoryDeInit(x) (T1MemoryDeInit(x))
 
-static inline u8 T2ReadByte(u8 * mem, u32 addr)
+static INLINE u8 T2ReadByte(u8 * mem, u32 addr)
 {
 #ifdef WORDS_BIGENDIAN
    return mem[addr];
@@ -74,12 +74,12 @@ static inline u8 T2ReadByte(u8 * mem, u32 addr)
 #endif
 }
 
-static inline u16 T2ReadWord(u8 * mem, u32 addr)
+static INLINE u16 T2ReadWord(u8 * mem, u32 addr)
 {
    return *((u16 *) (mem + addr));
 }
 
-static inline u32 T2ReadLong(u8 * mem, u32 addr)
+static INLINE u32 T2ReadLong(u8 * mem, u32 addr)
 {
 #ifdef WORDS_BIGENDIAN
    return *((u32 *) (mem + addr));
@@ -88,7 +88,7 @@ static inline u32 T2ReadLong(u8 * mem, u32 addr)
 #endif
 }
 
-static inline void T2WriteByte(u8 * mem, u32 addr, u8 val)
+static INLINE void T2WriteByte(u8 * mem, u32 addr, u8 val)
 {
 #ifdef WORDS_BIGENDIAN
    mem[addr] = val;
@@ -97,12 +97,12 @@ static inline void T2WriteByte(u8 * mem, u32 addr, u8 val)
 #endif
 }
 
-static inline void T2WriteWord(u8 * mem, u32 addr, u16 val)
+static INLINE void T2WriteWord(u8 * mem, u32 addr, u16 val)
 {
    *((u16 *) (mem + addr)) = val;
 }
 
-static inline void T2WriteLong(u8 * mem, u32 addr, u32 val)
+static INLINE void T2WriteLong(u8 * mem, u32 addr, u32 val)
 {
 #ifdef WORDS_BIGENDIAN
    *((u32 *) (mem + addr)) = val;
@@ -123,7 +123,7 @@ typedef struct
 T3Memory * T3MemoryInit(u32);
 void T3MemoryDeInit(T3Memory *);
 
-static inline u8 T3ReadByte(T3Memory * mem, u32 addr)
+static INLINE u8 T3ReadByte(T3Memory * mem, u32 addr)
 {
 #ifdef WORDS_BIGENDIAN
 	return mem->mem[addr];
@@ -132,7 +132,7 @@ static inline u8 T3ReadByte(T3Memory * mem, u32 addr)
 #endif
 }
 
-static inline u16 T3ReadWord(T3Memory * mem, u32 addr)
+static INLINE u16 T3ReadWord(T3Memory * mem, u32 addr)
 {
 #ifdef WORDS_BIGENDIAN
         return *((u16 *) (mem->mem + addr));
@@ -141,7 +141,7 @@ static inline u16 T3ReadWord(T3Memory * mem, u32 addr)
 #endif
 }
 
-static inline u32 T3ReadLong(T3Memory * mem, u32 addr)
+static INLINE u32 T3ReadLong(T3Memory * mem, u32 addr)
 {
 #ifdef WORDS_BIGENDIAN
 	return *((u32 *) (mem->mem + addr));
@@ -150,7 +150,7 @@ static inline u32 T3ReadLong(T3Memory * mem, u32 addr)
 #endif
 }
 
-static inline void T3WriteByte(T3Memory * mem, u32 addr, u8 val)
+static INLINE void T3WriteByte(T3Memory * mem, u32 addr, u8 val)
 {
 #ifdef WORDS_BIGENDIAN
 	mem->mem[addr] = val;
@@ -159,7 +159,7 @@ static inline void T3WriteByte(T3Memory * mem, u32 addr, u8 val)
 #endif
 }
 
-static inline void T3WriteWord(T3Memory * mem, u32 addr, u16 val)
+static INLINE void T3WriteWord(T3Memory * mem, u32 addr, u16 val)
 {
 #ifdef WORDS_BIGENDIAN
 	*((u16 *) (mem->mem + addr)) = val;
@@ -168,7 +168,7 @@ static inline void T3WriteWord(T3Memory * mem, u32 addr, u16 val)
 #endif
 }
 
-static inline void T3WriteLong(T3Memory * mem, u32 addr, u32 val)
+static INLINE void T3WriteLong(T3Memory * mem, u32 addr, u32 val)
 {
 #ifdef WORDS_BIGENDIAN
 	*((u32 *) (mem->mem + addr)) = val;
@@ -177,7 +177,7 @@ static inline void T3WriteLong(T3Memory * mem, u32 addr, u32 val)
 #endif
 }
 
-static inline int T123Load(void * mem, u32 size, int type, const char *filename)
+static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
 {
    FILE *fp;
    u32 filesize;
@@ -236,7 +236,7 @@ static inline int T123Load(void * mem, u32 size, int type, const char *filename)
    return 0;
 }
 
-static inline int T123Save(void * mem, u32 size, int type, const char *filename)
+static INLINE int T123Save(void * mem, u32 size, int type, const char *filename)
 {
    FILE *fp;
    u8 *buffer;
@@ -292,13 +292,13 @@ typedef void Dummy;
 Dummy * DummyInit(u32);
 void DummyDeInit(Dummy *);
 
-static inline u8 DummyReadByte(Dummy * d, u32 a) { return 0; }
-static inline u16 DummyReadWord(Dummy * d, u32 a) { return 0; }
-static inline u32 DummyReadLong(Dummy * d, u32 a) { return 0; }
+static INLINE u8 DummyReadByte(Dummy * d, u32 a) { return 0; }
+static INLINE u16 DummyReadWord(Dummy * d, u32 a) { return 0; }
+static INLINE u32 DummyReadLong(Dummy * d, u32 a) { return 0; }
 
-static inline void DummyWriteByte(Dummy * d, u32 a, u8 v) {}
-static inline void DummyWriteWord(Dummy * d, u32 a, u16 v) {}
-static inline void DummyWriteLong(Dummy * d, u32 a, u32 v) {}
+static INLINE void DummyWriteByte(Dummy * d, u32 a, u8 v) {}
+static INLINE void DummyWriteWord(Dummy * d, u32 a, u16 v) {}
+static INLINE void DummyWriteLong(Dummy * d, u32 a, u32 v) {}
 
 void MappedMemoryInit();
 u8 FASTCALL MappedMemoryReadByte(u32 addr);

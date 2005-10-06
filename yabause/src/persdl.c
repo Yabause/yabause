@@ -43,7 +43,7 @@ void ToggleFPS (); // This should probably be changed
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline void PERSDLSetBoth(SDLKey key, void (*fct_ptr1)(void), void (*fct_ptr2)(void)) {
+static INLINE void PERSDLSetBoth(SDLKey key, void (*fct_ptr1)(void), void (*fct_ptr2)(void)) {
 	PERSDLKeyPressed[key] = fct_ptr1;
 	PERSDLKeyReleased[key] = fct_ptr2;
 }

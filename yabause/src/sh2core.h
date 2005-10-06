@@ -299,7 +299,7 @@ int SH2DelCodeBreakpoint(SH2_struct *context, u32 addr);
 codebreakpoint_struct *SH2GetBreakpointList(SH2_struct *context);
 void SH2ClearCodeBreakpoints(SH2_struct *context);
 
-static inline void SH2HandleBreakpoints(SH2_struct *context)
+static INLINE void SH2HandleBreakpoints(SH2_struct *context)
 {
    int i;
 

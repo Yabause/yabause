@@ -1715,7 +1715,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
+static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
    ScuRegs->IST |= statusbit;
 
    if (!(ScuRegs->IMS & mask))

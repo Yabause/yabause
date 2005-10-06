@@ -1128,7 +1128,7 @@ int Vdp2LoadState(FILE *fp, int version, int size)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline void Vdp2GetPlaneSize(int planedata, int *planew, int *planeh)
+static INLINE void Vdp2GetPlaneSize(int planedata, int *planew, int *planeh)
 {
    switch(planedata)
    {
@@ -1154,7 +1154,7 @@ static inline void Vdp2GetPlaneSize(int planedata, int *planew, int *planeh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline char *AddBppString(char *outstring, int bpp)
+static INLINE char *AddBppString(char *outstring, int bpp)
 {
    switch (bpp)
    {
@@ -1183,7 +1183,7 @@ static inline char *AddBppString(char *outstring, int bpp)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline char *AddMosaicString(char *outstring, int mask)
+static INLINE char *AddMosaicString(char *outstring, int mask)
 {
    if (Vdp2Regs->MZCTL & mask)
    {
@@ -1195,7 +1195,7 @@ static inline char *AddMosaicString(char *outstring, int mask)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline char *AddBitmapInfoString(char *outstring, int wh, int palnum, int mapofn)
+static INLINE char *AddBitmapInfoString(char *outstring, int wh, int palnum, int mapofn)
 {
    int cellw=0, cellh=0;
 
@@ -1240,7 +1240,7 @@ static inline char *AddBitmapInfoString(char *outstring, int wh, int palnum, int
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline char *AddWindowInfoString(char *outstring, int wctl)
+static INLINE char *AddWindowInfoString(char *outstring, int wctl)
 {
    if (wctl & 0x2)
    {

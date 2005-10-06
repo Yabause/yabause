@@ -60,7 +60,7 @@ extern CDInterface *CDCoreList[];
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline void doCDReport(void)
+static INLINE void doCDReport(void)
 {
    Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
    Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | Cs2Area->track;
@@ -70,7 +70,7 @@ static inline void doCDReport(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static inline void doMPEGReport(void)
+static INLINE void doMPEGReport(void)
 {
    Cs2Area->reg.CR1 = (Cs2Area->status << 8) | Cs2Area->actionstatus;
    Cs2Area->reg.CR2 = Cs2Area->vcounter;
@@ -88,11 +88,38 @@ u8 FASTCALL Cs2ReadByte(u32 addr)
    {
       switch (addr)
       {
+         case 0x95001: // Receiver Buffer/Divisor Latch Low Byte
+            if (Cs2Area->nlreg.LCR & 0x80) // Divisor Latch Low Byte
+            {
+//               LOG("DLL read: %08X(%02X)\n", addr, Cs2Area->nlreg.DLL);
+               return Cs2Area->nlreg.DLL;
+            }
+            else // Receiver Buffer
+            {
+//               LOG("RBR read: %08X(%02X)\n", addr, Cs2Area->nlreg.RBR);
+               return Cs2Area->nlreg.RBR;
+            }
+
+            return 0;
+         case 0x95009: // Interrupt Identification Register
+//            LOG("IIR read: %02X\n", Cs2Area->nlreg.IIR);
+            return Cs2Area->nlreg.IIR;
+         case 0x9500D: // Line Control Register
+//            LOG("LCR read: %02X\n", Cs2Area->nlreg.MCR);
+            return Cs2Area->nlreg.LCR;
+         case 0x95011: // Modem Control Register
+//            LOG("MCR read: %02X\n", Cs2Area->nlreg.MCR);
+            return Cs2Area->nlreg.MCR;
+         case 0x95015: // Line Status Register
+//            LOG("LSR read: %02X\n", Cs2Area->nlreg.LSR);
+            return Cs2Area->nlreg.LSR;
          case 0x95019: // Modem Status Register
+//            LOG("MSR read: %02X\n", Cs2Area->nlreg.MSR);
+
             // Send interrupt here?
-            return Cs2Area->nlreg.MSR;
-            
+            return Cs2Area->nlreg.MSR;            
          case 0x9501D: // Scratch
+//            LOG("SCR read: %02X\n", Cs2Area->nlreg.SCR);
             return Cs2Area->nlreg.SCR;
          default:
             break;
@@ -115,9 +142,56 @@ void FASTCALL Cs2WriteByte(u32 addr, u8 val)
       {
          case 0x2503D: // ???
             return;
+         case 0x95001: // Transmitter Holding Buffer/Divisor Latch Low Byte
+            if (Cs2Area->nlreg.LCR & 0x80) // Divisor Latch Low Byte
+            {
+//               LOG("DLL write: %08X(%02X)\n", addr, val);
+               Cs2Area->nlreg.DLL = val;
+            }
+            else // Transmitter Holding Buffer
+            {
+//               LOG("THR write: %08X(%02X)\n", addr, val);
+               Cs2Area->nlreg.THR = val;
+            }
+
+            return;
+         case 0x95005: // Interrupt Enable Register/Divisor Latch High Byte
+            if (Cs2Area->nlreg.LCR & 0x80) // Divisor Latch High Byte
+            {
+//               LOG("DLM write: %08X(%02X)\n", addr, val);
+               Cs2Area->nlreg.DLM = val;
+            }
+            else // Interrupt Enable Register
+            {
+//               LOG("IER write: %08X(%02X)\n", addr, val);
+               Cs2Area->nlreg.IER = val;
+            }
+
+            return;
+         case 0x95009: // FIFO Control Register
+//            LOG("FCR write: %02X\n", val);
+            Cs2Area->nlreg.FCR = val;
+
+            if (val & 0x1)
+               // set FIFO enabled bits
+               Cs2Area->nlreg.IIR |= 0xC0;
+            else
+               // clear FIFO enabled bits
+               Cs2Area->nlreg.IIR &= ~0xC0;
+
+            return;
+         case 0x9500D: // Line Control Register
+//            LOG("LCR write: %02X\n", val);
+            Cs2Area->nlreg.LCR = val;
+            return;
+         case 0x95011: // Modem Control Register
+            Cs2Area->nlreg.MCR = val;
+//            LOG("MCR write: %02X\n", val);
+            return;
          case 0x95019: // Modem Status Register(read-only)
             return;
          case 0x9501D: // Scratch
+//            LOG("SCR write: %02X\n", val);
             Cs2Area->nlreg.SCR = val;
             return;
          default:
@@ -2565,7 +2639,9 @@ partition_struct * Cs2FilterData(filter_struct * curfilter, int isaudio)
                 memcpy(fltpartition->block[fltpartition->numblocks]->data,
                 Cs2Area->workblock.data + 12, Cs2Area->workblock.size);
                 break;
-     case 2352: // no conversion needed
+     case 2352: // Copy data as is
+                memcpy(fltpartition->block[fltpartition->numblocks]->data,
+                       Cs2Area->workblock.data, Cs2Area->workblock.size);
                 break;
      default: break;
   }
