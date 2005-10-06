@@ -1,3 +1,7 @@
+#ifdef MSVC
+#include <windows.h>
+#endif
+
 #include "SDL.h"
 #ifndef _arch_dreamcast
 #if HAVE_LIBGLUT

@@ -12,6 +12,22 @@
 #endif
 #endif
 
+#ifndef INLINE
+#ifdef MSVC
+#define INLINE _inline
+#else
+#define INLINE inline
+#endif 
+#endif
+
+#ifdef __i386__
+#define FASTCALL __attribute__((regparm(3)))
+#else
+#define FASTCALL
+#endif
+
+#endif
+
 #if defined(__LP64__)
 typedef unsigned char u8;
 typedef unsigned short u16;
