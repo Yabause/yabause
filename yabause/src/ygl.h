@@ -1,4 +1,4 @@
-#ifdef MSVC
+#ifdef _MSC_VER
 #include <windows.h>
 #endif
 

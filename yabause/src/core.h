@@ -13,7 +13,7 @@
 #endif
 
 #ifndef INLINE
-#ifdef MSVC
+#ifdef _MSC_VER
 #define INLINE _inline
 #else
 #define INLINE inline
