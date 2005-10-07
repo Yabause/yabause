@@ -82,6 +82,7 @@
 
 #include "c68k/c68k.h"
 #include "debug.h"
+#include "error.h"
 #include "memory.h"
 #include "scu.h"
 #include "yabause.h"
@@ -2676,7 +2677,16 @@ int ScspInit(int coreid) {
       return -1;
 
    if (SNDCore->Init() == -1)
-      return -1;
+   {
+      // Since it failed, instead of it being fatal, we'll just use the dummy
+      // core instead
+
+      // This might be helpful though.
+      YabSetError(YAB_ERR_CANNOTINIT, (void *)SNDCore->Name);
+
+      SNDCore = &SNDDummy;
+      SNDCore->Init();
+   }
 
    return 0;
 }
