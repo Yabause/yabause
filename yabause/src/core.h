@@ -35,23 +35,31 @@ typedef signed long s64;
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned long u32;
+#ifdef _MSC_VER
+typedef unsigned __int64 u64;
+#else
 typedef unsigned long long u64;
+#endif
 typedef unsigned long pointer;
 
 typedef signed char s8;
 typedef signed short s16;
 typedef signed long s32;
+#ifdef _MSC_VER
+typedef __int64 s64;
+#else
 typedef signed long long s64;
 #endif
+#endif
 
-static inline int StateWriteHeader(FILE *fp, const char *name, int version) {
+static INLINE int StateWriteHeader(FILE *fp, const char *name, int version) {
         fprintf(fp, name);
 	fwrite((void *)&version, sizeof(version), 1, fp);
 	fwrite((void *)&version, sizeof(version), 1, fp); // place holder for size
 	return ftell(fp);
 }
 
-static inline int StateFinishHeader(FILE *fp, int offset) {
+static INLINE int StateFinishHeader(FILE *fp, int offset) {
 	int size = 0;
 	size = ftell(fp) - offset;
 	fseek(fp, offset - 4, SEEK_SET);
@@ -60,7 +68,7 @@ static inline int StateFinishHeader(FILE *fp, int offset) {
 	return (size + 12);
 }
 
-static inline int StateCheckRetrieveHeader(FILE *fp, const char *name, int *version, int *size) {
+static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *version, int *size) {
 	char id[4];
 	int ret;
 
