@@ -79,7 +79,7 @@ int SNDSDLInit()
    audiofmt.freq = 44100;
    audiofmt.format = AUDIO_S16SYS;
    audiofmt.channels = 2;
-   audiofmt.samples = 1024;
+   audiofmt.samples = (audiofmt.freq / 60) * 2;
    audiofmt.callback = MixAudio;
    audiofmt.userdata = NULL;
 

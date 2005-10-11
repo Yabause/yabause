@@ -2470,13 +2470,14 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 	scsp_reset();
 }
 
-// Yabause specific start
+//////////////////////////////////////////////////////////////////////////////
+// Yabause specific
+//////////////////////////////////////////////////////////////////////////////
+
 u8 *SoundRam;
 ScspInternal *ScspInternalVars;
 static SoundInterface_struct *SNDCore=NULL;
 extern SoundInterface_struct *SNDCoreList[];
-
-#define NUMSOUNDBLOCKS  2
 
 struct sounddata {
   u32 *data32;
