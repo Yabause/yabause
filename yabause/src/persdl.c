@@ -155,19 +155,22 @@ int PERSDLHandleEvents(void) {
    {
       switch(event.type)
       {
-         case SDL_QUIT:
-            YuiQuit();
-            break;
          case SDL_KEYDOWN:
             PERSDLKeyPressed[event.key.keysym.sym]();
             break;
          case SDL_KEYUP:
             PERSDLKeyReleased[event.key.keysym.sym]();
             break;
+         case SDL_QUIT:
+            YuiQuit();
+            break;
          case SDL_VIDEORESIZE:
             VIDCore->Resize(event.resize.w, event.resize.h);
             break;
          default:
+            // Since we're not handling it, might as well tell SDL to stop
+            // sending the message
+            SDL_EventState(event.type, SDL_IGNORE);
             break;
       }
    }
