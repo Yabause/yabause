@@ -1,4 +1,7 @@
-0.0.8 -> 0.5.0
+0.5.0 -> Current
+general:
+  - Changed event handling a bit. Gained quite a bit of speed from it.
+0.0.7 -> 0.5.0
 cd block:
   - bug fixes
   - improved timing
