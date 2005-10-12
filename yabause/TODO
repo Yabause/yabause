@@ -30,3 +30,4 @@
    - Get configure working with cygwin and mingw
    - Finalize Save State format
    - Finish rewriting C++ that's missing
+   - Support multiple languages
