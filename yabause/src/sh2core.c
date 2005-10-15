@@ -520,7 +520,7 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          CurrentSH2->onchip.TOCR = 0xE0 | (val & 0x13);
          return;
       case 0x060:
-         CurrentSH2->onchip.IPRB = val & 0xFF00;
+         CurrentSH2->onchip.IPRB = (val << 8);
          return;
       case 0x061:
          return;
@@ -566,7 +566,7 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          CurrentSH2->onchip.ICR = (CurrentSH2->onchip.ICR & 0xFFFE) | (val & 0x1);
          return;
       case 0x0E2:
-         CurrentSH2->onchip.IPRA = val & 0xFFF0;
+         CurrentSH2->onchip.IPRA = (val << 8) | (CurrentSH2->onchip.IPRA & 0x00FF);
          return;
       case 0x0E3:
          CurrentSH2->onchip.IPRA = (CurrentSH2->onchip.IPRA & 0xFF00) | (val & 0xF0);
@@ -1097,11 +1097,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
    }
 
    if (*CHCR & 0x4)
-   {
-      LOG("FIXME should launch an interrupt\n");
-
       SH2SendInterrupt(CurrentSH2, *VCRDMA, (CurrentSH2->onchip.IPRA & 0xF00) >> 8);
-   }                                                                    
 
    // Set Transfer End bit
    *CHCR |= 0x2;
