@@ -114,7 +114,7 @@ void SmpcSNDON() {
 
 void SmpcSNDOFF() {
    yabsys.IsM68KRunning = 0;
-   memset((void *)SoundRam, 0, 0x80000); // hack needed by Lunar
+//   memset((void *)SoundRam, 0, 0x80000); // hack needed by Lunar
 
    SmpcRegs->OREG[31] = 0x7;
 }
