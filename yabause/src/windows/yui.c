@@ -1464,7 +1464,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             if (cbp[i].addr != 0xFFFFFFFF)
             {
-               sprintf(tempstr, "%08X", (int)cbp[i].addr);
+               sprintf(tempstr, "%02X", (int)cbp[i].addr);
                SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
          }
@@ -1505,14 +1505,14 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                // add a code breakpoint
                char bptext[10];
-               u8 addr=0;
+               u32 addr=0;
                memset(bptext, 0, 4);
                GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 4);
 
                if (bptext[0] != 0)
                {
                   sscanf(bptext, "%X", &addr);
-                  sprintf(bptext, "%02X", addr);
+                  sprintf(bptext, "%02X", (int)addr);
 
                   if (ScuDspAddCodeBreakpoint(addr) == 0)
                      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
