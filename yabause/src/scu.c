@@ -763,9 +763,7 @@ void ScuExec(u32 timing) {
 
                      transferNumber = readgensrc(instruction & 0x7);
 
-                     addressAdd = 4;
-/*
-                     switch((instruction >> 15) & 0x1)
+                     switch((instruction >> 15) & 0x7)
                      {
                         case 0: // Add 0
                            addressAdd = 0;
@@ -773,9 +771,11 @@ void ScuExec(u32 timing) {
                         case 1: // Add 1
                            addressAdd = 4;
                            break;
-                        default: break;                                     
+                        default:
+                           // Undocumented mode
+                           addressAdd = 4;
+                           break;
                      }
-*/
                   }
                   else
                   {
@@ -1110,12 +1110,36 @@ char *disloadimdest(u8 num)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ScuDspDisasm(u8 addr, char *outstring){
+char *disdmaram(u8 num)
+{
+   switch(num)
+   {
+      case 0x0: // MC0
+         return "MC0";
+      case 0x1: // MC1
+         return "MC1";
+      case 0x2: // MC2
+         return "MC2";
+      case 0x3: // MC3
+         return "MC3";
+      case 0x4: // Program Ram
+         return "PRG";
+      default: break;
+   }
+
+   return "??";
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ScuDspDisasm(u8 addr, char *outstring) {
    u32 instruction;
+   u8 counter=0;
+   u8 filllength=0;
 
    instruction = ScuDsp->ProgramRam[addr];
 
-   sprintf(outstring, "%08X: ", addr);
+   sprintf(outstring, "%02X: ", addr);
    outstring+=strlen(outstring);
 
    if (instruction == 0)
@@ -1131,108 +1155,153 @@ void ScuDspDisasm(u8 addr, char *outstring){
          break;
       case 0x1: // AND
          sprintf(outstring, "AND");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0x2: // OR
          sprintf(outstring, "OR");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0x3: // XOR
          sprintf(outstring, "XOR");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0x4: // ADD
          sprintf(outstring, "ADD");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0x5: // SUB
          sprintf(outstring, "SUB");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0x6: // AD2
          sprintf(outstring, "AD2");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0x8: // SR
-         sprintf(outstring, "AD2");
+         sprintf(outstring, "SR");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0x9: // RR
          sprintf(outstring, "RR");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0xA: // SL
-         outstring+=strlen(outstring);
          sprintf(outstring, "SL");
+         counter = strlen(outstring);
+         outstring+=strlen(outstring);
          break;
       case 0xB: // RL
          sprintf(outstring, "RL");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       case 0xF: // RL8
          sprintf(outstring, "RL8");
+         counter = strlen(outstring);
          outstring+=strlen(outstring);
          break;
       default: break;
    }
 
-
    switch (instruction >> 30) {
       case 0x00: // Operation Commands
+         filllength = 5 - counter;
+         memset((void  *)outstring, 0x20, filllength);
+         counter += filllength;
+         outstring += filllength;
+
          if ((instruction >> 23) & 0x4)
          {
             sprintf(outstring, "MOV %s, X", disd1bussrc((instruction >> 20) & 0x7));
+            counter+=strlen(outstring);
             outstring+=strlen(outstring);
          }
+
+         filllength = 16 - counter;
+         memset((void  *)outstring, 0x20, filllength);
+         counter += filllength;
+         outstring += filllength;
+
          switch ((instruction >> 23) & 0x3)
          {
             case 2:
                sprintf(outstring, "MOV MUL, P");
+               counter+=strlen(outstring);
                outstring+=strlen(outstring);
                break;
             case 3:
-               sprintf(outstring, "MOV [s], P");
+               sprintf(outstring, "MOV %s, P", disd1bussrc((instruction >> 20) & 0x7));
+               counter+=strlen(outstring);
                outstring+=strlen(outstring);
                break;
             default: break;
          }
+
+         filllength = 27 - counter;
+         memset((void  *)outstring, 0x20, filllength);
+         counter += filllength;
+         outstring += filllength;
 
          // Y-bus
          if ((instruction >> 17) & 0x4)
          {
             sprintf(outstring, "MOV %s, Y", disd1bussrc((instruction >> 14) & 0x7));
+            counter+=strlen(outstring);
             outstring+=strlen(outstring);
          }
+
+         filllength = 38 - counter;
+         memset((void  *)outstring, 0x20, filllength);
+         counter += filllength;
+         outstring += filllength;
 
          switch ((instruction >> 17) & 0x3)
          {
             case 1:
                sprintf(outstring, "CLR A");
+               counter+=strlen(outstring);
                outstring+=strlen(outstring);
                break;
             case 2:
                sprintf(outstring, "MOV ALU, A");
+               counter+=strlen(outstring);
                outstring+=strlen(outstring);
                break;
             case 3:
                sprintf(outstring, "MOV %s, A", disd1bussrc((instruction >> 14) & 0x7));
+               counter+=strlen(outstring);
                outstring+=strlen(outstring);
                break;
             default: break;
          }
+
+         filllength = 50 - counter;
+         memset((void  *)outstring, 0x20, filllength);
+         counter += filllength;
+         outstring += filllength;
 
          // D1-bus
          switch ((instruction >> 12) & 0x3)
          {
             case 1:
                sprintf(outstring, "MOV #$%02X, %s", (unsigned int)instruction & 0xFF, disd1busdest((instruction >> 8) & 0xF));
-               outstring+=strlen(outstring);                             
+               outstring+=strlen(outstring);
                break;
             case 3:
                sprintf(outstring, "MOV %s, %s", disd1bussrc(instruction & 0xF), disd1busdest((instruction >> 8) & 0xF));
-               outstring+=strlen(outstring);                             
+               outstring+=strlen(outstring);
                break;
-            default: break;
+            default:
+               outstring[0] = 0x00;
+               break;
          }
 
          break;
@@ -1282,8 +1351,80 @@ void ScuDspDisasm(u8 addr, char *outstring){
       case 0x03: // Other
          switch((instruction >> 28) & 0x3) {
             case 0x00: // DMA Commands
-               sprintf(outstring, "DMA/DMAH ??, ??, ??");
+            {
+               int addressAdd;
+
+               if (instruction & 0x1000)
+                  addressAdd = (instruction >> 15) & 0x7;
+               else
+                  addressAdd = (instruction >> 15) & 0x1;
+
+               switch(addressAdd)
+               {
+                  case 0: // Add 0
+                     addressAdd = 0;
+                     break;
+                  case 1: // Add 1
+                     addressAdd = 1;
+                     break;
+                  case 2: // Add 2
+                     addressAdd = 2;
+                     break;
+                  case 3: // Add 4
+                     addressAdd = 4;
+                     break;
+                  case 4: // Add 8
+                     addressAdd = 8;
+                     break;
+                  case 5: // Add 16
+                     addressAdd = 16;
+                     break;
+                  case 6: // Add 32
+                     addressAdd = 32;
+                     break;
+                  case 7: // Add 64
+                     addressAdd = 64;
+                     break;
+                  default:
+                     addressAdd = 0;
+                     break;
+               }
+
+               LOG("DMA Add = %X, addressAdd = %d", (instruction >> 15) & 0x7, addressAdd);
+
+               // Write Command name
+               sprintf(outstring, "DMA");
+               outstring+=strlen(outstring);
+
+               // Is h bit set?
+               if (instruction & 0x4000)
+               {
+                  outstring[0] = 'H';
+                  outstring++;
+               }
+
+               sprintf(outstring, "%d ", addressAdd);
+               outstring+=strlen(outstring);
+
+               if (instruction & 0x2000)
+               {
+                  // Command Format 2                 
+                  if (instruction & 0x1000)
+                     sprintf(outstring, "%s, D0, %s", disdmaram((instruction >> 8) & 0x7), disd1bussrc(instruction & 0x7));
+                  else
+                     sprintf(outstring, "D0, %s, %s", disdmaram((instruction >> 8) & 0x7), disd1bussrc(instruction & 0x7));
+               }
+               else
+               {
+                  // Command Format 1
+                  if (instruction & 0x1000)
+                     sprintf(outstring, "%s, D0, #$%02X", disdmaram((instruction >> 8) & 0x7), (int)(instruction & 0xFF));
+                  else
+                     sprintf(outstring, "D0, %s, #$%02X", disdmaram((instruction >> 8) & 0x7), (int)(instruction & 0xFF));
+               }
+               
                break;
+            }
             case 0x01: // Jump Commands
                switch ((instruction >> 19) & 0x7F) {
                   case 0x00:
@@ -1357,7 +1498,27 @@ void ScuDspStep(void) {
 
 void ScuDspGetRegisters(scudspregs_struct *regs) {
    if (regs != NULL) {
-      memcpy(regs, &ScuDsp, sizeof(scudspregs_struct));
+      memcpy(regs->ProgramRam, ScuDsp->ProgramRam, sizeof(u32) * 256);
+      memcpy(regs->MD, ScuDsp->MD, sizeof(u32) * 64 * 4);
+
+      regs->ProgControlPort.all = ScuDsp->ProgControlPort.all;
+      regs->ProgControlPort.part.P = regs->PC = ScuDsp->PC;
+      regs->TOP = ScuDsp->TOP;
+      regs->LOP = ScuDsp->LOP;
+      regs->jmpaddr = ScuDsp->jmpaddr;
+      regs->delayed = ScuDsp->delayed;
+      regs->DataRamPage = ScuDsp->DataRamPage;
+      regs->DataRamReadAddress = ScuDsp->DataRamReadAddress;
+      memcpy(regs->CT, ScuDsp->CT, sizeof(u8) * 4);
+      regs->RX = ScuDsp->RX;
+      regs->RY = ScuDsp->RY;
+      regs->RA0 = ScuDsp->RA0;
+      regs->WA0 = ScuDsp->WA0;
+
+      regs->AC.all = ScuDsp->AC.all;
+      regs->P.all = ScuDsp->P.all;
+      regs->ALU.all = ScuDsp->ALU.all;
+      regs->MUL.all = ScuDsp->MUL.all;
    }
 }
 
@@ -1365,7 +1526,27 @@ void ScuDspGetRegisters(scudspregs_struct *regs) {
 
 void ScuDspSetRegisters(scudspregs_struct *regs) {
    if (regs != NULL) {
-      memcpy(&ScuDsp, regs, sizeof(scudspregs_struct));
+      memcpy(ScuDsp->ProgramRam, regs->ProgramRam, sizeof(u32) * 256);
+      memcpy(ScuDsp->MD, regs->MD, sizeof(u32) * 64 * 4);
+
+      ScuDsp->ProgControlPort.all = regs->ProgControlPort.all;
+      ScuDsp->PC = regs->ProgControlPort.part.P;
+      ScuDsp->TOP = regs->TOP;
+      ScuDsp->LOP = regs->LOP;
+      ScuDsp->jmpaddr = regs->jmpaddr;
+      ScuDsp->delayed = regs->delayed;
+      ScuDsp->DataRamPage = regs->DataRamPage;
+      ScuDsp->DataRamReadAddress = regs->DataRamReadAddress;
+      memcpy(ScuDsp->CT, regs->CT, sizeof(u8) * 4);
+      ScuDsp->RX = regs->RX;
+      ScuDsp->RY = regs->RY;
+      ScuDsp->RA0 = regs->RA0;
+      ScuDsp->WA0 = regs->WA0;
+
+      ScuDsp->AC.all = regs->AC.all;
+      ScuDsp->P.all = regs->P.all;
+      ScuDsp->ALU.all = regs->ALU.all;
+      ScuDsp->MUL.all = regs->MUL.all;
    }
 }
 
