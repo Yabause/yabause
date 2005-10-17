@@ -1357,40 +1357,58 @@ void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
 
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_RESETCONTENT, 0, 0);
 
-   sprintf(tempstr, "PR =          %d", regs->ProgControlPort.part.PR);
+   sprintf(tempstr, "PR = %d   EP = %d", regs->ProgControlPort.part.PR, regs->ProgControlPort.part.EP);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "EP =          %d", regs->ProgControlPort.part.EP);
+   sprintf(tempstr, "T0 = %d   S =  %d", regs->ProgControlPort.part.T0, regs->ProgControlPort.part.S);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "T0 =          %d", regs->ProgControlPort.part.T0);
+   sprintf(tempstr, "Z =  %d   C =  %d", regs->ProgControlPort.part.Z, regs->ProgControlPort.part.C);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "S =           %d", regs->ProgControlPort.part.S);
+   sprintf(tempstr, "V =  %d   E =  %d", regs->ProgControlPort.part.V, regs->ProgControlPort.part.E);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "Z =           %d", regs->ProgControlPort.part.Z);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
-
-   sprintf(tempstr, "C =           %d", regs->ProgControlPort.part.C);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
-
-   sprintf(tempstr, "V =           %d", regs->ProgControlPort.part.V);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
-
-   sprintf(tempstr, "E =           %d", regs->ProgControlPort.part.E);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
-
-   sprintf(tempstr, "ES =          %d", regs->ProgControlPort.part.ES);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
-
-   sprintf(tempstr, "EX =          %d", regs->ProgControlPort.part.EX);
+   sprintf(tempstr, "ES = %d   EX = %d", regs->ProgControlPort.part.ES, regs->ProgControlPort.part.EX);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "LE =          %d", regs->ProgControlPort.part.LE);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "P =          %02X", regs->ProgControlPort.part.P);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "TOP =        %02X", regs->TOP);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "LOP =        %02X", regs->LOP);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "CT = %02X:%02X:%02X:%02X", regs->CT[0], regs->CT[1], regs->CT[2], regs->CT[3]);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "RA =   %08X", regs->RA0);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "WA =   %08X", regs->WA0);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "RX =   %08X", regs->RX);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "RY =   %08X", regs->RX);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "PH =       %04X", regs->P.part.H & 0xFFFF);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "PL =   %08X", regs->P.part.L & 0xFFFFFFFF);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "ACH =      %04X", regs->AC.part.H & 0xFFFF);
+   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+
+   sprintf(tempstr, "ACL =  %08X", regs->AC.part.L & 0xFFFFFFFF);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 }
 
@@ -1487,14 +1505,14 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                // add a code breakpoint
                char bptext[10];
-               u32 addr=0;
-               memset(bptext, 0, 10);
-               GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 10);
+               u8 addr=0;
+               memset(bptext, 0, 4);
+               GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 4);
 
                if (bptext[0] != 0)
                {
                   sscanf(bptext, "%X", &addr);
-                  sprintf(bptext, "%08X", (int)addr);
+                  sprintf(bptext, "%02X", addr);
 
                   if (ScuDspAddCodeBreakpoint(addr) == 0)
                      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);

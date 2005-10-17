@@ -185,7 +185,7 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
-SCUDSPDEBUGDLG DIALOG FIXED PURE  0, 0, 386, 229
+SCUDSPDEBUGDLG DIALOG FIXED PURE  0, 0, 436, 229
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "SCU DSP Debug"
 FONT 8, "Courier New"
@@ -194,13 +194,13 @@ BEGIN
     PUSHBUTTON      "&Step",IDC_STEP,53,212,40,14
     GROUPBOX "DSP Registers", -1, 2, 0, 71, 208, WS_CHILD | WS_VISIBLE
     LISTBOX IDC_LISTBOX1, 5, 10, 65, 195
-    GROUPBOX "Disassembled Code", -1, 75, 0, 213, 208, WS_CHILD | WS_VISIBLE
-    LISTBOX IDC_LISTBOX2,78, 10, 206, 195
-    GROUPBOX "Code Breakpoints", -1, 290, 0, 94, 90, WS_CHILD | WS_VISIBLE
-    EDITTEXT IDC_EDITTEXT1, 293, 10, 44, 11, ES_UPPERCASE
-    LISTBOX IDC_LISTBOX3,293, 20, 65, 66
-    PUSHBUTTON      "&Add",IDC_ADDBP1,361, 10, 20, 10
-    PUSHBUTTON      "&Del",IDC_DELBP1,361, 24, 20, 10
+    GROUPBOX "Disassembled Code", -1, 75, 0, 283, 208, WS_CHILD | WS_VISIBLE
+    LISTBOX IDC_LISTBOX2,78, 10, 276, 195
+    GROUPBOX "Code Breakpoints", -1, 360, 0, 74, 90, WS_CHILD | WS_VISIBLE
+    EDITTEXT IDC_EDITTEXT1, 363, 10, 14, 11, ES_UPPERCASE
+    LISTBOX IDC_LISTBOX3,363, 20, 45, 66
+    PUSHBUTTON      "&Add",IDC_ADDBP1,411, 10, 20, 10
+    PUSHBUTTON      "&Del",IDC_DELBP1,411, 24, 20, 10
 END
 
 //////////////////////////////////////////////////////////////////////////////
