@@ -714,7 +714,7 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
-void BreakpointHandler (SH2_struct *context, u32 addr)
+void SH2BreakpointHandler (SH2_struct *context, u32 addr)
 {
    MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
 
@@ -755,7 +755,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 //         }
 
 
-         SH2SetBreakpointCallBack(debugsh, (void (*)(void *, u32))&BreakpointHandler);
+         SH2SetBreakpointCallBack(debugsh, (void (*)(void *, u32))&SH2BreakpointHandler);
          return TRUE;
       }
       case WM_COMMAND:
@@ -1420,6 +1420,14 @@ void SCUDSPUpdateCodeList(HWND hDlg, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void SCUDSPBreakpointHandler (u32 addr)
+{
+   MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
+   DialogBox(y_hInstance, "SCUDSPDebugDlg", YabWin, (DLGPROC)SCUDSPDebugDlgProc);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
@@ -1428,12 +1436,28 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          scudspregs_struct dspregs;
+         scucodebreakpoint_struct *cbp;
+         char tempstr[10];
+         int i;
+
+         cbp = ScuDspGetBreakpointList();
+
+         for (i = 0; i < MAX_BREAKPOINTS; i++)
+         {
+            if (cbp[i].addr != 0xFFFFFFFF)
+            {
+               sprintf(tempstr, "%08X", (int)cbp[i].addr);
+               SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)tempstr);
+            }
+         }
 
          EnableWindow(GetDlgItem(hDlg, IDC_STEP), TRUE);
 
          ScuDspGetRegisters(&dspregs);
          SCUDSPUpdateRegList(hDlg, &dspregs);
          SCUDSPUpdateCodeList(hDlg, dspregs.ProgControlPort.part.P);
+
+         ScuDspSetBreakpointCallBack(&SCUDSPBreakpointHandler);
 
          return TRUE;
       }
@@ -1462,14 +1486,37 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDC_ADDBP1:
             {
                // add a code breakpoint
+               char bptext[10];
+               u32 addr=0;
+               memset(bptext, 0, 10);
+               GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 10);
+
+               if (bptext[0] != 0)
+               {
+                  sscanf(bptext, "%X", &addr);
+                  sprintf(bptext, "%08X", (int)addr);
+
+                  if (ScuDspAddCodeBreakpoint(addr) == 0)
+                     SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
+               }
                break;
             }
             case IDC_DELBP1:
             {
                // delete a code breakpoint
+               LRESULT ret;
+               char bptext[10];
+               u32 addr=0;
+
+               if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
+               {
+                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
+                  sscanf(bptext, "%X", &addr);
+                  ScuDspDelCodeBreakpoint(addr);
+                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
+               }
                break;
             }
-
             default: break;
          }
          break;
