@@ -815,7 +815,7 @@ void ScuExec(u32 timing) {
                            break;
                      }
 
-//                     fprintf(stderr, "DMA command format 1: addressAdd = %d transferNumber = %d hold = %d dir = %d\n", addressAdd, transferNumber, hold, direction);
+//                     LOG("DMA command format 1: addressAdd = %d transferNumber = %d hold = %d dir = %d\n", addressAdd, transferNumber, hold, direction);
                   }
 
                   if (direction)
@@ -828,11 +828,11 @@ void ScuExec(u32 timing) {
                      // DMA(H) [RAM], D0, ??
                      for (i = 0; i < transferNumber; i++)
                      {                        
-                        MappedMemoryWriteLong(ScuDsp->WA0 << 2, readdmasrc((instruction >> 8) & 0x3, addressAdd >> 2));
+                        MappedMemoryWriteLong(ScuDsp->WA0 << 2, readdmasrc((instruction >> 8) & 0x3, 1));
                         ScuDsp->WA0 += (addressAdd >> 2); 
                      }
 
-                     if (hold) ScuDsp->WA0 = WA0temp;                                        
+                     if (hold) ScuDsp->WA0 = WA0temp;
                   }
                   else
                   {
@@ -844,7 +844,7 @@ void ScuExec(u32 timing) {
                      // DMA(H) D0,[RAM], ??
                      for (i = 0; i < transferNumber; i++)
                      {                        
-                        writedmadest((instruction >> 8) & 0x7, MappedMemoryReadLong(ScuDsp->RA0 << 2), addressAdd >> 2);
+                        writedmadest((instruction >> 8) & 0x7, MappedMemoryReadLong(ScuDsp->RA0 << 2), 1);
                         ScuDsp->RA0 += (addressAdd >> 2); 
                      }
 
