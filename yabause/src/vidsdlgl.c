@@ -124,12 +124,12 @@ static int vdp1cob=0;
 
 static int vdp2width;
 static int vdp2height;
-int vdp2disptoggle=0xFF;
-int nbg0priority=0;
-int nbg1priority=0;
-int nbg2priority=0;
-int nbg3priority=0;
-int rbg0priority=0;
+static int vdp2disptoggle=0xFF;
+static int nbg0priority=0;
+static int nbg1priority=0;
+static int nbg2priority=0;
+static int nbg3priority=0;
+static int rbg0priority=0;
 static int sdlglfps;
 static int sdlglframecount;
 static u32 sdlglticks;
@@ -296,7 +296,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             }
             texture->textdata += texture->w;
          }
-
          break;
       }
       case 3:
@@ -339,7 +338,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             }
             texture->textdata += texture->w;
          }
-
          break;
       }
       case 5:
@@ -1148,56 +1146,72 @@ void VIDSDLGLVdp1ScaledSpriteDraw(void)
    switch ((cmd.CMDCTRL & 0xF00) >> 8)
    {
       case 0x0: // Only two coordinates
-         rw = cmd.CMDXC - x + Vdp1Regs->localX;
-         rh = cmd.CMDYC - y + Vdp1Regs->localY;
+         rw = cmd.CMDXC - x + Vdp1Regs->localX + 1;
+         rh = cmd.CMDYC - y + Vdp1Regs->localY + 1;
          break;
       case 0x5: // Upper-left
-         rw = cmd.CMDXB;
-         rh = cmd.CMDYB;
-         break;        
+         rw = cmd.CMDXB + 1;
+         rh = cmd.CMDYB + 1;
+         break;
       case 0x6: // Upper-Center
          rw = cmd.CMDXB;
          rh = cmd.CMDYB;
          x = x - rw/2;
+         rw++;
+         rh++;
          break;
       case 0x7: // Upper-Right
          rw = cmd.CMDXB;
          rh = cmd.CMDYB;
          x = x - rw;
+         rw++;
+         rh++;
          break;
       case 0x9: // Center-left
          rw = cmd.CMDXB;
          rh = cmd.CMDYB;
          y = y - rh/2;
+         rw++;
+         rh++;
          break;
       case 0xA: // Center-center
          rw = cmd.CMDXB;
          rh = cmd.CMDYB;
          x = x - rw/2;
          y = y - rh/2;
+         rw++;
+         rh++;
          break;
       case 0xB: // Center-right
          rw = cmd.CMDXB;
          rh = cmd.CMDYB;
          x = x - rw;
          y = y - rh/2;
+         rw++;
+         rh++;
          break;
-      case 0xC: // Lower-left
+      case 0xD: // Lower-left
          rw = cmd.CMDXB;
          rh = cmd.CMDYB;
          y = y - rh;
+         rw++;
+         rh++;
          break;
       case 0xE: // Lower-center
          rw = cmd.CMDXB;
          rh = cmd.CMDYB;
          x = x - rw/2;
          y = y - rh;
+         rw++;
+         rh++;
          break;
       case 0xF: // Lower-right
          rw = cmd.CMDXB;
          rh = cmd.CMDYB;
          x = x - rw;
          y = y - rh;
+         rw++;
+         rh++;
          break;
       default: break;
    }
@@ -1251,12 +1265,12 @@ void VIDSDLGLVdp1DistortedSpriteDraw(void)
 
    sprite.vertices[0] = (s32)((float)(cmd.CMDXA + Vdp1Regs->localX) * vdp1wratio);
    sprite.vertices[1] = (s32)((float)(cmd.CMDYA + Vdp1Regs->localY) * vdp1hratio);
-   sprite.vertices[2] = (s32)((float)(cmd.CMDXB + Vdp1Regs->localX) * vdp1wratio);
+   sprite.vertices[2] = (s32)((float)((cmd.CMDXB + 1) + Vdp1Regs->localX) * vdp1wratio);
    sprite.vertices[3] = (s32)((float)(cmd.CMDYB + Vdp1Regs->localY) * vdp1hratio);
-   sprite.vertices[4] = (s32)((float)(cmd.CMDXC + Vdp1Regs->localX) * vdp1wratio);
-   sprite.vertices[5] = (s32)((float)(cmd.CMDYC + Vdp1Regs->localY) * vdp1hratio);
+   sprite.vertices[4] = (s32)((float)((cmd.CMDXC + 1) + Vdp1Regs->localX) * vdp1wratio);
+   sprite.vertices[5] = (s32)((float)((cmd.CMDYC + 1) + Vdp1Regs->localY) * vdp1hratio);
    sprite.vertices[6] = (s32)((float)(cmd.CMDXD + Vdp1Regs->localX) * vdp1wratio);
-   sprite.vertices[7] = (s32)((float)(cmd.CMDYD + Vdp1Regs->localY) * vdp1hratio);
+   sprite.vertices[7] = (s32)((float)((cmd.CMDYD + 1) + Vdp1Regs->localY) * vdp1hratio);
 
    tmp = cmd.CMDSRCA;
 
@@ -1661,6 +1675,9 @@ static void Vdp2DrawNBG0(void)
          case 2:
             info.planew = info.planeh = 2;
             break;
+         default: // Not sure what 0x3 does
+            info.planew = info.planeh = 1;
+            break;
       }
 
       if(Vdp2Regs->PNCN0 & 0x8000)
@@ -1747,7 +1764,9 @@ static void Vdp2DrawNBG0(void)
       Vdp2DrawCell(&info, &texture);
    }
    else
+   {
       Vdp2DrawMap(&info, &texture);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1865,6 +1884,9 @@ static void Vdp2DrawNBG1(void)
             break;
          case 2:
             info.planew = info.planeh = 2;
+            break;
+         default: // Not sure what 0x3 does
+            info.planew = info.planeh = 1;
             break;
       }
 
@@ -2045,6 +2067,9 @@ static void Vdp2DrawNBG2(void)
       case 2:
          info.planew = info.planeh = 2;
          break;
+      default: // Not sure what 0x3 does
+         info.planew = info.planeh = 1;
+         break;
    }
 
    if(Vdp2Regs->PNCN2 & 0x8000)
@@ -2201,6 +2226,9 @@ static void Vdp2DrawNBG3(void)
          break;
       case 2:
          info.planew = info.planeh = 2;
+         break;
+      default: // Not sure what 0x3 does
+         info.planew = info.planeh = 1;
          break;
    }
 
@@ -2457,6 +2485,9 @@ static void Vdp2DrawRBG0(void)
             break;
          case 2:
             info.planew = info.planeh = 2;
+            break;
+         default: // Not sure what 0x3 does
+            info.planew = info.planeh = 1;
             break;
       }
 
