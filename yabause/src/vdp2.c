@@ -267,6 +267,8 @@ void Vdp2VBlankOUT(void) {
       VIDCore->Vdp2DrawScreens();
       Vdp1Draw();
    }
+   else
+      Vdp1NoDraw();
 
    VIDCore->Vdp2DrawEnd();
    ScuSendVBlankOUT();

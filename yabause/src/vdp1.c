@@ -275,12 +275,11 @@ void Vdp1Draw(void) {
    if (!Vdp1Regs->PTMR)
       return;
 
-   // If TVMD's DISP bit isn't set, don't render
-   if (!(Vdp2Regs->TVMD & 0x8000))
-      return;
-
    if (!Vdp1Regs->disptoggle)
+   {
+      Vdp1NoDraw();
       return;
+   }
 
    Vdp1Regs->addr = 0;
    returnAddr = 0xFFFFFFFF;
@@ -365,6 +364,84 @@ void Vdp1Draw(void) {
    Vdp1Regs->EDSR |= 2;
    ScuSendDrawEnd();
    VIDCore->Vdp1DrawEnd();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp1NoDraw(void) {
+   u32 returnAddr;
+   u32 commandCounter;
+   u16 command;
+
+   // Only when PTMR's not set do we not parse commands
+   if (!Vdp1Regs->PTMR)
+      return;
+
+   Vdp1Regs->addr = 0;
+   returnAddr = 0xFFFFFFFF;
+   commandCounter = 0;
+
+   // beginning of a frame (ST-013-R3-061694 page 53)
+   // BEF <- CEF
+   // CEF <- 0
+   Vdp1Regs->EDSR >>= 1;
+
+   command = T1ReadWord(Vdp1Ram, Vdp1Regs->addr);
+
+   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+      // First, process the command
+      if (!(command & 0x4000)) { // if (!skip)
+         switch (command & 0x000F) {
+            case 0: // normal sprite draw
+            case 1: // scaled sprite draw
+            case 2: // distorted sprite draw
+            case 4: // polygon draw
+            case 5: // polyline draw
+            case 6: // line draw
+            case 8: // user clipping coordinates
+            case 9: // system clipping coordinates
+            case 10: // local coordinate
+               break;
+            default: // Abort
+               VDP1LOG("vdp1\t: Bad command: %x\n",  command);
+               VIDCore->Vdp1DrawEnd();
+               Vdp1Regs->LOPR = Vdp1Regs->addr >> 3;
+               Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+               return;
+         }
+      }
+
+      // Next, determine where to go next
+      switch ((command & 0x3000) >> 12) {
+         case 0: // NEXT, jump to following table
+            Vdp1Regs->addr += 0x20;
+            break;
+         case 1: // ASSIGN, jump to CMDLINK
+            Vdp1Regs->addr = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 2) * 8;
+            break;
+         case 2: // CALL, call a subroutine
+            if (returnAddr == 0xFFFFFFFF)
+               returnAddr = Vdp1Regs->addr + 0x20;
+	
+            Vdp1Regs->addr = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 2) * 8;
+            break;
+         case 3: // RETURN, return from subroutine
+            if (returnAddr != 0xFFFFFFFF) {
+               Vdp1Regs->addr = returnAddr;
+               returnAddr = 0xFFFFFFFF;
+            }
+            else
+               Vdp1Regs->addr += 0x20;
+            break;
+      }
+
+      command = T1ReadWord(Vdp1Ram, Vdp1Regs->addr);
+      commandCounter++;    
+   }
+
+   // we set two bits to 1
+   Vdp1Regs->EDSR |= 2;
+   ScuSendDrawEnd();
 }
 
 //////////////////////////////////////////////////////////////////////////////

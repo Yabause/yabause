@@ -145,6 +145,7 @@ void FASTCALL	Vdp1WriteWord(u32, u16);
 void FASTCALL	Vdp1WriteLong(u32, u32);
 
 void Vdp1Draw(void);
+void Vdp1NoDraw(void);
 void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr);
 
 char *Vdp1DebugGetCommandNumberName(u32 number);
