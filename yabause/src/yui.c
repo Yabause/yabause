@@ -107,6 +107,5 @@ int YuiInit(void) {
 
 void YuiErrorMsg(const char *string) {
    fprintf(stderr, string);
-   stop = 1;
 }
 
