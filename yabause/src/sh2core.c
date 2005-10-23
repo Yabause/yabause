@@ -644,6 +644,9 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
             // RSTE and RSTS bits
             CurrentSH2->onchip.RSTCSR = (CurrentSH2->onchip.RSTCSR & 0x80) | (val & 0x60) | 0x1F;
          return;
+      case 0x092:
+         CurrentSH2->onchip.CCR = val & 0xCF;
+         return;
       case 0x0E0:
          CurrentSH2->onchip.ICR = val & 0x0101;
          return;
