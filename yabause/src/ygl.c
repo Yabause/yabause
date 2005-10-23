@@ -95,7 +95,7 @@ int YglInit(int width, int height, unsigned int depth) {
    SDL_InitSubSystem( SDL_INIT_VIDEO );
 
    //set the window title
-   sprintf(yab_version, "Yabause %s", "0.5.0");
+   sprintf(yab_version, "Yabause " VERSION);
    SDL_WM_SetCaption(yab_version, NULL);
 	
    SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 4 );
@@ -104,11 +104,13 @@ int YglInit(int width, int height, unsigned int depth) {
    SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4);
    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
    SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+
    if ( SDL_SetVideoMode( 320, 224, 32, SDL_OPENGL | SDL_RESIZABLE ) == NULL ) {
       fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
       SDL_Quit();
       return -1;
    }
+
 
    glClear(GL_COLOR_BUFFER_BIT);
 
