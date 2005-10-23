@@ -125,9 +125,27 @@ u8 FASTCALL Cs2ReadByte(u32 addr)
             break;
       }
    }
+   else
+   {
+      // only netlink seems to use byte-access
+      switch (addr)
+      {
+         case 0x95001:
+         case 0x95005:
+         case 0x95009:
+         case 0x9500D:
+         case 0x95011:
+         case 0x95015:
+         case 0x95019:
+         case 0x9501D:
+            return 0xFF;
+         default:
+            break;
+      }
+   }
 
    LOG("Unimplemented cs2 byte read: %08X\n", addr);
-   return 0xFF; // only netlink seems to use byte-access
+   return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -198,8 +216,20 @@ void FASTCALL Cs2WriteByte(u32 addr, u8 val)
             break;
       }
    }
+   else
+   {
+      // only netlink seems to use byte-access
+      switch (addr)
+      {
+         case 0x2503D:
+         case 0x95011:
+         case 0x9501D:
+            return;
+         default:
+            break;
+      }
+   }
 
-   // only netlink seems to use byte-access
    LOG("Unimplemented cs2 byte write: %08X\n", addr);
 }
 
@@ -819,9 +849,9 @@ void Cs2SetCommandTiming(u8 cmd) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2Execute(void) {
-  Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
-
   u16 instruction = Cs2Area->reg.CR1 >> 8;
+
+  Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
 
   switch (instruction) {
     case 0x00:
