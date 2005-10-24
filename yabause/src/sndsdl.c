@@ -83,11 +83,21 @@ int SNDSDLInit()
    audiofmt.callback = MixAudio;
    audiofmt.userdata = NULL;
 
+   //samples needs to be a power of 2 according to SDL-doc
+   //so normalize it to the nearest power of 2 here
+   u32 normSamples = 512;
+   while (normSamples < audiofmt.samples) 
+      normSamples <<= 1;
+
+   audiofmt.samples = normSamples;
+   
    soundlen = audiofmt.freq / 60; // 60 for NTSC or 50 for PAL. Initially assume it's going to be NTSC.
    soundbufsize = soundlen * NUMSOUNDBLOCKS * 2 * 2;
 
-   if (SDL_OpenAudio(&audiofmt, NULL) != 0)
+   if (SDL_OpenAudio(&audiofmt, NULL) != 0) {
+      printf("Could not open audio device: %s\n", SDL_GetError());
       return -1;
+   }
 
    if ((stereodata16 = (u16 *)malloc(soundbufsize)) == NULL)
       return -1;
