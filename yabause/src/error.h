@@ -12,5 +12,7 @@
 #define YAB_ERR_SH2READ                 7
 #define YAB_ERR_SH2WRITE                8
 
+#define YAB_ERR_SDL                     9
+
 void YabSetError(int type, void *extra);
 #endif

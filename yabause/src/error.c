@@ -63,6 +63,9 @@ void YabSetError(int type, void *extra)
       case YAB_ERR_SH2WRITE:
          YuiErrorMsg("SH2 write error\n"); // fix me
          break;
+      case YAB_ERR_SDL:
+         AllocAmendPrintString("SDL Error: ", extra);
+         break;
       case YAB_ERR_UNKNOWN:
       default:
          YuiErrorMsg("Unknown error occured\n");
