@@ -18,7 +18,6 @@
 */
 
 #include "dreamcast/perdc.h"
-#include <kos.h>
 #include "yabause.h"
 #include "yui.h"
 
