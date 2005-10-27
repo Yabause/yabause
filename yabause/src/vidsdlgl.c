@@ -52,7 +52,7 @@
 
 int VIDSDLGLInit(void);
 void VIDSDLGLDeInit(void);
-void VIDSDLGLResize(unsigned int, unsigned int);
+void VIDSDLGLResize(unsigned int, unsigned int, int);
 int VIDSDLGLVdp1Reset(void);
 void VIDSDLGLVdp1DrawStart(void);
 void VIDSDLGLVdp1DrawEnd(void);
@@ -1009,9 +1009,13 @@ void VIDSDLGLDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSDLGLResize(unsigned int w, unsigned int h)
+void VIDSDLGLResize(unsigned int w, unsigned int h, int on)
 {
-   SDL_SetVideoMode(w, h, 32, SDL_OPENGL | SDL_RESIZABLE);
+   if (on)
+      SDL_SetVideoMode(w, h, 32, SDL_OPENGL | SDL_RESIZABLE | SDL_FULLSCREEN);
+   else
+      SDL_SetVideoMode(w, h, 32, SDL_OPENGL | SDL_RESIZABLE);
+
    glViewport(0, 0, w, h);
 }
 

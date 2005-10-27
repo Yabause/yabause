@@ -25,7 +25,7 @@
 
 int VIDSDLSoftInit(void);
 void VIDSDLSoftDeInit(void);
-void VIDSDLSoftResize(unsigned int, unsigned int);
+void VIDSDLSoftResize(unsigned int, unsigned int, int);
 int VIDSDLSoftVdp1Reset(void);
 void VIDSDLSoftVdp1DrawStart(void);
 void VIDSDLSoftVdp1DrawEnd(void);
@@ -681,7 +681,7 @@ void VIDSDLSoftDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSDLSoftResize(unsigned int w, unsigned int h)
+void VIDSDLSoftResize(unsigned int w, unsigned int h, int on)
 {
 }
 

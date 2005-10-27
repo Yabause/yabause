@@ -32,7 +32,7 @@ typedef struct
    const char *Name;
    int (*Init)(void);
    void (*DeInit)(void);
-   void (*Resize)(unsigned int, unsigned int);
+   void (*Resize)(unsigned int, unsigned int, int);
    // VDP1 specific
    int (*Vdp1Reset)(void);
    void (*Vdp1DrawStart)(void);

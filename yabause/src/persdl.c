@@ -92,6 +92,19 @@ void ToggleVDP1(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ToggleFullScreen(void)
+{
+   static int i = 0;
+
+   i = !i;
+   if (i)
+     VIDCore->Resize(640, 448, 1);
+   else
+     VIDCore->Resize(320, 224, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int PERSDLInit(void) {
 	int i;
 
@@ -133,6 +146,8 @@ int PERSDLInit(void) {
 
         PERSDLKeyPressed[SDLK_F1] = ToggleFPS;
 
+	PERSDLKeyPressed[SDLK_f] = ToggleFullScreen;
+
 	return 0;
 }
 
@@ -165,7 +180,7 @@ int PERSDLHandleEvents(void) {
             YuiQuit();
             break;
          case SDL_VIDEORESIZE:
-            VIDCore->Resize(event.resize.w, event.resize.h);
+            VIDCore->Resize(event.resize.w, event.resize.h, 0);
             break;
          default:
             // Since we're not handling it, might as well tell SDL to stop

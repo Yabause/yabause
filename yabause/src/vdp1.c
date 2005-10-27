@@ -858,7 +858,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
 
 int VIDDummyInit(void);
 void VIDDummyDeInit(void);
-void VIDDummyResize(unsigned int, unsigned int);
+void VIDDummyResize(unsigned int, unsigned int, int);
 int VIDDummyVdp1Reset(void);
 void VIDDummyVdp1DrawStart(void);
 void VIDDummyVdp1DrawEnd(void);
@@ -938,7 +938,7 @@ void VIDDummyDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyResize(unsigned int i, unsigned int j)
+void VIDDummyResize(unsigned int i, unsigned int j, int on)
 {
 }
 
