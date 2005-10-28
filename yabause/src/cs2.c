@@ -60,9 +60,9 @@ extern CDInterface *CDCoreList[];
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void doCDReport(void)
+static INLINE void doCDReport(unsigned char status)
 {
-   Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
+   Cs2Area->reg.CR1 = (status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
    Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | Cs2Area->track;
    Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) & 0xFF);
    Cs2Area->reg.CR4 = (u16) Cs2Area->FAD; 
@@ -70,9 +70,9 @@ static INLINE void doCDReport(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void doMPEGReport(void)
+static INLINE void doMPEGReport(unsigned char status)
 {
-   Cs2Area->reg.CR1 = (Cs2Area->status << 8) | Cs2Area->actionstatus;
+   Cs2Area->reg.CR1 = (status << 8) | Cs2Area->actionstatus;
    Cs2Area->reg.CR2 = Cs2Area->vcounter;
    Cs2Area->reg.CR3 = (Cs2Area->pictureinfo << 8) | Cs2Area->mpegaudiostatus;
    Cs2Area->reg.CR4 = Cs2Area->mpegvideostatus; 
@@ -811,7 +811,8 @@ void Cs2Exec(u32 timing) {
       Cs2Area->status |= CDB_STAT_PERI;
 
       // adjust registers appropriately here(fix me)
-      doCDReport();
+      doCDReport(Cs2Area->status);
+
       Cs2Area->reg.HIRQ |= CDB_HIRQ_SCDQ;
     }
 }
@@ -1104,7 +1105,7 @@ void Cs2Execute(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2GetStatus(void) {
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
@@ -1216,12 +1217,11 @@ void Cs2InitializeCDSystem(void) {
   else
      val &= ~CDB_HIRQ_DCHG;
 
-  Cs2Area->reg.CR1 = (Cs2Area->status << 8) | (Cs2Area->repcnt & 0xF);
-  Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | (Cs2Area->track & 0xFF);
-  Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) &0xFF);
-  Cs2Area->reg.CR4 = (u16) Cs2Area->FAD;
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ = val | CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 void Cs2EndDataTransfer(void) {
   s32 i;
@@ -1290,7 +1290,7 @@ void Cs2PlayDisc(void) {
   pdpmode = Cs2Area->reg.CR3 >> 8;
 
   // Convert Start Position to playFAD
-  if (pdspos == 0xFFFFFF)
+  if (pdspos == 0xFFFFFF || pdpmode == 0xFF) // This still isn't right
   {
      // No Change
   }
@@ -1344,7 +1344,7 @@ void Cs2PlayDisc(void) {
 
   Cs2Area->status = CDB_STAT_PLAY;
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
@@ -1390,7 +1390,7 @@ void Cs2SeekDisc(void) {
 
   Cs2SetTiming(0);
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
@@ -1439,7 +1439,7 @@ void Cs2SetCDDeviceConnection(void) {
 
   Cs2Area->outconcddevnum = scdcfilternum;
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
@@ -1464,7 +1464,7 @@ void Cs2SetFilterRange(void) {
   Cs2Area->filter[sfrfilternum].range = ((Cs2Area->reg.CR3 & 0xFF) << 16) | Cs2Area->reg.CR4;
 
   // return default cd stats
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
@@ -1482,7 +1482,7 @@ void Cs2SetFilterSubheaderConditions(void) {
   Cs2Area->filter[sfscfilternum].smval = Cs2Area->reg.CR4 >> 8;
   Cs2Area->filter[sfscfilternum].cival = Cs2Area->reg.CR4 & 0xFF;
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
@@ -1522,7 +1522,7 @@ void Cs2SetFilterMode(void) {
      Cs2Area->filter[sfmfilternum].cival = 0;
   }
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
@@ -1559,7 +1559,7 @@ void Cs2SetFilterConnection(void) {
      Cs2Area->filter[sfcfilternum].condfalse = Cs2Area->reg.CR2 & 0xFF;
   }
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
@@ -1592,7 +1592,7 @@ void Cs2ResetSelector(void) {
      if (Cs2Area->blockfreespace > 0) Cs2Area->isbufferfull = 0;
      if (Cs2Area->blockfreespace == 200) Cs2Area->isonesectorstored = 0;
 
-     doCDReport();
+     doCDReport(Cs2Area->status);
      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
      return;
   }
@@ -1662,7 +1662,7 @@ void Cs2ResetSelector(void) {
      Cs2Area->isonesectorstored = 0;
   }
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
@@ -1719,7 +1719,7 @@ void Cs2CalculateActualSize(void) {
   else
      Cs2Area->calcsize = 0;
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
@@ -1795,128 +1795,170 @@ void Cs2SetSectorLength(void) {
     default: break;
   }
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2GetSectorData(void) {
-  u32 gsdbufno;
+static INLINE void CalcSectorOffsetNumber(u32 bufno, u32 *sectoffset, u32 *sectnum)
+{
+   if (*sectoffset == 0xFFFF)
+   {
+      // Last sector 
+      CDLOG("FIXME - Sector offset of 0xFFFF not supported\n");
+   }
+   else if (*sectnum == 0xFFFF)
+   {
+      // Sector x sectors from last
+      CDLOG("FIXME - Sector number of 0xFFFF not supported\n");
 
-  gsdbufno = Cs2Area->reg.CR3 >> 8;
+      // Calculate which sector we want
+      *sectoffset = Cs2Area->partition[bufno].numblocks - *sectoffset - 1;
 
-  if (gsdbufno < MAX_SELECTORS)
-  {
-     // Setup Data Transfer
-     Cs2Area->cdwnum = 0;
-     Cs2Area->datatranstype = 0;
-     Cs2Area->datatranspartition = Cs2Area->partition + gsdbufno;
-     Cs2Area->datatranspartitionnum = gsdbufno;
-     Cs2Area->datatransoffset = 0;
-     Cs2Area->datanumsecttrans = 0;
-     Cs2Area->datatranssectpos = Cs2Area->reg.CR2;
-     Cs2Area->datasectstotrans = Cs2Area->reg.CR4;
-
-     doCDReport();
-     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST;
-  }
-  else
-  {
-     Cs2Area->reg.CR1 = (CDB_STAT_REJECT << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
-     Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | (Cs2Area->track & 0xFF);
-     Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) &0xFF);
-     Cs2Area->reg.CR4 = (u16) Cs2Area->FAD;
-     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
-  }
+      // I think this is right
+      *sectnum = 1; 
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2DeleteSectorData(void) {
-  u32 dsdsectoffset = 0;
-  u32 dsdbufno = 0;
-  u32 dsdsectnum = 0;
-  u32 i;
+void Cs2GetSectorData(void)
+{
+   u32 gsdsectoffset;
+   u32 gsdbufno;
+   u32 gsdsectnum;
 
-  dsdsectoffset = Cs2Area->reg.CR2;
-  dsdbufno = Cs2Area->reg.CR3 >> 8;
-  dsdsectnum = Cs2Area->reg.CR4;
+   gsdsectoffset = Cs2Area->reg.CR2;
+   gsdbufno = Cs2Area->reg.CR3 >> 8;
+   gsdsectnum = Cs2Area->reg.CR4;
 
-  if (dsdbufno < MAX_SELECTORS)
-  {
-     if (dsdsectoffset == 0xFFFF)
-     {
-        // delete last sector 
-        CDLOG("cs2\t:deleteSectorData: FIXME - sector offset of 0xFFFF not supported\n");
-     }
-     else if (dsdsectnum == 0xFFFF)
-     {
-        // delete sector x sectors from last?
-        CDLOG("cs2\t:deleteSectorData: FIXME - sector number of 0xFFFF not supported\n");
-        // calculate which sector we want to delete
-        dsdsectoffset = Cs2Area->partition[dsdbufno].numblocks - dsdsectoffset - 1;
-        // I think this is right
-        dsdsectnum = 1; 
-     }
+   if (gsdbufno >= MAX_SELECTORS)
+   {
+      doCDReport(CDB_STAT_REJECT);
+      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+      return;
+   }
 
-     for (i = dsdsectoffset; i < (dsdsectoffset+dsdsectnum); i++)
-     {
-        Cs2Area->partition[dsdbufno].size -= Cs2Area->partition[dsdbufno].block[i]->size;
-        Cs2FreeBlock(Cs2Area->partition[dsdbufno].block[i]);
-        Cs2Area->partition[dsdbufno].block[i] = NULL;
-        Cs2Area->partition[dsdbufno].blocknum[i] = 0xFF;
-     }
+   if (Cs2Area->partition[gsdbufno].numblocks == 0)
+   {
+      CDLOG("No sectors available\n");
 
-     // sort remaining blocks
-     Cs2SortBlocks(&Cs2Area->partition[dsdbufno]);
+      doCDReport(CDB_STAT_REJECT);
+      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+      return;
+   }
 
-     Cs2Area->partition[dsdbufno].numblocks -= dsdsectnum;
+   CalcSectorOffsetNumber(gsdbufno, &gsdsectoffset, &gsdsectnum);
 
-     if (Cs2Area->blockfreespace == 200) Cs2Area->isonesectorstored = 0;
+   // Setup Data Transfer
+   Cs2Area->cdwnum = 0;
+   Cs2Area->datatranstype = 0;
+   Cs2Area->datatranspartition = Cs2Area->partition + gsdbufno;
+   Cs2Area->datatranspartitionnum = gsdbufno;
+   Cs2Area->datatransoffset = 0;
+   Cs2Area->datanumsecttrans = 0;
+   Cs2Area->datatranssectpos = gsdsectoffset;
+   Cs2Area->datasectstotrans = gsdsectnum;
 
-     doCDReport();
-     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
-  }
-  else
-  {
-     Cs2Area->reg.CR1 = (CDB_STAT_REJECT << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
-     Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | (Cs2Area->track & 0xFF);
-     Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) &0xFF);
-     Cs2Area->reg.CR4 = (u16) Cs2Area->FAD;
-     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
-  }
+   doCDReport(Cs2Area->status);
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2GetThenDeleteSectorData(void) {
-  u32 gtdsdbufno;
+void Cs2DeleteSectorData(void)
+{
+   u32 dsdsectoffset;
+   u32 dsdbufno;
+   u32 dsdsectnum;
+   u32 i;
 
-  gtdsdbufno = Cs2Area->reg.CR3 >> 8;
+   dsdsectoffset = Cs2Area->reg.CR2;
+   dsdbufno = Cs2Area->reg.CR3 >> 8;
+   dsdsectnum = Cs2Area->reg.CR4;
 
-  if (gtdsdbufno < MAX_SELECTORS)
-  {
-     // Setup Data Transfer
-     Cs2Area->cdwnum = 0;
-     Cs2Area->datatranstype = 2;
-     Cs2Area->datatranspartition = Cs2Area->partition + gtdsdbufno;
-     Cs2Area->datatransoffset = 0;
-     Cs2Area->datanumsecttrans = 0;
-     Cs2Area->datatranssectpos = Cs2Area->reg.CR2;
-     Cs2Area->datasectstotrans = Cs2Area->reg.CR4;
+   if (dsdbufno >= MAX_SELECTORS)
+   {
+      doCDReport(CDB_STAT_REJECT);
+      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+      return;
+   }
 
-     doCDReport();
-     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST;
-  }
-  else
-  {
-     Cs2Area->reg.CR1 = (CDB_STAT_REJECT << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
-     Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | (Cs2Area->track & 0xFF);
-     Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) &0xFF);
-     Cs2Area->reg.CR4 = (u16) Cs2Area->FAD;
-     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
-  }
+   if (Cs2Area->partition[dsdbufno].numblocks == 0)
+   {
+      CDLOG("No sectors available\n");
+
+      doCDReport(CDB_STAT_REJECT);
+      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+      return;
+   }
+
+   CalcSectorOffsetNumber(dsdbufno, &dsdsectoffset, &dsdsectnum);
+
+   for (i = dsdsectoffset; i < (dsdsectoffset+dsdsectnum); i++)
+   {
+      Cs2Area->partition[dsdbufno].size -= Cs2Area->partition[dsdbufno].block[i]->size;
+      Cs2FreeBlock(Cs2Area->partition[dsdbufno].block[i]);
+      Cs2Area->partition[dsdbufno].block[i] = NULL;
+      Cs2Area->partition[dsdbufno].blocknum[i] = 0xFF;
+   }
+
+   // sort remaining blocks
+   Cs2SortBlocks(&Cs2Area->partition[dsdbufno]);
+
+   Cs2Area->partition[dsdbufno].numblocks -= dsdsectnum;
+
+   if (Cs2Area->blockfreespace == 200)
+      Cs2Area->isonesectorstored = 0;
+
+   doCDReport(Cs2Area->status);
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Cs2GetThenDeleteSectorData(void)
+{
+   u32 gtdsdsectoffset;
+   u32 gtdsdbufno;
+   u32 gtdsdsectnum;
+
+   gtdsdsectoffset = Cs2Area->reg.CR2;
+   gtdsdbufno = Cs2Area->reg.CR3 >> 8;
+   gtdsdsectnum = Cs2Area->reg.CR4;
+
+   if (gtdsdbufno >= MAX_SELECTORS)
+   {
+      doCDReport(CDB_STAT_REJECT);
+      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+      return;
+   }
+
+   if (Cs2Area->partition[gtdsdbufno].numblocks == 0)
+   {
+      CDLOG("No sectors available\n");
+
+      doCDReport(CDB_STAT_REJECT);
+      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+      return;
+   }
+
+   CalcSectorOffsetNumber(gtdsdbufno, &gtdsdsectoffset, &gtdsdsectnum);
+
+   // Setup Data Transfer
+   Cs2Area->cdwnum = 0;
+   Cs2Area->datatranstype = 2;
+   Cs2Area->datatranspartition = Cs2Area->partition + gtdsdbufno;
+   Cs2Area->datatransoffset = 0;
+   Cs2Area->datanumsecttrans = 0;
+   Cs2Area->datatranssectpos = gtdsdsectoffset;
+   Cs2Area->datasectstotrans = gtdsdsectnum;
+
+   doCDReport(Cs2Area->status);
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST;
+
+   return;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1933,10 +1975,7 @@ void Cs2PutSectorData(void) {
   }
   else
   {
-     Cs2Area->reg.CR1 = (CDB_STAT_REJECT << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
-     Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | (Cs2Area->track & 0xFF);
-     Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) &0xFF);
-     Cs2Area->reg.CR4 = (u16) Cs2Area->FAD;
+     doCDReport(CDB_STAT_REJECT);
      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
   }
 }
@@ -1971,7 +2010,7 @@ void Cs2ChangeDirectory(void) {
      }
   }
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
@@ -1984,7 +2023,7 @@ void Cs2ReadDirectory(void) {
 
   if (rdfilternum == 0xFF)
   {
-     // fix me
+     doCDReport(CDB_STAT_REJECT);
   }
   else if (rdfilternum < 0x24)
   {
@@ -1992,10 +2031,11 @@ void Cs2ReadDirectory(void) {
      {
         // fix me
         CDLOG("cs2\t: ReadFileSystem failed\n");
+        doCDReport(CDB_STAT_REJECT);
      }
   }
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
@@ -2049,6 +2089,7 @@ void Cs2GetFileInfo(void) {
 
 void Cs2ReadFile(void) {
   u32 rffid, rfoffset, rfsize;
+  partition_struct * playpartition;
 
   rffid = ((Cs2Area->reg.CR3 & 0xFF) << 8) | Cs2Area->reg.CR4;
   rfoffset = ((Cs2Area->reg.CR1 & 0xFF) << 8) | Cs2Area->reg.CR2;
@@ -2066,7 +2107,7 @@ void Cs2ReadFile(void) {
 
   Cs2Area->status = CDB_STAT_PLAY;
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
@@ -2079,14 +2120,14 @@ void Cs2AbortFile(void) {
   Cs2Area->isonesectorstored = 0;
   Cs2Area->datatranstype = -1;
   Cs2Area->cdwnum = 0;
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2MpegGetStatus(void) {
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2113,7 +2154,7 @@ void Cs2MpegGetInterrupt(void) {
 void Cs2MpegSetInterruptMask(void) {
    Cs2Area->mpegintmask = ((Cs2Area->reg.CR1 & 0xFF) << 16) | Cs2Area->reg.CR2;
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2144,7 +2185,7 @@ void Cs2MpegInit(void) {
 void Cs2MpegSetMode(void) {
    // fix me
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2153,7 +2194,7 @@ void Cs2MpegSetMode(void) {
 void Cs2MpegPlay(void) {
    // fix me
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2162,7 +2203,7 @@ void Cs2MpegPlay(void) {
 void Cs2MpegSetDecodingMethod(void) {
    // fix me
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2192,7 +2233,7 @@ void Cs2MpegSetConnection(void) {
       Cs2Area->mpegcon[1].vidbufdivnum = Cs2Area->reg.CR4 & 0xFF;
    }
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2247,7 +2288,7 @@ void Cs2MpegSetStream(void) {
       Cs2Area->mpegstm[1].vidchannum = Cs2Area->reg.CR4 & 0xFF;
    }
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2281,7 +2322,7 @@ void Cs2MpegGetStream(void) {
 void Cs2MpegDisplay(void) {
    // fix me(should be setting display setting)
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2291,7 +2332,7 @@ void Cs2MpegSetWindow(void) {
    // fix me(should be setting windows settings)
 
    // return default mpeg stats
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2300,7 +2341,7 @@ void Cs2MpegSetWindow(void) {
 void Cs2MpegSetBorderColor() {
    // fix me(should be setting border color)
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2309,7 +2350,7 @@ void Cs2MpegSetBorderColor() {
 void Cs2MpegSetFade() {
    // fix me(should be setting fade setting)
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2318,7 +2359,7 @@ void Cs2MpegSetFade() {
 void Cs2MpegSetVideoEffects(void) {
    // fix me(should be setting video effects settings)
 
-   doMPEGReport();
+   doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }
 
@@ -2376,7 +2417,7 @@ void Cs2CmdE0(void) {
         Cs2Area->reg.HIRQ |= CDB_HIRQ_EFLS | CDB_HIRQ_CSCT;
   }
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
@@ -2436,7 +2477,7 @@ void Cs2CmdE2(void) {
      fclose(mpgfp);
   }
 
-  doCDReport();
+  doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPED;
 }
 
@@ -2807,13 +2848,17 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
       // readDirectory operation
 
       // make sure we have a valid current directory
-      if (Cs2Area->curdirsect == 0) return -1;
-
+      if (Cs2Area->curdirsect == 0)
+         return -1;
+/*
 //      rfspartition = ReadUnFilteredSector(??);
       CDLOG("cs2\t: fix me: readDirectory not working\n");
       return -1;
 
       fid_offset = fid;
+*/
+
+      curdirlba = Cs2Area->fileinfo[fid].lba;
    }
    else
    {
@@ -2847,86 +2892,93 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
       else
       {
          // Read in new directory record of specified directory
-         CDLOG("cs2\t: fix me: only root directory supported for changeDirectory\n");
-         return -1;
+
+         // make sure we have a valid current directory
+         if (Cs2Area->curdirsect == 0)
+            return -1;
+
+         curdirlba = Cs2Area->fileinfo[fid].lba - 150;
       }
    }
 
-  // now read in first sector of directory record
-  if ((rfspartition = Cs2ReadUnFilteredSector(curdirlba+150)) == NULL)
-        return -2;
+   // Make sure any old records are cleared
+   memset(Cs2Area->fileinfo, 0, sizeof(dirrec_struct) * MAX_FILES);
 
-  curdirlba++;
-  workbuffer = rfspartition->block[rfspartition->numblocks - 1]->data;
+   // now read in first sector of directory record
+   if ((rfspartition = Cs2ReadUnFilteredSector(curdirlba+150)) == NULL)
+      return -2;
 
-  // Fill in first two entries of fileinfo
-  for (i = 0; i < 2; i++)
-  {
-     Cs2CopyDirRecord(workbuffer, Cs2Area->fileinfo + i);
-     Cs2Area->fileinfo[i].lba += 150;
-     workbuffer += Cs2Area->fileinfo[i].recordsize;
+   curdirlba++;
+   workbuffer = rfspartition->block[rfspartition->numblocks - 1]->data;
 
-     if (workbuffer[0] == 0)
-     {
-        Cs2Area->numfiles = i;
-        break;
-     }
-  }
+   // Fill in first two entries of fileinfo
+   for (i = 0; i < 2; i++)
+   {
+      Cs2CopyDirRecord(workbuffer, Cs2Area->fileinfo + i);
+      Cs2Area->fileinfo[i].lba += 150;
+      workbuffer += Cs2Area->fileinfo[i].recordsize;
 
-  // If fid_offset != 0, parse sector entries until we've found the fid that
-  // matches fid_offset
+      if (workbuffer[0] == 0)
+      {
+         Cs2Area->numfiles = i;
+         break;
+      }
+   }
 
-  // implement me
+   // If fid_offset != 0, parse sector entries until we've found the fid that
+   // matches fid_offset
 
-  // Now generate the last 254 entries(the first two should've already been
-  // generated earlier)
-  for (i = 2; i < MAX_FILES; i++)
-  {
-     Cs2CopyDirRecord(workbuffer, Cs2Area->fileinfo + i);
-     Cs2Area->fileinfo[i].lba += 150;
-     workbuffer += Cs2Area->fileinfo[i].recordsize;
+   // implement me
 
-     if (workbuffer[0] == 0)
-     {
-        if (numsectorsleft > 0)
-        {
-           // Free previous read sector
-           rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
-           Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
-           rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
+   // Now generate the last 254 entries(the first two should've already been
+   // generated earlier)
+   for (i = 2; i < MAX_FILES; i++)
+   {
+      Cs2CopyDirRecord(workbuffer, Cs2Area->fileinfo + i);
+      Cs2Area->fileinfo[i].lba += 150;
+      workbuffer += Cs2Area->fileinfo[i].recordsize;
 
-           // Sort remaining blocks
-           Cs2SortBlocks(rfspartition);
-           rfspartition->numblocks -= 1;
+      if (workbuffer[0] == 0)
+      {
+         if (numsectorsleft > 0)
+         {
+            // Free previous read sector
+            rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
+            Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+            rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
+       
+            // Sort remaining blocks
+            Cs2SortBlocks(rfspartition);
+            rfspartition->numblocks -= 1;
+   
+            // Read in next sector of directory record
+            if ((rfspartition = Cs2ReadUnFilteredSector(dirrec.lba+150)) == NULL)
+               return -2;
+            dirrec.lba++;
+            numsectorsleft--;
+            workbuffer = rfspartition->block[rfspartition->numblocks - 1]->data;
+         }
+         else
+         {
+            Cs2Area->numfiles = i;
+            break;
+         }
+      }
+   }
 
-           // Read in next sector of directory record
-           if ((rfspartition = Cs2ReadUnFilteredSector(dirrec.lba+150)) == NULL)
-              return -2;
-           dirrec.lba++;
-           numsectorsleft--;
-           workbuffer = rfspartition->block[rfspartition->numblocks - 1]->data;
-        }
-        else
-        {
-           Cs2Area->numfiles = i;
-           break;
-        }
-     }
-  }
+   // Free the remaining sector
+   rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
+   Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+   rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
 
-  // Free the remaining sector
-  rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
-  Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
-  rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
-
-  // Sort remaining blocks
-  Cs2SortBlocks(rfspartition);
-  rfspartition->numblocks -= 1;
+   // Sort remaining blocks
+   Cs2SortBlocks(rfspartition);
+   rfspartition->numblocks -= 1;
 
 //#if CDDEBUG
 //  for (i = 0; i < MAX_FILES; i++)
 //  {
-//     CDLOG("fileinfo[%d].name = %s\n", i, fileinfo[i].name);
+//     CDLOG("fileinfo[%d].name = %s\n", i, Cs2Area->fileinfo[i].name);
 //  }
 //#endif
 
