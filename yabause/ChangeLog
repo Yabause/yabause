@@ -1,6 +1,7 @@
 0.5.0 -> Current
 general:
   - Changed event handling a bit. Gained quite a bit of speed from it.
+  - Added fullscreen and fixed resize in windows.
 0.0.7 -> 0.5.0
 cd block:
   - bug fixes
