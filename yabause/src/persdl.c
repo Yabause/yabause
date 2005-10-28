@@ -98,9 +98,15 @@ void ToggleFullScreen(void)
 
    i = !i;
    if (i)
+   {
      VIDCore->Resize(640, 448, 1);
+     YuiVideoResize(640, 448, 1);
+   }
    else
+   {
      VIDCore->Resize(320, 224, 0);
+     YuiVideoResize(320, 224, 0);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
