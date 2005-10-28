@@ -117,17 +117,24 @@ void YuiErrorMsg(const char *error_text) {
    (which is all the functionality we need) */
 #define __pow(x, e) ({\
 	register float __x __asm__("fr0") = (x); \
+	register float __y __asm__("fr1") = (x); \
 	register int __e __asm__("r2") = (e); \
 	__asm__ __volatile__( \
-						  "\n__powloop:\n\t" \
-						  "dt	%2\n\t" \
-						  "fmul	%0, %0\n\t" \
-						  "bf	__powloop\n\t" \
+						  "dt		%3\n\t" \
+						  "bt		__endofloop\n" \
+						  "__powloop:\n\t" \
+						  "dt		%3\n\t" \
+						  "fmul		%2, %0\n\t" \
+						  "bf		__powloop\n" \
+						  "__endofloop:\n\t" \
 						  : "=f"(__x) \
-						  : "0"(__x), "r"(__e) \
+						  : "0"(__x), "f"(__y), "r"(__e) \
 						   ); \
 	__x; })
 
 double pow(double x, double e)	{
-	return (double)__pow((float)x, (int)e);
+	if(e == 0)
+		return 1.0;
+	else
+		return (double)__pow((float)x, (int)e);
 }
