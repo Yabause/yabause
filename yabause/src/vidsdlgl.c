@@ -1011,10 +1011,14 @@ void VIDSDLGLDeInit(void)
 
 void VIDSDLGLResize(unsigned int w, unsigned int h, int on)
 {
+   glDeleteTextures(1, &_Ygl->texture);
+
    if (on)
       SDL_SetVideoMode(w, h, 32, SDL_OPENGL | SDL_RESIZABLE | SDL_FULLSCREEN);
    else
       SDL_SetVideoMode(w, h, 32, SDL_OPENGL | SDL_RESIZABLE);
+
+   YglGLInit(1024, 1024);
 
    glViewport(0, 0, w, h);
 }

@@ -88,9 +88,51 @@ void YglTMAllocate(YglTexture * output, unsigned int w, unsigned int h, unsigned
 
 //////////////////////////////////////////////////////////////////////////////
 
+int YglGLInit(int width, int height) {
+   glClear(GL_COLOR_BUFFER_BIT);
+
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(0, 320, 224, 0, 1, 0);
+
+   glMatrixMode(GL_TEXTURE);
+   glLoadIdentity();
+   glOrtho(-width, width, -height, height, 1, 0);
+
+   glEnable(GL_BLEND);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   glEnableClientState(GL_VERTEX_ARRAY);
+   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+   glGenTextures(1, &_Ygl->texture);
+   glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, YglTM->texture);
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int YglInit(int width, int height, unsigned int depth) {
    unsigned int i;
    char yab_version[64];
+
+   YglTMInit(width, height);
+
+   if ((_Ygl = (Ygl *) malloc(sizeof(Ygl))) == NULL)
+      return -1;
+   _Ygl->depth = depth;
+   if ((_Ygl->levels = (YglLevel *) malloc(sizeof(YglLevel) * depth)) == NULL)
+      return -1;
+   for(i = 0;i < depth;i++) {
+      _Ygl->levels[i].currentQuad = 0;
+      _Ygl->levels[i].maxQuad = 8 * 2000;
+      if ((_Ygl->levels[i].quads = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int))) == NULL)
+         return -1;
+
+      if ((_Ygl->levels[i].textcoords = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int))) == NULL)
+         return -1;
+   }
 
    SDL_InitSubSystem( SDL_INIT_VIDEO );
 
@@ -111,44 +153,7 @@ int YglInit(int width, int height, unsigned int depth) {
       return -1;
    }
 
-
-   glClear(GL_COLOR_BUFFER_BIT);
-
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glOrtho(0, 320, 224, 0, 1, 0);
-
-   glMatrixMode(GL_TEXTURE);
-   glLoadIdentity();
-   glOrtho(-width, width, -height, height, 1, 0);
-
-   glEnable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   glEnableClientState(GL_VERTEX_ARRAY);
-   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-   YglTMInit(width, height);
-
-   if ((_Ygl = (Ygl *) malloc(sizeof(Ygl))) == NULL)
-      return -1;
-   _Ygl->depth = depth;
-   if ((_Ygl->levels = (YglLevel *) malloc(sizeof(YglLevel) * depth)) == NULL)
-      return -1;
-   for(i = 0;i < depth;i++) {
-      _Ygl->levels[i].currentQuad = 0;
-      _Ygl->levels[i].maxQuad = 8 * 2000;
-      if ((_Ygl->levels[i].quads = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int))) == NULL)
-         return -1;
-
-      if ((_Ygl->levels[i].textcoords = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int))) == NULL)
-         return -1;
-   }
-
-   glGenTextures(1, &_Ygl->texture);
-   glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, YglTM->texture);
-   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+   YglGLInit(width, height);
 
    _Ygl->st = 0;
    _Ygl->msglength = 0;
