@@ -109,3 +109,5 @@ void YuiErrorMsg(const char *string) {
    fprintf(stderr, string);
 }
 
+void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {
+}

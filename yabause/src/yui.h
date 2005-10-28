@@ -35,6 +35,11 @@ void YuiSetCdromFilename(const char *);
 /* Tells the yui to enable, or disable sound. By default it should be assumed that sound is enabled */
 void YuiSetSoundEnable(int enablesound);
 
+/* Tells the yui to resize window. Ports that don't have to deal with windows
+   should just ignore this. The w and h variables are the width and height of
+   the client area. Take this into account when you resize your window. */
+void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen);
+
 //////////////////////////////////////////////////////////////////////////////
 // Helper functions(you can use these in your own port)
 //////////////////////////////////////////////////////////////////////////////
