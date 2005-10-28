@@ -8,7 +8,7 @@ case $target in
 	*darwin*) yabause_arch=macosx;;
 	*linux*) yabause_arch=linux;;
 	*cygwin*) yabause_arch=windows;;
-	*mingw32*) yabause_arch=windows;;
+	*mingw32*) yabause_arch=.;;
 	*freebsd*) yabause_arch=freebsd;;
 	*) yabause_arch=".";;
 esac

@@ -13,6 +13,6 @@ yabause_SOURCES = \
 	yabause.c yabause.h ygl.h ygl.c \
 	$(yabause_yui)/yui.c yui.h
 yabause_CFLAGS = $(YAB_CFLAGS)
-yabause_LDFLAGS = $(YAB_LIBS)
+yabause_LDADD = $(YAB_LIBS)
 c68k/c68k_ini.inc:
 	cd c68k && ./gen68k
