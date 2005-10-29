@@ -145,6 +145,30 @@ void YuiErrorMsg(const char *string)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)
+{
+   RECT rect;
+
+   rect.left = 0;
+   rect.top = 0;
+   rect.right = w;
+   rect.bottom = h;
+
+   AdjustWindowRectEx(&rect, GetWindowLong(YabWin, GWL_STYLE), TRUE, 0);
+
+   w = rect.right - rect.left;
+   h = rect.bottom - rect.top;
+
+   if (isfullscreen)
+      SetWindowPos(YabWin, HWND_TOPMOST, (GetSystemMetrics(SM_CXSCREEN) - w) / 2, ((GetSystemMetrics(SM_CYSCREEN) - h) / 2), w, h, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+   else
+      SetWindowPos(YabWin, HWND_NOTOPMOST, (GetSystemMetrics(SM_CXSCREEN) - w) / 2, (GetSystemMetrics(SM_CYSCREEN) - h) / 2, w, h, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+
+   SetForegroundWindow(YabWin);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int YuiInit(void)
 {
    WNDCLASS                    MyWndClass;
