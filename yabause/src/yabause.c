@@ -199,8 +199,9 @@ void YabauseDeInit() {
 
    if (BupRam)
    {
-      if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
-         YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+      if (bupfilename != NULL)
+         if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
+            YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
 
       T1MemoryDeInit(BupRam);
    }

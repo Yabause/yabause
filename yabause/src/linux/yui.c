@@ -220,7 +220,7 @@ static void GtkYuiRun(void) {
     gtk_tree_model_get( gtk_combo_box_get_model(GTK_COMBO_BOX(GtkYui.comboBios)), &iter,
 			0, &yinit.biospath, -1 );
     
-    yinit.buppath = NULL;
+    yinit.buppath = "backup.ram";
     yinit.mpegpath = NULL;
     yinit.cartpath = NULL;
     
