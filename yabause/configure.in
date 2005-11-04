@@ -93,5 +93,13 @@ AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug 
 AC_ARG_ENABLE(vdp2-debug, AC_HELP_STRING(--enable-vdp2-debug, enable vdp2 debug information) , AC_DEFINE(VDP2_DEBUG))
 AC_ARG_ENABLE(cd-debug, AC_HELP_STRING(--enable-cd-debug, enable cdblock debug information) , AC_DEFINE(CDDEBUG))
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile src/freebsd/Makefile src/linux/Makefile src/c68k/Makefile])
+AC_CONFIG_FILES([Makefile
+	doc/Makefile
+	src/Makefile
+	src/c68k/Makefile
+	src/freebsd/Makefile
+	src/linux/Makefile
+	src/macosx/Makefile
+	src/windows/Makefile
+])
 AC_OUTPUT

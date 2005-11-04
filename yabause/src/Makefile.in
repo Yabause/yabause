@@ -89,10 +89,11 @@ am__quote = @am__quote@
 install_sh = @install_sh@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
-SUBDIRS = freebsd linux c68k
+EXTRA_DIST = cd.c Makefile.mng logo.bmp logo.ico logo.png
+SUBDIRS = c68k freebsd linux macosx windows
 bin_PROGRAMS = yabause
 yabause_SOURCES = \
-	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c c68k/c68k_ini.inc \
+	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \
 	$(yabause_arch)/cd.c \
 	cdbase.c cdbase.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h \
 	debug.c debug.h error.c error.h memory.c memory.h \
@@ -104,6 +105,7 @@ yabause_SOURCES = \
 	yabause.c yabause.h ygl.h ygl.c \
 	$(yabause_yui)/yui.c yui.h
 
+nodist_yabause_SOURCES = c68k/c68k_ini.inc
 yabause_CFLAGS = $(YAB_CFLAGS)
 yabause_LDADD = $(YAB_LIBS)
 subdir = src
@@ -126,7 +128,8 @@ am_yabause_OBJECTS = yabause-c68kexec.$(OBJEXT) yabause-c68k.$(OBJEXT) \
 	yabause-vdp2.$(OBJEXT) yabause-vidsdlgl.$(OBJEXT) \
 	yabause-vidsdlsoft.$(OBJEXT) yabause-yabause.$(OBJEXT) \
 	yabause-ygl.$(OBJEXT) yabause-yui.$(OBJEXT)
-yabause_OBJECTS = $(am_yabause_OBJECTS)
+nodist_yabause_OBJECTS =
+yabause_OBJECTS = $(am_yabause_OBJECTS) $(nodist_yabause_OBJECTS)
 yabause_DEPENDENCIES =
 yabause_LDFLAGS =
 
@@ -178,7 +181,7 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive install-info-recursive \
 	uninstall-recursive check-recursive installcheck-recursive
 DIST_COMMON = Makefile.am Makefile.in
 DIST_SUBDIRS = $(SUBDIRS)
-SOURCES = $(yabause_SOURCES)
+SOURCES = $(yabause_SOURCES) $(nodist_yabause_SOURCES)
 
 all: all-recursive
 
