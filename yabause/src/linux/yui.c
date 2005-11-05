@@ -29,18 +29,22 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
-#include <gdk/gdkkeysyms.h>
+// #include <gdk/gdkkeysyms.h>
 #include <glib/gi18n.h>
 #include "yabause_logo.xpm"
 #include "icon.xpm"
 
 #include "SDL.h"
 
+#define CARTTYPE_DEFAULT 5
 #define N_KEPT_FILES 8
 #include <glib.h>
 #include <envz.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* --------------------------------------------------------------------------------- */
+/* managing the configuration file $HOME/.yabause                                    */
 
 static struct {
   char* fileName;
@@ -48,7 +52,7 @@ static struct {
   size_t confLen;
 } yuiConf = { "", NULL, 0 };
 
-void GtkYuiConfInit() {
+static void yuiConfInit() {
 
   FILE* in;
   const char* homeDir = g_get_home_dir();
@@ -73,41 +77,52 @@ void GtkYuiConfInit() {
   }
 }
 
-char* GtkYuiGetString( const char* name ) {
+static char* yuiGetString( const char* name ) {
 
   return envz_get( yuiConf.confPtr, yuiConf.confLen, name );
 }
 
-void GtkYuiSetString( const char* name, const char* value ) {
+static char* yuiGetStringNew( const char* name ) {
+
+  char* c = envz_get( yuiConf.confPtr, yuiConf.confLen, name );
+  char* d = c ? (char*)malloc( strlen(c)+1 ) : NULL;
+  if ( c ) strcpy( d,c );
+  return d;
+}
+
+static void yuiSetString( const char* name, const char* value ) {
 
   envz_add( &yuiConf.confPtr, &yuiConf.confLen, name, value );
  }
 
-int GtkYuiGetInt( const char* name, int deflt ) {
+static int yuiGetInt( const char* name, int deflt ) {
 
-  char* res = GtkYuiGetString( name );
+  char* res = yuiGetString( name );
   if ( !res ) return deflt;
   return atoi( res );
 }
 
-void GtkYuiSetInt( const char* name, const int value ) {
+static void yuiSetInt( const char* name, const int value ) {
 
   char tmp[32];
   sprintf( tmp, "%d", value );
-  GtkYuiSetString( name, tmp );
+  yuiSetString( name, tmp );
 }
 
-void GtkYuiStore() {
+static void yuiStore() {
 
   FILE* out = fopen( yuiConf.fileName, "w" );
   if ( !out ) {
 
-    fprintf( stderr, "Yabause:YuiConf : Cannot store configurations in file %s\n", yuiConf.fileName );
+    fprintf( stderr, "Yabause:yuiConf : Cannot store configurations in file %s\n", yuiConf.fileName );
     return;
   }
   fwrite( yuiConf.confPtr, 1, yuiConf.confLen, out );
   fclose( out );
 }
+
+/* --------------------------------------------------------*/
+/* Interface lists                                         */
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -138,112 +153,21 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
-int cdcore = CDCORE_DEFAULT;
-const char * bios = "jap.rom";
-const char * iso_or_cd = 0;
+/* ------------------------------------------------------------ */
+/* ComboFileSelect - Control for file selection                 */
 
-struct {
-  GtkWidget *window;
-  GdkPixbuf *pixBufIcon;
-  GtkWidget *buttonBios;
-  GtkWidget *buttonCdRom;
-  GtkWidget *comboBios;
-  gint idcBios;
-  GtkWidget *comboCdRom;
-  gint idcCdRom;
-  GtkWidget *checkIso;
-  GtkWidget *checkCdRom;
-  GtkWidget *buttonRun;
-  GtkWidget *buttonPause;
-  enum {GTKYUI_WAIT,GTKYUI_RUN,GTKYUI_PAUSE} running;
-} GtkYui;
+typedef struct {
 
-void GtkYuiAbout(void);
+  GtkWidget *frame;
+  GtkWidget *hbox;
+  GtkWidget *combo;
+  GtkWidget *button;
+  GtkWidget *filew;
 
-void YuiSetSoundEnable(int enablesound) {}
-
-void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {}
-
-int GtkWorkaround(void) {
-	return ~(PERCore->HandleEvents());
-}
-
-void GtkYuiErrorPopup( gchar* text ) {
-  
-  GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(GtkYui.window),
-				   GTK_DIALOG_DESTROY_WITH_PARENT,
-				   GTK_MESSAGE_ERROR,
-				   GTK_BUTTONS_CLOSE,
-				   text );
-  gtk_dialog_run (GTK_DIALOG (dialog));
-  gtk_widget_destroy (dialog);
-}
-
-static void GtkYuiRun(void) {
-
-  switch ( GtkYui.running ) {
-
-  case GTKYUI_WAIT: {
-    GtkTreeIter iter;    
-    yabauseinit_struct yinit;
-
-    if ( gtk_combo_box_get_active( GTK_COMBO_BOX(GtkYui.comboBios) ) <= 0 ) {
-      GtkYuiErrorPopup("You need to select a BIOS file.");
-      return;
-    }
-    
-    gtk_widget_set_sensitive( GtkYui.comboBios, FALSE );
-    gtk_widget_set_sensitive( GtkYui.comboCdRom, FALSE );
-    gtk_widget_set_sensitive( GtkYui.checkIso, FALSE );
-    gtk_widget_set_sensitive( GtkYui.checkCdRom, FALSE );
-    gtk_widget_set_sensitive( GtkYui.buttonBios, FALSE );
-    gtk_widget_set_sensitive( GtkYui.buttonCdRom, FALSE );
-    
-    if ( gtk_combo_box_get_active( GTK_COMBO_BOX(GtkYui.comboCdRom) ) <= 0 ) {
-      yinit.cdpath = NULL;
-      yinit.cdcoretype = CDCORE_DEFAULT; 
-    }
-    else {
-      gtk_combo_box_get_active_iter( GTK_COMBO_BOX(GtkYui.comboCdRom), &iter );
-      gtk_tree_model_get( gtk_combo_box_get_model(GTK_COMBO_BOX(GtkYui.comboCdRom)), &iter,
-			  0, &yinit.cdpath, -1 );
-      yinit.cdcoretype = ( gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( GtkYui.checkIso ) ) )
-	? CDCORE_ISO : CDCORE_ARCH;
-    }
-    yinit.percoretype = PERCORE_SDL;
-    yinit.sh2coretype = SH2CORE_DEFAULT;
-    yinit.vidcoretype = VIDCORE_SDLGL;
-    yinit.sndcoretype = SNDCORE_SDL;
-    yinit.carttype = CART_NONE;
-    yinit.regionid = REGION_AUTODETECT;
-    gtk_combo_box_get_active_iter( GTK_COMBO_BOX(GtkYui.comboBios), &iter );
-    gtk_tree_model_get( gtk_combo_box_get_model(GTK_COMBO_BOX(GtkYui.comboBios)), &iter,
-			0, &yinit.biospath, -1 );
-    
-    yinit.buppath = "backup.ram";
-    yinit.mpegpath = NULL;
-    yinit.cartpath = NULL;
-    
-    YabauseInit(&yinit);
-  } /* fall through GTKYUI_PAUSE */
-  case GTKYUI_PAUSE:
-    gtk_widget_show( GtkYui.buttonPause );
-    gtk_widget_hide( GtkYui.buttonRun );
-    GtkYui.running = GTKYUI_RUN;
-    g_idle_add((gboolean (*)(void*)) GtkWorkaround, (gpointer)1 );
-  }
-}
-
-static void GtkYuiPause(void) {
-
-  if ( GtkYui.running == GTKYUI_RUN ) {
-
-    gtk_widget_show( GtkYui.buttonRun );
-    gtk_widget_hide( GtkYui.buttonPause );
-    g_idle_remove_by_data( (gpointer)1 );
-    GtkYui.running = GTKYUI_PAUSE;
-  }
-}
+  gchar *name;
+  gchar lastPathEntry[64];
+  gint  idc;
+} ComboFileSelect;
 
 static void loadCombo( GtkComboBox* combo, gint* idc, gchar* name ) {
 
@@ -260,7 +184,7 @@ static void loadCombo( GtkComboBox* combo, gint* idc, gchar* name ) {
 
     gchar *c;
     *label = 'A'+i;
-    c = GtkYuiGetString( tmp );
+    c = yuiGetString( tmp );
     if ( c ) gtk_combo_box_insert_text( combo, ++(*idc), c );
   }
   gtk_combo_box_set_active( combo, *idc );
@@ -286,48 +210,287 @@ static void saveCombo( GtkComboBox* combo, gint idc, gchar* name ) {
     gtk_combo_box_set_active( combo, i );
     gtk_combo_box_get_active_iter( combo, &iter );
     gtk_tree_model_get( gtk_combo_box_get_model(combo), &iter, 0, &c, -1 );
-    GtkYuiSetString( tmp, c );
+    yuiSetString( tmp, c );
   }
-  GtkYuiStore();
+  yuiStore();
 }
 
-static void GtkYuiSetBios(GtkWidget * w, GtkFileSelection * fs) {
+static void yuiFileSelect(GtkWidget * w, ComboFileSelect* cf ) {
 
-  gint newid = ++GtkYui.idcBios;
-  const gchar* fileName = gtk_file_selection_get_filename( GTK_FILE_SELECTION(fs) );
-  GtkYuiSetString( "lastbiospath", fileName ); /* will be stored by saveCombo */
+  gint newid = ++(cf->idc);
+  const gchar* fileName = gtk_file_selection_get_filename( GTK_FILE_SELECTION(cf->filew) );
+  yuiSetString( cf->lastPathEntry, fileName ); /* will be stored by saveCombo */
 
-  gtk_combo_box_insert_text( GTK_COMBO_BOX( GtkYui.comboBios ), newid, fileName );
-  saveCombo( GTK_COMBO_BOX(GtkYui.comboBios), newid, "bios" );
-  gtk_combo_box_set_active( GTK_COMBO_BOX(GtkYui.comboBios), newid );	
-  gtk_widget_destroy(GTK_WIDGET(fs));
+  gtk_combo_box_insert_text( GTK_COMBO_BOX( cf->combo ), newid, fileName );
+  saveCombo( GTK_COMBO_BOX(cf->combo), newid, cf->name );
+  gtk_combo_box_set_active( GTK_COMBO_BOX(cf->combo), newid );
+  gtk_widget_destroy(cf->filew);
 }
 
-static void GtkYuiSetCdRom(GtkWidget * w, GtkFileSelection * fs) {
+static void yuiFileCancel(GtkWidget * w, ComboFileSelect* cf ) {
 
-  gint newid = ++GtkYui.idcCdRom;
-  const gchar* fileName = gtk_file_selection_get_filename( GTK_FILE_SELECTION(fs) );
-  GtkYuiSetString( "lastcdrompath", fileName ); /* will be stored by saveCombo */
-
-  gtk_combo_box_insert_text( GTK_COMBO_BOX( GtkYui.comboCdRom ), newid, fileName );
-  saveCombo( GTK_COMBO_BOX(GtkYui.comboCdRom), newid, "cdrom" );
-  gtk_combo_box_set_active( GTK_COMBO_BOX(GtkYui.comboCdRom), newid );	
-  gtk_widget_destroy(GTK_WIDGET(fs));
+  const gchar* fileName = gtk_file_selection_get_filename( GTK_FILE_SELECTION(cf->filew) );
+  yuiSetString( cf->lastPathEntry, fileName );
+  gtk_widget_destroy(cf->filew);
 }
 
-void GtkYuiBrowse( GtkButton* button, gpointer bCdRom ) {
 
-  GtkWidget *filew = gtk_file_selection_new("File selection");
-  gchar* lastpath = GtkYuiGetString( bCdRom ? "lastcdrompath" : "lastbiospath" );
-  if ( lastpath ) gtk_file_selection_set_filename(GTK_FILE_SELECTION( filew ), lastpath );
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(filew)->ok_button), "clicked", 
-		   bCdRom ? G_CALLBACK(GtkYuiSetCdRom) : G_CALLBACK(GtkYuiSetBios), 
-		   (gpointer)filew);
-  g_signal_connect_swapped(G_OBJECT(GTK_FILE_SELECTION(filew)->cancel_button), "clicked", G_CALLBACK(gtk_widget_destroy), G_OBJECT(filew));
-  gtk_widget_show(filew);
+static void yuiBrowse( GtkButton* button, ComboFileSelect* cf ) {
+
+  gchar* lastpath = yuiGetString( cf->lastPathEntry );
+  cf->filew = gtk_file_selection_new("File selection");
+  gtk_window_set_modal( cf->filew, TRUE );
+
+  if ( lastpath ) gtk_file_selection_set_filename(GTK_FILE_SELECTION( cf->filew ), lastpath );
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(cf->filew)->ok_button), "clicked", 
+		   G_CALLBACK(yuiFileSelect),
+		   (gpointer)cf);
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(cf->filew)->cancel_button), "clicked", 
+		   G_CALLBACK(yuiFileCancel),
+		   (gpointer)cf);
+
+  gtk_widget_show(cf->filew);
 }
 
-int GtkYuiInit(void) {
+static ComboFileSelect* cfNew( gchar *_name, gchar *title ) {
+
+  ComboFileSelect* cf = (ComboFileSelect*)malloc( sizeof( ComboFileSelect ) );
+
+  cf->name = (gchar*)malloc( strlen(_name)+1 );
+  strcpy( cf->name, _name );
+  strcpy( cf->lastPathEntry, "lastpath_" );
+  strcpy( cf->lastPathEntry+strlen( cf->lastPathEntry ), _name );
+
+  cf->frame = gtk_frame_new( title );
+  gtk_frame_set_shadow_type( GTK_FRAME( cf->frame ), GTK_SHADOW_OUT );
+  
+  cf->hbox = gtk_hbox_new( FALSE, 0 );
+  gtk_container_set_border_width( GTK_CONTAINER( cf->hbox ),1 );
+  gtk_container_add (GTK_CONTAINER (cf->frame), cf->hbox);
+
+  cf->combo = gtk_combo_box_new_text();
+  gtk_box_pack_start( GTK_BOX( cf->hbox ), cf->combo, TRUE, TRUE, 0 );
+  loadCombo( GTK_COMBO_BOX(cf->combo), &cf->idc, cf->name );
+
+  cf->button = gtk_button_new();
+  gtk_container_add( GTK_CONTAINER(cf->button), gtk_image_new_from_stock( GTK_STOCK_OPEN, GTK_ICON_SIZE_MENU ));
+  gtk_box_pack_start( GTK_BOX( cf->hbox ), cf->button, FALSE, FALSE, 0 );
+
+  g_signal_connect(cf->button, "clicked",
+		   G_CALLBACK(yuiBrowse), (gpointer)cf );
+  
+  return cf;
+}
+
+static void cfDelete( ComboFileSelect* cf ) {
+
+  free( cf->name ); /* widgets are destroyed by GTK, just remove our data */
+  free( cf );
+}
+
+static void cfSetSensitive( ComboFileSelect* cf, gboolean bSensitive ) {
+
+  gtk_widget_set_sensitive( cf->combo, bSensitive );
+}
+
+static gint cfGetActive( ComboFileSelect* cf ) {
+
+  return gtk_combo_box_get_active( GTK_COMBO_BOX(cf->combo) );
+}
+
+static void cfSetActive( ComboFileSelect* cf, gint i ) {
+
+  gtk_combo_box_set_active( GTK_COMBO_BOX(cf->combo), i );
+}
+
+static GtkWidget* cfGetWidget( ComboFileSelect* cf ) { return cf->frame; }
+
+static void cfGetText( ComboFileSelect* cf, gchar** str ) {
+
+  GtkTreeIter iter;    
+
+  if ( cfGetActive( cf ) < 1 ) *str = NULL;
+  else {
+    gtk_combo_box_get_active_iter( GTK_COMBO_BOX(cf->combo), &iter );
+    gtk_tree_model_get( gtk_combo_box_get_model( GTK_COMBO_BOX(cf->combo)), &iter, 0, str, -1 );
+  }
+}
+
+static void cfCatchValue( ComboFileSelect* cf, gchar* value ) {
+
+  gint i;
+  gchar* c = "";
+  if ( !value ) {
+    cfSetActive( cf, 0 );
+    return;
+  }
+  for ( i=1 ; i <= cf->idc ; i++ ) {
+    cfSetActive( cf, i );
+    cfGetText( cf, &c );
+    if ( !strcmp(value, c ) ) break;
+  }
+}
+
+/* ---------------------------------------------------- */
+/* Settings dialog                                      */
+
+static struct {
+  ComboFileSelect *cfBup, *cfCart;
+  GtkWidget* comboCartType;
+} yuiSettings;
+
+static void yuiSettingsResponse(GtkWidget *widget, gint arg1, gpointer user_data ) {
+
+  if ( arg1 == GTK_RESPONSE_ACCEPT ) {
+   
+    gchar *c;
+    cfGetText( yuiSettings.cfBup, &c );
+    yuiSetString( "buppath", c );
+    cfGetText( yuiSettings.cfCart, &c );
+    yuiSetString( "cartpath", c );
+    yuiSetInt( "carttype", gtk_combo_box_get_active( GTK_COMBO_BOX(yuiSettings.comboCartType))+1 );
+    yuiStore();
+  }
+}
+
+static void yuiSettingsDialog() {
+
+  GtkWidget* hboxcart;
+  GtkWidget* dialog = gtk_dialog_new_with_buttons ( "Settings",
+						    NULL,
+						   (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
+						    GTK_STOCK_OK,
+						    GTK_RESPONSE_ACCEPT,
+						    GTK_STOCK_CANCEL,
+						    GTK_RESPONSE_REJECT, NULL);
+  GtkWidget* vbox = GTK_DIALOG(dialog)->vbox;
+
+  yuiSettings.cfCart = cfNew( "cart", "Card slot" );
+  cfCatchValue( yuiSettings.cfCart, yuiGetString( "cartpath" ) );
+  yuiSettings.cfBup = cfNew( "bup", "Backup memory" );
+  cfCatchValue( yuiSettings.cfBup, yuiGetString( "buppath" ) );
+  gtk_box_pack_start( GTK_BOX( vbox ), cfGetWidget(yuiSettings.cfCart), FALSE, FALSE, 2 );
+  hboxcart = gtk_hbox_new( FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxcart, FALSE, FALSE, 2 );  
+  gtk_box_pack_start( GTK_BOX( vbox ), cfGetWidget(yuiSettings.cfBup), FALSE, FALSE, 2 );  
+
+  gtk_box_pack_start( GTK_BOX( hboxcart ), gtk_label_new( "Card type >" ), FALSE, FALSE, 2 );
+  yuiSettings.comboCartType = gtk_combo_box_new_text();
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 0, "PAR" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 1, "BACKUPRAM4MBIT" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 2, "BACKUPRAM8MBIT" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 3, "BACKUPRAM16MBIT" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 4, "BACKUPRAM32MBIT" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 5, "DRAM8MBIT" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 6, "DRAM32MBIT" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 7, "NETLINK" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 8, "ROM16MBIT" );
+  gtk_combo_box_set_active( GTK_COMBO_BOX(yuiSettings.comboCartType), yuiGetInt( "carttype", CARTTYPE_DEFAULT )-1);
+  gtk_box_pack_start( GTK_BOX( hboxcart ), yuiSettings.comboCartType, TRUE, FALSE, 2 );
+
+  gtk_widget_show_all(dialog);
+  g_signal_connect (GTK_OBJECT (dialog),
+		    "response",
+		    G_CALLBACK (yuiSettingsResponse), NULL);
+  gtk_dialog_run( GTK_DIALOG( dialog ) );
+
+  cfDelete( yuiSettings.cfCart );
+  cfDelete( yuiSettings.cfBup );
+  gtk_widget_destroy(dialog);
+}
+
+/* ---------------------------------------------------------- */
+/* GUI Core                                                   */
+ 
+static struct {
+  GtkWidget *window;
+  GdkPixbuf *pixBufIcon;
+  ComboFileSelect *cfBios, *cfCdRom;
+  GtkWidget *checkIso;
+  GtkWidget *checkCdRom;
+  GtkWidget *buttonRun;
+  GtkWidget *buttonPause;
+  GtkWidget *buttonSettings;
+  enum {GTKYUI_WAIT,GTKYUI_RUN,GTKYUI_PAUSE} running;
+} yui;
+
+static void yuiAbout(void);
+
+static int GtkWorkaround(void) {
+	return ~(PERCore->HandleEvents());
+}
+
+static void yuiErrorPopup( gchar* text ) {
+  
+  GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(yui.window),
+				   GTK_DIALOG_DESTROY_WITH_PARENT,
+				   GTK_MESSAGE_ERROR,
+				   GTK_BUTTONS_CLOSE,
+				   text );
+  gtk_dialog_run (GTK_DIALOG (dialog));
+  gtk_widget_destroy (dialog);
+}
+
+static void yuiRun(void) {
+
+  switch ( yui.running ) {
+
+  case GTKYUI_WAIT: {
+    yabauseinit_struct yinit;
+
+    if ( cfGetActive( yui.cfBios ) <= 0 ) {
+      yuiErrorPopup("You need to select a BIOS file.");
+      return;
+    }
+    
+    cfSetSensitive( yui.cfBios, FALSE );
+    cfSetSensitive( yui.cfCdRom, FALSE );
+    gtk_widget_set_sensitive( yui.checkIso, FALSE );
+    gtk_widget_set_sensitive( yui.checkCdRom, FALSE );
+    
+    if ( cfGetActive( yui.cfCdRom) <= 0 ) {
+      yinit.cdpath = NULL;
+      yinit.cdcoretype = CDCORE_DEFAULT; 
+    }
+    else {
+      cfGetText( yui.cfCdRom, &yinit.cdpath );
+      yinit.cdcoretype = ( gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( yui.checkIso ) ) )
+	? CDCORE_ISO : CDCORE_ARCH;
+    }
+    yinit.percoretype = PERCORE_SDL;
+    yinit.sh2coretype = SH2CORE_DEFAULT;
+    yinit.vidcoretype = VIDCORE_SDLGL;
+    yinit.sndcoretype = SNDCORE_SDL;
+    yinit.regionid = REGION_AUTODETECT;
+    cfGetText( yui.cfBios, &yinit.biospath );
+    
+    yinit.buppath = yuiGetStringNew( "buppath" );
+    yinit.mpegpath = NULL;
+    yinit.cartpath = yuiGetStringNew( "cartpath" );
+    yinit.carttype = yinit.cartpath ? yuiGetInt( "carttype", CARTTYPE_DEFAULT ) : CART_NONE;
+   
+    YabauseInit(&yinit);
+  } /* fall through GTKYUI_PAUSE */
+  case GTKYUI_PAUSE:
+    gtk_widget_show( yui.buttonPause );
+    gtk_widget_hide( yui.buttonRun );
+    yui.running = GTKYUI_RUN;
+    g_idle_add((gboolean (*)(void*)) GtkWorkaround, (gpointer)1 );
+  }
+}
+
+static void yuiPause(void) {
+
+  if ( yui.running == GTKYUI_RUN ) {
+
+    gtk_widget_show( yui.buttonRun );
+    gtk_widget_hide( yui.buttonPause );
+    g_idle_remove_by_data( (gpointer)1 );
+    yui.running = GTKYUI_PAUSE;
+  }
+}
+
+static int yuiInit(void) {
 	int fake_argc = 0;
 	char ** fake_argv = NULL;
 	char * text;
@@ -336,27 +499,23 @@ int GtkYuiInit(void) {
 	GtkWidget *hboxHigh;
 	GtkWidget *hboxLow;
 	GtkWidget *vboxHigh;
-	GtkWidget *hboxCdRom;
-	GtkWidget *hboxBios;
-	GtkWidget *frameBios;
-	GtkWidget *frameCdRom;
 	GtkWidget *hboxRadioCD;
 	GtkWidget *buttonQuit;
 	GtkWidget *buttonHelp;
 	
 	gtk_init (&fake_argc, &fake_argv);
-	GtkYui.running = GTKYUI_WAIT;
-	GtkYui.pixBufIcon = gdk_pixbuf_new_from_xpm_data(icon_xpm);
-	GtkYuiConfInit();
+	yui.running = GTKYUI_WAIT;
+	yui.pixBufIcon = gdk_pixbuf_new_from_xpm_data(icon_xpm);
+	yuiConfInit();
 
-	GtkYui.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_resizable( GTK_WINDOW( GtkYui.window ), FALSE );
-	g_signal_connect(G_OBJECT (GtkYui.window), "delete_event", GTK_SIGNAL_FUNC(YuiQuit), NULL);
-	gtk_window_set_icon( GTK_WINDOW(GtkYui.window), GtkYui.pixBufIcon );
+	yui.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_resizable( GTK_WINDOW( yui.window ), FALSE );
+	g_signal_connect(G_OBJECT (yui.window), "delete_event", GTK_SIGNAL_FUNC(YuiQuit), NULL);
+	gtk_window_set_icon( GTK_WINDOW(yui.window), yui.pixBufIcon );
 
 	vbox = gtk_vbox_new (FALSE, 2);
 	gtk_container_set_border_width( GTK_CONTAINER( vbox ),4 );
-	gtk_container_add (GTK_CONTAINER (GtkYui.window), vbox);
+	gtk_container_add (GTK_CONTAINER (yui.window), vbox);
 
 	hboxHigh = gtk_hbox_new( FALSE, 4 );
 	gtk_box_pack_start( GTK_BOX( vbox ), hboxHigh, TRUE, TRUE, 2 );
@@ -368,50 +527,27 @@ int GtkYuiInit(void) {
 	vboxHigh = gtk_vbox_new( FALSE, 5 );
 	gtk_box_pack_start( GTK_BOX( hboxHigh ), vboxHigh, TRUE, TRUE, 2 );
 
-	frameBios = gtk_frame_new( "Bios" );
-	gtk_frame_set_shadow_type( GTK_FRAME( frameBios ), GTK_SHADOW_OUT );
-	gtk_box_pack_start( GTK_BOX( vboxHigh ), frameBios, FALSE, FALSE, 2 );
-	frameCdRom = gtk_frame_new( "CD-ROM" );
-	gtk_frame_set_shadow_type( GTK_FRAME( frameCdRom ), GTK_SHADOW_OUT );
-	gtk_box_pack_start( GTK_BOX( vboxHigh ), frameCdRom, FALSE, FALSE, 2 );
+	yui.cfBios = cfNew( "bios", "Bios" );
+	yui.cfCdRom = cfNew( "cdrom", "CD-ROM" );
+	gtk_box_pack_start( GTK_BOX( vboxHigh ), cfGetWidget( yui.cfBios ), FALSE, TRUE, 4 );
+	gtk_box_pack_start( GTK_BOX( vboxHigh ), cfGetWidget( yui.cfCdRom ), FALSE, TRUE, 4 );	
 
 	hboxRadioCD = gtk_hbox_new( FALSE, 2 );
 	gtk_box_pack_start( GTK_BOX( vboxHigh ), hboxRadioCD, FALSE, TRUE, 4 );
 
-	GtkYui.checkIso = gtk_radio_button_new_with_label( NULL, "ISO file" );
-	GtkYui.checkCdRom = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON(GtkYui.checkIso), "Native CD" );
-	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), GtkYui.checkIso, FALSE, TRUE, 4 );
-	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), GtkYui.checkCdRom, FALSE, TRUE, 4 );
+	yui.checkIso = gtk_radio_button_new_with_label( NULL, "ISO file" );
+	yui.checkCdRom = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON(yui.checkIso), "Native CD" );
+	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), yui.checkIso, FALSE, TRUE, 4 );
+	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), yui.checkCdRom, FALSE, TRUE, 4 );
 
-	hboxBios = gtk_hbox_new( FALSE, 0 );
-	gtk_container_set_border_width( GTK_CONTAINER( hboxBios ),1 );
-	gtk_container_add (GTK_CONTAINER (frameBios), hboxBios);
+	yui.buttonRun = gtk_button_new_from_stock( GTK_STOCK_EXECUTE );
+	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonRun, FALSE, FALSE, 2 );
 
-	hboxCdRom = gtk_hbox_new( FALSE, 0 );
-	gtk_container_set_border_width( GTK_CONTAINER( hboxCdRom ),1 );
-	gtk_container_add (GTK_CONTAINER (frameCdRom), hboxCdRom);
+	yui.buttonPause = gtk_button_new_with_label( "Pause" );
+	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonPause, FALSE, FALSE, 2 );
 
-	GtkYui.comboBios = gtk_combo_box_new_text();
-	gtk_box_pack_start( GTK_BOX( hboxBios ), GtkYui.comboBios, TRUE, TRUE, 0 );
-	loadCombo( GTK_COMBO_BOX(GtkYui.comboBios), &GtkYui.idcBios, "bios" );
-
-	GtkYui.comboCdRom = gtk_combo_box_new_text();
-	gtk_box_pack_start( GTK_BOX( hboxCdRom ), GtkYui.comboCdRom, TRUE, TRUE, 0 );
-	loadCombo( GTK_COMBO_BOX(GtkYui.comboCdRom), &GtkYui.idcCdRom, "cdrom" );
-
-	GtkYui.buttonBios = gtk_button_new();
-	gtk_container_add( GTK_CONTAINER(GtkYui.buttonBios), gtk_image_new_from_stock( GTK_STOCK_OPEN, GTK_ICON_SIZE_MENU ));
-	gtk_box_pack_start( GTK_BOX( hboxBios ), GtkYui.buttonBios, FALSE, FALSE, 0 );
-
-	GtkYui.buttonCdRom = gtk_button_new();
-	gtk_container_add( GTK_CONTAINER(GtkYui.buttonCdRom), gtk_image_new_from_stock( GTK_STOCK_OPEN, GTK_ICON_SIZE_MENU ));
-	gtk_box_pack_start( GTK_BOX( hboxCdRom ), GtkYui.buttonCdRom, FALSE, FALSE, 0 );
-
-	GtkYui.buttonRun = gtk_button_new_from_stock( GTK_STOCK_EXECUTE );
-	gtk_box_pack_start( GTK_BOX( hboxLow ), GtkYui.buttonRun, FALSE, FALSE, 2 );
-
-	GtkYui.buttonPause = gtk_button_new_with_label( "Pause" );
-	gtk_box_pack_start( GTK_BOX( hboxLow ), GtkYui.buttonPause, FALSE, FALSE, 2 );
+	yui.buttonSettings = gtk_button_new_from_stock( GTK_STOCK_PREFERENCES );
+	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonSettings, FALSE, FALSE, 2 );
 
 	gtk_box_pack_start( GTK_BOX( hboxLow ), gtk_vseparator_new(), TRUE, FALSE, 2 );
 
@@ -423,51 +559,53 @@ int GtkYuiInit(void) {
 	gtk_box_pack_start( GTK_BOX( hboxLow ), buttonHelp, FALSE, FALSE, 2 );
 
 	text = g_strdup_printf ("Yabause %s", VERSION);
-	gtk_window_set_title(GTK_WINDOW (GtkYui.window), text);
+	gtk_window_set_title(GTK_WINDOW (yui.window), text);
 	g_free(text);
 
-	g_signal_connect(GtkYui.buttonRun, "clicked",
-			 G_CALLBACK(GtkYuiRun), NULL);
-	g_signal_connect(GtkYui.buttonPause, "clicked",
-			 G_CALLBACK(GtkYuiPause), NULL);
+	g_signal_connect(yui.buttonRun, "clicked",
+			 G_CALLBACK(yuiRun), NULL);
+	g_signal_connect(yui.buttonPause, "clicked",
+			 G_CALLBACK(yuiPause), NULL);
+	g_signal_connect(yui.buttonSettings, "clicked",
+			 G_CALLBACK(yuiSettingsDialog), NULL);
 	g_signal_connect_swapped(buttonQuit, "clicked",
 				 G_CALLBACK(YuiQuit), NULL );
-	g_signal_connect(GtkYui.buttonBios, "clicked",
-			 G_CALLBACK(GtkYuiBrowse), (gpointer)FALSE );
-	g_signal_connect(GtkYui.buttonCdRom, "clicked",
-			 G_CALLBACK(GtkYuiBrowse), (gpointer)TRUE );
 	g_signal_connect(buttonHelp, "clicked",
-			 G_CALLBACK(GtkYuiAbout), NULL );
+			 G_CALLBACK(yuiAbout), NULL );
 
-	gtk_widget_show_all (GtkYui.window);
-	gtk_widget_hide( GtkYui.buttonPause );
+	gtk_widget_show_all (yui.window);
+	gtk_widget_hide( yui.buttonPause );
 }
 
+/* ------------------------------------------------- */
+/* Interface functions -- non-static !               */
+
+void YuiSetSoundEnable(int enablesound) {}
+
+void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {}
+
 void YuiSetBiosFilename(const char * biosfilename) {
-        bios = biosfilename;
+  /*        bios = biosfilename; */
 }
 
 void YuiSetIsoFilename(const char * isofilename) {
-	cdcore = CDCORE_ISO;
-	iso_or_cd = isofilename;
+  /*	cdcore = CDCORE_ISO;
+	iso_or_cd = isofilename; */
 }
 
 void YuiSetCdromFilename(const char * cdromfilename) {
-	cdcore = CDCORE_ARCH;
-	iso_or_cd = cdromfilename;
+  /*	cdcore = CDCORE_ARCH;
+	iso_or_cd = cdromfilename; */
 }
 
 void YuiHideShow(void) {
 }
 
-void YuiQuit(void) {
-  
-   gtk_main_quit();
-}
+void YuiQuit(void) { gtk_main_quit(); }
 
 int YuiInit(void) {
 
-   GtkYuiInit();
+   yuiInit();
    gtk_main();
    return 0;
 }
@@ -476,6 +614,9 @@ void YuiErrorMsg(const char *string) {
 
    fprintf(stderr, string);
 }
+
+/* ------------------------------------------------------------- */
+/* About box                                                     */
 
 /* Code taken from beep media player:
    http://www.sosdg.org/~larne/w/BMP_Homepage
@@ -521,7 +662,7 @@ static const gchar *credit_text[] = {
 };
 
 static GtkWidget *
-GtkYuiGenerateCreditList(const gchar * text[], gboolean sec_space)
+yuiGenerateCreditList(const gchar * text[], gboolean sec_space)
 {
     GtkWidget *scrollwin;
     GtkWidget *treeview;
@@ -587,7 +728,7 @@ GtkYuiGenerateCreditList(const gchar * text[], gboolean sec_space)
     return scrollwin;
 }
 
-void GtkYuiAbout(void) {
+static void yuiAbout(void) {
     static GtkWidget *about_window = NULL;
 
     GdkPixmap *yabause_logo_pmap = NULL, *yabause_logo_mask = NULL;
@@ -604,7 +745,7 @@ void GtkYuiAbout(void) {
         return;
 
     about_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_icon( GTK_WINDOW(about_window), GtkYui.pixBufIcon );
+    gtk_window_set_icon( GTK_WINDOW(about_window), yui.pixBufIcon );
     gtk_window_set_type_hint(GTK_WINDOW(about_window),
                              GDK_WINDOW_TYPE_HINT_DIALOG);
 
@@ -653,7 +794,7 @@ void GtkYuiAbout(void) {
     about_notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(about_vbox), about_notebook, TRUE, TRUE, 0);
 
-    list = GtkYuiGenerateCreditList(credit_text, TRUE);
+    list = yuiGenerateCreditList(credit_text, TRUE);
     gtk_notebook_append_page(GTK_NOTEBOOK(about_notebook), list,
                              gtk_label_new(_("Credits")));
 
