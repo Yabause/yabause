@@ -25,19 +25,21 @@
 #include "../vidsdlgl.h"
 #include "../persdl.h"
 #include "../cs0.h"
-#include "yuiconf.h"
 
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
-// #include <gdk/gdkkeysyms.h>
+/* #include <gdk/gdkkeysyms.h> */
 #include <glib/gi18n.h>
 #include "yabause_logo.xpm"
 #include "icon.xpm"
 
-#include "SDL.h"
+/* #include "SDL.h" */
 
-#define CARTTYPE_DEFAULT 5
+#define FS_X_DEFAULT 640
+#define FS_Y_DEFAULT 448
+#define CARTTYPE_DEFAULT 0
 #define N_KEPT_FILES 8
+
 #include <glib.h>
 #include <envz.h>
 #include <stdio.h>
@@ -80,14 +82,6 @@ static void yuiConfInit() {
 static char* yuiGetString( const char* name ) {
 
   return envz_get( yuiConf.confPtr, yuiConf.confLen, name );
-}
-
-static char* yuiGetStringNew( const char* name ) {
-
-  char* c = envz_get( yuiConf.confPtr, yuiConf.confLen, name );
-  char* d = c ? (char*)malloc( strlen(c)+1 ) : NULL;
-  if ( c ) strcpy( d,c );
-  return d;
 }
 
 static void yuiSetString( const char* name, const char* value ) {
@@ -239,7 +233,7 @@ static void yuiBrowse( GtkButton* button, ComboFileSelect* cf ) {
 
   gchar* lastpath = yuiGetString( cf->lastPathEntry );
   cf->filew = gtk_file_selection_new("File selection");
-  gtk_window_set_modal( cf->filew, TRUE );
+  gtk_window_set_modal( GTK_WINDOW(cf->filew), TRUE );
 
   if ( lastpath ) gtk_file_selection_set_filename(GTK_FILE_SELECTION( cf->filew ), lastpath );
   g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(cf->filew)->ok_button), "clicked", 
@@ -291,6 +285,7 @@ static void cfDelete( ComboFileSelect* cf ) {
 static void cfSetSensitive( ComboFileSelect* cf, gboolean bSensitive ) {
 
   gtk_widget_set_sensitive( cf->combo, bSensitive );
+  gtk_widget_set_sensitive( cf->button, bSensitive );
 }
 
 static gint cfGetActive( ComboFileSelect* cf ) {
@@ -335,27 +330,74 @@ static void cfCatchValue( ComboFileSelect* cf, gchar* value ) {
 /* Settings dialog                                      */
 
 static struct {
-  ComboFileSelect *cfBup, *cfCart;
-  GtkWidget* comboCartType;
+  ComboFileSelect *cfBup, *cfCart, *cfMpeg;
+  GtkWidget *comboCartType, *comboRegion, *spinX, *spinY;
 } yuiSettings;
 
 static void yuiSettingsResponse(GtkWidget *widget, gint arg1, gpointer user_data ) {
+  /* settings dialog has exited. Recover all information. */
 
   if ( arg1 == GTK_RESPONSE_ACCEPT ) {
    
     gchar *c;
+    int r;
     cfGetText( yuiSettings.cfBup, &c );
     yuiSetString( "buppath", c );
     cfGetText( yuiSettings.cfCart, &c );
     yuiSetString( "cartpath", c );
-    yuiSetInt( "carttype", gtk_combo_box_get_active( GTK_COMBO_BOX(yuiSettings.comboCartType))+1 );
+    cfGetText( yuiSettings.cfMpeg, &c );
+    yuiSetString( "mpegpath", c );
+    yuiSetInt( "carttype", gtk_combo_box_get_active( GTK_COMBO_BOX(yuiSettings.comboCartType)) );
+    switch ( gtk_combo_box_get_active( GTK_COMBO_BOX(yuiSettings.comboRegion)) ) {
+    case 0: r = REGION_AUTODETECT; break;
+    case 1: r = REGION_JAPAN ; break;
+    case 2: r = REGION_ASIANTSC ; break;
+    case 3: r = REGION_NORTHAMERICA ; break;
+    case 4: r = REGION_CENTRALSOUTHAMERICANTSC ; break;
+    case 5: r = REGION_KOREA ; break;
+    case 6: r = REGION_ASIAPAL ; break;
+    case 7: r = REGION_EUROPE ; break;
+    case 8: r = REGION_CENTRALSOUTHAMERICAPAL ; break;
+    }
+    yuiSetInt( "region", r );
+    yuiSetInt( "fsX", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinX ) ) );
+    yuiSetInt( "fsY", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinY ) ) );
     yuiStore();
   }
 }
 
-static void yuiSettingsDialog() {
+static void yuiComboCart( GtkWidget *widget, gpointer user_data ) {
+  /* comboCartType changed */
+  
+  switch ( gtk_combo_box_get_active( GTK_COMBO_BOX(yuiSettings.comboCartType) ) ) {
 
-  GtkWidget* hboxcart;
+  case CART_PAR:
+  case CART_BACKUPRAM4MBIT:
+  case CART_BACKUPRAM8MBIT:
+  case CART_BACKUPRAM16MBIT:
+  case CART_BACKUPRAM32MBIT:
+  case CART_ROM16MBIT:
+    cfSetSensitive( yuiSettings.cfCart, TRUE );
+    break;
+  default:
+    cfSetSensitive( yuiSettings.cfCart, FALSE );   
+  }
+}
+
+static void spinFsChanged( GtkWidget *widget, gboolean bFsY ) {
+  /* Keep the 10/7 ratio between spinX and spinY */
+
+  if ( bFsY ) gtk_spin_button_set_value( GTK_SPIN_BUTTON(yuiSettings.spinX),
+					 (gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON(yuiSettings.spinY))*10)/7 );
+  else gtk_spin_button_set_value( GTK_SPIN_BUTTON(yuiSettings.spinY),
+					 (gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON(yuiSettings.spinX))*7)/10 );
+}
+
+static void yuiSettingsDialog() {
+  /* create and run settings dialog. */
+
+  int r;
+  GtkWidget *hboxcart, *hboxregion;
   GtkWidget* dialog = gtk_dialog_new_with_buttons ( "Settings",
 						    NULL,
 						   (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -365,28 +407,99 @@ static void yuiSettingsDialog() {
 						    GTK_RESPONSE_REJECT, NULL);
   GtkWidget* vbox = GTK_DIALOG(dialog)->vbox;
 
-  yuiSettings.cfCart = cfNew( "cart", "Card slot" );
-  cfCatchValue( yuiSettings.cfCart, yuiGetString( "cartpath" ) );
-  yuiSettings.cfBup = cfNew( "bup", "Backup memory" );
-  cfCatchValue( yuiSettings.cfBup, yuiGetString( "buppath" ) );
-  gtk_box_pack_start( GTK_BOX( vbox ), cfGetWidget(yuiSettings.cfCart), FALSE, FALSE, 2 );
-  hboxcart = gtk_hbox_new( FALSE, 4 );
-  gtk_box_pack_start( GTK_BOX( vbox ), hboxcart, FALSE, FALSE, 2 );  
-  gtk_box_pack_start( GTK_BOX( vbox ), cfGetWidget(yuiSettings.cfBup), FALSE, FALSE, 2 );  
+  /* Cartbridge path selection CF */
 
-  gtk_box_pack_start( GTK_BOX( hboxcart ), gtk_label_new( "Card type >" ), FALSE, FALSE, 2 );
+  yuiSettings.cfCart = cfNew( "cart", "Cartbridge slot" );
+  cfCatchValue( yuiSettings.cfCart, yuiGetString( "cartpath" ) );
+  gtk_box_pack_start( GTK_BOX( vbox ), cfGetWidget(yuiSettings.cfCart), FALSE, FALSE, 4 );
+
+  /* Cartbridge type selection Combo */
+
+  hboxcart = gtk_hbox_new( FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxcart, FALSE, FALSE, 4 );  
+
+  gtk_box_pack_start( GTK_BOX( hboxcart ), gtk_label_new( "Cartbridge type >" ), FALSE, FALSE, 2 );
   yuiSettings.comboCartType = gtk_combo_box_new_text();
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 0, "PAR" );
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 1, "BACKUPRAM4MBIT" );
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 2, "BACKUPRAM8MBIT" );
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 3, "BACKUPRAM16MBIT" );
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 4, "BACKUPRAM32MBIT" );
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 5, "DRAM8MBIT" );
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 6, "DRAM32MBIT" );
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 7, "NETLINK" );
-  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 8, "ROM16MBIT" );
-  gtk_combo_box_set_active( GTK_COMBO_BOX(yuiSettings.comboCartType), yuiGetInt( "carttype", CARTTYPE_DEFAULT )-1);
-  gtk_box_pack_start( GTK_BOX( hboxcart ), yuiSettings.comboCartType, TRUE, FALSE, 2 );
+
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 0, "None" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 1, "Pro Action Replay" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 2, "4 Mbit Backup Ram" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 3, "8 Mbit Backup Ram" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 4, "16 Mbit Backup Ram" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 5, "32 Mbit Backup Ram" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 6, "8 Mbit Dram" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 7, "32 Mbit Dram" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 8, "Netlink" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboCartType), 9, "16 Mbit ROM" );
+  
+  g_signal_connect (GTK_OBJECT (yuiSettings.comboCartType), "changed", G_CALLBACK (yuiComboCart), NULL );
+  
+  gtk_combo_box_set_active( GTK_COMBO_BOX(yuiSettings.comboCartType), yuiGetInt( "carttype", CARTTYPE_DEFAULT ));
+  gtk_box_pack_start( GTK_BOX( hboxcart ), yuiSettings.comboCartType, FALSE, FALSE, 2 );
+
+  /* Backup Memory path selection CF */
+
+  yuiSettings.cfBup = cfNew( "bup", "Backup memory" ); 
+  cfCatchValue( yuiSettings.cfBup, yuiGetString( "buppath" ) );  
+  gtk_box_pack_start( GTK_BOX( vbox ), cfGetWidget(yuiSettings.cfBup), FALSE, FALSE, 4 );  
+
+  /* Region selection Combo */
+
+  hboxregion = gtk_hbox_new( FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxregion, FALSE, FALSE, 4 );  
+
+  gtk_box_pack_start( GTK_BOX( hboxregion ), gtk_label_new( "Region >" ), FALSE, FALSE, 2 );
+  yuiSettings.comboRegion = gtk_combo_box_new_text();
+
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 0, "Auto-detect" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 1, "Japan(NTSC)" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 2, "Asia(NTCS)" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 3, "North America(NTSC)" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 4, "Central/South America(NTSC)" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 5, "Korea(NTSC)" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 6, "Asia(PAL)" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 7, "Europe + others(PAL)" );
+  gtk_combo_box_insert_text( GTK_COMBO_BOX(yuiSettings.comboRegion), 8, "Central/South America(PAL)" );
+
+  switch ( yuiGetInt( "region", 0 ) ) {
+    case REGION_AUTODETECT: r = 0; break;
+    case REGION_JAPAN: r=1; break;
+    case REGION_ASIANTSC: r=2; break;
+    case REGION_NORTHAMERICA: r=3; break;
+    case REGION_CENTRALSOUTHAMERICANTSC: r=4; break;
+    case REGION_KOREA: r=5; break;
+    case REGION_ASIAPAL: r=6; break;
+    case REGION_EUROPE: r=7; break;
+    case REGION_CENTRALSOUTHAMERICAPAL: r=8; break;
+  }
+  gtk_combo_box_set_active( GTK_COMBO_BOX(yuiSettings.comboRegion), r );
+  gtk_box_pack_start( GTK_BOX( hboxregion ), yuiSettings.comboRegion, FALSE, FALSE, 2 );
+
+  /* MPEG ROM File selection CF */
+
+  yuiSettings.cfMpeg = cfNew( "mpeg", "MPEG ROM File" ); 
+  cfCatchValue( yuiSettings.cfMpeg, yuiGetString( "mpegpath" ) );  
+  gtk_box_pack_start( GTK_BOX( vbox ), cfGetWidget(yuiSettings.cfMpeg), FALSE, FALSE, 4 );  
+
+  /* Fullscreen resolution */
+
+  { GtkWidget* hboxFs = gtk_hbox_new( FALSE, 4 );
+  yuiSettings.spinX = gtk_spin_button_new_with_range( 40, 2048, 40 );
+  yuiSettings.spinY = gtk_spin_button_new_with_range( 28, 2048, 28 );
+  gtk_spin_button_set_value( GTK_SPIN_BUTTON(yuiSettings.spinX), yuiGetInt( "fsX", FS_X_DEFAULT ) );
+  gtk_spin_button_set_value( GTK_SPIN_BUTTON(yuiSettings.spinY), yuiGetInt( "fsY", FS_Y_DEFAULT ) );
+  g_signal_connect(GTK_OBJECT( yuiSettings.spinX ), "value-changed", G_CALLBACK( spinFsChanged ), (gpointer)0 );
+  g_signal_connect(GTK_OBJECT( yuiSettings.spinY ), "value-changed", G_CALLBACK( spinFsChanged ), (gpointer)1 );
+
+  gtk_box_pack_start( GTK_BOX( hboxFs ), gtk_label_new( "Fullscreen resolution >  X :" ), FALSE, FALSE, 2 );
+  gtk_box_pack_start( GTK_BOX( hboxFs ), yuiSettings.spinX, FALSE, FALSE, 0 );
+  gtk_box_pack_start( GTK_BOX( hboxFs ), gtk_label_new( " Y :" ), FALSE, FALSE, 2 );
+  gtk_box_pack_start( GTK_BOX( hboxFs ), yuiSettings.spinY, FALSE, FALSE, 0 );
+
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxFs, FALSE, FALSE, 4 );
+  }
+
+  /* ---------------------- */
 
   gtk_widget_show_all(dialog);
   g_signal_connect (GTK_OBJECT (dialog),
@@ -396,6 +509,7 @@ static void yuiSettingsDialog() {
 
   cfDelete( yuiSettings.cfCart );
   cfDelete( yuiSettings.cfBup );
+  cfDelete( yuiSettings.cfMpeg );
   gtk_widget_destroy(dialog);
 }
 
@@ -410,6 +524,7 @@ static struct {
   GtkWidget *checkCdRom;
   GtkWidget *buttonRun;
   GtkWidget *buttonPause;
+  GtkWidget *buttonFs;
   GtkWidget *buttonSettings;
   enum {GTKYUI_WAIT,GTKYUI_RUN,GTKYUI_PAUSE} running;
 } yui;
@@ -453,7 +568,7 @@ static void yuiRun(void) {
       yinit.cdcoretype = CDCORE_DEFAULT; 
     }
     else {
-      cfGetText( yui.cfCdRom, &yinit.cdpath );
+      cfGetText( yui.cfCdRom, (gchar**)(&yinit.cdpath) );
       yinit.cdcoretype = ( gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( yui.checkIso ) ) )
 	? CDCORE_ISO : CDCORE_ARCH;
     }
@@ -461,18 +576,19 @@ static void yuiRun(void) {
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_SDLGL;
     yinit.sndcoretype = SNDCORE_SDL;
-    yinit.regionid = REGION_AUTODETECT;
-    cfGetText( yui.cfBios, &yinit.biospath );
+    yinit.regionid = yuiGetInt( "region", REGION_AUTODETECT );
+    cfGetText( yui.cfBios, (gchar**)(&yinit.biospath) );
     
-    yinit.buppath = yuiGetStringNew( "buppath" );
-    yinit.mpegpath = NULL;
-    yinit.cartpath = yuiGetStringNew( "cartpath" );
-    yinit.carttype = yinit.cartpath ? yuiGetInt( "carttype", CARTTYPE_DEFAULT ) : CART_NONE;
+    yinit.buppath = g_strdup(yuiGetString( "buppath" ));
+    yinit.mpegpath = g_strdup(yuiGetString( "mpegpath" ));
+    yinit.cartpath = g_strdup(yuiGetString( "cartpath" ));
+    yinit.carttype = yuiGetInt( "carttype", CARTTYPE_DEFAULT );
    
     YabauseInit(&yinit);
   } /* fall through GTKYUI_PAUSE */
   case GTKYUI_PAUSE:
     gtk_widget_show( yui.buttonPause );
+    gtk_widget_show( yui.buttonFs );
     gtk_widget_hide( yui.buttonRun );
     yui.running = GTKYUI_RUN;
     g_idle_add((gboolean (*)(void*)) GtkWorkaround, (gpointer)1 );
@@ -488,6 +604,12 @@ static void yuiPause(void) {
     g_idle_remove_by_data( (gpointer)1 );
     yui.running = GTKYUI_PAUSE;
   }
+}
+
+static void yuiFs(void) {
+
+  yuiRun();
+  VIDCore->Resize( yuiGetInt( "fsX", FS_X_DEFAULT  ), yuiGetInt( "fsY", FS_Y_DEFAULT ), TRUE );
 }
 
 static int yuiInit(void) {
@@ -546,6 +668,9 @@ static int yuiInit(void) {
 	yui.buttonPause = gtk_button_new_with_label( "Pause" );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonPause, FALSE, FALSE, 2 );
 
+	yui.buttonFs = gtk_button_new_with_label( "Full Screen" );
+	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonFs, FALSE, FALSE, 2 );
+
 	yui.buttonSettings = gtk_button_new_from_stock( GTK_STOCK_PREFERENCES );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonSettings, FALSE, FALSE, 2 );
 
@@ -554,7 +679,6 @@ static int yuiInit(void) {
 	buttonQuit = gtk_button_new_from_stock( GTK_STOCK_QUIT );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), buttonQuit, FALSE, FALSE, 2 );
 
-	//	buttonHelp = gtk_button_new_with_label("About");
 	buttonHelp = gtk_button_new_from_stock( GTK_STOCK_HELP );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), buttonHelp, FALSE, FALSE, 2 );
 
@@ -566,6 +690,8 @@ static int yuiInit(void) {
 			 G_CALLBACK(yuiRun), NULL);
 	g_signal_connect(yui.buttonPause, "clicked",
 			 G_CALLBACK(yuiPause), NULL);
+	g_signal_connect(yui.buttonFs, "clicked",
+			 G_CALLBACK(yuiFs), NULL);
 	g_signal_connect(yui.buttonSettings, "clicked",
 			 G_CALLBACK(yuiSettingsDialog), NULL);
 	g_signal_connect_swapped(buttonQuit, "clicked",
@@ -575,6 +701,7 @@ static int yuiInit(void) {
 
 	gtk_widget_show_all (yui.window);
 	gtk_widget_hide( yui.buttonPause );
+	gtk_widget_hide( yui.buttonFs );
 }
 
 /* ------------------------------------------------- */
