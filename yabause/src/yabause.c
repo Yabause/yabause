@@ -55,7 +55,7 @@ void print_usage(const char *program_name) {
           "Usage: %s [OPTIONS]...\n", program_name);
    printf("   -h         --help                 Print help and exit\n");
    printf("   -b STRING  --bios=STRING          bios file\n");
-   printf("   -i STRING  --iso=STRING           iso file\n");
+   printf("   -i STRING  --iso=STRING           iso/cue file\n");
    printf("   -c STRING  --cdrom=STRING         cdrom path\n");
 }
 #endif
@@ -199,9 +199,8 @@ void YabauseDeInit() {
 
    if (BupRam)
    {
-      if (bupfilename != NULL)
-         if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
-            YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+      if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
+         YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
 
       T1MemoryDeInit(BupRam);
    }
