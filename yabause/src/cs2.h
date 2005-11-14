@@ -120,7 +120,7 @@ typedef struct
    u32 DTR;
    u16 UNKNOWN;
    u16 HIRQ;
-   u16 HIRQMASK;
+   u16 HIRQMASK; // Masks bits from HIRQ -only- when generating A-bus interrupts
    u16 CR1;
    u16 CR2;
    u16 CR3;

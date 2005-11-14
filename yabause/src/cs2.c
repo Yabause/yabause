@@ -261,7 +261,6 @@ u16 FASTCALL Cs2ReadWord(u32 addr) {
 
                   Cs2Area->reg.HIRQ = val;
 
-                  val &= Cs2Area->reg.HIRQMASK;
 //                  CDLOG("cs2\t: Hirq read, Hirq mask = %x - ret: %x\n", Memory::getWord(0x9000C), val);
                   return val;
     case 0x9000C: 
@@ -410,7 +409,6 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
 
                   Cs2Area->reg.HIRQ = val;
 
-                  val &= Cs2Area->reg.HIRQMASK;
                   val |= (val << 16);
                   return val;
     case 0x9000C: return ((Cs2Area->reg.HIRQMASK << 16) | Cs2Area->reg.HIRQMASK);
