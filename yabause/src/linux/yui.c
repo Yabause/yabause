@@ -28,12 +28,11 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
-/* #include <gdk/gdkkeysyms.h> */
+#include <gdk/gdkkeysyms.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <glib/gi18n.h>
 #include "yabause_logo.xpm"
 #include "icon.xpm"
-
-/* #include "SDL.h" */
 
 #define FS_X_DEFAULT 640
 #define FS_Y_DEFAULT 448
@@ -44,6 +43,11 @@
 #include <envz.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+
+static void yuiRun(void);
+static void yuiPause(void);
+
 
 /* --------------------------------------------------------------------------------- */
 /* managing the configuration file $HOME/.yabause                                    */
@@ -515,7 +519,7 @@ static void yuiSettingsDialog() {
 
 /* ---------------------------------------------------------- */
 /* GUI Core                                                   */
- 
+
 static struct {
   GtkWidget *window;
   GdkPixbuf *pixBufIcon;
@@ -532,7 +536,8 @@ static struct {
 static void yuiAbout(void);
 
 static int GtkWorkaround(void) {
-	return ~(PERCore->HandleEvents());
+  if ( yui.running == GTKYUI_RUN ) return ~(PERCore->HandleEvents());
+  return TRUE;
 }
 
 static void yuiErrorPopup( gchar* text ) {
@@ -546,11 +551,8 @@ static void yuiErrorPopup( gchar* text ) {
   gtk_widget_destroy (dialog);
 }
 
-static void yuiRun(void) {
+static void yuiYabauseInit() {
 
-  switch ( yui.running ) {
-
-  case GTKYUI_WAIT: {
     yabauseinit_struct yinit;
 
     if ( cfGetActive( yui.cfBios ) <= 0 ) {
@@ -585,7 +587,16 @@ static void yuiRun(void) {
     yinit.carttype = yuiGetInt( "carttype", CARTTYPE_DEFAULT );
    
     YabauseInit(&yinit);
-  } /* fall through GTKYUI_PAUSE */
+    yui.running = GTKYUI_PAUSE;
+}
+
+static void yuiRun(void) {
+
+  switch ( yui.running ) {
+
+  case GTKYUI_WAIT:
+    yuiYabauseInit();
+    /* fall through GTKYUI_PAUSE */
   case GTKYUI_PAUSE:
     gtk_widget_show( yui.buttonPause );
     gtk_widget_show( yui.buttonFs );
@@ -595,14 +606,16 @@ static void yuiRun(void) {
   }
 }
 
+static void debugUpdateViews();
 static void yuiPause(void) {
 
   if ( yui.running == GTKYUI_RUN ) {
 
+    yui.running = GTKYUI_PAUSE;
     gtk_widget_show( yui.buttonRun );
     gtk_widget_hide( yui.buttonPause );
     g_idle_remove_by_data( (gpointer)1 );
-    yui.running = GTKYUI_PAUSE;
+    debugUpdateViews();
   }
 }
 
@@ -611,6 +624,8 @@ static void yuiFs(void) {
   yuiRun();
   VIDCore->Resize( yuiGetInt( "fsX", FS_X_DEFAULT  ), yuiGetInt( "fsY", FS_Y_DEFAULT ), TRUE );
 }
+
+#include "debug.c"
 
 static int yuiInit(void) {
 	int fake_argc = 0;
@@ -645,6 +660,7 @@ static int yuiInit(void) {
 
 	hboxLow = gtk_hbox_new( FALSE, 2 );
 	gtk_box_pack_start( GTK_BOX( vbox ), hboxLow, TRUE, TRUE, 2 );
+	gtk_box_pack_start( GTK_BOX( vbox ), widgetDebug(), TRUE, TRUE, 2 );
 
 	vboxHigh = gtk_vbox_new( FALSE, 5 );
 	gtk_box_pack_start( GTK_BOX( hboxHigh ), vboxHigh, TRUE, TRUE, 2 );
@@ -657,7 +673,7 @@ static int yuiInit(void) {
 	hboxRadioCD = gtk_hbox_new( FALSE, 2 );
 	gtk_box_pack_start( GTK_BOX( vboxHigh ), hboxRadioCD, FALSE, TRUE, 4 );
 
-	yui.checkIso = gtk_radio_button_new_with_label( NULL, "ISO file" );
+	yui.checkIso = gtk_radio_button_new_with_label( NULL, "ISO or CUE file" );
 	yui.checkCdRom = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON(yui.checkIso), "Native CD" );
 	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), yui.checkIso, FALSE, TRUE, 4 );
 	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), yui.checkCdRom, FALSE, TRUE, 4 );
@@ -670,7 +686,7 @@ static int yuiInit(void) {
 
 	yui.buttonFs = gtk_button_new_with_label( "Full Screen" );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonFs, FALSE, FALSE, 2 );
-
+ 
 	yui.buttonSettings = gtk_button_new_from_stock( GTK_STOCK_PREFERENCES );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonSettings, FALSE, FALSE, 2 );
 
