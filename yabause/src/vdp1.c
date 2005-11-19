@@ -859,6 +859,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
 int VIDDummyInit(void);
 void VIDDummyDeInit(void);
 void VIDDummyResize(unsigned int, unsigned int, int);
+int VIDDummyIsFullscreen(void);
 int VIDDummyVdp1Reset(void);
 void VIDDummyVdp1DrawStart(void);
 void VIDDummyVdp1DrawEnd(void);
@@ -894,6 +895,7 @@ VIDCORE_DUMMY,
 VIDDummyInit,
 VIDDummyDeInit,
 VIDDummyResize,
+VIDDummyIsFullscreen,
 VIDDummyVdp1Reset,
 VIDDummyVdp1DrawStart,
 VIDDummyVdp1DrawEnd,
@@ -940,6 +942,13 @@ void VIDDummyDeInit(void)
 
 void VIDDummyResize(unsigned int i, unsigned int j, int on)
 {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int VIDDummyIsFullscreen(void)
+{
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

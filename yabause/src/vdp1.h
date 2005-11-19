@@ -33,6 +33,7 @@ typedef struct
    int (*Init)(void);
    void (*DeInit)(void);
    void (*Resize)(unsigned int, unsigned int, int);
+   int (*IsFullscreen)(void);
    // VDP1 specific
    int (*Vdp1Reset)(void);
    void (*Vdp1DrawStart)(void);

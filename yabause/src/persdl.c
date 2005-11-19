@@ -94,18 +94,15 @@ void ToggleVDP1(void)
 
 void ToggleFullScreen(void)
 {
-   static int i = 0;
-
-   i = !i;
-   if (i)
-   {
-     VIDCore->Resize(640, 448, 1);
-     YuiVideoResize(640, 448, 1);
-   }
-   else
+   if (VIDCore->IsFullscreen())
    {
      VIDCore->Resize(320, 224, 0);
      YuiVideoResize(320, 224, 0);
+   }
+   else
+   {
+     VIDCore->Resize(640, 448, 1);
+     YuiVideoResize(640, 448, 1);
    }
 }
 

@@ -26,6 +26,7 @@
 int VIDSDLSoftInit(void);
 void VIDSDLSoftDeInit(void);
 void VIDSDLSoftResize(unsigned int, unsigned int, int);
+int VIDSDLSoftIsFullscreen(void);
 int VIDSDLSoftVdp1Reset(void);
 void VIDSDLSoftVdp1DrawStart(void);
 void VIDSDLSoftVdp1DrawEnd(void);
@@ -60,6 +61,7 @@ VIDCORE_SDLSOFT,
 VIDSDLSoftInit,
 VIDSDLSoftDeInit,
 VIDSDLSoftResize,
+VIDSDLSoftIsFullscreen,
 VIDSDLSoftVdp1Reset,
 VIDSDLSoftVdp1DrawStart,
 VIDSDLSoftVdp1DrawEnd,
@@ -683,6 +685,12 @@ void VIDSDLSoftDeInit(void)
 
 void VIDSDLSoftResize(unsigned int w, unsigned int h, int on)
 {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int VIDSDLSoftIsFullscreen(void) {
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

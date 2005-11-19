@@ -53,6 +53,7 @@
 int VIDSDLGLInit(void);
 void VIDSDLGLDeInit(void);
 void VIDSDLGLResize(unsigned int, unsigned int, int);
+int VIDSDLGLIsFullscreen(void);
 int VIDSDLGLVdp1Reset(void);
 void VIDSDLGLVdp1DrawStart(void);
 void VIDSDLGLVdp1DrawEnd(void);
@@ -87,6 +88,7 @@ VIDCORE_SDLGL,
 VIDSDLGLInit,
 VIDSDLGLDeInit,
 VIDSDLGLResize,
+VIDSDLGLIsFullscreen,
 VIDSDLGLVdp1Reset,
 VIDSDLGLVdp1DrawStart,
 VIDSDLGLVdp1DrawEnd,
@@ -1009,9 +1011,13 @@ void VIDSDLGLDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int _VIDSDLGLIsFullscreen;
+
 void VIDSDLGLResize(unsigned int w, unsigned int h, int on)
 {
    glDeleteTextures(1, &_Ygl->texture);
+
+   _VIDSDLGLIsFullscreen = on;
 
    if (on)
       SDL_SetVideoMode(w, h, 32, SDL_OPENGL | SDL_RESIZABLE | SDL_FULLSCREEN);
@@ -1021,6 +1027,12 @@ void VIDSDLGLResize(unsigned int w, unsigned int h, int on)
    YglGLInit(1024, 1024);
 
    glViewport(0, 0, w, h);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int VIDSDLGLIsFullscreen(void) {
+   return _VIDSDLGLIsFullscreen;
 }
 
 //////////////////////////////////////////////////////////////////////////////
