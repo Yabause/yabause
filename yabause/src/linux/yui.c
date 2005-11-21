@@ -789,6 +789,7 @@ static const gchar *credit_text[] = {
     N_("Lawrence Sebald"),
     N_("menace690"),
     N_("Joost Peters"),
+    N_("Fabien Coulon"),
     NULL,
 
     N_("With Additional Help:"),
