@@ -54,6 +54,9 @@
 #define CDB_STAT_WAIT      0x80
 #define CDB_STAT_REJECT    0xFF
 
+#define CDB_PLAYTYPE_SECTOR     0x01
+#define CDB_PLAYTYPE_FILE       0x02
+
 Cs2 * Cs2Area = NULL;
 
 extern CDInterface *CDCoreList[];
@@ -635,6 +638,7 @@ void Cs2Reset(void) {
 
   Cs2Area->playFAD = 0xFFFFFFFF;
   Cs2Area->playendFAD = 0xFFFFFFFF;
+  Cs2Area->playtype = 0;
 
   // set authentication variables to 0(not authenticated)
   Cs2Area->satauth = 0;
@@ -755,10 +759,6 @@ void Cs2Exec(u32 timing) {
          default: break;
       }
 
-      if (Cs2Area->_command) {
-         return;
-      }
-
       switch (Cs2Area->status & 0xF) {
          case CDB_STAT_PAUSE:
          {
@@ -776,7 +776,7 @@ void Cs2Exec(u32 timing) {
             {
                Cs2Area->FAD++;
 
-               CDLOG("blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", playpartition->numblocks, Cs2Area->blockfreespace, Cs2Area->FAD, playpartition->size, Cs2Area->isbufferfull);
+               CDLOG("partition number = %d blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", (playpartition - Cs2Area->partition), playpartition->numblocks, Cs2Area->blockfreespace, Cs2Area->FAD, playpartition->size, Cs2Area->isbufferfull);
 
                Cs2Area->reg.HIRQ |= CDB_HIRQ_CSCT;
                Cs2Area->isonesectorstored = 1;
@@ -786,6 +786,9 @@ void Cs2Exec(u32 timing) {
                   Cs2Area->status = CDB_STAT_PAUSE;
                   Cs2SetTiming(0);
                   Cs2Area->reg.HIRQ |= CDB_HIRQ_PEND;
+
+                  if (Cs2Area->playtype == CDB_PLAYTYPE_FILE)
+                     Cs2Area->reg.HIRQ |= CDB_HIRQ_EFLS;
 
                   CDLOG("PLAY HAS ENDED\n");
                }
@@ -805,6 +808,9 @@ void Cs2Exec(u32 timing) {
             break;
          default: break;
       }
+
+      if (Cs2Area->_command)
+         return;
 
       Cs2Area->status |= CDB_STAT_PERI;
 
@@ -1004,7 +1010,7 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x74:
-      CDLOG("cs2\t: Command: readFile\n");
+      CDLOG("cs2\t: Command: readFile %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2ReadFile();
       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
@@ -1341,6 +1347,7 @@ void Cs2PlayDisc(void) {
   Cs2SetTiming(1);
 
   Cs2Area->status = CDB_STAT_PLAY;
+  Cs2Area->playtype = CDB_PLAYTYPE_SECTOR;
 
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
@@ -1808,14 +1815,8 @@ static INLINE void CalcSectorOffsetNumber(u32 bufno, u32 *sectoffset, u32 *sectn
    }
    else if (*sectnum == 0xFFFF)
    {
-      // Sector x sectors from last
-      CDLOG("FIXME - Sector number of 0xFFFF not supported\n");
-
-      // Calculate which sector we want
-      *sectoffset = Cs2Area->partition[bufno].numblocks - *sectoffset - 1;
-
-      // I think this is right
-      *sectnum = 1; 
+      // From sectoffset to last sector in partition
+      *sectnum = Cs2Area->partition[bufno].numblocks - *sectoffset;
    }
 }
 
@@ -2086,11 +2087,12 @@ void Cs2GetFileInfo(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2ReadFile(void) {
-  u32 rffid, rfoffset, rfsize;
+  u32 rfoffset, rffilternum, rffid, rfsize;
   partition_struct * playpartition;
 
-  rffid = ((Cs2Area->reg.CR3 & 0xFF) << 8) | Cs2Area->reg.CR4;
   rfoffset = ((Cs2Area->reg.CR1 & 0xFF) << 8) | Cs2Area->reg.CR2;
+  rffilternum = Cs2Area->reg.CR3 >> 8;
+  rffid = ((Cs2Area->reg.CR3 & 0xFF) << 8) | Cs2Area->reg.CR4;
   rfsize = ((Cs2Area->fileinfo[rffid].size + Cs2Area->getsectsize - 1) /
            Cs2Area->getsectsize) - rfoffset;
 
@@ -2103,10 +2105,13 @@ void Cs2ReadFile(void) {
 
   Cs2SetTiming(1);
 
+  Cs2Area->outconcddev = Cs2Area->filter + rffilternum;
+
   Cs2Area->status = CDB_STAT_PLAY;
+  Cs2Area->playtype = CDB_PLAYTYPE_FILE;
 
   doCDReport(Cs2Area->status);
-  Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
+  Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 //////////////////////////////////////////////////////////////////////////////

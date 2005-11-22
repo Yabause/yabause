@@ -228,6 +228,7 @@ typedef struct {
   CDInterface * cdi;
 
   int carttype;
+  int playtype;
 
   netlinkregs_struct nlreg;
 } Cs2;
