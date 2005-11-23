@@ -20,13 +20,6 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "../scu.h"
-#include "../yui.h"
-#include "../sndsdl.h"
-#include "../vidsdlgl.h"
-#include "../persdl.h"
-#include "../cs0.h"
-
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <gdk/gdkkeysyms.h>
@@ -34,6 +27,13 @@
 #include <glib/gi18n.h>
 #include "yabause_logo.xpm"
 #include "icon.xpm"
+
+#include "../scu.h"
+#include "../yui.h"
+#include "../sndsdl.h"
+#include "../vidsdlgl.h"
+#include "../persdl.h"
+#include "../cs0.h"
 
 #define FS_X_DEFAULT 640
 #define FS_Y_DEFAULT 448
