@@ -1244,10 +1244,17 @@ void Cs2EndDataTransfer(void) {
      Cs2Area->reg.CR4 = 0;
   }
 
-  // stop any transfers that may be going(this is still probably wrong)
+  // stop any transfers that may be going(this is still probably wrong), and
+  // set/clear the appropriate flags
 
-  switch (Cs2Area->datatranstype) {    
-     case 2: {
+  switch (Cs2Area->datatranstype)
+  {
+     case 0:
+        // Get Sector Data
+        Cs2Area->reg.HIRQ |= CDB_HIRQ_EHST;
+        break;
+     case 2:
+     {
         // Get Then Delete Sector
 
         // Make sure we actually have to free something
@@ -1271,6 +1278,7 @@ void Cs2EndDataTransfer(void) {
 
         if (Cs2Area->blockfreespace == 200) Cs2Area->isonesectorstored = 0;
 
+        Cs2Area->reg.HIRQ |= CDB_HIRQ_EHST;
         break;
      }
      default: break;
