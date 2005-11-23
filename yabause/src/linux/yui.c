@@ -20,6 +20,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "../scu.h"
 #include "../yui.h"
 #include "../sndsdl.h"
 #include "../vidsdlgl.h"
@@ -47,7 +48,6 @@
 
 static void yuiRun(void);
 static void yuiPause(void);
-
 
 /* --------------------------------------------------------------------------------- */
 /* managing the configuration file $HOME/.yabause                                    */
@@ -530,6 +530,7 @@ static struct {
   GtkWidget *buttonPause;
   GtkWidget *buttonFs;
   GtkWidget *buttonSettings;
+  gboolean soundenabled;
   enum {GTKYUI_WAIT,GTKYUI_RUN,GTKYUI_PAUSE} running;
 } yui;
 
@@ -577,7 +578,7 @@ static void yuiYabauseInit() {
     yinit.percoretype = PERCORE_SDL;
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_SDLGL;
-    yinit.sndcoretype = SNDCORE_SDL;
+    yinit.sndcoretype = yui.soundenabled ? SNDCORE_SDL : SNDCORE_DUMMY;
     yinit.regionid = yuiGetInt( "region", REGION_AUTODETECT );
     cfGetText( yui.cfBios, (gchar**)(&yinit.biospath) );
     
@@ -614,6 +615,8 @@ static void yuiPause(void) {
     yui.running = GTKYUI_PAUSE;
     gtk_widget_show( yui.buttonRun );
     gtk_widget_hide( yui.buttonPause );
+    if (VIDCore->IsFullscreen())
+      VIDCore->Resize( 320, 224, FALSE );
     g_idle_remove_by_data( (gpointer)1 );
     debugUpdateViews();
   }
@@ -622,7 +625,8 @@ static void yuiPause(void) {
 static void yuiFs(void) {
 
   yuiRun();
-  VIDCore->Resize( yuiGetInt( "fsX", FS_X_DEFAULT  ), yuiGetInt( "fsY", FS_Y_DEFAULT ), TRUE );
+  if ( yui.running == GTKYUI_RUN ) 
+    VIDCore->Resize( yuiGetInt( "fsX", FS_X_DEFAULT  ), yuiGetInt( "fsY", FS_Y_DEFAULT ), TRUE );
 }
 
 #include "debug.c"
@@ -642,7 +646,7 @@ static int yuiInit(void) {
 	
 	gtk_init (&fake_argc, &fake_argv);
 	yui.running = GTKYUI_WAIT;
-	yui.pixBufIcon = gdk_pixbuf_new_from_xpm_data(icon_xpm);
+	yui.pixBufIcon = gdk_pixbuf_new_from_xpm_data((const char **)icon_xpm);
 	yuiConfInit();
 
 	yui.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -723,7 +727,10 @@ static int yuiInit(void) {
 /* ------------------------------------------------- */
 /* Interface functions -- non-static !               */
 
-void YuiSetSoundEnable(int enablesound) {}
+void YuiSetSoundEnable(int enablesound) {
+  
+  yui.soundenabled = enablesound;
+}
 
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {}
 

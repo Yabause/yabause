@@ -17,6 +17,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#define MAX_VDP1_COMMAND 4000
+
 typedef struct _memDumpDlg {
 
   GtkWidget *dialog, *list, *entryAddress;
@@ -34,8 +36,35 @@ typedef struct {
   SH2_struct *debugsh;
 } SH2procDlg;
 
+typedef struct { 
+  GtkWidget *dialog, *bpList, *regList, *uLabel;
+  GtkListStore *bpListStore, *regListStore;
+  u32 cbp[MAX_BREAKPOINTS]; /* the list of breakpoint positions, as they can be found in the list widget */
+  u32 lastCode; /* offset of last unassembly. Try to reuse it to prevent sliding. */
+} SCUDSPprocDlg;
+
+typedef struct { 
+  GtkWidget *dialog, *bpList, *regList, *uLabel;
+  GtkListStore *bpListStore, *regListStore;
+  u32 cbp[MAX_BREAKPOINTS]; /* the list of breakpoint positions, as they can be found in the list widget */
+  u32 lastCode; /* offset of last unassembly. Try to reuse it to prevent sliding. */
+} M68KprocDlg;
+
+typedef struct {
+  GtkWidget *dialog, *spin, *commName, *commDesc;
+  gint curs;
+} VDP1procDlg;
+
+typedef struct {
+  GtkWidget *dialog, *NBG0, *NBG1, *NBG2, *NBG3, *RBG0;
+} VDP2procDlg;
+
 static SH2procDlg SSH2procDlg;
 static SH2procDlg MSH2procDlg;
+static SCUDSPprocDlg SCUDSPproc;
+static VDP1procDlg VDP1proc;
+static VDP2procDlg VDP2proc;
+static M68KprocDlg M68Kproc;
 
 static u32 memDumpLastOffset = 0; /* last offset set to a memDump dialog. To be reused in new dialogs. */
 static memDumpDlg *dumpDlgs = NULL; /* chain of dump dialogs */
@@ -118,12 +147,14 @@ static void memDumpUpdate( memDumpDlg* memDump ) {
 }
 
 static void memDumpUpdateAll() {
+  /* to be called whenever memory content may have changed */
 
   memDumpDlg *memDump;
   for ( memDump = dumpDlgs ; memDump ; memDump = memDump->succ ) memDumpUpdate( memDump );
 }
 
 static void editedAddressDump( GtkWidget *widget, memDumpDlg *memDump ) {
+  /* address bar has been modified */
 
   const gchar *stradr = gtk_entry_get_text(GTK_ENTRY(memDump->entryAddress));
   gchar *endptr;
@@ -141,6 +172,7 @@ static void editedDump( GtkCellRendererText *cellrenderertext,
 		      gchar *arg1,
 		      gchar *arg2,
 		      memDumpDlg *memDump) {
+  /* dump line <arg1> has been modified - new content is <arg2> */
 
   GtkTreeIter iter;
   gint i = atoi(arg1);
@@ -166,7 +198,7 @@ static void editedDump( GtkCellRendererText *cellrenderertext,
       }
     }
   }
-  memDumpUpdate( memDump );
+  debugUpdateViews();
 }
 
 static gboolean memDumpDeleteCallback(GtkWidget *widget,
@@ -174,7 +206,7 @@ static gboolean memDumpDeleteCallback(GtkWidget *widget,
 				      memDumpDlg *memDump) {
 
   memDumpDelete( memDump );
-  return FALSE;
+  return FALSE; /* propagate event */
 }
 
 static void memDumpPageUpCallback(GtkWidget *w, gpointer func, gpointer data, gpointer data2, memDumpDlg *memDump) {
@@ -212,6 +244,7 @@ static memDumpDlg* openMemDump() {
   memDump->dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
   gtk_window_set_title( GTK_WINDOW(memDump->dialog), "Memory Dump" );
   gtk_window_set_resizable( GTK_WINDOW(memDump->dialog), FALSE );
+  gtk_window_set_icon( GTK_WINDOW(memDump->dialog), yui.pixBufIcon );
 
   vbox = gtk_vbox_new(FALSE, 2);
   gtk_container_set_border_width( GTK_CONTAINER( vbox ),4 );
@@ -253,7 +286,6 @@ static memDumpDlg* openMemDump() {
 
   g_signal_connect(G_OBJECT(memDump->dialog), "delete-event", GTK_SIGNAL_FUNC(memDumpDeleteCallback), memDump );
   gtk_widget_show_all( memDump->dialog );
-  gtk_window_activate_focus( GTK_WINDOW(memDump->dialog) );
   return memDump;
 }
 
@@ -338,7 +370,7 @@ static void SH2UpdateCodeList( SH2procDlg *sh2, u32 addr) {
     if ( offset + 2*i == addr ) { strcpy( curs, tagEnd ); curs += strlen(tagEnd); }
     else { strcpy( curs, "\n" ); curs += 1;}
   }
-
+  *curs = 0;
   gtk_label_set_markup( GTK_LABEL(sh2->uLabel), buf );
 }
 
@@ -355,6 +387,7 @@ static void editedReg( GtkCellRendererText *cellrenderertext,
 		      gchar *arg1,
 		      gchar *arg2,
 		      SH2procDlg *sh2) {
+  /* registry number <arg1> value has been set to <arg2> */
 
   GtkTreeIter iter;
   char bptext[10];
@@ -376,6 +409,7 @@ static void editedBp( GtkCellRendererText *cellrenderertext,
 		      gchar *arg1,
 		      gchar *arg2,
 		      SH2procDlg *sh2) {
+  /* breakpoint <arg1> has been set to address <arg2> */
 
   GtkTreeIter iter;
   char bptext[10];
@@ -407,7 +441,7 @@ static void SH2BreakpointHandler (SH2_struct *context, u32 addr) {
     SH2UpdateRegList(sh2, &sh2regs);
     SH2UpdateCodeList(sh2, sh2regs.PC);  
   }
-  debugPauseLoop();
+  debugPauseLoop(); /* execution is suspended inside a normal cycle - enter secondary gtk loop */
 }
 
 static void sh2update( gboolean bMaster ) {
@@ -438,7 +472,6 @@ static SH2procDlg* openSH2( GtkWidget* widget, gpointer bMaster ) {
   if ( openedSH2[(int)bMaster] ) {
 
     gtk_widget_show_all( sh2->dialog );
-    gtk_window_activate_focus( GTK_WINDOW(sh2->dialog) );
     return sh2;
   }
   openedSH2[(int)bMaster] = TRUE;
@@ -452,6 +485,7 @@ static SH2procDlg* openSH2( GtkWidget* widget, gpointer bMaster ) {
   sh2->dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
   gtk_window_set_title( GTK_WINDOW(sh2->dialog), bMaster ? "Master SH2" : "Slave SH2" );
   gtk_window_set_resizable( GTK_WINDOW(sh2->dialog), FALSE );
+  gtk_window_set_icon( GTK_WINDOW(sh2->dialog), yui.pixBufIcon );
 
   hbox = gtk_hbox_new(FALSE, 2);
   gtk_container_set_border_width( GTK_CONTAINER( hbox ),4 );
@@ -463,7 +497,7 @@ static SH2procDlg* openSH2( GtkWidget* widget, gpointer bMaster ) {
 
   /* unassembler frame */
 
-  uFrame = gtk_frame_new("Assembler code");
+  uFrame = gtk_frame_new("Disassembled code");
   gtk_box_pack_start( GTK_BOX( vbox ), uFrame, FALSE, FALSE, 4 );
   
   sh2->uLabel = gtk_label_new(NULL);
@@ -540,30 +574,653 @@ static SH2procDlg* openSH2( GtkWidget* widget, gpointer bMaster ) {
   g_signal_connect(G_OBJECT(sh2->dialog), "delete-event", GTK_SIGNAL_FUNC(gtk_widget_hide_on_delete), NULL );
   /* never kill this dialog - Just hide it */
   gtk_widget_show_all( sh2->dialog );
-  gtk_window_activate_focus( GTK_WINDOW(sh2->dialog) );
   return sh2;
+}
+
+/* ------------------------------------------------------------------------------- */
+/* VDP1 Dialog ------------------------------------------------------------------- */
+
+static void vdp1define() {
+  /* fill in all dialog elements */
+ 
+  gint i;
+  gchar *string;
+  gchar nameTemp[1024];
+  gchar *nameCurs;
+  static gchar tagPC[] = "<span foreground=\"red\">";
+  static gchar tagEnd[] = "</span>";
+  static gchar noName[] = "---";
+
+  nameCurs = nameTemp;
+  for ( i = VDP1proc.curs-2 ; i < VDP1proc.curs + 3 ; i++ ) {
+
+    if ( i >= 0 ) string = Vdp1DebugGetCommandNumberName(i);
+    else string = noName;
+    if ( !string ) string = noName;
+
+    if ( i == VDP1proc.curs ) { strcpy( nameCurs, tagPC ); nameCurs += strlen( tagPC ); }
+    strcpy( nameCurs, string ); nameCurs += strlen( string );
+    *(nameCurs++) = '\n';
+    if ( i == VDP1proc.curs ) { strcpy( nameCurs, tagEnd ); nameCurs += strlen( tagEnd ); }
+  }
+  *nameCurs = 0;
+  gtk_label_set_markup( GTK_LABEL(VDP1proc.commName), nameTemp );
+
+  Vdp1DebugCommand( VDP1proc.curs, nameTemp );
+  gtk_label_set_text( GTK_LABEL(VDP1proc.commDesc), nameTemp );
+}
+
+static void vdp1cursorChanged (GtkWidget *spin, gpointer user_data) {
+  /* called when user change line number */
+
+  VDP1proc.curs = gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON(spin) );
+  vdp1define();
+}
+
+static void vdp1update() {
+  /* to be called when command list has changed */
+
+  gint i;
+  for ( i = 0 ; i < MAX_VDP1_COMMAND ; i++ ) if ( !Vdp1DebugGetCommandNumberName(i) ) break;
+  gtk_spin_button_set_range(GTK_SPIN_BUTTON(VDP1proc.spin),0,i-1);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(VDP1proc.spin),0);
+  VDP1proc.curs = 0;
+  vdp1define();
+}
+
+static gboolean vdp1deleteSignal() {
+
+  openedVDP1 = FALSE;
+  return FALSE; /* propagate event */
 }
 
 static void openVDP1() {
 
+  GtkWidget *vbox, *hbox;
+
+  /* Initialization */
+
+  if ( openedVDP1 ) {
+
+    gtk_widget_show_all( VDP1proc.dialog );
+    return;
+  }
+  if ( yui.running == GTKYUI_WAIT ) {
+    yuiYabauseInit(); /* force yabause initialization */
+    YabauseExec();
+  }
+  openedVDP1 = TRUE;
+  
+  /* Dialog window */
+
+  VDP1proc.dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
+  gtk_window_set_title( GTK_WINDOW(VDP1proc.dialog), "VDP1" );
+  gtk_window_set_resizable( GTK_WINDOW(VDP1proc.dialog), FALSE );
+  gtk_window_set_icon( GTK_WINDOW(VDP1proc.dialog), yui.pixBufIcon );
+
+  vbox = gtk_vbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( vbox ),4 );
+  gtk_container_add (GTK_CONTAINER (VDP1proc.dialog), vbox);  
+
+  /* Command list */
+
+  hbox = gtk_hbox_new(FALSE, 2);
+  VDP1proc.spin = gtk_spin_button_new_with_range(0,MAX_VDP1_COMMAND,1);
+  gtk_box_pack_start( GTK_BOX( hbox ), VDP1proc.spin, FALSE, FALSE, 4 );
+  g_signal_connect(G_OBJECT(VDP1proc.spin), "value-changed", GTK_SIGNAL_FUNC(vdp1cursorChanged), NULL );
+  VDP1proc.commName = gtk_label_new("");
+  gtk_box_pack_start( GTK_BOX( hbox ), VDP1proc.commName, FALSE, FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hbox, FALSE, FALSE, 4 );
+
+   /* Description text */
+
+  VDP1proc.commDesc = gtk_label_new("");
+  gtk_box_pack_start( GTK_BOX( vbox ), VDP1proc.commDesc, FALSE, FALSE, 4 );
+  
+  vdp1update();
+  g_signal_connect(G_OBJECT(VDP1proc.dialog), "delete-event", GTK_SIGNAL_FUNC(vdp1deleteSignal), NULL );
+  gtk_widget_show_all( VDP1proc.dialog );
+}
+
+/* ------------------------------------------------------------------------------- */
+/* VDP2 Dialog ------------------------------------------------------------------- */
+
+static void vdp2update() {
+  /* to be called if something changed in plane stats */
+
+  gchar tempstr[1024];
+  gboolean isscrenabled;
+
+  Vdp2DebugStatsNBG0(tempstr, &isscrenabled);  
+  if ( isscrenabled ) gtk_label_set_text( GTK_LABEL(VDP2proc.NBG0), tempstr );
+  else gtk_label_set_text( GTK_LABEL(VDP2proc.NBG0), "<disabled>" );
+
+  Vdp2DebugStatsNBG1(tempstr, &isscrenabled);  
+  if ( isscrenabled ) gtk_label_set_text( GTK_LABEL(VDP2proc.NBG1), tempstr );
+  else gtk_label_set_text( GTK_LABEL(VDP2proc.NBG1), "<disabled>" );
+
+  Vdp2DebugStatsNBG2(tempstr, &isscrenabled);  
+  if ( isscrenabled ) gtk_label_set_text( GTK_LABEL(VDP2proc.NBG2), tempstr );
+  else gtk_label_set_text( GTK_LABEL(VDP2proc.NBG2), "<disabled>" );
+
+  Vdp2DebugStatsNBG3(tempstr, &isscrenabled);  
+  if ( isscrenabled ) gtk_label_set_text( GTK_LABEL(VDP2proc.NBG3), tempstr );
+  else gtk_label_set_text( GTK_LABEL(VDP2proc.NBG3), "<disabled>" );
+
+  Vdp2DebugStatsRBG0(tempstr, &isscrenabled);  
+  if ( isscrenabled ) gtk_label_set_text( GTK_LABEL(VDP2proc.RBG0), tempstr );
+  else gtk_label_set_text( GTK_LABEL(VDP2proc.RBG0), "<disabled>" );
 }
 
 static void openVDP2() {
 
+  GtkWidget *vbox, *frame, *scrolled;
+
+  /* Initialization */
+
+  if ( openedVDP2 ) {
+
+    gtk_widget_show_all( VDP2proc.dialog );
+    return;
+  }
+  if ( yui.running == GTKYUI_WAIT ) {
+    yuiYabauseInit(); /* force yabause initialization */
+    YabauseExec();
+  }
+  openedVDP2 = TRUE;
+  
+  /* Dialog window */
+
+  VDP2proc.dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
+  gtk_window_set_title( GTK_WINDOW(VDP2proc.dialog), "VDP2" );
+  gtk_window_resize( GTK_WINDOW(VDP2proc.dialog), 300, 600 );
+  gtk_window_set_icon( GTK_WINDOW(VDP2proc.dialog), yui.pixBufIcon );
+
+  scrolled = gtk_scrolled_window_new( NULL, NULL );
+  gtk_container_add (GTK_CONTAINER (VDP2proc.dialog), scrolled);  
+  
+  vbox = gtk_vbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( vbox ),4 );
+  gtk_scrolled_window_add_with_viewport( GTK_SCROLLED_WINDOW( scrolled ), vbox );
+
+  /* Plane list */
+  
+  frame = gtk_frame_new("NBG0/RBG1");
+  gtk_container_add( GTK_CONTAINER ( frame ), VDP2proc.NBG0 = gtk_label_new("") );
+  gtk_box_pack_start( GTK_BOX( vbox ), frame, FALSE, FALSE, 4 );
+
+  frame = gtk_frame_new("NBG1");
+  gtk_container_add( GTK_CONTAINER ( frame ), VDP2proc.NBG1 = gtk_label_new("") );
+  gtk_box_pack_start( GTK_BOX( vbox ), frame, FALSE, FALSE, 4 );
+
+  frame = gtk_frame_new("NBG2");
+  gtk_container_add( GTK_CONTAINER ( frame ), VDP2proc.NBG2 = gtk_label_new("") );
+  gtk_box_pack_start( GTK_BOX( vbox ), frame, FALSE, FALSE, 4 );
+
+  frame = gtk_frame_new("NBG3");
+  gtk_container_add( GTK_CONTAINER ( frame ), VDP2proc.NBG3 = gtk_label_new("") );
+  gtk_box_pack_start( GTK_BOX( vbox ), frame, FALSE, FALSE, 4 );
+
+  frame = gtk_frame_new("RBG0");
+  gtk_container_add( GTK_CONTAINER ( frame ), VDP2proc.RBG0 = gtk_label_new("") );
+  gtk_box_pack_start( GTK_BOX( vbox ), frame, FALSE, FALSE, 4 );
+  
+  vdp2update();
+  g_signal_connect(G_OBJECT(VDP2proc.dialog), "delete-event", GTK_SIGNAL_FUNC(gtk_widget_hide_on_delete), NULL );
+  /* never kill this dialog - Just hide it */
+  gtk_widget_show_all( VDP2proc.dialog );
 }
 
-static void openM68K() {
+/* ------------------------------------------------------------------------------- */
+/* M680000 Dialog ---------------------------------------------------------------- */
+
+static void openM68K(GtkWidget* widget);
+
+static void M68KupdateRegList( m68kregs_struct *regs) {
+  /* refresh the registery list */
+
+  GtkTreeIter iter;
+  char regstr[32];
+  char valuestr[32];
+  int i;
+ 
+  for ( i = 0 ; i < 8 ; i++ ) {
+    
+    if ( i==0 ) gtk_tree_model_get_iter_first( GTK_TREE_MODEL( M68Kproc.regListStore ), &iter );
+    else gtk_tree_model_iter_next( GTK_TREE_MODEL( M68Kproc.regListStore ), &iter );
+    sprintf(regstr, "D%d", i );
+    sprintf(valuestr, "%08x", regs->D[i]);
+    gtk_list_store_set( GTK_LIST_STORE( M68Kproc.regListStore ), &iter, 0, regstr, 1, valuestr, -1 );
+  }
+  for ( i = 0 ; i < 8 ; i++ ) {
+    
+    gtk_tree_model_iter_next( GTK_TREE_MODEL( M68Kproc.regListStore ), &iter );
+    sprintf(regstr, "A%d", i );
+    sprintf(valuestr, "%08x", regs->A[i]);
+    gtk_list_store_set( GTK_LIST_STORE( M68Kproc.regListStore ), &iter, 0, regstr, 1, valuestr, -1 );
+  }
+
+  gtk_tree_model_iter_next( GTK_TREE_MODEL( M68Kproc.regListStore ), &iter );
+  sprintf(valuestr, "%08x", regs->SR);
+  gtk_list_store_set( GTK_LIST_STORE( M68Kproc.regListStore ), &iter, 0, "SR", 1, valuestr, -1 );
+
+  gtk_tree_model_iter_next( GTK_TREE_MODEL( M68Kproc.regListStore ), &iter );
+  sprintf(valuestr, "%08x", regs->PC);
+  gtk_list_store_set( GTK_LIST_STORE( M68Kproc.regListStore ), &iter, 0, "PC", 1, valuestr, -1 );
+}
+
+static void M68KupdateCodeList(u32 addr) {
+  /* refresh the assembler view. <addr> points the line to be highlighted. */
 
 }
 
-static void openSCUDSP() {
+static void M68KEditedBp( GtkCellRendererText *cellrenderertext,
+			  gchar *arg1,
+			  gchar *arg2) {
+  /* breakpoint <arg1> has been set to address <arg2> */
 
+  GtkTreeIter iter;
+  char bptext[10];
+  char *endptr;
+  int i = atoi(arg1);
+  u32 addr;
+  gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( M68Kproc.bpListStore ), &iter, arg1 );
+  addr = strtol(arg2, &endptr, 16 );
+  if ((endptr - arg2 < strlen(arg2)) || (!addr)) addr = 0xFFFFFFFF;
+  if ( M68Kproc.cbp[i] != 0xFFFFFFFF) M68KDelCodeBreakpoint(M68Kproc.cbp[i]);
+  M68Kproc.cbp[i] = 0xFFFFFFFF;
+
+  if ((addr!=0xFFFFFFFF)&&(M68KAddCodeBreakpoint(addr) == 0)) {
+   
+    sprintf(bptext, "%08X", (int)addr);
+    M68Kproc.cbp[i] = addr;
+  } else strcpy(bptext,"<empty>");
+  gtk_list_store_set( GTK_LIST_STORE( M68Kproc.bpListStore ), &iter, 0, bptext, -1 );
 }
+
+static void M68KbreakpointHandler (u32 addr) {
+
+  yuiPause();
+  openM68K(NULL);
+  debugPauseLoop(); /* execution is suspended inside a normal cycle - enter secondary gtk loop */
+}
+
+static void M68Kupdate() {
+
+  m68kregs_struct regs;
+  M68KGetRegisters(&regs);
+  M68KupdateCodeList(regs.PC);
+  M68KupdateRegList(&regs);
+}
+
+static void M68Kstep( GtkWidget* widget, M68KprocDlg* m68k ) {
+
+  M68KStep();
+  debugUpdateViews(); /* update all dialogs, including us */
+}
+
+static void openM68K(GtkWidget* widget) {
+
+  GtkWidget *hbox, *vbox, *uFrame, *buttonStep, *buttonRun, *hboxButtons;
+  GClosure *closureF9, *closureF7;
+  GtkAccelGroup *accelGroup;
+  GtkCellRenderer *bpListRenderer, *regListRenderer1, *regListRenderer2;
+  GtkTreeViewColumn *bpListColumn, *regListColumn1, *regListColumn2;
+  codebreakpoint_struct *cbp;
+  char tempstr[10];
+  int i;
+
+  /* Initialization */
+
+  M68Kproc.lastCode = 0;
+  if ( openedM68K ) {
+
+    gtk_widget_show_all( M68Kproc.dialog );
+    return;
+  }
+  openedM68K = TRUE;
+  if ( yui.running == GTKYUI_WAIT ) yuiYabauseInit(); /* force yabause initialization */
+  M68KSetBreakpointCallBack(&M68KbreakpointHandler);
+ 
+  /* Dialog window */
+
+  M68Kproc.dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
+  gtk_window_set_title( GTK_WINDOW(M68Kproc.dialog), "M68000" );
+  gtk_window_set_resizable( GTK_WINDOW(M68Kproc.dialog), FALSE );
+  gtk_window_set_icon( GTK_WINDOW(M68Kproc.dialog), yui.pixBufIcon );
+
+  hbox = gtk_hbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( hbox ),4 );
+  gtk_container_add (GTK_CONTAINER (M68Kproc.dialog), hbox);  
+
+  vbox = gtk_vbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( vbox ),4 );
+  gtk_box_pack_start( GTK_BOX( hbox ), vbox, FALSE, FALSE, 4 );
+
+  /* unassembler frame */
+
+  uFrame = gtk_frame_new("Disassembled code");
+  gtk_box_pack_start( GTK_BOX( vbox ), uFrame, FALSE, FALSE, 4 );
+  
+  M68Kproc.uLabel = gtk_label_new("\n\nDisassembler for M68K is missing.\n");
+  gtk_container_add (GTK_CONTAINER (uFrame), M68Kproc.uLabel );
+
+  /* Register list */
+
+  M68Kproc.regListStore = gtk_list_store_new(2,G_TYPE_STRING,G_TYPE_STRING);
+  M68Kproc.regList = gtk_tree_view_new_with_model( GTK_TREE_MODEL(M68Kproc.regListStore) );
+  regListRenderer1 = gtk_cell_renderer_text_new();
+  regListRenderer2 = gtk_cell_renderer_text_new();
+  regListColumn1 = gtk_tree_view_column_new_with_attributes("Register", regListRenderer1, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(M68Kproc.regList), regListColumn1);
+  regListColumn2 = gtk_tree_view_column_new_with_attributes("Value", regListRenderer2, "text", 1, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(M68Kproc.regList), regListColumn2);
+  gtk_box_pack_start( GTK_BOX( hbox ), M68Kproc.regList, FALSE, FALSE, 4 );
+
+  for (i = 0; i < 23 ; i++) {
+
+    GtkTreeIter iter;
+    gtk_list_store_append( GTK_LIST_STORE( M68Kproc.regListStore ), &iter );
+  }
+
+  /* breakpoint list */
+
+  M68Kproc.bpListStore = gtk_list_store_new(1,G_TYPE_STRING);
+  M68Kproc.bpList = gtk_tree_view_new_with_model( GTK_TREE_MODEL(M68Kproc.bpListStore) );
+  bpListRenderer = gtk_cell_renderer_text_new();
+  g_object_set(G_OBJECT(bpListRenderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL );
+  bpListColumn = gtk_tree_view_column_new_with_attributes("Breakpoints", bpListRenderer, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(M68Kproc.bpList), bpListColumn);
+  gtk_box_pack_start( GTK_BOX( hbox ), M68Kproc.bpList, FALSE, FALSE, 4 );
+  g_signal_connect(G_OBJECT(bpListRenderer), "edited", GTK_SIGNAL_FUNC(M68KEditedBp), NULL );
+
+  for (i = 0; i < MAX_BREAKPOINTS; i++) {
+    
+    GtkTreeIter iter;
+    M68Kproc.cbp[i] = 0xFFFFFFFF;
+    gtk_list_store_append( GTK_LIST_STORE( M68Kproc.bpListStore ), &iter );
+    gtk_list_store_set( GTK_LIST_STORE( M68Kproc.bpListStore ), &iter, 0, "<empty>", -1 );
+  }
+
+  /* Control buttons */
+  
+  hboxButtons = gtk_hbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( hboxButtons ),4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxButtons, FALSE, FALSE, 4 );
+
+  buttonStep = gtk_button_new_with_label( "Step [F7]" );
+  gtk_box_pack_start( GTK_BOX( hboxButtons ), buttonStep, FALSE, FALSE, 2 );
+  g_signal_connect( buttonStep, "clicked", G_CALLBACK(M68Kstep), NULL );
+
+  buttonRun = gtk_button_new_with_label( "Run [F9]" );
+  gtk_box_pack_start( GTK_BOX( hboxButtons ), buttonRun, FALSE, FALSE, 2 );
+  g_signal_connect( buttonRun, "clicked", G_CALLBACK(yuiRun), NULL );
+
+  accelGroup = gtk_accel_group_new ();
+  closureF9 = g_cclosure_new (G_CALLBACK (yuiRun), NULL, NULL);
+  closureF7 = g_cclosure_new (G_CALLBACK (M68Kstep), NULL, NULL);
+  gtk_accel_group_connect( accelGroup, GDK_F9, 0, 0, closureF9 );
+  gtk_accel_group_connect( accelGroup, GDK_F7, 0, 0, closureF7 );
+  gtk_window_add_accel_group( GTK_WINDOW( M68Kproc.dialog ), accelGroup );
+
+  M68Kupdate();
+  g_signal_connect(G_OBJECT(M68Kproc.dialog), "delete-event", GTK_SIGNAL_FUNC(gtk_widget_hide_on_delete), NULL );
+  /* never kill this dialog - Just hide it */
+  gtk_widget_show_all( M68Kproc.dialog );
+}
+
+
+/* ------------------------------------------------------------------------------- */
+/* SCUDSP Dialog ----------------------------------------------------------------- */
+
+static void openSCUDSP(GtkWidget* widget);
+
+static void SCUDSPupdateRegList( scudspregs_struct *regs) {
+  /* refresh the registery list */
+
+  GtkTreeIter iter;
+  char regstr[32];
+  char valuestr[32];
+  int i;
+  
+  gtk_tree_model_get_iter_first( GTK_TREE_MODEL( SCUDSPproc.regListStore ), &iter );
+  sprintf(valuestr, "%d", regs->ProgControlPort.part.PR);
+  yuiUpcase(valuestr);
+  gtk_list_store_set( GTK_LIST_STORE( SCUDSPproc.regListStore ), &iter, 0, "PR", 1, valuestr, -1 );
+
+  #define SCUDSPUPDATEREGLISTp(rreg,format) \
+  gtk_tree_model_iter_next( GTK_TREE_MODEL( SCUDSPproc.regListStore ), &iter ); \
+  sprintf(valuestr, #format, (int)regs->ProgControlPort.part.rreg); \
+  gtk_list_store_set( GTK_LIST_STORE( SCUDSPproc.regListStore ), &iter, 0, #rreg, 1, valuestr, -1 );
+  #define SCUDSPUPDATEREGLIST(rreg,format) \
+  gtk_tree_model_iter_next( GTK_TREE_MODEL( SCUDSPproc.regListStore ), &iter ); \
+  sprintf(valuestr, #format, (int)regs->rreg); \
+  gtk_list_store_set( GTK_LIST_STORE( SCUDSPproc.regListStore ), &iter, 0, #rreg, 1, valuestr, -1 );
+  #define SCUDSPUPDATEREGLISTx(rreg,vreg,format) \
+  gtk_tree_model_iter_next( GTK_TREE_MODEL( SCUDSPproc.regListStore ), &iter ); \
+  sprintf(valuestr, #format, (int)(vreg)); \
+  gtk_list_store_set( GTK_LIST_STORE( SCUDSPproc.regListStore ), &iter, 0, #rreg, 1, valuestr, -1 );
+  
+  SCUDSPUPDATEREGLISTp(EP,%d);
+  SCUDSPUPDATEREGLISTp(T0,%d);
+  SCUDSPUPDATEREGLISTp(S,%d);
+  SCUDSPUPDATEREGLISTp(Z,%d);
+  SCUDSPUPDATEREGLISTp(C,%d);
+  SCUDSPUPDATEREGLISTp(V,%d);
+  SCUDSPUPDATEREGLISTp(E,%d);
+  SCUDSPUPDATEREGLISTp(ES,%d);
+  SCUDSPUPDATEREGLISTp(EX,%d);
+  SCUDSPUPDATEREGLISTp(LE,%d);
+  SCUDSPUPDATEREGLISTp(P,%02X);
+  SCUDSPUPDATEREGLIST(TOP,%02X);
+  SCUDSPUPDATEREGLIST(LOP,%02X);
+  gtk_tree_model_iter_next( GTK_TREE_MODEL( SCUDSPproc.regListStore ), &iter );
+  sprintf(valuestr, "%08X", ((u32)(regs->CT[0]))<<24 + ((u32)(regs->CT[1]))<<16 + ((u32)(regs->CT[2]))<<8 + ((u32)(regs->CT[3])) );
+  gtk_list_store_set( GTK_LIST_STORE( SCUDSPproc.regListStore ), &iter, 0, "CT", 1, valuestr, -1 );
+  SCUDSPUPDATEREGLISTx(RA,regs->RA0,%08X);
+  SCUDSPUPDATEREGLISTx(WA,regs->WA0,%08X);
+  SCUDSPUPDATEREGLIST(RX,%08X);
+  SCUDSPUPDATEREGLIST(RY,%08X);
+  SCUDSPUPDATEREGLISTx(PH,regs->P.part.H & 0xFFFF,%04X);
+  SCUDSPUPDATEREGLISTx(PL,regs->P.part.L & 0xFFFFFFFF,%08X);
+  SCUDSPUPDATEREGLISTx(ACH,regs->AC.part.H & 0xFFFF,%04X);
+  SCUDSPUPDATEREGLISTx(ACL,regs->AC.part.L & 0xFFFFFFFF,%08X);
+}
+
+static void SCUDSPupdateCodeList(u32 addr) {
+  /* refresh the assembler view. <addr> points the line to be highlighted. */
+
+  int i;
+  static char tagPC[] = "<span foreground=\"red\">";
+  static char tagEnd[] = "</span>\n";
+  char buf[100*24+40];
+  char *curs = buf;
+  char lineBuf[100];
+  u32 offset;
+
+  if ( addr - SCUDSPproc.lastCode >= 20 ) offset = addr - 8;
+  else offset = SCUDSPproc.lastCode;
+  SCUDSPproc.lastCode = offset;
+
+  for (i=0; i < 24; i++) {
+
+    if ( offset + i == addr ) { strcpy( curs, tagPC ); curs += strlen(tagPC); }
+    ScuDspDisasm(offset+i, lineBuf);
+    strcpy( curs, lineBuf );
+    curs += strlen(lineBuf);
+    if ( offset + i == addr ) { strcpy( curs, tagEnd ); curs += strlen(tagEnd); }
+    else { strcpy( curs, "\n" ); curs += 1;}
+  }
+  *curs = 0;
+  gtk_label_set_markup( GTK_LABEL(SCUDSPproc.uLabel), buf );
+}
+
+static void SCUDSPstep( GtkWidget* widget, SCUDSPprocDlg* scu ) {
+
+  ScuDspStep();
+  debugUpdateViews(); /* update all dialogs, including us */
+}
+
+static void scuEditedBp( GtkCellRendererText *cellrenderertext,
+		      gchar *arg1,
+		      gchar *arg2) {
+  /* breakpoint <arg1> has been set to address <arg2> */
+
+  GtkTreeIter iter;
+  char bptext[10];
+  char *endptr;
+  int i = atoi(arg1);
+  u32 addr;
+  gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( SCUDSPproc.bpListStore ), &iter, arg1 );
+  addr = strtol(arg2, &endptr, 16 );
+  if ((endptr - arg2 < strlen(arg2)) || (!addr)) addr = 0xFFFFFFFF;
+  if ( SCUDSPproc.cbp[i] != 0xFFFFFFFF) ScuDspDelCodeBreakpoint(SCUDSPproc.cbp[i]);
+  SCUDSPproc.cbp[i] = 0xFFFFFFFF;
+
+  if ((addr!=0xFFFFFFFF)&&(ScuDspAddCodeBreakpoint(addr) == 0)) {
+   
+    sprintf(bptext, "%08X", (int)addr);
+    SCUDSPproc.cbp[i] = addr;
+  } else strcpy(bptext,"<empty>");
+  gtk_list_store_set( GTK_LIST_STORE( SCUDSPproc.bpListStore ), &iter, 0, bptext, -1 );
+}
+
+static void SCUDSPbreakpointHandler (u32 addr) {
+
+  yuiPause();
+  openSCUDSP(NULL);
+  debugPauseLoop(); /* execution is suspended inside a normal cycle - enter secondary gtk loop */
+}
+
+static void SCUDSPupdate() {
+
+  scudspregs_struct regs;
+  ScuDspGetRegisters(&regs);
+  SCUDSPupdateCodeList(regs.ProgControlPort.part.P);
+  SCUDSPupdateRegList(&regs);
+}
+
+static void openSCUDSP(GtkWidget* widget) {
+
+  GtkWidget *hbox, *vbox, *uFrame, *buttonStep, *buttonRun, *hboxButtons;
+  GClosure *closureF9, *closureF7;
+  GtkAccelGroup *accelGroup;
+  GtkCellRenderer *bpListRenderer, *regListRenderer1, *regListRenderer2;
+  GtkTreeViewColumn *bpListColumn, *regListColumn1, *regListColumn2;
+  codebreakpoint_struct *cbp;
+  char tempstr[10];
+  int i;
+
+  /* Initialization */
+
+  SCUDSPproc.lastCode = 0;
+  if ( openedSCUDSP ) {
+
+    gtk_widget_show_all( SCUDSPproc.dialog );
+    return;
+  }
+  openedSCUDSP = TRUE;
+  if ( yui.running == GTKYUI_WAIT ) yuiYabauseInit(); /* force yabause initialization */
+  ScuDspSetBreakpointCallBack(&SCUDSPbreakpointHandler);
+ 
+  /* Dialog window */
+
+  SCUDSPproc.dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
+  gtk_window_set_title( GTK_WINDOW(SCUDSPproc.dialog), "SCU/DSP" );
+  gtk_window_set_resizable( GTK_WINDOW(SCUDSPproc.dialog), FALSE );
+  gtk_window_set_icon( GTK_WINDOW(SCUDSPproc.dialog), yui.pixBufIcon );
+
+  hbox = gtk_hbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( hbox ),4 );
+  gtk_container_add (GTK_CONTAINER (SCUDSPproc.dialog), hbox);  
+
+  vbox = gtk_vbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( vbox ),4 );
+  gtk_box_pack_start( GTK_BOX( hbox ), vbox, FALSE, FALSE, 4 );
+
+  /* unassembler frame */
+
+  uFrame = gtk_frame_new("Disassembled code");
+  gtk_box_pack_start( GTK_BOX( vbox ), uFrame, FALSE, FALSE, 4 );
+  
+  SCUDSPproc.uLabel = gtk_label_new(NULL);
+  gtk_container_add (GTK_CONTAINER (uFrame), SCUDSPproc.uLabel );
+
+  /* Register list */
+
+  SCUDSPproc.regListStore = gtk_list_store_new(2,G_TYPE_STRING,G_TYPE_STRING);
+  SCUDSPproc.regList = gtk_tree_view_new_with_model( GTK_TREE_MODEL(SCUDSPproc.regListStore) );
+  regListRenderer1 = gtk_cell_renderer_text_new();
+  regListRenderer2 = gtk_cell_renderer_text_new();
+  regListColumn1 = gtk_tree_view_column_new_with_attributes("Register", regListRenderer1, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(SCUDSPproc.regList), regListColumn1);
+  regListColumn2 = gtk_tree_view_column_new_with_attributes("Value", regListRenderer2, "text", 1, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(SCUDSPproc.regList), regListColumn2);
+  gtk_box_pack_start( GTK_BOX( hbox ), SCUDSPproc.regList, FALSE, FALSE, 4 );
+
+  for (i = 0; i < 23 ; i++) {
+
+    GtkTreeIter iter;
+    gtk_list_store_append( GTK_LIST_STORE( SCUDSPproc.regListStore ), &iter );
+  }
+
+  /* breakpoint list */
+
+  SCUDSPproc.bpListStore = gtk_list_store_new(1,G_TYPE_STRING);
+  SCUDSPproc.bpList = gtk_tree_view_new_with_model( GTK_TREE_MODEL(SCUDSPproc.bpListStore) );
+  bpListRenderer = gtk_cell_renderer_text_new();
+  g_object_set(G_OBJECT(bpListRenderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL );
+  bpListColumn = gtk_tree_view_column_new_with_attributes("Breakpoints", bpListRenderer, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(SCUDSPproc.bpList), bpListColumn);
+  gtk_box_pack_start( GTK_BOX( hbox ), SCUDSPproc.bpList, FALSE, FALSE, 4 );
+  g_signal_connect(G_OBJECT(bpListRenderer), "edited", GTK_SIGNAL_FUNC(scuEditedBp), NULL );
+
+  for (i = 0; i < MAX_BREAKPOINTS; i++) {
+    
+    GtkTreeIter iter;
+    SCUDSPproc.cbp[i] = 0xFFFFFFFF;
+    gtk_list_store_append( GTK_LIST_STORE( SCUDSPproc.bpListStore ), &iter );
+    gtk_list_store_set( GTK_LIST_STORE( SCUDSPproc.bpListStore ), &iter, 0, "<empty>", -1 );
+  }
+
+  /* Control buttons */
+  
+  hboxButtons = gtk_hbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( hboxButtons ),4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxButtons, FALSE, FALSE, 4 );
+
+  buttonStep = gtk_button_new_with_label( "Step [F7]" );
+  gtk_box_pack_start( GTK_BOX( hboxButtons ), buttonStep, FALSE, FALSE, 2 );
+  g_signal_connect( buttonStep, "clicked", G_CALLBACK(SCUDSPstep), NULL );
+
+  buttonRun = gtk_button_new_with_label( "Run [F9]" );
+  gtk_box_pack_start( GTK_BOX( hboxButtons ), buttonRun, FALSE, FALSE, 2 );
+  g_signal_connect( buttonRun, "clicked", G_CALLBACK(yuiRun), NULL );
+
+  accelGroup = gtk_accel_group_new ();
+  closureF9 = g_cclosure_new (G_CALLBACK (yuiRun), NULL, NULL);
+  closureF7 = g_cclosure_new (G_CALLBACK (SCUDSPstep), NULL, NULL);
+  gtk_accel_group_connect( accelGroup, GDK_F9, 0, 0, closureF9 );
+  gtk_accel_group_connect( accelGroup, GDK_F7, 0, 0, closureF7 );
+  gtk_window_add_accel_group( GTK_WINDOW( SCUDSPproc.dialog ), accelGroup );
+
+  SCUDSPupdate();
+  g_signal_connect(G_OBJECT(SCUDSPproc.dialog), "delete-event", GTK_SIGNAL_FUNC(gtk_widget_hide_on_delete), NULL );
+  /* never kill this dialog - Just hide it */
+  gtk_widget_show_all( SCUDSPproc.dialog );
+}
+
+/* ------------------------------------------------------------------------------ */
 
 static void debugUpdateViews() {
+  /* to be called whenever something may have changed (run, step, user action on memory) */
 
+  if ( openedVDP1 ) vdp1update();
+  if ( openedVDP2 ) vdp2update();
   if ( openedSH2[FALSE] ) sh2update( FALSE );
   if ( openedSH2[TRUE] ) sh2update( TRUE );
+  if ( openedSCUDSP ) SCUDSPupdate();
+  if ( openedM68K ) M68Kupdate();
   memDumpUpdateAll();
 }
 
