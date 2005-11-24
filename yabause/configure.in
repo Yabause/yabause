@@ -55,15 +55,15 @@ case $target in
 		AC_CHECK_LIB(GL, glEnable, [
 			YAB_LIBS="$YAB_LIBS -lGL"
 			AC_DEFINE(HAVE_LIBGL)
-			], [AC_MSG_ERROR("You need to install OpenGL") ])
+			], [AC_MSG_ERROR("You need to install OpenGL") ], $YAB_LIBS)
 		AC_CHECK_LIB(glut, glutGetModifiers,[
 			YAB_LIBS="$YAB_LIBS -lglut"
-			AC_DEFINE(HAVE_LIBGLUT)])
+			AC_DEFINE(HAVE_LIBGLUT)],, $YAB_LIBS)
 		yabause_yui="."
 		;;
 	*) 
-		AC_CHECK_LIB(GL, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL") ])
-		AC_CHECK_LIB(glut, glutGetModifiers)
+		AC_CHECK_LIB(GL, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL") ], $YAB_LIBS)
+		AC_CHECK_LIB(glut, glutGetModifiers, [], [], $YAB_LIBS)
 		yabause_yui="."
 		;;
 
