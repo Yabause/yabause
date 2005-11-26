@@ -140,7 +140,7 @@ void YuiQuit(void)
 
 void YuiErrorMsg(const char *string)
 {
-   fprintf(stderr, string);
+   MessageBox (NULL, string, "Error",  MB_OK | MB_ICONINFORMATION);
 }
 
 //////////////////////////////////////////////////////////////////////////////

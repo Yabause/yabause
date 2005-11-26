@@ -68,23 +68,10 @@ void GenerateCDROMList(HWND hWnd)
 
 BOOL IsPathCdrom(const char *path)
 {
-   DWORD fflags;
-
-   fflags = GetFileAttributes(path);
-
-   if (fflags != INVALID_FILE_ATTRIBUTES)
-   {
-      if ((fflags & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_DIRECTORY)) ==
-          (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_DIRECTORY))
-      {
-         // Almost sure this is a cdrom drive path, need to do
-         // a few more checks
-         if (GetDriveType(cdrompath) == DRIVE_CDROM)
-            return TRUE;
-      }
-   }
-
-   return FALSE;
+   if (GetDriveType(cdrompath) == DRIVE_CDROM)
+      return TRUE;
+   else
+      return FALSE;
 }
 
 //////////////////////////////////////////////////////////////////////////////
