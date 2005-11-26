@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include "cs0.h"
+#include "error.h"
 
 cartridge_struct *CartridgeArea;
 
@@ -1199,7 +1200,9 @@ void CartDeInit(void)
 
          if (size != 0)
          {
-            T123Save(CartridgeArea->bupram, size, 1, CartridgeArea->filename);
+            if (T123Save(CartridgeArea->bupram, size, 1, CartridgeArea->filename) != 0)
+               YabSetError(YAB_ERR_FILEWRITE, (void *)CartridgeArea->filename);
+
             T1MemoryDeInit(CartridgeArea->bupram);
          }
       }
