@@ -2853,7 +2853,7 @@ int Cs2CopyDirRecord(u8 * buffer, dirrec_struct * dirrec)
 
 int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
 {
-   u32 fid_offset = 0;
+//   u32 fid_offset = 0;
    u8 * workbuffer;
    u32 i;
    dirrec_struct dirrec;

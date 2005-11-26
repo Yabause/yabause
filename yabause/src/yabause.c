@@ -330,7 +330,9 @@ void YabStopSlave(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
+#ifndef NO_CLI
    int i;
+#endif
    LogStart();
 
 #ifndef NO_CLI

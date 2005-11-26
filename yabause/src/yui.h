@@ -131,6 +131,13 @@ void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen);
    entry. context should be either MSH2 or SSH2.
 */
 
+/* u32 M68KDisasm(u32 addr, char *outstring);
+
+   Generates a disassembled instruction into specified string(string) based on
+   instruction stored at specified address(addr). Returns address of next
+   instruction.
+*/
+
 /* void M68KStep();
 
    Executes 1 68k instruction.
@@ -175,6 +182,9 @@ void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen);
 */
 
 /* void ScuDspDisasm(u8 addr, char *outstring);
+
+   Generates a disassembled instruction into specified string(string) based on
+   instruction stored at specified address(addr).
 */
 
 /* void ScuDspStep(void);
