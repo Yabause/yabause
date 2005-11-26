@@ -19,12 +19,19 @@
 
 #define MAX_VDP1_COMMAND 4000
 
+typedef struct {
+
+  gpointer memDump;
+  gint num;
+} _mdqTag;
+
 typedef struct _memDumpDlg {
 
   GtkWidget *dialog, *list, *entryAddress;
   GtkListStore *listStore;
   u32 offset; /* the position we are dumping */
   gint nLines, wLine; /* number of lines, width of a line */
+  _mdqTag tag[10];
   struct _memDumpDlg *pred, *succ; /* they are douly-linked chained */
 } memDumpDlg;
 
@@ -223,9 +230,37 @@ static void memDumpPageDownCallback(GtkWidget *w, gpointer func, gpointer data, 
   memDumpUpdate( memDump );
 }
 
+
+gpointer mdqTag( memDumpDlg* _memDump, gint _num ) {
+
+  _memDump->tag[_num].num = _num;
+  _memDump->tag[_num].memDump = _memDump;
+  return &(_memDump->tag[_num]);
+}
+
+static void memDumpQuick( GtkWidget* w, _mdqTag* tag ) {
+
+  u32 addr;
+
+  switch ( tag->num ) {
+
+    case 0: addr = 0x25E00000 ; break; /* VDP2_VRAM_A0*/
+    case 1: addr = 0x25E20000 ; break; /* VDP2_VRAM_A1*/
+    case 2: addr = 0x25E40000 ; break; /* VDP2_VRAM_B0*/
+    case 3: addr = 0x25E60000 ; break; /* VDP2_VRAM_B1*/
+    case 4: addr = 0x25F00000 ; break; /* VDP2_CRAM*/
+    case 5: addr = 0x20200000 ; break; /* LWRAM*/
+    case 6: addr = 0x26000000 ; break; /* HWRAM*/
+    case 7: addr = 0x25C00000 ; break; /* SpriteVRAM*/
+  }
+  ((memDumpDlg*)tag->memDump)->offset = addr;
+  memDumpUpdate( (memDumpDlg*)tag->memDump );
+}
+
 static memDumpDlg* openMemDump() {
 
-  GtkWidget *vbox;
+  static gchar* quickName[8] = {"VDP2_VRAM_A0", "VDP2_VRAM_A1", "VDP2_VRAM_B0", "VDP2_VRAM_B1", "VDP2_CRAM", "LWRAM", "HWRAM", "SpriteVRAM" };
+  GtkWidget *vbox, *hbox, *vboxQuick;
   GtkAccelGroup *accelGroup;
   GtkCellRenderer *listRenderer, *listRendererAddress;
   GtkTreeViewColumn *listColumn, *listColumnAddress;
@@ -246,9 +281,12 @@ static memDumpDlg* openMemDump() {
   gtk_window_set_resizable( GTK_WINDOW(memDump->dialog), FALSE );
   gtk_window_set_icon( GTK_WINDOW(memDump->dialog), yui.pixBufIcon );
 
+  hbox = gtk_hbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( hbox ),4 );
+  gtk_container_add (GTK_CONTAINER (memDump->dialog), hbox);  
+   
   vbox = gtk_vbox_new(FALSE, 2);
-  gtk_container_set_border_width( GTK_CONTAINER( vbox ),4 );
-  gtk_container_add (GTK_CONTAINER (memDump->dialog), vbox);  
+  gtk_box_pack_start( GTK_BOX( hbox ), vbox, FALSE, FALSE, 4 );  
 
   /* The address bar */
 
@@ -277,6 +315,18 @@ static memDumpDlg* openMemDump() {
     GtkTreeIter iter;
     gtk_list_store_append( GTK_LIST_STORE( memDump->listStore ), &iter );
   }
+
+  /* Quick buttons */
+
+  vboxQuick = gtk_vbox_new(FALSE, 0);
+  gtk_box_pack_start( GTK_BOX( hbox ), vboxQuick, FALSE, FALSE, 4 );
+  for ( i = 0 ; i < 8 ; i++ ) {
+    GtkWidget* button;
+    g_signal_connect(G_OBJECT(button=gtk_button_new_with_label( quickName[i] )), "clicked", 
+		     GTK_SIGNAL_FUNC(memDumpQuick), mdqTag(memDump,i) );
+    gtk_box_pack_start( GTK_BOX( vboxQuick ), button, FALSE, FALSE, 0 );
+  }
+
   memDumpUpdate(memDump);
 
   accelGroup = gtk_accel_group_new ();

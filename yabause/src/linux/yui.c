@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static gboolean forceSoundEnabled = TRUE;
 
 static void yuiRun(void);
 static void yuiPause(void);
@@ -335,7 +336,8 @@ static void cfCatchValue( ComboFileSelect* cf, gchar* value ) {
 
 static struct {
   ComboFileSelect *cfBup, *cfCart, *cfMpeg;
-  GtkWidget *comboCartType, *comboRegion, *spinX, *spinY;
+  GtkWidget *comboCartType, *comboRegion, *spinX, *spinY, *checkAspect, *checkSound;
+  gboolean soundenabled;
 } yuiSettings;
 
 static void yuiSettingsResponse(GtkWidget *widget, gint arg1, gpointer user_data ) {
@@ -366,6 +368,8 @@ static void yuiSettingsResponse(GtkWidget *widget, gint arg1, gpointer user_data
     yuiSetInt( "region", r );
     yuiSetInt( "fsX", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinX ) ) );
     yuiSetInt( "fsY", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinY ) ) );
+    yuiSetInt( "keepRatio", gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( yuiSettings.checkAspect ) ) );
+    yuiSettings.soundenabled = gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( yuiSettings.checkSound ) );
     yuiStore();
   }
 }
@@ -391,6 +395,7 @@ static void yuiComboCart( GtkWidget *widget, gpointer user_data ) {
 static void spinFsChanged( GtkWidget *widget, gboolean bFsY ) {
   /* Keep the 10/7 ratio between spinX and spinY */
 
+  if ( ! gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( yuiSettings.checkAspect ) ) ) return;
   if ( bFsY ) gtk_spin_button_set_value( GTK_SPIN_BUTTON(yuiSettings.spinX),
 					 (gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON(yuiSettings.spinY))*10)/7 );
   else gtk_spin_button_set_value( GTK_SPIN_BUTTON(yuiSettings.spinY),
@@ -503,6 +508,25 @@ static void yuiSettingsDialog() {
   gtk_box_pack_start( GTK_BOX( vbox ), hboxFs, FALSE, FALSE, 4 );
   }
 
+
+  { GtkWidget* hbox = gtk_hbox_new( FALSE, 4 );
+
+  gtk_box_pack_start( GTK_BOX( hbox ), gtk_hseparator_new(), TRUE, FALSE, 2 );
+  yuiSettings.checkAspect = gtk_check_button_new_with_label("Keep aspect ratio");
+  gtk_box_pack_start( GTK_BOX( hbox ), yuiSettings.checkAspect, FALSE, FALSE, 0 );
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON( yuiSettings.checkAspect ), yuiGetInt( "keepRatio", 1 ) );
+
+  gtk_box_pack_start( GTK_BOX( vbox ), hbox, FALSE, FALSE, 4 );
+  }
+
+  /* enable sound ? */
+
+  { yuiSettings.checkSound = gtk_check_button_new_with_label("Sound enabled");
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON( yuiSettings.checkSound ), yuiSettings.soundenabled );
+
+  gtk_box_pack_start( GTK_BOX( vbox ), yuiSettings.checkSound, FALSE, FALSE, 4 );
+  }
+
   /* ---------------------- */
 
   gtk_widget_show_all(dialog);
@@ -530,7 +554,6 @@ static struct {
   GtkWidget *buttonPause;
   GtkWidget *buttonFs;
   GtkWidget *buttonSettings;
-  gboolean soundenabled;
   enum {GTKYUI_WAIT,GTKYUI_RUN,GTKYUI_PAUSE} running;
 } yui;
 
@@ -578,7 +601,7 @@ static void yuiYabauseInit() {
     yinit.percoretype = PERCORE_SDL;
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_SDLGL;
-    yinit.sndcoretype = yui.soundenabled ? SNDCORE_SDL : SNDCORE_DUMMY;
+    yinit.sndcoretype = yuiSettings.soundenabled ? SNDCORE_SDL : SNDCORE_DUMMY;
     yinit.regionid = yuiGetInt( "region", REGION_AUTODETECT );
     cfGetText( yui.cfBios, (gchar**)(&yinit.biospath) );
     
@@ -643,7 +666,8 @@ static int yuiInit(void) {
 	GtkWidget *hboxRadioCD;
 	GtkWidget *buttonQuit;
 	GtkWidget *buttonHelp;
-	
+
+	yuiSettings.soundenabled = forceSoundEnabled;
 	gtk_init (&fake_argc, &fake_argv);
 	yui.running = GTKYUI_WAIT;
 	yui.pixBufIcon = gdk_pixbuf_new_from_xpm_data((const char **)icon_xpm);
@@ -729,7 +753,7 @@ static int yuiInit(void) {
 
 void YuiSetSoundEnable(int enablesound) {
   
-  yui.soundenabled = enablesound;
+  forceSoundEnabled = enablesound;
 }
 
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {}
