@@ -559,20 +559,20 @@ static void gen_jumptable(u32 base, u32 start1, u32 end1, u32 step1, u32 start2,
 
 	if (start1 != end1)
     {
-        fprintf(ini_file, "\t\tfor(i = 0x%.4X; i <= 0x%.4X; i += 0x%.4X)\n", start1, end1, step1);
+        fprintf(ini_file, "\t\tfor(i = 0x%.4X; i <= 0x%.4X; i += 0x%.4X)\n", (int)start1, (int)end1, (int)step1);
     	if (start2 != end2)
         {
-            fprintf(ini_file, "\t\t\tfor(j = 0x%.4X; j <= 0x%.4X; j += 0x%.4X)\n\t", start2, end2, step2);
+            fprintf(ini_file, "\t\t\tfor(j = 0x%.4X; j <= 0x%.4X; j += 0x%.4X)\n\t", (int)start2, (int)end2, (int)step2);
         	if (start3 != end3)
             {
-                fprintf(ini_file, "\t\t\t\tfor(k = 0x%.4X; k <= 0x%.4X; k += 0x%.4X)\n\t", start3, end3, step3);
-                fprintf(ini_file, "\t\t\t\t\tJumpTable[0x%.4X + i + j + k] = &&OP_0x%.4X;\n", base, op);
+                fprintf(ini_file, "\t\t\t\tfor(k = 0x%.4X; k <= 0x%.4X; k += 0x%.4X)\n\t", (int)start3, (int)end3, (int)step3);
+                fprintf(ini_file, "\t\t\t\t\tJumpTable[0x%.4X + i + j + k] = &&OP_0x%.4X;\n", (int)base, (int)op);
             }
-            else fprintf(ini_file, "\t\t\t\tJumpTable[0x%.4X + i + j] = &&OP_0x%.4X;\n", base, op);
+            else fprintf(ini_file, "\t\t\t\tJumpTable[0x%.4X + i + j] = &&OP_0x%.4X;\n", (int)base, (int)op);
         }
-        else fprintf(ini_file, "\t\t\tJumpTable[0x%.4X + i] = &&OP_0x%.4X;\n", base, op);
+        else fprintf(ini_file, "\t\t\tJumpTable[0x%.4X + i] = &&OP_0x%.4X;\n", (int)base, (int)op);
     }
-    else fprintf(ini_file, "\t\tJumpTable[0x%.4X] = &&OP_0x%.4X;\n", base, op);
+    else fprintf(ini_file, "\t\tJumpTable[0x%.4X] = &&OP_0x%.4X;\n", (int)base, (int)op);
 #endif
 }
 

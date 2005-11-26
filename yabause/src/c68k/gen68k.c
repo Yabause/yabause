@@ -2784,7 +2784,7 @@ static void GenROLk()
 
 static void GenASRD()
 {
-    u32 base = get_current_opcode_base();
+//    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
@@ -2871,7 +2871,7 @@ static void GenASRD()
 
 static void GenLSRD()
 {
-    u32 base = get_current_opcode_base();
+//    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
@@ -2942,7 +2942,7 @@ static void GenLSRD()
 
 static void GenROXRD()
 {
-    u32 base = get_current_opcode_base();
+//    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
@@ -3009,7 +3009,7 @@ static void GenROXRD()
 
 static void GenRORD()
 {
-    u32 base = get_current_opcode_base();
+//    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
@@ -3062,7 +3062,7 @@ static void GenRORD()
 
 static void GenASLD()
 {
-    u32 base = get_current_opcode_base();
+//    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
@@ -3146,7 +3146,7 @@ static void GenASLD()
 
 static void GenLSLD()
 {
-    u32 base = get_current_opcode_base();
+//    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
@@ -3225,7 +3225,7 @@ static void GenLSLD()
 
 static void GenROXLD()
 {
-    u32 base = get_current_opcode_base();
+//    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
@@ -3292,7 +3292,7 @@ static void GenROXLD()
 
 static void GenROLD()
 {
-    u32 base = get_current_opcode_base();
+//    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
@@ -3605,7 +3605,7 @@ int main()
     {
         char fn[16];
         
-        sprintf(fn, "c68k_op%.1X.inc", i);
+        sprintf(fn, "c68k_op%.1X.inc", (int)i);
         opcode_file = fopen(fn, "wt");
         if (opcode_file != NULL)
         {

@@ -62,8 +62,6 @@ void FASTCALL C68k_Reset_Dummy(void);
 
 void C68k_Init(c68k_struc *cpu, C68K_INT_CALLBACK *int_cb)
 {
-    u32 i;
-    
     memset(cpu, 0, sizeof(c68k_struc));
 
     C68k_Set_ReadB(cpu, C68k_Read_Dummy);
