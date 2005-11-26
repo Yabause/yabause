@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include "cs2.h"
 #include "debug.h"
+#include "error.h"
 #include "yui.h"
 
 #define CDB_HIRQ_CMOK      0x0001
@@ -544,7 +545,17 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath) 
    if (Cs2Area->cdi == NULL)
       return -1;
 
-   Cs2Area->cdi->Init(cdpath);
+   if (Cs2Area->cdi->Init(cdpath) != 0)
+   {
+      // Since it failed, instead of it being fatal, we'll just use the dummy
+      // core instead
+
+      // This might be helpful though.
+      YabSetError(YAB_ERR_CANNOTINIT, (void *)Cs2Area->cdi->Name);
+
+      Cs2Area->cdi = &DummyCD;
+      Cs2Area->cdi->Init(NULL);
+   }
 
    Cs2Reset();
 
@@ -2096,7 +2107,6 @@ void Cs2GetFileInfo(void) {
 
 void Cs2ReadFile(void) {
   u32 rfoffset, rffilternum, rffid, rfsize;
-  partition_struct * playpartition;
 
   rfoffset = ((Cs2Area->reg.CR1 & 0xFF) << 8) | Cs2Area->reg.CR2;
   rffilternum = Cs2Area->reg.CR3 >> 8;
