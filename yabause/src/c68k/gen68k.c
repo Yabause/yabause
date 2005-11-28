@@ -47,7 +47,10 @@
 static void GenLogicI(char op)
 {
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     if (current_ea != EA_DREG) current_cycle += 4;
     switch (current_size)
@@ -85,7 +88,7 @@ static void GenLogicI(char op)
 static void GenLogicICCR(char op)
 {
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
 
     wf_op("\tres = FETCH_BYTE & C68K_CCR_MASK;\n");
     wf_op("\tPC += 2;\n");
@@ -98,7 +101,7 @@ static void GenLogicICCR(char op)
 static void GenLogicISR(char op)
 {
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
     
     wf_op("\tif (CPU->flag_S)\n");
     wf_op("\t{\n");
@@ -173,7 +176,10 @@ static void GenEORISR()
 static void GenArithI(char op)
 {
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES | GEN_SRC | GEN_DST);
+    else
+        start_all(GEN_ALL);
 
     if ((op != ' ') && (current_ea != EA_DREG)) current_cycle += 4;
     switch (current_size)
@@ -242,7 +248,10 @@ static void GenBitsOp(char op, u32 dyn)
 {
     // generate jump table & opcode declaration
     if (dyn) current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ADR | GEN_RES | GEN_SRC);
     
     if (current_ea == EA_DREG)
     {
@@ -340,7 +349,7 @@ static void GenMOVEPWaD()
     // generate jump table & opcode declaration
     current_ea = EA_D16A;
     current_ea2 = EA_DREG;
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     set_current_size(SIZE_BYTE);
@@ -358,7 +367,7 @@ static void GenMOVEPLaD()
     // generate jump table & opcode declaration
     current_ea = EA_D16A;
     current_ea2 = EA_DREG;
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     set_current_size(SIZE_BYTE);
@@ -384,7 +393,7 @@ static void GenMOVEPWDa()
     // generate jump table & opcode declaration
     current_ea = EA_D16A;
     current_ea2 = EA_DREG;
-    start_all();
+    start_all(GEN_ADR | GEN_RES);
 
     // read
     set_current_size(SIZE_LONG);
@@ -404,7 +413,7 @@ static void GenMOVEPLDa()
     // generate jump table & opcode declaration
     current_ea = EA_D16A;
     current_ea2 = EA_DREG;
-    start_all();
+    start_all(GEN_ADR | GEN_RES);
 
     // read
     set_current_size(SIZE_LONG);
@@ -429,7 +438,11 @@ static void GenMOVE(u32 size)
     set_current_size(size);
     
     // generate jump table & opcode declaration
-    start_all();
+    if (((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM)) &&
+        ((current_ea2 == EA_AREG) || (current_ea2 == EA_DREG) || (current_ea2 == EA_IMM)))
+        start_all(GEN_RES);
+    else
+        start_all(GEN_ADR | GEN_RES);
     
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -465,7 +478,10 @@ static void GenMOVEA(u32 size)
 
     // generate jump table & opcode declaration
     current_ea2 = EA_AREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES);
+    else
+        start_all(GEN_ADR | GEN_RES);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -496,7 +512,7 @@ static void GenMOVEQ()
     gen_opjumptable_ext(base, 0x00, 0xFF, 1, base);
 
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES);
 
     // read
     set_current_size(SIZE_BYTE);
@@ -515,7 +531,17 @@ static void GenMOVEQ()
 static void GenSingle(char op)
 {
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM)) {
+        if (op == 'c')
+            start_all(GEN_RES);
+        else
+            start_all(GEN_RES | GEN_SRC);
+    } else {
+        if (op == 'c')
+            start_all(GEN_ADR | GEN_RES);
+        else
+            start_all(GEN_ADR | GEN_RES | GEN_SRC);
+    }
 
     if (current_size == SIZE_LONG) current_cycle = 6;
     else current_cycle= 4;
@@ -591,7 +617,10 @@ static void GenNOT()
 static void GenMOVESRa()
 {
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES);
+    else
+        start_all(GEN_ADR | GEN_RES);
 
     // read
     wf_op("\tres = GET_SR;\n");
@@ -607,7 +636,10 @@ static void GenMOVESRa()
 static void GenMOVEaSR()
 {
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES);
+    else
+        start_all(GEN_ADR | GEN_RES);
 
     wf_op("\tif (CPU->flag_S)\n");
     wf_op("\t{\n");
@@ -635,7 +667,10 @@ static void GenMOVEaSR()
 static void GenMOVEaCCR()
 {
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES);
+    else
+        start_all(GEN_ADR | GEN_RES);
 
     // read
     set_current_size(SIZE_WORD);
@@ -652,7 +687,7 @@ static void GenMOVEAUSP()
     current_ea = EA_AREG;
 
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
 
     wf_op("\tif (!CPU->flag_S)\n");
     wf_op("\t{\n");
@@ -675,7 +710,7 @@ static void GenMOVEUSPA()
     current_ea = EA_AREG;
     
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
 
     wf_op("\tif (!CPU->flag_S)\n");
     wf_op("\t{\n");
@@ -697,7 +732,10 @@ static void GenPEA()
 {
     set_current_size(SIZE_LONG);
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(0);
+    else
+        start_all(GEN_ADR);
     
     _ea_calc_free(current_ea, current_op->reg_sft);
     mem_op("\tPUSH_32_F(adr)\n");
@@ -710,7 +748,7 @@ static void GenSWAP()
     current_ea = EA_DREG;
     set_current_size(SIZE_LONG);
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -728,7 +766,7 @@ static void GenSWAP()
 static void GenMOVEMaR()
 {
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_ALL);
     
     // get register mask
     wf_op("\tres = FETCH_WORD;\n");
@@ -771,7 +809,7 @@ static void GenMOVEMaR()
 static void GenMOVEMRa()
 {
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_ALL);
 
     // get register mask
     wf_op("\tres = FETCH_WORD;\n");
@@ -827,7 +865,7 @@ static void GenEXT()
 {
     current_ea = EA_DREG;
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
 
     // read
     set_current_size(current_size - 1);
@@ -845,7 +883,10 @@ static void GenEXT()
 static void GenTST()
 {
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES);
+    else
+        start_all(GEN_ADR | GEN_RES);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -863,7 +904,10 @@ static void GenTAS()
     if (is_ea_memory(current_ea)) current_cycle += 6;
 
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES);
+    else
+        start_all(GEN_ADR | GEN_RES);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -895,7 +939,7 @@ static void GenTRAP()
     gen_opjumptable_ext(base, (0 << 0), (15 << 0), (1 << 0), base);
 
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES);
 
     gen_exception("\t", "C68K_TRAP_BASE_EX + (Opcode & 0xF)");
 
@@ -905,7 +949,7 @@ static void GenTRAP()
 static void GenTRAPV()
 {
     // generate label & declarations
-    start_all();
+    start_all(GEN_RES);
 
     wf_op("\tif %s\n", get_cond_as_cond(COND_VS, 0));
     wf_op("\t{\n");
@@ -920,7 +964,7 @@ static void GenLINK()
     current_ea = EA_AREG;
     set_current_size(SIZE_LONG);
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -942,7 +986,7 @@ static void GenLINKA7()
     current_ea = EA_AREG;
     set_current_size(SIZE_LONG);
     // generate jump table & opcode declaration
-    start_all();
+    start_all(0);
 
     // push A7
     wf_op("\tCPU->A[7] -= 4;\n");
@@ -959,7 +1003,7 @@ static void GenULNK()
     current_ea = EA_AREG;
     set_current_size(SIZE_LONG);
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
     
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -978,7 +1022,7 @@ static void GenULNKA7()
     current_ea = EA_AREG;
     set_current_size(SIZE_LONG);
     // generate jump table & opcode declaration
-    start_all();
+    start_all(0);
 
     mem_op("\tREAD_LONG_F(CPU->A[7], CPU->A[7])\n");
     
@@ -988,7 +1032,7 @@ static void GenULNKA7()
 static void GenRESET()
 {
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
 
     wf_op("\tif (!CPU->flag_S)\n");
     wf_op("\t{\n");
@@ -1007,7 +1051,7 @@ static void GenLEA()
     current_ea2 = EA_AREG;
     set_current_size(SIZE_LONG);
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_ADR | GEN_RES);
 
     _ea_calc_free(current_ea, current_op->reg_sft);
     wf_op("\tres = adr;\n");
@@ -1020,13 +1064,13 @@ static void GenLEA()
 
 static void GenNOP()
 {
-    start_all();
+    start_all(0);
     terminate_op(4);
 }
 
 static void GenILLEGAL()
 {
-    start_all();
+    start_all(GEN_RES);
 
     gen_exception("\t\t", "C68K_ILLEGAL_INSTRUCTION_EX");
     
@@ -1038,7 +1082,10 @@ static void GenCHK()
     current_ea2 = EA_DREG;
     set_current_size(SIZE_WORD);
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read Src
     _ea_calc(current_ea, current_op->reg_sft);
@@ -1059,7 +1106,7 @@ static void GenCHK()
 static void GenSTOP()
 {
     // generate jump table & opcode declaration
-    start_all();
+    start_all(GEN_RES);
 
     wf_op("\tif (!CPU->flag_S)\n");
     wf_op("\t{\n");
@@ -1090,7 +1137,7 @@ static void GenSTOP()
 
 static void GenRTE()
 {
-    start_all();
+    start_all(GEN_RES);
 
     wf_op("\tif (!CPU->flag_S)\n");
     wf_op("\t{\n");
@@ -1118,7 +1165,7 @@ static void GenRTE()
 
 static void GenRTS()
 {
-    start_all();
+    start_all(GEN_RES);
 
     mem_op("\tPOP_32_F(res)\n");
     wf_op("\tSET_PC(res)\n");
@@ -1128,7 +1175,7 @@ static void GenRTS()
 
 static void GenRTR()
 {
-    start_all();
+    start_all(GEN_RES);
 
     mem_op("\tPOP_16_F(res)\n");
     wf_op("\tSET_CCR(res)\n");
@@ -1140,7 +1187,7 @@ static void GenRTR()
 
 static void GenJSR()
 {
-    start_all();
+    start_all(GEN_ADR);
     
     // get adr
     _ea_calc_free(current_ea, current_op->reg_sft);
@@ -1152,7 +1199,7 @@ static void GenJSR()
 
 static void GenJMP()
 {
-    start_all();
+    start_all(GEN_ADR);
 
     // get adr
     _ea_calc_free(current_ea, current_op->reg_sft);
@@ -1172,7 +1219,10 @@ static void GenSTCC()
         // generate jump table
         gen_opjumptable(base + (cond << 8));
         // generate label & declarations
-        start_op(base + (cond << 8));
+        if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+            start_op(base + (cond << 8), GEN_RES);
+        else
+            start_op(base + (cond << 8), GEN_ADR | GEN_RES);
         
         set_current_size(SIZE_BYTE);
 
@@ -1223,7 +1273,7 @@ static void GenDBCC()
         // generate jump table
         gen_opjumptable(base + (cond << 8));
         // generate label & declarations
-        start_op(base + (cond << 8));
+        start_op(base + (cond << 8), GEN_RES);
         
         if (cond != COND_TR)
         {
@@ -1279,7 +1329,7 @@ static void GenBCC()
         // generate jump table
         gen_opjumptable_ext(base + (cond << 8), 0x01, 0xFF, 1, base + (cond << 8) + 0x01);
         // generate label & declarations
-        start_op(base + (cond << 8) + 0x01);
+        start_op(base + (cond << 8) + 0x01, 0);
 
         // op
         wf_op("\tif %s\n", get_cond_as_cond(cond, 0));
@@ -1303,7 +1353,7 @@ static void GenBCC16()
         // generate jump table
         gen_opjumptable(base + (cond << 8));
         // generate label & declarations
-        start_op(base + (cond << 8));
+        start_op(base + (cond << 8), 0);
 
         // op
         wf_op("\tif %s\n", get_cond_as_cond(cond, 0));
@@ -1329,7 +1379,7 @@ static void GenBRA()
     // generate jump table
     gen_opjumptable_ext(base, 0x01, 0xFF, 1, base + 0x01);
     // generate label & declarations
-    start_op(base + 0x01);
+    start_op(base + 0x01, 0);
 
     wf_op("\tPC += (s32)(s8)Opcode;\n");     // no rebase needed for 8 bits deplacement
 
@@ -1343,7 +1393,7 @@ static void GenBRA16()
     // generate jump table
     gen_opjumptable(base + 0x00);
     // generate label & declarations
-    start_op(base + 0x00);
+    start_op(base + 0x00, 0);
 
     wf_op("\tPC += (s32)(s16)FETCH_WORD;\n");
     // unbase PC
@@ -1361,7 +1411,7 @@ static void GenBSR()
     // generate jump table
     gen_opjumptable_ext(base, 0x01, 0xFF, 1, base + 0x01);
     // generate label & declarations
-    start_op(base + 0x01);
+    start_op(base + 0x01, 0);
 
     mem_op("\tPUSH_32_F(PC - CPU->BasePC)\n");
     wf_op("\tPC += (s32)(s8)Opcode;\n");     // no rebase needed for 8 bits deplacement
@@ -1376,7 +1426,7 @@ static void GenBSR16()
     // generate jump table
     gen_opjumptable(base + 0x00);
     // generate label & declarations
-    start_op(base + 0x00);
+    start_op(base + 0x00, GEN_RES);
 
     wf_op("\tres = (s32)(s16)FETCH_WORD;\n");
     // unbase PC
@@ -1401,7 +1451,10 @@ static void GenArithQ(char op)
     gen_opjumptable_ext(base, (0 << 9), (7 << 9), (1 << 9), base);
 
     // generate label & declarations
-    start_op(base);
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_op(base, GEN_DST | GEN_RES | GEN_SRC);
+    else
+        start_op(base, GEN_ALL);
 
     if (current_ea == EA_AREG) set_current_size(SIZE_LONG);
 
@@ -1441,7 +1494,10 @@ static void GenLogicaD(char op)
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG)
     {
@@ -1469,7 +1525,10 @@ static void GenLogicDa(char op)
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG) current_cycle += 4;
 
@@ -1520,7 +1579,10 @@ static void GenNBCD()
     set_current_size(SIZE_BYTE);
 
     // generate jump table & opcode declaration
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES);
+    else
+        start_all(GEN_ADR | GEN_RES);
 
     if (is_ea_memory(current_ea)) current_cycle += 2;
 
@@ -1584,7 +1646,7 @@ static void GenxBCD(char op)
     // generate jump table & opcode declaration
     current_ea = EA_DREG;
     current_ea2 = EA_DREG;
-    start_all();
+    start_all(GEN_DST | GEN_RES | GEN_SRC);
 
     // read src (Dx)
     _ea_calc(current_ea, current_op->reg_sft);
@@ -1609,7 +1671,7 @@ static void GenxBCDM(char op)
     // generate jump table & opcode declaration
     current_ea = EA_ADEC;
     current_ea2 = EA_ADEC;
-    start_all();
+    start_all(GEN_ALL);
 
     // read src (ADEC)
     _ea_calc(current_ea, current_op->reg_sft);
@@ -1634,7 +1696,7 @@ static void GenxBCD7M(char op)
     // generate jump table & opcode declaration
     current_ea = EA_ADEC7;
     current_ea2 = EA_ADEC;
-    start_all();
+    start_all(GEN_ALL);
 
     // read src (ADEC7)
     _ea_calc(current_ea, 0);
@@ -1659,7 +1721,7 @@ static void GenxBCDM7(char op)
     // generate jump table & opcode declaration
     current_ea = EA_ADEC;
     current_ea2 = EA_ADEC7;
-    start_all();
+    start_all(GEN_ALL);
 
     // read src (ADEC)
     _ea_calc(current_ea, current_op->reg_sft);
@@ -1684,7 +1746,7 @@ static void GenxBCD7M7(char op)
     // generate jump table & opcode declaration
     current_ea = EA_ADEC7;
     current_ea2 = EA_ADEC7;
-    start_all();
+    start_all(GEN_ALL);
 
     // read src (ADEC7)
     _ea_calc(current_ea, 0);
@@ -1756,7 +1818,10 @@ static void GenDIVU()
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_DST | GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ALL);
 
     set_current_size(SIZE_WORD);
     
@@ -1815,7 +1880,10 @@ static void GenDIVS()
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_DST | GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ALL);
 
     set_current_size(SIZE_WORD);
 
@@ -1887,7 +1955,10 @@ static void GenMULU()
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     set_current_size(SIZE_WORD);
 
@@ -1918,7 +1989,10 @@ static void GenMULS()
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     set_current_size(SIZE_WORD);
     // read src signed
@@ -1949,7 +2023,10 @@ static void GenArithaD(char op)
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_DST | GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ALL);
 
     if (current_size == SIZE_LONG)
     {
@@ -1988,7 +2065,7 @@ static void GenArithDa(char op)
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_DREG;
-    start_all();
+    start_all(GEN_ALL);
 
     if (current_size == SIZE_LONG) current_cycle += 4;
 
@@ -2013,7 +2090,10 @@ static void GenArithA(char op)
 {
     // generate jump table & opcode declaration
     current_ea2 = EA_AREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_DST | GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ALL);
 
     if ((current_size == SIZE_WORD) && (op != ' ') && (!is_ea_memory(current_ea))) current_cycle += 2;
 
@@ -2048,7 +2128,10 @@ static void GenArithX(char op)
     // generate jump table & opcode declaration
     current_ea = EA_DREG;
     current_ea2 = EA_DREG;
-    start_all();
+    if ((current_ea == EA_AREG) || (current_ea == EA_DREG) || (current_ea == EA_IMM))
+        start_all(GEN_DST | GEN_RES | GEN_SRC);
+    else
+        start_all(GEN_ALL);
 
     if (current_size == SIZE_LONG) current_cycle += 4;
 
@@ -2074,7 +2157,7 @@ static void GenArithXM(char op)
     // generate jump table & opcode declaration
     current_ea = EA_ADEC;
     current_ea2 = EA_ADEC;
-    start_all();
+    start_all(GEN_ALL);
 
     if (current_size == SIZE_LONG) current_cycle += 4;
 
@@ -2100,7 +2183,7 @@ static void GenArithX7M(char op)
     // generate jump table & opcode declaration
     current_ea = EA_ADEC7;
     current_ea2 = EA_ADEC;
-    start_all();
+    start_all(GEN_ALL);
 
     if (current_size == SIZE_LONG) current_cycle += 4;
 
@@ -2126,7 +2209,7 @@ static void GenArithXM7(char op)
     // generate jump table & opcode declaration
     current_ea = EA_ADEC;
     current_ea2 = EA_ADEC7;
-    start_all();
+    start_all(GEN_ALL);
 
     if (current_size == SIZE_LONG) current_cycle += 4;
 
@@ -2152,7 +2235,7 @@ static void GenArithX7M7(char op)
     // generate jump table & opcode declaration
     current_ea = EA_ADEC7;
     current_ea2 = EA_ADEC7;
-    start_all();
+    start_all(GEN_ALL);
 
     if (current_size == SIZE_LONG) current_cycle += 4;
 
@@ -2268,7 +2351,7 @@ static void GenCMPM()
     // generate jump table & opcode declaration
     current_ea = EA_AINC;
     current_ea2 = EA_AINC;
-    start_all();
+    start_all(GEN_ALL);
 
     // read src (ADEC)
     _ea_calc(current_ea, current_op->reg_sft);
@@ -2290,7 +2373,7 @@ static void GenCMP7M()
     // generate jump table & opcode declaration
     current_ea = EA_AINC7;
     current_ea2 = EA_AINC;
-    start_all();
+    start_all(GEN_ALL);
 
     // read src (ADEC)
     _ea_calc(current_ea, 0);
@@ -2312,7 +2395,7 @@ static void GenCMPM7()
     // generate jump table & opcode declaration
     current_ea = EA_AINC;
     current_ea2 = EA_AINC7;
-    start_all();
+    start_all(GEN_ALL);
 
     // read src (ADEC)
     _ea_calc(current_ea, current_op->reg_sft);
@@ -2334,7 +2417,7 @@ static void GenCMP7M7()
     // generate jump table & opcode declaration
     current_ea = EA_AINC7;
     current_ea2 = EA_AINC7;
-    start_all();
+    start_all(GEN_ALL);
 
     // read src (ADEC)
     _ea_calc(current_ea, 0);
@@ -2357,7 +2440,7 @@ static void GenEXGDD()
     set_current_size(SIZE_LONG);
     current_ea = EA_DREG;
     current_ea2 = EA_DREG;
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
     
     // read R1
     _ea_calc(current_ea, current_op->reg_sft);
@@ -2380,7 +2463,7 @@ static void GenEXGAA()
     set_current_size(SIZE_LONG);
     current_ea = EA_AREG;
     current_ea2 = EA_AREG;
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     // read R1
     _ea_calc(current_ea, current_op->reg_sft);
@@ -2403,7 +2486,7 @@ static void GenEXGAD()
     set_current_size(SIZE_LONG);
     current_ea = EA_AREG;
     current_ea2 = EA_DREG;
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     // read R1
     _ea_calc(current_ea, current_op->reg_sft);
@@ -2430,7 +2513,7 @@ static void GenASRk()
     // generate jump table
     gen_opjumptable_ext(base, 0x0000, 0x0E00, 0x0200, base);
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG) current_cycle += 2;
 
@@ -2466,7 +2549,7 @@ static void GenLSRk()
     // generate jump table
     gen_opjumptable_ext(base, 0x0000, 0x0E00, 0x0200, base);
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG) current_cycle += 2;
 
@@ -2501,7 +2584,7 @@ static void GenROXRk()
     // generate jump table
     gen_opjumptable_ext(base, 0x0000, 0x0E00, 0x0200, base);
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG) current_cycle += 2;
 
@@ -2551,7 +2634,7 @@ static void GenRORk()
     // generate jump table
     gen_opjumptable_ext(base, 0x0000, 0x0E00, 0x0200, base);
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG) current_cycle += 2;
 
@@ -2588,7 +2671,7 @@ static void GenASLk()
     // generate jump table
     gen_opjumptable_ext(base, 0x0000, 0x0E00, 0x0200, base);
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES | GEN_SRC);
     
     if (current_size == SIZE_LONG) current_cycle += 2;
 
@@ -2665,7 +2748,7 @@ static void GenLSLk()
     // generate jump table
     gen_opjumptable_ext(base, 0x0000, 0x0E00, 0x0200, base);
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG) current_cycle += 2;
 
@@ -2703,7 +2786,7 @@ static void GenROXLk()
     // generate jump table
     gen_opjumptable_ext(base, 0x0000, 0x0E00, 0x0200, base);
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG) current_cycle += 2;
 
@@ -2753,7 +2836,7 @@ static void GenROLk()
     // generate jump table
     gen_opjumptable_ext(base, 0x0000, 0x0E00, 0x0200, base);
     // generate label & declarations
-    start_op(base);
+    start_op(base, GEN_RES | GEN_SRC);
 
     if (current_size == SIZE_LONG) current_cycle += 2;
 
@@ -2789,7 +2872,7 @@ static void GenASRD()
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
 
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -2876,7 +2959,7 @@ static void GenLSRD()
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
 
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -2947,7 +3030,7 @@ static void GenROXRD()
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
 
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3014,7 +3097,7 @@ static void GenRORD()
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
 
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3067,7 +3150,7 @@ static void GenASLD()
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
 
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3151,7 +3234,7 @@ static void GenLSLD()
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
 
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3230,7 +3313,7 @@ static void GenROXLD()
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
 
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3297,7 +3380,7 @@ static void GenROLD()
     current_ea = EA_DREG;               // dst = Dx
     if (current_size == SIZE_LONG) current_cycle += 2;
 
-    start_all();
+    start_all(GEN_RES | GEN_SRC);
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3361,7 +3444,7 @@ static void GenROLD()
 static void GenASR()
 {
     set_current_size(SIZE_WORD);        // dst = mem (word operation)
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -3383,7 +3466,7 @@ static void GenASR()
 static void GenLSR()
 {
     set_current_size(SIZE_WORD);        // dst = mem (word operation)
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -3404,7 +3487,7 @@ static void GenLSR()
 static void GenROXR()
 {
     set_current_size(SIZE_WORD);        // dst = mem (word operation)
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -3426,7 +3509,7 @@ static void GenROXR()
 static void GenROR()
 {
     set_current_size(SIZE_WORD);        // dst = mem (word operation)
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -3448,7 +3531,7 @@ static void GenROR()
 static void GenASL()
 {
     set_current_size(SIZE_WORD);        // dst = mem (word operation)
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -3470,7 +3553,7 @@ static void GenASL()
 static void GenLSL()
 {
     set_current_size(SIZE_WORD);        // dst = mem (word operation)
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -3492,7 +3575,7 @@ static void GenLSL()
 static void GenROXL()
 {
     set_current_size(SIZE_WORD);        // dst = mem (word operation)
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -3514,7 +3597,7 @@ static void GenROXL()
 static void GenROL()
 {
     set_current_size(SIZE_WORD);        // dst = mem (word operation)
-    start_all();
+    start_all(GEN_ADR | GEN_RES | GEN_SRC);
 
     // read
     _ea_calc(current_ea, current_op->reg_sft);
@@ -3536,7 +3619,7 @@ static void GenROL()
 #ifdef NEOCD_HLE
 static void Gen0xFABE()
 {
-    start_all();
+    start_all(GEN_ALL);
 
     wf_op("\tneogeo_exit();\n");
 
@@ -3545,7 +3628,7 @@ static void Gen0xFABE()
 
 static void Gen0xFABF()
 {
-    start_all();
+    start_all(GEN_ALL);
 
     wf_op("\timg_display = 1;\n");
     wf_op("\tcdrom_load_files();\n");
@@ -3555,7 +3638,7 @@ static void Gen0xFABF()
 
 static void Gen0xFAC0()
 {
-    start_all();
+    start_all(GEN_ALL);
 
     wf_op("\timg_display = 0;\n");
     wf_op("\tcdrom_load_files();\n");
@@ -3565,7 +3648,7 @@ static void Gen0xFAC0()
 
 static void Gen0xFAC1()
 {
-    start_all();
+    start_all(GEN_ALL);
 
     wf_op("\tneogeo_upload();\n");
 
@@ -3574,7 +3657,7 @@ static void Gen0xFAC1()
 
 static void Gen0xFAC2()
 {
-    start_all();
+    start_all(GEN_ALL);
 
     wf_op("\tneogeo_prio_switch();\n");
 
@@ -3583,7 +3666,7 @@ static void Gen0xFAC2()
 
 static void Gen0xFAC3()
 {
-    start_all();
+    start_all(GEN_ALL);
 
     wf_op("\tneogeo_cdda_control();\n");
 

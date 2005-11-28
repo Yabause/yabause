@@ -18,6 +18,7 @@
 */
 
 #include <stdarg.h>
+#include <string.h>
 
 #define	EA_DREG         0
 #define	EA_AREG         1
@@ -621,7 +622,13 @@ static void wf_op(char* fmt, ...)
 	va_end(args);
 }
 
-static void start_op(u32 op)
+#define GEN_ADR 1
+#define GEN_RES 2
+#define GEN_SRC 4
+#define GEN_DST 8
+#define GEN_ALL 15
+
+static void start_op(u32 op, int v)
 {
     current_io_sav = 0;
     current_cycle = 0;
@@ -629,8 +636,10 @@ static void start_op(u32 op)
     wf_op("\n// %s\n", current_op->op_name);
     wf_op("OP_0x%.4X:\n", op & 0xFFFF);
     wf_op("{\n");
-    wf_op("\tu32 adr, res;\n");
-    wf_op("\tpointer src, dst;\n\n");
+    if (v & GEN_ADR) wf_op("\tu32 adr;\n");
+    if (v & GEN_RES) wf_op("\tu32 res;\n");
+    if (v & GEN_DST) wf_op("\tpointer dst;\n");
+    if (v & GEN_SRC) wf_op("\tpointer src;\n");
 }
 
 static void add_CCnt(u32 cycle)
@@ -1500,7 +1509,7 @@ static u32 get_current_opcode_base()
     return base;
 }
 
-static void start_all()
+static void start_all(int v)
 {
     u32 base;
 
@@ -1510,7 +1519,7 @@ static void start_all()
     gen_opjumptable(base);
 
     // generate label & declarations
-    start_op(base);
+    start_op(base, v);
 }
 
 static void set_current_size(u32 sz)
