@@ -364,6 +364,7 @@ void Vdp1Draw(void) {
 
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
+   Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
    ScuSendDrawEnd();
    VIDCore->Vdp1DrawEnd();
 }
