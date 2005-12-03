@@ -1913,17 +1913,30 @@ void ScuSendVBlankIN(void) {
 
 void ScuSendVBlankOUT(void) {
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
-   ScuRegs->timer0 = 0;
+   if (ScuRegs->T1MD & 0x1)
+   {
+      ScuRegs->timer0 = 0;
+
+      if (ScuRegs->timer0 == ScuRegs->T0C)
+         ScuSendTimer0();
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendHBlankIN(void) {
    SendInterrupt(0x42, 0xD, 0x0004, 0x0004);
-   ScuRegs->timer0++;
-   // if timer0 equals timer 0 compare register, do an interrupt
-   if (ScuRegs->timer0 == ScuRegs->T0C)
-      ScuSendTimer0();
+
+   if (ScuRegs->T1MD & 0x1)
+   {
+      ScuRegs->timer0++;
+
+      // if timer0 equals timer 0 compare register, do an interrupt
+      if (ScuRegs->timer0 == ScuRegs->T0C)
+         ScuSendTimer0();
+
+      // FIX ME - Should handle timer 1 as well
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
