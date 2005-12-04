@@ -1,5 +1,5 @@
 dnlAC_INIT(src/yabause.cc)
-AC_INIT(yabause, 0.5.1)
+AC_INIT(yabause, 0.6)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -14,7 +14,7 @@ case $target in
 esac
 AC_SUBST(yabause_arch)
 
-AM_INIT_AUTOMAKE(yabause, 0.5.1)
+AM_INIT_AUTOMAKE(yabause, 0.6)
 
 AC_PROG_CC
 AC_PROG_INSTALL

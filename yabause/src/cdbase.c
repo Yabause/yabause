@@ -355,8 +355,10 @@ int ISOCDInit(const char * iso) {
       else if (0 == (isofilesize % 2352))
          bytesPerSector = 2352;
       else
+      {
          printf("Unsupported CD image!\n");
          return -1;
+      }
 
       // Generate TOC
       isoTOC[0] = 0x41000096;
