@@ -578,6 +578,7 @@ static void yuiErrorPopup( gchar* text ) {
 static void yuiYabauseInit() {
 
     yabauseinit_struct yinit;
+    gchar *c;
 
     if ( cfGetActive( yui.cfBios ) <= 0 ) {
       yuiErrorPopup("You need to select a BIOS file.");
@@ -609,7 +610,13 @@ static void yuiYabauseInit() {
     yinit.mpegpath = g_strdup(yuiGetString( "mpegpath" ));
     yinit.cartpath = g_strdup(yuiGetString( "cartpath" ));
     yinit.carttype = yuiGetInt( "carttype", CARTTYPE_DEFAULT );
-   
+
+    cfGetText( yui.cfBios, &c );
+    yuiSetString( "lastrunbios", c );
+    cfGetText( yui.cfCdRom, &c );
+    yuiSetString( "lastruncdrom", c );
+    yuiStore();
+     
     YabauseInit(&yinit);
     yui.running = GTKYUI_PAUSE;
 }
@@ -695,6 +702,8 @@ static int yuiInit(void) {
 
 	yui.cfBios = cfNew( "bios", "Bios" );
 	yui.cfCdRom = cfNew( "cdrom", "CD-ROM" );
+	cfCatchValue( yui.cfBios, yuiGetString( "lastrunbios" ) );  
+	cfCatchValue( yui.cfCdRom, yuiGetString( "lastruncdrom" ) );  
 	gtk_box_pack_start( GTK_BOX( vboxHigh ), cfGetWidget( yui.cfBios ), FALSE, TRUE, 4 );
 	gtk_box_pack_start( GTK_BOX( vboxHigh ), cfGetWidget( yui.cfCdRom ), FALSE, TRUE, 4 );	
 
