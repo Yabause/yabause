@@ -98,7 +98,7 @@ static int yuiGetInt( const char* name, int deflt ) {
 
   char* res = yuiGetString( name );
   if ( !res ) return deflt;
-  return atoi( res );
+  return atol( res );
 }
 
 static void yuiSetInt( const char* name, const int value ) {

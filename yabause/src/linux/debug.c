@@ -25,6 +25,11 @@ typedef struct {
   gint num;
 } _mdqTag;
 
+typedef struct {
+  ComboFileSelect* cfFile;
+  GtkWidget *startEdit, *toEdit, *dialog, *checkExe;
+} memTransferDlg;
+
 typedef struct _memDumpDlg {
 
   GtkWidget *dialog, *list, *entryAddress;
@@ -72,6 +77,7 @@ static SCUDSPprocDlg SCUDSPproc;
 static VDP1procDlg VDP1proc;
 static VDP2procDlg VDP2proc;
 static M68KprocDlg M68Kproc;
+static memTransferDlg transferDlg;
 
 static u32 memDumpLastOffset = 0; /* last offset set to a memDump dialog. To be reused in new dialogs. */
 static memDumpDlg *dumpDlgs = NULL; /* chain of dump dialogs */
@@ -1260,6 +1266,127 @@ static void openSCUDSP(GtkWidget* widget) {
   gtk_widget_show_all( SCUDSPproc.dialog );
 }
 
+/* ---------------------------------------------------------------------------- */
+/* Memory transfert                                                             */
+
+static openMemCallback(GtkWidget* widget, gpointer action) {
+
+  gchar *fileName;
+  const gchar *str;
+  gchar *endptr;
+  gboolean bExe = gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON(transferDlg.checkExe) );
+  u32 from, to;
+
+  cfGetText( transferDlg.cfFile, &fileName );
+  if ( !fileName ) {
+    yuiErrorPopup("Please give a file name.");
+    return;
+  }
+
+  from = strtol( str = gtk_entry_get_text( GTK_ENTRY(transferDlg.startEdit) ), &endptr, 16 );
+  if (endptr - str < strlen(str)) {
+    yuiErrorPopup("Invalid <From> field, please enter a 8 digit hexadecimal integer.");
+    return;
+  }
+  if ( (gint)action == 1 ) { /* field <to> just for store action */
+    to = strtol( str = gtk_entry_get_text( GTK_ENTRY(transferDlg.toEdit) ), &endptr, 16 );
+    if (endptr - str < strlen(str)) {
+      yuiErrorPopup("Invalid <To> field, please enter a 8 digit hexadecimal integer.");
+      return;
+    }
+    if ( to <= from ) {
+      yuiErrorPopup("Make sure <To> is greater than <From>.");
+      return;
+    }
+  }
+
+  switch ((gint)action) {
+  case 0: /* load */
+    if ( bExe ) {
+      MappedMemoryLoadExec(fileName, from);
+    } else {
+      if ( MappedMemoryLoad(fileName, from) ) {
+	yuiErrorPopup("Something bad happend when trying to load file.");
+	return;      
+      }
+    }
+    break;
+  case 1: /* save */
+    if ( MappedMemorySave(fileName, from, to-from) ) {
+      yuiErrorPopup("Something bad happend when trying to store in file.");
+      return;      
+    }
+    break;
+  }
+  yuiSetString( "transferpath", fileName );
+  yuiSetInt( "transferStart", from );
+  if ( (gint)action == 1 ) yuiSetInt( "transferTo", to );
+  yuiSetInt( "checkExe", bExe );
+  yuiStore();
+  gtk_dialog_response(GTK_DIALOG( transferDlg.dialog ), GTK_RESPONSE_DELETE_EVENT );
+  debugUpdateViews();
+}
+
+static void openMemTrans(GtkWidget* widget) {
+
+  GtkWidget *vbox, *hboxstart, *hboxbuttons, *buttonLoad, *buttonStore;
+  gchar str[16];
+  if ( yui.running == GTKYUI_WAIT ) yuiYabauseInit(); /* force yabause initialization */
+  transferDlg.dialog = gtk_dialog_new_with_buttons ( "Memory Transfer",
+						    NULL,
+						   (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
+						    GTK_STOCK_CLOSE,
+						    GTK_RESPONSE_DELETE_EVENT, NULL);
+  gtk_window_set_icon( GTK_WINDOW(transferDlg.dialog), yui.pixBufIcon );
+  gtk_window_set_resizable( GTK_WINDOW(transferDlg.dialog), FALSE );
+  vbox = GTK_DIALOG(transferDlg.dialog)->vbox;
+
+  /* File name */
+
+  transferDlg.cfFile = cfNew( "transfer", "Transfer file" ); 
+  cfCatchValue( transferDlg.cfFile, yuiGetString( "transferpath" ) );  
+  gtk_box_pack_start( GTK_BOX( vbox ), cfGetWidget(transferDlg.cfFile), FALSE, FALSE, 4 );  
+
+  /* Start address */
+ 
+  hboxstart = gtk_hbox_new( FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxstart, FALSE, FALSE, 4 );  
+
+  gtk_box_pack_start( GTK_BOX( hboxstart ), gtk_label_new( "From >" ), FALSE, FALSE, 2 );
+  transferDlg.startEdit = gtk_entry_new_with_max_length(8);
+  g_sprintf( str, "%08X", yuiGetInt( "transferStart", 0 ) );
+  gtk_entry_set_text( GTK_ENTRY( transferDlg.startEdit ), str );
+  gtk_box_pack_start( GTK_BOX( hboxstart ), transferDlg.startEdit, FALSE, FALSE, 2 );
+
+  gtk_box_pack_start( GTK_BOX( hboxstart ), gtk_label_new( "    To >" ), FALSE, FALSE, 2 );
+  transferDlg.toEdit = gtk_entry_new_with_max_length(8);
+  g_sprintf( str, "%08X", yuiGetInt( "transferTo", 0 ) );
+  gtk_entry_set_text( GTK_ENTRY( transferDlg.toEdit ), str );
+  gtk_box_pack_start( GTK_BOX( hboxstart ), transferDlg.toEdit, FALSE, FALSE, 2 );
+
+  /* Buttons */
+
+  hboxbuttons = gtk_hbox_new( FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxbuttons, FALSE, FALSE, 4 );  
+
+  buttonLoad = gtk_button_new_with_label( "Load" );
+  buttonStore = gtk_button_new_with_label( "Store" );
+  gtk_box_pack_start( GTK_BOX( hboxbuttons ), buttonLoad, FALSE, FALSE, 2 );
+  g_signal_connect( buttonLoad, "clicked", G_CALLBACK(openMemCallback), (gpointer)0 );
+  gtk_box_pack_start( GTK_BOX( hboxbuttons ), buttonStore, FALSE, FALSE, 2 );
+  g_signal_connect( buttonStore, "clicked", G_CALLBACK(openMemCallback), (gpointer)1 );
+  
+  transferDlg.checkExe = gtk_check_button_new_with_label( "Load as executable" );
+  gtk_box_pack_start( GTK_BOX( hboxbuttons ), transferDlg.checkExe, FALSE, FALSE, 4 );  
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON( transferDlg.checkExe ), yuiGetInt( "checkExe", 0 ));
+
+  gtk_widget_show_all(transferDlg.dialog); 
+  gtk_dialog_run( GTK_DIALOG( transferDlg.dialog ) );
+
+  cfDelete( transferDlg.cfFile );
+  gtk_widget_destroy(transferDlg.dialog);
+}
+
 /* ------------------------------------------------------------------------------ */
 
 static void debugUpdateViews() {
@@ -1277,7 +1404,8 @@ static void debugUpdateViews() {
 static GtkWidget* widgetDebug() {
 
   GtkWidget *hbox = gtk_hbox_new( FALSE, 4 );
-  GtkWidget *buttonMemDump = gtk_button_new_with_label( "Memory Dump" );
+  GtkWidget *buttonMemDump = gtk_button_new_with_label( "Memory" );
+  GtkWidget *buttonMemTrans = gtk_button_new_with_label( "Transfer" );
   GtkWidget *buttonMSH2 = gtk_button_new_with_label( "MSH2" );
   GtkWidget *buttonSSH2 = gtk_button_new_with_label( "SSH2" );
   GtkWidget *buttonVDP1 = gtk_button_new_with_label( "VDP1" );
@@ -1285,6 +1413,7 @@ static GtkWidget* widgetDebug() {
   GtkWidget *buttonM68K = gtk_button_new_with_label( "M68K" );
   GtkWidget *buttonSCUDSP = gtk_button_new_with_label( "ScuDsp" );
   gtk_box_pack_start( GTK_BOX( hbox ), buttonMemDump, FALSE, FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( hbox ), buttonMemTrans, FALSE, FALSE, 4 );
   gtk_box_pack_start( GTK_BOX( hbox ), buttonMSH2, FALSE, FALSE, 4 );
   gtk_box_pack_start( GTK_BOX( hbox ), buttonSSH2, FALSE, FALSE, 4 );
   gtk_box_pack_start( GTK_BOX( hbox ), buttonVDP1, FALSE, FALSE, 4 );
@@ -1294,6 +1423,8 @@ static GtkWidget* widgetDebug() {
 
   g_signal_connect(buttonMemDump, "clicked",
 		   G_CALLBACK(openMemDump), NULL);
+  g_signal_connect(buttonMemTrans, "clicked",
+		   G_CALLBACK(openMemTrans), NULL);
   g_signal_connect(buttonMSH2, "clicked",
 		   G_CALLBACK(openSH2), (gpointer)TRUE );
   g_signal_connect(buttonSSH2, "clicked",
