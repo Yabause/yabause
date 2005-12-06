@@ -1159,30 +1159,31 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void M68KBreakpointHandler (u32 addr)
+{
+   MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
+   DialogBox(y_hInstance, "M68KDebugDlg", YabWin, (DLGPROC)M68KDebugDlgProc);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void M68KUpdateCodeList(HWND hDlg, u32 addr)
 {
-/*
    u32 buf_size;
    u32 buf_addr;
    int i, i2;
    char buf[60];
    u32 offset;
    char op[64], inst[32], arg[24];
-   unsigned char *buffer;
    u32 op_size;
 
-   buffer = ((ScspRam *)((Scsp *)mem->soundr)->getSRam())->getBuffer();
-        
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_RESETCONTENT, 0, 0);
 
-//   offset = addr - (12 * 2);
    offset = addr;
 
    for (i = 0; i < 24; i++)
    {
-      op_size += Dis68000One(offset, &buffer[offset], op, inst, arg);
-      sprintf(buf, "%06x: %s %s", offset, inst, arg);
-      offset += op_size;
+      offset = M68KDisasm(offset, buf);
 
       SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_ADDSTRING, 0,
                   (s32)buf);
@@ -1190,7 +1191,6 @@ void M68KUpdateCodeList(HWND hDlg, u32 addr)
 
 //   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_SETCURSEL,12,0);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_SETCURSEL,0,0);
-*/
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1203,21 +1203,28 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          m68kregs_struct m68kregs;
-
-/*
-         SendMessage(GetDlgItem(hDlg, IDC_CHKREAD), BM_SETCHECK, BST_UNCHECKED, 0);
-         SendMessage(GetDlgItem(hDlg, IDC_CHKWRITE), BM_SETCHECK, BST_UNCHECKED, 0);
-         SendMessage(GetDlgItem(hDlg, IDC_CHKBYTE), BM_SETCHECK, BST_UNCHECKED, 0);
-         SendMessage(GetDlgItem(hDlg, IDC_CHKWORD), BM_SETCHECK, BST_UNCHECKED, 0);
-         SendMessage(GetDlgItem(hDlg, IDC_CHKDWORD), BM_SETCHECK, BST_UNCHECKED, 0);
-*/
+         m68kcodebreakpoint_struct *cbp;
+         char tempstr[10];
+         int i;
 
          EnableWindow(GetDlgItem(hDlg, IDC_STEP), TRUE);
+
+         cbp = M68KGetBreakpointList();
+
+         for (i = 0; i < MAX_BREAKPOINTS; i++)
+         {
+            if (cbp[i].addr != 0xFFFFFFFF)
+            {
+               sprintf(tempstr, "%08X", (int)cbp[i].addr);
+               SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)tempstr);
+            }
+         }
 
          M68KGetRegisters(&m68kregs);
          M68KUpdateRegList(hDlg, &m68kregs);
          M68KUpdateCodeList(hDlg, m68kregs.PC);
 
+         M68KSetBreakpointCallBack(&M68KBreakpointHandler);
          return TRUE;
       }
       case WM_COMMAND:
@@ -1226,19 +1233,6 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             case IDOK:
             {
-/*
-               if (scsprunthreadhandle != INVALID_HANDLE_VALUE)
-               {
-                  killScspRunThread=1;
-
-                  // wait for thread to end(should really set it to timeout after a
-                  // certain time so I can test for keypresses)
-                  WaitForSingleObject(scsprunthreadhandle,INFINITE);
-                  CloseHandle(scsprunthreadhandle);                                           
-                  scsprunthreadhandle = INVALID_HANDLE_VALUE;
-               }
-*/
-
                EndDialog(hDlg, TRUE);
 
                return TRUE;
@@ -1258,20 +1252,37 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDC_ADDBP1:
             {
                // add a code breakpoint
+               char bptext[10];
+               u32 addr=0;
+               memset(bptext, 0, 10);
+               GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 10);
+
+               if (bptext[0] != 0)
+               {
+                  sscanf(bptext, "%X", &addr);
+                  sprintf(bptext, "%05X", (int)addr);
+
+                  if (M68KAddCodeBreakpoint(addr) == 0)
+                     SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
+               }
                break;
             }
             case IDC_DELBP1:
             {
                // delete a code breakpoint
+               LRESULT ret;
+               char bptext[10];
+               u32 addr=0;
+
+               if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
+               {
+                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
+                  sscanf(bptext, "%X", &addr);
+                  M68KDelCodeBreakpoint(addr);
+                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
+               }
                break;
             }
-/*
-            case IDC_ADDBP2:
-            {
-               // add a memory breakpoint
-               break;
-            }
-*/
             case IDC_LISTBOX1:
             {
                switch (HIWORD(wParam))
