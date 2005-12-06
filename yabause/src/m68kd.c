@@ -24,90 +24,1282 @@ typedef struct
    u16 mask;
    u16 inst;
    const char *name;
-   int size;
+   int (*disasm)(u32, u16, char *);
 } m68kdis_struct;
 
-static m68kdis_struct instruction[] = {
-   { 0xF1F0, 0xC100, "abcd", 2 },
-   { 0xF000, 0xD000, "adda", 2 },
-   { 0xFF00, 0x0600, "addi", 2 },
-   { 0xF100, 0x5000, "addq", 2 },
-   { 0xF137, 0xD100, "addx", 2 },
-   { 0xF000, 0xC000, "and", 2 },
-   { 0xFF00, 0x0200, "andi", 2 },
-   { 0xFFFF, 0x023C, "andi #??, CCR", 2 },
-   { 0xFFC0, 0xE1C0, "asl", 2 },
-   { 0xFFC0, 0xE0C0, "asr", 2 },
-   { 0xF000, 0x6000, "bcc", 2 },
-   { 0xF1C0, 0x0140, "bchg", 2 },
-   { 0xF1C0, 0x0180, "bclr", 2 },
-   { 0xFFF8, 0x4848, "bkpt", 2 },
-   { 0xFF00, 0x6000, "bra", 2 },
-   { 0xF1C0, 0x01C0, "bset", 2 },
-   { 0xFF00, 0x6100, "bsr", 2 },
-   { 0xF1C0, 0x0100, "btst", 2 },
-   { 0xF040, 0x4000, "chk", 2 },
-   { 0xFF00, 0x4200, "clr", 2 },
-   { 0xF000, 0xB000, "cmp", 2 }, // fix me
-   { 0xF000, 0xB000, "cmpa", 2 }, // fix me
-   { 0xFF00, 0x0C00, "cmpi", 2 },
-   { 0xF138, 0xB108, "cmpm", 2 },
-   { 0xF0F8, 0x50C8, "dbcc", 2 },
-   { 0xF1C0, 0x81C0, "divs.w", 2 },
-   { 0xF1C0, 0x80C0, "divu.w", 2 },
-   { 0xF000, 0xB000, "eor", 2 }, // fix me
-   { 0xFF00, 0x0A00, "eori", 2 },
-   { 0xFFFF, 0x0A3C, "eori #??, CCR", 2 },
-   { 0xF100, 0xC100, "exg", 2 },
-   { 0xFE38, 0x4800, "ext", 2 },
-   { 0xFFFF, 0x4AFC, "illegal", 2 },
-   { 0xFFC0, 0x4EC0, "jmp", 2 },
-   { 0xFFC0, 0x4E80, "jsr", 2 },
-   { 0xF1C0, 0x41C0, "lea", 2 },
-   { 0xFFF8, 0x4E50, "link", 2 },
-   { 0xF118, 0xE108, "lsl", 2 },
-   { 0xF118, 0xE008, "lsr", 2 },
-   { 0xC000, 0x0000, "move", 2 },
-   { 0xC1C0, 0x0040, "movea", 2 },
-   { 0xFFC0, 0x44C0, "move ??, CCR", 2 },
-   { 0xFFC0, 0x40C0, "move SR, ??", 2 },
-   { 0xFB80, 0x4880, "movem", 2 },
-   { 0xF038, 0x0008, "movep", 2 },
-   { 0xF100, 0x7000, "moveq", 2 },
-   { 0xF1C0, 0xC1C0, "muls", 2 },
-   { 0xF1C0, 0xC0C0, "mulu", 2 },
-   { 0xFFC0, 0x4800, "nbcd", 2 },
-   { 0xFF00, 0x4400, "neg", 2 },
-   { 0xFF00, 0x4000, "negx", 2 },
-   { 0xFFFF, 0x4E71, "nop", 2 },
-   { 0xFF00, 0x4600, "not", 2 },
-   { 0xF000, 0x8000, "or", 2 },
-   { 0xFF00, 0x0000, "ori", 2 },
-   { 0xFFFF, 0x003C, "ori #??, CCR", 2 },
-   { 0xFFC0, 0x4840, "pea", 2 },
-   { 0xF118, 0xE118, "rol", 2 },
-   { 0xF118, 0xE018, "ror", 2 },
-   { 0xF118, 0xE110, "roxl", 2 },
-   { 0xF118, 0xE010, "roxr", 2 },
-   { 0xFFFF, 0x4E77, "rtr", 2 },
-   { 0xFFFF, 0x4E75, "rts", 2 },
-   { 0xF1F0, 0x8100, "sbcd", 2 },
-   { 0xF0C0, 0x50C0, "scc", 2 },
-   { 0xF000, 0x9000, "sub", 2 }, // fix me
-   { 0xF000, 0x9000, "suba", 2 }, // fix me
-   { 0xFF00, 0x0400, "subi", 2 },
-   { 0xF100, 0x5100, "subq", 2 },
-   { 0xF130, 0x9100, "subx", 2 },
-   { 0xFFF8, 0x4840, "swap", 2 },
-   { 0xFFC0, 0x4AC0, "tas", 2 },
-   { 0xFFF0, 0x4E40, "trap", 2 },
-   { 0xFFFF, 0x4E76, "trapv", 2 },
-   { 0xFF00, 0x4A00, "tst", 2 },
-   { 0xFFF8, 0x4E58, "unlk", 2 },
-   { 0x0000, 0x0000, NULL, 0 }
-};
-
 u32 FASTCALL c68k_word_read(const u32 adr);
+
+//////////////////////////////////////////////////////////////////////////////
+
+int setsizestr(u16 size, char *outstring)
+{
+   switch (size & 0x3)
+   {
+      case 0x1:
+         return sprintf(outstring, ".b ");
+      case 0x3:
+         return sprintf(outstring, ".w ");
+      case 0x2:
+         return sprintf(outstring, ".l ");
+      default:
+         return sprintf(outstring, " ");
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int setsizestr2(u16 size, char *outstring)
+{
+   switch (size & 0x3)
+   {
+      case 0x0:
+         return sprintf(outstring, ".b ");
+      case 0x1:
+         return sprintf(outstring, ".w ");
+      case 0x2:
+         return sprintf(outstring, ".l ");
+      default:
+         return sprintf(outstring, " ");
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int setimmstr(u32 addr, u16 size, int *addsize, char *outstring)
+{
+   switch (size & 0x3)
+   {
+      case 0x0:
+         *addsize+=2;
+         return sprintf(outstring, "#0x%X", (unsigned int)(c68k_word_read(addr) & 0xFF));
+      case 0x1:
+         *addsize+=2;
+         return sprintf(outstring, "#0x%X", (unsigned int)c68k_word_read(addr));
+      case 0x2:
+         *addsize+=4;
+         return sprintf(outstring, "#0x%X", (unsigned int)((c68k_word_read(addr) << 16) | c68k_word_read(addr+2)));
+      default:
+         return 0;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int seteafieldstr(u32 addr, u16 modereg, int *addsize, char *outstring)
+{
+   switch ((modereg >> 3) & 0x7)
+   {
+      case 0x0:
+         // Dn         
+         return sprintf(outstring, "d%d", modereg & 0x7);
+      case 0x1:
+         // An         
+         return sprintf(outstring, "a%d", modereg & 0x7);
+      case 0x2:
+         // (An)         
+         return sprintf(outstring, "(a%d)", modereg & 0x7);
+      case 0x3:
+         // (An)+         
+         return sprintf(outstring, "(a%d)+", modereg & 0x7);
+      case 0x4:
+         // -(An)         
+         return sprintf(outstring, "-(a%d)", modereg & 0x7);
+      case 0x5:
+         // (d16, An)
+         *addsize += 2;         
+         return sprintf(outstring, "0x%X(a%d)", (unsigned int)c68k_word_read(addr), modereg & 0x7);
+      case 0x6:
+         // (d8,An,Xn)
+         // fix me
+         *addsize += 2;         
+         return sprintf(outstring, "0x%X(a%d, Xn)", (unsigned int)(c68k_word_read(addr) & 0xFF), modereg & 0x7);
+      case 0x7:
+         switch (modereg & 0x7)
+         {
+            case 0x0:
+               // (xxx).W
+               *addsize += 2; // fix me?
+               return sprintf(outstring, "(0x%X).w", (unsigned int)c68k_word_read(addr));
+            case 0x1:
+               // (xxx).L
+               *addsize += 4; // fix me?
+               return sprintf(outstring, "(0x%X).l", (unsigned int)((c68k_word_read(addr) << 16) | c68k_word_read(addr+2)));
+            case 0x4:
+               // #<data>
+               *addsize += 2; // fix me?
+               return sprintf(outstring, "#0x%X", (unsigned int)c68k_word_read(addr));
+            case 0x2:
+               // (d16,PC)
+               *addsize += 2;               
+               return sprintf(outstring, "0x%X(PC)", (unsigned int)c68k_word_read(addr));
+            case 0x3:
+               // (d8,PC,Xn)
+               // fix me
+               return 0;
+            default: break;
+         }
+      default: break;
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int setcondstr(u16 cond, char *outstring)
+{
+   switch (cond & 0xF)
+   {
+      case 0x0:
+         // True
+         return sprintf(outstring, "t ");
+      case 0x1:
+         // False
+         return sprintf(outstring, "f ");
+      case 0x2:
+         // High
+         return sprintf(outstring, "hi");
+      case 0x3:
+         // Low or Same
+         return sprintf(outstring, "ls");
+      case 0x4:
+         // Carry Clear
+         return sprintf(outstring, "cc");
+      case 0x5:
+         // Carry Set
+         return sprintf(outstring, "cs");
+      case 0x6:
+         // Not Equal
+         return sprintf(outstring, "ne");
+      case 0x7:
+         // Equal
+         return sprintf(outstring, "eq");
+      case 0x8:
+         // Overflow Clear
+         return sprintf(outstring, "vc");
+      case 0x9:
+         // Overflow Set
+         return sprintf(outstring, "vs");
+      case 0xA:
+         // Plus
+         return sprintf(outstring, "pl");
+      case 0xB:
+         // Minus
+         return sprintf(outstring, "mi");
+      case 0xC:
+         // Greater or Equal
+         return sprintf(outstring, "ge");
+      case 0xD:
+         // Less Than
+         return sprintf(outstring, "lt");
+      case 0xE:
+         // Greater Than
+         return sprintf(outstring, "gt");
+      case 0xF:
+         // Less or Equal
+         return sprintf(outstring, "le");
+      default: break;
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int setbranchdispstr(u32 addr, u16 op, int *addsize, char *outstring)
+{
+   if ((op & 0xFF) == 0xFF)
+   {
+      // 32-bit displacement
+      *addsize += 4;
+      return sprintf(outstring, ".l   %X", (unsigned int)(addr + ((c68k_word_read(addr) << 16) |  c68k_word_read(addr+2))));
+   }
+   else if ((op & 0xFF) == 0x00)
+   {
+      // 16-bit displacement
+      *addsize += 2;
+      return sprintf(outstring, ".w   %X", (unsigned int)((s32)addr + (s32)(s16)c68k_word_read(addr)));
+   }
+
+   // 8-bit displacement
+   return sprintf(outstring, ".s   %X", (unsigned int)((s32)addr + (s32)(s8)(op & 0xFF)));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disabcd(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "abcd");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disadd(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "add");
+   outstring += setsizestr2(op >> 6, outstring);
+   outstring += sprintf(outstring, "  ");
+
+   if (op & 0x100)
+   {
+      // Dn, <ea>
+      outstring += sprintf(outstring, "d%d, ", (op >> 9) & 7);
+      seteafieldstr(addr+size, op, &size, outstring);
+   }
+   else
+   {
+      // <ea>, Dn
+      outstring += seteafieldstr(addr+size, op, &size, outstring);
+      sprintf(outstring, ", d%d", (op >> 9) & 7);
+   }
+
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disadda(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "adda");
+   if ((op & 0x1C0) == 0xC0)
+      outstring += sprintf(outstring, ".w  ");
+   else
+      outstring += sprintf(outstring, ".l  ");
+   outstring += seteafieldstr(addr+size, op, &size, outstring);
+   outstring += sprintf(outstring, ", a%d", (op >> 9) & 0x7);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disaddi(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "addi");
+   outstring += setsizestr2(op >> 6, outstring);
+   outstring += setimmstr(addr+size, op >> 6, &size, outstring);
+   outstring += sprintf(outstring, ", ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disaddq(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "addq");
+   outstring += setsizestr2(op >> 6, outstring);
+   outstring += sprintf(outstring, " ");
+   outstring += sprintf(outstring, "#%d, ", (op >> 9) & 7); // fix me
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disaddx(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "addx");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disand(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "and");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disandi(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "andi");
+   outstring += setsizestr2(op >> 6, outstring);
+   outstring += sprintf(outstring, " ");
+   outstring += setimmstr(addr+size, op >> 6, &size, outstring);
+   outstring += sprintf(outstring, ", ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disanditoccr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "andi to CCR");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disasl(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "asl");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disasr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "asr");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbcc(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "b");
+   outstring += setcondstr(op >> 8, outstring);
+   setbranchdispstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbkpt(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "bkpt");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbra(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "bra");
+   setbranchdispstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbchg(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "bchg");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbclrd(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "bclr");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbclrs(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "bclr    ");
+   outstring += setimmstr(addr+size, 0, &size, outstring);
+   outstring += sprintf(outstring, ", ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbsetd(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "bset");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbsets(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "bset    ");
+   outstring += setimmstr(addr+size, 0, &size, outstring);
+   outstring += sprintf(outstring, ", ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbtstd(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "btst");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbtsts(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "btst    ");
+   outstring += setimmstr(addr+size, 0, &size, outstring);
+   outstring += sprintf(outstring, ", ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disbsr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "bsr");
+   setbranchdispstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dischk(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "chk");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disclr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "clr");
+   outstring += setsizestr2((op >> 6), outstring);
+   outstring += sprintf(outstring, "  ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disdbcc(u32 addr, u16 op, char *outstring)
+{
+   outstring += sprintf(outstring, "db");
+   outstring += setcondstr(op >> 8, outstring);
+   outstring += sprintf(outstring, "   ");
+   sprintf(outstring, " d%d, %X", op & 0x7, (unsigned int)((s32)addr+2+(s32)(s16)c68k_word_read(addr+2)));
+   return 4;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int discmpb(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "cmp.b   ");
+   outstring += seteafieldstr(addr+size, op, &size, outstring);
+   outstring += sprintf(outstring, ", d%d", (op >> 9) & 0x7);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int discmpw(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "cmp.w   ");
+   outstring += seteafieldstr(addr+size, op, &size, outstring);
+   outstring += sprintf(outstring, ", d%d", (op >> 9) & 0x7);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int discmpl(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "cmp.l   ");
+   outstring += seteafieldstr(addr+size, op, &size, outstring);
+   outstring += sprintf(outstring, ", d%d", (op >> 9) & 0x7);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int discmpaw(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "cmpa.w");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int discmpal(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "cmpa.l");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int discmpi(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "cmpi");
+   outstring += setsizestr2((op >> 6), outstring);
+   outstring += sprintf(outstring, " ");
+   outstring += setimmstr(addr+size, op >> 6, &size, outstring);
+   outstring += sprintf(outstring, ", ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disdivs(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "divs.w");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disdivu(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "divu.w");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int discmpm(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "cmpm");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int diseorb(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "eor.b");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int diseorw(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "eor.w");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int diseorl(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "eor.l");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int diseori(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "eori");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int diseoritoccr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "eori to ccr");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disexg(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "exg");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disext(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "ext");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disillegal(u32 addr, u16 op, char *outstring)
+{
+   sprintf(outstring, "illegal");
+   return 2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disjmp(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "jmp ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disjsr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "jsr     ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dislea(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "lea     ");
+   outstring += seteafieldstr(addr+size, op, &size, outstring);
+   outstring += sprintf(outstring, ", a%d", (op >> 9) & 0x7);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dislink(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "link");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dislsl(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "lsl");
+   outstring += setsizestr2(op >> 6, outstring);
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dislsr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "lsr");
+   outstring += setsizestr2(op >> 6, outstring);
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismove(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "move");
+   outstring += setsizestr((op >> 12), outstring);
+   outstring += sprintf(outstring, " ");
+   outstring += seteafieldstr(addr+size, op, &size, outstring);
+   outstring += sprintf(outstring, ", ");
+   seteafieldstr(addr+size, ((op >> 3) & 0x38) | ((op >> 9) & 0x7), &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismovea(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "movea");
+   outstring += setsizestr((op >> 12), outstring);
+   outstring += seteafieldstr(addr+size, op, &size, outstring);
+   outstring += sprintf(outstring, ", a%d", (op >> 9) & 0x7);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismovetoccr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "move to ccr");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismovefromsr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "move from sr");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismovetosr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "move    ");
+   outstring += seteafieldstr(addr+size, op, &size, outstring);
+   sprintf(outstring, ", sr");
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismovem(u32 addr, u16 op, char *outstring)
+{
+   outstring += sprintf(outstring, "movem");
+   // fix me
+   return 4;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismovep(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "movep");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismoveq(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "moveq   #0x%X, d%d", op & 0xFF, (op >> 9) & 0x7);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismuls(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "muls");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dismulu(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "mulu");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disnbcd(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "nbcd");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disneg(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "neg");
+   outstring += setsizestr2((op >> 6), outstring);
+   outstring += sprintf(outstring, "  ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disnegx(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "negx");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disnop(u32 addr, u16 op, char *outstring)
+{
+   sprintf(outstring, "nop");
+   return 2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disnot(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "not");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disor(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "ori to CCR");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disori(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "ori");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disoritoccr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "ori to CCR");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dispea(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "pea");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disrol(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "rol");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disror(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "ror");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disroxl(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "roxl");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disroxr(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "roxr");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disrtr(u32 addr, u16 op, char *outstring)
+{
+   sprintf(outstring, "rtr");
+   return 2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disrts(u32 addr, u16 op, char *outstring)
+{
+   sprintf(outstring, "rts");
+   return 2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dissbcd(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "sbcd");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disscc(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "scc");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dissub(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "sub");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dissuba(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "suba");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dissubi(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "subi");
+   outstring += setsizestr2(op >> 6, outstring);
+   outstring += sprintf(outstring, " ");
+   outstring += setimmstr(addr+size, op >> 6, &size, outstring);
+   outstring += sprintf(outstring, ", ");
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dissubq(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "subq");
+   outstring += setsizestr2(op >> 6, outstring);
+   outstring += sprintf(outstring, " #%d, ", (op >> 9) & 7); // fix me
+   seteafieldstr(addr+size, op, &size, outstring);
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dissubx(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "subx");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disswap(u32 addr, u16 op, char *outstring)
+{
+   sprintf(outstring, "swap d%d", op & 0x7);
+   return 2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int distas(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "tas");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int distrap(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "trap");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int distrapv(u32 addr, u16 op, char *outstring)
+{
+   sprintf(outstring, "trapv");
+   return 2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int distst(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+
+   outstring += sprintf(outstring, "tst");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int disunlk(u32 addr, u16 op, char *outstring)
+{
+   int size=2;
+   outstring += sprintf(outstring, "unlk");
+   // fix me
+   return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static m68kdis_struct instruction[] = {
+   { 0xFFFF, 0x023C, "andi #??, CCR", disanditoccr },
+   { 0xFFFF, 0x0A3C, "eori #??, CCR", diseoritoccr },
+   { 0xFFFF, 0x4AFC, "illegal", disillegal },
+   { 0xFFFF, 0x4E71, "nop", disnop },
+   { 0xFFFF, 0x003C, "ori #??, CCR", disoritoccr },
+   { 0xFFFF, 0x4E77, "rtr", disrtr },
+   { 0xFFFF, 0x4E75, "rts", disrts },
+   { 0xFFFF, 0x4E76, "trapv", distrapv },
+   { 0xFFF8, 0x4848, "bkpt", disbkpt },
+   { 0xFFF8, 0x4E50, "link", dislink },
+   { 0xFFF8, 0x4840, "swap", disswap },
+   { 0xFFF8, 0x4E58, "unlk", disunlk },
+   { 0xFFF0, 0x4E40, "trap", distrap },
+   { 0xF1F8, 0xD100, "addx.b", disaddx },
+   { 0xF1F8, 0xD140, "addx.w", disaddx },
+   { 0xF1F8, 0xD180, "addx.l", disaddx },
+   { 0xF1F8, 0xB108, "cmpm.b", discmpm },
+   { 0xF1F8, 0xB148, "cmpm.w", discmpm },
+   { 0xF1F8, 0xB188, "cmpm.l", discmpm },
+   { 0xFFC0, 0xE1C0, "asl", disasl },
+   { 0xFFC0, 0xE0C0, "asr", disasr },
+   { 0xFFC0, 0x0880, "bclr", disbclrs },
+   { 0xFFC0, 0x08C0, "bset", disbsets },
+   { 0xFFC0, 0x0800, "btst", disbtsts },
+   { 0xFFC0, 0x4EC0, "jmp", disjmp },
+   { 0xFFC0, 0x4E80, "jsr", disjsr },
+   { 0xFFC0, 0x44C0, "move ??, CCR", dismovetoccr },
+   { 0xFFC0, 0x40C0, "move SR, ??", dismovefromsr },
+   { 0xFFC0, 0x46C0, "move ??, SR", dismovetosr },
+   { 0xFFC0, 0x4800, "nbcd", disnbcd },
+   { 0xFFC0, 0x4840, "pea", dispea },
+   { 0xFFC0, 0x4AC0, "tas", distas },
+   { 0xFE38, 0x4800, "ext", disext },
+   { 0xF1F0, 0xC100, "abcd", disabcd },
+   { 0xF1F0, 0x8100, "sbcd", dissbcd },
+   { 0xF0F8, 0x50C8, "dbcc", disdbcc },
+   { 0xFB80, 0x4880, "movem", dismovem },
+   { 0xFF00, 0x0600, "addi", disaddi },
+   { 0xFF00, 0x0200, "andi", disandi },
+   { 0xFF00, 0x6000, "bra", disbra },
+   { 0xFF00, 0x6100, "bsr", disbsr },
+   { 0xFF00, 0x4200, "clr", disclr },
+   { 0xFF00, 0x0C00, "cmpi", discmpi },
+   { 0xFF00, 0x0A00, "eori", diseori },
+   { 0xFF00, 0x4400, "neg", disneg },
+   { 0xFF00, 0x4000, "negx", disnegx },
+   { 0xFF00, 0x4600, "not", disnot },
+   { 0xFF00, 0x0000, "ori", disori },
+   { 0xFF00, 0x0400, "subi", dissubi },
+   { 0xFF00, 0x4A00, "tst", distst },
+   { 0xF118, 0xE108, "lsl", dislsl },
+   { 0xF118, 0xE008, "lsr", dislsr },
+   { 0xF118, 0xE118, "rol", disrol },
+   { 0xF118, 0xE018, "ror", disror },
+   { 0xF118, 0xE110, "roxl", disroxl },
+   { 0xF118, 0xE010, "roxr", disroxr },
+   { 0xF1C0, 0xD0C0, "adda.w", disadda },
+   { 0xF1C0, 0xD1C0, "adda.l", disadda },
+   { 0xF1C0, 0x0140, "bchg", disbchg },
+   { 0xF1C0, 0x0180, "bclr", disbclrd },
+   { 0xF1C0, 0x01C0, "bset", disbsetd },
+   { 0xF1C0, 0x0100, "btst", disbtstd },
+   { 0xF1C0, 0xB000, "cmp.b", discmpb },
+   { 0xF1C0, 0xB040, "cmp.w", discmpw },
+   { 0xF1C0, 0xB080, "cmp.l", discmpl },
+   { 0xF1C0, 0xB0C0, "cmpa.w", discmpaw },
+   { 0xF1C0, 0xB1C0, "cmpa.l", discmpal },
+   { 0xF1C0, 0x81C0, "divs.w", disdivs },
+   { 0xF1C0, 0x80C0, "divu.w", disdivu },
+   { 0xF1C0, 0xB100, "eor.b", diseorb },
+   { 0xF1C0, 0xB140, "eor.w", diseorw },
+   { 0xF1C0, 0xB180, "eor.l", diseorl },
+   { 0xF1C0, 0x41C0, "lea", dislea },
+   { 0xF1C0, 0xC1C0, "muls", dismuls },
+   { 0xF1C0, 0xC0C0, "mulu", dismulu },
+   { 0xF130, 0x9100, "subx", dissubx },
+   { 0xF038, 0x0008, "movep", dismovep },
+   { 0xF0C0, 0x50C0, "scc", disscc },
+   { 0xC1C0, 0x0040, "movea", dismovea },
+   { 0xF040, 0x4000, "chk", dischk },
+   { 0xF100, 0x5000, "addq", disaddq },
+   { 0xF100, 0xC100, "exg", disexg },
+   { 0xF100, 0x7000, "moveq", dismoveq },
+   { 0xF100, 0x5100, "subq", dissubq },
+   { 0xF000, 0xD000, "add", disadd }, // fix me
+   { 0xF000, 0xC000, "and", disand },
+   { 0xF000, 0x6000, "bcc", disbcc },
+   { 0xF000, 0x8000, "or", disor },
+   { 0xF000, 0x9000, "sub", dissub }, // fix me
+   { 0xF000, 0x9000, "suba", dissuba }, // fix me
+   { 0xC000, 0x0000, "move", dismove },
+   { 0x0000, 0x0000, NULL, NULL }
+};
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -115,24 +1307,21 @@ u32 M68KDisasm(u32 addr, char *outstring)
 {
    int i;
 
-   sprintf(outstring, "%05X: ", (unsigned int)addr);
+   outstring += sprintf(outstring, "%05X: ", (unsigned int)addr);
 
    for (i = 0; instruction[i].name != NULL; i++)
    {
       u16 op = c68k_word_read(addr);
 
-      // fix me
       if ((op & instruction[i].mask) == instruction[i].inst)
       {
-         strcat(outstring, instruction[i].name);
-         addr += instruction[i].size;
+         addr += instruction[i].disasm(addr, op, outstring);
          return addr;
       }
    }
 
-   strcat(outstring, "unknown");
-
-   return addr;
+   sprintf(outstring, "unknown");
+   return (addr+2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
