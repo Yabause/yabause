@@ -174,8 +174,12 @@ void SmpcINTBACKStatus(void) {
    time_t tmp = time(NULL);
 #ifdef WIN32
    memcpy(&times, localtime(&tmp), sizeof(times));
-#else
+#elif !defined(_arch_dreamcast)
    localtime_r(&tmp, &times);
+#else
+   struct tm * internal_localtime_r(const time_t * tim_p, struct tm *res);
+
+   internal_localtime_r(&tmp, &times);
 #endif
    year[0] = (1900 + times.tm_year) / 1000;
    year[1] = ((1900 + times.tm_year) % 1000) / 100;

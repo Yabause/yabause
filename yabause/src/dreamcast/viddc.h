@@ -17,13 +17,12 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef PERDC_H
-#define PERDC_H
+#ifndef VIDDC_H
+#define VIDDC_H
 
-#include "peripheral.h"
+#include "vdp1.h"
 
-#define PERCORE_DC 2
-
-extern PerInterface_struct PERDC;
+#define VIDCORE_DC	3
+extern VideoInterface_struct VIDDC;
 
 #endif
