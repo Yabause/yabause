@@ -432,12 +432,34 @@ static void SH2UpdateCodeList( SH2procDlg *sh2, u32 addr) {
 
 static void sh2step( GtkWidget* widget, SH2procDlg* sh2 ) {
 
+  if ( yui.running != GTKYUI_PAUSE) return;
   SH2Step(sh2->debugsh);
   debugUpdateViews(); /* update all dialogs, including us */
 }
 
 static void sh2stepMaster() { sh2step( NULL, &MSH2procDlg ); }
 static void sh2stepSlave() { sh2step( NULL, &SSH2procDlg ); }
+
+static void sh2stepOver( GtkWidget* widget, SH2procDlg* sh2 ) {
+
+  sh2regs_struct sh2regs;
+  if ( yui.running != GTKYUI_PAUSE) return;
+
+  SH2GetRegisters(sh2->debugsh, &sh2regs);
+
+  if ( sh2->cbp[MAX_BREAKPOINTS-1] != 0xFFFFFFFF) SH2DelCodeBreakpoint(sh2->debugsh, sh2->cbp[MAX_BREAKPOINTS-1]);
+  if (SH2AddCodeBreakpoint(sh2->debugsh, sh2regs.PC+2) == 0) {
+
+    sh2->cbp[MAX_BREAKPOINTS-1] = sh2regs.PC+2;
+    yuiRun(); /* pray we catch the breakpoint */
+  } else {
+    sh2->cbp[MAX_BREAKPOINTS-1] = 0xFFFFFFFF;
+    yuiErrorPopup("Cannot step over: sh2 refuses to register a new breakpoint.");
+  }
+}
+
+static void sh2stepOverMaster() { sh2stepOver( NULL, &MSH2procDlg ); }
+static void sh2stepOverSlave() { sh2stepOver( NULL, &SSH2procDlg ); }
 
 static void editedReg( GtkCellRendererText *cellrenderertext,
 		      gchar *arg1,
@@ -496,6 +518,11 @@ static void SH2BreakpointHandler (SH2_struct *context, u32 addr) {
     SH2GetRegisters(sh2->debugsh, &sh2regs);
     SH2UpdateRegList(sh2, &sh2regs);
     SH2UpdateCodeList(sh2, sh2regs.PC);  
+    if ( sh2regs.PC == sh2->cbp[MAX_BREAKPOINTS-1] ) { /* special step over breakpoint */
+      
+      SH2DelCodeBreakpoint(sh2->debugsh, sh2->cbp[MAX_BREAKPOINTS-1]);
+      sh2->cbp[MAX_BREAKPOINTS-1] = 0xFFFFFFFF;
+    }
   }
   debugPauseLoop(); /* execution is suspended inside a normal cycle - enter secondary gtk loop */
 }
@@ -511,8 +538,8 @@ static void sh2update( gboolean bMaster ) {
 
 static SH2procDlg* openSH2( GtkWidget* widget, gpointer bMaster ) {
 
-  GtkWidget *hbox, *vbox, *uFrame, *buttonStep, *buttonRun, *hboxButtons;
-  GClosure *closureF9, *closureF7;
+  GtkWidget *hbox, *vbox, *uFrame, *buttonStep, *buttonRun, *buttonStepOver, *buttonPause, *hboxButtons1, *hboxButtons2;
+  GClosure *closureF9, *closureF8, *closureF7, *closureF6;
   GtkAccelGroup *accelGroup;
   GtkCellRenderer *bpListRenderer, *regListRenderer1, *regListRenderer2;
   GtkTreeViewColumn *bpListColumn, *regListColumn1, *regListColumn2;
@@ -594,7 +621,7 @@ static SH2procDlg* openSH2( GtkWidget* widget, gpointer bMaster ) {
 
   cbp = SH2GetBreakpointList(bMaster?MSH2:SSH2);
   
-  for (i = 0; i < MAX_BREAKPOINTS; i++) {
+  for (i = 0; i < MAX_BREAKPOINTS-1; i++) {
     
     GtkTreeIter iter;
     sh2->cbp[i] = cbp[i].addr;
@@ -608,23 +635,39 @@ static SH2procDlg* openSH2( GtkWidget* widget, gpointer bMaster ) {
 
   /* Control buttons */
   
-  hboxButtons = gtk_hbox_new(FALSE, 2);
-  gtk_container_set_border_width( GTK_CONTAINER( hboxButtons ),4 );
-  gtk_box_pack_start( GTK_BOX( vbox ), hboxButtons, FALSE, FALSE, 4 );
+  hboxButtons1 = gtk_hbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( hboxButtons1 ),4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxButtons1, FALSE, FALSE, 4 );
 
   buttonStep = gtk_button_new_with_label( "Step [F7]" );
-  gtk_box_pack_start( GTK_BOX( hboxButtons ), buttonStep, FALSE, FALSE, 2 );
+  gtk_box_pack_start( GTK_BOX( hboxButtons1 ), buttonStep, FALSE, FALSE, 2 );
   g_signal_connect( buttonStep, "clicked", G_CALLBACK(sh2step), sh2 );
 
+  buttonStepOver = gtk_button_new_with_label( "Step over [F8]" );
+  gtk_box_pack_start( GTK_BOX( hboxButtons1 ), buttonStepOver, FALSE, FALSE, 2 );
+  g_signal_connect( buttonStepOver, "clicked", G_CALLBACK(sh2stepOver), sh2 );
+
+  hboxButtons2 = gtk_hbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( hboxButtons2 ),4 );
+  gtk_box_pack_start( GTK_BOX( vbox ), hboxButtons2, FALSE, FALSE, 4 );
+
   buttonRun = gtk_button_new_with_label( "Run [F9]" );
-  gtk_box_pack_start( GTK_BOX( hboxButtons ), buttonRun, FALSE, FALSE, 2 );
+  gtk_box_pack_start( GTK_BOX( hboxButtons2 ), buttonRun, FALSE, FALSE, 2 );
   g_signal_connect( buttonRun, "clicked", G_CALLBACK(yuiRun), NULL );
+
+  buttonPause = gtk_button_new_with_label( "Pause [F6]" );
+  gtk_box_pack_start( GTK_BOX( hboxButtons2 ), buttonPause, FALSE, FALSE, 2 );
+  g_signal_connect( buttonPause, "clicked", G_CALLBACK(yuiPause), NULL );
 
   accelGroup = gtk_accel_group_new ();
   closureF9 = g_cclosure_new (G_CALLBACK (yuiRun), NULL, NULL);
+  closureF8 = g_cclosure_new (G_CALLBACK (bMaster ? sh2stepOverMaster : sh2stepOverSlave), NULL, NULL);
   closureF7 = g_cclosure_new (G_CALLBACK (bMaster ? sh2stepMaster : sh2stepSlave), NULL, NULL);
+  closureF6 = g_cclosure_new (G_CALLBACK (yuiPause), NULL, NULL);
   gtk_accel_group_connect( accelGroup, GDK_F9, 0, 0, closureF9 );
+  gtk_accel_group_connect( accelGroup, GDK_F8, 0, 0, closureF8 );
   gtk_accel_group_connect( accelGroup, GDK_F7, 0, 0, closureF7 );
+  gtk_accel_group_connect( accelGroup, GDK_F6, 0, 0, closureF6 );
   gtk_window_add_accel_group( GTK_WINDOW( sh2->dialog ), accelGroup );
 
   g_signal_connect(G_OBJECT(sh2->dialog), "delete-event", GTK_SIGNAL_FUNC(gtk_widget_hide_on_delete), NULL );
@@ -1353,13 +1396,13 @@ static void openMemTrans(GtkWidget* widget) {
   gtk_box_pack_start( GTK_BOX( vbox ), hboxstart, FALSE, FALSE, 4 );  
 
   gtk_box_pack_start( GTK_BOX( hboxstart ), gtk_label_new( "From >" ), FALSE, FALSE, 2 );
-  transferDlg.startEdit = gtk_entry_new_with_max_length(8);
+  transferDlg.startEdit = gtk_entry_new_with_max_length(10);
   g_sprintf( str, "%08X", yuiGetInt( "transferStart", 0 ) );
   gtk_entry_set_text( GTK_ENTRY( transferDlg.startEdit ), str );
   gtk_box_pack_start( GTK_BOX( hboxstart ), transferDlg.startEdit, FALSE, FALSE, 2 );
 
   gtk_box_pack_start( GTK_BOX( hboxstart ), gtk_label_new( "    To >" ), FALSE, FALSE, 2 );
-  transferDlg.toEdit = gtk_entry_new_with_max_length(8);
+  transferDlg.toEdit = gtk_entry_new_with_max_length(10);
   g_sprintf( str, "%08X", yuiGetInt( "transferTo", 0 ) );
   gtk_entry_set_text( GTK_ENTRY( transferDlg.toEdit ), str );
   gtk_box_pack_start( GTK_BOX( hboxstart ), transferDlg.toEdit, FALSE, FALSE, 2 );
