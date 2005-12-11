@@ -5,6 +5,7 @@
 
 #define SH2CORE_DEFAULT     -1
 #define MAX_INTERRUPTS 50
+#define HARD_CODING
 
 typedef struct
 {

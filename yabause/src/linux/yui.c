@@ -627,7 +627,8 @@ static void yuiRun(void) {
 
   case GTKYUI_WAIT:
     yuiYabauseInit();
-    /* fall through GTKYUI_PAUSE */
+    if ( yui.running != GTKYUI_PAUSE ) return;
+    /* fall through */
   case GTKYUI_PAUSE:
     gtk_widget_show( yui.buttonPause );
     gtk_widget_show( yui.buttonFs );

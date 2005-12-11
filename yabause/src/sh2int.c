@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
+#include "sh2hardcode.h"
 
 #define INSTRUCTION_A(x) ((x & 0xF000) >> 12)
 #define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
@@ -139,6 +140,15 @@ void FASTCALL SH2undecoded(SH2_struct * sh)
       sh->cycles++;
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+#ifdef HARD_CODING
+void FASTCALL SH2hardbreak(SH2_struct * sh)
+{
+  hcExec( sh, sh->instruction >> 8 );
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2298,6 +2308,9 @@ opcodefunc decode(u16 instruction)
       case 0:
          switch (INSTRUCTION_D(instruction))
          {
+#ifdef HARD_CODING
+    	    case 1: return &SH2hardbreak;
+#endif
             case 2:
                switch (INSTRUCTION_C(instruction))
                {
@@ -2647,14 +2660,14 @@ int SH2InterpreterReset()
 
 FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
-   while(context->cycles < cycles)
+  while(context->cycles < cycles)
    {
       SH2HandleBreakpoints(context);
 
 #ifdef EMULATEUBC
       // fix me
       int ubcainterrupt=0, ubcbinterrupt=0;
-             
+      
       if (context->onchip.BBRA & 0x10)
       {
          if (context->onchip.BARA.all == context->regs.PC) // fix me
@@ -2704,8 +2717,10 @@ FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
       }
 #endif
    }
-
-   return 0; // fix me
+#ifdef HARD_CODING
+  context->cycles = cycles;
+#endif
+  return 0; // fix me
 }
 
 //////////////////////////////////////////////////////////////////////////////

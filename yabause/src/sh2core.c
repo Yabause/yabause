@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "memory.h"
 #include "yabause.h"
+#include "sh2hardcode.h"
 
 SH2_struct *MSH2=NULL;
 SH2_struct *SSH2=NULL;
@@ -95,7 +96,7 @@ void SH2DeInit()
 void SH2Reset(SH2_struct *context)
 {
    int i;
-
+   
    // Reset general registers
    for (i = 0; i < 15; i++)
       context->regs.R[i] = 0x00000000;
@@ -159,7 +160,7 @@ u32 FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    }
 
    SH2Core->Exec(context, cycles);
-
+  
    FRTExec(cycles);
    WDTExec(cycles);
 

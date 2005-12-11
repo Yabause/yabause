@@ -9,6 +9,7 @@ yabause_SOURCES = \
 	peripheral.h peripheral.c \
 	persdl.c persdl.h profile.c profile.h \
 	scu.c scu.h sh2core.c sh2core.h sh2d.c sh2d.h sh2int.c sh2int.h \
+	sh2hardcode.c sh2hardcode.h \
 	smpc.c smpc.h scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
 	vdp2.c vdp2.h vidsdlgl.c vidsdlgl.h vidsdlsoft.c vidsdlsoft.h \
 	yabause.c yabause.h ygl.h ygl.c \
