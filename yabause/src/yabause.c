@@ -32,7 +32,6 @@
 #include "smpc.h"
 #include "vdp2.h"
 #include "yui.h"
-#include "sh2hardcode.h"
 #ifdef __APPLE__
 #include "SDL.h"
 #endif
@@ -240,9 +239,6 @@ void YabauseReset() {
 
 int YabauseExec() {
    PROFILE_START("Total Emulation");
-#ifdef HARD_CODING
-   checkHcHacks();
-#endif
    PROFILE_START("MSH2");
    SH2Exec(MSH2, yabsys.DecilineStop);
    PROFILE_STOP("MSH2");

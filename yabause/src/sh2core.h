@@ -262,6 +262,7 @@ typedef struct
    u32 delay;
    u32 cycles;
    u8 isslave;
+   u8 isIdle;
    u16 instruction;
    codebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
    int numcodebreakpoints;

@@ -26,7 +26,6 @@
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
-#include "sh2hardcode.h"
 
 #define INSTRUCTION_A(x) ((x & 0xF000) >> 12)
 #define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
@@ -50,6 +49,10 @@ SH2Interface_struct SH2Interpreter = {
 typedef u32 (FASTCALL *fetchfunc)(u32);
 
 static fetchfunc fetchlist[0x100];
+
+#ifdef IDLE_DETECT
+#include "sh2idle.c"
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -140,15 +143,6 @@ void FASTCALL SH2undecoded(SH2_struct * sh)
       sh->cycles++;
    }
 }
-
-//////////////////////////////////////////////////////////////////////////////
-
-#ifdef HARD_CODING
-void FASTCALL SH2hardbreak(SH2_struct * sh)
-{
-  hcExec( sh, sh->instruction >> 8 );
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2308,9 +2302,6 @@ opcodefunc decode(u16 instruction)
       case 0:
          switch (INSTRUCTION_D(instruction))
          {
-#ifdef HARD_CODING
-    	    case 1: return &SH2hardbreak;
-#endif
             case 2:
                switch (INSTRUCTION_C(instruction))
                {
@@ -2660,6 +2651,10 @@ int SH2InterpreterReset()
 
 FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
+#ifdef IDLE_DETECT
+  if ( context->isIdle ) SH2idleParse( context, cycles );
+  else SH2idleCheck( context, cycles );
+#endif
   while(context->cycles < cycles)
    {
       SH2HandleBreakpoints(context);
@@ -2717,9 +2712,6 @@ FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
       }
 #endif
    }
-#ifdef HARD_CODING
-  context->cycles = cycles;
-#endif
   return 0; // fix me
 }
 

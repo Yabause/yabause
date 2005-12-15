@@ -24,7 +24,6 @@
 #include "debug.h"
 #include "memory.h"
 #include "yabause.h"
-#include "sh2hardcode.h"
 
 SH2_struct *MSH2=NULL;
 SH2_struct *SSH2=NULL;
@@ -156,6 +155,9 @@ u32 FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
          context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts-1].level;
          context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts-1].vector << 2));
          context->NumberOfInterrupts--;
+#ifdef IDLE_DETECT
+	 context->isIdle = 0;
+#endif
       }
    }
 
