@@ -110,6 +110,7 @@ void SH2Reset(SH2_struct *context)
    // Internal variables
    context->delay = 0x00000000;
    context->cycles = 0;
+   context->isIdle = 0;
 
    context->frc.leftover = 0;
    context->frc.div = 8;
