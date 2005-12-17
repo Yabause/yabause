@@ -1,53 +1,78 @@
+/*  Copyright 2005 Fabien Coulon
 
-#define MAX_CYCLE_CHECK 12
+    This file is part of Yabause.
 
-/* Register determinism markers */
-/* 0 : register has not been changed. At the end of first pass, such registers are considered deterministic.
-   1 : register content is "deterministic" : its content does not depend on the number of executed loops 
-   -1 : register has been changed and is not proved to be deterministic
+    Yabause is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    Yabause is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Yabause; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-static struct sbDet {
-  u8 R[15];
-  u8 GBR, VBR, MACL, MACH, PR;
-  u8 SRT,SRS,SRI,SRQ,SRM;
-  u8 Const;
-} bDet;
+#define MAX_CYCLE_CHECK 12
+// idle loops greater than MAX_CYCLE_CHECK instructions will not be detected. 
+
+/* Detection of idle loops: ie loops in which no write to memory is
+done, ending with a conditional jump, at the point of which T flag is
+"deterministic" in the sense it does not depend on the number of
+executed loops */
+
+/* bDet : Bitwise register markers. 1: register is deterministic
+   bChg : Bitwise register markers. 1: register has been changed, not in a deterministic way */
+
+u32 bDet, bChg;
+
+/* Macro <implies(dest,src)> : makes changes resulting from the
+   execution of an instruction in which the content of <dest> register
+   only depends on <src> register(s) (and potentially constant values,
+   including memory content which is constant in an idle loop) */
 
 #define delayCheck(PC) SH2idleCheckIterate( fetchlist[(PC >> 20) & 0x0FF](PC), PC )
 
-#define implies(dest,src) dest = (src)?1:-1;
-#define implies2(dest,dest2,src) dest = dest2 = (src)?1:-1;
+#define implies(dest,src) if ( src ) bDet |= dest; else bChg |= dest;
+#define implies2(dest,dest2,src) if ( src ) bDet |= dest|dest2; else bChg |= dest|dest2;
+#define implies3(dest,dest2,dest3,src) if ( src ) bDet |= dest|dest2|dest3; else bChg |= dest|dest2|dest3;
 
-#define destRB bDet.R[INSTRUCTION_B(instruction)]
-#define destRC bDet.R[INSTRUCTION_C(instruction)]
-#define destMACL bDet.MACL
-#define destMACH bDet.MACH
-#define destSR bDet.SRT=bDet.SRS=bDet.SRI=bDet.SRQ=bDet.SRM
-#define destSRT bDet.SRT
-#define destSRQ bDet.SRQ
-#define destPR bDet.PR
-#define destGBR bDet.GBR
-#define destVBR bDet.VBR
-#define destCONST bDet.Const
-#define destR0 bDet.R[0]
+#define destRB (1<<INSTRUCTION_B(instruction))
+#define destRC (1<<INSTRUCTION_C(instruction))
+#define destMACL 0x100
+#define destMACH 0x200
+#define destMAC 0x300
+#define destSRT 0x400
+#define destSRQ 0x800
+#define destSRS 0x1000
+#define destSRI 0x2000
+#define destSRM 0x4000
+#define destSR 0x7C00
+#define destPR 0x8000
+#define destGBR 0x10000
+#define destVBR 0x20000
+#define destCONST 0x40000
+#define destR0 1
 
-#define srcSR (bDet.SRT==1 && bDet.SRS==1 && bDet.SRI==1 && bDet.SRQ==1 && bDet.SRM==1)
-#define srcSRT (bDet.SRT==1)
-#define srcSRS (bDet.SRS==1)
-#define srcSRQ (bDet.SRQ==1)
-#define srcSRM (bDet.SRM==1)
-#define srcGBR (bDet.GBR == 1)
-#define srcVBR (bDet.VBR == 1)
-#define srcRC (bDet.R[INSTRUCTION_C(instruction)] == 1)
-#define srcRB (bDet.R[INSTRUCTION_B(instruction)] == 1)
-#define srcR0 (bDet.R[0] == 1)
-#define srcMACL (bDet.MACL == 1)
-#define srcMACH (bDet.MACH == 1)
-#define srcMAC ( (bDet.MACL == 1)&&(bDet.MACH == 1) )
-#define srcPR (bDet.PR==1)
-
-#define isConst(src) if ( bDet.Const && !src ) return 0; 
+#define srcSRT (bDet & destSRT )
+#define srcSRS (bDet & destSRS)
+#define srcSRQ (bDet & destSRQ)
+#define srcSRM (bDet & destSRM)
+#define srcGBR (bDet & destGBR)
+#define srcVBR (bDet & destVBR)
+#define srcSR (~destSR | bDet)
+#define srcRC (bDet & destRC)
+#define srcRB (bDet & destRB)
+#define srcR0 (bDet & destR0)
+#define srcMACL (bDet & destMACL)
+#define srcMACH (bDet & destMACH)
+#define srcMAC ( ~destMAC | bDet )
+#define srcPR (bDet & destPR)
+#define isConst(src) if ( (bDet & destCONST) && !src ) return 0; 
 
 int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
   // update bDet after execution of <instruction>
@@ -85,9 +110,9 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	  switch (INSTRUCTION_C(instruction))
 	    {
 	    case 0:  //clrt;
-	    case 1: bDet.SRT = 1;  //sett;
+	    case 1: implies( destSRT, 1 );  //sett;
 	      break;
-	    case 2: bDet.MACL = bDet.MACH = 1;  //clrmac;
+	    case 2: implies( destMAC, 1 );  //clrmac;
 	      break;
 	    }     
 	  break;
@@ -96,7 +121,7 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	    {
 	    case 0:  //nop;
 	      break;
-	    case 1: bDet.SRM = bDet.SRQ = bDet.SRT = 1;  //div0u;
+	    case 1: implies3( destSRM, destSRQ, destSRT, 1 );  //div0u;
 	      break;
 	    case 2: implies(destRB, srcSRT );   //movt;
 	      break;
@@ -126,7 +151,7 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	case 13:  //movwl0;
 	case 14:  implies(destRB, srcRC && srcR0);  //movll0;
 	  break;
-	case 15:  implies2(destMACH, destMACL, srcRC && srcRB && srcSRS && srcMACL && srcMACH); //macl
+	case 15:  implies(destMAC, srcRC && srcRB && srcSRS && srcMACL && srcMACH); //macl
 	  break;
 	}
       break;
@@ -136,10 +161,10 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	{
 	case 0:  //movbs;
 	case 1:  //movws;
-	case 2:  //movls;
+	case 2: return 0; //movls;
 	case 4:  //movbm;
 	case 5:  //movwm;
-	case 6:  //movlm;
+	case 6:  return 0;//movlm;
 	case 7: implies(destSR, srcRC && srcRB ); //div0s
 	  break;
 	case 8: implies(destSRT, srcRC && srcRB ); //tst
@@ -152,7 +177,7 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	  break;
 	case 13: implies( destRB, srcRB && srcRC ); //xtrct
 	  break;
-	case 14: implies2( destMACL, destMACH, srcRB && srcRC ); //mulu
+	case 14: implies( destMAC, srcRB && srcRC ); //mulu
 	  break;
 	case 15: implies( destMACL, srcRB && srcRC ); //muls
 	  break;
@@ -190,18 +215,19 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	case 0:
 	  switch(INSTRUCTION_C(instruction))
 	    {
-	    case 0:  //shll;
-	    case 1:  //dt;
-	    case 2: implies( destSRT, srcRB ); //shal
+	    case 1: //dt;
+	    case 0: //shll;
+	    case 2: implies2( destSRT, destRB, srcRB ); //shal
 	      break;
 	    }
 	  break;
 	case 1:
 	  switch(INSTRUCTION_C(instruction))
 	    {
-	    case 0:  //shlr;
-	    case 1:  //cmppz;
-	    case 2: implies( destSRT, srcRB ); //shar
+	    case 2:
+	    case 0:  implies2( destSRT, destRB, srcRB ); //shlr;
+	      break;
+	    case 1: implies( destSRT, srcRB ); //cmppz
 	      break;
 	    }     
 	  break;
@@ -292,7 +318,7 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	  switch(INSTRUCTION_C(instruction))
 	    {
 	    case 0: isConst( srcRB );
-	      bDet.PR = 1;
+	      implies( destPR, 1 );
 	      break; //jsr
 	    case 1:  return 0; //tas;
 	    case 2: isConst( srcRB );
@@ -353,13 +379,13 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	case 9:   //bt;
 	case 11:  //bf;
 	case 13:  //bts;
-	case 15: return 0; //bfs; /* FIX ME */
+	case 15: return 0; //bfs;
 	}   
       break;
-    case 9: bDet.R[INSTRUCTION_B(instruction)] = 1;  //movwi;
+    case 9: implies( destRB, 1 );  //movwi;
       break;
     case 10: return delayCheck(PC+2); //bra;
-    case 11: bDet.PR = 1; return delayCheck(PC+2); //bsr;
+    case 11: implies( destPR, 1 ); return delayCheck(PC+2); //bsr;
     case 12:
       switch(INSTRUCTION_B(instruction))
 	{
@@ -371,7 +397,7 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	case 5:   //movwlg;
 	case 6: implies( destR0, srcGBR ); //movllg
 	  break;
-	case 7: bDet.R[0] = 1;   //mova;
+	case 7: implies( destR0, 1 );   //mova;
 	  break;
 	case 8: implies( destSRT, srcR0 );  //tsti;
 	  break;
@@ -387,13 +413,13 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	}
       break;
     case 13: //movli;
-    case 14:  bDet.R[INSTRUCTION_B(instruction)] = 1;  //movi;
+    case 14: implies( destRB, 1 );  //movi;
       break;
     }
   return 1;
 }
 
-static u32 oldLoopBegin[2] = {0,0};
+static u32 oldLoopBegin[2][2] = {{0,0},{0,0}};
 static u32 idleCheckCount = 0;
 static u32 sh2cycleCount = 0;
 static u32 sh2oldCycleCount = 0;
@@ -405,7 +431,7 @@ static u32 oldCheckCount = 0;
     context->cycles = cycles;}
 #define IDLE_VERBOSE_SH2_COUNT {\
    sh2cycleCount += cycles; \
-    if ( sh2cycleCount-sh2oldCycleCount > 0x8fffff ) { \
+    if ( sh2cycleCount-sh2oldCycleCount > 0x4ffffff ) { \
       fprintf( stderr, "%lu idle instructions dropped / %lu sh2 instructions parsed : %g \%\n", \
 	       idleCheckCount-oldCheckCount, sh2cycleCount-sh2oldCycleCount, \
 	       (float)(idleCheckCount-oldCheckCount)/(sh2cycleCount-sh2oldCycleCount)*100 ); \
@@ -417,7 +443,7 @@ static u32 oldCheckCount = 0;
 #define IDLE_VERBOSE_SH2_COUNT
 #endif
 
-void SH2idleCheck(SH2_struct *context, u32 cycles) {
+void INLINE SH2idleCheck(SH2_struct *context, u32 cycles) {
   // try to find an idle loop while interpreting
 
   int i;
@@ -439,8 +465,8 @@ void SH2idleCheck(SH2_struct *context, u32 cycles) {
       if ( INSTRUCTION_A(context->instruction)==8 ) {
 
 	switch( INSTRUCTION_B(context->instruction) ) {
-	case 13: //SH2bts
-	  isDelayed = 1; 
+ 	case 13: //SH2bts
+ 	  isDelayed = 1; 
 	case 9:  //SH2bt
 	  if (context->regs.SR.part.T != 1) {
 	    context->regs.PC += 2;
@@ -450,12 +476,11 @@ void SH2idleCheck(SH2_struct *context, u32 cycles) {
 	  loopEnd = context->regs.PC;
 	  disp = (s32)(s8)context->instruction;
 	  loopBegin = context->regs.PC = context->regs.PC+(disp<<1)+4;
-	  if ( isDelayed ) loopBegin -= 2;
 	  context->cycles += 3;
 	  goto branching_reached;
 	  break;
-	case 15: //SH2bfs
-	  isDelayed = 1; 
+ 	case 15: //SH2bfs
+ 	  isDelayed = 1; 
 	case 11: //SH2bf
 	  if (context->regs.SR.part.T == 1) {
 	    context->regs.PC += 2;
@@ -465,7 +490,6 @@ void SH2idleCheck(SH2_struct *context, u32 cycles) {
 	  loopEnd = context->regs.PC;
 	  disp = (s32)(s8)context->instruction;
 	  loopBegin = context->regs.PC = context->regs.PC+(disp<<1)+4;
-	  if ( isDelayed ) loopBegin -= 2;
 	  context->cycles += 3;
 	  goto branching_reached;
 	  break;
@@ -478,10 +502,8 @@ void SH2idleCheck(SH2_struct *context, u32 cycles) {
 
   // if branching, execute (delayed included) until getting back to the conditional instruction  
 
-  memset( &bDet, 0, sizeof( struct sbDet ) ); // initialize determinism markers
-
+  bDet = bChg = 0; // initialize markers
   cyclesCheckEnd = context->cycles + MAX_CYCLE_CHECK;
-  //  if ( cycleCheckEnd > cycles ) cycleCheckEnd = cycles; 
 
   if ( isDelayed ) {
     context->instruction = fetchlist[((loopEnd+2) >> 20) & 0x0FF](loopEnd+2);
@@ -496,8 +518,8 @@ void SH2idleCheck(SH2_struct *context, u32 cycles) {
 
     u32 PC = context->regs.PC;
     context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
-    opcodes[context->instruction](context);
     if ( !SH2idleCheckIterate(context->instruction,PC) ) return;    
+    opcodes[context->instruction](context);
     if ( context->cycles >= cyclesCheckEnd ) return;
   }
 
@@ -510,53 +532,47 @@ void SH2idleCheck(SH2_struct *context, u32 cycles) {
 
   // Mark unchanged registers as deterministic registers
 
-  #define markunchanged( val ) val = val ? 0: 1;
-  for ( i=0 ; i < 16 ; i++ ) markunchanged(bDet.R[i]);
-  markunchanged(bDet.GBR);
-  markunchanged(bDet.VBR);
-  markunchanged(bDet.MACL);
-  markunchanged(bDet.MACH);
-  markunchanged(bDet.PR);
-  markunchanged(bDet.SRT);
-  markunchanged(bDet.SRS);
-  markunchanged(bDet.SRI);
-  markunchanged(bDet.SRQ);
-  markunchanged(bDet.SRM);
-  bDet.Const = 1; // changing a "constant value" by a non-deterministic value is now forbidden
+  bDet = ~bChg;
+  bDet |= destCONST; // some values need to be constant. From now, changing them is forbidden.
 
   // Second pass
 
-  if ( isDelayed ) {
-
-    context->instruction = fetchlist[((loopEnd+2) >> 20) & 0x0FF](loopEnd+2);
-    opcodes[context->instruction](context);
-    if ( !SH2idleCheckIterate(context->instruction,0) ) return;
-  }
+  if ( isDelayed )
+    if ( !SH2idleCheckIterate(fetchlist[((loopEnd+2) >> 20) & 0x0FF](loopEnd+2),0) ) return;
 
   while ( context->regs.PC != loopEnd ) {
     
     u32 PC = context->regs.PC;
     context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
-    opcodes[context->instruction](context);
     if ( !SH2idleCheckIterate(context->instruction,PC) ) return;    
+    opcodes[context->instruction](context);
   }
   context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
   opcodes[context->instruction](context);  
 
 #ifdef IDLE_DETECT_VERBOSE
-  if (( bDet.SRT == 1 )&&(loopBegin!=oldLoopBegin[context==MSH2])) {
+  if (( bDet & destSRT )&&(loopBegin!=oldLoopBegin[context==MSH2][0])&&(loopBegin!=oldLoopBegin[context==MSH2][1])) {
+    char lineBuf[64];
+    u32 offset,end;
     printf( "New %s idle loop at %X -- %X\n", (context==MSH2)?"master":"slave", loopBegin, loopEnd );
-    oldLoopBegin[context==MSH2] = loopBegin;
+    if ( loopEnd > loopBegin ) { offset = loopBegin; end = loopEnd; }
+    else { offset = loopEnd; end = loopBegin; }
+    for ( ; offset <= end ; offset+=2 ) {
+      SH2Disasm(offset, MappedMemoryReadWord(offset), 0, lineBuf);
+      printf( "%s\n", lineBuf );
+    }
+    oldLoopBegin[context==MSH2][1] = oldLoopBegin[context==MSH2][0];
+    oldLoopBegin[context==MSH2][0] = loopBegin;
     if ( context->regs.PC != loopBegin ) fprintf( stderr, "SH2idleCheck : branching is not leading to begin of loop !\n" );
   }
 #endif
-  if ( bDet.SRT == 1 ) {
+  if ( bDet & destSRT ) {
     DROP_IDLE;
     context->isIdle = 1;
   }
 }
 
-void SH2idleParse( SH2_struct *context, u32 cycles ) {
+void INLINE SH2idleParse( SH2_struct *context, u32 cycles ) {
   // called when <context> is in idle state : check whether we are still idle
 
   IDLE_VERBOSE_SH2_COUNT;
@@ -568,15 +584,15 @@ void SH2idleParse( SH2_struct *context, u32 cycles ) {
       switch( INSTRUCTION_B(context->instruction) ) {
       case 13: //SH2bts
       case 9:  //SH2bt
+	opcodes[context->instruction](context);
 	if ( !context->regs.SR.part.T ) context->isIdle = 0;
 	else DROP_IDLE;
-	opcodes[context->instruction](context);
 	return;
       case 15: //SH2bfs
       case 11: //SH2bf
+	opcodes[context->instruction](context);
 	if ( context->regs.SR.part.T ) context->isIdle = 0;
 	else DROP_IDLE;
-	opcodes[context->instruction](context);
 	return;
       }   
     }

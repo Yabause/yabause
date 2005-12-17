@@ -34,6 +34,7 @@
 #include "../vidsdlgl.h"
 #include "../persdl.h"
 #include "../cs0.h"
+#include "../scsp.h"
 
 #define FS_X_DEFAULT 640
 #define FS_Y_DEFAULT 448

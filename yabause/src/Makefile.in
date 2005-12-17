@@ -97,7 +97,7 @@ yabause_SOURCES = \
 	$(yabause_arch)/cd.c \
 	cdbase.c cdbase.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h \
 	debug.c debug.h error.c error.h memory.c memory.h \
-	peripheral.h peripheral.c \
+	peripheral.h peripheral.c m68kd.c\
 	persdl.c persdl.h profile.c profile.h \
 	scu.c scu.h sh2core.c sh2core.h sh2d.c sh2d.h sh2int.c sh2int.h \
 	smpc.c smpc.h scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
@@ -120,14 +120,15 @@ am_yabause_OBJECTS = yabause-c68kexec.$(OBJEXT) yabause-c68k.$(OBJEXT) \
 	yabause-cs1.$(OBJEXT) yabause-cs2.$(OBJEXT) \
 	yabause-debug.$(OBJEXT) yabause-error.$(OBJEXT) \
 	yabause-memory.$(OBJEXT) yabause-peripheral.$(OBJEXT) \
-	yabause-persdl.$(OBJEXT) yabause-profile.$(OBJEXT) \
-	yabause-scu.$(OBJEXT) yabause-sh2core.$(OBJEXT) \
-	yabause-sh2d.$(OBJEXT) yabause-sh2int.$(OBJEXT) \
-	yabause-smpc.$(OBJEXT) yabause-scsp.$(OBJEXT) \
-	yabause-sndsdl.$(OBJEXT) yabause-vdp1.$(OBJEXT) \
-	yabause-vdp2.$(OBJEXT) yabause-vidsdlgl.$(OBJEXT) \
-	yabause-vidsdlsoft.$(OBJEXT) yabause-yabause.$(OBJEXT) \
-	yabause-ygl.$(OBJEXT) yabause-yui.$(OBJEXT)
+	yabause-m68kd.$(OBJEXT) yabause-persdl.$(OBJEXT) \
+	yabause-profile.$(OBJEXT) yabause-scu.$(OBJEXT) \
+	yabause-sh2core.$(OBJEXT) yabause-sh2d.$(OBJEXT) \
+	yabause-sh2int.$(OBJEXT) yabause-smpc.$(OBJEXT) \
+	yabause-scsp.$(OBJEXT) yabause-sndsdl.$(OBJEXT) \
+	yabause-vdp1.$(OBJEXT) yabause-vdp2.$(OBJEXT) \
+	yabause-vidsdlgl.$(OBJEXT) yabause-vidsdlsoft.$(OBJEXT) \
+	yabause-yabause.$(OBJEXT) yabause-ygl.$(OBJEXT) \
+	yabause-yui.$(OBJEXT)
 nodist_yabause_OBJECTS =
 yabause_OBJECTS = $(am_yabause_OBJECTS) $(nodist_yabause_OBJECTS)
 yabause_DEPENDENCIES =
@@ -150,6 +151,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-debug.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-error.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-gen68k.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-m68kd.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-memory.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-peripheral.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-persdl.Po \
@@ -228,6 +230,7 @@ yabause-debug.$(OBJEXT): debug.c
 yabause-error.$(OBJEXT): error.c
 yabause-memory.$(OBJEXT): memory.c
 yabause-peripheral.$(OBJEXT): peripheral.c
+yabause-m68kd.$(OBJEXT): m68kd.c
 yabause-persdl.$(OBJEXT): persdl.c
 yabause-profile.$(OBJEXT): profile.c
 yabause-scu.$(OBJEXT): scu.c
@@ -264,6 +267,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-debug.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-gen68k.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-m68kd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-peripheral.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-persdl.Po@am__quote@
@@ -441,6 +445,18 @@ yabause-peripheral.obj: peripheral.c
 @AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-peripheral.Po' tmpdepfile='$(DEPDIR)/yabause-peripheral.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-peripheral.obj `cygpath -w peripheral.c`
+
+yabause-m68kd.o: m68kd.c
+@AMDEP_TRUE@	source='m68kd.c' object='yabause-m68kd.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-m68kd.Po' tmpdepfile='$(DEPDIR)/yabause-m68kd.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-m68kd.o `test -f 'm68kd.c' || echo '$(srcdir)/'`m68kd.c
+
+yabause-m68kd.obj: m68kd.c
+@AMDEP_TRUE@	source='m68kd.c' object='yabause-m68kd.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-m68kd.Po' tmpdepfile='$(DEPDIR)/yabause-m68kd.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-m68kd.obj `cygpath -w m68kd.c`
 
 yabause-persdl.o: persdl.c
 @AMDEP_TRUE@	source='persdl.c' object='yabause-persdl.o' libtool=no @AMDEPBACKSLASH@

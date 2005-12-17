@@ -433,6 +433,10 @@ static void SH2UpdateCodeList( SH2procDlg *sh2, u32 addr) {
 static void sh2step( GtkWidget* widget, SH2procDlg* sh2 ) {
 
   if ( yui.running != GTKYUI_PAUSE) return;
+  if (( sh2->debugsh == SSH2 )&&( !yabsys.IsSSH2Running )) {
+    yuiErrorPopup( "SSH2 is inactive now." );
+    return;
+  }
   SH2Step(sh2->debugsh);
   debugUpdateViews(); /* update all dialogs, including us */
 }
@@ -911,6 +915,30 @@ static void M68KupdateRegList( m68kregs_struct *regs) {
 static void M68KupdateCodeList(u32 addr) {
   /* refresh the assembler view. <addr> points the line to be highlighted. */
 
+  int i;
+  static char tagPC[] = "<span foreground=\"red\">";
+  static char tagEnd[] = "</span>\n";
+  char buf[64*24+40];
+  char *curs = buf;
+  char lineBuf[64];
+  u8 bOnPC = 0;
+  u32 offset;
+
+  if ( addr - M68Kproc.lastCode >= 22 ) offset = addr;
+  else offset = M68Kproc.lastCode;
+  M68Kproc.lastCode = offset;
+
+  for (i=0; i < 24; i++) {
+
+    if ( offset == addr ) { bOnPC = 1; strcpy( curs, tagPC ); curs += strlen(tagPC); }
+    offset = M68KDisasm(offset, lineBuf);
+    strcpy( curs, lineBuf );
+    curs += strlen(lineBuf);
+    if ( bOnPC ) { bOnPC = 0; strcpy( curs, tagEnd ); curs += strlen(tagEnd); }
+    else { strcpy( curs, "\n" ); curs += 1;}
+  }
+  *curs = 0;
+  gtk_label_set_markup( GTK_LABEL(M68Kproc.uLabel), buf );
 }
 
 static void M68KEditedBp( GtkCellRendererText *cellrenderertext,
@@ -1001,7 +1029,7 @@ static void openM68K(GtkWidget* widget) {
   uFrame = gtk_frame_new("Disassembled code");
   gtk_box_pack_start( GTK_BOX( vbox ), uFrame, FALSE, FALSE, 4 );
   
-  M68Kproc.uLabel = gtk_label_new("\n\nDisassembler for M68K is missing.\n");
+  M68Kproc.uLabel = gtk_label_new("\n");
   gtk_container_add (GTK_CONTAINER (uFrame), M68Kproc.uLabel );
 
   /* Register list */
