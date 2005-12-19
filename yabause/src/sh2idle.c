@@ -17,6 +17,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "sh2core.h"
+#include "sh2int.h"
+
 #define MAX_CYCLE_CHECK 12
 // idle loops greater than MAX_CYCLE_CHECK instructions will not be detected. 
 
@@ -443,7 +446,7 @@ static u32 oldCheckCount = 0;
 #define IDLE_VERBOSE_SH2_COUNT
 #endif
 
-void INLINE SH2idleCheck(SH2_struct *context, u32 cycles) {
+void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   // try to find an idle loop while interpreting
 
   int i;
@@ -572,7 +575,7 @@ void INLINE SH2idleCheck(SH2_struct *context, u32 cycles) {
   }
 }
 
-void INLINE SH2idleParse( SH2_struct *context, u32 cycles ) {
+void FASTCALL SH2idleParse( SH2_struct *context, u32 cycles ) {
   // called when <context> is in idle state : check whether we are still idle
 
   IDLE_VERBOSE_SH2_COUNT;

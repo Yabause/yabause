@@ -22,20 +22,13 @@
 
 #include "sh2core.h"
 #include "sh2int.h"
+#include "sh2idle.h"
 #include "cs0.h"
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
 
-#define INSTRUCTION_A(x) ((x & 0xF000) >> 12)
-#define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
-#define INSTRUCTION_C(x) ((x & 0x00F0) >> 4)
-#define INSTRUCTION_D(x) (x & 0x000F)
-#define INSTRUCTION_CD(x) (x & 0x00FF)
-#define INSTRUCTION_BCD(x) (x & 0x0FFF)
-
-typedef void (FASTCALL *opcodefunc)(SH2_struct *);
-static opcodefunc opcodes[0x10000];
+opcodefunc opcodes[0x10000];
 
 SH2Interface_struct SH2Interpreter = {
    SH2CORE_INTERPRETER,
@@ -46,13 +39,16 @@ SH2Interface_struct SH2Interpreter = {
    SH2InterpreterExec
 };
 
-typedef u32 (FASTCALL *fetchfunc)(u32);
+SH2Interface_struct SH2DebugInterpreter = {
+   SH2CORE_DEBUGINTERPRETER,
+   "SH2 Debugger Interpreter",
+   SH2InterpreterInit,
+   SH2InterpreterDeInit,
+   SH2InterpreterReset,
+   SH2DebugInterpreterExec
+};
 
-static fetchfunc fetchlist[0x100];
-
-#ifdef IDLE_DETECT
-#include "sh2idle.c"
-#endif
+fetchfunc fetchlist[0x100];
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2649,13 +2645,9 @@ int SH2InterpreterReset()
 
 //////////////////////////////////////////////////////////////////////////////
 
-FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
+FASTCALL u32 SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
-#ifdef IDLE_DETECT
-  if ( context->isIdle ) SH2idleParse( context, cycles );
-  else SH2idleCheck( context, cycles );
-#endif
-  while(context->cycles < cycles)
+   while(context->cycles < cycles)
    {
       SH2HandleBreakpoints(context);
 
@@ -2716,3 +2708,24 @@ FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
+{
+   if (context->isIdle)
+      SH2idleParse( context, cycles);
+   else
+      SH2idleCheck(context, cycles);
+
+   while(context->cycles < cycles)
+   {
+      // Fetch Instruction
+      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+
+      // Execute it
+      opcodes[context->instruction](context);
+   }
+   return 0; // fix me
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
