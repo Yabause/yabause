@@ -126,6 +126,7 @@ static void yuiStore() {
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
+&SH2DebugInterpreter,
 NULL
 };
 

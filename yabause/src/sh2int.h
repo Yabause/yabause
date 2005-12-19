@@ -18,6 +18,7 @@ u32 FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);
 u32 FASTCALL SH2DebugInterpreterExec(SH2_struct *context, u32 cycles);
 
 extern SH2Interface_struct SH2Interpreter;
+extern SH2Interface_struct SH2DebugInterpreter;
 
 typedef u32 (FASTCALL *fetchfunc)(u32);
 extern fetchfunc fetchlist[0x100];

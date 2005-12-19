@@ -19,6 +19,8 @@
 
 #include "sh2core.h"
 #include "sh2int.h"
+#include "sh2d.h"
+#include "memory.h"
 
 #define MAX_CYCLE_CHECK 12
 // idle loops greater than MAX_CYCLE_CHECK instructions will not be detected. 
@@ -198,7 +200,7 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	case 4: implies2( destSRQ, destSRT, srcRB && srcRC && srcSRQ && srcSRM );  //div1; /* CHECK ME */
 	  break;
 	case 13:   //dmuls;
-	case 5: implies2( destMACL, destMACH, srcRB && srcRC ); // dmulu
+	case 5: implies( destMAC, srcRB && srcRC ); // dmulu
 	  break;
 	case 8: implies( destRB, srcRB && srcRC ); //sub
 	  break;
@@ -461,9 +463,8 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   // run until conditional branching - delayed instruction excluded
 
   for (;;) {
-      SH2HandleBreakpoints(context);
       // Fetch Instruction
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       if ( INSTRUCTION_A(context->instruction)==8 ) {
 
@@ -531,7 +532,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   u32 PC = context->regs.PC;
   context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
   opcodes[context->instruction](context);
-  if ( context->regs.PC != loopBegin ) return;
+  if ( context->regs.PC != loopBegin ) return; // We are not in a single loop... forget it
 
   // Mark unchanged registers as deterministic registers
 
