@@ -3213,6 +3213,8 @@ fi
 YAB_CFLAGS="$YAB_CFLAGS $SDL_CFLAGS"
 YAB_LIBS="$YAB_LIBS $SDL_LIBS"
 
+use_gtk=no
+
 case $target in
 	*darwin*)
 		YAB_LIBS="$YAB_LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
@@ -5004,6 +5006,7 @@ _ACEOF
 fi
 
 		yabause_yui="."
+		use_gtk=yes
 		;;
 	*)
 
@@ -5168,8 +5171,6 @@ esac
 if test "${with_gtk+set}" = set; then
   withval="$with_gtk"
   use_gtk=$withval
-else
-  use_gtk=no
 fi;
 
 if test x$use_gtk = xyes ; then
