@@ -72,6 +72,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
+&SH2DebugInterpreter,
 NULL
 };
 
