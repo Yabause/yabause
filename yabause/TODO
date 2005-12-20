@@ -21,6 +21,7 @@
      when interrupts are masked, then issues the interrupt once the mask is
      lifted
    - SCU should be handling non-longword aligned DMA transfers
+   - Fix SCSP OCT/FNS pitch issues
 
  (3) MONITOR/DEBUGGER
 
@@ -36,3 +37,4 @@
    - Finalize Save State format
    - Finish rewriting C++ that's missing
    - Support multiple languages
+   - Improve Opengl texture handling
