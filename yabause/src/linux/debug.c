@@ -63,7 +63,7 @@ typedef struct {
 } M68KprocDlg;
 
 typedef struct {
-  GtkWidget *dialog, *spin, *commName, *commDesc;
+  GtkWidget *dialog, *spin, *commName, *commDesc, *buttonVBlankOut;
   gint curs;
 } VDP1procDlg;
 
@@ -562,6 +562,9 @@ static SH2procDlg* openSH2( GtkWidget* widget, gpointer bMaster ) {
     return sh2;
   }
   openedSH2[(int)bMaster] = TRUE;
+  if ( yuiGetInt( "sh2core", -1 ) != 1 ) 
+    yuiWarningPopup( "Yabause execution mode is <Fast Interpreter>. Debugger won't be fully \
+functional. You may restart with <Debug Interpreter>." );
   if ( yui.running == GTKYUI_WAIT ) yuiYabauseInit(); /* force yabause initialization */
   sh2->debugsh = bMaster ? MSH2 : SSH2; /* so that proc structures exist */  
   SH2SetBreakpointCallBack(sh2->debugsh, (void (*)(void *, u32))SH2BreakpointHandler);
@@ -728,6 +731,7 @@ static void vdp1update() {
   gtk_spin_button_set_range(GTK_SPIN_BUTTON(VDP1proc.spin),0,i-1);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(VDP1proc.spin),0);
   VDP1proc.curs = 0;
+  gtk_widget_set_sensitive( VDP1proc.buttonVBlankOut, yabsys.LineCount != 262 );
   vdp1define();
 }
 
@@ -735,6 +739,13 @@ static gboolean vdp1deleteSignal() {
 
   openedVDP1 = FALSE;
   return FALSE; /* propagate event */
+}
+
+static void VDP1vBlankOut() {
+
+  while (yabsys.LineCount != 262)
+    if (YabauseExec() != 0) return;
+  debugUpdateViews();
 }
 
 static void openVDP1() {
@@ -774,6 +785,12 @@ static void openVDP1() {
   VDP1proc.commName = gtk_label_new("");
   gtk_box_pack_start( GTK_BOX( hbox ), VDP1proc.commName, FALSE, FALSE, 4 );
   gtk_box_pack_start( GTK_BOX( vbox ), hbox, FALSE, FALSE, 4 );
+
+  /* vblank-out button */
+
+  VDP1proc.buttonVBlankOut = gtk_button_new_with_label( "Jump to\nvblank-out" );
+  gtk_box_pack_start( GTK_BOX( hbox ), VDP1proc.buttonVBlankOut, FALSE, FALSE, 2 );
+  g_signal_connect( VDP1proc.buttonVBlankOut, "clicked", G_CALLBACK(VDP1vBlankOut), NULL );
 
    /* Description text */
 

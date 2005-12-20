@@ -51,6 +51,32 @@ static gboolean forceSoundEnabled = TRUE;
 static void yuiRun(void);
 static void yuiPause(void);
 
+typedef struct {
+
+  GtkWidget *frame;
+  GtkWidget *hbox;
+  GtkWidget *combo;
+  GtkWidget *button;
+  GtkWidget *filew;
+
+  gchar *name;
+  gchar lastPathEntry[64];
+  gint  idc;
+} ComboFileSelect;
+
+static struct {
+  GtkWidget *window;
+  GdkPixbuf *pixBufIcon;
+  ComboFileSelect *cfBios, *cfCdRom;
+  GtkWidget *checkIso;
+  GtkWidget *checkCdRom;
+  GtkWidget *buttonRun;
+  GtkWidget *buttonPause;
+  GtkWidget *buttonFs;
+  GtkWidget *buttonSettings;
+  enum {GTKYUI_WAIT,GTKYUI_RUN,GTKYUI_PAUSE} running;
+} yui;
+
 /* --------------------------------------------------------------------------------- */
 /* managing the configuration file $HOME/.yabause                                    */
 
@@ -156,19 +182,6 @@ NULL
 
 /* ------------------------------------------------------------ */
 /* ComboFileSelect - Control for file selection                 */
-
-typedef struct {
-
-  GtkWidget *frame;
-  GtkWidget *hbox;
-  GtkWidget *combo;
-  GtkWidget *button;
-  GtkWidget *filew;
-
-  gchar *name;
-  gchar lastPathEntry[64];
-  gint  idc;
-} ComboFileSelect;
 
 static void loadCombo( GtkComboBox* combo, gint* idc, gchar* name ) {
 
@@ -338,7 +351,7 @@ static void cfCatchValue( ComboFileSelect* cf, gchar* value ) {
 
 static struct {
   ComboFileSelect *cfBup, *cfCart, *cfMpeg;
-  GtkWidget *comboCartType, *comboRegion, *spinX, *spinY, *checkAspect, *checkSound;
+  GtkWidget *comboCartType, *comboRegion, *spinX, *spinY, *checkAspect, *checkSound, *cbSh2;
   gboolean soundenabled;
 } yuiSettings;
 
@@ -367,6 +380,7 @@ static void yuiSettingsResponse(GtkWidget *widget, gint arg1, gpointer user_data
     case 7: r = REGION_EUROPE ; break;
     case 8: r = REGION_CENTRALSOUTHAMERICAPAL ; break;
     }
+    yuiSetInt( "sh2core", gtk_combo_box_get_active( GTK_COMBO_BOX(yuiSettings.cbSh2) ));
     yuiSetInt( "region", r );
     yuiSetInt( "fsX", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinX ) ) );
     yuiSetInt( "fsY", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinY ) ) );
@@ -408,7 +422,7 @@ static void yuiSettingsDialog() {
   /* create and run settings dialog. */
 
   int r;
-  GtkWidget *hboxcart, *hboxregion;
+  GtkWidget *hboxcart, *hboxregion, *fSh2;
   GtkWidget* dialog = gtk_dialog_new_with_buttons ( "Settings",
 						    NULL,
 						   (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -417,6 +431,17 @@ static void yuiSettingsDialog() {
 						    GTK_STOCK_CANCEL,
 						    GTK_RESPONSE_REJECT, NULL);
   GtkWidget* vbox = GTK_DIALOG(dialog)->vbox;
+
+  /* sh2core combo */
+
+  fSh2 = gtk_frame_new("Execution mode");
+  gtk_box_pack_start( GTK_BOX( vbox ), fSh2, FALSE, FALSE, 4 );
+
+  yuiSettings.cbSh2 = gtk_combo_box_new_text();
+  gtk_container_add (GTK_CONTAINER( fSh2 ), yuiSettings.cbSh2 );
+  gtk_combo_box_append_text( GTK_COMBO_BOX(yuiSettings.cbSh2), "Fast Interpreter" );
+  gtk_combo_box_append_text( GTK_COMBO_BOX(yuiSettings.cbSh2), "Debug Interpreter" );
+  gtk_combo_box_set_active( GTK_COMBO_BOX(yuiSettings.cbSh2), yuiGetInt( "sh2core", 0 ) );
 
   /* Cartbridge path selection CF */
 
@@ -531,6 +556,17 @@ static void yuiSettingsDialog() {
 
   /* ---------------------- */
 
+  if ( yui.running != GTKYUI_WAIT ) {
+
+    cfSetSensitive( yuiSettings.cfCart, FALSE );
+    cfSetSensitive( yuiSettings.cfBup, FALSE );
+    cfSetSensitive( yuiSettings.cfMpeg, FALSE );
+    gtk_widget_set_sensitive( yuiSettings.comboCartType, 0 );
+    gtk_widget_set_sensitive( yuiSettings.comboRegion, 0 );
+    gtk_widget_set_sensitive( yuiSettings.cbSh2, 0 );
+    gtk_widget_set_sensitive( yuiSettings.checkSound, 0 );
+  }
+
   gtk_widget_show_all(dialog);
   g_signal_connect (GTK_OBJECT (dialog),
 		    "response",
@@ -546,19 +582,6 @@ static void yuiSettingsDialog() {
 /* ---------------------------------------------------------- */
 /* GUI Core                                                   */
 
-static struct {
-  GtkWidget *window;
-  GdkPixbuf *pixBufIcon;
-  ComboFileSelect *cfBios, *cfCdRom;
-  GtkWidget *checkIso;
-  GtkWidget *checkCdRom;
-  GtkWidget *buttonRun;
-  GtkWidget *buttonPause;
-  GtkWidget *buttonFs;
-  GtkWidget *buttonSettings;
-  enum {GTKYUI_WAIT,GTKYUI_RUN,GTKYUI_PAUSE} running;
-} yui;
-
 static void yuiAbout(void);
 
 static int GtkWorkaround(void) {
@@ -566,15 +589,25 @@ static int GtkWorkaround(void) {
   return TRUE;
 }
 
-static void yuiErrorPopup( gchar* text ) {
+static void yuiPopup( gchar* text, GtkMessageType mType ) {
   
   GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(yui.window),
 				   GTK_DIALOG_DESTROY_WITH_PARENT,
-				   GTK_MESSAGE_ERROR,
+				   mType,
 				   GTK_BUTTONS_CLOSE,
 				   text );
   gtk_dialog_run (GTK_DIALOG (dialog));
   gtk_widget_destroy (dialog);
+}
+
+static void yuiErrorPopup( gchar* text ) {
+  
+  yuiPopup( text, GTK_MESSAGE_ERROR );
+}
+
+static void yuiWarningPopup( gchar* text ) {
+  
+  yuiPopup( text, GTK_MESSAGE_WARNING );
 }
 
 static void yuiYabauseInit() {
@@ -602,7 +635,7 @@ static void yuiYabauseInit() {
 	? CDCORE_ISO : CDCORE_ARCH;
     }
     yinit.percoretype = PERCORE_SDL;
-    yinit.sh2coretype = SH2CORE_DEFAULT;
+    yinit.sh2coretype = yuiGetInt( "sh2core", SH2CORE_DEFAULT );
     yinit.vidcoretype = VIDCORE_SDLGL;
     yinit.sndcoretype = yuiSettings.soundenabled ? SNDCORE_SDL : SNDCORE_DUMMY;
     yinit.regionid = yuiGetInt( "region", REGION_AUTODETECT );
