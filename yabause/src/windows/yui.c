@@ -247,6 +247,10 @@ int YuiInit(void)
    // Grab Bios Language Settings
 //   GetPrivateProfileString("General", "BiosLanguage", "", tempstr, MAX_PATH, inifilename);
 
+   // Grab SH2 Core Settings
+   GetPrivateProfileString("General", "SH2Core", "", tempstr, MAX_PATH, inifilename);
+   sh2coretype = atoi(tempstr);
+
    // Grab Region Settings
    GetPrivateProfileString("General", "Region", "", tempstr, MAX_PATH, inifilename);
 
@@ -330,7 +334,7 @@ int YuiInit(void)
    stop = 0;
 
    yinit.percoretype = PERCORE_SDL;
-   yinit.sh2coretype = SH2CORE_DEFAULT;
+   yinit.sh2coretype = sh2coretype;
    yinit.vidcoretype = VIDCORE_SDLGL;
 //   yinit.vidcoretype = VIDCORE_SDLSOFT;
    yinit.sndcoretype = SNDCORE_SDL;
@@ -816,6 +820,14 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                char bptext[10];
                u32 addr=0;
+               extern SH2Interface_struct *SH2Core;
+
+               if (SH2Core->id != SH2CORE_DEBUGINTERPRETER)
+               {
+                  MessageBox (hDlg, "Breakpoints only supported by SH2 Debug Interpreter", "Error",  MB_OK | MB_ICONINFORMATION);
+                  break;
+               }
+                  
                memset(bptext, 0, 10);
                GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 10);
 
@@ -834,6 +846,10 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                LRESULT ret;
                char bptext[10];
                u32 addr=0;
+               extern SH2Interface_struct *SH2Core;
+
+               if (SH2Core->id != SH2CORE_DEBUGINTERPRETER)
+                  break;
 
                if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
                {

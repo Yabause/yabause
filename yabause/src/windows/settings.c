@@ -33,6 +33,7 @@ char inifilename[MAX_PATH];
 int num_cdroms=0;
 char drive_list[24];
 char bioslang=0;
+char sh2coretype=0;
 u8 regionid=0;
 int disctype;
 int carttype;
@@ -149,6 +150,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             EnableWindow(GetDlgItem(hDlg, IDC_DRIVELETTERCB), FALSE);
          }
 
+/*
          // Setup Bios Language Combo box
          SendDlgItemMessage(hDlg, IDC_BIOSLANGCB, CB_RESETCONTENT, 0, 0);
          SendDlgItemMessage(hDlg, IDC_BIOSLANGCB, CB_ADDSTRING, 0, (long)"English");
@@ -163,6 +165,15 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Since it's not fully working, let's disable it
          EnableWindow(GetDlgItem(hDlg, IDC_BIOSLANGCB), FALSE);
+*/
+
+         // Setup SH2 Core Combo box
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (long)"Fast Interpreter");
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (long)"Debug Interpreter");
+
+         // Set Selected SH2 Core
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_SETCURSEL, sh2coretype, 0); // fix me
 
          // Setup Region Combo box
          SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_RESETCONTENT, 0, 0);
@@ -515,7 +526,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   GetDlgItemText(hDlg, IDC_IMAGEEDIT, cdrompath, MAX_PATH);
                   WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
                }
-
+/*
                // Convert ID to language string
                bioslang = (char)SendDlgItemMessage(hDlg, IDC_BIOSLANGCB, CB_GETCURSEL, 0, 0);
 
@@ -543,6 +554,12 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
 
 //               WritePrivateProfileString("General", "BiosLanguage", tempstr, inifilename);
+*/
+               // Write SH2 core type
+               sh2coretype = (char)SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_GETCURSEL, 0, 0);
+
+               sprintf(tempstr, "%d", sh2coretype);
+               WritePrivateProfileString("General", "SH2Core", tempstr, inifilename);
 
                // Convert Combo Box ID to Region ID
                regionid = (char)SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_GETCURSEL, 0, 0);

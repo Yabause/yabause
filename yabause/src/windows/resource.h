@@ -78,7 +78,8 @@
 #define IDC_IMAGEEDIT                   1003
 #define IDC_IMAGEBROWSE                 1004
 
-#define IDC_BIOSLANGCB                  1005
+//#define IDC_BIOSLANGCB                  1005
+#define IDC_SH2CORECB                   1005
 
 #define IDC_REGIONCB                    1006
 

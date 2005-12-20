@@ -32,6 +32,7 @@ extern char cartfilename[MAX_PATH];
 extern char inifilename[MAX_PATH];
 
 extern char bioslang;
+extern char sh2coretype;
 extern u8 regionid;
 extern int disctype;
 extern int carttype;
