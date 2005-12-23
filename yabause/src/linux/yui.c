@@ -46,7 +46,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static gboolean forceSoundEnabled = TRUE;
+static gboolean forceSoundDisabled = FALSE;
 
 static void yuiRun(void);
 static void yuiPause(void);
@@ -386,6 +386,8 @@ static void yuiSettingsResponse(GtkWidget *widget, gint arg1, gpointer user_data
     yuiSetInt( "fsY", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinY ) ) );
     yuiSetInt( "keepRatio", gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( yuiSettings.checkAspect ) ) );
     yuiSettings.soundenabled = gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( yuiSettings.checkSound ) );
+    if ( !forceSoundDisabled ) yuiSetInt( "soundenabled", yuiSettings.soundenabled );
+    else if ( yuiSettings.soundenabled ) yuiSetInt( "soundenabled", yuiSettings.soundenabled );
     yuiStore();
   }
 }
@@ -710,11 +712,13 @@ static int yuiInit(void) {
 	GtkWidget *buttonQuit;
 	GtkWidget *buttonHelp;
 
-	yuiSettings.soundenabled = forceSoundEnabled;
 	gtk_init (&fake_argc, &fake_argv);
 	yui.running = GTKYUI_WAIT;
 	yui.pixBufIcon = gdk_pixbuf_new_from_xpm_data((const char **)icon_xpm);
 	yuiConfInit();
+
+	if ( forceSoundDisabled ) yuiSettings.soundenabled = FALSE;
+	else yuiSettings.soundenabled = yuiGetInt( "soundenabled", TRUE );
 
 	yui.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_resizable( GTK_WINDOW( yui.window ), FALSE );
@@ -798,7 +802,7 @@ static int yuiInit(void) {
 
 void YuiSetSoundEnable(int enablesound) {
   
-  forceSoundEnabled = enablesound;
+  if ( !enablesound ) forceSoundDisabled = TRUE;
 }
 
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {}
