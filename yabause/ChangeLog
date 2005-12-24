@@ -1,46 +1,76 @@
-0.5.0 -> Current
-general:
-  - Changed event handling a bit. Gained quite a bit of speed from it.
-  - Added fullscreen and fixed resize in windows.
+0.5.0 -> 0.6.0
+ cart:
+  - accesses to Netlink addresses when Netlink was not present was causing
+    errors, this has been fixed.
+ scu:
+  - fixed DSP debugging.
+  - fixed a Timer 0 bug. Fixes Shining the Holy Ark.
+ sh2:
+  - added SH2 idle detection. Speed should be significantly faster.
+  - separated original core(now the "debug interpreter core") from the core
+    with idle detection.
+  - sh2 cores are now selectable.
+ 68k:
+  - added 68k disassembler.
+  - fixed some warnings.
+ vdp1:
+  - added debugging functions.
+  - fixed bug that was causing garbage graphics in Albert Odyssey.
+  - fixed bug that was causing graphics in Legend of Oasis to not get drawn.
+  - other bug fixes.
+ vdp2:
+  - fixed a few priority bugs.
+  - added initial special priority emulation.
+ general:
+  - changed event handling a bit. Gained quite a bit of speed from it.
+  - added fullscreen and fixed resize in Windows. Still needs quite a bit of
+    work.
+  - fixed some Mac OS X port bugs.
+  - fixed some Dreamcast port bugs.
+  - added proper Linux gui.
+  - Fixed YGL initialization.
+  - fixed some Windows ports bugs
+  - other bug fixes.
+
 0.0.7 -> 0.5.0
-cd block:
+ cd block:
   - bug fixes
   - improved timing
-cart:
+ cart:
   - added Action Replay emulation
   - added 8/32 Mbit dram emulation
   - added 4/8/32 Mbit backup ram emulation
   - added 16 Mbit rom emulation
   - added very early Netlink emulation
-scsp:
+ scsp:
   - added Stephane Dallongeville's SCSP's core. Thanks again Stef!
   - fixed a couple of bugs that were causing movies to lock up.
-68k:
+ 68k:
   - added Stephane Dallongeville's 68k's core. Thanks again Stef!
   - fixed a few endian related bugs
   - added debugger(still need disassembler though)
-scu:
+ scu:
   - added dsp emulation
   - added dsp debugger
   - added indirect dma emulation
   - added timer0 emulation
   - bug fixes
-smpc:
+ smpc:
   - added very basic SH2 direct peripheral mode
   - added clock change commands
   - added slave sh2 off/on commands
   - fixed intback command timing
   - bug fixes
-sh2:
+ sh2:
   - added FRT, WDT, and partial UBC emulation
   - fixed a couple of opcode bugs
   - re-added debugger
   - added some early dynarec code
-vdp1:
+ vdp1:
   - added sprite priorities
   - added color offset
   - bug fixes
-vdp2:
+ vdp2:
   - added basic rbg0 emulation(no rotation, etc.)
   - added backscreen emulation
   - added caching
@@ -58,6 +88,7 @@ general:
   - added iso and bin/cue files support
   - changed several parts of yabause to allow for multiple implementations of video, sound, and peripheral code.
   - added save states(currently broken unfortunately)
+
 0.0.6 -> 0.0.7
  cd block:
   - added cd interface for porters.
@@ -93,6 +124,7 @@ general:
     a nice custom ui.
   - threads removed, program should be more stable now.
   - added save ram loading ability
+
 0.0.5 -> 0.0.6
  scu
   - added direct dma
