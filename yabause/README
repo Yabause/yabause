@@ -8,13 +8,13 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
         _________________________________________
-        Copyright (c) 2002-2004 Guillaume Duhamel
+        Copyright (c) 2002-2005 Guillaume Duhamel
 
 
-1) Introduction.............................................22
+1) Introduction.............................................20
 2) Staff/Thanks.............................................37
-3) Contact information......................................72
-4) Disclaimer...............................................81
+3) Contact information......................................76
+4) Disclaimer...............................................85
 
 
 1 Introduction________________________________________________
@@ -37,7 +37,7 @@ specific README files:
 2 Staff/Thanks________________________________________________
 
 Lead Programmer: Guillaume Duhamel
-Windows port: Theo Berkau (http://s89133014.onlinehome.us/)
+Windows port: Theo Berkau (http://www.cyberwarriorx.com)
 Mac OS X port: Adam Green (http://victoly.com/~adam/)
 Dreamcast port: Lawrence Sebald (http://ljsdcdev.sunsite.dk/)
 
@@ -67,6 +67,10 @@ Thanks to:
 
   * Bart Trzynadlowski
     for his disassembler.
+
+  * Charles MacDonald
+    for his saturn sample programs, docs, and being a major
+    source for saturn information.
 
 
 3 Contact information_________________________________________
