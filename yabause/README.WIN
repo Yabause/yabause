@@ -12,22 +12,25 @@
 
 
 1) Compiling instructions...................................20
-2) How to use Yabause.......................................44
-3) Contact information.....................................106
-4) Disclaimer..............................................120
+2) How to use Yabause.......................................47
+3) Contact information.....................................114
+4) Disclaimer..............................................128
 
 
 1 Compiling instructions______________________________________
 
-Yabause is written in C using the SDL and OpenGL libraries,
-so you need a working C compiler(such as gcc) and these
-libraries runtime and development packages:
+Yabause is written in C using the SDL, OpenGL, an GLUT
+libraries, so you need a working C compiler(such as gcc) and
+these libraries runtime and development packages:
 
   * you can find SDL at http://www.libsdl.org/index.php in
     the download section.
 
   * OpenGL should be included with your compiler, if it isn't,
     check on your compiler's website for links.
+
+  * Check google for GLUT. I haven't been able to find a good
+    source for it.
 
 Once these libraries installed, you should be ready to
 install Yabause.
@@ -39,7 +42,7 @@ can be called by typing: make -f makefile.mng in the src
 subdirectory.
 
 Note: If anyone feels like fixing this, let me know. Visual C++
-      support should be available soon.
+      support should be available sometime in the future.
 
 2 How to use Yabause__________________________________________
 
@@ -57,6 +60,10 @@ of your Saturn game's cdrom image.
 
 The Drive Letter setting is for you to be able to choose which
 cdrom drive you want yabause to use when trying to boot a game.
+
+The SH2 Core setting is for you to be able to choose which SH2
+Core to use. Unless you're a developer, chances are, you should
+leave it as the default: "Fast Interpreter".
 
 The Region setting allows you to choose which region of game
 you'll be booting. In most cases, it's best to leave it as
@@ -102,6 +109,7 @@ z - Right Trigger
 j - Start button
 q - Quit program
 F1 - Toggle FPS display
+f - Toggle fullscreen/window mode
 
 3 Contact information_________________________________________
 
