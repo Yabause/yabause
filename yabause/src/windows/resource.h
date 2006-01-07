@@ -24,14 +24,15 @@
 #define IDM_MEMTRANSFER 10004
 #define IDM_RUN         10005
 #define IDM_PAUSE       10006
-#define IDM_SETTINGS    10007
-#define IDM_EXIT        10008
-#define IDM_MSH2DEBUG   10009
-#define IDM_SSH2DEBUG   10010
-#define IDM_VDP1DEBUG   10011
-#define IDM_VDP2DEBUG   10012
-#define IDM_M68KDEBUG   10013
-#define IDM_SCUDSPDEBUG 10014
+#define IDM_RESET       10007
+#define IDM_SETTINGS    10008
+#define IDM_EXIT        10009
+#define IDM_MSH2DEBUG   10010
+#define IDM_SSH2DEBUG   10011
+#define IDM_VDP1DEBUG   10012
+#define IDM_VDP2DEBUG   10013
+#define IDM_M68KDEBUG   10014
+#define IDM_SCUDSPDEBUG 10015
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002

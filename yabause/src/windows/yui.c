@@ -381,6 +381,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                DialogBox(y_hInstance, "MemTransferDlg", hWnd, (DLGPROC)MemTransferDlgProc);
                break;
             }
+            case IDM_RESET:
+            {
+               YabauseReset();
+               break;
+            }
             case IDM_SETTINGS:
             {
                DialogBox(y_hInstance, "SettingsDlg", hWnd, (DLGPROC)SettingsDlgProc);
