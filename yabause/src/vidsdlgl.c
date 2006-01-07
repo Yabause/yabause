@@ -354,6 +354,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                dot = T1ReadWord(Vdp1Ram, charAddr);               
                charAddr += 2;
 
+               //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
                else *texture->textdata++ = COLOR_ADD(SAT2YAB1(alpha, dot), vdp1cor, vdp1cog, vdp1cob);
             }
@@ -374,89 +375,109 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
    u8 SPCLMD = Vdp2Regs->SPCTL;
    u8 sprite_register;
    u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
+   u16 lutPri;
+   u16 *reg_src = &cmd->CMDCOLR;
+   int not_lut = 1;
 
    // is the sprite is RGB or LUT (in fact, LUT can use bank color, we just hope it won't...)
-   if (((SPCLMD & 0x20) && (cmd->CMDCOLR & 0x8000)) || (((cmd->CMDPMOD >> 3) & 0x7) == 1))
+   if ((SPCLMD & 0x20) && (cmd->CMDCOLR & 0x8000))
    {
       // RGB data, use register 0
       sprite->priority = Vdp2Regs->PRISA & 0x7;
+      return;
    }
-   else
+
+   if (((cmd->CMDPMOD >> 3) & 0x7) == 1) {
+      u32 charAddr, dot, colorLut;
+
+      sprite->priority = Vdp2Regs->PRISA & 0x7;
+
+      charAddr = cmd->CMDSRCA * 8;
+      dot = T1ReadByte(Vdp1Ram, charAddr);
+      colorLut = cmd->CMDCOLR * 8;
+      lutPri = T1ReadWord(Vdp1Ram, (dot >> 4) * 2 + colorLut);
+      if (!(lutPri & 0x8000)) {
+         not_lut = 0;
+         reg_src = &lutPri;
+      } else
+         return;
+   }
+
    {
       u8 sprite_type = SPCLMD & 0xF;
       switch(sprite_type)
       {
          case 0:
-            sprite_register = (cmd->CMDCOLR & 0xC000) >> 14;
+            sprite_register = (*reg_src & 0xC000) >> 14;
 #ifdef WORDS_BIGENDIAN
             sprite->priority = sprprilist[sprite_register^1] & 0x7;
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
-            cmd->CMDCOLR &= 0x7FF;
+            if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 1:
-            sprite_register = (cmd->CMDCOLR & 0xE000) >> 13;
+            sprite_register = (*reg_src & 0xE000) >> 13;
 #ifdef WORDS_BIGENDIAN
             sprite->priority = sprprilist[sprite_register^1] & 0x7;
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
-            cmd->CMDCOLR &= 0x7FF;
+            if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 2:
-            sprite_register = (cmd->CMDCOLR >> 14) & 0x1;
+            sprite_register = (*reg_src >> 14) & 0x1;
 #ifdef WORDS_BIGENDIAN
             sprite->priority = sprprilist[sprite_register^1] & 0x7;
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
-            cmd->CMDCOLR &= 0x7FF;
+            if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 3:
-            sprite_register = (cmd->CMDCOLR & 0x6000) >> 13;
+            sprite_register = (*reg_src & 0x6000) >> 13;
 #ifdef WORDS_BIGENDIAN
             sprite->priority = sprprilist[sprite_register^1] & 0x7;
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
-            cmd->CMDCOLR &= 0x7FF;
+            if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 4:
-            sprite_register = (cmd->CMDCOLR & 0x6000) >> 13;
+            sprite_register = (*reg_src & 0x6000) >> 13;
 #ifdef WORDS_BIGENDIAN
             sprite->priority = sprprilist[sprite_register^1] & 0x7;
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
-            cmd->CMDCOLR &= 0x3FF;
+            if (not_lut) cmd->CMDCOLR &= 0x3FF;
             break;
          case 5:
-            sprite_register = (cmd->CMDCOLR & 0x7000) >> 12;
+            sprite_register = (*reg_src & 0x7000) >> 12;
 #ifdef WORDS_BIGENDIAN
             sprite->priority = sprprilist[sprite_register^1] & 0x7;
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
-            cmd->CMDCOLR &= 0x7FF;
+            if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 6:
-            sprite_register = (cmd->CMDCOLR & 0x7000) >> 12;
+            sprite_register = (*reg_src & 0x7000) >> 12;
 #ifdef WORDS_BIGENDIAN
             sprite->priority = sprprilist[sprite_register^1] & 0x7;
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
-            cmd->CMDCOLR &= 0x3FF;
+            if (not_lut) cmd->CMDCOLR &= 0x3FF;
             break;
          case 7:
-            sprite_register = (cmd->CMDCOLR & 0x7000) >> 12;
+            sprite_register = (*reg_src & 0x7000) >> 12;
 #ifdef WORDS_BIGENDIAN
             sprite->priority = sprprilist[sprite_register^1] & 0x7;
 #else
             sprite->priority = sprprilist[sprite_register] & 0x7;
 #endif
-            cmd->CMDCOLR &= 0x1FF;
+            if (not_lut) cmd->CMDCOLR &= 0x1FF;
             break;
          default:
             VDP1LOG("sprite type %d not implemented\n", sprite_type);
@@ -647,6 +668,7 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
 
    tile.w = tile.h = info->patternpixelwh;   
    tile.flip = info->flipfunction;
+
    if (info->specialprimode == 1)
       tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
    else
@@ -2601,13 +2623,21 @@ static void Vdp2DrawRBG0(void)
 
 void VIDSDLGLVdp2DrawScreens(void)
 {
+   int i, j;
+   void (*tab[8][5])(void);
+   int idx[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+   tab[nbg3priority][idx[nbg3priority]++] = &Vdp2DrawNBG3;
+   tab[nbg2priority][idx[nbg2priority]++] = &Vdp2DrawNBG2;
+   tab[nbg1priority][idx[nbg1priority]++] = &Vdp2DrawNBG1;
+   tab[nbg0priority][idx[nbg0priority]++] = &Vdp2DrawNBG0;
+   tab[rbg0priority][idx[rbg0priority]++] = &Vdp2DrawRBG0;
+
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
-   Vdp2DrawNBG3();
-   Vdp2DrawNBG2();
-   Vdp2DrawNBG1();
-   Vdp2DrawNBG0();
-   Vdp2DrawRBG0();
+   for(i = 0;i < 8;i++)
+      for(j = 0;j < idx[i];j++)
+         tab[i][j]();
 }
 
 //////////////////////////////////////////////////////////////////////////////

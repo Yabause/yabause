@@ -652,7 +652,7 @@ static void Vdp2DrawNBG1(void)
    }
    else
    {
-      fprintf(stderr, "nbg1 tile draw\n");
+      //fprintf(stderr, "nbg1 tile draw\n");
       // Draw Tile Map here
    }
 }
