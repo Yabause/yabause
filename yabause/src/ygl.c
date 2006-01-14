@@ -115,6 +115,17 @@ int YglGLInit(int width, int height) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+int YglScreenInit(int r, int g, int b, int d) {
+   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, r);
+   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, g);
+   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, b);
+   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, d);
+
+   return (SDL_SetVideoMode(320, 224, 32, SDL_OPENGL | SDL_RESIZABLE) != NULL);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int YglInit(int width, int height, unsigned int depth) {
    unsigned int i;
    char yab_version[64];
@@ -142,16 +153,16 @@ int YglInit(int width, int height, unsigned int depth) {
    sprintf(yab_version, "Yabause " VERSION);
    SDL_WM_SetCaption(yab_version, NULL);
 	
-   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-   if ( SDL_SetVideoMode( 320, 224, 32, SDL_OPENGL | SDL_RESIZABLE ) == NULL ) {
-      fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
-      SDL_Quit();
-      return -1;
+   if (!YglScreenInit(8, 8, 8, 24))
+   {
+      if (!YglScreenInit(5, 6, 5, 16))
+      {
+         fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
+         SDL_Quit();
+         return -1;
+      }
    }
 
    YglGLInit(width, height);
