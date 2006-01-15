@@ -624,11 +624,6 @@ static void yuiYabauseInit() {
       return;
     }
     
-    cfSetSensitive( yui.cfBios, FALSE );
-    cfSetSensitive( yui.cfCdRom, FALSE );
-    gtk_widget_set_sensitive( yui.checkIso, FALSE );
-    gtk_widget_set_sensitive( yui.checkCdRom, FALSE );
-    
     if ( cfGetActive( yui.cfCdRom) <= 0 ) {
       yinit.cdpath = NULL;
       yinit.cdcoretype = CDCORE_DEFAULT; 
@@ -656,7 +651,16 @@ static void yuiYabauseInit() {
     yuiSetString( "lastruncdrom", c );
     yuiStore();
      
-    YabauseInit(&yinit);
+    if (YabauseInit(&yinit) == -1) {
+      yuiErrorPopup("Yabause initialization failed.");
+      return;
+    }
+    
+    cfSetSensitive( yui.cfBios, FALSE );
+    cfSetSensitive( yui.cfCdRom, FALSE );
+    gtk_widget_set_sensitive( yui.checkIso, FALSE );
+    gtk_widget_set_sensitive( yui.checkCdRom, FALSE );
+
     yui.running = GTKYUI_PAUSE;
 }
 
