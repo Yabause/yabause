@@ -73,6 +73,7 @@ static struct {
   GtkWidget *checkCdRom;
   GtkWidget *buttonRun;
   GtkWidget *buttonPause;
+  GtkWidget *buttonReset;
   GtkWidget *buttonFs;
   GtkWidget *buttonSettings;
   enum {GTKYUI_WAIT,GTKYUI_RUN,GTKYUI_PAUSE} running;
@@ -767,6 +768,9 @@ static int yuiInit(void) {
 	yui.buttonPause = gtk_button_new_with_label( "Pause" );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonPause, FALSE, FALSE, 2 );
 
+	yui.buttonReset = gtk_button_new_with_label( "Reset" );
+	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonReset, FALSE, FALSE, 2 );
+
 	yui.buttonFs = gtk_button_new_with_label( "Full Screen" );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonFs, FALSE, FALSE, 2 );
  
@@ -789,6 +793,8 @@ static int yuiInit(void) {
 			 G_CALLBACK(yuiRun), NULL);
 	g_signal_connect(yui.buttonPause, "clicked",
 			 G_CALLBACK(yuiPause), NULL);
+	g_signal_connect(yui.buttonReset, "clicked",
+			 G_CALLBACK(YabauseReset), NULL);
 	g_signal_connect(yui.buttonFs, "clicked",
 			 G_CALLBACK(yuiFs), NULL);
 	g_signal_connect(yui.buttonSettings, "clicked",
