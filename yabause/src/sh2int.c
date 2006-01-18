@@ -769,7 +769,7 @@ void FASTCALL SH2extsb(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (u32)(s32)sh->regs.R[m];
+   sh->regs.R[n] = (u32)(s8)sh->regs.R[m];
    sh->regs.PC += 2;
    sh->cycles++;
 }
