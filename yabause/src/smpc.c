@@ -23,6 +23,7 @@
 #include "smpc.h"
 #include "cs2.h"
 #include "debug.h"
+#include "peripheral.h"
 #include "scsp.h"
 #include "scu.h"
 #include "sh2core.h"
@@ -34,7 +35,9 @@ Smpc * SmpcRegs;
 u8 * SmpcRegsT;
 SmpcInternal * SmpcInternalVars;
 
+#ifndef USENEWPERINTERFACE
 extern u16 buttonbits;
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -88,6 +91,11 @@ void SmpcReset(void) {
    SmpcInternalVars->firstPeri=0;
 
    SmpcInternalVars->timing=0;
+
+#ifdef USENEWPERINTERFACE
+   memset((void *)&SmpcInternalVars->port1, 0, sizeof(PortData_struct));
+   memset((void *)&SmpcInternalVars->port2, 0, sizeof(PortData_struct));
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -276,6 +284,52 @@ void SmpcINTBACKPeripheral(void) {
   etc.
   */
 
+#ifdef USENEWPERINTERFACE
+  int oregoffset=0;
+  PortData_struct *port1, *port2;
+
+  if (SmpcInternalVars->port1.size == 0 && SmpcInternalVars->port2.size == 0)
+  {
+     // Request data from the Peripheral Interface
+     port1 = PERCore->GetPerDataP1();
+     port2 = PERCore->GetPerDataP2();
+     memcpy(&SmpcInternalVars->port1, port1, sizeof(PortData_struct));
+     memcpy(&SmpcInternalVars->port2, port2, sizeof(PortData_struct));
+     SmpcInternalVars->port1.offset = 0;
+     SmpcInternalVars->port2.offset = 0;
+  }
+
+  // Port 1
+  if (SmpcInternalVars->port1.size > 0)
+  {
+     if ((SmpcInternalVars->port1.size-SmpcInternalVars->port1.offset) < 32)
+     {
+        memcpy(SmpcRegs->OREG, SmpcInternalVars->port1.data+SmpcInternalVars->port1.offset, SmpcInternalVars->port1.size-SmpcInternalVars->port1.offset);
+        oregoffset += SmpcInternalVars->port1.size-SmpcInternalVars->port1.offset;
+        SmpcInternalVars->port1.size = 0;
+     }
+     else
+     {
+        memcpy(SmpcRegs->OREG, SmpcInternalVars->port1.data, 32);
+        oregoffset += 32;
+        SmpcInternalVars->port1.offset += 32;
+     }
+  }
+  // Port 2
+  if (SmpcInternalVars->port2.size > 0 && oregoffset < 32)
+  {
+     if ((SmpcInternalVars->port2.size-SmpcInternalVars->port2.offset) < (32 - oregoffset))
+     {
+        memcpy(SmpcRegs->OREG + oregoffset, SmpcInternalVars->port2.data+SmpcInternalVars->port2.offset, SmpcInternalVars->port2.size-SmpcInternalVars->port2.offset);
+        SmpcInternalVars->port2.size = 0;
+     }
+     else
+     {
+        memcpy(SmpcRegs->OREG + oregoffset, SmpcInternalVars->port1.data, 32);
+        SmpcInternalVars->port2.offset += 32;
+     }
+  }
+#else
   // Port 1
   SmpcRegs->OREG[0] = 0xF1; //Port Status(Directly Connected)
   SmpcRegs->OREG[1] = 0x02; //PeripheralID(Standard Pad)
@@ -284,6 +338,8 @@ void SmpcINTBACKPeripheral(void) {
 
   // Port 2
   SmpcRegs->OREG[4] = 0xF0; //Port Status(Not Connected)
+#endif
+
 /*
   Use this as a reference for implementing other peripherals
   // Port 1

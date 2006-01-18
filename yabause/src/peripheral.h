@@ -22,6 +22,7 @@
 #define PERIPHERAL_H
 
 #include "core.h"
+#include "smpc.h"
 
 #define PERCORE_DEFAULT -1
 #define PERCORE_DUMMY 0
@@ -35,9 +36,22 @@ typedef struct
    int (*Init)(void);
    void (*DeInit)(void);
    int (*HandleEvents)(void);
+#ifdef USENEWPERINTERFACE
+//   PerInfo_struct *(*PerGetList)(void);
+   PortData_struct *(*GetPerDataP1)(void);
+   PortData_struct *(*GetPerDataP2)(void);
+   void (*PerSetButtonMapping)();
+#endif
 } PerInterface_struct;
 
 extern PerInterface_struct * PERCore;
+
+typedef struct
+{
+   char *name;
+   int emulatedflags;
+   int numbuttons;
+} PerInfo_struct;
 
 int PerInit(int coreid);
 void PerDeInit(void);

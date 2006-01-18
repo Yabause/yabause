@@ -27,13 +27,27 @@ int PERSDLInit(void);
 void PERSDLDeInit(void);
 int PERSDLHandleEvents(void);
 void PERSDLNothing(void);
+#ifdef USENEWPERINTERFACE
+PortData_struct *PERSDLGetPerDataP1(void);
+PortData_struct *PERSDLGetPerDataP2(void);
+
+static PortData_struct port1;
+static PortData_struct port2;
+#endif
 
 PerInterface_struct PERSDL = {
 PERCORE_SDL,
 "SDL Input Interface",
 PERSDLInit,
 PERSDLDeInit,
+#ifndef USENEWPERINTERFACE
 PERSDLHandleEvents
+#else
+PERSDLHandleEvents,
+PERSDLGetPerDataP1,
+PERSDLGetPerDataP2,
+PERSDLNothing
+#endif
 };
 
 void (*PERSDLKeyPressed[SDLK_LAST])(void);
@@ -216,3 +230,36 @@ int PERSDLHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef USENEWPERINTERFACE
+PortData_struct *PERSDLGetPerDataP1(void)
+{
+   // fix me, but this is the basic idea. Basically make sure the structure
+   // is completely ready before you return
+   port1.data[0] = 0xF1;
+   port1.data[1] = 0x02;
+   port1.data[2] = buttonbits >> 8;
+   port1.data[3] = buttonbits & 0xFF;
+   port1.size = 4;
+   return &port1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+PortData_struct *PERSDLGetPerDataP2(void)
+{
+   port2.data[0] = 0xF0;
+   port2.size = 1;
+   return &port2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+PerInfo_struct *PERSDLGetList(void)
+{
+   // Returns a list of peripherals available along with information on each
+   // peripheral
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+#endif

@@ -174,3 +174,53 @@ void PerLTriggerPressed(void) {
 void PerLTriggerReleased(void) {
    buttonbits |= ~0xFFF7;
 }
+
+#ifdef USENEWPERINTERFACE
+//////////////////////////////////////////////////////////////////////////////
+
+void PerAddPeripheral(PortData_struct *port, int perid, int addoffset)
+{
+   int pernum = port->data[0] & 0xF;
+   int i;
+   int peroffset=1;
+
+   if (pernum == 0xF)
+     return;
+
+   // if only one peripheral is connected use 0xF0, otherwise use 0x00 or 0x10
+   if (pernum == 0)
+      port->data[0] = 0xF0 | (pernum + 1);
+   else
+      port->data[0] = 0x10 | (pernum + 1);
+
+   // figure out where we're at, then add peripheral id
+   for (i = 0; i < pernum; i++)
+      peroffset += (port->data[peroffset] & 0xF);
+
+   port->data[peroffset] = perid;
+   peroffset++;
+
+   // set peripheral data for peripheral to default values and adjust size
+   // of port data
+   switch (perid)
+   {
+      case 0x02:
+         port->data[peroffset] = 0xFF;
+         port->data[peroffset+1] = 0xFF;
+         port->size = peroffset+2;
+         break;
+      default: break;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerRemovePeripheral(PortData_struct *port, int removeoffset)
+{
+   // stub
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+#endif
+
