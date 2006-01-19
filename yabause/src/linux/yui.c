@@ -661,6 +661,7 @@ static void yuiYabauseInit() {
     cfSetSensitive( yui.cfCdRom, FALSE );
     gtk_widget_set_sensitive( yui.checkIso, FALSE );
     gtk_widget_set_sensitive( yui.checkCdRom, FALSE );
+    gtk_widget_show( yui.buttonReset );
 
     yui.running = GTKYUI_PAUSE;
 }
@@ -805,6 +806,7 @@ static int yuiInit(void) {
 			 G_CALLBACK(yuiAbout), NULL );
 
 	gtk_widget_show_all (yui.window);
+	gtk_widget_hide( yui.buttonReset );
 	gtk_widget_hide( yui.buttonPause );
 	gtk_widget_hide( yui.buttonFs );
 }
