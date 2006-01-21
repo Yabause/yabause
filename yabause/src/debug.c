@@ -23,16 +23,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+//////////////////////////////////////////////////////////////////////////////
+
 Debug * DebugInit(const char * n, DebugOutType t, char * s) {
 	Debug * d;
 
-	d = (Debug *) malloc(sizeof(Debug));
+        if ((d = (Debug *) malloc(sizeof(Debug))) == NULL)
+           return NULL;
+
 	d->output_type = t;
-	d->name = strdup(n);
+
+        if ((d->name = strdup(n)) == NULL)
+        {
+           free(d);
+           return NULL;
+        }
 
 	switch(t) {
 	case DEBUG_STREAM:
-		d->output.stream = fopen(s, "w");
+                d->output.stream = fopen(s, "w");
 		break;
 	case DEBUG_STRING:
 		d->output.string = s;
@@ -48,24 +57,36 @@ Debug * DebugInit(const char * n, DebugOutType t, char * s) {
 	return d;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 void DebugDeInit(Debug * d) {
+        if (d == NULL)
+           return;
+
 	switch(d->output_type) {
 	case DEBUG_STREAM:
-		fclose(d->output.stream);
+                if (d->output.stream)
+                   fclose(d->output.stream);
 		break;
 	case DEBUG_STRING:
 	case DEBUG_STDOUT:
 	case DEBUG_STDERR:
 		break;
 	}
-	free(d->name);
+        if (d->name)
+           free(d->name);
 	free(d);
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 	if (t != d->output_type) {
 		if (d->output_type == DEBUG_STREAM)
+                {
+                   if (d->output.stream)
 			fclose(d->output.stream);
+                }
 		d->output_type = t;
 	}
 	switch(t) {
@@ -84,8 +105,13 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ...) {
 	va_list l;
+
+        if (d == NULL)
+           return;
 
 	va_start(l, format);
 
@@ -93,12 +119,17 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
 	case DEBUG_STDOUT:
 	case DEBUG_STDERR:
 	case DEBUG_STREAM:
+                if (d->output.stream == NULL)
+                   break;
 		fprintf(d->output.stream, "%s (%s:%ld): ", d->name, file, line);
 		vfprintf(d->output.stream, format, l);
 		break;
 	case DEBUG_STRING:
 		{
 			int i;
+                        if (d->output.string == NULL)
+                           break;
+
 			i = sprintf(d->output.string, "%s (%s:%ld): ", d->name, file, line);
 			vsprintf(d->output.string + i, format, l);
 		}
@@ -108,12 +139,22 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
 	va_end(l);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 Debug * MainLog;
 
+//////////////////////////////////////////////////////////////////////////////
+
 void LogStart(void) {
-	MainLog = DebugInit("main", DEBUG_STDOUT, NULL);
+        MainLog = DebugInit("main", DEBUG_STDOUT, NULL);
+//        MainLog = DebugInit("main", DEBUG_STREAM, "stdout.txt");
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 void LogStop(void) {
 	DebugDeInit(MainLog);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
