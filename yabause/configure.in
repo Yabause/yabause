@@ -95,6 +95,8 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug informa
 AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug information) , AC_DEFINE(VDP1_DEBUG))
 AC_ARG_ENABLE(vdp2-debug, AC_HELP_STRING(--enable-vdp2-debug, enable vdp2 debug information) , AC_DEFINE(VDP2_DEBUG))
 AC_ARG_ENABLE(cd-debug, AC_HELP_STRING(--enable-cd-debug, enable cdblock debug information) , AC_DEFINE(CDDEBUG))
+AC_ARG_ENABLE(smpc-debug, AC_HELP_STRING(--enable-smpc-debug, enable smpc debug information) , AC_DEFINE(SMPC_DEBUG))
+AC_ARG_ENABLE(scsp-debug, AC_HELP_STRING(--enable-scsp-debug, enable scsp debug information) , AC_DEFINE(SCSP_DEBUG))
 
 AC_CONFIG_FILES([Makefile
 	doc/Makefile

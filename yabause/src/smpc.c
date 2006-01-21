@@ -423,59 +423,59 @@ void SmpcExec(s32 t) {
       if (SmpcInternalVars->timing <= 0) {
          switch(SmpcRegs->COMREG) {
             case 0x0:
-               LOG("smpc\t: MSHON not implemented\n");
+               SMPCLOG("smpc\t: MSHON not implemented\n");
                break;
             case 0x2:
-               LOG("smpc\t: SSHON\n");
+               SMPCLOG("smpc\t: SSHON\n");
                SmpcSSHON();
                break;
             case 0x3:
-               LOG("smpc\t: SSHOFF\n");
+               SMPCLOG("smpc\t: SSHOFF\n");
                SmpcSSHOFF();
                break;
             case 0x6:
-               LOG("smpc\t: SNDON\n");
+               SMPCLOG("smpc\t: SNDON\n");
                SmpcSNDON();
                break;
             case 0x7:
-               LOG("smpc\t: SNDOFF\n");
+               SMPCLOG("smpc\t: SNDOFF\n");
                SmpcSNDOFF();
                break;
             case 0x8:
-               LOG("smpc\t: CDON not implemented\n");
+               SMPCLOG("smpc\t: CDON not implemented\n");
                break;
             case 0x9:
-               LOG("smpc\t: CDOFF not implemented\n");
+               SMPCLOG("smpc\t: CDOFF not implemented\n");
                break;
             case 0xD:
-               LOG("smpc\t: SYSRES not implemented\n");
+               SMPCLOG("smpc\t: SYSRES not implemented\n");
                break;
             case 0xE:
-               LOG("smpc\t: CKCHG352\n");
+               SMPCLOG("smpc\t: CKCHG352\n");
                SmpcCKCHG352();
                break;
             case 0xF:
-               LOG("smpc\t: CKCHG320\n");
+               SMPCLOG("smpc\t: CKCHG320\n");
                SmpcCKCHG320();
                break;
             case 0x10:
-               LOG("smpc\t: INTBACK\n");
+               SMPCLOG("smpc\t: INTBACK\n");
                SmpcINTBACK();
                break;
             case 0x17:
-               LOG("smpc\t: SETSMEM\n");
+               SMPCLOG("smpc\t: SETSMEM\n");
                SmpcSETSMEM();
                break;
             case 0x19:
-               LOG("smpc\t: RESENAB\n");
+               SMPCLOG("smpc\t: RESENAB\n");
                SmpcRESENAB();
                break;
             case 0x1A:
-               LOG("smpc\t: RESDISA\n");
+               SMPCLOG("smpc\t: RESDISA\n");
                SmpcRESDISA();
                break;
             default:
-               LOG("smpc\t: Command %02X not implemented\n", SmpcRegs->COMREG);
+               SMPCLOG("smpc\t: Command %02X not implemented\n", SmpcRegs->COMREG);
                break;
          }
   
@@ -496,7 +496,7 @@ u8 FASTCALL SmpcReadByte(u32 addr) {
 
 u16 FASTCALL SmpcReadWord(u32 addr) {
    // byte access only
-   LOG("smpc\t: SMPC register read word - %08X\n", addr);
+   SMPCLOG("smpc\t: SMPC register read word - %08X\n", addr);
    return 0;
 }
 
@@ -504,7 +504,7 @@ u16 FASTCALL SmpcReadWord(u32 addr) {
 
 u32 FASTCALL SmpcReadLong(u32 addr) {
    // byte access only
-   LOG("smpc\t: SMPC register read long - %08X\n", addr);
+   SMPCLOG("smpc\t: SMPC register read long - %08X\n", addr);
    return 0;
 }
 
@@ -513,15 +513,15 @@ u32 FASTCALL SmpcReadLong(u32 addr) {
 void SmpcSetTiming(void) {
    switch(SmpcRegs->COMREG) {
       case 0x0:
-         LOG("smpc\t: MSHON not implemented\n");
+         SMPCLOG("smpc\t: MSHON not implemented\n");
          SmpcInternalVars->timing = 1;
          return;
       case 0x8:
-         LOG("smpc\t: CDON not implemented\n");
+         SMPCLOG("smpc\t: CDON not implemented\n");
          SmpcInternalVars->timing = 1;
          return;
       case 0x9:
-         LOG("smpc\t: CDOFF not implemented\n");
+         SMPCLOG("smpc\t: CDOFF not implemented\n");
          SmpcInternalVars->timing = 1;
          return;
       case 0xD:
@@ -563,7 +563,7 @@ void SmpcSetTiming(void) {
          SmpcInternalVars->timing = 1;
          return;
       default:
-         LOG("smpc\t: unimplemented command: %02X\n", SmpcRegs->COMREG);
+         SMPCLOG("smpc\t: unimplemented command: %02X\n", SmpcRegs->COMREG);
          SmpcRegs->SF = 0;
          break;
    }
@@ -604,7 +604,7 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
 
          switch (SmpcRegs->DDR[0] & 0x7F) { // Which Control Method do we use?
             case 0x40:
-               LOG("smpc\t: Peripheral TH Control Method not implemented\n");
+               SMPCLOG("smpc\t: Peripheral TH Control Method not implemented\n");
                break;
             case 0x60:
                switch (val & 0x60) {
@@ -626,7 +626,7 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                SmpcRegs->PDR[0] = val;
                break;
             default:
-               LOG("smpc\t: Peripheral Unknown Control Method not implemented\n");
+               SMPCLOG("smpc\t: Peripheral Unknown Control Method not implemented\n");
                break;
          }
 
@@ -640,14 +640,14 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
 
 void FASTCALL SmpcWriteWord(u32 addr, u16 val) {
    // byte access only
-   LOG("smpc\t: SMPC register write word - %08X\n", addr);
+   SMPCLOG("smpc\t: SMPC register write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL SmpcWriteLong(u32 addr, u32 val) {
    // byte access only
-   LOG("smpc\t: SMPC register write long - %08X\n", addr);
+   SMPCLOG("smpc\t: SMPC register write long - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////

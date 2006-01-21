@@ -824,6 +824,8 @@ Optional Features:
   --enable-vdp1-debug     enable vdp1 debug information
   --enable-vdp2-debug     enable vdp2 debug information
   --enable-cd-debug       enable cdblock debug information
+  --enable-smpc-debug     enable smpc debug information
+  --enable-scsp-debug     enable scsp debug information
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -5297,6 +5299,22 @@ if test "${enable_cd_debug+set}" = set; then
   enableval="$enable_cd_debug"
   cat >>confdefs.h <<\_ACEOF
 #define CDDEBUG 1
+_ACEOF
+
+fi;
+# Check whether --enable-smpc-debug or --disable-smpc-debug was given.
+if test "${enable_smpc_debug+set}" = set; then
+  enableval="$enable_smpc_debug"
+  cat >>confdefs.h <<\_ACEOF
+#define SMPC_DEBUG 1
+_ACEOF
+
+fi;
+# Check whether --enable-scsp-debug or --disable-scsp-debug was given.
+if test "${enable_scsp_debug+set}" = set; then
+  enableval="$enable_scsp_debug"
+  cat >>confdefs.h <<\_ACEOF
+#define SCSP_DEBUG 1
 _ACEOF
 
 fi;

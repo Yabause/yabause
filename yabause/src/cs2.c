@@ -499,7 +499,6 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                             break;
                     default: break;
                   }
-
 	          break;
     default:
              LOG("cs2\t: Undocumented register read %08X\n", addr);

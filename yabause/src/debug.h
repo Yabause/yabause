@@ -57,4 +57,10 @@ void LogStop(void);
 #define VDP2LOG(f, r...)
 #endif
 
+#ifdef SMPC_DEBUG
+#define SMPCLOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
+#else
+#define SMPCLOG(f, r...)
+#endif
+
 #endif

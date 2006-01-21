@@ -2510,7 +2510,7 @@ static void Vdp2DrawRBG0(void)
             break;
          default:
 #if VDP2_DEBUG
-            cerr << "RGB0\t: don't know what to do with plane size" << endl;
+            VDP2LOG("RGB0\t: don't know what to do with plane size\n");
 #endif
             PlaneSize = 0;
             break;
