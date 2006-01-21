@@ -157,11 +157,14 @@ int YglInit(int width, int height, unsigned int depth) {
 
    if (!YglScreenInit(8, 8, 8, 24))
    {
-      if (!YglScreenInit(5, 6, 5, 16))
+      if (!YglScreenInit(4, 4, 4, 24))
       {
-         fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
-         SDL_Quit();
-         return -1;
+         if (!YglScreenInit(5, 6, 5, 16))
+         {
+            fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
+            SDL_Quit();
+            return -1;
+         }
       }
    }
 
