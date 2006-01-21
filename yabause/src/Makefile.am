@@ -1,5 +1,5 @@
-EXTRA_DIST = cd.c Makefile.mng logo.bmp logo.ico logo.png sh2idle.c
-SUBDIRS = c68k freebsd linux macosx windows
+EXTRA_DIST = cd.c Makefile.mng logo.bmp logo.ico logo.png
+SUBDIRS = c68k dreamcast freebsd linux macosx windows
 bin_PROGRAMS = yabause
 yabause_SOURCES = \
 	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \

@@ -5301,7 +5301,7 @@ _ACEOF
 
 fi;
 
-                                                                                ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/freebsd/Makefile src/linux/Makefile src/macosx/Makefile src/windows/Makefile"
+                                                                                          ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/dreamcast/Makefile src/freebsd/Makefile src/linux/Makefile src/macosx/Makefile src/windows/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5875,6 +5875,7 @@ do
   "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
   "src/c68k/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/c68k/Makefile" ;;
+  "src/dreamcast/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/dreamcast/Makefile" ;;
   "src/freebsd/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/freebsd/Makefile" ;;
   "src/linux/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/linux/Makefile" ;;
   "src/macosx/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/macosx/Makefile" ;;
