@@ -1,5 +1,5 @@
 /*  Copyright 2003-2005 Guillaume Duhamel
-    Copyright 2004-2005 Theo Berkau
+    Copyright 2004-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -292,8 +292,19 @@ u16 FASTCALL Vdp2ReadWord(u32 addr) {
       case 0x000:
          return Vdp2Regs->TVMD;
       case 0x002:
+         if (!(Vdp2Regs->EXTEN & 0x200))
+         {
+            // Latch HV counter on read
+            // Vdp2Regs->HCNT = ?;
+            Vdp2Regs->VCNT = yabsys.LineCount;
+            Vdp2Regs->TVSTAT |= 0x200;
+         }
+
          return Vdp2Regs->EXTEN;
       case 0x004:
+         // Clear External latch and sync flags
+         Vdp2Regs->TVSTAT &= 0xFCFF;
+
          // if TVMD's DISP bit is cleared, TVSTAT's VBLANK bit is always set
          if (Vdp2Regs->TVMD & 0x8000)
             return Vdp2Regs->TVSTAT;
@@ -1311,6 +1322,69 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE char *AddMapInfo(char *outstring, int patternwh, u16 PNC, u8 PLSZ, int mapoffset, int numplanes, u8 *map)
+{
+   int deca;
+   int multi;
+   int i;
+   int patterndatasize;
+   int planew, planeh;
+   u32 tmp=0;
+   u32 addr;
+
+   if(PNC & 0x8000)
+      patterndatasize = 1;
+   else
+      patterndatasize = 2;
+
+   switch(PLSZ)
+   {
+      case 0:
+         planew = planeh = 1;
+         break;
+      case 1:
+         planew = 2;
+         planeh = 1;
+         break;
+      case 2:
+         planew = planeh = 2;
+         break;
+      default: // Not sure what 0x3 does
+         planew = planeh = 1;
+         break;
+   }
+
+   deca = planeh + planew - 2;
+   multi = planeh * planew;
+
+   // Map Planes A-D
+   for (i = 0; i < numplanes; i++)
+   {
+      tmp = mapoffset | map[i];
+
+      if (patterndatasize == 1)
+      {
+         if (patternwh == 1)
+            addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
+         else
+            addr = (tmp >> deca) * (multi * 0x800);
+      }
+      else
+      {
+         if (patternwh == 1)
+            addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
+         else
+            addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
+      }
+  
+      AddString(outstring, "Plane %C Address = %08X\r\n", 0x41+i, (unsigned int)addr);
+   }
+
+   return outstring;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 {
    if (Vdp2Regs->BGON & 0x10)
@@ -1441,8 +1515,9 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 
       // Shadow Control here
 
-      // Color Ram Address Offset here
-
+      // Color Ram Address Offset
+      AddString(outstring, "Color Ram Address Offset = %X\r\n", (Vdp2Regs->CRAOFB & 0x7) << 8);
+       
       // Special Priority Mode here
 
       // Color Calculation Control here
@@ -1470,9 +1545,9 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
 {
    u16 lineVerticalScrollReg = Vdp2Regs->SCRCTL & 0x3F;
-   u32 tmp=0;
    int isbitmap=Vdp2Regs->CHCTLA & 0x2;
    int patternwh=(Vdp2Regs->CHCTLA & 0x1) + 1;
+   u8 map[4];
 
    if (Vdp2Regs->BGON & 0x1 || Vdp2Regs->BGON & 0x20)
    {
@@ -1532,6 +1607,12 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
             AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
             AddString(outstring, "Supplementary Color number = %d\r\n", supplementdata & 0x1f);
          }
+
+         map[0] = Vdp2Regs->MPABN0 & 0xFF;
+         map[1] = Vdp2Regs->MPABN0 >> 8;
+         map[2] = Vdp2Regs->MPCDN0 & 0xFF;
+         map[3] = Vdp2Regs->MPCDN0 >> 8;
+         outstring = AddMapInfo(outstring, patternwh, Vdp2Regs->PNCN0, Vdp2Regs->PLSZ & 0x3, (Vdp2Regs->MPOFN & 0x7) << 6, 4, map);
 
 /*
          // Figure out Cell start address
@@ -1632,35 +1713,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       }
       else
       {
-/*
          // NBG0
-         unsigned long mapOffsetReg=(readWord(reg, 0x3C) & 0x7) << 6;
-         int deca = planeh + planew - 2;
-         int multi = planeh * planew;
-
-         if (!isbitmap)
-         {
-            // Map Planes A-D
-            for (int i=0; i < 4; i++)
-            {
-               tmp = mapOffsetReg | reg->getByte(0x40 + (i ^ 1));
-
-               if (patterndatasize == 1)
-               {
-                  if (patternwh == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-                  else addr = (tmp >> deca) * (multi * 0x800);
-               }
-               else
-               {
-                  if (patternwh == 1) addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-                  else addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-               }
-  
-               AddString(outstring, "Plane %C Address = %08X\r\n", 0x41+i, addr);
-            }
-         }
-*/
-
 /*
          // Screen scroll values
          AddString(outstring, "Screen Scroll x = %f, y = %f\r\n", (float)(reg->getLong(0x70) & 0x7FFFF00) / 65536, (float)(reg->getLong(0x74) & 0x7FFFF00) / 65536);
@@ -1731,7 +1784,8 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
 
       // Shadow Control here
 
-      // Color Ram Address Offset here
+      // Color Ram Address Offset
+      AddString(outstring, "Color Ram Address Offset = %X\r\n", (Vdp2Regs->CRAOFA & 0x7) << 8);
  
       // Special Priority Mode here
 
@@ -1760,12 +1814,9 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
 void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
 {
    u16 lineVerticalScrollReg = (Vdp2Regs->SCRCTL >> 8) & 0x3F;
-   u32 mapOffsetReg=(Vdp2Regs->MPOFN & 0x70) << 2;
-   u32 tmp=0;
-   int deca;
-   int multi;
    int isbitmap=Vdp2Regs->CHCTLA & 0x200;
    int patternwh=((Vdp2Regs->CHCTLA & 0x100) >> 8) + 1;
+   u8 map[4];
 
    if (Vdp2Regs->BGON & 0x2)
    {
@@ -1816,28 +1867,13 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
             AddString(outstring, "Supplementary Color number = %d\r\n", supplementdata & 0x1f);
          }
 
+         map[0] = Vdp2Regs->MPABN1 & 0xFF;
+         map[1] = Vdp2Regs->MPABN1 >> 8;
+         map[2] = Vdp2Regs->MPCDN1 & 0xFF;
+         map[3] = Vdp2Regs->MPCDN1 >> 8;
+         outstring = AddMapInfo(outstring, patternwh, Vdp2Regs->PNCN1, (Vdp2Regs->PLSZ & 0xC) >> 2, (Vdp2Regs->MPOFN & 0x70) << 2, 4, map);
+
 /*
-         deca = planeh + planew - 2;
-         multi = planeh * planew;
-
-         // Map Planes A-D
-         for (int i=0; i < 4; i++)
-         {
-            tmp = mapOffsetReg | reg->getByte(0x44 + (i ^ 1));
-
-            if (patterndatasize == 1)
-            {
-               if (patternwh == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-               else addr = (tmp >> deca) * (multi * 0x800);
-            }
-            else {
-               if (patternwh == 1) addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-               else addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-            }
-
-            AddString(outstring, "Plane %C Address = %08X\r\n", 0x41+i, addr);
-         }
-
          // Figure out Cell start address
          switch(patterndatasize)
          {
@@ -1959,7 +1995,8 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
 
       // Shadow Control here
 
-      // Color Ram Address Offset here
+      // Color Ram Address Offset
+      AddString(outstring, "Color Ram Address Offset = %X\r\n", (Vdp2Regs->CRAOFA & 0x70) << 4);
 
       // Special Priority Mode here
 
@@ -1985,10 +2022,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
 
 void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
 {
-   u32 mapOffsetReg=(Vdp2Regs->MPOFN & 0x700) >> 2;
-   u32 tmp=0;
-   int deca;
-   int multi;
+   u8 map[4];
 
    if (Vdp2Regs->BGON & 0x4)
    {
@@ -2031,30 +2065,12 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
          AddString(outstring, "Supplementary Color number = %d\r\n", supplementdata & 0x1f);
       }
      
-
+      map[0] = Vdp2Regs->MPABN2 & 0xFF;
+      map[1] = Vdp2Regs->MPABN2 >> 8;
+      map[2] = Vdp2Regs->MPCDN2 & 0xFF;
+      map[3] = Vdp2Regs->MPCDN2 >> 8;
+      outstring = AddMapInfo(outstring, patternwh, Vdp2Regs->PNCN2, (Vdp2Regs->PLSZ >> 4) & 0x3, (Vdp2Regs->MPOFN & 0x700) >> 2, 4, map);
 /*
-      deca = planeh + planew - 2;
-      multi = planeh * planew;
-
-      // Map Planes A-D
-      for (int i=0; i < 4; i++)
-      {
-         tmp = mapOffsetReg | reg->getByte(0x48 + (i ^ 1));
-
-         if (patterndatasize == 1)
-         {
-            if (patternwh == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-            else addr = (tmp >> deca) * (multi * 0x800);
-         }
-         else
-         {
-            if (patternwh == 1) addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-            else addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-         }
- 
-         AddString(outstring, "Plane %C Address = %08X\r\n", 0x41+i, addr);
-      }
-
       // Figure out Cell start address
       switch(patterndatasize)
       {
@@ -2112,7 +2128,8 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
 
       // Shadow Control here
 
-      // Color Ram Address Offset here
+      // Color Ram Address Offset
+      AddString(outstring, "Color Ram Address Offset = %X\r\n", Vdp2Regs->CRAOFA & 0x700);
 
       // Special Priority Mode here
 
@@ -2140,10 +2157,7 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
 
 void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
 {
-   u32 mapOffsetReg=(Vdp2Regs->MPOFN & 0x7000) >> 6;
-   u32 tmp=0;
-   int deca;
-   int multi;
+   u8 map[4];
 
    if (Vdp2Regs->BGON & 0x8)
    {
@@ -2185,30 +2199,14 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
          AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
          AddString(outstring, "Supplementary Color number = %d\r\n", supplementdata & 0x1f);
       }
-     
+
+      map[0] = Vdp2Regs->MPABN3 & 0xFF;
+      map[1] = Vdp2Regs->MPABN3 >> 8;
+      map[2] = Vdp2Regs->MPCDN3 & 0xFF;
+      map[3] = Vdp2Regs->MPCDN3 >> 8;
+      outstring = AddMapInfo(outstring, patternwh, Vdp2Regs->PNCN3, (Vdp2Regs->PLSZ & 0xC0) >> 6, (Vdp2Regs->MPOFN & 0x7000) >> 6, 4, map);
+
 /*
-      deca = planeh + planew - 2;
-      multi = planeh * planew;
-
-      // Map Planes A-D
-      for (int i=0; i < 4; i++)
-      {
-         tmp = mapOffsetReg | reg->getByte(0x4C + (i ^ 1));
-
-         if (patterndatasize == 1)
-         {
-            if (patternwh == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-            else addr = (tmp >> deca) * (multi * 0x800);
-         }
-         else
-         {
-            if (patternwh == 1) addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-            else addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-         }
-
-         AddString(outstring, "Plane %C Address = %08X\r\n", 0x41+i, addr);
-      }
-
       // Figure out Cell start address
       switch(patterndatasize)
       {
@@ -2268,7 +2266,8 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
 
       // Shadow Control here
 
-      // Color Ram Address Offset here
+      // Color Ram Address Offset
+      AddString(outstring, "Color Ram Address Offset = %X\r\n", Vdp2Regs->CRAOFA & 0x7000);
 
       // Special Priority Mode here
 
