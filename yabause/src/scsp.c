@@ -356,6 +356,8 @@ static void scsp_sound_interrupt(u32 id)
 
 		if (scsp.sintf != NULL) scsp.sintf(level);
 	}
+
+
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1937,8 +1939,29 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
 	for(slot = &(scsp.slot[0]); slot < &(scsp.slot[32]); slot++)
 	{
 		if (slot->ecnt >= SCSP_ENV_DE) continue;	// enveloppe null...
-		
-		if (slot->ssctl) continue;			// not yet supported !
+
+		if (slot->ssctl)
+                {
+                   // Still not correct, but at least this fixes games
+                   // that rely on Call Address information
+                   scsp_buf_len = len;
+                   scsp_buf_pos = 0;
+
+                   for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+                   {
+                      if ((slot->fcnt += slot->finc) > slot->lea)
+                      {
+                         if (slot->lpctl) slot->fcnt = slot->lsa;
+                         else
+                         {
+                            slot->ecnt = SCSP_ENV_DE;
+                            break;
+                         }
+                      }
+                   }
+
+                   continue; // not yet supported!
+                }
 
 		scsp_buf_len = len;
 		scsp_buf_pos = 0;
