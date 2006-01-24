@@ -554,7 +554,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		slot->lea = (slot->lea & (0x00FF << SCSP_FREQ_LB)) + (d << (8 + SCSP_FREQ_LB));
 		return;
 
-        case 0x07: // LSA(low byte)
+        case 0x07: // LEA(low byte)
 		slot->lea = (slot->lea & (0xFF00 << SCSP_FREQ_LB)) + (d << SCSP_FREQ_LB);
 		return;
 
@@ -3039,6 +3039,156 @@ int SoundLoadState(FILE *fp, int version, int size)
    fread((void *)sram->getBuffer(), 0x80000, 1, fp);
 */
    return size;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+// Terrible, but I'm not sure how to do the equivalent in inline
+#define AddString(s, r...) \
+   sprintf(s, ## r); \
+   s += strlen(s)
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ScspSlotDebugStats(u8 slotnum, char *outstring)
+{
+
+   AddString(outstring, "Sound Source = ");
+   switch (scsp.slot[slotnum].ssctl)
+   {
+      case 0:
+      {
+         AddString(outstring, "External DRAM data\r\n");
+         break;
+      }
+      case 1:
+      {
+         AddString(outstring, "Internal(Noise)\r\n");
+         break;
+      }
+      case 2:
+      {
+         AddString(outstring, "Internal(0's)\r\n");
+         break;
+      }
+      default:
+      {
+         AddString(outstring, "Invalid setting\r\n");
+         break;
+      }
+   }
+   AddString(outstring, "Source bit = ");
+   switch(scsp.slot[slotnum].sbctl)
+   {
+      case 0:
+      {
+         AddString(outstring, "No bit reversal\r\n");
+         break;
+      }
+      case 1:
+      {
+         AddString(outstring, "Reverse other bits\r\n");
+         break;
+      }
+      case 2:
+      {
+         AddString(outstring, "Reverse sign bit\r\n");
+         break;
+      }
+      case 3:
+      {
+         AddString(outstring, "Reverse sign and other bits\r\n");
+         break;
+      }
+   }
+
+   // Loop Control
+   AddString(outstring, "Loop Mode = ");
+   switch (scsp.slot[slotnum].lpctl)
+   {
+      case 0:
+      {
+         AddString(outstring, "Off\r\n");
+         break;
+      }
+      case 1:
+      {
+         AddString(outstring, "Normal\r\n");
+         break;
+      }
+      case 2:
+      {
+         AddString(outstring, "Reverse\r\n");
+         break;
+      }
+      case 3:
+      {
+         AddString(outstring, "Alternative\r\n");
+         break;
+      }
+   }
+   // PCM8B
+   if (scsp.slot[slotnum].pcm8b)
+   {
+      AddString(outstring, "8-bit samples\r\n");
+   }
+   else
+   {
+      AddString(outstring, "16-bit samples\r\n");
+   }
+
+   AddString(outstring, "Start Address = %05X\r\n", scsp.slot[slotnum].sa);
+   AddString(outstring, "Loop Start Address = %04X\r\n", scsp.slot[slotnum].lsa >> SCSP_FREQ_LB);
+   AddString(outstring, "Loop End Address = %04X\r\n", scsp.slot[slotnum].lea >> SCSP_FREQ_LB);
+   AddString(outstring, "Decay 1 Rate = %d\r\n", scsp.slot[slotnum].dr);
+   AddString(outstring, "Decay 2 Rate = %d\r\n", scsp.slot[slotnum].sr);
+   if (scsp.slot[slotnum].eghold)
+   {
+      AddString(outstring, "EG Hold Enabled\r\n");
+   }
+   AddString(outstring, "Attack Rate = %d\r\n", scsp.slot[slotnum].ar);
+
+   if (scsp.slot[slotnum].lslnk)
+   {
+      AddString(outstring, "Loop Start Link Enabled\r\n");
+   }
+
+   if (scsp.slot[slotnum].krs != 0)
+   {
+      AddString(outstring, "Key rate scaling = %d\r\n", scsp.slot[slotnum].krs);
+   }
+
+//   AddString(outstring, "Decay Level = \r\n");
+   AddString(outstring, "Release Rate = %d\r\n", scsp.slot[slotnum].rr);
+
+   if (scsp.slot[slotnum].swe)
+   {
+      AddString(outstring, "Stack Write Inhibited\r\n");
+   }
+
+   if (scsp.slot[slotnum].sdir)
+   {
+      AddString(outstring, "Sound Direct Enabled\r\n");
+   }
+
+   AddString(outstring, "Total Level = %d\r\n", scsp.slot[slotnum].tl);
+//   AddString(outstring, "Modulation Level = \r\n");
+//   AddString(outstring, "Modulation Input X = \r\n");
+//   AddString(outstring, "Modulation Input Y = \r\n");
+//   AddString(outstring, "Octave = \r\n");
+//   AddString(outstring, "Frequency Number Switch = \r\n");
+//   AddString(outstring, "LFO Reset = \r\n");
+//   AddString(outstring, "LFO Frequency = \r\n");
+//   AddString(outstring, "LFO Frequency modulation waveform = \r\n");
+//   AddString(outstring, "LFO Frequency modulation level = \r\n");
+//   AddString(outstring, "LFO Amplitude modulation waveform = \r\n");
+//   AddString(outstring, "LFO Amplitude modulation level = \r\n");
+//   AddString(outstring, "Input Select = \r\n");
+//   AddString(outstring, "Input mix level = \r\n");
+//   AddString(outstring, "Direct data send level = \r\n");
+//   AddString(outstring, "Direct data fixed position = \r\n");
+//   AddString(outstring, "Effect data send level = \r\n");
+//   AddString(outstring, "Effect data fixed position = \r\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////

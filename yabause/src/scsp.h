@@ -62,6 +62,7 @@ void ScspReset(void);
 void M68KExec(u32 cycles);
 void ScspExec(void);
 void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
+void ScspSlotDebugStats(u8 slotnum, char *outstring);
 
 void FASTCALL scsp_w_b(u32, u8);
 void FASTCALL scsp_w_w(u32, u16);
