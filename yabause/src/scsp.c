@@ -1366,7 +1366,15 @@ u16 scsp_get_w(u32 a)
 
 static void scsp_slot_update_null(slot_t *slot)
 {
+	s32 out, env;
 
+	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+	{
+                SCSP_GET_ENV
+
+		SCSP_UPDATE_PHASE
+                SCSP_UPDATE_ENV
+	}
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1394,7 +1402,7 @@ static void scsp_slot_update_8B_L(slot_t *slot)
 static void scsp_slot_update_8B_R(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_8B
@@ -1410,7 +1418,7 @@ static void scsp_slot_update_8B_R(slot_t *slot)
 static void scsp_slot_update_8B_LR(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
                 SCSP_GET_OUT_8B
@@ -1446,7 +1454,7 @@ static void scsp_slot_update_E_8B_L(slot_t *slot)
 static void scsp_slot_update_E_8B_R(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_8B
@@ -1463,7 +1471,7 @@ static void scsp_slot_update_E_8B_R(slot_t *slot)
 static void scsp_slot_update_E_8B_LR(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_8B
@@ -1500,7 +1508,7 @@ static void scsp_slot_update_F_8B_L(slot_t *slot)
 static void scsp_slot_update_F_8B_R(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_8B
@@ -1517,7 +1525,7 @@ static void scsp_slot_update_F_8B_R(slot_t *slot)
 static void scsp_slot_update_F_8B_LR(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_8B
@@ -1554,7 +1562,7 @@ static void scsp_slot_update_F_E_8B_L(slot_t *slot)
 static void scsp_slot_update_F_E_8B_R(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_8B
@@ -1571,7 +1579,7 @@ static void scsp_slot_update_F_E_8B_R(slot_t *slot)
 static void scsp_slot_update_F_E_8B_LR(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_8B
@@ -1607,7 +1615,7 @@ static void scsp_slot_update_16B_L(slot_t *slot)
 static void scsp_slot_update_16B_R(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_16B
@@ -1623,7 +1631,7 @@ static void scsp_slot_update_16B_R(slot_t *slot)
 static void scsp_slot_update_16B_LR(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_16B
@@ -1659,7 +1667,7 @@ static void scsp_slot_update_E_16B_L(slot_t *slot)
 static void scsp_slot_update_E_16B_R(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_16B
@@ -1676,7 +1684,7 @@ static void scsp_slot_update_E_16B_R(slot_t *slot)
 static void scsp_slot_update_E_16B_LR(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_16B
@@ -1713,7 +1721,7 @@ static void scsp_slot_update_F_16B_L(slot_t *slot)
 static void scsp_slot_update_F_16B_R(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_16B
@@ -1730,7 +1738,7 @@ static void scsp_slot_update_F_16B_R(slot_t *slot)
 static void scsp_slot_update_F_16B_LR(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_16B
@@ -1767,7 +1775,7 @@ static void scsp_slot_update_F_E_16B_L(slot_t *slot)
 static void scsp_slot_update_F_E_16B_R(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_16B
@@ -1784,7 +1792,7 @@ static void scsp_slot_update_F_E_16B_R(slot_t *slot)
 static void scsp_slot_update_F_E_16B_LR(slot_t *slot)
 {
 	s32 out, env;
-	
+
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
 		SCSP_GET_OUT_16B
@@ -3052,7 +3060,6 @@ int SoundLoadState(FILE *fp, int version, int size)
 
 void ScspSlotDebugStats(u8 slotnum, char *outstring)
 {
-
    AddString(outstring, "Sound Source = ");
    switch (scsp.slot[slotnum].ssctl)
    {
@@ -3185,7 +3192,7 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 //   AddString(outstring, "LFO Amplitude modulation level = \r\n");
 //   AddString(outstring, "Input Select = \r\n");
 //   AddString(outstring, "Input mix level = \r\n");
-//   AddString(outstring, "Direct data send level = \r\n");
+   AddString(outstring, "Direct data send level: left = %d, right = %d\r\n", scsp.slot[slotnum].disll, scsp.slot[slotnum].dislr);
 //   AddString(outstring, "Direct data fixed position = \r\n");
 //   AddString(outstring, "Effect data send level = \r\n");
 //   AddString(outstring, "Effect data fixed position = \r\n");
