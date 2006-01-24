@@ -33,6 +33,7 @@
 #define IDM_VDP2DEBUG   10013
 #define IDM_M68KDEBUG   10014
 #define IDM_SCUDSPDEBUG 10015
+#define IDM_SCSPDEBUG   10016
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002
@@ -126,4 +127,9 @@
 #define IDC_RBG0ET                      1010
 
 //////////////////////////////////////////////////////////////////////////////
+// SCSP debug stuff
 
+#define IDC_SCSPSLOTCB                  1001
+#define IDC_SCSPSLOTET                  1002
+
+//////////////////////////////////////////////////////////////////////////////

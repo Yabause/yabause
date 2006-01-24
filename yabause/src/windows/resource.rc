@@ -41,6 +41,7 @@ BEGIN
     MENUITEM "VDP2", IDM_VDP2DEBUG
     MENUITEM "68K", IDM_M68KDEBUG
     MENUITEM "SCU DSP", IDM_SCUDSPDEBUG
+    MENUITEM "SCSP", IDM_SCSPDEBUG
   END
 END
 
@@ -202,6 +203,24 @@ BEGIN
     LISTBOX IDC_LISTBOX3,363, 20, 45, 66
     PUSHBUTTON      "&Add",IDC_ADDBP1,411, 10, 20, 10
     PUSHBUTTON      "&Del",IDC_DELBP1,411, 24, 20, 10
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+SCSPDEBUGDLG DIALOG FIXED PURE  0, 0, 436, 229
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "SCSP Debug"
+FONT 8, "Courier New"
+BEGIN
+    DEFPUSHBUTTON   "&Close",IDOK, 3, 212, 40, 14
+    GROUPBOX        "Slot Info", -1, 2, 0, 152, 208, WS_CHILD | WS_VISIBLE
+    LTEXT           "Slot Number", -1, 6, 9, 70, 10
+    COMBOBOX        IDC_SCSPSLOTCB, 56, 7, 35, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, WS_DISABLED
+    EDITTEXT        IDC_SCSPSLOTET, 5, 24, 146, 172, ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    GROUPBOX        "Common Control Registers", -1, 156, 0, 182, 208, WS_CHILD | WS_VISIBLE
+    LISTBOX         IDC_LISTBOX2,159, 10, 176, 195
+    GROUPBOX        "DSP Control Registers", -1, 340, 0, 94, 208, WS_CHILD | WS_VISIBLE
+    LISTBOX         IDC_LISTBOX3,343, 10, 88, 195
 END
 
 //////////////////////////////////////////////////////////////////////////////

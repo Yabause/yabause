@@ -69,6 +69,8 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam);
 LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
+LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam);
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -421,6 +423,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_SCUDSPDEBUG:
             {
                DialogBox(y_hInstance, "SCUDSPDebugDlg", hWnd, (DLGPROC)SCUDSPDebugDlgProc);
+               break;
+            }
+            case IDM_SCSPDEBUG:
+            {
+               DialogBox(y_hInstance, "SCSPDebugDlg", hWnd, (DLGPROC)SCSPDebugDlgProc);
                break;
             }
             case IDM_EXIT:
@@ -1603,3 +1610,73 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam)
+{
+   char tempstr[1024];
+   int i;
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_RESETCONTENT, 0, 0);
+
+         for (i = 0; i < 32; i++)
+         {
+            sprintf(tempstr, "%d", i);
+            SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_ADDSTRING, 0, (long)tempstr);
+         }
+
+         SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_SETCURSEL, 0, 0);
+
+         // Setup Slot Info
+         ScspSlotDebugStats(0, tempstr);
+         SetDlgItemText(hDlg, IDC_SCSPSLOTET, tempstr);
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_SCSPSLOTCB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case CBN_SELCHANGE:
+                  {
+                     u8 cursel=0;
+
+                     // Update Sound Slot Info
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_GETCURSEL, 0, 0);
+
+                     ScspSlotDebugStats(cursel, tempstr);
+                     SetDlgItemText(hDlg, IDC_SCSPSLOTET, tempstr);
+
+                     return TRUE;
+                  }
+                  default: break;
+               }
+
+               return TRUE;
+            }
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+
+               return TRUE;
+            }
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
