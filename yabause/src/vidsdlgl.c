@@ -1670,9 +1670,6 @@ static void Vdp2DrawNBG0(void)
    info.transparencyenable = !(Vdp2Regs->BGON & 0x100);
    info.specialprimode = Vdp2Regs->SFPRMD & 0x3;
 
-   info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % 512);
-   info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % 512);
-
    info.colornumber = (Vdp2Regs->CHCTLA & 0x70) >> 4;
 
    if((info.isbitmap = Vdp2Regs->CHCTLA & 0x2) != 0)
@@ -1692,8 +1689,11 @@ static void Vdp2DrawNBG0(void)
                  break;
          case 3: info.cellw = 1024;
                  info.cellh = 512;
-                 break;                                                           
+                 break;
       }
+
+      info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % 512);
+      info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % 512);
 
       info.charaddr = (Vdp2Regs->MPOFN & 0x7) * 0x20000;
       info.paladdr = (Vdp2Regs->BMPNA & 0x7) << 4;
@@ -1714,13 +1714,16 @@ static void Vdp2DrawNBG0(void)
             info.planew = 2;
             info.planeh = 1;
             break;
-         case 2:
+         case 3:
             info.planew = info.planeh = 2;
             break;
-         default: // Not sure what 0x3 does
+         default: // Not sure what 0x2 does
             info.planew = info.planeh = 1;
             break;
       }
+
+      info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % (512 * info.planew));
+      info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % (512 * info.planeh));
 
       if(Vdp2Regs->PNCN0 & 0x8000)
          info.patterndatasize = 1;
@@ -1883,8 +1886,6 @@ static void Vdp2DrawNBG1(void)
    info.enable = Vdp2Regs->BGON & 0x2;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x200);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 2) & 0x3;
-   info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % 512);
-   info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % 512);
 
    info.colornumber = (Vdp2Regs->CHCTLA & 0x3000) >> 12;
 
@@ -1906,6 +1907,9 @@ static void Vdp2DrawNBG1(void)
                  break;
       }
 
+      info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % 512);
+      info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % 512);
+
       info.charaddr = ((Vdp2Regs->MPOFN & 0x70) >> 4) * 0x20000;
       info.paladdr = (Vdp2Regs->BMPNA & 0x700) >> 4;
       info.flipfunction = 0;
@@ -1924,13 +1928,16 @@ static void Vdp2DrawNBG1(void)
             info.planew = 2;
             info.planeh = 1;
             break;
-         case 2:
+         case 3:
             info.planew = info.planeh = 2;
             break;
-         default: // Not sure what 0x3 does
+         default: // Not sure what 0x2 does
             info.planew = info.planeh = 1;
             break;
       }
+
+      info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % (512 * info.planew));
+      info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % (512 * info.planeh));
 
       if(Vdp2Regs->PNCN1 & 0x8000)
          info.patterndatasize = 1;
@@ -2091,8 +2098,6 @@ static void Vdp2DrawNBG2(void)
    info.enable = Vdp2Regs->BGON & 0x4;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x400);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 4) & 0x3;
-   info.x = - ((Vdp2Regs->SCXN2 & 0x7FF) % 512);
-   info.y = - ((Vdp2Regs->SCYN2 & 0x7FF) % 512);
 
    info.colornumber = (Vdp2Regs->CHCTLB & 0x2) >> 1;	
    info.mapwh = 2;
@@ -2106,13 +2111,15 @@ static void Vdp2DrawNBG2(void)
          info.planew = 2;
          info.planeh = 1;
          break;
-      case 2:
+      case 3:
          info.planew = info.planeh = 2;
          break;
-      default: // Not sure what 0x3 does
+      default: // Not sure what 0x2 does
          info.planew = info.planeh = 1;
          break;
    }
+   info.x = - ((Vdp2Regs->SCXN2 & 0x7FF) % (512 * info.planew));
+   info.y = - ((Vdp2Regs->SCYN2 & 0x7FF) % (512 * info.planeh));
 
    if(Vdp2Regs->PNCN2 & 0x8000)
       info.patterndatasize = 1;
@@ -2250,8 +2257,6 @@ static void Vdp2DrawNBG3(void)
    info.enable = Vdp2Regs->BGON & 0x8;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x800);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 6) & 0x3;
-   info.x = - ((Vdp2Regs->SCXN3 & 0x7FF) % 512);
-   info.y = - ((Vdp2Regs->SCYN3 & 0x7FF) % 512);
 
    info.colornumber = (Vdp2Regs->CHCTLB & 0x20) >> 5;
 	
@@ -2266,13 +2271,15 @@ static void Vdp2DrawNBG3(void)
          info.planew = 2;
          info.planeh = 1;
          break;
-      case 2:
+      case 3:
          info.planew = info.planeh = 2;
          break;
-      default: // Not sure what 0x3 does
+      default: // Not sure what 0x2 does
          info.planew = info.planeh = 1;
          break;
    }
+   info.x = - ((Vdp2Regs->SCXN3 & 0x7FF) % (512 * info.planew));
+   info.y = - ((Vdp2Regs->SCYN3 & 0x7FF) % (512 * info.planeh));
 
    if(Vdp2Regs->PNCN3 & 0x8000)
       info.patterndatasize = 1;
