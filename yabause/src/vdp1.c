@@ -284,8 +284,6 @@ void Vdp1Draw(void) {
    Vdp1Regs->addr = 0;
    returnAddr = 0xFFFFFFFF;
    commandCounter = 0;
-   Vdp1Regs->localX = 0;
-   Vdp1Regs->localY = 0;
 
    // beginning of a frame (ST-013-R3-061694 page 53)
    // BEF <- CEF
