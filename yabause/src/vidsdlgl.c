@@ -757,7 +757,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
          u16 tmp = T1ReadWord(Vdp2Ram, info->addr);         
 
          info->addr += 2;
-         info->specialfunction = info->supplementdata & 0x200 >> 9;
+         info->specialfunction = (info->supplementdata >> 9) & 0x1;
 
          switch(info->colornumber)
          {
@@ -2630,6 +2630,7 @@ static void Vdp2DrawRBG0(void)
 
 void VIDSDLGLVdp2DrawScreens(void)
 {
+/*
    int i, j;
    void (*tab[8][5])(void);
    int idx[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -2645,6 +2646,12 @@ void VIDSDLGLVdp2DrawScreens(void)
    for(i = 0;i < 8;i++)
       for(j = 0;j < idx[i];j++)
          tab[i][j]();
+*/
+   Vdp2DrawNBG3();
+   Vdp2DrawNBG2();
+   Vdp2DrawNBG1();
+   Vdp2DrawNBG0();
+   Vdp2DrawRBG0();
 }
 
 //////////////////////////////////////////////////////////////////////////////
