@@ -213,7 +213,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             j = 0;
             while(j < sprite->w)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr);
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
                // Pixel 1
                if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
@@ -244,13 +244,13 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             j = 0;
             while(j < sprite->w)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr);
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
                if (((dot >> 4) == 0) && !SPD)
                   *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
                else
                {
-                  temp = T1ReadWord(Vdp1Ram, (dot >> 4) * 2 + colorLut);
+                  temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
                   if (temp & 0x8000)
                      *texture->textdata++ = COLOR_ADD(SAT2YAB1(alpha, temp), vdp1cor, vdp1cog, vdp1cob);
                   else
@@ -263,7 +263,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                   *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
                else
                {
-                  temp = T1ReadWord(Vdp1Ram, (dot & 0xF) * 2 + colorLut);
+                  temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
                   if (temp & 0x8000)
                      *texture->textdata++ = COLOR_ADD(SAT2YAB1(alpha, temp), vdp1cor, vdp1cog, vdp1cob);
                   else
@@ -290,7 +290,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr) & 0x3F;
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x3F;
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
@@ -311,7 +311,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr) & 0x7F;               
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x7F;
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
@@ -332,7 +332,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr);
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
@@ -351,7 +351,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadWord(Vdp1Ram, charAddr);
+               dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
                charAddr += 2;
 
                //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
@@ -393,7 +393,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
       sprite->priority = Vdp2Regs->PRISA & 0x7;
 
       charAddr = cmd->CMDSRCA * 8;
-      dot = T1ReadByte(Vdp1Ram, charAddr);
+      dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
       colorLut = cmd->CMDCOLR * 8;
       lutPri = T1ReadWord(Vdp1Ram, (dot >> 4) * 2 + colorLut);
       if (!(lutPri & 0x8000)) {
@@ -1692,8 +1692,8 @@ static void Vdp2DrawNBG0(void)
                  break;
       }
 
-      info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % 512);
-      info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % 512);
+      info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % info.cellw);
+      info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % info.cellh);
 
       info.charaddr = (Vdp2Regs->MPOFN & 0x7) * 0x20000;
       info.paladdr = (Vdp2Regs->BMPNA & 0x7) << 4;
@@ -1907,8 +1907,8 @@ static void Vdp2DrawNBG1(void)
                  break;
       }
 
-      info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % 512);
-      info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % 512);
+      info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
+      info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % info.cellh);
 
       info.charaddr = ((Vdp2Regs->MPOFN & 0x70) >> 4) * 0x20000;
       info.paladdr = (Vdp2Regs->BMPNA & 0x700) >> 4;
