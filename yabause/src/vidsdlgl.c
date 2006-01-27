@@ -2630,23 +2630,8 @@ static void Vdp2DrawRBG0(void)
 
 void VIDSDLGLVdp2DrawScreens(void)
 {
-/*
-   int i, j;
-   void (*tab[8][5])(void);
-   int idx[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-   tab[nbg3priority][idx[nbg3priority]++] = &Vdp2DrawNBG3;
-   tab[nbg2priority][idx[nbg2priority]++] = &Vdp2DrawNBG2;
-   tab[nbg1priority][idx[nbg1priority]++] = &Vdp2DrawNBG1;
-   tab[nbg0priority][idx[nbg0priority]++] = &Vdp2DrawNBG0;
-   tab[rbg0priority][idx[rbg0priority]++] = &Vdp2DrawRBG0;
-
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
-   for(i = 0;i < 8;i++)
-      for(j = 0;j < idx[i];j++)
-         tab[i][j]();
-*/
    Vdp2DrawNBG3();
    Vdp2DrawNBG2();
    Vdp2DrawNBG1();
