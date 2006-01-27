@@ -290,7 +290,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr) & 0x3F;               
+               dot = T1ReadByte(Vdp1Ram, charAddr) & 0x3F;
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
@@ -332,7 +332,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr);               
+               dot = T1ReadByte(Vdp1Ram, charAddr);
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
@@ -351,7 +351,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadWord(Vdp1Ram, charAddr);               
+               dot = T1ReadWord(Vdp1Ram, charAddr);
                charAddr += 2;
 
                //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
@@ -566,7 +566,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
          {
             for(j = 0;j < info->cellw;j+=4)
             {
-               u16 dot = T1ReadWord(Vdp2Ram, info->charaddr);
+               u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
 
                info->charaddr += 2;
                if (!(dot & 0xF000) && info->transparencyenable) color = 0x00000000;
@@ -590,7 +590,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
          {
             for(j = 0;j < info->cellw;j+=2)
             {
-               u16 dot = T1ReadWord(Vdp2Ram, info->charaddr);
+               u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
                
                info->charaddr += 2;
                if (!(dot & 0xFF00) && info->transparencyenable) color = 0x00000000;
@@ -609,7 +609,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
       {
         for(j = 0;j < info->cellw;j++)
         {
-          u16 dot = T1ReadWord(Vdp2Ram, info->charaddr);
+          u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
           if ((dot == 0) && info->transparencyenable) color = 0x00000000;
           else color = Vdp2ColorRamGetColor(info->coloroffset + dot, info->alpha);
           info->charaddr += 2;
@@ -623,7 +623,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
       {
         for(j = 0;j < info->cellw;j++)
         {
-          u16 dot = T1ReadWord(Vdp2Ram, info->charaddr);
+          u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
           info->charaddr += 2;
           if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
 	  else color = SAT2YAB1(0xFF, dot);
@@ -637,9 +637,9 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
       {
         for(j = 0;j < info->cellw;j++)
         {
-          u16 dot1 = T1ReadWord(Vdp2Ram, info->charaddr);
+          u16 dot1 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
           info->charaddr += 2;
-          u16 dot2 = T1ReadWord(Vdp2Ram, info->charaddr);
+          u16 dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
           info->charaddr += 2;
           if (!(dot1 & 0x8000) && info->transparencyenable) color = 0x00000000;
           else color = SAT2YAB2(info->alpha, dot1, dot2);
