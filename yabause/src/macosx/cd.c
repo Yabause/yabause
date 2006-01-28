@@ -33,11 +33,7 @@
 
 #include "../cdbase.h"
 
-int MacOSXCDInit(const char *);
-int MacOSXCDDeInit();
-int MacOSXCDGetStatus();
-long MacOSXCDReadTOC(unsigned long *);
-int MacOSXCDReadSectorFAD(unsigned long, void *);
+#include "cd.h"
 
 CDInterface ArchCD = {
 CDCORE_ARCH,
@@ -58,22 +54,37 @@ int MacOSXCDInit(const char *cdrom_name) {
 	mach_port_t masterPort;
 	CFMutableDictionaryRef classesToMatch;
 	
+	printf("MacOSXCDInit\n");
+	
+	
 	if (IOMasterPort(MACH_PORT_NULL, &masterPort) != 0)
 		printf("IOMasterPort Failed!\n");
-		
+	
+			
 	classesToMatch = IOServiceMatching("IOCDMedia"); 
-
+	
+	printf("MacOSXCDInit:IOService Matching\n");
+	
 	if (classesToMatch == NULL)
 		printf("IOServiceMatching returned a NULL dictionary.\n");
 	else
 		CFDictionarySetValue(classesToMatch, CFSTR(kIOMediaEjectableKey), kCFBooleanTrue);
 	
+	printf("MacOSXCDInit:CFDict\n");
+	
 	if (IOServiceGetMatchingServices(masterPort, classesToMatch, &mediaIterator) != 0)
 		printf("IOServiceGetMatchingServices Failed!\n");
 		
 	getCDPath(mediaIterator, cdPath, sizeof(cdPath));
+	
+	printf("CDPath %s\n",cdPath);
+	
 	if ((hCDROM = open(cdPath, O_RDONLY)) == -1)
-		return -1;
+		{
+			printf("CDInit NOK !!!!\n");
+			return -1;
+			
+		}
 	printf("CDInit OK\n");
 	return 0;
 }

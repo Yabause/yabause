@@ -1,0 +1,6 @@
+/* Localized versions of Info.plist keys */
+
+CFBundleName = "Yabausemac";
+CFBundleShortVersionString = "Yabausemac version 0.6.0beta3";
+CFBundleGetInfoString = "Yabausemac version 0.6, J. VERNET.";
+NSHumanReadableCopyright = "http://yabause.sourceforge.net/";
