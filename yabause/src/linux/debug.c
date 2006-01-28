@@ -71,12 +71,18 @@ typedef struct {
   GtkWidget *dialog, *NBG0, *NBG1, *NBG2, *NBG3, *RBG0;
 } VDP2procDlg;
 
+typedef struct {
+  GtkWidget *dialog, *spin, *commDesc;
+  gint curs;
+} SCSPprocDlg;
+
 static SH2procDlg SSH2procDlg;
 static SH2procDlg MSH2procDlg;
 static SCUDSPprocDlg SCUDSPproc;
 static VDP1procDlg VDP1proc;
 static VDP2procDlg VDP2proc;
 static M68KprocDlg M68Kproc;
+static SCSPprocDlg SCSPproc;
 static memTransferDlg transferDlg;
 
 static u32 memDumpLastOffset = 0; /* last offset set to a memDump dialog. To be reused in new dialogs. */
@@ -87,6 +93,7 @@ static gboolean openedVDP1 = FALSE;
 static gboolean openedVDP2 = FALSE;
 static gboolean openedM68K = FALSE;
 static gboolean openedSCUDSP = FALSE;
+static gboolean openedSCSP = FALSE;
 
 static void debugUpdateViews();
 
@@ -1475,6 +1482,83 @@ static void openMemTrans(GtkWidget* widget) {
   gtk_widget_destroy(transferDlg.dialog);
 }
 
+/* ------------------------------------------------------------------------------- */
+/* SCSP Dialog ------------------------------------------------------------------- */
+
+static void scspDefine() {
+  /* fill in all dialog elements */
+ 
+  char tempstr[1024];
+  
+  ScspSlotDebugStats(SCSPproc.curs, tempstr);
+  gtk_label_set_text( GTK_LABEL(SCSPproc.commDesc), tempstr );
+}
+
+static void scspCursorChanged (GtkWidget *spin, gpointer user_data) {
+  /* called when user change line number */
+
+  SCSPproc.curs = gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON(spin) );
+  scspDefine();
+}
+
+static void SCSPupdate() {
+  /* to be called when command list has changed */
+
+  scspDefine();
+}
+
+static gboolean scspDeleteSignal() {
+
+  openedSCSP = FALSE;
+  return FALSE; /* propagate event */
+}
+
+static void openSCSP() {
+
+  GtkWidget *vbox, *hbox;
+
+  /* Initialization */
+
+  if ( openedSCSP ) {
+
+    gtk_widget_show_all( SCSPproc.dialog );
+    return;
+  }
+  if ( yui.running == GTKYUI_WAIT ) yuiYabauseInit(); /* force yabause initialization */
+  openedSCSP = TRUE;
+  
+  /* Dialog window */
+
+  SCSPproc.dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
+  gtk_window_set_title( GTK_WINDOW(SCSPproc.dialog), "SCSP" );
+  gtk_window_set_resizable( GTK_WINDOW(SCSPproc.dialog), FALSE );
+  gtk_window_set_icon( GTK_WINDOW(SCSPproc.dialog), yui.pixBufIcon );
+
+  vbox = gtk_vbox_new(FALSE, 2);
+  gtk_container_set_border_width( GTK_CONTAINER( vbox ),4 );
+  gtk_container_add (GTK_CONTAINER (SCSPproc.dialog), vbox);  
+  hbox = gtk_hbox_new(FALSE, 2);
+  gtk_box_pack_start( GTK_BOX( vbox ), hbox, FALSE, FALSE, 4 );  
+
+  /* Slot spin button */
+
+  gtk_box_pack_start( GTK_BOX( hbox ), gtk_label_new("Slot number"), FALSE, FALSE, 4 );  
+  SCSPproc.spin = gtk_spin_button_new_with_range(0,31,1);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(SCSPproc.spin),0);
+  SCSPproc.curs = 0;
+  gtk_box_pack_start( GTK_BOX( hbox ), SCSPproc.spin, FALSE, FALSE, 4 );
+  g_signal_connect(G_OBJECT(SCSPproc.spin), "value-changed", GTK_SIGNAL_FUNC(scspCursorChanged), NULL );
+
+   /* Description text */
+
+  SCSPproc.commDesc = gtk_label_new("");
+  gtk_box_pack_start( GTK_BOX( vbox ), SCSPproc.commDesc, FALSE, FALSE, 4 );
+  
+  SCSPupdate();
+  g_signal_connect(G_OBJECT(SCSPproc.dialog), "delete-event", GTK_SIGNAL_FUNC(scspDeleteSignal), NULL );
+  gtk_widget_show_all( SCSPproc.dialog );
+}
+
 /* ------------------------------------------------------------------------------ */
 
 static void debugUpdateViews() {
@@ -1485,6 +1569,7 @@ static void debugUpdateViews() {
   if ( openedSH2[FALSE] ) sh2update( FALSE );
   if ( openedSH2[TRUE] ) sh2update( TRUE );
   if ( openedSCUDSP ) SCUDSPupdate();
+  if ( openedSCSP ) SCSPupdate();
   if ( openedM68K ) M68Kupdate();
   memDumpUpdateAll();
 }
@@ -1500,6 +1585,8 @@ static GtkWidget* widgetDebug() {
   GtkWidget *buttonVDP2 = gtk_button_new_with_label( "VDP2" );
   GtkWidget *buttonM68K = gtk_button_new_with_label( "M68K" );
   GtkWidget *buttonSCUDSP = gtk_button_new_with_label( "ScuDsp" );
+  GtkWidget *buttonSCSP = gtk_button_new_with_label( "SCSP" );
+
   gtk_box_pack_start( GTK_BOX( hbox ), buttonMemDump, FALSE, FALSE, 4 );
   gtk_box_pack_start( GTK_BOX( hbox ), buttonMemTrans, FALSE, FALSE, 4 );
   gtk_box_pack_start( GTK_BOX( hbox ), buttonMSH2, FALSE, FALSE, 4 );
@@ -1508,6 +1595,7 @@ static GtkWidget* widgetDebug() {
   gtk_box_pack_start( GTK_BOX( hbox ), buttonVDP2, FALSE, FALSE, 4 );
   gtk_box_pack_start( GTK_BOX( hbox ), buttonM68K, FALSE, FALSE, 4 );
   gtk_box_pack_start( GTK_BOX( hbox ), buttonSCUDSP, FALSE, FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( hbox ), buttonSCSP, FALSE, FALSE, 4 );
 
   g_signal_connect(buttonMemDump, "clicked",
 		   G_CALLBACK(openMemDump), NULL);
@@ -1525,6 +1613,8 @@ static GtkWidget* widgetDebug() {
 		   G_CALLBACK(openM68K), NULL);
   g_signal_connect(buttonSCUDSP, "clicked",
 		   G_CALLBACK(openSCUDSP), NULL);
+  g_signal_connect(buttonSCSP, "clicked",
+		   G_CALLBACK(openSCSP), NULL);
 
   return hbox;
 }
