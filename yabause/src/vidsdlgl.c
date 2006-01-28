@@ -1662,6 +1662,7 @@ static void Vdp2DrawNBG0(void)
 {
    vdp2draw_struct info;
    YglTexture texture;
+   int *tmp;
 
    /* FIXME should start by checking if it's a normal
     * or rotate scroll screen
@@ -1805,8 +1806,39 @@ static void Vdp2DrawNBG0(void)
       info.vertices[6] = info.x * info.coordincx;
       info.vertices[7] = (info.y + info.cellh) * info.coordincy;
 
-      YglQuad((YglSprite *)&info, &texture);
+      tmp = YglQuad((YglSprite *)&info, &texture);
       Vdp2DrawCell(&info, &texture);
+
+      // Handle Scroll Wrapping(Let's see if we even need do to it to begin
+      // with)
+      if (info.x < (vdp2width - info.cellw))
+      {
+         info.vertices[0] = (info.x+info.cellw) * info.coordincx;
+         info.vertices[2] = (info.x + (info.cellw<<1)) * info.coordincx;
+         info.vertices[4] = (info.x + (info.cellw<<1)) * info.coordincx;
+         info.vertices[6] = (info.x+info.cellw) * info.coordincx;
+
+         YglCachedQuad((YglSprite *)&info, tmp);
+
+         if (info.y < (vdp2height - info.cellh))
+         {
+            info.vertices[1] = (info.y+info.cellh) * info.coordincy;
+            info.vertices[3] = (info.y + (info.cellh<<1)) * info.coordincy;
+            info.vertices[5] = (info.y + (info.cellh<<1)) * info.coordincy;
+            info.vertices[7] = (info.y+info.cellh) * info.coordincy;
+
+            YglCachedQuad((YglSprite *)&info, tmp);
+         }
+      }
+      else if (info.y < (vdp2height - info.cellh))
+      {
+         info.vertices[1] = (info.y+info.cellh) * info.coordincy;
+         info.vertices[3] = (info.y + (info.cellh<<1)) * info.coordincy;
+         info.vertices[5] = (info.y + (info.cellh<<1)) * info.coordincy;
+         info.vertices[7] = (info.y+info.cellh) * info.coordincy;
+
+         YglCachedQuad((YglSprite *)&info, tmp);
+      }
    }
    else
    {
@@ -1882,6 +1914,7 @@ static void Vdp2DrawNBG1(void)
 {
    vdp2draw_struct info;
    YglTexture texture;
+   int *tmp;
 
    info.enable = Vdp2Regs->BGON & 0x2;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x200);
@@ -2019,8 +2052,39 @@ static void Vdp2DrawNBG1(void)
       info.vertices[6] = info.x * info.coordincx;
       info.vertices[7] = (info.y + info.cellh) * info.coordincy;
 
-      YglQuad((YglSprite *)&info, &texture);
+      tmp = YglQuad((YglSprite *)&info, &texture);
       Vdp2DrawCell(&info, &texture);
+
+      // Handle Scroll Wrapping(Let's see if we even need do to it to begin
+      // with)
+      if (info.x < (vdp2width - info.cellw))
+      {
+         info.vertices[0] = (info.x+info.cellw) * info.coordincx;
+         info.vertices[2] = (info.x + (info.cellw<<1)) * info.coordincx;
+         info.vertices[4] = (info.x + (info.cellw<<1)) * info.coordincx;
+         info.vertices[6] = (info.x+info.cellw) * info.coordincx;
+
+         YglCachedQuad((YglSprite *)&info, tmp);
+
+         if (info.y < (vdp2height - info.cellh))
+         {
+            info.vertices[1] = (info.y+info.cellh) * info.coordincy;
+            info.vertices[3] = (info.y + (info.cellh<<1)) * info.coordincy;
+            info.vertices[5] = (info.y + (info.cellh<<1)) * info.coordincy;
+            info.vertices[7] = (info.y+info.cellh) * info.coordincy;
+
+            YglCachedQuad((YglSprite *)&info, tmp);
+         }
+      }
+      else if (info.y < (vdp2height - info.cellh))
+      {
+         info.vertices[1] = (info.y+info.cellh) * info.coordincy;
+         info.vertices[3] = (info.y + (info.cellh<<1)) * info.coordincy;
+         info.vertices[5] = (info.y + (info.cellh<<1)) * info.coordincy;
+         info.vertices[7] = (info.y+info.cellh) * info.coordincy;
+
+         YglCachedQuad((YglSprite *)&info, tmp);
+      }
    }
    else
       Vdp2DrawMap(&info, &texture);
