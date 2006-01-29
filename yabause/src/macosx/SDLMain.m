@@ -5,7 +5,7 @@
     Feel free to customize this file to suit your needs
 */
 /* Yabause SDLMain 
-	0.6.0 Beta
+	0.6.0 Beta 4
 	J. Vernet
 	16/01/2006	*/
 

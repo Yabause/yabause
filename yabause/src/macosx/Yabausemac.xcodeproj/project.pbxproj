@@ -694,7 +694,7 @@
 				OPTIMIZATION_CFLAGS = "-O";
 				OTHER_CFLAGS = (
 					"-DWORDS_BIGENDIAN=1",
-					"-DVERSION=0.6.0",
+					"-DVERSION=0.6",
 				);
 				OTHER_LDFLAGS = (
 					"-framework",
