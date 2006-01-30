@@ -48,6 +48,9 @@
 #include <stdlib.h>
 
 static gboolean forceSoundDisabled = FALSE;
+static gchar* forceBiosFileName = NULL;
+static gchar* forceCdFileName = NULL;
+static gint   forceCdType = 0;
 
 static void yuiRun(void);
 static void yuiPause(void);
@@ -334,18 +337,30 @@ static void cfGetText( ComboFileSelect* cf, gchar** str ) {
   }
 }
 
-static void cfCatchValue( ComboFileSelect* cf, gchar* value ) {
+static gboolean cfCatchValue( ComboFileSelect* cf, gchar* value ) {
 
   gint i;
   gchar* c = "";
   if ( !value ) {
     cfSetActive( cf, 0 );
-    return;
+    return TRUE;
   }
   for ( i=1 ; i <= cf->idc ; i++ ) {
     cfSetActive( cf, i );
     cfGetText( cf, &c );
-    if ( !strcmp(value, c ) ) break;
+    if ( !strcmp(value, c ) ) return TRUE;
+  }
+  return FALSE;
+}
+
+static cfCatchOrInsertValue( ComboFileSelect* cf, gchar* value ) {
+
+  if ( !cfCatchValue( cf, value )) {
+
+    gint newid = ++(cf->idc);
+    gtk_combo_box_insert_text( GTK_COMBO_BOX( cf->combo ), newid, value );
+    saveCombo( GTK_COMBO_BOX(cf->combo), newid, cf->name );
+    gtk_combo_box_set_active( GTK_COMBO_BOX(cf->combo), newid );    
   }
 }
 
@@ -755,6 +770,9 @@ static int yuiInit(void) {
 	gtk_box_pack_start( GTK_BOX( vboxHigh ), cfGetWidget( yui.cfBios ), FALSE, TRUE, 4 );
 	gtk_box_pack_start( GTK_BOX( vboxHigh ), cfGetWidget( yui.cfCdRom ), FALSE, TRUE, 4 );	
 
+	if ( forceBiosFileName ) cfCatchOrInsertValue( yui.cfBios, forceBiosFileName );
+	if ( forceCdFileName ) cfCatchOrInsertValue( yui.cfCdRom, forceCdFileName );
+
 	hboxRadioCD = gtk_hbox_new( FALSE, 2 );
 	gtk_box_pack_start( GTK_BOX( vboxHigh ), hboxRadioCD, FALSE, TRUE, 4 );
 
@@ -762,6 +780,8 @@ static int yuiInit(void) {
 	yui.checkCdRom = gtk_radio_button_new_with_label_from_widget( GTK_RADIO_BUTTON(yui.checkIso), "Native CD" );
 	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), yui.checkIso, FALSE, TRUE, 4 );
 	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), yui.checkCdRom, FALSE, TRUE, 4 );
+
+	if ( forceCdType == 2 ) gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(yui.checkCdRom), TRUE ); 
 
 	yui.buttonRun = gtk_button_new_from_stock( GTK_STOCK_EXECUTE );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonRun, FALSE, FALSE, 2 );
@@ -822,17 +842,20 @@ void YuiSetSoundEnable(int enablesound) {
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {}
 
 void YuiSetBiosFilename(const char * biosfilename) {
-  /*        bios = biosfilename; */
+
+  forceBiosFileName = g_strdup(biosfilename);
 }
 
 void YuiSetIsoFilename(const char * isofilename) {
-  /*	cdcore = CDCORE_ISO;
-	iso_or_cd = isofilename; */
+
+  forceCdFileName = g_strdup(isofilename);
+  forceCdType = 1;
 }
 
 void YuiSetCdromFilename(const char * cdromfilename) {
-  /*	cdcore = CDCORE_ARCH;
-	iso_or_cd = cdromfilename; */
+
+  forceCdFileName = g_strdup(cdromfilename);
+  forceCdType = 2;
 }
 
 void YuiHideShow(void) {
