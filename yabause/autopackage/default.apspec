@@ -1,0 +1,43 @@
+# -*-shell-script-*-
+
+[Meta]
+RootName: @yabause.sf.net/yabause:$SOFTWAREVERSION
+DisplayName: Yabause Sega Saturn Emulator
+ShortName: yabause
+Maintainer: Guillaume Duhamel <guillaume.duhamel@gmail.com>
+Packager: Guillaume Duhamel <guillaume.duhamel@gmail.com>
+Summary: Yabause is a Sega Saturn emulator.
+URL: http://yabause.sf.net/
+License: GNU General Public License, Version 2
+SoftwareVersion: 0.6
+AutopackageTarget: 1.0
+
+# Only uncomment InterfaceVersion if your package exposes interfaces to other software,
+# for instance if it includes DSOs or python/perl modules. See the developer guide for more info,
+# or ask on autopackage-dev if you don't understand interface versioning in autopackage.
+#
+# InterfaceVersion: 0.0
+
+[Description]
+This is a Sega Saturn emulator.
+
+[BuildPrepare]
+prepareBuild
+
+[BuildUnprepare]
+unprepareBuild
+
+[Imports]
+echo '*' | import
+
+[Prepare]
+# Dependency checking
+require @gtk.org/gtk 2.4
+
+[Install]
+# Put your installation script here
+installExe bin/yabause
+
+[Uninstall]
+# Usually just the following line is enough to uninstall everything
+uninstallFromLog

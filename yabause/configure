@@ -5319,7 +5319,7 @@ _ACEOF
 
 fi;
 
-                                                                                          ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/dreamcast/Makefile src/freebsd/Makefile src/linux/Makefile src/macosx/Makefile src/windows/Makefile"
+                                                                                                    ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/dreamcast/Makefile src/freebsd/Makefile src/linux/Makefile src/macosx/Makefile src/windows/Makefile autopackage/default.apspec"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5898,6 +5898,7 @@ do
   "src/linux/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/linux/Makefile" ;;
   "src/macosx/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/macosx/Makefile" ;;
   "src/windows/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/windows/Makefile" ;;
+  "autopackage/default.apspec" ) CONFIG_FILES="$CONFIG_FILES autopackage/default.apspec" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

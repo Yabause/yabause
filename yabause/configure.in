@@ -107,5 +107,6 @@ AC_CONFIG_FILES([Makefile
 	src/linux/Makefile
 	src/macosx/Makefile
 	src/windows/Makefile
+	autopackage/default.apspec
 ])
 AC_OUTPUT
