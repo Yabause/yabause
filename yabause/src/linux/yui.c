@@ -665,6 +665,7 @@ static void yuiYabauseInit() {
     yuiSetString( "lastrunbios", c );
     cfGetText( yui.cfCdRom, &c );
     yuiSetString( "lastruncdrom", c );
+    yuiSetInt( "cdType", !gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( yui.checkIso ) ) );
     yuiStore();
      
     if (YabauseInit(&yinit) == -1) {
@@ -781,7 +782,8 @@ static int yuiInit(void) {
 	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), yui.checkIso, FALSE, TRUE, 4 );
 	gtk_box_pack_start( GTK_BOX( hboxRadioCD ), yui.checkCdRom, FALSE, TRUE, 4 );
 
-	if ( forceCdType == 2 ) gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(yui.checkCdRom), TRUE ); 
+	if (( yuiGetInt( "cdType", 0 )&& !forceCdType )||( forceCdType == 2 ))
+	  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(yui.checkCdRom), TRUE ); 
 
 	yui.buttonRun = gtk_button_new_from_stock( GTK_STOCK_EXECUTE );
 	gtk_box_pack_start( GTK_BOX( hboxLow ), yui.buttonRun, FALSE, FALSE, 2 );
