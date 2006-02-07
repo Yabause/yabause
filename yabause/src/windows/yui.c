@@ -1614,7 +1614,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
-   char tempstr[1024];
+   char tempstr[2048];
    int i;
 
    switch (uMsg)
