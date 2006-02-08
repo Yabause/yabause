@@ -12,6 +12,14 @@ typedef struct
 
 typedef struct
 {
+   u8 vector;
+   u8 level;
+   u16 mask;
+   u32 statusbit;
+} scuinterrupt_struct;
+
+typedef struct
+{
    /* DMA registers */
    u32 D0R;
    u32 D0W;
@@ -69,6 +77,8 @@ typedef struct
    int numcodebreakpoints;
    void (*BreakpointCallBack)(u32);
    u8 inbreakpoint;
+   scuinterrupt_struct interrupts[30];
+   u32 NumberOfInterrupts;
 } Scu;
 
 extern Scu * ScuRegs;

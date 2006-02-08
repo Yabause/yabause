@@ -28,6 +28,8 @@
 Scu * ScuRegs;
 scudspregs_struct * ScuDsp;
 
+void ScuTestInterruptMask();
+
 //////////////////////////////////////////////////////////////////////////////
 
 int ScuInit(void) {
@@ -84,6 +86,9 @@ void ScuReset(void) {
 
    ScuRegs->timer0 = 0;
    ScuRegs->timer1 = 0;
+
+   memset((void *)ScuRegs->interrupts, 0, sizeof(scuinterrupt_struct) * 30);
+   ScuRegs->NumberOfInterrupts = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1869,6 +1874,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0xA0:
          ScuRegs->IMS = val;
+         ScuTestInterruptMask();
          break;
       case 0xA4:
          ScuRegs->IST &= val;
@@ -1896,11 +1902,74 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ScuTestInterruptMask()
+{
+   int i, i2;
+
+   // Handle SCU interrupts
+   for (i = 0; i < ScuRegs->NumberOfInterrupts; i++)
+   {
+      if (!(ScuRegs->IMS & ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].mask))
+      {
+         SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].level);
+         ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].statusbit;
+
+         // Shorten list
+         for (i2 = i; i2 < (ScuRegs->NumberOfInterrupts-1); i2++)
+            memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2+1], sizeof(scuinterrupt_struct));
+
+         ScuRegs->NumberOfInterrupts--;
+         break;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
+{
+   u32 i, i2;
+   scuinterrupt_struct tmp;
+
+   // Make sure interrupt doesn't already exist
+   for (i = 0; i < ScuRegs->NumberOfInterrupts; i++)
+   {
+      if (ScuRegs->interrupts[i].vector == vector)
+         return;
+   }
+
+   ScuRegs->interrupts[ScuRegs->NumberOfInterrupts].vector = vector;
+   ScuRegs->interrupts[ScuRegs->NumberOfInterrupts].level = level;
+   ScuRegs->interrupts[ScuRegs->NumberOfInterrupts].mask = mask;
+   ScuRegs->interrupts[ScuRegs->NumberOfInterrupts].statusbit = statusbit;
+   ScuRegs->NumberOfInterrupts++;
+
+   // Sort interrupts
+   for (i = 0; i < (ScuRegs->NumberOfInterrupts-1); i++)
+   {
+      for (i2 = i+1; i2 < ScuRegs->NumberOfInterrupts; i2++)
+      {
+         if (ScuRegs->interrupts[i].level > ScuRegs->interrupts[i2].level)
+         {
+            memcpy(&tmp, &ScuRegs->interrupts[i], sizeof(scuinterrupt_struct));
+            memcpy(&ScuRegs->interrupts[i], &ScuRegs->interrupts[i2], sizeof(scuinterrupt_struct));
+            memcpy(&ScuRegs->interrupts[i2], &tmp, sizeof(scuinterrupt_struct));
+         }
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
-   ScuRegs->IST |= statusbit;
 
    if (!(ScuRegs->IMS & mask))
       SH2SendInterrupt(MSH2, vector, level);
+   else
+   {
+      ScuQueueInterrupt(vector, level, mask, statusbit);
+      ScuRegs->IST |= statusbit;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
