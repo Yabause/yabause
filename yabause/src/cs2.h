@@ -211,6 +211,8 @@ typedef struct {
   block_struct workblock;
 
   u32 curdirsect;
+  u32 curdirsize;
+  u32 curdirfidoffset;
   dirrec_struct fileinfo[MAX_FILES];
   u32 numfiles;
 
@@ -340,7 +342,8 @@ int Cs2CopyDirRecord(u8 * buffer, dirrec_struct * dirrec);
 int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset);
 void Cs2SetupFileInfoTransfer(u32 fid);
 partition_struct * Cs2ReadUnFilteredSector(u32 rufsFAD);
-partition_struct * Cs2ReadFilteredSector(u32 rfsFAD);
+//partition_struct * Cs2ReadFilteredSector(u32 rfsFAD);
+int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition);
 u8 Cs2GetRegionID(void);
 
 int Cs2SaveState(FILE *);

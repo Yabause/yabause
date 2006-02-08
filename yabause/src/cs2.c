@@ -697,6 +697,8 @@ void Cs2Reset(void) {
 
   // clear filesystem stuff
   Cs2Area->curdirsect = 0;
+  Cs2Area->curdirsize = 0;
+  Cs2Area->curdirfidoffset = 0;
   memset(&Cs2Area->fileinfo, 0, sizeof(Cs2Area->fileinfo));
   Cs2Area->numfiles = 0;
 
@@ -780,32 +782,49 @@ void Cs2Exec(u32 timing) {
          case CDB_STAT_PLAY:
          {
             partition_struct * playpartition;
-            playpartition = Cs2ReadFilteredSector(Cs2Area->FAD);
+            int ret = Cs2ReadFilteredSector(Cs2Area->FAD, &playpartition);
 
-            if (playpartition != NULL)
+            switch (ret)
             {
-               Cs2Area->FAD++;
+               case 0:
+                  // Sector Read OK
+                  Cs2Area->FAD++;
 
-               CDLOG("partition number = %d blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", (playpartition - Cs2Area->partition), playpartition->numblocks, Cs2Area->blockfreespace, Cs2Area->FAD, playpartition->size, Cs2Area->isbufferfull);
+                  if (playpartition != NULL)
+                  {
+                     // We can use this sector
+                     CDLOG("partition number = %d blocks = %d blockfreespace = %d fad = %x playpartition->size = %x isbufferfull = %x\n", (playpartition - Cs2Area->partition), playpartition->numblocks, Cs2Area->blockfreespace, Cs2Area->FAD, playpartition->size, Cs2Area->isbufferfull);
 
-               Cs2Area->reg.HIRQ |= CDB_HIRQ_CSCT;
-               Cs2Area->isonesectorstored = 1;
+                     Cs2Area->reg.HIRQ |= CDB_HIRQ_CSCT;
+                     Cs2Area->isonesectorstored = 1;
 
-               if (Cs2Area->FAD >= Cs2Area->playendFAD) {
-                  // we're done
-                  Cs2Area->status = CDB_STAT_PAUSE;
-                  Cs2SetTiming(0);
-                  Cs2Area->reg.HIRQ |= CDB_HIRQ_PEND;
+                     if (Cs2Area->FAD >= Cs2Area->playendFAD) {
+                        // we're done
+                        Cs2Area->status = CDB_STAT_PAUSE;
+                        Cs2SetTiming(0);
+                        Cs2Area->reg.HIRQ |= CDB_HIRQ_PEND;
 
-                  if (Cs2Area->playtype == CDB_PLAYTYPE_FILE)
-                     Cs2Area->reg.HIRQ |= CDB_HIRQ_EFLS;
+                        if (Cs2Area->playtype == CDB_PLAYTYPE_FILE)
+                           Cs2Area->reg.HIRQ |= CDB_HIRQ_EFLS;
 
-                  CDLOG("PLAY HAS ENDED\n");
-               }
-               if (Cs2Area->isbufferfull) {
-                  CDLOG("BUFFER IS FULL\n");
-//                  status = CDB_STAT_PAUSE;
-               }
+                        CDLOG("PLAY HAS ENDED\n");
+                     }
+                     if (Cs2Area->isbufferfull) {
+                        CDLOG("BUFFER IS FULL\n");
+//                        status = CDB_STAT_PAUSE;
+                     }
+                  }
+                  else
+                  {
+                     CDLOG("Sector filtered out\n");
+                  }
+                  break;
+               case -1:
+                  // Things weren't setup correctly
+                  break;
+               case -2:
+                  // Do a read retry
+                  break;
             }
 
             break;
@@ -2016,14 +2035,18 @@ void Cs2ChangeDirectory(void) {
 
   if (cdfilternum == 0xFF)
   {
-     // fix me
+     doCDReport(CDB_STAT_REJECT);
+     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
+     return;
   }
   else if (cdfilternum < 0x24)
   {
      if (Cs2ReadFileSystem(Cs2Area->filter + cdfilternum, ((Cs2Area->reg.CR3 & 0xFF) << 16) | Cs2Area->reg.CR4, 0) != 0)
      {
-        // fix me
         CDLOG("cs2\t: ReadFileSystem failed\n");
+        doCDReport(CDB_STAT_REJECT);
+        Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
+        return;
      }
   }
 
@@ -2041,14 +2064,17 @@ void Cs2ReadDirectory(void) {
   if (rdfilternum == 0xFF)
   {
      doCDReport(CDB_STAT_REJECT);
+     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
+     return;
   }
   else if (rdfilternum < 0x24)
   {
      if (Cs2ReadFileSystem(Cs2Area->filter + rdfilternum, ((Cs2Area->reg.CR3 & 0xFF) << 8) | Cs2Area->reg.CR4, 1) != 0)
      {
-        // fix me
         CDLOG("cs2\t: ReadFileSystem failed\n");
         doCDReport(CDB_STAT_REJECT);
+        Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
+        return;
      }
   }
 
@@ -2099,7 +2125,6 @@ void Cs2GetFileInfo(void) {
   }
 
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY;
-
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2852,7 +2877,6 @@ int Cs2CopyDirRecord(u8 * buffer, dirrec_struct * dirrec)
 
 int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
 {
-//   u32 fid_offset = 0;
    u8 * workbuffer;
    u32 i;
    dirrec_struct dirrec;
@@ -2870,15 +2894,10 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
       // make sure we have a valid current directory
       if (Cs2Area->curdirsect == 0)
          return -1;
-/*
-//      rfspartition = ReadUnFilteredSector(??);
-      CDLOG("cs2\t: fix me: readDirectory not working\n");
-      return -1;
 
-      fid_offset = fid;
-*/
-
-      curdirlba = Cs2Area->fileinfo[fid].lba;
+      Cs2Area->curdirfidoffset = fid - 2;
+      curdirlba = Cs2Area->curdirsect;
+      numsectorsleft = Cs2Area->curdirsize;
    }
    else
    {
@@ -2907,7 +2926,8 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
          rfspartition->numblocks -= 1;
 
          curdirlba = Cs2Area->curdirsect = dirrec.lba;
-         numsectorsleft = (dirrec.size / blocksectsize) - 1;
+         numsectorsleft = Cs2Area->curdirsize = (dirrec.size / blocksectsize) - 1;
+         Cs2Area->curdirfidoffset = 0;
       }
       else
       {
@@ -2917,7 +2937,9 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
          if (Cs2Area->curdirsect == 0)
             return -1;
 
-         curdirlba = Cs2Area->fileinfo[fid].lba - 150;
+         curdirlba = Cs2Area->curdirsect = Cs2Area->fileinfo[fid - Cs2Area->curdirfidoffset].lba - 150;
+         numsectorsleft = Cs2Area->curdirsize = (Cs2Area->fileinfo[fid - Cs2Area->curdirfidoffset].size / blocksectsize) - 1;
+         Cs2Area->curdirfidoffset = 0;
       }
    }
 
@@ -2945,10 +2967,44 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
       }
    }
 
-   // If fid_offset != 0, parse sector entries until we've found the fid that
-   // matches fid_offset
+   // If doing a ReadDirectory operation, parse sector entries until we've
+   // found the fid that matches fid
+   if (isoffset)
+   {
+      for (i = 2; i < fid; i++)
+      {
+         Cs2CopyDirRecord(workbuffer, Cs2Area->fileinfo + 2);
+         workbuffer += Cs2Area->fileinfo[2].recordsize;
 
-   // implement me
+         if (workbuffer[0] == 0)
+         {
+            if (numsectorsleft > 0)
+            {
+               // Free previous read sector
+               rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
+               Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+               rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
+       
+               // Sort remaining blocks
+               Cs2SortBlocks(rfspartition);
+               rfspartition->numblocks -= 1;
+   
+               // Read in next sector of directory record
+               if ((rfspartition = Cs2ReadUnFilteredSector(curdirlba+150)) == NULL)
+                  return -2;
+
+               curdirlba++;
+
+               numsectorsleft--;
+               workbuffer = rfspartition->block[rfspartition->numblocks - 1]->data;
+            }
+            else
+            {
+               break;
+            }
+         }
+      }
+   }
 
    // Now generate the last 254 entries(the first two should've already been
    // generated earlier)
@@ -2972,9 +3028,10 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
             rfspartition->numblocks -= 1;
    
             // Read in next sector of directory record
-            if ((rfspartition = Cs2ReadUnFilteredSector(dirrec.lba+150)) == NULL)
+            if ((rfspartition = Cs2ReadUnFilteredSector(curdirlba+150)) == NULL)
                return -2;
-            dirrec.lba++;
+
+            curdirlba++;
             numsectorsleft--;
             workbuffer = rfspartition->block[rfspartition->numblocks - 1]->data;
          }
@@ -3113,7 +3170,7 @@ partition_struct * Cs2ReadUnFilteredSector(u32 rufsFAD) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-partition_struct * Cs2ReadFilteredSector(u32 rfsFAD) {
+int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
   char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                           0xFF, 0xFF, 0xFF, 0x00};
   int isaudio = 0;
@@ -3121,8 +3178,11 @@ partition_struct * Cs2ReadFilteredSector(u32 rfsFAD) {
   if (Cs2Area->outconcddev != NULL && !Cs2Area->isbufferfull)
   {     
      // read a sector using cd interface function to workblock.data
-     if (!Cs2Area->cdi->ReadSectorFAD(rfsFAD, Cs2Area->workblock.data)) 
-        return NULL;
+     if (!Cs2Area->cdi->ReadSectorFAD(rfsFAD, Cs2Area->workblock.data))
+     {
+        *partition = NULL;
+        return -2;
+     }
 
      Cs2Area->workblock.size = Cs2Area->getsectsize;
      Cs2Area->workblock.FAD = rfsFAD;
@@ -3144,11 +3204,13 @@ partition_struct * Cs2ReadFilteredSector(u32 rfsFAD) {
 
      // pass workblock to filter function(after it identifies partition,
      // it should allocate the partition block, setup/change the partition
-     // values, and copy workblock to the allocated block)
-     return Cs2FilterData(Cs2Area->outconcddev, isaudio);
+     // values, and copy workblock to the allocated block)        
+     *partition = Cs2FilterData(Cs2Area->outconcddev, isaudio);
+     return 0;
   }
 
-  return NULL;
+  *partition = NULL;
+  return -1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
