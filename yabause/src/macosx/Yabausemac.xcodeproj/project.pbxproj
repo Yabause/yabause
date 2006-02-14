@@ -400,6 +400,7 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
+				4EBA39B0096DD69E00A0E0F1 /* c68k_opB.inc */,
 				4E7E6F5F0986B8BE00E72DF5 /* cd.h */,
 				4E62EF54097017EE00EEB0F4 /* types.h */,
 				4E62EF2E097015C200EEB0F4 /* cd.c */,
@@ -429,7 +430,6 @@
 				4EBA39AD096DD69E00A0E0F1 /* c68k_op8.inc */,
 				4EBA39AE096DD69E00A0E0F1 /* c68k_op9.inc */,
 				4EBA39AF096DD69E00A0E0F1 /* c68k_opA.inc */,
-				4EBA39B0096DD69E00A0E0F1 /* c68k_opB.inc */,
 				4EBA39B1096DD69E00A0E0F1 /* c68k_opC.inc */,
 				4EBA39B2096DD69E00A0E0F1 /* c68k_opD.inc */,
 				4EBA39B3096DD69E00A0E0F1 /* c68k_opE.inc */,
@@ -675,7 +675,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				DEBUGGING_SYMBOLS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					/Library/Frameworks,
 					"$(SRCROOT)",
@@ -755,7 +754,7 @@
 				OPTIMIZATION_CFLAGS = "-fast -mcpu=7450";
 				OTHER_CFLAGS = (
 					"-DWORDS_BIGENDIAN=1",
-					"-DVERSION=0.6.0",
+					"-DVERSION=0.6",
 				);
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -784,7 +783,7 @@
 					"-framework",
 					GLUT,
 				);
-				PREBINDING = NO;
+				PRECOMPILE_PREFIX_HEADER = YES;
 				PRODUCT_NAME = Yabausemac;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
