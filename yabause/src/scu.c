@@ -1915,7 +1915,7 @@ void ScuTestInterruptMask()
          ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].statusbit;
 
          // Shorten list
-         for (i2 = i; i2 < (ScuRegs->NumberOfInterrupts-1); i2++)
+         for (i2 = ScuRegs->NumberOfInterrupts-1-i; i2 < (ScuRegs->NumberOfInterrupts-1); i2++)
             memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2+1], sizeof(scuinterrupt_struct));
 
          ScuRegs->NumberOfInterrupts--;
