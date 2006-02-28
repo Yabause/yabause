@@ -953,6 +953,15 @@ void scsp_set_b(u32 a, u8 d)
 	switch(a & 0x3F){
         case 0x00: // MEM4MB/DAC18B
                 scsp.mem4b = (d >> 1) & 0x1;
+                if (scsp.mem4b)
+                   C68k_Set_Fetch(&C68K, 0x000000, 0x080000, (pointer)SoundRam);
+                else
+                {
+                   C68k_Set_Fetch(&C68K, 0x000000, 0x040000, (pointer)SoundRam);
+                   C68k_Set_Fetch(&C68K, 0x040000, 0x080000, (pointer)SoundRam);
+                   C68k_Set_Fetch(&C68K, 0x080000, 0x0C0000, (pointer)SoundRam);
+                   C68k_Set_Fetch(&C68K, 0x0C0000, 0x100000, (pointer)SoundRam);
+                }
                 return;
 
         case 0x01: // VER/MVOL
@@ -1092,6 +1101,15 @@ void scsp_set_w(u32 a, u16 d)
         case 0x00: // MEM4MB/DAC18B/VER/MVOL
                 scsp.mem4b = (d >> 9) & 0x1;                
 		scsp.mvol = d & 0xF;
+                if (scsp.mem4b)
+                   C68k_Set_Fetch(&C68K, 0x000000, 0x080000, (pointer)SoundRam);
+                else
+                {
+                   C68k_Set_Fetch(&C68K, 0x000000, 0x040000, (pointer)SoundRam);
+                   C68k_Set_Fetch(&C68K, 0x040000, 0x080000, (pointer)SoundRam);
+                   C68k_Set_Fetch(&C68K, 0x080000, 0x0C0000, (pointer)SoundRam);
+                   C68k_Set_Fetch(&C68K, 0x0C0000, 0x100000, (pointer)SoundRam);
+                }
 		return;
 
         case 0x01: // RBL/RBP
@@ -2667,7 +2685,10 @@ int ScspInit(int coreid) {
    C68k_Set_WriteB(&C68K, (C68K_WRITE *)c68k_byte_write);
    C68k_Set_WriteW(&C68K, (C68K_WRITE *)c68k_word_write);
 
-   C68k_Set_Fetch(&C68K, 0x000000, 0x080000, (pointer)SoundRam);
+   C68k_Set_Fetch(&C68K, 0x000000, 0x040000, (pointer)SoundRam);
+   C68k_Set_Fetch(&C68K, 0x040000, 0x080000, (pointer)SoundRam);
+   C68k_Set_Fetch(&C68K, 0x080000, 0x0C0000, (pointer)SoundRam);
+   C68k_Set_Fetch(&C68K, 0x0C0000, 0x100000, (pointer)SoundRam);
 
    yabsys.IsM68KRunning = 0;
 
