@@ -1,5 +1,5 @@
 /*  Copyright 2004 Stephane Dallongeville
-    Copyright 2004-2005 Theo Berkau
+    Copyright 2004-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -627,7 +627,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		return;
 
         case 0x10: // OCT/FNS(highest 2 bits)
-		if (d & 0x40) slot->fsft = 7 + ((-(d >> 3)) & 7);
+		if (d & 0x40) slot->fsft = 23 - ((d >> 3) & 0xF);
 		else slot->fsft = ((d >> 3) & 7) ^ 7;
 		slot->finct = (slot->finct & 0x7F80) + ((d & 3) << (8 + 7));
 		slot->finc = (0x20000 + slot->finct) >> slot->fsft;
@@ -815,7 +815,7 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 		return;
 
         case 0x8: // OCT/FNS
-		if (d & 0x4000) slot->fsft = 7 + ((-(d >> 11)) & 7);
+		if (d & 0x4000) slot->fsft = 23 - ((d >> 11) & 0xF);
 		else slot->fsft = (((d >> 11) & 7) ^ 7);
 		slot->finc = ((0x400 + (d & 0x3FF)) << 7) >> slot->fsft;
 		return;
@@ -2489,7 +2489,7 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 	{
 		x = 1.0 + ((i & 3) * 0.25);				// bits 0-1 : x1.00, x1.25, x1.50, x1.75
 		x *= (double) (1 << ((i >> 2)));			// bits 2-5 : shift bits (x2^0 - x2^15)
-		x *= (double) (SCSP_ENV_LEN << SCSP_ENV_LB);	// on ajuste pour le tableau scsp_env_table
+		x *= (double) (SCSP_ENV_LEN << SCSP_ENV_LB);	// adjust for table scsp_env_table
 
 		scsp_attack_rate[i + 4] = scsp_round(x / (double) SCSP_ATTACK_R);
 		scsp_decay_rate[i + 4] = scsp_round(x / (double) SCSP_DECAY_R);
