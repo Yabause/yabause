@@ -859,7 +859,7 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
    int i;
 
    // Setup the vector table area, etc.(all bioses have it at 0x00000600-0x00000B00)
-   for (i = 0; i < 0x500; i+=4)
+   for (i = 0; i < 0xA00; i+=4)
    {
       u32 data;
       data = MappedMemoryReadLong(0x00000600+i);
