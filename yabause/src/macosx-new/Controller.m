@@ -20,8 +20,11 @@ NSString *DoubleSize = @"values.DoubleSize";
 
 - (void)setupDirectories
 {
-	NSString *home = NSHomeDirectory();
-	
+	// Other directories will be created for cartidges and BIOS files, expansions roms and PAR rom
+	NSString *mainDirectory = [[[NSHomeDirectory() stringByAppendingPathComponent:@"Library"] stringByAppendingPathComponent:@"Application Support"] stringByAppendingPathComponent:@"Yabause"];
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	[fileManager createDirectoryAtPath:mainDirectory attributes:nil];
+	YuiSetBackupRamFilename([[mainDirectory stringByAppendingPathComponent:@"System Memory.ram"] UTF8String]);
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification

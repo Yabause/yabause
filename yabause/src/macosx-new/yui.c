@@ -50,8 +50,8 @@ unsigned int seth = 224;
 
 char * bios = NULL;
 char * iso_or_cd = NULL;
-char *backup_ram = "backup.ram"; 
-char *cartidge_path = "saved_games"; // Will add support for other cartidges later, when restyling the interface
+char *backup_ram = NULL; 
+char *cartidge_path = "saved_games"; // Will add real support for other cartidges later
 int carttype = CART_BACKUPRAM32MBIT;
 int cdcore = CDCORE_DEFAULT;
 int soundenable = 1;
@@ -72,6 +72,22 @@ void YuiSetBiosFilename(const char * biosfilename)
 	return;
 }
 
+void YuiSetBackupRamFilename(const char * backupfilename)
+{
+	if(backup_ram)
+		free(backup_ram);
+	
+	if(backupfilename != NULL)
+	{
+		backup_ram = malloc(strlen(backupfilename)+1);
+		strcpy(backup_ram, backupfilename);
+	}
+	else
+		backup_ram = NULL;
+	
+	return;	
+}
+
 void YuiSetCartidgeFilename(const char * cartfilename) 
 {	
 	if(cartidge_path)
@@ -79,7 +95,7 @@ void YuiSetCartidgeFilename(const char * cartfilename)
 	
 	if(cartfilename != NULL)
 	{
-		bios = malloc(strlen(cartfilename)+1);
+		cartidge_path = malloc(strlen(cartfilename)+1);
 		strcpy(cartidge_path, cartfilename);
 	}
 	else
@@ -165,7 +181,7 @@ int YuiInit(void)
 	
 	
 	yinit.buppath = backup_ram;
-	yinit.mpegpath = NULL;
+	yinit.mpegpath = NULL; // Will eventually fix this, but does not look like something with high priority
 	yinit.cartpath = cartidge_path;
 	
 	
@@ -196,7 +212,7 @@ void YuiErrorMsg(const char *string)
 
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) 
 {
-	if(!isfullscreen && (w != setw || h != seth) && (w == 320 && w == 224))
+	if(!isfullscreen && (w != setw || h != seth)) // Will change this whole resizing system.
 		VIDCore->Resize(setw, seth, 0);
 }
 
