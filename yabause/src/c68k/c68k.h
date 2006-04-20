@@ -32,6 +32,8 @@
 extern "C" {
 #endif
 
+#include "../core.h"
+
 // setting
 ///////////
 
@@ -47,13 +49,6 @@ extern "C" {
 #define C68K_TAS_CAN_SET_MEMORY
 //#define C68K_CONST_JUMP_TABLE
 //#define C68K_AUTOVECTOR_CALLBACK
-
-#undef FASTCALL
-#ifdef __i386__
-#define FASTCALL __attribute__((regparm(3)))
-#else
-#define FASTCALL
-#endif
 
 // 68K core types definitions
 //////////////////////////////

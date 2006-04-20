@@ -29,7 +29,7 @@
 #include <windows.h>
 #endif
 
-#include "types.h"
+#include "../core.h"
 #include "c68k.h"
 #include "gen68k.h"
 

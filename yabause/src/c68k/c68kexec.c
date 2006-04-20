@@ -17,7 +17,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "types.h"
+#include "../core.h"
 #include "c68k.h"
 
 #ifdef NEOCD_HLE

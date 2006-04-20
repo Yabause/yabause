@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "types.h"
 #include "c68k.h"
 
 // shared global variable
