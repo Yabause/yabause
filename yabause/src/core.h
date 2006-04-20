@@ -5,7 +5,9 @@
 #include <string.h>
 
 #ifndef FASTCALL
-#ifdef __i386__
+#ifdef __MINGW32__
+#define FASTCALL __attribute__((fastcall))
+#elif defined (__i386__)
 #define FASTCALL __attribute__((regparm(3)))
 #else
 #define FASTCALL

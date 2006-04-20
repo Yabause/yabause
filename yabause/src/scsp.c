@@ -78,7 +78,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
-#include "scsp.h"
 
 #include "c68k/c68k.h"
 #include "debug.h"
@@ -86,6 +85,7 @@
 #include "memory.h"
 #include "scu.h"
 #include "yabause.h"
+#include "scsp.h"
 
 ////////////////////////////////////////////////////////////////
 
