@@ -223,10 +223,10 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>4E16E38909A12F0E00D2D7EF</string>
+						<string>4E58C7BA09D55732000EFFAD</string>
 						<key>history</key>
 						<array>
-							<string>4E36BFEF09A11B1D004D3A99</string>
+							<string>4E148B3C09B9C0ED004713AD</string>
 						</array>
 					</dict>
 					<key>SplitCount</key>
@@ -263,10 +263,10 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>4E16E38A09A12F0E00D2D7EF</string>
+						<string>4E58C7BB09D55732000EFFAD</string>
 						<key>history</key>
 						<array>
-							<string>4E36BFF009A11B1D004D3A99</string>
+							<string>4E148B3D09B9C0ED004713AD</string>
 						</array>
 					</dict>
 					<key>SplitCount</key>
@@ -318,8 +318,6 @@
 			<key>Layout</key>
 			<array>
 				<dict>
-					<key>BecomeActive</key>
-					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -360,13 +358,11 @@
 								<string>089C165CFE840E0CC02AAC07</string>
 								<string>1C37FBAC04509CD000000102</string>
 								<string>1C37FAAC04509CD000000102</string>
-								<string>1C08E77C0454961000C914BD</string>
 								<string>1C37FABC05509CD000000102</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>11</integer>
 									<integer>9</integer>
 									<integer>3</integer>
 									<integer>0</integer>
@@ -420,11 +416,11 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>4E16E38609A12F0E00D2D7EF</string>
+										<string>4E58C7B709D55732000EFFAD</string>
 										<key>history</key>
 										<array>
 											<string>4EE160BB098D4C5900267DA7</string>
-											<string>4E36BFEE09A11B1D004D3A99</string>
+											<string>4E148B3B09B9C0ED004713AD</string>
 										</array>
 										<key>prevStack</key>
 										<array>
@@ -451,6 +447,8 @@
 							<string>0pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -487,9 +485,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>4E16E38709A12F0E00D2D7EF</string>
+				<string>4E58C7B809D55732000EFFAD</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>4E16E38809A12F0E00D2D7EF</string>
+				<string>4E58C7B909D55732000EFFAD</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -608,7 +606,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>161558286.03579399</real>
+	<real>164976434.96019399</real>
 	<key>ToolbarDisplayMode</key>
 	<integer>1</integer>
 	<key>ToolbarIsVisible</key>
@@ -624,7 +622,6 @@
 	<key>WindowOrderList</key>
 	<array>
 		<string>4EEDFE3F0976ED740015CC00</string>
-		<string>1C0AD2B3069F1EA900FABCE6</string>
 		<string>4EC63D19098BE8D900FE560F</string>
 		<string>4E0A94D7098EB4A000BE0BF1</string>
 		<string>/Users/jeromevernet/Desktop/Yabause-CVS/yabause/src/macosx/Yabausemac.xcodeproj</string>
@@ -711,7 +708,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>4EEDFE3F0976ED740015CC00</string>
-				<string>4E16E38509A11B4C00D2D7EF</string>
+				<string>4E58C78909D53BE2000EFFAD</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
@@ -1023,8 +1020,8 @@
 										<string>yes</string>
 										<key>sizes</key>
 										<array>
-											<string>{{0, 0}, {367, 168}}</string>
-											<string>{{0, 173}, {367, 270}}</string>
+											<string>{{0, 0}, {491, 168}}</string>
+											<string>{{0, 173}, {491, 270}}</string>
 										</array>
 									</dict>
 									<key>VerticalSplitView</key>
@@ -1073,9 +1070,9 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>1C0AD2B3069F1EA900FABCE6</string>
-				<string>4E16E37E09A11B2F00D2D7EF</string>
+				<string>4E148B3409B9C0AA004713AD</string>
 				<string>1CD0528B0623707200166675</string>
-				<string>4E16E37F09A11B2F00D2D7EF</string>
+				<string>4E148B3509B9C0AA004713AD</string>
 			</array>
 			<key>ToolbarConfiguration</key>
 			<string>xcode.toolbar.config.run</string>
