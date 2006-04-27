@@ -21,6 +21,7 @@
 #include "persdl.h"
 #include "SDL.h"
 #include "yabause.h"
+#include "vdp2.h"
 #include "yui.h"
 
 int PERSDLInit(void);
@@ -143,6 +144,7 @@ int PERSDLInit(void) {
 	PERSDLSetBoth(SDLK_o, PerZPressed, PerZReleased);
 	PERSDLSetBoth(SDLK_z, PerRTriggerPressed, PerRTriggerReleased);
 	PERSDLSetBoth(SDLK_x, PerLTriggerPressed, PerLTriggerReleased);
+        PERSDLSetBoth(SDLK_BACKQUOTE, SpeedThrottleEnable, SpeedThrottleDisable);
 
 	PERSDLKeyPressed[SDLK_q] = YuiQuit;
 

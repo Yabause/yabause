@@ -366,6 +366,8 @@ void Vdp2VBlankIN(void);
 void Vdp2HBlankIN(void);
 void Vdp2HBlankOUT(void);
 void Vdp2VBlankOUT(void);
+void SpeedThrottleEnable(void);
+void SpeedThrottleDisable(void);
 
 u8 FASTCALL     Vdp2ReadByte(u32);
 u16 FASTCALL    Vdp2ReadWord(u32);

@@ -258,19 +258,72 @@ void Vdp2HBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+static int frameskipenab=0;
+static int framestoskip=0;
+static int throttlespeed=0;
+static int skipnextframe=0;
+//static u32 lastticks=0;
+//static u32 curticks=0;
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SpeedThrottleEnable(void) {
+   throttlespeed = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SpeedThrottleDisable(void) {
+   throttlespeed = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void Vdp2VBlankOUT(void) {
    Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
 
-   VIDCore->Vdp2DrawStart();
+   if (!skipnextframe)
+   {
+      VIDCore->Vdp2DrawStart();
 
-   if (Vdp2Regs->TVMD & 0x8000) {
-      VIDCore->Vdp2DrawScreens();
-      Vdp1Draw();
+      if (Vdp2Regs->TVMD & 0x8000) {
+         VIDCore->Vdp2DrawScreens();
+         Vdp1Draw();
+      }
+      else
+         Vdp1NoDraw();
+
+      VIDCore->Vdp2DrawEnd();
+
+      if (framestoskip > 0)
+         skipnextframe = 1;
    }
    else
-      Vdp1NoDraw();
+   {
+      framestoskip--;
 
-   VIDCore->Vdp2DrawEnd();
+      if (framestoskip < 1)
+         skipnextframe = 0;
+      else
+         skipnextframe = 1;
+      Vdp1NoDraw();
+   }
+
+   // Do Frame Skip/Frame Limiting/Speed Throttling here
+   if (throttlespeed)
+   {
+      // Should really depend on how fast we're rendering the frames
+      if (framestoskip < 1)
+         framestoskip = 6;
+   }
+   else if (frameskipenab)
+   {
+//         curticks = SDL_GetTicks();
+//         oldticks = curticks-lastticks;
+   }
+
+   // Check to see if we need to limit speed at all
+
    ScuSendVBlankOUT();
 }
 
