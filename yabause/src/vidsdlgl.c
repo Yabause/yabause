@@ -1016,7 +1016,6 @@ int VIDSDLGLInit(void)
       return -1;
 
    SetSaturnResolution(320, 224);
-   Vdp1SetTextureRatio(1, 1);
 
    vdp1wratio = 1;
    vdp1hratio = 1;
