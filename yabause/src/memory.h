@@ -184,6 +184,9 @@ static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
    u8 *buffer;
    u32 i;
 
+   if (!filename)
+      return -1;
+
    if ((fp = fopen(filename, "rb")) == NULL)
       return -1;
 

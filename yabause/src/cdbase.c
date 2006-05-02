@@ -323,6 +323,9 @@ int ISOCDInit(const char * iso) {
 
    memset(isoTOC, 0xFF, 0xCC * 2);
 
+   if (!iso)
+      return -1;
+
    if (!(isofile = fopen(iso, "rb")))
       return -1;
 

@@ -800,6 +800,9 @@ int MappedMemoryLoad(const char *filename, u32 addr)
    u8 *buffer;
    u32 i;
 
+   if (!filename)
+      return -1;
+
    if ((fp = fopen(filename, "rb")) == NULL)
       return -1;
 
@@ -832,6 +835,9 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
    FILE *fp;
    u8 *buffer;
    u32 i;
+
+   if (!filename)
+      return -1;
 
    if ((fp = fopen(filename, "wb")) == NULL)
       return -1;
