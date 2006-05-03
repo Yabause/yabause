@@ -142,6 +142,8 @@ int DummyCDReadSectorFAD(u32 FAD, void * buffer)
 	// since they only have to implement raw sector reading as opposed to
 	// implementing mode 1, mode 2 form1/form2, -and- raw sector reading.
 
+	memset(buffer, 0, 2352);
+
 	return 1;
 }
 
