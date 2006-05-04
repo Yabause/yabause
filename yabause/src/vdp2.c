@@ -261,7 +261,7 @@ void Vdp2HBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static int autoframeskipenab=1;
+static int autoframeskipenab=0;
 static int framestoskip=0;
 static int throttlespeed=0;
 static int skipnextframe=0;
