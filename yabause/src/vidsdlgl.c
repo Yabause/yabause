@@ -22,6 +22,7 @@
 #include "vidsdlgl.h"
 #include "debug.h"
 #include "vdp2.h"
+#include "yabause.h"
 #include "ygl.h"
 
 #if defined WORDS_BIGENDIAN
@@ -1528,7 +1529,7 @@ void VIDSDLGLVdp2DrawEnd(void)
 {
    if (fpstoggle)
    {
-      YglOnScreenDebugMessage("%02d/60 FPS", sdlglfps);
+      YglOnScreenDebugMessage("%02d/%d FPS", sdlglfps, yabsys.IsPal ? 50 : 60);
 
       sdlglframecount++;
       if(SDL_GetTicks() >= sdlglticks + 1000)

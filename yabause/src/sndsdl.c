@@ -27,7 +27,7 @@
 int SNDSDLInit();
 void SNDSDLDeInit();
 int SNDSDLReset();
-int SNDSDLChangeVerticalFrequency(int vertfreq);
+int SNDSDLChangeVideoFormat(int vertfreq);
 void SNDSDLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
 void SNDSDLMuteAudio();
 void SNDSDLUnMuteAudio();
@@ -38,7 +38,7 @@ SNDCORE_SDL,
 SNDSDLInit,
 SNDSDLDeInit,
 SNDSDLReset,
-SNDSDLChangeVerticalFrequency,
+SNDSDLChangeVideoFormat,
 SNDSDLUpdateAudio,
 SNDSDLMuteAudio,
 SNDSDLUnMuteAudio
@@ -134,13 +134,18 @@ int SNDSDLReset()
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SNDSDLChangeVerticalFrequency(int vertfreq)
+int SNDSDLChangeVideoFormat(int vertfreq)
 {
    soundlen = audiofmt.freq / vertfreq;
    soundbufsize = soundlen * NUMSOUNDBLOCKS * 2 * 2;
 
-   if ((stereodata16 = (u16 *)realloc(stereodata16, soundbufsize)) == NULL)
+   if (stereodata16)
+      free(stereodata16);
+
+   if ((stereodata16 = (u16 *)malloc(soundbufsize)) == NULL)
       return -1;
+
+   memset(stereodata16, 0, soundbufsize);
 
    return 0;
 }

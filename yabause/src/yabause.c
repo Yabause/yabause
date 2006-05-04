@@ -66,23 +66,25 @@ void YabauseChangeTiming(int freqtype) {
    // Setup all the variables related to timing
    yabsys.DecilineCount = 0;
    yabsys.LineCount = 0;
+   yabsys.CurSH2FreqType = freqtype;
 
    switch (freqtype)
    {
-      case CLKTYPE_26MHZNTSC:
-         yabsys.DecilineStop = 26846587 / 263 / 10 / 60; // I'm guessing this is wrong
+      case CLKTYPE_26MHZ:
+         if (!yabsys.IsPal)
+            yabsys.DecilineStop = 26846587 / 263 / 10 / 60; // I'm guessing this is wrong
+         else
+            yabsys.DecilineStop = 26846587 / 312 / 10 / 50; // I'm guessing this is wrong
+
          yabsys.Duf = 26846587 / 100000;
+
          break;
-      case CLKTYPE_28MHZNTSC:
-         yabsys.DecilineStop = 28636360 / 263 / 10 / 60; // I'm guessing this is wrong
-         yabsys.Duf = 28636360 / 100000;                         
-         break;
-      case CLKTYPE_26MHZPAL:
-         yabsys.DecilineStop = 26846587 / 312 / 10 / 50; // I'm guessing this is wrong
-         yabsys.Duf = 26846587 / 100000;
-         break;
-      case CLKTYPE_28MHZPAL:
-         yabsys.DecilineStop = 28636360 / 312 / 10 / 50; // I'm guessing this is wrong
+      case CLKTYPE_28MHZ:
+         if (!yabsys.IsPal)
+            yabsys.DecilineStop = 28636360 / 263 / 10 / 60; // I'm guessing this is wrong
+         else
+            yabsys.DecilineStop = 28636360 / 312 / 10 / 50; // I'm guessing this is wrong
+
          yabsys.Duf = 28636360 / 100000;
          break;
       default: break;
@@ -170,7 +172,8 @@ int YabauseInit(yabauseinit_struct *init)
 
    MappedMemoryInit();
 
-   YabauseChangeTiming(CLKTYPE_26MHZNTSC);
+   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+   YabauseChangeTiming(CLKTYPE_26MHZ);
 
    if (LoadBios(init->biospath) != 0)
    {
@@ -325,6 +328,20 @@ void YabStartSlave(void) {
 void YabStopSlave(void) {
    SH2Reset(SSH2);
    yabsys.IsSSH2Running = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YabauseSetVideoFormat(int type) {
+   yabsys.IsPal = type;
+   yabsys.OneFrameTime = 1000 / (type ? 50 : 60);
+   Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
+   ScspChangeVideoFormat(type);
+   YabauseChangeTiming(yabsys.CurSH2FreqType);
+#ifdef WIN32
+   lastticks = timeGetTime();
+#else
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -28,10 +28,11 @@ typedef struct
    void (*SetPeripheralType)(int port1type, int port2type);
 } PeripheralInterface_struct;
 
-#define CLKTYPE_26MHZNTSC       0
-#define CLKTYPE_28MHZNTSC       1
-#define CLKTYPE_26MHZPAL        2
-#define CLKTYPE_28MHZPAL        3
+#define CLKTYPE_26MHZ           0
+#define CLKTYPE_28MHZ           1
+
+#define VIDEOFORMATTYPE_NTSC    0
+#define VIDEOFORMATTYPE_PAL     1
 
 void YabauseChangeTiming(int freqtype);
 int YabauseInit(yabauseinit_struct *init);
@@ -40,6 +41,7 @@ void YabauseReset();
 int YabauseExec();
 void YabStartSlave(void);
 void YabStopSlave(void);
+void YabauseSetVideoFormat(int type);
 
 typedef struct
 {
@@ -48,8 +50,11 @@ typedef struct
    int DecilineStop;
    u32 Duf;
    u32 CycleCountII;
+   int CurSH2FreqType;
+   int IsPal;
    u8 IsSSH2Running;
    u8 IsM68KRunning;
+   u32 OneFrameTime;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

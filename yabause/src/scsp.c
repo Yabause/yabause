@@ -2776,17 +2776,23 @@ void ScspReset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int ScspChangeVerticalFrequency(int vertfreq) {
-   scspsoundlen = 44100 / vertfreq;
+int ScspChangeVideoFormat(int type) {
+   scspsoundlen = 44100 / (type ? 50 : 60);
+
+   if (scspchannel[0].data32)
+      free(scspchannel[0].data32);
+
+   if (scspchannel[1].data32)
+      free(scspchannel[1].data32);
 
    // Reallocate the sound buffers
-   if ((scspchannel[0].data32 = (u32 *)realloc(scspchannel[0].data32, scspsoundlen * sizeof(u32))) == NULL)
+   if ((scspchannel[0].data32 = (u32 *)calloc(scspsoundlen, sizeof(u32))) == NULL)
       return -1;
 
-   if ((scspchannel[1].data32 = (u32 *)realloc(scspchannel[1].data32, scspsoundlen * sizeof(u32))) == NULL)
+   if ((scspchannel[1].data32 = (u32 *)calloc(scspsoundlen, sizeof(u32))) == NULL)
       return -1;
 
-   SNDCore->ChangeVerticalFrequency(vertfreq);
+   SNDCore->ChangeVideoFormat(type ? 50 : 60);
 
    return 0;
 }
@@ -3226,7 +3232,7 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 int SNDDummyInit();
 void SNDDummyDeInit();
 int SNDDummyReset();
-int SNDDummyChangeVerticalFrequency(int vertfreq);
+int SNDDummyChangeVideoFormat(int vertfreq);
 void SNDDummyUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
 void SNDDummyMuteAudio();
 void SNDDummyUnMuteAudio();
@@ -3237,7 +3243,7 @@ SNDCORE_DUMMY,
 SNDDummyInit,
 SNDDummyDeInit,
 SNDDummyReset,
-SNDDummyChangeVerticalFrequency,
+SNDDummyChangeVideoFormat,
 SNDDummyUpdateAudio,
 SNDDummyMuteAudio,
 SNDDummyUnMuteAudio
@@ -3265,7 +3271,7 @@ int SNDDummyReset()
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SNDDummyChangeVerticalFrequency(int vertfreq)
+int SNDDummyChangeVideoFormat(int vertfreq)
 {
    return 0;
 }

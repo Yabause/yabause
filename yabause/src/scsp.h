@@ -13,7 +13,7 @@ typedef struct
    int (*Init)();
    void (*DeInit)();
    int (*Reset)();
-   int (*ChangeVerticalFrequency)(int vertfreq);
+   int (*ChangeVideoFormat)(int vertfreq);
    void (*UpdateAudio)(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
    void (*MuteAudio)();
    void (*UnMuteAudio)();
@@ -59,6 +59,7 @@ int ScspInit(int coreid);
 void ScspDeInit(void);
 void M68KReset(void);
 void ScspReset(void);
+int ScspChangeVideoFormat(int type);
 void M68KExec(u32 cycles);
 void ScspExec(void);
 void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);

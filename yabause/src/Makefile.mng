@@ -29,7 +29,7 @@ CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -Wall
 #CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -Wall -g
 CFLAGS2= -fomit-frame-pointer -Wall
 #CFLAGS2= -fomit-frame-pointer -Wall -g
-LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -mwindows -mthreads
+LDFLAGS=-lmingw32 -lSDLmain -lSDL -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -mwindows -mthreads
 OBJS = cdbase.o cs0.o cs1.o cs2.o debug.o error.o m68kd.o memory.o peripheral.o persdl.o profile.o scsp.o scu.o sh2core.o sh2idle.o sh2int.o sh2d.o smpc.o sndsdl.o vdp1.o vdp2.o vidsdlgl.o vidsdlsoft.o yabause.o ygl.o c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o windows/cd.o windows/yui.o windows/settings.o windows/resource.o
 
 all: $(TARGET)

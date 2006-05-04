@@ -358,6 +358,7 @@ typedef struct {
 } Vdp2Internal_struct;
 
 extern Vdp2Internal_struct Vdp2Internal;
+extern u32 lastticks;
 
 int Vdp2Init(int coreid);
 void Vdp2DeInit(void);

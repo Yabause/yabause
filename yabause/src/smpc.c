@@ -141,7 +141,7 @@ void SmpcCKCHG352() {
    YabStopSlave();
 
    // change clock
-   YabauseChangeTiming(CLKTYPE_28MHZNTSC); // fix me
+   YabauseChangeTiming(CLKTYPE_28MHZ);
 
    // Send NMI
    SH2NMI(MSH2);
@@ -161,7 +161,7 @@ void SmpcCKCHG320() {
    YabStopSlave();
 
    // change clock
-   YabauseChangeTiming(CLKTYPE_26MHZNTSC); // fix me
+   YabauseChangeTiming(CLKTYPE_26MHZ);
 
    // Send NMI
    SH2NMI(MSH2);

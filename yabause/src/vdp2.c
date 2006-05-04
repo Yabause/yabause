@@ -19,6 +19,9 @@
 */
 
 #include <stdlib.h>
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include "vdp2.h"
 #include "debug.h"
 #include "scu.h"
@@ -258,12 +261,15 @@ void Vdp2HBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static int frameskipenab=0;
+static int autoframeskipenab=1;
 static int framestoskip=0;
 static int throttlespeed=0;
 static int skipnextframe=0;
-//static u32 lastticks=0;
-//static u32 curticks=0;
+u32 lastticks=0;
+static u32 curticks=0;
+static u32 diffticks=0;
+static u32 framecount=0;
+static u32 onesecondticks=0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -316,13 +322,49 @@ void Vdp2VBlankOUT(void) {
       if (framestoskip < 1)
          framestoskip = 6;
    }
-   else if (frameskipenab)
+   else if (autoframeskipenab)
    {
-//         curticks = SDL_GetTicks();
-//         oldticks = curticks-lastticks;
-   }
+      framecount++;
 
-   // Check to see if we need to limit speed at all
+      if (framecount > (yabsys.IsPal ? 50 : 60))
+      {
+         framecount = 1;
+         onesecondticks = 0;
+      }
+
+#ifdef WIN32
+      curticks = timeGetTime();
+#else
+      curticks = 0; // fix me
+#endif
+      diffticks = curticks-lastticks;
+
+      if ((onesecondticks+diffticks) > (yabsys.OneFrameTime * framecount))
+      {
+         // Skip the next frame
+         skipnextframe = 1;
+
+         // How many frames should we skip?
+         framestoskip = 1;
+      }
+      else if ((onesecondticks+diffticks) < (yabsys.OneFrameTime * framecount))
+      {
+         // Check to see if we need to limit speed at all
+#ifdef WIN32
+         for (;;)
+         {
+            curticks = timeGetTime();
+            diffticks = curticks-lastticks;
+            if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * framecount))
+               break;
+         }
+#else
+#endif
+      }
+
+      onesecondticks += diffticks;
+      lastticks = curticks;
+   }
 
    ScuSendVBlankOUT();
 }
