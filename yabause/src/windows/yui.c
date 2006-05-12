@@ -21,7 +21,6 @@
 
 #include <windows.h>
 #include <commctrl.h>
-#include "SDL.h"
 #undef FASTCALL
 #include "../memory.h"
 #include "../scu.h"
@@ -29,10 +28,11 @@
 #include "../sh2d.h"
 #include "../vdp2.h"
 #include "../yui.h"
-#include "../sndsdl.h"
-#include "../vidsdlgl.h"
-#include "../vidsdlsoft.h"
+#include "snddx.h"
+#include "../vidogl.h"
+#include "../peripheral.h"
 #include "../persdl.h"
+#include "perdx.h"
 #include "../cs0.h"
 #include "resource.h"
 #include "settings.h"
@@ -42,9 +42,12 @@ int stop;
 int yabwinw;
 int yabwinh;
 
-char SDL_windowhack[32];
 HINSTANCE y_hInstance;
-HWND YabWin;
+HWND YabWin=NULL;
+HWND YabMenu=NULL;
+HDC YabHDC=NULL;
+HGLRC YabHRC=NULL;
+BOOL isfullscreenset=FALSE;
 
 u32 mtrnssaddress=0x06004000;
 u32 mtrnseaddress=0x06100000;
@@ -55,6 +58,11 @@ int mtrnssetpc=TRUE;
 u32 memaddr=0;
 
 SH2_struct *debugsh;
+
+static int redsize = 0;
+static int greensize = 0;
+static int bluesize = 0;
+static int depthsize = 0;
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -71,6 +79,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
+void YuiReleaseVideo(void);
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -79,7 +88,8 @@ NULL
 };
 
 PerInterface_struct *PERCoreList[] = {
-&PERSDL,
+&PERDummy,
+&PERDIRECTX,
 NULL
 };
 
@@ -92,14 +102,13 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
-&SNDSDL,
+&SNDDIRECTX,
 NULL
 };
 
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
-&VIDSDLGL,
-&VIDSDLSoft,
+&VIDOGL,
 NULL
 };
 
@@ -136,7 +145,7 @@ void YuiHideShow(void)
 
 void YuiQuit(void)
 {
-	stop = 1;
+        stop = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -148,61 +157,200 @@ void YuiErrorMsg(const char *string)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)
+void YuiSetVideoAttribute(int type, int val)
 {
+   switch (type)
+   {
+      case RED_SIZE:
+      {
+         redsize = val;
+         break;
+      }
+      case GREEN_SIZE:
+      {
+         greensize = val;
+         break;
+      }
+      case BLUE_SIZE:
+      {
+         bluesize = val;
+         break;
+      }
+      case DEPTH_SIZE:
+      {
+         depthsize = val;
+         break;
+      }
+      default: break;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
+{
+   PIXELFORMATDESCRIPTOR pfd;
+   DWORD style=0;
+   DWORD exstyle=0;
    RECT rect;
 
-   rect.left = 0;
-   rect.top = 0;
-   rect.right = w;
-   rect.bottom = h;
+   // Make sure any previously setup variables are released
+   YuiReleaseVideo();
 
-   AdjustWindowRectEx(&rect, GetWindowLong(YabWin, GWL_STYLE), TRUE, 0);
+   if (fullscreen)
+   {
+       DEVMODE dmSettings;
+       LONG ret;
 
-   w = rect.right - rect.left;
-   h = rect.bottom - rect.top;
+       memset(&dmSettings, 0, sizeof(dmSettings));
+       dmSettings.dmSize = sizeof(dmSettings);
+       dmSettings.dmPelsWidth = width;
+       dmSettings.dmPelsHeight = height;
+       dmSettings.dmBitsPerPel = bpp;
+       dmSettings.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL;
 
-   if (isfullscreen)
-      SetWindowPos(YabWin, HWND_TOPMOST, (GetSystemMetrics(SM_CXSCREEN) - w) / 2, ((GetSystemMetrics(SM_CYSCREEN) - h) / 2), w, h, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+       if ((ret = ChangeDisplaySettings(&dmSettings,CDS_FULLSCREEN)) != DISP_CHANGE_SUCCESSFUL)
+       {
+          // revert back to windowed mode
+          ChangeDisplaySettings(NULL,0);
+          ShowCursor(TRUE);
+          fullscreen = FALSE;
+          SetMenu(YabWin, YabMenu);
+       }
+       else
+       {
+          // Adjust window styles
+          style = WS_POPUP;
+          exstyle = WS_EX_APPWINDOW;
+          SetMenu(YabWin, NULL);
+       }
+   }
    else
-      SetWindowPos(YabWin, HWND_NOTOPMOST, (GetSystemMetrics(SM_CXSCREEN) - w) / 2, (GetSystemMetrics(SM_CYSCREEN) - h) / 2, w, h, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+   {
+       // Adjust window styles
+       style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX;
+       exstyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+       SetMenu(YabWin, YabMenu);
+   }
 
+   SetWindowLong(YabWin, GWL_STYLE, style);
+   SetWindowLong(YabWin, GWL_EXSTYLE, exstyle);
+
+   rect.left = 0;
+   rect.right = width;
+   rect.top = 0;
+   rect.bottom = height;
+   AdjustWindowRectEx(&rect, style, FALSE, exstyle);
+
+   if (!fullscreen)
+   {
+      rect.right = rect.left + width + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
+      rect.bottom = rect.top + height + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);  
+   }
+
+   SetWindowPos(YabWin, HWND_TOP, 0, 0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS);
+
+   // Get the Device Context for our window
+   if ((YabHDC = GetDC(YabWin)) == NULL)
+   {
+      YuiReleaseVideo();
+      return -1;
+   }
+
+   // Let's setup the Pixel format for the context
+   memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+   pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+   pfd.nVersion = 1;
+   pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+   pfd.iPixelType = PFD_TYPE_RGBA;
+   pfd.cColorBits = bpp;
+   pfd.cRedBits = redsize;
+   pfd.cGreenBits = greensize;
+   pfd.cBlueBits = bluesize;
+   pfd.cAlphaBits = 0;
+   pfd.cAccumRedBits = 0;
+   pfd.cAccumGreenBits = 0;
+   pfd.cAccumBlueBits = 0;
+   pfd.cAccumAlphaBits = 0;
+   pfd.cAccumBits = pfd.cAccumRedBits + pfd.cAccumGreenBits +
+                    pfd.cAccumBlueBits + pfd.cAccumAlphaBits;
+   pfd.cDepthBits = depthsize;
+   pfd.cStencilBits = 0;
+
+   SetPixelFormat(YabHDC, ChoosePixelFormat(YabHDC, &pfd), &pfd);
+
+   if ((YabHRC = wglCreateContext(YabHDC)) == NULL)
+   {
+      YuiReleaseVideo();
+      return -1;
+   }
+
+   if(wglMakeCurrent(YabHDC,YabHRC) == FALSE)
+   {
+      YuiReleaseVideo();
+      return -1;
+   }
+
+   ShowWindow(YabWin,SW_SHOW);
    SetForegroundWindow(YabWin);
+   SetFocus(YabWin);
+
+   isfullscreenset = fullscreen;
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YuiReleaseVideo(void)
+{
+   if (isfullscreenset)
+   {
+      ChangeDisplaySettings(NULL,0);
+      ShowCursor(TRUE);
+   }
+
+   if (YabHRC)
+   {
+       wglMakeCurrent(NULL,NULL);
+       wglDeleteContext(YabHRC);
+       YabHRC = NULL;
+   }
+
+   if (YabHDC)
+      ReleaseDC(YabWin,YabHDC);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YuiSwapBuffers()
+{
+   SwapBuffers(YabHDC);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)
+{
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int YuiInit(void)
 {
-   WNDCLASS                    MyWndClass;
    HWND                        hWnd;
+   MSG                         msg;
    DWORD inifilenamesize=0;
    char *pinifilename;
-   static char szAppName[128];
-   static char szClassName[] = "Yabause";
 //   RECT                        workarearect;
 //   DWORD ret;
    char tempstr[MAX_PATH];
    yabauseinit_struct yinit;
-
-   sprintf(szAppName, "Yabause %s", VERSION);
+   HACCEL hAccel;
+   static char szAppName[128];
+   WNDCLASS MyWndClass;
 
    y_hInstance = GetModuleHandle(NULL);
-
-   // Set up and register window class
-   MyWndClass.style = CS_HREDRAW | CS_VREDRAW;
-   MyWndClass.lpfnWndProc = (WNDPROC) WindowProc;
-   MyWndClass.cbClsExtra = 0;
-   MyWndClass.cbWndExtra = sizeof(DWORD);
-   MyWndClass.hInstance = y_hInstance;
-   MyWndClass.hIcon = LoadIcon(y_hInstance, MAKEINTRESOURCE(IDI_ICON));
-   MyWndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-   MyWndClass.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
-   MyWndClass.lpszMenuName = MAKEINTRESOURCE(IDR_MENU);
-   MyWndClass.lpszClassName = szClassName;
-
-   if (!RegisterClass(&MyWndClass))
-      return -1;
 
    // get program pathname
    inifilenamesize = GetModuleFileName(y_hInstance, inifilename, MAX_PATH);
@@ -304,42 +452,48 @@ int YuiInit(void)
 //      yabwinh = workarearect.bottom - workarearect.top;
 //   }
 
-   // Create a window
-   hWnd = CreateWindow(szClassName,        // class
-                       szAppName,          // caption
-                       WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
-                       WS_THICKFRAME | WS_MINIMIZEBOX |  // style
-                       WS_CLIPCHILDREN,  
-                       CW_USEDEFAULT,      // x pos
-                       CW_USEDEFAULT,      // y pos
-                       yabwinw,        // width
-                       yabwinh,       // height
-                       HWND_DESKTOP,       // parent window
-                       NULL,               // menu 
-                       y_hInstance,          // instance
-                       NULL);              // parms
+   hAccel = LoadAccelerators(y_hInstance, MAKEINTRESOURCE(IDR_MAIN_ACCEL));
 
-   if (!hWnd)
+   // Set up and register window class
+   MyWndClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+   MyWndClass.lpfnWndProc = (WNDPROC) WindowProc;
+   MyWndClass.cbClsExtra = 0;
+   MyWndClass.cbWndExtra = sizeof(DWORD);
+   MyWndClass.hInstance = y_hInstance;
+   MyWndClass.hIcon = LoadIcon(y_hInstance, MAKEINTRESOURCE(IDI_ICON));
+   MyWndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+   MyWndClass.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
+   MyWndClass.lpszClassName = "Yabause";
+   MyWndClass.lpszMenuName = NULL;
+
+   YabMenu = LoadMenu(y_hInstance, MAKEINTRESOURCE(IDR_MENU));
+
+   if (!RegisterClass(&MyWndClass))
       return -1;
 
-   SetWindowPos(hWnd, HWND_TOP, 0, 0, yabwinw, yabwinh, SWP_NOREPOSITION);
+   sprintf(szAppName, "Yabause %s", VERSION);
 
-   // may change this
-   ShowWindow(hWnd, SW_SHOWDEFAULT);
-   UpdateWindow(hWnd);
-
-   sprintf(SDL_windowhack,"SDL_WINDOWID=%ld", (long int)hWnd);
-   putenv(SDL_windowhack);
-
-   YabWin = hWnd;
+   // Create new window
+   YabWin = CreateWindow("Yabause",            // class
+                         szAppName,            // caption
+                         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |                                        
+                         WS_THICKFRAME | WS_MINIMIZEBOX |   // style
+                         WS_CLIPCHILDREN,
+                         CW_USEDEFAULT,        // x pos
+                         CW_USEDEFAULT,        // y pos
+                         yabwinw, // width
+                         yabwinh, // height
+                         HWND_DESKTOP,         // parent window
+                         NULL,                 // menu
+                         y_hInstance,          // instance
+                         NULL);                // parms
 
    stop = 0;
 
-   yinit.percoretype = PERCORE_SDL;
+   yinit.percoretype = PERCORE_DIRECTX;
    yinit.sh2coretype = sh2coretype;
-   yinit.vidcoretype = VIDCORE_SDLGL;
-//   yinit.vidcoretype = VIDCORE_SDLSOFT;
-   yinit.sndcoretype = SNDCORE_SDL;
+   yinit.vidcoretype = VIDCORE_OGL;
+   yinit.sndcoretype = SNDCORE_DIRECTX;
    if (IsPathCdrom(cdrompath))
       yinit.cdcoretype = CDCORE_SPTI;
    else
@@ -357,10 +511,22 @@ int YuiInit(void)
 
    while (!stop)
    {
+      if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
+      {
+         if (TranslateAccelerator(YabWin, hAccel, &msg) == 0)
+         {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+         }
+      }
+
       if (PERCore->HandleEvents() != 0)
          return -1;
    }
 
+   YuiReleaseVideo();
+   if (YabMenu)
+      DestroyMenu(YabMenu);
    return 0;
 }
 
@@ -374,10 +540,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       {
          switch (LOWORD(wParam))
          {
-//            case IDM_RUN:
-//            {
-//               break;
-//            }
             case IDM_MEMTRANSFER:
             {
                DialogBox(y_hInstance, "MemTransferDlg", hWnd, (DLGPROC)MemTransferDlgProc);
@@ -430,23 +592,24 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                DialogBox(y_hInstance, "SCSPDebugDlg", hWnd, (DLGPROC)SCSPDebugDlgProc);
                break;
             }
+            case IDM_TOGGLEFULLSCREEN:
+            {
+               ToggleFullScreen();
+               break;
+            }
             case IDM_EXIT:
                PostMessage(hWnd, WM_CLOSE, 0, 0);
                break;
          }
          return 0L;
       }
-      case WM_ENTERMENULOOP:
+      case WM_CLOSE:
       {
-         return 0L;
-      }
-      case WM_EXITMENULOOP:
-      {
+         stop = 1;
          return 0L;
       }
       case WM_SIZE:
       {
-         SetWindowPos(hWnd, HWND_TOP, 0, 0, yabwinw, yabwinh, SWP_NOREPOSITION);
          return 0L;
       }
       case WM_PAINT:

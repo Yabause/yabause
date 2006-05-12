@@ -277,6 +277,13 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
+IDR_MAIN_ACCEL ACCELERATORS DISCARDABLE
+BEGIN
+    VK_RETURN,      IDM_TOGGLEFULLSCREEN,   VIRTKEY, ALT, NOINVERT
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
 #ifdef _MSC_VER
 IDI_ICON        ICON    DISCARDABLE     "..\logo.ico"
 #else
