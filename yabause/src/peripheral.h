@@ -53,6 +53,8 @@ typedef struct
    int numbuttons;
 } PerInfo_struct;
 
+extern PerInterface_struct PERDummy;
+
 int PerInit(int coreid);
 void PerDeInit(void);
 
