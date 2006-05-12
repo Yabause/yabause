@@ -22,11 +22,11 @@
 TARGET = yabause.exe
 CC = gcc
 RC = windres
-DDEFINES=-DDEBUG
-#DDEFINES=
+#DDEFINES=-DDEBUG
+DDEFINES=
 VDEFINES=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.6.0\" -DHAVE_LIBGLUT -DNO_CLI
-#CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -Wall
-CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -Wall -g
+CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -Wall
+#CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -Wall -g
 CFLAGS2= -fomit-frame-pointer -Wall
 #CFLAGS2= -fomit-frame-pointer -Wall -g
 LDFLAGS=-lmingw32 -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -ldxguid -ldinput8 -ldsound -mwindows -mthreads
