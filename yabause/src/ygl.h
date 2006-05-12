@@ -2,7 +2,9 @@
 #include <windows.h>
 #endif
 
+#ifdef HAVE_LIBSDL
 #include "SDL.h"
+#endif
 #ifndef _arch_dreamcast
 #if HAVE_LIBGLUT
     #ifdef __APPLE__
@@ -53,7 +55,7 @@ extern YglTextureManager * YglTM;
 void YglTMInit(unsigned int, unsigned int);
 void YglTMDeInit(void);
 void YglTMReset(void);
- void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
+void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 
 typedef struct {
 	int * quads;

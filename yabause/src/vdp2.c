@@ -19,9 +19,6 @@
 */
 
 #include <stdlib.h>
-#ifdef WIN32
-#include <windows.h>
-#endif
 #include "vdp2.h"
 #include "debug.h"
 #include "scu.h"
@@ -33,6 +30,20 @@ u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
 Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
+
+static int autoframeskipenab=1;
+static int framestoskip=0;
+static int throttlespeed=0;
+static int skipnextframe=0;
+u32 lastticks=0;
+static u32 curticks=0;
+static u32 diffticks=0;
+static u32 framecount=0;
+static u32 onesecondticks=0;
+static int fps;
+static int fpsframecount=0;
+static u32 fpsticks;
+static int fpstoggle=0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -123,7 +134,7 @@ void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp2Init(int coreid) {
+int Vdp2Init(void) {
    if ((Vdp2Regs = (Vdp2 *) calloc(1, sizeof(Vdp2))) == NULL)
       return -1;
 
@@ -261,15 +272,28 @@ void Vdp2HBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static int autoframeskipenab=0;
-static int framestoskip=0;
-static int throttlespeed=0;
-static int skipnextframe=0;
-u32 lastticks=0;
-static u32 curticks=0;
-static u32 diffticks=0;
-static u32 framecount=0;
-static u32 onesecondticks=0;
+void FPSDisplay(void)
+{
+   if (fpstoggle)
+   {
+      VIDCore->OnScreenDebugMessage("%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+
+      fpsframecount++;
+      if(YabauseGetTicks() >= fpsticks + 1000)
+      {
+         fps = fpsframecount;
+         fpsframecount = 0;
+         fpsticks = YabauseGetTicks();
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ToggleFPS(void)
+{
+   fpstoggle ^= 1;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -299,6 +323,7 @@ void Vdp2VBlankOUT(void) {
       else
          Vdp1NoDraw();
 
+      FPSDisplay();
       VIDCore->Vdp2DrawEnd();
 
       if (framestoskip > 0)
@@ -332,11 +357,7 @@ void Vdp2VBlankOUT(void) {
          onesecondticks = 0;
       }
 
-#ifdef WIN32
-      curticks = timeGetTime();
-#else
-      curticks = 0; // fix me
-#endif
+      curticks = YabauseGetTicks();
       diffticks = curticks-lastticks;
 
       if ((onesecondticks+diffticks) > (yabsys.OneFrameTime * framecount))
@@ -350,16 +371,13 @@ void Vdp2VBlankOUT(void) {
       else if ((onesecondticks+diffticks) < (yabsys.OneFrameTime * framecount))
       {
          // Check to see if we need to limit speed at all
-#ifdef WIN32
          for (;;)
          {
-            curticks = timeGetTime();
+            curticks = YabauseGetTicks();
             diffticks = curticks-lastticks;
             if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * framecount))
                break;
          }
-#else
-#endif
       }
 
       onesecondticks += diffticks;
@@ -2383,6 +2401,57 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
    {
       // disabled
       *isenabled = 0;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ToggleNBG0(void)
+{
+   VIDCore->Vdp2ToggleDisplayNBG0();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ToggleNBG1(void)
+{
+   VIDCore->Vdp2ToggleDisplayNBG1();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ToggleNBG2(void)
+{
+   VIDCore->Vdp2ToggleDisplayNBG2();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ToggleNBG3(void)
+{
+   VIDCore->Vdp2ToggleDisplayNBG3();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ToggleRBG0(void)
+{
+   VIDCore->Vdp2ToggleDisplayRBG0();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ToggleFullScreen(void)
+{
+   if (VIDCore->IsFullscreen())
+   {
+     VIDCore->Resize(320, 224, 0);
+     YuiVideoResize(320, 224, 0);
+   }
+   else
+   {
+     VIDCore->Resize(640, 480, 1);
+     YuiVideoResize(640, 480, 1);
    }
 }
 

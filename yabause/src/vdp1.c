@@ -121,7 +121,7 @@ Vdp1 * Vdp1Regs;
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp1Init(int coreid) {
+int Vdp1Init(void) {
    int i;
 
    if ((Vdp1Regs = (Vdp1 *) malloc(sizeof(Vdp1))) == NULL)
@@ -135,6 +135,27 @@ int Vdp1Init(int coreid) {
       return -1;
 
    Vdp1Regs->disptoggle = 1;
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp1DeInit(void) {
+   if (Vdp1Regs)
+      free(Vdp1Regs);
+
+   if (Vdp1Ram)
+      T1MemoryDeInit(Vdp1Ram);
+
+   if (Vdp1FrameBuffer)
+      T1MemoryDeInit(Vdp1FrameBuffer);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int VideoInit(int coreid) {
+   int i;
 
    // So which core do we want?
    if (coreid == VIDCORE_DEFAULT)
@@ -162,16 +183,7 @@ int Vdp1Init(int coreid) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1DeInit(void) {
-   if (Vdp1Regs)
-      free(Vdp1Regs);
-
-   if (Vdp1Ram)
-      T1MemoryDeInit(Vdp1Ram);
-
-   if (Vdp1FrameBuffer)
-      T1MemoryDeInit(Vdp1FrameBuffer);
-
+void VideoDeInit(void) {
    if (VIDCore)
       VIDCore->DeInit();
 }
@@ -849,6 +861,14 @@ void Vdp1DebugCommand(u32 number, char *outstring)
          default: break;
       }
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+
+void ToggleVDP1(void)
+{
+   Vdp1Regs->disptoggle ^= 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////

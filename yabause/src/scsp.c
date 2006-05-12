@@ -2864,20 +2864,27 @@ void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScspExec() {
+   u32 audiosize;
+
    scsp_update_timer((u32)(ScspInternalVars->scsptiming2 + 2.7947)); // I should really be using integers, but oh well
    ScspInternalVars->scsptiming2 = (ScspInternalVars->scsptiming2 + 2.7947) - (float)((u32)(ScspInternalVars->scsptiming2 + 2.7947)); 
    ScspInternalVars->scsptiming1++;
 
-   if (ScspInternalVars->scsptiming1 >= 263) // fix me
+   if (ScspInternalVars->scsptiming1 >= 263)
    {
-      memset(scspchannel[0].data32, 0, 4 * scspsoundlen);
-      memset(scspchannel[1].data32, 0, 4 * scspsoundlen);
-
-      scsp_update((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, scspsoundlen);
-      SNDCore->UpdateAudio(scspchannel[0].data32, (s32 *)scspchannel[1].data32, scspsoundlen);
-
       ScspInternalVars->scsptiming1 -= 263;
       ScspInternalVars->scsptiming2 = 0;
+   }
+
+   if ((audiosize = SNDCore->GetAudioSpace()))
+   {
+      if (audiosize > (scspsoundlen))
+         audiosize = scspsoundlen;
+      memset(scspchannel[0].data32, 0, sizeof(u32) * audiosize);
+      memset(scspchannel[1].data32, 0, sizeof(u32) * audiosize);
+
+      scsp_update((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, audiosize);
+      SNDCore->UpdateAudio(scspchannel[0].data32, (s32 *)scspchannel[1].data32, audiosize);
    }
 }
 
@@ -3234,6 +3241,7 @@ void SNDDummyDeInit();
 int SNDDummyReset();
 int SNDDummyChangeVideoFormat(int vertfreq);
 void SNDDummyUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
+u32 SNDDummyGetAudioSpace();
 void SNDDummyMuteAudio();
 void SNDDummyUnMuteAudio();
 
@@ -3245,6 +3253,7 @@ SNDDummyDeInit,
 SNDDummyReset,
 SNDDummyChangeVideoFormat,
 SNDDummyUpdateAudio,
+SNDDummyGetAudioSpace,
 SNDDummyMuteAudio,
 SNDDummyUnMuteAudio
 };
@@ -3280,6 +3289,13 @@ int SNDDummyChangeVideoFormat(int vertfreq)
 
 void SNDDummyUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples)
 {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SNDDummyGetAudioSpace()
+{
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

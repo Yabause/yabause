@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include "ygl.h"
+#include "yui.h"
 
 YglTextureManager * YglTM;
 Ygl * _Ygl;
@@ -116,12 +117,19 @@ int YglGLInit(int width, int height) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YglScreenInit(int r, int g, int b, int d) {
+#ifndef HAVE_LIBSDL
+   YuiSetVideoAttribute(RED_SIZE, r);
+   YuiSetVideoAttribute(GREEN_SIZE, g);
+   YuiSetVideoAttribute(BLUE_SIZE, b);
+   YuiSetVideoAttribute(DEPTH_SIZE, d);
+   return (YuiSetVideoMode(320, 224, 32, 0) == 0);
+#else
    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, r);
    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, g);
    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, b);
    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, d);
-
    return (SDL_SetVideoMode(320, 224, 32, SDL_OPENGL | SDL_RESIZABLE) != NULL);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -147,13 +155,16 @@ int YglInit(int width, int height, unsigned int depth) {
          return -1;
    }
 
-   SDL_InitSubSystem( SDL_INIT_VIDEO );
+#ifdef HAVE_LIBSDL
+   if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+      SDL_InitSubSystem(SDL_INIT_VIDEO);
 
    //set the window title
    sprintf(yab_version, "Yabause " VERSION);
    SDL_WM_SetCaption(yab_version, NULL);
 	
    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#endif
 
    if (!YglScreenInit(8, 8, 8, 24))
    {
@@ -161,8 +172,10 @@ int YglInit(int width, int height, unsigned int depth) {
       {
          if (!YglScreenInit(5, 6, 5, 16))
          {
+#ifdef HAVE_LIBSDL
             fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
             SDL_Quit();
+#endif
             return -1;
          }
       }
@@ -339,7 +352,11 @@ void YglRender(void) {
 #endif
 #endif
 
+#ifndef HAVE_LIBSDL
+   YuiSwapBuffers();
+#else
    SDL_GL_SwapBuffers();
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

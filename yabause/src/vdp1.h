@@ -63,6 +63,7 @@ typedef struct
    void (*Vdp2ToggleDisplayNBG2)(void);
    void (*Vdp2ToggleDisplayNBG3)(void);
    void (*Vdp2ToggleDisplayRBG0)(void);
+   void (*OnScreenDebugMessage)(char *string, ...);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
@@ -134,8 +135,10 @@ typedef struct
    u16 CMDGRDA;   
 } vdp1cmd_struct;
 
-int Vdp1Init(int coreid);
+int Vdp1Init(void);
 void Vdp1DeInit(void);
+int VideoInit(int coreid);
+void VideoDeInit(void);
 void Vdp1Reset(void);
 
 u8 FASTCALL	Vdp1ReadByte(u32);
@@ -151,5 +154,6 @@ void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr);
 
 char *Vdp1DebugGetCommandNumberName(u32 number);
 void Vdp1DebugCommand(u32 number, char *outstring);
+void ToggleVDP1(void);
 
 #endif

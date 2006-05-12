@@ -9,6 +9,11 @@
 #include "vdp1.h"
 #include "yabause.h"
 
+#define RED_SIZE        1
+#define GREEN_SIZE      2
+#define BLUE_SIZE       3
+#define DEPTH_SIZE      4
+
 /* This function should be the "main" function of the program.
  * The function passed as an argument is the main emulation
    function and should be called as often as possible */
@@ -39,6 +44,20 @@ void YuiSetSoundEnable(int enablesound);
    should just ignore this. The w and h variables are the width and height of
    the client area. Take this into account when you resize your window. */
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen);
+
+/* Sets attribute for the Video display. The values passed to this function
+   depends on what Video core is being used at the time. This may end up
+   being moved to the Video Core. */
+void YuiSetVideoAttribute(int type, int val);
+
+/* Tells the yui it wants to setup the display to display the specified video
+   format. It's up to the yui to setup the actual display. This may end
+   up being moved to the Video Core. */
+int YuiSetVideoMode(int width, int height, int bpp, int fullscreen);
+
+/* Tells the yui to exchange front and back video buffers. This may end
+   up being moved to the Video Core. */
+void YuiSwapBuffers();
 
 //////////////////////////////////////////////////////////////////////////////
 // Helper functions(you can use these in your own port)

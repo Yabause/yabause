@@ -15,6 +15,7 @@ typedef struct
    int (*Reset)();
    int (*ChangeVideoFormat)(int vertfreq);
    void (*UpdateAudio)(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
+   u32 (*GetAudioSpace)();
    void (*MuteAudio)();
    void (*UnMuteAudio)();
 } SoundInterface_struct;

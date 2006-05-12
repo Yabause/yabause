@@ -41,6 +41,7 @@ void YabauseReset();
 int YabauseExec();
 void YabStartSlave(void);
 void YabStopSlave(void);
+u32 YabauseGetTicks(void);
 void YabauseSetVideoFormat(int type);
 
 typedef struct

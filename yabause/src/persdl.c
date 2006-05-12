@@ -54,8 +54,6 @@ PERSDLNothing
 void (*PERSDLKeyPressed[SDLK_LAST])(void);
 void (*PERSDLKeyReleased[SDLK_LAST])(void);
 
-void ToggleFPS (); // This should probably be changed
-
 //////////////////////////////////////////////////////////////////////////////
 
 static INLINE void PERSDLSetBoth(SDLKey key, void (*fct_ptr1)(void), void (*fct_ptr2)(void)) {
@@ -65,66 +63,11 @@ static INLINE void PERSDLSetBoth(SDLKey key, void (*fct_ptr1)(void), void (*fct_
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ToggleNBG0(void)
-{
-   VIDCore->Vdp2ToggleDisplayNBG0();
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ToggleNBG1(void)
-{
-   VIDCore->Vdp2ToggleDisplayNBG1();
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ToggleNBG2(void)
-{
-   VIDCore->Vdp2ToggleDisplayNBG2();
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ToggleNBG3(void)
-{
-   VIDCore->Vdp2ToggleDisplayNBG3();
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ToggleRBG0(void)
-{
-   VIDCore->Vdp2ToggleDisplayRBG0();
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ToggleVDP1(void)
-{
-   Vdp1Regs->disptoggle ^= 1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ToggleFullScreen(void)
-{
-   if (VIDCore->IsFullscreen())
-   {
-     VIDCore->Resize(320, 224, 0);
-     YuiVideoResize(320, 224, 0);
-   }
-   else
-   {
-     VIDCore->Resize(640, 448, 1);
-     YuiVideoResize(640, 448, 1);
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 int PERSDLInit(void) {
 	int i;
+
+        if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+           SDL_InitSubSystem(SDL_INIT_VIDEO);
 
 	for(i = 0;i < SDLK_LAST;i++) {
 		PERSDLKeyPressed[i] = PERSDLNothing;

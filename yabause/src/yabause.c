@@ -19,6 +19,9 @@
 */
 
 #include <sys/types.h>
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include "yabause.h"
 #include "cs0.h"
 #include "cs2.h"
@@ -32,7 +35,7 @@
 #include "smpc.h"
 #include "vdp2.h"
 #include "yui.h"
-#ifdef __APPLE__
+#ifdef HAVE_LIBSDL
 #include "SDL.h"
 #endif
 
@@ -121,6 +124,12 @@ int YabauseInit(yabauseinit_struct *init)
 
    bupfilename = init->buppath;
 
+   if (VideoInit(init->vidcoretype) != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, "Video");
+      return -1;
+   }
+
    // Initialize input core
    if (PerInit(init->percoretype) != 0)
    {
@@ -152,13 +161,13 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (Vdp1Init(init->vidcoretype) != 0)
+   if (Vdp1Init() != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, "VDP1");
       return -1;
    }
 
-   if (Vdp2Init(init->vidcoretype) != 0)
+   if (Vdp2Init() != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, "VDP2");
       return -1;
@@ -215,6 +224,8 @@ void YabauseDeInit() {
    Vdp1DeInit();
    Vdp2DeInit();
    SmpcDeInit();
+   PerDeInit();
+   VideoDeInit();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -332,16 +343,25 @@ void YabStopSlave(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+u32 YabauseGetTicks(void) {
+#ifdef WIN32
+   return timeGetTime();
+#else
+#ifdef HAVE_LIBSDL
+   return SDL_GetTicks();
+#endif
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void YabauseSetVideoFormat(int type) {
    yabsys.IsPal = type;
    yabsys.OneFrameTime = 1000 / (type ? 50 : 60);
    Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
    ScspChangeVideoFormat(type);
    YabauseChangeTiming(yabsys.CurSH2FreqType);
-#ifdef WIN32
-   lastticks = timeGetTime();
-#else
-#endif
+   lastticks = YabauseGetTicks();
 }
 
 //////////////////////////////////////////////////////////////////////////////

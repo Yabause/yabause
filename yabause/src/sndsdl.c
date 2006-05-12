@@ -1,4 +1,4 @@
-/*  Copyright 2005 Theo Berkau
+/*  Copyright 2005-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -23,12 +23,14 @@
 #include "error.h"
 #include "scsp.h"
 #include "sndsdl.h"
+#include "debug.h"
 
 int SNDSDLInit();
 void SNDSDLDeInit();
 int SNDSDLReset();
 int SNDSDLChangeVideoFormat(int vertfreq);
 void SNDSDLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
+u32 SNDSDLGetAudioSpace();
 void SNDSDLMuteAudio();
 void SNDSDLUnMuteAudio();
 
@@ -40,15 +42,16 @@ SNDSDLDeInit,
 SNDSDLReset,
 SNDSDLChangeVideoFormat,
 SNDSDLUpdateAudio,
+SNDSDLGetAudioSpace,
 SNDSDLMuteAudio,
 SNDSDLUnMuteAudio
 };
 
-#define NUMSOUNDBLOCKS  2
+#define NUMSOUNDBLOCKS  4
 
 static u16 *stereodata16;
-static u32 soundpos;
-static u32 soundblknum;
+static u32 soundoffset;
+static volatile u32 soundpos;
 static u32 soundlen;
 static u32 soundbufsize;
 static SDL_AudioSpec audiofmt;
@@ -107,11 +110,9 @@ int SNDSDLInit()
    memset(stereodata16, 0, soundbufsize);
 
    soundpos = 0;
-   soundblknum = 0;
 
    SDL_PauseAudio(0);
 
-//  debugfp = fopen("scsp.raw", "wb");
    return 0;
 }
 
@@ -154,17 +155,43 @@ int SNDSDLChangeVideoFormat(int vertfreq)
 
 void SNDSDLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples)
 {
+   u32 copy1size=0, copy2size=0;
    SDL_LockAudio();
-   // check to see if we're falling behind/getting ahead
 
-   ScspConvert32uto16s((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, ((s16 *)stereodata16 + (soundblknum * soundlen * 2)), num_samples);
+   if ((soundbufsize - soundoffset) < (num_samples * sizeof(s16) * 2))
+   {
+      copy1size = (soundbufsize - soundoffset);
+      copy2size = (num_samples * sizeof(s16) * 2) - copy1size;
+   }
+   else
+   {
+      copy1size = (num_samples * sizeof(s16) * 2);
+      copy2size = 0;
+   }
 
-   soundblknum++;
-   soundblknum &= (NUMSOUNDBLOCKS - 1);
+   ScspConvert32uto16s((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, (s16 *)(((u8 *)stereodata16)+soundoffset), copy1size / sizeof(s16) / 2);
 
-//   if (debugfp) fwrite((void *)stereodata16, 1, SOUNDBLOCKSIZE * 2 * NUMSOUNDBLOCKS, debugfp);
+   if (copy2size)
+      ScspConvert32uto16s((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, (s16 *)stereodata16, copy2size / sizeof(s16) / 2);
+
+   soundoffset += copy1size + copy2size;
+   soundoffset %= soundbufsize;
 
    SDL_UnlockAudio();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SNDSDLGetAudioSpace()
+{
+   u32 freespace=0;
+
+   if (soundoffset > soundpos)
+      freespace = soundbufsize - soundoffset + soundpos;
+   else
+      freespace = soundpos - soundoffset;
+
+   return (freespace / sizeof(s16) / 2);
 }
 
 //////////////////////////////////////////////////////////////////////////////

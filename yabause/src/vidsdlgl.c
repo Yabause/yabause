@@ -23,6 +23,7 @@
 #include "debug.h"
 #include "vdp2.h"
 #include "yabause.h"
+#include "SDL.h"
 #include "ygl.h"
 
 #if defined WORDS_BIGENDIAN
@@ -116,7 +117,8 @@ VIDSDLGLVdp2ToggleDisplayNBG0,
 VIDSDLGLVdp2ToggleDisplayNBG1,
 VIDSDLGLVdp2ToggleDisplayNBG2,
 VIDSDLGLVdp2ToggleDisplayNBG3,
-VIDSDLGLVdp2ToggleDisplayRBG0
+VIDSDLGLVdp2ToggleDisplayRBG0,
+YglOnScreenDebugMessage
 };
 
 static float vdp1wratio=1;
@@ -133,10 +135,6 @@ static int nbg1priority=0;
 static int nbg2priority=0;
 static int nbg3priority=0;
 static int rbg0priority=0;
-static int sdlglfps;
-static int sdlglframecount;
-static u32 sdlglticks;
-static int fpstoggle=0;
 
 typedef struct
 {
@@ -1518,28 +1516,8 @@ void VIDSDLGLVdp2DrawStart(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ToggleFPS(void)
-{
-   fpstoggle ^= 1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 void VIDSDLGLVdp2DrawEnd(void)
 {
-   if (fpstoggle)
-   {
-      YglOnScreenDebugMessage("%02d/%d FPS", sdlglfps, yabsys.IsPal ? 50 : 60);
-
-      sdlglframecount++;
-      if(SDL_GetTicks() >= sdlglticks + 1000)
-      {
-         sdlglfps = sdlglframecount;
-         sdlglframecount = 0;
-         sdlglticks = SDL_GetTicks();
-      }
-   }
-
    YglRender();
 }
 

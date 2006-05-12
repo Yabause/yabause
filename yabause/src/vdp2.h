@@ -360,13 +360,14 @@ typedef struct {
 extern Vdp2Internal_struct Vdp2Internal;
 extern u32 lastticks;
 
-int Vdp2Init(int coreid);
+int Vdp2Init(void);
 void Vdp2DeInit(void);
 void Vdp2Reset(void);
 void Vdp2VBlankIN(void);
 void Vdp2HBlankIN(void);
 void Vdp2HBlankOUT(void);
 void Vdp2VBlankOUT(void);
+void ToggleFPS(void);
 void SpeedThrottleEnable(void);
 void SpeedThrottleDisable(void);
 
@@ -382,5 +383,12 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG1(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG2(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG3(char *outstring, int *isenabled);
+
+void ToggleNBG0();
+void ToggleNBG1();
+void ToggleNBG2();
+void ToggleNBG3();
+void ToggleRBG0();
+void ToggleFullScreen();
 
 #endif
