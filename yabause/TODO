@@ -17,11 +17,7 @@
    - Add vdp2 windows
    - Add vdp1 clipping/windows
    - Make sure sh2 dma round robin priority is working correctly
-   - Fix SCU interrupts so the interrupt status register only gets updated
-     when interrupts are masked, then issues the interrupt once the mask is
-     lifted
    - SCU should be handling non-longword aligned DMA transfers
-   - Fix SCSP OCT/FNS pitch issues
 
  (3) MONITOR/DEBUGGER
 
