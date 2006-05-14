@@ -30,6 +30,7 @@ if test x$HAVE_LIBSDL = x ; then
 else
 	SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
 	SDL_LIBS=`$HAVE_LIBSDL --libs`
+	AC_DEFINE(HAVE_LIBSDL)
 fi
 
 YAB_CFLAGS="$YAB_CFLAGS $SDL_CFLAGS"
