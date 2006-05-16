@@ -31,7 +31,7 @@ u8 * Vdp2ColorRam;
 Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 
-static int autoframeskipenab=1;
+static int autoframeskipenab=0;
 static int framestoskip=0;
 static int throttlespeed=0;
 static int skipnextframe=0;
