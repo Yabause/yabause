@@ -23,6 +23,9 @@ void AllocAmendPrintString(const char *string1, const char *string2)
 
 void YabSetError(int type, void *extra)
 {
+   char tempstr[512];
+   SH2_struct *sh;
+
    switch (type)
    {
       case YAB_ERR_FILENOTFOUND:
@@ -41,21 +44,33 @@ void YabSetError(int type, void *extra)
          AllocAmendPrintString("Cannot initialize ", extra);
          break;
       case YAB_ERR_SH2INVALIDOPCODE:
-         YuiErrorMsg("SH2 invalid opcode\n"); // fix me
-/*
-         fprintf(stderr, "R0 = %08X\tR12 = %08X\n", sh2opcodes->regs.R[0], sh2opcodes->regs.R[12]);
-         fprintf(stderr, "R1 = %08X\tR13 = %08X\n", sh2opcodes->regs.R[1], sh2opcodes->regs.R[13]);
-         fprintf(stderr, "R2 = %08X\tR14 = %08X\n", sh2opcodes->regs.R[2], sh2opcodes->regs.R[14]);
-         fprintf(stderr, "R3 = %08X\tR15 = %08X\n", sh2opcodes->regs.R[3], sh2opcodes->regs.R[15]);
-         fprintf(stderr, "R4 = %08X\tSR = %08X\n", sh2opcodes->regs.R[4], sh2opcodes->regs.SR.all);
-         fprintf(stderr, "R5 = %08X\tGBR = %08X\n", sh2opcodes->regs.R[5], sh2opcodes->regs.GBR);
-         fprintf(stderr, "R6 = %08X\tVBR = %08X\n", sh2opcodes->regs.R[6], sh2opcodes->regs.VBR);
-         fprintf(stderr, "R7 = %08X\tMACH = %08X\n", sh2opcodes->regs.R[7], sh2opcodes->regs.MACH);
-         fprintf(stderr, "R8 = %08X\tMACL = %08X\n", sh2opcodes->regs.R[8], sh2opcodes->regs.MACL);
-         fprintf(stderr, "R9 = %08X\tPR = %08X\n", sh2opcodes->regs.R[9], sh2opcodes->regs.PR);
-         fprintf(stderr, "R10 = %08X\tPC = %08X\n", sh2opcodes->regs.R[10], sh2opcodes->regs.PC);
-         fprintf(stderr, "R11 = %08X\n", sh2opcodes->regs.R[11]);
-*/
+         sh = (SH2_struct *)extra;
+         sprintf(tempstr, "%s SH2 invalid opcode\n\n"
+                          "R0 =  %08X\tR12 =  %08X\n"
+                          "R1 =  %08X\tR13 =  %08X\n"
+                          "R2 =  %08X\tR14 =  %08X\n"
+                          "R3 =  %08X\tR15 =  %08X\n"
+                          "R4 =  %08X\tSR =   %08X\n"
+                          "R5 =  %08X\tGBR =  %08X\n"
+                          "R6 =  %08X\tVBR =  %08X\n"
+                          "R7 =  %08X\tMACH = %08X\n"
+                          "R8 =  %08X\tMACL = %08X\n"
+                          "R9 =  %08X\tPR =   %08X\n"
+                          "R10 = %08X\tPC =   %08X\n"
+                          "R11 = %08X\n", sh->isslave ? "Slave" : "Master",
+                          sh->regs.R[0], sh->regs.R[12],
+                          sh->regs.R[1], sh->regs.R[13],
+                          sh->regs.R[2], sh->regs.R[14],
+                          sh->regs.R[3], sh->regs.R[15],
+                          sh->regs.R[4], sh->regs.SR.all,
+                          sh->regs.R[5], sh->regs.GBR,
+                          sh->regs.R[6], sh->regs.VBR,
+                          sh->regs.R[7], sh->regs.MACH,
+                          sh->regs.R[8], sh->regs.MACL,
+                          sh->regs.R[9], sh->regs.PR,
+                          sh->regs.R[10], sh->regs.PC,
+                          sh->regs.R[11]);
+         YuiErrorMsg(tempstr);
          break;
       case YAB_ERR_SH2READ:
          YuiErrorMsg("SH2 read error\n"); // fix me
@@ -65,6 +80,9 @@ void YabSetError(int type, void *extra)
          break;
       case YAB_ERR_SDL:
          AllocAmendPrintString("SDL Error: ", extra);
+         break;
+      case YAB_ERR_OTHER:
+         YuiErrorMsg((char *)extra);
          break;
       case YAB_ERR_UNKNOWN:
       default:

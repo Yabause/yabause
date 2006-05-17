@@ -14,5 +14,7 @@
 
 #define YAB_ERR_SDL                     9
 
+#define YAB_ERR_OTHER                   10
+
 void YabSetError(int type, void *extra);
 #endif
