@@ -34,3 +34,5 @@
    - Finish rewriting C++ that's missing
    - Support multiple languages
    - Improve Opengl texture handling
+   - Allow user to remap peripheral controls
+   - Add a screenshot function for those too lazy to use the print-screen function
