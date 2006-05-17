@@ -31,6 +31,7 @@
 #include "../scu.h"
 #include "../yui.h"
 #include "../sndsdl.h"
+#include "../vidogl.h"
 #include "../vidsdlgl.h"
 #include "../vidsdlsoft.h"
 #include "../persdl.h"
@@ -160,6 +161,7 @@ SH2Interface_struct *SH2CoreList[] = {
 &SH2DebugInterpreter,
 NULL
 };
+#define SH2CORE_YUI_DEFAULT 1
 
 PerInterface_struct *PERCoreList[] = {
 &PERSDL,
@@ -185,6 +187,7 @@ VideoInterface_struct *VIDCoreList[] = {
 &VIDSDLSoft,
 NULL
 };
+#define VIDCORE_YUI_DEFAULT 1
 
 /* ------------------------------------------------------------ */
 /* ComboFileSelect - Control for file selection                 */
@@ -369,7 +372,7 @@ static cfCatchOrInsertValue( ComboFileSelect* cf, gchar* value ) {
 
 static struct {
   ComboFileSelect *cfBup, *cfCart, *cfMpeg;
-  GtkWidget *comboCartType, *comboRegion, *spinX, *spinY, *checkAspect, *checkSound, *cbSh2;
+  GtkWidget *comboCartType, *comboRegion, *spinX, *spinY, *checkAspect, *checkSound, *cbSh2, *cbVid;
   gboolean soundenabled;
 } yuiSettings;
 
@@ -399,6 +402,7 @@ static void yuiSettingsResponse(GtkWidget *widget, gint arg1, gpointer user_data
     case 8: r = REGION_CENTRALSOUTHAMERICAPAL ; break;
     }
     yuiSetInt( "sh2core", gtk_combo_box_get_active( GTK_COMBO_BOX(yuiSettings.cbSh2) ));
+    yuiSetInt( "vidcore", gtk_combo_box_get_active( GTK_COMBO_BOX(yuiSettings.cbVid) ));
     yuiSetInt( "region", r );
     yuiSetInt( "fsX", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinX ) ) );
     yuiSetInt( "fsY", gtk_spin_button_get_value_as_int( GTK_SPIN_BUTTON( yuiSettings.spinY ) ) );
@@ -441,8 +445,8 @@ static void spinFsChanged( GtkWidget *widget, gboolean bFsY ) {
 static void yuiSettingsDialog() {
   /* create and run settings dialog. */
 
-  int r;
-  GtkWidget *hboxcart, *hboxregion, *fSh2;
+  int r,i;
+  GtkWidget *hboxcart, *hboxregion, *fSh2, *fVid;
   GtkWidget* dialog = gtk_dialog_new_with_buttons ( "Settings",
 						    NULL,
 						   (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -459,9 +463,20 @@ static void yuiSettingsDialog() {
 
   yuiSettings.cbSh2 = gtk_combo_box_new_text();
   gtk_container_add (GTK_CONTAINER( fSh2 ), yuiSettings.cbSh2 );
-  gtk_combo_box_append_text( GTK_COMBO_BOX(yuiSettings.cbSh2), "Fast Interpreter" );
-  gtk_combo_box_append_text( GTK_COMBO_BOX(yuiSettings.cbSh2), "Debug Interpreter" );
-  gtk_combo_box_set_active( GTK_COMBO_BOX(yuiSettings.cbSh2), yuiGetInt( "sh2core", 0 ) );
+  for ( i = 0 ; SH2CoreList[i] ; i++ ) 
+    gtk_combo_box_append_text( GTK_COMBO_BOX(yuiSettings.cbSh2), SH2CoreList[i]->Name );
+  gtk_combo_box_set_active( GTK_COMBO_BOX(yuiSettings.cbSh2), yuiGetInt( "sh2core", SH2CORE_YUI_DEFAULT ) );
+
+  /* Video Core selection */
+
+  fVid = gtk_frame_new("Video Core");
+  gtk_box_pack_start( GTK_BOX( vbox ), fVid, FALSE, FALSE, 4 );
+
+  yuiSettings.cbVid = gtk_combo_box_new_text();
+  gtk_container_add (GTK_CONTAINER( fVid ), yuiSettings.cbVid );
+  for ( i = 0 ; VIDCoreList[i] ; i++ ) 
+    gtk_combo_box_append_text( GTK_COMBO_BOX(yuiSettings.cbVid), VIDCoreList[i]->Name );
+  gtk_combo_box_set_active( GTK_COMBO_BOX(yuiSettings.cbVid), yuiGetInt( "vidcore", VIDCORE_YUI_DEFAULT ) );
 
   /* Cartbridge path selection CF */
 
@@ -650,8 +665,10 @@ static void yuiYabauseInit() {
 	? CDCORE_ISO : CDCORE_ARCH;
     }
     yinit.percoretype = PERCORE_SDL;
-    yinit.sh2coretype = yuiGetInt( "sh2core", SH2CORE_DEFAULT );
-    yinit.vidcoretype = VIDCORE_SDLGL;
+    yinit.sh2coretype = SH2CoreList[yuiGetInt( "sh2core", SH2CORE_YUI_DEFAULT )]->id;
+    printf( "%d   (sh2)\n", yinit.sh2coretype);
+    yinit.vidcoretype = VIDCoreList[yuiGetInt( "vidcore", VIDCORE_YUI_DEFAULT )]->id;
+    printf( "%d   (vidcore)\n",yinit.vidcoretype );
     yinit.sndcoretype = yuiSettings.soundenabled ? SNDCORE_SDL : SNDCORE_DUMMY;
     yinit.regionid = yuiGetInt( "region", REGION_AUTODETECT );
     cfGetText( yui.cfBios, (gchar**)(&yinit.biospath) );
