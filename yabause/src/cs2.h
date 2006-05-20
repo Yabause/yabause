@@ -345,7 +345,7 @@ partition_struct * Cs2ReadUnFilteredSector(u32 rufsFAD);
 //partition_struct * Cs2ReadFilteredSector(u32 rfsFAD);
 int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition);
 u8 Cs2GetRegionID(void);
-
+int Cs2ChangeDisc(const char *cdpath);
 int Cs2SaveState(FILE *);
 int Cs2LoadState(FILE *, int, int);
 

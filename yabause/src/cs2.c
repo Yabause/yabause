@@ -22,6 +22,7 @@
 #include "cs2.h"
 #include "debug.h"
 #include "error.h"
+#include "smpc.h"
 #include "yui.h"
 
 #define CDB_HIRQ_CMOK      0x0001
@@ -1347,6 +1348,8 @@ void Cs2PlayDisc(void) {
      // Track Mode
      Cs2SetupDefaultPlayStats((pdspos & 0xFF00) >> 8);
      Cs2Area->FAD = Cs2Area->playFAD = Cs2Area->FAD + (pdspos & 0xFF); // is this right?
+     Cs2Area->track = (pdspos & 0xFF00) >> 8;
+     Cs2Area->index = (pdspos & 0xFF);
   }
   else
   {
@@ -3190,8 +3193,13 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
      if (memcmp(syncheader, Cs2Area->workblock.data, 12) != 0) isaudio = 1;
 
      // if mode 2 track, setup the subheader values
-     if (!isaudio &&
-         Cs2Area->workblock.data[0xF] == 0x02)
+     if (isaudio)
+     {
+        // Audio data should really be passed onto the SCSP
+        *partition = NULL;
+        return 0;
+     }
+     else if (Cs2Area->workblock.data[0xF] == 0x02)
      {
         // if it's form 2 data the sector size should be 2324
         if (Cs2Area->workblock.data[0x12] & 0x20) Cs2Area->workblock.size = 2324;
@@ -3201,6 +3209,7 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
         Cs2Area->workblock.sm = Cs2Area->workblock.data[0x12];
         Cs2Area->workblock.ci = Cs2Area->workblock.data[0x13];
      }
+
 
      // pass workblock to filter function(after it identifies partition,
      // it should allocate the partition block, setup/change the partition
@@ -3271,6 +3280,27 @@ u8 Cs2GetRegionID() {
    }
 
    return ret;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int Cs2ChangeDisc(const char *cdpath) {
+   // This is meant to allow the cd cores to change the path to the
+   // cdrom/image without having to reboot yabause.
+   int ret;
+
+   if (Cs2Area->cdi == NULL)
+      return -1;
+
+   Cs2Area->cdi->DeInit();
+   if ((ret = Cs2Area->cdi->Init(cdpath)) != 0)
+      return ret;
+
+   Cs2Area->isdiskchanged = 1;
+   Cs2Area->status = CDB_STAT_PAUSE;
+   SmpcRecheckRegion();
+
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

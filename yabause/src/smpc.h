@@ -52,6 +52,7 @@ typedef struct {
    u8 intbackIreg0;
    u8 firstPeri;
    u8 regionid;
+   u8 regionsetting;
    u8 SMEM[4];
    s32 timing;
 #ifdef USENEWPERINTERFACE
@@ -62,6 +63,7 @@ typedef struct {
 
 int SmpcInit(u8 regionid);
 void SmpcDeInit(void);
+void SmpcRecheckRegion(void);
 void SmpcReset(void);
 void SmpcExec(s32 t);
 void SmpcINTBACKEnd();

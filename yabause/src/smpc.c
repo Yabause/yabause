@@ -49,7 +49,8 @@ int SmpcInit(u8 regionid) {
 
    if ((SmpcInternalVars = (SmpcInternal *) calloc(1, sizeof(SmpcInternal))) == NULL)
       return -1;
-
+  
+   SmpcInternalVars->regionsetting = regionid;
    SmpcInternalVars->regionid = regionid;
 
    return 0;
@@ -67,15 +68,21 @@ void SmpcDeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcReset(void) {
-   memset((void *)SmpcRegs, 0, sizeof(Smpc));
-   memset((void *)SmpcInternalVars->SMEM, 0, 4);
-
-   if (SmpcInternalVars->regionid == 0)
+void SmpcRecheckRegion(void) {
+   if (SmpcInternalVars->regionsetting == REGION_AUTODETECT)
    {
       // Time to autodetect the region using the cd block
       SmpcInternalVars->regionid = Cs2GetRegionID();          
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SmpcReset(void) {
+   memset((void *)SmpcRegs, 0, sizeof(Smpc));
+   memset((void *)SmpcInternalVars->SMEM, 0, 4);
+
+   SmpcRecheckRegion();
 
    SmpcInternalVars->dotsel = 0;
    SmpcInternalVars->mshnmi = 0;
@@ -122,8 +129,6 @@ void SmpcSNDON() {
 
 void SmpcSNDOFF() {
    yabsys.IsM68KRunning = 0;
-//   memset((void *)SoundRam, 0, 0x80000); // hack needed by Lunar
-
    SmpcRegs->OREG[31] = 0x7;
 }
 
@@ -142,6 +147,9 @@ void SmpcCKCHG352() {
 
    // change clock
    YabauseChangeTiming(CLKTYPE_28MHZ);
+
+   // Set DOTSEL
+   SmpcInternalVars->dotsel = 1;
 
    // Send NMI
    SH2NMI(MSH2);
@@ -162,6 +170,9 @@ void SmpcCKCHG320() {
 
    // change clock
    YabauseChangeTiming(CLKTYPE_26MHZ);
+
+   // Set DOTSEL
+   SmpcInternalVars->dotsel = 0;
 
    // Send NMI
    SH2NMI(MSH2);
