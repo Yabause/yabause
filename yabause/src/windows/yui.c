@@ -79,6 +79,8 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
+LRESULT CALLBACK ErrorDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam);
 void YuiReleaseVideo(void);
 
 SH2Interface_struct *SH2CoreList[] = {
@@ -152,7 +154,25 @@ void YuiQuit(void)
 
 void YuiErrorMsg(const char *string)
 {
-   MessageBox (NULL, string, "Error",  MB_OK | MB_ICONINFORMATION);
+   // This sucks, but until YuiErrorMsg is changed around, this will have to do
+   if (strncmp(string, "Master SH2 invalid opcode", 25) == 0)
+   {
+      if (DialogBoxParam(y_hInstance, "ErrorDebugDlg", NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
+      {
+         debugsh = MSH2;
+         DialogBox(y_hInstance, "SH2DebugDlg", NULL, (DLGPROC)SH2DebugDlgProc);
+      }
+   }
+   else if (strncmp(string, "Slave SH2 invalid opcode", 24) == 0)
+   {
+      if (DialogBoxParam(y_hInstance, "ErrorDebugDlg", NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
+      {
+         debugsh = SSH2;
+         DialogBox(y_hInstance, "SH2DebugDlg", NULL, (DLGPROC)SH2DebugDlgProc);
+      }
+   }
+   else
+      MessageBox (NULL, string, "Error",  MB_OK | MB_ICONINFORMATION);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1843,3 +1863,40 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+LRESULT CALLBACK ErrorDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                   LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         SetDlgItemText(hDlg, IDC_EDTEXT, (LPCTSTR)lParam);
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_EDCONTINUE:
+            {
+               EndDialog(hDlg, FALSE);
+
+               return TRUE;
+            }
+            case IDC_EDDEBUG:
+            {
+               EndDialog(hDlg, TRUE);
+
+               return TRUE;
+            }
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////

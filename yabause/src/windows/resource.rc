@@ -277,6 +277,18 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
+ERRORDEBUGDLG DIALOG DISCARDABLE  0, 0, 136, 144
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "Error"
+FONT 8, "Courier New"
+BEGIN
+    LTEXT           "", IDC_EDTEXT, 6, 6, 130, 112
+    DEFPUSHBUTTON   "Continue", IDC_EDCONTINUE, 75, 124, 38, 12
+    PUSHBUTTON      "Debug", IDC_EDDEBUG, 23, 124, 33, 13
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
 IDR_MAIN_ACCEL ACCELERATORS DISCARDABLE
 BEGIN
     VK_RETURN,      IDM_TOGGLEFULLSCREEN,   VIRTKEY, ALT, NOINVERT
