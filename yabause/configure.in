@@ -25,22 +25,7 @@ AC_LANG(C)
 
 AC_C_BIGENDIAN
 
-AC_PATH_PROGS(HAVE_LIBSDL, [sdl-config sdl11-config])
-
-if test x$HAVE_LIBSDL = x ; then
-	AC_MSG_ERROR([You need to install SDL])
-else
-	SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
-	SDL_LIBS=`$HAVE_LIBSDL --libs`
-	AC_DEFINE(HAVE_LIBSDL)
-fi
-
-AC_SUBST(SDL_CFLAGS)
-AC_SUBST(SDL_LIBS)
-YAB_CFLAGS="$YAB_CFLAGS $SDL_CFLAGS"
-YAB_LIBS="$YAB_LIBS $SDL_LIBS"
-
-use_gtk=no
+SDL_CFLAGS=""
 
 case $target in
 	*darwin*)
@@ -56,6 +41,19 @@ case $target in
 		yabause_yui="windows"
 		;;
 	*linux* | *freebsd*)
+		AC_PATH_PROGS(HAVE_LIBSDL, [sdl-config sdl11-config])
+
+		if test x$HAVE_LIBSDL = x ; then
+			AC_MSG_ERROR([You need to install SDL])
+		else
+			SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
+			SDL_LIBS=`$HAVE_LIBSDL --libs`
+			AC_DEFINE(HAVE_LIBSDL)
+		fi
+		AC_SUBST(SDL_CFLAGS)
+		YAB_CFLAGS="$YAB_CFLAGS $SDL_CFLAGS"
+		YAB_LIBS="$YAB_LIBS $SDL_LIBS"
+
 		AC_PATH_XTRA
 		YAB_LIBS="$YAB_LIBS $X_LIBS"
 		YAB_CFLAGS="$YAB_CFLAGS $X_CFLAGS"
@@ -67,34 +65,26 @@ case $target in
 			YAB_LIBS="$YAB_LIBS -lglut"
 			AC_DEFINE(HAVE_LIBGLUT)],, $YAB_LIBS)
 		yabause_yui="."
-		use_gtk=yes
+		AC_CHECK_TOOL(HAVE_PKG, pkg-config)
+
+		if test ! x$HAVE_PKG = x ; then
+			yabause_yui="linux"
+			GTK_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
+			GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
+		fi
+		YAB_CFLAGS="$YAB_CFLAGS $GTK_CFLAGS"
+		YAB_LIBS="$YAB_LIBS $GTK_LIBS"
+		AC_SUBST(YAB_CFLAGS)
+		AC_SUBST(YAB_LIBS)
 		;;
 	*) 
 		AC_CHECK_LIB(GL, glEnable, [], [AC_MSG_ERROR("You need to install OpenGL") ], $YAB_LIBS)
 		AC_CHECK_LIB(glut, glutGetModifiers, [], [], $YAB_LIBS)
 		yabause_yui="."
 		;;
-
 esac
 
-AC_ARG_WITH(gtk, AC_HELP_STRING(--with-gtk, use a gtk interface), [use_gtk=$withval])
-
-if test x$use_gtk = xyes ; then
-	AC_CHECK_TOOL(HAVE_PKG, pkg-config)
-
-	if test ! x$HAVE_PKG = x ; then
-		yabause_yui="linux"
-		GTK_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
-		GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
-	fi
-fi
-
 AC_SUBST(yabause_yui)
-
-YAB_CFLAGS="$YAB_CFLAGS $GTK_CFLAGS"
-YAB_LIBS="$YAB_LIBS $GTK_LIBS"
-AC_SUBST(YAB_CFLAGS)
-AC_SUBST(YAB_LIBS)
 
 AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug information) , AC_DEFINE(DEBUG))
 AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug information) , AC_DEFINE(VDP1_DEBUG))
