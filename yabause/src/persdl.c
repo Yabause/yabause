@@ -18,6 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef HAVE_LIBSDL
 #include "persdl.h"
 #include "SDL.h"
 #include "yabause.h"
@@ -206,5 +207,7 @@ PerInfo_struct *PERSDLGetList(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+#endif
 
 #endif
