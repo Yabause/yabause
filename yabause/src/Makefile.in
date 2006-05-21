@@ -94,7 +94,6 @@ SUBDIRS = c68k dreamcast freebsd linux macosx windows
 bin_PROGRAMS = yabause
 yabause_SOURCES = \
 	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \
-	$(yabause_arch)/cd.c \
 	cdbase.c cdbase.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h \
 	debug.c debug.h error.c error.h memory.c memory.h \
 	peripheral.h peripheral.c m68kd.c \
@@ -108,7 +107,7 @@ yabause_SOURCES = \
 
 nodist_yabause_SOURCES = c68k/c68k_ini.inc
 yabause_CFLAGS = $(YAB_CFLAGS)
-yabause_LDADD = $(YAB_LIBS)
+yabause_LDADD = $(YAB_LIBS) cd-$(yabause_arch).$(OBJEXT)
 subdir = src
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
@@ -116,23 +115,23 @@ bin_PROGRAMS = yabause$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
 am_yabause_OBJECTS = yabause-c68kexec.$(OBJEXT) yabause-c68k.$(OBJEXT) \
-	yabause-gen68k.$(OBJEXT) yabause-cd.$(OBJEXT) \
-	yabause-cdbase.$(OBJEXT) yabause-cs0.$(OBJEXT) \
-	yabause-cs1.$(OBJEXT) yabause-cs2.$(OBJEXT) \
-	yabause-debug.$(OBJEXT) yabause-error.$(OBJEXT) \
-	yabause-memory.$(OBJEXT) yabause-peripheral.$(OBJEXT) \
-	yabause-m68kd.$(OBJEXT) yabause-persdl.$(OBJEXT) \
-	yabause-profile.$(OBJEXT) yabause-scu.$(OBJEXT) \
-	yabause-sh2core.$(OBJEXT) yabause-sh2d.$(OBJEXT) \
-	yabause-sh2idle.$(OBJEXT) yabause-sh2int.$(OBJEXT) \
-	yabause-smpc.$(OBJEXT) yabause-scsp.$(OBJEXT) \
-	yabause-sndsdl.$(OBJEXT) yabause-vdp1.$(OBJEXT) \
-	yabause-vdp2.$(OBJEXT) yabause-vidsdlgl.$(OBJEXT) \
-	yabause-vidsdlsoft.$(OBJEXT) yabause-yabause.$(OBJEXT) \
-	yabause-ygl.$(OBJEXT) yabause-yui.$(OBJEXT)
+	yabause-gen68k.$(OBJEXT) yabause-cdbase.$(OBJEXT) \
+	yabause-cs0.$(OBJEXT) yabause-cs1.$(OBJEXT) \
+	yabause-cs2.$(OBJEXT) yabause-debug.$(OBJEXT) \
+	yabause-error.$(OBJEXT) yabause-memory.$(OBJEXT) \
+	yabause-peripheral.$(OBJEXT) yabause-m68kd.$(OBJEXT) \
+	yabause-persdl.$(OBJEXT) yabause-profile.$(OBJEXT) \
+	yabause-scu.$(OBJEXT) yabause-sh2core.$(OBJEXT) \
+	yabause-sh2d.$(OBJEXT) yabause-sh2idle.$(OBJEXT) \
+	yabause-sh2int.$(OBJEXT) yabause-smpc.$(OBJEXT) \
+	yabause-scsp.$(OBJEXT) yabause-sndsdl.$(OBJEXT) \
+	yabause-vdp1.$(OBJEXT) yabause-vdp2.$(OBJEXT) \
+	yabause-vidsdlgl.$(OBJEXT) yabause-vidsdlsoft.$(OBJEXT) \
+	yabause-yabause.$(OBJEXT) yabause-ygl.$(OBJEXT) \
+	yabause-yui.$(OBJEXT)
 nodist_yabause_OBJECTS =
 yabause_OBJECTS = $(am_yabause_OBJECTS) $(nodist_yabause_OBJECTS)
-yabause_DEPENDENCIES =
+yabause_DEPENDENCIES = cd-$(yabause_arch).$(OBJEXT)
 yabause_LDFLAGS =
 
 DEFS = @DEFS@
@@ -144,7 +143,6 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/yabause-c68k.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-c68kexec.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/yabause-cd.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-cdbase.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-cs0.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-cs1.Po \
@@ -223,7 +221,6 @@ clean-binPROGRAMS:
 yabause-c68kexec.$(OBJEXT): c68k/c68kexec.c
 yabause-c68k.$(OBJEXT): c68k/c68k.c
 yabause-gen68k.$(OBJEXT): c68k/gen68k.c
-yabause-cd.$(OBJEXT): $(yabause_arch)/cd.c
 yabause-cdbase.$(OBJEXT): cdbase.c
 yabause-cs0.$(OBJEXT): cs0.c
 yabause-cs1.$(OBJEXT): cs1.c
@@ -262,7 +259,6 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-c68k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-c68kexec.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cdbase.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cs0.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-cs1.Po@am__quote@
@@ -341,18 +337,6 @@ yabause-gen68k.obj: c68k/gen68k.c
 @AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-gen68k.Po' tmpdepfile='$(DEPDIR)/yabause-gen68k.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-gen68k.obj `cygpath -w c68k/gen68k.c`
-
-yabause-cd.o: $(yabause_arch)/cd.c
-@AMDEP_TRUE@	source='$(yabause_arch)/cd.c' object='yabause-cd.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cd.Po' tmpdepfile='$(DEPDIR)/yabause-cd.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cd.o `test -f '$(yabause_arch)/cd.c' || echo '$(srcdir)/'`$(yabause_arch)/cd.c
-
-yabause-cd.obj: $(yabause_arch)/cd.c
-@AMDEP_TRUE@	source='$(yabause_arch)/cd.c' object='yabause-cd.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-cd.Po' tmpdepfile='$(DEPDIR)/yabause-cd.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-cd.obj `cygpath -w $(yabause_arch)/cd.c`
 
 yabause-cdbase.o: cdbase.c
 @AMDEP_TRUE@	source='cdbase.c' object='yabause-cdbase.o' libtool=no @AMDEPBACKSLASH@

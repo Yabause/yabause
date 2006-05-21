@@ -3,7 +3,6 @@ SUBDIRS = c68k dreamcast freebsd linux macosx windows
 bin_PROGRAMS = yabause
 yabause_SOURCES = \
 	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \
-	$(yabause_arch)/cd.c \
 	cdbase.c cdbase.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h \
 	debug.c debug.h error.c error.h memory.c memory.h \
 	peripheral.h peripheral.c m68kd.c \
@@ -16,6 +15,6 @@ yabause_SOURCES = \
 	$(yabause_yui)/yui.c yui.h
 nodist_yabause_SOURCES = c68k/c68k_ini.inc
 yabause_CFLAGS = $(YAB_CFLAGS)
-yabause_LDADD = $(YAB_LIBS)
+yabause_LDADD = $(YAB_LIBS) cd-$(yabause_arch).$(OBJEXT)
 c68k/c68k_ini.inc:
 	cd c68k && ./gen68k
