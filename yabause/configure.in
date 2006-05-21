@@ -8,7 +8,7 @@ case $target in
 	*darwin*) yabause_arch=macosx;;
 	*linux*) yabause_arch=linux;;
 	*cygwin*) yabause_arch=windows;;
-	*mingw32*) yabause_arch=.;;
+	*mingw32*) yabause_arch=windows;;
 	*freebsd*) yabause_arch=freebsd;;
 	*) yabause_arch=".";;
 esac
@@ -49,7 +49,7 @@ case $target in
 		;;
 	*mingw32*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
-		yabause_yui="."
+		yabause_yui="windows"
 		;;
 	*linux* | *freebsd*)
 		AC_PATH_XTRA
