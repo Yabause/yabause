@@ -97,7 +97,7 @@ yabause_SOURCES = \
 	perdx.c perdx.h snddx.c snddx.h
 
 yabause_LDFLAGS = -mwindows -mthreads
-yabause_LDADD = ../libyabause.a -lmingw32 -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -ldxguid -ldinput8 -ldsound
+yabause_LDADD = ../libyabause.a resource.o -lmingw32 -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -ldxguid -ldinput8 -ldsound
 subdir = src/windows
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
@@ -107,7 +107,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_yabause_OBJECTS = settings.$(OBJEXT) yui.$(OBJEXT) perdx.$(OBJEXT) \
 	snddx.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
-yabause_DEPENDENCIES = ../libyabause.a
+yabause_DEPENDENCIES = ../libyabause.a resource.o
 
 DEFS = @DEFS@
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
@@ -332,6 +332,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 	mostlyclean-generic tags uninstall uninstall-am \
 	uninstall-binPROGRAMS uninstall-info-am
 
+resource.o: resource.rc resource.h
+	windres $< -o $@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -297,9 +297,9 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 #ifdef _MSC_VER
-IDI_ICON        ICON    DISCARDABLE     "logo.ico"
+IDI_ICON        ICON    DISCARDABLE     "../logo.ico"
 #else
-IDI_ICON        ICON    DISCARDABLE     "logo.ico"
+IDI_ICON        ICON    DISCARDABLE     "../logo.ico"
 #endif
 //////////////////////////////////////////////////////////////////////////////
 
