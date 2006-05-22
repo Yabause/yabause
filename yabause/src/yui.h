@@ -13,6 +13,7 @@
 #define GREEN_SIZE      2
 #define BLUE_SIZE       3
 #define DEPTH_SIZE      4
+#define DOUBLEBUFFER	5
 
 /* This function should be the "main" function of the program.
  * The function passed as an argument is the main emulation

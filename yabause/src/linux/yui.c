@@ -37,6 +37,7 @@
 #include "../persdl.h"
 #include "../cs0.h"
 #include "../scsp.h"
+#include "SDL.h"
 
 #define FS_X_DEFAULT 640
 #define FS_Y_DEFAULT 448
@@ -1094,6 +1095,38 @@ static void yuiAbout(void) {
     gtk_widget_grab_default(close_btn);
 
     gtk_widget_show_all(about_window);
+}
+
+void YuiSwapBuffers(void) {
+	SDL_GL_SwapBuffers();
+}
+
+void YuiSetVideoAttribute(int type, int val) {
+	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+		SDL_InitSubSystem(SDL_INIT_VIDEO);
+	switch(type) {
+		case RED_SIZE:
+			SDL_GL_SetAttribute(SDL_GL_RED_SIZE, val);
+			break;
+		case GREEN_SIZE:
+			SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, val);
+			break;
+		case BLUE_SIZE:
+			SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, val);
+			break;
+		case DEPTH_SIZE:
+			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, val);
+			break;
+		case DOUBLEBUFFER:
+			SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+			break;
+	}
+}
+
+int YuiSetVideoMode(int width, int height, int bpp, int fullscreen) {
+	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+		SDL_InitSubSystem(SDL_INIT_VIDEO);
+	return (SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE) == NULL);
 }
 
 int main(int argc, char *argv[]) {
