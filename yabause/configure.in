@@ -25,8 +25,6 @@ AC_LANG(C)
 
 AC_C_BIGENDIAN
 
-SDL_CFLAGS=""
-
 case $target in
 	*darwin*)
 		YAB_LIBS="$YAB_LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
@@ -50,20 +48,19 @@ case $target in
 			SDL_LIBS=`$HAVE_LIBSDL --libs`
 			AC_DEFINE(HAVE_LIBSDL)
 		fi
-		AC_SUBST(SDL_CFLAGS)
-		YAB_CFLAGS="$YAB_CFLAGS $SDL_CFLAGS"
-		YAB_LIBS="$YAB_LIBS $SDL_LIBS"
+		CFLAGS="$CFLAGS $SDL_CFLAGS"
+		LIBS="$LIBS $SDL_LIBS"
 
 		AC_PATH_XTRA
-		YAB_LIBS="$YAB_LIBS $X_LIBS"
-		YAB_CFLAGS="$YAB_CFLAGS $X_CFLAGS"
+		LIBS="$LIBS $X_LIBS"
+		CFLAGS="$CFLAGS $X_CFLAGS"
 		AC_CHECK_LIB(GL, glEnable, [
-			YAB_LIBS="$YAB_LIBS -lGL"
+			LIBS="$LIBS -lGL"
 			AC_DEFINE(HAVE_LIBGL)
-			], [AC_MSG_ERROR("You need to install OpenGL") ], $YAB_LIBS)
+			], [AC_MSG_ERROR("You need to install OpenGL") ], $LIBS)
 		AC_CHECK_LIB(glut, glutGetModifiers,[
-			YAB_LIBS="$YAB_LIBS -lglut"
-			AC_DEFINE(HAVE_LIBGLUT)],, $YAB_LIBS)
+			LIBS="$LIBS -lglut"
+			AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
 		yabause_yui="."
 		AC_CHECK_TOOL(HAVE_PKG, pkg-config)
 
@@ -72,8 +69,8 @@ case $target in
 			GTK_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
 			GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
 		fi
-		YAB_CFLAGS="$YAB_CFLAGS $GTK_CFLAGS"
-		YAB_LIBS="$YAB_LIBS $GTK_LIBS"
+		YAB_CFLAGS="$CFLAGS $GTK_CFLAGS"
+		YAB_LIBS="$LIBS $GTK_LIBS"
 		AC_SUBST(YAB_CFLAGS)
 		AC_SUBST(YAB_LIBS)
 		;;

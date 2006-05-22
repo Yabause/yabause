@@ -1,5 +1,5 @@
 EXTRA_DIST = cd.c Makefile.mng logo.bmp logo.ico logo.png
-SUBDIRS = c68k . $(yabause_arch)
+SUBDIRS = c68k . $(yabause_yui)
 noinst_LIBRARIES = libyabause.a
 libyabause_a_SOURCES = \
 	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \
@@ -13,7 +13,6 @@ libyabause_a_SOURCES = \
 	vdp2.c vdp2.h vidogl.c vidogl.h vidsdlgl.c vidsdlgl.h vidsdlsoft.c vidsdlsoft.h \
 	yabause.c yabause.h ygl.h ygl.c yui.h
 nodist_libyabause_a_SOURCES = c68k/c68k_ini.inc
-libyabause_a_CFLAGS = $(SDL_CFLAGS)
 libyabause_a_LIBADD = cd-$(yabause_arch).$(OBJEXT)
 c68k/c68k_ini.inc:
 	cd c68k && ./gen68k
