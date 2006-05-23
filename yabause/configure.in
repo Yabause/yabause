@@ -95,7 +95,6 @@ AC_CONFIG_FILES([Makefile
 	src/Makefile
 	src/c68k/Makefile
 	src/dreamcast/Makefile
-	src/freebsd/Makefile
 	src/linux/Makefile
 	src/macosx/Makefile
 	src/windows/Makefile
