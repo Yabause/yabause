@@ -237,12 +237,6 @@ distclean-depend:
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(COMPILE) -c `cygpath -w $<`
 
-c68kexec.o: c68k/c68kexec.c
-@AMDEP_TRUE@	source='c68k/c68kexec.c' object='c68kexec.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/c68kexec.Po' tmpdepfile='$(DEPDIR)/c68kexec.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o c68kexec.o `test -f 'c68k/c68kexec.c' || echo '$(srcdir)/'`c68k/c68kexec.c
-
 c68kexec.obj: c68k/c68kexec.c
 @AMDEP_TRUE@	source='c68k/c68kexec.c' object='c68kexec.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@	depfile='$(DEPDIR)/c68kexec.Po' tmpdepfile='$(DEPDIR)/c68kexec.TPo' @AMDEPBACKSLASH@
@@ -496,6 +490,8 @@ uninstall-info: uninstall-info-recursive
 
 c68k/c68k_ini.inc:
 	cd c68k && ./gen68k
+c68kexec.o: c68k/c68kexec.c
+	$(COMPILE) -O0 c68k/c68kexec.c -c -o c68kexec.o
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

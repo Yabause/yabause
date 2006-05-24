@@ -16,3 +16,5 @@ nodist_libyabause_a_SOURCES = c68k/c68k_ini.inc
 libyabause_a_LIBADD = cd-$(yabause_arch).$(OBJEXT)
 c68k/c68k_ini.inc:
 	cd c68k && ./gen68k
+c68kexec.o: c68k/c68kexec.c
+	$(COMPILE) -O0 c68k/c68kexec.c -c -o c68kexec.o
