@@ -1049,6 +1049,8 @@ void VIDSDLGLResize(unsigned int w, unsigned int h, int on)
    YglGLInit(1024, 1024);
 
    glViewport(0, 0, w, h);
+
+   SetSaturnResolution(vdp2width, vdp2height);
 }
 
 //////////////////////////////////////////////////////////////////////////////
