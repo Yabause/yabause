@@ -65,9 +65,15 @@ case $target in
 		AC_CHECK_TOOL(HAVE_PKG, pkg-config)
 
 		if test ! x$HAVE_PKG = x ; then
-			yabause_yui="linux"
-			GTK_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
-			GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
+			if `$HAVE_PKG gtkglext-1.0` ; then
+				yabause_yui="linux gtk"
+				GTK_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
+				GTK_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
+			else
+				yabause_yui="linux"
+				GTK_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
+				GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
+			fi
 		fi
 		YAB_CFLAGS="$CFLAGS $GTK_CFLAGS"
 		YAB_LIBS="$LIBS $GTK_LIBS"
@@ -95,6 +101,7 @@ AC_CONFIG_FILES([Makefile
 	src/Makefile
 	src/c68k/Makefile
 	src/dreamcast/Makefile
+	src/gtk/Makefile
 	src/linux/Makefile
 	src/macosx/Makefile
 	src/windows/Makefile

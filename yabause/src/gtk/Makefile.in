@@ -90,7 +90,6 @@ am__quote = @am__quote@
 install_sh = @install_sh@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
-EXTRA_DIST = menu.xml
 bin_PROGRAMS = yabause
 yabause_SOURCES = gtkglwidget.c gtkglwidget.h main.c settings.c menu.c gtk-compat.c gtk-compat.h \
 	yuifileentry.c yuifileentry.h yuirange.c yuirange.h yuiinputentry.c yuiinputentry.h yuipage.c yuipage.h \
