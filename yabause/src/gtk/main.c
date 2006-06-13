@@ -66,7 +66,7 @@ YuiAction key_config[] = {
 
 void keep_clean(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
-	draw(YUI_WINDOW(yui)->area);
+	yui_window_update(YUI_WINDOW(yui));
 }
 
 GtkWidget * yui_new() {
@@ -74,7 +74,7 @@ GtkWidget * yui_new() {
 
 	clean_handler = g_signal_connect(YUI_WINDOW(yui)->area, "expose-event", G_CALLBACK(keep_clean), 0);
 
-	gtk_widget_show_all(yui);
+	gtk_widget_show(yui);
 
 	return yui;
 }
@@ -169,7 +169,7 @@ void YuiQuit(void) {
 }
 
 void YuiErrorMsg(const char * string) {
-	g_print(string);
+	yui_window_log(YUI_WINDOW(yui), string);
 }
 
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {
@@ -183,7 +183,7 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen) {
 }
 
 void YuiSwapBuffers(void) {
-	draw(YUI_WINDOW(yui)->area);
+	yui_window_update(YUI_WINDOW(yui));
 }
 
 int yui_main(void) {

@@ -23,6 +23,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *nbg4;
   GtkWidget *rbg1;
   GtkWidget *fullscreen1;
+  GtkWidget *log;
   GtkWidget *menuitem3;
   GtkWidget *menuitem3_menu;
   GtkWidget *msh1;
@@ -123,6 +124,10 @@ GtkWidget* create_menu(YuiWindow * window1) {
 #endif
   g_signal_connect_swapped(fullscreen1, "activate", G_CALLBACK(yui_window_toggle_fullscreen), window1);
   gtk_container_add (GTK_CONTAINER (view1_menu), fullscreen1);
+
+  log = gtk_menu_item_new_with_mnemonic ("Log");
+  g_signal_connect_swapped(log, "activate", G_CALLBACK(yui_window_show_log), window1);
+  gtk_container_add(GTK_CONTAINER(view1_menu), log);
 
   menuitem3 = gtk_menu_item_new_with_mnemonic ("_Debug");
   gtk_widget_show (menuitem3);

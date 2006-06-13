@@ -30,6 +30,7 @@ struct _YuiWindow {
 	GtkWidget * box;
 	GtkWidget * menu;
 	GtkWidget * area;
+	GtkWidget * log;
 
 	YuiAction * actions;
 };
@@ -40,9 +41,12 @@ struct _YuiWindowClass {
 	void (* yui_window) (YuiWindow * yw);
 };
 
-GType		yui_window_get_type       (void);
-GtkWidget *	yui_window_new            (YuiAction * act);
+GType		yui_window_get_type	(void);
+GtkWidget *	yui_window_new		(YuiAction * act);
 void		yui_window_toggle_fullscreen(YuiWindow * yui);
+void		yui_window_update	(YuiWindow * yui);
+void		yui_window_log		(YuiWindow * yui, const char * message);
+void		yui_window_show_log	(YuiWindow * yui);
 
 G_END_DECLS
 

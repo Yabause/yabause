@@ -2,6 +2,7 @@
 #include <gdk/gdkkeysyms.h>
 
 #include "yuiwindow.h"
+#include "gtkglwidget.h"
 
 #include "menu.h"
 
@@ -56,6 +57,13 @@ static void yui_window_init (YuiWindow * yw) {
 	g_signal_connect(G_OBJECT(yw), "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(G_OBJECT(yw), "key-press-event", G_CALLBACK(yui_window_keypress), yw);
 	g_signal_connect(G_OBJECT(yw), "key-release-event", G_CALLBACK(yui_window_keyrelease), yw);
+
+	yw->log = gtk_text_view_new();
+	gtk_box_pack_start(GTK_BOX(yw->box), yw->log, FALSE, FALSE, 0);
+
+	gtk_widget_show(yw->box);
+	gtk_widget_show_all(yw->menu);
+	gtk_widget_show(yw->area);
 }
 
 GtkWidget * yui_window_new(YuiAction * act) {
@@ -102,7 +110,7 @@ static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpoin
 
 static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpointer user_data) {
 	int i = 0;
-	YuiWindow * yui = widget;
+	YuiWindow * yui = YUI_WINDOW(widget);
 
 	while(yui->actions[i].name) {
 		if (event->keyval == yui->actions[i].key) {
@@ -112,4 +120,26 @@ static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpo
 		i++;
 	}
 	return FALSE;
+}
+
+void yui_window_update(YuiWindow * yui) {
+	draw(yui->area);
+}
+
+void yui_window_log(YuiWindow * yui, const char * message) {
+	GtkTextBuffer * buffer;
+	GtkTextIter iter;
+
+	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(yui->log));
+	gtk_text_buffer_get_end_iter(buffer, &iter);
+	gtk_text_buffer_insert(buffer, &iter, message, -1);
+}
+
+void yui_window_show_log(YuiWindow * yui) {
+	static int i = 0;
+	if (i)
+		gtk_widget_hide(yui->log);
+	else
+		gtk_widget_show(yui->log);
+	i = !i;
 }
