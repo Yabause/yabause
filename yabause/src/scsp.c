@@ -3295,7 +3295,19 @@ void SNDDummyUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samp
 
 u32 SNDDummyGetAudioSpace()
 {
-   return 0;
+   /* A "hack" to get dummy sound core working enough
+    * so videos are not "freezing". Values have been
+    * found by experiments... I don't have a clue why
+    * they are working ^^;
+    */
+   static int i = 0;
+   i++;
+   if (i == 55) {
+	i = 0;
+   	return 85;
+   } else {
+        return 0;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
