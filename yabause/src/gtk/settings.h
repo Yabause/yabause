@@ -4,6 +4,7 @@
 #include <gtk/gtk.h>
 
 #include "../vdp1.h"
+#include "../vdp2.h"
 #include "../scsp.h"
 #include "../yabause.h"
 #include "../cdbase.h"
