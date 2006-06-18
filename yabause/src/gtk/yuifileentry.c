@@ -102,8 +102,8 @@ static void yui_file_entry_browse(GtkWidget * widget, gpointer user_data) {
         gint result;
         const gchar * filename;
 
-        file_selector = gtk_file_chooser_dialog_new ("Please choose a file", 0, GTK_FILE_CHOOSER_ACTION_OPEN,
-                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, 0);
+        file_selector = gtk_file_chooser_dialog_new ("Please choose a file", NULL, GTK_FILE_CHOOSER_ACTION_OPEN,
+                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	filename = gtk_entry_get_text(GTK_ENTRY(user_data));
 	if (filename[0] != '\0')
         	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_selector), filename);
