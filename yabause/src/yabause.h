@@ -19,15 +19,6 @@ typedef struct
    const char *cartpath;
 } yabauseinit_struct;
 
-typedef struct
-{
-   int id;
-   const char *Name;
-   int (*Init)();
-   void (*DeInit)();
-   void (*SetPeripheralType)(int port1type, int port2type);
-} PeripheralInterface_struct;
-
 #define CLKTYPE_26MHZ           0
 #define CLKTYPE_28MHZ           1
 
