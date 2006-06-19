@@ -637,7 +637,7 @@ static void start_op(u32 op, int v)
     wf_op("OP_0x%.4X:\n", op & 0xFFFF);
     wf_op("{\n");
     if (v & GEN_ADR) wf_op("\tu32 adr;\n");
-    if (v & GEN_RES) wf_op("\tu32 res;\n");
+    if (v & GEN_RES) wf_op("\ts32 res;\n");
     if (v & GEN_DST) wf_op("\tpointer dst;\n");
     if (v & GEN_SRC) wf_op("\tpointer src;\n");
 }

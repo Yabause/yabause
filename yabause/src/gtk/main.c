@@ -147,6 +147,7 @@ void yui_settings_load(void) {
 }
 
 int main(int argc, char *argv[]) {
+	LogStart();
 	inifile = g_build_filename(g_get_home_dir(), ".yabause.ini", NULL);
 	
 	keyfile = g_key_file_new();
@@ -161,6 +162,9 @@ int main(int argc, char *argv[]) {
 	yui_settings_load();
 
 	gtk_main ();
+
+	YabauseDeInit();
+	LogStop();
 
 	return 0;
 }
