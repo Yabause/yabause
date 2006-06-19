@@ -70,10 +70,9 @@ int LinuxCDDeInit(void) {
 
 s32 LinuxCDReadTOC(u32 * TOC)
 {
-   int success;
    struct cdrom_tochdr ctTOC;
    struct cdrom_tocentry ctTOCent;
-   int i, j;
+   int i;
    int add150 = 0;
 
    ctTOCent.cdte_format = CDROM_LBA;
@@ -149,7 +148,6 @@ int LinuxCDGetStatus(void) {
 }
 
 int LinuxCDReadSectorFAD(u32 FAD, void *buffer) {
-        u32 dwBytesReturned;
 	union {
 		struct cdrom_msf msf;
 		char bigbuf[2352];
