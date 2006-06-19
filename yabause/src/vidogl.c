@@ -1641,6 +1641,8 @@ static void Vdp2DrawNBG0(void)
    vdp2draw_struct info;
    YglTexture texture;
    int *tmp;
+   int i, i2;
+   u32 linescrolladdr;
 
    /* FIXME should start by checking if it's a normal
     * or rotate scroll screen
@@ -1775,6 +1777,37 @@ static void Vdp2DrawNBG0(void)
 
    if (info.isbitmap)
    {
+      // Let's check to see if game has set up bitmap to a size smaller than
+      // 512x256 using line scroll and vertical cell scroll
+      if (Vdp2Regs->SCRCTL & 0x7 == 0x7)
+      {
+         linescrolladdr = (Vdp2Regs->LSTA0.all & 0x7FFFE) << 1;
+
+         // Let's first figure out if we have to adjust the vertical offset
+         for(i = 0; i < (info.cellh-1); i++)
+         {
+            if (T1ReadWord(Vdp2Ram, linescrolladdr+((i+1) * 8)) != 0x0000)
+            {
+               info.y+=i;
+
+               // Now let's figure out the height of the bitmap
+               for (i2 = i+1; i2 < info.cellh; i2++)
+               {
+                  if (T1ReadLong(Vdp2Ram,linescrolladdr+((i2+1)*8) + 4) == 0)
+                     break;
+               }
+
+               info.cellh = i2-i+1;
+
+               break;
+            }
+         }
+
+         // Now let's fetch line 1's line scroll horizontal value, that should
+         // be the same as the bitmap width
+         info.cellw = T1ReadWord(Vdp2Ram, linescrolladdr+((i+1)*8));
+      }
+
       info.vertices[0] = info.x * info.coordincx;
       info.vertices[1] = info.y * info.coordincy;
       info.vertices[2] = (info.x + info.cellw) * info.coordincx;

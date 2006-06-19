@@ -1061,6 +1061,15 @@ void FASTCALL Vdp2WriteLong(u32 addr, u32 val) {
          Vdp2Regs->SCXN3 = val >> 16;
          Vdp2Regs->SCYN3 = val & 0xFFFF;
          return;
+      case 0x09C:
+         Vdp2Regs->VCSTA.all = val;
+         return;
+      case 0x0A0:
+         Vdp2Regs->LSTA0.all = val;
+         return;
+      case 0x0A4:
+         Vdp2Regs->LSTA1.all = val;
+         return;
       case 0x0AC:
          Vdp2Regs->BKTAU = val >> 16;
          Vdp2Regs->BKTAL = val & 0xFFFF;
@@ -1888,7 +1897,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          if (lineVerticalScrollReg & 0x1)
          {      
             AddString(outstring, "Vertical Cell Scroll enabled\r\n");
-            AddString(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", 0x05E00000 + (int)(0x05E00000 + ((Vdp2Regs->VCSTA.all & 0x7FFFE) << 1)));
+            AddString(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", (int)(0x05E00000 + ((Vdp2Regs->VCSTA.all & 0x7FFFE) << 1)));
          }
       }
 
