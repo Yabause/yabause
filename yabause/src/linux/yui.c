@@ -32,7 +32,6 @@
 #include "../yui.h"
 #include "../sndsdl.h"
 #include "../vidogl.h"
-#include "../vidsdlgl.h"
 #include "../vidsdlsoft.h"
 #include "../persdl.h"
 #include "../cs0.h"
@@ -187,7 +186,7 @@ NULL
 
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
-&VIDSDLGL,
+&VIDOGL,
 &VIDSDLSoft,
 NULL
 };

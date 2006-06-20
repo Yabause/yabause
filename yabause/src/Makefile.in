@@ -102,7 +102,7 @@ libyabause_a_SOURCES = \
 	scu.c scu.h sh2core.c sh2core.h \
 	sh2d.c sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h \
 	smpc.c smpc.h scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
-	vdp2.c vdp2.h vidogl.c vidogl.h vidsdlgl.c vidsdlgl.h vidsdlsoft.c vidsdlsoft.h \
+	vdp2.c vdp2.h vidogl.c vidogl.h vidsdlsoft.c vidsdlsoft.h \
 	yabause.c yabause.h ygl.h ygl.c yui.h
 
 nodist_libyabause_a_SOURCES = c68k/c68k_ini.inc
@@ -121,8 +121,8 @@ am_libyabause_a_OBJECTS = c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
 	profile.$(OBJEXT) scu.$(OBJEXT) sh2core.$(OBJEXT) \
 	sh2d.$(OBJEXT) sh2idle.$(OBJEXT) sh2int.$(OBJEXT) \
 	smpc.$(OBJEXT) scsp.$(OBJEXT) sndsdl.$(OBJEXT) vdp1.$(OBJEXT) \
-	vdp2.$(OBJEXT) vidogl.$(OBJEXT) vidsdlgl.$(OBJEXT) \
-	vidsdlsoft.$(OBJEXT) yabause.$(OBJEXT) ygl.$(OBJEXT)
+	vdp2.$(OBJEXT) vidogl.$(OBJEXT) vidsdlsoft.$(OBJEXT) \
+	yabause.$(OBJEXT) ygl.$(OBJEXT)
 nodist_libyabause_a_OBJECTS =
 libyabause_a_OBJECTS = $(am_libyabause_a_OBJECTS) \
 	$(nodist_libyabause_a_OBJECTS)
@@ -146,9 +146,8 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/sh2idle.Po ./$(DEPDIR)/sh2int.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/smpc.Po ./$(DEPDIR)/sndsdl.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/vdp1.Po ./$(DEPDIR)/vdp2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vidogl.Po ./$(DEPDIR)/vidsdlgl.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vidsdlsoft.Po ./$(DEPDIR)/yabause.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ygl.Po
+@AMDEP_TRUE@	./$(DEPDIR)/vidogl.Po ./$(DEPDIR)/vidsdlsoft.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause.Po ./$(DEPDIR)/ygl.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -217,7 +216,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vdp1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vdp2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vidogl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vidsdlgl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vidsdlsoft.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ygl.Po@am__quote@
