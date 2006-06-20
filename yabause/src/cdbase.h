@@ -40,19 +40,7 @@ typedef struct
         int (*ReadSectorFAD)(u32 FAD, void *buffer);
 } CDInterface;
 
-int DummyCDInit(const char *);
-int DummyCDDeInit();
-int DummyCDGetStatus();
-s32 DummyCDReadTOC(u32 *);
-int DummyCDReadSectorFAD(u32, void *);
-
 extern CDInterface DummyCD;
-
-int ISOCDInit(const char *);
-int ISOCDDeInit();
-int ISOCDGetStatus();
-s32 ISOCDReadTOC(u32 *);
-int ISOCDReadSectorFAD(u32, void *);
 
 extern CDInterface ISOCD;
 

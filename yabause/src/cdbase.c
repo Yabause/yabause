@@ -27,6 +27,12 @@
 
 // Contains the Dummy and ISO CD Interfaces
 
+int DummyCDInit(const char *);
+int DummyCDDeInit();
+int DummyCDGetStatus();
+s32 DummyCDReadTOC(u32 *);
+int DummyCDReadSectorFAD(u32, void *);
+
 CDInterface DummyCD = {
 CDCORE_DUMMY,
 "Dummy CD Drive",
@@ -36,6 +42,12 @@ DummyCDGetStatus,
 DummyCDReadTOC,
 DummyCDReadSectorFAD
 };
+
+int ISOCDInit(const char *);
+int ISOCDDeInit();
+int ISOCDGetStatus();
+s32 ISOCDReadTOC(u32 *);
+int ISOCDReadSectorFAD(u32, void *);
 
 CDInterface ISOCD = {
 CDCORE_ISO,
