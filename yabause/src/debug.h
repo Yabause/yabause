@@ -28,39 +28,39 @@ void LogStart(void);
 void LogStop(void);
 
 #ifdef DEBUG
-#define LOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
+#define LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define LOG(f, r...)
+#define LOG(...)
 #endif
 
 #ifdef CDDEBUG
-#define CDLOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
+#define CDLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define CDLOG(f, r...)
+#define CDLOG(...)
 #endif
 
 #ifdef SCSP_DEBUG
-#define SCSPLOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
+#define SCSPLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define SCSPLOG(f, r...)
+#define SCSPLOG(...)
 #endif
 
 #ifdef VDP1_DEBUG
-#define VDP1LOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
+#define VDP1LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define VDP1LOG(f, r...)
+#define VDP1LOG(...)
 #endif
 
 #ifdef VDP2_DEBUG
-#define VDP2LOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
+#define VDP2LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define VDP2LOG(f, r...)
+#define VDP2LOG(...)
 #endif
 
 #ifdef SMPC_DEBUG
-#define SMPCLOG(f, r...) DebugPrintf(MainLog, __FILE__, __LINE__, f, ## r)
+#define SMPCLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define SMPCLOG(f, r...)
+#define SMPCLOG(...)
 #endif
 
 #endif
