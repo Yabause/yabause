@@ -36,3 +36,4 @@
    - Improve Opengl texture handling
    - Allow user to remap peripheral controls
    - Add a screenshot function for those too lazy to use the print-screen function
+   - If using region autodetection and there's no CD in the drive it fails. Should be able to detect the region from MPEG card and Action Replay
