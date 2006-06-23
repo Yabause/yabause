@@ -89,18 +89,17 @@ am__quote = @am__quote@
 install_sh = @install_sh@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
-EXTRA_DIST = cd.c yui.c yabause_logo.xpm icon.xpm debug.c
 bin_PROGRAMS = yabause
-yabause_SOURCES = yui.c
+yabause_SOURCES = main.c settings.c settings.h
 yabause_CFLAGS = $(YAB_CFLAGS)
 yabause_LDADD = $(YAB_LIBS) ../libyabause.a
-subdir = src/linux
+subdir = src/carbon
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
 bin_PROGRAMS = yabause$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
-am_yabause_OBJECTS = yabause-yui.$(OBJEXT)
+am_yabause_OBJECTS = yabause-main.$(OBJEXT) yabause-settings.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
 yabause_DEPENDENCIES = ../libyabause.a
 yabause_LDFLAGS =
@@ -112,7 +111,8 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/yabause-yui.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/yabause-main.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-settings.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -128,7 +128,7 @@ all: all-am
 .SUFFIXES: .c .o .obj
 $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/linux/Makefile
+	  $(AUTOMAKE) --gnu  src/carbon/Makefile
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -157,7 +157,8 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-yabause-yui.$(OBJEXT): yui.c
+yabause-main.$(OBJEXT): main.c
+yabause-settings.$(OBJEXT): settings.c
 yabause$(EXEEXT): $(yabause_OBJECTS) $(yabause_DEPENDENCIES) 
 	@rm -f yabause$(EXEEXT)
 	$(LINK) $(yabause_LDFLAGS) $(yabause_OBJECTS) $(yabause_LDADD) $(LIBS)
@@ -168,7 +169,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yui.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-settings.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
@@ -185,17 +187,29 @@ distclean-depend:
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(COMPILE) -c `cygpath -w $<`
 
-yabause-yui.o: yui.c
-@AMDEP_TRUE@	source='yui.c' object='yabause-yui.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yui.Po' tmpdepfile='$(DEPDIR)/yabause-yui.TPo' @AMDEPBACKSLASH@
+yabause-main.o: main.c
+@AMDEP_TRUE@	source='main.c' object='yabause-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-main.Po' tmpdepfile='$(DEPDIR)/yabause-main.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yui.o `test -f 'yui.c' || echo '$(srcdir)/'`yui.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-main.o `test -f 'main.c' || echo '$(srcdir)/'`main.c
 
-yabause-yui.obj: yui.c
-@AMDEP_TRUE@	source='yui.c' object='yabause-yui.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yui.Po' tmpdepfile='$(DEPDIR)/yabause-yui.TPo' @AMDEPBACKSLASH@
+yabause-main.obj: main.c
+@AMDEP_TRUE@	source='main.c' object='yabause-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-main.Po' tmpdepfile='$(DEPDIR)/yabause-main.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yui.obj `cygpath -w yui.c`
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-main.obj `cygpath -w main.c`
+
+yabause-settings.o: settings.c
+@AMDEP_TRUE@	source='settings.c' object='yabause-settings.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-settings.Po' tmpdepfile='$(DEPDIR)/yabause-settings.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-settings.o `test -f 'settings.c' || echo '$(srcdir)/'`settings.c
+
+yabause-settings.obj: settings.c
+@AMDEP_TRUE@	source='settings.c' object='yabause-settings.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-settings.Po' tmpdepfile='$(DEPDIR)/yabause-settings.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-settings.obj `cygpath -w settings.c`
 CCDEPMODE = @CCDEPMODE@
 uninstall-info-am:
 

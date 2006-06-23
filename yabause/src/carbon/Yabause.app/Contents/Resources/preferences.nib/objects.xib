@@ -1,0 +1,675 @@
+<?xml version="1.0" standalone="yes"?>
+<object class="NSIBObjectData">
+  <string name="targetFramework">IBCarbonFramework</string>
+  <object name="rootObject" class="NSCustomObject" id="1">
+    <string name="customClass">NSApplication</string>
+  </object>
+  <array count="101" name="allObjects">
+    <object class="IBCarbonWindow" id="166">
+      <string name="windowRect">70 163 378 518 </string>
+      <string name="title">Yabause preferences</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="167">
+        <string name="bounds">0 0 308 355 </string>
+        <array count="1" name="subviews">
+          <object class="IBCarbonTab" id="193">
+            <string name="bounds">12 -5 308 356 </string>
+            <array count="4" name="subviews">
+              <object class="IBCarbonUserPane" id="194">
+                <string name="bounds">42 -5 308 356 </string>
+                <array count="3" name="subviews">
+                  <object class="IBCarbonGroupBox" id="182">
+                    <string name="bounds">50 15 116 336 </string>
+                    <array count="2" name="subviews">
+                      <object class="IBCarbonEditText" id="180">
+                        <string name="bounds">81 34 97 239 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">1</int>
+                      </object>
+                      <object class="IBCarbonButton" id="181">
+                        <string name="bounds">79 250 99 320 </string>
+                        <string name="title">Browse</string>
+                      </object>
+                    </array>
+                    <string name="title">Bios</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="183">
+                    <string name="bounds">124 15 218 336 </string>
+                    <array count="3" name="subviews">
+                      <object class="IBCarbonEditText" id="185">
+                        <string name="bounds">155 34 171 239 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">2</int>
+                      </object>
+                      <object class="IBCarbonButton" id="184">
+                        <string name="bounds">153 250 173 320 </string>
+                        <string name="title">Browse</string>
+                      </object>
+                      <object class="IBCarbonPopupButton" id="226">
+                        <string name="bounds">182 31 202 320 </string>
+                        <object name="menu" class="IBCarbonMenu" id="225">
+                          <string name="title">Popup:</string>
+                          <array count="3" name="items">
+                            <object class="IBCarbonMenuItem" id="229">
+                              <string name="title">Item 1</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="227">
+                              <string name="title">Item 2</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="228">
+                              <string name="title">Item 3</string>
+                            </object>
+                          </array>
+                        </object>
+                      </object>
+                    </array>
+                    <string name="title">Cdrom</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="192">
+                    <string name="bounds">226 15 290 336 </string>
+                    <array count="1" name="subviews">
+                      <object class="IBCarbonPopupButton" id="188">
+                        <string name="bounds">254 31 274 320 </string>
+                        <object name="menu" class="IBCarbonMenu" id="187">
+                          <string name="title">Popup:</string>
+                          <array count="3" name="items">
+                            <object class="IBCarbonMenuItem" id="191">
+                              <string name="title">Item 1</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="189">
+                              <string name="title">Item 2</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="190">
+                              <string name="title">Item 3</string>
+                            </object>
+                          </array>
+                        </object>
+                      </object>
+                    </array>
+                    <string name="title">Region</string>
+                  </object>
+                </array>
+                <ostype name="controlSignature">tabs</ostype>
+                <int name="controlID">129</int>
+                <int name="featureBits">2</int>
+              </object>
+              <object class="IBCarbonUserPane" id="195">
+                <string name="bounds">42 -5 308 356 </string>
+                <array count="3" name="subviews">
+                  <object class="IBCarbonGroupBox" id="203">
+                    <string name="bounds">50 15 114 336 </string>
+                    <array count="1" name="subviews">
+                      <object class="IBCarbonPopupButton" id="202">
+                        <string name="bounds">78 31 98 320 </string>
+                        <object name="menu" class="IBCarbonMenu" id="198">
+                          <string name="title">Popup:</string>
+                          <array count="3" name="items">
+                            <object class="IBCarbonMenuItem" id="201">
+                              <string name="title">Item 1</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="199">
+                              <string name="title">Item 2</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="200">
+                              <string name="title">Item 3</string>
+                            </object>
+                          </array>
+                        </object>
+                      </object>
+                    </array>
+                    <string name="title">Video core</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="209">
+                    <string name="bounds">122 15 216 336 </string>
+                    <array count="5" name="subviews">
+                      <object class="IBCarbonEditText" id="205">
+                        <string name="bounds">181 94 197 222 </string>
+                      </object>
+                      <object class="IBCarbonStaticText" id="206">
+                        <string name="bounds">150 31 166 83 </string>
+                        <string name="title">Width</string>
+                      </object>
+                      <object class="IBCarbonStaticText" id="207">
+                        <string name="bounds">174 31 190 83 </string>
+                        <string name="title">Height</string>
+                      </object>
+                      <object class="IBCarbonCheckBox" id="208">
+                        <string name="bounds">152 233 166 320 </string>
+                        <string name="title">Keep ratio</string>
+                      </object>
+                      <object class="IBCarbonEditText" id="210">
+                        <string name="bounds">151 94 167 222 </string>
+                      </object>
+                    </array>
+                    <string name="title">Resolution</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="216">
+                    <string name="bounds">224 15 288 336 </string>
+                    <array count="1" name="subviews">
+                      <object class="IBCarbonPopupButton" id="212">
+                        <string name="bounds">252 31 272 320 </string>
+                        <object name="menu" class="IBCarbonMenu" id="211">
+                          <string name="title">Popup:</string>
+                          <array count="3" name="items">
+                            <object class="IBCarbonMenuItem" id="215">
+                              <string name="title">Item 1</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="213">
+                              <string name="title">Item 2</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="214">
+                              <string name="title">Item 3</string>
+                            </object>
+                          </array>
+                        </object>
+                      </object>
+                    </array>
+                    <string name="title">Sound core</string>
+                  </object>
+                </array>
+                <ostype name="controlSignature">tabs</ostype>
+                <int name="controlID">130</int>
+                <int name="featureBits">2</int>
+              </object>
+              <object class="IBCarbonUserPane" id="196">
+                <string name="bounds">42 -5 308 356 </string>
+                <array count="3" name="subviews">
+                  <object class="IBCarbonGroupBox" id="224">
+                    <string name="bounds">50 15 144 336 </string>
+                    <array count="3" name="subviews">
+                      <object class="IBCarbonEditText" id="217">
+                        <string name="bounds">81 34 97 239 </string>
+                      </object>
+                      <object class="IBCarbonButton" id="218">
+                        <string name="bounds">79 250 99 320 </string>
+                        <string name="title">Browse</string>
+                      </object>
+                      <object class="IBCarbonPopupButton" id="220">
+                        <string name="bounds">108 31 128 320 </string>
+                        <object name="menu" class="IBCarbonMenu" id="219">
+                          <string name="title">Popup:</string>
+                          <array count="3" name="items">
+                            <object class="IBCarbonMenuItem" id="223">
+                              <string name="title">Item 1</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="221">
+                              <string name="title">Item 2</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="222">
+                              <string name="title">Item 3</string>
+                            </object>
+                          </array>
+                        </object>
+                      </object>
+                    </array>
+                    <string name="title">Cartridge</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="230">
+                    <string name="bounds">152 15 218 336 </string>
+                    <array count="2" name="subviews">
+                      <object class="IBCarbonEditText" id="232">
+                        <string name="bounds">183 34 199 239 </string>
+                      </object>
+                      <object class="IBCarbonButton" id="231">
+                        <string name="bounds">181 250 201 320 </string>
+                        <string name="title">Browse</string>
+                      </object>
+                    </array>
+                    <string name="title">Memory</string>
+                  </object>
+                  <object class="IBCarbonGroupBox" id="233">
+                    <string name="bounds">226 15 292 336 </string>
+                    <array count="2" name="subviews">
+                      <object class="IBCarbonEditText" id="234">
+                        <string name="bounds">257 34 273 239 </string>
+                      </object>
+                      <object class="IBCarbonButton" id="235">
+                        <string name="bounds">255 250 275 320 </string>
+                        <string name="title">Browse</string>
+                      </object>
+                    </array>
+                    <string name="title">Mpeg ROM</string>
+                  </object>
+                </array>
+                <ostype name="controlSignature">tabs</ostype>
+                <int name="controlID">131</int>
+                <int name="featureBits">2</int>
+              </object>
+              <object class="IBCarbonUserPane" id="197">
+                <string name="bounds">42 -5 308 356 </string>
+                <array count="27" name="subviews">
+                  <object class="IBCarbonStaticText" id="239">
+                    <string name="bounds">64 15 80 111 </string>
+                    <string name="title">Up</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="245">
+                    <string name="bounds">65 122 81 163 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">31</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="247">
+                    <string name="bounds">90 15 106 111 </string>
+                    <string name="title">Right</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="248">
+                    <string name="bounds">91 122 107 163 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">32</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="249">
+                    <string name="bounds">116 15 132 111 </string>
+                    <string name="title">Down</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="250">
+                    <string name="bounds">117 122 133 163 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">33</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="251">
+                    <string name="bounds">142 15 158 111 </string>
+                    <string name="title">Left</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="252">
+                    <string name="bounds">143 122 159 163 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">34</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="263">
+                    <string name="bounds">168 15 184 111 </string>
+                    <string name="title">Right trigger</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="264">
+                    <string name="bounds">169 122 185 163 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">35</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="265">
+                    <string name="bounds">194 15 210 111 </string>
+                    <string name="title">Left trigger</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="266">
+                    <string name="bounds">195 122 211 163 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">36</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="267">
+                    <string name="bounds">220 15 236 111 </string>
+                    <string name="title">Start</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="268">
+                    <string name="bounds">221 122 237 163 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">37</int>
+                  </object>
+                  <object class="IBCarbonEditText" id="283">
+                    <string name="bounds">65 292 81 333 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">38</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="284">
+                    <string name="bounds">64 185 80 281 </string>
+                    <string name="title">A</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="285">
+                    <string name="bounds">117 292 133 333 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">40</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="286">
+                    <string name="bounds">142 185 158 281 </string>
+                    <string name="title">X</string>
+                  </object>
+                  <object class="IBCarbonStaticText" id="287">
+                    <string name="bounds">194 185 210 281 </string>
+                    <string name="title">Z</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="288">
+                    <string name="bounds">169 292 185 333 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">42</int>
+                  </object>
+                  <object class="IBCarbonEditText" id="295">
+                    <string name="bounds">195 292 211 333 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">43</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="290">
+                    <string name="bounds">90 185 106 281 </string>
+                    <string name="title">B</string>
+                  </object>
+                  <object class="IBCarbonStaticText" id="291">
+                    <string name="bounds">116 185 132 281 </string>
+                    <string name="title">C</string>
+                  </object>
+                  <object class="IBCarbonEditText" id="289">
+                    <string name="bounds">91 292 107 333 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">39</int>
+                  </object>
+                  <object class="IBCarbonEditText" id="293">
+                    <string name="bounds">143 292 159 333 </string>
+                    <ostype name="controlSignature">conf</ostype>
+                    <int name="controlID">41</int>
+                  </object>
+                  <object class="IBCarbonStaticText" id="296">
+                    <string name="bounds">168 185 184 281 </string>
+                    <string name="title">Y</string>
+                  </object>
+                  <object class="IBCarbonSeparator" id="297">
+                    <string name="bounds">54 174 296 175 </string>
+                  </object>
+                </array>
+                <ostype name="controlSignature">tabs</ostype>
+                <int name="controlID">132</int>
+                <string name="title">Input</string>
+                <int name="featureBits">2</int>
+              </object>
+            </array>
+            <ostype name="controlSignature">tabs</ostype>
+            <int name="controlID">128</int>
+            <array count="4" name="tabItems">
+              <dictionary count="4">
+                <string>contentResID</string>
+                <string>0</string>
+                <string>tabEnabled</string>
+                <string>1</string>
+                <string>tabName</string>
+                <string>General</string>
+                <string>userPane</string>
+                <reference idRef="194"/>
+              </dictionary>
+              <dictionary count="4">
+                <string>contentResID</string>
+                <string>0</string>
+                <string>tabEnabled</string>
+                <string>1</string>
+                <string>tabName</string>
+                <string>Video/Sound</string>
+                <string>userPane</string>
+                <reference idRef="195"/>
+              </dictionary>
+              <dictionary count="4">
+                <string>contentResID</string>
+                <string>0</string>
+                <string>tabEnabled</string>
+                <string>1</string>
+                <string>tabName</string>
+                <string>Memory</string>
+                <string>userPane</string>
+                <reference idRef="196"/>
+              </dictionary>
+              <dictionary count="4">
+                <string>contentResID</string>
+                <string>0</string>
+                <string>tabEnabled</string>
+                <string>1</string>
+                <string>tabName</string>
+                <string>Input</string>
+                <string>userPane</string>
+                <reference idRef="197"/>
+              </dictionary>
+            </array>
+          </object>
+        </array>
+      </object>
+      <boolean name="isResizable">FALSE</boolean>
+      <int name="carbonWindowClass">5</int>
+    </object>
+    <reference idRef="167"/>
+    <reference idRef="180"/>
+    <reference idRef="181"/>
+    <reference idRef="182"/>
+    <reference idRef="183"/>
+    <reference idRef="184"/>
+    <reference idRef="185"/>
+    <reference idRef="187"/>
+    <reference idRef="188"/>
+    <reference idRef="189"/>
+    <reference idRef="190"/>
+    <reference idRef="191"/>
+    <reference idRef="192"/>
+    <reference idRef="193"/>
+    <reference idRef="194"/>
+    <reference idRef="195"/>
+    <reference idRef="196"/>
+    <reference idRef="197"/>
+    <reference idRef="198"/>
+    <reference idRef="199"/>
+    <reference idRef="200"/>
+    <reference idRef="201"/>
+    <reference idRef="202"/>
+    <reference idRef="203"/>
+    <reference idRef="205"/>
+    <reference idRef="206"/>
+    <reference idRef="207"/>
+    <reference idRef="208"/>
+    <reference idRef="209"/>
+    <reference idRef="210"/>
+    <reference idRef="211"/>
+    <reference idRef="212"/>
+    <reference idRef="213"/>
+    <reference idRef="214"/>
+    <reference idRef="215"/>
+    <reference idRef="216"/>
+    <reference idRef="217"/>
+    <reference idRef="218"/>
+    <reference idRef="219"/>
+    <reference idRef="220"/>
+    <reference idRef="221"/>
+    <reference idRef="222"/>
+    <reference idRef="223"/>
+    <reference idRef="224"/>
+    <reference idRef="225"/>
+    <reference idRef="226"/>
+    <reference idRef="227"/>
+    <reference idRef="228"/>
+    <reference idRef="229"/>
+    <reference idRef="230"/>
+    <reference idRef="231"/>
+    <reference idRef="232"/>
+    <reference idRef="233"/>
+    <reference idRef="234"/>
+    <reference idRef="235"/>
+    <reference idRef="239"/>
+    <reference idRef="245"/>
+    <reference idRef="247"/>
+    <reference idRef="248"/>
+    <reference idRef="249"/>
+    <reference idRef="250"/>
+    <reference idRef="251"/>
+    <reference idRef="252"/>
+    <object class="IBCarbonStaticText" id="259">
+      <string name="bounds">-24520 -30662 -24504 -30566 </string>
+      <string name="title">Up</string>
+    </object>
+    <object class="IBCarbonEditText" id="260">
+      <string name="bounds">-24509 -30532 -24513 -30537 </string>
+    </object>
+    <object class="IBCarbonStaticText" id="261">
+      <string name="bounds">-24515 -30657 -24499 -30561 </string>
+      <string name="title">Up</string>
+    </object>
+    <object class="IBCarbonEditText" id="262">
+      <string name="bounds">-24504 -30527 -24508 -30532 </string>
+    </object>
+    <reference idRef="263"/>
+    <reference idRef="264"/>
+    <reference idRef="265"/>
+    <reference idRef="266"/>
+    <reference idRef="267"/>
+    <reference idRef="268"/>
+    <object class="IBCarbonEditText" id="269">
+      <string name="bounds">-24514 -30537 -24518 -30542 </string>
+    </object>
+    <object class="IBCarbonStaticText" id="270">
+      <string name="bounds">-24577 -30667 -24561 -30571 </string>
+      <string name="title">Right</string>
+    </object>
+    <object class="IBCarbonEditText" id="271">
+      <string name="bounds">-24462 -30537 -24466 -30542 </string>
+    </object>
+    <object class="IBCarbonStaticText" id="272">
+      <string name="bounds">-24551 -30667 -24535 -30571 </string>
+      <string name="title">Down</string>
+    </object>
+    <object class="IBCarbonEditText" id="273">
+      <string name="bounds">-24436 -30537 -24440 -30542 </string>
+    </object>
+    <object class="IBCarbonStaticText" id="274">
+      <string name="bounds">-24447 -30667 -24431 -30571 </string>
+      <string name="title">Start</string>
+    </object>
+    <object class="IBCarbonEditText" id="275">
+      <string name="bounds">-24540 -30537 -24544 -30542 </string>
+    </object>
+    <object class="IBCarbonStaticText" id="276">
+      <string name="bounds">-24473 -30667 -24457 -30571 </string>
+      <string name="title">Left trigger</string>
+    </object>
+    <object class="IBCarbonEditText" id="277">
+      <string name="bounds">-24566 -30537 -24570 -30542 </string>
+    </object>
+    <object class="IBCarbonEditText" id="278">
+      <string name="bounds">-24488 -30537 -24492 -30542 </string>
+    </object>
+    <object class="IBCarbonStaticText" id="279">
+      <string name="bounds">-24499 -30667 -24483 -30571 </string>
+      <string name="title">Right trigger</string>
+    </object>
+    <object class="IBCarbonEditText" id="280">
+      <string name="bounds">-24592 -30537 -24596 -30542 </string>
+    </object>
+    <object class="IBCarbonStaticText" id="281">
+      <string name="bounds">-24603 -30667 -24587 -30571 </string>
+      <string name="title">Up</string>
+    </object>
+    <object class="IBCarbonStaticText" id="282">
+      <string name="bounds">-24525 -30667 -24509 -30571 </string>
+      <string name="title">Left</string>
+    </object>
+    <reference idRef="283"/>
+    <reference idRef="284"/>
+    <reference idRef="285"/>
+    <reference idRef="286"/>
+    <reference idRef="287"/>
+    <reference idRef="288"/>
+    <reference idRef="289"/>
+    <reference idRef="290"/>
+    <reference idRef="291"/>
+    <reference idRef="293"/>
+    <reference idRef="295"/>
+    <reference idRef="296"/>
+    <reference idRef="297"/>
+  </array>
+  <array count="101" name="allParents">
+    <reference idRef="1"/>
+    <reference idRef="166"/>
+    <reference idRef="182"/>
+    <reference idRef="182"/>
+    <reference idRef="194"/>
+    <reference idRef="194"/>
+    <reference idRef="183"/>
+    <reference idRef="183"/>
+    <reference idRef="188"/>
+    <reference idRef="192"/>
+    <reference idRef="187"/>
+    <reference idRef="187"/>
+    <reference idRef="187"/>
+    <reference idRef="194"/>
+    <reference idRef="167"/>
+    <reference idRef="193"/>
+    <reference idRef="193"/>
+    <reference idRef="193"/>
+    <reference idRef="193"/>
+    <reference idRef="202"/>
+    <reference idRef="198"/>
+    <reference idRef="198"/>
+    <reference idRef="198"/>
+    <reference idRef="203"/>
+    <reference idRef="195"/>
+    <reference idRef="209"/>
+    <reference idRef="209"/>
+    <reference idRef="209"/>
+    <reference idRef="209"/>
+    <reference idRef="195"/>
+    <reference idRef="209"/>
+    <reference idRef="212"/>
+    <reference idRef="216"/>
+    <reference idRef="211"/>
+    <reference idRef="211"/>
+    <reference idRef="211"/>
+    <reference idRef="195"/>
+    <reference idRef="224"/>
+    <reference idRef="224"/>
+    <reference idRef="220"/>
+    <reference idRef="224"/>
+    <reference idRef="219"/>
+    <reference idRef="219"/>
+    <reference idRef="219"/>
+    <reference idRef="196"/>
+    <reference idRef="226"/>
+    <reference idRef="183"/>
+    <reference idRef="225"/>
+    <reference idRef="225"/>
+    <reference idRef="225"/>
+    <reference idRef="196"/>
+    <reference idRef="230"/>
+    <reference idRef="230"/>
+    <reference idRef="196"/>
+    <reference idRef="233"/>
+    <reference idRef="233"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+    <reference idRef="197"/>
+  </array>
+  <dictionary count="3" name="nameTable">
+    <string>Dialog</string>
+    <reference idRef="166"/>
+    <string>File&apos;s Owner</string>
+    <reference idRef="1"/>
+    <string>NSCustomView2</string>
+    <reference idRef="297"/>
+  </dictionary>
+  <unsigned_int name="nextObjectID">298</unsigned_int>
+</object>

@@ -1,4 +1,3 @@
-dnlAC_INIT(src/yabause.cc)
 AC_INIT(yabause, 0.6)
 
 AC_CANONICAL_HOST
@@ -27,8 +26,8 @@ AC_C_BIGENDIAN
 
 case $target in
 	*darwin*)
-		YAB_LIBS="$YAB_LIBS $SDL_LIBS -framework IOKit -framework CoreFoundation -framework GLUT"
-		yabause_yui="."
+		YAB_LIBS="$YAB_LIBS -framework IOKit -framework Carbon -framework AGL -framework OpenGL"
+		yabause_yui="carbon"
 		;;
 	*cygwin*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
@@ -100,6 +99,7 @@ AC_CONFIG_FILES([Makefile
 	doc/Makefile
 	src/Makefile
 	src/c68k/Makefile
+	src/carbon/Makefile
 	src/dreamcast/Makefile
 	src/gtk/Makefile
 	src/linux/Makefile
