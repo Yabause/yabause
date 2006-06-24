@@ -37,7 +37,11 @@
 
 #include "cdbase.h"
 
-#include "macosx-new/cd.h"
+int MacOSXCDInit(const char *);
+int MacOSXCDDeInit();
+int MacOSXCDGetStatus();
+long MacOSXCDReadTOC(unsigned long *);
+int MacOSXCDReadSectorFAD(unsigned long, void *);
 
 CDInterface ArchCD = {
 CDCORE_ARCH,
