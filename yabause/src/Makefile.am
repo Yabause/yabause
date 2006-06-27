@@ -10,7 +10,7 @@ libyabause_a_SOURCES = \
 	scu.c scu.h sh2core.c sh2core.h \
 	sh2d.c sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h \
 	smpc.c smpc.h scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
-	vdp2.c vdp2.h vidogl.c vidogl.h vidsdlsoft.c vidsdlsoft.h \
+	vdp2.c vdp2.h vidogl.c vidogl.h vidsoft.c vidsoft.h \
 	yabause.c yabause.h ygl.h ygl.c yui.h
 nodist_libyabause_a_SOURCES = c68k/c68k_ini.inc
 libyabause_a_LIBADD = cd-$(yabause_arch).$(OBJEXT)
