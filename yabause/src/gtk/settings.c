@@ -43,6 +43,7 @@ YuiRangeItem cdcores[] = {
 YuiRangeItem vidcores[] = {
 	{ "0", "Dummy Video Interface" },
 	{ "1", "OpenGL Video Interface" },
+	{ "2", "Software Video Interface" },
 	{ 0, 0}
 };
 

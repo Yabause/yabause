@@ -6,6 +6,7 @@
 #include "../sh2core.h"
 #include "../sh2int.h"
 #include "../vidogl.h"
+#include "../vidsoft.h"
 #include "../cs0.h"
 #include "../cdbase.h"
 #include "../scsp.h"
@@ -40,6 +41,7 @@ NULL
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
 &VIDOGL,
+&VIDSoft,
 NULL
 };
 
