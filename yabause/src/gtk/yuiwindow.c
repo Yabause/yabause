@@ -13,6 +13,7 @@ static void yui_window_init		(YuiWindow      * yfe);
 static void yui_window_changed	(GtkWidget * widget, YuiWindow * yfe);
 static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
+static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, YuiWindow * yui);
 
 GType yui_window_get_type (void) {
   static GType yfe_type = 0;
@@ -38,7 +39,15 @@ GType yui_window_get_type (void) {
   return yfe_type;
 }
 
+enum { YUI_WINDOW_RUNNING_SIGNAL, YUI_WINDOW_PAUSED_SIGNAL, LAST_SIGNAL };
+
+static guint yui_window_signals[LAST_SIGNAL] = { 0, 0 };
+
 static void yui_window_class_init (YuiWindowClass * klass) {
+	yui_window_signals[YUI_WINDOW_RUNNING_SIGNAL] = g_signal_new ("running", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
+			G_STRUCT_OFFSET(YuiWindowClass, yui_window_running), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL] = g_signal_new ("paused", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
+			G_STRUCT_OFFSET(YuiWindowClass, yui_window_paused), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
 static void yui_window_init (YuiWindow * yw) {
@@ -64,9 +73,12 @@ static void yui_window_init (YuiWindow * yw) {
 	gtk_widget_show(yw->box);
 	gtk_widget_show_all(yw->menu);
 	gtk_widget_show(yw->area);
+
+	yw->clean_handler = g_signal_connect(yw->area, "expose-event", G_CALLBACK(yui_window_keep_clean), yw);
+	yw->state = 0;
 }
 
-GtkWidget * yui_window_new(YuiAction * act) {
+GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata, GCallback rfunc) {
 	GtkWidget * widget;
 	YuiWindow * yw;
 
@@ -74,6 +86,9 @@ GtkWidget * yui_window_new(YuiAction * act) {
 	yw = YUI_WINDOW(widget);
 
 	yw->actions = act;
+	yw->init_func = ifunc;
+	yw->init_data = idata;
+	yw->run_func = rfunc;
 
 	return widget;
 }
@@ -142,4 +157,31 @@ void yui_window_show_log(YuiWindow * yui) {
 	else
 		gtk_widget_show(yui->log);
 	i = !i;
+}
+
+static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, YuiWindow * yui) {
+	glClear(GL_COLOR_BUFFER_BIT);
+	yui_window_update(yui);
+}
+
+void yui_window_run(YuiWindow * yui) {
+	if ((yui->state & YUI_IS_INIT) == 0) {
+		((int (*)(gpointer)) yui->init_func)(yui->init_data);
+		yui->state |= YUI_IS_INIT;
+		g_signal_handler_disconnect(yui->area, yui->clean_handler);
+	}
+
+	if ((yui->state & YUI_IS_RUNNING) == 0) {
+		g_idle_add(yui->run_func, 1);
+		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_RUNNING_SIGNAL], 0);
+		yui->state |= YUI_IS_RUNNING;
+	}
+}
+
+void yui_window_pause(YuiWindow * yui) {
+	if (yui->state & YUI_IS_RUNNING) {
+		g_idle_remove_by_data(1);
+		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);
+		yui->state &= ~YUI_IS_RUNNING;
+	}
 }

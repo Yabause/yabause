@@ -53,11 +53,9 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), new1);
 
   open1 = gtk_image_menu_item_new_from_stock ("gtk-media-play", accel_group);
-  gtk_widget_show (open1);
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), open1);
 
   save1 = gtk_image_menu_item_new_from_stock ("gtk-media-pause", accel_group);
-  gtk_widget_show (save1);
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), save1);
 
   separatormenuitem1 = gtk_separator_menu_item_new ();
@@ -166,7 +164,8 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_window_add_accel_group (GTK_WINDOW (window1), accel_group);
 
   g_signal_connect(new1, "activate", yui_conf, 0);
-  g_signal_connect(open1, "activate", yui_run, 0);
+  g_signal_connect_swapped(open1, "activate", yui_window_run, window1);
+  g_signal_connect_swapped(save1, "activate", yui_window_pause, window1);
   g_signal_connect(quit1, "activate", gtk_main_quit, 0);
 
   return menubar1;

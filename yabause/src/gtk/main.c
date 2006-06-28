@@ -48,7 +48,6 @@ NULL
 GtkWidget * yui;
 GKeyFile * keyfile;
 yabauseinit_struct yinit;
-gulong clean_handler;
 YuiAction key_config[] = {
 	{ 0 , "Up", PerUpPressed, PerUpReleased },
 	{ 0 , "Right", PerRightPressed, PerRightReleased },
@@ -66,15 +65,13 @@ YuiAction key_config[] = {
 	{ 0, 0, 0, 0 }
 };
 
-void keep_clean(void) {
-	glClear(GL_COLOR_BUFFER_BIT);
-	yui_window_update(YUI_WINDOW(yui));
+int yui_main(void) {
+	YabauseExec();
+	return TRUE;
 }
 
 GtkWidget * yui_new() {
-	yui = yui_window_new(key_config);
-
-	clean_handler = g_signal_connect(YUI_WINDOW(yui)->area, "expose-event", G_CALLBACK(keep_clean), 0);
+	yui = yui_window_new(key_config, YabauseInit, &yinit, yui_main);
 
 	gtk_widget_show(yui);
 
@@ -190,21 +187,6 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen) {
 
 void YuiSwapBuffers(void) {
 	yui_window_update(YUI_WINDOW(yui));
-}
-
-int yui_main(void) {
-	YabauseExec();
-	return TRUE;
-}
-
-void yui_run(void) {
-	if(YabauseInit(&yinit) == -1) {
-		g_print("Yabause initialization failed\n");
-		return;
-	}
-
-	g_signal_handler_disconnect(YUI_WINDOW(yui)->area, clean_handler);
-	g_idle_add(yui_main, 0);
 }
 
 void yui_conf(void) {
