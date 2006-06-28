@@ -39,7 +39,6 @@ GtkWidget* create_menu(YuiWindow * window1) {
 
   menubar1 = gtk_menu_bar_new ();
   gtk_widget_show (menubar1);
-  //gtk_box_pack_start (GTK_BOX (vbox1), menubar1, FALSE, FALSE, 0);
 
   menuitem1 = gtk_menu_item_new_with_mnemonic ("_Yabause");
   gtk_widget_show (menuitem1);
@@ -48,24 +47,19 @@ GtkWidget* create_menu(YuiWindow * window1) {
   menuitem1_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem1), menuitem1_menu);
 
-  new1 = gtk_image_menu_item_new_from_stock ("gtk-preferences", accel_group);
+  new1 = gtk_image_menu_item_new_from_stock ("gtk-preferences", NULL);
   gtk_widget_show (new1);
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), new1);
 
-  open1 = gtk_image_menu_item_new_from_stock ("gtk-media-play", accel_group);
-  gtk_container_add (GTK_CONTAINER (menuitem1_menu), open1);
-
-  save1 = gtk_image_menu_item_new_from_stock ("gtk-media-pause", accel_group);
-  gtk_container_add (GTK_CONTAINER (menuitem1_menu), save1);
+  gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "run")));
+  gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "pause")));
 
   separatormenuitem1 = gtk_separator_menu_item_new ();
   gtk_widget_show (separatormenuitem1);
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), separatormenuitem1);
   gtk_widget_set_sensitive (separatormenuitem1, FALSE);
 
-  quit1 = gtk_image_menu_item_new_from_stock ("gtk-quit", accel_group);
-  gtk_widget_show (quit1);
-  gtk_container_add (GTK_CONTAINER (menuitem1_menu), quit1);
+  gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "quit")));
 
   view1 = gtk_menu_item_new_with_mnemonic ("_View");
   gtk_widget_show (view1);
@@ -115,13 +109,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (rbg1), TRUE);
   g_signal_connect(rbg1, "activate", G_CALLBACK(ToggleRBG0), 0);
 
-#if ((GLIB_MAJOR_VERSION < 2) || ((GLIB_MAJOR_VERSION == 2) && (GLIB_MINOR_VERSION < 8)))
-  fullscreen1 = gtk_menu_item_new_with_mnemonic ("Fullscreen");
-#else
-  fullscreen1 = gtk_image_menu_item_new_from_stock ("gtk-fullscreen", accel_group);
-#endif
-  g_signal_connect_swapped(fullscreen1, "activate", G_CALLBACK(yui_window_toggle_fullscreen), window1);
-  gtk_container_add (GTK_CONTAINER (view1_menu), fullscreen1);
+  gtk_container_add(GTK_CONTAINER(view1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "fullscreen")));
 
   log = gtk_menu_item_new_with_mnemonic ("Log");
   g_signal_connect_swapped(log, "activate", G_CALLBACK(yui_window_show_log), window1);
@@ -157,16 +145,14 @@ GtkWidget* create_menu(YuiWindow * window1) {
   menuitem4_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem4), menuitem4_menu);
 
-  about1 = gtk_image_menu_item_new_from_stock ("gtk-about", accel_group);
+  about1 = gtk_image_menu_item_new_from_stock ("gtk-about", NULL);
   gtk_widget_show (about1);
   gtk_container_add (GTK_CONTAINER (menuitem4_menu), about1);
 
-  gtk_window_add_accel_group (GTK_WINDOW (window1), accel_group);
+  //gtk_window_add_accel_group (GTK_WINDOW (window1), accel_group);
 
   g_signal_connect(new1, "activate", yui_conf, 0);
-  g_signal_connect_swapped(open1, "activate", yui_window_run, window1);
-  g_signal_connect_swapped(save1, "activate", yui_window_pause, window1);
-  g_signal_connect(quit1, "activate", gtk_main_quit, 0);
+  //g_signal_connect(quit1, "activate", gtk_main_quit, 0);
 
   return menubar1;
 }

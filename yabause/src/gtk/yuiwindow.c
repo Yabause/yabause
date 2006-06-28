@@ -4,7 +4,7 @@
 #include "yuiwindow.h"
 #include "gtkglwidget.h"
 
-#include "menu.h"
+#include "settings.h"
 
 #include "icon.xpm"
 
@@ -14,6 +14,13 @@ static void yui_window_changed	(GtkWidget * widget, YuiWindow * yfe);
 static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, YuiWindow * yui);
+
+static GtkActionEntry action_entries[] = {
+	{ "run" , "gtk-media-play", "Run", "<Ctrl>r", NULL, G_CALLBACK(yui_window_run) },
+	{ "pause" , "gtk-media-pause", "Pause", "<Ctrl>p", NULL, G_CALLBACK(yui_window_pause) },
+	{ "fullscreen", "gtk-fullscreen", "Fullscreen", "<Ctrl>f", NULL, G_CALLBACK(yui_window_toggle_fullscreen) },
+	{ "quit", "gtk-quit", "Quit", "<Ctrl>q", NULL, gtk_main_quit }
+};
 
 GType yui_window_get_type (void) {
   static GType yfe_type = 0;
@@ -50,7 +57,22 @@ static void yui_window_class_init (YuiWindowClass * klass) {
 			G_STRUCT_OFFSET(YuiWindowClass, yui_window_paused), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
+static void yui_set_accel_group(gpointer action, gpointer group) {
+	gtk_action_set_accel_group(action, group);
+}
+
 static void yui_window_init (YuiWindow * yw) {
+	GtkAccelGroup * accel_group = gtk_accel_group_new();
+
+	yw->action_group = gtk_action_group_new("yui");
+	gtk_action_group_add_actions(yw->action_group, action_entries, sizeof(action_entries) / sizeof(GtkActionEntry), yw);
+	gtk_action_set_sensitive(gtk_action_group_get_action(yw->action_group, "pause"), FALSE);
+	{
+		GList * list = gtk_action_group_list_actions(yw->action_group);
+		g_list_foreach(list, yui_set_accel_group, accel_group);
+	}
+	gtk_window_add_accel_group(GTK_WINDOW(yw), accel_group);
+
 	gtk_window_set_icon(GTK_WINDOW(yw), gdk_pixbuf_new_from_xpm_data((const char **)icon_xpm));
 	gtk_window_set_title (GTK_WINDOW(yw), "Yabause");
 
@@ -78,7 +100,7 @@ static void yui_window_init (YuiWindow * yw) {
 	yw->state = 0;
 }
 
-GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata, GCallback rfunc) {
+GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata, GSourceFunc rfunc) {
 	GtkWidget * widget;
 	YuiWindow * yw;
 
@@ -93,7 +115,7 @@ GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata, GCa
 	return widget;
 }
 
-void yui_window_toggle_fullscreen(YuiWindow * yui) {
+void yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui) {
 	static int togglefullscreen = 0;
 	togglefullscreen = 1 - togglefullscreen;
 	if (togglefullscreen) {
@@ -112,13 +134,9 @@ static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpoin
 	while(yui->actions[i].name) {
 		if (event->keyval == yui->actions[i].key) {
 			yui->actions[i].press();
-			return TRUE;
+			//return TRUE;
 		}
 		i++;
-	}
-	if (event->keyval == GDK_f) {
-		yui_window_toggle_fullscreen(yui);
-		return TRUE;
 	}
 	return FALSE;
 }
@@ -130,7 +148,7 @@ static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpo
 	while(yui->actions[i].name) {
 		if (event->keyval == yui->actions[i].key) {
 			yui->actions[i].release();
-			return TRUE;
+			//return TRUE;
 		}
 		i++;
 	}
@@ -164,7 +182,7 @@ static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, Yu
 	yui_window_update(yui);
 }
 
-void yui_window_run(YuiWindow * yui) {
+void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 	if ((yui->state & YUI_IS_INIT) == 0) {
 		((int (*)(gpointer)) yui->init_func)(yui->init_data);
 		yui->state |= YUI_IS_INIT;
@@ -172,16 +190,20 @@ void yui_window_run(YuiWindow * yui) {
 	}
 
 	if ((yui->state & YUI_IS_RUNNING) == 0) {
-		g_idle_add(yui->run_func, 1);
+		g_idle_add(yui->run_func, GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_RUNNING_SIGNAL], 0);
 		yui->state |= YUI_IS_RUNNING;
+		gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "run"), FALSE);
+		gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "pause"), TRUE);
 	}
 }
 
-void yui_window_pause(YuiWindow * yui) {
+void yui_window_pause(GtkWidget * w, YuiWindow * yui) {
 	if (yui->state & YUI_IS_RUNNING) {
-		g_idle_remove_by_data(1);
+		g_idle_remove_by_data(GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);
 		yui->state &= ~YUI_IS_RUNNING;
+		gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "run"), TRUE);
+		gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "pause"), FALSE);
 	}
 }

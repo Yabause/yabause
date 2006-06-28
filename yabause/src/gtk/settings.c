@@ -53,8 +53,8 @@ YuiRangeItem sndcores[] = {
 	{ 0, 0}
 };
 
-gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", "Start", 0 };
-gchar * keys2[] = { "A", "B", "C", "X", "Y", "Z", 0 };
+const gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", "Start", 0 };
+const gchar * keys2[] = { "A", "B", "C", "X", "Y", "Z", 0 };
 
 YuiPageItem biositems[] = {
 	{ "BiosPath", YUI_FILE_SETTING, 0 },
@@ -144,7 +144,7 @@ create_dialog1 (void)
 
   notebook1 = gtk_notebook_new ();
   
-  gtk_box_pack_start(GTK_DIALOG(dialog1)->vbox, notebook1, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog1)->vbox), notebook1, TRUE, TRUE, 0);
 
   /*
    * General configuration
