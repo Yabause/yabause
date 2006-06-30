@@ -1,5 +1,6 @@
 #include "settings.h"
 #include "yuiwindow.h"
+#include "yuivdp1.h"
 
 GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *vbox1;
@@ -122,6 +123,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   menuitem3_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem3), menuitem3_menu);
 
+#if 0
   msh1 = gtk_menu_item_new_with_mnemonic ("MSH2");
   gtk_widget_show (msh1);
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), msh1);
@@ -129,14 +131,17 @@ GtkWidget* create_menu(YuiWindow * window1) {
   ssh1 = gtk_menu_item_new_with_mnemonic ("SSH2");
   gtk_widget_show (ssh1);
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), ssh1);
+#endif
 
   vdp2 = gtk_menu_item_new_with_mnemonic ("Vdp1");
-  gtk_widget_show (vdp2);
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), vdp2);
+  g_signal_connect_swapped(vdp2, "activate", G_CALLBACK(yui_vdp1_new), window1);
 
+#if 0
   vdp1 = gtk_menu_item_new_with_mnemonic ("Vdp2");
   gtk_widget_show (vdp1);
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), vdp1);
+#endif
 
   menuitem4 = gtk_menu_item_new_with_mnemonic ("_Help");
   gtk_widget_show (menuitem4);
