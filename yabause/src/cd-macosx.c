@@ -136,13 +136,6 @@ long MacOSXCDReadTOC(unsigned long *TOC)
 	/* Leadout */
 	TOC[101] = pTrackDescriptors[2].control << 28 | pTrackDescriptors[2].adr << 24 | CDConvertMSFToLBA(pTrackDescriptors[2].p) + add150;
 
-	{
-		int i;
-		for(i = 0;i < 102;i++) {
-			printf("%x\n", TOC[i]);
-		}
-	}
-			
 	//free(cdTOC); Looks like this is not need, will look into that.
 	return (0xCC * 2);
 }

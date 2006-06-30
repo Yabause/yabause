@@ -138,11 +138,17 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
           case kHICommandPreferences:
 	    CreateSettingsWindow();
             break;
+          case kHICommandQuit:
+            QuitApplicationEventLoop();
+            break;
           case YUI_COMMAND_RUN:
 	    YuiRun();
             break;
           case YUI_COMMAND_PAUSE:
             printf("pause\n");
+            break;
+          default:
+            printf("unhandled command\n");
             break;
         }
       }
@@ -280,6 +286,7 @@ int main () {
 
   EnableMenuCommand(NULL, kHICommandPreferences);
 
+/*
   {
     CFStringRef s;
     int i, j = 0;
@@ -292,6 +299,7 @@ int main () {
       j++;
     }
   }
+*/
 
   read_settings();
 
