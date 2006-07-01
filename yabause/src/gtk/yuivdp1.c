@@ -52,7 +52,8 @@ static void yui_vdp1_init (YuiVdp1 * yv) {
 
 	yv->store = gtk_list_store_new(1, G_TYPE_STRING);
 	yv->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL (yv->store));
-	g_object_set(yv->view, "headers-visible", FALSE);
+	//g_object_set(yv->view, "headers-visible", FALSE);
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(yv->view), FALSE);
 	{
 		GtkCellRenderer *renderer;
 		GtkTreeViewColumn *column;

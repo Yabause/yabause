@@ -114,9 +114,9 @@ GtkWidget* yui_resolution_new(GKeyFile * keyfile, const gchar * group) {
 	widget = GTK_WIDGET(g_object_new(yui_resolution_get_type(), "key-file", keyfile, "group", group, NULL));
 	yr = YUI_RESOLUTION(widget);
 
-	gtk_entry_set_text(yr->entry_w, g_key_file_get_value(yr->keyfile, yr->group, "Width", 0));
-	gtk_entry_set_text(yr->entry_h, g_key_file_get_value(yr->keyfile, yr->group, "Height", 0));
-	gtk_toggle_button_set_active(yr->keep_ratio, g_key_file_get_value(yr->keyfile, yr->group, "Keep ratio", 0));
+	gtk_entry_set_text(GTK_ENTRY(yr->entry_w), g_key_file_get_value(yr->keyfile, yr->group, "Width", 0));
+	gtk_entry_set_text(GTK_ENTRY(yr->entry_h), g_key_file_get_value(yr->keyfile, yr->group, "Height", 0));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(yr->keep_ratio), g_key_file_get_integer(yr->keyfile, yr->group, "Keep ratio", 0));
 
 	return widget;
 }
