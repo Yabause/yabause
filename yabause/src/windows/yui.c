@@ -30,6 +30,7 @@
 #include "../yui.h"
 #include "snddx.h"
 #include "../vidogl.h"
+#include "../vidsoft.h"
 #include "../peripheral.h"
 #include "../persdl.h"
 #include "perdx.h"
@@ -115,6 +116,7 @@ NULL
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
 &VIDOGL,
+&VIDSoft,
 NULL
 };
 
@@ -462,6 +464,25 @@ int YuiInit(void)
    else if (stricmp(tempstr, "AUTO") == 0)
       regionid = 0;
 
+   // Grab Video Core Settings
+   GetPrivateProfileString("Video", "VideoCore", "-1", tempstr, MAX_PATH, inifilename);
+   vidcoretype = atoi(tempstr);
+   if (vidcoretype == -1)
+      vidcoretype = VIDCORE_OGL;
+
+   // Grab Sound Core Settings
+   GetPrivateProfileString("Sound", "SoundCore", "-1", tempstr, MAX_PATH, inifilename);
+   sndcoretype = atoi(tempstr);
+
+   if (sndcoretype == -1)
+      sndcoretype = SNDCORE_DIRECTX;
+
+   // Grab Peripheral Core Settings
+   GetPrivateProfileString("Peripheral", "PeripheralCore", "-1", tempstr, MAX_PATH, inifilename);
+   percoretype = atoi(tempstr);
+   if (percoretype == -1)
+      percoretype = PERCORE_DIRECTX;
+
    // Figure out how much of the screen is useable
 //   if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workarearect, 0) == FALSE)
 //   {
@@ -514,10 +535,10 @@ int YuiInit(void)
 
    stop = 0;
 
-   yinit.percoretype = PERCORE_DIRECTX;
+   yinit.percoretype = percoretype;
    yinit.sh2coretype = sh2coretype;
-   yinit.vidcoretype = VIDCORE_OGL;
-   yinit.sndcoretype = SNDCORE_DIRECTX;
+   yinit.vidcoretype = vidcoretype;
+   yinit.sndcoretype = sndcoretype;
    if (IsPathCdrom(cdrompath))
       yinit.cdcoretype = CDCORE_SPTI;
    else
@@ -1906,45 +1927,7 @@ LRESULT CALLBACK ErrorDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 //////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
-#ifndef NO_CLI
-   int i;
-#endif
    LogStart();
-
-#ifndef NO_CLI
-   //handle command line arguments
-   for (i = 1; i < argc; ++i) {
-      if (argv[i]) {
-         //show usage
-         if (0 == strcmp(argv[i], "-h") || 0 == strcmp(argv[i], "-?") || 0 == strcmp(argv[i], "--help")) {
-            print_usage(argv[0]);
-            return 0;
-         }
-			
-         //set bios
-         if (0 == strcmp(argv[i], "-b") && argv[i + 1])
-            YuiSetBiosFilename(argv[i + 1]);
-         else if (strstr(argv[i], "--bios="))
-            YuiSetBiosFilename(argv[i] + strlen("--bios="));
-	
-         //set iso
-         else if (0 == strcmp(argv[i], "-i") && argv[i + 1])
-            YuiSetIsoFilename(argv[i + 1]);
-         else if (strstr(argv[i], "--iso="))
-            YuiSetIsoFilename(argv[i] + strlen("--iso="));
-
-         //set cdrom
-         else if (0 == strcmp(argv[i], "-c") && argv[i + 1])
-            YuiSetCdromFilename(argv[i + 1]);
-         else if (strstr(argv[i], "--cdrom="))
-            YuiSetCdromFilename(argv[i] + strlen("--cdrom="));
-
-         // Set sound
-         else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0)
-            YuiSetSoundEnable(0);
-      }
-   }
-#endif
 
    if (YuiInit() != 0)
       fprintf(stderr, "Error running Yabause\n");

@@ -33,6 +33,9 @@ extern char inifilename[MAX_PATH];
 
 extern char bioslang;
 extern char sh2coretype;
+extern char vidcoretype;
+extern char sndcoretype;
+extern char percoretype;
 extern u8 regionid;
 extern int disctype;
 extern int carttype;

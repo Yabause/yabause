@@ -105,6 +105,27 @@
 #define IDC_INPUTSETTINGS               1018
 
 //////////////////////////////////////////////////////////////////////////////
+// Video Settings stuff
+
+#define IDC_VIDEOCORECB                 1001
+#define IDC_FULLSCREENSTARTUPCB         1002
+#define IDC_AUTOFRAMESKIPCB             1003
+#define IDC_FSSIZECB                    1004
+#define IDC_CUSTOMWINDOWCB              1005
+#define IDC_WIDTHEDIT                   1006
+#define IDC_HEIGHTEDIT                  1007
+
+//////////////////////////////////////////////////////////////////////////////
+// Sound Settings stuff
+
+#define IDC_SOUNDCORECB                 1001
+
+//////////////////////////////////////////////////////////////////////////////
+// Peripheral Settings stuff
+
+#define IDC_PERCORECB                   1001
+
+//////////////////////////////////////////////////////////////////////////////
 // VDP1 debug stuff
 
 #define IDC_VDP1CMDLB                   1001

@@ -21,6 +21,9 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "../cs0.h"
+#include "../peripheral.h"
+#include "../scsp.h"
+#include "../vdp1.h"
 #include "resource.h"
 
 char biosfilename[MAX_PATH] = "\0";
@@ -34,9 +37,26 @@ int num_cdroms=0;
 char drive_list[24];
 char bioslang=0;
 char sh2coretype=0;
+char vidcoretype=0;
+char sndcoretype=0;
+char percoretype=0;
 u8 regionid=0;
 int disctype;
 int carttype;
+
+extern HINSTANCE y_hInstance;
+extern VideoInterface_struct *VIDCoreList[];
+extern PerInterface_struct *PERCoreList[];
+extern SoundInterface_struct *SNDCoreList[];
+
+LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                      LPARAM lParam);
+
+LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                      LPARAM lParam);
+
+LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                      LPARAM lParam);
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -460,19 +480,19 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_VIDEOSETTINGS:
             {
-//               DialogBox(g_hInstance, "VideoSettingsDlg", hDlg, (DLGPROC)VideoSettingsDlgProc);
+               DialogBox(y_hInstance, "VideoSettingsDlg", hDlg, (DLGPROC)VideoSettingsDlgProc);
 
                return TRUE;
             }
             case IDC_SOUNDSETTINGS:
             {
-//               DialogBox(g_hInstance, "SoundSettingsDlg", hDlg, (DLGPROC)SoundSettingsDlgProc);
+               DialogBox(y_hInstance, "SoundSettingsDlg", hDlg, (DLGPROC)SoundSettingsDlgProc);
 
                return TRUE;
             }
             case IDC_INPUTSETTINGS:
             {
-//               DialogBox(g_hInstance, "InputSettingsDlg", hDlg, (DLGPROC)InputSettingsDlgProc);
+               DialogBox(y_hInstance, "InputSettingsDlg", hDlg, (DLGPROC)InputSettingsDlgProc);
 
                return TRUE;
             }
@@ -525,6 +545,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   // retrieve image filename string instead
                   GetDlgItemText(hDlg, IDC_IMAGEEDIT, cdrompath, MAX_PATH);
                   WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
+//                  Cs2ChangeDisc(cdrompath);
                }
 /*
                // Convert ID to language string
@@ -627,3 +648,193 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                      LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         int i;
+
+         // Setup Video Core Combo box
+         SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (long)"None");
+
+         for (i = 1; VIDCoreList[i] != NULL; i++)
+            SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (long)VIDCoreList[i]->Name);
+
+         // Set Selected Video Core
+         for (i = 0; VIDCoreList[i] != NULL; i++)
+         {
+            if (vidcoretype == VIDCoreList[i]->id)
+               SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_SETCURSEL, i, 0);
+         }
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               char tempstr[MAX_PATH];
+
+               EndDialog(hDlg, TRUE);
+
+               // Write Video core type
+               vidcoretype = VIDCoreList[SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_GETCURSEL, 0, 0)]->id;
+               sprintf(tempstr, "%d", vidcoretype);
+               WritePrivateProfileString("Video", "VideoCore", tempstr, inifilename);
+
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_DESTROY:
+      {
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                      LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         int i;
+
+         // Setup Sound Core Combo box
+         SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (long)"None");
+
+         for (i = 1; SNDCoreList[i] != NULL; i++)
+            SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (long)SNDCoreList[i]->Name);
+
+         // Set Selected Sound Core
+         for (i = 0; SNDCoreList[i] != NULL; i++)
+         {
+            if (sndcoretype == SNDCoreList[i]->id)
+               SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_SETCURSEL, i, 0);
+         }
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               char tempstr[MAX_PATH];
+
+               EndDialog(hDlg, TRUE);
+
+               // Write Sound core type
+               sndcoretype = SNDCoreList[SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_GETCURSEL, 0, 0)]->id;
+               sprintf(tempstr, "%d", sndcoretype);
+               WritePrivateProfileString("Sound", "SoundCore", tempstr, inifilename);
+
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_DESTROY:
+      {
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                      LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         int i;
+
+         // Setup Peripheral Core Combo box
+         SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_ADDSTRING, 0, (long)"None");
+
+         for (i = 1; PERCoreList[i] != NULL; i++)
+            SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_ADDSTRING, 0, (long)PERCoreList[i]->Name);
+
+         // Set Selected Peripheral Core
+         for (i = 0; PERCoreList[i] != NULL; i++)
+         {
+            if (percoretype == PERCoreList[i]->id)
+               SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_SETCURSEL, i, 0);
+         }
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               char tempstr[MAX_PATH];
+
+               EndDialog(hDlg, TRUE);
+
+               // Write Sound core type
+               percoretype = PERCoreList[SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_GETCURSEL, 0, 0)]->id;
+               sprintf(tempstr, "%d", percoretype);
+               WritePrivateProfileString("Peripheral", "PeripheralCore", tempstr, inifilename);
+
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_DESTROY:
+      {
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
