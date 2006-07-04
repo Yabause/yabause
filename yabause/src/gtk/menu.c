@@ -1,6 +1,7 @@
 #include "settings.h"
 #include "yuiwindow.h"
 #include "yuivdp1.h"
+#include "yuivdp2.h"
 
 GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *vbox1;
@@ -137,11 +138,9 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), vdp2);
   g_signal_connect_swapped(vdp2, "activate", G_CALLBACK(yui_vdp1_new), window1);
 
-#if 0
   vdp1 = gtk_menu_item_new_with_mnemonic ("Vdp2");
-  gtk_widget_show (vdp1);
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), vdp1);
-#endif
+  g_signal_connect_swapped(vdp1, "activate", G_CALLBACK(yui_vdp2_new), window1);
 
   menuitem4 = gtk_menu_item_new_with_mnemonic ("_Help");
   gtk_widget_show (menuitem4);
