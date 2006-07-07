@@ -287,31 +287,38 @@ static void INLINE HandleClipping(vdp2draw_struct *info, clipping_struct *clip)
    if (info->x < 0)
    {
       clip->xstart = 0;
+      clip->xend = (info->x+info->cellw);
       clip->pixeloffset = 0 - info->x;
+      clip->lineincrement = 0 - info->x;
    }
    else
+   {
       clip->xstart = info->x;
 
-   if ((info->x+info->cellw) > vdp2width)
-   {
-      clip->xend = vdp2width;
-      clip->lineincrement = (info->x+info->cellw) - vdp2width;
+      if ((info->x+info->cellw) > vdp2width)
+      {
+         clip->xend = vdp2width;
+         clip->lineincrement = (info->x+info->cellw) - vdp2width;
+      }
+      else
+         clip->xend = (info->x+info->cellw);
    }
-   else
-      clip->xend = (info->x+info->cellw);
 
    if (info->y < 0)
    {
       clip->ystart = 0;
+      clip->yend = (info->y+info->cellh);
       clip->pixeloffset =  (info->cellw * (0 - info->y)) + clip->pixeloffset;
    }
    else
+   {
       clip->ystart = info->y;
 
-   if ((info->y+info->cellh) >= vdp2height)
-      clip->yend = vdp2height;
-   else
-      clip->yend = (info->y+info->cellh);
+      if ((info->y+info->cellh) >= vdp2height)
+         clip->yend = vdp2height;
+      else
+         clip->yend = (info->y+info->cellh);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -399,50 +406,112 @@ void Vdp2DrawScrollBitmap(vdp2draw_struct *info)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#define Vdp2DrawCell4bpp(mask, shift) \
+   if ((dot & mask) == 0 && info->transparencyenable) {} \
+   else \
+   { \
+      color = Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | ((dot & mask) >> shift))); \
+      vdp2putpixel32(i2, i, info->PostPixelFetchCalc(info, color), info->priority); \
+   }
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info)
 {
    u32 color;
    int i, i2;
    clipping_struct clip;
+   u32 newcharaddr;
+   int addrincrement=1;
 
    HandleClipping(info, &clip);
+
+   if (info->flipfunction & 0x1)
+   {
+      // Horizontal flip
+   }
+
+   if (info->flipfunction & 0x2)
+   {
+      // Vertical flip
+//      clip.pixeloffset = (info.w * info.h) - clip.pixeloffset;
+//      clip.lineincrement = 0 - clip.lineincrement;
+   }
 
    switch(info->colornumber)
    {
       case 0: // 4 BPP
-         clip.pixeloffset >>= 1;
-         clip.lineincrement >>= 1;
-
-         info->charaddr += clip.pixeloffset;
-
-         for (i = clip.ystart; i < clip.yend; i++)
+         if ((clip.lineincrement | clip.pixeloffset) == 0)
          {
-            for (i2 = clip.xstart; i2 < clip.xend; i2+=2)
+            for (i = clip.ystart; i < clip.yend; i++)
             {
-               u8 dot = T1ReadByte(Vdp2Ram, info->charaddr);
+               u32 dot;
                u32 color;
+
+               i2 = clip.xstart;
+
+               // Fetch Pixel 1/2/3/4/5/6/7/8
+               dot = T1ReadLong(Vdp2Ram, info->charaddr);
+               info->charaddr+=4;
+
+               // Draw 8 Pixels
+               Vdp2DrawCell4bpp(0xF0000000, 28)
+               i2++;
+               Vdp2DrawCell4bpp(0x0F000000, 24)
+               i2++;
+               Vdp2DrawCell4bpp(0x00F00000, 20)
+               i2++;
+               Vdp2DrawCell4bpp(0x000F0000, 16)
+               i2++;
+               Vdp2DrawCell4bpp(0x0000F000, 12)
+               i2++;
+               Vdp2DrawCell4bpp(0x00000F00, 8)
+               i2++;
+               Vdp2DrawCell4bpp(0x000000F0, 4)
+               i2++;
+               Vdp2DrawCell4bpp(0x0000000F, 0)
+               i2++;
+            }
+         }
+         else
+         {
+            u8 dot;
+
+            newcharaddr = info->charaddr + ((info->cellw * info->cellh) >> 1);
+
+            info->charaddr <<= 1;
+            info->charaddr += clip.pixeloffset;
+
+            for (i = clip.ystart; i < clip.yend; i++)
+            {
+               dot = T1ReadByte(Vdp2Ram, info->charaddr >> 1);
                info->charaddr++;
 
-               if ((dot & 0xF0) == 0 && info->transparencyenable)
+               for (i2 = clip.xstart; i2 < clip.xend; i2++)
                {
-               }
-               else
-               {
-                  color = Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | ((dot & 0xF0) >> 4)));
-                  vdp2putpixel32(i2, i, info->PostPixelFetchCalc(info, color), info->priority);
-               }
+                  u32 color;
 
-               dot &= 0xF;
-               if (dot == 0 && info->transparencyenable)
-                  continue;
-
-               color = Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | dot));
-               vdp2putpixel32(i2+1, i, info->PostPixelFetchCalc(info, color), info->priority);
+                  // Draw two pixels
+                  if(info->charaddr & 0x1)
+                  {
+                     Vdp2DrawCell4bpp(0xF0, 4)
+                     info->charaddr++;
+                  }
+                  else
+                  {
+                     Vdp2DrawCell4bpp(0x0F, 0)
+                     dot = T1ReadByte(Vdp2Ram, info->charaddr >> 1);
+                     info->charaddr++;
+                  }
+               }
+               info->charaddr += clip.lineincrement;
             }
-            info->charaddr += clip.lineincrement;
+
+            info->charaddr = newcharaddr;
          }
          break;
       case 1: // 8 BPP
+         newcharaddr = info->charaddr + (info->cellw * info->cellh);   
          info->charaddr += clip.pixeloffset;
          
          for (i = clip.ystart; i < clip.yend; i++)
@@ -461,6 +530,8 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info)
 
             info->charaddr += clip.lineincrement;
          }
+
+         info->charaddr = newcharaddr;
 
          break;
     case 2: // 16 BPP(palette)
@@ -638,10 +709,9 @@ static void Vdp2DrawPage(vdp2draw_struct *info)
       {
          info->y = Y;
          if ((info->x >= -info->patternpixelwh) &&
-             (info->y >= -info->patternpixelwh)) /* &&
+             (info->y >= -info->patternpixelwh) &&
              (info->x <= info->draww) &&
              (info->y <= info->drawh))
-*/
          {
             Vdp2PatternAddr(info);
             Vdp2DrawPattern(info);
@@ -686,8 +756,8 @@ static void Vdp2DrawMap(vdp2draw_struct *info)
    u32 lastplane=0xFFFFFFFF;
 
    info->patternpixelwh = 8 * info->patternwh;
-//   info->draww = (int)((float)vdp2width / info->coordincx);
-//   info->drawh = (int)((float)vdp2height / info->coordincy);
+   info->draww = (int)((float)vdp2width / info->coordincx);
+   info->drawh = (int)((float)vdp2height / info->coordincy);
 
    for(i = 0;i < info->mapwh;i++)
    {
