@@ -937,7 +937,8 @@ static void Vdp2DrawBackScreen(void)
 {
    int i;
 
-   if ((Vdp2Regs->TVMD & 0x100) == 0)
+   // Only draw black if TVMD's DISP and BDCLMD bits are cleared
+   if ((Vdp2Regs->TVMD & 0x8000) == 0 && (Vdp2Regs->TVMD & 0x100) == 0)
    {
       // Draw Black
       for (i = 0; i < (vdp2width * vdp2height); i++)
@@ -2324,23 +2325,7 @@ int VIDSoftVdp2Reset(void)
 
 void VIDSoftVdp2DrawStart(void)
 {
-   int i;
-
    Vdp2DrawBackScreen();
-
-   for (i = 1; i < 8; i++)
-   {   
-      if (nbg3priority == i)
-         Vdp2DrawNBG3();
-      if (nbg2priority == i)
-         Vdp2DrawNBG2();
-      if (nbg1priority == i)
-         Vdp2DrawNBG1();
-      if (nbg0priority == i)
-         Vdp2DrawNBG0();
-//      if (rbg0priority == i)
-//         Vdp2DrawRBG0();
-   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2483,7 +2468,21 @@ void VIDSoftVdp2DrawEnd(void)
 
 void VIDSoftVdp2DrawScreens(void)
 {
+   int i;
 
+   for (i = 1; i < 8; i++)
+   {   
+      if (nbg3priority == i)
+         Vdp2DrawNBG3();
+      if (nbg2priority == i)
+         Vdp2DrawNBG2();
+      if (nbg1priority == i)
+         Vdp2DrawNBG1();
+      if (nbg0priority == i)
+         Vdp2DrawNBG0();
+//      if (rbg0priority == i)
+//         Vdp2DrawRBG0();
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
