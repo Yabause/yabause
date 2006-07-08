@@ -2194,78 +2194,213 @@ void FASTCALL Vdp1ProcessSpritePixel(u16 *pixel, int *shadow, int *priority, int
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1NormalSpriteDraw(void)
+void FASTCALL DrawRegularSprite(vdp2draw_struct *info)
 {
-   vdp1cmd_struct cmd;
-   u32 addr;
-   s16 x, y;
-   u16 w, h;
-   clipping_struct clip;
    int i, i2;
-   u8 SPD;
-   int type;
-
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
-
-   x = cmd.CMDXA + Vdp1Regs->localX;
-   y = cmd.CMDYA + Vdp1Regs->localY;
-   w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-   h = cmd.CMDSIZE & 0xFF;
-   SPD = ((cmd.CMDPMOD & 0x40) != 0);
-   type = (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7);
-
-//   sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
-
-   addr = cmd.CMDSRCA << 3;
+   clipping_struct clip;
 
    // Handle vdp1 clipping
    clip.pixeloffset=0;
    clip.lineincrement=0;
 
    // Handle clipping(both window and screen clipping)
-   if (x < 0)
+   if (info->x < 0)
    {
       clip.xstart = 0;
-      clip.pixeloffset = 0 - x;
+      clip.pixeloffset = 0 - info->x;
    }
    else
-      clip.xstart = x;
+      clip.xstart = info->x;
 
-   if (x+w > vdp1width)
+   if (info->x+info->cellw > vdp1width)
    {
       clip.xend = vdp1width;
-      clip.lineincrement = (x+w) - vdp2width;
+      clip.lineincrement = (info->x+info->cellw) - vdp1width;
    }
    else
-      clip.xend = (x+w);
+      clip.xend = (info->x+info->cellw);
 
-   if (y < 0)
+   if (info->y < 0)
    {
       clip.ystart = 0;
-      clip.pixeloffset = (w * (0 - y)) + clip.pixeloffset;
+      clip.pixeloffset = (info->cellw * (0 - info->y)) + clip.pixeloffset;
    }
    else
-      clip.ystart = y;
+      clip.ystart = info->y;
 
-   if ((y+h) >= vdp1height)
+   if ((info->y+info->cellh) >= vdp1height)
       clip.yend = vdp1height;
    else
-      clip.yend = (y+h);
+      clip.yend = (info->y+info->cellh);
 
    for (i = clip.ystart; i < clip.yend; i++)
-      addr = Vdp1DrawHorzLine(clip.xstart, i, clip.xend, type, cmd.CMDCOLR, SPD, addr, 1) + clip.lineincrement; // fix me
+      info->addr = Vdp1DrawHorzLine(clip.xstart, i, clip.xend, info->colornumber, info->supplementdata, info->transparencyenable, info->addr, 1) + clip.lineincrement; // fix me
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftVdp1NormalSpriteDraw(void)
+{
+   vdp1cmd_struct cmd;
+   vdp2draw_struct info;
+
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+
+   info.x = cmd.CMDXA + Vdp1Regs->localX;
+   info.y = cmd.CMDYA + Vdp1Regs->localY;
+   info.cellw = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
+   info.cellh = cmd.CMDSIZE & 0xFF;
+   info.transparencyenable = ((cmd.CMDPMOD & 0x40) != 0);
+   info.colornumber = (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7);
+   info.flipfunction = (cmd.CMDCTRL & 0x30) >> 4;
+   info.addr = cmd.CMDSRCA << 3;
+   info.supplementdata = cmd.CMDCOLR;
+
+   DrawRegularSprite(&info);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDSoftVdp1ScaledSpriteDraw(void)
 {
+   vdp1cmd_struct cmd;
+   vdp2draw_struct info;
+
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+
+   info.x = cmd.CMDXA + Vdp1Regs->localX;
+   info.y = cmd.CMDYA + Vdp1Regs->localY;
+
+   switch ((cmd.CMDCTRL >> 8) & 0xF)
+   {
+      case 0x0: // Only two coordinates
+         info.cellw = ((int)cmd.CMDXC) - info.x + Vdp1Regs->localX + 1;
+         info.cellh = ((int)cmd.CMDYC) - info.y + Vdp1Regs->localY + 1;
+         break;
+      case 0x5: // Upper-left
+         info.cellw = ((int)cmd.CMDXB) + 1;
+         info.cellh = ((int)cmd.CMDYB) + 1;
+         break;
+      case 0x6: // Upper-Center
+         info.cellw = ((int)cmd.CMDXB);
+         info.cellh = ((int)cmd.CMDYB);
+         info.x = info.x - info.cellw/2;
+         info.cellw++;
+         info.cellh++;
+         break;
+      case 0x7: // Upper-Right
+         info.cellw = ((int)cmd.CMDXB);
+         info.cellh = ((int)cmd.CMDYB);
+         info.x = info.x - info.cellw;
+         info.cellw++;
+         info.cellh++;
+         break;
+      case 0x9: // Center-left
+         info.cellw = ((int)cmd.CMDXB);
+         info.cellh = ((int)cmd.CMDYB);
+         info.y = info.y - info.cellh/2;
+         info.cellw++;
+         info.cellh++;
+         break;
+      case 0xA: // Center-center
+         info.cellw = ((int)cmd.CMDXB);
+         info.cellh = ((int)cmd.CMDYB);
+         info.x = info.x - info.cellw/2;
+         info.y = info.y - info.cellh/2;
+         info.cellw++;
+         info.cellh++;
+         break;
+      case 0xB: // Center-right
+         info.cellw = ((int)cmd.CMDXB);
+         info.cellh = ((int)cmd.CMDYB);
+         info.x = info.x - info.cellw;
+         info.y = info.y - info.cellh/2;
+         info.cellw++;
+         info.cellh++;
+         break;
+      case 0xD: // Lower-left
+         info.cellw = ((int)cmd.CMDXB);
+         info.cellh = ((int)cmd.CMDYB);
+         info.y = info.y - info.cellh;
+         info.cellw++;
+         info.cellh++;
+         break;
+      case 0xE: // Lower-center
+         info.cellw = ((int)cmd.CMDXB);
+         info.cellh = ((int)cmd.CMDYB);
+         info.x = info.x - info.cellw/2;
+         info.y = info.y - info.cellh;
+         info.cellw++;
+         info.cellh++;
+         break;
+      case 0xF: // Lower-right
+         info.cellw = ((int)cmd.CMDXB);
+         info.cellh = ((int)cmd.CMDYB);
+         info.x = info.x - info.cellw;
+         info.y = info.y - info.cellh;
+         info.cellw++;
+         info.cellh++;
+         break;
+      default: break;
+   }
+
+   if (info.cellw == (((cmd.CMDSIZE >> 8) & 0x3F) * 8) &&
+       info.cellh == (cmd.CMDSIZE & 0xFF))
+   {
+      // Draw as a normal sprite
+      info.transparencyenable = ((cmd.CMDPMOD & 0x40) != 0);
+      info.colornumber = (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7);
+      info.flipfunction = (cmd.CMDCTRL & 0x30) >> 4;
+      info.addr = cmd.CMDSRCA << 3;
+      info.supplementdata = cmd.CMDCOLR;
+      DrawRegularSprite(&info);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDSoftVdp1DistortedSpriteDraw(void)
 {
+   vdp1cmd_struct cmd;
+   vdp2draw_struct info;
+   int w, h;
+   s32 vertices[8];
+
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+
+   w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
+   h = cmd.CMDSIZE & 0xFF;
+	
+   info.flipfunction = (cmd.CMDCTRL & 0x30) >> 4;
+
+   vertices[0] = (s32)(cmd.CMDXA + Vdp1Regs->localX);
+   vertices[1] = (s32)(cmd.CMDYA + Vdp1Regs->localY);
+   vertices[2] = (s32)((cmd.CMDXB + 1) + Vdp1Regs->localX);
+   vertices[3] = (s32)(cmd.CMDYB + Vdp1Regs->localY);
+   vertices[4] = (s32)((cmd.CMDXC + 1) + Vdp1Regs->localX);
+   vertices[5] = (s32)((cmd.CMDYC + 1) + Vdp1Regs->localY);
+   vertices[6] = (s32)(cmd.CMDXD + Vdp1Regs->localX);
+   vertices[7] = (s32)((cmd.CMDYD + 1) + Vdp1Regs->localY);
+
+   if ((vertices[0] + w) == vertices[4] &&
+       (vertices[1] + h) == vertices[5] &&
+       vertices[0] == vertices[6] &&
+       vertices[1] == vertices[3] &&
+       vertices[4] == vertices[2] &&
+       vertices[5] == vertices[7])       
+   {
+      // Draw as a normal sprite
+      info.x = vertices[0];
+      info.y = vertices[1];
+      info.cellw = w;
+      info.cellh = h;
+      info.transparencyenable = ((cmd.CMDPMOD & 0x40) != 0);
+      info.colornumber = (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7);
+      info.flipfunction = (cmd.CMDCTRL & 0x30) >> 4;
+      info.addr = cmd.CMDSRCA << 3;
+      info.supplementdata = cmd.CMDCOLR;
+      DrawRegularSprite(&info);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
