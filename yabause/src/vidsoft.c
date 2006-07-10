@@ -2076,7 +2076,7 @@ u32 FASTCALL Vdp1DrawHorzLine(int x1, int y, int x2, int type, u16 colorbank, u8
          break;
       }
       default:
-         VDP1LOG("Unimplemented sprite color mode: %X\n", (cmd->CMDPMOD >> 3) & 0x7);
+         VDP1LOG("Unimplemented sprite color mode: %X\n", type);
          break;
    }
 
@@ -2207,31 +2207,38 @@ void FASTCALL DrawRegularSprite(vdp2draw_struct *info)
    if (info->x < 0)
    {
       clip.xstart = 0;
+      clip.xend = (info->x+info->cellw);
       clip.pixeloffset = 0 - info->x;
+      clip.lineincrement = 0 - info->x;
    }
    else
+   {
       clip.xstart = info->x;
 
-   if (info->x+info->cellw > vdp1width)
-   {
-      clip.xend = vdp1width;
-      clip.lineincrement = (info->x+info->cellw) - vdp1width;
+      if ((info->x+info->cellw) > vdp1width)
+      {
+         clip.xend = vdp1width;
+         clip.lineincrement = (info->x+info->cellw) - vdp1width;
+      }
+      else
+         clip.xend = (info->x+info->cellw);
    }
-   else
-      clip.xend = (info->x+info->cellw);
 
    if (info->y < 0)
    {
       clip.ystart = 0;
-      clip.pixeloffset = (info->cellw * (0 - info->y)) + clip.pixeloffset;
+      clip.yend = (info->y+info->cellh);
+      clip.pixeloffset =  (info->cellw * (0 - info->y)) + clip.pixeloffset;
    }
    else
+   {
       clip.ystart = info->y;
 
-   if ((info->y+info->cellh) >= vdp1height)
-      clip.yend = vdp1height;
-   else
-      clip.yend = (info->y+info->cellh);
+      if ((info->y+info->cellh) >= vdp1height)
+         clip.yend = vdp1height;
+      else
+         clip.yend = (info->y+info->cellh);
+   }
 
    for (i = clip.ystart; i < clip.yend; i++)
       info->addr = Vdp1DrawHorzLine(clip.xstart, i, clip.xend, info->colornumber, info->supplementdata, info->transparencyenable, info->addr, 1) + clip.lineincrement; // fix me
