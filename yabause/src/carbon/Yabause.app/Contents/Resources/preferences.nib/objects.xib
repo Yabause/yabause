@@ -4,7 +4,7 @@
   <object name="rootObject" class="NSCustomObject" id="1">
     <string name="customClass">NSApplication</string>
   </object>
-  <array count="101" name="allObjects">
+  <array count="113" name="allObjects">
     <object class="IBCarbonWindow" id="166">
       <string name="windowRect">70 163 378 518 </string>
       <string name="title">Yabause preferences</string>
@@ -46,17 +46,19 @@
                       </object>
                       <object class="IBCarbonPopupButton" id="226">
                         <string name="bounds">182 31 202 320 </string>
+                        <int name="selectedItem">3</int>
                         <object name="menu" class="IBCarbonMenu" id="225">
                           <string name="title">Popup:</string>
                           <array count="3" name="items">
                             <object class="IBCarbonMenuItem" id="229">
-                              <string name="title">Item 1</string>
+                              <string name="title">Dummy CD</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="227">
-                              <string name="title">Item 2</string>
+                              <string name="title">ISO or CUE file</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="228">
-                              <string name="title">Item 3</string>
+                              <boolean name="checked">TRUE</boolean>
+                              <string name="title">Cdrom device</string>
                             </object>
                           </array>
                         </object>
@@ -71,15 +73,34 @@
                         <string name="bounds">254 31 274 320 </string>
                         <object name="menu" class="IBCarbonMenu" id="187">
                           <string name="title">Popup:</string>
-                          <array count="3" name="items">
+                          <array count="9" name="items">
                             <object class="IBCarbonMenuItem" id="191">
-                              <string name="title">Item 1</string>
+                              <boolean name="checked">TRUE</boolean>
+                              <string name="title">Auto-detect</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="298">
+                              <string name="title">Japan (NTSC)</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="189">
-                              <string name="title">Item 2</string>
+                              <string name="title">Asia (NTSC)</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="299">
+                              <string name="title">North America (NTSC)</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="300">
+                              <string name="title">Central/South America (NTSC)</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="190">
-                              <string name="title">Item 3</string>
+                              <string name="title">Korea (NTSC)</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="301">
+                              <string name="title">Asia (PAL)</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="302">
+                              <string name="title">Europe + others (PAL)</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="303">
+                              <string name="title">Central/South America (PAL)</string>
                             </object>
                           </array>
                         </object>
@@ -100,17 +121,19 @@
                     <array count="1" name="subviews">
                       <object class="IBCarbonPopupButton" id="202">
                         <string name="bounds">78 31 98 320 </string>
+                        <int name="selectedItem">2</int>
                         <object name="menu" class="IBCarbonMenu" id="198">
                           <string name="title">Popup:</string>
                           <array count="3" name="items">
                             <object class="IBCarbonMenuItem" id="201">
-                              <string name="title">Item 1</string>
+                              <string name="title">Dummy Video Interface</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="199">
-                              <string name="title">Item 2</string>
+                              <boolean name="checked">TRUE</boolean>
+                              <string name="title">OpenGL Video Interface</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="200">
-                              <string name="title">Item 3</string>
+                              <string name="title">Software Video Interface</string>
                             </object>
                           </array>
                         </object>
@@ -123,6 +146,7 @@
                     <array count="5" name="subviews">
                       <object class="IBCarbonEditText" id="205">
                         <string name="bounds">181 94 197 222 </string>
+                        <string name="title">224</string>
                       </object>
                       <object class="IBCarbonStaticText" id="206">
                         <string name="bounds">150 31 166 83 </string>
@@ -138,6 +162,7 @@
                       </object>
                       <object class="IBCarbonEditText" id="210">
                         <string name="bounds">151 94 167 222 </string>
+                        <string name="title">320</string>
                       </object>
                     </array>
                     <string name="title">Resolution</string>
@@ -149,15 +174,13 @@
                         <string name="bounds">252 31 272 320 </string>
                         <object name="menu" class="IBCarbonMenu" id="211">
                           <string name="title">Popup:</string>
-                          <array count="3" name="items">
+                          <array count="2" name="items">
                             <object class="IBCarbonMenuItem" id="215">
-                              <string name="title">Item 1</string>
+                              <boolean name="checked">TRUE</boolean>
+                              <string name="title">Dummy Sound Interface</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="213">
-                              <string name="title">Item 2</string>
-                            </object>
-                            <object class="IBCarbonMenuItem" id="214">
-                              <string name="title">Item 3</string>
+                              <string name="title">SDL Sound Interface</string>
                             </object>
                           </array>
                         </object>
@@ -187,15 +210,37 @@
                         <string name="bounds">108 31 128 320 </string>
                         <object name="menu" class="IBCarbonMenu" id="219">
                           <string name="title">Popup:</string>
-                          <array count="3" name="items">
+                          <array count="10" name="items">
                             <object class="IBCarbonMenuItem" id="223">
-                              <string name="title">Item 1</string>
+                              <boolean name="checked">TRUE</boolean>
+                              <string name="title">None</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="221">
-                              <string name="title">Item 2</string>
+                              <string name="title">Pro Action Replay</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="222">
-                              <string name="title">Item 3</string>
+                              <string name="title">4 Mbit Backup Ram</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="305">
+                              <string name="title">8 Mbit Backup Ram</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="306">
+                              <string name="title">16 Mbit Backup Ram</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="307">
+                              <string name="title">32 Mbit Backup Ram</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="308">
+                              <string name="title">8 Mbit Dram</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="309">
+                              <string name="title">32 Mbit Dram</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="310">
+                              <string name="title">Netlink</string>
+                            </object>
+                            <object class="IBCarbonMenuItem" id="311">
+                              <string name="title">16 Mbit ROM</string>
                             </object>
                           </array>
                         </object>
@@ -447,7 +492,6 @@
     <reference idRef="211"/>
     <reference idRef="212"/>
     <reference idRef="213"/>
-    <reference idRef="214"/>
     <reference idRef="215"/>
     <reference idRef="216"/>
     <reference idRef="217"/>
@@ -478,18 +522,18 @@
     <reference idRef="251"/>
     <reference idRef="252"/>
     <object class="IBCarbonStaticText" id="259">
-      <string name="bounds">-24520 -30662 -24504 -30566 </string>
+      <string name="bounds">140 24182 156 24278 </string>
       <string name="title">Up</string>
     </object>
     <object class="IBCarbonEditText" id="260">
-      <string name="bounds">-24509 -30532 -24513 -30537 </string>
+      <string name="bounds">148 24310 146 24309 </string>
     </object>
     <object class="IBCarbonStaticText" id="261">
-      <string name="bounds">-24515 -30657 -24499 -30561 </string>
+      <string name="bounds">135 24187 151 24283 </string>
       <string name="title">Up</string>
     </object>
     <object class="IBCarbonEditText" id="262">
-      <string name="bounds">-24504 -30527 -24508 -30532 </string>
+      <string name="bounds">143 24315 141 24314 </string>
     </object>
     <reference idRef="263"/>
     <reference idRef="264"/>
@@ -498,52 +542,52 @@
     <reference idRef="267"/>
     <reference idRef="268"/>
     <object class="IBCarbonEditText" id="269">
-      <string name="bounds">-24514 -30537 -24518 -30542 </string>
+      <string name="bounds">153 24305 151 24304 </string>
     </object>
     <object class="IBCarbonStaticText" id="270">
-      <string name="bounds">-24577 -30667 -24561 -30571 </string>
+      <string name="bounds">197 24177 213 24273 </string>
       <string name="title">Right</string>
     </object>
     <object class="IBCarbonEditText" id="271">
-      <string name="bounds">-24462 -30537 -24466 -30542 </string>
+      <string name="bounds">101 24305 99 24304 </string>
     </object>
     <object class="IBCarbonStaticText" id="272">
-      <string name="bounds">-24551 -30667 -24535 -30571 </string>
+      <string name="bounds">171 24177 187 24273 </string>
       <string name="title">Down</string>
     </object>
     <object class="IBCarbonEditText" id="273">
-      <string name="bounds">-24436 -30537 -24440 -30542 </string>
+      <string name="bounds">75 24305 73 24304 </string>
     </object>
     <object class="IBCarbonStaticText" id="274">
-      <string name="bounds">-24447 -30667 -24431 -30571 </string>
+      <string name="bounds">67 24177 83 24273 </string>
       <string name="title">Start</string>
     </object>
     <object class="IBCarbonEditText" id="275">
-      <string name="bounds">-24540 -30537 -24544 -30542 </string>
+      <string name="bounds">179 24305 177 24304 </string>
     </object>
     <object class="IBCarbonStaticText" id="276">
-      <string name="bounds">-24473 -30667 -24457 -30571 </string>
+      <string name="bounds">93 24177 109 24273 </string>
       <string name="title">Left trigger</string>
     </object>
     <object class="IBCarbonEditText" id="277">
-      <string name="bounds">-24566 -30537 -24570 -30542 </string>
+      <string name="bounds">205 24305 203 24304 </string>
     </object>
     <object class="IBCarbonEditText" id="278">
-      <string name="bounds">-24488 -30537 -24492 -30542 </string>
+      <string name="bounds">127 24305 125 24304 </string>
     </object>
     <object class="IBCarbonStaticText" id="279">
-      <string name="bounds">-24499 -30667 -24483 -30571 </string>
+      <string name="bounds">119 24177 135 24273 </string>
       <string name="title">Right trigger</string>
     </object>
     <object class="IBCarbonEditText" id="280">
-      <string name="bounds">-24592 -30537 -24596 -30542 </string>
+      <string name="bounds">231 24305 229 24304 </string>
     </object>
     <object class="IBCarbonStaticText" id="281">
-      <string name="bounds">-24603 -30667 -24587 -30571 </string>
+      <string name="bounds">223 24177 239 24273 </string>
       <string name="title">Up</string>
     </object>
     <object class="IBCarbonStaticText" id="282">
-      <string name="bounds">-24525 -30667 -24509 -30571 </string>
+      <string name="bounds">145 24177 161 24273 </string>
       <string name="title">Left</string>
     </object>
     <reference idRef="283"/>
@@ -559,8 +603,21 @@
     <reference idRef="295"/>
     <reference idRef="296"/>
     <reference idRef="297"/>
+    <reference idRef="298"/>
+    <reference idRef="299"/>
+    <reference idRef="300"/>
+    <reference idRef="301"/>
+    <reference idRef="302"/>
+    <reference idRef="303"/>
+    <reference idRef="305"/>
+    <reference idRef="306"/>
+    <reference idRef="307"/>
+    <reference idRef="308"/>
+    <reference idRef="309"/>
+    <reference idRef="310"/>
+    <reference idRef="311"/>
   </array>
-  <array count="101" name="allParents">
+  <array count="113" name="allParents">
     <reference idRef="1"/>
     <reference idRef="166"/>
     <reference idRef="182"/>
@@ -596,7 +653,6 @@
     <reference idRef="216"/>
     <reference idRef="211"/>
     <reference idRef="211"/>
-    <reference idRef="211"/>
     <reference idRef="195"/>
     <reference idRef="224"/>
     <reference idRef="224"/>
@@ -662,6 +718,19 @@
     <reference idRef="197"/>
     <reference idRef="197"/>
     <reference idRef="197"/>
+    <reference idRef="187"/>
+    <reference idRef="187"/>
+    <reference idRef="187"/>
+    <reference idRef="187"/>
+    <reference idRef="187"/>
+    <reference idRef="187"/>
+    <reference idRef="219"/>
+    <reference idRef="219"/>
+    <reference idRef="219"/>
+    <reference idRef="219"/>
+    <reference idRef="219"/>
+    <reference idRef="219"/>
+    <reference idRef="219"/>
   </array>
   <dictionary count="3" name="nameTable">
     <string>Dialog</string>
@@ -671,5 +740,5 @@
     <string>NSCustomView2</string>
     <reference idRef="297"/>
   </dictionary>
-  <unsigned_int name="nextObjectID">298</unsigned_int>
+  <unsigned_int name="nextObjectID">312</unsigned_int>
 </object>
