@@ -3,6 +3,14 @@
 #include "yuivdp1.h"
 #include "yuivdp2.h"
 
+void openAboutDialog(GtkWidget * w, gpointer data) {
+	gtk_show_about_dialog(data,
+		"name", "Yabause",
+		"version", VERSION,
+		"website", "http://yabause.sourceforge.net",
+		NULL);
+}
+
 GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *vbox1;
   GtkWidget *menubar1;
@@ -55,6 +63,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
 
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "run")));
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "pause")));
+  gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "reset")));
 
   separatormenuitem1 = gtk_separator_menu_item_new ();
   gtk_widget_show (separatormenuitem1);
@@ -150,8 +159,8 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem4), menuitem4_menu);
 
   about1 = gtk_image_menu_item_new_from_stock ("gtk-about", NULL);
-  gtk_widget_show (about1);
   gtk_container_add (GTK_CONTAINER (menuitem4_menu), about1);
+  g_signal_connect(about1, "activate", G_CALLBACK(openAboutDialog), window1);
 
   //gtk_window_add_accel_group (GTK_WINDOW (window1), accel_group);
 

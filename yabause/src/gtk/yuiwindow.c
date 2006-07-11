@@ -18,6 +18,7 @@ static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, Yu
 static GtkActionEntry action_entries[] = {
 	{ "run" , "gtk-media-play", "Run", "<Ctrl>r", NULL, G_CALLBACK(yui_window_run) },
 	{ "pause" , "gtk-media-pause", "Pause", "<Ctrl>p", NULL, G_CALLBACK(yui_window_pause) },
+	{ "reset", NULL, "Reset", NULL, NULL, G_CALLBACK(yui_window_reset) },
 	{ "fullscreen", "gtk-fullscreen", "Fullscreen", "<Ctrl>f", NULL, G_CALLBACK(yui_window_toggle_fullscreen) },
 	{ "quit", "gtk-quit", "Quit", "<Ctrl>q", NULL, gtk_main_quit }
 };
@@ -67,6 +68,7 @@ static void yui_window_init (YuiWindow * yw) {
 	yw->action_group = gtk_action_group_new("yui");
 	gtk_action_group_add_actions(yw->action_group, action_entries, sizeof(action_entries) / sizeof(GtkActionEntry), yw);
 	gtk_action_set_sensitive(gtk_action_group_get_action(yw->action_group, "pause"), FALSE);
+	gtk_action_set_sensitive(gtk_action_group_get_action(yw->action_group, "reset"), FALSE);
 	{
 		GList * list = gtk_action_group_list_actions(yw->action_group);
 		g_list_foreach(list, yui_set_accel_group, accel_group);
@@ -100,7 +102,8 @@ static void yui_window_init (YuiWindow * yw) {
 	yw->state = 0;
 }
 
-GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata, GSourceFunc rfunc) {
+GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata,
+		GSourceFunc rfunc, GCallback resetfunc) {
 	GtkWidget * widget;
 	YuiWindow * yw;
 
@@ -111,6 +114,7 @@ GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata, GSo
 	yw->init_func = ifunc;
 	yw->init_data = idata;
 	yw->run_func = rfunc;
+	yw->reset_func = resetfunc;
 
 	return widget;
 }
@@ -187,6 +191,7 @@ void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 		((int (*)(gpointer)) yui->init_func)(yui->init_data);
 		yui->state |= YUI_IS_INIT;
 		g_signal_handler_disconnect(yui->area, yui->clean_handler);
+		gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "reset"), TRUE);
 	}
 
 	if ((yui->state & YUI_IS_RUNNING) == 0) {
@@ -205,5 +210,11 @@ void yui_window_pause(GtkWidget * w, YuiWindow * yui) {
 		yui->state &= ~YUI_IS_RUNNING;
 		gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "run"), TRUE);
 		gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "pause"), FALSE);
+	}
+}
+
+void yui_window_reset(GtkWidget * w, YuiWindow * yui) {
+	if (yui->state & YUI_IS_INIT) {
+		yui->reset_func();
 	}
 }

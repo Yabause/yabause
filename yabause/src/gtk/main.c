@@ -65,13 +65,13 @@ YuiAction key_config[] = {
 	{ 0, 0, 0, 0 }
 };
 
-int yui_main(void) {
+int yui_main(gpointer data) {
 	YabauseExec();
 	return TRUE;
 }
 
 GtkWidget * yui_new() {
-	yui = yui_window_new(key_config, YabauseInit, &yinit, yui_main);
+	yui = yui_window_new(key_config, G_CALLBACK(YabauseInit), &yinit, yui_main, G_CALLBACK(YabauseReset));
 
 	gtk_widget_show(yui);
 

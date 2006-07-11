@@ -40,6 +40,7 @@ struct _YuiWindow {
 	GCallback init_func;
 	gpointer init_data;
 	GSourceFunc run_func;
+	GCallback reset_func;
 
 	guint state;
 
@@ -54,13 +55,15 @@ struct _YuiWindowClass {
 };
 
 GType		yui_window_get_type	(void);
-GtkWidget *	yui_window_new		(YuiAction * act, GCallback ifunc, gpointer idata, GSourceFunc rfunc);
+GtkWidget *	yui_window_new		(YuiAction * act, GCallback ifunc, gpointer idata,
+					GSourceFunc rfunc, GCallback resetfunc);
 void		yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui);
 void		yui_window_update	(YuiWindow * yui);
 void		yui_window_log		(YuiWindow * yui, const char * message);
 void		yui_window_show_log	(YuiWindow * yui);
 void		yui_window_run		(GtkWidget * w, YuiWindow * yui);
 void		yui_window_pause	(GtkWidget * w, YuiWindow * yui);
+void		yui_window_reset	(GtkWidget * w, YuiWindow * yui);
 
 G_END_DECLS
 
