@@ -129,6 +129,10 @@ u32 *vdp2framebuffer=NULL;
 
 static int vdp1width;
 static int vdp1height;
+static int vdp1clipxstart;
+static int vdp1clipxend;
+static int vdp1clipystart;
+static int vdp1clipyend;
 static int vdp1pixelsize;
 static int vdp1spritetype;
 static int vdp2width;
@@ -2418,14 +2422,155 @@ void VIDSoftVdp1PolygonDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int INLINE ClipLine(int *x1, int *y1, int *x2, int *y2)
+{
+   // rewrite me
+   int point1vis=0;
+   int point2vis=0;
+
+   // Let's see if point 1 is clipped
+   if (*x1 >= vdp1clipxstart &&
+       *x1 < vdp1clipxend &&
+       *y1 >= vdp1clipystart &&
+       *y1 < vdp1clipyend)
+      point1vis = 1;
+
+   // Let's see if point 1 is clipped
+   if (*x2 >= vdp1clipxstart &&
+       *x2 < vdp1clipxend &&
+       *y2 >= vdp1clipystart &&
+       *y2 < vdp1clipyend)
+      point2vis = 1;
+
+   // Both points are visible, so don't do any clipping
+   if (point1vis && point2vis)
+      return 1;
+
+   // Both points are invisible, so don't draw
+   if (point1vis == 0 && point2vis == 0)
+      return 0;
+
+   return 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL DrawLine(int x1, int y1, int x2, int y2, u16 color)
+{
+   // Uses Bresenham's line algorithm(eventually this should be changed over
+   // to Wu's symmetric double step
+   u16 *fbstart = &((u16 *)vdp1framebuffer)[(y1 * vdp1width) + x1];
+   int deltax, deltay, xinc, yinc, i;
+   int error=0;
+
+   deltax = x2-x1;
+   deltay = y2-y1;
+
+   if (deltax >= 0)
+     // Line is going right
+     xinc = 1;
+   else
+   {
+      // Line is going left
+      xinc = -1;
+      deltax = 0 - deltax;
+   }
+
+   if (deltay >= 0)
+      // Line is going down
+      yinc = vdp1width;
+   else
+   {
+      // Line is going up
+      yinc = 0 - vdp1width;
+      deltay = 0 - deltay;
+   }
+
+   // Draw the line
+   if (deltax > deltay)
+   {
+      for (i = 0; i <= deltax; i++)
+      {
+         fbstart[0] = color;
+
+         error += deltay;
+
+         if (error > deltax)
+         {
+            // Handle error
+            error -= deltax;
+            fbstart += yinc;
+         }
+
+         fbstart += xinc;
+      }
+   }
+   else
+   {
+      for (i = 0; i <= deltay; i++)
+      {
+         *fbstart = color;
+         error += deltax;
+
+         if (error > 0)
+         {
+            error -= deltay;
+            fbstart += xinc;
+         }
+
+         fbstart += yinc;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void VIDSoftVdp1PolylineDraw(void)
 {
+   int X[4];
+   int Y[4];
+   u16 color;
+
+   X[0] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
+   Y[0] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
+   X[1] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10));
+   Y[1] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12));
+   X[2] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14));
+   Y[2] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16));
+   X[3] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x18));
+   Y[3] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A));
+
+   color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
+//   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+
+   if (ClipLine(&X[0], &Y[0], &X[1], &Y[1]))
+      DrawLine(X[0], Y[0], X[1], Y[1], color);
+
+   if (ClipLine(&X[1], &Y[1], &X[2], &Y[2]))
+      DrawLine(X[1], Y[1], X[2], Y[2], color);
+
+   if (ClipLine(&X[2], &Y[2], &X[3], &Y[3]))
+      DrawLine(X[2], Y[2], X[3], Y[3], color);
+
+   if (ClipLine(&X[3], &Y[3], &X[0], &Y[0]))
+      DrawLine(X[3], Y[3], X[0], Y[0], color);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDSoftVdp1LineDraw(void)
 {
+   int x1, y1, x2, y2;
+
+   x1 = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
+   y1 = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
+   x2 = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10));
+   y2 = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12));
+
+//   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+
+   if (ClipLine(&x1, &y1, &x2, &y2))
+      DrawLine(x1, y1, x2, y2, T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2436,6 +2581,26 @@ void VIDSoftVdp1UserClipping(void)
    Vdp1Regs->userclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
    Vdp1Regs->userclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
    Vdp1Regs->userclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+
+   if (vdp1clipxstart > Vdp1Regs->systemclipX1)
+      vdp1clipxstart = Vdp1Regs->userclipX1;
+   else
+      vdp1clipxstart = Vdp1Regs->systemclipX1;
+
+   if (vdp1clipxend < Vdp1Regs->systemclipX2)
+      vdp1clipxend = Vdp1Regs->userclipX2;
+   else
+      vdp1clipxend = Vdp1Regs->systemclipX2;
+
+   if (vdp1clipystart > Vdp1Regs->systemclipY1)
+      vdp1clipystart = Vdp1Regs->userclipY1;
+   else
+      vdp1clipystart = Vdp1Regs->systemclipY1;
+
+   if (vdp1clipyend < Vdp1Regs->systemclipY2)
+      vdp1clipyend = Vdp1Regs->userclipY2;
+   else
+      vdp1clipyend = Vdp1Regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2446,6 +2611,11 @@ void VIDSoftVdp1SystemClipping(void)
    Vdp1Regs->systemclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
    Vdp1Regs->systemclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
    Vdp1Regs->systemclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+
+   vdp1clipxstart = Vdp1Regs->systemclipX1;
+   vdp1clipxend = Vdp1Regs->systemclipX2;
+   vdp1clipystart = Vdp1Regs->systemclipY1;
+   vdp1clipyend = Vdp1Regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
