@@ -72,7 +72,12 @@ void SmpcRecheckRegion(void) {
    if (SmpcInternalVars->regionsetting == REGION_AUTODETECT)
    {
       // Time to autodetect the region using the cd block
-      SmpcInternalVars->regionid = Cs2GetRegionID();          
+      SmpcInternalVars->regionid = Cs2GetRegionID();
+
+      // Since we couldn't detect the region from the CD, let's assume
+      // it's japanese
+      if (SmpcInternalVars->regionid == 0)
+         SmpcInternalVars->regionid = 1;
    }
 }
 
