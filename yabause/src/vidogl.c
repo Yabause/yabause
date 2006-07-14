@@ -166,10 +166,42 @@ typedef struct
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int);
+   u32 FASTCALL (* PostPixelFetchCalc)(void *, u32);
    int patternpixelwh;
    int draww;
    int drawh;
 } vdp2draw_struct;
+
+typedef struct
+{
+   float Xst;
+   float Yst;
+   float Zst;
+   float deltaXst;
+   float deltaYst;
+   float deltaX;
+   float deltaY;
+   float A;
+   float B;
+   float C;
+   float D;
+   float E;
+   float F;
+   s32 Px;
+   s32 Py;
+   s32 Pz;
+   s32 Cx;
+   s32 Cy;
+   s32 Cz;
+   float Mx;
+   float My;
+   float kx;
+   float ky;
+   float KAst;
+   float deltaKAst;
+   float deltaKAx;
+   int coefenab;
+} vdp2rotationparameter_struct;
 
 static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 
@@ -569,16 +601,16 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
                info->charaddr += 2;
                if (!(dot & 0xF000) && info->transparencyenable) color = 0x00000000;
                else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF000) >> 12)), info->alpha);
-               *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xF00) && info->transparencyenable) color = 0x00000000;
                else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF00) >> 8)), info->alpha);
-               *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xF0) && info->transparencyenable) color = 0x00000000;
                else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF0) >> 4)), info->alpha);
-               *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xF) && info->transparencyenable) color = 0x00000000;
                else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
-               *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+               *texture->textdata++ = info->PostPixelFetchCalc(info, color);               
             }
             texture->textdata += texture->w;
          }
@@ -593,11 +625,10 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
                info->charaddr += 2;
                if (!(dot & 0xFF00) && info->transparencyenable) color = 0x00000000;
                else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), info->alpha);
-               *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xFF) && info->transparencyenable) color = 0x00000000;
                else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
-
-               *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
             }
             texture->textdata += texture->w;
          }
@@ -611,7 +642,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
           if ((dot == 0) && info->transparencyenable) color = 0x00000000;
           else color = Vdp2ColorRamGetColor(info->coloroffset + dot, info->alpha);
           info->charaddr += 2;
-          *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+          *texture->textdata++ = info->PostPixelFetchCalc(info, color);
 	}
         texture->textdata += texture->w;
       }
@@ -625,7 +656,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
           info->charaddr += 2;
           if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
 	  else color = SAT2YAB1(0xFF, dot);
-          *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+          *texture->textdata++ = info->PostPixelFetchCalc(info, color);
 	}
         texture->textdata += texture->w;
       }
@@ -641,7 +672,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
           info->charaddr += 2;
           if (!(dot1 & 0x8000) && info->transparencyenable) color = 0x00000000;
           else color = SAT2YAB2(info->alpha, dot1, dot2);
-          *texture->textdata++ = COLOR_ADD(color,info->cor,info->cog,info->cob);
+          *texture->textdata++ = info->PostPixelFetchCalc(info, color);
 	}
         texture->textdata += texture->w;
       }
@@ -897,103 +928,122 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2ReadRotationTable(u32 addr)
+static void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter)
 {
-/*
    s32 i;
+   u32 addr;
+
+   addr = Vdp2Regs->RPTA.all << 1;
+
+   if (which == 0)
+   {
+      // Rotation Parameter A
+      addr &= 0x000FFF7C;
+      parameter->coefenab = Vdp2Regs->KTCTL & 0x1;
+   }
+   else
+   {
+      // Rotation Parameter B
+      addr = (addr & 0x000FFFFC) | 0x00000080;
+      parameter->coefenab = Vdp2Regs->KTCTL & 0x100;
+   }
 
    i = T1ReadLong(Vdp2Ram, addr);
-   Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+   parameter->Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   Yst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+   parameter->Yst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   Zst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
+   parameter->Zst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   deltaXst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+   parameter->deltaXst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   deltaYst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+   parameter->deltaYst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   deltaX = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+   parameter->deltaX = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   deltaY = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
+   parameter->deltaY = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   A = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+   parameter->A = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   B = (float) (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-        i = T1ReadLong(Vdp2Ram, addr);
-   C = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+   parameter->B = (float) (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   D = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+   parameter->C = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   E = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+   parameter->D = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+   parameter->E = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   Px = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Px = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
    addr += 2;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   Py = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Py = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
    addr += 2;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   Pz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Pz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
    addr += 4;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   Cx = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Cx = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
    addr += 2;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   Cy = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Cy = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
    addr += 2;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   Cz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Cz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   Mx = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
+   parameter->Mx = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   My = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
+   parameter->My = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   kx = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
+   parameter->kx = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
-   ky = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
+   parameter->ky = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
    addr += 4;
-*/
+
+   if (parameter->coefenab)
+   {
+      // Handle coefficients here
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1390,8 +1440,8 @@ void VIDOGLVdp1PolygonDraw(void)
 
 void VIDOGLVdp1PolylineDraw(void)
 {
-   s16 X[2];
-   s16 Y[2];
+   s16 X[4];
+   s16 Y[4];
    u16 color;
    u16 CMDPMOD;
    u8 alpha;
@@ -1519,6 +1569,22 @@ void VIDOGLVdp2DrawStart(void)
 void VIDOGLVdp2DrawEnd(void)
 {
    YglRender();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL DoNothing(void *info, u32 pixel)
+{
+   return pixel;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL DoColorOffset(void *info, u32 pixel)
+{
+    return COLOR_ADD(pixel, ((vdp2draw_struct *)info)->cor,
+                     ((vdp2draw_struct *)info)->cog,
+                     ((vdp2draw_struct *)info)->cob);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1762,9 +1828,11 @@ static void Vdp2DrawNBG0(void)
          if (Vdp2Regs->COAB & 0x100)
             info.cob |= 0xFFFFFF00;
       }
+
+      info.PostPixelFetchCalc = &DoColorOffset;
    }
    else // color offset disable
-      info.cor = info.cog = info.cob = 0;
+      info.PostPixelFetchCalc = &DoNothing;
 
    info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN0.all & 0x7FF00);
    info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00);
@@ -2039,9 +2107,11 @@ static void Vdp2DrawNBG1(void)
          if (Vdp2Regs->COAB & 0x100)
             info.cob |= 0xFFFFFF00;
       }
+
+      info.PostPixelFetchCalc = &DoColorOffset;
    }
    else // color offset disable
-      info.cor = info.cog = info.cob = 0;
+      info.PostPixelFetchCalc = &DoNothing;
 
    info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00);
    info.coordincy = (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00);
@@ -2251,9 +2321,11 @@ static void Vdp2DrawNBG2(void)
          if (Vdp2Regs->COAB & 0x100)
             info.cob |= 0xFFFFFF00;
       }
+
+      info.PostPixelFetchCalc = &DoColorOffset;
    }
    else // color offset disable
-      info.cor = info.cog = info.cob = 0;
+      info.PostPixelFetchCalc = &DoNothing;
 
    info.coordincx = info.coordincy = 1;
 
@@ -2411,9 +2483,11 @@ static void Vdp2DrawNBG3(void)
          if (Vdp2Regs->COAB & 0x100)
             info.cob |= 0xFFFFFF00;
       }
+
+      info.PostPixelFetchCalc = &DoColorOffset;
    }
    else // color offset disable
-      info.cor = info.cog = info.cob = 0;
+      info.PostPixelFetchCalc = &DoNothing;
 
    info.coordincx = info.coordincy = 1;
 
@@ -2539,15 +2613,7 @@ static void Vdp2DrawRBG0(void)
 {
    vdp2draw_struct info;
    YglTexture texture;
-   u32 RotTableAddressA;
-   u32 RotTableAddressB;
-
-   // For now, let's treat it like a regular scroll screen
-   RotTableAddressA = RotTableAddressB = Vdp2Regs->RPTA.all << 1;
-   RotTableAddressA &= 0x000FFF7C;
-   RotTableAddressB = (RotTableAddressB & 0x000FFFFC) | 0x00000080;
-
-   Vdp2ReadRotationTable(RotTableAddressA);
+   vdp2rotationparameter_struct parameter;
 
    info.enable = Vdp2Regs->BGON & 0x10;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x1000);
@@ -2671,14 +2737,38 @@ static void Vdp2DrawRBG0(void)
          if (Vdp2Regs->COAB & 0x100)
             info.cob |= 0xFFFFFF00;
       }
+
+      info.PostPixelFetchCalc = &DoColorOffset;
    }
    else // color offset disable
-      info.cor = info.cog = info.cob = 0;
+      info.PostPixelFetchCalc = &DoNothing;
  
    info.coordincx = info.coordincy = 1;
 
    info.priority = rbg0priority;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2RBG0PlaneAddr;
+
+   switch (Vdp2Regs->RPMD & 0x3)
+   {
+      case 0:
+         // Parameter A only
+         Vdp2ReadRotationTable(0, &parameter);
+         break;
+      case 1:
+         // Parameter B only
+         Vdp2ReadRotationTable(1, &parameter);
+         break;
+      case 2:
+      case 3:
+         VDP2LOG("Rotation Parameter Mode %d not supported!\n", Vdp2Regs->RPMD & 0x3);
+         memset(&parameter, 0, sizeof(vdp2rotationparameter_struct));
+         break;
+   }
+
+   if (!parameter.coefenab)
+   {
+      // Since coefficients aren't being used, we can simplify the drawing process
+   }
 
    if (!(info.enable & vdp2disptoggle) || (info.priority == 0))
       return;
