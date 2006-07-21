@@ -1432,7 +1432,7 @@ static void GenBSR16()
     // unbase PC
     wf_op("\tPC -= CPU->BasePC;\n");
     mem_op("\tPUSH_32_F(PC + 2)\n");
-    wf_op("\tPC += res;\n");
+    wf_op("\tPC += (s32) res;\n");
     // rebase PC for 16 bits deplacement
     wf_op("\tSET_PC(PC);\n");
 
