@@ -1,0 +1,11 @@
+Source: yabause
+Section: games
+Priority: optional
+Maintainer: Damian Dimmich  <damian@transterpreter.org>
+Build-Depends: debhelper (>= 4.0.0), autotools-dev
+Standards-Version: 3.6.2
+
+Package: yabause
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Sega dreamcast emulator.  Still under development but can already run a bunch of games.
