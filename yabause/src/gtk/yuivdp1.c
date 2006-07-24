@@ -127,9 +127,6 @@ void yui_vdp1_fill(YuiVdp1 * vdp1) {
 	gint i, j;
 	gchar * string;
 	gchar nameTemp[1024];
-	static gchar tagPC[] = "<span foreground=\"red\">";
-	static gchar tagEnd[] = "</span>";
-	static gchar noName[] = "---";
 	GtkTreeIter iter;
 
 	yui_vdp1_clear(vdp1);

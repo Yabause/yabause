@@ -12,13 +12,10 @@ void openAboutDialog(GtkWidget * w, gpointer data) {
 }
 
 GtkWidget* create_menu(YuiWindow * window1) {
-  GtkWidget *vbox1;
   GtkWidget *menubar1;
   GtkWidget *menuitem1;
   GtkWidget *menuitem1_menu;
   GtkWidget *new1;
-  GtkWidget *open1;
-  GtkWidget *save1;
   GtkWidget *separatormenuitem1;
   GtkWidget *quit1;
   GtkWidget *view1;
@@ -32,7 +29,6 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *nbg3;
   GtkWidget *nbg4;
   GtkWidget *rbg1;
-  GtkWidget *fullscreen1;
   GtkWidget *log;
   GtkWidget *menuitem3;
   GtkWidget *menuitem3_menu;
@@ -165,7 +161,6 @@ GtkWidget* create_menu(YuiWindow * window1) {
   //gtk_window_add_accel_group (GTK_WINDOW (window1), accel_group);
 
   g_signal_connect(new1, "activate", yui_conf, 0);
-  //g_signal_connect(quit1, "activate", gtk_main_quit, 0);
 
   return menubar1;
 }
