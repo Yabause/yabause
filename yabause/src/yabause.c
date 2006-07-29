@@ -46,6 +46,7 @@
 
 yabsys_struct yabsys;
 const char *bupfilename = NULL;
+int usequickload = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -192,6 +193,12 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
    YabauseReset();
+
+   if (usequickload)
+   {
+      if (YabauseQuickLoadGame() != 0)
+         YabauseReset();
+   }
 
    return 0;
 }
@@ -363,6 +370,206 @@ void YabauseSetVideoFormat(int type) {
    ScspChangeVideoFormat(type);
    YabauseChangeTiming(yabsys.CurSH2FreqType);
    lastticks = YabauseGetTicks();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YabauseSpeedySetup()
+{
+   u32 data;
+   int i;
+
+   // Setup the vector table area, etc.(all bioses have it at 0x00000600-0x00000810)
+   for (i = 0; i < 0x210; i+=4)
+   {
+      data = MappedMemoryReadLong(0x00000600+i);
+      MappedMemoryWriteLong(0x06000000+i, data);
+   }
+
+   // Setup the bios function pointers, etc.(all bioses have it at 0x00000820-0x00001100)
+   for (i = 0; i < 0x8E0; i+=4)
+   {
+      data = MappedMemoryReadLong(0x00000820+i);
+      MappedMemoryWriteLong(0x06000220+i, data);
+   }
+
+   // I'm not sure this is really needed
+   for (i = 0; i < 0x700; i+=4)
+   {
+      data = MappedMemoryReadLong(0x00001100+i);
+      MappedMemoryWriteLong(0x06001100+i, data);
+   }
+
+   // Fix 0x06000210-0x060002E0 area
+   MappedMemoryWriteLong(0x06000268, MappedMemoryReadLong(0x00001344));
+   MappedMemoryWriteLong(0x0600026C, MappedMemoryReadLong(0x00001348));
+   MappedMemoryWriteLong(0x060002C4, MappedMemoryReadLong(0x00001104));
+   MappedMemoryWriteLong(0x060002C8, MappedMemoryReadLong(0x00001108));
+   MappedMemoryWriteLong(0x060002CC, MappedMemoryReadLong(0x0000110C));
+   MappedMemoryWriteLong(0x060002D0, MappedMemoryReadLong(0x00001110));
+   MappedMemoryWriteLong(0x060002D4, MappedMemoryReadLong(0x00001114));
+   MappedMemoryWriteLong(0x060002D8, MappedMemoryReadLong(0x00001118));
+
+   // Set the cpu's, etc. to sane states
+
+   // Set CD block to a sane state
+   Cs2Area->reg.HIRQ = 0xFC1;
+   Cs2Area->isdiskchanged = 0;
+   Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
+   Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | Cs2Area->track;
+   Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) & 0xFF);
+   Cs2Area->reg.CR4 = (u16) Cs2Area->FAD; 
+   Cs2Area->satauth = 4;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YabauseQuickLoadGame()
+{
+   partition_struct * lgpartition;
+   u8 *buffer;
+   u32 fad;
+   u32 addr;
+   u32 size;
+   int i, i2;
+   dirrec_struct dirrec;
+
+   Cs2Area->outconcddev = Cs2Area->filter + 0;
+   Cs2Area->outconcddevnum = 0;
+
+   // read in lba 0/FAD 150
+   if ((lgpartition = Cs2ReadUnFilteredSector(150)) == NULL)
+      return -1;
+
+   // Make sure we're dealing with a saturn game
+   buffer = lgpartition->block[lgpartition->numblocks - 1]->data;
+
+   YabauseSpeedySetup();
+
+   if (memcmp(buffer, "SEGA SEGASATURN", 15) == 0)
+   {
+      // figure out how many more sectors we need to read
+      size = (buffer[0xE0] << 24) |
+             (buffer[0xE1] << 16) |
+             (buffer[0xE2] << 8) |
+              buffer[0xE3];
+      size >>= 11;
+
+      // Figure out where to load the first program
+      addr = (buffer[0xF0] << 24) |
+             (buffer[0xF1] << 16) |
+             (buffer[0xF2] << 8) |
+              buffer[0xF3];
+
+      // Free Block
+      lgpartition->size = 0;
+      Cs2FreeBlock(lgpartition->block[lgpartition->numblocks - 1]);
+      lgpartition->blocknum[lgpartition->numblocks - 1] = 0xFF;
+      lgpartition->numblocks = 0;
+
+      // Copy over ip to 0x06002000
+      for (i = 0; i < size; i++)
+      {
+         if ((lgpartition = Cs2ReadUnFilteredSector(150+i)) == NULL)
+            return -1;
+
+         buffer = lgpartition->block[lgpartition->numblocks - 1]->data;
+
+         for (i2 = 0; i2 < 0x800; i2++)
+            MappedMemoryWriteByte(0x06002000 + (i * 0x800) + i2, buffer[i2]);
+
+         // Free Block
+         lgpartition->size = 0;
+         Cs2FreeBlock(lgpartition->block[lgpartition->numblocks - 1]);
+         lgpartition->blocknum[lgpartition->numblocks - 1] = 0xFF;
+         lgpartition->numblocks = 0;
+      }
+
+      // Ok, now that we've loaded the ip, now it's time to load the
+      // First Program
+
+      // Figure out where the first program is located
+      if ((lgpartition = Cs2ReadUnFilteredSector(166)) == NULL)
+         return -1;
+
+      // Figure out root directory's location
+
+      // Retrieve directory record's lba
+      Cs2CopyDirRecord(lgpartition->block[lgpartition->numblocks - 1]->data + 0x9C, &dirrec);
+
+      // Free Block
+      lgpartition->size = 0;
+      Cs2FreeBlock(lgpartition->block[lgpartition->numblocks - 1]);
+      lgpartition->blocknum[lgpartition->numblocks - 1] = 0xFF;
+      lgpartition->numblocks = 0;
+
+      // Now then, fetch the root directory's records
+      if ((lgpartition = Cs2ReadUnFilteredSector(dirrec.lba+150)) == NULL)
+         return -1;
+
+      buffer = lgpartition->block[lgpartition->numblocks - 1]->data;
+
+      // Skip the first two records, read in the last one
+      for (i = 0; i < 3; i++)
+      {
+         Cs2CopyDirRecord(buffer, &dirrec);
+         buffer += dirrec.recordsize;
+      }
+
+      size = dirrec.size / 2048;
+      if ((dirrec.size % 2048) != 0)
+         size++;
+
+      // Free Block
+      lgpartition->size = 0;
+      Cs2FreeBlock(lgpartition->block[lgpartition->numblocks - 1]);
+      lgpartition->blocknum[lgpartition->numblocks - 1] = 0xFF;
+      lgpartition->numblocks = 0;
+
+      // Copy over First Program to addr
+      for (i = 0; i < size; i++)
+      {
+         if ((lgpartition = Cs2ReadUnFilteredSector(150+dirrec.lba+i)) == NULL)
+            return -1;
+
+         buffer = lgpartition->block[lgpartition->numblocks - 1]->data;
+
+         for (i2 = 0; i2 < 0x800; i2++)
+            MappedMemoryWriteByte(addr + (i * 0x800) + i2, buffer[i2]);
+
+         // Free Block
+         lgpartition->size = 0;
+         Cs2FreeBlock(lgpartition->block[lgpartition->numblocks - 1]);
+         lgpartition->blocknum[lgpartition->numblocks - 1] = 0xFF;
+         lgpartition->numblocks = 0;
+      }
+
+      // Now setup SH2 registers to start executing at ip code
+      for (i = 0; i < 15; i++)
+         MSH2->regs.R[i] = 0x00000000;
+      MSH2->regs.R[15] = 0x06002000;
+      MSH2->regs.SR.all = 0x00000000;
+      MSH2->regs.GBR = 0x00000000;
+      MSH2->regs.VBR = 0x06000000;
+      MSH2->regs.MACH = 0x00000000;
+      MSH2->regs.MACL = 0x00000000;
+      MSH2->regs.PR = 0x00000000;
+      MSH2->regs.PC = 0x06002E00;
+   }
+   else
+   {
+      // Ok, we're not. Time to bail!
+
+      // Free Block
+      lgpartition->size = 0;
+      Cs2FreeBlock(lgpartition->block[lgpartition->numblocks - 1]);
+      lgpartition->blocknum[lgpartition->numblocks - 1] = 0xFF;
+      lgpartition->numblocks = 0;
+
+      return -1;
+   }
+
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
