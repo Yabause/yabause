@@ -46,7 +46,6 @@
 
 yabsys_struct yabsys;
 const char *bupfilename = NULL;
-int usequickload = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -186,15 +185,23 @@ int YabauseInit(yabauseinit_struct *init)
    YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
    YabauseChangeTiming(CLKTYPE_26MHZ);
 
-   if (LoadBios(init->biospath) != 0)
+   if (init->biospath != NULL)
    {
-      YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->biospath);
-      return -2;
+      if (LoadBios(init->biospath) != 0)
+      {
+         YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->biospath);
+         return -2;
+      }
+      yabsys.emulatebios = 0;
    }
+   else
+      yabsys.emulatebios = 1;
 
    YabauseReset();
 
-   if (usequickload)
+   yabsys.usequickload = 0;
+
+   if (yabsys.usequickload)
    {
       if (YabauseQuickLoadGame() != 0)
          YabauseReset();
@@ -400,7 +407,11 @@ void YabauseSpeedySetup()
       MappedMemoryWriteLong(0x06001100+i, data);
    }
 
-   // Fix 0x06000210-0x060002E0 area
+   // Fix some spots in 0x06000210-0x0600032C area
+   MappedMemoryWriteLong(0x06000234, 0x000002AC);
+   MappedMemoryWriteLong(0x06000238, 0x000002BC);
+   MappedMemoryWriteLong(0x0600023C, 0x00000350);
+   MappedMemoryWriteLong(0x0600024C, 0x00000000);
    MappedMemoryWriteLong(0x06000268, MappedMemoryReadLong(0x00001344));
    MappedMemoryWriteLong(0x0600026C, MappedMemoryReadLong(0x00001348));
    MappedMemoryWriteLong(0x060002C4, MappedMemoryReadLong(0x00001104));
@@ -409,6 +420,12 @@ void YabauseSpeedySetup()
    MappedMemoryWriteLong(0x060002D0, MappedMemoryReadLong(0x00001110));
    MappedMemoryWriteLong(0x060002D4, MappedMemoryReadLong(0x00001114));
    MappedMemoryWriteLong(0x060002D8, MappedMemoryReadLong(0x00001118));
+   MappedMemoryWriteLong(0x06000328, 0x000004C8);
+   MappedMemoryWriteLong(0x0600032C, 0x00001800);
+
+   // Fix SCU interrupts
+   for (i = 0; i < 0x80; i+=4)
+      MappedMemoryWriteLong(0x06000A00+i, 0x0600083C);
 
    // Set the cpu's, etc. to sane states
 
@@ -431,6 +448,7 @@ int YabauseQuickLoadGame()
    u32 fad;
    u32 addr;
    u32 size;
+   u32 blocks;
    int i, i2;
    dirrec_struct dirrec;
 
@@ -453,7 +471,10 @@ int YabauseQuickLoadGame()
              (buffer[0xE1] << 16) |
              (buffer[0xE2] << 8) |
               buffer[0xE3];
-      size >>= 11;
+      blocks = size >> 11;
+      if ((size % 2048) != 0) 
+         blocks++;
+
 
       // Figure out where to load the first program
       addr = (buffer[0xF0] << 24) |
@@ -468,15 +489,25 @@ int YabauseQuickLoadGame()
       lgpartition->numblocks = 0;
 
       // Copy over ip to 0x06002000
-      for (i = 0; i < size; i++)
+      for (i = 0; i < blocks; i++)
       {
          if ((lgpartition = Cs2ReadUnFilteredSector(150+i)) == NULL)
             return -1;
 
          buffer = lgpartition->block[lgpartition->numblocks - 1]->data;
 
-         for (i2 = 0; i2 < 0x800; i2++)
-            MappedMemoryWriteByte(0x06002000 + (i * 0x800) + i2, buffer[i2]);
+         if (size >= 2048)
+         {
+            for (i2 = 0; i2 < 2048; i2++)
+               MappedMemoryWriteByte(0x06002000 + (i * 0x800) + i2, buffer[i2]);
+         }
+         else
+         {
+            for (i2 = 0; i2 < size; i2++)
+               MappedMemoryWriteByte(0x06002000 + (i * 0x800) + i2, buffer[i2]);
+         }
+
+         size -= 2048;
 
          // Free Block
          lgpartition->size = 0;
@@ -516,9 +547,10 @@ int YabauseQuickLoadGame()
          buffer += dirrec.recordsize;
       }
 
-      size = dirrec.size / 2048;
+      size = dirrec.size;
+      blocks = size >> 11;
       if ((dirrec.size % 2048) != 0)
-         size++;
+         blocks++;
 
       // Free Block
       lgpartition->size = 0;
@@ -527,15 +559,25 @@ int YabauseQuickLoadGame()
       lgpartition->numblocks = 0;
 
       // Copy over First Program to addr
-      for (i = 0; i < size; i++)
+      for (i = 0; i < blocks; i++)
       {
          if ((lgpartition = Cs2ReadUnFilteredSector(150+dirrec.lba+i)) == NULL)
             return -1;
 
          buffer = lgpartition->block[lgpartition->numblocks - 1]->data;
 
-         for (i2 = 0; i2 < 0x800; i2++)
-            MappedMemoryWriteByte(addr + (i * 0x800) + i2, buffer[i2]);
+         if (size >= 2048)
+         {
+            for (i2 = 0; i2 < 2048; i2++)
+               MappedMemoryWriteByte(addr + (i * 0x800) + i2, buffer[i2]);
+         }
+         else
+         {
+            for (i2 = 0; i2 < size; i2++)
+               MappedMemoryWriteByte(addr + (i * 0x800) + i2, buffer[i2]);
+         }
+
+         size -= 2048;
 
          // Free Block
          lgpartition->size = 0;

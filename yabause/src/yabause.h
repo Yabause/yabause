@@ -47,6 +47,8 @@ typedef struct
    u8 IsSSH2Running;
    u8 IsM68KRunning;
    u32 OneFrameTime;
+   int emulatebios;
+   int usequickload;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;
