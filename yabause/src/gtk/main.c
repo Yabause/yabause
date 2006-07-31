@@ -136,9 +136,9 @@ void yui_settings_load(void) {
 	yinit.sndcoretype = g_key_file_get_integer(keyfile, "General", "SoundCore", 0);
 	i = 0;
 	while(key_config[i].name) {
-		key_config[i].key =
-			gdk_keyval_from_name(g_key_file_get_value(keyfile, "Input", key_config[i].name, 0));
-		i++;
+	  gchar * keyName = g_key_file_get_value(keyfile, "Input", key_config[i].name, 0);
+	  if ( keyName ) key_config[i].key = gdk_keyval_from_name( keyName );
+	  i++;
 	}
 	yui_resize(g_key_file_get_integer(keyfile, "General", "Width", 0),
 			g_key_file_get_integer(keyfile, "General", "Height", 0),

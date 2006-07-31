@@ -44,13 +44,13 @@ YuiRangeItem vidcores[] = {
 	{ "0", "Dummy Video Interface" },
 	{ "1", "OpenGL Video Interface" },
 	{ "2", "Software Video Interface" },
-	{ 0, 0}
+	{ 1, 0 }
 };
 
 YuiRangeItem sndcores[] = {
 	{ "0", "Dummy Sound Interface" },
 	{ "1", "SDL Sound Interface" },
-	{ 0, 0}
+	{ 1, 0 }
 };
 
 const gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", "Start", 0 };

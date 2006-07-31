@@ -6,6 +6,7 @@
 #include <GL/gl.h>
 
 int draw(GtkWidget *);
+int drawPause(GtkWidget *);
 GtkWidget * gtk_gl_widget_new(void);
 
 #endif

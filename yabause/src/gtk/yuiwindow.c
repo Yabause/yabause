@@ -3,6 +3,7 @@
 
 #include "yuiwindow.h"
 #include "gtkglwidget.h"
+#include "../yabause.h"
 
 #include "settings.h"
 
@@ -62,6 +63,17 @@ static void yui_set_accel_group(gpointer action, gpointer group) {
 	gtk_action_set_accel_group(action, group);
 }
 
+static void yui_popup( YuiWindow* w, gchar* text, GtkMessageType mType ) {
+  
+  GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(w),
+				   GTK_DIALOG_DESTROY_WITH_PARENT,
+				   mType,
+				   GTK_BUTTONS_CLOSE,
+				   text );
+  gtk_dialog_run (GTK_DIALOG (dialog));
+  gtk_widget_destroy (dialog);
+}
+
 static void yui_window_init (YuiWindow * yw) {
 	GtkAccelGroup * accel_group = gtk_accel_group_new();
 
@@ -86,6 +98,7 @@ static void yui_window_init (YuiWindow * yw) {
 
 	yw->area = gtk_gl_widget_new();
 	gtk_box_pack_start(GTK_BOX(yw->box), yw->area, TRUE, TRUE, 0);
+	gtk_widget_set_size_request(GTK_WIDGET(yw->area), 320, 240 );
 
 	g_signal_connect(G_OBJECT(yw), "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(G_OBJECT(yw), "key-press-event", G_CALLBACK(yui_window_keypress), yw);
@@ -160,7 +173,9 @@ static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpo
 }
 
 void yui_window_update(YuiWindow * yui) {
-	draw(yui->area);
+
+  if (!(yui->state & YUI_IS_RUNNING)) drawPause(yui->area);
+  else draw(yui->area);
 }
 
 void yui_window_log(YuiWindow * yui, const char * message) {
@@ -188,10 +203,14 @@ static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, Yu
 
 void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 	if ((yui->state & YUI_IS_INIT) == 0) {
-		((int (*)(gpointer)) yui->init_func)(yui->init_data);
-		yui->state |= YUI_IS_INIT;
-		g_signal_handler_disconnect(yui->area, yui->clean_handler);
-		gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "reset"), TRUE);
+	  if ( !(((yabauseinit_struct*)(yui->init_data))->biospath) ) {
+	    yui_popup( yui, "Please select a BIOS file in Preferences.", GTK_MESSAGE_ERROR );
+	    return;
+	  }
+	  ((int (*)(gpointer)) yui->init_func)(yui->init_data);
+	  yui->state |= YUI_IS_INIT;
+	  //	       	g_signal_handler_disconnect(yui->area, yui->clean_handler);
+	  gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "reset"), TRUE);
 	}
 
 	if ((yui->state & YUI_IS_RUNNING) == 0) {

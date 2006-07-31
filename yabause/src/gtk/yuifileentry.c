@@ -87,11 +87,14 @@ static void yui_file_entry_init (YuiFileEntry * yfe) {
 GtkWidget * yui_file_entry_new(GKeyFile * keyfile, const gchar * group, const gchar * key) {
 	GtkWidget * entry;
 	YuiFileEntry * yfe;
+	gchar * entryText;
 
 	entry = GTK_WIDGET(g_object_new(yui_file_entry_get_type(), "spacing", 10,
 		"key-file", keyfile, "group", group, "key", key, 0));
 	yfe = YUI_FILE_ENTRY(entry);
-        gtk_entry_set_text(GTK_ENTRY(yfe->entry), g_key_file_get_value(yfe->keyfile, yfe->group, yfe->key, 0));
+	entryText = g_key_file_get_value(yfe->keyfile, yfe->group, yfe->key, 0);
+	if ( !entryText ) entryText = "";
+        gtk_entry_set_text(GTK_ENTRY(yfe->entry), entryText );
         g_signal_connect(GTK_ENTRY(yfe->entry), "changed", G_CALLBACK(yui_file_entry_changed), yfe);
 
 	return entry;

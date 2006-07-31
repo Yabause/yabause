@@ -72,6 +72,7 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 	GtkWidget * widget;
 	GtkWidget * label;
 	GtkWidget * entry;
+	gchar * keyName;
 	int row = 0;
 
 	widget = GTK_WIDGET(g_object_new(yui_input_entry_get_type(), "key-file", keyfile, "group", group, NULL));
@@ -86,7 +87,9 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 
 		entry = gtk_entry_new ();
 
-		gtk_entry_set_text(GTK_ENTRY(entry), g_key_file_get_value(keyfile, group, keys[row], 0));
+		keyName = g_key_file_get_value(keyfile, group, keys[row], 0);
+		if ( !keyName ) keyName = "";
+		gtk_entry_set_text(GTK_ENTRY(entry), keyName );
 		g_signal_connect(entry, "key-press-event", G_CALLBACK(yui_input_entry_keypress), keys[row]);
   
 		gtk_table_attach(GTK_TABLE(widget), entry,  1, 2, row, row + 1,

@@ -13,6 +13,14 @@ int draw(GtkWidget * glxarea) {
 	gdk_gl_drawable_swap_buffers(gldrawable);
 }
 
+int drawPause(GtkWidget * glxarea) {
+
+  gdk_draw_rectangle(glxarea->window,
+		     glxarea->style->bg_gc[GTK_WIDGET_STATE (glxarea)],
+		     TRUE,
+		     0, 0, glxarea->allocation.width, glxarea->allocation.height);
+}
+
 static gboolean resize (GtkWidget *w,GdkEventConfigure *event, gpointer data) {
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (w);
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (w);
