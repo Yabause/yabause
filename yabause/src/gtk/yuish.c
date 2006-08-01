@@ -63,7 +63,7 @@ static void yui_sh_init (YuiSh * sh2) {
   gtk_container_set_border_width( GTK_CONTAINER( sh2->hboxmain ),4 );
   gtk_box_pack_start( GTK_BOX( sh2->vbox ), sh2->hboxmain, FALSE, FALSE, 4 );
 
-  sh2->hbox = gtk_hbox_new(FALSE, 2);
+  sh2->hbox = gtk_hbutton_box_new();
   gtk_container_set_border_width( GTK_CONTAINER( sh2->hbox ),4 );
   gtk_box_pack_start( GTK_BOX( sh2->vbox ), sh2->hbox, FALSE, FALSE, 4 ); 
 
