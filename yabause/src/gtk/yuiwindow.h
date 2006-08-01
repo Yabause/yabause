@@ -62,6 +62,7 @@ void		yui_window_update	(YuiWindow * yui);
 void		yui_window_log		(YuiWindow * yui, const char * message);
 void		yui_window_show_log	(YuiWindow * yui);
 void            yui_popup               (YuiWindow *w, gchar* text, GtkMessageType mType );
+void		yui_window_start	(GtkWidget * w, YuiWindow * yui);
 void		yui_window_run		(GtkWidget * w, YuiWindow * yui);
 void		yui_window_pause	(GtkWidget * w, YuiWindow * yui);
 void		yui_window_reset	(GtkWidget * w, YuiWindow * yui);

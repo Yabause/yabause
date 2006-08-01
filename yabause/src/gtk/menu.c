@@ -3,6 +3,7 @@
 #include "yuivdp1.h"
 #include "yuivdp2.h"
 #include "yuish.h"
+#include "yuitransfer.h"
 
 void openAboutDialog(GtkWidget * w, gpointer data) {
 	gtk_show_about_dialog(data,
@@ -41,6 +42,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *menuitem4_menu;
   GtkWidget *about1;
   GtkAccelGroup *accel_group;
+  GtkWidget *transfer;
 
   accel_group = gtk_accel_group_new ();
 
@@ -61,6 +63,10 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "run")));
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "pause")));
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "reset")));
+
+  transfer = gtk_menu_item_new_with_mnemonic ("Transfer");
+  gtk_container_add (GTK_CONTAINER (menuitem1_menu), transfer);
+  g_signal_connect_swapped(transfer, "activate", G_CALLBACK(yui_transfer_new), window1);
 
   separatormenuitem1 = gtk_separator_menu_item_new ();
   gtk_widget_show (separatormenuitem1);

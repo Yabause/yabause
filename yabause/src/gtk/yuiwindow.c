@@ -201,7 +201,7 @@ static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, Yu
 	yui_window_update(yui);
 }
 
-void yui_window_run(GtkWidget * w, YuiWindow * yui) {
+void yui_window_start(GtkWidget * w, YuiWindow * yui) {
 	if ((yui->state & YUI_IS_INIT) == 0) {
 	  if ( !(((yabauseinit_struct*)(yui->init_data))->biospath) ) {
 	    yui_popup( yui, "Please select a BIOS file in Preferences.", GTK_MESSAGE_ERROR );
@@ -212,6 +212,10 @@ void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 	  //	       	g_signal_handler_disconnect(yui->area, yui->clean_handler);
 	  gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "reset"), TRUE);
 	}
+}
+
+void yui_window_run(GtkWidget * w, YuiWindow * yui) {
+	yui_window_start(w, yui);
 
 	if ((yui->state & YUI_IS_RUNNING) == 0) {
 		g_idle_add(yui->run_func, GINT_TO_POINTER(1));
