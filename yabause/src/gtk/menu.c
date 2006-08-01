@@ -2,6 +2,7 @@
 #include "yuiwindow.h"
 #include "yuivdp1.h"
 #include "yuivdp2.h"
+#include "yuish.h"
 
 void openAboutDialog(GtkWidget * w, gpointer data) {
 	gtk_show_about_dialog(data,
@@ -32,8 +33,8 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *log;
   GtkWidget *menuitem3;
   GtkWidget *menuitem3_menu;
-  GtkWidget *msh1;
-  GtkWidget *ssh1;
+  GtkWidget *msh;
+  GtkWidget *ssh;
   GtkWidget *vdp2;
   GtkWidget *vdp1;
   GtkWidget *menuitem4;
@@ -129,15 +130,15 @@ GtkWidget* create_menu(YuiWindow * window1) {
   menuitem3_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem3), menuitem3_menu);
 
-#if 0
-  msh1 = gtk_menu_item_new_with_mnemonic ("MSH2");
-  gtk_widget_show (msh1);
-  gtk_container_add (GTK_CONTAINER (menuitem3_menu), msh1);
+  msh = gtk_menu_item_new_with_mnemonic ("MSH2");
+  gtk_widget_show (msh);
+  gtk_container_add (GTK_CONTAINER (menuitem3_menu), msh);
+  g_signal_connect_swapped(msh, "activate", G_CALLBACK(yui_msh_new), window1);
 
-  ssh1 = gtk_menu_item_new_with_mnemonic ("SSH2");
-  gtk_widget_show (ssh1);
-  gtk_container_add (GTK_CONTAINER (menuitem3_menu), ssh1);
-#endif
+  ssh = gtk_menu_item_new_with_mnemonic ("SSH2");
+  gtk_widget_show (ssh);
+  gtk_container_add (GTK_CONTAINER (menuitem3_menu), ssh);
+  g_signal_connect_swapped(ssh, "activate", G_CALLBACK(yui_ssh_new), window1);
 
   vdp2 = gtk_menu_item_new_with_mnemonic ("Vdp1");
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), vdp2);

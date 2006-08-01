@@ -63,7 +63,7 @@ static void yui_set_accel_group(gpointer action, gpointer group) {
 	gtk_action_set_accel_group(action, group);
 }
 
-static void yui_popup( YuiWindow* w, gchar* text, GtkMessageType mType ) {
+void yui_popup( YuiWindow* w, gchar* text, GtkMessageType mType ) {
   
   GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(w),
 				   GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -236,4 +236,12 @@ void yui_window_reset(GtkWidget * w, YuiWindow * yui) {
 	if (yui->state & YUI_IS_INIT) {
 		yui->reset_func();
 	}
+}
+
+void yui_window_invalidate(GtkWidget * w, YuiWindow * yui ) {
+
+  /* Emit a pause signal while already in pause means refresh all debug views */
+
+  if ( !(yui->state & YUI_IS_RUNNING ))
+    g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);
 }
