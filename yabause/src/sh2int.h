@@ -12,6 +12,7 @@
 #define INSTRUCTION_BCD(x) (x & 0x0FFF)
 
 int SH2InterpreterInit();
+int SH2DebugInterpreterInit();
 void SH2InterpreterDeInit();
 int SH2InterpreterReset();
 u32 FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);

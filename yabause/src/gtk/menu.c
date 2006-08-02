@@ -4,6 +4,8 @@
 #include "yuivdp2.h"
 #include "yuish.h"
 #include "yuitransfer.h"
+#include "yuim68k.h"
+#include "yuiscudsp.h"
 
 void openAboutDialog(GtkWidget * w, gpointer data) {
 	gtk_show_about_dialog(data,
@@ -38,6 +40,8 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *ssh;
   GtkWidget *vdp2;
   GtkWidget *vdp1;
+  GtkWidget *m68k;
+  GtkWidget *scudsp;
   GtkWidget *menuitem4;
   GtkWidget *menuitem4_menu;
   GtkWidget *about1;
@@ -153,6 +157,14 @@ GtkWidget* create_menu(YuiWindow * window1) {
   vdp1 = gtk_menu_item_new_with_mnemonic ("Vdp2");
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), vdp1);
   g_signal_connect_swapped(vdp1, "activate", G_CALLBACK(yui_vdp2_new), window1);
+
+  m68k = gtk_menu_item_new_with_mnemonic ("M68K");
+  gtk_container_add (GTK_CONTAINER (menuitem3_menu), m68k);
+  g_signal_connect_swapped(m68k, "activate", G_CALLBACK(yui_m68k_new), window1);
+
+  scudsp = gtk_menu_item_new_with_mnemonic ("SCU-DSP");
+  gtk_container_add (GTK_CONTAINER (menuitem3_menu), scudsp);
+  g_signal_connect_swapped(scudsp, "activate", G_CALLBACK(yui_scudsp_new), window1);
 
   menuitem4 = gtk_menu_item_new_with_mnemonic ("_Help");
   gtk_widget_show (menuitem4);

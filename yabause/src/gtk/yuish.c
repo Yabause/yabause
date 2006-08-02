@@ -79,6 +79,7 @@ static void yui_sh_init (YuiSh * sh2) {
   sh2->uLabel = gtk_label_new(NULL);
   gtk_container_add (GTK_CONTAINER (sh2->uFrame), sh2->uLabel );
 
+
   /* Register list */
 
   sh2->regListStore = gtk_list_store_new(2,G_TYPE_STRING,G_TYPE_STRING);
@@ -115,19 +116,25 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   gint i;
   yui = y;
 
+  if (!( yui->state & YUI_IS_INIT )) {
+    yui_window_run(dialog, yui);
+    yui_window_pause(dialog, yui);
+  }
+
   if ( bMaster && yui_msh ) return GTK_WIDGET(yui_msh);
   if ( !bMaster && yui_ssh ) return GTK_WIDGET(yui_ssh);
   
   dialog = GTK_WIDGET(g_object_new(yui_sh_get_type(), NULL));
   sh2 = YUI_SH(dialog);
 
-  if (!( yui->state & YUI_IS_INIT )) {
-    yui_window_run(dialog, yui);
-    yui_window_pause(dialog, yui);
-  }
+  sh2->breakpointEnabled = MSH2->breakpointEnabled; 
+  if ( !sh2->breakpointEnabled )
+    gtk_box_pack_start( GTK_BOX( sh2->vboxmain ), 
+			gtk_label_new("Breakpoints are disabled (fast interpreter)"), FALSE, FALSE, 4 );
 
   sh2->bMaster = bMaster;
   sh2->debugsh = bMaster ? MSH2 : SSH2; 
+
   SH2SetBreakpointCallBack(sh2->debugsh, (void (*)(void *, u32))SH2BreakpointHandler);
 
   gtk_window_set_title(GTK_WINDOW(sh2), bMaster?"Master SH2":"Slave SH2");  
@@ -183,6 +190,10 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   if ( yui->state & YUI_IS_RUNNING ) yui_sh_clear(sh2);
   
   gtk_widget_show_all(GTK_WIDGET(sh2));
+  if ( !sh2->breakpointEnabled ) {
+    gtk_widget_hide( sh2->bpList );
+    gtk_widget_hide( sh2->buttonStepOver );
+  }
   
   return dialog;
 }
@@ -284,10 +295,6 @@ static void SH2UpdateCodeList( YuiSh *sh2, u32 addr) {
 
 static void yui_sh_step( GtkWidget* widget, YuiSh * sh2 ) {
 
-  if (( sh2->debugsh == SSH2 )&&( !yabsys.IsSSH2Running )) {
-    yui_popup( yui, "Slave SH2 is inactive.", GTK_MESSAGE_ERROR );
-    return;
-  }
   SH2Step(sh2->debugsh);
   yui_window_invalidate( widget, yui ); /* update all dialogs, including us */
 }
@@ -392,7 +399,8 @@ void yui_sh_update(YuiSh * sh) {
   gtk_widget_set_sensitive(sh->bpList, TRUE);
   gtk_widget_set_sensitive(sh->regList, TRUE);
   gtk_widget_set_sensitive(sh->buttonStepOver, TRUE);
-  gtk_widget_set_sensitive(sh->buttonStep, TRUE);
+  gtk_widget_set_sensitive(sh->buttonStep, 
+			   !sh->debugsh->isIdle && !(( sh->debugsh == SSH2 )&&( !yabsys.IsSSH2Running )));
 }
 
 void yui_sh_destroy(YuiSh * sh) {

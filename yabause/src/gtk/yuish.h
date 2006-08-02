@@ -34,6 +34,7 @@ struct _YuiSh
   u32 lastCode; /* offset of last unassembly. Try to reuse it to prevent sliding. */
   SH2_struct *debugsh;  
   gboolean bMaster;
+  gboolean breakpointEnabled;
   gulong paused_handler;
   gulong running_handler;
 };

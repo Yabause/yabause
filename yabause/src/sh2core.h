@@ -264,6 +264,7 @@ typedef struct
    u8 isslave;
    u8 isIdle;
    u16 instruction;
+   u8 breakpointEnabled;
    codebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
    int numcodebreakpoints;
    void (*BreakpointCallBack)(void *, u32);

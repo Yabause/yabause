@@ -42,7 +42,7 @@ SH2Interface_struct SH2Interpreter = {
 SH2Interface_struct SH2DebugInterpreter = {
    SH2CORE_DEBUGINTERPRETER,
    "SH2 Debugger Interpreter",
-   SH2InterpreterInit,
+   SH2DebugInterpreterInit,
    SH2InterpreterDeInit,
    SH2InterpreterReset,
    SH2DebugInterpreterExec
@@ -2621,11 +2621,21 @@ int SH2InterpreterInit()
             break;
       }
    }
-
+   
    SH2ClearCodeBreakpoints(MSH2);
    SH2ClearCodeBreakpoints(SSH2);
-
+   MSH2->breakpointEnabled = 0;
+   SSH2->breakpointEnabled = 0;  
+   
    return 0;
+}
+
+int SH2DebugInterpreterInit() {
+
+  SH2InterpreterInit();
+  MSH2->breakpointEnabled = 1;
+  SSH2->breakpointEnabled = 1;  
+  return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
