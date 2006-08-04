@@ -52,7 +52,7 @@ void BiosInit(void)
    // Setup vectors
    MappedMemoryWriteLong(0x06000600, 0x002B0009); // rte, nop
    MappedMemoryWriteLong(0x06000604, 0xE0F0600C); // mov #0xF0, r0; extu.b r0, r0
-   MappedMemoryWriteLong(0x06000608, 0x400EAFFE); // ldc r0, sr; bra
+   MappedMemoryWriteLong(0x06000608, 0x400E8BFE); // ldc r0, sr; bf
    MappedMemoryWriteLong(0x0600060C, 0x00090009); // nop
    MappedMemoryWriteLong(0x06000610, 0x000B0009); // rts, nop
 
