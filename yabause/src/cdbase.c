@@ -1,4 +1,4 @@
-/*  Copyright 2004-2005 Theo Berkau
+/*  Copyright 2004-2006 Theo Berkau
     Copyright 2005 Joost Peters
     
     This file is part of Yabause.
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "cdbase.h"
+#include "error.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -373,7 +374,8 @@ int ISOCDInit(const char * iso) {
          bytesPerSector = 2352;
       else
       {
-         printf("Unsupported CD image!\n");
+         YabSetError(YAB_ERR_OTHER, "Unsupported CD image!\n");
+
          return -1;
       }
 
