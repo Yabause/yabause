@@ -27,6 +27,8 @@
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
+#include "bios.h"
+#include "yabause.h"
 
 opcodefunc opcodes[0x10000];
 
@@ -94,6 +96,12 @@ void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 
 void FASTCALL SH2undecoded(SH2_struct * sh)
 {
+   if (yabsys.emulatebios)
+   {
+      if (BiosHandleFunc(sh))
+         return;
+   }
+
    if (sh->isslave)
    {
       int vectnum;

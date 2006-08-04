@@ -113,13 +113,13 @@ void SmpcReset(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void SmpcSSHON() {
-   YabStartSlave();
+   YabauseStartSlave();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void SmpcSSHOFF() {
-   YabStopSlave();
+   YabauseStopSlave();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -148,7 +148,7 @@ void SmpcCKCHG352() {
 
    // Clear VDP1/VDP2 ram
 
-   YabStopSlave();
+   YabauseStopSlave();
 
    // change clock
    YabauseChangeTiming(CLKTYPE_28MHZ);
@@ -171,7 +171,7 @@ void SmpcCKCHG320() {
 
    // Clear VDP1/VDP2 ram
 
-   YabStopSlave();
+   YabauseStopSlave();
 
    // change clock
    YabauseChangeTiming(CLKTYPE_26MHZ);

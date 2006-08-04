@@ -1,5 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
-    Copyright 2004-2005 Theo Berkau
+    Copyright 2004-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -197,14 +197,22 @@ int YabauseInit(yabauseinit_struct *init)
    else
       yabsys.emulatebios = 1;
 
-   YabauseReset();
-
    yabsys.usequickload = 0;
 
-   if (yabsys.usequickload)
+   YabauseResetNoLoad();
+
+   if (yabsys.usequickload || yabsys.emulatebios)
    {
       if (YabauseQuickLoadGame() != 0)
-         YabauseReset();
+      {
+         if (yabsys.emulatebios)
+         {
+            YabSetError(YAB_ERR_CANNOTINIT, "Game");
+            return -1;
+         }
+         else
+            YabauseResetNoLoad();
+      }
    }
 
    return 0;
@@ -212,7 +220,7 @@ int YabauseInit(yabauseinit_struct *init)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YabauseDeInit() {
+void YabauseDeInit(void) {
    SH2DeInit();
 
    if (BiosRom)
@@ -245,9 +253,9 @@ void YabauseDeInit() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YabauseReset() {
+void YabauseResetNoLoad(void) {
    SH2Reset(MSH2);
-   YabStopSlave();
+   YabauseStopSlave();
    memset(HighWram, 0, 0x100000);
    memset(LowWram, 0, 0x100000);
 
@@ -266,7 +274,24 @@ void YabauseReset() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int YabauseExec() {
+void YabauseReset(void) {
+   YabauseResetNoLoad();
+
+   if (yabsys.usequickload || yabsys.emulatebios)
+   {
+      if (YabauseQuickLoadGame() != 0)
+      {
+         if (yabsys.emulatebios)
+            YabSetError(YAB_ERR_CANNOTINIT, "Game");
+         else
+            YabauseResetNoLoad();
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YabauseExec(void) {
    PROFILE_START("Total Emulation");
    PROFILE_START("MSH2");
    SH2Exec(MSH2, yabsys.DecilineStop);
@@ -344,14 +369,22 @@ int YabauseExec() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YabStartSlave(void) {
-   SH2PowerOn(SSH2);
+void YabauseStartSlave(void) {
+   if (yabsys.emulatebios)
+   {
+      SSH2->regs.R[15] = 0x06001000;
+      SSH2->regs.VBR = 0x06000400;
+      SSH2->regs.PC = MappedMemoryReadLong(0x06000250);
+   }
+   else
+      SH2PowerOn(SSH2);
+
    yabsys.IsSSH2Running = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YabStopSlave(void) {
+void YabauseStopSlave(void) {
    SH2Reset(SSH2);
    yabsys.IsSSH2Running = 0;
 }
@@ -381,52 +414,57 @@ void YabauseSetVideoFormat(int type) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YabauseSpeedySetup()
+void YabauseSpeedySetup(void)
 {
    u32 data;
    int i;
 
-   // Setup the vector table area, etc.(all bioses have it at 0x00000600-0x00000810)
-   for (i = 0; i < 0x210; i+=4)
+   if (yabsys.emulatebios)
+      BiosInit();
+   else
    {
-      data = MappedMemoryReadLong(0x00000600+i);
-      MappedMemoryWriteLong(0x06000000+i, data);
+      // Setup the vector table area, etc.(all bioses have it at 0x00000600-0x00000810)
+      for (i = 0; i < 0x210; i+=4)
+      {
+         data = MappedMemoryReadLong(0x00000600+i);
+         MappedMemoryWriteLong(0x06000000+i, data);
+      }
+
+      // Setup the bios function pointers, etc.(all bioses have it at 0x00000820-0x00001100)
+      for (i = 0; i < 0x8E0; i+=4)
+      {
+         data = MappedMemoryReadLong(0x00000820+i);
+         MappedMemoryWriteLong(0x06000220+i, data);
+      }
+
+      // I'm not sure this is really needed
+      for (i = 0; i < 0x700; i+=4)
+      {
+         data = MappedMemoryReadLong(0x00001100+i);
+         MappedMemoryWriteLong(0x06001100+i, data);
+      }
+
+      // Fix some spots in 0x06000210-0x0600032C area
+      MappedMemoryWriteLong(0x06000234, 0x000002AC);
+      MappedMemoryWriteLong(0x06000238, 0x000002BC);
+      MappedMemoryWriteLong(0x0600023C, 0x00000350);
+      MappedMemoryWriteLong(0x06000240, 0x32524459);
+      MappedMemoryWriteLong(0x0600024C, 0x00000000);
+      MappedMemoryWriteLong(0x06000268, MappedMemoryReadLong(0x00001344));
+      MappedMemoryWriteLong(0x0600026C, MappedMemoryReadLong(0x00001348));
+      MappedMemoryWriteLong(0x060002C4, MappedMemoryReadLong(0x00001104));
+      MappedMemoryWriteLong(0x060002C8, MappedMemoryReadLong(0x00001108));
+      MappedMemoryWriteLong(0x060002CC, MappedMemoryReadLong(0x0000110C));
+      MappedMemoryWriteLong(0x060002D0, MappedMemoryReadLong(0x00001110));
+      MappedMemoryWriteLong(0x060002D4, MappedMemoryReadLong(0x00001114));
+      MappedMemoryWriteLong(0x060002D8, MappedMemoryReadLong(0x00001118));
+      MappedMemoryWriteLong(0x06000328, 0x000004C8);
+      MappedMemoryWriteLong(0x0600032C, 0x00001800);
+
+      // Fix SCU interrupts
+      for (i = 0; i < 0x80; i+=4)
+         MappedMemoryWriteLong(0x06000A00+i, 0x0600083C);
    }
-
-   // Setup the bios function pointers, etc.(all bioses have it at 0x00000820-0x00001100)
-   for (i = 0; i < 0x8E0; i+=4)
-   {
-      data = MappedMemoryReadLong(0x00000820+i);
-      MappedMemoryWriteLong(0x06000220+i, data);
-   }
-
-   // I'm not sure this is really needed
-   for (i = 0; i < 0x700; i+=4)
-   {
-      data = MappedMemoryReadLong(0x00001100+i);
-      MappedMemoryWriteLong(0x06001100+i, data);
-   }
-
-   // Fix some spots in 0x06000210-0x0600032C area
-   MappedMemoryWriteLong(0x06000234, 0x000002AC);
-   MappedMemoryWriteLong(0x06000238, 0x000002BC);
-   MappedMemoryWriteLong(0x0600023C, 0x00000350);
-   MappedMemoryWriteLong(0x06000240, 0x32524459);
-   MappedMemoryWriteLong(0x0600024C, 0x00000000);
-   MappedMemoryWriteLong(0x06000268, MappedMemoryReadLong(0x00001344));
-   MappedMemoryWriteLong(0x0600026C, MappedMemoryReadLong(0x00001348));
-   MappedMemoryWriteLong(0x060002C4, MappedMemoryReadLong(0x00001104));
-   MappedMemoryWriteLong(0x060002C8, MappedMemoryReadLong(0x00001108));
-   MappedMemoryWriteLong(0x060002CC, MappedMemoryReadLong(0x0000110C));
-   MappedMemoryWriteLong(0x060002D0, MappedMemoryReadLong(0x00001110));
-   MappedMemoryWriteLong(0x060002D4, MappedMemoryReadLong(0x00001114));
-   MappedMemoryWriteLong(0x060002D8, MappedMemoryReadLong(0x00001118));
-   MappedMemoryWriteLong(0x06000328, 0x000004C8);
-   MappedMemoryWriteLong(0x0600032C, 0x00001800);
-
-   // Fix SCU interrupts
-   for (i = 0; i < 0x80; i+=4)
-      MappedMemoryWriteLong(0x06000A00+i, 0x0600083C);
 
    // Set the cpu's, etc. to sane states
 
@@ -438,11 +476,22 @@ void YabauseSpeedySetup()
    Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) & 0xFF);
    Cs2Area->reg.CR4 = (u16) Cs2Area->FAD; 
    Cs2Area->satauth = 4;
+
+   // Set Master SH2 registers accordingly
+   for (i = 0; i < 15; i++)
+      MSH2->regs.R[i] = 0x00000000;
+   MSH2->regs.R[15] = 0x06002000;
+   MSH2->regs.SR.all = 0x00000000;
+   MSH2->regs.GBR = 0x00000000;
+   MSH2->regs.VBR = 0x06000000;
+   MSH2->regs.MACH = 0x00000000;
+   MSH2->regs.MACL = 0x00000000;
+   MSH2->regs.PR = 0x00000000;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int YabauseQuickLoadGame()
+int YabauseQuickLoadGame(void)
 {
    partition_struct * lgpartition;
    u8 *buffer;
@@ -588,15 +637,6 @@ int YabauseQuickLoadGame()
       }
 
       // Now setup SH2 registers to start executing at ip code
-      for (i = 0; i < 15; i++)
-         MSH2->regs.R[i] = 0x00000000;
-      MSH2->regs.R[15] = 0x06002000;
-      MSH2->regs.SR.all = 0x00000000;
-      MSH2->regs.GBR = 0x00000000;
-      MSH2->regs.VBR = 0x06000000;
-      MSH2->regs.MACH = 0x00000000;
-      MSH2->regs.MACL = 0x00000000;
-      MSH2->regs.PR = 0x00000000;
       MSH2->regs.PC = 0x06002E00;
    }
    else

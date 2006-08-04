@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-    Copyright 2005 Theo Berkau
+    Copyright 2005-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -864,13 +864,10 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
 {
    int i;
 
-   // Setup the vector table area, etc.(all bioses have it at 0x00000600-0x00000B00)
-   for (i = 0; i < 0xA00; i+=4)
-   {
-      u32 data;
-      data = MappedMemoryReadLong(0x00000600+i);
-      MappedMemoryWriteLong(0x06000000+i, data);
-   }
+   YabauseResetNoLoad();
+
+   // Setup the vector table area, etc.
+   YabauseSpeedySetup();
 
    MappedMemoryLoad(filename, pc);
    MSH2->regs.PC = pc;
