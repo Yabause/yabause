@@ -382,10 +382,10 @@ int YuiInit(void)
    inifilenamesize = GetModuleFileName(y_hInstance, inifilename, MAX_PATH);
 
    // set pointer to start of extension
-   pinifilename = inifilename + inifilenamesize - 4;
 
-   // replace .exe with .ini
-   sprintf(pinifilename, ".ini");
+   if ((pinifilename = strrchr(inifilename, '.')))
+      // replace .exe with .ini
+      sprintf(pinifilename, ".ini");
 
    if (GetPrivateProfileString("General", "BiosPath", "", biosfilename, MAX_PATH, inifilename) == 0 ||
        GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
@@ -399,7 +399,7 @@ int YuiInit(void)
       }
    }
 
-   GetPrivateProfileString("General", "BackupRamPath", "", backupramfilename, MAX_PATH, inifilename);
+   GetPrivateProfileString("General", "BackupRamPath", "bkram.bin", backupramfilename, MAX_PATH, inifilename);
    GetPrivateProfileString("General", "MpegRomPath", "", mpegromfilename, MAX_PATH, inifilename);
 
    GetPrivateProfileString("General", "CartType", "", tempstr, MAX_PATH, inifilename);
