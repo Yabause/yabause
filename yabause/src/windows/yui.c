@@ -387,8 +387,7 @@ int YuiInit(void)
       // replace .exe with .ini
       sprintf(pinifilename, ".ini");
 
-   if (GetPrivateProfileString("General", "BiosPath", "", biosfilename, MAX_PATH, inifilename) == 0 ||
-       GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
+   if (GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
    {
       // Startup Settings Configuration here
       if (DialogBox(y_hInstance, "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
@@ -399,6 +398,7 @@ int YuiInit(void)
       }
    }
 
+   GetPrivateProfileString("General", "BiosPath", "", biosfilename, MAX_PATH, inifilename);
    GetPrivateProfileString("General", "BackupRamPath", "bkram.bin", backupramfilename, MAX_PATH, inifilename);
    GetPrivateProfileString("General", "MpegRomPath", "", mpegromfilename, MAX_PATH, inifilename);
 
@@ -545,7 +545,10 @@ int YuiInit(void)
       yinit.cdcoretype = CDCORE_ISO;
    yinit.carttype = carttype;
    yinit.regionid = regionid;
-   yinit.biospath = biosfilename;
+   if (strcmp(biosfilename, "") == 0)
+      yinit.biospath = NULL;
+   else
+      yinit.biospath = biosfilename;
    yinit.cdpath = cdrompath;
    yinit.buppath = backupramfilename;
    yinit.mpegpath = mpegromfilename;
