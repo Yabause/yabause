@@ -1,5 +1,5 @@
-/*  Copyright 2003 Guillaume Duhamel
-    Copyright 2004-2005 Theo Berkau
+/*  Copyright 2005 Guillaume Duhamel
+    Copyright 2005-2006 Theo Berkau
 
     This file is part of Yabause.
 

@@ -1,5 +1,6 @@
 /*  Copyright 2004-2005 Theo Berkau
     Copyright 2006 Ex-Cyber
+    Copyright 2005 Guillaume Duhamel
 
     This file is part of Yabause.
 
