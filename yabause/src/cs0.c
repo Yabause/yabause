@@ -1,4 +1,5 @@
 /*  Copyright 2004-2005 Theo Berkau
+    Copyright 2006 Ex-Cyber
 
     This file is part of Yabause.
 
@@ -146,6 +147,176 @@ void FASTCALL DummyCs2WriteLong(u32 addr, u32 val)
 // Action Replay 4M Plus funcions
 //////////////////////////////////////////////////////////////////////////////
 
+typedef enum
+  {
+    FL_READ,
+    FL_SDP,   
+    FL_CMD,
+    FL_ID,
+    FL_IDSDP,
+    FL_IDCMD,
+    FL_WRITEBUF,
+    FL_WRITEARRAY
+  } flashstate;
+
+u8 flreg0 = 0;
+u8 flreg1 = 0;
+
+flashstate flstate0;
+flashstate flstate1;
+
+u8 flbuf0[128];
+u8 flbuf1[128];
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL FlashCs0ReadByte(u32 addr)
+{
+  flashstate* state;
+  u8* reg;
+    
+  if (addr & 1)
+    {
+      state = &flstate1;
+      reg = &flreg1;
+    }
+  else
+    {
+      state = &flstate0;
+      reg = &flreg0;
+    }
+
+  switch (*state)
+    {
+    case FL_ID:
+    case FL_IDSDP:
+    case FL_IDCMD:
+      if (addr & 2) return 0xD5;
+      else return 0x1F;
+    case FL_WRITEARRAY: *reg ^= 0x02;
+    case FL_WRITEBUF: return *reg;  
+    case FL_SDP: 
+    case FL_CMD: *state = FL_READ;
+    case FL_READ:
+    default: return T2ReadByte(CartridgeArea->rom, addr);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL FlashCs0ReadWord(u32 addr)
+{
+  return ((u16)(FlashCs0ReadByte(addr) << 8) | (u16)(FlashCs0ReadByte(addr+1)));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL FlashCs0ReadLong(u32 addr)
+{
+  return ((u32)FlashCs0ReadWord(addr) << 16) |(u32) FlashCs0ReadWord(addr + 2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL FlashCs0WriteByte(u32 addr, u8 val)
+{
+  flashstate* state;
+  u8* reg;
+  u8* buf;
+  
+  if (addr & 1)
+    {
+      state = &flstate1;
+      reg = &flreg1;
+      buf = flbuf1;
+    }
+  else
+    {
+      state = &flstate0;
+      reg = &flreg0;
+      buf = flbuf0;
+    }
+  
+  switch (*state)
+    {
+    case FL_READ:
+    	if (((addr & 0xfffe) == 0xaaaa) && (val == 0xaa))
+		*state = FL_SDP;
+    	return;
+  	case FL_WRITEBUF:
+  		buf[(addr >> 1) & 0x7f] = val;
+  		if (((addr >> 1) & 0x7f) == 0x7f)
+  		{
+  			int i;
+  			int j = addr & 0x1;
+  			addr &= 0xffffff00;
+  			for (i = 0; i <= 127; i++)
+  			{
+  				T2WriteByte(CartridgeArea->rom, (addr + i*2 + j), buf[i]);
+  			}
+  			*state = FL_READ;
+  		}
+  		return;
+    case FL_SDP:
+      if (((addr & 0xfffe) == 0x5554) && (val == 0x55))
+	  *state = FL_CMD;
+      else *state = FL_READ;
+      return;
+    case FL_ID:
+      if (((addr & 0xfffe) == 0xaaaa) && (val == 0xaa))
+	  *state = FL_IDSDP;
+      else *state = FL_ID;
+      return;
+    case FL_IDSDP:
+      if (((addr & 0xfffe) == 0x5554) && (val == 0x55))
+	  *state = FL_READ;
+      else *state=FL_ID;
+      return;
+    case FL_IDCMD:
+      if (((addr & 0xfffe) == 0xaaaa) && (val == 0xf0))
+	  *state = FL_READ;
+      else *state = FL_ID;
+      return;
+    case FL_CMD:
+      if ((addr & 0xfffe) != 0xaaaa)
+	{
+	  *state = FL_READ;
+	  return;
+	}
+
+      switch (val)
+	{
+	case 0xa0:
+	  *state = FL_WRITEBUF;
+	  return;
+	case 0x90:
+	  *state = FL_ID;
+	  return;
+	default:
+	  *state = FL_READ;
+	  return;	  
+	}
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL FlashCs0WriteWord(u32 addr, u16 val)
+{
+  FlashCs0WriteByte(addr, (u8)(val >> 8));
+  FlashCs0WriteByte(addr + 1, (u8)(val & 0xff));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL FlashCs0WriteLong(u32 addr, u32 val)
+{
+  FlashCs0WriteWord(addr, (u16)(val >> 16));
+  FlashCs0WriteWord(addr + 2, (u16)(val & 0xffff));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 u8 FASTCALL AR4MCs0ReadByte(u32 addr)
 {
    addr &= 0x1FFFFFF;
@@ -155,7 +326,7 @@ u8 FASTCALL AR4MCs0ReadByte(u32 addr)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-            return T2ReadByte(CartridgeArea->rom, addr);
+	   return FlashCs0ReadByte(addr);
 //            return biosarea->getByte(addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Byte read\n");
@@ -192,7 +363,7 @@ u16 FASTCALL AR4MCs0ReadWord(u32 addr)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-            return T2ReadWord(CartridgeArea->rom, addr);
+	   return FlashCs0ReadWord(addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Word read\n");
          break;
@@ -240,7 +411,7 @@ u32 FASTCALL AR4MCs0ReadLong(u32 addr)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-            return T2ReadLong(CartridgeArea->rom, addr);
+	   return FlashCs0ReadLong(addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Long read\n");
          break;
@@ -288,7 +459,7 @@ void FASTCALL AR4MCs0WriteByte(u32 addr, u8 val)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-            T2WriteByte(CartridgeArea->rom, addr, val);
+	   FlashCs0WriteByte(addr, val);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport byte write\n");
          break;
@@ -323,7 +494,7 @@ void FASTCALL AR4MCs0WriteWord(u32 addr, u16 val)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-            T2WriteWord(CartridgeArea->rom, addr, val);
+	   FlashCs0WriteWord(addr, val);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Word write\n");
          break;
@@ -358,7 +529,7 @@ void FASTCALL AR4MCs0WriteLong(u32 addr, u32 val)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-            T2WriteLong(CartridgeArea->rom, addr, val);
+	   FlashCs0WriteLong(addr, val);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Long write\n");
          break;
@@ -865,7 +1036,9 @@ int CartInit(const char * filename, int type)
          // Load AR firmware to memory
          if (T123Load(CartridgeArea->rom, 0x40000, 2, filename) != 0)
             return -1;
-
+		 flstate0 = FL_READ;
+		 flstate1 = FL_READ;
+		 
          // Setup Functions
          CartridgeArea->Cs0ReadByte = &AR4MCs0ReadByte;
          CartridgeArea->Cs0ReadWord = &AR4MCs0ReadWord;
@@ -1162,7 +1335,11 @@ void CartDeInit(void)
       if (CartridgeArea->carttype == CART_PAR)
       {
          if (CartridgeArea->rom)
-            T2MemoryDeInit(CartridgeArea->rom);
+        {
+			if (T123Save(CartridgeArea->rom, 0x40000, 2, CartridgeArea->filename) != 0)
+			YabSetError(YAB_ERR_FILEWRITE, (void *)CartridgeArea->filename);
+			T2MemoryDeInit(CartridgeArea->rom);
+		}
       }
       else
       {

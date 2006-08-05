@@ -95,8 +95,8 @@ SUBDIRS = c68k . $(yabause_yui)
 noinst_LIBRARIES = libyabause.a
 libyabause_a_SOURCES = \
 	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \
-	cdbase.c cdbase.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h \
-	debug.c debug.h error.c error.h memory.c memory.h \
+        bios.c bios.h cdbase.c cdbase.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c \
+        cs2.h debug.c debug.h error.c error.h memory.c memory.h \
 	peripheral.h peripheral.c m68kd.c \
 	persdl.c persdl.h profile.c profile.h \
 	scu.c scu.h sh2core.c sh2core.h \
@@ -115,14 +115,14 @@ LIBRARIES = $(noinst_LIBRARIES)
 libyabause_a_AR = $(AR) cru
 libyabause_a_DEPENDENCIES = cd-$(yabause_arch).$(OBJEXT)
 am_libyabause_a_OBJECTS = c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
-	gen68k.$(OBJEXT) cdbase.$(OBJEXT) cs0.$(OBJEXT) cs1.$(OBJEXT) \
-	cs2.$(OBJEXT) debug.$(OBJEXT) error.$(OBJEXT) memory.$(OBJEXT) \
-	peripheral.$(OBJEXT) m68kd.$(OBJEXT) persdl.$(OBJEXT) \
-	profile.$(OBJEXT) scu.$(OBJEXT) sh2core.$(OBJEXT) \
-	sh2d.$(OBJEXT) sh2idle.$(OBJEXT) sh2int.$(OBJEXT) \
-	smpc.$(OBJEXT) scsp.$(OBJEXT) sndsdl.$(OBJEXT) vdp1.$(OBJEXT) \
-	vdp2.$(OBJEXT) vidogl.$(OBJEXT) vidsoft.$(OBJEXT) \
-	yabause.$(OBJEXT) ygl.$(OBJEXT)
+	gen68k.$(OBJEXT) bios.$(OBJEXT) cdbase.$(OBJEXT) cs0.$(OBJEXT) \
+	cs1.$(OBJEXT) cs2.$(OBJEXT) debug.$(OBJEXT) error.$(OBJEXT) \
+	memory.$(OBJEXT) peripheral.$(OBJEXT) m68kd.$(OBJEXT) \
+	persdl.$(OBJEXT) profile.$(OBJEXT) scu.$(OBJEXT) \
+	sh2core.$(OBJEXT) sh2d.$(OBJEXT) sh2idle.$(OBJEXT) \
+	sh2int.$(OBJEXT) smpc.$(OBJEXT) scsp.$(OBJEXT) sndsdl.$(OBJEXT) \
+	vdp1.$(OBJEXT) vdp2.$(OBJEXT) vidogl.$(OBJEXT) \
+	vidsoft.$(OBJEXT) yabause.$(OBJEXT) ygl.$(OBJEXT)
 nodist_libyabause_a_OBJECTS =
 libyabause_a_OBJECTS = $(am_libyabause_a_OBJECTS) \
 	$(nodist_libyabause_a_OBJECTS)
@@ -134,20 +134,21 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/c68k.Po ./$(DEPDIR)/c68kexec.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/cdbase.Po ./$(DEPDIR)/cs0.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/cs1.Po ./$(DEPDIR)/cs2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/debug.Po ./$(DEPDIR)/error.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/gen68k.Po ./$(DEPDIR)/m68kd.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/memory.Po ./$(DEPDIR)/peripheral.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/persdl.Po ./$(DEPDIR)/profile.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/scsp.Po ./$(DEPDIR)/scu.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/sh2core.Po ./$(DEPDIR)/sh2d.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/sh2idle.Po ./$(DEPDIR)/sh2int.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/smpc.Po ./$(DEPDIR)/sndsdl.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vdp1.Po ./$(DEPDIR)/vdp2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vidogl.Po ./$(DEPDIR)/vidsoft.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/yabause.Po ./$(DEPDIR)/ygl.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/bios.Po ./$(DEPDIR)/c68k.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/c68kexec.Po ./$(DEPDIR)/cdbase.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/cs0.Po ./$(DEPDIR)/cs1.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/cs2.Po ./$(DEPDIR)/debug.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/error.Po ./$(DEPDIR)/gen68k.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/m68kd.Po ./$(DEPDIR)/memory.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/peripheral.Po ./$(DEPDIR)/persdl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/profile.Po ./$(DEPDIR)/scsp.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/scu.Po ./$(DEPDIR)/sh2core.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/sh2d.Po ./$(DEPDIR)/sh2idle.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/sh2int.Po ./$(DEPDIR)/smpc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/sndsdl.Po ./$(DEPDIR)/vdp1.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/vdp2.Po ./$(DEPDIR)/vidogl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/vidsoft.Po ./$(DEPDIR)/yabause.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ygl.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -191,6 +192,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bios.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c68k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c68kexec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cdbase.Po@am__quote@
