@@ -48,20 +48,21 @@ u32 bDet, bChg;
 
 #define destRB (1<<INSTRUCTION_B(instruction))
 #define destRC (1<<INSTRUCTION_C(instruction))
-#define destMACL 0x100
-#define destMACH 0x200
-#define destMAC 0x300
-#define destSRT 0x400
-#define destSRQ 0x800
-#define destSRS 0x1000
-#define destSRI 0x2000
-#define destSRM 0x4000
-#define destSR 0x7C00
-#define destPR 0x8000
-#define destGBR 0x10000
-#define destVBR 0x20000
-#define destCONST 0x40000
+#define destMACL 0x10000
+#define destMACH 0x20000
+#define destMAC 0x30000
+#define destSRT 0x40000
+#define destSRQ 0x80000
+#define destSRS 0x100000
+#define destSRI 0x200000
+#define destSRM 0x400000
+#define destSR 0x7C0000
+#define destPR 0x800000
+#define destGBR 0x1000000
+#define destVBR 0x2000000
+#define destCONST 0x4000000
 #define destR0 1
+#define destR15 (1<<15)
 
 #define srcSRT (bDet & destSRT )
 #define srcSRS (bDet & destSRS)
@@ -73,6 +74,7 @@ u32 bDet, bChg;
 #define srcRC (bDet & destRC)
 #define srcRB (bDet & destRB)
 #define srcR0 (bDet & destR0)
+#define srcR15 (bDet & destR15)
 #define srcMACL (bDet & destMACL)
 #define srcMACH (bDet & destMACH)
 #define srcMAC ( ~destMAC | bDet )
@@ -102,8 +104,9 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	case 3:
 	  switch (INSTRUCTION_C(instruction))
 	    {
-	    case 0: //bsrf;
-	    case 2: return delayCheck(PC+2); //braf;
+	    case 0: implies( destPR, 1 ); //bsrf;
+	    case 2: isConst( srcRB );
+	      return delayCheck(PC+2); //braf;
 	    }
 	  break;
 	case 4: //movbs0;
@@ -148,8 +151,12 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	    {
 	    case 1: //sleep;
 	      break;
-	    case 0: //rts;
-	    case 2: return delayCheck(PC+2);  //rte;
+	    case 0: isConst(srcPR); //rts;
+	      return delayCheck(PC+2);
+	    case 2: 
+	      isConst(srcR15);
+	      implies(destSR, srcR15);
+	      return delayCheck(PC+2);  //rte;
 	    }     
 	  break;
 	case 12: //movbl0;

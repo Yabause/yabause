@@ -97,10 +97,13 @@ gchar * inifile;
 
 void yui_settings_load(void) {
 	int i;
+	gchar *biosPath;
 	g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
 	if (yinit.biospath)
-		g_free(yinit.biospath);
-	yinit.biospath = g_strdup(g_key_file_get_value(keyfile, "General", "BiosPath", 0));
+	  g_free(yinit.biospath);
+	biosPath = g_key_file_get_value(keyfile, "General", "BiosPath", 0);
+	if ( !biosPath || (!*biosPath) ) yinit.biospath = NULL; 
+	else yinit.biospath = g_strdup(biosPath);
 	if (yinit.cdpath)
 		g_free(yinit.cdpath);
 	yinit.cdpath = g_strdup(g_key_file_get_value(keyfile, "General", "CDROMDrive", 0));

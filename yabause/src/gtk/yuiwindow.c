@@ -203,13 +203,8 @@ static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, Yu
 
 void yui_window_start(GtkWidget * w, YuiWindow * yui) {
 	if ((yui->state & YUI_IS_INIT) == 0) {
-	  if ( !(((yabauseinit_struct*)(yui->init_data))->biospath) ) {
-	    yui_popup( yui, "Please select a BIOS file in Preferences.", GTK_MESSAGE_ERROR );
-	    return;
-	  }
 	  ((int (*)(gpointer)) yui->init_func)(yui->init_data);
 	  yui->state |= YUI_IS_INIT;
-	  //	       	g_signal_handler_disconnect(yui->area, yui->clean_handler);
 	  gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "reset"), TRUE);
 	}
 }
