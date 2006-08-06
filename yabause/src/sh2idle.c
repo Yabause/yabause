@@ -1,4 +1,4 @@
-/*  Copyright 2005 Fabien Coulon
+/*  Copyright 2005-2006 Fabien Coulon
 
     This file is part of Yabause.
 

@@ -1,5 +1,6 @@
-/*  Copyright 2003-2004 Guillaume Duhamel
-    Copyright 2004-2005 Theo Berkau
+/*  Copyright 2003-2005 Guillaume Duhamel
+    Copyright 2004-2006 Theo Berkau
+    Copyright 2005 Fabien Coulon
 
     This file is part of Yabause.
 

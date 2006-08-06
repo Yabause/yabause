@@ -1,5 +1,6 @@
 /*  Copyright 2004 Stephane Dallongeville
     Copyright 2004-2006 Theo Berkau
+    Copyright 2006 Guillaume Duhamel
 
     This file is part of Yabause.
 

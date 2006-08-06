@@ -1,4 +1,4 @@
-/*  Copyright 2003-2004 Guillaume Duhamel
+/*  Copyright 2003-2006 Guillaume Duhamel
     Copyright 2004 Lawrence Sebald
     Copyright 2004-2006 Theo Berkau
 
