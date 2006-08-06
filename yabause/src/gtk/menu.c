@@ -6,6 +6,7 @@
 #include "yuitransfer.h"
 #include "yuim68k.h"
 #include "yuiscudsp.h"
+#include "yuiscsp.h"
 #include "yuimem.h"
 
 void openAboutDialog(GtkWidget * w, gpointer data) {
@@ -43,6 +44,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *vdp1;
   GtkWidget *m68k;
   GtkWidget *scudsp;
+  GtkWidget *scsp;
   GtkWidget *menuitem4;
   GtkWidget *menuitem4_menu;
   GtkWidget *about1;
@@ -164,6 +166,10 @@ GtkWidget* create_menu(YuiWindow * window1) {
   scudsp = gtk_menu_item_new_with_mnemonic ("SCU-DSP");
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), scudsp);
   g_signal_connect_swapped(scudsp, "activate", G_CALLBACK(yui_scudsp_new), window1);
+
+  scsp = gtk_menu_item_new_with_mnemonic ("SCSP");
+  gtk_container_add (GTK_CONTAINER (menuitem3_menu), scsp);
+  g_signal_connect_swapped(scsp, "activate", G_CALLBACK(yui_scsp_new), window1);
 
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), gtk_separator_menu_item_new ());
 

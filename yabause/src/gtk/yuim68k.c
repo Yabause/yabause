@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 
 #include "yuim68k.h"
 #include "../scsp.h"
@@ -109,6 +110,8 @@ static void yui_m68k_init (YuiM68k * m68k) {
 
 GtkWidget * yui_m68k_new(YuiWindow * y) {
   GtkWidget * dialog;
+  GClosure *closureF7;
+  GtkAccelGroup *accelGroup;
   m68kcodebreakpoint_struct *cbp;
   gint i;
   yui = y;
@@ -149,7 +152,7 @@ GtkWidget * yui_m68k_new(YuiWindow * y) {
   {
     GtkWidget * but2, * but3, * but4;
     
-    yui_m68k->buttonStep = gtk_button_new_with_label( "Step" );
+    yui_m68k->buttonStep = gtk_button_new_with_label( "Step [F7]" );
     gtk_box_pack_start( GTK_BOX( yui_m68k->hbox ), yui_m68k->buttonStep, FALSE, FALSE, 2 );
     g_signal_connect( yui_m68k->buttonStep, "clicked", G_CALLBACK(yui_m68k_step), yui_m68k );
     
@@ -167,6 +170,10 @@ GtkWidget * yui_m68k_new(YuiWindow * y) {
   }
   yui_m68k->paused_handler = g_signal_connect_swapped(yui, "paused", G_CALLBACK(yui_m68k_update), yui_m68k);
   yui_m68k->running_handler = g_signal_connect_swapped(yui, "running", G_CALLBACK(yui_m68k_clear), yui_m68k);
+  accelGroup = gtk_accel_group_new ();
+  closureF7 = g_cclosure_new (G_CALLBACK (yui_m68k_step), yui_m68k, NULL);
+  gtk_accel_group_connect( accelGroup, GDK_F7, 0, 0, closureF7 );
+  gtk_window_add_accel_group( GTK_WINDOW( dialog ), accelGroup );
   
   yui_m68k_update(yui_m68k);
   if ( yui->state & YUI_IS_RUNNING ) yui_m68k_clear(yui_m68k);

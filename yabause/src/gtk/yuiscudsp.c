@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 
 #include "yuiscudsp.h"
 #include "../scu.h"
@@ -108,6 +109,8 @@ static void yui_scudsp_init (YuiScudsp * scudsp) {
 
 GtkWidget * yui_scudsp_new(YuiWindow * y) {
   GtkWidget * dialog;
+  GClosure *closureF7;
+  GtkAccelGroup *accelGroup;
   scucodebreakpoint_struct *cbp;
   gint i;
   yui = y;
@@ -148,7 +151,7 @@ GtkWidget * yui_scudsp_new(YuiWindow * y) {
   {
     GtkWidget * but2, * but3, * but4;
     
-    yui_scudsp->buttonStep = gtk_button_new_with_label( "Step" );
+    yui_scudsp->buttonStep = gtk_button_new_with_label( "Step [F7]" );
     gtk_box_pack_start( GTK_BOX( yui_scudsp->hbox ), yui_scudsp->buttonStep, FALSE, FALSE, 2 );
     g_signal_connect( yui_scudsp->buttonStep, "clicked", G_CALLBACK(yui_scudsp_step), yui_scudsp );
     
@@ -166,6 +169,10 @@ GtkWidget * yui_scudsp_new(YuiWindow * y) {
   }
   yui_scudsp->paused_handler = g_signal_connect_swapped(yui, "paused", G_CALLBACK(yui_scudsp_update), yui_scudsp);
   yui_scudsp->running_handler = g_signal_connect_swapped(yui, "running", G_CALLBACK(yui_scudsp_clear), yui_scudsp);
+  accelGroup = gtk_accel_group_new ();
+  closureF7 = g_cclosure_new (G_CALLBACK (yui_scudsp_step), yui_scudsp, NULL);
+  gtk_accel_group_connect( accelGroup, GDK_F7, 0, 0, closureF7 );
+  gtk_window_add_accel_group( GTK_WINDOW( dialog ), accelGroup );
   
   yui_scudsp_update(yui_scudsp);
   if ( yui->state & YUI_IS_RUNNING ) yui_scudsp_clear(yui_scudsp);

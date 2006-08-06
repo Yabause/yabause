@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 
 #include "yuish.h"
 #include "../sh2core.h"
@@ -111,6 +112,8 @@ static void yui_sh_init (YuiSh * sh2) {
 
 GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   GtkWidget * dialog;
+  GClosure *closureF7, *closureF8;
+  GtkAccelGroup *accelGroup;
   codebreakpoint_struct *cbp;
   YuiSh * sh2;
   gint i;
@@ -163,11 +166,11 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   {
     GtkWidget * but2, * but3, * but4;
     
-    sh2->buttonStep = gtk_button_new_with_label( "Step" );
+    sh2->buttonStep = gtk_button_new_with_label( "Step [F7]" );
     gtk_box_pack_start( GTK_BOX( sh2->hbox ), sh2->buttonStep, FALSE, FALSE, 2 );
     g_signal_connect( sh2->buttonStep, "clicked", G_CALLBACK(yui_sh_step), sh2 );
     
-    sh2->buttonStepOver = gtk_button_new_with_label( "Step over" );
+    sh2->buttonStepOver = gtk_button_new_with_label( "Step over [F8]" );
     gtk_box_pack_start( GTK_BOX( sh2->hbox ), sh2->buttonStepOver, FALSE, FALSE, 2 );
     g_signal_connect( sh2->buttonStepOver, "clicked", G_CALLBACK(yui_sh_step_over), sh2 );
     
@@ -185,6 +188,12 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   }
   sh2->paused_handler = g_signal_connect_swapped(yui, "paused", G_CALLBACK(yui_sh_update), sh2);
   sh2->running_handler = g_signal_connect_swapped(yui, "running", G_CALLBACK(yui_sh_clear), sh2);
+  accelGroup = gtk_accel_group_new ();
+  closureF7 = g_cclosure_new (G_CALLBACK (yui_sh_step), sh2, NULL);
+  closureF8 = g_cclosure_new (G_CALLBACK (yui_sh_step_over), sh2, NULL);
+  gtk_accel_group_connect( accelGroup, GDK_F7, 0, 0, closureF7 );
+  gtk_accel_group_connect( accelGroup, GDK_F8, 0, 0, closureF8 );
+  gtk_window_add_accel_group( GTK_WINDOW( dialog ), accelGroup );
   
   yui_sh_update(sh2);
   if ( yui->state & YUI_IS_RUNNING ) yui_sh_clear(sh2);
