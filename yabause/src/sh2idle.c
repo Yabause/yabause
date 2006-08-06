@@ -22,12 +22,12 @@
 #include "sh2d.h"
 #include "memory.h"
 
-#define MAX_CYCLE_CHECK 12
+#define MAX_CYCLE_CHECK 14
 // idle loops greater than MAX_CYCLE_CHECK instructions will not be detected. 
 
 /* Detection of idle loops: ie loops in which no write to memory is
-done, ending with a conditional jump, at the point of which T flag is
-"deterministic" in the sense it does not depend on the number of
+done, ending with a conditional jump, at the point of which all registers are
+"deterministic" in the sense they don't depend on the number of
 executed loops */
 
 /* bDet : Bitwise register markers. 1: register is deterministic
@@ -70,14 +70,14 @@ u32 bDet, bChg;
 #define srcSRM (bDet & destSRM)
 #define srcGBR (bDet & destGBR)
 #define srcVBR (bDet & destVBR)
-#define srcSR (~destSR | bDet)
+#define srcSR (!(destSR & ~bDet))
 #define srcRC (bDet & destRC)
 #define srcRB (bDet & destRB)
 #define srcR0 (bDet & destR0)
 #define srcR15 (bDet & destR15)
 #define srcMACL (bDet & destMACL)
 #define srcMACH (bDet & destMACH)
-#define srcMAC ( ~destMAC | bDet )
+#define srcMAC (!(destMAC & ~bDet))
 #define srcPR (bDet & destPR)
 #define isConst(src) if ( (bDet & destCONST) && !src ) return 0; 
 
@@ -204,7 +204,7 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	case 7:   //cmpgt;
 	case 3: implies( destSRT, srcRB && srcRC );
 	  break;
-	case 4: implies2( destSRQ, destSRT, srcRB && srcRC && srcSRQ && srcSRM );  //div1; /* CHECK ME */
+	case 4: implies3( destSRQ, destSRT, destRB, srcRB && srcRC && srcSRQ && srcSRM );  //div1; /* CHECK ME */
 	  break;
 	case 13:   //dmuls;
 	case 5: implies( destMAC, srcRB && srcRC ); // dmulu
@@ -348,7 +348,7 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
 	      break;
 	    }
 	  break;
-	case 15: implies2( destMACL, destMACH, srcRB && srcRC && srcMACL ); //macw
+	case 15: implies( destMAC, srcRB && srcRC && srcMAC ); //macw
 	  break;
 	}
     case 5: implies( destRB, srcRC ); //movll4
@@ -560,9 +560,11 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   }
   context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
   opcodes[context->instruction](context);  
+  
+  if ( context->regs.PC != loopBegin ) return;
 
 #ifdef IDLE_DETECT_VERBOSE
-  if (( bDet & destSRT )&&(loopBegin!=oldLoopBegin[context==MSH2][0])&&(loopBegin!=oldLoopBegin[context==MSH2][1])) {
+  if (( !~bDet )&&(loopBegin!=oldLoopBegin[context==MSH2][0])&&(loopBegin!=oldLoopBegin[context==MSH2][1])) {
     char lineBuf[64];
     u32 offset,end;
     printf( "New %s idle loop at %X -- %X\n", (context==MSH2)?"master":"slave", loopBegin, loopEnd );
@@ -574,10 +576,9 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
     }
     oldLoopBegin[context==MSH2][1] = oldLoopBegin[context==MSH2][0];
     oldLoopBegin[context==MSH2][0] = loopBegin;
-    if ( context->regs.PC != loopBegin ) fprintf( stderr, "SH2idleCheck : branching is not leading to begin of loop !\n" );
   }
 #endif
-  if ( bDet & destSRT ) {
+  if ( !~bDet ) {
     DROP_IDLE;
     context->isIdle = 1;
   }
@@ -595,15 +596,15 @@ void FASTCALL SH2idleParse( SH2_struct *context, u32 cycles ) {
       switch( INSTRUCTION_B(context->instruction) ) {
       case 13: //SH2bts
       case 9:  //SH2bt
-	opcodes[context->instruction](context);
 	if ( !context->regs.SR.part.T ) context->isIdle = 0;
 	else DROP_IDLE;
+	opcodes[context->instruction](context);
 	return;
       case 15: //SH2bfs
       case 11: //SH2bf
-	opcodes[context->instruction](context);
 	if ( context->regs.SR.part.T ) context->isIdle = 0;
 	else DROP_IDLE;
+	opcodes[context->instruction](context);
 	return;
       }   
     }
