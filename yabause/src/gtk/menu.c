@@ -6,6 +6,7 @@
 #include "yuitransfer.h"
 #include "yuim68k.h"
 #include "yuiscudsp.h"
+#include "yuimem.h"
 
 void openAboutDialog(GtkWidget * w, gpointer data) {
 	gtk_show_about_dialog(data,
@@ -47,6 +48,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *about1;
   GtkAccelGroup *accel_group;
   GtkWidget *transfer;
+  GtkWidget *memory;
 
   accel_group = gtk_accel_group_new ();
 
@@ -72,10 +74,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), transfer);
   g_signal_connect_swapped(transfer, "activate", G_CALLBACK(yui_transfer_new), window1);
 
-  separatormenuitem1 = gtk_separator_menu_item_new ();
-  gtk_widget_show (separatormenuitem1);
-  gtk_container_add (GTK_CONTAINER (menuitem1_menu), separatormenuitem1);
-  gtk_widget_set_sensitive (separatormenuitem1, FALSE);
+  gtk_container_add (GTK_CONTAINER (menuitem1_menu), gtk_separator_menu_item_new ());
 
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "quit")));
 
@@ -165,6 +164,12 @@ GtkWidget* create_menu(YuiWindow * window1) {
   scudsp = gtk_menu_item_new_with_mnemonic ("SCU-DSP");
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), scudsp);
   g_signal_connect_swapped(scudsp, "activate", G_CALLBACK(yui_scudsp_new), window1);
+
+  gtk_container_add (GTK_CONTAINER (menuitem3_menu), gtk_separator_menu_item_new ());
+
+  memory = gtk_menu_item_new_with_mnemonic ("Memory dump");
+  gtk_container_add (GTK_CONTAINER (menuitem3_menu), memory);
+  g_signal_connect_swapped(memory, "activate", G_CALLBACK(yui_mem_new), window1);
 
   menuitem4 = gtk_menu_item_new_with_mnemonic ("_Help");
   gtk_widget_show (menuitem4);

@@ -94,7 +94,7 @@ bin_PROGRAMS = yabause
 yabause_SOURCES = gtkglwidget.c gtkglwidget.h main.c settings.c menu.c gtk-compat.c gtk-compat.h \
 	yuifileentry.c yuifileentry.h yuirange.c yuirange.h yuiinputentry.c yuiinputentry.h yuipage.c yuipage.h \
 	yuiresolution.c yuiresolution.h yuiwindow.c yuiwindow.h yuivdp1.c yuivdp1.h yuivdp2.c yuivdp2.h \
-	yuish.c yuish.h yuitransfer.c yuitransfer.h yuim68k.c yuim68k.h yuiscudsp.c yuiscudsp.h
+	yuish.c yuish.h yuitransfer.c yuitransfer.h yuim68k.c yuim68k.h yuiscudsp.c yuiscudsp.h yuimem.c yuimem.h
 
 yabause_CFLAGS = $(YAB_CFLAGS)
 yabause_LDADD = ../libyabause.a $(YAB_LIBS)
@@ -112,7 +112,8 @@ am_yabause_OBJECTS = yabause-gtkglwidget.$(OBJEXT) \
 	yabause-yuiresolution.$(OBJEXT) yabause-yuiwindow.$(OBJEXT) \
 	yabause-yuivdp1.$(OBJEXT) yabause-yuivdp2.$(OBJEXT) \
 	yabause-yuish.$(OBJEXT) yabause-yuitransfer.$(OBJEXT) \
-	yabause-yuim68k.$(OBJEXT) yabause-yuiscudsp.$(OBJEXT)
+	yabause-yuim68k.$(OBJEXT) yabause-yuiscudsp.$(OBJEXT) \
+	yabause-yuimem.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
 yabause_DEPENDENCIES = ../libyabause.a
 yabause_LDFLAGS =
@@ -132,6 +133,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-yuifileentry.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-yuiinputentry.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-yuim68k.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-yuimem.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-yuipage.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-yuirange.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-yuiresolution.Po \
@@ -200,6 +202,7 @@ yabause-yuish.$(OBJEXT): yuish.c
 yabause-yuitransfer.$(OBJEXT): yuitransfer.c
 yabause-yuim68k.$(OBJEXT): yuim68k.c
 yabause-yuiscudsp.$(OBJEXT): yuiscudsp.c
+yabause-yuimem.$(OBJEXT): yuimem.c
 yabause$(EXEEXT): $(yabause_OBJECTS) $(yabause_DEPENDENCIES) 
 	@rm -f yabause$(EXEEXT)
 	$(LINK) $(yabause_LDFLAGS) $(yabause_OBJECTS) $(yabause_LDADD) $(LIBS)
@@ -218,6 +221,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuifileentry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuiinputentry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuim68k.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuimem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuipage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuirange.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuiresolution.Po@am__quote@
@@ -446,6 +450,18 @@ yabause-yuiscudsp.obj: yuiscudsp.c
 @AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yuiscudsp.Po' tmpdepfile='$(DEPDIR)/yabause-yuiscudsp.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yuiscudsp.obj `cygpath -w yuiscudsp.c`
+
+yabause-yuimem.o: yuimem.c
+@AMDEP_TRUE@	source='yuimem.c' object='yabause-yuimem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yuimem.Po' tmpdepfile='$(DEPDIR)/yabause-yuimem.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yuimem.o `test -f 'yuimem.c' || echo '$(srcdir)/'`yuimem.c
+
+yabause-yuimem.obj: yuimem.c
+@AMDEP_TRUE@	source='yuimem.c' object='yabause-yuimem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yuimem.Po' tmpdepfile='$(DEPDIR)/yabause-yuimem.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yuimem.obj `cygpath -w yuimem.c`
 CCDEPMODE = @CCDEPMODE@
 uninstall-info-am:
 
