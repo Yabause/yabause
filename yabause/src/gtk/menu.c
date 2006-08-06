@@ -55,17 +55,14 @@ GtkWidget* create_menu(YuiWindow * window1) {
   accel_group = gtk_accel_group_new ();
 
   menubar1 = gtk_menu_bar_new ();
-  gtk_widget_show (menubar1);
 
   menuitem1 = gtk_menu_item_new_with_mnemonic ("_Yabause");
-  gtk_widget_show (menuitem1);
   gtk_container_add (GTK_CONTAINER (menubar1), menuitem1);
 
   menuitem1_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem1), menuitem1_menu);
 
   new1 = gtk_image_menu_item_new_from_stock ("gtk-preferences", NULL);
-  gtk_widget_show (new1);
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), new1);
 
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "run")));
@@ -81,18 +78,15 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "quit")));
 
   view1 = gtk_menu_item_new_with_mnemonic ("_View");
-  gtk_widget_show (view1);
   gtk_container_add (GTK_CONTAINER (menubar1), view1);
 
   view1_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (view1), view1_menu);
 
   fps1 = gtk_check_menu_item_new_with_mnemonic ("FPS");
-  gtk_widget_show (fps1);
   gtk_container_add (GTK_CONTAINER (view1_menu), fps1);
 
   layer1 = gtk_menu_item_new_with_mnemonic ("Layer");
-  gtk_widget_show (layer1);
   gtk_container_add (GTK_CONTAINER (view1_menu), layer1);
 
   layer1_menu = gtk_menu_new ();
@@ -135,19 +129,16 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_container_add(GTK_CONTAINER(view1_menu), log);
 
   menuitem3 = gtk_menu_item_new_with_mnemonic ("_Debug");
-  gtk_widget_show (menuitem3);
   gtk_container_add (GTK_CONTAINER (menubar1), menuitem3);
 
   menuitem3_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem3), menuitem3_menu);
 
   msh = gtk_menu_item_new_with_mnemonic ("MSH2");
-  gtk_widget_show (msh);
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), msh);
   g_signal_connect_swapped(msh, "activate", G_CALLBACK(yui_msh_new), window1);
 
   ssh = gtk_menu_item_new_with_mnemonic ("SSH2");
-  gtk_widget_show (ssh);
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), ssh);
   g_signal_connect_swapped(ssh, "activate", G_CALLBACK(yui_ssh_new), window1);
 
@@ -178,7 +169,6 @@ GtkWidget* create_menu(YuiWindow * window1) {
   g_signal_connect_swapped(memory, "activate", G_CALLBACK(yui_mem_new), window1);
 
   menuitem4 = gtk_menu_item_new_with_mnemonic ("_Help");
-  gtk_widget_show (menuitem4);
   gtk_container_add (GTK_CONTAINER (menubar1), menuitem4);
 
   menuitem4_menu = gtk_menu_new ();

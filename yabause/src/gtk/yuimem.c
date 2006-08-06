@@ -35,11 +35,40 @@ static void yui_mem_class_init (YuiMemClass * klass) {
 }
 
 static void yui_mem_init (YuiMem * yv) {
+	GtkWidget * entry;
+	GtkWidget * combo;
+	GtkWidget * view;
+	GtkWidget * scroll;
+	GtkListStore * store;
+	GtkCellRenderer *renderer;
+	GtkTreeViewColumn *column;
+
 	gtk_window_set_title(GTK_WINDOW(yv), "Memory dump");
 
 	yv->vbox = gtk_vbox_new(FALSE, 2);
 	gtk_container_set_border_width(GTK_CONTAINER(yv->vbox), 4);
+	gtk_box_set_spacing(GTK_BOX(yv->vbox), 4);
 	gtk_container_add(GTK_CONTAINER(yv), yv->vbox);
+
+	entry = gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(yv->vbox), entry, FALSE, FALSE, 0);
+
+	combo = gtk_combo_box_new();
+	gtk_box_pack_start(GTK_BOX(yv->vbox), combo, FALSE, FALSE, 0);
+
+	store = gtk_list_store_new(1, G_TYPE_STRING);
+	view = gtk_tree_view_new_with_model(GTK_TREE_MODEL (store));
+
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes("Address", renderer, "text", 0, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes("Dump", renderer, "text", 0, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
+	scroll = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(scroll), view);
+	gtk_box_pack_start(GTK_BOX(yv->vbox), scroll, TRUE, TRUE, 0);
 
 	g_signal_connect(G_OBJECT(yv), "delete-event", GTK_SIGNAL_FUNC(yui_mem_destroy), NULL);
 
