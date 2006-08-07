@@ -6,6 +6,12 @@
 #include "yuiinputentry.h"
 #include "yuiresolution.h"
 
+YuiRangeItem sh2interpreters[] = {
+  { "0", "Fast Interpreter" },
+  { "1", "Debug Interpreter" },
+  { 0, 0 }
+};
+
 YuiRangeItem regions[] = {
 	{ "Auto" , "Auto-detect" },
 	{ "J" , "Japan" },
@@ -56,6 +62,22 @@ YuiRangeItem sndcores[] = {
 const gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", "Start", 0 };
 const gchar * keys2[] = { "A", "B", "C", "X", "Y", "Z", 0 };
 
+YuiPageItem regionitems[] = {
+	{ "Region", YUI_RANGE_SETTING, regions },
+	{ 0, 0 }
+};
+
+YuiPageItem sh2items[] = {
+	{ "SH2Int", YUI_RANGE_SETTING, sh2interpreters },
+	{ 0, 0 }
+};
+
+YuiPageDesc advanced_desc[] = {
+  { "<b>Region</b>", regionitems },
+  { "<b>SH2 Interpreter</b>", sh2items },
+  { 0, 0}
+};
+  
 YuiPageItem biositems[] = {
 	{ "BiosPath", YUI_FILE_SETTING, 0 },
 	{ 0, 0 }
@@ -67,15 +89,9 @@ YuiPageItem cditems[] = {
 	{ 0, 0 }
 };
 
-YuiPageItem regionitems[] = {
-	{ "Region", YUI_RANGE_SETTING, regions },
-	{ 0, 0 }
-};
-
 YuiPageDesc general_desc[] = {
 	{ "<b>Bios</b>", biositems },
 	{ "<b>Cdrom</b>", cditems },
-	{ "<b>Region</b>", regionitems },
 	{ 0, 0}
 };
 
@@ -135,7 +151,7 @@ create_dialog1 (void)
   GtkWidget *table5;
   GtkWidget *button11;
   GtkWidget *button12;
-  GtkWidget * general, * video_sound, * cart_memory;
+  GtkWidget * general, * video_sound, * cart_memory, *advanced;
 
   dialog1 = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog1), "Yabause configuration");
@@ -187,6 +203,14 @@ create_dialog1 (void)
   gtk_box_pack_start (GTK_BOX (hbox22), table5, TRUE, TRUE, 0);
 
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), vbox17, gtk_label_new ("Input"));
+
+  /*
+   * Cart/Memory configuration
+   */
+
+  advanced = yui_page_new(keyfile, "General", advanced_desc);
+  
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), advanced, gtk_label_new ("Advanced"));
 
   /*
    * Dialog buttons

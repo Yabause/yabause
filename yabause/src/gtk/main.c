@@ -133,6 +133,7 @@ void yui_settings_load(void) {
 	yinit.buppath = g_strdup(g_key_file_get_value(keyfile, "General", "BackupRamPath", 0));
 	if (yinit.mpegpath)
 		g_free(yinit.mpegpath);
+	yinit.sh2coretype = g_key_file_get_integer(keyfile, "General", "SH2Int", 0);
 	yinit.mpegpath = g_strdup(g_key_file_get_value(keyfile, "General", "MpegRomPath", 0));
 	yinit.carttype = g_key_file_get_integer(keyfile, "General", "CartType", 0);
 	yinit.vidcoretype = g_key_file_get_integer(keyfile, "General", "VideoCore", 0);
