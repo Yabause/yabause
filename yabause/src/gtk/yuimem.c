@@ -3,9 +3,11 @@
 #include "yuimem.h"
 #include "settings.h"
 
-static void yui_mem_class_init	(YuiMemClass * klass);
-static void yui_mem_init	(YuiMem      * yfe);
-static void yui_mem_clear(YuiMem * vdp1);
+static void yui_mem_class_init		(YuiMemClass * klass);
+static void yui_mem_init		(YuiMem      * yfe);
+static void yui_mem_clear		(YuiMem * vdp1);
+static void yui_mem_address_changed	(GtkWidget * w, YuiMem * ym);
+static void yui_mem_update		(YuiMem * ym);
 
 GType yui_mem_get_type (void) {
   static GType yfe_type = 0;
@@ -39,9 +41,8 @@ static void yui_mem_init (YuiMem * yv) {
 	GtkWidget * combo;
 	GtkWidget * view;
 	GtkWidget * scroll;
-	GtkListStore * store;
-	GtkCellRenderer *renderer;
-	GtkTreeViewColumn *column;
+	GtkCellRenderer * renderer;
+	GtkTreeViewColumn * column;
 
 	gtk_window_set_title(GTK_WINDOW(yv), "Memory dump");
 
@@ -51,19 +52,20 @@ static void yui_mem_init (YuiMem * yv) {
 	gtk_container_add(GTK_CONTAINER(yv), yv->vbox);
 
 	entry = gtk_entry_new();
+	g_signal_connect(entry, "changed", G_CALLBACK(yui_mem_address_changed), yv);
 	gtk_box_pack_start(GTK_BOX(yv->vbox), entry, FALSE, FALSE, 0);
 
 	combo = gtk_combo_box_new();
 	gtk_box_pack_start(GTK_BOX(yv->vbox), combo, FALSE, FALSE, 0);
 
-	store = gtk_list_store_new(1, G_TYPE_STRING);
-	view = gtk_tree_view_new_with_model(GTK_TREE_MODEL (store));
+	yv->store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+	view = gtk_tree_view_new_with_model(GTK_TREE_MODEL (yv->store));
 
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes("Address", renderer, "text", 0, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
 	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes("Dump", renderer, "text", 0, NULL);
+	column = gtk_tree_view_column_new_with_attributes("Dump", renderer, "text", 1, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
 	scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -75,6 +77,8 @@ static void yui_mem_init (YuiMem * yv) {
 	yv->hbox = gtk_hbutton_box_new();
 	gtk_box_set_spacing(GTK_BOX(yv->hbox), 4);
 	gtk_box_pack_start(GTK_BOX(yv->vbox ), yv->hbox, FALSE, FALSE, 4);
+
+	yv->address = 0;
 }
 
 static gulong paused_handler;
@@ -115,9 +119,6 @@ GtkWidget * yui_mem_new(YuiWindow * y) {
 	return dialog;
 }
 
-void yui_mem_update(YuiMem * vdp1) {
-}
-
 void yui_mem_destroy(YuiMem * vdp1) {
 	g_signal_handler_disconnect(yui, running_handler);
 	g_signal_handler_disconnect(yui, paused_handler);
@@ -126,4 +127,23 @@ void yui_mem_destroy(YuiMem * vdp1) {
 }
 
 static void yui_mem_clear(YuiMem * vdp1) {
+}
+
+static void yui_mem_address_changed(GtkWidget * w, YuiMem * ym) {
+	sscanf(gtk_entry_get_text(GTK_ENTRY(w)), "%x", &ym->address);
+	yui_mem_update(ym);
+}
+
+static void yui_mem_update(YuiMem * ym) {
+	int i;
+	GtkTreeIter iter;
+	char address[10];
+
+	gtk_list_store_clear(ym->store);
+
+	for(i = 0;i < 6;i++) {
+		sprintf(address, "%08x", ym->address + (8 * i));
+		gtk_list_store_append(ym->store, &iter);
+		gtk_list_store_set(GTK_LIST_STORE(ym->store ), &iter, 0, address, 1, "0", -1);
+	}
 }

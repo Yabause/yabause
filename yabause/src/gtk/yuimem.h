@@ -24,6 +24,10 @@ struct _YuiMem
 
   GtkWidget * vbox;
   GtkWidget * hbox;
+
+  GtkListStore * store;
+
+  guint32 address;
 };
 
 struct _YuiMemClass
@@ -36,7 +40,6 @@ struct _YuiMemClass
 GType		yui_mem_get_type(void);
 GtkWidget *	yui_mem_new	(YuiWindow * yui);
 void		yui_mem_fill	(YuiMem * vdp1);
-void		yui_mem_update	(YuiMem * vdp1);
 void		yui_mem_destroy	(YuiMem * vdp1);
 
 G_END_DECLS
