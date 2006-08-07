@@ -38,7 +38,6 @@ static void yui_mem_class_init (YuiMemClass * klass) {
 
 static void yui_mem_init (YuiMem * yv) {
 	GtkWidget * entry;
-	GtkWidget * combo;
 	GtkWidget * view;
 	GtkWidget * scroll;
 	GtkCellRenderer * renderer;
@@ -52,11 +51,8 @@ static void yui_mem_init (YuiMem * yv) {
 	gtk_container_add(GTK_CONTAINER(yv), yv->vbox);
 
 	entry = gtk_entry_new();
-	g_signal_connect(entry, "changed", G_CALLBACK(yui_mem_address_changed), yv);
+	g_signal_connect(entry, "activate", G_CALLBACK(yui_mem_address_changed), yv);
 	gtk_box_pack_start(GTK_BOX(yv->vbox), entry, FALSE, FALSE, 0);
-
-	combo = gtk_combo_box_new();
-	gtk_box_pack_start(GTK_BOX(yv->vbox), combo, FALSE, FALSE, 0);
 
 	yv->store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
 	view = gtk_tree_view_new_with_model(GTK_TREE_MODEL (yv->store));
@@ -135,15 +131,20 @@ static void yui_mem_address_changed(GtkWidget * w, YuiMem * ym) {
 }
 
 static void yui_mem_update(YuiMem * ym) {
-	int i;
+	int i, j;
 	GtkTreeIter iter;
 	char address[10];
+	char dump[30];
 
 	gtk_list_store_clear(ym->store);
 
 	for(i = 0;i < 6;i++) {
 		sprintf(address, "%08x", ym->address + (8 * i));
+		for(j = 0;j < 8;j++) {
+			sprintf(dump + (j * 3), "%02x ", MappedMemoryReadByte(ym->address + (8 * i) + j));
+		}
+
 		gtk_list_store_append(ym->store, &iter);
-		gtk_list_store_set(GTK_LIST_STORE(ym->store ), &iter, 0, address, 1, "0", -1);
+		gtk_list_store_set(GTK_LIST_STORE(ym->store ), &iter, 0, address, 1, dump, -1);
 	}
 }
