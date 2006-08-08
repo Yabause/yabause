@@ -46,8 +46,12 @@ struct _YuiMem
   GtkWidget * hbox;
 
   GtkListStore * store;
+  GtkWidget *entry, *quickCombo;
 
+  guint wLine;
   guint32 address;
+  gulong paused_handler;
+  gulong running_handler;
 };
 
 struct _YuiMemClass
