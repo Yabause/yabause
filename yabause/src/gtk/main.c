@@ -1,5 +1,6 @@
 /*  Copyright 2006 Guillaume Duhamel
     Copyright 2006 Fabien Coulon
+    Copyright 2005 Joost Peters
 
     This file is part of Yabause.
 
@@ -170,6 +171,9 @@ void yui_settings_load(void) {
 }
 
 int main(int argc, char *argv[]) {
+#ifndef NO_CLI
+	int i;
+#endif
 	LogStart();
 	inifile = g_build_filename(g_get_home_dir(), ".yabause.ini", NULL);
 	
@@ -183,6 +187,57 @@ int main(int argc, char *argv[]) {
 	yui = yui_new();
 
 	yui_settings_load();
+
+#ifndef NO_CLI
+   //handle command line arguments
+   for (i = 1; i < argc; ++i) {
+      if (argv[i]) {
+         //show usage
+         if (0 == strcmp(argv[i], "-h") || 0 == strcmp(argv[i], "-?") || 0 == strcmp(argv[i], "--help")) {
+            print_usage(argv[0]);
+            return 0;
+         }
+			
+         //set bios
+         if (0 == strcmp(argv[i], "-b") && argv[i + 1]) {
+	    if (yinit.biospath)
+	       g_free(yinit.biospath);
+	    yinit.biospath = g_strdup(argv[i + 1]);
+	 } else if (strstr(argv[i], "--bios=")) {
+	    if (yinit.biospath)
+	       g_free(yinit.biospath);
+	    yinit.biospath =  g_strdup(argv[i] + strlen("--bios="));
+	 }
+         //set iso
+         else if (0 == strcmp(argv[i], "-i") && argv[i + 1]) {
+	    if (yinit.cdpath)
+		g_free(yinit.cdpath);
+	    yinit.cdpath = g_strdup(argv[i + 1]);
+	    yinit.cdcoretype = 1;
+	 } else if (strstr(argv[i], "--iso=")) {
+	    if (yinit.cdpath)
+		g_free(yinit.cdpath);
+	    yinit.cdpath = g_strdup(argv[i] + strlen("--iso="));
+	    yinit.cdcoretype = 1;
+	 }
+         //set cdrom
+	 else if (0 == strcmp(argv[i], "-c") && argv[i + 1]) {
+	    if (yinit.cdpath)
+		g_free(yinit.cdpath);
+	    yinit.cdpath = g_strdup(argv[i + 1]);
+	    yinit.cdcoretype = 2;
+	 } else if (strstr(argv[i], "--cdrom=")) {
+	    if (yinit.cdpath)
+		g_free(yinit.cdpath);
+	    yinit.cdpath = g_strdup(argv[i] + strlen("--cdrom="));
+	    yinit.cdcoretype = 2;
+	 }
+         // Set sound
+         else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0)
+	    yinit.sndcoretype = 0;
+      }
+   }
+#endif
 
 	gtk_main ();
 

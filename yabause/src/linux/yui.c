@@ -1,5 +1,4 @@
 /*  Copyright 2004-2005 Guillaume Duhamel
-    Copyright 2005 Joost Peters
     Copyright 2005 Israel Jacques
     Copyright 2005 Fabien Coulon
 
