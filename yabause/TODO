@@ -24,7 +24,6 @@
    - Add a command to dump memory
    - Add a command to execute N instructions
    - Implement a method to trace emulation
-   - Add ability to set memory breakpoints
    - Each cpu should have some ability to return debugging information(e.g. VDP1 should return current commands as text, VDP2 should return screen info, etc.)
 
  (4) OTHER
