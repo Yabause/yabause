@@ -2633,6 +2633,8 @@ int SH2InterpreterInit()
    
    SH2ClearCodeBreakpoints(MSH2);
    SH2ClearCodeBreakpoints(SSH2);
+   SH2ClearMemoryBreakpoints(MSH2);
+   SH2ClearMemoryBreakpoints(SSH2);
    MSH2->breakpointEnabled = 0;
    SSH2->breakpointEnabled = 0;  
    

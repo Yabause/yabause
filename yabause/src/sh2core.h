@@ -1,5 +1,5 @@
 /*  Copyright 2003-2005 Guillaume Duhamel
-    Copyright 2004-2005 Theo Berkau
+    Copyright 2004-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -22,6 +22,7 @@
 #define SH2_H
 
 #include "core.h"
+#include "memory.h"
 
 #define SH2CORE_DEFAULT     -1
 #define MAX_INTERRUPTS 50
@@ -254,7 +255,26 @@ typedef struct
   u32 addr;
 } codebreakpoint_struct;
 
+typedef struct
+{
+  u32 addr;
+  u32 flags;
+  readbytefunc oldreadbyte;
+  readwordfunc oldreadword;
+  readlongfunc oldreadlong;
+  writebytefunc oldwritebyte;
+  writewordfunc oldwriteword;
+  writelongfunc oldwritelong;
+} memorybreakpoint_struct;
+
 #define MAX_BREAKPOINTS 10
+
+#define BREAK_BYTEREAD  0x1
+#define BREAK_WORDREAD  0x2
+#define BREAK_LONGREAD  0x4
+#define BREAK_BYTEWRITE 0x8
+#define BREAK_WORDWRITE 0x10
+#define BREAK_LONGWRITE 0x20
 
 typedef struct
 {
@@ -287,6 +307,8 @@ typedef struct
    u8 breakpointEnabled;
    codebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
    int numcodebreakpoints;
+   memorybreakpoint_struct memorybreakpoint[MAX_BREAKPOINTS];
+   int nummemorybreakpoints;
    void (*BreakpointCallBack)(void *, u32);
    int inbreakpoint;
 } SH2_struct;
@@ -334,6 +356,11 @@ static INLINE void SH2HandleBreakpoints(SH2_struct *context)
       }
    }
 }
+
+int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags);
+int SH2DelMemoryBreakpoint(SH2_struct *context, u32 addr);
+memorybreakpoint_struct *SH2GetMemoryBreakpointList(SH2_struct *context);
+void SH2ClearMemoryBreakpoints(SH2_struct *context);
 
 void DMAExec(void);
 void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);

@@ -34,6 +34,8 @@ extern SH2Interface_struct *SH2CoreList[];
 void OnchipReset(SH2_struct *context);
 void FRTExec(u32 cycles);
 void WDTExec(u32 cycles);
+u8 SCIReceiveByte(void);
+void SCITransmitByte(u8);
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -323,6 +325,355 @@ void SH2ClearCodeBreakpoints(SH2_struct *context) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
+   int i;
+
+   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+   {
+      CurrentSH2->inbreakpoint = 1;
+      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+      CurrentSH2->inbreakpoint = 0;
+   }
+
+   for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
+   {
+      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
+          ((addr >> 16) & 0xFFF))
+         return CurrentSH2->memorybreakpoint[i].oldreadbyte(addr);
+   }
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
+   int i;
+
+   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+   {
+      CurrentSH2->inbreakpoint = 1;
+      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+      CurrentSH2->inbreakpoint = 0;
+   }
+
+   for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
+   {
+      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
+          ((addr >> 16) & 0xFFF))
+         return CurrentSH2->memorybreakpoint[i].oldreadword(addr);
+   }
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
+   int i;
+
+   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+   {
+      CurrentSH2->inbreakpoint = 1;
+      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+      CurrentSH2->inbreakpoint = 0;
+   }
+
+   for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
+   {
+      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
+          ((addr >> 16) & 0xFFF))
+         return CurrentSH2->memorybreakpoint[i].oldreadlong(addr);
+   }
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
+   int i;
+
+   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+   {
+      CurrentSH2->inbreakpoint = 1;
+      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+      CurrentSH2->inbreakpoint = 0;
+   }
+
+   for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
+   {
+      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
+          ((addr >> 16) & 0xFFF))
+      {
+         CurrentSH2->memorybreakpoint[i].oldwritebyte(addr, val);
+         break;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
+   int i;
+
+   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+   {
+      CurrentSH2->inbreakpoint = 1;
+      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+      CurrentSH2->inbreakpoint = 0;
+   }
+
+   for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
+   {
+      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
+          ((addr >> 16) & 0xFFF))
+      {
+         CurrentSH2->memorybreakpoint[i].oldwriteword(addr, val);
+         break;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
+   int i;
+
+   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+   {
+      CurrentSH2->inbreakpoint = 1;
+      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+      CurrentSH2->inbreakpoint = 0;
+   }
+
+   for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
+   {
+      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
+          ((addr >> 16) & 0xFFF))
+      {
+         CurrentSH2->memorybreakpoint[i].oldwritelong(addr, val);
+         break;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int CheckForMemoryBreakpointDupes(SH2_struct *context, u32 addr, u32 flag, int *which)
+{
+   int i;
+
+   for (i = 0; i < context->nummemorybreakpoints; i++)
+   {
+      if (((context->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
+          ((addr >> 16) & 0xFFF))
+      {
+         // See it actually was using the same operation flag
+         if (context->memorybreakpoint[i].flags & flag)
+         {
+            *which = i;
+            return 1;
+         }
+      }                
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags) {
+   int which;
+
+   if (context->nummemorybreakpoints < MAX_BREAKPOINTS) {
+      // Only regular addresses are supported at this point(Sorry, no onchip!)
+      switch (addr >> 29) {
+         case 0x0:
+         case 0x1:
+         case 0x5:
+            break;
+         default:
+            return -1;
+      }
+
+      context->memorybreakpoint[context->nummemorybreakpoints].addr = addr;
+      context->memorybreakpoint[context->nummemorybreakpoints].flags = flags;
+
+      context->memorybreakpoint[context->nummemorybreakpoints].oldreadbyte = ReadByteList[(addr >> 16) & 0xFFF];
+      context->memorybreakpoint[context->nummemorybreakpoints].oldreadword = ReadWordList[(addr >> 16) & 0xFFF];
+      context->memorybreakpoint[context->nummemorybreakpoints].oldreadlong = ReadLongList[(addr >> 16) & 0xFFF];
+      context->memorybreakpoint[context->nummemorybreakpoints].oldwritebyte = WriteByteList[(addr >> 16) & 0xFFF];
+      context->memorybreakpoint[context->nummemorybreakpoints].oldwriteword = WriteWordList[(addr >> 16) & 0xFFF];
+      context->memorybreakpoint[context->nummemorybreakpoints].oldwritelong = WriteLongList[(addr >> 16) & 0xFFF];
+
+      if (flags & BREAK_BYTEREAD)
+      {
+         // Make sure function isn't already being breakpointed by another breakpoint
+         if (!CheckForMemoryBreakpointDupes(context, addr, BREAK_BYTEREAD, &which))
+         {
+            LOG("Added SH2MemoryBreakpointReadByte to break list for %08X\n", addr);
+            ReadByteList[(addr >> 16) & 0xFFF] = &SH2MemoryBreakpointReadByte;
+         }
+         else
+            // fix old memory access function
+            context->memorybreakpoint[context->nummemorybreakpoints].oldreadbyte = context->memorybreakpoint[which].oldreadbyte;
+      }
+
+      if (flags & BREAK_WORDREAD)
+      {
+         // Make sure function isn't already being breakpointed by another breakpoint
+         if (!CheckForMemoryBreakpointDupes(context, addr, BREAK_WORDREAD, &which))
+            ReadWordList[(addr >> 16) & 0xFFF] = &SH2MemoryBreakpointReadWord;
+         else
+            // fix old memory access function
+            context->memorybreakpoint[context->nummemorybreakpoints].oldreadword = context->memorybreakpoint[which].oldreadword;
+      }
+
+      if (flags & BREAK_LONGREAD)
+      {
+         // Make sure function isn't already being breakpointed by another breakpoint
+         if (!CheckForMemoryBreakpointDupes(context, addr, BREAK_LONGREAD, &which))
+            ReadLongList[(addr >> 16) & 0xFFF] = &SH2MemoryBreakpointReadLong;
+         else
+            // fix old memory access function
+            context->memorybreakpoint[context->nummemorybreakpoints].oldreadword = context->memorybreakpoint[which].oldreadword;
+      }
+
+      if (flags & BREAK_BYTEWRITE)
+      {
+         // Make sure function isn't already being breakpointed by another breakpoint
+         if (!CheckForMemoryBreakpointDupes(context, addr, BREAK_BYTEWRITE, &which))
+            WriteByteList[(addr >> 16) & 0xFFF] = &SH2MemoryBreakpointWriteByte;
+         else
+            // fix old memory access function
+            context->memorybreakpoint[context->nummemorybreakpoints].oldwritebyte = context->memorybreakpoint[which].oldwritebyte;
+      }
+
+      if (flags & BREAK_WORDWRITE)
+      {
+         // Make sure function isn't already being breakpointed by another breakpoint
+         if (!CheckForMemoryBreakpointDupes(context, addr, BREAK_WORDWRITE, &which))
+            WriteWordList[(addr >> 16) & 0xFFF] = &SH2MemoryBreakpointWriteWord;
+         else
+            // fix old memory access function
+            context->memorybreakpoint[context->nummemorybreakpoints].oldwriteword = context->memorybreakpoint[which].oldwriteword;
+      }
+
+      if (flags & BREAK_LONGWRITE)
+      {
+         // Make sure function isn't already being breakpointed by another breakpoint
+         if (!CheckForMemoryBreakpointDupes(context, addr, BREAK_LONGWRITE, &which))
+            WriteLongList[(addr >> 16) & 0xFFF] = &SH2MemoryBreakpointWriteLong;
+         else
+            // fix old memory access function
+            context->memorybreakpoint[context->nummemorybreakpoints].oldwritelong = context->memorybreakpoint[which].oldwritelong;
+      }
+
+      context->nummemorybreakpoints++;
+
+      return 0;
+   }
+
+   return -1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2SortMemoryBreakpoints(SH2_struct *context) {
+   int i, i2;
+   memorybreakpoint_struct tmp;
+
+   for (i = 0; i < (MAX_BREAKPOINTS-1); i++)
+   {
+      for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
+      {
+         if (context->memorybreakpoint[i].addr == 0xFFFFFFFF &&
+             context->memorybreakpoint[i2].addr != 0xFFFFFFFF)
+         {
+            memcpy(&tmp, context->memorybreakpoint+i, sizeof(memorybreakpoint_struct));
+            memcpy(context->memorybreakpoint+i, context->memorybreakpoint+i2, sizeof(memorybreakpoint_struct));
+            memcpy(context->memorybreakpoint+i2, &tmp, sizeof(memorybreakpoint_struct));
+         }
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SH2DelMemoryBreakpoint(SH2_struct *context, u32 addr) {
+   int i, i2;
+
+   if (context->nummemorybreakpoints > 0) {
+      for (i = 0; i < context->nummemorybreakpoints; i++) {
+         if (context->memorybreakpoint[i].addr == addr)
+         {
+            // Remove memory access piggyback function to memory access function table
+
+            // Make sure no other breakpoints need the breakpoint functions first
+            for (i2 = 0; i2 < context->nummemorybreakpoints; i2++)
+            {
+               if (((context->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
+                   ((context->memorybreakpoint[i2].addr >> 16) & 0xFFF) &&
+                   i != i2)
+               {
+                  // Clear the flags
+                  context->memorybreakpoint[i].flags &= ~context->memorybreakpoint[i2].flags;
+               }                
+            }
+            
+            if (context->memorybreakpoint[i].flags & BREAK_BYTEREAD)
+               ReadByteList[(addr >> 16) & 0xFFF] = context->memorybreakpoint[i].oldreadbyte;
+
+            if (context->memorybreakpoint[i].flags & BREAK_WORDREAD)
+               ReadWordList[(addr >> 16) & 0xFFF] = context->memorybreakpoint[i].oldreadword;
+
+            if (context->memorybreakpoint[i].flags & BREAK_LONGREAD)
+               ReadLongList[(addr >> 16) & 0xFFF] = context->memorybreakpoint[i].oldreadlong;
+
+            if (context->memorybreakpoint[i].flags & BREAK_BYTEWRITE)
+               WriteByteList[(addr >> 16) & 0xFFF] = context->memorybreakpoint[i].oldwritebyte;
+
+            if (context->memorybreakpoint[i].flags & BREAK_WORDWRITE)
+               WriteWordList[(addr >> 16) & 0xFFF] = context->memorybreakpoint[i].oldwriteword;
+
+            if (context->memorybreakpoint[i].flags & BREAK_LONGWRITE)
+               WriteLongList[(addr >> 16) & 0xFFF] = context->memorybreakpoint[i].oldwritelong;
+
+            context->memorybreakpoint[i].addr = 0xFFFFFFFF;
+            SH2SortMemoryBreakpoints(context);
+            context->nummemorybreakpoints--;
+            return 0;
+         }
+      }
+   }
+
+   return -1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+memorybreakpoint_struct *SH2GetMemoryBreakpointList(SH2_struct *context) {
+   return context->memorybreakpoint;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2ClearMemoryBreakpoints(SH2_struct *context) {
+   int i;
+   for (i = 0; i < MAX_BREAKPOINTS; i++)
+   {
+      context->memorybreakpoint[i].addr = 0xFFFFFFFF;
+      context->memorybreakpoint[i].flags = 0;
+      context->memorybreakpoint[i].oldreadbyte = NULL;
+      context->memorybreakpoint[i].oldreadword = NULL;
+      context->memorybreakpoint[i].oldreadlong = NULL;
+      context->memorybreakpoint[i].oldwritebyte = NULL;
+      context->memorybreakpoint[i].oldwriteword = NULL;
+      context->memorybreakpoint[i].oldwritelong = NULL;
+   }
+   context->nummemorybreakpoints = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // Onchip specific
 //////////////////////////////////////////////////////////////////////////////
 
@@ -385,8 +736,39 @@ void OnchipReset(SH2_struct *context) {
 u8 FASTCALL OnchipReadByte(u32 addr) {
    switch(addr)
    {
+      case 0x000:
+//         LOG("Serial Mode Register read: %02X\n", CurrentSH2->onchip.SMR);
+         return CurrentSH2->onchip.SMR;
+      case 0x001:
+//         LOG("Bit Rate Register read: %02X\n", CurrentSH2->onchip.BRR);
+         return CurrentSH2->onchip.BRR;
+      case 0x002:
+//         LOG("Serial Control Register read: %02X\n", CurrentSH2->onchip.SCR);
+         return CurrentSH2->onchip.SCR;
+      case 0x003:
+//         LOG("Transmit Data Register read: %02X\n", CurrentSH2->onchip.TDR);
+         return CurrentSH2->onchip.TDR;
       case 0x004:
+//         LOG("Serial Status Register read: %02X\n", CurrentSH2->onchip.SSR);
+
+/*
+         // if Receiver is enabled, clear SSR's TDRE bit, set SSR's RDRF and update RDR.
+
+         if (CurrentSH2->onchip.SCR & 0x10)
+         {
+            CurrentSH2->onchip.RDR = SCIReceiveByte();
+            CurrentSH2->onchip.SSR = (CurrentSH2->onchip.SSR & 0x7F) | 0x40;
+         }
+         // if Transmitter is enabled, clear SSR's RDRF bit, and set SSR's TDRE bit.
+         else if (CurrentSH2->onchip.SCR & 0x20)
+         {
+            CurrentSH2->onchip.SSR = (CurrentSH2->onchip.SSR & 0xBF) | 0x80;
+         }
+*/
          return CurrentSH2->onchip.SSR;
+      case 0x005:
+//         LOG("Receive Data Register read: %02X PC = %08X\n", CurrentSH2->onchip.RDR, CurrentSH2->regs.PC);
+         return CurrentSH2->onchip.RDR;
       case 0x011:
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
@@ -476,6 +858,41 @@ u32 FASTCALL OnchipReadLong(u32 addr) {
 
 void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
    switch(addr) {
+      case 0x000:
+//         LOG("Serial Mode Register write: %02X\n", val);
+         CurrentSH2->onchip.SMR = val;
+         return;
+      case 0x001:
+//         LOG("Bit Rate Register write: %02X\n", val);
+         CurrentSH2->onchip.BRR = val;
+         return;
+      case 0x002:
+//         LOG("Serial Control Register write: %02X\n", val);
+
+         // If Transmitter is getting disabled, set TDRE
+         if (!(val & 0x20))
+            CurrentSH2->onchip.SSR |= 0x80;
+
+         CurrentSH2->onchip.SCR = val;
+         return;
+      case 0x003:
+//         LOG("Transmit Data Register write: %02X. PC = %08X\n", val, CurrentSH2->regs.PC);
+         CurrentSH2->onchip.TDR = val;
+         return;
+      case 0x004:
+//         LOG("Serial Status Register write: %02X\n", val);
+         
+         if (CurrentSH2->onchip.SCR & 0x20)
+         {
+            // Transmitter Mode
+
+            // If the TDRE bit cleared, let's do a transfer
+            if (!(val & 0x80))
+               SCITransmitByte(CurrentSH2->onchip.TDR);
+
+            // Generate an interrupt if need be here
+         }
+         return;
       case 0x010:
          CurrentSH2->onchip.TIER = (val & 0x8E) | 0x1;
          return;
@@ -1138,6 +1555,19 @@ void FASTCALL SSH2InputCaptureWriteWord(u32 addr, u16 data)
    // Time for an Interrupt?
    if (SSH2->onchip.TIER & 0x80)
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// SCI Specific
+//////////////////////////////////////////////////////////////////////////////
+
+u8 SCIReceiveByte(void) {
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SCITransmitByte(u8 val) {
 }
 
 //////////////////////////////////////////////////////////////////////////////

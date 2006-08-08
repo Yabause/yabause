@@ -342,6 +342,22 @@ extern u8 *LowWram;
 extern u8 *BiosRom;
 extern u8 *BupRam;
 
+typedef void (FASTCALL *writebytefunc)(u32, u8);
+typedef void (FASTCALL *writewordfunc)(u32, u16);
+typedef void (FASTCALL *writelongfunc)(u32, u32);
+
+typedef u8 (FASTCALL *readbytefunc)(u32);
+typedef u16 (FASTCALL *readwordfunc)(u32);
+typedef u32 (FASTCALL *readlongfunc)(u32);
+
+extern writebytefunc WriteByteList[0x1000];
+extern writewordfunc WriteWordList[0x1000];
+extern writelongfunc WriteLongList[0x1000];
+
+extern readbytefunc ReadByteList[0x1000];
+extern readwordfunc ReadWordList[0x1000];
+extern readlongfunc ReadLongList[0x1000];
+
 int MappedMemoryLoad(const char *filename, u32 addr);
 int MappedMemorySave(const char *filename, u32 addr, u32 size);
 void MappedMemoryLoadExec(const char *filename, u32 pc);

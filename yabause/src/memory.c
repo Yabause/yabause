@@ -36,21 +36,13 @@
 
 //////////////////////////////////////////////////////////////////////////////
 
-typedef void (FASTCALL *writebytefunc)(u32, u8);
-typedef void (FASTCALL *writewordfunc)(u32, u16);
-typedef void (FASTCALL *writelongfunc)(u32, u32);
+writebytefunc WriteByteList[0x1000];
+writewordfunc WriteWordList[0x1000];
+writelongfunc WriteLongList[0x1000];
 
-typedef u8 (FASTCALL *readbytefunc)(u32);
-typedef u16 (FASTCALL *readwordfunc)(u32);
-typedef u32 (FASTCALL *readlongfunc)(u32);
-
-static writebytefunc WriteByteList[0x1000];
-static writewordfunc WriteWordList[0x1000];
-static writelongfunc WriteLongList[0x1000];
-
-static readbytefunc ReadByteList[0x1000];
-static readwordfunc ReadWordList[0x1000];
-static readlongfunc ReadLongList[0x1000];
+readbytefunc ReadByteList[0x1000];
+readwordfunc ReadWordList[0x1000];
+readlongfunc ReadLongList[0x1000];
 
 u8 *HighWram;
 u8 *LowWram;
