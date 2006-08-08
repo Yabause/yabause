@@ -65,13 +65,9 @@ case $target in
 
 		if test ! x$HAVE_PKG = x ; then
 			if `$HAVE_PKG gtkglext-1.0` ; then
-				yabause_yui="linux gtk"
+				yabause_yui="gtk"
 				GTK_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
 				GTK_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
-			else
-				yabause_yui="linux"
-				GTK_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
-				GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
 			fi
 		fi
 		YAB_CFLAGS="$CFLAGS $GTK_CFLAGS"
@@ -102,7 +98,6 @@ AC_CONFIG_FILES([Makefile
 	src/carbon/Makefile
 	src/dreamcast/Makefile
 	src/gtk/Makefile
-	src/linux/Makefile
 	src/windows/Makefile
 	autopackage/default.apspec
 ])
