@@ -101,11 +101,16 @@ GtkWidget * yui_vdp2_new(YuiWindow * y) {
 	GtkWidget * dialog;
 	YuiVdp2 * yv;
 
-	dialog = GTK_WIDGET(g_object_new(yui_vdp2_get_type(), NULL));
-	yv = YUI_VDP2(dialog);
-
 	yui = y;
 
+	if (!( yui->state & YUI_IS_INIT )) {
+	  yui_window_run(dialog, yui);
+	  yui_window_pause(dialog, yui);
+	}
+	
+	dialog = GTK_WIDGET(g_object_new(yui_vdp2_get_type(), NULL));
+	yv = YUI_VDP2(dialog);	
+	
 	{
 		GtkWidget * but2, * but3, * but4, * hbox;
 

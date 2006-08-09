@@ -37,6 +37,10 @@ static void yui_sh_editedBp( GtkCellRendererText *cellrenderertext,
 			     gchar *arg1,
 			     gchar *arg2,
 			     YuiSh *sh2);
+static void yui_sh_editedMbp( GtkCellRendererText *cellrenderertext,
+			     gchar *arg1,
+			     gchar *arg2,
+			      YuiSh *sh2);
 static void yui_sh_step( GtkWidget* widget, YuiSh * sh2 );
 static void yui_sh_step_over( GtkWidget* widget, YuiSh * sh2 );
 static void SH2BreakpointHandler (SH2_struct *context, u32 addr);
@@ -72,6 +76,8 @@ static void yui_sh_class_init (YuiShClass * klass) {
 }
 
 static void yui_sh_init (YuiSh * sh2) {
+  GtkWidget *vboxBp;
+
   gtk_window_set_title(GTK_WINDOW(sh2), "SH");
   gtk_window_set_resizable( GTK_WINDOW(sh2), FALSE );
 
@@ -116,14 +122,28 @@ static void yui_sh_init (YuiSh * sh2) {
 
   /* breakpoint list */
 
+  vboxBp = gtk_vbox_new(FALSE, 0);
+  gtk_box_pack_start( GTK_BOX( sh2->hboxmain ), vboxBp, FALSE, FALSE, 2 );
+
   sh2->bpListStore = gtk_list_store_new(1,G_TYPE_STRING);
   sh2->bpList = gtk_tree_view_new_with_model( GTK_TREE_MODEL(sh2->bpListStore) );
   sh2->bpListRenderer = gtk_cell_renderer_text_new();
   g_object_set(G_OBJECT(sh2->bpListRenderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL );
-  sh2->bpListColumn = gtk_tree_view_column_new_with_attributes("Breakpoints", sh2->bpListRenderer, "text", 0, NULL);
+  sh2->bpListColumn = gtk_tree_view_column_new_with_attributes("Code breaks", sh2->bpListRenderer, "text", 0, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(sh2->bpList), sh2->bpListColumn);
-  gtk_box_pack_start( GTK_BOX( sh2->hboxmain ), sh2->bpList, FALSE, FALSE, 4 );
+  gtk_box_pack_start( GTK_BOX( vboxBp ), sh2->bpList, FALSE, FALSE, 0 );
   g_signal_connect(G_OBJECT(sh2->bpListRenderer), "edited", GTK_SIGNAL_FUNC(yui_sh_editedBp), sh2 );
+
+  /* memory breakpoint list */
+
+  sh2->mbpListStore = gtk_list_store_new(1,G_TYPE_STRING);
+  sh2->mbpList = gtk_tree_view_new_with_model( GTK_TREE_MODEL(sh2->mbpListStore) );
+  sh2->mbpListRenderer = gtk_cell_renderer_text_new();
+  g_object_set(G_OBJECT(sh2->mbpListRenderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL );
+  sh2->mbpListColumn = gtk_tree_view_column_new_with_attributes("Memory breaks", sh2->mbpListRenderer, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(sh2->mbpList), sh2->mbpListColumn);
+  gtk_box_pack_start( GTK_BOX( vboxBp ), sh2->mbpList, FALSE, FALSE, 0 );
+  g_signal_connect(G_OBJECT(sh2->mbpListRenderer), "edited", GTK_SIGNAL_FUNC(yui_sh_editedMbp), sh2 );
 
   g_signal_connect(G_OBJECT(sh2), "delete-event", GTK_SIGNAL_FUNC(yui_sh_destroy), NULL);
 }
@@ -134,6 +154,7 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   GClosure *closureF7, *closureF8;
   GtkAccelGroup *accelGroup;
   codebreakpoint_struct *cbp;
+  memorybreakpoint_struct *cmbp;
   YuiSh * sh2;
   gint i;
   yui = y;
@@ -167,7 +188,7 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
     gtk_list_store_append( GTK_LIST_STORE( sh2->regListStore ), &iter );
   }	
   
-  cbp = SH2GetBreakpointList(bMaster?MSH2:SSH2);
+  cbp = SH2GetBreakpointList(sh2->debugsh);
   
   for (i = 0; i < MAX_BREAKPOINTS-1; i++) {
     
@@ -182,6 +203,33 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
     } else gtk_list_store_set( GTK_LIST_STORE( sh2->bpListStore ), &iter, 0, "<empty>", -1 );
   } 
 
+  cmbp = SH2GetMemoryBreakpointList(sh2->debugsh);
+
+  for (i = 0; i < MAX_BREAKPOINTS; i++) {
+    
+    GtkTreeIter iter;
+    sh2->cmbp[i] = cmbp[i].addr;
+    sh2->mbpFlags[i] = cmbp[i].flags;
+    gtk_list_store_append( GTK_LIST_STORE( sh2->mbpListStore ), &iter );
+    if (cmbp[i].addr != 0xFFFFFFFF) {
+      
+      gchar tempstr[30];
+      gchar *curs = tempstr+8;
+      u32 flags = sh2->cmbp[i];
+      sprintf(tempstr, "%08X", (int)cbp[i].addr);
+      *(curs++) = ' ';
+      if ( flags & BREAK_BYTEREAD ) *(curs++) = 'b';
+      if ( flags & BREAK_WORDREAD ) *(curs++) = 'w';
+      if ( flags & BREAK_LONGREAD ) *(curs++) = 'l';
+      if ( flags & BREAK_BYTEWRITE ) *(curs++) = 'B';
+      if ( flags & BREAK_WORDWRITE ) *(curs++) = 'W';
+      if ( flags & BREAK_LONGWRITE ) *(curs++) = 'L';
+      *curs = 0;
+       
+      gtk_list_store_set( GTK_LIST_STORE( sh2->mbpListStore ), &iter, 0, tempstr, -1 );
+    } else gtk_list_store_set( GTK_LIST_STORE( sh2->mbpListStore ), &iter, 0, "<empty>", -1 );
+  } 
+  
   {
     GtkWidget * but2, * but3, * but4;
     
@@ -390,6 +438,61 @@ static void yui_sh_editedBp( GtkCellRendererText *cellrenderertext,
     sh2->cbp[i] = addr;
   } else strcpy(bptext,"<empty>");
   gtk_list_store_set( GTK_LIST_STORE( sh2->bpListStore ), &iter, 0, bptext, -1 );
+}
+
+static void yui_sh_editedMbp( GtkCellRendererText *cellrenderertext,
+			     gchar *arg1,
+			     gchar *arg2,
+			      YuiSh *sh2) {
+  /* breakpoint <arg1> has been set to address <arg2> */
+  
+  GtkTreeIter iter;
+  gchar bptext[20] = "<empty>";
+  gchar *curs;
+  gchar *endptr;
+  int i = atoi(arg1);
+  u32 addr;
+  gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( sh2->mbpListStore ), &iter, arg1 );
+  addr = strtol(arg2, &endptr, 16 );
+  if (!addr) addr = 0xFFFFFFFF;
+  if ( sh2->cmbp[i] != 0xFFFFFFFF) SH2DelMemoryBreakpoint(sh2->debugsh, sh2->cmbp[i]);
+  sh2->cmbp[i] = 0xFFFFFFFF;
+  
+  if (addr!=0xFFFFFFFF) {
+    
+    u32 flags = 0;
+    while ( *endptr ) {
+      
+      switch (*endptr) {
+	
+      case 'b': flags |= BREAK_BYTEREAD; break;
+      case 'w': flags |= BREAK_WORDREAD; break;
+      case 'l': flags |= BREAK_LONGREAD; break;
+      case 'B': flags |= BREAK_BYTEWRITE; break;
+      case 'W': flags |= BREAK_WORDWRITE; break;
+      case 'L': flags |= BREAK_LONGWRITE; break;
+      }
+      endptr++;
+    }
+    
+    if ( !flags ) flags = BREAK_BYTEREAD|BREAK_WORDREAD|BREAK_LONGREAD|BREAK_BYTEWRITE|BREAK_WORDWRITE|BREAK_LONGWRITE;
+    if (SH2AddMemoryBreakpoint(sh2->debugsh, addr, flags) == 0) {
+      
+      sprintf(bptext, "%08X", (int)addr);
+      curs = bptext+8; *(curs++) = ' ';
+      if ( flags & BREAK_BYTEREAD ) *(curs++) = 'b';
+      if ( flags & BREAK_WORDREAD ) *(curs++) = 'w';
+      if ( flags & BREAK_LONGREAD ) *(curs++) = 'l';
+      if ( flags & BREAK_BYTEWRITE ) *(curs++) = 'B';
+      if ( flags & BREAK_WORDWRITE ) *(curs++) = 'W';
+      if ( flags & BREAK_LONGWRITE ) *(curs++) = 'L';
+      *curs = 0;
+      
+      sh2->cmbp[i] = addr;
+      sh2->mbpFlags[i] = flags;
+    }
+  }
+  gtk_list_store_set( GTK_LIST_STORE( sh2->mbpListStore ), &iter, 0, bptext, -1 );
 }
 
 static void debugPauseLoop() { /* secondary gtk event loop for the "breakpoint pause" state */

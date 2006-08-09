@@ -114,6 +114,11 @@ GtkWidget * yui_vdp1_new(YuiWindow * y) {
 
 	yui = y;
 
+	if (!( yui->state & YUI_IS_INIT )) {
+	  yui_window_run(dialog, yui);
+	  yui_window_pause(dialog, yui);
+	}
+
 	dialog = GTK_WIDGET(g_object_new(yui_vdp1_get_type(), NULL));
 	yv = YUI_VDP1(dialog);
 

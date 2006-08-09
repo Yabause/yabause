@@ -92,6 +92,7 @@ static void yui_mem_init (YuiMem * yv) {
 	gtk_box_pack_start(GTK_BOX(yv->vbox), hboxTop, FALSE, FALSE, 0);	
 
 	yv->entry = gtk_entry_new();
+	gtk_entry_set_max_length( GTK_ENTRY( yv->entry ), 8 );
 	g_signal_connect(yv->entry, "activate", G_CALLBACK(yui_mem_address_changed), yv);
 	gtk_box_pack_start(GTK_BOX(hboxTop), yv->entry, FALSE, FALSE, 0);
 
@@ -144,6 +145,11 @@ GtkWidget * yui_mem_new(YuiWindow * y) {
 
 	yui = y;
 
+	if (!( yui->state & YUI_IS_INIT )) {
+	  yui_window_run(dialog, yui);
+	  yui_window_pause(dialog, yui);
+	}
+	
 	dialog = GTK_WIDGET(g_object_new(yui_mem_get_type(), NULL));
 	yv = YUI_MEM(dialog);
 
