@@ -1,5 +1,5 @@
 /*  Copyright 2004 Guillaume Duhamel
-    Copyright 2004-2005 Theo Berkau
+    Copyright 2004-2006 Theo Berkau
     Copyright 2005 Joost Peters
 
     This file is part of Yabause.
@@ -985,10 +985,12 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          sh2regs_struct sh2regs;
          codebreakpoint_struct *cbp;
+         memorybreakpoint_struct *mbp;
          char tempstr[10];
          int i;
 
          cbp = SH2GetBreakpointList(debugsh);
+         mbp = SH2GetMemoryBreakpointList(debugsh);
 
          for (i = 0; i < MAX_BREAKPOINTS; i++)
          {
@@ -996,6 +998,12 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                sprintf(tempstr, "%08X", (int)cbp[i].addr);
                SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)tempstr);
+            }
+
+            if (mbp[i].addr != 0xFFFFFFFF)
+            {
+               sprintf(tempstr, "%08X", (int)mbp[i].addr);
+               SendMessage(GetDlgItem(hDlg, IDC_LISTBOX4), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
          }
 
@@ -1081,6 +1089,108 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   SH2DelCodeBreakpoint(debugsh, addr);
                   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
                }
+               break;
+            }
+            case IDC_ADDBP2:
+            {
+               char bptext[10];
+               u32 addr=0;
+               u32 flags=0;
+
+               memset(bptext, 0, 10);
+               GetDlgItemText(hDlg, IDC_EDITTEXT2, bptext, 10);
+
+               if (bptext[0] != 0)
+               {
+                  sscanf(bptext, "%X", &addr);
+                  sprintf(bptext, "%08X", (int)addr);
+
+                  if (SendDlgItemMessage(hDlg, IDC_CHKREAD, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                  {
+                     if (SendDlgItemMessage(hDlg, IDC_CHKBYTE1, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        flags |= BREAK_BYTEREAD;
+                     if (SendDlgItemMessage(hDlg, IDC_CHKWORD1, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        flags |= BREAK_WORDREAD;
+                     if (SendDlgItemMessage(hDlg, IDC_CHKLONG1, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        flags |= BREAK_LONGREAD;
+                  }
+
+                  if (SendDlgItemMessage(hDlg, IDC_CHKWRITE, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                  {
+                     if (SendDlgItemMessage(hDlg, IDC_CHKBYTE2, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        flags |= BREAK_BYTEWRITE;
+                     if (SendDlgItemMessage(hDlg, IDC_CHKWORD2, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        flags |= BREAK_WORDWRITE;
+                     if (SendDlgItemMessage(hDlg, IDC_CHKLONG2, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        flags |= BREAK_LONGWRITE;
+                  }
+
+                  if (SH2AddMemoryBreakpoint(debugsh, addr, flags) == 0)
+                     SendMessage(GetDlgItem(hDlg, IDC_LISTBOX4), LB_ADDSTRING, 0, (LPARAM)bptext);
+               }
+               break;
+            }
+            case IDC_DELBP2:
+            {
+               LRESULT ret;
+               char bptext[10];
+               u32 addr=0;
+
+               if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX4), LB_GETCURSEL, 0, 0)) != LB_ERR)
+               {
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_GETTEXT, 0, (LPARAM)bptext);
+                  sscanf(bptext, "%X", &addr);
+                  SH2DelMemoryBreakpoint(debugsh, addr);
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_DELETESTRING, ret, 0);
+               }
+               break;
+            }
+            case IDC_CHKREAD:
+            {
+               LRESULT ret;
+
+               if (HIWORD(wParam) == BN_CLICKED)
+               {
+                  if ((ret = SendDlgItemMessage(hDlg, IDC_CHKREAD, BM_GETCHECK, 0, 0)) == BST_UNCHECKED)
+                  {
+                     SendDlgItemMessage(hDlg, IDC_CHKREAD, BM_SETCHECK, BST_CHECKED, 0);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKBYTE1), TRUE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKWORD1), TRUE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKLONG1), TRUE);
+                  }
+                  else if (ret == BST_CHECKED)
+                  {
+                     SendDlgItemMessage(hDlg, IDC_CHKREAD, BM_SETCHECK, BST_UNCHECKED, 0);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKBYTE1), FALSE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKWORD1), FALSE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKLONG1), FALSE);
+                  }
+               }
+
+               break;
+            }
+            case IDC_CHKWRITE:
+            {
+               LRESULT ret;
+
+               if (HIWORD(wParam) == BN_CLICKED)
+               {
+                  if ((ret = SendDlgItemMessage(hDlg, IDC_CHKWRITE, BM_GETCHECK, 0, 0)) == BST_UNCHECKED)
+                  {
+                     SendDlgItemMessage(hDlg, IDC_CHKWRITE, BM_SETCHECK, BST_CHECKED, 0);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKBYTE2), TRUE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKWORD2), TRUE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKLONG2), TRUE);
+                  }
+                  else if (ret == BST_CHECKED)
+                  {
+                     SendDlgItemMessage(hDlg, IDC_CHKWRITE, BM_SETCHECK, BST_UNCHECKED, 0);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKBYTE2), FALSE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKWORD2), FALSE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CHKLONG2), FALSE);
+                  }
+               }
+
                break;
             }
             case IDC_LISTBOX1:

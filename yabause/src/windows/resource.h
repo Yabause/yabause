@@ -1,4 +1,4 @@
-/*  Copyright 2004 Theo Berkau
+/*  Copyright 2004-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -66,13 +66,16 @@
 
 #define IDC_CHKREAD                     1032
 #define IDC_CHKWRITE                    1033
-#define IDC_CHKBYTE                     1034
-#define IDC_CHKWORD                     1035
-#define IDC_CHKDWORD                    1036
+#define IDC_CHKBYTE1                    1034
+#define IDC_CHKWORD1                    1035
+#define IDC_CHKLONG1                   1036
+#define IDC_CHKBYTE2                    1037
+#define IDC_CHKWORD2                    1038
+#define IDC_CHKLONG2                   1039
 
-#define IDC_BROWSE                      1037
-#define IDC_DOWNLOADMEM                 1038
-#define IDC_UPLOADMEM                   1039
+#define IDC_BROWSE                      1040
+#define IDC_DOWNLOADMEM                 1041
+#define IDC_UPLOADMEM                   1042
 
 //////////////////////////////////////////////////////////////////////////////
 // Settings stuff
