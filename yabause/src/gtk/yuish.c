@@ -200,7 +200,7 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
       gchar tempstr[20];
       sprintf(tempstr, "%08X", (int)cbp[i].addr);
       gtk_list_store_set( GTK_LIST_STORE( sh2->bpListStore ), &iter, 0, tempstr, -1 );
-    } else gtk_list_store_set( GTK_LIST_STORE( sh2->bpListStore ), &iter, 0, "<empty>", -1 );
+    } else gtk_list_store_set( GTK_LIST_STORE( sh2->bpListStore ), &iter, 0, " -", -1 );
   } 
 
   cmbp = SH2GetMemoryBreakpointList(sh2->debugsh);
@@ -227,7 +227,7 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
       *curs = 0;
        
       gtk_list_store_set( GTK_LIST_STORE( sh2->mbpListStore ), &iter, 0, tempstr, -1 );
-    } else gtk_list_store_set( GTK_LIST_STORE( sh2->mbpListStore ), &iter, 0, "<empty>", -1 );
+    } else gtk_list_store_set( GTK_LIST_STORE( sh2->mbpListStore ), &iter, 0, " -", -1 );
   } 
   
   {
@@ -261,13 +261,14 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   gtk_accel_group_connect( accelGroup, GDK_F7, 0, 0, closureF7 );
   gtk_accel_group_connect( accelGroup, GDK_F8, 0, 0, closureF8 );
   gtk_window_add_accel_group( GTK_WINDOW( dialog ), accelGroup );
-  
+
   yui_sh_update(sh2);
   if ( yui->state & YUI_IS_RUNNING ) yui_sh_clear(sh2);
   
   gtk_widget_show_all(GTK_WIDGET(sh2));
   if ( !sh2->breakpointEnabled ) {
     gtk_widget_hide( sh2->bpList );
+    gtk_widget_hide( sh2->mbpList );
     gtk_widget_hide( sh2->buttonStepOver );
   }
   
@@ -436,7 +437,7 @@ static void yui_sh_editedBp( GtkCellRendererText *cellrenderertext,
    
     sprintf(bptext, "%08X", (int)addr);
     sh2->cbp[i] = addr;
-  } else strcpy(bptext,"<empty>");
+  } else strcpy(bptext," -");
   gtk_list_store_set( GTK_LIST_STORE( sh2->bpListStore ), &iter, 0, bptext, -1 );
 }
 
@@ -447,7 +448,7 @@ static void yui_sh_editedMbp( GtkCellRendererText *cellrenderertext,
   /* breakpoint <arg1> has been set to address <arg2> */
   
   GtkTreeIter iter;
-  gchar bptext[20] = "<empty>";
+  gchar bptext[20] = " -";
   gchar *curs;
   gchar *endptr;
   int i = atoi(arg1);
@@ -528,6 +529,7 @@ void yui_sh_update(YuiSh * sh) {
   SH2UpdateRegList(sh, &sh2regs);	
   gtk_widget_set_sensitive(sh->uLabel, TRUE);
   gtk_widget_set_sensitive(sh->bpList, TRUE);
+  gtk_widget_set_sensitive(sh->mbpList, TRUE);
   gtk_widget_set_sensitive(sh->regList, TRUE);
   gtk_widget_set_sensitive(sh->buttonStepOver, TRUE);
   gtk_widget_set_sensitive(sh->buttonStep, 
@@ -548,6 +550,7 @@ static void yui_sh_clear(YuiSh * sh) {
   
   gtk_widget_set_sensitive(sh->uLabel, FALSE);
   gtk_widget_set_sensitive(sh->bpList, FALSE);
+  gtk_widget_set_sensitive(sh->mbpList, FALSE);
   gtk_widget_set_sensitive(sh->regList, FALSE);
   gtk_widget_set_sensitive(sh->buttonStepOver, FALSE);
   gtk_widget_set_sensitive(sh->buttonStep, FALSE);
