@@ -329,18 +329,19 @@ void SH2ClearCodeBreakpoints(SH2_struct *context) {
 u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
    int i;
 
-   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
-   {
-      CurrentSH2->inbreakpoint = 1;
-      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
-      CurrentSH2->inbreakpoint = 0;
-   }
-
    for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
    {
-      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
-          ((addr >> 16) & 0xFFF))
+      if (CurrentSH2->memorybreakpoint[i].addr == addr)
+      {
+         if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+         {
+            CurrentSH2->inbreakpoint = 1;
+            CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+            CurrentSH2->inbreakpoint = 0;
+         }
+
          return CurrentSH2->memorybreakpoint[i].oldreadbyte(addr);
+      }
    }
    return 0;
 }
@@ -350,18 +351,19 @@ u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
 u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
    int i;
 
-   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
-   {
-      CurrentSH2->inbreakpoint = 1;
-      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
-      CurrentSH2->inbreakpoint = 0;
-   }
-
    for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
    {
-      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
-          ((addr >> 16) & 0xFFF))
+      if (CurrentSH2->memorybreakpoint[i].addr == addr)
+      {
+         if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+         {
+            CurrentSH2->inbreakpoint = 1;
+            CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+            CurrentSH2->inbreakpoint = 0;
+         }
+
          return CurrentSH2->memorybreakpoint[i].oldreadword(addr);
+      }
    }
    return 0;
 }
@@ -371,19 +373,21 @@ u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
 u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
    int i;
 
-   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
-   {
-      CurrentSH2->inbreakpoint = 1;
-      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
-      CurrentSH2->inbreakpoint = 0;
-   }
-
    for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
    {
-      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
-          ((addr >> 16) & 0xFFF))
+      if (CurrentSH2->memorybreakpoint[i].addr == addr)
+      {
+         if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+         {
+            CurrentSH2->inbreakpoint = 1;
+            CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+            CurrentSH2->inbreakpoint = 0;
+         }
+
          return CurrentSH2->memorybreakpoint[i].oldreadlong(addr);
+      }
    }
+
    return 0;
 }
 
@@ -392,18 +396,17 @@ u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
 void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
    int i;
 
-   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
-   {
-      CurrentSH2->inbreakpoint = 1;
-      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
-      CurrentSH2->inbreakpoint = 0;
-   }
-
    for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
    {
-      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
-          ((addr >> 16) & 0xFFF))
+      if (CurrentSH2->memorybreakpoint[i].addr == addr)
       {
+         if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+         {
+            CurrentSH2->inbreakpoint = 1;
+            CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+            CurrentSH2->inbreakpoint = 0;
+         }
+
          CurrentSH2->memorybreakpoint[i].oldwritebyte(addr, val);
          break;
       }
@@ -415,18 +418,17 @@ void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
 void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
    int i;
 
-   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
-   {
-      CurrentSH2->inbreakpoint = 1;
-      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
-      CurrentSH2->inbreakpoint = 0;
-   }
-
    for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
    {
-      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
-          ((addr >> 16) & 0xFFF))
+      if (CurrentSH2->memorybreakpoint[i].addr == addr)
       {
+         if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+         {
+            CurrentSH2->inbreakpoint = 1;
+            CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+            CurrentSH2->inbreakpoint = 0;
+         }
+
          CurrentSH2->memorybreakpoint[i].oldwriteword(addr, val);
          break;
       }
@@ -438,18 +440,17 @@ void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
 void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
    int i;
 
-   if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
-   {
-      CurrentSH2->inbreakpoint = 1;
-      CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
-      CurrentSH2->inbreakpoint = 0;
-   }
-
    for (i = 0; i < CurrentSH2->nummemorybreakpoints; i++)
    {
-      if (((CurrentSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) ==
-          ((addr >> 16) & 0xFFF))
+      if (CurrentSH2->memorybreakpoint[i].addr == addr)
       {
+         if (CurrentSH2->BreakpointCallBack && CurrentSH2->inbreakpoint == 0)
+         {
+            CurrentSH2->inbreakpoint = 1;
+            CurrentSH2->BreakpointCallBack(CurrentSH2, 0);
+            CurrentSH2->inbreakpoint = 0;
+         }
+
          CurrentSH2->memorybreakpoint[i].oldwritelong(addr, val);
          break;
       }
