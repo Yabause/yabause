@@ -75,7 +75,9 @@ YuiRangeItem vidcores[] = {
 
 YuiRangeItem sndcores[] = {
 	{ "0", "Dummy Sound Interface" },
+#ifdef HAVE_LIBSDL
 	{ "1", "SDL Sound Interface" },
+#endif
 	{ 1, 0 }
 };
 

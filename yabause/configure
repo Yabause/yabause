@@ -3288,11 +3288,7 @@ fi
 done
 
 
-		if test x$HAVE_LIBSDL = x ; then
-			{ { echo "$as_me:$LINENO: error: You need to install SDL" >&5
-echo "$as_me: error: You need to install SDL" >&2;}
-   { (exit 1); exit 1; }; }
-		else
+		if test ! x$HAVE_LIBSDL = x ; then
 			SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
 			SDL_LIBS=`$HAVE_LIBSDL --libs`
 			cat >>confdefs.h <<\_ACEOF

@@ -1,7 +1,5 @@
  (1) (KNOWN) BUGS
 
-   - Logo will not show if yabause is installed
-
  (2) EMULATION
 
    - Add sh2 dynamic recompiler in addition to sh2 interpreter
@@ -21,16 +19,12 @@
 
  (3) MONITOR/DEBUGGER
 
-   - Add a command to dump memory
-   - Add a command to execute N instructions
-   - Implement a method to trace emulation
    - Each cpu should have some ability to return debugging information(e.g. VDP1 should return current commands as text, VDP2 should return screen info, etc.)
 
  (4) OTHER
 
    - Get configure working with cygwin and mingw
    - Finalize Save State format
-   - Finish rewriting C++ that's missing
    - Support multiple languages
    - Improve Opengl texture handling
    - Allow user to remap peripheral controls

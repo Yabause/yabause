@@ -40,9 +40,7 @@ case $target in
 	*linux* | *freebsd*)
 		AC_PATH_PROGS(HAVE_LIBSDL, [sdl-config sdl11-config])
 
-		if test x$HAVE_LIBSDL = x ; then
-			AC_MSG_ERROR([You need to install SDL])
-		else
+		if test ! x$HAVE_LIBSDL = x ; then
 			SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
 			SDL_LIBS=`$HAVE_LIBSDL --libs`
 			AC_DEFINE(HAVE_LIBSDL)
