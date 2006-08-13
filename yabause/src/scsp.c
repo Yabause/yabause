@@ -2935,6 +2935,12 @@ void ScspUnMuteAudio() {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ScspSetVolume(int volume) {
+   SNDCore->SetVolume(volume);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void M68KSetBreakpointCallBack(void (*func)(u32)) {
    ScspInternalVars->BreakpointCallBack = func;
 }
@@ -3245,6 +3251,7 @@ void SNDDummyUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samp
 u32 SNDDummyGetAudioSpace();
 void SNDDummyMuteAudio();
 void SNDDummyUnMuteAudio();
+void SNDDummySetVolume(int volume);
 
 SoundInterface_struct SNDDummy = {
 SNDCORE_DUMMY,
@@ -3256,7 +3263,8 @@ SNDDummyChangeVideoFormat,
 SNDDummyUpdateAudio,
 SNDDummyGetAudioSpace,
 SNDDummyMuteAudio,
-SNDDummyUnMuteAudio
+SNDDummyUnMuteAudio,
+SNDDummySetVolume
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3320,6 +3328,12 @@ void SNDDummyMuteAudio()
 //////////////////////////////////////////////////////////////////////////////
 
 void SNDDummyUnMuteAudio()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SNDDummySetVolume(int volume)
 {
 }
 

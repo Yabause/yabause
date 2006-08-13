@@ -35,6 +35,7 @@ void SNDSDLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_sample
 u32 SNDSDLGetAudioSpace();
 void SNDSDLMuteAudio();
 void SNDSDLUnMuteAudio();
+void SNDSDLSetVolume(int volume);
 
 SoundInterface_struct SNDSDL = {
 SNDCORE_SDL,
@@ -46,7 +47,8 @@ SNDSDLChangeVideoFormat,
 SNDSDLUpdateAudio,
 SNDSDLGetAudioSpace,
 SNDSDLMuteAudio,
-SNDSDLUnMuteAudio
+SNDSDLUnMuteAudio,
+SNDSDLSetVolume
 };
 
 #define NUMSOUNDBLOCKS  4
@@ -208,6 +210,12 @@ void SNDSDLMuteAudio()
 void SNDSDLUnMuteAudio()
 {
    SDL_PauseAudio(0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SNDSDLSetVolume(int volume)
+{
 }
 
 //////////////////////////////////////////////////////////////////////////////
