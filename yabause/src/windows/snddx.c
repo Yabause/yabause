@@ -30,6 +30,7 @@ void SNDDXUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples
 u32 SNDDXGetAudioSpace();
 void SNDDXMuteAudio();
 void SNDDXUnMuteAudio();
+void SNDDXSetVolume(int volume);
 
 SoundInterface_struct SNDDIRECTX = {
 SNDCORE_DIRECTX,
@@ -41,7 +42,8 @@ SNDDXChangeVideoFormat,
 SNDDXUpdateAudio,
 SNDDXGetAudioSpace,
 SNDDXMuteAudio,
-SNDDXUnMuteAudio
+SNDDXUnMuteAudio,
+SNDDXSetVolume
 };
 
 LPDIRECTSOUND8 lpDS8;
@@ -54,6 +56,8 @@ static u16 *stereodata16;
 static u32 soundoffset=0;
 static u32 soundlen;
 static u32 soundbufsize;
+static LONG soundvolume;
+static int issoundmuted;
 
 /*
 //////////////////////////////////////////////////////////////////////////////
@@ -141,6 +145,9 @@ int SNDDXInit()
       return -1;
 
    memset(stereodata16, 0, soundbufsize);
+
+   soundvolume = DSBVOLUME_MAX;
+   issoundmuted = 0;
 
    return 0;
 }
@@ -251,13 +258,24 @@ u32 SNDDXGetAudioSpace()
 
 void SNDDXMuteAudio()
 {
+   issoundmuted = 1;
+   IDirectSoundBuffer8_SetVolume (lpDSB2, DSBVOLUME_MIN);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void SNDDXUnMuteAudio()
 {
+   issoundmuted = 0;
+   IDirectSoundBuffer8_SetVolume (lpDSB2, soundvolume);
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+void SNDDXSetVolume(int volume)
+{
+   soundvolume = (((LONG)volume) - 100) * 100;
+   if (!issoundmuted)
+      IDirectSoundBuffer8_SetVolume (lpDSB2, soundvolume);
+}
 

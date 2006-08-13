@@ -35,6 +35,7 @@ extern char bioslang;
 extern char sh2coretype;
 extern char vidcoretype;
 extern char sndcoretype;
+extern int sndvolume;
 extern char percoretype;
 extern u8 regionid;
 extern int disctype;

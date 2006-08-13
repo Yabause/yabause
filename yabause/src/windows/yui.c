@@ -477,6 +477,10 @@ int YuiInit(void)
    if (sndcoretype == -1)
       sndcoretype = SNDCORE_DIRECTX;
 
+   // Grab Volume Settings
+   GetPrivateProfileString("Sound", "Volume", "100", tempstr, MAX_PATH, inifilename);
+   sndvolume = atoi(tempstr);
+
    // Grab Peripheral Core Settings
    GetPrivateProfileString("Peripheral", "PeripheralCore", "-1", tempstr, MAX_PATH, inifilename);
    percoretype = atoi(tempstr);
@@ -556,6 +560,8 @@ int YuiInit(void)
 
    if (YabauseInit(&yinit) == -1)
       return -1;
+
+   ScspSetVolume(sndvolume);
 
    while (!stop)
    {
@@ -968,10 +974,12 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 void SH2BreakpointHandler (SH2_struct *context, u32 addr)
 {
+   ScspMuteAudio();
    MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
 
    debugsh = context;
    DialogBox(y_hInstance, "SH2DebugDlg", YabWin, (DLGPROC)SH2DebugDlgProc);
+   ScspUnMuteAudio();
 }
 
 //////////////////////////////////////////////////////////////////////////////

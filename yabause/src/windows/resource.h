@@ -122,6 +122,7 @@
 // Sound Settings stuff
 
 #define IDC_SOUNDCORECB                 1001
+#define IDC_SLVOLUME                    1002
 
 //////////////////////////////////////////////////////////////////////////////
 // Peripheral Settings stuff

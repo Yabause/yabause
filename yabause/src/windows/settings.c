@@ -18,6 +18,7 @@
 */
 
 #include <windows.h>
+#include <commctrl.h>
 #include <stdio.h>
 #include <ctype.h>
 #include "../cs0.h"
@@ -40,6 +41,7 @@ char sh2coretype=0;
 char vidcoretype=0;
 char sndcoretype=0;
 char percoretype=0;
+int sndvolume=0;
 u8 regionid=0;
 int disctype;
 int carttype;
@@ -735,6 +737,12 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_SETCURSEL, i, 0);
          }
 
+         // Setup Volume Slider
+         SendDlgItemMessage(hDlg, IDC_SLVOLUME, TBM_SETRANGE, 0, MAKELONG(0, 100));
+
+         // Set Selected Volume
+         SendDlgItemMessage(hDlg, IDC_SLVOLUME, TBM_SETPOS, TRUE, sndvolume);
+
          return TRUE;
       }
       case WM_COMMAND:
@@ -752,6 +760,11 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                sprintf(tempstr, "%d", sndcoretype);
                WritePrivateProfileString("Sound", "SoundCore", tempstr, inifilename);
 
+               // Write Volume
+               sndvolume = SendDlgItemMessage(hDlg, IDC_SLVOLUME, TBM_GETPOS, 0, 0);
+               sprintf(tempstr, "%d", sndvolume);
+               WritePrivateProfileString("Sound", "Volume", tempstr, inifilename);
+               ScspSetVolume(sndvolume);
                return TRUE;
             }
             case IDCANCEL:
@@ -810,7 +823,7 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                EndDialog(hDlg, TRUE);
 
-               // Write Sound core type
+               // Write Peripheral core type
                percoretype = PERCoreList[SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_GETCURSEL, 0, 0)]->id;
                sprintf(tempstr, "%d", percoretype);
                WritePrivateProfileString("Peripheral", "PeripheralCore", tempstr, inifilename);
