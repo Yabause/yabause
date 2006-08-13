@@ -3,16 +3,6 @@ AC_INIT(yabause, 0.6)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-case $target in
-	*darwin*) yabause_arch=macosx;;
-	*linux*) yabause_arch=linux;;
-	*cygwin*) yabause_arch=windows;;
-	*mingw32*) yabause_arch=windows;;
-	*freebsd*) yabause_arch=freebsd;;
-	*) yabause_arch=".";;
-esac
-AC_SUBST(yabause_arch)
-
 AM_INIT_AUTOMAKE(yabause, 0.6)
 
 AC_PROG_RANLIB
@@ -23,6 +13,19 @@ AC_PROG_INSTALL
 AC_LANG(C)
 
 AC_C_BIGENDIAN
+
+case $target in
+	*darwin*) yabause_arch=macosx;;
+	*linux*) yabause_arch=linux;;
+	*cygwin*) yabause_arch=windows;;
+	*mingw32*)
+		AC_CHECK_HEADERS("wnaspi32.h", [], [], [#include <windows.h>])
+		yabause_arch=windows
+		;;
+	*freebsd*) yabause_arch=freebsd;;
+	*) yabause_arch=".";;
+esac
+AC_SUBST(yabause_arch)
 
 case $target in
 	*darwin*)

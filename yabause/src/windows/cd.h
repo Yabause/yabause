@@ -23,7 +23,9 @@
 
 #include <ddk/ntddcdrm.h>
 #include <ddk/ntddscsi.h>
+#ifdef HAVE_WNASPI32_H
 #include <wnaspi32.h>
+#endif
 #include "../cdbase.h"
 
 #define CDCORE_SPTI     2
