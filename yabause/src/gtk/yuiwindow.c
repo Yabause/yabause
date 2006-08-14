@@ -117,7 +117,7 @@ static void yui_window_init (YuiWindow * yw) {
 
 	yw->area = gtk_gl_widget_new();
 	gtk_box_pack_start(GTK_BOX(yw->box), yw->area, TRUE, TRUE, 0);
-	gtk_widget_set_size_request(GTK_WIDGET(yw->area), 320, 240 );
+	gtk_widget_set_size_request(GTK_WIDGET(yw->area), 320, 224);
 
 	g_signal_connect(G_OBJECT(yw), "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(G_OBJECT(yw), "key-press-event", G_CALLBACK(yui_window_keypress), yw);
@@ -243,6 +243,7 @@ void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 
 void yui_window_pause(GtkWidget * w, YuiWindow * yui) {
 	if (yui->state & YUI_IS_RUNNING) {
+		dumpScreen(yui->area);
 		ScspMuteAudio();
 		g_idle_remove_by_data(GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);

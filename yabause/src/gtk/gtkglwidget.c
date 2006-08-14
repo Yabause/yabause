@@ -21,6 +21,8 @@
 #include "gtkglwidget.h"
 #include <gtk/gtkgl.h>
 
+GLubyte * pixels = NULL;
+
 int draw(GtkWidget * glxarea) {
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (glxarea);
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (glxarea);
@@ -34,11 +36,13 @@ int draw(GtkWidget * glxarea) {
 }
 
 int drawPause(GtkWidget * glxarea) {
-
-  gdk_draw_rectangle(glxarea->window,
-		     glxarea->style->bg_gc[GTK_WIDGET_STATE (glxarea)],
-		     TRUE,
-		     0, 0, glxarea->allocation.width, glxarea->allocation.height);
+	if (pixels) {
+		glDrawPixels(glxarea->allocation.width, glxarea->allocation.height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+		draw(glxarea);
+	} else {
+		gdk_draw_rectangle(glxarea->window, glxarea->style->bg_gc[GTK_WIDGET_STATE (glxarea)],
+				TRUE, 0, 0, glxarea->allocation.width, glxarea->allocation.height);
+	}
 }
 
 static gboolean resize (GtkWidget *w,GdkEventConfigure *event, gpointer data) {
@@ -75,4 +79,18 @@ GtkWidget * gtk_gl_widget_new(void) {
 	g_signal_connect (GTK_OBJECT(drawingArea),"configure_event", GTK_SIGNAL_FUNC(resize),0);
 
 	return drawingArea;
+}
+
+void dumpScreen(GtkWidget * glxarea) {
+	int width, height, size;
+
+	width = glxarea->allocation.width;
+	height = glxarea->allocation.height;
+        size = width * height * 3;
+ 
+	if (pixels) free(pixels);
+        pixels = malloc(sizeof(GLubyte) * size);
+        if (pixels == NULL) return;    
+
+        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 }

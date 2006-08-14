@@ -27,6 +27,7 @@
 
 int draw(GtkWidget *);
 int drawPause(GtkWidget *);
+void dumpScreen(GtkWidget *);
 GtkWidget * gtk_gl_widget_new(void);
 
 #endif
