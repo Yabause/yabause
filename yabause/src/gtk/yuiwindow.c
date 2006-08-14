@@ -232,6 +232,7 @@ void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 	yui_window_start(w, yui);
 
 	if ((yui->state & YUI_IS_RUNNING) == 0) {
+		ScspUnMuteAudio();
 		g_idle_add(yui->run_func, GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_RUNNING_SIGNAL], 0);
 		yui->state |= YUI_IS_RUNNING;
@@ -242,6 +243,7 @@ void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 
 void yui_window_pause(GtkWidget * w, YuiWindow * yui) {
 	if (yui->state & YUI_IS_RUNNING) {
+		ScspMuteAudio();
 		g_idle_remove_by_data(GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);
 		yui->state &= ~YUI_IS_RUNNING;
