@@ -22,6 +22,9 @@
 #include <gtk/gtkgl.h>
 
 GLubyte * pixels = NULL;
+gint pixels_width;
+gint pixels_height;
+gint pixels_rowstride;
 
 int draw(GtkWidget * glxarea) {
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (glxarea);
@@ -37,7 +40,7 @@ int draw(GtkWidget * glxarea) {
 
 int drawPause(GtkWidget * glxarea) {
 	if (pixels) {
-		glDrawPixels(glxarea->allocation.width, glxarea->allocation.height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+		glDrawPixels(pixels_width, pixels_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 		draw(glxarea);
 	} else {
 		gdk_draw_rectangle(glxarea->window, glxarea->style->bg_gc[GTK_WIDGET_STATE (glxarea)],
@@ -82,28 +85,28 @@ GtkWidget * gtk_gl_widget_new(void) {
 }
 
 void dumpScreen(GtkWidget * glxarea) {
-	int width, height, size;
+	int size;
 
-	width = glxarea->allocation.width;
-	height = glxarea->allocation.height;
-        size = width * height * 3;
+	pixels_width = glxarea->allocation.width;
+	pixels_height = glxarea->allocation.height;
+	pixels_rowstride = pixels_width * 3;
+	pixels_rowstride += (pixels_rowstride % 4)? (4 - (pixels_rowstride % 4)): 0;
+
+        size = pixels_rowstride * pixels_height;
  
 	if (pixels) free(pixels);
         pixels = malloc(sizeof(GLubyte) * size);
         if (pixels == NULL) return;    
 
-        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        glReadPixels(0, 0, pixels_width, pixels_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 }
 
 void takeScreenshot(GtkWidget * glxarea) {
 	GdkPixbuf * pixbuf, * correct;
-	gint rowstride;
        
 	dumpScreen(glxarea);
-	rowstride = glxarea->allocation.width * 3;
-	rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
 	pixbuf = gdk_pixbuf_new_from_data(pixels, GDK_COLORSPACE_RGB, FALSE, 8,
-			glxarea->allocation.width, glxarea->allocation.height, rowstride, NULL, NULL);
+			pixels_width, pixels_height, pixels_rowstride, NULL, NULL);
 	correct = gdk_pixbuf_flip(pixbuf, FALSE);
 
 	gdk_pixbuf_save(correct, "screenshot.png", "png", NULL, NULL);
