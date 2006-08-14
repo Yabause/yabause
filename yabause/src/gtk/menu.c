@@ -71,6 +71,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkAccelGroup *accel_group;
   GtkWidget *transfer;
   GtkWidget *memory;
+  GtkWidget *screenshot;
 
   accel_group = gtk_accel_group_new ();
 
@@ -92,6 +93,10 @@ GtkWidget* create_menu(YuiWindow * window1) {
   transfer = gtk_menu_item_new_with_mnemonic ("Transfer");
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), transfer);
   g_signal_connect_swapped(transfer, "activate", G_CALLBACK(yui_transfer_new), window1);
+
+  screenshot = gtk_menu_item_new_with_mnemonic ("Screenshot");
+  gtk_container_add (GTK_CONTAINER (menuitem1_menu), screenshot);
+  g_signal_connect_swapped(screenshot, "activate", G_CALLBACK(yui_window_screenshot), window1);
 
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), gtk_separator_menu_item_new ());
 

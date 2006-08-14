@@ -86,6 +86,7 @@ void		yui_window_run		(GtkWidget * w, YuiWindow * yui);
 void		yui_window_pause	(GtkWidget * w, YuiWindow * yui);
 void		yui_window_reset	(GtkWidget * w, YuiWindow * yui);
 void            yui_window_invalidate(GtkWidget * w, YuiWindow * yui );
+void		yui_window_screenshot	(YuiWindow * w);
 
 G_END_DECLS
 

@@ -266,3 +266,7 @@ void yui_window_invalidate(GtkWidget * w, YuiWindow * yui ) {
   if ( !(yui->state & YUI_IS_RUNNING ))
     g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);
 }
+
+void yui_window_screenshot(YuiWindow * w) {
+	takeScreenshot(w->area);
+}
