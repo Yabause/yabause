@@ -97,10 +97,13 @@ void dumpScreen(GtkWidget * glxarea) {
 
 void takeScreenshot(GtkWidget * glxarea) {
 	GdkPixbuf * pixbuf, * correct;
+	gint rowstride;
        
 	dumpScreen(glxarea);
+	rowstride = glxarea->allocation.width * 3;
+	rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
 	pixbuf = gdk_pixbuf_new_from_data(pixels, GDK_COLORSPACE_RGB, FALSE, 8,
-			glxarea->allocation.width, glxarea->allocation.height, glxarea->allocation.width * 3, NULL, NULL);
+			glxarea->allocation.width, glxarea->allocation.height, rowstride, NULL, NULL);
 	correct = gdk_pixbuf_flip(pixbuf, FALSE);
 
 	gdk_pixbuf_save(correct, "screenshot.png", "png", NULL, NULL);
