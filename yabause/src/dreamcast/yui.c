@@ -114,3 +114,8 @@ void YuiErrorMsg(const char *error_text) {
    fprintf(stderr, "Error: %s\n", error_text);
    stop = 1;
 }
+
+/* stub for now... just to make things compile again... */
+void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)    {
+}
+

@@ -24,7 +24,7 @@ include $(KOS_BASE)/Makefile.rules
 
 KOS_CFLAGS += -I. -DDEBUG -DNO_CLI
 
-OBJS = cdbase.o cs0.o cs1.o cs2.o debug.o memory.o peripheral.o profile.o scsp.o scu.o sh2core.o sh2int.o sh2d.o smpc.o vdp1.o vdp2.o yabause.o error.o 
+OBJS = cdbase.o cs0.o cs1.o cs2.o debug.o memory.o peripheral.o profile.o scsp.o scu.o sh2core.o sh2int.o sh2d.o smpc.o vdp1.o vdp2.o yabause.o error.o bios.o sh2idle.o 
 C68K_OBJS = c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o
 ARCH_OBJS = dreamcast/yui.o dreamcast/perdc.o dreamcast/viddc.o dreamcast/localtime.o
 
