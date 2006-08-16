@@ -2250,6 +2250,104 @@ void FASTCALL DrawRegularSprite(vdp2draw_struct *info)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
+
+  #define max4(a,b,c,d) (a>b)?( (c>d)?( (a>c)?a:c ):( (a>d)?a:d ) ):( (c>d)?( (b>c)?b:c ):( (b>d)?b:d ) )
+
+  s32 x1 = vertices[0];
+  s32 y1 = vertices[1];
+  s32 x2 = vertices[2];
+  s32 y2 = vertices[3];
+  s32 x3 = vertices[4];
+  s32 y3 = vertices[5];
+  s32 x4 = vertices[6];
+  s32 y4 = vertices[7];
+
+  s32 lW = info->cellw;
+  s32 lH = info->cellh;
+    
+  s32 xLead;
+  s32 yLead;
+
+  float xStepC;
+  float yStepC;
+  float xStepM;
+  float yStepM;
+  float xStepB;
+  float yStepB;
+  
+  float xN = x1;
+  float yN = y1;
+
+  float H = 0;
+  int y;
+
+  float xStepStepM;
+  float yStepStepM;
+
+  float stepW;
+  float stepH;
+
+  if ( info->colornumber != 0x15 ) return;
+
+  {
+    s32 xA = x4-x1;
+    s32 yA = y4-y1;
+    s32 xB = x3-x2;
+    s32 yB = y3-y2;
+    s32 xC = x2-x1;
+    s32 yC = y2-y1;
+    s32 xD = x3-x4;
+    s32 yD = y3-y4;
+    
+    xLead = max4(abs(xA),abs(yA),abs(xB),abs(yB));
+    yLead = max4(abs(xC),abs(yC),abs(xD),abs(yD));
+
+    if (( !xLead )||( !yLead )) return;
+    
+    xStepC = (float)xC / yLead;
+    yStepC = (float)yC / yLead;
+    xStepM = (float)xA / xLead;
+    yStepM = (float)yA / xLead;
+    xStepB = (float)xB / xLead;
+    yStepB = (float)yB / xLead;
+  }
+  
+  xStepStepM = (xStepB - xStepM) / yLead;
+  yStepStepM = (yStepB - yStepM) / yLead;
+  
+  stepW = (float)lW / xLead;
+  stepH = (float)lH / yLead;
+ 
+  for ( y = yLead ; y ; y-- ) {
+
+    float xM = xN;
+    float yM = yN;
+    float W = 0;
+    int iHaddr = info->addr + 2*((int)H * lW);
+
+    int x;
+    for ( x = xLead ; x ; x-- ) {
+
+      if (( xM > 0 )&&( yM > 0 )&&( xM < vdp1width )&&( yM < vdp1height )) {
+	u16 dot = T1ReadWord(Vdp1Ram, ( iHaddr + 2*(int)W) & 0x7FFFF);
+	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = dot;
+      }
+      
+      W += stepW;
+      xM += xStepM;
+      yM += yStepM;
+    }
+    xStepM += xStepStepM;
+    yStepM += yStepStepM;
+    xN += xStepC;
+    yN += yStepC;
+    H += stepH;
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 void VIDSoftVdp1NormalSpriteDraw(void)
 {
    vdp1cmd_struct cmd;
@@ -2393,12 +2491,12 @@ void VIDSoftVdp1DistortedSpriteDraw(void)
    vertices[6] = (s32)(cmd.CMDXD + Vdp1Regs->localX);
    vertices[7] = (s32)((cmd.CMDYD + 1) + Vdp1Regs->localY);
 
-   if ((vertices[0] + w) == vertices[4] &&
+   /*   if ((vertices[0] + w) == vertices[4] &&
        (vertices[1] + h) == vertices[5] &&
        vertices[0] == vertices[6] &&
        vertices[1] == vertices[3] &&
        vertices[4] == vertices[2] &&
-       vertices[5] == vertices[7])       
+       vertices[5] == vertices[7])       */
    {
       // Draw as a normal sprite
       info.x = vertices[0];
@@ -2410,7 +2508,8 @@ void VIDSoftVdp1DistortedSpriteDraw(void)
       info.flipfunction = (cmd.CMDCTRL & 0x30) >> 4;
       info.addr = cmd.CMDSRCA << 3;
       info.supplementdata = cmd.CMDCOLR;
-      DrawRegularSprite(&info);
+      /* DrawRegularSprite(&info); */
+      DrawDistortedSprite(&info, vertices);
    }
 }
 
