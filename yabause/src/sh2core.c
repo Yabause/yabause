@@ -256,7 +256,16 @@ void SH2SetBreakpointCallBack(SH2_struct *context, void (*func)(void *, u32)) {
 //////////////////////////////////////////////////////////////////////////////
 
 int SH2AddCodeBreakpoint(SH2_struct *context, u32 addr) {
+   int i;
+
    if (context->numcodebreakpoints < MAX_BREAKPOINTS) {
+      // Make sure it isn't already on the list
+      for (i = 0; i < context->numcodebreakpoints; i++)
+      {
+         if (addr == context->codebreakpoint[i].addr)
+            return -1;
+      }
+
       context->codebreakpoint[context->numcodebreakpoints].addr = addr;
       context->numcodebreakpoints++;
 
@@ -343,6 +352,19 @@ u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
          return CurrentSH2->memorybreakpoint[i].oldreadbyte(addr);
       }
    }
+
+   // Use the closest match if address doesn't match
+   for (i = 0; i < MSH2->nummemorybreakpoints; i++)
+   {
+      if (((MSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+         return MSH2->memorybreakpoint[i].oldreadbyte(addr);
+   }
+   for (i = 0; i < SSH2->nummemorybreakpoints; i++)
+   {
+      if (((SSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+         return SSH2->memorybreakpoint[i].oldreadbyte(addr);
+   }
+
    return 0;
 }
 
@@ -365,6 +387,19 @@ u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
          return CurrentSH2->memorybreakpoint[i].oldreadword(addr);
       }
    }
+
+   // Use the closest match if address doesn't match
+   for (i = 0; i < MSH2->nummemorybreakpoints; i++)
+   {
+      if (((MSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+         return MSH2->memorybreakpoint[i].oldreadword(addr);
+   }
+   for (i = 0; i < SSH2->nummemorybreakpoints; i++)
+   {
+      if (((SSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+         return SSH2->memorybreakpoint[i].oldreadword(addr);
+   }
+
    return 0;
 }
 
@@ -388,6 +423,18 @@ u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
       }
    }
 
+   // Use the closest match if address doesn't match
+   for (i = 0; i < MSH2->nummemorybreakpoints; i++)
+   {
+      if (((MSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+         return MSH2->memorybreakpoint[i].oldreadlong(addr);
+   }
+   for (i = 0; i < SSH2->nummemorybreakpoints; i++)
+   {
+      if (((SSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+         return SSH2->memorybreakpoint[i].oldreadlong(addr);
+   }
+
    return 0;
 }
 
@@ -408,7 +455,25 @@ void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
          }
 
          CurrentSH2->memorybreakpoint[i].oldwritebyte(addr, val);
-         break;
+         return;
+      }
+   }
+
+   // Use the closest match if address doesn't match
+   for (i = 0; i < MSH2->nummemorybreakpoints; i++)
+   {
+      if (((MSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+      {
+         MSH2->memorybreakpoint[i].oldwritebyte(addr, val);
+         return;
+      }
+   }
+   for (i = 0; i < SSH2->nummemorybreakpoints; i++)
+   {
+      if (((SSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+      {
+         SSH2->memorybreakpoint[i].oldwritebyte(addr, val);
+         return;
       }
    }
 }
@@ -430,7 +495,25 @@ void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
          }
 
          CurrentSH2->memorybreakpoint[i].oldwriteword(addr, val);
-         break;
+         return;
+      }
+   }
+
+   // Use the closest match if address doesn't match
+   for (i = 0; i < MSH2->nummemorybreakpoints; i++)
+   {
+      if (((MSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+      {
+         MSH2->memorybreakpoint[i].oldwriteword(addr, val);
+         return;
+      }
+   }
+   for (i = 0; i < SSH2->nummemorybreakpoints; i++)
+   {
+      if (((SSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+      {
+         SSH2->memorybreakpoint[i].oldwriteword(addr, val);
+         return;
       }
    }
 }
@@ -452,7 +535,25 @@ void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
          }
 
          CurrentSH2->memorybreakpoint[i].oldwritelong(addr, val);
-         break;
+         return;
+      }
+   }
+
+   // Use the closest match if address doesn't match
+   for (i = 0; i < MSH2->nummemorybreakpoints; i++)
+   {
+      if (((MSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+      {
+         MSH2->memorybreakpoint[i].oldwritelong(addr, val);
+         return;
+      }
+   }
+   for (i = 0; i < SSH2->nummemorybreakpoints; i++)
+   {
+      if (((SSH2->memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
+      {
+         SSH2->memorybreakpoint[i].oldwritelong(addr, val);
+         return;
       }
    }
 }
@@ -484,6 +585,10 @@ int CheckForMemoryBreakpointDupes(SH2_struct *context, u32 addr, u32 flag, int *
 
 int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags) {
    int which;
+   int i;
+
+   if (flags == 0)
+      return -1;
 
    if (context->nummemorybreakpoints < MAX_BREAKPOINTS) {
       // Only regular addresses are supported at this point(Sorry, no onchip!)
@@ -493,6 +598,13 @@ int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags) {
          case 0x5:
             break;
          default:
+            return -1;
+      }
+
+      // Make sure it isn't already on the list
+      for (i = 0; i < context->nummemorybreakpoints; i++)
+      {
+         if ((addr & 0x0FFFFFFF) == (context->memorybreakpoint[i].addr & 0xFFFFFFF))
             return -1;
       }
 
@@ -510,10 +622,7 @@ int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags) {
       {
          // Make sure function isn't already being breakpointed by another breakpoint
          if (!CheckForMemoryBreakpointDupes(context, addr, BREAK_BYTEREAD, &which))
-         {
-            LOG("Added SH2MemoryBreakpointReadByte to break list for %08X\n", addr);
             ReadByteList[(addr >> 16) & 0xFFF] = &SH2MemoryBreakpointReadByte;
-         }
          else
             // fix old memory access function
             context->memorybreakpoint[context->nummemorybreakpoints].oldreadbyte = context->memorybreakpoint[which].oldreadbyte;

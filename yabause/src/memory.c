@@ -33,6 +33,7 @@
 #include "smpc.h"
 #include "vdp1.h"
 #include "vdp2.h"
+#include "yabause.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -854,8 +855,6 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
 
 void MappedMemoryLoadExec(const char *filename, u32 pc)
 {
-   int i;
-
    YabauseResetNoLoad();
 
    // Setup the vector table area, etc.

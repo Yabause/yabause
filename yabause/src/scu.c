@@ -1564,7 +1564,16 @@ void ScuDspSetBreakpointCallBack(void (*func)(u32)) {
 //////////////////////////////////////////////////////////////////////////////
 
 int ScuDspAddCodeBreakpoint(u32 addr) {
+   int i;
+
    if (ScuRegs->numcodebreakpoints < MAX_BREAKPOINTS) {
+      // Make sure it isn't already on the list
+      for (i = 0; i < ScuRegs->numcodebreakpoints; i++)
+      {
+         if (addr == ScuRegs->codebreakpoint[i].addr)
+            return -1;
+      }
+
       ScuRegs->codebreakpoint[ScuRegs->numcodebreakpoints].addr = addr;
       ScuRegs->numcodebreakpoints++;
 

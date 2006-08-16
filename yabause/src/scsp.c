@@ -2948,7 +2948,16 @@ void M68KSetBreakpointCallBack(void (*func)(u32)) {
 //////////////////////////////////////////////////////////////////////////////
 
 int M68KAddCodeBreakpoint(u32 addr) {
+  int i;
+
   if (ScspInternalVars->numcodebreakpoints < MAX_BREAKPOINTS) {
+      // Make sure it isn't already on the list
+      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
+      {
+         if (addr == ScspInternalVars->codebreakpoint[i].addr)
+            return -1;
+      }
+
      ScspInternalVars->codebreakpoint[ScspInternalVars->numcodebreakpoints].addr = addr;
      ScspInternalVars->numcodebreakpoints++;
 
