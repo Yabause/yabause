@@ -2255,14 +2255,20 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
   #define max4(a,b,c,d) (a>b)?( (c>d)?( (a>c)?a:c ):( (a>d)?a:d ) ):( (c>d)?( (b>c)?b:c ):( (b>d)?b:d ) )
   #define max2(a,b) (a>b)?a:b
 
-  s32 x1 = vertices[0];
-  s32 y1 = vertices[1];
-  s32 x2 = vertices[2];
-  s32 y2 = vertices[3];
-  s32 x3 = vertices[4];
-  s32 y3 = vertices[5];
-  s32 x4 = vertices[6];
-  s32 y4 = vertices[7];
+  static int flipVerticesAssign[4][8] = {
+    {0,1,2,3,4,5,6,7}, // no flip
+    {2,3,0,1,6,7,4,5}, // horz flip
+    {6,7,4,5,2,3,0,1}, // vert flip
+    {4,5,6,7,0,1,2,3}}; // horz & vert flip
+
+  s32 x1 = vertices[flipVerticesAssign[info->flipfunction][0]];
+  s32 y1 = vertices[flipVerticesAssign[info->flipfunction][1]];
+  s32 x4 = vertices[flipVerticesAssign[info->flipfunction][2]];
+  s32 y4 = vertices[flipVerticesAssign[info->flipfunction][3]];
+  s32 x3 = vertices[flipVerticesAssign[info->flipfunction][4]];
+  s32 y3 = vertices[flipVerticesAssign[info->flipfunction][5]];
+  s32 x2 = vertices[flipVerticesAssign[info->flipfunction][6]];
+  s32 y2 = vertices[flipVerticesAssign[info->flipfunction][7]];
 
   s32 lW = info->cellw;
   s32 lH = info->cellh;
@@ -2309,17 +2315,15 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
     s32 yLeadC = abs(xC)+abs(yC);
     s32 yLeadD = abs(xD)+abs(yD);
     
-    xLead = max2(xLeadA, xLeadB);
-    yLead = max2(yLeadC, yLeadD);
+    xLead = max2(xLeadA, xLeadB)+1;
+    yLead = max2(yLeadC, yLeadD)+1;
 
-    if (( !xLead )||( !yLead )) return;
-    
-    xStepC = (float)xC / yLead;
-    yStepC = (float)yC / yLead;
-    xStepM = (float)xA / xLead;
-    yStepM = (float)yA / xLead;
-    xStepB = (float)xB / xLead;
-    yStepB = (float)yB / xLead;
+    xStepC = 1.0*xC / yLead;
+    yStepC = 1.0*yC / yLead;
+    xStepM = 1.0*xA / xLead;
+    yStepM = 1.0*yA / xLead;
+    xStepB = 1.0*xB / xLead;
+    yStepB = 1.0*yB / xLead;
   }
   
   xStepStepM = (xStepB - xStepM) / yLead;
@@ -2328,7 +2332,7 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
   stepW = (float)lW / xLead;
   stepH = (float)lH / yLead;
 
-#define DRAW_DISTORTED_SPRITE_LOOP_BEGIN       for ( x = xLead ; x ; x-- ) { \
+#define DRAW_DISTORTED_SPRITE_LOOP_BEGIN       for ( x = xLead+1 ; x ; x-- ) { \
     if (( xM > 0 )&&( yM > 0 )&&( xM < vdp1width )&&( yM < vdp1height )) {
       
 #define DRAW_DISTORTED_SPRITE_LOOP_END    	} \
@@ -2336,7 +2340,7 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
       xM += xStepM;\
       yM += yStepM;}
  
-  for ( y = yLead ; y ; y-- ) {
+  for ( y = yLead+1 ; y ; y-- ) {
 
     float xM = xN;
     float yM = yN;
@@ -2355,14 +2359,14 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
       int iW = W;
       u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (iW>>1)) & 0x7FFFF);
       if ((iW & 0x1) == 0)	{
-	// Odd pixel
+	// Even pixel
 	dot >>= 4;
 	if (dot == 0 && !SPD) continue;
 	
 	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
       }
       else {
-	// Even pixel
+	// Odd pixel
 	dot &= 0xF;
 	if (dot == 0 && !SPD) continue;
 	
@@ -2380,14 +2384,14 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
       int iW = W;
       u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (iW>>1)) & 0x7FFFF);
       if ((iW & 0x1) == 0)	{
-	// Odd pixel
+	// Even pixel
 	dot >>= 4;
 	if (dot == 0 && !SPD) continue;
 	
 	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = T1ReadWord(Vdp1Ram, (dot * 2 + colorlut) & 0x7FFFF);
       }
       else {
-	// Even pixel
+	// Odd pixel
 	dot &= 0xF;
 	if (dot == 0 && !SPD) continue;
 	
