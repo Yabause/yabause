@@ -111,7 +111,8 @@ void read_settings(void) {
 		s = CFPreferencesCopyAppValue(
 			CFStringCreateWithCString(0, key_config[i].name, 0),
 			kCFPreferencesCurrentApplication);
-		key_config[i].key = CFStringGetIntValue(s);
+		if (s)
+			key_config[i].key = CFStringGetIntValue(s);
 		i++;
 	}
 }
