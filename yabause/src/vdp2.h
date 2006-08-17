@@ -384,11 +384,13 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG2(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG3(char *outstring, int *isenabled);
 
-void ToggleNBG0();
-void ToggleNBG1();
-void ToggleNBG2();
-void ToggleNBG3();
-void ToggleRBG0();
-void ToggleFullScreen();
+void ToggleNBG0(void);
+void ToggleNBG1(void);
+void ToggleNBG2(void);
+void ToggleNBG3(void);
+void ToggleRBG0(void);
+void ToggleFullScreen(void);
+void EnableAutoFrameSkip(void);
+void DisableAutoFrameSkip(void);
 
 #endif
