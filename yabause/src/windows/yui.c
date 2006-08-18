@@ -605,7 +605,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
          {
             case IDM_MEMTRANSFER:
             {
+               ScspMuteAudio();
                DialogBox(y_hInstance, "MemTransferDlg", hWnd, (DLGPROC)MemTransferDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_RESET:
@@ -615,44 +617,60 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             }
             case IDM_SETTINGS:
             {
+               ScspMuteAudio();
                DialogBox(y_hInstance, "SettingsDlg", hWnd, (DLGPROC)SettingsDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_MSH2DEBUG:
             {
+               ScspMuteAudio();
                debugsh = MSH2;
                DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_SSH2DEBUG:
             {
+               ScspMuteAudio();
                debugsh = SSH2;
                DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_VDP1DEBUG:
             {
+               ScspMuteAudio();
                DialogBox(y_hInstance, "VDP1DebugDlg", hWnd, (DLGPROC)VDP1DebugDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_VDP2DEBUG:
             {
+               ScspMuteAudio();
                DialogBox(y_hInstance, "VDP2DebugDlg", hWnd, (DLGPROC)VDP2DebugDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_M68KDEBUG:
             {
+               ScspMuteAudio();
                DialogBox(y_hInstance, "M68KDebugDlg", hWnd, (DLGPROC)M68KDebugDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_SCUDSPDEBUG:
             {
+               ScspMuteAudio();
                DialogBox(y_hInstance, "SCUDSPDebugDlg", hWnd, (DLGPROC)SCUDSPDebugDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_SCSPDEBUG:
             {
+               ScspMuteAudio();
                DialogBox(y_hInstance, "SCSPDebugDlg", hWnd, (DLGPROC)SCSPDebugDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_TOGGLEFULLSCREEN:
@@ -661,9 +679,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                break;
             }
             case IDM_EXIT:
+               ScspMuteAudio();
                PostMessage(hWnd, WM_CLOSE, 0, 0);
                break;
          }
+
          return 0L;
       }
       case WM_ENTERMENULOOP:
@@ -671,10 +691,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
          ScspMuteAudio();
          return 0L;
       }
-      case WM_ACTIVATE:
+      case WM_EXITMENULOOP:
       {
-         if (LOWORD(wParam) != WA_INACTIVE && stop == 0)
-            ScspUnMuteAudio();
+         ScspUnMuteAudio();
          return 0L;
       }
       case WM_CLOSE:
