@@ -18,17 +18,47 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef GTKGLWIDGET_H
-#define GTKGLWIDGET_H
+#ifndef YUI_GL_H
+#define YUI_GL_H
 
 #include <gtk/gtk.h>
 
 #include <GL/gl.h>
 
-int draw(GtkWidget *);
-int drawPause(GtkWidget *);
-void dumpScreen(GtkWidget *);
-void takeScreenshot(GtkWidget *);
-GtkWidget * gtk_gl_widget_new(void);
+G_BEGIN_DECLS
+
+#define YUI_GL_TYPE            (yui_gl_get_type ())
+#define YUI_GL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), YUI_GL_TYPE, YuiGl))
+#define YUI_GL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  YUI_GL_TYPE, YuiGlClass))
+#define IS_YUI_GL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), YUI_GL_TYPE))
+#define IS_YUI_GL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  YUI_GL_TYPE))
+
+typedef struct _YuiGl       YuiGl;
+typedef struct _YuiGlClass  YuiGlClass;
+
+struct _YuiGl
+{
+  GtkDrawingArea hbox;
+
+  GLubyte * pixels;
+  gint pixels_width;
+  gint pixels_height;
+  gint pixels_rowstride;
+};
+
+struct _YuiGlClass
+{
+  GtkDrawingAreaClass parent_class;
+};
+
+GType		yui_gl_get_type		(void);
+GtkWidget *	yui_gl_new		(void);
+
+int		yui_gl_draw		(YuiGl *);
+int		yui_gl_draw_pause	(YuiGl *);
+void		yui_gl_dump_screen	(YuiGl *);
+void		yui_gl_screenshot	(YuiGl *);
+
+G_END_DECLS
 
 #endif

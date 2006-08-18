@@ -21,14 +21,13 @@
 #include "gtkglwidget.h"
 #include <gtk/gtkgl.h>
 
-GLubyte * pixels = NULL;
-gint pixels_width;
-gint pixels_height;
-gint pixels_rowstride;
+static void yui_gl_class_init	(YuiGlClass * klass);
+static void yui_gl_init		(YuiGl      * yfe);
+static gboolean yui_gl_resize   (GtkWidget *w,GdkEventConfigure *event, gpointer data);
 
-int draw(GtkWidget * glxarea) {
-	GdkGLContext *glcontext = gtk_widget_get_gl_context (glxarea);
-	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (glxarea);
+int yui_gl_draw(YuiGl * glxarea) {
+	GdkGLContext *glcontext = gtk_widget_get_gl_context (GTK_WIDGET(glxarea));
+	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (GTK_WIDGET(glxarea));
 
 	if (!gdk_gl_drawable_make_current (gldrawable, glcontext)) {
 		g_print("Cannot set gl drawable current\n");
@@ -38,17 +37,17 @@ int draw(GtkWidget * glxarea) {
 	gdk_gl_drawable_swap_buffers(gldrawable);
 }
 
-int drawPause(GtkWidget * glxarea) {
-	if (pixels) {
-		glDrawPixels(pixels_width, pixels_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-		draw(glxarea);
+int yui_gl_draw_pause(YuiGl * glxarea) {
+	if (glxarea->pixels) {
+		glDrawPixels(glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
+		yui_gl_draw(glxarea);
 	} else {
-		gdk_draw_rectangle(glxarea->window, glxarea->style->bg_gc[GTK_WIDGET_STATE (glxarea)],
-				TRUE, 0, 0, glxarea->allocation.width, glxarea->allocation.height);
+		gdk_draw_rectangle(GTK_WIDGET(glxarea)->window, GTK_WIDGET(glxarea)->style->bg_gc[GTK_WIDGET_STATE (glxarea)],
+				TRUE, 0, 0, GTK_WIDGET(glxarea)->allocation.width, GTK_WIDGET(glxarea)->allocation.height);
 	}
 }
 
-static gboolean resize (GtkWidget *w,GdkEventConfigure *event, gpointer data) {
+static gboolean yui_gl_resize(GtkWidget *w,GdkEventConfigure *event, gpointer data) {
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (w);
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (w);
 
@@ -60,7 +59,7 @@ static gboolean resize (GtkWidget *w,GdkEventConfigure *event, gpointer data) {
 	return FALSE;
 }
 
-GtkWidget * gtk_gl_widget_new(void) {
+GtkWidget * yui_gl_new(void) {
 	GtkWidget * drawingArea;
 	int attribs[] = {
 		GDK_GL_RGBA,
@@ -75,42 +74,73 @@ GtkWidget * gtk_gl_widget_new(void) {
 		GDK_GL_ATTRIB_LIST_NONE 
 	};
 
-	drawingArea = gtk_drawing_area_new();
+	drawingArea = GTK_WIDGET(g_object_new(yui_gl_get_type(), NULL));
 
 	gtk_widget_set_gl_capability(drawingArea, gdk_gl_config_new(attribs), NULL, TRUE, GDK_GL_RGBA_TYPE);
 
-	g_signal_connect (GTK_OBJECT(drawingArea),"configure_event", GTK_SIGNAL_FUNC(resize),0);
+	g_signal_connect (GTK_OBJECT(drawingArea),"configure_event", GTK_SIGNAL_FUNC(yui_gl_resize),0);
 
 	return drawingArea;
 }
 
-void dumpScreen(GtkWidget * glxarea) {
+void yui_gl_dump_screen(YuiGl * glxarea) {
 	int size;
 
-	pixels_width = glxarea->allocation.width;
-	pixels_height = glxarea->allocation.height;
-	pixels_rowstride = pixels_width * 3;
-	pixels_rowstride += (pixels_rowstride % 4)? (4 - (pixels_rowstride % 4)): 0;
+	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;
+	glxarea->pixels_height = GTK_WIDGET(glxarea)->allocation.height;
+	glxarea->pixels_rowstride = glxarea->pixels_width * 3;
+	glxarea->pixels_rowstride += (glxarea->pixels_rowstride % 4)? (4 - (glxarea->pixels_rowstride % 4)): 0;
 
-        size = pixels_rowstride * pixels_height;
+        size = glxarea->pixels_rowstride * glxarea->pixels_height;
  
-	if (pixels) free(pixels);
-        pixels = malloc(sizeof(GLubyte) * size);
-        if (pixels == NULL) return;    
+	if (glxarea->pixels) free(glxarea->pixels);
+        glxarea->pixels = malloc(sizeof(GLubyte) * size);
+        if (glxarea->pixels == NULL) return;    
 
-        glReadPixels(0, 0, pixels_width, pixels_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        glReadPixels(0, 0, glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
 }
 
-void takeScreenshot(GtkWidget * glxarea) {
+void yui_gl_screenshot(YuiGl * glxarea) {
 	GdkPixbuf * pixbuf, * correct;
        
-	dumpScreen(glxarea);
-	pixbuf = gdk_pixbuf_new_from_data(pixels, GDK_COLORSPACE_RGB, FALSE, 8,
-			pixels_width, pixels_height, pixels_rowstride, NULL, NULL);
+	yui_gl_dump_screen(glxarea);
+	pixbuf = gdk_pixbuf_new_from_data(glxarea->pixels, GDK_COLORSPACE_RGB, FALSE, 8,
+			glxarea->pixels_width, glxarea->pixels_height, glxarea->pixels_rowstride, NULL, NULL);
 	correct = gdk_pixbuf_flip(pixbuf, FALSE);
 
 	gdk_pixbuf_save(correct, "screenshot.png", "png", NULL, NULL);
 
 	g_object_unref(pixbuf);
 	g_object_unref(correct);
+}
+
+GType yui_gl_get_type (void) {
+  static GType yfe_type = 0;
+
+  if (!yfe_type)
+    {
+      static const GTypeInfo yfe_info =
+      {
+	sizeof (YuiGlClass),
+	NULL, /* base_init */
+        NULL, /* base_finalize */
+	(GClassInitFunc) yui_gl_class_init,
+        NULL, /* class_finalize */
+	NULL, /* class_data */
+        sizeof (YuiGl),
+	0,
+	(GInstanceInitFunc) yui_gl_init,
+      };
+
+      yfe_type = g_type_register_static(GTK_TYPE_DRAWING_AREA, "YuiGl", &yfe_info, 0);
+    }
+
+  return yfe_type;
+}
+
+static void yui_gl_class_init (YuiGlClass * klass) {
+}
+
+static void yui_gl_init (YuiGl * y) {
+	y->pixels = NULL;
 }

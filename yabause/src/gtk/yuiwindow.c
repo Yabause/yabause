@@ -115,7 +115,7 @@ static void yui_window_init (YuiWindow * yw) {
 	yw->menu = create_menu(yw);
 	gtk_box_pack_start(GTK_BOX(yw->box), yw->menu, FALSE, FALSE, 0);
 
-	yw->area = gtk_gl_widget_new();
+	yw->area = yui_gl_new();
 	gtk_box_pack_start(GTK_BOX(yw->box), yw->area, TRUE, TRUE, 0);
 	gtk_widget_set_size_request(GTK_WIDGET(yw->area), 320, 224);
 
@@ -193,8 +193,8 @@ static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpo
 
 void yui_window_update(YuiWindow * yui) {
 
-  if (!(yui->state & YUI_IS_RUNNING)) drawPause(yui->area);
-  else draw(yui->area);
+  if (!(yui->state & YUI_IS_RUNNING)) yui_gl_draw_pause(YUI_GL(yui->area));
+  else yui_gl_draw(YUI_GL(yui->area));
 }
 
 void yui_window_log(YuiWindow * yui, const char * message) {
@@ -243,7 +243,7 @@ void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 
 void yui_window_pause(GtkWidget * w, YuiWindow * yui) {
 	if (yui->state & YUI_IS_RUNNING) {
-		dumpScreen(yui->area);
+		yui_gl_dump_screen(YUI_GL(yui->area));
 		ScspMuteAudio();
 		g_idle_remove_by_data(GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);
@@ -268,5 +268,5 @@ void yui_window_invalidate(GtkWidget * w, YuiWindow * yui ) {
 }
 
 void yui_window_screenshot(YuiWindow * w) {
-	takeScreenshot(w->area);
+	yui_gl_screenshot(YUI_GL(w->area));
 }
