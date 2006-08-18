@@ -25,6 +25,7 @@
 #include "../peripheral.h"
 #include "../scsp.h"
 #include "../vdp1.h"
+#include "../vdp2.h"
 #include "resource.h"
 
 char biosfilename[MAX_PATH] = "\0";
@@ -42,6 +43,7 @@ char vidcoretype=0;
 char sndcoretype=0;
 char percoretype=0;
 int sndvolume=0;
+int enableautofskip=0;
 u8 regionid=0;
 int disctype;
 int carttype;
@@ -674,6 +676,12 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_SETCURSEL, i, 0);
          }
 
+         // Setup Auto Frameskip checkbox
+         if (enableautofskip)
+            SendDlgItemMessage(hDlg, IDC_AUTOFRAMESKIPCB, BM_SETCHECK, BST_CHECKED, 0);
+         else
+            SendDlgItemMessage(hDlg, IDC_AUTOFRAMESKIPCB, BM_SETCHECK, BST_UNCHECKED, 0);
+                                     
          return TRUE;
       }
       case WM_COMMAND:
@@ -690,6 +698,20 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                vidcoretype = VIDCoreList[SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_GETCURSEL, 0, 0)]->id;
                sprintf(tempstr, "%d", vidcoretype);
                WritePrivateProfileString("Video", "VideoCore", tempstr, inifilename);
+
+               if (SendDlgItemMessage(hDlg, IDC_AUTOFRAMESKIPCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+               {
+                  EnableAutoFrameSkip();
+                  enableautofskip = 1;
+               }
+               else
+               {
+                  DisableAutoFrameSkip();
+                  enableautofskip = 0;
+               }
+                  
+               sprintf(tempstr, "%d", enableautofskip);
+               WritePrivateProfileString("Video", "AutoFrameSkip", tempstr, inifilename);
 
                return TRUE;
             }

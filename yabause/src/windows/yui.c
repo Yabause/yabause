@@ -43,7 +43,7 @@
 #define DONT_PROFILE
 #include "../profile.h"
 
-int stop;
+int stop=1;
 int yabwinw;
 int yabwinh;
 
@@ -470,6 +470,10 @@ int YuiInit(void)
    if (vidcoretype == -1)
       vidcoretype = VIDCORE_OGL;
 
+   // Grab Auto Frameskip Settings
+   GetPrivateProfileString("Video", "AutoFrameSkip", "0", tempstr, MAX_PATH, inifilename);
+   enableautofskip = atoi(tempstr);
+
    // Grab Sound Core Settings
    GetPrivateProfileString("Sound", "SoundCore", "-1", tempstr, MAX_PATH, inifilename);
    sndcoretype = atoi(tempstr);
@@ -537,8 +541,6 @@ int YuiInit(void)
                          y_hInstance,          // instance
                          NULL);                // parms
 
-   stop = 0;
-
    yinit.percoretype = percoretype;
    yinit.sh2coretype = sh2coretype;
    yinit.vidcoretype = vidcoretype;
@@ -561,7 +563,14 @@ int YuiInit(void)
    if (YabauseInit(&yinit) == -1)
       return -1;
 
+   stop = 0;
+
    ScspSetVolume(sndvolume);
+
+   if (enableautofskip)
+      EnableAutoFrameSkip();
+   else
+      DisableAutoFrameSkip();
 
    while (!stop)
    {
@@ -655,6 +664,17 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                PostMessage(hWnd, WM_CLOSE, 0, 0);
                break;
          }
+         return 0L;
+      }
+      case WM_ENTERMENULOOP:
+      {
+         ScspMuteAudio();
+         return 0L;
+      }
+      case WM_ACTIVATE:
+      {
+         if (LOWORD(wParam) != WA_INACTIVE && stop == 0)
+            ScspUnMuteAudio();
          return 0L;
       }
       case WM_CLOSE:

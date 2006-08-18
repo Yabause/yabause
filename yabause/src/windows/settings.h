@@ -36,6 +36,7 @@ extern char sh2coretype;
 extern char vidcoretype;
 extern char sndcoretype;
 extern int sndvolume;
+extern int enableautofskip;
 extern char percoretype;
 extern u8 regionid;
 extern int disctype;
