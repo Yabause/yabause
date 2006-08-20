@@ -182,7 +182,7 @@ int YabauseInit(yabauseinit_struct *init)
 
    MappedMemoryInit();
 
-   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+   YabauseSetVideoFormat(yabsys.flags & 0x1);
    YabauseChangeTiming(CLKTYPE_26MHZ);
 
    if (init->biospath != NULL)
@@ -321,7 +321,7 @@ int YabauseExec(void) {
       PROFILE_STOP("SCSP");
       yabsys.DecilineCount = 0;
       yabsys.LineCount++;
-      if (yabsys.LineCount == 224)
+      if (yabsys.LineCount == yabsys.VBlankLineCount)
       {
          PROFILE_START("vblankin");
          // VBlankIN
@@ -329,7 +329,7 @@ int YabauseExec(void) {
          Vdp2VBlankIN();
          PROFILE_STOP("vblankin");
       }
-      else if (yabsys.LineCount == 263)
+      else if (yabsys.LineCount == yabsys.MaxLineCount)
       {
          // VBlankOUT
          PROFILE_START("VDP1/VDP2");
@@ -405,6 +405,7 @@ u32 YabauseGetTicks(void) {
 
 void YabauseSetVideoFormat(int type) {
    yabsys.IsPal = type;
+   yabsys.MaxLineCount = type ? 313 : 263;
    yabsys.OneFrameTime = 1000 / (type ? 50 : 60);
    Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
    ScspChangeVideoFormat(type);

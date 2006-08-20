@@ -37,6 +37,7 @@ typedef struct
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
+   int flags;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -61,6 +62,8 @@ typedef struct
 {
    int DecilineCount;
    int LineCount;
+   int VBlankLineCount;
+   int MaxLineCount;
    int DecilineStop;
    u32 Duf;
    u32 CycleCountII;

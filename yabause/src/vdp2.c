@@ -241,6 +241,7 @@ void Vdp2Reset(void) {
    Vdp2Regs->COBG = 0x0000;
    Vdp2Regs->COBB = 0x0000;
 
+   yabsys.VBlankLineCount = 224;
    Vdp2Internal.ColorMode = 0;
 }
 
@@ -464,6 +465,7 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
       case 0x000:
          VIDCore->Vdp2SetResolution(val);
          Vdp2Regs->TVMD = val;
+         yabsys.VBlankLineCount = 224+(val & 0x30);
          return;
       case 0x002:
          Vdp2Regs->EXTEN = val;
@@ -919,6 +921,7 @@ void FASTCALL Vdp2WriteLong(u32 addr, u32 val) {
          Vdp2Regs->TVMD = val >> 16;
          Vdp2Regs->EXTEN = val & 0xFFFF;
          VIDCore->Vdp2SetResolution(Vdp2Regs->TVMD);
+         yabsys.VBlankLineCount = 224+(Vdp2Regs->TVMD & 0x30);
          return;
       case 0x004:
          Vdp2Regs->VRSIZE = val & 0xFFFF;
