@@ -25,8 +25,8 @@ information check the README file.
 2 Compiling instructions______________________________________
 
 Yabause is written in C using the gtk+, gtkglext and OpenGL
-libraries. So you need a working C compiler, as gcc and the
-above libraries runtime and development packages:
+libraries. So you need a working C compiler, such as gcc and
+the above libraries runtime and development packages:
 
   * http://www.gtk.org
 
