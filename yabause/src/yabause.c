@@ -182,7 +182,7 @@ int YabauseInit(yabauseinit_struct *init)
 
    MappedMemoryInit();
 
-   YabauseSetVideoFormat(yabsys.flags & 0x1);
+   YabauseSetVideoFormat(init->flags & 0x1);
    YabauseChangeTiming(CLKTYPE_26MHZ);
 
    if (init->biospath != NULL)
