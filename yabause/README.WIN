@@ -12,19 +12,22 @@
 
 
 1) Compiling instructions...................................20
-2) How to use Yabause.......................................47
-3) Contact information.....................................114
-4) Disclaimer..............................................128
+2) How to use Yabause.......................................52
+3) Contact information.....................................146
+4) Disclaimer..............................................161
 
 
 1 Compiling instructions______________________________________
 
-Yabause is written in C using the SDL, OpenGL, an GLUT
+Yabause is written in C using the DirectX 8.0, OpenGL, and GLUT
 libraries, so you need a working C compiler(such as gcc) and
-these libraries runtime and development packages:
+these libraries, runtime and development packages:
 
-  * you can find SDL at http://www.libsdl.org/index.php in
-    the download section.
+  * You can find DirectX headers and libraries(for mingw) at
+    http://alleg.sourceforge.net/wip.html as the file
+    "dx80_mgw.zip". The actual runtime libraries(or
+    headers/libraries for MSVC) can be gotten from
+    http://www.microsoft.com/DirectX
 
   * OpenGL should be included with your compiler, if it isn't,
     check on your compiler's website for links.
@@ -35,19 +38,21 @@ these libraries runtime and development packages:
 Once these libraries installed, you should be ready to
 install Yabause.
 
-Unfortunately, I've been having some trouble getting configure
-working properly with mingw and cygwin, so instead I've written
-a makefile(src\makefile.mng) for compiling using mingw which
-can be called by typing: make -f makefile.mng in the src
-subdirectory.
+All you have to do now is now is go into your mingw/cygwin
+shell environment, go into the directory where you extracted
+yabause, and type: "./configure". Once that's done(and there
+was no errors), type: "make". It should now take some time to
+compile so go grab yourself a sandwich or beer - whatever suits
+your fancy and it should be done in a few minutes. Now all you
+have to do is type "./src/yabause" in order to run it. Visual C++
+support is still on the horizon, we just haven't gotten around to
+finishing it.
 
-Note: If anyone feels like fixing this, let me know. Visual C++
-      support should be available sometime in the future.
 
 2 How to use Yabause__________________________________________
 
-The first requirement is a Saturn ROM BIOS image (hence a Sega
-Saturn). Please don't ask us where to get one. 
+While not necessarily needed, it is recommended you get a Saturn
+ROM BIOS image. Please don't ask us where to get one.
 
 Execute "yabause". The program will open a settings window.
 
@@ -70,9 +75,10 @@ you'll be booting. In most cases, it's best to leave it as
 "Auto-detect".
 
 The Bios ROM File setting allows you to specify the location
-of your Saturn ROM BIOS image. This setting -must- be set to a
-valid Saturn ROM BIOS in order for yabause to operate
-correctly.
+of your Saturn ROM BIOS image. If you leave it blank, yabause
+will try to emulate the bios instead. It's better to specify
+a ROM BIOS image if you can since the emulated bios isn't
+100% perfect and may not work with your games.
 
 The Backup RAM File setting allows you to specify the location
 of the Backup RAM file. This file allows yabause to store and
@@ -93,6 +99,24 @@ you will see a brief animation of the saturn logo being formed.
 
 Special Note: Some settings require a restart of the program.
 
+There's also settings specifically for video, sound, and input.
+
+In Video Settings, you can set the Video Core to either do
+hardware rendering using OpenGL, software renderer(uses OpenGL
+the final draw though), or disable drawing completely with the
+"None" option. You can also "Enable Auto Frame-skipping" which
+basically tries to skip rendering video frames if emulation is
+lagging in attempt to speed things up.
+
+In Sound Settings, you can set the Sound Core to either do sound
+mixing using DirectX Sound or disable sound completely with the
+"None" option. You can also adjust the sound volume using the
+volume slider underneath.
+
+In Input Settings, you can set the Peripheral Core to either do
+peripheral handling using DirectX Input or disable input
+completely with the "None" option.
+
 Here are the current key mappings(they may be subject to change):
 Up arrow - Up
 Left arrow - Left
@@ -110,11 +134,20 @@ j - Start button
 q - Quit program
 F1 - Toggle FPS display
 f - Toggle fullscreen/window mode
+` - Enable Speed Throttle
+1 - Toggle VDP2 NBG0 display
+2 - Toggle VDP2 NBG1 display
+3 - Toggle VDP2 NBG2 display
+4 - Toggle VDP2 NBG3 display
+5 - Toggle VDP2 RBG0 display
+6 - Toggle VDP1 display
+
 
 3 Contact information_________________________________________
 
 General inquiries should go to:
 E-mail:	guillaume.duhamel@gmail.com
+E-mail: cwx@cyberwarriorx.com
 
 Windows Port-related inquiries should go to:
 E-mail: cwx@cyberwarriorx.com
