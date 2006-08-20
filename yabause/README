@@ -7,39 +7,35 @@
            \_/ \_||___/              \____/ \____\
      Yet Another Buggy And Uncomplete Saturn Emulator
 
-        _________________________________________
-        Copyright (c) 2002-2005 Guillaume Duhamel
+           ____________________________________
+           Copyright (c) 2002-2006 Yabause team
 
 
 1) Introduction.............................................20
-2) Staff/Thanks.............................................37
-3) Contact information......................................76
-4) Disclaimer...............................................85
+2) Staff/Thanks.............................................36
+3) Contact information......................................72
+4) Disclaimer...............................................82
 
 
 1 Introduction________________________________________________
 
 Yabause is a Sega Saturn emulator under GNU GPL.
 
-Be aware that this is an early alpha version. Don't expect to
-play commercial games on your PC. This software is released
-for testing purposes only, and is essentially aimed to
-developers.
+Yabause can boot Saturn bios and games, some of those games
+are playable.
 
 For installation/how to use informations, check the ports
 specific README files:
 
   * README.DC for the dreamcast port
   * README.LIN for the linux port
+  * README.MAC for the mac port
   * README.WIN for the windows port
 
 
 2 Staff/Thanks________________________________________________
 
-Lead Programmer: Guillaume Duhamel
-Windows port: Theo Berkau (http://www.cyberwarriorx.com)
-Mac OS X port: Adam Green (http://victoly.com/~adam/)
-Dreamcast port: Lawrence Sebald (http://ljsdcdev.sunsite.dk/)
+See the AUTHORS file for team members list.
 
 Thanks to:
 
@@ -77,6 +73,7 @@ Thanks to:
 
 E-mail:	guillaume.duhamel@gmail.com
 Web:	http://yabause.sourceforge.net
+IRC:    irc://irc.freenode.net/yabause
 
 Please don't ask for roms, bios files or any other
 copyrighted stuff.
