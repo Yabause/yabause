@@ -25,7 +25,7 @@ information check the README file.
 2 Compiling instructions______________________________________
 
 Yabause is written in C using the gtk+, gtkglext and OpenGL
-libraries, so you need a working C compiler, as gcc and the
+libraries. So you need a working C compiler, as gcc and the
 above libraries runtime and development packages:
 
   * http://www.gtk.org
@@ -39,7 +39,7 @@ Yabause can also use the SDL library:
 
   * http://www.libsdl.org/
 
-Once these libraries installed, you should be ready to
+Once these libraries are installed, you should be ready to
 install Yabause.
 
 Uncompress the Yabause source archive, move to the newly
@@ -67,7 +67,8 @@ the Preferences dialog (Yabause>Preferences).
 
 First, set the BIOS path.
 Yabause can run some games without a BIOS, but most of them
-needs it.
+needs it. If you want to use the emulated BIOS, just let the
+BIOS entry blank.
 
 Next, set the cdrom device.
 It can be a cd device, an iso or a cue file. Set the cd type
