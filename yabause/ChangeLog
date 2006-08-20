@@ -1,100 +1,104 @@
 0.6.0 -> Present
  cart:
-  - added Action Replay flash emulation.
+  - Added Action Replay flash emulation.
  cd block:
-  - fixed Read Directory/Change Directory commands. This fixes Duke Nukem 3D
+  - Fixed Read Directory/Change Directory commands. This fixes Duke Nukem 3D
     and a few others that have Netlink support.
   - Audio data is no longer stored when read by the cd block. This fixes
     Guardian Heroes.
   - other bug fixes.
  scsp:
-  - added function that allows developers to get easy to read information on
+  - Added function that allows developers to get easy to read information on
     the requested scsp sound slot.
-  - fixed a bug where the phase wasn't getting updated if DISDL was set to 0.
+  - Fixed a bug where the phase wasn't getting updated if DISDL was set to 0.
     This fixes Falcom Classics, Nadesico, and many other games using ADX.
-  - fixed a bug that was causing OCT with a setting of 0x8 to play at the wrong
-    octave.
-  - fixed a bug that was causing King of Fighters 95(and possibly others) to go
-    into an endless loop.
+  - Fixed a bug that was causing OCT with a setting of 0x8 to play at the
+    wrong octave.
+  - Fixed a bug that was causing King of Fighters 95(and possibly others) to
+    go into an endless loop.
  scu:
-  - improved SCU interrupt handling.
+  - Improved SCU interrupt handling.
  sh2:
-  - fixed a bug in exts.b opcode.
-  - corrected some bugs in sh2idle
+  - Fixed a bug in exts.b opcode.
+  - Corrected some bugs in sh2idle
   - SCI emulation improvements
  smpc:
-  - added proper DOTSEL reporting.
-  - region settings are now properly preserved.
-  - changed region autodetection so it defaults to the japanese region if
+  - Added proper DOTSEL reporting.
+  - Region settings are now properly preserved.
+  - Changed region autodetection so it defaults to the japanese region if
     it can't autodetect.
  68k:
-  - fixed a few bugs.
+  - Fixed a few bugs.
  vdp2:
-  - debug info bug fixes
-  - implemented one mode of external HV latching. This fixes King of Fighters
+  - Debug info bug fixes
+  - Implemented one mode of external HV latching. This fixes King of Fighters
     95.
-  - external latch and sync flags are now cleared on TVSTAT reading.
-  - added speed throttle(basically skips 6 frame draws).
-  - added long writes for VCSTA, LSTA0, and LSTA1 registers.
+  - External latch and sync flags are now cleared on TVSTAT reading.
+  - Added speed throttle(basically skips 6 frame draws).
+  - Added long writes for VCSTA, LSTA0, and LSTA1 registers.
  software video core:
-  - rewrote it so it's no longer dependent on SDL.
-  - added NBG2/NBG3 support.
-  - added tile mode rendering.
-  - added frame buffer emulation.
-  - added normal sprite drawing.
-  - changed Normal Sprite drawing so that Scaled Sprite and Distorted Sprite
+  - Rewrote it so it's no longer dependent on SDL.
+  - Added NBG2/NBG3 support.
+  - Added tile mode rendering.
+  - Added frame buffer emulation.
+  - Added normal sprite drawing.
+  - Changed Normal Sprite drawing so that Scaled Sprite and Distorted Sprite
     functions can use it too.
-  - added some support for Scaled/Distorted Sprites.
-  - added VDP1 Polyline and Line drawing to Software renderer.
-  - fixed a bunch of bugs.
+  - Added some support for Scaled/Distorted Sprites.
+  - Added VDP1 Polyline and Line drawing to Software renderer.
+  - Fixed a bunch of bugs.
  opengl video core:
-  - fixed a few issues with OpenGL initialization.
-  - fixed a window/fullscreen bug.
-  - added a smart Line Scroll/Vertical Cell Scroll interpreter.
-  - changed Color Offset so it uses the same method as the Software renderer.
-  - fixed Rotation Table reading.
-  - fixed a bug in VIDOGLVdp1PolylineDraw where coordinate reads were writing
+  - Fixed a few issues with OpenGL initialization.
+  - Fixed a window/fullscreen bug.
+  - Added a smart Line Scroll/Vertical Cell Scroll interpreter.
+  - Changed Color Offset so it uses the same method as the Software renderer.
+  - Fixed Rotation Table reading.
+  - Fixed a bug in VIDOGLVdp1PolylineDraw where coordinate reads were writing
     to invalid areas.
  linux port:
-  - removed some useless debug messages and fixed the "quit" menu entry.
-  - added vdp1 debug dialog in new gtk interface.
-  - added dialog for sh2, video core switching.
-  - added reset menu entry.
-  - added about dialog.
-  - added MSH2 and SSH2 debug dialogs to the GTK interface.
-  - added transfer dialog to the new gtk ui.
-  - added empty Memory Dump dialog.
-  - added the dialog box for scsp
-  - added shortcut F7 for command Step
-  - added support for memory breakpoints in sh2 debug dialog
-  - sound is now muted when emulation is paused (in gtk interface).
-  - the window data is now saved while emulation is paused.
-  - screenshot function added.
+  - Removed some useless debug messages and fixed the "quit" menu entry.
+  - Added vdp1 debug dialog in new gtk interface.
+  - Added dialog for sh2, video core switching.
+  - Added reset menu entry.
+  - Added about dialog.
+  - Added MSH2 and SSH2 debug dialogs to the GTK interface.
+  - Added transfer dialog to the new gtk ui.
+  - Added empty Memory Dump dialog.
+  - Added the dialog box for scsp
+  - Added shortcut F7 for command Step
+  - Added support for memory breakpoints in sh2 debug dialog
+  - Sound is now muted when emulation is paused (in gtk interface).
+  - The window data is now saved while emulation is paused.
+  - Screenshot function added.
+ macos port:
+  - Added carbon interface
+  - Can now build .dmg image from .app directory
+  - Other improvements
  windows port:
-  - added SCSP Debug Dialog.
-  - added Reset option to menu.
-  - now uses DirectInput and DirectSound instead of SDL.
-  - added dialog for video, sound and input core switching.
-  - fixed window/fullscreen switching.
-  - added support for memory breakpoints in sh2 debug dialog
-  - other bug fixes.
-  - sound volume can now be adjusted in the settings dialog
-  - sound is now muted whenever a breakpoint is triggered
+  - Added SCSP Debug Dialog.
+  - Added Reset option to menu.
+  - Now uses DirectInput and DirectSound instead of SDL.
+  - Added dialog for video, sound and input core switching.
+  - Fixed window/fullscreen switching.
+  - Added support for memory breakpoints in sh2 debug dialog.
+  - Sound volume can now be adjusted in the settings dialog.
+  - Sound is now muted when dialog window has focus.
+  - Auto frameskip can be be enabled via video settings menu.
+  - Other bug fixes.
  general:
-  - better handling of NULL string when opening a file
-  - fixed a few memory leaks
-  - macos x port improvements
-  - iso support fixes
-  - did some more work on PAL support(still not finished)
-  - added auto frameskipping(still not working correctly)
-  - improved sound buffering
-  - fixed handling of invalid SH2 opcodes
-  - dummy sound core bug fixes
-  - added carbon interface
-  - fixed some warnings
-  - added experimental bios emulation
-  - added memory breakpoints
-  - added a function to the Sound cores for setting the volume.
+  - Better handling of NULL string when opening a file
+  - Fixed a few memory leaks
+  - ISO support fixes
+  - PAL support added
+  - Fixed v-blank timing
+  - Added auto frameskipping(still not working correctly)
+  - Improved sound buffering
+  - Fixed handling of invalid SH2 opcodes
+  - Dummy sound core bug fixes
+  - Fixed some warnings
+  - Added experimental bios emulation
+  - Added memory breakpoints
+  - Added a function to the sound cores for setting the volume.
 0.5.0 -> 0.6.0
  cart:
   - accesses to Netlink addresses when Netlink was not present was causing
