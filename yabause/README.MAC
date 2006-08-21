@@ -1,0 +1,85 @@
+        _   _          
+       / \_/ \            ___  _      ____ 
+       \     /___  ___   /   || | __ /    \ ____
+        \   //   ||   \ /    || | \ \\  \_//    \
+        /  //    ||   //  _  || |__\ \\  \    __/
+        \_//  _  ||   \\_/ \_||______/ \  \\  \__
+           \_/ \_||___/              \____/ \____\
+     Yet Another Buggy And Uncomplete Saturn Emulator
+
+           ____________________________________
+           Copyright (c) 2002-2006 Yabause team
+
+
+1) Introduction.............................................19
+2) Compiling instructions...................................25
+2) How to use Yabause.......................................52
+
+
+1 Introduction________________________________________________
+
+This file documents the mac version only, for general
+information check the README file.
+
+
+2 Compiling instructions______________________________________
+
+Yabause is written in C using the AGL, Carbon, IOKIit and
+OpenGL libraries. Those librarires should be include with you
+Mac OS X system.
+
+Yabause can also use the SDL library:
+
+  * http://www.libsdl.org/
+
+Once these libraries are installed, you should be ready to
+install Yabause.
+
+Uncompress the Yabause source archive, move to the newly
+created directory, type "./configure", then "make",
+it will generate one program: "yabause" in the "src/carbon"
+directory and copy it in the Yabause.app bundle.
+
+You can also pass the --enable-debug, --enable-vdp1-debug,
+--enable-cd-debug options to the configure script, Yabause
+will then print debug messages on the error standard output.
+(Use the --help flag for a complete list of options.)
+
+You can then use Yabause by opening the bundle with:
+"open Yabause.app" or with the Mac OS X finder.
+
+
+3 How to use Yabause__________________________________________
+
+Before using Yabause, you need to configure a few things in
+the Preferences dialog (Yabause>Preferences).
+
+
+3.1 Configuration_____________________________________________
+
+First, set the BIOS path.
+Yabause can run some games without a BIOS, but most of them
+needs it. If you want to use the emulated BIOS, just let the
+BIOS entry blank.
+
+Next, set the cdrom device.
+It can be a cd device, an iso or a cue file. Set the cd type
+accordingly.
+
+The last thing you have to configure is the keys.
+
+Once eveything is set, you can start emulation with the
+"Yabause>run" entry.
+
+
+3.2 Command line arguments____________________________________
+
+-b (or --bios=)
+    Specify bios file.
+-c (or --cdrom=)
+    Specify cd device. You can know which file is used as cd
+    device by looking in /etc/fstab. It is commonly something
+    like /dev/hdc or /dev/hdd for IDE devices and /dev/scd0
+    for SCSI devices.
+-i (or --iso=)
+    Specify iso file.
