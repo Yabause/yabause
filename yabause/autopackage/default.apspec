@@ -9,7 +9,7 @@ Packager: Guillaume Duhamel <guillaume.duhamel@gmail.com>
 Summary: Yabause is a Sega Saturn emulator.
 URL: http://yabause.sf.net/
 License: GNU General Public License, Version 2
-SoftwareVersion: 0.6
+SoftwareVersion: 0.7
 AutopackageTarget: 1.0
 
 [Description]
