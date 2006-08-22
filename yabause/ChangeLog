@@ -1,3 +1,9 @@
+0.7.0 -> Present
+ windows:
+  - Fixed a bug that was causing the emulator to sometimes start in using PAL
+    timing.
+ general:
+  - Fixed a potential issue when enabling/disabling auto frameskipping.
 0.6.0 -> 0.7.0
  cart:
   - Added Action Replay flash emulation.
