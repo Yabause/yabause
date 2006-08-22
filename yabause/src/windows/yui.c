@@ -559,6 +559,7 @@ int YuiInit(void)
    yinit.buppath = backupramfilename;
    yinit.mpegpath = mpegromfilename;
    yinit.cartpath = cartfilename;
+   yinit.flags = VIDEOFORMATTYPE_NTSC;
 
    if (YabauseInit(&yinit) == -1)
       return -1;
