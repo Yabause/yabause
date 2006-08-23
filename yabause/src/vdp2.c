@@ -2540,6 +2540,7 @@ void ToggleFullScreen(void)
 void EnableAutoFrameSkip(void)
 {
    autoframeskipenab = 1;
+   lastticks = YabauseGetTicks();
 }
 
 //////////////////////////////////////////////////////////////////////////////
