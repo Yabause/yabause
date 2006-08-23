@@ -1413,7 +1413,7 @@ void VIDOGLVdp1PolygonDraw(void)
    if ((CMDPMOD & 0x7) == 0x3)
       alpha = 0x80;
 
-   if ((color & 0x8000) == 0)
+   if (color == 0)
       alpha = 0;
 
    polygon.priority = Vdp2Regs->PRISA & 0x7;
@@ -1433,7 +1433,10 @@ void VIDOGLVdp1PolygonDraw(void)
 
    YglQuad(&polygon, &texture);
 
-   *texture.textdata = COLOR_ADD(SAT2YAB1(alpha,color), vdp1cor, vdp1cog, vdp1cob);
+   if (color & 0x8000)
+      *texture.textdata = COLOR_ADD(SAT2YAB1(alpha,color), vdp1cor, vdp1cog, vdp1cob);
+   else
+      *texture.textdata = COLOR_ADD(Vdp2ColorRamGetColor(color, alpha), vdp1cor, vdp1cog, vdp1cob);
 }
 
 //////////////////////////////////////////////////////////////////////////////
