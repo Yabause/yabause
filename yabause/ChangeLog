@@ -1,5 +1,7 @@
 0.7.0 -> Present
- windows:
+ linux port:
+  - Added autostart and fullscreen command line switches.
+ windows port:
   - Fixed a bug that was causing the emulator to sometimes start in using PAL
     timing.
  general:

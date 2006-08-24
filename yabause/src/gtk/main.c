@@ -235,8 +235,17 @@ int main(int argc, char *argv[]) {
 	    yinit.cdcoretype = 2;
 	 }
          // Set sound
-         else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0)
+         else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0) {
 	    yinit.sndcoretype = 0;
+	 }
+	 // Autostart
+	 else if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "--autostart") == 0) {
+            yui_window_run(0, yui);
+	 }
+	 // Fullscreen
+	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
+            yui_window_toggle_fullscreen(0, yui);
+	 }
       }
    }
 #endif

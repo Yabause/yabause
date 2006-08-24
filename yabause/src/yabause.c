@@ -61,6 +61,9 @@ void print_usage(const char *program_name) {
    printf("   -b STRING  --bios=STRING          bios file\n");
    printf("   -i STRING  --iso=STRING           iso/cue file\n");
    printf("   -c STRING  --cdrom=STRING         cdrom path\n");
+   printf("   -ns        --nosound              turn sound off\n");
+   printf("   -a         --autostart            autostart emulation\n");
+   printf("   -f         --fullscreen           start in fullscreen mode\n");
 }
 #endif
 
