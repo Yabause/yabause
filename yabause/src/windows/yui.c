@@ -680,9 +680,35 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                break;
             }
             case IDM_EXIT:
+            {
                ScspMuteAudio();
                PostMessage(hWnd, WM_CLOSE, 0, 0);
                break;
+            }
+            case IDM_WEBSITE:
+            {
+               ShellExecute(NULL, "open", "http://yabause.sourceforge.net", NULL, NULL, SW_SHOWNORMAL);
+               break;
+            }
+            case IDM_FORUM:
+            {
+               ShellExecute(NULL, "open", "http://yabause.sourceforge.net/forums/", NULL, NULL, SW_SHOWNORMAL);
+               break;
+            }
+            case IDM_SUBMITBUGREPORT:
+            {
+               ShellExecute(NULL, "open", "http://sourceforge.net/tracker/?func=add&group_id=89991&atid=592126", NULL, NULL, SW_SHOWNORMAL);
+               break;
+            }
+            case IDM_DONATE:
+            {
+               ShellExecute(NULL, "open", "https://sourceforge.net/donate/index.php?group_id=89991", NULL, NULL, SW_SHOWNORMAL);
+               break;
+            }
+            case IDM_ABOUT:
+            {
+               break;
+            }
          }
 
          return 0L;

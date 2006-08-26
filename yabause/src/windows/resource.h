@@ -36,6 +36,11 @@
 #define IDM_SCUDSPDEBUG      10016
 #define IDM_SCSPDEBUG        10017
 #define IDM_TOGGLEFULLSCREEN 10018
+#define IDM_WEBSITE          10019
+#define IDM_FORUM            10020
+#define IDM_SUBMITBUGREPORT  10021
+#define IDM_DONATE           10022
+#define IDM_ABOUT            10023
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002

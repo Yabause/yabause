@@ -43,6 +43,14 @@ BEGIN
     MENUITEM "SCU DSP", IDM_SCUDSPDEBUG
     MENUITEM "SCSP", IDM_SCSPDEBUG
   END
+  POPUP "&Help"
+  BEGIN
+    MENUITEM "&Website", IDM_WEBSITE
+    MENUITEM "&Forum", IDM_FORUM
+    MENUITEM "&Submit a bug report", IDM_SUBMITBUGREPORT
+    MENUITEM "&Donate to Yabause", IDM_DONATE
+//    MENUITEM "&About Yabause", IDM_ABOUT
+  END
 END
 
 //////////////////////////////////////////////////////////////////////////////
