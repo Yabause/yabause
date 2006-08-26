@@ -2468,7 +2468,7 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
   stepH = (float)lH / yLead;
 
 #define DRAW_DISTORTED_SPRITE_LOOP_BEGIN       for ( x = xLead+1 ; x ; x-- ) { \
-    if (( xM >= 0 )&&( yM >= 0 )&&( xM <= vdp1width )&&( yM <= vdp1height )) {
+    if (( xM >= 0 )&&( yM >= 0 )&&( xM < vdp1width )&&( yM < vdp1height )) {
       
 #define DRAW_DISTORTED_SPRITE_LOOP_END    	} \
       W += stepW;  \
