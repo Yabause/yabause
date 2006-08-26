@@ -32,6 +32,7 @@
 #include "../cdbase.h"
 #include "../scsp.h"
 #include "../sndsdl.h"
+#include "pergtk.h"
 
 #include "settings.h"
 
@@ -43,6 +44,7 @@ NULL
 
 PerInterface_struct *PERCoreList[] = {
 &PERDummy,
+&PERGTK,
 NULL
 };
 
@@ -89,7 +91,8 @@ YuiAction key_config[] = {
 };
 
 int yui_main(gpointer data) {
-	YabauseExec();
+	PERCore->HandleEvents();
+	//YabauseExec();
 	return TRUE;
 }
 
@@ -102,7 +105,7 @@ GtkWidget * yui_new() {
 }
 
 void yui_settings_init(void) {
-	yinit.percoretype = PERCORE_DUMMY;
+	yinit.percoretype = PERCORE_GTK;
 	yinit.sh2coretype = SH2CORE_DEFAULT;
 	yinit.vidcoretype = VIDCORE_OGL;
 	yinit.sndcoretype = SNDCORE_DUMMY;

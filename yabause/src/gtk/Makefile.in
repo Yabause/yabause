@@ -94,7 +94,7 @@ bin_PROGRAMS = yabause
 yabause_SOURCES = gtkglwidget.c gtkglwidget.h main.c settings.c menu.c gtk-compat.c gtk-compat.h \
 	yuifileentry.c yuifileentry.h yuirange.c yuirange.h yuiinputentry.c yuiinputentry.h yuipage.c yuipage.h \
 	yuiresolution.c yuiresolution.h yuiwindow.c yuiwindow.h yuivdp1.c yuivdp1.h yuivdp2.c yuivdp2.h \
-	yuiscsp.c yuiscsp.h \
+	yuiscsp.c yuiscsp.h pergtk.c pergtk.h \
 	yuish.c yuish.h yuitransfer.c yuitransfer.h yuim68k.c yuim68k.h yuiscudsp.c yuiscudsp.h yuimem.c yuimem.h
 
 yabause_CFLAGS = $(YAB_CFLAGS)
@@ -112,9 +112,10 @@ am_yabause_OBJECTS = yabause-gtkglwidget.$(OBJEXT) \
 	yabause-yuiinputentry.$(OBJEXT) yabause-yuipage.$(OBJEXT) \
 	yabause-yuiresolution.$(OBJEXT) yabause-yuiwindow.$(OBJEXT) \
 	yabause-yuivdp1.$(OBJEXT) yabause-yuivdp2.$(OBJEXT) \
-	yabause-yuiscsp.$(OBJEXT) yabause-yuish.$(OBJEXT) \
-	yabause-yuitransfer.$(OBJEXT) yabause-yuim68k.$(OBJEXT) \
-	yabause-yuiscudsp.$(OBJEXT) yabause-yuimem.$(OBJEXT)
+	yabause-yuiscsp.$(OBJEXT) yabause-pergtk.$(OBJEXT) \
+	yabause-yuish.$(OBJEXT) yabause-yuitransfer.$(OBJEXT) \
+	yabause-yuim68k.$(OBJEXT) yabause-yuiscudsp.$(OBJEXT) \
+	yabause-yuimem.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
 yabause_DEPENDENCIES = ../libyabause.a
 yabause_LDFLAGS =
@@ -130,6 +131,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-gtkglwidget.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-main.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-menu.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/yabause-pergtk.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-settings.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-yuifileentry.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/yabause-yuiinputentry.Po \
@@ -201,6 +203,7 @@ yabause-yuiwindow.$(OBJEXT): yuiwindow.c
 yabause-yuivdp1.$(OBJEXT): yuivdp1.c
 yabause-yuivdp2.$(OBJEXT): yuivdp2.c
 yabause-yuiscsp.$(OBJEXT): yuiscsp.c
+yabause-pergtk.$(OBJEXT): pergtk.c
 yabause-yuish.$(OBJEXT): yuish.c
 yabause-yuitransfer.$(OBJEXT): yuitransfer.c
 yabause-yuim68k.$(OBJEXT): yuim68k.c
@@ -220,6 +223,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-gtkglwidget.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-menu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-pergtk.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-settings.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuifileentry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yabause-yuiinputentry.Po@am__quote@
@@ -418,6 +422,18 @@ yabause-yuiscsp.obj: yuiscsp.c
 @AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-yuiscsp.Po' tmpdepfile='$(DEPDIR)/yabause-yuiscsp.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yuiscsp.obj `cygpath -w yuiscsp.c`
+
+yabause-pergtk.o: pergtk.c
+@AMDEP_TRUE@	source='pergtk.c' object='yabause-pergtk.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-pergtk.Po' tmpdepfile='$(DEPDIR)/yabause-pergtk.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-pergtk.o `test -f 'pergtk.c' || echo '$(srcdir)/'`pergtk.c
+
+yabause-pergtk.obj: pergtk.c
+@AMDEP_TRUE@	source='pergtk.c' object='yabause-pergtk.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/yabause-pergtk.Po' tmpdepfile='$(DEPDIR)/yabause-pergtk.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-pergtk.obj `cygpath -w pergtk.c`
 
 yabause-yuish.o: yuish.c
 @AMDEP_TRUE@	source='yuish.c' object='yabause-yuish.o' libtool=no @AMDEPBACKSLASH@

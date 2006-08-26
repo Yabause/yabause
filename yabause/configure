@@ -826,6 +826,8 @@ Optional Features:
   --enable-cd-debug       enable cdblock debug information
   --enable-smpc-debug     enable smpc debug information
   --enable-scsp-debug     enable scsp debug information
+  --enable-newperinterface
+                          use new controls interface
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -5422,6 +5424,14 @@ if test "${enable_scsp_debug+set}" = set; then
   enableval="$enable_scsp_debug"
   cat >>confdefs.h <<\_ACEOF
 #define SCSP_DEBUG 1
+_ACEOF
+
+fi;
+# Check whether --enable-newperinterface or --disable-newperinterface was given.
+if test "${enable_newperinterface+set}" = set; then
+  enableval="$enable_newperinterface"
+  cat >>confdefs.h <<\_ACEOF
+#define USENEWPERINTERFACE 1
 _ACEOF
 
 fi;
