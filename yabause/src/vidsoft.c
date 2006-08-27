@@ -143,6 +143,8 @@ static int nbg1priority=0;
 static int nbg2priority=0;
 static int nbg3priority=0;
 static int rbg0priority=0;
+static int outputwidth;
+static int outputheight;
 
 typedef struct
 {
@@ -1786,14 +1788,6 @@ static void Vdp2DrawNBG3(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void SetSaturnResolution(int width, int height)
-{
-   vdp2width=width;
-   vdp2height=height;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 int VIDSoftInit(void)
 {
    // Initialize output buffer
@@ -1808,7 +1802,8 @@ int VIDSoftInit(void)
    if ((vdp2framebuffer = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
       return -1;
 
-   SetSaturnResolution(320, 224);
+   vdp2width = 320;
+   vdp2height = 224;
 
 #ifdef USE_OPENGL
    YuiSetVideoAttribute(DOUBLEBUFFER, 1);
@@ -1834,6 +1829,8 @@ int VIDSoftInit(void)
    glMatrixMode(GL_TEXTURE);
    glLoadIdentity();
    glOrtho(-320, 320, -224, 224, 1, 0);
+   outputwidth = 320;
+   outputheight = 224;
 #endif
    return 0;
 }
@@ -1877,6 +1874,8 @@ void VIDSoftResize(unsigned int w, unsigned int h, int on)
    glOrtho(-w, w, -h, h, 1, 0);
 
    glViewport(0, 0, w, h);
+   outputwidth = w;
+   outputheight = h;
 #endif
 }
 
@@ -3091,9 +3090,8 @@ void VIDSoftVdp2DrawEnd(void)
    }
 #ifdef USE_OPENGL
    glRasterPos2i(0, 0);
-   glPixelZoom(1.0, -1.0);
+   glPixelZoom((float)outputwidth / (float)vdp2width, 0 - ((float)outputheight / (float)vdp2height));
    glDrawPixels(vdp2width, vdp2height, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
-
    YuiSwapBuffers();
 #endif
 }
@@ -3123,6 +3121,62 @@ void VIDSoftVdp2DrawScreens(void)
 
 void VIDSoftVdp2SetResolution(u16 TVMD)
 {
+   // This needs some work
+
+   // Horizontal Resolution
+   switch (TVMD & 0x7)
+   {
+      case 0:
+         vdp2width = 320;
+         break;
+      case 1:
+         vdp2width = 352;
+         break;
+      case 2:
+         vdp2width = 640;
+         break;
+      case 3:
+         vdp2width = 704;
+         break;
+      case 4:
+         vdp2width = 320;
+         break;
+      case 5:
+         vdp2width = 352;
+         break;
+      case 6:
+         vdp2width = 640;
+         break;
+      case 7:
+         vdp2width = 704;
+         break;
+   }
+
+   // Vertical Resolution
+   switch ((TVMD >> 4) & 0x3)
+   {
+      case 0:
+         vdp2height = 224;
+         break;
+      case 1:
+         vdp2height = 240;
+         break;
+      case 2:
+         vdp2height = 256;
+         break;
+      default: break;
+   }
+
+   // Check for interlace
+   switch ((TVMD >> 6) & 0x3)
+   {
+      case 2: // Single-density Interlace
+      case 3: // Double-density Interlace
+         vdp2height *= 2;
+         break;
+      case 0: // Non-interlace
+      default: break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
