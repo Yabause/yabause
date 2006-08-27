@@ -3159,10 +3159,12 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
          vdp2width = 352;
          break;
       case 2:
-         vdp2width = 640;
+//         vdp2width = 640;
+         vdp2width = 320;
          break;
       case 3:
-         vdp2width = 704;
+//         vdp2width = 704;
+         vdp2width = 352;
          break;
       case 4:
          vdp2width = 320;
@@ -3171,10 +3173,12 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
          vdp2width = 352;
          break;
       case 6:
-         vdp2width = 640;
+//         vdp2width = 640;
+         vdp2width = 320;
          break;
       case 7:
-         vdp2width = 704;
+//         vdp2width = 704;
+         vdp2width = 352;
          break;
    }
 
@@ -3198,7 +3202,7 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
    {
       case 2: // Single-density Interlace
       case 3: // Double-density Interlace
-         vdp2height *= 2;
+//         vdp2height *= 2;
          break;
       case 0: // Non-interlace
       default: break;
@@ -3279,6 +3283,14 @@ void VIDSoftVdp2ToggleDisplayRBG0(void)
 
 void VIDSoftOnScreenDebugMessage(char *string, ...)
 {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftGetScreenSize(int *width, int *height)
+{
+   *width = vdp2width;
+   *height = vdp2height;
 }
 
 //////////////////////////////////////////////////////////////////////////////
