@@ -40,7 +40,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 windows/resource.o: windows/resource.rc windows/resource.h
-	$(RC) $< -o $@
+	$(RC) $(VDEFINES) $(DDEFINES) $< -o $@
 clean:
 	rm -f $(OBJS)
 	rm -f $(TARGET)

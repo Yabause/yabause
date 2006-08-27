@@ -20,6 +20,8 @@
 #include <windows.h>
 #include "resource.h"
 
+#define PROG_VERSION "0.7.0"
+
 IDR_MENU MENU
 BEGIN
   POPUP "&File"
@@ -49,7 +51,7 @@ BEGIN
     MENUITEM "&Forum", IDM_FORUM
     MENUITEM "&Submit a bug report", IDM_SUBMITBUGREPORT
     MENUITEM "&Donate to Yabause", IDM_DONATE
-//    MENUITEM "&About Yabause", IDM_ABOUT
+    MENUITEM "&About Yabause", IDM_ABOUT
   END
 END
 
@@ -359,6 +361,20 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
+ABOUTDLG DIALOG FIXED PURE  6, 21, 190, 137
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "About Yabause"
+FONT 8, "Courier New"
+BEGIN
+    CONTROL IDB_BITMAP, -1, "static", SS_BITMAP | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 3, 3, 157, 75
+    CTEXT           "Yabause v" PROG_VERSION, -1,3,84,184,25
+    CTEXT           "Copyright (c) 2002-2006 Yabause Team",-1,3,94,184,8
+    CTEXT           "http://yabause.sourceforge.net",-1,3,104,184,8
+    DEFPUSHBUTTON   "&OK",IDOK,75,120,40,14
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
 IDR_MAIN_ACCEL ACCELERATORS DISCARDABLE
 BEGIN
     VK_RETURN,      IDM_TOGGLEFULLSCREEN,   VIRTKEY, ALT, NOINVERT
@@ -368,8 +384,10 @@ END
 
 #ifdef _MSC_VER
 IDI_ICON        ICON    DISCARDABLE     "../logo.ico"
+IDB_BITMAP      BITMAP  DISCARDABLE     "yabause_logo.bmp"
 #else
 IDI_ICON        ICON    DISCARDABLE     "logo.ico"
+IDB_BITMAP      BITMAP  DISCARDABLE     "./windows/yabause_logo.bmp"
 #endif
 //////////////////////////////////////////////////////////////////////////////
 
