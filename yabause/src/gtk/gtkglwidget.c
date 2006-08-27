@@ -24,6 +24,9 @@
 #endif
 #include "../vidsoft.h"
 
+#define X_NOSCALE 160
+#define Y_NOSCALE 120
+
 static void yui_gl_class_init	(YuiGlClass * klass);
 static void yui_gl_init		(YuiGl      * yfe);
 static gboolean yui_gl_resize   (GtkWidget *w,GdkEventConfigure *event, gpointer data);
@@ -40,18 +43,33 @@ int yui_gl_draw(YuiGl * glxarea) {
 
 	gdk_gl_drawable_swap_buffers(gldrawable);
 #else
-	GdkPixbuf * pixbuf;
+	int buf_width, buf_height;
+	GdkPixbuf * pixbuf, * scaledpixbuf;
 	GdkRectangle rect = { 0, 0, GTK_WIDGET(glxarea)->allocation.width, GTK_WIDGET(glxarea)->allocation.height };
-
+	
+	VIDSoftGetScreenSize( &buf_width, &buf_height );
 	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;
 	glxarea->pixels_height = GTK_WIDGET(glxarea)->allocation.height;
 	glxarea->pixels_rowstride = glxarea->pixels_width * 4;
 	glxarea->pixels_rowstride += (glxarea->pixels_rowstride % 4)? (4 - (glxarea->pixels_rowstride % 4)): 0;
 
 	pixbuf = gdk_pixbuf_new_from_data(dispbuffer, GDK_COLORSPACE_RGB, TRUE, 8,
-			glxarea->pixels_width, glxarea->pixels_height, glxarea->pixels_rowstride, NULL, NULL);
-	gdk_draw_pixbuf(GTK_WIDGET(glxarea)->window, NULL, pixbuf, 0, 0, 0, 0, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
+			buf_width, buf_height, buf_width*4, NULL, NULL);
 
+	if (( glxarea->pixels_width < buf_width + X_NOSCALE )&&( glxarea->pixels_height < buf_height + Y_NOSCALE )) {
+
+	  gdk_draw_pixbuf(GTK_WIDGET(glxarea)->window, NULL, pixbuf, 0, 0,
+			  (glxarea->pixels_width-buf_width)/2, (glxarea->pixels_height-buf_height)/2,
+			  buf_width, buf_height, GDK_RGB_DITHER_NONE, 0, 0);
+	} else {
+	  
+	  scaledpixbuf = gdk_pixbuf_scale_simple(pixbuf, 
+						 glxarea->pixels_width, glxarea->pixels_height, GDK_INTERP_NEAREST );
+	  gdk_draw_pixbuf(GTK_WIDGET(glxarea)->window, NULL, 
+			  scaledpixbuf, 0, 0, 0, 0, glxarea->pixels_width, glxarea->pixels_height, 
+			  GDK_RGB_DITHER_NONE, 0, 0);
+	  g_object_unref(scaledpixbuf);
+	}
 	g_object_unref(pixbuf);
 #endif
 }
