@@ -14,6 +14,9 @@ AC_LANG(C)
 
 AC_C_BIGENDIAN
 
+use_opengl=yes
+AC_ARG_WITH(opengl, AC_HELP_STRING(--without-opengl, don't use OpenGL), [use_opengl=$withval])
+
 case $target in
 	*darwin*) yabause_arch=macosx;;
 	*linux*) yabause_arch=linux;;
@@ -54,13 +57,15 @@ case $target in
 		AC_PATH_XTRA
 		LIBS="$LIBS $X_LIBS"
 		CFLAGS="$CFLAGS $X_CFLAGS"
-		AC_CHECK_LIB(GL, glEnable, [
-			LIBS="$LIBS -lGL"
-			AC_DEFINE(HAVE_LIBGL)
-			],, $LIBS)
-		AC_CHECK_LIB(glut, glutGetModifiers,[
-			LIBS="$LIBS -lglut"
-			AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
+		if test x$use_opengl = xyes ; then
+			AC_CHECK_LIB(GL, glEnable, [
+				LIBS="$LIBS -lGL"
+				AC_DEFINE(HAVE_LIBGL)
+				],, $LIBS)
+			AC_CHECK_LIB(glut, glutGetModifiers,[
+				LIBS="$LIBS -lglut"
+				AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
+		fi
 		yabause_yui="."
 		AC_CHECK_TOOL(HAVE_PKG, pkg-config)
 

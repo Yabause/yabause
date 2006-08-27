@@ -832,6 +832,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --without-opengl        don't use OpenGL
   --with-x                use the X Window System
 
 Some influential environment variables:
@@ -3221,6 +3222,14 @@ presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
 esac
 
 
+use_opengl=yes
+
+# Check whether --with-opengl or --without-opengl was given.
+if test "${with_opengl+set}" = set; then
+  withval="$with_opengl"
+  use_opengl=$withval
+fi;
+
 case $target in
 	*darwin*) yabause_arch=macosx;;
 	*linux*) yabause_arch=linux;;
@@ -4980,7 +4989,8 @@ fi
 
 		LIBS="$LIBS $X_LIBS"
 		CFLAGS="$CFLAGS $X_CFLAGS"
-		echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
+		if test x$use_opengl = xyes ; then
+			echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
 echo $ECHO_N "checking for glEnable in -lGL... $ECHO_C" >&6
 if test "${ac_cv_lib_GL_glEnable+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5045,15 +5055,15 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_GL_glEnable" >&5
 echo "${ECHO_T}$ac_cv_lib_GL_glEnable" >&6
 if test $ac_cv_lib_GL_glEnable = yes; then
 
-			LIBS="$LIBS -lGL"
-			cat >>confdefs.h <<\_ACEOF
+				LIBS="$LIBS -lGL"
+				cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGL 1
 _ACEOF
 
 
 fi
 
-		echo "$as_me:$LINENO: checking for glutGetModifiers in -lglut" >&5
+			echo "$as_me:$LINENO: checking for glutGetModifiers in -lglut" >&5
 echo $ECHO_N "checking for glutGetModifiers in -lglut... $ECHO_C" >&6
 if test "${ac_cv_lib_glut_glutGetModifiers+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5118,13 +5128,14 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_glut_glutGetModifiers" >&5
 echo "${ECHO_T}$ac_cv_lib_glut_glutGetModifiers" >&6
 if test $ac_cv_lib_glut_glutGetModifiers = yes; then
 
-			LIBS="$LIBS -lglut"
-			cat >>confdefs.h <<\_ACEOF
+				LIBS="$LIBS -lglut"
+				cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGLUT 1
 _ACEOF
 
 fi
 
+		fi
 		yabause_yui="."
 		if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
