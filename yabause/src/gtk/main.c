@@ -65,7 +65,9 @@ NULL
 
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
+#ifdef HAVE_LIBGL
 &VIDOGL,
+#endif
 &VIDSoft,
 NULL
 };
@@ -107,7 +109,11 @@ GtkWidget * yui_new() {
 void yui_settings_init(void) {
 	yinit.percoretype = PERCORE_GTK;
 	yinit.sh2coretype = SH2CORE_DEFAULT;
+#ifdef HAVE_LIBGL
 	yinit.vidcoretype = VIDCORE_OGL;
+#else
+	yinit.vidcoretype = VIDCORE_SOFT;
+#endif
 	yinit.sndcoretype = SNDCORE_DUMMY;
 	yinit.cdcoretype = CDCORE_DEFAULT;
 	yinit.carttype = CART_NONE;
@@ -185,7 +191,9 @@ int main(int argc, char *argv[]) {
 	keyfile = g_key_file_new();
 
 	gtk_init(&argc, &argv);
+#ifdef HAVE_LIBGL
 	gtk_gl_init(&argc, &argv);
+#endif
 
 	yui_settings_init();
 

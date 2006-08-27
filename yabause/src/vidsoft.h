@@ -24,6 +24,8 @@
 
 #define VIDCORE_SOFT   2
 
+extern u32 *dispbuffer;
+
 extern VideoInterface_struct VIDSoft;
 #endif
 

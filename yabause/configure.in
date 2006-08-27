@@ -57,7 +57,7 @@ case $target in
 		AC_CHECK_LIB(GL, glEnable, [
 			LIBS="$LIBS -lGL"
 			AC_DEFINE(HAVE_LIBGL)
-			], [AC_MSG_ERROR("You need to install OpenGL") ], $LIBS)
+			],, $LIBS)
 		AC_CHECK_LIB(glut, glutGetModifiers,[
 			LIBS="$LIBS -lglut"
 			AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
@@ -69,6 +69,12 @@ case $target in
 				yabause_yui="gtk"
 				GTK_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
 				GTK_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
+			else
+				if `$HAVE_PKG gtk+-2.0` ; then
+					yabause_yui="gtk"
+					GTK_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
+					GTK_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
+				fi
 			fi
 		fi
 		YAB_CFLAGS="$CFLAGS $GTK_CFLAGS"

@@ -22,7 +22,9 @@
 #include "debug.h"
 #include "vdp2.h"
 
+#ifdef HAVE_LIBGL
 #define USE_OPENGL
+#endif
 
 #ifdef USE_OPENGL
 #include "ygl.h"
@@ -3092,8 +3094,9 @@ void VIDSoftVdp2DrawEnd(void)
    glRasterPos2i(0, 0);
    glPixelZoom((float)outputwidth / (float)vdp2width, 0 - ((float)outputheight / (float)vdp2height));
    glDrawPixels(vdp2width, vdp2height, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
-   YuiSwapBuffers();
+
 #endif
+   YuiSwapBuffers();
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -20,6 +20,8 @@
 #ifndef VIDOGL_H
 #define VIDOGL_H
 
+#ifdef HAVE_LIBGL
+
 #include "vdp1.h"
 
 #define VIDCORE_OGL   1
@@ -27,4 +29,4 @@
 extern VideoInterface_struct VIDOGL;
 #endif
 
-
+#endif

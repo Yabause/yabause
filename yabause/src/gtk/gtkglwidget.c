@@ -19,13 +19,17 @@
 */
 
 #include "gtkglwidget.h"
+#ifdef HAVE_LIBGL
 #include <gtk/gtkgl.h>
+#endif
+#include "../vidsoft.h"
 
 static void yui_gl_class_init	(YuiGlClass * klass);
 static void yui_gl_init		(YuiGl      * yfe);
 static gboolean yui_gl_resize   (GtkWidget *w,GdkEventConfigure *event, gpointer data);
 
 int yui_gl_draw(YuiGl * glxarea) {
+#ifdef HAVE_LIBGL
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (GTK_WIDGET(glxarea));
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (GTK_WIDGET(glxarea));
 
@@ -35,11 +39,28 @@ int yui_gl_draw(YuiGl * glxarea) {
 	}
 
 	gdk_gl_drawable_swap_buffers(gldrawable);
+#else
+	GdkPixbuf * pixbuf;
+	GdkRectangle rect = { 0, 0, GTK_WIDGET(glxarea)->allocation.width, GTK_WIDGET(glxarea)->allocation.height };
+
+	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;
+	glxarea->pixels_height = GTK_WIDGET(glxarea)->allocation.height;
+	glxarea->pixels_rowstride = glxarea->pixels_width * 4;
+	glxarea->pixels_rowstride += (glxarea->pixels_rowstride % 4)? (4 - (glxarea->pixels_rowstride % 4)): 0;
+
+	pixbuf = gdk_pixbuf_new_from_data(dispbuffer, GDK_COLORSPACE_RGB, TRUE, 8,
+			glxarea->pixels_width, glxarea->pixels_height, glxarea->pixels_rowstride, NULL, NULL);
+	gdk_draw_pixbuf(GTK_WIDGET(glxarea)->window, NULL, pixbuf, 0, 0, 0, 0, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
+
+	g_object_unref(pixbuf);
+#endif
 }
 
 int yui_gl_draw_pause(YuiGl * glxarea) {
 	if (glxarea->pixels) {
+#ifdef HAVE_LIBGL
 		glDrawPixels(glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
+#endif
 		yui_gl_draw(glxarea);
 	} else {
 		gdk_draw_rectangle(GTK_WIDGET(glxarea)->window, GTK_WIDGET(glxarea)->style->bg_gc[GTK_WIDGET_STATE (glxarea)],
@@ -48,6 +69,7 @@ int yui_gl_draw_pause(YuiGl * glxarea) {
 }
 
 static gboolean yui_gl_resize(GtkWidget *w,GdkEventConfigure *event, gpointer data) {
+#ifdef HAVE_LIBGL
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (w);
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (w);
 
@@ -55,12 +77,13 @@ static gboolean yui_gl_resize(GtkWidget *w,GdkEventConfigure *event, gpointer da
 		return FALSE;
 
 	glViewport(0, 0, event->width, event->height);
-
+#endif
 	return FALSE;
 }
 
 GtkWidget * yui_gl_new(void) {
 	GtkWidget * drawingArea;
+#ifdef HAVE_LIBGL
 	int attribs[] = {
 		GDK_GL_RGBA,
 		GDK_GL_RED_SIZE,   1,
@@ -73,10 +96,13 @@ GtkWidget * yui_gl_new(void) {
 
 		GDK_GL_ATTRIB_LIST_NONE 
 	};
+#endif
 
 	drawingArea = GTK_WIDGET(g_object_new(yui_gl_get_type(), NULL));
 
+#ifdef HAVE_LIBGL
 	gtk_widget_set_gl_capability(drawingArea, gdk_gl_config_new(attribs), NULL, TRUE, GDK_GL_RGBA_TYPE);
+#endif
 
 	g_signal_connect (GTK_OBJECT(drawingArea),"configure_event", GTK_SIGNAL_FUNC(yui_gl_resize),0);
 
@@ -84,6 +110,7 @@ GtkWidget * yui_gl_new(void) {
 }
 
 void yui_gl_dump_screen(YuiGl * glxarea) {
+#ifdef HAVE_LIBGL
 	int size;
 
 	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;
@@ -98,6 +125,7 @@ void yui_gl_dump_screen(YuiGl * glxarea) {
         if (glxarea->pixels == NULL) return;    
 
         glReadPixels(0, 0, glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
+#endif
 }
 
 void yui_gl_screenshot(YuiGl * glxarea) {
