@@ -68,7 +68,9 @@ YuiRangeItem cdcores[] = {
 
 YuiRangeItem vidcores[] = {
 	{ "0", "Dummy Video Interface" },
+#ifdef HAVE_LIBGL
 	{ "1", "OpenGL Video Interface" },
+#endif
 	{ "2", "Software Video Interface" },
 	{ 1, 0 }
 };
