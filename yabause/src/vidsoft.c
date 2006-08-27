@@ -2251,141 +2251,6 @@ void FASTCALL DrawRegularSprite(vdp2draw_struct *info)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void DrawScaledSprite(s32 x0, s32 y0, s32 x1, s32 y1, s32 W, s32 H, int type, u8 flip, u16 colorbank, u8 SPD, u32 addr) {
-
-  float h0, w0;
-  float stepH = (float)H/y1;
-  float stepW = (float)W/x1;
-  u16* iPix = ((u16*)vdp1framebuffer) + y0 * vdp1width + x0;
-  int stepPix = vdp1width - x1;
-  u32 colorlut = (u32)colorbank << 3;
-
-  switch( flip ) {
-
-  case 0: 
-    h0 = 0;
-    w0 = 0;
-    break;
-  case 1:
-    h0 = 0;
-    w0 = W;
-    stepW = -stepW;
-    break;
-  case 2:
-    h0 = H;
-    w0 = 0;
-    stepH = -stepH;
-    break;
-  case 3:
-    h0 = H;
-    w0 = W;
-    stepH = -stepH;
-    stepW = -stepW;
-    break;
-  }
-  
-  for ( ; y1 ; y1-- ) {
-
-    float w = w0;
-    int iAddr;
-    int x = x1;
-
-    switch ( type ) {
-      
-    case 0x10:
-      // 4 bpp Bank mode -> 16-bit FB Pixel
-      
-      iAddr = addr + (int)h0*(W>>1);
-      
-      for ( ; x ; x-- ) {
-	
-	int iw = w;
-	u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + (iw>>1)) & 0x7FFFF);
-	if ((iw & 0x1) == 0) dot >>= 4; // Even pixel
-	else dot &= 0xF; // Odd pixel
-	if (!(dot == 0 && !SPD)) *(iPix) = colorbank | dot;
-
-	iPix++;      
-	w += stepW;
-      }
-      break;
-    case 0x11:
-      // 4 bpp LUT mode -> 16-bit FB Pixel
-      iAddr = addr + (int)h0*(W>>1);
-      
-      for ( ; x ; x-- ) {
-
-	int iw = w;
-	u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + (iw>>1)) & 0x7FFFF);
-	if ((iw & 0x1) == 0) dot >>= 4; // Even pixel
-	else dot &= 0xF; // Odd pixel
-	if (!(dot == 0 && !SPD)) *(iPix) = T1ReadWord(Vdp1Ram, (dot * 2 + colorlut) & 0x7FFFF);
-
-	iPix++;      
-	w += stepW;
-      }
-      break;
-    case 0x12:
-      // 8 bpp(64 color) Bank mode -> 16-bit FB Pixel
-
-      iAddr = addr + (int)h0*W;
-      for ( ; x ; x-- ) {
-	
-	u16 dot = T1ReadWord(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF) & 0x3F;
-	if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
-	
-	iPix++;      
-	w += stepW;
-      }
-      break;
-    case 0x13:
-      // 8 bpp(128 color) Bank mode -> 16-bit FB Pixel
-
-      iAddr = addr + (int)h0*W;
-      for ( ; x ; x-- ) {
-	
-	u16 dot = T1ReadWord(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF) & 0x7F;
-	if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
-	
-	iPix++;      
-	w += stepW;
-      }
-      break;
-    case 0x14:
-      // 8 bpp(256 color) Bank mode -> 16-bit FB Pixel
-
-      iAddr = addr + (int)h0*W;
-      for ( ; x ; x-- ) {
-	
-	u16 dot = T1ReadWord(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF);
-	if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
-	
-	iPix++;      
-	w += stepW;
-      }
-      break;
-    case 0x15:
-      // 16 bpp Bank mode -> 16-bit FB Pixel
-      
-      iAddr = addr + 2*(int)h0*W;
-      for ( ; x ; x-- ) {
-	
-	u16 dot = T1ReadWord(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF);
-	if (!((dot == 0) && !SPD)) *(iPix) = dot;
-	
-	iPix++;      
-	w += stepW;
-      }
-      break;
-    }
-    
-    iPix += stepPix;
-    h0 += stepH;
-  }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
 
   #define max4(a,b,c,d) (a>b)?( (c>d)?( (a>c)?a:c ):( (a>d)?a:d ) ):( (c>d)?( (b>c)?b:c ):( (b>d)?b:d ) )
@@ -2469,7 +2334,7 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
   stepH = (float)lH / yLead;
 
 #define DRAW_DISTORTED_SPRITE_LOOP_BEGIN       for ( x = xLead+1 ; x ; x-- ) { \
-    if (( xM >= 0 )&&( yM >= 0 )&&( xM < vdp1width )&&( yM < vdp1height )) {
+    if (( xM >= vdp1clipxstart )&&( yM >= vdp1clipystart )&&( xM < vdp1clipxend )&&( yM < vdp1clipyend )) {
       
 #define DRAW_DISTORTED_SPRITE_LOOP_END    	} \
       W += stepW;  \
@@ -2601,93 +2466,261 @@ void VIDSoftVdp1NormalSpriteDraw(void)
 void VIDSoftVdp1ScaledSpriteDraw(void)
 {
    vdp1cmd_struct cmd;
-   vdp2draw_struct info;
+
+   s32 x0, y0, x1, y1, W, H;
+   u8 flip, SPD;
+   u16 colorbank;
+   int type;
+   u32 addr;
+   float h0, w0, stepH, stepW;
+   s32   clipx1, clipx2, clipy1, clipy2;
+   u16* iPix;
+   int stepPix;
+   u32 colorlut;
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
-   info.x = cmd.CMDXA + Vdp1Regs->localX;
-   info.y = cmd.CMDYA + Vdp1Regs->localY;
+   x0 = cmd.CMDXA + Vdp1Regs->localX;
+   y0 = cmd.CMDYA + Vdp1Regs->localY;
 
    switch ((cmd.CMDCTRL >> 8) & 0xF)
    {
       case 0x0: // Only two coordinates
-         info.cellw = ((int)cmd.CMDXC) - info.x + Vdp1Regs->localX + 1;
-         info.cellh = ((int)cmd.CMDYC) - info.y + Vdp1Regs->localY + 1;
+         x1 = ((int)cmd.CMDXC) - x0 + Vdp1Regs->localX + 1;
+         y1 = ((int)cmd.CMDYC) - y0 + Vdp1Regs->localY + 1;
          break;
       case 0x5: // Upper-left
-         info.cellw = ((int)cmd.CMDXB) + 1;
-         info.cellh = ((int)cmd.CMDYB) + 1;
+         x1 = ((int)cmd.CMDXB) + 1;
+         y1 = ((int)cmd.CMDYB) + 1;
          break;
       case 0x6: // Upper-Center
-         info.cellw = ((int)cmd.CMDXB);
-         info.cellh = ((int)cmd.CMDYB);
-         info.x = info.x - info.cellw/2;
-         info.cellw++;
-         info.cellh++;
+         x1 = ((int)cmd.CMDXB);
+         y1 = ((int)cmd.CMDYB);
+         x0 = x0 - x1/2;
+         x1++;
+         y1++;
          break;
       case 0x7: // Upper-Right
-         info.cellw = ((int)cmd.CMDXB);
-         info.cellh = ((int)cmd.CMDYB);
-         info.x = info.x - info.cellw;
-         info.cellw++;
-         info.cellh++;
+         x1 = ((int)cmd.CMDXB);
+         y1 = ((int)cmd.CMDYB);
+         x0 = x0 - x1;
+         x1++;
+         y1++;
          break;
       case 0x9: // Center-left
-         info.cellw = ((int)cmd.CMDXB);
-         info.cellh = ((int)cmd.CMDYB);
-         info.y = info.y - info.cellh/2;
-         info.cellw++;
-         info.cellh++;
+         x1 = ((int)cmd.CMDXB);
+         y1 = ((int)cmd.CMDYB);
+         y0 = y0 - y1/2;
+         x1++;
+         y1++;
          break;
       case 0xA: // Center-center
-         info.cellw = ((int)cmd.CMDXB);
-         info.cellh = ((int)cmd.CMDYB);
-         info.x = info.x - info.cellw/2;
-         info.y = info.y - info.cellh/2;
-         info.cellw++;
-         info.cellh++;
+         x1 = ((int)cmd.CMDXB);
+         y1 = ((int)cmd.CMDYB);
+         x0 = x0 - x1/2;
+         y0 = y0 - y1/2;
+         x1++;
+         y1++;
          break;
       case 0xB: // Center-right
-         info.cellw = ((int)cmd.CMDXB);
-         info.cellh = ((int)cmd.CMDYB);
-         info.x = info.x - info.cellw;
-         info.y = info.y - info.cellh/2;
-         info.cellw++;
-         info.cellh++;
+         x1 = ((int)cmd.CMDXB);
+         y1 = ((int)cmd.CMDYB);
+         x0 = x0 - x1;
+         y0 = y0 - y1/2;
+         x1++;
+         y1++;
          break;
       case 0xD: // Lower-left
-         info.cellw = ((int)cmd.CMDXB);
-         info.cellh = ((int)cmd.CMDYB);
-         info.y = info.y - info.cellh;
-         info.cellw++;
-         info.cellh++;
+         x1 = ((int)cmd.CMDXB);
+         y1 = ((int)cmd.CMDYB);
+         y0 = y0 - y1;
+         x1++;
+         y1++;
          break;
       case 0xE: // Lower-center
-         info.cellw = ((int)cmd.CMDXB);
-         info.cellh = ((int)cmd.CMDYB);
-         info.x = info.x - info.cellw/2;
-         info.y = info.y - info.cellh;
-         info.cellw++;
-         info.cellh++;
+         x1 = ((int)cmd.CMDXB);
+         y1 = ((int)cmd.CMDYB);
+         x0 = x0 - x1/2;
+         y0 = y0 - y1;
+         x1++;
+         y1++;
          break;
       case 0xF: // Lower-right
-         info.cellw = ((int)cmd.CMDXB);
-         info.cellh = ((int)cmd.CMDYB);
-         info.x = info.x - info.cellw;
-         info.y = info.y - info.cellh;
-         info.cellw++;
-         info.cellh++;
+         x1 = ((int)cmd.CMDXB);
+         y1 = ((int)cmd.CMDYB);
+         x0 = x0 - x1;
+         y0 = y0 - y1;
+         x1++;
+         y1++;
          break;
       default: break;
    }
 
-   DrawScaledSprite(info.x, info.y, info.cellw, info.cellh, 
-		    (((cmd.CMDSIZE >> 8) & 0x3F) * 8), (cmd.CMDSIZE & 0xFF),
-		    (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7), 
-		    (cmd.CMDCTRL & 0x30) >> 4, 
-		    cmd.CMDCOLR, 
-		    ((cmd.CMDPMOD & 0x40) != 0), 
-		    cmd.CMDSRCA << 3);
+   W = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
+   H = cmd.CMDSIZE & 0xFF;
+   type = (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7);
+   flip = (cmd.CMDCTRL & 0x30) >> 4;
+   colorbank = cmd.CMDCOLR;
+   colorlut = (u32)colorbank << 3;
+   SPD = ((cmd.CMDPMOD & 0x40) != 0);
+   addr = cmd.CMDSRCA << 3;
+
+   if ( x0 < vdp1clipxstart ) {
+     
+     if ( x0+x1 < vdp1clipxstart ) return;
+     clipx1 = vdp1clipxstart-x0;
+   } else clipx1 = 0;
+   
+   if ( x0+x1 > vdp1clipxend ) {
+     
+     if ( x0 > vdp1clipxend ) return;
+     clipx2 = x0+x1-vdp1clipxend;
+   } else clipx2 = 0;
+   
+   if ( y0 < vdp1clipystart ) {
+     
+     if ( y0+y1 < vdp1clipystart ) return;
+     clipy1 = vdp1clipystart-y0;
+   } else clipy1 = 0;
+   
+   if ( y0+y1 > vdp1clipyend ) {
+     
+     if ( y0 > vdp1clipyend ) return;
+     clipy2 = y0+y1-vdp1clipyend;
+   } else clipy2 = 0;
+   
+   switch( flip ) {
+     
+   case 0: 
+     stepH = (float)H/y1;
+     stepW = (float)W/x1;
+     h0 = clipy1*stepH;
+     w0 = clipx1*stepW;
+     break;
+   case 1:
+     stepH = (float)H/y1;
+     stepW = -(float)W/x1;
+     h0 = clipy1*stepH;
+     w0 = W+clipx2*stepW;
+     break;
+   case 2:
+     stepH = -(float)H/y1;
+     stepW = (float)W/x1;
+     h0 = H+clipy2*stepH;
+     w0 = clipx1*stepW;
+     break;
+   case 3:
+     stepH = -(float)H/y1;
+     stepW = -(float)W/x1;
+     h0 = H+clipy2*stepH;
+     w0 = W+clipx2*stepW;
+     break;
+   }
+   
+   y1 -= clipy1 + clipy2;
+   x1 -= clipx1 + clipx2;
+   
+   iPix = ((u16*)vdp1framebuffer) + (y0+clipy1) * vdp1width + x0+clipx1;
+   stepPix = vdp1width - x1;
+   
+   for ( ; y1 ; y1-- ) {
+     
+     float w = w0;
+     int iAddr;
+     int x = x1;
+     
+     switch ( type ) {
+       
+     case 0x10:
+       // 4 bpp Bank mode -> 16-bit FB Pixel
+      
+       iAddr = addr + (int)h0*(W>>1);
+      
+       for ( ; x ; x-- ) {
+	
+	 int iw = w;
+	 u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + (iw>>1)) & 0x7FFFF);
+	 if ((iw & 0x1) == 0) dot >>= 4; // Even pixel
+	 else dot &= 0xF; // Odd pixel
+	 if (!(dot == 0 && !SPD)) *(iPix) = colorbank | dot;
+
+	 iPix++;      
+	 w += stepW;
+       }
+       break;
+     case 0x11:
+       // 4 bpp LUT mode -> 16-bit FB Pixel
+       iAddr = addr + (int)h0*(W>>1);
+      
+       for ( ; x ; x-- ) {
+
+	 int iw = w;
+	 u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + (iw>>1)) & 0x7FFFF);
+	 if ((iw & 0x1) == 0) dot >>= 4; // Even pixel
+	 else dot &= 0xF; // Odd pixel
+	 if (!(dot == 0 && !SPD)) *(iPix) = T1ReadWord(Vdp1Ram, (dot * 2 + colorlut) & 0x7FFFF);
+
+	 iPix++;      
+	 w += stepW;
+       }
+       break;
+     case 0x12:
+       // 8 bpp(64 color) Bank mode -> 16-bit FB Pixel
+
+       iAddr = addr + (int)h0*W;
+       for ( ; x ; x-- ) {
+	
+	 u16 dot = T1ReadWord(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF) & 0x3F;
+	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
+	
+	 iPix++;      
+	 w += stepW;
+       }
+       break;
+     case 0x13:
+       // 8 bpp(128 color) Bank mode -> 16-bit FB Pixel
+
+       iAddr = addr + (int)h0*W;
+       for ( ; x ; x-- ) {
+	
+	 u16 dot = T1ReadWord(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF) & 0x7F;
+	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
+	
+	 iPix++;      
+	 w += stepW;
+       }
+       break;
+     case 0x14:
+       // 8 bpp(256 color) Bank mode -> 16-bit FB Pixel
+
+       iAddr = addr + (int)h0*W;
+       for ( ; x ; x-- ) {
+	
+	 u16 dot = T1ReadWord(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF);
+	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
+	
+	 iPix++;      
+	 w += stepW;
+       }
+       break;
+     case 0x15:
+       // 16 bpp Bank mode -> 16-bit FB Pixel
+      
+       iAddr = addr + 2*(int)h0*W;
+       for ( ; x ; x-- ) {
+	
+	 u16 dot = T1ReadWord(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF);
+	 if (!((dot == 0) && !SPD)) *(iPix) = dot;
+	
+	 iPix++;      
+	 w += stepW;
+       }
+       break;
+     }
+    
+     iPix += stepPix;
+     h0 += stepH;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2715,26 +2748,16 @@ void VIDSoftVdp1DistortedSpriteDraw(void)
    vertices[6] = (s32)(cmd.CMDXD + Vdp1Regs->localX);
    vertices[7] = (s32)((cmd.CMDYD + 1) + Vdp1Regs->localY);
 
-   /*   if ((vertices[0] + w) == vertices[4] &&
-       (vertices[1] + h) == vertices[5] &&
-       vertices[0] == vertices[6] &&
-       vertices[1] == vertices[3] &&
-       vertices[4] == vertices[2] &&
-       vertices[5] == vertices[7])       */
-   {
-      // Draw as a normal sprite
-      info.x = vertices[0];
-      info.y = vertices[1];
-      info.cellw = w;
-      info.cellh = h;
-      info.transparencyenable = ((cmd.CMDPMOD & 0x40) != 0);
-      info.colornumber = (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7);
-      info.flipfunction = (cmd.CMDCTRL & 0x30) >> 4;
-      info.addr = cmd.CMDSRCA << 3;
-      info.supplementdata = cmd.CMDCOLR;
-      /* DrawRegularSprite(&info); */
-      DrawDistortedSprite(&info, vertices);
-   }
+   info.x = vertices[0];
+   info.y = vertices[1];
+   info.cellw = w;
+   info.cellh = h;
+   info.transparencyenable = ((cmd.CMDPMOD & 0x40) != 0);
+   info.colornumber = (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7);
+   info.flipfunction = (cmd.CMDCTRL & 0x30) >> 4;
+   info.addr = cmd.CMDSRCA << 3;
+   info.supplementdata = cmd.CMDCOLR;
+   DrawDistortedSprite(&info, vertices);
 }
 
 //////////////////////////////////////////////////////////////////////////////
