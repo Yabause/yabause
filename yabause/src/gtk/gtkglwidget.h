@@ -44,6 +44,7 @@ struct _YuiGl
   gint pixels_width;
   gint pixels_height;
   gint pixels_rowstride;
+  gint is_init;
 };
 
 struct _YuiGlClass

@@ -72,6 +72,7 @@ int yui_gl_draw(YuiGl * glxarea) {
 	}
 	g_object_unref(pixbuf);
 #endif
+	glxarea->is_init = 1;
 }
 
 int yui_gl_draw_pause(YuiGl * glxarea) {
@@ -95,6 +96,7 @@ static gboolean yui_gl_resize(GtkWidget *w,GdkEventConfigure *event, gpointer da
 		return FALSE;
 
 	glViewport(0, 0, event->width, event->height);
+        if ( YUI_GL(w)->is_init ) VIDCore->Resize(event->width, event->height, FALSE );
 #endif
 	return FALSE;
 }
@@ -116,6 +118,7 @@ GtkWidget * yui_gl_new(void) {
 	};
 #endif
 
+	YUI_GL(drawingArea)->is_init = 0;
 	drawingArea = GTK_WIDGET(g_object_new(yui_gl_get_type(), NULL));
 
 #ifdef HAVE_LIBGL

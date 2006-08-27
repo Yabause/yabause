@@ -20,6 +20,7 @@
 #ifndef YUI_WINDOW_H
 #define YUI_WINDOW_H
 
+#include <gtk/gtk.h>
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtkwindow.h>
