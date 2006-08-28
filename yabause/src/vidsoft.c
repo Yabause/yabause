@@ -1899,6 +1899,7 @@ int VIDSoftVdp1Reset(void)
 void VIDSoftVdp1DrawStart(void)
 {
    int i,i2;
+   int w,h;
 
    if (Vdp1Regs->TVMR & 0x1)
    {
@@ -1926,10 +1927,15 @@ void VIDSoftVdp1DrawStart(void)
       vdp1pixelsize = 2;
    }
 
+   h = Vdp1Regs->EWRR & 0x1FF;
+   if (h > vdp1height) h = vdp1height;
+   w = (Vdp1Regs->EWRR >> 6) & 0x3F8;
+   if (w > vdp1width) w = vdp1width;
+
    // This should be controlled by FBCR
-   for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < (Vdp1Regs->EWRR & 0x1FF); i2++)
+   for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
    {
-      for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < ((Vdp1Regs->EWRR >> 6) & 0x3F8); i++)
+      for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
       {
          ((u16 *)vdp1framebuffer)[(i2 * vdp1width) + i] = Vdp1Regs->EWDR;
       }
