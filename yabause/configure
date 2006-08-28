@@ -3305,14 +3305,26 @@ esac
 case $target in
 	*darwin*)
 		YAB_LIBS="$YAB_LIBS -framework IOKit -framework Carbon -framework AGL -framework OpenGL"
+		cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBGL 1
+_ACEOF
+
 		yabause_yui="carbon"
 		;;
 	*cygwin*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
+		cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBGL 1
+_ACEOF
+
 		yabause_yui="."
 		;;
 	*mingw32*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
+		cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBGL 1
+_ACEOF
+
 		yabause_yui="windows"
 		;;
 	*linux* | *freebsd*)
