@@ -23,32 +23,29 @@
 
 #define		TAB_ID 	 	128
 #define		TAB_SIGNATURE	'tabs'
+int tabList[] = {129, 130, 131, 132};
+
+ControlRef oldTab;
 
 void SelectItemOfTabControl(ControlRef tabControl)
 {
     ControlRef userPane;
     ControlID controlID;
-    UInt16 i;
-    int tabList[] = {129, 130, 131, 132};
-    int lastTabIndex;
 
-    lastTabIndex = GetControlValue(tabControl);
+    GetControlID(tabControl, &controlID);
+    if (controlID.id != TAB_ID) return;
+
     controlID.signature = TAB_SIGNATURE;
 
-    for (i = 1; i < 5; i++)
-    {
-        controlID.id = tabList[i - 1];
-        GetControlByID(GetControlOwner(tabControl), &controlID, &userPane);
+    controlID.id = tabList[GetControlValue(tabControl) - 1];
+    GetControlByID(GetControlOwner(tabControl), &controlID, &userPane);
        
-        if (i == lastTabIndex) {
-            EnableControl(userPane);
-            SetControlVisibility(userPane, true, true);
-        } else {
-            SetControlVisibility(userPane, false, false);
-            DisableControl(userPane);
-        }
-    }
-    
+    DisableControl(oldTab);
+    SetControlVisibility(oldTab, false, false);
+    EnableControl(userPane);
+    SetControlVisibility(userPane, true, true);
+    oldTab = userPane;
+
     Draw1Control(tabControl);
 }
 
@@ -69,14 +66,25 @@ void InstallTabHandler(WindowRef window)
     EventTypeSpec	controlSpec = { kEventClassControl, kEventControlHit };
     ControlRef 		tabControl;
     ControlID 		controlID;
+    int i;
 
     controlID.signature = TAB_SIGNATURE;
+
+    for(i = 0;i < 4;i++) {
+       controlID.id = tabList[i];
+       GetControlByID(window, &controlID, &tabControl);
+       DisableControl(tabControl);
+       SetControlVisibility(tabControl, false, false);
+    }
+
     controlID.id = TAB_ID;
     GetControlByID(window, &controlID, &tabControl);
 
     InstallControlEventHandler(tabControl,
                         NewEventHandlerUPP( TabEventHandler ),
                         1, &controlSpec, 0, NULL);
+
+    SetControl32BitValue(tabControl, 1);
 
     SelectItemOfTabControl(tabControl); 
 }
@@ -201,6 +209,7 @@ WindowRef CreateSettingsWindow() {
   load_settings(myWindow);
 
   InstallTabHandler(myWindow);
+
   {
     int i;
     ControlRef control;
