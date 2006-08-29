@@ -20,7 +20,7 @@
 #include <windows.h>
 #include "resource.h"
 
-#define PROG_VERSION "0.7.0"
+#define PROG_VERSION "0.7.1"
 
 IDR_MENU MENU
 BEGIN
