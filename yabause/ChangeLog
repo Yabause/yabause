@@ -1,13 +1,33 @@
-0.7.0 -> Present
+0.7.0 -> 0.7.1
+ opengl video core:
+  - Added polygons that use a palette.
  software video core:
-  - Added scaled sprites with clipping and flipping
-  - Full screen mode now working correctly
-  - Added correct support for vdp2 resolutions other than 320x224
+  - Added scaled sprites with clipping and flipping.
+  - Full screen mode now working correctly.
+  - Added correct support for vdp2 resolutions other than 320x224.
+  - Fixed compilation issue on big endian systems.
+  - Added function to software renderer for fetching width/height of the display buffer
+  - Memory leak when clearing VDP1 frame buffer fixed.
  linux port:
   - Added autostart and fullscreen command line switches.
+  - Fixed a bug that was causing the emulator to sometimes start in using PAL
+    timing.
+  - Added an option to choose the peripheral interface at configure time.
+  - Started to move the gtk controls code into a proper peripheral core.
+  - Added code so software renderer can be used without OpenGL.
+  - Added --without-opengl switch to configure script to prevent OpenGL
+    detection.
+  - Resizing is now enabled when using software renderer and opengl.
+ macos port:
+  - Fixed a bug that was causing the emulator to sometimes start in using PAL
+    timing.
+  - Some fixes to carbon interface (preferences should works now).
  windows port:
   - Fixed a bug that was causing the emulator to sometimes start in using PAL
     timing.
+  - Added shortcuts to the Yabause website, forum, donation page, and the
+    submit bug page to the main menu.
+  - Added About dialog.
  general:
   - Fixed a potential issue when enabling/disabling auto frameskipping.
 0.6.0 -> 0.7.0
