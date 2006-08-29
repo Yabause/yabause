@@ -123,6 +123,7 @@ void yui_settings_init(void) {
 	yinit.buppath = 0;
 	yinit.mpegpath = 0;
 	yinit.cartpath = 0;
+        yinit.flags = VIDEOFORMATTYPE_NTSC;
 }
 
 gchar * inifile;
