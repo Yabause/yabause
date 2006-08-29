@@ -105,6 +105,7 @@ void read_settings(void) {
 	yinit.buppath = 0;
 	yinit.mpegpath = 0;
 	yinit.cartpath = 0;
+        yinit.flags = VIDEOFORMATTYPE_NTSC;
 
 	i = 0;
 	while(key_config[i].name) {
