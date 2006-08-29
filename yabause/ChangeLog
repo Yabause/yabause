@@ -1,5 +1,6 @@
 0.7.0 -> Present
  software video core:
+  - Added scaled sprites with clipping and flipping
   - Full screen mode now working correctly
   - Added correct support for vdp2 resolutions other than 320x224
  linux port:
