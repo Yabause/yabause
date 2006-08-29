@@ -8,4 +8,4 @@ Standards-Version: 3.6.2
 Package: yabause
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Sega dreamcast emulator.  Still under development but can already run a bunch of games.
+Description: Sega Saturn emulator.  Still under development but can already run a bunch of games.
