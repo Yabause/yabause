@@ -128,6 +128,8 @@ typedef struct
    u16 MPEGRGB;
 } blockregs_struct;
 
+#define NETLINK_BUFFER_SIZE     1024
+
 typedef struct
 {
    u8 RBR;
@@ -143,6 +145,14 @@ typedef struct
    u8 MSR;
    u8 SCR;
 } netlinkregs_struct;
+
+typedef struct {
+   u8 inbuffer[NETLINK_BUFFER_SIZE];
+   u8 outbuffer[NETLINK_BUFFER_SIZE];
+   u32 inbufferstart, inbufferend, inbuffersize;
+   u32 outbufferstart, outbufferend, outbuffersize;
+   netlinkregs_struct reg;
+} Netlink;
 
 typedef struct {
   blockregs_struct reg;
@@ -230,9 +240,7 @@ typedef struct {
   CDInterface * cdi;
 
   int carttype;
-  int playtype;
-
-  netlinkregs_struct nlreg;
+  int playtype;  
 } Cs2;
 
 extern Cs2 * Cs2Area;
