@@ -2369,7 +2369,7 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
         u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (iW>>1)) & 0x7FFFF);
         if ((iW & 0x1) == 0) dot >>= 4; // Even pixel
         else dot &= 0xF; // Odd pixel
-        if (dot == 0 && !SPD) continue;
+        if ((dot == 0) && !SPD) continue;
         ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
       
       DRAW_DISTORTED_SPRITE_LOOP_END
@@ -2384,7 +2384,7 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
         u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (iW>>1)) & 0x7FFFF);
         if ((iW & 0x1) == 0)  dot >>= 4; // Even pixel
         else dot &= 0xF; // Odd pixel
-	if (dot == 0 && !SPD) continue;
+	if ((dot == 0) && !SPD) continue;
 	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = T1ReadWord(Vdp1Ram, (dot * 2 + colorlut) & 0x7FFFF);
     
       DRAW_DISTORTED_SPRITE_LOOP_END
@@ -2592,7 +2592,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
        iAddr = addr + h0*W;
        for ( ; x ; x-- ) {
 	
-	 u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + 2*(int)w) & 0x7FFFF) & 0x3F;
+	 u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + w) & 0x7FFFF) & 0x3F;
 	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
 	
 	 iPix++;      
@@ -2605,7 +2605,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
        iAddr = addr + h0*W;
        for ( ; x ; x-- ) {
 	
-	 u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + 2*w) & 0x7FFFF) & 0x7F;
+	 u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + w) & 0x7FFFF) & 0x7F;
 	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
 	
 	 iPix++;      
@@ -2618,7 +2618,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
        iAddr = addr + h0*W;
        for ( ; x ; x-- ) {
 	
-	 u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + 2*w) & 0x7FFFF);
+	 u16 dot = T1ReadByte(Vdp1Ram, ( iAddr + w) & 0x7FFFF);
 	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
 	
 	 iPix++;      
