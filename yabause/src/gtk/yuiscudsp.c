@@ -350,7 +350,7 @@ static void yui_scudsp_editedReg( GtkCellRendererText *cellrenderertext,
   u32 addr;
 
   gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( scudsp->regListStore ), &iter, arg1 );
-  addr = strtol(arg2, &endptr, 16 );
+  addr = strtoul(arg2, &endptr, 16 );
   if ( endptr - arg2 == strlen(arg2) ) {
    
     sprintf(bptext, "%08X", (int)addr);
@@ -372,7 +372,7 @@ static void yui_scudsp_editedBp( GtkCellRendererText *cellrenderertext,
   int i = atoi(arg1);
   u32 addr;
   gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( scudsp->bpListStore ), &iter, arg1 );
-  addr = strtol(arg2, &endptr, 16 );
+  addr = strtoul(arg2, &endptr, 16 );
   if ((endptr - arg2 < strlen(arg2)) || (!addr)) addr = 0xFFFFFFFF;
   if ( scudsp->cbp[i] != 0xFFFFFFFF) ScuDspDelCodeBreakpoint(scudsp->cbp[i]);
   scudsp->cbp[i] = 0xFFFFFFFF;

@@ -406,7 +406,7 @@ static void yui_sh_editedReg( GtkCellRendererText *cellrenderertext,
   u32 addr;
 
   gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( sh2->regListStore ), &iter, arg1 );
-  addr = strtol(arg2, &endptr, 16 );
+  addr = strtoul(arg2, &endptr, 16 );
   if ( endptr - arg2 == strlen(arg2) ) {
    
     sprintf(bptext, "%08X", (int)addr);
@@ -428,7 +428,7 @@ static void yui_sh_editedBp( GtkCellRendererText *cellrenderertext,
   int i = atoi(arg1);
   u32 addr;
   gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( sh2->bpListStore ), &iter, arg1 );
-  addr = strtol(arg2, &endptr, 16 );
+  addr = strtoul(arg2, &endptr, 16 );
   if ((endptr - arg2 < strlen(arg2)) || (!addr)) addr = 0xFFFFFFFF;
   if ( sh2->cbp[i] != 0xFFFFFFFF) SH2DelCodeBreakpoint(sh2->debugsh, sh2->cbp[i]);
   sh2->cbp[i] = 0xFFFFFFFF;
@@ -454,7 +454,7 @@ static void yui_sh_editedMbp( GtkCellRendererText *cellrenderertext,
   int i = atoi(arg1);
   u32 addr;
   gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( sh2->mbpListStore ), &iter, arg1 );
-  addr = strtol(arg2, &endptr, 16 );
+  addr = strtoul(arg2, &endptr, 16 );
   if (!addr) addr = 0xFFFFFFFF;
   if ( sh2->cmbp[i] != 0xFFFFFFFF) SH2DelMemoryBreakpoint(sh2->debugsh, sh2->cmbp[i]);
   sh2->cmbp[i] = 0xFFFFFFFF;
