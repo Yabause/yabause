@@ -24,7 +24,9 @@
 #include "../sh2core.h"
 #include "../sh2int.h"
 #include "../vidogl.h"
+#include "../vidsoft.h"
 #include "../scsp.h"
+#include "../sndsdl.h"
 #include "../cdbase.h"
 #include "../cs0.h"
 

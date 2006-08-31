@@ -65,12 +65,14 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
+&SNDSDL,
 NULL
 };
 
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
 &VIDOGL,
+&VIDSoft,
 NULL
 };
 
@@ -87,8 +89,20 @@ void read_settings(void) {
 	yinit.percoretype = PERCORE_DUMMY;
 	yinit.sh2coretype = SH2CORE_INTERPRETER;
 	yinit.vidcoretype = VIDCORE_OGL;
+	s = CFPreferencesCopyAppValue(CFSTR("VideoCore"),
+		kCFPreferencesCurrentApplication);
+	if (s)
+		yinit.vidcoretype = CFStringGetIntValue(s) - 1;
 	yinit.sndcoretype = SNDCORE_DUMMY;
+	s = CFPreferencesCopyAppValue(CFSTR("SoundCore"),
+		kCFPreferencesCurrentApplication);
+	if (s)
+		yinit.sndcoretype = CFStringGetIntValue(s) - 1;
 	yinit.cdcoretype = CDCORE_ARCH;
+	s = CFPreferencesCopyAppValue(CFSTR("CDROMCore"),
+		kCFPreferencesCurrentApplication);
+	if (s)
+		yinit.cdcoretype = CFStringGetIntValue(s) - 1;
 	yinit.carttype = CART_NONE;
 	yinit.regionid = 0;
 

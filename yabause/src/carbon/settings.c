@@ -55,7 +55,7 @@ pascal OSStatus TabEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEve
     
     GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef,
 	NULL, sizeof(ControlRef), NULL, &control );
-    
+
     SelectItemOfTabControl(control);
     
     return eventNotHandledErr;
@@ -103,6 +103,20 @@ CFStringRef get_settings(WindowRef window, int i) {
 	return s;
 }
 
+CFStringRef get_settings_c(WindowRef window, int i) {
+	ControlID id;
+	ControlRef control;
+	CFStringRef s;
+
+	id.signature = 'conf';
+	id.id = i;
+	GetControlByID(window, &id, &control);
+	s = CFStringCreateWithFormat(kCFAllocatorDefault, NULL,
+		CFSTR("%d"), GetControl32BitValue(control));
+
+	return s;
+}
+
 void set_settings(WindowRef window, int i, CFStringRef s) {
 	ControlID id;
 	ControlRef control;
@@ -116,6 +130,18 @@ void set_settings(WindowRef window, int i, CFStringRef s) {
 	}
 }
 
+void set_settings_c(WindowRef window, int i, CFStringRef s) {
+	ControlID id;
+	ControlRef control;
+
+	if (s) {
+		id.signature = 'conf';
+		id.id = i;
+		GetControlByID(window, &id, &control);
+		SetControl32BitValue(control, CFStringGetIntValue(s));
+	}
+}
+
 void save_settings(WindowRef window) {
 	int i;
 	CFStringRef s;
@@ -124,6 +150,22 @@ void save_settings(WindowRef window) {
 		kCFPreferencesCurrentApplication);
 	CFPreferencesSetAppValue(CFSTR("CDROMDrive"), get_settings(window, 2),
 		kCFPreferencesCurrentApplication);
+	CFPreferencesSetAppValue(CFSTR("CDROMCore"), get_settings_c(window, 3),
+		kCFPreferencesCurrentApplication);
+	CFPreferencesSetAppValue(CFSTR("Region"), get_settings_c(window, 4),
+		kCFPreferencesCurrentApplication);
+	CFPreferencesSetAppValue(CFSTR("VideoCore"), get_settings_c(window, 5),
+		kCFPreferencesCurrentApplication);
+	CFPreferencesSetAppValue(CFSTR("SoundCore"), get_settings_c(window, 6),
+		kCFPreferencesCurrentApplication);
+	CFPreferencesSetAppValue(CFSTR("CartPath"), get_settings(window, 7),
+		kCFPreferencesCurrentApplication);
+	CFPreferencesSetAppValue(CFSTR("CartType"), get_settings_c(window, 8),
+		kCFPreferencesCurrentApplication);
+	CFPreferencesSetAppValue(CFSTR("BackupRamPath"),
+		get_settings(window, 9), kCFPreferencesCurrentApplication);
+	CFPreferencesSetAppValue(CFSTR("MpegRomPath"),
+		get_settings(window, 10), kCFPreferencesCurrentApplication);
 
 	i = 0;
 	while(key_config[i].name) {
@@ -144,6 +186,23 @@ void load_settings(WindowRef window) {
 	set_settings(window, 1, CFPreferencesCopyAppValue(CFSTR("BiosPath"),
 		kCFPreferencesCurrentApplication));
 	set_settings(window, 2, CFPreferencesCopyAppValue(CFSTR("CDROMDrive"),
+		kCFPreferencesCurrentApplication));
+	set_settings_c(window, 3, CFPreferencesCopyAppValue(CFSTR("CDROMCore"),
+		kCFPreferencesCurrentApplication));
+	set_settings_c(window, 4, CFPreferencesCopyAppValue(CFSTR("Region"),
+		kCFPreferencesCurrentApplication));
+	set_settings_c(window, 5, CFPreferencesCopyAppValue(CFSTR("VideoCore"),
+		kCFPreferencesCurrentApplication));
+	set_settings_c(window, 6, CFPreferencesCopyAppValue(CFSTR("SoundCore"),
+		kCFPreferencesCurrentApplication));
+	set_settings(window, 7, CFPreferencesCopyAppValue(CFSTR("CartPath"),
+		kCFPreferencesCurrentApplication));
+	set_settings_c(window, 8, CFPreferencesCopyAppValue(CFSTR("CartType"),
+		kCFPreferencesCurrentApplication));
+	set_settings(window, 9,
+		CFPreferencesCopyAppValue(CFSTR("BackupRamPath"),
+		kCFPreferencesCurrentApplication));
+	set_settings(window, 10, CFPreferencesCopyAppValue(CFSTR("MpegRomPath"),
 		kCFPreferencesCurrentApplication));
 
 	i = 0;

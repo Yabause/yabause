@@ -27,6 +27,7 @@
                       </object>
                       <object class="IBCarbonButton" id="181">
                         <string name="bounds">79 250 99 320 </string>
+                        <boolean name="enabled">FALSE</boolean>
                         <string name="title">Browse</string>
                       </object>
                     </array>
@@ -42,10 +43,13 @@
                       </object>
                       <object class="IBCarbonButton" id="184">
                         <string name="bounds">153 250 173 320 </string>
+                        <boolean name="enabled">FALSE</boolean>
                         <string name="title">Browse</string>
                       </object>
                       <object class="IBCarbonPopupButton" id="226">
                         <string name="bounds">182 31 202 320 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">3</int>
                         <int name="selectedItem">3</int>
                         <object name="menu" class="IBCarbonMenu" id="225">
                           <string name="title">Popup:</string>
@@ -71,6 +75,8 @@
                     <array count="1" name="subviews">
                       <object class="IBCarbonPopupButton" id="188">
                         <string name="bounds">254 31 274 320 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">4</int>
                         <object name="menu" class="IBCarbonMenu" id="187">
                           <string name="title">Popup:</string>
                           <array count="9" name="items">
@@ -121,6 +127,8 @@
                     <array count="1" name="subviews">
                       <object class="IBCarbonPopupButton" id="202">
                         <string name="bounds">78 31 98 320 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">5</int>
                         <int name="selectedItem">2</int>
                         <object name="menu" class="IBCarbonMenu" id="198">
                           <string name="title">Popup:</string>
@@ -146,6 +154,7 @@
                     <array count="5" name="subviews">
                       <object class="IBCarbonEditText" id="205">
                         <string name="bounds">181 94 197 222 </string>
+                        <boolean name="enabled">FALSE</boolean>
                         <string name="title">224</string>
                       </object>
                       <object class="IBCarbonStaticText" id="206">
@@ -158,10 +167,12 @@
                       </object>
                       <object class="IBCarbonCheckBox" id="208">
                         <string name="bounds">152 233 166 320 </string>
+                        <boolean name="enabled">FALSE</boolean>
                         <string name="title">Keep ratio</string>
                       </object>
                       <object class="IBCarbonEditText" id="210">
                         <string name="bounds">151 94 167 222 </string>
+                        <boolean name="enabled">FALSE</boolean>
                         <string name="title">320</string>
                       </object>
                     </array>
@@ -172,6 +183,8 @@
                     <array count="1" name="subviews">
                       <object class="IBCarbonPopupButton" id="212">
                         <string name="bounds">252 31 272 320 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">6</int>
                         <object name="menu" class="IBCarbonMenu" id="211">
                           <string name="title">Popup:</string>
                           <array count="2" name="items">
@@ -201,13 +214,18 @@
                     <array count="3" name="subviews">
                       <object class="IBCarbonEditText" id="217">
                         <string name="bounds">81 34 97 239 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">7</int>
                       </object>
                       <object class="IBCarbonButton" id="218">
                         <string name="bounds">79 250 99 320 </string>
+                        <boolean name="enabled">FALSE</boolean>
                         <string name="title">Browse</string>
                       </object>
                       <object class="IBCarbonPopupButton" id="220">
                         <string name="bounds">108 31 128 320 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">8</int>
                         <object name="menu" class="IBCarbonMenu" id="219">
                           <string name="title">Popup:</string>
                           <array count="10" name="items">
@@ -253,9 +271,12 @@
                     <array count="2" name="subviews">
                       <object class="IBCarbonEditText" id="232">
                         <string name="bounds">183 34 199 239 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">9</int>
                       </object>
                       <object class="IBCarbonButton" id="231">
                         <string name="bounds">181 250 201 320 </string>
+                        <boolean name="enabled">FALSE</boolean>
                         <string name="title">Browse</string>
                       </object>
                     </array>
@@ -266,9 +287,12 @@
                     <array count="2" name="subviews">
                       <object class="IBCarbonEditText" id="234">
                         <string name="bounds">257 34 273 239 </string>
+                        <ostype name="controlSignature">conf</ostype>
+                        <int name="controlID">10</int>
                       </object>
                       <object class="IBCarbonButton" id="235">
                         <string name="bounds">255 250 275 320 </string>
+                        <boolean name="enabled">FALSE</boolean>
                         <string name="title">Browse</string>
                       </object>
                     </array>
@@ -522,18 +546,18 @@
     <reference idRef="251"/>
     <reference idRef="252"/>
     <object class="IBCarbonStaticText" id="259">
-      <string name="bounds">140 24182 156 24278 </string>
+      <string name="bounds">140 2798 156 2894 </string>
       <string name="title">Up</string>
     </object>
     <object class="IBCarbonEditText" id="260">
-      <string name="bounds">148 24310 146 24309 </string>
+      <string name="bounds">148 2926 146 2925 </string>
     </object>
     <object class="IBCarbonStaticText" id="261">
-      <string name="bounds">135 24187 151 24283 </string>
+      <string name="bounds">135 2803 151 2899 </string>
       <string name="title">Up</string>
     </object>
     <object class="IBCarbonEditText" id="262">
-      <string name="bounds">143 24315 141 24314 </string>
+      <string name="bounds">143 2931 141 2930 </string>
     </object>
     <reference idRef="263"/>
     <reference idRef="264"/>
@@ -542,52 +566,52 @@
     <reference idRef="267"/>
     <reference idRef="268"/>
     <object class="IBCarbonEditText" id="269">
-      <string name="bounds">153 24305 151 24304 </string>
+      <string name="bounds">153 2921 151 2920 </string>
     </object>
     <object class="IBCarbonStaticText" id="270">
-      <string name="bounds">197 24177 213 24273 </string>
+      <string name="bounds">197 2793 213 2889 </string>
       <string name="title">Right</string>
     </object>
     <object class="IBCarbonEditText" id="271">
-      <string name="bounds">101 24305 99 24304 </string>
+      <string name="bounds">101 2921 99 2920 </string>
     </object>
     <object class="IBCarbonStaticText" id="272">
-      <string name="bounds">171 24177 187 24273 </string>
+      <string name="bounds">171 2793 187 2889 </string>
       <string name="title">Down</string>
     </object>
     <object class="IBCarbonEditText" id="273">
-      <string name="bounds">75 24305 73 24304 </string>
+      <string name="bounds">75 2921 73 2920 </string>
     </object>
     <object class="IBCarbonStaticText" id="274">
-      <string name="bounds">67 24177 83 24273 </string>
+      <string name="bounds">67 2793 83 2889 </string>
       <string name="title">Start</string>
     </object>
     <object class="IBCarbonEditText" id="275">
-      <string name="bounds">179 24305 177 24304 </string>
+      <string name="bounds">179 2921 177 2920 </string>
     </object>
     <object class="IBCarbonStaticText" id="276">
-      <string name="bounds">93 24177 109 24273 </string>
+      <string name="bounds">93 2793 109 2889 </string>
       <string name="title">Left trigger</string>
     </object>
     <object class="IBCarbonEditText" id="277">
-      <string name="bounds">205 24305 203 24304 </string>
+      <string name="bounds">205 2921 203 2920 </string>
     </object>
     <object class="IBCarbonEditText" id="278">
-      <string name="bounds">127 24305 125 24304 </string>
+      <string name="bounds">127 2921 125 2920 </string>
     </object>
     <object class="IBCarbonStaticText" id="279">
-      <string name="bounds">119 24177 135 24273 </string>
+      <string name="bounds">119 2793 135 2889 </string>
       <string name="title">Right trigger</string>
     </object>
     <object class="IBCarbonEditText" id="280">
-      <string name="bounds">231 24305 229 24304 </string>
+      <string name="bounds">231 2921 229 2920 </string>
     </object>
     <object class="IBCarbonStaticText" id="281">
-      <string name="bounds">223 24177 239 24273 </string>
+      <string name="bounds">223 2793 239 2889 </string>
       <string name="title">Up</string>
     </object>
     <object class="IBCarbonStaticText" id="282">
-      <string name="bounds">145 24177 161 24273 </string>
+      <string name="bounds">145 2793 161 2889 </string>
       <string name="title">Left</string>
     </object>
     <reference idRef="283"/>
