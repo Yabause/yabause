@@ -109,6 +109,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (view1), view1_menu);
 
   fps1 = gtk_check_menu_item_new_with_mnemonic ("FPS");
+  g_signal_connect(fps1, "activate", G_CALLBACK(ToggleFPS), NULL);
   gtk_container_add (GTK_CONTAINER (view1_menu), fps1);
 
   layer1 = gtk_menu_item_new_with_mnemonic ("Layer");

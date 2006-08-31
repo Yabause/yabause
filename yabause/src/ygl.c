@@ -130,6 +130,14 @@ int YglInit(int width, int height, unsigned int depth) {
    unsigned int i;
    char yab_version[64];
 
+#ifdef HAVE_LIBGLUT
+   {
+      int fake_argc = 1;
+      char * fake_argv[] = { "yabause" };
+      glutInit(&fake_argc, fake_argv);
+   }
+#endif
+
    YglTMInit(width, height);
 
    if ((_Ygl = (Ygl *) malloc(sizeof(Ygl))) == NULL)
