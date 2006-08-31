@@ -1,4 +1,4 @@
-EXTRA_DIST = c68k.h c68kmac.inc gen68k.h gen68k.inc types.h
+EXTRA_DIST = c68k.h c68kmac.inc gen68k.h gen68k.inc
 bin_PROGRAMS = gen68k
 gen68k_SOURCES = c68kexec.c c68k.c gen68k.c
 gen68k_CFLAGS = -DC68K_GEN
