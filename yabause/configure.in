@@ -14,6 +14,16 @@ AC_LANG(C)
 
 AC_C_BIGENDIAN
 
+AC_PATH_PROGS(HAVE_LIBSDL, [sdl-config sdl11-config])
+
+if test ! x$HAVE_LIBSDL = x ; then
+	SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
+	SDL_LIBS=`$HAVE_LIBSDL --libs`
+	AC_DEFINE(HAVE_LIBSDL)
+fi
+CFLAGS="$CFLAGS $SDL_CFLAGS"
+LIBS="$LIBS $SDL_LIBS"
+
 use_opengl=yes
 AC_ARG_WITH(opengl, AC_HELP_STRING(--without-opengl, don't use OpenGL), [use_opengl=$withval])
 
@@ -47,16 +57,6 @@ case $target in
 		yabause_yui="windows"
 		;;
 	*linux* | *freebsd*)
-		AC_PATH_PROGS(HAVE_LIBSDL, [sdl-config sdl11-config])
-
-		if test ! x$HAVE_LIBSDL = x ; then
-			SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
-			SDL_LIBS=`$HAVE_LIBSDL --libs`
-			AC_DEFINE(HAVE_LIBSDL)
-		fi
-		CFLAGS="$CFLAGS $SDL_CFLAGS"
-		LIBS="$LIBS $SDL_LIBS"
-
 		AC_PATH_XTRA
 		LIBS="$LIBS $X_LIBS"
 		CFLAGS="$CFLAGS $X_CFLAGS"
