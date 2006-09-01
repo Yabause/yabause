@@ -41,7 +41,8 @@
 #define IDM_FORUM            10021
 #define IDM_SUBMITBUGREPORT  10022
 #define IDM_DONATE           10023
-#define IDM_ABOUT            10024
+#define IDM_COMPATLIST       10024
+#define IDM_ABOUT            10025
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002

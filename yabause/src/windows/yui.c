@@ -707,6 +707,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                ShellExecute(NULL, "open", "https://sourceforge.net/donate/index.php?group_id=89991", NULL, NULL, SW_SHOWNORMAL);
                break;
             }
+            case IDM_COMPATLIST:
+            {
+               ShellExecute(NULL, "open", "http://www.emu-compatibility.com/yabause/index.php?lang=uk", NULL, NULL, SW_SHOWNORMAL);
+               break;
+            }
             case IDM_ABOUT:
             {
                DialogBox(y_hInstance, "AboutDlg", hWnd, (DLGPROC)AboutDlgProc);

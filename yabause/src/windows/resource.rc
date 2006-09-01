@@ -51,6 +51,7 @@ BEGIN
     MENUITEM "&Forum", IDM_FORUM
     MENUITEM "&Submit a bug report", IDM_SUBMITBUGREPORT
     MENUITEM "&Donate to Yabause", IDM_DONATE
+    MENUITEM "EC &Compatibility list", IDM_COMPATLIST
     MENUITEM "&About Yabause", IDM_ABOUT
   END
 END
