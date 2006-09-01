@@ -118,8 +118,8 @@ GtkWidget * yui_gl_new(void) {
 	};
 #endif
 
-	YUI_GL(drawingArea)->is_init = 0;
 	drawingArea = GTK_WIDGET(g_object_new(yui_gl_get_type(), NULL));
+	YUI_GL(drawingArea)->is_init = 0;
 
 #ifdef HAVE_LIBGL
 	gtk_widget_set_gl_capability(drawingArea, gdk_gl_config_new(attribs), NULL, TRUE, GDK_GL_RGBA_TYPE);
