@@ -183,6 +183,7 @@ typedef struct {
   u32 TOC[102];
   u32 playFAD;
   u32 playendFAD;
+  unsigned int maxrepeat;
   u32 getsectsize;
   u32 putsectsize;
   u32 calcsize;
@@ -219,6 +220,7 @@ typedef struct {
   u32 blockfreespace;
   block_struct block[MAX_BLOCKS];
   block_struct workblock;
+  block_struct cddablock;
 
   u32 curdirsect;
   u32 curdirsize;
@@ -340,7 +342,7 @@ void Cs2CmdE2(void);                       // 0xE2
 
 u8 Cs2FADToTrack(u32 val);
 u32 Cs2TrackToFAD(u16 trackandindex);
-void Cs2SetupDefaultPlayStats(u8 track_number);
+void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD);
 block_struct * Cs2AllocateBlock(u8 * blocknum);
 void Cs2FreeBlock(block_struct * blk);
 void Cs2SortBlocks(partition_struct * part);

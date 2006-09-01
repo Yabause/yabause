@@ -81,6 +81,7 @@
 #include <math.h>
 
 #include "c68k/c68k.h"
+#include "cs2.h"
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
@@ -2004,6 +2005,36 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
 
 		scsp_slot_update_p[(slot->lfofms == 31)?0:1][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
 	}
+
+        if (Cs2Area->cddablock.size > 0)
+        {
+           u8 *buf=&Cs2Area->cddablock.data[2352 - Cs2Area->cddablock.size];
+           s32 out;
+
+           if (len > (Cs2Area->cddablock.size >> 2))
+                scsp_buf_len = (Cs2Area->cddablock.size >> 2);
+           else
+                scsp_buf_len = len;
+
+           scsp_buf_pos = 0;
+          
+           for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+           {
+                out = (s32)(s16)((buf[1] << 8) | buf[0]);
+
+                if (out)
+                   scsp_bufL[scsp_buf_pos] += out;
+
+                out = (s32)(s16)((buf[3] << 8) | buf[2]);
+
+                if (out)
+                   scsp_bufR[scsp_buf_pos] += out;
+
+                buf += 4;
+           }
+
+           Cs2Area->cddablock.size -= (scsp_buf_len << 2);
+        }
 }
 
 void scsp_update_timer(u32 len)
@@ -3232,6 +3263,7 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
    }
 
    AddString(outstring, "Total Level = %d\r\n", scsp.slot[slotnum].tl);
+
 //   AddString(outstring, "Modulation Level = \r\n");
 //   AddString(outstring, "Modulation Input X = \r\n");
 //   AddString(outstring, "Modulation Input Y = \r\n");

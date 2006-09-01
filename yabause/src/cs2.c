@@ -722,6 +722,7 @@ void Cs2Reset(void) {
   Cs2Area->playFAD = 0xFFFFFFFF;
   Cs2Area->playendFAD = 0xFFFFFFFF;
   Cs2Area->playtype = 0;
+  Cs2Area->maxrepeat = 0;
 
   // set authentication variables to 0(not authenticated)
   Cs2Area->satauth = 0;
@@ -764,6 +765,9 @@ void Cs2Reset(void) {
   }
 
   Cs2Area->blockfreespace = 200;
+
+  Cs2Area->cddablock.size = -1;
+  memset(Cs2Area->cddablock.data, 0, 2352);
 
   // initialize TOC
   memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
@@ -872,15 +876,27 @@ void Cs2Exec(u32 timing) {
                      Cs2Area->isonesectorstored = 1;
 
                      if (Cs2Area->FAD >= Cs2Area->playendFAD) {
-                        // we're done
-                        Cs2Area->status = CDB_STAT_PAUSE;
-                        Cs2SetTiming(0);
-                        Cs2Area->reg.HIRQ |= CDB_HIRQ_PEND;
+                        // Make sure we don't have to do a repeat
+                        if (Cs2Area->repcnt >= Cs2Area->maxrepeat) {
+                           // we're done
+                           Cs2Area->status = CDB_STAT_PAUSE;
+                           Cs2SetTiming(0);
+                           Cs2Area->reg.HIRQ |= CDB_HIRQ_PEND;
 
-                        if (Cs2Area->playtype == CDB_PLAYTYPE_FILE)
-                           Cs2Area->reg.HIRQ |= CDB_HIRQ_EFLS;
+                           if (Cs2Area->playtype == CDB_PLAYTYPE_FILE)
+                              Cs2Area->reg.HIRQ |= CDB_HIRQ_EFLS;
 
-                        CDLOG("PLAY HAS ENDED\n");
+                           CDLOG("PLAY HAS ENDED\n");
+                        }
+                        else {
+
+                           Cs2Area->FAD = Cs2Area->playFAD;
+                           if (Cs2Area->repcnt < 0xE)
+                              Cs2Area->repcnt++;
+                           Cs2Area->track = Cs2FADToTrack(Cs2Area->FAD);
+
+                           CDLOG("PLAY HAS REPEATED\n");
+                        }
                      }
                      if (Cs2Area->isbufferfull) {
                         CDLOG("BUFFER IS FULL\n");
@@ -891,15 +907,26 @@ void Cs2Exec(u32 timing) {
                   {
                      CDLOG("Sector filtered out\n");
                      if (Cs2Area->FAD >= Cs2Area->playendFAD) {
-                        // we're done
-                        Cs2Area->status = CDB_STAT_PAUSE;
-                        Cs2SetTiming(0);
-                        Cs2Area->reg.HIRQ |= CDB_HIRQ_PEND;
+                        // Make sure we don't have to do a repeat
+                        if (Cs2Area->repcnt >= Cs2Area->maxrepeat) {
+                           // we're done
+                           Cs2Area->status = CDB_STAT_PAUSE;
+                           Cs2SetTiming(0);
+                           Cs2Area->reg.HIRQ |= CDB_HIRQ_PEND;
 
-                        if (Cs2Area->playtype == CDB_PLAYTYPE_FILE)
-                           Cs2Area->reg.HIRQ |= CDB_HIRQ_EFLS;
+                           if (Cs2Area->playtype == CDB_PLAYTYPE_FILE)
+                              Cs2Area->reg.HIRQ |= CDB_HIRQ_EFLS;
+ 
+                           CDLOG("PLAY HAS ENDED\n");
+                        }
+                        else {
+                           Cs2Area->FAD = Cs2Area->playFAD;
+                           if (Cs2Area->repcnt < 0xE)
+                              Cs2Area->repcnt++;
+                           Cs2Area->track = Cs2FADToTrack(Cs2Area->FAD);
 
-                        CDLOG("PLAY HAS ENDED\n");
+                           CDLOG("PLAY HAS REPEATED\n");
+                        }
                      }
                   }
                   break;
@@ -1423,22 +1450,40 @@ void Cs2PlayDisc(void) {
   {
      // FAD Mode
      Cs2Area->playFAD = (pdspos & 0xFFFFF);
-     Cs2SetupDefaultPlayStats(Cs2FADToTrack(Cs2Area->playFAD));
-     Cs2Area->FAD = Cs2Area->playFAD;
+
+     Cs2SetupDefaultPlayStats(Cs2FADToTrack(Cs2Area->playFAD), 0);
+
+     if (!(pdpmode & 0x80))
+        // Move pickup to start position
+        Cs2Area->FAD = Cs2Area->playFAD;
   }
-  else if (pdspos != 0)
+  else 
   {
      // Track Mode
-     Cs2SetupDefaultPlayStats((pdspos & 0xFF00) >> 8);
-     Cs2Area->FAD = Cs2Area->playFAD = Cs2Area->FAD + (pdspos & 0xFF); // is this right?
-     Cs2Area->track = (pdspos & 0xFF00) >> 8;
-     Cs2Area->index = (pdspos & 0xFF);
+
+     // If track == 0, set it to the first available track, or something like that
+     if (pdspos == 0)
+        pdspos = 0x0100;
+
+     if (!(pdpmode & 0x80))
+     {
+        Cs2SetupDefaultPlayStats((pdspos & 0xFF00) >> 8, 1);
+        Cs2Area->playFAD = Cs2Area->FAD;
+        Cs2Area->track = (pdspos & 0xFF00) >> 8;
+        Cs2Area->index = (pdspos & 0xFF);
+     }
+     else
+     {
+        // Preserve Pickup Position
+        Cs2SetupDefaultPlayStats((pdspos & 0xFF00) >> 8, 0);
+     }
   }
-  else
-  {
-     // Default Mode
-     CDLOG("playdisc Default Mode is not implemented\n");
-  }
+
+  pdpmode &= 0x7F;
+
+  // Only update max repeat if bits 0-6 aren't all set
+  if (pdpmode != 0x7F)
+     Cs2Area->maxrepeat = pdpmode;
 
   // Convert End Position to playendFAD
   if (pdepos == 0xFFFFFF)
@@ -1500,7 +1545,7 @@ void Cs2SeekDisc(void) {
      {
         // Seek by index
         Cs2Area->status = CDB_STAT_PAUSE;
-        Cs2SetupDefaultPlayStats((Cs2Area->reg.CR2 >> 8));
+        Cs2SetupDefaultPlayStats((Cs2Area->reg.CR2 >> 8), 1);
         Cs2Area->index = Cs2Area->reg.CR2 & 0xFF;
      }
      else
@@ -2224,7 +2269,8 @@ void Cs2ReadFile(void) {
   rfsize = ((Cs2Area->fileinfo[rffid].size + Cs2Area->getsectsize - 1) /
            Cs2Area->getsectsize) - rfoffset;
 
-  Cs2SetupDefaultPlayStats(Cs2FADToTrack(Cs2Area->fileinfo[rffid].lba + rfoffset));
+  Cs2SetupDefaultPlayStats(Cs2FADToTrack(Cs2Area->fileinfo[rffid].lba + rfoffset), 0);
+  Cs2Area->maxrepeat = 0;
 
   Cs2Area->playFAD = Cs2Area->FAD = Cs2Area->fileinfo[rffid].lba + rfoffset;
   Cs2Area->playendFAD = Cs2Area->playFAD + rfsize;
@@ -2634,8 +2680,16 @@ u32 Cs2TrackToFAD(u16 trackandindex) {
      // leadout position
      return (Cs2Area->TOC[101] & 0x00FFFFFF); 
   if (trackandindex != 0x0000)
+  {
      // regular track
-     return (Cs2Area->TOC[(trackandindex >> 8) - 1] & 0x00FFFFFF) + (trackandindex & 0xFF);
+     // (really, we should be fetching subcode q's here)
+     if ((trackandindex & 0xFF) == 0x01)
+        // Return Start of Track
+        return (Cs2Area->TOC[(trackandindex >> 8) - 1] & 0x00FFFFFF);
+     else if ((trackandindex & 0xFF) == 0x63)
+        // Return End of Track
+        return ((Cs2Area->TOC[(trackandindex >> 8)] & 0x00FFFFFF) - 1);
+  }
 
   // assume it's leadin
   return 0;
@@ -2643,7 +2697,7 @@ u32 Cs2TrackToFAD(u16 trackandindex) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2SetupDefaultPlayStats(u8 track_number) {
+void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD) {
   if (track_number != 0xFF)
   {
      Cs2Area->options = 0;
@@ -2651,7 +2705,8 @@ void Cs2SetupDefaultPlayStats(u8 track_number) {
      Cs2Area->ctrladdr = (Cs2Area->TOC[track_number - 1] & 0xFF000000) >> 24;
      Cs2Area->index = 1;
      Cs2Area->track = track_number;
-     Cs2Area->FAD = Cs2Area->TOC[track_number - 1] & 0x00FFFFFF;
+     if (writeFAD)
+        Cs2Area->FAD = Cs2Area->TOC[track_number - 1] & 0x00FFFFFF;
   }
 }
 
@@ -3279,6 +3334,8 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
      if (isaudio)
      {
         // Audio data should really be passed onto the SCSP
+        memcpy((void *)&Cs2Area->cddablock, (void *)&Cs2Area->workblock, sizeof(block_struct));
+        Cs2Area->cddablock.size = 2352;
         *partition = NULL;
         return 0;
      }
