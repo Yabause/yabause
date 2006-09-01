@@ -391,7 +391,10 @@ int YuiInit(void)
 
    if (GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
    {
-      // Startup Settings Configuration here
+      // setup backupramfilename to a default name
+      sprintf(backupramfilename, "bkram.bin");
+
+      // Startup Settings Configuration
       if (DialogBox(y_hInstance, "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
       {
          // exit program with error
@@ -408,7 +411,7 @@ int YuiInit(void)
 
    // figure out cart type here, grab cartfilename if necessary
    carttype = atoi(tempstr);
-
+   
    switch (carttype)
    {
       case CART_PAR:
