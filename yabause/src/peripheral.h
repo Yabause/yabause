@@ -41,6 +41,9 @@ typedef struct
    PortData_struct *(*GetPerDataP1)(void);
    PortData_struct *(*GetPerDataP2)(void);
    void (*PerSetButtonMapping)();
+   u32 (*Scan)(const char *);
+   int canScan;
+   void (*Flush)(void);
 #endif
 } PerInterface_struct;
 
@@ -96,5 +99,9 @@ void PerRTriggerReleased(void);
 
 void PerLTriggerPressed(void);
 void PerLTriggerReleased(void);
+
+void PerKeyDown(u32);
+void PerKeyUp(u32);
+void PerSetKey(u32, const char *);
 
 #endif

@@ -280,6 +280,63 @@ void PerRemovePeripheral(PortData_struct *port, int removeoffset)
 
 #endif
 
+typedef struct {
+	u32 key;
+	const char * name;
+	void (*Press)(void);
+	void (*Release)(void);
+} PerConfig_struct;
+
+PerConfig_struct perkeyconfig[] = {
+	{ 0 , "Up", PerUpPressed, PerUpReleased },
+	{ 0 , "Right", PerRightPressed, PerRightReleased },
+	{ 0 , "Down", PerDownPressed, PerDownReleased },
+	{ 0 , "Left", PerLeftPressed, PerLeftReleased },
+	{ 0 , "Right trigger", PerRTriggerPressed, PerRTriggerReleased },
+	{ 0 , "Left trigger", PerLTriggerPressed, PerLTriggerReleased },
+	{ 0 , "Start", PerStartPressed, PerStartReleased },
+	{ 0 , "A", PerAPressed, PerAReleased },
+	{ 0 , "B", PerBPressed, PerBReleased },
+	{ 0 , "C", PerCPressed, PerCReleased },
+	{ 0 , "X", PerXPressed, PerXReleased },
+	{ 0 , "Y", PerYPressed, PerYReleased },
+	{ 0 , "Z", PerZPressed, PerZReleased },
+	{ 0, 0, 0, 0 }
+};
+
+void PerKeyDown(u32 key) {
+	int i = 0;
+
+	while(perkeyconfig[i].name) {
+		if (key == perkeyconfig[i].key) {
+			perkeyconfig[i].Press();
+		}
+		i++;
+	}
+}
+
+void PerKeyUp(u32 key) {
+	int i = 0;
+
+	while(perkeyconfig[i].name) {
+		if (key == perkeyconfig[i].key) {
+			perkeyconfig[i].Release();
+		}
+		i++;
+	}
+}
+
+void PerSetKey(u32 key, const char * name) {
+	int i = 0;
+
+	while(perkeyconfig[i].name) {
+		if (!strcmp(name, perkeyconfig[i].name)) {
+			perkeyconfig[i].key = key;
+		}
+		i++;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // Dummy Interface
 //////////////////////////////////////////////////////////////////////////////
@@ -294,6 +351,9 @@ PortData_struct *PERDummyGetPerDataP2(void);
 
 static PortData_struct port1;
 static PortData_struct port2;
+
+u32 PERDummyScan(const char *);
+void PERDummyFlush(void);
 #endif
 
 PerInterface_struct PERDummy = {
@@ -307,7 +367,10 @@ PERDummyHandleEvents
 PERDummyHandleEvents,
 PERDummyGetPerDataP1,
 PERDummyGetPerDataP2,
-PERDummyNothing
+PERDummyNothing,
+PERDummyScan,
+0,
+PERDummyFlush
 #endif
 };
 
@@ -388,5 +451,11 @@ PerInfo_struct *PERDummyGetList(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+u32 PERDummyScan(const char * name) {
+}
+
+void PERDummyFlush(void) {
+}
 
 #endif

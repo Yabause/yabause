@@ -23,10 +23,14 @@
 #include <gtk/gtklabel.h>
 #include <gtk/gtkentry.h>
 #include "yuiinputentry.h"
+#include "settings.h"
 
 static void yui_input_entry_class_init          (YuiInputEntryClass *klass);
 static void yui_input_entry_init                (YuiInputEntry      *yie);
 gboolean yui_input_entry_keypress(GtkWidget * widget, GdkEventKey * event, gpointer name);
+#ifdef USENEWPERINTERFACE
+gboolean yui_input_entry_focus_in(GtkWidget * widget, GdkEventFocus * event, gpointer user_data);
+#endif
 
 GType yui_input_entry_get_type (void) {
 	static GType yie_type = 0;
@@ -110,7 +114,14 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 		keyName = g_key_file_get_value(keyfile, group, keys[row], 0);
 		if ( !keyName ) keyName = "";
 		gtk_entry_set_text(GTK_ENTRY(entry), keyName );
+#ifdef USENEWPERINTERFACE
+		if (PERCore->canScan)
+			g_signal_connect(entry, "focus-in-event", G_CALLBACK(yui_input_entry_focus_in), keys[row]);
+		else
+			g_signal_connect(entry, "key-press-event", G_CALLBACK(yui_input_entry_keypress), keys[row]);
+#else
 		g_signal_connect(entry, "key-press-event", G_CALLBACK(yui_input_entry_keypress), keys[row]);
+#endif
   
 		gtk_table_attach(GTK_TABLE(widget), entry,  1, 2, row, row + 1,
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) (0), 0, 0);
@@ -122,10 +133,41 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 }
 
 gboolean yui_input_entry_keypress(GtkWidget * widget, GdkEventKey * event, gpointer name) {
-	gtk_entry_set_text(GTK_ENTRY(widget), gdk_keyval_name(event->keyval));
-	g_key_file_set_value(YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->keyfile,
+	char tmp[100];
+
+	g_sprintf(tmp, "%d", event->keyval);
+	gtk_entry_set_text(GTK_ENTRY(widget), tmp);
+	g_key_file_set_integer(YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->keyfile,
 		YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->group,
-		name, gdk_keyval_name(event->keyval));
+		name, event->keyval);
 
 	return TRUE;
 }
+
+gboolean is_watching = FALSE;
+
+#ifdef USENEWPERINTERFACE
+gboolean watch_joy(gpointer name) {
+	u32 i = PERCore->Scan(name);
+
+	if (i == 0) {
+		return TRUE;
+	} else {
+		g_key_file_set_integer(keyfile, "Input", name, i);
+		is_watching = FALSE;
+		return FALSE;
+	}
+}
+
+gboolean yui_input_entry_focus_in(GtkWidget * widget, GdkEventFocus * event, gpointer name) {
+
+	PERCore->Flush();
+
+	if (!is_watching) {
+		g_timeout_add(100, watch_joy, name);
+		is_watching = TRUE;
+	}
+
+	return FALSE;
+}
+#endif

@@ -32,6 +32,7 @@
 #include "../cdbase.h"
 #include "../scsp.h"
 #include "../sndsdl.h"
+#include "../persdljoy.h"
 #include "pergtk.h"
 
 #include "settings.h"
@@ -45,6 +46,7 @@ NULL
 PerInterface_struct *PERCoreList[] = {
 &PERDummy,
 &PERGTK,
+&PERSDLJoy,
 NULL
 };
 
@@ -75,6 +77,11 @@ NULL
 GtkWidget * yui;
 GKeyFile * keyfile;
 yabauseinit_struct yinit;
+
+const char * key_names[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger",
+	"Start", "A", "B", "C", "X", "Y", "Z", NULL };
+
+/*
 YuiAction key_config[] = {
 	{ 0 , "Up", PerUpPressed, PerUpReleased },
 	{ 0 , "Right", PerRightPressed, PerRightReleased },
@@ -91,6 +98,7 @@ YuiAction key_config[] = {
 	{ 0 , "Z", PerZPressed, PerZReleased },
 	{ 0, 0, 0, 0 }
 };
+*/
 
 int yui_main(gpointer data) {
 	PERCore->HandleEvents();
@@ -99,7 +107,11 @@ int yui_main(gpointer data) {
 }
 
 GtkWidget * yui_new() {
-	yui = yui_window_new(key_config, G_CALLBACK(YabauseInit), &yinit, yui_main, G_CALLBACK(YabauseReset));
+#ifdef USENEWPERINTERFACE
+	yui = yui_window_new(NULL, G_CALLBACK(YabauseInit), &yinit, yui_main, G_CALLBACK(YabauseReset));
+#else
+	yui = yui_window_new(NULL, G_CALLBACK(YabauseInit), &yinit, yui_main, G_CALLBACK(YabauseReset));
+#endif
 
 	gtk_widget_show(yui);
 
@@ -171,12 +183,26 @@ void yui_settings_load(void) {
 	yinit.carttype = g_key_file_get_integer(keyfile, "General", "CartType", 0);
 	yinit.vidcoretype = g_key_file_get_integer(keyfile, "General", "VideoCore", 0);
 	yinit.sndcoretype = g_key_file_get_integer(keyfile, "General", "SoundCore", 0);
+
 	i = 0;
+	/*
 	while(key_config[i].name) {
 	  gchar * keyName = g_key_file_get_value(keyfile, "Input", key_config[i].name, 0);
 	  if ( keyName ) key_config[i].key = gdk_keyval_from_name( keyName );
 	  i++;
 	}
+	*/
+
+	while(key_names[i]) {
+		/*
+	  gchar * keyName = g_key_file_get_value(keyfile, "Input", key_names[i], 0);
+	  if (keyName) PerSetKey(gdk_keyval_from_name( keyName ), key_names[i]);
+	  */
+	  u32 key = g_key_file_get_integer(keyfile, "Input", key_names[i], 0);
+	  PerSetKey(key, key_names[i]);
+	  i++;
+	}
+
 	yui_resize(g_key_file_get_integer(keyfile, "General", "Width", 0),
 			g_key_file_get_integer(keyfile, "General", "Height", 0),
 			g_key_file_get_integer(keyfile, "General", "Keep ratio", 0));

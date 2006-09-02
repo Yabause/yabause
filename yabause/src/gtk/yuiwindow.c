@@ -167,13 +167,8 @@ static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpoin
 	int i = 0;
 	YuiWindow * yui = YUI_WINDOW(widget);
 
-	while(yui->actions[i].name) {
-		if (event->keyval == yui->actions[i].key) {
-			yui->actions[i].press();
-			//return TRUE;
-		}
-		i++;
-	}
+	PerKeyDown(event->keyval);
+
 	return FALSE;
 }
 
@@ -181,13 +176,8 @@ static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpo
 	int i = 0;
 	YuiWindow * yui = YUI_WINDOW(widget);
 
-	while(yui->actions[i].name) {
-		if (event->keyval == yui->actions[i].key) {
-			yui->actions[i].release();
-			//return TRUE;
-		}
-		i++;
-	}
+	PerKeyUp(event->keyval);
+
 	return FALSE;
 }
 
