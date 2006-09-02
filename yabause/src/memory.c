@@ -656,7 +656,8 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipWriteByte(addr, val);
+            OnchipWriteByte(addr, val);
+            return; 
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
@@ -708,7 +709,8 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipWriteWord(addr, val);
+            OnchipWriteWord(addr, val);
+            return;
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
@@ -764,7 +766,8 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipWriteLong(addr, val);
+            OnchipWriteLong(addr, val);
+            return;
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
