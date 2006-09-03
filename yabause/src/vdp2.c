@@ -1286,8 +1286,8 @@ static INLINE void Vdp2GetPlaneSize(int planedata, int *planew, int *planeh)
 //////////////////////////////////////////////////////////////////////////////
 
 // Terrible, but I'm not sure how to do the equivalent in inline
-#define AddString(s, r...) \
-   sprintf(s, ## r); \
+#define AddString(s, ...) \
+   sprintf(s, __VA_ARGS__); \
    s += strlen(s)
 
 //////////////////////////////////////////////////////////////////////////////

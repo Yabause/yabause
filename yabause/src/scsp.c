@@ -3136,8 +3136,8 @@ int SoundLoadState(FILE *fp, int version, int size)
 //////////////////////////////////////////////////////////////////////////////
 
 // Terrible, but I'm not sure how to do the equivalent in inline
-#define AddString(s, r...) \
-   sprintf(s, ## r); \
+#define AddString(s, ...) \
+   sprintf(s, __VA_ARGS__); \
    s += strlen(s)
 
 //////////////////////////////////////////////////////////////////////////////

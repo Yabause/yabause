@@ -190,12 +190,13 @@ void SmpcINTBACKStatus(void) {
    int i;
    struct tm times;
    u8 year[4];
+   time_t tmp;
 
    SmpcRegs->OREG[0] = 0x80;   // goto normal startup
    //SmpcRegs->OREG[0] = 0x0;  // goto setclock/setlanguage screen
     
    // write time data in OREG1-7
-   time_t tmp = time(NULL);
+   tmp = time(NULL);
 #ifdef WIN32
    memcpy(&times, localtime(&tmp), sizeof(times));
 #elif !defined(_arch_dreamcast)

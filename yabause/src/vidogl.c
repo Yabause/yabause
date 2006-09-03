@@ -668,9 +668,10 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
       {
         for(j = 0;j < info->cellw;j++)
         {
-          u16 dot1 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
+          u16 dot1, dot2;
+          dot1 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
           info->charaddr += 2;
-          u16 dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
+          dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
           info->charaddr += 2;
           if (!(dot1 & 0x8000) && info->transparencyenable) color = 0x00000000;
           else color = SAT2YAB2(info->alpha, dot1, dot2);
@@ -1649,6 +1650,8 @@ static void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i)
 {
    u32 offset = (Vdp2Regs->MPOFN & 0x7) << 6;
    u32 tmp=0;
+   int deca;
+   int multi;
 
    switch(i)
    {
@@ -1666,8 +1669,8 @@ static void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i)
          break;
    }
 
-   int deca = info->planeh + info->planew - 2;
-   int multi = info->planeh * info->planew;
+   deca = info->planeh + info->planew - 2;
+   multi = info->planeh * info->planew;
 
    //if (Vdp2Regs->VRSIZE & 0x8000)
    //{
@@ -1936,6 +1939,8 @@ static void FASTCALL Vdp2NBG1PlaneAddr(vdp2draw_struct *info, int i)
 {
    u32 offset = (Vdp2Regs->MPOFN & 0x70) << 2;
    u32 tmp=0;
+   int deca;
+   int multi;
 
    switch(i)
    {
@@ -1953,8 +1958,8 @@ static void FASTCALL Vdp2NBG1PlaneAddr(vdp2draw_struct *info, int i)
          break;
    }
 
-   int deca = info->planeh + info->planew - 2;
-   int multi = info->planeh * info->planew;
+   deca = info->planeh + info->planew - 2;
+   multi = info->planeh * info->planew;
 
    //if (Vdp2Regs->VRSIZE & 0x8000)
    //{
@@ -2182,6 +2187,8 @@ static void FASTCALL Vdp2NBG2PlaneAddr(vdp2draw_struct *info, int i)
 {
    u32 offset = (Vdp2Regs->MPOFN & 0x700) >> 2;
    u32 tmp=0;
+   int deca;
+   int multi;
 
    switch(i)
    {
@@ -2199,8 +2206,8 @@ static void FASTCALL Vdp2NBG2PlaneAddr(vdp2draw_struct *info, int i)
          break;
    }
 
-   int deca = info->planeh + info->planew - 2;
-   int multi = info->planeh * info->planew;
+   deca = info->planeh + info->planew - 2;
+   multi = info->planeh * info->planew;
 
    //if (Vdp2Regs->VRSIZE & 0x8000)
    //{
@@ -2349,6 +2356,8 @@ static void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i)
 {
    u32 offset = (Vdp2Regs->MPOFN & 0x7000) >> 6;
    u32 tmp=0;
+   int deca;
+   int multi;
 
    switch(i)
    {
@@ -2366,8 +2375,8 @@ static void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i)
          break;
    }
 
-   int deca = info->planeh + info->planew - 2;
-   int multi = info->planeh * info->planew;
+   deca = info->planeh + info->planew - 2;
+   multi = info->planeh * info->planew;
 
    //if (Vdp2Regs->VRSIZE & 0x8000) {
       if (info->patterndatasize == 1) {
@@ -2540,6 +2549,8 @@ static void FASTCALL Vdp2RBG0PlaneAddr(vdp2draw_struct *info, int i)
    // works only for parameter A for time being
    u32 offset = (Vdp2Regs->MPOFR & 0x7) << 6;
    u32 tmp=0;
+   int deca;
+   int multi;
 
    switch(i)
    {
@@ -2593,8 +2604,8 @@ static void FASTCALL Vdp2RBG0PlaneAddr(vdp2draw_struct *info, int i)
          break;
    }
 
-   int deca = info->planeh + info->planew - 2;
-   int multi = info->planeh * info->planew;
+   deca = info->planeh + info->planew - 2;
+   multi = info->planeh * info->planew;
 
    if (info->patterndatasize == 1)
    {

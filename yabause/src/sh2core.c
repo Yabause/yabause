@@ -1562,6 +1562,8 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
 
    if (!(*CHCR & 0x2)) { // TE is not set
       int srcInc;
+      int destInc;
+
       switch(*CHCR & 0x3000) {
          case 0x0000: srcInc = 0; break;
          case 0x1000: srcInc = 1; break;
@@ -1569,7 +1571,6 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
          default: srcInc = 0; break;
       }
 
-      int destInc;
       switch(*CHCR & 0xC000) {
          case 0x0000: destInc = 0; break;
          case 0x4000: destInc = 1; break;
