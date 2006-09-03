@@ -56,32 +56,6 @@ PERGTKFlush
 #endif
 };
 
-#ifdef USENEWPERINTERFACE
-typedef struct {
-	u32 key;
-	const char * name;
-	void (*press)(void);
-	void (*release)(void);
-} PERGTKAction_struct;
-
-PERGTKAction_struct pergtk_key_config[] = {
-	{ 0 , "Up", PerUpPressed, PerUpReleased },
-	{ 0 , "Right", PerRightPressed, PerRightReleased },
-	{ 0 , "Down", PerDownPressed, PerDownReleased },
-	{ 0 , "Left", PerLeftPressed, PerLeftReleased },
-	{ 0 , "Right trigger", PerRTriggerPressed, PerRTriggerReleased },
-	{ 0 , "Left trigger", PerLTriggerPressed, PerLTriggerReleased },
-	{ 0 , "Start", PerStartPressed, PerStartReleased },
-	{ 0 , "A", PerAPressed, PerAReleased },
-	{ 0 , "B", PerBPressed, PerBReleased },
-	{ 0 , "C", PerCPressed, PerCReleased },
-	{ 0 , "X", PerXPressed, PerXReleased },
-	{ 0 , "Y", PerYPressed, PerYReleased },
-	{ 0 , "Z", PerZPressed, PerZReleased },
-	{ 0, 0, 0, 0 }
-};
-#endif
-
 //////////////////////////////////////////////////////////////////////////////
 
 int PERGTKInit(void) {
