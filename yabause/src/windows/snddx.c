@@ -18,7 +18,15 @@
 */
 
 #include <dsound.h>
-//#include "error.h"
+#ifdef __MINGW32__
+// I have to do this because for some reason because the dxerr8.h header is fubared
+const char*  __stdcall DXGetErrorString8A(HRESULT hr);
+#define DXGetErrorString8 DXGetErrorString8A
+const char*  __stdcall DXGetErrorDescription8A(HRESULT hr);
+#define DXGetErrorDescription8 DXGetErrorDescription8A
+#else
+#include <dxerr8.h>
+#endif
 #include "../scsp.h"
 #include "snddx.h"
 
@@ -59,39 +67,26 @@ static u32 soundbufsize;
 static LONG soundvolume;
 static int issoundmuted;
 
-/*
-//////////////////////////////////////////////////////////////////////////////
-
-void MixAudio(void *userdata, Uint8 *stream, int len) {
-   int i;
-   Uint8 *soundbuf=(Uint8 *)stereodata16;
-
-   for (i = 0; i < len; i++)
-   {
-      if (soundpos >= soundbufsize)
-         soundpos = 0;
-
-      stream[i] = soundbuf[soundpos];
-      soundpos++;
-   }
-}
-*/
 //////////////////////////////////////////////////////////////////////////////
 
 int SNDDXInit()
 {
    DSBUFFERDESC dsbdesc;
    WAVEFORMATEX wfx;
+   HRESULT ret;
+   char tempstr[512];
 
-   if (DirectSoundCreate8(NULL, &lpDS8, NULL) != DS_OK)
+   if ((ret = DirectSoundCreate8(NULL, &lpDS8, NULL)) != DS_OK)
    {
-      MessageBox (NULL, "DirectSound8Create error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "DirectSound8Create error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
-   if (IDirectSound8_SetCooperativeLevel(lpDS8, YabWin, DSSCL_PRIORITY) != DS_OK)
+   if ((ret = IDirectSound8_SetCooperativeLevel(lpDS8, YabWin, DSSCL_PRIORITY)) != DS_OK)
    {
-      MessageBox (NULL, "IDirectSound8_SetCooperativeLevel error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "IDirectSound8_SetCooperativeLevel error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
@@ -101,9 +96,10 @@ int SNDDXInit()
    dsbdesc.dwBufferBytes = 0;
    dsbdesc.lpwfxFormat = NULL;
 
-   if (IDirectSound8_CreateSoundBuffer(lpDS8, &dsbdesc, &lpDSB, NULL) != DS_OK)
+   if ((ret = IDirectSound8_CreateSoundBuffer(lpDS8, &dsbdesc, &lpDSB, NULL)) != DS_OK)
    {
-      MessageBox (NULL, "IDirectSound8_CreateSoundBuffer error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "Error when creating primary sound buffer: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
@@ -118,9 +114,10 @@ int SNDDXInit()
    wfx.nBlockAlign = (wfx.wBitsPerSample / 8) * wfx.nChannels;
    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
 
-   if (IDirectSoundBuffer8_SetFormat(lpDSB, &wfx) != DS_OK)
+   if ((ret = IDirectSoundBuffer8_SetFormat(lpDSB, &wfx)) != DS_OK)
    {
-      MessageBox (NULL, "IDirectSoundBuffer8_SetFormat error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "IDirectSoundBuffer8_SetFormat error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
@@ -133,9 +130,10 @@ int SNDDXInit()
    dsbdesc.dwBufferBytes = soundbufsize;
    dsbdesc.lpwfxFormat = &wfx;
 
-   if (IDirectSound8_CreateSoundBuffer(lpDS8, &dsbdesc, &lpDSB2, NULL) != DS_OK)
+   if ((ret = IDirectSound8_CreateSoundBuffer(lpDS8, &dsbdesc, &lpDSB2, NULL)) != DS_OK)
    {
-      MessageBox (NULL, "IDirectSound8_CreateSoundBuffer error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "Error when creating secondary sound buffer: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 

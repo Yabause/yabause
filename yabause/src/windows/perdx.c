@@ -19,6 +19,15 @@
 
 #include <windows.h>
 #include <dinput.h>
+#ifdef __MINGW32__
+// I have to do this because for some reason because the dxerr8.h header is fubared
+const char*  __stdcall DXGetErrorString8A(HRESULT hr);
+#define DXGetErrorString8 DXGetErrorString8A
+const char*  __stdcall DXGetErrorDescription8A(HRESULT hr);
+#define DXGetErrorDescription8 DXGetErrorDescription8A
+#else
+#include <dxerr8.h>
+#endif
 #include "../peripheral.h"
 #include "perdx.h"
 #include "../vdp1.h"
@@ -86,34 +95,40 @@ int PERDXInit(void)
 {
    int i;
    DIPROPDWORD dipdw;
+   char tempstr[512];
+   HRESULT ret;
 
-   if (DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION,
-       &IID_IDirectInput8, (LPVOID *)&lpDI8, NULL) != DI_OK)
+   if ((ret = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION,
+       &IID_IDirectInput8, (LPVOID *)&lpDI8, NULL)) != DI_OK)
    {
-      MessageBox (NULL, "DirectInput8Create error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "DirectInput8Create error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
 //   IDirectInput8_EnumDevices(lpDI8, DI8DEVCLASS_ALL, EnumPeripheralsCallback,
 //                      NULL, DIEDFL_ATTACHEDONLY);
 
-   if (IDirectInput8_CreateDevice(lpDI8, &GUID_SysKeyboard, &lpDIDevice[0],
-       NULL) != DI_OK)
+   if ((ret = IDirectInput8_CreateDevice(lpDI8, &GUID_SysKeyboard, &lpDIDevice[0],
+       NULL)) != DI_OK)
    {
-      MessageBox (NULL, "IDirectInput8_CreateDevice error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "IDirectInput8_CreateDevice error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
-   if (IDirectInputDevice8_SetDataFormat(lpDIDevice[0], &c_dfDIKeyboard) != DI_OK)
+   if ((ret = IDirectInputDevice8_SetDataFormat(lpDIDevice[0], &c_dfDIKeyboard)) != DI_OK)
    {
-      MessageBox (NULL, "IDirectInputDevice8_SetDataFormat error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "IDirectInputDevice8_SetDataFormat error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
-   if (IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[0], YabWin,
-       DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY) != DI_OK)
+   if ((ret = IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[0], YabWin,
+       DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY)) != DI_OK)
    {
-      MessageBox (NULL, "IDirectInputDevice8_SetCooperativeLevel error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "IDirectInputDevice8_SetCooperativeLevel error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
@@ -124,9 +139,10 @@ int PERDXInit(void)
    dipdw.dwData = 8; // should be enough
 
    // Setup Buffered input
-   if (IDirectInputDevice8_SetProperty(lpDIDevice[0], DIPROP_BUFFERSIZE, &dipdw.diph) != DI_OK)
+   if ((ret = IDirectInputDevice8_SetProperty(lpDIDevice[0], DIPROP_BUFFERSIZE, &dipdw.diph)) != DI_OK)
    {
-      MessageBox (NULL, "IDirectInputDevice8_SetProperty error", "Error",  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "IDirectInputDevice8_SetProperty error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
