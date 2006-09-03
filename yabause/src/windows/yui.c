@@ -377,6 +377,7 @@ int YuiInit(void)
    HACCEL hAccel;
    static char szAppName[128];
    WNDCLASS MyWndClass;
+   int ret;
 
    y_hInstance = GetModuleHandle(NULL);
 
@@ -546,6 +547,7 @@ int YuiInit(void)
                          y_hInstance,          // instance
                          NULL);                // parms
 
+YabauseSetup:
    yinit.percoretype = percoretype;
    yinit.sh2coretype = sh2coretype;
    yinit.vidcoretype = vidcoretype;
@@ -566,8 +568,24 @@ int YuiInit(void)
    yinit.cartpath = cartfilename;
    yinit.flags = VIDEOFORMATTYPE_NTSC;
 
-   if (YabauseInit(&yinit) == -1)
+   if ((ret = YabauseInit(&yinit)) < 0)
+   {
+      if (ret == -2)
+      {
+         if (DialogBox(GetModuleHandle(NULL), "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+         {
+            // exit program with error
+            MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
+            return -1;
+         }
+
+         YuiReleaseVideo();
+         YabauseDeInit();
+
+         goto YabauseSetup;
+      }
       return -1;
+   }
 
    stop = 0;
 
@@ -590,7 +608,12 @@ int YuiInit(void)
       }
 
       if (PERCore->HandleEvents() != 0)
+      {
+         YuiReleaseVideo();
+         if (YabMenu)
+            DestroyMenu(YabMenu);
          return -1;
+      }
    }
 
    YuiReleaseVideo();
