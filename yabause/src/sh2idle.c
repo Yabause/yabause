@@ -464,6 +464,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   u32 loopBegin;
   s32 disp;
   u32 cyclesCheckEnd;
+  u32 PC1, PC2, PC3;
 
   IDLE_VERBOSE_SH2_COUNT;
 
@@ -527,17 +528,17 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
 
   while ( context->regs.PC != loopEnd ) {
 
-    u32 PC = context->regs.PC;
-    context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
-    if ( !SH2idleCheckIterate(context->instruction,PC) ) return;    
+    PC1 = context->regs.PC;
+    context->instruction = fetchlist[(PC1 >> 20) & 0x0FF](PC1);
+    if ( !SH2idleCheckIterate(context->instruction,PC1) ) return;    
     opcodes[context->instruction](context);
     if ( context->cycles >= cyclesCheckEnd ) return;
   }
 
   // conditional jump 
 
-  u32 PC = context->regs.PC;
-  context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
+  PC2 = context->regs.PC;
+  context->instruction = fetchlist[(PC2 >> 20) & 0x0FF](PC2);
   opcodes[context->instruction](context);
   if ( context->regs.PC != loopBegin ) return; // We are not in a single loop... forget it
 
@@ -553,12 +554,12 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
 
   while ( context->regs.PC != loopEnd ) {
     
-    u32 PC = context->regs.PC;
-    context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
-    if ( !SH2idleCheckIterate(context->instruction,PC) ) return;    
+    PC3 = context->regs.PC;
+    context->instruction = fetchlist[(PC3 >> 20) & 0x0FF](PC3);
+    if ( !SH2idleCheckIterate(context->instruction,PC3) ) return;    
     opcodes[context->instruction](context);
   }
-  context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
+  context->instruction = fetchlist[(PC2 >> 20) & 0x0FF](PC2);
   opcodes[context->instruction](context);  
   
   if ( context->regs.PC != loopBegin ) return;
