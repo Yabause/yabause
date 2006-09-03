@@ -21,16 +21,20 @@
 #include <commctrl.h>
 #include <stdio.h>
 #include <ctype.h>
+#undef FASTCALL
 #include "../cs0.h"
 #include "../peripheral.h"
 #include "../scsp.h"
 #include "../vdp1.h"
 #include "../vdp2.h"
 #include "resource.h"
+#include "snddx.h"
+#include "perdx.h"
+#include "../vidogl.h"
 
 char biosfilename[MAX_PATH] = "\0";
 char cdrompath[MAX_PATH]="\0";
-char backupramfilename[MAX_PATH] = "\0";
+char backupramfilename[MAX_PATH] = "bkram.bin\0";
 char mpegromfilename[MAX_PATH] = "\0";
 char cartfilename[MAX_PATH] = "\0";
 char inifilename[MAX_PATH];
@@ -39,10 +43,10 @@ int num_cdroms=0;
 char drive_list[24];
 char bioslang=0;
 char sh2coretype=0;
-char vidcoretype=0;
-char sndcoretype=0;
-char percoretype=0;
-int sndvolume=0;
+char vidcoretype=VIDCORE_OGL;
+char sndcoretype=SNDCORE_DIRECTX;
+char percoretype=PERCORE_DIRECTX;
+int sndvolume=100;
 int enableautofskip=0;
 u8 regionid=0;
 int disctype;

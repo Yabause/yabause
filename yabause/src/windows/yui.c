@@ -392,9 +392,6 @@ int YuiInit(void)
 
    if (GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
    {
-      // setup backupramfilename to a default name
-      sprintf(backupramfilename, "bkram.bin");
-
       // Startup Settings Configuration
       if (DialogBox(y_hInstance, "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
       {
