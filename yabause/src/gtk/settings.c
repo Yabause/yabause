@@ -164,9 +164,7 @@ YuiPageDesc memory_desc[] = {
 	{ 0, 0 }
 };
 
-GtkWidget*
-create_dialog1 (void)
-{
+GtkWidget* create_dialog1(YuiWindow * yui) {
   GtkWidget *dialog1;
   GtkWidget *notebook1;
   GtkWidget *vbox17;
@@ -207,9 +205,11 @@ create_dialog1 (void)
   
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), cart_memory, gtk_label_new ("Cart/Memory"));
 
+
   /*
    * Input Configuration
    */
+  if (YUI_WINDOW(yui)->state & YUI_IS_INIT) {
   vbox17 = gtk_vbox_new (FALSE, 0);
   
   hbox22 = gtk_hbox_new (FALSE, 0);
@@ -227,9 +227,10 @@ create_dialog1 (void)
   gtk_box_pack_start (GTK_BOX (hbox22), table5, TRUE, TRUE, 0);
 
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), vbox17, gtk_label_new ("Input"));
+  }
 
   /*
-   * Cart/Memory configuration
+   * Advanced configuration
    */
 
   advanced = yui_page_new(keyfile, "General", advanced_desc);
@@ -251,4 +252,3 @@ create_dialog1 (void)
 
   return dialog1;
 }
-

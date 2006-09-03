@@ -83,7 +83,8 @@ GtkWidget* create_menu(YuiWindow * window1) {
   menuitem1_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem1), menuitem1_menu);
 
-  new1 = gtk_image_menu_item_new_from_stock ("gtk-preferences", NULL);
+  new1 = gtk_image_menu_item_new_from_stock("gtk-preferences", NULL);
+  g_signal_connect(new1, "activate", yui_conf, 0);
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), new1);
 
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "run")));
@@ -205,8 +206,6 @@ GtkWidget* create_menu(YuiWindow * window1) {
   g_signal_connect(about1, "activate", G_CALLBACK(openAboutDialog), window1);
 
   //gtk_window_add_accel_group (GTK_WINDOW (window1), accel_group);
-
-  g_signal_connect(new1, "activate", yui_conf, 0);
 
   return menubar1;
 }

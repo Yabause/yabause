@@ -38,7 +38,7 @@ extern yabauseinit_struct yinit;
 extern VideoInterface_struct * VIDCoreList[];
 extern SoundInterface_struct * SNDCoreList[];
 
-GtkWidget* create_dialog1 (void);
+GtkWidget* create_dialog1 (YuiWindow *);
 GtkWidget* create_menu (YuiWindow *);
 
 void yui_run(void);

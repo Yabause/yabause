@@ -319,7 +319,9 @@ void YuiSwapBuffers(void) {
 
 void yui_conf(void) {
 	gint result;
-	GtkWidget * dialog = create_dialog1();
+	GtkWidget * dialog;
+
+	dialog = create_dialog1(yui);
 	gtk_widget_show_all(dialog);
 
 	result = gtk_dialog_run(GTK_DIALOG(dialog));
