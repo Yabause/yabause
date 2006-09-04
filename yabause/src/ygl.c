@@ -131,11 +131,13 @@ int YglInit(int width, int height, unsigned int depth) {
    char yab_version[64];
 
 #ifdef HAVE_LIBGLUT
+#ifndef WIN32
    {
       int fake_argc = 1;
       char * fake_argv[] = { "yabause" };
       glutInit(&fake_argc, fake_argv);
    }
+#endif
 #endif
 
    YglTMInit(width, height);
