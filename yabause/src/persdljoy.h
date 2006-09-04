@@ -24,8 +24,6 @@
 
 #define PERCORE_SDLJOY 3
 
-void pouet_flush(void);
-
 extern PerInterface_struct PERSDLJoy;
 
 #endif
