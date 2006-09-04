@@ -119,7 +119,7 @@ GtkWidget * yui_new() {
 }
 
 void yui_settings_init(void) {
-	yinit.percoretype = PERCORE_GTK;
+	yinit.percoretype = PERCORE_SDLJOY;
 	yinit.sh2coretype = SH2CORE_DEFAULT;
 #ifdef HAVE_LIBGL
 	yinit.vidcoretype = VIDCORE_OGL;

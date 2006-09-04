@@ -99,6 +99,11 @@ esac
 
 AC_SUBST(yabause_yui)
 
+AC_MSG_CHECKING([[whether the compiled supports c99 variadic macros]])
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#define MACRO(...) puts(__VA_ARGS__)]], [[MACRO("foo");]]),
+	AC_DEFINE(HAVE_C99_VARIADIC_MACROS)
+	AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
+
 AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug information) , AC_DEFINE(DEBUG))
 AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug information) , AC_DEFINE(VDP1_DEBUG))
 AC_ARG_ENABLE(vdp2-debug, AC_HELP_STRING(--enable-vdp2-debug, enable vdp2 debug information) , AC_DEFINE(VDP2_DEBUG))
