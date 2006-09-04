@@ -2348,10 +2348,10 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
   xStepStepM = (xStepB - xStepM) / yLead;
   yStepStepM = (yStepB - yStepM) / yLead;
   
-  stepW = (float)lW / xLead;
-  stepH = (float)lH / yLead;
+  stepW = (float)(lW-1) / xLead;
+  stepH = (float)(lH-1) / yLead;
 
-#define DRAW_DISTORTED_SPRITE_LOOP_BEGIN       for ( x = xLead+1 ; x ; x-- ) { \
+#define DRAW_DISTORTED_SPRITE_LOOP_BEGIN       for ( x = xLead ; x ; x-- ) { \
     if (( xM >= vdp1clipxstart )&&( yM >= vdp1clipystart )&&( xM < vdp1clipxend )&&( yM < vdp1clipyend )) {
       
 #define DRAW_DISTORTED_SPRITE_LOOP_END    	} \
@@ -2359,7 +2359,7 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
       xM += xStepM;\
       yM += yStepM;}
  
-  for ( y = yLead+1 ; y ; y-- ) {
+  for ( y = yLead ; y ; y-- ) {
 
     float xM = xN;
     float yM = yN;
@@ -2379,8 +2379,8 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
         u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (iW>>1)) & 0x7FFFF);
         if ((iW & 0x1) == 0) dot >>= 4; // Even pixel
         else dot &= 0xF; // Odd pixel
-        if ((dot == 0) && !SPD) continue;
-        ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
+	if ( SPD | dot )
+	  ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
       
       DRAW_DISTORTED_SPRITE_LOOP_END
       break;
@@ -2394,8 +2394,8 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
         u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (iW>>1)) & 0x7FFFF);
         if ((iW & 0x1) == 0)  dot >>= 4; // Even pixel
         else dot &= 0xF; // Odd pixel
-	if ((dot == 0) && !SPD) continue;
-	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = T1ReadWord(Vdp1Ram, (dot * 2 + colorlut) & 0x7FFFF);
+	if ( SPD | dot )
+	  ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = T1ReadWord(Vdp1Ram, (dot * 2 + colorlut) & 0x7FFFF);
     
       DRAW_DISTORTED_SPRITE_LOOP_END
       break;
@@ -2406,8 +2406,8 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
       DRAW_DISTORTED_SPRITE_LOOP_BEGIN
       
       u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (int)W) & 0x7FFFF) & 0x3F;
-      if ((dot == 0) && !SPD) continue;
-      ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
+      if ( SPD | dot )
+	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
       
       DRAW_DISTORTED_SPRITE_LOOP_END
       break;
@@ -2418,8 +2418,8 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
       DRAW_DISTORTED_SPRITE_LOOP_BEGIN
       
       u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (int)W) & 0x7FFFF) & 0x7F;
-      if ((dot == 0) && !SPD) continue;
-      ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
+      if ( SPD | dot )
+	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
       
       DRAW_DISTORTED_SPRITE_LOOP_END
       break;
@@ -2430,8 +2430,8 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
       DRAW_DISTORTED_SPRITE_LOOP_BEGIN
 
       u16 dot = T1ReadByte(Vdp1Ram, ( iHaddr + (int)W) & 0x7FFFF);
-      if ((dot == 0) && !SPD) continue;
-      ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
+      if ( SPD | dot )	  
+	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = colorbank | dot;
 
       DRAW_DISTORTED_SPRITE_LOOP_END
       break;
@@ -2442,8 +2442,8 @@ void DrawDistortedSprite(vdp2draw_struct *info, s32* vertices) {
       DRAW_DISTORTED_SPRITE_LOOP_BEGIN
 
       u16 dot = T1ReadWord(Vdp1Ram, ( iHaddr + 2*(int)W) & 0x7FFFF);
-      if ((dot == 0) && !SPD) continue;
-      ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = dot;
+      if ( SPD | dot )	  
+	((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = dot;
 
       DRAW_DISTORTED_SPRITE_LOOP_END
       break;      
@@ -2674,6 +2674,8 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
+   flip = (cmd.CMDCTRL & 0x30) >> 4;
+
    x0 = cmd.CMDXA + Vdp1Regs->localX;
    y0 = cmd.CMDYA + Vdp1Regs->localY;
 
@@ -2682,6 +2684,8 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
       case 0x0: // Only two coordinates
          x1 = ((int)cmd.CMDXC) - x0 + Vdp1Regs->localX + 1;
          y1 = ((int)cmd.CMDYC) - y0 + Vdp1Regs->localY + 1;
+	 if (x1<0) { x1 = -x1; x0 -= x1; flip ^= 1; }
+	 if (y1<0) { y1 = -y1; y0 -= y1; flip ^= 2; }
          break;
       case 0x5: // Upper-left
          x1 = ((int)cmd.CMDXB) + 1;
@@ -2753,7 +2757,6 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
    W = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
    H = cmd.CMDSIZE & 0xFF;
    type = (vdp1pixelsize << 3) | ((cmd.CMDPMOD >> 3) & 0x7);
-   flip = (cmd.CMDCTRL & 0x30) >> 4;
    colorbank = cmd.CMDCOLR;
    colorlut = (u32)colorbank << 3;
    SPD = ((cmd.CMDPMOD & 0x40) != 0);
