@@ -126,15 +126,32 @@ int SNDDXInit()
    dsbdesc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_STICKYFOCUS |
                      DSBCAPS_CTRLVOLUME | DSBCAPS_GETCURRENTPOSITION2 |
                      DSBCAPS_LOCHARDWARE;
-//                     DSBCAPS_LOCSOFTWARE | DSBCAPS_CTRLPOSITIONNOTIFY;
    dsbdesc.dwBufferBytes = soundbufsize;
    dsbdesc.lpwfxFormat = &wfx;
 
    if ((ret = IDirectSound8_CreateSoundBuffer(lpDS8, &dsbdesc, &lpDSB2, NULL)) != DS_OK)
    {
-      sprintf(tempstr, "Error when creating secondary sound buffer: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
-      return -1;
+      if (ret == DSERR_CONTROLUNAVAIL ||
+          ret == DSERR_INVALIDCALL)
+      {
+         // Try using a software buffer instead
+         dsbdesc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_STICKYFOCUS |
+                           DSBCAPS_CTRLVOLUME | DSBCAPS_GETCURRENTPOSITION2 |
+                           DSBCAPS_LOCSOFTWARE;
+
+         if ((ret = IDirectSound8_CreateSoundBuffer(lpDS8, &dsbdesc, &lpDSB2, NULL)) != DS_OK)
+         {
+            sprintf(tempstr, "Error when creating secondary sound buffer: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+            MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
+            return -1;
+         }
+      }
+      else
+      {
+         sprintf(tempstr, "Error when creating secondary sound buffer: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+         MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
+         return -1;
+      }
    }
 
    IDirectSoundBuffer8_Play(lpDSB2, 0, 0, DSBPLAY_LOOPING);
