@@ -3210,6 +3210,7 @@ void VIDSoftVdp2DrawEnd(void)
       prioritytable[7] = (Vdp2Regs->PRISD >> 8) & 0x7;
 
       vdp1coloroffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
+      vdp1spritetype = Vdp2Regs->SPCTL & 0xF;
 
       if (Vdp2Regs->CLOFEN & 0x40)
       {
