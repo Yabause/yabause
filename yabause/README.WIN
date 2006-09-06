@@ -133,7 +133,7 @@ z - Right Trigger
 j - Start button
 q - Quit program
 F1 - Toggle FPS display
-f - Toggle fullscreen/window mode
+Alt-Enter - Toggle fullscreen/window mode
 ` - Enable Speed Throttle
 1 - Toggle VDP2 NBG0 display
 2 - Toggle VDP2 NBG1 display
