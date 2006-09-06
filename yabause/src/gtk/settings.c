@@ -96,6 +96,17 @@ YuiPageItem sh2items[] = {
 	{ 0, 0 }
 };
 
+YuiRangeItem vidformats[] = {
+	{ "0", "NTSC" },
+	{ "1", "PAL" },
+	{ 0, 0 }
+};
+
+YuiPageItem vidformatitems[] = {
+	{ "VideoFormat", YUI_RANGE_SETTING, vidformats },
+	{ 0, 0 }
+};
+
 YuiPageDesc advanced_desc[] = {
   { "<b>Region</b>", regionitems },
   { "<b>SH2 Interpreter</b>", sh2items },
@@ -113,9 +124,15 @@ YuiPageItem cditems[] = {
 	{ 0, 0 }
 };
 
+YuiPageItem snditems[] = {
+	{ "SoundCore", YUI_RANGE_SETTING, sndcores },
+	{ 0, 0 }
+};
+
 YuiPageDesc general_desc[] = {
 	{ "<b>Bios</b>", biositems },
 	{ "<b>Cdrom</b>", cditems },
+	{ "<b>Sound core</b>", snditems },
 	{ 0, 0}
 };
 
@@ -129,15 +146,10 @@ YuiPageItem resitems[] = {
 	{ 0, 0 }
 };
 
-YuiPageItem snditems[] = {
-	{ "SoundCore", YUI_RANGE_SETTING, sndcores },
-	{ 0, 0 }
-};
-
 YuiPageDesc video_sound_desc[] = {
 	{ "<b>Video core</b>", viditems },
 	{ "<b>Resolution</b>", resitems },
-	{ "<b>Sound core</b>", snditems },
+	{ "<b>Video Format</b>", vidformatitems },
 	{ 0, 0 }
 };
 
@@ -209,7 +221,6 @@ GtkWidget* create_dialog1(YuiWindow * yui) {
   /*
    * Input Configuration
    */
-  if (YUI_WINDOW(yui)->state & YUI_IS_INIT) {
   vbox17 = gtk_vbox_new (FALSE, 0);
   
   hbox22 = gtk_hbox_new (FALSE, 0);
@@ -227,7 +238,6 @@ GtkWidget* create_dialog1(YuiWindow * yui) {
   gtk_box_pack_start (GTK_BOX (hbox22), table5, TRUE, TRUE, 0);
 
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), vbox17, gtk_label_new ("Input"));
-  }
 
   /*
    * Advanced configuration

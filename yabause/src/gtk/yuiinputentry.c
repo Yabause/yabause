@@ -114,14 +114,19 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 		keyName = g_key_file_get_value(keyfile, group, keys[row], 0);
 		if ( !keyName ) keyName = "";
 		gtk_entry_set_text(GTK_ENTRY(entry), keyName );
+
+		if (PERCore) {
 #ifdef USENEWPERINTERFACE
-		if (PERCore->canScan)
-			g_signal_connect(entry, "focus-in-event", G_CALLBACK(yui_input_entry_focus_in), keys[row]);
-		else
-			g_signal_connect(entry, "key-press-event", G_CALLBACK(yui_input_entry_keypress), keys[row]);
+			if (PERCore->canScan)
+				g_signal_connect(entry, "focus-in-event", G_CALLBACK(yui_input_entry_focus_in), keys[row]);
+			else
+				g_signal_connect(entry, "key-press-event", G_CALLBACK(yui_input_entry_keypress), keys[row]);
 #else
-		g_signal_connect(entry, "key-press-event", G_CALLBACK(yui_input_entry_keypress), keys[row]);
+			g_signal_connect(entry, "key-press-event", G_CALLBACK(yui_input_entry_keypress), keys[row]);
 #endif
+		} else {
+			gtk_widget_set_sensitive(entry, FALSE);
+		}
   
 		gtk_table_attach(GTK_TABLE(widget), entry,  1, 2, row, row + 1,
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) (0), 0, 0);

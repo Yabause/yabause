@@ -206,6 +206,8 @@ void yui_settings_load(void) {
 	yui_resize(g_key_file_get_integer(keyfile, "General", "Width", 0),
 			g_key_file_get_integer(keyfile, "General", "Height", 0),
 			g_key_file_get_integer(keyfile, "General", "Keep ratio", 0));
+
+        yinit.flags = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 }
 
 int main(int argc, char *argv[]) {
