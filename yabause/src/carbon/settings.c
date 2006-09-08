@@ -168,12 +168,12 @@ void save_settings(WindowRef window) {
 		get_settings(window, 10), kCFPreferencesCurrentApplication);
 
 	i = 0;
-	while(key_config[i].name) {
+	while(key_names[i]) {
 		s = get_settings(window, 31 + i);
 		CFPreferencesSetAppValue(
-			CFStringCreateWithCString(0, key_config[i].name, 0),
+			CFStringCreateWithCString(0, key_names[i], 0),
 			s, kCFPreferencesCurrentApplication);
-		key_config[i].key = CFStringGetIntValue(s);
+		PerSetKey(CFStringGetIntValue(s), key_names[i]);
 		i++;
 	}
 
@@ -206,9 +206,9 @@ void load_settings(WindowRef window) {
 		kCFPreferencesCurrentApplication));
 
 	i = 0;
-	while(key_config[i].name) {
+	while(key_names[i]) {
 		set_settings(window, 31 + i, CFPreferencesCopyAppValue(
-			CFStringCreateWithCString(0, key_config[i].name, 0),
+			CFStringCreateWithCString(0, key_names[i], 0),
 			kCFPreferencesCurrentApplication));
 		i++;
 	}
@@ -280,7 +280,7 @@ WindowRef CreateSettingsWindow() {
 
     id.signature = 'conf';
     i = 0;
-    while(key_config[i].name) {
+    while(key_names[i]) {
       id.id = 31 + i;
       GetControlByID(myWindow, &id, &control);
 

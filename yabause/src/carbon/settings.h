@@ -36,6 +36,7 @@ WindowRef CreateSettingsWindow();
 
 typedef struct _YuiAction YuiAction;
 
+/*
 struct _YuiAction {
 	UInt32 key;
 	const char * name;
@@ -44,3 +45,6 @@ struct _YuiAction {
 };
 
 extern YuiAction key_config[];
+*/
+
+extern const char * key_names[];

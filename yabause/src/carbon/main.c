@@ -28,21 +28,9 @@
 
 AGLContext  myAGLContext = NULL;
 yabauseinit_struct yinit;
-YuiAction key_config[] = {
-	{ 0 , "Up", PerUpPressed, PerUpReleased },
-	{ 0 , "Right", PerRightPressed, PerRightReleased },
-	{ 0 , "Down", PerDownPressed, PerDownReleased },
-	{ 0 , "Left", PerLeftPressed, PerLeftReleased },
-	{ 0 , "Right trigger", PerRTriggerPressed, PerRTriggerReleased },
-	{ 0 , "Left trigger", PerLTriggerPressed, PerLTriggerReleased },
-	{ 0 , "Start", PerStartPressed, PerStartReleased },
-	{ 0 , "A", PerAPressed, PerAReleased },
-	{ 0 , "B", PerBPressed, PerBReleased },
-	{ 0 , "C", PerCPressed, PerCReleased },
-	{ 0 , "X", PerXPressed, PerXReleased },
-	{ 0 , "Y", PerYPressed, PerYReleased },
-	{ 0 , "Z", PerZPressed, PerZReleased },
-	{ 0, 0, 0, 0 }
+extern const char * key_names[] = {
+	"Up", "Right", "Down", "Left", "Right trigger", "Left trigger",
+	"Start", "A", "B", "C", "X", "Y", "Z", NULL
 };
 
 SH2Interface_struct *SH2CoreList[] = {
@@ -122,12 +110,12 @@ void read_settings(void) {
         yinit.flags = VIDEOFORMATTYPE_NTSC;
 
 	i = 0;
-	while(key_config[i].name) {
+	while(key_names[i]) {
 		s = CFPreferencesCopyAppValue(
-			CFStringCreateWithCString(0, key_config[i].name, 0),
+			CFStringCreateWithCString(0, key_names[i], 0),
 			kCFPreferencesCurrentApplication);
 		if (s)
-			key_config[i].key = CFStringGetIntValue(s);
+			PerSetKey(CFStringGetIntValue(s), key_names[i]);
 		i++;
 	}
 }
@@ -196,24 +184,12 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
         case kEventRawKeyDown:
           GetEventParameter(theEvent, kEventParamKeyCode,
             typeUInt32, NULL, sizeof(UInt32), NULL, &key);
-          i = 0;
-          while(key_config[i].name) {
-            if (key_config[i].key == key) {
-              key_config[i].press();
-            }
-            i++;
-          }
+          PerKeyDown(key);
           break;
         case kEventRawKeyUp:
           GetEventParameter(theEvent, kEventParamKeyCode,
             typeUInt32, NULL, sizeof(UInt32), NULL, &key);
-          i = 0;
-          while(key_config[i].name) {
-            if (key_config[i].key == key) {
-              key_config[i].release();
-            }
-            i++;
-          }
+          PerKeyUp(key);
           break;
       }
       break;
@@ -281,8 +257,6 @@ OSStatus MySetWindowAsDrawableObject  (WindowRef window)
                         AGL_DEPTH_SIZE, 24, 
                         AGL_NONE };
 
-    //AGLContext  myAGLContext = NULL;
-
     AGLPixelFormat myAGLPixelFormat;
 
     myAGLPixelFormat = aglChoosePixelFormat (NULL, 0, attributes);
@@ -320,21 +294,6 @@ int main () {
   DrawMenuBar();
 
   EnableMenuCommand(NULL, kHICommandPreferences);
-
-/*
-  {
-    CFStringRef s;
-    int i, j = 0;
-    while(key_config[j].name) {
-      s = CFStringCreateWithCString(0, key_config[j].name, 0);
-      for(i=0;i < CFStringGetLength(s);i++) {
-        printf("%c", CFStringGetCharacterAtIndex(s, i));
-      }
-      printf("\n");
-      j++;
-    }
-  }
-*/
 
   read_settings();
 
