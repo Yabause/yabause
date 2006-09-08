@@ -50,7 +50,6 @@
                         <string name="bounds">182 31 202 320 </string>
                         <ostype name="controlSignature">conf</ostype>
                         <int name="controlID">3</int>
-                        <int name="selectedItem">3</int>
                         <object name="menu" class="IBCarbonMenu" id="225">
                           <string name="title">Popup:</string>
                           <array count="3" name="items">
@@ -61,7 +60,6 @@
                               <string name="title">ISO or CUE file</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="228">
-                              <boolean name="checked">TRUE</boolean>
                               <string name="title">Cdrom device</string>
                             </object>
                           </array>
@@ -81,7 +79,6 @@
                           <string name="title">Popup:</string>
                           <array count="9" name="items">
                             <object class="IBCarbonMenuItem" id="191">
-                              <boolean name="checked">TRUE</boolean>
                               <string name="title">Auto-detect</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="298">
@@ -129,7 +126,6 @@
                         <string name="bounds">78 31 98 320 </string>
                         <ostype name="controlSignature">conf</ostype>
                         <int name="controlID">5</int>
-                        <int name="selectedItem">2</int>
                         <object name="menu" class="IBCarbonMenu" id="198">
                           <string name="title">Popup:</string>
                           <array count="3" name="items">
@@ -137,7 +133,6 @@
                               <string name="title">Dummy Video Interface</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="199">
-                              <boolean name="checked">TRUE</boolean>
                               <string name="title">OpenGL Video Interface</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="200">
@@ -189,7 +184,6 @@
                           <string name="title">Popup:</string>
                           <array count="2" name="items">
                             <object class="IBCarbonMenuItem" id="215">
-                              <boolean name="checked">TRUE</boolean>
                               <string name="title">Dummy Sound Interface</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="213">
@@ -230,7 +224,6 @@
                           <string name="title">Popup:</string>
                           <array count="10" name="items">
                             <object class="IBCarbonMenuItem" id="223">
-                              <boolean name="checked">TRUE</boolean>
                               <string name="title">None</string>
                             </object>
                             <object class="IBCarbonMenuItem" id="221">

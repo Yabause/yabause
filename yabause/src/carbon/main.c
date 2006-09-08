@@ -132,6 +132,8 @@ void YuiRun(void) {
 
 OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent, void* userData)
 {
+  OSStatus ret = noErr;
+
   switch(GetEventClass(theEvent)) {
     case kEventClassWindow:
       switch (GetEventKind (theEvent)) {
@@ -171,6 +173,7 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
             printf("pause\n");
             break;
           default:
+            ret = eventNotHandledErr;
             printf("unhandled command\n");
             break;
         }
@@ -195,7 +198,7 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
       break;
     }
  
-  return (noErr);
+  return ret;
 }
 
 WindowRef CreateMyWindow() {
