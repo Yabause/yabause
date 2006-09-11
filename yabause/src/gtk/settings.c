@@ -132,7 +132,6 @@ YuiPageItem snditems[] = {
 YuiPageDesc general_desc[] = {
 	{ "<b>Bios</b>", biositems },
 	{ "<b>Cdrom</b>", cditems },
-	{ "<b>Sound core</b>", snditems },
 	{ 0, 0}
 };
 
@@ -150,6 +149,11 @@ YuiPageDesc video_sound_desc[] = {
 	{ "<b>Video core</b>", viditems },
 	{ "<b>Resolution</b>", resitems },
 	{ "<b>Video Format</b>", vidformatitems },
+	{ 0, 0 }
+};
+
+YuiPageDesc sound_desc[] = {
+	{ "<b>Sound core</b>", snditems },
 	{ 0, 0 }
 };
 
@@ -185,7 +189,7 @@ GtkWidget* create_dialog1(YuiWindow * yui) {
   GtkWidget *table5;
   GtkWidget *button11;
   GtkWidget *button12;
-  GtkWidget * general, * video_sound, * cart_memory, *advanced;
+  GtkWidget * general, * video_sound, * cart_memory, *advanced, * sound;
 
   dialog1 = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog1), "Yabause configuration");
@@ -204,11 +208,18 @@ GtkWidget* create_dialog1(YuiWindow * yui) {
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), general, gtk_label_new ("General"));
 
   /*
-   * Video/Sound configuration
+   * Video configuration
    */
   video_sound = yui_page_new(keyfile, "General", video_sound_desc);
   
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), video_sound, gtk_label_new ("Video/Sound"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), video_sound, gtk_label_new ("Video"));
+
+  /*
+   * Sound configuration
+   */
+  sound = yui_page_new(keyfile, "General", sound_desc);
+  
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), sound, gtk_label_new ("Sound"));
 
   /*
    * Cart/Memory configuration
