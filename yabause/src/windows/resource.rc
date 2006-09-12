@@ -66,12 +66,12 @@ BEGIN
     DEFPUSHBUTTON   "&OK",    IDOK,       89,  72, 40, 14
     PUSHBUTTON      "&Cancel",IDCANCEL,   43,  72, 40, 14
     PUSHBUTTON      "&Browse",IDC_BROWSE, 140, 4,  30, 12
-    LTEXT           "File:",    -1, 4, 4,  16, 10
-    LTEXT           "Start Address:", -1, 4, 18, 46, 10
-    LTEXT           "End Address:", -1, 4, 32, 42, 10
-    EDITTEXT        IDC_EDITTEXT1, 52, 4,  86, 10, ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDITTEXT2, 52, 18, 36, 10, ES_UPPERCASE
-    EDITTEXT        IDC_EDITTEXT3, 52, 32, 36, 10, ES_UPPERCASE
+    LTEXT           "File:",    -1, 4, 4, 24, 10
+    LTEXT           "Start Address:", -1, 4, 18, 56, 10
+    LTEXT           "End Address:", -1, 4, 32, 50, 10
+    EDITTEXT        IDC_EDITTEXT1, 60, 4,  78, 10, ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDITTEXT2, 60, 18, 36, 10, ES_UPPERCASE
+    EDITTEXT        IDC_EDITTEXT3, 60, 32, 36, 10, ES_UPPERCASE
     AUTORADIOBUTTON "Download",  IDC_DOWNLOADMEM,  42, 46, 42, 10
     AUTORADIOBUTTON "Upload", IDC_UPLOADMEM, 92, 46, 42, 10
     AUTOCHECKBOX "Set PC to start address", IDC_CHECKBOX1, 34, 58, 104, 10
