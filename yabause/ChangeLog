@@ -1,6 +1,60 @@
 0.7.1 -> 0.7.2
- linux port
+ cart:
+  - A few Netlink changes(still doesn't work).
+ cd block:
+  - CD Block play disc command fixes and improvements. Play Modes now handled correctly.
+  - Added correct Repeat counter support.
+  - CD audio data is now written to its own buffer, which is then played by the SCSP.
+ scsp:
+  - CD audio data is now played by the SCSP. EFSDL and EFPAN support still needs to be added.
+ opengl video core:
+  - glutInit is now called before any other glut function(except for on the windows port).
+ software video core:
+  - Added normal sprite flipping(copied from scaled sprites).
+  - Corrected a bug with 8 bpp color calculation in scaled and distorted sprites.
+  - Fixed a bug that caused duplicated textures in 8 bpp regular sprites.
+  - Distorted sprites made safer (won't read outside the texture)
+  - Fixed transparency for distorted sprites.
+  - Fixed scaled sprites bug in zoom points modes two points mode and C point
+    upper than A.
+  - Fixed a bug that was causing sprite priority problems.
+ linux port:
+  - Fixed a gtk warning.
   - Added Joystick support.
+  - Added a test in configuration dialog so input tab is displayed only when
+    emulation is initialized.
+  - Added NTSC/PAL setting
+  - Input settings are now disabled when PERCore isn't initialized.
+  - Added a sound setting tab.
+ macos port:
+  - Added code to handle settings (everything should be working now, except
+    the "browse" buttons).
+  - Controls are now using the new Per* functions.
+  - Fixed some bugs in combo boxes.
+ windows port:
+  - EC Compatibility list link added to help menu.
+  - Fixed an issue where default values weren't set correctly when yabause.ini
+    wasn't present.
+  - Fixed an issue where Yabause would go into an endless loop if bios path
+    was incorrect.
+  - DirectX error messages now return more info when there's an error.
+  - Fixed an issue where people without hardware sound buffers on their
+    sound card would have problems trying to run with sound.
+  - Fixed some inaccurate information in the README.WIN file.
+  - Fixed cut-off text in Memory Transfer dialog.
+  - All dialog windows can now be closed using the X icon in the top-right
+    corner.
+ general:
+  - Fixed an issue where in certain cases Yabause would crash when sound
+    settings were altered.
+  - Some useless files were removed.
+  - Moved SDL detection in "global" part of configure script as it may be used
+    by all ports.
+  - Fixed a weird issue where a few functions were trying to return a value
+    when they obviously can't(How come GNU C compilers won't detect this?).
+  - Fixed a number of things that were causing compilation issues in VC++(VC++
+    still doesn't completely compile Yabause yet).
+  - Configure now checks if c99 variadic macros are available.
 0.7.0 -> 0.7.1
  opengl video core:
   - Added polygons that use a palette.
