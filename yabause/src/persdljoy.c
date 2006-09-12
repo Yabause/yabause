@@ -18,6 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef HAVE_LIBSDL
 #include "SDL.h"
 
 #include "debug.h"
@@ -223,5 +224,7 @@ void PERSDLJoyFlush(void) {
 
 	while(SDL_PollEvent(&event));
 }
+
+#endif
 
 #endif

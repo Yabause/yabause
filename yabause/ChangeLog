@@ -1,3 +1,6 @@
+0.7.1 -> 0.7.2
+ linux port
+  - Added Joystick support.
 0.7.0 -> 0.7.1
  opengl video core:
   - Added polygons that use a palette.
