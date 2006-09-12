@@ -93,7 +93,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 SH2DEBUGDLG DIALOG FIXED PURE  0, 0, 386, 229
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "SH2 Debug"
 FONT 8, "Courier New"
 BEGIN
@@ -128,7 +128,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 VDP1DEBUGDLG DIALOG FIXED PURE  0, 0, 306, 200
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "VDP1 Debug"
 FONT 8, "Courier New"
 BEGIN
@@ -142,7 +142,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 VDP2DEBUGDLG DIALOG FIXED PURE  0, 0, 454, 206
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "VDP2 Debug"
 FONT 8, "Courier New"
 BEGIN
@@ -172,7 +172,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 M68KDEBUGDLG DIALOG FIXED PURE  0, 0, 386, 229
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "68K Debug"
 FONT 8, "Courier New"
 BEGIN
@@ -202,7 +202,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 SCUDSPDEBUGDLG DIALOG FIXED PURE  0, 0, 436, 229
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "SCU DSP Debug"
 FONT 8, "Courier New"
 BEGIN
@@ -222,7 +222,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 SCSPDEBUGDLG DIALOG FIXED PURE  0, 0, 436, 229
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "SCSP Debug"
 FONT 8, "Courier New"
 BEGIN
@@ -240,7 +240,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 SETTINGSDLG DIALOG DISCARDABLE  0, 0, 220, 244
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Settings"
 FONT 8, "Courier New"
 BEGIN
@@ -292,7 +292,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 VIDEOSETTINGSDLG DIALOG DISCARDABLE  0, 0, 174, 135
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Video Settings"
 FONT 8, "Courier New"
 BEGIN
@@ -319,7 +319,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 SOUNDSETTINGSDLG DIALOG DISCARDABLE  0, 0, 174, 81
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Sound Settings"
 FONT 8, "Courier New"
 BEGIN
@@ -336,7 +336,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 INPUTSETTINGSDLG DIALOG DISCARDABLE  0, 0, 194, 52
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Peripheral Settings"
 FONT 8, "Courier New"
 BEGIN
@@ -351,7 +351,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 ERRORDEBUGDLG DIALOG DISCARDABLE  0, 0, 136, 144
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Error"
 FONT 8, "Courier New"
 BEGIN
@@ -363,7 +363,7 @@ END
 //////////////////////////////////////////////////////////////////////////////
 
 ABOUTDLG DIALOG FIXED PURE  6, 21, 190, 137
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "About Yabause"
 FONT 8, "Courier New"
 BEGIN
