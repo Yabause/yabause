@@ -1498,7 +1498,10 @@ void Cs2PlayDisc(void) {
   else if (pdepos != 0)
   {
      // Track Mode
-     Cs2Area->playendFAD = Cs2TrackToFAD(pdepos);
+     if ((pdepos & 0xFF) == 0)
+        Cs2Area->playendFAD = Cs2TrackToFAD(pdepos | 0x0063);
+     else
+        Cs2Area->playendFAD = Cs2TrackToFAD(pdepos);
   }
   else
   {
