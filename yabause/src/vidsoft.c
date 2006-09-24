@@ -31,6 +31,8 @@
 #include "yui.h"
 #endif
 
+#include <stdlib.h>
+
 #if defined WORDS_BIGENDIAN
 #define COLSAT2YAB16(priority,temp)            (priority | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
 #define COLSAT2YAB32(priority,temp)            ((temp & 0xFF << 24) | ((temp & 0xFF00) << 8) | ((temp & 0xFF0000) >> 8) | priority)
@@ -214,6 +216,8 @@ typedef struct
    float deltaKAx;
    int coefenab;
 } vdp2rotationparameter_struct;
+
+typedef struct { s16 x; s16 y; } vdp1vertex;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2959,8 +2963,166 @@ void VIDSoftVdp1DistortedSpriteDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1PolygonDraw(void)
-{
+int fcmpy_vdp1vertex( const void* v1, const void* v2 ) {
+
+  return ( ((vdp1vertex*)v1)->y <= ((vdp1vertex*)v2)->y )? -1 : 1;
+}
+
+void VIDSoftVdp1PolygonDraw(void) {
+
+  vdp1vertex v[4];
+  float xleft, xwidth;
+  int y, x;
+  float stepA, stepB, stepC, stepD;
+  int bInverted;
+  u16 *fb;
+  u16 color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
+
+  v[0].x = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
+  v[1].x = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10));
+  v[2].x = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14));
+  v[3].x = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x18));
+  v[0].y = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
+  v[1].y = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12));
+  v[2].y = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16));
+  v[3].y = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A));
+
+  /* points 0,1,2,3 are sorted by increasing y */
+  qsort( v, 4, sizeof( vdp1vertex ), fcmpy_vdp1vertex );
+
+  /* For parts I and II, y-end clipping is managed here by moving points */
+  if ( v[2].y >= vdp1clipyend ) {
+
+    if ( v[1].y >= vdp1clipyend ) {
+
+      if ( v[0].y >= vdp1clipyend ) return;
+      else {
+	
+	float Aratio = ( vdp1clipyend - v[1].y ) / ( v[1].y - v[0].y );
+	float Bratio = ( vdp1clipyend - v[0].y ) / ( v[2].y - v[0].y );
+	v[1].x = (v[1].x-v[0].x)*Aratio + v[0].x;
+	v[1].y = vdp1clipyend;
+	v[3].x = v[2].x = (v[2].x-v[0].x)*Bratio + v[0].x;
+	v[3].y = v[2].y = vdp1clipyend;
+      }
+    } else {
+
+      float Cratio = ( vdp1clipyend - v[1].y ) / ( v[3].y - v[1].y );
+      float Bratio = ( vdp1clipyend - v[0].y ) / ( v[2].y - v[0].y );
+      v[3].x = (v[3].x-v[1].x)*Cratio + v[1].x;
+      v[3].y = vdp1clipyend;
+      v[2].x = ( v[2].x-v[0].x)*Bratio + v[0].x;
+      v[2].y = vdp1clipyend;
+    }
+  }
+
+  stepA = (float)( v[1].x - v[0].x )/( v[1].y - v[0].y );
+  stepB = (float)( v[2].x - v[0].x )/( v[2].y - v[0].y );
+  stepC = (float)( v[3].x - v[1].x )/( v[3].y - v[1].y );
+  stepD = (float)( v[3].x - v[2].x )/( v[3].y - v[2].y );
+
+  xleft = v[0].x;
+  xwidth = 0;
+
+#define POLYGON_CLIP_X if ( xleft < vdp1clipxstart ) { \
+          xwidth -= (vdp1clipxstart - xleft); \
+          xleft = vdp1clipxstart;} \
+        if ( xleft + xwidth > vdp1clipxend ) xwidth = vdp1clipxend-xleft;
+
+  if ( v[1].x > v[2].x ) {  /* inverted case : point 2 at left of point 1 */
+
+    if ( v[0].y <= vdp1clipystart ) { /* y-clipping in part I */
+      if ( v[1].y <= vdp1clipystart ) y = v[1].y; else y = vdp1clipystart;
+      xleft += stepB * (y-v[0].y);
+      xwidth += (stepA - stepB) * (y-v[0].y);
+    } else y = v[0].y;
+
+    for ( ; y < v[1].y ; y++ ) { /* paint part I */
+
+      POLYGON_CLIP_X;
+      fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;
+      for ( x = (int)xwidth ; x>0 ; x-- ) *(fb++) = color; 
+      xleft += stepB;
+      xwidth += stepA - stepB;
+    }
+
+    if ( y <= vdp1clipystart ) { /* y-clipping in part II */
+      if ( v[2].y <= vdp1clipystart ) y = v[2].y; else y = vdp1clipystart;
+      xleft += stepB * (y-v[1].y);
+      xwidth += (stepC - stepB) * (y-v[1].y);
+    }
+
+    for ( ; y < v[2].y ; y++ ) { /* paint part II */
+      
+      POLYGON_CLIP_X;
+      fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;
+      for ( x = (int)xwidth ; x>0 ; x-- ) *(fb++) = color; 
+      xleft += stepB;
+      xwidth += stepC - stepB;
+    }
+
+    if ( y <= vdp1clipystart ) { /* y-clipping in part III */
+      if ( v[3].y <= vdp1clipystart ) y = v[3].y; else y = vdp1clipystart;
+      xleft += stepD * (y-v[2].y);
+      xwidth += (stepC - stepD) * (y-v[2].y);
+    } 
+
+    for ( ; (y < v[3].y) && (y <= vdp1clipyend) ; y++ ) { /* paint part III */
+      
+      POLYGON_CLIP_X;
+      fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;
+      for ( x = (int)xwidth ; x>0 ; x-- ) *(fb++) = color; 
+      xleft += stepD;
+      xwidth += stepC - stepD;
+    }
+  } else { /* non inverted : point 1 at left of point 2 */
+
+    if ( v[0].y <= vdp1clipystart ) { /* y-clipping in part I */
+      if ( v[1].y <= vdp1clipystart ) y = v[1].y; else y = vdp1clipystart;
+      xleft += stepA * (y-v[0].y);
+      xwidth += (stepB - stepA) * (y-v[0].y);
+    } else y = v[0].y;
+
+    for ( ; y < v[1].y ; y++ ) { /* paint part I */
+      
+      POLYGON_CLIP_X;
+      fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;
+      for ( x = (int)xwidth ; x>0 ; x-- ) *(fb++) = color; 
+      xleft += stepA;
+      xwidth += stepB - stepA;
+    }
+
+    if ( y <= vdp1clipystart ) { /* y-clipping in part II */
+      if ( v[2].y <= vdp1clipystart ) y = v[2].y; else y = vdp1clipystart;
+      xleft += stepC * (y-v[1].y);
+      xwidth += (stepB - stepC) * (y-v[1].y);
+    }
+
+    for ( ; y < v[2].y ; y++ ) { /* paint part II */
+      
+      POLYGON_CLIP_X;
+      fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;
+      for ( x = (int)xwidth ; x>0 ; x-- ) *(fb++) = color; 
+      xleft += stepC;
+      xwidth += stepB - stepC;
+    }
+
+    if ( y <= vdp1clipystart ) { /* y-clipping in part III */
+      if ( v[3].y <= vdp1clipystart ) y = v[3].y; else y = vdp1clipystart;
+      xleft += stepC * (y-v[2].y);
+      xwidth += (stepD - stepC) * (y-v[2].y);
+    }
+
+    for ( ; (y < v[3].y) && (y <= vdp1clipyend) ; y++ ) { /* paint part III */
+      
+      POLYGON_CLIP_X;
+      fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;
+      for ( x = (int)xwidth ; x>0 ; x-- ) *(fb++) = color;
+      xleft += stepC;
+      xwidth += stepD - stepC;
+    }    
+  }
+  
 }
 
 //////////////////////////////////////////////////////////////////////////////
