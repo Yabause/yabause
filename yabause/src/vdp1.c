@@ -297,7 +297,7 @@ void Vdp1Draw(void) {
    returnAddr = 0xFFFFFFFF;
    commandCounter = 0;
 
-   // beginning of a frame (ST-013-R3-061694 page 53)
+   // beginning of a frame
    // BEF <- CEF
    // CEF <- 0
    Vdp1Regs->EDSR >>= 1;
