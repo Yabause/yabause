@@ -690,13 +690,6 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    u32 cacheaddr = ((u32) (info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr;
    int * c;
    YglSprite tile;
-#ifdef YGL_CACHE_CHECK
-   int isCached = 0;
-   unsigned int * textdata1;
-   unsigned int * textdata2;
-   int match = 1;
-   int x, y;
-#endif
 
    tile.w = tile.h = info->patternpixelwh;   
    tile.flip = info->flipfunction;
@@ -716,25 +709,15 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
 
    if ((c = YglIsCached(cacheaddr)) != NULL)
    {
-#ifdef YGL_CACHE_CHECK
-      isCached = 1;
-      textdata1 = YglTM->texture + *(c + 1) * YglTM->width + *c;
-#else
       YglCachedQuad(&tile, c);
 
       info->x += tile.w;
       info->y += tile.h;
       return;
-#endif
    }
 
    c = YglQuad(&tile, texture);
    YglCache(cacheaddr, c);
-
-#ifdef YGL_CACHE_CHECK
-   if (isCached)
-      textdata2 = texture->textdata;
-#endif
 
    switch(info->patternwh)
    {
@@ -754,28 +737,6 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    }
    info->x += tile.w;
    info->y += tile.h;
-
-#ifdef YGL_CACHE_CHECK
-   if(isCached) {
-      y = 0;
-      while(match && y < tile.h)
-      {
-         x = 0;
-         while (match && x < tile.w)
-         {
-            match = (*textdata1 == *textdata2);
-            if (!match)
-               printf("cache mismatch (x=%d, y=%d, data1=%x, data2=%x) cacheaddr=%x\n", x, y, *textdata1, *textdata2, cacheaddr);
-            textdata1++;
-            textdata2++;
-            x++;
-         }
-         textdata1 += (YglTM->width - tile.w);
-         textdata2 += (YglTM->width - tile.w);
-         y++;
-      }
-   }
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -848,7 +809,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
    if (!(Vdp2Regs->VRSIZE & 0x8000))
       info->charaddr &= 0x3FFF;
 
-   info->charaddr *= 0x20; // selon Runik
+   info->charaddr *= 0x20; // thanks Runik
 }
 
 //////////////////////////////////////////////////////////////////////////////

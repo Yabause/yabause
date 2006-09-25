@@ -81,28 +81,8 @@ yabauseinit_struct yinit;
 const char * key_names[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger",
 	"Start", "A", "B", "C", "X", "Y", "Z", NULL };
 
-/*
-YuiAction key_config[] = {
-	{ 0 , "Up", PerUpPressed, PerUpReleased },
-	{ 0 , "Right", PerRightPressed, PerRightReleased },
-	{ 0 , "Down", PerDownPressed, PerDownReleased },
-	{ 0 , "Left", PerLeftPressed, PerLeftReleased },
-	{ 0 , "Right trigger", PerRTriggerPressed, PerRTriggerReleased },
-	{ 0 , "Left trigger", PerLTriggerPressed, PerLTriggerReleased },
-	{ 0 , "Start", PerStartPressed, PerStartReleased },
-	{ 0 , "A", PerAPressed, PerAReleased },
-	{ 0 , "B", PerBPressed, PerBReleased },
-	{ 0 , "C", PerCPressed, PerCReleased },
-	{ 0 , "X", PerXPressed, PerXReleased },
-	{ 0 , "Y", PerYPressed, PerYReleased },
-	{ 0 , "Z", PerZPressed, PerZReleased },
-	{ 0, 0, 0, 0 }
-};
-*/
-
 int yui_main(gpointer data) {
 	PERCore->HandleEvents();
-	//YabauseExec();
 	return TRUE;
 }
 
@@ -185,19 +165,8 @@ void yui_settings_load(void) {
 	yinit.sndcoretype = g_key_file_get_integer(keyfile, "General", "SoundCore", 0);
 
 	i = 0;
-	/*
-	while(key_config[i].name) {
-	  gchar * keyName = g_key_file_get_value(keyfile, "Input", key_config[i].name, 0);
-	  if ( keyName ) key_config[i].key = gdk_keyval_from_name( keyName );
-	  i++;
-	}
-	*/
 
 	while(key_names[i]) {
-		/*
-	  gchar * keyName = g_key_file_get_value(keyfile, "Input", key_names[i], 0);
-	  if (keyName) PerSetKey(gdk_keyval_from_name( keyName ), key_names[i]);
-	  */
 	  u32 key = g_key_file_get_integer(keyfile, "Input", key_names[i], 0);
 	  PerSetKey(key, key_names[i]);
 	  i++;
@@ -280,11 +249,11 @@ int main(int argc, char *argv[]) {
 	 }
 	 // Autostart
 	 else if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "--autostart") == 0) {
-            yui_window_run(0, yui);
+            yui_window_run(NULL, YUI_WINDOW(yui));
 	 }
 	 // Fullscreen
 	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
-            yui_window_toggle_fullscreen(0, yui);
+            yui_window_toggle_fullscreen(NULL, YUI_WINDOW(yui));
 	 }
       }
    }
@@ -323,7 +292,7 @@ void yui_conf(void) {
 	gint result;
 	GtkWidget * dialog;
 
-	dialog = create_dialog1(yui);
+	dialog = create_dialog1(YUI_WINDOW(yui));
 	gtk_widget_show_all(dialog);
 
 	result = gtk_dialog_run(GTK_DIALOG(dialog));
