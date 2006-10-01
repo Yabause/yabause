@@ -97,7 +97,7 @@ libyabause_a_SOURCES = \
 	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \
         bios.c bios.h cdbase.c cdbase.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c \
         cs2.h debug.c debug.h error.c error.h memory.c memory.h \
-	peripheral.h peripheral.c m68kd.c \
+        m68kd.c netlink.c netlink.h peripheral.h peripheral.c \
 	persdl.c persdl.h persdljoy.c persdljoy.h profile.c profile.h \
 	scu.c scu.h sh2core.c sh2core.h \
 	sh2d.c sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h \
@@ -117,13 +117,13 @@ libyabause_a_DEPENDENCIES = cd-$(yabause_arch).$(OBJEXT)
 am_libyabause_a_OBJECTS = c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
 	gen68k.$(OBJEXT) bios.$(OBJEXT) cdbase.$(OBJEXT) cs0.$(OBJEXT) \
 	cs1.$(OBJEXT) cs2.$(OBJEXT) debug.$(OBJEXT) error.$(OBJEXT) \
-	memory.$(OBJEXT) peripheral.$(OBJEXT) m68kd.$(OBJEXT) \
-	persdl.$(OBJEXT) persdljoy.$(OBJEXT) profile.$(OBJEXT) \
-	scu.$(OBJEXT) sh2core.$(OBJEXT) sh2d.$(OBJEXT) \
-	sh2idle.$(OBJEXT) sh2int.$(OBJEXT) smpc.$(OBJEXT) \
-	scsp.$(OBJEXT) sndsdl.$(OBJEXT) vdp1.$(OBJEXT) vdp2.$(OBJEXT) \
-	vidogl.$(OBJEXT) vidsoft.$(OBJEXT) yabause.$(OBJEXT) \
-	ygl.$(OBJEXT)
+	memory.$(OBJEXT) m68kd.$(OBJEXT) netlink.$(OBJEXT) \
+	peripheral.$(OBJEXT) persdl.$(OBJEXT) persdljoy.$(OBJEXT) \
+	profile.$(OBJEXT) scu.$(OBJEXT) sh2core.$(OBJEXT) \
+	sh2d.$(OBJEXT) sh2idle.$(OBJEXT) sh2int.$(OBJEXT) \
+	smpc.$(OBJEXT) scsp.$(OBJEXT) sndsdl.$(OBJEXT) vdp1.$(OBJEXT) \
+	vdp2.$(OBJEXT) vidogl.$(OBJEXT) vidsoft.$(OBJEXT) \
+	yabause.$(OBJEXT) ygl.$(OBJEXT)
 nodist_libyabause_a_OBJECTS =
 libyabause_a_OBJECTS = $(am_libyabause_a_OBJECTS) \
 	$(nodist_libyabause_a_OBJECTS)
@@ -141,15 +141,16 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/cs2.Po ./$(DEPDIR)/debug.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/error.Po ./$(DEPDIR)/gen68k.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/m68kd.Po ./$(DEPDIR)/memory.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/peripheral.Po ./$(DEPDIR)/persdl.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/persdljoy.Po ./$(DEPDIR)/profile.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/scsp.Po ./$(DEPDIR)/scu.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/sh2core.Po ./$(DEPDIR)/sh2d.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/sh2idle.Po ./$(DEPDIR)/sh2int.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/smpc.Po ./$(DEPDIR)/sndsdl.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vdp1.Po ./$(DEPDIR)/vdp2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/vidogl.Po ./$(DEPDIR)/vidsoft.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/yabause.Po ./$(DEPDIR)/ygl.Po
+@AMDEP_TRUE@	./$(DEPDIR)/netlink.Po ./$(DEPDIR)/peripheral.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/persdl.Po ./$(DEPDIR)/persdljoy.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/profile.Po ./$(DEPDIR)/scsp.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/scu.Po ./$(DEPDIR)/sh2core.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/sh2d.Po ./$(DEPDIR)/sh2idle.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/sh2int.Po ./$(DEPDIR)/smpc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/sndsdl.Po ./$(DEPDIR)/vdp1.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/vdp2.Po ./$(DEPDIR)/vidogl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/vidsoft.Po ./$(DEPDIR)/yabause.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ygl.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -205,6 +206,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gen68k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m68kd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netlink.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/peripheral.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/persdl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/persdljoy.Po@am__quote@
