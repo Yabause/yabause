@@ -484,7 +484,7 @@ int NetlinkInit(const char *setting)
    NetlinkArea->reg.MSR = 0x30;
    NetlinkArea->reg.SCR = 0x01;
 
-   if (setting = NULL || strcmp(setting, "") == 0)
+   if (setting == NULL || strcmp(setting, "") == 0)
    {
       // Use Loopback ip and port 1337
       sprintf(NetlinkArea->ipstring, "127.0.0.1");
