@@ -147,7 +147,7 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath) != 0)
+   if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->netlinksetting) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, "CS2");
       return -1;

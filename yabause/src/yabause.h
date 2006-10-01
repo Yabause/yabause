@@ -37,6 +37,7 @@ typedef struct
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
+   const char *netlinksetting;
    int flags;
 } yabauseinit_struct;
 

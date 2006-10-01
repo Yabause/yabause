@@ -128,32 +128,6 @@ typedef struct
    u16 MPEGRGB;
 } blockregs_struct;
 
-#define NETLINK_BUFFER_SIZE     1024
-
-typedef struct
-{
-   u8 RBR;
-   u8 THR;
-   u8 IER;
-   u8 DLL;
-   u8 DLM;
-   u8 IIR;
-   u8 FCR;
-   u8 LCR;
-   u8 MCR;
-   u8 LSR;
-   u8 MSR;
-   u8 SCR;
-} netlinkregs_struct;
-
-typedef struct {
-   u8 inbuffer[NETLINK_BUFFER_SIZE];
-   u8 outbuffer[NETLINK_BUFFER_SIZE];
-   u32 inbufferstart, inbufferend, inbuffersize;
-   u32 outbufferstart, outbufferend, outbuffersize;
-   netlinkregs_struct reg;
-} Netlink;
-
 typedef struct {
   blockregs_struct reg;
   u32 FAD;
@@ -247,7 +221,7 @@ typedef struct {
 
 extern Cs2 * Cs2Area;
 
-int Cs2Init(int, int, const char *, const char *);
+int Cs2Init(int, int, const char *, const char *, const char *);
 void Cs2DeInit(void);
 
 u8 FASTCALL 	Cs2ReadByte(u32);

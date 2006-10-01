@@ -23,6 +23,7 @@
 #include "cs2.h"
 #include "debug.h"
 #include "error.h"
+#include "netlink.h"
 #include "scu.h"
 #include "smpc.h"
 #include "yui.h"
@@ -62,7 +63,6 @@
 #define CDB_PLAYTYPE_FILE       0x02
 
 Cs2 * Cs2Area = NULL;
-Netlink *NetlinkArea = NULL;
 
 extern CDInterface *CDCoreList[];
 
@@ -88,84 +88,12 @@ static INLINE void doMPEGReport(u8 status)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void NetlinkLSRChange(u8 val)
-{
-   // If any of the error or alarms bits are set(and they weren't previously)
-   // trigger an interrupt
-   if ((NetlinkArea->reg.LSR ^ val) & val & 0x1E)
-   {
-      NetlinkArea->reg.IIR = 0x6;
-      ScuSendExternalInterrupt12();
-   }
-
-   NetlinkArea->reg.LSR = val;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void NetlinkMSRChange(u8 val)
-{
-   // If CTS/DSR/RI/RLSD changes, trigger interrupt(fix me)
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 u8 FASTCALL Cs2ReadByte(u32 addr)
 {
-   u8 ret;
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
    if(Cs2Area->carttype == CART_NETLINK)
-   {
-      switch (addr)
-      {
-         case 0x95001: // Receiver Buffer/Divisor Latch Low Byte
-            if (NetlinkArea->reg.LCR & 0x80) // Divisor Latch Low Byte
-            {
-//               LOG("DLL read: %08X(%02X)\n", addr, NetlinkArea->reg.DLL);
-               return NetlinkArea->reg.DLL;
-            }
-            else // Receiver Buffer
-            {
-               if (NetlinkArea->outbuffersize == 0)
-                  return 0x00;
-
-               ret = NetlinkArea->outbuffer[NetlinkArea->outbufferstart];
-               NetlinkArea->outbufferstart++;
-               NetlinkArea->outbuffersize--;
-
-               // If the buffer is empty now, make sure the data available
-               // bit in LSR is cleared
-               if (NetlinkArea->outbuffersize == 0)
-                  NetlinkArea->reg.LSR &= ~0x01;
-
-//               LOG("RBR read: %08X(%02X)\n", addr, ret);
-               return ret;
-            }
-
-            return 0;
-         case 0x95009: // Interrupt Identification Register
-//            LOG("IIR read: %02X\n", NetlinkArea->reg.IIR);
-            return NetlinkArea->reg.IIR;
-         case 0x9500D: // Line Control Register
-//            LOG("LCR read: %02X\n", NetlinkArea->reg.MCR);
-            return NetlinkArea->reg.LCR;
-         case 0x95011: // Modem Control Register
-//            LOG("MCR read: %02X\n", NetlinkArea->reg.MCR);
-            return NetlinkArea->reg.MCR;
-         case 0x95015: // Line Status Register
-//            LOG("LSR read: %02X\n", NetlinkArea->reg.LSR);
-            return NetlinkArea->reg.LSR;
-         case 0x95019: // Modem Status Register
-//            LOG("MSR read: %02X. PC = %08X\n", NetlinkArea->reg.MSR, MSH2->regs.PC);
-            return NetlinkArea->reg.MSR;
-         case 0x9501D: // Scratch
-//            LOG("SCR read: %02X\n", NetlinkArea->reg.SCR);
-            return NetlinkArea->reg.SCR;
-         default:
-            break;
-      }
-   }
+      return NetlinkReadByte(addr);
    else
    {
       // only netlink seems to use byte-access
@@ -197,89 +125,8 @@ void FASTCALL Cs2WriteByte(u32 addr, u8 val)
 
    if(Cs2Area->carttype == CART_NETLINK)
    {
-      switch (addr)
-      {
-         case 0x2503D: // ???
-//            LOG("2503D byte write = %02X\n", val );
-            return;
-         case 0x95001: // Transmitter Holding Buffer/Divisor Latch Low Byte
-            if (NetlinkArea->reg.LCR & 0x80) // Divisor Latch Low Byte
-            {
-//               LOG("DLL write: %08X(%02X)\n", addr, val);
-               NetlinkArea->reg.DLL = val;
-            }
-            else // Transmitter Holding Buffer
-            {
-//               LOG("THR write: %08X(%02X). PC = %08X\n", addr, val, MSH2->regs.PC);
-               NetlinkArea->inbuffer[NetlinkArea->inbufferend] = val;
-               NetlinkArea->inbufferend++;
-               NetlinkArea->inbuffersize++;
-//               NetlinkArea->reg.THR = val;
-               if (val == 0x0D &&
-                   toupper(NetlinkArea->inbuffer[NetlinkArea->inbufferstart]) == 'A' &&
-                   toupper(NetlinkArea->inbuffer[NetlinkArea->inbufferstart+1]) == 'T') // fix me
-               {
-                  LOG("Program issued %s\n", NetlinkArea->inbuffer);
-                  // Handle AT command here
-
-                  // Should fill output buffer with response and trigger an
-                  // interrupt
-                  sprintf(&NetlinkArea->outbuffer[NetlinkArea->outbufferend], "OK\r");
-                  NetlinkArea->outbufferend += 3;
-                  NetlinkArea->outbuffersize += 3;
-
-                  // Set Data available bit in LSR
-                  NetlinkArea->reg.LSR |= 0x01;
-
-                  // Trigger Interrrupt
-                  NetlinkArea->reg.IIR = 0x4;
-                  ScuSendExternalInterrupt12();
-               }
-            }
-
-            return;
-         case 0x95005: // Interrupt Enable Register/Divisor Latch High Byte
-            if (NetlinkArea->reg.LCR & 0x80) // Divisor Latch High Byte
-            {
-//               LOG("DLM write: %08X(%02X)\n", addr, val);
-               NetlinkArea->reg.DLM = val;
-            }
-            else // Interrupt Enable Register
-            {
-//               LOG("IER write: (%02X): Interrupt on %s%s%s%s\n", addr, val, (val & 0x1) ? "Received Data Available, " : "", (val & 0x2) ? "THR empty, " : "", (val & 0x4) ? "Receiver LSR change, " : "", (val & 0x8) ? "MSR change" : "");
-               NetlinkArea->reg.IER = val;
-            }
-
-            return;
-         case 0x95009: // FIFO Control Register
-//            LOG("FCR write: %02X\n", val);
-            NetlinkArea->reg.FCR = val;
-
-            if (val & 0x1)
-               // set FIFO enabled bits
-               NetlinkArea->reg.IIR |= 0xC0;
-            else
-               // clear FIFO enabled bits
-               NetlinkArea->reg.IIR &= ~0xC0;
-
-            return;
-         case 0x9500D: // Line Control Register
-//            LOG("LCR write: %02X\n", val);
-            NetlinkArea->reg.LCR = val;
-            return;
-         case 0x95011: // Modem Control Register
-//            LOG("MCR write: %02X\n", val);
-            NetlinkArea->reg.MCR = val;
-            return;
-         case 0x95019: // Modem Status Register(read-only)
-            return;
-         case 0x9501D: // Scratch
-//            LOG("SCR write: %02X\n", val);
-            NetlinkArea->reg.SCR = val;
-            return;
-         default:
-            break;
-      }
+      NetlinkWriteByte(addr, val);
+      return;
    }
    else
    {
@@ -579,7 +426,7 @@ void FASTCALL Cs2WriteLong(u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath) {
+int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *netlinksetting) {
    int i;
    if ((Cs2Area = (Cs2 *) malloc(sizeof(Cs2))) == NULL)
       return -1;
@@ -621,32 +468,7 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath) 
 
    // If Modem is connected, set the registers
    if(Cs2Area->carttype == CART_NETLINK)
-   {
-      if ((NetlinkArea = malloc(sizeof(Netlink))) == NULL)
-      {
-         Cs2Area->carttype = CART_NONE;
-         YabSetError(YAB_ERR_CANNOTINIT, (void *)"Netlink");
-         return 0;
-      }
-
-      memset(NetlinkArea->inbuffer, 0, NETLINK_BUFFER_SIZE);
-      memset(NetlinkArea->outbuffer, 0, NETLINK_BUFFER_SIZE);
-
-      NetlinkArea->inbufferstart = NetlinkArea->inbufferend = NetlinkArea->inbuffersize = 0;
-      NetlinkArea->outbufferstart = NetlinkArea->outbufferend = NetlinkArea->outbuffersize = 0;
-
-      NetlinkArea->reg.RBR = 0x00;
-      NetlinkArea->reg.IER = 0x00;
-//     NetlinkArea->reg.DLL = 0x??; // need to check
-//     NetlinkArea->reg.DLM = 0x??; // need to check
-     NetlinkArea->reg.IIR = 0x01;
-//      NetlinkArea->reg.FCR = 0x??; // have no idea
-      NetlinkArea->reg.LCR = 0x00;
-      NetlinkArea->reg.MCR = 0x00;
-      NetlinkArea->reg.LSR = 0x60;
-      NetlinkArea->reg.MSR = 0x30;
-      NetlinkArea->reg.SCR = 0x01;
-   }
+      return NetlinkInit(netlinksetting);
 
    return 0;
 }
@@ -658,6 +480,9 @@ void Cs2DeInit(void) {
       if (Cs2Area->cdi != NULL) {
          Cs2Area->cdi->DeInit();
       }
+
+      if(Cs2Area->carttype == CART_NETLINK)
+         NetlinkDeInit();
 
       free(Cs2Area);
    }
@@ -958,7 +783,10 @@ void Cs2Exec(u32 timing) {
       doCDReport(Cs2Area->status);
 
       Cs2Area->reg.HIRQ |= CDB_HIRQ_SCDQ;
-    }
+   }
+
+   if(Cs2Area->carttype == CART_NETLINK)
+      NetlinkExec(timing);
 }
 
 //////////////////////////////////////////////////////////////////////////////
