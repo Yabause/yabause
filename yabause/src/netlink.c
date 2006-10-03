@@ -17,7 +17,6 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-
 #ifdef USESOCKET
 #ifdef __MINGW32__
 // I blame mingw for this
@@ -33,6 +32,9 @@
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #endif
 #endif
 #include "cs2.h"
@@ -662,7 +664,7 @@ int NetworkInit(void)
       return -1;
 #endif
 
-   NetlinkArea->connectsocket = INVALID_SOCKET;
+   NetlinkArea->connectsocket = -1;
    NetlinkArea->connectstatus = CONNECTSTATUS_IDLE;
 
    return 0;
@@ -686,18 +688,22 @@ int NetworkConnect(const char *ip, const char *port)
 
    // Create a Socket
    if ((NetlinkArea->connectsocket = socket(result->ai_family, result->ai_socktype,
-                                            result->ai_protocol)) == INVALID_SOCKET)
+                                            result->ai_protocol)) == -1)
    {
       freeaddrinfo(result);
       return -1;
    }
 
    // Connect to the socket
-   if (connect(NetlinkArea->connectsocket, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR)
+   if (connect(NetlinkArea->connectsocket, result->ai_addr, (int)result->ai_addrlen) == -1)
    {
       freeaddrinfo(result);
+#ifdef WIN32
       closesocket(NetlinkArea->connectsocket);
-      NetlinkArea->connectsocket = INVALID_SOCKET;
+#else
+      close(NetlinkArea->connectsocket);
+#endif
+      NetlinkArea->connectsocket = -1;
       return -1;
    }
 
@@ -712,7 +718,7 @@ int NetworkWaitForConnect(const char *port)
 {
    struct addrinfo *result = NULL,
                    hints;
-   int ListenSocket = INVALID_SOCKET;
+   int ListenSocket = -1;
    fd_set read_fds;
    struct timeval tv;
 
@@ -728,26 +734,34 @@ int NetworkWaitForConnect(const char *port)
 
    // Create a socket that the client can connect to
    if ((ListenSocket = socket(result->ai_family, result->ai_socktype,
-                              result->ai_protocol)) == INVALID_SOCKET)
+                              result->ai_protocol)) == -1)
    {
       freeaddrinfo(result);
       return -1;
    }
 
    // Setup the listening socket
-   if (bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR)
+   if (bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen) == -1)
    {
       freeaddrinfo(result);
+#ifdef WIN32
       closesocket(ListenSocket);
+#else
+      close(ListenSocket);
+#endif
       return -1;
    }
 
    freeaddrinfo(result);
 
    // Shhh... Let's listen
-   if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
+   if (listen(ListenSocket, SOMAXCONN) == -1)
    {
+#ifdef WIN32
       closesocket(ListenSocket);
+#else
+      close(ListenSocket);
+#endif
       return -1;
    }
 
@@ -760,21 +774,33 @@ int NetworkWaitForConnect(const char *port)
 
    if (select(ListenSocket+1, &read_fds, NULL, NULL, &tv) < 1)
    {
+#ifdef WIN32
       closesocket(ListenSocket);
+#else
+      close(ListenSocket);
+#endif
       return -1;
    }
 
    if (FD_ISSET(ListenSocket, &read_fds))
    {
       // Good, time to connect
-      if ((NetlinkArea->connectsocket = accept(ListenSocket, NULL, NULL)) == INVALID_SOCKET)
+      if ((NetlinkArea->connectsocket = accept(ListenSocket, NULL, NULL)) == -1)
       {
+#ifdef WIN32
          closesocket(ListenSocket);
+#else
+         close(ListenSocket);
+#endif
          return -1;
       }
 
       // We don't need the listen socket anymore
+#ifdef WIN32
       closesocket(ListenSocket);
+#else
+      close(ListenSocket);
+#endif
    }
 
    return 0;
@@ -786,11 +812,15 @@ int NetworkSend(const char *buffer, int length)
 {
    int bytessent;
 
-   if ((bytessent = send(NetlinkArea->connectsocket, buffer, length, 0)) == SOCKET_ERROR)
+   if ((bytessent = send(NetlinkArea->connectsocket, buffer, length, 0)) == -1)
    {
       // Fix me, better error handling is needed
+#if WIN32
 //      closesocket(NetlinkArea->connectsocket);
-//      NetlinkArea->connectsocket = INVALID_SOCKET;
+#else
+//      close(NetlinkArea->connectsocket);
+#endif
+//      NetlinkArea->connectsocket = -1;
       return -1;
    }
 
@@ -824,10 +854,12 @@ int NetworkReceive(char *buffer, int maxlength)
 
 void NetworkDeInit(void)
 {
-   if (NetlinkArea->connectsocket != INVALID_SOCKET)
-      closesocket(NetlinkArea->connectsocket);
+   if (NetlinkArea->connectsocket != -1)
 #ifdef WIN32
+      closesocket(NetlinkArea->connectsocket);
    WSACleanup();
+#else
+      close(NetlinkArea->connectsocket);
 #endif
 }
 
