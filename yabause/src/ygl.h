@@ -18,6 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef HAVE_LIBGL
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
@@ -113,4 +114,5 @@ int * YglIsCached(u32);
 void YglCache(u32, int *);
 void YglCacheReset(void);
 
+#endif
 #endif

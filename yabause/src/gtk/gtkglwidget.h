@@ -23,7 +23,9 @@
 
 #include <gtk/gtk.h>
 
+#ifdef HAVE_LIBGL
 #include <GL/gl.h>
+#endif
 
 G_BEGIN_DECLS
 
@@ -40,7 +42,7 @@ struct _YuiGl
 {
   GtkDrawingArea hbox;
 
-  GLubyte * pixels;
+  guint * pixels;
   gint pixels_width;
   gint pixels_height;
   gint pixels_rowstride;

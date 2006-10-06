@@ -57,26 +57,26 @@ case $target in
 		yabause_yui="windows"
 		;;
 	*linux* | *freebsd*)
-		AC_PATH_XTRA
-		LIBS="$LIBS $X_LIBS"
-		CFLAGS="$CFLAGS $X_CFLAGS"
-		if test x$use_opengl = xyes ; then
-			AC_CHECK_LIB(GL, glEnable, [
-				LIBS="$LIBS -lGL"
-				AC_DEFINE(HAVE_LIBGL)
-				],, $LIBS)
-			AC_CHECK_LIB(glut, glutGetModifiers,[
-				LIBS="$LIBS -lglut"
-				AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
-		fi
 		yabause_yui="."
 		AC_CHECK_TOOL(HAVE_PKG, pkg-config)
 
 		if test ! x$HAVE_PKG = x ; then
-			if `$HAVE_PKG gtkglext-1.0` ; then
+			if test x$use_opengl = xyes && `$HAVE_PKG gtkglext-1.0` ; then
 				yabause_yui="gtk"
 				GTK_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
 				GTK_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
+
+				AC_PATH_XTRA
+				LIBS="$LIBS $X_LIBS"
+				CFLAGS="$CFLAGS $X_CFLAGS"
+
+				AC_CHECK_LIB(GL, glEnable, [
+					LIBS="$LIBS -lGL"
+					AC_DEFINE(HAVE_LIBGL)
+					],, $LIBS)
+				AC_CHECK_LIB(glut, glutGetModifiers,[
+					LIBS="$LIBS -lglut"
+					AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
 			else
 				if `$HAVE_PKG gtk+-2.0` ; then
 					yabause_yui="gtk"
