@@ -149,7 +149,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
       int i;
       int strnewhash = 0;
       i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, line);
-      i = vsprintf(strtmp + i, format, l);
+      i += vsprintf(strtmp + i, format, l);
       for ( ; i>0 ; i-- ) strnewhash += (int)(strtmp[i]);
       if ( strnewhash != strhash ) d->output.callback( strtmp );
       strhash = strnewhash;
