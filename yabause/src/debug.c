@@ -53,6 +53,9 @@ Debug * DebugInit(const char * n, DebugOutType t, char * s) {
 	case DEBUG_STDERR:
 		d->output.stream = stderr;
 		break;
+        case DEBUG_CALLBACK:
+	        d->output.callback = s;
+	        break;
 	}
 
 	return d;
@@ -72,6 +75,7 @@ void DebugDeInit(Debug * d) {
 	case DEBUG_STRING:
 	case DEBUG_STDOUT:
 	case DEBUG_STDERR:
+	case DEBUG_CALLBACK:
 		break;
 	}
         if (d->name)
@@ -97,6 +101,9 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 	case DEBUG_STRING:
 		d->output.string = s;
 		break;
+	case DEBUG_CALLBACK:
+        	  d->output.callback = s;
+		  break;
 	case DEBUG_STDOUT:
 		d->output.stream = stdout;
 		break;
@@ -110,6 +117,7 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 
 void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ...) {
 	va_list l;
+	char strtmp[256];
 
         if (d == NULL)
            return;
@@ -135,6 +143,14 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
 			vsprintf(d->output.string + i, format, l);
 		}
 		break;
+	case DEBUG_CALLBACK:
+	  {
+	    int i;
+	    i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, line);
+	    vsprintf(strtmp + i, format, l);
+	    d->output.callback( strtmp );
+	  }
+	  break;
 	}
 
 	va_end(l);
@@ -159,3 +175,7 @@ void LogStop(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void LogChangeOutput(DebugOutType t, char * s) {
+
+  DebugChangeOutput( MainLog, t, s );
+}

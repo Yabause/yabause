@@ -50,6 +50,7 @@ struct _YuiAction {
 struct _YuiWindow {
 	GtkWindow hbox;
 
+        GtkWidget * logpopup;
 	GtkWidget * box;
 	GtkWidget * menu;
 	GtkWidget * area;

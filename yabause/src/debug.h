@@ -24,13 +24,14 @@
 #include "core.h"
 #include <stdio.h>
 
-typedef enum { DEBUG_STRING, DEBUG_STREAM , DEBUG_STDOUT, DEBUG_STDERR } DebugOutType;
+typedef enum { DEBUG_STRING, DEBUG_STREAM , DEBUG_STDOUT, DEBUG_STDERR, DEBUG_CALLBACK } DebugOutType;
 
 typedef struct {
 	DebugOutType output_type;
 	union {
 		FILE * stream;
 		char * string;
+	        void  (*callback) (char*);
 	} output;
 	char * name;
 } Debug;
@@ -46,6 +47,7 @@ extern Debug * MainLog;
 
 void LogStart(void);
 void LogStop(void);
+void LogChangeOutput(DebugOutType t, char * s);
 
 #ifdef DEBUG
 #define LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)

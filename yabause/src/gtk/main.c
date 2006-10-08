@@ -33,6 +33,7 @@
 #include "../scsp.h"
 #include "../sndsdl.h"
 #include "../persdljoy.h"
+#include "../debug.h"
 #include "pergtk.h"
 
 #include "settings.h"
@@ -181,11 +182,16 @@ void yui_settings_load(void) {
         yinit.flags = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 }
 
+void YuiErrorMsg(const char * string) {
+	yui_window_log(YUI_WINDOW(yui), string);
+}
+
 int main(int argc, char *argv[]) {
 #ifndef NO_CLI
 	int i;
 #endif
 	LogStart();
+	LogChangeOutput( DEBUG_CALLBACK, YuiErrorMsg );
 	inifile = g_build_filename(g_get_home_dir(), ".yabause.ini", NULL);
 	
 	keyfile = g_key_file_new();
@@ -272,9 +278,6 @@ int main(int argc, char *argv[]) {
 void YuiQuit(void) {
 }
 
-void YuiErrorMsg(const char * string) {
-	yui_window_log(YUI_WINDOW(yui), string);
-}
 
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {
 }

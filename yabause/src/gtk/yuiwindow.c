@@ -93,8 +93,16 @@ void yui_popup( YuiWindow* w, gchar* text, GtkMessageType mType ) {
   gtk_widget_destroy (dialog);
 }
 
+gboolean  yui_window_log_delete(GtkWidget *widget, GdkEvent *event, YuiWindow *yw ) {
+
+  yui_window_show_log( yw );
+
+  return TRUE;   /* hide instead of killing */
+}
+
 static void yui_window_init (YuiWindow * yw) {
 	GtkAccelGroup * accel_group = gtk_accel_group_new();
+	GtkWidget * scroll;
 
 	yw->action_group = gtk_action_group_new("yui");
 	gtk_action_group_add_actions(yw->action_group, action_entries, sizeof(action_entries) / sizeof(GtkActionEntry), yw);
@@ -123,8 +131,16 @@ static void yui_window_init (YuiWindow * yw) {
 	g_signal_connect(G_OBJECT(yw), "key-press-event", G_CALLBACK(yui_window_keypress), yw);
 	g_signal_connect(G_OBJECT(yw), "key-release-event", G_CALLBACK(yui_window_keyrelease), yw);
 
+	yw->logpopup = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title( GTK_WINDOW( yw->logpopup ), "Yabause Logs" );
+	gtk_widget_set_size_request( yw->logpopup, 500, 300 );
+	scroll = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(yw->logpopup), scroll);
+	g_signal_connect(G_OBJECT(yw->logpopup), "delete-event", G_CALLBACK(yui_window_log_delete), yw);
+
 	yw->log = gtk_text_view_new();
-	gtk_box_pack_start(GTK_BOX(yw->box), yw->log, FALSE, FALSE, 0);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll), yw->log);
 
 	gtk_widget_show(yw->box);
 	gtk_widget_show_all(yw->menu);
@@ -192,16 +208,16 @@ void yui_window_log(YuiWindow * yui, const char * message) {
 	GtkTextIter iter;
 
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(yui->log));
-	gtk_text_buffer_get_end_iter(buffer, &iter);
+	gtk_text_buffer_get_start_iter(buffer, &iter);
 	gtk_text_buffer_insert(buffer, &iter, message, -1);
 }
 
 void yui_window_show_log(YuiWindow * yui) {
 	static int i = 0;
 	if (i)
-		gtk_widget_hide(yui->log);
+		gtk_widget_hide(yui->logpopup);
 	else
-		gtk_widget_show(yui->log);
+		gtk_widget_show_all(yui->logpopup);
 	i = !i;
 }
 
