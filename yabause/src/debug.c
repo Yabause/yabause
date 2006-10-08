@@ -116,44 +116,48 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 //////////////////////////////////////////////////////////////////////////////
 
 void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ...) {
-	va_list l;
-	char strtmp[256];
-
-        if (d == NULL)
-           return;
-
-	va_start(l, format);
-
-	switch(d->output_type) {
-	case DEBUG_STDOUT:
-	case DEBUG_STDERR:
-	case DEBUG_STREAM:
-                if (d->output.stream == NULL)
-                   break;
-		fprintf(d->output.stream, "%s (%s:%ld): ", d->name, file, line);
-		vfprintf(d->output.stream, format, l);
-		break;
-	case DEBUG_STRING:
-		{
-			int i;
-                        if (d->output.string == NULL)
-                           break;
-
-			i = sprintf(d->output.string, "%s (%s:%ld): ", d->name, file, line);
-			vsprintf(d->output.string + i, format, l);
-		}
-		break;
-	case DEBUG_CALLBACK:
-	  {
-	    int i;
-	    i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, line);
-	    vsprintf(strtmp + i, format, l);
-	    d->output.callback( strtmp );
-	  }
-	  break;
-	}
-
-	va_end(l);
+  va_list l;
+  static char strtmp[256];
+  static int strhash;
+  
+  if (d == NULL)
+    return;
+  
+  va_start(l, format);
+  
+  switch(d->output_type) {
+  case DEBUG_STDOUT:
+  case DEBUG_STDERR:
+  case DEBUG_STREAM:
+    if (d->output.stream == NULL)
+      break;
+    fprintf(d->output.stream, "%s (%s:%ld): ", d->name, file, line);
+    vfprintf(d->output.stream, format, l);
+    break;
+  case DEBUG_STRING:
+    {
+      int i;
+      if (d->output.string == NULL)
+	break;
+      
+      i = sprintf(d->output.string, "%s (%s:%ld): ", d->name, file, line);
+      vsprintf(d->output.string + i, format, l);
+    }
+    break;
+  case DEBUG_CALLBACK:
+    {
+      int i;
+      int strnewhash = 0;
+      i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, line);
+      i = vsprintf(strtmp + i, format, l);
+      for ( ; i>0 ; i-- ) strnewhash += (int)(strtmp[i]);
+      if ( strnewhash != strhash ) d->output.callback( strtmp );
+      strhash = strnewhash;
+    }
+    break;
+  }
+  
+  va_end(l);
 }
 
 //////////////////////////////////////////////////////////////////////////////
