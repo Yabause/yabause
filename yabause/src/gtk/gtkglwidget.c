@@ -78,6 +78,8 @@ int yui_gl_draw(YuiGl * glxarea) {
 int yui_gl_draw_pause(YuiGl * glxarea) {
 	if (glxarea->pixels) {
 #ifdef HAVE_LIBGL
+		glRasterPos2i(0, glxarea->pixels_height - 1);
+		glPixelZoom(1, 1);
 		glDrawPixels(glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
 #endif
 		yui_gl_draw(glxarea);
