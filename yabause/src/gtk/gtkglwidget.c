@@ -76,8 +76,8 @@ int yui_gl_draw(YuiGl * glxarea) {
 }
 
 int yui_gl_draw_pause(YuiGl * glxarea) {
-	if (glxarea->pixels) {
 #ifdef HAVE_LIBGL
+	if (glxarea->pixels) {
 		/* The "correct" raster position would be (0, height) but it's not a
 		 * valid position, so I have to use this hack... found here:
 		 * http://www.opengl.org/resources/features/KilgardTechniques/oglpitfall/ */ 
@@ -85,12 +85,15 @@ int yui_gl_draw_pause(YuiGl * glxarea) {
 		glBitmap(0, 0, 0, 0, 0, - glxarea->pixels_height, NULL);
 		glPixelZoom(1, 1);
 		glDrawPixels(glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
-#endif
 		yui_gl_draw(glxarea);
 	} else {
 		gdk_draw_rectangle(GTK_WIDGET(glxarea)->window, GTK_WIDGET(glxarea)->style->bg_gc[GTK_WIDGET_STATE (glxarea)],
 				TRUE, 0, 0, GTK_WIDGET(glxarea)->allocation.width, GTK_WIDGET(glxarea)->allocation.height);
 	}
+#else
+	if (dispbuffer)
+		yui_gl_draw(glxarea);
+#endif
 }
 
 static gboolean yui_gl_resize(GtkWidget *w,GdkEventConfigure *event, gpointer data) {
