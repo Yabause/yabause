@@ -78,7 +78,11 @@ int yui_gl_draw(YuiGl * glxarea) {
 int yui_gl_draw_pause(YuiGl * glxarea) {
 	if (glxarea->pixels) {
 #ifdef HAVE_LIBGL
-		glRasterPos2i(0, glxarea->pixels_height - 1);
+		/* The "correct" raster position would be (0, height) but it's not a
+		 * valid position, so I have to use this hack... found here:
+		 * http://www.opengl.org/resources/features/KilgardTechniques/oglpitfall/ */ 
+		glRasterPos2i(0, 0);
+		glBitmap(0, 0, 0, 0, 0, - glxarea->pixels_height, NULL);
 		glPixelZoom(1, 1);
 		glDrawPixels(glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
 #endif
