@@ -28,6 +28,7 @@
 #include "yuiscudsp.h"
 #include "yuiscsp.h"
 #include "yuimem.h"
+#include "yuiscreenshot.h"
 
 void openAboutDialog(GtkWidget * w, gpointer data) {
 	gtk_show_about_dialog(data,
@@ -97,7 +98,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
 
   screenshot = gtk_menu_item_new_with_mnemonic ("Screenshot");
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), screenshot);
-  g_signal_connect_swapped(screenshot, "activate", G_CALLBACK(yui_window_screenshot), window1);
+  g_signal_connect_swapped(screenshot, "activate", G_CALLBACK(yui_screenshot_new), window1);
 
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), gtk_separator_menu_item_new ());
 
