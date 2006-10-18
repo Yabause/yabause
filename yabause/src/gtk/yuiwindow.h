@@ -64,6 +64,7 @@ struct _YuiWindow {
 	GCallback reset_func;
 
 	guint state;
+	gboolean fullscreen;
 
 	GtkActionGroup * action_group;
 };
@@ -89,6 +90,7 @@ void		yui_window_pause	(GtkWidget * w, YuiWindow * yui);
 void		yui_window_reset	(GtkWidget * w, YuiWindow * yui);
 void            yui_window_invalidate(GtkWidget * w, YuiWindow * yui );
 void		yui_window_screenshot	(YuiWindow * w);
+void		yui_window_set_fullscreen(YuiWindow * w, gboolean f);
 
 G_END_DECLS
 

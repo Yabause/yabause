@@ -116,7 +116,7 @@ static void yui_resolution_init(YuiResolution * yr) {
         	(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) (0), 0, 0);
 	gtk_entry_set_invisible_char (GTK_ENTRY (yr->entry_h), 9679);
 
-	yr->keep_ratio = gtk_check_button_new_with_mnemonic ("Keep ratio");
+	yr->keep_ratio = gtk_check_button_new_with_mnemonic ("Fullscreen");
   
 	gtk_table_attach (GTK_TABLE (yr), yr->keep_ratio, 2, 3, 0, 1,
         	(GtkAttachOptions) (GTK_FILL), (GtkAttachOptions) (0), 0, 0);
@@ -141,7 +141,7 @@ GtkWidget* yui_resolution_new(GKeyFile * keyfile, const gchar * group) {
 	if ( !heightText ) heightText = "";
 	gtk_entry_set_text(GTK_ENTRY(yr->entry_w), widthText );
 	gtk_entry_set_text(GTK_ENTRY(yr->entry_h), heightText );
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(yr->keep_ratio), g_key_file_get_integer(yr->keyfile, yr->group, "Keep ratio", 0));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(yr->keep_ratio), g_key_file_get_integer(yr->keyfile, yr->group, "Fullscreen", 0));
 
 	return widget;
 }
@@ -155,5 +155,5 @@ static void yui_resolution_height_changed(GtkWidget * w, YuiResolution * yr) {
 }
 
 static void yui_resolution_keep_ratio_toggled(GtkWidget * w, YuiResolution * yr) {
-	g_key_file_set_integer(yr->keyfile, yr->group, "Keep ratio", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)));
+	g_key_file_set_integer(yr->keyfile, yr->group, "Fullscreen", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)));
 }

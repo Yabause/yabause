@@ -177,7 +177,7 @@ void yui_settings_load(void) {
 
 	yui_resize(g_key_file_get_integer(keyfile, "General", "Width", 0),
 			g_key_file_get_integer(keyfile, "General", "Height", 0),
-			g_key_file_get_integer(keyfile, "General", "Keep ratio", 0));
+			g_key_file_get_integer(keyfile, "General", "Fullscreen", 0));
 
         yinit.flags = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 }
@@ -261,7 +261,7 @@ int main(int argc, char *argv[]) {
 	 }
 	 // Fullscreen
 	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
-            yui_window_toggle_fullscreen(NULL, YUI_WINDOW(yui));
+            yui_window_set_fullscreen(YUI_WINDOW(yui), TRUE);
 	 }
       }
    }
@@ -313,6 +313,7 @@ void yui_conf(void) {
 	}
 }
 
-void yui_resize(guint width, guint height, gboolean keep_ratio) {
+void yui_resize(guint width, guint height, gboolean fullscreen) {
 	gtk_widget_set_size_request(YUI_WINDOW(yui)->area, width, height);
+	yui_window_set_fullscreen(yui, fullscreen);
 }

@@ -168,9 +168,8 @@ GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata,
 }
 
 void yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui) {
-	static int togglefullscreen = 0;
-	togglefullscreen = 1 - togglefullscreen;
-	if (togglefullscreen) {
+	yui->fullscreen = 1 - yui->fullscreen;
+	if (yui->fullscreen) {
 		gtk_widget_hide(yui->menu);
 		gtk_window_fullscreen(GTK_WINDOW(yui));
 	} else {
@@ -277,4 +276,15 @@ void yui_window_invalidate(GtkWidget * w, YuiWindow * yui ) {
 
 void yui_window_screenshot(YuiWindow * w) {
 	yui_gl_screenshot(YUI_GL(w->area));
+}
+
+void yui_window_set_fullscreen(YuiWindow * yui, gboolean f) {
+	if (f) {
+		gtk_widget_hide(yui->menu);
+		gtk_window_fullscreen(GTK_WINDOW(yui));
+	} else {
+		gtk_window_unfullscreen(GTK_WINDOW(yui));
+		gtk_widget_show(yui->menu);
+	}
+	yui->fullscreen = f;
 }
