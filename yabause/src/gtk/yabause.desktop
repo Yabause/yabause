@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=0.7.2
+Type=Application
+Name=Yabause
+Comment=Sega Saturn emulator
+TryExec=yabause
+Exec=yabause
+Icon=yabause.png
+Categories=GNOME;GTK;Application;Game;

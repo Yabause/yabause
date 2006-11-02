@@ -1,4 +1,10 @@
+Applicationsdir = $(datadir)/applications
+Applications_DATA = yabause.desktop
+pixmapdir = $(datadir)/pixmaps
+pixmap_DATA = yabause.png
 bin_PROGRAMS = yabause
+EXTRA_DIST = yabause.desktop yabause.png
+
 yabause_SOURCES = gtkglwidget.c gtkglwidget.h main.c settings.c menu.c gtk-compat.c gtk-compat.h \
 	yuifileentry.c yuifileentry.h yuirange.c yuirange.h yuiinputentry.c yuiinputentry.h yuipage.c yuipage.h \
 	yuiresolution.c yuiresolution.h yuiwindow.c yuiwindow.h yuivdp1.c yuivdp1.h yuivdp2.c yuivdp2.h \

@@ -31,6 +31,7 @@ require @gtk.org/gtk 2.4
 [Install]
 # Put your installation script here
 installExe bin/yabause
+installDesktop "Game" share/applications/yabause.desktop
 
 [Uninstall]
 # Usually just the following line is enough to uninstall everything
