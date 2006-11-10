@@ -240,7 +240,7 @@ void SNDDXUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples
    ScspConvert32uto16s((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, (s16 *)stereodata16, num_samples);
    memcpy(buffer1, stereodata16, buffer1_size);
    if (buffer2)
-      memcpy(buffer2, stereodata16+buffer1_size, buffer2_size);
+      memcpy(buffer2, ((u8 *)stereodata16)+buffer1_size, buffer2_size);
 
    soundoffset += buffer1_size + buffer2_size;
    soundoffset %= soundbufsize;
