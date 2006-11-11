@@ -66,6 +66,9 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam);
 
+LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam);
+
 //////////////////////////////////////////////////////////////////////////////
 
 void GenerateCDROMList(HWND hWnd)
@@ -500,7 +503,8 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_INPUTSETTINGS:
             {
-               DialogBox(y_hInstance, "InputSettingsDlg", hDlg, (DLGPROC)InputSettingsDlgProc);
+//               DialogBox(y_hInstance, "InputSettingsDlg", hDlg, (DLGPROC)InputSettingsDlgProc);
+               DialogBoxParam(y_hInstance, "PadConfigDlg", hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)0);
 
                return TRUE;
             }
@@ -814,6 +818,8 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+int configpadnum=0;
+
 LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam)
 {
@@ -823,18 +829,115 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          int i;
 
-         // Setup Peripheral Core Combo box
-         SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_ADDSTRING, 0, (long)"None");
-
-         for (i = 1; PERCoreList[i] != NULL; i++)
-            SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_ADDSTRING, 0, (long)PERCoreList[i]->Name);
-
-         // Set Selected Peripheral Core
-         for (i = 0; PERCoreList[i] != NULL; i++)
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
          {
-            if (percoretype == PERCoreList[i]->id)
-               SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_SETCURSEL, i, 0);
+            case IDC_PAD1PB:
+            {
+               DialogBoxParam(y_hInstance, "PadConfigDlg", hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)0);
+               return TRUE;
+            }
+            case IDC_PAD2PB:
+            {
+               DialogBoxParam(y_hInstance, "PadConfigDlg", hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)1);
+               return TRUE;
+            }
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_DESTROY:
+      {
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void DoControlConfig(HWND hDlg, u8 cursel, int controlid, int basecontrolid, int *controlmap)
+{
+   char buttonname[MAX_PATH];
+   int ret;
+
+   if ((ret = PERDXFetchNextPress(hDlg, cursel, buttonname)) >= 0)
+   {
+      SetDlgItemText(hDlg, controlid, buttonname);
+      controlmap[controlid - basecontrolid] = ret;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam)
+{
+   static u8 cursel;
+   static int controlmap[13];
+   static int padnum;
+   int i;
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         PERDXListDevices(GetDlgItem(hDlg, IDC_DXDEVICECB));
+         padnum = lParam;
+
+         // Load settings from ini here, if necessary
+         PERDXInitControlConfig(hDlg, padnum, controlmap, inifilename);
+
+         cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0);
+         if (cursel == 0)
+         {
+            // Disable all the controls
+            EnableWindow(GetDlgItem(hDlg, IDC_UPPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_LPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_RPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_APB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_BPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_CPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_XPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_YPB), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_ZPB), FALSE);
+         }
+         else
+         {
+            // Enable all the controls
+            EnableWindow(GetDlgItem(hDlg, IDC_UPPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_LPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_RPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_APB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_BPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_CPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_XPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_YPB), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_ZPB), TRUE);
          }
 
          return TRUE;
@@ -843,23 +946,132 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          switch (LOWORD(wParam))
          {
+            case IDC_UPPB:
+            case IDC_DOWNPB:
+            case IDC_LEFTPB:
+            case IDC_RIGHTPB:
+            case IDC_LPB:
+            case IDC_RPB:
+            case IDC_STARTPB:
+            case IDC_APB:
+            case IDC_BPB:
+            case IDC_CPB:
+            case IDC_XPB:
+            case IDC_YPB:
+            case IDC_ZPB:
+            {
+               DoControlConfig(hDlg, cursel-1, IDC_UPTEXT+(LOWORD(wParam)-IDC_UPPB), IDC_UPTEXT, controlmap);
+
+               return TRUE;
+            }
             case IDOK:
             {
-               char tempstr[MAX_PATH];
+               char string1[20];
+               char string2[20];
 
                EndDialog(hDlg, TRUE);
 
-               // Write Peripheral core type
-               percoretype = PERCoreList[SendDlgItemMessage(hDlg, IDC_PERCORECB, CB_GETCURSEL, 0, 0)]->id;
-               sprintf(tempstr, "%d", percoretype);
-               WritePrivateProfileString("Peripheral", "PeripheralCore", tempstr, inifilename);
+               for (i = 0; i < 256; i++)
+                  SetupControlUpDown(padnum, i, KeyStub, KeyStub);
 
+               SetupControlUpDown(padnum, controlmap[0], PerUpPressed, PerUpReleased);
+               SetupControlUpDown(padnum, controlmap[1], PerDownPressed, PerDownReleased);
+               SetupControlUpDown(padnum, controlmap[2], PerLeftPressed, PerLeftReleased);
+               SetupControlUpDown(padnum, controlmap[3], PerRightPressed, PerRightReleased);
+               SetupControlUpDown(padnum, controlmap[4], PerLTriggerPressed, PerLTriggerReleased);
+               SetupControlUpDown(padnum, controlmap[5], PerRTriggerPressed, PerRTriggerReleased);
+               SetupControlUpDown(padnum, controlmap[6], PerStartPressed, PerStartReleased);
+               SetupControlUpDown(padnum, controlmap[7], PerAPressed, PerAReleased);
+               SetupControlUpDown(padnum, controlmap[8], PerBPressed, PerBReleased);
+               SetupControlUpDown(padnum, controlmap[9], PerCPressed, PerCReleased);
+               SetupControlUpDown(padnum, controlmap[10], PerXPressed, PerXReleased);
+               SetupControlUpDown(padnum, controlmap[11], PerYPressed, PerYReleased);
+               SetupControlUpDown(padnum, controlmap[12], PerZPressed, PerZReleased);
+
+               sprintf(string1, "Peripheral%d", padnum+1);
+
+               // Write GUID
+               PERDXWriteGUID(cursel-1, padnum, inifilename);
+
+               sprintf(string2, "%d", controlmap[0]);
+               WritePrivateProfileString(string1, "Up", string2, inifilename);
+               sprintf(string2, "%d", controlmap[1]);
+               WritePrivateProfileString(string1, "Down", string2, inifilename);
+               sprintf(string2, "%d", controlmap[2]);
+               WritePrivateProfileString(string1, "Left", string2, inifilename);
+               sprintf(string2, "%d", controlmap[3]);
+               WritePrivateProfileString(string1, "Right", string2, inifilename);
+               sprintf(string2, "%d", controlmap[4]);
+               WritePrivateProfileString(string1, "L", string2, inifilename);
+               sprintf(string2, "%d", controlmap[5]);
+               WritePrivateProfileString(string1, "R", string2, inifilename);
+               sprintf(string2, "%d", controlmap[6]);
+               WritePrivateProfileString(string1, "Start", string2, inifilename);
+               sprintf(string2, "%d", controlmap[7]);
+               WritePrivateProfileString(string1, "A", string2, inifilename);
+               sprintf(string2, "%d", controlmap[8]);
+               WritePrivateProfileString(string1, "B", string2, inifilename);
+               sprintf(string2, "%d", controlmap[9]);
+               WritePrivateProfileString(string1, "C", string2, inifilename);
+               sprintf(string2, "%d", controlmap[10]);
+               WritePrivateProfileString(string1, "X", string2, inifilename);
+               sprintf(string2, "%d", controlmap[11]);
+               WritePrivateProfileString(string1, "Y", string2, inifilename);
+               sprintf(string2, "%d", controlmap[12]);
+               WritePrivateProfileString(string1, "Z", string2, inifilename);
                return TRUE;
             }
             case IDCANCEL:
             {
                EndDialog(hDlg, FALSE);
                return TRUE;
+            }
+            case IDC_DXDEVICECB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case CBN_SELCHANGE:
+                  {
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0);
+                     if (cursel == 0)
+                     {
+                        // Disable all the controls
+                        EnableWindow(GetDlgItem(hDlg, IDC_UPPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_LPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_RPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_APB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_BPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_CPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_XPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_YPB), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_ZPB), FALSE);
+                     }
+                     else
+                     {
+                        // Enable all the controls
+                        EnableWindow(GetDlgItem(hDlg, IDC_UPPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_LPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_RPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_APB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_BPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_CPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_XPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_YPB), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_ZPB), TRUE);
+                     }
+                     break;
+                  }
+                  default: break;
+               }
+               break;
             }
             default: break;
          }

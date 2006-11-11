@@ -38,6 +38,7 @@
 #include "resource.h"
 #include "settings.h"
 #include "cd.h"
+#include "../debug.h"
 
 
 #define DONT_PROFILE
@@ -251,6 +252,7 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
           style = WS_POPUP;
           exstyle = WS_EX_APPWINDOW;
           SetMenu(YabWin, NULL);
+          ShowCursor(FALSE);
        }
    }
    else
@@ -488,16 +490,13 @@ int YuiInit(void)
    GetPrivateProfileString("Sound", "Volume", "100", tempstr, MAX_PATH, inifilename);
    sndvolume = atoi(tempstr);
 
-   // Grab Peripheral Core Settings
-   GetPrivateProfileString("Peripheral", "PeripheralCore", "-1", tempstr, MAX_PATH, inifilename);
-   percoretype = atoi(tempstr);
-   if (percoretype == -1)
-      percoretype = PERCORE_DIRECTX;
+   GetPrivateProfileString("General", "CartType", "", tempstr, MAX_PATH, inifilename);
+
 
    // Figure out how much of the screen is useable
 //   if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workarearect, 0) == FALSE)
 //   {
-      // Since we can't retrieve it, use a default values
+      // Since we can't retrieve it, use default values
       yabwinw = 320 + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
       yabwinh = 224 + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);
 //   }
@@ -545,6 +544,7 @@ int YuiInit(void)
                          NULL);                // parms
 
 YabauseSetup:
+   memset(&yinit, 0, sizeof(yabauseinit_struct));
    yinit.percoretype = percoretype;
    yinit.sh2coretype = sh2coretype;
    yinit.vidcoretype = vidcoretype;
@@ -583,6 +583,8 @@ YabauseSetup:
       }
       return -1;
    }
+
+   PERDXLoadDevices(inifilename);
 
    stop = 0;
 
@@ -704,6 +706,41 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                ToggleFullScreen();
                break;
             }
+            case IDM_TOGGLENBG0:
+            {
+               ToggleNBG0();
+               break;
+            }
+            case IDM_TOGGLENBG1:
+            {
+               ToggleNBG1();
+               break;
+            }
+            case IDM_TOGGLENBG2:
+            {
+               ToggleNBG2();
+               break;
+            }
+            case IDM_TOGGLENBG3:
+            {
+               ToggleNBG3();
+               break;
+            }
+            case IDM_TOGGLERBG0:
+            {
+               ToggleRBG0();
+               break;
+            }
+            case IDM_TOGGLEVDP1:
+            {
+               ToggleVDP1();
+               break;
+            }
+            case IDM_TOGGLEFPS:
+            {
+               ToggleFPS();
+               break;
+            }
             case IDM_EXIT:
             {
                ScspMuteAudio();
@@ -742,6 +779,19 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             }
          }
 
+         return 0L;
+      }
+      case WM_KEYDOWN:
+      {
+         if(wParam == VK_OEM_3) // ~ key
+            SpeedThrottleEnable();
+
+         return 0L;
+      }
+      case WM_KEYUP:
+      {
+         if(wParam == VK_OEM_3) // ~ key
+             SpeedThrottleDisable();
          return 0L;
       }
       case WM_ENTERMENULOOP:

@@ -23,4 +23,18 @@
 #define PERCORE_DIRECTX 2
 
 extern PerInterface_struct PERDIRECTX;
+
+extern GUID GUIDDevice[256];
+extern u32 numguids;
+
+LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                     LPARAM lParam);
+
+void KeyStub(void);
+void SetupControlUpDown(u8 padnum, u8 controlcode, void (*downfunc)(), void (*upfunc)());
+
+void PERDXLoadDevices(char *inifilename);
+void PERDXListDevices(HWND control);
+int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *inifilename);
+BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCTSTR inifilename);
 #endif

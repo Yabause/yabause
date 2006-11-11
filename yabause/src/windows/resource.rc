@@ -340,12 +340,62 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Peripheral Settings"
 FONT 8, "Courier New"
 BEGIN
-    GROUPBOX "Peripheral Core Settings", -1, 3, 2, 188, 28, WS_CHILD | WS_VISIBLE
-    LTEXT           "Peripheral Core", -1, 10, 14, 60, 10
-    COMBOBOX        IDC_PERCORECB, 74, 13, 110, 33, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX "Control Settings", -1, 3, 2, 188, 28, WS_CHILD | WS_VISIBLE
+    PUSHBUTTON      "Pad 1", IDC_PAD1PB,52,12,40,14
+    PUSHBUTTON      "Pad 2", IDC_PAD2PB,102,12,40,14
 
     DEFPUSHBUTTON   "&OK",IDOK,82,34,40,14
     PUSHBUTTON      "&Cancel",IDCANCEL,127,34,40,14
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+PADCONFIGDLG DIALOG DISCARDABLE  0, 0, 220, 148
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Standard Pad Settings"
+FONT 8, "Courier New"
+BEGIN
+    COMBOBOX        IDC_DXDEVICECB, 45, 2, 130, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Up", IDC_UPPB,3,26,40,12
+    PUSHBUTTON      "Down", IDC_DOWNPB,3,40,40,12
+    PUSHBUTTON      "Left", IDC_LEFTPB,3,54,40,12
+    PUSHBUTTON      "Right", IDC_RIGHTPB,3,68,40,12
+    PUSHBUTTON      "L", IDC_LPB,3,82,40,12
+    PUSHBUTTON      "R", IDC_RPB,3,96,40,12
+    PUSHBUTTON      "Start", IDC_STARTPB,3,110,40,12
+    LTEXT           "", IDC_UPTEXT, 56, 28, 52, 10
+    LTEXT           "", IDC_DOWNTEXT, 56, 42, 52, 10
+    LTEXT           "", IDC_LEFTTEXT, 56, 56, 52, 10
+    LTEXT           "", IDC_RIGHTTEXT, 56, 70, 52, 10
+    LTEXT           "", IDC_LTEXT, 56, 84, 52, 10
+    LTEXT           "", IDC_RTEXT, 56, 98, 52, 10
+    LTEXT           "", IDC_STARTTEXT, 56, 112, 52, 10
+
+    PUSHBUTTON      "A", IDC_APB,110,26,40,12
+    PUSHBUTTON      "B", IDC_BPB,110,40,40,12
+    PUSHBUTTON      "C", IDC_CPB,110,54,40,12
+    PUSHBUTTON      "X", IDC_XPB,110,68,40,12
+    PUSHBUTTON      "Y", IDC_YPB,110,82,40,12
+    PUSHBUTTON      "Z", IDC_ZPB,110,96,40,12
+    LTEXT           "", IDC_ATEXT, 163, 28, 52, 10
+    LTEXT           "", IDC_BTEXT, 163, 42, 52, 10
+    LTEXT           "", IDC_CTEXT, 163, 56, 52, 10
+    LTEXT           "", IDC_XTEXT, 163, 70, 52, 10
+    LTEXT           "", IDC_YTEXT, 163, 84, 52, 10
+    LTEXT           "", IDC_ZTEXT, 163, 98, 52, 10
+    DEFPUSHBUTTON   "&OK",IDOK,128,130,40,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,173,130,40,14
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+BUTTONCONFIGDLG DIALOG DISCARDABLE  0, 0, 110, 40
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE
+FONT 8, "Courier New"
+BEGIN
+    CTEXT           "Waiting for input...", -1, 0, 6, 110, 12
+    DEFPUSHBUTTON   "",IDOK,0,0,0,0
+    PUSHBUTTON      "Cancel",IDC_CUSTOMCANCEL,35,20,40,14
 END
 
 //////////////////////////////////////////////////////////////////////////////
@@ -378,17 +428,25 @@ END
 
 IDR_MAIN_ACCEL ACCELERATORS DISCARDABLE
 BEGIN
-    VK_RETURN,      IDM_TOGGLEFULLSCREEN,   VIRTKEY, ALT, NOINVERT
+    VK_RETURN,      IDM_TOGGLEFULLSCREEN,       VIRTKEY, ALT, NOINVERT
+    "1",           IDM_TOGGLENBG0,             ASCII, NOINVERT
+    "2",           IDM_TOGGLENBG1,             ASCII, NOINVERT
+    "3",           IDM_TOGGLENBG2,             ASCII, NOINVERT
+    "4",           IDM_TOGGLENBG3,             ASCII, NOINVERT
+    "5",           IDM_TOGGLERBG0,             ASCII, NOINVERT
+    "6",           IDM_TOGGLEVDP1,             ASCII, NOINVERT
+    VK_F1,          IDM_TOGGLEFPS,              VIRTKEY, NOINVERT
 END
 
 //////////////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
+#if _MSC_VER
 IDI_ICON        ICON    DISCARDABLE     "../logo.ico"
 IDB_BITMAP      BITMAP  DISCARDABLE     "yabause_logo.bmp"
 #else
 IDI_ICON        ICON    DISCARDABLE     "logo.ico"
 IDB_BITMAP      BITMAP  DISCARDABLE     "./windows/yabause_logo.bmp"
 #endif
+
 //////////////////////////////////////////////////////////////////////////////
 

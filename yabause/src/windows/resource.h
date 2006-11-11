@@ -37,12 +37,19 @@
 #define IDM_SCUDSPDEBUG      10017
 #define IDM_SCSPDEBUG        10018
 #define IDM_TOGGLEFULLSCREEN 10019
-#define IDM_WEBSITE          10020
-#define IDM_FORUM            10021
-#define IDM_SUBMITBUGREPORT  10022
-#define IDM_DONATE           10023
-#define IDM_COMPATLIST       10024
-#define IDM_ABOUT            10025
+#define IDM_TOGGLENBG0       10020
+#define IDM_TOGGLENBG1       10021
+#define IDM_TOGGLENBG2       10022
+#define IDM_TOGGLENBG3       10023
+#define IDM_TOGGLERBG0       10024
+#define IDM_TOGGLEVDP1       10025
+#define IDM_TOGGLEFPS        10026
+#define IDM_WEBSITE          10027
+#define IDM_FORUM            10028
+#define IDM_SUBMITBUGREPORT  10029
+#define IDM_DONATE           10030
+#define IDM_COMPATLIST       10031
+#define IDM_ABOUT            10032
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002
@@ -132,9 +139,40 @@
 #define IDC_SLVOLUME                    1002
 
 //////////////////////////////////////////////////////////////////////////////
-// Peripheral Settings stuff
+// Input Settings stuff
 
-#define IDC_PERCORECB                   1001
+#define IDC_PAD1PB                      1001
+#define IDC_PAD2PB                      1002
+
+#define IDC_DXDEVICECB                  1010
+#define IDC_UPPB                        1011
+#define IDC_DOWNPB                      1012
+#define IDC_LEFTPB                      1013
+#define IDC_RIGHTPB                     1014
+#define IDC_LPB                         1015
+#define IDC_RPB                         1016
+#define IDC_STARTPB                     1017
+#define IDC_APB                         1018
+#define IDC_BPB                         1019
+#define IDC_CPB                         1020
+#define IDC_XPB                         1021
+#define IDC_YPB                         1022
+#define IDC_ZPB                         1023
+#define IDC_UPTEXT                      1024
+#define IDC_DOWNTEXT                    1025
+#define IDC_LEFTTEXT                    1026
+#define IDC_RIGHTTEXT                   1027
+#define IDC_LTEXT                       1028
+#define IDC_RTEXT                       1029
+#define IDC_STARTTEXT                   1030
+#define IDC_ATEXT                       1031
+#define IDC_BTEXT                       1032
+#define IDC_CTEXT                       1033
+#define IDC_XTEXT                       1034
+#define IDC_YTEXT                       1035
+#define IDC_ZTEXT                       1036
+
+#define IDC_CUSTOMCANCEL                1037
 
 //////////////////////////////////////////////////////////////////////////////
 // VDP1 debug stuff
