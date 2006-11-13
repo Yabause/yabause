@@ -532,7 +532,7 @@ void PERDXListDevices(HWND control)
    SendMessage(control, CB_RESETCONTENT, 0, 0);
    SendMessage(control, CB_ADDSTRING, 0, (long)"None");
 
-   IDirectInput8_EnumDevices(lpDI8, DI8DEVCLASS_ALL, EnumPeripheralsCallback2,
+   IDirectInput8_EnumDevices(lpDI8temp, DI8DEVCLASS_ALL, EnumPeripheralsCallback2,
                              (LPVOID)control, DIEDFL_ATTACHEDONLY);
 
    IDirectInput8_Release(lpDI8temp);
@@ -817,7 +817,7 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
        &IID_IDirectInput8, (LPVOID *)&lpDI8temp, NULL) != DI_OK)
       return -1;
 
-   if (IDirectInput8_CreateDevice(lpDI8, &GUIDDevice[guidnum], &lpDIDevicetemp,
+   if (IDirectInput8_CreateDevice(lpDI8temp, &GUIDDevice[guidnum], &lpDIDevicetemp,
        NULL) != DI_OK)
    {
       IDirectInput8_Release(lpDI8temp);
