@@ -1,5 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
-    Copyright 2004-2005 Lawrence Sebald
+    Copyright 2004-2006 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -17,8 +17,7 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
-#include <kos/dbglog.h>
+#include <stdio.h>
 
 #include "yui.h"
 #include "peripheral.h"
@@ -59,63 +58,68 @@ const char *iso_or_cd = 0;
 const char *backup_ram = "/ram/backup.ram";
 int cdcore = CDCORE_DEFAULT;
 
-void YuiSetBiosFilename(const char *biosfilename) {
-        bios = biosfilename;
+void YuiSetBiosFilename(const char *biosfilename)   {
+    bios = biosfilename;
 }
 
 void YuiSetIsoFilename(const char *isofilename) {
-	//cdcore = CDCORE_ISO;
-	//iso_or_cd = isofilename;
+    //cdcore = CDCORE_ISO;
+    //iso_or_cd = isofilename;
 }
 
 void YuiSetCdromFilename(const char *cdromfilename) {
-	//cdcore = CDCORE_ARCH;
-	//iso_or_cd = cdromfilename;
+    //cdcore = CDCORE_ARCH;
+    //iso_or_cd = cdromfilename;
 }
 
-void YuiHideShow(void) {
+void YuiHideShow(void)  {
 }
 
-void YuiQuit(void) {
-   stop = 1;
+void YuiQuit(void)  {
+    stop = 1;
 }
 
 int YuiInit(void) {
-   yabauseinit_struct yinit;
+    yabauseinit_struct yinit;
 
-   stop = 0;
+    stop = 0;
 
-   yinit.percoretype = PERCORE_DC;
-   yinit.sh2coretype = SH2CORE_DEFAULT;
-   yinit.vidcoretype = VIDCORE_DC;
-   yinit.sndcoretype = 0;
-   yinit.cdcoretype = cdcore;
-   yinit.carttype = CART_NONE;
-   yinit.regionid = REGION_AUTODETECT;
-   yinit.biospath = bios;
-   yinit.cdpath = iso_or_cd;
-   yinit.buppath = backup_ram;
-   yinit.mpegpath = NULL;
-   yinit.cartpath = NULL;
+    yinit.percoretype = PERCORE_DC;
+    yinit.sh2coretype = SH2CORE_DEFAULT;
+    yinit.vidcoretype = VIDCORE_DC;
+    yinit.sndcoretype = 0;
+    yinit.cdcoretype = cdcore;
+    yinit.carttype = CART_NONE;
+    yinit.regionid = REGION_AUTODETECT;
+    yinit.biospath = bios;
+    yinit.cdpath = iso_or_cd;
+    yinit.buppath = backup_ram;
+    yinit.mpegpath = NULL;
+    yinit.cartpath = NULL;
 
-   if (YabauseInit(&yinit) != 0)
+    if(YabauseInit(&yinit) != 0)
       return -1;
 
-   while (!stop)
-   {
-      if (PERCore->HandleEvents() != 0)
+    while (!stop)   {
+      if(PERCore->HandleEvents() != 0)
          return -1;
-   }
+    }
 
-   return 0;
+    return 0;
 }
 
-void YuiErrorMsg(const char *error_text) {
-   fprintf(stderr, "Error: %s\n", error_text);
-   stop = 1;
+void YuiErrorMsg(const char *error_text)    {
+    fprintf(stderr, "Error: %s\n", error_text);
+    stop = 1;
 }
 
 /* stub for now... just to make things compile again... */
-void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)    {
+void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)   {
 }
 
+int main(int argc, char *argv[])    {
+    printf("...\n");
+    YuiInit();
+
+    return 0;
+}

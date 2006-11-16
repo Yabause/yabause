@@ -1,16 +1,80 @@
-README.DC -- Dreamcast Readme (0.0.5-dc)
-Okay, for anyone just getting this for the Dreamcast, here's some basic information:
+        _   _          
+       / \_/ \            ___  _      ____ 
+       \     /___  ___   /   || | __ /    \ ____
+        \   //   ||   \ /    || | \ \\  \_//    \
+        /  //    ||   //  _  || |__\ \\  \    __/
+        \_//  _  ||   \\_/ \_||______/ \  \\  \__
+           \_/ \_||___/              \____/ \____\
+     Yet Another Buggy And Uncomplete Saturn Emulator
 
-1. Sometimes GCC can be just plain annoying, keep that in mind if you decide to
-   compile this beast yourself.
-2. Do not bug the PC version author for problems with the Dreamcast port. Tell me if
-   you have any problems with it.
-3. I do not want to hear about you wanting a BIOS image or any ISOs. I won't give
-   them to you, and on a particularly bad day, I might forward your message to 
-   law enforcement.
-4. The Dreamcast version gets as far as showing the BIOS language select. No Farther!
-5. In order to show the BIOS, you need a BIOS image. Put it on the cd in the root
-   directory, named saturn.bin
+           ____________________________________
+           Copyright (c) 2002-2006 Yabause team
 
-I think that's about it, so just have fun everyone!
-- Lawrence Sebald <bluecrab@gmail.com>
+
+1) Introduction.............................................20
+2) Compiling instructions...................................31
+2) How to use Yabause.......................................48
+4) Final Thoughts...........................................71
+
+
+1 Introduction________________________________________________
+
+This file documents the Dreamcast version only, for general
+information check the README file. Note, that if you are just
+a casual user, and not a developer, you probably won't have
+to worry about the Compiling instructions below. Pick up with
+the section "How to use Yabause" to learn how to make a CD
+image you can burn to use Yabause (or use a program like
+Selfboot).
+
+
+2 Compiling instructions______________________________________
+
+Yabause is written in C using KallistiOS. So, in order to
+compile it, you need a working sh-elf targetted C compiler, 
+such as gcc and a working KallistiOS environment:
+
+  * http://gamedev.allusion.net
+
+Once KallistiOS is set up, you should be ready to build 
+Yabause.
+
+Uncompress the Yabause source archive, move to the newly
+created directory, type "cd src", then "make -f Makefile.dc",
+it will generate one binary: "yabause.bin" in the "src"
+directory.
+
+
+3 How to use Yabause__________________________________________
+
+Before using Yabause, you need to build a CD with a few files
+in the correct places. In order to build a CD with the
+compiled binary, you must first scramble the binary. This can
+be done with the scramble utility which can be obtained from
+http://mc.pp.se/dc/files/scramble.c . This will have to be
+compiled with your native compiler. Once you run the scramble
+program on the yabause.bin file created in section 2 above,
+you will have a binary file suitable for booting on a real
+Dreamcast.
+
+Once you have your scrambled binary, you will need a Sega
+Saturn BIOS image. At the current time, this BIOS image must
+be named "saturn.bin" and be placed in the root of the CD.
+This will eventually be user-configurable, but for now it is
+not.
+
+From this point, follow your favorite guide for how to build
+a selfbooting CD out of plain files. I use the one available
+at http://mc.pp.se/dc/cdr.html .
+
+
+4 Final Thoughts______________________________________________
+
+The Dreamcast port of Yabause is quite slow. I have done very
+little in the way of optimizing any of the core of Yabause
+toward the Dreamcast (there is quite a bit that could be done
+when time allows). Do not expect the Dreamcast port of
+Yabause to run your favorite Sega Saturn games at any sort of
+playable speed for now (or the near future). As Yabause
+matures, and I have more time to work on it, hopefully speed
+will improve. For now, think of it as a fancy tech demo.

@@ -1,6 +1,6 @@
-/*  Copyright 2003-2004 Guillaume Duhamel
-    Copyright 2004-2005 Lawrence Sebald
-    Copyright 2004-2005 Theo Berkau
+/*  Copyright 2003-2006 Guillaume Duhamel
+    Copyright 2004-2006 Lawrence Sebald
+    Copyright 2004-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -41,20 +41,28 @@
 /* 24-bit color, unimplemented for now */
 #define SAT2YAB2(dot1, dot2)	0
 
-static pvr_init_params_t pvr_params =	{
-	/* Enable Opaque, Translucent, and Punch-Thru polygons with binsize 16 */
-	{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
-	/* 512KB Vertex Buffer */
-	512 * 1024,
-	/* DMA Enabled */
-	1,
-	/* FSAA Disabled */
-	0
+#define COLOR_ADDt(b)		(b > 0xFF ? 0xFF : (b < 0 ? 0 : b))
+#define COLOR_ADDb(b1,b2)	COLOR_ADDt((signed) (b1) + (b2))
+
+#define COLOR_ADD(l,r,g,b)	COLOR_ADDb((l & 0xFF), r) | \
+                (COLOR_ADDb((l >> 8) & 0xFF, g) << 8) | \
+                (COLOR_ADDb((l >> 16) & 0xFF, b) << 16) | \
+                (l & 0xFF000000)
+
+static pvr_init_params_t pvr_params =   {
+    /* Enable Opaque, Translucent, and Punch-Thru polygons with binsize 16 */
+    { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
+    /* 512KB Vertex Buffer */
+    512 * 1024,
+    /* DMA Enabled */
+    1,
+    /* FSAA Disabled */
+    0
 };
 
-struct sprite_info	{
-	float uf, vf;
-	int w, h;
+struct sprite_info  {
+    float uf, vf;
+    int w, h;
 };
 
 static struct sprite_info cur_spr;
@@ -65,8 +73,6 @@ static pvr_poly_hdr_t tr_poly_hdr;
 static pvr_poly_hdr_t tr_sprite_hdr;
 static pvr_poly_hdr_t pt_sprite_hdr;
 
-FILE *fp;
-
 /* DMA Vertex Buffers 256KB Each */
 static uint8 vbuf_opaque[1024 * 256] __attribute__((aligned(32)));
 static uint8 vbuf_translucent[1024 * 256] __attribute__((aligned(32)));
@@ -76,43 +82,74 @@ static uint8 vbuf_punchthru[1024 * 256] __attribute__((aligned(32)));
 static pvr_ptr_t tex_space;
 static uint32 cur_addr;
 
-static int power_of_two(int num)	{
-	int ret = 16;
+/* Misc parameters */
+static int vdp1cor = 0;
+static int vdp1cog = 0;
+static int vdp1cob = 0;
 
-	while(ret < num)
-		ret <<= 1;
+static int power_of_two(int num)    {
+    int ret = 16;
 
-	return ret;
+    while(ret < num)
+        ret <<= 1;
+
+    return ret;
 }
 
-static uint16 Vdp2ColorRamGetColor(uint32 addr, uint32 colorOffset)	{
-	uint16 tmp;
+static u32 Vdp2ColorRamGetColor32(u32 colorindex, int alpha)    {
+    switch(Vdp2Internal.ColorMode)  {
+        case 0:
+        case 1:
+        {
+            u32 tmp;
+            colorindex <<= 1;
+            tmp = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
+            return SAT2YAB32(alpha, tmp);
+        }
+        case 2:
+        {
+            u32 tmp1, tmp2;
+            colorindex <<= 2;
+            colorindex &= 0xFFF;
+            tmp1 = T2ReadWord(Vdp2ColorRam, colorindex);
+            tmp2 = T2ReadWord(Vdp2ColorRam, colorindex+2);
+            //return SAT2YAB2(alpha, tmp1, tmp2);
+            return 0; /* FIXME */
+        }
+        default:
+            break;
+    }
 
-	switch(Vdp2Internal.ColorMode)	{
-		case 0:
-		case 1:
-			addr <<= 1;
-			addr += colorOffset * 0x200;
-			tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
-			return SAT2YAB1(tmp);
-		case 2:
-		{
-			uint16 tmp2;
-			addr <<= 2;
-			addr += colorOffset * 0x400;
-			addr &= 0xFFF;
-			tmp = T2ReadWord(Vdp2ColorRam, addr);
-			tmp2 = T2ReadWord(Vdp2ColorRam, addr + 2);
-			return SAT2YAB2(tmp1, tmp2);
-		}
-		default:
-			break;
-	}
-	return 0;
+    return 0;
 }
 
-static int Vdp1ReadTexture(vdp1cmd_struct *cmd,  pvr_poly_hdr_t *hdr)
-{
+static uint16 Vdp2ColorRamGetColor(uint32 addr, uint32 colorOffset) {
+    uint16 tmp;
+
+    switch(Vdp2Internal.ColorMode)  {
+        case 0:
+        case 1:
+            addr <<= 1;
+            addr += colorOffset * 0x200;
+            tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
+            return SAT2YAB1(tmp);
+        case 2:
+        {
+            uint16 tmp2;
+            addr <<= 2;
+            addr += colorOffset * 0x400;
+            addr &= 0xFFF;
+            tmp = T2ReadWord(Vdp2ColorRam, addr);
+            tmp2 = T2ReadWord(Vdp2ColorRam, addr + 2);
+            return SAT2YAB2(tmp1, tmp2);
+        }
+        default:
+            break;
+    }
+    return 0;
+}
+
+static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_hdr_t *hdr)   {
 	u32 charAddr = cmd->CMDSRCA * 8;
 	uint16 dot, dot2;
 	int queuepos = 0;
@@ -353,124 +390,161 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd,  pvr_poly_hdr_t *hdr)
 	return 1;
 }
 
-static u8 Vdp1ReadPriority(vdp1cmd_struct *cmd)
-{
-	u8 SPCLMD = Vdp2Regs->SPCTL;
-	u8 sprite_register;
-	u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
-	
-	if ((SPCLMD & 0x20) && (cmd->CMDCOLR & 0x8000))
-	{
-		// RGB data, use register 0
-		return Vdp2Regs->PRISA & 0x07;
-	}
-	else
-	{
-		u8 sprite_type = SPCLMD & 0x0F;
-		switch(sprite_type)
-		{
-			case 0:
-				sprite_register = ((cmd->CMDCOLR & 0x8000) | (~cmd->CMDCOLR & 0x4000)) >> 14;
-				return sprprilist[sprite_register ^ 1] & 0x07;
-				break;
-			case 1:
-				sprite_register = ((cmd->CMDCOLR & 0xC000) | (~cmd->CMDCOLR & 0x2000)) >> 13;
-				return sprprilist[sprite_register ^ 1] & 0x07;
-				break;
-			case 3:
-				sprite_register = ((cmd->CMDCOLR & 0x4000) | (~cmd->CMDCOLR & 0x2000)) >> 13;
-				return sprprilist[sprite_register ^ 1] & 0x07;
-				break;
-			case 4:
-				sprite_register = ((cmd->CMDCOLR & 0x4000) | (~cmd->CMDCOLR & 0x2000)) >> 13;
-				return sprprilist[sprite_register ^ 1] & 0x07;
-				break;
-			case 5:
-				sprite_register = ((cmd->CMDCOLR & 0x6000) | (~cmd->CMDCOLR & 0x1000)) >> 12;
-				return sprprilist[sprite_register ^ 1] & 0x07;
-				break;
-			case 6:
-				sprite_register = ((cmd->CMDCOLR & 0x6000) | (~cmd->CMDCOLR & 0x1000)) >> 12;
-				return sprprilist[sprite_register ^ 1] & 0x07;
-				break;
-			case 7:
-				sprite_register = ((cmd->CMDCOLR & 0x6000) | (~cmd->CMDCOLR & 0x1000)) >> 12;
-				return sprprilist[sprite_register ^ 1] & 0x07;
-				break;
-			default:
-				VDP1LOG("sprite type %d not implemented\n", sprite_type);
-				return 0x07;
-				break;
-		}
-	}
+static u8 Vdp1ReadPriority(vdp1cmd_struct *cmd) {
+    u8 SPCLMD = Vdp2Regs->SPCTL;
+    u8 sprite_register;
+    u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
+
+    if ((SPCLMD & 0x20) && (cmd->CMDCOLR & 0x8000)) {
+        // RGB data, use register 0
+        return Vdp2Regs->PRISA & 0x07;
+    }
+    else    {
+        u8 sprite_type = SPCLMD & 0x0F;
+        switch(sprite_type) {
+            case 0:
+                sprite_register = ((cmd->CMDCOLR & 0x8000) | (~cmd->CMDCOLR & 0x4000)) >> 14;
+                return sprprilist[sprite_register ^ 1] & 0x07;
+                break;
+            case 1:
+                sprite_register = ((cmd->CMDCOLR & 0xC000) | (~cmd->CMDCOLR & 0x2000)) >> 13;
+                return sprprilist[sprite_register ^ 1] & 0x07;
+                break;
+            case 3:
+                sprite_register = ((cmd->CMDCOLR & 0x4000) | (~cmd->CMDCOLR & 0x2000)) >> 13;
+                return sprprilist[sprite_register ^ 1] & 0x07;
+                break;
+            case 4:
+                sprite_register = ((cmd->CMDCOLR & 0x4000) | (~cmd->CMDCOLR & 0x2000)) >> 13;
+                return sprprilist[sprite_register ^ 1] & 0x07;
+                break;
+            case 5:
+                sprite_register = ((cmd->CMDCOLR & 0x6000) | (~cmd->CMDCOLR & 0x1000)) >> 12;
+                return sprprilist[sprite_register ^ 1] & 0x07;
+                break;
+            case 6:
+                sprite_register = ((cmd->CMDCOLR & 0x6000) | (~cmd->CMDCOLR & 0x1000)) >> 12;
+                return sprprilist[sprite_register ^ 1] & 0x07;
+                break;
+            case 7:
+                sprite_register = ((cmd->CMDCOLR & 0x6000) | (~cmd->CMDCOLR & 0x1000)) >> 12;
+                return sprprilist[sprite_register ^ 1] & 0x07;
+                break;
+            default:
+                VDP1LOG("sprite type %d not implemented\n", sprite_type);
+                return 0x07;
+                break;
+        }
+    }
 }
 
-static int VIDDCInit(void)	{
-	pvr_poly_cxt_t op_poly_cxt, tr_poly_cxt;
+static int VIDDCInit(void)  {
+    pvr_poly_cxt_t op_poly_cxt, tr_poly_cxt;
 
-	vid_set_mode(DM_320x240_NTSC, PM_RGB565);
+    vid_set_mode(DM_320x240, PM_RGB565);
 
-	if(pvr_init(&pvr_params))	{
-		fprintf(stderr, "VIDDCInit() - error initializing PVR\n");
-		return -1;
-	}
+    if(pvr_init(&pvr_params))   {
+        fprintf(stderr, "VIDDCInit() - error initializing PVR\n");
+        return -1;
+    }
 
-	pvr_set_vertbuf(PVR_LIST_OP_POLY, vbuf_opaque, 1024 * 256);
-	pvr_set_vertbuf(PVR_LIST_TR_POLY, vbuf_translucent, 1024 * 256);
-	pvr_set_vertbuf(PVR_LIST_PT_POLY, vbuf_punchthru, 1024 * 256);
+    pvr_set_vertbuf(PVR_LIST_OP_POLY, vbuf_opaque, 1024 * 256);
+    pvr_set_vertbuf(PVR_LIST_TR_POLY, vbuf_translucent, 1024 * 256);
+    pvr_set_vertbuf(PVR_LIST_PT_POLY, vbuf_punchthru, 1024 * 256);
 
-	tex_space = pvr_mem_malloc(1024 * 1024 * 2);
-	cur_addr = (uint32)tex_space;
+    tex_space = pvr_mem_malloc(1024 * 1024 * 2);
+    cur_addr = (uint32)tex_space;
 
-	sq_set(tex_space, 0xFF, 1024 * 1024 * 2);
+    sq_set(tex_space, 0xFF, 1024 * 1024 * 2);
 
-	fp = fopen("/pc/Users/lj/vdp1log.txt", "w");
+    pvr_poly_cxt_col(&op_poly_cxt, PVR_LIST_OP_POLY);
+    pvr_poly_cxt_col(&tr_poly_cxt, PVR_LIST_TR_POLY);
 
-	pvr_poly_cxt_col(&op_poly_cxt, PVR_LIST_OP_POLY);
-	pvr_poly_cxt_col(&tr_poly_cxt, PVR_LIST_TR_POLY);
+    op_poly_cxt.gen.culling = PVR_CULLING_NONE;
+    tr_poly_cxt.gen.culling = PVR_CULLING_NONE;
 
-	pvr_poly_compile(&op_poly_hdr, &op_poly_cxt);
-	pvr_poly_compile(&tr_poly_hdr, &tr_poly_cxt);
+    pvr_poly_compile(&op_poly_hdr, &op_poly_cxt);
+    pvr_poly_compile(&tr_poly_hdr, &tr_poly_cxt);
 
-	pvr_poly_cxt_txr(&tr_poly_cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 | PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space, PVR_FILTER_NONE);
-	pvr_poly_cxt_txr(&op_poly_cxt, PVR_LIST_PT_POLY, PVR_TXRFMT_ARGB1555 | PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space, PVR_FILTER_NONE);
+    pvr_poly_cxt_txr(&tr_poly_cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 |
+                     PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space,
+                     PVR_FILTER_NONE);
+    pvr_poly_cxt_txr(&op_poly_cxt, PVR_LIST_PT_POLY, PVR_TXRFMT_ARGB1555 |
+                     PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space,
+                     PVR_FILTER_NONE);
 
-	pvr_poly_compile(&tr_sprite_hdr, &tr_poly_cxt);
-	pvr_poly_compile(&pt_sprite_hdr, &op_poly_cxt);
+    op_poly_cxt.gen.culling = PVR_CULLING_NONE;
+    tr_poly_cxt.gen.culling = PVR_CULLING_NONE;
 
-	return 0;
+    pvr_poly_compile(&tr_sprite_hdr, &tr_poly_cxt);
+    pvr_poly_compile(&pt_sprite_hdr, &op_poly_cxt);
+
+    return 0;
 }
 
-static void VIDDCDeInit(void)	{
-	pvr_set_vertbuf(PVR_LIST_OP_POLY, NULL, 0);
-	pvr_set_vertbuf(PVR_LIST_TR_POLY, NULL, 0);
-	pvr_set_vertbuf(PVR_LIST_PT_POLY, NULL, 0);
+static void VIDDCDeInit(void)   {
+    pvr_set_vertbuf(PVR_LIST_OP_POLY, NULL, 0);
+    pvr_set_vertbuf(PVR_LIST_TR_POLY, NULL, 0);
+    pvr_set_vertbuf(PVR_LIST_PT_POLY, NULL, 0);
 
-	pvr_mem_free(tex_space);
+    pvr_mem_free(tex_space);
 
-	pvr_shutdown();
-	vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
+    pvr_shutdown();
+    vid_set_mode(DM_640x480, PM_RGB565);
 }
 
-static void VIDDCResize(unsigned int w, unsigned int h, int unused)	{
+static void VIDDCResize(unsigned int w, unsigned int h, int unused) {
 }
 
-static int VIDDCIsFullscreen(void)	{
-	return 1;
+static int VIDDCIsFullscreen(void)  {
+    return 1;
 }
 
-static int VIDDCVdp1Reset(void)	{
-	return 0;
+static int VIDDCVdp1Reset(void) {
+    return 0;
 }
 
-static void VIDDCVdp1DrawStart(void)	{
-	cur_addr = (uint32)tex_space;
+static void VIDDCVdp1DrawStart(void)    {
+    if(Vdp2Regs->CLOFEN & 0x40)    {
+        // color offset enable
+        if(Vdp2Regs->CLOFSL & 0x40)    {
+            // color offset B
+            vdp1cor = Vdp2Regs->COBR & 0xFF;
+            if(Vdp2Regs->COBR & 0x100)
+                vdp1cor |= 0xFFFFFF00;
+            
+            vdp1cog = Vdp2Regs->COBG & 0xFF;
+            if(Vdp2Regs->COBG & 0x100)
+                vdp1cog |= 0xFFFFFF00;
+            
+            vdp1cob = Vdp2Regs->COBB & 0xFF;
+            if(Vdp2Regs->COBB & 0x100)
+                vdp1cob |= 0xFFFFFF00;
+        }
+        else    {
+            // color offset A
+            vdp1cor = Vdp2Regs->COAR & 0xFF;
+            if(Vdp2Regs->COAR & 0x100)
+                vdp1cor |= 0xFFFFFF00;
+            
+            vdp1cog = Vdp2Regs->COAG & 0xFF;
+            if(Vdp2Regs->COAG & 0x100)
+                vdp1cog |= 0xFFFFFF00;
+            
+            vdp1cob = Vdp2Regs->COAB & 0xFF;
+            if(Vdp2Regs->COAB & 0x100)
+                vdp1cob |= 0xFFFFFF00;
+        }
+    }
+    else // color offset disable
+        vdp1cor = vdp1cog = vdp1cob = 0;
 }
 
-static void VIDDCVdp1DrawEnd(void)	{
+static void VIDDCVdp1DrawEnd(void)  {
 }
 
-static void VIDDCVdp1NormalSpriteDraw(void)	{
+static void VIDDCVdp1NormalSpriteDraw(void) {
+#if 0
 	int x, y, num;
 	u8 z;
 	vdp1cmd_struct cmd;
@@ -531,12 +605,14 @@ static void VIDDCVdp1NormalSpriteDraw(void)	{
 	vert.y = y;
 	vert.v = 0.0f;
 	pvr_list_prim(list, &vert, sizeof(vert));
+#endif
 }
 
-static void VIDDCVdp1ScaledSpriteDraw(void)	{
+static void VIDDCVdp1ScaledSpriteDraw(void) {
 }
 
-static void VIDDCVdp1DistortedSpriteDraw(void)	{
+static void VIDDCVdp1DistortedSpriteDraw(void)  {
+#if 0
 	s16 X[4];
 	s16 Y[4];
 	vdp1cmd_struct cmd;
@@ -579,180 +655,193 @@ static void VIDDCVdp1DistortedSpriteDraw(void)	{
 	vert.x = X[1];
 	vert.y = Y[1];
 	pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(vert));
+#endif
 }
 
-static void VIDDCVdp1PolygonDraw(void)	{
-	s16 X[4];
-	s16 Y[4];
-	u16 color;
-	u16 CMDPMOD;
-	u8 alpha;
-	pvr_vertex_t vert;
-	pvr_list_t list;
+static void VIDDCVdp1PolygonDraw(void)  {
+    s16 X[4];
+    s16 Y[4];
+    u16 color;
+    u16 CMDPMOD;
+    u8 alpha;
+    pvr_vertex_t vert;
+    pvr_list_t list;
 
-	X[0] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
-	Y[0] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
-	X[1] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10);
-	Y[1] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
-	X[2] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
-	Y[2] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
-	X[3] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x18);
-	Y[3] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A);
+    X[0] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
+    Y[0] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
+    X[1] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10);
+    Y[1] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
+    X[2] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
+    Y[2] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+    X[3] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x18);
+    Y[3] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A);
 
-	color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x06);
-	CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x04);
+    color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x06);
+    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x04);
 
-	if ((color & 0x8000) == 0)	/* Completely transparent poly, don't bother rendering */
-		return;
+    /* Don't bother rendering completely transparent polygons */
+    if(!(color & 0x8000) && !(CMDPMOD & 0x0040))    {
+        return;
+    }
+    else if(!(color & 0x8000))   {
+        /* Hack to make it so that giant polygons don't clobber the rest of
+           the output... */
+        if(X[0] == 0 && X[3] == 0 && X[1] == 319 && X[2] == 319 && Y[0] == 0 &&
+           Y[1] == 0 && Y[2] == 255 && Y[3] == 255) {
+            return;
+        }
+    }
 
-	if ((CMDPMOD & 0x7) == 0x3)	{
-		alpha = 0x80;
-		list = PVR_LIST_TR_POLY;
-		pvr_list_prim(PVR_LIST_TR_POLY, &tr_poly_hdr, sizeof(pvr_poly_hdr_t));
-	}
-	else	{
-		alpha = 0xFF;
-		list = PVR_LIST_OP_POLY;
-		pvr_list_prim(PVR_LIST_OP_POLY, &op_poly_hdr, sizeof(pvr_poly_hdr_t));
-	}
+    if ((CMDPMOD & 0x0007) == 0x0003) {
+        alpha = 0x80;
+        list = PVR_LIST_TR_POLY;
+        pvr_list_prim(PVR_LIST_TR_POLY, &tr_poly_hdr, sizeof(pvr_poly_hdr_t));
+    }
+    else    {
+        alpha = 0xFF;
+        list = PVR_LIST_OP_POLY;
+        pvr_list_prim(PVR_LIST_OP_POLY, &op_poly_hdr, sizeof(pvr_poly_hdr_t));
+    }
 
-	fprintf(fp, "Polygon Draw: (%d, %d) (%d, %d) (%d, %d) (%d, %d) z: %d\n",
-				X[0], Y[0], X[1], Y[1], X[2], Y[2], X[3], Y[3], Vdp2Regs->PRISA & 0x07);
+    if(color & 0x8000)  {
+        vert.argb = COLOR_ADD(SAT2YAB32(alpha, color), vdp1cor, vdp1cog,
+                              vdp1cob);
+    }
+    else    {
+        vert.argb = COLOR_ADD(Vdp2ColorRamGetColor32(color, alpha), vdp1cor, 
+                              vdp1cog, vdp1cob);
+    }
 
-	vert.flags = PVR_CMD_VERTEX;
-	vert.u = 0.0f;
-	vert.v = 0.0f;
-	vert.oargb = 0;
-	vert.z = Vdp2Regs->PRISA & 0x07;
-	vert.argb = SAT2YAB32(alpha, color);
+    vert.flags = PVR_CMD_VERTEX;
+    vert.u = 0.0f;
+    vert.v = 0.0f;
+    vert.oargb = 0;
+    vert.z = (Vdp2Regs->PRISA & 0x07) + 1;
 
-	vert.x = X[3];
-	vert.y = Y[3];
-	pvr_list_prim(list, &vert, sizeof(vert));
+    vert.x = X[3];
+    vert.y = Y[3];
+    pvr_list_prim(list, &vert, sizeof(vert));
 
-	vert.x = X[0];
-	vert.y = Y[0];
-	pvr_list_prim(list, &vert, sizeof(vert));
+    vert.x = X[0];
+    vert.y = Y[0];
+    pvr_list_prim(list, &vert, sizeof(vert));
 
-	vert.x = X[2];
-	vert.y = Y[2];
-	pvr_list_prim(list, &vert, sizeof(vert));
+    vert.x = X[2];
+    vert.y = Y[2];
+    pvr_list_prim(list, &vert, sizeof(vert));
 
-	vert.x = X[1];
-	vert.y = Y[1];
-	vert.flags = PVR_CMD_VERTEX_EOL;
-	pvr_list_prim(list, &vert, sizeof(vert));
+    vert.flags = PVR_CMD_VERTEX_EOL;
+    vert.x = X[1];
+    vert.y = Y[1];
+    pvr_list_prim(list, &vert, sizeof(vert));
 }
 
-static void VIDDCVdp1PolylineDraw(void)	{
+static void VIDDCVdp1PolylineDraw(void) {
 }
 
-static void VIDDCVdp1LineDraw(void)	{
+static void VIDDCVdp1LineDraw(void) {
 }
 
-static void VIDDCVdp1UserClipping(void)	{
-	Vdp1Regs->userclipX1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
-	Vdp1Regs->userclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
-	Vdp1Regs->userclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
-	Vdp1Regs->userclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+static void VIDDCVdp1UserClipping(void) {
+    Vdp1Regs->userclipX1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
+    Vdp1Regs->userclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
+    Vdp1Regs->userclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
+    Vdp1Regs->userclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
 }
 
-static void VIDDCVdp1SystemClipping(void)	{
-	Vdp1Regs->systemclipX1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
-	Vdp1Regs->systemclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
-	Vdp1Regs->systemclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
-	Vdp1Regs->systemclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+static void VIDDCVdp1SystemClipping(void)   {
+    Vdp1Regs->systemclipX1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
+    Vdp1Regs->systemclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
+    Vdp1Regs->systemclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
+    Vdp1Regs->systemclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
 }
 
-static void VIDDCVdp1LocalCoordinate(void)	{
-	Vdp1Regs->localX = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
-	Vdp1Regs->localY = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
+static void VIDDCVdp1LocalCoordinate(void)  {
+    Vdp1Regs->localX = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
+    Vdp1Regs->localY = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
 }
 
-static int VIDDCVdp2Reset(void)	{
-	return 0;
+static int VIDDCVdp2Reset(void) {
+    return 0;
 }
 
-static void VIDDCVdp2DrawStart(void)	{
-	pvr_wait_ready();
-	pvr_scene_begin();
+static void VIDDCVdp2DrawStart(void)    {
+    pvr_wait_ready();
+    pvr_scene_begin();
 }
 
-static void VIDDCVdp2DrawEnd(void)	{
-	pvr_scene_finish();
+static void VIDDCVdp2DrawEnd(void)  {
+    pvr_scene_finish();
 }
 
-static void VIDDCVdp2DrawScreens(void)	{
+static void VIDDCVdp2DrawScreens(void)  {
 }
 
-static void VIDDCVdp2SetResolution(u16 TVMD)	{
+static void VIDDCVdp2SetResolution(u16 TVMD)    {
 }
 
-static void VIDDCVdp2SetPriorityNBG0(int priority)	{
+static void VIDDCVdp2SetPriorityNBG0(int priority)  {
 }
 
-static void VIDDCVdp2SetPriorityNBG1(int priority)	{
+static void VIDDCVdp2SetPriorityNBG1(int priority)  {
 }
 
-static void VIDDCVdp2SetPriorityNBG2(int priority)	{
+static void VIDDCVdp2SetPriorityNBG2(int priority)  {
 }
 
-static void VIDDCVdp2SetPriorityNBG3(int priority)	{
+static void VIDDCVdp2SetPriorityNBG3(int priority)  {
 }
 
-static void VIDDCVdp2SetPriorityRBG0(int priority)	{
+static void VIDDCVdp2SetPriorityRBG0(int priority)  {
 }
 
-static void VIDDCVdp2ToggleDisplayNBG0(void)	{
+static void VIDDCVdp2ToggleDisplayNBG0(void)    {
 }
 
-static void VIDDCVdp2ToggleDisplayNBG1(void)	{
+static void VIDDCVdp2ToggleDisplayNBG1(void)    {
 }
 
-static void VIDDCVdp2ToggleDisplayNBG2(void)	{
+static void VIDDCVdp2ToggleDisplayNBG2(void)    {
 }
 
-static void VIDDCVdp2ToggleDisplayNBG3(void)	{
+static void VIDDCVdp2ToggleDisplayNBG3(void)    {
 }
 
-static void VIDDCVdp2ToggleDisplayRBG0(void)	{
+static void VIDDCVdp2ToggleDisplayRBG0(void)    {
 }
 
 VideoInterface_struct VIDDC = {
-	VIDCORE_DC,
-	"Dreamcast PVR Video Interface",
-	VIDDCInit,
-	VIDDCDeInit,
-	VIDDCResize,
-	VIDDCIsFullscreen,
-	VIDDCVdp1Reset,
-	VIDDCVdp1DrawStart,
-	VIDDCVdp1DrawEnd,
-	VIDDCVdp1NormalSpriteDraw,
-	VIDDCVdp1ScaledSpriteDraw,
-	VIDDCVdp1DistortedSpriteDraw,
-	VIDDCVdp1PolygonDraw,
-	VIDDCVdp1PolylineDraw,
-	VIDDCVdp1LineDraw,
-	VIDDCVdp1UserClipping,
-	VIDDCVdp1SystemClipping,
-	VIDDCVdp1LocalCoordinate,
-	VIDDCVdp2Reset,
-	VIDDCVdp2DrawStart,
-	VIDDCVdp2DrawEnd,
-	VIDDCVdp2DrawScreens,
-	VIDDCVdp2SetResolution,
-	VIDDCVdp2SetPriorityNBG0,
-	VIDDCVdp2SetPriorityNBG1,
-	VIDDCVdp2SetPriorityNBG2,
-	VIDDCVdp2SetPriorityNBG3,
-	VIDDCVdp2SetPriorityRBG0,
-	VIDDCVdp2ToggleDisplayNBG0,
-	VIDDCVdp2ToggleDisplayNBG1,
-	VIDDCVdp2ToggleDisplayNBG2,
-	VIDDCVdp2ToggleDisplayNBG3,
-	VIDDCVdp2ToggleDisplayRBG0
+    VIDCORE_DC,
+    "Dreamcast PVR Video Interface",
+    VIDDCInit,
+    VIDDCDeInit,
+    VIDDCResize,
+    VIDDCIsFullscreen,
+    VIDDCVdp1Reset,
+    VIDDCVdp1DrawStart,
+    VIDDCVdp1DrawEnd,
+    VIDDCVdp1NormalSpriteDraw,
+    VIDDCVdp1ScaledSpriteDraw,
+    VIDDCVdp1DistortedSpriteDraw,
+    VIDDCVdp1PolygonDraw,
+    VIDDCVdp1PolylineDraw,
+    VIDDCVdp1LineDraw,
+    VIDDCVdp1UserClipping,
+    VIDDCVdp1SystemClipping,
+    VIDDCVdp1LocalCoordinate,
+    VIDDCVdp2Reset,
+    VIDDCVdp2DrawStart,
+    VIDDCVdp2DrawEnd,
+    VIDDCVdp2DrawScreens,
+    VIDDCVdp2SetResolution,
+    VIDDCVdp2SetPriorityNBG0,
+    VIDDCVdp2SetPriorityNBG1,
+    VIDDCVdp2SetPriorityNBG2,
+    VIDDCVdp2SetPriorityNBG3,
+    VIDDCVdp2SetPriorityRBG0,
+    VIDDCVdp2ToggleDisplayNBG0,
+    VIDDCVdp2ToggleDisplayNBG1,
+    VIDDCVdp2ToggleDisplayNBG2,
+    VIDDCVdp2ToggleDisplayNBG3,
+    VIDDCVdp2ToggleDisplayRBG0
 };
-
-
-
