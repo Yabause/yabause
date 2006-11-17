@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
@@ -47,7 +48,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(Applicationsdir)" \
+	"$(DESTDIR)$(pixmapdir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_yabause_OBJECTS = yabause-gtkglwidget.$(OBJEXT) \
@@ -73,6 +75,15 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(yabause_SOURCES)
 DIST_SOURCES = $(yabause_SOURCES)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+ApplicationsDATA_INSTALL = $(INSTALL_DATA)
+pixmapDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(Applications_DATA) $(pixmap_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -171,6 +182,11 @@ target_os = @target_os@
 target_vendor = @target_vendor@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
+Applicationsdir = $(datadir)/applications
+Applications_DATA = yabause.desktop
+pixmapdir = $(datadir)/pixmaps
+pixmap_DATA = yabause.png
+EXTRA_DIST = yabause.desktop yabause.png
 yabause_SOURCES = gtkglwidget.c gtkglwidget.h main.c settings.c menu.c gtk-compat.c gtk-compat.h \
 	yuifileentry.c yuifileentry.h yuirange.c yuirange.h yuiinputentry.c yuiinputentry.h yuipage.c yuipage.h \
 	yuiresolution.c yuiresolution.h yuiwindow.c yuiwindow.h yuivdp1.c yuivdp1.h yuivdp2.c yuivdp2.h \
@@ -575,6 +591,40 @@ yabause-yuimem.obj: yuimem.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(yabause_CFLAGS) $(CFLAGS) -c -o yabause-yuimem.obj `if test -f 'yuimem.c'; then $(CYGPATH_W) 'yuimem.c'; else $(CYGPATH_W) '$(srcdir)/yuimem.c'; fi`
 uninstall-info-am:
+install-ApplicationsDATA: $(Applications_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(Applicationsdir)" || $(mkdir_p) "$(DESTDIR)$(Applicationsdir)"
+	@list='$(Applications_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(ApplicationsDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(Applicationsdir)/$$f'"; \
+	  $(ApplicationsDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(Applicationsdir)/$$f"; \
+	done
+
+uninstall-ApplicationsDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(Applications_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(Applicationsdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(Applicationsdir)/$$f"; \
+	done
+install-pixmapDATA: $(pixmap_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(pixmapdir)" || $(mkdir_p) "$(DESTDIR)$(pixmapdir)"
+	@list='$(pixmap_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(pixmapDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(pixmapdir)/$$f'"; \
+	  $(pixmapDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(pixmapdir)/$$f"; \
+	done
+
+uninstall-pixmapDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(pixmap_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(pixmapdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pixmapdir)/$$f"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -653,9 +703,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(PROGRAMS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(Applicationsdir)" "$(DESTDIR)$(pixmapdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -702,7 +752,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-ApplicationsDATA install-pixmapDATA
 
 install-exec-am: install-binPROGRAMS
 
@@ -729,18 +779,21 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am
+uninstall-am: uninstall-ApplicationsDATA uninstall-binPROGRAMS \
+	uninstall-info-am uninstall-pixmapDATA
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
 	clean-generic ctags distclean distclean-compile \
 	distclean-generic distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-exec install-exec-am \
-	install-info install-info-am install-man install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	html-am info info-am install install-ApplicationsDATA \
+	install-am install-binPROGRAMS install-data install-data-am \
+	install-exec install-exec-am install-info install-info-am \
+	install-man install-pixmapDATA install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-info-am
+	uninstall-ApplicationsDATA uninstall-am uninstall-binPROGRAMS \
+	uninstall-info-am uninstall-pixmapDATA
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

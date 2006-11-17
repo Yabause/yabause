@@ -3554,12 +3554,13 @@ fi
 
 
 		if test ! x$HAVE_PKG = x ; then
-			if test x$use_opengl = xyes && `$HAVE_PKG gtkglext-1.0` ; then
-				yabause_yui="gtk"
-				GTK_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
-				GTK_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
+			if test x$use_opengl = xyes ; then
+				if  `$HAVE_PKG gtkglext-1.0` ; then
+					yabause_yui="gtk"
+					GTK_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
+					GTK_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
 
-				ac_ext=c
+					ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -5174,10 +5175,10 @@ fi
 
 fi
 
-				LIBS="$LIBS $X_LIBS"
-				CFLAGS="$CFLAGS $X_CFLAGS"
+					LIBS="$LIBS $X_LIBS"
+					CFLAGS="$CFLAGS $X_CFLAGS"
 
-				echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
+					echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
 echo $ECHO_N "checking for glEnable in -lGL... $ECHO_C" >&6
 if test "${ac_cv_lib_GL_glEnable+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5242,15 +5243,15 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_GL_glEnable" >&5
 echo "${ECHO_T}$ac_cv_lib_GL_glEnable" >&6
 if test $ac_cv_lib_GL_glEnable = yes; then
 
-					LIBS="$LIBS -lGL"
-					cat >>confdefs.h <<\_ACEOF
+						LIBS="$LIBS -lGL"
+						cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGL 1
 _ACEOF
 
 
 fi
 
-				echo "$as_me:$LINENO: checking for glutGetModifiers in -lglut" >&5
+					echo "$as_me:$LINENO: checking for glutGetModifiers in -lglut" >&5
 echo $ECHO_N "checking for glutGetModifiers in -lglut... $ECHO_C" >&6
 if test "${ac_cv_lib_glut_glutGetModifiers+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5315,13 +5316,18 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_glut_glutGetModifiers" >&5
 echo "${ECHO_T}$ac_cv_lib_glut_glutGetModifiers" >&6
 if test $ac_cv_lib_glut_glutGetModifiers = yes; then
 
-					LIBS="$LIBS -lglut"
-					cat >>confdefs.h <<\_ACEOF
+						LIBS="$LIBS -lglut"
+						cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGLUT 1
 _ACEOF
 
 fi
 
+				else
+					{ { echo "$as_me:$LINENO: error: cannot use OpenGL if gtkglext is not installed (either install it or pass --without-opengl to configure)" >&5
+echo "$as_me: error: cannot use OpenGL if gtkglext is not installed (either install it or pass --without-opengl to configure)" >&2;}
+   { (exit 1); exit 1; }; }
+				fi
 			else
 				if `$HAVE_PKG gtk+-2.0` ; then
 					yabause_yui="gtk"
