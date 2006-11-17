@@ -624,50 +624,65 @@ static void VIDDCVdp1ScaledSpriteDraw(void) {
 }
 
 static void VIDDCVdp1DistortedSpriteDraw(void)  {
-#if 0
-	s16 X[4];
-	s16 Y[4];
-	vdp1cmd_struct cmd;
-	pvr_vertex_t vert;
-	u8 z;
+    vdp1cmd_struct cmd;
+    u8 z;
+    pvr_sprite_txr_t sprite;
+    pvr_list_t list;
+    int num;
 
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
-	X[0] = Vdp1Regs->localX + cmd.CMDXA;
-	Y[0] = Vdp1Regs->localY + cmd.CMDYA;
-	X[1] = Vdp1Regs->localX + cmd.CMDXB;
-	Y[1] = Vdp1Regs->localY + cmd.CMDYB;
-	X[2] = Vdp1Regs->localX + cmd.CMDXC;
-	Y[2] = Vdp1Regs->localY + cmd.CMDYC;
-	X[3] = Vdp1Regs->localX + cmd.CMDXD;
-	Y[3] = Vdp1Regs->localY + cmd.CMDYD;
-	z = Vdp1ReadPriority(&cmd);
+    cur_spr.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
+    cur_spr.h = cmd.CMDSIZE & 0xFF;
 
-	pvr_list_prim(PVR_LIST_OP_POLY, &op_poly_hdr, sizeof(pvr_poly_hdr_t));
+    if ((cmd.CMDPMOD & 0x7) == 0x3) {
+        tr_sprite_hdr.a = 0.5f;
+        list = PVR_LIST_TR_POLY;
+        num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
 
-	vert.flags = PVR_CMD_VERTEX;
-	vert.argb = 0xFF0000FF;
-	vert.oargb = 0;
-	vert.u = 0.0f;
-	vert.v = 0.0f;
-	vert.x = X[3];
-	vert.y = Y[3];
-	vert.z = z;
-	pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(vert));
+        if(num == 0)
+            return;
+        else
+            pvr_list_prim(PVR_LIST_TR_POLY, &tr_sprite_hdr,
+                          sizeof(pvr_poly_ic_hdr_t));
+    }
+    else    {
+        pt_sprite_hdr.a = 1.0f;
+        num = Vdp1ReadTexture(&cmd, &pt_sprite_hdr);
+        list = PVR_LIST_PT_POLY;
 
-	vert.x = X[0];
-	vert.y = Y[0];
-	pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(vert));
+        if(num == 0)
+            return;
+        else
+            pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr,
+                          sizeof(pvr_poly_ic_hdr_t));
+    }
 
-	vert.x = X[2];
-	vert.y = Y[2];
-	pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(vert));
+    z = Vdp1ReadPriority(&cmd);
 
-	vert.flags = PVR_CMD_VERTEX_EOL;
-	vert.x = X[1];
-	vert.y = Y[1];
-	pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(vert));
-#endif
+    sprite.flags = PVR_CMD_VERTEX_EOL;
+    sprite.ax = cmd.CMDXA + Vdp1Regs->localX;
+    sprite.ay = cmd.CMDYA + Vdp1Regs->localY;
+    sprite.az = z;
+
+    sprite.bx = cmd.CMDXB + Vdp1Regs->localX + 1;
+    sprite.by = cmd.CMDYB + Vdp1Regs->localY;
+    sprite.bz = z;
+
+    sprite.cx = cmd.CMDXC + Vdp1Regs->localX + 1;
+    sprite.cy = cmd.CMDYC + Vdp1Regs->localY + 1;
+    sprite.cz = z;
+
+    sprite.dx = cmd.CMDXD + Vdp1Regs->localX;
+    sprite.dy = cmd.CMDYD + Vdp1Regs->localY + 1;
+
+    sprite.auv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? cur_spr.uf : 0.0f),
+                                   ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
+    sprite.buv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
+                                   ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
+    sprite.cuv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
+                                   ((cmd.CMDCTRL & 0x0020) ? 0.0f : cur_spr.vf));
+    pvr_list_prim(list, &sprite, sizeof(sprite));
 }
 
 static void VIDDCVdp1PolygonDraw(void)  {
