@@ -70,8 +70,8 @@ static struct sprite_info cur_spr;
 /* Polygon Headers */
 static pvr_poly_hdr_t op_poly_hdr;
 static pvr_poly_hdr_t tr_poly_hdr;
-static pvr_poly_hdr_t tr_sprite_hdr;
-static pvr_poly_hdr_t pt_sprite_hdr;
+static pvr_poly_ic_hdr_t tr_sprite_hdr;
+static pvr_poly_ic_hdr_t pt_sprite_hdr;
 
 /* DMA Vertex Buffers 256KB Each */
 static uint8 vbuf_opaque[1024 * 256] __attribute__((aligned(32)));
@@ -88,7 +88,7 @@ static int vdp1cog = 0;
 static int vdp1cob = 0;
 
 static int power_of_two(int num)    {
-    int ret = 16;
+    int ret = 8;
 
     while(ret < num)
         ret <<= 1;
@@ -149,13 +149,13 @@ static uint16 Vdp2ColorRamGetColor(uint32 addr, uint32 colorOffset) {
     return 0;
 }
 
-static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_hdr_t *hdr)   {
-	u32 charAddr = cmd->CMDSRCA * 8;
+static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
+	u32 charAddr = (cmd->CMDSRCA * 8) & 0x7FFFF;
 	uint16 dot, dot2;
 	int queuepos = 0;
-	uint32 *store_queue = (uint32 *) 0xE0000000;
-	vuint32 *qacr = (vuint32 *) 0xFF000038;
+	uint32 *store_queue;
 	uint32 cur_base;
+    u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
 
 	int wi = power_of_two(cur_spr.w);
 	int he = power_of_two(cur_spr.h);
@@ -164,7 +164,11 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_hdr_t *hdr)   {
 
 	VDP1LOG("Making new sprite %08X\n", charAddr);
 
-	switch((cmd->CMDPMOD >> 3) & 0x7)
+    /* Set up both Store Queues for transfer to VRAM */
+    QACR0 = 0x00000004;
+    QACR1 = 0x00000004;
+
+	switch((cmd->CMDPMOD >> 3) & 0x07)
 	{
 #if 0
 		case 0:
@@ -315,41 +319,47 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_hdr_t *hdr)   {
 		case 5:
 		{
 			// 16 bpp Bank mode
-			int i, j;
-			
-			for(i = 0; i < cur_spr.h; ++i)
-			{
-				for(j = 0; j < cur_spr.w; j += 2)
-				{
-					dot  = T1ReadWord(Vdp1Ram, charAddr);
-					dot2 = T1ReadWord(Vdp1Ram, charAddr + 2);
-					charAddr += 4;
+            u16 i, j;
 
-					store_queue[queuepos++] = SAT2YAB1(dot) | (SAT2YAB1(dot2) << 16);
+            for(i = 0; i < cur_spr.h; ++i)  {
+                store_queue = (uint32 *) (0xE0000000 | 
+                                          (cur_addr & 0x03FFFFE0));
 
-					if(queuepos == 8)	{
-						*qacr = ((cur_addr >> 24) & 0x1C);
-						asm("pref @%0" : : "r"((cur_addr & 0x03FFFFC0) | ((uint32) store_queue)));
-						store_queue = (uint32 *) (((uint32) store_queue) ^ 0x20);
-						qacr = (vuint32 *) (((uint32) qacr) ^ 0x04);
-						queuepos = 0;
-						cur_addr += 32;
-					}
+                for(j = 0; j < cur_spr.w; j += 2)  {
+                    dot = T1ReadWord(Vdp1Ram, charAddr);
+                    dot2 = T1ReadWord(Vdp1Ram, charAddr + 2);
+                    charAddr = (charAddr + 4) & 0x7FFFF;
 
-					//if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-					//else *texture->textdata++ = COLOR_ADD(SAT2YAB1(alpha, dot), vdp1cor, vdp1cog, vdp1cob);
-				}
+                    if((dot == 0) && !SPD)  ;   /* do nothing its transparent */
+                    else
+                        dot = SAT2YAB1(dot);
+                        //dot = COLOR_ADD16(SAT2YAB1(dot), vdp1cor, vdp1cog,
+                        //                  vdp1cob);
 
-				if(queuepos)	{
-					*qacr = ((cur_addr >> 24) & 0x1C);
-					asm("pref @%0" : : "r"((cur_addr & 0x03FFFFC0) | ((uint32) store_queue)));
-					store_queue = (uint32 *) (((uint32) store_queue) ^ 0x20);
-					qacr = (vuint32 *) (((uint32) qacr) ^ 0x04);
-					queuepos = 0;
-					cur_addr += 32;
-				}
-			}
-			break;
+                    if((dot2 == 0) && !SPD) ;   /* do nothing its transparent */
+                    else
+                        dot2 = SAT2YAB1(dot2);
+                        //dot2 = COLOR_ADD16(SAT2YAB1(dot2), vdp1cor, vdp1cog,
+                        //                   vdp1cob);
+
+                    store_queue[queuepos++] = dot | (dot2 << 16);
+
+                    if(queuepos == 8)   {
+                        asm("pref @%0" : : "r"(store_queue));
+                        queuepos = 0;
+                        store_queue += 8;
+                    }
+
+                }
+
+                if(queuepos)    {
+                    asm("pref @%0" : : "r"(store_queue));
+                    queuepos = 0;
+                }
+
+                cur_addr += wi * 2;
+            }
+            break;
 		}
 
 		default:
@@ -386,7 +396,7 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_hdr_t *hdr)   {
 		default:	assert_msg(0, "Invalid texture V size"); break;
 	}
 
-	hdr->mode3 = ((cur_base & 0x00FFFFF8) >> 3) | (1 << 26);
+	hdr->mode3 = ((cur_base & 0x00FFFFF8) >> 3) | (PVR_TXRFMT_NONTWIDDLED);
 	return 1;
 }
 
@@ -440,6 +450,7 @@ static u8 Vdp1ReadPriority(vdp1cmd_struct *cmd) {
 
 static int VIDDCInit(void)  {
     pvr_poly_cxt_t op_poly_cxt, tr_poly_cxt;
+    pvr_sprite_cxt_t pt_sprite_cxt, tr_sprite_cxt;
 
     vid_set_mode(DM_320x240, PM_RGB565);
 
@@ -466,18 +477,18 @@ static int VIDDCInit(void)  {
     pvr_poly_compile(&op_poly_hdr, &op_poly_cxt);
     pvr_poly_compile(&tr_poly_hdr, &tr_poly_cxt);
 
-    pvr_poly_cxt_txr(&tr_poly_cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 |
-                     PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space,
-                     PVR_FILTER_NONE);
-    pvr_poly_cxt_txr(&op_poly_cxt, PVR_LIST_PT_POLY, PVR_TXRFMT_ARGB1555 |
-                     PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space,
-                     PVR_FILTER_NONE);
+    pvr_sprite_cxt_txr(&tr_sprite_cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 |
+                       PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space,
+                       PVR_FILTER_NONE);
+    pvr_sprite_cxt_txr(&pt_sprite_cxt, PVR_LIST_PT_POLY, PVR_TXRFMT_ARGB1555 |
+                       PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space,
+                       PVR_FILTER_NONE);
 
-    op_poly_cxt.gen.culling = PVR_CULLING_NONE;
-    tr_poly_cxt.gen.culling = PVR_CULLING_NONE;
+    pt_sprite_cxt.gen.culling = PVR_CULLING_NONE;
+    tr_sprite_cxt.gen.culling = PVR_CULLING_NONE;
 
-    pvr_poly_compile(&tr_sprite_hdr, &tr_poly_cxt);
-    pvr_poly_compile(&pt_sprite_hdr, &op_poly_cxt);
+    pvr_sprite_compile(&tr_sprite_hdr, &tr_sprite_cxt);
+    pvr_sprite_compile(&pt_sprite_hdr, &pt_sprite_cxt);
 
     return 0;
 }
@@ -538,74 +549,75 @@ static void VIDDCVdp1DrawStart(void)    {
     }
     else // color offset disable
         vdp1cor = vdp1cog = vdp1cob = 0;
+
+    cur_addr = (uint32) tex_space;
 }
 
 static void VIDDCVdp1DrawEnd(void)  {
 }
 
 static void VIDDCVdp1NormalSpriteDraw(void) {
-#if 0
-	int x, y, num;
-	u8 z;
-	vdp1cmd_struct cmd;
-	pvr_vertex_t vert;
-	pvr_list_t list;
+    int x, y, num;
+    u8 z;
+    vdp1cmd_struct cmd;
+    pvr_sprite_txr_t sprite;
+    pvr_list_t list;
 
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
-	x = Vdp1Regs->localX + cmd.CMDXA;
-	y = Vdp1Regs->localY + cmd.CMDYA;
-	cur_spr.w = ((cmd.CMDSIZE >> 8) & 0x3F) << 3;
-	cur_spr.h = cmd.CMDSIZE & 0xFF;
+    x = Vdp1Regs->localX + cmd.CMDXA;
+    y = Vdp1Regs->localY + cmd.CMDYA;
+    cur_spr.w = ((cmd.CMDSIZE >> 8) & 0x3F) << 3;
+    cur_spr.h = cmd.CMDSIZE & 0xFF;
 
-	if ((cmd.CMDPMOD & 0x7) == 0x3)	{
-		vert.argb = 0x80FFFFFF;
-		list = PVR_LIST_TR_POLY;
-		num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
-		if(num == 0)
-			pvr_list_prim(PVR_LIST_TR_POLY, &tr_poly_hdr, sizeof(pvr_poly_hdr_t));
-		else
-			pvr_list_prim(PVR_LIST_TR_POLY, &tr_sprite_hdr, sizeof(pvr_poly_hdr_t));
-	}
-	else	{
-		vert.argb = 0xFFFFFFFF;
-		num = Vdp1ReadTexture(&cmd, &pt_sprite_hdr);
-		if(num == 0)	{
-			list = PVR_LIST_OP_POLY;
-			pvr_list_prim(PVR_LIST_OP_POLY, &op_poly_hdr, sizeof(pvr_poly_hdr_t));
-		}
-		else	{
-			list = PVR_LIST_PT_POLY;
-			pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr, sizeof(pvr_poly_hdr_t));
-		}
-	}
+    if ((cmd.CMDPMOD & 0x7) == 0x3) {
+        tr_sprite_hdr.a = 0.5f;
+        list = PVR_LIST_TR_POLY;
+        num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
 
-	z = Vdp1ReadPriority(&cmd);
+        if(num == 0)
+            return;
+        else
+            pvr_list_prim(PVR_LIST_TR_POLY, &tr_sprite_hdr,
+                          sizeof(pvr_poly_ic_hdr_t));
+    }
+    else    {
+        pt_sprite_hdr.a = 1.0f;
+        num = Vdp1ReadTexture(&cmd, &pt_sprite_hdr);
+        list = PVR_LIST_PT_POLY;
+        
+        if(num == 0)
+            return;
+        else
+            pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr,
+                          sizeof(pvr_poly_ic_hdr_t));
+    }
 
-	vert.flags = PVR_CMD_VERTEX;
-	vert.oargb = 0;
-	vert.u = 0.0f;
-	vert.v = cur_spr.vf;
-	vert.x = x;
-	vert.y = y + cur_spr.h;
-	vert.z = z;
-	pvr_list_prim(list, &vert, sizeof(vert));
+    z = Vdp1ReadPriority(&cmd);
 
-	vert.y = y;
-	vert.v = 0.0f;
-	pvr_list_prim(list, &vert, sizeof(vert));
+    sprite.flags = PVR_CMD_VERTEX_EOL;
+    sprite.ax = x;
+    sprite.ay = y;
+    sprite.az = z;
 
-	vert.x = x + cur_spr.w;
-	vert.y = y + cur_spr.h;
-	vert.u = cur_spr.uf;
-	vert.v = cur_spr.vf;
-	pvr_list_prim(list, &vert, sizeof(vert));
+    sprite.bx = x + cur_spr.w;
+    sprite.by = y;
+    sprite.bz = z;
 
-	vert.flags = PVR_CMD_VERTEX_EOL;
-	vert.y = y;
-	vert.v = 0.0f;
-	pvr_list_prim(list, &vert, sizeof(vert));
-#endif
+    sprite.cx = x + cur_spr.w;
+    sprite.cy = y + cur_spr.h;
+    sprite.cz = z;
+
+    sprite.dx = x;
+    sprite.dy = y + cur_spr.h;
+
+    sprite.auv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? cur_spr.uf : 0.0f),
+                                  ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
+    sprite.buv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
+                                  ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
+    sprite.cuv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
+                                  ((cmd.CMDCTRL & 0x0020) ? 0.0f : cur_spr.vf));
+    pvr_list_prim(list, &sprite, sizeof(sprite));
 }
 
 static void VIDDCVdp1ScaledSpriteDraw(void) {
