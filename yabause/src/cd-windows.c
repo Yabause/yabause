@@ -24,12 +24,16 @@
 
 //////////////////////////////////////////////////////////////////////////////
 
-HANDLE hCDROM;
-SCSI_PASS_THROUGH_DIRECT sptd;
-HINSTANCE aspidll; 
-unsigned char scsiAdapterNumber;
-unsigned char lun;
-unsigned char targetId;
+static HANDLE hCDROM;
+static SCSI_PASS_THROUGH_DIRECT sptd;
+static HINSTANCE aspidll; 
+static unsigned char scsiAdapterNumber;
+static unsigned char lun;
+static unsigned char targetId;
+static int KillCDThread=0;
+static HANDLE thread_handle=INVALID_HANDLE_VALUE;
+static int drivestatus=0;
+static DWORD thread_id;
 
 CDInterface SPTICD = {
 CDCORE_SPTI,
@@ -55,6 +59,8 @@ ASPICDReadSectorFAD
 // SPTI Interface
 //////////////////////////////////////////////////////////////////////////////
 
+DWORD WINAPI __stdcall SPTICDThread(void *b);
+
 int SPTICDInit(const char *cdrom_name) {
    char pipe_name[7];
 
@@ -69,13 +75,107 @@ int SPTICDInit(const char *cdrom_name) {
       return -1;
    }
 
+   // Setup a separate thread for handling SPTI commands(that way the emulation
+   // code doesn't have to wait for a response)
+   KillCDThread=0;
+   thread_handle = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE) SPTICDThread,(void *) &KillCDThread,0,&thread_id);
+
+   // Set it to highest priority to avoid breaks
+//   SetThreadPriority(thread_handle,THREAD_PRIORITY_HIGHEST);
+
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int SPTICDDeInit() {
+   if (thread_handle != INVALID_HANDLE_VALUE)                               
+   {
+      // Set the flag telling it to stop            
+      KillCDThread=1;     
+      if (WaitForSingleObject(thread_handle,INFINITE) == WAIT_TIMEOUT)      
+      {
+         // Couldn't close thread cleanly
+         TerminateThread(thread_handle,0);                                  
+      }          
+      CloseHandle(thread_handle);                                           
+      thread_handle = INVALID_HANDLE_VALUE;                                 
+   }   
+
    CloseHandle(hCDROM);
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+DWORD WINAPI __stdcall SPTICDThread(void *b)
+{
+   while (KillCDThread != 1)
+   {
+      DWORD dwBytesReturned;
+      unsigned char statusbuf[8];
+      BOOL success;
+
+      // Check to see if we have any work to do(for now, let's just do a drive
+      // status check once a second)
+
+      sptd.Length=sizeof(sptd);
+      sptd.PathId=0;   //
+      sptd.TargetId=0; // Don't need these, they're automatically generated
+      sptd.Lun=0;      //
+      sptd.CdbLength=12;
+      sptd.SenseInfoLength=0; // No sense data
+      sptd.DataIn=SCSI_IOCTL_DATA_IN; 
+      sptd.TimeOutValue=60; // may need to be changed
+      sptd.DataBuffer=(PVOID)&(statusbuf);
+      sptd.SenseInfoOffset=0;
+      sptd.DataTransferLength=8; // may need to change this
+
+      sptd.Cdb[0]=0xBD; // CDB12 code
+      sptd.Cdb[1]=0; // Reserved
+      sptd.Cdb[2]=0; // Reserved
+      sptd.Cdb[3]=0; // Reserved
+      sptd.Cdb[4]=0; // Reserved
+      sptd.Cdb[5]=0; // Reserved
+      sptd.Cdb[6]=0; // Reserved
+      sptd.Cdb[7]=0; // Reserved
+      sptd.Cdb[8]=0; // Allocation Length(byte 1)
+      sptd.Cdb[9]=8; // Allocation Length(byte 2) (may have to change this)
+      sptd.Cdb[10]=0; // Reserved
+      sptd.Cdb[11]=0; // Control
+      sptd.Cdb[12]=0;
+      sptd.Cdb[13]=0;
+      sptd.Cdb[14]=0;
+      sptd.Cdb[15]=0;
+
+      success=DeviceIoControl(hCDROM, IOCTL_SCSI_PASS_THROUGH_DIRECT,
+                              (PVOID)&sptd, (DWORD)sizeof(SCSI_PASS_THROUGH_DIRECT),
+                              NULL, 0, &dwBytesReturned, NULL);
+
+      if (success)
+      {
+         // Figure out drive status
+   
+         // Is door open?
+         if (statusbuf[1] & 0x10)
+            drivestatus = 3;
+         else
+         {
+            // Ok, so the door is closed, now is there a disc there?
+            success = DeviceIoControl(hCDROM, IOCTL_STORAGE_CHECK_VERIFY,
+                                      NULL, 0, NULL, 0, &dwBytesReturned, NULL);
+            if (!success)
+               drivestatus = 2;
+            else
+               drivestatus = 0;
+         }
+      }
+      else
+        drivestatus = 2;
+
+      Sleep(1000);
+   }
 
    return 0;
 }
@@ -95,6 +195,7 @@ int SPTICDGetStatus() {
    // If you really don't want to bother too much with this function, just
    // return status 0. Though it is kind of nice when the bios's cd player,
    // etc. recognizes when you've ejected the tray and popped in another disc.
+/*
    DWORD dwBytesReturned;
    unsigned char statusbuf[8];
    BOOL success;
@@ -149,6 +250,8 @@ int SPTICDGetStatus() {
    }
 
    return 2;
+*/
+   return drivestatus;
 }
 
 //////////////////////////////////////////////////////////////////////////////
