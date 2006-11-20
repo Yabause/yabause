@@ -33,6 +33,7 @@ Vdp2Internal_struct Vdp2Internal;
 
 static int autoframeskipenab=0;
 static int framestoskip=0;
+static int framesskipped=0;
 static int throttlespeed=0;
 static int skipnextframe=0;
 u32 lastticks=0;
@@ -327,6 +328,8 @@ void Vdp2VBlankOUT(void) {
       FPSDisplay();
       VIDCore->Vdp2DrawEnd();
 
+      framesskipped = 0;
+
       if (framestoskip > 0)
          skipnextframe = 1;
    }
@@ -339,6 +342,8 @@ void Vdp2VBlankOUT(void) {
       else
          skipnextframe = 1;
       Vdp1NoDraw();
+
+      framesskipped++;
    }
 
    // Do Frame Skip/Frame Limiting/Speed Throttling here
@@ -361,7 +366,8 @@ void Vdp2VBlankOUT(void) {
       curticks = YabauseGetTicks();
       diffticks = curticks-lastticks;
 
-      if ((onesecondticks+diffticks) > (yabsys.OneFrameTime * framecount))
+      if ((onesecondticks+diffticks) > (yabsys.OneFrameTime * framecount) &&
+          framesskipped < 9)
       {
          // Skip the next frame
          skipnextframe = 1;
