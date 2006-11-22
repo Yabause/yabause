@@ -2819,6 +2819,7 @@ void VIDSoftVdp1PolygonDraw(void) {
   int zA, zB, zC, zD, zE, zF;
   int y01, y02, y03, y12, y13, y23;
   float stepA, stepB, stepC, stepD, stepE, stepF;
+  int zAplus, zAminus, zBplus, zBminus, zEplus, zEminus;
   int bInverted;
   u16 *fb;
   u16 color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
@@ -2847,6 +2848,10 @@ void VIDSoftVdp1PolygonDraw(void) {
   stepD = y23 ? (zD = 0, (float)( v[3].x - v[2].x ) / (y23)) : (zD = 1, v[3].x - v[2].x); /* edge D = 23 */
   stepE = y03 ? (zE = 0, (float)( v[3].x - v[0].x ) / (y03)) : (zE = 1, v[3].x - v[0].x); /* edge E = 03 */
   stepF = y12 ? (zF = 0, (float)( v[2].x - v[1].x ) / (y12)) : (zF = 1, v[2].x - v[1].x); /* edge F = 12 */
+
+  zAplus = zA && ( stepA >= 0 );
+  zBplus = zB && ( stepB >= 0 );
+  zEminus = zE && ( stepE < 0 );
 
   xleft = v[0].x;
   xwidth = 1;
@@ -2905,8 +2910,8 @@ void VIDSoftVdp1PolygonDraw(void) {
       ||( v[2].x < vdp1clipxstart )||( v[2].x > vdp1clipxend )
       ||( v[3].x < vdp1clipxstart )||( v[3].x > vdp1clipxend )) {
     
-    if ( stepE < stepB ) {
-      if ( stepE < stepA ) {
+    if ( (stepE < stepB) || zEminus || zBplus ) {
+      if ( (stepE < stepA) || zEminus || zAplus ) {
 	
 	POLYGON_PAINT_PART( 0, 1, stepE, stepA, zE, zA );
 	POLYGON_PAINT_PART( 1, 2, stepE, stepF, zE, zF );
@@ -2919,7 +2924,7 @@ void VIDSoftVdp1PolygonDraw(void) {
       }
     } else {
       
-      if ( stepE < stepA ) {
+      if ( (stepE < stepA) || zEminus || zAplus ) {
 	
 	POLYGON_PAINT_PART( 0, 1, stepB, stepA, zB, zA );
 	POLYGON_PAINT_PART( 1, 2, stepB, stepC, zB, zC );
@@ -2932,8 +2937,8 @@ void VIDSoftVdp1PolygonDraw(void) {
       }
     }
   } else {
-    if ( stepE < stepB ) {
-      if ( stepE < stepA ) {
+    if ( (stepE < stepB) || zEminus || zBplus ) {
+      if ( (stepE < stepA) || zEminus || zAplus ) {
 	
 	POLYGON_PAINT_PART_NOCLIP( 0, 1, stepE, stepA, zE, zA );
 	POLYGON_PAINT_PART_NOCLIP( 1, 2, stepE, stepF, zE, zF );
@@ -2946,7 +2951,7 @@ void VIDSoftVdp1PolygonDraw(void) {
       }
     } else {
       
-      if ( stepE < stepA ) {
+      if ( (stepE < stepA) || zEminus || zAplus ) { 
 	
 	POLYGON_PAINT_PART_NOCLIP( 0, 1, stepB, stepA, zB, zA );
 	POLYGON_PAINT_PART_NOCLIP( 1, 2, stepB, stepC, zB, zC );
