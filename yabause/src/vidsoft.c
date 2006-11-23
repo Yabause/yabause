@@ -2866,6 +2866,7 @@ void VIDSoftVdp1PolygonDraw(void) {
     if ( y == v[pEnd].y ) { \
       if ( zLeft ) { xleft += stepLeft; xwidth -= stepLeft; zLeft = 0; } \
       if ( zRight ) { xwidth += stepRight; zRight = 0; }\
+    if (( y >= vdp1clipystart )&&( y <= vdp1clipyend)) { \
     if ( xleft < vdp1clipxstart ) { \
           xwidth -= (vdp1clipxstart - xleft); \
           xleft = vdp1clipxstart;} \
@@ -2885,7 +2886,7 @@ void VIDSoftVdp1PolygonDraw(void) {
       fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;\
       for ( x = (int)xwidth ; x>=0 ; x-- ) *(fb++) = color; \
       y++; \
-    }
+    }}
 
 #define POLYGON_PAINT_PART_NOCLIP( pBegin, pEnd, stepLeft, stepRight, zLeft, zRight ) \
     if ( y == v[pEnd].y ) { \
@@ -2912,7 +2913,7 @@ void VIDSoftVdp1PolygonDraw(void) {
     
     if ( (stepE < stepB) || zEminus || zBplus ) {
       if ( (stepE < stepA) || zEminus || zAplus ) {
-	
+
 	POLYGON_PAINT_PART( 0, 1, stepE, stepA, zE, zA );
 	POLYGON_PAINT_PART( 1, 2, stepE, stepF, zE, zF );
 	POLYGON_PAINT_PART( 2, 3, stepE, stepD, zE, zD );
