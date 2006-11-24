@@ -278,8 +278,6 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
       rect.bottom = rect.top + height + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);  
    }
 
-   SetWindowPos(YabWin, HWND_TOP, 0, 0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS);
-
    // Get the Device Context for our window
    if ((YabHDC = GetDC(YabWin)) == NULL)
    {
@@ -324,6 +322,7 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
    ShowWindow(YabWin,SW_SHOW);
    SetForegroundWindow(YabWin);
    SetFocus(YabWin);
+   SetWindowPos(YabWin, HWND_TOP, 0, 0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
 
    isfullscreenset = fullscreen;
 
@@ -348,7 +347,10 @@ void YuiReleaseVideo(void)
    }
 
    if (YabHDC)
+   {
       ReleaseDC(YabWin,YabHDC);
+      YabHDC = NULL;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
