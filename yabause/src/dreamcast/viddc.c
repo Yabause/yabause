@@ -78,6 +78,9 @@ static uint8 vbuf_opaque[1024 * 256] __attribute__((aligned(32)));
 static uint8 vbuf_translucent[1024 * 256] __attribute__((aligned(32)));
 static uint8 vbuf_punchthru[1024 * 256] __attribute__((aligned(32)));
 
+/* Priority levels, sprites drawn last get drawn on top */
+static float priority_levels[8];
+
 /* Texture space for VDP1 sprites */
 static pvr_ptr_t tex_space;
 static uint32 cur_addr;
@@ -123,202 +126,112 @@ static u32 Vdp2ColorRamGetColor32(u32 colorindex, int alpha)    {
     return 0;
 }
 
-static uint16 Vdp2ColorRamGetColor(uint32 addr, uint32 colorOffset) {
-    uint16 tmp;
+static uint16 Vdp2ColorRamGetColor(u32 colorindex)   {
+    u16 tmp;
 
     switch(Vdp2Internal.ColorMode)  {
         case 0:
         case 1:
-            addr <<= 1;
-            addr += colorOffset * 0x200;
-            tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
+        {
+            colorindex <<= 1;
+            tmp = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
             return SAT2YAB1(tmp);
+        }
         case 2:
         {
-            uint16 tmp2;
-            addr <<= 2;
-            addr += colorOffset * 0x400;
-            addr &= 0xFFF;
-            tmp = T2ReadWord(Vdp2ColorRam, addr);
-            tmp2 = T2ReadWord(Vdp2ColorRam, addr + 2);
-            return SAT2YAB2(tmp1, tmp2);
+            u16 tmp2;
+            colorindex <<= 2;
+            colorindex &= 0xFFF;
+            tmp = T2ReadWord(Vdp2ColorRam, colorindex);
+            tmp2 = T2ReadWord(Vdp2ColorRam, colorindex+2);
+            //return SAT2YAB2(alpha, tmp1, tmp2);
+            return 0; /* FIXME */
         }
         default:
             break;
     }
+    
     return 0;
 }
 
 static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
-	u32 charAddr = (cmd->CMDSRCA * 8) & 0x7FFFF;
-	uint16 dot, dot2;
-	int queuepos = 0;
-	uint32 *store_queue;
-	uint32 cur_base;
+    u32 charAddr = (cmd->CMDSRCA * 8) & 0x7FFFF;
+    uint16 dot, dot2;
+    int queuepos = 0;
+    uint32 *store_queue;
+    uint32 cur_base;
     u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
 
-	int wi = power_of_two(cur_spr.w);
-	int he = power_of_two(cur_spr.h);
+    int wi = power_of_two(cur_spr.w);
+    int he = power_of_two(cur_spr.h);
 
-	cur_base = cur_addr;
+    cur_base = cur_addr;
 
-	VDP1LOG("Making new sprite %08X\n", charAddr);
+    VDP1LOG("Making new sprite %08X\n", charAddr);
 
     /* Set up both Store Queues for transfer to VRAM */
     QACR0 = 0x00000004;
     QACR1 = 0x00000004;
 
-	switch((cmd->CMDPMOD >> 3) & 0x07)
-	{
-#if 0
-		case 0:
-		{
-			// 4 bpp Bank mode
-			u32 colorBank = cmd->CMDCOLR & 0xFFF0;
-			u32 colorOffset = (Vdp2Regs->CRAOFB >> 4) & 0x7;
-			u16 i;
-			
-			for(i = 0;i < sprite->h;i++)
-			{
-				u16 j;
-				j = 0;
-				while(j < sprite->w)
-				{
-					dot = T1ReadByte(Vdp1Ram, charAddr);
-					
-					// Pixel 1
-					if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-					else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor((dot >> 4) + colorBank, alpha, colorOffset), vdp1cor, vdp1cog, vdp1cob);
-					j += 1;
-					
-					// Pixel 2
-					if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-					else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor((dot & 0xF) + colorBank, alpha, colorOffset), vdp1cor, vdp1cog, vdp1cob);
-					j += 1;
-					
-					charAddr += 1;
-				}
-				texture->textdata += texture->w;
-			}
-			break;
-		}
-		case 1:
-		{
-			// 4 bpp LUT mode
-			u32 temp;
-			u32 colorLut = cmd->CMDCOLR * 8;
-			u16 i;
-			
-			for(i = 0;i < sprite->h;i++)
-			{
-				u16 j;
-				j = 0;
-				while(j < sprite->w)
-				{
-					dot = T1ReadByte(Vdp1Ram, charAddr);
-					
-					if (((dot >> 4) == 0) && !SPD)
-						*texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-					else
-					{
-						temp = T1ReadWord(Vdp1Ram, (dot >> 4) * 2 + colorLut);
-						if (temp & 0x8000)
-							*texture->textdata++ = COLOR_ADD(SAT2YAB1(alpha, temp), vdp1cor, vdp1cog, vdp1cob);
-						else
-							*texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(temp, alpha, 0), vdp1cor, vdp1cog, vdp1cob);
-					}
-					
-					j += 1;
-					
-					if (((dot & 0xF) == 0) && !SPD)
-						*texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-					else
-					{
-						temp = T1ReadWord(Vdp1Ram, (dot & 0xF) * 2 + colorLut);
-						if (temp & 0x8000)
-							*texture->textdata++ = COLOR_ADD(SAT2YAB1(alpha, temp), vdp1cor, vdp1cog, vdp1cob);
-						else
-							*texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(temp, alpha, 0), vdp1cor, vdp1cog, vdp1cob);                     
-					}
-					
-					j += 1;
-					
-					charAddr += 1;
-				}
-				texture->textdata += texture->w;
-			}
-			break;
-		}
-		case 2:
-		{
-			// 8 bpp(64 color) Bank mode
-			u32 colorBank = cmd->CMDCOLR & 0xFFC0;
-			u32 colorOffset = (Vdp2Regs->CRAOFB >> 4) & 0x7;
-			u16 i, j;
-			
-			for(i = 0;i < sprite->h;i++)
-			{
-				for(j = 0;j < sprite->w;j++)
-				{
-					dot = T1ReadByte(Vdp1Ram, charAddr) & 0x3F;               
-					charAddr++;
-					
-					if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-					else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(dot + colorBank, alpha, colorOffset), vdp1cor, vdp1cog, vdp1cob);
-				}
-				texture->textdata += texture->w;
-			}
-			
-			break;
-		}
-		case 3:
-		{
-			// 8 bpp(128 color) Bank mode
-			u32 colorBank = cmd->CMDCOLR & 0xFF80;
-			u32 colorOffset = (Vdp2Regs->CRAOFB >> 4) & 0x7;
-			u16 i, j;
-			
-			for(i = 0;i < sprite->h;i++)
-			{
-				for(j = 0;j < sprite->w;j++)
-				{
-					dot = T1ReadByte(Vdp1Ram, charAddr) & 0x7F;               
-					charAddr++;
-					
-					if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-					else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(dot + colorBank, alpha, colorOffset), vdp1cor, vdp1cog, vdp1cob);
-				}
-				texture->textdata += texture->w;
-			}
-			break;
-		}
-		case 4:
-		{
-			// 8 bpp(256 color) Bank mode
-			u32 colorBank = cmd->CMDCOLR & 0xFF00;
-			u32 colorOffset = (Vdp2Regs->CRAOFB >> 4) & 0x7;
-			u16 i, j;
-			
-			for(i = 0;i < sprite->h;i++)
-			{
-				for(j = 0;j < sprite->w;j++)
-				{
-					dot = T1ReadByte(Vdp1Ram, charAddr);               
-					charAddr++;
-					
-					if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
-					else *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(dot + colorBank, alpha, colorOffset), vdp1cor, vdp1cog, vdp1cob);
-				}
-				texture->textdata += texture->w;
-			}
-			
-			break;
-		}
-#endif
+    switch((cmd->CMDPMOD >> 3) & 0x07)  {
+        case 1:
+        {
+            // 4 bpp LUT mode
+            u16 temp;
+            u32 colorLut = cmd->CMDCOLR * 8;
+            u16 i, j;
+            
+            for(i = 0; i < cur_spr.h; ++i)  {
+                store_queue = (uint32 *) (0xE0000000 | 
+                                          (cur_addr & 0x03FFFFE0));
 
-		case 5:
-		{
-			// 16 bpp Bank mode
+                for(j = 0; j < cur_spr.w; j += 2)    {
+                    dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
+
+                    if (((dot & 0xF) == 0) && !SPD) dot2 = 0;
+                    else    {
+                        temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + 
+                                                    colorLut) & 0x7FFFF);
+
+                        if (temp & 0x8000)
+                            dot2 = SAT2YAB1(temp);
+                        else
+                            dot2 = Vdp2ColorRamGetColor(temp);                     
+                    }
+                    
+                    if (((dot >> 4) == 0) && !SPD)  ;
+                    else    {
+                        temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) &
+                                          0x7FFFF);
+                        if (temp & 0x8000)
+                            dot = SAT2YAB1(temp);
+                        else
+                            dot = Vdp2ColorRamGetColor(temp);
+                    }
+
+                    ++charAddr;
+
+                    store_queue[queuepos++] = dot | (dot2 << 16);
+
+                    if(queuepos == 8)   {
+                        asm("pref @%0" : : "r"(store_queue));
+                        queuepos = 0;
+                        store_queue += 8;
+                    }
+                }
+
+                if(queuepos)    {
+                    asm("pref @%0" : : "r"(store_queue));
+                    queuepos = 0;
+                }
+
+                cur_addr += wi * 2;
+            }
+            break;
+        }
+        case 5:
+        {
+            // 16 bpp Bank mode
             u16 i, j;
 
             for(i = 0; i < cur_spr.h; ++i)  {
@@ -330,17 +243,13 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
                     dot2 = T1ReadWord(Vdp1Ram, charAddr + 2);
                     charAddr = (charAddr + 4) & 0x7FFFF;
 
-                    if((dot == 0) && !SPD)  ;   /* do nothing its transparent */
+                    if((dot == 0) && !SPD)  ;
                     else
                         dot = SAT2YAB1(dot);
-                        //dot = COLOR_ADD16(SAT2YAB1(dot), vdp1cor, vdp1cog,
-                        //                  vdp1cob);
 
-                    if((dot2 == 0) && !SPD) ;   /* do nothing its transparent */
+                    if((dot2 == 0) && !SPD) ;
                     else
                         dot2 = SAT2YAB1(dot2);
-                        //dot2 = COLOR_ADD16(SAT2YAB1(dot2), vdp1cor, vdp1cog,
-                        //                   vdp1cob);
 
                     store_queue[queuepos++] = dot | (dot2 << 16);
 
@@ -360,44 +269,45 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
                 cur_addr += wi * 2;
             }
             break;
-		}
+        }
 
-		default:
-			VDP1LOG("Unimplemented sprite color mode: %X\n", (cmd->CMDPMOD >> 3) & 0x7);
-			return 0;
-	}
+        default:
+            printf("Sprite type not handled yet.... %x\n", (cmd->CMDPMOD >> 3) & 0x07);
+            VDP1LOG("Unimplemented sprite color mode: %X\n", (cmd->CMDPMOD >> 3) & 0x7);
+            return 0;
+    }
 
-	cur_spr.uf = (float) cur_spr.w / wi;
-	cur_spr.vf = (float) cur_spr.h / he;
+    cur_spr.uf = (float) cur_spr.w / wi;
+    cur_spr.vf = (float) cur_spr.h / he;
 
-	hdr->mode2 &= (~(PVR_TA_PM2_USIZE_MASK | PVR_TA_PM2_VSIZE_MASK));
+    hdr->mode2 &= (~(PVR_TA_PM2_USIZE_MASK | PVR_TA_PM2_VSIZE_MASK));
 
-	switch (wi) {
-		case 8:		break;
-		case 16:	hdr->mode2 |= (1 << PVR_TA_PM2_USIZE_SHIFT); break;
-		case 32:	hdr->mode2 |= (2 << PVR_TA_PM2_USIZE_SHIFT); break;
-		case 64:	hdr->mode2 |= (3 << PVR_TA_PM2_USIZE_SHIFT); break;
-		case 128:	hdr->mode2 |= (4 << PVR_TA_PM2_USIZE_SHIFT); break;
-		case 256:	hdr->mode2 |= (5 << PVR_TA_PM2_USIZE_SHIFT); break;
-		case 512:	hdr->mode2 |= (6 << PVR_TA_PM2_USIZE_SHIFT); break;
-		case 1024:	hdr->mode2 |= (7 << PVR_TA_PM2_USIZE_SHIFT); break;
-		default:	assert_msg(0, "Invalid texture U size"); break;
-	}
+    switch (wi) {
+        case 8:     break;
+        case 16:    hdr->mode2 |= (1 << PVR_TA_PM2_USIZE_SHIFT); break;
+        case 32:    hdr->mode2 |= (2 << PVR_TA_PM2_USIZE_SHIFT); break;
+        case 64:    hdr->mode2 |= (3 << PVR_TA_PM2_USIZE_SHIFT); break;
+        case 128:   hdr->mode2 |= (4 << PVR_TA_PM2_USIZE_SHIFT); break;
+        case 256:   hdr->mode2 |= (5 << PVR_TA_PM2_USIZE_SHIFT); break;
+        case 512:   hdr->mode2 |= (6 << PVR_TA_PM2_USIZE_SHIFT); break;
+        case 1024:  hdr->mode2 |= (7 << PVR_TA_PM2_USIZE_SHIFT); break;
+        default:    assert_msg(0, "Invalid texture U size"); break;
+    }
 
-	switch (he) {
-		case 8:		break;
-		case 16:	hdr->mode2 |= (1 << PVR_TA_PM2_VSIZE_SHIFT); break;
-		case 32:	hdr->mode2 |= (2 << PVR_TA_PM2_VSIZE_SHIFT); break;
-		case 64:	hdr->mode2 |= (3 << PVR_TA_PM2_VSIZE_SHIFT); break;
-		case 128:	hdr->mode2 |= (4 << PVR_TA_PM2_VSIZE_SHIFT); break;
-		case 256:	hdr->mode2 |= (5 << PVR_TA_PM2_VSIZE_SHIFT); break;
-		case 512:	hdr->mode2 |= (6 << PVR_TA_PM2_VSIZE_SHIFT); break;
-		case 1024:	hdr->mode2 |= (7 << PVR_TA_PM2_VSIZE_SHIFT); break;
-		default:	assert_msg(0, "Invalid texture V size"); break;
-	}
+    switch (he) {
+        case 8:     break;
+        case 16:    hdr->mode2 |= (1 << PVR_TA_PM2_VSIZE_SHIFT); break;
+        case 32:    hdr->mode2 |= (2 << PVR_TA_PM2_VSIZE_SHIFT); break;
+        case 64:    hdr->mode2 |= (3 << PVR_TA_PM2_VSIZE_SHIFT); break;
+        case 128:   hdr->mode2 |= (4 << PVR_TA_PM2_VSIZE_SHIFT); break;
+        case 256:   hdr->mode2 |= (5 << PVR_TA_PM2_VSIZE_SHIFT); break;
+        case 512:   hdr->mode2 |= (6 << PVR_TA_PM2_VSIZE_SHIFT); break;
+        case 1024:  hdr->mode2 |= (7 << PVR_TA_PM2_VSIZE_SHIFT); break;
+        default:    assert_msg(0, "Invalid texture V size"); break;
+    }
 
-	hdr->mode3 = ((cur_base & 0x00FFFFF8) >> 3) | (PVR_TXRFMT_NONTWIDDLED);
-	return 1;
+    hdr->mode3 = ((cur_base & 0x00FFFFF8) >> 3) | (PVR_TXRFMT_NONTWIDDLED);
+    return 1;
 }
 
 static u8 Vdp1ReadPriority(vdp1cmd_struct *cmd) {
@@ -490,6 +400,15 @@ static int VIDDCInit(void)  {
     pvr_sprite_compile(&tr_sprite_hdr, &tr_sprite_cxt);
     pvr_sprite_compile(&pt_sprite_hdr, &pt_sprite_cxt);
 
+    priority_levels[0] = 0.0f;
+    priority_levels[1] = 1.0f;
+    priority_levels[2] = 2.0f;
+    priority_levels[3] = 3.0f;
+    priority_levels[4] = 4.0f;
+    priority_levels[5] = 5.0f;
+    priority_levels[6] = 6.0f;
+    priority_levels[7] = 7.0f;
+
     return 0;
 }
 
@@ -554,6 +473,14 @@ static void VIDDCVdp1DrawStart(void)    {
 }
 
 static void VIDDCVdp1DrawEnd(void)  {
+    priority_levels[0] = 0.0f;
+    priority_levels[1] = 1.0f;
+    priority_levels[2] = 2.0f;
+    priority_levels[3] = 3.0f;
+    priority_levels[4] = 4.0f;
+    priority_levels[5] = 5.0f;
+    priority_levels[6] = 6.0f;
+    priority_levels[7] = 7.0f;
 }
 
 static void VIDDCVdp1NormalSpriteDraw(void) {
@@ -570,7 +497,7 @@ static void VIDDCVdp1NormalSpriteDraw(void) {
     cur_spr.w = ((cmd.CMDSIZE >> 8) & 0x3F) << 3;
     cur_spr.h = cmd.CMDSIZE & 0xFF;
 
-    if ((cmd.CMDPMOD & 0x7) == 0x3) {
+    if ((cmd.CMDPMOD & 0x07) == 0x03) {
         tr_sprite_hdr.a = 0.5f;
         list = PVR_LIST_TR_POLY;
         num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
@@ -598,15 +525,15 @@ static void VIDDCVdp1NormalSpriteDraw(void) {
     sprite.flags = PVR_CMD_VERTEX_EOL;
     sprite.ax = x;
     sprite.ay = y;
-    sprite.az = z;
+    sprite.az = priority_levels[z];
 
     sprite.bx = x + cur_spr.w;
     sprite.by = y;
-    sprite.bz = z;
+    sprite.bz = priority_levels[z];
 
     sprite.cx = x + cur_spr.w;
     sprite.cy = y + cur_spr.h;
-    sprite.cz = z;
+    sprite.cz = priority_levels[z];
 
     sprite.dx = x;
     sprite.dy = y + cur_spr.h;
@@ -618,9 +545,150 @@ static void VIDDCVdp1NormalSpriteDraw(void) {
     sprite.cuv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
                                   ((cmd.CMDCTRL & 0x0020) ? 0.0f : cur_spr.vf));
     pvr_list_prim(list, &sprite, sizeof(sprite));
+
+    priority_levels[z] += 0.000001f;
 }
 
 static void VIDDCVdp1ScaledSpriteDraw(void) {
+    vdp1cmd_struct cmd;
+    s16 rw = 0, rh = 0;
+    s16 x, y;
+    u8 z;
+    pvr_sprite_txr_t sprite;
+    pvr_list_t list;
+    int num;
+
+    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+
+    x = cmd.CMDXA + Vdp1Regs->localX;
+    y = cmd.CMDYA + Vdp1Regs->localY;
+    cur_spr.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
+    cur_spr.h = cmd.CMDSIZE & 0xFF;
+
+    if((cmd.CMDPMOD & 0x07) == 0x03)    {
+        tr_sprite_hdr.a = 0.5f;
+        list = PVR_LIST_TR_POLY;
+        num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
+
+        if(num == 0)
+            return;
+        else
+            pvr_list_prim(PVR_LIST_TR_POLY, &tr_sprite_hdr,
+                          sizeof(pvr_poly_ic_hdr_t));
+    }
+    else    {
+        pt_sprite_hdr.a = 1.0f;
+        num = Vdp1ReadTexture(&cmd, &pt_sprite_hdr);
+        list = PVR_LIST_PT_POLY;
+
+        if(num == 0)
+            return;
+        else
+            pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr,
+                          sizeof(pvr_poly_ic_hdr_t));
+    }
+
+    // Setup Zoom Point
+    switch ((cmd.CMDCTRL & 0xF00) >> 8) {
+        case 0x0: // Only two coordinates
+            rw = cmd.CMDXC - x + Vdp1Regs->localX + 1;
+            rh = cmd.CMDYC - y + Vdp1Regs->localY + 1;
+            break;
+        case 0x5: // Upper-left
+            rw = cmd.CMDXB + 1;
+            rh = cmd.CMDYB + 1;
+            break;
+        case 0x6: // Upper-Center
+            rw = cmd.CMDXB;
+            rh = cmd.CMDYB;
+            x = x - rw / 2;
+            ++rw;
+            ++rh;
+            break;
+        case 0x7: // Upper-Right
+            rw = cmd.CMDXB;
+            rh = cmd.CMDYB;
+            x = x - rw;
+            ++rw;
+            ++rh;
+            break;
+        case 0x9: // Center-left
+            rw = cmd.CMDXB;
+            rh = cmd.CMDYB;
+            y = y - rh / 2;
+            ++rw;
+            ++rh;
+            break;
+        case 0xA: // Center-center
+            rw = cmd.CMDXB;
+            rh = cmd.CMDYB;
+            x = x - rw / 2;
+            y = y - rh / 2;
+            ++rw;
+            ++rh;
+            break;
+        case 0xB: // Center-right
+            rw = cmd.CMDXB;
+            rh = cmd.CMDYB;
+            x = x - rw;
+            y = y - rh / 2;
+            ++rw;
+            ++rh;
+            break;
+        case 0xD: // Lower-left
+            rw = cmd.CMDXB;
+            rh = cmd.CMDYB;
+            y = y - rh;
+            ++rw;
+            ++rh;
+            break;
+        case 0xE: // Lower-center
+            rw = cmd.CMDXB;
+            rh = cmd.CMDYB;
+            x = x - rw / 2;
+            y = y - rh;
+            ++rw;
+            ++rh;
+            break;
+        case 0xF: // Lower-right
+            rw = cmd.CMDXB;
+            rh = cmd.CMDYB;
+            x = x - rw;
+            y = y - rh;
+            ++rw;
+            ++rh;
+            break;
+        default:
+            break;
+    }
+
+    z = Vdp1ReadPriority(&cmd);
+
+    sprite.flags = PVR_CMD_VERTEX_EOL;
+    sprite.ax = x;
+    sprite.ay = y;
+    sprite.az = priority_levels[z];
+
+    sprite.bx = x + rw;
+    sprite.by = y;
+    sprite.bz = priority_levels[z];
+
+    sprite.cx = x + rw;
+    sprite.cy = y + rh;
+    sprite.cz = priority_levels[z];
+
+    sprite.dx = x;
+    sprite.dy = y + rh;
+
+    sprite.auv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? cur_spr.uf : 0.0f),
+                                  ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
+    sprite.buv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
+                                  ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
+    sprite.cuv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
+                                  ((cmd.CMDCTRL & 0x0020) ? 0.0f : cur_spr.vf));
+    pvr_list_prim(list, &sprite, sizeof(sprite));
+
+    priority_levels[z] += 0.000001f;
 }
 
 static void VIDDCVdp1DistortedSpriteDraw(void)  {
@@ -635,7 +703,7 @@ static void VIDDCVdp1DistortedSpriteDraw(void)  {
     cur_spr.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
     cur_spr.h = cmd.CMDSIZE & 0xFF;
 
-    if ((cmd.CMDPMOD & 0x7) == 0x3) {
+    if((cmd.CMDPMOD & 0x7) == 0x3) {
         tr_sprite_hdr.a = 0.5f;
         list = PVR_LIST_TR_POLY;
         num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
@@ -663,26 +731,28 @@ static void VIDDCVdp1DistortedSpriteDraw(void)  {
     sprite.flags = PVR_CMD_VERTEX_EOL;
     sprite.ax = cmd.CMDXA + Vdp1Regs->localX;
     sprite.ay = cmd.CMDYA + Vdp1Regs->localY;
-    sprite.az = z;
+    sprite.az = priority_levels[z];
 
     sprite.bx = cmd.CMDXB + Vdp1Regs->localX + 1;
     sprite.by = cmd.CMDYB + Vdp1Regs->localY;
-    sprite.bz = z;
+    sprite.bz = priority_levels[z];
 
     sprite.cx = cmd.CMDXC + Vdp1Regs->localX + 1;
     sprite.cy = cmd.CMDYC + Vdp1Regs->localY + 1;
-    sprite.cz = z;
+    sprite.cz = priority_levels[z];
 
     sprite.dx = cmd.CMDXD + Vdp1Regs->localX;
     sprite.dy = cmd.CMDYD + Vdp1Regs->localY + 1;
 
     sprite.auv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? cur_spr.uf : 0.0f),
-                                   ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
+                                  ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
     sprite.buv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
-                                   ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
+                                  ((cmd.CMDCTRL & 0x0020) ? cur_spr.vf : 0.0f));
     sprite.cuv = PVR_PACK_16BIT_UV(((cmd.CMDCTRL & 0x0010) ? 0.0f : cur_spr.uf),
-                                   ((cmd.CMDCTRL & 0x0020) ? 0.0f : cur_spr.vf));
+                                  ((cmd.CMDCTRL & 0x0020) ? 0.0f : cur_spr.vf));
     pvr_list_prim(list, &sprite, sizeof(sprite));
+
+    priority_levels[z] += 0.000001f;
 }
 
 static void VIDDCVdp1PolygonDraw(void)  {
@@ -690,7 +760,7 @@ static void VIDDCVdp1PolygonDraw(void)  {
     s16 Y[4];
     u16 color;
     u16 CMDPMOD;
-    u8 alpha;
+    u8 alpha, z;
     pvr_vertex_t vert;
     pvr_list_t list;
 
@@ -739,11 +809,13 @@ static void VIDDCVdp1PolygonDraw(void)  {
                               vdp1cog, vdp1cob);
     }
 
+    z = Vdp2Regs->PRISA & 0x07;
+
     vert.flags = PVR_CMD_VERTEX;
     vert.u = 0.0f;
     vert.v = 0.0f;
     vert.oargb = 0;
-    vert.z = (Vdp2Regs->PRISA & 0x07) + 1;
+    vert.z = priority_levels[z];
 
     vert.x = X[3];
     vert.y = Y[3];
@@ -761,6 +833,8 @@ static void VIDDCVdp1PolygonDraw(void)  {
     vert.x = X[1];
     vert.y = Y[1];
     pvr_list_prim(list, &vert, sizeof(vert));
+
+    priority_levels[z] += 0.000001f;
 }
 
 static void VIDDCVdp1PolylineDraw(void) {
