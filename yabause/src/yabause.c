@@ -39,6 +39,10 @@
 #include "SDL.h"
 #endif
 
+#ifdef _arch_dreamcast
+#include <arch/timer.h>
+#endif
+
 #define DONT_PROFILE
 #include "profile.h"
 
@@ -397,10 +401,10 @@ void YabauseStopSlave(void) {
 u32 YabauseGetTicks(void) {
 #ifdef WIN32
    return timeGetTime();
-#else
-#ifdef HAVE_LIBSDL
+#elif defined(HAVE_LIBSDL)
    return SDL_GetTicks();
-#endif
+#elif defined(_arch_dreamcast)
+   return (u32) timer_ms_gettime64();
 #endif
 }
 

@@ -90,6 +90,13 @@ static int vdp1cor = 0;
 static int vdp1cog = 0;
 static int vdp1cob = 0;
 
+static int vdp2disptoggle = 0xFF;
+static int nbg0priority = 0;
+static int nbg1priority = 0;
+static int nbg2priority = 0;
+static int nbg3priority = 0;
+static int rbg0priority = 0;
+
 static int power_of_two(int num)    {
     int ret = 8;
 
@@ -882,33 +889,43 @@ static void VIDDCVdp2SetResolution(u16 TVMD)    {
 }
 
 static void VIDDCVdp2SetPriorityNBG0(int priority)  {
+    nbg0priority = priority;
 }
 
 static void VIDDCVdp2SetPriorityNBG1(int priority)  {
+    nbg1priority = priority;
 }
 
 static void VIDDCVdp2SetPriorityNBG2(int priority)  {
+    nbg2priority = priority;
 }
 
 static void VIDDCVdp2SetPriorityNBG3(int priority)  {
+    nbg3priority = priority;
 }
 
 static void VIDDCVdp2SetPriorityRBG0(int priority)  {
+    rbg0priority = priority;
 }
 
 static void VIDDCVdp2ToggleDisplayNBG0(void)    {
+    vdp2disptoggle ^= 0x01;
 }
 
 static void VIDDCVdp2ToggleDisplayNBG1(void)    {
+    vdp2disptoggle ^= 0x02;
 }
 
 static void VIDDCVdp2ToggleDisplayNBG2(void)    {
+    vdp2disptoggle ^= 0x04;
 }
 
 static void VIDDCVdp2ToggleDisplayNBG3(void)    {
+    vdp2disptoggle ^= 0x08;
 }
 
 static void VIDDCVdp2ToggleDisplayRBG0(void)    {
+    vdp2disptoggle ^= 0x10;
 }
 
 VideoInterface_struct VIDDC = {
