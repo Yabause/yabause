@@ -1,5 +1,6 @@
 /*  Copyright 2003-2005 Guillaume Duhamel
     Copyright 2004-2006 Theo Berkau
+    Copyright 2006      Anders Montonen
 
     This file is part of Yabause.
 
@@ -38,6 +39,7 @@
 #ifdef HAVE_LIBSDL
 #include "SDL.h"
 #endif
+#include <sys/time.h>
 
 #ifdef _arch_dreamcast
 #include <arch/timer.h>
@@ -191,6 +193,9 @@ int YabauseInit(yabauseinit_struct *init)
 
    YabauseSetVideoFormat(init->flags & 0x1);
    YabauseChangeTiming(CLKTYPE_26MHZ);
+   
+   if (init->frameskip)
+       EnableAutoFrameSkip();
 
    if (init->biospath != NULL)
    {
@@ -405,6 +410,10 @@ u32 YabauseGetTicks(void) {
    return SDL_GetTicks();
 #elif defined(_arch_dreamcast)
    return (u32) timer_ms_gettime64();
+#elif defined(__APPLE__)
+   struct timeval Time;
+   gettimeofday(&Time, NULL);
+   return (u32)(Time.tv_usec/1000);
 #endif
 }
 

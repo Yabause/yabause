@@ -1,4 +1,5 @@
 /*  Copyright 2006 Guillaume Duhamel
+    Copyright 2006 Anders Montonen
 
     This file is part of Yabause.
 
@@ -107,7 +108,12 @@ void read_settings(void) {
 	yinit.buppath = 0;
 	yinit.mpegpath = 0;
 	yinit.cartpath = 0;
-        yinit.flags = VIDEOFORMATTYPE_NTSC;
+	yinit.flags = VIDEOFORMATTYPE_NTSC;
+	
+	s = CFPreferencesCopyAppValue(CFSTR("AutoFrameSkip"),
+		kCFPreferencesCurrentApplication);
+	if (s)
+		yinit.frameskip = CFStringGetIntValue(s);
 
 	i = 0;
 	while(key_names[i]) {

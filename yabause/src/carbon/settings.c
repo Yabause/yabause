@@ -1,4 +1,5 @@
 /*  Copyright 2006 Guillaume Duhamel
+    Copyright 2006 Anders Montonen
 
     This file is part of Yabause.
 
@@ -166,6 +167,8 @@ void save_settings(WindowRef window) {
 		get_settings(window, 9), kCFPreferencesCurrentApplication);
 	CFPreferencesSetAppValue(CFSTR("MpegRomPath"),
 		get_settings(window, 10), kCFPreferencesCurrentApplication);
+    CFPreferencesSetAppValue(CFSTR("AutoFrameSkip"),
+        get_settings_c(window, 11), kCFPreferencesCurrentApplication);
 
 	i = 0;
 	while(key_names[i]) {
@@ -204,6 +207,8 @@ void load_settings(WindowRef window) {
 		kCFPreferencesCurrentApplication));
 	set_settings(window, 10, CFPreferencesCopyAppValue(CFSTR("MpegRomPath"),
 		kCFPreferencesCurrentApplication));
+    set_settings_c(window, 11, CFPreferencesCopyAppValue(CFSTR("AutoFrameSkip"),
+        kCFPreferencesCurrentApplication));
 
 	i = 0;
 	while(key_names[i]) {

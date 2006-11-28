@@ -1,5 +1,6 @@
 /*  Copyright 2003-2005 Guillaume Duhamel
     Copyright 2004-2006 Theo Berkau
+    Copyright 2006      Anders Montonen
 
     This file is part of Yabause.
 
@@ -39,6 +40,7 @@ typedef struct
    const char *cartpath;
    const char *netlinksetting;
    int flags;
+   int frameskip;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
