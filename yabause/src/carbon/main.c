@@ -26,6 +26,7 @@
 
 #define YUI_COMMAND_RUN		1
 #define YUI_COMMAND_PAUSE 	2
+#define YUI_COMMAND_RESUME  3
 
 AGLContext  myAGLContext = NULL;
 yabauseinit_struct yinit;
@@ -64,6 +65,8 @@ VideoInterface_struct *VIDCoreList[] = {
 &VIDSoft,
 NULL
 };
+
+EventLoopTimerRef EventTimer;
 
 void YuiIdle(EventLoopTimerRef a, void * b) {
 	int i;
@@ -133,12 +136,19 @@ void YuiRun(void) {
 	YabauseInit(&yinit);
 
 	InstallEventLoopTimer(GetCurrentEventLoop(), kEventDurationNoWait,
-		kEventDurationMillisecond, myFrameUPP, NULL, NULL);
+		kEventDurationMillisecond, myFrameUPP, NULL, &EventTimer);
+}
+
+static void YuiPause(const int Pause)
+{
+    EventTimerInterval Interval = (Pause ? kEventDurationForever : kEventDurationMillisecond);
+    SetEventLoopTimerNextFireTime(EventTimer, Interval);
 }
 
 OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent, void* userData)
 {
   OSStatus ret = noErr;
+  MenuRef menu;
 
   switch(GetEventClass(theEvent)) {
     case kEventClassWindow:
@@ -174,9 +184,21 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
             break;
           case YUI_COMMAND_RUN:
 	    YuiRun();
+        menu = GetMenuRef(1);
+        ChangeMenuItemAttributes(menu, 2, 0, kMenuItemAttrHidden);
+        ChangeMenuItemAttributes(menu, 3, kMenuItemAttrHidden, 0);
             break;
           case YUI_COMMAND_PAUSE:
-            printf("pause\n");
+              YuiPause(1);
+              menu = GetMenuRef(1);
+              ChangeMenuItemAttributes(menu, 2, kMenuItemAttrHidden, 0);
+              ChangeMenuItemAttributes(menu, 3, 0, kMenuItemAttrHidden);
+            break;
+        case YUI_COMMAND_RESUME:
+            YuiPause(0);
+            menu = GetMenuRef(1);
+            ChangeMenuItemAttributes(menu, 2, 0, kMenuItemAttrHidden);
+            ChangeMenuItemAttributes(menu, 3, kMenuItemAttrHidden, 0);
             break;
           default:
             ret = eventNotHandledErr;
@@ -299,6 +321,7 @@ int main () {
   SetMenuTitleWithCFString(menu, CFSTR("Emulation"));
   InsertMenuItemTextWithCFString(menu, CFSTR("Run"), 0, 0, YUI_COMMAND_RUN);
   InsertMenuItemTextWithCFString(menu, CFSTR("Pause"), 1, 0, YUI_COMMAND_PAUSE);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Resume"), 2, kMenuItemAttrHidden, YUI_COMMAND_RESUME);
   InsertMenu(menu, 0);
   DrawMenuBar();
 
