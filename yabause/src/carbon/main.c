@@ -23,10 +23,13 @@
 #include <AGL/agl.h>
 
 #include "settings.h"
+#include "cpustatus.h"
 
-#define YUI_COMMAND_RUN		1
-#define YUI_COMMAND_PAUSE 	2
-#define YUI_COMMAND_RESUME  3
+#define YUI_COMMAND_RUN		 1
+#define YUI_COMMAND_PAUSE 	 2
+#define YUI_COMMAND_RESUME   3
+#define YUI_COMMAND_SHOW_CPU 4
+#define YUI_COMMAND_HIDE_CPU 5
 
 AGLContext  myAGLContext = NULL;
 yabauseinit_struct yinit;
@@ -66,7 +69,7 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
-EventLoopTimerRef EventTimer;
+static EventLoopTimerRef EventTimer;
 
 void YuiIdle(EventLoopTimerRef a, void * b) {
 	int i;
@@ -193,12 +196,25 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
               menu = GetMenuRef(1);
               ChangeMenuItemAttributes(menu, 2, kMenuItemAttrHidden, 0);
               ChangeMenuItemAttributes(menu, 3, 0, kMenuItemAttrHidden);
+              UpdateCPUStatusWindow();
             break;
         case YUI_COMMAND_RESUME:
             YuiPause(0);
             menu = GetMenuRef(1);
             ChangeMenuItemAttributes(menu, 2, 0, kMenuItemAttrHidden);
             ChangeMenuItemAttributes(menu, 3, kMenuItemAttrHidden, 0);
+            break;
+        case YUI_COMMAND_SHOW_CPU:
+            ShowCPUStatusWindow();
+            menu = GetMenuRef(1);
+            ChangeMenuItemAttributes(menu, 4, kMenuItemAttrHidden, 0);
+            ChangeMenuItemAttributes(menu, 5, 0, kMenuItemAttrHidden);
+            break;
+        case YUI_COMMAND_HIDE_CPU:
+            HideCPUStatusWindow();
+            menu = GetMenuRef(1);
+            ChangeMenuItemAttributes(menu, 4, 0, kMenuItemAttrHidden);
+            ChangeMenuItemAttributes(menu, 5, kMenuItemAttrHidden, 0);
             break;
           default:
             ret = eventNotHandledErr;
@@ -322,6 +338,8 @@ int main () {
   InsertMenuItemTextWithCFString(menu, CFSTR("Run"), 0, 0, YUI_COMMAND_RUN);
   InsertMenuItemTextWithCFString(menu, CFSTR("Pause"), 1, 0, YUI_COMMAND_PAUSE);
   InsertMenuItemTextWithCFString(menu, CFSTR("Resume"), 2, kMenuItemAttrHidden, YUI_COMMAND_RESUME);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Show CPU status"), 3, 0, YUI_COMMAND_SHOW_CPU);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Hide CPU status"), 4, kMenuItemAttrHidden, YUI_COMMAND_HIDE_CPU);
   InsertMenu(menu, 0);
   DrawMenuBar();
 
