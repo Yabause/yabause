@@ -92,19 +92,9 @@ static void yui_file_entry_class_init (YuiFileEntryClass * klass) {
 
 static void yui_file_entry_init (YuiFileEntry * yfe) {
         gtk_container_set_border_width(GTK_CONTAINER(yfe), 10);
-
-        yfe->entry = gtk_entry_new ();
-
-        gtk_box_pack_start(GTK_BOX(yfe), yfe->entry, TRUE, TRUE, 0);
-        gtk_entry_set_invisible_char(GTK_ENTRY(yfe->entry), 9679);
-
-        yfe->button = gtk_button_new_with_mnemonic ("Browse");
-        g_signal_connect(yfe->button, "clicked", G_CALLBACK(yui_file_entry_browse), yfe->entry);
-
-        gtk_box_pack_start(GTK_BOX(yfe), yfe->button, FALSE, FALSE, 0);
 }
 
-GtkWidget * yui_file_entry_new(GKeyFile * keyfile, const gchar * group, const gchar * key) {
+GtkWidget * yui_file_entry_new(GKeyFile * keyfile, const gchar * group, const gchar * key, gint flags, const gchar * label) {
 	GtkWidget * entry;
 	YuiFileEntry * yfe;
 	gchar * entryText;
@@ -112,6 +102,20 @@ GtkWidget * yui_file_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 	entry = GTK_WIDGET(g_object_new(yui_file_entry_get_type(), "spacing", 10,
 		"key-file", keyfile, "group", group, "key", key, 0));
 	yfe = YUI_FILE_ENTRY(entry);
+
+	if (label) {
+        	gtk_box_pack_start(GTK_BOX(yfe), gtk_label_new_with_mnemonic(label), FALSE, FALSE, 0);
+	}
+
+        yfe->entry = gtk_entry_new ();
+        gtk_box_pack_start(GTK_BOX(yfe), yfe->entry, TRUE, TRUE, 0);
+
+	if (flags & YUI_FILE_ENTRY_BROWSE) {
+	        yfe->button = gtk_button_new_with_mnemonic ("Browse");
+        	g_signal_connect(yfe->button, "clicked", G_CALLBACK(yui_file_entry_browse), yfe->entry);
+	        gtk_box_pack_start(GTK_BOX(yfe), yfe->button, FALSE, FALSE, 0);
+	}
+
 	entryText = g_key_file_get_value(yfe->keyfile, yfe->group, yfe->key, 0);
 	if ( !entryText ) entryText = "";
         gtk_entry_set_text(GTK_ENTRY(yfe->entry), entryText );

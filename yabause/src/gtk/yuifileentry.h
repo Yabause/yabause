@@ -33,6 +33,7 @@ G_BEGIN_DECLS
 #define IS_YUI_FILE_ENTRY(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), YUI_FILE_ENTRY_TYPE))
 #define IS_YUI_FILE_ENTRY_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  YUI_FILE_ENTRY_TYPE))
 
+#define YUI_FILE_ENTRY_BROWSE	1
 
 typedef struct _YuiFileEntry       YuiFileEntry;
 typedef struct _YuiFileEntryClass  YuiFileEntryClass;
@@ -57,7 +58,7 @@ struct _YuiFileEntryClass
 };
 
 GType          yui_file_entry_get_type        (void);
-GtkWidget*     yui_file_entry_new             (GKeyFile *, const gchar *, const gchar *);
+GtkWidget*     yui_file_entry_new             (GKeyFile *, const gchar *, const gchar *, gint flags, const gchar * label);
 
 G_END_DECLS
 

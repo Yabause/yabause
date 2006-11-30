@@ -57,48 +57,35 @@ static void yui_page_class_init (YuiPageClass * klass) {
 static void yui_page_init (YuiPage * yp) {
 }
 
-GtkWidget * yui_page_new(GKeyFile * keyfile, const gchar * group, YuiPageDesc * desc) {
-	GtkWidget * label;
-	GtkWidget * frame;
-	GtkWidget * box;
+GtkWidget * yui_page_new(GKeyFile * keyfile) {
 	GtkWidget * widget;
 	YuiPage * yp;
-	guint i, j;
 
 	widget = GTK_WIDGET(g_object_new(yui_page_get_type(), 0));
 	yp = YUI_PAGE(widget);
 
-	j = 0;
-	while(desc[j].name) {
-		frame = gtk_frame_new(NULL);
-  
-		gtk_box_pack_start(GTK_BOX(yp), frame, FALSE, TRUE, 0);
-		gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_NONE);
-
-		box = gtk_vbox_new(FALSE, 0);
-		gtk_container_add(GTK_CONTAINER(frame), box);
-
-		label = gtk_label_new(desc[j].name);
-		gtk_frame_set_label_widget(GTK_FRAME(frame), label);
-		gtk_label_set_use_markup(GTK_LABEL(label), TRUE);
-
-		i = 0;
-		while(desc[j].items[i].name) {
-			switch(desc[j].items[i].type) {
-				case YUI_FILE_SETTING:
-					gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, group, desc[j].items[i].name));
-					break;
-				case YUI_RANGE_SETTING:
-					gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, group, desc[j].items[i].name, desc[j].items[i].data));
-					break;
-				case YUI_RESOLUTION_SETTING:
-					gtk_container_add(GTK_CONTAINER(box), yui_resolution_new(keyfile, group));
-					break;
-			}
-			i++;
-		}
-		j++;
-	}
+	yp->keyfile = keyfile;
 
 	return widget;
+}
+
+GtkWidget * yui_page_add(YuiPage * yp, const gchar * name) {
+	GtkWidget * label;
+	GtkWidget * frame;
+	GtkWidget * box;
+	GtkWidget * widget;
+
+	frame = gtk_frame_new(NULL);
+  
+	gtk_box_pack_start(GTK_BOX(yp), frame, FALSE, TRUE, 0);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_NONE);
+
+	box = gtk_vbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(frame), box);
+
+	label = gtk_label_new(name);
+	gtk_frame_set_label_widget(GTK_FRAME(frame), label);
+	gtk_label_set_use_markup(GTK_LABEL(label), TRUE);
+
+	return box;
 }

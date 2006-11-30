@@ -60,11 +60,12 @@ struct _YuiRangeClass
 {
   GtkHBoxClass parent_class;
 
-  void (* yui_range) (YuiRange * yfe);
+  void (* yui_range_change) (YuiRange * yfe);
 };
 
 GType          yui_range_get_type       (void);
 GtkWidget *    yui_range_new            (GKeyFile * keyfile, const gchar * group, const gchar * key, YuiRangeItem * items);
+gint           yui_range_get_active	(YuiRange * range);
 
 G_END_DECLS
 

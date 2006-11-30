@@ -36,25 +36,14 @@ G_BEGIN_DECLS
 #define YUI_RANGE_SETTING	2
 #define YUI_RESOLUTION_SETTING	3
 
-typedef struct _YuiPageItem   YuiPageItem;
-typedef struct _YuiPageDesc   YuiPageDesc;
 typedef struct _YuiPage       YuiPage;
 typedef struct _YuiPageClass  YuiPageClass;
-
-struct _YuiPageItem {
-	const gchar * name;
-	guint type;
-	gpointer data;
-};
-
-struct _YuiPageDesc {
-	const gchar * name;
-	YuiPageItem * items;
-};
 
 struct _YuiPage
 {
   GtkVBox vbox;
+
+  GKeyFile * keyfile;
 };
 
 struct _YuiPageClass
@@ -65,8 +54,10 @@ struct _YuiPageClass
 };
 
 GType          yui_page_get_type        (void);
-GtkWidget *    yui_page_new             (GKeyFile * keyfile, const gchar * group, YuiPageDesc * desc);
+GtkWidget *    yui_page_new             (GKeyFile * keyfile);
+
+GtkWidget *    yui_page_add		(YuiPage * yp, const gchar * name);
 
 G_END_DECLS
 
-#endif /* YUI_PAGE_H */
+#endif

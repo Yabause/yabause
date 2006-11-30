@@ -298,7 +298,6 @@ void yui_conf(void) {
 	GtkWidget * dialog;
 
 	dialog = create_dialog1(YUI_WINDOW(yui));
-	gtk_widget_show_all(dialog);
 
 	result = gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);

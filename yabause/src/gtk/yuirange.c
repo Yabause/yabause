@@ -77,6 +77,10 @@ static void yui_range_get_property(GObject * object, guint property_id,
 		GValue * value, GParamSpec * pspec) {
 }
 
+enum { YUI_RANGE_CHANGED_SIGNAL, LAST_SIGNAL };
+
+static guint yui_range_signals[LAST_SIGNAL] = { 0 };
+
 static void yui_range_class_init (YuiRangeClass * klass) {
 	GParamSpec * param;
 
@@ -94,6 +98,9 @@ static void yui_range_class_init (YuiRangeClass * klass) {
 
 	param = g_param_spec_pointer("items", 0, 0, G_PARAM_READABLE | G_PARAM_WRITABLE);
 	g_object_class_install_property(G_OBJECT_CLASS(klass), PROP_ITEMS, param);
+
+	yui_range_signals[YUI_RANGE_CHANGED_SIGNAL] = g_signal_new ("changed", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
+			G_STRUCT_OFFSET(YuiRangeClass, yui_range_change), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
 static void yui_range_init (YuiRange * yfe) {
@@ -136,4 +143,9 @@ GtkWidget * yui_range_new(GKeyFile * keyfile, const gchar * group, const gchar *
 static void yui_range_changed(GtkWidget * entry, YuiRange * yfe) {
 	g_key_file_set_value(yfe->keyfile, yfe->group, yfe->key,
 			yfe->items[gtk_combo_box_get_active(GTK_COMBO_BOX(yfe->combo))].value);
+	g_signal_emit(G_OBJECT(yfe), yui_range_signals[YUI_RANGE_CHANGED_SIGNAL], 0);
+}
+
+gint yui_range_get_active(YuiRange * range) {
+	return gtk_combo_box_get_active(range->combo);
 }

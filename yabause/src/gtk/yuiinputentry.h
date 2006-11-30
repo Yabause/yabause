@@ -33,7 +33,6 @@ G_BEGIN_DECLS
 #define IS_YUI_INPUT_ENTRY(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), YUI_INPUT_ENTRY_TYPE))
 #define IS_YUI_INPUT_ENTRY_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), YUI_INPUT_ENTRY_TYPE))
 
-
 typedef struct _YuiInputEntry       YuiInputEntry;
 typedef struct _YuiInputEntryClass  YuiInputEntryClass;
 
