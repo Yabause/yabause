@@ -29,7 +29,7 @@ OBJS = cdbase.o cs0.o cs1.o cs2.o debug.o memory.o peripheral.o profile.o \
  error.o bios.o sh2idle.o netlink.o
 C68K_OBJS = c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o
 ARCH_OBJS = dreamcast/yui.o dreamcast/perdc.o dreamcast/viddc.o \
- dreamcast/localtime.o
+ dreamcast/localtime.o dreamcast/cd.o
 
 # OBJS += persdl.o sndsdl.o vdsdlgl.o vidsdlglsoft ygl.o
 
@@ -47,13 +47,23 @@ yabause.elf: $(OBJS) $(ARCH_OBJS) $(C68K_OBJS)
 yabause.bin: yabause.elf
 	$(KOS_OBJCOPY) -R .stack -O binary yabause.elf yabause.bin
 
+cdtest.elf: dreamcast/cd.o tools/cdtest.o
+	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) \
+	-o $@ $(KOS_START) $^ \
+	 $(KOS_LIBS)
+
+cdtest.bin: cdtest.elf
+	$(KOS_OBJCOPY) -R .stack -O binary cdtest.elf cdtest.bin
+
 run: yabause.bin
 	$(KOS_LOADER) yabause.bin
 
 clean:
 	rm -f $(OBJS) $(ARCH_OBJS)
+	rm -f tools/cdtest.o
 	rm -f yabause.elf
-	rm -f output.bin
+	rm -f cdtest.elf
+	rm -f cdtest.bin
 
 distclean: clean
 	rm -f yabause.bin

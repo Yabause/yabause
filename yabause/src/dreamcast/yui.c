@@ -36,6 +36,7 @@ NULL
 };
 
 CDInterface *CDCoreList[] = {
+&ArchCD,
 &DummyCD,
 NULL
 };

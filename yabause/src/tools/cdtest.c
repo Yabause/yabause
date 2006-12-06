@@ -130,7 +130,7 @@ int IsTOCValid(u32 *TOC)
 
 int main(int argc, char *argv[])
 {
-   char *cdrom_name;
+   char *cdrom_name = NULL;
    u32 f_size=0;
    int status;
    char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -139,6 +139,7 @@ int main(int argc, char *argv[])
 
    atexit(cleanup);
 
+#ifndef _arch_dreamcast
    if (argc != 2)
    {
       ProgramUsage();
@@ -147,6 +148,7 @@ int main(int argc, char *argv[])
    printf("%s v%s - by Cyber Warrior X(c)%s\n", PROG_NAME, VER_NAME, COPYRIGHT_YEAR);
 
    cdrom_name = argv[1];
+#endif
 
    if (ArchCD.Init(cdrom_name) != 0)
    {

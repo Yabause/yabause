@@ -38,8 +38,10 @@
 #define SAT2YAB1(temp)	((temp & 0x8000) | (temp & 0x1F) << 10 | (temp & 0x3E0) | (temp & 0x7C00) >> 10)
 #define SAT2YAB32(alpha, temp)	(alpha << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
 
-/* 24-bit color, unimplemented for now */
-#define SAT2YAB2(dot1, dot2)	0
+#define SAT2YAB2(dot1, dot2)    ((dot1 & 0xF8) << 7 | (dot2 & 0xF800) >> 6 | \
+                                 (dot2 & 0x00F8) >> 3)
+#define SAT2YAB2_32(alpha, dot1, dot2)  (alpha << 24 | ((dot1 & 0xFF) << 16) | \
+                                         (dot2 & 0xFF00) | (dot2 & 0xFF))
 
 #define COLOR_ADDt(b)		(b > 0xFF ? 0xFF : (b < 0 ? 0 : b))
 #define COLOR_ADDb(b1,b2)	COLOR_ADDt((signed) (b1) + (b2))
@@ -123,8 +125,7 @@ static u32 Vdp2ColorRamGetColor32(u32 colorindex, int alpha)    {
             colorindex &= 0xFFF;
             tmp1 = T2ReadWord(Vdp2ColorRam, colorindex);
             tmp2 = T2ReadWord(Vdp2ColorRam, colorindex+2);
-            //return SAT2YAB2(alpha, tmp1, tmp2);
-            return 0; /* FIXME */
+            return SAT2YAB2_32(alpha, tmp1, tmp2);
         }
         default:
             break;
@@ -151,8 +152,7 @@ static uint16 Vdp2ColorRamGetColor(u32 colorindex)   {
             colorindex &= 0xFFF;
             tmp = T2ReadWord(Vdp2ColorRam, colorindex);
             tmp2 = T2ReadWord(Vdp2ColorRam, colorindex+2);
-            //return SAT2YAB2(alpha, tmp1, tmp2);
-            return 0; /* FIXME */
+            return SAT2YAB2(tmp, tmp2);
         }
         default:
             break;
@@ -162,7 +162,7 @@ static uint16 Vdp2ColorRamGetColor(u32 colorindex)   {
 }
 
 static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
-    u32 charAddr = (cmd->CMDSRCA * 8) & 0x7FFFF;
+    u32 charAddr = cmd->CMDSRCA * 8;
     uint16 dot, dot2;
     int queuepos = 0;
     uint32 *store_queue;
@@ -186,7 +186,7 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
             // 4 bpp LUT mode
             u16 temp;
             u32 colorLut = cmd->CMDCOLR * 8;
-            u16 i, j;
+            int i, j;
             
             for(i = 0; i < cur_spr.h; ++i)  {
                 store_queue = (uint32 *) (0xE0000000 | 
@@ -195,18 +195,18 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
                 for(j = 0; j < cur_spr.w; j += 2)    {
                     dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
-                    if (((dot & 0xF) == 0) && !SPD) dot2 = 0;
+                    if(((dot & 0xF) == 0) && !SPD) dot2 = 0;
                     else    {
                         temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + 
                                                     colorLut) & 0x7FFFF);
 
-                        if (temp & 0x8000)
+                        if(temp & 0x8000)
                             dot2 = SAT2YAB1(temp);
                         else
                             dot2 = Vdp2ColorRamGetColor(temp);                     
                     }
                     
-                    if (((dot >> 4) == 0) && !SPD)  ;
+                    if(((dot >> 4) == 0) && !SPD)  dot = 0;
                     else    {
                         temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) &
                                           0x7FFFF);
@@ -239,16 +239,16 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
         case 5:
         {
             // 16 bpp Bank mode
-            u16 i, j;
+            int i, j;
 
             for(i = 0; i < cur_spr.h; ++i)  {
                 store_queue = (uint32 *) (0xE0000000 | 
                                           (cur_addr & 0x03FFFFE0));
 
                 for(j = 0; j < cur_spr.w; j += 2)  {
-                    dot = T1ReadWord(Vdp1Ram, charAddr);
-                    dot2 = T1ReadWord(Vdp1Ram, charAddr + 2);
-                    charAddr = (charAddr + 4) & 0x7FFFF;
+                    dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
+                    dot2 = T1ReadWord(Vdp1Ram, (charAddr + 2) & 0x7FFFF);
+                    charAddr = charAddr + 4;
 
                     if((dot == 0) && !SPD)  ;
                     else
@@ -314,6 +314,10 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
     }
 
     hdr->mode3 = ((cur_base & 0x00FFFFF8) >> 3) | (PVR_TXRFMT_NONTWIDDLED);
+
+    /* Make sure everything is aligned nicely... */
+    cur_addr = (cur_addr & 0x03FFFFE0) + 0x20;
+
     return 1;
 }
 
@@ -786,14 +790,6 @@ static void VIDDCVdp1PolygonDraw(void)  {
     /* Don't bother rendering completely transparent polygons */
     if(!(color & 0x8000) && !(CMDPMOD & 0x0040))    {
         return;
-    }
-    else if(!(color & 0x8000))   {
-        /* Hack to make it so that giant polygons don't clobber the rest of
-           the output... */
-        if(X[0] == 0 && X[3] == 0 && X[1] == 319 && X[2] == 319 && Y[0] == 0 &&
-           Y[1] == 0 && Y[2] == 255 && Y[3] == 255) {
-            return;
-        }
     }
 
     if ((CMDPMOD & 0x0007) == 0x0003) {
