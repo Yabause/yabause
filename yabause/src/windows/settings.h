@@ -41,3 +41,6 @@ extern char percoretype;
 extern u8 regionid;
 extern int disctype;
 extern int carttype;
+extern DWORD netlinklocalip;
+extern DWORD netlinkremoteip;
+extern int netlinkport;

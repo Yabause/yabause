@@ -51,6 +51,9 @@ int enableautofskip=0;
 u8 regionid=0;
 int disctype;
 int carttype;
+DWORD netlinklocalip=MAKEIPADDRESS(127, 0, 0, 1);
+DWORD netlinkremoteip=MAKEIPADDRESS(127, 0, 0, 1);
+int netlinkport=7845;
 
 extern HINSTANCE y_hInstance;
 extern VideoInterface_struct *VIDCoreList[];
@@ -62,6 +65,9 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam);
+
+LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                        LPARAM lParam);
 
 LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam);
@@ -795,6 +801,68 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                sprintf(tempstr, "%d", sndvolume);
                WritePrivateProfileString("Sound", "Volume", tempstr, inifilename);
                ScspSetVolume(sndvolume);
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_DESTROY:
+      {
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                        LPARAM lParam)
+{
+   char tempstr[MAX_PATH];
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         SendDlgItemMessage(hDlg, IDC_LOCALIP, IPM_SETADDRESS, 0, netlinklocalip);
+         SendDlgItemMessage(hDlg, IDC_REMOTEIP, IPM_SETADDRESS, 0, netlinkremoteip);
+
+         sprintf(tempstr, "%d", netlinkport);
+         SetDlgItemText(hDlg, IDC_PORTET, tempstr);
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+
+               // Local IP
+               SendDlgItemMessage(hDlg, IDC_LOCALIP, IPM_GETADDRESS, 0, &netlinklocalip);
+               sprintf(tempstr, "%d.%d.%d.%d", FIRST_IPADDRESS(netlinklocalip), SECOND_IPADDRESS(netlinklocalip), THIRD_IPADDRESS(netlinklocalip), FOURTH_IPADDRESS(netlinklocalip));
+               WritePrivateProfileString("Netlink", "LocalIP", tempstr, inifilename);
+
+               // Remote IP
+               SendDlgItemMessage(hDlg, IDC_REMOTEIP, IPM_GETADDRESS, 0, &netlinkremoteip);
+               sprintf(tempstr, "%d.%d.%d.%d", FIRST_IPADDRESS(netlinkremoteip), SECOND_IPADDRESS(netlinkremoteip), THIRD_IPADDRESS(netlinkremoteip), FOURTH_IPADDRESS(netlinkremoteip));
+               WritePrivateProfileString("Netlink", "RemoteIP", tempstr, inifilename);
+
+               // Port Number
+               GetDlgItemText(hDlg, IDC_PORTET, tempstr, MAX_PATH);
+               netlinkport = atoi(tempstr);
+               WritePrivateProfileString("Netlink", "Port", tempstr, inifilename);
                return TRUE;
             }
             case IDCANCEL:

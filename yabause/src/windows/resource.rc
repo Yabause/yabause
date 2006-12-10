@@ -335,6 +335,24 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
+NETLINKSETTINGSDLG DIALOG DISCARDABLE  0, 0, 174, 81
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Netlink Settings"
+FONT 8, "Courier New"
+BEGIN
+    GROUPBOX "Netlink Settings", -1, 3, 2, 168, 57, WS_CHILD | WS_VISIBLE
+    LTEXT           "Local IP", -1, 10, 14, 40, 10
+    CONTROL         "", IDC_LOCALIP, WC_IPADDRESS, WS_VISIBLE | WS_CHILD, 50, 13, 80, 11
+    LTEXT           "Remote IP", -1, 10, 28, 40, 10
+    CONTROL         "", IDC_REMOTEIP, WC_IPADDRESS, WS_VISIBLE | WS_CHILD, 50, 27, 80, 11
+    LTEXT           "Port", -1, 10, 42, 30, 10
+    EDITTEXT IDC_PORTET, 50, 41, 30, 11, ES_NUMBER
+    DEFPUSHBUTTON   "&OK",IDOK,82,63,40,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,127,63,40,14
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
 INPUTSETTINGSDLG DIALOG DISCARDABLE  0, 0, 194, 52
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Peripheral Settings"

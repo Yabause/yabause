@@ -382,6 +382,7 @@ int YuiInit(void)
    static char szAppName[128];
    WNDCLASS MyWndClass;
    int ret;
+   int ip[4];
 
    y_hInstance = GetModuleHandle(NULL);
 
@@ -494,6 +495,17 @@ int YuiInit(void)
 
    GetPrivateProfileString("General", "CartType", "", tempstr, MAX_PATH, inifilename);
 
+   // Grab Netlink Settings
+   GetPrivateProfileString("Netlink", "LocalIP", "127.0.0.1", tempstr, MAX_PATH, inifilename);
+   sscanf(tempstr, "%d.%d.%d.%d", ip, ip+1, ip+2, ip+3);
+   netlinklocalip = MAKEIPADDRESS(ip[0], ip[1], ip[2], ip[3]);
+
+   GetPrivateProfileString("Netlink", "RemoteIP", "127.0.0.1", tempstr, MAX_PATH, inifilename);
+   sscanf(tempstr, "%d.%d.%d.%d", ip, ip+1, ip+2, ip+3);
+   netlinkremoteip = MAKEIPADDRESS(ip[0], ip[1], ip[2], ip[3]);
+
+   GetPrivateProfileString("Netlink", "Port", "7845", tempstr, MAX_PATH, inifilename);
+   netlinkport = atoi(tempstr);
 
    // Figure out how much of the screen is useable
 //   if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workarearect, 0) == FALSE)

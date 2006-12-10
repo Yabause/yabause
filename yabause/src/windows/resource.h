@@ -139,6 +139,13 @@
 #define IDC_SLVOLUME                    1002
 
 //////////////////////////////////////////////////////////////////////////////
+// Netlink Settings stuff
+
+#define IDC_LOCALIP                     1001
+#define IDC_REMOTEIP                    1002
+#define IDC_PORTET                      1003
+
+//////////////////////////////////////////////////////////////////////////////
 // Input Settings stuff
 
 #define IDC_PAD1PB                      1001
