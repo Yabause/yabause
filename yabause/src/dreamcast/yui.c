@@ -17,7 +17,9 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+
 #include <stdio.h>
+#include <arch/arch.h>
 
 #include "yui.h"
 #include "peripheral.h"
@@ -52,56 +54,28 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
-int stop;
-
 const char *bios = "/pc/saturn.bin";
-const char *iso_or_cd = 0;
-const char *backup_ram = "/ram/backup.ram";
-int cdcore = CDCORE_DEFAULT;
 
-void YuiSetBiosFilename(const char *biosfilename)   {
-    bios = biosfilename;
-}
-
-void YuiSetIsoFilename(const char *isofilename) {
-    //cdcore = CDCORE_ISO;
-    //iso_or_cd = isofilename;
-}
-
-void YuiSetCdromFilename(const char *cdromfilename) {
-    //cdcore = CDCORE_ARCH;
-    //iso_or_cd = cdromfilename;
-}
-
-void YuiHideShow(void)  {
-}
-
-void YuiQuit(void)  {
-    stop = 1;
-}
-
-int YuiInit(void) {
+int YuiInit(void)   {
     yabauseinit_struct yinit;
-
-    stop = 0;
 
     yinit.percoretype = PERCORE_DC;
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_DC;
-    yinit.sndcoretype = 0;
-    yinit.cdcoretype = cdcore;
+    yinit.sndcoretype = SNDCORE_DUMMY;
+    yinit.cdcoretype = CDCORE_ARCH;
     yinit.carttype = CART_NONE;
     yinit.regionid = REGION_AUTODETECT;
     yinit.biospath = bios;
-    yinit.cdpath = iso_or_cd;
-    yinit.buppath = backup_ram;
+    yinit.cdpath = NULL;
+    yinit.buppath = NULL;
     yinit.mpegpath = NULL;
     yinit.cartpath = NULL;
 
     if(YabauseInit(&yinit) != 0)
       return -1;
 
-    while (!stop)   {
+    for(;;) {
       if(PERCore->HandleEvents() != 0)
          return -1;
     }
@@ -111,7 +85,7 @@ int YuiInit(void) {
 
 void YuiErrorMsg(const char *error_text)    {
     fprintf(stderr, "Error: %s\n", error_text);
-    stop = 1;
+    arch_exit();
 }
 
 /* stub for now... just to make things compile again... */

@@ -1,4 +1,4 @@
-/*  Copyright 2005 Lawrence Sebald
+/*  Copyright 2005-2006 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -20,6 +20,7 @@
 #include "dreamcast/perdc.h"
 #include "yabause.h"
 #include "yui.h"
+#include "vdp2.h"
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
@@ -27,7 +28,6 @@
 int PERDCInit(void);
 void PERDCDeInit(void);
 int PERDCHandleEvents(void);
-void PERDCNothing(void);
 
 extern u16 buttonbits;
 
@@ -115,7 +115,4 @@ int PERDCHandleEvents(void)	{
 		return -1;
 
 	return 0;
-}
-
-void PERDCNothing(void)	{
 }
