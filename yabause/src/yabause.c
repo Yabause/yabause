@@ -504,6 +504,13 @@ void YabauseSpeedySetup(void)
    MSH2->regs.MACH = 0x00000000;
    MSH2->regs.MACL = 0x00000000;
    MSH2->regs.PR = 0x00000000;
+
+   // Set VDP2 register to sane values
+   Vdp2Regs->ZMXN0.part.I = 1;
+   Vdp2Regs->ZMYN0.part.I = 1;
+   Vdp2Regs->ZMXN1.part.I = 1;
+   Vdp2Regs->ZMYN1.part.I = 1;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
