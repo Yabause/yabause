@@ -143,7 +143,7 @@ target_os = @target_os@
 target_vendor = @target_vendor@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
-EXTRA_DIST = cd.cc localtime.c perdc.c perdc.h viddc.c viddc.h yui.c yui.cc
+EXTRA_DIST = localtime.c perdc.c perdc.h viddc.c viddc.h yui.c
 all: all-am
 
 .SUFFIXES:
