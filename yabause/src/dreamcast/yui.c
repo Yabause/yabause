@@ -19,7 +19,12 @@
 */
 
 #include <stdio.h>
+#include <time.h>
 #include <arch/arch.h>
+#include <dc/video.h>
+#include <dc/biosfont.h>
+#include <dc/maple.h>
+#include <dc/maple/controller.h>
 
 #include "yui.h"
 #include "peripheral.h"
@@ -71,6 +76,8 @@ int YuiInit(void)   {
     yinit.buppath = NULL;
     yinit.mpegpath = NULL;
     yinit.cartpath = NULL;
+    yinit.frameskip = 0;
+    yinit.flags = VIDEOFORMATTYPE_NTSC;
 
     if(YabauseInit(&yinit) != 0)
       return -1;
@@ -92,8 +99,70 @@ void YuiErrorMsg(const char *error_text)    {
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)   {
 }
 
+void DoGui()  {
+    struct coord    {
+        int x;
+        int y;
+    };
+
+    struct coord snowflakes[1024];
+    int i;
+    int offset;
+    int start_pressed = 0;
+
+    srand(time(NULL));
+
+    for(i = 0; i < 1024; ++i)    {
+        snowflakes[i].x = (rand() % 640);
+        snowflakes[i].y = -(rand() % 480);
+    }
+
+    while(!start_pressed)   {
+        offset = 64 * 640 + 64; /* 64 pixels in from the left, 64 down */
+        
+        bfont_draw_str(vram_s + offset, 640, 0, "Yabause 0.7.3");
+        offset += 640 * 128;
+        bfont_draw_str(vram_s + offset, 640, 0,
+                       "Please insert a Sega Saturn CD");
+        offset += 640 * 24;
+        bfont_draw_str(vram_s + offset, 640, 0, "and Press Start!");
+
+        for(i = 0; i < 1024; ++i)    {
+            int dx = 1 - (rand() % 3);
+
+            if(snowflakes[i].y >= 0)
+                vram_s[640 * snowflakes[i].y + snowflakes[i].x] = 0x0000;
+
+            snowflakes[i].x += dx;
+            snowflakes[i].y += 1;
+
+            if(snowflakes[i].x < 0)
+                snowflakes[i].x = 639;
+            else if(snowflakes[i].x > 639)
+                snowflakes[i].x = 0;
+
+            if(snowflakes[i].y > 479)
+                snowflakes[i].y = 0;
+
+            if(snowflakes[i].y >= 0)
+                vram_s[640 * snowflakes[i].y + snowflakes[i].x] = 0xD555;
+        }
+
+        MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+        if (st->buttons & CONT_START)
+            start_pressed = 1;
+        MAPLE_FOREACH_END()
+
+        vid_waitvbl();
+        vid_flip(1);
+    }
+}
+
 int main(int argc, char *argv[])    {
     printf("...\n");
+
+    bfont_set_encoding(BFONT_CODE_ISO8859_1);
+    DoGui();
     YuiInit();
 
     return 0;

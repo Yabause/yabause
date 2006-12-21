@@ -29,8 +29,8 @@
 
 /* This code borrowed from KallistiOS */
 /* GD-Rom BIOS calls... named mostly after Marcus' code. None have more
-than two parameters; R7 (fourth parameter) needs to describe
-which syscall we want. */
+   than two parameters; R7 (fourth parameter) needs to describe
+   which syscall we want. */
 
 #define MAKE_SYSCALL(rs, p1, p2, idx) \
     uint32 *syscall_bc = (uint32*)0x8c0000bc; \
@@ -47,13 +47,13 @@ int DCCDGetStatus(void);
 int DCCDReadSectorFAD(u32, void *);
 
 CDInterface ArchCD = {
-	CDCORE_ARCH,
-	"Dreamcast CD Drive",
-	DCCDInit,
-	DCCDDeInit,
-	DCCDGetStatus,
-	DCCDReadTOC,
-	DCCDReadSectorFAD
+    CDCORE_ARCH,
+    "Dreamcast CD Drive",
+    DCCDInit,
+    DCCDDeInit,
+    DCCDGetStatus,
+    DCCDReadTOC,
+    DCCDReadSectorFAD
 };
 
 /* This is mostly taken from the KallistiOS cdrom_reinit() function */
@@ -98,7 +98,7 @@ int DCCDInit(const char * cdrom_name)   {
 
 int DCCDDeInit(void)    {
     cdrom_reinit();
-	return 0;
+    return 0;
 }
 
 
@@ -185,5 +185,5 @@ int DCCDReadSectorFAD(u32 FAD, void *buffer)    {
         cdrom_read_sectors(buffer, FAD, 1);
     }
 
-	return 1;
+    return 1;
 }
