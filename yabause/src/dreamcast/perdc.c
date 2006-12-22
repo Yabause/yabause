@@ -108,6 +108,17 @@ int PERDCHandleEvents(void)	{
                 buttonbits &= 0xFFF7;
             else
                 buttonbits |= 0x0008;
+
+            if(state->joyx > 20)
+                buttonbits &= 0xFDFF;
+            else
+                buttonbits |= 0x0200;
+
+            if(state->joyy > 20)
+                buttonbits &= 0xFFEF;
+            else
+                buttonbits |= 0x0010;
+
         }
     }
 

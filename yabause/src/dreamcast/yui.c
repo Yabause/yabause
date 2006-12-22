@@ -25,6 +25,7 @@
 #include <dc/biosfont.h>
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
+#include <kos/fs.h>
 
 #include "yui.h"
 #include "peripheral.h"
@@ -59,7 +60,7 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
-const char *bios = "/pc/saturn.bin";
+const char *bios = "/ram/saturn.bin";
 
 int YuiInit(void)   {
     yabauseinit_struct yinit;
@@ -109,6 +110,7 @@ void DoGui()  {
     int i;
     int offset;
     int start_pressed = 0;
+    int phase = 0;
 
     srand(time(NULL));
 
@@ -122,10 +124,31 @@ void DoGui()  {
         
         bfont_draw_str(vram_s + offset, 640, 0, "Yabause 0.7.3");
         offset += 640 * 128;
-        bfont_draw_str(vram_s + offset, 640, 0,
-                       "Please insert a Sega Saturn CD");
-        offset += 640 * 24;
-        bfont_draw_str(vram_s + offset, 640, 0, "and Press Start!");
+
+        if(phase == 0)  {
+            FILE *fp;
+
+            fp = fopen("/cd/saturn.bin", "r");
+            if(fp)  {
+                fclose(fp);
+
+                fs_copy("/cd/saturn.bin", bios);
+                phase = 1;
+                continue;
+            }
+
+            bfont_draw_str(vram_s + offset, 640, 0,
+                           "Please insert a CD containing the Saturn BIOS");
+            offset += 640 * 24;
+            bfont_draw_str(vram_s + offset, 640, 0,
+                           "on the root of the disc, named saturn.bin.");
+        }
+        else    {
+            bfont_draw_str(vram_s + offset, 640, 0,
+                           "Please insert a Sega Saturn CD");
+            offset += 640 * 24;
+            bfont_draw_str(vram_s + offset, 640, 0, "and press start.");
+        }
 
         for(i = 0; i < 1024; ++i)    {
             int dx = 1 - (rand() % 3);
