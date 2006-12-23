@@ -1,4 +1,4 @@
-0.7.2 -> 0.?.?
+0.7.2 -> 0.8.0
  cart:
   - Moved Netlink code to its own file: netlink.c
   - Improved Netlink AT command handling. Most games using the X-Band software
