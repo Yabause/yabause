@@ -1,3 +1,79 @@
+0.7.2 -> 0.?.?
+ cart:
+  - Moved Netlink code to its own file: netlink.c
+  - Improved Netlink AT command handling. Most games using the X-Band software
+    should work now.
+  - Fixed a number of bugs that were causing strange behaviour in Netlink
+    emulation.
+  - Added Modem states. Online Mode is now handled correctly.
+  - Added Networking code that allows two Yabause instances to communicate
+    with each other. Still somewhat buggy.
+ cd block:
+  - Fixed an issue where games that didn't specify an index along with the
+    track when playing cd audio didn't work correctly.
+ vdp1:
+  - Code cleanups.
+ vdp2:
+  - Code cleanups.
+  - Adjusted frameskip code so it skips up to a maximum of 9 frames at a time.
+ direct sound core:
+  - Fixed a bug that was screwing up the buffer position. Now it's almost
+    perfect(at the very least there's no clicks or pops anymore).
+ sdl sound core:
+  - Fixed a bug that was screwing up the buffer position. Now it's almost
+    perfect(at the very least there's no clicks or pops anymore).
+ software video core:
+  - Polygon drawing improvements
+  - Removed the silly y-axis clipping technique
+  - Added a filter for clipping detection
+  - Added vdp1 "end codes" in textures, but didn't find a game that use it
+    yet, please report bugs.
+  - Code Cleanups
+  - Fixed a potential bug in polygons
+  - Fixed a bug in polygon clipping
+ linux port:
+  - Code cleanups
+  - Changed a few things in configure script to fix compilation problems when
+    OpenGL and/or gtkglext were not present.
+  - Added a log popup window.
+  - Added a screenshot window on gtk port.
+  - Fixed Pause/Screenshot bug.
+  - Removed the "Keep ratio" setting as it can't be done in gtk and
+    replaced it by a "Fullscreen" setting.
+  - Added a yabause entry in gnome and KDE application menus
+  - Changed configure script so it fails on linux if --with-opengl is used
+    and gtlglext is not installed.
+ dreamcast port:
+  - Compiles and runs again.
+  - Added Normal Sprite support.
+  - Added Distorted Sprite support.
+  - Added Scaled Sprite support.
+  - Added in YabauseGetTicks support.
+  - Ported VDP2 portion of software renderer.
+  - Added new cd core.
+  - Added very simple GUI.
+  - Other bug fixes.
+ netbsd port:
+  - Added patch to get yabause working on netbsd with cd support thanks to
+    Takashi Kyohara.
+ windows port:
+  - Added pad configuration(first pad only).
+  - Added support for gamepads/joysticks.
+  - Removed duplicate cd code.
+  - Added a separate thread for cd access. SPTICDGetStatus is the only
+    function making use of it for now.
+  - Fixed fullscreen bug
+  - Added dialog and settings saving/loading for Netlink stuff(disabled for now).
+  - Other bug fixes.
+ general:
+  - Commited mac port fix by Antime.
+  - Coordinate Increment Registers are now set to 1 when using the quick load
+    function. It seems there's at least one game out there that doesn't want
+    to set it.
+  - Improved Backup Ram bios emulation functions. The only functions that
+    still aren't functioning correctly are Bup Write, Bup Read, Bup Verify,
+    and Bup Set/Get Date. So still no saving, but at least there's no errors
+    when running games now.
 0.7.1 -> 0.7.2
  cart:
   - A few Netlink changes(still doesn't work).
