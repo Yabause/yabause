@@ -13,8 +13,8 @@
 
 1) Compiling instructions...................................20
 2) How to use Yabause.......................................52
-3) Contact information.....................................146
-4) Disclaimer..............................................161
+3) Contact information.....................................147
+4) Disclaimer..............................................162
 
 
 1 Compiling instructions______________________________________
@@ -113,11 +113,12 @@ mixing using DirectX Sound or disable sound completely with the
 "None" option. You can also adjust the sound volume using the
 volume slider underneath.
 
-In Input Settings, you can set the Peripheral Core to either do
-peripheral handling using DirectX Input or disable input
-completely with the "None" option.
+In Input Settings, you can set which device you'd like to use at the top of
+the window. Control settings can be changed by clicking on the equivalent
+button, and then when a new window pops up that says "waiting for input..."
+press a key/button and that will set the new setting for that control.
 
-Here are the current key mappings(they may be subject to change):
+Here are the default key mappings(they may be subject to change):
 Up arrow - Up
 Left arrow - Left
 Down arrow - Down
