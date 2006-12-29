@@ -505,12 +505,38 @@ void YabauseSpeedySetup(void)
    MSH2->regs.MACL = 0x00000000;
    MSH2->regs.PR = 0x00000000;
 
-   // Set VDP2 register to sane values
-   Vdp2Regs->ZMXN0.part.I = 1;
-   Vdp2Regs->ZMYN0.part.I = 1;
-   Vdp2Regs->ZMXN1.part.I = 1;
-   Vdp2Regs->ZMYN1.part.I = 1;
+   // Set SCU registers to sane states
+   ScuRegs->D1AD = ScuRegs->D2AD = 0;
+   ScuRegs->D0EN = 0x101;
+   ScuRegs->IST = 0x2006;
+   ScuRegs->AIACK = 0x1;
+   ScuRegs->ASR0 = ScuRegs->ASR1 = 0x1FF01FF0;
+   ScuRegs->AREF = 0x1F;
+   ScuRegs->RSEL = 0x1;
 
+   // Set SMPC registers to sane states
+   SmpcRegs->COMREG = 0x10;
+
+   // Set VDP1 registers to sane states
+   Vdp1Regs->EDSR = 3;
+   Vdp1Regs->localX = 160;
+   Vdp1Regs->localY = 112;
+   Vdp1Regs->systemclipX2 = 319;
+   Vdp1Regs->systemclipY2 = 223;
+
+   // Set VDP2 registers to sane states
+   Vdp2Regs->TVSTAT = 0x020A;
+   Vdp2Regs->ZMXN0.all = 0x10000;
+   Vdp2Regs->ZMYN0.all = 0x10000;
+   Vdp2Regs->ZMXN1.all = 0x10000;
+   Vdp2Regs->ZMYN1.all = 0x10000;
+   Vdp2Regs->BKTAL = 0x4000;
+   Vdp2Regs->SPCTL = 0x0020;
+   Vdp2Regs->PRINA = 0x0007;
+   Vdp2Regs->CLOFEN = 0x0001;
+   Vdp2Regs->COAR = 0x0200;
+   Vdp2Regs->COAG = 0x0200;
+   Vdp2Regs->COAB = 0x0200;
 }
 
 //////////////////////////////////////////////////////////////////////////////
