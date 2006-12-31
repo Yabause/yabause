@@ -58,7 +58,9 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
+#ifdef HAVE_LIBSDL
 &SNDSDL,
+#endif
 NULL
 };
 
