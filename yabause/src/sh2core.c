@@ -940,7 +940,9 @@ u32 FASTCALL OnchipReadLong(u32 addr) {
       case 0x12C:
          return CurrentSH2->onchip.VCRDIV;
       case 0x110:
+      case 0x118:
       case 0x130:
+      case 0x138:
          return CurrentSH2->onchip.DVDNTH;
       case 0x114:
       case 0x134:
@@ -1247,7 +1249,9 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
          CurrentSH2->onchip.VCRDIV = val & 0xFFFF;
          return;
       case 0x110:
+      case 0x118:
       case 0x130:
+      case 0x138:
          CurrentSH2->onchip.DVDNTH = val;
          return;
       case 0x114:
