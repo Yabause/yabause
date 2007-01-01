@@ -40,6 +40,8 @@ static u32 scumasklist[0x20] = {
 0xFFFFFE00, 0xFFFFFE00, 0xFFFFFE00, 0xFFFFFE00
 };
 
+u32 interruptlist[2][0x80];
+
 void SmpcCKCHG320();
 void SmpcCKCHG352();
 
@@ -60,24 +62,40 @@ void BiosInit(void)
    {
       MappedMemoryWriteLong(0x06000000+i, 0x06000600);
       MappedMemoryWriteLong(0x06000400+i, 0x06000600);
+      interruptlist[0][i >> 2] = 0x06000600;
+      interruptlist[1][i >> 2] = 0x06000600;
    }
 
    MappedMemoryWriteLong(0x06000010, 0x06000604);
    MappedMemoryWriteLong(0x06000018, 0x06000604);
    MappedMemoryWriteLong(0x06000024, 0x06000604);
    MappedMemoryWriteLong(0x06000028, 0x06000604);
+   interruptlist[0][4] = 0x06000604;
+   interruptlist[0][6] = 0x06000604;
+   interruptlist[0][9] = 0x06000604;
+   interruptlist[0][10] = 0x06000604;
 
    MappedMemoryWriteLong(0x06000410, 0x06000604);
    MappedMemoryWriteLong(0x06000418, 0x06000604);
    MappedMemoryWriteLong(0x06000424, 0x06000604);
    MappedMemoryWriteLong(0x06000428, 0x06000604);
+   interruptlist[1][4] = 0x06000604;
+   interruptlist[1][6] = 0x06000604;
+   interruptlist[1][9] = 0x06000604;
+   interruptlist[1][10] = 0x06000604;
 
    // Scu Interrupts
    for (i = 0; i < 0x38; i+=4)
+   {
       MappedMemoryWriteLong(0x06000100+i, 0x00000400+i);
+      interruptlist[0][0x40+(i >> 2)] = 0x00000400+i;
+   }
 
    for (i = 0; i < 0x40; i+=4)
+   {
       MappedMemoryWriteLong(0x06000140+i, 0x00000440+i);
+      interruptlist[0][0x50+(i >> 2)] = 0x00000440+i;
+   }
 
    for (i = 0; i < 0x100; i+=4)
       MappedMemoryWriteLong(0x06000A00+i, 0x06000610);
@@ -139,12 +157,11 @@ void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
 
 void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
 {
-   // check me
 //   LOG("BiosSetSh2Interrupt\n");
 
    if (sh->regs.R[5] == 0)
-   {
-      MappedMemoryWriteLong(sh->regs.VBR+(sh->regs.R[4] << 2), 0x06000600); // fix me
+   {            
+      MappedMemoryWriteLong(sh->regs.VBR+(sh->regs.R[4] << 2), interruptlist[sh->isslave][sh->regs.R[4]]);
       sh->cycles += 8;
    }
    else
