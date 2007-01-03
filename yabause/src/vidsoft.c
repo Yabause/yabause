@@ -37,10 +37,12 @@
 #if defined WORDS_BIGENDIAN
 #define COLSAT2YAB16(priority,temp)            (priority | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
 #define COLSAT2YAB32(priority,temp)            ((temp & 0xFF << 24) | ((temp & 0xFF00) << 8) | ((temp & 0xFF0000) >> 8) | priority)
+#define COLSAT2YAB32_2(priority,temp1,temp2)   ((temp2 & 0xFF << 24) | ((temp2 & 0xFF00) << 8) | ((temp1 & 0xFF) << 8) | priority)
 #define COLSATSTRIPPRIORITY(pixel)              (pixel | 0xFF)
 #else
 #define COLSAT2YAB16(priority,temp)            (priority << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
 #define COLSAT2YAB32(priority,temp)            (priority << 24 | (temp & 0xFF0000) | (temp & 0xFF00) | (temp & 0xFF))
+#define COLSAT2YAB32_2(priority,temp1,temp2)   (priority << 24 | ((temp1 & 0xFF) << 16) | (temp2 & 0xFF00) | (temp2 & 0xFF))
 #define COLSATSTRIPPRIORITY(pixel)             (0xFF000000 | pixel)
 #endif
 
@@ -580,6 +582,31 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info)
 */
       break;
     case 4: // 32 BPP
+         newcharaddr = info->charaddr + (info->cellw * info->cellh);   
+         info->charaddr += clip.pixeloffset;
+         
+         for (i = clip.ystart; i < clip.yend; i++)
+         {
+            for (i2 = clip.xstart; i2 < clip.xend; i2++)
+            {
+	       u16 dot1 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
+               info->charaddr += 2;
+               u16 dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
+               info->charaddr += 2;
+
+               if (!(dot1 & 0x8000) && info->transparencyenable)
+                  continue;
+
+	       color = COLSAT2YAB32_2(info->priority, dot1, dot2);
+               vdp2putpixel32(i2, i, info->PostPixelFetchCalc(info, color), info->priority);
+            }
+
+            info->charaddr += clip.lineincrement;
+         }
+
+         info->charaddr = newcharaddr;
+
+         break;
 /*
       for(i = 0;i < info->cellh;i++)
       {
