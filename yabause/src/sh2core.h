@@ -122,6 +122,8 @@ typedef struct
    u32 VCRDIV; // 0xFFFFFF0C
    u32 DVDNTH; // 0xFFFFFF10
    u32 DVDNTL; // 0xFFFFFF14
+   u32 DVDNTUH; // 0xFFFFFF18
+   u32 DVDNTUL; // 0xFFFFFF1C
 #ifdef WORDS_BIGENDIAN
   union {
     struct {

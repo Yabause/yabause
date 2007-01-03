@@ -940,16 +940,17 @@ u32 FASTCALL OnchipReadLong(u32 addr) {
       case 0x12C:
          return CurrentSH2->onchip.VCRDIV;
       case 0x110:
-      case 0x118:
       case 0x130:
-      case 0x138:
          return CurrentSH2->onchip.DVDNTH;
       case 0x114:
       case 0x134:
          return CurrentSH2->onchip.DVDNTL;
-      case 0x11C: // DVDNTL mirror
-      case 0x13C:
-         return CurrentSH2->onchip.DVDNTL;
+      case 0x118: // Acts as a separate register, but is set to the same value
+      case 0x138: // as DVDNTH after division
+         return CurrentSH2->onchip.DVDNTUH;
+      case 0x11C: // Acts as a separate register, but is set to the same value
+      case 0x13C: // as DVDNTL after division
+         return CurrentSH2->onchip.DVDNTUL;
       case 0x18C:
          return CurrentSH2->onchip.CHCR0;
       case 0x19C:
@@ -1209,34 +1210,39 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
       case 0x120:
          CurrentSH2->onchip.DVSR = val;
          return;
-      case 0x104:
+      case 0x104: // 32-bit / 32-bit divide operation
       case 0x124:
       {
          s32 divisor = (s32) CurrentSH2->onchip.DVSR;
          if (divisor == 0)
          {
-            CurrentSH2->onchip.DVDNTL = val;
+            // Regardless of what DVDNTL is set to, the top 3 bits
+            // are used to create the new DVDNTH value
             if (val & 0x80000000)
             {
-               CurrentSH2->onchip.DVDNTH = 0xFFFFFFFF;
+               CurrentSH2->onchip.DVDNTL = 0x80000000;
+               CurrentSH2->onchip.DVDNTH = 0xFFFFFFFC | ((val >> 29) & 0x3);
             }
             else
             {
-               CurrentSH2->onchip.DVDNTH = 0;
+               CurrentSH2->onchip.DVDNTL = 0x7FFFFFFF;
+               CurrentSH2->onchip.DVDNTH = 0 | (val >> 29);
             }
+            CurrentSH2->onchip.DVDNTUL = CurrentSH2->onchip.DVDNTL;
+            CurrentSH2->onchip.DVDNTUH = CurrentSH2->onchip.DVDNTH;
             CurrentSH2->onchip.DVCR |= 1;
-#if DEBUG
+
             if (CurrentSH2->onchip.DVCR & 0x2)
-               LOG("should be triggering DIVU interrupt\n");
-#endif
+               SH2SendInterrupt(CurrentSH2, CurrentSH2->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
          }
          else
          {
             s32 quotient = ((s32) val) / divisor;
             s32 remainder = ((s32) val) % divisor;
             CurrentSH2->onchip.DVDNTL = quotient;
+            CurrentSH2->onchip.DVDNTUL = quotient;
             CurrentSH2->onchip.DVDNTH = remainder;
-            CurrentSH2->onchip.DVCR &= ~1;
+            CurrentSH2->onchip.DVDNTUH = remainder;
          }
          return;
       }
@@ -1249,13 +1255,11 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
          CurrentSH2->onchip.VCRDIV = val & 0xFFFF;
          return;
       case 0x110:
-      case 0x118:
       case 0x130:
-      case 0x138:
          CurrentSH2->onchip.DVDNTH = val;
          return;
       case 0x114:
-      case 0x134: {
+      case 0x134: { // 64-bit / 32-bit divide operation
          s32 divisor = (s32) CurrentSH2->onchip.DVSR;
          s64 dividend = CurrentSH2->onchip.DVDNTH;
          dividend <<= 32;
@@ -1263,34 +1267,66 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 
          if (divisor == 0)
          {
-            CurrentSH2->onchip.DVDNTL = val;
+            if (CurrentSH2->onchip.DVDNTH & 0x80000000)
+            {
+               CurrentSH2->onchip.DVDNTL = 0x80000000;
+               CurrentSH2->onchip.DVDNTH = CurrentSH2->onchip.DVDNTH << 3; // fix me
+            }
+            else
+            {
+               CurrentSH2->onchip.DVDNTL = 0x7FFFFFFF;
+               CurrentSH2->onchip.DVDNTH = CurrentSH2->onchip.DVDNTH << 3; // fix me
+            }
+
+            CurrentSH2->onchip.DVDNTUL = CurrentSH2->onchip.DVDNTL;
+            CurrentSH2->onchip.DVDNTUH = CurrentSH2->onchip.DVDNTH;
             CurrentSH2->onchip.DVCR |= 1;
-#if DEBUG
+
             if (CurrentSH2->onchip.DVCR & 0x2)
-               LOG("should be triggering DIVU interrupt\n");
-#endif
+               SH2SendInterrupt(CurrentSH2, CurrentSH2->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
          }
          else
          {
             s64 quotient = dividend / divisor;
             s32 remainder = dividend % divisor;
 
-            // check for overflow
-            if (quotient >> 32) {
+            if (quotient > 0x7FFFFFFF)
+            {
                CurrentSH2->onchip.DVCR |= 1;
-#if DEBUG
+               CurrentSH2->onchip.DVDNTL = 0x7FFFFFFF;
+               CurrentSH2->onchip.DVDNTH = 0xFFFFFFFE; // fix me
+
                if (CurrentSH2->onchip.DVCR & 0x2)
-                  LOG("should be triggering DIVU interrupt\n");
-#endif
+                  SH2SendInterrupt(CurrentSH2, CurrentSH2->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
+            }
+            else if ((s32)(quotient >> 32) < -1)
+            {
+               CurrentSH2->onchip.DVCR |= 1;
+               CurrentSH2->onchip.DVDNTL = 0x80000000;
+               CurrentSH2->onchip.DVDNTH = 0xFFFFFFFE; // fix me
+
+               if (CurrentSH2->onchip.DVCR & 0x2)
+                  SH2SendInterrupt(CurrentSH2, CurrentSH2->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
             }
             else
-               CurrentSH2->onchip.DVCR &= ~1;
+            {
+               CurrentSH2->onchip.DVDNTL = quotient;
+               CurrentSH2->onchip.DVDNTH = remainder;
+            }
 
-            CurrentSH2->onchip.DVDNTL = quotient;
-            CurrentSH2->onchip.DVDNTH = remainder;
+            CurrentSH2->onchip.DVDNTUL = CurrentSH2->onchip.DVDNTL;
+            CurrentSH2->onchip.DVDNTUH = CurrentSH2->onchip.DVDNTH;
          }
          return;
       }
+      case 0x118:
+      case 0x138:
+         CurrentSH2->onchip.DVDNTUH = val;
+         return;
+      case 0x11C:
+      case 0x13C:
+         CurrentSH2->onchip.DVDNTUL = val;
+         return;
       case 0x140:
          CurrentSH2->onchip.BARA.all = val;         
          return;
