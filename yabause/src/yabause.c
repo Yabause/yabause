@@ -314,6 +314,10 @@ int YabauseExec(void) {
       SH2Exec(SSH2, yabsys.DecilineStop);
    PROFILE_STOP("SSH2");
 
+   PROFILE_START("SCU");
+   ScuExec(yabsys.DecilineStop >> 1);
+   PROFILE_STOP("SCU");
+
    yabsys.DecilineCount++;
    if(yabsys.DecilineCount == 9)
    {
@@ -361,9 +365,6 @@ int YabauseExec(void) {
       PROFILE_START("CDB");
       Cs2Exec(10);
       PROFILE_STOP("CDB");
-      PROFILE_START("SCU");
-      ScuExec(10);
-      PROFILE_STOP("SCU");
       yabsys.CycleCountII %= yabsys.Duf;
    }
 
