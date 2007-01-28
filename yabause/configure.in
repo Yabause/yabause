@@ -36,7 +36,7 @@ case $target in
 		yabause_arch=windows
 		;;
 	*freebsd*) yabause_arch=freebsd;;
-	*netbsd*) yabause_arch=netbsd;;
+	*netbsd* | *openbsd*) yabause_arch=netbsd;;
 	*) yabause_arch=".";;
 esac
 AC_SUBST(yabause_arch)
@@ -57,7 +57,7 @@ case $target in
 		AC_DEFINE(HAVE_LIBGL)
 		yabause_yui="windows"
 		;;
-	*linux* | *freebsd* | *netbsd*)
+	*linux* | *bsd*)
 		yabause_yui="."
 		AC_CHECK_TOOL(HAVE_PKG, pkg-config)
 

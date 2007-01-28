@@ -3441,7 +3441,7 @@ done
 		yabause_arch=windows
 		;;
 	*freebsd*) yabause_arch=freebsd;;
-	*netbsd*) yabause_arch=netbsd;;
+	*netbsd* | *openbsd*) yabause_arch=netbsd;;
 	*) yabause_arch=".";;
 esac
 
@@ -3471,7 +3471,7 @@ _ACEOF
 
 		yabause_yui="windows"
 		;;
-	*linux* | *freebsd* | *netbsd*)
+	*linux* | *bsd*)
 		yabause_yui="."
 		if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
