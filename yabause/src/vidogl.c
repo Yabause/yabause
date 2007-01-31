@@ -2663,7 +2663,7 @@ static void Vdp2DrawRBG0(void)
       else
          info.patterndatasize = 2;
 
-      if(Vdp2Regs->CHCTLB & 0x1)
+      if(Vdp2Regs->CHCTLB & 0x100)
          info.patternwh = 2;
       else
          info.patternwh = 1;
@@ -2674,8 +2674,8 @@ static void Vdp2DrawRBG0(void)
       info.auxmode = (Vdp2Regs->PNCR & 0x4000) >> 14;
    }
 
-   if (Vdp2Regs->CCCTL & 0x1000)
-      info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+   if (Vdp2Regs->CCCTL & 0x10)
+      info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
    else
       info.alpha = 0xFF;
 
