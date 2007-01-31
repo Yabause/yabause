@@ -79,9 +79,6 @@ void FASTCALL Vdp2RamWriteByte(u32 addr, u8 val) {
 void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
    addr &= 0x7FFFF;
    T1WriteWord(Vdp2Ram, addr, val);
-
-//   if (Vdp2Internal.ColorMode == 0)
-//      T1WriteWord(Vdp2Ram, addr + 0x800, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -124,6 +121,8 @@ void FASTCALL Vdp2ColorRamWriteByte(u32 addr, u8 val) {
 void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
    addr &= 0xFFF;
    T2WriteWord(Vdp2ColorRam, addr, val);
+//   if (Vdp2Internal.ColorMode == 0)
+//      T1WriteWord(Vdp2ColorRam, addr + 0x800, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1581,10 +1580,38 @@ static INLINE char *AddColorOffsetInfo(char *outstring, u16 offsetselectenab)
 
 void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 {
+   int patternwh=((Vdp2Regs->CHCTLB & 0x100) >> 8) + 1;
+   u8 map[16];
+
    if (Vdp2Regs->BGON & 0x10)
    {
       // enabled
+      int rotatenum=0;
+
       *isenabled = 1;
+
+      // Which Rotation Parameter is being used
+      switch (Vdp2Regs->RPMD & 0x3)
+      {
+         case 0:
+            // Parameter A
+            rotatenum = 0;
+            break;
+         case 1:
+            // Parameter B
+            rotatenum = 1;
+            break;
+         case 2:
+            // Parameter A+B switched via coefficients
+            // FIX ME(need to figure out which Parameter is being used)
+            break;
+         case 3:
+            // Parameter A+B switched via rotation parameter window
+            // FIX ME(need to figure out which Parameter is being used)
+            break;
+      }
+
+      AddString(outstring, "Using Parameter %C\r\n", 'A' + rotatenum);
 
       // Mosaic
       outstring = AddMosaicString(outstring, 0x10);
@@ -1593,23 +1620,45 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
       outstring = AddBppString(outstring, (Vdp2Regs->CHCTLB >> 12) & 0x7);
 
       // Bitmap or Tile mode?
-      if (Vdp2Regs->CHCTLA & 0x200)
+      if (Vdp2Regs->CHCTLB & 0x200)
       {
          // Bitmap mode
-//         outstring = AddBitmapInfoString(outstring, (Vdp2Regs->CHCTLA & 0x400) >> 10, Vdp2Regs->BMPNB, ??);
+         if (rotatenum == 0)
+         {
+            // Parameter A
+            outstring = AddBitmapInfoString(outstring, (Vdp2Regs->CHCTLB & 0x400) >> 10, Vdp2Regs->BMPNB, Vdp2Regs->MPOFR);
+         }
+         else
+         {
+            // Parameter B
+            outstring = AddBitmapInfoString(outstring, (Vdp2Regs->CHCTLB & 0x400) >> 10, Vdp2Regs->BMPNB, Vdp2Regs->MPOFR >> 4);
+         }
       }
       else
       {
          // Tile mode
-/*
-         if(Vdp2Regs->PNCN3 & 0x8000)
+         int patterndatasize; 
+         u16 supplementdata=Vdp2Regs->PNCR & 0x3FF;
+         int planew=0, planeh=0;
+
+         if(Vdp2Regs->PNCR & 0x8000)
             patterndatasize = 1;
          else
             patterndatasize = 2;
 
          AddString(outstring, "Tile(%dH x %dV)\r\n", patternwh, patternwh);
 
-         Vdp2GetPlaneSize((Vdp2Regs->PLSZ & 0xC0) >> 6, &planew, &planeh);
+         if (rotatenum == 0)
+         {
+            // Parameter A
+            Vdp2GetPlaneSize((Vdp2Regs->PLSZ & 0x300) >> 8, &planew, &planeh);
+         }
+         else
+         {
+            // Parameter B
+            Vdp2GetPlaneSize((Vdp2Regs->PLSZ & 0x3000) >> 8, &planew, &planeh);
+         }
+
          AddString(outstring, "Plane Size = %dH x %dV\r\n", planew, planeh);
 
          // Pattern Name Control stuff
@@ -1626,31 +1675,52 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
             AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
             AddString(outstring, "Supplementary Color number = %d\r\n", supplementdata & 0x1f);
          }
-*/
+
+
+         if (rotatenum == 0)
+         {
+            // Parameter A
+            map[0] = Vdp2Regs->MPABRA & 0xFF;
+            map[1] = Vdp2Regs->MPABRA >> 8;
+            map[2] = Vdp2Regs->MPCDRA & 0xFF;
+            map[3] = Vdp2Regs->MPCDRA >> 8;
+            map[4] = Vdp2Regs->MPEFRA & 0xFF;
+            map[5] = Vdp2Regs->MPEFRA >> 8;
+            map[6] = Vdp2Regs->MPGHRA & 0xFF;
+            map[7] = Vdp2Regs->MPGHRA >> 8;
+            map[8] = Vdp2Regs->MPIJRA & 0xFF;
+            map[9] = Vdp2Regs->MPIJRA >> 8;
+            map[10] = Vdp2Regs->MPKLRA & 0xFF;
+            map[11] = Vdp2Regs->MPKLRA >> 8;
+            map[12] = Vdp2Regs->MPMNRA & 0xFF;
+            map[13] = Vdp2Regs->MPMNRA >> 8;
+            map[14] = Vdp2Regs->MPOPRA & 0xFF;
+            map[15] = Vdp2Regs->MPOPRA >> 8;
+            outstring = AddMapInfo(outstring, patternwh, Vdp2Regs->PNCR, (Vdp2Regs->PLSZ >> 8) & 0x3, (Vdp2Regs->MPOFR & 0x7) << 6, 16, map);
+         }
+         else
+         {
+            // Parameter B
+            map[0] = Vdp2Regs->MPABRB & 0xFF;
+            map[1] = Vdp2Regs->MPABRB >> 8;
+            map[2] = Vdp2Regs->MPCDRB & 0xFF;
+            map[3] = Vdp2Regs->MPCDRB >> 8;
+            map[4] = Vdp2Regs->MPEFRB & 0xFF;
+            map[5] = Vdp2Regs->MPEFRB >> 8;
+            map[6] = Vdp2Regs->MPGHRB & 0xFF;
+            map[7] = Vdp2Regs->MPGHRB >> 8;
+            map[8] = Vdp2Regs->MPIJRB & 0xFF;
+            map[9] = Vdp2Regs->MPIJRB >> 8;
+            map[10] = Vdp2Regs->MPKLRB & 0xFF;
+            map[11] = Vdp2Regs->MPKLRB >> 8;
+            map[12] = Vdp2Regs->MPMNRB & 0xFF;
+            map[13] = Vdp2Regs->MPMNRB >> 8;
+            map[14] = Vdp2Regs->MPOPRB & 0xFF;
+            map[15] = Vdp2Regs->MPOPRB >> 8;
+            outstring = AddMapInfo(outstring, patternwh, Vdp2Regs->PNCR, (Vdp2Regs->PLSZ >> 12) & 0x3, (Vdp2Regs->MPOFR & 0x70) << 2, 16, map);
+         }
 
 /*
-         deca = planeh + planew - 2;
-         multi = planeh * planew;
-
-         // Map Planes A-D
-         for (int i=0; i < 4; i++)
-         {
-            tmp = mapOffsetReg | reg->getByte(0x4C + (i ^ 1));
-
-            if (patterndatasize == 1)
-            {
-               if (patternwh == 1) addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-               else addr = (tmp >> deca) * (multi * 0x800);
-            }
-            else
-            {
-               if (patternwh == 1) addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-               else addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-            }
-   
-            AddString(outstring, "Plane %C Address = %08X\r\n", 0x41+i, addr);
-         }
-   
          // Figure out Cell start address
          switch(patterndatasize)
          {
@@ -1772,6 +1842,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       }
       else
       {
+         // Tile
          int patterndatasize; 
          u16 supplementdata=Vdp2Regs->PNCN0 & 0x3FF;
          int planew=0, planeh=0;
@@ -1781,7 +1852,6 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          else
             patterndatasize = 2;
 
-         // Tile
          AddString(outstring, "Tile(%dH x %dV)\r\n", patternwh, patternwh);
 
          Vdp2GetPlaneSize(Vdp2Regs->PLSZ & 0x3, &planew, &planeh);
