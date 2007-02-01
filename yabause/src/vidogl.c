@@ -172,6 +172,7 @@ typedef struct
    int patternpixelwh;
    int draww;
    int drawh;
+   int rotatenum;
 } vdp2draw_struct;
 
 typedef struct
@@ -189,12 +190,12 @@ typedef struct
    float D;
    float E;
    float F;
-   s32 Px;
-   s32 Py;
-   s32 Pz;
-   s32 Cx;
-   s32 Cy;
-   s32 Cz;
+   float Px;
+   float Py;
+   float Pz;
+   float Cx;
+   float Cy;
+   float Cz;
    float Mx;
    float My;
    float kx;
@@ -965,27 +966,27 @@ static void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *param
    addr += 4;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Px = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Px = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
    addr += 2;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Py = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Py = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
    addr += 2;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Pz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Pz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
    addr += 4;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cx = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Cx = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
    addr += 2;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cy = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Cy = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
    addr += 2;
 
    i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
+   parameter->Cz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
    addr += 4;
 
    i = T1ReadLong(Vdp2Ram, addr);
@@ -2507,62 +2508,120 @@ int Vdp2RBG0GetY(Vdp2Screen * tmp, int Hcnt, int Vcnt)
 
 static void FASTCALL Vdp2RBG0PlaneAddr(vdp2draw_struct *info, int i)
 {
-   // works only for parameter A for time being
    u32 offset = (Vdp2Regs->MPOFR & 0x7) << 6;
    u32 tmp=0;
    int deca;
    int multi;
 
-   switch(i)
+   if (info->rotatenum == 0)
    {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABRA & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABRA >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDRA & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDRA >> 8);
-         break;
-      case 4:
-         tmp = offset | (Vdp2Regs->MPEFRA & 0xFF);
-         break;
-      case 5:
-         tmp = offset | (Vdp2Regs->MPEFRA >> 8);
-         break;
-      case 6:
-         tmp = offset | (Vdp2Regs->MPGHRA & 0xFF);
-         break;
-      case 7:
-         tmp = offset | (Vdp2Regs->MPGHRA >> 8);
-         break;
-      case 8:
-         tmp = offset | (Vdp2Regs->MPIJRA & 0xFF);
-         break;
-      case 9:
-         tmp = offset | (Vdp2Regs->MPIJRA >> 8);
-         break;
-      case 10:
-         tmp = offset | (Vdp2Regs->MPKLRA & 0xFF);
-         break;
-      case 11:
-         tmp = offset | (Vdp2Regs->MPKLRA >> 8);
-         break;
-      case 12:
-         tmp = offset | (Vdp2Regs->MPMNRA & 0xFF);
-         break;
-      case 13:
-         tmp = offset | (Vdp2Regs->MPMNRA >> 8);
-         break;
-      case 14:
-         tmp = offset | (Vdp2Regs->MPOPRA & 0xFF);
-         break;
-      case 15:
-         tmp = offset | (Vdp2Regs->MPOPRA >> 8);
-         break;
+      // Parameter A
+      switch(i)
+      {
+         case 0:
+            tmp = offset | (Vdp2Regs->MPABRA & 0xFF);
+            break;
+         case 1:
+            tmp = offset | (Vdp2Regs->MPABRA >> 8);
+            break;
+         case 2:
+            tmp = offset | (Vdp2Regs->MPCDRA & 0xFF);
+            break;
+         case 3:
+            tmp = offset | (Vdp2Regs->MPCDRA >> 8);
+            break;
+         case 4:
+            tmp = offset | (Vdp2Regs->MPEFRA & 0xFF);
+            break;
+         case 5:
+            tmp = offset | (Vdp2Regs->MPEFRA >> 8);
+            break;
+         case 6:
+            tmp = offset | (Vdp2Regs->MPGHRA & 0xFF);
+            break;
+         case 7:
+            tmp = offset | (Vdp2Regs->MPGHRA >> 8);
+            break;
+         case 8:
+            tmp = offset | (Vdp2Regs->MPIJRA & 0xFF);
+            break;
+         case 9:
+            tmp = offset | (Vdp2Regs->MPIJRA >> 8);
+            break;
+         case 10:
+            tmp = offset | (Vdp2Regs->MPKLRA & 0xFF);
+            break;
+         case 11:
+            tmp = offset | (Vdp2Regs->MPKLRA >> 8);
+            break;
+         case 12:
+            tmp = offset | (Vdp2Regs->MPMNRA & 0xFF);
+            break;
+         case 13:
+            tmp = offset | (Vdp2Regs->MPMNRA >> 8);
+            break;
+         case 14:
+            tmp = offset | (Vdp2Regs->MPOPRA & 0xFF);
+            break;
+         case 15:
+            tmp = offset | (Vdp2Regs->MPOPRA >> 8);
+            break;
+      }
+   }
+   else
+   {
+      // Parameter B
+      switch(i)
+      {
+         case 0:
+            tmp = offset | (Vdp2Regs->MPABRB & 0xFF);
+            break;
+         case 1:
+            tmp = offset | (Vdp2Regs->MPABRB >> 8);
+            break;
+         case 2:
+            tmp = offset | (Vdp2Regs->MPCDRB & 0xFF);
+            break;
+         case 3:
+            tmp = offset | (Vdp2Regs->MPCDRB >> 8);
+            break;
+         case 4:
+            tmp = offset | (Vdp2Regs->MPEFRB & 0xFF);
+            break;
+         case 5:
+            tmp = offset | (Vdp2Regs->MPEFRB >> 8);
+            break;
+         case 6:
+            tmp = offset | (Vdp2Regs->MPGHRB & 0xFF);
+            break;
+         case 7:
+            tmp = offset | (Vdp2Regs->MPGHRB >> 8);
+            break;
+         case 8:
+            tmp = offset | (Vdp2Regs->MPIJRB & 0xFF);
+            break;
+         case 9:
+            tmp = offset | (Vdp2Regs->MPIJRB >> 8);
+            break;
+         case 10:
+            tmp = offset | (Vdp2Regs->MPKLRB & 0xFF);
+            break;
+         case 11:
+            tmp = offset | (Vdp2Regs->MPKLRB >> 8);
+            break;
+         case 12:
+            tmp = offset | (Vdp2Regs->MPMNRB & 0xFF);
+            break;
+         case 13:
+            tmp = offset | (Vdp2Regs->MPMNRB >> 8);
+            break;
+         case 14:
+            tmp = offset | (Vdp2Regs->MPOPRB & 0xFF);
+            break;
+         case 15:
+            tmp = offset | (Vdp2Regs->MPOPRB >> 8);
+            break;
+      }
    }
 
    deca = info->planeh + info->planew - 2;
@@ -2593,16 +2652,42 @@ static void Vdp2DrawRBG0(void)
    vdp2rotationparameter_struct parameter;
 
    info.enable = Vdp2Regs->BGON & 0x10;
+   info.priority = rbg0priority;
+   if (!(info.enable & vdp2disptoggle) || (info.priority == 0))
+      return;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x1000);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 8) & 0x3;
 
-   info.x = 0; // this is obviously wrong
-   info.y = 0; // this is obviously wrong
-
    info.colornumber = (Vdp2Regs->CHCTLB & 0x7000) >> 12;
+
+   // Figure out which Rotation Parameter we're using
+   switch (Vdp2Regs->RPMD & 0x3)
+   {
+      case 0:
+         // Parameter A
+         info.rotatenum = 0;
+         break;
+      case 1:
+         // Parameter B
+         info.rotatenum = 1;
+         break;
+      case 2:
+         // Parameter A+B switched via coefficients
+         // FIX ME(need to figure out which Parameter is being used)
+      case 3:
+      default:
+         // Parameter A+B switched via rotation parameter window
+         // FIX ME(need to figure out which Parameter is being used)
+         VDP2LOG("Rotation Parameter Mode %d not supported!\n", Vdp2Regs->RPMD & 0x3);
+         info.rotatenum = 0;
+         break;
+   }
+
+   Vdp2ReadRotationTable(info.rotatenum, &parameter);
 
    if((info.isbitmap = Vdp2Regs->CHCTLB & 0x200) != 0)
    {
+      // Bitmap Mode
       switch((Vdp2Regs->CHCTLB & 0x400) >> 10)
       {
          case 0:
@@ -2622,24 +2707,16 @@ static void Vdp2DrawRBG0(void)
    }
    else
    {
+      // Tile Mode
       u8 PlaneSize;
       info.mapwh = 4;
 
-      switch(Vdp2Regs->RPMD & 0x3)
-      {
-         case 0:
-            PlaneSize = (Vdp2Regs->PLSZ & 0x300) >> 8;
-            break;
-         case 1:
-            PlaneSize = (Vdp2Regs->PLSZ & 0x3000) >> 12;
-            break;
-         default:
-#if VDP2_DEBUG
-            VDP2LOG("RGB0\t: don't know what to do with plane size\n");
-#endif
-            PlaneSize = 0;
-            break;
-      }
+      if (info.rotatenum == 0)
+         // Parameter A
+         PlaneSize = (Vdp2Regs->PLSZ & 0x300) >> 8;
+      else
+         // Parameter B
+         PlaneSize = (Vdp2Regs->PLSZ & 0x3000) >> 12;
 
       switch(PlaneSize)
       {
@@ -2721,34 +2798,35 @@ static void Vdp2DrawRBG0(void)
       info.PostPixelFetchCalc = &DoNothing;
  
    info.coordincx = info.coordincy = 1;
-
-   info.priority = rbg0priority;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2RBG0PlaneAddr;
 
-   switch (Vdp2Regs->RPMD & 0x3)
-   {
-      case 0:
-         // Parameter A only
-         Vdp2ReadRotationTable(0, &parameter);
-         break;
-      case 1:
-         // Parameter B only
-         Vdp2ReadRotationTable(1, &parameter);
-         break;
-      case 2:
-      case 3:
-         VDP2LOG("Rotation Parameter Mode %d not supported!\n", Vdp2Regs->RPMD & 0x3);
-         memset(&parameter, 0, sizeof(vdp2rotationparameter_struct));
-         break;
-   }
 
    if (!parameter.coefenab)
    {
       // Since coefficients aren't being used, we can simplify the drawing process
+      if (parameter.deltaXst == 0.0 &&
+          parameter.deltaYst == 1.0 &&
+          parameter.deltaX == 1.0 &&
+          parameter.deltaY == 0.0 &&
+          parameter.A == 1.0 &&
+          parameter.B == 0.0 &&
+          parameter.C == 0.0 &&
+          parameter.D == 0.0 &&
+          parameter.E == 1.0 &&
+          parameter.F == 0.0)
+      {
+         // No rotation
+         // FIXME - This should really be fixed point math
+         info.x = (int)-(parameter.kx * (parameter.Xst - parameter.Px) + parameter.Px + parameter.Mx);
+         info.y = (int)-(parameter.ky * (parameter.Yst - parameter.Py) + parameter.Py + parameter.My);
+         info.coordincx = 1.0 / parameter.kx;
+         info.coordincy = 1.0 / parameter.ky;
+      }
+      else
+      {
+         // Do simple rotation
+      }
    }
-
-   if (!(info.enable & vdp2disptoggle) || (info.priority == 0))
-      return;
 
    if (info.isbitmap)
    {
