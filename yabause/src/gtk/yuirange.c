@@ -130,9 +130,8 @@ GtkWidget * yui_range_new(GKeyFile * keyfile, const gchar * group, const gchar *
 		i++;
 	}
 	if ( !current ) {
-	  gtk_combo_box_set_active(GTK_COMBO_BOX(yfe->combo), (gint)(yfe->items[i].value) );
-	  g_key_file_set_value(yfe->keyfile, yfe->group, yfe->key,
-			       yfe->items[(gint)(yfe->items[i].value)].value);
+	  gtk_combo_box_set_active(GTK_COMBO_BOX(yfe->combo), 0);
+	  g_key_file_set_value(yfe->keyfile, yfe->group, yfe->key, "0");
 	}
 
         g_signal_connect(GTK_COMBO_BOX(yfe->combo), "changed", G_CALLBACK(yui_range_changed), yfe);
