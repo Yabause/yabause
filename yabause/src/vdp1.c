@@ -720,7 +720,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
          break;
       default:
          AddString(outstring, "Invalid command\r\n");
-         break;
+         return;
    }
 
    // Only Sprite commands use CMDSRCA, CMDSIZE
@@ -858,6 +858,279 @@ void Vdp1DebugCommand(u32 number, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#if defined WORDS_BIGENDIAN
+#define SAT2YAB1(alpha,temp)		(alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
+#else
+#define SAT2YAB1(alpha,temp)		(alpha << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
+#endif
+
+#if defined WORDS_BIGENDIAN
+#define SAT2YAB2(alpha,dot1,dot2)       ((dot2 & 0xFF << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | alpha)
+#else
+#define SAT2YAB2(alpha,dot1,dot2)       (alpha << 24 | ((dot1 & 0xFF) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF))
+#endif
+
+static u32 ColorRamGetColor(u32 colorindex)
+{
+   switch(Vdp2Internal.ColorMode)
+   {
+      case 0:
+      case 1:
+      {
+         u32 tmp;
+         colorindex <<= 1;
+         tmp = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
+         return SAT2YAB1(0xFF, tmp);
+      }
+      case 2:
+      {
+         u32 tmp1, tmp2;
+         colorindex <<= 2;
+         colorindex &= 0xFFF;
+         tmp1 = T2ReadWord(Vdp2ColorRam, colorindex);
+         tmp2 = T2ReadWord(Vdp2ColorRam, colorindex+2);
+         return SAT2YAB2(0xFF, tmp1, tmp2);
+      }
+      default: break;
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
+{
+   u16 command;
+   vdp1cmd_struct cmd;
+   u32 addr;
+   u32 *texture;
+   u32 charAddr;
+   u32 dot;
+   u8 SPD;
+   u32 alpha;
+   u32 *textdata;
+
+   if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
+      return NULL;
+
+   command = T1ReadWord(Vdp1Ram, addr);
+
+   if (command & 0x8000)
+      // Draw End
+      return NULL;
+
+   if (command & 0x4000)
+      // Command Skipped
+      return NULL;
+
+   Vdp1ReadCommand(&cmd, addr);
+
+   switch (cmd.CMDCTRL & 0x000F)
+   {
+      case 0: // Normal Sprite
+      case 1: // Scaled Sprite
+      case 2: // Distorted Sprite
+         w[0] = (cmd.CMDSIZE & 0x3F00) >> 5;
+         h[0] = cmd.CMDSIZE & 0xFF;
+
+         if ((texture = (u32 *)malloc(sizeof(u32) * w[0] * h[0])) == NULL)
+            return NULL;
+         break;
+      case 4: // Polygon
+      case 5: // Polyline
+      case 6: // Line
+         // Do 1x1 pixel
+         w[0] = 1;
+         h[0] = 1;
+         if ((texture = (u32 *)malloc(sizeof(u32))) == NULL)
+            return NULL;
+
+         if (cmd.CMDCOLR & 0x8000)
+            texture[0] = SAT2YAB1(0xFF, cmd.CMDCOLR);
+         else
+            texture[0] = ColorRamGetColor(cmd.CMDCOLR);
+
+         return texture;
+      case 8: // User Clipping
+      case 9: // System Clipping
+      case 10: // Local Coordinates
+         return NULL;
+      default: // Invalid command
+         return NULL;
+   }
+
+   charAddr = cmd.CMDSRCA * 8;
+   SPD = ((cmd.CMDPMOD & 0x40) != 0);
+   alpha = 0xFF;
+   textdata = texture;
+
+   switch((cmd.CMDPMOD >> 3) & 0x7)
+   {
+      case 0:
+      {
+         // 4 bpp Bank mode
+         u32 colorBank = cmd.CMDCOLR;
+         u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
+         u16 i;
+
+         for(i = 0;i < h[0];i++)
+         {
+            u16 j;
+            j = 0;
+            while(j < w[0])
+            {
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
+
+               // Pixel 1
+               if (((dot >> 4) == 0) && !SPD) *textdata++ = 0;
+               else *textdata++ = ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset);
+               j += 1;
+
+               // Pixel 2
+               if (((dot & 0xF) == 0) && !SPD) *textdata++ = 0;
+               else *textdata++ = ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset);
+               j += 1;
+
+               charAddr += 1;
+            }
+         }
+         break;
+      }
+      case 1:
+      {
+         // 4 bpp LUT mode
+         u32 temp;
+         u32 colorLut = cmd.CMDCOLR * 8;
+         u16 i;
+
+         for(i = 0;i < h[0];i++)
+         {
+            u16 j;
+            j = 0;
+            while(j < w[0])
+            {
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
+
+               if (((dot >> 4) == 0) && !SPD)
+                  *textdata++ = 0;
+               else
+               {
+                  temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
+                  if (temp & 0x8000)
+                     *textdata++ = SAT2YAB1(0xFF, temp);
+                  else
+                     *textdata++ = ColorRamGetColor(temp);
+               }
+
+               j += 1;
+
+               if (((dot & 0xF) == 0) && !SPD)
+                  *textdata++ = 0;
+               else
+               {
+                  temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
+                  if (temp & 0x8000)
+                     *textdata++ = SAT2YAB1(0xFF, temp);
+                  else
+                     *textdata++ = ColorRamGetColor(temp);
+               }
+
+               j += 1;
+
+               charAddr += 1;
+            }
+         }
+         break;
+      }
+      case 2:
+      {
+         // 8 bpp(64 color) Bank mode
+         u32 colorBank = cmd.CMDCOLR;
+         u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
+
+         u16 i, j;
+
+         for(i = 0;i < h[0];i++)
+         {
+            for(j = 0;j < w[0];j++)
+            {
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x3F;
+               charAddr++;
+
+               if ((dot == 0) && !SPD) *textdata++ = 0;
+               else *textdata++ = ColorRamGetColor((dot | colorBank) + colorOffset);
+            }
+         }
+         break;
+      }
+      case 3:
+      {
+         // 8 bpp(128 color) Bank mode
+         u32 colorBank = cmd.CMDCOLR;
+         u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
+         u16 i, j;
+
+         for(i = 0;i < h[0];i++)
+         {
+            for(j = 0;j < w[0];j++)
+            {
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x7F;
+               charAddr++;
+
+               if ((dot == 0) && !SPD) *textdata++ = 0;
+               else *textdata++ = ColorRamGetColor((dot | colorBank) + colorOffset);
+            }
+         }
+         break;
+      }
+      case 4:
+      {
+         // 8 bpp(256 color) Bank mode
+         u32 colorBank = cmd.CMDCOLR;
+         u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
+         u16 i, j;
+
+         for(i = 0;i < h[0];i++)
+         {
+            for(j = 0;j < w[0];j++)
+            {
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
+               charAddr++;
+
+               if ((dot == 0) && !SPD) *textdata++ = 0;
+               else *textdata++ = ColorRamGetColor((dot | colorBank) + colorOffset);
+            }
+         }
+         break;
+      }
+      case 5:
+      {
+         // 16 bpp Bank mode
+         u16 i, j;
+
+         for(i = 0;i < h[0];i++)
+         {
+            for(j = 0;j < w[0];j++)
+            {
+               dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
+               charAddr += 2;
+
+               //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
+               if ((dot == 0) && !SPD) *textdata++ = 0;
+               else *textdata++ = SAT2YAB1(0xFF, dot);
+            }
+         }
+         break;
+      }
+      default:
+         break;
+   }
+
+   return texture;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 
 void ToggleVDP1(void)
 {
