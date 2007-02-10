@@ -30,6 +30,7 @@ static void yui_vdp1_init		(YuiVdp1      * yfe);
 static void yui_vdp1_spin_cursor_changed(GtkWidget * spin, YuiVdp1 * vdp1);
 static void yui_vdp1_view_cursor_changed(GtkWidget * view, YuiVdp1 * vdp1);
 static void yui_vdp1_clear(YuiVdp1 * vdp1);
+static void yui_vdp1_expose(GtkWidget *widget, GdkEventExpose *event, gpointer data);
 
 GType yui_vdp1_get_type (void) {
   static GType yfe_type = 0;
@@ -59,15 +60,24 @@ static void yui_vdp1_class_init (YuiVdp1Class * klass) {
 }
 
 static void yui_vdp1_init (YuiVdp1 * yv) {
+	GtkWidget * hbox, * vbox1, * vbox2;
+
 	gtk_window_set_title(GTK_WINDOW(yv), "VDP1");
 
 	yv->vbox = gtk_vbox_new(FALSE, 2);
 	gtk_container_set_border_width(GTK_CONTAINER(yv->vbox), 4);
 	gtk_container_add(GTK_CONTAINER(yv), yv->vbox);
 
+	hbox = gtk_hbox_new(FALSE, 2);
+	gtk_box_pack_start(GTK_BOX(yv->vbox), hbox, TRUE, TRUE, 4);
+	vbox1 = gtk_vbox_new(FALSE, 2);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox1, TRUE, TRUE, 4);
+	vbox2 = gtk_vbox_new(FALSE, 2);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox2, TRUE, TRUE, 4);
+
 	yv->spin = gtk_spin_button_new_with_range(0, MAX_VDP1_COMMAND, 1);
 	gtk_spin_button_set_range(GTK_SPIN_BUTTON(yv->spin), 0, 0);
-	gtk_box_pack_start(GTK_BOX(yv->vbox), yv->spin, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(vbox1), yv->spin, FALSE, FALSE, 4);
 	g_signal_connect(G_OBJECT(yv->spin), "value-changed", GTK_SIGNAL_FUNC(yui_vdp1_spin_cursor_changed), yv);
 
 	yv->store = gtk_list_store_new(1, G_TYPE_STRING);
@@ -81,7 +91,7 @@ static void yui_vdp1_init (YuiVdp1 * yv) {
 		column = gtk_tree_view_column_new_with_attributes("Command", renderer, "text", 0, NULL);
 		gtk_tree_view_append_column(GTK_TREE_VIEW (yv->view), column);
 	}
-	gtk_box_pack_start(GTK_BOX(yv->vbox), yv->view, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(vbox1), yv->view, FALSE, FALSE, 4);
 	g_signal_connect(yv->view, "cursor-changed", G_CALLBACK(yui_vdp1_view_cursor_changed), yv);
 
 	g_signal_connect(G_OBJECT(yv), "delete-event", GTK_SIGNAL_FUNC(yui_vdp1_destroy), NULL);
@@ -94,14 +104,19 @@ static void yui_vdp1_init (YuiVdp1 * yv) {
 		gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(text), FALSE);
 		yv->buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text));
 		gtk_container_add(GTK_CONTAINER(scroll), text);
-		gtk_box_pack_start(GTK_BOX(yv->vbox), scroll, TRUE, TRUE, 4);
+		gtk_box_pack_start(GTK_BOX(vbox2), scroll, TRUE, TRUE, 4);
 	}
+	yv->image = gtk_drawing_area_new();
+	gtk_box_pack_start(GTK_BOX(vbox2), yv->image, TRUE, TRUE, 4);
 
 	yv->hbox = gtk_hbutton_box_new();
 	gtk_box_set_spacing(GTK_BOX(yv->hbox), 4);
 	gtk_box_pack_start(GTK_BOX(yv->vbox ), yv->hbox, FALSE, FALSE, 4);
 
 	yv->cursor = 0;
+	yv->texture = NULL;
+
+	g_signal_connect(yv->image, "expose_event", G_CALLBACK(yui_vdp1_expose), yv);
 }
 
 static gulong paused_handler;
@@ -175,6 +190,8 @@ void yui_vdp1_fill(YuiVdp1 * vdp1) {
 
 	Vdp1DebugCommand(vdp1->cursor, nameTemp);
 	gtk_text_buffer_set_text(vdp1->buffer, g_strstrip(nameTemp), -1);
+	vdp1->texture = Vdp1DebugTexture(vdp1->cursor, &vdp1->w, &vdp1->h);
+	gtk_widget_queue_draw_area(vdp1->image, 0, 0, vdp1->image->allocation.width, vdp1->image->allocation.height);
 }
 
 static void yui_vdp1_spin_cursor_changed(GtkWidget * spin, YuiVdp1 * vdp1) {
@@ -204,4 +221,20 @@ void yui_vdp1_destroy(YuiVdp1 * vdp1) {
 static void yui_vdp1_clear(YuiVdp1 * vdp1) {
 	gtk_list_store_clear(vdp1->store);
 	gtk_text_buffer_set_text(vdp1->buffer, "", -1);
+}
+
+static void yui_vdp1_expose(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+	GdkPixbuf * pixbuf;
+	YuiVdp1 * vdp1 = data;
+	int rowstride;
+
+	if ((vdp1->texture != NULL) && (vdp1->w > 0) && (vdp1->h > 0)) {
+		rowstride = vdp1->w * 4;
+		rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
+		pixbuf = gdk_pixbuf_new_from_data(vdp1->texture, GDK_COLORSPACE_RGB, TRUE, 8, vdp1->w, vdp1->h, rowstride, NULL, NULL);
+
+		gdk_draw_pixbuf(GTK_WIDGET(vdp1->image)->window, NULL, pixbuf, 0, 0, 0, 0, vdp1->w, vdp1->h, GDK_RGB_DITHER_NONE, 0, 0);
+
+		g_object_unref(pixbuf);
+	}
 }

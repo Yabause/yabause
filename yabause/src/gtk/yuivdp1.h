@@ -26,6 +26,7 @@
 #include <gtk/gtktable.h>
 
 #include "yuiwindow.h"
+#include "../core.h"
 
 G_BEGIN_DECLS
 
@@ -50,12 +51,16 @@ struct _YuiVdp1
   GtkWidget * commDesc;
   GtkWidget * spin;
   GtkWidget * buttonVBlankOut;
+  GtkWidget * image;
 
   GtkListStore * store;
   GtkWidget * view;
   GtkTextBuffer * buffer;
 
   gint cursor;
+  u32 * texture;
+  int w;
+  int h;
 };
 
 struct _YuiVdp1Class
