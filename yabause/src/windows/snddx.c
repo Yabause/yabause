@@ -1,4 +1,4 @@
-/*  Copyright 2005-2006 Theo Berkau
+/*  Copyright (C) 2005-2007 Theo Berkau
 
     This file is part of Yabause.
 
@@ -61,8 +61,8 @@ extern HWND YabWin;
 #define NUMSOUNDBLOCKS  4
 
 static u16 *stereodata16;
-static u32 soundoffset=0;
 static u32 soundlen;
+static u32 soundoffset=0;
 static u32 soundbufsize;
 static LONG soundvolume;
 static int issoundmuted;
@@ -132,7 +132,9 @@ int SNDDXInit()
    if ((ret = IDirectSound8_CreateSoundBuffer(lpDS8, &dsbdesc, &lpDSB2, NULL)) != DS_OK)
    {
       if (ret == DSERR_CONTROLUNAVAIL ||
-          ret == DSERR_INVALIDCALL)
+          ret == DSERR_INVALIDCALL ||
+          ret == E_FAIL || 
+          ret == E_NOTIMPL)
       {
          // Try using a software buffer instead
          dsbdesc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_STICKYFOCUS |
@@ -294,3 +296,4 @@ void SNDDXSetVolume(int volume)
       IDirectSoundBuffer8_SetVolume (lpDSB2, soundvolume);
 }
 
+//////////////////////////////////////////////////////////////////////////////
