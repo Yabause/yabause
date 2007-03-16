@@ -303,6 +303,7 @@ void yui_conf(void) {
 	gtk_widget_destroy(dialog);
 	switch(result) {
 		case GTK_RESPONSE_OK:
+                {
                         GtkWidget* warningDlg = gtk_message_dialog_new (GTK_WINDOW(yui),
                                                                         GTK_DIALOG_MODAL,
                                                                         GTK_MESSAGE_WARNING,
@@ -315,6 +316,7 @@ void yui_conf(void) {
 			g_file_set_contents(inifile, g_key_file_to_data(keyfile, 0, 0), -1, 0);
 			yui_settings_load();
 			break;
+                }
 		case GTK_RESPONSE_CANCEL:
 			g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
 			break;
