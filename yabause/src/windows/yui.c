@@ -1,5 +1,5 @@
 /*  Copyright 2004 Guillaume Duhamel
-    Copyright 2004-2006 Theo Berkau
+    Copyright 2004-2007 Theo Berkau
     Copyright 2005 Joost Peters
 
     This file is part of Yabause.
@@ -19,6 +19,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#define _WIN32_IE       0x0400
 #include <windows.h>
 #include <commctrl.h>
 #undef FASTCALL
@@ -383,6 +384,13 @@ int YuiInit(void)
    WNDCLASS MyWndClass;
    int ret;
    int ip[4];
+   char netlinksetting[80];
+   INITCOMMONCONTROLSEX iccs;
+
+   memset(&iccs, 0, sizeof(INITCOMMONCONTROLSEX));
+   iccs.dwSize = sizeof(INITCOMMONCONTROLSEX);
+   iccs.dwICC = ICC_INTERNET_CLASSES;
+   InitCommonControlsEx(&iccs);
 
    y_hInstance = GetModuleHandle(NULL);
 
@@ -496,16 +504,14 @@ int YuiInit(void)
    GetPrivateProfileString("General", "CartType", "", tempstr, MAX_PATH, inifilename);
 
    // Grab Netlink Settings
-   GetPrivateProfileString("Netlink", "LocalIP", "127.0.0.1", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileString("Netlink", "LocalRemoteIP", "127.0.0.1", tempstr, MAX_PATH, inifilename);
    sscanf(tempstr, "%d.%d.%d.%d", ip, ip+1, ip+2, ip+3);
-   netlinklocalip = MAKEIPADDRESS(ip[0], ip[1], ip[2], ip[3]);
-
-   GetPrivateProfileString("Netlink", "RemoteIP", "127.0.0.1", tempstr, MAX_PATH, inifilename);
-   sscanf(tempstr, "%d.%d.%d.%d", ip, ip+1, ip+2, ip+3);
-   netlinkremoteip = MAKEIPADDRESS(ip[0], ip[1], ip[2], ip[3]);
+   netlinklocalremoteip = MAKEIPADDRESS(ip[0], ip[1], ip[2], ip[3]);
 
    GetPrivateProfileString("Netlink", "Port", "7845", tempstr, MAX_PATH, inifilename);
    netlinkport = atoi(tempstr);
+
+   sprintf(netlinksetting, "%d.%d.%d.%d\n%d", FIRST_IPADDRESS(netlinklocalremoteip), SECOND_IPADDRESS(netlinklocalremoteip), THIRD_IPADDRESS(netlinklocalremoteip), FOURTH_IPADDRESS(netlinklocalremoteip), netlinkport);
 
    // Figure out how much of the screen is useable
 //   if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workarearect, 0) == FALSE)
@@ -577,6 +583,7 @@ YabauseSetup:
    yinit.buppath = backupramfilename;
    yinit.mpegpath = mpegromfilename;
    yinit.cartpath = cartfilename;
+   yinit.netlinksetting = netlinksetting;
    yinit.flags = VIDEOFORMATTYPE_NTSC;
 
    if ((ret = YabauseInit(&yinit)) < 0)
@@ -1467,6 +1474,9 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+u32 *vdp1texture=NULL;
+int vdp1texturew, vdp1textureh;
+
 LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
@@ -1499,6 +1509,8 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             i++;
          }
 
+         vdp1texturew = vdp1textureh = 1;
+
          return TRUE;
       }
       case WM_COMMAND:
@@ -1518,6 +1530,13 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      Vdp1DebugCommand(cursel, tempstr);
                      SetDlgItemText(hDlg, IDC_VDP1CMDET, tempstr);
 
+                     if (vdp1texture)
+                        free(vdp1texture);
+
+                     vdp1texture = Vdp1DebugTexture(cursel, &vdp1texturew, &vdp1textureh);
+                     InvalidateRect(hDlg, NULL, FALSE);
+                     UpdateWindow(hDlg);
+
                      return TRUE;
                   }
                   default: break;
@@ -1534,6 +1553,56 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
             default: break;
          }
+         break;
+      }
+      case WM_PAINT:
+      {
+         // Draw our texture box
+         PAINTSTRUCT ps;
+         HDC hdc;
+         BITMAPV4HEADER bmi;
+         int outw, outh;
+         RECT rect;
+
+         hdc = BeginPaint(GetDlgItem(hDlg, IDC_VDP1TEXTET), &ps);
+         GetClientRect(GetDlgItem(hDlg, IDC_VDP1TEXTET), &rect);
+         FillRect(hdc, &rect, (HBRUSH)GetStockObject(BLACK_BRUSH));
+
+         if (vdp1texture == NULL)
+         {
+            SetBkColor(hdc, RGB(0,0,0));
+            SetTextColor(hdc, RGB(255,255,255));
+            TextOut(hdc, 0, 0, "Not Available", 13);
+         }
+         else
+         {
+            memset(&bmi, 0, sizeof(bmi));
+            bmi.bV4Size = sizeof(bmi);
+            bmi.bV4Planes = 1;
+            bmi.bV4BitCount = 32;
+            bmi.bV4V4Compression = BI_RGB | BI_BITFIELDS; // double-check this
+            bmi.bV4RedMask = 0x000000FF;
+            bmi.bV4GreenMask = 0x0000FF00;
+            bmi.bV4BlueMask = 0x00FF0000;
+            bmi.bV4AlphaMask = 0xFF000000;
+            bmi.bV4Width = vdp1texturew;
+            bmi.bV4Height = -vdp1textureh;
+
+            // Let's try to maintain a correct ratio
+            if (vdp1texturew > vdp1textureh)
+            {
+               outw = rect.right;
+               outh = rect.bottom * vdp1textureh / vdp1texturew;
+            }
+            else
+            {
+               outw = rect.right * vdp1texturew / vdp1textureh;
+               outh = rect.bottom;
+            }
+   
+            StretchDIBits(hdc, 0, 0, outw, outh, 0, 0, vdp1texturew, vdp1textureh, vdp1texture, &bmi, DIB_RGB_COLORS, SRCCOPY);
+         }
+         EndPaint(GetDlgItem(hDlg, IDC_VDP1TEXTET), &ps);
          break;
       }
       default: break;
