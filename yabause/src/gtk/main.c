@@ -303,6 +303,15 @@ void yui_conf(void) {
 	gtk_widget_destroy(dialog);
 	switch(result) {
 		case GTK_RESPONSE_OK:
+                        GtkWidget* warningDlg = gtk_message_dialog_new (GTK_WINDOW(yui),
+                                                                        GTK_DIALOG_MODAL,
+                                                                        GTK_MESSAGE_WARNING,
+                                                                        GTK_BUTTONS_OK,
+                                                                        "You must restart Yabause before the changes take effect.",
+                                                                        NULL);
+
+                        gtk_dialog_run (warningDlg);
+                        gtk_widget_destroy (warningDlg); 
 			g_file_set_contents(inifile, g_key_file_to_data(keyfile, 0, 0), -1, 0);
 			yui_settings_load();
 			break;
