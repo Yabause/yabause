@@ -120,6 +120,7 @@
 #define IDC_VIDEOSETTINGS               1016
 #define IDC_SOUNDSETTINGS               1017
 #define IDC_INPUTSETTINGS               1018
+#define IDC_NETLINKSETTINGS             1019
 
 //////////////////////////////////////////////////////////////////////////////
 // Video Settings stuff
@@ -141,9 +142,8 @@
 //////////////////////////////////////////////////////////////////////////////
 // Netlink Settings stuff
 
-#define IDC_LOCALIP                     1001
-#define IDC_REMOTEIP                    1002
-#define IDC_PORTET                      1003
+#define IDC_LOCALREMOTEIP               1001
+#define IDC_PORTET                      1002
 
 //////////////////////////////////////////////////////////////////////////////
 // Input Settings stuff
@@ -186,6 +186,7 @@
 
 #define IDC_VDP1CMDLB                   1001
 #define IDC_VDP1CMDET                   1002
+#define IDC_VDP1TEXTET                  1003
 
 //////////////////////////////////////////////////////////////////////////////
 // VDP2 debug stuff
