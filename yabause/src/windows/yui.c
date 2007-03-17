@@ -51,7 +51,7 @@ int yabwinh;
 
 HINSTANCE y_hInstance;
 HWND YabWin=NULL;
-HWND YabMenu=NULL;
+HMENU YabMenu=NULL;
 HDC YabHDC=NULL;
 HGLRC YabHRC=NULL;
 BOOL isfullscreenset=FALSE;
@@ -371,7 +371,6 @@ void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)
 
 int YuiInit(void)
 {
-   HWND                        hWnd;
    MSG                         msg;
    DWORD inifilenamesize=0;
    char *pinifilename;
@@ -490,6 +489,26 @@ int YuiInit(void)
    GetPrivateProfileString("Video", "AutoFrameSkip", "0", tempstr, MAX_PATH, inifilename);
    enableautofskip = atoi(tempstr);
 
+   // Grab Full Screen Settings
+   GetPrivateProfileString("Video", "UseFullScreenOnStartup", "0", tempstr, MAX_PATH, inifilename);
+   usefullscreenonstartup = atoi(tempstr);
+
+   GetPrivateProfileString("Video", "FullScreenWidth", "640", tempstr, MAX_PATH, inifilename);
+   fullscreenwidth = atoi(tempstr);
+
+   GetPrivateProfileString("Video", "FullScreenHeight", "480", tempstr, MAX_PATH, inifilename);
+   fullscreenheight = atoi(tempstr);
+
+   // Grab Window Settings
+   GetPrivateProfileString("Video", "UseCustomWindowSize", "0", tempstr, MAX_PATH, inifilename);
+   usecustomwindowsize = atoi(tempstr);
+
+   GetPrivateProfileString("Video", "WindowWidth", "320", tempstr, MAX_PATH, inifilename);
+   windowwidth = atoi(tempstr);
+
+   GetPrivateProfileString("Video", "WindowHeight", "224", tempstr, MAX_PATH, inifilename);
+   windowheight = atoi(tempstr);
+
    // Grab Sound Core Settings
    GetPrivateProfileString("Sound", "SoundCore", "-1", tempstr, MAX_PATH, inifilename);
    sndcoretype = atoi(tempstr);
@@ -511,21 +530,20 @@ int YuiInit(void)
    GetPrivateProfileString("Netlink", "Port", "7845", tempstr, MAX_PATH, inifilename);
    netlinkport = atoi(tempstr);
 
-   sprintf(netlinksetting, "%d.%d.%d.%d\n%d", FIRST_IPADDRESS(netlinklocalremoteip), SECOND_IPADDRESS(netlinklocalremoteip), THIRD_IPADDRESS(netlinklocalremoteip), FOURTH_IPADDRESS(netlinklocalremoteip), netlinkport);
+   sprintf(netlinksetting, "%d.%d.%d.%d\n%d", (int)FIRST_IPADDRESS(netlinklocalremoteip), (int)SECOND_IPADDRESS(netlinklocalremoteip), (int)THIRD_IPADDRESS(netlinklocalremoteip), (int)FOURTH_IPADDRESS(netlinklocalremoteip), netlinkport);
 
    // Figure out how much of the screen is useable
-//   if (SystemParametersInfo(SPI_GETWORKAREA, 0, &workarearect, 0) == FALSE)
-//   {
+   if (usecustomwindowsize)
+   {
       // Since we can't retrieve it, use default values
+      yabwinw = windowwidth + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
+      yabwinh = windowheight + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);
+   }
+   else
+   {
       yabwinw = 320 + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
       yabwinh = 224 + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYCAPTION);
-//   }
-//   else
-//   {
-//      // Calculate sizes that fit in the work area
-//      yabwinw = workarearect.right - workarearect.left;
-//      yabwinh = workarearect.bottom - workarearect.top;
-//   }
+   }
 
    hAccel = LoadAccelerators(y_hInstance, MAKEINTRESOURCE(IDR_MAIN_ACCEL));
 
@@ -604,6 +622,11 @@ YabauseSetup:
       }
       return -1;
    }
+
+   if (usefullscreenonstartup)
+      VIDCore->Resize(fullscreenwidth, fullscreenheight, 1);
+   else if (usecustomwindowsize)
+      VIDCore->Resize(windowwidth, windowheight, 0);
 
    PERDXLoadDevices(inifilename);
 
@@ -724,7 +747,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             }
             case IDM_TOGGLEFULLSCREEN:
             {
-               ToggleFullScreen();
+               // Normally I should be using the function provided in vdp2.c,
+               // but it doesn't support odd custom resolutions.
+               if (isfullscreenset)
+                  VIDCore->Resize(windowwidth, windowheight, 0);
+               else
+                  VIDCore->Resize(fullscreenwidth, fullscreenheight, 1);
+
                break;
             }
             case IDM_TOGGLENBG0:
@@ -1600,7 +1629,7 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                outh = rect.bottom;
             }
    
-            StretchDIBits(hdc, 0, 0, outw, outh, 0, 0, vdp1texturew, vdp1textureh, vdp1texture, &bmi, DIB_RGB_COLORS, SRCCOPY);
+            StretchDIBits(hdc, 0, 0, outw, outh, 0, 0, vdp1texturew, vdp1textureh, vdp1texture, (BITMAPINFO *)&bmi, DIB_RGB_COLORS, SRCCOPY);
          }
          EndPaint(GetDlgItem(hDlg, IDC_VDP1TEXTET), &ps);
          break;
@@ -1757,13 +1786,9 @@ void M68KBreakpointHandler (u32 addr)
 
 void M68KUpdateCodeList(HWND hDlg, u32 addr)
 {
-   u32 buf_size;
-   u32 buf_addr;
-   int i, i2;
+   int i;
    char buf[60];
    u32 offset;
-   char op[64], inst[32], arg[24];
-   u32 op_size;
 
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_RESETCONTENT, 0, 0);
 
@@ -2025,13 +2050,13 @@ void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
    sprintf(tempstr, "PH =       %04X", regs->P.part.H & 0xFFFF);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "PL =   %08X", regs->P.part.L & 0xFFFFFFFF);
+   sprintf(tempstr, "PL =   %08X", (int)(regs->P.part.L & 0xFFFFFFFF));
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "ACH =      %04X", regs->AC.part.H & 0xFFFF);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "ACL =  %08X", regs->AC.part.L & 0xFFFFFFFF);
+   sprintf(tempstr, "ACL =  %08X", (int)(regs->AC.part.L & 0xFFFFFFFF));
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 }
 

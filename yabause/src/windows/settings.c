@@ -48,11 +48,16 @@ char sndcoretype=SNDCORE_DIRECTX;
 char percoretype=PERCORE_DIRECTX;
 int sndvolume=100;
 int enableautofskip=0;
+int usefullscreenonstartup=0;
+int fullscreenwidth=640;
+int fullscreenheight=480;
+int usecustomwindowsize=0;
+int windowwidth=320;
+int windowheight=224;
 u8 regionid=0;
 int disctype;
 int carttype;
-DWORD netlinklocalip=MAKEIPADDRESS(127, 0, 0, 1);
-DWORD netlinkremoteip=MAKEIPADDRESS(127, 0, 0, 1);
+DWORD netlinklocalremoteip=MAKEIPADDRESS(127, 0, 0, 1);
 int netlinkport=7845;
 
 extern HINSTANCE y_hInstance;
@@ -514,6 +519,12 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                return TRUE;
             }
+            case IDC_NETLINKSETTINGS:
+            {
+               DialogBoxParam(y_hInstance, "NetlinkSettingsDlg", hDlg, (DLGPROC)NetlinkSettingsDlgProc, (LPARAM)0);
+
+               return TRUE;
+            }
             case IDOK:
             {
                char tempstr[MAX_PATH];
@@ -555,7 +566,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   // convert drive letter to string
                   current_drive = (char)SendDlgItemMessage(hDlg, IDC_DRIVELETTERCB, CB_GETCURSEL, 0, 0);
-                  sprintf(cdrompath, "%c:", toupper(drive_list[current_drive]));
+                  sprintf(cdrompath, "%c:", toupper(drive_list[(int)current_drive]));
                   WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
                }
                else
@@ -674,6 +685,8 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
+         char tempstr[MAX_PATH];
+         DEVMODE dmSettings;
          int i;
 
          // Setup Video Core Combo box
@@ -695,16 +708,75 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             SendDlgItemMessage(hDlg, IDC_AUTOFRAMESKIPCB, BM_SETCHECK, BST_CHECKED, 0);
          else
             SendDlgItemMessage(hDlg, IDC_AUTOFRAMESKIPCB, BM_SETCHECK, BST_UNCHECKED, 0);
-                                     
+
+         // Setup Fullscreen on Startup checkbox
+         if (usefullscreenonstartup)
+            SendDlgItemMessage(hDlg, IDC_FULLSCREENSTARTUPCB, BM_SETCHECK, BST_CHECKED, 0);
+         else
+            SendDlgItemMessage(hDlg, IDC_FULLSCREENSTARTUPCB, BM_SETCHECK, BST_UNCHECKED, 0);
+
+         // Setup FullScreen width/height settings
+         SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_RESETCONTENT, 0, 0);
+
+         for (i = 0;; i++)
+         {
+            if (EnumDisplaySettings(NULL, i, &dmSettings) == FALSE)
+               break;
+            if (dmSettings.dmBitsPerPel == 32 && dmSettings.dmDisplayFrequency == 60)
+            {
+               int index;
+
+               sprintf(tempstr, "%dx%d", (int)dmSettings.dmPelsWidth, (int)dmSettings.dmPelsHeight);
+               index = SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_ADDSTRING, 0, (long)tempstr);
+
+
+               if (dmSettings.dmPelsWidth == fullscreenwidth &&
+                   dmSettings.dmPelsHeight == fullscreenheight)
+                  SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_SETCURSEL, index, 0);
+            }
+         }
+
+         // Setup use custom window size
+         if (usecustomwindowsize)
+         {
+            SendDlgItemMessage(hDlg, IDC_CUSTOMWINDOWCB, BM_SETCHECK, BST_CHECKED, 0);
+            EnableWindow(GetDlgItem(hDlg, IDC_WIDTHEDIT), TRUE);
+            EnableWindow(GetDlgItem(hDlg, IDC_HEIGHTEDIT), TRUE);
+         }
+         else
+            SendDlgItemMessage(hDlg, IDC_CUSTOMWINDOWCB, BM_SETCHECK, BST_UNCHECKED, 0);
+
+         // Setup window width and height
+         sprintf(tempstr, "%d", windowwidth);
+         SetDlgItemText(hDlg, IDC_WIDTHEDIT, tempstr);
+         sprintf(tempstr, "%d", windowheight);
+         SetDlgItemText(hDlg, IDC_HEIGHTEDIT, tempstr);
+
          return TRUE;
       }
       case WM_COMMAND:
       {
          switch (LOWORD(wParam))
          {
+            case IDC_CUSTOMWINDOWCB:
+            {
+               if (SendDlgItemMessage(hDlg, IDC_CUSTOMWINDOWCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+               {
+                  EnableWindow(GetDlgItem(hDlg, IDC_WIDTHEDIT), TRUE);
+                  EnableWindow(GetDlgItem(hDlg, IDC_HEIGHTEDIT), TRUE);
+               }
+               else
+               {
+                  EnableWindow(GetDlgItem(hDlg, IDC_WIDTHEDIT), FALSE);
+                  EnableWindow(GetDlgItem(hDlg, IDC_HEIGHTEDIT), FALSE);
+               }
+
+               return TRUE;
+            }
             case IDOK:
             {
                char tempstr[MAX_PATH];
+               int cursel;
 
                EndDialog(hDlg, TRUE);
 
@@ -723,9 +795,59 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   DisableAutoFrameSkip();
                   enableautofskip = 0;
                }
-                  
+
+               // Write Auto frameskip
                sprintf(tempstr, "%d", enableautofskip);
                WritePrivateProfileString("Video", "AutoFrameSkip", tempstr, inifilename);
+
+               // Write full screen on startup setting
+               if (SendDlgItemMessage(hDlg, IDC_FULLSCREENSTARTUPCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+               {
+                  usefullscreenonstartup = 1;
+                  WritePrivateProfileString("Video", "UseFullScreenOnStartup", "1", inifilename);
+               }
+               else
+               {
+                  usefullscreenonstartup = 0;
+                  WritePrivateProfileString("Video", "UseFullScreenOnStartup", "0", inifilename);
+               }
+
+               // Write full screen size settings
+               cursel = SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETCURSEL, 0, 0);
+               if (SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXTLEN, cursel, 0) <= MAX_PATH)
+               {
+                  SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXT, cursel, (long)tempstr);
+                  sscanf(tempstr, "%dx%d", &fullscreenwidth, &fullscreenheight);
+               }
+
+               sprintf(tempstr, "%d", fullscreenwidth);
+               WritePrivateProfileString("Video", "FullScreenWidth", tempstr, inifilename);
+               sprintf(tempstr, "%d", fullscreenheight);
+               WritePrivateProfileString("Video", "FullScreenHeight", tempstr, inifilename);
+
+               // Write use custom window size setting
+               if (SendDlgItemMessage(hDlg, IDC_CUSTOMWINDOWCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+               {
+                  usecustomwindowsize = 1;
+                  WritePrivateProfileString("Video", "UseCustomWindowSize", "1", inifilename);
+               }
+               else
+               {
+                  usecustomwindowsize = 0;
+                  WritePrivateProfileString("Video", "UseCustomWindowSize", "0", inifilename);
+               }
+               
+               // Write window width and height settings
+               GetDlgItemText(hDlg, IDC_WIDTHEDIT, tempstr, MAX_PATH);
+               windowwidth = atoi(tempstr);
+               WritePrivateProfileString("Video", "WindowWidth", tempstr, inifilename);
+               GetDlgItemText(hDlg, IDC_HEIGHTEDIT, tempstr, MAX_PATH);
+               windowheight = atoi(tempstr);
+               WritePrivateProfileString("Video", "WindowHeight", tempstr, inifilename);
+
+               // Re-initialize Video
+               if (!VIDCore->IsFullscreen() && usecustomwindowsize)
+                  VIDCore->Resize(windowwidth, windowheight, 0);
 
                return TRUE;
             }
@@ -833,8 +955,7 @@ LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         SendDlgItemMessage(hDlg, IDC_LOCALIP, IPM_SETADDRESS, 0, netlinklocalip);
-         SendDlgItemMessage(hDlg, IDC_REMOTEIP, IPM_SETADDRESS, 0, netlinkremoteip);
+         SendDlgItemMessage(hDlg, IDC_LOCALREMOTEIP, IPM_SETADDRESS, 0, netlinklocalremoteip);
 
          sprintf(tempstr, "%d", netlinkport);
          SetDlgItemText(hDlg, IDC_PORTET, tempstr);
@@ -849,15 +970,10 @@ LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                EndDialog(hDlg, TRUE);
 
-               // Local IP
-               SendDlgItemMessage(hDlg, IDC_LOCALIP, IPM_GETADDRESS, 0, &netlinklocalip);
-               sprintf(tempstr, "%d.%d.%d.%d", FIRST_IPADDRESS(netlinklocalip), SECOND_IPADDRESS(netlinklocalip), THIRD_IPADDRESS(netlinklocalip), FOURTH_IPADDRESS(netlinklocalip));
-               WritePrivateProfileString("Netlink", "LocalIP", tempstr, inifilename);
-
-               // Remote IP
-               SendDlgItemMessage(hDlg, IDC_REMOTEIP, IPM_GETADDRESS, 0, &netlinkremoteip);
-               sprintf(tempstr, "%d.%d.%d.%d", FIRST_IPADDRESS(netlinkremoteip), SECOND_IPADDRESS(netlinkremoteip), THIRD_IPADDRESS(netlinkremoteip), FOURTH_IPADDRESS(netlinkremoteip));
-               WritePrivateProfileString("Netlink", "RemoteIP", tempstr, inifilename);
+               // Local/Remote IP
+               SendDlgItemMessage(hDlg, IDC_LOCALREMOTEIP, IPM_GETADDRESS, 0, (long)&netlinklocalremoteip);
+               sprintf(tempstr, "%d.%d.%d.%d", (int)FIRST_IPADDRESS(netlinklocalremoteip), (int)SECOND_IPADDRESS(netlinklocalremoteip), (int)THIRD_IPADDRESS(netlinklocalremoteip), (int)FOURTH_IPADDRESS(netlinklocalremoteip));
+               WritePrivateProfileString("Netlink", "LocalRemoteIP", tempstr, inifilename);
 
                // Port Number
                GetDlgItemText(hDlg, IDC_PORTET, tempstr, MAX_PATH);
@@ -895,8 +1011,6 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         int i;
-
          return TRUE;
       }
       case WM_COMMAND:
