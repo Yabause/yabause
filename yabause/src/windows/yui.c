@@ -388,7 +388,7 @@ int YuiInit(void)
 
    memset(&iccs, 0, sizeof(INITCOMMONCONTROLSEX));
    iccs.dwSize = sizeof(INITCOMMONCONTROLSEX);
-   iccs.dwICC = ICC_INTERNET_CLASSES;
+   iccs.dwICC = ICC_INTERNET_CLASSES | ICC_TAB_CLASSES;
    InitCommonControlsEx(&iccs);
 
    y_hInstance = GetModuleHandle(NULL);

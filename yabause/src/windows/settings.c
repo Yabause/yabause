@@ -65,6 +65,9 @@ extern VideoInterface_struct *VIDCoreList[];
 extern PerInterface_struct *PERCoreList[];
 extern SoundInterface_struct *SNDCoreList[];
 
+LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                      LPARAM lParam);
+
 LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam);
 
@@ -119,8 +122,145 @@ BOOL IsPathCdrom(const char *path)
 
 //////////////////////////////////////////////////////////////////////////////
 
+HWND dialoglist[4];
+
 LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
-                                 LPARAM lParam)
+                                      LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         // Testing tabs
+         TCITEM tabitem; 
+         RECT rect;
+         int i;
+
+         tabitem.mask = TCIF_TEXT | TCIF_IMAGE;
+         tabitem.iImage = -1;
+
+         tabitem.pszText = "Basic";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 0, &tabitem);
+         tabitem.pszText = "Video";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 1, &tabitem);
+         tabitem.pszText = "Sound";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 2, &tabitem);
+         tabitem.pszText = "Input";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 3, &tabitem);
+
+         // Create all the dialogs
+         dialoglist[0] = CreateDialog(y_hInstance,
+                                      "BasicSettingsDlg",
+                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
+                                      (DLGPROC)BasicSettingsDlgProc);
+         dialoglist[1] = CreateDialog(y_hInstance,
+                                      "VideoSettingsDlg",
+                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
+                                      (DLGPROC)VideoSettingsDlgProc);
+         dialoglist[2] = CreateDialog(y_hInstance,
+                                      "SoundSettingsDlg",
+                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
+                                      (DLGPROC)SoundSettingsDlgProc);
+         dialoglist[3] = CreateDialog(y_hInstance,
+                                      "PadConfigDlg",
+                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
+                                      (DLGPROC)PadConfigDlgProc);
+
+         // Setup Tabs
+         GetClientRect(GetDlgItem(hDlg, IDC_SETTINGSTAB), &rect);
+         TabCtrl_AdjustRect(GetDlgItem(hDlg, IDC_SETTINGSTAB), FALSE,
+                            &rect);
+
+         // Adjust the size of and hide all the dialogs
+         for (i = 0; i < 4; i++)
+         {
+            MoveWindow(dialoglist[i], rect.left, rect.top,
+                       rect.right - rect.left, rect.bottom - rect.top,
+                       TRUE);
+            ShowWindow(dialoglist[i], SW_HIDE);
+         }
+
+         // Set only the first one as visible
+         SetWindowPos(dialoglist[0], HWND_TOP, 0, 0, 0, 0,
+                      SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               int i;
+
+               for (i = 0; i < 4; i++)
+               {
+                  SendMessage(dialoglist[i], WM_COMMAND, IDOK, 0);
+                  dialoglist[i] = NULL;
+               }
+
+               EndDialog(hDlg, TRUE);
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_NOTIFY:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_SETTINGSTAB:
+            {               
+               LPNMHDR lpnmhdr = (LPNMHDR)lParam;
+
+               if (lpnmhdr->code == TCN_SELCHANGING)
+               {
+                  // Hide old dialog
+                  int cursel = TabCtrl_GetCurSel(GetDlgItem(hDlg, IDC_SETTINGSTAB));
+                  ShowWindow(dialoglist[cursel],SW_HIDE);
+                  return TRUE;
+               }
+               else if (lpnmhdr->code == TCN_SELCHANGE)
+               {
+                  // Show the new current dialog
+                  int cursel = TabCtrl_GetCurSel(GetDlgItem(hDlg, IDC_SETTINGSTAB));
+                  ShowWindow(dialoglist[cursel],SW_SHOWNORMAL);
+                  return TRUE;
+               }
+               break;
+            }
+            default: break;
+         }
+         break;
+      }
+      case WM_DESTROY:
+      {
+         int i;
+
+         for (i = 0; i < 4; i++)
+         {
+            if (dialoglist[i])
+               DestroyWindow(dialoglist[i]);
+         }
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                      LPARAM lParam)
 {
    switch (uMsg)
    {
@@ -497,31 +637,6 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   // adjust appropriate edit box
                   SetDlgItemText(hDlg, IDC_CARTEDIT, cartfilename);
                }
-
-               return TRUE;
-            }
-            case IDC_VIDEOSETTINGS:
-            {
-               DialogBox(y_hInstance, "VideoSettingsDlg", hDlg, (DLGPROC)VideoSettingsDlgProc);
-
-               return TRUE;
-            }
-            case IDC_SOUNDSETTINGS:
-            {
-               DialogBox(y_hInstance, "SoundSettingsDlg", hDlg, (DLGPROC)SoundSettingsDlgProc);
-
-               return TRUE;
-            }
-            case IDC_INPUTSETTINGS:
-            {
-//               DialogBox(y_hInstance, "InputSettingsDlg", hDlg, (DLGPROC)InputSettingsDlgProc);
-               DialogBoxParam(y_hInstance, "PadConfigDlg", hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)0);
-
-               return TRUE;
-            }
-            case IDC_NETLINKSETTINGS:
-            {
-               DialogBoxParam(y_hInstance, "NetlinkSettingsDlg", hDlg, (DLGPROC)NetlinkSettingsDlgProc, (LPARAM)0);
 
                return TRUE;
             }

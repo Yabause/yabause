@@ -94,6 +94,11 @@
 //////////////////////////////////////////////////////////////////////////////
 // Settings stuff
 
+#define IDC_SETTINGSTAB                 1020
+
+//////////////////////////////////////////////////////////////////////////////
+// Basic Settings stuff
+
 #define IDC_DISCTYPECB                  1001
 #define IDC_DRIVELETTERCB               1002
 #define IDC_IMAGEEDIT                   1003
@@ -116,11 +121,6 @@
 #define IDC_CARTTYPECB                  1013
 #define IDC_CARTEDIT                    1014
 #define IDC_CARTBROWSE                  1015
-
-#define IDC_VIDEOSETTINGS               1016
-#define IDC_SOUNDSETTINGS               1017
-#define IDC_INPUTSETTINGS               1018
-#define IDC_NETLINKSETTINGS             1019
 
 //////////////////////////////////////////////////////////////////////////////
 // Video Settings stuff
