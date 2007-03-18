@@ -122,7 +122,9 @@ BOOL IsPathCdrom(const char *path)
 
 //////////////////////////////////////////////////////////////////////////////
 
-HWND dialoglist[4];
+#define MAX_SETTINGS_DIALOGS    5
+
+HWND dialoglist[MAX_SETTINGS_DIALOGS];
 
 LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam)
@@ -147,6 +149,8 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 2, &tabitem);
          tabitem.pszText = "Input";
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 3, &tabitem);
+//         tabitem.pszText = "Netlink";
+//         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 4, &tabitem);
 
          // Create all the dialogs
          dialoglist[0] = CreateDialog(y_hInstance,
@@ -165,6 +169,10 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       "PadConfigDlg",
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)PadConfigDlgProc);
+         dialoglist[4] = CreateDialog(y_hInstance,
+                                      "NetlinkSettingsDlg",
+                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
+                                      (DLGPROC)NetlinkSettingsDlgProc);
 
          // Setup Tabs
          GetClientRect(GetDlgItem(hDlg, IDC_SETTINGSTAB), &rect);
@@ -172,7 +180,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                             &rect);
 
          // Adjust the size of and hide all the dialogs
-         for (i = 0; i < 4; i++)
+         for (i = 0; i < MAX_SETTINGS_DIALOGS; i++)
          {
             MoveWindow(dialoglist[i], rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top,
@@ -194,7 +202,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                int i;
 
-               for (i = 0; i < 4; i++)
+               for (i = 0; i < MAX_SETTINGS_DIALOGS; i++)
                {
                   SendMessage(dialoglist[i], WM_COMMAND, IDOK, 0);
                   dialoglist[i] = NULL;
@@ -245,7 +253,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          int i;
 
-         for (i = 0; i < 4; i++)
+         for (i = 0; i < MAX_SETTINGS_DIALOGS; i++)
          {
             if (dialoglist[i])
                DestroyWindow(dialoglist[i]);
