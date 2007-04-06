@@ -589,9 +589,10 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info)
          {
             for (i2 = clip.xstart; i2 < clip.xend; i2++)
             {
-	       u16 dot1 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
+               u16 dot1, dot2;
+               dot1 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
                info->charaddr += 2;
-               u16 dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
+               dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
                info->charaddr += 2;
 
                if (!(dot1 & 0x8000) && info->transparencyenable)
