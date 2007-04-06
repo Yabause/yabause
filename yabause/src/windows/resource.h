@@ -182,6 +182,21 @@
 #define IDC_CUSTOMCANCEL                1037
 
 //////////////////////////////////////////////////////////////////////////////
+// Log Settings stuff
+
+#define IDC_USELOGCB                    1001
+#define IDC_LOGTYPECB                   1002
+#define IDC_LOGFILENAMEET               1003
+#define IDC_LOGBROWSEBT                 1004
+
+//////////////////////////////////////////////////////////////////////////////
+// Log stuff
+
+#define IDC_LOGET                       1001
+#define IDC_SAVELOGBT                   1002
+#define IDC_CLEARBT                     1003
+
+//////////////////////////////////////////////////////////////////////////////
 // VDP1 debug stuff
 
 #define IDC_VDP1CMDLB                   1001
