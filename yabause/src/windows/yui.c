@@ -2350,9 +2350,13 @@ LRESULT CALLBACK ErrorDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                               LPARAM lParam)
 {
+   char tempstr[256];
+
    switch (uMsg)
    {
       case WM_INITDIALOG:
+         sprintf(tempstr, "Yabause v%s", VERSION);
+         SetDlgItemText(hDlg, IDC_VERSIONTEXT, tempstr);
          return TRUE;
       case WM_COMMAND:
       {
