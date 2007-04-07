@@ -39,8 +39,11 @@
 #ifdef HAVE_LIBSDL
 #include "SDL.h"
 #endif
+#ifdef _MSC_VER
+#include <time.h>
+#else
 #include <sys/time.h>
-
+#endif
 #ifdef _arch_dreamcast
 #include <arch/timer.h>
 #endif
