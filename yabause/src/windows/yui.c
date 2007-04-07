@@ -55,6 +55,10 @@ HMENU YabMenu=NULL;
 HDC YabHDC=NULL;
 HGLRC YabHRC=NULL;
 BOOL isfullscreenset=FALSE;
+HWND LogWin=NULL;
+char *logbuffer;
+u32 logcounter=0;
+u32 logsize=512;
 
 u32 mtrnssaddress=0x06004000;
 u32 mtrnseaddress=0x06100000;
@@ -90,6 +94,9 @@ LRESULT CALLBACK ErrorDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                               LPARAM lParam);
+LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                            LPARAM lParam);
+void UpdateLogCallback (char *string);
 void YuiReleaseVideo(void);
 
 SH2Interface_struct *SH2CoreList[] = {
@@ -374,8 +381,6 @@ int YuiInit(void)
    MSG                         msg;
    DWORD inifilenamesize=0;
    char *pinifilename;
-//   RECT                        workarearect;
-//   DWORD ret;
    char tempstr[MAX_PATH];
    yabauseinit_struct yinit;
    HACCEL hAccel;
@@ -531,6 +536,46 @@ int YuiInit(void)
    netlinkport = atoi(tempstr);
 
    sprintf(netlinksetting, "%d.%d.%d.%d\n%d", (int)FIRST_IPADDRESS(netlinklocalremoteip), (int)SECOND_IPADDRESS(netlinklocalremoteip), (int)THIRD_IPADDRESS(netlinklocalremoteip), (int)FOURTH_IPADDRESS(netlinklocalremoteip), netlinkport);
+
+#if DEBUG
+   // Grab Logging settings
+   GetPrivateProfileString("Log", "Enable", "0", tempstr, MAX_PATH, inifilename);
+   uselog = atoi(tempstr);
+
+   GetPrivateProfileString("Log", "Type", "0", tempstr, MAX_PATH, inifilename);
+   logtype = atoi(tempstr);
+
+   GetPrivateProfileString("Log", "Filename", "", logfilename, MAX_PATH, inifilename);
+
+   if (uselog)
+   {
+      switch (logtype)
+      {
+         case 0: // Log to file
+            MainLog = DebugInit("main", DEBUG_STREAM, logfilename);
+            break;
+         case 1: // Log to Window
+         {
+            RECT rect;
+
+            if ((logbuffer = (char *)malloc(logsize)) == NULL)
+               break;
+            LogWin = CreateDialog(y_hInstance,
+                                  "LogDlg",
+                                  NULL,
+                                  (DLGPROC)LogDlgProc);
+            GetWindowRect(LogWin, &rect);
+            GetPrivateProfileString("Log", "WindowX", "0", tempstr, MAX_PATH, inifilename);
+            ret = atoi(tempstr);
+            GetPrivateProfileString("Log", "WindowY", "0", tempstr, MAX_PATH, inifilename);
+            SetWindowPos(LogWin, HWND_TOP, ret, atoi(tempstr), rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+            MainLog = DebugInit("main", DEBUG_CALLBACK, &UpdateLogCallback);
+            break;
+         }
+         default: break;
+      }
+   }
+#endif
 
    // Figure out how much of the screen is useable
    if (usecustomwindowsize)
@@ -2331,15 +2376,106 @@ LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char *argv[]) {
-   LogStart();
+LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                            LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+         // Use the maximum available characters
+         SendDlgItemMessage(hDlg, IDC_LOGET, EM_LIMITTEXT, 0, 0); 
+         return TRUE;
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_CLEARBT:
+               SetDlgItemText(hDlg, IDC_LOGET, "");
+               return TRUE;
+            case IDC_SAVELOGBT:
+            {
+               OPENFILENAME ofn;
 
+               // setup ofn structure
+               ZeroMemory(&ofn, sizeof(ofn));
+               ofn.lStructSize = sizeof(ofn);
+               ofn.hwndOwner = hDlg;
+               ofn.lpstrFilter = "All Files\0*.*\0Text Files\0*.txt\0";
+               ofn.nFilterIndex = 1;
+               ofn.lpstrFile = logfilename;
+               ofn.nMaxFile = sizeof(logfilename);
+               ofn.Flags = OFN_OVERWRITEPROMPT;
+ 
+               if (GetSaveFileName(&ofn))
+               {
+                  FILE *fp=fopen(logfilename, "wb");
+                  HLOCAL *localbuf=SendDlgItemMessage(hDlg, IDC_LOGET, EM_GETHANDLE, 0, 0);
+                  unsigned char *buf;
+
+                  if (fp == NULL)
+                  {
+                     MessageBox (NULL, "Unable to open file for writing", "Error",  MB_OK | MB_ICONINFORMATION);
+                     return FALSE;
+                  }
+
+                  buf = LocalLock(localbuf);
+                  fwrite((void *)buf, 1, strlen(buf), fp);
+                  LocalUnlock(localbuf);
+                  fclose(fp);
+               }
+
+               return TRUE;
+            }
+            default: break;
+         }
+         break;
+      }
+      case WM_DESTROY:
+      {
+         KillTimer(hDlg, 1);
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void UpdateLogCallback (char *string)
+{
+   int len = GetWindowTextLength(GetDlgItem(LogWin, IDC_LOGET));
+   sprintf(logbuffer, "%s\r\n", string);
+   SendDlgItemMessage(LogWin, IDC_LOGET, EM_SETSEL, len, len);
+   SendDlgItemMessage(LogWin, IDC_LOGET, EM_REPLACESEL, FALSE, (LPARAM)logbuffer);  
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int main(int argc, char *argv[]) {
    if (YuiInit() != 0)
       fprintf(stderr, "Error running Yabause\n");
 
    YabauseDeInit();
    PROFILE_PRINT();
+#if DEBUG
    LogStop();
+   if (LogWin)
+   {
+      RECT rect;
+      char text[10];
+
+      // Remember log window position
+      GetWindowRect(LogWin, &rect);
+      sprintf(text, "%d", rect.left);
+      WritePrivateProfileString("Log", "WindowX", text, inifilename);
+      sprintf(text, "%d", rect.top);
+      WritePrivateProfileString("Log", "WindowY", text, inifilename);
+
+      DestroyWindow(LogWin);
+   }
+#endif
    return 0;
 }
 

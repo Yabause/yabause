@@ -19,10 +19,19 @@
 
 #include <windows.h>
 
+typedef struct
+{
+   char *string;
+   HWND hWnd;
+   HWND hParent;
+} helpballoon_struct;
+
 LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam);
 
 extern BOOL IsPathCdrom(const char *path);
+
+int CreateHelpBalloons(helpballoon_struct *hb[]);
 
 extern char biosfilename[MAX_PATH];
 extern char cdrompath[MAX_PATH];
@@ -30,6 +39,7 @@ extern char backupramfilename[MAX_PATH];
 extern char mpegromfilename[MAX_PATH];
 extern char cartfilename[MAX_PATH];
 extern char inifilename[MAX_PATH];
+extern char logfilename[MAX_PATH];
 
 extern char bioslang;
 extern char sh2coretype;
@@ -49,3 +59,6 @@ extern int disctype;
 extern int carttype;
 extern DWORD netlinklocalremoteip;
 extern int netlinkport;
+extern int uselog;
+extern int logtype;
+

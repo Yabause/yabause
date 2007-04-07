@@ -28,6 +28,7 @@
 #include "../vdp1.h"
 #include "../vdp2.h"
 #include "resource.h"
+#include "settings.h"
 #include "snddx.h"
 #include "perdx.h"
 #include "../vidogl.h"
@@ -38,6 +39,7 @@ char backupramfilename[MAX_PATH] = "bkram.bin\0";
 char mpegromfilename[MAX_PATH] = "\0";
 char cartfilename[MAX_PATH] = "\0";
 char inifilename[MAX_PATH];
+char logfilename[MAX_PATH];
 
 int num_cdroms=0;
 char drive_list[24];
@@ -59,6 +61,8 @@ int disctype;
 int carttype;
 DWORD netlinklocalremoteip=MAKEIPADDRESS(127, 0, 0, 1);
 int netlinkport=7845;
+int uselog=0;
+int logtype=0;
 
 extern HINSTANCE y_hInstance;
 extern VideoInterface_struct *VIDCoreList[];
@@ -82,6 +86,9 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam);
+
+LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam);
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -122,7 +129,7 @@ BOOL IsPathCdrom(const char *path)
 
 //////////////////////////////////////////////////////////////////////////////
 
-#define MAX_SETTINGS_DIALOGS    5
+#define MAX_SETTINGS_DIALOGS    6
 
 HWND dialoglist[MAX_SETTINGS_DIALOGS];
 
@@ -133,7 +140,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         // Testing tabs
+         // Setup Tabs
          TCITEM tabitem; 
          RECT rect;
          int i;
@@ -141,38 +148,64 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          tabitem.mask = TCIF_TEXT | TCIF_IMAGE;
          tabitem.iImage = -1;
 
-         tabitem.pszText = "Basic";
-         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 0, &tabitem);
-         tabitem.pszText = "Video";
-         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 1, &tabitem);
-         tabitem.pszText = "Sound";
-         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 2, &tabitem);
-         tabitem.pszText = "Input";
-         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 3, &tabitem);
-//         tabitem.pszText = "Netlink";
-//         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), 4, &tabitem);
+         i = 0;
 
-         // Create all the dialogs
-         dialoglist[0] = CreateDialog(y_hInstance,
+         // Setup Tabs and create all the dialogs
+         tabitem.pszText = "Basic";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
+
+         dialoglist[i] = CreateDialog(y_hInstance,
                                       "BasicSettingsDlg",
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)BasicSettingsDlgProc);
-         dialoglist[1] = CreateDialog(y_hInstance,
+         i++;
+
+         tabitem.pszText = "Video";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
+
+         dialoglist[i] = CreateDialog(y_hInstance,
                                       "VideoSettingsDlg",
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)VideoSettingsDlgProc);
-         dialoglist[2] = CreateDialog(y_hInstance,
+         i++;
+
+         tabitem.pszText = "Sound";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
+
+         dialoglist[i] = CreateDialog(y_hInstance,
                                       "SoundSettingsDlg",
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)SoundSettingsDlgProc);
-         dialoglist[3] = CreateDialog(y_hInstance,
+         i++;
+
+         tabitem.pszText = "Input";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
+
+         dialoglist[i] = CreateDialog(y_hInstance,
                                       "PadConfigDlg",
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)PadConfigDlgProc);
-         dialoglist[4] = CreateDialog(y_hInstance,
-                                      "NetlinkSettingsDlg",
+         i++;
+
+//         tabitem.pszText = "Netlink";
+//         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
+
+//         dialoglist[i] = CreateDialog(y_hInstance,
+//                                      "NetlinkSettingsDlg",
+//                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
+//                                      (DLGPROC)NetlinkSettingsDlgProc);
+//         i++;
+
+#if DEBUG
+         tabitem.pszText = "Log";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
+
+         dialoglist[i] = CreateDialog(y_hInstance,
+                                      "LogSettingsDlg",
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
-                                      (DLGPROC)NetlinkSettingsDlgProc);
+                                      (DLGPROC)LogSettingsDlgProc);
+         i++;
+#endif
 
          // Setup Tabs
          GetClientRect(GetDlgItem(hDlg, IDC_SETTINGSTAB), &rect);
@@ -1394,3 +1427,190 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         // Setup use log setting
+         if (uselog)
+         {
+            SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_SETCHECK, BST_CHECKED, 0);
+            SendMessage(hDlg, WM_COMMAND, IDC_USELOGCB, 0);
+         }
+         else
+            SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_SETCHECK, BST_UNCHECKED, 0);
+
+         SendMessage(hDlg, WM_COMMAND, IDC_USELOGCB, 0);
+
+         // Setup log type setting
+         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (long)"Write to File");
+         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (long)"Write to Window");
+         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_SETCURSEL, logtype, 0);
+
+         // Setup log filename setting
+         SetDlgItemText(hDlg, IDC_LOGFILENAMEET, logfilename);
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_USELOGCB:
+            {
+               if (SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+               {
+                  SendMessage(hDlg, WM_COMMAND, (CBN_SELCHANGE << 16) | IDC_LOGTYPECB, 0);
+                  EnableWindow(GetDlgItem(hDlg, IDC_LOGTYPECB), TRUE);
+               }
+               else
+               {
+                  EnableWindow(GetDlgItem(hDlg, IDC_LOGTYPECB), FALSE);
+                  EnableWindow(GetDlgItem(hDlg, IDC_LOGFILENAMEET), FALSE);
+                  EnableWindow(GetDlgItem(hDlg, IDC_LOGBROWSEBT), FALSE);
+               }
+
+               return TRUE;
+            }
+            case IDC_LOGTYPECB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case CBN_SELCHANGE:
+                  {
+                     if (SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_GETCURSEL, 0, 0) == 0)
+                     {
+                        EnableWindow(GetDlgItem(hDlg, IDC_LOGFILENAMEET), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_LOGBROWSEBT), TRUE);
+                     }
+                     else
+                     {
+                        EnableWindow(GetDlgItem(hDlg, IDC_LOGFILENAMEET), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_LOGBROWSEBT), FALSE);
+                     }
+
+                     return TRUE;
+                  }
+                  default: break;
+               }
+
+               return TRUE;
+            }
+            case IDC_LOGBROWSEBT:
+            {
+               OPENFILENAME ofn;
+
+               // setup ofn structure
+               ZeroMemory(&ofn, sizeof(ofn));
+               ofn.lStructSize = sizeof(ofn);
+               ofn.hwndOwner = hDlg;
+               ofn.lpstrFilter = "All Files\0*.*\0Text Files\0*.txt\0";
+               ofn.nFilterIndex = 1;
+               ofn.lpstrFile = logfilename;
+               ofn.nMaxFile = sizeof(logfilename);
+               ofn.Flags = OFN_OVERWRITEPROMPT;
+ 
+               if (GetSaveFileName(&ofn))
+               {
+                  SetDlgItemText(hDlg, IDC_LOGFILENAMEET, logfilename);
+               }
+
+               return TRUE;
+            }
+            case IDOK:
+            {
+               char tempstr[MAX_PATH];
+
+               // Write use log setting
+               if (SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                  uselog = 1;
+               else
+                  uselog = 0;
+
+               sprintf(tempstr, "%d", uselog);
+               WritePrivateProfileString("Log", "Enable", tempstr, inifilename);
+
+               // Write log type setting
+               logtype = SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_GETCURSEL, 0, 0);
+               sprintf(tempstr, "%d", logtype);
+               WritePrivateProfileString("Log", "Type", tempstr, inifilename);
+
+               // Write log filename
+               WritePrivateProfileString("Log", "Filename", logfilename, inifilename);
+
+               EndDialog(hDlg, TRUE);
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_DESTROY:
+      {
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int CreateHelpBalloons(helpballoon_struct *hb[])
+{
+   TOOLINFO ti;
+   RECT rect;
+   int i;
+
+   for (i = 0; hb[i] != NULL; i++)
+   {
+      hb[i]->hWnd = CreateWindowEx(WS_EX_TOPMOST,
+                                   TOOLTIPS_CLASS,
+                                   NULL,
+                                   WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
+                                   CW_USEDEFAULT,
+                                   CW_USEDEFAULT,
+                                   CW_USEDEFAULT,
+                                   CW_USEDEFAULT,
+                                   hb[i]->hParent,
+                                   NULL,
+                                   y_hInstance,
+                                   NULL);
+
+      if (!hb[i]->hWnd)
+         return -1;
+
+      SetWindowPos(hb[i]->hWnd, HWND_TOPMOST, 0, 0, 0, 0,
+                   SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+      // Create some help balloons
+      ti.cbSize = sizeof(TOOLINFO);
+      ti.uFlags = TTF_SUBCLASS;
+      ti.hwnd = hb[i]->hParent;
+      ti.hinst = y_hInstance;
+      ti.uId = 0;
+      ti.lpszText = hb[i]->string;
+      GetClientRect(hb[i]->hParent, &rect);
+      ti.rect.left = rect.left;
+      ti.rect.top = rect.top;
+      ti.rect.right = rect.right;
+      ti.rect.bottom = rect.bottom;
+
+      // Add it
+      SendMessage(hb[i]->hWnd, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
