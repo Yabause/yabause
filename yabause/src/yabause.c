@@ -24,6 +24,7 @@
 #include <windows.h>
 #endif
 #include "yabause.h"
+#include "cheat.h"
 #include "cs0.h"
 #include "cs2.h"
 #include "debug.h"
@@ -192,6 +193,12 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
+   if (CheatInit() != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, "Cheat System");
+      return -1;
+   }
+
    MappedMemoryInit();
 
    YabauseSetVideoFormat(init->flags & 0x1);
@@ -264,6 +271,7 @@ void YabauseDeInit(void) {
    SmpcDeInit();
    PerDeInit();
    VideoDeInit();
+   CheatDeInit();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -347,6 +355,7 @@ int YabauseExec(void) {
          SmpcINTBACKEnd();
          Vdp2VBlankIN();
          PROFILE_STOP("vblankin");
+         CheatDoPatches();
       }
       else if (yabsys.LineCount == yabsys.MaxLineCount)
       {

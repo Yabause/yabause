@@ -76,11 +76,11 @@ int CheatAddARCode(const char *code)
    switch (addr >> 28)
    {
       case 0x1:
-         return CheatAddCode(CHEATTYPE_WORDWRITE, addr & 0x7FFFFFFF, val);
+         return CheatAddCode(CHEATTYPE_WORDWRITE, addr & 0x0FFFFFFF, val);
       case 0x3:
-         return CheatAddCode(CHEATTYPE_BYTEWRITE, addr & 0x7FFFFFFF, val);
+         return CheatAddCode(CHEATTYPE_BYTEWRITE, addr & 0x0FFFFFFF, val);
       case 0xD:
-         return CheatAddCode(CHEATTYPE_ENABLE, addr & 0x7FFFFFFF, val);
+         return CheatAddCode(CHEATTYPE_ENABLE, addr & 0x0FFFFFFF, val);
       default: return -1;
    }
 
@@ -155,10 +155,10 @@ void CheatDoPatches(void)
                return;
             break;
          case CHEATTYPE_BYTEWRITE:
-            MappedMemoryWriteByte(cheatlist[i].addr, cheatlist[i].val);
+            MappedMemoryWriteByte(cheatlist[i].addr, (u8)cheatlist[i].val);
             break;
          case CHEATTYPE_WORDWRITE:
-            MappedMemoryWriteWord(cheatlist[i].addr, cheatlist[i].val);
+            MappedMemoryWriteWord(cheatlist[i].addr, (u16)cheatlist[i].val);
             break;
          case CHEATTYPE_LONGWRITE:
             MappedMemoryWriteLong(cheatlist[i].addr, cheatlist[i].val);
