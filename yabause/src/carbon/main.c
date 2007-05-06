@@ -101,7 +101,15 @@ void read_settings(void) {
 	if (s)
 		yinit.cdcoretype = CFStringGetIntValue(s) - 1;
 	yinit.carttype = CART_NONE;
+    s = CFPreferencesCopyAppValue(CFSTR("CartType"),
+        kCFPreferencesCurrentApplication);
+    if (s)
+        yinit.carttype = CFStringGetIntValue(s) - 1;
 	yinit.regionid = 0;
+    s = CFPreferencesCopyAppValue(CFSTR("Region"),
+        kCFPreferencesCurrentApplication);
+    if (s)
+        yinit.regionid = CFStringGetIntValue(s) - 1;
 
 	yinit.biospath = 0;
 	s = CFPreferencesCopyAppValue(CFSTR("BiosPath"),
@@ -114,8 +122,21 @@ void read_settings(void) {
 	if (s)
 		yinit.cdpath = strdup(CFStringGetCStringPtr(s, 0));
 	yinit.buppath = 0;
+    s = CFPreferencesCopyAppValue(CFSTR("BackupRamPath"),
+        kCFPreferencesCurrentApplication);
+    if (s)
+        yinit.buppath = strdup(CFStringGetCStringPtr(s, 0));
 	yinit.mpegpath = 0;
+    s = CFPreferencesCopyAppValue(CFSTR("MpegRomPath"),
+        kCFPreferencesCurrentApplication);
+    if (s)
+        yinit.mpegpath = strdup(CFStringGetCStringPtr(s, 0));
 	yinit.cartpath = 0;
+    s = CFPreferencesCopyAppValue(CFSTR("CartPath"),
+        kCFPreferencesCurrentApplication);
+    if (s)
+        yinit.cartpath = strdup(CFStringGetCStringPtr(s, 0));
+    
 	yinit.flags = VIDEOFORMATTYPE_NTSC;
 	
 	s = CFPreferencesCopyAppValue(CFSTR("AutoFrameSkip"),

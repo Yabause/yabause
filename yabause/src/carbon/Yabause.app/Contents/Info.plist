@@ -5,6 +5,8 @@
 	<key>CFBundleExecutable</key>
 	<string>Yabause</string>
 	<key>CFBundleIconFile</key>
-	<string>yabause</string>
+	<string>yabause.icns</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.8.0</string>
 </dict>
 </plist>
