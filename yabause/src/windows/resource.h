@@ -29,27 +29,29 @@
 #define IDM_RESET            10009
 #define IDM_SETTINGS         10010
 #define IDM_EXIT             10011
-#define IDM_MSH2DEBUG        10012
-#define IDM_SSH2DEBUG        10013
-#define IDM_VDP1DEBUG        10014
-#define IDM_VDP2DEBUG        10015
-#define IDM_M68KDEBUG        10016
-#define IDM_SCUDSPDEBUG      10017
-#define IDM_SCSPDEBUG        10018
-#define IDM_TOGGLEFULLSCREEN 10019
-#define IDM_TOGGLENBG0       10020
-#define IDM_TOGGLENBG1       10021
-#define IDM_TOGGLENBG2       10022
-#define IDM_TOGGLENBG3       10023
-#define IDM_TOGGLERBG0       10024
-#define IDM_TOGGLEVDP1       10025
-#define IDM_TOGGLEFPS        10026
-#define IDM_WEBSITE          10027
-#define IDM_FORUM            10028
-#define IDM_SUBMITBUGREPORT  10029
-#define IDM_DONATE           10030
-#define IDM_COMPATLIST       10031
-#define IDM_ABOUT            10032
+#define IDM_SEARCHCHEATS     10020
+#define IDM_CHEATLIST        10021
+#define IDM_MSH2DEBUG        10030
+#define IDM_SSH2DEBUG        10031
+#define IDM_VDP1DEBUG        10032
+#define IDM_VDP2DEBUG        10033
+#define IDM_M68KDEBUG        10034
+#define IDM_SCUDSPDEBUG      10035
+#define IDM_SCSPDEBUG        10036
+#define IDM_TOGGLEFULLSCREEN 10040
+#define IDM_TOGGLENBG0       10041
+#define IDM_TOGGLENBG1       10042
+#define IDM_TOGGLENBG2       10043
+#define IDM_TOGGLENBG3       10044
+#define IDM_TOGGLERBG0       10045
+#define IDM_TOGGLEVDP1       10046
+#define IDM_TOGGLEFPS        10047
+#define IDM_WEBSITE          10050
+#define IDM_FORUM            10051
+#define IDM_SUBMITBUGREPORT  10052
+#define IDM_DONATE           10053
+#define IDM_COMPATLIST       10054
+#define IDM_ABOUT            10055
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002
@@ -226,6 +228,27 @@
 
 #define IDC_SCSPSLOTCB                  1001
 #define IDC_SCSPSLOTET                  1002
+
+//////////////////////////////////////////////////////////////////////////////
+// Error debug stuff
+
+#define IDC_CHEATLIST                   1001
+#define IDC_DELETECODE                  1002
+#define IDC_CLEARCODES                  1003
+#define IDC_ADDAR                       1004
+#define IDC_ADDRAWMEMADDR               1005
+#define IDC_ADDFROMFILE                 1006
+
+#define IDC_CODE                        1010
+#define IDC_CODEDESC                    1011
+
+#define IDC_CODEADDR                    1012
+#define IDC_CODEVAL                     1013
+
+#define IDC_CTENABLE                    1015
+#define IDC_CTBYTEWRITE                 1016
+#define IDC_CTWORDWRITE                 1017
+#define IDC_CTLONGWRITE                 1018
 
 //////////////////////////////////////////////////////////////////////////////
 // Error debug stuff

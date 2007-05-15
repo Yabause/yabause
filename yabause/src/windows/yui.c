@@ -40,7 +40,7 @@
 #include "settings.h"
 #include "cd.h"
 #include "../debug.h"
-
+#include "cheats.h"
 
 #define DONT_PROFILE
 #include "../profile.h"
@@ -730,6 +730,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_RESET:
             {
                YabauseReset();
+               break;
+            }
+            case IDM_CHEATLIST:
+            {
+               ScspMuteAudio();
+               DialogBox(y_hInstance, "CheatListDlg", hWnd, (DLGPROC)CheatListDlgProc);
+               ScspUnMuteAudio();
                break;
             }
             case IDM_SETTINGS:

@@ -1,4 +1,4 @@
-/*  Copyright 2004-2006 Theo Berkau
+/*  Copyright 2004-2007 Theo Berkau
 
     This file is part of Yabause.
 
@@ -33,6 +33,10 @@ BEGIN
     MENUITEM "&Settings", IDM_SETTINGS
     MENUITEM SEPARATOR
     MENUITEM "&Quit", IDM_EXIT
+  END
+  POPUP "&Cheats"
+  BEGIN
+    MENUITEM "&Cheat List", IDM_CHEATLIST
   END
   POPUP "&Debug"
   BEGIN
@@ -422,14 +426,77 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
-LOGDLG DIALOG DISCARDABLE  0, 0, 220, 206
+ADDARCODEDLG DIALOG DISCARDABLE  0, 0, 186, 70
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Add Action Replay code"
+FONT 8, "Courier New"
+BEGIN
+    LTEXT           "Action Replay Code:",    -1, 4, 4, 78, 10
+    LTEXT           "Description:", -1, 4, 18, 56, 10
+
+    EDITTEXT        IDC_CODE, 82, 4, 100, 10, ES_UPPERCASE
+    EDITTEXT        IDC_CODEDESC, 82, 18, 100, 30, ES_MULTILINE | ES_WANTRETURN
+
+    DEFPUSHBUTTON   "&Cancel", IDCANCEL, 57, 53, 33, 13
+    PUSHBUTTON      "&OK", IDOK, 95, 53, 33, 13
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+ADDCODEDLG DIALOG DISCARDABLE  0, 0, 216, 112
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Add Code"
+FONT 8, "Courier New"
+BEGIN
+    GROUPBOX "Cheat Type", -1, 4, 4, 208, 23, WS_CHILD | WS_VISIBLE
+
+    AUTORADIOBUTTON "Enable",  IDC_CTENABLE,  6, 14, 42, 10
+    AUTORADIOBUTTON "Byte Write",  IDC_CTBYTEWRITE,  47, 14, 51, 10
+    AUTORADIOBUTTON "Word Write",  IDC_CTWORDWRITE,  103, 14, 50, 10
+    AUTORADIOBUTTON "Long Write",  IDC_CTLONGWRITE,  159, 14, 50, 10
+
+    LTEXT           "Address:",    -1, 4, 32, 78, 10
+    LTEXT           "Value:",    -1, 4, 46, 78, 10
+    LTEXT           "Description:", -1, 4, 60, 56, 10
+
+    EDITTEXT        IDC_CODEADDR, 112, 32, 100, 10, ES_UPPERCASE
+    EDITTEXT        IDC_CODEVAL, 112, 46, 100, 10, ES_UPPERCASE | ES_NUMBER
+    EDITTEXT        IDC_CODEDESC, 112, 60, 100, 30, ES_MULTILINE | ES_WANTRETURN
+
+    DEFPUSHBUTTON   "&Cancel", IDCANCEL, 72, 95, 33, 13
+    PUSHBUTTON      "&OK", IDOK, 110, 95, 33, 13
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+CHEATLISTDLG DIALOG DISCARDABLE  0, 0, 221, 240
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Cheats"
+FONT 8, "Courier New"
+BEGIN
+    CONTROL         "", IDC_CHEATLIST, "SysListView32", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | LVS_REPORT, 3, 3, 215, 164
+
+    PUSHBUTTON      "&Delete", IDC_DELETECODE, 3, 173, 33, 13
+    PUSHBUTTON      "&Clear", IDC_CLEARCODES, 185, 173, 33, 13
+
+    GROUPBOX        "Add Codes...", -1, 3, 191, 215, 27, WS_CHILD | WS_VISIBLE
+    PUSHBUTTON      "Action Replay", IDC_ADDAR, 10, 200, 63, 13
+    PUSHBUTTON      "Raw Memory Address", IDC_ADDRAWMEMADDR, 79, 200, 79, 13
+    PUSHBUTTON      "From File", IDC_ADDFROMFILE, 166, 200, 44, 13
+
+    DEFPUSHBUTTON   "&Close", IDOK, 94, 224, 33, 13
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+LOGDLG DIALOG DISCARDABLE  0, 0, 214, 203
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Log"
 FONT 8, "Courier New"
 BEGIN
-    EDITTEXT        IDC_LOGET, 6, 6, 208, 179, ES_MULTILINE | ES_READONLY | ES_AUTOHSCROLL | ES_AUTOVSCROLL
-    PUSHBUTTON      "Clear", IDC_CLEARBT, 6, 187, 33, 13
-    PUSHBUTTON      "Save Log to file", IDC_SAVELOGBT, 144, 187, 70, 13
+    EDITTEXT        IDC_LOGET, 3, 3, 208, 181, ES_MULTILINE | ES_READONLY | ES_AUTOHSCROLL | ES_AUTOVSCROLL
+    PUSHBUTTON      "Clear", IDC_CLEARBT, 3, 187, 33, 13
+    PUSHBUTTON      "Save Log to file", IDC_SAVELOGBT, 141, 187, 70, 13
 END
 
 //////////////////////////////////////////////////////////////////////////////
