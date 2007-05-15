@@ -36,6 +36,7 @@ typedef struct
    int type;
    u32 addr;
    u32 val;
+   int enable;
 } cheatlist_struct;
 
 int CheatInit(void);
@@ -43,7 +44,11 @@ void CheatDeInit(void);
 int CheatAddCode(int type, u32 addr, u32 val);
 int CheatAddARCode(const char *code);
 int CheatRemoveCode(int type, u32 addr, u32 val);
+int CheatRemoveCodeByIndex(int i);
 int CheatRemoveARCode(const char *code);
+void CheatClearCodes(void);
+void CheatEnableCode(int index);
+void CheatDisableCode(int index);
 void CheatDoPatches(void);
 
 #endif

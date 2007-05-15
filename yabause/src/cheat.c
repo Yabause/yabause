@@ -52,6 +52,7 @@ int CheatAddCode(int type, u32 addr, u32 val)
    cheatlist[numcheats].type = type;
    cheatlist[numcheats].addr = addr;
    cheatlist[numcheats].val = val;
+   cheatlist[numcheats].enable = 1;
    numcheats++;
 
    // Make sure we still have room
@@ -75,6 +76,9 @@ int CheatAddARCode(const char *code)
    sscanf(code, "%08X %04X", &addr, &val);
    switch (addr >> 28)
    {
+      case 0x0:
+         // One time word write(fix me)
+         return -1;
       case 0x1:
          return CheatAddCode(CHEATTYPE_WORDWRITE, addr & 0x0FFFFFFF, val);
       case 0x3:
@@ -120,6 +124,22 @@ int CheatRemoveCode(int type, u32 addr, u32 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int CheatRemoveCodeByIndex(int i)
+{
+   // Move all entries one forward
+   for (; i < numcheats-1; i++)
+      memcpy(&cheatlist[i], &cheatlist[i+1], sizeof(cheatlist_struct));
+
+   numcheats--;
+
+   // Set the last one to type none
+   cheatlist[numcheats].type = CHEATTYPE_NONE;
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int CheatRemoveARCode(const char *code)
 {
    u32 addr;
@@ -129,13 +149,35 @@ int CheatRemoveARCode(const char *code)
    switch (addr >> 28)
    {
       case 0x1:
-         return CheatRemoveCode(CHEATTYPE_WORDWRITE, addr & 0x7FFFFFFF, val);
+         return CheatRemoveCode(CHEATTYPE_WORDWRITE, addr & 0x0FFFFFFF, val);
       case 0x3:
-         return CheatRemoveCode(CHEATTYPE_BYTEWRITE, addr & 0x7FFFFFFF, val);
+         return CheatRemoveCode(CHEATTYPE_BYTEWRITE, addr & 0x0FFFFFFF, val);
       case 0xD:
-         return CheatRemoveCode(CHEATTYPE_ENABLE, addr & 0x7FFFFFFF, val);
+         return CheatRemoveCode(CHEATTYPE_ENABLE, addr & 0x0FFFFFFF, val);
       default: return -1;
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void CheatClearCodes(void)
+{
+   cheatlist[0].type = CHEATTYPE_NONE;
+   numcheats = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void CheatEnableCode(int index)
+{
+   cheatlist[index].enable = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void CheatDisableCode(int index)
+{
+   cheatlist[index].enable = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -151,16 +193,24 @@ void CheatDoPatches(void)
          case CHEATTYPE_NONE:
             return;
          case CHEATTYPE_ENABLE:
+            if (cheatlist[i].enable == 0)
+               continue;
             if (MappedMemoryReadWord(cheatlist[i].addr) != cheatlist[i].val)
                return;
             break;
          case CHEATTYPE_BYTEWRITE:
+            if (cheatlist[i].enable == 0)
+               continue;
             MappedMemoryWriteByte(cheatlist[i].addr, (u8)cheatlist[i].val);
             break;
          case CHEATTYPE_WORDWRITE:
+            if (cheatlist[i].enable == 0)
+               continue;
             MappedMemoryWriteWord(cheatlist[i].addr, (u16)cheatlist[i].val);
             break;
          case CHEATTYPE_LONGWRITE:
+            if (cheatlist[i].enable == 0)
+               continue;
             MappedMemoryWriteLong(cheatlist[i].addr, cheatlist[i].val);
             break;            
       }
