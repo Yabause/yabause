@@ -371,9 +371,31 @@ int CheckHeader(u32 device)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int CalcSaveSize(u32 tableaddr, int blocksize)
+{
+   int numblocks=0;
+
+   // Now figure out how many blocks this save is
+   for(;;)
+   {
+       u16 block;
+       block = (MappedMemoryReadByte(tableaddr) << 8) | MappedMemoryReadByte(tableaddr + 2);
+       if (block == 0)
+         break;
+       tableaddr += 4;
+       if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
+          tableaddr += 8;
+       numblocks++;
+   }
+
+   return numblocks;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 u32 GetFreeSpace(u32 device, u32 size, u32 addr, u32 blocksize)
 {
-   int i, i2;
+   int i;
    u32 usedblocks=0;
 
    for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
@@ -381,21 +403,8 @@ u32 GetFreeSpace(u32 device, u32 size, u32 addr, u32 blocksize)
       // Find a block with the start of a save
       if (((s8)MappedMemoryReadByte(addr + i + 1)) < 0)
       {
-         i2 = addr+i+0x45;
-         usedblocks++;
-
          // Now figure out how many blocks this save is
-         for(;;)
-         {
-            u16 block;
-            block = (MappedMemoryReadByte(i2) << 8) | MappedMemoryReadByte(i2 + 2);
-            if (block == 0)
-               break;
-            i2 += 4;
-            if (((i2-1) & ((blocksize << 1) - 1)) == 0)
-               i2 += 8;
-            usedblocks++;
-         }
+         usedblocks += (CalcSaveSize(addr+i+0x45, blocksize) + 1);
       }
    }
 
@@ -450,6 +459,43 @@ u32 FindSave(u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u3
 
 void DeleteSave(u32 blockoffset)
 {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, int *numblocks, int *blocksread)
+{
+   tableaddr[0] = addr + (block * blocksize * 2) + 0x45;
+
+   u16 *blocktbl;
+   int i=0;
+   blocksread[0]=0;
+
+   // First of all figure out how large of buffer we need
+   numblocks[0] = CalcSaveSize(tableaddr[0], blocksize);
+
+   // Allocate buffer
+   if ((blocktbl = (u16 *)malloc(sizeof(u16) * numblocks[0])) == NULL)
+      return NULL;
+
+   // Now read in the table
+   for(i = 0; i < numblocks[0]; i++)
+   {
+       u16 block;
+       block = (MappedMemoryReadByte(tableaddr[0]) << 8) | MappedMemoryReadByte(tableaddr[0] + 2);
+       tableaddr[0] += 4;
+
+       if (((tableaddr[0]-1) & ((blocksize << 1) - 1)) == 0)
+       {
+          tableaddr[0] = addr + (blocktbl[blocksread[0]] * blocksize * 2) + 9;
+          blocksread[0]++;
+       }
+       blocktbl[i] = block;
+   }
+
+   tableaddr[0] += 4;
+
+   return blocktbl;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -657,8 +703,12 @@ void FASTCALL BiosBUPRead(SH2_struct * sh)
    u32 ret;
    u32 i;
    u32 tableaddr;
+   u16 *blocktbl;
+   int numblocks;
+   int blocksread;
+   u32 datasize;
 
-   LOG("BiosBUPRead. PR = %08X\n", sh->regs.PR);
+   LOG("BiosBUPRead\n", sh->regs.PR);
 
    ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
 
@@ -679,8 +729,36 @@ void FASTCALL BiosBUPRead(SH2_struct * sh)
       return;
    }
 
-   // Read in save here
-   tableaddr = addr + (block * blocksize) + 0x45;
+   tableaddr = addr + (block * blocksize * 2) + 0x3D;
+   datasize = (MappedMemoryReadByte(tableaddr) << 24) | (MappedMemoryReadByte(tableaddr + 2) << 16) |
+              (MappedMemoryReadByte(tableaddr+4) << 8) | MappedMemoryReadByte(tableaddr + 6);
+
+   // Read in Block Table
+   if ((blocktbl = ReadBlockTable(addr, &tableaddr, block, blocksize, &numblocks, &blocksread)) == NULL)
+   {
+      // Just return an error that might make sense
+      sh->regs.R[0] = 8;
+      sh->regs.PC = sh->regs.PR;
+      return;
+   }
+
+   // Now let's read in the data
+   while (datasize > 0)
+   {
+      MappedMemoryWriteByte(sh->regs.R[6], MappedMemoryReadByte(tableaddr));
+      datasize--;
+      sh->regs.R[6]++;
+      tableaddr+=2;
+
+      if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
+      {
+         // Load up the next block
+         tableaddr = addr + (blocktbl[blocksread] * blocksize * 2) + 9;
+         blocksread++;
+      }
+   }
+
+   free(blocktbl);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
