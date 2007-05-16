@@ -264,7 +264,6 @@ void FASTCALL BiosClearSemaphore(SH2_struct * sh)
 
 void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
 {
-   // check me
    LOG("BiosChangeSystemClock\n");
 
    MappedMemoryWriteLong(0x06000324, sh->regs.R[4]);
@@ -416,7 +415,6 @@ u32 GetFreeSpace(u32 device, u32 size, u32 addr, u32 blocksize)
 u32 FindSave(u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
 {
    u32 i;
-   int findmatch = MappedMemoryReadByte(stringaddr);
 
    for (i = ((blockoffset * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
@@ -428,16 +426,14 @@ u32 FindSave(u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u3
          // See if string matches, or if there's no string to check, just copy
          // the data over
          for (i3 = 0; i3 < 11; i3++)
-         {
+         {            
             u8 data = MappedMemoryReadByte(stringaddr+i3);
                 
             if (MappedMemoryReadByte(addr+i+0x9+(i3*2)) != data)
             {
-               if (data == 0 && findmatch == 0)
-               {
+               if (data == 0)
                   // There's no string to match
                   return ((i / blocksize) >> 1);
-               }
                else
                   // No Match, move onto the next block
                   i3 = 12;
@@ -445,7 +441,7 @@ u32 FindSave(u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u3
             else
             {
                // Match
-               if (i3 == 10)
+               if (i3 == 10 || data == 0)
                   return ((i / blocksize) >> 1);
             }
          }
@@ -457,18 +453,84 @@ u32 FindSave(u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u3
 
 //////////////////////////////////////////////////////////////////////////////
 
-void DeleteSave(u32 blockoffset)
+void DeleteSave(u32 addr, u32 blockoffset, u32 blocksize)
 {
+    MappedMemoryWriteByte(addr + (blockoffset * blocksize * 2) + 0x1, 0x00);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 *GetFreeBlocks(u32 addr, u32 blocksize, u32 numblocks, u32 size)
+{
+   u8 *blocktbl;
+   u16 *freetbl;
+   u32 tableaddr;
+   int i;
+   u32 blockcount=0;
+
+   // Create a table that tells us which blocks are free and used
+   if ((blocktbl = (u8 *)malloc(sizeof(u8) * (size / blocksize))) == NULL)
+      return NULL;
+
+   memset(blocktbl, 0, (size / blocksize));
+
+   for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
+   {
+      // Find a block with the start of a save
+      if (((s8)MappedMemoryReadByte(addr + i + 1)) < 0)
+      {
+         tableaddr = addr+i+0x45;
+         blocktbl[i / (blocksize << 1)] = 1;
+
+         // Now let's figure out which blocks are used
+         for(;;)
+         {
+            u16 block;
+            block = (MappedMemoryReadByte(tableaddr) << 8) | MappedMemoryReadByte(tableaddr + 2);
+            if (block == 0)
+               break;
+            tableaddr += 4;
+            if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
+               tableaddr += 8;
+            // block is used
+            blocktbl[block] = 1;
+         }
+      }
+   }
+
+   if ((freetbl = (u16 *)malloc(sizeof(u16) * numblocks)) == NULL)
+   {
+      free(blocktbl);
+      return NULL;
+   }
+
+   // Find some free blocks for us to use
+   for (i = 2; i < (size / blocksize); i++)
+   {
+      if (blocktbl[i] == 0)
+      {
+         freetbl[blockcount] = i;
+         blockcount++;
+
+         if (blockcount >= numblocks)
+            break;
+      }
+   }
+
+   // Ok, we're all done
+   free(blocktbl);
+
+   return freetbl;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, int *numblocks, int *blocksread)
 {
-   tableaddr[0] = addr + (block * blocksize * 2) + 0x45;
-
    u16 *blocktbl;
    int i=0;
+
+   tableaddr[0] = addr + (block * blocksize * 2) + 0x45;
    blocksread[0]=0;
 
    // First of all figure out how large of buffer we need
@@ -502,7 +564,7 @@ u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, int *num
 
 void FASTCALL BiosBUPInit(SH2_struct * sh)
 {
-   LOG("BiosBUPInit. arg1 = %08X, arg2 = %08X, arg3 = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6]);
+//   LOG("BiosBUPInit. arg1 = %08X, arg2 = %08X, arg3 = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6]);
 
    // Setup Function table
    MappedMemoryWriteLong(0x06000354, sh->regs.R[5]);
@@ -560,7 +622,7 @@ void FASTCALL BiosBUPSelectPartition(SH2_struct * sh)
 
 void FASTCALL BiosBUPFormat(SH2_struct * sh)
 {
-   LOG("BiosBUPFormat. PR = %08X\n", sh->regs.PR);
+//   LOG("BiosBUPFormat. PR = %08X\n", sh->regs.PR);
 
    switch (sh->regs.R[4])
    {
@@ -589,6 +651,7 @@ void FASTCALL BiosBUPFormat(SH2_struct * sh)
          }
          break;
       case 2:
+         LOG("Formatting FDD not supported\n");
       default: break;
    }
 
@@ -606,7 +669,7 @@ void FASTCALL BiosBUPStatus(SH2_struct * sh)
    u32 ret;
    u32 freeblocks=0;
 
-   LOG("BiosBUPStatus. arg1 = %d, arg2 = %d, arg3 = %08X, PR = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6], sh->regs.PR);
+//   LOG("BiosBUPStatus. arg1 = %d, arg2 = %d, arg3 = %08X, PR = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6], sh->regs.PR);
 
    // Fill in status variables
    ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
@@ -645,6 +708,11 @@ void FASTCALL BiosBUPWrite(SH2_struct * sh)
    u32 block;
    u32 ret;
    u32 savesize;
+   u16 *blocktbl;
+   u32 workaddr;
+   u32 blockswritten=0;
+   u32 datasize;
+   u32 i;
 
    LOG("BiosBUPWrite. arg1 = %d, arg2 = %08X, arg3 = %08X, arg4 = %d, PR = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6], sh->regs.R[7], sh->regs.PR);
 
@@ -666,13 +734,14 @@ void FASTCALL BiosBUPWrite(SH2_struct * sh)
       }
 
       // Delete old save
-      DeleteSave(block);
+      DeleteSave(addr, block, blocksize);
    }
 
    // Let's figure out how many blocks will be needed for the save
-   savesize = MappedMemoryReadLong(sh->regs.R[5]+0x1C);
-   savesize += 0x1D;
-   savesize = savesize / (blocksize - 6);
+   datasize = MappedMemoryReadLong(sh->regs.R[5]+0x1C);
+   savesize = (datasize + 0x1D) / (blocksize - 6);
+   if ((datasize + 0x1D) % (blocksize - 6))
+      savesize++;
 
    // Will it blend? Err... fit
    if (savesize > GetFreeSpace(sh->regs.R[4], size, addr, blocksize))
@@ -683,9 +752,97 @@ void FASTCALL BiosBUPWrite(SH2_struct * sh)
       return;
    }
 
-   // Find free blocks for the save here
+   // Find free blocks for the save
+   if ((blocktbl = GetFreeBlocks(addr, blocksize, savesize, size)) == NULL)
+   {
+      // Just return an error that might make sense
+      sh->regs.R[0] = 8;
+      sh->regs.PC = sh->regs.PR;
+      return;
+   }
 
-   // Create save here
+   // Create save
+   workaddr = addr + (blocktbl[0] * blocksize * 2);
+
+   MappedMemoryWriteByte(workaddr+0x1, 0x80);
+
+   // Copy over filename
+   for (i = workaddr+0x9; i < ((workaddr+0x9) + (11 * 2)); i+=2)
+   {
+      MappedMemoryWriteByte(i, MappedMemoryReadByte(sh->regs.R[5]));
+      sh->regs.R[5]++;
+   }
+
+   sh->regs.R[5]++;
+
+   // Copy over comment
+   for (i = workaddr+0x21; i < ((workaddr+0x21) + (10 * 2)); i+=2)
+   {
+      MappedMemoryWriteByte(i, MappedMemoryReadByte(sh->regs.R[5]));
+      sh->regs.R[5]++;
+   }
+
+   // Copy over language
+   MappedMemoryWriteByte(workaddr+0x1F, MappedMemoryReadByte(sh->regs.R[5]));
+   sh->regs.R[5]++;
+
+   sh->regs.R[5]++;
+
+   // Copy over date
+   for (i = workaddr+0x35; i < ((workaddr+0x35) + (4 * 2)); i+=2)
+   {
+      MappedMemoryWriteByte(i, MappedMemoryReadByte(sh->regs.R[5]));
+      sh->regs.R[5]++;
+   }
+
+   // Copy over data size
+   for (i = workaddr+0x3D; i < ((workaddr+0x3D) + (4 * 2)); i+=2)
+   {
+      MappedMemoryWriteByte(i, MappedMemoryReadByte(sh->regs.R[5]));
+      sh->regs.R[5]++;
+   }
+
+   // write the block table
+   workaddr += 0x45;
+
+   for (i = 1; i < savesize; i++)
+   {
+      MappedMemoryWriteByte(workaddr, blocktbl[i] >> 8);
+      workaddr+=2;
+      MappedMemoryWriteByte(workaddr, blocktbl[i]);
+      workaddr+=2;
+
+      if (((workaddr-1) & ((blocksize << 1) - 1)) == 0)
+      {
+         // Next block
+         blockswritten++;
+         workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
+      }
+   }
+
+   // Write 2 blank bytes so we now how large the table size is next time
+   MappedMemoryWriteByte(workaddr, 0);
+   workaddr+=2;
+   MappedMemoryWriteByte(workaddr, 0);
+   workaddr+=2;
+
+   // Lastly, write the actual save data
+   while (datasize > 0)
+   {
+      MappedMemoryWriteByte(workaddr, MappedMemoryReadByte(sh->regs.R[6]));
+      datasize--;
+      sh->regs.R[6]++;
+      workaddr+=2;
+
+      if (((workaddr-1) & ((blocksize << 1) - 1)) == 0)
+      {
+         // Next block
+         blockswritten++;
+         workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
+      }
+   }
+
+   free(blocktbl);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
@@ -699,9 +856,7 @@ void FASTCALL BiosBUPRead(SH2_struct * sh)
    u32 addr;
    u32 blocksize;
    u32 block;
-   u32 blockoffset;
    u32 ret;
-   u32 i;
    u32 tableaddr;
    u16 *blocktbl;
    int numblocks;
@@ -789,7 +944,7 @@ void FASTCALL BiosBUPDelete(SH2_struct * sh)
       return;
    }
 
-   DeleteSave(block);
+   DeleteSave(addr, block, blocksize);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
@@ -803,7 +958,7 @@ void FASTCALL BiosBUPDirectory(SH2_struct * sh)
    u32 addr;
    u32 blocksize;
    u32 ret;
-   int i, i2=0;
+   int i;
    char filename[12];
    u32 blockoffset=2;
 
@@ -897,6 +1052,11 @@ void FASTCALL BiosBUPVerify(SH2_struct * sh)
    u32 blocksize;
    u32 block;
    u32 ret;
+   u32 tableaddr;
+   u32 datasize;
+   u16 *blocktbl;
+   int numblocks;
+   int blocksread;
 
    LOG("BiosBUPVerify. PR = %08X\n", sh->regs.PR);
 
@@ -914,12 +1074,49 @@ void FASTCALL BiosBUPVerify(SH2_struct * sh)
    if ((block = FindSave(sh->regs.R[4], sh->regs.R[5], 2, size, addr, blocksize)) == 0)
    {
       // Since the save doesn't exist, let's bail with an error
-      sh->regs.R[0] = 5;
+      sh->regs.R[0] = 5; // Not found
       sh->regs.PC = sh->regs.PR;
       return;
    }
 
-   // Verify Save here
+   tableaddr = addr + (block * blocksize * 2) + 0x3D;
+   datasize = (MappedMemoryReadByte(tableaddr) << 24) | (MappedMemoryReadByte(tableaddr + 2) << 16) |
+              (MappedMemoryReadByte(tableaddr+4) << 8) | MappedMemoryReadByte(tableaddr + 6);
+
+   // Read in Block Table
+   if ((blocktbl = ReadBlockTable(addr, &tableaddr, block, blocksize, &numblocks, &blocksread)) == NULL)
+   {
+      // Just return an error that might make sense
+      sh->regs.R[0] = 8; // Broken
+      sh->regs.PC = sh->regs.PR;
+      return;
+   }
+
+   // Now let's read in the data, and check to see if it matches 
+   while (datasize > 0)
+   {
+      if (MappedMemoryReadByte(sh->regs.R[6]) != MappedMemoryReadByte(tableaddr))
+      {
+         free(blocktbl);
+         // Ok, the data doesn't match
+         sh->regs.R[0] = 7; // No match
+         sh->regs.PC = sh->regs.PR;
+         return;
+      }
+
+      datasize--;
+      sh->regs.R[6]++;
+      tableaddr+=2;
+
+      if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
+      {
+         // Load up the next block
+         tableaddr = addr + (blocktbl[blocksread] * blocksize * 2) + 9;
+         blocksread++;
+      }
+   }
+
+   free(blocktbl);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
