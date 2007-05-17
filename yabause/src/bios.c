@@ -1124,10 +1124,92 @@ void FASTCALL BiosBUPVerify(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ConvertMonthAndDay(u32 data, u32 monthaddr, u32 dayaddr, int type)
+{
+   int i;
+   u16 monthtbl[11] = { 31, 31+28, 31+28+31, 31+28+31+30, 31+28+31+30+31,
+                        31+28+31+30+31+30, 31+28+31+30+31+30+31,
+                        31+28+31+30+31+30+31+31, 31+28+31+30+31+30+31+31+30,
+                        31+28+31+30+31+30+31+31+30+31,
+                        31+28+31+30+31+30+31+31+30+31+30 };
+
+   if (data < monthtbl[0])
+   {
+      // Month
+      MappedMemoryWriteByte(monthaddr, 1);
+
+      // Day
+      MappedMemoryWriteByte(dayaddr, data + 1);
+      return;
+   }
+
+   for (i = 1; i < 11; i++)
+   {
+      if (data <= monthtbl[i])
+         break;
+   }
+
+   if (type == 1)
+   {
+      // Month
+      MappedMemoryWriteByte(monthaddr, i + 1);
+
+      // Day
+      if ((i + 1) == 2)
+         MappedMemoryWriteByte(dayaddr, data - monthtbl[(i - 1)] + 1);
+      else
+         MappedMemoryWriteByte(dayaddr, data - monthtbl[(i - 1)]);
+   }
+   else
+   {
+      // Month
+      MappedMemoryWriteByte(monthaddr, i + 1);
+      
+      // Day
+      MappedMemoryWriteByte(dayaddr, data - monthtbl[(i - 1)] + 1);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void FASTCALL BiosBUPGetDate(SH2_struct * sh)
 {
+   u32 date;
+   u32 div;
+   u32 yearoffset;
+
    LOG("BiosBUPGetDate. PR = %08X\n", sh->regs.PR);
 
+   date = sh->regs.R[4];
+
+   // Time
+   MappedMemoryWriteByte(sh->regs.R[5]+3, (date % 0x5A0) / 0x3C);
+
+   // Minute
+   MappedMemoryWriteByte(sh->regs.R[5]+4, date % 0x3C);
+
+   div = date / 0x5A0;
+
+   // Week
+   if (div > 0xAB71)
+      MappedMemoryWriteByte(sh->regs.R[5]+5, (div + 1) % 7);
+   else
+      MappedMemoryWriteByte(sh->regs.R[5]+5, (div + 2) % 7);
+
+   if ((div % 0x5B5) > 0x16E)
+   {
+      yearoffset = (div - 1) / 0x16D;
+      ConvertMonthAndDay((div - 1) % 0x16D, sh->regs.R[5]+1, sh->regs.R[5]+2, 0);
+   }
+   else
+   {
+      yearoffset = 0;
+      ConvertMonthAndDay(0, sh->regs.R[5]+1, sh->regs.R[5]+2, 1);
+   }
+
+   // Year
+   MappedMemoryWriteByte(sh->regs.R[5], ((div / 0x5B5) * 4) + yearoffset);
+   
    sh->regs.PC = sh->regs.PR;
 }
 
@@ -1137,19 +1219,29 @@ void FASTCALL BiosBUPSetDate(SH2_struct * sh)
 {
    u32 date;
    u8 data;
+   u32 remainder;
+   u16 monthtbl[11] = { 31, 31+28, 31+28+31, 31+28+31+30, 31+28+31+30+31,
+                        31+28+31+30+31+30, 31+28+31+30+31+30+31,
+                        31+28+31+30+31+30+31+31, 31+28+31+30+31+30+31+31+30,
+                        31+28+31+30+31+30+31+31+30+31,
+                        31+28+31+30+31+30+31+31+30+31+30 };
 
    LOG("BiosBUPSetDate. PR = %08X\n", sh->regs.PR);
+
    // Year
    data = MappedMemoryReadByte(sh->regs.R[4]);
    date = (data / 4) * 0x5B5;
-   if (data % 4)
-      date += ((data % 4) * 0x16D) + 1;
+   remainder = data % 4;
+   if (remainder)
+      date += (remainder * 0x16D) + 1;
 
    // Month
    data = MappedMemoryReadByte(sh->regs.R[4]+1);
    if (data != 1 && data < 13)
    {
-      // fix me
+      date += monthtbl[data - 2];
+      if (date > 2 && remainder == 0)
+         date++;
    }
 
    // Day
