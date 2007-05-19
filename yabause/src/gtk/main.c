@@ -262,6 +262,9 @@ int main(int argc, char *argv[]) {
 	 // Fullscreen
 	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
             yui_window_set_fullscreen(YUI_WINDOW(yui), TRUE);
+	 } else if (strstr(argv[i], "--binary=")) {
+            yui_window_run(NULL, YUI_WINDOW(yui));
+	    MappedMemoryLoadExec(argv[i] + strlen("--binary="), 0x06004000);
 	 }
       }
    }
