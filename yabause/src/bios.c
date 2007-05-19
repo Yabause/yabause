@@ -105,6 +105,8 @@ void BiosInit(void)
    MappedMemoryWriteLong(0x0600026C, 0x0000026C);
    MappedMemoryWriteLong(0x06000274, 0x00000274);
    MappedMemoryWriteLong(0x06000280, 0x00000280);
+   MappedMemoryWriteLong(0x0600029C, 0x0000029C);
+   MappedMemoryWriteLong(0x060002DC, 0x000002DC);
    MappedMemoryWriteLong(0x06000300, 0x00000300);
    MappedMemoryWriteLong(0x06000304, 0x00000304);
    MappedMemoryWriteLong(0x06000310, 0x00000310);
@@ -223,6 +225,20 @@ void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
 
    sh->cycles += 20;
 
+   sh->regs.PC = sh->regs.PR;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL BiosCDINIT2(SH2_struct * sh)
+{
+   sh->regs.PC = sh->regs.PR;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL BiosCDINIT1(SH2_struct * sh)
+{
    sh->regs.PC = sh->regs.PR;
 }
 
@@ -1362,8 +1378,14 @@ int FASTCALL BiosHandleFunc(SH2_struct * sh)
       case 0x1D: // 0x06000274
          BiosCheckMPEGCard(sh);
          break;
-      case 0x20:  // 0x06000280
+      case 0x20: // 0x06000280
          BiosChangeScuInterruptPriority(sh);
+         break;
+      case 0x27: // 0x0600029C
+         BiosCDINIT2(sh);
+         break;
+      case 0x37: // 0x060002DC
+         BiosCDINIT1(sh);
          break;
       case 0x40: // 0x06000300
          BiosSetScuInterrupt(sh);

@@ -482,12 +482,14 @@ void YabauseSpeedySetup(void)
       MappedMemoryWriteLong(0x0600024C, 0x00000000);
       MappedMemoryWriteLong(0x06000268, MappedMemoryReadLong(0x00001344));
       MappedMemoryWriteLong(0x0600026C, MappedMemoryReadLong(0x00001348));
+      MappedMemoryWriteLong(0x0600029C, MappedMemoryReadLong(0x00001354));
       MappedMemoryWriteLong(0x060002C4, MappedMemoryReadLong(0x00001104));
       MappedMemoryWriteLong(0x060002C8, MappedMemoryReadLong(0x00001108));
       MappedMemoryWriteLong(0x060002CC, MappedMemoryReadLong(0x0000110C));
       MappedMemoryWriteLong(0x060002D0, MappedMemoryReadLong(0x00001110));
       MappedMemoryWriteLong(0x060002D4, MappedMemoryReadLong(0x00001114));
       MappedMemoryWriteLong(0x060002D8, MappedMemoryReadLong(0x00001118));
+      MappedMemoryWriteLong(0x060002DC, MappedMemoryReadLong(0x0000111C));
       MappedMemoryWriteLong(0x06000328, 0x000004C8);
       MappedMemoryWriteLong(0x0600032C, 0x00001800);
 
