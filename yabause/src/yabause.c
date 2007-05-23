@@ -30,6 +30,7 @@
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
+#include "m68kcore.h"
 #include "peripheral.h"
 #include "scsp.h"
 #include "scu.h"
@@ -168,6 +169,10 @@ int YabauseInit(yabauseinit_struct *init)
       YabSetError(YAB_ERR_CANNOTINIT, "SCU");
       return -1;
    }
+
+#ifdef USEM68KCORE
+   M68KInit(1);
+#endif
 
    if (ScspInit(init->sndcoretype) != 0)
    {

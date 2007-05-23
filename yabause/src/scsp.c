@@ -85,6 +85,7 @@
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
+#include "m68kcore.h"
 #include "scu.h"
 #include "yabause.h"
 #include "scsp.h"
@@ -392,7 +393,11 @@ static void scsp_slot_keyon(slot_t *slot)
 	// key need to be released before being pressed ;)
 	if (slot->ecurp == SCSP_ENV_RELEASE)
 	{
+#ifdef USEM68KCORE
+                SCSPLOG("key on slot %d. 68K PC = %08X slot->sa = %08X slot->lsa = %08X slot->lea = %08X\n", slot - &(scsp.slot[0]), M68K->GetPC(), slot->sa, slot->lsa, slot->lea >> SCSP_FREQ_LB);
+#else
                 SCSPLOG("key on slot %d. 68K PC = %08X slot->sa = %08X slot->lsa = %08X slot->lea = %08X\n", slot - &(scsp.slot[0]), C68k_Get_PC(&C68K), slot->sa, slot->lsa, slot->lea >> SCSP_FREQ_LB);
+#endif
 
 		// set buffer, loop start/end address of the slot
 		if (slot->pcm8b)
@@ -956,13 +961,24 @@ void scsp_set_b(u32 a, u8 d)
         case 0x00: // MEM4MB/DAC18B
                 scsp.mem4b = (d >> 1) & 0x1;
                 if (scsp.mem4b)
+#ifdef USEM68KCORE
+                   M68K->SetFetch(0x000000, 0x080000, (pointer)SoundRam);
+#else
                    C68k_Set_Fetch(&C68K, 0x000000, 0x080000, (pointer)SoundRam);
+#endif
                 else
                 {
+#ifdef USEM68KCORE
+                   M68K->SetFetch(0x000000, 0x040000, (pointer)SoundRam);
+                   M68K->SetFetch(0x040000, 0x080000, (pointer)SoundRam);
+                   M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
+                   M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
+#else
                    C68k_Set_Fetch(&C68K, 0x000000, 0x040000, (pointer)SoundRam);
                    C68k_Set_Fetch(&C68K, 0x040000, 0x080000, (pointer)SoundRam);
                    C68k_Set_Fetch(&C68K, 0x080000, 0x0C0000, (pointer)SoundRam);
                    C68k_Set_Fetch(&C68K, 0x0C0000, 0x100000, (pointer)SoundRam);
+#endif
                 }
                 return;
 
@@ -1104,13 +1120,24 @@ void scsp_set_w(u32 a, u16 d)
                 scsp.mem4b = (d >> 9) & 0x1;                
 		scsp.mvol = d & 0xF;
                 if (scsp.mem4b)
+#ifdef USEM68KCORE
+                   M68K->SetFetch(0x000000, 0x080000, (pointer)SoundRam);
+#else
                    C68k_Set_Fetch(&C68K, 0x000000, 0x080000, (pointer)SoundRam);
+#endif
                 else
                 {
+#ifdef USEM68KCORE
+                   M68K->SetFetch(0x000000, 0x040000, (pointer)SoundRam);
+                   M68K->SetFetch(0x040000, 0x080000, (pointer)SoundRam);
+                   M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
+                   M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
+#else
                    C68k_Set_Fetch(&C68K, 0x000000, 0x040000, (pointer)SoundRam);
                    C68k_Set_Fetch(&C68K, 0x040000, 0x080000, (pointer)SoundRam);
                    C68k_Set_Fetch(&C68K, 0x080000, 0x0C0000, (pointer)SoundRam);
                    C68k_Set_Fetch(&C68K, 0x0C0000, 0x100000, (pointer)SoundRam);
+#endif
                 }
 		return;
 
@@ -2606,7 +2633,11 @@ void FASTCALL c68k_word_write(const u32 adr, u32 data) {
 
 void c68k_interrupt_handler(u32 level) {
    // send interrupt to 68k
+#ifdef USEM68KCORE
+   M68K->SetIRQ((s32)level);
+#else
    C68k_Set_IRQ(&C68K, (s32)level);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2710,6 +2741,19 @@ int ScspInit(int coreid) {
    if ((ScspInternalVars = (ScspInternal *)calloc(1, sizeof(ScspInternal))) == NULL)
       return -1;
 
+#ifdef USEM68KCORE
+   M68K->Init(); // not sure if I need the int callback or not
+
+   M68K->SetReadB((C68K_READ *)c68k_byte_read);
+   M68K->SetReadW((C68K_READ *)c68k_word_read);
+   M68K->SetWriteB((C68K_WRITE *)c68k_byte_write);
+   M68K->SetWriteW((C68K_WRITE *)c68k_word_write);
+
+   M68K->SetFetch(0x000000, 0x040000, (pointer)SoundRam);
+   M68K->SetFetch(0x040000, 0x080000, (pointer)SoundRam);
+   M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
+   M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
+#else
    C68k_Init(&C68K, NULL); // not sure if I need the int callback or not
 
    C68k_Set_ReadB(&C68K, (C68K_READ *)c68k_byte_read);
@@ -2721,6 +2765,7 @@ int ScspInit(int coreid) {
    C68k_Set_Fetch(&C68K, 0x040000, 0x080000, (pointer)SoundRam);
    C68k_Set_Fetch(&C68K, 0x080000, 0x0C0000, (pointer)SoundRam);
    C68k_Set_Fetch(&C68K, 0x0C0000, 0x100000, (pointer)SoundRam);
+#endif
 
    yabsys.IsM68KRunning = 0;
 
@@ -2797,7 +2842,11 @@ void ScspDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void M68KReset(void) {
+#ifdef USEM68KCORE
+   M68K->Reset();
+#else
    C68k_Reset(&C68K);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2837,7 +2886,11 @@ void M68KExec(u32 cycles) {
    {
       if (ScspInternalVars->numcodebreakpoints == 0)
       {
+#ifdef USEM68KCORE
+         M68K->Exec((u32)((float)cycles / 2.5)); // almost correct
+#else
          C68k_Exec(&C68K, (u32)((float)cycles / 2.5)); // almost correct
+#endif
       }
       else
       {
@@ -2848,7 +2901,11 @@ void M68KExec(u32 cycles) {
          {
             // Make sure it isn't one of our breakpoints
             for (i=0; i < ScspInternalVars->numcodebreakpoints; i++) {
+#ifdef USEM68KCORE
+               if ((M68K->GetPC() == ScspInternalVars->codebreakpoint[i].addr) && ScspInternalVars->inbreakpoint == 0) {
+#else
                if ((C68k_Get_PC(&C68K) == ScspInternalVars->codebreakpoint[i].addr) && ScspInternalVars->inbreakpoint == 0) {
+#endif
                   ScspInternalVars->inbreakpoint = 1;
                   if (ScspInternalVars->BreakpointCallBack)
                      ScspInternalVars->BreakpointCallBack(ScspInternalVars->codebreakpoint[i].addr);
@@ -2857,7 +2914,11 @@ void M68KExec(u32 cycles) {
             }
 
             // execute instructions individually
+#ifdef USEM68KCORE
+            cyclesexecuted += M68K->Exec(1);
+#else
             cyclesexecuted += C68k_Exec(&C68K, 1);
+#endif
           
             if (cyclesexecuted >= cyclestoexec) break;
          }
@@ -2868,7 +2929,11 @@ void M68KExec(u32 cycles) {
 //////////////////////////////////////////////////////////////////////////////
 
 void M68KStep() {
+#ifdef USEM68KCORE
+   M68K->Exec(1);
+#else
    C68k_Exec(&C68K, 1);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2927,12 +2992,22 @@ void M68KGetRegisters(m68kregs_struct *regs) {
 
    if (regs != NULL) {
       for (i = 0; i < 8; i++) {
+#ifdef USEM68KCORE
+         regs->D[i] = M68K->GetDReg(i);
+         regs->A[i] = M68K->GetAReg(i);
+#else
          regs->D[i] = C68k_Get_DReg(&C68K, i);
          regs->A[i] = C68k_Get_AReg(&C68K, i);
+#endif
       }
 
+#ifdef USEM68KCORE
+      regs->SR = M68K->GetSR();
+      regs->PC = M68K->GetPC();
+#else
       regs->SR = C68k_Get_SR(&C68K);
       regs->PC = C68k_Get_PC(&C68K);
+#endif
    }
 }
 
@@ -2943,12 +3018,22 @@ void M68KSetRegisters(m68kregs_struct *regs) {
 
    if (regs != NULL) {
       for (i = 0; i < 8; i++) {
+#ifdef USEM68KCORE
+         M68K->SetDReg(i, regs->D[i]);
+         M68K->SetAReg(i, regs->A[i]);
+#else
          C68k_Set_DReg(&C68K, i, regs->D[i]);
          C68k_Set_AReg(&C68K, i, regs->A[i]);
+#endif
       }
 
+#ifdef USEM68KCORE
+      M68K->SetSR(regs->SR);
+      M68K->SetPC(regs->PC);
+#else
       C68k_Set_SR(&C68K, regs->SR);
       C68k_Set_PC(&C68K, regs->PC);
+#endif
    }
 }
 

@@ -116,6 +116,7 @@ AC_ARG_ENABLE(cd-debug, AC_HELP_STRING(--enable-cd-debug, enable cdblock debug i
 AC_ARG_ENABLE(smpc-debug, AC_HELP_STRING(--enable-smpc-debug, enable smpc debug information) , AC_DEFINE(SMPC_DEBUG))
 AC_ARG_ENABLE(scsp-debug, AC_HELP_STRING(--enable-scsp-debug, enable scsp debug information) , AC_DEFINE(SCSP_DEBUG))
 AC_ARG_ENABLE(newperinterface, AC_HELP_STRING(--enable-newperinterface, use new controls interface) , AC_DEFINE(USENEWPERINTERFACE))
+AC_ARG_ENABLE(m68kcore, AC_HELP_STRING(--enable-m68kcore, use m68k core interface) , AC_DEFINE(USEM68KCORE))
 
 AC_CONFIG_FILES([Makefile
 	doc/Makefile
