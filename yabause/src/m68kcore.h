@@ -1,0 +1,65 @@
+/*  Copyright 2007 Guillaume Duhamel
+
+    This file is part of Yabause.
+
+    Yabause is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    Yabause is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Yabause; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef M68KCORE_H
+#define M68KCORE_H
+
+#include "core.h"
+
+typedef u32 FASTCALL M68K_READ(const u32 adr);
+typedef void FASTCALL M68K_WRITE(const u32 adr, u32 data);
+
+typedef struct {
+	int id;
+	const char *Name;
+
+	void (*Init)(void);
+	void (*DeInit)(void);
+	void (*Reset)(void);
+
+	s32  FASTCALL (*Exec)(s32 cycle);
+
+	u32 (*GetDReg)(u32 num);
+	u32 (*GetAReg)(u32 num);
+	u32 (*GetPC)(void);
+	u32 (*GetSR)(void);
+	u32 (*GetUSP)(void);
+	u32 (*GetMSP)(void);
+
+	void (*SetDReg)(u32 num, u32 val);
+	void (*SetAReg)(u32 num, u32 val);
+	void (*SetPC)(u32 val);
+	void (*SetSR)(u32 val);
+	void (*SetUSP)(u32 val);
+	void (*SetMSP)(u32 val);
+
+	void (*SetFetch)(u32 low_adr, u32 high_adr, pointer fetch_adr);
+	void FASTCALL (*SetIRQ)(s32 level);
+
+	void (*SetReadB)(M68K_READ *Func);
+	void (*SetReadW)(M68K_READ *Func);
+	void (*SetWriteB)(M68K_WRITE *Func);
+	void (*SetWriteW)(M68K_WRITE *Func);
+} M68K_struct;
+
+extern M68K_struct * M68K;
+
+void M68KInit(int coreid);
+
+#endif
