@@ -25,3 +25,103 @@ M68K_struct * M68K = NULL;
 void M68KInit(int coreid) {
 	M68K = &M68KC68K;
 }
+
+void M68KDummyInit(void) {
+}
+
+void M68KDummyDeInit(void) {
+}
+
+void M68KDummyReset(void) {
+}
+
+s32 FASTCALL M68KDummyExec(s32 cycle) {
+	return 0;
+}
+
+u32 M68KDummyGetDReg(u32 num) {
+	return 0;
+}
+
+u32 M68KDummyGetAReg(u32 num) {
+	return 0;
+}
+
+u32 M68KDummyGetPC(void) {
+	return 0;
+}
+
+u32 M68KDummyGetSR(void) {
+	return 0;
+}
+
+u32 M68KDummyGetUSP(void) {
+	return 0;
+}
+
+u32 M68KDummyGetMSP(void) {
+	return 0;
+}
+
+void M68KDummySetDReg(u32 num, u32 val) {
+}
+
+void M68KDummySetAReg(u32 num, u32 val) {
+}
+
+void M68KDummySetPC(u32 val) {
+}
+
+void M68KDummySetSR(u32 val) {
+}
+
+void M68KDummySetUSP(u32 val) {
+}
+
+void M68KDummySetMSP(u32 val) {
+}
+
+void M68KDummySetFetch(u32 low_adr, u32 high_adr, pointer fetch_adr) {
+}
+
+void FASTCALL M68KDummySetIRQ(s32 level) {
+}
+
+void M68KDummySetReadB(M68K_READ *Func) {
+}
+
+void M68KDummySetReadW(M68K_READ *Func) {
+}
+
+void M68KDummySetWriteB(M68K_WRITE *Func) {
+}
+
+void M68KDummySetWriteW(M68K_WRITE *Func) {
+}
+
+M68K_struct M68KDummy = {
+	0,
+	"Dummy 68k Interface",
+	M68KDummyInit,
+	M68KDummyDeInit,
+	M68KDummyReset,
+	M68KDummyExec,
+	M68KDummyGetDReg,
+	M68KDummyGetAReg,
+	M68KDummyGetPC,
+	M68KDummyGetSR,
+	M68KDummyGetUSP,
+	M68KDummyGetMSP,
+	M68KDummySetDReg,
+	M68KDummySetAReg,
+	M68KDummySetPC,
+	M68KDummySetSR,
+	M68KDummySetUSP,
+	M68KDummySetMSP,
+	M68KDummySetFetch,
+	M68KDummySetIRQ,
+	M68KDummySetReadB,
+	M68KDummySetReadW,
+	M68KDummySetWriteB,
+	M68KDummySetWriteW
+};
