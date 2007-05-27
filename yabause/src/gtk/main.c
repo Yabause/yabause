@@ -34,9 +34,19 @@
 #include "../sndsdl.h"
 #include "../persdljoy.h"
 #include "../debug.h"
+#include "../m68kcore.h"
+#include "../m68kc68k.h"
 #include "pergtk.h"
 
 #include "settings.h"
+
+#ifdef USEM68KCORE
+M68K_struct * M68KCoreList[] = {
+&M68KDummy,
+&M68KC68K,
+NULL
+};
+#endif
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -102,6 +112,7 @@ GtkWidget * yui_new() {
 }
 
 void yui_settings_init(void) {
+	yinit.m68kcoretype = M68KCORE_C68K;
 	yinit.percoretype = PERCORE_GTK;
 	yinit.sh2coretype = SH2CORE_DEFAULT;
 #ifdef HAVE_LIBGL

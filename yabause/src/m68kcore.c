@@ -19,11 +19,33 @@
 
 #include "m68kcore.h"
 #include "m68kc68k.h"
+#include "memory.h"
+
+extern u8 * SoundRam;
 
 M68K_struct * M68K = NULL;
 
-void M68KInit(int coreid) {
-	M68K = &M68KC68K;
+#ifdef USEM68KCORE
+extern M68K_struct * M68KCoreList[];
+#endif
+
+int M68KInit(int coreid) {
+#ifdef USEM68KCORE
+   int i;
+
+   // Go through core list and find the id
+   for (i = 0; M68KCoreList[i] != NULL; i++)
+   {
+      if (M68KCoreList[i]->id == coreid)
+      {
+         // Set to current core
+         M68K = M68KCoreList[i];
+         break;
+      }
+   }
+#endif
+
+   return 0;
 }
 
 void M68KDummyInit(void) {
@@ -36,6 +58,17 @@ void M68KDummyReset(void) {
 }
 
 s32 FASTCALL M68KDummyExec(s32 cycle) {
+	T2WriteWord(SoundRam, 0x700, 0);
+	T2WriteWord(SoundRam, 0x710, 0);
+	T2WriteWord(SoundRam, 0x720, 0);
+	T2WriteWord(SoundRam, 0x730, 0);
+	T2WriteWord(SoundRam, 0x740, 0);
+	T2WriteWord(SoundRam, 0x750, 0);
+	T2WriteWord(SoundRam, 0x760, 0);
+	T2WriteWord(SoundRam, 0x770, 0);
+
+	T2WriteWord(SoundRam, 0x790, 0);
+	T2WriteWord(SoundRam, 0x792, 0);
 	return 0;
 }
 

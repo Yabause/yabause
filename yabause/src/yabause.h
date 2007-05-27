@@ -30,6 +30,7 @@ typedef struct
    int sh2coretype;
    int vidcoretype;
    int sndcoretype;
+   int m68kcoretype;
    int cdcoretype;
    int carttype;
    u8 regionid;

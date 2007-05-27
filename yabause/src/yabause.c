@@ -171,7 +171,11 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
 #ifdef USEM68KCORE
-   M68KInit(1);
+   if (M68KInit(init->m68kcoretype) != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, "M68K");
+      return -1;
+   }
 #endif
 
    if (ScspInit(init->sndcoretype) != 0)

@@ -22,9 +22,9 @@
 
 #include "core.h"
 
-#define M68K_DEFAULT -1
-#define M68K_DUMMY    0
-#define M68K_C68K     1
+#define M68KCORE_DEFAULT -1
+#define M68KCORE_DUMMY    0
+#define M68KCORE_C68K     1
 
 typedef u32 FASTCALL M68K_READ(const u32 adr);
 typedef void FASTCALL M68K_WRITE(const u32 adr, u32 data);
@@ -64,7 +64,7 @@ typedef struct {
 
 extern M68K_struct * M68K;
 
-void M68KInit(int coreid);
+int M68KInit(int coreid);
 
 extern M68K_struct M68KDummy;
 
