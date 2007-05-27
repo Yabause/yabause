@@ -109,6 +109,15 @@ AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#define MACRO(...) puts(__VA_ARGS__)]], [[MA
 	AC_DEFINE(HAVE_C99_VARIADIC_MACROS)
 	AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
+compile_c68k=yes
+AC_ARG_WITH(c68k, AC_HELP_STRING(--without-c68k, don't compile C68k), [compile_c68k=$withval])
+if test x$compile_c68k = xyes ; then
+	AC_DEFINE(HAVE_C68K)
+else
+	AC_DEFINE(USEM68KCORE)
+fi
+AM_CONDITIONAL(COMPILE_C68K, test x$compile_c68k = xyes)
+
 AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug information) , AC_DEFINE(DEBUG))
 AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug information) , AC_DEFINE(VDP1_DEBUG))
 AC_ARG_ENABLE(vdp2-debug, AC_HELP_STRING(--enable-vdp2-debug, enable vdp2 debug information) , AC_DEFINE(VDP2_DEBUG))

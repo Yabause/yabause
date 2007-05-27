@@ -33,6 +33,8 @@ int M68KInit(int coreid) {
 #ifdef USEM68KCORE
    int i;
 
+   M68K = &M68KDummy;
+
    // Go through core list and find the id
    for (i = 0; M68KCoreList[i] != NULL; i++)
    {

@@ -698,6 +698,8 @@ X_EXTRA_LIBS
 YAB_CFLAGS
 YAB_LIBS
 yabause_yui
+COMPILE_C68K_TRUE
+COMPILE_C68K_FALSE
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -1311,6 +1313,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-opengl        don't use OpenGL
   --with-x                use the X Window System
+  --without-c68k          don't compile C68k
 
 Some influential environment variables:
   CC          C compiler command
@@ -7006,6 +7009,35 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
+compile_c68k=yes
+
+# Check whether --with-c68k was given.
+if test "${with_c68k+set}" = set; then
+  withval=$with_c68k; compile_c68k=$withval
+fi
+
+if test x$compile_c68k = xyes ; then
+	cat >>confdefs.h <<\_ACEOF
+#define HAVE_C68K 1
+_ACEOF
+
+else
+	cat >>confdefs.h <<\_ACEOF
+#define USEM68KCORE 1
+_ACEOF
+
+fi
+
+
+if test x$compile_c68k = xyes; then
+  COMPILE_C68K_TRUE=
+  COMPILE_C68K_FALSE='#'
+else
+  COMPILE_C68K_TRUE='#'
+  COMPILE_C68K_FALSE=
+fi
+
+
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval=$enable_debug; cat >>confdefs.h <<\_ACEOF
@@ -7210,6 +7242,13 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${COMPILE_C68K_TRUE}" && test -z "${COMPILE_C68K_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"COMPILE_C68K\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"COMPILE_C68K\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -7864,11 +7903,13 @@ X_EXTRA_LIBS!$X_EXTRA_LIBS$ac_delim
 YAB_CFLAGS!$YAB_CFLAGS$ac_delim
 YAB_LIBS!$YAB_LIBS$ac_delim
 yabause_yui!$yabause_yui$ac_delim
+COMPILE_C68K_TRUE!$COMPILE_C68K_TRUE$ac_delim
+COMPILE_C68K_FALSE!$COMPILE_C68K_FALSE$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 6; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 8; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

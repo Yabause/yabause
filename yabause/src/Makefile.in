@@ -37,6 +37,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+@COMPILE_C68K_TRUE@am__append_1 = c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c m68kc68k.c m68kc68k.h
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -51,18 +52,29 @@ AR = ar
 ARFLAGS = cru
 libyabause_a_AR = $(AR) $(ARFLAGS)
 libyabause_a_DEPENDENCIES = cd-$(yabause_arch).$(OBJEXT)
-am_libyabause_a_OBJECTS = c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
-	gen68k.$(OBJEXT) bios.$(OBJEXT) cdbase.$(OBJEXT) \
+am__libyabause_a_SOURCES_DIST = bios.c bios.h cdbase.c cdbase.h \
+	cheat.c cheat.h core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h \
+	debug.c debug.h error.c error.h memory.c memory.h m68kcore.c \
+	m68kcore.h m68kd.c netlink.c netlink.h peripheral.h \
+	peripheral.c persdl.c persdl.h persdljoy.c persdljoy.h \
+	profile.c profile.h scu.c scu.h sh2core.c sh2core.h sh2d.c \
+	sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h smpc.c smpc.h \
+	scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h vdp2.c vdp2.h \
+	vidogl.c vidogl.h vidsoft.c vidsoft.h yabause.c yabause.h \
+	ygl.h ygl.c yui.h c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \
+	m68kc68k.c m68kc68k.h
+@COMPILE_C68K_TRUE@am__objects_1 = c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
+@COMPILE_C68K_TRUE@	gen68k.$(OBJEXT) m68kc68k.$(OBJEXT)
+am_libyabause_a_OBJECTS = bios.$(OBJEXT) cdbase.$(OBJEXT) \
 	cheat.$(OBJEXT) cs0.$(OBJEXT) cs1.$(OBJEXT) cs2.$(OBJEXT) \
 	debug.$(OBJEXT) error.$(OBJEXT) memory.$(OBJEXT) \
-	m68kcore.$(OBJEXT) m68kc68k.$(OBJEXT) m68kd.$(OBJEXT) \
-	netlink.$(OBJEXT) peripheral.$(OBJEXT) persdl.$(OBJEXT) \
-	persdljoy.$(OBJEXT) profile.$(OBJEXT) scu.$(OBJEXT) \
-	sh2core.$(OBJEXT) sh2d.$(OBJEXT) sh2idle.$(OBJEXT) \
-	sh2int.$(OBJEXT) smpc.$(OBJEXT) scsp.$(OBJEXT) \
-	sndsdl.$(OBJEXT) vdp1.$(OBJEXT) vdp2.$(OBJEXT) \
-	vidogl.$(OBJEXT) vidsoft.$(OBJEXT) yabause.$(OBJEXT) \
-	ygl.$(OBJEXT)
+	m68kcore.$(OBJEXT) m68kd.$(OBJEXT) netlink.$(OBJEXT) \
+	peripheral.$(OBJEXT) persdl.$(OBJEXT) persdljoy.$(OBJEXT) \
+	profile.$(OBJEXT) scu.$(OBJEXT) sh2core.$(OBJEXT) \
+	sh2d.$(OBJEXT) sh2idle.$(OBJEXT) sh2int.$(OBJEXT) \
+	smpc.$(OBJEXT) scsp.$(OBJEXT) sndsdl.$(OBJEXT) vdp1.$(OBJEXT) \
+	vdp2.$(OBJEXT) vidogl.$(OBJEXT) vidsoft.$(OBJEXT) \
+	yabause.$(OBJEXT) ygl.$(OBJEXT) $(am__objects_1)
 nodist_libyabause_a_OBJECTS =
 libyabause_a_OBJECTS = $(am_libyabause_a_OBJECTS) \
 	$(nodist_libyabause_a_OBJECTS)
@@ -74,7 +86,7 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libyabause_a_SOURCES) $(nodist_libyabause_a_SOURCES)
-DIST_SOURCES = $(libyabause_a_SOURCES)
+DIST_SOURCES = $(am__libyabause_a_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -83,7 +95,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = . @yabause_yui@ c68k
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -96,6 +108,8 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+COMPILE_C68K_FALSE = @COMPILE_C68K_FALSE@
+COMPILE_C68K_TRUE = @COMPILE_C68K_TRUE@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
@@ -188,23 +202,20 @@ target_vendor = @target_vendor@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
 EXTRA_DIST = cd.c Makefile.mng logo.bmp logo.ico logo.png
-SUBDIRS = c68k . $(yabause_yui)
+@COMPILE_C68K_FALSE@SUBDIRS = . $(yabause_yui)
+@COMPILE_C68K_TRUE@SUBDIRS = c68k . $(yabause_yui)
 noinst_LIBRARIES = libyabause.a
-libyabause_a_SOURCES = \
-	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c \
-        bios.c bios.h cdbase.c cdbase.h cheat.c cheat.h core.h cs0.c \
-	cs0.h cs1.c cs1.h cs2.c cs2.h \
-	debug.c debug.h error.c error.h memory.c memory.h \
-	m68kcore.c m68kcore.h m68kc68k.c m68kc68k.h \
-        m68kd.c netlink.c netlink.h peripheral.h peripheral.c \
-	persdl.c persdl.h persdljoy.c persdljoy.h profile.c profile.h \
-	scu.c scu.h sh2core.c sh2core.h \
-	sh2d.c sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h \
-	smpc.c smpc.h scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
-	vdp2.c vdp2.h vidogl.c vidogl.h vidsoft.c vidsoft.h \
-	yabause.c yabause.h ygl.h ygl.c yui.h
-
-nodist_libyabause_a_SOURCES = c68k/c68k_ini.inc
+libyabause_a_SOURCES = bios.c bios.h cdbase.c cdbase.h cheat.c cheat.h \
+	core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h debug.c debug.h \
+	error.c error.h memory.c memory.h m68kcore.c m68kcore.h \
+	m68kd.c netlink.c netlink.h peripheral.h peripheral.c persdl.c \
+	persdl.h persdljoy.c persdljoy.h profile.c profile.h scu.c \
+	scu.h sh2core.c sh2core.h sh2d.c sh2d.h sh2idle.c sh2idle.h \
+	sh2int.c sh2int.h smpc.c smpc.h scsp.c scsp.h sndsdl.c \
+	sndsdl.h vdp1.c vdp1.h vdp2.c vdp2.h vidogl.c vidogl.h \
+	vidsoft.c vidsoft.h yabause.c yabause.h ygl.h ygl.c yui.h \
+	$(am__append_1)
+@COMPILE_C68K_TRUE@nodist_libyabause_a_SOURCES = c68k/c68k_ini.inc
 libyabause_a_LIBADD = cd-$(yabause_arch).$(OBJEXT)
 all: all-recursive
 
@@ -301,6 +312,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+@COMPILE_C68K_FALSE@c68kexec.o: c68k/c68kexec.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT c68kexec.o -MD -MP -MF "$(DEPDIR)/c68kexec.Tpo" -c -o c68kexec.o `test -f 'c68k/c68kexec.c' || echo '$(srcdir)/'`c68k/c68kexec.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/c68kexec.Tpo" "$(DEPDIR)/c68kexec.Po"; else rm -f "$(DEPDIR)/c68kexec.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='c68k/c68kexec.c' object='c68kexec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o c68kexec.o `test -f 'c68k/c68kexec.c' || echo '$(srcdir)/'`c68k/c68kexec.c
 
 c68kexec.obj: c68k/c68kexec.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT c68kexec.obj -MD -MP -MF "$(DEPDIR)/c68kexec.Tpo" -c -o c68kexec.obj `if test -f 'c68k/c68kexec.c'; then $(CYGPATH_W) 'c68k/c68kexec.c'; else $(CYGPATH_W) '$(srcdir)/c68k/c68kexec.c'; fi`; \
@@ -605,10 +623,10 @@ uninstall-info: uninstall-info-recursive
 	mostlyclean-generic mostlyclean-recursive pdf pdf-am ps ps-am \
 	tags tags-recursive uninstall uninstall-am uninstall-info-am
 
-c68k/c68k_ini.inc:
-	cd c68k && ./gen68k
-c68kexec.o: c68k/c68kexec.c
-	$(COMPILE) -O0 c68k/c68kexec.c -c -o c68kexec.o
+@COMPILE_C68K_TRUE@c68k/c68k_ini.inc:
+@COMPILE_C68K_TRUE@	cd c68k && ./gen68k
+@COMPILE_C68K_TRUE@c68kexec.o: c68k/c68kexec.c
+@COMPILE_C68K_TRUE@	$(COMPILE) -O0 c68k/c68kexec.c -c -o c68kexec.o
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
