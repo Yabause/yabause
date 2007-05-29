@@ -42,6 +42,9 @@
 #include "../debug.h"
 #include "cheats.h"
 #include "hexedit.h"
+#ifdef USEM68KCORE
+#include "../m68kcore.h"
+#endif
 
 #define DONT_PROFILE
 #include "../profile.h"
@@ -133,6 +136,13 @@ VideoInterface_struct *VIDCoreList[] = {
 &VIDSoft,
 NULL
 };
+
+#ifdef USEM68KCORE
+M68K_struct *M68KCoreList[] = {
+&M68KDummy,
+NULL
+};
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2511,7 +2521,11 @@ void UpdateLogCallback (char *string)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char *argv[]) {
+int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine, int nCmdShow)
+{
+   MessageBox(NULL, "Testing", "Test",  MB_OK | MB_ICONINFORMATION);
+
    if (YuiInit() != 0)
       fprintf(stderr, "Error running Yabause\n");
 

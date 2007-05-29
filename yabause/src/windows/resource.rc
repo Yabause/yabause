@@ -558,8 +558,8 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
-#if _MSC_VER
-IDI_ICON        ICON    DISCARDABLE     "../logo.ico"
+#ifdef _MSC_VER
+IDI_ICON        ICON    DISCARDABLE     "..\\logo.ico"
 IDB_BITMAP      BITMAP  DISCARDABLE     "yabause_logo.bmp"
 #else
 IDI_ICON        ICON    DISCARDABLE     "logo.ico"
