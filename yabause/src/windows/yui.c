@@ -2524,8 +2524,6 @@ void UpdateLogCallback (char *string)
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 {
-   MessageBox(NULL, "Testing", "Test",  MB_OK | MB_ICONINFORMATION);
-
    if (YuiInit() != 0)
       fprintf(stderr, "Error running Yabause\n");
 
