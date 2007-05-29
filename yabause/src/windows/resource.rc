@@ -19,6 +19,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include "hexedit.h"
 #include "resource.h"
 
 IDR_MENU MENU
@@ -47,6 +48,7 @@ BEGIN
     MENUITEM "68K", IDM_M68KDEBUG
     MENUITEM "SCU DSP", IDM_SCUDSPDEBUG
     MENUITEM "SCSP", IDM_SCSPDEBUG
+    MENUITEM "Memory Editor", IDM_MEMORYEDITOR
   END
   POPUP "&Help"
   BEGIN
@@ -240,6 +242,21 @@ BEGIN
     LISTBOX         IDC_LISTBOX2,159, 10, 176, 195
     GROUPBOX        "DSP Control Registers", -1, 340, 0, 94, 208, WS_CHILD | WS_VISIBLE
     LISTBOX         IDC_LISTBOX3,343, 10, 88, 195
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+MEMORYEDITORDLG DIALOG FIXED PURE  0, 0, 288, 229
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Memory Editor"
+FONT 8, "Courier New"
+BEGIN
+    CONTROL         "", IDC_HEXEDIT, HEXEDIT, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL, 4, 4, 280, 132
+//    PUSHBUTTON      "Goto Address",IDC_GOTOADDRESS, 4, 140, 54, 14
+//    PUSHBUTTON      "Save Selected",IDOK, 3, 212, 40, 14
+//    PUSHBUTTON      "Search for text",IDOK, 3, 212, 40, 14
+//    PUSHBUTTON      "Search for bytes",IDOK, 3, 212, 40, 14
+    DEFPUSHBUTTON   "&Close",IDOK, 3, 212, 40, 14
 END
 
 //////////////////////////////////////////////////////////////////////////////

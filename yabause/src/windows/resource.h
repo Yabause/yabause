@@ -38,6 +38,7 @@
 #define IDM_M68KDEBUG        10034
 #define IDM_SCUDSPDEBUG      10035
 #define IDM_SCSPDEBUG        10036
+#define IDM_MEMORYEDITOR     10037
 #define IDM_TOGGLEFULLSCREEN 10040
 #define IDM_TOGGLENBG0       10041
 #define IDM_TOGGLENBG1       10042
@@ -228,6 +229,12 @@
 
 #define IDC_SCSPSLOTCB                  1001
 #define IDC_SCSPSLOTET                  1002
+
+//////////////////////////////////////////////////////////////////////////////
+// Memory Editor stuff
+
+#define IDC_HEXEDIT                     1001
+#define IDC_GOTOADDRESS                 1002
 
 //////////////////////////////////////////////////////////////////////////////
 // Error debug stuff

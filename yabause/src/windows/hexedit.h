@@ -21,6 +21,15 @@
 #define HEXEDIT_H
 
 #define HEXEDIT "YabauseHexEdit"
+#define HEX_SETADDRESSLIST      WM_USER+11
+#define HEX_GOTOADDRESS         WM_USER+12
+#define HEX_GETSELECTED         WM_USER+13
+
+typedef struct
+{
+   u32 start;
+   u32 end;
+} addrlist_struct;
 
 void InitHexEdit();
 

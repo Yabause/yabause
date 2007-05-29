@@ -41,6 +41,7 @@
 #include "cd.h"
 #include "../debug.h"
 #include "cheats.h"
+#include "hexedit.h"
 
 #define DONT_PROFILE
 #include "../profile.h"
@@ -89,7 +90,9 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
-                                    LPARAM lParam);
+                                  LPARAM lParam);
+LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                     LPARAM lParam);
 LRESULT CALLBACK ErrorDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -395,6 +398,8 @@ int YuiInit(void)
    iccs.dwSize = sizeof(INITCOMMONCONTROLSEX);
    iccs.dwICC = ICC_INTERNET_CLASSES | ICC_TAB_CLASSES;
    InitCommonControlsEx(&iccs);
+
+   InitHexEdit();
 
    y_hInstance = GetModuleHandle(NULL);
 
@@ -794,6 +799,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             {
                ScspMuteAudio();
                DialogBox(y_hInstance, "SCSPDebugDlg", hWnd, (DLGPROC)SCSPDebugDlgProc);
+               ScspUnMuteAudio();
+               break;
+            }
+            case IDM_MEMORYEDITOR:
+            {
+               ScspMuteAudio();
+               DialogBox(y_hInstance, "MemoryEditorDlg", hWnd, (DLGPROC)MemoryEditorDlgProc);
                ScspUnMuteAudio();
                break;
             }
@@ -2303,6 +2315,41 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                EndDialog(hDlg, TRUE);
 
                return TRUE;
+            }
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                     LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+
+               return TRUE;
+            }
+            case IDC_GOTOADDRESS:
+            {
+                SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, 0x060FFC00); // fix me
             }
             default: break;
          }
