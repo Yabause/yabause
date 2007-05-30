@@ -600,6 +600,9 @@ LRESULT HexEditCtl_Vscroll(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 
 LRESULT HexEditCtl_KeyDown(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 {
+   u32 addr;
+   u8 data;
+
    switch (wParam)
    {
       case VK_LEFT:
@@ -659,9 +662,6 @@ LRESULT HexEditCtl_KeyDown(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
             if ((wParam >= '0' && wParam <= '9') ||
                 (wParam >= 'A' && wParam <= 'F'))
             {
-               u32 addr;
-               u8 data;
-
                if (wParam >= '0' && wParam <= '9')
                   data = wParam - 0x30;
                else
@@ -685,15 +685,19 @@ LRESULT HexEditCtl_KeyDown(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
          }
          else
          {
-            u32 addr;
-            u8 data;
+            u8 keystate[256];
+            u16 key;
 
             // So long as it's an ANSI character, we're all good
-
+            if (!GetKeyboardState(keystate) ||
+                !ToAscii(wParam, LOBYTE(HIWORD(lParam)), keystate, &key, 0))
+               break;
+            
             // Modify data in memory
-//            addr = cc->addr + (cc->cury * cc->maxcurx) + cc->curx;
-//            MappedMemoryWriteByte(addr, data);
-            HexEditCtl_KeyDown(cc, VK_RIGHT, 0);                  
+            addr = cc->addr + (cc->cury * cc->maxcurx) + cc->curx;
+            MappedMemoryWriteByte(addr, (u8)key);
+
+            HexEditCtl_KeyDown(cc, VK_RIGHT, 0);
             InvalidateRect(cc->hwnd, NULL, FALSE);
             HexEditCtl_SetCaretPos(cc);
          }
