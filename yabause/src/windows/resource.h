@@ -74,25 +74,26 @@
 #define IDC_STEP                        1025
 #define IDC_STEPOVER                    1026
 #define IDC_MEMTRANSFER                 1027
+#define IDC_MEMEDITOR                   1028
 
-#define IDC_ADDBP1                      1028
-#define IDC_DELBP1                      1029
+#define IDC_ADDBP1                      1040
+#define IDC_DELBP1                      1041
 
-#define IDC_ADDBP2                      1030
-#define IDC_DELBP2                      1031
+#define IDC_ADDBP2                      1042
+#define IDC_DELBP2                      1043
 
-#define IDC_CHKREAD                     1032
-#define IDC_CHKWRITE                    1033
-#define IDC_CHKBYTE1                    1034
-#define IDC_CHKWORD1                    1035
-#define IDC_CHKLONG1                   1036
-#define IDC_CHKBYTE2                    1037
-#define IDC_CHKWORD2                    1038
-#define IDC_CHKLONG2                   1039
+#define IDC_CHKREAD                     1044
+#define IDC_CHKWRITE                    1045
+#define IDC_CHKBYTE1                    1046
+#define IDC_CHKWORD1                    1047
+#define IDC_CHKLONG1                    1048
+#define IDC_CHKBYTE2                    1049
+#define IDC_CHKWORD2                    1050
+#define IDC_CHKLONG2                    1051
 
-#define IDC_BROWSE                      1040
-#define IDC_DOWNLOADMEM                 1041
-#define IDC_UPLOADMEM                   1042
+#define IDC_BROWSE                      1060
+#define IDC_DOWNLOADMEM                 1061
+#define IDC_UPLOADMEM                   1062
 
 //////////////////////////////////////////////////////////////////////////////
 // Settings stuff
@@ -245,6 +246,12 @@
 #define IDC_PRESETADDRRB                1002
 #define IDC_OFFSETET                    1003
 #define IDC_PRESETLISTCB                1004
+
+//////////////////////////////////////////////////////////////////////////////
+// Search Memory dialog stuff
+
+#define IDC_SEARCHTYPECB                1001
+#define IDC_SEARCHMEMET                 1002
 
 //////////////////////////////////////////////////////////////////////////////
 // Error debug stuff

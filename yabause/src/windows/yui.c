@@ -1342,6 +1342,11 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                DialogBox(y_hInstance, "MemTransferDlg", hDlg, (DLGPROC)MemTransferDlgProc);
                break;
             }
+            case IDC_MEMEDITOR:
+            {
+               DialogBox(y_hInstance, "MemoryEditorDlg", hDlg, (DLGPROC)MemoryEditorDlgProc);
+               break;
+            }
             case IDC_ADDBP1:
             {
                char bptext[10];
@@ -1573,6 +1578,40 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                      SH2SetRegisters(debugsh, &sh2regs);
                      SH2UpdateRegList(hDlg, &sh2regs);
+                     break;
+                  }
+                  default: break;
+               }
+
+               break;
+            }
+            case IDC_LISTBOX2:
+            {
+               switch (HIWORD(wParam))
+               {
+                  case LBN_DBLCLK:
+                  {
+                     // Add a code breakpoint when code is double-clicked
+                     char bptext[10];
+                     u32 addr=0;
+                     int cursel;
+                     extern SH2Interface_struct *SH2Core;
+                     sh2regs_struct sh2regs;
+
+                     if (SH2Core->id != SH2CORE_DEBUGINTERPRETER)
+                     {
+                        MessageBox (hDlg, "Breakpoints only supported by SH2 Debug Interpreter", "Error",  MB_OK | MB_ICONINFORMATION);
+                        break;
+                     }
+
+                     SH2GetRegisters(debugsh, &sh2regs);
+                     cursel = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_GETCURSEL,0,0);
+                  
+                     addr = sh2regs.PC - ((12 - cursel) * 2);
+                     sprintf(bptext, "%08X", (int)addr);
+
+                     if (SH2AddCodeBreakpoint(debugsh, addr) == 0)
+                        SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
                      break;
                   }
                   default: break;
@@ -2436,6 +2475,45 @@ LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                     LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (long)"Hex");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (long)"Text");
+//         SetDlgItemText(hDlg, IDC_SEARCHMEMET, ?);
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam)
 {
@@ -2464,6 +2542,13 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, addr);
                   SendMessage(hDlg, WM_NEXTDLGCTL, IDC_HEXEDIT, TRUE);
+               }
+            }
+            case IDC_SEARCHMEM:
+            {
+               if (DialogBoxParam(y_hInstance, "SearchMemoryDlg", hDlg, (DLGPROC)SearchMemoryDlgProc, (LPARAM)0) == TRUE)
+               {
+//                  SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, addr);
                }
             }
             default: break;
