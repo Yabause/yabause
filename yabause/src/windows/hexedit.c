@@ -50,14 +50,6 @@ enum CURMODE { HEXMODE = 0x00, ASCIIMODE };
 
 //////////////////////////////////////////////////////////////////////////////
 
-void HexSetAddr(HexEditCtl_struct *cc, int num, u32 start, u32 end, const char *typetext)
-{
-   cc->addrlist[num].start = start;
-   cc->addrlist[num].end = end;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 LRESULT InitHexEditCtl(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
    HexEditCtl_struct *cc;
@@ -65,27 +57,7 @@ LRESULT InitHexEditCtl(HWND hwnd, WPARAM wParam, LPARAM lParam)
    if ((cc = (HexEditCtl_struct *)malloc(sizeof(HexEditCtl_struct))) == NULL)
       return FALSE;
 
-   cc->numaddr = 13;
-
-   if ((cc->addrlist = (addrlist_struct *)malloc(sizeof(addrlist_struct) * cc->numaddr)) == NULL)
-   {
-      free(cc);
-      return FALSE;
-   }
-
-   HexSetAddr(cc, 0, 0x00000000, 0x0007FFFF, "Bios ROM"); 
-   HexSetAddr(cc, 1, 0x00180000, 0x0018FFFF, "Backup RAM");
-   HexSetAddr(cc, 2, 0x00200000, 0x002FFFFF, "Low Work RAM");
-   HexSetAddr(cc, 3, 0x02000000, 0x03FFFFFF, "A-bus CS0");
-   HexSetAddr(cc, 4, 0x04000000, 0x04FFFFFF, "A-bus CS1");
-   HexSetAddr(cc, 5, 0x05000000, 0x057FFFFF, "A-bus Dummy");
-   HexSetAddr(cc, 6, 0x05800000, 0x058FFFFF, "A-bus CS2");
-   HexSetAddr(cc, 7, 0x05A00000, 0x05AFFFFF, "68k RAM");
-   HexSetAddr(cc, 8, 0x05C00000, 0x05C7FFFF, "VDP1 RAM");
-   HexSetAddr(cc, 9, 0x05C80000, 0x05CBFFFF, "VDP1 Framebuffer");
-   HexSetAddr(cc, 10, 0x05E00000, 0x05E7FFFF, "VDP2 RAM");
-   HexSetAddr(cc, 11, 0x05F00000, 0x05F00FFF, "VDP2 Color RAM");
-   HexSetAddr(cc, 12, 0x06000000, 0x060FFFFF, "High Work RAM");
+   cc->numaddr = 0;
 
    cc->hwnd = hwnd;
    cc->font = GetStockObject(DEFAULT_GUI_FONT);
@@ -739,12 +711,22 @@ LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
          return HexEditCtl_KeyDown(cc, wParam, lParam);
       case HEX_SETADDRESSLIST:
       {
+         addrlist_struct *addrlist;
+
          if (((addrlist_struct *)lParam) != NULL && wParam > 0)
          {
+            if ((addrlist = (addrlist_struct *)malloc(sizeof(addrlist_struct) * wParam)) == NULL)
+               return -1;
+
+            memcpy(addrlist, (void *)lParam, sizeof(addrlist_struct) * wParam);
+
             if (cc->addrlist)
                free(cc->addrlist);
-            cc->addrlist = (addrlist_struct *)lParam;
+            
+            cc->addrlist = addrlist;
             cc->numaddr = (int)wParam;
+            cc->addr = cc->addrlist[0].start;
+            cc->curx = cc->cury = 0;
             return 0;
          }
          return -1;

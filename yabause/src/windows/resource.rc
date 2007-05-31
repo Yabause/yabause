@@ -246,17 +246,48 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
-MEMORYEDITORDLG DIALOG FIXED PURE  0, 0, 288, 229
+GOTOADDRESSDLG DIALOG FIXED PURE  0, 0, 190, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Goto Address"
+FONT 8, "Courier New"
+BEGIN
+    AUTORADIOBUTTON "Specify address",  IDC_SPECIFYADDRRB,  4, 4, 72, 10
+    AUTORADIOBUTTON "Preset address", IDC_PRESETADDRRB, 85, 4, 72, 10
+    GROUPBOX        "", -1, 4, 16, 77, 22, WS_CHILD | WS_VISIBLE
+    LTEXT           "Address:", -1, 7, 24, 36, 11
+    EDITTEXT        IDC_OFFSETET, 42, 23, 36, 12, ES_UPPERCASE
+    GROUPBOX        "", -1, 85, 16, 101, 22, WS_CHILD | WS_VISIBLE
+    COMBOBOX        IDC_PRESETLISTCB, 88, 23, 96, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, WS_DISABLED
+    DEFPUSHBUTTON   "&OK",IDOK,52,42,40,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,97,42,40,14
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+SEARCHMEMORYDLG DIALOG FIXED PURE  0, 0, 190, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Search Memory"
+FONT 8, "Courier New"
+BEGIN
+//    COMBOBOX        IDC_SEARCHTYPECB, 88, 23, 96, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, WS_DISABLED
+//    EDITTEXT        IDC_SEARCHMEMET, 42, 23, 36, 12, ES_UPPERCASE
+    DEFPUSHBUTTON   "&OK",IDOK,52,42,40,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,97,42,40,14
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+MEMORYEDITORDLG DIALOG FIXED PURE  0, 0, 288, 183
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Memory Editor"
 FONT 8, "Courier New"
 BEGIN
     CONTROL         "", IDC_HEXEDIT, HEXEDIT, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL, 4, 4, 280, 132
-//    PUSHBUTTON      "Goto Address",IDC_GOTOADDRESS, 4, 140, 54, 14
-//    PUSHBUTTON      "Save Selected",IDOK, 3, 212, 40, 14
-//    PUSHBUTTON      "Search for text",IDOK, 3, 212, 40, 14
-//    PUSHBUTTON      "Search for bytes",IDOK, 3, 212, 40, 14
-    DEFPUSHBUTTON   "&Close",IDOK, 3, 212, 40, 14
+    GROUPBOX        "", -1, 4, 136, 280, 25, WS_CHILD | WS_VISIBLE
+    PUSHBUTTON      "Goto Address",IDC_GOTOADDRESS, 8, 143, 54, 14
+    PUSHBUTTON      "Save Selected",IDC_SAVESEL, 114, 143, 59, 14, WS_DISABLED
+    PUSHBUTTON      "Search memory",IDC_SEARCHMEM, 221, 143, 59, 14, WS_DISABLED
+    DEFPUSHBUTTON   "&Close",IDOK, 124, 165, 40, 14
 END
 
 //////////////////////////////////////////////////////////////////////////////

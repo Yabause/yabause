@@ -144,6 +144,22 @@ NULL
 };
 #endif
 
+addrlist_struct hexaddrlist[13] = {
+   { 0x00000000, 0x0007FFFF, "Bios ROM" },
+   { 0x00180000, 0x0018FFFF, "Backup RAM" },
+   { 0x00200000, 0x002FFFFF, "Low Work RAM" },
+   { 0x02000000, 0x03FFFFFF, "A-bus CS0" },
+   { 0x04000000, 0x04FFFFFF, "A-bus CS1" },
+   { 0x05000000, 0x057FFFFF, "A-bus Dummy" },
+   { 0x05800000, 0x058FFFFF, "A-bus CS2" },
+   { 0x05A00000, 0x05AFFFFF, "68k RAM" },
+   { 0x05C00000, 0x05C7FFFF, "VDP1 RAM" },
+   { 0x05C80000, 0x05CBFFFF, "VDP1 Framebuffer" },
+   { 0x05E00000, 0x05E7FFFF, "VDP2 RAM" },
+   { 0x05F00000, 0x05F00FFF, "VDP2 Color RAM" },
+   { 0x06000000, 0x060FFFFF, "High Work RAM" }
+};
+
 //////////////////////////////////////////////////////////////////////////////
 
 void YuiSetBiosFilename(const char *bios)
@@ -2338,6 +2354,88 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam)
+{
+   static u32 *addr;
+   char tempstr[9];
+   int i;
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         addr = (u32 *)lParam;
+         sprintf(tempstr, "%08X", addr[0]);
+         SetDlgItemText(hDlg, IDC_OFFSETET, tempstr);
+
+         SendDlgItemMessage(hDlg, IDC_SPECIFYADDRRB, BM_SETCHECK, BST_CHECKED, 0);
+         SendDlgItemMessage(hDlg, IDC_PRESETADDRRB, BM_SETCHECK, BST_UNCHECKED, 0);
+
+         EnableWindow(GetDlgItem(hDlg, IDC_OFFSETET), TRUE);
+         EnableWindow(GetDlgItem(hDlg, IDC_PRESETLISTCB), FALSE);
+
+         SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_RESETCONTENT, 0, 0);
+         for (i = 0; i < 13; i++)
+         {
+            SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_ADDSTRING, 0, (long)hexaddrlist[i].name);
+            if (addr[0] >= hexaddrlist[i].start && addr[0] <= hexaddrlist[i].end)
+               SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_SETCURSEL, i, 0);
+         }
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDOK:
+            {
+               if (SendDlgItemMessage(hDlg, IDC_SPECIFYADDRRB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+               {
+                  GetDlgItemText(hDlg, IDC_OFFSETET, tempstr, 9);
+                  sscanf(tempstr, "%08X", addr);
+               }
+               else
+                  addr[0] = hexaddrlist[SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_GETCURSEL, 0, 0)].start;
+               EndDialog(hDlg, TRUE);
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            case IDC_SPECIFYADDRRB:
+            {
+               if (HIWORD(wParam) == BN_CLICKED)
+               {
+                  EnableWindow(GetDlgItem(hDlg, IDC_OFFSETET), TRUE);
+                  EnableWindow(GetDlgItem(hDlg, IDC_PRESETLISTCB), FALSE);
+               }
+
+               break;
+            }
+            case IDC_PRESETADDRRB:
+            {
+               if (HIWORD(wParam) == BN_CLICKED)
+               {
+                  EnableWindow(GetDlgItem(hDlg, IDC_OFFSETET), FALSE);
+                  EnableWindow(GetDlgItem(hDlg, IDC_PRESETLISTCB), TRUE);
+               }
+               break;
+            }
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam)
 {
@@ -2345,6 +2443,7 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
+         SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_SETADDRESSLIST, 13, hexaddrlist);
          return TRUE;
       }
       case WM_COMMAND:
@@ -2359,7 +2458,13 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_GOTOADDRESS:
             {
-                SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, 0x060FFC00); // fix me
+               u32 addr=0x06000000;
+
+               if (DialogBoxParam(y_hInstance, "GotoAddressDlg", hDlg, (DLGPROC)GotoAddressDlgProc, (LPARAM)&addr) == TRUE)
+               {
+                  SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, addr);
+                  SendMessage(hDlg, WM_NEXTDLGCTL, IDC_HEXEDIT, TRUE);
+               }
             }
             default: break;
          }

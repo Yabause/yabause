@@ -29,6 +29,7 @@ typedef struct
 {
    u32 start;
    u32 end;
+   char name[32];
 } addrlist_struct;
 
 void InitHexEdit();

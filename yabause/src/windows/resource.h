@@ -235,6 +235,16 @@
 
 #define IDC_HEXEDIT                     1001
 #define IDC_GOTOADDRESS                 1002
+#define IDC_SAVESEL                     1003
+#define IDC_SEARCHMEM                   1004
+
+//////////////////////////////////////////////////////////////////////////////
+// Goto address dialog stuff
+
+#define IDC_SPECIFYADDRRB               1001
+#define IDC_PRESETADDRRB                1002
+#define IDC_OFFSETET                    1003
+#define IDC_PRESETLISTCB                1004
 
 //////////////////////////////////////////////////////////////////////////////
 // Error debug stuff
