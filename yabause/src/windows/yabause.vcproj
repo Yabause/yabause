@@ -54,6 +54,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_MSC_VER"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -329,6 +330,10 @@
 				RelativePath="yui.c"
 				>
 			</File>
+			<File
+				RelativePath=".\yuidebug.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -473,6 +478,10 @@
 			</File>
 			<File
 				RelativePath="..\yui.h"
+				>
+			</File>
+			<File
+				RelativePath=".\yuidebug.h"
 				>
 			</File>
 		</Filter>

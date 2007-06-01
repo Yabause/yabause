@@ -18,7 +18,6 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#define _WIN32_IE       0x0400
 #include <windows.h>
 #include <commctrl.h>
 #undef FASTCALL
@@ -37,7 +36,7 @@
 #include "cheats.h"
 #ifdef USEM68KCORE
 #include "../m68kcore.h"
-#include "../m68khle.h"
+//#include "../m68khle.h"
 #endif
 #include "yuidebug.h"
 
@@ -98,7 +97,7 @@ NULL
 #ifdef USEM68KCORE
 M68K_struct *M68KCoreList[] = {
 &M68KDummy,
-&M68KHLE,
+//&M68KHLE,
 NULL
 };
 #endif
@@ -586,8 +585,8 @@ YabauseSetup:
    else
       yinit.cdcoretype = CDCORE_ISO;
 #ifdef USEM68KCORE
-   yinit.m68kcoretype = M68KCORE_HLE;
-   //yinit.m68kcoretype = 0;
+   //yinit.m68kcoretype = M68KCORE_HLE;
+   yinit.m68kcoretype = 0;
 #endif
    yinit.carttype = carttype;
    yinit.regionid = regionid;
