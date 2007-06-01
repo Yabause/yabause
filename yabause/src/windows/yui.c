@@ -2543,6 +2543,7 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, addr);
                   SendMessage(hDlg, WM_NEXTDLGCTL, IDC_HEXEDIT, TRUE);
                }
+               break;
             }
             case IDC_SEARCHMEM:
             {
@@ -2550,6 +2551,7 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
 //                  SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, addr);
                }
+               break;
             }
             default: break;
          }
