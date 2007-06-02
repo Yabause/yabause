@@ -1,3 +1,10 @@
+0.8.0 -> ?
+ macos port:
+  - Added browse button for bios setting
+ general:
+  - Added a core system for m68k and a c68k core interface.
+  - Added a dummy m68k core based on old yabause code, working enough
+    to boot the bios.
 0.7.2 -> 0.8.0
  cart:
   - Moved Netlink code to its own file: netlink.c
