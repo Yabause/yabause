@@ -38,6 +38,11 @@ extern const char * key_names[] = {
 	"Start", "A", "B", "C", "X", "Y", "Z", NULL
 };
 
+M68K_struct * M68KCoreList[] = {
+&M68KDummy,
+NULL
+};
+
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
 &SH2DebugInterpreter,

@@ -53,7 +53,7 @@ void SelectItemOfTabControl(ControlRef tabControl)
 pascal OSStatus TabEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void *inUserData)
 {
     ControlRef control;
-    
+
     GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef,
 	NULL, sizeof(ControlRef), NULL, &control );
 
@@ -243,6 +243,42 @@ OSStatus SettingsWindowEventHandler (EventHandlerCallRef myHandler, EventRef the
   return (result);
 }
 
+OSStatus BrowseHandler(EventHandlerCallRef h, EventRef event, void* data) {
+	NavDialogRef dialog;
+	NavDialogCreationOptions options;
+
+	NavGetDefaultDialogCreationOptions(&options);
+	NavCreateChooseFileDialog(&options, NULL, NULL, NULL, NULL,
+		NULL, &dialog);
+	NavDialogRun(dialog);
+
+	if (NavDialogGetUserAction(dialog) == kNavUserActionChoose) {
+		NavReplyRecord reply;
+		FSRef fileAsFSRef;
+		CFURLRef fileAsCFURLRef = NULL;
+		CFStringRef s;
+
+		NavDialogGetReply(dialog, &reply);
+
+		AEGetNthPtr(&(reply.selection), 1, typeFSRef,
+			NULL, NULL, &fileAsFSRef, sizeof(FSRef), NULL);
+
+		NavDisposeReply(&reply);
+		NavDialogDispose(dialog);
+	
+		fileAsCFURLRef = CFURLCreateFromFSRef(NULL, &fileAsFSRef);
+		s = CFURLCopyPath(fileAsCFURLRef);
+
+		CFShow(s);
+
+		SetControlData(data, kControlEditTextPart,
+			kControlEditTextCFStringTag, sizeof(CFStringRef), &s);
+    		Draw1Control(data);
+	}
+
+	return noErr;
+}
+
 OSStatus KeyConfigHandler(EventHandlerCallRef h, EventRef event, void* data) {
 	UInt32 key;
 	CFStringRef s;
@@ -276,11 +312,14 @@ WindowRef CreateSettingsWindow() {
 
   {
     int i;
-    ControlRef control;
+    ControlRef control, controlled;
     ControlID id;
     EventTypeSpec elist[] = {
       { kEventClassKeyboard, kEventRawKeyDown },
       { kEventClassKeyboard, kEventRawKeyUp }
+    };
+    EventTypeSpec flist[] = {
+      { kEventClassControl, kEventControlHit }
     };
 
     id.signature = 'conf';
@@ -293,6 +332,13 @@ WindowRef CreateSettingsWindow() {
 	GetEventTypeCount(elist), elist, control, NULL);
       i++;
     }
+
+    id.id = 50;
+    GetControlByID(myWindow, &id, &control);
+    id.id = 1;
+    GetControlByID(myWindow, &id, &controlled);
+    InstallControlEventHandler(control, NewEventHandlerUPP(BrowseHandler),
+      GetEventTypeCount(flist), flist, controlled, NULL);
   }
 
   ShowWindow(myWindow);

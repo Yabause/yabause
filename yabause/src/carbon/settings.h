@@ -29,6 +29,7 @@
 #include "../sndsdl.h"
 #include "../cdbase.h"
 #include "../cs0.h"
+#include "../m68kcore.h"
 
 extern yabauseinit_struct yinit;
 
