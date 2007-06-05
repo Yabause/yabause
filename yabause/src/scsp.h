@@ -86,6 +86,9 @@ void M68KExec(u32 cycles);
 void ScspExec(void);
 void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
 void ScspSlotDebugStats(u8 slotnum, char *outstring);
+int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename);
+void ScspMuteAudio();
+void ScspUnMuteAudio();
 void ScspSetVolume(int volume);
 
 void FASTCALL scsp_w_b(u32, u8);

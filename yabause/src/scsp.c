@@ -1,5 +1,5 @@
 /*  Copyright 2004 Stephane Dallongeville
-    Copyright 2004-2006 Theo Berkau
+    Copyright 2004-2007 Theo Berkau
     Copyright 2006 Guillaume Duhamel
 
     This file is part of Yabause.
@@ -3359,6 +3359,141 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 //   AddString(outstring, "Direct data fixed position = \r\n");
 //   AddString(outstring, "Effect data send level = \r\n");
 //   AddString(outstring, "Effect data fixed position = \r\n");
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 ScspSlotDebugAudio(slot_t *slot, u32 *workbuf, s16 *buf, u32 len)
+{
+   u32 *bufL, *bufR;
+
+   scsp_bufL = bufL = workbuf;
+   scsp_bufR = bufR = workbuf+len;
+
+   if (slot->ecnt >= SCSP_ENV_DE)
+   {
+      // enveloppe null...
+      memset(buf, 0, sizeof(s16) * 2 * len);
+      return 0; 
+   }
+
+   if (slot->ssctl)
+   {
+      memset(buf, 0, sizeof(s16) * 2 * len);
+      return 0; // not yet supported!
+   }
+
+   scsp_buf_len = len;
+   scsp_buf_pos = 0;
+
+   // take effect sound volume if no direct sound volume...
+   if ((slot->disll == 31) && (slot->dislr == 31))
+   {
+      slot->disll = slot->efsll;
+      slot->dislr = slot->efslr;
+   }
+
+   memset(bufL, 0, sizeof(u32) * len);
+   memset(bufR, 0, sizeof(u32) * len);
+   scsp_slot_update_p[(slot->lfofms == 31)?0:1][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
+   ScspConvert32uto16s((s32 *)bufL, (s32 *)bufR, (s16 *)buf, len);
+   return len;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+   char id[4];
+   u32 size;
+} chunk_struct;
+
+typedef struct {
+   chunk_struct riff;
+   char rifftype[4];
+} waveheader_struct;
+
+typedef struct {
+   chunk_struct chunk;
+   u16 compress;
+   u16 numchan;
+   u32 rate;
+   u32 bytespersec;
+   u16 blockalign;
+   u16 bitspersample;
+} fmt_struct;
+
+//////////////////////////////////////////////////////////////////////////////
+
+int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename)
+{
+   u32 workbuf[512*2*2];
+   s16 buf[512*2];
+   slot_t slot;
+   FILE *fp;
+   u32 counter = 0;
+   waveheader_struct waveheader;
+   fmt_struct fmt;
+   chunk_struct data;
+   long length;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+      return -1;
+
+   // Do wave header
+   memcpy(waveheader.riff.id, "RIFF", 4);
+   waveheader.riff.size = 0; // we'll fix this after the file is closed
+   memcpy(waveheader.rifftype, "WAVE", 4);
+   fwrite((void *)&waveheader, 1, sizeof(waveheader_struct), fp);
+
+   // fmt chunk
+   memcpy(fmt.chunk.id, "fmt ", 4);
+   fmt.chunk.size = 16; // we'll fix this at the end
+   fmt.compress = 1; // PCM
+   fmt.numchan = 2; // Stereo
+   fmt.rate = 44100;
+   fmt.bitspersample = 16;
+   fmt.blockalign = fmt.bitspersample / 8 * fmt.numchan;
+   fmt.bytespersec = fmt.rate * fmt.blockalign;
+   fwrite((void *)&fmt, 1, sizeof(fmt_struct), fp);
+
+   // data chunk
+   memcpy(data.id, "data", 4);
+   data.size = 0; // we'll fix this at the end
+   fwrite((void *)&data, 1, sizeof(chunk_struct), fp);
+
+   memcpy(&slot, &scsp.slot[slotnum], sizeof(slot_t));
+
+   // Clear out the phase counter, etc.
+   slot.fcnt = 0;
+   slot.ecnt = SCSP_ENV_AS;
+   slot.einc = slot.einca;
+   slot.ecmp = SCSP_ENV_AE;
+   slot.ecurp = SCSP_ENV_ATTACK;
+   slot.enxt = scsp_attack_next;
+
+   // Mix the audio, and then write it to the file
+   for(;;)
+   {
+      if (ScspSlotDebugAudio(&slot, workbuf, buf, 512) == 0)
+         break;
+
+      counter += 512;
+      fwrite((void *)buf, 2, 512 * 2, fp);
+      if (slot.lpctl != 0 && counter >= (44100 * 2 * 5))
+         break;
+   }
+
+   length = ftell(fp);
+
+   // Let's fix the riff chunk size and the data chunk size
+   fseek(fp, sizeof(waveheader_struct)-0x8, SEEK_SET);
+   length -= 0x4;
+   fwrite((void *)&length, 1, 4, fp);
+
+   fseek(fp, sizeof(waveheader_struct)+sizeof(fmt_struct)+0x4, SEEK_SET);
+   length -= sizeof(waveheader_struct)+sizeof(fmt_struct);
+   fwrite((void *)&length, 1, 4, fp);
+   fclose(fp);
 }
 
 //////////////////////////////////////////////////////////////////////////////
