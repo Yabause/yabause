@@ -19,10 +19,10 @@
 
 #ifdef DONT_PROFILE
 /* Profiling disabled: compiler won't generate machine instructions now. */
-#define PROFILE_START(t)    (void*)0
-#define PROFILE_STOP(t)     (void*)0
-#define PROFILE_PRINT()     (void*)0
-#define PROFILE_RESET()     (void*)0
+#define PROFILE_START(t)
+#define PROFILE_STOP(t)
+#define PROFILE_PRINT()     
+#define PROFILE_RESET()
 #else
 /* Profiling enabled */
 #define MAX_TAG_LEN       100
