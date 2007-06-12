@@ -1,5 +1,4 @@
 #include <windows.h>
-#define _WIN32_IE 0x400
 #include <commctrl.h>
 #include "cheats.h"
 #include "../cheat.h"
@@ -103,7 +102,7 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // Get address
                GetDlgItemText(hDlg, IDC_CODEADDR, tempstr, 9);
-               if (sscanf(tempstr, "%08X", &addr) != 1)
+               if (sscanf(tempstr, "%08lX", &addr) != 1)
                {
                   MessageBox (hDlg, "Invalid Address", "Error",  MB_OK | MB_ICONINFORMATION);
                   return TRUE;
@@ -111,7 +110,7 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // Get value
                GetDlgItemText(hDlg, IDC_CODEVAL, tempstr, 11);
-               if (sscanf(tempstr, "%d", &val) != 1)
+               if (sscanf(tempstr, "%ld", &val) != 1)
                {
                   MessageBox (hDlg, "Invalid Value", "Error",  MB_OK | MB_ICONINFORMATION);
                   return TRUE;

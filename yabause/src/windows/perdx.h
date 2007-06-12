@@ -36,5 +36,6 @@ void SetupControlUpDown(u8 padnum, u8 controlcode, void (*downfunc)(), void (*up
 void PERDXLoadDevices(char *inifilename);
 void PERDXListDevices(HWND control);
 int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *inifilename);
+int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname);
 BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCTSTR inifilename);
 #endif

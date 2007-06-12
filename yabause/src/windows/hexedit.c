@@ -707,6 +707,12 @@ LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
          return HexEditCtl_Vscroll(cc, wParam, lParam);
       case WM_GETDLGCODE:
          return DLGC_WANTALLKEYS;
+      case WM_MOUSEWHEEL:
+         if (HIWORD(wParam) < 0x8000)
+            return HexEditCtl_Vscroll(cc, SB_LINEUP, 0);
+         else if (HIWORD(wParam) >= 0x8000)
+            return HexEditCtl_Vscroll(cc, SB_LINEDOWN, 0);
+         break;
       case WM_KEYDOWN:
          return HexEditCtl_KeyDown(cc, wParam, lParam);
       case HEX_SETADDRESSLIST:

@@ -39,6 +39,7 @@
 //#include "../m68khle.h"
 #endif
 #include "yuidebug.h"
+#include "hexedit.h"
 
 #define DONT_PROFILE
 #include "../profile.h"
@@ -517,7 +518,7 @@ int YuiInit(void)
             ret = atoi(tempstr);
             GetPrivateProfileString("Log", "WindowY", "0", tempstr, MAX_PATH, inifilename);
             SetWindowPos(LogWin, HWND_TOP, ret, atoi(tempstr), rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
-            MainLog = DebugInit("main", DEBUG_CALLBACK, &UpdateLogCallback);
+            MainLog = DebugInit("main", DEBUG_CALLBACK, (char *)&UpdateLogCallback);
             break;
          }
          default: break;
@@ -946,9 +947,9 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
       // Remember log window position
       GetWindowRect(LogWin, &rect);
-      sprintf(text, "%d", rect.left);
+      sprintf(text, "%ld", rect.left);
       WritePrivateProfileString("Log", "WindowX", text, inifilename);
-      sprintf(text, "%d", rect.top);
+      sprintf(text, "%ld", rect.top);
       WritePrivateProfileString("Log", "WindowY", text, inifilename);
 
       DestroyWindow(LogWin);
