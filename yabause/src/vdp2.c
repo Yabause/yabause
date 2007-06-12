@@ -1552,7 +1552,7 @@ static INLINE char *AddColorOffsetInfo(char *outstring, u16 offsetselectenab)
             b |= 0xFFFFFF00;
 
          AddString(outstring, "Color Offset B Enabled\r\n");
-         AddString(outstring, "R = %d, G = %d, B = %d\r\n", r, g, b);
+         AddString(outstring, "R = %ld, G = %ld, B = %ld\r\n", r, g, b);
       }
       else
       {
@@ -1569,7 +1569,7 @@ static INLINE char *AddColorOffsetInfo(char *outstring, u16 offsetselectenab)
             b |= 0xFFFFFF00;
 
          AddString(outstring, "Color Offset A Enabled\r\n");
-         AddString(outstring, "R = %d, G = %d, B = %d\r\n", r, g, b);
+         AddString(outstring, "R = %ld, G = %ld, B = %ld\r\n", r, g, b);
       }
    }
 
@@ -1587,6 +1587,7 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
    {
       // enabled
       int rotatenum=0;
+      int coeftbl=0, coefmode=0;
 
       *isenabled = 1;
 
@@ -1596,10 +1597,14 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
          case 0:
             // Parameter A
             rotatenum = 0;
+            coeftbl = Vdp2Regs->KTCTL & 0x1;
+            coefmode = (Vdp2Regs->KTCTL >> 2) & 0x3;
             break;
          case 1:
             // Parameter B
             rotatenum = 1;
+            coeftbl = Vdp2Regs->KTCTL & 0x100;
+            coefmode = (Vdp2Regs->KTCTL >> 10) & 0x3;
             break;
          case 2:
             // Parameter A+B switched via coefficients
@@ -1612,6 +1617,11 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
       }
 
       AddString(outstring, "Using Parameter %C\r\n", 'A' + rotatenum);
+
+      if (coeftbl)
+      {
+         AddString(outstring, "Coefficient Table Enabled(Mode %d)\r\n", coefmode);
+      }
 
       // Mosaic
       outstring = AddMosaicString(outstring, 0x10);
@@ -1675,7 +1685,6 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
             AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
             AddString(outstring, "Supplementary Color number = %d\r\n", supplementdata & 0x1f);
          }
-
 
          if (rotatenum == 0)
          {
@@ -1822,6 +1831,11 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       if (Vdp2Regs->BGON & 0x20)
       {
          AddString(outstring, "RBG1 mode\r\n");
+
+         if (Vdp2Regs->KTCTL & 0x100)
+         {
+            AddString(outstring, "Coefficient Table Enabled(Mode %d)\r\n", (Vdp2Regs->KTCTL >> 10) & 0x3);
+         }
       }
       else
       {

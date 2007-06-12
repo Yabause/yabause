@@ -38,6 +38,7 @@
 #include "smpc.h"
 #include "vdp2.h"
 #include "yui.h"
+#include "bios.h"
 #ifdef HAVE_LIBSDL
 #include "SDL.h"
 #endif
@@ -569,7 +570,6 @@ int YabauseQuickLoadGame(void)
 {
    partition_struct * lgpartition;
    u8 *buffer;
-   u32 fad;
    u32 addr;
    u32 size;
    u32 blocks;

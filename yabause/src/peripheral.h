@@ -23,6 +23,7 @@
 
 #include "core.h"
 #include "smpc.h"
+#include "yabause.h"
 
 #define PERCORE_DEFAULT -1
 #define PERCORE_DUMMY 0

@@ -61,6 +61,7 @@ void YabauseStopSlave(void);
 u32 YabauseGetTicks(void);
 void YabauseSetVideoFormat(int type);
 void YabauseSpeedySetup(void);
+int YabauseQuickLoadGame(void);
 
 typedef struct
 {
