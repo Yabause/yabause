@@ -129,7 +129,6 @@ int YglScreenInit(int r, int g, int b, int d) {
 
 int YglInit(int width, int height, unsigned int depth) {
    unsigned int i;
-   char yab_version[64];
 
 #ifdef HAVE_LIBGLUT
 #ifndef WIN32

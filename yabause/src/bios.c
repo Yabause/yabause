@@ -978,7 +978,7 @@ void FASTCALL BiosBUPDirectory(SH2_struct * sh)
    char filename[12];
    u32 blockoffset=2;
 
-   int findmatch = MappedMemoryReadByte(sh->regs.R[5]);
+//   int findmatch = MappedMemoryReadByte(sh->regs.R[5]);
 
    for (i = 0; i < 12; i++)
       filename[i] = MappedMemoryReadByte(sh->regs.R[5]+i);

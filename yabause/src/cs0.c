@@ -297,6 +297,7 @@ void FASTCALL FlashCs0WriteByte(u32 addr, u8 val)
 	  *state = FL_READ;
 	  return;	  
 	}
+    default: break;
     }
 }
 

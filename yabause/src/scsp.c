@@ -3306,16 +3306,16 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
       AddString(outstring, "16-bit samples\r\n");
    }
 
-   AddString(outstring, "Start Address = %05X\r\n", scsp.slot[slotnum].sa);
-   AddString(outstring, "Loop Start Address = %04X\r\n", scsp.slot[slotnum].lsa >> SCSP_FREQ_LB);
-   AddString(outstring, "Loop End Address = %04X\r\n", scsp.slot[slotnum].lea >> SCSP_FREQ_LB);
-   AddString(outstring, "Decay 1 Rate = %d\r\n", scsp.slot[slotnum].dr);
-   AddString(outstring, "Decay 2 Rate = %d\r\n", scsp.slot[slotnum].sr);
+   AddString(outstring, "Start Address = %05lX\r\n", scsp.slot[slotnum].sa);
+   AddString(outstring, "Loop Start Address = %04lX\r\n", scsp.slot[slotnum].lsa >> SCSP_FREQ_LB);
+   AddString(outstring, "Loop End Address = %04lX\r\n", scsp.slot[slotnum].lea >> SCSP_FREQ_LB);
+   AddString(outstring, "Decay 1 Rate = %ld\r\n", scsp.slot[slotnum].dr);
+   AddString(outstring, "Decay 2 Rate = %ld\r\n", scsp.slot[slotnum].sr);
    if (scsp.slot[slotnum].eghold)
    {
       AddString(outstring, "EG Hold Enabled\r\n");
    }
-   AddString(outstring, "Attack Rate = %d\r\n", scsp.slot[slotnum].ar);
+   AddString(outstring, "Attack Rate = %ld\r\n", scsp.slot[slotnum].ar);
 
    if (scsp.slot[slotnum].lslnk)
    {
@@ -3324,11 +3324,11 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 
    if (scsp.slot[slotnum].krs != 0)
    {
-      AddString(outstring, "Key rate scaling = %d\r\n", scsp.slot[slotnum].krs);
+      AddString(outstring, "Key rate scaling = %ld\r\n", scsp.slot[slotnum].krs);
    }
 
 //   AddString(outstring, "Decay Level = \r\n");
-   AddString(outstring, "Release Rate = %d\r\n", scsp.slot[slotnum].rr);
+   AddString(outstring, "Release Rate = %ld\r\n", scsp.slot[slotnum].rr);
 
    if (scsp.slot[slotnum].swe)
    {
@@ -3340,7 +3340,7 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
       AddString(outstring, "Sound Direct Enabled\r\n");
    }
 
-   AddString(outstring, "Total Level = %d\r\n", scsp.slot[slotnum].tl);
+   AddString(outstring, "Total Level = %ld\r\n", scsp.slot[slotnum].tl);
 
 //   AddString(outstring, "Modulation Level = \r\n");
 //   AddString(outstring, "Modulation Input X = \r\n");
@@ -3359,6 +3359,30 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 //   AddString(outstring, "Direct data fixed position = \r\n");
 //   AddString(outstring, "Effect data send level = \r\n");
 //   AddString(outstring, "Effect data fixed position = \r\n");
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int ScspSlotDebugSaveRegisters(u8 slotnum, const char *filename)
+{
+   FILE *fp;
+   int i;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+      return -1;
+
+   for (i = (slotnum * 0x20); i < ((slotnum+1) * 0x20); i += 2)
+   {
+#ifdef WORDS_BIGENDIAN
+      fwrite((void *)&scsp_isr[i ^ 2], 1, 2, fp);
+#else
+      fwrite((void *)&scsp_isr[(i + 1) ^ 2], 1, 1, fp);
+      fwrite((void *)&scsp_isr[i ^ 2], 1, 1, fp);
+#endif
+   }
+
+   fclose(fp);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3494,6 +3518,7 @@ int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename)
    length -= sizeof(waveheader_struct)+sizeof(fmt_struct);
    fwrite((void *)&length, 1, 4, fp);
    fclose(fp);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

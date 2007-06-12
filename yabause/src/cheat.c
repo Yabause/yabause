@@ -73,7 +73,7 @@ int CheatAddARCode(const char *code)
 {
    u32 addr;
    u16 val;
-   sscanf(code, "%08X %04X", &addr, &val);
+   sscanf(code, "%08lX %04hX", &addr, &val);
    switch (addr >> 28)
    {
       case 0x0:
@@ -144,7 +144,7 @@ int CheatRemoveARCode(const char *code)
 {
    u32 addr;
    u16 val;
-   sscanf(code, "%08X %04X", &addr, &val);
+   sscanf(code, "%08lX %04hX", &addr, &val);
 
    switch (addr >> 28)
    {

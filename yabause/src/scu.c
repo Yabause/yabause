@@ -82,7 +82,7 @@ void ScuReset(void) {
    ScuRegs->AREF = 0x0;
 
    ScuRegs->RSEL = 0x0;
-   ScuRegs->VER = 0x0;
+   ScuRegs->VER = 0x04; // Looks like all consumer saturn's used at least version 4
 
    ScuRegs->timer0 = 0;
    ScuRegs->timer1 = 0;
@@ -433,7 +433,7 @@ void writedmadest(u8 num, u32 val, u8 add)
           ScuDsp->CT[3]+=add;
           return;
       case 0x4: // Program Ram
-          fprintf(stderr, "scu\t: DMA Program writes not implemented\n");
+          LOG("scu\t: DMA Program writes not implemented\n");
 //          ScuDsp->ProgramRam[?] = val;
 //          ?? += add;
           return;
@@ -534,7 +534,6 @@ void ScuExec(u32 timing) {
 //                      ScuDsp->ProgControlPort.part.V = 1;
 //                   else
 //                      ScuDsp->ProgControlPort.part.V = 0;
-
                break;
             case 0x5: // SUB
                ScuDsp->ALU.part.L = (unsigned)((signed)ScuDsp->AC.part.L - (signed)ScuDsp->P.part.L);
@@ -580,7 +579,7 @@ void ScuExec(u32 timing) {
                // need carry test
                break;
             case 0x8: // SR
-//               fprintf(stderr, "scu\t: SR instruction not implemented\n");
+//               LOG("scu\t: SR instruction not implemented\n");
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L & 0x1;
 
                ScuDsp->ALU.part.L = (ScuDsp->AC.part.L & 0x80000000) | (ScuDsp->AC.part.L >> 1);
@@ -591,7 +590,7 @@ void ScuExec(u32 timing) {
                   ScuDsp->ProgControlPort.part.Z = 0;
                ScuDsp->ProgControlPort.part.S = ScuDsp->ALU.part.L >> 31;
 
-//               fprintf(stderr, "scu\t: SR: ACL = %08X ALL = %08X. C = %d, Z = %d, S = %d\n", ScuDsp->AC.part.L, ScuDsp->ALU.part.L, ScuDsp->ProgControlPort.part.C, ScuDsp->ProgControlPort.part.Z, ScuDsp->ProgControlPort.part.S);
+//               LOG("scu\t: SR: ACL = %08X ALL = %08X. C = %d, Z = %d, S = %d\n", ScuDsp->AC.part.L, ScuDsp->ALU.part.L, ScuDsp->ProgControlPort.part.C, ScuDsp->ProgControlPort.part.Z, ScuDsp->ProgControlPort.part.S);
                break;
             case 0x9: // RR
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L & 0x1;
@@ -616,7 +615,7 @@ void ScuExec(u32 timing) {
                ScuDsp->ProgControlPort.part.S = ScuDsp->ALU.part.L >> 31;
                break;
             case 0xB: // RL
-//               fprintf(stderr, "scu\t: RL instruction not implemented\n");
+//               LOG("scu\t: RL instruction not implemented\n");
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L >> 31;
 
                ScuDsp->ALU.part.L = (ScuDsp->AC.part.L << 1) | ScuDsp->ProgControlPort.part.C;
@@ -627,7 +626,7 @@ void ScuExec(u32 timing) {
                   ScuDsp->ProgControlPort.part.Z = 0;
                ScuDsp->ProgControlPort.part.S = ScuDsp->ALU.part.L >> 31;
 
-//               fprintf(stderr, "scu\t: RL: ACL = %08X ALL = %08X. C = %d, Z = %d, S = %d\n", ScuDsp->AC.part.L, ScuDsp->ALU.part.L, ScuDsp->ProgControlPort.part.C, ScuDsp->ProgControlPort.part.Z, ScuDsp->ProgControlPort.part.S);
+//               LOG("scu\t: RL: ACL = %08X ALL = %08X. C = %d, Z = %d, S = %d\n", ScuDsp->AC.part.L, ScuDsp->ALU.part.L, ScuDsp->ProgControlPort.part.C, ScuDsp->ProgControlPort.part.Z, ScuDsp->ProgControlPort.part.S);
                break;
             case 0xF: // RL8
                ScuDsp->ALU.part.L = (ScuDsp->AC.part.L << 8) | ((ScuDsp->AC.part.L >> 24) & 0xFF);
@@ -878,7 +877,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           fprintf(stderr, "scu\t: JMP NS: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
+                           LOG("scu\t: JMP NS: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x43: // JMP NZS, Imm
                            if (!ScuDsp->ProgControlPort.part.Z || !ScuDsp->ProgControlPort.part.S)
@@ -887,7 +886,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           fprintf(stderr, "scu\t: JMP NZS: Z = %d, S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
+                           LOG("scu\t: JMP NZS: Z = %d, S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x44: // JMP NC, Imm
                            if (!ScuDsp->ProgControlPort.part.C)
@@ -903,7 +902,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           fprintf(stderr, "scu\t: JMP NT0: T0 = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.T0, (unsigned int)ScuDsp->jmpaddr);
+                           LOG("scu\t: JMP NT0: T0 = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.T0, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x61: // JMP Z,Imm
                            if (ScuDsp->ProgControlPort.part.Z)
@@ -919,7 +918,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           fprintf(stderr, "scu\t: JMP S: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
+                           LOG("scu\t: JMP S: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x63: // JMP ZS, Imm
                            if (ScuDsp->ProgControlPort.part.Z || ScuDsp->ProgControlPort.part.S)
@@ -928,7 +927,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           fprintf(stderr, "scu\t: JMP ZS: Z = %d, S = %d, jmpaddr = %08X\n", ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
+                           LOG("scu\t: JMP ZS: Z = %d, S = %d, jmpaddr = %08X\n", ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x64: // JMP C, Imm
                            if (ScuDsp->ProgControlPort.part.C)
@@ -945,7 +944,7 @@ void ScuExec(u32 timing) {
                            }
                            break;
                         default:
-                           fprintf(stderr, "scu\t: Unknown JMP instruction not implemented\n");
+                           LOG("scu\t: Unknown JMP instruction not implemented\n");
                            break;
                      }
                      break;
@@ -982,7 +981,7 @@ void ScuExec(u32 timing) {
                      }
 
                      LOG("dsp has ended\n");
-
+                     timing = 1;
                      break;
                   default: break;
                }
@@ -1846,11 +1845,12 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->DSTP = val;
          break;
       case 0x80: // DSP Program Control Port
+         LOG("scu\t: wrote %08X to DSP Program Control Port\n", val);
          ScuDsp->ProgControlPort.all = (ScuDsp->ProgControlPort.all & 0x00FC0000) | (val & 0x060380FF);
 
          if (ScuDsp->ProgControlPort.part.LE) {
             // set pc
-            ScuDsp->PC = (unsigned char)ScuDsp->ProgControlPort.part.P;
+            ScuDsp->PC = (u8)ScuDsp->ProgControlPort.part.P;
             LOG("scu\t: DSP set pc = %02X\n", ScuDsp->PC);
          }
 

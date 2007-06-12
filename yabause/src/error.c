@@ -65,18 +65,18 @@ void YabSetError(int type, void *extra)
       case YAB_ERR_SH2INVALIDOPCODE:
          sh = (SH2_struct *)extra;
          sprintf(tempstr, "%s SH2 invalid opcode\n\n"
-                          "R0 =  %08X\tR12 =  %08X\n"
-                          "R1 =  %08X\tR13 =  %08X\n"
-                          "R2 =  %08X\tR14 =  %08X\n"
-                          "R3 =  %08X\tR15 =  %08X\n"
-                          "R4 =  %08X\tSR =   %08X\n"
-                          "R5 =  %08X\tGBR =  %08X\n"
-                          "R6 =  %08X\tVBR =  %08X\n"
-                          "R7 =  %08X\tMACH = %08X\n"
-                          "R8 =  %08X\tMACL = %08X\n"
-                          "R9 =  %08X\tPR =   %08X\n"
-                          "R10 = %08X\tPC =   %08X\n"
-                          "R11 = %08X\n", sh->isslave ? "Slave" : "Master",
+                          "R0 =  %08lX\tR12 =  %08lX\n"
+                          "R1 =  %08lX\tR13 =  %08lX\n"
+                          "R2 =  %08lX\tR14 =  %08lX\n"
+                          "R3 =  %08lX\tR15 =  %08lX\n"
+                          "R4 =  %08lX\tSR =   %08lX\n"
+                          "R5 =  %08lX\tGBR =  %08lX\n"
+                          "R6 =  %08lX\tVBR =  %08lX\n"
+                          "R7 =  %08lX\tMACH = %08lX\n"
+                          "R8 =  %08lX\tMACL = %08lX\n"
+                          "R9 =  %08lX\tPR =   %08lX\n"
+                          "R10 = %08lX\tPC =   %08lX\n"
+                          "R11 = %08lX\n", sh->isslave ? "Slave" : "Master",
                           sh->regs.R[0], sh->regs.R[12],
                           sh->regs.R[1], sh->regs.R[13],
                           sh->regs.R[2], sh->regs.R[14],

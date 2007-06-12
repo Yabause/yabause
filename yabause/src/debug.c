@@ -54,7 +54,7 @@ Debug * DebugInit(const char * n, DebugOutType t, char * s) {
 		d->output.stream = stderr;
 		break;
         case DEBUG_CALLBACK:
-	        d->output.callback = s;
+                d->output.callback = (void  (*) (char*))s;
 	        break;
 	}
 
@@ -102,7 +102,7 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 		d->output.string = s;
 		break;
 	case DEBUG_CALLBACK:
-        	  d->output.callback = s;
+                  d->output.callback = (void  (*) (char*))s;
 		  break;
 	case DEBUG_STDOUT:
 		d->output.stream = stdout;
