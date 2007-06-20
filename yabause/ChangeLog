@@ -1,10 +1,53 @@
-0.8.0 -> ?
- macos port:
-  - Added browse button for bios setting
- general:
+0.8.0 -> Present
+ scsp:
+  - Added functions for dumping individual slots to wav files. 
+ scu:
+  - Fixed SCU execution speed
+ sh2:
+  - Added DVDNTL/DVDNTH mirrors
+  - Added overflow interrupt
+ vdp1:
+  - Added function for displaying vdp1 textures for debugging
+  - Other bug fixes
+ vdp2:
+  - Added more RBG0 debug info
+ 68k:
   - Added a core system for m68k and a c68k core interface.
   - Added a dummy m68k core based on old yabause code, working enough
     to boot the bios.
+ emulated bios:
+  - Registers are now reset correctly
+  - Fixed bug in BiosSetSh2Interrupt
+  - Added Read/Write Save support
+  - Added undocumented CD Authentication function
+ opengl video core:
+  - RBG0 bug fixes
+  - Rotation Screen improvements
+ software video core:
+  - Added 32 BPP cell draw mode
+ bsd port:
+  - Added support for OpenBSD
+ linux port:
+  - Fixed the segfault that occured when opening the preferences dialog.
+  - Added texture display in vdp1 debug dialog
+  - Other GUI improvements
+ macos port:
+  - Added browse button for bios setting
+  - Other bug fixes
+ windows port:
+  - Fixed a bug that was causing sound to not work on some people's computers.
+  - Added texture display in vdp1 debug dialog
+  - Added window/full screen resizing
+  - Added full screen on startup
+  - Settings changed to use tabs instead of what was previously used
+  - Other bug fixes
+  - Logging now is done to a logging window when DEBUG is defined while
+    compiling.
+  - Added cheat dialog
+  - Added memory editor
+  - Added Visual C++ project file
+ general:
+  - Added Cheat support. Largely untested.
 0.7.2 -> 0.8.0
  cart:
   - Moved Netlink code to its own file: netlink.c
