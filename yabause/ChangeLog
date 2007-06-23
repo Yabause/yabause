@@ -1,4 +1,4 @@
-0.8.0 -> Present
+0.8.0 -> 0.8.5
  scsp:
   - Added functions for dumping individual slots to wav files. 
  scu:
