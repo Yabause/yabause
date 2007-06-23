@@ -15,6 +15,7 @@
    - Make sure sh2 dma round robin priority is working correctly
    - SCU should be handling non-longword aligned DMA transfers
    - Convert CD Block code so it's capable of handling async transfers
+   - Fix whatever is causing those strange pitch problems in the SCSP
 
  (3) MONITOR/DEBUGGER
 
