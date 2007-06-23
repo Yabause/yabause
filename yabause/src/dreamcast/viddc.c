@@ -1,5 +1,5 @@
 /*  Copyright 2003-2006 Guillaume Duhamel
-    Copyright 2004-2006 Lawrence Sebald
+    Copyright 2004-2007 Lawrence Sebald
     Copyright 2004-2006 Theo Berkau
     Copyright 2006 Fabien Coulon
 
@@ -76,6 +76,8 @@ static pvr_init_params_t pvr_params =   {
 };
 
 struct sprite_info  {
+    uint32 pvr_base;
+    uint32 vdp1_base;
     float uf, vf;
     int w, h;
 };
@@ -116,6 +118,9 @@ typedef struct  {
 } vdp2draw_struct;
 
 static struct sprite_info cur_spr;
+
+static struct sprite_info cache[1024];
+int cached_spr = 0;
 
 /* Polygon Headers */
 static pvr_poly_hdr_t op_poly_hdr;
@@ -232,19 +237,27 @@ static uint16 Vdp2ColorRamGetColor(u32 colorindex)   {
 }
 
 static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
-    u32 charAddr = cmd->CMDSRCA * 8;
+    u32 charAddr = cmd->CMDSRCA << 3;
     uint16 dot, dot2;
     int queuepos = 0;
     uint32 *store_queue;
     uint32 cur_base;
     u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
+    int k;
 
     int wi = power_of_two(cur_spr.w);
     int he = power_of_two(cur_spr.h);
 
-    cur_base = cur_addr;
+    for(k = 0; k < cached_spr; ++k)  {
+        if(cache[k].vdp1_base == charAddr) {
+            if(cache[k].w == cur_spr.w && cache[k].h == cur_spr.h)  {
+                cur_base = cache[k].pvr_base;
+                goto fillHeader;
+            }
+        }
+    }
 
-    VDP1LOG("Making new sprite %08X\n", charAddr);
+    cur_base = cur_addr;
 
     /* Set up both Store Queues for transfer to VRAM */
     QACR0 = 0x00000004;
@@ -559,6 +572,17 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
                     (cmd->CMDPMOD >> 3) & 0x7);
             return 0;
     }
+
+    if(cached_spr < 1023)    {
+        cache[cached_spr].vdp1_base = cmd->CMDSRCA << 3;
+        cache[cached_spr].pvr_base = cur_base;
+        cache[cached_spr].w = cur_spr.w;
+        cache[cached_spr].h = cur_spr.h;
+
+        cached_spr++;
+    }
+
+fillHeader:
 
     cur_spr.uf = (float) cur_spr.w / wi;
     cur_spr.vf = (float) cur_spr.h / he;
@@ -947,7 +971,31 @@ static void Vdp2DrawCell(vdp2draw_struct *info)
             printf("vdp2 cell draw 16bpp\n");
             break;
         case 4: // 32 BPP
-            printf("vdp2 cell draw 32bpp\n");
+            newcharaddr = info->charaddr + (info->cellw * info->cellh);   
+            info->charaddr += clip.pixeloffset;
+            
+            for (i = clip.ystart; i < clip.yend; i++)
+            {
+                for (i2 = clip.xstart; i2 < clip.xend; i2++)
+                {
+                    u16 dot1, dot2;
+                    dot1 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
+                    info->charaddr += 2;
+                    dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
+                    info->charaddr += 2;
+                    
+                    if (!(dot1 & 0x8000) && info->transparencyenable)
+                        continue;
+                    
+                    color = SAT2YAB2(dot1, dot2);
+                    vdp2putpixel(i2, i, info->PostPixelFetchCalc(info, color), info->priority);
+                }
+                
+                info->charaddr += clip.lineincrement;
+            }
+                
+                info->charaddr = newcharaddr;
+            
             break;
     }
 }
@@ -1263,6 +1311,7 @@ static void VIDDCVdp1DrawStart(void)    {
 }
 
 static void VIDDCVdp1DrawEnd(void)  {
+    cached_spr = 0;
     priority_levels[0] = 0.0f;
     priority_levels[1] = 1.0f;
     priority_levels[2] = 2.0f;
@@ -1592,10 +1641,6 @@ static void VIDDCVdp1PolygonDraw(void)  {
     }
 
     z = Vdp2Regs->PRISA & 0x07;
-
-    if(X[0] == 0 && X[2] == 320)    {
-        printf("prio: %d\n", z);
-    }
 
     vert.flags = PVR_CMD_VERTEX;
     vert.u = 0.0f;
