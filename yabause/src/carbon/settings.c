@@ -333,12 +333,11 @@ WindowRef CreateSettingsWindow() {
       i++;
     }
 
-    id.id = 50;
-    GetControlByID(myWindow, &id, &control);
-    id.id = 1;
-    GetControlByID(myWindow, &id, &controlled);
-    InstallControlEventHandler(control, NewEventHandlerUPP(BrowseHandler),
-      GetEventTypeCount(flist), flist, controlled, NULL);
+    InstallBrowseHandler(myWindow, 50, 1);  /* BIOS */
+    InstallBrowseHandler(myWindow, 51, 2);  /* CDROM */
+    InstallBrowseHandler(myWindow, 52, 7);  /* Cartridge ROM */
+    InstallBrowseHandler(myWindow, 53, 9);  /* Memory */
+    InstallBrowseHandler(myWindow, 54, 10); /* MPEG ROM */
   }
 
   ShowWindow(myWindow);
@@ -349,4 +348,22 @@ WindowRef CreateSettingsWindow() {
 			    eventList, myWindow, NULL);
 
   return myWindow;
+}
+
+void InstallBrowseHandler(WindowRef myWindow, const SInt32 ControllerId,
+                          const SInt32 ControlledId)
+{
+    EventTypeSpec flist[] = {
+      { kEventClassControl, kEventControlHit }
+    };
+    ControlID  Id;
+    ControlRef Controller, Controlled;
+    
+    Id.signature = 'conf';
+    Id.id = ControllerId;
+    GetControlByID(myWindow, &Id, &Controller);
+    Id.id = ControlledId;
+    GetControlByID(myWindow, &Id, &Controlled);
+    InstallControlEventHandler(Controller, NewEventHandlerUPP(BrowseHandler),
+      GetEventTypeCount(flist), flist, Controlled, NULL);
 }
