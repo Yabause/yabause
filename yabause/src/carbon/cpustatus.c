@@ -137,8 +137,11 @@ void UpdateCPUStatusWindow(void)
     int ii = 0;
     int srNumber = 0;
     
-    SH2GetRegisters(MSH2, &master);
-    SH2GetRegisters(SSH2, &slave);
+    if(MSH2)
+        SH2GetRegisters(MSH2, &master);
+    
+    if(SSH2)
+        SH2GetRegisters(SSH2, &slave);
     
     /* Master registers */
     for(ii = 0; ii < 16; ii++)
