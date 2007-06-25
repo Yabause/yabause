@@ -1531,34 +1531,18 @@ static void set_current_size(u32 sz)
             current_bits_mask = 0xFF;
             current_sft_mask = 7;
             strcpy(szc, "u8");
-#ifdef C68K_BIG_ENDIAN
-            strcpy(szcf, "*(3 + (u8*)");
-#else
-            strcpy(szcf, "*((u8*)");
-#endif
+            strcpy(szcf, "*(BYTE_OFF + (u8*)");
             strcpy(szcs, "s8");
-#ifdef C68K_BIG_ENDIAN
-            strcpy(szcsf, "*(3 + (s8*)");
-#else
-            strcpy(szcsf, "*((s8*)");
-#endif
+            strcpy(szcsf, "*(BYTE_OFF + (s8*)");
             break;
 
         case SIZE_WORD:
             current_bits_mask = 0xFFFF;
             current_sft_mask = 15;
             strcpy(szc, "u16");
-#ifdef C68K_BIG_ENDIAN
-            strcpy(szcf, "*(1 + (u16*)");
-#else
-            strcpy(szcf, "*((u16*)");
-#endif
+            strcpy(szcf, "*(WORD_OFF + (u16*)");
             strcpy(szcs, "s16");
-#ifdef C68K_BIG_ENDIAN
-            strcpy(szcsf, "*(1 + (s16*)");
-#else
-            strcpy(szcsf, "*((s16*)");
-#endif
+            strcpy(szcsf, "*(WORD_OFF + (s16*)");
             break;
 
         case SIZE_LONG:

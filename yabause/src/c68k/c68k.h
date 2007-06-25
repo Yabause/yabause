@@ -45,6 +45,15 @@ extern "C" {
 #ifdef WORDS_BIGENDIAN
 #define C68K_BIG_ENDIAN
 #endif
+
+#ifdef C68K_BIG_ENDIAN
+ #define BYTE_OFF 3
+ #define WORD_OFF 1
+#else
+ #define BYTE_OFF 0
+ #define WORD_OFF 0
+#endif
+
 //#define C68K_DEBUG
 #define C68K_TAS_CAN_SET_MEMORY
 //#define C68K_CONST_JUMP_TABLE
