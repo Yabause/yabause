@@ -282,16 +282,32 @@ OSStatus BrowseHandler(EventHandlerCallRef h, EventRef event, void* data) {
 OSStatus KeyConfigHandler(EventHandlerCallRef h, EventRef event, void* data) {
 	UInt32 key;
 	CFStringRef s;
-	Str255 tmp;
         GetEventParameter(event, kEventParamKeyCode,
 		typeUInt32, NULL, sizeof(UInt32), NULL, &key);
-	NumToString(key, tmp);
-	s = CFStringCreateWithPascalString(0, tmp, 0);
+    s = CFStringCreateWithFormat(NULL, NULL, CFSTR("%d"), key);
 	SetControlData(data, kControlEditTextPart,
 		kControlEditTextCFStringTag, sizeof(CFStringRef), &s);
 	Draw1Control(data);
 
 	return noErr;
+}
+
+void InstallBrowseHandler(WindowRef myWindow, const SInt32 ControllerId,
+                          const SInt32 ControlledId)
+{
+    EventTypeSpec flist[] = {
+      { kEventClassControl, kEventControlHit }
+    };
+    ControlID  Id;
+    ControlRef Controller, Controlled;
+    
+    Id.signature = 'conf';
+    Id.id = ControllerId;
+    GetControlByID(myWindow, &Id, &Controller);
+    Id.id = ControlledId;
+    GetControlByID(myWindow, &Id, &Controlled);
+    InstallControlEventHandler(Controller, NewEventHandlerUPP(BrowseHandler),
+      GetEventTypeCount(flist), flist, Controlled, NULL);
 }
 
 WindowRef CreateSettingsWindow() {
@@ -317,9 +333,6 @@ WindowRef CreateSettingsWindow() {
     EventTypeSpec elist[] = {
       { kEventClassKeyboard, kEventRawKeyDown },
       { kEventClassKeyboard, kEventRawKeyUp }
-    };
-    EventTypeSpec flist[] = {
-      { kEventClassControl, kEventControlHit }
     };
 
     id.signature = 'conf';
@@ -350,20 +363,3 @@ WindowRef CreateSettingsWindow() {
   return myWindow;
 }
 
-void InstallBrowseHandler(WindowRef myWindow, const SInt32 ControllerId,
-                          const SInt32 ControlledId)
-{
-    EventTypeSpec flist[] = {
-      { kEventClassControl, kEventControlHit }
-    };
-    ControlID  Id;
-    ControlRef Controller, Controlled;
-    
-    Id.signature = 'conf';
-    Id.id = ControllerId;
-    GetControlByID(myWindow, &Id, &Controller);
-    Id.id = ControlledId;
-    GetControlByID(myWindow, &Id, &Controlled);
-    InstallControlEventHandler(Controller, NewEventHandlerUPP(BrowseHandler),
-      GetEventTypeCount(flist), flist, Controlled, NULL);
-}
