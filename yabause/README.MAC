@@ -36,7 +36,14 @@ Once these libraries are installed, you should be ready to
 install Yabause.
 
 Uncompress the Yabause source archive, move to the newly
-created directory, type "./configure", then "make",
+created directory, type
+
+    ./configure --disable-dependency-tracking --disable-shared
+
+then
+
+    make
+
 it will generate one program: "yabause" in the "src/carbon"
 directory and copy it in the Yabause.app bundle.
 

@@ -34,6 +34,16 @@
 #endif
 #endif
 
+/* When building multiple arches on OS X you must use the compiler-
+   provided endian flags instead of the one provided by autoconf */
+#if defined(__BIG_ENDIAN__) || defined(__LITTLE_ENDIAN__)
+ #undef WORDS_BIGENDIAN
+ #ifdef __BIG_ENDIAN__
+  #define WORDS_BIGENDIAN
+ #endif
+#endif
+
+
 #ifndef INLINE
 #ifdef _MSC_VER
 #define INLINE _inline

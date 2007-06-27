@@ -6,3 +6,10 @@ yabause_LDADD = $(YAB_LIBS) ../libyabause.a
 all-local:
 	if [ ! -e Yabause.app/Contents/MacOS ]; then mkdir Yabause.app/Contents/MacOS; fi
 	cp yabause Yabause.app/Contents/MacOS
+	if [ ! -e Yabause.app/Contents/Frameworks ]; then mkdir Yabause.app/Contents/Frameworks; fi
+	if [ -e /Library/Frameworks/SDL.framework ]; then \
+		cp -r /Library/Frameworks/SDL.framework Yabause.app/Contents/Frameworks; \
+	elif [ -e ~/Library/Frameworks/SDL.framework ]; then \
+		cp -r ~/Library/Frameworks/SDL.framework Yabause.app/Contents/Frameworks; \
+	fi
+

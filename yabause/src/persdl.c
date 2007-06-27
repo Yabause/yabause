@@ -20,7 +20,11 @@
 
 #ifdef HAVE_LIBSDL
 #include "persdl.h"
-#include "SDL.h"
+#ifdef __APPLE__
+ #include <SDL/SDL.h>
+#else
+ #include "SDL.h"
+#endif
 #include "yabause.h"
 #include "vdp2.h"
 #include "yui.h"

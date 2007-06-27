@@ -14,13 +14,29 @@ AC_LANG(C)
 
 AC_C_BIGENDIAN
 
-AC_PATH_PROGS(HAVE_LIBSDL, [sdl-config sdl11-config])
+case $target in
+    *darwin*)
+        OLDLDFLAGS="$LDFLAGS"
+        LDFLAGS="$LDFLAGS -framework SDL"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+        int t(void) { return 0; }
+        ]],[[
+        int foo = t();
+        ]])],[AC_DEFINE(HAVE_LIBSDL)
+             SDL_LIBS="-framework SDL"], [])
+        LDFLAGS="$OLDLDFLAGS"
+        ;;
+    *)
+        AC_PATH_PROGS(HAVE_LIBSDL, [sdl-config sdl11-config])
 
-if test ! x$HAVE_LIBSDL = x ; then
-	SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
-	SDL_LIBS=`$HAVE_LIBSDL --libs`
-	AC_DEFINE(HAVE_LIBSDL)
-fi
+        if test ! x$HAVE_LIBSDL = x ; then
+            SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
+            SDL_LIBS=`$HAVE_LIBSDL --libs`
+            AC_DEFINE(HAVE_LIBSDL)
+        fi
+        ;;
+esac
+
 CFLAGS="$CFLAGS $SDL_CFLAGS"
 LIBS="$LIBS $SDL_LIBS"
 
@@ -46,6 +62,8 @@ case $target in
 		YAB_LIBS="$YAB_LIBS -framework IOKit -framework Carbon -framework AGL -framework OpenGL"
 		AC_DEFINE(HAVE_LIBGL)
 		yabause_yui="carbon"
+        CFLAGS="$CFLAGS -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc"
+        LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc"
 		;;
 	*cygwin*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"

@@ -24,7 +24,11 @@
 #endif
 
 #ifdef HAVE_LIBSDL
-#include "SDL.h"
+ #ifdef __APPLE__
+  #include <SDL/SDL.h>
+ #else
+  #include "SDL.h"
+ #endif
 #endif
 #ifndef _arch_dreamcast
 #if HAVE_LIBGLUT

@@ -40,7 +40,11 @@
 #include "yui.h"
 #include "bios.h"
 #ifdef HAVE_LIBSDL
-#include "SDL.h"
+ #ifdef __APPLE__
+  #include <SDL/SDL.h>
+ #else
+  #include "SDL.h"
+ #endif
 #endif
 #ifdef _MSC_VER
 #include <time.h>

@@ -21,7 +21,11 @@
 
 #include <stdlib.h>
 
-#include "SDL.h"
+#ifdef __APPLE__
+ #include <SDL/SDL.h>
+#else
+ #include "SDL.h"
+#endif
 #include "error.h"
 #include "scsp.h"
 #include "sndsdl.h"

@@ -19,7 +19,11 @@
 */
 
 #ifdef HAVE_LIBSDL
-#include "SDL.h"
+#ifdef __APPLE__
+ #include <SDL/SDL.h>
+#else
+ #include "SDL.h"
+#endif
 
 #include "debug.h"
 #include "persdljoy.h"
