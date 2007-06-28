@@ -8,8 +8,8 @@ all-local:
 	cp yabause Yabause.app/Contents/MacOS
 	if [ ! -e Yabause.app/Contents/Frameworks ]; then mkdir Yabause.app/Contents/Frameworks; fi
 	if [ -e /Library/Frameworks/SDL.framework ]; then \
-		cp -r /Library/Frameworks/SDL.framework Yabause.app/Contents/Frameworks; \
+		cp -R /Library/Frameworks/SDL.framework Yabause.app/Contents/Frameworks; \
 	elif [ -e ~/Library/Frameworks/SDL.framework ]; then \
-		cp -r ~/Library/Frameworks/SDL.framework Yabause.app/Contents/Frameworks; \
+		cp -R ~/Library/Frameworks/SDL.framework Yabause.app/Contents/Frameworks; \
 	fi
 
