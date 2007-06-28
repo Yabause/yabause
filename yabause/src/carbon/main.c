@@ -80,7 +80,7 @@ static EventLoopTimerRef EventTimer;
 
 void YuiIdle(EventLoopTimerRef a, void * b) {
 	int i;
-	for(i = 0;i < 20;i++) {
+	for(i = 0;i < 200;i++) {
 		YabauseExec();
 	}
 }
