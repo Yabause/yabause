@@ -161,18 +161,40 @@ void read_settings(void) {
 }
 
 void YuiRun(void) {
-	EventLoopTimerUPP myFrameUPP = NewEventLoopTimerUPP(YuiIdle);
+	static int FirstRun = 1;
+	EventLoopTimerUPP myFrameUPP;
+
+	if(FirstRun)
+	{
+		myFrameUPP = NewEventLoopTimerUPP(YuiIdle);
+		InstallEventLoopTimer(GetCurrentEventLoop(), kEventDurationNoWait,
+			kEventDurationMillisecond, myFrameUPP, NULL, &EventTimer);
+		FirstRun = 0;
+	}
+	else
+	{
+		YabauseDeInit();
+	}
 
 	read_settings();
 	YabauseInit(&yinit);
-
-	InstallEventLoopTimer(GetCurrentEventLoop(), kEventDurationNoWait,
-		kEventDurationMillisecond, myFrameUPP, NULL, &EventTimer);
 }
 
 static void YuiPause(const int Pause)
 {
-    EventTimerInterval Interval = (Pause ? kEventDurationForever : kEventDurationMillisecond);
+    EventTimerInterval Interval;
+
+    if(Pause)
+    {
+        Interval = kEventDurationForever;
+        ScspMuteAudio();
+    }
+    else
+    {
+        Interval = kEventDurationMillisecond;
+        ScspUnMuteAudio();
+    }
+
     SetEventLoopTimerNextFireTime(EventTimer, Interval);
 }
 
