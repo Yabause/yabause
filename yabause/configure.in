@@ -67,11 +67,13 @@ case $target in
 		;;
 	*cygwin*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
+                AC_DEFINE(_WIN32_IE, 0x0400)
 		AC_DEFINE(HAVE_LIBGL)
 		yabause_yui="."
 		;;
 	*mingw32*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
+                AC_DEFINE(_WIN32_IE, 0x0400)
 		AC_DEFINE(HAVE_LIBGL)
 		yabause_yui="windows"
 		;;
