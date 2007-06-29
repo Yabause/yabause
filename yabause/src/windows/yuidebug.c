@@ -47,6 +47,36 @@ char *logbuffer;
 u32 logcounter=0;
 u32 logsize=512;
 
+enum { OFN_DEFAULTSAVE=0, OFN_DEFAULTLOAD };
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const char *lpstrFilter, char *lpstrFile, DWORD nMaxFile)
+{
+   ZeroMemory(ofn, sizeof(OPENFILENAME));
+   ofn->lStructSize = sizeof(OPENFILENAME);
+   ofn->hwndOwner = hwnd;
+   ofn->lpstrFilter = lpstrFilter;
+   ofn->nFilterIndex = 1;
+   ofn->lpstrFile = lpstrFile;
+   ofn->nMaxFile = nMaxFile;
+
+   switch (type)
+   {
+      case OFN_DEFAULTSAVE:
+      {
+         ofn->Flags = OFN_OVERWRITEPROMPT;
+         break;
+      }
+      case OFN_DEFAULTLOAD:
+      {
+         ofn->Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+         break;
+      }
+   }
+
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 LRESULT CALLBACK ErrorDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -158,16 +188,10 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                if (SendMessage(GetDlgItem(hDlg, IDC_DOWNLOADMEM), BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
-                  // setup ofn structure
-                  ZeroMemory(&ofn, sizeof(ofn));
-                  ofn.lStructSize = sizeof(ofn);
-                  ofn.hwndOwner = hDlg;
-                  ofn.lpstrFilter = "All Files\0*.*\0Binary Files\0*.BIN\0";
-                  ofn.nFilterIndex = 1;
-                  ofn.lpstrFile = mtrnsfilename;
-                  ofn.nMaxFile = sizeof(mtrnsfilename);
-                  ofn.Flags = OFN_OVERWRITEPROMPT;
- 
+                  SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
+                           "All Files\0*.*\0Binary Files\0*.BIN\0",
+                           mtrnsfilename, sizeof(mtrnsfilename));
+
                   if (GetSaveFileName(&ofn))
                   {
                      SetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename);
@@ -176,14 +200,9 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                else
                {
                   // setup ofn structure
-                  ZeroMemory(&ofn, sizeof(OPENFILENAME));
-                  ofn.lStructSize = sizeof(OPENFILENAME);
-                  ofn.hwndOwner = hDlg;
-                  ofn.lpstrFilter = "All Files\0*.*\0Binary Files\0*.BIN\0";
-                  ofn.nFilterIndex = 1;
-                  ofn.lpstrFile = mtrnsfilename;
-                  ofn.nMaxFile = sizeof(mtrnsfilename);
-                  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                  SetupOFN(&ofn, OFN_DEFAULTLOAD, hDlg,
+                           "All Files\0*.*\0Binary Files\0*.BIN\0",
+                           mtrnsfilename, sizeof(mtrnsfilename));
 
                   if (GetOpenFileName(&ofn))
                   {
@@ -198,10 +217,10 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                GetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename, MAX_PATH);
 
                GetDlgItemText(hDlg, IDC_EDITTEXT2, tempstr, 9);
-               sscanf(tempstr, "%08X", &mtrnssaddress);
+               sscanf(tempstr, "%08lX", &mtrnssaddress);
 
                GetDlgItemText(hDlg, IDC_EDITTEXT3, tempstr, 9);
-               sscanf(tempstr, "%08X", &mtrnseaddress);
+               sscanf(tempstr, "%08lX", &mtrnseaddress);
 
                if ((mtrnseaddress - mtrnssaddress) < 0)
                {
@@ -361,7 +380,7 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          char buf[8];
 
-         sprintf(buf, "%08X", (int)memaddr);
+         sprintf(buf, "%08lX", memaddr);
          SetDlgItemText(hDlg, IDC_EDITTEXT1, buf);
          return TRUE;
       }
@@ -376,7 +395,7 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                EndDialog(hDlg, TRUE);
                GetDlgItemText(hDlg, IDC_EDITTEXT1, buf, 11);
 
-               sscanf(buf, "%08x", &memaddr);
+               sscanf(buf, "%08lx", &memaddr);
 
                return TRUE;
             }
@@ -501,8 +520,8 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                if (bptext[0] != 0)
                {
-                  sscanf(bptext, "%X", &addr);
-                  sprintf(bptext, "%08X", (int)addr);
+                  sscanf(bptext, "%lX", &addr);
+                  sprintf(bptext, "%08lX", addr);
 
                   if (SH2AddCodeBreakpoint(debugsh, addr) == 0)
                      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
@@ -522,7 +541,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
                   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
-                  sscanf(bptext, "%X", &addr);
+                  sscanf(bptext, "%lX", &addr);
                   SH2DelCodeBreakpoint(debugsh, addr);
                   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
                }
@@ -539,8 +558,8 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                if (bptext[0] != 0)
                {
-                  sscanf(bptext, "%X", &addr);
-                  sprintf(bptext, "%08X", (int)addr);
+                  sscanf(bptext, "%lX", &addr);
+                  sprintf(bptext, "%08lX", addr);
 
                   if (SendDlgItemMessage(hDlg, IDC_CHKREAD, BM_GETCHECK, 0, 0) == BST_CHECKED)
                   {
@@ -576,7 +595,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX4), LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
                   SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_GETTEXT, 0, (LPARAM)bptext);
-                  sscanf(bptext, "%X", &addr);
+                  sscanf(bptext, "%lX", &addr);
                   SH2DelMemoryBreakpoint(debugsh, addr);
                   SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_DELETESTRING, ret, 0);
                }
@@ -761,6 +780,12 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
          break;
       }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
+      }
       default: break;
    }
 
@@ -897,6 +922,12 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          EndPaint(GetDlgItem(hDlg, IDC_VDP1TEXTET), &ps);
          break;
       }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
+      }
       default: break;
    }
 
@@ -994,6 +1025,12 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             default: break;
          }
          break;
+      }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
       }
       default: break;
    }
@@ -1135,7 +1172,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                if (bptext[0] != 0)
                {
-                  sscanf(bptext, "%X", &addr);
+                  sscanf(bptext, "%lX", &addr);
                   sprintf(bptext, "%05X", (int)addr);
 
                   if (M68KAddCodeBreakpoint(addr) == 0)
@@ -1153,7 +1190,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
                   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
-                  sscanf(bptext, "%X", &addr);
+                  sscanf(bptext, "%lX", &addr);
                   M68KDelCodeBreakpoint(addr);
                   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
                }
@@ -1254,6 +1291,12 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
          break;
       }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
+      }
       default: break;
    }
 
@@ -1298,16 +1341,16 @@ void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
    sprintf(tempstr, "CT = %02X:%02X:%02X:%02X", regs->CT[0], regs->CT[1], regs->CT[2], regs->CT[3]);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "RA =   %08X", regs->RA0);
+   sprintf(tempstr, "RA =   %08lX", regs->RA0);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "WA =   %08X", regs->WA0);
+   sprintf(tempstr, "WA =   %08lX", regs->WA0);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "RX =   %08X", regs->RX);
+   sprintf(tempstr, "RX =   %08lX", regs->RX);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
-   sprintf(tempstr, "RY =   %08X", regs->RX);
+   sprintf(tempstr, "RY =   %08lX", regs->RX);
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "PH =       %04X", regs->P.part.H & 0xFFFF);
@@ -1422,7 +1465,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                if (bptext[0] != 0)
                {
-                  sscanf(bptext, "%X", &addr);
+                  sscanf(bptext, "%lX", &addr);
                   sprintf(bptext, "%02X", (int)addr);
 
                   if (ScuDspAddCodeBreakpoint(addr) == 0)
@@ -1440,7 +1483,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
                   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
-                  sscanf(bptext, "%X", &addr);
+                  sscanf(bptext, "%lX", &addr);
                   ScuDspDelCodeBreakpoint(addr);
                   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
                }
@@ -1449,6 +1492,12 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             default: break;
          }
          break;
+      }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
       }
       default: break;
    }
@@ -1509,6 +1558,42 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                return TRUE;
             }
+            case IDC_SCSPSLOTSAVE:
+            {
+               OPENFILENAME ofn;
+               u8 cursel=0;
+
+               cursel = (u8)SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_GETCURSEL, 0, 0);
+               sprintf(tempstr, "channel%02d.wav", cursel);
+
+               // setup ofn structure
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
+                        "All Files\0*.*\0WAV Files\0*.WAV\0",
+                        tempstr, sizeof(tempstr));
+ 
+               if (GetSaveFileName(&ofn))
+                  ScspSlotDebugAudioSaveWav(cursel, tempstr);
+
+               return TRUE;
+            }
+            case IDC_SCSPSLOTREGSAVE:
+            {
+               OPENFILENAME ofn;
+               u8 cursel=0;
+
+               cursel = (u8)SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_GETCURSEL, 0, 0);
+               sprintf(tempstr, "channel%02dregs.bin", cursel);
+
+               // setup ofn structure
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
+                        "All Files\0*.*\0Binary Files\0*.BIN\0",
+                        tempstr, sizeof(tempstr));
+
+               if (GetSaveFileName(&ofn))
+                  ScspSlotDebugSaveRegisters(cursel, tempstr);
+
+               return TRUE;
+            }
             case IDOK:
             {
                EndDialog(hDlg, TRUE);
@@ -1518,6 +1603,12 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             default: break;
          }
          break;
+      }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
       }
       default: break;
    }
@@ -1539,7 +1630,7 @@ LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          addr = (u32 *)lParam;
-         sprintf(tempstr, "%08X", addr[0]);
+         sprintf(tempstr, "%08lX", addr[0]);
          SetDlgItemText(hDlg, IDC_OFFSETET, tempstr);
 
          SendDlgItemMessage(hDlg, IDC_SPECIFYADDRRB, BM_SETCHECK, BST_CHECKED, 0);
@@ -1566,7 +1657,7 @@ LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if (SendDlgItemMessage(hDlg, IDC_SPECIFYADDRRB, BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
                   GetDlgItemText(hDlg, IDC_OFFSETET, tempstr, 9);
-                  sscanf(tempstr, "%08X", addr);
+                  sscanf(tempstr, "%08lX", addr);
                }
                else
                   addr[0] = hexaddrlist[SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_GETCURSEL, 0, 0)].start;
@@ -1655,7 +1746,7 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_SETADDRESSLIST, 13, hexaddrlist);
+         SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_SETADDRESSLIST, 13, (LPARAM)hexaddrlist);
          return TRUE;
       }
       case WM_COMMAND:
@@ -1691,6 +1782,12 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
          break;
       }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
+      }
       default: break;
    }
 
@@ -1720,19 +1817,14 @@ LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                OPENFILENAME ofn;
 
                // setup ofn structure
-               ZeroMemory(&ofn, sizeof(ofn));
-               ofn.lStructSize = sizeof(ofn);
-               ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "All Files\0*.*\0Text Files\0*.txt\0";
-               ofn.nFilterIndex = 1;
-               ofn.lpstrFile = logfilename;
-               ofn.nMaxFile = sizeof(logfilename);
-               ofn.Flags = OFN_OVERWRITEPROMPT;
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
+                        "All Files\0*.*\0Text Files\0*.txt\0",
+                        logfilename, sizeof(logfilename));
  
                if (GetSaveFileName(&ofn))
                {
                   FILE *fp=fopen(logfilename, "wb");
-                  HLOCAL *localbuf=SendDlgItemMessage(hDlg, IDC_LOGET, EM_GETHANDLE, 0, 0);
+                  HLOCAL *localbuf=(HLOCAL *)SendDlgItemMessage(hDlg, IDC_LOGET, EM_GETHANDLE, 0, 0);
                   unsigned char *buf;
 
                   if (fp == NULL)
