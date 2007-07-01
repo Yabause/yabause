@@ -230,6 +230,8 @@
 
 #define IDC_SCSPSLOTCB                  1001
 #define IDC_SCSPSLOTET                  1002
+#define IDC_SCSPSLOTSAVE                1003
+#define IDC_SCSPSLOTREGSAVE             1004
 
 //////////////////////////////////////////////////////////////////////////////
 // Memory Editor stuff
