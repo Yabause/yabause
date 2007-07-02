@@ -207,7 +207,8 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
     case kEventClassWindow:
       switch (GetEventKind (theEvent)) {
         case kEventWindowClose:
- 
+
+          YabauseDeInit();
           QuitApplicationEventLoop();
           break;
  
@@ -233,6 +234,7 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
 	    CreateSettingsWindow();
             break;
           case kHICommandQuit:
+            YabauseDeInit();
             QuitApplicationEventLoop();
             break;
           case YUI_COMMAND_RUN:
