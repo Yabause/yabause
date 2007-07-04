@@ -34,10 +34,8 @@
 #include "cd.h"
 #include "../debug.h"
 #include "cheats.h"
-#ifdef USEM68KCORE
 #include "../m68kcore.h"
 //#include "../m68khle.h"
-#endif
 #include "yuidebug.h"
 #include "hexedit.h"
 
@@ -95,13 +93,11 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
-#ifdef USEM68KCORE
 M68K_struct *M68KCoreList[] = {
 &M68KDummy,
 //&M68KHLE,
 NULL
 };
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -585,10 +581,8 @@ YabauseSetup:
       yinit.cdcoretype = CDCORE_SPTI;
    else
       yinit.cdcoretype = CDCORE_ISO;
-#ifdef USEM68KCORE
    //yinit.m68kcoretype = M68KCORE_HLE;
    yinit.m68kcoretype = 0;
-#endif
    yinit.carttype = carttype;
    yinit.regionid = regionid;
    if (strcmp(biosfilename, "") == 0)

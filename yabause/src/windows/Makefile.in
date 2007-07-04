@@ -51,7 +51,8 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_yabause_OBJECTS = settings.$(OBJEXT) yui.$(OBJEXT) perdx.$(OBJEXT) \
-	snddx.$(OBJEXT) cheats.$(OBJEXT)
+	snddx.$(OBJEXT) cheats.$(OBJEXT) hexedit.$(OBJEXT) \
+	yuidebug.$(OBJEXT)
 yabause_OBJECTS = $(am_yabause_OBJECTS)
 yabause_DEPENDENCIES = ../libyabause.a resource.o
 DEFAULT_INCLUDES = -I. -I$(srcdir)
@@ -173,7 +174,8 @@ yabause_yui = @yabause_yui@
 EXTRA_DIST = cd.h
 yabause_SOURCES = \
 	resource.h resource.rc settings.c settings.h yui.c \
-        perdx.c perdx.h snddx.c snddx.h cheats.c cheats.h
+        perdx.c perdx.h snddx.c snddx.h cheats.c cheats.h \
+        hexedit.c hexedit.h yuidebug.c yuidebug.h
 
 yabause_LDFLAGS = -mwindows -mthreads
 yabause_LDADD = ../libyabause.a resource.o -lmingw32 -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -ldxguid -ldinput8 -ldsound -ldxerr8
@@ -244,10 +246,12 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cheats.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hexedit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/perdx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/settings.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snddx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yui.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yuidebug.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

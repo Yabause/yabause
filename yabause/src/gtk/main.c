@@ -40,7 +40,6 @@
 
 #include "settings.h"
 
-#ifdef USEM68KCORE
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
 #ifdef HAVE_C68K
@@ -48,7 +47,6 @@ M68K_struct * M68KCoreList[] = {
 #endif
 NULL
 };
-#endif
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,

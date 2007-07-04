@@ -25,12 +25,9 @@ extern u8 * SoundRam;
 
 M68K_struct * M68K = NULL;
 
-#ifdef USEM68KCORE
 extern M68K_struct * M68KCoreList[];
-#endif
 
 int M68KInit(int coreid) {
-#ifdef USEM68KCORE
    int i;
 
    M68K = &M68KDummy;
@@ -45,7 +42,6 @@ int M68KInit(int coreid) {
          break;
       }
    }
-#endif
 
    return 0;
 }
