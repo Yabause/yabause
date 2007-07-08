@@ -122,8 +122,6 @@ Vdp1 * Vdp1Regs;
 //////////////////////////////////////////////////////////////////////////////
 
 int Vdp1Init(void) {
-   int i;
-
    if ((Vdp1Regs = (Vdp1 *) malloc(sizeof(Vdp1))) == NULL)
       return -1;
 
@@ -192,6 +190,7 @@ void VideoDeInit(void) {
 
 void Vdp1Reset(void) {
    Vdp1Regs->PTMR = 0;
+   Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
    VIDCore->Vdp1Reset();
 }
 
