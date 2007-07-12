@@ -312,8 +312,7 @@ static void scsp_attack_next(slot_t *slot);
 
 static int scsp_round(double val)
 {
-	if ((val - ((double) (int) val)) > 0.5) return (int) (val + 1);
-	else return (int) val;
+	return (int)(val + 0.5);
 }
 
 
