@@ -52,6 +52,8 @@ HMENU YabMenu=NULL;
 HDC YabHDC=NULL;
 HGLRC YabHRC=NULL;
 BOOL isfullscreenset=FALSE;
+int yabwinx = 0;
+int yabwiny = 0;
 
 static int redsize = 0;
 static int greensize = 0;
@@ -174,6 +176,13 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
    DWORD exstyle=0;
    RECT rect;
 
+   if (!isfullscreenset && fullscreen)
+   {
+      GetWindowRect(YabWin, &rect);
+      yabwinx = rect.left;
+      yabwiny = rect.top;
+   }
+
    // Make sure any previously setup variables are released
    YuiReleaseVideo();
 
@@ -273,7 +282,11 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
    ShowWindow(YabWin,SW_SHOW);
    SetForegroundWindow(YabWin);
    SetFocus(YabWin);
-   SetWindowPos(YabWin, HWND_TOP, 0, 0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+
+   if (fullscreen)
+      SetWindowPos(YabWin, HWND_TOP, 0, 0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+   else
+      SetWindowPos(YabWin, HWND_TOP, yabwinx, yabwiny, rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
 
    isfullscreenset = fullscreen;
 
@@ -522,6 +535,12 @@ int YuiInit(void)
    }
 #endif
 
+   // Get Window Position(if saved)
+   GetPrivateProfileString("General", "WindowX", "0", tempstr, MAX_PATH, inifilename);
+   yabwinx = atoi(tempstr);
+   GetPrivateProfileString("General", "WindowY", "0", tempstr, MAX_PATH, inifilename);
+   yabwiny = atoi(tempstr);
+
    // Figure out how much of the screen is useable
    if (usecustomwindowsize)
    {
@@ -562,10 +581,10 @@ int YuiInit(void)
                          WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |                                        
                          WS_THICKFRAME | WS_MINIMIZEBOX |   // style
                          WS_CLIPCHILDREN,
-                         CW_USEDEFAULT,        // x pos
-                         CW_USEDEFAULT,        // y pos
-                         yabwinw, // width
-                         yabwinh, // height
+                         yabwinx,              // x pos
+                         yabwiny,              // y pos
+                         yabwinw,              // width
+                         yabwinh,              // height
                          HWND_DESKTOP,         // parent window
                          NULL,                 // menu
                          y_hInstance,          // instance
@@ -654,6 +673,12 @@ YabauseSetup:
    YuiReleaseVideo();
    if (YabMenu)
       DestroyMenu(YabMenu);
+
+   sprintf(tempstr, "%d", yabwinx);
+   WritePrivateProfileString("General", "WindowX", tempstr, inifilename);
+   sprintf(tempstr, "%d", yabwiny);
+   WritePrivateProfileString("General", "WindowY", tempstr, inifilename);
+
    return 0;
 }
 
@@ -862,6 +887,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       }
       case WM_CLOSE:
       {
+         RECT rect;
+
+         GetWindowRect(hWnd, &rect);
+         yabwinx = rect.left;
+         yabwiny = rect.left;
          stop = 1;
          return 0L;
       }
@@ -880,10 +910,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       case WM_DESTROY:
       {
          PostQuitMessage(0);
-
          return 0L;
       }
-
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
