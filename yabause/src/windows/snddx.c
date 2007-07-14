@@ -27,6 +27,7 @@ const char*  __stdcall DXGetErrorDescription8A(HRESULT hr);
 #else
 #include <dxerr8.h>
 #endif
+#include <math.h>
 #include "../scsp.h"
 #include "snddx.h"
 
@@ -291,7 +292,12 @@ void SNDDXUnMuteAudio()
 
 void SNDDXSetVolume(int volume)
 {
-   soundvolume = (((LONG)volume) - 100) * 100;
+   // Convert linear volume to logarithmic volume
+   if (volume == 0)
+      soundvolume = DSBVOLUME_MIN;
+   else
+      soundvolume = log10((double)volume / 100.0) * 2000.0;
+
    if (!issoundmuted)
       IDirectSoundBuffer8_SetVolume (lpDSB2, soundvolume);
 }

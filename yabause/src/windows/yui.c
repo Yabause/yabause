@@ -35,6 +35,9 @@
 #include "../debug.h"
 #include "cheats.h"
 #include "../m68kcore.h"
+#ifndef _MSC_VER
+#include "../m68kc68k.h"
+#endif
 //#include "../m68khle.h"
 #include "yuidebug.h"
 #include "hexedit.h"
@@ -97,6 +100,9 @@ NULL
 
 M68K_struct *M68KCoreList[] = {
 &M68KDummy,
+#ifndef _MSC_VER
+&M68KC68K,
+#endif
 //&M68KHLE,
 NULL
 };
@@ -601,7 +607,11 @@ YabauseSetup:
    else
       yinit.cdcoretype = CDCORE_ISO;
    //yinit.m68kcoretype = M68KCORE_HLE;
-   yinit.m68kcoretype = 0;
+#ifdef _MSC_VER
+   yinit.m68kcoretype = M68KCORE_DEFAULT;
+#else
+   yinit.m68kcoretype = M68KCORE_C68K;
+#endif
    yinit.carttype = carttype;
    yinit.regionid = regionid;
    if (strcmp(biosfilename, "") == 0)
