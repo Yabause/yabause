@@ -639,7 +639,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
           &IID_IDirectInput8, (LPVOID *)&lpDI8temp, NULL) != DI_OK)
          return -1;
 
-      if (IDirectInput8_CreateDevice(lpDI8, &GUIDDevice[i], &lpDIDevicetemp,
+      if (IDirectInput8_CreateDevice(lpDI8temp, &GUIDDevice[i], &lpDIDevicetemp,
           NULL) != DI_OK)
       {
          IDirectInput8_Release(lpDI8temp);
