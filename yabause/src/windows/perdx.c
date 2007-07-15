@@ -72,6 +72,15 @@ padconf_struct pad[1];
 #define TYPE_JOYSTICK           1
 #define TYPE_MOUSE              2
 
+#define PAD_DIR_AXISLEFT        0
+#define PAD_DIR_AXISRIGHT       1
+#define PAD_DIR_AXISUP          2
+#define PAD_DIR_AXISDOWN        3
+#define PAD_DIR_POVUP           4
+#define PAD_DIR_POVRIGHT        5
+#define PAD_DIR_POVDOWN         6
+#define PAD_DIR_POVLEFT         7
+
 //////////////////////////////////////////////////////////////////////////////
 
 BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
@@ -243,7 +252,7 @@ void PERDXLoadDevices(char *inifilename)
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
                GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_JOYSTICK)
       {
-         if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIJoystick) != DI_OK)
+         if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIJoystick2) != DI_OK)
             continue;
          pad[i].type = TYPE_JOYSTICK;
       }
@@ -390,71 +399,99 @@ void PollKeys(void)
                {
                   if (didod[i2].dwData < 0x7FFF)
                   {
-                     pad[i].down[0]();
-                     pad[i].up[1]();
+                     pad[i].down[PAD_DIR_AXISLEFT]();
+                     pad[i].up[PAD_DIR_AXISRIGHT]();
                   }
                   else if (didod[i2].dwData > 0x7FFF)
                   {
-                     pad[i].down[1]();
-                     pad[i].up[0]();
+                     pad[i].down[PAD_DIR_AXISRIGHT]();
+                     pad[i].up[PAD_DIR_AXISLEFT]();
                   }
                   else
                   {
-                     pad[i].up[0]();
-                     pad[i].up[1]();
+                     pad[i].up[PAD_DIR_AXISLEFT]();
+                     pad[i].up[PAD_DIR_AXISRIGHT]();
                   }
                }
                else if (didod[i2].dwOfs == 4)
                {
                   if (didod[i2].dwData < 0x7FFF)
                   {
-                     pad[i].down[2]();
-                     pad[i].up[3]();
+                     pad[i].down[PAD_DIR_AXISUP]();
+                     pad[i].up[PAD_DIR_AXISDOWN]();
                   }
                   else if ( didod[i2].dwData > 0x7FFF)
                   {
-                     pad[i].down[3]();
-                     pad[i].up[2]();
+                     pad[i].down[PAD_DIR_AXISDOWN]();
+                     pad[i].up[PAD_DIR_AXISUP]();
                   }
                   else
                   {
-                     pad[i].up[2]();
-                     pad[i].up[3]();
+                     pad[i].up[PAD_DIR_AXISUP]();
+                     pad[i].up[PAD_DIR_AXISDOWN]();
                   }
                }
                else if (didod[i2].dwOfs == 0x20)
                {
-                  // This should really allow for diagonals
-                  // POV Up
-                  if (didod[i2].dwData < 9000)
+                  // POV Center
+                  if (LOWORD(didod[i2].dwData) == 0xFFFF)
                   {
-                     pad[i].down[4]();
-                     pad[i].up[6]();
+                     pad[i].up[PAD_DIR_POVUP]();
+                     pad[i].up[PAD_DIR_POVRIGHT]();
+                     pad[i].up[PAD_DIR_POVDOWN]();
+                     pad[i].up[PAD_DIR_POVLEFT]();
+                  }
+                  // POV Up
+                  else if (didod[i2].dwData < 4500)
+                  {
+                     pad[i].down[PAD_DIR_POVUP]();
+                     pad[i].up[PAD_DIR_POVRIGHT]();
+                     pad[i].up[PAD_DIR_POVLEFT]();
+                  }
+                  // POV Up-right
+                  else if (didod[i2].dwData < 9000)
+                  {
+                     pad[i].down[PAD_DIR_POVUP]();
+                     pad[i].down[PAD_DIR_POVRIGHT]();
                   }
                   // POV Right
+                  else if (didod[i2].dwData < 13500)
+                  {
+                     pad[i].down[PAD_DIR_POVRIGHT]();
+                     pad[i].up[PAD_DIR_POVDOWN]();
+                     pad[i].up[PAD_DIR_POVUP]();
+                  }
+                  // POV Right-down
                   else if (didod[i2].dwData < 18000)
                   {
-                     pad[i].down[5]();
-                     pad[i].up[7]();
+                     pad[i].down[PAD_DIR_POVRIGHT]();
+                     pad[i].down[PAD_DIR_POVDOWN]();
                   }
                   // POV Down
+                  else if (didod[i2].dwData < 22500)
+                  {
+                     pad[i].down[PAD_DIR_POVDOWN]();
+                     pad[i].up[PAD_DIR_POVLEFT]();
+                     pad[i].up[PAD_DIR_POVRIGHT]();
+                  }
+                  // POV Down-left
                   else if (didod[i2].dwData < 27000)
                   {
-                     pad[i].down[6]();
-                     pad[i].up[4]();
+                     pad[i].down[PAD_DIR_POVDOWN]();
+                     pad[i].down[PAD_DIR_POVLEFT]();
                   }
                   // POV Left
+                  else if (didod[i2].dwData < 31500)
+                  {
+                     pad[i].down[PAD_DIR_POVLEFT]();
+                     pad[i].up[PAD_DIR_POVUP]();
+                     pad[i].up[PAD_DIR_POVDOWN]();
+                  }
+                  // POV Left-up
                   else if (didod[i2].dwData < 36000)
                   {
-                     pad[i].down[7]();
-                     pad[i].up[5]();
-                  }
-                  else
-                  {
-                     pad[i].up[4]();
-                     pad[i].up[5]();
-                     pad[i].up[6]();
-                     pad[i].up[7]();
+                     pad[i].down[PAD_DIR_POVLEFT]();
+                     pad[i].down[PAD_DIR_POVUP]();
                   }
                }
                else if (didod[i2].dwOfs >= 0x30)
