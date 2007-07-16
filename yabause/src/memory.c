@@ -21,8 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 #include "memory.h"
+#include "coffelf.h"
 #include "cs0.h"
 #include "cs1.h"
 #include "cs2.h"
@@ -858,6 +860,20 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
 
 void MappedMemoryLoadExec(const char *filename, u32 pc)
 {
+   char *p;
+   int i;
+
+   if (!(p = strrchr(filename, '.')))
+   {
+      p = strdup(p);
+      for (i = 0; i < strlen(p); i++)
+         p[i] = toupper(p[i]);
+      if (strcmp(p, ".COF") == 0 || strcmp(p, ".COFF") == 0)
+         MappedMemoryLoadCoff(filename);
+      free(p);
+      return;
+   }
+
    YabauseResetNoLoad();
 
    // Setup the vector table area, etc.
