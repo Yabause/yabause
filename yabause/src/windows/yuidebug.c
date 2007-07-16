@@ -193,21 +193,17 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                            mtrnsfilename, sizeof(mtrnsfilename));
 
                   if (GetSaveFileName(&ofn))
-                  {
                      SetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename);
-                  }
                }
                else
                {
                   // setup ofn structure
                   SetupOFN(&ofn, OFN_DEFAULTLOAD, hDlg,
-                           "All Files\0*.*\0Binary Files\0*.BIN\0",
+                           "All Files\0*.*\0Binary Files\0*.BIN\0COFF Files\0*.COF;*.COFF\0",
                            mtrnsfilename, sizeof(mtrnsfilename));
 
                   if (GetOpenFileName(&ofn))
-                  {
                      SetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename);
-                  }
                }
 
                return TRUE;
