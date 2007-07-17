@@ -865,7 +865,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             }
             case IDM_ABOUT:
             {
+               ScspMuteAudio();
                DialogBox(y_hInstance, "AboutDlg", hWnd, (DLGPROC)AboutDlgProc);
+               ScspUnMuteAudio();
                break;
             }
          }
