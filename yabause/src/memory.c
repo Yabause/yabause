@@ -863,7 +863,7 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
    char *p;
    int i;
 
-   if (!(p = strrchr(filename, '.')))
+   if ((p = strrchr(filename, '.')))
    {
       p = strdup(p);
       for (i = 0; i < strlen(p); i++)
