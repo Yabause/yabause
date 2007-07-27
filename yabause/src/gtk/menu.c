@@ -42,7 +42,7 @@ void openAboutDialog(GtkWidget * w, gpointer data) {
 	gtk_show_about_dialog(data,
 		"name", "Yabause",
 		"version", VERSION,
-		"website", "http://yabause.sourceforge.net",
+		"website", "http://yabause.org",
 		NULL);
 }
 

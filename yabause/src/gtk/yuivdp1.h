@@ -47,6 +47,7 @@ struct _YuiVdp1
 
   GtkWidget * vbox;
   GtkWidget * hbox;
+  GtkWidget * hbox_right;
   GtkWidget * commName;
   GtkWidget * commDesc;
   GtkWidget * spin;

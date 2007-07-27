@@ -1,4 +1,4 @@
-/*  Copyright 2006 Guillaume Duhamel
+/*  Copyright 2006-2007 Guillaume Duhamel
     Copyright 2005-2006 Fabien Coulon
 
     This file is part of Yabause.
@@ -60,7 +60,7 @@ static void yui_vdp1_class_init (YuiVdp1Class * klass) {
 }
 
 static void yui_vdp1_init (YuiVdp1 * yv) {
-	GtkWidget * hbox, * vbox1, * vbox2;
+	GtkWidget * hbox, * hbox2, * vbox1, * vbox2, * but4;
 
 	gtk_window_set_title(GTK_WINDOW(yv), "VDP1");
 
@@ -75,7 +75,7 @@ static void yui_vdp1_init (YuiVdp1 * yv) {
 	vbox2 = gtk_vbox_new(FALSE, 2);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox2, TRUE, TRUE, 4);
 
-	yv->spin = gtk_spin_button_new_with_range(0, MAX_VDP1_COMMAND, 1);
+	yv->spin = gtk_spin_button_new_with_range(0, MAX_VDP1_COMMAND, -1);
 	gtk_spin_button_set_range(GTK_SPIN_BUTTON(yv->spin), 0, 0);
 	gtk_box_pack_start(GTK_BOX(vbox1), yv->spin, FALSE, FALSE, 4);
 	g_signal_connect(G_OBJECT(yv->spin), "value-changed", GTK_SIGNAL_FUNC(yui_vdp1_spin_cursor_changed), yv);
@@ -86,12 +86,16 @@ static void yui_vdp1_init (YuiVdp1 * yv) {
 	{
 		GtkCellRenderer *renderer;
 		GtkTreeViewColumn *column;
+		GtkWidget * scroll = gtk_scrolled_window_new(NULL, NULL);
+		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
 		renderer = gtk_cell_renderer_text_new();
 		column = gtk_tree_view_column_new_with_attributes("Command", renderer, "text", 0, NULL);
 		gtk_tree_view_append_column(GTK_TREE_VIEW (yv->view), column);
+
+		gtk_container_add(GTK_CONTAINER(scroll), yv->view);
+		gtk_box_pack_start(GTK_BOX(vbox1), scroll, TRUE, TRUE, 4);
 	}
-	gtk_box_pack_start(GTK_BOX(vbox1), yv->view, FALSE, FALSE, 4);
 	g_signal_connect(yv->view, "cursor-changed", G_CALLBACK(yui_vdp1_view_cursor_changed), yv);
 
 	g_signal_connect(G_OBJECT(yv), "delete-event", GTK_SIGNAL_FUNC(yui_vdp1_destroy), NULL);
@@ -109,9 +113,20 @@ static void yui_vdp1_init (YuiVdp1 * yv) {
 	yv->image = gtk_drawing_area_new();
 	gtk_box_pack_start(GTK_BOX(vbox2), yv->image, TRUE, TRUE, 4);
 
+	hbox2 = gtk_hbox_new(FALSE, 2);
+
 	yv->hbox = gtk_hbutton_box_new();
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(yv->hbox), GTK_BUTTONBOX_END);
 	gtk_box_set_spacing(GTK_BOX(yv->hbox), 4);
-	gtk_box_pack_start(GTK_BOX(yv->vbox ), yv->hbox, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(hbox2 ), yv->hbox, FALSE, FALSE, 4);
+
+	gtk_box_pack_start(GTK_BOX(hbox2), gtk_hseparator_new(), TRUE, FALSE,4);
+
+	but4 = gtk_button_new_from_stock("gtk-close");
+	g_signal_connect_swapped(but4, "clicked", G_CALLBACK(yui_vdp1_destroy), yv);
+	gtk_box_pack_start(GTK_BOX(hbox2), but4, FALSE, FALSE, 2);
+
+	gtk_box_pack_start(GTK_BOX(yv->vbox ), hbox2, FALSE, FALSE, 4);
 
 	yv->cursor = 0;
 	yv->texture = NULL;
@@ -139,17 +154,19 @@ GtkWidget * yui_vdp1_new(YuiWindow * y) {
 
 	{
 		GtkWidget * but2, * but3, * but4;
-		but2 = gtk_button_new();
+		but2 = gtk_button_new_from_stock("run");
 		gtk_action_connect_proxy(gtk_action_group_get_action(yui->action_group, "run"), but2);
 		gtk_box_pack_start(GTK_BOX(yv->hbox), but2, FALSE, FALSE, 2);
 
-		but3 = gtk_button_new();
+		but3 = gtk_button_new_from_stock("pause");
 		gtk_action_connect_proxy(gtk_action_group_get_action(yui->action_group, "pause"), but3);
 		gtk_box_pack_start(GTK_BOX(yv->hbox), but3, FALSE, FALSE, 2);
 
+/*
 		but4 = gtk_button_new_from_stock("gtk-close");
 		g_signal_connect_swapped(but4, "clicked", G_CALLBACK(yui_vdp1_destroy), dialog);
 		gtk_box_pack_start(GTK_BOX(yv->hbox), but4, FALSE, FALSE, 2);
+*/
 	}
 	paused_handler = g_signal_connect_swapped(yui, "paused", G_CALLBACK(yui_vdp1_update), yv);
 	running_handler = g_signal_connect_swapped(yui, "running", G_CALLBACK(yui_vdp1_clear), yv);
@@ -163,26 +180,19 @@ GtkWidget * yui_vdp1_new(YuiWindow * y) {
 }
 
 void yui_vdp1_fill(YuiVdp1 * vdp1) {
-	gint i, j;
+	gint j;
 	gchar * string;
 	gchar nameTemp[1024];
 	GtkTreeIter iter;
 
 	yui_vdp1_clear(vdp1);
 
-	j = vdp1->cursor - 2;
-	if (j < 0) j = 0;
-	i = j + 5;
+	j = 0;
+
 	string = Vdp1DebugGetCommandNumberName(j);
-	while(string && (j < i)) {
+	while(string && (j < MAX_VDP1_COMMAND)) {
 		gtk_list_store_append(vdp1->store, &iter);
 		gtk_list_store_set(vdp1->store, &iter, 0, string, -1);
-
-		if (j == vdp1->cursor) {
-			GtkTreePath * path = gtk_tree_model_get_path(GTK_TREE_MODEL(vdp1->store), &iter);
-			gtk_tree_view_set_cursor(GTK_TREE_VIEW(vdp1->view), path, NULL, 0);
-			gtk_tree_path_free(path);
-		}
 
 		j++;
 		string = Vdp1DebugGetCommandNumberName(j);
@@ -195,11 +205,41 @@ void yui_vdp1_fill(YuiVdp1 * vdp1) {
 }
 
 static void yui_vdp1_spin_cursor_changed(GtkWidget * spin, YuiVdp1 * vdp1) {
+	GtkTreePath * path;
+	gchar strpath[10];
+	gchar nameTemp[1024];
+
 	vdp1->cursor = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spin));
-	yui_vdp1_fill(vdp1);
+	
+	sprintf(strpath, "%i", vdp1->cursor);
+
+	path = gtk_tree_path_new_from_string(strpath);
+	gtk_tree_view_set_cursor(GTK_TREE_VIEW(vdp1->view), path, NULL, 0);
+	gtk_tree_path_free(path);
+
+	Vdp1DebugCommand(vdp1->cursor, nameTemp);
+	gtk_text_buffer_set_text(vdp1->buffer, g_strstrip(nameTemp), -1);
+	vdp1->texture = Vdp1DebugTexture(vdp1->cursor, &vdp1->w, &vdp1->h);
+	gtk_widget_queue_draw_area(vdp1->image, 0, 0, vdp1->image->allocation.width, vdp1->image->allocation.height);
 }
 
 static void yui_vdp1_view_cursor_changed(GtkWidget * view, YuiVdp1 * vdp1) {
+	GtkTreePath * path;
+	gchar * strpath;
+	int i;
+
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, NULL);
+
+	if (path) {
+		strpath = gtk_tree_path_to_string(path);
+
+		sscanf(strpath, "%i", &i);
+
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vdp1->spin), i);
+
+		g_free(strpath);
+		gtk_tree_path_free(path);
+	}
 }
 
 void yui_vdp1_update(YuiVdp1 * vdp1) {
@@ -231,7 +271,8 @@ static void yui_vdp1_expose(GtkWidget *widget, GdkEventExpose *event, gpointer d
 	if ((vdp1->texture != NULL) && (vdp1->w > 0) && (vdp1->h > 0)) {
 		rowstride = vdp1->w * 4;
 		rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
-		pixbuf = gdk_pixbuf_new_from_data(vdp1->texture, GDK_COLORSPACE_RGB, TRUE, 8, vdp1->w, vdp1->h, rowstride, NULL, NULL);
+		pixbuf = gdk_pixbuf_new_from_data((const guchar *) vdp1->texture, GDK_COLORSPACE_RGB, TRUE, 8,
+			vdp1->w, vdp1->h, rowstride, NULL, NULL);
 
 		gdk_draw_pixbuf(GTK_WIDGET(vdp1->image)->window, NULL, pixbuf, 0, 0, 0, 0, vdp1->w, vdp1->h, GDK_RGB_DITHER_NONE, 0, 0);
 
