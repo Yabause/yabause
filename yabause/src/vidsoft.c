@@ -291,6 +291,7 @@ typedef struct
    int xend, yend;
    int pixeloffset;
    int lineincrement;
+   int pixelincrement;
 } clipping_struct;
 
 static void INLINE HandleClipping(vdp2draw_struct *info, clipping_struct *clip)
@@ -441,16 +442,20 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info)
 
    HandleClipping(info, &clip);
 
+   clip.pixelincrement = 1;
    if (info->flipfunction & 0x1)
    {
       // Horizontal flip
+      clip.pixelincrement = -1;
+      clip.pixeloffset = (clip.xend - clip.xstart) - 1;
+      clip.lineincrement = 2 * (clip.xend - clip.xstart);
    }
 
    if (info->flipfunction & 0x2)
    {
       // Vertical flip
-//      clip.pixeloffset = (info.w * info.h) - clip.pixeloffset;
-//      clip.lineincrement = 0 - clip.lineincrement;
+      //clip.pixeloffset += ((clip.yend - clip.ystart) - 1) * (clip.xend - clip.xstart);
+      //clip.lineincrement -= 2 * (clip.xend - clip.xstart);
    }
 
    switch(info->colornumber)
@@ -534,7 +539,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info)
             for (i2 = clip.xstart; i2 < clip.xend; i2++)
             {
                u32 color = T1ReadByte(Vdp2Ram, info->charaddr);
-               info->charaddr++;
+               info->charaddr += clip.pixelincrement;
 
                if (color == 0 && info->transparencyenable)
                   continue;
@@ -633,6 +638,10 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info)
 static void Vdp2DrawPattern(vdp2draw_struct *info)
 {
    int * c;
+   int xstart, xincrement;
+
+   xstart = 0;
+   xincrement = 8;
 
 //   if (info->specialprimode == 1)
 //      tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
@@ -647,16 +656,24 @@ static void Vdp2DrawPattern(vdp2draw_struct *info)
          info->y += 8;
          break;
       case 2:
+         if (info->flipfunction & 1)
+         {
+            xstart = 8;
+            xincrement = -8;
+         }
+
+         info->x += xstart;
          Vdp2DrawCell(info);
-         info->x += 8;
+         info->x += xincrement;
          Vdp2DrawCell(info);
-         info->x -= 8;
+         info->x -= xincrement;
          info->y += 8;
          Vdp2DrawCell(info);
-         info->x += 8;
+         info->x += xincrement;
          Vdp2DrawCell(info);
-         info->x += 8;
+         info->x += 8 + xstart;
          info->y += 8;
+
          break;
    }
 }
