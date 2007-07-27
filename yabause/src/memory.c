@@ -869,9 +869,13 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
       for (i = 0; i < strlen(p); i++)
          p[i] = toupper(p[i]);
       if (strcmp(p, ".COF") == 0 || strcmp(p, ".COFF") == 0)
+      {
          MappedMemoryLoadCoff(filename);
+         free(p);
+         return;
+      }
+
       free(p);
-      return;
    }
 
    YabauseResetNoLoad();
