@@ -410,9 +410,15 @@ void Vdp1NoDraw(void) {
             case 4: // polygon draw
             case 5: // polyline draw
             case 6: // line draw
+               break;
             case 8: // user clipping coordinates
+               VIDCore->Vdp1UserClipping();
+               break;
             case 9: // system clipping coordinates
+               VIDCore->Vdp1SystemClipping();
+               break;
             case 10: // local coordinate
+               VIDCore->Vdp1LocalCoordinate();
                break;
             default: // Abort
                VDP1LOG("vdp1\t: Bad command: %x\n",  command);
