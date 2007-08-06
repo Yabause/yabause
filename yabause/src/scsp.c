@@ -448,15 +448,15 @@ static void scsp_slot_keyonoff(void)
 	}
 }
 
-////////////////////////////////////////////////////////////////
-// Enveloppe Events Handler
-//
-// Max EG level = 0x3FF      /|\
-//                          / | \
-//                         /  |  \_____
-// Min EG level = 0x000 __/   |  |    |\___
-//                        A   D1 D2   R
-//
+/*
+   Enveloppe Events Handler
+
+   Max EG level = 0x3FF      /|\
+                            / | \
+                           /  |  \_____
+   Min EG level = 0x000 __/   |  |    |\___
+                          A   D1 D2   R
+*/
 
 static void scsp_env_null_next(slot_t *slot)
 {
@@ -1386,7 +1386,7 @@ u16 scsp_get_w(u32 a)
 
 static void scsp_slot_update_null(slot_t *slot)
 {
-	s32 out, env;
+        s32 env;
 
 	for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
 	{
@@ -2555,7 +2555,8 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 // Yabause specific
 //////////////////////////////////////////////////////////////////////////////
 
-u8 *SoundRam;
+u8 *SoundRam=NULL;
+u8 *SoundDummy=NULL;
 ScspInternal *ScspInternalVars;
 static SoundInterface_struct *SNDCore=NULL;
 extern SoundInterface_struct *SNDCoreList[];
@@ -2707,6 +2708,9 @@ int ScspInit(int coreid) {
    if ((SoundRam = T2MemoryInit(0x80000)) == NULL)
       return -1;
 
+   if ((SoundDummy = T2MemoryInit(0x10000)) == NULL)
+      return -1;
+
    if ((ScspInternalVars = (ScspInternal *)calloc(1, sizeof(ScspInternal))) == NULL)
       return -1;
 
@@ -2721,6 +2725,13 @@ int ScspInit(int coreid) {
    M68K->SetFetch(0x040000, 0x080000, (pointer)SoundRam);
    M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
    M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
+
+   // Setup a 64k buffer filled with invalid 68k instructions - we'll map it
+   // to the remaining area
+   memset(SoundDummy, 0xFF, 0x10000);
+
+   for (i = 0x10; i < 0x100; i++)
+      M68K->SetFetch(i << 16, (i << 16) + 0xFFFF, (pointer)SoundDummy);
 
    yabsys.IsM68KRunning = 0;
 
@@ -2792,6 +2803,9 @@ void ScspDeInit(void) {
 
    if (SoundRam)
       T2MemoryDeInit(SoundRam);
+
+   if (SoundDummy)
+      T2MemoryDeInit(SoundDummy);
 }
 
 //////////////////////////////////////////////////////////////////////////////
