@@ -267,7 +267,7 @@ OSStatus BrowseHandler(EventHandlerCallRef h, EventRef event, void* data) {
 		NavDialogDispose(dialog);
 	
 		fileAsCFURLRef = CFURLCreateFromFSRef(NULL, &fileAsFSRef);
-		s = CFURLCopyPath(fileAsCFURLRef);
+		s = CFURLCopyFileSystemPath(fileAsCFURLRef, kCFURLPOSIXPathStyle);
 
 		CFShow(s);
 
