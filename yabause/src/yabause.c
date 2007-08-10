@@ -23,6 +23,7 @@
 #ifdef WIN32
 #include <windows.h>
 #endif
+#include <string.h>
 #include "yabause.h"
 #include "cheat.h"
 #include "cs0.h"
@@ -219,7 +220,7 @@ int YabauseInit(yabauseinit_struct *init)
    if (init->frameskip)
        EnableAutoFrameSkip();
 
-   if (init->biospath != NULL)
+   if (init->biospath != NULL && strlen(init->biospath))
    {
       if (LoadBios(init->biospath) != 0)
       {
