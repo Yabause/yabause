@@ -40,6 +40,7 @@ extern const char * key_names[] = {
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
+&M68KC68K,
 NULL
 };
 
@@ -91,6 +92,7 @@ void read_settings(void) {
 	yinit.percoretype = PERCORE_DUMMY;
 	yinit.sh2coretype = SH2CORE_INTERPRETER;
 	yinit.vidcoretype = VIDCORE_OGL;
+	yinit.m68kcoretype = M68KCORE_C68K;
 	s = CFPreferencesCopyAppValue(CFSTR("VideoCore"),
 		kCFPreferencesCurrentApplication);
 	if (s)
