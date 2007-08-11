@@ -311,7 +311,7 @@ void yui_conf(void) {
 	gint result;
 	GtkWidget * dialog;
 
-	dialog = create_dialog1(YUI_WINDOW(yui));
+	dialog = create_dialog1();
 
 	result = gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
@@ -325,7 +325,7 @@ void yui_conf(void) {
                                                                         "You must restart Yabause before the changes take effect.",
                                                                         NULL);
 
-                        gtk_dialog_run (warningDlg);
+                        gtk_dialog_run (GTK_DIALOG(warningDlg));
                         gtk_widget_destroy (warningDlg); 
 			g_file_set_contents(inifile, g_key_file_to_data(keyfile, 0, 0), -1, 0);
 			yui_settings_load();
@@ -339,5 +339,5 @@ void yui_conf(void) {
 
 void yui_resize(guint width, guint height, gboolean fullscreen) {
 	gtk_widget_set_size_request(YUI_WINDOW(yui)->area, width, height);
-	yui_window_set_fullscreen(yui, fullscreen);
+	yui_window_set_fullscreen(YUI_WINDOW(yui), fullscreen);
 }

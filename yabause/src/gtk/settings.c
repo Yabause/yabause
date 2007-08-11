@@ -112,7 +112,7 @@ void hide_show_netlink(YuiRange * instance, gpointer data) {
 	}
 }
 
-GtkWidget* create_dialog1(YuiWindow * yui) {
+GtkWidget* create_dialog1(void) {
   GtkWidget *dialog1;
   GtkWidget *notebook1;
   GtkWidget *vbox17;
@@ -123,7 +123,6 @@ GtkWidget* create_dialog1(YuiWindow * yui) {
   GtkWidget *button12;
   GtkWidget * general, * video_sound, * cart_memory, *advanced, * sound;
   GtkWidget * box;
-  GtkWidget * pouet;
 
   dialog1 = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog1), "Yabause configuration");
