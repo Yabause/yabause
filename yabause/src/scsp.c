@@ -306,6 +306,7 @@ static void scsp_release_next(slot_t *slot);
 static void scsp_substain_next(slot_t *slot);
 static void scsp_decay_next(slot_t *slot);
 static void scsp_attack_next(slot_t *slot);
+static void scsp_slot_update_keyon(slot_t *slot);
 
 ////////////////////////////////////////////////////////////////
 // Misc
@@ -529,19 +530,27 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
         case 0x01: // SSCTL(low bit)/LPCTL/8B/SA(highest 4 bits)
 		slot->ssctl = (slot->ssctl & 2) + ((d >> 7) & 1);
 		slot->lpctl = (d >> 5) & 3;
+
 		slot->pcm8b = d & 0x10;
 		slot->sa = (slot->sa & 0x0FFFF) + ((d & 0xF) << 16);
 		slot->sa &= SCSP_RAM_MASK;
+
+                if (slot->ecnt < SCSP_ENV_DE) scsp_slot_update_keyon(slot);
+
 		return;
 
         case 0x02: // SA(next highest byte)
 		slot->sa = (slot->sa & 0xF00FF) + (d << 8);
 		slot->sa &= SCSP_RAM_MASK;
+
+                if (slot->ecnt < SCSP_ENV_DE) scsp_slot_update_keyon(slot);
 		return;
 
         case 0x03: // SA(low byte)
 		slot->sa = (slot->sa & 0xFFF00) + d;
 		slot->sa &= SCSP_RAM_MASK;
+
+                if (slot->ecnt < SCSP_ENV_DE) scsp_slot_update_keyon(slot);
 		return;
 
         case 0x04: // LSA(high byte)
@@ -752,9 +761,12 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 		slot->sbctl = (d >> 9) & 3;
 		slot->ssctl = (d >> 7) & 3;
 		slot->lpctl = (d >> 5) & 3;
+
 		slot->pcm8b = d & 0x10;
 		slot->sa = (slot->sa & 0x0FFFF) | ((d & 0xF) << 16);
 		slot->sa &= SCSP_RAM_MASK;
+
+                if (slot->ecnt < SCSP_ENV_DE) scsp_slot_update_keyon(slot);
 
 		if (d & 0x1000) scsp_slot_keyonoff();
 		return;
@@ -762,6 +774,9 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
         case 0x1: // SA(low word)
 		slot->sa = (slot->sa & 0xF0000) | d;
 		slot->sa &= SCSP_RAM_MASK;
+
+                if (slot->ecnt < SCSP_ENV_DE) scsp_slot_update_keyon(slot);
+
 		return;
 
         case 0x2: // LSA
@@ -1381,6 +1396,29 @@ u16 scsp_get_w(u32 a)
 
 #define SCSP_UPDATE_LFO		\
 		slot->lfoinc += slot->lfocnt;
+
+////////////////////////////////////////////////////////////////
+
+static void scsp_slot_update_keyon(slot_t *slot)
+{
+   // set buffer, loop start/end address of the slot
+   if (slot->pcm8b)
+   {
+      slot->buf8 = (s8*) &(scsp.scsp_ram[slot->sa]);
+
+      if ((slot->sa + (slot->lea >> SCSP_FREQ_LB)) > SCSP_RAM_MASK)
+         slot->lea = (SCSP_RAM_MASK - slot->sa) << SCSP_FREQ_LB;
+   }
+   else
+   {
+      slot->buf16 = (s16*) &(scsp.scsp_ram[slot->sa & ~1]);
+
+      if ((slot->sa + (slot->lea >> (SCSP_FREQ_LB - 1))) > SCSP_RAM_MASK)
+         slot->lea = (SCSP_RAM_MASK - slot->sa) << (SCSP_FREQ_LB - 1);
+   }
+
+   SCSP_UPDATE_PHASE
+}
 
 ////////////////////////////////////////////////////////////////
 
@@ -2452,8 +2490,6 @@ void scsp_reset(void)
 		slot->ecnt = SCSP_ENV_DE;		// slot off
 		slot->dislr = slot->disll = 31;	// direct level sound off
 		slot->efslr = slot->efsll = 31;	// effect level sound off
-                slot->buf8 = (s8*)&(scsp.scsp_ram[1]);
-                slot->buf16 = (s16*)&(scsp.scsp_ram[0]);
 	}
 }
 
@@ -3288,6 +3324,34 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 //   AddString(outstring, "Direct data fixed position = \r\n");
 //   AddString(outstring, "Effect data send level = \r\n");
 //   AddString(outstring, "Effect data fixed position = \r\n");
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ScspCommonControlRegisterDebugStats(char *outstring)
+{
+   AddString(outstring, "Memory: %s\r\n", scsp.mem4b ? "4 Mbit" : "2 Mbit");
+   AddString(outstring, "Master volume: %ld\r\n", scsp.mvol);
+   AddString(outstring, "Ring buffer length: %ld\r\n", scsp.rbl);
+   AddString(outstring, "Ring buffer address: %08lX\r\n", scsp.rbp);
+   AddString(outstring, "Monitor slot: %ld\r\n", scsp.mslc);
+   AddString(outstring, "Call address: %ld\r\n", scsp.ca);
+   AddString(outstring, "DMA memory address start: %08lX\r\n", scsp.dmea);
+   AddString(outstring, "DMA register address start: %08lX\r\n", scsp.drga);
+   AddString(outstring, "DMA Flags: %lX\r\n", scsp.dmlen);
+   AddString(outstring, "Timer A counter: %02lX\r\n", scsp.timacnt >> 8);
+   AddString(outstring, "Timer A increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timasd));
+   AddString(outstring, "Timer B counter: %02lX\r\n", scsp.timbcnt >> 8);
+   AddString(outstring, "Timer B increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timbsd));
+   AddString(outstring, "Timer C counter: %02lX\r\n", scsp.timccnt >> 8);
+   AddString(outstring, "Timer C increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timcsd));
+   AddString(outstring, "Sound cpu interrupt pending: %04lX\r\n", scsp.scipd);
+   AddString(outstring, "Sound cpu interrupt enable: %04lX\r\n", scsp.scieb);
+   AddString(outstring, "Sound cpu interrupt level 0: %04lX\r\n", scsp.scilv0);
+   AddString(outstring, "Sound cpu interrupt level 1: %04lX\r\n", scsp.scilv1);
+   AddString(outstring, "Sound cpu interrupt level 2: %04lX\r\n", scsp.scilv2);
+   AddString(outstring, "Main cpu interrupt pending: %04lX\r\n", scsp.mcipd);
+   AddString(outstring, "Main cpu interrupt enable: %04lX\r\n", scsp.mcieb);
 }
 
 //////////////////////////////////////////////////////////////////////////////
