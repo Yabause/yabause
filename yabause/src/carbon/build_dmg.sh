@@ -3,6 +3,7 @@ tmp=`hdid tmp.dmg`
 disk=`echo $tmp | cut -f 1 -d\ `
 cp -R Yabause.app /Volumes/Yabause/
 cp ../../ChangeLog /Volumes/Yabause/
+cp ../../README /Volumes/Yabause/
 cp ../../README.MAC /Volumes/Yabause/
 cp ../../AUTHORS /Volumes/Yabause/
 cp ../../COPYING /Volumes/Yabause/
