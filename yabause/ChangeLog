@@ -1,3 +1,39 @@
+0.8.5 -> 0.8.6
+ 68k:
+  - Fixed a bug which caused the emulator to crash if 68k execution jumped to
+    an invalid address.
+ scsp:
+  - Fixed a bug where the slot buffer pointers weren't set correctly.
+  - Added a function for debugging SCSP registers
+ vdp1:
+  - MODR returns the correct version number now.
+  - Fixed a bug that caused Local Coordinates, etc. commands to not get executed
+    correctly.
+ software video core:
+  - Added vdp2 horizontal flip for cell mode.
+ linux port:
+  - Improved vdp1 window a bit.
+  - Updated website url.
+  - Some cleanups
+ macos port:
+  - Added browse buttons for some settings.
+  - Added universal build support.
+  - Emulation loop was optimized.
+  - Fixed bug when "Run" is selected from the menu.
+  - Audio is now muted when emulator is paused.
+  - Fixed Backup RAM saving.
+  - Fixed a bug that was causing filenames to be parsed wrong.
+  - Other bug fixes and cleanups.
+ windows port:
+  - msys compiling is now fixed.
+  - Windows position is now saved when program exits.
+  - Fixed sound volume adjustment. Should be more accurate now.
+  - Fixed centering bug on joysticks.
+  - Fixed POV hat diagonals.
+  - Sound is now muted in the about dialog.
+  - Other bug fixes.
+ general:
+  - Added COFF file support.
 0.8.0 -> 0.8.5
  scsp:
   - Added functions for dumping individual slots to wav files. 
