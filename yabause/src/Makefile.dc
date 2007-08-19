@@ -26,7 +26,8 @@ KOS_CFLAGS += -I. -DDEBUG -DNO_CLI
 
 OBJS = bios.o cdbase.o cheat.o cs0.o cs1.o cs2.o debug.o error.o m68kd.o \
  memory.o netlink.o peripheral.o profile.o scsp.o scu.o sh2core.o sh2idle.o \
- sh2int.o sh2d.o smpc.o vdp1.o vdp2.o yabause.o
+ sh2int.o sh2d.o smpc.o vdp1.o vdp2.o yabause.o m68kcore.o coffelf.o \
+ m68kc68k.o
 C68K_OBJS = c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o
 ARCH_OBJS = dreamcast/yui.o dreamcast/perdc.o dreamcast/viddc.o \
  dreamcast/localtime.o dreamcast/cd.o

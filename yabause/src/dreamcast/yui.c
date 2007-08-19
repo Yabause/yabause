@@ -29,7 +29,9 @@
 
 #include "yui.h"
 #include "peripheral.h"
-#include "../cs0.h"
+#include "cs0.h"
+#include "m68kcore.h"
+#include "m68kc68k.h"
 #include "dreamcast/perdc.h"
 #include "dreamcast/viddc.h"
 
@@ -60,6 +62,12 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
+M68K_struct * M68KCoreList[] = {
+    &M68KDummy,
+    &M68KC68K,
+    NULL
+};
+
 const char *bios = "/ram/saturn.bin";
 
 int YuiInit(void)   {
@@ -68,6 +76,7 @@ int YuiInit(void)   {
     yinit.percoretype = PERCORE_DC;
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_DC;
+    yinit.m68kcoretype = M68KCORE_C68K;
     yinit.sndcoretype = SNDCORE_DUMMY;
     yinit.cdcoretype = CDCORE_ARCH;
     yinit.carttype = CART_NONE;
@@ -122,7 +131,7 @@ void DoGui()  {
     while(!start_pressed)   {
         offset = 64 * 640 + 64; /* 64 pixels in from the left, 64 down */
         
-        bfont_draw_str(vram_s + offset, 640, 0, "Yabause 0.8.5");
+        bfont_draw_str(vram_s + offset, 640, 0, "Yabause 0.8.6");
         offset += 640 * 128;
 
         if(phase == 0)  {
