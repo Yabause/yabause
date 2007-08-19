@@ -155,7 +155,7 @@ GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata,
 	GtkWidget * widget;
 	YuiWindow * yw;
 
-	widget = GTK_WIDGET(g_object_new(yui_window_get_type(), 0));
+	widget = GTK_WIDGET(g_object_new(yui_window_get_type(), NULL));
 	yw = YUI_WINDOW(widget);
 
 	yw->actions = act;

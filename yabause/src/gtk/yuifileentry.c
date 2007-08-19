@@ -100,7 +100,7 @@ GtkWidget * yui_file_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 	gchar * entryText;
 
 	entry = GTK_WIDGET(g_object_new(yui_file_entry_get_type(), "spacing", 10,
-		"key-file", keyfile, "group", group, "key", key, 0));
+		"key-file", keyfile, "group", group, "key", key, NULL));
 	yfe = YUI_FILE_ENTRY(entry);
 
 	if (label) {

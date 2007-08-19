@@ -118,7 +118,7 @@ GtkWidget * yui_range_new(GKeyFile * keyfile, const gchar * group, const gchar *
 	guint i;
 
 	entry = GTK_WIDGET(g_object_new(yui_range_get_type(), "spacing", 10,
-		"key-file", keyfile, "group", group, "key", key, "items", items, 0));
+		"key-file", keyfile, "group", group, "key", key, "items", items, NULL));
 	yfe = YUI_RANGE(entry);
 
 	current = g_key_file_get_value(yfe->keyfile, yfe->group, yfe->key, 0);

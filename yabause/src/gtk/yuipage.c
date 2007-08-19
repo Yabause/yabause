@@ -61,7 +61,7 @@ GtkWidget * yui_page_new(GKeyFile * keyfile) {
 	GtkWidget * widget;
 	YuiPage * yp;
 
-	widget = GTK_WIDGET(g_object_new(yui_page_get_type(), 0));
+	widget = GTK_WIDGET(g_object_new(yui_page_get_type(), NULL));
 	yp = YUI_PAGE(widget);
 
 	yp->keyfile = keyfile;
