@@ -34,6 +34,7 @@
 #include <IOKit/storage/IOCDTypes.h>
 #include <IOKit/storage/IOCDMedia.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <util.h>
 
 #include "cdbase.h"
 
@@ -57,14 +58,22 @@ int hCDROM;
 char *BSDDeviceName = NULL;
 
 int MacOSXCDInit(const char *cdrom_name)
-{	
-	if ((hCDROM = open(cdrom_name, O_RDONLY)) == -1)
+{
+	char *ExpandedName = NULL;
+	char *Device = strrchr(cdrom_name, '/');
+
+	if (Device == NULL)
+		Device = cdrom_name;
+	else
+		Device++;
+
+	if ((hCDROM = opendev(Device, O_RDONLY, OPENDEV_PART, &ExpandedName)) == -1)
 	{
 			return -1;
 	}
 	
-	BSDDeviceName = malloc(strlen(cdrom_name)+1);
-	strcpy(BSDDeviceName, cdrom_name);
+	BSDDeviceName = malloc(strlen(ExpandedName)+1);
+	strcpy(BSDDeviceName, ExpandedName);
 	
 	return 0;
 }
