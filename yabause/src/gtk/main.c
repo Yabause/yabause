@@ -203,7 +203,22 @@ int main(int argc, char *argv[]) {
 #endif
 	LogStart();
 	LogChangeOutput( DEBUG_CALLBACK, YuiErrorMsg );
-	inifile = g_build_filename(g_get_home_dir(), ".yabause.ini", NULL);
+	inifile = g_build_filename(g_get_user_config_dir(), "yabause.ini", NULL);
+
+	if (! g_file_test(inifile, G_FILE_TEST_EXISTS)) {
+		// no inifile found, but it could in the old location
+		gchar * oldinifile;
+
+		oldinifile = g_build_filename(g_get_home_dir(), ".yabause.ini", NULL);
+
+		if (g_file_test(oldinifile, G_FILE_TEST_EXISTS)) {
+			// ok, we found an old .ini file, let's copy the content
+			gchar * data;
+
+			g_file_get_contents(oldinifile, &data, NULL, NULL);
+			g_file_set_contents(inifile, data, -1, NULL);
+		}
+	}
 	
 	keyfile = g_key_file_new();
 
