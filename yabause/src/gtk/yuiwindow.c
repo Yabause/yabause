@@ -274,10 +274,6 @@ void yui_window_invalidate(GtkWidget * w, YuiWindow * yui ) {
     g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);
 }
 
-void yui_window_screenshot(YuiWindow * w) {
-	yui_gl_screenshot(YUI_GL(w->area));
-}
-
 void yui_window_set_fullscreen(YuiWindow * yui, gboolean f) {
 	if (f) {
 		gtk_widget_hide(yui->menu);

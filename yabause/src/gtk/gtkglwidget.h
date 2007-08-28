@@ -60,7 +60,6 @@ GtkWidget *	yui_gl_new		(void);
 int		yui_gl_draw		(YuiGl *);
 int		yui_gl_draw_pause	(YuiGl *);
 void		yui_gl_dump_screen	(YuiGl *);
-void		yui_gl_screenshot	(YuiGl *);
 
 G_END_DECLS
 

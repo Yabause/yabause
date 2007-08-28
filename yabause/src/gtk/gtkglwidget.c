@@ -158,20 +158,6 @@ void yui_gl_dump_screen(YuiGl * glxarea) {
 #endif
 }
 
-void yui_gl_screenshot(YuiGl * glxarea) {
-	GdkPixbuf * pixbuf, * correct;
-       
-	yui_gl_dump_screen(glxarea);
-	pixbuf = gdk_pixbuf_new_from_data(glxarea->pixels, GDK_COLORSPACE_RGB, FALSE, 8,
-			glxarea->pixels_width, glxarea->pixels_height, glxarea->pixels_rowstride, NULL, NULL);
-	correct = gdk_pixbuf_flip(pixbuf, FALSE);
-
-	gdk_pixbuf_save(correct, "screenshot.png", "png", NULL, NULL);
-
-	g_object_unref(pixbuf);
-	g_object_unref(correct);
-}
-
 GType yui_gl_get_type (void) {
   static GType yfe_type = 0;
 

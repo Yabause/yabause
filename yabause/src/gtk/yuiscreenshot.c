@@ -122,7 +122,7 @@ static gboolean yui_screenshot_expose(GtkWidget *widget, GdkEventExpose *event, 
 }
 
 static void yui_screenshot_update(YuiScreenshot	* ys, gpointer data) {
-	yui_gl_dump_screen(yui->area);
+	yui_gl_dump_screen(YUI_GL(yui->area));
 	gtk_widget_queue_draw_area(ys->image, 0, 0, 320, 224);
 }
 
