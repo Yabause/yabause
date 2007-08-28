@@ -2,6 +2,7 @@
  linux port:
   - fixed a bug on 64 bits CPU
   - changed the location of the ini file to conform to XDG specification
+  - removed some old useless code
 0.8.5 -> 0.8.6
  68k:
   - Fixed a bug which caused the emulator to crash if 68k execution jumped to
