@@ -1751,7 +1751,6 @@ void VIDOGLVdp1PolylineDraw(void)
    glEnd();
    glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
 */
-   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1764,6 +1763,8 @@ void VIDOGLVdp1LineDraw(void)
    u16 CMDPMOD;
    u8 alpha;
    s32 priority;
+   YglSprite polygon;
+   YglTexture texture;
 
    X[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
    Y[0] = Vdp1Regs->localY + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
@@ -1783,14 +1784,25 @@ void VIDOGLVdp1LineDraw(void)
 
    priority = Vdp2Regs->PRISA & 0x7;
 
-/*
-   glColor4ub(((color & 0x1F) << 3), ((color & 0x3E0) >> 2), ((color & 0x7C00) >> 7), alpha);
-   glBegin(GL_LINES);
-   glVertex2i(X[0], Y[0]);
-   glVertex2i(X[1], Y[1]);
-   glEnd();
-   glColor4ub(0xFF, 0xFF, 0xFF, 0xFF);
-*/
+   polygon.vertices[0] = (int)((float)X[0] * vdp1wratio);
+   polygon.vertices[1] = (int)((float)Y[0] * vdp1hratio);
+   polygon.vertices[2] = (int)((float)X[0] * vdp1wratio)+1;
+   polygon.vertices[3] = (int)((float)Y[0] * vdp1hratio)+1;
+   polygon.vertices[4] = (int)((float)X[1] * vdp1wratio);
+   polygon.vertices[5] = (int)((float)Y[1] * vdp1hratio);
+   polygon.vertices[6] = (int)((float)X[1] * vdp1wratio)+1;
+   polygon.vertices[7] = (int)((float)Y[1] * vdp1hratio)+1;
+
+   polygon.w = 1;
+   polygon.h = 1;
+   polygon.flip = 0;
+
+   YglQuad(&polygon, &texture);
+
+   if (color & 0x8000)
+      *texture.textdata = COLOR_ADD(SAT2YAB1(alpha,color), vdp1cor, vdp1cog, vdp1cob);
+   else
+      *texture.textdata = COLOR_ADD(Vdp2ColorRamGetColor(color, alpha), vdp1cor, vdp1cog, vdp1cob);
 }
 
 //////////////////////////////////////////////////////////////////////////////
