@@ -467,6 +467,18 @@ int main () {
   InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG3"), 12, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG3);
   InsertMenuItemTextWithCFString(menu, CFSTR("Hide RBG0"), 13, 0, YUI_COMMAND_TOGGLE_RBG0);
   InsertMenuItemTextWithCFString(menu, CFSTR("Show RBG0"), 14, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_RBG0);
+
+  SetMenuItemCommandKey(menu, 6, 0, '1');
+  SetMenuItemCommandKey(menu, 7, 0, '1');
+  SetMenuItemCommandKey(menu, 8, 0, '2');
+  SetMenuItemCommandKey(menu, 9, 0, '2');
+  SetMenuItemCommandKey(menu, 10, 0, '3');
+  SetMenuItemCommandKey(menu, 11, 0, '3');
+  SetMenuItemCommandKey(menu, 12, 0, '4');
+  SetMenuItemCommandKey(menu, 13, 0, '4');
+  SetMenuItemCommandKey(menu, 14, 0, '5');
+  SetMenuItemCommandKey(menu, 15, 0, '5');
+
   InsertMenu(menu, 0);
   DrawMenuBar();
 
