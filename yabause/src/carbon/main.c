@@ -35,6 +35,7 @@
 #define YUI_COMMAND_TOGGLE_NBG2	8
 #define YUI_COMMAND_TOGGLE_NBG3	9
 #define YUI_COMMAND_TOGGLE_RBG0	10
+#define YUI_COMMAND_TOGGLE_VDP1	11
 
 AGLContext  myAGLContext = NULL;
 yabauseinit_struct yinit;
@@ -284,20 +285,20 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
         case YUI_COMMAND_SHOW_CPU:
             ShowCPUStatusWindow();
             menu = GetMenuRef(1);
-            ChangeMenuItemAttributes(menu, 4, kMenuItemAttrHidden, 0);
-            ChangeMenuItemAttributes(menu, 5, 0, kMenuItemAttrHidden);
+            ChangeMenuItemAttributes(menu, 5, kMenuItemAttrHidden, 0);
+            ChangeMenuItemAttributes(menu, 6, 0, kMenuItemAttrHidden);
             break;
         case YUI_COMMAND_HIDE_CPU:
             HideCPUStatusWindow();
             menu = GetMenuRef(1);
-            ChangeMenuItemAttributes(menu, 4, 0, kMenuItemAttrHidden);
-            ChangeMenuItemAttributes(menu, 5, kMenuItemAttrHidden, 0);
+            ChangeMenuItemAttributes(menu, 5, 0, kMenuItemAttrHidden);
+            ChangeMenuItemAttributes(menu, 6, kMenuItemAttrHidden, 0);
             break;
 	case YUI_COMMAND_TOGGLE_NBG0:
 		if(VIDCore)
 		{
 			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 6);
+			ToggleLayerMenuItem(menu, 8);
 			ToggleNBG0();
 		}
 		break;
@@ -305,7 +306,7 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
 		if(VIDCore)
 		{
 			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 8);
+			ToggleLayerMenuItem(menu, 10);
 			ToggleNBG1();
 		}
 		break;
@@ -313,7 +314,7 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
 		if(VIDCore)
 		{
 			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 10);
+			ToggleLayerMenuItem(menu, 12);
 			ToggleNBG2();
 		}
 		break;
@@ -321,7 +322,7 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
 		if(VIDCore)
 		{
 			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 12);
+			ToggleLayerMenuItem(menu, 14);
 			ToggleNBG3();
 		}
 		break;
@@ -329,8 +330,16 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
 		if(VIDCore)
 		{
 			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 14);
+			ToggleLayerMenuItem(menu, 16);
 			ToggleRBG0();
+		}
+		break;
+	case YUI_COMMAND_TOGGLE_VDP1:
+		if(VIDCore)
+		{
+			menu = GetMenuRef(1);
+			ToggleLayerMenuItem(menu, 18);
+			ToggleVDP1();
 		}
 		break;
           default:
