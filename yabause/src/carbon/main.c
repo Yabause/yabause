@@ -30,6 +30,11 @@
 #define YUI_COMMAND_RESUME   3
 #define YUI_COMMAND_SHOW_CPU 4
 #define YUI_COMMAND_HIDE_CPU 5
+#define YUI_COMMAND_TOGGLE_NBG0	6
+#define YUI_COMMAND_TOGGLE_NBG1	7
+#define YUI_COMMAND_TOGGLE_NBG2	8
+#define YUI_COMMAND_TOGGLE_NBG3	9
+#define YUI_COMMAND_TOGGLE_RBG0	10
 
 AGLContext  myAGLContext = NULL;
 yabauseinit_struct yinit;
@@ -200,6 +205,24 @@ static void YuiPause(const int Pause)
     SetEventLoopTimerNextFireTime(EventTimer, Interval);
 }
 
+static void ToggleLayerMenuItem(MenuRef menu, MenuItemIndex BaseItemIndex)
+{
+	MenuItemAttributes ItemAttributes;
+
+	GetMenuItemAttributes(menu, BaseItemIndex, &ItemAttributes);
+
+	if(ItemAttributes & kMenuItemAttrHidden)
+	{
+		ChangeMenuItemAttributes(menu, BaseItemIndex, 0, kMenuItemAttrHidden);
+		ChangeMenuItemAttributes(menu, BaseItemIndex+1, kMenuItemAttrHidden, 0);
+	}
+	else
+	{
+		ChangeMenuItemAttributes(menu, BaseItemIndex, kMenuItemAttrHidden, 0);
+		ChangeMenuItemAttributes(menu, BaseItemIndex+1, 0, kMenuItemAttrHidden);
+	}
+}
+
 OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent, void* userData)
 {
   OSStatus ret = noErr;
@@ -270,6 +293,46 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
             ChangeMenuItemAttributes(menu, 4, 0, kMenuItemAttrHidden);
             ChangeMenuItemAttributes(menu, 5, kMenuItemAttrHidden, 0);
             break;
+	case YUI_COMMAND_TOGGLE_NBG0:
+		if(VIDCore)
+		{
+			menu = GetMenuRef(1);
+			ToggleLayerMenuItem(menu, 6);
+			ToggleNBG0();
+		}
+		break;
+	case YUI_COMMAND_TOGGLE_NBG1:
+		if(VIDCore)
+		{
+			menu = GetMenuRef(1);
+			ToggleLayerMenuItem(menu, 8);
+			ToggleNBG1();
+		}
+		break;
+	case YUI_COMMAND_TOGGLE_NBG2:
+		if(VIDCore)
+		{
+			menu = GetMenuRef(1);
+			ToggleLayerMenuItem(menu, 10);
+			ToggleNBG2();
+		}
+		break;
+	case YUI_COMMAND_TOGGLE_NBG3:
+		if(VIDCore)
+		{
+			menu = GetMenuRef(1);
+			ToggleLayerMenuItem(menu, 12);
+			ToggleNBG3();
+		}
+		break;
+	case YUI_COMMAND_TOGGLE_RBG0:
+		if(VIDCore)
+		{
+			menu = GetMenuRef(1);
+			ToggleLayerMenuItem(menu, 14);
+			ToggleRBG0();
+		}
+		break;
           default:
             ret = eventNotHandledErr;
             printf("unhandled command\n");
@@ -394,6 +457,16 @@ int main () {
   InsertMenuItemTextWithCFString(menu, CFSTR("Resume"), 2, kMenuItemAttrHidden, YUI_COMMAND_RESUME);
   InsertMenuItemTextWithCFString(menu, CFSTR("Show CPU status"), 3, 0, YUI_COMMAND_SHOW_CPU);
   InsertMenuItemTextWithCFString(menu, CFSTR("Hide CPU status"), 4, kMenuItemAttrHidden, YUI_COMMAND_HIDE_CPU);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Hide NBG0"), 5, 0, YUI_COMMAND_TOGGLE_NBG0);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG0"), 6, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG0);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Hide NBG1"), 7, 0, YUI_COMMAND_TOGGLE_NBG1);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG1"), 8, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG1);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Hide NBG2"), 9, 0, YUI_COMMAND_TOGGLE_NBG2);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG2"), 10, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG2);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Hide NBG3"), 11, 0, YUI_COMMAND_TOGGLE_NBG3);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG3"), 12, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG3);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Hide RBG0"), 13, 0, YUI_COMMAND_TOGGLE_RBG0);
+  InsertMenuItemTextWithCFString(menu, CFSTR("Show RBG0"), 14, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_RBG0);
   InsertMenu(menu, 0);
   DrawMenuBar();
 
