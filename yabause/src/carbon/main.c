@@ -446,41 +446,13 @@ OSStatus MySetWindowAsDrawableObject  (WindowRef window)
 int main () {
   MenuRef menu;
   EventLoopTimerRef nextFrameTimer;
+  IBNibRef menuNib;
 
   WindowRef window = CreateMyWindow();
   MySetWindowAsDrawableObject(window);
 
-  CreateNewMenu(1, 0, &menu);
-  SetMenuTitleWithCFString(menu, CFSTR("Emulation"));
-  InsertMenuItemTextWithCFString(menu, CFSTR("Run"), 0, 0, YUI_COMMAND_RUN);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Pause"), 1, 0, YUI_COMMAND_PAUSE);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Resume"), 2, kMenuItemAttrHidden, YUI_COMMAND_RESUME);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Show CPU status"), 3, 0, YUI_COMMAND_SHOW_CPU);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Hide CPU status"), 4, kMenuItemAttrHidden, YUI_COMMAND_HIDE_CPU);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Hide NBG0"), 5, 0, YUI_COMMAND_TOGGLE_NBG0);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG0"), 6, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG0);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Hide NBG1"), 7, 0, YUI_COMMAND_TOGGLE_NBG1);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG1"), 8, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG1);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Hide NBG2"), 9, 0, YUI_COMMAND_TOGGLE_NBG2);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG2"), 10, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG2);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Hide NBG3"), 11, 0, YUI_COMMAND_TOGGLE_NBG3);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Show NBG3"), 12, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_NBG3);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Hide RBG0"), 13, 0, YUI_COMMAND_TOGGLE_RBG0);
-  InsertMenuItemTextWithCFString(menu, CFSTR("Show RBG0"), 14, kMenuItemAttrHidden, YUI_COMMAND_TOGGLE_RBG0);
-
-  SetMenuItemCommandKey(menu, 6, 0, '1');
-  SetMenuItemCommandKey(menu, 7, 0, '1');
-  SetMenuItemCommandKey(menu, 8, 0, '2');
-  SetMenuItemCommandKey(menu, 9, 0, '2');
-  SetMenuItemCommandKey(menu, 10, 0, '3');
-  SetMenuItemCommandKey(menu, 11, 0, '3');
-  SetMenuItemCommandKey(menu, 12, 0, '4');
-  SetMenuItemCommandKey(menu, 13, 0, '4');
-  SetMenuItemCommandKey(menu, 14, 0, '5');
-  SetMenuItemCommandKey(menu, 15, 0, '5');
-
-  InsertMenu(menu, 0);
-  DrawMenuBar();
+  CreateNibReference(CFSTR("menu"), &menuNib);
+  SetMenuBarFromNib(menuNib, CFSTR("MenuBar"));
 
   EnableMenuCommand(NULL, kHICommandPreferences);
 
