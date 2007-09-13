@@ -20,6 +20,7 @@
 
 #include <gtk/gtk.h>
 
+#include "yuiviewer.h"
 #include "yuivdp1.h"
 #include "../vdp1.h"
 #include "../yabause.h"
@@ -30,7 +31,7 @@ static void yui_vdp1_init		(YuiVdp1      * yfe);
 static void yui_vdp1_spin_cursor_changed(GtkWidget * spin, YuiVdp1 * vdp1);
 static void yui_vdp1_view_cursor_changed(GtkWidget * view, YuiVdp1 * vdp1);
 static void yui_vdp1_clear(YuiVdp1 * vdp1);
-static void yui_vdp1_expose(GtkWidget *widget, GdkEventExpose *event, gpointer data);
+static void yui_vdp1_draw(YuiVdp1 * vdp1);
 
 GType yui_vdp1_get_type (void) {
   static GType yfe_type = 0;
@@ -110,7 +111,7 @@ static void yui_vdp1_init (YuiVdp1 * yv) {
 		gtk_container_add(GTK_CONTAINER(scroll), text);
 		gtk_box_pack_start(GTK_BOX(vbox2), scroll, TRUE, TRUE, 4);
 	}
-	yv->image = gtk_drawing_area_new();
+	yv->image = yui_viewer_new();
 	gtk_box_pack_start(GTK_BOX(vbox2), yv->image, TRUE, TRUE, 4);
 
 	hbox2 = gtk_hbox_new(FALSE, 2);
@@ -131,7 +132,7 @@ static void yui_vdp1_init (YuiVdp1 * yv) {
 	yv->cursor = 0;
 	yv->texture = NULL;
 
-	g_signal_connect(yv->image, "expose_event", G_CALLBACK(yui_vdp1_expose), yv);
+	//g_signal_connect(yv->image, "expose_event", G_CALLBACK(yui_vdp1_expose), yv);
 }
 
 static gulong paused_handler;
@@ -201,7 +202,7 @@ void yui_vdp1_fill(YuiVdp1 * vdp1) {
 	Vdp1DebugCommand(vdp1->cursor, nameTemp);
 	gtk_text_buffer_set_text(vdp1->buffer, g_strstrip(nameTemp), -1);
 	vdp1->texture = Vdp1DebugTexture(vdp1->cursor, &vdp1->w, &vdp1->h);
-	gtk_widget_queue_draw_area(vdp1->image, 0, 0, vdp1->image->allocation.width, vdp1->image->allocation.height);
+	yui_vdp1_draw(vdp1);
 }
 
 static void yui_vdp1_spin_cursor_changed(GtkWidget * spin, YuiVdp1 * vdp1) {
@@ -220,7 +221,7 @@ static void yui_vdp1_spin_cursor_changed(GtkWidget * spin, YuiVdp1 * vdp1) {
 	Vdp1DebugCommand(vdp1->cursor, nameTemp);
 	gtk_text_buffer_set_text(vdp1->buffer, g_strstrip(nameTemp), -1);
 	vdp1->texture = Vdp1DebugTexture(vdp1->cursor, &vdp1->w, &vdp1->h);
-	gtk_widget_queue_draw_area(vdp1->image, 0, 0, vdp1->image->allocation.width, vdp1->image->allocation.height);
+	yui_vdp1_draw(vdp1);
 }
 
 static void yui_vdp1_view_cursor_changed(GtkWidget * view, YuiVdp1 * vdp1) {
@@ -263,19 +264,18 @@ static void yui_vdp1_clear(YuiVdp1 * vdp1) {
 	gtk_text_buffer_set_text(vdp1->buffer, "", -1);
 }
 
-static void yui_vdp1_expose(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+static void yui_vdp1_draw(YuiVdp1 * vdp1) {
 	GdkPixbuf * pixbuf;
-	YuiVdp1 * vdp1 = data;
-	int rowstride;
-
-	if ((vdp1->texture != NULL) && (vdp1->w > 0) && (vdp1->h > 0)) {
-		rowstride = vdp1->w * 4;
-		rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
-		pixbuf = gdk_pixbuf_new_from_data((const guchar *) vdp1->texture, GDK_COLORSPACE_RGB, TRUE, 8,
-			vdp1->w, vdp1->h, rowstride, NULL, NULL);
-
-		gdk_draw_pixbuf(GTK_WIDGET(vdp1->image)->window, NULL, pixbuf, 0, 0, 0, 0, vdp1->w, vdp1->h, GDK_RGB_DITHER_NONE, 0, 0);
-
-		g_object_unref(pixbuf);
-	}
+ 	int rowstride;
+ 
+ 	if ((vdp1->texture != NULL) && (vdp1->w > 0) && (vdp1->h > 0)) {
+ 		rowstride = vdp1->w * 4;
+ 		rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
+ 		pixbuf = gdk_pixbuf_new_from_data((const guchar *) vdp1->texture, GDK_COLORSPACE_RGB, TRUE, 8,
+ 			vdp1->w, vdp1->h, rowstride, NULL, NULL);
+ 
+ 		yui_viewer_draw_pixbuf(YUI_VIEWER(vdp1->image), pixbuf, vdp1->w, vdp1->h);
+ 
+ 		g_object_unref(pixbuf);
+ 	}
 }

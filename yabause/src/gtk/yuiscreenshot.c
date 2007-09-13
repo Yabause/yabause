@@ -1,4 +1,4 @@
-/*  Copyright 2006 Guillaume Duhamel
+/*  Copyright 2006-2007 Guillaume Duhamel
     Copyright 2005-2006 Fabien Coulon
 
     This file is part of Yabause.
@@ -20,12 +20,12 @@
 
 #include "yuiscreenshot.h"
 #include "gtkglwidget.h"
+#include "yuiviewer.h"
 
 static void yui_screenshot_class_init	(YuiScreenshotClass * klass);
 static void yui_screenshot_init		(YuiScreenshot      * yfe);
-static gboolean yui_screenshot_expose(GtkWidget *widget, GdkEventExpose *event, gpointer data);
 static void yui_screenshot_update	(YuiScreenshot	* ys, gpointer data);
-static void yui_screenshot_save		(GtkWidget * widget, gpointer data);
+static gboolean yui_screenshot_draw(YuiScreenshot * ys);
 
 GType yui_screenshot_get_type (void) {
   static GType yfe_type = 0;
@@ -67,7 +67,7 @@ static void yui_screenshot_init (YuiScreenshot * yv) {
 	box = gtk_vbox_new(FALSE, 4);
 	gtk_container_add(GTK_CONTAINER(yv), box);
 
-	yv->image = gtk_drawing_area_new();
+	yv->image = yui_viewer_new();
 	gtk_box_pack_start(GTK_BOX(box), yv->image, FALSE, FALSE, 0);
 	gtk_widget_set_size_request(GTK_WIDGET(yv->image), 320, 224);
 
@@ -80,13 +80,11 @@ static void yui_screenshot_init (YuiScreenshot * yv) {
 
 	button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, FALSE, 0);
-	g_signal_connect(button, "clicked", G_CALLBACK(yui_screenshot_save), NULL);
+	g_signal_connect_swapped(button, "clicked", G_CALLBACK(yui_viewer_save), yv->image);
 
 	button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, FALSE, 0);
 	g_signal_connect_swapped(button, "clicked", G_CALLBACK(gtk_widget_destroy), yv);
-
-	g_signal_connect(yv->image, "expose_event", G_CALLBACK(yui_screenshot_expose), yv);
 }
 
 GtkWidget * yui_screenshot_new(YuiWindow * y) {
@@ -101,59 +99,27 @@ GtkWidget * yui_screenshot_new(YuiWindow * y) {
 	gtk_widget_show_all(dialog);
        
 	yui_gl_dump_screen(YUI_GL(yui->area));
+	yui_screenshot_draw(yv);
 
 	return dialog;
 }
 
-static gboolean yui_screenshot_expose(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+static void yui_screenshot_update(YuiScreenshot	* ys, gpointer data) {
+	yui_gl_dump_screen(YUI_GL(yui->area));
+	yui_screenshot_draw(ys);
+}
+
+static gboolean yui_screenshot_draw(YuiScreenshot * ys) {
 	GdkPixbuf * pixbuf, * correct;
 
 	pixbuf = gdk_pixbuf_new_from_data(YUI_GL(yui->area)->pixels, GDK_COLORSPACE_RGB, FALSE, 8,
 			YUI_GL(yui->area)->pixels_width, YUI_GL(yui->area)->pixels_height, YUI_GL(yui->area)->pixels_rowstride, NULL, NULL);
 	correct = gdk_pixbuf_flip(pixbuf, FALSE);
 
-	gdk_draw_pixbuf(GTK_WIDGET(YUI_SCREENSHOT(data)->image)->window, NULL, correct, 0, 0, 0, 0,
-			  YUI_GL(yui->area)->pixels_width, YUI_GL(yui->area)->pixels_height, GDK_RGB_DITHER_NONE, 0, 0);
+	yui_viewer_draw_pixbuf(YUI_VIEWER(ys->image), correct, YUI_GL(yui->area)->pixels_width, YUI_GL(yui->area)->pixels_height);
 
 	g_object_unref(pixbuf);
 	g_object_unref(correct);
 
 	return TRUE;
-}
-
-static void yui_screenshot_update(YuiScreenshot	* ys, gpointer data) {
-	yui_gl_dump_screen(YUI_GL(yui->area));
-	gtk_widget_queue_draw_area(ys->image, 0, 0, 320, 224);
-}
-
-static void yui_screenshot_save(GtkWidget * widget, gpointer data) {
-	GdkPixbuf * pixbuf, * correct;
-        GtkWidget * file_selector;
-        gint result;
-	char * filename;
-
-        file_selector = gtk_file_chooser_dialog_new ("Please choose a file", NULL, GTK_FILE_CHOOSER_ACTION_SAVE,
-                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
-
-        gtk_widget_show(file_selector);
-
-        result = gtk_dialog_run(GTK_DIALOG(file_selector));
-
-        switch(result) {
-                case GTK_RESPONSE_ACCEPT:
-			filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector));
-			pixbuf = gdk_pixbuf_new_from_data(YUI_GL(yui->area)->pixels, GDK_COLORSPACE_RGB, FALSE, 8,
-				YUI_GL(yui->area)->pixels_width, YUI_GL(yui->area)->pixels_height, YUI_GL(yui->area)->pixels_rowstride, NULL, NULL);
-			correct = gdk_pixbuf_flip(pixbuf, FALSE);
-
-			gdk_pixbuf_save(correct, filename, "png", NULL, NULL);
-
-			g_object_unref(pixbuf);
-			g_object_unref(correct);
-                        break;
-                case GTK_RESPONSE_CANCEL:
-                        break;
-        }
-
-        gtk_widget_destroy(file_selector);
 }
