@@ -26,6 +26,7 @@
 #include "vdp2.h"
 #include "yabause.h"
 #include "ygl.h"
+#include "yui.h"
 
 #if defined WORDS_BIGENDIAN
 #define SAT2YAB1(alpha,temp)		(alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
@@ -1020,7 +1021,7 @@ static INLINE void ReadPlaneSize(vdp2draw_struct *info, u16 reg)
       case 3:
          info->planew = info->planeh = 2;
          break;
-      default: // Not sure what 0x2 does
+      default: // Not sure what 0x2 does, though a few games seem to use it
          info->planew = info->planeh = 1;
          break;
    }
@@ -1451,7 +1452,41 @@ static INLINE void ReadCoefficient(vdp2rotationparameter_struct *parameter, u32 
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_struct *parameter, YglTexture *texture)
+static INLINE u32 Vdp2RoationFetchPixel(vdp2draw_struct *info, int x, int y, int cellw)
+{
+   u32 dot;
+
+   switch(info->colornumber)
+   {
+      case 0: // 4 BPP
+         dot = T1ReadByte(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) / 2) & 0x7FFFF));
+         if (!(x & 0x1)) dot >>= 4; 
+         if (!(dot & 0xF) && info->transparencyenable) return 0x00000000;
+         else return Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
+      case 1: // 8 BPP
+         dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (y * cellw) + x) & 0x7FFFF));
+         if (!(dot & 0xFF) && info->transparencyenable) return 0x00000000;
+         else return Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
+      case 2: // 16 BPP(palette)
+         dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
+         if ((dot == 0) && info->transparencyenable) return 0x00000000;
+         else return Vdp2ColorRamGetColor(info->coloroffset + dot, info->alpha);
+      case 3: // 16 BPP(RGB)   
+         dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
+         if (!(dot & 0x8000) && info->transparencyenable) return 0x00000000;
+         else return SAT2YAB1(0xFF, dot);
+      case 4: // 32 BPP
+         dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
+         if (!(dot & 0x80000000) && info->transparencyenable) return 0x00000000;
+         else return SAT2YAB2(info->alpha, (dot >> 16), dot);
+      default:
+         return 0;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_struct *parameter, YglTexture *texture)
 {
    if (!parameter->coefenab)
    {
@@ -1488,7 +1523,7 @@ static INLINE void Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter
          }
          else
          {
-            Vdp2DrawMap(&info, &texture);
+            Vdp2DrawMap(info, texture);
             return;
          }
       }
@@ -1500,6 +1535,11 @@ static INLINE void Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter
       int i, j;
       int x, y;
       int cellw, cellh;
+      int pagepixelwh;
+      int planepixelwidth;
+      int planepixelheight;
+      int screenwidth;
+      int screenheight;
 
       CalculateRotationValues(parameter);
 
@@ -1511,11 +1551,29 @@ static INLINE void Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter
       info->vertices[5] = vdp2height;
       info->vertices[6] = 0;
       info->vertices[7] = vdp2height;
+
       cellw = info->cellw;
       cellh = info->cellh;
       info->cellw = vdp2width;
       info->cellh = vdp2height;
+      info->flipfunction = 0;
       YglQuad((YglSprite *)info, texture);
+
+      if (!info->isbitmap)
+      {
+         pagepixelwh=64*8;
+         planepixelwidth=info->planew*pagepixelwh;
+         planepixelheight=info->planeh*pagepixelwh;
+         screenwidth=4*planepixelwidth;
+         screenheight=4*planepixelheight;
+      }
+      else
+      {
+         planepixelwidth=0;
+         planepixelheight=0;
+         screenwidth=0;
+         screenheight=0;
+      }
 
       for (j = 0; j < vdp2height; j++)
       {
@@ -1530,7 +1588,6 @@ static INLINE void Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter
 
          for (i = 0; i < vdp2width; i++)
          {
-            u32 dot;
             u32 color;
 
             if (parameter->deltaKAx != 0)
@@ -1557,46 +1614,89 @@ static INLINE void Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter
                x &= cellw-1;
                y &= cellh-1;
 
-               switch(info->colornumber)
-               {
-                  case 0: // 4 BPP
-                     dot = T1ReadByte(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) / 2) & 0x7FFFF));
-                     if (!(x & 0x1)) dot >>= 4; 
-                     if (!(dot & 0xF) && info->transparencyenable) color = 0x00000000;
-                     else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
-                     break;
-                  case 1: // 8 BPP
-                     dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (y * cellw) + x) & 0x7FFFF));
-                     if (!(dot & 0xFF) && info->transparencyenable) color = 0x00000000;
-                     else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
-                     break;
-                  case 2: // 16 BPP(palette)
-                     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
-                     if ((dot == 0) && info->transparencyenable) color = 0x00000000;
-                     else color = Vdp2ColorRamGetColor(info->coloroffset + dot, info->alpha);
-                     break;
-                  case 3: // 16 BPP(RGB)   
-                     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
-                     if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
-                     else color = SAT2YAB1(0xFF, dot);
-                     break;
-                  case 4: // 32 BPP
-                     dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
-                     if (!(dot & 0x80000000) && info->transparencyenable) color = 0x00000000;
-                     else color = SAT2YAB2(info->alpha, (dot >> 16), dot);
-                     break;
-                  default:
-                     color = 0;
-                     break;
-               }
+               // Fetch Pixel
+               color = Vdp2RoationFetchPixel(info, x, y, cellw);
             }
             else
             {
                // Tile
-//               color = SAT2YAB1(0xFF, 0x801F);
-               color = 0x00000000;
+               int planenum;
 
-               // Calculate which plane we're dealing with here
+               x &= screenwidth-1;
+               y &= screenheight-1;
+
+               // Calculate which plane we're dealing with
+               planenum = (y / planepixelheight * 4) + (x / planepixelwidth);
+               x = (x % planepixelwidth);
+               y = (y % planepixelheight);
+
+               // Fetch and decode pattern name data here
+               info->PlaneAddr(info, planenum); // needs reworking
+
+               // Figure out which page it's on(if plane size is not 1x1)
+               info->addr += ((y / (8 * info->patternwh) * info->pagewh * info->planew) +
+                             (x / (8 * info->patternwh))) * info->patterndatasize * 2;
+ 
+               Vdp2PatternAddr(info); // Heh, this could be optimized
+
+               // Figure out which pixel in the tile we want
+               if (info->patternwh == 1)
+               {
+                  x &= 8-1;
+                  y &= 8-1;
+
+                  // vertical flip
+                  if (info->flipfunction & 0x2)
+                     y = 8 - 1 - y;
+
+                  // horizontal flip
+                  if (info->flipfunction & 0x1)
+                     x = 8 - 1 - x;
+               }
+               else
+               {
+                  if (info->flipfunction)
+                  {
+                     y &= 16 - 1;
+                     if (info->flipfunction & 0x2)
+                     {
+                        if (!(y & 8))
+                           y = 8 - 1 - y + 16;
+                        else
+                           y = 16 - 1 - y;
+                     }
+                     else if (y & 8)
+                        y += 8;
+
+                     if (info->flipfunction & 0x1)
+                     {
+                        if (!(x & 8))
+                           y += 8;
+
+                        x &= 8-1;
+                        x = 8 - 1 - x;
+                     }
+                     else if (x & 8)
+                     {
+                        y += 8;
+                        x &= 8-1;
+                     }
+                     else
+                        x &= 8-1;
+                  }
+                  else
+                  {
+                     y &= 16 - 1;
+                     if (y & 8)
+                        y += 8;
+                     if (x & 8)
+                        y += 8;
+                     x &= 8-1;
+                  }
+               }
+
+               // Fetch pixel
+               color = Vdp2RoationFetchPixel(info, x, y, 8);
             }
 
             *texture->textdata++ = info->PostPixelFetchCalc(info, color);
