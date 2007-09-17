@@ -5,6 +5,9 @@
   - removed some old useless code
   - added a "subclass" to GtkDrawingArea so sprite textures and screenshots
     can now be saved through a popup menu
+ macos port:
+  - Added fullscreen support
+  - Added graphics layer toggling
 0.8.5 -> 0.8.6
  68k:
   - Fixed a bug which caused the emulator to crash if 68k execution jumped to

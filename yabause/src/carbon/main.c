@@ -25,6 +25,9 @@
 #include "settings.h"
 #include "cpustatus.h"
 
+#define YUI_MENU_EMULATION  1
+#define YUI_MENU_DEBUG      2
+
 #define YUI_COMMAND_RUN		 1
 #define YUI_COMMAND_PAUSE 	 2
 #define YUI_COMMAND_RESUME   3
@@ -36,9 +39,12 @@
 #define YUI_COMMAND_TOGGLE_NBG3	9
 #define YUI_COMMAND_TOGGLE_RBG0	10
 #define YUI_COMMAND_TOGGLE_VDP1	11
+#define YUI_COMMAND_TOGGLE_FULLSCREEN   12
 
 AGLContext  myAGLContext = NULL;
+WindowRef   myWindow = NULL;
 yabauseinit_struct yinit;
+
 extern const char * key_names[] = {
 	"Up", "Right", "Down", "Left", "Right trigger", "Left trigger",
 	"Start", "A", "B", "C", "X", "Y", "Z", NULL
@@ -168,26 +174,6 @@ void read_settings(void) {
 	}
 }
 
-void YuiRun(void) {
-	static int FirstRun = 1;
-	EventLoopTimerUPP myFrameUPP;
-
-	if(FirstRun)
-	{
-		myFrameUPP = NewEventLoopTimerUPP(YuiIdle);
-		InstallEventLoopTimer(GetCurrentEventLoop(), kEventDurationNoWait,
-			kEventDurationMillisecond, myFrameUPP, NULL, &EventTimer);
-		FirstRun = 0;
-	}
-	else
-	{
-		YabauseDeInit();
-	}
-
-	read_settings();
-	YabauseInit(&yinit);
-}
-
 static void YuiPause(const int Pause)
 {
     EventTimerInterval Interval;
@@ -206,7 +192,28 @@ static void YuiPause(const int Pause)
     SetEventLoopTimerNextFireTime(EventTimer, Interval);
 }
 
-static void ToggleLayerMenuItem(MenuRef menu, MenuItemIndex BaseItemIndex)
+void YuiRun(void) {
+	static int FirstRun = 1;
+	EventLoopTimerUPP myFrameUPP;
+
+	if(FirstRun)
+	{
+		myFrameUPP = NewEventLoopTimerUPP(YuiIdle);
+		InstallEventLoopTimer(GetCurrentEventLoop(), kEventDurationNoWait,
+			kEventDurationMillisecond, myFrameUPP, NULL, &EventTimer);
+		FirstRun = 0;
+	}
+	else
+	{
+        YuiPause(0);
+        YabauseDeInit();
+	}
+
+	read_settings();
+	YabauseInit(&yinit);
+}
+
+static void TogglePairedMenuItems(MenuRef menu, MenuItemIndex BaseItemIndex)
 {
 	MenuItemAttributes ItemAttributes;
 
@@ -264,84 +271,88 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
             QuitApplicationEventLoop();
             break;
           case YUI_COMMAND_RUN:
-	    YuiRun();
-        menu = GetMenuRef(1);
-        ChangeMenuItemAttributes(menu, 2, 0, kMenuItemAttrHidden);
-        ChangeMenuItemAttributes(menu, 3, kMenuItemAttrHidden, 0);
-            break;
+              YuiRun();
+              menu = GetMenuRef(YUI_MENU_EMULATION);
+              ChangeMenuItemAttributes(menu, 2, 0, kMenuItemAttrHidden);
+              ChangeMenuItemAttributes(menu, 3, kMenuItemAttrHidden, 0);
+              break;
           case YUI_COMMAND_PAUSE:
               YuiPause(1);
-              menu = GetMenuRef(1);
-              ChangeMenuItemAttributes(menu, 2, kMenuItemAttrHidden, 0);
-              ChangeMenuItemAttributes(menu, 3, 0, kMenuItemAttrHidden);
+              menu = GetMenuRef(YUI_MENU_EMULATION);
+              TogglePairedMenuItems(menu, 2);
               UpdateCPUStatusWindow();
-            break;
+              break;
         case YUI_COMMAND_RESUME:
             YuiPause(0);
-            menu = GetMenuRef(1);
-            ChangeMenuItemAttributes(menu, 2, 0, kMenuItemAttrHidden);
-            ChangeMenuItemAttributes(menu, 3, kMenuItemAttrHidden, 0);
+            menu = GetMenuRef(YUI_MENU_EMULATION);
+            TogglePairedMenuItems(menu, 2);
             break;
         case YUI_COMMAND_SHOW_CPU:
             ShowCPUStatusWindow();
-            menu = GetMenuRef(1);
-            ChangeMenuItemAttributes(menu, 5, kMenuItemAttrHidden, 0);
-            ChangeMenuItemAttributes(menu, 6, 0, kMenuItemAttrHidden);
+            menu = GetMenuRef(YUI_MENU_DEBUG);
+            TogglePairedMenuItems(menu, 1);
             break;
         case YUI_COMMAND_HIDE_CPU:
             HideCPUStatusWindow();
-            menu = GetMenuRef(1);
-            ChangeMenuItemAttributes(menu, 5, 0, kMenuItemAttrHidden);
-            ChangeMenuItemAttributes(menu, 6, kMenuItemAttrHidden, 0);
+            menu = GetMenuRef(YUI_MENU_DEBUG);
+            TogglePairedMenuItems(menu, 1);
             break;
-	case YUI_COMMAND_TOGGLE_NBG0:
-		if(VIDCore)
-		{
-			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 8);
-			ToggleNBG0();
-		}
-		break;
-	case YUI_COMMAND_TOGGLE_NBG1:
-		if(VIDCore)
-		{
-			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 10);
-			ToggleNBG1();
-		}
-		break;
-	case YUI_COMMAND_TOGGLE_NBG2:
-		if(VIDCore)
-		{
-			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 12);
-			ToggleNBG2();
-		}
-		break;
-	case YUI_COMMAND_TOGGLE_NBG3:
-		if(VIDCore)
-		{
-			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 14);
-			ToggleNBG3();
-		}
-		break;
-	case YUI_COMMAND_TOGGLE_RBG0:
-		if(VIDCore)
-		{
-			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 16);
-			ToggleRBG0();
-		}
-		break;
-	case YUI_COMMAND_TOGGLE_VDP1:
-		if(VIDCore)
-		{
-			menu = GetMenuRef(1);
-			ToggleLayerMenuItem(menu, 18);
-			ToggleVDP1();
-		}
-		break;
+        case YUI_COMMAND_TOGGLE_NBG0:
+            if(VIDCore)
+            {
+                menu = GetMenuRef(YUI_MENU_DEBUG);
+                TogglePairedMenuItems(menu, 4);
+                ToggleNBG0();
+            }
+            break;
+        case YUI_COMMAND_TOGGLE_NBG1:
+            if(VIDCore)
+            {
+                menu = GetMenuRef(YUI_MENU_DEBUG);
+                TogglePairedMenuItems(menu, 6);
+                ToggleNBG1();
+            }
+            break;
+        case YUI_COMMAND_TOGGLE_NBG2:
+            if(VIDCore)
+            {
+                menu = GetMenuRef(YUI_MENU_DEBUG);
+                TogglePairedMenuItems(menu, 8);
+                ToggleNBG2();
+            }
+            break;
+        case YUI_COMMAND_TOGGLE_NBG3:
+            if(VIDCore)
+            {
+                menu = GetMenuRef(YUI_MENU_DEBUG);
+                TogglePairedMenuItems(menu, 10);
+                ToggleNBG3();
+            }
+            break;
+        case YUI_COMMAND_TOGGLE_RBG0:
+            if(VIDCore)
+            {
+                menu = GetMenuRef(YUI_MENU_DEBUG);
+                TogglePairedMenuItems(menu, 12);
+                ToggleRBG0();
+            }
+            break;
+        case YUI_COMMAND_TOGGLE_VDP1:
+            if(VIDCore)
+            {
+                menu = GetMenuRef(YUI_MENU_DEBUG);
+                TogglePairedMenuItems(menu, 14);
+                ToggleVDP1();
+            }
+            break;
+        case YUI_COMMAND_TOGGLE_FULLSCREEN:
+            if(VIDCore)
+            {
+                menu = GetMenuRef(YUI_MENU_EMULATION);
+                TogglePairedMenuItems(menu, 5);
+                ToggleFullScreen();
+            }
+            break;
           default:
             ret = eventNotHandledErr;
             printf("unhandled command\n");
@@ -371,7 +382,7 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
   return ret;
 }
 
-WindowRef CreateMyWindow() {
+static WindowRef CreateMyWindow() {
 
   WindowRef myWindow;
   Rect contentBounds;
@@ -409,7 +420,7 @@ WindowRef CreateMyWindow() {
   return myWindow;
 }
 
-OSStatus MyAGLReportError (void) {
+static OSStatus MyAGLReportError (void) {
     GLenum err = aglGetError();
 
     if (err == AGL_NO_ERROR)
@@ -418,12 +429,9 @@ OSStatus MyAGLReportError (void) {
         return (OSStatus) err;
 }
 
-OSStatus MySetWindowAsDrawableObject  (WindowRef window)
+static OSStatus MySetWindowAsDrawableObject  (WindowRef window)
 {
-
     OSStatus err = noErr;
-
-    Rect rectPort;
 
     GLint attributes[] =  { AGL_RGBA,
                         AGL_DOUBLEBUFFER, 
@@ -440,6 +448,7 @@ OSStatus MySetWindowAsDrawableObject  (WindowRef window)
         myAGLContext = aglCreateContext (myAGLPixelFormat, NULL);
 
         err = MyAGLReportError ();
+        aglDestroyPixelFormat(myAGLPixelFormat);
     }
 
     if (! aglSetDrawable (myAGLContext, GetWindowPort (window)))
@@ -457,8 +466,8 @@ int main () {
   EventLoopTimerRef nextFrameTimer;
   IBNibRef menuNib;
 
-  WindowRef window = CreateMyWindow();
-  MySetWindowAsDrawableObject(window);
+  myWindow = CreateMyWindow();
+  MySetWindowAsDrawableObject(myWindow);
 
   CreateNibReference(CFSTR("menu"), &menuNib);
   SetMenuBarFromNib(menuNib, CFSTR("MenuBar"));
@@ -482,8 +491,100 @@ void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {
 void YuiSetVideoAttribute(int type, int val) {
 }
 
-int YuiSetVideoMode(int width, int height, int bpp, int fullscreen) {
-	return 0;
+int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
+{
+    static          CFDictionaryRef oldDisplayMode = 0;
+    static          int             oldDisplayModeValid = 0;
+    
+    AGLPixelFormat  myAGLPixelFormat;
+    AGLDrawable     myDrawable = aglGetDrawable(myAGLContext);
+    OSStatus        err = noErr;
+    GLint attributesFullscreen[] =  { AGL_RGBA,
+                                      AGL_FULLSCREEN,
+                                      AGL_DOUBLEBUFFER, 
+                                      AGL_DEPTH_SIZE, 24, 
+                                      AGL_NONE };
+    CGDirectDisplayID   displayId = kCGDirectMainDisplay;
+    
+    if(myDrawable)
+    {
+        if(fullscreen)
+        {
+            Rect            bounds;
+            CGPoint         point;
+            CGDisplayCount  displayCount;
+
+            GetWindowBounds(myWindow, kWindowGlobalPortRgn, &bounds);
+            point.x = (float)bounds.left;
+            point.y = (float)bounds.top;
+            
+            CGGetDisplaysWithPoint(point, 1, &displayId, &displayCount);
+            
+            CFDictionaryRef refDisplayMode = CGDisplayBestModeForParameters(displayId,
+                                                                            bpp, width, height, NULL);
+            if(refDisplayMode)
+            {
+                GDHandle gdhDisplay; 
+                oldDisplayMode = CGDisplayCurrentMode(displayId);
+                oldDisplayModeValid = 1;
+
+                aglSetDrawable(myAGLContext, NULL);
+                aglSetCurrentContext(NULL);
+                aglDestroyContext(myAGLContext);
+                myAGLContext = NULL;
+
+                CGCaptureAllDisplays();
+                CGDisplaySwitchToMode(displayId, refDisplayMode);
+                CGDisplayHideCursor(displayId);
+
+                DMGetGDeviceByDisplayID((DisplayIDType)displayId, &gdhDisplay, 0);
+
+                myAGLPixelFormat = aglChoosePixelFormat(&gdhDisplay, 1, attributesFullscreen);
+                if(myAGLPixelFormat)
+                {
+                    myAGLContext = aglCreateContext(myAGLPixelFormat, NULL);
+                    if(myAGLContext)
+                    {
+                        aglSetCurrentContext(myAGLContext);
+                        aglSetFullScreen(myAGLContext, width, height, 0, 0);
+                    }
+                    
+                    err = MyAGLReportError();
+                    aglDestroyPixelFormat(myAGLPixelFormat);
+                }
+                else
+                {
+                    err = MyAGLReportError();
+                    CGReleaseAllDisplays();
+                    CGDisplayShowCursor(displayId);
+                }
+            }
+            else
+            {
+                err = MyAGLReportError();
+            }
+        }
+        else
+        {
+            if(oldDisplayModeValid)
+            {
+                oldDisplayModeValid = 0;
+                
+                aglSetDrawable(myAGLContext, NULL);
+                aglSetCurrentContext(NULL);
+                aglDestroyContext(myAGLContext);
+                myAGLContext = NULL;
+
+                CGDisplayShowCursor(displayId);
+                CGDisplaySwitchToMode(displayId, oldDisplayMode);
+                CGReleaseAllDisplays();
+
+                MySetWindowAsDrawableObject(myWindow);
+            }
+        }
+    }
+    
+    return !(err == noErr);
 }
 
 void YuiSwapBuffers(void) {
