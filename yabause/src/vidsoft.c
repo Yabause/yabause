@@ -20,6 +20,7 @@
 */
 
 #include "vidsoft.h"
+#include "vidshared.h"
 #include "debug.h"
 #include "vdp2.h"
 
@@ -152,73 +153,6 @@ static int nbg3priority=0;
 static int rbg0priority=0;
 static int outputwidth;
 static int outputheight;
-
-typedef struct
-{
-   int cellw, cellh;
-   int flipfunction;
-   int priority;
-
-   int mapwh;
-   int planew, planeh;
-   int pagewh;
-   int patternwh;
-   int patterndatasize;
-   int specialfunction;
-   u32 addr, charaddr, paladdr;
-   int colornumber;
-   int isbitmap;
-   u16 supplementdata;
-   int auxmode;
-   int enable;
-   int x, y;
-   int alpha;
-   int coloroffset;
-   int transparencyenable;
-   int specialprimode;
-
-   s32 cor;
-   s32 cog;
-   s32 cob;
-
-   float coordincx, coordincy;
-   void FASTCALL (* PlaneAddr)(void *, int);
-   u32 FASTCALL (* PostPixelFetchCalc)(void *, u32);
-   int patternpixelwh;
-   int draww;
-   int drawh;
-} vdp2draw_struct;
-
-typedef struct
-{
-   float Xst;
-   float Yst;
-   float Zst;
-   float deltaXst;
-   float deltaYst;
-   float deltaX;
-   float deltaY;
-   float A;
-   float B;
-   float C;
-   float D;
-   float E;
-   float F;
-   s32 Px;
-   s32 Py;
-   s32 Pz;
-   s32 Cx;
-   s32 Cy;
-   s32 Cz;
-   float Mx;
-   float My;
-   float kx;
-   float ky;
-   float KAst;
-   float deltaKAst;
-   float deltaKAx;
-   int coefenab;
-} vdp2rotationparameter_struct;
 
 typedef struct { s16 x; s16 y; } vdp1vertex;
 
@@ -838,126 +772,6 @@ static void Vdp2DrawMap(vdp2draw_struct *info)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter)
-{
-   s32 i;
-   u32 addr;
-
-   addr = Vdp2Regs->RPTA.all << 1;
-
-   if (which == 0)
-   {
-      // Rotation Parameter A
-      addr &= 0x000FFF7C;
-      parameter->coefenab = Vdp2Regs->KTCTL & 0x1;
-   }
-   else
-   {
-      // Rotation Parameter B
-      addr = (addr & 0x000FFFFC) | 0x00000080;
-      parameter->coefenab = Vdp2Regs->KTCTL & 0x100;
-   }
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->Yst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->Zst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->deltaXst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->deltaYst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->deltaX = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->deltaY = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->A = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->B = (float) (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->C = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->D = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->E = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Px = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-   addr += 2;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Py = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-   addr += 2;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Pz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-   addr += 4;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cx = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-   addr += 2;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cy = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-   addr += 2;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cz = ((i & 0x3FFF) | (i & 0x2000 ? 0xE000 : 0x0000));
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->Mx = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->My = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->kx = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->ky = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   if (parameter->coefenab)
-   {
-      // Handle coefficients here
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static u32 FASTCALL DoNothing(void *info, u32 pixel)
 {
    return pixel;
@@ -989,6 +803,298 @@ static u32 FASTCALL DoColorCalcWithColorOffset(void *info, u32 pixel)
    return COLOR_ADD(pixel, ((vdp2draw_struct *)info)->cor,
                     ((vdp2draw_struct *)info)->cog,
                     ((vdp2draw_struct *)info)->cob);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void ReadVdp2ColorOffset(vdp2draw_struct *info, int clofmask, int ccmask)
+{
+   if (Vdp2Regs->CLOFEN & clofmask)
+   {
+      // color offset enable
+      if (Vdp2Regs->CLOFSL & clofmask)
+      {
+         // color offset B
+         info->cor = Vdp2Regs->COBR & 0xFF;
+         if (Vdp2Regs->COBR & 0x100)
+            info->cor |= 0xFFFFFF00;
+
+         info->cog = Vdp2Regs->COBG & 0xFF;
+         if (Vdp2Regs->COBG & 0x100)
+            info->cog |= 0xFFFFFF00;
+
+         info->cob = Vdp2Regs->COBB & 0xFF;
+         if (Vdp2Regs->COBB & 0x100)
+            info->cob |= 0xFFFFFF00;
+      }
+      else
+      {
+         // color offset A
+         info->cor = Vdp2Regs->COAR & 0xFF;
+         if (Vdp2Regs->COAR & 0x100)
+            info->cor |= 0xFFFFFF00;
+
+         info->cog = Vdp2Regs->COAG & 0xFF;
+         if (Vdp2Regs->COAG & 0x100)
+            info->cog |= 0xFFFFFF00;
+
+         info->cob = Vdp2Regs->COAB & 0xFF;
+         if (Vdp2Regs->COAB & 0x100)
+            info->cob |= 0xFFFFFF00;
+      }
+
+      if (Vdp2Regs->CCCTL & ccmask)
+         info->PostPixelFetchCalc = &DoColorCalcWithColorOffset;
+      else
+         info->PostPixelFetchCalc = &DoColorOffset;
+   }
+   else // color offset disable
+   {
+      if (Vdp2Regs->CCCTL & ccmask)
+         info->PostPixelFetchCalc = &DoColorCalc;
+      else
+         info->PostPixelFetchCalc = &DoNothing;
+   }
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, int cellw)
+{
+   u32 dot;
+
+   switch(info->colornumber)
+   {
+      case 0: // 4 BPP
+         dot = T1ReadByte(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) / 2) & 0x7FFFF));
+         if (!(x & 0x1)) dot >>= 4; 
+         if (!(dot & 0xF) && info->transparencyenable) return 0x00000000;
+         else return Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | (dot & 0xF)));
+      case 1: // 8 BPP
+         dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (y * cellw) + x) & 0x7FFFF));
+         if (!(dot & 0xFF) && info->transparencyenable) return 0x00000000;
+         else return Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | (dot & 0xFF)));
+      case 2: // 16 BPP(palette)
+         dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
+         if ((dot == 0) && info->transparencyenable) return 0x00000000;
+         else return Vdp2ColorRamGetColor(info->coloroffset + dot);
+      case 3: // 16 BPP(RGB)   
+         dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
+         if (!(dot & 0x8000) && info->transparencyenable) return 0x00000000;
+         else return COLSAT2YAB16(0, dot);
+      case 4: // 32 BPP
+         dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
+         if (!(dot & 0x80000000) && info->transparencyenable) return 0x00000000;
+         else return COLSAT2YAB32(0, dot);
+      default:
+         return 0;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_struct *parameter)
+{
+   if (!parameter->coefenab)
+   {
+      // Since coefficients aren't being used, we can simplify the drawing process
+      if (IsScreenRotated(parameter))
+      {
+         // No rotation
+         // FIXME - This should really be fixed point math
+         info->x = (int)-(parameter->kx * (parameter->Xst - parameter->Px) + parameter->Px + parameter->Mx);
+         info->y = (int)-(parameter->ky * (parameter->Yst - parameter->Py) + parameter->Py + parameter->My);
+         info->coordincx = 1.0 / parameter->kx;
+         info->coordincy = 1.0 / parameter->ky;
+      }
+      else
+      {
+         // Do simple rotation here
+      }
+   }
+   else
+   {
+      // Rotation using Coefficient Tables(now this stuff just gets wacky. It
+      // has to be done in software, no exceptions)
+      int i, j;
+      int x, y;
+      int cellw, cellh;
+      int pagepixelwh;
+      int planepixelwidth;
+      int planepixelheight;
+      int screenwidth;
+      int screenheight;
+
+      CalculateRotationValues(parameter);
+
+/*
+      info->vertices[0] = 0;
+      info->vertices[1] = 0;
+      info->vertices[2] = vdp2width;
+      info->vertices[3] = 0;
+      info->vertices[4] = vdp2width;
+      info->vertices[5] = vdp2height;
+      info->vertices[6] = 0;
+      info->vertices[7] = vdp2height;
+*/
+      cellw = info->cellw;
+      cellh = info->cellh;
+/*
+      info->cellw = vdp2width;
+      info->cellh = vdp2height;
+      info->flipfunction = 0;
+      YglQuad((YglSprite *)info, texture);
+*/
+      if (!info->isbitmap)
+      {
+         pagepixelwh=64*8;
+         planepixelwidth=info->planew*pagepixelwh;
+         planepixelheight=info->planeh*pagepixelwh;
+         screenwidth=4*planepixelwidth;
+         screenheight=4*planepixelheight;
+      }
+      else
+      {
+         planepixelwidth=0;
+         planepixelheight=0;
+         screenwidth=0;
+         screenheight=0;
+      }
+
+      for (j = 0; j < vdp2height; j++)
+      {
+         if (parameter->deltaKAx == 0)
+         {
+            Vdp2ReadCoefficient(parameter,
+                                parameter->coeftbladdr +
+                                (u32)(((float)j)*parameter->deltaKAst *
+                                ((float)parameter->coefdatasize)));
+         }
+
+
+         for (i = 0; i < vdp2width; i++)
+         {
+            u32 color;
+
+            if (parameter->deltaKAx != 0)
+            {
+               Vdp2ReadCoefficient(parameter,
+                                   parameter->coeftbladdr+
+                                   (u32)((((float)j*parameter->deltaKAst) +
+                                   ((float)i*parameter->deltaKAx)) *
+                                   ((float)parameter->coefdatasize)));
+            }
+
+
+            if (parameter->msb)
+               continue;
+
+            x = GenerateRotatedXPos(info, parameter, i, j);
+            y = GenerateRotatedYPos(info, parameter, i, j);
+
+            // Convert coordinates into graphics
+            if (info->isbitmap)
+            {
+               x &= cellw-1;
+               y &= cellh-1;
+
+               // Fetch Pixel
+               color = Vdp2RotationFetchPixel(info, x, y, cellw);
+            }
+            else
+            {
+               // Tile
+               int planenum;
+
+               x &= screenwidth-1;
+               y &= screenheight-1;
+
+               // Calculate which plane we're dealing with
+               planenum = (y / planepixelheight * 4) + (x / planepixelwidth);
+               x = (x % planepixelwidth);
+               y = (y % planepixelheight);
+
+               // Fetch and decode pattern name data here
+               info->PlaneAddr(info, planenum); // needs reworking
+
+               // Figure out which page it's on(if plane size is not 1x1)
+               info->addr += ((y / (8 * info->patternwh) * info->pagewh * info->planew) +
+                             (x / (8 * info->patternwh))) * info->patterndatasize * 2;
+ 
+               Vdp2PatternAddr(info); // Heh, this could be optimized
+
+               // Figure out which pixel in the tile we want
+               if (info->patternwh == 1)
+               {
+                  x &= 8-1;
+                  y &= 8-1;
+
+                  // vertical flip
+                  if (info->flipfunction & 0x2)
+                     y = 8 - 1 - y;
+
+                  // horizontal flip
+                  if (info->flipfunction & 0x1)
+                     x = 8 - 1 - x;
+               }
+               else
+               {
+                  if (info->flipfunction)
+                  {
+                     y &= 16 - 1;
+                     if (info->flipfunction & 0x2)
+                     {
+                        if (!(y & 8))
+                           y = 8 - 1 - y + 16;
+                        else
+                           y = 16 - 1 - y;
+                     }
+                     else if (y & 8)
+                        y += 8;
+
+                     if (info->flipfunction & 0x1)
+                     {
+                        if (!(x & 8))
+                           y += 8;
+
+                        x &= 8-1;
+                        x = 8 - 1 - x;
+                     }
+                     else if (x & 8)
+                     {
+                        y += 8;
+                        x &= 8-1;
+                     }
+                     else
+                        x &= 8-1;
+                  }
+                  else
+                  {
+                     y &= 16 - 1;
+                     if (y & 8)
+                        y += 8;
+                     if (x & 8)
+                        y += 8;
+                     x &= 8-1;
+                  }
+               }
+
+               // Fetch pixel
+               color = Vdp2RotationFetchPixel(info, x, y, 8);
+            }
+
+            vdp2putpixel32(i, j, info->PostPixelFetchCalc(info, color), info->priority);
+         }
+      }
+      return;
+   }
+
+
+   if (info->isbitmap)
+      Vdp2DrawScrollBitmap(info);
+   else
+      Vdp2DrawMap(info);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1039,153 +1145,86 @@ static void Vdp2DrawBackScreen(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFN & 0x7) << 6;
-   u32 tmp=0;
-   int deca;
-   int multi;
-
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABN0 & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABN0 >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDN0 & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDN0 >> 8);
-         break;
-   }
-
-   deca = info->planeh + info->planew - 2;
-   multi = info->planeh * info->planew;
-
-   //if (Vdp2Regs->VRSIZE & 0x8000)
-   //{
-      if (info->patterndatasize == 1)
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = (tmp >> deca) * (multi * 0x800);
-      }
-      else
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-      }
-   /*}
-   else
-   {
-      if (info->patterndatasize == 1)
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x800);
-      }
-      else
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0xF) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
-      }
-   }*/
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static void Vdp2DrawNBG0(void)
 {
    vdp2draw_struct info;
    int i, i2;
-   u32 linescrolladdr;
+   vdp2rotationparameter_struct parameter;
 
-   /* FIXME should start by checking if it's a normal
-    * or rotate scroll screen
-    */
-   info.enable = Vdp2Regs->BGON & 0x1;
+   if (Vdp2Regs->BGON & 0x20)
+   {
+      // RBG1 mode
+      info.enable = Vdp2Regs->BGON & 0x20;
+
+      // Read in Parameter B
+      Vdp2ReadRotationTable(1, &parameter);
+
+      if((info.isbitmap = Vdp2Regs->CHCTLA & 0x2) != 0)
+      {
+         // Bitmap Mode
+
+         ReadBitmapSize(&info, Vdp2Regs->CHCTLA >> 2, 0x3);
+
+         info.charaddr = (Vdp2Regs->MPOFR & 0x70) * 0x2000;
+         info.paladdr = (Vdp2Regs->BMPNA & 0x7) << 4;
+         info.flipfunction = 0;
+         info.specialfunction = 0;
+      }
+      else
+      {
+         // Tile Mode
+         info.mapwh = 4;
+         ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 12);
+         ReadPatternData(&info, Vdp2Regs->PNCN0, Vdp2Regs->CHCTLA & 0x1);
+      }
+
+      info.rotatenum = 1;
+      info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+      parameter.coefenab = Vdp2Regs->KTCTL & 0x100;
+   }
+   else if (Vdp2Regs->BGON & 0x1)
+   {
+      // NBG0 mode
+      info.enable = Vdp2Regs->BGON & 0x1;
+
+      if((info.isbitmap = Vdp2Regs->CHCTLA & 0x2) != 0)
+      {
+         // Bitmap Mode
+
+         ReadBitmapSize(&info, Vdp2Regs->CHCTLA >> 2, 0x3);
+
+         info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % info.cellw);
+         info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % info.cellh);
+
+         info.charaddr = (Vdp2Regs->MPOFN & 0x7) * 0x20000;
+         info.paladdr = (Vdp2Regs->BMPNA & 0x7) << 4;
+         info.flipfunction = 0;
+         info.specialfunction = 0;
+      }
+      else
+      {
+         // Tile Mode
+         info.mapwh = 2;
+
+         ReadPlaneSize(&info, Vdp2Regs->PLSZ);
+
+         info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % (512 * info.planew));
+         info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % (512 * info.planeh));
+         ReadPatternData(&info, Vdp2Regs->PNCN0, Vdp2Regs->CHCTLA & 0x1);
+      }
+
+      info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN0.all & 0x7FF00);
+      info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00);
+      info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG0PlaneAddr;
+   }
+   else
+      // Not enabled
+      return;
+
    info.transparencyenable = !(Vdp2Regs->BGON & 0x100);
    info.specialprimode = Vdp2Regs->SFPRMD & 0x3;
 
    info.colornumber = (Vdp2Regs->CHCTLA & 0x70) >> 4;
-
-   if((info.isbitmap = Vdp2Regs->CHCTLA & 0x2) != 0)
-   {
-      // Bitmap Mode
-
-      switch((Vdp2Regs->CHCTLA & 0xC) >> 2)
-      {
-         case 0: info.cellw = 512;
-                 info.cellh = 256;
-                 break;
-         case 1: info.cellw = 512;
-                 info.cellh = 512;
-                 break;
-         case 2: info.cellw = 1024;
-                 info.cellh = 256;
-                 break;
-         case 3: info.cellw = 1024;
-                 info.cellh = 512;
-                 break;
-      }
-
-      info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % info.cellw);
-      info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % info.cellh);
-
-      info.charaddr = (Vdp2Regs->MPOFN & 0x7) * 0x20000;
-      info.paladdr = (Vdp2Regs->BMPNA & 0x7) << 8;
-      info.flipfunction = 0;
-      info.specialfunction = 0;
-   }
-   else
-   {
-      // Tile Mode
-      info.mapwh = 2;
-
-      switch(Vdp2Regs->PLSZ & 0x3)
-      {
-         case 0:
-            info.planew = info.planeh = 1;
-            break;
-         case 1:
-            info.planew = 2;
-            info.planeh = 1;
-            break;
-         case 3:
-            info.planew = info.planeh = 2;
-            break;
-         default: // Not sure what 0x2 does
-            info.planew = info.planeh = 1;
-            break;
-      }
-
-      info.x = - ((Vdp2Regs->SCXIN0 & 0x7FF) % (512 * info.planew));
-      info.y = - ((Vdp2Regs->SCYIN0 & 0x7FF) % (512 * info.planeh));
-
-      if(Vdp2Regs->PNCN0 & 0x8000)
-         info.patterndatasize = 1;
-      else
-         info.patterndatasize = 2;
-
-      if(Vdp2Regs->CHCTLA & 0x1)
-         info.patternwh = 2;
-      else
-         info.patternwh = 1;
-
-      info.pagewh = 64/info.patternwh;
-      info.cellw = info.cellh = 8;
-      info.supplementdata = Vdp2Regs->PNCN0 & 0x3FF;
-      info.auxmode = (Vdp2Regs->PNCN0 & 0x4000) >> 14;
-   }
 
    if (Vdp2Regs->CCCTL & 0x1)
       info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
@@ -1193,131 +1232,25 @@ static void Vdp2DrawNBG0(void)
       info.alpha = 0xFF;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7) << 8;
-
-   if (Vdp2Regs->CLOFEN & 0x1)
-   {
-      // color offset enable
-      if (Vdp2Regs->CLOFSL & 0x1)
-      {
-         // color offset B
-         info.cor = Vdp2Regs->COBR & 0xFF;
-         if (Vdp2Regs->COBR & 0x100)
-            info.cor |= 0xFFFFFF00;
-
-         info.cog = Vdp2Regs->COBG & 0xFF;
-         if (Vdp2Regs->COBG & 0x100)
-            info.cog |= 0xFFFFFF00;
-
-         info.cob = Vdp2Regs->COBB & 0xFF;
-         if (Vdp2Regs->COBB & 0x100)
-            info.cob |= 0xFFFFFF00;
-      }
-      else
-      {
-         // color offset A
-         info.cor = Vdp2Regs->COAR & 0xFF;
-         if (Vdp2Regs->COAR & 0x100)
-            info.cor |= 0xFFFFFF00;
-
-         info.cog = Vdp2Regs->COAG & 0xFF;
-         if (Vdp2Regs->COAG & 0x100)
-            info.cog |= 0xFFFFFF00;
-
-         info.cob = Vdp2Regs->COAB & 0xFF;
-         if (Vdp2Regs->COAB & 0x100)
-            info.cob |= 0xFFFFFF00;
-      }
-
-      if (Vdp2Regs->CCCTL & 0x1)
-         info.PostPixelFetchCalc = &DoColorCalcWithColorOffset;
-      else
-         info.PostPixelFetchCalc = &DoColorOffset;
-   }
-   else // color offset disable
-   {
-      if (Vdp2Regs->CCCTL & 0x1)
-         info.PostPixelFetchCalc = &DoColorCalc;
-      else
-         info.PostPixelFetchCalc = &DoNothing;
-   }
-
-   info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN0.all & 0x7FF00);
-   info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00);
-
+   ReadVdp2ColorOffset(&info, 0x1, 0x1);
    info.priority = nbg0priority;
-   info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG0PlaneAddr;
 
    if (!(info.enable & vdp2disptoggle))
       return;
 
-   if (info.isbitmap)
-      Vdp2DrawScrollBitmap(&info);
-   else
-      Vdp2DrawMap(&info);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void FASTCALL Vdp2NBG1PlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFN & 0x70) << 2;
-   u32 tmp=0;
-   int deca;
-   int multi;
-
-   switch(i)
+   if (info.enable == 1)
    {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABN1 & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABN1 >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDN1 & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDN1 >> 8);
-         break;
+      // NBG0 draw
+      if (info.isbitmap)
+         Vdp2DrawScrollBitmap(&info);
+      else
+         Vdp2DrawMap(&info);
    }
-
-   deca = info->planeh + info->planew - 2;
-   multi = info->planeh * info->planew;
-
-   //if (Vdp2Regs->VRSIZE & 0x8000)
-   //{
-      if (info->patterndatasize == 1)
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = (tmp >> deca) * (multi * 0x800);
-      }
-      else
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-      }
-   /*}
    else
    {
-      if (info->patterndatasize == 1)
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x800);
-      }
-      else
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0xF) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
-      }
-   }*/
+      // RBG1 draw
+      Vdp2DrawRotation(&info, &parameter);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1334,21 +1267,7 @@ static void Vdp2DrawNBG1(void)
 
    if((info.isbitmap = Vdp2Regs->CHCTLA & 0x200) != 0)
    {
-      switch((Vdp2Regs->CHCTLA & 0xC00) >> 10)
-      {
-         case 0: info.cellw = 512;
-                 info.cellh = 256;
-                 break;
-         case 1: info.cellw = 512;
-                 info.cellh = 512;
-                 break;
-         case 2: info.cellw = 1024;
-                 info.cellh = 256;
-                 break;
-         case 3: info.cellw = 1024;
-                 info.cellh = 512;
-                 break;
-      }
+      ReadBitmapSize(&info, Vdp2Regs->CHCTLA >> 10, 0x3);
 
       info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
       info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % info.cellh);
@@ -1362,40 +1281,12 @@ static void Vdp2DrawNBG1(void)
    {
       info.mapwh = 2;
 
-      switch((Vdp2Regs->PLSZ & 0xC) >> 2)
-      {
-         case 0:
-            info.planew = info.planeh = 1;
-            break;
-         case 1:
-            info.planew = 2;
-            info.planeh = 1;
-            break;
-         case 3:
-            info.planew = info.planeh = 2;
-            break;
-         default: // Not sure what 0x2 does
-            info.planew = info.planeh = 1;
-            break;
-      }
+      ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 2);
 
       info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % (512 * info.planew));
       info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % (512 * info.planeh));
 
-      if(Vdp2Regs->PNCN1 & 0x8000)
-         info.patterndatasize = 1;
-      else
-         info.patterndatasize = 2;
-
-      if(Vdp2Regs->CHCTLA & 0x100)
-         info.patternwh = 2;
-      else
-         info.patternwh = 1;
-
-      info.pagewh = 64/info.patternwh;
-      info.cellw = info.cellh = 8;
-      info.supplementdata = Vdp2Regs->PNCN1 & 0x3FF;
-      info.auxmode = (Vdp2Regs->PNCN1 & 0x4000) >> 14;
+      ReadPatternData(&info, Vdp2Regs->PNCN1, Vdp2Regs->CHCTLA & 0x100);
    }
 
    if (Vdp2Regs->CCCTL & 0x2)
@@ -1404,54 +1295,7 @@ static void Vdp2DrawNBG1(void)
       info.alpha = 0xFF;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x70) << 4;
-
-   if (Vdp2Regs->CLOFEN & 0x2)
-   {
-      // color offset enable
-      if (Vdp2Regs->CLOFSL & 0x2)
-      {
-         // color offset B
-         info.cor = Vdp2Regs->COBR & 0xFF;
-         if (Vdp2Regs->COBR & 0x100)
-            info.cor |= 0xFFFFFF00;
-
-         info.cog = Vdp2Regs->COBG & 0xFF;
-         if (Vdp2Regs->COBG & 0x100)
-            info.cog |= 0xFFFFFF00;
-
-         info.cob = Vdp2Regs->COBB & 0xFF;
-         if (Vdp2Regs->COBB & 0x100)
-            info.cob |= 0xFFFFFF00;
-      }
-      else
-      {
-         // color offset A
-         info.cor = Vdp2Regs->COAR & 0xFF;
-         if (Vdp2Regs->COAR & 0x100)
-            info.cor |= 0xFFFFFF00;
-
-         info.cog = Vdp2Regs->COAG & 0xFF;
-         if (Vdp2Regs->COAG & 0x100)
-            info.cog |= 0xFFFFFF00;
-
-         info.cob = Vdp2Regs->COAB & 0xFF;
-         if (Vdp2Regs->COAB & 0x100)
-            info.cob |= 0xFFFFFF00;
-      }
-
-      if (Vdp2Regs->CCCTL & 0x2)
-         info.PostPixelFetchCalc = &DoColorCalcWithColorOffset;
-      else
-         info.PostPixelFetchCalc = &DoColorOffset;
-   }
-   else // color offset disable
-   {
-      if (Vdp2Regs->CCCTL & 0x2)
-         info.PostPixelFetchCalc = &DoColorCalc;
-      else
-         info.PostPixelFetchCalc = &DoNothing;
-   }
-
+   ReadVdp2ColorOffset(&info, 0x2, 0x2);
    info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00);
    info.coordincy = (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00);
 
@@ -1503,70 +1347,6 @@ static void Vdp2DrawNBG1(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2NBG2PlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFN & 0x700) >> 2;
-   u32 tmp=0;
-   int deca;
-   int multi;
-
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABN2 & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABN2 >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDN2 & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDN2 >> 8);
-         break;
-   }
-
-   deca = info->planeh + info->planew - 2;
-   multi = info->planeh * info->planew;
-
-   //if (Vdp2Regs->VRSIZE & 0x8000)
-   //{
-      if (info->patterndatasize == 1)
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = (tmp >> deca) * (multi * 0x800);
-      }
-      else
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-      }
-   /*}
-   else
-   {
-      if (info->patterndatasize == 1)
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x800);
-      }
-      else
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0xF) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
-      }
-   }*/
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static void Vdp2DrawNBG2(void)
 {
    vdp2draw_struct info;
@@ -1578,39 +1358,10 @@ static void Vdp2DrawNBG2(void)
    info.colornumber = (Vdp2Regs->CHCTLB & 0x2) >> 1;	
    info.mapwh = 2;
 
-   switch((Vdp2Regs->PLSZ & 0x30) >> 4)
-   {
-      case 0:
-         info.planew = info.planeh = 1;
-         break;
-      case 1:
-         info.planew = 2;
-         info.planeh = 1;
-         break;
-      case 3:
-         info.planew = info.planeh = 2;
-         break;
-      default: // Not sure what 0x2 does
-         info.planew = info.planeh = 1;
-         break;
-   }
+   ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 4);
    info.x = - ((Vdp2Regs->SCXN2 & 0x7FF) % (512 * info.planew));
    info.y = - ((Vdp2Regs->SCYN2 & 0x7FF) % (512 * info.planeh));
-
-   if(Vdp2Regs->PNCN2 & 0x8000)
-      info.patterndatasize = 1;
-   else
-      info.patterndatasize = 2;
-
-   if(Vdp2Regs->CHCTLB & 0x1)
-      info.patternwh = 2;
-   else
-      info.patternwh = 1;
-
-   info.pagewh = 64/info.patternwh;
-   info.cellw = info.cellh = 8;
-   info.supplementdata = Vdp2Regs->PNCN2 & 0x3FF;
-   info.auxmode = (Vdp2Regs->PNCN2 & 0x4000) >> 14;
+   ReadPatternData(&info, Vdp2Regs->PNCN2, Vdp2Regs->CHCTLB & 0x1);
     
    if (Vdp2Regs->CCCTL & 0x4)
       info.alpha = ((~Vdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
@@ -1618,54 +1369,7 @@ static void Vdp2DrawNBG2(void)
       info.alpha = 0xFF;
 
    info.coloroffset = Vdp2Regs->CRAOFA & 0x700;
-
-   if (Vdp2Regs->CLOFEN & 0x4)
-   {
-      // color offset enable
-      if (Vdp2Regs->CLOFSL & 0x4)
-      {
-         // color offset B
-         info.cor = Vdp2Regs->COBR & 0xFF;
-         if (Vdp2Regs->COBR & 0x100)
-            info.cor |= 0xFFFFFF00;
-
-         info.cog = Vdp2Regs->COBG & 0xFF;
-         if (Vdp2Regs->COBG & 0x100)
-            info.cog |= 0xFFFFFF00;
-
-         info.cob = Vdp2Regs->COBB & 0xFF;
-         if (Vdp2Regs->COBB & 0x100)
-            info.cob |= 0xFFFFFF00;
-      }
-      else
-      {
-         // color offset A
-         info.cor = Vdp2Regs->COAR & 0xFF;
-         if (Vdp2Regs->COAR & 0x100)
-            info.cor |= 0xFFFFFF00;
-
-         info.cog = Vdp2Regs->COAG & 0xFF;
-         if (Vdp2Regs->COAG & 0x100)
-            info.cog |= 0xFFFFFF00;
-
-         info.cob = Vdp2Regs->COAB & 0xFF;
-         if (Vdp2Regs->COAB & 0x100)
-            info.cob |= 0xFFFFFF00;
-      }
-
-      if (Vdp2Regs->CCCTL & 0x4)
-         info.PostPixelFetchCalc = &DoColorCalcWithColorOffset;
-      else
-         info.PostPixelFetchCalc = &DoColorOffset;
-   }
-   else // color offset disable
-   {
-      if (Vdp2Regs->CCCTL & 0x4)
-         info.PostPixelFetchCalc = &DoColorCalc;
-      else
-         info.PostPixelFetchCalc = &DoNothing;
-   }
-
+   ReadVdp2ColorOffset(&info, 0x4, 0x4);
    info.coordincx = info.coordincy = 1;
 
    info.priority = nbg2priority;
@@ -1675,64 +1379,6 @@ static void Vdp2DrawNBG2(void)
       return;
 
    Vdp2DrawMap(&info);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFN & 0x7000) >> 6;
-   u32 tmp=0;
-   int deca;
-   int multi;
-
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABN3 & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABN3 >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDN3 & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDN3 >> 8);
-         break;
-   }
-
-   deca = info->planeh + info->planew - 2;
-   multi = info->planeh * info->planew;
-
-   //if (Vdp2Regs->VRSIZE & 0x8000) {
-      if (info->patterndatasize == 1) {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = (tmp >> deca) * (multi * 0x800);
-      }
-      else {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-      }
-   /*}
-   else {
-      if (info->patterndatasize == 1) {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x800);
-      }
-      else {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0xF) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
-      }
-   }*/
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1749,39 +1395,10 @@ static void Vdp2DrawNBG3(void)
 	
    info.mapwh = 2;
 
-   switch((Vdp2Regs->PLSZ & 0xC0) >> 6)
-   {
-      case 0:
-         info.planew = info.planeh = 1;
-         break;
-      case 1:
-         info.planew = 2;
-         info.planeh = 1;
-         break;
-      case 3:
-         info.planew = info.planeh = 2;
-         break;
-      default: // Not sure what 0x2 does
-         info.planew = info.planeh = 1;
-         break;
-   }
+   ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 6);
    info.x = - ((Vdp2Regs->SCXN3 & 0x7FF) % (512 * info.planew));
    info.y = - ((Vdp2Regs->SCYN3 & 0x7FF) % (512 * info.planeh));
-
-   if(Vdp2Regs->PNCN3 & 0x8000)
-      info.patterndatasize = 1;
-   else
-      info.patterndatasize = 2;
-
-   if(Vdp2Regs->CHCTLB & 0x10)
-      info.patternwh = 2;
-   else
-      info.patternwh = 1;
-
-   info.pagewh = 64/info.patternwh;
-   info.cellw = info.cellh = 8;
-   info.supplementdata = Vdp2Regs->PNCN3 & 0x3FF;
-   info.auxmode = (Vdp2Regs->PNCN3 & 0x4000) >> 14;
+   ReadPatternData(&info, Vdp2Regs->PNCN3, Vdp2Regs->CHCTLB & 0x10);
 
    if (Vdp2Regs->CCCTL & 0x8)
       info.alpha = ((~Vdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
@@ -1789,54 +1406,7 @@ static void Vdp2DrawNBG3(void)
       info.alpha = 0xFF;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7000) >> 4;
-
-   if (Vdp2Regs->CLOFEN & 0x8)
-   {
-      // color offset enable
-      if (Vdp2Regs->CLOFSL & 0x8)
-      {
-         // color offset B
-         info.cor = Vdp2Regs->COBR & 0xFF;
-         if (Vdp2Regs->COBR & 0x100)
-            info.cor |= 0xFFFFFF00;
-
-         info.cog = Vdp2Regs->COBG & 0xFF;
-         if (Vdp2Regs->COBG & 0x100)
-            info.cog |= 0xFFFFFF00;
-
-         info.cob = Vdp2Regs->COBB & 0xFF;
-         if (Vdp2Regs->COBB & 0x100)
-            info.cob |= 0xFFFFFF00;
-      }
-      else
-      {
-         // color offset A
-         info.cor = Vdp2Regs->COAR & 0xFF;
-         if (Vdp2Regs->COAR & 0x100)
-            info.cor |= 0xFFFFFF00;
-
-         info.cog = Vdp2Regs->COAG & 0xFF;
-         if (Vdp2Regs->COAG & 0x100)
-            info.cog |= 0xFFFFFF00;
-
-         info.cob = Vdp2Regs->COAB & 0xFF;
-         if (Vdp2Regs->COAB & 0x100)
-            info.cob |= 0xFFFFFF00;
-      }
-
-      if (Vdp2Regs->CCCTL & 0x8)
-         info.PostPixelFetchCalc = &DoColorCalcWithColorOffset;
-      else
-         info.PostPixelFetchCalc = &DoColorOffset;
-   }
-   else // color offset disable
-   {
-      if (Vdp2Regs->CCCTL & 0x8)
-         info.PostPixelFetchCalc = &DoColorCalc;
-      else
-         info.PostPixelFetchCalc = &DoNothing;
-   }
-
+   ReadVdp2ColorOffset(&info, 0x8, 0x8);
    info.coordincx = info.coordincy = 1;
 
    info.priority = nbg3priority;
@@ -1846,6 +1416,93 @@ static void Vdp2DrawNBG3(void)
       return;
 
    Vdp2DrawMap(&info);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void Vdp2DrawRBG0(void)
+{
+   vdp2draw_struct info;
+   vdp2rotationparameter_struct parameter;
+
+   info.enable = Vdp2Regs->BGON & 0x10;
+   info.priority = rbg0priority;
+   if (!(info.enable & vdp2disptoggle))
+      return;
+   info.transparencyenable = !(Vdp2Regs->BGON & 0x1000);
+   info.specialprimode = (Vdp2Regs->SFPRMD >> 8) & 0x3;
+
+   info.colornumber = (Vdp2Regs->CHCTLB & 0x7000) >> 12;
+
+   // Figure out which Rotation Parameter we're using
+   switch (Vdp2Regs->RPMD & 0x3)
+   {
+      case 0:
+         // Parameter A
+         info.rotatenum = 0;
+         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+         break;
+      case 1:
+         // Parameter B
+         info.rotatenum = 1;
+         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+         break;
+      case 2:
+         // Parameter A+B switched via coefficients
+         // FIX ME(need to figure out which Parameter is being used)
+      case 3:
+      default:
+         // Parameter A+B switched via rotation parameter window
+         // FIX ME(need to figure out which Parameter is being used)
+         VDP2LOG("Rotation Parameter Mode %d not supported!\n", Vdp2Regs->RPMD & 0x3);
+         info.rotatenum = 0;
+         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+         break;
+   }
+
+   Vdp2ReadRotationTable(info.rotatenum, &parameter);
+
+   if((info.isbitmap = Vdp2Regs->CHCTLB & 0x200) != 0)
+   {
+      // Bitmap Mode
+      ReadBitmapSize(&info, Vdp2Regs->CHCTLB >> 10, 0x1);
+
+      if (info.rotatenum == 0)
+         // Parameter A
+         info.charaddr = (Vdp2Regs->MPOFR & 0x7) * 0x20000;
+      else
+         // Parameter B
+         info.charaddr = (Vdp2Regs->MPOFR & 0x70) * 0x2000;
+
+      info.paladdr = (Vdp2Regs->BMPNB & 0x7) << 4;
+      info.flipfunction = 0;
+      info.specialfunction = 0;
+   }
+   else
+   {
+      // Tile Mode
+      info.mapwh = 4;
+
+      if (info.rotatenum == 0)
+         // Parameter A
+         ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 8);
+      else
+         // Parameter B
+         ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 12);
+
+      ReadPatternData(&info, Vdp2Regs->PNCR, Vdp2Regs->CHCTLB & 0x100);
+   }
+
+   if (Vdp2Regs->CCCTL & 0x10)
+      info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+   else
+      info.alpha = 0xFF;
+
+   info.coloroffset = (Vdp2Regs->CRAOFB & 0x7) << 8;
+
+   ReadVdp2ColorOffset(&info, 0x10, 0x10);
+   info.coordincx = info.coordincy = 1;
+   Vdp2DrawRotation(&info, &parameter);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3386,8 +3043,8 @@ void VIDSoftVdp2DrawScreens(void)
          Vdp2DrawNBG1();
       if (nbg0priority == i)
          Vdp2DrawNBG0();
-//      if (rbg0priority == i)
-//         Vdp2DrawRBG0();
+      if (rbg0priority == i)
+         Vdp2DrawRBG0();
    }
 }
 

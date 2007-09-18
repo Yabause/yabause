@@ -22,6 +22,7 @@
 #ifdef HAVE_LIBGL
 
 #include "vidogl.h"
+#include "vidshared.h"
 #include "debug.h"
 #include "vdp2.h"
 #include "yabause.h"
@@ -137,84 +138,6 @@ static int nbg1priority=0;
 static int nbg2priority=0;
 static int nbg3priority=0;
 static int rbg0priority=0;
-
-typedef struct
-{
-   int vertices[8];
-   int cellw, cellh;
-   int flipfunction;
-   int priority;
-
-   int mapwh;
-   int planew, planeh;
-   int pagewh;
-   int patternwh;
-   int patterndatasize;
-   int specialfunction;
-   u32 addr, charaddr, paladdr;
-   int colornumber;
-   int isbitmap;
-   u16 supplementdata;
-   int auxmode;
-   int enable;
-   int x, y;
-   int alpha;
-   int coloroffset;
-   int transparencyenable;
-   int specialprimode;
-
-   int cor;
-   int cog;
-   int cob;
-
-   float coordincx, coordincy;
-   void FASTCALL (* PlaneAddr)(void *, int);
-   u32 FASTCALL (* PostPixelFetchCalc)(void *, u32);
-   int patternpixelwh;
-   int draww;
-   int drawh;
-   int rotatenum;
-} vdp2draw_struct;
-
-typedef struct
-{
-   float Xst;
-   float Yst;
-   float Zst;
-   float deltaXst;
-   float deltaYst;
-   float deltaX;
-   float deltaY;
-   float A;
-   float B;
-   float C;
-   float D;
-   float E;
-   float F;
-   float Px;
-   float Py;
-   float Pz;
-   float Cx;
-   float Cy;
-   float Cz;
-   float Mx;
-   float My;
-   float kx;
-   float ky;
-   float KAst;
-   float deltaKAst;
-   float deltaKAx;
-   u32 coeftbladdr;
-   int coefenab;
-   int coefmode;
-   int coefdatasize;
-   float Xp;
-   float Yp;
-   float dX;
-   float dY;
-   int screenover;
-   int msb;
-} vdp2rotationparameter_struct;
 
 static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 
@@ -903,152 +826,6 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE int GenerateRotatedXPos(vdp2draw_struct *info, vdp2rotationparameter_struct *p, int x, int y)
-{
-   float Xsp = p->A * ((p->Xst + p->deltaXst * y) - p->Px) +
-               p->B * ((p->Yst + p->deltaYst * y) - p->Py) +
-               p->C * (p->Zst - p->Pz);
-
-   return (int)(p->kx * (Xsp + p->dX * (float)x) + p->Xp);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE int GenerateRotatedYPos(vdp2draw_struct *info, vdp2rotationparameter_struct *p, int x, int y)
-{
-   float Ysp = p->D * ((p->Xst + p->deltaXst * y) - p->Px) +
-               p->E * ((p->Yst + p->deltaYst * y) - p->Py) +
-               p->F * (p->Zst - p->Pz);
-
-   return (int)(p->ky * (Ysp + p->dY * (float)x) + p->Yp);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE void CalculateRotationValues(vdp2rotationparameter_struct *p)
-{
-   p->Xp=p->A * (p->Px - p->Cx) +
-         p->B * (p->Py - p->Cy) +
-         p->C * (p->Pz - p->Cz) +
-         p->Cx + p->Mx;
-   p->Yp=p->D * (p->Px - p->Cx) +
-         p->E * (p->Py - p->Cy) +
-         p->F * (p->Pz - p->Cz) +
-         p->Cy + p->My;
-   p->dX=p->A * p->deltaX +
-         p->B * p->deltaY;
-   p->dY=p->D * p->deltaX +
-         p->E * p->deltaY;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE void CalcPlaneAddr(vdp2draw_struct *info, u32 tmp)
-{
-   int deca = info->planeh + info->planew - 2;
-   int multi = info->planeh * info->planew;
-     
-   //if (Vdp2Regs->VRSIZE & 0x8000)
-   //{
-      if (info->patterndatasize == 1)
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = (tmp >> deca) * (multi * 0x800);
-      }
-      else
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
-      }
-   /*}
-   else
-   {
-      if (info->patterndatasize == 1)
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x2000);
-         else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x800);
-      }
-      else
-      {
-         if (info->patternwh == 1)
-            info->addr = ((tmp & 0xF) >> deca) * (multi * 0x4000);
-         else
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
-      }
-   }*/
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE void ReadBitmapSize(vdp2draw_struct *info, u16 bm, int mask)
-{
-   switch(bm & mask)
-   {
-      case 0: info->cellw = 512;
-              info->cellh = 256;
-              break;
-      case 1: info->cellw = 512;
-              info->cellh = 512;
-              break;
-      case 2: info->cellw = 1024;
-              info->cellh = 256;
-              break;
-      case 3: info->cellw = 1024;
-              info->cellh = 512;
-              break;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE void ReadPlaneSize(vdp2draw_struct *info, u16 reg)
-{
-   switch(reg & 0x3)
-   {
-      case 0:
-         info->planew = info->planeh = 1;
-         break;
-      case 1:
-         info->planew = 2;
-         info->planeh = 1;
-         break;
-      case 3:
-         info->planew = info->planeh = 2;
-         break;
-      default: // Not sure what 0x2 does, though a few games seem to use it
-         info->planew = info->planeh = 1;
-         break;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE void ReadPatternData(vdp2draw_struct *info, u16 pnc, int chctlwh)
-{
-   if(pnc & 0x8000)
-      info->patterndatasize = 1;
-   else
-      info->patterndatasize = 2;
-
-   if(chctlwh)
-      info->patternwh = 2;
-   else
-      info->patternwh = 1;
-
-   info->pagewh = 64/info->patternwh;
-   info->cellw = info->cellh = 8;
-   info->supplementdata = pnc & 0x3FF;
-   info->auxmode = (pnc & 0x4000) >> 14;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static u32 FASTCALL DoNothing(void *info, u32 pixel)
 {
    return pixel;
@@ -1109,350 +886,7 @@ static INLINE void ReadVdp2ColorOffset(vdp2draw_struct *info, int mask)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter)
-{
-   s32 i;
-   u32 addr;
-
-   addr = Vdp2Regs->RPTA.all << 1;
-
-   if (which == 0)
-   {
-      // Rotation Parameter A
-      addr &= 0x000FFF7C;
-      parameter->coefenab = Vdp2Regs->KTCTL & 0x1;
-      parameter->screenover = (Vdp2Regs->PLSZ >> 10) & 0x3;
-   }
-   else
-   {
-      // Rotation Parameter B
-      addr = (addr & 0x000FFFFC) | 0x00000080;
-      parameter->coefenab = Vdp2Regs->KTCTL & 0x100;
-      parameter->screenover = (Vdp2Regs->PLSZ >> 14) & 0x3;
-   }
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->Yst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->Zst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->deltaXst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->deltaYst = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->deltaX = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->deltaY = (float) (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->A = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->B = (float) (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->C = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->D = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->E = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->F = (float) (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Px = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
-   addr += 2;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Py = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
-   addr += 2;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Pz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
-   addr += 4;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cx = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
-   addr += 2;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cy = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
-   addr += 2;
-
-   i = T1ReadWord(Vdp2Ram, addr);
-   parameter->Cz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->Mx = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->My = (float) (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->kx = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   i = T1ReadLong(Vdp2Ram, addr);
-   parameter->ky = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
-   addr += 4;
-
-   if (parameter->coefenab)
-   {
-      // Read in coefficient values
-      i = T1ReadLong(Vdp2Ram, addr);
-      parameter->KAst = (float)(unsigned)(i & 0xFFFFFFC0) / 65536;
-      addr += 4;
-
-      i = T1ReadLong(Vdp2Ram, addr);
-      parameter->deltaKAst = (float) (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
-      addr += 4;     
-
-      i = T1ReadLong(Vdp2Ram, addr);
-      parameter->deltaKAx = (float) (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
-      addr += 4;
-
-      if (which == 0)
-      {
-         parameter->coefdatasize = (Vdp2Regs->KTCTL & 0x2 ? 2 : 4);
-         parameter->coeftbladdr = ((Vdp2Regs->KTAOF & 0x7) * 0x10000 + parameter->KAst) * parameter->coefdatasize;
-         parameter->coefmode = (Vdp2Regs->KTCTL >> 2) & 0x3;
-      }
-      else
-      {
-         parameter->coefdatasize = (Vdp2Regs->KTCTL & 0x200 ? 2 : 4);
-         parameter->coeftbladdr = (((Vdp2Regs->KTAOF >> 8) & 0x7) * 0x10000 + parameter->KAst) * parameter->coefdatasize;
-         parameter->coefmode = (Vdp2Regs->KTCTL >> 10) & 0x3;
-      }
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE int IsScreenRotated(vdp2rotationparameter_struct *parameter)
-{
-  return (parameter->deltaXst == 0.0 &&
-          parameter->deltaYst == 1.0 &&
-          parameter->deltaX == 1.0 &&
-          parameter->deltaY == 0.0 &&
-          parameter->A == 1.0 &&
-          parameter->B == 0.0 &&
-          parameter->C == 0.0 &&
-          parameter->D == 0.0 &&
-          parameter->E == 1.0 &&
-          parameter->F == 0.0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void FASTCALL Vdp2ParameterAPlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFR & 0x7) << 6;
-   u32 tmp=0;
-
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABRA & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABRA >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDRA & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDRA >> 8);
-         break;
-      case 4:
-         tmp = offset | (Vdp2Regs->MPEFRA & 0xFF);
-         break;
-      case 5:
-         tmp = offset | (Vdp2Regs->MPEFRA >> 8);
-         break;
-      case 6:
-         tmp = offset | (Vdp2Regs->MPGHRA & 0xFF);
-         break;
-      case 7:
-         tmp = offset | (Vdp2Regs->MPGHRA >> 8);
-         break;
-      case 8:
-         tmp = offset | (Vdp2Regs->MPIJRA & 0xFF);
-         break;
-      case 9:
-         tmp = offset | (Vdp2Regs->MPIJRA >> 8);
-         break;
-      case 10:
-         tmp = offset | (Vdp2Regs->MPKLRA & 0xFF);
-         break;
-      case 11:
-         tmp = offset | (Vdp2Regs->MPKLRA >> 8);
-         break;
-      case 12:
-         tmp = offset | (Vdp2Regs->MPMNRA & 0xFF);
-         break;
-      case 13:
-         tmp = offset | (Vdp2Regs->MPMNRA >> 8);
-         break;
-      case 14:
-         tmp = offset | (Vdp2Regs->MPOPRA & 0xFF);
-         break;
-      case 15:
-         tmp = offset | (Vdp2Regs->MPOPRA >> 8);
-         break;
-   }
-
-   CalcPlaneAddr(info, tmp);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void FASTCALL Vdp2ParameterBPlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFR & 0x70) << 2;
-   u32 tmp=0;
-
-   // Parameter B
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABRB & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABRB >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDRB & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDRB >> 8);
-         break;
-      case 4:
-         tmp = offset | (Vdp2Regs->MPEFRB & 0xFF);
-         break;
-      case 5:
-         tmp = offset | (Vdp2Regs->MPEFRB >> 8);
-         break;
-      case 6:
-         tmp = offset | (Vdp2Regs->MPGHRB & 0xFF);
-         break;
-      case 7:
-         tmp = offset | (Vdp2Regs->MPGHRB >> 8);
-         break;
-      case 8:
-         tmp = offset | (Vdp2Regs->MPIJRB & 0xFF);
-         break;
-      case 9:
-         tmp = offset | (Vdp2Regs->MPIJRB >> 8);
-         break;
-      case 10:
-         tmp = offset | (Vdp2Regs->MPKLRB & 0xFF);
-         break;
-      case 11:
-         tmp = offset | (Vdp2Regs->MPKLRB >> 8);
-         break;
-      case 12:
-         tmp = offset | (Vdp2Regs->MPMNRB & 0xFF);
-         break;
-      case 13:
-         tmp = offset | (Vdp2Regs->MPMNRB >> 8);
-         break;
-      case 14:
-         tmp = offset | (Vdp2Regs->MPOPRB & 0xFF);
-         break;
-      case 15:
-         tmp = offset | (Vdp2Regs->MPOPRB >> 8);
-         break;
-   }
-
-   CalcPlaneAddr(info, tmp);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static float ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 addr)
-{
-   s32 i;
-
-   if (parameter->coefdatasize == 2)
-   {
-      addr &= ~0x1;
-      i = T1ReadWord(Vdp2Ram, addr);
-      parameter->msb = (i >> 15) & 0x1;
-      return (float) (signed) ((i & 0x7FFF) | (i & 0x4000 ? 0xFFFFC000 : 0x00000000)) / 1024;
-   }
-   else
-   {
-      addr &= ~0x3;
-      i = T1ReadLong(Vdp2Ram, addr);
-      parameter->msb = (i >> 31) & 0x1;
-      return (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE void ReadCoefficient(vdp2rotationparameter_struct *parameter, u32 addr)
-{
-   switch (parameter->coefmode)
-   {
-      case 0: // coefficient for kx and ky
-         parameter->kx = parameter->ky = ReadCoefficientMode0_2(parameter, addr);
-         break;
-      case 1: // coefficient for kx
-         parameter->kx = ReadCoefficientMode0_2(parameter, addr);
-         break;
-      case 2: // coefficient for ky
-         parameter->ky = ReadCoefficientMode0_2(parameter, addr);
-         break;
-      case 3: // coefficient for Xp
-      {
-         s32 i;
-
-         if (parameter->coefdatasize == 2)
-         {
-            i = T1ReadWord(Vdp2Ram, addr);
-            parameter->Xp = (float) (signed) ((i & 0x7FFF) | (i & 0x4000 ? 0xFFFFC000 : 0x00000000)) / 4;
-         }
-         else
-         {
-            i = T1ReadLong(Vdp2Ram, addr);
-            parameter->Xp = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 256;
-         }
-         break;
-      }
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE u32 Vdp2RoationFetchPixel(vdp2draw_struct *info, int x, int y, int cellw)
+static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, int cellw)
 {
    u32 dot;
 
@@ -1579,10 +1013,10 @@ void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_stru
       {
          if (parameter->deltaKAx == 0)
          {
-            ReadCoefficient(parameter,
-                            parameter->coeftbladdr +
-                            (u32)(((float)j)*parameter->deltaKAst *
-                            ((float)parameter->coefdatasize)));
+            Vdp2ReadCoefficient(parameter,
+                                parameter->coeftbladdr +
+                                (u32)(((float)j)*parameter->deltaKAst *
+                                ((float)parameter->coefdatasize)));
          }
 
 
@@ -1592,11 +1026,11 @@ void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_stru
 
             if (parameter->deltaKAx != 0)
             {
-               ReadCoefficient(parameter,
-                               parameter->coeftbladdr+
-                               (u32)((((float)j*parameter->deltaKAst) +
-                               ((float)i*parameter->deltaKAx)) *
-                               ((float)parameter->coefdatasize)));
+               Vdp2ReadCoefficient(parameter,
+                                   parameter->coeftbladdr+
+                                   (u32)((((float)j*parameter->deltaKAst) +
+                                   ((float)i*parameter->deltaKAx)) *
+                                   ((float)parameter->coefdatasize)));
             }
 
             if (parameter->msb)
@@ -1615,7 +1049,7 @@ void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_stru
                y &= cellh-1;
 
                // Fetch Pixel
-               color = Vdp2RoationFetchPixel(info, x, y, cellw);
+               color = Vdp2RotationFetchPixel(info, x, y, cellw);
             }
             else
             {
@@ -1696,7 +1130,7 @@ void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_stru
                }
 
                // Fetch pixel
-               color = Vdp2RoationFetchPixel(info, x, y, 8);
+               color = Vdp2RotationFetchPixel(info, x, y, 8);
             }
 
             *texture->textdata++ = info->PostPixelFetchCalc(info, color);
@@ -2318,32 +1752,6 @@ static void Vdp2DrawLineColorScreen(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFN & 0x7) << 6;
-   u32 tmp=0;
-
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABN0 & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABN0 >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDN0 & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDN0 >> 8);
-         break;
-   }
-
-   CalcPlaneAddr(info, tmp);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static void Vdp2DrawNBG0(void)
 {
    vdp2draw_struct info;
@@ -2533,32 +1941,6 @@ static void Vdp2DrawNBG0(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2NBG1PlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFN & 0x70) << 2;
-   u32 tmp=0;
-
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABN1 & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABN1 >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDN1 & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDN1 >> 8);
-         break;
-   }
-
-   CalcPlaneAddr(info, tmp);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static void Vdp2DrawNBG1(void)
 {
    vdp2draw_struct info;
@@ -2662,32 +2044,6 @@ static void Vdp2DrawNBG1(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2NBG2PlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFN & 0x700) >> 2;
-   u32 tmp=0;
-
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABN2 & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABN2 >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDN2 & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDN2 >> 8);
-         break;
-   }
-
-   CalcPlaneAddr(info, tmp);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static void Vdp2DrawNBG2(void)
 {
    vdp2draw_struct info;
@@ -2710,7 +2066,7 @@ static void Vdp2DrawNBG2(void)
    else
       info.alpha = 0xFF;
 
-   info.coloroffset = (Vdp2Regs->CRAOFA & 0x700);
+   info.coloroffset = Vdp2Regs->CRAOFA & 0x700;
    ReadVdp2ColorOffset(&info, 0x4);
    info.coordincx = info.coordincy = 1;
 
@@ -2721,32 +2077,6 @@ static void Vdp2DrawNBG2(void)
       return;
 
    Vdp2DrawMap(&info, &texture);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i)
-{
-   u32 offset = (Vdp2Regs->MPOFN & 0x7000) >> 6;
-   u32 tmp=0;
-
-   switch(i)
-   {
-      case 0:
-         tmp = offset | (Vdp2Regs->MPABN3 & 0xFF);
-         break;
-      case 1:
-         tmp = offset | (Vdp2Regs->MPABN3 >> 8);
-         break;
-      case 2:
-         tmp = offset | (Vdp2Regs->MPCDN3 & 0xFF);
-         break;
-      case 3:
-         tmp = offset | (Vdp2Regs->MPCDN3 >> 8);
-         break;
-   }
-
-   CalcPlaneAddr(info, tmp);
 }
 
 //////////////////////////////////////////////////////////////////////////////
