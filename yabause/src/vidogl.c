@@ -920,7 +920,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_struct *parameter, YglTexture *texture)
+static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_struct *parameter, YglTexture *texture)
 {
    if (!parameter->coefenab)
    {
