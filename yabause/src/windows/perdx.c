@@ -200,6 +200,18 @@ int PERDXInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void StringToGUID(const char *string, GUID *guid)
+{
+   int data4[8];
+   int i;
+
+   sscanf(string, "%08lX-%04hX-%04hX-%02X%02X%02X%02X%02X%02X%02X%02X", (int *)&guid->Data1, (int *)&guid->Data2, (int *)&guid->Data3, &data4[0], &data4[1], &data4[2], &data4[3], &data4[4], &data4[5], &data4[6], &data4[7]);
+   for (i = 0; i < 8; i++)
+     guid->Data4[i] = (BYTE)data4[i];
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void PERDXLoadDevices(char *inifilename)
 {
    char tempstr[MAX_PATH];
@@ -228,7 +240,7 @@ void PERDXLoadDevices(char *inifilename)
       for(i2 = 0; i2 < 256; i2++)
          SetupControlUpDown(i, i2, KeyStub, KeyStub);
 
-      sscanf(tempstr, "%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X", (int *)&guid.Data1, (int *)&guid.Data2, (int *)&guid.Data3, (int *)&guid.Data4[0], (int *)&guid.Data4[1], (int *)&guid.Data4[2], (int *)&guid.Data4[3], (int *)&guid.Data4[4], (int *)&guid.Data4[5], (int *)&guid.Data4[6], (int *)&guid.Data4[7]);
+      StringToGUID(tempstr, &guid);
 
       // Ok, now that we've got the GUID of the device, let's set it up
 
@@ -660,7 +672,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
       DIDEVCAPS didc;
       int buttonid;
 
-      sscanf(tempstr, "%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X", (int *)&guid.Data1, (int *)&guid.Data2, (int *)&guid.Data3, (int *)&guid.Data4[0], (int *)&guid.Data4[1], (int *)&guid.Data4[2], (int *)&guid.Data4[3], (int *)&guid.Data4[4], (int *)&guid.Data4[5], (int *)&guid.Data4[6], (int *)&guid.Data4[7]);
+      StringToGUID(tempstr, &guid);
 
       // Let's find a match
       for (i = 0; i < numguids; i++)
