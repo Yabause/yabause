@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_IE=0x400;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.8.0\&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_IE=0x400;_WIN32_WINNT=0x400;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.8.6\&quot;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -117,7 +117,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_IE=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.8.0\&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.8.6\&quot;"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -212,6 +212,10 @@
 			</File>
 			<File
 				RelativePath=".\cheats.c"
+				>
+			</File>
+			<File
+				RelativePath="..\coffelf.c"
 				>
 			</File>
 			<File
@@ -315,6 +319,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\vidshared.c"
+				>
+			</File>
+			<File
 				RelativePath="..\vidsoft.c"
 				>
 			</File>
@@ -358,6 +366,10 @@
 			</File>
 			<File
 				RelativePath=".\cheats.h"
+				>
+			</File>
+			<File
+				RelativePath="..\coffelf.h"
 				>
 			</File>
 			<File
@@ -462,6 +474,10 @@
 			</File>
 			<File
 				RelativePath="..\vidogl.h"
+				>
+			</File>
+			<File
+				RelativePath="..\vidshared.h"
 				>
 			</File>
 			<File
