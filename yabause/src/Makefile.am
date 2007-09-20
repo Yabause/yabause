@@ -1,8 +1,17 @@
 EXTRA_DIST = cd.c Makefile.mng logo.bmp logo.ico logo.png
 if COMPILE_C68K
-SUBDIRS = c68k . $(yabause_yui)
+SUBDIRS = c68k . $(YUI_SUBDIR)
 else
-SUBDIRS = . $(yabause_yui)
+SUBDIRS = . $(YUI_SUBDIR)
+endif
+if YUI_IS_CARBON
+YUI_SUBDIR=carbon
+endif
+if YUI_IS_GTK
+YUI_SUBDIR=gtk
+endif
+if YUI_IS_WINDOWS
+YUI_SUBDIR=windows
 endif
 noinst_LIBRARIES = libyabause.a
 libyabause_a_SOURCES = \

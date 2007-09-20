@@ -716,6 +716,12 @@ YAB_LIBS
 yabause_yui
 COMPILE_C68K_TRUE
 COMPILE_C68K_FALSE
+YUI_IS_CARBON_TRUE
+YUI_IS_CARBON_FALSE
+YUI_IS_GTK_TRUE
+YUI_IS_GTK_FALSE
+YUI_IS_WINDOWS_TRUE
+YUI_IS_WINDOWS_FALSE
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -6630,6 +6636,30 @@ fi
 
 ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/carbon/Makefile src/dreamcast/Makefile src/gtk/Makefile src/windows/Makefile autopackage/default.apspec"
 
+ if test ${yabause_yui} = "carbon"; then
+  YUI_IS_CARBON_TRUE=
+  YUI_IS_CARBON_FALSE='#'
+else
+  YUI_IS_CARBON_TRUE='#'
+  YUI_IS_CARBON_FALSE=
+fi
+
+ if test ${yabause_yui} = "gtk"; then
+  YUI_IS_GTK_TRUE=
+  YUI_IS_GTK_FALSE='#'
+else
+  YUI_IS_GTK_TRUE='#'
+  YUI_IS_GTK_FALSE=
+fi
+
+ if test ${yabause_yui} = "windows"; then
+  YUI_IS_WINDOWS_TRUE=
+  YUI_IS_WINDOWS_FALSE='#'
+else
+  YUI_IS_WINDOWS_TRUE='#'
+  YUI_IS_WINDOWS_FALSE=
+fi
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -6774,6 +6804,27 @@ if test -z "${COMPILE_C68K_TRUE}" && test -z "${COMPILE_C68K_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"COMPILE_C68K\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"COMPILE_C68K\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${YUI_IS_CARBON_TRUE}" && test -z "${YUI_IS_CARBON_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"YUI_IS_CARBON\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"YUI_IS_CARBON\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${YUI_IS_GTK_TRUE}" && test -z "${YUI_IS_GTK_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"YUI_IS_GTK\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"YUI_IS_GTK\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${YUI_IS_WINDOWS_TRUE}" && test -z "${YUI_IS_WINDOWS_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"YUI_IS_WINDOWS\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"YUI_IS_WINDOWS\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -7445,11 +7496,17 @@ YAB_LIBS!$YAB_LIBS$ac_delim
 yabause_yui!$yabause_yui$ac_delim
 COMPILE_C68K_TRUE!$COMPILE_C68K_TRUE$ac_delim
 COMPILE_C68K_FALSE!$COMPILE_C68K_FALSE$ac_delim
+YUI_IS_CARBON_TRUE!$YUI_IS_CARBON_TRUE$ac_delim
+YUI_IS_CARBON_FALSE!$YUI_IS_CARBON_FALSE$ac_delim
+YUI_IS_GTK_TRUE!$YUI_IS_GTK_TRUE$ac_delim
+YUI_IS_GTK_FALSE!$YUI_IS_GTK_FALSE$ac_delim
+YUI_IS_WINDOWS_TRUE!$YUI_IS_WINDOWS_TRUE$ac_delim
+YUI_IS_WINDOWS_FALSE!$YUI_IS_WINDOWS_FALSE$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 9; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 15; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

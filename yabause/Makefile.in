@@ -182,7 +182,7 @@ top_srcdir = @top_srcdir@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
 SUBDIRS = src doc
-EXTRA_DIST = README.DC README.LIN README.WIN GOALS
+EXTRA_DIST = README.DC README.LIN README.MAC README.WIN GOALS
 all: all-recursive
 
 .SUFFIXES:

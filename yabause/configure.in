@@ -154,4 +154,7 @@ AC_CONFIG_FILES([Makefile
 	src/windows/Makefile
 	autopackage/default.apspec
 ])
+AM_CONDITIONAL([YUI_IS_CARBON], [test ${yabause_yui} = "carbon"])
+AM_CONDITIONAL([YUI_IS_GTK], [test ${yabause_yui} = "gtk"])
+AM_CONDITIONAL([YUI_IS_WINDOWS], [test ${yabause_yui} = "windows"])
 AC_OUTPUT
