@@ -93,6 +93,8 @@ void VIDSoftVdp2ToggleDisplayNBG2(void);
 void VIDSoftVdp2ToggleDisplayNBG3(void);
 void VIDSoftVdp2ToggleDisplayRBG0(void);
 void VIDSoftOnScreenDebugMessage(char *string, ...);
+void VIDSoftVdp1SwapFrameBuffer(void);
+void VIDSoftVdp1EraseFrameBuffer(void);
 
 VideoInterface_struct VIDSoft = {
 VIDCORE_SOFT,
@@ -132,7 +134,10 @@ VIDSoftOnScreenDebugMessage,
 };
 
 u32 *dispbuffer=NULL;
-u8 *vdp1framebuffer=NULL;
+u8 *vdp1framebuffer[2]= { NULL, NULL };
+u8 *vdp1frontframebuffer;
+u8 *vdp1backframebuffer;
+
 u32 *vdp2framebuffer=NULL;
 
 static int vdp1width;
@@ -928,24 +933,9 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 
       CalculateRotationValues(parameter);
 
-/*
-      info->vertices[0] = 0;
-      info->vertices[1] = 0;
-      info->vertices[2] = vdp2width;
-      info->vertices[3] = 0;
-      info->vertices[4] = vdp2width;
-      info->vertices[5] = vdp2height;
-      info->vertices[6] = 0;
-      info->vertices[7] = vdp2height;
-*/
       cellw = info->cellw;
       cellh = info->cellh;
-/*
-      info->cellw = vdp2width;
-      info->cellh = vdp2height;
-      info->flipfunction = 0;
-      YglQuad((YglSprite *)info, texture);
-*/
+
       if (!info->isbitmap)
       {
          pagepixelwh=64*8;
@@ -1513,14 +1503,20 @@ int VIDSoftInit(void)
    if ((dispbuffer = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
       return -1;
 
-   // Initialize VDP1 framebuffer
-   if ((vdp1framebuffer = (u8 *)calloc(sizeof(u8), 0x40000)) == NULL)
+   // Initialize VDP1 framebuffer 1
+   if ((vdp1framebuffer[0] = (u8 *)calloc(sizeof(u8), 0x40000)) == NULL)
+      return -1;
+
+   // Initialize VDP1 framebuffer 2
+   if ((vdp1framebuffer[1] = (u8 *)calloc(sizeof(u8), 0x40000)) == NULL)
       return -1;
 
    // Initialize VDP2 framebuffer
    if ((vdp2framebuffer = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
       return -1;
 
+   vdp1backframebuffer = vdp1framebuffer[0];
+   vdp1frontframebuffer = vdp1framebuffer[1];
    vdp2width = 320;
    vdp2height = 224;
 
@@ -1561,8 +1557,11 @@ void VIDSoftDeInit(void)
    if (dispbuffer)
       free(dispbuffer);
 
-   if (vdp1framebuffer)
-      free(vdp1framebuffer);
+   if (vdp1framebuffer[0])
+      free(vdp1framebuffer[0]);
+
+   if (vdp1framebuffer[1])
+      free(vdp1framebuffer[1]);
 
    if (vdp2framebuffer)
       free(vdp2framebuffer);
@@ -1615,9 +1614,6 @@ int VIDSoftVdp1Reset(void)
 
 void VIDSoftVdp1DrawStart(void)
 {
-   int i,i2;
-   int w,h;
-
    if (Vdp1Regs->TVMR & 0x1)
    {
       if (Vdp1Regs->TVMR & 0x2)
@@ -1644,19 +1640,7 @@ void VIDSoftVdp1DrawStart(void)
       vdp1pixelsize = 2;
    }
 
-   h = Vdp1Regs->EWRR & 0x1FF;
-   if (h > vdp1height) h = vdp1height;
-   w = (Vdp1Regs->EWRR >> 6) & 0x3F8;
-   if (w > vdp1width) w = vdp1width;
-
-   // This should be controlled by FBCR
-   for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
-   {
-      for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
-      {
-         ((u16 *)vdp1framebuffer)[(i2 * vdp1width) + i] = Vdp1Regs->EWDR;
-      }
-   }
+   VIDSoftVdp1EraseFrameBuffer();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1922,7 +1906,7 @@ void VIDSoftVdp1DistortedSpriteDraw() {
       yM += yStepM;}
 
 #define DISTORTED_SPRITE_PUT(color) if ( SPD | dot ) \
-	  ((u16 *)vdp1framebuffer)[((int)yM * vdp1width) + (int)xM] = color;
+          ((u16 *)vdp1backframebuffer)[((int)yM * vdp1width) + (int)xM] = color;
 
 #define DISTORTED_SPRITE_ENDCODE_BREAK( code ) \
   	 if (endCode && (dot == code)) {\
@@ -2062,7 +2046,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
      if ( x0+W < vdp1clipxstart ) return;
      clipx1 = vdp1clipxstart-x0;
    } else clipx1 = 0;
-   
+
    if ( x0+W > vdp1clipxend ) {
      
      if ( x0 > vdp1clipxend ) return;
@@ -2112,9 +2096,9 @@ void VIDSoftVdp1NormalSpriteDraw(void)
    y1 = H - clipy1 + clipy2;
    x1 = W - clipx1 + clipx2;
    
-   iPix = ((u16*)vdp1framebuffer) + (y0+clipy1) * vdp1width + x0+clipx1;
+   iPix = ((u16*)vdp1backframebuffer) + (y0+clipy1) * vdp1width + x0+clipx1;
    stepPix = vdp1width - x1;
-   
+
 #define NORMAL_SPRITE_ENDCODE_BREAK( code ) \
   	 if (endCode && (dot == code)) {\
 	   if (endCode == 1) endCode = 2;\
@@ -2143,7 +2127,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
 	
 	 u16 dot = Vdp1ReadPattern16( iAddr, w );
 	 NORMAL_SPRITE_ENDCODE_BREAK(0xF);
-	 if (!(dot == 0 && !SPD)) *(iPix) = colorbank | dot;
+         if (!(dot == 0 && !SPD)) *(iPix) = colorbank | dot;
 
 	 iPix++;      
 	 w += stepW;
@@ -2157,7 +2141,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
 
 	 u16 dot = Vdp1ReadPattern16( iAddr, w );
 	 NORMAL_SPRITE_ENDCODE_BREAK(0xF);
-	 if (!(dot == 0 && !SPD)) *(iPix) = T1ReadWord(Vdp1Ram, (dot * 2 + colorlut) & 0x7FFFF);
+         if (!(dot == 0 && !SPD)) *(iPix) = T1ReadWord(Vdp1Ram, (dot * 2 + colorlut) & 0x7FFFF);
 
 	 iPix++;      
 	 w += stepW;
@@ -2171,7 +2155,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
 	
 	 u16 dot = Vdp1ReadPattern64( iAddr, w );
 	 NORMAL_SPRITE_ENDCODE_BREAK(0xFF);
-	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
+         if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
 	
 	 iPix++;      
 	 w += stepW;
@@ -2185,7 +2169,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
 	
 	 u16 dot = Vdp1ReadPattern128( iAddr, w );
 	 NORMAL_SPRITE_ENDCODE_BREAK(0xFF);
-	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
+         if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
 	
 	 iPix++;      
 	 w += stepW;
@@ -2199,7 +2183,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
 	
 	 u16 dot = Vdp1ReadPattern256( iAddr, w );
 	 NORMAL_SPRITE_ENDCODE_BREAK(0xFF);
-	 if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
+         if (!((dot == 0) && !SPD)) *(iPix) = colorbank | dot;
 	
 	 iPix++;      
 	 w += stepW;
@@ -2213,7 +2197,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
 	
 	 u16 dot = Vdp1ReadPattern64k( iAddr, w );
 	 NORMAL_SPRITE_ENDCODE_BREAK(0x7FFF);
-	 if (!((dot == 0) && !SPD)) *(iPix) = dot;
+         if (!((dot == 0) && !SPD)) *(iPix) = dot;
 	
 	 iPix++;      
 	 w += stepW;
@@ -2389,7 +2373,7 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
    y1 -= clipy1 + clipy2;
    x1 -= clipx1 + clipx2;
    
-   iPix = ((u16*)vdp1framebuffer) + (y0+clipy1) * vdp1width + x0+clipx1;
+   iPix = ((u16*)vdp1backframebuffer) + (y0+clipy1) * vdp1width + x0+clipx1;
    stepPix = vdp1width - x1;
 
 #define SCALED_SPRITE_ENDCODE_BREAK( code ) \
@@ -2568,7 +2552,7 @@ void VIDSoftVdp1PolygonDraw(void) {
         int x2 = x1 + (int)xwidth;			   \
         if ( x1 < vdp1clipxstart ) x1 = vdp1clipxstart; \
         if ( x2 > vdp1clipxend ) x2 = vdp1clipxend;\
-        fb = (u16 *)vdp1framebuffer + y*vdp1width + x1;\
+        fb = (u16 *)vdp1backframebuffer + y*vdp1width + x1;\
         for ( ; x1<=x2 ; x1++ ) *(fb++) = color; \
       }} \
     if ( v[pBegin].y <= vdp1clipystart ) { \
@@ -2585,7 +2569,7 @@ void VIDSoftVdp1PolygonDraw(void) {
         int x2 = x1 + (int)xwidth;			   \
         if ( x1 < vdp1clipxstart ) x1 = vdp1clipxstart; \
         if ( x2 > vdp1clipxend ) x2 = vdp1clipxend;\
-        fb = (u16 *)vdp1framebuffer + y*vdp1width + x1;\
+        fb = (u16 *)vdp1backframebuffer + y*vdp1width + x1;\
         for ( ; x1<=x2 ; x1++ ) *(fb++) = color; \
       } \
       y++; \
@@ -2595,7 +2579,7 @@ void VIDSoftVdp1PolygonDraw(void) {
     if ( y == v[pEnd].y ) { \
       if ( zLeft ) { xleft += stepLeft; xwidth -= stepLeft; stepLeft = 0; } \
       if ( zRight ) { xwidth += stepRight; stepRight = 0; }\
-    fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;\
+    fb = (u16 *)vdp1backframebuffer + y*vdp1width + (int)xleft;\
     for ( x = (int)xwidth ; x>=0 ; x-- ) *(fb++) = color; \
     }  \
     while ( y < v[pEnd].y ) { \
@@ -2603,7 +2587,7 @@ void VIDSoftVdp1PolygonDraw(void) {
       xwidth += stepRight - stepLeft;\
       xleft += stepLeft;\
       \
-      fb = (u16 *)vdp1framebuffer + y*vdp1width + (int)xleft;\
+      fb = (u16 *)vdp1backframebuffer + y*vdp1width + (int)xleft;\
       for ( x = (int)xwidth ; x>=0 ; x-- ) *(fb++) = color; \
       y++; \
     }
@@ -2709,7 +2693,7 @@ void FASTCALL DrawLine(int x1, int y1, int x2, int y2, u16 color)
 {
    // Uses Bresenham's line algorithm(eventually this should be changed over
    // to Wu's symmetric double step
-   u16 *fbstart = &((u16 *)vdp1framebuffer)[(y1 * vdp1width) + x1];
+   u16 *fbstart = &((u16 *)vdp1backframebuffer)[(y1 * vdp1width) + x1];
    int deltax, deltay, xinc, yinc, i;
    int error=0;
 
@@ -2953,14 +2937,14 @@ void VIDSoftVdp2DrawEnd(void)
                info.cob |= 0xFFFFFF00;
          }
 
-         if (Vdp2Regs->CCCTL & 0x1)
+         if (Vdp2Regs->CCCTL & 0x40)
             info.PostPixelFetchCalc = &DoColorCalcWithColorOffset;
          else
             info.PostPixelFetchCalc = &DoColorOffset;
       }
       else // color offset disable
       {
-         if (Vdp2Regs->CCCTL & 0x1)
+         if (Vdp2Regs->CCCTL & 0x40)
             info.PostPixelFetchCalc = &DoColorCalc;
          else
             info.PostPixelFetchCalc = &DoNothing;
@@ -2973,7 +2957,7 @@ void VIDSoftVdp2DrawEnd(void)
             if (vdp1pixelsize == 2)
             {
                // 16-bit pixel size
-               pixel = ((u16 *)vdp1framebuffer)[(i2 * vdp1width) + i];
+               pixel = ((u16 *)vdp1frontframebuffer)[(i2 * vdp1width) + i];
 
                if (pixel == 0)
                   dispbuffer[(i2 * vdp2width) + i] = COLSATSTRIPPRIORITY(vdp2framebuffer[(i2 * vdp2width) + i]);
@@ -2998,7 +2982,7 @@ void VIDSoftVdp2DrawEnd(void)
             else
             {
                // 8-bit pixel size
-               pixel = vdp1framebuffer[(i2 * vdp1width) + i];
+               pixel = vdp1frontframebuffer[(i2 * vdp1width) + i];
 
                if (pixel == 0)
                   dispbuffer[(i2 * vdp2width) + i] = COLSATSTRIPPRIORITY(vdp2framebuffer[(i2 * vdp2width) + i]);
@@ -3018,6 +3002,9 @@ void VIDSoftVdp2DrawEnd(void)
       for (i = 0; i < (vdp2width*vdp2height); i++)
          dispbuffer[i] = COLSATSTRIPPRIORITY(vdp2framebuffer[i]);
    }
+
+   VIDSoftVdp1SwapFrameBuffer();
+
 #ifdef USE_OPENGL
    glRasterPos2i(0, 0);
    glPixelZoom((float)outputwidth / (float)vdp2width, 0 - ((float)outputheight / (float)vdp2height));
@@ -3200,3 +3187,30 @@ void VIDSoftGetScreenSize(int *width, int *height)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void VIDSoftVdp1SwapFrameBuffer(void)
+{
+   u8 *temp = vdp1frontframebuffer;
+   vdp1frontframebuffer = vdp1backframebuffer;
+   vdp1backframebuffer = temp;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftVdp1EraseFrameBuffer(void)
+{   
+   int i,i2;
+   int w,h;
+
+   h = (Vdp1Regs->EWRR & 0x1FF) + 1;
+   if (h > vdp1height) h = vdp1height;
+   w = ((Vdp1Regs->EWRR >> 6) & 0x3F8) + 8;
+   if (w > vdp1width) w = vdp1width;
+
+   for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
+   {
+      for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
+         ((u16 *)vdp1backframebuffer)[(i2 * vdp1width) + i] = Vdp1Regs->EWDR;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
