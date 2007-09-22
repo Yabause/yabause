@@ -1606,7 +1606,6 @@ void VIDOGLVdp1LineDraw(void)
    u16 color;
    u16 CMDPMOD;
    u8 alpha;
-   s32 priority;
    YglSprite polygon;
    YglTexture texture;
 
@@ -1626,7 +1625,7 @@ void VIDOGLVdp1LineDraw(void)
    if ((color & 0x8000) == 0)
       alpha = 0;
 
-   priority = Vdp2Regs->PRISA & 0x7;
+   polygon.priority = Vdp2Regs->PRISA & 0x7;
 
    polygon.vertices[0] = (int)((float)X[0] * vdp1wratio);
    polygon.vertices[1] = (int)((float)Y[0] * vdp1hratio);
