@@ -1,13 +1,24 @@
 0.8.6 -> ?.?.?
+ opengl video core:
+  - Added support for VDP1 line draw.
+  - Added support for VDP2 Rotation with coefficient tables.
+  - Other bug fixes.
+ software video core:
+  - Added support for VDP1 frame buffer switching.
+  - Added support for VDP2 Rotation with coefficient tables.
+  - Fixed a bug in frame buffer erasing.
+  - Other bug fixes.
  linux port:
-  - fixed a bug on 64 bits CPU
-  - changed the location of the ini file to conform to XDG specification
-  - removed some old useless code
-  - added a "subclass" to GtkDrawingArea so sprite textures and screenshots
-    can now be saved through a popup menu
+  - Fixed a bug on 64 bits CPU.
+  - Hanged the location of the ini file to conform to XDG specification.
+  - Removed some old useless code.
+  - Added a "subclass" to GtkDrawingArea so sprite textures and screenshots
+    can now be saved through a popup menu.
  macos port:
-  - Added fullscreen support
-  - Added graphics layer toggling
+  - Added fullscreen support.
+  - Added graphics layer toggling.
+ windows port:
+  - Fixed a stack corruption bug in DirectInput code.
 0.8.5 -> 0.8.6
  68k:
   - Fixed a bug which caused the emulator to crash if 68k execution jumped to
