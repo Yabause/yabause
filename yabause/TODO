@@ -16,6 +16,8 @@
    - SCU should be handling non-longword aligned DMA transfers
    - Convert CD Block code so it's capable of handling async transfers
    - Fix whatever is causing those strange pitch problems in the SCSP
+   - Add scsp slot sbctl support as there's a few odd games that use it
+   - Add support for scsp slot alternate/reverse looping
 
  (3) MONITOR/DEBUGGER
 
