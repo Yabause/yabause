@@ -1,3 +1,4 @@
+EXTRA_DIST = build_dmg.sh
 bin_PROGRAMS = yabause
 yabause_SOURCES = main.c settings.c settings.h cpustatus.c cpustatus.h
 yabause_CFLAGS = $(YAB_CFLAGS)

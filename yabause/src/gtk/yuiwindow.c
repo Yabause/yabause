@@ -26,8 +26,6 @@
 
 #include "settings.h"
 
-#include "icon.xpm"
-
 static void yui_window_class_init	(YuiWindowClass * klass);
 static void yui_window_init		(YuiWindow      * yfe);
 static void yui_window_changed	(GtkWidget * widget, YuiWindow * yfe);
@@ -114,7 +112,26 @@ static void yui_window_init (YuiWindow * yw) {
 	}
 	gtk_window_add_accel_group(GTK_WINDOW(yw), accel_group);
 
-	gtk_window_set_icon(GTK_WINDOW(yw), gdk_pixbuf_new_from_xpm_data((const char **)icon_xpm));
+	{
+		const gchar * const * data_dir;
+		gboolean pngfound = FALSE;
+		gchar * pngfile;
+
+		data_dir = g_get_system_data_dirs();
+		while (!pngfound && (*data_dir != NULL)) {
+			pngfile = g_build_filename(*data_dir, "pixmaps", "yabause.png", NULL);
+			if (g_file_test(pngfile, G_FILE_TEST_EXISTS)) {
+				gtk_window_set_icon(GTK_WINDOW(yw), gdk_pixbuf_new_from_file(pngfile, NULL));
+				pngfound = TRUE;
+			}
+			data_dir++;
+		}
+
+		if (!pngfound) {
+			gtk_window_set_icon(GTK_WINDOW(yw), gdk_pixbuf_new_from_file("yabause.png", NULL));
+		}
+	}
+
 	gtk_window_set_title (GTK_WINDOW(yw), "Yabause");
 
 	yw->box = gtk_vbox_new(FALSE, 0);
