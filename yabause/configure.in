@@ -155,6 +155,13 @@ AC_CONFIG_FILES([Makefile
 	autopackage/default.apspec
 ])
 AM_CONDITIONAL([YUI_IS_CARBON], [test ${yabause_yui} = "carbon"])
+AM_CONDITIONAL([YUI_IS_DREAMCAST], [test ${yabause_yui} = "dreamcast"])
 AM_CONDITIONAL([YUI_IS_GTK], [test ${yabause_yui} = "gtk"])
 AM_CONDITIONAL([YUI_IS_WINDOWS], [test ${yabause_yui} = "windows"])
+
+AM_CONDITIONAL([ARCH_IS_FREEBSD], [test ${yabause_arch} = "freebsd"])
+AM_CONDITIONAL([ARCH_IS_LINUX], [test ${yabause_arch} = "linux"])
+AM_CONDITIONAL([ARCH_IS_MACOSX], [test ${yabause_arch} = "macosx"])
+AM_CONDITIONAL([ARCH_IS_NETBSD], [test ${yabause_arch} = "netbsd"])
+AM_CONDITIONAL([ARCH_IS_WINDOWS], [test ${yabause_arch} = "windows"])
 AC_OUTPUT

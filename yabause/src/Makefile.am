@@ -1,4 +1,4 @@
-EXTRA_DIST = cd.c Makefile.mng logo.bmp logo.ico logo.png
+EXTRA_DIST = cd.c Makefile.dc Makefile.mng logo.bmp logo.ico logo.png
 if COMPILE_C68K
 SUBDIRS = c68k . $(YUI_SUBDIR)
 else
@@ -6,6 +6,9 @@ SUBDIRS = . $(YUI_SUBDIR)
 endif
 if YUI_IS_CARBON
 YUI_SUBDIR=carbon
+endif
+if YUI_IS_DREAMCAST
+YUI_SUBDIR=dreamcast
 endif
 if YUI_IS_GTK
 YUI_SUBDIR=gtk
@@ -34,4 +37,18 @@ c68k/c68k_ini.inc:
 c68kexec.o: c68k/c68kexec.c
 	$(COMPILE) -O0 c68k/c68kexec.c -c -o c68kexec.o
 endif
-libyabause_a_LIBADD = cd-$(yabause_arch).$(OBJEXT)
+if ARCH_IS_FREEBSD
+libyabause_a_SOURCES += cd-freebsd.c
+endif
+if ARCH_IS_LINUX
+libyabause_a_SOURCES += cd-linux.c
+endif
+if ARCH_IS_MACOSX
+libyabause_a_SOURCES += cd-macosx.c
+endif
+if ARCH_IS_NETBSD
+libyabause_a_SOURCES += cd-netbsd.c
+endif
+if ARCH_IS_WINDOWS
+libyabause_a_SOURCES += cd-windows.c
+endif

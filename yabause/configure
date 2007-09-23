@@ -718,10 +718,22 @@ COMPILE_C68K_TRUE
 COMPILE_C68K_FALSE
 YUI_IS_CARBON_TRUE
 YUI_IS_CARBON_FALSE
+YUI_IS_DREAMCAST_TRUE
+YUI_IS_DREAMCAST_FALSE
 YUI_IS_GTK_TRUE
 YUI_IS_GTK_FALSE
 YUI_IS_WINDOWS_TRUE
 YUI_IS_WINDOWS_FALSE
+ARCH_IS_FREEBSD_TRUE
+ARCH_IS_FREEBSD_FALSE
+ARCH_IS_LINUX_TRUE
+ARCH_IS_LINUX_FALSE
+ARCH_IS_MACOSX_TRUE
+ARCH_IS_MACOSX_FALSE
+ARCH_IS_NETBSD_TRUE
+ARCH_IS_NETBSD_FALSE
+ARCH_IS_WINDOWS_TRUE
+ARCH_IS_WINDOWS_FALSE
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -6644,6 +6656,14 @@ else
   YUI_IS_CARBON_FALSE=
 fi
 
+ if test ${yabause_yui} = "dreamcast"; then
+  YUI_IS_DREAMCAST_TRUE=
+  YUI_IS_DREAMCAST_FALSE='#'
+else
+  YUI_IS_DREAMCAST_TRUE='#'
+  YUI_IS_DREAMCAST_FALSE=
+fi
+
  if test ${yabause_yui} = "gtk"; then
   YUI_IS_GTK_TRUE=
   YUI_IS_GTK_FALSE='#'
@@ -6658,6 +6678,47 @@ fi
 else
   YUI_IS_WINDOWS_TRUE='#'
   YUI_IS_WINDOWS_FALSE=
+fi
+
+
+ if test ${yabause_arch} = "freebsd"; then
+  ARCH_IS_FREEBSD_TRUE=
+  ARCH_IS_FREEBSD_FALSE='#'
+else
+  ARCH_IS_FREEBSD_TRUE='#'
+  ARCH_IS_FREEBSD_FALSE=
+fi
+
+ if test ${yabause_arch} = "linux"; then
+  ARCH_IS_LINUX_TRUE=
+  ARCH_IS_LINUX_FALSE='#'
+else
+  ARCH_IS_LINUX_TRUE='#'
+  ARCH_IS_LINUX_FALSE=
+fi
+
+ if test ${yabause_arch} = "macosx"; then
+  ARCH_IS_MACOSX_TRUE=
+  ARCH_IS_MACOSX_FALSE='#'
+else
+  ARCH_IS_MACOSX_TRUE='#'
+  ARCH_IS_MACOSX_FALSE=
+fi
+
+ if test ${yabause_arch} = "netbsd"; then
+  ARCH_IS_NETBSD_TRUE=
+  ARCH_IS_NETBSD_FALSE='#'
+else
+  ARCH_IS_NETBSD_TRUE='#'
+  ARCH_IS_NETBSD_FALSE=
+fi
+
+ if test ${yabause_arch} = "windows"; then
+  ARCH_IS_WINDOWS_TRUE=
+  ARCH_IS_WINDOWS_FALSE='#'
+else
+  ARCH_IS_WINDOWS_TRUE='#'
+  ARCH_IS_WINDOWS_FALSE=
 fi
 
 cat >confcache <<\_ACEOF
@@ -6814,6 +6875,13 @@ echo "$as_me: error: conditional \"YUI_IS_CARBON\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
+if test -z "${YUI_IS_DREAMCAST_TRUE}" && test -z "${YUI_IS_DREAMCAST_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"YUI_IS_DREAMCAST\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"YUI_IS_DREAMCAST\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
 if test -z "${YUI_IS_GTK_TRUE}" && test -z "${YUI_IS_GTK_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"YUI_IS_GTK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
@@ -6825,6 +6893,41 @@ if test -z "${YUI_IS_WINDOWS_TRUE}" && test -z "${YUI_IS_WINDOWS_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"YUI_IS_WINDOWS\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"YUI_IS_WINDOWS\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${ARCH_IS_FREEBSD_TRUE}" && test -z "${ARCH_IS_FREEBSD_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"ARCH_IS_FREEBSD\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"ARCH_IS_FREEBSD\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${ARCH_IS_LINUX_TRUE}" && test -z "${ARCH_IS_LINUX_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"ARCH_IS_LINUX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"ARCH_IS_LINUX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${ARCH_IS_MACOSX_TRUE}" && test -z "${ARCH_IS_MACOSX_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"ARCH_IS_MACOSX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"ARCH_IS_MACOSX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${ARCH_IS_NETBSD_TRUE}" && test -z "${ARCH_IS_NETBSD_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"ARCH_IS_NETBSD\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"ARCH_IS_NETBSD\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${ARCH_IS_WINDOWS_TRUE}" && test -z "${ARCH_IS_WINDOWS_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"ARCH_IS_WINDOWS\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"ARCH_IS_WINDOWS\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -7498,15 +7601,27 @@ COMPILE_C68K_TRUE!$COMPILE_C68K_TRUE$ac_delim
 COMPILE_C68K_FALSE!$COMPILE_C68K_FALSE$ac_delim
 YUI_IS_CARBON_TRUE!$YUI_IS_CARBON_TRUE$ac_delim
 YUI_IS_CARBON_FALSE!$YUI_IS_CARBON_FALSE$ac_delim
+YUI_IS_DREAMCAST_TRUE!$YUI_IS_DREAMCAST_TRUE$ac_delim
+YUI_IS_DREAMCAST_FALSE!$YUI_IS_DREAMCAST_FALSE$ac_delim
 YUI_IS_GTK_TRUE!$YUI_IS_GTK_TRUE$ac_delim
 YUI_IS_GTK_FALSE!$YUI_IS_GTK_FALSE$ac_delim
 YUI_IS_WINDOWS_TRUE!$YUI_IS_WINDOWS_TRUE$ac_delim
 YUI_IS_WINDOWS_FALSE!$YUI_IS_WINDOWS_FALSE$ac_delim
+ARCH_IS_FREEBSD_TRUE!$ARCH_IS_FREEBSD_TRUE$ac_delim
+ARCH_IS_FREEBSD_FALSE!$ARCH_IS_FREEBSD_FALSE$ac_delim
+ARCH_IS_LINUX_TRUE!$ARCH_IS_LINUX_TRUE$ac_delim
+ARCH_IS_LINUX_FALSE!$ARCH_IS_LINUX_FALSE$ac_delim
+ARCH_IS_MACOSX_TRUE!$ARCH_IS_MACOSX_TRUE$ac_delim
+ARCH_IS_MACOSX_FALSE!$ARCH_IS_MACOSX_FALSE$ac_delim
+ARCH_IS_NETBSD_TRUE!$ARCH_IS_NETBSD_TRUE$ac_delim
+ARCH_IS_NETBSD_FALSE!$ARCH_IS_NETBSD_FALSE$ac_delim
+ARCH_IS_WINDOWS_TRUE!$ARCH_IS_WINDOWS_TRUE$ac_delim
+ARCH_IS_WINDOWS_FALSE!$ARCH_IS_WINDOWS_FALSE$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 15; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 27; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

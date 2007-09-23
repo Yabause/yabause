@@ -34,6 +34,12 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @COMPILE_C68K_TRUE@am__append_1 = c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c m68kc68k.c m68kc68k.h
+#libyabause_a_LIBADD = cd-$(YAB_ARCH).$(OBJEXT)
+@ARCH_IS_FREEBSD_TRUE@am__append_2 = cd-freebsd.c
+@ARCH_IS_LINUX_TRUE@am__append_3 = cd-linux.c
+@ARCH_IS_MACOSX_TRUE@am__append_4 = cd-macosx.c
+@ARCH_IS_NETBSD_TRUE@am__append_5 = cd-netbsd.c
+@ARCH_IS_WINDOWS_TRUE@am__append_6 = cd-windows.c
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -47,7 +53,7 @@ LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
 libyabause_a_AR = $(AR) $(ARFLAGS)
-libyabause_a_DEPENDENCIES = cd-$(yabause_arch).$(OBJEXT)
+libyabause_a_LIBADD =
 am__libyabause_a_SOURCES_DIST = bios.c bios.h cdbase.c cdbase.h \
 	cheat.c cheat.h coffelf.c coffelf.h core.h cs0.c cs0.h cs1.c \
 	cs1.h cs2.c cs2.h debug.c debug.h error.c error.h memory.c \
@@ -59,9 +65,15 @@ am__libyabause_a_SOURCES_DIST = bios.c bios.h cdbase.c cdbase.h \
 	vdp2.c vdp2.h vidogl.c vidogl.h vidshared.c vidshared.h \
 	vidsoft.c vidsoft.h yabause.c yabause.h ygl.h ygl.c yui.h \
 	c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c m68kc68k.c \
-	m68kc68k.h
+	m68kc68k.h cd-freebsd.c cd-linux.c cd-macosx.c cd-netbsd.c \
+	cd-windows.c
 @COMPILE_C68K_TRUE@am__objects_1 = c68kexec.$(OBJEXT) c68k.$(OBJEXT) \
 @COMPILE_C68K_TRUE@	gen68k.$(OBJEXT) m68kc68k.$(OBJEXT)
+@ARCH_IS_FREEBSD_TRUE@am__objects_2 = cd-freebsd.$(OBJEXT)
+@ARCH_IS_LINUX_TRUE@am__objects_3 = cd-linux.$(OBJEXT)
+@ARCH_IS_MACOSX_TRUE@am__objects_4 = cd-macosx.$(OBJEXT)
+@ARCH_IS_NETBSD_TRUE@am__objects_5 = cd-netbsd.$(OBJEXT)
+@ARCH_IS_WINDOWS_TRUE@am__objects_6 = cd-windows.$(OBJEXT)
 am_libyabause_a_OBJECTS = bios.$(OBJEXT) cdbase.$(OBJEXT) \
 	cheat.$(OBJEXT) coffelf.$(OBJEXT) cs0.$(OBJEXT) cs1.$(OBJEXT) \
 	cs2.$(OBJEXT) debug.$(OBJEXT) error.$(OBJEXT) memory.$(OBJEXT) \
@@ -72,7 +84,8 @@ am_libyabause_a_OBJECTS = bios.$(OBJEXT) cdbase.$(OBJEXT) \
 	smpc.$(OBJEXT) scsp.$(OBJEXT) sndsdl.$(OBJEXT) vdp1.$(OBJEXT) \
 	vdp2.$(OBJEXT) vidogl.$(OBJEXT) vidshared.$(OBJEXT) \
 	vidsoft.$(OBJEXT) yabause.$(OBJEXT) ygl.$(OBJEXT) \
-	$(am__objects_1)
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6)
 nodist_libyabause_a_OBJECTS =
 libyabause_a_OBJECTS = $(am_libyabause_a_OBJECTS) \
 	$(nodist_libyabause_a_OBJECTS)
@@ -96,7 +109,7 @@ RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = . carbon gtk windows c68k
+DIST_SUBDIRS = . carbon dreamcast gtk windows c68k
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -206,10 +219,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
-EXTRA_DIST = cd.c Makefile.mng logo.bmp logo.ico logo.png
+EXTRA_DIST = cd.c Makefile.dc Makefile.mng logo.bmp logo.ico logo.png
 @COMPILE_C68K_FALSE@SUBDIRS = . $(YUI_SUBDIR)
 @COMPILE_C68K_TRUE@SUBDIRS = c68k . $(YUI_SUBDIR)
 @YUI_IS_CARBON_TRUE@YUI_SUBDIR = carbon
+@YUI_IS_DREAMCAST_TRUE@YUI_SUBDIR = dreamcast
 @YUI_IS_GTK_TRUE@YUI_SUBDIR = gtk
 @YUI_IS_WINDOWS_TRUE@YUI_SUBDIR = windows
 noinst_LIBRARIES = libyabause.a
@@ -222,9 +236,10 @@ libyabause_a_SOURCES = bios.c bios.h cdbase.c cdbase.h cheat.c cheat.h \
 	sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h smpc.c smpc.h \
 	scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h vdp2.c vdp2.h \
 	vidogl.c vidogl.h vidshared.c vidshared.h vidsoft.c vidsoft.h \
-	yabause.c yabause.h ygl.h ygl.c yui.h $(am__append_1)
+	yabause.c yabause.h ygl.h ygl.c yui.h $(am__append_1) \
+	$(am__append_2) $(am__append_3) $(am__append_4) \
+	$(am__append_5) $(am__append_6)
 @COMPILE_C68K_TRUE@nodist_libyabause_a_SOURCES = c68k/c68k_ini.inc
-libyabause_a_LIBADD = cd-$(yabause_arch).$(OBJEXT)
 all: all-recursive
 
 .SUFFIXES:
@@ -275,6 +290,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bios.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c68k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c68kexec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cd-freebsd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cd-linux.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cd-macosx.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cd-netbsd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cd-windows.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cdbase.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cheat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coffelf.Po@am__quote@
