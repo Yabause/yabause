@@ -19,6 +19,7 @@
   - Added graphics layer toggling.
  windows port:
   - Fixed a stack corruption bug in DirectInput code.
+  - Fixed(hopefully this time) the joystick centering bug.
 0.8.5 -> 0.8.6
  68k:
   - Fixed a bug which caused the emulator to crash if 68k execution jumped to
