@@ -1,4 +1,4 @@
-0.8.6 -> ?.?.?
+0.8.6 -> 0.9.0
  opengl video core:
   - Added support for VDP1 line draw.
   - Added support for VDP2 Rotation with coefficient tables.
