@@ -407,14 +407,15 @@ void PollKeys(void)
             // This probably could be optimized
             for (i2 = 0; i2 < size; i2++)
             {
+               // X Axis
                if (didod[i2].dwOfs == 0)
                {
-                  if (didod[i2].dwData < 0x7FFF)
+                  if (didod[i2].dwData < 0x3FFF)
                   {
                      pad[i].down[PAD_DIR_AXISLEFT]();
                      pad[i].up[PAD_DIR_AXISRIGHT]();
                   }
-                  else if (didod[i2].dwData > 0x7FFF)
+                  else if (didod[i2].dwData > 0xBFFF)
                   {
                      pad[i].down[PAD_DIR_AXISRIGHT]();
                      pad[i].up[PAD_DIR_AXISLEFT]();
@@ -425,14 +426,15 @@ void PollKeys(void)
                      pad[i].up[PAD_DIR_AXISRIGHT]();
                   }
                }
+               // Y Axis
                else if (didod[i2].dwOfs == 4)
                {
-                  if (didod[i2].dwData < 0x7FFF)
+                  if (didod[i2].dwData < 0x3FFF)
                   {
                      pad[i].down[PAD_DIR_AXISUP]();
                      pad[i].up[PAD_DIR_AXISDOWN]();
                   }
-                  else if ( didod[i2].dwData > 0x7FFF)
+                  else if (didod[i2].dwData > 0xBFFF)
                   {
                      pad[i].down[PAD_DIR_AXISDOWN]();
                      pad[i].up[PAD_DIR_AXISUP]();
