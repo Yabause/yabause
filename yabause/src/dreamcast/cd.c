@@ -140,11 +140,6 @@ s32 DCCDReadTOC(u32 * TOC)  {
 }
 
 int DCCDGetStatus(void)  {
-    // 0 - CD Present, disc spinning
-    // 1 - CD Present, disc not spinning
-    // 2 - CD not present
-    // 3 - Tray open
-    // see ../windows/cd.cc for more info
     int status = 0;
     int err = cdrom_get_status(&status, NULL);
 
