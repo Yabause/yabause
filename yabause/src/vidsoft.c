@@ -159,6 +159,9 @@ static int rbg0priority=0;
 static int outputwidth;
 static int outputheight;
 
+static char message[512];
+static int msglength;
+
 typedef struct { s16 x; s16 y; } vdp1vertex;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1546,6 +1549,7 @@ int VIDSoftInit(void)
    glOrtho(-320, 320, -224, 224, 1, 0);
    outputwidth = 320;
    outputheight = 224;
+   msglength = 0;
 #endif
    return 0;
 }
@@ -3010,6 +3014,17 @@ void VIDSoftVdp2DrawEnd(void)
    glPixelZoom((float)outputwidth / (float)vdp2width, 0 - ((float)outputheight / (float)vdp2height));
    glDrawPixels(vdp2width, vdp2height, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
 
+#if HAVE_LIBGLUT
+   if (msglength > 0) {
+      glColor3f(1.0f, 0.0f, 0.0f);
+      glRasterPos2i(10, 22);
+      for (i = 0; i < msglength; i++) {
+         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, message[i]);
+      }
+      glColor3f(1, 1, 1);
+   }
+#endif
+
 #endif
    YuiSwapBuffers();
 }
@@ -3175,6 +3190,12 @@ void VIDSoftVdp2ToggleDisplayRBG0(void)
 
 void VIDSoftOnScreenDebugMessage(char *string, ...)
 {
+   va_list arglist;
+
+   va_start(arglist, string);
+   vsprintf(message, string, arglist);
+   va_end(arglist);
+   msglength = strlen(message);
 }
 
 //////////////////////////////////////////////////////////////////////////////
