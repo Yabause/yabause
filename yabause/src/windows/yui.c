@@ -956,6 +956,12 @@ LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
          break;
       }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
+      }
       default: break;
    }
 
