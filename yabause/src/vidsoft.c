@@ -904,6 +904,14 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
 
 static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_struct *parameter)
 {
+   int i, j;
+   int x, y;
+   int pagepixelwh;
+   int planepixelwidth;
+   int planepixelheight;
+   int screenwidth;
+   int screenheight;
+
    if (!parameter->coefenab)
    {
       // Since coefficients aren't being used, we can simplify the drawing process
@@ -919,25 +927,137 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       else
       {
          // Do simple rotation here
+         CalculateRotationValues(parameter);
+
+         if (!info->isbitmap)
+         {
+            pagepixelwh=64*8;
+            planepixelwidth=info->planew*pagepixelwh;
+            planepixelheight=info->planeh*pagepixelwh;
+            screenwidth=4*planepixelwidth;
+            screenheight=4*planepixelheight;
+         }
+         else
+         {
+            planepixelwidth=0;
+            planepixelheight=0;
+            screenwidth=0;
+            screenheight=0;
+         }
+
+         for (j = 0; j < vdp2height; j++)
+         {
+            for (i = 0; i < vdp2width; i++)
+            {
+               u32 color;
+
+               x = GenerateRotatedXPos(info, parameter, i, j); // This can definitely be optimized
+               y = GenerateRotatedYPos(info, parameter, i, j); // This can definitely be optimized
+
+               // Convert coordinates into graphics
+               if (info->isbitmap)
+               {
+                  x &= info->cellw-1;
+                  y &= info->cellh-1;
+
+                  // Fetch Pixel
+                  color = Vdp2RotationFetchPixel(info, x, y, info->cellw);
+               }
+               else
+               {
+                  // Tile
+                  int planenum;
+
+                  x &= screenwidth-1;
+                  y &= screenheight-1;
+
+                  // Calculate which plane we're dealing with
+                  planenum = (y / planepixelheight * 4) + (x / planepixelwidth);
+                  x = (x % planepixelwidth);
+                  y = (y % planepixelheight);
+
+                  // Fetch and decode pattern name data here
+                  info->PlaneAddr(info, planenum); // needs reworking
+
+                  // Figure out which page it's on(if plane size is not 1x1)
+                  info->addr += ((y / (8 * info->patternwh) * info->pagewh * info->planew) +
+                                (x / (8 * info->patternwh))) * info->patterndatasize * 2;
+ 
+                  Vdp2PatternAddr(info); // Heh, this could be optimized
+
+                  // Figure out which pixel in the tile we want
+                  if (info->patternwh == 1)
+                  {
+                     x &= 8-1;
+                     y &= 8-1;
+
+                     // vertical flip
+                     if (info->flipfunction & 0x2)
+                        y = 8 - 1 - y;
+
+                     // horizontal flip
+                     if (info->flipfunction & 0x1)
+                        x = 8 - 1 - x;
+                  }
+                  else
+                  {
+                     if (info->flipfunction)
+                     {
+                        y &= 16 - 1;
+                        if (info->flipfunction & 0x2)
+                        {
+                           if (!(y & 8))
+                              y = 8 - 1 - y + 16;
+                           else
+                              y = 16 - 1 - y;
+                        }
+                        else if (y & 8)
+                           y += 8;
+
+                        if (info->flipfunction & 0x1)
+                        {
+                           if (!(x & 8))
+                              y += 8;
+
+                           x &= 8-1;
+                           x = 8 - 1 - x;
+                        }
+                        else if (x & 8)
+                        {
+                           y += 8;
+                           x &= 8-1;
+                        }
+                        else
+                           x &= 8-1;
+                     }
+                     else
+                     {
+                        y &= 16 - 1;
+                        if (y & 8)
+                           y += 8;
+                        if (x & 8)
+                           y += 8;
+                        x &= 8-1;
+                     }
+                  }
+
+                  // Fetch pixel
+                  color = Vdp2RotationFetchPixel(info, x, y, 8);
+               }
+
+               vdp2putpixel32(i, j, info->PostPixelFetchCalc(info, color), info->priority);
+            }
+         }
+
+
+         return;
       }
    }
    else
    {
       // Rotation using Coefficient Tables(now this stuff just gets wacky. It
       // has to be done in software, no exceptions)
-      int i, j;
-      int x, y;
-      int cellw, cellh;
-      int pagepixelwh;
-      int planepixelwidth;
-      int planepixelheight;
-      int screenwidth;
-      int screenheight;
-
       CalculateRotationValues(parameter);
-
-      cellw = info->cellw;
-      cellh = info->cellh;
 
       if (!info->isbitmap)
       {
@@ -989,11 +1109,11 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
             // Convert coordinates into graphics
             if (info->isbitmap)
             {
-               x &= cellw-1;
-               y &= cellh-1;
+               x &= info->cellw-1;
+               y &= info->cellh-1;
 
                // Fetch Pixel
-               color = Vdp2RotationFetchPixel(info, x, y, cellw);
+               color = Vdp2RotationFetchPixel(info, x, y, info->cellw);
             }
             else
             {
@@ -1082,7 +1202,6 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       }
       return;
    }
-
 
    if (info->isbitmap)
       Vdp2DrawScrollBitmap(info);
