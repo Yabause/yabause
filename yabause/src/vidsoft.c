@@ -356,6 +356,8 @@ void Vdp2DrawScrollBitmap(vdp2draw_struct *info)
 
                vdp2putpixel32(i2, i, info->PostPixelFetchCalc(info, color), info->priority);
             }
+
+            info->charaddr += clip.lineincrement;
          }
          return;
       default: break;
@@ -1730,6 +1732,11 @@ int VIDSoftIsFullscreen(void) {
 
 int VIDSoftVdp1Reset(void)
 {
+   vdp1clipxstart = 0;
+   vdp1clipxend = 512;
+   vdp1clipystart = 0;
+   vdp1clipyend = 256;
+   
    return 0;
 }
 
@@ -1744,7 +1751,6 @@ void VIDSoftVdp1DrawStart(void)
          // Rotation 8-bit
          vdp1width = 512;
          vdp1height = 512;
-
       }
       else
       {
@@ -2175,13 +2181,13 @@ void VIDSoftVdp1NormalSpriteDraw(void)
      if ( x0 > vdp1clipxend ) return;
      clipx2 = x0+W-vdp1clipxend;
    } else clipx2 = 0;
-   
+
    if ( y0 < vdp1clipystart ) {
      
      if ( y0+H < vdp1clipystart ) return;
      clipy1 = vdp1clipystart-y0;
    } else clipy1 = 0;
-   
+
    if ( y0+H > vdp1clipyend ) {
      
      if ( y0 > vdp1clipyend ) return;
@@ -2190,35 +2196,39 @@ void VIDSoftVdp1NormalSpriteDraw(void)
 
    switch( flip ) {
      
-   case 0: 
+   case 0:
+     // No flipping
      stepH = 1;
      stepW = 1;
      h0 = clipy1;
      w0 = clipx1;
      break;
    case 1:
+     // Horizontal flipping
      stepH = 1;
      stepW = -1;
      h0 = clipy1;
-     w0 = W-1-clipx2;
+     w0 = W-1-clipx1;
      break;
    case 2:
+     // Vertical flipping
      stepH = -1;
      stepW = 1;
-     h0 = H-1-clipy2;
+     h0 = H-1-clipy1;
      w0 = clipx1;
      break;
    case 3:
+     // Horizontal/Vertical flipping
      stepH = -1;
      stepW = -1;
-     h0 = H-1-clipy2;
-     w0 = W-1-clipx2;
+     h0 = H-1-clipy1;
+     w0 = W-1-clipx1;
      break;
    }
-   
-   y1 = H - clipy1 + clipy2;
-   x1 = W - clipx1 + clipx2;
-   
+
+   y1 = H - (clipy1 + clipy2);
+   x1 = W - (clipx1 + clipx2);
+
    iPix = ((u16*)vdp1backframebuffer) + (y0+clipy1) * vdp1width + x0+clipx1;
    stepPix = vdp1width - x1;
 
@@ -2245,7 +2255,6 @@ void VIDSoftVdp1NormalSpriteDraw(void)
        // 4 bpp Bank mode -> 16-bit FB Pixel
       
        iAddr = addr + h0*(W>>1);
-      
        for ( ; x ; x-- ) {
 	
 	 u16 dot = Vdp1ReadPattern16( iAddr, w );
@@ -2319,7 +2328,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
        for ( ; x ; x-- ) {
 	
 	 u16 dot = Vdp1ReadPattern64k( iAddr, w );
-	 NORMAL_SPRITE_ENDCODE_BREAK(0x7FFF);
+         NORMAL_SPRITE_ENDCODE_BREAK(0x7FFF);
          if (!((dot == 0) && !SPD)) *(iPix) = dot;
 	
 	 iPix++;      
@@ -2477,19 +2486,19 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
      stepH = (float)H/y1;
      stepW = -(float)W/x1;
      h0 = clipy1*stepH;
-     w0 = W+clipx2*stepW;
+     w0 = W+clipx1*stepW;
      break;
    case 2:
      stepH = -(float)H/y1;
      stepW = (float)W/x1;
-     h0 = H+clipy2*stepH;
+     h0 = H+clipy1*stepH;
      w0 = clipx1*stepW;
      break;
    case 3:
      stepH = -(float)H/y1;
      stepW = -(float)W/x1;
-     h0 = H+clipy2*stepH;
-     w0 = W+clipx2*stepW;
+     h0 = H+clipy1*stepH;
+     w0 = W+clipx1*stepW;
      break;
    }
    
@@ -2939,6 +2948,7 @@ void VIDSoftVdp1UserClipping(void)
    Vdp1Regs->userclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
    Vdp1Regs->userclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
 
+   // This needs work
    if (vdp1clipxstart > Vdp1Regs->systemclipX1)
       vdp1clipxstart = Vdp1Regs->userclipX1;
    else
