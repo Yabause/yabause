@@ -1,4 +1,4 @@
-/*  Copyright 2006 Theo Berkau
+/*  Copyright 2006-2007 Theo Berkau
 
     This file is part of Yabause.
 
@@ -21,6 +21,7 @@
 #include "cs0.h"
 #include "debug.h"
 #include "sh2core.h"
+#include "bios.h"
 
 static u8 sh2masklist[0x20] = {
 0xF0, 0xE0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80,
@@ -469,6 +470,45 @@ u32 FindSave(u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u3
 
 //////////////////////////////////////////////////////////////////////////////
 
+u32 FindSave2(u32 device, const char *string, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
+{
+   u32 i;
+
+   for (i = ((blockoffset * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
+   {
+      // Find a block with the start of a save
+      if (((s8)MappedMemoryReadByte(addr + i + 1)) < 0)
+      {
+         int i3;
+
+         // See if string matches, or if there's no string to check, just copy
+         // the data over
+         for (i3 = 0; i3 < 11; i3++)
+         {            
+            if (MappedMemoryReadByte(addr+i+0x9+(i3*2)) != string[i3])
+            {
+               if (string[i3] == 0)
+                  // There's no string to match
+                  return ((i / blocksize) >> 1);
+               else
+                  // No Match, move onto the next block
+                  i3 = 12;
+            }
+            else
+            {
+               // Match
+               if (i3 == 10 || string[i3] == 0)
+                  return ((i / blocksize) >> 1);
+            }
+         }
+      }
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void DeleteSave(u32 addr, u32 blockoffset, u32 blocksize)
 {
     MappedMemoryWriteByte(addr + (blockoffset * blocksize * 2) + 0x1, 0x00);
@@ -640,36 +680,7 @@ void FASTCALL BiosBUPFormat(SH2_struct * sh)
 {
 //   LOG("BiosBUPFormat. PR = %08X\n", sh->regs.PR);
 
-   switch (sh->regs.R[4])
-   {
-      case 0:
-         FormatBackupRam(BupRam, 0x10000);
-         break;
-      case 1:
-         if ((CartridgeArea->cartid & 0xF0) == 0x20)
-         {
-            switch (CartridgeArea->cartid & 0xF)
-            {
-               case 1:
-                  FormatBackupRam(CartridgeArea->bupram, 0x100000);
-                  break;
-               case 2:
-                  FormatBackupRam(CartridgeArea->bupram, 0x200000);
-                  break;
-               case 3:
-                  FormatBackupRam(CartridgeArea->bupram, 0x400000);
-                  break;
-               case 4:
-                  FormatBackupRam(CartridgeArea->bupram, 0x800000);
-                  break;
-               default: break;
-            }
-         }
-         break;
-      case 2:
-         LOG("Formatting FDD not supported\n");
-      default: break;
-   }
+   BupFormat(sh->regs.R[4]);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
@@ -1491,6 +1502,254 @@ int FASTCALL BiosHandleFunc(SH2_struct * sh)
    }
 
    return 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+deviceinfo_struct *BupGetDeviceList(int *numdevices)
+{
+   deviceinfo_struct *device;
+   int devicecount=1;
+
+   if ((CartridgeArea->cartid & 0xF0) == 0x20)
+      devicecount++;
+
+   if ((device = (deviceinfo_struct *)malloc(devicecount * sizeof(deviceinfo_struct))) == NULL)
+   {
+      *numdevices = 0;
+      return NULL;
+   }
+
+   *numdevices = devicecount;
+
+   device[0].id = 0;
+   sprintf(device[0].name, "Internal Backup RAM");
+
+   if ((CartridgeArea->cartid & 0xF0) == 0x20)
+   {
+      device[1].id = 1;
+      sprintf(device[1].name, "%d Mbit Backup RAM Cartridge", 1 << ((CartridgeArea->cartid & 0xF)+1));  
+   }
+
+   // For now it's only internal backup ram and cartridge, no floppy :(
+//   device[2].id = 2;
+//   sprintf(device[1].name, "Floppy Disk Drive");
+
+   return device;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int BupGetStats(u32 device, u32 *freespace, u32 *maxspace)
+{
+   u32 ret;
+   u32 size;
+   u32 addr;
+   u32 blocksize;
+
+   ret = GetDeviceStats(device, &size, &addr, &blocksize);
+
+   // Make sure there's a proper header, and return if there's any other errors
+   if (ret == 1 || CheckHeader(device) != 0)
+      return 0;
+
+   *maxspace = size / blocksize;
+   *freespace = GetFreeSpace(device, size, addr, blocksize);
+
+   return 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+saveinfo_struct *BupGetSaveList(u32 device, int *numsaves)
+{
+   u32 ret;
+   u32 size;
+   u32 addr;
+   u32 blocksize;
+   saveinfo_struct *save;
+   int savecount=0;
+   u32 i, j;
+   u32 workaddr;
+
+   ret = GetDeviceStats(device, &size, &addr, &blocksize);
+
+   // Make sure there's a proper header, and return if there's any other errors
+   if (ret == 1 || CheckHeader(device) != 0)
+   {
+      *numsaves = 0;
+      return NULL;
+   }
+
+   for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
+   {
+      // Find a block with the start of a save
+      if (((s8)MappedMemoryReadByte(addr + i + 1)) < 0)
+         savecount++;
+   }
+
+   if ((save = (saveinfo_struct *)malloc(savecount * sizeof(saveinfo_struct))) == NULL)
+   {
+      *numsaves = 0;
+      return NULL;
+   }
+
+   *numsaves = savecount;
+
+   savecount = 0;
+
+   for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
+   {
+      // Find a block with the start of a save
+      if (((s8)MappedMemoryReadByte(addr + i + 1)) < 0)
+      {
+         workaddr = addr + i;
+
+         // Copy over filename
+         for (j = 0; j < 11; j++)
+            save[savecount].filename[j] = MappedMemoryReadByte(workaddr+0x9+(j * 2));
+         save[savecount].filename[11] = '\0';
+
+         // Copy over comment
+         for (j = 0; j < 10; j++)
+            save[savecount].comment[j] = MappedMemoryReadByte(workaddr+0x21+(j * 2));
+         save[savecount].comment[10] = '\0';
+
+         // Copy over language
+         save[savecount].language = MappedMemoryReadByte(workaddr+0x1F);
+
+         // Copy over Date(fix me)
+         save[savecount].year = 0;
+         save[savecount].month = 0;
+         save[savecount].day = 0;
+         save[savecount].hour = 0;
+         save[savecount].minute = 0;
+         save[savecount].week = 0;
+
+         // Copy over data size
+         save[savecount].datasize = (MappedMemoryReadByte(workaddr+0x3D) << 24) |
+                                    (MappedMemoryReadByte(workaddr+0x3F) << 16) |
+                                    (MappedMemoryReadByte(workaddr+0x41) << 8) |
+                                    MappedMemoryReadByte(workaddr+0x43);
+
+         // Calculate size in blocks
+         save[savecount].blocksize = CalcSaveSize(workaddr+0x45, blocksize) + 1;
+         savecount++;
+      }
+   }
+
+   return save;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int BupDeleteSave(u32 device, const char *savename)
+{
+   u32 ret;
+   u32 size;
+   u32 addr;
+   u32 blocksize;
+   u32 block;
+
+   ret = GetDeviceStats(device, &size, &addr, &blocksize);
+
+   // Make sure there's a proper header, and return if there's any other errors
+   if (ret == 1 || CheckHeader(device) != 0)
+      return -1;
+
+   // Let's find and delete the save game
+   if ((block = FindSave2(device, savename, 2, size, addr, blocksize)) != 0)
+   {
+      // Delete old save
+      DeleteSave(addr, block, blocksize);
+      return 0;
+   }
+
+   return -2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void BupFormat(u32 device)
+{
+   switch (device)
+   {
+      case 0:
+         FormatBackupRam(BupRam, 0x10000);
+         break;
+      case 1:
+         if ((CartridgeArea->cartid & 0xF0) == 0x20)
+         {
+            switch (CartridgeArea->cartid & 0xF)
+            {
+               case 1:
+                  FormatBackupRam(CartridgeArea->bupram, 0x100000);
+                  break;
+               case 2:
+                  FormatBackupRam(CartridgeArea->bupram, 0x200000);
+                  break;
+               case 3:
+                  FormatBackupRam(CartridgeArea->bupram, 0x400000);
+                  break;
+               case 4:
+                  FormatBackupRam(CartridgeArea->bupram, 0x800000);
+                  break;
+               default: break;
+            }
+         }
+         break;
+      case 2:
+         LOG("Formatting FDD not supported\n");
+      default: break;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int BupCopySave(u32 srcdevice, u32 dstdevice, const char *savename)
+{
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int BupImportSave(u32 device, const char *filename)
+{
+   FILE *fp;
+   u32 filesize;
+   u8 *buffer;
+
+   if (!filename)
+      return -1;
+
+   if ((fp = fopen(filename, "rb")) == NULL)
+      return -1;
+
+   // Calculate file size
+   fseek(fp, 0, SEEK_END);
+   filesize = ftell(fp);
+   fseek(fp, 0, SEEK_SET);
+
+   if ((buffer = (u8 *)malloc(filesize)) == NULL)
+   {
+      fclose(fp);
+      return -2;
+   }
+
+   fread((void *)buffer, 1, filesize, fp);
+   fclose(fp);
+
+   // Write save here
+
+   free(buffer);
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int BupExportSave(u32 device, const char *savename, const char *filename)
+{
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

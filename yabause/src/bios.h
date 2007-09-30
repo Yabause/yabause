@@ -20,8 +20,39 @@
 #ifndef BIOS_H
 #define BIOS_H
 
+#include "sh2core.h"
+
+typedef struct
+{
+   char filename[12];
+   char comment[11];
+   u8 language;
+   u8 year;
+   u8 month;
+   u8 day;
+   u8 hour;
+   u8 minute;
+   u8 week;
+   u32 datasize;
+   u16 blocksize;
+} saveinfo_struct;
+
+typedef struct
+{
+   u8 id;
+   char name[32];
+} deviceinfo_struct;
+
 void BiosInit(void);
 int FASTCALL BiosHandleFunc(SH2_struct * sh);
 
+deviceinfo_struct *BupGetDeviceList(int *numdevices);
+int BupGetStats(u32 device, u32 *freespace, u32 *maxspace);
+saveinfo_struct *BupGetSaveList(u32 device, int *numsaves);
+int BupDeleteSave(u32 device, const char *savename);
+void BupFormat(u32 device);
+int BupCopySave(u32 srcdevice, u32 dstdevice, const char *savename);
+int BupImportSave(u32 device, const char *filename);
+int BupExportSave(u32 device, const char *savename, const char *filename);
 #endif
 
