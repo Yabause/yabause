@@ -27,8 +27,9 @@
 #define IDM_RUN              10007
 #define IDM_PAUSE            10008
 #define IDM_RESET            10009
-#define IDM_SETTINGS         10010
-#define IDM_EXIT             10011
+#define IDM_BACKUPRAMMANAGER 10010
+#define IDM_SETTINGS         10011
+#define IDM_EXIT             10012
 #define IDM_SEARCHCHEATS     10020
 #define IDM_CHEATLIST        10021
 #define IDM_MSH2DEBUG        10030
@@ -38,7 +39,8 @@
 #define IDM_M68KDEBUG        10034
 #define IDM_SCUDSPDEBUG      10035
 #define IDM_SCSPDEBUG        10036
-#define IDM_MEMORYEDITOR     10037
+#define IDM_SMPCDEBUG        10037
+#define IDM_MEMORYEDITOR     10038
 #define IDM_TOGGLEFULLSCREEN 10040
 #define IDM_TOGGLENBG0       10041
 #define IDM_TOGGLENBG1       10042
@@ -254,6 +256,23 @@
 
 #define IDC_SEARCHTYPECB                1001
 #define IDC_SEARCHMEMET                 1002
+
+//////////////////////////////////////////////////////////////////////////////
+// Backup Ram dialog stuff
+
+#define IDC_BUPDEVICECB                 1001
+#define IDC_BUPSAVELB                   1002
+#define IDC_BUPFREESPACELT              1003
+#define IDC_BUPDELETEBT                 1004
+#define IDC_BUPFORMATBT                 1005
+#define IDC_BUPIMPORTBT                 1006
+#define IDC_BUPEXPORTBT                 1007
+#define IDC_BUPFILENAMEET               1008
+#define IDC_BUPCOMMENTET                1009
+#define IDC_BUPLANGUAGEET               1010
+#define IDC_BUPDATEET                   1011
+#define IDC_BUPDATASIZEET               1012
+#define IDC_BUPBLOCKSIZEET              1013
 
 //////////////////////////////////////////////////////////////////////////////
 // Error debug stuff

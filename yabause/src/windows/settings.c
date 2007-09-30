@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #undef FASTCALL
+#include "../bios.h"
 #include "../cs0.h"
 #include "../peripheral.h"
 #include "../scsp.h"
@@ -1557,6 +1558,205 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       }
       case WM_DESTROY:
       {
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 currentbupdevice=0;
+deviceinfo_struct *devices=NULL;
+int numbupdevices=0;
+saveinfo_struct *saves=NULL;
+int numsaves=0;
+
+//////////////////////////////////////////////////////////////////////////////
+
+void RefreshSaveList(HWND hDlg)
+{
+   u32 i;
+   u32 freespace=0, maxspace=0;
+   char tempstr[MAX_PATH];
+
+   saves = BupGetSaveList(currentbupdevice, &numsaves);
+
+   SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_RESETCONTENT, 0, 0);
+
+   for (i = 0; i < numsaves; i++)
+      SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_ADDSTRING, 0, (LPARAM)saves[i].filename);
+
+   BupGetStats(currentbupdevice, &freespace, &maxspace);
+   sprintf(tempstr, "%d/%d blocks free", (int)freespace, (int)maxspace);
+   SetDlgItemText(hDlg, IDC_BUPFREESPACELT, tempstr);                     
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam)
+{
+   char tempstr[MAX_PATH];
+   char tempstr2[MAX_PATH];
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         int i;
+
+         // Get available devices
+         if ((devices = BupGetDeviceList(&numbupdevices)) == NULL)
+            return FALSE;
+
+         SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_RESETCONTENT, 0, 0);
+         for (i = 0; i < numbupdevices; i++)
+            SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_ADDSTRING, 0, (long)devices[i].name);
+
+         SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_SETCURSEL, 0, 0);
+         RefreshSaveList(hDlg);
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_BUPDEVICECB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case CBN_SELCHANGE:
+                  {
+                     currentbupdevice = (u8)SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_GETCURSEL, 0, 0);
+                     RefreshSaveList(hDlg);
+                     return TRUE;
+                  }
+                  default: break;
+               }
+
+               return TRUE;
+            }
+            case IDC_BUPSAVELB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case LBN_SELCHANGE:
+                  {
+                     u8 cursel=0;
+                     int i;
+
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_GETCURSEL, 0, 0);
+
+                     SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_GETTEXT, cursel, (LPARAM)tempstr);
+
+                     for (i = 0; i < numsaves; i++)
+                     {
+                        if (strcmp(tempstr, saves[i].filename) == 0)
+                        {
+                           cursel = i;
+                           break;
+                        }
+                     }
+
+                     SetDlgItemText(hDlg, IDC_BUPFILENAMEET, saves[cursel].filename);
+                     SetDlgItemText(hDlg, IDC_BUPCOMMENTET, saves[cursel].comment);
+                     switch(saves[cursel].language)
+                     {
+                        case 0:
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "Japanese");
+                           break;
+                        case 1:
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "English");
+                           break;
+                        case 2:
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "French");
+                           break;
+                        case 3:
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "German");
+                           break;
+                        case 4:
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "Spanish");
+                           break;
+                        case 5:
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "Italian");
+                           break;
+                        default: break;
+                     }
+                     sprintf(tempstr, "%d", (int)saves[cursel].datasize);
+                     SetDlgItemText(hDlg, IDC_BUPDATASIZEET, tempstr);
+                     sprintf(tempstr, "%d", saves[cursel].blocksize);
+                     SetDlgItemText(hDlg, IDC_BUPBLOCKSIZEET, tempstr);
+                     return TRUE;
+                  }
+                  default: break;
+               }
+
+               return TRUE;
+            }
+            case IDC_BUPDELETEBT:
+            {
+               LRESULT cursel = SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_GETCURSEL, 0, 0);
+
+               if (cursel == LB_ERR)
+                  return TRUE;
+
+               SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_GETTEXT, cursel, (LPARAM)tempstr);
+
+               sprintf(tempstr2, "Are you sure you want to delete %s?", tempstr);
+               if (MessageBox (hDlg, tempstr2, "Confirm Delete",  MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+               {
+                  BupDeleteSave(currentbupdevice, tempstr);
+                  RefreshSaveList(hDlg);
+               }
+               return TRUE;
+            }
+            case IDC_BUPFORMATBT:
+            {
+               sprintf(tempstr, "Are you sure you want to format %s?", devices[currentbupdevice].name);
+               if (MessageBox (hDlg, tempstr, "Confirm Delete",  MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+               {
+                  BupFormat(currentbupdevice);
+                  RefreshSaveList(hDlg);
+               }
+               return TRUE;
+            }
+            case IDC_BUPIMPORTBT:
+            {
+               RefreshSaveList(hDlg);
+               return TRUE;
+            }
+            case IDC_BUPEXPORTBT:
+            {
+               RefreshSaveList(hDlg);
+               return TRUE;
+            }
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_CLOSE:
+      {
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
+      }
+      case WM_DESTROY:
+      {
+         if (saves)
+            free(saves);
          break;
       }
    }

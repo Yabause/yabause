@@ -32,6 +32,7 @@ BEGIN
     MENUITEM "Reset", IDM_RESET
     MENUITEM SEPARATOR
     MENUITEM "&Settings", IDM_SETTINGS
+    MENUITEM "&Backup Ram Manager", IDM_BACKUPRAMMANAGER
     MENUITEM SEPARATOR
     MENUITEM "&Quit", IDM_EXIT
   END
@@ -546,6 +547,45 @@ BEGIN
     EDITTEXT        IDC_LOGET, 3, 3, 208, 181, ES_MULTILINE | ES_READONLY | ES_AUTOHSCROLL | ES_AUTOVSCROLL
     PUSHBUTTON      "Clear", IDC_CLEARBT, 3, 187, 33, 13
     PUSHBUTTON      "Save Log to file", IDC_SAVELOGBT, 141, 187, 70, 13
+END
+
+//////////////////////////////////////////////////////////////////////////////
+
+BACKUPRAMDLG DIALOG DISCARDABLE  0, 0, 169, 220
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Backup Ram Manager"
+FONT 8, "Courier New"
+BEGIN
+    GROUPBOX        "Device List", -1, 2, 2, 164, 25, WS_CHILD | WS_VISIBLE
+    COMBOBOX        IDC_BUPDEVICECB, 22, 11, 125, 37, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    GROUPBOX        "Save List", -1, 2, 28, 80, 174, WS_CHILD | WS_VISIBLE
+    LISTBOX         IDC_BUPSAVELB, 5, 37, 75, 114, LBS_SORT | WS_VSCROLL
+    LTEXT           "", IDC_BUPFREESPACELT, 5, 146, 56, 20
+    PUSHBUTTON      "Delete", IDC_BUPDELETEBT, 5, 171, 33, 13
+    PUSHBUTTON      "Format", IDC_BUPFORMATBT, 5, 186, 33, 13
+
+    GROUPBOX "Save Info", -1, 84, 28, 83, 174, WS_CHILD | WS_VISIBLE
+    LTEXT           "Filename", -1, 88, 37, 56, 10
+    EDITTEXT        IDC_BUPFILENAMEET, 88, 47, 72, 10, ES_READONLY
+    LTEXT           "Comment", -1, 88, 64, 56, 10
+    EDITTEXT        IDC_BUPCOMMENTET, 88, 73, 70, 10, ES_READONLY
+/*
+    LTEXT           "Language", -1, 88, 91, 56, 10
+    EDITTEXT        IDC_BUPLANGUAGEET, 88, 101, 72, 10, ES_READONLY
+    LTEXT           "Date", -1, 88, 119, 56, 10
+    EDITTEXT        IDC_BUPDATEET, 88, 130, 72, 10, ES_READONLY
+    LTEXT           "Data size", -1, 88, 147, 56, 10
+    EDITTEXT        IDC_BUPDATASIZEET, 88, 159, 61, 10, ES_READONLY
+    LTEXT           "Block size", -1, 88, 176, 56, 10
+    EDITTEXT        IDC_BUPBLOCKSIZEET, 88, 188, 37, 10, ES_READONLY
+*/
+    LTEXT           "Data size", -1, 88, 91, 70, 10
+    EDITTEXT        IDC_BUPDATASIZEET, 88, 101, 60, 10, ES_READONLY
+    LTEXT           "Block size", -1, 88, 118, 72, 10
+    EDITTEXT        IDC_BUPBLOCKSIZEET, 88, 130, 60, 10, ES_READONLY
+
+    DEFPUSHBUTTON   "&Close", IDOK, 133, 205, 33, 13
 END
 
 //////////////////////////////////////////////////////////////////////////////

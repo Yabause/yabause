@@ -29,6 +29,9 @@ typedef struct
 LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam);
 
+LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam);
+
 extern BOOL IsPathCdrom(const char *path);
 
 int CreateHelpBalloons(helpballoon_struct *hb[]);

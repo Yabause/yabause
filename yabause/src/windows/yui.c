@@ -728,6 +728,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                ScspUnMuteAudio();
                break;
             }
+            case IDM_BACKUPRAMMANAGER:
+            {
+               ScspMuteAudio();
+               DialogBox(y_hInstance, "BackupRamDlg", hWnd, (DLGPROC)BackupRamDlgProc);
+               ScspUnMuteAudio();
+               break;
+            }
             case IDM_MSH2DEBUG:
             {
                ScspMuteAudio();
