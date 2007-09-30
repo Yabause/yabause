@@ -63,6 +63,7 @@
 
 yabsys_struct yabsys;
 const char *bupfilename = NULL;
+u64 tickfreq;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -429,17 +430,19 @@ void YabauseStopSlave(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 YabauseGetTicks(void) {
+u64 YabauseGetTicks(void) {
 #ifdef WIN32
-   return timeGetTime();
+   u64 ticks;
+   QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
+   return ticks;
 #elif defined(HAVE_LIBSDL)
    return SDL_GetTicks();
 #elif defined(_arch_dreamcast)
-   return (u32) timer_ms_gettime64();
+   return (u64) timer_ms_gettime64();
 #elif defined(__APPLE__)
    struct timeval Time;
    gettimeofday(&Time, NULL);
-   return (u32)(Time.tv_usec/1000);
+   return (u64)(Time.tv_usec/1000);
 #endif
 }
 
@@ -448,7 +451,12 @@ u32 YabauseGetTicks(void) {
 void YabauseSetVideoFormat(int type) {
    yabsys.IsPal = type;
    yabsys.MaxLineCount = type ? 313 : 263;
-   yabsys.OneFrameTime = 1000 / (type ? 50 : 60);
+#ifdef WIN32
+   QueryPerformanceFrequency((LARGE_INTEGER *)&yabsys.tickfreq);
+#else
+   yabsys.tickfreq = 1000;
+#endif
+   yabsys.OneFrameTime = yabsys.tickfreq / (type ? 50 : 60);
    Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
    ScspChangeVideoFormat(type);
    YabauseChangeTiming(yabsys.CurSH2FreqType);

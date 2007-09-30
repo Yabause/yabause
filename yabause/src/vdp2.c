@@ -36,14 +36,14 @@ static int framestoskip=0;
 static int framesskipped=0;
 static int throttlespeed=0;
 static int skipnextframe=0;
-u32 lastticks=0;
-static u32 curticks=0;
-static u32 diffticks=0;
+u64 lastticks=0;
+static u64 curticks=0;
+static u64 diffticks=0;
 static u32 framecount=0;
-static u32 onesecondticks=0;
+static u64 onesecondticks=0;
 static int fps;
 static int fpsframecount=0;
-static u32 fpsticks;
+static u64 fpsticks;
 static int fpstoggle=0;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -280,7 +280,7 @@ void FPSDisplay(void)
       VIDCore->OnScreenDebugMessage("%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
 
       fpsframecount++;
-      if(YabauseGetTicks() >= fpsticks + 1000)
+      if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
       {
          fps = fpsframecount;
          fpsframecount = 0;
@@ -365,7 +365,7 @@ void Vdp2VBlankOUT(void) {
       curticks = YabauseGetTicks();
       diffticks = curticks-lastticks;
 
-      if ((onesecondticks+diffticks) > (yabsys.OneFrameTime * framecount) &&
+      if ((onesecondticks+diffticks) > (yabsys.OneFrameTime * (u64)framecount) &&
           framesskipped < 9)
       {
          // Skip the next frame
@@ -374,14 +374,14 @@ void Vdp2VBlankOUT(void) {
          // How many frames should we skip?
          framestoskip = 1;
       }
-      else if ((onesecondticks+diffticks) < (yabsys.OneFrameTime * framecount))
+      else if ((onesecondticks+diffticks) < (yabsys.OneFrameTime * (u64)framecount))
       {
          // Check to see if we need to limit speed at all
          for (;;)
          {
             curticks = YabauseGetTicks();
             diffticks = curticks-lastticks;
-            if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * framecount))
+            if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * (u64)framecount))
                break;
          }
       }

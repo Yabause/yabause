@@ -58,7 +58,7 @@ void YabauseReset(void);
 int YabauseExec(void);
 void YabauseStartSlave(void);
 void YabauseStopSlave(void);
-u32 YabauseGetTicks(void);
+u64 YabauseGetTicks(void);
 void YabauseSetVideoFormat(int type);
 void YabauseSpeedySetup(void);
 int YabauseQuickLoadGame(void);
@@ -76,7 +76,8 @@ typedef struct
    int IsPal;
    u8 IsSSH2Running;
    u8 IsM68KRunning;
-   u32 OneFrameTime;
+   u64 OneFrameTime;
+   u64 tickfreq;
    int emulatebios;
    int usequickload;
 } yabsys_struct;
