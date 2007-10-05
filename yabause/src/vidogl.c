@@ -974,6 +974,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       int planepixelheight;
       int screenwidth;
       int screenheight;
+      int oldcellx=-1, oldcelly=-1;
 
       CalculateRotationValues(parameter);
 
@@ -1000,13 +1001,18 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
          planepixelheight=info->planeh*pagepixelwh;
          screenwidth=4*planepixelwidth;
          screenheight=4*planepixelheight;
+         oldcellx=-1;
+         oldcelly=-1;
       }
       else
       {
+         pagepixelwh=0;
          planepixelwidth=0;
          planepixelheight=0;
          screenwidth=0;
          screenheight=0;
+         oldcellx=0;
+         oldcelly=0;
       }
 
       for (j = 0; j < vdp2height; j++)
@@ -1055,23 +1061,33 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
             {
                // Tile
                int planenum;
+               int pagesize=info->pagewh*info->pagewh;
 
                x &= screenwidth-1;
                y &= screenheight-1;
 
-               // Calculate which plane we're dealing with
-               planenum = (y / planepixelheight * 4) + (x / planepixelwidth);
-               x = (x % planepixelwidth);
-               y = (y % planepixelheight);
+               if ((x / (8 * info->patternwh)) != oldcellx ||
+                   (y / (8 * info->patternwh)) != oldcelly)
+               {
+                  oldcellx = x / (8 * info->patternwh);
+                  oldcelly = y / (8 * info->patternwh);
 
-               // Fetch and decode pattern name data here
-               info->PlaneAddr(info, planenum); // needs reworking
+                  // Calculate which plane we're dealing with
+                  planenum = ((int)(y / planepixelheight)*4) + (int)(x / planepixelwidth);
+                  x = (x % planepixelwidth);
+                  y = (y % planepixelheight);
 
-               // Figure out which page it's on(if plane size is not 1x1)
-               info->addr += ((y / (8 * info->patternwh) * info->pagewh * info->planew) +
-                             (x / (8 * info->patternwh))) * info->patterndatasize * 2;
- 
-               Vdp2PatternAddr(info); // Heh, this could be optimized
+                  // Fetch and decode pattern name data
+                  info->PlaneAddr(info, planenum); // needs reworking
+
+                  // Figure out which page it's on(if plane size is not 1x1)
+                  info->addr += ((y / pagepixelwh * pagesize * info->planew) +
+                                (x / pagepixelwh * pagesize) +
+                                ((y % pagepixelwh) / (8 * info->patternwh) * info->pagewh) +
+                                ((x % pagepixelwh) / (8 * info->patternwh))) * info->patterndatasize * 2;
+   
+                  Vdp2PatternAddr(info); // Heh, this could be optimized
+               }
 
                // Figure out which pixel in the tile we want
                if (info->patternwh == 1)
