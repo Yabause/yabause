@@ -29,6 +29,7 @@
 #include "cs1.h"
 #include "cs2.h"
 #include "debug.h"
+#include "error.h"
 #include "sh2core.h"
 #include "scsp.h"
 #include "scu.h"
@@ -930,8 +931,7 @@ void FormatBackupRam(void *mem, u32 size)
 
 int YabSaveState(const char *filename)
 {
-/*
-   u32 i, i2;
+   u32 i;
    FILE *fp;
    int offset;
 
@@ -969,10 +969,21 @@ int YabSaveState(const char *filename)
 
    offset = StateWriteHeader(fp, "OTHR", 1);
 
-   // Other data here
-   fwrite((void *)ram->getBuffer(), 0x10000, 1, fp);
-   fwrite((void *)ramHigh->getBuffer(), 0x100000, 1, fp);
-   fwrite((void *)ramLow->getBuffer(), 0x100000, 1, fp);
+   // Other data
+   fwrite((void *)BupRam, 0x10000, 1, fp); // do we really want to save this?
+   fwrite((void *)HighWram, 0x100000, 1, fp);
+   fwrite((void *)LowWram, 0x100000, 1, fp);
+
+   fwrite((void *)&yabsys.DecilineCount, sizeof(int), 1, fp);
+   fwrite((void *)&yabsys.LineCount, sizeof(int), 1, fp);
+   fwrite((void *)&yabsys.VBlankLineCount, sizeof(int), 1, fp);
+   fwrite((void *)&yabsys.MaxLineCount, sizeof(int), 1, fp);
+   fwrite((void *)&yabsys.DecilineStop, sizeof(int), 1, fp);
+   fwrite((void *)&yabsys.Duf, sizeof(int), 1, fp);
+   fwrite((void *)&yabsys.CycleCountII, sizeof(u32), 1, fp);
+   fwrite((void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
+   fwrite((void *)&yabsys.IsPal, sizeof(int), 1, fp);
+
    i += StateFinishHeader(fp, offset);
 
    // Go back and update size
@@ -980,7 +991,6 @@ int YabSaveState(const char *filename)
    fwrite((void *)&i, sizeof(i), 1, fp);
 
    fclose(fp);
-*/
 
    return 0;
 }
@@ -989,10 +999,9 @@ int YabSaveState(const char *filename)
 
 int YabLoadState(const char *filename)
 {
-/*
    FILE *fp;
    char id[3];
-   unsigned char endian;
+   u8 endian;
    int version, size, chunksize;
 
    if ((fp = fopen(filename, "rb")) == NULL)
@@ -1019,7 +1028,7 @@ int YabLoadState(const char *filename)
 #endif
    {
       // should setup reading so it's byte-swapped
-      cerr << "loadState byteswapping not supported" << endl;
+      YabSetError(YAB_ERR_OTHER, (void *)"Load State byteswapping not supported");
       fclose(fp);
       return -3;
    }
@@ -1035,116 +1044,114 @@ int YabLoadState(const char *filename)
 
    // Verify version here
 
-   soundr->muteAudio();
+   ScspMuteAudio();
    
-   if (stateCheckRetrieveHeader(fp, "CS0 ", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "CART", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   cs0->loadState(fp, version, chunksize);
+   CartLoadState(fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "CS1 ", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "CS2 ", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   cs1->loadState(fp, version, chunksize);
+   Cs2LoadState(fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "CS2 ", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "MSH2", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   cs2->loadState(fp, version, chunksize);
+   SH2LoadState(MSH2, fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "MSH2", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "SSH2", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   msh->loadState(fp, version, chunksize);
+   SH2LoadState(SSH2, fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "SSH2", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "SCSP", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   ssh->loadState(fp, version, chunksize);
+   SoundLoadState(fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "SCSP", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "SCU ", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   soundr->loadState(fp, version, chunksize);
+   ScuLoadState(fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "SCU ", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "SMPC", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   scu->loadState(fp, version, chunksize);
+   SmpcLoadState(fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "SMPC", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "VDP1", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   smpc->loadState(fp, version, chunksize);
+   Vdp1LoadState(fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "VDP1", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "VDP2", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
-   vdp1_2->loadState(fp, version, chunksize);
+   Vdp2LoadState(fp, version, chunksize);
 
-   if (stateCheckRetrieveHeader(fp, "VDP2", &version, &chunksize) != 0)
+   if (StateCheckRetrieveHeader(fp, "OTHR", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      soundr->unmuteAudio();
-      return -3;
-   }
-   vdp2_3->loadState(fp, version, chunksize);
-
-   if (stateCheckRetrieveHeader(fp, "OTHR", &version, &chunksize) != 0)
-   {
-      fclose(fp);
-      // Revert back to old state here
-      soundr->unmuteAudio();
+      ScspUnMuteAudio();
       return -3;
    }
    // Other data
-   fread((void *)ram->getBuffer(), 0x10000, 1, fp);
-   fread((void *)ramHigh->getBuffer(), 0x100000, 1, fp);
-   fread((void *)ramLow->getBuffer(), 0x100000, 1, fp);
+   fread((void *)BupRam, 0x10000, 1, fp);
+   fread((void *)HighWram, 0x100000, 1, fp);
+   fread((void *)LowWram, 0x100000, 1, fp);
+
+   fread((void *)&yabsys.DecilineCount, sizeof(int), 1, fp);
+   fread((void *)&yabsys.LineCount, sizeof(int), 1, fp);
+   fread((void *)&yabsys.VBlankLineCount, sizeof(int), 1, fp);
+   fread((void *)&yabsys.MaxLineCount, sizeof(int), 1, fp);
+   fread((void *)&yabsys.DecilineStop, sizeof(int), 1, fp);
+   fread((void *)&yabsys.Duf, sizeof(int), 1, fp);
+   fread((void *)&yabsys.CycleCountII, sizeof(u32), 1, fp);
+   fread((void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
+   fread((void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
    fclose(fp);
 
-#endif
-
-   soundr->unmuteAudio();
-*/
+   ScspUnMuteAudio();
    return 0;
 }
 

@@ -95,4 +95,6 @@ void FASTCALL	SmpcWriteByte(u32, u8);
 void FASTCALL	SmpcWriteWord(u32, u16);
 void FASTCALL	SmpcWriteLong(u32, u32);
 
+int SmpcSaveState(FILE *fp);
+int SmpcLoadState(FILE *fp, int version, int size);
 #endif

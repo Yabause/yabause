@@ -3111,39 +3111,37 @@ void M68KClearCodeBreakpoints() {
 
 int SoundSaveState(FILE *fp)
 {
-//   int i;
-//   u32 temp;
+   int i;
+   u32 temp;
    int offset;
 
    offset = StateWriteHeader(fp, "SCSP", 1);
 
-/*
    // Save 68k registers first
-   fwrite((void *)&is68kOn, 1, 1, fp);
+   fwrite((void *)&yabsys.IsM68KRunning, 1, 1, fp);
 
    for (i = 0; i < 8; i++)
-   {
-      temp = C68k_Get_DReg(&C68K, i);
+   {      
+      temp = M68K->GetDReg(i);
       fwrite((void *)&temp, 4, 1, fp);
    }
 
    for (i = 0; i < 8; i++)
    {
-      temp =  C68k_Get_AReg(&C68K, i);
+      temp = M68K->GetAReg(i);
       fwrite((void *)&temp, 4, 1, fp);
    }
 
-   temp = C68k_Get_SR(&C68K);
+   temp = M68K->GetSR();
    fwrite((void *)&temp, 4, 1, fp);
-   temp = C68k_Get_PC(&C68K);
+   temp = M68K->GetPC();
    fwrite((void *)&temp, 4, 1, fp);
 
    // Now for the SCSP registers
    fwrite((void *)scsp_reg, 0x1000, 1, fp);
 
    // Lastly, sound ram
-   fwrite((void *)sram->getBuffer(), 0x80000, 1, fp);
-*/
+   fwrite((void *)SoundRam, 0x80000, 1, fp);
 
    return StateFinishHeader(fp, offset);
 }
@@ -3152,34 +3150,32 @@ int SoundSaveState(FILE *fp)
 
 int SoundLoadState(FILE *fp, int version, int size)
 {
-/*
    int i;
    u32 temp;
 
    // Read 68k registers first
-   fread((void *)&is68kOn, 1, 1, fp);
+   fread((void *)&yabsys.IsM68KRunning, 1, 1, fp);
 
    for (i = 0; i < 8; i++) {
       fread((void *)&temp, 4, 1, fp);
-      C68k_Set_DReg(&C68K, i, temp);
+      M68K->SetDReg(i, temp);
    }
 
    for (i = 0; i < 8; i++) {
       fread((void *)&temp, 4, 1, fp);
-      C68k_Set_AReg(&C68K, i, temp);
+      M68K->SetAReg(i, temp);
    }
 
    fread((void *)&temp, 4, 1, fp);
-   C68k_Set_SR(&C68K, temp);
+   M68K->SetSR(temp);
    fread((void *)&temp, 4, 1, fp);
-   C68k_Set_PC(&C68K, temp);
+   M68K->SetPC(temp);
 
    // Now for the SCSP registers
    fread((void *)scsp_reg, 0x1000, 1, fp);
 
    // Lastly, sound ram
-   fread((void *)sram->getBuffer(), 0x80000, 1, fp);
-*/
+   fread((void *)SoundRam, 0x80000, 1, fp);
    return size;
 }
 

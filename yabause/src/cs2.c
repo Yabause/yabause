@@ -3276,7 +3276,7 @@ int Cs2ChangeDisc(const char *cdpath) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Cs2saveState(FILE * fp) {
+int Cs2SaveState(FILE * fp) {
    int offset, i;
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
@@ -3369,7 +3369,7 @@ int Cs2saveState(FILE * fp) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Cs2loadState(FILE * fp, int version, int size) {
+int Cs2LoadState(FILE * fp, int version, int size) {
    int i, i2;
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all

@@ -271,6 +271,16 @@ typedef struct
 
 #define MAX_BREAKPOINTS 10
 
+typedef struct
+{
+   codebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
+   int numcodebreakpoints;
+   memorybreakpoint_struct memorybreakpoint[MAX_BREAKPOINTS];
+   int nummemorybreakpoints;
+   void (*BreakpointCallBack)(void *, u32);
+   int inbreakpoint;
+} breakpoint_struct;
+
 #define BREAK_BYTEREAD  0x1
 #define BREAK_WORDREAD  0x2
 #define BREAK_LONGREAD  0x4
@@ -307,12 +317,7 @@ typedef struct
    u8 isIdle;
    u16 instruction;
    u8 breakpointEnabled;
-   codebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-   int numcodebreakpoints;
-   memorybreakpoint_struct memorybreakpoint[MAX_BREAKPOINTS];
-   int nummemorybreakpoints;
-   void (*BreakpointCallBack)(void *, u32);
-   int inbreakpoint;
+   breakpoint_struct bp;
 } SH2_struct;
 
 typedef struct
@@ -349,12 +354,12 @@ static INLINE void SH2HandleBreakpoints(SH2_struct *context)
 {
    int i;
 
-   for (i=0; i < context->numcodebreakpoints; i++) {
-      if ((context->regs.PC == context->codebreakpoint[i].addr) && context->inbreakpoint == 0) {
-         context->inbreakpoint = 1;
-         if (context->BreakpointCallBack)
-             context->BreakpointCallBack(context, context->codebreakpoint[i].addr);
-         context->inbreakpoint = 0;
+   for (i=0; i < context->bp.numcodebreakpoints; i++) {
+      if ((context->regs.PC == context->bp.codebreakpoint[i].addr) && context->bp.inbreakpoint == 0) {
+         context->bp.inbreakpoint = 1;
+         if (context->bp.BreakpointCallBack)
+             context->bp.BreakpointCallBack(context, context->bp.codebreakpoint[i].addr);
+         context->bp.inbreakpoint = 0;
       }
    }
 }
@@ -386,5 +391,8 @@ void FASTCALL DataArrayWriteLong(u32 addr, u32 val);
 
 void FASTCALL MSH2InputCaptureWriteWord(u32 addr, u16 data);
 void FASTCALL SSH2InputCaptureWriteWord(u32 addr, u16 data);
+
+int SH2SaveState(SH2_struct *context, FILE *fp);
+int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
 
 #endif

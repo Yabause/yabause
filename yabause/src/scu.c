@@ -27,6 +27,7 @@
 
 Scu * ScuRegs;
 scudspregs_struct * ScuDsp;
+scubp_struct * ScuBP;
 
 void ScuTestInterruptMask();
 
@@ -41,11 +42,14 @@ int ScuInit(void) {
    if ((ScuDsp = (scudspregs_struct *) calloc(1, sizeof(scudspregs_struct))) == NULL)
 		return -1;
 
+   if ((ScuBP = (scubp_struct *) calloc(1, sizeof(scubp_struct))) == NULL)
+		return -1;
+
    for (i = 0; i < MAX_BREAKPOINTS; i++)
-      ScuRegs->codebreakpoint[i].addr = 0xFFFFFFFF;
-   ScuRegs->numcodebreakpoints = 0;
-   ScuRegs->BreakpointCallBack=NULL;
-   ScuRegs->inbreakpoint=0;
+      ScuBP->codebreakpoint[i].addr = 0xFFFFFFFF;
+   ScuBP->numcodebreakpoints = 0;
+   ScuBP->BreakpointCallBack=NULL;
+   ScuBP->inbreakpoint=0;
    
    return 0;
 }
@@ -58,6 +62,9 @@ void ScuDeInit(void) {
 
    if (ScuDsp)
       free(ScuDsp);
+
+   if (ScuBP)
+      free(ScuBP);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -452,11 +459,11 @@ void ScuExec(u32 timing) {
          u32 instruction;
 
          // Make sure it isn't one of our breakpoints
-         for (i=0; i < ScuRegs->numcodebreakpoints; i++) {
-            if ((ScuDsp->PC == ScuRegs->codebreakpoint[i].addr) && ScuRegs->inbreakpoint == 0) {
-               ScuRegs->inbreakpoint = 1;
-               if (ScuRegs->BreakpointCallBack) ScuRegs->BreakpointCallBack(ScuRegs->codebreakpoint[i].addr);
-                 ScuRegs->inbreakpoint = 0;
+         for (i=0; i < ScuBP->numcodebreakpoints; i++) {
+            if ((ScuDsp->PC == ScuBP->codebreakpoint[i].addr) && ScuBP->inbreakpoint == 0) {
+               ScuBP->inbreakpoint = 1;
+               if (ScuBP->BreakpointCallBack) ScuBP->BreakpointCallBack(ScuBP->codebreakpoint[i].addr);
+                 ScuBP->inbreakpoint = 0;
             }
          }
 
@@ -1560,7 +1567,7 @@ void ScuDspSetRegisters(scudspregs_struct *regs) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuDspSetBreakpointCallBack(void (*func)(u32)) {
-   ScuRegs->BreakpointCallBack = func;
+   ScuBP->BreakpointCallBack = func;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1568,16 +1575,16 @@ void ScuDspSetBreakpointCallBack(void (*func)(u32)) {
 int ScuDspAddCodeBreakpoint(u32 addr) {
    int i;
 
-   if (ScuRegs->numcodebreakpoints < MAX_BREAKPOINTS) {
+   if (ScuBP->numcodebreakpoints < MAX_BREAKPOINTS) {
       // Make sure it isn't already on the list
-      for (i = 0; i < ScuRegs->numcodebreakpoints; i++)
+      for (i = 0; i < ScuBP->numcodebreakpoints; i++)
       {
-         if (addr == ScuRegs->codebreakpoint[i].addr)
+         if (addr == ScuBP->codebreakpoint[i].addr)
             return -1;
       }
 
-      ScuRegs->codebreakpoint[ScuRegs->numcodebreakpoints].addr = addr;
-      ScuRegs->numcodebreakpoints++;
+      ScuBP->codebreakpoint[ScuBP->numcodebreakpoints].addr = addr;
+      ScuBP->numcodebreakpoints++;
 
       return 0;
    }
@@ -1595,12 +1602,12 @@ void ScuDspSortCodeBreakpoints() {
    {
       for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
       {
-         if (ScuRegs->codebreakpoint[i].addr == 0xFFFFFFFF &&
-            ScuRegs->codebreakpoint[i2].addr != 0xFFFFFFFF)
+         if (ScuBP->codebreakpoint[i].addr == 0xFFFFFFFF &&
+            ScuBP->codebreakpoint[i2].addr != 0xFFFFFFFF)
          {
-            tmp = ScuRegs->codebreakpoint[i].addr;
-            ScuRegs->codebreakpoint[i].addr = ScuRegs->codebreakpoint[i2].addr;
-            ScuRegs->codebreakpoint[i2].addr = tmp;
+            tmp = ScuBP->codebreakpoint[i].addr;
+            ScuBP->codebreakpoint[i].addr = ScuBP->codebreakpoint[i2].addr;
+            ScuBP->codebreakpoint[i2].addr = tmp;
          }
       }
    } 
@@ -1611,13 +1618,13 @@ void ScuDspSortCodeBreakpoints() {
 int ScuDspDelCodeBreakpoint(u32 addr) {
    int i;
 
-   if (ScuRegs->numcodebreakpoints > 0) {
-      for (i = 0; i < ScuRegs->numcodebreakpoints; i++) {
-         if (ScuRegs->codebreakpoint[i].addr == addr)
+   if (ScuBP->numcodebreakpoints > 0) {
+      for (i = 0; i < ScuBP->numcodebreakpoints; i++) {
+         if (ScuBP->codebreakpoint[i].addr == addr)
          {
-            ScuRegs->codebreakpoint[i].addr = 0xFFFFFFFF;
+            ScuBP->codebreakpoint[i].addr = 0xFFFFFFFF;
             ScuDspSortCodeBreakpoints();
-            ScuRegs->numcodebreakpoints--;
+            ScuBP->numcodebreakpoints--;
             return 0;
          }
       }
@@ -1629,7 +1636,7 @@ int ScuDspDelCodeBreakpoint(u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 scucodebreakpoint_struct *ScuDspGetBreakpointList() {
-   return ScuRegs->codebreakpoint;
+   return ScuBP->codebreakpoint;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1637,9 +1644,9 @@ scucodebreakpoint_struct *ScuDspGetBreakpointList() {
 void ScuDspClearCodeBreakpoints() {
    int i;
    for (i = 0; i < MAX_BREAKPOINTS; i++)
-      ScuRegs->codebreakpoint[i].addr = 0xFFFFFFFF;
+      ScuBP->codebreakpoint[i].addr = 0xFFFFFFFF;
 
-   ScuRegs->numcodebreakpoints = 0;
+   ScuBP->numcodebreakpoints = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2189,28 +2196,27 @@ int ScuSaveState(FILE *fp)
    int offset;
 
    offset = StateWriteHeader(fp, "SCU ", 1);
-/*
-   // Write registers
-   fwrite((void *)this->getBuffer(), 0x100, 1, fp);
-   fwrite((void *)&timer0, 4, 1, fp);
-   fwrite((void *)&timer1, 4, 1, fp);
+
+   // Write registers and internal variables
+   fwrite((void *)ScuRegs, sizeof(Scu), 1, fp);
 
    // Write DSP area
-   fwrite((void *)&dsp, sizeof(scudspregs_struct), 1, fp);
-*/
+   fwrite((void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+
    return StateFinishHeader(fp, offset);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 int ScuLoadState(FILE *fp, int version, int size)
 {
-/*
-   // Read registers
-   fread((void *)this->getBuffer(), 0x100, 1, fp);
-   fread((void *)&timer0, 4, 1, fp);
-   fread((void *)&timer1, 4, 1, fp);
+   // Read registers and internal variables
+   fread((void *)ScuRegs, sizeof(Scu), 1, fp);
 
    // Read DSP area
-   fread((void *)&dsp, sizeof(scudspregs_struct), 1, fp);
-*/
+   fread((void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+
    return size;
 }
+
+//////////////////////////////////////////////////////////////////////////////

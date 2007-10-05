@@ -152,6 +152,9 @@ void Vdp1Draw(void);
 void Vdp1NoDraw(void);
 void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr);
 
+int Vdp1SaveState(FILE *fp);
+int Vdp1LoadState(FILE *fp, int version, int size);
+
 char *Vdp1DebugGetCommandNumberName(u32 number);
 void Vdp1DebugCommand(u32 number, char *outstring);
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h);

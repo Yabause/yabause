@@ -93,15 +93,19 @@ typedef struct
    /* internal variables */
    u32 timer0;
    u32 timer1;
-   scucodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-   int numcodebreakpoints;
-   void (*BreakpointCallBack)(u32);
-   u8 inbreakpoint;
    scuinterrupt_struct interrupts[30];
    u32 NumberOfInterrupts;
 } Scu;
 
 extern Scu * ScuRegs;
+
+typedef struct
+{
+   scucodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
+   int numcodebreakpoints;
+   void (*BreakpointCallBack)(u32);
+   u8 inbreakpoint;
+} scubp_struct;
 
 typedef struct {
   u32 ProgramRam[256];
@@ -300,5 +304,7 @@ int ScuDspAddCodeBreakpoint(u32 addr);
 int ScuDspDelCodeBreakpoint(u32 addr);
 scucodebreakpoint_struct *ScuDspGetBreakpointList();
 void ScuDspClearCodeBreakpoints();
+int ScuSaveState(FILE *fp);
+int ScuLoadState(FILE *fp, int version, int size);
 
 #endif

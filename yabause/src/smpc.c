@@ -685,6 +685,9 @@ int SmpcSaveState(FILE *fp)
    fwrite((void *)&SmpcRegs->IOSEL, sizeof(u8), 1, fp);
    fwrite((void *)&SmpcRegs->EXLE, sizeof(u8), 1, fp);
 
+   // Write internal variables
+   fwrite((void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
+
    // Write ID's of currently emulated peripherals(fix me)
 
    return StateFinishHeader(fp, offset);
@@ -705,10 +708,10 @@ int SmpcLoadState(FILE *fp, int version, int size)
    fread((void *)&SmpcRegs->IOSEL, sizeof(u8), 1, fp);
    fread((void *)&SmpcRegs->EXLE, sizeof(u8), 1, fp);
 
-   // Read ID's of currently emulated peripherals(fix me)
+   // Read internal variables
+   fread((void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
 
-   // May need to rework the following
-   SmpcInternalVars->timing=0;
+   // Read ID's of currently emulated peripherals(fix me)
 
    return size;
 }

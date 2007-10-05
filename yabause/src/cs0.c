@@ -1397,38 +1397,33 @@ void CartDeInit(void)
 
 int CartSaveState(FILE * fp)
 {
-/*
-	int offset;
+   int offset;
 
-        offset = StateWriteHeader(fp, "Cs0 ", 1);
+   offset = StateWriteHeader(fp, "CART", 1);
 
-	// Write cart type
-	fwrite((void *) &Cs0Area->carttype, 4, 1, fp);
+   // Write cart type
+   fwrite((void *)&CartridgeArea->carttype, 4, 1, fp);
 
-	// Write the areas associated with the cart type here
+   // Write the areas associated with the cart type here
 
-	return StateFinishHeader(fp, offset);
-*/
-   return 0;
+   return StateFinishHeader(fp, offset);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int CartLoadState(FILE * fp, int version, int size)
 {
-/*
-	int oldtype = Cs0Area->carttype;
-	// Read cart type
-	fread((void *) &Cs0Area->carttype, 4, 1, fp);
+   int newtype;
 
-	// Check to see if old cart type and new cart type match, if they don't,
-	// reallocate memory areas
+   // Read cart type
+   fread((void *)&newtype, 4, 1, fp);
 
-	// Read the areas associated with the cart type here
+   // Check to see if old cart type and new cart type match, if they don't,
+   // reallocate memory areas
 
-	return size;
-*/
-   return 0;
+   // Read the areas associated with the cart type here
+
+   return size;
 }
 
 //////////////////////////////////////////////////////////////////////////////

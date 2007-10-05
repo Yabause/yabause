@@ -85,6 +85,8 @@ int ScspChangeVideoFormat(int type);
 void M68KExec(u32 cycles);
 void ScspExec(void);
 void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
+int SoundSaveState(FILE *fp);
+int SoundLoadState(FILE *fp, int version, int size);
 void ScspSlotDebugStats(u8 slotnum, char *outstring);
 void ScspCommonControlRegisterDebugStats(char *outstring);
 int ScspSlotDebugSaveRegisters(u8 slotnum, const char *filename);
