@@ -2,6 +2,8 @@
 #define YUIDEBUG_H
 #include "../sh2core.h"
 
+enum { OFN_DEFAULTSAVE=0, OFN_DEFAULTLOAD };
+
 LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -25,6 +27,7 @@ LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                             LPARAM lParam);
 void UpdateLogCallback (char *string);
+void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const char *lpstrFilter, char *lpstrFile, DWORD nMaxFile);
 
 extern SH2_struct *debugsh;
 extern HWND LogWin;

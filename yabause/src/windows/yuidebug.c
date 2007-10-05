@@ -47,8 +47,6 @@ char *logbuffer;
 u32 logcounter=0;
 u32 logsize=512;
 
-enum { OFN_DEFAULTSAVE=0, OFN_DEFAULTLOAD };
-
 //////////////////////////////////////////////////////////////////////////////
 
 void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const char *lpstrFilter, char *lpstrFile, DWORD nMaxFile)

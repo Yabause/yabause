@@ -29,7 +29,9 @@
 #define IDM_RESET            10009
 #define IDM_BACKUPRAMMANAGER 10010
 #define IDM_SETTINGS         10011
-#define IDM_EXIT             10012
+#define IDM_SAVESTATEAS      10012
+#define IDM_LOADSTATEAS      10013
+#define IDM_EXIT             10014
 #define IDM_SEARCHCHEATS     10020
 #define IDM_CHEATLIST        10021
 #define IDM_MSH2DEBUG        10030

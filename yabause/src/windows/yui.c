@@ -63,6 +63,8 @@ static int greensize = 0;
 static int bluesize = 0;
 static int depthsize = 0;
 
+char yssfilename[MAX_PATH] = "\0";
+
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 void YuiReleaseVideo(void);
 
@@ -837,6 +839,37 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_TOGGLEFPS:
             {
                ToggleFPS();
+               break;
+            }
+            case IDM_SAVESTATEAS:
+            {
+               OPENFILENAME ofn;
+
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd,
+                        "Yabause Save State files\0*.YSS\0All Files\0*.*\0",
+                        yssfilename, sizeof(yssfilename));
+
+               if (GetSaveFileName(&ofn))
+               {
+                  if (YabSaveState(yssfilename) != 0)
+                     MessageBox (hWnd, "Couldn't save state file", "Error",  MB_OK | MB_ICONINFORMATION);
+               }
+               break;
+            }
+            case IDM_LOADSTATEAS:
+            {
+               OPENFILENAME ofn;
+
+               SetupOFN(&ofn, OFN_DEFAULTLOAD, hWnd,
+                        "Yabause Save State files\0*.YSS\0All Files\0*.*\0",
+                        yssfilename, sizeof(yssfilename));
+
+               if (GetOpenFileName(&ofn))
+               {
+                  if (YabLoadState(yssfilename) != 0)
+                     MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
+               }
+
                break;
             }
             case IDM_EXIT:
