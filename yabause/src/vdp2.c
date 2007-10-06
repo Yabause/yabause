@@ -1225,13 +1225,16 @@ int Vdp2SaveState(FILE *fp)
    offset = StateWriteHeader(fp, "VDP2", 1);
 
    // Write registers
-   fwrite((void *)&Vdp2Regs, sizeof(Vdp2), 1, fp);
+   fwrite((void *)Vdp2Regs, sizeof(Vdp2), 1, fp);
 
    // Write VDP2 ram
    fwrite((void *)Vdp2Ram, 0x80000, 1, fp);
 
    // Write CRAM
    fwrite((void *)Vdp2ColorRam, 0x1000, 1, fp);
+
+   // Write internal variables
+   fwrite((void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
 
    return StateFinishHeader(fp, offset);
 }
@@ -1241,13 +1244,16 @@ int Vdp2SaveState(FILE *fp)
 int Vdp2LoadState(FILE *fp, int version, int size)
 {
    // Read registers
-   fread((void *)&Vdp2Regs, sizeof(Vdp2), 1, fp);
+   fread((void *)Vdp2Regs, sizeof(Vdp2), 1, fp);
 
    // Read VDP2 ram
    fread((void *)Vdp2Ram, 0x80000, 1, fp);
 
    // Read CRAM
    fread((void *)Vdp2ColorRam, 0x1000, 1, fp);
+
+   // Read internal variables
+   fread((void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
 
    VIDCore->Vdp2SetResolution(Vdp2Regs->TVMD);
    VIDCore->Vdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);

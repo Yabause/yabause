@@ -491,7 +491,7 @@ int Vdp1SaveState(FILE *fp)
    offset = StateWriteHeader(fp, "VDP1", 1);
 
    // Write registers
-   fwrite((void *)&Vdp1Regs, sizeof(Vdp1), 1, fp); // fix me
+   fwrite((void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
 
    // Write VDP1 ram
    fwrite((void *)Vdp1Ram, 0x80000, 1, fp);
@@ -504,7 +504,7 @@ int Vdp1SaveState(FILE *fp)
 int Vdp1LoadState(FILE *fp, int version, int size)
 {
    // Read registers
-   fread((void *)&Vdp1Regs, sizeof(Vdp1), 1, fp); // fix me
+   fread((void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
 
    // Read VDP1 ram
    fread((void *)Vdp1Ram, 0x80000, 1, fp);

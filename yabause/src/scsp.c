@@ -3176,6 +3176,9 @@ int SoundLoadState(FILE *fp, int version, int size)
 
    // Lastly, sound ram
    fread((void *)SoundRam, 0x80000, 1, fp);
+
+   // Internal variables need to be regenerated here
+
    return size;
 }
 
