@@ -79,6 +79,8 @@ void SmpcRecheckRegion(void) {
       if (SmpcInternalVars->regionid == 0)
          SmpcInternalVars->regionid = 1;
    }
+   else
+      Cs2GetIP(0);
 }
 
 //////////////////////////////////////////////////////////////////////////////

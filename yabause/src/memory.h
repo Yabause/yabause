@@ -368,5 +368,7 @@ void FormatBackupRam(void *mem, u32 size);
 
 int YabSaveState(const char *filename);
 int YabLoadState(const char *filename);
+int YabSaveStateSlot(const char *dirpath, u8 slot);
+int YabLoadStateSlot(const char *dirpath, u8 slot);
 
 #endif

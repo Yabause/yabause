@@ -219,7 +219,25 @@ typedef struct {
   int playtype;  
 } Cs2;
 
+typedef struct {
+   char system[17];
+   char company[17];
+   char itemnum[11];
+   char version[7];
+   char date[11];
+   char cdinfo[9];
+   char region[11];
+   char peripheral[17];
+   char gamename[113];
+   u32 ipsize;
+   u32 msh2stack;
+   u32 ssh2stack;
+   u32 firstprogaddr;
+   u32 firstprogsize;
+} ip_struct;
+
 extern Cs2 * Cs2Area;
+extern ip_struct * cdip;
 
 int Cs2Init(int, int, const char *, const char *, const char *);
 void Cs2DeInit(void);
@@ -328,6 +346,7 @@ void Cs2SetupFileInfoTransfer(u32 fid);
 partition_struct * Cs2ReadUnFilteredSector(u32 rufsFAD);
 //partition_struct * Cs2ReadFilteredSector(u32 rfsFAD);
 int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition);
+u8 Cs2GetIP(int autoregion);
 u8 Cs2GetRegionID(void);
 int Cs2ChangeDisc(const char *cdpath);
 int Cs2SaveState(FILE *);
