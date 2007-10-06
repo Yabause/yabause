@@ -34,7 +34,6 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @COMPILE_C68K_TRUE@am__append_1 = c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c m68kc68k.c m68kc68k.h
-#libyabause_a_LIBADD = cd-$(YAB_ARCH).$(OBJEXT)
 @ARCH_IS_FREEBSD_TRUE@am__append_2 = cd-freebsd.c
 @ARCH_IS_LINUX_TRUE@am__append_3 = cd-linux.c
 @ARCH_IS_MACOSX_TRUE@am__append_4 = cd-macosx.c

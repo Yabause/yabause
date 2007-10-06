@@ -110,6 +110,43 @@ static gboolean yui_gl_resize(GtkWidget *w,GdkEventConfigure *event, gpointer da
 	return FALSE;
 }
 
+int beforehiding = 0;
+
+gboolean gonna_hide(gpointer data) {
+	beforehiding--;
+
+	if (beforehiding == 0) {
+		static unsigned char source_data[] = { 0 };
+		static unsigned char mask_data[] = { 0 };
+
+		GdkCursor *cursor;
+ 		GdkPixmap *source, *mask;
+		GdkColor fg = { 0, 65535, 65535, 65535 };
+		GdkColor bg = { 0, 0, 0, 0 };
+ 
+		source = gdk_bitmap_create_from_data(NULL, source_data, 1, 1);
+		mask = gdk_bitmap_create_from_data(NULL, mask_data, 1, 1);
+		cursor = gdk_cursor_new_from_pixmap(source, mask, &fg, &bg, 1, 1);
+		gdk_pixmap_unref(source);
+		gdk_pixmap_unref(mask);
+
+		gdk_window_set_cursor(GTK_WIDGET(data)->window, cursor);
+
+		return FALSE;
+	} else {
+		return TRUE;
+	}
+}
+
+static gboolean yui_gl_hide_cursor(GtkWidget * widget, GdkEventMotion * event, gpointer user_data) {
+	if (beforehiding == 0) {
+		gdk_window_set_cursor(widget->window, NULL);
+		g_timeout_add(1000, gonna_hide, widget);
+	}
+
+	beforehiding = 2;
+}
+
 GtkWidget * yui_gl_new(void) {
 	GtkWidget * drawingArea;
 #ifdef HAVE_LIBGL
@@ -135,6 +172,10 @@ GtkWidget * yui_gl_new(void) {
 #endif
 
 	g_signal_connect (GTK_OBJECT(drawingArea),"configure_event", GTK_SIGNAL_FUNC(yui_gl_resize),0);
+
+	gtk_widget_set_events(drawingArea, GDK_POINTER_MOTION_MASK);
+
+	g_signal_connect(GTK_OBJECT(drawingArea), "motion-notify-event", GTK_SIGNAL_FUNC(yui_gl_hide_cursor),0);
 
 	return drawingArea;
 }
