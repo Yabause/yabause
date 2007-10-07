@@ -145,6 +145,9 @@ GtkWidget* create_dialog1(void) {
   box = yui_page_add(YUI_PAGE(general), "<b>Cdrom</b>");
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "CDROMCore", cdcores));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "CDROMDrive", YUI_FILE_ENTRY_BROWSE, NULL));
+
+  box = yui_page_add(YUI_PAGE(general), "<b>Save states</b>");
+  gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "StatePath", YUI_FILE_ENTRY_BROWSE | YUI_FILE_ENTRY_DIRECTORY, NULL));
   
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), general, gtk_label_new ("General"));
   gtk_widget_show_all(general);

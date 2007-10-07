@@ -34,6 +34,7 @@ G_BEGIN_DECLS
 #define IS_YUI_FILE_ENTRY_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  YUI_FILE_ENTRY_TYPE))
 
 #define YUI_FILE_ENTRY_BROWSE	1
+#define YUI_FILE_ENTRY_DIRECTORY	2
 
 typedef struct _YuiFileEntry       YuiFileEntry;
 typedef struct _YuiFileEntryClass  YuiFileEntryClass;
@@ -48,6 +49,8 @@ struct _YuiFileEntry
   GKeyFile * keyfile;
   gchar * group;
   gchar * key;
+
+  int flags;
 };
 
 struct _YuiFileEntryClass

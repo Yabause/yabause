@@ -103,6 +103,8 @@ GtkWidget * yui_file_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 		"key-file", keyfile, "group", group, "key", key, NULL));
 	yfe = YUI_FILE_ENTRY(entry);
 
+	yfe->flags = flags;
+
 	if (label) {
         	gtk_box_pack_start(GTK_BOX(yfe), gtk_label_new_with_mnemonic(label), FALSE, FALSE, 0);
 	}
@@ -112,7 +114,7 @@ GtkWidget * yui_file_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 
 	if (flags & YUI_FILE_ENTRY_BROWSE) {
 	        yfe->button = gtk_button_new_with_mnemonic ("Browse");
-        	g_signal_connect(yfe->button, "clicked", G_CALLBACK(yui_file_entry_browse), yfe->entry);
+        	g_signal_connect(yfe->button, "clicked", G_CALLBACK(yui_file_entry_browse), yfe);
 	        gtk_box_pack_start(GTK_BOX(yfe), yfe->button, FALSE, FALSE, 0);
 	}
 
@@ -128,10 +130,18 @@ static void yui_file_entry_browse(GtkWidget * widget, gpointer user_data) {
         GtkWidget * file_selector;
         gint result;
         const gchar * filename;
+	YuiFileEntry * yfe = user_data;
+	GtkFileChooserAction action;
 
-        file_selector = gtk_file_chooser_dialog_new ("Please choose a file", NULL, GTK_FILE_CHOOSER_ACTION_OPEN,
+	if (yfe->flags & YUI_FILE_ENTRY_DIRECTORY) {
+		action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
+	} else {
+		action = GTK_FILE_CHOOSER_ACTION_OPEN;
+	}
+
+        file_selector = gtk_file_chooser_dialog_new ("Please choose a file", NULL, action,
                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
-	filename = gtk_entry_get_text(GTK_ENTRY(user_data));
+	filename = gtk_entry_get_text(GTK_ENTRY(yfe->entry));
 	if (filename[0] != '\0')
         	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_selector), filename);
 
@@ -142,7 +152,7 @@ static void yui_file_entry_browse(GtkWidget * widget, gpointer user_data) {
         switch(result) {
                 case GTK_RESPONSE_ACCEPT:
                         filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector));
-                        gtk_entry_set_text(GTK_ENTRY(user_data), filename);
+                        gtk_entry_set_text(GTK_ENTRY(yfe->entry), filename);
                         break;
                 case GTK_RESPONSE_CANCEL:
                         break;
