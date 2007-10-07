@@ -64,6 +64,7 @@ static int bluesize = 0;
 static int depthsize = 0;
 
 char yssfilename[MAX_PATH] = "\0";
+char ysspath[MAX_PATH] = "\0";
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 void YuiReleaseVideo(void);
@@ -387,6 +388,9 @@ int YuiInit(void)
    GetPrivateProfileString("General", "BiosPath", "", biosfilename, MAX_PATH, inifilename);
    GetPrivateProfileString("General", "BackupRamPath", "bkram.bin", backupramfilename, MAX_PATH, inifilename);
    GetPrivateProfileString("General", "MpegRomPath", "", mpegromfilename, MAX_PATH, inifilename);
+   GetPrivateProfileString("General", "StatePath", "", ysspath, MAX_PATH, inifilename);
+   if (strcmp(ysspath, "") == 0)
+      GetCurrentDirectory(MAX_PATH, ysspath);
 
    GetPrivateProfileString("General", "CartType", "", tempstr, MAX_PATH, inifilename);
 
@@ -872,6 +876,30 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
                break;
             }
+            case IDM_SAVESTATE_F2:
+            case IDM_SAVESTATE_F3:
+            case IDM_SAVESTATE_F4:
+            case IDM_SAVESTATE_F5:
+            case IDM_SAVESTATE_F6:
+            case IDM_SAVESTATE_F7:
+            case IDM_SAVESTATE_F8:
+            case IDM_SAVESTATE_F9:
+            case IDM_SAVESTATE_F10:
+               if (YabSaveStateSlot(ysspath, LOWORD(wParam)-IDM_SAVESTATE_F2) != 0)
+                  MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
+               break;
+            case IDM_LOADSTATE_F2:
+            case IDM_LOADSTATE_F3:
+            case IDM_LOADSTATE_F4:
+            case IDM_LOADSTATE_F5:
+            case IDM_LOADSTATE_F6:
+            case IDM_LOADSTATE_F7:
+            case IDM_LOADSTATE_F8:
+            case IDM_LOADSTATE_F9:
+            case IDM_LOADSTATE_F10:
+               if (YabLoadStateSlot(ysspath, LOWORD(wParam)-IDM_LOADSTATE_F2) != 0)
+                  MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
+               break;
             case IDM_EXIT:
             {
                ScspMuteAudio();

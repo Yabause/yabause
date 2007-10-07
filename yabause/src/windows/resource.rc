@@ -31,6 +31,30 @@ BEGIN
     MENUITEM "&Settings", IDM_SETTINGS
     MENUITEM "&Backup Ram Manager", IDM_BACKUPRAMMANAGER
     MENUITEM SEPARATOR
+    POPUP "Save State"
+    {
+      MENUITEM "1", IDM_SAVESTATE_F2
+      MENUITEM "2", IDM_SAVESTATE_F3
+      MENUITEM "3", IDM_SAVESTATE_F4
+      MENUITEM "4", IDM_SAVESTATE_F5
+      MENUITEM "5", IDM_SAVESTATE_F6
+      MENUITEM "6", IDM_SAVESTATE_F7
+      MENUITEM "7", IDM_SAVESTATE_F8
+      MENUITEM "8", IDM_SAVESTATE_F9
+      MENUITEM "9", IDM_SAVESTATE_F10
+    }
+    POPUP "Load State"
+    {
+      MENUITEM "1", IDM_LOADSTATE_F2
+      MENUITEM "2", IDM_LOADSTATE_F3
+      MENUITEM "3", IDM_LOADSTATE_F4
+      MENUITEM "4", IDM_LOADSTATE_F5
+      MENUITEM "5", IDM_LOADSTATE_F6
+      MENUITEM "6", IDM_LOADSTATE_F7
+      MENUITEM "7", IDM_LOADSTATE_F8
+      MENUITEM "8", IDM_LOADSTATE_F9
+      MENUITEM "9", IDM_LOADSTATE_F10
+    }
     MENUITEM "Save State As", IDM_SAVESTATEAS
     MENUITEM "Load State As", IDM_LOADSTATEAS
     MENUITEM SEPARATOR
@@ -624,14 +648,32 @@ END
 
 IDR_MAIN_ACCEL ACCELERATORS DISCARDABLE
 BEGIN
-    VK_RETURN,      IDM_TOGGLEFULLSCREEN,       VIRTKEY, ALT, NOINVERT
-    "1",           IDM_TOGGLENBG0,             ASCII, NOINVERT
-    "2",           IDM_TOGGLENBG1,             ASCII, NOINVERT
-    "3",           IDM_TOGGLENBG2,             ASCII, NOINVERT
-    "4",           IDM_TOGGLENBG3,             ASCII, NOINVERT
-    "5",           IDM_TOGGLERBG0,             ASCII, NOINVERT
-    "6",           IDM_TOGGLEVDP1,             ASCII, NOINVERT
-    VK_F1,          IDM_TOGGLEFPS,              VIRTKEY, NOINVERT
+    VK_RETURN,     IDM_TOGGLEFULLSCREEN,        VIRTKEY, ALT, NOINVERT
+    "1",           IDM_TOGGLENBG0,              ASCII, NOINVERT
+    "2",           IDM_TOGGLENBG1,              ASCII, NOINVERT
+    "3",           IDM_TOGGLENBG2,              ASCII, NOINVERT
+    "4",           IDM_TOGGLENBG3,              ASCII, NOINVERT
+    "5",           IDM_TOGGLERBG0,              ASCII, NOINVERT
+    "6",           IDM_TOGGLEVDP1,              ASCII, NOINVERT
+    VK_F1,         IDM_TOGGLEFPS,               VIRTKEY, NOINVERT
+    VK_F2,         IDM_SAVESTATE_F2,            VIRTKEY, SHIFT, NOINVERT
+    VK_F3,         IDM_SAVESTATE_F3,            VIRTKEY, SHIFT, NOINVERT
+    VK_F4,         IDM_SAVESTATE_F4,            VIRTKEY, SHIFT, NOINVERT
+    VK_F5,         IDM_SAVESTATE_F5,            VIRTKEY, SHIFT, NOINVERT
+    VK_F6,         IDM_SAVESTATE_F6,            VIRTKEY, SHIFT, NOINVERT
+    VK_F7,         IDM_SAVESTATE_F7,            VIRTKEY, SHIFT, NOINVERT
+    VK_F8,         IDM_SAVESTATE_F8,            VIRTKEY, SHIFT, NOINVERT
+    VK_F9,         IDM_SAVESTATE_F9,            VIRTKEY, SHIFT, NOINVERT
+    VK_F10,        IDM_SAVESTATE_F10,           VIRTKEY, SHIFT, NOINVERT
+    VK_F2,         IDM_LOADSTATE_F2,            VIRTKEY, NOINVERT
+    VK_F3,         IDM_LOADSTATE_F3,            VIRTKEY, NOINVERT
+    VK_F4,         IDM_LOADSTATE_F4,            VIRTKEY, NOINVERT
+    VK_F5,         IDM_LOADSTATE_F5,            VIRTKEY, NOINVERT
+    VK_F6,         IDM_LOADSTATE_F6,            VIRTKEY, NOINVERT
+    VK_F7,         IDM_LOADSTATE_F7,            VIRTKEY, NOINVERT
+    VK_F8,         IDM_LOADSTATE_F8,            VIRTKEY, NOINVERT
+    VK_F9,         IDM_LOADSTATE_F9,            VIRTKEY, NOINVERT
+    VK_F10,        IDM_LOADSTATE_F10,           VIRTKEY, NOINVERT
 END
 
 //////////////////////////////////////////////////////////////////////////////

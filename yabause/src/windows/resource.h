@@ -57,6 +57,24 @@
 #define IDM_DONATE           10053
 #define IDM_COMPATLIST       10054
 #define IDM_ABOUT            10055
+#define IDM_SAVESTATE_F2     10060
+#define IDM_SAVESTATE_F3     10061
+#define IDM_SAVESTATE_F4     10062
+#define IDM_SAVESTATE_F5     10063
+#define IDM_SAVESTATE_F6     10064
+#define IDM_SAVESTATE_F7     10065
+#define IDM_SAVESTATE_F8     10066
+#define IDM_SAVESTATE_F9     10067
+#define IDM_SAVESTATE_F10    10068
+#define IDM_LOADSTATE_F2     10069
+#define IDM_LOADSTATE_F3     10070
+#define IDM_LOADSTATE_F4     10071
+#define IDM_LOADSTATE_F5     10072
+#define IDM_LOADSTATE_F6     10073
+#define IDM_LOADSTATE_F7     10074
+#define IDM_LOADSTATE_F8     10075
+#define IDM_LOADSTATE_F9     10076
+#define IDM_LOADSTATE_F10    10077
 
 #define IDC_EDITTEXT1                   1001
 #define IDC_EDITTEXT2                   1002
