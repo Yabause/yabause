@@ -1434,7 +1434,23 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl)
       AddString(outstring, "Display %s of Window\r\n", (wctl & 0x10) ? "outside" : "inside");
    }
 
-   AddString(outstring, "Window Overlap Logic: %s\r\n", (wctl & 0x80) ? "AND" : "OR");
+   if (wctl & 0x2A)
+   {
+      AddString(outstring, "Window Overlap Logic: %s\r\n", (wctl & 0x80) ? "AND" : "OR");
+   }
+   else
+   {
+      if (wctl & 0x80)
+      {
+         // Whole screen window enabled
+         AddString(outstring, "Window enabled whole screen\r\n");      
+      }
+      else
+      {
+         // Whole screen window disabled
+         AddString(outstring, "Window disabled whole screen\r\n");
+      }
+   }
 
    return outstring;
 }
