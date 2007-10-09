@@ -1395,7 +1395,7 @@ u16 scsp_get_w(u32 a)
 		}
 
 #define SCSP_UPDATE_LFO		\
-		slot->lfoinc += slot->lfocnt;
+                slot->lfocnt += slot->lfoinc;
 
 ////////////////////////////////////////////////////////////////
 
