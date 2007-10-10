@@ -2041,7 +2041,8 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
 
 //              SCSPLOG("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
 
-		scsp_slot_update_p[(slot->lfofms == 31)?0:1][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
+//                scsp_slot_update_p[(slot->lfofms == 31)?0:1][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
+                scsp_slot_update_p[0][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
 	}
 
         if (Cs2Area->cddablock.size > 0)
@@ -2539,11 +2540,11 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 		else scsp_lfo_tri_e[i] = (i - (SCSP_LFO_LEN / 2)) * 2;
 		scsp_lfo_noi_e[i] = rand() & SCSP_LFO_MASK;
 
-		scsp_lfo_sawt_f[i] = i - (SCSP_LFO_LEN / 2);
-		if (i < (SCSP_LFO_LEN / 2)) scsp_lfo_squa_f[i] = 0 - (SCSP_LFO_LEN / 2);
-		else scsp_lfo_squa_f[i] = SCSP_LFO_MASK - (SCSP_LFO_LEN / 2);
-		if (i < (SCSP_LFO_LEN / 2)) scsp_lfo_tri_f[i] = (i * 2) - (SCSP_LFO_LEN / 2);
-		else scsp_lfo_tri_f[i] = (SCSP_LFO_MASK - ((i - (SCSP_LFO_LEN / 2)) * 2)) - (SCSP_LFO_LEN / 2);
+                scsp_lfo_sawt_f[(i + 512) & SCSP_LFO_MASK] = i - (SCSP_LFO_LEN / 2);
+                if (i < (SCSP_LFO_LEN / 2)) scsp_lfo_squa_f[i] = SCSP_LFO_MASK - (SCSP_LFO_LEN / 2);
+                else scsp_lfo_squa_f[i] = 0 - (SCSP_LFO_LEN / 2);
+                if (i < (SCSP_LFO_LEN / 2)) scsp_lfo_tri_f[(i + 768) & SCSP_LFO_MASK] = (i * 2) - (SCSP_LFO_LEN / 2);
+                else scsp_lfo_tri_f[(i + 768) & SCSP_LFO_MASK] = (SCSP_LFO_MASK - ((i - (SCSP_LFO_LEN / 2)) * 2)) - (SCSP_LFO_LEN / 2) + 1;
 		scsp_lfo_noi_f[i] = scsp_lfo_noi_e[i] - (SCSP_LFO_LEN / 2);
 	}
 
