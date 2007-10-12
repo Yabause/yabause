@@ -932,8 +932,6 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 
 u8 scsp_slot_get_b(u32 s, u32 a)
 {
-//        slot_t *slot = &(scsp.slot[s]);
-
 	a &= 0x1F;
 
         SCSPLOG("r_b slot %d : reg %.2X\n", s, a);
@@ -945,15 +943,13 @@ u8 scsp_slot_get_b(u32 s, u32 a)
 
 u16 scsp_slot_get_w(u32 s, u32 a)
 {
-//        slot_t *slot = &(scsp.slot[s]);
+        a &= 0x1E;
 
-	a = (a >> 1) & 0xF;
+        SCSPLOG("r_w slot %d : reg %.2X\n", s, a);
 
-        SCSPLOG("r_w slot %d : reg %.2X\n", s, a * 2);
+        if (a == 0x00) return *(u16 *)&scsp_isr[a ^ 2] & 0xEFFF;
 
-	if (a == 0x00) return *(u16 *)&scsp_isr[a ^ 2] & 0xEFFF;
-
-	return *(u16 *)&scsp_isr[a ^ 2];
+        return *(u16 *)&scsp_isr[a ^ 2];
 }
 
 ////////////////////////////////////////////////////////////////
@@ -3184,8 +3180,73 @@ int SoundLoadState(FILE *fp, int version, int size)
 
 //////////////////////////////////////////////////////////////////////////////
 
+char *AddSoundLFO(char *outstring, const char *string, u16 level, u16 waveform)
+{
+   if (level > 0)
+   {
+      switch (waveform)
+      {
+         case 0:
+            AddString(outstring, "%s Sawtooth\r\n", string);
+            break;
+         case 1:
+            AddString(outstring, "%s Square\r\n", string);
+            break;
+         case 2:
+            AddString(outstring, "%s Triangle\r\n", string);
+            break;
+         case 3:
+            AddString(outstring, "%s Noise\r\n", string);
+            break;
+      }
+   }
+
+   return outstring;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+char *AddSoundPan(char *outstring, u16 pan)
+{
+   if (pan == 0x0F)
+   {
+      AddString(outstring, "Left = -MAX dB, Right = -0 dB\r\n");
+   }
+   else if (pan == 0x1F)
+   {
+      AddString(outstring, "Left = -0 dB, Right = -MAX dB\r\n");
+   }
+   else
+   {
+      AddString(outstring, "Left = -%d dB, Right = -%d dB\r\n", (pan & 0xF) * 3, (pan >> 4) * 3);
+   }
+
+   return outstring;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+char *AddSoundLevel(char *outstring, u16 level)
+{
+   if (level == 0)
+   {
+      AddString(outstring, "-MAX dB\r\n");
+   }
+   else
+   {
+      AddString(outstring, "-%d dB\r\n", level *  6);
+   }
+
+   return outstring;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void ScspSlotDebugStats(u8 slotnum, char *outstring)
 {
+   u32 slotoffset=slotnum * 0x20;
+   int i;
+
    AddString(outstring, "Sound Source = ");
    switch (scsp.slot[slotnum].ssctl)
    {
@@ -3256,7 +3317,7 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
       }
       case 3:
       {
-         AddString(outstring, "Alternative\r\n");
+         AddString(outstring, "Alternating\r\n");
          break;
       }
    }
@@ -3291,7 +3352,7 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
       AddString(outstring, "Key rate scaling = %ld\r\n", scsp.slot[slotnum].krs);
    }
 
-//   AddString(outstring, "Decay Level = \r\n");
+   AddString(outstring, "Decay Level = %d\r\n", (scsp_r_w(slotoffset + 0xA) >> 5) & 0x1F);
    AddString(outstring, "Release Rate = %ld\r\n", scsp.slot[slotnum].rr);
 
    if (scsp.slot[slotnum].swe)
@@ -3306,23 +3367,37 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 
    AddString(outstring, "Total Level = %ld\r\n", scsp.slot[slotnum].tl);
 
-//   AddString(outstring, "Modulation Level = \r\n");
-//   AddString(outstring, "Modulation Input X = \r\n");
-//   AddString(outstring, "Modulation Input Y = \r\n");
-//   AddString(outstring, "Octave = \r\n");
-//   AddString(outstring, "Frequency Number Switch = \r\n");
-//   AddString(outstring, "LFO Reset = \r\n");
-//   AddString(outstring, "LFO Frequency = \r\n");
-//   AddString(outstring, "LFO Frequency modulation waveform = \r\n");
-//   AddString(outstring, "LFO Frequency modulation level = \r\n");
-//   AddString(outstring, "LFO Amplitude modulation waveform = \r\n");
-//   AddString(outstring, "LFO Amplitude modulation level = \r\n");
-//   AddString(outstring, "Input Select = \r\n");
-//   AddString(outstring, "Input mix level = \r\n");
-   AddString(outstring, "Direct data send level: left = %d, right = %d\r\n", scsp.slot[slotnum].disll, scsp.slot[slotnum].dislr);
-//   AddString(outstring, "Direct data fixed position = \r\n");
-//   AddString(outstring, "Effect data send level = \r\n");
-//   AddString(outstring, "Effect data fixed position = \r\n");
+   AddString(outstring, "Modulation Level = %d\r\n", scsp.slot[slotnum].mdl);
+   AddString(outstring, "Modulation Input X = %d\r\n", scsp.slot[slotnum].mdx);
+   AddString(outstring, "Modulation Input Y = %d\r\n", scsp.slot[slotnum].mdy);
+
+   AddString(outstring, "Octave = %d\r\n", (scsp_r_w(slotoffset + 0x10) >> 11) & 0xF);
+   AddString(outstring, "Frequency Number Switch = %d\r\n", scsp_r_w(slotoffset + 0x10) & 0x3FF);
+
+   AddString(outstring, "LFO Reset = %s\r\n", ((scsp_r_w(slotoffset + 0x12) >> 15) & 0x1) ? "TRUE" : "FALSE");
+   AddString(outstring, "LFO Frequency = %d\r\n", (scsp_r_w(slotoffset + 0x12) >> 10) & 0x1F);
+   outstring = AddSoundLFO(outstring, "LFO Frequency modulation waveform = ",
+                           (scsp_r_w(slotoffset + 0x12) >> 5) & 0x7,
+                           (scsp_r_w(slotoffset + 0x12) >> 8) & 0x3);
+   AddString(outstring, "LFO Frequency modulation level = %d\r\n", (scsp_r_w(slotoffset + 0x12) >> 5) & 0x7);
+   outstring = AddSoundLFO(outstring, "LFO Amplitude modulation waveform = ",
+                           scsp_r_w(slotoffset + 0x12) & 0x7,
+                           (scsp_r_w(slotoffset + 0x12) >> 3) & 0x3);
+   AddString(outstring, "LFO Amplitude modulation level = %d\r\n", scsp_r_w(slotoffset + 0x12) & 0x7);
+
+   AddString(outstring, "Input mix level = ");
+   outstring = AddSoundLevel(outstring, scsp_r_w(slotoffset + 0x14) & 0x7);
+   AddString(outstring, "Input Select = %d\r\n", (scsp_r_w(slotoffset + 0x14) >> 3) & 0x1F);
+
+   AddString(outstring, "Direct data send level = ");
+   outstring = AddSoundLevel(outstring, (scsp_r_w(slotoffset + 0x16) >> 13) & 0x7);
+   AddString(outstring, "Direct data panpot = ");
+   outstring = AddSoundPan(outstring, (scsp_r_w(slotoffset + 0x16) >> 8) & 0x1F);
+
+   AddString(outstring, "Effect data send level = ");
+   outstring = AddSoundLevel(outstring, (scsp_r_w(slotoffset + 0x16) >> 5) & 0x7);
+   AddString(outstring, "Effect data panpot = ");
+   outstring = AddSoundPan(outstring, scsp_r_w(slotoffset + 0x16) & 0x1F);
 }
 
 //////////////////////////////////////////////////////////////////////////////
