@@ -845,10 +845,10 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 		}
 		else if (slot->lfoinc == -1) slot->lfocnt = 0;
 
-		slot->lfoinc = scsp_lfo_step[(d >> 10) & 0x1F];
-		if ((d >> 5) & 7) slot->lfofms = ((d >> 5) & 7) + 7;
+                slot->lfoinc = scsp_lfo_step[(d >> 10) & 0x1F]; // LFOF
+                if ((d >> 5) & 7) slot->lfofms = ((d >> 5) & 7) + 7; // PLFOS
 		else slot->lfofms = 31;
-		if (d & 7) slot->lfoems = ((d & 7) ^ 7) + 4;
+                if (d & 7) slot->lfoems = ((d & 7) ^ 7) + 4; // ALFOS
 		else slot->lfoems = 31;
 
 		switch((d >> 8) & 3){
@@ -1376,7 +1376,7 @@ u16 scsp_get_w(u32 a)
 		}
 
 #define SCSP_UPDATE_PHASE_LFO	\
-		slot->fcnt += slot->finc + ((slot->lfofmw[(slot->lfocnt >> SCSP_LFO_LB) & SCSP_LFO_MASK] << slot->lfofms) >> slot->fsft);	\
+                slot->fcnt += ((slot->lfofmw[(slot->lfocnt >> SCSP_LFO_LB) & SCSP_LFO_MASK] << (slot->lfofms-7)) >> (slot->fsft+1));       \
 		if ((slot->fcnt += slot->finc) > slot->lea)		\
 		{									\
 			if (slot->lpctl) slot->fcnt = slot->lsa;		\
@@ -1938,13 +1938,16 @@ static void (*scsp_slot_update_p[2][2][2][2][2])(slot_t *slot) =
 				{	// NO RIGHT
 					scsp_slot_update_null,
 					// RIGHT
-					scsp_slot_update_F_8B_R
+                                        scsp_slot_update_F_8B_R
+//                                        scsp_slot_update_8B_R
 				},
 				// LEFT
 				{	// NO RIGHT
-					scsp_slot_update_F_8B_L,
+                                        scsp_slot_update_F_8B_L,
+//                                        scsp_slot_update_8B_L,
 					// RIGHT
-					scsp_slot_update_F_8B_LR
+                                        scsp_slot_update_F_8B_LR
+//                                        scsp_slot_update_8B_LR
 				},
 			},
 			// 16 BITS
@@ -1952,13 +1955,16 @@ static void (*scsp_slot_update_p[2][2][2][2][2])(slot_t *slot) =
 				{	// NO RIGHT
 					scsp_slot_update_null,
 					// RIGHT
-					scsp_slot_update_F_16B_R
+                                        scsp_slot_update_F_16B_R
+//                                        scsp_slot_update_16B_R
 				},
 				// LEFT
 				{	// NO RIGHT
-					scsp_slot_update_F_16B_L,
+                                        scsp_slot_update_F_16B_L,
+//                                        scsp_slot_update_16B_L,
 					// RIGHT
-					scsp_slot_update_F_16B_LR
+                                        scsp_slot_update_F_16B_LR
+//                                        scsp_slot_update_16B_LR
 				},
 			}
 		},
@@ -1968,27 +1974,33 @@ static void (*scsp_slot_update_p[2][2][2][2][2])(slot_t *slot) =
 				{	// NO RIGHT
 					scsp_slot_update_null,
 					// RIGHT
-					scsp_slot_update_F_E_8B_R
+                                        scsp_slot_update_F_E_8B_R
+//                                        scsp_slot_update_E_8B_R
 				},
 				// LEFT
 				{	// NO RIGHT
-					scsp_slot_update_F_E_8B_L,
+                                        scsp_slot_update_F_E_8B_L,
+//                                        scsp_slot_update_E_8B_L,
 					// RIGHT
-					scsp_slot_update_F_E_8B_LR
+                                        scsp_slot_update_F_E_8B_LR
+//                                        scsp_slot_update_E_8B_LR
 				},
 			},
 			// 16 BITS
 			{	// NO LEFT
 				{	// NO RIGHT
-					scsp_slot_update_null,
+                                        scsp_slot_update_null,
 					// RIGHT
-					scsp_slot_update_F_E_16B_R
+                                        scsp_slot_update_F_E_16B_R
+//                                        scsp_slot_update_E_16B_R
 				},
 				// LEFT
 				{	// NO RIGHT
-					scsp_slot_update_F_E_16B_L,
+                                        scsp_slot_update_F_E_16B_L,
+//                                        scsp_slot_update_E_16B_L,
 					// RIGHT
-					scsp_slot_update_F_E_16B_LR
+                                        scsp_slot_update_F_E_16B_LR
+//                                        scsp_slot_update_E_16B_LR
 				},
 			}
 		}
@@ -2041,8 +2053,7 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
 
 //              SCSPLOG("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
 
-//                scsp_slot_update_p[(slot->lfofms == 31)?0:1][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
-                scsp_slot_update_p[0][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
+		scsp_slot_update_p[(slot->lfofms == 31)?0:1][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
 	}
 
         if (Cs2Area->cddablock.size > 0)
@@ -2531,6 +2542,8 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 		scsp_lfo_step[31 - i] = scsp_round(x * ((double) (SCSP_LFO_LEN) / (double) (SCSP_FREQ)) * (double) (1 << SCSP_LFO_LB));
 	}
 
+        LOG("LFO LEN = %d\n", SCSP_LFO_LEN);
+
 	for(i = 0; i < SCSP_LFO_LEN; i++)
 	{
 		scsp_lfo_sawt_e[i] = SCSP_LFO_MASK - i;
@@ -2541,8 +2554,8 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 		scsp_lfo_noi_e[i] = rand() & SCSP_LFO_MASK;
 
                 scsp_lfo_sawt_f[(i + 512) & SCSP_LFO_MASK] = i - (SCSP_LFO_LEN / 2);
-                if (i < (SCSP_LFO_LEN / 2)) scsp_lfo_squa_f[i] = SCSP_LFO_MASK - (SCSP_LFO_LEN / 2);
-                else scsp_lfo_squa_f[i] = 0 - (SCSP_LFO_LEN / 2);
+                if (i < (SCSP_LFO_LEN / 2)) scsp_lfo_squa_f[i] = SCSP_LFO_MASK - (SCSP_LFO_LEN / 2) - 128;
+                else scsp_lfo_squa_f[i] = 0 - (SCSP_LFO_LEN / 2) + 128;
                 if (i < (SCSP_LFO_LEN / 2)) scsp_lfo_tri_f[(i + 768) & SCSP_LFO_MASK] = (i * 2) - (SCSP_LFO_LEN / 2);
                 else scsp_lfo_tri_f[(i + 768) & SCSP_LFO_MASK] = (SCSP_LFO_MASK - ((i - (SCSP_LFO_LEN / 2)) * 2)) - (SCSP_LFO_LEN / 2) + 1;
 		scsp_lfo_noi_f[i] = scsp_lfo_noi_e[i] - (SCSP_LFO_LEN / 2);
