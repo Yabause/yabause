@@ -3110,8 +3110,9 @@ int SoundSaveState(FILE *fp)
    int i;
    u32 temp;
    int offset;
+   u8 nextphase;
 
-   offset = StateWriteHeader(fp, "SCSP", 1);
+   offset = StateWriteHeader(fp, "SCSP", 2);
 
    // Save 68k registers first
    fwrite((void *)&yabsys.IsM68KRunning, 1, 1, fp);
@@ -3136,8 +3137,71 @@ int SoundSaveState(FILE *fp)
    // Now for the SCSP registers
    fwrite((void *)scsp_reg, 0x1000, 1, fp);
 
-   // Lastly, sound ram
+   // Sound RAM is important
    fwrite((void *)SoundRam, 0x80000, 1, fp);
+
+   // Write slot internal variables
+   for (i = 0; i < 32; i++)
+   {
+      fwrite((void *)&scsp.slot[i].key, 1, 1, fp);
+      fwrite((void *)&scsp.slot[i].fcnt, 4, 1, fp);
+      fwrite((void *)&scsp.slot[i].ecnt, 4, 1, fp);
+      fwrite((void *)&scsp.slot[i].einc, 4, 1, fp);
+      fwrite((void *)&scsp.slot[i].ecmp, 4, 1, fp);
+      fwrite((void *)&scsp.slot[i].ecurp, 4, 1, fp);
+
+      if (scsp.slot[i].enxt == scsp_env_null_next)
+         nextphase = 0;
+      else if (scsp.slot[i].enxt == scsp_release_next)
+         nextphase = 1;
+      else if (scsp.slot[i].enxt == scsp_substain_next)
+         nextphase = 2;
+      else if (scsp.slot[i].enxt == scsp_decay_next)
+         nextphase = 3;
+      else if (scsp.slot[i].enxt == scsp_attack_next)
+         nextphase = 4;
+      fwrite((void *)&nextphase, 1, 1, fp);
+
+      fwrite((void *)&scsp.slot[i].lfocnt, 4, 1, fp);
+      fwrite((void *)&scsp.slot[i].lfoinc, 4, 1, fp);
+   }
+
+   // Write main internal variables
+   fwrite((void *)&scsp.mem4b, 4, 1, fp);
+   fwrite((void *)&scsp.mvol, 4, 1, fp);
+
+   fwrite((void *)&scsp.rbl, 4, 1, fp);
+   fwrite((void *)&scsp.rbp, 4, 1, fp);
+
+   fwrite((void *)&scsp.mslc, 4, 1, fp);
+
+   fwrite((void *)&scsp.dmea, 4, 1, fp);
+   fwrite((void *)&scsp.drga, 4, 1, fp);
+   fwrite((void *)&scsp.dmfl, 4, 1, fp);
+   fwrite((void *)&scsp.dmlen, 4, 1, fp);
+
+   fwrite((void *)scsp.midinbuf, 1, 4, fp);
+   fwrite((void *)scsp.midoutbuf, 1, 4, fp);
+   fwrite((void *)&scsp.midincnt, 1, 1, fp);
+   fwrite((void *)&scsp.midoutcnt, 1, 1, fp);
+   fwrite((void *)&scsp.midflag, 1, 1, fp);
+
+   fwrite((void *)&scsp.timacnt, 4, 1, fp);
+   fwrite((void *)&scsp.timasd, 4, 1, fp);
+   fwrite((void *)&scsp.timbcnt, 4, 1, fp);
+   fwrite((void *)&scsp.timbsd, 4, 1, fp);
+   fwrite((void *)&scsp.timccnt, 4, 1, fp);
+   fwrite((void *)&scsp.timcsd, 4, 1, fp);
+
+   fwrite((void *)&scsp.scieb, 4, 1, fp);
+   fwrite((void *)&scsp.scipd, 4, 1, fp);
+   fwrite((void *)&scsp.scilv0, 4, 1, fp);
+   fwrite((void *)&scsp.scilv1, 4, 1, fp);
+   fwrite((void *)&scsp.scilv2, 4, 1, fp);
+   fwrite((void *)&scsp.mcieb, 4, 1, fp);
+   fwrite((void *)&scsp.mcipd, 4, 1, fp);
+
+   fwrite((void *)scsp.stack, 4, 32 * 2, fp);
 
    return StateFinishHeader(fp, offset);
 }
@@ -3146,8 +3210,9 @@ int SoundSaveState(FILE *fp)
 
 int SoundLoadState(FILE *fp, int version, int size)
 {
-   int i;
+   int i, i2;
    u32 temp;
+   u8 nextphase;
 
    // Read 68k registers first
    fread((void *)&yabsys.IsM68KRunning, 1, 1, fp);
@@ -3173,7 +3238,103 @@ int SoundLoadState(FILE *fp, int version, int size)
    // Lastly, sound ram
    fread((void *)SoundRam, 0x80000, 1, fp);
 
-   // Internal variables need to be regenerated here
+   if (version > 1)
+   {
+      // Internal variables need to be regenerated
+      for(i = 0; i < 32; i++)
+      {
+         for (i2 = 0; i2 < 0x20; i2+=2)
+            scsp_slot_set_w(i, 0x1E - i2, scsp_slot_get_w(i, 0x1E - i2));
+      }
+
+      scsp_set_w(0x402, scsp_get_w(0x402));
+
+      // Read slot internal variables
+      for (i = 0; i < 32; i++)
+      {
+         fread((void *)&scsp.slot[i].key, 1, 1, fp);
+         fread((void *)&scsp.slot[i].fcnt, 4, 1, fp);
+         fread((void *)&scsp.slot[i].ecnt, 4, 1, fp);
+         fread((void *)&scsp.slot[i].einc, 4, 1, fp);
+         fread((void *)&scsp.slot[i].ecmp, 4, 1, fp);
+         fread((void *)&scsp.slot[i].ecurp, 4, 1, fp);
+
+         fread((void *)&nextphase, 1, 1, fp);
+         switch(nextphase)
+         {
+            case 0:
+               scsp.slot[i].enxt = scsp_env_null_next;
+               break;
+            case 1:
+               scsp.slot[i].enxt = scsp_release_next;
+               break;
+            case 2:
+               scsp.slot[i].enxt = scsp_substain_next;
+               break;
+            case 3:
+               scsp.slot[i].enxt = scsp_decay_next;
+               break;
+            case 4:
+               scsp.slot[i].enxt = scsp_attack_next;
+               break;
+            default: break;
+         }
+
+         fread((void *)&scsp.slot[i].lfocnt, 4, 1, fp);
+         fread((void *)&scsp.slot[i].lfoinc, 4, 1, fp);
+
+         // Rebuild the buf8/buf16 variables
+         if (scsp.slot[i].pcm8b)
+         {
+            scsp.slot[i].buf8 = (s8*) &(scsp.scsp_ram[scsp.slot[i].sa]);
+            if ((scsp.slot[i].sa + (scsp.slot[i].lea >> SCSP_FREQ_LB)) > SCSP_RAM_MASK)
+               scsp.slot[i].lea = (SCSP_RAM_MASK - scsp.slot[i].sa) << SCSP_FREQ_LB;
+         }
+         else
+         {
+            scsp.slot[i].buf16 = (s16*) &(scsp.scsp_ram[scsp.slot[i].sa & ~1]);
+            if ((scsp.slot[i].sa + (scsp.slot[i].lea >> (SCSP_FREQ_LB - 1))) > SCSP_RAM_MASK)
+               scsp.slot[i].lea = (SCSP_RAM_MASK - scsp.slot[i].sa) << (SCSP_FREQ_LB - 1);
+         }
+      }
+
+      // Read main internal variables
+      fread((void *)&scsp.mem4b, 4, 1, fp);
+      fread((void *)&scsp.mvol, 4, 1, fp);
+
+      fread((void *)&scsp.rbl, 4, 1, fp);
+      fread((void *)&scsp.rbp, 4, 1, fp);
+
+      fread((void *)&scsp.mslc, 4, 1, fp);
+
+      fread((void *)&scsp.dmea, 4, 1, fp);
+      fread((void *)&scsp.drga, 4, 1, fp);
+      fread((void *)&scsp.dmfl, 4, 1, fp);
+      fread((void *)&scsp.dmlen, 4, 1, fp);
+
+      fread((void *)scsp.midinbuf, 1, 4, fp);
+      fread((void *)scsp.midoutbuf, 1, 4, fp);
+      fread((void *)&scsp.midincnt, 1, 1, fp);
+      fread((void *)&scsp.midoutcnt, 1, 1, fp);
+      fread((void *)&scsp.midflag, 1, 1, fp);
+
+      fread((void *)&scsp.timacnt, 4, 1, fp);
+      fread((void *)&scsp.timasd, 4, 1, fp);
+      fread((void *)&scsp.timbcnt, 4, 1, fp);
+      fread((void *)&scsp.timbsd, 4, 1, fp);
+      fread((void *)&scsp.timccnt, 4, 1, fp);
+      fread((void *)&scsp.timcsd, 4, 1, fp);
+
+      fread((void *)&scsp.scieb, 4, 1, fp);
+      fread((void *)&scsp.scipd, 4, 1, fp);
+      fread((void *)&scsp.scilv0, 4, 1, fp);
+      fread((void *)&scsp.scilv1, 4, 1, fp);
+      fread((void *)&scsp.scilv2, 4, 1, fp);
+      fread((void *)&scsp.mcieb, 4, 1, fp);
+      fread((void *)&scsp.mcipd, 4, 1, fp);
+
+      fread((void *)scsp.stack, 4, 32 * 2, fp);
+   }
 
    return size;
 }
@@ -3245,7 +3406,6 @@ char *AddSoundLevel(char *outstring, u16 level)
 void ScspSlotDebugStats(u8 slotnum, char *outstring)
 {
    u32 slotoffset=slotnum * 0x20;
-   int i;
 
    AddString(outstring, "Sound Source = ");
    switch (scsp.slot[slotnum].ssctl)
