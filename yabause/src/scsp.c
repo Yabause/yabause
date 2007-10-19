@@ -2786,6 +2786,19 @@ int ScspInit(int coreid) {
    if ((scspchannel[1].data32 = (u32 *)calloc(scspsoundlen, sizeof(u32))) == NULL)
       return -1;
 
+   return ScspChangeSoundCore(coreid);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int ScspChangeSoundCore(int coreid)
+{
+   int i;
+
+   // Make sure the old core is freed
+   if (SNDCore)
+      SNDCore->DeInit();
+
    // So which core do we want?
    if (coreid == SNDCORE_DEFAULT)
       coreid = 0; // Assume we want the first one
@@ -2802,18 +2815,19 @@ int ScspInit(int coreid) {
    }
 
    if (SNDCore == NULL)
+   {
+      SNDCore = &SNDDummy;
       return -1;
+   }
 
    if (SNDCore->Init() == -1)
    {
       // Since it failed, instead of it being fatal, we'll just use the dummy
       // core instead
+      SNDCore = &SNDDummy;
 
       // This might be helpful though.
       YabSetError(YAB_ERR_CANNOTINIT, (void *)SNDCore->Name);
-
-      SNDCore = &SNDDummy;
-      SNDCore->Init();
    }
 
    return 0;
