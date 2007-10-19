@@ -153,7 +153,17 @@ void Vdp1DeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int VideoInit(int coreid) {
+   return VideoChangeCore(coreid);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int VideoChangeCore(int coreid)
+{
    int i;
+
+   // Make sure the old core is freed
+   VideoDeInit();
 
    // So which core do we want?
    if (coreid == VIDCORE_DEFAULT)

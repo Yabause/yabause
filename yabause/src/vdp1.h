@@ -138,6 +138,7 @@ typedef struct
 int Vdp1Init(void);
 void Vdp1DeInit(void);
 int VideoInit(int coreid);
+int VideoChangeCore(int coreid);
 void VideoDeInit(void);
 void Vdp1Reset(void);
 
