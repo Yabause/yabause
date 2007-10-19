@@ -1003,6 +1003,8 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                WritePrivateProfileString("Video", "WindowHeight", tempstr, inifilename);
 
                // Re-initialize Video
+               VideoChangeCore(vidcoretype);
+
                if (VIDCore && !VIDCore->IsFullscreen() && usecustomwindowsize)
                   VIDCore->Resize(windowwidth, windowheight, 0);
 
