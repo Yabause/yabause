@@ -37,8 +37,8 @@
 
 #if defined WORDS_BIGENDIAN
 #define COLSAT2YAB16(priority,temp)            (priority | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
-#define COLSAT2YAB32(priority,temp)            ((temp & 0xFF << 24) | ((temp & 0xFF00) << 8) | ((temp & 0xFF0000) >> 8) | priority)
-#define COLSAT2YAB32_2(priority,temp1,temp2)   ((temp2 & 0xFF << 24) | ((temp2 & 0xFF00) << 8) | ((temp1 & 0xFF) << 8) | priority)
+#define COLSAT2YAB32(priority,temp)            (((temp & 0xFF) << 24) | ((temp & 0xFF00) << 8) | ((temp & 0xFF0000) >> 8) | priority)
+#define COLSAT2YAB32_2(priority,temp1,temp2)   (((temp2 & 0xFF) << 24) | ((temp2 & 0xFF00) << 8) | ((temp1 & 0xFF) << 8) | priority)
 #define COLSATSTRIPPRIORITY(pixel)              (pixel | 0xFF)
 #else
 #define COLSAT2YAB16(priority,temp)            (priority << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)

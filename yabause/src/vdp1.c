@@ -880,7 +880,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
 #endif
 
 #if defined WORDS_BIGENDIAN
-#define SAT2YAB2(alpha,dot1,dot2)       ((dot2 & 0xFF << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | alpha)
+#define SAT2YAB2(alpha,dot1,dot2)       (((dot2 & 0xFF) << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | alpha)
 #else
 #define SAT2YAB2(alpha,dot1,dot2)       (alpha << 24 | ((dot1 & 0xFF) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF))
 #endif
