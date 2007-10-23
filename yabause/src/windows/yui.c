@@ -965,13 +965,17 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
          ScspUnMuteAudio();
          return 0L;
       }
-      case WM_CLOSE:
+      case WM_MOVE:
       {
          RECT rect;
 
          GetWindowRect(hWnd, &rect);
          yabwinx = rect.left;
-         yabwiny = rect.left;
+         yabwiny = rect.top;
+         return 0L;
+      }
+      case WM_CLOSE:
+      {
          stop = 1;
          return 0L;
       }
