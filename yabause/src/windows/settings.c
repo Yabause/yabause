@@ -1,4 +1,4 @@
-/*  Copyright 2004-2005 Theo Berkau
+/*  Copyright 2004-2007 Theo Berkau
 
     This file is part of Yabause.
 
@@ -24,10 +24,12 @@
 #undef FASTCALL
 #include "../bios.h"
 #include "../cs0.h"
+#include "../cs2.h"
 #include "../peripheral.h"
 #include "../scsp.h"
 #include "../vdp1.h"
 #include "../vdp2.h"
+#include "cd.h"
 #include "resource.h"
 #include "settings.h"
 #include "snddx.h"
@@ -687,6 +689,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                char tempstr[MAX_PATH];
                char current_drive=0;
                BOOL imagebool;
+               BOOL cdromchanged=FALSE;
 
                // Convert Dialog items back to variables
                GetDlgItemText(hDlg, IDC_BIOSEDIT, biosfilename, MAX_PATH);
@@ -723,16 +726,28 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   // convert drive letter to string
                   current_drive = (char)SendDlgItemMessage(hDlg, IDC_DRIVELETTERCB, CB_GETCURSEL, 0, 0);
-                  sprintf(cdrompath, "%c:", toupper(drive_list[(int)current_drive]));
-                  WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
+                  sprintf(tempstr, "%c:", toupper(drive_list[(int)current_drive]));
+
+                  if (strcmp(tempstr, cdrompath) != 0)
+                  {
+                     strcpy(cdrompath, tempstr);
+                     cdromchanged = TRUE;
+                  }
                }
                else
                {
                   // retrieve image filename string instead
-                  GetDlgItemText(hDlg, IDC_IMAGEEDIT, cdrompath, MAX_PATH);
-                  WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
-//                  Cs2ChangeDisc(cdrompath);
+                  GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempstr, MAX_PATH);
+
+                  if (strcmp(tempstr, cdrompath) != 0)
+                  {
+                     strcpy(cdrompath, tempstr);
+                     cdromchanged = TRUE;
+                  }
                }
+
+               WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
+
 /*
                // Convert ID to language string
                bioslang = (char)SendDlgItemMessage(hDlg, IDC_BIOSLANGCB, CB_GETCURSEL, 0, 0);
@@ -809,6 +824,14 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   default:
                      regionid = 0;
                      break;
+               }
+
+               if (cdromchanged)
+               {
+                  if (IsPathCdrom(cdrompath))
+                     Cs2ChangeCDCore(CDCORE_SPTI, cdrompath);
+                  else
+                     Cs2ChangeCDCore(CDCORE_ISO, cdrompath);
                }
 
                EndDialog(hDlg, TRUE);
@@ -934,13 +957,20 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                char tempstr[MAX_PATH];
                int cursel;
+               int newvidcoretype;
+               BOOL vidcorechanged=FALSE;
 
                EndDialog(hDlg, TRUE);
 
                // Write Video core type
-               vidcoretype = VIDCoreList[SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_GETCURSEL, 0, 0)]->id;
-               sprintf(tempstr, "%d", vidcoretype);
-               WritePrivateProfileString("Video", "VideoCore", tempstr, inifilename);
+               newvidcoretype = VIDCoreList[SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_GETCURSEL, 0, 0)]->id;
+               if (newvidcoretype != vidcoretype)
+               {
+                  vidcoretype = newvidcoretype;
+                  vidcorechanged = TRUE;
+                  sprintf(tempstr, "%d", vidcoretype);
+                  WritePrivateProfileString("Video", "VideoCore", tempstr, inifilename);
+               }
 
                if (SendDlgItemMessage(hDlg, IDC_AUTOFRAMESKIPCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
@@ -1003,7 +1033,8 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                WritePrivateProfileString("Video", "WindowHeight", tempstr, inifilename);
 
                // Re-initialize Video
-               VideoChangeCore(vidcoretype);
+               if (vidcorechanged)
+                  VideoChangeCore(vidcoretype);
 
                if (VIDCore && !VIDCore->IsFullscreen() && usecustomwindowsize)
                   VIDCore->Resize(windowwidth, windowheight, 0);
@@ -1069,19 +1100,27 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDOK:
             {
                char tempstr[MAX_PATH];
+               int newsndcoretype;
+               BOOL sndcorechanged=FALSE;
 
                EndDialog(hDlg, TRUE);
 
                // Write Sound core type
-               sndcoretype = SNDCoreList[SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_GETCURSEL, 0, 0)]->id;
-               sprintf(tempstr, "%d", sndcoretype);
-               WritePrivateProfileString("Sound", "SoundCore", tempstr, inifilename);
+               newsndcoretype = SNDCoreList[SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_GETCURSEL, 0, 0)]->id;
+               if (newsndcoretype != sndcoretype)
+               {
+                  sndcoretype = newsndcoretype;
+                  sndcorechanged = TRUE;
+                  sprintf(tempstr, "%d", sndcoretype);
+                  WritePrivateProfileString("Sound", "SoundCore", tempstr, inifilename);
+               }
 
                // Write Volume
                sndvolume = SendDlgItemMessage(hDlg, IDC_SLVOLUME, TBM_GETPOS, 0, 0);
                sprintf(tempstr, "%d", sndvolume);
                WritePrivateProfileString("Sound", "Volume", tempstr, inifilename);
-               ScspChangeSoundCore(sndcoretype);
+               if (sndcorechanged)
+                  ScspChangeSoundCore(sndcoretype);
                ScspSetVolume(sndvolume);
                return TRUE;
             }
