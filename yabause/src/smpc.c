@@ -69,6 +69,9 @@ void SmpcDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void SmpcRecheckRegion(void) {
+   if (SmpcInternalVars == NULL)
+      return;
+
    if (SmpcInternalVars->regionsetting == REGION_AUTODETECT)
    {
       // Time to autodetect the region using the cd block

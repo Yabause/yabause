@@ -240,6 +240,7 @@ extern Cs2 * Cs2Area;
 extern ip_struct * cdip;
 
 int Cs2Init(int, int, const char *, const char *, const char *);
+int Cs2ChangeCDCore(int coreid, const char *cdpath);
 void Cs2DeInit(void);
 
 u8 FASTCALL 	Cs2ReadByte(u32);
@@ -348,7 +349,6 @@ partition_struct * Cs2ReadUnFilteredSector(u32 rufsFAD);
 int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition);
 u8 Cs2GetIP(int autoregion);
 u8 Cs2GetRegionID(void);
-int Cs2ChangeDisc(const char *cdpath);
 int Cs2SaveState(FILE *);
 int Cs2LoadState(FILE *, int, int);
 

@@ -428,12 +428,38 @@ void FASTCALL Cs2WriteLong(u32 addr, u32 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *netlinksetting) {
-   int i;
+   int ret;
+
    if ((Cs2Area = (Cs2 *) malloc(sizeof(Cs2))) == NULL)
       return -1;
 
    Cs2Area->carttype = carttype;
    Cs2Area->mpegpath = mpegpath;
+
+   if ((ret = Cs2ChangeCDCore(coreid, cdpath)) != 0)
+      return ret;
+
+   Cs2Reset();
+
+   // If Modem is connected, set the registers
+   if(Cs2Area->carttype == CART_NETLINK)
+      return NetlinkInit(netlinksetting);
+
+   if ((cdip = (ip_struct *) calloc(sizeof(ip_struct), 1)) == NULL)
+      return -1;
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int Cs2ChangeCDCore(int coreid, const char *cdpath)
+{
+   int i;
+
+   // Make sure the old core is freed
+   if (Cs2Area->cdi != NULL)
+      Cs2Area->cdi->DeInit();
 
    // So which core do we want?
    if (coreid == CDCORE_DEFAULT)
@@ -451,28 +477,24 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
    }
 
    if (Cs2Area->cdi == NULL)
+   {
+      Cs2Area->cdi = &DummyCD;
       return -1;
+   }
 
    if (Cs2Area->cdi->Init(cdpath) != 0)
    {
       // Since it failed, instead of it being fatal, we'll just use the dummy
       // core instead
+      Cs2Area->cdi = &DummyCD;
 
       // This might be helpful though.
       YabSetError(YAB_ERR_CANNOTINIT, (void *)Cs2Area->cdi->Name);
-
-      Cs2Area->cdi = &DummyCD;
-      Cs2Area->cdi->Init(NULL);
    }
 
-   Cs2Reset();
-
-   // If Modem is connected, set the registers
-   if(Cs2Area->carttype == CART_NETLINK)
-      return NetlinkInit(netlinksetting);
-
-   if ((cdip = (ip_struct *) calloc(sizeof(ip_struct), 1)) == NULL)
-      return -1;
+   Cs2Area->isdiskchanged = 1;
+   Cs2Area->status = CDB_STAT_PAUSE;
+   SmpcRecheckRegion();
 
    return 0;
 }
@@ -3301,27 +3323,6 @@ u8 Cs2GetIP(int autoregion) {
 u8 Cs2GetRegionID(void)
 {
    return Cs2GetIP(1);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-int Cs2ChangeDisc(const char *cdpath) {
-   // This is meant to allow the cd cores to change the path to the
-   // cdrom/image without having to reboot yabause.
-   int ret;
-
-   if (Cs2Area->cdi == NULL)
-      return -1;
-
-   Cs2Area->cdi->DeInit();
-   if ((ret = Cs2Area->cdi->Init(cdpath)) != 0)
-      return ret;
-
-   Cs2Area->isdiskchanged = 1;
-   Cs2Area->status = CDB_STAT_PAUSE;
-   SmpcRecheckRegion();
-
-   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
