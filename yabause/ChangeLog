@@ -1,3 +1,32 @@
+0.9.0 -> 0.9.1
+ scsp:
+  - Fixed slot pitch LFO. Amplitude LFO is probably more accurate now too.
+ emulated bios:
+  - Added Backup RAM manager functions.
+ opengl video core:
+  - Fixed a bug with VDP2 2x2 plane size rotation screens.
+  - Optimized tile mode rotation screens
+  - Added support for VDP1 polyline.
+ software video core:
+  - FPS display now working.
+  - Added support for VDP2 rotation without coefficient tables.
+  - Fixed a bug in VDP2 24 BPP bitmap mode.
+  - Fixed several clipping bugs in Normal and Scaled Sprites.
+  - Fixed a bug with VDP2 2x2 plane size rotation screens.
+  - Optimized tile mode rotation screens.
+ linux port:
+  - Cursor now disappears after 2 seconds of inactivity in the gtk port.
+ macos port:
+  - New high resolution icon.
+  - Add some missing OS X application property list keys.
+ windows port:
+  - Fixed window position bug.
+  - Other bug fixes.
+ general:
+  - Tweaked frame timing code so it's more accurate.
+  - Re-implemented save states.
+  - Some internal changes do so that sound, video, and cd cores can be changed
+    at runtime.
 0.8.6 -> 0.9.0
  opengl video core:
   - Added support for VDP1 line draw.
