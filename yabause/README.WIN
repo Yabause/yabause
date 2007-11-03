@@ -13,8 +13,8 @@
 
 1) Compiling instructions...................................20
 2) How to use Yabause.......................................61
-3) Contact information.....................................147
-4) Disclaimer..............................................162
+3) Contact information.....................................200
+4) Disclaimer..............................................215
 
 
 1 Compiling instructions______________________________________
@@ -97,9 +97,9 @@ The MPEG ROM File setting allows you to specify the location
 of a MPEG Card's ROM image. While not necessary, it does allow
 you to test out the saturn's vcd capabilities.
 
-The Cartridge Type setting allows you to be choose which type
-of external cartridge to emulate. Some carts also require you
-to supply a rom filename, or a new filename for the emulator to
+The Cartridge Type setting allows you to choose which type of
+external cartridge to emulate. Some carts also require you to
+supply a rom filename, or a new filename for the emulator to
 write to. You can enter that information in the field below it.
 
 When you're done, just click on the "OK" button. If the bios
@@ -119,6 +119,13 @@ draw though), or disable drawing completely with the "None"
 option. You can also "Enable Auto Frame-skipping" which basically
 tries to skip rendering video frames if emulation is lagging in
 an attempt to speed things up.
+
+The Full Screen on startup setting allows you to set Yabause to
+run using the full screen when started. You can also change what
+resolution is used while in full screen.
+
+The custom window size setting allows you to set the size of the
+video display for yabause.
 
 Sound Settings________________________________________________
 
@@ -171,6 +178,24 @@ Alt-Enter - Toggle fullscreen/window mode
 4 - Toggle VDP2 NBG3 display
 5 - Toggle VDP2 RBG0 display
 6 - Toggle VDP1 display
+F2 - Load State from slot 1
+F3 - Load State from slot 2
+F4 - Load State from slot 3
+F5 - Load State from slot 4
+F6 - Load State from slot 5
+F7 - Load State from slot 6
+F8 - Load State from slot 7
+F9 - Load State from slot 8
+F10 - Load State from slot 9
+Shift-F2 - Save State to slot 1
+Shift-F3 - Save State to slot 2
+Shift-F4 - Save State to slot 3
+Shift-F5 - Save State to slot 4
+Shift-F6 - Save State to slot 5
+Shift-F7 - Save State to slot 6
+Shift-F8 - Save State to slot 7
+Shift-F9 - Save State to slot 8
+Shift-F10 - Save State to slot 9
 
 
 3 Contact information_________________________________________
