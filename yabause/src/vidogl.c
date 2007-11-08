@@ -370,7 +370,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
    }
 
    {
-      u8 sprite_type = SPCLMD & 0xF;
+      u8 sprite_type = SPCLMD & 0xF;      
       switch(sprite_type)
       {
          case 0:
@@ -1544,7 +1544,19 @@ void VIDOGLVdp1PolygonDraw(void)
    if (color == 0)
       alpha = 0;
 
-   polygon.priority = Vdp2Regs->PRISA & 0x7;
+   if (color & 0x8000)
+      polygon.priority = Vdp2Regs->PRISA & 0x7;
+   else
+   {
+      int shadow, priority, colorcalc;
+
+      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+#ifdef WORDS_BIGENDIAN
+      polygon.priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1];
+#else
+      polygon.priority = ((u8 *)&Vdp2Regs->PRISA)[priority];
+#endif
+   }
 
    polygon.vertices[0] = (int)((float)X[0] * vdp1wratio);
    polygon.vertices[1] = (int)((float)Y[0] * vdp1hratio);

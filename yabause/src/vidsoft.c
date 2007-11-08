@@ -1809,116 +1809,6 @@ void VIDSoftVdp1DrawEnd(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-
-void FASTCALL Vdp1ProcessSpritePixel(u16 *pixel, int *shadow, int *priority, int *colorcalc)
-{
-   switch(vdp1spritetype)
-   {
-      case 0x0:
-      {
-         // Type 0(2-bit priority, 3-bit color calculation, 11-bit color data)
-         *priority = *pixel >> 14;
-         *colorcalc = (*pixel >> 11) & 0x7;
-         *pixel = *pixel & 0x7FF;
-         break;
-      }
-      case 0x1:
-      {
-         // Type 1(3-bit priority, 2-bit color calculation, 11-bit color data)
-         *priority = *pixel >> 13;
-         *colorcalc = (*pixel >> 11) & 0x3;
-         *pixel &= 0x7FF;
-         break;
-      }
-      case 0x2:
-      {
-         // Type 2(1-bit shadow, 1-bit priority, 3-bit color calculation, 11-bit color data)
-         *shadow = *pixel >> 15;
-         *priority = (*pixel >> 14) & 0x1;
-         *colorcalc = (*pixel >> 11) & 0x7;
-         *pixel &= 0x7FF;
-         break;
-      }
-      case 0x3:
-      {
-         // Type 3(1-bit shadow, 2-bit priority, 2-bit color calculation, 11-bit color data)
-         *shadow = *pixel >> 15;
-         *priority = (*pixel >> 13) & 0x3;
-         *colorcalc = (*pixel >> 11) & 0x3;
-         *pixel &= 0x7FF;
-         break;
-      }
-      case 0x4:
-      {
-         // Type 4(1-bit shadow, 2-bit priority, 3-bit color calculation, 10-bit color data)
-         *shadow = *pixel >> 15;
-         *priority = (*pixel >> 13) & 0x3;
-         *colorcalc = (*pixel >> 10) & 0x7;
-         *pixel &= 0x3FF;
-         break;
-      }
-      case 0x5:
-      {
-         // Type 5(1-bit shadow, 3-bit priority, 1-bit color calculation, 11-bit color data)
-         *shadow = *pixel >> 15;
-         *priority = (*pixel >> 12) & 0x7;
-         *colorcalc = (*pixel >> 11) & 0x1;
-         *pixel &= 0x7FF;
-         break;
-      }
-      case 0x6:
-      {
-         // Type 6(1-bit shadow, 3-bit priority, 2-bit color calculation, 10-bit color data)
-         *shadow = *pixel >> 15;
-         *priority = (*pixel >> 12) & 0x7;
-         *colorcalc = (*pixel >> 10) & 0x3;
-         *pixel &= 0x3FF;
-         break;
-      }
-      case 0x7:
-      {
-         // Type 7(1-bit shadow, 3-bit priority, 3-bit color calculation, 9-bit color data)
-         *shadow = *pixel >> 15;
-         *priority = (*pixel >> 12) & 0x7;
-         *colorcalc = (*pixel >> 9) & 0x7;
-         *pixel &= 0x1FF;
-         break;
-      }
-      case 0x8:
-      {
-         // Type 8(1-bit priority, 7-bit color data)
-         *priority = *pixel >> 7;
-         *pixel &= 0x7F;
-         break;
-      }
-      case 0x9:
-      {
-         // Type 9(1-bit priority, 1-bit color calculation, 6-bit color data)
-         *priority = *pixel >> 7;
-         *colorcalc = (*pixel >> 6) & 0x1;
-         *pixel &= 0x3F;
-         break;
-      }
-      case 0xA:
-      {
-         // Type A(2-bit priority, 6-bit color data)
-         *priority = *pixel >> 6;
-         *pixel &= 0x3F;
-         break;
-      }
-      case 0xB:
-      {
-         // Type B(2-bit color calculation, 6-bit color data)
-         *colorcalc = *pixel >> 6;
-         *pixel &= 0x3F;
-         break;
-      }
-      default: break;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static INLINE u16  Vdp1ReadPattern16( u32 base, u32 offset ) {
 
   u16 dot = T1ReadByte(Vdp1Ram, ( base + (offset>>1)) & 0x7FFFF);
@@ -3134,7 +3024,7 @@ void VIDSoftVdp2DrawEnd(void)
                else
                {
                   // Color bank
-                  Vdp1ProcessSpritePixel(&pixel, &shadow, &priority, &colorcalc);
+                  Vdp1ProcessSpritePixel(vdp1spritetype, &pixel, &shadow, &priority, &colorcalc);
                   if (prioritytable[priority] >= Vdp2GetPixelPriority(vdp2framebuffer[(i2 * vdp2width) + i]))
                      dispbuffer[(i2 * vdp2width) + i] = info.PostPixelFetchCalc(&info, COLSAT2YAB32(0xFF, Vdp2ColorRamGetColor(vdp1coloroffset | pixel)));
                   else               

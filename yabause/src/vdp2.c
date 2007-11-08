@@ -1281,6 +1281,9 @@ static INLINE void Vdp2GetPlaneSize(int planedata, int *planew, int *planeh)
       case 2:
          *planew = *planeh = 2;
          break;
+      default:
+         *planew = *planeh = 1;         
+         break;
    }
 }
 
@@ -1520,7 +1523,7 @@ static INLINE char *AddMapInfo(char *outstring, int patternwh, u16 PNC, u8 PLSZ,
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE char *AddColorCalcInfo(char *outstring, u16 calcenab, u16 gradnum, u16 calcratio)
+static INLINE char *AddColorCalcInfo(char *outstring, u16 calcenab, u16 gradnum, u16 calcratio, u16 sfcnum)
 {
    if (Vdp2Regs->CCCTL & calcenab)
    {
@@ -1533,6 +1536,10 @@ static INLINE char *AddColorCalcInfo(char *outstring, u16 calcenab, u16 gradnum,
       else if (Vdp2Regs->CCCTL & 0x0400)
       {
          AddString(outstring, "Extended Color Calculation Enabled\r\n");
+      }
+      else
+      {
+         AddString(outstring, "Special Color Calculation Mode = %d\r\n", sfcnum);
       }
 
       AddString(outstring, "Color Calculation Ratio = %d:%d\r\n", 31 - calcratio, 1 + calcratio);
@@ -1813,7 +1820,7 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRIR & 0x7);
         
       // Color Calculation
-      outstring = AddColorCalcInfo(outstring, 0x0010, 0x0001, Vdp2Regs->CCRR & 0x1F);
+      outstring = AddColorCalcInfo(outstring, 0x0010, 0x0001, Vdp2Regs->CCRR & 0x1F, (Vdp2Regs->SFCCMD >> 8) & 0x3);
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0010);
@@ -2087,7 +2094,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRINA & 0x7);
 
       // Color Calculation 
-      outstring = AddColorCalcInfo(outstring, 0x0001, 0x0002, Vdp2Regs->CCRNA & 0x1F);
+      outstring = AddColorCalcInfo(outstring, 0x0001, 0x0002, Vdp2Regs->CCRNA & 0x1F, Vdp2Regs->SFCCMD & 0x3);
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0001);
@@ -2298,7 +2305,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
       AddString(outstring, "Priority = %d\r\n", (Vdp2Regs->PRINA >> 8) & 0x7);
 
       // Color Calculation
-      outstring = AddColorCalcInfo(outstring, 0x0002, 0x0004, (Vdp2Regs->CCRNA >> 8) & 0x1F);
+      outstring = AddColorCalcInfo(outstring, 0x0002, 0x0004, (Vdp2Regs->CCRNA >> 8) & 0x1F, (Vdp2Regs->SFCCMD >> 2) & 0x3);
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0002);
@@ -2431,7 +2438,7 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRINB & 0x7);
                        
       // Color Calculation
-      outstring = AddColorCalcInfo(outstring, 0x0004, 0x0005, Vdp2Regs->CCRNB & 0x1F);
+      outstring = AddColorCalcInfo(outstring, 0x0004, 0x0005, Vdp2Regs->CCRNB & 0x1F, (Vdp2Regs->SFCCMD >> 4) & 0x3);
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0004);
@@ -2567,7 +2574,7 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
       AddString(outstring, "Priority = %d\r\n", (Vdp2Regs->PRINB >> 8) & 0x7);
 
       // Color Calculation
-      outstring = AddColorCalcInfo(outstring, 0x0008, 0x0006, (Vdp2Regs->CCRNB >> 8) & 0x1F);
+      outstring = AddColorCalcInfo(outstring, 0x0008, 0x0006, (Vdp2Regs->CCRNB >> 8) & 0x1F, (Vdp2Regs->SFCCMD >> 6) & 0x3);
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0008);
