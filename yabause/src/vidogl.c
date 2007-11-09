@@ -805,7 +805,10 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
 {
    int i, j;
    int X, Y;
+   u32 lastplane;
+
    X = info->x;
+   lastplane=0xFFFFFFFF;
 
    info->patternpixelwh = 8 * info->patternwh;
    info->draww = (int)((float)vdp2width / info->coordincx);
@@ -819,7 +822,11 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
       {
          info->y = Y;
          info->PlaneAddr(info, info->mapwh * i + j);
-         Vdp2DrawPlane(info, texture);
+         if (info->addr != lastplane)
+         {
+            lastplane = info->addr;
+            Vdp2DrawPlane(info, texture);
+         }
       }
    }
 }

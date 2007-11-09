@@ -773,8 +773,8 @@ static void Vdp2DrawMap(vdp2draw_struct *info)
          info->PlaneAddr(info, info->mapwh * i + j);
          if (info->addr != lastplane)
          {
-            Vdp2DrawPlane(info);
             lastplane = info->addr;
+            Vdp2DrawPlane(info);
          }
       }
    }
