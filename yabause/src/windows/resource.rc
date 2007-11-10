@@ -680,11 +680,10 @@ END
 
 #ifdef _MSC_VER
 IDI_ICON        ICON    DISCARDABLE     "..\\logo.ico"
-IDB_BITMAP      BITMAP  DISCARDABLE     "yabause_logo.bmp"
 #else
-IDI_ICON        ICON    DISCARDABLE     "logo.ico"
-IDB_BITMAP      BITMAP  DISCARDABLE     "./windows/yabause_logo.bmp"
+IDI_ICON        ICON    DISCARDABLE     "../logo.ico"
 #endif
+IDB_BITMAP      BITMAP  DISCARDABLE     "yabause_logo.bmp"
 
 //////////////////////////////////////////////////////////////////////////////
 
