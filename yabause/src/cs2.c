@@ -828,7 +828,7 @@ void Cs2Command(void) {
 
 void Cs2SetTiming(int playing) {
   if (playing) {
-     if (Cs2Area->speed1x == 0) // should also verify to make sure it's not reading cd audio
+     if (Cs2Area->speed1x == 1) // should also verify to make sure it's not reading cd audio
         Cs2Area->_periodictiming = 13300;
      else
         Cs2Area->_periodictiming = 6700;
