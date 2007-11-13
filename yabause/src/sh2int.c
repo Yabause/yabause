@@ -1,5 +1,5 @@
 /*  Copyright 2003-2005 Guillaume Duhamel
-    Copyright 2004-2006 Theo Berkau
+    Copyright 2004-2007 Theo Berkau
     Copyright 2005 Fabien Coulon
 
     This file is part of Yabause.
@@ -79,6 +79,13 @@ u32 FASTCALL FetchLWram(u32 addr)
 u32 FASTCALL FetchHWram(u32 addr)
 {
    return T2ReadWord(HighWram, addr & 0xFFFFF);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL FetchInvalid(u32 addr)
+{
+   return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2627,6 +2634,7 @@ int SH2InterpreterInit()
             fetchlist[i] = FetchHWram;
             break;
          default:
+            fetchlist[i] = FetchInvalid;
             break;
       }
    }
