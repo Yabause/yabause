@@ -135,7 +135,7 @@ void yui_settings_init(void) {
 gchar * inifile;
 
 void yui_settings_load(void) {
-	int i, tmp;
+	int i, tmp, stmp;
 	gchar *biosPath;
 	g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
 	if (yinit.biospath)
@@ -143,10 +143,19 @@ void yui_settings_load(void) {
 	biosPath = g_key_file_get_value(keyfile, "General", "BiosPath", 0);
 	if ( !biosPath || (!*biosPath) ) yinit.biospath = NULL; 
 	else yinit.biospath = g_strdup(biosPath);
-	if (yinit.cdpath)
-		g_free(yinit.cdpath);
+
+	/* cd core */
+	stmp = yinit.cdpath;
 	yinit.cdpath = g_strdup(g_key_file_get_value(keyfile, "General", "CDROMDrive", 0));
+	tmp = yinit.cdcoretype;
 	yinit.cdcoretype = g_key_file_get_integer(keyfile, "General", "CDROMCore", 0);
+	if((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && ((strcmp(stmp, yinit.cdpath)) || (tmp != yinit.cdcoretype))) {
+		Cs2ChangeCDCore(yinit.cdcoretype, yinit.cdpath);
+	}
+	if (stmp)
+		g_free(stmp);
+
+	/* region */
 	{
 		char * region = g_key_file_get_value(keyfile, "General", "Region", 0);
 		if ((region == 0) || !strcmp(region, "Auto")) {
@@ -175,12 +184,20 @@ void yui_settings_load(void) {
 	yinit.sh2coretype = g_key_file_get_integer(keyfile, "General", "SH2Int", 0);
 	yinit.mpegpath = g_strdup(g_key_file_get_value(keyfile, "General", "MpegRomPath", 0));
 	yinit.carttype = g_key_file_get_integer(keyfile, "General", "CartType", 0);
+
+	/* video core */
 	tmp = yinit.vidcoretype;
 	yinit.vidcoretype = g_key_file_get_integer(keyfile, "General", "VideoCore", 0);
 	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.vidcoretype)) {
 		VideoChangeCore(yinit.vidcoretype);
 	}
+
+	/* sound core */
+	tmp = yinit.sndcoretype;
 	yinit.sndcoretype = g_key_file_get_integer(keyfile, "General", "SoundCore", 0);
+	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.sndcoretype)) {
+		ScspChangeSoundCore(yinit.sndcoretype);
+	}
 
 	i = 0;
 
