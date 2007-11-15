@@ -135,7 +135,7 @@ void yui_settings_init(void) {
 gchar * inifile;
 
 void yui_settings_load(void) {
-	int i;
+	int i, tmp;
 	gchar *biosPath;
 	g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
 	if (yinit.biospath)
@@ -175,7 +175,11 @@ void yui_settings_load(void) {
 	yinit.sh2coretype = g_key_file_get_integer(keyfile, "General", "SH2Int", 0);
 	yinit.mpegpath = g_strdup(g_key_file_get_value(keyfile, "General", "MpegRomPath", 0));
 	yinit.carttype = g_key_file_get_integer(keyfile, "General", "CartType", 0);
+	tmp = yinit.vidcoretype;
 	yinit.vidcoretype = g_key_file_get_integer(keyfile, "General", "VideoCore", 0);
+	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.vidcoretype)) {
+		VideoChangeCore(yinit.vidcoretype);
+	}
 	yinit.sndcoretype = g_key_file_get_integer(keyfile, "General", "SoundCore", 0);
 
 	i = 0;
