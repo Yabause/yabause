@@ -714,16 +714,18 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 			slot->dislr = slot->disll = (((d >> 5) & 7) ^ 7) + SCSP_ENV_HB;
 			if (d & 0x10)
 			{
-				if ((d & 0xF) == 0xF) slot->disll = 31;
-				else slot->disll += (d >> 1) & 7;
-			}
-			else
-			{
+                                // Panning Left
 				if ((d & 0xF) == 0xF) slot->dislr = 31;
 				else slot->dislr += (d >> 1) & 7;
 			}
+			else
+			{
+                                // Panning Right
+				if ((d & 0xF) == 0xF) slot->disll = 31;
+				else slot->disll += (d >> 1) & 7;
+			}
 		}
-		else slot->dislr = slot->disll = 31;
+                else slot->dislr = slot->disll = 31; // muted
 		return;
 
         case 0x17: // EFSDL/EFPAN
@@ -732,16 +734,18 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 			slot->efslr = slot->efsll = (((d >> 5) & 7) ^ 7) + SCSP_ENV_HB;
 			if (d & 0x10)
 			{
-				if ((d & 0xF) == 0xF) slot->efsll = 31;
-				else slot->efsll += (d >> 1) & 7;
-			}
-			else
-			{
+                                // Panning Left
 				if ((d & 0xF) == 0xF) slot->efslr = 31;
 				else slot->efslr += (d >> 1) & 7;
 			}
+			else
+			{
+                                // Panning Right
+				if ((d & 0xF) == 0xF) slot->efsll = 31;
+				else slot->efsll += (d >> 1) & 7;
+			}
 		}
-		else slot->efslr = slot->efsll = 31;
+                else slot->efslr = slot->efsll = 31; // muted
 		return;
 	}
 }
@@ -900,32 +904,36 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
 			slot->dislr = slot->disll = (((d >> 13) & 7) ^ 7) + SCSP_ENV_HB;
 			if (d & 0x1000)
 			{
-				if ((d & 0xF00) == 0xF00) slot->disll = 31;
-				else slot->disll += (d >> 9) & 7;
-			}
-			else
-			{
+                                // Panning Left
 				if ((d & 0xF00) == 0xF00) slot->dislr = 31;
 				else slot->dislr += (d >> 9) & 7;
 			}
+			else
+			{
+                                // Panning Right
+				if ((d & 0xF00) == 0xF00) slot->disll = 31;
+				else slot->disll += (d >> 9) & 7;
+			}
 		}
-		else slot->dislr = slot->disll = 31;
+                else slot->dislr = slot->disll = 31; // muted
 
 		if (d & 0xE0)
 		{
 			slot->efslr = slot->efsll = (((d >> 5) & 7) ^ 7) + SCSP_ENV_HB;
 			if (d & 0x10)
 			{
-				if ((d & 0xF) == 0xF) slot->efsll = 31;
-				else slot->efsll += (d >> 1) & 7;
-			}
-			else
-			{
+                                // Panning Left
 				if ((d & 0xF) == 0xF) slot->efslr = 31;
 				else slot->efslr += (d >> 1) & 7;
 			}
+			else
+			{
+                                // Panning Right
+				if ((d & 0xF) == 0xF) slot->efsll = 31;
+				else slot->efsll += (d >> 1) & 7;
+			}
 		}
-		else slot->efslr = slot->efsll = 31;
+                else slot->efslr = slot->efsll = 31; // muted
 		return;
 	}
 }
