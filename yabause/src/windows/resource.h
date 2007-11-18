@@ -254,6 +254,7 @@
 #define IDC_SCSPSLOTET                  1002
 #define IDC_SCSPSLOTSAVE                1003
 #define IDC_SCSPSLOTREGSAVE             1004
+#define IDC_SCSPCOMMONREGET             1005
 
 //////////////////////////////////////////////////////////////////////////////
 // Memory Editor stuff
