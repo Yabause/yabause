@@ -3417,7 +3417,7 @@ char *AddSoundLevel(char *outstring, u16 level)
    }
    else
    {
-      AddString(outstring, "-%d dB\r\n", level *  6);
+      AddString(outstring, "-%d dB\r\n", (7-level) *  6);
    }
 
    return outstring;
