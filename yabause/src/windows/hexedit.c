@@ -741,9 +741,11 @@ LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
          // Make sure address is valid         
          if (CalcCurPosFromAddr(cc, lParam))
          {
-            cc->addr = (u32)lParam;
+            cc->addr = (u32)lParam & 0xFFFFFFF0;
             InvalidateRect(cc->hwnd, NULL, FALSE);
+            cc->curx = (int)lParam & 0xF;
             HexEditCtl_SetCaretPos(cc);
+            SetFocus(cc->hwnd);
          }
          return 0;
       case HEX_GETSELECTED:

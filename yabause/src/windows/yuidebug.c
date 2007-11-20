@@ -1787,9 +1787,23 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_SEARCHMEM:
             {
-               if (DialogBoxParam(y_hInstance, "SearchMemoryDlg", hDlg, (DLGPROC)SearchMemoryDlgProc, (LPARAM)0) == TRUE)
+               char searchstr[1024];
+
+               if (DialogBoxParam(y_hInstance, "SearchMemoryDlg", hDlg, (DLGPROC)SearchMemoryDlgProc, (LPARAM)searchstr) == TRUE)
                {
+                  // Open up searching dialog here(do the actual search on a
+                  // separate thread)
+
+                  // return found address(if any) when done.
+
+                  // Ok, we found a match, go to that address
 //                  SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, addr);
+
+                  // No matches found, if the search wasn't from bios start,
+                  // ask the user if they want to search from the begining.
+//                  MessageBox (hDlg, "Finished searching up to end of memory, continue from the beginning?", "Wrap search?", MB_OKCANCEL | MB_ICONINFORMATION);
+
+//                  MessageBox (hDlg, "No matches found", "Finished search", MB_OK | MB_ICONINFORMATION);
                }
                break;
             }
