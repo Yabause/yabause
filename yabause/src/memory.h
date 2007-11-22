@@ -358,6 +358,28 @@ extern readbytefunc ReadByteList[0x1000];
 extern readwordfunc ReadWordList[0x1000];
 extern readlongfunc ReadLongList[0x1000];
 
+typedef struct {
+u32 addr;
+u32 val;
+} result_struct;
+
+#define SEARCHBYTE              0
+#define SEARCHWORD              1
+#define SEARCHLONG              2
+
+#define SEARCHEXACT             (0 << 2)
+#define SEARCHLESSTHAN          (1 << 2)
+#define SEARCHGREATERTHAN       (2 << 2)
+
+#define SEARCHUNSIGNED          (0 << 4)
+#define SEARCHSIGNED            (1 << 4)
+#define SEARCHHEX               (2 << 4)
+#define SEARCHSTRING            (3 << 4)
+
+result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
+                                  const char *searchstr,
+                                  result_struct *prevresults, u32 *maxresults);
+
 int MappedMemoryLoad(const char *filename, u32 addr);
 int MappedMemorySave(const char *filename, u32 addr, u32 size);
 void MappedMemoryLoadExec(const char *filename, u32 pc);

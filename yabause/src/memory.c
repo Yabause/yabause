@@ -1183,3 +1183,156 @@ int YabLoadStateSlot(const char *dirpath, u8 slot)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int MappedMemoryAddMatch(u32 addr, u32 val, int searchtype, result_struct *result, u32 *numresults)
+{
+   result[numresults[0]].addr = addr;
+   result[numresults[0]].val = val;
+   numresults[0]++;
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE int SearchIncrementAndCheckBounds(result_struct *prevresults,
+                                                u32 *maxresults,
+                                                u32 numresults, u32 i,
+                                                u32 inc, u32 *newaddr,
+                                                u32 endaddr)
+{
+   if (prevresults)
+   {
+      if (i >= maxresults[0])
+      {
+         maxresults[0] = numresults;
+         return 1;
+      }
+      newaddr[0] = prevresults[i].addr;
+      i++;
+   }
+   else
+   {
+      newaddr[0] = inc;
+
+      if (newaddr[0] > endaddr || numresults >= maxresults[0])
+      {
+         maxresults[0] = numresults;
+         return 1;
+      }
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
+                                  const char *searchstr,
+                                  result_struct *prevresults, u32 *maxresults)
+{
+   u32 i=0;
+   result_struct *results;
+   u32 numresults=0;
+   u32 searchval;
+   int issigned=0;
+   u32 addr;
+
+   if ((results = (result_struct *)malloc(sizeof(result_struct) * maxresults[0])) == NULL)
+      return NULL;
+
+   switch (searchtype & 0x30)
+   {
+      case SEARCHSTRING:
+      {
+         // String search(not supported, yet)
+         free(results);
+         return NULL;
+      }
+      case SEARCHUNSIGNED:
+         searchval = (u32)atoi(searchstr);
+         issigned = 0;
+         break;
+      case SEARCHSIGNED:
+         searchval = (u32)atoi(searchstr);
+         issigned = 1;
+         break;
+      case SEARCHHEX:         
+         sscanf(searchstr, "%08lx", &searchval);
+         break;
+   }
+
+   if (prevresults)
+   {
+      addr = prevresults[i].addr;
+      i++;
+   }
+   else
+      addr = startaddr;
+
+   // Regular value search
+   for (;;)
+   {
+       u32 val=0;
+       u32 newaddr;
+
+       // Fetch byte/word/etc.
+       switch (searchtype & 0x3)
+       {
+          case SEARCHBYTE:
+             val = MappedMemoryReadByte(addr);
+             // sign extend if neccessary
+             if (issigned)
+                val = (s8)val;
+
+             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, i, addr+1, &newaddr, endaddr))
+                return results;
+             break;
+          case SEARCHWORD:
+             val = MappedMemoryReadWord(addr);
+             // sign extend if neccessary
+             if (issigned)
+                val = (s16)val;
+
+             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, i, addr+2, &newaddr, endaddr))
+                return results;
+             break;
+          case SEARCHLONG:
+             val = MappedMemoryReadLong(addr);
+
+             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, i, addr+4, &newaddr, endaddr))
+                return results;
+             break;
+          default:
+             maxresults[0] = 0; 
+             if (results)
+                free(results);
+             return NULL;
+       }
+
+       // Do a comparison
+       switch (searchtype & 0xC)
+       {
+          case SEARCHEXACT:
+             if (val == searchval)
+                MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+             break;
+          case SEARCHLESSTHAN:
+             if ((!issigned && val < searchval) || (issigned && (signed)val < (signed)searchval))
+                MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+             break;
+          case SEARCHGREATERTHAN:
+             if ((!issigned && val > searchval) || (issigned && (signed)val > (signed)searchval))
+                MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+             break;
+          default:
+             maxresults[0] = 0;
+             if (results)
+                free(results);
+             return NULL;
+       }
+
+       addr = newaddr;
+   }
+
+   maxresults[0] = numresults;
+   return results;
+}
