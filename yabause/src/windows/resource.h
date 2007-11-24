@@ -277,6 +277,7 @@
 
 #define IDC_SEARCHTYPECB                1001
 #define IDC_SEARCHMEMET                 1002
+#define IDC_SEARCHPB                    1003
 
 //////////////////////////////////////////////////////////////////////////////
 // Backup Ram dialog stuff

@@ -20,6 +20,7 @@
 */
 
 #include <windows.h>
+#include <commctrl.h>
 #include "resource.h"
 #undef FASTCALL
 #include "../memory.h"
@@ -377,7 +378,7 @@ void SH2UpdateCodeList(HWND hDlg, u32 addr)
       SH2Disasm(offset, MappedMemoryReadWord(offset), 0, buf);
 
       SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_ADDSTRING, 0,
-                  (s32)buf);
+                  (LPARAM)buf);
       offset += 2;
    }
 
@@ -675,7 +676,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                      sh2regs_struct sh2regs;
                      SH2GetRegisters(debugsh, &sh2regs);
-                     cursel = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_GETCURSEL,0,0);
+                     cursel = (int)SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_GETCURSEL,0,0);
 
                      if (cursel < 16)
                      {
@@ -776,7 +777,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      }
 
                      SH2GetRegisters(debugsh, &sh2regs);
-                     cursel = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_GETCURSEL,0,0);
+                     cursel = (int)SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_GETCURSEL,0,0);
                   
                      addr = sh2regs.PC - ((12 - cursel) * 2);
                      sprintf(bptext, "%08X", (int)addr);
@@ -1114,7 +1115,7 @@ void M68KUpdateCodeList(HWND hDlg, u32 addr)
       offset = M68KDisasm(offset, buf);
 
       SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_ADDSTRING, 0,
-                  (s32)buf);
+                  (LPARAM)buf);
    }
 
 //   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_SETCURSEL,12,0);
@@ -1221,7 +1222,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      int cursel;
                      m68kregs_struct m68kregs;
 
-                     cursel = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_GETCURSEL,0,0);
+                     cursel = (int)SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_GETCURSEL,0,0);
 
                      M68KGetRegisters(&m68kregs);
 
@@ -1383,11 +1384,11 @@ void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SCUDSPUpdateCodeList(HWND hDlg, u32 addr)
+void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
 {
    int i;
    char buf[60];
-   u32 offset;
+   u8 offset;
 
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_RESETCONTENT, 0, 0);
 
@@ -1399,7 +1400,7 @@ void SCUDSPUpdateCodeList(HWND hDlg, u32 addr)
       offset++;
 
       SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_ADDSTRING, 0,
-                  (s32)buf);
+                  (LPARAM)buf);
    }
 
    SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_SETCURSEL,0,0);
@@ -1442,7 +1443,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          ScuDspGetRegisters(&dspregs);
          SCUDSPUpdateRegList(hDlg, &dspregs);
-         SCUDSPUpdateCodeList(hDlg, dspregs.ProgControlPort.part.P);
+         SCUDSPUpdateCodeList(hDlg, (u8)dspregs.ProgControlPort.part.P);
 
          ScuDspSetBreakpointCallBack(&SCUDSPBreakpointHandler);
 
@@ -1466,7 +1467,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                ScuDspGetRegisters(&dspregs);
                SCUDSPUpdateRegList(hDlg, &dspregs);
-               SCUDSPUpdateCodeList(hDlg, dspregs.ProgControlPort.part.P);
+               SCUDSPUpdateCodeList(hDlg, (u8)dspregs.ProgControlPort.part.P);
 
                break;
             }
@@ -1537,7 +1538,7 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          for (i = 0; i < 32; i++)
          {
             sprintf(tempstr, "%d", i);
-            SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_ADDSTRING, 0, (long)tempstr);
+            SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_ADDSTRING, 0, (LPARAM)tempstr);
          }
 
          SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_SETCURSEL, 0, 0);
@@ -1657,7 +1658,7 @@ LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_RESETCONTENT, 0, 0);
          for (i = 0; i < 13; i++)
          {
-            SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_ADDSTRING, 0, (long)hexaddrlist[i].name);
+            SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_ADDSTRING, 0, (LPARAM)hexaddrlist[i].name);
             if (addr[0] >= hexaddrlist[i].start && addr[0] <= hexaddrlist[i].end)
                SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_SETCURSEL, i, 0);
          }
@@ -1715,17 +1716,55 @@ LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+typedef struct
+{
+   char searchstr[1024];
+   int searchtype;
+   u32 startaddr;
+   u32 endaddr;
+   result_struct *results;
+   HWND hDlg;
+} searcharg_struct;
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam)
 {
+   static searcharg_struct *searcharg;
+
    switch (uMsg)
    {
       case WM_INITDIALOG:
       {
+         int cursel=0;
+
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (long)"Hex");
-         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (long)"Text");
-//         SetDlgItemText(hDlg, IDC_SEARCHMEMET, ?);
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Hex value(s)");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Text");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Unsigned 8-bit value");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Signed 8-bit value");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Unsigned 16-bit value");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Signed 16-bit value");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Unsigned 32-bit value");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Signed 32-bit value");
+         searcharg = (searcharg_struct *)lParam;
+
+         switch (searcharg->searchtype & 0x30)
+         {
+            case SEARCHSIGNED:
+               cursel += 1;
+            case SEARCHUNSIGNED:
+               cursel += 2 + ((searcharg->searchtype & 0x3) * 2);
+               break;
+            case SEARCHSTRING:
+               cursel = 1;
+            case SEARCHHEX:
+            default: break;
+         }
+
+         SetDlgItemText(hDlg, IDC_SEARCHMEMET, searcharg->searchstr);
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_SETCURSEL, cursel, 0);
          return TRUE;
       }
       case WM_COMMAND:
@@ -1734,6 +1773,37 @@ LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             case IDOK:
             {
+               int cursel=(int)SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_GETCURSEL, 0, 0);
+
+               switch(cursel)
+               {
+                  case 0:
+                     searcharg->searchtype = SEARCHHEX;
+                     break;
+                  case 1:
+                     searcharg->searchtype = SEARCHSTRING;
+                     break;
+                  case 2:
+                     searcharg->searchtype = SEARCHBYTE | SEARCHUNSIGNED;
+                     break;
+                  case 3:
+                     searcharg->searchtype = SEARCHBYTE | SEARCHSIGNED;
+                     break;
+                  case 4:
+                     searcharg->searchtype = SEARCHWORD | SEARCHUNSIGNED;
+                     break;
+                  case 5:
+                     searcharg->searchtype = SEARCHWORD | SEARCHSIGNED;
+                     break;
+                  case 6:
+                     searcharg->searchtype = SEARCHLONG | SEARCHUNSIGNED;
+                     break;
+                  case 7:
+                     searcharg->searchtype = SEARCHLONG | SEARCHSIGNED;
+                     break;
+               }
+
+               GetDlgItemText(hDlg, IDC_SEARCHMEMET, searcharg->searchstr, 1024);
                EndDialog(hDlg, TRUE);
                return TRUE;
             }
@@ -1754,9 +1824,115 @@ LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+static int KillSearchThread=0;
+static HANDLE hThread=INVALID_HANDLE_VALUE;
+static DWORD thread_id;
+#define SEARCHSIZE      0x10000
+
+DWORD WINAPI __stdcall SearchThread(void *b)
+{    
+   result_struct *results;
+   u32 startaddr;
+   u32 endaddr;
+   searcharg_struct *searcharg=(searcharg_struct *)b;
+
+   startaddr=searcharg->startaddr;
+   endaddr=searcharg->endaddr;
+
+   PostMessage(GetDlgItem(searcharg->hDlg, IDC_SEARCHPB), PBM_SETRANGE, 0, MAKELPARAM (0, (endaddr-startaddr) / SEARCHSIZE));
+   PostMessage(GetDlgItem(searcharg->hDlg, IDC_SEARCHPB), PBM_SETSTEP, 1, 0);
+
+   while (KillSearchThread != 1)
+   {
+      u32 numresults=1;
+
+      if ((searcharg->endaddr - startaddr) > SEARCHSIZE)
+         endaddr = startaddr+SEARCHSIZE;
+      else
+         endaddr = searcharg->endaddr;
+
+      results = MappedMemorySearch(startaddr, endaddr,
+                                   searcharg->searchtype | SEARCHEXACT,
+                                   searcharg->searchstr,
+                                   NULL, &numresults);
+      if (results && numresults)
+      {
+         // We're done
+         searcharg->results = results;          
+         EndDialog(searcharg->hDlg, TRUE);
+         return 0;
+      }
+
+      if (results)
+         free(results);
+
+      startaddr += (endaddr - startaddr);
+      if (startaddr >= searcharg->endaddr)
+      {
+         EndDialog(searcharg->hDlg, TRUE);
+         searcharg->results = NULL;
+         return 0;
+      }
+
+      PostMessage(GetDlgItem(searcharg->hDlg, IDC_SEARCHPB), PBM_STEPIT, 0, 0);
+   }
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK SearchBusyDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                   LPARAM lParam)
+{
+   static searcharg_struct *searcharg;
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         // Create thread
+         KillSearchThread=0;
+         searcharg = (searcharg_struct *)lParam;
+         searcharg->hDlg = hDlg;
+         hThread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE) SearchThread,(void *)lParam,0,&thread_id);
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDCANCEL:
+            {
+               // Kill thread
+               KillSearchThread = 1;
+               if (WaitForSingleObject(hThread, INFINITE) == WAIT_TIMEOUT)
+               {
+                  // Couldn't close thread cleanly
+                  TerminateThread(hThread,0);                                  
+               }          
+               CloseHandle(hThread);
+               hThread = INVALID_HANDLE_VALUE;
+               searcharg->results = NULL;
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            default: break;
+         }
+         break;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam)
 {
+   static searcharg_struct searcharg;
+
    switch (uMsg)
    {
       case WM_INITDIALOG:
@@ -1787,23 +1963,36 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_SEARCHMEM:
             {
-               char searchstr[1024];
-
-               if (DialogBoxParam(y_hInstance, "SearchMemoryDlg", hDlg, (DLGPROC)SearchMemoryDlgProc, (LPARAM)searchstr) == TRUE)
+               if (DialogBoxParam(y_hInstance, "SearchMemoryDlg", hDlg,
+                                  (DLGPROC)SearchMemoryDlgProc,
+                                  (LPARAM)&searcharg) == TRUE)
                {
-                  // Open up searching dialog here(do the actual search on a
-                  // separate thread)
+                  // Open up searching dialog
 
-                  // return found address(if any) when done.
+                  searcharg.startaddr = 0;
+                  searcharg.endaddr = 0x06100000;
 
-                  // Ok, we found a match, go to that address
-//                  SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, addr);
+                  if (DialogBoxParam(y_hInstance, "SearchBusyDlg", hDlg,
+                                     (DLGPROC)SearchBusyDlgProc,
+                                     (LPARAM)&searcharg) == TRUE)
+                  {
+                     if (searcharg.results)
+                     {
+                        // Ok, we found a match, go to that address
+                        SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, searcharg.results[0].addr);
+                        free(searcharg.results);
+                     }
+                     else
+                     {
+                        // No matches found, if the search wasn't from bios start,
+                        // ask the user if they want to search from the begining.
 
-                  // No matches found, if the search wasn't from bios start,
-                  // ask the user if they want to search from the begining.
-//                  MessageBox (hDlg, "Finished searching up to end of memory, continue from the beginning?", "Wrap search?", MB_OKCANCEL | MB_ICONINFORMATION);
-
-//                  MessageBox (hDlg, "No matches found", "Finished search", MB_OK | MB_ICONINFORMATION);
+                        if (SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GETCURADDRESS, 0, 0) != 0)
+                           MessageBox (hDlg, "Finished searching up to end of memory, continue from the beginning?", "Wrap search?", MB_OKCANCEL);
+                        else
+                           MessageBox (hDlg, "No matches found", "Finished search", MB_OK);
+                     }
+                  }
                }
                break;
             }

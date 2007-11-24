@@ -24,6 +24,7 @@
 #define HEX_SETADDRESSLIST      WM_USER+11
 #define HEX_GOTOADDRESS         WM_USER+12
 #define HEX_GETSELECTED         WM_USER+13
+#define HEX_GETCURADDRESS       WM_USER+14
 
 typedef struct
 {

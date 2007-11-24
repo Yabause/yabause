@@ -57,6 +57,7 @@ LRESULT InitHexEditCtl(HWND hwnd, WPARAM wParam, LPARAM lParam)
    if ((cc = (HexEditCtl_struct *)malloc(sizeof(HexEditCtl_struct))) == NULL)
       return FALSE;
 
+   cc->addrlist = NULL;
    cc->numaddr = 0;
 
    cc->hwnd = hwnd;
@@ -74,6 +75,7 @@ LRESULT InitHexEditCtl(HWND hwnd, WPARAM wParam, LPARAM lParam)
    cc->maxcury = 16;
    cc->curmode = HEXMODE;
    cc->editmode = 0;
+
 
    // Set the text
    SetWindowText(hwnd, ((CREATESTRUCT *)lParam)->lpszName);
@@ -750,6 +752,8 @@ LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
          return 0;
       case HEX_GETSELECTED:
          return 0;
+      case HEX_GETCURADDRESS:
+         return (LRESULT)cc->addr;
       default:
          break;
    }

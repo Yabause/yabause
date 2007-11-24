@@ -358,7 +358,7 @@ int YuiInit(void)
 
    memset(&iccs, 0, sizeof(INITCOMMONCONTROLSEX));
    iccs.dwSize = sizeof(INITCOMMONCONTROLSEX);
-   iccs.dwICC = ICC_INTERNET_CLASSES | ICC_TAB_CLASSES;
+   iccs.dwICC = ICC_INTERNET_CLASSES | ICC_TAB_CLASSES | ICC_PROGRESS_CLASS;
    InitCommonControlsEx(&iccs);
 
    InitHexEdit();
