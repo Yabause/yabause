@@ -435,6 +435,7 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
 
    Cs2Area->carttype = carttype;
    Cs2Area->mpegpath = mpegpath;
+   Cs2Area->cdi=NULL;
 
    if ((ret = Cs2ChangeCDCore(coreid, cdpath)) != 0)
       return ret;
