@@ -1732,6 +1732,7 @@ LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam)
 {
    static searcharg_struct *searcharg;
+   char tempstr[10];
 
    switch (uMsg)
    {
@@ -1765,6 +1766,13 @@ LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          SetDlgItemText(hDlg, IDC_SEARCHMEMET, searcharg->searchstr);
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_SETCURSEL, cursel, 0);
+
+         sprintf(tempstr, "%08X", (int)searcharg->startaddr);
+         SetDlgItemText(hDlg, IDC_SEARCHSTARTADDRET, tempstr);
+
+         sprintf(tempstr, "%08X", (int)searcharg->endaddr);
+         SetDlgItemText(hDlg, IDC_SEARCHENDADDRET, tempstr);
+
          return TRUE;
       }
       case WM_COMMAND:
@@ -1963,15 +1971,14 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_SEARCHMEM:
             {
+               searcharg.startaddr = 0;
+               searcharg.endaddr = 0x06100000;
+
                if (DialogBoxParam(y_hInstance, "SearchMemoryDlg", hDlg,
                                   (DLGPROC)SearchMemoryDlgProc,
                                   (LPARAM)&searcharg) == TRUE)
                {
                   // Open up searching dialog
-
-                  searcharg.startaddr = 0;
-                  searcharg.endaddr = 0x06100000;
-
                   if (DialogBoxParam(y_hInstance, "SearchBusyDlg", hDlg,
                                      (DLGPROC)SearchBusyDlgProc,
                                      (LPARAM)&searcharg) == TRUE)
