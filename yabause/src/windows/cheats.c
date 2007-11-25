@@ -1,9 +1,28 @@
+/*  Copyright 2007 Theo Berkau
+
+    This file is part of Yabause.
+
+    Yabause is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    Yabause is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Yabause; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 #include <windows.h>
 #include <commctrl.h>
 #include "cheats.h"
 #include "../cheat.h"
 #include "resource.h"
-#include "../debug.h"
+#include "../memory.h"
 
 extern HINSTANCE y_hInstance;
 
@@ -356,6 +375,77 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
 
          return 0L;
+      }
+
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static result_struct *cheatresults=NULL;
+//static u32 numresults;
+
+LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         // If cheat search hasn't been started yet, disable search and add
+         // cheat
+         if (cheatresults == NULL)
+         {
+            SetDlgItemText(hDlg, IDC_CTSEARCHRESTARTBT, (LPCTSTR)"Start");
+            EnableWindow(GetDlgItem(hDlg, IDC_CTSEARCHBT), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_CTADDCHEATBT), FALSE);
+         }
+
+         SendDlgItemMessage(hDlg, IDC_EXACTRB, BM_SETCHECK, BST_CHECKED, 0);
+         SendDlgItemMessage(hDlg, IDC_LESSTHANRB, BM_SETCHECK, BST_UNCHECKED, 0);
+         SendDlgItemMessage(hDlg, IDC_GREATERTHANRB, BM_SETCHECK, BST_UNCHECKED, 0);
+
+         SendDlgItemMessage(hDlg, IDC_UNSIGNEDRB, BM_SETCHECK, BST_CHECKED, 0);
+         SendDlgItemMessage(hDlg, IDC_SIGNEDRB, BM_SETCHECK, BST_UNCHECKED, 0);
+
+         SendDlgItemMessage(hDlg, IDC_8BITRB, BM_SETCHECK, BST_CHECKED, 0);
+         SendDlgItemMessage(hDlg, IDC_16BITRB, BM_SETCHECK, BST_UNCHECKED, 0);
+         SendDlgItemMessage(hDlg, IDC_32BITRB, BM_SETCHECK, BST_UNCHECKED, 0);
+
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_CTSEARCHRESTARTBT:
+               if (cheatresults == NULL)
+               {
+                  SetDlgItemText(hDlg, IDC_CTSEARCHRESTARTBT, (LPCTSTR)"Restart");
+                  EnableWindow(GetDlgItem(hDlg, IDC_CTSEARCHBT), TRUE);
+               }
+               else
+                  free(cheatresults);
+
+               // Setup initial values
+               break;
+            case IDC_CTSEARCHBT:
+               // Search low wram and high wram areas
+               return TRUE;
+            case IDC_CTADDCHEATBT:
+               return TRUE;
+            case IDCANCEL:
+            case IDOK:
+            {
+               EndDialog(hDlg, TRUE);
+               return TRUE;
+            }
+            default: break;
+         }
+         break;
       }
 
       default: break;

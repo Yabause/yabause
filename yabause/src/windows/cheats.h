@@ -1,4 +1,4 @@
-/*  Copyright 2004-2005 Theo Berkau
+/*  Copyright 2007 Theo Berkau
 
     This file is part of Yabause.
 
@@ -19,3 +19,6 @@
 
 LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam);
+
+LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam);

@@ -32,7 +32,7 @@
 #define IDM_SAVESTATEAS      10012
 #define IDM_LOADSTATEAS      10013
 #define IDM_EXIT             10014
-#define IDM_SEARCHCHEATS     10020
+#define IDM_CHEATSEARCH      10020
 #define IDM_CHEATLIST        10021
 #define IDM_MSH2DEBUG        10030
 #define IDM_SSH2DEBUG        10031
@@ -299,7 +299,7 @@
 #define IDC_BUPBLOCKSIZEET              1013
 
 //////////////////////////////////////////////////////////////////////////////
-// Error debug stuff
+// Cheat stuff
 
 #define IDC_CHEATLIST                   1001
 #define IDC_DELETECODE                  1002
@@ -318,6 +318,25 @@
 #define IDC_CTBYTEWRITE                 1016
 #define IDC_CTWORDWRITE                 1017
 #define IDC_CTLONGWRITE                 1018
+
+//////////////////////////////////////////////////////////////////////////////
+// Cheat search stuff
+
+#define IDC_EXACTRB                     1002
+#define IDC_LESSTHANRB                  1003
+#define IDC_GREATERTHANRB               1004
+
+#define IDC_UNSIGNEDRB                  1010
+#define IDC_SIGNEDRB                    1011
+
+#define IDC_8BITRB                      1015
+#define IDC_16BITRB                     1016
+#define IDC_32BITRB                     1017
+
+#define IDC_CHEATSEARCHET               1020
+#define IDC_CTSEARCHRESTARTBT           1021
+#define IDC_CTSEARCHBT                  1022
+#define IDC_CTADDCHEATBT                1023
 
 //////////////////////////////////////////////////////////////////////////////
 // Error debug stuff

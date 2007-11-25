@@ -720,6 +720,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                YabauseReset();
                break;
             }
+            case IDM_CHEATSEARCH:
+            {
+               ScspMuteAudio();
+               DialogBox(y_hInstance, "CheatSearchDlg", hWnd, (DLGPROC)CheatSearchDlgProc);
+               ScspUnMuteAudio();
+               break;
+            }
             case IDM_CHEATLIST:
             {
                ScspMuteAudio();
