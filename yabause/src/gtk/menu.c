@@ -46,6 +46,18 @@ void openAboutDialog(GtkWidget * w, gpointer data) {
 		NULL);
 }
 
+void YuiSaveState() {
+  char * dir = g_key_file_get_value(keyfile, "General", "StatePath", NULL);
+
+  YabSaveStateSlot(dir, 1);
+}
+
+void YuiLoadState() {
+  char * dir = g_key_file_get_value(keyfile, "General", "StatePath", NULL);
+
+  YabLoadStateSlot(dir, 1);
+}
+
 GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *menubar1;
   GtkWidget *menuitem1;
@@ -112,6 +124,27 @@ GtkWidget* create_menu(YuiWindow * window1) {
   frameLimiter = gtk_check_menu_item_new_with_mnemonic ("Frame Skip/Limiter");
   g_signal_connect (frameLimiter, "activate", G_CALLBACK (ToggleFLimiter), NULL);
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), frameLimiter);
+
+  {
+    GtkWidget * savestate_menu;
+    GtkWidget * savestate;
+    GtkWidget * savestate_save;
+    GtkWidget * savestate_load;
+
+    savestate = gtk_menu_item_new_with_mnemonic("Save state");
+    gtk_container_add(GTK_CONTAINER(menuitem1_menu), savestate);
+
+    savestate_menu = gtk_menu_new();
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(savestate), savestate_menu);
+
+    savestate_save = gtk_menu_item_new_with_mnemonic("Save");
+    gtk_container_add(GTK_CONTAINER(savestate_menu), savestate_save);
+    g_signal_connect_swapped(savestate_save, "activate", G_CALLBACK(YuiSaveState), NULL);
+
+    savestate_load = gtk_menu_item_new_with_mnemonic("Load");
+    gtk_container_add(GTK_CONTAINER(savestate_menu), savestate_load);
+    g_signal_connect_swapped(savestate_load, "activate", G_CALLBACK(YuiLoadState), NULL);
+  }
 
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), gtk_separator_menu_item_new ());
 
@@ -218,8 +251,6 @@ GtkWidget* create_menu(YuiWindow * window1) {
   about1 = gtk_image_menu_item_new_from_stock ("gtk-about", NULL);
   gtk_container_add (GTK_CONTAINER (menuitem4_menu), about1);
   g_signal_connect(about1, "activate", G_CALLBACK(openAboutDialog), window1);
-
-  //gtk_window_add_accel_group (GTK_WINDOW (window1), accel_group);
 
   return menubar1;
 }
