@@ -134,15 +134,39 @@ void yui_settings_init(void) {
 
 gchar * inifile;
 
-void yui_settings_load(void) {
+int safe_strcmp(const char * s1, const char * s2) {
+	if (s1) {
+		if (s2) {
+			return strcmp(s1, s2);
+		} else {
+			return 1;
+		}
+	} else {
+		if (s2) {
+			return -1;
+		} else {
+			return 0;
+		}
+	}
+}
+
+gboolean yui_settings_load(void) {
 	int i, tmp, stmp;
 	gchar *biosPath;
+	gboolean mustRestart = FALSE;
+
 	g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
-	if (yinit.biospath)
-	  g_free(yinit.biospath);
+
+	/* bios */
+	stmp = yinit.biospath;
 	biosPath = g_key_file_get_value(keyfile, "General", "BiosPath", 0);
 	if ( !biosPath || (!*biosPath) ) yinit.biospath = NULL; 
 	else yinit.biospath = g_strdup(biosPath);
+	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && safe_strcmp(stmp, yinit.biospath)) {
+		mustRestart = TRUE;
+	}
+	if (stmp)
+		g_free(stmp);
 
 	/* cd core */
 	stmp = yinit.cdpath;
@@ -157,6 +181,7 @@ void yui_settings_load(void) {
 
 	/* region */
 	{
+		tmp = yinit.regionid;
 		char * region = g_key_file_get_value(keyfile, "General", "Region", 0);
 		if ((region == 0) || !strcmp(region, "Auto")) {
 			yinit.regionid = 0;
@@ -172,18 +197,51 @@ void yui_settings_load(void) {
 				case 'L': yinit.regionid = 0xD; break;
 			}
 		}
+
+		if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.regionid)) {
+			mustRestart = TRUE;
+		}
 	}
-	if (yinit.cartpath)
-		g_free(yinit.cartpath);
+
+	/* cart */
+	stmp = yinit.cartpath;
 	yinit.cartpath = g_strdup(g_key_file_get_value(keyfile, "General", "CartPath", 0));
-	if (yinit.buppath)
-		g_free(yinit.buppath);
-	yinit.buppath = g_strdup(g_key_file_get_value(keyfile, "General", "BackupRamPath", 0));
-	if (yinit.mpegpath)
-		g_free(yinit.mpegpath);
-	yinit.sh2coretype = g_key_file_get_integer(keyfile, "General", "SH2Int", 0);
-	yinit.mpegpath = g_strdup(g_key_file_get_value(keyfile, "General", "MpegRomPath", 0));
+	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && safe_strcmp(stmp, yinit.cartpath)) {
+		mustRestart = TRUE;
+	}
+	if (stmp)
+	  g_free(stmp);
+
+	tmp = yinit.carttype;
 	yinit.carttype = g_key_file_get_integer(keyfile, "General", "CartType", 0);
+	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.carttype)) {
+          mustRestart = TRUE;
+	}
+
+	/* backup ram */
+	stmp = yinit.buppath;
+	yinit.buppath = g_strdup(g_key_file_get_value(keyfile, "General", "BackupRamPath", 0));
+	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && safe_strcmp(stmp, yinit.buppath)) {
+		mustRestart = TRUE;
+	}
+	if (stmp)
+		g_free(stmp);
+
+	/* mpeg rom */
+	stmp = yinit.mpegpath;
+	yinit.mpegpath = g_strdup(g_key_file_get_value(keyfile, "General", "MpegRomPath", 0));
+	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && safe_strcmp(stmp, yinit.mpegpath)) {
+		mustRestart = TRUE;
+	}
+	if (stmp)
+		g_free(stmp);
+
+	/* sh2 */
+	tmp = yinit.sh2coretype;
+	yinit.sh2coretype = g_key_file_get_integer(keyfile, "General", "SH2Int", 0);
+	if (tmp != yinit.sh2coretype) {
+		mustRestart = TRUE;
+	}
 
 	/* video core */
 	tmp = yinit.vidcoretype;
@@ -212,6 +270,8 @@ void yui_settings_load(void) {
 			g_key_file_get_integer(keyfile, "General", "Fullscreen", 0));
 
         yinit.flags = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
+
+	return mustRestart;
 }
 
 void YuiErrorMsg(const char * string) {
@@ -354,17 +414,20 @@ void yui_conf(void) {
 	switch(result) {
 		case GTK_RESPONSE_OK:
                 {
-                        GtkWidget* warningDlg = gtk_message_dialog_new (GTK_WINDOW(yui),
-                                                                        GTK_DIALOG_MODAL,
-                                                                        GTK_MESSAGE_WARNING,
-                                                                        GTK_BUTTONS_OK,
-                                                                        "You must restart Yabause before the changes take effect.",
-                                                                        NULL);
-
-                        gtk_dialog_run (GTK_DIALOG(warningDlg));
-                        gtk_widget_destroy (warningDlg); 
+			gboolean mustRestart;
 			g_file_set_contents(inifile, g_key_file_to_data(keyfile, 0, 0), -1, 0);
-			yui_settings_load();
+			mustRestart = yui_settings_load();
+			if (mustRestart) {
+                       		GtkWidget* warningDlg = gtk_message_dialog_new (GTK_WINDOW(yui),
+                                	                                        GTK_DIALOG_MODAL,
+                                        	                                GTK_MESSAGE_WARNING,
+                                                	                        GTK_BUTTONS_OK,
+                                                        	                "You must restart Yabause before the changes take effect.",
+                                                                	        NULL);
+
+                        	gtk_dialog_run (GTK_DIALOG(warningDlg));
+                        	gtk_widget_destroy (warningDlg); 
+			}
 			break;
                 }
 		case GTK_RESPONSE_CANCEL:
