@@ -375,6 +375,8 @@ u32 val;
 #define SEARCHSIGNED            (1 << 4)
 #define SEARCHHEX               (2 << 4)
 #define SEARCHSTRING            (3 << 4)
+#define SEARCHREL8BIT           (6 << 4)
+#define SEARCHREL16BIT          (7 << 4)
 
 result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
                                   const char *searchstr,

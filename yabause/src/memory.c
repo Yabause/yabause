@@ -1225,6 +1225,143 @@ static INLINE int SearchIncrementAndCheckBounds(result_struct *prevresults,
 
 //////////////////////////////////////////////////////////////////////////////
 
+static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
+                        const char *searchstr, result_struct *results,
+                        u32 *maxresults)
+{
+   u8 *buf=NULL;
+   u32 *buf32=NULL;
+   u32 buflen=0;
+   u32 counter;
+   u16 lastval=0;
+   u32 addr;
+   u32 numresults=0;
+
+   buflen=strlen(searchstr);
+
+   if ((buf32=(u32 *)malloc(buflen*sizeof(u32))) == NULL)
+      return 0;
+
+   buf = (u8 *)buf32;
+
+   // Copy string to buffer
+   switch (searchtype & 0x70)
+   {
+      case SEARCHSTRING:
+         strcpy(buf, searchstr);
+         break;
+      case SEARCHREL8BIT:
+      case SEARCHREL16BIT:
+      {
+         char *text;
+         char *searchtext=strdup(searchstr);
+
+         // Calculate buffer length and read values into table
+         buflen = 0;
+         for (text=strtok((char *)searchtext, " ,"); text != NULL; text=strtok(NULL, " ,"))
+         {            
+            buf32[buflen] = atoi(text);
+            buflen++;
+         }
+         free(searchtext);
+
+         break;
+      }
+   }    
+
+   addr = startaddr;
+   counter = 0;
+
+   for (;;)
+   {
+      // Fetch byte/word/etc.
+      switch (searchtype & 0x70)
+      {
+         case SEARCHSTRING:
+         {
+            u8 val = MappedMemoryReadByte(addr);
+            addr++;
+
+            if (val == buf[counter])
+            {
+               counter++;
+               if (counter == buflen)
+                  MappedMemoryAddMatch(addr-buflen, val, searchtype, results, &numresults);
+            }
+            else
+               counter = 0;
+            break;
+         }
+         case SEARCHREL8BIT:
+         {
+            int diff;
+            u32 j;
+            u8 val2;
+            u8 val = MappedMemoryReadByte(addr);
+
+            for (j = 1; j < buflen; j++)
+            {
+               // grab the next value
+               val2 = MappedMemoryReadByte(addr+j);
+
+               // figure out the diff
+               diff = (int)val2 - (int)val;
+
+               // see if there's a match             
+               if (((int)buf32[j] - (int)buf32[j-1]) != diff)
+                  break;
+
+               if (j == (buflen - 1))
+                  MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+
+               val = val2;
+            }
+
+            addr++;
+
+            break;
+         }
+         case SEARCHREL16BIT:
+         {
+            int diff;
+            u32 j;
+            u16 val2;
+            u16 val = MappedMemoryReadWord(addr);
+
+            for (j = 1; j < buflen; j++)
+            {
+               // grab the next value
+               val2 = MappedMemoryReadWord(addr+(j*2));
+
+               // figure out the diff
+               diff = (int)val2 - (int)val;
+
+               // see if there's a match             
+               if (((int)buf32[j] - (int)buf32[j-1]) != diff)
+                  break;
+
+               if (j == (buflen - 1))
+                  MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+
+               val = val2;
+            }
+
+            addr+=2;
+            break;
+         }
+      }    
+
+      if (addr > endaddr || numresults >= maxresults[0])
+         break;
+   }
+
+   free(buf);
+   maxresults[0] = numresults;
+   return 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
                                   const char *searchstr,
                                   result_struct *prevresults, u32 *maxresults)
@@ -1239,14 +1376,26 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
    if ((results = (result_struct *)malloc(sizeof(result_struct) * maxresults[0])) == NULL)
       return NULL;
 
-   switch (searchtype & 0x30)
+   switch (searchtype & 0x70)
    {
       case SEARCHSTRING:
+      case SEARCHREL8BIT:
+      case SEARCHREL16BIT:
       {
-         // String search(not supported, yet)
-         free(results);
-         return NULL;
+         // String/8-bit relative/16-bit relative search(not supported, yet)
+         if (SearchString(startaddr, endaddr,  searchtype, searchstr,
+                          results, maxresults) == 0)
+         {
+            maxresults[0] = 0;
+            free(results);
+            return NULL;
+         }
+
+         return results;
       }
+      case SEARCHHEX:         
+         sscanf(searchstr, "%08lx", &searchval);
+         break;
       case SEARCHUNSIGNED:
          searchval = (u32)atoi(searchstr);
          issigned = 0;
@@ -1255,10 +1404,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
          searchval = (u32)atoi(searchstr);
          issigned = 1;
          break;
-      case SEARCHHEX:         
-         sscanf(searchstr, "%08lx", &searchval);
-         break;
-   }
+   }   
 
    if (prevresults)
    {
