@@ -1743,6 +1743,8 @@ LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_RESETCONTENT, 0, 0);
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Hex value(s)");
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Text");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"8-bit Relative value(s)");
+         SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"16-bit Relative value(s)");
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Unsigned 8-bit value");
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Signed 8-bit value");
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Unsigned 16-bit value");
@@ -1751,15 +1753,22 @@ LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SendDlgItemMessage(hDlg, IDC_SEARCHTYPECB, CB_ADDSTRING, 0, (LPARAM)"Signed 32-bit value");
          searcharg = (searcharg_struct *)lParam;
 
-         switch (searcharg->searchtype & 0x30)
+         switch (searcharg->searchtype & 0x70)
          {
             case SEARCHSIGNED:
                cursel += 1;
             case SEARCHUNSIGNED:
-               cursel += 2 + ((searcharg->searchtype & 0x3) * 2);
+               cursel += 4 + ((searcharg->searchtype & 0x3) * 2);
                break;
             case SEARCHSTRING:
                cursel = 1;
+               break;
+            case SEARCHREL8BIT:
+               cursel = 2;
+               break;
+            case SEARCHREL16BIT:
+               cursel = 3;
+               break;
             case SEARCHHEX:
             default: break;
          }
@@ -1792,21 +1801,27 @@ LRESULT CALLBACK SearchMemoryDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      searcharg->searchtype = SEARCHSTRING;
                      break;
                   case 2:
-                     searcharg->searchtype = SEARCHBYTE | SEARCHUNSIGNED;
+                     searcharg->searchtype = SEARCHREL8BIT;
                      break;
                   case 3:
-                     searcharg->searchtype = SEARCHBYTE | SEARCHSIGNED;
+                     searcharg->searchtype = SEARCHREL16BIT;
                      break;
                   case 4:
-                     searcharg->searchtype = SEARCHWORD | SEARCHUNSIGNED;
+                     searcharg->searchtype = SEARCHBYTE | SEARCHUNSIGNED;
                      break;
                   case 5:
-                     searcharg->searchtype = SEARCHWORD | SEARCHSIGNED;
+                     searcharg->searchtype = SEARCHBYTE | SEARCHSIGNED;
                      break;
                   case 6:
-                     searcharg->searchtype = SEARCHLONG | SEARCHUNSIGNED;
+                     searcharg->searchtype = SEARCHWORD | SEARCHUNSIGNED;
                      break;
                   case 7:
+                     searcharg->searchtype = SEARCHWORD | SEARCHSIGNED;
+                     break;
+                  case 8:
+                     searcharg->searchtype = SEARCHLONG | SEARCHUNSIGNED;
+                     break;
+                  case 9:
                      searcharg->searchtype = SEARCHLONG | SEARCHSIGNED;
                      break;
                }
