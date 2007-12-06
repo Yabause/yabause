@@ -1260,7 +1260,7 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
          buflen = 0;
          for (text=strtok((char *)searchtext, " ,"); text != NULL; text=strtok(NULL, " ,"))
          {            
-            buf32[buflen] = atoi(text);
+            buf32[buflen] = strtoul(text, NULL, 0);
             buflen++;
          }
          free(searchtext);
