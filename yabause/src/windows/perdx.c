@@ -508,7 +508,7 @@ void PollKeys(void)
                      pad[i].down[PAD_DIR_POVUP]();
                   }
                }
-               else if (didod[i2].dwOfs >= 0x30)
+               else if (didod[i2].dwOfs >= 0x30 && didod[i2].dwOfs <= 0xFF)
                {
                   if (didod[i2].dwData & 0x80)
                      pad[i].down[didod[i2].dwOfs]();
