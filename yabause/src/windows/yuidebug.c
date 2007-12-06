@@ -1961,6 +1961,8 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_SETADDRESSLIST, 13, (LPARAM)hexaddrlist);
+         searcharg.startaddr = 0;
+         searcharg.endaddr = 0x06100000;
          return TRUE;
       }
       case WM_COMMAND:
@@ -1986,9 +1988,8 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_SEARCHMEM:
             {
-               searcharg.startaddr = 0;
-               searcharg.endaddr = 0x06100000;
-
+               searcharg.startaddr = SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GETCURADDRESS, 0, 0);
+               
                if (DialogBoxParam(y_hInstance, "SearchMemoryDlg", hDlg,
                                   (DLGPROC)SearchMemoryDlgProc,
                                   (LPARAM)&searcharg) == TRUE)
