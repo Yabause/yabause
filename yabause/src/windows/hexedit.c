@@ -42,6 +42,7 @@ typedef struct
    int editmode;
    addrlist_struct *addrlist;
    int numaddr;
+   int selstart, selend;
 } HexEditCtl_struct;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -71,11 +72,12 @@ LRESULT InitHexEditCtl(HWND hwnd, WPARAM wParam, LPARAM lParam)
    cc->addr = 0;
    cc->curx = 0;
    cc->cury = 0;
+   cc->selstart = 0;
+   cc->selend = 0;
    cc->maxcurx = 16;
    cc->maxcury = 16;
    cc->curmode = HEXMODE;
    cc->editmode = 0;
-
 
    // Set the text
    SetWindowText(hwnd, ((CREATESTRUCT *)lParam)->lpszName);
@@ -524,6 +526,75 @@ void MoveCursor(HexEditCtl_struct *cc, int offset)
          }
       }
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+BOOL HexEditCtl_Copy(HexEditCtl_struct *cc)
+{
+   u32 size;
+   HGLOBAL clipmem;
+   char *text;
+
+   // Empty clipboard
+   if (!OpenClipboard(cc->hwnd))
+      return FALSE;
+   EmptyClipboard();
+
+   // If text is selected, copy it using the CF_TEXT format.
+   if (cc->selstart == cc->selend)
+   {
+      // Nothing is selected
+      CloseClipboard();
+      return FALSE;
+   }
+
+   if (cc->selstart > cc->selend)
+      size = cc->selstart - cc->selend;
+   else
+      size = cc->selend - cc->selstart;
+
+   // Ok, allocate memory and copy memory to clipboard
+   if ((clipmem = GlobalAlloc(GMEM_MOVEABLE, size)) == NULL)
+   {
+      CloseClipboard();
+      return FALSE;
+   }
+
+   text = GlobalLock(clipmem);
+   // fill text here
+   GlobalUnlock(clipmem);
+
+   // Place the handle on the clipboard.
+   SetClipboardData(CF_TEXT, clipmem);
+
+   CloseClipboard();
+   return TRUE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void HexEditCtl_Paste(HexEditCtl_struct *cc)
+{
+   HANDLE hclip;
+   char *text;
+
+   if (!IsClipboardFormatAvailable(CF_TEXT))
+      return;
+
+   OpenClipboard(cc->hwnd);
+
+   if ((hclip = GetClipboardData(CF_TEXT)) != NULL)
+   {
+      if ((text = (char *)GlobalLock(hclip)) != NULL)
+      {
+         // Paste data here
+
+         GlobalUnlock(hclip);
+      }
+   }
+
+   CloseClipboard();
 }
 
 //////////////////////////////////////////////////////////////////////////////
