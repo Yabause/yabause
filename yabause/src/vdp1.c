@@ -842,7 +842,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
             AddString(outstring, "15 BPP(RGB)\r\n");
 
             // Only non-textured commands
-            if (!(cmd.CMDCTRL & 0x0004))
+            if (cmd.CMDCTRL & 0x0004)
             {
                AddString(outstring, "Non-textured color: %04X\r\n", cmd.CMDCOLR);
             }
