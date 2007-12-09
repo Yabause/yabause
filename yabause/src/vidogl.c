@@ -445,6 +445,78 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
 #endif
             if (not_lut) cmd->CMDCOLR &= 0x1FF;
             break;
+         case 8:
+            sprite_register = (*reg_src & 0x80) >> 7;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            if (not_lut) cmd->CMDCOLR &= 0x7F;
+            break;
+         case 9:
+            sprite_register = (*reg_src & 0x80) >> 7;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            if (not_lut) cmd->CMDCOLR &= 0x3F;
+            break;
+         case 10:
+            sprite_register = (*reg_src & 0xC0) >> 6;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            if (not_lut) cmd->CMDCOLR &= 0x3F;
+            break;
+         case 11:
+            sprite_register = 0;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            if (not_lut) cmd->CMDCOLR &= 0x3F;
+            break;
+         case 12:
+            sprite_register = (*reg_src & 0x80) >> 7;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            if (not_lut) cmd->CMDCOLR &= 0xFF;
+            break;
+         case 13:
+            sprite_register = (*reg_src & 0x80) >> 7;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            if (not_lut) cmd->CMDCOLR &= 0xFF;
+            break;
+         case 14:
+            sprite_register = (*reg_src & 0xC0) >> 6;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            if (not_lut) cmd->CMDCOLR &= 0xFF;
+            break;
+         case 15:
+            sprite_register = 0;
+#ifdef WORDS_BIGENDIAN
+            sprite->priority = sprprilist[sprite_register^1] & 0x7;
+#else
+            sprite->priority = sprprilist[sprite_register] & 0x7;
+#endif
+            if (not_lut) cmd->CMDCOLR &= 0xFF;
+            break;
          default:
             VDP1LOG("sprite type %d not implemented\n", sprite_type);
 
