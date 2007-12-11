@@ -1,6 +1,37 @@
 0.9.1 -> 0.9.2
- opengl video core
+ cd block:
+  - Fixed a bug in periodic timing. Most movies should play correctly now.
+  - Other bug fixes
+ scsp:
+  - Fixed a bug that was causing reversed panning.
+  - Fixed a bug in SCSP slot debug stats.
+ sh2:
+  - Fixed a bug that caused Yabause to crash when fetching instructions from
+    some areas.
+ vdp2:
+  - Fixed undocumented plane size setting when debugging vdp2
+  - Special Color Calculation mode added to vdp2 debugging
+ opengl video core:
   - Added the eight missing sprite types in Vdp1ReadPriority.
+ software video core:
+  - Fixed a bug where Polygons that used non-RGB values had the wrong
+    priority.
+  - Fixed a bug that was causing some scrolling issues.
+ gtk port:
+  - CD, sound, and video cores can now be changed without restarting the
+    emulator.
+  - Added basic support for save states.
+ windows port:
+  - Fixed compilation with MSYS.
+  - Changed SCSP debug dialog so it allows for individual slot saving.
+  - Fixed a bug when using goto address in memory editor.
+  - Fixed a bug where Yabause crashed when joystick was unplugged.
+  - Added memory search support.
+ general:
+  - Fixed some bugs where vdp1/vdp2 layers wouldn't be drawn after switching
+    video cores.
+  - Fixed a bug when switching between opengl and software video cores.
+  - Added memory search function.
 0.9.0 -> 0.9.1
  scsp:
   - Fixed slot pitch LFO. Amplitude LFO is probably more accurate now too.
