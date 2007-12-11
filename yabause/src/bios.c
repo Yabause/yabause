@@ -411,7 +411,7 @@ int CalcSaveSize(u32 tableaddr, int blocksize)
 
 u32 GetFreeSpace(u32 device, u32 size, u32 addr, u32 blocksize)
 {
-   int i;
+   u32 i;
    u32 usedblocks=0;
 
    for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
@@ -521,7 +521,7 @@ u16 *GetFreeBlocks(u32 addr, u32 blocksize, u32 numblocks, u32 size)
    u8 *blocktbl;
    u16 *freetbl;
    u32 tableaddr;
-   int i;
+   u32 i;
    u32 blockcount=0;
 
    // Create a table that tells us which blocks are free and used
@@ -565,7 +565,7 @@ u16 *GetFreeBlocks(u32 addr, u32 blocksize, u32 numblocks, u32 size)
    {
       if (blocktbl[i] == 0)
       {
-         freetbl[blockcount] = i;
+         freetbl[blockcount] = (u16)i;
          blockcount++;
 
          if (blockcount >= numblocks)
@@ -834,9 +834,9 @@ void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
    for (i = 1; i < savesize; i++)
    {
-      MappedMemoryWriteByte(workaddr, blocktbl[i] >> 8);
+      MappedMemoryWriteByte(workaddr, (u8)(blocktbl[i] >> 8));
       workaddr+=2;
-      MappedMemoryWriteByte(workaddr, blocktbl[i]);
+      MappedMemoryWriteByte(workaddr, (u8)blocktbl[i]);
       workaddr+=2;
 
       if (((workaddr-1) & ((blocksize << 1) - 1)) == 0)
@@ -985,7 +985,7 @@ void FASTCALL BiosBUPDirectory(SH2_struct * sh)
    u32 addr;
    u32 blocksize;
    u32 ret;
-   int i;
+   u32 i;
    char filename[12];
    u32 blockoffset=2;
 
@@ -1008,7 +1008,7 @@ void FASTCALL BiosBUPDirectory(SH2_struct * sh)
 
    for (i = 0; i < sh->regs.R[6]; i++)
    {
-      int i4;
+      u32 i4;
       u32 datasize=0;
       u32 block = FindSave(sh->regs.R[4], sh->regs.R[5], blockoffset, size, addr, blocksize);
 
@@ -1062,7 +1062,7 @@ void FASTCALL BiosBUPDirectory(SH2_struct * sh)
       }
 
       // Calculate block size from the data size, and then copy it over
-      MappedMemoryWriteWord(sh->regs.R[7], ((datasize + 0x1D) / (blocksize - 6)) + 1);
+      MappedMemoryWriteWord(sh->regs.R[7], (u16)(((datasize + 0x1D) / (blocksize - 6)) + 1));
       sh->regs.R[7] += 4;
    }
 
@@ -1166,7 +1166,7 @@ void ConvertMonthAndDay(u32 data, u32 monthaddr, u32 dayaddr, int type)
       MappedMemoryWriteByte(monthaddr, 1);
 
       // Day
-      MappedMemoryWriteByte(dayaddr, data + 1);
+      MappedMemoryWriteByte(dayaddr, (u8)(data + 1));
       return;
    }
 
@@ -1179,21 +1179,21 @@ void ConvertMonthAndDay(u32 data, u32 monthaddr, u32 dayaddr, int type)
    if (type == 1)
    {
       // Month
-      MappedMemoryWriteByte(monthaddr, i + 1);
+      MappedMemoryWriteByte(monthaddr, (u8)(i + 1));
 
       // Day
       if ((i + 1) == 2)
-         MappedMemoryWriteByte(dayaddr, data - monthtbl[(i - 1)] + 1);
+         MappedMemoryWriteByte(dayaddr, (u8)(data - monthtbl[(i - 1)] + 1));
       else
-         MappedMemoryWriteByte(dayaddr, data - monthtbl[(i - 1)]);
+         MappedMemoryWriteByte(dayaddr, (u8)(data - monthtbl[(i - 1)]));
    }
    else
    {
       // Month
-      MappedMemoryWriteByte(monthaddr, i + 1);
+      MappedMemoryWriteByte(monthaddr, (u8)(i + 1));
       
       // Day
-      MappedMemoryWriteByte(dayaddr, data - monthtbl[(i - 1)] + 1);
+      MappedMemoryWriteByte(dayaddr, (u8)(data - monthtbl[(i - 1)] + 1));
    }
 }
 
@@ -1210,18 +1210,18 @@ void FASTCALL BiosBUPGetDate(SH2_struct * sh)
    date = sh->regs.R[4];
 
    // Time
-   MappedMemoryWriteByte(sh->regs.R[5]+3, (date % 0x5A0) / 0x3C);
+   MappedMemoryWriteByte(sh->regs.R[5]+3, (u8)((date % 0x5A0) / 0x3C));
 
    // Minute
-   MappedMemoryWriteByte(sh->regs.R[5]+4, date % 0x3C);
+   MappedMemoryWriteByte(sh->regs.R[5]+4, (u8)(date % 0x3C));
 
    div = date / 0x5A0;
 
    // Week
    if (div > 0xAB71)
-      MappedMemoryWriteByte(sh->regs.R[5]+5, (div + 1) % 7);
+      MappedMemoryWriteByte(sh->regs.R[5]+5, (u8)((div + 1) % 7));
    else
-      MappedMemoryWriteByte(sh->regs.R[5]+5, (div + 2) % 7);
+      MappedMemoryWriteByte(sh->regs.R[5]+5, (u8)((div + 2) % 7));
 
    if ((div % 0x5B5) > 0x16E)
    {
@@ -1235,7 +1235,7 @@ void FASTCALL BiosBUPGetDate(SH2_struct * sh)
    }
 
    // Year
-   MappedMemoryWriteByte(sh->regs.R[5], ((div / 0x5B5) * 4) + yearoffset);
+   MappedMemoryWriteByte(sh->regs.R[5], (u8)(((div / 0x5B5) * 4) + yearoffset));
    
    sh->regs.PC = sh->regs.PR;
 }
