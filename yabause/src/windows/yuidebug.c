@@ -394,7 +394,7 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         char buf[8];
+         char buf[9];
 
          sprintf(buf, "%08lX", memaddr);
          SetDlgItemText(hDlg, IDC_EDITTEXT1, buf);
