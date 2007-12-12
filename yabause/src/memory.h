@@ -73,10 +73,10 @@ static INLINE void T1WriteLong(u8 * mem, u32 addr, u32 val)
 #ifdef WORDS_BIGENDIAN
    *((u32 *) (mem + addr)) = val;
 #else
-   mem[addr] = val >> 24;
-   mem[addr + 1] = (val >> 16) & 0xFF;
-   mem[addr + 2] = (val >> 8) & 0xFF;
-   mem[addr + 3] = val & 0xFF;
+   mem[addr] = (u8)(val >> 24);
+   mem[addr + 1] = (u8)(val >> 16);
+   mem[addr + 2] = (u8)(val >> 8);
+   mem[addr + 3] = (u8)val;
 #endif
 }
 
@@ -127,8 +127,8 @@ static INLINE void T2WriteLong(u8 * mem, u32 addr, u32 val)
 #ifdef WORDS_BIGENDIAN
    *((u32 *) (mem + addr)) = val;
 #else
-   *((u16 *) (mem + addr)) = val >> 16;
-   *((u16 *) (mem + addr + 2)) = val & 0xFFFF;
+   *((u16 *) (mem + addr)) = (u16)(val >> 16);
+   *((u16 *) (mem + addr + 2)) = (u16)val;
 #endif
 }
 

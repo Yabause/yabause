@@ -193,8 +193,8 @@ u8 FASTCALL NetlinkReadByte(u32 addr)
 void FASTCALL NetlinkDoATResponse(const char *string)
 {
    strcpy(&NetlinkArea->outbuffer[NetlinkArea->outbufferend], string);
-   NetlinkArea->outbufferend += strlen(string);
-   NetlinkArea->outbuffersize += strlen(string);
+   NetlinkArea->outbufferend += (u32)strlen(string);
+   NetlinkArea->outbuffersize += (u32)strlen(string);
 }
 
 //////////////////////////////////////////////////////////////////////////////

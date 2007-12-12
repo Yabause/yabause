@@ -73,7 +73,7 @@ static INLINE void doCDReport(u8 status)
 {
    Cs2Area->reg.CR1 = (status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
    Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | Cs2Area->track;
-   Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) & 0xFF);
+   Cs2Area->reg.CR3 = (u16)((Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) & 0xFF));
    Cs2Area->reg.CR4 = (u16) Cs2Area->FAD; 
 }
 
@@ -195,9 +195,9 @@ u16 FASTCALL Cs2ReadWord(u32 addr) {
                      case 0:
                              // Get Toc Data
                              if (Cs2Area->transfercount % 4 == 0)
-                                val = (Cs2Area->TOC[Cs2Area->transfercount >> 2] & 0xFFFF0000) >> 16;
+                                val = (u16)((Cs2Area->TOC[Cs2Area->transfercount >> 2] & 0xFFFF0000) >> 16);
                              else
-                                val = Cs2Area->TOC[Cs2Area->transfercount >> 2] & 0x0000FFFF;
+                                val = (u16)Cs2Area->TOC[Cs2Area->transfercount >> 2];
 
                              Cs2Area->transfercount += 2;
                              Cs2Area->cdwnum += 2;
@@ -320,7 +320,7 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                   else
                     val &= ~CDB_HIRQ_CSCT;
 
-                  Cs2Area->reg.HIRQ = val;
+                  Cs2Area->reg.HIRQ = (u16)val;
 
                   val |= (val << 16);
                   return val;
@@ -1154,8 +1154,8 @@ void Cs2GetSessionInfo(void) {
 
   switch (Cs2Area->reg.CR1 & 0xFF) {
     case 0:
-            Cs2Area->reg.CR3 = 0x0100 | ((Cs2Area->TOC[101] & 0xFF0000) >> 16);
-            Cs2Area->reg.CR4 = Cs2Area->TOC[101] & 0x00FFFF;
+            Cs2Area->reg.CR3 = (u16)(0x0100 | ((Cs2Area->TOC[101] & 0xFF0000) >> 16));
+            Cs2Area->reg.CR4 = (u16)Cs2Area->TOC[101];
             break;
     case 1:
             Cs2Area->reg.CR3 = 0x0100; // return Session number(high byte)/and first byte of Session lba
@@ -1229,7 +1229,7 @@ void Cs2EndDataTransfer(void) {
   s32 i;
   if (Cs2Area->cdwnum)
   {
-     Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->cdwnum >> 17) & 0xFF);
+     Cs2Area->reg.CR1 = (u16)((Cs2Area->status << 8) | ((Cs2Area->cdwnum >> 17) & 0xFF));
      Cs2Area->reg.CR2 = (u16)(Cs2Area->cdwnum >> 1);
      Cs2Area->reg.CR3 = 0;
      Cs2Area->reg.CR4 = 0;
@@ -1325,15 +1325,15 @@ void Cs2PlayDisc(void) {
 
      if (!(pdpmode & 0x80))
      {
-        Cs2SetupDefaultPlayStats((pdspos & 0xFF00) >> 8, 1);
+        Cs2SetupDefaultPlayStats((u8)(pdspos >> 8), 1);
         Cs2Area->playFAD = Cs2Area->FAD;
-        Cs2Area->track = (pdspos & 0xFF00) >> 8;
-        Cs2Area->index = (pdspos & 0xFF);
+        Cs2Area->track = (u8)(pdspos >> 8);
+        Cs2Area->index = (u8)pdspos;
      }
      else
      {
         // Preserve Pickup Position
-        Cs2SetupDefaultPlayStats((pdspos & 0xFF00) >> 8, 0);
+        Cs2SetupDefaultPlayStats((u8)(pdspos >> 8), 0);
      }
   }
 
@@ -1357,9 +1357,9 @@ void Cs2PlayDisc(void) {
   {
      // Track Mode
      if ((pdepos & 0xFF) == 0)
-        Cs2Area->playendFAD = Cs2TrackToFAD(pdepos | 0x0063);
+        Cs2Area->playendFAD = Cs2TrackToFAD((u16)(pdepos | 0x0063));
      else
-        Cs2Area->playendFAD = Cs2TrackToFAD(pdepos);
+        Cs2Area->playendFAD = Cs2TrackToFAD((u16)pdepos);
   }
   else
   {
@@ -1471,7 +1471,7 @@ void Cs2SetCDDeviceConnection(void) {
   else if (scdcfilternum < 0x24)
      Cs2Area->outconcddev = Cs2Area->filter + scdcfilternum;
 
-  Cs2Area->outconcddevnum = scdcfilternum;
+  Cs2Area->outconcddevnum = (u8)scdcfilternum;
 
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
@@ -1643,7 +1643,7 @@ void Cs2ResetSelector(void) {
   {
      // reset true filter output connections
      for (i = 0; i < MAX_SELECTORS; i++)
-        Cs2Area->filter[i].condtrue = i;
+        Cs2Area->filter[i].condtrue = (u8)i;
   }
 
   if (Cs2Area->reg.CR1 & 0x10)
@@ -1704,7 +1704,7 @@ void Cs2ResetSelector(void) {
 
 void Cs2GetBufferSize(void) {
   Cs2Area->reg.CR1 = Cs2Area->status << 8;
-  Cs2Area->reg.CR2 = Cs2Area->blockfreespace;
+  Cs2Area->reg.CR2 = (u16)Cs2Area->blockfreespace;
   Cs2Area->reg.CR3 = MAX_SELECTORS << 8;
   Cs2Area->reg.CR4 = MAX_BLOCKS;
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
@@ -1760,8 +1760,8 @@ void Cs2CalculateActualSize(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2GetActualSize(void) {
-  Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->calcsize >> 16) & 0xFF);
-  Cs2Area->reg.CR2 = Cs2Area->calcsize & 0xFFFF;
+  Cs2Area->reg.CR1 = (u16)((Cs2Area->status << 8) | ((Cs2Area->calcsize >> 16) & 0xFF));
+  Cs2Area->reg.CR2 = (u16)Cs2Area->calcsize;
   Cs2Area->reg.CR3 = 0;
   Cs2Area->reg.CR4 = 0;
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
@@ -1777,8 +1777,8 @@ void Cs2GetSectorInfo(void) {
   gsibufno = Cs2Area->reg.CR3 >> 8;
   if (gsibufno < MAX_SELECTORS) {
      if (gsisctnum < Cs2Area->partition[gsibufno].numblocks) {
-        Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->partition[gsibufno].block[gsisctnum]->FAD >> 16) & 0xFF);
-        Cs2Area->reg.CR2 = Cs2Area->partition[gsibufno].block[gsisctnum]->FAD & 0xFFFF;
+        Cs2Area->reg.CR1 = (u16)((Cs2Area->status << 8) | ((Cs2Area->partition[gsibufno].block[gsisctnum]->FAD >> 16) & 0xFF));
+        Cs2Area->reg.CR2 = (u16)Cs2Area->partition[gsibufno].block[gsisctnum]->FAD;
         Cs2Area->reg.CR3 = (Cs2Area->partition[gsibufno].block[gsisctnum]->fn << 8) | Cs2Area->partition[gsibufno].block[gsisctnum]->cn;
         Cs2Area->reg.CR4 = (Cs2Area->partition[gsibufno].block[gsisctnum]->sm << 8) | Cs2Area->partition[gsibufno].block[gsisctnum]->ci;
         Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
@@ -1883,11 +1883,11 @@ void Cs2GetSectorData(void)
    Cs2Area->cdwnum = 0;
    Cs2Area->datatranstype = 0;
    Cs2Area->datatranspartition = Cs2Area->partition + gsdbufno;
-   Cs2Area->datatranspartitionnum = gsdbufno;
+   Cs2Area->datatranspartitionnum = (u8)gsdbufno;
    Cs2Area->datatransoffset = 0;
    Cs2Area->datanumsecttrans = 0;
-   Cs2Area->datatranssectpos = gsdsectoffset;
-   Cs2Area->datasectstotrans = gsdsectnum;
+   Cs2Area->datatranssectpos = (u16)gsdsectoffset;
+   Cs2Area->datasectstotrans = (u16)gsdsectnum;
 
    doCDReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST;
@@ -1935,7 +1935,7 @@ void Cs2DeleteSectorData(void)
    // sort remaining blocks
    Cs2SortBlocks(&Cs2Area->partition[dsdbufno]);
 
-   Cs2Area->partition[dsdbufno].numblocks -= dsdsectnum;
+   Cs2Area->partition[dsdbufno].numblocks -= (u8)dsdsectnum;
 
    if (Cs2Area->blockfreespace == 200)
       Cs2Area->isonesectorstored = 0;
@@ -1980,8 +1980,8 @@ void Cs2GetThenDeleteSectorData(void)
    Cs2Area->datatranspartition = Cs2Area->partition + gtdsdbufno;
    Cs2Area->datatransoffset = 0;
    Cs2Area->datanumsecttrans = 0;
-   Cs2Area->datatranssectpos = gtdsdsectoffset;
-   Cs2Area->datasectstotrans = gtdsdsectnum;
+   Cs2Area->datatranssectpos = (u16)gtdsdsectoffset;
+   Cs2Area->datasectstotrans = (u16)gtdsdsectnum;
 
    doCDReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST;
@@ -2079,7 +2079,7 @@ void Cs2ReadDirectory(void) {
 void Cs2GetFileSystemScope(void) {
   // may need to fix this
   Cs2Area->reg.CR1 = Cs2Area->status << 8;
-  Cs2Area->reg.CR2 = Cs2Area->numfiles - 2;
+  Cs2Area->reg.CR2 = (u16)(Cs2Area->numfiles - 2);
   Cs2Area->reg.CR3 = 0x0100;
   Cs2Area->reg.CR4 = 0x0002;
 
@@ -2180,7 +2180,7 @@ void Cs2MpegGetInterrupt(void) {
    // mask interupt
    mgiworkinterrupt &= Cs2Area->mpegintmask;
 
-   Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((mgiworkinterrupt >> 16) & 0xFF);
+   Cs2Area->reg.CR1 = (u16)((Cs2Area->status << 8) | ((mgiworkinterrupt >> 16) & 0xFF));
    Cs2Area->reg.CR2 = (u16) mgiworkinterrupt;
    Cs2Area->reg.CR3 = 0;
    Cs2Area->reg.CR4 = 0;
@@ -2563,7 +2563,7 @@ void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD) {
   {
      Cs2Area->options = 0;
      Cs2Area->repcnt = 0;
-     Cs2Area->ctrladdr = (Cs2Area->TOC[track_number - 1] & 0xFF000000) >> 24;
+     Cs2Area->ctrladdr = (u8)(Cs2Area->TOC[track_number - 1] >> 24);
      Cs2Area->index = 1;
      Cs2Area->track = track_number;
      if (writeFAD)
@@ -2586,7 +2586,7 @@ block_struct * Cs2AllocateBlock(u8 * blocknum) {
 
         Cs2Area->block[i].size = Cs2Area->getsectsize;
 
-        *blocknum = i;
+        *blocknum = (u8)i;
         return (Cs2Area->block + i);
      }
   }
@@ -2899,7 +2899,7 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
 
       Cs2Area->curdirfidoffset = fid - 2;
       curdirlba = Cs2Area->curdirsect;
-      numsectorsleft = Cs2Area->curdirsize;
+      numsectorsleft = (u8)Cs2Area->curdirsize;
    }
    else
    {
@@ -2928,7 +2928,8 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
          rfspartition->numblocks -= 1;
 
          curdirlba = Cs2Area->curdirsect = dirrec.lba;
-         numsectorsleft = Cs2Area->curdirsize = (dirrec.size / blocksectsize) - 1;
+         Cs2Area->curdirsize = (dirrec.size / blocksectsize) - 1;
+         numsectorsleft = (u8)Cs2Area->curdirsize;
          Cs2Area->curdirfidoffset = 0;
       }
       else
@@ -2940,7 +2941,8 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
             return -1;
 
          curdirlba = Cs2Area->curdirsect = Cs2Area->fileinfo[fid - Cs2Area->curdirfidoffset].lba - 150;
-         numsectorsleft = Cs2Area->curdirsize = (Cs2Area->fileinfo[fid - Cs2Area->curdirfidoffset].size / blocksectsize) - 1;
+         Cs2Area->curdirsize = (Cs2Area->fileinfo[fid - Cs2Area->curdirfidoffset].size / blocksectsize) - 1;
+         numsectorsleft = (u8)Cs2Area->curdirsize;
          Cs2Area->curdirfidoffset = 0;
       }
    }
@@ -3067,15 +3069,15 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2SetupFileInfoTransfer(u32 fid) {
-  Cs2Area->transfileinfo[0] = (Cs2Area->fileinfo[fid].lba & 0xFF000000) >> 24;
-  Cs2Area->transfileinfo[1] = (Cs2Area->fileinfo[fid].lba & 0x00FF0000) >> 16;
-  Cs2Area->transfileinfo[2] = (Cs2Area->fileinfo[fid].lba & 0x0000FF00) >> 8;
-  Cs2Area->transfileinfo[3] =  Cs2Area->fileinfo[fid].lba & 0x000000FF;
+  Cs2Area->transfileinfo[0] = (u8)(Cs2Area->fileinfo[fid].lba >> 24);
+  Cs2Area->transfileinfo[1] = (u8)(Cs2Area->fileinfo[fid].lba >> 16);
+  Cs2Area->transfileinfo[2] = (u8)(Cs2Area->fileinfo[fid].lba >> 8);
+  Cs2Area->transfileinfo[3] = (u8)Cs2Area->fileinfo[fid].lba;
 
-  Cs2Area->transfileinfo[4] = (Cs2Area->fileinfo[fid].size & 0xFF000000) >> 24;
-  Cs2Area->transfileinfo[5] = (Cs2Area->fileinfo[fid].size & 0x00FF0000) >> 16;
-  Cs2Area->transfileinfo[6] = (Cs2Area->fileinfo[fid].size & 0x0000FF00) >> 8;
-  Cs2Area->transfileinfo[7] =  Cs2Area->fileinfo[fid].size & 0x000000FF;
+  Cs2Area->transfileinfo[4] = (u8)(Cs2Area->fileinfo[fid].size >> 24);
+  Cs2Area->transfileinfo[5] = (u8)(Cs2Area->fileinfo[fid].size >> 16);
+  Cs2Area->transfileinfo[6] = (u8)(Cs2Area->fileinfo[fid].size >> 8);
+  Cs2Area->transfileinfo[7] = (u8)Cs2Area->fileinfo[fid].size;
 
   Cs2Area->transfileinfo[8] = Cs2Area->fileinfo[fid].interleavegapsize;
   Cs2Area->transfileinfo[9] = Cs2Area->fileinfo[fid].fileunitsize;

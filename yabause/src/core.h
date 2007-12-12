@@ -102,7 +102,7 @@ static INLINE int StateFinishHeader(FILE *fp, int offset) {
 
 static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *version, int *size) {
 	char id[4];
-	int ret;
+        size_t ret;
 
 	if ((ret = fread((void *)id, 1, 4, fp)) != 4)
 		return -1;

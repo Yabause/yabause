@@ -862,7 +862,7 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
 void MappedMemoryLoadExec(const char *filename, u32 pc)
 {
    char *p;
-   int i;
+   size_t i;
 
    if ((p = strrchr(filename, '.')))
    {
@@ -907,6 +907,7 @@ int LoadBackupRam(const char *filename)
 void FormatBackupRam(void *mem, u32 size)
 {
    int i, i2;
+   u32 i3;
    u8 header[32] = {
       0xFF, 'B', 0xFF, 'a', 0xFF, 'c', 0xFF, 'k',
       0xFF, 'U', 0xFF, 'p', 0xFF, 'R', 0xFF, 'a',
@@ -920,10 +921,10 @@ void FormatBackupRam(void *mem, u32 size)
          T1WriteByte(mem, (i2 * 32) + i, header[i]);
 
    // Clear the rest
-   for(i = 0x80; i < size; i+=2)
+   for(i3 = 0x80; i3 < size; i3+=2)
    {
-      T1WriteByte(mem, i, 0xFF);
-      T1WriteByte(mem, i+1, 0x00);
+      T1WriteByte(mem, i3, 0xFF);
+      T1WriteByte(mem, i3+1, 0x00);
    }
 }
 
@@ -1237,7 +1238,7 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
    u32 addr;
    u32 numresults=0;
 
-   buflen=strlen(searchstr);
+   buflen=(u32)strlen(searchstr);
 
    if ((buf32=(u32 *)malloc(buflen*sizeof(u32))) == NULL)
       return 0;

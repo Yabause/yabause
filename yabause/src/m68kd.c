@@ -1311,7 +1311,7 @@ u32 M68KDisasm(u32 addr, char *outstring)
 
    for (i = 0; instruction[i].name != NULL; i++)
    {
-      u16 op = c68k_word_read(addr);
+      u16 op = (u16)c68k_word_read(addr);
 
       if ((op & instruction[i].mask) == instruction[i].inst)
       {
