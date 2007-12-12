@@ -54,6 +54,7 @@ extern "C" {
  #define WORD_OFF 0
 #endif
 
+//#define C68K_NO_JUMP_TABLE
 //#define C68K_DEBUG
 #define C68K_TAS_CAN_SET_MEMORY
 //#define C68K_CONST_JUMP_TABLE

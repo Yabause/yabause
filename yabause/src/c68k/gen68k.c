@@ -3699,13 +3699,14 @@ int main()
 
     // init opcode jump table
     ini_file = fopen("c68k_ini.inc", "wt");
+#ifndef C68K_NO_JUMP_TABLE
 #ifdef C68K_CONST_JUMP_TABLE
     for(i = 0; i < 0x10000; i++) op_jump_table[i] = OP_ILLEGAL;
 #else
     // defaut ILLEGAL instruction
     gen_jumptable(0x0000, 0x0000, 0xFFFF, 1, 0, 0, 0, 0, 0, 0, 0x4AFC);
 #endif
-
+#endif
     // generate opcode files
     for(i = 0; i < OP_INFO_TABLE_LEN; i++)
     {

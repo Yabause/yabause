@@ -528,6 +528,17 @@ static u32 prepare_generate()
 	return 0;
 }
 
+static void wf_op(char* fmt, ...)
+{
+	va_list args;
+
+    if (opcode_file == NULL) return;
+
+	va_start(args, fmt);
+	vfprintf(opcode_file, fmt, args);
+	va_end(args);
+}
+
 static void gen_jumptable(u32 base, u32 start1, u32 end1, u32 step1, u32 start2, u32 end2, u32 step2, u32 start3, u32 end3, u32 step3, u32 op)
 {
 #ifdef C68K_CONST_JUMP_TABLE
@@ -544,7 +555,8 @@ static void gen_jumptable(u32 base, u32 start1, u32 end1, u32 step1, u32 start2,
     step2 &= 0xFFFF;
     if (end2 < start2) end2 = start2;
     op &= 0xFFFF;
-    
+
+#ifndef C68K_NO_JUMP_TABLE
 #ifdef C68K_CONST_JUMP_TABLE
     if (step1 == 0) step1 = 1;
     if (step2 == 0) step2 = 1;
@@ -558,7 +570,7 @@ static void gen_jumptable(u32 base, u32 start1, u32 end1, u32 step1, u32 start2,
 #else
     if (ini_file == NULL) return;
 
-	if (start1 != end1)
+    if (start1 != end1)
     {
         fprintf(ini_file, "\t\tfor(i = 0x%.4X; i <= 0x%.4X; i += 0x%.4X)\n", (int)start1, (int)end1, (int)step1);
     	if (start2 != end2)
@@ -574,6 +586,22 @@ static void gen_jumptable(u32 base, u32 start1, u32 end1, u32 step1, u32 start2,
         else fprintf(ini_file, "\t\t\tJumpTable[0x%.4X + i] = &&OP_0x%.4X;\n", (int)base, (int)op);
     }
     else fprintf(ini_file, "\t\tJumpTable[0x%.4X] = &&OP_0x%.4X;\n", (int)base, (int)op);
+#endif
+#else
+    u32 i, j, k;
+
+    if (step1 == 0) step1 = 1;
+    if (step2 == 0) step2 = 1;
+    if (step3 == 0) step3 = 1;
+
+    for(i = start1; i <= end1; i += step1)
+        for(j = start2; j <= end2; j += step2)
+            for(k = start3; k <= end3; k += step3)
+            {
+                u32 temp=(base + i + j + k);
+                if (temp != op && temp != 0x4E57 && temp != 0x4E5F)
+                   wf_op("case 0x%.4X:\n", base + i + j + k);
+            }    
 #endif
 }
 
@@ -611,17 +639,6 @@ static void gen_opjumptable(u32 op)
     gen_opjumptable_ext(op, 0, 0, 0, op);
 }
 
-static void wf_op(char* fmt, ...)
-{
-	va_list args;
-
-    if (opcode_file == NULL) return;
-
-	va_start(args, fmt);
-	vfprintf(opcode_file, fmt, args);
-	va_end(args);
-}
-
 #define GEN_ADR 1
 #define GEN_RES 2
 #define GEN_SRC 4
@@ -634,7 +651,11 @@ static void start_op(u32 op, int v)
     current_cycle = 0;
 
     wf_op("\n// %s\n", current_op->op_name);
+#ifndef C68K_NO_JUMP_TABLE
     wf_op("OP_0x%.4X:\n", op & 0xFFFF);
+#else
+    wf_op("case 0x%.4X:\n", op & 0xFFFF);
+#endif
     wf_op("{\n");
     if (v & GEN_ADR) wf_op("\tu32 adr;\n");
     if (v & GEN_RES) wf_op("\tu32 res;\n");

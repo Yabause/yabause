@@ -40,10 +40,18 @@
 #define ROR_32(A, C)    (LSR_32(A, C) | LSL_32(A, 32-(C)))
 #define ROR_33(A, C)    (LSR_32(A, C) | LSL_32(A, 33-(C)))
 
+
+#ifndef C68K_NO_JUMP_TABLE
 #define NEXT                    \
     Opcode = FETCH_WORD;        \
 	PC += 2;			        \
     goto *JumpTable[Opcode];
+#else
+#define NEXT                    \
+    Opcode = FETCH_WORD;        \
+	PC += 2;			        \
+    goto SwitchTable;
+#endif
 
 #define RET(A)                  \
     CCnt -= (A);                \

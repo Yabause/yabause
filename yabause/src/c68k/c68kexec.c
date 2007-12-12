@@ -106,8 +106,10 @@ static const s32 c68k_exception_cycle_table[256] =
 // global variable
 ///////////////////
 
+#ifndef C68K_NO_JUMP_TABLE
 #ifndef C68K_CONST_JUMP_TABLE
 static void *JumpTable[0x10000];
+#endif
 #endif
 
 static u32 c68k_shiftop_mask[64][2];
@@ -149,8 +151,12 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
 
 #ifndef C68K_GEN
 
+#ifndef C68K_NO_JUMP_TABLE
 #ifdef C68K_CONST_JUMP_TABLE
     #include "c68k_ini.inc"
+#endif
+#else
+    C68k_Initialised = 1;
 #endif
 
     CPU = cpu;
@@ -158,8 +164,10 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
 
     if (CPU->Status & (C68K_RUNNING | C68K_DISABLE | C68K_FAULTED))
     {
+#ifndef C68K_NO_JUMP_TABLE
 #ifndef C68K_CONST_JUMP_TABLE
         if (!C68k_Initialised) goto C68k_Init;
+#endif
 #endif
         return (CPU->Status | 0x80000000);
     }
@@ -225,11 +233,20 @@ C68k_Exec:
 #ifndef C68K_DEBUG
     NEXT
 #else
+#ifdef C68K_NO_JUMP_TABLE
+    NEXT
+#else
     Opcode = FETCH_WORD;
 	PC += 2;
     goto *JumpTable[Opcode];
 #endif
+#endif
 
+#ifdef C68K_NO_JUMP_TABLE
+SwitchTable:
+    switch(Opcode)
+    {
+#endif
     #include "c68k_op0.inc"
     #include "c68k_op1.inc"
     #include "c68k_op2.inc"
@@ -246,6 +263,9 @@ C68k_Exec:
     #include "c68k_opD.inc"
     #include "c68k_opE.inc"
     #include "c68k_opF.inc"
+#ifdef C68K_NO_JUMP_TABLE
+    }
+#endif
 
 C68k_Exec_End:
     CHECK_INT
@@ -262,6 +282,7 @@ C68k_Exec_Really_End:
     return (CPU->CycleToDo - CCnt);
 
 #ifndef C68K_CONST_JUMP_TABLE
+#ifndef C68K_NO_JUMP_TABLE
 C68k_Init:
     {
         u32 i, j;
@@ -273,7 +294,7 @@ C68k_Init:
     
     return 0;
 #endif
-
+#endif
 #else
     return 0;
 #endif
