@@ -28,6 +28,56 @@ extern HINSTANCE y_hInstance;
 
 //////////////////////////////////////////////////////////////////////////////
 
+void AddCode(HWND hParent, int i)
+{
+   LVITEM itemdata;
+   char code[MAX_PATH];
+   cheatlist_struct *cheat;
+   int cheatnum;   
+
+   cheat = CheatGetList(&cheatnum);
+
+   switch(cheat[i].type)
+   {
+      case CHEATTYPE_ENABLE:
+         sprintf(code, "Enable code: %08X %08X", (int)cheat[i].addr, (int)cheat[i].val);
+         break;
+      case CHEATTYPE_BYTEWRITE:
+         sprintf(code, "Byte Write: %08X %02X", (int)cheat[i].addr, (int)cheat[i].val);
+         break;
+      case CHEATTYPE_WORDWRITE:
+         sprintf(code, "Word write: %08X %04X", (int)cheat[i].addr, (int)cheat[i].val);
+         break;
+      case CHEATTYPE_LONGWRITE:
+         sprintf(code, "Long write: %08X %08X", (int)cheat[i].addr, (int)cheat[i].val);
+         break;
+      default: break;
+   }
+
+   itemdata.mask = LVIF_TEXT;
+   itemdata.iItem = SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETITEMCOUNT, 0, 0);
+   itemdata.iSubItem = 0;
+   itemdata.pszText = (LPTSTR)code;
+   itemdata.cchTextMax = strlen(itemdata.pszText);
+   SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_INSERTITEM, 0, (LPARAM)&itemdata);
+
+   itemdata.iSubItem = 1;
+   itemdata.pszText = (LPTSTR)cheat[i].desc;
+   itemdata.cchTextMax = strlen(itemdata.pszText);
+   SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
+
+   itemdata.iSubItem = 2;
+   if (cheat[i].enable)
+      itemdata.pszText = "Enabled";
+   else
+      itemdata.pszText = "Disabled";
+      
+   itemdata.cchTextMax = strlen(itemdata.pszText);
+   SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
@@ -42,40 +92,25 @@ LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             case IDOK:
             {
-               char tempstr[MAX_PATH];
-               char tempstr2[MAX_PATH];
-               LVITEM itemdata;
+               char code[MAX_PATH];
+               char desc[MAX_PATH];
+               int cheatnum;
 
-               GetDlgItemText(hDlg, IDC_CODE, tempstr, 14);
+               GetDlgItemText(hDlg, IDC_CODE, code, 14);
 
                // should verify text here
 
-               if (CheatAddARCode(tempstr) != 0)
+               if (CheatAddARCode(code) != 0)
                {
                    MessageBox (hDlg, "Unable to add code", "Error",  MB_OK | MB_ICONINFORMATION);
                    return TRUE;
                }
 
-               // Add code to code list
-               itemdata.mask = LVIF_TEXT;
-               itemdata.iItem = SendDlgItemMessage(GetParent(hDlg), IDC_CHEATLIST, LVM_GETITEMCOUNT, 0, 0);
-               itemdata.iSubItem = 0;
-               sprintf(tempstr2, "AR %s", tempstr);
-               itemdata.pszText = tempstr2;
-               itemdata.cchTextMax = strlen(itemdata.pszText);
-               SendDlgItemMessage(GetParent(hDlg), IDC_CHEATLIST, LVM_INSERTITEM, 0, (LPARAM)&itemdata);
+               GetDlgItemText(hDlg, IDC_CODEDESC, desc, MAX_PATH);
+               CheatGetList(&cheatnum);
+               CheatChangeDescriptionByIndex(cheatnum-1, desc);
+               AddCode(GetParent(hDlg), cheatnum-1);
 
-               GetDlgItemText(hDlg, IDC_CODEDESC, tempstr, MAX_PATH);
-
-               itemdata.iSubItem = 1;
-               itemdata.pszText = tempstr;
-               itemdata.cchTextMax = strlen(itemdata.pszText);
-               SendDlgItemMessage(GetParent(hDlg), IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
-
-               itemdata.iSubItem = 2;
-               itemdata.pszText = "Enabled";
-               itemdata.cchTextMax = strlen(itemdata.pszText);
-               SendDlgItemMessage(GetParent(hDlg), IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
                EnableWindow(GetDlgItem(GetParent(hDlg), IDC_CLEARCODES), TRUE);
 
                EndDialog(hDlg, TRUE);
@@ -113,11 +148,11 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDOK:
             {
                char tempstr[MAX_PATH];
-               char tempstr2[MAX_PATH];
-               LVITEM itemdata;
+               char desc[MAX_PATH];
                int type;
                u32 addr;
                u32 val;
+               int cheatnum;
 
                // Get address
                GetDlgItemText(hDlg, IDC_CODEADDR, tempstr, 9);
@@ -137,25 +172,13 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // Get type
                if (SendDlgItemMessage(hDlg, IDC_CTENABLE, BM_GETCHECK, 0, 0) == BST_CHECKED)
-               {
                   type = CHEATTYPE_ENABLE;
-                  sprintf(tempstr2, "Enable code - %08X %08X", (int)addr, (int)val);
-               }
                else if (SendDlgItemMessage(hDlg, IDC_CTBYTEWRITE, BM_GETCHECK, 0, 0) == BST_CHECKED)
-               {
                   type = CHEATTYPE_BYTEWRITE;
-                  sprintf(tempstr2, "Byte Write code - %08X %02X", (int)addr, (int)val);
-               }
                else if (SendDlgItemMessage(hDlg, IDC_CTWORDWRITE, BM_GETCHECK, 0, 0) == BST_CHECKED)
-               {
                   type = CHEATTYPE_WORDWRITE;
-                  sprintf(tempstr2, "Word write code - %08X %04X", (int)addr, (int)val);
-               }
                else
-               {
                   type = CHEATTYPE_LONGWRITE;
-                  sprintf(tempstr2, "Long write code - %08X %08X", (int)addr, (int)val);
-               }
 
                if (CheatAddCode(type, addr, val) != 0)
                {
@@ -163,24 +186,11 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                    return TRUE;
                }
 
-               // Add code to code list
-               itemdata.mask = LVIF_TEXT;
-               itemdata.iItem = SendDlgItemMessage(GetParent(hDlg), IDC_CHEATLIST, LVM_GETITEMCOUNT, 0, 0);
-               itemdata.iSubItem = 0;
-               itemdata.pszText = tempstr2;
-               itemdata.cchTextMax = strlen(itemdata.pszText);
-               SendDlgItemMessage(GetParent(hDlg), IDC_CHEATLIST, LVM_INSERTITEM, 0, (LPARAM)&itemdata);
-               GetDlgItemText(hDlg, IDC_CODEDESC, tempstr, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_CODEDESC, desc, MAX_PATH);
+               CheatGetList(&cheatnum);
+               CheatChangeDescriptionByIndex(cheatnum-1, desc);
+               AddCode(GetParent(hDlg), cheatnum-1);
 
-               itemdata.iSubItem = 1;
-               itemdata.pszText = tempstr;
-               itemdata.cchTextMax = strlen(itemdata.pszText);
-               SendDlgItemMessage(GetParent(hDlg), IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
-
-               itemdata.iSubItem = 2;
-               itemdata.pszText = "Enabled";
-               itemdata.cchTextMax = strlen(itemdata.pszText);
-               SendDlgItemMessage(GetParent(hDlg), IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
                EnableWindow(GetDlgItem(GetParent(hDlg), IDC_CLEARCODES), TRUE);
 
                EndDialog(hDlg, TRUE);
@@ -235,6 +245,8 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          LVCOLUMN coldata;
+         int cheatnum;
+         int i;
 
          ListView_SetExtendedListViewStyleEx(GetDlgItem(hDlg, IDC_CHEATLIST),
                                              LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
@@ -242,12 +254,12 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          coldata.mask = LVCF_TEXT | LVCF_WIDTH;
          coldata.pszText = "Code\0";
          coldata.cchTextMax = strlen(coldata.pszText);
-         coldata.cx = 91;
+         coldata.cx = 190;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)0, (LPARAM)&coldata);
 
          coldata.pszText = "Description\0";
          coldata.cchTextMax = strlen(coldata.pszText);
-         coldata.cx = 211;
+         coldata.cx = 111;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)1, (LPARAM)&coldata);
 
          coldata.pszText = "Status\0";
@@ -255,8 +267,19 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          coldata.cx = 70;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)2, (LPARAM)&coldata);
 
+         // Generate cheat list
+         CheatGetList(&cheatnum);
+
+         for (i = 0; i < cheatnum; i++)
+         {
+            // Add code to code list
+            AddCode(hDlg, i);
+         }
+
+         if (cheatnum == 0)
+            EnableWindow(GetDlgItem(hDlg, IDC_CLEARCODES), FALSE);
+
          EnableWindow(GetDlgItem(hDlg, IDC_DELETECODE), FALSE);
-         EnableWindow(GetDlgItem(hDlg, IDC_CLEARCODES), FALSE);
 
          EnableWindow(GetDlgItem(hDlg, IDC_ADDFROMFILE), FALSE);
 
