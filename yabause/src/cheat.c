@@ -119,6 +119,13 @@ int CheatChangeDescription(int type, u32 addr, u32 val, char *desc)
       // There is no matches, so let's bail
       return -1;
 
+   return CheatChangeDescriptionByIndex(i, desc);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int CheatChangeDescriptionByIndex(int i, char *desc)
+{
    // Free old description(if existing)
    if (cheatlist[i].desc)
       free(cheatlist[i].desc);
