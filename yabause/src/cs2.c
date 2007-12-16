@@ -3197,6 +3197,8 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
      if (isaudio)
      {
         // Audio data should really be passed onto the SCSP
+        Cs2Area->speed1x = 1;
+        Cs2SetTiming(1);
         memcpy((void *)&Cs2Area->cddablock, (void *)&Cs2Area->workblock, sizeof(block_struct));
         Cs2Area->cddablock.size = 2352;
         *partition = NULL;
