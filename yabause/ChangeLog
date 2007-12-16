@@ -27,6 +27,7 @@
   - Fixed a bug when using goto address in memory editor.
   - Fixed a bug where Yabause crashed when joystick was unplugged.
   - Added memory search support.
+  - Fixed cheat dialog. Codes should show up after re-opening it.
  general:
   - Fixed some bugs where vdp1/vdp2 layers wouldn't be drawn after switching
     video cores.
