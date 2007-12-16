@@ -52,6 +52,7 @@ int CheatAddCode(int type, u32 addr, u32 val)
    cheatlist[numcheats].type = type;
    cheatlist[numcheats].addr = addr;
    cheatlist[numcheats].val = val;
+   cheatlist[numcheats].desc = NULL;
    cheatlist[numcheats].enable = 1;
    numcheats++;
 
@@ -93,39 +94,60 @@ int CheatAddARCode(const char *code)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CheatRemoveCode(int type, u32 addr, u32 val)
+int FindCheat(int type, u32 addr, u32 val)
 {
    int i;
 
-   // Let's look for the cheat
    for (i = 0; i < numcheats; i++)
    {
       if (cheatlist[i].type == type &&
           cheatlist[i].addr == addr &&
           cheatlist[i].val == val)
-         break;
-      if (i == (numcheats - 1))
-         // There is no matches, so let's bail
-         return -1;
+         return i;
    }
 
-   // We have a match time, time to remove it
-   // Move all entries one forward
-   for (; i < numcheats-1; i++)
-      memcpy(&cheatlist[i], &cheatlist[i+1], sizeof(cheatlist_struct));
+   return -1;
+}
 
-   numcheats--;
+//////////////////////////////////////////////////////////////////////////////
 
-   // Set the last one to type none
-   cheatlist[numcheats].type = CHEATTYPE_NONE;
+int CheatChangeDescription(int type, u32 addr, u32 val, char *desc)
+{
+   int i;
 
+   if ((i = FindCheat(type, addr, val)) == -1)
+      // There is no matches, so let's bail
+      return -1;
+
+   // Free old description(if existing)
+   if (cheatlist[i].desc)
+      free(cheatlist[i].desc);
+
+   cheatlist[i].desc = strdup(desc);
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int CheatRemoveCode(int type, u32 addr, u32 val)
+{
+   int i;
+
+   if ((i = FindCheat(type, addr, val)) == -1)
+      // There is no matches, so let's bail
+      return -1;
+
+   return CheatRemoveCodeByIndex(i);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int CheatRemoveCodeByIndex(int i)
 {
+   // If there's a description, free the memory.
+   if (cheatlist[i].desc)
+      free(cheatlist[i].desc);
+
    // Move all entries one forward
    for (; i < numcheats-1; i++)
       memcpy(&cheatlist[i], &cheatlist[i+1], sizeof(cheatlist_struct));
@@ -219,3 +241,13 @@ void CheatDoPatches(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+cheatlist_struct *CheatGetList(int *cheatnum)
+{
+   if (cheatnum == NULL)
+      return NULL;
+
+   *cheatnum = numcheats;
+   return cheatlist;
+}
+
+//////////////////////////////////////////////////////////////////////////////
