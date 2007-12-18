@@ -64,4 +64,5 @@ extern DWORD netlinklocalremoteip;
 extern int netlinkport;
 extern int uselog;
 extern int logtype;
+extern int nocorechange;
 

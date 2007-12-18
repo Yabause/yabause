@@ -376,6 +376,8 @@ int YuiInit(void)
 
    if (GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
    {
+      nocorechange = 1;
+
       // Startup Settings Configuration
       if (DialogBox(y_hInstance, "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
       {
@@ -635,6 +637,8 @@ YabauseSetup:
    {
       if (ret == -2)
       {
+         nocorechange = 1;
+
          if (DialogBox(GetModuleHandle(NULL), "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
          {
             // exit program with error

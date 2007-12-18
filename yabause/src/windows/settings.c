@@ -66,6 +66,7 @@ DWORD netlinklocalremoteip=MAKEIPADDRESS(127, 0, 0, 1);
 int netlinkport=7845;
 int uselog=0;
 int logtype=0;
+int nocorechange = 0;
 
 extern HINSTANCE y_hInstance;
 extern VideoInterface_struct *VIDCoreList[];
@@ -826,7 +827,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      break;
                }
 
-               if (cdromchanged)
+               if (cdromchanged && nocorechange == 0)
                {
                   if (IsPathCdrom(cdrompath))
                      Cs2ChangeCDCore(CDCORE_SPTI, cdrompath);
@@ -1033,7 +1034,7 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                WritePrivateProfileString("Video", "WindowHeight", tempstr, inifilename);
 
                // Re-initialize Video
-               if (vidcorechanged)
+               if (vidcorechanged && nocorechange == 0)
                   VideoChangeCore(vidcoretype);
 
                if (VIDCore && !VIDCore->IsFullscreen() && usecustomwindowsize)
@@ -1119,7 +1120,7 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                sndvolume = SendDlgItemMessage(hDlg, IDC_SLVOLUME, TBM_GETPOS, 0, 0);
                sprintf(tempstr, "%d", sndvolume);
                WritePrivateProfileString("Sound", "Volume", tempstr, inifilename);
-               if (sndcorechanged)
+               if (sndcorechanged && nocorechange == 0)
                   ScspChangeSoundCore(sndcoretype);
                ScspSetVolume(sndvolume);
                return TRUE;
