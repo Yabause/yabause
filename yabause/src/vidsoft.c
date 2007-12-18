@@ -34,6 +34,7 @@
 #endif
 
 #include <stdlib.h>
+#include <stdarg.h>
 
 #if defined WORDS_BIGENDIAN
 #define COLSAT2YAB16(priority,temp)            (priority | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
