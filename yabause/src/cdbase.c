@@ -312,6 +312,7 @@ int InitBinCue(const char *cuefilename)
 
       if (isofile == NULL)
       {
+         YabSetError(YAB_ERR_FILENOTFOUND, tempbuffer);
          free(tempbuffer);
          return -1;
       }
