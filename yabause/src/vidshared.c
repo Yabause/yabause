@@ -404,14 +404,14 @@ float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 ad
 
    if (parameter->coefdatasize == 2)
    {
-      addr &= ~0x1;
+      addr &= 0x7FFFE;
       i = T1ReadWord(Vdp2Ram, addr);
       parameter->msb = (i >> 15) & 0x1;
       return (float) (signed) ((i & 0x7FFF) | (i & 0x4000 ? 0xFFFFC000 : 0x00000000)) / 1024;
    }
    else
    {
-      addr &= ~0x3;
+      addr &= 0x7FFFC;
       i = T1ReadLong(Vdp2Ram, addr);
       parameter->msb = (i >> 31) & 0x1;
       return (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
