@@ -62,9 +62,11 @@ BEGIN
   END
   POPUP "&Emulation"
   BEGIN
-//    MENUITEM "&Run", IDM_RUN
-//    MENUITEM "&Pause", IDM_PAUSE
-    MENUITEM "Reset", IDM_RESET
+#ifdef USETHREADS
+    MENUITEM "&Run", IDM_RUN, GRAYED
+    MENUITEM "&Pause", IDM_PAUSE
+#endif
+    MENUITEM "Hard Reset", IDM_RESET
   END
   POPUP "&Cheats"
   BEGIN

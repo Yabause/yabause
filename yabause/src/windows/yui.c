@@ -21,6 +21,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #undef FASTCALL
+#include "../cs2.h"
 #include "../vdp2.h"
 #include "../yui.h"
 #include "snddx.h"
@@ -45,7 +46,11 @@
 #define DONT_PROFILE
 #include "../profile.h"
 
+HANDLE emuthread=INVALID_HANDLE_VALUE;
+int KillEmuThread=0;
 int stop=1;
+int stopped=1;
+int paused=0;
 int yabwinw;
 int yabwinh;
 
@@ -65,6 +70,7 @@ static int depthsize = 0;
 
 char yssfilename[MAX_PATH] = "\0";
 char ysspath[MAX_PATH] = "\0";
+char netlinksetting[80];
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 void YuiReleaseVideo(void);
@@ -341,6 +347,190 @@ void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void YuiPause()
+{
+#ifdef USETHREADS
+   stop = 1;
+   while (!stopped) { Sleep(0); }
+   ScspMuteAudio();
+   paused = 1;
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YuiUnPause()
+{
+#ifdef USETHREADS
+   if (paused)
+   {
+      ScspUnMuteAudio();
+      stop = 0;
+      paused = 0;
+   }
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YuiTempPause()
+{
+#ifdef USETHREADS
+   if (!paused)
+   {
+      stop = 1;
+      while (!stopped) { Sleep(0); }
+      ScspMuteAudio();
+   }
+#else
+   ScspMuteAudio();
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YuiTempUnPause()
+{
+#ifdef USETHREADS
+   if (!paused)
+   {
+      ScspUnMuteAudio();
+      stop = 0;
+   }
+#else
+   ScspUnMuteAudio();
+#endif
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+#ifdef USETHREADS
+DWORD WINAPI YabauseEmulate(LPVOID arg)
+{
+   yabauseinit_struct yinit;
+   int ret;
+
+//YabauseSetup:
+   memset(&yinit, 0, sizeof(yabauseinit_struct));
+   yinit.percoretype = percoretype;
+   yinit.sh2coretype = sh2coretype;
+   yinit.vidcoretype = vidcoretype;
+   yinit.sndcoretype = sndcoretype;
+   if (IsPathCdrom(cdrompath))
+      yinit.cdcoretype = CDCORE_SPTI;
+   else
+      yinit.cdcoretype = CDCORE_ISO;
+   //yinit.m68kcoretype = M68KCORE_HLE;
+#ifdef _MSC_VER
+   yinit.m68kcoretype = M68KCORE_DEFAULT;
+#else
+   yinit.m68kcoretype = M68KCORE_C68K;
+#endif
+   yinit.carttype = carttype;
+   yinit.regionid = regionid;
+   if (strcmp(biosfilename, "") == 0)
+      yinit.biospath = NULL;
+   else
+      yinit.biospath = biosfilename;
+   yinit.cdpath = cdrompath;
+   yinit.buppath = backupramfilename;
+   yinit.mpegpath = mpegromfilename;
+   yinit.cartpath = cartfilename;
+   yinit.netlinksetting = netlinksetting;
+   yinit.flags = VIDEOFORMATTYPE_NTSC;
+
+   if ((ret = YabauseInit(&yinit)) < 0)
+   {
+/*
+      if (ret == -2)
+      {
+         nocorechange = 1;
+
+         if (DialogBox(GetModuleHandle(NULL), "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+         {
+            // exit program with error
+            MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
+            return -1;
+         }
+
+         YuiReleaseVideo();
+         YabauseDeInit();
+
+         goto YabauseSetup;
+      }
+*/
+      return -1;
+   }
+
+   if (usefullscreenonstartup)
+      VIDCore->Resize(fullscreenwidth, fullscreenheight, 1);
+   else if (usecustomwindowsize)
+      VIDCore->Resize(windowwidth, windowheight, 0);
+
+   PERDXLoadDevices(inifilename);
+
+   stop = 0;   
+
+   ScspSetVolume(sndvolume);
+
+   if (enableautofskip)
+      EnableAutoFrameSkip();
+   else
+      DisableAutoFrameSkip();
+
+//   nocorechange = 1;
+
+   while(!KillEmuThread)
+   {
+      while (!stop)
+      {
+         stopped = 0;
+
+         if (PERCore->HandleEvents() != 0)
+         {
+            YuiReleaseVideo();
+            if (YabMenu)
+               DestroyMenu(YabMenu);
+            return -1;
+         }
+         Sleep(0);
+      }
+
+      if (changecore)
+      {
+         // Update cores
+         if (changecore & 0x1)
+         {
+            if (IsPathCdrom(cdrompath))
+               Cs2ChangeCDCore(CDCORE_SPTI, cdrompath);
+            else
+               Cs2ChangeCDCore(CDCORE_ISO, cdrompath);
+            MessageBox (NULL, "Changed cd core", "Notice",  MB_OK | MB_ICONINFORMATION);
+         }
+         else if (changecore & 0x2)
+         {
+            VideoChangeCore(vidcoretype);
+            MessageBox (NULL, "Changed video core", "Notice",  MB_OK | MB_ICONINFORMATION);
+         }
+         else if (changecore & 0x4)
+         {
+            ScspChangeSoundCore(sndcoretype);
+            MessageBox (NULL, "Changed sound core", "Notice",  MB_OK | MB_ICONINFORMATION);
+         }
+
+         changecore = 0;
+         corechanged = 1;
+      }
+
+      stopped = 1;
+
+      Sleep(300);
+   }
+}
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
 int YuiInit(void)
 {
    MSG                         msg;
@@ -353,7 +543,6 @@ int YuiInit(void)
    WNDCLASS MyWndClass;
    int ret;
    int ip[4];
-   char netlinksetting[80];
    INITCOMMONCONTROLSEX iccs;
 
    memset(&iccs, 0, sizeof(INITCOMMONCONTROLSEX));
@@ -604,6 +793,8 @@ int YuiInit(void)
                          y_hInstance,          // instance
                          NULL);                // parms
 
+
+#ifndef USETHREADS
 YabauseSetup:
    memset(&yinit, 0, sizeof(yabauseinit_struct));
    yinit.percoretype = percoretype;
@@ -670,6 +861,7 @@ YabauseSetup:
    else
       DisableAutoFrameSkip();
 
+
    while (!stop)
    {
       if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
@@ -689,6 +881,34 @@ YabauseSetup:
          return -1;
       }
    }
+
+#else
+
+   KillEmuThread=0;
+   emuthread = CreateThread(NULL, 0, YabauseEmulate, &KillEmuThread, 0, NULL);
+
+   while (GetMessage(&msg,NULL,0,0))
+   {
+      if (TranslateAccelerator(YabWin, hAccel, &msg) == 0)
+      {
+         TranslateMessage(&msg);
+         DispatchMessage(&msg);
+      }
+   }
+
+   if (emuthread != INVALID_HANDLE_VALUE)
+   {
+      // If the playback thread is going
+      KillEmuThread=1;     // Set the flag telling it to stop
+      if (WaitForSingleObject(emuthread,INFINITE) == WAIT_TIMEOUT)
+      {
+         // Couldn't close thread cleanly
+         TerminateThread(emuthread,0);
+      }
+      CloseHandle(emuthread);
+      emuthread = INVALID_HANDLE_VALUE;
+   }
+#endif
 
    YuiReleaseVideo();
    if (YabMenu)
@@ -714,100 +934,116 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
          {
             case IDM_MEMTRANSFER:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "MemTransferDlg", hWnd, (DLGPROC)MemTransferDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
+               break;
+            }
+            case IDM_RUN:
+            {
+               YuiUnPause();
+               EnableMenuItem(YabMenu, IDM_RUN, MF_GRAYED);
+               EnableMenuItem(YabMenu, IDM_PAUSE, MF_ENABLED);
+               break;
+            }
+            case IDM_PAUSE:
+            {
+               YuiPause();
+               EnableMenuItem(YabMenu, IDM_PAUSE, MF_GRAYED);
+               EnableMenuItem(YabMenu, IDM_RUN, MF_ENABLED);
                break;
             }
             case IDM_RESET:
             {
+               YuiTempPause();
                YabauseReset();
+               YuiTempUnPause();
                break;
             }
             case IDM_CHEATSEARCH:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "CheatSearchDlg", hWnd, (DLGPROC)CheatSearchDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_CHEATLIST:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "CheatListDlg", hWnd, (DLGPROC)CheatListDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_SETTINGS:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "SettingsDlg", hWnd, (DLGPROC)SettingsDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_BACKUPRAMMANAGER:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "BackupRamDlg", hWnd, (DLGPROC)BackupRamDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_MSH2DEBUG:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                debugsh = MSH2;
                DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_SSH2DEBUG:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                debugsh = SSH2;
                DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_VDP1DEBUG:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "VDP1DebugDlg", hWnd, (DLGPROC)VDP1DebugDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_VDP2DEBUG:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "VDP2DebugDlg", hWnd, (DLGPROC)VDP2DebugDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_M68KDEBUG:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "M68KDebugDlg", hWnd, (DLGPROC)M68KDebugDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_SCUDSPDEBUG:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "SCUDSPDebugDlg", hWnd, (DLGPROC)SCUDSPDebugDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_SCSPDEBUG:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "SCSPDebugDlg", hWnd, (DLGPROC)SCSPDebugDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_MEMORYEDITOR:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "MemoryEditorDlg", hWnd, (DLGPROC)MemoryEditorDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
             case IDM_TOGGLEFULLSCREEN:
@@ -944,9 +1180,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             }
             case IDM_ABOUT:
             {
-               ScspMuteAudio();
+               YuiTempPause();
                DialogBox(y_hInstance, "AboutDlg", hWnd, (DLGPROC)AboutDlgProc);
-               ScspUnMuteAudio();
+               YuiTempUnPause();
                break;
             }
          }
@@ -966,6 +1202,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
              SpeedThrottleDisable();
          return 0L;
       }
+#ifndef USETHREADS
       case WM_ENTERMENULOOP:
       {
          ScspMuteAudio();
@@ -976,6 +1213,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
          ScspUnMuteAudio();
          return 0L;
       }
+#endif
       case WM_MOVE:
       {
          RECT rect;
@@ -988,6 +1226,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       case WM_CLOSE:
       {
          stop = 1;
+         PostQuitMessage(0);
          return 0L;
       }
       case WM_SIZE:
@@ -1003,10 +1242,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
          return 0L;
       }
       case WM_DESTROY:
-      {
-         PostQuitMessage(0);
          return 0L;
-      }
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);

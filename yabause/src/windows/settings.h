@@ -65,4 +65,7 @@ extern int netlinkport;
 extern int uselog;
 extern int logtype;
 extern int nocorechange;
-
+#ifdef USETHREADS
+extern int changecore;
+extern int corechanged;
+#endif

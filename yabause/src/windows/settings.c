@@ -67,6 +67,10 @@ int netlinkport=7845;
 int uselog=0;
 int logtype=0;
 int nocorechange = 0;
+#ifdef USETHREADS
+int changecore = 0;
+int corechanged = 0;
+#endif
 
 extern HINSTANCE y_hInstance;
 extern VideoInterface_struct *VIDCoreList[];
@@ -829,10 +833,16 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                if (cdromchanged && nocorechange == 0)
                {
+#ifndef USETHREADS
                   if (IsPathCdrom(cdrompath))
                      Cs2ChangeCDCore(CDCORE_SPTI, cdrompath);
                   else
                      Cs2ChangeCDCore(CDCORE_ISO, cdrompath);
+#else
+                  corechanged = 0;
+                  changecore |= 1;
+                  while (corechanged == 0) { Sleep(0); }
+#endif
                }
 
                EndDialog(hDlg, TRUE);
@@ -1035,7 +1045,15 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // Re-initialize Video
                if (vidcorechanged && nocorechange == 0)
+               {
+#ifndef USETHREADS
                   VideoChangeCore(vidcoretype);
+#else
+                  corechanged = 0;
+                  changecore |= 2;
+                  while (corechanged == 0) { Sleep(0); }
+#endif
+               }
 
                if (VIDCore && !VIDCore->IsFullscreen() && usecustomwindowsize)
                   VIDCore->Resize(windowwidth, windowheight, 0);
@@ -1121,7 +1139,16 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                sprintf(tempstr, "%d", sndvolume);
                WritePrivateProfileString("Sound", "Volume", tempstr, inifilename);
                if (sndcorechanged && nocorechange == 0)
+               {
+#ifndef USETHREADS
                   ScspChangeSoundCore(sndcoretype);
+#else
+                  corechanged = 0;
+                  changecore |= 4;
+                  while (corechanged == 0) { Sleep(0); }
+#endif
+               }
+
                ScspSetVolume(sndvolume);
                return TRUE;
             }
