@@ -2410,11 +2410,11 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
    // Check for interlace
    switch ((TVMD >> 6) & 0x3)
    {
-      case 2: // Single-density Interlace
       case 3: // Double-density Interlace
          height *= 2;
          hratio = 2;
          break;
+      case 2: // Single-density Interlace
       case 0: // Non-interlace
       default: break;
    }
