@@ -365,7 +365,7 @@ void Vdp2VBlankOUT(void) {
       curticks = YabauseGetTicks();
       diffticks = curticks-lastticks;
 
-      if ((onesecondticks+diffticks) > (yabsys.OneFrameTime * (u64)framecount) &&
+      if ((onesecondticks+diffticks) > ((yabsys.OneFrameTime * (u64)framecount) + (yabsys.OneFrameTime / 2)) &&
           framesskipped < 9)
       {
          // Skip the next frame
@@ -374,7 +374,7 @@ void Vdp2VBlankOUT(void) {
          // How many frames should we skip?
          framestoskip = 1;
       }
-      else if ((onesecondticks+diffticks) < (yabsys.OneFrameTime * (u64)framecount))
+      else if ((onesecondticks+diffticks) < ((yabsys.OneFrameTime * (u64)framecount) - (yabsys.OneFrameTime / 2)))
       {
          // Check to see if we need to limit speed at all
          for (;;)
