@@ -321,7 +321,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr += 2;
 
                //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
-               if ((dot == 0) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
+               if (!(dot & 0x8000) && !SPD) *texture->textdata++ = COLOR_ADD(0, vdp1cor, vdp1cog, vdp1cob);
                else *texture->textdata++ = COLOR_ADD(SAT2YAB1(alpha, dot), vdp1cor, vdp1cog, vdp1cob);
             }
             texture->textdata += texture->w;

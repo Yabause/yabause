@@ -485,12 +485,12 @@ int Cs2ChangeCDCore(int coreid, const char *cdpath)
 
    if (Cs2Area->cdi->Init(cdpath) != 0)
    {
+      // This might be helpful.
+      YabSetError(YAB_ERR_CANNOTINIT, (void *)Cs2Area->cdi->Name);
+
       // Since it failed, instead of it being fatal, we'll just use the dummy
       // core instead
       Cs2Area->cdi = &DummyCD;
-
-      // This might be helpful though.
-      YabSetError(YAB_ERR_CANNOTINIT, (void *)Cs2Area->cdi->Name);
    }
 
    Cs2Area->isdiskchanged = 1;

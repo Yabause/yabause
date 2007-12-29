@@ -344,7 +344,10 @@ int ISOCDInit(const char * iso) {
       return -1;
 
    if (!(isofile = fopen(iso, "rb")))
+   {
+      YabSetError(YAB_ERR_FILENOTFOUND, (char *)iso);
       return -1;
+   }
 
    fread((void *)header, 1, 6, isofile);
 
