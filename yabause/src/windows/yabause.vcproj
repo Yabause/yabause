@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-                                PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_IE=0x400;_WIN32_WINNT=0x400;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.9.2\&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_IE=0x400;_WIN32_WINNT=0x400;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.9.2\&quot;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -117,7 +117,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-                                PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.9.2\&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.9.2\&quot;"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -183,35 +183,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\cd-windows.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						WarningLevel="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						WarningLevel="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\cdbase.c"
 				>
 			</File>
 			<File
 				RelativePath="..\cheat.c"
-				>
-			</File>
-			<File
-				RelativePath=".\cheats.c"
 				>
 			</File>
 			<File
@@ -239,10 +215,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\hexedit.c"
-				>
-			</File>
-			<File
 				RelativePath="..\m68kcore.c"
 				>
 			</File>
@@ -259,10 +231,6 @@
 				>
 			</File>
 			<File
-				RelativePath="perdx.c"
-				>
-			</File>
-			<File
 				RelativePath="..\peripheral.c"
 				>
 			</File>
@@ -276,10 +244,6 @@
 			</File>
 			<File
 				RelativePath="..\scu.c"
-				>
-			</File>
-			<File
-				RelativePath="settings.c"
 				>
 			</File>
 			<File
@@ -300,10 +264,6 @@
 			</File>
 			<File
 				RelativePath="..\smpc.c"
-				>
-			</File>
-			<File
-				RelativePath="snddx.c"
 				>
 			</File>
 			<File
@@ -334,14 +294,58 @@
 				RelativePath="..\ygl.c"
 				>
 			</File>
-			<File
-				RelativePath="yui.c"
+			<Filter
+				Name="windows specific"
 				>
-			</File>
-			<File
-				RelativePath=".\yuidebug.c"
-				>
-			</File>
+				<File
+					RelativePath="..\cd-windows.c"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							WarningLevel="2"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							WarningLevel="2"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\cheats.c"
+					>
+				</File>
+				<File
+					RelativePath=".\hexedit.c"
+					>
+				</File>
+				<File
+					RelativePath="perdx.c"
+					>
+				</File>
+				<File
+					RelativePath="settings.c"
+					>
+				</File>
+				<File
+					RelativePath="snddx.c"
+					>
+				</File>
+				<File
+					RelativePath="yui.c"
+					>
+				</File>
+				<File
+					RelativePath=".\yuidebug.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -362,10 +366,6 @@
 			</File>
 			<File
 				RelativePath="..\cheat.h"
-				>
-			</File>
-			<File
-				RelativePath=".\cheats.h"
 				>
 			</File>
 			<File
@@ -397,10 +397,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\hexedit.h"
-				>
-			</File>
-			<File
 				RelativePath="..\m68kcore.h"
 				>
 			</File>
@@ -413,10 +409,6 @@
 				>
 			</File>
 			<File
-				RelativePath="perdx.h"
-				>
-			</File>
-			<File
 				RelativePath="..\peripheral.h"
 				>
 			</File>
@@ -425,19 +417,11 @@
 				>
 			</File>
 			<File
-				RelativePath="resource.h"
-				>
-			</File>
-			<File
 				RelativePath="..\scsp.h"
 				>
 			</File>
 			<File
 				RelativePath="..\scu.h"
-				>
-			</File>
-			<File
-				RelativePath="settings.h"
 				>
 			</File>
 			<File
@@ -458,10 +442,6 @@
 			</File>
 			<File
 				RelativePath="..\smpc.h"
-				>
-			</File>
-			<File
-				RelativePath="snddx.h"
 				>
 			</File>
 			<File
@@ -496,10 +476,38 @@
 				RelativePath="..\yui.h"
 				>
 			</File>
-			<File
-				RelativePath=".\yuidebug.h"
+			<Filter
+				Name="windows specific"
 				>
-			</File>
+				<File
+					RelativePath=".\cheats.h"
+					>
+				</File>
+				<File
+					RelativePath=".\hexedit.h"
+					>
+				</File>
+				<File
+					RelativePath="perdx.h"
+					>
+				</File>
+				<File
+					RelativePath="resource.h"
+					>
+				</File>
+				<File
+					RelativePath="settings.h"
+					>
+				</File>
+				<File
+					RelativePath="snddx.h"
+					>
+				</File>
+				<File
+					RelativePath=".\yuidebug.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
