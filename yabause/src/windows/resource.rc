@@ -733,11 +733,7 @@ END
 
 //////////////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
-IDI_ICON        ICON    DISCARDABLE     "..\\logo.ico"
-#else
-IDI_ICON        ICON    DISCARDABLE     "../logo.ico"
-#endif
+IDI_ICON        ICON    DISCARDABLE     "logo.ico"
 IDB_BITMAP      BITMAP  DISCARDABLE     "yabause_logo.bmp"
 
 //////////////////////////////////////////////////////////////////////////////
