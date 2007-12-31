@@ -138,6 +138,8 @@
 #define IDC_BUPDATEET                   1011
 #define IDC_CODEDESC                    1011
 #define IDC_SIGNEDRB                    1011
+#define IDC_RBG0ENABCB2                 1011
+#define IDC_DISPENABCB                  1011
 #define IDC_CHECKBOX5                   1012
 #define IDC_MPEGROMBROWSE               1012
 #define IDC_DOWNPB                      1012
@@ -149,7 +151,6 @@
 #define IDC_CODEVAL                     1013
 #define IDC_CARTEDIT                    1014
 #define IDC_RIGHTPB                     1014
-#define IDC_RBG0ET2                     1014
 #define IDC_VDP2GENET                   1014
 #define IDC_CARTBROWSE                  1015
 #define IDC_LPB                         1015

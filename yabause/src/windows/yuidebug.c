@@ -1025,6 +1025,19 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             // disabled
             SendMessage(GetDlgItem(hDlg, IDC_RBG0ENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
 
+         Vdp2DebugStatsGeneral(tempstr, &isscrenabled);
+
+         if (isscrenabled)
+         {
+            // enabled
+            SendMessage(GetDlgItem(hDlg, IDC_DISPENABCB), BM_SETCHECK, BST_CHECKED, 0);
+            SetDlgItemText(hDlg, IDC_VDP2GENET, tempstr);
+         }
+         else
+            // disabled
+            SendMessage(GetDlgItem(hDlg, IDC_DISPENABCB), BM_SETCHECK, BST_UNCHECKED, 0);
+
+
          return TRUE;
       }
       case WM_COMMAND:
