@@ -386,6 +386,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG1(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG2(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG3(char *outstring, int *isenabled);
+void Vdp2DebugStatsGeneral(char *outstring, int *isenabled);
 
 void ToggleNBG0(void);
 void ToggleNBG1(void);
