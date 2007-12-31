@@ -290,10 +290,10 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          switch (LOWORD(wParam))
          {
             case IDC_ADDAR:
-               DialogBox(y_hInstance, "AddARCodeDlg", hDlg, (DLGPROC)AddARCodeDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_ADDARCODE), hDlg, (DLGPROC)AddARCodeDlgProc);
                break;
             case IDC_ADDRAWMEMADDR:
-               DialogBox(y_hInstance, "AddCodeDlg", hDlg, (DLGPROC)AddCodeDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_ADDCODE), hDlg, (DLGPROC)AddCodeDlgProc);
                break;
             case IDC_ADDFROMFILE:
                // do an open file dialog here

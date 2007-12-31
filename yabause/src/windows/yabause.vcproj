@@ -515,7 +515,15 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
+				RelativePath=".\logo.ico"
+				>
+			</File>
+			<File
 				RelativePath="resource.rc"
+				>
+			</File>
+			<File
+				RelativePath=".\yabause_logo.bmp"
 				>
 			</File>
 		</Filter>

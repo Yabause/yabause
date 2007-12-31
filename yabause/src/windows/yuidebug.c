@@ -142,18 +142,18 @@ void YuiErrorMsg(const char *string)
    // This sucks, but until YuiErrorMsg is changed around, this will have to do
    if (strncmp(string, "Master SH2 invalid opcode", 25) == 0)
    {
-      if (DialogBoxParam(y_hInstance, "ErrorDebugDlg", NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
+      if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_ERRORDEBUG), NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
       {
          debugsh = MSH2;
-         DialogBox(y_hInstance, "SH2DebugDlg", NULL, (DLGPROC)SH2DebugDlgProc);
+         DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), NULL, (DLGPROC)SH2DebugDlgProc);
       }
    }
    else if (strncmp(string, "Slave SH2 invalid opcode", 24) == 0)
    {
-      if (DialogBoxParam(y_hInstance, "ErrorDebugDlg", NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
+      if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_ERRORDEBUG), NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
       {
          debugsh = SSH2;
-         DialogBox(y_hInstance, "SH2DebugDlg", NULL, (DLGPROC)SH2DebugDlgProc);
+         DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), NULL, (DLGPROC)SH2DebugDlgProc);
       }
    }
    else
@@ -437,7 +437,7 @@ void SH2BreakpointHandler (SH2_struct *context, u32 addr)
    MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
 
    debugsh = context;
-   DialogBox(y_hInstance, "SH2DebugDlg", YabWin, (DLGPROC)SH2DebugDlgProc);
+   DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), YabWin, (DLGPROC)SH2DebugDlgProc);
    ScspUnMuteAudio();
 }
 
@@ -511,12 +511,12 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_MEMTRANSFER:
             {
-               DialogBox(y_hInstance, "MemTransferDlg", hDlg, (DLGPROC)MemTransferDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_MEMTRANSFER), hDlg, (DLGPROC)MemTransferDlgProc);
                break;
             }
             case IDC_MEMEDITOR:
             {
-               DialogBox(y_hInstance, "MemoryEditorDlg", hDlg, (DLGPROC)MemoryEditorDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_MEMORYEDITOR), hDlg, (DLGPROC)MemoryEditorDlgProc);
                break;
             }
             case IDC_ADDBP1:
@@ -711,7 +711,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         memaddr = sh2regs.PC;
                      }
 
-                     if (DialogBox(GetModuleHandle(0), "MemDlg", hDlg, (DLGPROC)MemDlgProc) != FALSE)
+                     if (DialogBox(GetModuleHandle(0), MAKEINTRESOURCE(IDD_MEM), hDlg, (DLGPROC)MemDlgProc) != FALSE)
                      {
                         if (cursel < 16)
                         {
@@ -1095,7 +1095,7 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
 void M68KBreakpointHandler (u32 addr)
 {
    MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
-   DialogBox(y_hInstance, "M68KDebugDlg", YabWin, (DLGPROC)M68KDebugDlgProc);
+   DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_M68KDEBUG), YabWin, (DLGPROC)M68KDebugDlgProc);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1257,7 +1257,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         default: break;
                      }
 
-                     if (DialogBox(y_hInstance, "MemDlg", hDlg, (DLGPROC)MemDlgProc) == TRUE)
+                     if (DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_MEM), hDlg, (DLGPROC)MemDlgProc) == TRUE)
                      {
                         switch (cursel)
                         {
@@ -1411,7 +1411,7 @@ void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
 void SCUDSPBreakpointHandler (u32 addr)
 {
    MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
-   DialogBox(y_hInstance, "SCUDSPDebugDlg", YabWin, (DLGPROC)SCUDSPDebugDlgProc);
+   DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SCUDSPDEBUG), YabWin, (DLGPROC)SCUDSPDebugDlgProc);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1979,7 +1979,7 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                u32 addr=0x06000000;
 
-               if (DialogBoxParam(y_hInstance, "GotoAddressDlg", hDlg, (DLGPROC)GotoAddressDlgProc, (LPARAM)&addr) == TRUE)
+               if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_GOTOADDRESS), hDlg, (DLGPROC)GotoAddressDlgProc, (LPARAM)&addr) == TRUE)
                {
                   SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GOTOADDRESS, 0, addr);
                   SendMessage(hDlg, WM_NEXTDLGCTL, IDC_HEXEDIT, TRUE);
@@ -1990,12 +1990,12 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                searcharg.startaddr = SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GETCURADDRESS, 0, 0);
                
-               if (DialogBoxParam(y_hInstance, "SearchMemoryDlg", hDlg,
+               if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_SEARCHMEMORY), hDlg,
                                   (DLGPROC)SearchMemoryDlgProc,
                                   (LPARAM)&searcharg) == TRUE)
                {
                   // Open up searching dialog
-                  if (DialogBoxParam(y_hInstance, "SearchBusyDlg", hDlg,
+                  if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_SEARCHBUSY), hDlg,
                                      (DLGPROC)SearchBusyDlgProc,
                                      (LPARAM)&searcharg) == TRUE)
                   {

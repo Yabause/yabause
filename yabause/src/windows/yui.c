@@ -446,7 +446,7 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
       {
          nocorechange = 1;
 
-         if (DialogBox(GetModuleHandle(NULL), "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+         if (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
          {
             // exit program with error
             MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
@@ -568,7 +568,7 @@ int YuiInit(void)
       nocorechange = 1;
 
       // Startup Settings Configuration
-      if (DialogBox(y_hInstance, "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+      if (DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
       {
          // exit program with error
          MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
@@ -722,7 +722,7 @@ int YuiInit(void)
             if ((logbuffer = (char *)malloc(logsize)) == NULL)
                break;
             LogWin = CreateDialog(y_hInstance,
-                                  "LogDlg",
+                                  MAKEINTRESOURCE(IDD_LOG),
                                   NULL,
                                   (DLGPROC)LogDlgProc);
             GetWindowRect(LogWin, &rect);
@@ -830,7 +830,7 @@ YabauseSetup:
       {
          nocorechange = 1;
 
-         if (DialogBox(GetModuleHandle(NULL), "SettingsDlg", NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+         if (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
          {
             // exit program with error
             MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
@@ -935,7 +935,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_MEMTRANSFER:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "MemTransferDlg", hWnd, (DLGPROC)MemTransferDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_MEMTRANSFER), hWnd, (DLGPROC)MemTransferDlgProc);
                YuiTempUnPause();
                break;
             }
@@ -963,28 +963,28 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_CHEATSEARCH:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "CheatSearchDlg", hWnd, (DLGPROC)CheatSearchDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_CHEATSEARCH), hWnd, (DLGPROC)CheatSearchDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_CHEATLIST:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "CheatListDlg", hWnd, (DLGPROC)CheatListDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_CHEATLIST), hWnd, (DLGPROC)CheatListDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_SETTINGS:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "SettingsDlg", hWnd, (DLGPROC)SettingsDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), hWnd, (DLGPROC)SettingsDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_BACKUPRAMMANAGER:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "BackupRamDlg", hWnd, (DLGPROC)BackupRamDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_BACKUPRAM), hWnd, (DLGPROC)BackupRamDlgProc);
                YuiTempUnPause();
                break;
             }
@@ -992,7 +992,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             {
                YuiTempPause();
                debugsh = MSH2;
-               DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), hWnd, (DLGPROC)SH2DebugDlgProc);
                YuiTempUnPause();
                break;
             }
@@ -1000,49 +1000,49 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             {
                YuiTempPause();
                debugsh = SSH2;
-               DialogBox(y_hInstance, "SH2DebugDlg", hWnd, (DLGPROC)SH2DebugDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), hWnd, (DLGPROC)SH2DebugDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_VDP1DEBUG:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "VDP1DebugDlg", hWnd, (DLGPROC)VDP1DebugDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_VDP1DEBUG), hWnd, (DLGPROC)VDP1DebugDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_VDP2DEBUG:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "VDP2DebugDlg", hWnd, (DLGPROC)VDP2DebugDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_VDP2DEBUG), hWnd, (DLGPROC)VDP2DebugDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_M68KDEBUG:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "M68KDebugDlg", hWnd, (DLGPROC)M68KDebugDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_M68KDEBUG), hWnd, (DLGPROC)M68KDebugDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_SCUDSPDEBUG:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "SCUDSPDebugDlg", hWnd, (DLGPROC)SCUDSPDebugDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SCUDSPDEBUG), hWnd, (DLGPROC)SCUDSPDebugDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_SCSPDEBUG:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "SCSPDebugDlg", hWnd, (DLGPROC)SCSPDebugDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SCSPDEBUG), hWnd, (DLGPROC)SCSPDebugDlgProc);
                YuiTempUnPause();
                break;
             }
             case IDM_MEMORYEDITOR:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "MemoryEditorDlg", hWnd, (DLGPROC)MemoryEditorDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_MEMORYEDITOR), hWnd, (DLGPROC)MemoryEditorDlgProc);
                YuiTempUnPause();
                break;
             }
@@ -1181,7 +1181,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_ABOUT:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, "AboutDlg", hWnd, (DLGPROC)AboutDlgProc);
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hWnd, (DLGPROC)AboutDlgProc);
                YuiTempUnPause();
                break;
             }

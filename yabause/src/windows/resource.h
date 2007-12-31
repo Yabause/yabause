@@ -1,200 +1,187 @@
-/*  Copyright 2004-2006 Theo Berkau
-
-    This file is part of Yabause.
-
-    Yabause is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    Yabause is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
-
-#define IDR_MENU             10000
-#define IDI_ICON             10001
-#define IDB_BITMAP           10002
-#define IDR_MAIN_ACCEL       10003
-#define IDM_CHOOSEBIOS       10004
-#define IDM_CHOOSECDROM      10005
-#define IDM_MEMTRANSFER      10006
-#define IDM_RUN              10007
-#define IDM_PAUSE            10008
-#define IDM_RESET            10009
-#define IDM_BACKUPRAMMANAGER 10010
-#define IDM_SETTINGS         10011
-#define IDM_SAVESTATEAS      10012
-#define IDM_LOADSTATEAS      10013
-#define IDM_EXIT             10014
-#define IDM_CHEATSEARCH      10020
-#define IDM_CHEATLIST        10021
-#define IDM_MSH2DEBUG        10030
-#define IDM_SSH2DEBUG        10031
-#define IDM_VDP1DEBUG        10032
-#define IDM_VDP2DEBUG        10033
-#define IDM_M68KDEBUG        10034
-#define IDM_SCUDSPDEBUG      10035
-#define IDM_SCSPDEBUG        10036
-#define IDM_SMPCDEBUG        10037
-#define IDM_MEMORYEDITOR     10038
-#define IDM_TOGGLEFULLSCREEN 10040
-#define IDM_TOGGLENBG0       10041
-#define IDM_TOGGLENBG1       10042
-#define IDM_TOGGLENBG2       10043
-#define IDM_TOGGLENBG3       10044
-#define IDM_TOGGLERBG0       10045
-#define IDM_TOGGLEVDP1       10046
-#define IDM_TOGGLEFPS        10047
-#define IDM_WEBSITE          10050
-#define IDM_FORUM            10051
-#define IDM_SUBMITBUGREPORT  10052
-#define IDM_DONATE           10053
-#define IDM_COMPATLIST       10054
-#define IDM_ABOUT            10055
-#define IDM_SAVESTATE_F2     10060
-#define IDM_SAVESTATE_F3     10061
-#define IDM_SAVESTATE_F4     10062
-#define IDM_SAVESTATE_F5     10063
-#define IDM_SAVESTATE_F6     10064
-#define IDM_SAVESTATE_F7     10065
-#define IDM_SAVESTATE_F8     10066
-#define IDM_SAVESTATE_F9     10067
-#define IDM_SAVESTATE_F10    10068
-#define IDM_LOADSTATE_F2     10069
-#define IDM_LOADSTATE_F3     10070
-#define IDM_LOADSTATE_F4     10071
-#define IDM_LOADSTATE_F5     10072
-#define IDM_LOADSTATE_F6     10073
-#define IDM_LOADSTATE_F7     10074
-#define IDM_LOADSTATE_F8     10075
-#define IDM_LOADSTATE_F9     10076
-#define IDM_LOADSTATE_F10    10077
-
+//{{NO_DEPENDENCIES}}
+// Microsoft Visual C++ generated include file.
+// Used by resource.rc
+//
+#define IDR_MENU                        100
+#define IDI_ICON                        101
+#define IDB_BITMAP                      102
+#define IDR_MAIN_ACCEL                  103
+#define IDD_MEMTRANSFER                 104
+#define IDD_MEM                         105
+#define IDD_SH2DEBUG                    106
+#define IDD_VDP1DEBUG                   107
+#define IDD_VDP2DEBUG                   108
+#define IDD_M68KDEBUG                   109
+#define IDD_SCUDSPDEBUG                 110
+#define IDD_SCSPDEBUG                   111
+#define IDD_GOTOADDRESS                 112
+#define IDD_SEARCHMEMORY                113
+#define IDD_SEARCHBUSY                  114
+#define IDD_MEMORYEDITOR                115
+#define IDD_SETTINGS                    116
+#define IDD_BASICSETTINGS               117
+#define IDD_VIDEOSETTINGS               118
+#define IDD_SOUNDSETTINGS               119
+#define IDD_NETLINKSETTINGS             120
+#define IDD_INPUTSETTINGS               121
+#define IDD_PADCONFIG                   122
+#define IDD_BUTTONCONFIG                123
+#define IDD_LOGSETTINGS                 124
+#define IDD_ADDARCODE                   125
+#define IDD_ADDCODE                     126
+#define IDD_CHEATLIST                   127
+#define IDD_CHEATSEARCH                 128
+#define IDD_LOG                         129
+#define IDD_BACKUPRAM                   130
+#define IDD_ERRORDEBUG                  131
+#define IDD_ABOUT                       132
 #define IDC_EDITTEXT1                   1001
-#define IDC_EDITTEXT2                   1002
-#define IDC_EDITTEXT3                   1003
-
-#define IDC_LISTBOX1                    1004
-#define IDC_LISTBOX2                    1005
-#define IDC_LISTBOX3                    1006
-#define IDC_LISTBOX4                    1007
-
-#define IDC_CHECKBOX1                   1008
-#define IDC_CHECKBOX2                   1009
-#define IDC_CHECKBOX3                   1010
-#define IDC_CHECKBOX4                   1011
-#define IDC_CHECKBOX5                   1012
-                                            
-#define IDC_STATUSBAR                   1020
-
-#define IDC_STEP                        1025
-#define IDC_STEPOVER                    1026
-#define IDC_MEMTRANSFER                 1027
-#define IDC_MEMEDITOR                   1028
-
-#define IDC_ADDBP1                      1040
-#define IDC_DELBP1                      1041
-
-#define IDC_ADDBP2                      1042
-#define IDC_DELBP2                      1043
-
-#define IDC_CHKREAD                     1044
-#define IDC_CHKWRITE                    1045
-#define IDC_CHKBYTE1                    1046
-#define IDC_CHKWORD1                    1047
-#define IDC_CHKLONG1                    1048
-#define IDC_CHKBYTE2                    1049
-#define IDC_CHKWORD2                    1050
-#define IDC_CHKLONG2                    1051
-
-#define IDC_BROWSE                      1060
-#define IDC_DOWNLOADMEM                 1061
-#define IDC_UPLOADMEM                   1062
-
-//////////////////////////////////////////////////////////////////////////////
-// Settings stuff
-
-#define IDC_SETTINGSTAB                 1020
-
-//////////////////////////////////////////////////////////////////////////////
-// Basic Settings stuff
-
 #define IDC_DISCTYPECB                  1001
-#define IDC_DRIVELETTERCB               1002
-#define IDC_IMAGEEDIT                   1003
-#define IDC_IMAGEBROWSE                 1004
-
-//#define IDC_BIOSLANGCB                  1005
-#define IDC_SH2CORECB                   1005
-
-#define IDC_REGIONCB                    1006
-
-#define IDC_BIOSEDIT                    1007
-#define IDC_BIOSBROWSE                  1008
-
-#define IDC_BACKUPRAMEDIT               1009
-#define IDC_BACKUPRAMBROWSE             1010
-
-#define IDC_MPEGROMEDIT                 1011
-#define IDC_MPEGROMBROWSE               1012
-
-#define IDC_CARTTYPECB                  1013
-#define IDC_CARTEDIT                    1014
-#define IDC_CARTBROWSE                  1015
-
-//////////////////////////////////////////////////////////////////////////////
-// Video Settings stuff
-
 #define IDC_VIDEOCORECB                 1001
-#define IDC_FULLSCREENSTARTUPCB         1002
-#define IDC_AUTOFRAMESKIPCB             1003
-#define IDC_FSSIZECB                    1004
-#define IDC_CUSTOMWINDOWCB              1005
-#define IDC_WIDTHEDIT                   1006
-#define IDC_HEIGHTEDIT                  1007
-
-//////////////////////////////////////////////////////////////////////////////
-// Sound Settings stuff
-
 #define IDC_SOUNDCORECB                 1001
-#define IDC_SLVOLUME                    1002
-
-//////////////////////////////////////////////////////////////////////////////
-// Netlink Settings stuff
-
 #define IDC_LOCALREMOTEIP               1001
-#define IDC_PORTET                      1002
-
-//////////////////////////////////////////////////////////////////////////////
-// Input Settings stuff
-
 #define IDC_PAD1PB                      1001
+#define IDC_USELOGCB                    1001
+#define IDC_LOGET                       1001
+#define IDC_VDP1CMDLB                   1001
+#define IDC_NBG0ENABCB                  1001
+#define IDC_SCSPSLOTCB                  1001
+#define IDC_HEXEDIT                     1001
+#define IDC_SPECIFYADDRRB               1001
+#define IDC_SEARCHTYPECB                1001
+#define IDC_BUPDEVICECB                 1001
+#define IDC_CHEATLIST                   1001
+#define IDC_EDTEXT                      1001
+#define IDC_VERSIONTEXT                 1001
+#define IDC_EDITTEXT2                   1002
+#define IDC_DRIVELETTERCB               1002
+#define IDC_FULLSCREENSTARTUPCB         1002
+#define IDC_SLVOLUME                    1002
+#define IDC_PORTET                      1002
 #define IDC_PAD2PB                      1002
-
+#define IDC_LOGTYPECB                   1002
+#define IDC_SAVELOGBT                   1002
+#define IDC_VDP1CMDET                   1002
+#define IDC_NBG0ET                      1002
+#define IDC_SCSPSLOTET                  1002
+#define IDC_GOTOADDRESS                 1002
+#define IDC_PRESETADDRRB                1002
+#define IDC_SEARCHMEMET                 1002
+#define IDC_BUPSAVELB                   1002
+#define IDC_DELETECODE                  1002
+#define IDC_EXACTRB                     1002
+#define IDC_EDCONTINUE                  1002
+#define IDC_EDITTEXT3                   1003
+#define IDC_IMAGEEDIT                   1003
+#define IDC_AUTOFRAMESKIPCB             1003
+#define IDC_LOGFILENAMEET               1003
+#define IDC_CLEARBT                     1003
+#define IDC_VDP1TEXTET                  1003
+#define IDC_NBG1ENABCB                  1003
+#define IDC_SCSPSLOTSAVE                1003
+#define IDC_SAVESEL                     1003
+#define IDC_OFFSETET                    1003
+#define IDC_SEARCHPB                    1003
+#define IDC_BUPFREESPACELT              1003
+#define IDC_CLEARCODES                  1003
+#define IDC_LESSTHANRB                  1003
+#define IDC_EDDEBUG                     1003
+#define IDC_LISTBOX1                    1004
+#define IDC_IMAGEBROWSE                 1004
+#define IDC_FSSIZECB                    1004
+#define IDC_LOGBROWSEBT                 1004
+#define IDC_NBG1ET                      1004
+#define IDC_SCSPSLOTREGSAVE             1004
+#define IDC_SEARCHMEM                   1004
+#define IDC_PRESETLISTCB                1004
+#define IDC_SEARCHSTARTADDRET           1004
+#define IDC_BUPDELETEBT                 1004
+#define IDC_ADDAR                       1004
+#define IDC_GREATERTHANRB               1004
+#define IDC_LISTBOX2                    1005
+#define IDC_SH2CORECB                   1005
+#define IDC_CUSTOMWINDOWCB              1005
+#define IDC_NBG2ENABCB                  1005
+#define IDC_SCSPCOMMONREGET             1005
+#define IDC_SEARCHENDADDRET             1005
+#define IDC_BUPFORMATBT                 1005
+#define IDC_ADDRAWMEMADDR               1005
+#define IDC_LISTBOX3                    1006
+#define IDC_REGIONCB                    1006
+#define IDC_WIDTHEDIT                   1006
+#define IDC_NBG2ET                      1006
+#define IDC_BUPIMPORTBT                 1006
+#define IDC_ADDFROMFILE                 1006
+#define IDC_LISTBOX4                    1007
+#define IDC_BIOSEDIT                    1007
+#define IDC_HEIGHTEDIT                  1007
+#define IDC_NBG3ENABCB                  1007
+#define IDC_BUPEXPORTBT                 1007
+#define IDC_CHECKBOX1                   1008
+#define IDC_BIOSBROWSE                  1008
+#define IDC_NBG3ET                      1008
+#define IDC_BUPFILENAMEET               1008
+#define IDC_CHECKBOX2                   1009
+#define IDC_BACKUPRAMEDIT               1009
+#define IDC_RBG0ENABCB                  1009
+#define IDC_BUPCOMMENTET                1009
+#define IDC_CHECKBOX3                   1010
+#define IDC_BACKUPRAMBROWSE             1010
 #define IDC_DXDEVICECB                  1010
+#define IDC_RBG0ET                      1010
+#define IDC_BUPLANGUAGEET               1010
+#define IDC_CODE                        1010
+#define IDC_UNSIGNEDRB                  1010
+#define IDC_CHECKBOX4                   1011
+#define IDC_MPEGROMEDIT                 1011
 #define IDC_UPPB                        1011
+#define IDC_BUPDATEET                   1011
+#define IDC_CODEDESC                    1011
+#define IDC_SIGNEDRB                    1011
+#define IDC_CHECKBOX5                   1012
+#define IDC_MPEGROMBROWSE               1012
 #define IDC_DOWNPB                      1012
+#define IDC_BUPDATASIZEET               1012
+#define IDC_CODEADDR                    1012
+#define IDC_CARTTYPECB                  1013
 #define IDC_LEFTPB                      1013
+#define IDC_BUPBLOCKSIZEET              1013
+#define IDC_CODEVAL                     1013
+#define IDC_CARTEDIT                    1014
 #define IDC_RIGHTPB                     1014
+#define IDC_RBG0ET2                     1014
+#define IDC_VDP2GENET                   1014
+#define IDC_CARTBROWSE                  1015
 #define IDC_LPB                         1015
+#define IDC_CTENABLE                    1015
+#define IDC_8BITRB                      1015
 #define IDC_RPB                         1016
+#define IDC_CTBYTEWRITE                 1016
+#define IDC_16BITRB                     1016
 #define IDC_STARTPB                     1017
+#define IDC_CTWORDWRITE                 1017
+#define IDC_32BITRB                     1017
 #define IDC_APB                         1018
+#define IDC_CTLONGWRITE                 1018
 #define IDC_BPB                         1019
+#define IDC_STATUSBAR                   1020
+#define IDC_SETTINGSTAB                 1020
 #define IDC_CPB                         1020
+#define IDC_CHEATSEARCHET               1020
 #define IDC_XPB                         1021
+#define IDC_CTSEARCHRESTARTBT           1021
 #define IDC_YPB                         1022
+#define IDC_CTSEARCHBT                  1022
 #define IDC_ZPB                         1023
+#define IDC_CTADDCHEATBT                1023
 #define IDC_UPTEXT                      1024
+#define IDC_STEP                        1025
 #define IDC_DOWNTEXT                    1025
+#define IDC_STEPOVER                    1026
 #define IDC_LEFTTEXT                    1026
+#define IDC_MEMTRANSFER                 1027
 #define IDC_RIGHTTEXT                   1027
+#define IDC_MEMEDITOR                   1028
 #define IDC_LTEXT                       1028
 #define IDC_RTEXT                       1029
 #define IDC_STARTTEXT                   1030
@@ -204,150 +191,85 @@
 #define IDC_XTEXT                       1034
 #define IDC_YTEXT                       1035
 #define IDC_ZTEXT                       1036
-
 #define IDC_CUSTOMCANCEL                1037
+#define IDC_ADDBP1                      1040
+#define IDC_DELBP1                      1041
+#define IDC_ADDBP2                      1042
+#define IDC_DELBP2                      1043
+#define IDC_CHKREAD                     1044
+#define IDC_CHKWRITE                    1045
+#define IDC_CHKBYTE1                    1046
+#define IDC_CHKWORD1                    1047
+#define IDC_CHKLONG1                    1048
+#define IDC_CHKBYTE2                    1049
+#define IDC_CHKWORD2                    1050
+#define IDC_CHKLONG2                    1051
+#define IDC_BROWSE                      1060
+#define IDC_DOWNLOADMEM                 1061
+#define IDC_UPLOADMEM                   1062
+#define IDM_CHOOSEBIOS                  40001
+#define IDM_CHOOSECDROM                 40002
+#define IDM_MEMTRANSFER                 40004
+#define IDM_RUN                         40005
+#define IDM_PAUSE                       40006
+#define IDM_RESET                       40007
+#define IDM_BACKUPRAMMANAGER            40008
+#define IDM_SETTINGS                    40009
+#define IDM_SAVESTATEAS                 40010
+#define IDM_LOADSTATEAS                 40011
+#define IDM_EXIT                        40012
+#define IDM_CHEATSEARCH                 40020
+#define IDM_CHEATLIST                   40021
+#define IDM_MSH2DEBUG                   40030
+#define IDM_SSH2DEBUG                   40031
+#define IDM_VDP1DEBUG                   40032
+#define IDM_VDP2DEBUG                   40033
+#define IDM_M68KDEBUG                   40034
+#define IDM_SCUDSPDEBUG                 40035
+#define IDM_SCSPDEBUG                   40036
+#define IDM_SMPCDEBUG                   40037
+#define IDM_MEMORYEDITOR                40038
+#define IDM_TOGGLEFULLSCREEN            40040
+#define IDM_TOGGLENBG0                  40041
+#define IDM_TOGGLENBG1                  40042
+#define IDM_TOGGLENBG2                  40043
+#define IDM_TOGGLENBG3                  40044
+#define IDM_TOGGLERBG0                  40045
+#define IDM_TOGGLEVDP1                  40046
+#define IDM_TOGGLEFPS                   40047
+#define IDM_WEBSITE                     40050
+#define IDM_FORUM                       40051
+#define IDM_SUBMITBUGREPORT             40052
+#define IDM_DONATE                      40053
+#define IDM_COMPATLIST                  40054
+#define IDM_ABOUT                       40055
+#define IDM_SAVESTATE_F2                40060
+#define IDM_SAVESTATE_F3                40061
+#define IDM_SAVESTATE_F4                40062
+#define IDM_SAVESTATE_F5                40063
+#define IDM_SAVESTATE_F6                40064
+#define IDM_SAVESTATE_F7                40065
+#define IDM_SAVESTATE_F8                40066
+#define IDM_SAVESTATE_F9                40067
+#define IDM_SAVESTATE_F10               40068
+#define IDM_LOADSTATE_F2                40069
+#define IDM_LOADSTATE_F3                40070
+#define IDM_LOADSTATE_F4                40071
+#define IDM_LOADSTATE_F5                40072
+#define IDM_LOADSTATE_F6                40073
+#define IDM_LOADSTATE_F7                40074
+#define IDM_LOADSTATE_F8                40075
+#define IDM_LOADSTATE_F9                40076
+#define IDM_LOADSTATE_F10               40077
+#define IDC_STATIC                      -1
 
-//////////////////////////////////////////////////////////////////////////////
-// Log Settings stuff
-
-#define IDC_USELOGCB                    1001
-#define IDC_LOGTYPECB                   1002
-#define IDC_LOGFILENAMEET               1003
-#define IDC_LOGBROWSEBT                 1004
-
-//////////////////////////////////////////////////////////////////////////////
-// Log stuff
-
-#define IDC_LOGET                       1001
-#define IDC_SAVELOGBT                   1002
-#define IDC_CLEARBT                     1003
-
-//////////////////////////////////////////////////////////////////////////////
-// VDP1 debug stuff
-
-#define IDC_VDP1CMDLB                   1001
-#define IDC_VDP1CMDET                   1002
-#define IDC_VDP1TEXTET                  1003
-
-//////////////////////////////////////////////////////////////////////////////
-// VDP2 debug stuff
-
-#define IDC_NBG0ENABCB                  1001
-#define IDC_NBG0ET                      1002
-
-#define IDC_NBG1ENABCB                  1003
-#define IDC_NBG1ET                      1004
-
-#define IDC_NBG2ENABCB                  1005
-#define IDC_NBG2ET                      1006
-
-#define IDC_NBG3ENABCB                  1007
-#define IDC_NBG3ET                      1008
-
-#define IDC_RBG0ENABCB                  1009
-#define IDC_RBG0ET                      1010
-
-//////////////////////////////////////////////////////////////////////////////
-// SCSP debug stuff
-
-#define IDC_SCSPSLOTCB                  1001
-#define IDC_SCSPSLOTET                  1002
-#define IDC_SCSPSLOTSAVE                1003
-#define IDC_SCSPSLOTREGSAVE             1004
-#define IDC_SCSPCOMMONREGET             1005
-
-//////////////////////////////////////////////////////////////////////////////
-// Memory Editor stuff
-
-#define IDC_HEXEDIT                     1001
-#define IDC_GOTOADDRESS                 1002
-#define IDC_SAVESEL                     1003
-#define IDC_SEARCHMEM                   1004
-
-//////////////////////////////////////////////////////////////////////////////
-// Goto address dialog stuff
-
-#define IDC_SPECIFYADDRRB               1001
-#define IDC_PRESETADDRRB                1002
-#define IDC_OFFSETET                    1003
-#define IDC_PRESETLISTCB                1004
-
-//////////////////////////////////////////////////////////////////////////////
-// Search Memory dialog stuff
-
-#define IDC_SEARCHTYPECB                1001
-#define IDC_SEARCHMEMET                 1002
-#define IDC_SEARCHPB                    1003
-#define IDC_SEARCHSTARTADDRET           1004
-#define IDC_SEARCHENDADDRET             1005
-
-//////////////////////////////////////////////////////////////////////////////
-// Backup Ram dialog stuff
-
-#define IDC_BUPDEVICECB                 1001
-#define IDC_BUPSAVELB                   1002
-#define IDC_BUPFREESPACELT              1003
-#define IDC_BUPDELETEBT                 1004
-#define IDC_BUPFORMATBT                 1005
-#define IDC_BUPIMPORTBT                 1006
-#define IDC_BUPEXPORTBT                 1007
-#define IDC_BUPFILENAMEET               1008
-#define IDC_BUPCOMMENTET                1009
-#define IDC_BUPLANGUAGEET               1010
-#define IDC_BUPDATEET                   1011
-#define IDC_BUPDATASIZEET               1012
-#define IDC_BUPBLOCKSIZEET              1013
-
-//////////////////////////////////////////////////////////////////////////////
-// Cheat stuff
-
-#define IDC_CHEATLIST                   1001
-#define IDC_DELETECODE                  1002
-#define IDC_CLEARCODES                  1003
-#define IDC_ADDAR                       1004
-#define IDC_ADDRAWMEMADDR               1005
-#define IDC_ADDFROMFILE                 1006
-
-#define IDC_CODE                        1010
-#define IDC_CODEDESC                    1011
-
-#define IDC_CODEADDR                    1012
-#define IDC_CODEVAL                     1013
-
-#define IDC_CTENABLE                    1015
-#define IDC_CTBYTEWRITE                 1016
-#define IDC_CTWORDWRITE                 1017
-#define IDC_CTLONGWRITE                 1018
-
-//////////////////////////////////////////////////////////////////////////////
-// Cheat search stuff
-
-#define IDC_EXACTRB                     1002
-#define IDC_LESSTHANRB                  1003
-#define IDC_GREATERTHANRB               1004
-
-#define IDC_UNSIGNEDRB                  1010
-#define IDC_SIGNEDRB                    1011
-
-#define IDC_8BITRB                      1015
-#define IDC_16BITRB                     1016
-#define IDC_32BITRB                     1017
-
-#define IDC_CHEATSEARCHET               1020
-#define IDC_CTSEARCHRESTARTBT           1021
-#define IDC_CTSEARCHBT                  1022
-#define IDC_CTADDCHEATBT                1023
-
-//////////////////////////////////////////////////////////////////////////////
-// Error debug stuff
-
-#define IDC_EDTEXT                      1001
-#define IDC_EDCONTINUE                  1002
-#define IDC_EDDEBUG                     1003
-
-//////////////////////////////////////////////////////////////////////////////
-// About box stuff
-
-#define IDC_VERSIONTEXT                 1001
-
-//////////////////////////////////////////////////////////////////////////////
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        133
+#define _APS_NEXT_COMMAND_VALUE         40080
+#define _APS_NEXT_CONTROL_VALUE         1063
+#define _APS_NEXT_SYMED_VALUE           133
+#endif
+#endif

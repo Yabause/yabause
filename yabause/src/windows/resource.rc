@@ -1,740 +1,859 @@
-/*  Copyright 2004-2007 Theo Berkau
-
-    This file is part of Yabause.
-
-    Yabause is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    Yabause is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
-
-#include <windows.h>
-#include <commctrl.h>
-#include "hexedit.h"
+// Microsoft Visual C++ generated resource script.
+//
 #include "resource.h"
 
-IDR_MENU MENU
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include <windows.h>
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (Canada) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENC)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_CAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU MENU 
 BEGIN
-  POPUP "&File"
-  BEGIN
-    MENUITEM "&Memory Transfer", IDM_MEMTRANSFER
-    MENUITEM SEPARATOR
-    MENUITEM "&Settings", IDM_SETTINGS
-    MENUITEM "&Backup Ram Manager", IDM_BACKUPRAMMANAGER
-    MENUITEM SEPARATOR
-    POPUP "Save State"
-    {
-      MENUITEM "1", IDM_SAVESTATE_F2
-      MENUITEM "2", IDM_SAVESTATE_F3
-      MENUITEM "3", IDM_SAVESTATE_F4
-      MENUITEM "4", IDM_SAVESTATE_F5
-      MENUITEM "5", IDM_SAVESTATE_F6
-      MENUITEM "6", IDM_SAVESTATE_F7
-      MENUITEM "7", IDM_SAVESTATE_F8
-      MENUITEM "8", IDM_SAVESTATE_F9
-      MENUITEM "9", IDM_SAVESTATE_F10
-    }
-    POPUP "Load State"
-    {
-      MENUITEM "1", IDM_LOADSTATE_F2
-      MENUITEM "2", IDM_LOADSTATE_F3
-      MENUITEM "3", IDM_LOADSTATE_F4
-      MENUITEM "4", IDM_LOADSTATE_F5
-      MENUITEM "5", IDM_LOADSTATE_F6
-      MENUITEM "6", IDM_LOADSTATE_F7
-      MENUITEM "7", IDM_LOADSTATE_F8
-      MENUITEM "8", IDM_LOADSTATE_F9
-      MENUITEM "9", IDM_LOADSTATE_F10
-    }
-    MENUITEM "Save State As", IDM_SAVESTATEAS
-    MENUITEM "Load State As", IDM_LOADSTATEAS
-    MENUITEM SEPARATOR
-    MENUITEM "&Quit", IDM_EXIT
-  END
-  POPUP "&Emulation"
-  BEGIN
-#ifdef USETHREADS
-    MENUITEM "&Run", IDM_RUN, GRAYED
-    MENUITEM "&Pause", IDM_PAUSE
-#endif
-    MENUITEM "Hard Reset", IDM_RESET
-  END
-  POPUP "&Cheats"
-  BEGIN
-//    MENUITEM "&Search for cheats", IDM_CHEATSEARCH
-    MENUITEM "&Cheat List", IDM_CHEATLIST
-  END
-  POPUP "&Debug"
-  BEGIN
-    MENUITEM "Master SH2", IDM_MSH2DEBUG
-    MENUITEM "Slave SH2", IDM_SSH2DEBUG
-    MENUITEM "VDP1", IDM_VDP1DEBUG
-    MENUITEM "VDP2", IDM_VDP2DEBUG
-    MENUITEM "68K", IDM_M68KDEBUG
-    MENUITEM "SCU DSP", IDM_SCUDSPDEBUG
-    MENUITEM "SCSP", IDM_SCSPDEBUG
-    MENUITEM "Memory Editor", IDM_MEMORYEDITOR
-  END
-  POPUP "&Help"
-  BEGIN
-    MENUITEM "&Website", IDM_WEBSITE
-    MENUITEM "&Forum", IDM_FORUM
-    MENUITEM "&Submit a bug report", IDM_SUBMITBUGREPORT
-    MENUITEM "&Donate to Yabause", IDM_DONATE
-    MENUITEM "EC &Compatibility list", IDM_COMPATLIST
-    MENUITEM "&About Yabause", IDM_ABOUT
-  END
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Memory Transfer",            IDM_MEMTRANSFER
+        MENUITEM SEPARATOR
+        MENUITEM "&Settings",                   IDM_SETTINGS
+        MENUITEM "&Backup Ram Manager",         IDM_BACKUPRAMMANAGER
+        MENUITEM SEPARATOR
+        POPUP "Save State"
+        BEGIN
+            MENUITEM "1",                           IDM_SAVESTATE_F2
+            MENUITEM "2",                           IDM_SAVESTATE_F3
+            MENUITEM "3",                           IDM_SAVESTATE_F4
+            MENUITEM "4",                           IDM_SAVESTATE_F5
+            MENUITEM "5",                           IDM_SAVESTATE_F6
+            MENUITEM "6",                           IDM_SAVESTATE_F7
+            MENUITEM "7",                           IDM_SAVESTATE_F8
+            MENUITEM "8",                           IDM_SAVESTATE_F9
+            MENUITEM "9",                           IDM_SAVESTATE_F10
+        END
+        POPUP "Load State"
+        BEGIN
+            MENUITEM "1",                           IDM_LOADSTATE_F2
+            MENUITEM "2",                           IDM_LOADSTATE_F3
+            MENUITEM "3",                           IDM_LOADSTATE_F4
+            MENUITEM "4",                           IDM_LOADSTATE_F5
+            MENUITEM "5",                           IDM_LOADSTATE_F6
+            MENUITEM "6",                           IDM_LOADSTATE_F7
+            MENUITEM "7",                           IDM_LOADSTATE_F8
+            MENUITEM "8",                           IDM_LOADSTATE_F9
+            MENUITEM "9",                           IDM_LOADSTATE_F10
+        END
+        MENUITEM "Save State As",               IDM_SAVESTATEAS
+        MENUITEM "Load State As",               IDM_LOADSTATEAS
+        MENUITEM SEPARATOR
+        MENUITEM "&Quit",                       IDM_EXIT
+    END
+    POPUP "&Emulation"
+    BEGIN
+        MENUITEM "Hard Reset",                  IDM_RESET
+    END
+    POPUP "&Cheats"
+    BEGIN
+        MENUITEM "&Cheat List",                 IDM_CHEATLIST
+    END
+    POPUP "&Debug"
+    BEGIN
+        MENUITEM "Master SH2",                  IDM_MSH2DEBUG
+        MENUITEM "Slave SH2",                   IDM_SSH2DEBUG
+        MENUITEM "VDP1",                        IDM_VDP1DEBUG
+        MENUITEM "VDP2",                        IDM_VDP2DEBUG
+        MENUITEM "68K",                         IDM_M68KDEBUG
+        MENUITEM "SCU DSP",                     IDM_SCUDSPDEBUG
+        MENUITEM "SCSP",                        IDM_SCSPDEBUG
+        MENUITEM "Memory Editor",               IDM_MEMORYEDITOR
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Website",                    IDM_WEBSITE
+        MENUITEM "&Forum",                      IDM_FORUM
+        MENUITEM "&Submit a bug report",        IDM_SUBMITBUGREPORT
+        MENUITEM "&Donate to Yabause",          IDM_DONATE
+        MENUITEM "EC &Compatibility list",      IDM_COMPATLIST
+        MENUITEM "&About Yabause",              IDM_ABOUT
+    END
 END
 
-//////////////////////////////////////////////////////////////////////////////
 
-MEMTRANSFERDLG DIALOG FIXED PURE  100, 100, 172, 90
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MEMTRANSFER DIALOGEX 100, 100, 174, 90
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Memory Transfer"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "&OK",    IDOK,       89,  72, 40, 14
-    PUSHBUTTON      "&Cancel",IDCANCEL,   43,  72, 40, 14
-    PUSHBUTTON      "&Browse",IDC_BROWSE, 140, 4,  30, 12
-    LTEXT           "File:",    -1, 4, 4, 24, 10
-    LTEXT           "Start Address:", -1, 4, 18, 56, 10
-    LTEXT           "End Address:", -1, 4, 32, 50, 10
-    EDITTEXT        IDC_EDITTEXT1, 60, 4,  78, 10, ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDITTEXT2, 60, 18, 36, 10, ES_UPPERCASE
-    EDITTEXT        IDC_EDITTEXT3, 60, 32, 36, 10, ES_UPPERCASE
-    AUTORADIOBUTTON "Download",  IDC_DOWNLOADMEM,  42, 46, 42, 10
-    AUTORADIOBUTTON "Upload", IDC_UPLOADMEM, 92, 46, 42, 10
-    AUTOCHECKBOX "Set PC to start address", IDC_CHECKBOX1, 34, 58, 104, 10
+    DEFPUSHBUTTON   "&OK",IDOK,89,72,40,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,43,72,40,14
+    PUSHBUTTON      "&Browse",IDC_BROWSE,140,4,30,12
+    LTEXT           "File:",-1,4,4,24,10
+    LTEXT           "Start Address:",-1,4,18,56,10
+    LTEXT           "End Address:",-1,4,32,50,10
+    EDITTEXT        IDC_EDITTEXT1,60,4,78,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDITTEXT2,60,18,36,12,ES_UPPERCASE
+    EDITTEXT        IDC_EDITTEXT3,60,32,36,12,ES_UPPERCASE
+    CONTROL         "Download",IDC_DOWNLOADMEM,"Button",BS_AUTORADIOBUTTON,42,46,42,10
+    CONTROL         "Upload",IDC_UPLOADMEM,"Button",BS_AUTORADIOBUTTON,92,46,42,10
+    CONTROL         "Set PC to start address",IDC_CHECKBOX1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,34,58,104,10
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-MEMDLG DIALOG FIXED PURE  6, 21, 116, 60
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_MEM DIALOGEX 6, 21, 116, 60
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Register Modification"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "&OK",IDOK,16,42,40,14
     PUSHBUTTON      "&Cancel",IDCANCEL,60,42,40,14
-    CTEXT           "Enter New Register Value:", 63, 18, 5, 88, 10
-    EDITTEXT        IDC_EDITTEXT1,36,20,44,11
+    CTEXT           "Enter New Register Value:",63,0,5,116,10
+    EDITTEXT        IDC_EDITTEXT1,36,20,44,12
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-SH2DEBUGDLG DIALOG FIXED PURE  0, 0, 386, 229
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_SH2DEBUG DIALOGEX 0, 0, 386, 229
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "SH2 Debug"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "&Close",IDOK, 3, 212, 40, 14
+    DEFPUSHBUTTON   "&Close",IDOK,3,212,40,14
     PUSHBUTTON      "&Step",IDC_STEP,53,212,40,14
-//    PUSHBUTTON      "S&tep Over",IDC_STEPOVER,103,212,40,14
     PUSHBUTTON      "&Memory Transfer",IDC_MEMTRANSFER,153,212,70,14
     PUSHBUTTON      "Memory &Editor",IDC_MEMEDITOR,233,212,70,14
-    GROUPBOX "SH2 Registers", -1, 2, 0, 71, 208, WS_CHILD | WS_VISIBLE
-    LISTBOX IDC_LISTBOX1, 5, 10, 65, 195
-    GROUPBOX "Disassembled Code", -1, 75, 0, 213, 208, WS_CHILD | WS_VISIBLE
-    LISTBOX IDC_LISTBOX2,78, 10, 206, 195
-    GROUPBOX "Code Breakpoints", -1, 290, 0, 94, 70, WS_CHILD | WS_VISIBLE
-    EDITTEXT IDC_EDITTEXT1, 293, 10, 44, 11, ES_UPPERCASE
-    LISTBOX IDC_LISTBOX3,293, 20, 65, 46, WS_VSCROLL
-    PUSHBUTTON      "&Add",IDC_ADDBP1,361, 10, 20, 10
-    PUSHBUTTON      "&Del",IDC_DELBP1,361, 24, 20, 10
-    GROUPBOX "Memory Breakpoints", -1, 290, 72, 94, 136, WS_CHILD | WS_VISIBLE
-    EDITTEXT IDC_EDITTEXT2, 293, 81, 44, 11
-    LISTBOX IDC_LISTBOX4, 293, 91, 65, 46, WS_VSCROLL
-    PUSHBUTTON      "&Add",IDC_ADDBP2,361, 83, 20, 10
-    PUSHBUTTON      "&Del",IDC_DELBP2,361, 96, 20, 10
-    CHECKBOX "Read", IDC_CHKREAD, 293, 135, 36, 10
-    CHECKBOX "Write", IDC_CHKWRITE, 293, 165, 36, 10
-    AUTOCHECKBOX "Byte", IDC_CHKBYTE1, 339, 135, 36, 10, WS_DISABLED
-    AUTOCHECKBOX "Word", IDC_CHKWORD1, 339, 145, 36, 10, WS_DISABLED
-    AUTOCHECKBOX "Long", IDC_CHKLONG1, 339, 155, 36, 10, WS_DISABLED
-    AUTOCHECKBOX "Byte", IDC_CHKBYTE2, 339, 165, 36, 10, WS_DISABLED
-    AUTOCHECKBOX "Word", IDC_CHKWORD2, 339, 175, 36, 10, WS_DISABLED
-    AUTOCHECKBOX "Long", IDC_CHKLONG2, 339, 185, 36, 10, WS_DISABLED
+    GROUPBOX        "SH2 Registers",-1,2,0,71,208
+    LISTBOX         IDC_LISTBOX1,5,10,65,195
+    GROUPBOX        "Disassembled Code",-1,75,0,213,208
+    LISTBOX         IDC_LISTBOX2,78,10,206,195
+    GROUPBOX        "Code Breakpoints",-1,290,0,94,70
+    EDITTEXT        IDC_EDITTEXT1,293,10,44,12,ES_UPPERCASE
+    LISTBOX         IDC_LISTBOX3,293,20,65,46,WS_VSCROLL
+    PUSHBUTTON      "&Add",IDC_ADDBP1,361,10,20,10
+    PUSHBUTTON      "&Del",IDC_DELBP1,361,24,20,10
+    GROUPBOX        "Memory Breakpoints",-1,290,72,94,136
+    EDITTEXT        IDC_EDITTEXT2,293,81,44,12
+    LISTBOX         IDC_LISTBOX4,293,91,65,46,WS_VSCROLL
+    PUSHBUTTON      "&Add",IDC_ADDBP2,361,83,20,10
+    PUSHBUTTON      "&Del",IDC_DELBP2,361,96,20,10
+    CHECKBOX        "Read",IDC_CHKREAD,293,135,36,10
+    CHECKBOX        "Write",IDC_CHKWRITE,293,165,36,10
+    CONTROL         "Byte",IDC_CHKBYTE1,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,339,135,36,10
+    CONTROL         "Word",IDC_CHKWORD1,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,339,145,36,10
+    CONTROL         "Long",IDC_CHKLONG1,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,339,155,36,10
+    CONTROL         "Byte",IDC_CHKBYTE2,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,339,165,36,10
+    CONTROL         "Word",IDC_CHKWORD2,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,339,175,36,10
+    CONTROL         "Long",IDC_CHKLONG2,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,339,185,36,10
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-VDP1DEBUGDLG DIALOG FIXED PURE  0, 0, 390, 200
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_VDP1DEBUG DIALOG  0, 0, 390, 200
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "VDP1 Debug"
 FONT 8, "Courier New"
 BEGIN
-    LTEXT           "VDP1 Command List", -1, 4, 4, 70, 10
-    LISTBOX         IDC_VDP1CMDLB, 4, 14, 124, 168, WS_VSCROLL
-    LTEXT           "VDP1 Command Info", -1, 132, 4, 70, 10
-    EDITTEXT        IDC_VDP1CMDET, 132, 14, 170, 162, ES_MULTILINE | ES_READONLY | WS_HSCROLL | WS_VSCROLL
-    LTEXT           "Texture", -1, 306, 4, 70, 10
-    EDITTEXT        IDC_VDP1TEXTET, 306, 14, 80, 80, WS_DISABLED
-    DEFPUSHBUTTON   "&Close", IDOK, 4, 182, 40, 14
+    LTEXT           "VDP1 Command List",-1,4,4,70,10
+    LISTBOX         IDC_VDP1CMDLB,4,14,124,168,WS_VSCROLL
+    LTEXT           "VDP1 Command Info",-1,132,4,70,10
+    EDITTEXT        IDC_VDP1CMDET,132,14,170,162,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "Texture",-1,306,4,70,10
+    EDITTEXT        IDC_VDP1TEXTET,306,14,80,80,WS_DISABLED
+    DEFPUSHBUTTON   "&Close",IDOK,4,182,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-VDP2DEBUGDLG DIALOG FIXED PURE  0, 0, 454, 206
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_VDP2DEBUG DIALOGEX 0, 0, 453, 311
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "VDP2 Debug"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "&Close",IDOK, 4, 188, 40, 14
-
-    LTEXT           "NBG0/RBG1 Info", -1, 4,   4,  70, 10
-    CHECKBOX "Screen Enabled", IDC_NBG0ENABCB, 4, 14, 70, 10
-    EDITTEXT        IDC_NBG0ET, 4, 24,  86, 160, ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
-
-    LTEXT           "NBG1 Info", -1, 94,  4,  70, 10
-    CHECKBOX "Screen Enabled", IDC_NBG1ENABCB, 94, 14, 70, 10
-    EDITTEXT        IDC_NBG1ET, 94, 24,  86, 160, ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
-
-    LTEXT           "NBG2 Info", -1, 184, 4,  70, 10
-    CHECKBOX "Screen Enabled", IDC_NBG2ENABCB, 184, 14, 70, 10
-    EDITTEXT        IDC_NBG2ET, 184, 24,  86, 160, ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
-
-    LTEXT           "NBG3 Info", -1, 274, 4,  70, 10
-    CHECKBOX "Screen Enabled", IDC_NBG3ENABCB, 274, 14, 70, 10
-    EDITTEXT        IDC_NBG3ET, 274, 24,  86, 160, ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
-
-    LTEXT           "RBG0 Info", -1, 364, 4,  70, 10
-    CHECKBOX "Screen Enabled", IDC_RBG0ENABCB, 364, 14, 70, 10
-    EDITTEXT        IDC_RBG0ET, 364, 24, 86, 160, ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    DEFPUSHBUTTON   "&Close",IDOK,4,293,40,14
+    LTEXT           "NBG0/RBG1 Info",-1,4,4,70,10
+    CHECKBOX        "Screen Enabled",IDC_NBG0ENABCB,4,14,70,10
+    EDITTEXT        IDC_NBG0ET,4,24,145,118,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "NBG1 Info",-1,153,4,70,10
+    CHECKBOX        "Screen Enabled",IDC_NBG1ENABCB,153,14,70,10
+    EDITTEXT        IDC_NBG1ET,153,24,145,118,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "NBG2 Info",-1,303,4,86,10
+    CHECKBOX        "Screen Enabled",IDC_NBG2ENABCB,303,14,86,10
+    EDITTEXT        IDC_NBG2ET,303,24,146,118,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "NBG3 Info",-1,4,148,70,10
+    CHECKBOX        "Screen Enabled",IDC_NBG3ENABCB,4,159,70,10
+    EDITTEXT        IDC_NBG3ET,4,168,145,118,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "RBG0 Info",-1,153,148,70,10
+    CHECKBOX        "Screen Enabled",IDC_RBG0ENABCB,153,159,70,10
+    EDITTEXT        IDC_RBG0ET,153,168,145,118,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "General Info",-1,303,148,86,10
+    EDITTEXT        IDC_VDP2GENET,303,168,146,118,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-M68KDEBUGDLG DIALOG FIXED PURE  0, 0, 386, 229
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_M68KDEBUG DIALOGEX 0, 0, 387, 229
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "68K Debug"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "&Close",IDOK, 3, 212, 40, 14
+    DEFPUSHBUTTON   "&Close",IDOK,3,212,40,14
     PUSHBUTTON      "&Step",IDC_STEP,53,212,40,14
-    GROUPBOX "68k Registers", -1, 2, 0, 71, 208, WS_CHILD | WS_VISIBLE
-    LISTBOX IDC_LISTBOX1, 5, 10, 65, 195
-    GROUPBOX "Disassembled Code", -1, 75, 0, 213, 208, WS_CHILD | WS_VISIBLE
-    LISTBOX IDC_LISTBOX2,78, 10, 206, 195
-    GROUPBOX "Code Breakpoints", -1, 290, 0, 94, 90, WS_CHILD | WS_VISIBLE
-    EDITTEXT IDC_EDITTEXT1, 293, 10, 44, 11, ES_UPPERCASE
-    LISTBOX IDC_LISTBOX3,293, 20, 65, 66
-    PUSHBUTTON      "&Add",IDC_ADDBP1,361, 10, 20, 10
-    PUSHBUTTON      "&Del",IDC_DELBP1,361, 24, 20, 10
-//    GROUPBOX "Memory Breakpoints", -1, 290, 86, 94, 113, WS_CHILD | WS_VISIBLE
-//    EDITTEXT IDC_EDITTEXT2, 293, 95, 44, 11
-//    LISTBOX IDC_LISTBOX4, 293, 105, 65, 66
-//    PUSHBUTTON      "&Add",IDC_ADDBP2,361, 97, 20, 10
-//    PUSHBUTTON      "&Del",IDC_DELBP2,361, 110, 20, 10
-//    CHECKBOX "&Read", IDC_CHKREAD, 293, 167, 36, 10
-//    CHECKBOX "&Write", IDC_CHKWRITE, 293, 177, 36, 10
-//    CHECKBOX "&Byte", IDC_CHKBYTE, 339, 167, 36, 10
-//    CHECKBOX "&Word", IDC_CHKWORD, 339, 177, 36, 10
-//    CHECKBOX "&Dword", IDC_CHKDWORD, 339, 187, 36, 10
+    GROUPBOX        "68k Registers",-1,3,0,71,208
+    LISTBOX         IDC_LISTBOX1,5,10,65,195
+    GROUPBOX        "Disassembled Code",-1,75,0,213,208
+    LISTBOX         IDC_LISTBOX2,78,10,206,195
+    GROUPBOX        "Code Breakpoints",-1,290,0,94,90
+    EDITTEXT        IDC_EDITTEXT1,294,10,44,12,ES_UPPERCASE
+    LISTBOX         IDC_LISTBOX3,294,20,65,58
+    PUSHBUTTON      "&Add",IDC_ADDBP1,362,10,20,10
+    PUSHBUTTON      "&Del",IDC_DELBP1,362,24,20,10
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-SCUDSPDEBUGDLG DIALOG FIXED PURE  0, 0, 436, 229
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_SCUDSPDEBUG DIALOGEX 0, 0, 436, 229
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "SCU DSP Debug"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "&Close",IDOK, 3, 212, 40, 14
+    DEFPUSHBUTTON   "&Close",IDOK,3,212,40,14
     PUSHBUTTON      "&Step",IDC_STEP,53,212,40,14
-    GROUPBOX "DSP Registers", -1, 2, 0, 71, 208, WS_CHILD | WS_VISIBLE
-    LISTBOX IDC_LISTBOX1, 5, 10, 65, 195
-    GROUPBOX "Disassembled Code", -1, 75, 0, 283, 208, WS_CHILD | WS_VISIBLE
-    LISTBOX IDC_LISTBOX2,78, 10, 276, 195
-    GROUPBOX "Code Breakpoints", -1, 360, 0, 74, 90, WS_CHILD | WS_VISIBLE
-    EDITTEXT IDC_EDITTEXT1, 363, 10, 14, 11, ES_UPPERCASE
-    LISTBOX IDC_LISTBOX3,363, 20, 45, 66
-    PUSHBUTTON      "&Add",IDC_ADDBP1,411, 10, 20, 10
-    PUSHBUTTON      "&Del",IDC_DELBP1,411, 24, 20, 10
+    GROUPBOX        "DSP Registers",-1,2,0,71,208
+    LISTBOX         IDC_LISTBOX1,5,10,65,195
+    GROUPBOX        "Disassembled Code",-1,75,0,283,208
+    LISTBOX         IDC_LISTBOX2,78,10,276,195
+    GROUPBOX        "Code Breakpoints",-1,360,0,74,90
+    EDITTEXT        IDC_EDITTEXT1,363,10,14,12,ES_UPPERCASE
+    LISTBOX         IDC_LISTBOX3,363,20,45,66
+    PUSHBUTTON      "&Add",IDC_ADDBP1,411,10,20,10
+    PUSHBUTTON      "&Del",IDC_DELBP1,411,24,20,10
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-SCSPDEBUGDLG DIALOG FIXED PURE  0, 0, 436, 229
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_SCSPDEBUG DIALOGEX 0, 0, 441, 229
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "SCSP Debug"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "&Close",IDOK, 3, 212, 40, 14
-    PUSHBUTTON      "&Save as wav",IDC_SCSPSLOTSAVE, 53, 212, 52, 14
-    PUSHBUTTON      "Save slot registers",IDC_SCSPSLOTREGSAVE, 115, 212, 83, 14
-    GROUPBOX        "Slot Info", -1, 2, 0, 152, 208, WS_CHILD | WS_VISIBLE
-    LTEXT           "Slot Number", -1, 6, 9, 70, 10
-    COMBOBOX        IDC_SCSPSLOTCB, 56, 7, 35, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, WS_DISABLED
-    EDITTEXT        IDC_SCSPSLOTET, 5, 24, 146, 172, ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
-    GROUPBOX        "Common Control Registers", -1, 156, 0, 182, 208, WS_CHILD | WS_VISIBLE
-    EDITTEXT        IDC_SCSPCOMMONREGET,159, 10, 176, 195, ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
-    GROUPBOX        "DSP Control Registers", -1, 340, 0, 94, 208, WS_CHILD | WS_VISIBLE
-    LISTBOX         IDC_LISTBOX3,343, 10, 88, 195
+    DEFPUSHBUTTON   "&Close",IDOK,3,212,40,14
+    PUSHBUTTON      "&Save as wav",IDC_SCSPSLOTSAVE,53,212,52,14
+    PUSHBUTTON      "Save slot registers",IDC_SCSPSLOTREGSAVE,115,212,83,14
+    GROUPBOX        "Slot Info",-1,3,0,153,208
+    LTEXT           "Slot Number",-1,8,9,70,10
+    COMBOBOX        IDC_SCSPSLOTCB,58,7,35,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,0x8000000L
+    EDITTEXT        IDC_SCSPSLOTET,7,24,144,172,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    GROUPBOX        "Common Control Registers",-1,159,0,182,208
+    EDITTEXT        IDC_SCSPCOMMONREGET,163,10,174,195,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    GROUPBOX        "DSP Control Registers",-1,344,0,94,208
+    LISTBOX         IDC_LISTBOX3,348,10,86,195
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-GOTOADDRESSDLG DIALOG FIXED PURE  0, 0, 190, 60
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_GOTOADDRESS DIALOG  0, 0, 190, 60
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Goto Address"
 FONT 8, "Courier New"
 BEGIN
-    AUTORADIOBUTTON "Specify address",  IDC_SPECIFYADDRRB,  4, 4, 72, 10
-    AUTORADIOBUTTON "Preset address", IDC_PRESETADDRRB, 85, 4, 72, 10
-    GROUPBOX        "", -1, 4, 16, 77, 22, WS_CHILD | WS_VISIBLE
-    LTEXT           "Address:", -1, 7, 24, 36, 11
-    EDITTEXT        IDC_OFFSETET, 42, 23, 36, 12, ES_UPPERCASE
-    GROUPBOX        "", -1, 85, 16, 101, 22, WS_CHILD | WS_VISIBLE
-    COMBOBOX        IDC_PRESETLISTCB, 88, 23, 96, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, WS_DISABLED
+    CONTROL         "Specify address",IDC_SPECIFYADDRRB,"Button",BS_AUTORADIOBUTTON,4,4,72,10
+    CONTROL         "Preset address",IDC_PRESETADDRRB,"Button",BS_AUTORADIOBUTTON,85,4,72,10
+    GROUPBOX        "",-1,4,16,77,22
+    LTEXT           "Address:",-1,7,24,36,11
+    EDITTEXT        IDC_OFFSETET,42,23,36,12,ES_UPPERCASE
+    GROUPBOX        "",-1,85,16,101,22
+    COMBOBOX        IDC_PRESETLISTCB,88,23,96,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,0x8000000L
     DEFPUSHBUTTON   "&OK",IDOK,52,42,40,14
     PUSHBUTTON      "&Cancel",IDCANCEL,97,42,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-SEARCHMEMORYDLG DIALOG FIXED PURE  0, 0, 190, 107
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_SEARCHMEMORY DIALOGEX 0, 0, 190, 107
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Search Memory"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Search criteria", -1, 4, 4, 182, 41, WS_CHILD | WS_VISIBLE
-    LTEXT           "Type:", -1, 9, 14, 36, 11
-    LTEXT           "Value:", -1, 9, 31, 36, 11
-    COMBOBOX        IDC_SEARCHTYPECB, 34, 13, 96, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, WS_DISABLED
-    EDITTEXT        IDC_SEARCHMEMET, 34, 29, 148, 12
-    GROUPBOX        "Options", -1, 4, 49, 182, 36, WS_CHILD | WS_VISIBLE
-    LTEXT           "Start Address:", -1, 9, 59, 58, 11
-    LTEXT           "End Address:", -1, 9, 71, 51, 11
-    EDITTEXT        IDC_SEARCHSTARTADDRET, 67, 58, 36, 10, ES_UPPERCASE
-    EDITTEXT        IDC_SEARCHENDADDRET, 67, 71, 36, 10, ES_UPPERCASE
+    GROUPBOX        "Search criteria",-1,4,4,182,41
+    LTEXT           "Type:",-1,9,14,36,11
+    LTEXT           "Value:",-1,9,31,36,11
+    COMBOBOX        IDC_SEARCHTYPECB,34,13,96,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,0x8000000L
+    EDITTEXT        IDC_SEARCHMEMET,34,29,148,12
+    GROUPBOX        "Options",-1,4,49,182,36
+    LTEXT           "Start Address:",-1,9,59,58,11
+    LTEXT           "End Address:",-1,9,71,51,11
+    EDITTEXT        IDC_SEARCHSTARTADDRET,67,58,36,12,ES_UPPERCASE
+    EDITTEXT        IDC_SEARCHENDADDRET,67,71,36,12,ES_UPPERCASE
     DEFPUSHBUTTON   "&OK",IDOK,52,89,40,14
     PUSHBUTTON      "&Cancel",IDCANCEL,97,89,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-SEARCHBUSYDLG DIALOG FIXED PURE  0, 0, 85, 55
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_SEARCHBUSY DIALOG  0, 0, 85, 55
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Please wait"
 FONT 8, "Courier New"
 BEGIN
-    LTEXT           "Searching...", -1, 3, 3, 79, 11
-    CONTROL         "", IDC_SEARCHPB, "msctls_progress32", WS_CHILD | WS_VISIBLE | WS_BORDER, 6, 17, 73, 8
-    PUSHBUTTON      "&Cancel", IDCANCEL,22,37,40,14
+    LTEXT           "Searching...",-1,3,3,79,11
+    CONTROL         "",IDC_SEARCHPB,"msctls_progress32",WS_BORDER,6,17,73,8
+    PUSHBUTTON      "&Cancel",IDCANCEL,22,37,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-MEMORYEDITORDLG DIALOG FIXED PURE  0, 0, 288, 183
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_MEMORYEDITOR DIALOG  0, 0, 288, 183
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Memory Editor"
 FONT 8, "Courier New"
 BEGIN
-    CONTROL         "", IDC_HEXEDIT, HEXEDIT, WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL, 4, 4, 280, 132
-    GROUPBOX        "", -1, 4, 136, 280, 25, WS_CHILD | WS_VISIBLE
-    PUSHBUTTON      "Goto Address",IDC_GOTOADDRESS, 8, 143, 54, 14
-    PUSHBUTTON      "Save Selected",IDC_SAVESEL, 114, 143, 59, 14, WS_DISABLED
-    PUSHBUTTON      "Search memory",IDC_SEARCHMEM, 221, 143, 59, 14
-    DEFPUSHBUTTON   "&Close",IDOK, 124, 165, 40, 14
+    CONTROL         "",IDC_HEXEDIT,"YabauseHexEdit",WS_BORDER | WS_VSCROLL | WS_TABSTOP,4,4,280,132
+    GROUPBOX        "",-1,4,136,280,25
+    PUSHBUTTON      "Goto Address",IDC_GOTOADDRESS,8,143,54,14
+    PUSHBUTTON      "Save Selected",IDC_SAVESEL,114,143,59,14,WS_DISABLED
+    PUSHBUTTON      "Search memory",IDC_SEARCHMEM,221,143,59,14
+    DEFPUSHBUTTON   "&Close",IDOK,124,165,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-SETTINGSDLG DIALOG DISCARDABLE  0, 0, 230, 244
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_SETTINGS DIALOG  0, 0, 230, 244
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Settings"
 FONT 8, "Courier New"
 BEGIN
-    CONTROL         "", IDC_SETTINGSTAB, "SysTabControl32", WS_VISIBLE | WS_CHILD, 3, 3, 224, 221
+    CONTROL         "",IDC_SETTINGSTAB,"SysTabControl32",0x0,3,3,224,221
     DEFPUSHBUTTON   "&OK",IDOK,142,227,40,14
     PUSHBUTTON      "&Cancel",IDCANCEL,187,227,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-BASICSETTINGSDLG DIALOG DISCARDABLE  0, 0, 220, 206
-STYLE WS_VISIBLE | WS_CHILD
+IDD_BASICSETTINGS DIALOG  0, 0, 220, 206
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "Courier New"
 BEGIN
-    GROUPBOX "Yabause Basic Settings", -1, 3, 2, 214, 200, WS_CHILD | WS_VISIBLE
-    LTEXT           "Disc Type", -1, 10, 14, 40, 10
-    COMBOBOX        IDC_DISCTYPECB, 49, 13, 55, 33, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Drive Letter", -1, 112, 14, 56, 10
-    COMBOBOX        IDC_DRIVELETTERCB, 163, 13, 46, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    LTEXT           "Cue/Iso File", -1, 10, 29, 61, 10
-    EDITTEXT        IDC_IMAGEEDIT, 10, 38, 162, 13, ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse",IDC_IMAGEBROWSE, 176, 38, 33, 12
-
-//    LTEXT           "Bios Language", -1, 10, 55, 60, 10, WS_DISABLED
-//    COMBOBOX        IDC_BIOSLANGCB, 10, 64, 66, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, WS_DISABLED
-
-    LTEXT           "SH2 Core", -1, 10, 55, 60, 10
-    COMBOBOX        IDC_SH2CORECB, 10, 64, 74, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, WS_DISABLED
-
-    LTEXT           "Region", -1, 90, 55, 115, 10
-    COMBOBOX        IDC_REGIONCB, 90, 64, 119, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    LTEXT           "Bios ROM File", -1, 10, 81, 73, 10
-    EDITTEXT        IDC_BIOSEDIT, 10, 90, 162, 13, ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse",IDC_BIOSBROWSE, 176, 90, 33, 13
-
-    LTEXT           "Backup RAM File", -1, 10, 107, 73, 10
-    EDITTEXT        IDC_BACKUPRAMEDIT, 10, 116, 162, 13, ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse",IDC_BACKUPRAMBROWSE, 176, 116, 33, 13
-
-    LTEXT           "MPEG ROM File", -1, 10, 133, 73, 10
-    EDITTEXT        IDC_MPEGROMEDIT, 10, 142, 162, 13 , ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse",IDC_MPEGROMBROWSE, 176, 142, 33, 13
-
-    LTEXT           "Cartridge Type", -1, 10, 160, 60, 10
-    COMBOBOX        IDC_CARTTYPECB, 70, 158, 86, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Cartridge ROM/RAM/EEPROM File", -1, 10, 175, 130, 10
-    EDITTEXT        IDC_CARTEDIT, 10, 184, 162, 13 , ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse",IDC_CARTBROWSE, 176, 184, 33, 13
+    GROUPBOX        "Yabause Basic Settings",-1,3,2,214,200
+    LTEXT           "Disc Type",-1,10,14,40,10
+    COMBOBOX        IDC_DISCTYPECB,49,13,55,33,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Drive Letter",-1,112,14,56,10
+    COMBOBOX        IDC_DRIVELETTERCB,163,13,46,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Cue/Iso File",-1,10,29,61,10
+    EDITTEXT        IDC_IMAGEEDIT,10,38,162,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_IMAGEBROWSE,176,38,33,12
+    LTEXT           "SH2 Core",-1,10,55,60,10
+    COMBOBOX        IDC_SH2CORECB,10,64,74,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,0x8000000L
+    LTEXT           "Region",-1,90,55,115,10
+    COMBOBOX        IDC_REGIONCB,90,64,119,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Bios ROM File",-1,10,81,73,10
+    EDITTEXT        IDC_BIOSEDIT,10,90,162,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_BIOSBROWSE,176,90,33,13
+    LTEXT           "Backup RAM File",-1,10,107,73,10
+    EDITTEXT        IDC_BACKUPRAMEDIT,10,116,162,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_BACKUPRAMBROWSE,176,116,33,13
+    LTEXT           "MPEG ROM File",-1,10,133,73,10
+    EDITTEXT        IDC_MPEGROMEDIT,10,142,162,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_MPEGROMBROWSE,176,142,33,13
+    LTEXT           "Cartridge Type",-1,10,160,60,10
+    COMBOBOX        IDC_CARTTYPECB,70,158,86,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Cartridge ROM/RAM/EEPROM File",-1,10,175,130,10
+    EDITTEXT        IDC_CARTEDIT,10,184,162,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_CARTBROWSE,176,184,33,13
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-VIDEOSETTINGSDLG DIALOG DISCARDABLE  0, 0, 174, 135
-STYLE WS_VISIBLE | WS_CHILD
+IDD_VIDEOSETTINGS DIALOG  0, 0, 174, 135
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "Courier New"
 BEGIN
-    GROUPBOX "Video Core Settings", -1, 3, 2, 168, 28, WS_CHILD | WS_VISIBLE
-    LTEXT           "Video Core", -1, 10, 14, 40, 10
-    COMBOBOX        IDC_VIDEOCORECB, 54, 13, 110, 49, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    GROUPBOX "Other Settings", -1, 3, 31, 168, 82, WS_CHILD | WS_VISIBLE
-    AUTOCHECKBOX    "Enable Auto Frame-skipping", IDC_AUTOFRAMESKIPCB, 10, 42, 121, 10
-    AUTOCHECKBOX    "Full Screen on startup", IDC_FULLSCREENSTARTUPCB, 10, 52, 106, 10
-    LTEXT           "Full-Screen Size", -1, 10, 66, 70, 10
-    COMBOBOX        IDC_FSSIZECB, 80, 65, 55, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    AUTOCHECKBOX    "Use custom window size", IDC_CUSTOMWINDOWCB, 10, 82, 106, 10
-    LTEXT           "Width", -1, 10, 96, 60, 10
-    EDITTEXT        IDC_WIDTHEDIT, 40, 95, 22, 13, WS_DISABLED
-    LTEXT           "Height", -1, 80, 96, 60, 10
-    EDITTEXT        IDC_HEIGHTEDIT, 110, 95, 22, 13, WS_DISABLED
+    GROUPBOX        "Video Core Settings",-1,3,2,168,28
+    LTEXT           "Video Core",-1,10,14,40,10
+    COMBOBOX        IDC_VIDEOCORECB,54,13,110,49,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Other Settings",-1,3,31,168,82
+    CONTROL         "Enable Auto Frame-skipping",IDC_AUTOFRAMESKIPCB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,42,121,10
+    CONTROL         "Full Screen on startup",IDC_FULLSCREENSTARTUPCB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,52,106,10
+    LTEXT           "Full-Screen Size",-1,10,66,70,10
+    COMBOBOX        IDC_FSSIZECB,80,65,55,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Use custom window size",IDC_CUSTOMWINDOWCB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,82,106,10
+    LTEXT           "Width",-1,10,96,60,10
+    EDITTEXT        IDC_WIDTHEDIT,40,95,22,13,WS_DISABLED
+    LTEXT           "Height",-1,80,96,60,10
+    EDITTEXT        IDC_HEIGHTEDIT,110,95,22,13,WS_DISABLED
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-SOUNDSETTINGSDLG DIALOG DISCARDABLE  0, 0, 174, 81
-STYLE WS_VISIBLE | WS_CHILD
+IDD_SOUNDSETTINGS DIALOG  0, 0, 174, 81
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "Courier New"
 BEGIN
-    GROUPBOX "Sound Core Settings", -1, 3, 2, 168, 28, WS_CHILD | WS_VISIBLE
-    LTEXT           "Sound Core", -1, 10, 14, 40, 10
-    COMBOBOX        IDC_SOUNDCORECB, 54, 13, 110, 33, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX "Other Settings", -1, 3, 31, 168, 28, WS_CHILD | WS_VISIBLE
-    LTEXT           "Volume", -1, 10, 42, 30, 10
-    CONTROL         "", IDC_SLVOLUME, "msctls_trackbar32", WS_VISIBLE | WS_CHILD, 40, 42, 128, 10
+    GROUPBOX        "Sound Core Settings",-1,3,2,168,28
+    LTEXT           "Sound Core",-1,10,14,40,10
+    COMBOBOX        IDC_SOUNDCORECB,54,13,110,33,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Other Settings",-1,3,31,168,28
+    LTEXT           "Volume",-1,10,42,30,10
+    CONTROL         "",IDC_SLVOLUME,"msctls_trackbar32",0x0,40,42,128,10
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-NETLINKSETTINGSDLG DIALOG DISCARDABLE  0, 0, 174, 62
-STYLE WS_VISIBLE | WS_CHILD
+IDD_NETLINKSETTINGS DIALOG  0, 0, 174, 62
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "Courier New"
 BEGIN
-    GROUPBOX "Netlink Settings", -1, 3, 2, 168, 39, WS_CHILD | WS_VISIBLE
-    LTEXT           "Local/Remote IP", -1, 10, 14, 60, 10
-    CONTROL         "", IDC_LOCALREMOTEIP, WC_IPADDRESS, WS_VISIBLE | WS_CHILD, 80, 13, 80, 11
-    LTEXT           "Port", -1, 10, 28, 30, 10
-    EDITTEXT IDC_PORTET, 80, 27, 30, 11, ES_NUMBER
+    GROUPBOX        "Netlink Settings",-1,3,2,168,39
+    LTEXT           "Local/Remote IP",-1,10,14,60,10
+    CONTROL         "",IDC_LOCALREMOTEIP,"SysIPAddress32",0x0,80,13,80,11
+    LTEXT           "Port",-1,10,28,30,10
+    EDITTEXT        IDC_PORTET,80,27,30,11,ES_NUMBER
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-INPUTSETTINGSDLG DIALOG DISCARDABLE  0, 0, 194, 52
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_INPUTSETTINGS DIALOG  0, 0, 194, 52
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Peripheral Settings"
 FONT 8, "Courier New"
 BEGIN
-    GROUPBOX "Control Settings", -1, 3, 2, 188, 28, WS_CHILD | WS_VISIBLE
-    PUSHBUTTON      "Pad 1", IDC_PAD1PB,52,12,40,14
-    PUSHBUTTON      "Pad 2", IDC_PAD2PB,102,12,40,14
+    GROUPBOX        "Control Settings",-1,3,2,188,28
+    PUSHBUTTON      "Pad 1",IDC_PAD1PB,52,12,40,14
+    PUSHBUTTON      "Pad 2",IDC_PAD2PB,102,12,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-PADCONFIGDLG DIALOG DISCARDABLE  0, 0, 220, 148
-STYLE WS_VISIBLE | WS_CHILD
+IDD_PADCONFIG DIALOG  0, 0, 220, 148
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "Courier New"
 BEGIN
-    COMBOBOX        IDC_DXDEVICECB, 45, 2, 130, 87, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Up", IDC_UPPB,3,26,40,12
-    PUSHBUTTON      "Down", IDC_DOWNPB,3,40,40,12
-    PUSHBUTTON      "Left", IDC_LEFTPB,3,54,40,12
-    PUSHBUTTON      "Right", IDC_RIGHTPB,3,68,40,12
-    PUSHBUTTON      "L", IDC_LPB,3,82,40,12
-    PUSHBUTTON      "R", IDC_RPB,3,96,40,12
-    PUSHBUTTON      "Start", IDC_STARTPB,3,110,40,12
-    LTEXT           "", IDC_UPTEXT, 56, 28, 52, 10
-    LTEXT           "", IDC_DOWNTEXT, 56, 42, 52, 10
-    LTEXT           "", IDC_LEFTTEXT, 56, 56, 52, 10
-    LTEXT           "", IDC_RIGHTTEXT, 56, 70, 52, 10
-    LTEXT           "", IDC_LTEXT, 56, 84, 52, 10
-    LTEXT           "", IDC_RTEXT, 56, 98, 52, 10
-    LTEXT           "", IDC_STARTTEXT, 56, 112, 52, 10
-
-    PUSHBUTTON      "A", IDC_APB,110,26,40,12
-    PUSHBUTTON      "B", IDC_BPB,110,40,40,12
-    PUSHBUTTON      "C", IDC_CPB,110,54,40,12
-    PUSHBUTTON      "X", IDC_XPB,110,68,40,12
-    PUSHBUTTON      "Y", IDC_YPB,110,82,40,12
-    PUSHBUTTON      "Z", IDC_ZPB,110,96,40,12
-    LTEXT           "", IDC_ATEXT, 163, 28, 52, 10
-    LTEXT           "", IDC_BTEXT, 163, 42, 52, 10
-    LTEXT           "", IDC_CTEXT, 163, 56, 52, 10
-    LTEXT           "", IDC_XTEXT, 163, 70, 52, 10
-    LTEXT           "", IDC_YTEXT, 163, 84, 52, 10
-    LTEXT           "", IDC_ZTEXT, 163, 98, 52, 10
+    COMBOBOX        IDC_DXDEVICECB,45,2,130,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Up",IDC_UPPB,3,26,40,12
+    PUSHBUTTON      "Down",IDC_DOWNPB,3,40,40,12
+    PUSHBUTTON      "Left",IDC_LEFTPB,3,54,40,12
+    PUSHBUTTON      "Right",IDC_RIGHTPB,3,68,40,12
+    PUSHBUTTON      "L",IDC_LPB,3,82,40,12
+    PUSHBUTTON      "R",IDC_RPB,3,96,40,12
+    PUSHBUTTON      "Start",IDC_STARTPB,3,110,40,12
+    LTEXT           "",IDC_UPTEXT,56,28,52,10
+    LTEXT           "",IDC_DOWNTEXT,56,42,52,10
+    LTEXT           "",IDC_LEFTTEXT,56,56,52,10
+    LTEXT           "",IDC_RIGHTTEXT,56,70,52,10
+    LTEXT           "",IDC_LTEXT,56,84,52,10
+    LTEXT           "",IDC_RTEXT,56,98,52,10
+    LTEXT           "",IDC_STARTTEXT,56,112,52,10
+    PUSHBUTTON      "A",IDC_APB,110,26,40,12
+    PUSHBUTTON      "B",IDC_BPB,110,40,40,12
+    PUSHBUTTON      "C",IDC_CPB,110,54,40,12
+    PUSHBUTTON      "X",IDC_XPB,110,68,40,12
+    PUSHBUTTON      "Y",IDC_YPB,110,82,40,12
+    PUSHBUTTON      "Z",IDC_ZPB,110,96,40,12
+    LTEXT           "",IDC_ATEXT,163,28,52,10
+    LTEXT           "",IDC_BTEXT,163,42,52,10
+    LTEXT           "",IDC_CTEXT,163,56,52,10
+    LTEXT           "",IDC_XTEXT,163,70,52,10
+    LTEXT           "",IDC_YTEXT,163,84,52,10
+    LTEXT           "",IDC_ZTEXT,163,98,52,10
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-BUTTONCONFIGDLG DIALOG DISCARDABLE  0, 0, 110, 40
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE
-FONT 8, "Courier New"
+IDD_BUTTONCONFIG DIALOGEX 0, 0, 110, 40
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    CTEXT           "Waiting for input...", -1, 0, 6, 110, 12
-    DEFPUSHBUTTON   "",IDOK,0,0,0,0
+    CTEXT           "Waiting for input...",-1,0,6,110,12
+    DEFPUSHBUTTON   "",IDOK,0,-6,6,6
     PUSHBUTTON      "Cancel",IDC_CUSTOMCANCEL,35,20,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-LOGSETTINGSDLG DIALOG DISCARDABLE  0, 0, 220, 206
-STYLE WS_VISIBLE | WS_CHILD
+IDD_LOGSETTINGS DIALOG  0, 0, 220, 206
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "Courier New"
 BEGIN
-    GROUPBOX "Log Settings", -1, 3, 2, 214, 200, WS_CHILD | WS_VISIBLE
-    AUTOCHECKBOX    "Enable Logging", IDC_USELOGCB, 10, 14, 104, 10
-
-    LTEXT           "Log Type", -1, 10, 29, 40, 10
-    COMBOBOX        IDC_LOGTYPECB, 49, 28, 75, 33, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    LTEXT           "Log Filename", -1, 10, 44, 61, 10
-    EDITTEXT        IDC_LOGFILENAMEET, 10, 53, 162, 13, ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse",IDC_LOGBROWSEBT, 176, 53, 33, 12
+    GROUPBOX        "Log Settings",-1,3,2,214,200
+    CONTROL         "Enable Logging",IDC_USELOGCB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,104,10
+    LTEXT           "Log Type",-1,10,29,40,10
+    COMBOBOX        IDC_LOGTYPECB,49,28,75,33,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Log Filename",-1,10,44,61,10
+    EDITTEXT        IDC_LOGFILENAMEET,10,53,162,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_LOGBROWSEBT,176,53,33,12
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-ADDARCODEDLG DIALOG DISCARDABLE  0, 0, 186, 70
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_ADDARCODE DIALOGEX 0, 0, 186, 70
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Add Action Replay code"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    LTEXT           "Action Replay Code:",    -1, 4, 4, 78, 10
-    LTEXT           "Description:", -1, 4, 18, 56, 10
-
-    EDITTEXT        IDC_CODE, 82, 4, 100, 10, ES_UPPERCASE
-    EDITTEXT        IDC_CODEDESC, 82, 18, 100, 30, ES_MULTILINE | ES_WANTRETURN
-
-    DEFPUSHBUTTON   "&Cancel", IDCANCEL, 57, 53, 33, 13
-    PUSHBUTTON      "&OK", IDOK, 95, 53, 33, 13
+    LTEXT           "Action Replay Code:",-1,4,4,78,10
+    LTEXT           "Description:",-1,4,18,56,10
+    EDITTEXT        IDC_CODE,82,4,100,12,ES_UPPERCASE
+    EDITTEXT        IDC_CODEDESC,82,18,100,30,ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "&Cancel",IDCANCEL,57,53,33,13
+    PUSHBUTTON      "&OK",IDOK,95,53,33,13
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-ADDCODEDLG DIALOG DISCARDABLE  0, 0, 216, 112
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_ADDCODE DIALOGEX 0, 0, 216, 112
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Add Code"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    GROUPBOX "Cheat Type", -1, 4, 4, 208, 23, WS_CHILD | WS_VISIBLE
-
-    AUTORADIOBUTTON "Enable",  IDC_CTENABLE,  6, 14, 42, 10
-    AUTORADIOBUTTON "Byte Write",  IDC_CTBYTEWRITE,  47, 14, 51, 10
-    AUTORADIOBUTTON "Word Write",  IDC_CTWORDWRITE,  103, 14, 50, 10
-    AUTORADIOBUTTON "Long Write",  IDC_CTLONGWRITE,  159, 14, 50, 10
-
-    LTEXT           "Address:",    -1, 4, 32, 78, 10
-    LTEXT           "Value:",    -1, 4, 46, 78, 10
-    LTEXT           "Description:", -1, 4, 60, 56, 10
-
-    EDITTEXT        IDC_CODEADDR, 112, 32, 100, 10, ES_UPPERCASE
-    EDITTEXT        IDC_CODEVAL, 112, 46, 100, 10, ES_UPPERCASE | ES_NUMBER
-    EDITTEXT        IDC_CODEDESC, 112, 60, 100, 30, ES_MULTILINE | ES_WANTRETURN
-
-    DEFPUSHBUTTON   "&Cancel", IDCANCEL, 72, 95, 33, 13
-    PUSHBUTTON      "&OK", IDOK, 110, 95, 33, 13
+    GROUPBOX        "Cheat Type",-1,4,4,208,23
+    CONTROL         "Enable",IDC_CTENABLE,"Button",BS_AUTORADIOBUTTON,6,14,42,10
+    CONTROL         "Byte Write",IDC_CTBYTEWRITE,"Button",BS_AUTORADIOBUTTON,47,14,51,10
+    CONTROL         "Word Write",IDC_CTWORDWRITE,"Button",BS_AUTORADIOBUTTON,103,14,50,10
+    CONTROL         "Long Write",IDC_CTLONGWRITE,"Button",BS_AUTORADIOBUTTON,159,14,50,10
+    LTEXT           "Address:",-1,4,32,78,10
+    LTEXT           "Value:",-1,4,46,78,10
+    LTEXT           "Description:",-1,4,60,56,10
+    EDITTEXT        IDC_CODEADDR,112,32,100,12,ES_UPPERCASE
+    EDITTEXT        IDC_CODEVAL,112,46,100,12,ES_UPPERCASE | ES_NUMBER
+    EDITTEXT        IDC_CODEDESC,112,60,100,30,ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "&Cancel",IDCANCEL,72,95,33,13
+    PUSHBUTTON      "&OK",IDOK,110,95,33,13
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-CHEATLISTDLG DIALOG DISCARDABLE  0, 0, 221, 240
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_CHEATLIST DIALOG  0, 0, 221, 240
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Cheats"
 FONT 8, "Courier New"
 BEGIN
-    CONTROL         "", IDC_CHEATLIST, "SysListView32", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | LVS_REPORT, 3, 3, 215, 164
-
-    PUSHBUTTON      "&Delete", IDC_DELETECODE, 3, 173, 33, 13
-    PUSHBUTTON      "&Clear", IDC_CLEARCODES, 185, 173, 33, 13
-
-    GROUPBOX        "Add Codes...", -1, 3, 191, 215, 27, WS_CHILD | WS_VISIBLE
-    PUSHBUTTON      "Action Replay", IDC_ADDAR, 10, 200, 63, 13
-    PUSHBUTTON      "Raw Memory Address", IDC_ADDRAWMEMADDR, 79, 200, 79, 13
-    PUSHBUTTON      "From File", IDC_ADDFROMFILE, 166, 200, 44, 13
-
-    DEFPUSHBUTTON   "&Close", IDOK, 94, 224, 33, 13
+    CONTROL         "",IDC_CHEATLIST,"SysListView32",LVS_REPORT | WS_BORDER | WS_TABSTOP,3,3,215,164
+    PUSHBUTTON      "&Delete",IDC_DELETECODE,3,173,33,13
+    PUSHBUTTON      "&Clear",IDC_CLEARCODES,185,173,33,13
+    GROUPBOX        "Add Codes...",-1,3,191,215,27
+    PUSHBUTTON      "Action Replay",IDC_ADDAR,10,200,63,13
+    PUSHBUTTON      "Raw Memory Address",IDC_ADDRAWMEMADDR,79,200,79,13
+    PUSHBUTTON      "From File",IDC_ADDFROMFILE,166,200,44,13
+    DEFPUSHBUTTON   "&Close",IDOK,94,224,33,13
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-CHEATSEARCHDLG DIALOG DISCARDABLE  0, 0, 221, 262
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_CHEATSEARCH DIALOG  0, 0, 221, 262
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Search for cheats"
 FONT 8, "Courier New"
 BEGIN
-    CONTROL         "", IDC_CHEATLIST, "SysListView32", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | LVS_REPORT, 3, 3, 215, 164
-
-    GROUPBOX        "Compare type", -1, 3, 169, 70, 43, WS_CHILD | WS_VISIBLE
-    AUTORADIOBUTTON "Exact",  IDC_EXACTRB, 6, 179, 34, 10
-    AUTORADIOBUTTON "Less than",  IDC_LESSTHANRB, 6, 189, 49, 10
-    AUTORADIOBUTTON "Greater than",  IDC_GREATERTHANRB, 6, 199, 61, 10
-
-    GROUPBOX        "Data type", -1, 76, 169, 70, 43, WS_CHILD | WS_VISIBLE
-    AUTORADIOBUTTON "Unsigned",  IDC_UNSIGNEDRB, 79, 179, 42, 10
-    AUTORADIOBUTTON "Signed",  IDC_SIGNEDRB,  79, 189, 42, 10
-
-    GROUPBOX        "Data size", -1, 149, 169, 69, 43, WS_CHILD | WS_VISIBLE
-    AUTORADIOBUTTON "8-bit",  IDC_8BITRB,  152, 179, 34, 10
-    AUTORADIOBUTTON "16-bit",  IDC_16BITRB,  152, 189, 42, 10
-    AUTORADIOBUTTON "32-bit",  IDC_32BITRB,  152, 199, 39, 10
-
-    EDITTEXT        IDC_CHEATSEARCHET, 46, 215, 148, 12
-    PUSHBUTTON      "Restart", IDC_CTSEARCHRESTARTBT, 10, 230, 63, 13
-    PUSHBUTTON      "Search", IDC_CTSEARCHBT, 79, 230, 63, 13
-    PUSHBUTTON      "Add cheat", IDC_CTADDCHEATBT, 148, 230, 63, 13
-    DEFPUSHBUTTON   "&Close", IDOK, 90, 246, 33, 13
+    CONTROL         "",IDC_CHEATLIST,"SysListView32",LVS_REPORT | WS_BORDER | WS_TABSTOP,3,3,215,164
+    GROUPBOX        "Compare type",-1,3,169,70,43
+    CONTROL         "Exact",IDC_EXACTRB,"Button",BS_AUTORADIOBUTTON,6,179,34,10
+    CONTROL         "Less than",IDC_LESSTHANRB,"Button",BS_AUTORADIOBUTTON,6,189,49,10
+    CONTROL         "Greater than",IDC_GREATERTHANRB,"Button",BS_AUTORADIOBUTTON,6,199,61,10
+    GROUPBOX        "Data type",-1,76,169,70,43
+    CONTROL         "Unsigned",IDC_UNSIGNEDRB,"Button",BS_AUTORADIOBUTTON,79,179,42,10
+    CONTROL         "Signed",IDC_SIGNEDRB,"Button",BS_AUTORADIOBUTTON,79,189,42,10
+    GROUPBOX        "Data size",-1,149,169,69,43
+    CONTROL         "8-bit",IDC_8BITRB,"Button",BS_AUTORADIOBUTTON,152,179,34,10
+    CONTROL         "16-bit",IDC_16BITRB,"Button",BS_AUTORADIOBUTTON,152,189,42,10
+    CONTROL         "32-bit",IDC_32BITRB,"Button",BS_AUTORADIOBUTTON,152,199,39,10
+    EDITTEXT        IDC_CHEATSEARCHET,46,215,148,12
+    PUSHBUTTON      "Restart",IDC_CTSEARCHRESTARTBT,10,230,63,13
+    PUSHBUTTON      "Search",IDC_CTSEARCHBT,79,230,63,13
+    PUSHBUTTON      "Add cheat",IDC_CTADDCHEATBT,148,230,63,13
+    DEFPUSHBUTTON   "&Close",IDOK,90,246,33,13
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-LOGDLG DIALOG DISCARDABLE  0, 0, 214, 203
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_LOG DIALOG  0, 0, 214, 203
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Log"
 FONT 8, "Courier New"
 BEGIN
-    EDITTEXT        IDC_LOGET, 3, 3, 208, 181, ES_MULTILINE | ES_READONLY | ES_AUTOHSCROLL | ES_AUTOVSCROLL
-    PUSHBUTTON      "Clear", IDC_CLEARBT, 3, 187, 33, 13
-    PUSHBUTTON      "Save Log to file", IDC_SAVELOGBT, 141, 187, 70, 13
+    EDITTEXT        IDC_LOGET,3,3,208,181,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Clear",IDC_CLEARBT,3,187,33,13
+    PUSHBUTTON      "Save Log to file",IDC_SAVELOGBT,141,187,70,13
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-BACKUPRAMDLG DIALOG DISCARDABLE  0, 0, 169, 220
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_BACKUPRAM DIALOGEX 0, 0, 173, 222
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Backup Ram Manager"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Device List", -1, 2, 2, 164, 25, WS_CHILD | WS_VISIBLE
-    COMBOBOX        IDC_BUPDEVICECB, 22, 11, 125, 37, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    GROUPBOX        "Save List", -1, 2, 28, 80, 174, WS_CHILD | WS_VISIBLE
-    LISTBOX         IDC_BUPSAVELB, 5, 37, 75, 114, LBS_SORT | WS_VSCROLL
-    LTEXT           "", IDC_BUPFREESPACELT, 5, 146, 56, 20
-    PUSHBUTTON      "Delete", IDC_BUPDELETEBT, 5, 171, 33, 13
-    PUSHBUTTON      "Format", IDC_BUPFORMATBT, 5, 186, 33, 13
-
-    GROUPBOX "Save Info", -1, 84, 28, 83, 174, WS_CHILD | WS_VISIBLE
-    LTEXT           "Filename", -1, 88, 37, 56, 10
-    EDITTEXT        IDC_BUPFILENAMEET, 88, 47, 72, 10, ES_READONLY
-    LTEXT           "Comment", -1, 88, 64, 56, 10
-    EDITTEXT        IDC_BUPCOMMENTET, 88, 73, 70, 10, ES_READONLY
-/*
-    LTEXT           "Language", -1, 88, 91, 56, 10
-    EDITTEXT        IDC_BUPLANGUAGEET, 88, 101, 72, 10, ES_READONLY
-    LTEXT           "Date", -1, 88, 119, 56, 10
-    EDITTEXT        IDC_BUPDATEET, 88, 130, 72, 10, ES_READONLY
-    LTEXT           "Data size", -1, 88, 147, 56, 10
-    EDITTEXT        IDC_BUPDATASIZEET, 88, 159, 61, 10, ES_READONLY
-    LTEXT           "Block size", -1, 88, 176, 56, 10
-    EDITTEXT        IDC_BUPBLOCKSIZEET, 88, 188, 37, 10, ES_READONLY
-*/
-    LTEXT           "Data size", -1, 88, 91, 70, 10
-    EDITTEXT        IDC_BUPDATASIZEET, 88, 101, 60, 10, ES_READONLY
-    LTEXT           "Block size", -1, 88, 118, 72, 10
-    EDITTEXT        IDC_BUPBLOCKSIZEET, 88, 130, 60, 10, ES_READONLY
-
-    DEFPUSHBUTTON   "&Close", IDOK, 133, 205, 33, 13
+    GROUPBOX        "Device List",-1,3,2,167,25
+    COMBOBOX        IDC_BUPDEVICECB,22,11,125,37,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Save List",-1,3,28,80,174
+    LISTBOX         IDC_BUPSAVELB,5,37,75,114,LBS_SORT | WS_VSCROLL
+    LTEXT           "",IDC_BUPFREESPACELT,5,146,56,20
+    PUSHBUTTON      "Delete",IDC_BUPDELETEBT,5,171,33,13
+    PUSHBUTTON      "Format",IDC_BUPFORMATBT,5,186,33,13
+    GROUPBOX        "Save Info",-1,87,28,83,174
+    LTEXT           "Filename",-1,88,37,56,10
+    EDITTEXT        IDC_BUPFILENAMEET,88,47,72,12,ES_READONLY
+    LTEXT           "Comment",-1,88,64,56,10
+    EDITTEXT        IDC_BUPCOMMENTET,88,73,70,12,ES_READONLY
+    LTEXT           "Data size",-1,88,91,70,10
+    EDITTEXT        IDC_BUPDATASIZEET,88,101,60,12,ES_READONLY
+    LTEXT           "Block size",-1,88,118,72,10
+    EDITTEXT        IDC_BUPBLOCKSIZEET,88,130,60,12,ES_READONLY
+    DEFPUSHBUTTON   "&Close",IDOK,137,206,33,13
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-ERRORDEBUGDLG DIALOG DISCARDABLE  0, 0, 136, 144
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_ERRORDEBUG DIALOG  0, 0, 136, 144
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Error"
 FONT 8, "Courier New"
 BEGIN
-    LTEXT           "", IDC_EDTEXT, 6, 6, 130, 112
-    DEFPUSHBUTTON   "Continue", IDC_EDCONTINUE, 75, 124, 38, 12
-    PUSHBUTTON      "Debug", IDC_EDDEBUG, 23, 124, 33, 13
+    LTEXT           "",IDC_EDTEXT,6,6,130,112
+    DEFPUSHBUTTON   "Continue",IDC_EDCONTINUE,75,124,38,12
+    PUSHBUTTON      "Debug",IDC_EDDEBUG,23,124,33,13
 END
 
-//////////////////////////////////////////////////////////////////////////////
-
-ABOUTDLG DIALOG FIXED PURE  6, 21, 190, 137
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_ABOUT DIALOGEX 6, 21, 190, 137
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "About Yabause"
-FONT 8, "Courier New"
+FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    CONTROL IDB_BITMAP, -1, "static", SS_BITMAP | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 3, 3, 157, 75
-    CTEXT           "Yabause vX.X.X", IDC_VERSIONTEXT,3,84,184,25
-    CTEXT           "Copyright (c) 2002-2007 Yabause Team",-1,3,94,184,8
-    CTEXT           "http://yabause.sourceforge.net",-1,3,104,184,8
+    CONTROL         102,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN,3,3,184,74
+    CTEXT           "Yabause vX.X.X",IDC_VERSIONTEXT,3,84,184,8
+    CTEXT           "Copyright (c) 2002-2007 Yabause Team",IDC_STATIC,3,94,184,8
+    CTEXT           "http://yabause.org",IDC_STATIC,3,104,184,8
     DEFPUSHBUTTON   "&OK",IDOK,75,120,40,14
 END
 
-//////////////////////////////////////////////////////////////////////////////
 
-IDR_MAIN_ACCEL ACCELERATORS DISCARDABLE
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAIN_ACCEL ACCELERATORS 
 BEGIN
-    VK_RETURN,     IDM_TOGGLEFULLSCREEN,        VIRTKEY, ALT, NOINVERT
-    "1",           IDM_TOGGLENBG0,              ASCII, NOINVERT
-    "2",           IDM_TOGGLENBG1,              ASCII, NOINVERT
-    "3",           IDM_TOGGLENBG2,              ASCII, NOINVERT
-    "4",           IDM_TOGGLENBG3,              ASCII, NOINVERT
-    "5",           IDM_TOGGLERBG0,              ASCII, NOINVERT
-    "6",           IDM_TOGGLEVDP1,              ASCII, NOINVERT
-    VK_F1,         IDM_TOGGLEFPS,               VIRTKEY, NOINVERT
-    VK_F2,         IDM_SAVESTATE_F2,            VIRTKEY, SHIFT, NOINVERT
-    VK_F3,         IDM_SAVESTATE_F3,            VIRTKEY, SHIFT, NOINVERT
-    VK_F4,         IDM_SAVESTATE_F4,            VIRTKEY, SHIFT, NOINVERT
-    VK_F5,         IDM_SAVESTATE_F5,            VIRTKEY, SHIFT, NOINVERT
-    VK_F6,         IDM_SAVESTATE_F6,            VIRTKEY, SHIFT, NOINVERT
-    VK_F7,         IDM_SAVESTATE_F7,            VIRTKEY, SHIFT, NOINVERT
-    VK_F8,         IDM_SAVESTATE_F8,            VIRTKEY, SHIFT, NOINVERT
-    VK_F9,         IDM_SAVESTATE_F9,            VIRTKEY, SHIFT, NOINVERT
-    VK_F10,        IDM_SAVESTATE_F10,           VIRTKEY, SHIFT, NOINVERT
-    VK_F2,         IDM_LOADSTATE_F2,            VIRTKEY, NOINVERT
-    VK_F3,         IDM_LOADSTATE_F3,            VIRTKEY, NOINVERT
-    VK_F4,         IDM_LOADSTATE_F4,            VIRTKEY, NOINVERT
-    VK_F5,         IDM_LOADSTATE_F5,            VIRTKEY, NOINVERT
-    VK_F6,         IDM_LOADSTATE_F6,            VIRTKEY, NOINVERT
-    VK_F7,         IDM_LOADSTATE_F7,            VIRTKEY, NOINVERT
-    VK_F8,         IDM_LOADSTATE_F8,            VIRTKEY, NOINVERT
-    VK_F9,         IDM_LOADSTATE_F9,            VIRTKEY, NOINVERT
-    VK_F10,        IDM_LOADSTATE_F10,           VIRTKEY, NOINVERT
+    VK_RETURN,      IDM_TOGGLEFULLSCREEN,   VIRTKEY, ALT, NOINVERT
+    "1",            IDM_TOGGLENBG0,         ASCII,  NOINVERT
+    "2",            IDM_TOGGLENBG1,         ASCII,  NOINVERT
+    "3",            IDM_TOGGLENBG2,         ASCII,  NOINVERT
+    "4",            IDM_TOGGLENBG3,         ASCII,  NOINVERT
+    "5",            IDM_TOGGLERBG0,         ASCII,  NOINVERT
+    "6",            IDM_TOGGLEVDP1,         ASCII,  NOINVERT
+    VK_F1,          IDM_TOGGLEFPS,          VIRTKEY, NOINVERT
+    VK_F2,          IDM_SAVESTATE_F2,       VIRTKEY, SHIFT, NOINVERT
+    VK_F3,          IDM_SAVESTATE_F3,       VIRTKEY, SHIFT, NOINVERT
+    VK_F4,          IDM_SAVESTATE_F4,       VIRTKEY, SHIFT, NOINVERT
+    VK_F5,          IDM_SAVESTATE_F5,       VIRTKEY, SHIFT, NOINVERT
+    VK_F6,          IDM_SAVESTATE_F6,       VIRTKEY, SHIFT, NOINVERT
+    VK_F7,          IDM_SAVESTATE_F7,       VIRTKEY, SHIFT, NOINVERT
+    VK_F8,          IDM_SAVESTATE_F8,       VIRTKEY, SHIFT, NOINVERT
+    VK_F9,          IDM_SAVESTATE_F9,       VIRTKEY, SHIFT, NOINVERT
+    VK_F10,         IDM_SAVESTATE_F10,      VIRTKEY, SHIFT, NOINVERT
+    VK_F2,          IDM_LOADSTATE_F2,       VIRTKEY, NOINVERT
+    VK_F3,          IDM_LOADSTATE_F3,       VIRTKEY, NOINVERT
+    VK_F4,          IDM_LOADSTATE_F4,       VIRTKEY, NOINVERT
+    VK_F5,          IDM_LOADSTATE_F5,       VIRTKEY, NOINVERT
+    VK_F6,          IDM_LOADSTATE_F6,       VIRTKEY, NOINVERT
+    VK_F7,          IDM_LOADSTATE_F7,       VIRTKEY, NOINVERT
+    VK_F8,          IDM_LOADSTATE_F8,       VIRTKEY, NOINVERT
+    VK_F9,          IDM_LOADSTATE_F9,       VIRTKEY, NOINVERT
+    VK_F10,         IDM_LOADSTATE_F10,      VIRTKEY, NOINVERT
 END
 
-//////////////////////////////////////////////////////////////////////////////
 
-IDI_ICON        ICON    DISCARDABLE     "logo.ico"
-IDB_BITMAP      BITMAP  DISCARDABLE     "yabause_logo.bmp"
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
 
-//////////////////////////////////////////////////////////////////////////////
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON                ICON                    "logo.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP              BITMAP                  "yabause_logo.bmp"
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include <windows.h>\r\n"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_MEMTRANSFER, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 170
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 86
+    END
+
+    IDD_MEM, DIALOG
+    BEGIN
+        TOPMARGIN, 5
+        BOTTOMMARGIN, 56
+    END
+
+    IDD_SH2DEBUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 384
+        BOTTOMMARGIN, 226
+    END
+
+    IDD_VDP1DEBUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 386
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 196
+    END
+
+    IDD_VDP2DEBUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 449
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 307
+    END
+
+    IDD_M68KDEBUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 384
+        BOTTOMMARGIN, 226
+    END
+
+    IDD_SCUDSPDEBUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 434
+        BOTTOMMARGIN, 226
+    END
+
+    IDD_SCSPDEBUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 438
+        BOTTOMMARGIN, 226
+    END
+
+    IDD_GOTOADDRESS, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 186
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 56
+    END
+
+    IDD_SEARCHMEMORY, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 186
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 103
+    END
+
+    IDD_SEARCHBUSY, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 82
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 51
+    END
+
+    IDD_MEMORYEDITOR, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 284
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 179
+    END
+
+    IDD_SETTINGS, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 227
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 241
+    END
+
+    IDD_INPUTSETTINGS, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 191
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 30
+    END
+
+    IDD_BUTTONCONFIG, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 34
+    END
+
+    IDD_ADDARCODE, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 182
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 66
+    END
+
+    IDD_ADDCODE, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 212
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 108
+    END
+
+    IDD_CHEATLIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 218
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 237
+    END
+
+    IDD_LOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 211
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 200
+    END
+
+    IDD_BACKUPRAM, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 170
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 219
+    END
+
+    IDD_ERRORDEBUG, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 137
+    END
+
+    IDD_ABOUT, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 187
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 134
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (Canada) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
 

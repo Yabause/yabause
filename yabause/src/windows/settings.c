@@ -163,7 +163,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
-                                      "BasicSettingsDlg",
+                                      MAKEINTRESOURCE(IDD_BASICSETTINGS),
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)BasicSettingsDlgProc);
          i++;
@@ -172,7 +172,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
-                                      "VideoSettingsDlg",
+                                      MAKEINTRESOURCE(IDD_VIDEOSETTINGS),
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)VideoSettingsDlgProc);
          i++;
@@ -181,7 +181,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
-                                      "SoundSettingsDlg",
+                                      MAKEINTRESOURCE(IDD_SOUNDSETTINGS),
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)SoundSettingsDlgProc);
          i++;
@@ -190,7 +190,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
-                                      "PadConfigDlg",
+                                      MAKEINTRESOURCE(IDD_PADCONFIG),
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)PadConfigDlgProc);
          i++;
@@ -199,7 +199,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 //         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
 //         dialoglist[i] = CreateDialog(y_hInstance,
-//                                      "NetlinkSettingsDlg",
+//                                      MAKEINTRESOURCE(IDD_NETLINKSETTINGS),
 //                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
 //                                      (DLGPROC)NetlinkSettingsDlgProc);
 //         i++;
@@ -209,7 +209,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
-                                      "LogSettingsDlg",
+                                      MAKEINTRESOURCE(IDD_LOGSETTINGS),
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)LogSettingsDlgProc);
          i++;
@@ -1246,12 +1246,12 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             case IDC_PAD1PB:
             {
-               DialogBoxParam(y_hInstance, "PadConfigDlg", hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)0);
+               DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_PADCONFIG), hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)0);
                return TRUE;
             }
             case IDC_PAD2PB:
             {
-               DialogBoxParam(y_hInstance, "PadConfigDlg", hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)1);
+               DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_PADCONFIG), hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)1);
                return TRUE;
             }
             case IDOK:

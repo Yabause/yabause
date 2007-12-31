@@ -904,7 +904,7 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
       }
    }
 
-   if (DialogBoxParam(y_hInstance, "ButtonConfigDlg", hWnd, (DLGPROC)ButtonConfigDlgProc, (LPARAM)lpDIDevicetemp) == TRUE)
+   if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_BUTTONCONFIG), hWnd, (DLGPROC)ButtonConfigDlgProc, (LPARAM)lpDIDevicetemp) == TRUE)
    {
       // Figure out what kind of code to generate
       if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_KEYBOARD)
