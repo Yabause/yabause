@@ -1,5 +1,5 @@
 /*  Copyright 2004 Guillaume Duhamel
-    Copyright 2004-2007 Theo Berkau
+    Copyright 2004-2008 Theo Berkau
     Copyright 2005 Joost Peters
 
     This file is part of Yabause.
@@ -20,6 +20,7 @@
 */
 #include <windows.h>
 #include <commctrl.h>
+#include <GL/gl.h>
 #undef FASTCALL
 #include "../cs2.h"
 #include "../vdp2.h"
@@ -53,6 +54,8 @@ int stopped=1;
 int paused=0;
 int yabwinw;
 int yabwinh;
+int screenwidth;
+int screenheight;
 
 HINSTANCE y_hInstance;
 HWND YabWin=NULL;
@@ -71,6 +74,7 @@ static int depthsize = 0;
 char yssfilename[MAX_PATH] = "\0";
 char ysspath[MAX_PATH] = "\0";
 char netlinksetting[80];
+char bmpfilename[MAX_PATH] = "\0";
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 void YuiReleaseVideo(void);
@@ -305,6 +309,9 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
 
    isfullscreenset = fullscreen;
 
+   screenwidth = width;
+   screenheight = height;
+
    return 0;
 }
 
@@ -343,6 +350,69 @@ void YuiSwapBuffers()
 
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)
 {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YuiCaptureScreen(const char *filename)
+{
+   u8 *buf;
+   FILE *fp;
+   BITMAPFILEHEADER bmf;
+   BITMAPINFOHEADER bmi;
+   int totalsize=screenwidth * screenheight * sizeof(u32);
+   int i;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+   {
+      // error
+      return -1;
+   }
+
+   if ((buf = (u8 *)malloc(totalsize)) == NULL)
+   {
+      // error
+      fclose(fp);
+      return -2;
+   }
+
+   SwapBuffers(YabHDC);
+   glReadBuffer(GL_BACK);
+   glReadPixels(0, 0, screenwidth, screenheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+   SwapBuffers(YabHDC);
+
+   for (i = 0; i < (screenwidth * screenheight); i++)
+   {
+      u8 temp;
+
+      temp = buf[i * 4];
+      buf[i * 4] = buf[(i * 4) + 2];
+      buf[(i * 4) + 2] = temp;
+   }
+
+   // Setup BMP header
+   ZeroMemory(&bmf, sizeof(bmf));
+   bmf.bfType = 'B' | ('M' << 8);
+   bmf.bfSize = sizeof(bmf);
+   bmf.bfOffBits = sizeof(bmf) + sizeof(bmi);
+
+   ZeroMemory(&bmi, sizeof(bmi));
+
+   bmi.biSize = sizeof(bmi);
+   bmi.biWidth = screenwidth;
+   bmi.biHeight = screenheight;
+   bmi.biPlanes = 1;
+   bmi.biBitCount = 32;
+   bmi.biCompression = 0; // None
+   bmi.biSizeImage = bmi.biWidth * bmi.biHeight * sizeof(u32);
+
+   fwrite((void *)&bmf, 1, sizeof(bmf), fp);
+   fwrite((void *)&bmi, 1, sizeof(bmi), fp);
+   fwrite((void *)buf, 1, totalsize, fp);
+   fclose(fp);
+   free(buf);
+
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1147,6 +1217,23 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                if (YabLoadStateSlot(ysspath, LOWORD(wParam)-IDM_LOADSTATE_F2) != 0)
                   MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
                break;
+            case IDM_CAPTURESCREEN:
+            {
+               OPENFILENAME ofn;
+               
+               YuiTempPause();
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd,
+                       "All Files\0*.*\0Bitmap Files\0*.BMP\0",
+                       bmpfilename, sizeof(bmpfilename));
+
+               if (GetSaveFileName(&ofn))
+               {
+                  if (YuiCaptureScreen(bmpfilename))
+                     MessageBox (hWnd, "Couldn't save capture file", "Error",  MB_OK | MB_ICONINFORMATION);
+               }
+               YuiTempUnPause();
+               break;
+            }
             case IDM_EXIT:
             {
                ScspMuteAudio();

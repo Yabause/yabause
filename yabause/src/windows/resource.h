@@ -138,7 +138,6 @@
 #define IDC_BUPDATEET                   1011
 #define IDC_CODEDESC                    1011
 #define IDC_SIGNEDRB                    1011
-#define IDC_RBG0ENABCB2                 1011
 #define IDC_DISPENABCB                  1011
 #define IDC_CHECKBOX5                   1012
 #define IDC_MPEGROMBROWSE               1012
@@ -262,6 +261,8 @@
 #define IDM_LOADSTATE_F8                40075
 #define IDM_LOADSTATE_F9                40076
 #define IDM_LOADSTATE_F10               40077
+#define ID_FILE_CAPTURESCREEN           40080
+#define IDM_CAPTURESCREEN               40081
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -269,7 +270,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
-#define _APS_NEXT_COMMAND_VALUE         40080
+#define _APS_NEXT_COMMAND_VALUE         40082
 #define _APS_NEXT_CONTROL_VALUE         1063
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
