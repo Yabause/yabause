@@ -296,7 +296,7 @@ void SNDDXSetVolume(int volume)
    if (volume == 0)
       soundvolume = DSBVOLUME_MIN;
    else
-      soundvolume = log10((double)volume / 100.0) * 2000.0;
+      soundvolume = (LONG)(log10((double)volume / 100.0) * 2000.0);
 
    if (!issoundmuted)
       IDirectSoundBuffer8_SetVolume (lpDSB2, soundvolume);

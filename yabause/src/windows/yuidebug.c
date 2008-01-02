@@ -856,9 +856,9 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   case LBN_SELCHANGE:
                   {
-                     u8 cursel=0;
+                     u32 cursel=0;
 
-                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_VDP1CMDLB, LB_GETCURSEL, 0, 0);
+                     cursel = (u32)SendDlgItemMessage(hDlg, IDC_VDP1CMDLB, LB_GETCURSEL, 0, 0);
 
                      Vdp1DebugCommand(cursel, tempstr);
                      SetDlgItemText(hDlg, IDC_VDP1CMDET, tempstr);
@@ -2001,7 +2001,7 @@ LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_SEARCHMEM:
             {
-               searcharg.startaddr = SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GETCURADDRESS, 0, 0);
+               searcharg.startaddr = (u32)SendDlgItemMessage(hDlg, IDC_HEXEDIT, HEX_GETCURADDRESS, 0, 0);
                
                if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_SEARCHMEMORY), hDlg,
                                   (DLGPROC)SearchMemoryDlgProc,

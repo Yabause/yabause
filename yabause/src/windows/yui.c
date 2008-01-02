@@ -761,7 +761,7 @@ int YuiInit(void)
    // Grab Netlink Settings
    GetPrivateProfileString("Netlink", "LocalRemoteIP", "127.0.0.1", tempstr, MAX_PATH, inifilename);
    sscanf(tempstr, "%d.%d.%d.%d", ip, ip+1, ip+2, ip+3);
-   netlinklocalremoteip = MAKEIPADDRESS(ip[0], ip[1], ip[2], ip[3]);
+   netlinklocalremoteip = (DWORD)MAKEIPADDRESS(ip[0], ip[1], ip[2], ip[3]);
 
    GetPrivateProfileString("Netlink", "Port", "7845", tempstr, MAX_PATH, inifilename);
    netlinkport = atoi(tempstr);
