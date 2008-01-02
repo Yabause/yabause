@@ -34,7 +34,8 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 extern BOOL IsPathCdrom(const char *path);
 
-int CreateHelpBalloons(helpballoon_struct *hb[]);
+int CreateHelpBalloons(helpballoon_struct *hb);
+void DestroyHelpBalloons(helpballoon_struct *hb);
 
 extern char biosfilename[MAX_PATH];
 extern char cdrompath[MAX_PATH];

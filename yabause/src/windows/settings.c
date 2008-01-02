@@ -1,4 +1,4 @@
-/*  Copyright 2004-2007 Theo Berkau
+/*  Copyright 2004-2008 Theo Berkau
 
     This file is part of Yabause.
 
@@ -119,7 +119,7 @@ void GenerateCDROMList(HWND hWnd)
          drive_list[num_cdroms] = 'c' + i;
 
          sprintf(tempstr, "%c", 'C' + i);
-         SendDlgItemMessage(hWnd, IDC_DRIVELETTERCB, CB_ADDSTRING, 0, (long)tempstr);
+         SendDlgItemMessage(hWnd, IDC_DRIVELETTERCB, CB_ADDSTRING, 0, (LPARAM)tempstr);
          num_cdroms++;
       } 
    }
@@ -189,10 +189,14 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          tabitem.pszText = "Input";
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
+//         dialoglist[i] = CreateDialog(y_hInstance,
+//                                      MAKEINTRESOURCE(IDD_PADCONFIG),
+//                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
+//                                      (DLGPROC)PadConfigDlgProc);
          dialoglist[i] = CreateDialog(y_hInstance,
-                                      MAKEINTRESOURCE(IDD_PADCONFIG),
+                                      MAKEINTRESOURCE(IDD_INPUTSETTINGS),
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
-                                      (DLGPROC)PadConfigDlgProc);
+                                      (DLGPROC)InputSettingsDlgProc);
          i++;
 
 //         tabitem.pszText = "Netlink";
@@ -311,6 +315,8 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam)
 {
+   static helpballoon_struct hb[9];
+
    switch (uMsg)
    {
       case WM_INITDIALOG:
@@ -323,8 +329,8 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Disc Type Box
          SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (long)"CD");
-         SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (long)"Image");
+         SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (LPARAM)"CD");
+         SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (LPARAM)"Image");
 
          // Drive Letter Box
          SendDlgItemMessage(hDlg, IDC_DRIVELETTERCB, CB_RESETCONTENT, 0, 0);
@@ -400,23 +406,23 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup SH2 Core Combo box
          SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (long)"Fast Interpreter");
-         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (long)"Debug Interpreter");
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (LPARAM)"Fast Interpreter");
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (LPARAM)"Debug Interpreter");
 
          // Set Selected SH2 Core
-         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_SETCURSEL, sh2coretype, 0); // fix me
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_SETCURSEL, sh2coretype, 0);
 
          // Setup Region Combo box
          SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Auto-detect");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Japan(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Asia(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"North America(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Central/South America(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Korea(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Asia(PAL)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Europe + others(PAL)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (long)"Central/South America(PAL)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Auto-detect");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Japan(NTSC)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Asia(NTSC)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"North America(NTSC)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Central/South America(NTSC)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Korea(NTSC)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Asia(PAL)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Europe + others(PAL)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Central/South America(PAL)");
 
          // Set Selected Region
          switch(regionid)
@@ -460,16 +466,16 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup Cart Type Combo box
          SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"None");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"Pro Action Replay");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"4 Mbit Backup Ram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"8 Mbit Backup Ram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"16 Mbit Backup Ram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"32 Mbit Backup Ram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"8 Mbit Dram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"32 Mbit Dram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"Netlink");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (long)"16 Mbit Rom");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"None");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"Pro Action Replay");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"4 Mbit Backup Ram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"8 Mbit Backup Ram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"16 Mbit Backup Ram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"32 Mbit Backup Ram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"8 Mbit Dram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"32 Mbit Dram");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"Netlink");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"16 Mbit Rom");
 
          // Set Selected Cart Type
          SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_SETCURSEL, carttype, 0);
@@ -498,6 +504,27 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                break;
             default: break;
          }
+
+         // Setup Tooltips
+         hb[0].string = "Select whether to use a cdrom or a disc image";
+         hb[0].hParent = GetDlgItem(hDlg, IDC_DISCTYPECB);
+         hb[1].string = "Use this to select the SH2 emulation method. If in doubt, leave it as 'Fast Interpreter'";
+         hb[1].hParent = GetDlgItem(hDlg, IDC_SH2CORECB);
+         hb[2].string = "Use this to select the region of the CD. Normally it's best to leave it as 'Auto-detect'";
+         hb[2].hParent = GetDlgItem(hDlg, IDC_REGIONCB);
+         hb[3].string = "This is where you put the path to a Saturn bios rom image. If you don't have one, just leave it blank";
+         hb[3].hParent = GetDlgItem(hDlg, IDC_BIOSEDIT);
+         hb[4].string = "This is where you put the path to internal backup ram file. This holds all your saves.";
+         hb[4].hParent = GetDlgItem(hDlg, IDC_BACKUPRAMEDIT);
+         hb[5].string = "If you don't know what this is, just leave it blank.";
+         hb[5].hParent = GetDlgItem(hDlg, IDC_MPEGROMEDIT);  
+         hb[6].string = "Use this to select what kind of cartridge to emulate.  If in doubt, leave it as 'None'";
+         hb[6].hParent = GetDlgItem(hDlg, IDC_CARTTYPECB);
+         hb[7].string = "This is where you put the path to the file used by the emulated cartridge. The kind of file that goes here depends on what Cartridge Type is set to";
+         hb[7].hParent = GetDlgItem(hDlg, IDC_CARTEDIT);
+         hb[8].string = NULL;
+
+         CreateHelpBalloons(hb);
 
          return TRUE;
       }
@@ -700,7 +727,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                GetDlgItemText(hDlg, IDC_BIOSEDIT, biosfilename, MAX_PATH);
                GetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, backupramfilename, MAX_PATH);
                GetDlgItemText(hDlg, IDC_MPEGROMEDIT, mpegromfilename, MAX_PATH);
-               carttype = SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_GETCURSEL, 0, 0);
+               carttype = (int)SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_GETCURSEL, 0, 0);
                GetDlgItemText(hDlg, IDC_CARTEDIT, cartfilename, MAX_PATH);
 
                // write path/filenames
@@ -860,6 +887,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       }
       case WM_DESTROY:
       {
+         DestroyHelpBalloons(hb);
          break;
       }
    }
@@ -882,10 +910,10 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup Video Core Combo box
          SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (long)"None");
+         SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (LPARAM)"None");
 
          for (i = 1; VIDCoreList[i] != NULL; i++)
-            SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (long)VIDCoreList[i]->Name);
+            SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (LPARAM)VIDCoreList[i]->Name);
 
          // Set Selected Video Core
          for (i = 0; VIDCoreList[i] != NULL; i++)
@@ -918,7 +946,7 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                int index;
 
                sprintf(tempstr, "%dx%d", (int)dmSettings.dmPelsWidth, (int)dmSettings.dmPelsHeight);
-               index = SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_ADDSTRING, 0, (long)tempstr);
+               index = (int)SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_ADDSTRING, 0, (LPARAM)tempstr);
 
 
                if (dmSettings.dmPelsWidth == fullscreenwidth &&
@@ -1011,10 +1039,10 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
 
                // Write full screen size settings
-               cursel = SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETCURSEL, 0, 0);
+               cursel = (int)SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETCURSEL, 0, 0);
                if (SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXTLEN, cursel, 0) <= MAX_PATH)
                {
-                  SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXT, cursel, (long)tempstr);
+                  SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXT, cursel, (LPARAM)tempstr);
                   sscanf(tempstr, "%dx%d", &fullscreenwidth, &fullscreenheight);
                }
 
@@ -1092,10 +1120,10 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup Sound Core Combo box
          SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (long)"None");
+         SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (LPARAM)"None");
 
          for (i = 1; SNDCoreList[i] != NULL; i++)
-            SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (long)SNDCoreList[i]->Name);
+            SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (LPARAM)SNDCoreList[i]->Name);
 
          // Set Selected Sound Core
          for (i = 0; SNDCoreList[i] != NULL; i++)
@@ -1135,7 +1163,7 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
 
                // Write Volume
-               sndvolume = SendDlgItemMessage(hDlg, IDC_SLVOLUME, TBM_GETPOS, 0, 0);
+               sndvolume = (int)SendDlgItemMessage(hDlg, IDC_SLVOLUME, TBM_GETPOS, 0, 0);
                sprintf(tempstr, "%d", sndvolume);
                WritePrivateProfileString("Sound", "Volume", tempstr, inifilename);
                if (sndcorechanged && nocorechange == 0)
@@ -1198,7 +1226,7 @@ LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                EndDialog(hDlg, TRUE);
 
                // Local/Remote IP
-               SendDlgItemMessage(hDlg, IDC_LOCALREMOTEIP, IPM_GETADDRESS, 0, (long)&netlinklocalremoteip);
+               SendDlgItemMessage(hDlg, IDC_LOCALREMOTEIP, IPM_GETADDRESS, 0, (LPARAM)&netlinklocalremoteip);
                sprintf(tempstr, "%d.%d.%d.%d", (int)FIRST_IPADDRESS(netlinklocalremoteip), (int)SECOND_IPADDRESS(netlinklocalremoteip), (int)THIRD_IPADDRESS(netlinklocalremoteip), (int)FOURTH_IPADDRESS(netlinklocalremoteip));
                WritePrivateProfileString("Netlink", "LocalRemoteIP", tempstr, inifilename);
 
@@ -1234,26 +1262,99 @@ int configpadnum=0;
 LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam)
 {
+   static helpballoon_struct hb[26];
+
    switch (uMsg)
    {
       case WM_INITDIALOG:
       {
+         int i;
+
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"None");
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"Direct");
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"6-port Multitap");
+
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"None");
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"Direct");
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"6-port Multitap");
+
+         for (i = 0; i < 6; i++)
+         {
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_RESETCONTENT, 0, 0);
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"None");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Standard Pad");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Analog Pad");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Stunner");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Mouse");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Keyboard");
+
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_RESETCONTENT, 0, 0);
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"None");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Standard Pad");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Analog Pad");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Stunner");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Mouse");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Keyboard");
+
+            // finish me
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_SETCURSEL, 0, 0);
+            EnableWindow(GetDlgItem(hDlg, IDC_PORT1ATYPECB+i), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_PORT1ACFGPB+i), FALSE);            
+
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_SETCURSEL, 0, 0);
+            EnableWindow(GetDlgItem(hDlg, IDC_PORT2ATYPECB+i), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_PORT2ACFGPB+i), FALSE);            
+         }
+
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_SETCURSEL, 1, 0);
+         EnableWindow(GetDlgItem(hDlg, IDC_PORT1CONNTYPECB), FALSE);
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_SETCURSEL, 0, 0);
+         EnableWindow(GetDlgItem(hDlg, IDC_PORT2CONNTYPECB), FALSE);
+
+         SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB, CB_SETCURSEL, 1, 0);
+         EnableWindow(GetDlgItem(hDlg, IDC_PORT1ACFGPB), TRUE);            
+
+         // Setup Tooltips
+         hb[0].string = "Use this to select whether to use a multi-tap or direct connection";
+         hb[0].hParent = GetDlgItem(hDlg, IDC_PORT1CONNTYPECB);
+         hb[1].string = hb[0].string;
+         hb[1].hParent = GetDlgItem(hDlg, IDC_PORT2CONNTYPECB);
+
+         for (i = 0; i < 6; i++)
+         {
+            hb[2+i].string = "Use this to select what kind of peripheral to emulate";
+            hb[2+i].hParent = GetDlgItem(hDlg, IDC_PORT1ATYPECB+i);
+            hb[8+i].string = hb[2+i].string;
+            hb[8+i].hParent = GetDlgItem(hDlg, IDC_PORT2ATYPECB+i);            
+
+            hb[14+i].string = "Press this to change the button configuration, etc.";
+            hb[14+i].hParent = GetDlgItem(hDlg, IDC_PORT1ACFGPB+i);
+            hb[20+i].string = hb[14+i].string;
+            hb[20+i].hParent = GetDlgItem(hDlg, IDC_PORT2ACFGPB+i);            
+         }
+         
+         hb[26].string = NULL;
+
+         CreateHelpBalloons(hb);
+
          return TRUE;
       }
       case WM_COMMAND:
       {
          switch (LOWORD(wParam))
          {
-            case IDC_PAD1PB:
+            case IDC_PORT1ACFGPB:
             {
                DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_PADCONFIG), hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)0);
                return TRUE;
             }
-            case IDC_PAD2PB:
-            {
-               DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_PADCONFIG), hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)1);
-               return TRUE;
-            }
+//            case IDC_PAD2ACFGPB:
+//            {
+//               DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_PADCONFIG), hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)1);
+//               return TRUE;
+//            }
             case IDOK:
             {
                EndDialog(hDlg, TRUE);
@@ -1272,6 +1373,7 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       }
       case WM_DESTROY:
       {
+         DestroyHelpBalloons(hb);
          break;
       }
    }
@@ -1308,7 +1410,7 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          PERDXListDevices(GetDlgItem(hDlg, IDC_DXDEVICECB));
-         padnum = lParam;
+         padnum = (int)lParam;
 
          // Load settings from ini here, if necessary
          PERDXInitControlConfig(hDlg, padnum, controlmap, inifilename);
@@ -1518,8 +1620,8 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup log type setting
          SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (long)"Write to File");
-         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (long)"Write to Window");
+         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (LPARAM)"Write to File");
+         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (LPARAM)"Write to Window");
          SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_SETCURSEL, logtype, 0);
 
          // Setup log filename setting
@@ -1606,7 +1708,7 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                WritePrivateProfileString("Log", "Enable", tempstr, inifilename);
 
                // Write log type setting
-               logtype = SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_GETCURSEL, 0, 0);
+               logtype = (int)SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_GETCURSEL, 0, 0);
                sprintf(tempstr, "%d", logtype);
                WritePrivateProfileString("Log", "Type", tempstr, inifilename);
 
@@ -1647,7 +1749,7 @@ int numsaves=0;
 
 void RefreshSaveList(HWND hDlg)
 {
-   u32 i;
+   int i;
    u32 freespace=0, maxspace=0;
    char tempstr[MAX_PATH];
 
@@ -1683,7 +1785,7 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_RESETCONTENT, 0, 0);
          for (i = 0; i < numbupdevices; i++)
-            SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_ADDSTRING, 0, (long)devices[i].name);
+            SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_ADDSTRING, 0, (LPARAM)devices[i].name);
 
          SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_SETCURSEL, 0, 0);
          RefreshSaveList(hDlg);
@@ -1836,15 +1938,15 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CreateHelpBalloons(helpballoon_struct *hb[])
+int CreateHelpBalloons(helpballoon_struct *hb)
 {
    TOOLINFO ti;
    RECT rect;
    int i;
 
-   for (i = 0; hb[i] != NULL; i++)
+   for (i = 0; hb[i].string != NULL; i++)
    {
-      hb[i]->hWnd = CreateWindowEx(WS_EX_TOPMOST,
+      hb[i].hWnd = CreateWindowEx(WS_EX_TOPMOST,
                                    TOOLTIPS_CLASS,
                                    NULL,
                                    WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
@@ -1852,35 +1954,50 @@ int CreateHelpBalloons(helpballoon_struct *hb[])
                                    CW_USEDEFAULT,
                                    CW_USEDEFAULT,
                                    CW_USEDEFAULT,
-                                   hb[i]->hParent,
+                                   hb[i].hParent,
                                    NULL,
                                    y_hInstance,
                                    NULL);
 
-      if (!hb[i]->hWnd)
+      if (!hb[i].hWnd)
          return -1;
 
-      SetWindowPos(hb[i]->hWnd, HWND_TOPMOST, 0, 0, 0, 0,
+      SetWindowPos(hb[i].hWnd, HWND_TOPMOST, 0, 0, 0, 0,
                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
       // Create some help balloons
       ti.cbSize = sizeof(TOOLINFO);
       ti.uFlags = TTF_SUBCLASS;
-      ti.hwnd = hb[i]->hParent;
+      ti.hwnd = hb[i].hParent;
       ti.hinst = y_hInstance;
       ti.uId = 0;
-      ti.lpszText = hb[i]->string;
-      GetClientRect(hb[i]->hParent, &rect);
+      ti.lpszText = hb[i].string;
+      GetClientRect(hb[i].hParent, &rect);
       ti.rect.left = rect.left;
       ti.rect.top = rect.top;
       ti.rect.right = rect.right;
       ti.rect.bottom = rect.bottom;
 
       // Add it
-      SendMessage(hb[i]->hWnd, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+      SendMessage(hb[i].hWnd, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
    }
 
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void DestroyHelpBalloons(helpballoon_struct *hb)
+{
+   int i;
+   for (i = 0; hb[i].string != NULL; i++)
+   {
+      if (hb[i].hWnd)
+      {
+         DestroyWindow(hb[i].hWnd);
+         hb[i].hWnd = NULL;
+      }
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////

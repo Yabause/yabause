@@ -207,6 +207,32 @@
 #define IDC_BROWSE                      1060
 #define IDC_DOWNLOADMEM                 1061
 #define IDC_UPLOADMEM                   1062
+#define IDC_PORT1CONNTYPECB             1064
+#define IDC_PORT1ATYPECB                1065
+#define IDC_PORT1BTYPECB                1066
+#define IDC_PORT1CTYPECB                1067
+#define IDC_PORT1DTYPECB                1068
+#define IDC_PORT1ETYPECB                1069
+#define IDC_PORT1FTYPECB                1070
+#define IDC_PORT1ACFGPB                 1071
+#define IDC_PORT1BCFGPB                 1072
+#define IDC_PORT1CCFGPB                 1073
+#define IDC_PORT1DCFGPB                 1074
+#define IDC_PORT1ECFGPB                 1075
+#define IDC_PORT1FCFGPB                 1076
+#define IDC_PORT2CONNTYPECB             1147
+#define IDC_PORT2ATYPECB                1148
+#define IDC_PORT2BTYPECB                1149
+#define IDC_PORT2CTYPECB                1150
+#define IDC_PORT2DTYPECB                1151
+#define IDC_PORT2ETYPECB                1152
+#define IDC_PORT2FTYPECB                1153
+#define IDC_PORT2ACFGPB                 1154
+#define IDC_PORT2BCFGPB                 1155
+#define IDC_PORT2CCFGPB                 1156
+#define IDC_PORT2DCFGPB                 1157
+#define IDC_PORT2ECFGPB                 1158
+#define IDC_PORT2FCFGPB                 1159
 #define IDM_CHOOSEBIOS                  40001
 #define IDM_CHOOSECDROM                 40002
 #define IDM_MEMTRANSFER                 40004
@@ -271,7 +297,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         40082
-#define _APS_NEXT_CONTROL_VALUE         1063
+#define _APS_NEXT_CONTROL_VALUE         1099
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
 #endif
