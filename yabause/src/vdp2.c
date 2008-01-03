@@ -2641,7 +2641,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
             break;
       }
 
-      if (Vdp2Regs->TVMD & 0x1)
+      if (Vdp2Regs->TVSTAT & 0x1)
       {
          AddString(outstring, "(PAL)\r\n");
       }

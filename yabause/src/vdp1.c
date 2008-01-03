@@ -926,6 +926,41 @@ static u32 ColorRamGetColor(u32 colorindex)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE int CheckEndcode(int dot, int endcode, int *code)
+{
+   if (dot == endcode)
+   {
+      code[0]++;
+      if (code[0] == 2)
+      {
+         code[0] = 0;
+         return 2;
+      }
+      return 1;
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE int DoEndcode(int count, u32 *charAddr, u32 **textdata, int width, int xoff, int oddpixel, int pixelsize)
+{
+   if (count > 1)
+   {
+      charAddr[0] += ((width - xoff + oddpixel) / (8 / pixelsize));
+      memset(textdata[0], 0, sizeof(u32) * (width - xoff));
+      textdata[0] += (width - xoff);
+      return 1;
+   }
+   else
+      *textdata[0]++ = 0;
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
 {
    u16 command;
@@ -936,7 +971,10 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
    u32 dot;
    u8 SPD;
    u32 alpha;
-   u32 *textdata;
+   u32 *textdata;   
+   int isendcode;
+   int code=0;
+   int ret;
 
    if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
       return NULL;
@@ -963,6 +1001,14 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
 
          if ((texture = (u32 *)malloc(sizeof(u32) * w[0] * h[0])) == NULL)
             return NULL;
+
+         if (!(cmd.CMDPMOD & 0x80))
+         {
+            isendcode = 1;
+            code = 0;
+         }
+         else
+            isendcode = 0;
          break;
       case 4: // Polygon
       case 5: // Polyline
@@ -1010,15 +1056,32 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
                dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
                // Pixel 1
-               if (((dot >> 4) == 0) && !SPD) *textdata++ = 0;
-               else *textdata++ = ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset);
+               if (isendcode && (ret = CheckEndcode(dot >> 4, 0xF, &code)) > 0)
+               {
+                  if (DoEndcode(ret, &charAddr, &textdata, w[0], j, 0, 4))
+                     break;
+               }
+               else
+               {
+                  if (((dot >> 4) == 0) && !SPD) *textdata++ = 0;
+                  else *textdata++ = ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset);
+               }
+
                j += 1;
 
                // Pixel 2
-               if (((dot & 0xF) == 0) && !SPD) *textdata++ = 0;
-               else *textdata++ = ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset);
-               j += 1;
+               if (isendcode && (ret = CheckEndcode(dot & 0xF, 0xF, &code)) > 0)
+               {
+                  if (DoEndcode(ret, &charAddr, &textdata, w[0], j, 1, 4))
+                     break;
+               }
+               else
+               {
+                  if (((dot & 0xF) == 0) && !SPD) *textdata++ = 0;
+                  else *textdata++ = ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset);
+               }
 
+               j += 1;
                charAddr += 1;
             }
          }
@@ -1039,28 +1102,44 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
             {
                dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
-               if (((dot >> 4) == 0) && !SPD)
-                  *textdata++ = 0;
+               if (isendcode && (ret = CheckEndcode(dot >> 4, 0xF, &code)) > 0)
+               {
+                  if (DoEndcode(ret, &charAddr, &textdata, w[0], j, 0, 4))
+                     break;
+               }
                else
                {
-                  temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
-                  if (temp & 0x8000)
-                     *textdata++ = SAT2YAB1(0xFF, temp);
+                  if (((dot >> 4) == 0) && !SPD)
+                     *textdata++ = 0;
                   else
-                     *textdata++ = ColorRamGetColor(temp);
+                  {
+                     temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
+                     if (temp & 0x8000)
+                        *textdata++ = SAT2YAB1(0xFF, temp);
+                     else
+                        *textdata++ = ColorRamGetColor(temp);
+                  }
                }
 
                j += 1;
 
-               if (((dot & 0xF) == 0) && !SPD)
-                  *textdata++ = 0;
+               if (isendcode && (ret = CheckEndcode(dot & 0xF, 0xF, &code)) > 0)
+               {
+                  if (DoEndcode(ret, &charAddr, &textdata, w[0], j, 1, 4))
+                     break;
+               }
                else
                {
-                  temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
-                  if (temp & 0x8000)
-                     *textdata++ = SAT2YAB1(0xFF, temp);
+                  if (((dot & 0xF) == 0) && !SPD)
+                     *textdata++ = 0;
                   else
-                     *textdata++ = ColorRamGetColor(temp);
+                  {
+                     temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
+                     if (temp & 0x8000)
+                        *textdata++ = SAT2YAB1(0xFF, temp);
+                     else
+                        *textdata++ = ColorRamGetColor(temp);
+                  }
                }
 
                j += 1;
@@ -1141,11 +1220,20 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
             for(j = 0;j < w[0];j++)
             {
                dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
-               charAddr += 2;
 
-               //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
-               if ((dot == 0) && !SPD) *textdata++ = 0;
-               else *textdata++ = SAT2YAB1(0xFF, dot);
+               if (isendcode && (ret = CheckEndcode(dot, 0x7FFF, &code)) > 0)
+               {
+                  if (DoEndcode(ret, &charAddr, &textdata, w[0], j, 0, 16))
+                     break;
+               }
+               else
+               {
+                  //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
+                  if (!(dot & 0x8000) && !SPD) *textdata++ = 0;
+                  else *textdata++ = SAT2YAB1(0xFF, dot);
+               }
+
+               charAddr += 2;
             }
          }
          break;
