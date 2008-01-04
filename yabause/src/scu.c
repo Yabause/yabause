@@ -382,8 +382,10 @@ void writeloadimdest(u8 num, u32 val)
       case 0xA: // LOP
           ScuDsp->LOP = val;
           return;
-      case 0xC: // TOP
-          ScuDsp->TOP = val;
+      case 0xC: // PC->TOP, PC
+          ScuDsp->TOP = ScuDsp->PC;
+          ScuDsp->jmpaddr = val;
+          ScuDsp->delayed = 0;
           return;
       default: break;
    }
@@ -988,6 +990,7 @@ void ScuExec(u32 timing) {
                      }
 
                      LOG("dsp has ended\n");
+                     ScuDsp->ProgControlPort.part.P = ScuDsp->PC+1;
                      timing = 1;
                      break;
                   default: break;
@@ -1870,6 +1873,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
 //         LOG("scu\t: wrote %08X to DSP Program ram offset %02X\n", val, ScuDsp->PC);
          ScuDsp->ProgramRam[ScuDsp->PC] = val;
          ScuDsp->PC++;
+         ScuDsp->ProgControlPort.part.P = ScuDsp->PC;
          break;
       case 0x88: // DSP Data Ram Address Port
          ScuDsp->DataRamPage = (val >> 6) & 3;
