@@ -1,0 +1,20 @@
+AC_INIT(mini18n, 0.1)
+
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+
+AM_INIT_AUTOMAKE(mini18n, 0.1)
+
+AC_PROG_RANLIB
+
+AC_PROG_CC
+AC_PROG_INSTALL
+
+AC_LANG(C)
+
+AC_CONFIG_FILES([Makefile
+	src/Makefile
+	example/Makefile
+])
+
+AC_OUTPUT

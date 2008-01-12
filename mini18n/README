@@ -1,0 +1,11 @@
+mini18n - minimal translation library
+-------------------------------------
+
+Compilation:
+sh autogen.sh
+./configure && make
+
+you'll get an example program named 'minitest' in 'example' dir
+cd to that dir and run it. That's it for now :)
+
+guillaume@yabause.org
