@@ -153,3 +153,9 @@ void yui_viewer_draw_pixbuf(YuiViewer * yv, GdkPixbuf * pixbuf, int w, int h) {
 	gdk_window_clear(GTK_WIDGET(yv)->window);
 	gtk_widget_queue_draw_area(GTK_WIDGET(yv), 0, 0, w, h);
 }
+
+void yui_viewer_clear(YuiViewer * yv) {
+	if (GTK_WIDGET(yv)->window != NULL) {
+		gdk_window_clear(GTK_WIDGET(yv)->window);
+	}
+}

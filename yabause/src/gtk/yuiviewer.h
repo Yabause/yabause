@@ -52,6 +52,7 @@ GType		yui_viewer_get_type (void);
 GtkWidget *	yui_viewer_new      (void);
 void		yui_viewer_draw_pixbuf(YuiViewer * yv, GdkPixbuf * pixbuf, int w, int h);
 void		yui_viewer_save     (YuiViewer * yv);
+void		yui_viewer_clear    (YuiViewer * yv);
 
 G_END_DECLS
 

@@ -21,9 +21,7 @@
 #ifndef YUI_VDP1_H
 #define YUI_VDP1_H
 
-#include <glib.h>
-#include <glib-object.h>
-#include <gtk/gtktable.h>
+#include <gtk/gtk.h>
 
 #include "yuiwindow.h"
 #include "../core.h"
@@ -45,23 +43,20 @@ struct _YuiVdp1
 {
   GtkWindow dialog;
 
-  GtkWidget * vbox;
-  GtkWidget * hbox;
-  GtkWidget * hbox_right;
-  GtkWidget * commName;
-  GtkWidget * commDesc;
-  GtkWidget * spin;
-  GtkWidget * buttonVBlankOut;
   GtkWidget * image;
+  GtkWidget * toolbar;
 
   GtkListStore * store;
-  GtkWidget * view;
   GtkTextBuffer * buffer;
 
   gint cursor;
   u32 * texture;
   int w;
   int h;
+
+  gulong paused_handler;
+  gulong running_handler;
+  YuiWindow * yui;
 };
 
 struct _YuiVdp1Class
