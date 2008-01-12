@@ -76,7 +76,7 @@ void ScuReset(void) {
    ScuRegs->DSTP = 0x0;
    ScuRegs->DSTA = 0x0;
 
-   ScuRegs->PPAF = 0x0;
+   ScuDsp->ProgControlPort.all = 0;
    ScuRegs->PDA = 0x0;
 
    ScuRegs->T1MD = 0x0;
@@ -475,6 +475,7 @@ void ScuExec(u32 timing) {
          switch (instruction >> 26)
          {
             case 0x0: // NOP
+               ScuDsp->ALU.all = 0;
                break;
             case 0x1: // AND
                ScuDsp->ALU.part.L = ScuDsp->AC.part.L & ScuDsp->P.part.L;
