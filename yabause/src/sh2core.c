@@ -299,7 +299,9 @@ void SH2SortCodeBreakpoints(SH2_struct *context) {
 //////////////////////////////////////////////////////////////////////////////
 
 int SH2DelCodeBreakpoint(SH2_struct *context, u32 addr) {
-   int i;
+   int i, i2;
+
+   LOG("Deleting breakpoint %08X...\n", addr);
 
    if (context->bp.numcodebreakpoints > 0) {
       for (i = 0; i < context->bp.numcodebreakpoints; i++) {
@@ -308,10 +310,20 @@ int SH2DelCodeBreakpoint(SH2_struct *context, u32 addr) {
             context->bp.codebreakpoint[i].addr = 0xFFFFFFFF;
             SH2SortCodeBreakpoints(context);
             context->bp.numcodebreakpoints--;
+
+            LOG("Remaining breakpoints: \n");
+
+            for (i2 = 0; i2 < context->bp.numcodebreakpoints; i2++)
+            {
+               LOG("%08X", context->bp.codebreakpoint[i2].addr);
+            }
+
             return 0;
          }
       }
    }
+
+   LOG("Failed deleting breakpoint\n");
 
    return -1;
 }
@@ -340,7 +352,7 @@ u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
    {
-      if (CurrentSH2->bp.memorybreakpoint[i].addr == addr)
+      if (CurrentSH2->bp.memorybreakpoint[i].addr == (addr & 0x0FFFFFFF))
       {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
@@ -375,7 +387,7 @@ u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
    {
-      if (CurrentSH2->bp.memorybreakpoint[i].addr == addr)
+      if (CurrentSH2->bp.memorybreakpoint[i].addr == (addr & 0x0FFFFFFF))
       {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
@@ -410,7 +422,7 @@ u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
    {
-      if (CurrentSH2->bp.memorybreakpoint[i].addr == addr)
+      if (CurrentSH2->bp.memorybreakpoint[i].addr == (addr & 0x0FFFFFFF))
       {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
@@ -445,7 +457,7 @@ void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
    {
-      if (CurrentSH2->bp.memorybreakpoint[i].addr == addr)
+      if (CurrentSH2->bp.memorybreakpoint[i].addr == (addr & 0x0FFFFFFF))
       {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
@@ -485,7 +497,7 @@ void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
    {
-      if (CurrentSH2->bp.memorybreakpoint[i].addr == addr)
+      if (CurrentSH2->bp.memorybreakpoint[i].addr == (addr & 0x0FFFFFFF))
       {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
@@ -525,7 +537,7 @@ void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
    {
-      if (CurrentSH2->bp.memorybreakpoint[i].addr == addr)
+      if (CurrentSH2->bp.memorybreakpoint[i].addr == (addr & 0x0FFFFFFF))
       {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
@@ -601,10 +613,12 @@ int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags) {
             return -1;
       }
 
+      addr &= 0x0FFFFFFF;
+
       // Make sure it isn't already on the list
       for (i = 0; i < context->bp.nummemorybreakpoints; i++)
       {
-         if ((addr & 0x0FFFFFFF) == (context->bp.memorybreakpoint[i].addr & 0xFFFFFFF))
+         if (addr == context->bp.memorybreakpoint[i].addr)
             return -1;
       }
 
