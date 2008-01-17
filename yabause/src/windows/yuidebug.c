@@ -554,12 +554,12 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if (SH2Core->id != SH2CORE_DEBUGINTERPRETER)
                   break;
 
-               if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
+               if ((ret = SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
-                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETTEXT, ret, (LPARAM)bptext);
                   sscanf(bptext, "%lX", &addr);
                   SH2DelCodeBreakpoint(debugsh, addr);
-                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_DELETESTRING, ret, 0);
                }
                break;
             }
@@ -608,13 +608,14 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                char bptext[10];
                u32 addr=0;
 
-               if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX4), LB_GETCURSEL, 0, 0)) != LB_ERR)
+               if ((ret = SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_GETTEXT, 0, (LPARAM)bptext);
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_GETTEXT, ret, (LPARAM)bptext);
                   sscanf(bptext, "%lX", &addr);
                   SH2DelMemoryBreakpoint(debugsh, addr);
                   SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_DELETESTRING, ret, 0);
                }
+
                break;
             }
             case IDC_CHKREAD:
@@ -1216,13 +1217,14 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                char bptext[10];
                u32 addr=0;
 
-               if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
+               if ((ret = SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
-                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETTEXT, ret, (LPARAM)bptext);
                   sscanf(bptext, "%lX", &addr);
                   M68KDelCodeBreakpoint(addr);
-                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_DELETESTRING, ret, 0);
                }
+
                break;
             }
             case IDC_LISTBOX1:
@@ -1509,13 +1511,14 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                char bptext[10];
                u32 addr=0;
 
-               if ((ret = SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETCURSEL, 0, 0)) != LB_ERR)
+               if ((ret = SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
-                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_GETTEXT, 0, (LPARAM)bptext);
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETTEXT, ret, (LPARAM)bptext);
                   sscanf(bptext, "%lX", &addr);
                   ScuDspDelCodeBreakpoint(addr);
-                  SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_DELETESTRING, ret, 0);
+                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_DELETESTRING, ret, 0);
                }
+
                break;
             }
             default: break;
