@@ -189,24 +189,22 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          tabitem.pszText = "Input";
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
-//         dialoglist[i] = CreateDialog(y_hInstance,
-//                                      MAKEINTRESOURCE(IDD_PADCONFIG),
-//                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
-//                                      (DLGPROC)PadConfigDlgProc);
          dialoglist[i] = CreateDialog(y_hInstance,
                                       MAKEINTRESOURCE(IDD_INPUTSETTINGS),
                                       GetDlgItem(hDlg, IDC_SETTINGSTAB),
                                       (DLGPROC)InputSettingsDlgProc);
          i++;
 
-//         tabitem.pszText = "Netlink";
-//         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
+#ifdef USESOCKET
+         tabitem.pszText = "Netlink";
+         TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
-//         dialoglist[i] = CreateDialog(y_hInstance,
-//                                      MAKEINTRESOURCE(IDD_NETLINKSETTINGS),
-//                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
-//                                      (DLGPROC)NetlinkSettingsDlgProc);
-//         i++;
+         dialoglist[i] = CreateDialog(y_hInstance,
+                                      MAKEINTRESOURCE(IDD_NETLINKSETTINGS),
+                                      GetDlgItem(hDlg, IDC_SETTINGSTAB),
+                                      (DLGPROC)NetlinkSettingsDlgProc);
+         i++;
+#endif
 
 #if DEBUG
          tabitem.pszText = "Log";

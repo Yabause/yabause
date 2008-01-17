@@ -456,6 +456,9 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          char tempstr[10];
          int i;
 
+         SendDlgItemMessage(hDlg, IDC_EDITTEXT1, EM_SETLIMITTEXT, 8, 0);
+         SendDlgItemMessage(hDlg, IDC_EDITTEXT2, EM_SETLIMITTEXT, 8, 0);
+
          cbp = SH2GetBreakpointList(debugsh);
          mbp = SH2GetMemoryBreakpointList(debugsh);
 
@@ -1152,6 +1155,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          EnableWindow(GetDlgItem(hDlg, IDC_STEP), TRUE);
 
+         SendDlgItemMessage(hDlg, IDC_EDITTEXT1, EM_SETLIMITTEXT, 5, 0);
          cbp = M68KGetBreakpointList();
 
          for (i = 0; i < MAX_BREAKPOINTS; i++)
@@ -1443,6 +1447,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          char tempstr[10];
          int i;
 
+         SendDlgItemMessage(hDlg, IDC_EDITTEXT1, EM_SETLIMITTEXT, 2, 0);
          cbp = ScuDspGetBreakpointList();
 
          for (i = 0; i < MAX_BREAKPOINTS; i++)
