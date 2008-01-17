@@ -444,7 +444,10 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
 
    // If Modem is connected, set the registers
    if(Cs2Area->carttype == CART_NETLINK)
-      return NetlinkInit(netlinksetting);
+   {
+      if ((ret = NetlinkInit(netlinksetting)) != 0)
+         return ret;
+   }
 
    if ((cdip = (ip_struct *) calloc(sizeof(ip_struct), 1)) == NULL)
       return -1;

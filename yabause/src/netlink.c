@@ -73,6 +73,10 @@ int NetworkConnect(const char *ip, const char *port);
 int NetworkWaitForConnect(const char *port);
 int NetworkSend(const char *buffer, int length);
 int NetworkReceive(char *buffer, int maxlength);
+
+#ifndef WIN32
+#define closesocket close
+#endif
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -496,12 +500,20 @@ int NetlinkInit(const char *setting)
    {
       char *p;
       p = strchr(setting, '\n');
-      memcpy(NetlinkArea->ipstring, setting, (int)(setting - p));
-
-      if (strlen(p+1) == 0)
+      if (p == NULL)
+      {
+         strcpy(NetlinkArea->ipstring, setting);
          sprintf(NetlinkArea->portstring, "1337");
+      }
       else
-         strcpy(NetlinkArea->portstring, p+1);
+      {
+         memcpy(NetlinkArea->ipstring, setting, (int)(p - setting));
+         NetlinkArea->ipstring[(p - setting)] = '\0';
+         if (strlen(p+1) == 0)
+            sprintf(NetlinkArea->portstring, "1337");
+         else
+            strcpy(NetlinkArea->portstring, p+1);
+      }
    }
 
 #ifdef USESOCKET
@@ -698,11 +710,7 @@ int NetworkConnect(const char *ip, const char *port)
    if (connect(NetlinkArea->connectsocket, result->ai_addr, (int)result->ai_addrlen) == -1)
    {
       freeaddrinfo(result);
-#ifdef WIN32
       closesocket(NetlinkArea->connectsocket);
-#else
-      close(NetlinkArea->connectsocket);
-#endif
       NetlinkArea->connectsocket = -1;
       return -1;
    }
@@ -744,11 +752,7 @@ int NetworkWaitForConnect(const char *port)
    if (bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen) == -1)
    {
       freeaddrinfo(result);
-#ifdef WIN32
       closesocket(ListenSocket);
-#else
-      close(ListenSocket);
-#endif
       return -1;
    }
 
@@ -757,11 +761,7 @@ int NetworkWaitForConnect(const char *port)
    // Shhh... Let's listen
    if (listen(ListenSocket, SOMAXCONN) == -1)
    {
-#ifdef WIN32
       closesocket(ListenSocket);
-#else
-      close(ListenSocket);
-#endif
       return -1;
    }
 
@@ -774,11 +774,7 @@ int NetworkWaitForConnect(const char *port)
 
    if (select(ListenSocket+1, &read_fds, NULL, NULL, &tv) < 1)
    {
-#ifdef WIN32
       closesocket(ListenSocket);
-#else
-      close(ListenSocket);
-#endif
       return -1;
    }
 
@@ -787,20 +783,12 @@ int NetworkWaitForConnect(const char *port)
       // Good, time to connect
       if ((NetlinkArea->connectsocket = accept(ListenSocket, NULL, NULL)) == -1)
       {
-#ifdef WIN32
          closesocket(ListenSocket);
-#else
-         close(ListenSocket);
-#endif
          return -1;
       }
 
       // We don't need the listen socket anymore
-#ifdef WIN32
       closesocket(ListenSocket);
-#else
-      close(ListenSocket);
-#endif
    }
 
    return 0;
@@ -815,11 +803,7 @@ int NetworkSend(const char *buffer, int length)
    if ((bytessent = send(NetlinkArea->connectsocket, buffer, length, 0)) == -1)
    {
       // Fix me, better error handling is needed
-#if WIN32
 //      closesocket(NetlinkArea->connectsocket);
-#else
-//      close(NetlinkArea->connectsocket);
-#endif
 //      NetlinkArea->connectsocket = -1;
       return -1;
    }
@@ -855,11 +839,9 @@ int NetworkReceive(char *buffer, int maxlength)
 void NetworkDeInit(void)
 {
    if (NetlinkArea->connectsocket != -1)
-#ifdef WIN32
       closesocket(NetlinkArea->connectsocket);
+#ifdef WIN32
    WSACleanup();
-#else
-      close(NetlinkArea->connectsocket);
 #endif
 }
 
