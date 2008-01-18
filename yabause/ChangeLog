@@ -1,3 +1,46 @@
+0.9.1 -> 0.9.3
+ cart:
+  - Fixed a couple of bugs with Netlink emulation.
+ cd block:
+  - Tweaked error handling for cue files so it's more helpful to the user.
+ scu:
+  - Fixed a bug in DSP MVI instruction.
+  - Fixed a bug with DSP Program Ram Address.
+  - Fixed ALU behaviour on NOP.
+  - Other bug fixes.
+ vdp2:
+  - Fixed a bug where coefficient reading wasn't making sure reads weren't
+    going out of bounds.
+  - Tweaked frame-skipping so it only skips if frame time is faster/slower
+    than a 1/2 a frame. The results are much better now.
+  - Added general VDP2 debug info functionality.
+  - Added partial end code support to VDP1 texture debugging.
+ opengl video core:
+  - Fixed a bug in 16 BPP sprites where pixels 0x0001-0x7FFF weren't
+    transparent when transparency was enabled.
+ gtk port:
+  - Redesigned the window so each part can now be resized.
+  - Added a toolbar and removed the buttons.
+  - The sprite list now displays texture thumbnails.
+  - Added tooltips to "run" and "pause" buttons.
+  - Redesigned VDP2 debug window.
+ windows port:
+  - Fixed a bug that was causing Yabause to crash when run for the first time.
+  - Added screen capture.
+  - Reworked Input dialog so it'll allow for more than one peripheral(in the
+    future).
+  - Added a bunch of tools tips for basic and input settings.
+  - Fixed a bug that was causing wrong VDP1 command information to sometimes
+    be displayed.
+  - Other bug fixes.
+  - Fixed a bug that was causing the wrong breakpoint to be removed from the
+    breakpoint list.
+  - Text length is now limited correctly in breakpoint edit text controls.
+ general:
+  - Tweaked memory breakpoints so that regardless of whether you're using
+    cached or cache-through addresses variations of an address, it'll still
+    detect and break when the memory is accessed.
+  - Other bug fixes.
 0.9.1 -> 0.9.2
  cd block:
   - Fixed a bug in periodic timing. Most movies should play correctly now.
