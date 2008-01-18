@@ -8,7 +8,7 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
         _________________________________________
-        Copyright (c) 2002-2007 Yabause team
+        Copyright (c) 2002-2008 Yabause team
 
 
 1) Compiling instructions...................................20
@@ -49,6 +49,9 @@ your fancy and it should be done in a few minutes. Now all you
 have to do is type "./src/yabause" in order to run it. 
 
 Compiling using Visual C++____________________________________
+
+Make sure you have the latest DirectX SDK and DDK installed. You
+can get both of them from Microsoft's website.
 
 Load up IDE that comes with Visual C++/Visual Studio, go into the
 file menu, open an existing project. Go into the yabause's
@@ -138,16 +141,19 @@ slider underneath.
 Input Settings________________________________________________
 
 If you click on the "Input" tab another list of settings is
-displayed. You can set which device you'd like to use at the top
-of the window. Control settings can be changed by clicking on the
-equivalent button, and then when a new window pops up that says
-"waiting for input..." press a key/button and that will set the
-new setting for that control.
+displayed. Here you can choose which peripheral(s) emulate(in
+the future). For now you can only configure the first peripheral
+which is by default the standard pad. If you press "Config"
+another window will pop up. Here can set which device you'd like
+to use at the top of the window. Control settings can be changed
+by clicking on the equivalent button, and then when a new window
+pops up that says "waiting for input..." press a key/button and
+that will set the new setting for that control.
 
 Log Settings________________________________________________
 
 If you've compiled your own copy of Yabause with the processor
-defineDEBUG, another tab will be available called "Log". This
+define DEBUG, another tab will be available called "Log". This
 allows you to control whether or not the program should be
 logging emulation output using the "Enable Logging" setting. Log
 Type tells the program whether it should write the output to a
