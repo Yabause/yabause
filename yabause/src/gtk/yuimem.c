@@ -29,10 +29,12 @@ static void yui_mem_init		(YuiMem      * yfe);
 static void yui_mem_clear		(YuiMem * vdp1);
 static void yui_mem_address_changed	(GtkWidget * w, YuiMem * ym);
 static void yui_mem_content_changed  ( GtkCellRendererText *cellrenderertext, gchar *arg1, gchar *arg2, YuiMem *ym);
-static void yui_mem_pagedown_pressed (GtkWidget *w, gpointer func, gpointer data, gpointer data2, YuiMem *ym);
-static void yui_mem_pageup_pressed   (GtkWidget *w, gpointer func, gpointer data, gpointer data2, YuiMem *ym);
+static gboolean yui_mem_pagedown_pressed (GtkWidget *w, gpointer func, gpointer data, gpointer data2, YuiMem *ym);
+static gboolean yui_mem_pageup_pressed   (GtkWidget *w, gpointer func, gpointer data, gpointer data2, YuiMem *ym);
 static void yui_mem_update		(YuiMem * ym);
 static void yui_mem_combo_changed(GtkWidget * w, YuiMem * ym);
+static void yui_mem_pagedown_clicked (GtkToolButton * button, YuiMem * ym);
+static void yui_mem_pageup_clicked (GtkToolButton * button, YuiMem * ym);
 
 struct { gchar* name; u32 address; } quickAddress[] = 
   { {"VDP2_VRAM_A0", 0x25E00000 },
@@ -74,35 +76,49 @@ static void yui_mem_class_init (YuiMemClass * klass) {
 
 static void yui_mem_init (YuiMem * yv) {
 	GtkWidget * view;
-	GtkWidget * scroll;
-	GtkWidget * hboxTop;
 	GtkCellRenderer * renderer;
 	GtkTreeViewColumn * column;
 	GtkAccelGroup *accelGroup;
+	GtkToolItem * comboItem, * upbutton, * downbutton;
+	GtkWidget * testbox, * vbox;
 	gint i;
 
 	gtk_window_set_title(GTK_WINDOW(yv), "Memory dump");
 
-	yv->vbox = gtk_vbox_new(FALSE, 2);
-	gtk_container_set_border_width(GTK_CONTAINER(yv->vbox), 4);
-	gtk_box_set_spacing(GTK_BOX(yv->vbox), 4);
-	gtk_container_add(GTK_CONTAINER(yv), yv->vbox);
+	vbox = gtk_vbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(yv), vbox);
 
-	hboxTop = gtk_hbox_new(FALSE, 2);
-	gtk_box_pack_start(GTK_BOX(yv->vbox), hboxTop, FALSE, FALSE, 0);	
+	yv->toolbar = gtk_toolbar_new();
+	gtk_toolbar_set_style(GTK_TOOLBAR(yv->toolbar), GTK_TOOLBAR_ICONS);
+	gtk_box_pack_start(GTK_BOX(vbox), yv->toolbar, FALSE, FALSE, 0);
 
-	yv->entry = gtk_entry_new();
-	gtk_entry_set_max_length( GTK_ENTRY( yv->entry ), 8 );
-	g_signal_connect(yv->entry, "activate", G_CALLBACK(yui_mem_address_changed), yv);
-	gtk_box_pack_start(GTK_BOX(hboxTop), yv->entry, FALSE, FALSE, 0);
+	gtk_toolbar_insert(GTK_TOOLBAR(yv->toolbar), gtk_separator_tool_item_new(), 0);
 
-	yv->quickCombo = gtk_combo_box_new_text();
-	gtk_combo_box_insert_text( GTK_COMBO_BOX( yv->quickCombo ), 0, "Select ..." );
+	comboItem = gtk_tool_item_new();
+	gtk_tool_item_set_expand(comboItem, FALSE);
+	gtk_toolbar_insert(GTK_TOOLBAR(yv->toolbar), comboItem, 1);
+
+	downbutton = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
+	g_signal_connect(downbutton, "clicked", G_CALLBACK(yui_mem_pagedown_clicked), yv);
+	gtk_toolbar_insert(GTK_TOOLBAR(yv->toolbar), downbutton, 2);
+
+	upbutton = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
+	g_signal_connect(upbutton, "clicked", G_CALLBACK(yui_mem_pageup_clicked), yv);
+	gtk_toolbar_insert(GTK_TOOLBAR(yv->toolbar), upbutton, 3);
+
+	yv->quickCombo = gtk_combo_box_entry_new_text();
+
+	gtk_entry_set_width_chars(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(yv->quickCombo))), 8);
+
 	for ( i = 0 ; quickAddress[i].name ; i++ )
-	  gtk_combo_box_insert_text( GTK_COMBO_BOX( yv->quickCombo ), i+1, quickAddress[i].name );
+	  gtk_combo_box_insert_text( GTK_COMBO_BOX( yv->quickCombo ), i, quickAddress[i].name );
 	gtk_combo_box_set_active( GTK_COMBO_BOX(yv->quickCombo), 0 );
-	gtk_box_pack_start( GTK_BOX( hboxTop ), yv->quickCombo, FALSE, FALSE, 0 );
 	g_signal_connect(yv->quickCombo, "changed", G_CALLBACK(yui_mem_combo_changed), yv );
+	g_signal_connect(gtk_bin_get_child(GTK_BIN(yv->quickCombo)), "activate", G_CALLBACK(yui_mem_address_changed), yv );
+
+	testbox = gtk_vbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(testbox), yv->quickCombo, TRUE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(comboItem), testbox);
 
 	yv->store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
 	view = gtk_tree_view_new_with_model(GTK_TREE_MODEL (yv->store));
@@ -115,16 +131,9 @@ static void yui_mem_init (YuiMem * yv) {
 	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL );
 	g_signal_connect(G_OBJECT(renderer), "edited", GTK_SIGNAL_FUNC(yui_mem_content_changed), yv );
-	scroll = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	gtk_container_add(GTK_CONTAINER(scroll), view);
-	gtk_box_pack_start(GTK_BOX(yv->vbox), scroll, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), view, TRUE, TRUE, 0);
 
 	g_signal_connect(G_OBJECT(yv), "delete-event", GTK_SIGNAL_FUNC(yui_mem_destroy), NULL);
-
-	yv->hbox = gtk_hbutton_box_new();
-	gtk_box_set_spacing(GTK_BOX(yv->hbox), 4);
-	gtk_box_pack_start(GTK_BOX(yv->vbox ), yv->hbox, FALSE, FALSE, 4);
 
 	accelGroup = gtk_accel_group_new ();
 	gtk_accel_group_connect( accelGroup, GDK_Page_Up, 0, 0, 
@@ -135,42 +144,46 @@ static void yui_mem_init (YuiMem * yv) {
 
 	yv->address = 0;
 	yv->wLine = 8;
-}
 
-static YuiWindow * yui;
+	gtk_window_set_default_size(GTK_WINDOW(yv), 300, -1);
+}
 
 GtkWidget * yui_mem_new(YuiWindow * y) {
 	GtkWidget * dialog;
 	YuiMem * yv;
 
-	yui = y;
-
-	if (!( yui->state & YUI_IS_INIT )) {
-	  yui_window_run(dialog, yui);
-	  yui_window_pause(dialog, yui);
-	}
-	
 	dialog = GTK_WIDGET(g_object_new(yui_mem_get_type(), NULL));
 	yv = YUI_MEM(dialog);
 
-	{
-		GtkWidget * but2, * but3, * but4;
-		but2 = gtk_button_new();
-		gtk_action_connect_proxy(gtk_action_group_get_action(yui->action_group, "run"), but2);
-		gtk_box_pack_start(GTK_BOX(yv->hbox), but2, FALSE, FALSE, 2);
+	yv->yui = y;
 
-		but3 = gtk_button_new();
-		gtk_action_connect_proxy(gtk_action_group_get_action(yui->action_group, "pause"), but3);
-		gtk_box_pack_start(GTK_BOX(yv->hbox), but3, FALSE, FALSE, 2);
-
-		but4 = gtk_button_new_from_stock("gtk-close");
-		g_signal_connect_swapped(but4, "clicked", G_CALLBACK(yui_mem_destroy), dialog);
-		gtk_box_pack_start(GTK_BOX(yv->hbox), but4, FALSE, FALSE, 2);
+	if (!( yv->yui->state & YUI_IS_INIT )) {
+	  yui_window_run(dialog, yv->yui);
+	  yui_window_pause(dialog, yv->yui);
 	}
-	yv->paused_handler = g_signal_connect_swapped(yui, "paused", G_CALLBACK(yui_mem_update), yv);
-	yv->running_handler = g_signal_connect_swapped(yui, "running", G_CALLBACK(yui_mem_clear), yv);
 
-	if ((yui->state & (YUI_IS_RUNNING | YUI_IS_INIT)) == YUI_IS_INIT)
+	{
+		GtkToolItem * play_button, * pause_button;
+
+		play_button = gtk_tool_button_new_from_stock("run");
+		gtk_action_connect_proxy(gtk_action_group_get_action(yv->yui->action_group, "run"), GTK_WIDGET(play_button));
+		gtk_toolbar_insert(GTK_TOOLBAR(yv->toolbar), GTK_TOOL_ITEM(play_button), 0);
+#if GTK_CHECK_VERSION(2,12,0)
+		gtk_widget_set_tooltip_text(GTK_WIDGET(play_button), "start emulation");
+#endif
+
+		pause_button = gtk_tool_button_new_from_stock("pause");
+		gtk_action_connect_proxy(gtk_action_group_get_action(yv->yui->action_group, "pause"), GTK_WIDGET(pause_button));
+		gtk_toolbar_insert(GTK_TOOLBAR(yv->toolbar), GTK_TOOL_ITEM(pause_button), 1);
+#if GTK_CHECK_VERSION(2,12,0)
+		gtk_widget_set_tooltip_text(GTK_WIDGET(pause_button), "pause emulation");
+#endif
+	}
+
+	yv->paused_handler = g_signal_connect_swapped(yv->yui, "paused", G_CALLBACK(yui_mem_update), yv);
+	yv->running_handler = g_signal_connect_swapped(yv->yui, "running", G_CALLBACK(yui_mem_clear), yv);
+
+	if ((yv->yui->state & (YUI_IS_RUNNING | YUI_IS_INIT)) == YUI_IS_INIT)
 		yui_mem_update(yv);
 
 	gtk_widget_show_all(GTK_WIDGET(yv));
@@ -179,8 +192,8 @@ GtkWidget * yui_mem_new(YuiWindow * y) {
 }
 
 void yui_mem_destroy(YuiMem * ym) {
-	g_signal_handler_disconnect(yui, ym->running_handler);
-	g_signal_handler_disconnect(yui, ym->paused_handler);
+	g_signal_handler_disconnect(ym->yui, ym->running_handler);
+	g_signal_handler_disconnect(ym->yui, ym->paused_handler);
 
 	gtk_widget_destroy(GTK_WIDGET(ym));
 }
@@ -196,9 +209,9 @@ static void yui_mem_address_changed(GtkWidget * w, YuiMem * ym) {
 static void yui_mem_combo_changed(GtkWidget * w, YuiMem * ym) {
 
   gint i = gtk_combo_box_get_active( GTK_COMBO_BOX(w) );
-  
-  if ( i>0 ) {
-    ym->address = quickAddress[i-1].address;
+
+  if (i > -1) {
+    ym->address = quickAddress[i].address;
     yui_mem_update(ym);
   }
 }
@@ -211,15 +224,29 @@ static gint hexaDigitToInt( gchar c ) {
   return -1;
 }
 
-static void yui_mem_pageup_pressed(GtkWidget *w, gpointer func, gpointer data, gpointer data2, YuiMem *ym) {
+static gboolean yui_mem_pageup_pressed(GtkWidget *w, gpointer func, gpointer data, gpointer data2, YuiMem *ym) {
 
   ym->address -= 2*ym->wLine;
   yui_mem_update(ym);
+
+  return TRUE;
 }
 
-static void yui_mem_pagedown_pressed(GtkWidget *w, gpointer func, gpointer data, gpointer data2, YuiMem *ym) {
+static gboolean yui_mem_pagedown_pressed(GtkWidget *w, gpointer func, gpointer data, gpointer data2, YuiMem *ym) {
 
   ym->address += 2*ym->wLine;
+  yui_mem_update(ym);
+
+  return TRUE;
+}
+
+static void yui_mem_pagedown_clicked (GtkToolButton * button, YuiMem * ym) {
+  ym->address += 2*ym->wLine;
+  yui_mem_update(ym);
+}
+
+static void yui_mem_pageup_clicked (GtkToolButton * button, YuiMem * ym) {
+  ym->address -= 2*ym->wLine;
   yui_mem_update(ym);
 }
 
@@ -253,7 +280,7 @@ static void yui_mem_content_changed( GtkCellRendererText *cellrenderertext,
       }
     }
   }
-  yui_window_invalidate(GTK_WIDGET(ym), yui);
+  yui_window_invalidate(GTK_WIDGET(ym), ym->yui);
 }
 
 static void yui_mem_update(YuiMem * ym) {
@@ -273,7 +300,7 @@ static void yui_mem_update(YuiMem * ym) {
 		gtk_list_store_append(ym->store, &iter);
 		gtk_list_store_set(GTK_LIST_STORE(ym->store ), &iter, 0, address, 1, dump, -1);
 	}
+
 	sprintf( address, "%08X", ym->address );
-	gtk_entry_set_text( GTK_ENTRY(ym->entry), address );
-	gtk_combo_box_set_active( GTK_COMBO_BOX(ym->quickCombo), 0 );
+	gtk_entry_set_text( GTK_ENTRY(gtk_bin_get_child(GTK_BIN(ym->quickCombo))), address );
 }

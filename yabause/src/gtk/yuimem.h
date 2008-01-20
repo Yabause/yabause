@@ -42,16 +42,17 @@ struct _YuiMem
 {
   GtkWindow dialog;
 
-  GtkWidget * vbox;
-  GtkWidget * hbox;
+  GtkWidget * toolbar;
 
   GtkListStore * store;
-  GtkWidget *entry, *quickCombo;
+  GtkWidget * quickCombo;
 
   guint wLine;
   guint32 address;
   gulong paused_handler;
   gulong running_handler;
+
+  YuiWindow * yui;
 };
 
 struct _YuiMemClass
