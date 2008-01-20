@@ -1166,6 +1166,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             {
                OPENFILENAME ofn;
 
+               YuiTempPause();
+
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd,
                         "Yabause Save State files\0*.YSS\0All Files\0*.*\0",
                         yssfilename, sizeof(yssfilename));
@@ -1175,11 +1177,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                   if (YabSaveState(yssfilename) != 0)
                      MessageBox (hWnd, "Couldn't save state file", "Error",  MB_OK | MB_ICONINFORMATION);
                }
+               YuiTempUnPause();
                break;
             }
             case IDM_LOADSTATEAS:
             {
                OPENFILENAME ofn;
+
+               YuiTempPause();
 
                SetupOFN(&ofn, OFN_DEFAULTLOAD, hWnd,
                         "Yabause Save State files\0*.YSS\0All Files\0*.*\0",
@@ -1190,6 +1195,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                   if (YabLoadState(yssfilename) != 0)
                      MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
                }
+               YuiTempUnPause();
 
                break;
             }
