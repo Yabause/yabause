@@ -316,49 +316,49 @@ void SH2UpdateRegList(HWND hDlg, sh2regs_struct *regs)
    char tempstr[128];
    int i;
 
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_RESETCONTENT, 0, 0);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_RESETCONTENT, 0, 0);
 
    for (i = 0; i < 16; i++)
    {                                       
       sprintf(tempstr, "R%02d =  %08x", i, (int)regs->R[i]);
       strupr(tempstr);
-      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+      SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
    }
 
    // SR
    sprintf(tempstr, "SR =   %08x", (int)regs->SR.all);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // GBR
    sprintf(tempstr, "GBR =  %08x", (int)regs->GBR);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // VBR
    sprintf(tempstr, "VBR =  %08x", (int)regs->VBR);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // MACH
    sprintf(tempstr, "MACH = %08x", (int)regs->MACH);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // MACL
    sprintf(tempstr, "MACL = %08x", (int)regs->MACL);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // PR
    sprintf(tempstr, "PR =   %08x", (int)regs->PR);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // PC
    sprintf(tempstr, "PC =   %08x", (int)regs->PC);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -369,7 +369,7 @@ void SH2UpdateCodeList(HWND hDlg, u32 addr)
    char buf[60];
    u32 offset;
 
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_RESETCONTENT, 0, 0);
+   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_RESETCONTENT, 0, 0);
 
    offset = addr - (12 * 2);
 
@@ -377,12 +377,12 @@ void SH2UpdateCodeList(HWND hDlg, u32 addr)
    {
       SH2Disasm(offset, MappedMemoryReadWord(offset), 0, buf);
 
-      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_ADDSTRING, 0,
+      SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_ADDSTRING, 0,
                   (LPARAM)buf);
       offset += 2;
    }
 
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_SETCURSEL,12,0);
+   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_SETCURSEL,12,0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -456,8 +456,8 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          char tempstr[10];
          int i;
 
-         SendDlgItemMessage(hDlg, IDC_EDITTEXT1, EM_SETLIMITTEXT, 8, 0);
-         SendDlgItemMessage(hDlg, IDC_EDITTEXT2, EM_SETLIMITTEXT, 8, 0);
+         SendDlgItemMessage(hDlg, IDC_CODEBPET, EM_SETLIMITTEXT, 8, 0);
+         SendDlgItemMessage(hDlg, IDC_MEMBPET, EM_SETLIMITTEXT, 8, 0);
 
          cbp = SH2GetBreakpointList(debugsh);
          mbp = SH2GetMemoryBreakpointList(debugsh);
@@ -467,13 +467,13 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             if (cbp[i].addr != 0xFFFFFFFF)
             {
                sprintf(tempstr, "%08X", (int)cbp[i].addr);
-               SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)tempstr);
+               SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
 
             if (mbp[i].addr != 0xFFFFFFFF)
             {
                sprintf(tempstr, "%08X", (int)mbp[i].addr);
-               SendMessage(GetDlgItem(hDlg, IDC_LISTBOX4), LB_ADDSTRING, 0, (LPARAM)tempstr);
+               SendMessage(GetDlgItem(hDlg, IDC_MEMBPLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
          }
 
@@ -522,7 +522,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_MEMORYEDITOR), hDlg, (DLGPROC)MemoryEditorDlgProc);
                break;
             }
-            case IDC_ADDBP1:
+            case IDC_ADDCODEBP:
             {
                char bptext[10];
                u32 addr=0;
@@ -535,7 +535,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
                   
                memset(bptext, 0, 10);
-               GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 10);
+               GetDlgItemText(hDlg, IDC_CODEBPET, bptext, 10);
 
                if (bptext[0] != 0)
                {
@@ -543,11 +543,11 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   sprintf(bptext, "%08lX", addr);
 
                   if (SH2AddCodeBreakpoint(debugsh, addr) == 0)
-                     SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
+                     SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
                }
                break;
             }
-            case IDC_DELBP1:
+            case IDC_DELCODEBP:
             {
                LRESULT ret;
                char bptext[10];
@@ -557,23 +557,23 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if (SH2Core->id != SH2CORE_DEBUGINTERPRETER)
                   break;
 
-               if ((ret = SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETCURSEL, 0, 0)) != LB_ERR)
+               if ((ret = SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETTEXT, ret, (LPARAM)bptext);
+                  SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_GETTEXT, ret, (LPARAM)bptext);
                   sscanf(bptext, "%lX", &addr);
                   SH2DelCodeBreakpoint(debugsh, addr);
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_DELETESTRING, ret, 0);
+                  SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_DELETESTRING, ret, 0);
                }
                break;
             }
-            case IDC_ADDBP2:
+            case IDC_ADDMEMBP:
             {
                char bptext[10];
                u32 addr=0;
                u32 flags=0;
 
                memset(bptext, 0, 10);
-               GetDlgItemText(hDlg, IDC_EDITTEXT2, bptext, 10);
+               GetDlgItemText(hDlg, IDC_MEMBPET, bptext, 10);
 
                if (bptext[0] != 0)
                {
@@ -601,22 +601,22 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   }
 
                   if (SH2AddMemoryBreakpoint(debugsh, addr, flags) == 0)
-                     SendMessage(GetDlgItem(hDlg, IDC_LISTBOX4), LB_ADDSTRING, 0, (LPARAM)bptext);
+                     SendMessage(GetDlgItem(hDlg, IDC_MEMBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
                }
                break;
             }
-            case IDC_DELBP2:
+            case IDC_DELMEMBP:
             {
                LRESULT ret;
                char bptext[10];
                u32 addr=0;
 
-               if ((ret = SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_GETCURSEL, 0, 0)) != LB_ERR)
+               if ((ret = SendDlgItemMessage(hDlg, IDC_MEMBPLB, LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_GETTEXT, ret, (LPARAM)bptext);
+                  SendDlgItemMessage(hDlg, IDC_MEMBPLB, LB_GETTEXT, ret, (LPARAM)bptext);
                   sscanf(bptext, "%lX", &addr);
                   SH2DelMemoryBreakpoint(debugsh, addr);
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX4, LB_DELETESTRING, ret, 0);
+                  SendDlgItemMessage(hDlg, IDC_MEMBPLB, LB_DELETESTRING, ret, 0);
                }
 
                break;
@@ -669,7 +669,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                break;
             }
-            case IDC_LISTBOX1:
+            case IDC_REGLISTLB:
             {
                switch (HIWORD(wParam))
                {
@@ -680,7 +680,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                      sh2regs_struct sh2regs;
                      SH2GetRegisters(debugsh, &sh2regs);
-                     cursel = (int)SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_GETCURSEL,0,0);
+                     cursel = (int)SendMessage(GetDlgItem(hDlg,LOWORD(wParam)), LB_GETCURSEL,0,0);
 
                      if (cursel < 16)
                      {
@@ -761,7 +761,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                break;
             }
-            case IDC_LISTBOX2:
+            case IDC_DISASM:
             {
                switch (HIWORD(wParam))
                {
@@ -781,13 +781,13 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      }
 
                      SH2GetRegisters(debugsh, &sh2regs);
-                     cursel = (int)SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_GETCURSEL,0,0);
+                     cursel = (int)SendMessage(GetDlgItem(hDlg,LOWORD(wParam)), LB_GETCURSEL,0,0);
                   
                      addr = sh2regs.PC - ((12 - cursel) * 2);
                      sprintf(bptext, "%08X", (int)addr);
 
                      if (SH2AddCodeBreakpoint(debugsh, addr) == 0)
-                        SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
+                        SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
                      break;
                   }
                   default: break;
@@ -1078,14 +1078,14 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
    char tempstr[128];
    int i;
 
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_RESETCONTENT, 0, 0);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_RESETCONTENT, 0, 0);
 
    // Data registers
    for (i = 0; i < 8; i++)
    {
       sprintf(tempstr, "D%d =   %08x", i, (int)regs->D[i]);
       strupr(tempstr);
-      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+      SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
    }
 
    // Address registers
@@ -1093,18 +1093,18 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
    {
       sprintf(tempstr, "A%d =   %08x", i, (int)regs->A[i]);
       strupr(tempstr);
-      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+      SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
    }
 
    // SR
    sprintf(tempstr, "SR =   %08x", (int)regs->SR);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    // PC
    sprintf(tempstr, "PC =   %08x", (int)regs->PC);
    strupr(tempstr);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1123,7 +1123,7 @@ void M68KUpdateCodeList(HWND hDlg, u32 addr)
    char buf[60];
    u32 offset;
 
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_RESETCONTENT, 0, 0);
+   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_RESETCONTENT, 0, 0);
 
    offset = addr;
 
@@ -1131,12 +1131,12 @@ void M68KUpdateCodeList(HWND hDlg, u32 addr)
    {
       offset = M68KDisasm(offset, buf);
 
-      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_ADDSTRING, 0,
+      SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_ADDSTRING, 0,
                   (LPARAM)buf);
    }
 
-//   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_SETCURSEL,12,0);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_SETCURSEL,0,0);
+//   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_SETCURSEL,12,0);
+   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_SETCURSEL,0,0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1155,7 +1155,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          EnableWindow(GetDlgItem(hDlg, IDC_STEP), TRUE);
 
-         SendDlgItemMessage(hDlg, IDC_EDITTEXT1, EM_SETLIMITTEXT, 5, 0);
+         SendDlgItemMessage(hDlg, IDC_CODEBPET, EM_SETLIMITTEXT, 5, 0);
          cbp = M68KGetBreakpointList();
 
          for (i = 0; i < MAX_BREAKPOINTS; i++)
@@ -1163,7 +1163,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             if (cbp[i].addr != 0xFFFFFFFF)
             {
                sprintf(tempstr, "%08X", (int)cbp[i].addr);
-               SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)tempstr);
+               SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
          }
 
@@ -1196,13 +1196,13 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                M68KUpdateCodeList(hDlg, m68kregs.PC);
                break;
             }
-            case IDC_ADDBP1:
+            case IDC_ADDCODEBP:
             {
                // add a code breakpoint
                char bptext[10];
                u32 addr=0;
                memset(bptext, 0, 10);
-               GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 10);
+               GetDlgItemText(hDlg, IDC_CODEBPET, bptext, 10);
 
                if (bptext[0] != 0)
                {
@@ -1210,7 +1210,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   sprintf(bptext, "%05X", (int)addr);
 
                   if (M68KAddCodeBreakpoint(addr) == 0)
-                     SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
+                     SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
                }
                break;
             }
@@ -1221,17 +1221,17 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                char bptext[10];
                u32 addr=0;
 
-               if ((ret = SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETCURSEL, 0, 0)) != LB_ERR)
+               if ((ret = SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETTEXT, ret, (LPARAM)bptext);
+                  SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_GETTEXT, ret, (LPARAM)bptext);
                   sscanf(bptext, "%lX", &addr);
                   M68KDelCodeBreakpoint(addr);
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_DELETESTRING, ret, 0);
+                  SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_DELETESTRING, ret, 0);
                }
 
                break;
             }
-            case IDC_LISTBOX1:
+            case IDC_REGLISTLB:
             {
                switch (HIWORD(wParam))
                {
@@ -1241,7 +1241,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      int cursel;
                      m68kregs_struct m68kregs;
 
-                     cursel = (int)SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_GETCURSEL,0,0);
+                     cursel = (int)SendMessage(GetDlgItem(hDlg,LOWORD(wParam)), LB_GETCURSEL,0,0);
 
                      M68KGetRegisters(&m68kregs);
 
@@ -1344,61 +1344,61 @@ void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
 {
    char tempstr[128];
 
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_RESETCONTENT, 0, 0);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_RESETCONTENT, 0, 0);
 
    sprintf(tempstr, "PR = %d   EP = %d", regs->ProgControlPort.part.PR, regs->ProgControlPort.part.EP);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "T0 = %d   S =  %d", regs->ProgControlPort.part.T0, regs->ProgControlPort.part.S);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "Z =  %d   C =  %d", regs->ProgControlPort.part.Z, regs->ProgControlPort.part.C);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "V =  %d   E =  %d", regs->ProgControlPort.part.V, regs->ProgControlPort.part.E);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "ES = %d   EX = %d", regs->ProgControlPort.part.ES, regs->ProgControlPort.part.EX);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "LE =          %d", regs->ProgControlPort.part.LE);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "P =          %02X", regs->ProgControlPort.part.P);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "TOP =        %02X", regs->TOP);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "LOP =        %02X", regs->LOP);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "CT = %02X:%02X:%02X:%02X", regs->CT[0], regs->CT[1], regs->CT[2], regs->CT[3]);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "RA =   %08lX", regs->RA0);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "WA =   %08lX", regs->WA0);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "RX =   %08lX", regs->RX);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "RY =   %08lX", regs->RX);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "PH =       %04X", regs->P.part.H & 0xFFFF);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "PL =   %08X", (int)(regs->P.part.L & 0xFFFFFFFF));
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "ACH =      %04X", regs->AC.part.H & 0xFFFF);
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 
    sprintf(tempstr, "ACL =  %08X", (int)(regs->AC.part.L & 0xFFFFFFFF));
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX1), LB_ADDSTRING, 0, (LPARAM)tempstr);
+   SendMessage(GetDlgItem(hDlg, IDC_REGLISTLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1406,10 +1406,10 @@ void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
 void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
 {
    int i;
-   char buf[60];
+   char buf[MAX_PATH];
    u8 offset;
 
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_RESETCONTENT, 0, 0);
+   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_RESETCONTENT, 0, 0);
 
    offset = addr;
 
@@ -1418,11 +1418,11 @@ void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
       ScuDspDisasm(offset, buf);
       offset++;
 
-      SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_ADDSTRING, 0,
+      SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_ADDSTRING, 0,
                   (LPARAM)buf);
    }
 
-   SendMessage(GetDlgItem(hDlg, IDC_LISTBOX2), LB_SETCURSEL,0,0);
+   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_SETCURSEL,0,0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1447,7 +1447,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          char tempstr[10];
          int i;
 
-         SendDlgItemMessage(hDlg, IDC_EDITTEXT1, EM_SETLIMITTEXT, 2, 0);
+         SendDlgItemMessage(hDlg, IDC_CODEBPET, EM_SETLIMITTEXT, 2, 0);
          cbp = ScuDspGetBreakpointList();
 
          for (i = 0; i < MAX_BREAKPOINTS; i++)
@@ -1455,7 +1455,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             if (cbp[i].addr != 0xFFFFFFFF)
             {
                sprintf(tempstr, "%02X", (int)cbp[i].addr);
-               SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)tempstr);
+               SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
          }
 
@@ -1491,13 +1491,13 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                break;
             }
-            case IDC_ADDBP1:
+            case IDC_ADDCODEBP:
             {
                // add a code breakpoint
                char bptext[10];
                u32 addr=0;
                memset(bptext, 0, 4);
-               GetDlgItemText(hDlg, IDC_EDITTEXT1, bptext, 4);
+               GetDlgItemText(hDlg, IDC_CODEBPET, bptext, 4);
 
                if (bptext[0] != 0)
                {
@@ -1505,23 +1505,23 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   sprintf(bptext, "%02X", (int)addr);
 
                   if (ScuDspAddCodeBreakpoint(addr) == 0)
-                     SendMessage(GetDlgItem(hDlg, IDC_LISTBOX3), LB_ADDSTRING, 0, (LPARAM)bptext);
+                     SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
                }
                break;
             }
-            case IDC_DELBP1:
+            case IDC_DELCODEBP:
             {
                // delete a code breakpoint
                LRESULT ret;
                char bptext[10];
                u32 addr=0;
 
-               if ((ret = SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETCURSEL, 0, 0)) != LB_ERR)
+               if ((ret = SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_GETCURSEL, 0, 0)) != LB_ERR)
                {
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_GETTEXT, ret, (LPARAM)bptext);
+                  SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_GETTEXT, ret, (LPARAM)bptext);
                   sscanf(bptext, "%lX", &addr);
                   ScuDspDelCodeBreakpoint(addr);
-                  SendDlgItemMessage(hDlg, IDC_LISTBOX3, LB_DELETESTRING, ret, 0);
+                  SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_DELETESTRING, ret, 0);
                }
 
                break;

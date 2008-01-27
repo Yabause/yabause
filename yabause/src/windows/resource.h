@@ -117,6 +117,7 @@
 #define IDC_HEIGHTEDIT                  1007
 #define IDC_NBG3ENABCB                  1007
 #define IDC_BUPEXPORTBT                 1007
+#define IDC_MEMBPLB                     1007
 #define IDC_CHECKBOX1                   1008
 #define IDC_BIOSBROWSE                  1008
 #define IDC_NBG3ET                      1008
@@ -179,6 +180,7 @@
 #define IDC_DOWNTEXT                    1025
 #define IDC_STEPOVER                    1026
 #define IDC_LEFTTEXT                    1026
+#define IDC_STEP2                       1026
 #define IDC_MEMTRANSFER                 1027
 #define IDC_RIGHTTEXT                   1027
 #define IDC_MEMEDITOR                   1028
@@ -195,7 +197,9 @@
 #define IDC_ADDBP1                      1040
 #define IDC_DELBP1                      1041
 #define IDC_ADDBP2                      1042
+#define IDC_ADDMEMBP                    1042
 #define IDC_DELBP2                      1043
+#define IDC_DELMEMBP                    1043
 #define IDC_CHKREAD                     1044
 #define IDC_CHKWRITE                    1045
 #define IDC_CHKBYTE1                    1046
@@ -220,6 +224,13 @@
 #define IDC_PORT1DCFGPB                 1074
 #define IDC_PORT1ECFGPB                 1075
 #define IDC_PORT1FCFGPB                 1076
+#define IDC_REGLISTLB                   1099
+#define IDC_DISASM                      1100
+#define IDC_CODEBPET                    1101
+#define IDC_CODEBPLB                    1102
+#define IDC_ADDCODEBP                   1103
+#define IDC_DELCODEBP                   1104
+#define IDC_MEMBPET                     1105
 #define IDC_PORT2CONNTYPECB             1147
 #define IDC_PORT2ATYPECB                1148
 #define IDC_PORT2BTYPECB                1149
@@ -297,7 +308,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         40082
-#define _APS_NEXT_CONTROL_VALUE         1099
+#define _APS_NEXT_CONTROL_VALUE         1106
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
 #endif
