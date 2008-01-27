@@ -42,6 +42,7 @@
 #endif
 //#include "../m68khle.h"
 #include "yuidebug.h"
+#include "disasm.h"
 #include "hexedit.h"
 
 #define DONT_PROFILE
@@ -620,6 +621,7 @@ int YuiInit(void)
    iccs.dwICC = ICC_INTERNET_CLASSES | ICC_TAB_CLASSES | ICC_PROGRESS_CLASS;
    InitCommonControlsEx(&iccs);
 
+   InitDisasm();
    InitHexEdit();
 
    y_hInstance = GetModuleHandle(NULL);

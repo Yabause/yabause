@@ -28,6 +28,7 @@
 #include "../sh2d.h"
 #include "../vdp2.h"
 #include "../yui.h"
+#include "disasm.h"
 #include "hexedit.h"
 #include "settings.h"
 #include "yuidebug.h"
@@ -365,24 +366,8 @@ void SH2UpdateRegList(HWND hDlg, sh2regs_struct *regs)
 
 void SH2UpdateCodeList(HWND hDlg, u32 addr)
 {
-   int i;
-   char buf[60];
-   u32 offset;
-
-   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_RESETCONTENT, 0, 0);
-
-   offset = addr - (12 * 2);
-
-   for (i=0; i < 24; i++) // amount of lines
-   {
-      SH2Disasm(offset, MappedMemoryReadWord(offset), 0, buf);
-
-      SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_ADDSTRING, 0,
-                  (LPARAM)buf);
-      offset += 2;
-   }
-
-   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_SETCURSEL,12,0);
+   SendDlgItemMessage(hDlg, IDC_DISASM, DIS_GOTOADDRESS,0, addr-(11 * sizeof(u16)));
+   SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETPC,0, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -443,6 +428,14 @@ void SH2BreakpointHandler (SH2_struct *context, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int SH2Dis(u32 addr, char *string)
+{
+   SH2Disasm(addr, MappedMemoryReadWord(addr), 0, string);
+   return 2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
@@ -476,6 +469,9 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SendMessage(GetDlgItem(hDlg, IDC_MEMBPLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
          }
+
+         SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETDISFUNC, 0, (LPARAM)SH2Dis);
+         SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETENDADDRESS, 0, 0x06100000);
 
 //         if (proc->paused())
 //         {
@@ -1405,24 +1401,8 @@ void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
 
 void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
 {
-   int i;
-   char buf[MAX_PATH];
-   u8 offset;
-
-   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_RESETCONTENT, 0, 0);
-
-   offset = addr;
-
-   for (i = 0; i < 24; i++)
-   {
-      ScuDspDisasm(offset, buf);
-      offset++;
-
-      SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_ADDSTRING, 0,
-                  (LPARAM)buf);
-   }
-
-   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_SETCURSEL,0,0);
+   SendDlgItemMessage(hDlg, IDC_DISASM, DIS_GOTOADDRESS,0, addr-11);
+   SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETPC,0, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1431,6 +1411,13 @@ void SCUDSPBreakpointHandler (u32 addr)
 {
    MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SCUDSPDEBUG), YabWin, (DLGPROC)SCUDSPDebugDlgProc);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int SCUDSPDis(u32 addr, char *string)
+{
+   ScuDspDisasm((u8)addr, string);
+   return 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1458,6 +1445,9 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
          }
+
+         SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETDISFUNC, 0, (LPARAM)SCUDSPDis);
+         SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETENDADDRESS, 0, 0x100);
 
          EnableWindow(GetDlgItem(hDlg, IDC_STEP), TRUE);
 

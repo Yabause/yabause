@@ -35,6 +35,7 @@ typedef struct
    u32 addr;
    u32 pc;
    u32 e_addr;
+   u32 scrollscale;
    int (*disinst)(u32 addr, char *string);
 } DisasmCtl_struct;
 
@@ -130,7 +131,7 @@ LRESULT DisasmCtl_Vscroll(DisasmCtl_struct *cc, WPARAM wParam, LPARAM lParam)
          InvalidateRect(cc->hwnd, NULL, FALSE);
          return 0;
       case SB_THUMBTRACK:
-         cc->addr = HIWORD(wParam) << 16;
+         cc->addr = HIWORD(wParam) << cc->scrollscale;
          InvalidateRect(cc->hwnd, NULL, FALSE);
          return 0;
       case SB_THUMBPOSITION:
@@ -208,11 +209,15 @@ LRESULT CALLBACK DisasmCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
          return 0;
       case DIS_SETENDADDRESS:
          cc->e_addr = (u32)lParam;
-         SetScrollRange(hwnd, SB_VERT, 0, cc->e_addr >> 16, TRUE);
+         if (cc->e_addr >= 0x10000)         
+            cc->scrollscale = 16;
+         else
+            cc->scrollscale = 2;
+         SetScrollRange(hwnd, SB_VERT, 0, cc->e_addr >> cc->scrollscale, TRUE);
          return 0;
       case DIS_GOTOADDRESS:
          cc->addr = (u32)lParam;
-         SetScrollPos(cc->hwnd, SB_VERT, cc->addr >> 16, TRUE);
+         SetScrollPos(cc->hwnd, SB_VERT, cc->addr >> cc->scrollscale, TRUE);
          InvalidateRect(cc->hwnd, NULL, FALSE);
          SetFocus(cc->hwnd);
          return 0;

@@ -180,7 +180,6 @@
 #define IDC_DOWNTEXT                    1025
 #define IDC_STEPOVER                    1026
 #define IDC_LEFTTEXT                    1026
-#define IDC_STEP2                       1026
 #define IDC_MEMTRANSFER                 1027
 #define IDC_RIGHTTEXT                   1027
 #define IDC_MEMEDITOR                   1028
@@ -231,6 +230,7 @@
 #define IDC_ADDCODEBP                   1103
 #define IDC_DELCODEBP                   1104
 #define IDC_MEMBPET                     1105
+#define IDC_CUSTOM1                     1106
 #define IDC_PORT2CONNTYPECB             1147
 #define IDC_PORT2ATYPECB                1148
 #define IDC_PORT2BTYPECB                1149
@@ -308,7 +308,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         40082
-#define _APS_NEXT_CONTROL_VALUE         1106
+#define _APS_NEXT_CONTROL_VALUE         1107
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
 #endif
