@@ -766,9 +766,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      // Add a code breakpoint when code is double-clicked
                      char bptext[10];
                      u32 addr=0;
-                     int cursel;
                      extern SH2Interface_struct *SH2Core;
-                     sh2regs_struct sh2regs;
 
                      if (SH2Core->id != SH2CORE_DEBUGINTERPRETER)
                      {
@@ -776,10 +774,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         break;
                      }
 
-                     SH2GetRegisters(debugsh, &sh2regs);
-                     cursel = (int)SendMessage(GetDlgItem(hDlg,LOWORD(wParam)), LB_GETCURSEL,0,0);
-                  
-                     addr = sh2regs.PC - ((12 - cursel) * 2);
+                     addr = (u32)SendMessage(GetDlgItem(hDlg,LOWORD(wParam)), DIS_GETCURSEL,0,0);
                      sprintf(bptext, "%08X", (int)addr);
 
                      if (SH2AddCodeBreakpoint(debugsh, addr) == 0)
@@ -1115,24 +1110,15 @@ void M68KBreakpointHandler (u32 addr)
 
 void M68KUpdateCodeList(HWND hDlg, u32 addr)
 {
-   int i;
-   char buf[60];
-   u32 offset;
+   SendDlgItemMessage(hDlg, IDC_DISASM, DIS_GOTOADDRESS, 0, addr);
+   SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETPC, 0, addr);
+}
 
-   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_RESETCONTENT, 0, 0);
+//////////////////////////////////////////////////////////////////////////////
 
-   offset = addr;
-
-   for (i = 0; i < 24; i++)
-   {
-      offset = M68KDisasm(offset, buf);
-
-      SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_ADDSTRING, 0,
-                  (LPARAM)buf);
-   }
-
-//   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_SETCURSEL,12,0);
-   SendMessage(GetDlgItem(hDlg, IDC_DISASM), LB_SETCURSEL,0,0);
+int M68KDis(u32 addr, char *string)
+{
+   return (int)(M68KDisasm(addr, string) - addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1162,6 +1148,9 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)tempstr);
             }
          }
+
+         SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETDISFUNC, 0, (LPARAM)M68KDis);
+         SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETENDADDRESS, 0, 0x100000);
 
          M68KGetRegisters(&m68kregs);
          M68KUpdateRegList(hDlg, &m68kregs);
@@ -1210,7 +1199,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
                break;
             }
-            case IDC_DELBP1:
+            case IDC_DELCODEBP:
             {
                // delete a code breakpoint
                LRESULT ret;
@@ -1317,7 +1306,28 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                break;
             }
+            case IDC_DISASM:
+            {
+               switch (HIWORD(wParam))
+               {
+                  case LBN_DBLCLK:
+                  {
+                     // Add a code breakpoint when code is double-clicked
+                     char bptext[10];
+                     u32 addr=0;
 
+                     addr = (u32)SendMessage(GetDlgItem(hDlg,LOWORD(wParam)), DIS_GETCURSEL,0,0);
+                     sprintf(bptext, "%05X", (int)addr);
+
+                     if (M68KAddCodeBreakpoint(addr) == 0)
+                        SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
+                     break;
+                  }
+                  default: break;
+               }
+
+               break;
+            }
             default: break;
          }
          break;
@@ -1401,7 +1411,10 @@ void SCUDSPUpdateRegList(HWND hDlg, scudspregs_struct *regs)
 
 void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
 {
-   SendDlgItemMessage(hDlg, IDC_DISASM, DIS_GOTOADDRESS,0, addr-11);
+   if (addr < 11)
+      SendDlgItemMessage(hDlg, IDC_DISASM, DIS_GOTOADDRESS,0, 0);
+   else
+      SendDlgItemMessage(hDlg, IDC_DISASM, DIS_GOTOADDRESS,0, addr-11);
    SendDlgItemMessage(hDlg, IDC_DISASM, DIS_SETPC,0, addr);
 }
 
@@ -1512,6 +1525,29 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   sscanf(bptext, "%lX", &addr);
                   ScuDspDelCodeBreakpoint(addr);
                   SendDlgItemMessage(hDlg, IDC_CODEBPLB, LB_DELETESTRING, ret, 0);
+               }
+
+               break;
+            }
+            case IDC_DISASM:
+            {
+               switch (HIWORD(wParam))
+               {
+                  case LBN_DBLCLK:
+                  {
+                     // Add a code breakpoint when code is double-clicked
+                     char bptext[10];
+                     u32 addr=0;
+
+                     addr = (u32)SendMessage(GetDlgItem(hDlg,LOWORD(wParam)), DIS_GETCURSEL,0,0);
+                     sprintf(bptext, "%02X", (int)addr);
+
+                     if (ScuDspAddCodeBreakpoint(addr) == 0)
+                        SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
+
+                     break;
+                  }
+                  default: break;
                }
 
                break;

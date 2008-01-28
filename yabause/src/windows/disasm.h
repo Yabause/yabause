@@ -27,6 +27,8 @@
 #define DIS_SETENDADDRESS       WM_USER+12
 #define DIS_GOTOADDRESS         WM_USER+13
 #define DIS_SETPC               WM_USER+14
+#define DIS_GETCURSEL           WM_USER+15
+#define DIS_GETCURADDRESS       WM_USER+16
 
 void InitDisasm();
 

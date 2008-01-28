@@ -36,6 +36,7 @@ typedef struct
    u32 pc;
    u32 e_addr;
    u32 scrollscale;
+   int cursel;
    int (*disinst)(u32 addr, char *string);
 } DisasmCtl_struct;
 
@@ -173,6 +174,7 @@ LRESULT CALLBACK DisasmCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
          {
             cc = (DisasmCtl_struct *)GetWindowLong(hwnd, 0);
             cc->addr = 0;
+            cc->cursel = 0;
             cc->disinst = DisasmInstructionNull;
             SetScrollRange(hwnd, SB_VERT, 0, 65535, TRUE);
          }
@@ -202,19 +204,39 @@ LRESULT CALLBACK DisasmCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
          else if (HIWORD(wParam) >= 0x8000)
             return DisasmCtl_Vscroll(cc, SB_LINEDOWN, 0);
          break;
+      case WM_LBUTTONDOWN:
+         return 0;
+      case WM_LBUTTONDBLCLK:
+      {
+         cc->cursel = HIWORD(lParam) / cc->fontmetric.tmHeight;
+         PostMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(hwnd), LBN_DBLCLK), (LPARAM)hwnd);
+         return 0;
+      }
       case WM_KEYDOWN:
          return DisasmCtl_KeyDown(cc, wParam, lParam);
       case DIS_SETDISFUNC:
          cc->disinst = (int (*)(u32, char *))lParam;
          return 0;
       case DIS_SETENDADDRESS:
+      {
+         int highestbit=0;
+         int i;
          cc->e_addr = (u32)lParam;
-         if (cc->e_addr >= 0x10000)         
-            cc->scrollscale = 16;
+
+         for (i = 0; i < 31; i++)
+         {
+            if (lParam & 0x1)
+               highestbit = i;
+            lParam >>= 1;
+         }
+
+         if (highestbit > 15)
+            cc->scrollscale = highestbit - 15;
          else
             cc->scrollscale = 2;
          SetScrollRange(hwnd, SB_VERT, 0, cc->e_addr >> cc->scrollscale, TRUE);
          return 0;
+      }
       case DIS_GOTOADDRESS:
          cc->addr = (u32)lParam;
          SetScrollPos(cc->hwnd, SB_VERT, cc->addr >> cc->scrollscale, TRUE);
@@ -224,6 +246,19 @@ LRESULT CALLBACK DisasmCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
       case DIS_SETPC:
          cc->pc = (u32)lParam;
          return 0;
+      case DIS_GETCURSEL:      
+      {
+         char text[MAX_PATH];
+         u32 addr=cc->addr;
+         int i;
+
+         for (i = 0; i < cc->cursel; i++)
+            addr += cc->disinst(addr, text);
+
+         return addr;
+      }
+      case DIS_GETCURADDRESS:
+         return cc->addr;
       default:
          break;
    }
@@ -245,7 +280,7 @@ void InitDisasm()
    wc.hIcon          = 0;
    wc.lpszMenuName   = 0;
    wc.hbrBackground  = (HBRUSH)GetSysColorBrush(COLOR_WINDOW);
-   wc.style          = 0;
+   wc.style          = CS_DBLCLKS;
    wc.cbClsExtra     = 0;
    wc.cbWndExtra     = sizeof(DisasmCtl_struct *);
    wc.hIconSm        = 0;
