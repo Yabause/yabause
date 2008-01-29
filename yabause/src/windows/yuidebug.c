@@ -140,21 +140,29 @@ LRESULT CALLBACK ErrorDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 void YuiErrorMsg(const char *string)
 {
+   extern SH2Interface_struct *SH2Core;
+
    // This sucks, but until YuiErrorMsg is changed around, this will have to do
    if (strncmp(string, "Master SH2 invalid opcode", 25) == 0)
    {
-      if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_ERRORDEBUG), NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
+      if (SH2Core->id == SH2CORE_DEBUGINTERPRETER)
       {
-         debugsh = MSH2;
-         DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), NULL, (DLGPROC)SH2DebugDlgProc);
+         if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_ERRORDEBUG), NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
+         {
+            debugsh = MSH2;
+            DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), NULL, (DLGPROC)SH2DebugDlgProc);
+         }
       }
    }
    else if (strncmp(string, "Slave SH2 invalid opcode", 24) == 0)
    {
-      if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_ERRORDEBUG), NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
+      if (SH2Core->id == SH2CORE_DEBUGINTERPRETER)
       {
-         debugsh = SSH2;
-         DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), NULL, (DLGPROC)SH2DebugDlgProc);
+         if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_ERRORDEBUG), NULL, (DLGPROC)ErrorDebugDlgProc, (LPARAM)string) == TRUE)
+         {
+            debugsh = SSH2;
+            DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), NULL, (DLGPROC)SH2DebugDlgProc);
+         }
       }
    }
    else
