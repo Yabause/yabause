@@ -232,19 +232,19 @@ static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
       case 1:
       {
          for (i = 0; i < filesize; i++)
-            T1WriteByte(mem, i, buffer[i]);
+            T1WriteByte((u8 *) mem, i, buffer[i]);
          break;
       }
       case 2:
       {
          for (i = 0; i < filesize; i++)
-            T2WriteByte(mem, i, buffer[i]);
+            T2WriteByte((u8 *) mem, i, buffer[i]);
          break;
       }
       case 3:
       {
          for (i = 0; i < filesize; i++)
-            T3WriteByte(mem, i, buffer[i]);
+            T3WriteByte((T3Memory *) mem, i, buffer[i]);
          break;
       }
       default:
@@ -279,19 +279,19 @@ static INLINE int T123Save(void * mem, u32 size, int type, const char *filename)
       case 1:
       {
          for (i = 0; i < size; i++)
-            buffer[i] = T1ReadByte(mem, i);
+            buffer[i] = T1ReadByte((u8 *) mem, i);
          break;
       }
       case 2:
       {
          for (i = 0; i < size; i++)
-            buffer[i] = T2ReadByte(mem, i);
+            buffer[i] = T2ReadByte((u8 *) mem, i);
          break;
       }
       case 3:
       {
          for (i = 0; i < size; i++)
-            buffer[i] = T3ReadByte(mem, i);
+            buffer[i] = T3ReadByte((T3Memory *) mem, i);
          break;
       }
       default:
