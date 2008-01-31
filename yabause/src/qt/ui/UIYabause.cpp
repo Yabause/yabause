@@ -1,4 +1,5 @@
 #include "UIYabause.h"
+#include "UISettings.h"
 #include "../YabauseGL.h"
 #include "../qt_yabause.h"
 
@@ -31,6 +32,9 @@ UIYabause::~UIYabause()
 
 void UIYabause::timerEvent( QTimerEvent* )
 { Yabause::exec(); }
+
+void UIYabause::on_aYabauseSettings_triggered()
+{ UISettings( window() ).exec(); }
 
 void UIYabause::on_aYabauseRun_triggered()
 {

@@ -21,6 +21,7 @@ protected:
 	void timerEvent( QTimerEvent* event );
 
 protected slots:
+	void on_aYabauseSettings_triggered();
 	void on_aYabauseRun_triggered();
 	void on_aYabausePause_triggered();
 

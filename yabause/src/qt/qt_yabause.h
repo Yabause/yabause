@@ -20,6 +20,7 @@ extern "C"
 }
 
 #include "ui/UIYabause.h"
+#include "Settings.h"
 
 namespace Yabause
 {
@@ -29,6 +30,8 @@ namespace Yabause
 	void log( const char* string );
 	
 	UIYabause* mainWindow();
+	Settings* settings();
+	
 	/*
 	void YuiErrorMsg(const char *string);
 	void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen);

@@ -15,6 +15,9 @@ int main( int argc, char** argv )
 	LogChangeOutput( DEBUG_CALLBACK, (char*)Yabause::log );
 #endif
 	
+	// init settings
+	Settings::setIniInformations();
+	
 	// init yabause
 	Yabause::init();
 	

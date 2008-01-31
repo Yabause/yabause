@@ -54,19 +54,20 @@ yabauseinit_struct yinit;
 
 // main window
 UIYabause* mUIYabause = 0;
+Settings* mSettings = 0;
 
 extern "C" 
 {
 	void YuiErrorMsg(const char *string)
 	{ qWarning( string ); }
 
-	void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)
+	void YuiVideoResize(unsigned int /*w*/, unsigned int /*h*/, int /*isfullscreen*/)
 	{ YuiErrorMsg( "YuiVideoResize" ); }
 
-	int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
+	int YuiSetVideoMode(int /*width*/, int /*height*/, int /*bpp*/, int /*fullscreen*/)
 	{ return 0; }
 
-	void YuiSetVideoAttribute(int type, int val)
+	void YuiSetVideoAttribute(int /*type*/, int /*val*/)
 	{ YuiErrorMsg( "YuiSetVideoAttribute" ); }
 
 	void YuiSwapBuffers()
@@ -128,4 +129,11 @@ UIYabause* Yabause::mainWindow()
 	if ( !mUIYabause )
 		mUIYabause = new UIYabause;
 	return mUIYabause;
+}
+
+Settings* Yabause::settings()
+{
+	if ( !mSettings )
+		mSettings = new Settings();
+	return mSettings;
 }

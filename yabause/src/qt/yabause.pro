@@ -19,8 +19,33 @@ LANGUAGE	= Qt4/C++
 TARGET	= yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
-DEFINES	+= STDC_HEADERS=1 HAVE_SYS_TYPES_H=1 HAVE_SYS_STAT_H=1 DHAVE_STDLIB_H=1 HAVE_STRING_H=1 HAVE_MEMORY_H=1 HAVE_STRINGS_H=1 HAVE_INTTYPES_H=1 HAVE_STDINT_H=1 HAVE_UNISTD_H=1 HAVE_LIBSDL=1 HAVE_LIBGL=1 HAVE_C99_VARIADIC_MACROS=1 HAVE_C68K=1 DEBUG=1
 LIBS	+= -L../ -lyabause -lSDL
+
+# program defines
+DEFINES	+= "PACKAGE_NAME=\"\\\"yabause\\\"\"" \
+	"PACKAGE_TARNAME=\"\\\"yabause\\\"\"" \
+	"PACKAGE_VERSION=\"\\\"0.9.3\\\"\"" \
+	"PACKAGE_BUGREPORT=\"\\\"\\\"\"" \
+	"PACKAGE=\"\\\"yabause\\\"\"" \
+	"VERSION=\"\\\"0.9.3\\\"\"" \
+	"PACKAGE_STRING=\"\\\"yabause 0.9.3\\\"\""
+	
+# include defines
+DEFINES	+= STDC_HEADERS=1 \
+	HAVE_SYS_TYPES_H=1 \
+	HAVE_SYS_STAT_H=1 \
+	DHAVE_STDLIB_H=1 \
+	HAVE_STRING_H=1 \
+	HAVE_MEMORY_H=1 \
+	HAVE_STRINGS_H=1 \
+	HAVE_INTTYPES_H=1 \
+	HAVE_STDINT_H=1 \
+	HAVE_UNISTD_H=1 \
+	HAVE_LIBSDL=1 \
+	HAVE_LIBGL=1 \
+	HAVE_C99_VARIADIC_MACROS=1 \
+	HAVE_C68K=1 \
+	DEBUG=1
 
 BUILD_PATH	= ./build
 BUILDER	= GNUMake
@@ -49,13 +74,18 @@ CONFIG(debug, debug|release) {
 	RCC_DIR	= $${BUILD_PATH}/release/.rcc
 }
 
+FORMS	+= ui/UIYabause.ui \
+	ui/UISettings.ui
+
 HEADERS	+= qt_yabause.h \
 	ui/UIYabause.h \
-	YabauseGL.h
+	YabauseGL.h \
+	ui/UISettings.h \
+	Settings.h
 
 SOURCES	+= qt_yabause.cpp \
 	main.cpp \
 	ui/UIYabause.cpp \
-	YabauseGL.cpp
-FORMS	+= ui/UIYabause.ui \
-	ui/UISettings.ui
+	YabauseGL.cpp \
+	ui/UISettings.cpp \
+	Settings.cpp
