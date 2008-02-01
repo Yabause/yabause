@@ -14,13 +14,11 @@ public:
 	UIYabause( QWidget* parent = 0 );
 	~UIYabause();
 
-	void appendLog( const char* msg );
 	void swapBuffers();
+	void appendLog( const char* msg );
 
 protected:
 	YabauseGL* mYabauseGL;
-
-protected:
 	YabauseThread* mYabauseThread;
 	QString mLog;
 

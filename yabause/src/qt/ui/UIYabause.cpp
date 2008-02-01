@@ -3,6 +3,11 @@
 #include "../YabauseGL.h"
 #include "../YabauseThread.h"
 
+#include <QTimer>
+
+void qAppendLog( const char* s )
+{ QtYabause::mainWindow()->appendLog( s ); }
+
 UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )
 {
@@ -21,30 +26,34 @@ UIYabause::UIYabause( QWidget* parent )
 	aYabausePause->setEnabled( false );
 	aYabauseReset->setEnabled( false );
 
-//#ifndef QT_NO_DEBUG
+	// start log
 	LogStart();
-	//LogChangeOutput( DEBUG_CALLBACK, (char*)appendLog );
-//#endif
+	LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
 	
-	// create thread
+	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
+	
+	// start emulation
 	mYabauseThread->startEmulation();
 }
 
 UIYabause::~UIYabause()
 {
+	// stop emulation
 	mYabauseThread->stopEmulation();
 
-//#ifndef QT_NO_DEBUG
+	// stop log
 	LogStop();
-//#endif
 }
-
-void UIYabause::appendLog( const char* s )
-{ mLog += s; }
 
 void UIYabause::swapBuffers()
 { mYabauseGL->swapBuffers(); }
+
+void UIYabause::appendLog( const char* s )
+{
+	mLog += s;
+	//qWarning( s );
+}
 
 void UIYabause::on_aYabauseSettings_triggered()
 { UISettings( window() ).exec(); }

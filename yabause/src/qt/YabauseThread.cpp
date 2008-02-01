@@ -1,9 +1,10 @@
 #include "YabauseThread.h"
 
 YabauseThread::YabauseThread( QObject* o )
-	: QThread( o )
+	: QObject( o )
 {
 	mYabauseConf = new YabauseConf;
+	mTimerId = -1;
 }
 
 YabauseThread::~YabauseThread()
@@ -17,25 +18,27 @@ YabauseConf* YabauseThread::yabauseConf()
 
 void YabauseThread::startEmulation()
 {
-	if ( isRunning() )
-		return;
+	//if ( isRunning() )
+		//return;
 	initEmulation();
-	start();
+	//start();
+	mPause = true;
+	mTimerId = startTimer( 0 );
 }
 
 void YabauseThread::stopEmulation()
 {
-	if ( isRunning() )
+	//if ( isRunning() )
 		mRunning = false;
-	terminate();
-	wait( 2000 );
+	//terminate();
+	//wait( 2000 );
 	deInitEmulation();
 }
 
 void YabauseThread::initEmulation()
 {
 	reloadSettings();
-	YabauseInit( mYabauseConf );
+	qWarning( "YabauseInit: %i", YabauseInit( mYabauseConf ) );
 }
 
 void YabauseThread::deInitEmulation()
@@ -71,7 +74,6 @@ void YabauseThread::reloadSettings()
 	mYabauseConf->percoretype = PERCORE_SDLJOY;
 	mYabauseConf->sndcoretype = SNDCORE_SDL;
 	mYabauseConf->biospath = "./SEGA_101.BIN";
-	qWarning( "settings reload" );
 }
 
 bool YabauseThread::emulationRunning()
@@ -89,7 +91,7 @@ bool YabauseThread::emulationPaused()
 void YabauseThread::resetYabauseConf()
 {
 	// free structure
-	//memset( mYabauseConf, 0, sizeof( *mYabauseConf ) );
+	memset( mYabauseConf, 0, sizeof( yabauseinit_struct ) );
 	// fill default structure
 	mYabauseConf->m68kcoretype = M68KCORE_C68K;
 	mYabauseConf->percoretype = PERCORE_DUMMY;
@@ -111,41 +113,22 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf->flags = VIDEOFORMATTYPE_NTSC;
 }
 
-void YabauseThread::run()
+void YabauseThread::timerEvent( QTimerEvent* )
 {
-	mPause = true;
-	mRunning = true;
-	while ( mRunning )
+	//mPause = true;
+	//mRunning = true;
+	//while ( mRunning )
 	{
 		if ( !mPause )
-			YabauseExec();
-		else
-			msleep( 25 );
-		sleep( 0 );
-	}
-}
-
-/*
-{
-	while(!KillEmuThread)
-	{
-		while (!stop)
 		{
-			stopped = 0;
-
-			if (PERCore->HandleEvents() != 0) // YabauseExec() is called 8 
-			times here
-			{
-				//[snip]
-				return -1;
-			}
-			Sleep(0);
+			YabauseExec();
+			YabauseExec();
+			YabauseExec();
+			YabauseExec();
+			YabauseExec();
 		}
-
-		//[snip]
-
-		stopped = 1;
-		Sleep(300);
+		//else
+			//msleep( 25 );
+		//sleep( 0 );
 	}
 }
-*/

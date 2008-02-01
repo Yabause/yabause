@@ -6,7 +6,7 @@
 
 #include "QtYabause.h"
 
-class YabauseThread : public QThread
+class YabauseThread : public QObject
 {
 	Q_OBJECT
 	
@@ -31,11 +31,12 @@ protected:
 	QMutex mMutex;
 	bool mPause;
 	bool mRunning;
+	int mTimerId;
 	
 	void initEmulation();
 	void deInitEmulation();
 	void resetYabauseConf();
-	void run();
+	void timerEvent( QTimerEvent* );
 };
 
 #endif // YABAUSETHREAD_H
