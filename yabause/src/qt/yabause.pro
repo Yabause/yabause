@@ -29,7 +29,7 @@ DEFINES	+= "PACKAGE_NAME=\"\\\"yabause\\\"\"" \
 	"PACKAGE=\"\\\"yabause\\\"\"" \
 	"VERSION=\"\\\"0.9.3\\\"\"" \
 	"PACKAGE_STRING=\"\\\"yabause 0.9.3\\\"\""
-	
+
 # include defines
 DEFINES	+= STDC_HEADERS=1 \
 	HAVE_SYS_TYPES_H=1 \
@@ -77,15 +77,17 @@ CONFIG(debug, debug|release) {
 FORMS	+= ui/UIYabause.ui \
 	ui/UISettings.ui
 
-HEADERS	+= qt_yabause.h \
-	ui/UIYabause.h \
+HEADERS	+= ui/UIYabause.h \
 	YabauseGL.h \
 	ui/UISettings.h \
-	Settings.h
+	Settings.h \
+	YabauseThread.h \
+	QtYabause.h
 
-SOURCES	+= qt_yabause.cpp \
-	main.cpp \
+SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
 	YabauseGL.cpp \
 	ui/UISettings.cpp \
-	Settings.cpp
+	Settings.cpp \
+	YabauseThread.cpp \
+	QtYabause.cpp

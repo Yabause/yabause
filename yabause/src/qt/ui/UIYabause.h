@@ -4,6 +4,7 @@
 #include "ui_UIYabause.h"
 
 class YabauseGL;
+class YabauseThread;
 
 class UIYabause : public QMainWindow, public Ui::UIYabause
 {
@@ -13,12 +14,15 @@ public:
 	UIYabause( QWidget* parent = 0 );
 	~UIYabause();
 
-//protected:
+	void appendLog( const char* msg );
+	void swapBuffers();
+
+protected:
 	YabauseGL* mYabauseGL;
 
 protected:
-	int mTimerId;
-	void timerEvent( QTimerEvent* event );
+	YabauseThread* mYabauseThread;
+	QString mLog;
 
 protected slots:
 	void on_aYabauseSettings_triggered();

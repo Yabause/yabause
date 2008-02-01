@@ -9,13 +9,9 @@ class YabauseGL : public QGLWidget
 	
 public:
 	YabauseGL( QWidget* parent = 0 );
-	~YabauseGL();
 
 protected:
-	virtual void initializeGL();
 	virtual void resizeGL( int w, int h );
-	virtual void paintGL();
-
 };
 
 #endif // YABAUSEGL_H

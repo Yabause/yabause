@@ -1,9 +1,7 @@
 #include "UIYabause.h"
 #include "UISettings.h"
 #include "../YabauseGL.h"
-#include "../qt_yabause.h"
-
-using namespace Yabause;
+#include "../YabauseThread.h"
 
 UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )
@@ -22,39 +20,53 @@ UIYabause::UIYabause( QWidget* parent )
 	// init actions
 	aYabausePause->setEnabled( false );
 	aYabauseReset->setEnabled( false );
+
+//#ifndef QT_NO_DEBUG
+	LogStart();
+	//LogChangeOutput( DEBUG_CALLBACK, (char*)appendLog );
+//#endif
 	
-	// no timer yet started
-	mTimerId = -1;
+	// create thread
+	mYabauseThread = new YabauseThread( this );
+	mYabauseThread->startEmulation();
 }
 
 UIYabause::~UIYabause()
-{ on_aYabausePause_triggered(); }
+{
+	mYabauseThread->stopEmulation();
 
-void UIYabause::timerEvent( QTimerEvent* )
-{ Yabause::exec(); }
+//#ifndef QT_NO_DEBUG
+	LogStop();
+//#endif
+}
+
+void UIYabause::appendLog( const char* s )
+{ mLog += s; }
+
+void UIYabause::swapBuffers()
+{ mYabauseGL->swapBuffers(); }
 
 void UIYabause::on_aYabauseSettings_triggered()
 { UISettings( window() ).exec(); }
 
 void UIYabause::on_aYabauseRun_triggered()
 {
-	if ( mTimerId == -1 )
+	if ( mYabauseThread->emulationPaused() )
 	{
-		mTimerId = startTimer( 0 );
 		aYabauseRun->setEnabled( false );
 		aYabausePause->setEnabled( true );
 		aYabauseReset->setEnabled( true );
+		mYabauseThread->runEmulation();
 	}
 }
 
 void UIYabause::on_aYabausePause_triggered()
 {
-	if ( mTimerId != -1 )
+	if ( !mYabauseThread->emulationPaused() )
 	{
-		killTimer( mTimerId );
-		mTimerId = -1;
 		aYabauseRun->setEnabled( true );
 		aYabausePause->setEnabled( false );
 		aYabauseReset->setEnabled( true );
+		mYabauseThread->pauseEmulation();
 	}
 }

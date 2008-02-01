@@ -1,5 +1,5 @@
-#ifndef QT_YABAUSE_H
-#define QT_YABAUSE_H
+#ifndef QTYABAUSE_H
+#define QTYABAUSE_H
 
 extern "C"
 {
@@ -19,26 +19,15 @@ extern "C"
 	#include "../m68kc68k.h"
 }
 
+typedef yabauseinit_struct YabauseConf;
+
 #include "ui/UIYabause.h"
 #include "Settings.h"
 
-namespace Yabause
+namespace QtYabause
 {
-	void init();
-	void deInit();
-	void exec();
-	void log( const char* string );
-	
 	UIYabause* mainWindow();
 	Settings* settings();
-	
-	/*
-	void YuiErrorMsg(const char *string);
-	void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen);
-	int YuiSetVideoMode(int width, int height, int bpp, int fullscreen);
-	void YuiSetVideoAttribute(int type, int val);
-	void YuiSwapBuffers();
-	*/
 };
 
-#endif // QT_YABAUSE_H
+#endif // QTYABAUSE_H
