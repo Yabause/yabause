@@ -87,8 +87,8 @@ void YabauseThread::reloadSettings()
 	mYabauseConf->cdcoretype = s->value( "General/CdRom", CDCORE_DEFAULT ).toInt();
 	mYabauseConf->carttype = CART_NONE;
 	mYabauseConf->regionid = 0;
-	mYabauseConf->biospath = s->value( "General/Bios", "./SEGA_101.BIN" ).toString().toAscii().constData();
-	mYabauseConf->cdpath = s->value( "General/CdRomISO", "" ).toString().toAscii().constData();
+	mYabauseConf->biospath = "/Users/filipeazevedo/Movies/SEGA_101.BIN"; //s->value( "General/Bios", "./SEGA_101.BIN" ).toString().toAscii().constData();
+	mYabauseConf->cdpath = "/Users/filipeazevedo/Movies/thor/The Story of Thor 2 (U).cue"; //s->value( "General/CdRomISO", "" ).toString().toAscii().constData();
 	mYabauseConf->buppath = 0;
 	mYabauseConf->mpegpath = 0;
 	mYabauseConf->cartpath = 0;

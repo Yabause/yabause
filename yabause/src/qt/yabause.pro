@@ -19,7 +19,9 @@ LANGUAGE	= Qt4/C++
 TARGET	= yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
-LIBS	+= -L../ -lyabause -lSDL
+LIBS	+= -L../ -lyabause
+!mac:LIBS	+= -lSDL
+else:LIBS	+= -framework SDL -framework IOKit
 
 # program defines
 DEFINES	+= "PACKAGE_NAME=\"\\\"yabause\\\"\"" \
@@ -50,7 +52,7 @@ DEFINES	+= STDC_HEADERS=1 \
 BUILD_PATH	= ./build
 BUILDER	= GNUMake
 COMPILER	= G++
-EXECUTE_RELEASE	= yabause
+EXECUTE_RELEASE	= yabause.app/Contents/MacOS/yabause
 EXECUTE_DEBUG	= yabause_debug
 
 CONFIG(debug, debug|release) {
