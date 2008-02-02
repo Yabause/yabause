@@ -10,6 +10,14 @@ class UISettings : public QDialog, public Ui::UISettings
 public:
 	UISettings( QWidget* parent = 0 );
 	~UISettings();
+
+protected:
+	void loadCores();
+	void loadSettings();
+	void saveSettings();
+
+protected slots:
+	void accept();
 };
 
 #endif // UISETTINGS_H

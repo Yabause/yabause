@@ -52,7 +52,7 @@ void UIYabause::swapBuffers()
 void UIYabause::appendLog( const char* s )
 {
 	mLog += s;
-	//qWarning( s );
+	//qWarning( QString( "appendLog: %1" ).arg( s ).toAscii() );
 }
 
 void UIYabause::on_aYabauseSettings_triggered()
@@ -78,4 +78,9 @@ void UIYabause::on_aYabausePause_triggered()
 		aYabauseReset->setEnabled( true );
 		mYabauseThread->pauseEmulation();
 	}
+}
+
+void UIYabause::on_aYabauseReset_triggered()
+{
+	mYabauseThread->resetEmulation();
 }

@@ -603,5 +603,38 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>dbbButtons</sender>
+   <signal>accepted()</signal>
+   <receiver>UISettings</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>369</x>
+     <y>314</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>383</x>
+     <y>403</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dbbButtons</sender>
+   <signal>rejected()</signal>
+   <receiver>UISettings</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>463</x>
+     <y>313</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>453</x>
+     <y>352</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

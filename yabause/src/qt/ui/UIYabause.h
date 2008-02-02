@@ -26,6 +26,7 @@ protected slots:
 	void on_aYabauseSettings_triggered();
 	void on_aYabauseRun_triggered();
 	void on_aYabausePause_triggered();
+	void on_aYabauseReset_triggered();
 
 };
 

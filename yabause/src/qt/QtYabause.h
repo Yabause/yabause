@@ -28,6 +28,14 @@ namespace QtYabause
 {
 	UIYabause* mainWindow();
 	Settings* settings();
+
+	// get core by id
+	M68K_struct* getM68KCore( int id );
+	SH2Interface_struct* getSH2Core( int id );
+	PerInterface_struct* getPERCore( int id );
+	CDInterface* getCDCore( int id );
+	SoundInterface_struct* getSNDCore( int id );
+	VideoInterface_struct* getVDICore( int id );
 };
 
 #endif // QTYABAUSE_H

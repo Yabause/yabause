@@ -12,7 +12,7 @@ YabauseThread::~YabauseThread()
 
 YabauseConf* YabauseThread::yabauseConf()
 {
-	QMutexLocker l( &mMutex );
+	//QMutexLocker l( &mMutex );
 	return mYabauseConf;
 }
 
@@ -23,7 +23,6 @@ void YabauseThread::startEmulation()
 	initEmulation();
 	//start();
 	mPause = true;
-	mTimerId = startTimer( 0 );
 }
 
 void YabauseThread::stopEmulation()
@@ -38,7 +37,9 @@ void YabauseThread::stopEmulation()
 void YabauseThread::initEmulation()
 {
 	reloadSettings();
+	qWarning( "1/ bp: %s", mYabauseConf->biospath );
 	qWarning( "YabauseInit: %i", YabauseInit( mYabauseConf ) );
+	qWarning( "2/ bp: %s", mYabauseConf->biospath );
 }
 
 void YabauseThread::deInitEmulation()
@@ -48,19 +49,21 @@ void YabauseThread::deInitEmulation()
 
 void YabauseThread::runEmulation()
 {
-	QMutexLocker l( &mMutex );
+	//QMutexLocker l( &mMutex );
 	mPause = false;
+	mTimerId = startTimer( 0 );
 }
 
 void YabauseThread::pauseEmulation()
 {
-	QMutexLocker l( &mMutex );
+	//QMutexLocker l( &mMutex );
 	mPause = true;
+	killTimer( mTimerId );
 }
 
 void YabauseThread::resetEmulation()
 {
-	QMutexLocker l( &mMutex );
+	//QMutexLocker l( &mMutex );
 	pauseEmulation();
 	reloadSettings();
 	runEmulation();
@@ -68,23 +71,39 @@ void YabauseThread::resetEmulation()
 
 void YabauseThread::reloadSettings()
 {
-	QMutexLocker l( &mMutex );
+	//QMutexLocker l( &mMutex );
+	// get settings pointer
+	Settings* s = QtYabause::settings();
+	
+	// reset yabause conf
 	resetYabauseConf();
-	// need read ini file
-	mYabauseConf->percoretype = PERCORE_SDLJOY;
-	mYabauseConf->sndcoretype = SNDCORE_SDL;
-	mYabauseConf->biospath = "./SEGA_101.BIN";
+
+	// read & apply settings
+	mYabauseConf->m68kcoretype = s->value( "Advanced/M68KCore", M68KCORE_C68K ).toInt();
+	mYabauseConf->percoretype = s->value( "Input/PERCore", PERCORE_DUMMY ).toInt();
+	mYabauseConf->sh2coretype = s->value( "Advanced/SH2Interpreter", SH2CORE_DEFAULT ).toInt();
+	mYabauseConf->vidcoretype = s->value( "Video/VideoCore", VIDCORE_OGL ).toInt();
+	mYabauseConf->sndcoretype = s->value( "Sound/SoundCore", SNDCORE_DUMMY ).toInt();
+	mYabauseConf->cdcoretype = s->value( "General/CdRom", CDCORE_DEFAULT ).toInt();
+	mYabauseConf->carttype = CART_NONE;
+	mYabauseConf->regionid = 0;
+	mYabauseConf->biospath = s->value( "General/Bios", "./SEGA_101.BIN" ).toString().toAscii().constData();
+	mYabauseConf->cdpath = s->value( "General/CdRomISO", "" ).toString().toAscii().constData();
+	mYabauseConf->buppath = 0;
+	mYabauseConf->mpegpath = 0;
+	mYabauseConf->cartpath = 0;
+	mYabauseConf->flags = VIDEOFORMATTYPE_NTSC;
 }
 
 bool YabauseThread::emulationRunning()
 {
-	QMutexLocker l( &mMutex );
+	//QMutexLocker l( &mMutex );
 	return mRunning;
 }
 
 bool YabauseThread::emulationPaused()
 {
-	QMutexLocker l( &mMutex );
+	//QMutexLocker l( &mMutex );
 	return mPause;
 }
 
