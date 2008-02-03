@@ -3,7 +3,9 @@
 #include "../YabauseGL.h"
 #include "../YabauseThread.h"
 
-#include <QTimer>
+#include <QTextEdit>
+#include <QFileDialog>
+#include <QMessageBox>
 
 void qAppendLog( const char* s )
 { QtYabause::mainWindow()->appendLog( s ); }
@@ -17,10 +19,14 @@ UIYabause::UIYabause( QWidget* parent )
 	
 	// create glcontext
 	mYabauseGL = new YabauseGL;
+	//mYabauseGL->setFocusPolicy( Qt::StrongFocus );
 	// and set it as central application widget
 	setCentralWidget( mYabauseGL );
-	// set strong focus on glwidget
-	//mYabauseGL->setFocusPolicy( Qt::StrongFocus );
+	
+	// create log widget
+	teLog = new QTextEdit( this );
+	teLog->setWindowFlags( Qt::Window );
+	teLog->setReadOnly( true );
 	
 	// init actions
 	aYabausePause->setEnabled( false );
@@ -32,6 +38,10 @@ UIYabause::UIYabause( QWidget* parent )
 	
 	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
+	
+	// connections
+	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
+	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	
 	// start emulation
 	mYabauseThread->startEmulation();
@@ -46,17 +56,39 @@ UIYabause::~UIYabause()
 	LogStop();
 }
 
+void UIYabause::closeEvent( QCloseEvent* )
+{
+	teLog->close();
+	QApplication::quit();
+}
+
 void UIYabause::swapBuffers()
 { mYabauseGL->swapBuffers(); }
 
 void UIYabause::appendLog( const char* s )
 {
-	mLog += s;
-	//qWarning( QString( "appendLog: %1" ).arg( s ).toAscii() );
+	teLog->moveCursor( QTextCursor::End );
+	teLog->append( s );
+}
+
+void UIYabause::sizeRequested( const QSize& s )
+{ resize( s ); }
+
+void UIYabause::fullscreenRequested( bool f )
+{
+	if ( isFullScreen() && !f )
+		showNormal();
+	else if ( !isFullScreen() && f )
+		showFullScreen();
+	if ( aViewFullscreen->isChecked() != f )
+		aViewFullscreen->setChecked( f );
 }
 
 void UIYabause::on_aYabauseSettings_triggered()
-{ UISettings( window() ).exec(); }
+{
+	if ( UISettings( window() ).exec() )
+		mYabauseThread->reloadSettings();
+}
 
 void UIYabause::on_aYabauseRun_triggered()
 {
@@ -81,6 +113,80 @@ void UIYabause::on_aYabausePause_triggered()
 }
 
 void UIYabause::on_aYabauseReset_triggered()
+{ mYabauseThread->resetEmulation(); }
+
+void UIYabause::on_aYabauseTransfer_triggered()
 {
-	mYabauseThread->resetEmulation();
+}
+
+void UIYabause::on_aYabauseScreenshot_triggered()
+{
+	// images filter that can write qt
+	QStringList filters = QStringList()
+		<< tr( "PNG Images (*.png)" )
+		<< tr( "JPG Images (*.jpg)" )
+		<< tr( "JPEG Images (*.jpeg)" )
+		<< tr( "BMP Images (*.bmp)" )
+		<< tr( "PPM Images (*.ppm)" )
+		<< tr( "XBM Images (*.xbm)" )
+		<< tr( "XPM Images (*.xpm)" );
+	
+	// take screenshot of gl view
+	QPixmap screenshot = mYabauseGL->renderPixmap();
+	
+	// request a file to save to to user
+	const QString s = QFileDialog::getSaveFileName( window(), tr( "Choose a location for your screenshot" ), QString(), filters.join( ";;" ) );
+	
+	// write image if ok
+	if ( !s.isEmpty() )
+		if ( !screenshot.save( s ) )
+			QMessageBox::information( window(), tr( "Informations..." ), tr( "An error occur while writing the screenshot." ) );
+}
+
+void UIYabause::on_aYabauseFrameSkipLimiter_triggered()
+{
+}
+
+void UIYabause::on_aYabauseQuit_triggered()
+{
+	mYabauseThread->pauseEmulation();
+	close();
+}
+
+void UIYabause::on_aViewFPS_triggered()
+{
+}
+
+void UIYabause::on_aViewLayerVdp1_triggered()
+{
+}
+
+void UIYabause::on_aViewLayerNBG0_triggered()
+{
+}
+
+void UIYabause::on_aViewLayerNBG1_triggered()
+{
+}
+
+void UIYabause::on_aViewLayerNBG2_triggered()
+{
+}
+
+void UIYabause::on_aViewLayerNBG3_triggered()
+{
+}
+
+void UIYabause::on_aViewLayerRBG1_triggered()
+{
+}
+
+void UIYabause::on_aViewFullscreen_triggered( bool b )
+{ fullscreenRequested( b ); }
+
+void UIYabause::on_aViewLog_triggered()
+{
+	if ( !teLog->isVisible() )
+		teLog->show();
+	teLog->raise();
 }
