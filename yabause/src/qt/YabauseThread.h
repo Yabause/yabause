@@ -37,6 +37,10 @@ protected:
 	void deInitEmulation();
 	void resetYabauseConf();
 	void timerEvent( QTimerEvent* );
+
+signals:
+	void requestSize( const QSize& size );
+	void requestFullscreen( bool fullscreen );
 };
 
 #endif // YABAUSETHREAD_H
