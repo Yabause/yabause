@@ -20,7 +20,7 @@ TARGET	= yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
 LIBS	+= -L../ -lyabause
-!mac:LIBS	+= -lSDL
+!mac:LIBS	+= -lSDL -lglut
 else:LIBS	+= -framework SDL -framework IOKit
 
 # program defines
@@ -47,6 +47,7 @@ DEFINES	+= STDC_HEADERS=1 \
 	HAVE_LIBGL=1 \
 	HAVE_C99_VARIADIC_MACROS=1 \
 	HAVE_C68K=1 \
+	USENEWPERINTERFACE=1
 	DEBUG=1
 
 BUILD_PATH	= ./build
