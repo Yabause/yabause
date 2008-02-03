@@ -18,7 +18,7 @@ NULL
 
 PerInterface_struct *PERCoreList[] = {
 &PERDummy,
-#ifdef HAVE_LIBSDL
+#ifdef HAVE_LIBSDL && USENEWPERINTERFACE
 &PERSDLJoy,
 #endif
 NULL
