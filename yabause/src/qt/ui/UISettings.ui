@@ -6,7 +6,7 @@
     <x>0</x>
     <y>0</y>
     <width>506</width>
-    <height>334</height>
+    <height>337</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -373,7 +373,11 @@
         </widget>
        </item>
        <item row="0" column="1" >
-        <widget class="QLineEdit" name="leUp" />
+        <widget class="QLineEdit" name="leUp" >
+         <property name="statusTip" >
+          <string>Up</string>
+         </property>
+        </widget>
        </item>
        <item rowspan="7" row="0" column="2" >
         <widget class="Line" name="lInput" >
@@ -390,7 +394,11 @@
         </widget>
        </item>
        <item row="0" column="4" >
-        <widget class="QLineEdit" name="leA" />
+        <widget class="QLineEdit" name="leA" >
+         <property name="statusTip" >
+          <string>A</string>
+         </property>
+        </widget>
        </item>
        <item row="1" column="0" >
         <widget class="QLabel" name="lRight" >
@@ -400,7 +408,11 @@
         </widget>
        </item>
        <item row="1" column="1" >
-        <widget class="QLineEdit" name="leRight" />
+        <widget class="QLineEdit" name="leRight" >
+         <property name="statusTip" >
+          <string>Right</string>
+         </property>
+        </widget>
        </item>
        <item row="1" column="3" >
         <widget class="QLabel" name="lB" >
@@ -410,7 +422,11 @@
         </widget>
        </item>
        <item row="1" column="4" >
-        <widget class="QLineEdit" name="leB" />
+        <widget class="QLineEdit" name="leB" >
+         <property name="statusTip" >
+          <string>B</string>
+         </property>
+        </widget>
        </item>
        <item row="2" column="0" >
         <widget class="QLabel" name="lDown" >
@@ -420,7 +436,11 @@
         </widget>
        </item>
        <item row="2" column="1" >
-        <widget class="QLineEdit" name="leDown" />
+        <widget class="QLineEdit" name="leDown" >
+         <property name="statusTip" >
+          <string>Down</string>
+         </property>
+        </widget>
        </item>
        <item row="2" column="3" >
         <widget class="QLabel" name="lC" >
@@ -430,7 +450,11 @@
         </widget>
        </item>
        <item row="2" column="4" >
-        <widget class="QLineEdit" name="leC" />
+        <widget class="QLineEdit" name="leC" >
+         <property name="statusTip" >
+          <string>C</string>
+         </property>
+        </widget>
        </item>
        <item row="3" column="0" >
         <widget class="QLabel" name="lLeft" >
@@ -440,7 +464,11 @@
         </widget>
        </item>
        <item row="3" column="1" >
-        <widget class="QLineEdit" name="leLeft" />
+        <widget class="QLineEdit" name="leLeft" >
+         <property name="statusTip" >
+          <string>Left</string>
+         </property>
+        </widget>
        </item>
        <item row="3" column="3" >
         <widget class="QLabel" name="lX" >
@@ -450,7 +478,11 @@
         </widget>
        </item>
        <item row="3" column="4" >
-        <widget class="QLineEdit" name="leX" />
+        <widget class="QLineEdit" name="leX" >
+         <property name="statusTip" >
+          <string>X</string>
+         </property>
+        </widget>
        </item>
        <item row="4" column="0" >
         <widget class="QLabel" name="lRightTrigger" >
@@ -460,7 +492,11 @@
         </widget>
        </item>
        <item row="4" column="1" >
-        <widget class="QLineEdit" name="leRightTrigger" />
+        <widget class="QLineEdit" name="leRightTrigger" >
+         <property name="statusTip" >
+          <string>Right trigger</string>
+         </property>
+        </widget>
        </item>
        <item row="4" column="3" >
         <widget class="QLabel" name="lY" >
@@ -470,7 +506,11 @@
         </widget>
        </item>
        <item row="4" column="4" >
-        <widget class="QLineEdit" name="leY" />
+        <widget class="QLineEdit" name="leY" >
+         <property name="statusTip" >
+          <string>Y</string>
+         </property>
+        </widget>
        </item>
        <item row="5" column="0" >
         <widget class="QLabel" name="lLeftTrigger" >
@@ -480,7 +520,11 @@
         </widget>
        </item>
        <item row="5" column="1" >
-        <widget class="QLineEdit" name="leLeftTrigger" />
+        <widget class="QLineEdit" name="leLeftTrigger" >
+         <property name="statusTip" >
+          <string>Left trigger</string>
+         </property>
+        </widget>
        </item>
        <item row="5" column="3" >
         <widget class="QLabel" name="lZ" >
@@ -490,7 +534,11 @@
         </widget>
        </item>
        <item row="5" column="4" >
-        <widget class="QLineEdit" name="leZ" />
+        <widget class="QLineEdit" name="leZ" >
+         <property name="statusTip" >
+          <string>Z</string>
+         </property>
+        </widget>
        </item>
        <item row="6" column="0" >
         <widget class="QLabel" name="lStart" >
@@ -500,7 +548,11 @@
         </widget>
        </item>
        <item row="6" column="1" >
-        <widget class="QLineEdit" name="leStart" />
+        <widget class="QLineEdit" name="leStart" >
+         <property name="statusTip" >
+          <string>Start</string>
+         </property>
+        </widget>
        </item>
        <item row="6" column="3" colspan="2" >
         <spacer>
