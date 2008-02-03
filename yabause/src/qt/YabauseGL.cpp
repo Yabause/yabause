@@ -11,6 +11,6 @@ YabauseGL::YabauseGL( QWidget* parent )
 
 void YabauseGL::resizeGL( int w, int h )
 {
-	glViewport( 0, 0, w, h );
-	VIDCore->Resize( w, h, 0 );
+	if ( VIDCore )
+		VIDCore->Resize( w, h, 0 );
 }
