@@ -20,7 +20,7 @@ TARGET	= yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
 LIBS	+= -L../ -lyabause
-!mac:LIBS	+= -lSDL -lglut
+!mac:LIBS	+= -lSDL
 else:LIBS	+= -framework SDL -framework IOKit
 
 # program defines
@@ -48,12 +48,12 @@ DEFINES	+= STDC_HEADERS=1 \
 	HAVE_C99_VARIADIC_MACROS=1 \
 	HAVE_C68K=1 \
 	USENEWPERINTERFACE=1
-	DEBUG=1
+DEBUG	= 1
 
 BUILD_PATH	= ./build
 BUILDER	= GNUMake
 COMPILER	= G++
-EXECUTE_RELEASE	= yabause.app/Contents/MacOS/yabause
+EXECUTE_RELEASE	= yabause
 EXECUTE_DEBUG	= yabause_debug
 
 CONFIG(debug, debug|release) {
@@ -78,14 +78,16 @@ CONFIG(debug, debug|release) {
 }
 
 FORMS	+= ui/UIYabause.ui \
-	ui/UISettings.ui
+	ui/UISettings.ui \
+	ui/UIAbout.ui
 
 HEADERS	+= ui/UIYabause.h \
 	YabauseGL.h \
 	ui/UISettings.h \
 	Settings.h \
 	YabauseThread.h \
-	QtYabause.h
+	QtYabause.h \
+	ui/UIAbout.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -93,4 +95,6 @@ SOURCES	+= main.cpp \
 	ui/UISettings.cpp \
 	Settings.cpp \
 	YabauseThread.cpp \
-	QtYabause.cpp
+	QtYabause.cpp \
+	ui/UIAbout.cpp
+RESOURCES	+= resources/resources.qrc

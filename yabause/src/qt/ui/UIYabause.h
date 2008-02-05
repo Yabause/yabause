@@ -49,6 +49,8 @@ protected slots:
 	void on_aViewLayerRBG1_triggered();
 	void on_aViewFullscreen_triggered( bool b );
 	void on_aViewLog_triggered();
+	// help menu
+	void on_aHelpAbout_triggered();
 };
 
 #endif // UIYABAUSE_H

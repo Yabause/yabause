@@ -1,8 +1,10 @@
 #include "UIYabause.h"
 #include "UISettings.h"
+#include "UIAbout.h"
 #include "../YabauseGL.h"
 #include "../YabauseThread.h"
 
+#include <QTimer>
 #include <QTextEdit>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -45,6 +47,9 @@ UIYabause::UIYabause( QWidget* parent )
 	
 	// start emulation
 	mYabauseThread->startEmulation();
+	
+	// show settings dialog
+	QTimer::singleShot( 0, aYabauseSettings, SLOT( trigger() ) );
 }
 
 UIYabause::~UIYabause()
@@ -87,7 +92,7 @@ void UIYabause::fullscreenRequested( bool f )
 void UIYabause::on_aYabauseSettings_triggered()
 {
 	if ( UISettings( window() ).exec() )
-		mYabauseThread->reloadSettings();
+		mYabauseThread->resetEmulation();
 }
 
 void UIYabause::on_aYabauseRun_triggered()
@@ -190,3 +195,6 @@ void UIYabause::on_aViewLog_triggered()
 		teLog->show();
 	teLog->raise();
 }
+
+void UIYabause::on_aHelpAbout_triggered()
+{ UIAbout( window() ).exec(); }

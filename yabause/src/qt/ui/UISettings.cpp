@@ -136,7 +136,7 @@ void UISettings::inputScan_timeout()
 	
 	// get per core id
 	int i = PERCORE_DUMMY;
-#ifdef HAVE_LIBSDL && USENEWPERINTERFACE
+#if defined( HAVE_LIBSDL ) && defined( USENEWPERINTERFACE )
 	i = PERCORE_SDLJOY;
 #endif
 	

@@ -7,7 +7,7 @@ int main( int argc, char** argv )
 	// create application
 	QApplication app( argc, argv );
 	// init application
-	app.setApplicationName( "yabause" );
+	app.setApplicationName( "Yabause Qt Gui" );
 	// init settings
 	Settings::setIniInformations();
 	// show main window

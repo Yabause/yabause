@@ -3,6 +3,8 @@
 YabauseThread::YabauseThread( QObject* o )
 	: QObject( o )
 {
+	mRunning = false;
+	mPause = true;
 	mYabauseConf = new YabauseConf;
 	mTimerId = -1;
 }
@@ -11,26 +13,19 @@ YabauseThread::~YabauseThread()
 { delete mYabauseConf; }
 
 YabauseConf* YabauseThread::yabauseConf()
-{
-	//QMutexLocker l( &mMutex );
-	return mYabauseConf;
-}
+{ return mYabauseConf; }
 
 void YabauseThread::startEmulation()
 {
-	//if ( isRunning() )
-		//return;
-	initEmulation();
-	//start();
+	mRunning = false;
 	mPause = true;
+	initEmulation();
 }
 
 void YabauseThread::stopEmulation()
 {
-	//if ( isRunning() )
-		mRunning = false;
-	//terminate();
-	//wait( 2000 );
+	mPause = true;
+	mRunning = false;
 	deInitEmulation();
 }
 
@@ -47,24 +42,27 @@ void YabauseThread::deInitEmulation()
 
 void YabauseThread::runEmulation()
 {
-	//QMutexLocker l( &mMutex );
+	mRunning = true;
 	mPause = false;
 	mTimerId = startTimer( 0 );
 }
 
 void YabauseThread::pauseEmulation()
 {
-	//QMutexLocker l( &mMutex );
 	mPause = true;
+	mRunning = true;
 	killTimer( mTimerId );
 }
 
 void YabauseThread::resetEmulation()
 {
-	//QMutexLocker l( &mMutex );
-	pauseEmulation();
+	bool p = mPause;
+	if ( mRunning && !p )
+		pauseEmulation();
 	reloadSettings();
-	runEmulation();
+	YabauseReset();
+	if ( mRunning && !p )
+		runEmulation();
 }
 
 void YabauseThread::reloadSettings()
@@ -135,7 +133,7 @@ void YabauseThread::resetYabauseConf()
 	memset( mYabauseConf, 0, sizeof( yabauseinit_struct ) );
 	// fill default structure
 	mYabauseConf->m68kcoretype = M68KCORE_C68K;
-#ifdef HAVE_LIBSDL && USENEWPERINTERFACE
+#if defined( HAVE_LIBSDL ) && defined( USENEWPERINTERFACE )
 	mYabauseConf->percoretype = PERCORE_SDLJOY;
 #else
 	mYabauseConf->percoretype = PERCORE_DUMMY;
