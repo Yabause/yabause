@@ -1,4 +1,5 @@
 /*  Copyright 2005-2006 Fabien Coulon
+    Copyright 2008 Guillaume Duhamel
 
     This file is part of Yabause.
 
@@ -42,22 +43,32 @@ struct _YuiSh
 {
   GtkWindow dialog;
 
-  GtkWidget *vbox, *vboxmain;
-  GtkWidget *hbox, *hboxmain;
-  GtkWidget * buttonStep, * buttonStepOver;
-  GtkWidget *bpList, *mbpList, *regList, *uLabel, *uFrame;
+  GtkWidget * view;
+  GtkWidget * toolbar;
+  GtkWidget *vbox;
+  GtkWidget *hboxmain;
+  GtkToolItem * buttonStep;
+  GtkWidget *bpList, *mbpList, *regList; //, *uLabel, *uFrame;
   GtkListStore *bpListStore, *mbpListStore, *regListStore;
   GtkCellRenderer *bpListRenderer, *mbpListRenderer, *regListRenderer1, *regListRenderer2;
   GtkTreeViewColumn *bpListColumn, *mbpListColumn, *regListColumn1, *regListColumn2;
-  u32 cbp[MAX_BREAKPOINTS]; /* the list of breakpoint positions, as they can be found in the list widget */
-  u32 cmbp[MAX_BREAKPOINTS]; /* the list of memory breakpoint positions, as they can be found in the list widget */
-  u32 mbpFlags[MAX_BREAKPOINTS]; 
+  //u32 cbp[MAX_BREAKPOINTS]; /* the list of breakpoint positions, as they can be found in the list widget */
+  //u32 cmbp[MAX_BREAKPOINTS]; /* the list of memory breakpoint positions, as they can be found in the list widget */
+  //u32 mbpFlags[MAX_BREAKPOINTS]; 
   u32 lastCode; /* offset of last unassembly. Try to reuse it to prevent sliding. */
   SH2_struct *debugsh;  
   gboolean bMaster;
   gboolean breakpointEnabled;
   gulong paused_handler;
   gulong running_handler;
+
+  GtkListStore * store;
+
+  GtkWidget * bp_menu;
+  GtkWidget * mbp_menu;
+  GtkWidget * mbp_menu_item[6];
+
+  GtkWidget * vboxBp;
 };
 
 struct _YuiShClass
