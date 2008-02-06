@@ -1164,7 +1164,7 @@ int YabSaveStateSlot(const char *dirpath, u8 slot)
 #ifdef WIN32
    sprintf(filename, "%s\\%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #else
-   sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum);
+   sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #endif
    return YabSaveState(filename);
 }
@@ -1177,7 +1177,7 @@ int YabLoadStateSlot(const char *dirpath, u8 slot)
 #ifdef WIN32
    sprintf(filename, "%s\\%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #else
-   sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum);
+   sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #endif
    return YabLoadState(filename);
 }
