@@ -1,4 +1,6 @@
 #include "QtYabause.h"
+#include "ui/UIYabause.h"
+#include "Settings.h"
 
 // cores
 

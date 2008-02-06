@@ -1,6 +1,8 @@
 #include <QApplication>
 
 #include "QtYabause.h"
+#include "Settings.h"
+#include "ui/UIYabause.h"
 
 int main( int argc, char** argv )
 {

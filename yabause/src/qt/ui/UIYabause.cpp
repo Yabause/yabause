@@ -1,8 +1,9 @@
 #include "UIYabause.h"
+#include "Settings.h"
 #include "UISettings.h"
 #include "UIAbout.h"
 #include "../YabauseGL.h"
-#include "../YabauseThread.h"
+#include "QtYabause.h"
 
 #include <QTimer>
 #include <QTextEdit>
@@ -91,6 +92,7 @@ void UIYabause::fullscreenRequested( bool f )
 
 void UIYabause::on_aYabauseSettings_triggered()
 {
+	YabauseLocker locker( mYabauseThread );
 	if ( UISettings( window() ).exec() )
 		mYabauseThread->resetEmulation();
 }
@@ -126,6 +128,7 @@ void UIYabause::on_aYabauseTransfer_triggered()
 
 void UIYabause::on_aYabauseScreenshot_triggered()
 {
+	YabauseLocker locker( mYabauseThread );
 	// images filter that can write qt
 	QStringList filters = QStringList()
 		<< tr( "PNG Images (*.png)" )
@@ -148,46 +151,96 @@ void UIYabause::on_aYabauseScreenshot_triggered()
 			QMessageBox::information( window(), tr( "Informations..." ), tr( "An error occur while writing the screenshot." ) );
 }
 
-void UIYabause::on_aYabauseFrameSkipLimiter_triggered()
+void UIYabause::on_aYabauseFrameSkipLimiter_triggered( bool b )
 {
+	if ( b )
+		EnableAutoFrameSkip();
+	else
+		DisableAutoFrameSkip();
+}
+
+void UIYabause::on_mYabauseSaveState_triggered( QAction* a )
+{
+	YabauseLocker locker( mYabauseThread );
+	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QDir::homePath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
+		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't save state file" ) );
+}
+
+void UIYabause::on_mYabauseLoadState_triggered( QAction* a )
+{
+	YabauseLocker locker( mYabauseThread );
+	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QDir::homePath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
+		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't load state file" ) );
+}
+
+void UIYabause::on_aYabauseSaveStateAs_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	const QString fn = QFileDialog::getSaveFileName( window(), tr( "Choose a file to save your state" ), QtYabause::settings()->value( "General/SaveStates", QDir::homePath() ).toString(), tr( "Yabause Save State (*.yss )" ) );
+	if ( fn.isNull() )
+		return;
+	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
+		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't save state file" ) );
+}
+
+void UIYabause::on_aYabauseLoadStateAs_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	const QString fn = QFileDialog::getOpenFileName( window(), tr( "Select a file to load your state" ), QtYabause::settings()->value( "General/SaveStates", QDir::homePath() ).toString(), tr( "Yabause Save State (*.yss )" ) );
+	if ( fn.isNull() )
+		return;
+	if ( YabLoadState( fn.toAscii().constData() ) != 0 )
+		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't load state file" ) );
+	else
+		aYabauseRun->trigger();
 }
 
 void UIYabause::on_aYabauseQuit_triggered()
 {
-	mYabauseThread->pauseEmulation();
+	aYabausePause->trigger();
 	close();
 }
 
 void UIYabause::on_aViewFPS_triggered()
 {
+	ToggleFPS();
 }
 
 void UIYabause::on_aViewLayerVdp1_triggered()
 {
+	ToggleVDP1();
 }
 
 void UIYabause::on_aViewLayerNBG0_triggered()
 {
+	ToggleNBG0();
 }
 
 void UIYabause::on_aViewLayerNBG1_triggered()
 {
+	ToggleNBG1();
 }
 
 void UIYabause::on_aViewLayerNBG2_triggered()
 {
+	ToggleNBG2();
 }
 
 void UIYabause::on_aViewLayerNBG3_triggered()
 {
+	ToggleNBG3();
 }
 
-void UIYabause::on_aViewLayerRBG1_triggered()
+void UIYabause::on_aViewLayerRBG0_triggered()
 {
+	ToggleRBG0();
 }
 
 void UIYabause::on_aViewFullscreen_triggered( bool b )
-{ fullscreenRequested( b ); }
+{
+	fullscreenRequested( b );
+	//ToggleFullScreen();
+}
 
 void UIYabause::on_aViewLog_triggered()
 {

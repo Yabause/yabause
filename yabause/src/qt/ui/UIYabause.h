@@ -2,10 +2,36 @@
 #define UIYABAUSE_H
 
 #include "ui_UIYabause.h"
+#include "../YabauseThread.h"
 
 class YabauseGL;
-class YabauseThread;
 class QTextEdit;
+
+class YabauseLocker
+{
+public:
+	YabauseLocker( YabauseThread* yt/*, bool fr = false*/ )
+	{
+		Q_ASSERT( yt );
+		mThread = yt;
+		//mForceRun = fr;
+		mRunning = mThread->emulationRunning();
+		mPaused = mThread->emulationPaused();
+		if ( mRunning && !mPaused )
+			mThread->pauseEmulation();
+	}
+	~YabauseLocker()
+	{
+		if ( ( mRunning && !mPaused ) /*|| mForceRun*/ )
+			mThread->runEmulation();
+	}
+
+protected:
+	YabauseThread* mThread;
+	bool mRunning;
+	bool mPaused;
+	//bool mForceRun;
+};
 
 class UIYabause : public QMainWindow, public Ui::UIYabause
 {
@@ -35,8 +61,11 @@ protected slots:
 	void on_aYabauseReset_triggered();
 	void on_aYabauseTransfer_triggered();
 	void on_aYabauseScreenshot_triggered();
-	void on_aYabauseFrameSkipLimiter_triggered();
-	//load
+	void on_aYabauseFrameSkipLimiter_triggered( bool b );
+	void on_mYabauseSaveState_triggered( QAction* );
+	void on_mYabauseLoadState_triggered( QAction* );
+	void on_aYabauseSaveStateAs_triggered();
+	void on_aYabauseLoadStateAs_triggered();
 	//save
 	void on_aYabauseQuit_triggered();
 	// view menu
@@ -46,7 +75,7 @@ protected slots:
 	void on_aViewLayerNBG1_triggered();
 	void on_aViewLayerNBG2_triggered();
 	void on_aViewLayerNBG3_triggered();
-	void on_aViewLayerRBG1_triggered();
+	void on_aViewLayerRBG0_triggered();
 	void on_aViewFullscreen_triggered( bool b );
 	void on_aViewLog_triggered();
 	// help menu

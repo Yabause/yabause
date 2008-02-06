@@ -6,7 +6,7 @@
     <x>0</x>
     <y>0</y>
     <width>234</width>
-    <height>122</height>
+    <height>179</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -16,7 +16,7 @@
    <item>
     <widget class="QLabel" name="lInformations" >
      <property name="text" >
-      <string>Yabause Qt Gui&lt;br />Based on Yabause %1&lt;br />&lt;a href="http://yabause.org">http://yabause.org&lt;/a></string>
+      <string>Yabause Qt Gui&lt;br />Based on Yabause %1&lt;br />&lt;a href="http://yabause.org">http://yabause.org&lt;/a>&lt;br />The Yabause Team&lt;br />&lt;a href="mailto:pasnox@gmail.com">Filipe AZEVEDO&lt;/a></string>
      </property>
      <property name="textFormat" >
       <enum>Qt::RichText</enum>
@@ -34,6 +34,9 @@
    </item>
    <item>
     <widget class="QLabel" name="lMonkeyStudio" >
+     <property name="toolTip" >
+      <string>http://www.monkeystudio.org</string>
+     </property>
      <property name="text" >
       <string>&lt;a href="http://www.monkeystudio.org">&lt;img src=":/icons/icons/made.png">&lt;/a></string>
      </property>

@@ -30,8 +30,29 @@
      <property name="title" >
       <string>Save State</string>
      </property>
-     <addaction name="aYabauseSaveStateSave" />
-     <addaction name="aYabauseSaveStateLoad" />
+     <addaction name="aYabauseSaveState1" />
+     <addaction name="aYabauseSaveState2" />
+     <addaction name="aYabauseSaveState3" />
+     <addaction name="aYabauseSaveState4" />
+     <addaction name="aYabauseSaveState5" />
+     <addaction name="aYabauseSaveState6" />
+     <addaction name="aYabauseSaveState7" />
+     <addaction name="aYabauseSaveState8" />
+     <addaction name="aYabauseSaveState9" />
+    </widget>
+    <widget class="QMenu" name="mYabauseLoadState" >
+     <property name="title" >
+      <string>Load State</string>
+     </property>
+     <addaction name="aYabauseLoadState1" />
+     <addaction name="aYabauseLoadState2" />
+     <addaction name="aYabauseLoadState3" />
+     <addaction name="aYabauseLoadState4" />
+     <addaction name="aYabauseLoadState5" />
+     <addaction name="aYabauseLoadState6" />
+     <addaction name="aYabauseLoadState7" />
+     <addaction name="aYabauseLoadState8" />
+     <addaction name="aYabauseLoadState9" />
     </widget>
     <addaction name="aYabauseSettings" />
     <addaction name="aYabauseRun" />
@@ -40,7 +61,11 @@
     <addaction name="aYabauseTransfer" />
     <addaction name="aYabauseScreenshot" />
     <addaction name="aYabauseFrameSkipLimiter" />
+    <addaction name="separator" />
     <addaction name="mYabauseSaveState" />
+    <addaction name="mYabauseLoadState" />
+    <addaction name="aYabauseSaveStateAs" />
+    <addaction name="aYabauseLoadStateAs" />
     <addaction name="separator" />
     <addaction name="aYabauseQuit" />
     <addaction name="separator" />
@@ -58,7 +83,7 @@
      <addaction name="aViewLayerNBG1" />
      <addaction name="aViewLayerNBG2" />
      <addaction name="aViewLayerNBG3" />
-     <addaction name="aViewLayerRBG1" />
+     <addaction name="aViewLayerRBG0" />
     </widget>
     <addaction name="aViewFPS" />
     <addaction name="mViewLayer" />
@@ -66,6 +91,9 @@
     <addaction name="aViewLog" />
    </widget>
    <widget class="QMenu" name="mViewDebug" >
+    <property name="enabled" >
+     <bool>false</bool>
+    </property>
     <property name="title" >
      <string>&amp;Debug</string>
     </property>
@@ -135,6 +163,9 @@
    </property>
   </action>
   <action name="aYabauseTransfer" >
+   <property name="enabled" >
+    <bool>false</bool>
+   </property>
    <property name="text" >
     <string>Transfer</string>
    </property>
@@ -150,16 +181,6 @@
    </property>
    <property name="text" >
     <string>Frame Skip/Limiter</string>
-   </property>
-  </action>
-  <action name="aYabauseSaveStateSave" >
-   <property name="text" >
-    <string>Save</string>
-   </property>
-  </action>
-  <action name="aYabauseSaveStateLoad" >
-   <property name="text" >
-    <string>Load</string>
    </property>
   </action>
   <action name="aViewFPS" >
@@ -286,7 +307,7 @@
     <string>NBG3</string>
    </property>
   </action>
-  <action name="aViewLayerRBG1" >
+  <action name="aViewLayerRBG0" >
    <property name="checkable" >
     <bool>true</bool>
    </property>
@@ -294,7 +315,107 @@
     <bool>true</bool>
    </property>
    <property name="text" >
-    <string>RBG1</string>
+    <string>RBG0</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState1" >
+   <property name="text" >
+    <string>1</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState2" >
+   <property name="text" >
+    <string>2</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState3" >
+   <property name="text" >
+    <string>3</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState4" >
+   <property name="text" >
+    <string>4</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState5" >
+   <property name="text" >
+    <string>5</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState6" >
+   <property name="text" >
+    <string>6</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState7" >
+   <property name="text" >
+    <string>7</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState8" >
+   <property name="text" >
+    <string>8</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveState9" >
+   <property name="text" >
+    <string>9</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState1" >
+   <property name="text" >
+    <string>1</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState2" >
+   <property name="text" >
+    <string>2</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState3" >
+   <property name="text" >
+    <string>3</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState4" >
+   <property name="text" >
+    <string>4</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState5" >
+   <property name="text" >
+    <string>5</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState6" >
+   <property name="text" >
+    <string>6</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState7" >
+   <property name="text" >
+    <string>7</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState8" >
+   <property name="text" >
+    <string>8</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadState9" >
+   <property name="text" >
+    <string>9</string>
+   </property>
+  </action>
+  <action name="aYabauseSaveStateAs" >
+   <property name="text" >
+    <string>Save State As...</string>
+   </property>
+  </action>
+  <action name="aYabauseLoadStateAs" >
+   <property name="text" >
+    <string>Load State As...</string>
    </property>
   </action>
  </widget>

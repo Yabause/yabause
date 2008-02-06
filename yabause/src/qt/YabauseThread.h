@@ -2,6 +2,7 @@
 #define YABAUSETHREAD_H
 
 #include <QThread>
+#include <QSize>
 #include <QMutexLocker>
 
 #include "QtYabause.h"

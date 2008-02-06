@@ -17,12 +17,14 @@ extern "C"
 	#include "../debug.h"
 	#include "../m68kcore.h"
 	#include "../m68kc68k.h"
+
+	#include "../vdp2.h"
 }
 
 typedef yabauseinit_struct YabauseConf;
 
-#include "ui/UIYabause.h"
-#include "Settings.h"
+class UIYabause;
+class Settings;
 
 namespace QtYabause
 {

@@ -19,7 +19,7 @@ LANGUAGE	= Qt4/C++
 TARGET	= yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
-LIBS	+= -L../ -lyabause
+LIBS	+= -L../ -lyabause -lglut
 !mac:LIBS	+= -lSDL
 else:LIBS	+= -framework SDL -framework IOKit
 

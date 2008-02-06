@@ -1,4 +1,7 @@
 #include "YabauseThread.h"
+#include "Settings.h"
+
+#include <QStringList>
 
 YabauseThread::YabauseThread( QObject* o )
 	: QObject( o )
