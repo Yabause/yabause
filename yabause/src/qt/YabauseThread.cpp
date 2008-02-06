@@ -77,13 +77,17 @@ void YabauseThread::pauseEmulation()
 	killTimer( mTimerId );
 }
 
-void YabauseThread::resetEmulation()
+void YabauseThread::resetEmulation( bool fullreset )
 {
 	bool p = mPause;
 	if ( mRunning && !p )
 		pauseEmulation();
 	reloadSettings();
-	YabauseReset();
+	// update cores...
+	Cs2ChangeCDCore( mYabauseConf->cdcoretype, mYabauseConf->cdpath );
+	// reset yabause
+	if ( fullreset )
+		YabauseReset();
 	if ( mRunning && !p )
 		runEmulation();
 }

@@ -41,7 +41,7 @@ public:
 	
 	void runEmulation();
 	void pauseEmulation();
-	void resetEmulation();
+	void resetEmulation( bool fr = false );
 	void reloadSettings();
 
 	bool emulationRunning();

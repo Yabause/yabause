@@ -40,6 +40,7 @@ extern "C"
 
 	#include "../vdp1.h"
 	#include "../vdp2.h"
+	#include "../cs2.h"
 }
 
 typedef yabauseinit_struct YabauseConf;

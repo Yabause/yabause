@@ -140,7 +140,7 @@ void UIYabause::on_aYabausePause_triggered()
 }
 
 void UIYabause::on_aYabauseReset_triggered()
-{ mYabauseThread->resetEmulation(); }
+{ mYabauseThread->resetEmulation( true ); }
 
 void UIYabause::on_aYabauseTransfer_triggered()
 {
@@ -222,39 +222,25 @@ void UIYabause::on_aYabauseQuit_triggered()
 }
 
 void UIYabause::on_aViewFPS_triggered()
-{
-	ToggleFPS();
-}
+{ ToggleFPS(); }
 
 void UIYabause::on_aViewLayerVdp1_triggered()
-{
-	ToggleVDP1();
-}
+{ ToggleVDP1(); }
 
 void UIYabause::on_aViewLayerNBG0_triggered()
-{
-	ToggleNBG0();
-}
+{ ToggleNBG0(); }
 
 void UIYabause::on_aViewLayerNBG1_triggered()
-{
-	ToggleNBG1();
-}
+{ ToggleNBG1(); }
 
 void UIYabause::on_aViewLayerNBG2_triggered()
-{
-	ToggleNBG2();
-}
+{ ToggleNBG2(); }
 
 void UIYabause::on_aViewLayerNBG3_triggered()
-{
-	ToggleNBG3();
-}
+{ ToggleNBG3(); }
 
 void UIYabause::on_aViewLayerRBG0_triggered()
-{
-	ToggleRBG0();
-}
+{ ToggleRBG0(); }
 
 void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
@@ -270,4 +256,7 @@ void UIYabause::on_aViewLog_triggered()
 }
 
 void UIYabause::on_aHelpAbout_triggered()
-{ UIAbout( window() ).exec(); }
+{
+	YabauseLocker locker( mYabauseThread );
+	UIAbout( window() ).exec();
+}
