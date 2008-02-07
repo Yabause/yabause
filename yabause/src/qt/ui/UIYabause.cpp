@@ -168,7 +168,7 @@ void UIYabause::on_aYabauseScreenshot_triggered()
 		<< tr( "XPM Images (*.xpm)" );
 	
 	// take screenshot of gl view
-	QPixmap screenshot = mYabauseGL->renderPixmap();
+	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
 	// request a file to save to to user
 	const QString s = QFileDialog::getSaveFileName( window(), tr( "Choose a location for your screenshot" ), QString(), filters.join( ";;" ) );

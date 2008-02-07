@@ -281,9 +281,9 @@ void UISettings::loadSettings()
 
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore" ).toInt() ) );
-	leWidth->setText( s->value( "Video/Width" ).toString() );
-	leHeight->setText( s->value( "Video/Height" ).toString() );
-	cbFullscreen->setChecked( s->value( "Video/Fullscreen" ).toBool() );
+	leWidth->setText( s->value( "Video/Width", 320 ).toString() );
+	leHeight->setText( s->value( "Video/Height", 240 ).toString() );
+	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat" ).toInt() ) );
 
 	// sound
