@@ -36,6 +36,7 @@ protected:
 	bool mScanningInput;
 	void qSleep( int ms );
 	void requestFile( const QString& caption, QLineEdit* edit );
+	void requestNewFile( const QString& caption, QLineEdit* edit );
 	void requestFolder( const QString& caption, QLineEdit* edit );
 	void requestDrive( const QString& caption, QLineEdit* edit );
 	void loadCores();

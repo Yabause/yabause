@@ -190,21 +190,21 @@ void UIYabause::on_aYabauseFrameSkipLimiter_triggered( bool b )
 void UIYabause::on_mYabauseSaveState_triggered( QAction* a )
 {
 	YabauseLocker locker( mYabauseThread );
-	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QDir::homePath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
+	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
 		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't save state file" ) );
 }
 
 void UIYabause::on_mYabauseLoadState_triggered( QAction* a )
 {
 	YabauseLocker locker( mYabauseThread );
-	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QDir::homePath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
+	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
 		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't load state file" ) );
 }
 
 void UIYabause::on_aYabauseSaveStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = QFileDialog::getSaveFileName( window(), tr( "Choose a file to save your state" ), QtYabause::settings()->value( "General/SaveStates", QDir::homePath() ).toString(), tr( "Yabause Save State (*.yss )" ) );
+	const QString fn = QFileDialog::getSaveFileName( window(), tr( "Choose a file to save your state" ), QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Yabause Save State (*.yss )" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
@@ -214,7 +214,7 @@ void UIYabause::on_aYabauseSaveStateAs_triggered()
 void UIYabause::on_aYabauseLoadStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = QFileDialog::getOpenFileName( window(), tr( "Select a file to load your state" ), QtYabause::settings()->value( "General/SaveStates", QDir::homePath() ).toString(), tr( "Yabause Save State (*.yss )" ) );
+	const QString fn = QFileDialog::getOpenFileName( window(), tr( "Select a file to load your state" ), QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Yabause Save State (*.yss )" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabLoadState( fn.toAscii().constData() ) != 0 )

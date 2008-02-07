@@ -124,6 +124,13 @@ void UISettings::requestFile( const QString& c, QLineEdit* e )
 		e->setText( s );
 }
 
+void UISettings::requestNewFile( const QString& c, QLineEdit* e )
+{
+	const QString s = QFileDialog::getSaveFileName( window(), c, e->text() );
+	if ( !s.isNull() )
+		e->setText( s );
+}
+
 void UISettings::requestFolder( const QString& c, QLineEdit* e )
 {
 	const QString s = QFileDialog::getExistingDirectory( window(), c, e->text() );
@@ -225,7 +232,7 @@ void UISettings::tbBrowse_clicked()
 		return;
 	}
 	else if ( tb == tbMemory )
-		requestFile( tr( "Choose a memory file" ), leMemory );
+		requestNewFile( tr( "Choose a memory file" ), leMemory );
 	else if ( tb == tbMpegROM )
 		requestFile( tr( "Choose a mpeg rom" ), leMpegROM );
 }
@@ -270,7 +277,7 @@ void UISettings::loadSettings()
 	leBios->setText( s->value( "General/Bios" ).toString() );
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom" ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
-	leSaveStates->setText( s->value( "General/SaveStates" ).toString() );
+	leSaveStates->setText( s->value( "General/SaveStates", QApplication::applicationDirPath() ).toString() );
 
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore" ).toInt() ) );
@@ -285,7 +292,7 @@ void UISettings::loadSettings()
 	// cartridge/memory
 	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type" ).toInt() ) );
 	leCartridge->setText( s->value( "Cartridge/Path" ).toString() );
-	leMemory->setText( s->value( "Memory/Path" ).toString() );
+	leMemory->setText( s->value( "Memory/Path", QApplication::applicationDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
 	
 	// input
@@ -293,7 +300,7 @@ void UISettings::loadSettings()
 		le->setText( s->value( QString( "Input/%1" ).arg( le->statusTip() ) ).toString() );
 	
 	// advanced
-	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region" ).toString() ) );
+	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", "Auto" ).toString() ) );
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter" ).toInt() ) );
 }
 
