@@ -36,6 +36,8 @@ void qAppendLog( const char* s )
 UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )
 {
+	mInit = false;
+	
 	// setup dialog
 	setupUi( this );
 	setAttribute( Qt::WA_DeleteOnClose );
@@ -65,12 +67,6 @@ UIYabause::UIYabause( QWidget* parent )
 	// connections
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
-	
-	// start emulation
-	mYabauseThread->startEmulation();
-	
-	// show settings dialog
-	QTimer::singleShot( 0, aYabauseSettings, SLOT( trigger() ) );
 }
 
 UIYabause::~UIYabause()
@@ -88,6 +84,18 @@ void UIYabause::closeEvent( QCloseEvent* )
 	QApplication::quit();
 }
 
+void UIYabause::showEvent( QShowEvent* )
+{
+	if ( !mInit )
+	{
+		mInit = true;
+		// start emulation
+		mYabauseThread->startEmulation();
+		// show settings dialog
+		aYabauseSettings->trigger();
+	}
+}
+
 void UIYabause::swapBuffers()
 { mYabauseGL->swapBuffers(); }
 
@@ -98,7 +106,7 @@ void UIYabause::appendLog( const char* s )
 }
 
 void UIYabause::sizeRequested( const QSize& s )
-{ resize( s ); }
+{ resize( s.isNull() ? QSize( 320, 240 ) : s ); }
 
 void UIYabause::fullscreenRequested( bool f )
 {

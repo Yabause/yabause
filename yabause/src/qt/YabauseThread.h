@@ -36,14 +36,6 @@ public:
 	~YabauseThread();
 	
 	YabauseConf* yabauseConf();
-	void startEmulation();
-	void stopEmulation();
-	
-	void runEmulation();
-	void pauseEmulation();
-	void resetEmulation( bool fr = false );
-	void reloadSettings();
-
 	bool emulationRunning();
 	bool emulationPaused();
 
@@ -58,6 +50,15 @@ protected:
 	void deInitEmulation();
 	void resetYabauseConf();
 	void timerEvent( QTimerEvent* );
+
+public slots:
+	void startEmulation();
+	void stopEmulation();
+	
+	void runEmulation();
+	void pauseEmulation();
+	void resetEmulation( bool fr = false );
+	void reloadSettings();
 
 signals:
 	void requestSize( const QSize& size );

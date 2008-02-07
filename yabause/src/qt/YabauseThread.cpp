@@ -79,17 +79,13 @@ void YabauseThread::pauseEmulation()
 
 void YabauseThread::resetEmulation( bool fullreset )
 {
-	bool p = mPause;
-	if ( mRunning && !p )
-		pauseEmulation();
+	// reload settings
 	reloadSettings();
 	// update cores...
 	Cs2ChangeCDCore( mYabauseConf->cdcoretype, mYabauseConf->cdpath );
 	// reset yabause
 	if ( fullreset )
 		YabauseReset();
-	if ( mRunning && !p )
-		runEmulation();
 }
 
 void YabauseThread::reloadSettings()
@@ -190,16 +186,7 @@ void YabauseThread::timerEvent( QTimerEvent* )
 	//while ( mRunning )
 	{
 		if ( !mPause )
-		{
 			PERCore->HandleEvents();
-			/*
-			YabauseExec();
-			YabauseExec();
-			YabauseExec();
-			YabauseExec();
-			YabauseExec();
-			*/
-		}
 		//else
 			//msleep( 25 );
 		//sleep( 0 );

@@ -68,8 +68,10 @@ protected:
 	YabauseGL* mYabauseGL;
 	YabauseThread* mYabauseThread;
 	QTextEdit* teLog;
+	bool mInit;
 
 	void closeEvent( QCloseEvent* event );
+	void showEvent( QShowEvent* event );
 
 protected slots:
 	void sizeRequested( const QSize& size );
