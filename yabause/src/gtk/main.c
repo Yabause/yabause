@@ -257,6 +257,9 @@ gboolean yui_settings_load(void) {
 		ScspChangeSoundCore(yinit.sndcoretype);
 	}
 
+	/* peripheral core */
+	yinit.percoretype = g_key_file_get_integer(keyfile, "General", "PerCore", 0);
+
 	i = 0;
 
 	while(key_names[i]) {

@@ -87,7 +87,7 @@ static void yui_input_entry_class_init (YuiInputEntryClass *klass) {
 }
 
 static void yui_input_entry_init(YuiInputEntry *yie) {
-	gtk_container_set_border_width(GTK_CONTAINER(yie), 10);
+	gtk_container_set_border_width(GTK_CONTAINER(yie), 0);
 	gtk_table_set_row_spacings(GTK_TABLE(yie), 10);
 	gtk_table_set_col_spacings(GTK_TABLE(yie), 10);
 }

@@ -83,12 +83,20 @@ YuiRangeItem sndcores[] = {
 	{ 1, 0 }
 };
 
-const gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", "Start", 0 };
-const gchar * keys2[] = { "A", "B", "C", "X", "Y", "Z", 0 };
+const gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", 0 };
+const gchar * keys2[] = { "A", "B", "C", "X", "Y", "Z", "Start", 0 };
 
 YuiRangeItem vidformats[] = {
 	{ "0", "NTSC" },
 	{ "1", "PAL" },
+	{ 0, 0 }
+};
+
+YuiRangeItem percores[] = {
+	{ "2", "Gtk Input Interface" },
+#ifdef USENEWPERINTERFACE
+	{ "3", "Joystick Input Interface" },
+#endif
 	{ 0, 0 }
 };
 
@@ -225,13 +233,28 @@ GtkWidget* create_dialog1(void) {
   
   gtk_box_pack_start (GTK_BOX (vbox17), hbox22, FALSE, TRUE, 0);
 
-  table4 = yui_input_entry_new(keyfile, "Input", keys1);
-  
-  gtk_box_pack_start (GTK_BOX (hbox22), table4, TRUE, TRUE, 0);
+  {
+    GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
+    GtkWidget * select_percore = yui_range_new(keyfile, "General", "PerCore", percores);
+
+    gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
+
+    gtk_container_set_border_width(GTK_CONTAINER(box_percore), 10);
+
+    gtk_box_pack_start(GTK_BOX (box_percore), select_percore, FALSE, FALSE, 0);
+
+    table4 = yui_input_entry_new(keyfile, "Input", keys1);
+
+    gtk_box_pack_start (GTK_BOX (box_percore), table4, TRUE, TRUE, 0);
+
+    gtk_box_pack_start (GTK_BOX (hbox22), box_percore, TRUE, TRUE, 0);
+  }
 
   gtk_box_pack_start (GTK_BOX (hbox22), gtk_vseparator_new(), TRUE, TRUE, 0);
 
   table5 = yui_input_entry_new(keyfile, "Input", keys2);
+
+  gtk_container_set_border_width(GTK_CONTAINER(table5), 10);
   
   gtk_box_pack_start (GTK_BOX (hbox22), table5, TRUE, TRUE, 0);
 
