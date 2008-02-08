@@ -44,7 +44,6 @@ UIYabause::UIYabause( QWidget* parent )
 	
 	// create glcontext
 	mYabauseGL = new YabauseGL;
-	//mYabauseGL->setFocusPolicy( Qt::StrongFocus );
 	// and set it as central application widget
 	setCentralWidget( mYabauseGL );
 	

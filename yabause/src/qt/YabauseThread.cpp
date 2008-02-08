@@ -68,6 +68,7 @@ void YabauseThread::runEmulation()
 	mRunning = true;
 	mPause = false;
 	mTimerId = startTimer( 0 );
+	ScspUnMuteAudio();
 }
 
 void YabauseThread::pauseEmulation()
@@ -75,6 +76,7 @@ void YabauseThread::pauseEmulation()
 	mPause = true;
 	mRunning = true;
 	killTimer( mTimerId );
+	ScspMuteAudio();
 }
 
 void YabauseThread::resetEmulation( bool fullreset )
@@ -83,6 +85,14 @@ void YabauseThread::resetEmulation( bool fullreset )
 	reloadSettings();
 	// update cores...
 	Cs2ChangeCDCore( mYabauseConf->cdcoretype, mYabauseConf->cdpath );
+	VideoChangeCore( mYabauseConf->vidcoretype );
+	ScspChangeVideoFormat( mYabauseConf->flags );
+	ScspChangeSoundCore( mYabauseConf->sndcoretype );
+	//cartridge
+	//mpeg
+	//input
+	//region
+	//interpreter
 	// reset yabause
 	if ( fullreset )
 		YabauseReset();
