@@ -3,9 +3,9 @@
  <widget class="QMainWindow" name="UIYabause" >
   <property name="geometry" >
    <rect>
-    <x>1</x>
-    <y>22</y>
-    <width>300</width>
+    <x>0</x>
+    <y>0</y>
+    <width>327</width>
     <height>200</height>
    </rect>
   </property>
@@ -18,8 +18,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>300</width>
-     <height>22</height>
+     <width>327</width>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="mYabause" >
@@ -113,7 +113,14 @@
     </property>
     <addaction name="aHelpAbout" />
    </widget>
+   <widget class="QMenu" name="mCheats" >
+    <property name="title" >
+     <string>Cheats</string>
+    </property>
+    <addaction name="aCheatsList" />
+   </widget>
    <addaction name="mYabause" />
+   <addaction name="mCheats" />
    <addaction name="mView" />
    <addaction name="mViewDebug" />
    <addaction name="mHelp" />
@@ -416,6 +423,11 @@
   <action name="aYabauseLoadStateAs" >
    <property name="text" >
     <string>Load State As...</string>
+   </property>
+  </action>
+  <action name="aCheatsList" >
+   <property name="text" >
+    <string>List...</string>
    </property>
   </action>
  </widget>

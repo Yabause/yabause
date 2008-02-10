@@ -79,7 +79,10 @@ CONFIG(debug, debug|release) {
 
 FORMS	+= ui/UIYabause.ui \
 	ui/UISettings.ui \
-	ui/UIAbout.ui
+	ui/UIAbout.ui \
+	ui/UICheats.ui \
+	ui/UICheatAR.ui \
+	ui/UICheatRaw.ui
 
 HEADERS	+= ui/UIYabause.h \
 	YabauseGL.h \
@@ -87,7 +90,12 @@ HEADERS	+= ui/UIYabause.h \
 	Settings.h \
 	YabauseThread.h \
 	QtYabause.h \
-	ui/UIAbout.h
+	ui/UIAbout.h \
+	ui/UICheats.h \
+	ui/UICheatAR.h \
+	ui/UICheatRaw.h \
+	CommonDialogs.h \
+	PerQt.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -96,5 +104,10 @@ SOURCES	+= main.cpp \
 	Settings.cpp \
 	YabauseThread.cpp \
 	QtYabause.cpp \
-	ui/UIAbout.cpp
+	ui/UIAbout.cpp \
+	ui/UICheats.cpp \
+	ui/UICheatAR.cpp \
+	ui/UICheatRaw.cpp \
+	CommonDialogs.cpp \
+	PerQt.c
 RESOURCES	+= resources/resources.qrc

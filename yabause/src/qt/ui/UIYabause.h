@@ -53,6 +53,22 @@ protected:
 	//bool mForceRun;
 };
 
+struct PlayerInputState
+{
+	PlayerInputState()
+	{
+		UpPressed = false;
+		DownPressed = false;
+		LeftPressed = false;
+		RightPressed = false;
+	}
+
+	bool UpPressed;
+	bool DownPressed;
+	bool LeftPressed;
+	bool RightPressed;
+};
+
 class UIYabause : public QMainWindow, public Ui::UIYabause
 {
 	Q_OBJECT
@@ -69,9 +85,12 @@ protected:
 	YabauseThread* mYabauseThread;
 	QTextEdit* teLog;
 	bool mInit;
+	PlayerInputState mPlayer1;
 
-	void closeEvent( QCloseEvent* event );
-	void showEvent( QShowEvent* event );
+	virtual void closeEvent( QCloseEvent* event );
+	virtual void showEvent( QShowEvent* event );
+	virtual void keyPressEvent( QKeyEvent* event );
+	virtual void keyReleaseEvent( QKeyEvent* event );
 
 protected slots:
 	void sizeRequested( const QSize& size );
@@ -88,8 +107,9 @@ protected slots:
 	void on_mYabauseLoadState_triggered( QAction* );
 	void on_aYabauseSaveStateAs_triggered();
 	void on_aYabauseLoadStateAs_triggered();
-	//save
 	void on_aYabauseQuit_triggered();
+	// cheats
+	void on_aCheatsList_triggered();
 	// view menu
 	void on_aViewFPS_triggered();
 	void on_aViewLayerVdp1_triggered();

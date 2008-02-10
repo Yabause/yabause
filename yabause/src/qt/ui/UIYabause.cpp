@@ -21,14 +21,15 @@
 #include "UIYabause.h"
 #include "Settings.h"
 #include "UISettings.h"
+#include "UICheats.h"
 #include "UIAbout.h"
 #include "../YabauseGL.h"
 #include "QtYabause.h"
+#include "../CommonDialogs.h"
 
+#include <QKeyEvent>
 #include <QTimer>
 #include <QTextEdit>
-#include <QFileDialog>
-#include <QMessageBox>
 
 void qAppendLog( const char* s )
 { QtYabause::mainWindow()->appendLog( s ); }
@@ -95,6 +96,92 @@ void UIYabause::showEvent( QShowEvent* )
 	}
 }
 
+void UIYabause::keyPressEvent( QKeyEvent* e )
+{
+	switch ( e->key() )
+	{
+		case Qt::Key_Up:
+			/*
+			mPlayer1.UpPressed = true;
+			qWarning( "Pressed: Up" );
+			break;
+			*/
+		case Qt::Key_Down:
+			/*
+			mPlayer1.DownPressed = true;
+			qWarning( "Pressed: down" );
+			break;
+			*/
+		case Qt::Key_Left:
+			/*
+			mPlayer1.LeftPressed = true;
+			qWarning( "Pressed: Left" );
+			break;
+			*/
+		case Qt::Key_Right:
+			/*
+			mPlayer1.RightPressed = true;
+			qWarning( "Pressed: Right" );
+			break;
+			*/
+		case Qt::Key_Q:
+		case Qt::Key_S:
+		case Qt::Key_D:
+		case Qt::Key_W:
+		case Qt::Key_X:
+		case Qt::Key_C:
+		case Qt::Key_A:
+		case Qt::Key_Z:
+		case Qt::Key_Return:
+			PerKeyDown( e->key() );
+		default:
+			break;
+	}
+}
+
+void UIYabause::keyReleaseEvent( QKeyEvent* e )
+{
+	switch ( e->key() )
+	{
+		case Qt::Key_Up:
+			/*
+			mPlayer1.UpPressed = false;
+			qWarning( "Released: Up" );
+			break;
+			*/
+		case Qt::Key_Down:
+			/*
+			mPlayer1.DownPressed = false;
+			qWarning( "Released: down" );
+			break;
+			*/
+		case Qt::Key_Left:
+			/*
+			mPlayer1.LeftPressed = false;
+			qWarning( "Released: Left" );
+			break;
+			*/
+		case Qt::Key_Right:
+			/*
+			mPlayer1.RightPressed = false;
+			qWarning( "Released: Right" );
+			break;
+			*/
+		case Qt::Key_Q:
+		case Qt::Key_S:
+		case Qt::Key_D:
+		case Qt::Key_W:
+		case Qt::Key_X:
+		case Qt::Key_C:
+		case Qt::Key_A:
+		case Qt::Key_Z:
+		case Qt::Key_Return:
+			PerKeyUp( e->key() );
+		default:
+			break;
+	}
+}
+
 void UIYabause::swapBuffers()
 { mYabauseGL->swapBuffers(); }
 
@@ -150,8 +237,7 @@ void UIYabause::on_aYabauseReset_triggered()
 { mYabauseThread->resetEmulation( true ); }
 
 void UIYabause::on_aYabauseTransfer_triggered()
-{
-}
+{}
 
 void UIYabause::on_aYabauseScreenshot_triggered()
 {
@@ -170,12 +256,12 @@ void UIYabause::on_aYabauseScreenshot_triggered()
 	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
 	// request a file to save to to user
-	const QString s = QFileDialog::getSaveFileName( window(), tr( "Choose a location for your screenshot" ), QString(), filters.join( ";;" ) );
+	const QString s = CommonDialogs::getSaveFileName( QString(), filters.join( ";;" ), tr( "Choose a location for your screenshot" ) );
 	
 	// write image if ok
 	if ( !s.isEmpty() )
 		if ( !screenshot.save( s ) )
-			QMessageBox::information( window(), tr( "Informations..." ), tr( "An error occur while writing the screenshot." ) );
+			CommonDialogs::information( tr( "An error occur while writing the screenshot." ) );
 }
 
 void UIYabause::on_aYabauseFrameSkipLimiter_triggered( bool b )
@@ -190,34 +276,34 @@ void UIYabause::on_mYabauseSaveState_triggered( QAction* a )
 {
 	YabauseLocker locker( mYabauseThread );
 	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
-		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't save state file" ) );
+		CommonDialogs::information( tr( "Couldn't save state file" ) );
 }
 
 void UIYabause::on_mYabauseLoadState_triggered( QAction* a )
 {
 	YabauseLocker locker( mYabauseThread );
 	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
-		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't load state file" ) );
+		CommonDialogs::information( tr( "Couldn't load state file" ) );
 }
 
 void UIYabause::on_aYabauseSaveStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = QFileDialog::getSaveFileName( window(), tr( "Choose a file to save your state" ), QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Yabause Save State (*.yss )" ) );
+	const QString fn = CommonDialogs::getSaveFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Yabause Save State (*.yss )" ), tr( "Choose a file to save your state" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
-		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't save state file" ) );
+		CommonDialogs::information( tr( "Couldn't save state file" ) );
 }
 
 void UIYabause::on_aYabauseLoadStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = QFileDialog::getOpenFileName( window(), tr( "Select a file to load your state" ), QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Yabause Save State (*.yss )" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Select a file to load your state" ), tr( "Yabause Save State (*.yss )" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabLoadState( fn.toAscii().constData() ) != 0 )
-		QMessageBox::information( window(), tr( "Informations..." ), tr( "Couldn't load state file" ) );
+		CommonDialogs::information( tr( "Couldn't load state file" ) );
 	else
 		aYabauseRun->trigger();
 }
@@ -227,6 +313,9 @@ void UIYabause::on_aYabauseQuit_triggered()
 	aYabausePause->trigger();
 	close();
 }
+
+void UIYabause::on_aCheatsList_triggered()
+{ UICheats( this ).exec(); }
 
 void UIYabause::on_aViewFPS_triggered()
 { ToggleFPS(); }
