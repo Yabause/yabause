@@ -44,6 +44,8 @@ extern "C"
 
 	#include "../cheat.h"
 	#include "../memory.h"
+	
+	#include "PerQt.h"
 }
 
 typedef yabauseinit_struct YabauseConf;

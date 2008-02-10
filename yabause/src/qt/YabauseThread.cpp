@@ -109,7 +109,7 @@ void YabauseThread::reloadSettings()
 
 	// read & apply settings
 	mYabauseConf->m68kcoretype = s->value( "Advanced/M68KCore", mYabauseConf->m68kcoretype ).toInt();
-	mYabauseConf->percoretype = s->value( "Input/PERCore", mYabauseConf->percoretype ).toInt();
+	mYabauseConf->percoretype = s->value( "Input/PerCore", mYabauseConf->percoretype ).toInt();
 	mYabauseConf->sh2coretype = s->value( "Advanced/SH2Interpreter", mYabauseConf->sh2coretype ).toInt();
 	mYabauseConf->vidcoretype = s->value( "Video/VideoCore", mYabauseConf->vidcoretype ).toInt();
 	mYabauseConf->sndcoretype = s->value( "Sound/SoundCore", mYabauseConf->sndcoretype ).toInt();
@@ -142,7 +142,7 @@ void YabauseThread::reloadSettings()
 	emit requestSize( QSize( s->value( "Video/Width", 320 ).toInt(), s->value( "Video/Height", 240 ).toInt() ) );
 	emit requestFullscreen( s->value( "Video/Fullscreen", false ).toBool() );
 	
-	s->beginGroup( "Input" );
+	s->beginGroup( "Input/Keys" );
 	foreach ( const QString& ki, s->childKeys() )
 		PerSetKey( (u32)s->value( ki ).toString().toUInt(), ki.toAscii().constData() );
 	s->endGroup();

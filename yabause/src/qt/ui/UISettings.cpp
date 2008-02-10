@@ -20,10 +20,8 @@
 */
 #include "UISettings.h"
 #include "Settings.h"
+#include "CommonDialogs.h"
 
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QInputDialog>
 #include <QDir>
 #include <QList>
 #include <QTimer>
@@ -119,21 +117,21 @@ void UISettings::qSleep( int ms )
 
 void UISettings::requestFile( const QString& c, QLineEdit* e )
 {
-	const QString s = QFileDialog::getOpenFileName( window(), c, e->text() );
+	const QString s = CommonDialogs::getOpenFileName( e->text(), c );
 	if ( !s.isNull() )
 		e->setText( s );
 }
 
 void UISettings::requestNewFile( const QString& c, QLineEdit* e )
 {
-	const QString s = QFileDialog::getSaveFileName( window(), c, e->text() );
+	const QString s = CommonDialogs::getSaveFileName( e->text(), c );
 	if ( !s.isNull() )
 		e->setText( s );
 }
 
 void UISettings::requestFolder( const QString& c, QLineEdit* e )
 {
-	const QString s = QFileDialog::getExistingDirectory( window(), c, e->text() );
+	const QString s = CommonDialogs::getExistingDirectory( e->text(), c );
 	if ( !s.isNull() )
 		e->setText( s );
 }
@@ -145,9 +143,9 @@ void UISettings::requestDrive( const QString& c, QLineEdit* e )
 	foreach ( const QFileInfo& fi, QDir::drives() )
 		drives << fi.fileName();
 	
-	bool b;
-	const QString s = QInputDialog::getItem( window(), tr( "CD Rom Drive..." ), c, drives, 0, false, &b );
-	if ( b && !s.isNull() )
+	// request user to choose a drive
+	const QString s = CommonDialogs::getItem( drives, c, tr( "CD Rom Drive..." ) );
+	if ( !s.isNull() )
 		e->setText( s );
 }
 
@@ -163,10 +161,7 @@ void UISettings::inputScan_timeout()
 		return;
 	
 	// get per core id
-	int i = PERCORE_DUMMY;
-#if defined( HAVE_LIBSDL ) && defined( USENEWPERINTERFACE )
-	i = PERCORE_SDLJOY;
-#endif
+	int i = cbInput->itemData( cbInput->currentIndex() ).toInt();
 	
 	// get percore pointer
 	PerInterface_struct* c = QtYabause::getPERCore( i );
@@ -210,7 +205,7 @@ void UISettings::tbBrowse_clicked()
 	{
 		if ( cbCdRom->currentText().contains( "dummy", Qt::CaseInsensitive ) )
 		{
-			QMessageBox::information( window(), tr( "Informations..." ), tr( "The dummies cores don't need configuration." ) );
+			CommonDialogs::information( tr( "The dummies cores don't need configuration." ) );
 			return;
 		}
 		else if ( cbCdRom->currentText().contains( "iso", Qt::CaseInsensitive ) )
@@ -228,7 +223,7 @@ void UISettings::tbBrowse_clicked()
 		requestFolder( tr( "Choose a folder to store save states" ), leSaveStates );
 	else if ( tb == tbCartridge )
 	{
-		QMessageBox::information( window(), tr( "Informations..." ), tr( "Not yet implemented" ) );
+		CommonDialogs::information( tr( "Not yet implemented" ) );
 		return;
 	}
 	else if ( tb == tbMemory )
@@ -258,6 +253,10 @@ void UISettings::loadCores()
 	// Cartridge Types
 	foreach ( const Item& it, mCartridgeTypes )
 		cbCartridge->addItem( it.Name, it.id );
+	
+	// Input Drivers
+	for ( int i = 0; PERCoreList[i] != NULL; i++ )
+		cbInput->addItem( PERCoreList[i]->Name, PERCoreList[i]->id );
 	
 	// Regions
 	foreach ( const Item& it, mRegions )
@@ -296,8 +295,9 @@ void UISettings::loadSettings()
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
 	
 	// input
+	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore" ).toInt() ) );
 	foreach ( QLineEdit* le, wInput->findChildren<QLineEdit*>() )
-		le->setText( s->value( QString( "Input/%1" ).arg( le->statusTip() ) ).toString() );
+		le->setText( s->value( QString( "Input/Keys/%1" ).arg( le->statusTip() ) ).toString() );
 	
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", "Auto" ).toString() ) );
@@ -332,8 +332,9 @@ void UISettings::saveSettings()
 	s->setValue( "MpegROM/Path", leMpegROM->text() );
 	
 	// input
+	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );
 	foreach ( QLineEdit* le, wInput->findChildren<QLineEdit*>() )
-		s->setValue( QString( "Input/%1" ).arg( le->statusTip() ), le->text() );
+		s->setValue( QString( "Input/Keys/%1" ).arg( le->statusTip() ), le->text() );
 	
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
