@@ -41,6 +41,9 @@ extern "C"
 	#include "../vdp1.h"
 	#include "../vdp2.h"
 	#include "../cs2.h"
+
+	#include "../cheat.h"
+	#include "../memory.h"
 }
 
 typedef yabauseinit_struct YabauseConf;
