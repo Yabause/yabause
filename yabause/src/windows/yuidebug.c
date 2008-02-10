@@ -1110,8 +1110,10 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
 
 void M68KBreakpointHandler (u32 addr)
 {
+   ScspMuteAudio();
    MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_M68KDEBUG), YabWin, (DLGPROC)M68KDebugDlgProc);
+   ScspUnMuteAudio();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1430,8 +1432,10 @@ void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
 
 void SCUDSPBreakpointHandler (u32 addr)
 {
+   ScspMuteAudio();
    MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SCUDSPDEBUG), YabWin, (DLGPROC)SCUDSPDebugDlgProc);
+   ScspUnMuteAudio();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1601,6 +1605,10 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // Setup Slot Info
          ScspSlotDebugStats(0, tempstr);
          SetDlgItemText(hDlg, IDC_SCSPSLOTET, tempstr);
+
+         // Setup Common Control registers
+         ScspCommonControlRegisterDebugStats(tempstr);
+         SetDlgItemText(hDlg, IDC_SCSPCOMMONREGET, tempstr);
 
          return TRUE;
       }
