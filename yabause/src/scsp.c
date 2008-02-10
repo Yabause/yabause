@@ -2081,7 +2081,7 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
 
 void scsp_update_timer(u32 len)
 {
-	if (scsp.timacnt != 0xFF00)
+        if (!(scsp.scipd & 0x40))
 	{
 		scsp.timacnt += len << (8 - scsp.timasd);
 		if (scsp.timacnt >= 0xFF00)
@@ -2092,7 +2092,7 @@ void scsp_update_timer(u32 len)
 		}
 	}
 
-	if (scsp.timbcnt != 0xFF00)
+        if (!(scsp.scipd & 0x80))
 	{
 		scsp.timbcnt += len << (8 - scsp.timbsd);
 		if (scsp.timbcnt >= 0xFF00)
@@ -2103,7 +2103,7 @@ void scsp_update_timer(u32 len)
 		}
 	}
 
-	if (scsp.timccnt != 0xFF00)
+        if (!(scsp.scipd & 0x100))
 	{
 		scsp.timccnt += len << (8 - scsp.timcsd);
 		if (scsp.timccnt >= 0xFF00)
@@ -3590,17 +3590,33 @@ void ScspCommonControlRegisterDebugStats(char *outstring)
    AddString(outstring, "Master volume: %ld\r\n", scsp.mvol);
    AddString(outstring, "Ring buffer length: %ld\r\n", scsp.rbl);
    AddString(outstring, "Ring buffer address: %08lX\r\n", scsp.rbp);
+   AddString(outstring, "\r\n");
+
+   AddString(outstring, "Slot Status Registers\r\n");
+   AddString(outstring, "-----------------\r\n");
    AddString(outstring, "Monitor slot: %ld\r\n", scsp.mslc);
    AddString(outstring, "Call address: %ld\r\n", scsp.ca);
+   AddString(outstring, "\r\n");
+
+   AddString(outstring, "DMA Registers\r\n");
+   AddString(outstring, "-----------------\r\n");
    AddString(outstring, "DMA memory address start: %08lX\r\n", scsp.dmea);
    AddString(outstring, "DMA register address start: %08lX\r\n", scsp.drga);
    AddString(outstring, "DMA Flags: %lX\r\n", scsp.dmlen);
+   AddString(outstring, "\r\n");
+
+   AddString(outstring, "Timer Registers\r\n");
+   AddString(outstring, "-----------------\r\n");
    AddString(outstring, "Timer A counter: %02lX\r\n", scsp.timacnt >> 8);
    AddString(outstring, "Timer A increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timasd));
    AddString(outstring, "Timer B counter: %02lX\r\n", scsp.timbcnt >> 8);
    AddString(outstring, "Timer B increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timbsd));
    AddString(outstring, "Timer C counter: %02lX\r\n", scsp.timccnt >> 8);
    AddString(outstring, "Timer C increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timcsd));
+   AddString(outstring, "\r\n");
+
+   AddString(outstring, "Interrupt Registers\r\n");
+   AddString(outstring, "-----------------\r\n");
    AddString(outstring, "Sound cpu interrupt pending: %04lX\r\n", scsp.scipd);
    AddString(outstring, "Sound cpu interrupt enable: %04lX\r\n", scsp.scieb);
    AddString(outstring, "Sound cpu interrupt level 0: %04lX\r\n", scsp.scilv0);
@@ -3608,6 +3624,7 @@ void ScspCommonControlRegisterDebugStats(char *outstring)
    AddString(outstring, "Sound cpu interrupt level 2: %04lX\r\n", scsp.scilv2);
    AddString(outstring, "Main cpu interrupt pending: %04lX\r\n", scsp.mcipd);
    AddString(outstring, "Main cpu interrupt enable: %04lX\r\n", scsp.mcieb);
+   AddString(outstring, "\r\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
