@@ -240,11 +240,11 @@ typedef struct scsp_t
 	u8	midflag;		// midi flag (empty, full, overflow ...)
 	u8	midflag2;		// midi flag 2 (here only for alignement)
 
-	s32	timacnt;		// timer A counter
+        s32     timacnt;        // timer A counter
 	u32	timasd;		// timer A step diviser
-	s32	timbcnt;		// timer B counter
+        s32     timbcnt;        // timer B counter
 	u32	timbsd;		// timer B step diviser
-	s32	timccnt;		// timer C counter
+        s32     timccnt;        // timer C counter
 	u32	timcsd;		// timer C step diviser
 
 	u32	scieb;		// allow sound cpu interrupt
@@ -320,6 +320,29 @@ static int scsp_round(double val)
 ////////////////////////////////////////////////////////////////
 // Interrupts
 
+static INLINE void scsp_trigger_main_interrupt(u32 id)
+{
+   SCSPLOG("scsp main interrupt accepted %.4X\n", id);
+   scsp.mintf();
+}
+
+static INLINE void scsp_trigger_sound_interrupt(u32 id)
+{
+   u32 level;
+   level = 0;
+   if (id > 0x80) id = 0x80;
+
+   if (scsp.scilv0 & id) level |= 1;
+   if (scsp.scilv1 & id) level |= 2;
+   if (scsp.scilv2 & id) level |= 4;
+
+#ifdef SCSP_DEBUG
+   if (id == 0x8) SCSPLOG("scsp sound interrupt accepted %.2X lev=%d\n", id, level);
+#endif
+
+   scsp.sintf(level);
+}
+
 static void scsp_main_interrupt(u32 id)
 {
 //	if (scsp.mcipd & id) return;
@@ -329,17 +352,11 @@ static void scsp_main_interrupt(u32 id)
 	scsp.mcipd |= id;
 
 	if (scsp.mcieb & id)
-	{
-                SCSPLOG("scsp main interrupt accepted %.4X\n", id);
-
-		if (scsp.mintf != NULL) scsp.mintf();
-	}
+           scsp_trigger_main_interrupt(id);
 }
 
 static void scsp_sound_interrupt(u32 id)
-{
-	u32 level;
-	
+{	
 //	if (scsp.scipd & id) return;
 
 //      SCSPLOG("scsp sound interrupt %.4X\n", id);
@@ -347,20 +364,7 @@ static void scsp_sound_interrupt(u32 id)
 	scsp.scipd |= id;
 	
 	if (scsp.scieb & id)
-	{
-		level = 0;
-                if (id > 0x80) id = 0x80;
-
-		if (scsp.scilv0 & id) level |= 1;
-		if (scsp.scilv1 & id) level |= 2;
-		if (scsp.scilv2 & id) level |= 4;
-
-                if (id == 0x8) SCSPLOG("scsp sound interrupt accepted %.2X lev=%d\n", id, level);
-
-		if (scsp.sintf != NULL) scsp.sintf(level);
-	}
-
-
+           scsp_trigger_sound_interrupt(id);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1057,13 +1061,30 @@ void scsp_set_b(u32 a, u8 d)
 		return;
 
         case 0x1E: // SCIEB(high byte)
+        {
+                int i;
 		scsp.scieb = (scsp.scieb & 0xFF) + (d << 8);
-		return;
 
+                for (i = 0; i < 3; i++)
+                {
+                   if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
+                      scsp_trigger_sound_interrupt((1 << (i+8)));
+                }
+
+		return;
+        }
         case 0x1F: // SCIEB(low byte)
+        {
+                int i;
 		scsp.scieb = (scsp.scieb & 0x700) + d;
-		return;
 
+                for (i = 0; i < 8; i++)
+                {
+                   if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
+                      scsp_trigger_sound_interrupt((1 << i));
+                }
+		return;
+        }
         case 0x21: // SCIPD(low byte)
 		if (d & 0x20) scsp_sound_interrupt(0x20);
 		return;
@@ -1097,7 +1118,8 @@ void scsp_set_b(u32 a, u8 d)
 		return;
 
         case 0x2D: // MCIPD(low byte)
-		if (d & 0x20) scsp_main_interrupt(0x20);
+		if (d & 0x20)
+                   scsp_main_interrupt(0x20);
 		return;
 
         case 0x2E: // MCIRE(high byte)
@@ -1177,9 +1199,16 @@ void scsp_set_w(u32 a, u16 d)
 		return;
 
         case 0x0F: // SCIEB
+        {
+                int i;
 		scsp.scieb = d;
+                for (i = 0; i < 11; i++)
+                {
+                   if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
+                      scsp_trigger_sound_interrupt((1 << i));
+                }
 		return;
-
+        }
         case 0x10: // SCIPD
 		if (d & 0x20) scsp_sound_interrupt(0x20);
 		return;
@@ -1201,14 +1230,22 @@ void scsp_set_w(u32 a, u16 d)
 		return;
 
         case 0x15: // MCIEB
-		scsp.mcieb = d;
+        {
+                int i;
+                scsp.mcieb = d;
+                for (i = 0; i < 11; i++)
+                {
+                   if (scsp.mcieb & (1 << i) && scsp.mcipd & (1 << i))
+                      scsp_trigger_main_interrupt((1 << i));
+                }
 		return;
+        }
 
         case 0x16: // MCIPD
 		if (d & 0x20) scsp_main_interrupt(0x20);
 		return;
 
-        case 0x18: // MCIRE
+        case 0x17: // MCIRE
 		scsp.mcipd &= ~d;
 		return;
 	}
@@ -2081,45 +2118,47 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
 
 void scsp_update_timer(u32 len)
 {
-        if (!(scsp.scipd & 0x40))
-	{
-		scsp.timacnt += len << (8 - scsp.timasd);
-		if (scsp.timacnt >= 0xFF00)
-		{
-			scsp_sound_interrupt(0x40);
-			scsp_main_interrupt(0x40);
-			scsp.timacnt = 0xFF00;
-		}
-	}
+   scsp.timacnt += len << (8 - scsp.timasd);
 
-        if (!(scsp.scipd & 0x80))
-	{
-		scsp.timbcnt += len << (8 - scsp.timbsd);
-		if (scsp.timbcnt >= 0xFF00)
-		{
-			scsp_sound_interrupt(0x80);
-			scsp_main_interrupt(0x80);
-			scsp.timbcnt = 0xFF00;
-		}
-	}
+   if (scsp.timacnt >= 0xFF00)
+   {
+      if (!(scsp.scipd & 0x40))
+         scsp_sound_interrupt(0x40);
+      if (!(scsp.mcipd & 0x40))
+         scsp_main_interrupt(0x40);
+      scsp.timacnt &= 0x00FF;
+   }
 
-        if (!(scsp.scipd & 0x100))
-	{
-		scsp.timccnt += len << (8 - scsp.timcsd);
-		if (scsp.timccnt >= 0xFF00)
-		{
-			scsp_sound_interrupt(0x100);
-			scsp_main_interrupt(0x100);
-			scsp.timccnt = 0xFF00;
-		}
-	}
+   scsp.timbcnt += len << (8 - scsp.timbsd);
 
-	// 1F interrupt can't be accurate here...
-	if (len)
-	{
-		scsp_sound_interrupt(0x400);
-		scsp_main_interrupt(0x400);
-	}
+   if (scsp.timbcnt >= 0xFF00)
+   {
+      if (!(scsp.scipd & 0x80))
+         scsp_sound_interrupt(0x80);
+      if (!(scsp.mcipd & 0x80))
+         scsp_main_interrupt(0x80);
+      scsp.timbcnt &= 0x00FF;
+   }
+
+   scsp.timccnt += len << (8 - scsp.timcsd);
+
+   if (scsp.timccnt >= 0xFF00)
+   {
+      if (!(scsp.scipd & 0x100))
+         scsp_sound_interrupt(0x100);
+      if (!(scsp.mcipd & 0x100))
+         scsp_main_interrupt(0x100);
+      scsp.timccnt &= 0x00FF;
+   }
+
+   // 1F interrupt can't be accurate here...
+   if (len)
+   {
+      if (!(scsp.scipd & 0x400))
+         scsp_sound_interrupt(0x400);
+      if (!(scsp.mcipd & 0x400))
+         scsp_main_interrupt(0x400);
+   }
 }
 
 ////////////////////////////////////////////////////////////////
