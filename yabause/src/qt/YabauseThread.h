@@ -35,12 +35,12 @@ public:
 	YabauseThread( QObject* owner = 0 );
 	~YabauseThread();
 	
-	YabauseConf* yabauseConf();
+	yabauseinit_struct* yabauseConf();
 	bool emulationRunning();
 	bool emulationPaused();
 
 protected:
-	YabauseConf* mYabauseConf;
+	yabauseinit_struct* mYabauseConf;
 	QMutex mMutex;
 	bool mPause;
 	bool mRunning;

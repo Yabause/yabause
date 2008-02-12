@@ -1,13 +1,17 @@
 #include "UIWaitInput.h"
 
 #include <QTimer>
-#include <QTime>
+#include <QKeyEvent>
 
 UIWaitInput::UIWaitInput( PerInterface_struct* c, const QString& pk, QWidget* p )
 	: QDialog( p )
 {
 	// setup dialog
 	setupUi( this );
+
+	// set focus
+	setFocusPolicy( Qt::StrongFocus );
+	setFocus();
 
 	// get core
 	mCore = c;
@@ -20,15 +24,29 @@ UIWaitInput::UIWaitInput( PerInterface_struct* c, const QString& pk, QWidget* p 
 	if ( mCore->Init() != 0 )
 		qWarning( "UIWaitInput: Can't Init Core" );
 	
-	// create timer for input scan
-	QTimer* mTimerInputScan = new QTimer( this );
-	mTimerInputScan->setInterval( 25 );
-	
-	// connect
-	connect( mTimerInputScan, SIGNAL( timeout() ), this, SLOT( inputScan_timeout() ) );
-	
-	// start input scan
-	mTimerInputScan->start();
+	if ( mCore->canScan == 1 )
+	{
+		// create timer for input scan
+		QTimer* mTimerInputScan = new QTimer( this );
+		mTimerInputScan->setInterval( 25 );
+		
+		// connect
+		connect( mTimerInputScan, SIGNAL( timeout() ), this, SLOT( inputScan_timeout() ) );
+		
+		// start input scan
+		mTimerInputScan->start();
+	}
+}
+
+void UIWaitInput::keyPressEvent( QKeyEvent* e )
+{
+	if ( mCore->id == PERCORE_QT && e->key() != Qt::Key_Escape )
+	{
+		mKeyString = QString::number( e->key() );
+		PerSetKey( e->key(), mPadKey.toAscii().constData() );
+		QDialog::accept();
+	}
+	QWidget::keyPressEvent( e );
 }
 
 void UIWaitInput::inputScan_timeout()

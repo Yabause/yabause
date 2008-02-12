@@ -48,8 +48,6 @@ extern "C"
 	#include "PerQt.h"
 }
 
-typedef yabauseinit_struct YabauseConf;
-
 class UIYabause;
 class Settings;
 

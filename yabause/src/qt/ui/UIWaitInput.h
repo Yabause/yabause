@@ -18,6 +18,8 @@ protected:
 	QString mKeyString;
 	bool mScanningInput;
 
+	void keyPressEvent( QKeyEvent* event );
+
 protected slots:
 	void inputScan_timeout();
 };

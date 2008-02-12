@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>506</width>
-    <height>404</height>
+    <width>507</width>
+    <height>411</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -789,10 +789,13 @@
          <property name="orientation" >
           <enum>Qt::Vertical</enum>
          </property>
+         <property name="sizeType" >
+          <enum>QSizePolicy::MinimumExpanding</enum>
+         </property>
          <property name="sizeHint" >
           <size>
            <width>20</width>
-           <height>81</height>
+           <height>1</height>
           </size>
          </property>
         </spacer>

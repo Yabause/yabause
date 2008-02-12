@@ -28,14 +28,14 @@ YabauseThread::YabauseThread( QObject* o )
 {
 	mRunning = false;
 	mPause = true;
-	mYabauseConf = new YabauseConf;
+	mYabauseConf = new yabauseinit_struct;
 	mTimerId = -1;
 }
 
 YabauseThread::~YabauseThread()
 { delete mYabauseConf; }
 
-YabauseConf* YabauseThread::yabauseConf()
+yabauseinit_struct* YabauseThread::yabauseConf()
 { return mYabauseConf; }
 
 void YabauseThread::startEmulation()
