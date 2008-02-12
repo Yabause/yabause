@@ -88,11 +88,6 @@ void YabauseThread::resetEmulation( bool fullreset )
 	VideoChangeCore( mYabauseConf->vidcoretype );
 	ScspChangeVideoFormat( mYabauseConf->flags );
 	ScspChangeSoundCore( mYabauseConf->sndcoretype );
-	//cartridge
-	//mpeg
-	//input
-	//region
-	//interpreter
 	// reset yabause
 	if ( fullreset )
 		YabauseReset();
