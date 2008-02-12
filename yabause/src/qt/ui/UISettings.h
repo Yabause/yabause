@@ -30,11 +30,8 @@ class UISettings : public QDialog, public Ui::UISettings
 	
 public:
 	UISettings( QWidget* parent = 0 );
-	~UISettings();
 
 protected:
-	bool mScanningInput;
-	void qSleep( int ms );
 	void requestFile( const QString& caption, QLineEdit* edit );
 	void requestNewFile( const QString& caption, QLineEdit* edit );
 	void requestFolder( const QString& caption, QLineEdit* edit );
@@ -44,8 +41,8 @@ protected:
 	void saveSettings();
 
 protected slots:
-	void inputScan_timeout();
 	void tbBrowse_clicked();
+	void pbInputs_clicked();
 	void accept();
 };
 

@@ -82,7 +82,8 @@ FORMS	+= ui/UIYabause.ui \
 	ui/UIAbout.ui \
 	ui/UICheats.ui \
 	ui/UICheatAR.ui \
-	ui/UICheatRaw.ui
+	ui/UICheatRaw.ui \
+	ui/UIWaitInput.ui
 
 HEADERS	+= ui/UIYabause.h \
 	YabauseGL.h \
@@ -95,7 +96,8 @@ HEADERS	+= ui/UIYabause.h \
 	ui/UICheatAR.h \
 	ui/UICheatRaw.h \
 	CommonDialogs.h \
-	PerQt.h
+	PerQt.h \
+	ui/UIWaitInput.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -109,5 +111,7 @@ SOURCES	+= main.cpp \
 	ui/UICheatAR.cpp \
 	ui/UICheatRaw.cpp \
 	CommonDialogs.cpp \
-	PerQt.c
+	PerQt.c \
+	ui/UIWaitInput.cpp
+
 RESOURCES	+= resources/resources.qrc

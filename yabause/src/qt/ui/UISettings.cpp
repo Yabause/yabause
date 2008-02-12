@@ -21,11 +21,10 @@
 #include "UISettings.h"
 #include "Settings.h"
 #include "CommonDialogs.h"
+#include "UIWaitInput.h"
 
 #include <QDir>
 #include <QList>
-#include <QTimer>
-#include <QTime>
 
 extern M68K_struct* M68KCoreList[];
 extern SH2Interface_struct* SH2CoreList[];
@@ -72,13 +71,9 @@ const Items mVideoFromats = Items()
 	<< Item( "0", "NTSC" )
 	<< Item( "1", "PAL" );
 
-const int TIMEOUT_SCAN = 1000;
-
 UISettings::UISettings( QWidget* p )
 	: QDialog( p )
 {
-	mScanningInput = false;
-	
 	// setup dialog
 	setupUi( this );
 
@@ -88,31 +83,11 @@ UISettings::UISettings( QWidget* p )
 	// load settings
 	loadSettings();
 	
-	// create timer for input scan
-	QTimer* mTimerInputScan = new QTimer( this );
-	mTimerInputScan->setInterval( TIMEOUT_SCAN / 2 );
-	
 	// connections
 	foreach ( QToolButton* tb, findChildren<QToolButton*>() )
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbBrowse_clicked() ) );
-	connect( mTimerInputScan, SIGNAL( timeout() ), this, SLOT( inputScan_timeout() ) );
-	
-	// start input scan
-	mTimerInputScan->start();
-}
-
-UISettings::~UISettings()
-{}
-
-void UISettings::qSleep( int ms )
-{
-    Q_ASSERT( ms > 0 );
-#ifdef Q_OS_WIN
-    Sleep( uint( ms ) );
-#else
-    struct timespec ts = { ms /1000, ( ms %1000 ) *1000 *1000 };
-    nanosleep( &ts, NULL );
-#endif
+	foreach ( QPushButton* pb, wInput->findChildren<QPushButton*>() )
+		connect( pb, SIGNAL( clicked() ), this, SLOT( pbInputs_clicked() ) );
 }
 
 void UISettings::requestFile( const QString& c, QLineEdit* e )
@@ -147,51 +122,6 @@ void UISettings::requestDrive( const QString& c, QLineEdit* e )
 	const QString s = CommonDialogs::getItem( drives, c, tr( "CD Rom Drive..." ) );
 	if ( !s.isNull() )
 		e->setText( s );
-}
-
-void UISettings::inputScan_timeout()
-{
-	// cancel if already listening input
-	if ( mScanningInput )
-		return;
-	
-	// get focused lineedit
-	QLineEdit* le = qobject_cast<QLineEdit*>( QApplication::focusWidget() );
-	if ( !le || le->parent() != wInput )
-		return;
-	
-	// get per core id
-	int i = cbInput->itemData( cbInput->currentIndex() ).toInt();
-	
-	// get percore pointer
-	PerInterface_struct* c = QtYabause::getPERCore( i );
-	
-	// check if we have valid core & can scan keys
-	if ( !c || c->canScan != 1 )
-		return;
-	
-	// tell we are listening input
-	mScanningInput = true;
-	
-	// get pressed input for key stock in the lineedit->statusTip()
-	const char* ki = strdup( le->statusTip().toAscii().constData() );
-	u32 k = 0;
-	QTime t;
-	t.start();
-	do
-	{
-		c->Flush();
-		k = c->Scan( ki );
-		QCoreApplication::processEvents( QEventLoop::AllEvents, TIMEOUT_SCAN );
-		qSleep( 10 );
-	} while ( t.elapsed() < TIMEOUT_SCAN && k == 0 && QApplication::focusWidget() == le );
-	
-	// write it in the settings dialog
-	if ( k != 0 )
-		le->setText( QString::number( k ) );
-	
-	// tell we no longer listening input
-	mScanningInput = false;
 }
 
 void UISettings::tbBrowse_clicked()
@@ -230,6 +160,24 @@ void UISettings::tbBrowse_clicked()
 		requestNewFile( tr( "Choose a memory file" ), leMemory );
 	else if ( tb == tbMpegROM )
 		requestFile( tr( "Choose a mpeg rom" ), leMpegROM );
+}
+
+void UISettings::pbInputs_clicked()
+{
+	// get per core id
+	int i = cbInput->itemData( cbInput->currentIndex() ).toInt();
+	
+	// get percore pointer
+	PerInterface_struct* c = QtYabause::getPERCore( i );
+
+	// request user input
+	if ( c )
+	{
+		QPushButton* pb = qobject_cast<QPushButton*>( sender() );
+		UIWaitInput wi( c, pb->statusTip(), window() );
+		if ( wi.exec() )
+			wInput->findChild<QLabel*>( QString( "l%1" ).arg( pb->statusTip() ) )->setText( wi.keyString() );
+	}
 }
 
 void UISettings::loadCores()
@@ -296,8 +244,8 @@ void UISettings::loadSettings()
 	
 	// input
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore" ).toInt() ) );
-	foreach ( QLineEdit* le, wInput->findChildren<QLineEdit*>() )
-		le->setText( s->value( QString( "Input/Keys/%1" ).arg( le->statusTip() ) ).toString() );
+	foreach ( QLabel* l, wInput->findChildren<QLabel*>() )
+		l->setText( s->value( QString( "Input/Keys/%1" ).arg( l->statusTip() ) ).toString() );
 	
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", "Auto" ).toString() ) );
@@ -333,8 +281,8 @@ void UISettings::saveSettings()
 	
 	// input
 	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );
-	foreach ( QLineEdit* le, wInput->findChildren<QLineEdit*>() )
-		s->setValue( QString( "Input/Keys/%1" ).arg( le->statusTip() ), le->text() );
+	foreach ( QLabel* l, wInput->findChildren<QLabel*>() )
+		s->setValue( QString( "Input/Keys/%1" ).arg( l->statusTip() ), l->text() );
 	
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );

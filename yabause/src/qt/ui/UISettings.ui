@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>554</width>
-    <height>391</height>
+    <width>506</width>
+    <height>404</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -365,7 +365,7 @@
        <string>Input</string>
       </attribute>
       <layout class="QGridLayout" >
-       <item row="0" column="0" colspan="6" >
+       <item row="0" column="0" colspan="4" >
         <widget class="QLabel" name="lInput" >
          <property name="font" >
           <font>
@@ -381,199 +381,410 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0" colspan="6" >
+       <item row="1" column="0" colspan="4" >
         <widget class="QComboBox" name="cbInput" />
        </item>
-       <item row="2" column="0" >
-        <widget class="QLabel" name="lUp" >
-         <property name="text" >
-          <string>Up</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1" >
-        <widget class="QLineEdit" name="leUp" >
-         <property name="statusTip" >
-          <string>Up</string>
-         </property>
-        </widget>
-       </item>
-       <item rowspan="7" row="2" column="2" >
-        <widget class="Line" name="lVInput" >
+       <item row="2" column="0" colspan="4" >
+        <widget class="Line" name="line" >
          <property name="orientation" >
-          <enum>Qt::Vertical</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="3" colspan="2" >
-        <widget class="QLabel" name="lA" >
-         <property name="text" >
-          <string>A</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="5" >
-        <widget class="QLineEdit" name="leA" >
-         <property name="statusTip" >
-          <string>A</string>
+          <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
        <item row="3" column="0" >
-        <widget class="QLabel" name="lRight" >
+        <widget class="QPushButton" name="pbUp" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip" >
+          <string>Up</string>
+         </property>
          <property name="text" >
-          <string>Right</string>
+          <string>Up</string>
          </property>
         </widget>
        </item>
        <item row="3" column="1" >
-        <widget class="QLineEdit" name="leRight" >
+        <widget class="QLabel" name="lUp" >
          <property name="statusTip" >
-          <string>Right</string>
+          <string>Up</string>
          </property>
-        </widget>
-       </item>
-       <item row="3" column="3" colspan="2" >
-        <widget class="QLabel" name="lB" >
          <property name="text" >
-          <string>B</string>
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
-       <item row="3" column="5" >
-        <widget class="QLineEdit" name="leB" >
+       <item row="3" column="2" >
+        <widget class="QPushButton" name="pbA" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="statusTip" >
-          <string>B</string>
+          <string>A</string>
+         </property>
+         <property name="text" >
+          <string>A</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="3" >
+        <widget class="QLabel" name="lA" >
+         <property name="statusTip" >
+          <string>A</string>
+         </property>
+         <property name="text" >
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
        <item row="4" column="0" >
-        <widget class="QLabel" name="lDown" >
+        <widget class="QPushButton" name="pbDown" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip" >
+          <string>Down</string>
+         </property>
          <property name="text" >
           <string>Down</string>
          </property>
         </widget>
        </item>
        <item row="4" column="1" >
-        <widget class="QLineEdit" name="leDown" >
+        <widget class="QLabel" name="lDown" >
          <property name="statusTip" >
           <string>Down</string>
          </property>
-        </widget>
-       </item>
-       <item row="4" column="3" colspan="2" >
-        <widget class="QLabel" name="lC" >
          <property name="text" >
-          <string>C</string>
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
-       <item row="4" column="5" >
-        <widget class="QLineEdit" name="leC" >
+       <item row="4" column="2" >
+        <widget class="QPushButton" name="pbB" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="statusTip" >
-          <string>C</string>
+          <string>B</string>
+         </property>
+         <property name="text" >
+          <string>B</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="3" >
+        <widget class="QLabel" name="lB" >
+         <property name="statusTip" >
+          <string>B</string>
+         </property>
+         <property name="text" >
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
        <item row="5" column="0" >
-        <widget class="QLabel" name="lLeft" >
+        <widget class="QPushButton" name="pbLeft" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip" >
+          <string>Left</string>
+         </property>
          <property name="text" >
           <string>Left</string>
          </property>
         </widget>
        </item>
        <item row="5" column="1" >
-        <widget class="QLineEdit" name="leLeft" >
+        <widget class="QLabel" name="lLeft" >
          <property name="statusTip" >
           <string>Left</string>
          </property>
-        </widget>
-       </item>
-       <item row="5" column="3" colspan="2" >
-        <widget class="QLabel" name="lX" >
          <property name="text" >
-          <string>X</string>
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
-       <item row="5" column="5" >
-        <widget class="QLineEdit" name="leX" >
+       <item row="5" column="2" >
+        <widget class="QPushButton" name="pbC" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="statusTip" >
-          <string>X</string>
+          <string>C</string>
+         </property>
+         <property name="text" >
+          <string>C</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="3" >
+        <widget class="QLabel" name="lC" >
+         <property name="statusTip" >
+          <string>C</string>
+         </property>
+         <property name="text" >
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
        <item row="6" column="0" >
-        <widget class="QLabel" name="lRightTrigger" >
+        <widget class="QPushButton" name="pbRight" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip" >
+          <string>Right</string>
+         </property>
          <property name="text" >
-          <string>Right Trigger</string>
+          <string>Right</string>
          </property>
         </widget>
        </item>
        <item row="6" column="1" >
-        <widget class="QLineEdit" name="leRightTrigger" >
+        <widget class="QLabel" name="lRight" >
          <property name="statusTip" >
-          <string>Right trigger</string>
+          <string>Right</string>
          </property>
-        </widget>
-       </item>
-       <item row="6" column="3" colspan="2" >
-        <widget class="QLabel" name="lY" >
          <property name="text" >
-          <string>Y</string>
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
-       <item row="6" column="5" >
-        <widget class="QLineEdit" name="leY" >
+       <item row="6" column="2" >
+        <widget class="QPushButton" name="pbX" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="statusTip" >
-          <string>Y</string>
+          <string>X</string>
+         </property>
+         <property name="text" >
+          <string>X</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="3" >
+        <widget class="QLabel" name="lX" >
+         <property name="statusTip" >
+          <string>X</string>
+         </property>
+         <property name="text" >
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
        <item row="7" column="0" >
-        <widget class="QLabel" name="lLeftTrigger" >
+        <widget class="QPushButton" name="pbL" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip" >
+          <string>L</string>
+         </property>
          <property name="text" >
-          <string>Left Trigger</string>
+          <string>L</string>
          </property>
         </widget>
        </item>
        <item row="7" column="1" >
-        <widget class="QLineEdit" name="leLeftTrigger" >
+        <widget class="QLabel" name="lL" >
          <property name="statusTip" >
-          <string>Left trigger</string>
+          <string>L</string>
          </property>
-        </widget>
-       </item>
-       <item row="7" column="3" colspan="2" >
-        <widget class="QLabel" name="lZ" >
          <property name="text" >
-          <string>Z</string>
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
-       <item row="7" column="5" >
-        <widget class="QLineEdit" name="leZ" >
+       <item row="7" column="2" >
+        <widget class="QPushButton" name="pbY" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="statusTip" >
-          <string>Z</string>
+          <string>Y</string>
+         </property>
+         <property name="text" >
+          <string>Y</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="3" >
+        <widget class="QLabel" name="lY" >
+         <property name="statusTip" >
+          <string>Y</string>
+         </property>
+         <property name="text" >
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
          </property>
         </widget>
        </item>
        <item row="8" column="0" >
-        <widget class="QLabel" name="lStart" >
+        <widget class="QPushButton" name="pbR" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip" >
+          <string>R</string>
+         </property>
+         <property name="text" >
+          <string>R</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1" >
+        <widget class="QLabel" name="lR" >
+         <property name="statusTip" >
+          <string>R</string>
+         </property>
+         <property name="text" >
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="2" >
+        <widget class="QPushButton" name="pbZ" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip" >
+          <string>Z</string>
+         </property>
+         <property name="text" >
+          <string>Z</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="3" >
+        <widget class="QLabel" name="lZ" >
+         <property name="statusTip" >
+          <string>Z</string>
+         </property>
+         <property name="text" >
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0" >
+        <widget class="QPushButton" name="pbStart" >
+         <property name="maximumSize" >
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip" >
+          <string>Start</string>
+         </property>
          <property name="text" >
           <string>Start</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="1" >
-        <widget class="QLineEdit" name="leStart" >
+       <item row="9" column="1" >
+        <widget class="QLabel" name="lStart" >
          <property name="statusTip" >
           <string>Start</string>
          </property>
+         <property name="text" >
+          <string>-</string>
+         </property>
+         <property name="indent" >
+          <number>20</number>
+         </property>
         </widget>
        </item>
-       <item row="8" column="4" colspan="2" >
+       <item row="9" column="2" colspan="2" >
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType" >
+          <enum>QSizePolicy::Maximum</enum>
+         </property>
+         <property name="sizeHint" >
+          <size>
+           <width>20</width>
+           <height>21</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="10" column="1" colspan="2" >
         <spacer>
          <property name="orientation" >
           <enum>Qt::Vertical</enum>
@@ -581,20 +792,7 @@
          <property name="sizeHint" >
           <size>
            <width>20</width>
-           <height>2</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="9" column="0" colspan="6" >
-        <spacer>
-         <property name="orientation" >
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" >
-          <size>
-           <width>478</width>
-           <height>16</height>
+           <height>81</height>
           </size>
          </property>
         </spacer>
@@ -682,8 +880,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>369</x>
-     <y>314</y>
+     <x>373</x>
+     <y>399</y>
     </hint>
     <hint type="destinationlabel" >
      <x>383</x>
@@ -698,8 +896,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>463</x>
-     <y>313</y>
+     <x>467</x>
+     <y>399</y>
     </hint>
     <hint type="destinationlabel" >
      <x>453</x>
