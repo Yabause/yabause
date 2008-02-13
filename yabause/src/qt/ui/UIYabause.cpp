@@ -19,12 +19,12 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "UIYabause.h"
-#include "Settings.h"
+#include "../Settings.h"
 #include "UISettings.h"
 #include "UICheats.h"
 #include "UIAbout.h"
 #include "../YabauseGL.h"
-#include "QtYabause.h"
+#include "../QtYabause.h"
 #include "../CommonDialogs.h"
 
 #include <QKeyEvent>

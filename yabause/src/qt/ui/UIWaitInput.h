@@ -2,7 +2,7 @@
 #define UIWAITINPUT_H
 
 #include "ui_UIWaitInput.h"
-#include "QtYabause.h"
+#include "../QtYabause.h"
 
 class UIWaitInput : public QDialog, public Ui::UIWaitInput
 {

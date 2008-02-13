@@ -20,6 +20,7 @@ TARGET	= yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
 LIBS	+= -L../ -lyabause
+win32:LIBS	+= -lopengl32
 !mac:LIBS	+= -lSDL -lglut
 else:LIBS	+= -framework SDL -framework IOKit -framework glut
 
@@ -48,7 +49,9 @@ DEFINES	+= STDC_HEADERS=1 \
 	HAVE_C99_VARIADIC_MACROS=1 \
 	HAVE_C68K=1 \
 	USENEWPERINTERFACE=1
-DEBUG	= 1
+	DEBUG=1
+
+win32:DEFINES	+= _WIN32_IE=0x0400
 
 BUILD_PATH	= ./build
 BUILDER	= GNUMake

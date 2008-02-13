@@ -22,7 +22,7 @@
 #define UISETTINGS_H
 
 #include "ui_UISettings.h"
-#include "QtYabause.h"
+#include "../QtYabause.h"
 
 class UISettings : public QDialog, public Ui::UISettings
 {
