@@ -23,6 +23,8 @@ LIBS	+= -L../ -lyabause
 win32:LIBS	+= -lopengl32
 !mac:LIBS	+= -lSDL -lglut
 else:LIBS	+= -framework SDL -framework IOKit -framework glut
+RESOURCES	+= resources/resources.qrc
+mac:ICON	+= resources/icons/yabause.icns
 
 # program defines
 DEFINES	+= "PACKAGE_NAME=\"\\\"yabause\\\"\"" \
@@ -48,7 +50,7 @@ DEFINES	+= STDC_HEADERS=1 \
 	HAVE_LIBGL=1 \
 	HAVE_C99_VARIADIC_MACROS=1 \
 	HAVE_C68K=1 \
-	USENEWPERINTERFACE=1
+	USENEWPERINTERFACE=1 \
 	DEBUG=1
 
 win32:DEFINES	+= _WIN32_IE=0x0400
@@ -116,5 +118,3 @@ SOURCES	+= main.cpp \
 	CommonDialogs.cpp \
 	PerQt.c \
 	ui/UIWaitInput.cpp
-
-RESOURCES	+= resources/resources.qrc

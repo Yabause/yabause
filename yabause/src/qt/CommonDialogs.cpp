@@ -16,10 +16,10 @@ QString CommonDialogs::getItem( const QStringList i, const QString& l, const QSt
 	return b ? s : QString();
 }
 
-QString CommonDialogs::getSaveFileName( const QString& d, const QString& f, const QString& c )
+QString CommonDialogs::getSaveFileName( const QString& d, const QString& c, const QString& f )
 { return QFileDialog::getSaveFileName( QApplication::activeWindow(), c, d, f ); }
 
-QString CommonDialogs::getOpenFileName( const QString& d, const QString& f, const QString& c )
+QString CommonDialogs::getOpenFileName( const QString& d, const QString& c, const QString& f )
 { return QFileDialog::getOpenFileName( QApplication::activeWindow(), c, d, f ); }
 
 QString CommonDialogs::getExistingDirectory( const QString& d, const QString& c, QFileDialog::Options o )
