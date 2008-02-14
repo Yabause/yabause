@@ -3925,4 +3925,160 @@ void SNDDummySetVolume(int volume)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// Wave File Output Sound Interface
+//////////////////////////////////////////////////////////////////////////////
+
+int SNDWavInit();
+void SNDWavDeInit();
+int SNDWavReset();
+int SNDWavChangeVideoFormat(int vertfreq);
+void SNDWavUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
+u32 SNDWavGetAudioSpace();
+void SNDWavMuteAudio();
+void SNDWavUnMuteAudio();
+void SNDWavSetVolume(int volume);
+
+SoundInterface_struct SNDWave = {
+SNDCORE_WAV,
+"Wave File Ouput Interface",
+SNDWavInit,
+SNDWavDeInit,
+SNDWavReset,
+SNDWavChangeVideoFormat,
+SNDWavUpdateAudio,
+SNDWavGetAudioSpace,
+SNDWavMuteAudio,
+SNDWavUnMuteAudio,
+SNDWavSetVolume
+};
+
+char *wavefilename=NULL;
+static FILE *wavefp;
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SNDWavInit()
+{
+   waveheader_struct waveheader;
+   fmt_struct fmt;
+   chunk_struct data;
+
+   if (wavefilename)
+   {
+
+      if ((wavefp = fopen(wavefilename, "wb")) == NULL)
+         return -1;
+   }
+   else
+   {
+      if ((wavefp = fopen("scsp.wav", "wb")) == NULL)
+         return -1;
+   }
+
+   // Do wave header
+   memcpy(waveheader.riff.id, "RIFF", 4);
+   waveheader.riff.size = 0; // we'll fix this after the file is closed
+   memcpy(waveheader.rifftype, "WAVE", 4);
+   fwrite((void *)&waveheader, 1, sizeof(waveheader_struct), wavefp);
+
+   // fmt chunk
+   memcpy(fmt.chunk.id, "fmt ", 4);
+   fmt.chunk.size = 16; // we'll fix this at the end
+   fmt.compress = 1; // PCM
+   fmt.numchan = 2; // Stereo
+   fmt.rate = 44100;
+   fmt.bitspersample = 16;
+   fmt.blockalign = fmt.bitspersample / 8 * fmt.numchan;
+   fmt.bytespersec = fmt.rate * fmt.blockalign;
+   fwrite((void *)&fmt, 1, sizeof(fmt_struct), wavefp);
+
+   // data chunk
+   memcpy(data.id, "data", 4);
+   data.size = 0; // we'll fix this at the end
+   fwrite((void *)&data, 1, sizeof(chunk_struct), wavefp);
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SNDWavDeInit()
+{
+   if (wavefp)
+   {
+      long length = ftell(wavefp);
+
+      // Let's fix the riff chunk size and the data chunk size
+      fseek(wavefp, sizeof(waveheader_struct)-0x8, SEEK_SET);
+      length -= 0x4;
+      fwrite((void *)&length, 1, 4, wavefp);
+
+      fseek(wavefp, sizeof(waveheader_struct)+sizeof(fmt_struct)+0x4, SEEK_SET);
+      length -= sizeof(waveheader_struct)+sizeof(fmt_struct);
+      fwrite((void *)&length, 1, 4, wavefp);
+      fclose(wavefp);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SNDWavReset()
+{
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SNDWavChangeVideoFormat(int vertfreq)
+{
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SNDWavUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples)
+{
+   s16 stereodata16[44100 / 50];
+   ScspConvert32uto16s((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, (s16 *)stereodata16, num_samples);
+   fwrite((void *)stereodata16, sizeof(s16) * 2, num_samples, wavefp);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SNDWavGetAudioSpace()
+{
+   /* A "hack" to get sound core working enough
+    * so videos are not "freezing". Values have been
+    * found by experiments... I don't have a clue why
+    * they are working ^^;
+    */
+   static int i = 0;
+   i++;
+   if (i == 55) {
+	i = 0;
+   	return 85;
+   } else {
+        return 0;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SNDWavMuteAudio()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SNDWavUnMuteAudio()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SNDWavSetVolume(int volume)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
 

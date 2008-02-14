@@ -25,6 +25,7 @@
 
 #define SNDCORE_DEFAULT -1
 #define SNDCORE_DUMMY   0
+#define SNDCORE_WAV     10 // should really be 1, but I'll probably break people's stuff
 
 typedef struct
 {
@@ -68,6 +69,7 @@ typedef struct
 } ScspInternal;
 
 extern SoundInterface_struct SNDDummy;
+extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;
 
 u8 FASTCALL SoundRamReadByte(u32 addr);
