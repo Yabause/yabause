@@ -40,8 +40,10 @@ NULL
 
 PerInterface_struct *PERCoreList[] = {
 &PERDummy,
-#if defined( HAVE_LIBSDL ) && defined( USENEWPERINTERFACE )
+#if defined( HAVE_LIBSDL )
+&PERSDL,
 &PERSDLJoy,
+&PERQTSDL,
 #endif
 &PERQT,
 NULL
@@ -88,6 +90,9 @@ extern "C"
 	{ return 0; }
 
 	void YuiSetVideoAttribute(int /*type*/, int /*val*/)
+	{}
+	
+	void YuiQuit()
 	{}
 
 	void YuiSwapBuffers()

@@ -33,6 +33,7 @@ extern "C"
 	#include "../cdbase.h"
 	#include "../scsp.h"
 	#include "../sndsdl.h"
+	#include "../persdl.h"
 	#include "../persdljoy.h"
 	#include "../debug.h"
 	#include "../m68kcore.h"
@@ -46,6 +47,7 @@ extern "C"
 	#include "../memory.h"
 	
 	#include "PerQt.h"
+	#include "PerQtSDL.h"
 }
 
 class UIYabause;
