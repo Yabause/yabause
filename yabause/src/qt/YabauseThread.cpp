@@ -160,8 +160,8 @@ void YabauseThread::resetYabauseConf()
 	memset( mYabauseConf, 0, sizeof( yabauseinit_struct ) );
 	// fill default structure
 	mYabauseConf->m68kcoretype = M68KCORE_C68K;
-#if defined( HAVE_LIBSDL ) && defined( USENEWPERINTERFACE )
-	mYabauseConf->percoretype = PERCORE_SDLJOY;
+#ifdef USENEWPERINTERFACE
+	mYabauseConf->percoretype = PERCORE_QT;
 #else
 	mYabauseConf->percoretype = PERCORE_DUMMY;
 #endif
