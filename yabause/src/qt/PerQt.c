@@ -30,7 +30,7 @@ PortData_struct *PERQTGetPerDataP2(void);
 
 static PortData_struct port1;
 static PortData_struct port2;
-u32 PERQTScan(const char * name);
+u32 PERQTScan(const char* name);
 void PERQTFlush(void);
 #endif
 
@@ -107,6 +107,7 @@ PerInfo_struct* PERQTGetList(void)
 {
    // Returns a list of peripherals available along with information on each
    // peripheral
+	return 0;
 }
 
 u32 PERQTScan(const char* name)
