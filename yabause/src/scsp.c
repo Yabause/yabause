@@ -285,6 +285,8 @@ static s32		scsp_null_rate[0x20];			// null enveloppe step
 
 static s32		scsp_lfo_step[32];			// directly give the lfo counter step
 
+static s32              scsp_tl_table[256];                      // table of values for total level attentuation
+
 static u8		scsp_reg[0x1000];
 
 static u8		* scsp_isr;
@@ -628,7 +630,7 @@ void scsp_slot_set_b(u32 s, u32 a, u8 d)
 		return;
 
         case 0x0D: // TL
-		slot->tl = (d & 0xFF) << 2;				// adjusted for enveloppe substract
+                slot->tl = scsp_tl_table[(d & 0xFF)];
 		return;
 
         case 0x0E: // MDL/MDXSL(highest 4 bits)
@@ -830,7 +832,7 @@ void scsp_slot_set_w(u32 s, s32 a, u16 d)
         case 0x6: // STWINH/SDIR
 		slot->sdir = (d >> 8) & 2;
 		slot->swe = (d >> 8) & 1;
-		slot->tl = (d & 0xFF) << 2;				// adjusted for enveloppe substract
+                slot->tl = scsp_tl_table[(d & 0xFF)];
 		return;
 
         case 0x7: // MDL/MDXSL/MDYSL
@@ -1355,11 +1357,11 @@ u16 scsp_get_w(u32 a)
 #define SCSP_GET_OUT_16B        \
                 out = (s32) slot->buf16[slot->fcnt >> SCSP_FREQ_LB];
 
-#define SCSP_GET_ENV		\
-		env = scsp_env_table[slot->ecnt >> SCSP_ENV_LB] - slot->tl;
+#define SCSP_GET_ENV            \
+                env = scsp_env_table[slot->ecnt >> SCSP_ENV_LB] * slot->tl / 1024;
 
-#define SCSP_GET_ENV_LFO	\
-		env = (scsp_env_table[slot->ecnt >> SCSP_ENV_LB] - slot->tl) - (slot->lfoemw[(slot->lfocnt >> SCSP_LFO_LB) & SCSP_LFO_MASK] >> slot->lfoems);
+#define SCSP_GET_ENV_LFO        \
+                env = (scsp_env_table[slot->ecnt >> SCSP_ENV_LB] * slot->tl / 1024) - (slot->lfoemw[(slot->lfocnt >> SCSP_LFO_LB) & SCSP_LFO_MASK] >> slot->lfoems);
 
 #define SCSP_OUT_8B_L		\
 		if ((out) && (env > 0))							\
@@ -2626,6 +2628,9 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
                 SCSPLOG("attack rate[%d] = %.8X -> %.8X\n", i, scsp_attack_rate[i], scsp_attack_rate[i] >> SCSP_ENV_LB);
                 SCSPLOG("decay rate[%d] = %.8X -> %.8X\n", i, scsp_decay_rate[i], scsp_decay_rate[i] >> SCSP_ENV_LB);
 	}
+
+        for(i = 0; i < 256; i++)
+           scsp_tl_table[i] = scsp_round(pow(10, ((double)i * -0.3762) / 20) * 1024.0);
 
 	scsp_reset();
 }
