@@ -47,7 +47,7 @@ extern "C"
 	#include "../memory.h"
 	
 	#include "PerQt.h"
-	#include "PerQtSDL.h"
+	#include "PerJSW.h"
 }
 
 class UIYabause;
