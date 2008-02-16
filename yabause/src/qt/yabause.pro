@@ -58,7 +58,7 @@ win32:DEFINES	+= _WIN32_IE=0x0400
 BUILD_PATH	= ./build
 BUILDER	= GNUMake
 COMPILER	= G++
-EXECUTE_RELEASE	= yabause.app/Contents/MacOS/yabause
+EXECUTE_RELEASE	= yabause
 EXECUTE_DEBUG	= yabause_debug
 
 CONFIG(debug, debug|release) {
@@ -82,6 +82,9 @@ CONFIG(debug, debug|release) {
 	RCC_DIR	= $${BUILD_PATH}/release/.rcc
 }
 
+# include jsw library files
+include( "3rdparty/libjsw.pri" )
+
 FORMS	+= ui/UIYabause.ui \
 	ui/UISettings.ui \
 	ui/UIAbout.ui \
@@ -103,7 +106,8 @@ HEADERS	+= ui/UIYabause.h \
 	CommonDialogs.h \
 	PerQt.h \
 	ui/UIWaitInput.h \
-	PerQtSDL.h
+	JSWHelper.h \
+	PerJSW.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -119,4 +123,5 @@ SOURCES	+= main.cpp \
 	CommonDialogs.cpp \
 	PerQt.c \
 	ui/UIWaitInput.cpp \
-	PerQtSDL.c
+	JSWHelper.cpp \
+	PerJSW.cpp
