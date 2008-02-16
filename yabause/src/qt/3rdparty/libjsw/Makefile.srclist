@@ -1,0 +1,4 @@
+SRC_H = forcefeedback.h
+SRC_C = axisio.c attributes.c buttonio.c calibrationfio.c	\
+        forcefeedback.c main.c utils.c
+SRC_CPP = fio.cpp disk.cpp string.cpp

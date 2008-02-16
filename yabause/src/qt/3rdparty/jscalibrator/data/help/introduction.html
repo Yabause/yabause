@@ -1,0 +1,180 @@
+<html>
+
+<head>
+<title>libjsw - Introduction</title>
+</head>
+
+<body
+ bgcolor="ffffff"
+ text="000000"
+ link="0000ff"
+ vlink="800080"
+ alink="d0d0d0"
+>
+
+<a name="top">
+
+<left>
+
+[<a href="index.html">Contents</a>]
+
+<hr>
+
+<a name="introduction">
+<h2>Introduction To libjsw</h2>
+
+<p>The libjsw system is a methoid for UNIX programs to interact with the
+joysticks and other game controllers using a standardized methoid of input
+and output. </p>
+
+<p> The libjsw system consists of a library (<code>libjsw</code>) and
+supporting programs such as <code>jscalibrator</code> that interact with
+the libjsw system at the library level.</p>
+
+<p>This makes possible, a common set of calibration and correction values
+for all programs that use libjsw. There is also a version of
+libjsw for Win32, enabling UNIX programs that use libjsw to be portable to
+Windows. </p>
+
+
+<a name="terminology">
+<h2>Terminology</h2>
+
+<p>The libjsw system uses the following terms to describe calibration.</p>
+
+<ul>
+
+<li>Device Name - The libjsw system reffers to joysticks by their device
+names, usually <code>/dev/js#</code> where <code>#</code> is a number. For
+USB joysticks, the notation is <code>/dev/input/js#</code>. Note that
+these device name notations match Linux <i>device file paths</i> for 
+joysticks.
+
+<li>Axis - Represents a one dimensional path of motion for a moveable part
+on a joystick or any game controller. For example most joysticks have
+atleast one stick that moves in two dimensions, this would count as two
+axises. Newer joysticks have rotatable sticks, rudder pedals, throttles,
+etc which will count as additional axises.
+
+<li>Range of Motion - The range of motion is the set of values that an
+axis can encompass. The range of motion consists of three primary
+reference points; <i>minimum</i>, <i>center</i>, and <i>maximum</i>.
+These points are usually determined through the process of calibration.
+
+<li>Null Zone - A range of values near the <i>center</i> where the input
+value from the physical joystick produces a 0 output value by libjsw. Some
+axises can be set by the user to have no null zone what so ever.
+
+<li>Correction Level - The libjsw system offers several levels of error
+correction. The current supported values are 0, 1, and 2, where 0 specifies
+no error correction and 2 specifies the maximum amount of error correction
+supported (higher levels may be supported in the future). Error correction
+involves libjsw checking an input value from the physical joystick,
+correcting it, and then giving a modified/corrected output value.
+
+<li>Dead Zone - A range of values defined by two bounds that are typically
+very close to the <i>center</i>, this range of values are input values from
+the physical joystick that are erratic and difficult to interprite. When
+<i>correction level</i> is set to 0, this range of values are interprited
+"as is". However if <i>correction level</i> is positive, then these values
+will be "corrected" to the best that libjsw can. Higher levels of
+<i>correction level</i> will produce better dead zone corrections. If the
+entire or a part of the <i>dead zone</i> lies <u>within</u> the <i>null
+zone</i>, then that entire or part of the <i>dead zone</i> will be 
+interprited as 0 output.
+
+<li>Correctional Coefficient - The maximum coefficient value used as 
+corrected output when the input values are within the <i>dead zone</i>.
+This only has affect when <i>correction level</i> is set to level 1 or
+higher. See <a href="#error_correction">Error Correction</a> below.
+
+</ul>
+
+
+<a name="how_libjsw_works">
+<h2>How libjsw Works</h2>
+
+<p>libjsw calibrates joysticks using <code>jscalibrator</code> or any
+compliant supporting software. See <a href="how_to_calibrate.html">How To
+Calibrate</a> for instructions on using <code>jscalibrator</code> to
+calibrate your joysticks. </p>
+
+<p>Calibrated joystick values are usually stored in the file
+<code>.joystick</code> located in the user's home directory. If you do not
+have this file then you should run <code>jscalibrator</code> to calibrate
+your joysticks for the first time. The Win32 version of libjsw stores the
+calibration in the file <code>C:\WINDOWS\LIBJSW.INI</code> </p>
+
+<p>When a program that uses the libjsw library runs and decides to open a
+joystick using the libjsw library, libjsw first checks for the calibration
+file and if it exists it will be loaded along with the joystick that the
+program wants to open. The program can then request values from the
+joystick through libjsw, libjsw can give either raw joystick values or
+calibrated corrected output values (whichever the program wants). </p>
+
+<p>Note that libjsw cannot provide calibrated and corrected output if the
+calibration file does <u>not</u> exist. Remember to <u>calibrate your
+joystick(s) first</u>, before running any program that uses libjsw. You may
+also need to calibrate your joysticks periodically from time to time, since
+the mechanical parts within a joystick may errode with time and use. </p>
+
+<p>To learn how to write your own programs to use libjsw, see <code>man
+JSIntro</code> or visit the libjsw home page at
+<a href="http://wolfpack.twu.net/libjsw">http://wolfpack.twu.net/libjsw</a>
+</p>
+
+
+<a name="error_correction">
+<h2>Error Correction</h2>
+
+<p>The libjsw system offers several layers of advanced error correction.
+When <i>correction level</i> is set to level 1 or higher, libjsw
+will take input values from the physical joystick and give corrected
+output values for functions <code>JSGetAxisCoeff()</code> and
+<code>JSGetAxisCoeffNZ()</code> (see <code>man JSGetAxisCoeff</code>
+for programming information).
+The correction that libjsw performs on the pipeline is as follows:
+</p>
+<ol>
+ <li>Get raw input values from joystick
+ <li>Ignore if no change
+ <li>If input value falls inside the <i>null zone</i> then output a value
+of 0.
+ <li>If input value falls inside the <i>dead zone</i> then correct it and
+output the corrected value.
+ <li>All else take input value and output a value based on the axis
+position from the maximum as a coefficient.
+</ol>
+
+<p> The above are generalized outlines of what to expect with corrected
+values, they do not represent the exact equations used by libjsw (inquire
+with <a href="contacts.html">authors</a> about that). </p>
+
+<p>
+Below is a graph that represents the input versus output values using
+error correction with a defined <i>null zone</i> and <i>dead zone</i>.
+</p>
+<img src="io_graph_correction.png">
+
+
+<br>
+<font size="1">
+Back to the <a href="#top">top</a>
+</font>
+
+
+<!-- Footer -->
+<hr>
+<table width="100%" border="0" cellspacing="0" cellpadding="5">
+<tr><td align="right">
+ <font size="1">
+ <a href="http://wolfpack.twu.net/libjsw">libjsw</a> is
+ Copyright &copy; 1997-2005
+ <a href="http://wolfpack.twu.net/">WolfPack Entertainment</a>
+ </font>
+</td></tr>
+</table>
+
+</left>
+</body>
+</html>

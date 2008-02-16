@@ -1,0 +1,195 @@
+<html>
+
+<head>
+<title>libjsw - How To Calibrate</title>
+</head>
+
+<body
+ bgcolor="ffffff"
+ text="000000"
+ link="0000ff"
+ vlink="800080"
+ alink="d0d0d0"
+>
+ 
+<a name="top">
+
+<left>
+
+[<a href="index.html">Contents</a>]
+
+<hr>
+
+<a name="axis_layouts">
+<h2>Axis Layouts</h2>
+
+<p>
+<code>jscalibrator</code> features two methoids for calibrating
+joysticks; <i>representative</i> or <i>logical</i>
+axis layout.
+</p>
+
+<p>
+The <i>representative</i> axis layout (depicted below) shows a diagram
+of what a typical joystick looks like with cross hairs and ticks indicating
+the current axis positions. The solid circle in the smaller top grid
+represents the hat, the big grid in the center represents the standard
+x and y axises, the vertical bar on the right represents the throttle
+axis, and the horizontal bar on the bottom represents the rotate or
+steering wheel axis.
+</p>
+
+<img src="representative_axis_layout.png">
+
+<p>
+The above methoid of calibration is usually the easiest and fastest but
+lacks the ability the set precise specifications.
+</p>
+
+<p>
+Logical layout (depicted below) offers a more advanced level 
+of calibration. Each axis is presented as a separate line with
+its current position and attributes. The horizontal window with an arrow 
+pointing down along a ruler is called the <i>axis 
+gauge</i>, the ruler ticks are in units of 25% where the center
+tick is 0% and the left and right most ticks are -100% and 100% 
+(respectivly).
+</p>
+
+<img src="logical_axis_layout.png">
+
+<p>
+Each axis has the following attributes (as shown below);
+<i>null zone</i>, <i>correction level</i>, <i>dead zone</i> (min &amp;
+max), <i>correctional coefficient</i>, etc. Reffer to the
+<a href="introduction.html#terminology">Introduction</a> for
+definitions on these attributes.
+</p>
+
+<img src="logical_axis_bar.png">
+
+
+<a name="representative_calibration">
+<h2>Representative Calibration</h2>
+
+<p>
+To calibrate using the <i>representative axis layout</i>, first click on
+the Representative tab as needed to get to the representative axis layout
+page. Next click on the <img src="calibrate_button1.png"> toggle button to
+begin calibrating.
+</p>
+
+<p>
+Move all axises through their full range of motion (including the hats if
+you have them) and return all axises to their <i>centers</i>.
+</p>
+
+<p>
+Click on the <img src="calibrate_button1.png"> toggle button again to
+process the calibrated values and end calibration (this may take a few
+seconds).
+</p>
+
+<p>
+The <i>null zone</i> and other parameters will be set by the program to
+their most useable values. If these values are not satisfactory or you
+wish to set additional parameters, then you should perform a calibration
+using the <i>logical axis layout</i> (see next section).
+</p>
+
+
+<a name="logical_calibration">
+<h2>Logical Calibration</h2>
+
+<p>
+To calibrate using the <i>logical axis layout</i>, first click on the
+Logical tab as needed to get to the logical axis layout page. Next click
+on the <img src="calibrate_button2.png"> toggle button next to the axis
+you want to calibrate to begin calibrating that axis.
+</p>
+
+<p>Move just that axis through its full range of motion and then return it
+to its <i>center</i>.</p>
+
+<p>Click on the <img src="calibrate_button2.png"> toggle button again to
+process the calibrated values and end calibration (this may take a few
+seconds).</p>
+
+<p>
+Next you can adjust the <i>null zone</i>, <i>correction level</i>,
+<i>dead zone</i>, and other parameters for that axis. If you are unsure
+about what a parameter does, then you should look it up in the
+definitions described in the
+<a href="introduction.html#terminology">Introduction</a>.
+</p>
+
+<p>
+The <i>null zone</i> is depicted as a grey region near the center on
+the axis gauge (shown below). The <i>dead zone</i> is shown only when
+<i>correction level</i> is set to level 1 or greater, the <i>dead
+zone</i> is depicted as a slightly thicker black bar parallel to the
+ruler with two vertical bars representing the min and max bounds.
+</p>
+
+<img src="axis_gauge.png">
+
+<p>
+Adjust the <i>null zone</i> to cover the range where the arrow seems to
+"fluctuate" when you are not touching the stick.
+</p>
+
+<p>
+If the axis seems to give "erratic" values <u>when moved</u> in a range
+near the center, then set the <i>correction level</i> to 1 (or higher)
+and adjust the <i>dead zone</i> (both min and max) to cover this range.
+Once you have the <i>dead zone</i> range set, you need to specify the
+<i>correctional coefficient</i> for both the the min and max <i>dead
+zone</i> ranges. A typical <i>correctional coefficient</i> would be 0.1,
+decrease the <i>correctional coefficient</i> for a greater "dampening"
+affect on the <i>dead zone</i>.
+</p>
+
+
+
+<a name="saving_calibration">
+<h2>Saving Calibration</h2>
+
+<p>
+Once you are satisfied with the calibration, you should save it to
+file. Simply go to Calibration-&gt;Save, the calibration will be saved
+to the default calibration file found in your home directory.
+</p>
+
+<p>
+Calibration for other devices found in that file (if it already exists)
+will be preserved.
+</p>
+
+<p>
+You can select another joystick device to calibrate from the
+<i>joystick device prompt</i>, click on the popdown button and select
+one from the list then press <code>ENTER</code>.
+</p>
+
+
+<br>
+<font size="1">
+Back to the <a href="#top">top</a>
+</font>
+
+
+<!-- Footer -->
+<hr>
+<table width="100%" border="0" cellspacing="0" cellpadding="5">
+<tr><td align="right">
+ <font size="1">
+ <a href="http://wolfpack.twu.net/libjsw">libjsw</a> is
+ Copyright &copy; 1997-2005
+ <a href="http://wolfpack.twu.net/">WolfPack Entertainment</a>
+ </font>
+</td></tr>
+</table>
+
+</left>
+</body>
+</html>

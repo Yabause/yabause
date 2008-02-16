@@ -1,0 +1,114 @@
+             J O Y S T I C K   W R A P P E R   L I B R A R Y
+
+            I N S T A L L A T I O N   I N S T R U C T I O N S
+
+
+    Basic Installation Overview:
+
+	Step 1: Install the Linux Joystick Driver.
+	Step 2: Install the Joystick Wrapper Library (libjsw).
+	Step 3: Install the Joystick Calibrator.
+	Step 4: Calibrate your Joystick(s).
+
+
+    1. Install the Linux Joystick Driver: (Linux only)
+
+	Note: Skip this step if you already have it installed. If you
+	have Linux 2.2.15 or newer then you may already have the
+	joystick drivers installed, check the directory:
+
+		/lib/modules/<linux_version>/misc/*joy*
+
+	As of Linux 2.6.x, check:
+
+		/lib/modules/<linux_version>/kernel/drivers/input/joydev.ko
+		/lib/modules/<linux_version>/kernel/drivers/input/joystick/
+		/lib/modules/<linux_version>/kernel/drivers/input/joystick/analog.ko
+
+
+	Download the Linux Joystick Driver 1.2.x at:
+
+	http://atrey.karlin.mff.cuni.cz/~vojtech/joystick/
+
+	-or-
+
+	ftp://atrey.karlin.mff.cuni.cz/pub/linux/joystick/joystick-1.2.14.tar.gz
+
+	Follow the instructions included in the Linux Joystick Driver.
+	Rememeber to load the joystick driver modules and install the
+	joystick.h header file in /usr/include/linux/joystick.h.
+
+
+    2. Install the Joystick Wrapper Library (libjsw):
+
+	Go to the `libjsw' subdirectory. Choose the most appropriate
+	Makefile for your system and type `make -f <makefile>' to
+	start the building process.
+
+	If there were no errors, then type `make -f <makefile> install'
+	(make sure you have root privlages).
+
+	Note: FreeBSD users should use gmake (devel/gmake) instead of make.
+
+
+    3. Build the Joystick Calibrator:
+
+	Go to the `jscalibrator' subdirectory. Choose the most appropriate
+	Makefile for your system and type `make -f <makefile>' to
+	start the building process.
+
+	If there were no errors, then type `make -f <makefile> install'
+	(make sure you have root privlages).
+
+
+    4. Calibrating your Joystick(s):
+
+	Make sure that you have your Linux Joystick Driver installed
+	properly and that the required modules are loaded. To load
+	the driver, type:
+
+	# modprobe joy-analog
+
+	Or for Linux 2.6.x
+
+	# modprobe joydev
+
+	You can also specify arguments when loading the joystick driver,
+	for example:
+
+	# modprobe joy-analog js_an=0x201,1023,0
+
+	Please read the Linux Joystick driver documentation for a list
+	of available arguments.
+
+	Now run jscalibrator to see if the driver was loaded properly:
+
+	# jscalibrator &
+
+	To open/select a joystick in jscalibrator, enter the joystick's
+	device path in jscalibrator's Joystick Device path entry.
+	Below is a list of joystick paths:
+
+	/dev/js0				Analog Joystick 1
+	/dev/js1				Analog Joystick 2
+	/dev/js2				Analog Joystick 3
+	/dev/js3				Analog Joystick 4
+	/dev/input/js0				USB Joystick 1
+	/dev/input/js1				USB Joystick 2
+	/dev/input/js2				USB Joystick 3
+	/dev/input/js3				USB Joystick 4
+
+	Note that SDL and some other non-libjsw programs use
+	/dev/input/event8, do not attempt to open the joystick device
+	using this path in jscalibrator as the methods those programs
+	use are not the same as jscalibrator.
+
+	The logical layout (look in the view menu) offers more advanced
+	and precise axis calibration options.
+
+	If you are having trouble getting exact calibration values, then
+	you can go to the logical layout and click on the axis's gauge
+	and you will be prompted for exact calibration values.
+
+                                                                 ======
+                                                                 LIBJSW

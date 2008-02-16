@@ -1,0 +1,8 @@
+SRC_H = cdialog.h config.h fb.h fprompt.h guiutils.h		\
+        helpmesgs.h jc.h jcjsprops.h pdialog.h pulist.h
+
+SRC_C = cdialog.c fb.c fprompt.c guiutils.c jc.c jccalib.c	\
+        jccb.c jcdraw.c jcfile.c jchelp.c jcjsprops.c		\
+        jcwidgets.c main.c pdialog.c pulist.c statusbar.c
+
+SRC_CPP = disk.cpp fio.cpp prochandle.cpp string.cpp

@@ -1,0 +1,86 @@
+# Generated automatically from Makefile.install.UNIX.in by configure.
+# Install values and rules for UNIX
+#
+#   Do not use this Makefile directly! It is intended to be called
+#   by another Makefile.
+#
+#   Note, the following parameters must be already defined by
+#   the calling Makefile:
+#
+#	BIN
+#	PREFIX
+#
+
+INSTALL      = install
+INSTBINFLAGS = -m 0755 -s
+INSTUIDFLAGS = -m 4755
+INSTLIBFLAGS = -m 0755 -s
+INSTINCFLAGS = -m 0444
+INSTMANFLAGS = -m 0444
+INSTCFGFLAGS = -m 0644
+INSTDATFLAGS = -m 0444
+
+COPY      = cp
+COPYFLAGS = -R -f
+
+MKDIR      = mkdir
+MKDIRFLAGS = -p
+
+MAN       = $(BIN).1.bz2
+ICON      = $(BIN).xpm
+
+BIN_DIR   = $(PREFIX)/bin
+MAN_DIR   = $(PREFIX)/man/man1
+DATA_DIR  = $(PREFIX)/share/libjsw
+ICONS_DIR = $(PREFIX)/share/icons
+
+HR = "-------------------------------------------------------------------------"
+
+install: preinstall install_bin install_data postinstall
+
+install_bin:
+	@echo "Installing $(BIN) -> $(BIN_DIR)"
+	@$(MKDIR) $(MKDIRFLAGS) $(BIN_DIR)
+	@$(INSTALL) $(INSTBINFLAGS) $(BIN) $(BIN_DIR)
+
+install_data:
+	@-$(RM) $(RMFLAGS) $(MAN_DIR)/$(BIN).1
+	@-$(RM) $(RMFLAGS) $(MAN_DIR)/$(BIN).1.gz
+	@echo "Installing $(MAN) -> $(MAN_DIR)"
+	@$(MKDIR) $(MKDIRFLAGS) $(MAN_DIR)
+	@$(INSTALL) $(INSTMANFLAGS) $(MAN) $(MAN_DIR)
+	@echo "Installing $(ICON) -> $(ICONS_DIR)"
+	@$(MKDIR) $(MKDIRFLAGS) $(ICONS_DIR)
+	@$(INSTALL) $(INSTDATFLAGS) $(ICON) $(ICONS_DIR)
+	@echo "Installing data files -> $(DATA_DIR)"
+	@$(MKDIR) $(MKDIRFLAGS) $(DATA_DIR)
+	@$(COPY) $(COPYFLAGS) data/* $(DATA_DIR)
+
+preinstall:
+	@echo "Installing \"$(BIN)\"..."
+
+postinstall:
+	@echo "Install done."
+	@echo $(HR)
+	@echo "Program $(BIN) installed in:"
+	@echo " "
+	@echo "        $(BIN_DIR)"
+	@echo " "
+	@echo "Manual pages installed in:"
+	@echo " "
+	@echo "        $(MAN_DIR)"
+	@echo " "
+	@echo "Icons installed in:"
+	@echo " "
+	@echo "        $(ICONS_DIR)"
+	@echo " "
+	@echo "Data files installed in:"
+	@echo " "
+	@echo "        $(DATA_DIR)"
+	@echo " "
+	@echo $(HR)
+	@echo " "
+	@echo "Installation complete!"
+	@echo " "
+	@echo "To run the application, use the command \"$(BIN) &\""
+	@echo " "

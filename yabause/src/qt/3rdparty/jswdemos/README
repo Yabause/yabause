@@ -1,0 +1,22 @@
+                       L I B J S W   D E M O S
+
+                   http://www.battlefieldlinux.com/wolfpack/libjsw/
+
+
+These are excerpts of working demo code from the libjsw online tutorial.
+
+You are assumed to know ANSI C, have libjsw installed, and ran
+jscalibrator atleast once to calibrate your joysticks.
+
+To compile all the demos, type:
+
+    # make
+
+
+You should learn by looking the respective demo's source code in the
+following order:
+
+    basic.c		Basic libjsw API procedures and usage
+    listing.c		How to list installed game controllers
+    axis_timming.c	Advanced axis event handling with critical timming
+    button_timming.c	Advanced button event handling with critical timming

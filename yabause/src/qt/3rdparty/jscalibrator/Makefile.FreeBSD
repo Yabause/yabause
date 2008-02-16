@@ -1,0 +1,166 @@
+# ########################################################################
+#
+#                  Makefile for Joystick Calibrator
+#
+#   Rules:
+#
+#	all	-- builds program.
+#	install -- install program.
+#	clean	-- remove object and other work files.
+#
+#       If no arguments are givin, the program is built by default.
+#
+
+
+# ########################################################################
+# Installation Options:
+#
+#   You may modify any value as needed. Change only the ones you are
+#   absolutly sure that requires modification.
+#
+PREFIX = /usr
+
+
+# ########################################################################
+# Compiler Flags:
+#
+#   These are definations to enable or disable certain compile time
+#   options. Omitting a defination turns that option off.
+#
+#   Each argument is of the format -D<option> where <option> is
+#   one of the following:
+#
+#	USE_GETDENTS		Use getdents() instead of readdir().
+#
+#       USE_XSHM		Enable MIT X Shared Memory.
+#
+#	JS_SUPPORT		Enable joystick support, requires libjsw
+#				which comes with X Joystick Calibrator.
+#				Add -ljsw to the LIB line farther below
+#				if you enable this.
+#
+#   Other arguments include:
+#
+#	-O#			Specifies the optimization level the
+#				compiler is to compile at. This (attempts)
+#				to improve the efficiency of the generated
+#				program when it runs. Available values for
+#				# are from 0 to 2 (some compilers allow
+#				higher values). When in doubt, set # to 2.
+#
+#	-g			Compile with debugging information,
+#				this is useful for determining why this
+#				program (if it did) crash. However this
+#				may hinder performance, so don't use
+#				this option unless you are attempting
+#				to debug the program.
+#
+
+#CFLAGS = -Wall -O -g \
+#         `gtk-config --cflags`
+
+CFLAGS = -Wall -O6 -funroll-loops -ffast-math \
+         `gtk-config --cflags`
+
+CPPFLAGS = -D__cplusplus
+
+
+# ########################################################################
+# Dependant Libraries:
+#
+#   These are dynamic (sometimes called shared) libraries that this
+#   program is to be `linked' to.
+#
+#   Each argument is of the format -l<name> where <name> is the name
+#   of the library. You may have to add one or more -l<name> arguments
+#   to the LIB line depending on what you have set in the CFLAGS line
+#   farther above.
+#
+LIBS = -ljsw `gtk-config --libs`
+
+# Library Directories:
+#
+#   All libraries are looked for in the directories specified below.
+#
+#   Each argument is of the format -L<dir> where <dir> is the full
+#   path to the directory.
+#
+LIB_DIRS =
+
+# Header File Directories:
+#
+#   Required header files that are not in the standard locations are
+#   searched for in the directories specified below.
+#
+#   Each argument is of the format -I<dir> where <dir> is the full
+#   path to the directory.
+#
+INC_DIRS =
+
+
+# ########################################################################
+# Program Source and Header Files:
+#
+#   Do not modify any values in this section unless you know what you
+#   are doing or have been instructed to do so.
+#
+include Makefile.srclist
+
+LS      = ls
+LSFLAGS = -s -h -c --color=auto
+RM      = rm
+RMFLAGS = -f
+
+CC  = cc
+CPP = c++
+BIN = jscalibrator
+OBJ_C   = $(SRC_C:.c=.o)
+OBJ_CPP = $(SRC_CPP:.cpp=.o)
+.c.o:
+	@echo "Compiling module $*.o"
+	@+$(CC) -c $*.c $(INC_DIRS) $(CFLAGS)
+.cpp.o:
+	@echo "Compiling module $*.o"
+	@+$(CPP) -c $*.cpp $(INC_DIRS) $(CFLAGS) $(CPPFLAGS)
+
+
+# ########################################################################
+# Build Rules:
+#
+$(BIN): prebuild modules postbuild
+
+modules: $(OBJ_C) $(OBJ_CPP)
+	@echo  -n "Linking modules..."
+	@$(CPP) $(OBJ_C) $(OBJ_CPP) -o $(BIN) $(LIBS) $(LIB_DIRS)
+	@echo -n "   "
+	@-$(LS) $(LSFLAGS) $(BIN)
+
+prebuild:
+	@echo "Building program \"$(BIN)\"..."
+
+postbuild:
+	@echo "Build done."
+	@echo "To install, type \"su\" (to gain root privileges) and then type \"make install\"."
+
+all: $(BIN)
+
+
+# ########################################################################
+# Install Rules:
+#
+#   This rule is defined externally.
+#
+include Makefile.install.UNIX
+
+
+# ########################################################################
+# Maintainance and Misc Rules:
+#
+clean:
+	@echo "Cleaning program \"$(BIN)\"..."
+	@echo "Deleting all intermediate files..."
+	@$(RM) $(RMFLAGS) a.out core *.o $(BIN)
+	@echo "Clean done."
+
+
+# ########################################################################
