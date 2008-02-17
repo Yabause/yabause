@@ -28,9 +28,12 @@
 #include "../debug.h"
 #include "PerQtSDL.h"
 
-u32 mCalibrate = 0;
-u32 mLastAxis0 = 0;
-u32 mLastAxis1 = 0;
+u32 mSDLoystickLastAxisP1[] = { 0, 0, 0, 0, 0, 0 }; // increase this if your joystick can handle more than 6 axis
+#ifdef __APPLE__
+Sint16 mSDLCenter = 128;
+#else
+Sint16 mSDLCenter = 0;
+#endif
 
 int PERQtSDLInit(void);
 void PERQtSDLDeInit(void);
@@ -96,36 +99,24 @@ u32 hashAxisValue( Uint8 a, Sint16 v )
 int PERQtSDLHandleEvents(void) {
 	SDL_Event e;
 	u32 k = 0;
-	SDL_PollEvent( &e ); // do test sans sdl pour rapidité
-	// polling only one or all event seem not fixing speed loss :( fucking sdl
+	SDL_PollEvent( &e );
 	//while ( SDL_PollEvent( &e ) )
 	{
 		switch ( e.type )
 		{
 			case SDL_JOYAXISMOTION:
-				k = e.jaxis.value;
-				if ( e.jaxis.axis == 2 )
-				{
-					mCalibrate = k;
-					break;
-				}
-				else if ( k == mCalibrate )
-				{
-					if ( e.jaxis.axis == 0 )
-						PerKeyUp( mLastAxis0 );
-					else if ( e.jaxis.axis == 1 )
-						PerKeyUp( mLastAxis1 );
-				}
+			{
+				Sint16 cur = e.jaxis.value;
+				if ( cur == mSDLCenter )
+					PerKeyUp( mSDLoystickLastAxisP1[e.jaxis.axis] );
 				else
 				{
 					k = hashAxisValue( e.jaxis.axis, e.jaxis.value );
-					if ( e.jaxis.axis == 0 )
-						mLastAxis0 = k;
-					else if ( e.jaxis.axis == 1 )
-						mLastAxis1 = k;
 					PerKeyDown( k );
+					mSDLoystickLastAxisP1[e.jaxis.axis] = k;
 				}
 				break;
+			}
 			case SDL_JOYBUTTONDOWN:
 				PerKeyDown( e.jbutton.button +1 );
 				break;
@@ -136,6 +127,8 @@ int PERQtSDLHandleEvents(void) {
 				break;
 		}
 	}
+	
+	PERQtSDLFlush();
 	
 	if (YabauseExec() != 0)
 		return -1;
@@ -199,17 +192,12 @@ u32 PERQtSDLScan( const char* n ) {
 	switch ( e.type )
 	{
 		case SDL_JOYAXISMOTION:
-			k = e.jaxis.value;
-			if ( e.jaxis.axis == 2 )
-			{
-				mCalibrate = k;
-				k = 0;
-			}
-			else if ( k == mCalibrate )
-				k = 0;
-			else
+		{
+			Sint16 cur = e.jaxis.value;
+			if ( cur != mSDLCenter )
 				k = hashAxisValue( e.jaxis.axis, e.jaxis.value );
 			break;
+		}
 		case SDL_JOYBUTTONDOWN:
 			k = e.jbutton.button +1;
 			break;
