@@ -152,10 +152,7 @@ void UISettings::tbBrowse_clicked()
 	else if ( tb == tbSaveStates )
 		requestFolder( tr( "Choose a folder to store save states" ), leSaveStates );
 	else if ( tb == tbCartridge )
-	{
-		CommonDialogs::information( tr( "Not yet implemented" ) );
-		return;
-	}
+		requestNewFile( tr( "Choose a cartridge file" ), leCartridge );
 	else if ( tb == tbMemory )
 		requestNewFile( tr( "Choose a memory file" ), leMemory );
 	else if ( tb == tbMpegROM )

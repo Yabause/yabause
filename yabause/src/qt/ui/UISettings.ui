@@ -6,7 +6,7 @@
     <x>0</x>
     <y>0</y>
     <width>507</width>
-    <height>411</height>
+    <height>422</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -642,7 +642,7 @@
        <item row="7" column="1" >
         <widget class="QLabel" name="lL" >
          <property name="statusTip" >
-          <string>L</string>
+          <string>Left trigger</string>
          </property>
          <property name="text" >
           <string>-</string>
@@ -700,7 +700,7 @@
        <item row="8" column="1" >
         <widget class="QLabel" name="lR" >
          <property name="statusTip" >
-          <string>R</string>
+          <string>Right trigger</string>
          </property>
          <property name="text" >
           <string>-</string>

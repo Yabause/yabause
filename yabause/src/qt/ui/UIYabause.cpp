@@ -97,90 +97,10 @@ void UIYabause::showEvent( QShowEvent* )
 }
 
 void UIYabause::keyPressEvent( QKeyEvent* e )
-{
-	switch ( e->key() )
-	{
-		case Qt::Key_Up:
-			/*
-			mPlayer1.UpPressed = true;
-			qWarning( "Pressed: Up" );
-			break;
-			*/
-		case Qt::Key_Down:
-			/*
-			mPlayer1.DownPressed = true;
-			qWarning( "Pressed: down" );
-			break;
-			*/
-		case Qt::Key_Left:
-			/*
-			mPlayer1.LeftPressed = true;
-			qWarning( "Pressed: Left" );
-			break;
-			*/
-		case Qt::Key_Right:
-			/*
-			mPlayer1.RightPressed = true;
-			qWarning( "Pressed: Right" );
-			break;
-			*/
-		case Qt::Key_Q:
-		case Qt::Key_S:
-		case Qt::Key_D:
-		case Qt::Key_W:
-		case Qt::Key_X:
-		case Qt::Key_C:
-		case Qt::Key_A:
-		case Qt::Key_Z:
-		case Qt::Key_Return:
-			PerKeyDown( e->key() );
-		default:
-			break;
-	}
-}
+{ PerKeyDown( e->key() ); }
 
 void UIYabause::keyReleaseEvent( QKeyEvent* e )
-{
-	switch ( e->key() )
-	{
-		case Qt::Key_Up:
-			/*
-			mPlayer1.UpPressed = false;
-			qWarning( "Released: Up" );
-			break;
-			*/
-		case Qt::Key_Down:
-			/*
-			mPlayer1.DownPressed = false;
-			qWarning( "Released: down" );
-			break;
-			*/
-		case Qt::Key_Left:
-			/*
-			mPlayer1.LeftPressed = false;
-			qWarning( "Released: Left" );
-			break;
-			*/
-		case Qt::Key_Right:
-			/*
-			mPlayer1.RightPressed = false;
-			qWarning( "Released: Right" );
-			break;
-			*/
-		case Qt::Key_Q:
-		case Qt::Key_S:
-		case Qt::Key_D:
-		case Qt::Key_W:
-		case Qt::Key_X:
-		case Qt::Key_C:
-		case Qt::Key_A:
-		case Qt::Key_Z:
-		case Qt::Key_Return:
-			PerKeyUp( e->key() );
-		default:
-			break;
-	}
-}
+{ PerKeyUp( e->key() ); }
 
 void UIYabause::swapBuffers()
 { mYabauseGL->swapBuffers(); }

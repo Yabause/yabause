@@ -53,22 +53,6 @@ protected:
 	//bool mForceRun;
 };
 
-struct PlayerInputState
-{
-	PlayerInputState()
-	{
-		UpPressed = false;
-		DownPressed = false;
-		LeftPressed = false;
-		RightPressed = false;
-	}
-
-	bool UpPressed;
-	bool DownPressed;
-	bool LeftPressed;
-	bool RightPressed;
-};
-
 class UIYabause : public QMainWindow, public Ui::UIYabause
 {
 	Q_OBJECT
@@ -85,7 +69,6 @@ protected:
 	YabauseThread* mYabauseThread;
 	QTextEdit* teLog;
 	bool mInit;
-	PlayerInputState mPlayer1;
 
 	virtual void closeEvent( QCloseEvent* event );
 	virtual void showEvent( QShowEvent* event );
