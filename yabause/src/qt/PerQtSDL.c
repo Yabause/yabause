@@ -22,12 +22,13 @@
 #ifdef __APPLE__
  #include <SDL/SDL.h>
 #else
- #include "SDL.h"
+ #include "SDL/SDL.h"
 #endif
 
 #include "../debug.h"
 #include "PerQtSDL.h"
 
+SDL_Joystick* mSDLJoystick1 = 0;
 u32 mSDLoystickLastAxisP1[] = { 0, 0, 0, 0, 0, 0 }; // increase this if your joystick can handle more than 6 axis
 #ifdef __APPLE__
 Sint16 mSDLCenter = 128;
@@ -71,15 +72,32 @@ PERQtSDLFlush
 //////////////////////////////////////////////////////////////////////////////
 
 int PERQtSDLInit(void) {
-   putenv( "SDL_VIDEODRIVER=dummy" );
-   SDL_InitSubSystem( SDL_INIT_JOYSTICK | SDL_INIT_VIDEO );
-   SDL_JoystickOpen( 0 );
-   return 0;
+	// init joysticks
+	if ( SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == -1 )
+		return -1;
+	// sdl will not add joystick event in sdlevent loop, we will request ourselves when needed
+	SDL_JoystickEventState( SDL_IGNORE );
+	// open first joystick
+	mSDLJoystick1 = SDL_JoystickOpen( 0 );
+	// is it open ?
+	if ( !mSDLJoystick1 )
+		return -1;
+	// success
+	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PERQtSDLDeInit(void) {
+	// close joystick
+	if ( mSDLJoystick1 )
+	{
+		 if ( SDL_JoystickOpened( 0 ) )
+			SDL_JoystickClose( mSDLJoystick1 );
+		mSDLJoystick1 = 0;
+	}
+	// close sdl joysticks
+	SDL_QuitSubSystem( SDL_INIT_JOYSTICK );
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -89,46 +107,83 @@ void PERQtSDLNothing(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 hashAxisValue( Uint8 a, Sint16 v )
+// this may need be moved in the PerCore interface so all core can call it
+u32 hashAxisSDL( Uint8 a, Sint16 v )
 {
-	u32 r = v < 0 ? -v : v;
-	a == 0 ? r-- : r++;
+	u32 r = v < 0 ? -v : v +1;
+	a % 2 ? r-- : r++;
+	r += 100; // to avoid conflict with buttons
 	return r;
 }
 
+int isSDLJoysticksSame( Sint16* oav, Uint8* obv, Sint16* nav, Uint8* nbv, int na, int nb )
+{
+	int i;
+	for ( i = 0; i < na; i++ )
+		if ( oav[i] != nav[i] )
+			return -1;
+	for ( i = 0; i < nb; i++ )
+		if ( obv[i] != nbv[i] )
+			return -1;
+	return 0;
+}
+
 int PERQtSDLHandleEvents(void) {
-	SDL_Event e;
-	u32 k = 0;
-	SDL_PollEvent( &e );
-	//while ( SDL_PollEvent( &e ) )
+	// if available joy
+	if ( mSDLJoystick1 )
 	{
-		switch ( e.type )
-		{
-			case SDL_JOYAXISMOTION:
-			{
-				Sint16 cur = e.jaxis.value;
-				if ( cur == mSDLCenter )
-					PerKeyUp( mSDLoystickLastAxisP1[e.jaxis.axis] );
-				else
-				{
-					k = hashAxisValue( e.jaxis.axis, e.jaxis.value );
-					PerKeyDown( k );
-					mSDLoystickLastAxisP1[e.jaxis.axis] = k;
-				}
-				break;
-			}
-			case SDL_JOYBUTTONDOWN:
-				PerKeyDown( e.jbutton.button +1 );
-				break;
-			case SDL_JOYBUTTONUP:
-				PerKeyUp( e.jbutton.button +1 );
-				break;
-			default:
-				break;
-		}
-	}
+		// check joystick
+		int i;
+		int na = SDL_JoystickNumAxes( mSDLJoystick1 );
+		int nb = SDL_JoystickNumButtons( mSDLJoystick1 );
 	
-	PERQtSDLFlush();
+		// remember last values before update joysticks values
+		Sint16* oav = malloc( na *sizeof( Sint16 ) );
+		for ( i = 0; i < na; i++ )
+			oav[i] = SDL_JoystickGetAxis( mSDLJoystick1, i );
+		Uint8* obv = malloc( nb *sizeof( Uint8 ) );
+		for ( i = 0; i < nb; i++ )
+			obv[i] = SDL_JoystickGetButton( mSDLJoystick1, i );
+		
+		// update joysticks states
+		SDL_JoystickUpdate();
+		
+		// get new values
+		Sint16* nav = malloc( na *sizeof( Sint16 ) );
+		for ( i = 0; i < na; i++ )
+			nav[i] = SDL_JoystickGetAxis( mSDLJoystick1, i );
+		Uint8* nbv = malloc( nb *sizeof( Uint8 ) );
+		for ( i = 0; i < nb; i++ )
+			nbv[i] = SDL_JoystickGetButton( mSDLJoystick1, i );
+		
+		// if differents update states
+		if ( isSDLJoysticksSame( oav, obv, nav, nbv, na, nb ) == -1 )
+		{
+			// check axis
+			for ( i = 0; i < na; i++ )
+			{
+				Sint16 cur = nav[i];
+				Sint16 cen = mSDLCenter; // need find a way to get neutral value for each axis
+				if ( cur == cen )
+					PerKeyUp( hashAxisSDL( i, oav[i] ) );
+				else
+					PerKeyDown( hashAxisSDL( i, cur ) );
+			}
+			// check buttons
+			for ( i = 0; i < nb; i++ )
+			{
+				if ( nbv[i] )
+					PerKeyDown( i +1 );
+				else
+					PerKeyUp( i +1 );
+			}
+		}
+		// free values
+		free( oav );
+		free( obv );
+		free( nav );
+		free( nbv );
+	}
 	
 	if (YabauseExec() != 0)
 		return -1;
@@ -185,24 +240,36 @@ PerInfo_struct *PERQtSDLGetList(void)
 //////////////////////////////////////////////////////////////////////////////
 
 u32 PERQtSDLScan( const char* n ) {
-	
-	SDL_Event e;
+	// if no available joy
+	if ( !mSDLJoystick1 )
+		return 0;
+	// check joystick
+	int i;
 	u32 k = 0;
-	SDL_PollEvent( &e );
-	switch ( e.type )
+	// update joysticks states
+	SDL_JoystickUpdate();
+	// check axis
+	for ( i = 4; i < SDL_JoystickNumAxes( mSDLJoystick1 ); i++ )
 	{
-		case SDL_JOYAXISMOTION:
+		Sint16 cur = SDL_JoystickGetAxis( mSDLJoystick1, i );
+		Sint16 cen = mSDLCenter;
+		if ( cur != cen )
 		{
-			Sint16 cur = e.jaxis.value;
-			if ( cur != mSDLCenter )
-				k = hashAxisValue( e.jaxis.axis, e.jaxis.value );
+			k = hashAxisSDL( i, cur );
 			break;
 		}
-		case SDL_JOYBUTTONDOWN:
-			k = e.jbutton.button +1;
-			break;
-		default:
-			k = 0;
+	}
+	// check buttons
+	if ( k == 0 )
+	{
+		for ( i = 0; i < SDL_JoystickNumButtons( mSDLJoystick1 ); i++ )
+		{
+			if ( SDL_JoystickGetButton( mSDLJoystick1, i ) )
+			{
+				k = i +1;
+				break;
+			}
+		}
 	}
 	if ( k != 0 )
 		PerSetKey( k, n );
@@ -210,8 +277,6 @@ u32 PERQtSDLScan( const char* n ) {
 }
 
 void PERQtSDLFlush(void) {
-	SDL_Event e;
-	while ( SDL_PollEvent( &e ) );
 }
 
 #endif

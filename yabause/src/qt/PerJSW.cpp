@@ -27,7 +27,6 @@ extern "C"
 {
 	static JSWHelperAttributes* mJoysticks = 0;
 	static JSWHelperJoystick* mJoystickP1 = 0;
-	u32 mJoystickLastAxisP1[] = { 0, 0, 0, 0, 0, 0 }; // increase this if your joystick can handle more than 6 axis
 
 	int PERJSWInit(void);
 	void PERJSWDeInit(void);
@@ -89,6 +88,7 @@ extern "C"
 	{
 		u32 r = u32( v < 0 ? -v : v +1 );
 		a % 2 ? r-- : r++;
+		r += 100; // to not conflict with buttons
 		return r;
 	}
 
@@ -107,22 +107,17 @@ extern "C"
 					double cur = jsd.axis[i]->cur;
 					double cen = jsd.axis[i]->cen;
 					if ( cur == cen )
-						PerKeyUp( mJoystickLastAxisP1[i] );
+						PerKeyUp( hashAxis( i, jsd.axis[i]->prev ) );
 					else
-					{
-						u32 k = hashAxis( i, cur ) +100; // +100 to avoid conflict with buttons as cur range is -1.0 - +1.0
-						PerKeyDown( k );
-						mJoystickLastAxisP1[i] = k;
-					}
+						PerKeyDown( hashAxis( i, cur ) );
 				}
 				// check buttons
 				for ( int i = 0; i < jsd.total_buttons; i++ )
 				{
-					int bs = JSGetButtonState( &jsd, i );
-					if ( bs == 0 )
-						PerKeyUp( i +1 );
-					else
+					if ( JSGetButtonState( &jsd, i ) )
 						PerKeyDown( i +1 );
+					else
+						PerKeyUp( i +1 );
 				}
 			}
 		}
@@ -183,14 +178,14 @@ extern "C"
 		if ( JSUpdate( &jsd ) == JSGotEvent )
 		{
 			// check axis
-			for ( int i = 4; i < jsd.total_axises; i++ )
+			for ( int i = 0; i < jsd.total_axises; i++ )
 			{
 				// double cur = JSGetAxisCoeffNZ( &jsd, i ); // should normally use this is joy is calibrate using jscalibrator
 				double cur = jsd.axis[i]->cur;
 				double cen = jsd.axis[i]->cen;
 				if ( cur != cen )
 				{
-					k = hashAxis( i, cur ) +100; // +100 to avoid conflict with buttons as cur range is -1.0 - +1.0
+					k = hashAxis( i, cur );
 					break;
 				}
 			}

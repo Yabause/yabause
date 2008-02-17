@@ -58,7 +58,7 @@ win32:DEFINES	+= _WIN32_IE=0x0400
 BUILD_PATH	= ./build
 BUILDER	= GNUMake
 COMPILER	= G++
-EXECUTE_RELEASE	= yabause.app/Contents/MacOS/yabause
+EXECUTE_RELEASE	= yabause
 EXECUTE_DEBUG	= yabause_debug
 
 CONFIG(debug, debug|release) {
