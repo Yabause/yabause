@@ -67,6 +67,8 @@ extern "C"
 			mJoysticks = JSWHelper::joysticks();
 		if ( !mJoystickP1 )
 			mJoystickP1 = mJoysticks->joystick( 0 );
+		if ( !mJoystickP1 )
+			return 0;
 		if ( mJoystickP1->status() != JSSuccess )
 			PERJSWDeInit();
 		return mJoystickP1 ? ( mJoystickP1->status() == JSSuccess ? 0 : -1 ) : -1;
@@ -92,37 +94,36 @@ extern "C"
 
 	int PERJSWHandleEvents(void)
 	{
-		if ( !mJoystickP1 )
-			return -1;
-		// handle joystick events
-		js_data_struct jsd = *mJoystickP1->datas();
-		if ( JSUpdate( &jsd ) == JSGotEvent )
+		if ( mJoystickP1 )
 		{
-			// check axis
-			for ( int i = 0; i < jsd.total_axises; i++ )
+			// handle joystick events
+			js_data_struct jsd = *mJoystickP1->datas();
+			if ( JSUpdate( &jsd ) == JSGotEvent )
 			{
-				// double cur = JSGetAxisCoeffNZ( &jsd, i ); // should normally use this is joy is calibrate using jscalibrator
-				double cur = jsd.axis[i]->cur;
-				double cen = jsd.axis[i]->cen;
-				u32 k = hashAxis( i, cur ) +100; // +100 to avoid conflict with buttons as cur range is -1.0 - +1.0
-				if ( cur == cen )
+				// check axis
+				for ( int i = 0; i < jsd.total_axises; i++ )
 				{
-					PerKeyUp( mJoystickLastAxisP1[i] );
+					// double cur = JSGetAxisCoeffNZ( &jsd, i ); // should normally use this is joy is calibrate using jscalibrator
+					double cur = jsd.axis[i]->cur;
+					double cen = jsd.axis[i]->cen;
+					if ( cur == cen )
+						PerKeyUp( mJoystickLastAxisP1[i] );
+					else
+					{
+						u32 k = hashAxis( i, cur ) +100; // +100 to avoid conflict with buttons as cur range is -1.0 - +1.0
+						PerKeyDown( k );
+						mJoystickLastAxisP1[i] = k;
+					}
 				}
-				else
+				// check buttons
+				for ( int i = 0; i < jsd.total_buttons; i++ )
 				{
-					PerKeyDown( k );
-					mJoystickLastAxisP1[i] = k;
+					int bs = JSGetButtonState( &jsd, i );
+					if ( bs == 0 )
+						PerKeyUp( i +1 );
+					else
+						PerKeyDown( i +1 );
 				}
-			}
-			// check buttons
-			for ( int i = 0; i < jsd.total_buttons; i++ )
-			{
-				int bs = JSGetButtonState( &jsd, i );
-				if ( bs == 0 )
-					PerKeyUp( i +1 );
-				else
-					PerKeyDown( i +1 );
 			}
 		}
 	
