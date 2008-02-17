@@ -66,7 +66,11 @@ public:
 	{ return mCalibrationFile; }
 
 	JSWHelperJoystick* joystick( int i ) const
-	{ return mAttributes ? new JSWHelperJoystick( &mAttributes[i], mCalibrationFile ) : 0; }
+	{
+		if ( mAttributes && !( i > mAttributesCount ) )
+			return new JSWHelperJoystick( &mAttributes[i], mCalibrationFile );
+		return 0;
+	}
 
 protected:
 	js_attribute_struct* mAttributes;
