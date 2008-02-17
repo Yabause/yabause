@@ -115,7 +115,8 @@ u32 hashAxisSDL( u8 a, s16 v )
 		v = v < 0 ? -1 : 1;
 	r = v < 0 ? -v : v +1;
 	a % 2 ? r-- : r++;
-	r += 100; // to avoid conflict with buttons, we may in future do 100* playerid
+	r += 20 *( a +1 );
+	//r += 10 *( playerid +1 );
 	return r;
 }
 
