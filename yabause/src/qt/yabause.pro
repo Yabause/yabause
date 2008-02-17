@@ -58,7 +58,7 @@ win32:DEFINES	+= _WIN32_IE=0x0400
 BUILD_PATH	= ./build
 BUILDER	= GNUMake
 COMPILER	= G++
-EXECUTE_RELEASE	= yabause
+EXECUTE_RELEASE	= yabause.app/Contents/MacOS/yabause
 EXECUTE_DEBUG	= yabause_debug
 
 CONFIG(debug, debug|release) {
@@ -107,7 +107,8 @@ HEADERS	+= ui/UIYabause.h \
 	PerQt.h \
 	ui/UIWaitInput.h \
 	JSWHelper.h \
-	PerJSW.h
+	PerJSW.h \
+	PerQtSDL.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -124,4 +125,5 @@ SOURCES	+= main.cpp \
 	PerQt.c \
 	ui/UIWaitInput.cpp \
 	JSWHelper.cpp \
-	PerJSW.cpp
+	PerJSW.cpp \
+	PerQtSDL.c
