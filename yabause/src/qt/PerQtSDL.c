@@ -29,7 +29,7 @@
 #include "PerQtSDL.h"
 
 SDL_Joystick* mSDLJoystick1 = 0;
-u32 mSDLoystickLastAxisP1[] = { 0, 0, 0, 0, 0, 0 }; // increase this if your joystick can handle more than 6 axis
+// need find a way to get neutral value for each axis
 #ifdef __APPLE__
 Sint16 mSDLCenter = 128;
 #else
@@ -75,7 +75,7 @@ int PERQtSDLInit(void) {
 	// init joysticks
 	if ( SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == -1 )
 		return -1;
-	// sdl will not add joystick event in sdlevent loop, we will request ourselves when needed
+	// ignore joysticks event in sdl event loop
 	SDL_JoystickEventState( SDL_IGNORE );
 	// open first joystick
 	mSDLJoystick1 = SDL_JoystickOpen( 0 );
@@ -108,15 +108,14 @@ void PERQtSDLNothing(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 // this may need be moved in the PerCore interface so all core can call it
-u32 hashAxisSDL( Uint8 a, Sint16 v )
+u32 hashAxisSDL( u8 a, s16 v )
 {
 	u32 r;
-	if ( v == -1 || v == 1 )
-		r = v < 0 ? -v : v +1;
-	else
-		r = v < 0 ? -v : v;
+	if ( !( v == -1 || v == 1 ) )
+		v = v < 0 ? -1 : 1;
+	r = v < 0 ? -v : v +1;
 	a % 2 ? r-- : r++;
-	r += 100; // to avoid conflict with buttons
+	r += 100; // to avoid conflict with buttons, we may in future do 100* playerid
 	return r;
 }
 
@@ -167,7 +166,7 @@ int PERQtSDLHandleEvents(void) {
 			for ( i = 0; i < na; i++ )
 			{
 				Sint16 cur = nav[i];
-				Sint16 cen = mSDLCenter; // need find a way to get neutral value for each axis
+				Sint16 cen = mSDLCenter;
 				if ( cur == cen )
 					PerKeyUp( hashAxisSDL( i, oav[i] ) );
 				else
@@ -257,7 +256,6 @@ u32 PERQtSDLScan( const char* n ) {
 	{
 		Sint16 cur = SDL_JoystickGetAxis( mSDLJoystick1, i );
 		Sint16 cen = mSDLCenter;
-		LOG( "cur: %i, cen: %i", cur, cen );
 		if ( cur != cen )
 		{
 			k = hashAxisSDL( i, cur );
