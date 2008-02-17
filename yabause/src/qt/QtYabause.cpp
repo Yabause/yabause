@@ -46,6 +46,7 @@ PerInterface_struct *PERCoreList[] = {
 #ifdef HAVE_LIBSDL
 &PERSDL,
 &PERSDLJoy,
+&PERQTSDL,
 #endif
 #endif
 NULL
