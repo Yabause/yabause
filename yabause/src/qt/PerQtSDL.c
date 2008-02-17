@@ -110,7 +110,11 @@ void PERQtSDLNothing(void) {
 // this may need be moved in the PerCore interface so all core can call it
 u32 hashAxisSDL( Uint8 a, Sint16 v )
 {
-	u32 r = v < 0 ? -v : v +1;
+	u32 r;
+	if ( v == -1 || v == 1 )
+		r = v < 0 ? -v : v +1;
+	else
+		r = v < 0 ? -v : v;
 	a % 2 ? r-- : r++;
 	r += 100; // to avoid conflict with buttons
 	return r;
@@ -249,10 +253,11 @@ u32 PERQtSDLScan( const char* n ) {
 	// update joysticks states
 	SDL_JoystickUpdate();
 	// check axis
-	for ( i = 4; i < SDL_JoystickNumAxes( mSDLJoystick1 ); i++ )
+	for ( i = 0; i < SDL_JoystickNumAxes( mSDLJoystick1 ); i++ )
 	{
 		Sint16 cur = SDL_JoystickGetAxis( mSDLJoystick1, i );
 		Sint16 cen = mSDLCenter;
+		LOG( "cur: %i, cen: %i", cur, cen );
 		if ( cur != cen )
 		{
 			k = hashAxisSDL( i, cur );
