@@ -27,6 +27,7 @@ extern "C"
 {
 	static JSWHelperAttributes* mJoysticks = 0;
 	static JSWHelperJoystick* mJoystickP1 = 0;
+	static int mCalibrationDone = 0; // use to check if autocalibration already done
 
 	int PERJSWInit(void);
 	void PERJSWDeInit(void);
@@ -62,14 +63,21 @@ extern "C"
 
 	int PERJSWInit(void)
 	{
+		// get joysticks list
 		if ( !mJoysticks )
 			mJoysticks = JSWHelper::joysticks();
+		// get joy 0
 		if ( !mJoystickP1 )
 			mJoystickP1 = mJoysticks->joystick( 0 );
+		// is it ok ?
 		if ( !mJoystickP1 )
 			return 0;
+		// check joy status
 		if ( mJoystickP1->status() != JSSuccess )
 			PERJSWDeInit();
+		// perform auto calibration
+		PERJSWScan( 0 );
+		// return state
 		return mJoystickP1 ? ( mJoystickP1->status() == JSSuccess ? 0 : -1 ) : -1;
 	}
 
@@ -79,16 +87,22 @@ extern "C"
 		mJoystickP1 = 0;
 		delete mJoysticks;
 		mJoysticks = 0;
+		mCalibrationDone = 0;
 	}
 
 	void PERJSWNothing(void)
 	{}
 
-	u32 hashAxis( int a, double v )
+	// this should move to percore interface
+	u32 hashAxis( u8 a, s16 v )
 	{
-		u32 r = u32( v < 0 ? -v : v +1 );
+		u32 r;
+		if ( !( v == -1 || v == 1 ) )
+			v = v < 0 ? -1 : 1;
+		r = v < 0 ? -v : v +1;
 		a % 2 ? r-- : r++;
-		r += 100; // to not conflict with buttons
+		r += 20 *( a +1 );
+		//r += 10 *( playerid +1 );
 		return r;
 	}
 
@@ -104,8 +118,8 @@ extern "C"
 				for ( int i = 0; i < jsd.total_axises; i++ )
 				{
 					// double cur = JSGetAxisCoeffNZ( &jsd, i ); // should normally use this is joy is calibrate using jscalibrator
-					double cur = jsd.axis[i]->cur;
-					double cen = jsd.axis[i]->cen;
+					s16 cur = jsd.axis[i]->cur;
+					s16 cen = jsd.axis[i]->cen;
 					if ( cur == cen )
 						PerKeyUp( hashAxis( i, jsd.axis[i]->prev ) );
 					else
@@ -180,15 +194,25 @@ extern "C"
 			// check axis
 			for ( int i = 0; i < jsd.total_axises; i++ )
 			{
-				// double cur = JSGetAxisCoeffNZ( &jsd, i ); // should normally use this is joy is calibrate using jscalibrator
-				double cur = jsd.axis[i]->cur;
-				double cen = jsd.axis[i]->cen;
-				if ( cur != cen )
+				// if joy is calibrate
+				if ( mCalibrationDone != 0 )
 				{
-					k = hashAxis( i, cur );
-					break;
+					// double cur = JSGetAxisCoeffNZ( &jsd, i ); // should normally use this is joy is calibrate using jscalibrator
+					s16 cur = jsd.axis[i]->cur;
+					s16 cen = jsd.axis[i]->cen;
+					qWarning( "cur: %i, cen: %i", cur, cen );
+					if ( cur != cen )
+					{
+						k = hashAxis( i, cur );
+						break;
+					}
 				}
+				// calibrate axis
+				else
+					jsd.axis[i]->cen = jsd.axis[i]->cur;
 			}
+			// remember that axis are calibrate
+			mCalibrationDone = -1;
 			// check buttons
 			if ( k == 0 )
 			{

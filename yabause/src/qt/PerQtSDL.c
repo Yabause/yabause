@@ -29,12 +29,8 @@
 #include "PerQtSDL.h"
 
 SDL_Joystick* mSDLJoystick1 = 0;
-// need find a way to get neutral value for each axis
-#ifdef __APPLE__
-Sint16 mSDLCenter = 128;
-#else
-Sint16 mSDLCenter = 0;
-#endif
+Sint16* mSDLNeutralPoints = 0; // stock each axis neutral point
+int mCalibrationDone = 0; // use to check if autocalibration already done
 
 int PERQtSDLInit(void);
 void PERQtSDLDeInit(void);
@@ -72,6 +68,8 @@ PERQtSDLFlush
 //////////////////////////////////////////////////////////////////////////////
 
 int PERQtSDLInit(void) {
+	if ( mSDLJoystick1 )
+		return 0;
 	// init joysticks
 	if ( SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == -1 )
 		return -1;
@@ -81,7 +79,14 @@ int PERQtSDLInit(void) {
 	mSDLJoystick1 = SDL_JoystickOpen( 0 );
 	// is it open ?
 	if ( !mSDLJoystick1 )
+	{
+		PERQtSDLDeInit();
 		return -1;
+	}
+	// create structure for neutral points
+	mSDLNeutralPoints = malloc( SDL_JoystickNumAxes( mSDLJoystick1 ) *sizeof( Sint16 ) );
+	// perform auto calibration
+	PERQtSDLScan( 0 );
 	// success
 	return 0;
 }
@@ -95,9 +100,12 @@ void PERQtSDLDeInit(void) {
 		 if ( SDL_JoystickOpened( 0 ) )
 			SDL_JoystickClose( mSDLJoystick1 );
 		mSDLJoystick1 = 0;
+		free( mSDLNeutralPoints );
+		mSDLNeutralPoints = 0;
 	}
 	// close sdl joysticks
 	SDL_QuitSubSystem( SDL_INIT_JOYSTICK );
+	mCalibrationDone = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -167,7 +175,7 @@ int PERQtSDLHandleEvents(void) {
 			for ( i = 0; i < na; i++ )
 			{
 				Sint16 cur = nav[i];
-				Sint16 cen = mSDLCenter;
+				Sint16 cen = mSDLNeutralPoints[i];
 				if ( cur == cen )
 					PerKeyUp( hashAxisSDL( i, oav[i] ) );
 				else
@@ -255,14 +263,23 @@ u32 PERQtSDLScan( const char* n ) {
 	// check axis
 	for ( i = 0; i < SDL_JoystickNumAxes( mSDLJoystick1 ); i++ )
 	{
-		Sint16 cur = SDL_JoystickGetAxis( mSDLJoystick1, i );
-		Sint16 cen = mSDLCenter;
-		if ( cur != cen )
+		// if joy is calibrate
+		if ( mCalibrationDone != 0 )
 		{
-			k = hashAxisSDL( i, cur );
-			break;
+			Sint16 cur = SDL_JoystickGetAxis( mSDLJoystick1, i );
+			Sint16 cen = mSDLNeutralPoints[i];
+			if ( cur != cen )
+			{
+				k = hashAxisSDL( i, cur );
+				break;
+			}
 		}
+		// calibrate axis
+		else
+			mSDLNeutralPoints[i] = SDL_JoystickGetAxis( mSDLJoystick1, i );
 	}
+	// remember that axis are calibrate
+	mCalibrationDone = -1;
 	// check buttons
 	if ( k == 0 )
 	{
