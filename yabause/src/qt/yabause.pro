@@ -83,7 +83,7 @@ CONFIG(debug, debug|release) {
 }
 
 # include jsw library files
-include( "3rdparty/libjsw.pri" )
+unix:!mac:include( "3rdparty/libjsw.pri" )
 
 FORMS	+= ui/UIYabause.ui \
 	ui/UISettings.ui \
