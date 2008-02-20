@@ -51,7 +51,6 @@ DEFINES	+= STDC_HEADERS=1 \
 	HAVE_C99_VARIADIC_MACROS=1 \
 	HAVE_C68K=1 \
 	USENEWPERINTERFACE=1 \
-	HAVE_LIBJSW=1 \
 	DEBUG=1
 
 win32:DEFINES	+= _WIN32_IE=0x0400
@@ -86,8 +85,14 @@ CONFIG(debug, debug|release) {
 # include jsw library files
 unix:!mac {
 	include( 3rdparty/libjsw.pri )
-	HEADERS	+= JSWHelper.h
-	SOURCES	+= JSWHelper.cpp
+	
+	DEFINES	+= HAVE_LIBJSW=1
+	
+	HEADERS	+= JSWHelper.h \
+		PerJSW.h
+		
+	SOURCES	+= JSWHelper.cpp \
+		PerJSW.cpp
 }
 
 FORMS	+= ui/UIYabause.ui \
@@ -112,7 +117,6 @@ HEADERS	+= ui/UIYabause.h \
 	CommonDialogs.h \
 	PerQt.h \
 	ui/UIWaitInput.h \
-	PerJSW.h \
 	PerQtSDL.h \
 	ui/UIBackupRam.h
 
@@ -130,6 +134,5 @@ SOURCES	+= main.cpp \
 	CommonDialogs.cpp \
 	PerQt.c \
 	ui/UIWaitInput.cpp \
-	PerJSW.cpp \
 	PerQtSDL.c \
 	ui/UIBackupRam.cpp

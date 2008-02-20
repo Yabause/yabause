@@ -48,8 +48,10 @@ extern "C"
 	#include "../bios.h"
 	
 	#include "PerQt.h"
-	#include "PerJSW.h"
 	#include "PerQtSDL.h"
+#ifdef HAVE_LIBJSW
+	#include "PerJSW.h"
+#endif
 }
 
 class UIYabause;
