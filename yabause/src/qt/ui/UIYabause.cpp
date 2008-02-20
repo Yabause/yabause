@@ -21,6 +21,7 @@
 #include "UIYabause.h"
 #include "../Settings.h"
 #include "UISettings.h"
+#include "UIBackupRam.h"
 #include "UICheats.h"
 #include "UIAbout.h"
 #include "../YabauseGL.h"
@@ -234,8 +235,17 @@ void UIYabause::on_aYabauseQuit_triggered()
 	close();
 }
 
-void UIYabause::on_aCheatsList_triggered()
-{ UICheats( this ).exec(); }
+void UIYabause::on_aToolsBackupManager_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIBackupRam( this ).exec();
+}
+
+void UIYabause::on_aToolsCheatsList_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UICheats( this ).exec();
+}
 
 void UIYabause::on_aViewFPS_triggered()
 { ToggleFPS(); }

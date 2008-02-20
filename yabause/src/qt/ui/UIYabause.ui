@@ -5,7 +5,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>327</width>
+    <width>320</width>
     <height>200</height>
    </rect>
   </property>
@@ -21,8 +21,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>327</width>
-     <height>22</height>
+     <width>320</width>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="mYabause" >
@@ -116,14 +116,15 @@
     </property>
     <addaction name="aHelpAbout" />
    </widget>
-   <widget class="QMenu" name="mCheats" >
+   <widget class="QMenu" name="mTools" >
     <property name="title" >
-     <string>Cheats</string>
+     <string>Tools</string>
     </property>
-    <addaction name="aCheatsList" />
+    <addaction name="aToolsBackupManager" />
+    <addaction name="aToolsCheatsList" />
    </widget>
    <addaction name="mYabause" />
-   <addaction name="mCheats" />
+   <addaction name="mTools" />
    <addaction name="mView" />
    <addaction name="mViewDebug" />
    <addaction name="mHelp" />
@@ -428,9 +429,14 @@
     <string>Load State As...</string>
    </property>
   </action>
-  <action name="aCheatsList" >
+  <action name="aToolsCheatsList" >
    <property name="text" >
-    <string>List...</string>
+    <string>Cheats List...</string>
+   </property>
+  </action>
+  <action name="aToolsBackupManager" >
+   <property name="text" >
+    <string>Backup Manager...</string>
    </property>
   </action>
  </widget>

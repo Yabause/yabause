@@ -91,8 +91,9 @@ protected slots:
 	void on_aYabauseSaveStateAs_triggered();
 	void on_aYabauseLoadStateAs_triggered();
 	void on_aYabauseQuit_triggered();
-	// cheats
-	void on_aCheatsList_triggered();
+	// tools
+	void on_aToolsBackupManager_triggered();
+	void on_aToolsCheatsList_triggered();
 	// view menu
 	void on_aViewFPS_triggered();
 	void on_aViewLayerVdp1_triggered();

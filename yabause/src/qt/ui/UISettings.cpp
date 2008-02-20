@@ -88,6 +88,8 @@ UISettings::UISettings( QWidget* p )
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbBrowse_clicked() ) );
 	foreach ( QPushButton* pb, wInput->findChildren<QPushButton*>() )
 		connect( pb, SIGNAL( clicked() ), this, SLOT( pbInputs_clicked() ) );
+
+	//lInput->setText( "yoyoyo" );
 }
 
 void UISettings::requestFile( const QString& c, QLineEdit* e )
@@ -242,7 +244,8 @@ void UISettings::loadSettings()
 	// input
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore" ).toInt() ) );
 	foreach ( QLabel* l, wInput->findChildren<QLabel*>() )
-		l->setText( s->value( QString( "Input/Keys/%1" ).arg( l->statusTip() ) ).toString() );
+		if ( l != lInput )
+			l->setText( s->value( QString( "Input/Keys/%1" ).arg( l->statusTip() ) ).toString() );
 	
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", "Auto" ).toString() ) );

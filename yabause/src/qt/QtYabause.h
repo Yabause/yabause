@@ -45,6 +45,7 @@ extern "C"
 
 	#include "../cheat.h"
 	#include "../memory.h"
+	#include "../bios.h"
 	
 	#include "PerQt.h"
 	#include "PerJSW.h"

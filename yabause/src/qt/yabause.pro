@@ -83,7 +83,7 @@ CONFIG(debug, debug|release) {
 }
 
 # include jsw library files
-unix:!mac:include( "3rdparty/libjsw.pri" )
+unix:!mac:include( 3rdparty/libjsw.pri )
 
 FORMS	+= ui/UIYabause.ui \
 	ui/UISettings.ui \
@@ -91,7 +91,8 @@ FORMS	+= ui/UIYabause.ui \
 	ui/UICheats.ui \
 	ui/UICheatAR.ui \
 	ui/UICheatRaw.ui \
-	ui/UIWaitInput.ui
+	ui/UIWaitInput.ui \
+	ui/UIBackupRam.ui
 
 HEADERS	+= ui/UIYabause.h \
 	YabauseGL.h \
@@ -108,7 +109,8 @@ HEADERS	+= ui/UIYabause.h \
 	ui/UIWaitInput.h \
 	JSWHelper.h \
 	PerJSW.h \
-	PerQtSDL.h
+	PerQtSDL.h \
+	ui/UIBackupRam.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -126,4 +128,5 @@ SOURCES	+= main.cpp \
 	ui/UIWaitInput.cpp \
 	JSWHelper.cpp \
 	PerJSW.cpp \
-	PerQtSDL.c
+	PerQtSDL.c \
+	ui/UIBackupRam.cpp
