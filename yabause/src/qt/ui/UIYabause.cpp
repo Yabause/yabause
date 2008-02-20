@@ -31,6 +31,8 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include <QTextEdit>
+#include <QDockWidget>
+#include <QImageWriter>
 
 void qAppendLog( const char* s )
 { QtYabause::mainWindow()->appendLog( s ); }
@@ -51,8 +53,14 @@ UIYabause::UIYabause( QWidget* parent )
 	
 	// create log widget
 	teLog = new QTextEdit( this );
-	teLog->setWindowFlags( Qt::Window );
 	teLog->setReadOnly( true );
+	teLog->setWordWrapMode( QTextOption::NoWrap );
+	teLog->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+	teLog->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+	mLogDock = new QDockWidget( this );
+	mLogDock->setWidget( teLog );
+	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
+	mLogDock->setVisible( false );
 	
 	// init actions
 	aYabausePause->setEnabled( false );
@@ -79,10 +87,13 @@ UIYabause::~UIYabause()
 	LogStop();
 }
 
-void UIYabause::closeEvent( QCloseEvent* )
+void UIYabause::closeEvent( QCloseEvent* e )
 {
-	teLog->close();
-	QApplication::quit();
+	// pause emulation
+	aYabausePause->trigger();
+
+	// close dialog
+	QMainWindow::closeEvent( e );
 }
 
 void UIYabause::showEvent( QShowEvent* )
@@ -163,21 +174,19 @@ void UIYabause::on_aYabauseTransfer_triggered()
 void UIYabause::on_aYabauseScreenshot_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	// images filter that can write qt
-	QStringList filters = QStringList()
-		<< tr( "PNG Images (*.png)" )
-		<< tr( "JPG Images (*.jpg)" )
-		<< tr( "JPEG Images (*.jpeg)" )
-		<< tr( "BMP Images (*.bmp)" )
-		<< tr( "PPM Images (*.ppm)" )
-		<< tr( "XBM Images (*.xbm)" )
-		<< tr( "XPM Images (*.xpm)" );
+	// images filter that qt can write
+	QStringList filters;
+	foreach ( QByteArray ba, QImageWriter::supportedImageFormats() )
+		if ( !filters.contains( ba, Qt::CaseInsensitive ) )
+			filters << QString( ba ).toLower();
+	for ( int i = 0; i < filters.count(); i++ )
+		filters[i] = tr( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
 	
 	// take screenshot of gl view
 	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
 	// request a file to save to to user
-	const QString s = CommonDialogs::getSaveFileName( QString(), filters.join( ";;" ), tr( "Choose a location for your screenshot" ) );
+	const QString s = CommonDialogs::getSaveFileName( QString(), tr( "Choose a location for your screenshot" ), filters.join( ";;" ) );
 	
 	// write image if ok
 	if ( !s.isEmpty() )
@@ -230,10 +239,7 @@ void UIYabause::on_aYabauseLoadStateAs_triggered()
 }
 
 void UIYabause::on_aYabauseQuit_triggered()
-{
-	aYabausePause->trigger();
-	close();
-}
+{ close(); }
 
 void UIYabause::on_aToolsBackupManager_triggered()
 {
@@ -276,9 +282,8 @@ void UIYabause::on_aViewFullscreen_triggered( bool b )
 
 void UIYabause::on_aViewLog_triggered()
 {
-	if ( !teLog->isVisible() )
-		teLog->show();
-	teLog->raise();
+	if ( !mLogDock->isVisible() )
+		mLogDock->show();
 }
 
 void UIYabause::on_aHelpAbout_triggered()

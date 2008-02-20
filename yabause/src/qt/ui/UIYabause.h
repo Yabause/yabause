@@ -26,6 +26,7 @@
 
 class YabauseGL;
 class QTextEdit;
+class QDockWidget;
 
 class YabauseLocker
 {
@@ -67,6 +68,7 @@ public:
 protected:
 	YabauseGL* mYabauseGL;
 	YabauseThread* mYabauseThread;
+	QDockWidget* mLogDock;
 	QTextEdit* teLog;
 	bool mInit;
 
