@@ -18,6 +18,8 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifdef HAVE_LIBJSW
+
 #ifndef PERJSW_H
 #define PERJSW_H
 
@@ -31,3 +33,5 @@ extern "C"
 }
 
 #endif // PERJSW_H
+
+#endif // HAVE_LIBJSW
