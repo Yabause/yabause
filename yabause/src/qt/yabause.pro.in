@@ -17,6 +17,7 @@
 TEMPLATE	= app
 LANGUAGE	= Qt4/C++
 TARGET	= yabause
+mac:TARGET	= Yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
 LIBS	+= -L../ -lyabause @YAB_LIBS@ @LIBS@
