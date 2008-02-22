@@ -16,6 +16,7 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifdef HAVE_LIBSDL
 
 #ifndef PERQTSDL_H
 #define PERQTSDL_H
@@ -27,3 +28,5 @@
 extern PerInterface_struct PERQTSDL;
 
 #endif // PERQTSDL_H
+
+#endif // HAVE_LIBSDL
