@@ -19,11 +19,11 @@ LANGUAGE	= Qt4/C++
 TARGET	= yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
-LIBS	+= -L../ -lyabause  -L/usr/lib -lSDL  -lGL -lglut
+LIBS	+= -L../ -lyabause @LIBS@
 RESOURCES	+= resources/resources.qrc
 mac:ICON	+= resources/icons/yabause.icns
 
-AC_DEFS = -DPACKAGE_NAME=\"yabause\" -DPACKAGE_TARNAME=\"yabause\" -DPACKAGE_VERSION=\"0.9.3\" -DPACKAGE_STRING=\"yabause\ 0.9.3\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"yabause\" -DVERSION=\"0.9.3\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_LIBSDL=1 -DHAVE_LIBGL=1 -DHAVE_LIBGLUT=1 -DHAVE_C99_VARIADIC_MACROS=1 -DHAVE_C68K=1
+AC_DEFS = @DEFS@
 QMAKE_CXXFLAGS+= $$replace(AC_DEFS, "\", "\\\"")
 
 win32:DEFINES	+= _WIN32_IE=0x0400

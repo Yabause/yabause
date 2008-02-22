@@ -6776,7 +6776,7 @@ _ACEOF
 fi
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/carbon/Makefile src/dreamcast/Makefile src/gtk/Makefile src/windows/Makefile autopackage/default.apspec"
+ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/carbon/Makefile src/dreamcast/Makefile src/gtk/Makefile src/qt/yabause.pro src/windows/Makefile autopackage/default.apspec"
 
  if test ${yabause_yui} = "carbon"; then
   YUI_IS_CARBON_TRUE=
@@ -7521,6 +7521,7 @@ do
     "src/carbon/Makefile") CONFIG_FILES="$CONFIG_FILES src/carbon/Makefile" ;;
     "src/dreamcast/Makefile") CONFIG_FILES="$CONFIG_FILES src/dreamcast/Makefile" ;;
     "src/gtk/Makefile") CONFIG_FILES="$CONFIG_FILES src/gtk/Makefile" ;;
+    "src/qt/yabause.pro") CONFIG_FILES="$CONFIG_FILES src/qt/yabause.pro" ;;
     "src/windows/Makefile") CONFIG_FILES="$CONFIG_FILES src/windows/Makefile" ;;
     "autopackage/default.apspec") CONFIG_FILES="$CONFIG_FILES autopackage/default.apspec" ;;
 

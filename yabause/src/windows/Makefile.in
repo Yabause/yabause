@@ -173,7 +173,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
-EXTRA_DIST = cd.h yabause.vcproj yabause_logo.bmp
+EXTRA_DIST = cd.h yabause.vcproj yabause_logo.bmp logo.ico
 yabause_SOURCES = \
 	resource.h resource.rc settings.c settings.h yui.c \
         perdx.c perdx.h snddx.c snddx.h cheats.c cheats.h \

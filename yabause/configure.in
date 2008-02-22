@@ -153,6 +153,7 @@ AC_CONFIG_FILES([Makefile
 	src/carbon/Makefile
 	src/dreamcast/Makefile
 	src/gtk/Makefile
+	src/qt/yabause.pro
 	src/windows/Makefile
 	autopackage/default.apspec
 ])
