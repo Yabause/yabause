@@ -108,7 +108,7 @@ RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = . carbon dreamcast gtk windows c68k
+DIST_SUBDIRS = . carbon dreamcast gtk qt windows c68k
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -224,6 +224,7 @@ EXTRA_DIST = cd.c Makefile.dc Makefile.mng logo.bmp logo.png
 @YUI_IS_CARBON_TRUE@YUI_SUBDIR = carbon
 @YUI_IS_DREAMCAST_TRUE@YUI_SUBDIR = dreamcast
 @YUI_IS_GTK_TRUE@YUI_SUBDIR = gtk
+@YUI_IS_QT_TRUE@YUI_SUBDIR = qt
 @YUI_IS_WINDOWS_TRUE@YUI_SUBDIR = windows
 noinst_LIBRARIES = libyabause.a
 libyabause_a_SOURCES = bios.c bios.h cdbase.c cdbase.h cheat.c cheat.h \

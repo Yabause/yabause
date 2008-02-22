@@ -13,6 +13,9 @@ endif
 if YUI_IS_GTK
 YUI_SUBDIR=gtk
 endif
+if YUI_IS_QT
+YUI_SUBDIR=qt
+endif
 if YUI_IS_WINDOWS
 YUI_SUBDIR=windows
 endif

@@ -722,6 +722,8 @@ YUI_IS_DREAMCAST_TRUE
 YUI_IS_DREAMCAST_FALSE
 YUI_IS_GTK_TRUE
 YUI_IS_GTK_FALSE
+YUI_IS_QT_TRUE
+YUI_IS_QT_FALSE
 YUI_IS_WINDOWS_TRUE
 YUI_IS_WINDOWS_FALSE
 ARCH_IS_FREEBSD_TRUE
@@ -4749,6 +4751,20 @@ esac
 
 case $target in
 	*darwin*)
+		# getting the major version of darwin
+		major=`expr $target_os : "darwin\(^.*\)"`
+		if  $major -gt 8 ; then
+			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386"
+			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386"
+		else
+			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386 -arch ppc"
+			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
+			cat >>confdefs.h <<\_ACEOF
+#define MAC_OS_X_VERSION_MAX_ALLOWED MAC_OS_X_VERSION_10_3
+_ACEOF
+
+		fi
+
 		if test "x$CC" != xcc; then
   { echo "$as_me:$LINENO: checking whether $CC and cc understand -c and -o together" >&5
 echo $ECHO_N "checking whether $CC and cc understand -c and -o together... $ECHO_C" >&6; }
@@ -4881,12 +4897,6 @@ fi
 _ACEOF
 
 		yabause_yui="carbon"
-		CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386 -arch ppc"
-		LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
-		cat >>confdefs.h <<\_ACEOF
-#define MAC_OS_X_VERSION_MAX_ALLOWED MAC_OS_X_VERSION_10_3
-_ACEOF
-
 		;;
 	*cygwin*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
@@ -6776,7 +6786,7 @@ _ACEOF
 fi
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/carbon/Makefile src/dreamcast/Makefile src/gtk/Makefile src/qt/yabause.pro src/windows/Makefile autopackage/default.apspec"
+ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/carbon/Makefile src/dreamcast/Makefile src/gtk/Makefile src/qt/Makefile src/qt/yabause.pro src/windows/Makefile autopackage/default.apspec"
 
  if test ${yabause_yui} = "carbon"; then
   YUI_IS_CARBON_TRUE=
@@ -6800,6 +6810,14 @@ fi
 else
   YUI_IS_GTK_TRUE='#'
   YUI_IS_GTK_FALSE=
+fi
+
+ if test ${yabause_yui} = "qt"; then
+  YUI_IS_QT_TRUE=
+  YUI_IS_QT_FALSE='#'
+else
+  YUI_IS_QT_TRUE='#'
+  YUI_IS_QT_FALSE=
 fi
 
  if test ${yabause_yui} = "windows"; then
@@ -7016,6 +7034,13 @@ if test -z "${YUI_IS_GTK_TRUE}" && test -z "${YUI_IS_GTK_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"YUI_IS_GTK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"YUI_IS_GTK\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${YUI_IS_QT_TRUE}" && test -z "${YUI_IS_QT_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"YUI_IS_QT\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"YUI_IS_QT\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -7521,6 +7546,7 @@ do
     "src/carbon/Makefile") CONFIG_FILES="$CONFIG_FILES src/carbon/Makefile" ;;
     "src/dreamcast/Makefile") CONFIG_FILES="$CONFIG_FILES src/dreamcast/Makefile" ;;
     "src/gtk/Makefile") CONFIG_FILES="$CONFIG_FILES src/gtk/Makefile" ;;
+    "src/qt/Makefile") CONFIG_FILES="$CONFIG_FILES src/qt/Makefile" ;;
     "src/qt/yabause.pro") CONFIG_FILES="$CONFIG_FILES src/qt/yabause.pro" ;;
     "src/windows/Makefile") CONFIG_FILES="$CONFIG_FILES src/windows/Makefile" ;;
     "autopackage/default.apspec") CONFIG_FILES="$CONFIG_FILES autopackage/default.apspec" ;;
@@ -7736,6 +7762,8 @@ YUI_IS_DREAMCAST_TRUE!$YUI_IS_DREAMCAST_TRUE$ac_delim
 YUI_IS_DREAMCAST_FALSE!$YUI_IS_DREAMCAST_FALSE$ac_delim
 YUI_IS_GTK_TRUE!$YUI_IS_GTK_TRUE$ac_delim
 YUI_IS_GTK_FALSE!$YUI_IS_GTK_FALSE$ac_delim
+YUI_IS_QT_TRUE!$YUI_IS_QT_TRUE$ac_delim
+YUI_IS_QT_FALSE!$YUI_IS_QT_FALSE$ac_delim
 YUI_IS_WINDOWS_TRUE!$YUI_IS_WINDOWS_TRUE$ac_delim
 YUI_IS_WINDOWS_FALSE!$YUI_IS_WINDOWS_FALSE$ac_delim
 ARCH_IS_FREEBSD_TRUE!$ARCH_IS_FREEBSD_TRUE$ac_delim
@@ -7752,7 +7780,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 27; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 29; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

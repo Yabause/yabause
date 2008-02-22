@@ -59,13 +59,21 @@ AC_SUBST(yabause_arch)
 
 case $target in
 	*darwin*)
+		# getting the major version of darwin
+		major=`expr $target_os : "darwin\([^.]*\)"`
+		if [ $major -gt 8 ]; then
+			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386"
+			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386"
+		else
+			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386 -arch ppc"
+			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
+			AC_DEFINE(MAC_OS_X_VERSION_MAX_ALLOWED, MAC_OS_X_VERSION_10_3)
+		fi
+
 		AM_PROG_CC_C_O
 		YAB_LIBS="$YAB_LIBS -framework IOKit -framework Carbon -framework AGL -framework OpenGL"
 		AC_DEFINE(HAVE_LIBGL)
 		yabause_yui="carbon"
-		CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386 -arch ppc"
-		LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
-		AC_DEFINE(MAC_OS_X_VERSION_MAX_ALLOWED, MAC_OS_X_VERSION_10_3)
 		;;
 	*cygwin*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
@@ -153,6 +161,7 @@ AC_CONFIG_FILES([Makefile
 	src/carbon/Makefile
 	src/dreamcast/Makefile
 	src/gtk/Makefile
+	src/qt/Makefile
 	src/qt/yabause.pro
 	src/windows/Makefile
 	autopackage/default.apspec
@@ -160,6 +169,7 @@ AC_CONFIG_FILES([Makefile
 AM_CONDITIONAL([YUI_IS_CARBON], [test ${yabause_yui} = "carbon"])
 AM_CONDITIONAL([YUI_IS_DREAMCAST], [test ${yabause_yui} = "dreamcast"])
 AM_CONDITIONAL([YUI_IS_GTK], [test ${yabause_yui} = "gtk"])
+AM_CONDITIONAL([YUI_IS_QT], [test ${yabause_yui} = "qt"])
 AM_CONDITIONAL([YUI_IS_WINDOWS], [test ${yabause_yui} = "windows"])
 
 AM_CONDITIONAL([ARCH_IS_FREEBSD], [test ${yabause_arch} = "freebsd"])

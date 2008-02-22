@@ -17,43 +17,18 @@
 TEMPLATE	= app
 LANGUAGE	= Qt4/C++
 TARGET	= yabause
+mac:TARGET	= Yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
-LIBS	+= -L../ -lyabause
-win32:LIBS	+= -lopengl32
-!mac:LIBS	+= -lSDL -lglut
-else:LIBS	+= -framework SDL -framework IOKit -framework glut
+LIBS	+= -L../ -lyabause  -L/usr/lib -lSDL  -lGL -lglut -Wl,--export-dynamic -lgtkglext-x11-1.0 -lgdkglext-x11-1.0 -lGLU -lGL -lXmu -lXt -lSM -lICE -lgtk-x11-2.0 -lpangox-1.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lfontconfig -lXext -lXrender -lXinerama -lXi -lXrandr -lXcursor -lXcomposite -lXdamage -lpango-1.0 -lcairo -lX11 -lXfixes -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0    -L/usr/lib -lSDL  -lGL -lglut
+AC_DEFS = -DPACKAGE_NAME=\"yabause\" -DPACKAGE_TARNAME=\"yabause\" -DPACKAGE_VERSION=\"0.9.3\" -DPACKAGE_STRING=\"yabause\ 0.9.3\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"yabause\" -DVERSION=\"0.9.3\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_LIBSDL=1 -DHAVE_LIBGL=1 -DHAVE_LIBGLUT=1 -DHAVE_C99_VARIADIC_MACROS=1 -DHAVE_C68K=1
+QMAKE_CXXFLAGS	+= $$replace( AC_DEFS, "\", "\\\"" )
+QMAKE_CFLAGS	+= $$replace( AC_DEFS, "\", "\\\"" )
+# i don't know why u limit the build to panther, but it's a bad idea for leopard users
+QMAKE_CXXFLAGS	-= -DMAC_OS_X_VERSION_MAX_ALLOWED=MAC_OS_X_VERSION_10_3
+QMAKE_CFLAGS	-= -DMAC_OS_X_VERSION_MAX_ALLOWED=MAC_OS_X_VERSION_10_3
 RESOURCES	+= resources/resources.qrc
 mac:ICON	+= resources/icons/yabause.icns
-
-# program defines
-DEFINES	+= "PACKAGE_NAME=\"\\\"yabause\\\"\"" \
-	"PACKAGE_TARNAME=\"\\\"yabause\\\"\"" \
-	"PACKAGE_VERSION=\"\\\"0.9.3\\\"\"" \
-	"PACKAGE_BUGREPORT=\"\\\"\\\"\"" \
-	"PACKAGE=\"\\\"yabause\\\"\"" \
-	"VERSION=\"\\\"0.9.3\\\"\"" \
-	"PACKAGE_STRING=\"\\\"yabause 0.9.3\\\"\""
-
-# include defines
-DEFINES	+= STDC_HEADERS=1 \
-	HAVE_SYS_TYPES_H=1 \
-	HAVE_SYS_STAT_H=1 \
-	DHAVE_STDLIB_H=1 \
-	HAVE_STRING_H=1 \
-	HAVE_MEMORY_H=1 \
-	HAVE_STRINGS_H=1 \
-	HAVE_INTTYPES_H=1 \
-	HAVE_STDINT_H=1 \
-	HAVE_UNISTD_H=1 \
-	HAVE_LIBSDL=1 \
-	HAVE_LIBGL=1 \
-	HAVE_C99_VARIADIC_MACROS=1 \
-	HAVE_C68K=1 \
-	USENEWPERINTERFACE=1 \
-	DEBUG=1
-
-win32:DEFINES	+= _WIN32_IE=0x0400
 
 BUILD_PATH	= ./build
 BUILDER	= GNUMake
