@@ -19,12 +19,39 @@ LANGUAGE	= Qt4/C++
 TARGET	= yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
-LIBS	+= -L../ -lyabause  -L/usr/lib -lSDL  -lGL -lglut
+LIBS	+= -L../ -lyabause
+win32:LIBS	+= -lopengl32
+!mac:LIBS	+= -lSDL -lglut
+else:LIBS	+= -framework SDL -framework IOKit -framework glut
 RESOURCES	+= resources/resources.qrc
 mac:ICON	+= resources/icons/yabause.icns
 
-AC_DEFS = -DPACKAGE_NAME=\"yabause\" -DPACKAGE_TARNAME=\"yabause\" -DPACKAGE_VERSION=\"0.9.3\" -DPACKAGE_STRING=\"yabause\ 0.9.3\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"yabause\" -DVERSION=\"0.9.3\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_LIBSDL=1 -DHAVE_LIBGL=1 -DHAVE_LIBGLUT=1 -DHAVE_C99_VARIADIC_MACROS=1 -DHAVE_C68K=1
-QMAKE_CXXFLAGS+= $$replace(AC_DEFS, "\", "\\\"")
+# program defines
+DEFINES	+= "PACKAGE_NAME=\"\\\"yabause\\\"\"" \
+	"PACKAGE_TARNAME=\"\\\"yabause\\\"\"" \
+	"PACKAGE_VERSION=\"\\\"0.9.3\\\"\"" \
+	"PACKAGE_BUGREPORT=\"\\\"\\\"\"" \
+	"PACKAGE=\"\\\"yabause\\\"\"" \
+	"VERSION=\"\\\"0.9.3\\\"\"" \
+	"PACKAGE_STRING=\"\\\"yabause 0.9.3\\\"\""
+
+# include defines
+DEFINES	+= STDC_HEADERS=1 \
+	HAVE_SYS_TYPES_H=1 \
+	HAVE_SYS_STAT_H=1 \
+	DHAVE_STDLIB_H=1 \
+	HAVE_STRING_H=1 \
+	HAVE_MEMORY_H=1 \
+	HAVE_STRINGS_H=1 \
+	HAVE_INTTYPES_H=1 \
+	HAVE_STDINT_H=1 \
+	HAVE_UNISTD_H=1 \
+	HAVE_LIBSDL=1 \
+	HAVE_LIBGL=1 \
+	HAVE_C99_VARIADIC_MACROS=1 \
+	HAVE_C68K=1 \
+	USENEWPERINTERFACE=1 \
+	DEBUG=1
 
 win32:DEFINES	+= _WIN32_IE=0x0400
 
@@ -56,7 +83,17 @@ CONFIG(debug, debug|release) {
 }
 
 # include jsw library files
-unix:!mac:include( "3rdparty/libjsw.pri" )
+unix:!mac {
+	include( 3rdparty/libjsw.pri )
+	
+	DEFINES	+= HAVE_LIBJSW=1
+
+	HEADERS	+= JSWHelper.h \
+		PerJSW.h
+		
+	SOURCES	+= JSWHelper.cpp \
+		PerJSW.cpp
+}
 
 FORMS	+= ui/UIYabause.ui \
 	ui/UISettings.ui \
@@ -64,7 +101,8 @@ FORMS	+= ui/UIYabause.ui \
 	ui/UICheats.ui \
 	ui/UICheatAR.ui \
 	ui/UICheatRaw.ui \
-	ui/UIWaitInput.ui
+	ui/UIWaitInput.ui \
+	ui/UIBackupRam.ui
 
 HEADERS	+= ui/UIYabause.h \
 	YabauseGL.h \
@@ -79,9 +117,8 @@ HEADERS	+= ui/UIYabause.h \
 	CommonDialogs.h \
 	PerQt.h \
 	ui/UIWaitInput.h \
-	JSWHelper.h \
-	PerJSW.h \
-	PerQtSDL.h
+	PerQtSDL.h \
+	ui/UIBackupRam.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -97,6 +134,5 @@ SOURCES	+= main.cpp \
 	CommonDialogs.cpp \
 	PerQt.c \
 	ui/UIWaitInput.cpp \
-	JSWHelper.cpp \
-	PerJSW.cpp \
-	PerQtSDL.c
+	PerQtSDL.c \
+	ui/UIBackupRam.cpp
