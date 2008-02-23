@@ -52,6 +52,7 @@
 #endif 
 #endif
 
+#ifndef GEKKO
 #if defined(__LP64__)
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -82,6 +83,10 @@ typedef __int64 s64;
 #else
 typedef signed long long s64;
 #endif
+#endif
+#else
+#include <gccore.h>
+typedef unsigned long pointer;
 #endif
 
 static INLINE int StateWriteHeader(FILE *fp, const char *name, int version) {

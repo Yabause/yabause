@@ -443,6 +443,8 @@ u64 YabauseGetTicks(void) {
    struct timeval Time;
    gettimeofday(&Time, NULL);
    return (u64)(Time.tv_usec/1000);
+#elif defined(GEKKO)
+   return 0; // fix me
 #endif
 }
 
