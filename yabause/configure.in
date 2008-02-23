@@ -3,6 +3,8 @@ AC_INIT(yabause, 0.9.3)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
+echo $target_os
+
 AM_INIT_AUTOMAKE(yabause, 0.9.3)
 
 AC_PROG_RANLIB
@@ -60,16 +62,16 @@ AC_SUBST(yabause_arch)
 case $target in
 	*darwin*)
 		# getting the major version of darwin
-		major=`expr $target_os : "darwin\([^.]*\)"`
-		if [ $major -gt 8 ]; then
+		major=`expr $target_os : "darwin\(@<:@^.@:>@*\)"`
+		if test $major -gt 8 ; then
 			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386"
 			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386"
 		else
 			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386 -arch ppc"
 			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
-			AC_DEFINE(MAC_OS_X_VERSION_MAX_ALLOWED, MAC_OS_X_VERSION_10_3)
 		fi
 
+		AC_DEFINE(MAC_OS_X_VERSION_MAX_ALLOWED, MAC_OS_X_VERSION_10_3)
 		AM_PROG_CC_C_O
 		YAB_LIBS="$YAB_LIBS -framework IOKit -framework Carbon -framework AGL -framework OpenGL"
 		AC_DEFINE(HAVE_LIBGL)
