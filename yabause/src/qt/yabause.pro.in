@@ -20,7 +20,8 @@ TARGET	= yabause
 mac:TARGET	= Yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
-LIBS	+= -L../ -lyabause @YAB_LIBS@ @LIBS@
+LIBS	+= -L../ -lyabause @LIBS@
+mac:LIBS	+= @YAB_LIBS@
 AC_DEFS = @DEFS@
 QMAKE_CXXFLAGS	+= $$replace( AC_DEFS, "\", "\\\"" )
 QMAKE_CFLAGS	+= $$replace( AC_DEFS, "\", "\\\"" )
@@ -91,7 +92,6 @@ HEADERS	+= ui/UIYabause.h \
 	CommonDialogs.h \
 	PerQt.h \
 	ui/UIWaitInput.h \
-	PerQtSDL.h \
 	ui/UIBackupRam.h
 
 SOURCES	+= main.cpp \
@@ -108,5 +108,4 @@ SOURCES	+= main.cpp \
 	CommonDialogs.cpp \
 	PerQt.c \
 	ui/UIWaitInput.cpp \
-	PerQtSDL.c \
 	ui/UIBackupRam.cpp

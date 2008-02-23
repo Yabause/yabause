@@ -48,7 +48,6 @@ extern "C"
 	#include "../bios.h"
 	
 	#include "PerQt.h"
-	#include "PerQtSDL.h"
 #ifdef HAVE_LIBJSW
 	#include "PerJSW.h"
 #endif
