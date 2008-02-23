@@ -12,3 +12,7 @@ EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h JSWHelper.cpp JSWHelper.h \
 	ui/UISettings.cpp ui/UISettings.h ui/UISettings.ui \
 	ui/UIWaitInput.cpp ui/UIWaitInput.h ui/UIWaitInput.ui \
 	ui/UIYabause.cpp ui/UIYabause.h ui/UIYabause.ui
+
+all-local:
+	qmake-qt4 yabause.pro -o Makefile.qmake
+	$(MAKE) -f Makefile.qmake release

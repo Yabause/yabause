@@ -1349,6 +1349,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-opengl        don't use OpenGL
   --with-x                use the X Window System
+  --with-qt               try to use Qt port
   --without-c68k          don't compile C68k
 
 Some influential environment variables:
@@ -6648,6 +6649,17 @@ fi
 		yabause_yui="."
 		;;
 esac
+
+use_qt_port=no
+
+# Check whether --with-qt was given.
+if test "${with_qt+set}" = set; then
+  withval=$with_qt; use_qt_port=$withval
+fi
+
+if test x$use_qt_port = xyes ; then
+	yabause_yui="qt"
+fi
 
 
 

@@ -126,6 +126,12 @@ case $target in
 		;;
 esac
 
+use_qt_port=no
+AC_ARG_WITH(qt, AC_HELP_STRING(--with-qt, try to use Qt port), [use_qt_port=$withval])
+if test x$use_qt_port = xyes ; then
+	yabause_yui="qt"
+fi
+
 AC_SUBST(yabause_yui)
 
 AC_MSG_CHECKING([[whether the compiled supports c99 variadic macros]])
