@@ -33,42 +33,42 @@ SDL_Joystick* mSDLJoystick1 = 0;
 Sint16* mSDLNeutralPoints = 0; // stock each axis neutral point
 int mCalibrationDone = 0; // use to check if autocalibration already done
 
-int PERQtSDLInit(void);
-void PERQtSDLDeInit(void);
-int PERQtSDLHandleEvents(void);
-void PERQtSDLNothing(void);
+int PERSDLJoyInit(void);
+void PERSDLJoyDeInit(void);
+int PERSDLJoyHandleEvents(void);
+void PERSDLJoyNothing(void);
 #ifdef USENEWPERINTERFACE
-PortData_struct *PERQtSDLGetPerDataP1(void);
-PortData_struct *PERQtSDLGetPerDataP2(void);
+PortData_struct *PERSDLJoyGetPerDataP1(void);
+PortData_struct *PERSDLJoyGetPerDataP2(void);
 
 static PortData_struct port1;
 static PortData_struct port2;
 
-u32 PERQtSDLScan(const char *);
-void PERQtSDLFlush(void);
+u32 PERSDLJoyScan(const char *);
+void PERSDLJoyFlush(void);
 #endif
 
 PerInterface_struct PERSDLJoy = {
 PERCORE_SDLJOY,
-"Qt SDL Interface",
-PERQtSDLInit,
-PERQtSDLDeInit,
+"SDL Joystick Interface",
+PERSDLJoyInit,
+PERSDLJoyDeInit,
 #ifndef USENEWPERINTERFACE
-PERQtSDLHandleEvents
+PERSDLJoyHandleEvents
 #else
-PERQtSDLHandleEvents,
-PERQtSDLGetPerDataP1,
-PERQtSDLGetPerDataP2,
-PERQtSDLNothing,
-PERQtSDLScan,
+PERSDLJoyHandleEvents,
+PERSDLJoyGetPerDataP1,
+PERSDLJoyGetPerDataP2,
+PERSDLJoyNothing,
+PERSDLJoyScan,
 1,
-PERQtSDLFlush
+PERSDLJoyFlush
 #endif
 };
 
 //////////////////////////////////////////////////////////////////////////////
 
-int PERQtSDLInit(void) {
+int PERSDLJoyInit(void) {
 	if ( mSDLJoystick1 )
 		return 0;
 	// init joysticks
@@ -81,20 +81,20 @@ int PERQtSDLInit(void) {
 	// is it open ?
 	if ( !mSDLJoystick1 )
 	{
-		PERQtSDLDeInit();
+		PERSDLJoyDeInit();
 		return -1;
 	}
 	// create structure for neutral points
 	mSDLNeutralPoints = malloc( SDL_JoystickNumAxes( mSDLJoystick1 ) *sizeof( Sint16 ) );
 	// perform auto calibration
-	PERQtSDLScan( 0 );
+	PERSDLJoyScan( 0 );
 	// success
 	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PERQtSDLDeInit(void) {
+void PERSDLJoyDeInit(void) {
 	// close joystick
 	if ( mSDLJoystick1 )
 	{
@@ -111,7 +111,7 @@ void PERQtSDLDeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PERQtSDLNothing(void) {
+void PERSDLJoyNothing(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -141,7 +141,7 @@ int isSDLJoysticksSame( Sint16* oav, Uint8* obv, Sint16* nav, Uint8* nbv, int na
 	return 0;
 }
 
-int PERQtSDLHandleEvents(void) {
+int PERSDLJoyHandleEvents(void) {
 	// if available joy
 	if ( mSDLJoystick1 )
 	{
@@ -220,7 +220,7 @@ int PERQtSDLHandleEvents(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 #ifdef USENEWPERINTERFACE
-PortData_struct *PERQtSDLGetPerDataP1(void)
+PortData_struct *PERSDLJoyGetPerDataP1(void)
 {
    port1.data[0] = 0xF1;
    port1.data[1] = 0x02;
@@ -233,7 +233,7 @@ PortData_struct *PERQtSDLGetPerDataP1(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-PortData_struct *PERQtSDLGetPerDataP2(void)
+PortData_struct *PERSDLJoyGetPerDataP2(void)
 {
    port2.data[0] = 0xF0;
    port2.size = 1;
@@ -243,7 +243,7 @@ PortData_struct *PERQtSDLGetPerDataP2(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-PerInfo_struct *PERQtSDLGetList(void)
+PerInfo_struct *PERSDLJoyGetList(void)
 {
    // Returns a list of peripherals available along with information on each
    // peripheral
@@ -252,7 +252,7 @@ PerInfo_struct *PERQtSDLGetList(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERQtSDLScan( const char* n ) {
+u32 PERSDLJoyScan( const char* n ) {
 	// if no available joy
 	if ( !mSDLJoystick1 )
 		return 0;
@@ -298,7 +298,7 @@ u32 PERQtSDLScan( const char* n ) {
 	return k;
 }
 
-void PERQtSDLFlush(void) {
+void PERSDLJoyFlush(void) {
 }
 
 #endif
