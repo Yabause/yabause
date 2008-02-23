@@ -4753,20 +4753,6 @@ esac
 
 case $target in
 	*darwin*)
-		# getting the major version of darwin
-		major=`expr $target_os : "darwin\([^.]*\)"`
-		if test $major -gt 8 ; then
-			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386"
-			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386"
-		else
-			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386 -arch ppc"
-			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
-		fi
-
-		cat >>confdefs.h <<\_ACEOF
-#define MAC_OS_X_VERSION_MAX_ALLOWED MAC_OS_X_VERSION_10_3
-_ACEOF
-
 		if test "x$CC" != xcc; then
   { echo "$as_me:$LINENO: checking whether $CC and cc understand -c and -o together" >&5
 echo $ECHO_N "checking whether $CC and cc understand -c and -o together... $ECHO_C" >&6; }
@@ -4899,6 +4885,12 @@ fi
 _ACEOF
 
 		yabause_yui="carbon"
+		CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386 -arch ppc"
+		LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
+		cat >>confdefs.h <<\_ACEOF
+#define MAC_OS_X_VERSION_MAX_ALLOWED MAC_OS_X_VERSION_10_3
+_ACEOF
+
 		;;
 	*cygwin*)
 		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
