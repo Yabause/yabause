@@ -41,7 +41,7 @@ am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
-CONFIG_CLEAN_FILES = yabause.pro
+CONFIG_CLEAN_FILES = yabause.pro Makefile.qmake
 SOURCES =
 DIST_SOURCES =
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -67,6 +67,7 @@ EXEEXT = @EXEEXT@
 GREP = @GREP@
 HAVE_LIBSDL = @HAVE_LIBSDL@
 HAVE_PKG = @HAVE_PKG@
+HAVE_QMAKE = @HAVE_QMAKE@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -202,6 +203,8 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 yabause.pro: $(top_builddir)/config.status $(srcdir)/yabause.pro.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+Makefile.qmake: $(top_builddir)/config.status yabause.pro
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 tags: TAGS
 TAGS:
 
@@ -265,7 +268,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic mostlyclean-am
+clean-am: clean-generic clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -320,20 +323,22 @@ uninstall-am:
 .MAKE: install-am install-strip
 
 .PHONY: all all-am all-local check check-am clean clean-generic \
-	distclean distclean-generic distdir dvi dvi-am html html-am \
-	info info-am install install-am install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-generic pdf pdf-am ps ps-am uninstall \
-	uninstall-am
+	clean-local distclean distclean-generic distdir dvi dvi-am \
+	html html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
+	pdf-am ps ps-am uninstall uninstall-am
 
 
-all-local:
-	qmake-qt4 yabause.pro -o Makefile.qmake
+all-local: Makefile.qmake
 	$(MAKE) -f Makefile.qmake release
+
+clean-local: Makefile.qmake
+	$(MAKE) -f Makefile.qmake clean
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

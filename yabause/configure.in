@@ -3,8 +3,6 @@ AC_INIT(yabause, 0.9.3)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-echo $target_os
-
 AM_INIT_AUTOMAKE(yabause, 0.9.3)
 
 AC_PROG_RANLIB
@@ -130,6 +128,7 @@ use_qt_port=no
 AC_ARG_WITH(qt, AC_HELP_STRING(--with-qt, try to use Qt port), [use_qt_port=$withval])
 if test x$use_qt_port = xyes ; then
 	yabause_yui="qt"
+        AC_PATH_PROGS(HAVE_QMAKE, [qmake-qt4 qmake])
 fi
 
 AC_SUBST(yabause_yui)
@@ -166,6 +165,8 @@ AC_CONFIG_FILES([Makefile
 	src/windows/Makefile
 	autopackage/default.apspec
 ])
+AC_CONFIG_FILES([src/qt/Makefile.qmake:src/qt/yabause.pro], [$QMAKE src/qt/yabause.pro -o src/qt/Makefile.qmake], [QMAKE=$HAVE_QMAKE])
+
 AM_CONDITIONAL([YUI_IS_CARBON], [test ${yabause_yui} = "carbon"])
 AM_CONDITIONAL([YUI_IS_DREAMCAST], [test ${yabause_yui} = "dreamcast"])
 AM_CONDITIONAL([YUI_IS_GTK], [test ${yabause_yui} = "gtk"])
