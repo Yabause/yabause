@@ -329,80 +329,85 @@ void YabauseReset(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseExec(void) {
-   PROFILE_START("Total Emulation");
-   PROFILE_START("MSH2");
-   SH2Exec(MSH2, yabsys.DecilineStop);
-   PROFILE_STOP("MSH2");
+   int oneframeexec=0;
 
-   PROFILE_START("SSH2");
-   if (yabsys.IsSSH2Running)
-      SH2Exec(SSH2, yabsys.DecilineStop);
-   PROFILE_STOP("SSH2");
-
-   PROFILE_START("SCU");
-   ScuExec(yabsys.DecilineStop >> 1);
-   PROFILE_STOP("SCU");
-
-   yabsys.DecilineCount++;
-   if(yabsys.DecilineCount == 9)
+   while (!oneframeexec)
    {
-      // HBlankIN
-      PROFILE_START("hblankin");
-      Vdp2HBlankIN();
-      PROFILE_STOP("hblankin");
-   }
-   else if (yabsys.DecilineCount == 10)
-   {
-      // HBlankOUT
-      PROFILE_START("hblankout");
-      Vdp2HBlankOUT();
-      PROFILE_STOP("hblankout");
-      PROFILE_START("SCSP");
-      ScspExec();
-      PROFILE_STOP("SCSP");
-      yabsys.DecilineCount = 0;
-      yabsys.LineCount++;
-      if (yabsys.LineCount == yabsys.VBlankLineCount)
+      PROFILE_START("Total Emulation");
+      PROFILE_START("MSH2");
+      SH2Exec(MSH2, yabsys.DecilineStop);
+      PROFILE_STOP("MSH2");
+
+      PROFILE_START("SSH2");
+      if (yabsys.IsSSH2Running)
+         SH2Exec(SSH2, yabsys.DecilineStop);
+      PROFILE_STOP("SSH2");
+
+      PROFILE_START("SCU");
+      ScuExec(yabsys.DecilineStop >> 1);
+      PROFILE_STOP("SCU");
+
+      yabsys.DecilineCount++;
+      if(yabsys.DecilineCount == 9)
       {
-         PROFILE_START("vblankin");
-         // VBlankIN
-         SmpcINTBACKEnd();
-         Vdp2VBlankIN();
-         PROFILE_STOP("vblankin");
-         CheatDoPatches();
+         // HBlankIN
+         PROFILE_START("hblankin");
+         Vdp2HBlankIN();
+         PROFILE_STOP("hblankin");
       }
-      else if (yabsys.LineCount == yabsys.MaxLineCount)
+      else if (yabsys.DecilineCount == 10)
       {
-         // VBlankOUT
-         PROFILE_START("VDP1/VDP2");
-         Vdp2VBlankOUT();
-         yabsys.LineCount = 0;
-         PROFILE_STOP("VDP1/VDP2");
+         // HBlankOUT
+         PROFILE_START("hblankout");
+         Vdp2HBlankOUT();
+         PROFILE_STOP("hblankout");
+         PROFILE_START("SCSP");
+         ScspExec();
+         PROFILE_STOP("SCSP");
+         yabsys.DecilineCount = 0;
+         yabsys.LineCount++;
+         if (yabsys.LineCount == yabsys.VBlankLineCount)
+         {
+            PROFILE_START("vblankin");
+            // VBlankIN
+            SmpcINTBACKEnd();
+            Vdp2VBlankIN();
+            PROFILE_STOP("vblankin");
+            CheatDoPatches();
+         }
+         else if (yabsys.LineCount == yabsys.MaxLineCount)
+         {
+            // VBlankOUT
+            PROFILE_START("VDP1/VDP2");
+            Vdp2VBlankOUT();
+            yabsys.LineCount = 0;
+            oneframeexec = 1;
+            PROFILE_STOP("VDP1/VDP2");
+         }
       }
+
+      yabsys.CycleCountII += MSH2->cycles;
+
+      while (yabsys.CycleCountII > yabsys.Duf)
+      {
+         PROFILE_START("SMPC");
+         SmpcExec(10);
+         PROFILE_STOP("SMPC");
+         PROFILE_START("CDB");
+         Cs2Exec(10);
+         PROFILE_STOP("CDB");
+         yabsys.CycleCountII %= yabsys.Duf;
+      }
+
+      PROFILE_START("68K");
+      M68KExec(170);
+      PROFILE_STOP("68K");
+
+      MSH2->cycles %= yabsys.DecilineStop;
+      if (yabsys.IsSSH2Running) 
+         SSH2->cycles %= yabsys.DecilineStop;
+      PROFILE_STOP("Total Emulation");
    }
-
-   yabsys.CycleCountII += MSH2->cycles;
-
-   while (yabsys.CycleCountII > yabsys.Duf)
-   {
-      PROFILE_START("SMPC");
-      SmpcExec(10);
-      PROFILE_STOP("SMPC");
-      PROFILE_START("CDB");
-      Cs2Exec(10);
-      PROFILE_STOP("CDB");
-      yabsys.CycleCountII %= yabsys.Duf;
-   }
-
-   PROFILE_START("68K");
-   M68KExec(170);
-   PROFILE_STOP("68K");
-
-   MSH2->cycles %= yabsys.DecilineStop;
-   if (yabsys.IsSSH2Running) 
-      SSH2->cycles %= yabsys.DecilineStop;
-   PROFILE_STOP("Total Emulation");
-
    return 0;
 }
 

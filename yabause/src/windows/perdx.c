@@ -531,21 +531,6 @@ int PERDXHandleEvents(void)
 {
    PollKeys();
 
-   // I may end up changing this depending on people's results
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
    if (YabauseExec() != 0)
       return -1;
 
