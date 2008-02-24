@@ -86,8 +86,10 @@ int PERSDLJoyInit(void) {
 	}
 	// create structure for neutral points
 	mSDLNeutralPoints = malloc( SDL_JoystickNumAxes( mSDLJoystick1 ) *sizeof( Sint16 ) );
+#ifdef USENEWPERINTERFACE
 	// perform auto calibration
 	PERSDLJoyScan( 0 );
+#endif
 	// success
 	return 0;
 }
