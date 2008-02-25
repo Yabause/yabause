@@ -165,7 +165,9 @@ AC_CONFIG_FILES([Makefile
 	src/windows/Makefile
 	autopackage/default.apspec
 ])
-AC_CONFIG_FILES([src/qt/Makefile.qmake:src/qt/yabause.pro], [$QMAKE src/qt/yabause.pro -o src/qt/Makefile.qmake], [QMAKE=$HAVE_QMAKE])
+if test x$use_qt_port = xyes ; then
+	AC_CONFIG_FILES([src/qt/Makefile.qmake:src/qt/yabause.pro], [$QMAKE src/qt/yabause.pro -o src/qt/Makefile.qmake], [QMAKE=$HAVE_QMAKE])
+fi
 
 AM_CONDITIONAL([YUI_IS_CARBON], [test ${yabause_yui} = "carbon"])
 AM_CONDITIONAL([YUI_IS_DREAMCAST], [test ${yabause_yui} = "dreamcast"])

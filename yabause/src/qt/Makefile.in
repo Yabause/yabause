@@ -240,6 +240,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
+@YUI_IS_QT_FALSE@all-local:
 all-am: Makefile all-local
 installdirs:
 install: install-am
@@ -266,6 +267,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+@YUI_IS_QT_FALSE@clean-local:
 clean: clean-am
 
 clean-am: clean-generic clean-local mostlyclean-am
@@ -334,11 +336,11 @@ uninstall-am:
 	pdf-am ps ps-am uninstall uninstall-am
 
 
-all-local: Makefile.qmake
-	$(MAKE) -f Makefile.qmake release
+@YUI_IS_QT_TRUE@all-local: Makefile.qmake
+@YUI_IS_QT_TRUE@	$(MAKE) -f Makefile.qmake release
 
-clean-local: Makefile.qmake
-	$(MAKE) -f Makefile.qmake clean
+@YUI_IS_QT_TRUE@clean-local: Makefile.qmake
+@YUI_IS_QT_TRUE@	$(MAKE) -f Makefile.qmake clean
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

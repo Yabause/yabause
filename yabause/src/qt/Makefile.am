@@ -13,8 +13,10 @@ EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h JSWHelper.cpp JSWHelper.h \
 	ui/UIWaitInput.cpp ui/UIWaitInput.h ui/UIWaitInput.ui \
 	ui/UIYabause.cpp ui/UIYabause.h ui/UIYabause.ui
 
+if YUI_IS_QT
 all-local: Makefile.qmake
 	$(MAKE) -f Makefile.qmake release
 
 clean-local: Makefile.qmake
 	$(MAKE) -f Makefile.qmake clean
+endif

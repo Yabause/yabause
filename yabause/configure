@@ -6838,8 +6838,10 @@ fi
 
 ac_config_files="$ac_config_files Makefile doc/Makefile src/Makefile src/c68k/Makefile src/carbon/Makefile src/dreamcast/Makefile src/gtk/Makefile src/qt/Makefile src/qt/yabause.pro src/windows/Makefile autopackage/default.apspec"
 
-ac_config_files="$ac_config_files src/qt/Makefile.qmake:src/qt/yabause.pro"
+if test x$use_qt_port = xyes ; then
+	ac_config_files="$ac_config_files src/qt/Makefile.qmake:src/qt/yabause.pro"
 
+fi
 
  if test ${yabause_yui} = "carbon"; then
   YUI_IS_CARBON_TRUE=
