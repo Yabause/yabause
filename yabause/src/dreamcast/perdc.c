@@ -1,4 +1,4 @@
-/*  Copyright 2005-2006 Lawrence Sebald
+/*  Copyright 2005-2008 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -122,8 +122,7 @@ int PERDCHandleEvents(void)	{
         }
     }
 
-	if(YabauseExec() != 0)
-		return -1;
+    YabauseExec();
 
 	return 0;
 }

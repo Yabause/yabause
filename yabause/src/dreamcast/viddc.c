@@ -390,16 +390,14 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
                     dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x3F;
                     dot2 = T1ReadByte(Vdp1Ram, (charAddr + 1) & 0x7FFFF) & 0x3F;
                     charAddr = charAddr + 2;
-                    
-                    if((dot == 0) && !SPD)  ;
-                    else    {
+
+                    if(dot || SPD)  {
                         temp = Vdp2ColorRamGetColor((dot | colorBank) +
                                                     colorOffset);
                         dot = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
                     }
-                    
-                    if((dot2 == 0) && !SPD) ;
-                    else    {
+
+                    if(dot2 || SPD) {
                         temp = Vdp2ColorRamGetColor((dot2 | colorBank) +
                                                     colorOffset);
                         dot2 = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
@@ -441,15 +439,13 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
                     dot2 = T1ReadByte(Vdp1Ram, (charAddr + 1) & 0x7FFFF) & 0x7F;
                     charAddr = charAddr + 2;
 
-                    if((dot == 0) && !SPD)  ;
-                    else    {
+                    if(dot || SPD)  {
                         temp = Vdp2ColorRamGetColor((dot | colorBank) +
                                                     colorOffset);
                         dot = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
                     }
 
-                    if((dot2 == 0) && !SPD) ;
-                    else    {
+                    if(dot2 || SPD) {
                         temp = Vdp2ColorRamGetColor((dot2 | colorBank) +
                                                     colorOffset);
                         dot2 = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
@@ -491,15 +487,13 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
                     dot2 = T1ReadByte(Vdp1Ram, (charAddr + 1) & 0x7FFFF);
                     charAddr = charAddr + 2;
 
-                    if((dot == 0) && !SPD)  ;
-                    else    {
+                    if(dot || SPD)  {
                         temp = Vdp2ColorRamGetColor((dot | colorBank) +
                                                     colorOffset);
                         dot = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
                     }
 
-                    if((dot2 == 0) && !SPD) ;
-                    else    {
+                    if(dot2 || SPD) {
                         temp = Vdp2ColorRamGetColor((dot2 | colorBank) +
                                                     colorOffset);
                         dot2 = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
@@ -538,13 +532,11 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
                     dot2 = T1ReadWord(Vdp1Ram, (charAddr + 2) & 0x7FFFF);
                     charAddr = charAddr + 4;
 
-                    if((dot == 0) && !SPD)  ;
-                    else
+                    if(dot || SPD)
                         dot = COLOR_ADD(SAT2YAB1(dot), vdp1cor, vdp1cog,
                                         vdp1cob);
 
-                    if((dot2 == 0) && !SPD) ;
-                    else
+                    if(dot2 || SPD)
                         dot2 = COLOR_ADD(SAT2YAB1(dot2), vdp1cor, vdp1cog,
                                          vdp1cob);
 
