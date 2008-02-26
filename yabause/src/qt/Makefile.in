@@ -155,7 +155,7 @@ top_srcdir = @top_srcdir@
 yabause_arch = @yabause_arch@
 yabause_yui = @yabause_yui@
 EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h JSWHelper.cpp JSWHelper.h \
-	main.cpp PerJSW.cpp PerJSW.h PerQt.c PerQt.h PerQtSDL.c PerQtSDL.h \
+	main.cpp PerJSW.cpp PerJSW.h PerQt.c PerQt.h \
 	QtYabause.cpp QtYabause.h Settings.cpp Settings.h yabause.desktop \
 	YabauseGL.cpp YabauseGL.h yabause.pro.in YabauseThread.cpp YabauseThread.h \
 	resources/resources.qrc \
