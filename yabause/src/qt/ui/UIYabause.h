@@ -70,10 +70,8 @@ protected:
 	YabauseThread* mYabauseThread;
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
-	bool mInit;
 
 	virtual void closeEvent( QCloseEvent* event );
-	virtual void showEvent( QShowEvent* event );
 	virtual void keyPressEvent( QKeyEvent* event );
 	virtual void keyReleaseEvent( QKeyEvent* event );
 
@@ -105,7 +103,6 @@ protected slots:
 	void on_aViewLayerNBG3_triggered();
 	void on_aViewLayerRBG0_triggered();
 	void on_aViewFullscreen_triggered( bool b );
-	void on_aViewLog_triggered();
 	// help menu
 	void on_aHelpAbout_triggered();
 };

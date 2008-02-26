@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>320</width>
-    <height>200</height>
+    <width>640</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -15,14 +15,20 @@
   <property name="windowIcon" >
    <iconset resource="../resources/resources.qrc" >:/icons/icons/yabause.png</iconset>
   </property>
+  <property name="iconSize" >
+   <size>
+    <width>16</width>
+    <height>16</height>
+   </size>
+  </property>
   <widget class="QWidget" name="centralwidget" />
   <widget class="QMenuBar" name="menubar" >
    <property name="geometry" >
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>320</width>
-     <height>27</height>
+     <width>640</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="mYabause" >
@@ -32,6 +38,9 @@
     <widget class="QMenu" name="mYabauseSaveState" >
      <property name="title" >
       <string>Save State</string>
+     </property>
+     <property name="icon" >
+      <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/save_state.png</iconset>
      </property>
      <addaction name="aYabauseSaveState1" />
      <addaction name="aYabauseSaveState2" />
@@ -46,6 +55,9 @@
     <widget class="QMenu" name="mYabauseLoadState" >
      <property name="title" >
       <string>Load State</string>
+     </property>
+     <property name="icon" >
+      <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/load_state.png</iconset>
      </property>
      <addaction name="aYabauseLoadState1" />
      <addaction name="aYabauseLoadState2" />
@@ -80,6 +92,9 @@
     <widget class="QMenu" name="mViewLayer" >
      <property name="title" >
       <string>&amp;Layer</string>
+     </property>
+     <property name="icon" >
+      <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/layer.png</iconset>
      </property>
      <addaction name="aViewLayerVdp1" />
      <addaction name="aViewLayerNBG0" />
@@ -129,7 +144,38 @@
    <addaction name="mViewDebug" />
    <addaction name="mHelp" />
   </widget>
+  <widget class="QToolBar" name="toolBar" >
+   <property name="windowTitle" >
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea" >
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak" >
+    <bool>false</bool>
+   </attribute>
+   <addaction name="aYabauseRun" />
+   <addaction name="aYabausePause" />
+   <addaction name="aYabauseReset" />
+   <addaction name="separator" />
+   <addaction name="aYabauseSettings" />
+   <addaction name="aYabauseFrameSkipLimiter" />
+   <addaction name="aViewFPS" />
+   <addaction name="aViewFullscreen" />
+   <addaction name="aYabauseTransfer" />
+   <addaction name="aYabauseScreenshot" />
+   <addaction name="aViewLog" />
+   <addaction name="separator" />
+   <addaction name="aToolsBackupManager" />
+   <addaction name="aToolsCheatsList" />
+   <addaction name="separator" />
+   <addaction name="aYabauseQuit" />
+   <addaction name="aHelpAbout" />
+  </widget>
   <action name="aYabauseQuit" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/quit.png</iconset>
+   </property>
    <property name="text" >
     <string>&amp;Quit</string>
    </property>
@@ -148,11 +194,17 @@
    </property>
   </action>
   <action name="aYabauseSettings" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/settings.png</iconset>
+   </property>
    <property name="text" >
     <string>&amp;Settings...</string>
    </property>
   </action>
   <action name="aYabauseRun" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/play.png</iconset>
+   </property>
    <property name="text" >
     <string>R&amp;un</string>
    </property>
@@ -161,6 +213,12 @@
    </property>
   </action>
   <action name="aYabausePause" >
+   <property name="enabled" >
+    <bool>false</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/pause.png</iconset>
+   </property>
    <property name="text" >
     <string>&amp;Pause</string>
    </property>
@@ -169,6 +227,12 @@
    </property>
   </action>
   <action name="aYabauseReset" >
+   <property name="enabled" >
+    <bool>false</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/reset.png</iconset>
+   </property>
    <property name="text" >
     <string>&amp;Reset</string>
    </property>
@@ -177,11 +241,17 @@
    <property name="enabled" >
     <bool>false</bool>
    </property>
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/transfert.png</iconset>
+   </property>
    <property name="text" >
     <string>Transfer</string>
    </property>
   </action>
   <action name="aYabauseScreenshot" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/screenshot.png</iconset>
+   </property>
    <property name="text" >
     <string>Screenshot</string>
    </property>
@@ -190,6 +260,9 @@
    <property name="checkable" >
     <bool>true</bool>
    </property>
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/frame_skipping.png</iconset>
+   </property>
    <property name="text" >
     <string>Frame Skip/Limiter</string>
    </property>
@@ -197,6 +270,9 @@
   <action name="aViewFPS" >
    <property name="checkable" >
     <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/fps.png</iconset>
    </property>
    <property name="text" >
     <string>FPS</string>
@@ -217,6 +293,9 @@
    <property name="checkable" >
     <bool>true</bool>
    </property>
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/fullscreen.png</iconset>
+   </property>
    <property name="text" >
     <string>&amp;Fullscreen</string>
    </property>
@@ -225,6 +304,12 @@
    </property>
   </action>
   <action name="aViewLog" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/log.png</iconset>
+   </property>
    <property name="text" >
     <string>Log</string>
    </property>
@@ -270,6 +355,9 @@
    </property>
   </action>
   <action name="aHelpAbout" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/about.png</iconset>
+   </property>
    <property name="text" >
     <string>&amp;About...</string>
    </property>
@@ -420,21 +508,33 @@
    </property>
   </action>
   <action name="aYabauseSaveStateAs" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/save_state.png</iconset>
+   </property>
    <property name="text" >
     <string>Save State As...</string>
    </property>
   </action>
   <action name="aYabauseLoadStateAs" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/load_state.png</iconset>
+   </property>
    <property name="text" >
     <string>Load State As...</string>
    </property>
   </action>
   <action name="aToolsCheatsList" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/cheats.png</iconset>
+   </property>
    <property name="text" >
     <string>Cheats List...</string>
    </property>
   </action>
   <action name="aToolsBackupManager" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/backup_ram.png</iconset>
+   </property>
    <property name="text" >
     <string>Backup Manager...</string>
    </property>

@@ -8,6 +8,8 @@ UICheats::UICheats( QWidget* p )
 {
 	// set up dialog
 	setupUi( this );
+	if ( p && !p->isFullScreen() )
+		setWindowFlags( Qt::Sheet );
 	// cheat counts
 	int cheatsCount;
 	// get cheats

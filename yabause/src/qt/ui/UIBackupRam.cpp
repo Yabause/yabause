@@ -13,6 +13,8 @@ UIBackupRam::UIBackupRam( QWidget* p )
 {
 	//setup dialog
 	setupUi( this );
+	if ( p && !p->isFullScreen() )
+		setWindowFlags( Qt::Sheet );
 
 	// get available devices
 	if ( ( devices = BupGetDeviceList( &numbupdevices ) ) == NULL )

@@ -34,17 +34,23 @@
 #include <QDockWidget>
 #include <QImageWriter>
 
+//#define USE_UNIFIED_TITLE_TOOLBAR
+
 void qAppendLog( const char* s )
 { QtYabause::mainWindow()->appendLog( s ); }
 
 UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )
 {
-	mInit = false;
-	
 	// setup dialog
 	setupUi( this );
+	toolBar->insertAction( aYabauseSettings, mYabauseSaveState->menuAction() );
+	toolBar->insertAction( aYabauseSettings, mYabauseLoadState->menuAction() );
+	toolBar->insertSeparator( aYabauseSettings );
 	setAttribute( Qt::WA_DeleteOnClose );
+#ifdef USE_UNIFIED_TITLE_TOOLBAR
+	setUnifiedTitleAndToolBarOnMac( true );
+#endif
 	
 	// create glcontext
 	mYabauseGL = new YabauseGL;
@@ -58,13 +64,10 @@ UIYabause::UIYabause( QWidget* parent )
 	teLog->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
 	teLog->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
 	mLogDock = new QDockWidget( this );
+	mLogDock->setWindowTitle( "Log" );
 	mLogDock->setWidget( teLog );
 	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
 	mLogDock->setVisible( false );
-	
-	// init actions
-	aYabausePause->setEnabled( false );
-	aYabauseReset->setEnabled( false );
 
 	// start log
 	LogStart();
@@ -73,9 +76,17 @@ UIYabause::UIYabause( QWidget* parent )
 	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
 	
-	// connections
+	// connectionsdd
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
+	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
+	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
+	
+	// start emulation
+	mYabauseThread->startEmulation();
+	
+	// show settings dialog
+	QTimer::singleShot( 25, aYabauseSettings, SLOT( trigger() ) );
 }
 
 UIYabause::~UIYabause()
@@ -96,18 +107,6 @@ void UIYabause::closeEvent( QCloseEvent* e )
 	QMainWindow::closeEvent( e );
 }
 
-void UIYabause::showEvent( QShowEvent* )
-{
-	if ( !mInit )
-	{
-		mInit = true;
-		// start emulation
-		mYabauseThread->startEmulation();
-		// show settings dialog
-		aYabauseSettings->trigger();
-	}
-}
-
 void UIYabause::keyPressEvent( QKeyEvent* e )
 { PerKeyDown( e->key() ); }
 
@@ -124,16 +123,27 @@ void UIYabause::appendLog( const char* s )
 }
 
 void UIYabause::sizeRequested( const QSize& s )
-{ resize( s.isNull() ? QSize( 320, 240 ) : s ); }
+{ resize( s.isNull() ? QSize( 640, 480 ) : s ); }
 
 void UIYabause::fullscreenRequested( bool f )
 {
 	if ( isFullScreen() && !f )
+	{
 		showNormal();
+#ifdef USE_UNIFIED_TITLE_TOOLBAR
+		setUnifiedTitleAndToolBarOnMac( true );
+#endif
+	}
 	else if ( !isFullScreen() && f )
+	{
+#ifdef USE_UNIFIED_TITLE_TOOLBAR
+		setUnifiedTitleAndToolBarOnMac( false );
+#endif
 		showFullScreen();
+	}
 	if ( aViewFullscreen->isChecked() != f )
 		aViewFullscreen->setChecked( f );
+	aViewFullscreen->setIcon( QIcon( f ? ":/actions/no_fullscreen.png" : ":/actions/fullscreen.png" ) );
 }
 
 void UIYabause::on_aYabauseSettings_triggered()
@@ -278,12 +288,6 @@ void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
 	fullscreenRequested( b );
 	//ToggleFullScreen();
-}
-
-void UIYabause::on_aViewLog_triggered()
-{
-	if ( !mLogDock->isVisible() )
-		mLogDock->show();
 }
 
 void UIYabause::on_aHelpAbout_triggered()

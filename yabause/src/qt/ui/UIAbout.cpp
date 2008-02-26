@@ -20,9 +20,11 @@
 */
 #include "UIAbout.h"
 
-UIAbout::UIAbout( QWidget* o )
-	: QDialog( o )
+UIAbout::UIAbout( QWidget* p )
+	: QDialog( p )
 {
 	setupUi( this );
+	if ( p && !p->isFullScreen() )
+		setWindowFlags( Qt::Sheet );
 	lInformations->setText( lInformations->text().arg( VERSION ) );
 }

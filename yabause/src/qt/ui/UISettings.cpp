@@ -76,6 +76,11 @@ UISettings::UISettings( QWidget* p )
 {
 	// setup dialog
 	setupUi( this );
+	if ( p && !p->isFullScreen() )
+		setWindowFlags( Qt::Sheet );
+	
+	//if ( p && p->isVisible() )
+		//setWindowFlags( Qt::Sheet );
 
 	// load cores informations
 	loadCores();
@@ -88,8 +93,6 @@ UISettings::UISettings( QWidget* p )
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbBrowse_clicked() ) );
 	foreach ( QPushButton* pb, wInput->findChildren<QPushButton*>() )
 		connect( pb, SIGNAL( clicked() ), this, SLOT( pbInputs_clicked() ) );
-
-	//lInput->setText( "yoyoyo" );
 }
 
 void UISettings::requestFile( const QString& c, QLineEdit* e )
