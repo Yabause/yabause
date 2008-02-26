@@ -133,7 +133,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf->cartpath = strdup( s->value( "Cartridge/Path", mYabauseConf->cartpath ).toString().toAscii().constData() );
 	mYabauseConf->flags = s->value( "Video/VideoFormat", mYabauseConf->flags ).toInt();
 	
-	emit requestSize( QSize( s->value( "Video/Width", 320 ).toInt(), s->value( "Video/Height", 240 ).toInt() ) );
+	emit requestSize( QSize( s->value( "Video/Width", 0 ).toInt(), s->value( "Video/Height", 0 ).toInt() ) );
 	emit requestFullscreen( s->value( "Video/Fullscreen", false ).toBool() );
 	
 	s->beginGroup( "Input/Keys" );

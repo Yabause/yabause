@@ -31,6 +31,7 @@ public:
 	YabauseGL( QWidget* parent = 0 );
 
 protected:
+	virtual void showEvent( QShowEvent* event );
 	virtual void resizeGL( int w, int h );
 };
 

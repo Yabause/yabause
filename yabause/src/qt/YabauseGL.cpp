@@ -21,9 +21,18 @@
 #include "YabauseGL.h"
 #include "QtYabause.h"
 
-YabauseGL::YabauseGL( QWidget* parent )
-	: QGLWidget( parent )
+YabauseGL::YabauseGL( QWidget* p )
+	: QGLWidget( p )
 {}
+
+void YabauseGL::showEvent( QShowEvent* e )
+{
+	// hack for clearing the the gl context
+	QGLWidget::showEvent( e );
+	QSize s = size();
+	resize( 0, 0 );
+	resize( s );
+}
 
 void YabauseGL::resizeGL( int w, int h )
 {
