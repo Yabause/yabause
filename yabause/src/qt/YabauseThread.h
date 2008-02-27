@@ -33,18 +33,18 @@ class YabauseThread : public QObject
 	
 public:
 	YabauseThread( QObject* owner = 0 );
-	~YabauseThread();
 	
 	yabauseinit_struct* yabauseConf();
 	bool emulationRunning();
 	bool emulationPaused();
 
 protected:
-	yabauseinit_struct* mYabauseConf;
+	yabauseinit_struct mYabauseConf;
 	QMutex mMutex;
 	bool mPause;
 	bool mRunning;
 	int mTimerId;
+	int mInit;
 	
 	void initEmulation();
 	void deInitEmulation();
