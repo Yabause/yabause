@@ -252,9 +252,9 @@ void UIYabause::on_aYabauseOpenISO_triggered()
 	{
 		Cs2ChangeCDCore( ISOCD.id, strdup( fn.toAscii().constData() ) );
 		YabauseReset();
+		if ( !aYabauseRun->isChecked() )
+			aYabauseRun->trigger();
 	}
-	if ( !aYabauseRun->isChecked() )
-		aYabauseRun->trigger();
 }
 
 void UIYabause::on_aYabauseOpenCDRom_triggered()
@@ -265,9 +265,9 @@ void UIYabause::on_aYabauseOpenCDRom_triggered()
 	{
 		Cs2ChangeCDCore( ArchCD.id, strdup( fn.toAscii().constData() ) );
 		YabauseReset();
+		if ( !aYabauseRun->isChecked() )
+			aYabauseRun->trigger();
 	}
-	if ( !aYabauseRun->isChecked() )
-		aYabauseRun->trigger();
 }
 
 void UIYabause::on_aYabauseQuit_triggered()
