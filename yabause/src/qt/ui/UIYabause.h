@@ -90,6 +90,8 @@ protected slots:
 	void on_mYabauseLoadState_triggered( QAction* );
 	void on_aYabauseSaveStateAs_triggered();
 	void on_aYabauseLoadStateAs_triggered();
+	void on_aYabauseOpenISO_triggered();
+	void on_aYabauseOpenCDRom_triggered();
 	void on_aYabauseQuit_triggered();
 	// tools
 	void on_aToolsBackupManager_triggered();

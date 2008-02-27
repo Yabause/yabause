@@ -29,7 +29,6 @@
 #include "../CommonDialogs.h"
 
 #include <QKeyEvent>
-#include <QTimer>
 #include <QTextEdit>
 #include <QDockWidget>
 #include <QImageWriter>
@@ -84,9 +83,6 @@ UIYabause::UIYabause( QWidget* parent )
 	
 	// start emulation
 	mYabauseThread->startEmulation();
-	
-	// show settings dialog
-	QTimer::singleShot( 25, aYabauseSettings, SLOT( trigger() ) );
 }
 
 UIYabause::~UIYabause()
@@ -245,6 +241,32 @@ void UIYabause::on_aYabauseLoadStateAs_triggered()
 	if ( YabLoadState( fn.toAscii().constData() ) != 0 )
 		CommonDialogs::information( tr( "Couldn't load state file" ) );
 	else
+		aYabauseRun->trigger();
+}
+
+void UIYabause::on_aYabauseOpenISO_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	const QString fn = CommonDialogs::getOpenFileName( ".", tr( "Select your iso/cue/bin file" ), tr( "Yabause Save State (*.iso *.cue *.bin)" ) );
+	if ( !fn.isEmpty() )
+	{
+		Cs2ChangeCDCore( ISOCD.id, strdup( fn.toAscii().constData() ) );
+		YabauseReset();
+	}
+	if ( !aYabauseRun->isChecked() )
+		aYabauseRun->trigger();
+}
+
+void UIYabause::on_aYabauseOpenCDRom_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	const QString fn = CommonDialogs::getExistingDirectory( ".", tr( "Select a cdrom volume" ) );
+	if ( !fn.isEmpty() )
+	{
+		Cs2ChangeCDCore( ArchCD.id, strdup( fn.toAscii().constData() ) );
+		YabauseReset();
+	}
+	if ( !aYabauseRun->isChecked() )
 		aYabauseRun->trigger();
 }
 

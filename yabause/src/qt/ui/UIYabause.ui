@@ -82,8 +82,10 @@
     <addaction name="aYabauseSaveStateAs" />
     <addaction name="aYabauseLoadStateAs" />
     <addaction name="separator" />
-    <addaction name="aYabauseQuit" />
+    <addaction name="aYabauseOpenISO" />
+    <addaction name="aYabauseOpenCDRom" />
     <addaction name="separator" />
+    <addaction name="aYabauseQuit" />
    </widget>
    <widget class="QMenu" name="mView" >
     <property name="title" >
@@ -157,6 +159,9 @@
    <addaction name="aYabauseRun" />
    <addaction name="aYabausePause" />
    <addaction name="aYabauseReset" />
+   <addaction name="separator" />
+   <addaction name="aYabauseOpenISO" />
+   <addaction name="aYabauseOpenCDRom" />
    <addaction name="separator" />
    <addaction name="aYabauseSettings" />
    <addaction name="aYabauseFrameSkipLimiter" />
@@ -294,7 +299,7 @@
     <bool>true</bool>
    </property>
    <property name="icon" >
-    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/fullscreen.png</iconset>
+    <iconset resource="../resources/resources.qrc" >:/actions/fullscreen.png</iconset>
    </property>
    <property name="text" >
     <string>&amp;Fullscreen</string>
@@ -537,6 +542,22 @@
    </property>
    <property name="text" >
     <string>Backup Manager...</string>
+   </property>
+  </action>
+  <action name="aYabauseOpenISO" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/iso.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Open ISO</string>
+   </property>
+  </action>
+  <action name="aYabauseOpenCDRom" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/cd.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Open CD Rom</string>
    </property>
   </action>
  </widget>
