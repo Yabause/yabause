@@ -54,4 +54,7 @@ void CheatEnableCode(int index);
 void CheatDisableCode(int index);
 void CheatDoPatches(void);
 cheatlist_struct *CheatGetList(int *cheatnum);
+int CheatSave(const char *filename);
+int CheatLoad(const char *filename);
+
 #endif

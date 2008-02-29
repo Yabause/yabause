@@ -1,4 +1,4 @@
-/*  Copyright 2007 Theo Berkau
+/*  Copyright 2007-2008 Theo Berkau
 
     This file is part of Yabause.
 
@@ -24,6 +24,11 @@
 cheatlist_struct *cheatlist=NULL;
 int numcheats=0;
 int cheatsize;
+
+#define DoubleWordSwap(x) x = (((x & 0xFF000000) >> 24) + \
+                              ((x & 0x00FF0000) >> 8) + \
+                              ((x & 0x0000FF00) << 8) + \
+                              ((x & 0x000000FF) << 24));
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -258,3 +263,108 @@ cheatlist_struct *CheatGetList(int *cheatnum)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+int CheatSave(const char *filename)
+{
+   FILE *fp;
+   int i;
+   int num;
+
+   if (!filename)
+      return -1;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+      return -1;
+
+   fprintf(fp, "YCHT");
+   num = numcheats;
+#ifndef WORDS_BIGENDIAN
+   DoubleWordSwap(num);
+#endif
+   fwrite((void *)&num, sizeof(int), 1, fp);
+
+   for(i = 0; i < numcheats; i++)
+   {
+      u8 descsize;
+      cheatlist_struct cheat;
+
+      memcpy(&cheat, &cheatlist[i], sizeof(cheatlist_struct));
+#ifndef WORDS_BIGENDIAN
+      DoubleWordSwap(cheat.type);
+      DoubleWordSwap(cheat.addr);
+      DoubleWordSwap(cheat.val);
+      DoubleWordSwap(cheat.enable);
+#endif
+      fwrite((void *)&cheat.type, sizeof(int), 1, fp);
+      fwrite((void *)&cheat.addr, sizeof(u32), 1, fp);
+      fwrite((void *)&cheat.val, sizeof(u32), 1, fp);
+      descsize = (u8)strlen(cheatlist[i].desc)+1;
+      fwrite((void *)&descsize, sizeof(u8), 1, fp);
+      fwrite((void *)cheatlist[i].desc, sizeof(char), descsize, fp);
+      fwrite((void *)&cheat.enable, sizeof(int), 1, fp);
+   }
+
+   fclose (fp);
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int CheatLoad(const char *filename)
+{
+   FILE *fp;
+   int i;
+   char id[4];
+   char desc[256];
+
+   if (!filename)
+      return -1;
+
+   if ((fp = fopen(filename, "rb")) == NULL)
+      return -1;
+
+   fread((void *)id, 1, 4, fp);
+   if (strncmp(id, "YCHT", 4) != 0)
+   {
+      fclose(fp);
+      return -2;
+   }
+
+   fread((void *)&numcheats, sizeof(int), 1, fp);
+#ifndef WORDS_BIGENDIAN
+   DoubleWordSwap(numcheats);
+#endif
+
+   if (numcheats >= cheatsize)
+   {
+      cheatlist = realloc(cheatlist, sizeof(cheatlist_struct) * (cheatsize * 2));
+      cheatsize *= 2;
+   }
+
+   for(i = 0; i < numcheats; i++)
+   {
+      u8 descsize;
+
+      fread((void *)&cheatlist[i].type, sizeof(int), 1, fp);
+      fread((void *)&cheatlist[i].addr, sizeof(u32), 1, fp);
+      fread((void *)&cheatlist[i].val, sizeof(u32), 1, fp);
+      fread((void *)&descsize, sizeof(u8), 1, fp);
+      fread((void *)desc, sizeof(char), descsize, fp);
+      CheatChangeDescriptionByIndex(i, desc);
+      fread((void *)&cheatlist[i].enable, sizeof(int), 1, fp);
+#ifndef WORDS_BIGENDIAN
+      DoubleWordSwap(cheatlist[i].type);
+      DoubleWordSwap(cheatlist[i].addr);
+      DoubleWordSwap(cheatlist[i].val);
+      DoubleWordSwap(cheatlist[i].enable);
+#endif
+   }
+
+   fclose (fp);
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
