@@ -23,8 +23,11 @@
 #include "../cheat.h"
 #include "resource.h"
 #include "../memory.h"
+#include "yuidebug.h"
 
 extern HINSTANCE y_hInstance;
+
+char cheatfilename[MAX_PATH] = "\0";
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -112,6 +115,7 @@ LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                AddCode(GetParent(hDlg), cheatnum-1);
 
                EnableWindow(GetDlgItem(GetParent(hDlg), IDC_CLEARCODES), TRUE);
+               EnableWindow(GetDlgItem(GetParent(hDlg), IDC_SAVETOFILE), TRUE);
 
                EndDialog(hDlg, TRUE);
                return TRUE;
@@ -192,6 +196,7 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                AddCode(GetParent(hDlg), cheatnum-1);
 
                EnableWindow(GetDlgItem(GetParent(hDlg), IDC_CLEARCODES), TRUE);
+               EnableWindow(GetDlgItem(GetParent(hDlg), IDC_SAVETOFILE), TRUE);
 
                EndDialog(hDlg, TRUE);
                return TRUE;
@@ -240,13 +245,14 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
+   int cheatnum;
+   int i;
+
    switch (uMsg)
    {
       case WM_INITDIALOG:
       {
          LVCOLUMN coldata;
-         int cheatnum;
-         int i;
 
          ListView_SetExtendedListViewStyleEx(GetDlgItem(hDlg, IDC_CHEATLIST),
                                              LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
@@ -277,11 +283,15 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
 
          if (cheatnum == 0)
+         {
             EnableWindow(GetDlgItem(hDlg, IDC_CLEARCODES), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_SAVETOFILE), FALSE);
+         }
+         else
+            EnableWindow(GetDlgItem(hDlg, IDC_SAVETOFILE), TRUE);
 
          EnableWindow(GetDlgItem(hDlg, IDC_DELETECODE), FALSE);
-
-         EnableWindow(GetDlgItem(hDlg, IDC_ADDFROMFILE), FALSE);
+         EnableWindow(GetDlgItem(hDlg, IDC_ADDFROMFILE), TRUE);
 
          return TRUE;
       }
@@ -295,9 +305,51 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDC_ADDRAWMEMADDR:
                DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_ADDCODE), hDlg, (DLGPROC)AddCodeDlgProc);
                break;
-            case IDC_ADDFROMFILE:
-               // do an open file dialog here
+            case IDC_SAVETOFILE:
+            {
+               OPENFILENAME ofn;
+
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
+                        "Yabause Cheat Files\0*.YCT\0All Files\0*.*\0",
+                        cheatfilename, sizeof(cheatfilename));
+
+               if (GetSaveFileName(&ofn))
+               {
+                  if (CheatSave(cheatfilename) != 0)
+                     MessageBox (hDlg, "Unable to open file for loading", "Error",  MB_OK | MB_ICONINFORMATION);
+               }
                break;
+            }
+            case IDC_ADDFROMFILE:
+            {
+               OPENFILENAME ofn;
+
+               // setup ofn structure
+               SetupOFN(&ofn, OFN_DEFAULTLOAD, hDlg,
+                        "Yabause Cheat Files\0*.YCT\0All Files\0*.*\0",
+                        cheatfilename, sizeof(cheatfilename));
+
+               if (GetOpenFileName(&ofn))
+               {
+                  if (CheatLoad(cheatfilename) == 0)
+                  {
+                     EnableWindow(GetDlgItem(GetParent(hDlg), IDC_SAVETOFILE), TRUE);
+
+                     // Generate cheat list
+                     CheatGetList(&cheatnum);
+
+                     for (i = 0; i < cheatnum; i++)
+                     {
+                        // Add code to code list
+                        AddCode(hDlg, i);
+                     }
+                  }
+                  else
+                     MessageBox (hDlg, "Unable to open file for saving", "Error",  MB_OK | MB_ICONINFORMATION);
+               }
+
+               break;
+            }
             case IDC_DELETECODE:
             {
                int cursel=SendDlgItemMessage(hDlg, IDC_CHEATLIST,
@@ -320,6 +372,7 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_DELETEALLITEMS, 0, 0);
                EnableWindow(GetDlgItem(GetParent(hDlg), IDC_CLEARCODES), FALSE);
                EnableWindow(GetDlgItem(GetParent(hDlg), IDC_DELETECODE), FALSE);
+               EnableWindow(GetDlgItem(GetParent(hDlg), IDC_SAVETOFILE), FALSE);
                break;
             case IDCANCEL:
             case IDOK:

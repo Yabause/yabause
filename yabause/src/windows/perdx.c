@@ -66,7 +66,7 @@ typedef struct
 } padconf_struct;
 
 u32 numpads=1;
-padconf_struct pad[1];
+padconf_struct pad[12];
 
 #define TYPE_KEYBOARD           0
 #define TYPE_JOYSTICK           1

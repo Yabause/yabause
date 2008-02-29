@@ -231,6 +231,8 @@
 #define IDC_DELCODEBP                   1104
 #define IDC_MEMBPET                     1105
 #define IDC_CUSTOM1                     1106
+#define IDC_BUTTON1                     1107
+#define IDC_SAVETOFILE                  1107
 #define IDC_PORT2CONNTYPECB             1147
 #define IDC_PORT2ATYPECB                1148
 #define IDC_PORT2BTYPECB                1149
@@ -308,7 +310,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         40082
-#define _APS_NEXT_CONTROL_VALUE         1107
+#define _APS_NEXT_CONTROL_VALUE         1108
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
 #endif

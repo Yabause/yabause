@@ -20,6 +20,8 @@
 #ifndef HEXEDIT_H
 #define HEXEDIT_H
 
+#include "custctl.h"
+
 #define HEXEDIT "YabauseHexEdit"
 #define HEX_SETADDRESSLIST      WM_USER+11
 #define HEX_GOTOADDRESS         WM_USER+12

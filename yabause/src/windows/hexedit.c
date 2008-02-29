@@ -18,24 +18,22 @@
 */
 
 #include <windows.h>
-#include "../core.h"
-#include "../memory.h"
-#include "../debug.h"
 #include "hexedit.h"
+#include "../debug.h"
 
 typedef struct
 {
    HWND hwnd;
    HFONT font;
+   int hasfocus;
    COLORREF text_color1;
+   COLORREF bg_color;
+   SCROLLINFO scrollinfo;
+   TEXTMETRIC fontmetric;
    COLORREF text_color2;
    COLORREF text_color3;
    COLORREF edit_color;
-   COLORREF bg_color;
-   int hasfocus;
    u32 addr;
-   SCROLLINFO scrollinfo;
-   TEXTMETRIC fontmetric;
    int curx, cury;
    int maxcurx, maxcury;
    int curmode;
@@ -102,22 +100,6 @@ void DestroyHexEditCtl(HexEditCtl_struct *cc)
          free(cc->addrlist);
       free(cc);
    }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-LRESULT HexEditCtl_SetFont(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
-{
-   HDC hdc;
-   HFONT oldfont;
-
-   cc->font = (HFONT)wParam;
-   hdc = GetDC(cc->hwnd);
-   oldfont = SelectObject(hdc, cc->font);
-   GetTextMetrics(hdc, &cc->fontmetric);
-   SelectObject(hdc, oldfont);
-   ReleaseDC(cc->hwnd, hdc);
-   return FALSE;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -258,7 +240,7 @@ LRESULT HexEditCtl_OnPaint(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
    {
       x = 0;
       sprintf(text, "%08X  ", (int)addr);
-      GetTextExtentPoint32(hdc, text, strlen(text), &size);
+      GetTextExtentPoint32(hdc, text, (int)strlen(text), &size);
       if (size.cy+y >= rect.bottom)
          break;
 
@@ -284,7 +266,7 @@ LRESULT HexEditCtl_OnPaint(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
          else
             SetTextColor(hdc, cc->text_color3);
          sprintf(text, "%02X%02X ", MappedMemoryReadByte(addr), MappedMemoryReadByte(addr+1));
-         GetTextExtentPoint32(hdc, text, strlen(text), &size);
+         GetTextExtentPoint32(hdc, text, (int)strlen(text), &size);
          clip.left = x;
          clip.top = y;
          clip.right = clip.left+size.cx;
@@ -306,7 +288,7 @@ LRESULT HexEditCtl_OnPaint(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 
          text[0] = byte;
          text[1] = '\0';
-         GetTextExtentPoint32(hdc, text, strlen(text), &size);
+         GetTextExtentPoint32(hdc, text, (int)strlen(text), &size);
          clip.left = x;
          clip.top = y;
          clip.right = rect.right;
@@ -708,9 +690,9 @@ LRESULT HexEditCtl_KeyDown(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
                 (wParam >= 'A' && wParam <= 'F'))
             {
                if (wParam >= '0' && wParam <= '9')
-                  data = wParam - 0x30;
+                  data = (u8)wParam - 0x30;
                else
-                  data = wParam - 0x37;
+                  data = (u8)wParam - 0x37;
 
                // Modify data in memory
                addr = cc->addr + (cc->cury * cc->maxcurx) + cc->curx;
@@ -769,7 +751,7 @@ LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
       case WM_ERASEBKGND:
          return TRUE;
       case WM_SETFONT:
-         return HexEditCtl_SetFont(cc, wParam, lParam);
+         return CustomCtl_SetFont((CustomCtl_struct *)cc, wParam, lParam);
       case WM_SETFOCUS:
          HexEditCtl_SetFocus(cc);
          break;
@@ -812,7 +794,7 @@ LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
       }
       case HEX_GOTOADDRESS:
          // Make sure address is valid         
-         if (CalcCurPosFromAddr(cc, lParam))
+         if (CalcCurPosFromAddr(cc, (u32)lParam))
          {
             cc->addr = (u32)lParam & 0xFFFFFFF0;
             InvalidateRect(cc->hwnd, NULL, FALSE);
