@@ -17,6 +17,8 @@ UICheats::UICheats( QWidget* p )
 	// add know cheats to treewidget
 	for ( int id = 0; id < cheatsCount; id++ )
 		addCode( id );
+	// set save button state
+	pbSaveFile->setEnabled( cheatsCount );
 }
 
 void UICheats::addCode( int id )
@@ -47,6 +49,7 @@ void UICheats::addCode( int id )
 	it->setText( 2, mCheats[id].enable ? tr( "Enabled" ) : tr( "Disabled" ) );
 	// enable buttons
 	pbClear->setEnabled( true );
+	pbSaveFile->setEnabled( true );
 }
 
 void UICheats::addARCode( const QString& c, const QString& d )
@@ -60,7 +63,7 @@ void UICheats::addARCode( const QString& c, const QString& d )
 	}
 	// change the description
 	int cheatsCount;
-	CheatGetList( &cheatsCount );
+	mCheats = CheatGetList( &cheatsCount );
 	if ( CheatChangeDescriptionByIndex( cheatsCount -1, d.toAscii().data() ) != 0 )
 		CommonDialogs::information( tr( "Unable to change description" ) );
 	// add code in treewidget
@@ -94,7 +97,7 @@ void UICheats::addRawCode( int t, const QString& a, const QString& v, const QStr
 	}
 	// get cheats and cheats count
 	int cheatsCount;
-	CheatGetList( &cheatsCount );
+	mCheats = CheatGetList( &cheatsCount );
 	// change description
 	if ( CheatChangeDescriptionByIndex( cheatsCount -1, d.toAscii().data() ) != 0 )
 		CommonDialogs::information( tr( "Unable to change description" ) );
@@ -141,6 +144,8 @@ void UICheats::on_pbDelete_clicked()
 		}
 		// delete item
 		delete it;
+		// disable buttons
+		pbClear->setEnabled( twCheats->topLevelItemCount() );
 	}
 }
 
@@ -171,5 +176,31 @@ void UICheats::on_pbRaw_clicked()
 		addRawCode( d.type(), d.leAddress->text(), d.leValue->text(), d.teDescription->toPlainText() );
 }
 
-void UICheats::on_pbFile_clicked()
-{}
+void UICheats::on_pbSaveFile_clicked()
+{
+	const QString s = CommonDialogs::getSaveFileName( ".", tr( "Choose a cheat file to save to" ), tr( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
+	if ( !s.isEmpty() )
+		if ( CheatSave( s.toAscii().constData() ) != 0 )
+			CommonDialogs::information( tr( "Unable to open file for loading" ) );
+}
+
+void UICheats::on_pbLoadFile_clicked()
+{
+	const QString s = CommonDialogs::getOpenFileName( ".", tr( "Choose a cheat file to open" ), tr( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
+	if ( !s.isEmpty() )
+	{
+		if ( CheatLoad( s.toAscii().constData() ) == 0 )
+		{
+			// clear tree
+			twCheats->clear();
+			// get cheats and cheats count
+			int cheatsCount;
+			mCheats = CheatGetList( &cheatsCount );
+			// add cheats
+			for ( int i = 0; i < cheatsCount; i++ )
+				addCode( i );
+		}
+		else
+			CommonDialogs::information( tr( "Unable to open file for saving" ) );
+	}
+}

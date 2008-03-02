@@ -25,7 +25,8 @@ protected slots:
 	void on_pbClear_clicked();
 	void on_pbAR_clicked();
 	void on_pbRaw_clicked();
-	void on_pbFile_clicked();
+	void on_pbSaveFile_clicked();
+	void on_pbLoadFile_clicked();
 };
 
 #endif // UICHEATS_H
