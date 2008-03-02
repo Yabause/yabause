@@ -196,8 +196,8 @@ int CheatRemoveARCode(const char *code)
 
 void CheatClearCodes(void)
 {
-   cheatlist[0].type = CHEATTYPE_NONE;
-   numcheats = 0;
+   while (numcheats > 0)
+      CheatRemoveCodeByIndex(numcheats-1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -330,6 +330,8 @@ int CheatLoad(const char *filename)
       fclose(fp);
       return -2;
    }
+
+   CheatClearCodes();
 
    fread((void *)&numcheats, sizeof(int), 1, fp);
 #ifndef WORDS_BIGENDIAN
