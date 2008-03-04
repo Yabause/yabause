@@ -118,6 +118,7 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CC_FOR_BUILD = @CC_FOR_BUILD@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -157,6 +158,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+WINDRES = @WINDRES@
 XMKMF = @XMKMF@
 X_CFLAGS = @X_CFLAGS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
@@ -664,7 +666,7 @@ uninstall-am:
 	tags tags-recursive uninstall uninstall-am
 
 @COMPILE_C68K_TRUE@c68k/c68k_ini.inc:
-@COMPILE_C68K_TRUE@	cd c68k && ./gen68k
+@COMPILE_C68K_TRUE@	cd c68k && ./gen68k$(EXEEXT)
 @COMPILE_C68K_TRUE@c68kexec.o: c68k/c68kexec.c
 @COMPILE_C68K_TRUE@	$(COMPILE) -O0 c68k/c68kexec.c -c -o c68kexec.o
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
