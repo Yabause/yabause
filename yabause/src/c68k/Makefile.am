@@ -6,6 +6,3 @@ gen68k_LDFLAGS = -DC68K_GEN
 nodist_pkgdata_DATA = c68k_ini.inc
 c68k_ini.inc: gen68k$(EXEEXT)
 	./gen68k$(EXEEXT)
-
-CC = @CC_FOR_BUILD@
-CPP = @CPP_FOR_BUILD@
