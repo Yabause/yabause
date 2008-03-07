@@ -20,6 +20,10 @@
 #ifndef MINI18N_H
 #define MINI18N_H
 
+#ifndef _
+#define _(source) (mini18n(source))
+#endif
+
 int mini18n_set_locale(const char * locale);
 const char * mini18n(const char * source);
 void mini18n_close(void);

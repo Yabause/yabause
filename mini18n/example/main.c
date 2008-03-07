@@ -17,19 +17,19 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "../src/mini18n_pv_hash.h"
+#include "../src/mini18n.h"
 #include <stdio.h>
 
 int main(int argc, char ** argv) {
 	if (argc > 1) {
 		mini18n_set_locale(argv[1]);
-	} else {
-		mini18n_set_locale("fr");
 	}
 
+	/* "long" version */
 	printf("%s\n", mini18n("Hello!"));
-	printf("%s\n", mini18n("I am a test program"));
-	printf("%s\n", mini18n("You can use \\ and : in your strings"));
+	/* "short" version */
+	printf("%s\n", _("I am a test program"));
+	printf("%s\n", _("You can use \\ and : in your strings"));
 
 	mini18n_close();
 }
