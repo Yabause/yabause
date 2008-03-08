@@ -316,7 +316,7 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if (GetSaveFileName(&ofn))
                {
                   if (CheatSave(cheatfilename) != 0)
-                     MessageBox (hDlg, "Unable to open file for loading", "Error",  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hDlg, "Unable to open file for saving", "Error",  MB_OK | MB_ICONINFORMATION);
                }
                break;
             }
@@ -334,6 +334,7 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   if (CheatLoad(cheatfilename) == 0)
                   {
                      EnableWindow(GetDlgItem(GetParent(hDlg), IDC_SAVETOFILE), TRUE);
+                     SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_DELETEALLITEMS, 0, 0);
 
                      // Generate cheat list
                      CheatGetList(&cheatnum);
