@@ -55,6 +55,10 @@
 #ifdef _arch_dreamcast
 #include <arch/timer.h>
 #endif
+#ifdef GEKKO
+#include <ogc/lwp_watchdog.h>
+extern long long gettime();
+#endif
 
 #define DONT_PROFILE
 #include "profile.h"
@@ -448,8 +452,8 @@ u64 YabauseGetTicks(void) {
    struct timeval Time;
    gettimeofday(&Time, NULL);
    return (u64)(Time.tv_usec/1000);
-#elif defined(GEKKO)
-   return 0; // fix me
+#elif defined(GEKKO)  
+   return gettime();
 #endif
 }
 
@@ -460,6 +464,8 @@ void YabauseSetVideoFormat(int type) {
    yabsys.MaxLineCount = type ? 313 : 263;
 #ifdef WIN32
    QueryPerformanceFrequency((LARGE_INTEGER *)&yabsys.tickfreq);
+#elif defined(GEKKO)  
+   yabsys.tickfreq = secs_to_ticks(1);
 #else
    yabsys.tickfreq = 1000;
 #endif
