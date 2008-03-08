@@ -22,6 +22,9 @@ AM_PROG_CC_C_O
 #										#
 #################################################################################
 
+# checking for mini18n
+AC_CHECK_LIB(mini18n, mini18n)
+
 # checking for variadic macros
 AC_MSG_CHECKING([[whether the compiled supports c99 variadic macros]])
 AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#define MACRO(...) puts(__VA_ARGS__)]], [[MACRO("foo");]]),
@@ -29,67 +32,75 @@ AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#define MACRO(...) puts(__VA_ARGS__)]], [[MA
 	AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
 # checking for SDL (can be used for sound and input)
-case $host in
-    *darwin*)
-        OLDLDFLAGS="$LDFLAGS"
-        LDFLAGS="$LDFLAGS -framework SDL"
-        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-        int t(void) { return 0; }
-        ]],[[
-        int foo = t();
-        ]])],[AC_DEFINE(HAVE_LIBSDL)
-             SDL_LIBS="-framework SDL"], [])
-        LDFLAGS="$OLDLDFLAGS"
-        ;;
-    *)
-        YAB_CHECK_HOST_TOOLS(HAVE_LIBSDL, [sdl-config sdl11-config])
+use_sdl=yes
+AC_ARG_WITH(sdl, AC_HELP_STRING(--without-sdl, don't use SDL), [use_sdl=$withval])
 
-        if test ! x$HAVE_LIBSDL = x ; then
-            SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
-            SDL_LIBS=`$HAVE_LIBSDL --libs`
-            AC_DEFINE(HAVE_LIBSDL)
-        fi
-        ;;
-esac
+if test x$use_sdl = xyes ; then
+	case $host in
+		*darwin*)
+			OLDLDFLAGS="$LDFLAGS"
+			LDFLAGS="$LDFLAGS -framework SDL"
+			AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+			int t(void) { return 0; }
+			]],[[
+			int foo = t();
+			]])],[AC_DEFINE(HAVE_LIBSDL)
+			SDL_LIBS="-framework SDL"], [])
+			LDFLAGS="$OLDLDFLAGS"
+			;;
+		*)
+			YAB_CHECK_HOST_TOOLS(HAVE_LIBSDL, [sdl-config sdl11-config])
 
-CFLAGS="$CFLAGS $SDL_CFLAGS"
-LIBS="$LIBS $SDL_LIBS"
+			if test ! x$HAVE_LIBSDL = x ; then
+				SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
+				SDL_LIBS=`$HAVE_LIBSDL --libs`
+				AC_DEFINE(HAVE_LIBSDL)
+			fi
+			;;
+	esac
+
+	CFLAGS="$CFLAGS $SDL_CFLAGS"
+	LIBS="$LIBS $SDL_LIBS"
+fi
 
 # checking for OpenGL (most ports needs it for video)
 use_opengl=yes
 AC_ARG_WITH(opengl, AC_HELP_STRING(--without-opengl, don't use OpenGL), [use_opengl=$withval])
-case $host in
-	*darwin*)
-		LIBS="$LIBS -framework Opengl"
-		AC_DEFINE(HAVE_LIBGL)
-		;;
-	*cygwin* | *mingw32*)
-		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
-		AC_DEFINE(HAVE_LIBGL)
-		;;
-	*linux* | *bsd*)
-		AC_PATH_XTRA
-		LIBS="$LIBS $X_LIBS"
-		CFLAGS="$CFLAGS $X_CFLAGS"
 
-		AC_CHECK_LIB(GL, glEnable, [
-			LIBS="$LIBS -lGL"
+if test x$use_opengl = xyes ; then
+	case $host in
+		*darwin*)
+			LIBS="$LIBS -framework Opengl"
 			AC_DEFINE(HAVE_LIBGL)
-			],, $LIBS)
-		AC_CHECK_LIB(glut, glutGetModifiers,[
-			LIBS="$LIBS -lglut"
-			AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
-		;;
-	*)
-		AC_CHECK_LIB(GL, glEnable, [
-			LIBS="$LIBS -lGL"
+			;;
+		*cygwin* | *mingw32*)
+			YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
 			AC_DEFINE(HAVE_LIBGL)
-			],, $LIBS)
-		AC_CHECK_LIB(glut, glutGetModifiers,[
-			LIBS="$LIBS -lglut"
-			AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
-		;;
-esac
+			;;
+		*linux* | *bsd*)
+			AC_PATH_XTRA
+			LIBS="$LIBS $X_LIBS"
+			CFLAGS="$CFLAGS $X_CFLAGS"
+
+			AC_CHECK_LIB(GL, glEnable, [
+				LIBS="$LIBS -lGL"
+				AC_DEFINE(HAVE_LIBGL)
+				],, $LIBS)
+			AC_CHECK_LIB(glut, glutGetModifiers,[
+				LIBS="$LIBS -lglut"
+				AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
+			;;
+		*)
+			AC_CHECK_LIB(GL, glEnable, [
+				LIBS="$LIBS -lGL"
+				AC_DEFINE(HAVE_LIBGL)
+				],, $LIBS)
+			AC_CHECK_LIB(glut, glutGetModifiers,[
+				LIBS="$LIBS -lglut"
+				AC_DEFINE(HAVE_LIBGLUT)],, $LIBS)
+			;;
+	esac
+fi
 
 # platform-specific features
 case $host in

@@ -1352,6 +1352,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --without-sdl           don't use SDL
   --without-opengl        don't use OpenGL
   --with-x                use the X Window System
   --without-c68k          don't compile C68k
@@ -4691,6 +4692,79 @@ fi
 #										#
 #################################################################################
 
+# checking for mini18n
+
+{ echo "$as_me:$LINENO: checking for mini18n in -lmini18n" >&5
+echo $ECHO_N "checking for mini18n in -lmini18n... $ECHO_C" >&6; }
+if test "${ac_cv_lib_mini18n_mini18n+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmini18n  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mini18n ();
+int
+main ()
+{
+return mini18n ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_mini18n_mini18n=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_mini18n_mini18n=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_mini18n_mini18n" >&5
+echo "${ECHO_T}$ac_cv_lib_mini18n_mini18n" >&6; }
+if test $ac_cv_lib_mini18n_mini18n = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBMINI18N 1
+_ACEOF
+
+  LIBS="-lmini18n $LIBS"
+
+fi
+
+
 # checking for variadic macros
 { echo "$as_me:$LINENO: checking whether the compiled supports c99 variadic macros" >&5
 echo $ECHO_N "checking whether the compiled supports c99 variadic macros... $ECHO_C" >&6; }
@@ -4743,24 +4817,33 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 # checking for SDL (can be used for sound and input)
-case $host in
-    *darwin*)
-        OLDLDFLAGS="$LDFLAGS"
-        LDFLAGS="$LDFLAGS -framework SDL"
-        cat >conftest.$ac_ext <<_ACEOF
+use_sdl=yes
+
+# Check whether --with-sdl was given.
+if test "${with_sdl+set}" = set; then
+  withval=$with_sdl; use_sdl=$withval
+fi
+
+
+if test x$use_sdl = xyes ; then
+	case $host in
+		*darwin*)
+			OLDLDFLAGS="$LDFLAGS"
+			LDFLAGS="$LDFLAGS -framework SDL"
+			cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-        int t(void) { return 0; }
+			int t(void) { return 0; }
 
 int
 main ()
 {
 
-        int foo = t();
+			int foo = t();
 
   ;
   return 0;
@@ -4788,7 +4871,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 #define HAVE_LIBSDL 1
 _ACEOF
 
-             SDL_LIBS="-framework SDL"
+			SDL_LIBS="-framework SDL"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -4798,9 +4881,9 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
-        LDFLAGS="$OLDLDFLAGS"
-        ;;
-    *)
+			LDFLAGS="$OLDLDFLAGS"
+			;;
+		*)
 
 		if test -n "$ac_tool_prefix"; then
   for ac_prog in sdl-config sdl11-config
@@ -4911,19 +4994,20 @@ fi
 		fi
 
 
-        if test ! x$HAVE_LIBSDL = x ; then
-            SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
-            SDL_LIBS=`$HAVE_LIBSDL --libs`
-            cat >>confdefs.h <<\_ACEOF
+			if test ! x$HAVE_LIBSDL = x ; then
+				SDL_CFLAGS=`$HAVE_LIBSDL --cflags`
+				SDL_LIBS=`$HAVE_LIBSDL --libs`
+				cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBSDL 1
 _ACEOF
 
-        fi
-        ;;
-esac
+			fi
+			;;
+	esac
 
-CFLAGS="$CFLAGS $SDL_CFLAGS"
-LIBS="$LIBS $SDL_LIBS"
+	CFLAGS="$CFLAGS $SDL_CFLAGS"
+	LIBS="$LIBS $SDL_LIBS"
+fi
 
 # checking for OpenGL (most ports needs it for video)
 use_opengl=yes
@@ -4933,23 +5017,25 @@ if test "${with_opengl+set}" = set; then
   withval=$with_opengl; use_opengl=$withval
 fi
 
-case $host in
-	*darwin*)
-		LIBS="$LIBS -framework Opengl"
-		cat >>confdefs.h <<\_ACEOF
+
+if test x$use_opengl = xyes ; then
+	case $host in
+		*darwin*)
+			LIBS="$LIBS -framework Opengl"
+			cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGL 1
 _ACEOF
 
-		;;
-	*cygwin* | *mingw32*)
-		YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
-		cat >>confdefs.h <<\_ACEOF
+			;;
+		*cygwin* | *mingw32*)
+			YAB_LIBS="$YAB_LIBS -lopengl32 -lglut32"
+			cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGL 1
 _ACEOF
 
-		;;
-	*linux* | *bsd*)
-		{ echo "$as_me:$LINENO: checking for X" >&5
+			;;
+		*linux* | *bsd*)
+			{ echo "$as_me:$LINENO: checking for X" >&5
 echo $ECHO_N "checking for X... $ECHO_C" >&6; }
 
 
@@ -6263,10 +6349,10 @@ fi
 
 fi
 
-		LIBS="$LIBS $X_LIBS"
-		CFLAGS="$CFLAGS $X_CFLAGS"
+			LIBS="$LIBS $X_LIBS"
+			CFLAGS="$CFLAGS $X_CFLAGS"
 
-		{ echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
+			{ echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
 echo $ECHO_N "checking for glEnable in -lGL... $ECHO_C" >&6; }
 if test "${ac_cv_lib_GL_glEnable+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6329,15 +6415,15 @@ fi
 echo "${ECHO_T}$ac_cv_lib_GL_glEnable" >&6; }
 if test $ac_cv_lib_GL_glEnable = yes; then
 
-			LIBS="$LIBS -lGL"
-			cat >>confdefs.h <<\_ACEOF
+				LIBS="$LIBS -lGL"
+				cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGL 1
 _ACEOF
 
 
 fi
 
-		{ echo "$as_me:$LINENO: checking for glutGetModifiers in -lglut" >&5
+			{ echo "$as_me:$LINENO: checking for glutGetModifiers in -lglut" >&5
 echo $ECHO_N "checking for glutGetModifiers in -lglut... $ECHO_C" >&6; }
 if test "${ac_cv_lib_glut_glutGetModifiers+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6400,16 +6486,16 @@ fi
 echo "${ECHO_T}$ac_cv_lib_glut_glutGetModifiers" >&6; }
 if test $ac_cv_lib_glut_glutGetModifiers = yes; then
 
-			LIBS="$LIBS -lglut"
-			cat >>confdefs.h <<\_ACEOF
+				LIBS="$LIBS -lglut"
+				cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGLUT 1
 _ACEOF
 
 fi
 
-		;;
-	*)
-		{ echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
+			;;
+		*)
+			{ echo "$as_me:$LINENO: checking for glEnable in -lGL" >&5
 echo $ECHO_N "checking for glEnable in -lGL... $ECHO_C" >&6; }
 if test "${ac_cv_lib_GL_glEnable+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6472,15 +6558,15 @@ fi
 echo "${ECHO_T}$ac_cv_lib_GL_glEnable" >&6; }
 if test $ac_cv_lib_GL_glEnable = yes; then
 
-			LIBS="$LIBS -lGL"
-			cat >>confdefs.h <<\_ACEOF
+				LIBS="$LIBS -lGL"
+				cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGL 1
 _ACEOF
 
 
 fi
 
-		{ echo "$as_me:$LINENO: checking for glutGetModifiers in -lglut" >&5
+			{ echo "$as_me:$LINENO: checking for glutGetModifiers in -lglut" >&5
 echo $ECHO_N "checking for glutGetModifiers in -lglut... $ECHO_C" >&6; }
 if test "${ac_cv_lib_glut_glutGetModifiers+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6543,15 +6629,16 @@ fi
 echo "${ECHO_T}$ac_cv_lib_glut_glutGetModifiers" >&6; }
 if test $ac_cv_lib_glut_glutGetModifiers = yes; then
 
-			LIBS="$LIBS -lglut"
-			cat >>confdefs.h <<\_ACEOF
+				LIBS="$LIBS -lglut"
+				cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBGLUT 1
 _ACEOF
 
 fi
 
-		;;
-esac
+			;;
+	esac
+fi
 
 # platform-specific features
 case $host in
