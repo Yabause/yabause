@@ -35,7 +35,7 @@ int cheatsize;
 int CheatInit(void)
 {  
    cheatsize = 10;
-   if ((cheatlist = (cheatlist_struct *)malloc(sizeof(cheatlist_struct) * cheatsize)) == NULL)
+   if ((cheatlist = (cheatlist_struct *)calloc(cheatsize, sizeof(cheatlist_struct))) == NULL)
       return -1;
    cheatlist[0].type = CHEATTYPE_NONE;
 
@@ -158,7 +158,10 @@ int CheatRemoveCodeByIndex(int i)
 {
    // If there's a description, free the memory.
    if (cheatlist[i].desc)
+   {
       free(cheatlist[i].desc);
+      cheatlist[i].desc = NULL;
+   }
 
    // Move all entries one forward
    for (; i < numcheats-1; i++)
@@ -341,6 +344,7 @@ int CheatLoad(const char *filename)
    if (numcheats >= cheatsize)
    {
       cheatlist = realloc(cheatlist, sizeof(cheatlist_struct) * (cheatsize * 2));
+      memset((void *)cheatlist, 0, sizeof(cheatlist_struct) * (cheatsize * 2));
       cheatsize *= 2;
    }
 
