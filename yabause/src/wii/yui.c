@@ -36,6 +36,8 @@
 static u32 *xfb[2] = { NULL, NULL };
 int fbsel = 0;
 static GXRModeObj *rmode = NULL;
+volatile int running=1;
+volatile int resetemu=0;
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -75,13 +77,26 @@ char biosfilename[512]="\0";
 
 extern int vdp2width, vdp2height;
 
+void reset()
+{
+   resetemu=1;
+}
+
+void powerdown()
+{
+   running = 0;
+}
+
 int main(int argc, char **argv)
 {
    yabauseinit_struct yinit;
-   int ret;   
+   int ret;
 
    VIDEO_Init();
    PAD_Init();
+
+   SYS_SetResetCallback(reset);
+   SYS_SetPowerCallback(powerdown);
 	
    switch(VIDEO_GetCurrentTvMode()) 
    {
@@ -151,10 +166,15 @@ int main(int argc, char **argv)
    DisableAutoFrameSkip();
 
    printf("Emulation starting\n");
-   while(1) 
+   while(running) 
    {
       if (PERCore->HandleEvents() != 0)
          return -1;
+      if (resetemu)
+      {
+         YabauseReset();
+         resetemu = 0;
+      }
    }
 
    return 0;
