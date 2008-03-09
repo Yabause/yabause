@@ -85,7 +85,9 @@ protected slots:
 	void on_aYabauseReset_triggered();
 	void on_aYabauseTransfer_triggered();
 	void on_aYabauseScreenshot_triggered();
-	void on_aYabauseFrameSkipLimiter_triggered( bool b );
+	void on_aYabauseFrameSkipLimiter_toggled( bool toggled );
+	void aYabauseSound_toggled( bool toggled );
+	void on_sVolume_valueChanged( int value );
 	void on_mYabauseSaveState_triggered( QAction* );
 	void on_mYabauseLoadState_triggered( QAction* );
 	void on_aYabauseSaveStateAs_triggered();
@@ -106,6 +108,7 @@ protected slots:
 	void on_aViewLayerRBG0_triggered();
 	void on_aViewFullscreen_triggered( bool b );
 	// help menu
+	void on_aHelpEmuCompatibility_triggered();
 	void on_aHelpAbout_triggered();
 };
 

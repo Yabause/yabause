@@ -32,6 +32,9 @@
 #include <QTextEdit>
 #include <QDockWidget>
 #include <QImageWriter>
+#include <QUrl>
+#include <QDesktopServices>
+#include <QWidgetAction>
 
 //#define USE_UNIFIED_TITLE_TOOLBAR
 
@@ -43,6 +46,11 @@ UIYabause::UIYabause( QWidget* parent )
 {
 	// setup dialog
 	setupUi( this );
+	mYabauseSound->menuAction()->setCheckable( true );
+	mYabauseSound->menuAction()->setChecked( true );
+	QWidgetAction* wa = new QWidgetAction( this );
+	wa->setDefaultWidget( sVolume );
+	mYabauseSound->addAction( wa );
 	toolBar->insertAction( aYabauseSettings, mYabauseSaveState->menuAction() );
 	toolBar->insertAction( aYabauseSettings, mYabauseLoadState->menuAction() );
 	toolBar->insertSeparator( aYabauseSettings );
@@ -80,6 +88,7 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
+	connect( mYabauseSound->menuAction(), SIGNAL( toggled( bool ) ), this, SLOT( aYabauseSound_toggled( bool ) ) );
 	
 	// start emulation
 	mYabauseThread->startEmulation();
@@ -200,13 +209,24 @@ void UIYabause::on_aYabauseScreenshot_triggered()
 			CommonDialogs::information( tr( "An error occur while writing the screenshot." ) );
 }
 
-void UIYabause::on_aYabauseFrameSkipLimiter_triggered( bool b )
+void UIYabause::on_aYabauseFrameSkipLimiter_toggled( bool toggled )
 {
-	if ( b )
+	if ( toggled )
 		EnableAutoFrameSkip();
 	else
 		DisableAutoFrameSkip();
 }
+
+void UIYabause::aYabauseSound_toggled( bool toggled )
+{
+	if ( toggled )
+		ScspUnMuteAudio();
+	else
+		ScspMuteAudio();
+}
+
+void UIYabause::on_sVolume_valueChanged( int value )
+{ ScspSetVolume( value ); }
 
 void UIYabause::on_mYabauseSaveState_triggered( QAction* a )
 {
@@ -247,9 +267,10 @@ void UIYabause::on_aYabauseLoadStateAs_triggered()
 void UIYabause::on_aYabauseOpenISO_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( ".", tr( "Select your iso/cue/bin file" ), tr( "Yabause Save State (*.iso *.cue *.bin)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), tr( "Select your iso/cue/bin file" ), tr( "Yabause Save State (*.iso *.cue *.bin)" ) );
 	if ( !fn.isEmpty() )
 	{
+		QtYabause::settings()->setValue( "Recents/ISOs", fn );
 		Cs2ChangeCDCore( ISOCD.id, strdup( fn.toAscii().constData() ) );
 		YabauseReset();
 		if ( !aYabauseRun->isChecked() )
@@ -260,15 +281,18 @@ void UIYabause::on_aYabauseOpenISO_triggered()
 void UIYabause::on_aYabauseOpenCDRom_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getExistingDirectory( ".", tr( "Select a cdrom volume" ) );
+	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), tr( "Select a cdrom volume" ) );
 	if ( !fn.isEmpty() )
 	{
-		Cs2ChangeCDCore( ArchCD.id, strdup( fn.toAscii().constData() ) );
+		QtYabause::settings()->setValue( "Recents/CDs", fn );
+		Cs2ChangeCDCore( QtYabause::defaultCDCore().id, strdup( fn.toAscii().constData() ) );
 		YabauseReset();
 		if ( !aYabauseRun->isChecked() )
 			aYabauseRun->trigger();
 	}
 }
+
+//VideoChangeCore( mYabauseConf.vidcoretype );
 
 void UIYabause::on_aYabauseQuit_triggered()
 { close(); }
@@ -311,6 +335,9 @@ void UIYabause::on_aViewFullscreen_triggered( bool b )
 	fullscreenRequested( b );
 	//ToggleFullScreen();
 }
+
+void UIYabause::on_aHelpEmuCompatibility_triggered()
+{ QDesktopServices::openUrl( QUrl( aHelpEmuCompatibility->statusTip() ) ); }
 
 void UIYabause::on_aHelpAbout_triggered()
 {

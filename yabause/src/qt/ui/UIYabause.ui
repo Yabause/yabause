@@ -21,14 +21,34 @@
     <height>16</height>
    </size>
   </property>
-  <widget class="QWidget" name="centralwidget" />
+  <widget class="QWidget" name="centralwidget" >
+   <widget class="QSlider" name="sVolume" >
+    <property name="geometry" >
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>160</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="maximum" >
+     <number>100</number>
+    </property>
+    <property name="value" >
+     <number>100</number>
+    </property>
+    <property name="orientation" >
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+  </widget>
   <widget class="QMenuBar" name="menubar" >
    <property name="geometry" >
     <rect>
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>22</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="mYabause" >
@@ -69,13 +89,20 @@
      <addaction name="aYabauseLoadState8" />
      <addaction name="aYabauseLoadState9" />
     </widget>
+    <widget class="QMenu" name="mYabauseSound" >
+     <property name="title" >
+      <string>Sound</string>
+     </property>
+    </widget>
     <addaction name="aYabauseSettings" />
     <addaction name="aYabauseRun" />
     <addaction name="aYabausePause" />
     <addaction name="aYabauseReset" />
+    <addaction name="separator" />
     <addaction name="aYabauseTransfer" />
     <addaction name="aYabauseScreenshot" />
     <addaction name="aYabauseFrameSkipLimiter" />
+    <addaction name="mYabauseSound" />
     <addaction name="separator" />
     <addaction name="mYabauseSaveState" />
     <addaction name="mYabauseLoadState" />
@@ -131,6 +158,7 @@
     <property name="title" >
      <string>&amp;Help</string>
     </property>
+    <addaction name="aHelpEmuCompatibility" />
     <addaction name="aHelpAbout" />
    </widget>
    <widget class="QMenu" name="mTools" >
@@ -558,6 +586,17 @@
    </property>
    <property name="text" >
     <string>Open CD Rom</string>
+   </property>
+  </action>
+  <action name="aHelpEmuCompatibility" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/emu-compatibility.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Emu-Compatibility</string>
+   </property>
+   <property name="statusTip" >
+    <string>http://www.emu-compatibility.com/yabause/index.php?lang=uk</string>
    </property>
   </action>
  </widget>
