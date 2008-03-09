@@ -63,6 +63,8 @@ UIYabause::UIYabause( QWidget* parent )
 	mYabauseGL = new YabauseGL;
 	// and set it as central application widget
 	setCentralWidget( mYabauseGL );
+	// set focus proxy to the mainwindow
+	mYabauseGL->setFocusProxy( this );
 	
 	// create log widget
 	teLog = new QTextEdit( this );
