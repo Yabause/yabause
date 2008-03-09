@@ -35,6 +35,7 @@ int SNDSDLInit();
 void SNDSDLDeInit();
 int SNDSDLReset();
 int SNDSDLChangeVideoFormat(int vertfreq);
+void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
 void SNDSDLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
 u32 SNDSDLGetAudioSpace();
 void SNDSDLMuteAudio();
@@ -63,21 +64,22 @@ static volatile u32 soundpos;
 static u32 soundlen;
 static u32 soundbufsize;
 static SDL_AudioSpec audiofmt;
+static u8 soundvolume;
 
 //////////////////////////////////////////////////////////////////////////////
 
 void MixAudio(void *userdata, Uint8 *stream, int len) {
-   int i;
-   Uint8 *soundbuf=(Uint8 *)stereodata16;
+	int i;
+	Uint8* soundbuf = (Uint8*)stereodata16;
 
-   for (i = 0; i < len; i++)
-   {
-      if (soundpos >= soundbufsize)
-         soundpos = 0;
-
-      stream[i] = soundbuf[soundpos];
-      soundpos++;
-   }
+	// original code
+	for (i = 0; i < len; i++)
+	{
+		if (soundpos >= soundbufsize)
+			soundpos = 0;
+		stream[i] = soundbuf[soundpos];
+		soundpos++;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -105,6 +107,8 @@ int SNDSDLInit()
    
    soundlen = audiofmt.freq / 60; // 60 for NTSC or 50 for PAL. Initially assume it's going to be NTSC.
    soundbufsize = soundlen * NUMSOUNDBLOCKS * 2 * 2;
+   
+   soundvolume = SDL_MIX_MAXVOLUME;
 
    if (SDL_OpenAudio(&audiofmt, NULL) != 0)
    {
@@ -161,6 +165,28 @@ int SNDSDLChangeVideoFormat(int vertfreq)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len) {
+   u32 i;
+
+   for (i = 0; i < len; i++)
+   {
+      // Left Channel
+      *srcL = ( *srcL *soundvolume ) /SDL_MIX_MAXVOLUME;
+      if (*srcL > 0x7FFF) *dst = 0x7FFF;
+      else if (*srcL < -0x8000) *dst = -0x8000;
+      else *dst = *srcL;
+      srcL++;
+      dst++;
+      // Right Channel
+	  *srcR = ( *srcR *soundvolume ) /SDL_MIX_MAXVOLUME;
+      if (*srcR > 0x7FFF) *dst = 0x7FFF;
+      else if (*srcR < -0x8000) *dst = -0x8000;
+      else *dst = *srcR;
+      srcR++;
+      dst++;
+   } 
+}
+
 void SNDSDLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples)
 {
    u32 copy1size=0, copy2size=0;
@@ -177,12 +203,12 @@ void SNDSDLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_sample
       copy2size = 0;
    }
 
-   ScspConvert32uto16s((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, (s16 *)(((u8 *)stereodata16)+soundoffset), copy1size / sizeof(s16) / 2);
+   sdlConvert32uto16s((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, (s16 *)(((u8 *)stereodata16)+soundoffset), copy1size / sizeof(s16) / 2);
 
    if (copy2size)
-      ScspConvert32uto16s((s32 *)leftchanbuffer + (copy1size / sizeof(s16) / 2), (s32 *)rightchanbuffer + (copy1size / sizeof(s16) / 2), (s16 *)stereodata16, copy2size / sizeof(s16) / 2);
+      sdlConvert32uto16s((s32 *)leftchanbuffer + (copy1size / sizeof(s16) / 2), (s32 *)rightchanbuffer + (copy1size / sizeof(s16) / 2), (s16 *)stereodata16, copy2size / sizeof(s16) / 2);
 
-   soundoffset += copy1size + copy2size;
+   soundoffset += copy1size + copy2size;   
    soundoffset %= soundbufsize;
 
    SDL_UnlockAudio();
@@ -220,6 +246,7 @@ void SNDSDLUnMuteAudio()
 
 void SNDSDLSetVolume(int volume)
 {
+   soundvolume = ( (double)SDL_MIX_MAXVOLUME /(double)100 ) *volume;
 }
 
 //////////////////////////////////////////////////////////////////////////////
