@@ -1,3 +1,29 @@
+0.9.3 -> 0.9.4
+ scsp:
+  - Fixed a timer bug.
+  - Fixed a bug with mcire word writes.
+  - Added wave file output core to available sound cores.
+  - Fixed a bug in total level attenuation.
+  - Fixed a bug in EG.
+ gtk port:
+  - Redesigned memory dump window.
+  - Redesigned SH2 debug window.
+  - Other bug fixes.
+ qt port:
+  - Added initial support. It should be pretty much on par with the gtk port.
+ wii port:
+  - Added initial support.
+ windows port:
+  - Fixed a bug where emulation wasn't paused when save/load state as was
+    selected from the menu.
+  - Changed disassembler so it can scroll up and down.
+  - Tweaked error messages so it doesn't report invalid opcode errors when
+    running the fast interpreter.
+  - Added SCSP common control register debug info to SCSP debug dialog
+  - Other bug fixes.
+ general:
+  - Added a few internal tweaks that should yield some performance gains.
+  - Added support for saving and loading cheats.
 0.9.2 -> 0.9.3
  cart:
   - Fixed a couple of bugs with Netlink emulation.
