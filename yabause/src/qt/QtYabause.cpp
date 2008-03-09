@@ -165,3 +165,33 @@ VideoInterface_struct* QtYabause::getVDICore( int id )
 	return 0;
 }
 
+CDInterface QtYabause::defaultCDCore()
+{ return ArchCD; }
+
+SoundInterface_struct QtYabause::defaultSNDCore()
+{
+#ifdef HAVE_LIBSDL
+	return SNDSDL;
+#else
+	return SNDDummy;
+#endif
+}
+
+VideoInterface_struct QtYabause::defaultVIDCore()
+{
+#ifdef HAVE_LIBGL
+	return VIDOGL;
+#else
+	return VIDSoft;
+#endif
+}
+
+PerInterface_struct QtYabause::defaultPERCore()
+{
+#ifdef HAVE_LIBSDL
+	return PERSDLJoy;
+#else
+	return PERQT;
+#endif
+}
+

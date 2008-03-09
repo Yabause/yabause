@@ -68,6 +68,12 @@ namespace QtYabause
 	CDInterface* getCDCore( int id );
 	SoundInterface_struct* getSNDCore( int id );
 	VideoInterface_struct* getVDICore( int id );
+
+	// default cores
+	CDInterface defaultCDCore();
+	SoundInterface_struct defaultSNDCore();
+	VideoInterface_struct defaultVIDCore();
+	PerInterface_struct defaultPERCore();
 };
 
 #endif // QTYABAUSE_H
