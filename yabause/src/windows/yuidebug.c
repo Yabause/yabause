@@ -826,11 +826,8 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          u32 i=0;
 
          // execute yabause until vblank-out
-         while (yabsys.LineCount != 262)
-         {
-            if (YabauseExec() != 0)
-               return FALSE;
-         }
+         if (YabauseExec() != 0)
+            return FALSE;
 
          // Build command list
          SendMessage(GetDlgItem(hDlg, IDC_VDP1CMDLB), LB_RESETCONTENT, 0, 0);
