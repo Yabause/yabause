@@ -1597,6 +1597,32 @@ static INLINE char *AddColorOffsetInfo(char *outstring, u16 offsetselectenab)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE char *AddSpecialPriorityInfo(char *outstring, u16 spriority)
+{
+   if (spriority & 0x3)
+   {
+      AddString(outstring, "Special Priority Mode %d used", spriority & 0x3);
+
+      switch (spriority & 0x3)
+      {
+         case 1:
+            AddString(outstring, "(per tile)\r\n");
+            break;
+         case 2:
+            AddString(outstring, "(per pixel)\r\n");
+            break;
+         case 3:
+            AddString(outstring, "(undocumented)\r\n");
+            break;
+         default: break;
+      }
+   }
+
+   return outstring;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 {
    int patternwh=((Vdp2Regs->CHCTLB & 0x100) >> 8) + 1;
@@ -1810,7 +1836,8 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
       // Color Ram Address Offset
       AddString(outstring, "Color Ram Address Offset = %X\r\n", (Vdp2Regs->CRAOFB & 0x7) << 8);
        
-      // Special Priority Mode here
+      // Special Priority Mode
+      outstring = AddSpecialPriorityInfo(outstring, Vdp2Regs->SFPRMD >> 8);
 
       // Color Calculation Control here
 
@@ -2084,7 +2111,8 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       // Color Ram Address Offset
       AddString(outstring, "Color Ram Address Offset = %X\r\n", (Vdp2Regs->CRAOFA & 0x7) << 8);
  
-      // Special Priority Mode here
+      // Special Priority Mode
+      outstring = AddSpecialPriorityInfo(outstring, Vdp2Regs->SFPRMD);
 
       // Color Calculation Control here
 
@@ -2295,7 +2323,8 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
       // Color Ram Address Offset
       AddString(outstring, "Color Ram Address Offset = %X\r\n", (Vdp2Regs->CRAOFA & 0x70) << 4);
 
-      // Special Priority Mode here
+      // Special Priority Mode
+      outstring = AddSpecialPriorityInfo(outstring, Vdp2Regs->SFPRMD >> 2);
 
       // Color Calculation Control here
 
@@ -2428,7 +2457,8 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
       // Color Ram Address Offset
       AddString(outstring, "Color Ram Address Offset = %X\r\n", Vdp2Regs->CRAOFA & 0x700);
 
-      // Special Priority Mode here
+      // Special Priority Mode
+      outstring = AddSpecialPriorityInfo(outstring, Vdp2Regs->SFPRMD >> 4);
 
       // Color Calculation Control here
 
@@ -2566,7 +2596,8 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
       // Color Ram Address Offset
       AddString(outstring, "Color Ram Address Offset = %X\r\n", Vdp2Regs->CRAOFA & 0x7000);
 
-      // Special Priority Mode here
+      // Special Priority Mode
+      outstring = AddSpecialPriorityInfo(outstring, Vdp2Regs->SFPRMD >> 6);
 
       // Special Color Calculation Mode here
 
