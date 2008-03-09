@@ -151,19 +151,11 @@ void YabauseThread::resetYabauseConf()
 	memset( &mYabauseConf, 0, sizeof( yabauseinit_struct ) );
 	// fill default structure
 	mYabauseConf.m68kcoretype = M68KCORE_C68K;
-#ifdef USENEWPERINTERFACE
-	mYabauseConf.percoretype = PERCORE_QT;
-#else
-	mYabauseConf.percoretype = PERCORE_DUMMY;
-#endif
+	mYabauseConf.percoretype = QtYabause::defaultPERCore().id;
 	mYabauseConf.sh2coretype = SH2CORE_DEFAULT;
-#ifdef HAVE_LIBGL
-	mYabauseConf.vidcoretype = VIDCORE_OGL;
-#else
-	mYabauseConf.vidcoretype = VIDCORE_SOFT;
-#endif
-	mYabauseConf.sndcoretype = SNDCORE_DUMMY;
-	mYabauseConf.cdcoretype = CDCORE_DEFAULT;
+	mYabauseConf.vidcoretype = QtYabause::defaultVIDCore().id;
+	mYabauseConf.sndcoretype = QtYabause::defaultSNDCore().id;
+	mYabauseConf.cdcoretype = QtYabause::defaultCDCore().id;
 	mYabauseConf.carttype = CART_NONE;
 	mYabauseConf.regionid = 0;
 	mYabauseConf.biospath = 0;
