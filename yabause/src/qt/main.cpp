@@ -29,10 +29,11 @@ int main( int argc, char** argv )
 	// create application
 	QApplication app( argc, argv );
 	// init application
-	app.setApplicationName( "Yabause Qt Gui" );
+	app.setApplicationName( QString( "Qt Yabause v%1 - http://www.yabause.org" ).arg( VERSION ) );
 	// init settings
 	Settings::setIniInformations();
 	// show main window
+	QtYabause::mainWindow()->setWindowTitle( app.applicationName() );
 	QtYabause::mainWindow()->show();
 	// connection
 	QObject::connect( &app, SIGNAL( lastWindowClosed() ), &app, SLOT( quit() ) );
