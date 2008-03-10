@@ -24,6 +24,11 @@
 
 // cores
 
+#ifdef Q_OS_WIN
+extern CDInterface SPTICD;
+extern CDInterface ASPICD;
+#endif
+
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
 #ifdef HAVE_C68K
@@ -56,7 +61,12 @@ NULL
 CDInterface *CDCoreList[] = {
 &DummyCD,
 &ISOCD,
+#ifndef Q_OS_WIN
 &ArchCD,
+#else
+&SPTICD,
+&ASPICD,
+#endif
 NULL
 };
 
@@ -166,7 +176,13 @@ VideoInterface_struct* QtYabause::getVDICore( int id )
 }
 
 CDInterface QtYabause::defaultCDCore()
-{ return ArchCD; }
+{
+#ifdef Q_OS_WIN
+	return SPTICD;
+#else
+	return ArchCD;
+#endif
+}
 
 SoundInterface_struct QtYabause::defaultSNDCore()
 {

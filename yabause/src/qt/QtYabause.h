@@ -51,6 +51,9 @@ extern "C"
 #ifdef HAVE_LIBJSW
 	#include "PerJSW.h"
 #endif
+#ifdef Q_OS_WIN
+	#include "../windows/cd.h"
+#endif
 }
 
 class UIYabause;
