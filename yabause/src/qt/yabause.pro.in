@@ -1,7 +1,7 @@
 ###########################################################################################
 ##		Created using Monkey Studio v1.8.1.0
 ##
-##	Author    : Filipe AZEVEDO aka Nox P@sNox <pasnox@gmail.com>
+##	Author    : Filipe AZEVEDO aka Nox P@sNox <pasnox@yabause.org>
 ##	Project   : yabause
 ##	FileName  : yabause.pro
 ##	Date      : 2008-01-28T23:22:47
@@ -21,7 +21,6 @@ mac:TARGET	= Yabause
 CONFIG	+= debug_and_release
 QT	+= opengl
 LIBS	+= -L../ -lyabause @LIBS@
-mac:LIBS	+= @YAB_LIBS@
 AC_DEFS = @DEFS@
 QMAKE_CXXFLAGS	+= $$replace( AC_DEFS, "\", "\\\"" )
 QMAKE_CFLAGS	+= $$replace( AC_DEFS, "\", "\\\"" )
@@ -29,6 +28,7 @@ mac:QMAKE_CXXFLAGS	+= -DMAC_OS_X_VERSION_MIN_REQUIRED=MAC_OS_X_VERSION_MAX_ALLOW
 mac:QMAKE_CFLAGS	+= -DMAC_OS_X_VERSION_MIN_REQUIRED=MAC_OS_X_VERSION_MAX_ALLOWED
 RESOURCES	+= resources/resources.qrc
 mac:ICON	+= resources/icons/yabause.icns
+win32:RC_FILE	+= resources/icons/yabause.rc
 
 BUILD_PATH	= ./build
 BUILDER	= GNUMake
@@ -58,11 +58,11 @@ CONFIG(debug, debug|release) {
 }
 
 # include jsw library files
-unix:!mac {
+unix:!mac:DEFINES	+= HAVE_LIBJSW=1 # this can be added by the configure script
+
+contains(DEFINES, HAVE_LIBJSW=1) {
 	include( 3rdparty/libjsw.pri )
 	
-	DEFINES	+= HAVE_LIBJSW=1
-
 	HEADERS	+= JSWHelper.h \
 		PerJSW.h
 		
