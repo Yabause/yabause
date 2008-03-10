@@ -22,24 +22,70 @@
    </size>
   </property>
   <widget class="QWidget" name="centralwidget" >
-   <widget class="QSlider" name="sVolume" >
+   <widget class="QFrame" name="fSound" >
     <property name="geometry" >
      <rect>
-      <x>20</x>
-      <y>20</y>
-      <width>160</width>
-      <height>25</height>
+      <x>10</x>
+      <y>10</y>
+      <width>64</width>
+      <height>121</height>
      </rect>
     </property>
-    <property name="maximum" >
-     <number>100</number>
+    <property name="sizePolicy" >
+     <sizepolicy vsizetype="Fixed" hsizetype="Maximum" >
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
     </property>
-    <property name="value" >
-     <number>100</number>
+    <property name="frameShape" >
+     <enum>QFrame::StyledPanel</enum>
     </property>
-    <property name="orientation" >
-     <enum>Qt::Horizontal</enum>
+    <property name="frameShadow" >
+     <enum>QFrame::Sunken</enum>
     </property>
+    <layout class="QVBoxLayout" >
+     <item>
+      <widget class="QSlider" name="sVolume" >
+       <property name="sizePolicy" >
+        <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip" >
+        <string>Volume</string>
+       </property>
+       <property name="maximum" >
+        <number>100</number>
+       </property>
+       <property name="value" >
+        <number>100</number>
+       </property>
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="tickPosition" >
+        <enum>QSlider::TicksBothSides</enum>
+       </property>
+       <property name="tickInterval" >
+        <number>15</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="cbSound" >
+       <property name="toolTip" >
+        <string>Mute/UnMute Sound</string>
+       </property>
+       <property name="icon" >
+        <iconset resource="../resources/resources.qrc" >:/actions/sound.png</iconset>
+       </property>
+       <property name="checked" >
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar" >
@@ -62,6 +108,8 @@
      <property name="icon" >
       <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/save_state.png</iconset>
      </property>
+     <addaction name="aYabauseSaveStateAs" />
+     <addaction name="separator" />
      <addaction name="aYabauseSaveState1" />
      <addaction name="aYabauseSaveState2" />
      <addaction name="aYabauseSaveState3" />
@@ -79,6 +127,8 @@
      <property name="icon" >
       <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/load_state.png</iconset>
      </property>
+     <addaction name="aYabauseLoadStateAs" />
+     <addaction name="separator" />
      <addaction name="aYabauseLoadState1" />
      <addaction name="aYabauseLoadState2" />
      <addaction name="aYabauseLoadState3" />
@@ -89,11 +139,6 @@
      <addaction name="aYabauseLoadState8" />
      <addaction name="aYabauseLoadState9" />
     </widget>
-    <widget class="QMenu" name="mYabauseSound" >
-     <property name="title" >
-      <string>Sound</string>
-     </property>
-    </widget>
     <addaction name="aYabauseSettings" />
     <addaction name="aYabauseRun" />
     <addaction name="aYabausePause" />
@@ -102,12 +147,9 @@
     <addaction name="aYabauseTransfer" />
     <addaction name="aYabauseScreenshot" />
     <addaction name="aYabauseFrameSkipLimiter" />
-    <addaction name="mYabauseSound" />
     <addaction name="separator" />
     <addaction name="mYabauseSaveState" />
     <addaction name="mYabauseLoadState" />
-    <addaction name="aYabauseSaveStateAs" />
-    <addaction name="aYabauseLoadStateAs" />
     <addaction name="separator" />
     <addaction name="aYabauseOpenISO" />
     <addaction name="aYabauseOpenCDRom" />
@@ -191,6 +233,7 @@
    <addaction name="aYabauseOpenISO" />
    <addaction name="aYabauseOpenCDRom" />
    <addaction name="separator" />
+   <addaction name="aSound" />
    <addaction name="aYabauseSettings" />
    <addaction name="aYabauseFrameSkipLimiter" />
    <addaction name="aViewFPS" />
@@ -541,19 +584,13 @@
    </property>
   </action>
   <action name="aYabauseSaveStateAs" >
-   <property name="icon" >
-    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/save_state.png</iconset>
-   </property>
    <property name="text" >
-    <string>Save State As...</string>
+    <string>To File...</string>
    </property>
   </action>
   <action name="aYabauseLoadStateAs" >
-   <property name="icon" >
-    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/load_state.png</iconset>
-   </property>
    <property name="text" >
-    <string>Load State As...</string>
+    <string>From File...</string>
    </property>
   </action>
   <action name="aToolsCheatsList" >
@@ -577,7 +614,7 @@
     <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/iso.png</iconset>
    </property>
    <property name="text" >
-    <string>Open ISO</string>
+    <string>Open ISO...</string>
    </property>
   </action>
   <action name="aYabauseOpenCDRom" >
@@ -585,7 +622,7 @@
     <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/cd.png</iconset>
    </property>
    <property name="text" >
-    <string>Open CD Rom</string>
+    <string>Open CD Rom...</string>
    </property>
   </action>
   <action name="aHelpEmuCompatibility" >
@@ -597,6 +634,14 @@
    </property>
    <property name="statusTip" >
     <string>http://www.emu-compatibility.com/yabause/index.php?lang=uk</string>
+   </property>
+  </action>
+  <action name="aSound" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/sound.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Sound...</string>
    </property>
   </action>
  </widget>

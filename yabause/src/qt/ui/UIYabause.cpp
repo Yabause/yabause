@@ -34,7 +34,6 @@
 #include <QImageWriter>
 #include <QUrl>
 #include <QDesktopServices>
-#include <QWidgetAction>
 
 //#define USE_UNIFIED_TITLE_TOOLBAR
 
@@ -46,11 +45,6 @@ UIYabause::UIYabause( QWidget* parent )
 {
 	// setup dialog
 	setupUi( this );
-	mYabauseSound->menuAction()->setCheckable( true );
-	mYabauseSound->menuAction()->setChecked( true );
-	QWidgetAction* wa = new QWidgetAction( this );
-	wa->setDefaultWidget( sVolume );
-	mYabauseSound->addAction( wa );
 	toolBar->insertAction( aYabauseSettings, mYabauseSaveState->menuAction() );
 	toolBar->insertAction( aYabauseSettings, mYabauseLoadState->menuAction() );
 	toolBar->insertSeparator( aYabauseSettings );
@@ -58,6 +52,7 @@ UIYabause::UIYabause( QWidget* parent )
 #ifdef USE_UNIFIED_TITLE_TOOLBAR
 	setUnifiedTitleAndToolBarOnMac( true );
 #endif
+	fSound->setParent( 0, Qt::Popup );
 	
 	// create glcontext
 	mYabauseGL = new YabauseGL;
@@ -90,7 +85,6 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
-	connect( mYabauseSound->menuAction(), SIGNAL( toggled( bool ) ), this, SLOT( aYabauseSound_toggled( bool ) ) );
 	
 	// start emulation
 	mYabauseThread->startEmulation();
@@ -219,19 +213,10 @@ void UIYabause::on_aYabauseFrameSkipLimiter_toggled( bool toggled )
 		DisableAutoFrameSkip();
 }
 
-void UIYabause::aYabauseSound_toggled( bool toggled )
-{
-	if ( toggled )
-		ScspUnMuteAudio();
-	else
-		ScspMuteAudio();
-}
-
-void UIYabause::on_sVolume_valueChanged( int value )
-{ ScspSetVolume( value ); }
-
 void UIYabause::on_mYabauseSaveState_triggered( QAction* a )
 {
+	if ( a == aYabauseSaveStateAs )
+		return;
 	YabauseLocker locker( mYabauseThread );
 	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
 		CommonDialogs::information( tr( "Couldn't save state file" ) );
@@ -239,6 +224,8 @@ void UIYabause::on_mYabauseSaveState_triggered( QAction* a )
 
 void UIYabause::on_mYabauseLoadState_triggered( QAction* a )
 {
+	if ( a == aYabauseLoadStateAs )
+		return;
 	YabauseLocker locker( mYabauseThread );
 	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
 		CommonDialogs::information( tr( "Couldn't load state file" ) );
@@ -247,7 +234,7 @@ void UIYabause::on_mYabauseLoadState_triggered( QAction* a )
 void UIYabause::on_aYabauseSaveStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getSaveFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Yabause Save State (*.yss )" ), tr( "Choose a file to save your state" ) );
+	const QString fn = CommonDialogs::getSaveFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Choose a file to save your state" ), tr( "Yabause Save State (*.yss )" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
@@ -346,3 +333,22 @@ void UIYabause::on_aHelpAbout_triggered()
 	YabauseLocker locker( mYabauseThread );
 	UIAbout( window() ).exec();
 }
+
+void UIYabause::on_aSound_triggered()
+{
+	QWidget* ab = toolBar->widgetForAction( aSound );
+	fSound->move( ab->mapToGlobal( ab->rect().bottomLeft() ) );
+	fSound->show();
+}
+
+void UIYabause::on_cbSound_toggled( bool toggled )
+{
+	if ( toggled )
+		ScspUnMuteAudio();
+	else
+		ScspMuteAudio();
+	cbSound->setIcon( QIcon( toggled ? ":/actions/sound.png" : ":/actions/mute.png" ) );
+}
+
+void UIYabause::on_sVolume_valueChanged( int value )
+{ ScspSetVolume( value ); }
