@@ -37,6 +37,8 @@
 
 //#define USE_UNIFIED_TITLE_TOOLBAR
 
+//VideoChangeCore( mYabauseConf.vidcoretype );
+
 void qAppendLog( const char* s )
 { QtYabause::mainWindow()->appendLog( s ); }
 
@@ -45,9 +47,9 @@ UIYabause::UIYabause( QWidget* parent )
 {
 	// setup dialog
 	setupUi( this );
-	toolBar->insertAction( aYabauseSettings, mYabauseSaveState->menuAction() );
-	toolBar->insertAction( aYabauseSettings, mYabauseLoadState->menuAction() );
-	toolBar->insertSeparator( aYabauseSettings );
+	toolBar->insertAction( aFileSettings, mFileSaveState->menuAction() );
+	toolBar->insertAction( aFileSettings, mFileLoadState->menuAction() );
+	toolBar->insertSeparator( aFileSettings );
 	setAttribute( Qt::WA_DeleteOnClose );
 #ifdef USE_UNIFIED_TITLE_TOOLBAR
 	setUnifiedTitleAndToolBarOnMac( true );
@@ -102,7 +104,7 @@ UIYabause::~UIYabause()
 void UIYabause::closeEvent( QCloseEvent* e )
 {
 	// pause emulation
-	aYabausePause->trigger();
+	aEmulationPause->trigger();
 
 	// close dialog
 	QMainWindow::closeEvent( e );
@@ -147,42 +149,82 @@ void UIYabause::fullscreenRequested( bool f )
 	aViewFullscreen->setIcon( QIcon( f ? ":/actions/no_fullscreen.png" : ":/actions/fullscreen.png" ) );
 }
 
-void UIYabause::on_aYabauseSettings_triggered()
+void UIYabause::on_aFileSettings_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	if ( UISettings( window() ).exec() )
 		mYabauseThread->resetEmulation();
 }
 
-void UIYabause::on_aYabauseRun_triggered()
+void UIYabause::on_aFileOpenISO_triggered()
 {
-	if ( mYabauseThread->emulationPaused() )
+	YabauseLocker locker( mYabauseThread );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), tr( "Select your iso/cue/bin file" ), tr( "Yabause Save State (*.iso *.cue *.bin)" ) );
+	if ( !fn.isEmpty() )
 	{
-		aYabauseRun->setEnabled( false );
-		aYabausePause->setEnabled( true );
-		aYabauseReset->setEnabled( true );
-		mYabauseThread->runEmulation();
+		QtYabause::settings()->setValue( "Recents/ISOs", fn );
+		Cs2ChangeCDCore( ISOCD.id, strdup( fn.toAscii().constData() ) );
+		YabauseReset();
+		if ( !aEmulationRun->isChecked() )
+			aEmulationRun->trigger();
 	}
 }
 
-void UIYabause::on_aYabausePause_triggered()
+void UIYabause::on_aFileOpenCDRom_triggered()
 {
-	if ( !mYabauseThread->emulationPaused() )
+	YabauseLocker locker( mYabauseThread );
+	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), tr( "Select a cdrom volume" ) );
+	if ( !fn.isEmpty() )
 	{
-		aYabauseRun->setEnabled( true );
-		aYabausePause->setEnabled( false );
-		aYabauseReset->setEnabled( true );
-		mYabauseThread->pauseEmulation();
+		QtYabause::settings()->setValue( "Recents/CDs", fn );
+		Cs2ChangeCDCore( QtYabause::defaultCDCore().id, strdup( fn.toAscii().constData() ) );
+		YabauseReset();
+		if ( !aEmulationRun->isChecked() )
+			aEmulationRun->trigger();
 	}
 }
 
-void UIYabause::on_aYabauseReset_triggered()
-{ mYabauseThread->resetEmulation( true ); }
+void UIYabause::on_mFileSaveState_triggered( QAction* a )
+{
+	if ( a == aFileSaveStateAs )
+		return;
+	YabauseLocker locker( mYabauseThread );
+	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
+		CommonDialogs::information( tr( "Couldn't save state file" ) );
+}
 
-void UIYabause::on_aYabauseTransfer_triggered()
-{}
+void UIYabause::on_mFileLoadState_triggered( QAction* a )
+{
+	if ( a == aFileLoadStateAs )
+		return;
+	YabauseLocker locker( mYabauseThread );
+	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
+		CommonDialogs::information( tr( "Couldn't load state file" ) );
+}
 
-void UIYabause::on_aYabauseScreenshot_triggered()
+void UIYabause::on_aFileSaveStateAs_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	const QString fn = CommonDialogs::getSaveFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Choose a file to save your state" ), tr( "Yabause Save State (*.yss )" ) );
+	if ( fn.isNull() )
+		return;
+	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
+		CommonDialogs::information( tr( "Couldn't save state file" ) );
+}
+
+void UIYabause::on_aFileLoadStateAs_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Select a file to load your state" ), tr( "Yabause Save State (*.yss )" ) );
+	if ( fn.isNull() )
+		return;
+	if ( YabLoadState( fn.toAscii().constData() ) != 0 )
+		CommonDialogs::information( tr( "Couldn't load state file" ) );
+	else
+		aEmulationRun->trigger();
+}
+
+void UIYabause::on_aFileScreenshot_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	// images filter that qt can write
@@ -205,86 +247,41 @@ void UIYabause::on_aYabauseScreenshot_triggered()
 			CommonDialogs::information( tr( "An error occur while writing the screenshot." ) );
 }
 
-void UIYabause::on_aYabauseFrameSkipLimiter_toggled( bool toggled )
+void UIYabause::on_aFileQuit_triggered()
+{ close(); }
+
+void UIYabause::on_aEmulationRun_triggered()
+{
+	if ( mYabauseThread->emulationPaused() )
+	{
+		aEmulationRun->setEnabled( false );
+		aEmulationPause->setEnabled( true );
+		aEmulationReset->setEnabled( true );
+		mYabauseThread->runEmulation();
+	}
+}
+
+void UIYabause::on_aEmulationPause_triggered()
+{
+	if ( !mYabauseThread->emulationPaused() )
+	{
+		aEmulationRun->setEnabled( true );
+		aEmulationPause->setEnabled( false );
+		aEmulationReset->setEnabled( true );
+		mYabauseThread->pauseEmulation();
+	}
+}
+
+void UIYabause::on_aEmulationReset_triggered()
+{ mYabauseThread->resetEmulation( true ); }
+
+void UIYabause::on_aEmulationFrameSkipLimiter_toggled( bool toggled )
 {
 	if ( toggled )
 		EnableAutoFrameSkip();
 	else
 		DisableAutoFrameSkip();
 }
-
-void UIYabause::on_mYabauseSaveState_triggered( QAction* a )
-{
-	if ( a == aYabauseSaveStateAs )
-		return;
-	YabauseLocker locker( mYabauseThread );
-	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
-		CommonDialogs::information( tr( "Couldn't save state file" ) );
-}
-
-void UIYabause::on_mYabauseLoadState_triggered( QAction* a )
-{
-	if ( a == aYabauseLoadStateAs )
-		return;
-	YabauseLocker locker( mYabauseThread );
-	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
-		CommonDialogs::information( tr( "Couldn't load state file" ) );
-}
-
-void UIYabause::on_aYabauseSaveStateAs_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getSaveFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Choose a file to save your state" ), tr( "Yabause Save State (*.yss )" ) );
-	if ( fn.isNull() )
-		return;
-	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
-		CommonDialogs::information( tr( "Couldn't save state file" ) );
-}
-
-void UIYabause::on_aYabauseLoadStateAs_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Select a file to load your state" ), tr( "Yabause Save State (*.yss )" ) );
-	if ( fn.isNull() )
-		return;
-	if ( YabLoadState( fn.toAscii().constData() ) != 0 )
-		CommonDialogs::information( tr( "Couldn't load state file" ) );
-	else
-		aYabauseRun->trigger();
-}
-
-void UIYabause::on_aYabauseOpenISO_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), tr( "Select your iso/cue/bin file" ), tr( "Yabause Save State (*.iso *.cue *.bin)" ) );
-	if ( !fn.isEmpty() )
-	{
-		QtYabause::settings()->setValue( "Recents/ISOs", fn );
-		Cs2ChangeCDCore( ISOCD.id, strdup( fn.toAscii().constData() ) );
-		YabauseReset();
-		if ( !aYabauseRun->isChecked() )
-			aYabauseRun->trigger();
-	}
-}
-
-void UIYabause::on_aYabauseOpenCDRom_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), tr( "Select a cdrom volume" ) );
-	if ( !fn.isEmpty() )
-	{
-		QtYabause::settings()->setValue( "Recents/CDs", fn );
-		Cs2ChangeCDCore( QtYabause::defaultCDCore().id, strdup( fn.toAscii().constData() ) );
-		YabauseReset();
-		if ( !aYabauseRun->isChecked() )
-			aYabauseRun->trigger();
-	}
-}
-
-//VideoChangeCore( mYabauseConf.vidcoretype );
-
-void UIYabause::on_aYabauseQuit_triggered()
-{ close(); }
 
 void UIYabause::on_aToolsBackupManager_triggered()
 {
@@ -297,6 +294,9 @@ void UIYabause::on_aToolsCheatsList_triggered()
 	YabauseLocker locker( mYabauseThread );
 	UICheats( this ).exec();
 }
+
+void UIYabause::on_aToolsTransfer_triggered()
+{}
 
 void UIYabause::on_aViewFPS_triggered()
 { ToggleFPS(); }

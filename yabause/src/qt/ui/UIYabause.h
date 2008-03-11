@@ -78,24 +78,25 @@ protected:
 protected slots:
 	void sizeRequested( const QSize& size );
 	void fullscreenRequested( bool fullscreen );
-	// yabause menu
-	void on_aYabauseSettings_triggered();
-	void on_aYabauseRun_triggered();
-	void on_aYabausePause_triggered();
-	void on_aYabauseReset_triggered();
-	void on_aYabauseTransfer_triggered();
-	void on_aYabauseScreenshot_triggered();
-	void on_aYabauseFrameSkipLimiter_toggled( bool toggled );
-	void on_mYabauseSaveState_triggered( QAction* );
-	void on_mYabauseLoadState_triggered( QAction* );
-	void on_aYabauseSaveStateAs_triggered();
-	void on_aYabauseLoadStateAs_triggered();
-	void on_aYabauseOpenISO_triggered();
-	void on_aYabauseOpenCDRom_triggered();
-	void on_aYabauseQuit_triggered();
+	// file menu
+	void on_aFileSettings_triggered();
+	void on_aFileOpenISO_triggered();
+	void on_aFileOpenCDRom_triggered();
+	void on_mFileSaveState_triggered( QAction* );
+	void on_mFileLoadState_triggered( QAction* );
+	void on_aFileSaveStateAs_triggered();
+	void on_aFileLoadStateAs_triggered();
+	void on_aFileScreenshot_triggered();
+	void on_aFileQuit_triggered();
+	// emulation menu
+	void on_aEmulationRun_triggered();
+	void on_aEmulationPause_triggered();
+	void on_aEmulationReset_triggered();
+	void on_aEmulationFrameSkipLimiter_toggled( bool toggled );
 	// tools
 	void on_aToolsBackupManager_triggered();
 	void on_aToolsCheatsList_triggered();
+	void on_aToolsTransfer_triggered();
 	// view menu
 	void on_aViewFPS_triggered();
 	void on_aViewLayerVdp1_triggered();
