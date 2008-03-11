@@ -278,7 +278,10 @@ gboolean yui_settings_load(void) {
 }
 
 void YuiErrorMsg(const char * string) {
-	yui_window_log(YUI_WINDOW(yui), string);
+	GtkWidget* warningDlg = gtk_message_dialog_new (GTK_WINDOW(yui), GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
+                               	                        GTK_BUTTONS_OK, string, NULL);
+       	gtk_dialog_run (GTK_DIALOG(warningDlg));
+       	gtk_widget_destroy (warningDlg); 
 }
 
 int main(int argc, char *argv[]) {

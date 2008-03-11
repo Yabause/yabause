@@ -246,16 +246,17 @@ static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, Yu
 
 void yui_window_start(GtkWidget * w, YuiWindow * yui) {
 	if ((yui->state & YUI_IS_INIT) == 0) {
-	  ((int (*)(gpointer)) yui->init_func)(yui->init_data);
-	  yui->state |= YUI_IS_INIT;
-	  gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "reset"), TRUE);
+	  if (((int (*)(gpointer)) yui->init_func)(yui->init_data) == 0) {
+	    yui->state |= YUI_IS_INIT;
+	    gtk_action_set_sensitive(gtk_action_group_get_action(yui->action_group, "reset"), TRUE);
+	  }
 	}
 }
 
 void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 	yui_window_start(w, yui);
 
-	if ((yui->state & YUI_IS_RUNNING) == 0) {
+	if ((yui->state & YUI_IS_INIT) && ((yui->state & YUI_IS_RUNNING) == 0)) {
 		ScspUnMuteAudio();
 		g_idle_add(yui->run_func, GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_RUNNING_SIGNAL], 0);
