@@ -29,7 +29,7 @@ int main( int argc, char** argv )
 	// create application
 	QApplication app( argc, argv );
 	// init application
-	app.setApplicationName( QString( "Qt Yabause v%1 - http://www.yabause.org" ).arg( VERSION ) );
+	app.setApplicationName( QString( "Qt Yabause v%1 - A Beautiful And Under-rated Saturn Emulator" ).arg( VERSION ) );
 	// init settings
 	Settings::setIniInformations();
 	// show main window
