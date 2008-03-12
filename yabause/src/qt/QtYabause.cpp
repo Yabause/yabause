@@ -127,6 +127,9 @@ Settings* QtYabause::settings()
 	return mSettings;
 }
 
+const char* QtYabause::getCurrentCdSerial()
+{ return cdip ? cdip->itemnum : 0; }
+
 M68K_struct* QtYabause::getM68KCore( int id )
 {
 	for ( int i = 0; M68KCoreList[i] != NULL; i++ )

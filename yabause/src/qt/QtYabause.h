@@ -64,6 +64,9 @@ namespace QtYabause
 	UIYabause* mainWindow();
 	Settings* settings();
 
+	// get cd serial
+	const char* getCurrentCdSerial();
+
 	// get core by id
 	M68K_struct* getM68KCore( int id );
 	SH2Interface_struct* getSH2Core( int id );
