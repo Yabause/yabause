@@ -111,8 +111,10 @@ protected slots:
 	void on_aHelpAbout_triggered();
 	// toolbar
 	void on_aSound_triggered();
+	void on_aVideoDriver_triggered();
 	void on_cbSound_toggled( bool toggled );
 	void on_sVolume_valueChanged( int value );
+	void on_cbVideoDriver_currentIndexChanged( int id );
 };
 
 #endif // UIYABAUSE_H

@@ -26,6 +26,7 @@
         <file>icons/actions/settings.png</file>
         <file alias="sound.png" >icons/actions/sound.png</file>
         <file>icons/actions/transfert.png</file>
+        <file>icons/actions/video.png</file>
     </qresource>
     <qresource prefix="/icons" >
         <file>icons/made.png</file>

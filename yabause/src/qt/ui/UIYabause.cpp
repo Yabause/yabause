@@ -35,9 +35,9 @@
 #include <QUrl>
 #include <QDesktopServices>
 
-//#define USE_UNIFIED_TITLE_TOOLBAR
+extern VideoInterface_struct *VIDCoreList[];
 
-//VideoChangeCore( mYabauseConf.vidcoretype );
+//#define USE_UNIFIED_TITLE_TOOLBAR
 
 void qAppendLog( const char* s )
 { QtYabause::mainWindow()->appendLog( s ); }
@@ -55,6 +55,13 @@ UIYabause::UIYabause( QWidget* parent )
 	setUnifiedTitleAndToolBarOnMac( true );
 #endif
 	fSound->setParent( 0, Qt::Popup );
+	fVideoDriver->setParent( 0, Qt::Popup );
+	
+	// fill combo driver
+	cbVideoDriver->blockSignals( true );
+	for ( int i = 0; VIDCoreList[i] != NULL; i++ )
+		cbVideoDriver->addItem( VIDCoreList[i]->Name, VIDCoreList[i]->id );
+	cbVideoDriver->blockSignals( false );
 	
 	// create glcontext
 	mYabauseGL = new YabauseGL;
@@ -336,9 +343,32 @@ void UIYabause::on_aHelpAbout_triggered()
 
 void UIYabause::on_aSound_triggered()
 {
+	// show volume widget
 	QWidget* ab = toolBar->widgetForAction( aSound );
 	fSound->move( ab->mapToGlobal( ab->rect().bottomLeft() ) );
 	fSound->show();
+}
+
+void UIYabause::on_aVideoDriver_triggered()
+{
+	// set current core the selected one in the combo list
+	if ( VIDCore )
+	{
+		cbVideoDriver->blockSignals( true );
+		for ( int i = 0; VIDCoreList[i] != NULL; i++ )
+		{
+			if ( VIDCoreList[i]->id == VIDCore->id )
+			{
+				cbVideoDriver->setCurrentIndex( cbVideoDriver->findData( VIDCore->id ) );
+				break;
+			}
+		}
+		cbVideoDriver->blockSignals( false );
+	}
+	//  show video core widget
+	QWidget* ab = toolBar->widgetForAction( aVideoDriver );
+	fVideoDriver->move( ab->mapToGlobal( ab->rect().bottomLeft() ) );
+	fVideoDriver->show();
 }
 
 void UIYabause::on_cbSound_toggled( bool toggled )
@@ -352,3 +382,10 @@ void UIYabause::on_cbSound_toggled( bool toggled )
 
 void UIYabause::on_sVolume_valueChanged( int value )
 { ScspSetVolume( value ); }
+
+void UIYabause::on_cbVideoDriver_currentIndexChanged( int id )
+{
+	VideoInterface_struct* core = QtYabause::getVDICore( cbVideoDriver->itemData( id ).toInt() );
+	if ( core )
+		VideoChangeCore( core->id );
+}

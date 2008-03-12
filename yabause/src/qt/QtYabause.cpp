@@ -65,7 +65,7 @@ CDInterface *CDCoreList[] = {
 &ArchCD,
 #else
 &SPTICD,
-&ASPICD,
+//&ASPICD,
 #endif
 NULL
 };

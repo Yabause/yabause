@@ -87,6 +87,33 @@
      </item>
     </layout>
    </widget>
+   <widget class="QFrame" name="fVideoDriver" >
+    <property name="geometry" >
+     <rect>
+      <x>80</x>
+      <y>10</y>
+      <width>250</width>
+      <height>48</height>
+     </rect>
+    </property>
+    <property name="sizePolicy" >
+     <sizepolicy vsizetype="Fixed" hsizetype="Maximum" >
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="frameShape" >
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow" >
+     <enum>QFrame::Sunken</enum>
+    </property>
+    <layout class="QVBoxLayout" >
+     <item>
+      <widget class="QComboBox" name="cbVideoDriver" />
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar" >
    <property name="geometry" >
@@ -94,7 +121,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>27</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="mFile" >
@@ -240,14 +267,13 @@
    <addaction name="aFileOpenISO" />
    <addaction name="aFileOpenCDRom" />
    <addaction name="separator" />
-   <addaction name="aSound" />
    <addaction name="aFileSettings" />
+   <addaction name="aVideoDriver" />
+   <addaction name="aSound" />
    <addaction name="aEmulationFrameSkipLimiter" />
    <addaction name="aViewFPS" />
    <addaction name="aViewFullscreen" />
-   <addaction name="aToolsTransfer" />
    <addaction name="aFileScreenshot" />
-   <addaction name="aViewLog" />
    <addaction name="separator" />
    <addaction name="aToolsBackupManager" />
    <addaction name="aToolsCheatsList" />
@@ -736,6 +762,14 @@
    </property>
    <property name="text" >
     <string>Sound...</string>
+   </property>
+  </action>
+  <action name="aVideoDriver" >
+   <property name="icon" >
+    <iconset resource="../resources/resources.qrc" >:/actions/icons/actions/video.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Video Driver</string>
    </property>
   </action>
  </widget>
