@@ -35,8 +35,11 @@ void YabauseGL::showEvent( QShowEvent* e )
 }
 
 void YabauseGL::resizeGL( int w, int h )
+{ updateView( QSize( w, h ) ); }
+
+void YabauseGL::updateView( const QSize& s )
 {
-	glViewport( 0, 0, w, h );
+	glViewport( 0, 0, s.width(), s.height() );
 	if ( VIDCore )
-		VIDCore->Resize( w, h, 0 );
+		VIDCore->Resize( s.width(), s.height(), 0 );
 }

@@ -29,6 +29,8 @@ class YabauseGL : public QGLWidget
 	
 public:
 	YabauseGL( QWidget* parent = 0 );
+	
+	void updateView( const QSize& size );
 
 protected:
 	virtual void showEvent( QShowEvent* event );
