@@ -34,6 +34,9 @@
 #include <QImageWriter>
 #include <QUrl>
 #include <QDesktopServices>
+#include <QDateTime>
+
+#include <QDebug>
 
 extern VideoInterface_struct *VIDCoreList[];
 
@@ -56,20 +59,19 @@ UIYabause::UIYabause( QWidget* parent )
 #endif
 	fSound->setParent( 0, Qt::Popup );
 	fVideoDriver->setParent( 0, Qt::Popup );
-	
+	fSound->installEventFilter( this );
+	fVideoDriver->installEventFilter( this );
 	// fill combo driver
 	cbVideoDriver->blockSignals( true );
 	for ( int i = 0; VIDCoreList[i] != NULL; i++ )
 		cbVideoDriver->addItem( VIDCoreList[i]->Name, VIDCoreList[i]->id );
 	cbVideoDriver->blockSignals( false );
-	
 	// create glcontext
 	mYabauseGL = new YabauseGL;
 	// and set it as central application widget
 	setCentralWidget( mYabauseGL );
 	// set focus proxy to the mainwindow
 	mYabauseGL->setFocusProxy( this );
-	
 	// create log widget
 	teLog = new QTextEdit( this );
 	teLog->setReadOnly( true );
@@ -81,29 +83,26 @@ UIYabause::UIYabause( QWidget* parent )
 	mLogDock->setWidget( teLog );
 	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
 	mLogDock->setVisible( false );
-
 	// start log
 	LogStart();
 	LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
-	
 	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
-	
 	// connectionsdd
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
-	
 	// start emulation
 	mYabauseThread->startEmulation();
+	// refresh states actions
+	refreshStatesActions();
 }
 
 UIYabause::~UIYabause()
 {
 	// stop emulation
 	mYabauseThread->stopEmulation();
-
 	// stop log
 	LogStop();
 }
@@ -112,7 +111,6 @@ void UIYabause::closeEvent( QCloseEvent* e )
 {
 	// pause emulation
 	aEmulationPause->trigger();
-
 	// close dialog
 	QMainWindow::closeEvent( e );
 }
@@ -130,6 +128,13 @@ void UIYabause::appendLog( const char* s )
 {
 	teLog->moveCursor( QTextCursor::End );
 	teLog->append( s );
+}
+
+bool UIYabause::eventFilter( QObject* o, QEvent* e )
+{
+	if ( e->type() == QEvent::Hide )
+		setFocus();
+	return QMainWindow::eventFilter( o, e );
 }
 
 void UIYabause::sizeRequested( const QSize& s )
@@ -156,11 +161,60 @@ void UIYabause::fullscreenRequested( bool f )
 	aViewFullscreen->setIcon( QIcon( f ? ":/actions/no_fullscreen.png" : ":/actions/fullscreen.png" ) );
 }
 
+void UIYabause::refreshStatesActions()
+{
+	// reset save actions
+	int i = 0;
+	foreach ( QAction* a, findChildren<QAction*>( QRegExp( "aFileSaveState*" ) ) )
+	{
+		if ( a == aFileSaveStateAs )
+			continue;
+		i++;
+		a->setText( QString( "%1 ... " ).arg( i ) );
+	}
+	// reset load actions
+	i = 0;
+	foreach ( QAction* a, findChildren<QAction*>( QRegExp( "aFileLoadState*" ) ) )
+	{
+		if ( a == aFileLoadStateAs )
+			continue;
+		i++;
+		a->setText( QString( "%1 ... " ).arg( i ) );
+		a->setEnabled( false );
+	}
+	// get states files of this game
+	const QString serial = QtYabause::getCurrentCdSerial();
+	const QString mask = QString( "%1_*.yss" ).arg( serial );
+	const QString statesPath = QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString();
+	QRegExp rx( QString( mask ).replace( '*', "(\\d+)") );
+	QDir d( statesPath );
+	foreach ( const QFileInfo& fi, d.entryInfoList( QStringList( mask ), QDir::Files | QDir::Readable, QDir::Name | QDir::IgnoreCase ) )
+	{
+		if ( rx.exactMatch( fi.fileName() ) )
+		{
+			int slot = rx.capturedTexts().value( 1 ).toInt();
+			const QString caption = QString( "%1 %2 " ).arg( slot ).arg( fi.lastModified().toString( Qt::SystemLocaleDate ) );
+			// update save state action
+			if ( QAction* a = findChild<QAction*>( QString( "aFileSaveState%1" ).arg( slot ) ) )
+			{
+				a->setText( caption );
+				// update load state action
+				a = findChild<QAction*>( QString( "aFileLoadState%1" ).arg( slot ) );
+				a->setText( caption );
+				a->setEnabled( true );
+			}
+		}
+	}
+}
+
 void UIYabause::on_aFileSettings_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	if ( UISettings( window() ).exec() )
+	{
 		mYabauseThread->resetEmulation();
+		refreshStatesActions();
+	}
 }
 
 void UIYabause::on_aFileOpenISO_triggered()
@@ -174,6 +228,7 @@ void UIYabause::on_aFileOpenISO_triggered()
 		YabauseReset();
 		if ( !aEmulationRun->isChecked() )
 			aEmulationRun->trigger();
+		refreshStatesActions();
 	}
 }
 
@@ -188,6 +243,7 @@ void UIYabause::on_aFileOpenCDRom_triggered()
 		YabauseReset();
 		if ( !aEmulationRun->isChecked() )
 			aEmulationRun->trigger();
+		refreshStatesActions();
 	}
 }
 
@@ -198,6 +254,8 @@ void UIYabause::on_mFileSaveState_triggered( QAction* a )
 	YabauseLocker locker( mYabauseThread );
 	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
 		CommonDialogs::information( tr( "Couldn't save state file" ) );
+	else
+		refreshStatesActions();
 }
 
 void UIYabause::on_mFileLoadState_triggered( QAction* a )
@@ -387,5 +445,8 @@ void UIYabause::on_cbVideoDriver_currentIndexChanged( int id )
 {
 	VideoInterface_struct* core = QtYabause::getVDICore( cbVideoDriver->itemData( id ).toInt() );
 	if ( core )
+	{
 		VideoChangeCore( core->id );
+		mYabauseGL->updateView( mYabauseGL->size() );
+	}
 }

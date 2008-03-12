@@ -64,6 +64,7 @@ public:
 
 	void swapBuffers();
 	void appendLog( const char* msg );
+	virtual bool eventFilter( QObject* o, QEvent* e );
 
 protected:
 	YabauseGL* mYabauseGL;
@@ -78,6 +79,7 @@ protected:
 protected slots:
 	void sizeRequested( const QSize& size );
 	void fullscreenRequested( bool fullscreen );
+	void refreshStatesActions();
 	// file menu
 	void on_aFileSettings_triggered();
 	void on_aFileOpenISO_triggered();
