@@ -1231,8 +1231,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                
                YuiTempPause();
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd,
-                       "All Files\0*.*\0Bitmap Files\0*.BMP\0",
+                       "Bitmap Files\0*.BMP\0All Files\0*.*\0",
                        bmpfilename, sizeof(bmpfilename));
+               ofn.lpstrDefExt = "bmp";
 
                if (GetSaveFileName(&ofn))
                {
