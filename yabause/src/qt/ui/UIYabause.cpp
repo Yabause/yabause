@@ -93,6 +93,7 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
+	connect( mYabauseThread, SIGNAL( error( const char* ) ), this, SLOT( appendLog( const char* ) ) );
 	// start emulation
 	mYabauseThread->startEmulation();
 	// refresh states actions
@@ -212,8 +213,8 @@ void UIYabause::on_aFileSettings_triggered()
 	YabauseLocker locker( mYabauseThread );
 	if ( UISettings( window() ).exec() )
 	{
-		mYabauseThread->resetEmulation();
-		refreshStatesActions();
+		if ( mYabauseThread->resetEmulation() )
+			refreshStatesActions();
 	}
 }
 
@@ -224,11 +225,13 @@ void UIYabause::on_aFileOpenISO_triggered()
 	if ( !fn.isEmpty() )
 	{
 		QtYabause::settings()->setValue( "Recents/ISOs", fn );
-		Cs2ChangeCDCore( ISOCD.id, strdup( fn.toAscii().constData() ) );
-		YabauseReset();
-		if ( !aEmulationRun->isChecked() )
-			aEmulationRun->trigger();
-		refreshStatesActions();
+		if ( Cs2ChangeCDCore( ISOCD.id, strdup( fn.toAscii().constData() ) ) == 0 )
+		{
+			YabauseReset();
+			if ( !aEmulationRun->isChecked() )
+				aEmulationRun->trigger();
+			refreshStatesActions();
+		}
 	}
 }
 
@@ -239,11 +242,13 @@ void UIYabause::on_aFileOpenCDRom_triggered()
 	if ( !fn.isEmpty() )
 	{
 		QtYabause::settings()->setValue( "Recents/CDs", fn );
-		Cs2ChangeCDCore( QtYabause::defaultCDCore().id, strdup( fn.toAscii().constData() ) );
-		YabauseReset();
-		if ( !aEmulationRun->isChecked() )
-			aEmulationRun->trigger();
-		refreshStatesActions();
+		if ( Cs2ChangeCDCore( QtYabause::defaultCDCore().id, strdup( fn.toAscii().constData() ) ) == 0 )
+		{
+			YabauseReset();
+			if ( !aEmulationRun->isChecked() )
+				aEmulationRun->trigger();
+			refreshStatesActions();
+		}
 	}
 }
 
@@ -319,10 +324,12 @@ void UIYabause::on_aEmulationRun_triggered()
 {
 	if ( mYabauseThread->emulationPaused() )
 	{
-		aEmulationRun->setEnabled( false );
-		aEmulationPause->setEnabled( true );
-		aEmulationReset->setEnabled( true );
-		mYabauseThread->runEmulation();
+		if ( mYabauseThread->runEmulation() )
+		{
+			aEmulationRun->setEnabled( false );
+			aEmulationPause->setEnabled( true );
+			aEmulationReset->setEnabled( true );
+		}
 	}
 }
 
@@ -446,7 +453,7 @@ void UIYabause::on_cbVideoDriver_currentIndexChanged( int id )
 	VideoInterface_struct* core = QtYabause::getVDICore( cbVideoDriver->itemData( id ).toInt() );
 	if ( core )
 	{
-		VideoChangeCore( core->id );
-		mYabauseGL->updateView( mYabauseGL->size() );
+		if ( VideoChangeCore( core->id ) == 0 )
+			mYabauseGL->updateView( mYabauseGL->size() );
 	}
 }

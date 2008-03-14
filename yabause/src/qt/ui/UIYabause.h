@@ -63,7 +63,6 @@ public:
 	~UIYabause();
 
 	void swapBuffers();
-	void appendLog( const char* msg );
 	virtual bool eventFilter( QObject* o, QEvent* e );
 
 protected:
@@ -75,6 +74,9 @@ protected:
 	virtual void closeEvent( QCloseEvent* event );
 	virtual void keyPressEvent( QKeyEvent* event );
 	virtual void keyReleaseEvent( QKeyEvent* event );
+
+public slots:
+	void appendLog( const char* msg );
 
 protected slots:
 	void sizeRequested( const QSize& size );
