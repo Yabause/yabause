@@ -51,17 +51,25 @@ void YabauseThread::stopEmulation()
 }
 
 void YabauseThread::initEmulation()
-{ YabauseInit( &mYabauseConf ); }
+{ mInit = YabauseInit( &mYabauseConf ); }
 
 void YabauseThread::deInitEmulation()
 { YabauseDeInit(); }
 
-void YabauseThread::runEmulation()
+bool YabauseThread::runEmulation()
 {
+	if ( mInit == -1 )
+		initEmulation();
+	if ( mInit == -1 )
+	{
+		emit error( "Can't init yabause" );
+		return false;
+	}
 	mRunning = true;
 	mPause = false;
 	mTimerId = startTimer( 0 );
 	ScspUnMuteAudio();
+	return true;
 }
 
 void YabauseThread::pauseEmulation()
@@ -72,15 +80,27 @@ void YabauseThread::pauseEmulation()
 	ScspMuteAudio();
 }
 
-void YabauseThread::resetEmulation( bool fullreset )
+bool YabauseThread::resetEmulation( bool fullreset )
 {
+	if ( mInit == -1 )
+		initEmulation();
+	if ( mInit == -1 )
+	{
+		emit error( "Can't init yabause" );
+		return false;
+	}
 	reloadSettings();
-	Cs2ChangeCDCore( mYabauseConf.cdcoretype, mYabauseConf.cdpath );
-	VideoChangeCore( mYabauseConf.vidcoretype );
-	ScspChangeVideoFormat( mYabauseConf.flags );
-	ScspChangeSoundCore( mYabauseConf.sndcoretype );
+	if ( Cs2ChangeCDCore( mYabauseConf.cdcoretype, mYabauseConf.cdpath ) != 0 )
+		return false;
+	if ( VideoChangeCore( mYabauseConf.vidcoretype ) != 0 )
+		return false;
+	if ( ScspChangeVideoFormat( mYabauseConf.flags ) != 0 )
+		return false;
+	if ( ScspChangeSoundCore( mYabauseConf.sndcoretype ) != 0 )
+		return false;
 	if ( fullreset )
 		YabauseReset();
+	return true;
 }
 
 void YabauseThread::reloadSettings()

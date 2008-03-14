@@ -55,14 +55,15 @@ public slots:
 	void startEmulation();
 	void stopEmulation();
 	
-	void runEmulation();
+	bool runEmulation();
 	void pauseEmulation();
-	void resetEmulation( bool fr = false );
+	bool resetEmulation( bool fullReset = false );
 	void reloadSettings();
 
 signals:
 	void requestSize( const QSize& size );
 	void requestFullscreen( bool fullscreen );
+	void error( const char* error );
 };
 
 #endif // YABAUSETHREAD_H
