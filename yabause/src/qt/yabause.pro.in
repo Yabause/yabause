@@ -109,3 +109,5 @@ SOURCES	+= main.cpp \
 	PerQt.c \
 	ui/UIWaitInput.cpp \
 	ui/UIBackupRam.cpp
+
+TRANSLATIONS	+= translations/yabause_fr.ts
