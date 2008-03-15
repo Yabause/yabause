@@ -80,6 +80,7 @@ namespace QtYabause
 	SoundInterface_struct defaultSNDCore();
 	VideoInterface_struct defaultVIDCore();
 	PerInterface_struct defaultPERCore();
+	SH2Interface_struct defaultSH2Core();
 };
 
 #endif // QTYABAUSE_H

@@ -95,7 +95,7 @@ Settings* mSettings = 0;
 extern "C" 
 {
 	void YuiErrorMsg(const char *string)
-	{ qWarning( QString( "YuiErrorMsg: %1" ).arg( string ).toAscii() ); }
+	{ QtYabause::mainWindow()->appendLog( string ); }
 
 	void YuiVideoResize(unsigned int /*w*/, unsigned int /*h*/, int /*isfullscreen*/)
 	{}
@@ -210,5 +210,10 @@ VideoInterface_struct QtYabause::defaultVIDCore()
 PerInterface_struct QtYabause::defaultPERCore()
 {
 	return PERQT;
+}
+
+SH2Interface_struct QtYabause::defaultSH2Core()
+{
+	return SH2Interpreter;
 }
 

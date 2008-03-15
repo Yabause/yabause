@@ -37,6 +37,7 @@ public:
 	yabauseinit_struct* yabauseConf();
 	bool emulationRunning();
 	bool emulationPaused();
+	inline int init() const { return mInit; }
 
 protected:
 	yabauseinit_struct mYabauseConf;
