@@ -224,35 +224,35 @@ void UISettings::loadSettings()
 
 	// general
 	leBios->setText( s->value( "General/Bios" ).toString() );
-	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom" ).toInt() ) );
+	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	leSaveStates->setText( s->value( "General/SaveStates", QApplication::applicationDirPath() ).toString() );
 
 	// video
-	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore" ).toInt() ) );
+	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
 	leWidth->setText( s->value( "Video/Width" ).toString() );
 	leHeight->setText( s->value( "Video/Height" ).toString() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
-	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat" ).toInt() ) );
+	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFromats.at( 0 ).id ).toInt() ) );
 
 	// sound
-	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore" ).toInt() ) );
+	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
 
 	// cartridge/memory
-	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type" ).toInt() ) );
+	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
 	leCartridge->setText( s->value( "Cartridge/Path" ).toString() );
 	leMemory->setText( s->value( "Memory/Path", QApplication::applicationDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
 	
 	// input
-	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore" ).toInt() ) );
+	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore", QtYabause::defaultPERCore().id ).toInt() ) );
 	foreach ( QLabel* l, wInput->findChildren<QLabel*>() )
 		if ( l != lInput )
 			l->setText( s->value( QString( "Input/Keys/%1" ).arg( l->statusTip() ) ).toString() );
 	
 	// advanced
-	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", "Auto" ).toString() ) );
-	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter" ).toInt() ) );
+	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
+	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
 }
 
 void UISettings::saveSettings()
