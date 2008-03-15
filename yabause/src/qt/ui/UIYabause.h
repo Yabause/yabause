@@ -60,7 +60,6 @@ class UIYabause : public QMainWindow, public Ui::UIYabause
 	
 public:
 	UIYabause( QWidget* parent = 0 );
-	~UIYabause();
 
 	void swapBuffers();
 	virtual bool eventFilter( QObject* o, QEvent* e );
@@ -70,7 +69,9 @@ protected:
 	YabauseThread* mYabauseThread;
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
+	bool mInit;
 
+	virtual void showEvent( QShowEvent* event );
 	virtual void closeEvent( QCloseEvent* event );
 	virtual void keyPressEvent( QKeyEvent* event );
 	virtual void keyReleaseEvent( QKeyEvent* event );

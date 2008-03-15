@@ -48,6 +48,7 @@ void qAppendLog( const char* s )
 UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )
 {
+	mInit = false;
 	// setup dialog
 	setupUi( this );
 	toolBar->insertAction( aFileSettings, mFileSaveState->menuAction() );
@@ -83,9 +84,6 @@ UIYabause::UIYabause( QWidget* parent )
 	mLogDock->setWidget( teLog );
 	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
 	mLogDock->setVisible( false );
-	// start log
-	LogStart();
-	LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
 	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
 	// connectionsdd
@@ -94,24 +92,30 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
 	connect( mYabauseThread, SIGNAL( error( const char* ) ), this, SLOT( appendLog( const char* ) ) );
-	// start emulation
-	mYabauseThread->startEmulation();
-	// refresh states actions
-	refreshStatesActions();
 }
 
-UIYabause::~UIYabause()
+void UIYabause::showEvent( QShowEvent* e )
 {
-	// stop emulation
-	mYabauseThread->stopEmulation();
-	// stop log
-	LogStop();
+	if ( !mInit )
+	{
+		// start log
+		LogStart();
+		LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
+		// start emulation
+		mYabauseThread->startEmulation();
+		// refresh states actions
+		refreshStatesActions();
+	}
 }
 
 void UIYabause::closeEvent( QCloseEvent* e )
 {
 	// pause emulation
 	aEmulationPause->trigger();
+	// stop emulation
+	mYabauseThread->stopEmulation();
+	// stop log
+	LogStop();
 	// close dialog
 	QMainWindow::closeEvent( e );
 }
@@ -221,6 +225,11 @@ void UIYabause::on_aFileSettings_triggered()
 void UIYabause::on_aFileOpenISO_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
+	if ( mYabauseThread->init() == -1 )
+	{
+		CommonDialogs::information( tr( "Yabause is not initialized, can't open ISO." ) );
+		return;
+	}
 	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), tr( "Select your iso/cue/bin file" ), tr( "Yabause Save State (*.iso *.cue *.bin)" ) );
 	if ( !fn.isEmpty() )
 	{
@@ -238,6 +247,11 @@ void UIYabause::on_aFileOpenISO_triggered()
 void UIYabause::on_aFileOpenCDRom_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
+	if ( mYabauseThread->init() == -1 )
+	{
+		CommonDialogs::information( tr( "Yabause is not initialized, can't open CD Rom." ) );
+		return;
+	}
 	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), tr( "Select a cdrom volume" ) );
 	if ( !fn.isEmpty() )
 	{
@@ -358,6 +372,11 @@ void UIYabause::on_aEmulationFrameSkipLimiter_toggled( bool toggled )
 void UIYabause::on_aToolsBackupManager_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
+	if ( mYabauseThread->init() == -1 )
+	{
+		CommonDialogs::information( tr( "Yabause is not initialized, can't manage backup ram." ) );
+		return;
+	}
 	UIBackupRam( this ).exec();
 }
 
