@@ -169,22 +169,26 @@ void UIYabause::fullscreenRequested( bool f )
 void UIYabause::refreshStatesActions()
 {
 	// reset save actions
-	int i = 0;
 	foreach ( QAction* a, findChildren<QAction*>( QRegExp( "aFileSaveState*" ) ) )
 	{
 		if ( a == aFileSaveStateAs )
 			continue;
-		i++;
+		int i = a->objectName().remove( "aFileSaveState" ).toInt();
 		a->setText( QString( "%1 ... " ).arg( i ) );
+		a->setToolTip( a->text() );
+		a->setStatusTip( a->text() );
+		a->setData( i );
 	}
 	// reset load actions
-	i = 0;
 	foreach ( QAction* a, findChildren<QAction*>( QRegExp( "aFileLoadState*" ) ) )
 	{
 		if ( a == aFileLoadStateAs )
 			continue;
-		i++;
+		int i = a->objectName().remove( "aFileLoadState" ).toInt();
 		a->setText( QString( "%1 ... " ).arg( i ) );
+		a->setToolTip( a->text() );
+		a->setStatusTip( a->text() );
+		a->setData( i );
 		a->setEnabled( false );
 	}
 	// get states files of this game
@@ -203,9 +207,13 @@ void UIYabause::refreshStatesActions()
 			if ( QAction* a = findChild<QAction*>( QString( "aFileSaveState%1" ).arg( slot ) ) )
 			{
 				a->setText( caption );
+				a->setToolTip( caption );
+				a->setStatusTip( caption );
 				// update load state action
 				a = findChild<QAction*>( QString( "aFileLoadState%1" ).arg( slot ) );
 				a->setText( caption );
+				a->setToolTip( caption );
+				a->setStatusTip( caption );
 				a->setEnabled( true );
 			}
 		}
@@ -270,8 +278,11 @@ void UIYabause::on_mFileSaveState_triggered( QAction* a )
 {
 	if ( a == aFileSaveStateAs )
 		return;
+	qWarning() << "text" << a->text();
+	qWarning() << "action" << a->objectName();
+	qWarning() << "data" << a->data();
 	YabauseLocker locker( mYabauseThread );
-	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
+	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
 		CommonDialogs::information( tr( "Couldn't save state file" ) );
 	else
 		refreshStatesActions();
@@ -281,8 +292,11 @@ void UIYabause::on_mFileLoadState_triggered( QAction* a )
 {
 	if ( a == aFileLoadStateAs )
 		return;
+	qWarning() << "text" << a->text();
+	qWarning() << "action" << a->objectName();
+	qWarning() << "data" << a->data();
 	YabauseLocker locker( mYabauseThread );
-	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->text().toInt() ) != 0 )
+	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
 		CommonDialogs::information( tr( "Couldn't load state file" ) );
 }
 

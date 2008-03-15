@@ -121,7 +121,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="mFile" >
@@ -137,6 +137,7 @@
      </property>
      <addaction name="aFileSaveStateAs" />
      <addaction name="separator" />
+     <addaction name="aFileSaveState0" />
      <addaction name="aFileSaveState1" />
      <addaction name="aFileSaveState2" />
      <addaction name="aFileSaveState3" />
@@ -156,6 +157,7 @@
      </property>
      <addaction name="aFileLoadStateAs" />
      <addaction name="separator" />
+     <addaction name="aFileLoadState0" />
      <addaction name="aFileLoadState1" />
      <addaction name="aFileLoadState2" />
      <addaction name="aFileLoadState3" />
@@ -770,6 +772,22 @@
    </property>
    <property name="text" >
     <string>Video Driver</string>
+   </property>
+  </action>
+  <action name="aFileSaveState0" >
+   <property name="text" >
+    <string>0</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+0</string>
+   </property>
+  </action>
+  <action name="aFileLoadState0" >
+   <property name="text" >
+    <string>0</string>
+   </property>
+   <property name="shortcut" >
+    <string>Alt+0</string>
    </property>
   </action>
  </widget>
