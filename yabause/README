@@ -31,6 +31,7 @@ specific README files:
   * README.LIN for the linux port
   * README.MAC for the mac port
   * README.WIN for the windows port
+  * README.QT for the crossplatform Qt 4 port
 
 
 2 Staff/Thanks________________________________________________
