@@ -110,4 +110,5 @@ SOURCES	+= main.cpp \
 	ui/UIWaitInput.cpp \
 	ui/UIBackupRam.cpp
 
-TRANSLATIONS	+= translations/yabause_fr.ts
+TRANSLATIONS	+= translations/yabause_fr.ts \
+	translations/yabause_pt.ts
