@@ -1,4 +1,4 @@
-EXTRA_DIST = cd.c Makefile.dc Makefile.mng logo.bmp logo.png
+EXTRA_DIST = cd.c Makefile.dc Makefile.mng logo.bmp logo.png Makefile.wii logo.svg
 if COMPILE_C68K
 SUBDIRS = c68k . $(YUI_SUBDIR)
 else
