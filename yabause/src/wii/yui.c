@@ -23,21 +23,20 @@
 #include <malloc.h>
 #include <ogcsys.h>
 #include <gccore.h>
+#include <sdcard.h>
 #include "../cs0.h"
 #include "../m68kcore.h"
 #include "../peripheral.h"
 #include "../vidsoft.h"
 #include "../vdp2.h"
 #include "../yui.h"
-#if 0
-#include "prog.h"
-#endif
 
 static u32 *xfb[2] = { NULL, NULL };
 int fbsel = 0;
 static GXRModeObj *rmode = NULL;
-volatile int running=1;
+volatile int done=0;
 volatile int resetemu=0;
+int running=0;
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -84,7 +83,7 @@ void reset()
 
 void powerdown()
 {
-   running = 0;
+   done = 1;
 }
 
 int main(int argc, char **argv)
@@ -94,6 +93,7 @@ int main(int argc, char **argv)
 
    VIDEO_Init();
    PAD_Init();
+   SDCARD_Init();
 
    SYS_SetResetCallback(reset);
    SYS_SetPowerCallback(powerdown);
@@ -152,21 +152,46 @@ int main(int argc, char **argv)
 
    if ((ret = YabauseInit(&yinit)) != 0)
    {
+      sd_file *fp;
+      s32 size;
+      s32 i;
+      u32 data;
+      unsigned char *buf;
+
+
       // If it's failing, it's only because of the missing bios/cd
-#if 0
-      printf("Loading bios to rom area...");
-      for (i = 0; i < PROG_LEN; i++)
-         T2WriteByte(BiosRom, i, prog[i]);
+      while ((fp = SDCARD_OpenFile("dev0:\\bios.bin", "rb")) == NULL)
+      {         
+         printf("Couldn't find bios...trying again in 5 seconds...\n");
+         for(i = 0; i < (60 * 5); i++)
+            VIDEO_WaitVSync();
+      }
+
+      printf("Found bios\n");
+      printf("Loading bios to rom area...\n");
+      size = SDCARD_GetFileSize(fp);
+      SDCARD_SeekFile(fp, 0, SDCARD_SEEK_SET);
+      VIDEO_WaitVSync();
+
+      buf = malloc(size);
+      SDCARD_ReadFile(fp, buf, size);
+
+      for (i = 0; i < size / sizeof(data); i++)
+         T2WriteByte(BiosRom, i, buf[i]);
+
+      free(buf);
+
+      SDCARD_CloseFile(fp);
 
       YabauseResetNoLoad();
       printf("done.\n");
-#endif
    }
 
-   DisableAutoFrameSkip();
+   EnableAutoFrameSkip();
 
-   printf("Emulation starting\n");
-   while(running) 
+   console_init(xfb[fbsel],20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+
+   while(!done)
    {
       if (PERCore->HandleEvents() != 0)
          return -1;
@@ -177,11 +202,19 @@ int main(int argc, char **argv)
       }
    }
 
+   exit(0);
    return 0;
 }
 
 void YuiErrorMsg(const char *string)
 {
+   if (strncmp(string, "Master SH2 invalid opcode", 25) == 0)
+   {
+      if (!running)
+         return;
+      running = 0;
+   }
+
    printf("%s\n", string);
 }
 
