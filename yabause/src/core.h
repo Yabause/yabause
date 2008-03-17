@@ -137,4 +137,14 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
    s += strlen(s)
 #endif
 
+//////////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_LIBMINI18N
+#include "mini18n.h"
+#else
+#ifndef _
+#define _(a) (a)
+#endif
+#endif
+
 #endif

@@ -129,7 +129,7 @@ int YabauseInit(yabauseinit_struct *init)
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "SH2");
+      YabSetError(YAB_ERR_CANNOTINIT, _("SH2"));
       return -1;
    }
 
@@ -152,68 +152,68 @@ int YabauseInit(yabauseinit_struct *init)
 
    if (VideoInit(init->vidcoretype) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "Video");
+      YabSetError(YAB_ERR_CANNOTINIT, _("Video"));
       return -1;
    }
 
    // Initialize input core
    if (PerInit(init->percoretype) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "Peripheral");
+      YabSetError(YAB_ERR_CANNOTINIT, _("Peripheral"));
       return -1;
    }
 
    if (CartInit(init->cartpath, init->carttype) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "Cartridge");
+      YabSetError(YAB_ERR_CANNOTINIT, _("Cartridge"));
       return -1;
    }
 
    if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->netlinksetting) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "CS2");
+      YabSetError(YAB_ERR_CANNOTINIT, _("CS2"));
       return -1;
    }
 
    if (ScuInit() != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "SCU");
+      YabSetError(YAB_ERR_CANNOTINIT, _("SCU"));
       return -1;
    }
 
    if (M68KInit(init->m68kcoretype) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "M68K");
+      YabSetError(YAB_ERR_CANNOTINIT, _("M68K"));
       return -1;
    }
 
    if (ScspInit(init->sndcoretype) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "SCSP/M68K");
+      YabSetError(YAB_ERR_CANNOTINIT, _("SCSP/M68K"));
       return -1;
    }
 
    if (Vdp1Init() != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "VDP1");
+      YabSetError(YAB_ERR_CANNOTINIT, _("VDP1"));
       return -1;
    }
 
    if (Vdp2Init() != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "VDP2");
+      YabSetError(YAB_ERR_CANNOTINIT, _("VDP2"));
       return -1;
    }
 
    if (SmpcInit(init->regionid) != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "SMPC");
+      YabSetError(YAB_ERR_CANNOTINIT, _("SMPC"));
       return -1;
    }
 
    if (CheatInit() != 0)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, "Cheat System");
+      YabSetError(YAB_ERR_CANNOTINIT, _("Cheat System"));
       return -1;
    }
 
@@ -247,7 +247,7 @@ int YabauseInit(yabauseinit_struct *init)
       {
          if (yabsys.emulatebios)
          {
-            YabSetError(YAB_ERR_CANNOTINIT, "Game");
+            YabSetError(YAB_ERR_CANNOTINIT, _("Game"));
             return -1;
          }
          else
@@ -323,7 +323,7 @@ void YabauseReset(void) {
       if (YabauseQuickLoadGame() != 0)
       {
          if (yabsys.emulatebios)
-            YabSetError(YAB_ERR_CANNOTINIT, "Game");
+            YabSetError(YAB_ERR_CANNOTINIT, _("Game"));
          else
             YabauseResetNoLoad();
       }

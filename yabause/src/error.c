@@ -48,19 +48,19 @@ void YabSetError(int type, void *extra)
    switch (type)
    {
       case YAB_ERR_FILENOTFOUND:
-         AllocAmendPrintString("File not found: ", extra);
+         AllocAmendPrintString(_("File not found: "), extra);
          break;
       case YAB_ERR_MEMORYALLOC:
-         YuiErrorMsg("Error allocating memory\n");
+         YuiErrorMsg(_("Error allocating memory\n"));
          break;
       case YAB_ERR_FILEREAD:
-         AllocAmendPrintString("Error reading file: ", extra);
+         AllocAmendPrintString(_("Error reading file: "), extra);
          break;
       case YAB_ERR_FILEWRITE:
-         AllocAmendPrintString("Error writing file: ", extra);
+         AllocAmendPrintString(_("Error writing file: "), extra);
          break;
       case YAB_ERR_CANNOTINIT:
-         AllocAmendPrintString("Cannot initialize ", extra);
+         AllocAmendPrintString(_("Cannot initialize "), extra);
          break;
       case YAB_ERR_SH2INVALIDOPCODE:
          sh = (SH2_struct *)extra;
@@ -92,20 +92,20 @@ void YabSetError(int type, void *extra)
          YuiErrorMsg(tempstr);
          break;
       case YAB_ERR_SH2READ:
-         YuiErrorMsg("SH2 read error\n"); // fix me
+         YuiErrorMsg(_("SH2 read error\n")); // fix me
          break;
       case YAB_ERR_SH2WRITE:
-         YuiErrorMsg("SH2 write error\n"); // fix me
+         YuiErrorMsg(_("SH2 write error\n")); // fix me
          break;
       case YAB_ERR_SDL:
-         AllocAmendPrintString("SDL Error: ", extra);
+         AllocAmendPrintString(_("SDL Error: "), extra);
          break;
       case YAB_ERR_OTHER:
          YuiErrorMsg((char *)extra);
          break;
       case YAB_ERR_UNKNOWN:
       default:
-         YuiErrorMsg("Unknown error occured\n");
+         YuiErrorMsg(_("Unknown error occured\n"));
          break;
    }
 }
