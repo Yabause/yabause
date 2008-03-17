@@ -991,19 +991,6 @@ LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         RECT dlgsize;
-         int cxScreen, cyScreen;
-         int newx, newy;
-
-         cxScreen = GetSystemMetrics(SM_CXSCREEN);
-         cyScreen = GetSystemMetrics(SM_CYSCREEN);
-         GetWindowRect(hDlg, &dlgsize);
-
-         newx = (cxScreen - dlgsize.right) / 2;
-         newy = (cyScreen - dlgsize.bottom) / 2;
-
-         MoveWindow(hDlg, newx, newy, dlgsize.right-dlgsize.left, dlgsize.bottom-dlgsize.top, TRUE);
-
          lpDIDevicetemp = (LPDIRECTINPUTDEVICE8)lParam;
 
          if (IDirectInputDevice8_SetCooperativeLevel(lpDIDevicetemp, hDlg,
