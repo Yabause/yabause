@@ -424,6 +424,23 @@ void SmpcSETSMEM() {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void SmpcNMIREQ() {
+   SH2SendInterrupt(MSH2, 0xB, 16);
+   SmpcRegs->OREG[31] = 0x18;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SmpcResetButton() {
+   // If RESD isn't set, send an NMI request to the MSH2.
+   if (SmpcInternalVars->resd)
+      return;
+
+   SH2SendInterrupt(MSH2, 0xB, 16);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void SmpcRESENAB() {
   SmpcInternalVars->resd = 0;
   SmpcRegs->OREG[31] = 0x19;
@@ -486,6 +503,10 @@ void SmpcExec(s32 t) {
             case 0x17:
                SMPCLOG("smpc\t: SETSMEM\n");
                SmpcSETSMEM();
+               break;
+            case 0x18:
+               SMPCLOG("smpc\t: NMIREQ\n");
+               SmpcNMIREQ();
                break;
             case 0x19:
                SMPCLOG("smpc\t: RESENAB\n");
@@ -579,6 +600,7 @@ void SmpcSetTiming(void) {
          return;
       case 0x6:
       case 0x7:
+      case 0x18:
       case 0x19:
       case 0x1A:
          SmpcInternalVars->timing = 1;

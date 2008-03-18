@@ -55,6 +55,7 @@ int YabauseInit(yabauseinit_struct *init);
 void YabauseDeInit(void);
 void YabauseResetNoLoad(void);
 void YabauseReset(void);
+void YabauseResetButton(void);
 int YabauseExec(void);
 void YabauseStartSlave(void);
 void YabauseStopSlave(void);

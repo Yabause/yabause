@@ -85,6 +85,7 @@ int SmpcInit(u8 regionid);
 void SmpcDeInit(void);
 void SmpcRecheckRegion(void);
 void SmpcReset(void);
+void SmpcResetButton();
 void SmpcExec(s32 t);
 void SmpcINTBACKEnd();
 

@@ -332,6 +332,16 @@ void YabauseReset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void YabauseResetButton(void) {
+   // This basically emulates the reset button behaviour of the saturn. This
+   // is the better way of reseting the system since some operations (like
+   // backup ram access) shouldn't be interrupted and this allows for that.
+
+   SmpcResetButton();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int YabauseExec(void) {
    int oneframeexec=0;
 
