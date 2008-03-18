@@ -68,7 +68,8 @@ BEGIN
     END
     POPUP "&Emulation"
     BEGIN
-        MENUITEM "Hard Reset",                  IDM_RESET
+        MENUITEM "Reset",                       IDM_RESET
+        MENUITEM "Hard Reset",                  IDM_HARDRESET
     END
     POPUP "&Cheats"
     BEGIN

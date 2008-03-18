@@ -300,8 +300,8 @@
 #define IDM_LOADSTATE_F8                40075
 #define IDM_LOADSTATE_F9                40076
 #define IDM_LOADSTATE_F10               40077
-#define ID_FILE_CAPTURESCREEN           40080
-#define IDM_CAPTURESCREEN               40081
+#define IDM_CAPTURESCREEN               40080
+#define IDM_HARDRESET                   40081
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

@@ -1028,6 +1028,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_RESET:
             {
                YuiTempPause();
+               YabauseResetButton();
+               YuiTempUnPause();
+               break;
+            }
+            case IDM_HARDRESET:
+            {
+               YuiTempPause();
                YabauseReset();
                YuiTempUnPause();
                break;
