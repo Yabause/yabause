@@ -30,8 +30,10 @@ QString Settings::mProgramVersion;
 
 QString getIniFile( const QString& s )
 {
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC
 	return QString( "%1/../%2.ini" ).arg( QApplication::applicationDirPath() ).arg( s );
+#elif defined Q_OS_WIN
+	return QString( "%1/%2.ini" ).arg( QApplication::applicationDirPath() ).arg( s );
 #else
 	return QString( "%1/.%2/%2.ini" ).arg( QDir::homePath() ).arg( s );
 #endif
