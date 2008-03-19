@@ -238,7 +238,7 @@ void UIYabause::on_aFileOpenISO_triggered()
 		CommonDialogs::information( tr( "Yabause is not initialized, can't open ISO." ) );
 		return;
 	}
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), tr( "Select your iso/cue/bin file" ), tr( "Yabause Save State (*.iso *.cue *.bin)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), tr( "Select your iso/cue/bin file" ), tr( "CD Images (*.iso *.cue *.bin)" ) );
 	if ( !fn.isEmpty() )
 	{
 		QtYabause::settings()->setValue( "Recents/ISOs", fn );
@@ -260,7 +260,7 @@ void UIYabause::on_aFileOpenCDRom_triggered()
 		CommonDialogs::information( tr( "Yabause is not initialized, can't open CD Rom." ) );
 		return;
 	}
-	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), tr( "Select a cdrom volume" ) );
+	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), tr( "Choose a cdrom drive/mount point" ) );
 	if ( !fn.isEmpty() )
 	{
 		QtYabause::settings()->setValue( "Recents/CDs", fn );

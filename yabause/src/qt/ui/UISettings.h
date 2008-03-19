@@ -32,10 +32,9 @@ public:
 	UISettings( QWidget* parent = 0 );
 
 protected:
-	void requestFile( const QString& caption, QLineEdit* edit );
-	void requestNewFile( const QString& caption, QLineEdit* edit );
+	void requestFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
+	void requestNewFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestFolder( const QString& caption, QLineEdit* edit );
-	void requestDrive( const QString& caption, QLineEdit* edit );
 	void loadCores();
 	void loadSettings();
 	void saveSettings();

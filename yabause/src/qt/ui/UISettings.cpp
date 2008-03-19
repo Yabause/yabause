@@ -95,16 +95,16 @@ UISettings::UISettings( QWidget* p )
 		connect( pb, SIGNAL( clicked() ), this, SLOT( pbInputs_clicked() ) );
 }
 
-void UISettings::requestFile( const QString& c, QLineEdit* e )
+void UISettings::requestFile( const QString& c, QLineEdit* e, const QString& filters )
 {
-	const QString s = CommonDialogs::getOpenFileName( e->text(), c );
+	const QString s = CommonDialogs::getOpenFileName( e->text(), c, filters );
 	if ( !s.isNull() )
 		e->setText( s );
 }
 
-void UISettings::requestNewFile( const QString& c, QLineEdit* e )
+void UISettings::requestNewFile( const QString& c, QLineEdit* e, const QString& filters )
 {
-	const QString s = CommonDialogs::getSaveFileName( e->text(), c );
+	const QString s = CommonDialogs::getSaveFileName( e->text(), c, filters );
 	if ( !s.isNull() )
 		e->setText( s );
 }
@@ -112,19 +112,6 @@ void UISettings::requestNewFile( const QString& c, QLineEdit* e )
 void UISettings::requestFolder( const QString& c, QLineEdit* e )
 {
 	const QString s = CommonDialogs::getExistingDirectory( e->text(), c );
-	if ( !s.isNull() )
-		e->setText( s );
-}
-
-void UISettings::requestDrive( const QString& c, QLineEdit* e )
-{
-	// get all drives
-	QStringList drives;
-	foreach ( const QFileInfo& fi, QDir::drives() )
-		drives << fi.fileName();
-	
-	// request user to choose a drive
-	const QString s = CommonDialogs::getItem( drives, c, tr( "CD Rom Drive..." ) );
 	if ( !s.isNull() )
 		e->setText( s );
 }
@@ -144,15 +131,9 @@ void UISettings::tbBrowse_clicked()
 			return;
 		}
 		else if ( cbCdRom->currentText().contains( "iso", Qt::CaseInsensitive ) )
-			requestFile( tr( "" ), leCdRom );
+			requestFile( tr( "Select your iso/cue/bin file" ), leCdRom, tr( "CD Images (*.iso *.cue *.bin)" ) );
 		else
-		{
-#ifdef Q_OS_WIN
-			requestDrive( tr( "Choose a cdrom drive" ), leCdRom );
-#else
-			requestFolder( tr( "Choose a cdrom mount point" ), leCdRom );
-#endif
-		}
+			requestFolder( tr( "Choose a cdrom drive/mount point" ), leCdRom );
 	}
 	else if ( tb == tbSaveStates )
 		requestFolder( tr( "Choose a folder to store save states" ), leSaveStates );
