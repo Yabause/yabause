@@ -81,6 +81,8 @@ typedef struct {
 #endif
 } SmpcInternal;
 
+extern SmpcInternal * SmpcInternalVars;
+
 int SmpcInit(u8 regionid);
 void SmpcDeInit(void);
 void SmpcRecheckRegion(void);

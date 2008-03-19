@@ -575,6 +575,7 @@ void YabauseSpeedySetup(void)
 
    // Set SMPC registers to sane states
    SmpcRegs->COMREG = 0x10;
+   SmpcInternalVars->resd = 0;
 
    // Set VDP1 registers to sane states
    Vdp1Regs->EDSR = 3;
