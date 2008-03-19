@@ -151,7 +151,8 @@ int safe_strcmp(const char * s1, const char * s2) {
 }
 
 gboolean yui_settings_load(void) {
-	int i, tmp, stmp;
+	int i, tmp;
+	gchar * stmp;
 	gchar *biosPath;
 	gboolean mustRestart = FALSE;
 
@@ -375,9 +376,20 @@ int main(int argc, char *argv[]) {
 	 // Fullscreen
 	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
             yui_window_set_fullscreen(YUI_WINDOW(yui), TRUE);
-	 } else if (strstr(argv[i], "--binary=")) {
-            yui_window_run(NULL, YUI_WINDOW(yui));
-	    MappedMemoryLoadExec(argv[i] + strlen("--binary="), 0x06004000);
+	 }
+	 // Binary
+	 else if (strstr(argv[i], "--binary=")) {
+	    char binname[1024];
+	    u32 binaddress;
+	    int bincount;
+
+	    bincount = sscanf(argv[i] + strlen("--binary="), "%[^:]:%x", binname, &binaddress);
+	    if (bincount > 0) {
+	       if (bincount < 2) binaddress = 0x06004000;
+
+               yui_window_run(NULL, YUI_WINDOW(yui));
+	       MappedMemoryLoadExec(binname, binaddress);
+	    }
 	 }
       }
    }
