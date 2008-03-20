@@ -83,7 +83,7 @@ int sdcardopen(struct _reent *r, void *fileStruct, const char *path,int flags,in
       return -1;
 
    fddata[fd].fp = fp;
-   return 0;
+   return fd;
 }
 
 int sdcardclose(struct _reent *r,int fd)
@@ -219,7 +219,7 @@ void CARDIO_Init()
    int i;
    for (i = 0; i < MAX_FD; i++)
       fddata[i].fp = NULL;
-   AddDevice(&dotab_sdcard0);
+   setDefaultDevice(AddDevice(&dotab_sdcard0));
    AddDevice(&dotab_sdcard1);
 }
 
@@ -232,7 +232,7 @@ int _open_r _PARAMS ((struct _reent *r, const char *file, int flags, int mode))
    {
       if (devoptab_list[device]->open_r &&
           (fd = devoptab_list[device]->open_r(r, NULL, file, flags, mode)) != -1)
-         return ((fd << 16) | (device & 0xFFFF));
+         return ((fd << 4) | (device & 0xF));
    }
    else
       r->_errno = ENOSYS;
@@ -242,41 +242,41 @@ int _open_r _PARAMS ((struct _reent *r, const char *file, int flags, int mode))
 
 int _close_r _PARAMS ((struct _reent *r, int fd))
 {
-   int device = fd & 0xFFFF;
+   int device = fd & 0xF;
    if (fd != -1 && devoptab_list[device]->close_r)
-      return devoptab_list[device]->close_r(r, fd >> 16);
+      return devoptab_list[device]->close_r(r, fd >> 4);
    return -1;
 }
 
 _ssize_t _write_r _PARAMS ((struct _reent *r, int fd, void *ptr, size_t len))
 {
-   int device = fd & 0xFFFF;
+   int device = fd & 0xF;
    if (fd != -1 && devoptab_list[device]->write_r)
-      return devoptab_list[device]->write_r(r, fd >> 16, ptr, len);
+      return devoptab_list[device]->write_r(r, fd >> 4, ptr, len);
    return -1;
 }
 
 _ssize_t _read_r _PARAMS ((struct _reent *r, int fd, void *ptr, size_t len))
 {
-   int device = fd & 0xFFFF;
+   int device = fd & 0xF;
    if (fd != -1 && devoptab_list[device]->read_r)
-      return devoptab_list[device]->read_r(r, fd >> 16, ptr, len);
+      return devoptab_list[device]->read_r(r, fd >> 4, ptr, len);
    return -1;
 }
 
 _off_t _lseek_r _PARAMS ((struct _reent *r, int fd, _off_t pos, int dir))
 {
-   int device = fd & 0xFFFF;
+   int device = fd & 0xF;
    if (fd != -1 && devoptab_list[device]->seek_r)
-      return devoptab_list[device]->seek_r(r, fd >> 16, pos, dir);
+      return devoptab_list[device]->seek_r(r, fd >> 4, pos, dir);
    return -1;
 }
 
 int _fstat_r _PARAMS ((struct _reent *r, int fd, struct stat *st))
 {
-   int device = fd & 0xFFFF;
+   int device = fd & 0xF;
    if (fd != -1 && devoptab_list[device]->fstat_r)
-      return devoptab_list[device]->fstat_r(r, fd >> 16, st);
+      return devoptab_list[device]->fstat_r(r, fd >> 4, st);
    return -1;
 }
 

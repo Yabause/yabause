@@ -89,6 +89,27 @@ void powerdown()
    done = 1;
 }
 
+int DVDStopMotor()
+{
+   static char dvdstr[] ATTRIBUTE_ALIGN(32) = "/dev/di";
+   s32 fd;
+   u8 buf[0x20];
+   u8 outbuf[0x20];
+
+   if ((fd = IOS_Open(dvdstr,0)) < 0)
+      return 0;
+	
+   ((u32 *)buf)[0x00] = 0xE3000000;
+   ((u32 *)buf)[0x01] = 0;
+   ((u32 *)buf)[0x02] = 0;
+
+   IOS_Ioctl(fd, buf[0], buf, 0x20, outbuf, 0x20);
+
+   IOS_Close(fd);
+
+   return 1;
+}
+
 int main(int argc, char **argv)
 {
    yabauseinit_struct yinit;
@@ -101,6 +122,7 @@ int main(int argc, char **argv)
 
    SYS_SetResetCallback(reset);
    SYS_SetPowerCallback(powerdown);
+   DVDStopMotor();
 	
    switch(VIDEO_GetCurrentTvMode()) 
    {
@@ -154,8 +176,7 @@ int main(int argc, char **argv)
    yinit.sh2coretype = SH2CORE_INTERPRETER;
    yinit.vidcoretype = VIDCORE_SOFT;
    yinit.sndcoretype = SNDCORE_DUMMY;
-//   yinit.cdcoretype = CDCORE_ISO;
-   yinit.cdcoretype = CDCORE_DUMMY;
+   yinit.cdcoretype = CDCORE_ISO;
    yinit.m68kcoretype = M68KCORE_C68K;
    yinit.carttype = CART_NONE;
    yinit.regionid = REGION_AUTODETECT;
@@ -170,32 +191,30 @@ int main(int argc, char **argv)
    yinit.netlinksetting = NULL;
    yinit.flags = VIDEOFORMATTYPE_NTSC;
 
-   if ((ret = YabauseInit(&yinit)) != 0)
+   if ((ret = YabauseInit(&yinit)) == 0)
    {
-      int i;
-      printf("Rebooting program in 10 seconds...\n");
+      EnableAutoFrameSkip();
 
-      for(i = 0; i < (60 * 10); i++)
+      console_init(xfb[fbsel],20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+
+      while(!done)
+      {
+         if (PERCore->HandleEvents() != 0)
+            return -1;
+         if (resetemu)
+         {
+            YabauseReset();
+            resetemu = 0;
+         }
+     }
+
+     YabauseDeInit();
+   }
+   else
+   {
+      while(!done)
          VIDEO_WaitVSync();
    }
-
-   EnableAutoFrameSkip();
-
-   console_init(xfb[fbsel],20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
-
-   while(!done)
-   {
-      if (PERCore->HandleEvents() != 0)
-         return -1;
-      if (resetemu)
-      {
-         YabauseReset();
-         resetemu = 0;
-      }
-   }
-
-   YabauseDeInit();
-   printf("Exiting back to loader\n");
 
    exit(0);
    return 0;
@@ -208,9 +227,8 @@ void YuiErrorMsg(const char *string)
       if (!running)
          return;
       running = 0;
+      printf("%s\n", string);
    }
-
-   printf("%s\n", string);
 }
 
 void YuiSwapBuffers()
@@ -261,3 +279,4 @@ void YuiSwapBuffers()
    VIDEO_SetNextFramebuffer (xfb[fbsel]);
    VIDEO_Flush ();
 }
+
