@@ -20,6 +20,7 @@ echo "Relinking frameworks..."
 install_name_tool -id @executable_path/../Frameworks/QtCore $YABAUSE_FRAMEWORKS/QtCore
 install_name_tool -id @executable_path/../Frameworks/QtGui $YABAUSE_FRAMEWORKS/QtGui
 install_name_tool -id @executable_path/../Frameworks/QtOpenGL $YABAUSE_FRAMEWORKS/QtOpenGL
+install_name_tool -id @executable_path/../Frameworks/SDL $YABAUSE_FRAMEWORKS/SDL
 
 install_name_tool -change $QT_PATH_FRAMEWORKS/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore $YABAUSE_FRAMEWORKS/QtGui
 install_name_tool -change $QT_PATH_FRAMEWORKS/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore $YABAUSE_FRAMEWORKS/QtOpenGL
