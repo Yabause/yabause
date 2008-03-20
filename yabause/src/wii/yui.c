@@ -30,13 +30,14 @@
 #include "../vidsoft.h"
 #include "../vdp2.h"
 #include "../yui.h"
+#include "cardio.h"
 
 static u32 *xfb[2] = { NULL, NULL };
 int fbsel = 0;
 static GXRModeObj *rmode = NULL;
 volatile int done=0;
 volatile int resetemu=0;
-int running=0;
+int running=1;
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -72,7 +73,9 @@ M68K_struct *M68KCoreList[] = {
 NULL
 };
 
-char biosfilename[512]="\0";
+static char bupfilename[512]="dev0:\\bkram.bin";
+static char biosfilename[512]="dev0:\\bios.bin";
+static char isofilename[512]="dev0:\\game.cue";
 
 extern int vdp2width, vdp2height;
 
@@ -90,6 +93,7 @@ int main(int argc, char **argv)
 {
    yabauseinit_struct yinit;
    int ret;
+   DIR *dir;
 
    VIDEO_Init();
    PAD_Init();
@@ -130,11 +134,27 @@ int main(int argc, char **argv)
    if(rmode->viTVMode&VI_NON_INTERLACE) 
       VIDEO_WaitVSync();
 
+   CARDIO_Init();
+
+   printf("Please insert SD card with SD Gecko into gamecube slot A...\n");
+   for(;;)
+   {
+      VIDEO_WaitVSync();
+      if (SDCARD_ReadDir("dev0:\\", &dir) >= 1)
+      {
+         free(dir);
+         break;
+      }
+      else if (done)
+         exit(0);
+   }
+
    memset(&yinit, 0, sizeof(yabauseinit_struct));
    yinit.percoretype = PERCORE_DUMMY;
    yinit.sh2coretype = SH2CORE_INTERPRETER;
    yinit.vidcoretype = VIDCORE_SOFT;
    yinit.sndcoretype = SNDCORE_DUMMY;
+//   yinit.cdcoretype = CDCORE_ISO;
    yinit.cdcoretype = CDCORE_DUMMY;
    yinit.m68kcoretype = M68KCORE_C68K;
    yinit.carttype = CART_NONE;
@@ -143,8 +163,8 @@ int main(int argc, char **argv)
       yinit.biospath = NULL;
    else
       yinit.biospath = biosfilename;
-   yinit.cdpath = NULL;
-   yinit.buppath = NULL;
+   yinit.cdpath = isofilename;
+   yinit.buppath = bupfilename;
    yinit.mpegpath = NULL;
    yinit.cartpath = NULL;
    yinit.netlinksetting = NULL;
@@ -152,39 +172,11 @@ int main(int argc, char **argv)
 
    if ((ret = YabauseInit(&yinit)) != 0)
    {
-      sd_file *fp;
-      s32 size;
-      s32 i;
-      u32 data;
-      unsigned char *buf;
+      int i;
+      printf("Rebooting program in 10 seconds...\n");
 
-
-      // If it's failing, it's only because of the missing bios/cd
-      while ((fp = SDCARD_OpenFile("dev0:\\bios.bin", "rb")) == NULL)
-      {         
-         printf("Couldn't find bios...trying again in 5 seconds...\n");
-         for(i = 0; i < (60 * 5); i++)
-            VIDEO_WaitVSync();
-      }
-
-      printf("Found bios\n");
-      printf("Loading bios to rom area...\n");
-      size = SDCARD_GetFileSize(fp);
-      SDCARD_SeekFile(fp, 0, SDCARD_SEEK_SET);
-      VIDEO_WaitVSync();
-
-      buf = malloc(size);
-      SDCARD_ReadFile(fp, buf, size);
-
-      for (i = 0; i < size / sizeof(data); i++)
-         T2WriteByte(BiosRom, i, buf[i]);
-
-      free(buf);
-
-      SDCARD_CloseFile(fp);
-
-      YabauseResetNoLoad();
-      printf("done.\n");
+      for(i = 0; i < (60 * 10); i++)
+         VIDEO_WaitVSync();
    }
 
    EnableAutoFrameSkip();
@@ -201,6 +193,9 @@ int main(int argc, char **argv)
          resetemu = 0;
       }
    }
+
+   YabauseDeInit();
+   printf("Exiting back to loader\n");
 
    exit(0);
    return 0;
