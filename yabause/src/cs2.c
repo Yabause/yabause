@@ -2488,7 +2488,7 @@ void Cs2CmdE2(void) {
   Cs2Area->outconmpegrom = Cs2Area->filter + 0;
   Cs2Area->outconmpegromnum = 0;
 
-  if ((mpgfp = fopen(Cs2Area->mpegpath, "rb")) != NULL)
+  if (Cs2Area->mpegpath && (mpgfp = fopen(Cs2Area->mpegpath, "rb")) != NULL)
   {
      u32 readoffset = ((Cs2Area->reg.CR1 & 0xFF) << 8) | Cs2Area->reg.CR2;
      u16 readsize = Cs2Area->reg.CR4;
