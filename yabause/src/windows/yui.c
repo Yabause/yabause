@@ -423,23 +423,23 @@ void YuiPause()
 #ifdef USETHREADS
    stop = 1;
    while (!stopped) { Sleep(0); }
+#endif
    ScspMuteAudio();
    paused = 1;
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void YuiUnPause()
 {
-#ifdef USETHREADS
    if (paused)
    {
       ScspUnMuteAudio();
+#ifdef USETHREADS
       stop = 0;
+#endif
       paused = 0;
    }
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -945,7 +945,7 @@ YabauseSetup:
          }
       }
 
-      if (PERCore->HandleEvents() != 0)
+      if (!paused && PERCore->HandleEvents() != 0)
       {
          YuiReleaseVideo();
          if (YabMenu)
