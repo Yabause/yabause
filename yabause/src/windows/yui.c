@@ -1320,10 +1320,15 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       case WM_MOVE:
       {
          RECT rect;
+         WINDOWPLACEMENT info;
 
-         GetWindowRect(hWnd, &rect);
-         yabwinx = rect.left;
-         yabwiny = rect.top;
+         GetWindowPlacement(hWnd, &info);
+         if (info.showCmd != SW_SHOWMINIMIZED)
+         {
+            GetWindowRect(hWnd, &rect);
+            yabwinx = rect.left;
+            yabwiny = rect.top;
+         }
          return 0L;
       }
       case WM_CLOSE:
