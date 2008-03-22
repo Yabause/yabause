@@ -2873,12 +2873,10 @@ void ToggleFullScreen(void)
    if (VIDCore->IsFullscreen())
    {
       VIDCore->Resize(320, 224, 0);
-      YuiVideoResize(320, 224, 0);
    }
    else
    {
       VIDCore->Resize(640, 480, 1);
-      YuiVideoResize(640, 480, 1);
    }
 }
 

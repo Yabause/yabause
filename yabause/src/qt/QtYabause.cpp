@@ -51,7 +51,6 @@ PerInterface_struct *PERCoreList[] = {
 &PERJSW,
 #endif
 #ifdef HAVE_LIBSDL
-&PERSDL,
 &PERSDLJoy,
 #endif
 #endif
@@ -97,18 +96,12 @@ extern "C"
 	void YuiErrorMsg(const char *string)
 	{ QtYabause::mainWindow()->appendLog( string ); }
 
-	void YuiVideoResize(unsigned int /*w*/, unsigned int /*h*/, int /*isfullscreen*/)
-	{}
-
 	int YuiSetVideoMode(int /*width*/, int /*height*/, int /*bpp*/, int /*fullscreen*/)
 	{ return 0; }
 
 	void YuiSetVideoAttribute(int /*type*/, int /*val*/)
 	{}
 	
-	void YuiQuit()
-	{}
-
 	void YuiSwapBuffers()
 	{ QtYabause::mainWindow()->swapBuffers(); }
 }

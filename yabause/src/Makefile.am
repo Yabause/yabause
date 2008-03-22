@@ -26,7 +26,7 @@ libyabause_a_SOURCES = \
 	debug.c debug.h error.c error.h memory.c memory.h \
 	m68kcore.c m68kcore.h \
         m68kd.c netlink.c netlink.h peripheral.h peripheral.c \
-	persdl.c persdl.h persdljoy.c persdljoy.h profile.c profile.h \
+	persdljoy.c persdljoy.h profile.c profile.h \
 	scu.c scu.h sh2core.c sh2core.h \
 	sh2d.c sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h \
 	smpc.c smpc.h scsp.c scsp.h sndsdl.c sndsdl.h vdp1.c vdp1.h \

@@ -35,36 +35,8 @@
 #define DEPTH_SIZE      4
 #define DOUBLEBUFFER	5
 
-/* This function should be the "main" function of the program.
- * The function passed as an argument is the main emulation
-   function and should be called as often as possible */
-int YuiInit(void);
-
-/* quit yui_init */
-void YuiQuit(void);
-
-/* hide or show the interface */
-void YuiHideShow(void);
-
 /* If Yabause encounters any fatal errors, it sends the error text to this function */
 void YuiErrorMsg(const char *string);
-
-/* Sets bios filename in the yui - used to specify bios from the commandline */
-void YuiSetBiosFilename(const char *);
-
-/* Sets ISO filename in the yui - used to specify an ISO from the commandline */
-void YuiSetIsoFilename(const char *);
-
-/* Sets CDROM filename in the yui - used to specify the CDROM from the commandline */
-void YuiSetCdromFilename(const char *);
-
-/* Tells the yui to enable, or disable sound. By default it should be assumed that sound is enabled */
-void YuiSetSoundEnable(int enablesound);
-
-/* Tells the yui to resize window. Ports that don't have to deal with windows
-   should just ignore this. The w and h variables are the width and height of
-   the client area. Take this into account when you resize your window. */
-void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen);
 
 /* Sets attribute for the Video display. The values passed to this function
    depends on what Video core is being used at the time. This may end up

@@ -485,9 +485,6 @@ void YuiErrorMsg(const char * string) {
 	printf("%s\n", string);
 }
 
-void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {
-}
-
 void YuiSetVideoAttribute(int type, int val) {
 }
 

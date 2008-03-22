@@ -105,10 +105,6 @@ void YuiErrorMsg(const char *error_text)    {
     arch_exit();
 }
 
-/* stub for now... just to make things compile again... */
-void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen)   {
-}
-
 void DoGui()  {
     struct coord    {
         int x;

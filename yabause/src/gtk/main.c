@@ -403,10 +403,6 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-void YuiQuit(void) {
-}
-
-
 void YuiVideoResize(unsigned int w, unsigned int h, int isfullscreen) {
 }
 
