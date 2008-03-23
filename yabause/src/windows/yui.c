@@ -891,6 +891,14 @@ YabauseSetup:
    else
       DisableAutoFrameSkip();
 
+   if (vidcoretype == VIDCORE_DUMMY)
+   {
+      SetMenu(YabWin, YabMenu);
+
+      ShowWindow(YabWin,SW_SHOW);
+      SetForegroundWindow(YabWin);
+      SetFocus(YabWin);
+   }
 
    while (!stop)
    {
