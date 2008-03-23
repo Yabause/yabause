@@ -29,7 +29,7 @@ int main(int argc, char ** argv) {
 	printf("%s\n", mini18n("Hello!"));
 	/* "short" version */
 	printf("%s\n", _("I am a test program"));
-	printf("%s\n", _("You can use \\ and : in your strings"));
+	printf("%s\n", _("You can use \\ and | in your strings"));
 
 	mini18n_close();
 }

@@ -29,6 +29,11 @@ int mini18n_set_locale(const char * locale) {
 	mini18n_hash_free(hash);
 
 	hash = mini18n_hash_from_file(locale);
+	if (hash == NULL) {
+		return -1;
+	}
+
+	return 0;
 }
 
 const char * mini18n(const char * source) {

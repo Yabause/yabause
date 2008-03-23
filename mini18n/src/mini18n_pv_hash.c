@@ -95,6 +95,9 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 	FILE * f;
 
 	hash = mini18n_hash_init();
+	if (hash == NULL) {
+		return NULL;
+	}
 
 	f = fopen(filename, "r");
 	if (f == NULL) {
@@ -114,7 +117,7 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 							/* escape character, we're now in state 1 */
 							state = 1;
 							break;
-						case ':':
+						case '|':
 							/* separator, we're done */
 							key[j] = '\0';
 							j = 0;
