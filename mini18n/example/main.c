@@ -25,6 +25,8 @@ int main(int argc, char ** argv) {
 		mini18n_set_locale(argv[1]);
 	}
 
+	mini18n_set_log("out");
+
 	/* "long" version */
 	printf("%s\n", mini18n("Hello!"));
 	/* "short" version */

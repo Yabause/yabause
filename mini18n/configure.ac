@@ -12,6 +12,8 @@ AC_PROG_INSTALL
 
 AC_LANG(C)
 
+AC_ARG_ENABLE(log, AC_HELP_STRING(--enable-log, log non translated strings) , AC_DEFINE(MINI18N_LOG))
+
 AC_CONFIG_FILES([Makefile
 	src/Makefile
 	example/Makefile

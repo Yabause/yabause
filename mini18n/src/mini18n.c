@@ -23,7 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static mini18n_hash_t * hash;
+static mini18n_hash_t * hash = NULL;
+#ifdef MINI18N_LOG
+static FILE * log = NULL;
+#endif
 
 int mini18n_set_locale(const char * locale) {
 	mini18n_hash_free(hash);
@@ -36,10 +39,51 @@ int mini18n_set_locale(const char * locale) {
 	return 0;
 }
 
+int mini18n_set_log(const char * filename) {
+#ifdef MINI18N_LOG
+	log = fopen(filename, "w");
+
+	if (log == NULL) {
+		return -1;
+	}
+
+	return 0;
+#endif
+}
+
 const char * mini18n(const char * source) {
+#ifdef MINI18N_LOG
+	const char * translated = mini18n_hash_value(hash, source);
+
+	if ((log) && (translated == source)) {
+		unsigned int i = 0;
+		unsigned int n = strlen(source);
+
+		for(i = 0;i < n;i++) {
+			switch(source[i]) {
+				case '|':
+					fprintf(log, "\\|");
+					break;
+				case '\\':
+					fprintf(log, "\\\\");
+					break;
+				default:
+					fprintf(log, "%c", source[i]);
+					break;
+			}
+		}
+		fprintf(log, ":\n");
+	}
+
+	return translated;
+#else
 	return mini18n_hash_value(hash, source);
+#endif
 }
 
 void mini18n_close(void) {
 	mini18n_hash_free(hash);
+#ifdef MINI18N_LOG
+	if (log) fclose(log);
+#endif
 }

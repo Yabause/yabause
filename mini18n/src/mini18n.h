@@ -25,6 +25,7 @@
 #endif
 
 int mini18n_set_locale(const char * locale);
+int mini18n_set_log(const char * filename);
 const char * mini18n(const char * source);
 void mini18n_close(void);
 
