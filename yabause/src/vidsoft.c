@@ -1696,6 +1696,22 @@ int VIDSoftInit(void)
    outputheight = 224;
    msglength = 0;
 #endif
+
+#ifdef HAVE_LIBGLUT
+#ifndef WIN32
+   {
+      int fake_argc = 1;
+      char * fake_argv[] = { "yabause" };
+      static int glutinited = 0;
+
+      if (!glutinited)
+      {
+         glutInit(&fake_argc, fake_argv);
+         glutinited = 1;
+      }
+   }
+#endif
+#endif
    return 0;
 }
 
