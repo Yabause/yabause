@@ -3,6 +3,11 @@ AC_INIT(yabause, 0.9.4)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
+# hack to reset host_alias when we're not cross compiling
+if test "x$host_alias" = "x$host"; then
+	host_alias=
+fi
+
 AM_INIT_AUTOMAKE([1.8.0])
 
 AC_PROG_RANLIB
