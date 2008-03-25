@@ -19,6 +19,7 @@
 */
 
 #include <gtk/gtk.h>
+#include <string.h>
 
 #include "yuirange.h"
 
@@ -146,5 +147,5 @@ static void yui_range_changed(GtkWidget * entry, YuiRange * yfe) {
 }
 
 gint yui_range_get_active(YuiRange * range) {
-	return gtk_combo_box_get_active(range->combo);
+	return gtk_combo_box_get_active(GTK_COMBO_BOX(range->combo));
 }
