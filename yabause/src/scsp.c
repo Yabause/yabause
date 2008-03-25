@@ -2890,20 +2890,25 @@ int ScspChangeSoundCore(int coreid)
 void ScspDeInit(void) {
    if (scspchannel[0].data32)
       free(scspchannel[0].data32);
+   scspchannel[0].data32 = NULL;
 
    if (scspchannel[1].data32)
       free(scspchannel[1].data32);
+   scspchannel[1].data32 = NULL;
 
    if (SNDCore)
       SNDCore->DeInit();
+   SNDCore = NULL;
 
    scsp_shutdown();
 
    if (SoundRam)
       T2MemoryDeInit(SoundRam);
+   SoundRam = NULL;
 
    if (SoundDummy)
       T2MemoryDeInit(SoundDummy);
+   SoundDummy = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

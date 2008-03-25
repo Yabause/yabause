@@ -61,9 +61,11 @@ int SmpcInit(u8 regionid) {
 void SmpcDeInit(void) {
    if (SmpcRegsT)
       free(SmpcRegsT);
+   SmpcRegsT = NULL;
 
    if (SmpcInternalVars)
       free(SmpcInternalVars);
+   SmpcInternalVars = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

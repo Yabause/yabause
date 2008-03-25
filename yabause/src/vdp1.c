@@ -142,12 +142,15 @@ int Vdp1Init(void) {
 void Vdp1DeInit(void) {
    if (Vdp1Regs)
       free(Vdp1Regs);
+   Vdp1Regs = NULL;
 
    if (Vdp1Ram)
       T1MemoryDeInit(Vdp1Ram);
+   Vdp1Ram = NULL;
 
    if (Vdp1FrameBuffer)
       T1MemoryDeInit(Vdp1FrameBuffer);
+   Vdp1FrameBuffer = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -206,6 +209,7 @@ int VideoChangeCore(int coreid)
 void VideoDeInit(void) {
    if (VIDCore)
       VIDCore->DeInit();
+   VIDCore = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

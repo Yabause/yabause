@@ -516,9 +516,11 @@ void Cs2DeInit(void) {
 
       free(Cs2Area);
    }
+   Cs2Area = NULL;
 
    if (cdip)
       free(cdip);
+   cdip = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

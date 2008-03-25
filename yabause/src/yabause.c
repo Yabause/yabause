@@ -265,12 +265,15 @@ void YabauseDeInit(void) {
 
    if (BiosRom)
       T2MemoryDeInit(BiosRom);
+   BiosRom = NULL;
 
    if (HighWram)
       T2MemoryDeInit(HighWram);
+   HighWram = NULL;
 
    if (LowWram)
       T2MemoryDeInit(LowWram);
+   LowWram = NULL;
 
    if (BupRam)
    {
@@ -279,6 +282,7 @@ void YabauseDeInit(void) {
 
       T1MemoryDeInit(BupRam);
    }
+   BupRam = NULL;
 
    CartDeInit();
    Cs2DeInit();

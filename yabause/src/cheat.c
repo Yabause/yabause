@@ -48,6 +48,7 @@ void CheatDeInit(void)
 {  
    if (cheatlist)
       free(cheatlist);
+   cheatlist = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

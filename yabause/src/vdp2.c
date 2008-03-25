@@ -153,12 +153,15 @@ int Vdp2Init(void) {
 void Vdp2DeInit(void) {
    if (Vdp2Regs)
       free(Vdp2Regs);
+   Vdp2Regs = NULL;
 
    if (Vdp2Ram)
       T1MemoryDeInit(Vdp2Ram);
+   Vdp2Ram = NULL;
 
    if (Vdp2ColorRam)
       T2MemoryDeInit(Vdp2ColorRam);
+   Vdp2ColorRam = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

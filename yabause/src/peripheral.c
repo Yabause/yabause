@@ -60,6 +60,7 @@ int PerInit(int coreid) {
 void PerDeInit(void) {
    if (PERCore)
       PERCore->DeInit();
+   PERCore = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

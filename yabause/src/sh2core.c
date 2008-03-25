@@ -84,12 +84,15 @@ void SH2DeInit()
 {
    if (SH2Core)
       SH2Core->DeInit();
+   SH2Core = NULL;
 
    if (MSH2)
       free(MSH2);
+   MSH2 = NULL;
 
    if (SSH2)
       free(SSH2);
+   SSH2 = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

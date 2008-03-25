@@ -59,12 +59,15 @@ int ScuInit(void) {
 void ScuDeInit(void) {
    if (ScuRegs)
       free(ScuRegs);
+   ScuRegs = NULL;
 
    if (ScuDsp)
       free(ScuDsp);
+   ScuDsp = NULL;
 
    if (ScuBP)
       free(ScuBP);
+   ScuBP = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////
