@@ -17,9 +17,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef CARDIO_H
-#define CARDIO_H
+#ifndef PERWII_H
+#define PERWII_H
 
-void CARDIO_Init();
+int KeyboardInit();
+void KeyboardDeInit();
+void KeyboardPoll();
 
 #endif

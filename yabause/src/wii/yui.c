@@ -31,6 +31,7 @@
 #include "../vdp2.h"
 #include "../yui.h"
 #include "cardio.h"
+#include "perwii.h"
 
 static u32 *xfb[2] = { NULL, NULL };
 int fbsel = 0;
@@ -156,6 +157,7 @@ int main(int argc, char **argv)
    if(rmode->viTVMode&VI_NON_INTERLACE) 
       VIDEO_WaitVSync();
 
+   KeyboardInit();
    CARDIO_Init();
 
    printf("Please insert SD card with SD Gecko into gamecube slot A...\n");
@@ -206,15 +208,17 @@ int main(int argc, char **argv)
             YabauseReset();
             resetemu = 0;
          }
-     }
+      }
 
-     YabauseDeInit();
+      YabauseDeInit();
    }
    else
    {
       while(!done)
          VIDEO_WaitVSync();
    }
+
+   KeyboardDeInit();
 
    exit(0);
    return 0;
