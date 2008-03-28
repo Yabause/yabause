@@ -130,21 +130,7 @@ int YglScreenInit(int r, int g, int b, int d) {
 int YglInit(int width, int height, unsigned int depth) {
    unsigned int i;
 
-#ifdef HAVE_LIBGLUT
-#ifndef WIN32
-   {
-      int fake_argc = 1;
-      char * fake_argv[] = { "yabause" };
-      static int glutinited = 0;
-
-      if (!glutinited)
-      {
-         glutInit(&fake_argc, fake_argv);
-         glutinited = 1;
-      }
-   }
-#endif
-#endif
+   VideoInitGlut();
 
    YglTMInit(width, height);
 

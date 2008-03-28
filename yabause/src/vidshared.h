@@ -111,6 +111,8 @@ void FASTCALL Vdp2ParameterAPlaneAddr(vdp2draw_struct *info, int i);
 void FASTCALL Vdp2ParameterBPlaneAddr(vdp2draw_struct *info, int i);
 float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 addr);
 
+void VideoInitGlut();
+
 //////////////////////////////////////////////////////////////////////////////
 
 static INLINE int GenerateRotatedXPos(vdp2draw_struct *info, vdp2rotationparameter_struct *p, int x, int y)
