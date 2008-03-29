@@ -48,6 +48,7 @@ NULL
 
 PerInterface_struct *PERCoreList[] = {
 &PERDummy,
+&PERWIIKBD,
 NULL
 };
 
@@ -128,16 +129,16 @@ int main(int argc, char **argv)
    switch(VIDEO_GetCurrentTvMode()) 
    {
       case VI_NTSC:
-         rmode = &TVNtsc480IntDf;
+         rmode = &TVNtsc240Ds;
 	 break;
       case VI_PAL:
-  	 rmode = &TVPal528IntDf;
+         rmode = &TVPal264Ds;
  	 break;
       case VI_MPAL:
 	 rmode = &TVMpal480IntDf;
 	 break;
       default:
-	 rmode = &TVNtsc480IntDf;
+         rmode = &TVNtsc240Ds;
 	 break;
    }
 
@@ -157,7 +158,6 @@ int main(int argc, char **argv)
    if(rmode->viTVMode&VI_NON_INTERLACE) 
       VIDEO_WaitVSync();
 
-   KeyboardInit();
    CARDIO_Init();
 
    printf("Please insert SD card with SD Gecko into gamecube slot A...\n");
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
    }
 
    memset(&yinit, 0, sizeof(yabauseinit_struct));
-   yinit.percoretype = PERCORE_DUMMY;
+   yinit.percoretype = PERCORE_WIIKBD;
    yinit.sh2coretype = SH2CORE_INTERPRETER;
    yinit.vidcoretype = VIDCORE_SOFT;
    yinit.sndcoretype = SNDCORE_DUMMY;
@@ -218,8 +218,6 @@ int main(int argc, char **argv)
          VIDEO_WaitVSync();
    }
 
-   KeyboardDeInit();
-
    exit(0);
    return 0;
 }
@@ -247,10 +245,11 @@ void YuiSwapBuffers()
 
    for (j = 0; j < vdp2height; j++)
    {
-      for (i = 0; i < (vdp2width / 2); i++)
+      for (i = 0; i < vdp2width; i++)
       {
          // This isn't pretty
-         int y1, cb1, cr1, y2, cb2, cr2, cb, cr;
+         int y1, cb1, cr1;
+         int cb, cr;
          u8 r, g, b;
       
          r = buf[0] >> 24;
@@ -261,23 +260,12 @@ void YuiSwapBuffers()
          y1 = (299 * r + 587 * g + 114 * b) / 1000;
          cb1 = (-16874 * r - 33126 * g + 50000 * b + 12800000) / 100000;
          cr1 = (50000 * r - 41869 * g - 8131 * b + 12800000) / 100000;
+         cb = (cb1 + cb1) >> 1;
+         cr = (cr1 + cr1) >> 1;
 
-         r = buf[0] >> 24;
-         g = buf[0] >> 16;
-         b = buf[0] >> 8;
-         buf++;
- 
-         y2 = (299 * r + 587 * g + 114 * b) / 1000;
-         cb2 = (-16874 * r - 33126 * g + 50000 * b + 12800000) / 100000;
-         cr2 = (50000 * r - 41869 * g - 8131 * b + 12800000) / 100000;
- 
-         cb = (cb1 + cb2) >> 1;
-         cr = (cr1 + cr2) >> 1;
-
-         curfb[0] = (y1 << 24) | (cb << 16) | (y2 << 8) | cr;
+         curfb[0] = (y1 << 24) | (cb << 16) | (y1 << 8) | cr;
          curfb++;
       }
-      curfb += (640 - vdp2width) / 2;
    }
    
    VIDEO_SetNextFramebuffer (xfb[fbsel]);

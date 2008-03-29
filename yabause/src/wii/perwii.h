@@ -20,8 +20,8 @@
 #ifndef PERWII_H
 #define PERWII_H
 
-int KeyboardInit();
-void KeyboardDeInit();
-void KeyboardPoll();
+#define PERCORE_WIIKBD  2
+
+extern PerInterface_struct PERWIIKBD;
 
 #endif

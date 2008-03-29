@@ -20,6 +20,9 @@
 #include <stdio.h>
 #include <ogcsys.h>
 #include "../peripheral.h"
+#include "../vdp1.h"
+#include "../vdp2.h"
+#include "perwii.h"
 #include "keys.h"
 
 #define MSG_CONNECT             0
@@ -39,12 +42,13 @@ struct
    u8 keydata[6];
 } kbdevent ATTRIBUTE_ALIGN(32);
 
+void (*keycfgpush[256])(void);
 void (*keypush[256])(void);
 s32 KeyboardConnectCallback(s32 result,void *usrdata);
 
-void SetupKeyPush(u8 key, void (*pushfunc)())
+void SetupKeyPush(void (**push)(void), u8 key, void (*pushfunc)())
 {
-   keypush[key] = pushfunc;
+   *(push + key) = pushfunc;
 }
 
 void KeyStub(void)
@@ -71,6 +75,7 @@ s32 KeyboardPoll(s32 result, void *usrdata)
                if (kbdevent.keydata[0] == 0)
                   break;
                keypush[kbdevent.keydata[i]]();
+               keycfgpush[kbdevent.keydata[i]]();
             }
             IOS_IoctlAsync(kbdfd, 0, NULL, 0, (void *)&kbdevent, 0x10, KeyboardPoll, NULL);
             break;
@@ -92,7 +97,7 @@ s32 KeyboardConnectCallback(s32 result,void *usrdata)
    return 0;
 }
 
-int KeyboardInit()
+int PERKeyboardInit()
 {
    int i;
    static char kbdstr[] ATTRIBUTE_ALIGN(32) = "/dev/usb/kbd";
@@ -101,27 +106,38 @@ int KeyboardInit()
       return -1;
 
    for(i = 0; i < 256; i++)
-       SetupKeyPush(i, KeyStub);
+   {
+       SetupKeyPush(keypush, i, KeyStub);
+       SetupKeyPush(keycfgpush, i, KeyStub);
+   }
 
-   SetupKeyPush(KEY_UP, PerUpPressed);
-   SetupKeyPush(KEY_DOWN, PerDownPressed);
-   SetupKeyPush(KEY_LEFT, PerLeftPressed);
-   SetupKeyPush(KEY_RIGHT, PerRightPressed);
-   SetupKeyPush(KEY_K, PerAPressed);
-   SetupKeyPush(KEY_L, PerBPressed);
-   SetupKeyPush(KEY_M, PerCPressed);
-   SetupKeyPush(KEY_U, PerXPressed);
-   SetupKeyPush(KEY_I, PerYPressed);
-   SetupKeyPush(KEY_O, PerZPressed);
-   SetupKeyPush(KEY_X, PerLTriggerPressed);
-   SetupKeyPush(KEY_Z, PerRTriggerPressed);
-   SetupKeyPush(KEY_J, PerStartPressed);
+   SetupKeyPush(keypush, KEY_F1, ToggleFPS);
+   SetupKeyPush(keypush, KEY_1, ToggleNBG0);
+   SetupKeyPush(keypush, KEY_2, ToggleNBG1);
+   SetupKeyPush(keypush, KEY_3, ToggleNBG2);
+   SetupKeyPush(keypush, KEY_4, ToggleNBG3);
+   SetupKeyPush(keypush, KEY_4, ToggleRBG0);
+   SetupKeyPush(keypush, KEY_5, ToggleVDP1);
+
+   SetupKeyPush(keycfgpush, KEY_UP, PerUpPressed);
+   SetupKeyPush(keycfgpush, KEY_DOWN, PerDownPressed);
+   SetupKeyPush(keycfgpush, KEY_LEFT, PerLeftPressed);
+   SetupKeyPush(keycfgpush, KEY_RIGHT, PerRightPressed);
+   SetupKeyPush(keycfgpush, KEY_K, PerAPressed);
+   SetupKeyPush(keycfgpush, KEY_L, PerBPressed);
+   SetupKeyPush(keycfgpush, KEY_M, PerCPressed);
+   SetupKeyPush(keycfgpush, KEY_U, PerXPressed);
+   SetupKeyPush(keycfgpush, KEY_I, PerYPressed);
+   SetupKeyPush(keycfgpush, KEY_O, PerZPressed);
+   SetupKeyPush(keycfgpush, KEY_X, PerLTriggerPressed);
+   SetupKeyPush(keycfgpush, KEY_Z, PerRTriggerPressed);
+   SetupKeyPush(keycfgpush, KEY_J, PerStartPressed);
 
    IOS_IoctlAsync(kbdfd, 0, NULL, 0, (void *)&kbdevent, 0x10, KeyboardConnectCallback, NULL);
    return 0;
 }
 
-void KeyboardDeInit()
+void PERKeyboardDeInit()
 {
    if (kbdfd > -1)
    {
@@ -129,3 +145,16 @@ void KeyboardDeInit()
       kbdfd = -1;
    }
 }
+
+int PERKeyboardHandleEvents(void)
+{
+   return YabauseExec();
+}
+
+PerInterface_struct PERWIIKBD = {
+PERCORE_WIIKBD,
+"USB Keyboard Interface",
+PERKeyboardInit,
+PERKeyboardDeInit,
+PERKeyboardHandleEvents
+};
