@@ -1,6 +1,6 @@
 /*  Copyright 2005 Guillaume Duhamel
     Copyright 2005-2006 Theo Berkau
-	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+    Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
     This file is part of Yabause.
 
@@ -35,6 +35,8 @@ int main( int argc, char** argv )
 	// show main window
 	QtYabause::mainWindow()->setWindowTitle( app.applicationName() );
 	QtYabause::mainWindow()->show();
+	// set translation
+	QtYabause::setTranslationFile( qPrintable( app.applicationDirPath().append( "/french.ytf" ) ) );
 	// connection
 	QObject::connect( &app, SIGNAL( lastWindowClosed() ), &app, SLOT( quit() ) );
 	// exec application

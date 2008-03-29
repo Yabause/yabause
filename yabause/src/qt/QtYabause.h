@@ -57,11 +57,16 @@ extern "C"
 
 class UIYabause;
 class Settings;
+class QWidget;
 
 namespace QtYabause
 {
 	UIYabause* mainWindow();
 	Settings* settings();
+	void setTranslationFile( const char* filePath );
+	const char* translationFile();
+	void retranslateWidget( QWidget* widget );
+	void retranslateApplication();
 
 	// get cd serial
 	const char* getCurrentCdSerial();

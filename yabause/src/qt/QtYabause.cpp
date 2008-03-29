@@ -22,11 +22,16 @@
 #include "ui/UIYabause.h"
 #include "Settings.h"
 
+#include <QApplication>
+#include <QLabel>
+#include <QGroupBox>
+#include <QTreeWidget>
+
 // cores
 
 #ifdef Q_OS_WIN
 extern CDInterface SPTICD;
-extern CDInterface ASPICD;
+//extern CDInterface ASPICD;
 #endif
 
 M68K_struct * M68KCoreList[] = {
@@ -90,6 +95,8 @@ NULL
 UIYabause* mUIYabause = 0;
 // settings object
 Settings* mSettings = 0;
+// current translation file
+char* mTranslationFile = 0;
 
 extern "C" 
 {
@@ -118,6 +125,92 @@ Settings* QtYabause::settings()
 	if ( !mSettings )
 		mSettings = new Settings();
 	return mSettings;
+}
+
+void QtYabause::setTranslationFile( const char* filePath )
+{
+#ifdef HAVE_LIBMINI18N
+	mini18n_set_locale( filePath );
+	delete mTranslationFile;
+	mTranslationFile = strdup( filePath );
+	QtYabause::retranslateApplication();
+#endif
+}
+
+const char* QtYabause::translationFile()
+{ return mTranslationFile; }
+
+void QtYabause::retranslateWidget( QWidget* widget )
+{
+	if ( !widget )
+		return;
+	// translate all widget based members
+	widget->setAccessibleDescription( _( qPrintable( widget->accessibleDescription() ) ) );
+	widget->setAccessibleName( _( qPrintable( widget->accessibleName() ) ) );
+	widget->setStatusTip( _( qPrintable( widget->statusTip() ) ) );
+	widget->setStyleSheet( _( qPrintable( widget->styleSheet() ) ) );
+	widget->setToolTip( _( qPrintable( widget->toolTip() ) ) );
+	widget->setWhatsThis( _( qPrintable( widget->whatsThis() ) ) );
+	widget->setWindowIconText( _( qPrintable( widget->windowIconText() ) ) );
+	widget->setWindowTitle( _( qPrintable( widget->windowTitle() ) ) );
+	// get class name
+	const QString className = widget->metaObject()->className();
+	if ( className == "QWidget" )
+		return;
+	else if ( className == "QLabel" )
+	{
+		QLabel* l = qobject_cast<QLabel*>( widget );
+		l->setText( _( qPrintable( l->text() ) ) );
+	}
+	else if ( className == "QAbstractButton" )
+	{
+		QAbstractButton* ab = qobject_cast<QAbstractButton*>( widget );
+		ab->setText( _( qPrintable( ab->text() ) ) );
+	}
+	else if ( className == "QGroupBox" )
+	{
+		QGroupBox* gb = qobject_cast<QGroupBox*>( widget );
+		gb->setTitle( _( qPrintable( gb->title() ) ) );
+	}
+	else if ( className == "QMenu" || className == "QMenuBar" )
+	{
+		QList<QMenu*> menus;
+		if ( className == "QMenuBar" )
+			menus = qobject_cast<QMenuBar*>( widget )->findChildren<QMenu*>();
+		else
+			menus << qobject_cast<QMenu*>( widget );
+		foreach ( QMenu* m, menus )
+		{
+			m->setTitle( _( qPrintable( m->title() ) ) );
+			// retranslate menu actions
+			foreach ( QAction* a, m->actions() )
+			{
+				a->setIconText( _( qPrintable( a->iconText() ) ) );
+				a->setStatusTip( _( qPrintable( a->statusTip() ) ) );
+				a->setText( _( qPrintable( a->text() ) ) );
+				a->setToolTip( _( qPrintable( a->toolTip() ) ) );
+				a->setWhatsThis( _( qPrintable( a->whatsThis() ) ) );
+			}
+		}
+	}
+	else if ( className == "QTreeWidget" )
+	{
+		QTreeWidget* tw = qobject_cast<QTreeWidget*>( widget );
+		QTreeWidgetItem* twi = tw->headerItem();
+		for ( int i = 0; i < twi->columnCount(); i++ )
+		{
+			twi->setStatusTip( i, _( qPrintable( twi->statusTip( i ) ) ) );
+			twi->setText( i, _( qPrintable( twi->text( i ) ) ) );
+			twi->setToolTip( i, _( qPrintable( twi->toolTip( i ) ) ) );
+			twi->setWhatsThis( i, _( qPrintable( twi->whatsThis( i ) ) ) );
+		}
+	}
+}
+
+void QtYabause::retranslateApplication()
+{
+	foreach ( QWidget* widget, QApplication::allWidgets() )
+		retranslateWidget( widget );
 }
 
 const char* QtYabause::getCurrentCdSerial()
