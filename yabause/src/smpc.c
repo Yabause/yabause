@@ -380,8 +380,6 @@ void SmpcINTBACKPeripheral(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void SmpcINTBACK() {
-   SmpcRegs->SF = 1;
-
    if (SmpcInternalVars->intback) {
       SmpcINTBACKPeripheral();
       ScuSendSystemManager();
@@ -554,7 +552,8 @@ u32 FASTCALL SmpcReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcSetTiming(void) {
+void SmpcSetTiming(u8 command) {
+   SmpcRegs->COMREG = command;
    switch(SmpcRegs->COMREG) {
       case 0x0:
          SMPCLOG("smpc\t: MSHON not implemented\n");
@@ -618,7 +617,6 @@ void SmpcSetTiming(void) {
 
 void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
    addr &= 0x7F;
-   SmpcRegsT[addr >> 1] = val;
 
    switch(addr) {
       case 0x01: // Maybe an INTBACK continue/break request
@@ -628,25 +626,22 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                // Break
                SmpcInternalVars->intback = 0;
                SmpcRegs->SR &= 0x0F;
-               break;
             }
             else if (SmpcRegs->IREG[0] & 0x80) {                    
                // Continue
-               SmpcRegs->COMREG = 0x10;
-               SmpcSetTiming();
+               SmpcSetTiming(0x10);
                SmpcRegs->SF = 1;
             }
          }
-         return;
+         break;
       case 0x1F:
-         SmpcSetTiming();
+         SmpcSetTiming(val);
          return;
       case 0x63:
-         SmpcRegs->SF &= 0x1;
+         SmpcRegs->SF |= (val & 0x1);
          return;
       case 0x75:
          // FIX ME (should support other peripherals)
-
          switch (SmpcRegs->DDR[0] & 0x7F) { // Which Control Method do we use?
             case 0x40:
                SMPCLOG("smpc\t: Peripheral TH Control Method not implemented\n");
@@ -669,16 +664,17 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                }
 
                SmpcRegs->PDR[0] = val;
-               break;
+               return;
             default:
                SMPCLOG("smpc\t: Peripheral Unknown Control Method not implemented\n");
                break;
          }
-
-         return;
+         break;
       default:
-         return;
+         break;
    }
+
+   SmpcRegsT[addr >> 1] = val;
 }
 
 //////////////////////////////////////////////////////////////////////////////
