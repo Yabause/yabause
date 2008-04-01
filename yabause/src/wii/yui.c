@@ -32,6 +32,7 @@
 #include "../yui.h"
 #include "cardio.h"
 #include "perwii.h"
+#include "sndwii.h"
 
 static u32 *xfb[2] = { NULL, NULL };
 int fbsel = 0;
@@ -60,6 +61,7 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
+&SNDWII,
 NULL
 };
 
@@ -177,7 +179,7 @@ int main(int argc, char **argv)
    yinit.percoretype = PERCORE_WIIKBD;
    yinit.sh2coretype = SH2CORE_INTERPRETER;
    yinit.vidcoretype = VIDCORE_SOFT;
-   yinit.sndcoretype = SNDCORE_DUMMY;
+   yinit.sndcoretype = SNDCORE_WII;
    yinit.cdcoretype = CDCORE_ISO;
    yinit.m68kcoretype = M68KCORE_C68K;
    yinit.carttype = CART_NONE;
