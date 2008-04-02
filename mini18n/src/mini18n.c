@@ -46,9 +46,9 @@ int mini18n_set_log(const char * filename) {
 	if (log == NULL) {
 		return -1;
 	}
+#endif
 
 	return 0;
-#endif
 }
 
 const char * mini18n(const char * source) {
