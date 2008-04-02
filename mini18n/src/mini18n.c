@@ -72,7 +72,8 @@ const char * mini18n(const char * source) {
 					break;
 			}
 		}
-		fprintf(log, ":\n");
+		if ( n > 0 )
+			fprintf(log, "|\n");
 	}
 
 	return translated;
