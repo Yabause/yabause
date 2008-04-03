@@ -105,7 +105,7 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 	}
 
 	while (fgets(buffer, 1024, f)) {
-		int i = 0, j = 0, done = 0, state = 0;
+		int i = 0, j = 0, done = 0, state = 0, empty = 1;
 		char c;
 
 		while(!done && (i < 1024)) {
@@ -142,6 +142,7 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 							done = 1;
 							break;
 						default:
+							empty = 0;
 							value[j] = c;
 							j++;
 							break;
@@ -151,7 +152,7 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 			i++;
 		}
 
-		if (done) {
+		if (done && !empty) {
 			mini18n_hash_add(hash, key, value);
 		}
 	}

@@ -41,7 +41,7 @@ int mini18n_set_locale(const char * locale) {
 
 int mini18n_set_log(const char * filename) {
 #ifdef MINI18N_LOG
-	log = fopen(filename, "w");
+	log = fopen(filename, "a");
 
 	if (log == NULL) {
 		return -1;
