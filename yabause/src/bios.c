@@ -1316,9 +1316,9 @@ void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
    // Set SR according to vector
    sh->regs.SR.all = (u32)sh2masklist[vector - 0x40];
 
-   // Write new Interrupt mask value
-   MappedMemoryWriteLong(0x06000348, scumasklist[vector - 0x40]);
-   MappedMemoryWriteLong(0x25FE00A0, scumasklist[vector - 0x40]);
+   // Write new Interrupt mask value   
+   MappedMemoryWriteLong(0x06000348, MappedMemoryReadLong(0x06000348) | scumasklist[vector - 0x40]);
+   MappedMemoryWriteLong(0x25FE00A0, MappedMemoryReadLong(0x06000348) | scumasklist[vector - 0x40]);
 
    // Set PR to our Interrupt Return handler
    sh->regs.PR = 0x00000480;
@@ -1349,6 +1349,8 @@ void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
    sh->regs.R[15] += 4;
    sh->regs.R[4] = MappedMemoryReadLong(sh->regs.R[15]);
    sh->regs.R[15] += 4;
+   // Return SR back to normal
+   sh->regs.SR.all = 0xF0;
    oldmask = MappedMemoryReadLong(sh->regs.R[15]);
    MappedMemoryWriteLong(0x06000348, oldmask);
    MappedMemoryWriteLong(0x25FE00A0, oldmask);
@@ -1361,9 +1363,6 @@ void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
    sh->regs.R[15] += 4;
    sh->regs.R[0] = MappedMemoryReadLong(sh->regs.R[15]);
    sh->regs.R[15] += 4;
-
-   // Return SR back to normal
-   sh->regs.SR.all = 0xF0;
 
    sh->regs.PC = MappedMemoryReadLong(sh->regs.R[15]);
    sh->regs.R[15] += 4;
