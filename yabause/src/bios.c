@@ -1204,6 +1204,7 @@ void FASTCALL BiosBUPGetDate(SH2_struct * sh)
    u32 date;
    u32 div;
    u32 yearoffset;
+   u32 yearremainder;
 
    LOG("BiosBUPGetDate. PR = %08X\n", sh->regs.PR);
 
@@ -1223,10 +1224,12 @@ void FASTCALL BiosBUPGetDate(SH2_struct * sh)
    else
       MappedMemoryWriteByte(sh->regs.R[5]+5, (u8)((div + 2) % 7));
 
-   if ((div % 0x5B5) > 0x16E)
+   yearremainder = div % 0x5B5;
+
+   if (yearremainder > 0x16E)
    {
-      yearoffset = (div - 1) / 0x16D;
-      ConvertMonthAndDay((div - 1) % 0x16D, sh->regs.R[5]+1, sh->regs.R[5]+2, 0);
+      yearoffset = (yearremainder - 1) / 0x16D;
+      ConvertMonthAndDay((yearremainder - 1) % 0x16D, sh->regs.R[5]+1, sh->regs.R[5]+2, 0);
    }
    else
    {
