@@ -74,6 +74,9 @@ const char * mini18n(const char * source) {
 		}
 		if ( n > 0 )
 			fprintf(log, "|\n");
+
+		/* we add the non translated string to avoid duplicates in the log file */
+		mini18n_hash_add(hash, source, translated);
 	}
 
 	return translated;
