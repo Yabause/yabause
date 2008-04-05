@@ -589,11 +589,25 @@ void YabauseSpeedySetup(void)
    Vdp1Regs->systemclipY2 = 223;
 
    // Set VDP2 registers to sane states
+   memset(Vdp2Regs, 0, sizeof(Vdp2));
+   Vdp2Regs->TVMD = 0x8000;
    Vdp2Regs->TVSTAT = 0x020A;
-   Vdp2Regs->ZMXN0.all = 0x10000;
-   Vdp2Regs->ZMYN0.all = 0x10000;
-   Vdp2Regs->ZMXN1.all = 0x10000;
-   Vdp2Regs->ZMYN1.all = 0x10000;
+   Vdp2Regs->CYCA0L = 0x0F44;
+   Vdp2Regs->CYCA0U = 0xFFFF;
+   Vdp2Regs->CYCA1L = 0xFFFF;
+   Vdp2Regs->CYCA1U = 0xFFFF;
+   Vdp2Regs->CYCB0L = 0xFFFF;
+   Vdp2Regs->CYCB0U = 0xFFFF;
+   Vdp2Regs->CYCB1L = 0xFFFF;
+   Vdp2Regs->CYCB1U = 0xFFFF;
+   Vdp2Regs->BGON = 0x0001;
+   Vdp2Regs->PNCN0 = 0x8000;
+   Vdp2Regs->MPABN0 = 0x0303;
+   Vdp2Regs->MPCDN0 = 0x0303;
+   Vdp2Regs->ZMXN0.all = 0x00010000;
+   Vdp2Regs->ZMYN0.all = 0x00010000;
+   Vdp2Regs->ZMXN1.all = 0x00010000;
+   Vdp2Regs->ZMYN1.all = 0x00010000;
    Vdp2Regs->BKTAL = 0x4000;
    Vdp2Regs->SPCTL = 0x0020;
    Vdp2Regs->PRINA = 0x0007;
@@ -601,6 +615,12 @@ void YabauseSpeedySetup(void)
    Vdp2Regs->COAR = 0x0200;
    Vdp2Regs->COAG = 0x0200;
    Vdp2Regs->COAB = 0x0200;
+   VIDCore->Vdp2SetResolution(Vdp2Regs->TVMD);
+   VIDCore->Vdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
+   VIDCore->Vdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
+   VIDCore->Vdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
+   VIDCore->Vdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
+   VIDCore->Vdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
 }
 
 //////////////////////////////////////////////////////////////////////////////

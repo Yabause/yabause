@@ -414,6 +414,31 @@ static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int
          *pixel &= 0x3F;
          break;
       }
+      case 0xC:
+      {
+         // Type C(1-bit special priority, 8-bit color data - bit 7 is shared)
+         *priority = *pixel >> 7;
+         break;
+      }
+      case 0xD:
+      {
+         // Type D(1-bit special priority, 1-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
+         *priority = *pixel >> 7;
+         *colorcalc = (*pixel >> 6) & 0x1;
+         break;
+      }
+      case 0xE:
+      {
+         // Type E(2-bit special priority, 8-bit color data - bits 6 and 7 are shared)
+         *priority = *pixel >> 6;
+         break;
+      }
+      case 0xF:
+      {
+         // Type F(2-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
+         *colorcalc = *pixel >> 6;
+         break;
+      }
       default: break;
    }
 }

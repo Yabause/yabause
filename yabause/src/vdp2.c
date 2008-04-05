@@ -2761,6 +2761,11 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
          AddString(outstring, "Transparent Shadow Enabled\r\n");
       }
 
+      if (Vdp2Regs->SPCTL & 0x20)
+      {
+         AddString(outstring, "Sprite Window Enabled\r\n");
+      }
+
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLC >> 8, 1);
 
       AddString(outstring, "Color RAM Offset = %X\r\n", (Vdp2Regs->CRAOFB >> 4) & 0x7);
@@ -2825,7 +2830,6 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
       }
 
       outstring = AddColorOffsetInfo(outstring, 0x0040);
-
       *isenabled = 1;
    }
    else
