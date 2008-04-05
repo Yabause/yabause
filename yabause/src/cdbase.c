@@ -171,6 +171,11 @@ static int isofilesize=0;
 static int bytesPerSector = 0;
 static int isbincue = 0;
 static u32 isoTOC[102];
+static struct
+{
+   u32 fadstart;
+   u32 fileoffset;
+} isooffsettbl[100];
 
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
@@ -238,8 +243,13 @@ int InitBinCue(const char *cuefilename)
             break;
 
          if (indexnum == 1)
+         {
             // Update toc entry
             isoTOC[tracknum-1] = (isoTOC[tracknum-1] & 0xFF000000) | (MSF_TO_FAD(min, sec, frame) + pregap + 150);
+
+            isooffsettbl[tracknum-1].fadstart = MSF_TO_FAD(min, sec, frame) + pregap + 150;
+            isooffsettbl[tracknum-1].fileoffset = pregap + 150;
+         }
       }
       else if (strncmp(tempbuffer, "PREGAP", 5) == 0)
       {
@@ -330,6 +340,9 @@ int InitBinCue(const char *cuefilename)
    isoTOC[100] = (isoTOC[tracknum - 1] & 0xFF000000) | (tracknum << 16);
    isoTOC[101] = (isoTOC[tracknum - 1] & 0xFF000000) | ((isofilesize / bytesPerSector) + pregap + 150);
 
+   isooffsettbl[tracknum].fileoffset = 0;
+   isooffsettbl[tracknum].fadstart = 0xFFFFFFFF;
+
    return 0;
 }
 
@@ -389,6 +402,11 @@ int ISOCDInit(const char * iso) {
       isoTOC[99] = 0x41010000; 
       isoTOC[100] = 0x41010000;
       isoTOC[101] = (0x41 << 24) | (isofilesize / bytesPerSector);       //this isn't fully correct, but it does the job for now.
+
+      isooffsettbl[0].fileoffset = 150;
+      isooffsettbl[0].fadstart = 150;
+      isooffsettbl[1].fileoffset = 0;
+      isooffsettbl[1].fadstart = 0xFFFFFFFF;
    }
 
    return 0;
@@ -418,18 +436,28 @@ s32 ISOCDReadTOC(u32 * TOC) {
 //////////////////////////////////////////////////////////////////////////////
 
 int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
-        int sector = FAD - 150;
+        int sector;
+        int i;
 	
         assert(isofile);
-	
+
         memset(buffer, 0, 2352);
-        
+
+        for (i = 1; i < 100; i++)
+        {
+           if (FAD < isooffsettbl[i].fadstart)
+           {             
+               sector = FAD - isooffsettbl[i-1].fileoffset;
+               break;
+           }
+        }
+
 	if ((sector * bytesPerSector) >= isofilesize) {
 		printf("Warning: Trying to read beyond end of CD image! (sector: %d)\n", sector);
 		return 0;
 	}
 	
-	fseek(isofile, sector * bytesPerSector, SEEK_SET);
+        fseek(isofile, sector * bytesPerSector, SEEK_SET);
 	
 	if (2048 == bytesPerSector) {
 		memcpy(buffer, syncHdr, 12);
