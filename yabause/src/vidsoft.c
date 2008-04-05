@@ -2448,7 +2448,7 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
        // 4 bpp Bank mode -> 16-bit FB Pixel
       
        iAddr = addr + (int)h0*(W>>1);
-      
+
        for ( ; x ; x-- ) {
 	
 	 int iw = w;
@@ -3013,8 +3013,17 @@ void VIDSoftVdp2DrawEnd(void)
                else if (pixel & 0x8000)
                {
                   // 16 BPP               
-                  if (prioritytable[0] >= Vdp2GetPixelPriority(vdp2framebuffer[(i2 * vdp2width) + i]))                    
-                     dispbuffer[(i2 * vdp2width) + i] = info.PostPixelFetchCalc(&info, COLSAT2YAB16(0xFF, pixel));                     
+                  if (prioritytable[0] >= Vdp2GetPixelPriority(vdp2framebuffer[(i2 * vdp2width) + i]))
+                  {
+                     // if pixel is 0x8000, only draw pixel if sprite window
+                     // is disabled/sprite type 2-7. sprite types 0 and 1 are
+                     // -always- drawn and sprite types 8-F are always
+                     // transparent.
+                     if (pixel != 0x8000 || vdp1spritetype < 2 || (vdp1spritetype < 8 && !(Vdp2Regs->SPCTL & 0x10)))
+                        dispbuffer[(i2 * vdp2width) + i] = info.PostPixelFetchCalc(&info, COLSAT2YAB16(0xFF, pixel));
+                     else
+                        dispbuffer[(i2 * vdp2width) + i] = COLSATSTRIPPRIORITY(vdp2framebuffer[(i2 * vdp2width) + i]);
+                  }
                   else               
                      dispbuffer[(i2 * vdp2width) + i] = COLSATSTRIPPRIORITY(vdp2framebuffer[(i2 * vdp2width) + i]);
                }
