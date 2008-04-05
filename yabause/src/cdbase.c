@@ -1,4 +1,4 @@
-/*  Copyright 2004-2006 Theo Berkau
+/*  Copyright 2004-2008 Theo Berkau
     Copyright 2005 Joost Peters
     Copyright 2005-2006 Guillaume Duhamel
     
