@@ -6,25 +6,33 @@
 
 #define NUMSOUNDBLOCKS  4
 #define SOUNDLEN (44100 / 50)
-#define SOUNDBUFSIZE (SOUNDLEN * NUMSOUNDBLOCKS * 2 * 2)
+#define SOUNDTRUELEN (48000 / 50)
+#define SOUNDBUFSIZE (SOUNDTRUELEN * NUMSOUNDBLOCKS * 2 * 2)
 
 static u32 soundlen=SOUNDLEN;
+static u32 soundtruelen=SOUNDTRUELEN;
 static u32 soundbufsize=SOUNDBUFSIZE;
-static u16 stereodata16[SOUNDBUFSIZE] ATTRIBUTE_ALIGN(32);
+
 static u32 soundoffset=0;
-static volatile u32 soundpos;
+static s16 *truesoundoffset=0;
+volatile u32 soundpos;
 static int issoundmuted;
+
+typedef s16 sndbuf[SOUNDTRUELEN * 2];
+sndbuf stereodata16[NUMSOUNDBLOCKS] ATTRIBUTE_ALIGN(32);
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void StartDMA(void)
 {
-   AUDIO_InitDMA(((u32)stereodata16)+soundpos, soundlen * 4);
-   DCFlushRange(((void *)stereodata16)+soundpos, soundlen * 4);
-   AUDIO_StartDMA();
-   soundpos += (soundlen * 4);
-   if (soundpos >= soundbufsize)
+   AUDIO_StopDMA();
+   soundpos++;
+   if (soundpos >= NUMSOUNDBLOCKS)
       soundpos = 0;
+
+   AUDIO_InitDMA((u32)stereodata16[soundpos], soundtruelen * 4);
+   DCFlushRange((void *)stereodata16[soundpos], soundtruelen * 4);
+   AUDIO_StartDMA();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -36,14 +44,17 @@ int SNDWiiInit()
 
    soundpos = 0;
    soundlen = 44100 / 60; // 60 for NTSC or 50 for PAL. Initially assume it's going to be NTSC.
-   soundbufsize = soundlen * NUMSOUNDBLOCKS * 2 * 2;
+   soundtruelen = 48000 / 60;
+   truesoundoffset = stereodata16[0];
 
-   memset(stereodata16, 0, soundbufsize);
+   memset(stereodata16, 0, SOUNDBUFSIZE);
 
    issoundmuted = 0;
 
    AUDIO_RegisterDMACallback(StartDMA);
-   StartDMA();
+   AUDIO_InitDMA((u32)stereodata16[soundpos], soundlen * 4);
+   DCFlushRange((void *)stereodata16[soundpos], soundlen * 4);
+   AUDIO_StartDMA();
 
    return 0;
 }
@@ -66,9 +77,42 @@ int SNDWiiReset()
 int SNDWiiChangeVideoFormat(int vertfreq)
 {
    soundlen = 44100 / vertfreq;
+   soundtruelen = 48000 / vertfreq;
    soundbufsize = soundlen * NUMSOUNDBLOCKS * 2 * 2;
-   memset(stereodata16, 0, soundbufsize);
+   memset(stereodata16, 0, sizeof(stereodata16));
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ScspConvert32utoWiiAudio(s32 *srcL, s32 *srcR, s16 *dst, u32 len)
+{   
+   u32 i;
+   u32 truelen = len * 48000 / 44100;
+   u32 counter = 0;
+   u32 inc = (1 << 20) - ((u32)((44100 / 60) << 20) / ((48000 / 60)+1));
+
+   for (i = 0; i < truelen; i++)
+   {
+      // Left Channel
+      if (*srcL > 0x7FFF) *dst = 0x7FFF;
+      else if (*srcL < -0x8000) *dst = -0x8000;
+      else *dst = *srcL;
+      dst++;
+      // Right Channel
+      if (*srcR > 0x7FFF) *dst = 0x7FFF;
+      else if (*srcR < -0x8000) *dst = -0x8000;
+      else *dst = *srcR;
+      dst++;
+      if (counter < (1 << 20))
+      {
+         srcL++;
+         srcR++;
+      }
+      else
+         counter -= (1 << 20);
+      counter += inc;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -76,25 +120,27 @@ int SNDWiiChangeVideoFormat(int vertfreq)
 void SNDWiiUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples)
 {
    u32 copy1size=0, copy2size=0;
+   u32 temp;
 
-   if ((soundbufsize - soundoffset) < (num_samples * sizeof(s16) * 2))
+   if (((soundlen * NUMSOUNDBLOCKS) - soundoffset) < num_samples)
    {
-      copy1size = (soundbufsize - soundoffset);
-      copy2size = (num_samples * sizeof(s16) * 2) - copy1size;
+      copy1size = (soundlen * NUMSOUNDBLOCKS) - soundoffset;
+      copy2size = num_samples - copy1size;
    }
    else
    {
-      copy1size = (num_samples * sizeof(s16) * 2);
+      copy1size = num_samples;
       copy2size = 0;
    }
 
-   ScspConvert32uto16s((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, (s16 *)(((u8 *)stereodata16)+soundoffset), copy1size / sizeof(s16) / 2);
+   temp = (soundoffset % soundlen) * 800 / 735;
+   ScspConvert32utoWiiAudio((s32 *)leftchanbuffer, (s32 *)rightchanbuffer, (s16 *)&stereodata16[soundoffset / soundlen][temp], copy1size);
 
    if (copy2size)
-      ScspConvert32uto16s((s32 *)leftchanbuffer + (copy1size / sizeof(s16) / 2), (s32 *)rightchanbuffer + (copy1size / sizeof(s16) / 2), (s16 *)stereodata16, copy2size / sizeof(s16) / 2);
+      ScspConvert32utoWiiAudio((s32 *)leftchanbuffer + copy1size, (s32 *)rightchanbuffer + copy1size, (s16 *)stereodata16[0], copy2size);
 
-   soundoffset += copy1size + copy2size;   
-   soundoffset %= soundbufsize;
+   soundoffset += copy1size + copy2size;
+   soundoffset %= (soundlen * NUMSOUNDBLOCKS);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -103,12 +149,12 @@ u32 SNDWiiGetAudioSpace()
 {
    u32 freespace=0;
 
-   if (soundoffset > soundpos)
-      freespace = soundbufsize - soundoffset + soundpos;
+   if (soundoffset > (soundpos * soundlen))
+      freespace = (soundlen * NUMSOUNDBLOCKS) - soundoffset + (soundpos * soundlen);
    else
-      freespace = soundpos - soundoffset;
+      freespace = (soundpos * soundlen) - soundoffset;
 
-   return (freespace / sizeof(s16) / 2);
+   return freespace;
 }
 
 //////////////////////////////////////////////////////////////////////////////

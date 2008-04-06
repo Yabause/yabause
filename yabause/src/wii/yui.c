@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <malloc.h>
 #include <ogcsys.h>
@@ -82,6 +83,9 @@ static char biosfilename[512]="dev0:\\bios.bin";
 static char isofilename[512]="dev0:\\game.cue";
 
 extern int vdp2width, vdp2height;
+
+void gotoxy(int x, int y);
+void OnScreenDebugMessage(char *string, ...);
 
 void reset()
 {
@@ -148,7 +152,7 @@ int main(int argc, char **argv)
    xfb[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
    xfb[1] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
 
-   console_init(xfb[fbsel],20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+   CON_Init(xfb[fbsel],20,30,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
 	
    VIDEO_Configure(rmode);
    VIDEO_ClearFrameBuffer (rmode, xfb[0], COLOR_BLACK);
@@ -195,11 +199,14 @@ int main(int argc, char **argv)
    yinit.netlinksetting = NULL;
    yinit.flags = VIDEOFORMATTYPE_NTSC;
 
+   // Hijack the fps display
+   VIDSoft.OnScreenDebugMessage = OnScreenDebugMessage;
+
    if ((ret = YabauseInit(&yinit)) == 0)
    {
       EnableAutoFrameSkip();
 
-      console_init(xfb[fbsel],20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+      VIDEO_ClearFrameBuffer(rmode, xfb[fbsel], COLOR_BLACK);
 
       while(!done)
       {
@@ -209,6 +216,7 @@ int main(int argc, char **argv)
          {
             YabauseReset();
             resetemu = 0;
+            SYS_SetResetCallback(reset);
          }
       }
 
@@ -269,8 +277,25 @@ void YuiSwapBuffers()
          curfb++;
       }
    }
-   
+
    VIDEO_SetNextFramebuffer (xfb[fbsel]);
    VIDEO_Flush ();
+}
+
+void gotoxy(int x, int y)
+{
+   printf("\033[%d%dH", x, y);
+}
+
+void OnScreenDebugMessage(char *string, ...)
+{
+   va_list arglist;
+
+   va_start(arglist, string);
+   gotoxy(0, 1);
+   vprintf(string, arglist);
+   printf("\n");
+   gotoxy(0, 1);
+   va_end(arglist);
 }
 
