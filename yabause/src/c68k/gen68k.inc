@@ -218,6 +218,8 @@ static void GenASL();
 static void GenLSL();
 static void GenROXL();
 static void GenROL();
+static void Gen1010();
+static void Gen1111();
 #ifdef NEOCD_HLE
 static void Gen0xFABE();
 static void Gen0xFABF();
@@ -230,7 +232,7 @@ static void Gen0xFAC3();
 #ifdef NEOCD_HLE
 #define OP_INFO_TABLE_LEN   (142 + 6)
 #else
-#define OP_INFO_TABLE_LEN   142
+#define OP_INFO_TABLE_LEN   144
 #endif
 
 static c68k_op_info_struc op_info_table[OP_INFO_TABLE_LEN] =
@@ -238,6 +240,8 @@ static c68k_op_info_struc op_info_table[OP_INFO_TABLE_LEN] =
     //                                                         iid181318m      iid181318m
     //                              siz siz eam ear eam ear    nne6A626Pm      nne6A626Pm
     //  opname      opbase  opmask  typ sft  1   1   2   2     dccAX  PX       dccAX  PX    GenFunc
+    {   "1010",     0xA000, 0xF000, 0,  0,  -1, -1, -1, -1, "------------", "------------", Gen1010     },
+    {   "1111",     0xF000, 0xF000, 0,  0,  -1, -1, -1, -1, "------------", "------------", Gen1111     },
     {   "ORI",      0x0000, 0xFF00, 2,  6,  3,  0,  -1, -1, "o-ooooooo---", "------------", GenORI      },
     {   "ORICCR",   0x003C, 0xFFFF, 0,  0,  -1, -1, -1, -1, "------------", "------------", GenORICCR   },
     {   "ORISR",    0x007C, 0xFFFF, 0,  0,  -1, -1, -1, -1, "------------", "------------", GenORISR    },
@@ -405,7 +409,7 @@ static c68k_op_info_struc op_info_table[OP_INFO_TABLE_LEN] =
     {   "LSL",      0xE3C0, 0xFFC0, 0,  0,  3,  0,  -1, -1, "--ooooooo---", "------------", GenLSL      },
     {   "ROXL",     0xE5C0, 0xFFC0, 0,  0,  3,  0,  -1, -1, "--ooooooo---", "------------", GenROXL     },
     {   "ROL",      0xE7C0, 0xFFC0, 0,  0,  3,  0,  -1, -1, "--ooooooo---", "------------", GenROL      }
-    
+
 #ifdef NEOCD_HLE
     ,
     {   "0xFABE",   0xFABE, 0xFFFF, 0,  0,  -1, -1, -1, -1, "------------", "------------", Gen0xFABE   },

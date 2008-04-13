@@ -3616,6 +3616,36 @@ static void GenROL()
     terminate_op(8);
 }
 
+static void Gen1010()
+{
+    u32 base;
+    base = get_current_opcode_base();
+
+    // generate jump table
+    gen_opjumptable_ext(base, 0x0000, 0x0FFF, 0x1, base);
+
+    // generate label & declarations
+    start_op(base, GEN_RES);
+    wf_op("\tPC -= 2;\n");
+    gen_exception("\t", "C68K_1010_EX");
+    terminate_op(4);
+}
+
+static void Gen1111()
+{
+    u32 base;
+    base = get_current_opcode_base();
+
+    // generate jump table
+    gen_opjumptable_ext(base, 0x0000, 0x0FFF, 0x1, base);
+
+    // generate label & declarations
+    start_op(base, GEN_RES);
+    wf_op("\tPC -= 2;\n");
+    gen_exception("\t", "C68K_1111_EX");
+    terminate_op(4);
+}
+
 #ifdef NEOCD_HLE
 static void Gen0xFABE()
 {
