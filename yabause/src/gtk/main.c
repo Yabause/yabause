@@ -40,6 +40,12 @@
 
 #include "settings.h"
 
+static char biospath[256] = "\0";
+static char cdpath[256] = "\0";
+static char buppath[256] = "\0";
+static char mpegpath[256] = "\0";
+static char cartpath[256] = "\0";
+
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
 #ifdef HAVE_C68K
@@ -124,11 +130,11 @@ void yui_settings_init(void) {
 	yinit.cdcoretype = CDCORE_DEFAULT;
 	yinit.carttype = CART_NONE;
 	yinit.regionid = 0;
-	yinit.biospath = 0;
-	yinit.cdpath = 0;
-	yinit.buppath = 0;
-	yinit.mpegpath = 0;
-	yinit.cartpath = 0;
+	yinit.biospath = biospath;
+	yinit.cdpath = cdpath;
+	yinit.buppath = buppath;
+	yinit.mpegpath = mpegpath;
+	yinit.cartpath = cartpath;
         yinit.flags = VIDEOFORMATTYPE_NTSC;
 }
 
@@ -159,26 +165,30 @@ gboolean yui_settings_load(void) {
 	g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
 
 	/* bios */
-	stmp = yinit.biospath;
-	biosPath = g_key_file_get_value(keyfile, "General", "BiosPath", 0);
-	if ( !biosPath || (!*biosPath) ) yinit.biospath = NULL; 
-	else yinit.biospath = g_strdup(biosPath);
-	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && safe_strcmp(stmp, yinit.biospath)) {
+	stmp = g_key_file_get_value(keyfile, "General", "BiosPath", 0);
+	if (stmp && !*stmp) stmp = NULL;
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && safe_strcmp(stmp, yinit.biospath)) {
 		mustRestart = TRUE;
 	}
-	if (stmp)
-		g_free(stmp);
+	if (stmp) {
+		g_strlcpy(biospath, stmp, 256);
+		yinit.biospath = biospath;
+	}
+	else yinit.biospath = NULL;
 
 	/* cd core */
-	stmp = yinit.cdpath;
-	yinit.cdpath = g_strdup(g_key_file_get_value(keyfile, "General", "CDROMDrive", 0));
+	stmp = g_key_file_get_value(keyfile, "General", "CDROMDrive", 0);
+	if (stmp && !*stmp) stmp = NULL;
+	if((YUI_WINDOW(yui)->state & YUI_IS_INIT) && safe_strcmp(stmp, yinit.cdpath)) {
+		Cs2ChangeCDCore(yinit.cdcoretype, stmp);
+	}
+	if (stmp) g_strlcpy(cdpath, stmp, 256);
+
 	tmp = yinit.cdcoretype;
 	yinit.cdcoretype = g_key_file_get_integer(keyfile, "General", "CDROMCore", 0);
-	if((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && ((strcmp(stmp, yinit.cdpath)) || (tmp != yinit.cdcoretype))) {
+	if((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.cdcoretype)) {
 		Cs2ChangeCDCore(yinit.cdcoretype, yinit.cdpath);
 	}
-	if (stmp)
-		g_free(stmp);
 
 	/* region */
 	{
@@ -199,62 +209,71 @@ gboolean yui_settings_load(void) {
 			}
 		}
 
-		if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.regionid)) {
+		if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.regionid)) {
 			mustRestart = TRUE;
 		}
 	}
 
 	/* cart */
-	stmp = yinit.cartpath;
-	yinit.cartpath = g_strdup(g_key_file_get_value(keyfile, "General", "CartPath", 0));
-	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && safe_strcmp(stmp, yinit.cartpath)) {
+	stmp = g_key_file_get_value(keyfile, "General", "CartPath", 0);
+	if (stmp && !*stmp) stmp = NULL;
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && safe_strcmp(stmp, yinit.cartpath)) {
 		mustRestart = TRUE;
 	}
-	if (stmp)
-	  g_free(stmp);
+	if (stmp) {
+		g_strlcpy(cartpath, stmp, 256);
+		yinit.cartpath = cartpath;
+	}
+	else yinit.cartpath = NULL;
 
 	tmp = yinit.carttype;
 	yinit.carttype = g_key_file_get_integer(keyfile, "General", "CartType", 0);
-	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.carttype)) {
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.carttype)) {
           mustRestart = TRUE;
 	}
 
 	/* backup ram */
-	stmp = yinit.buppath;
-	yinit.buppath = g_strdup(g_key_file_get_value(keyfile, "General", "BackupRamPath", 0));
-	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && safe_strcmp(stmp, yinit.buppath)) {
+	stmp = g_key_file_get_value(keyfile, "General", "BackupRamPath", 0);
+	if (stmp && !*stmp) stmp = NULL;
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && safe_strcmp(stmp, yinit.buppath)) {
 		mustRestart = TRUE;
 	}
-	if (stmp)
-		g_free(stmp);
+	if (stmp) {
+		g_strlcpy(buppath, stmp, 256);
+		yinit.buppath = buppath;
+	}
+	else yinit.buppath = NULL;
 
 	/* mpeg rom */
-	stmp = yinit.mpegpath;
-	yinit.mpegpath = g_strdup(g_key_file_get_value(keyfile, "General", "MpegRomPath", 0));
-	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && safe_strcmp(stmp, yinit.mpegpath)) {
+	stmp = g_key_file_get_value(keyfile, "General", "MpegRomPath", 0);
+	if (stmp && !*stmp) stmp = NULL;
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && safe_strcmp(stmp, yinit.mpegpath)) {
 		mustRestart = TRUE;
 	}
-	if (stmp)
-		g_free(stmp);
+	if (stmp) {
+		g_strlcpy(mpegpath, stmp, 256);
+		yinit.mpegpath = mpegpath;
+	}
+	else yinit.mpegpath = NULL;
 
 	/* sh2 */
 	tmp = yinit.sh2coretype;
 	yinit.sh2coretype = g_key_file_get_integer(keyfile, "General", "SH2Int", 0);
-	if (tmp != yinit.sh2coretype) {
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.sh2coretype)) {
 		mustRestart = TRUE;
 	}
 
 	/* video core */
 	tmp = yinit.vidcoretype;
 	yinit.vidcoretype = g_key_file_get_integer(keyfile, "General", "VideoCore", 0);
-	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.vidcoretype)) {
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.vidcoretype)) {
 		VideoChangeCore(yinit.vidcoretype);
 	}
 
 	/* sound core */
 	tmp = yinit.sndcoretype;
 	yinit.sndcoretype = g_key_file_get_integer(keyfile, "General", "SoundCore", 0);
-	if ((YUI_WINDOW(yui)->state & YUI_IS_RUNNING) && (tmp != yinit.sndcoretype)) {
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.sndcoretype)) {
 		ScspChangeSoundCore(yinit.sndcoretype);
 	}
 
