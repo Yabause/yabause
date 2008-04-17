@@ -1404,7 +1404,7 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
       AddString(outstring, "Vertical start = %d\r\n", vstart);
       AddString(outstring, "Horizontal end = %d\r\n", hend);
       AddString(outstring, "Vertical end = %d\r\n", vend);
-      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x1) ? "outside" : "inside");
+      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x1) ? "inside" : "outside");
    }
 
    if (wctl & 0x8)
@@ -2062,22 +2062,6 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
             default: break;
          }
 
-         switch (lineVerticalScrollReg >> 4)
-         {
-            case 0:
-               AddString(outstring, "Line Scroll Interval = Each Line\r\n");
-               break;
-            case 1:
-               AddString(outstring, "Line Scroll Interval = Every 2 Lines\r\n");
-               break;
-            case 2:
-               AddString(outstring, "Line Scroll Interval = Every 4 Lines\r\n");
-               break;
-            case 3:
-               AddString(outstring, "Line Scroll Interval = Every 8 Lines\r\n");
-               break;
-         }
-
          if (lineVerticalScrollReg & 0x8)
          {
             AddString(outstring, "Line Zoom enabled\r\n");
@@ -2097,6 +2081,22 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          {
             AddString(outstring, "Line Scroll Enabled\r\n");
             AddString(outstring, "Line Scroll Table Address = %08X\r\n", (int)(0x05E00000 + ((Vdp2Regs->LSTA0.all & 0x7FFFE) << 1)));
+
+            switch (lineVerticalScrollReg >> 4)
+            {
+               case 0:
+                  AddString(outstring, "Line Scroll Interval = Each Line\r\n");
+                  break;
+               case 1:
+                  AddString(outstring, "Line Scroll Interval = Every 2 Lines\r\n");
+                  break;
+               case 2:
+                  AddString(outstring, "Line Scroll Interval = Every 4 Lines\r\n");
+                  break;
+               case 3:
+                  AddString(outstring, "Line Scroll Interval = Every 8 Lines\r\n");
+                  break;
+            }
          }
 
          if (lineVerticalScrollReg & 0x1)
@@ -2275,22 +2275,6 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
          default: break;
       }
 
-      switch (lineVerticalScrollReg >> 4)
-      {
-         case 0:
-            AddString(outstring, "Line Scroll Interval = Each Line\r\n");
-            break;
-         case 1:
-            AddString(outstring, "Line Scroll Interval = Every 2 Lines\r\n");
-            break;
-         case 2:
-            AddString(outstring, "Line Scroll Interval = Every 4 Lines\r\n");
-            break;
-         case 3:
-            AddString(outstring, "Line Scroll Interval = Every 8 Lines\r\n");
-            break;
-      }
-
       if (lineVerticalScrollReg & 0x8)
       {
          AddString(outstring, "Line Zoom X enabled\r\n");
@@ -2310,6 +2294,21 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
       {
          AddString(outstring, "Line Scroll Enabled\r\n");
          AddString(outstring, "Line Scroll Table Address = %08X\r\n", (int)(0x05E00000 + ((Vdp2Regs->LSTA1.all & 0x7FFFE) << 1)));
+         switch (lineVerticalScrollReg >> 4)
+         {
+            case 0:
+               AddString(outstring, "Line Scroll Interval = Each Line\r\n");
+               break;
+            case 1:
+               AddString(outstring, "Line Scroll Interval = Every 2 Lines\r\n");
+               break;
+            case 2:
+               AddString(outstring, "Line Scroll Interval = Every 4 Lines\r\n");
+               break;
+            case 3:
+               AddString(outstring, "Line Scroll Interval = Every 8 Lines\r\n");
+               break;
+         }
       }
 
       if (lineVerticalScrollReg & 0x1)
