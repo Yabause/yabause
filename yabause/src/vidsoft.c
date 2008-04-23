@@ -508,10 +508,24 @@ static INLINE int TestWindow(int wctl, int enablemask, int inoutmask, clipping_s
 
 //////////////////////////////////////////////////////////////////////////////
 
+void GeneratePlaneAddrTable(vdp2draw_struct *info, u32 *planetbl)
+{
+   int i;
+
+   for (i = 0; i < (info->mapwh*info->mapwh); i++)
+   {
+      info->PlaneAddr(info, i);
+      planetbl[i] = info->addr;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static INLINE void Vdp2MapCalcXY(vdp2draw_struct *info, int *x, int *y,
                                  int pagepixelwh, int planepixelwidth,
                                  int planepixelheight, int screenwidth,
-                                 int screenheight, int *oldcellx, int *oldcelly)
+                                 int screenheight, int *oldcellx, int *oldcelly,
+                                 u32 *planetbl)
 {
    int planenum;
    int pagesize=info->pagewh*info->pagewh;
@@ -528,7 +542,7 @@ static INLINE void Vdp2MapCalcXY(vdp2draw_struct *info, int *x, int *y,
       y[0] = (y[0] % planepixelheight);
 
       // Fetch and decode pattern name data
-      info->PlaneAddr(info, planenum); // needs reworking
+      info->addr = planetbl[planenum];
 
       // Figure out which page it's on(if plane size is not 1x1)
       info->addr += ((y[0] / pagepixelwh * pagesize * info->planew) +
@@ -614,6 +628,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
    int scrollx, scrolly;
    u32 linewnd0addr, linewnd1addr;
    int xmask, ymask;
+   u32 planetbl[16];
 
    if (!info->isbitmap)
    {
@@ -626,6 +641,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
       oldcelly=-1;
       xmask = screenwidth-1;
       ymask = screenheight-1;
+      GeneratePlaneAddrTable(info, planetbl);
    }
    else
    {
@@ -745,7 +761,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
             y=Y;
             Vdp2MapCalcXY(info, &x, &y, pagepixelwh, planepixelwidth,
                           planepixelheight, screenwidth, screenheight,
-                          &oldcellx, &oldcelly);
+                          &oldcellx, &oldcelly, planetbl);
          }
 
          if (!Vdp2FetchPixel(info, x, y, &color))
@@ -780,6 +796,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    int screenheight;
    int oldcellx, oldcelly;
    int xmask, ymask;
+   u32 planetbl[16];
 
    if (!parameter->coefenab)
    {
@@ -811,6 +828,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
             oldcelly=-1;
             xmask = screenwidth-1;
             ymask = screenheight-1;
+            GeneratePlaneAddrTable(info, planetbl);
          }
          else
          {
@@ -840,7 +858,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                   // Tile
                   Vdp2MapCalcXY(info, &x, &y, pagepixelwh, planepixelwidth,
                                 planepixelheight, screenwidth, screenheight,
-                                &oldcellx, &oldcelly);
+                                &oldcellx, &oldcelly, planetbl);
                }
 
                // Fetch pixel
@@ -877,6 +895,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
          oldcelly=-1;
          xmask = screenwidth-1;
          ymask = screenheight-1;
+         GeneratePlaneAddrTable(info, planetbl);
       }
       else
       {
@@ -931,12 +950,15 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                // Tile
                Vdp2MapCalcXY(info, &x, &y, pagepixelwh, planepixelwidth,
                              planepixelheight, screenwidth, screenheight,
-                             &oldcellx, &oldcelly);
+                             &oldcellx, &oldcelly, planetbl);
             }
 
             // Fetch pixel
             if (!Vdp2FetchPixel(info, x, y, &color))
-               continue;                  
+            {
+               textdata++;
+               continue;
+            }
 
             textdata[0] = COLSAT2YAB32(info->priority, info->PostPixelFetchCalc(info, color));
             textdata++;
