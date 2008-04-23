@@ -60,6 +60,12 @@ typedef struct
    int draww;
    int drawh;
    int rotatenum;
+   int mosaicxmask;
+   int mosaicymask;
+   int islinescroll;
+   u32 linescrolltbl;
+   int wctl;
+   int islinewindow;
 } vdp2draw_struct;
 
 typedef struct
@@ -257,6 +263,53 @@ static INLINE void ReadPatternData(vdp2draw_struct *info, u16 pnc, int chctlwh)
    info->cellw = info->cellh = 8;
    info->supplementdata = pnc & 0x3FF;
    info->auxmode = (pnc & 0x4000) >> 14;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void ReadMosaicData(vdp2draw_struct *info, u16 mask)
+{
+   if (Vdp2Regs->MZCTL & mask)
+   {  
+      info->mosaicxmask = ((Vdp2Regs->MZCTL >> 8) & 0xF) + 1;
+      info->mosaicymask = (Vdp2Regs->MZCTL >> 12) + 1;
+   }
+   else
+   {
+      info->mosaicxmask = 1;
+      info->mosaicymask = 1;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void ReadLineScrollData(vdp2draw_struct *info, u16 mask, u32 tbl)
+{
+   if (mask & 0xE)
+   {
+      info->islinescroll = (mask >> 1) & 0x7;
+      info->linescrolltbl = (tbl & 0x7FFFE) << 1;
+   }
+   else
+      info->islinescroll = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void ReadLineWindowData(vdp2draw_struct *info, u32 *linewnd0addr, u32 *linewnd1addr)
+{
+   info->islinewindow = 0;
+
+   if (info->wctl & 0x2 && Vdp2Regs->LWTA0.all & 0x80000000)
+   {
+      info->islinewindow |= 0x1;
+      linewnd0addr[0] = (Vdp2Regs->LWTA0.all & 0x7FFFE) << 1;
+   }
+   if (info->wctl & 0x8 && Vdp2Regs->LWTA1.all & 0x80000000)
+   {
+      info->islinewindow |= 0x2;
+      linewnd1addr[0] = (Vdp2Regs->LWTA0.all & 0x7FFFE) << 1;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
