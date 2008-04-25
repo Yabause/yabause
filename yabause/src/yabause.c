@@ -248,7 +248,7 @@ int YabauseInit(yabauseinit_struct *init)
          if (yabsys.emulatebios)
          {
             YabSetError(YAB_ERR_CANNOTINIT, _("Game"));
-            return -1;
+            return -2;
          }
          else
             YabauseResetNoLoad();
