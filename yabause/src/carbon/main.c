@@ -92,10 +92,7 @@ NULL
 static EventLoopTimerRef EventTimer;
 
 void YuiIdle(EventLoopTimerRef a, void * b) {
-	int i;
-	for(i = 0;i < 200;i++) {
-		YabauseExec();
-	}
+	YabauseExec();
 }
 
 void read_settings(void) {
@@ -185,7 +182,7 @@ static void YuiPause(const int Pause)
     }
     else
     {
-        Interval = kEventDurationMillisecond;
+        Interval = 16*kEventDurationMillisecond;
         ScspUnMuteAudio();
     }
 
@@ -200,7 +197,7 @@ void YuiRun(void) {
 	{
 		myFrameUPP = NewEventLoopTimerUPP(YuiIdle);
 		InstallEventLoopTimer(GetCurrentEventLoop(), kEventDurationNoWait,
-			kEventDurationMillisecond, myFrameUPP, NULL, &EventTimer);
+			16*kEventDurationMillisecond, myFrameUPP, NULL, &EventTimer);
 		FirstRun = 0;
 	}
 	else
