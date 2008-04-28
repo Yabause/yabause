@@ -113,15 +113,15 @@ GtkWidget* create_menu(YuiWindow * window1) {
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "pause")));
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "reset")));
 
-  transfer = gtk_menu_item_new_with_mnemonic ("Transfer");
+  transfer = gtk_menu_item_new_with_mnemonic (_("Transfer"));
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), transfer);
   g_signal_connect_swapped(transfer, "activate", G_CALLBACK(yui_transfer_new), window1);
 
-  screenshot = gtk_menu_item_new_with_mnemonic ("Screenshot");
+  screenshot = gtk_menu_item_new_with_mnemonic (_("Screenshot"));
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), screenshot);
   g_signal_connect_swapped(screenshot, "activate", G_CALLBACK(yui_screenshot_new), window1);
 
-  frameLimiter = gtk_check_menu_item_new_with_mnemonic ("Frame Skip/Limiter");
+  frameLimiter = gtk_check_menu_item_new_with_mnemonic (_("Frame Skip/Limiter"));
   g_signal_connect (frameLimiter, "activate", G_CALLBACK (ToggleFLimiter), NULL);
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), frameLimiter);
 
@@ -131,17 +131,17 @@ GtkWidget* create_menu(YuiWindow * window1) {
     GtkWidget * savestate_save;
     GtkWidget * savestate_load;
 
-    savestate = gtk_menu_item_new_with_mnemonic("Save state");
+    savestate = gtk_menu_item_new_with_mnemonic(_("Save state"));
     gtk_container_add(GTK_CONTAINER(menuitem1_menu), savestate);
 
     savestate_menu = gtk_menu_new();
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(savestate), savestate_menu);
 
-    savestate_save = gtk_menu_item_new_with_mnemonic("Save");
+    savestate_save = gtk_menu_item_new_with_mnemonic(_("Save"));
     gtk_container_add(GTK_CONTAINER(savestate_menu), savestate_save);
     g_signal_connect_swapped(savestate_save, "activate", G_CALLBACK(YuiSaveState), NULL);
 
-    savestate_load = gtk_menu_item_new_with_mnemonic("Load");
+    savestate_load = gtk_menu_item_new_with_mnemonic(_("Load"));
     gtk_container_add(GTK_CONTAINER(savestate_menu), savestate_load);
     g_signal_connect_swapped(savestate_load, "activate", G_CALLBACK(YuiLoadState), NULL);
   }
@@ -150,17 +150,17 @@ GtkWidget* create_menu(YuiWindow * window1) {
 
   gtk_container_add(GTK_CONTAINER(menuitem1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "quit")));
 
-  view1 = gtk_menu_item_new_with_mnemonic ("_View");
+  view1 = gtk_menu_item_new_with_mnemonic (_("_View"));
   gtk_container_add (GTK_CONTAINER (menubar1), view1);
 
   view1_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (view1), view1_menu);
 
-  fps1 = gtk_check_menu_item_new_with_mnemonic ("FPS");
+  fps1 = gtk_check_menu_item_new_with_mnemonic (_("FPS"));
   g_signal_connect(fps1, "activate", G_CALLBACK(ToggleFPS), NULL);
   gtk_container_add (GTK_CONTAINER (view1_menu), fps1);
 
-  layer1 = gtk_menu_item_new_with_mnemonic ("Layer");
+  layer1 = gtk_menu_item_new_with_mnemonic (_("Layer"));
   gtk_container_add (GTK_CONTAINER (view1_menu), layer1);
 
   layer1_menu = gtk_menu_new ();
@@ -198,11 +198,11 @@ GtkWidget* create_menu(YuiWindow * window1) {
 
   gtk_container_add(GTK_CONTAINER(view1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "fullscreen")));
 
-  log = gtk_menu_item_new_with_mnemonic ("Log");
+  log = gtk_menu_item_new_with_mnemonic (_("Log"));
   g_signal_connect_swapped(log, "activate", G_CALLBACK(yui_window_show_log), window1);
   gtk_container_add(GTK_CONTAINER(view1_menu), log);
 
-  menuitem3 = gtk_menu_item_new_with_mnemonic ("_Debug");
+  menuitem3 = gtk_menu_item_new_with_mnemonic (_("_Debug"));
   gtk_container_add (GTK_CONTAINER (menubar1), menuitem3);
 
   menuitem3_menu = gtk_menu_new ();
@@ -238,11 +238,11 @@ GtkWidget* create_menu(YuiWindow * window1) {
 
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), gtk_separator_menu_item_new ());
 
-  memory = gtk_menu_item_new_with_mnemonic ("Memory dump");
+  memory = gtk_menu_item_new_with_mnemonic (_("Memory dump"));
   gtk_container_add (GTK_CONTAINER (menuitem3_menu), memory);
   g_signal_connect_swapped(memory, "activate", G_CALLBACK(yui_mem_new), window1);
 
-  menuitem4 = gtk_menu_item_new_with_mnemonic ("_Help");
+  menuitem4 = gtk_menu_item_new_with_mnemonic (_("_Help"));
   gtk_container_add (GTK_CONTAINER (menubar1), menuitem4);
 
   menuitem4_menu = gtk_menu_new ();

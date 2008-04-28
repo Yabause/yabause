@@ -272,6 +272,11 @@ GtkWidget* create_dialog1(void) {
 
   box = yui_page_add(YUI_PAGE(advanced), "<b>SH2 Interpreter</b>");
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "SH2Int", sh2interpreters));
+
+#ifdef HAVE_LIBMINI18N
+  box = yui_page_add(YUI_PAGE(advanced), "<b>Translation</b>");
+  gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "TranslationPath", YUI_FILE_ENTRY_BROWSE, NULL));
+#endif
   
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), advanced, gtk_label_new ("Advanced"));
   gtk_widget_show_all(advanced);
