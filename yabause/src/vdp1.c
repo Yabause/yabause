@@ -952,7 +952,7 @@ static INLINE int DoEndcode(int count, u32 *charAddr, u32 **textdata, int width,
 {
    if (count > 1)
    {
-      charAddr[0] += ((width - xoff + oddpixel) / (8 / pixelsize));
+      charAddr[0] += (int)((float)(width - xoff + oddpixel) / (float)(8 / pixelsize));
       memset(textdata[0], 0, sizeof(u32) * (width - xoff));
       textdata[0] += (width - xoff);
       return 1;
@@ -976,7 +976,7 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
    u8 SPD;
    u32 alpha;
    u32 *textdata;   
-   int isendcode;
+   int isendcode=0;
    int code=0;
    int ret;
 
