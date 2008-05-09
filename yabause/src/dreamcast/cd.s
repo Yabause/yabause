@@ -111,3 +111,21 @@ _DCCDDeInit:
     .align      4
 .cdrom_reinit:
     .long       _cdrom_reinit
+
+    .section    .rodata
+    .align      2
+.CDInterfaceName:
+    .string     "Dreamcast CD Drive"
+
+    .data
+    .align      4
+    .globl      _ArchCD
+    .size       _ArchCD, 28
+_ArchCD:
+    .long       2
+    .long       .CDInterfaceName
+    .long       _DCCDInit
+    .long       _DCCDDeInit
+    .long       _DCCDGetStatus
+    .long       _DCCDReadTOC
+    .long       _DCCDReadSectorFAD

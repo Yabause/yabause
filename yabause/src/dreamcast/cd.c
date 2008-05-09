@@ -34,19 +34,8 @@ extern int DCCDDeInit(void);
 
 /* And these are still here (for now anyway) */
 int DCCDInit(const char *);
-int DCCDDeInit(void);
 s32 DCCDReadTOC(u32 *);
 int DCCDReadSectorFAD(u32, void *);
-
-CDInterface ArchCD = {
-    CDCORE_ARCH,
-    "Dreamcast CD Drive",
-    DCCDInit,
-    DCCDDeInit,
-    DCCDGetStatus,
-    DCCDReadTOC,
-    DCCDReadSectorFAD
-};
 
 /* This is mostly taken from the KallistiOS cdrom_reinit() function */
 int DCCDInit(const char * cdrom_name)   {
