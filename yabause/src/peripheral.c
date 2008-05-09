@@ -474,20 +474,6 @@ void PERDummyNothing(void) {
 int PERDummyHandleEvents(void) {
    if (YabauseExec() != 0)
       return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
-   if (YabauseExec() != 0)
-      return -1;
 
    return 0;
 }

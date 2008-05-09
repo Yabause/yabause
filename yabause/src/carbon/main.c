@@ -52,6 +52,7 @@ extern const char * key_names[] = {
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
+&M68KC68K,
 NULL
 };
 
@@ -90,8 +91,9 @@ NULL
 
 static EventLoopTimerRef EventTimer;
 
-void YuiIdle(EventLoopTimerRef a, void * b) {
-	YabauseExec();
+void YuiIdle(EventLoopTimerRef a, void * b)
+{
+    PERCore->HandleEvents();
 }
 
 void read_settings(void) {
