@@ -108,9 +108,50 @@ _DCCDDeInit:
     rts
     nop         ! Leave the return value from cdrom_reinit as the return here.
 
+!   int DCCDReadSectorFAD(u32 FAD, void *buffer)
+!       Read a single 2352 byte sector from the given position on the disc.
+    .globl      _DCCDReadSectorFAD
+    .line       114
+_DCCDReadSectorFAD:
+    sts.l       pr, @-r15
+    mov         r4, r2
+    mov.l       r4, @-r15
+    mov         r5, r4
+    mov.l       .cdrom_read_sectors, r0
+    mov.l       r5, @-r15
+    mov         r2, r5
+.read_sector_start:
+    jsr         @r0
+    mov         #1, r6
+    cmp/eq      #2, r0
+    bt          .read_reinit
+    cmp/eq      #0, r0
+    add         #8, r15
+    bf/s        .read_error
+    lds.l       @r15+, pr
+    rts
+    mov         #1, r0
+.read_reinit:
+    mov.l       .DCCDInit, r0
+    jsr         @r0
+    mov         #0, r4
+    cmp/eq      #0, r0
+    mov.l       @r15, r4
+    mov.l       .cdrom_read_sectors, r0
+    bt/s        .read_sector_start
+    mov.l       @(4, r15), r5
+    add         #8, r15
+.read_error:
+    rts
+    mov         #0, r0
+
     .align      4
 .cdrom_reinit:
     .long       _cdrom_reinit
+.cdrom_read_sectors:
+    .long       _cdrom_read_sectors
+.DCCDInit:
+    .long       _DCCDInit
 
     .section    .rodata
     .align      2

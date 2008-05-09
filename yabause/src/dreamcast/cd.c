@@ -113,20 +113,3 @@ s32 DCCDReadTOC(u32 * TOC)  {
 
     return 0xCC * 2;
 }
-
-int DCCDReadSectorFAD(u32 FAD, void *buffer)    {
-    int err = cdrom_read_sectors(buffer, FAD, 1);
-
-    if(err == ERR_NO_DISC)  {
-        return 0;
-    }
-    else if(err == ERR_DISC_CHG)    {
-        err = DCCDInit(NULL);
-        if(err != 0)
-            return 0;
-
-        cdrom_read_sectors(buffer, FAD, 1);
-    }
-
-    return 1;
-}
