@@ -1,3 +1,13 @@
+0.9.4 -> 0.9.5
+ gtk port:
+  - Tagged most of gtk port strings to be translatable.
+ software video core:
+  - Improved software renderer: window, line scroll, mosaic are now
+    available and color offset and scroll screen has been fixed.
+ general:
+  - Updated peripheral interface so both ports can now be used and
+    multiple pads can now be connected to each port.
+  - Added translation support through mini18n library.
 0.9.3 -> 0.9.4
  scsp:
   - Fixed a timer bug.
