@@ -24,32 +24,20 @@ int PERQTInit(void);
 void PERQTDeInit(void);
 int PERQTHandleEvents(void);
 void PERQTNothing(void);
-#ifdef USENEWPERINTERFACE
-PortData_struct *PERQTGetPerDataP1(void);
-PortData_struct *PERQTGetPerDataP2(void);
 
-static PortData_struct port1;
-static PortData_struct port2;
 u32 PERQTScan(const char* name);
 void PERQTFlush(void);
-#endif
 
 PerInterface_struct PERQT = {
 PERCORE_QT,
 "Qt Keyboard Input Interface",
 PERQTInit,
 PERQTDeInit,
-#ifndef USENEWPERINTERFACE
-PERQTHandleEvents
-#else
 PERQTHandleEvents,
-PERQTGetPerDataP1,
-PERQTGetPerDataP2,
 PERQTNothing,
 PERQTScan,
 0,
 PERQTFlush
-#endif
 };
 
 int PERQTInit(void)
@@ -68,26 +56,6 @@ int PERQTHandleEvents(void)
    return 0;
 }
 
-#ifdef USENEWPERINTERFACE
-PortData_struct* PERQTGetPerDataP1(void)
-{
-   // fix me, but this is the basic idea. Basically make sure the structure
-   // is completely ready before you return
-   port1.data[0] = 0xF1;
-   port1.data[1] = 0x02;
-   port1.data[2] = buttonbits >> 8;
-   port1.data[3] = buttonbits & 0xFF;
-   port1.size = 4;
-   return &port1;
-}
-
-PortData_struct* PERQTGetPerDataP2(void)
-{
-   port2.data[0] = 0xF0;
-   port2.size = 1;
-   return &port2;
-}
-
 PerInfo_struct* PERQTGetList(void)
 {
    // Returns a list of peripherals available along with information on each
@@ -100,5 +68,3 @@ u32 PERQTScan(const char* name)
 
 void PERQTFlush(void)
 {}
-
-#endif

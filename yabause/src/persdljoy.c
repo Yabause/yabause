@@ -39,33 +39,23 @@ int PERSDLJoyInit(void);
 void PERSDLJoyDeInit(void);
 int PERSDLJoyHandleEvents(void);
 void PERSDLJoyNothing(void);
-#ifdef USENEWPERINTERFACE
-PortData_struct *PERSDLJoyGetPerDataP1(void);
-PortData_struct *PERSDLJoyGetPerDataP2(void);
 
 static PortData_struct port1;
 static PortData_struct port2;
 
 u32 PERSDLJoyScan(const char *);
 void PERSDLJoyFlush(void);
-#endif
 
 PerInterface_struct PERSDLJoy = {
 PERCORE_SDLJOY,
 "SDL Joystick Interface",
 PERSDLJoyInit,
 PERSDLJoyDeInit,
-#ifndef USENEWPERINTERFACE
-PERSDLJoyHandleEvents
-#else
 PERSDLJoyHandleEvents,
-PERSDLJoyGetPerDataP1,
-PERSDLJoyGetPerDataP2,
 PERSDLJoyNothing,
 PERSDLJoyScan,
 1,
 PERSDLJoyFlush
-#endif
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -181,39 +171,6 @@ int PERSDLJoyHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-#ifdef USENEWPERINTERFACE
-PortData_struct *PERSDLJoyGetPerDataP1(void)
-{
-   port1.data[0] = 0xF1;
-   port1.data[1] = 0x02;
-   port1.data[2] = buttonbits >> 8;
-   port1.data[3] = buttonbits & 0xFF;
-   port1.size = 4;
-
-   return &port1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-PortData_struct *PERSDLJoyGetPerDataP2(void)
-{
-   port2.data[0] = 0xF0;
-   port2.size = 1;
-
-   return &port2;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-PerInfo_struct *PERSDLJoyGetList(void)
-{
-   // Returns a list of peripherals available along with information on each
-   // peripheral
-	return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 u32 PERSDLJoyScan( const char* n ) {
 	// if no available joy
 	if ( !mSDLJoystick1 )
@@ -249,18 +206,11 @@ u32 PERSDLJoyScan( const char* n ) {
 			}
 		}
 	}
-	
-	// set per key
-	if ( k != 0 )
-		PerSetKey( k, n );
-	
-	// return key
+
 	return k;
 }
 
 void PERSDLJoyFlush(void) {
 }
-
-#endif
 
 #endif

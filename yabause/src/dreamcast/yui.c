@@ -1,5 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
-    Copyright 2004-2007 Lawrence Sebald
+    Copyright 2004-2008 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -68,7 +68,8 @@ M68K_struct * M68KCoreList[] = {
     NULL
 };
 
-const char *bios = "/ram/saturn.bin";
+static const char *bios = "/ram/saturn.bin";
+static int emulate_bios = 0;
 
 int YuiInit(void)   {
     yabauseinit_struct yinit;
@@ -81,7 +82,7 @@ int YuiInit(void)   {
     yinit.cdcoretype = CDCORE_ARCH;
     yinit.carttype = CART_NONE;
     yinit.regionid = REGION_AUTODETECT;
-    yinit.biospath = bios;
+    yinit.biospath = emulate_bios ? NULL : bios;
     yinit.cdpath = NULL;
     yinit.buppath = NULL;
     yinit.mpegpath = NULL;
@@ -93,8 +94,7 @@ int YuiInit(void)   {
       return -1;
 
     for(;;) {
-      if(PERCore->HandleEvents() != 0)
-         return -1;
+        PERCore->HandleEvents();
     }
 
     return 0;
@@ -127,7 +127,7 @@ void DoGui()  {
     while(!start_pressed)   {
         offset = 64 * 640 + 64; /* 64 pixels in from the left, 64 down */
         
-        bfont_draw_str(vram_s + offset, 640, 0, "Yabause 0.9.4");
+        bfont_draw_str(vram_s + offset, 640, 0, "Yabause 0.9.5");
         offset += 640 * 128;
 
         if(phase == 0)  {
@@ -147,6 +147,12 @@ void DoGui()  {
             offset += 640 * 24;
             bfont_draw_str(vram_s + offset, 640, 0,
                            "on the root of the disc, named saturn.bin.");
+            offset += 640 * 48;
+            bfont_draw_str(vram_s + offset, 640, 0,
+                           "Or, to use the BIOS emulation feature, insert");
+            offset += 640 * 24;
+            bfont_draw_str(vram_s + offset, 640, 0,
+                           "a Sega Saturn CD and press Start.");
         }
         else    {
             bfont_draw_str(vram_s + offset, 640, 0,
@@ -177,8 +183,13 @@ void DoGui()  {
         }
 
         MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-        if (st->buttons & CONT_START)
-            start_pressed = 1;
+            if(st->buttons & CONT_START)    {
+                if(phase == 0)  {
+                    emulate_bios = 1;
+                }
+
+                start_pressed = 1;
+            }
         MAPLE_FOREACH_END()
 
         vid_waitvbl();

@@ -1,4 +1,4 @@
-/*  Copyright 2006 Lawrence Sebald
+/*  Copyright 2006, 2008 Lawrence Sebald
     Copyright 2000 Dan Potter
 
     This file is part of Yabause.
@@ -27,23 +27,14 @@
 #include "cdbase.h"
 #include "debug.h"
 
-/* This code borrowed from KallistiOS */
-/* GD-Rom BIOS calls... named mostly after Marcus' code. None have more
-   than two parameters; R7 (fourth parameter) needs to describe
-   which syscall we want. */
+/* These are defined in cd.s */
+extern int __gdc_change_data_type(void *param);
+extern int DCCDGetStatus(void);
 
-#define MAKE_SYSCALL(rs, p1, p2, idx) \
-    uint32 *syscall_bc = (uint32*)0x8c0000bc; \
-    int (*syscall)() = (int (*)())(*syscall_bc); \
-    rs syscall((p1), (p2), 0, (idx));
-
-/* Set disc access mode */
-static int gdc_change_data_type(void *param) { MAKE_SYSCALL(return, param, 0, 10); }
-
+/* And these are still here (for now anyway) */
 int DCCDInit(const char *);
 int DCCDDeInit(void);
 s32 DCCDReadTOC(u32 *);
-int DCCDGetStatus(void);
 int DCCDReadSectorFAD(u32, void *);
 
 CDInterface ArchCD = {
@@ -89,7 +80,7 @@ int DCCDInit(const char * cdrom_name)   {
     params[1] = 4096;           /* Magic value for RAW reads */
     params[2] = 0x0400;         /* ditto */
     params[3] = 2352;           /* sector size (not really on RAW though?) */
-    if(gdc_change_data_type(params) < 0)    {
+    if(__gdc_change_data_type(params) < 0)    {
         return -1;
     }
 
@@ -137,33 +128,6 @@ s32 DCCDReadTOC(u32 * TOC)  {
     TOC[101] = dctoc.leadout_sector;
 
     return 0xCC * 2;
-}
-
-int DCCDGetStatus(void)  {
-    int status = 0;
-    int err = cdrom_get_status(&status, NULL);
-
-    if(err == ERR_DISC_CHG) {
-        err = DCCDInit(NULL);
-        if(err != 0)
-            return 2;
-        else
-            cdrom_get_status(&status, NULL);
-    }
-
-    switch(status)  {
-        case CD_STATUS_OPEN:
-            return 3;
-
-        case CD_STATUS_NO_DISC:
-            return 2;
-
-        case CD_STATUS_PAUSED:
-            return 1;
-
-        default:
-            return 0;
-    }
 }
 
 int DCCDReadSectorFAD(u32 FAD, void *buffer)    {

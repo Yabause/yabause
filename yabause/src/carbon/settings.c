@@ -144,6 +144,7 @@ void set_settings_c(WindowRef window, int i, CFStringRef s) {
 }
 
 void save_settings(WindowRef window) {
+	PerPad_struct * pad;
 	int i;
 	CFStringRef s;
 
@@ -170,13 +171,16 @@ void save_settings(WindowRef window) {
     CFPreferencesSetAppValue(CFSTR("AutoFrameSkip"),
         get_settings_c(window, 11), kCFPreferencesCurrentApplication);
 
+	PerPortReset();
+	pad = PerPadAdd(&PORTDATA1);
+
 	i = 0;
 	while(key_names[i]) {
 		s = get_settings(window, 31 + i);
 		CFPreferencesSetAppValue(
 			CFStringCreateWithCString(0, key_names[i], 0),
 			s, kCFPreferencesCurrentApplication);
-		PerSetKey(CFStringGetIntValue(s), key_names[i]);
+		PerSetKey(CFStringGetIntValue(s), i, pad);
 		i++;
 	}
 

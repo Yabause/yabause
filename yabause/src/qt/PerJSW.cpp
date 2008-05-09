@@ -35,32 +35,20 @@ extern "C"
 	void PERJSWDeInit(void);
 	int PERJSWHandleEvents(void);
 	void PERJSWNothing(void);
-#ifdef USENEWPERINTERFACE
-	PortData_struct *PERJSWGetPerDataP1(void);
-	PortData_struct *PERJSWGetPerDataP2(void);
 
-	static PortData_struct port1;
-	static PortData_struct port2;
 	u32 PERJSWScan(const char * name);
 	void PERJSWFlush(void);
-#endif
 
 	PerInterface_struct PERJSW = {
 	PERCORE_JSW,
 	"JSW Joystick Interface",
 	PERJSWInit,
 	PERJSWDeInit,
-#ifndef USENEWPERINTERFACE
-	PERJSWHandleEvents
-#else
 	PERJSWHandleEvents,
-	PERJSWGetPerDataP1,
-	PERJSWGetPerDataP2,
 	PERJSWNothing,
 	PERJSWScan,
 	1,
 	PERJSWFlush
-#endif
 	};
 
 	int PERJSWInit(void)
@@ -143,26 +131,6 @@ extern "C"
 	   return 0;
 	}
 
-#ifdef USENEWPERINTERFACE
-	PortData_struct* PERJSWGetPerDataP1(void)
-	{
-	   // fix me, but this is the basic idea. Basically make sure the structure
-	   // is completely ready before you return
-	   port1.data[0] = 0xF1;
-	   port1.data[1] = 0x02;
-	   port1.data[2] = buttonbits >> 8;
-	   port1.data[3] = buttonbits & 0xFF;
-	   port1.size = 4;
-	   return &port1;
-	}
-
-	PortData_struct* PERJSWGetPerDataP2(void)
-	{
-	   port2.data[0] = 0xF0;
-	   port2.size = 1;
-	   return &port2;
-	}
-
 	PerInfo_struct* PERJSWGetList(void)
 	{
 	   // Returns a list of peripherals available along with information on each
@@ -213,14 +181,15 @@ extern "C"
 				}
 			}
 		}
+#if 0
 		if ( k != 0 )
 			PerSetKey( k, n );
+#endif
 		return k;
 	}
 
 	void PERJSWFlush(void)
 	{}
-#endif
 }
 
 #endif // HAVE_LIBJSW

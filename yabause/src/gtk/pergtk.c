@@ -28,32 +28,20 @@ int PERGTKInit(void);
 void PERGTKDeInit(void);
 int PERGTKHandleEvents(void);
 void PERGTKNothing(void);
-#ifdef USENEWPERINTERFACE
-PortData_struct *PERGTKGetPerDataP1(void);
-PortData_struct *PERGTKGetPerDataP2(void);
 
-static PortData_struct port1;
-static PortData_struct port2;
 u32 PERGTKScan(const char * name);
 void PERGTKFlush(void);
-#endif
 
 PerInterface_struct PERGTK = {
 PERCORE_GTK,
 "GTK Input Interface",
 PERGTKInit,
 PERGTKDeInit,
-#ifndef USENEWPERINTERFACE
-PERGTKHandleEvents
-#else
 PERGTKHandleEvents,
-PERGTKGetPerDataP1,
-PERGTKGetPerDataP2,
 PERGTKNothing,
 PERGTKScan,
 0,
 PERGTKFlush
-#endif
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -82,38 +70,6 @@ int PERGTKHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-#ifdef USENEWPERINTERFACE
-PortData_struct *PERGTKGetPerDataP1(void)
-{
-   // fix me, but this is the basic idea. Basically make sure the structure
-   // is completely ready before you return
-   port1.data[0] = 0xF1;
-   port1.data[1] = 0x02;
-   port1.data[2] = buttonbits >> 8;
-   port1.data[3] = buttonbits & 0xFF;
-   port1.size = 4;
-   return &port1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-PortData_struct *PERGTKGetPerDataP2(void)
-{
-   port2.data[0] = 0xF0;
-   port2.size = 1;
-   return &port2;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-PerInfo_struct *PERGTKGetList(void)
-{
-   // Returns a list of peripherals available along with information on each
-   // peripheral
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 u32 PERGTKScan(const char * name) {
 	g_print("this is wrong, the gtk peripheral can't scan\n");
 	return 1;
@@ -123,5 +79,3 @@ u32 PERGTKScan(const char * name) {
 
 void PERGTKFlush(void) {
 }
-
-#endif

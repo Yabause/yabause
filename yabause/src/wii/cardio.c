@@ -21,12 +21,13 @@
 // stdio functions
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/iosupport.h>
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <ogc/lwp_queue.h>
-#include <sdcard.h>
+#include "wiisd/tff.h"
 
 #define MAX_FD 64
 #define FD_MASK (MAX_FD-1)
@@ -39,11 +40,14 @@ typedef struct
 
 static struct
 {
-   sd_file *fp;
+   FIL *fp;
 } fddata[MAX_FD];
+
+FATFS sdcard;
 
 void freefd(int fd)
 {
+   free(fddata[fd & FD_MASK].fp);
    fddata[fd & FD_MASK].fp = NULL;
 }
 
@@ -60,26 +64,30 @@ int findfreefd()
    return -1;
 }
 
-sd_file *fetchsdfile(int fd)
+FIL *fetchsdfile(int fd)
 {
    return fddata[fd & FD_MASK].fp;
 }
 
 int sdcardopen(struct _reent *r, void *fileStruct, const char *path,int flags,int mode)
 {
-   char modetext[3];
-   sd_file *fp=NULL;
+   int modeflags;
+   FIL *fp;
    int fd = findfreefd();
+   int ret;
 
    if (fd == -1)
       return -1;
 
-   if(flags==O_WRONLY)
-      strcpy(modetext, "wb");
-   else
-      strcpy(modetext, "rb");
+   if ((fp = malloc(sizeof(FIL))) == NULL)
+      return -1;
 
-   if ((fp = SDCARD_OpenFile(path, modetext)) == NULL)
+   if(flags==O_WRONLY)
+      modeflags = FA_CREATE_ALWAYS | FA_WRITE;
+   else
+      modeflags = FA_READ;
+
+   if ((ret = f_open(fp, path, modeflags)) != FR_OK)
       return -1;
 
    fddata[fd].fp = fp;
@@ -88,12 +96,13 @@ int sdcardopen(struct _reent *r, void *fileStruct, const char *path,int flags,in
 
 int sdcardclose(struct _reent *r,int fd)
 {
-   sd_file *fp=(sd_file *)fd;
+   FIL *fp;
 
    if ((fp = fetchsdfile(fd)) != NULL)
    {
-      freefd((int)fp);
-      return SDCARD_CloseFile(fp);
+      f_close(fp);
+      freefd(fd);
+      return 0;
    }
 
    return -1;
@@ -101,33 +110,74 @@ int sdcardclose(struct _reent *r,int fd)
 
 int sdcardwrite(struct _reent *r,int fd,const char *ptr,int len)
 {
-   sd_file *fp;
+   FIL *fp;
+   int offset=0;
+   WORD byteswritten;
 
    if ((fp = fetchsdfile(fd)) != NULL)
-      return SDCARD_WriteFile(fp, ptr, len);
+   {
+      // Maximum write size is 64k
+      while (len > 65000)
+      {
+         if (f_write(fp, ptr + offset, 65000, &byteswritten) != FR_OK)
+             return -1;
+         offset += byteswritten;
+         len -= byteswritten;
+      }
+
+      // Write the rest
+      if (f_write(fp, ptr + offset, len, &byteswritten) == FR_OK)
+         return len;
+   }
    return -1;
 }
 
 int sdcardread(struct _reent *r,int fd,char *ptr,int len)
 {
-   sd_file *fp;
+   FIL *fp;
+   int offset=0;
+   WORD bytesread;
 
    if ((fp = fetchsdfile(fd)) != NULL)
-      return SDCARD_ReadFile(fp, ptr, len);
+   {
+      // Maximum read size is 64k
+      while (len > 65000)
+      {
+         if (f_read(fp, (BYTE *)ptr + offset, 65000, &bytesread) != FR_OK)
+             return -1;
+         offset += bytesread;
+         len -= bytesread;
+      }
+
+      // Write the rest
+      if (f_read(fp, (BYTE *)ptr + offset, len, &bytesread) == FR_OK)
+         return len;
+   }
    return -1;
 }
 
 int sdcardseek(struct _reent *r,int fd,int pos,int dir)
 {
-   sd_file *fp;
+   FIL *fp;
    int ret = -1;
 
    if ((fp = fetchsdfile(fd)) != NULL)
    {
-      if ((ret = SDCARD_SeekFile(fp, pos, dir)) == SDCARD_ERROR_READY)
+      switch (dir)
       {
-         // Me shakes my fist at libogc people
-         ret = ((_sd_file *)fp)->offset;
+         case SEEK_SET:
+            if (f_lseek(fp, pos) == FR_OK)
+               return fp->fptr;
+            break;
+         case SEEK_CUR:
+            if (f_lseek(fp, fp->fptr+pos) == FR_OK)
+               return fp->fptr; 
+            break;
+         case SEEK_END:
+            if (f_lseek(fp, fp->fsize+pos) == FR_OK)
+               return fp->fptr;             
+            break;
+         default: break;
       }
    }
 
@@ -136,63 +186,35 @@ int sdcardseek(struct _reent *r,int fd,int pos,int dir)
 
 int sdcardfstat(struct _reent *r,int fd,struct stat *st)
 {
-   sd_file *fp = NULL;
-   SDSTAT sdstat;
+   FIL *fp = NULL;
+//   FILINFO sdstat;
 
    if ((fp = fetchsdfile(fd)) != NULL)
    {
-      if(SDCARD_GetStats(fp, &sdstat) == SDCARD_ERROR_READY)
       {
-         st->st_size = sdstat.size;
+         st->st_size = fp->fsize;
+#if 0
          st->st_ino = sdstat.ino;
          st->st_dev = sdstat.dev;
          st->st_blksize = sdstat.blk_sz;
          st->st_blocks = sdstat.blk_cnt;
-
+#endif
          st->st_mode = 0;
 
-         if(sdstat.attr & SDCARD_ATTR_DIR)
-            st->st_mode |= S_IFDIR;
-
-         if(sdstat.attr & SDCARD_ATTR_RONLY)
+         if(fp->flag & FA_READ)
             st->st_mode |= S_IRUSR | S_IXUSR |
                            S_IRGRP | S_IXGRP |
                            S_IROTH | S_IXOTH;
-         else
+         if(fp->flag & FA_WRITE)
             st->st_mode |= S_IRWXU | S_IRWXG | S_IRWXO;
-
          return 0;
       }
    }
-
    return -1;
 }
 
-const devoptab_t dotab_sdcard0 = {
-"dev0", // name
-0, // structSize
-sdcardopen, // open_r
-sdcardclose, // close_r
-sdcardwrite, // write_r
-sdcardread, // read_r
-sdcardseek, // seek_r
-sdcardfstat, // fstat_r
-NULL, // stat_r
-NULL, // link_r
-NULL, // unlink_r
-NULL, // chdir_r
-NULL, // rename_r
-NULL, // mkdir_r
-0, // dirStateSize
-NULL, // diropen_r
-NULL, // dirreset_r
-NULL, // dirnext_r
-NULL, // dirclose_r
-NULL  // statvfs_r
-};
-
-const devoptab_t dotab_sdcard1 = {
-"dev1", // name
+const devoptab_t dotab_sdcard = {
+"sd", // name
 0, // structSize
 sdcardopen, // open_r
 sdcardclose, // close_r
@@ -219,8 +241,8 @@ void CARDIO_Init()
    int i;
    for (i = 0; i < MAX_FD; i++)
       fddata[i].fp = NULL;
-   setDefaultDevice(AddDevice(&dotab_sdcard0));
-   AddDevice(&dotab_sdcard1);
+   setDefaultDevice(AddDevice(&dotab_sdcard));
+   f_mount(0, &sdcard);
 }
 
 int _open_r _PARAMS ((struct _reent *r, const char *file, int flags, int mode))

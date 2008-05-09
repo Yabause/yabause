@@ -78,9 +78,9 @@ M68K_struct *M68KCoreList[] = {
 NULL
 };
 
-static char bupfilename[512]="dev0:\\bkram.bin";
-static char biosfilename[512]="dev0:\\bios.bin";
-static char isofilename[512]="dev0:\\game.cue";
+static char bupfilename[512]="bkram.bin";
+static char biosfilename[512]="bios.bin";
+static char isofilename[512]="game.cue";
 
 extern int vdp2width, vdp2height;
 
@@ -166,6 +166,7 @@ int main(int argc, char **argv)
 
    CARDIO_Init();
 
+/*
    printf("Please insert SD card with SD Gecko into gamecube slot A...\n");
    for(;;)
    {
@@ -178,6 +179,7 @@ int main(int argc, char **argv)
       else if (done)
          exit(0);
    }
+*/
 
    memset(&yinit, 0, sizeof(yabauseinit_struct));
    yinit.percoretype = PERCORE_WIIKBD;
@@ -193,7 +195,8 @@ int main(int argc, char **argv)
    else
       yinit.biospath = biosfilename;
    yinit.cdpath = isofilename;
-   yinit.buppath = bupfilename;
+//   yinit.buppath = bupfilename;
+   yinit.buppath = NULL;
    yinit.mpegpath = NULL;
    yinit.cartpath = NULL;
    yinit.netlinksetting = NULL;

@@ -57,11 +57,11 @@ program on the yabause.bin file created in section 2 above,
 you will have a binary file suitable for booting on a real
 Dreamcast.
 
-Once you have your scrambled binary, you will need a Sega
-Saturn BIOS image. At the current time, this BIOS image must
-be named "saturn.bin" and be placed in the root of the CD.
-This will eventually be user-configurable, but for now it is
-not.
+Once you have your scrambled binary, you may choose to include
+a Sega Saturn BIOS image on your disc as well. As of 0.9.5,
+this is not a requirement for the Dreamcast port, but if you
+choose to use an actual BIOS image, it must be put on the
+root of the CD and named "saturn.bin".
 
 From this point, follow your favorite guide for how to build
 a selfbooting CD out of plain files. I use the one available
@@ -78,3 +78,8 @@ Yabause to run your favorite Sega Saturn games at any sort of
 playable speed for now (or the near future). As Yabause
 matures, and I have more time to work on it, hopefully speed
 will improve. For now, think of it as a fancy tech demo.
+
+Note that in 0.9.5, a small bit of assembly has appeared in
+the Dreamcast port. Hopefully as time goes on more of the
+Dreamcast specific code will be rewritten in assembly for at
+least some small speed increase.

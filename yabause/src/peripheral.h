@@ -28,7 +28,22 @@
 #define PERCORE_DEFAULT -1
 #define PERCORE_DUMMY 0
 
-extern u16 buttonbits;
+#define PERPAD_UP	0
+#define PERPAD_RIGHT	1
+#define PERPAD_DOWN	2
+#define PERPAD_LEFT	3
+#define PERPAD_RIGHT_TRIGGER 4
+#define PERPAD_LEFT_TRIGGER 5
+#define PERPAD_START	6
+#define PERPAD_A	7
+#define PERPAD_B	8
+#define PERPAD_C	9
+#define PERPAD_X	10
+#define PERPAD_Y	11
+#define PERPAD_Z	12
+
+extern PortData_struct PORTDATA1;
+extern PortData_struct PORTDATA2;
 
 typedef struct
 {
@@ -37,72 +52,72 @@ typedef struct
    int (*Init)(void);
    void (*DeInit)(void);
    int (*HandleEvents)(void);
-#ifdef USENEWPERINTERFACE
-//   PerInfo_struct *(*PerGetList)(void);
-   PortData_struct *(*GetPerDataP1)(void);
-   PortData_struct *(*GetPerDataP2)(void);
    void (*PerSetButtonMapping)();
    u32 (*Scan)(const char *);
    int canScan;
    void (*Flush)(void);
-#endif
 } PerInterface_struct;
 
 extern PerInterface_struct * PERCore;
 
 typedef struct
 {
-   char *name;
-   int emulatedflags;
-   int numbuttons;
-} PerInfo_struct;
+   u8 perid;
+   u8 padbits[2];
+} PerPad_struct;
 
 extern PerInterface_struct PERDummy;
 
 int PerInit(int coreid);
 void PerDeInit(void);
 
-void PerUpPressed(void);
-void PerUpReleased(void);
+/* port related functions */
+void * PerAddPeripheral(PortData_struct *port, int perid);
+void PerPortReset(void);
 
-void PerDownPressed(void);
-void PerDownReleased(void);
+/* pad related functions */
+void PerPadUpPressed(PerPad_struct * pad);
+void PerPadUpReleased(PerPad_struct * pad);
 
-void PerRightPressed(void);
-void PerRightReleased(void);
+void PerPadDownPressed(PerPad_struct * pad);
+void PerPadDownReleased(PerPad_struct * pad);
 
-void PerLeftPressed(void);
-void PerLeftReleased(void);
+void PerPadRightPressed(PerPad_struct * pad);
+void PerPadRightReleased(PerPad_struct * pad);
 
-void PerStartPressed(void);
-void PerStartReleased(void);
+void PerPadLeftPressed(PerPad_struct * pad);
+void PerPadLeftReleased(PerPad_struct * pad);
 
-void PerAPressed(void);
-void PerAReleased(void);
+void PerPadStartPressed(PerPad_struct * pad);
+void PerPadStartReleased(PerPad_struct * pad);
 
-void PerBPressed(void);
-void PerBReleased(void);
+void PerPadAPressed(PerPad_struct * pad);
+void PerPadAReleased(PerPad_struct * pad);
 
-void PerCPressed(void);
-void PerCReleased(void);
+void PerPadBPressed(PerPad_struct * pad);
+void PerPadBReleased(PerPad_struct * pad);
 
-void PerXPressed(void);
-void PerXReleased(void);
+void PerPadCPressed(PerPad_struct * pad);
+void PerPadCReleased(PerPad_struct * pad);
 
-void PerYPressed(void);
-void PerYReleased(void);
+void PerPadXPressed(PerPad_struct * pad);
+void PerPadXReleased(PerPad_struct * pad);
 
-void PerZPressed(void);
-void PerZReleased(void);
+void PerPadYPressed(PerPad_struct * pad);
+void PerPadYReleased(PerPad_struct * pad);
 
-void PerRTriggerPressed(void);
-void PerRTriggerReleased(void);
+void PerPadZPressed(PerPad_struct * pad);
+void PerPadZReleased(PerPad_struct * pad);
 
-void PerLTriggerPressed(void);
-void PerLTriggerReleased(void);
+void PerPadRTriggerPressed(PerPad_struct * pad);
+void PerPadRTriggerReleased(PerPad_struct * pad);
+
+void PerPadLTriggerPressed(PerPad_struct * pad);
+void PerPadLTriggerReleased(PerPad_struct * pad);
 
 void PerKeyDown(u32);
 void PerKeyUp(u32);
-void PerSetKey(u32, const char *);
+void PerSetKey(u32, u8, PerPad_struct * pad);
+PerPad_struct * PerPadAdd(PortData_struct * port);
 
 #endif

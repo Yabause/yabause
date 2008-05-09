@@ -74,6 +74,7 @@ GtkWidget * yui_page_add(YuiPage * yp, const gchar * name) {
 	GtkWidget * frame;
 	GtkWidget * box;
 	GtkWidget * widget;
+	gchar buffer[1024];
 
 	frame = gtk_frame_new(NULL);
   
@@ -83,7 +84,9 @@ GtkWidget * yui_page_add(YuiPage * yp, const gchar * name) {
 	box = gtk_vbox_new(FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(frame), box);
 
-	label = gtk_label_new(name);
+	sprintf(buffer, "<b>%s</b>", name);
+
+	label = gtk_label_new(buffer);
 	gtk_frame_set_label_widget(GTK_FRAME(frame), label);
 	gtk_label_set_use_markup(GTK_LABEL(label), TRUE);
 

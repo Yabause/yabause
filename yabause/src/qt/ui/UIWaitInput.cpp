@@ -43,7 +43,7 @@ void UIWaitInput::keyPressEvent( QKeyEvent* e )
 	if ( mCore->id == PERCORE_QT && e->key() != Qt::Key_Escape )
 	{
 		mKeyString = QString::number( e->key() );
-		PerSetKey( e->key(), mPadKey.toAscii().constData() );
+		//PerSetKey( e->key(), mPadKey.toAscii().constData() );
 		QDialog::accept();
 	}
 	QWidget::keyPressEvent( e );

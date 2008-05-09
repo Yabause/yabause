@@ -29,7 +29,7 @@ int PERDCInit(void);
 void PERDCDeInit(void);
 int PERDCHandleEvents(void);
 
-extern u16 buttonbits;
+static PerPad_struct *pad1;
 
 PerInterface_struct PERDC = {
 	PERCORE_DC,
@@ -40,6 +40,8 @@ PerInterface_struct PERDC = {
 };
 
 int PERDCInit(void)	{
+    PerPortReset();
+    pad1 = PerPadAdd(&PORTDATA1);
 	return 0;
 }
 
@@ -55,69 +57,69 @@ int PERDCHandleEvents(void)	{
 
         if(state != NULL)   {
             if(state->buttons & CONT_DPAD_UP)
-                buttonbits &= 0xEFFF;
+                *pad1->padbits &= 0xEF;
             else
-                buttonbits |= 0x1000;
+                *pad1->padbits |= 0x10;
 
             if(state->buttons & CONT_DPAD_DOWN)
-                buttonbits &= 0xDFFF;
+                *pad1->padbits &= 0xDF;
             else
-                buttonbits |= 0x2000;
+                *pad1->padbits |= 0x20;
 
             if(state->buttons & CONT_DPAD_RIGHT)
-                buttonbits &= 0x7FFF;
+                *pad1->padbits &= 0x7F;
             else
-                buttonbits |= 0x8000;
+                *pad1->padbits |= 0x80;
 
             if(state->buttons & CONT_DPAD_LEFT)
-                buttonbits &= 0xBFFF;
+                *pad1->padbits &= 0xBF;
             else
-                buttonbits |= 0x4000;
+                *pad1->padbits |= 0x40;
 
             if(state->buttons & CONT_START)
-                buttonbits &= 0xF7FF;
+                *pad1->padbits &= 0xF7;
             else
-                buttonbits |= 0x0800;
+                *pad1->padbits |= 0x08;
 
             if(state->buttons & CONT_A)
-                buttonbits &= 0xFBFF;
+                *pad1->padbits &= 0xFB;
             else
-                buttonbits |= 0x0400;
+                *pad1->padbits |= 0x04;
 
             if(state->buttons & CONT_B)
-                buttonbits &= 0xFEFF;
+                *pad1->padbits &= 0xFE;
             else
-                buttonbits |= 0x0100;
+                *pad1->padbits |= 0x01;
 
             if(state->buttons & CONT_X)
-                buttonbits &= 0xFFBF;
+                *(pad1->padbits + 1) &= 0xBF;
             else
-                buttonbits |= 0x0040;
+                *(pad1->padbits + 1) |= 0x40;
 
             if(state->buttons & CONT_Y)
-                buttonbits &= 0xFFDF;
+                *(pad1->padbits + 1) &= 0xDF;
             else
-                buttonbits |= 0x0020;
+                *(pad1->padbits + 1) |= 0x20;
 
             if(state->rtrig > 20)
-                buttonbits &= 0xFF7F;
+                *(pad1->padbits + 1) &= 0x7F;
             else
-                buttonbits |= 0x0080;
+                *(pad1->padbits + 1) |= 0x80;
 
             if(state->ltrig > 20)
-                buttonbits &= 0xFFF7;
+                *(pad1->padbits + 1) &= 0xF7;
             else
-                buttonbits |= 0x0008;
+                *(pad1->padbits + 1) |= 0x08;
 
             if(state->joyx > 20)
-                buttonbits &= 0xFDFF;
+                *pad1->padbits &= 0xFD;
             else
-                buttonbits |= 0x0200;
+                *pad1->padbits |= 0x02;
 
             if(state->joyy > 20)
-                buttonbits &= 0xFFEF;
+                *(pad1->padbits + 1) &= 0xEF;
             else
-                buttonbits |= 0x0010;
+                *(pad1->padbits + 1) |= 0x10;
 
         }
     }

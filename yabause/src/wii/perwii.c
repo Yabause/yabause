@@ -32,6 +32,7 @@
 s32 kbdfd = -1;
 volatile BOOL kbdconnected = FALSE;
 extern u16 buttonbits;
+PerPad_struct *pad[12];
 
 struct
 {
@@ -42,18 +43,7 @@ struct
    u8 keydata[6];
 } kbdevent ATTRIBUTE_ALIGN(32);
 
-void (*keycfgpush[256])(void);
-void (*keypush[256])(void);
 s32 KeyboardConnectCallback(s32 result,void *usrdata);
-
-void SetupKeyPush(void (**push)(void), u8 key, void (*pushfunc)())
-{
-   *(push + key) = pushfunc;
-}
-
-void KeyStub(void)
-{
-}
 
 s32 KeyboardPoll(s32 result, void *usrdata)
 {
@@ -68,14 +58,15 @@ s32 KeyboardPoll(s32 result, void *usrdata)
             IOS_IoctlAsync(kbdfd, 0, NULL, 0, (void *)&kbdevent, 0x10, KeyboardConnectCallback, NULL);
             break;
          case MSG_EVENT:
-            buttonbits = 0xFFFF;
+            // Hackish, horray!
+            pad[0]->padbits[0] = 0xFF;
+            pad[0]->padbits[1] = 0xFF;
 
             for (i = 0; i < 6; i++)
             {
                if (kbdevent.keydata[0] == 0)
                   break;
-               keypush[kbdevent.keydata[i]]();
-               keycfgpush[kbdevent.keydata[i]]();
+               PerKeyDown(kbdevent.keydata[i]);
             }
             IOS_IoctlAsync(kbdfd, 0, NULL, 0, (void *)&kbdevent, 0x10, KeyboardPoll, NULL);
             break;
@@ -99,39 +90,35 @@ s32 KeyboardConnectCallback(s32 result,void *usrdata)
 
 int PERKeyboardInit()
 {
-   int i;
    static char kbdstr[] ATTRIBUTE_ALIGN(32) = "/dev/usb/kbd";
 
    if ((kbdfd = IOS_Open(kbdstr, IPC_OPEN_NONE)) < 0)
       return -1;
 
-   for(i = 0; i < 256; i++)
-   {
-       SetupKeyPush(keypush, i, KeyStub);
-       SetupKeyPush(keycfgpush, i, KeyStub);
-   }
+   PerPortReset();
+   pad[0] = PerPadAdd(&PORTDATA1);
 
-   SetupKeyPush(keypush, KEY_F1, ToggleFPS);
-   SetupKeyPush(keypush, KEY_1, ToggleNBG0);
-   SetupKeyPush(keypush, KEY_2, ToggleNBG1);
-   SetupKeyPush(keypush, KEY_3, ToggleNBG2);
-   SetupKeyPush(keypush, KEY_4, ToggleNBG3);
-   SetupKeyPush(keypush, KEY_4, ToggleRBG0);
-   SetupKeyPush(keypush, KEY_5, ToggleVDP1);
+//   SetupKeyPush(keypush, KEY_F1, ToggleFPS);
+//   SetupKeyPush(keypush, KEY_1, ToggleNBG0);
+//   SetupKeyPush(keypush, KEY_2, ToggleNBG1);
+//   SetupKeyPush(keypush, KEY_3, ToggleNBG2);
+//   SetupKeyPush(keypush, KEY_4, ToggleNBG3);
+//   SetupKeyPush(keypush, KEY_4, ToggleRBG0);
+//   SetupKeyPush(keypush, KEY_5, ToggleVDP1);
 
-   SetupKeyPush(keycfgpush, KEY_UP, PerUpPressed);
-   SetupKeyPush(keycfgpush, KEY_DOWN, PerDownPressed);
-   SetupKeyPush(keycfgpush, KEY_LEFT, PerLeftPressed);
-   SetupKeyPush(keycfgpush, KEY_RIGHT, PerRightPressed);
-   SetupKeyPush(keycfgpush, KEY_K, PerAPressed);
-   SetupKeyPush(keycfgpush, KEY_L, PerBPressed);
-   SetupKeyPush(keycfgpush, KEY_M, PerCPressed);
-   SetupKeyPush(keycfgpush, KEY_U, PerXPressed);
-   SetupKeyPush(keycfgpush, KEY_I, PerYPressed);
-   SetupKeyPush(keycfgpush, KEY_O, PerZPressed);
-   SetupKeyPush(keycfgpush, KEY_X, PerLTriggerPressed);
-   SetupKeyPush(keycfgpush, KEY_Z, PerRTriggerPressed);
-   SetupKeyPush(keycfgpush, KEY_J, PerStartPressed);
+   PerSetKey(KEY_UP, PERPAD_UP, pad[0]);
+   PerSetKey(KEY_DOWN, PERPAD_DOWN, pad[0]);
+   PerSetKey(KEY_LEFT, PERPAD_LEFT, pad[0]);
+   PerSetKey(KEY_RIGHT, PERPAD_RIGHT, pad[0]);
+   PerSetKey(KEY_K, PERPAD_A, pad[0]);
+   PerSetKey(KEY_L, PERPAD_B, pad[0]);
+   PerSetKey(KEY_M, PERPAD_C, pad[0]);
+   PerSetKey(KEY_U, PERPAD_X, pad[0]);
+   PerSetKey(KEY_I, PERPAD_Y, pad[0]);
+   PerSetKey(KEY_O, PERPAD_Z, pad[0]);
+   PerSetKey(KEY_X, PERPAD_LEFT_TRIGGER, pad[0]);
+   PerSetKey(KEY_Z, PERPAD_RIGHT_TRIGGER, pad[0]);
+   PerSetKey(KEY_J, PERPAD_START, pad[0]);
 
    IOS_IoctlAsync(kbdfd, 0, NULL, 0, (void *)&kbdevent, 0x10, KeyboardConnectCallback, NULL);
    return 0;

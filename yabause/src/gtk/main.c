@@ -86,7 +86,7 @@ NULL
 
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
-#ifdef HAVE_LIBGL
+#ifdef HAVE_LIBGTKGLEXT
 &VIDOGL,
 #endif
 &VIDSoft,
@@ -106,11 +106,7 @@ int yui_main(gpointer data) {
 }
 
 GtkWidget * yui_new() {
-#ifdef USENEWPERINTERFACE
 	yui = yui_window_new(NULL, G_CALLBACK(YabauseInit), &yinit, yui_main, G_CALLBACK(YabauseReset));
-#else
-	yui = yui_window_new(NULL, G_CALLBACK(YabauseInit), &yinit, yui_main, G_CALLBACK(YabauseReset));
-#endif
 
 	gtk_widget_show(yui);
 
@@ -121,7 +117,7 @@ void yui_settings_init(void) {
 	yinit.m68kcoretype = M68KCORE_C68K;
 	yinit.percoretype = PERCORE_GTK;
 	yinit.sh2coretype = SH2CORE_DEFAULT;
-#ifdef HAVE_LIBGL
+#ifdef HAVE_LIBGTKGLEXT
 	yinit.vidcoretype = VIDCORE_OGL;
 #else
 	yinit.vidcoretype = VIDCORE_SOFT;
@@ -161,6 +157,7 @@ gboolean yui_settings_load(void) {
 	gchar * stmp;
 	gchar *biosPath;
 	gboolean mustRestart = FALSE;
+	PerPad_struct * padbits;
 
 	g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
 
@@ -280,11 +277,14 @@ gboolean yui_settings_load(void) {
 	/* peripheral core */
 	yinit.percoretype = g_key_file_get_integer(keyfile, "General", "PerCore", 0);
 
+	PerPortReset();
+	padbits = PerPadAdd(&PORTDATA1);
+
 	i = 0;
 
 	while(key_names[i]) {
 	  u32 key = g_key_file_get_integer(keyfile, "Input", key_names[i], 0);
-	  PerSetKey(key, key_names[i]);
+	  PerSetKey(key, i, padbits);
 	  i++;
 	}
 
@@ -330,7 +330,7 @@ int main(int argc, char *argv[]) {
 	keyfile = g_key_file_new();
 
 	gtk_init(&argc, &argv);
-#ifdef HAVE_LIBGL
+#ifdef HAVE_LIBGTKGLEXT
 	gtk_gl_init(&argc, &argv);
 #endif
 
@@ -357,36 +357,26 @@ int main(int argc, char *argv[]) {
 			
          //set bios
          if (0 == strcmp(argv[i], "-b") && argv[i + 1]) {
-	    if (yinit.biospath)
-	       g_free(yinit.biospath);
-	    yinit.biospath = g_strdup(argv[i + 1]);
+            g_strlcpy(biospath, argv[i + 1], 256);
+            yinit.biospath = biospath;
 	 } else if (strstr(argv[i], "--bios=")) {
-	    if (yinit.biospath)
-	       g_free(yinit.biospath);
-	    yinit.biospath =  g_strdup(argv[i] + strlen("--bios="));
+            g_strlcpy(biospath, argv[i] + strlen("--bios="), 256);
+            yinit.biospath = biospath;
 	 }
          //set iso
          else if (0 == strcmp(argv[i], "-i") && argv[i + 1]) {
-	    if (yinit.cdpath)
-		g_free(yinit.cdpath);
-	    yinit.cdpath = g_strdup(argv[i + 1]);
+            g_strlcpy(cdpath, argv[i + 1], 256);
 	    yinit.cdcoretype = 1;
 	 } else if (strstr(argv[i], "--iso=")) {
-	    if (yinit.cdpath)
-		g_free(yinit.cdpath);
-	    yinit.cdpath = g_strdup(argv[i] + strlen("--iso="));
+            g_strlcpy(cdpath, argv[i] + strlen("--iso="), 256);
 	    yinit.cdcoretype = 1;
 	 }
          //set cdrom
 	 else if (0 == strcmp(argv[i], "-c") && argv[i + 1]) {
-	    if (yinit.cdpath)
-		g_free(yinit.cdpath);
-	    yinit.cdpath = g_strdup(argv[i + 1]);
+            g_strlcpy(cdpath, argv[i + 1], 256);
 	    yinit.cdcoretype = 2;
 	 } else if (strstr(argv[i], "--cdrom=")) {
-	    if (yinit.cdpath)
-		g_free(yinit.cdpath);
-	    yinit.cdpath = g_strdup(argv[i] + strlen("--cdrom="));
+            g_strlcpy(cdpath, argv[i] + strlen("--cdrom="), 256);
 	    yinit.cdcoretype = 2;
 	 }
          // Set sound

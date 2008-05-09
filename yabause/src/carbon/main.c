@@ -52,7 +52,6 @@ extern const char * key_names[] = {
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
-&M68KC68K,
 NULL
 };
 
@@ -96,6 +95,7 @@ void YuiIdle(EventLoopTimerRef a, void * b) {
 }
 
 void read_settings(void) {
+	PerPad_struct * pad;
 	int i;
 	CFStringRef s;
 	yinit.percoretype = PERCORE_DUMMY;
@@ -160,13 +160,16 @@ void read_settings(void) {
 	if (s)
 		yinit.frameskip = CFStringGetIntValue(s);
 
+	PerPortReset();
+	pad = PerPadAdd(&PORTDATA1);
+
 	i = 0;
 	while(key_names[i]) {
 		s = CFPreferencesCopyAppValue(
 			CFStringCreateWithCString(0, key_names[i], 0),
 			kCFPreferencesCurrentApplication);
 		if (s)
-			PerSetKey(CFStringGetIntValue(s), key_names[i]);
+			PerSetKey(CFStringGetIntValue(s), i, pad);
 		i++;
 	}
 }

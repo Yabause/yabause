@@ -112,7 +112,7 @@ static void yui_screenshot_update(YuiScreenshot	* ys, gpointer data) {
 static gboolean yui_screenshot_draw(YuiScreenshot * ys) {
 	GdkPixbuf * pixbuf, * correct;
 
-	pixbuf = gdk_pixbuf_new_from_data(YUI_GL(yui->area)->pixels, GDK_COLORSPACE_RGB, FALSE, 8,
+	pixbuf = gdk_pixbuf_new_from_data((const guchar *) YUI_GL(yui->area)->pixels, GDK_COLORSPACE_RGB, FALSE, 8,
 			YUI_GL(yui->area)->pixels_width, YUI_GL(yui->area)->pixels_height, YUI_GL(yui->area)->pixels_rowstride, NULL, NULL);
 	correct = gdk_pixbuf_flip(pixbuf, FALSE);
 

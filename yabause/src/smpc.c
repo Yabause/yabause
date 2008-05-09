@@ -35,10 +35,6 @@ Smpc * SmpcRegs;
 u8 * SmpcRegsT;
 SmpcInternal * SmpcInternalVars;
 
-#ifndef USENEWPERINTERFACE
-extern u16 buttonbits;
-#endif
-
 //////////////////////////////////////////////////////////////////////////////
 
 int SmpcInit(u8 regionid) {
@@ -111,10 +107,8 @@ void SmpcReset(void) {
 
    SmpcInternalVars->timing=0;
 
-#ifdef USENEWPERINTERFACE
    memset((void *)&SmpcInternalVars->port1, 0, sizeof(PortData_struct));
    memset((void *)&SmpcInternalVars->port2, 0, sizeof(PortData_struct));
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -266,6 +260,9 @@ void SmpcINTBACKStatus(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void SmpcINTBACKPeripheral(void) {
+  int oregoffset;
+  PortData_struct *port1, *port2;
+
   if (SmpcInternalVars->firstPeri)
     SmpcRegs->SR = 0xC0 | (SmpcRegs->IREG[1] >> 4);
   else
@@ -307,15 +304,13 @@ void SmpcINTBACKPeripheral(void) {
   etc.
   */
 
-#ifdef USENEWPERINTERFACE
-  int oregoffset=0;
-  PortData_struct *port1, *port2;
+  oregoffset=0;
 
   if (SmpcInternalVars->port1.size == 0 && SmpcInternalVars->port2.size == 0)
   {
      // Request data from the Peripheral Interface
-     port1 = PERCore->GetPerDataP1();
-     port2 = PERCore->GetPerDataP2();
+     port1 = &PORTDATA1;
+     port2 = &PORTDATA2;
      memcpy(&SmpcInternalVars->port1, port1, sizeof(PortData_struct));
      memcpy(&SmpcInternalVars->port2, port2, sizeof(PortData_struct));
      SmpcInternalVars->port1.offset = 0;
@@ -352,16 +347,6 @@ void SmpcINTBACKPeripheral(void) {
         SmpcInternalVars->port2.offset += 32;
      }
   }
-#else
-  // Port 1
-  SmpcRegs->OREG[0] = 0xF1; //Port Status(Directly Connected)
-  SmpcRegs->OREG[1] = 0x02; //PeripheralID(Standard Pad)
-  SmpcRegs->OREG[2] = buttonbits >> 8;   //First Data
-  SmpcRegs->OREG[3] = buttonbits & 0xFF;  //Second Data
-
-  // Port 2
-  SmpcRegs->OREG[4] = 0xF0; //Port Status(Not Connected)
-#endif
 
 /*
   Use this as a reference for implementing other peripherals
@@ -654,16 +639,16 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
             case 0x60:
                switch (val & 0x60) {
                   case 0x60: // 1st Data
-                     val = (val & 0x80) | 0x14 | (buttonbits & 0x8);
+                     val = (val & 0x80) | 0x14 | (PORTDATA1.data[1] & 0x8);
                      break;
                   case 0x20: // 2nd Data
-                     val = (val & 0x80) | 0x10 | (buttonbits >> 12);
+                     val = (val & 0x80) | 0x10 | ((PORTDATA1.data[2] >> 4) & 0xF);
                      break;
                   case 0x40: // 3rd Data
-                     val = (val & 0x80) | 0x10 | ((buttonbits >> 8) & 0xF);
+                     val = (val & 0x80) | 0x10 | (PORTDATA1.data[2] & 0xF);
                      break;
                   case 0x00: // 4th Data
-                     val = (val & 0x80) | 0x10 | ((buttonbits >> 4) & 0xF);
+                     val = (val & 0x80) | 0x10 | ((PORTDATA1.data[1] >> 4) & 0xF);
                      break;
                   default: break;
                }

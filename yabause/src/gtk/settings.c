@@ -68,11 +68,11 @@ YuiRangeItem cdcores[] = {
 
 YuiRangeItem vidcores[] = {
 	{ "0", "Dummy Video Interface" },
-#ifdef HAVE_LIBGL
+#ifdef HAVE_LIBGTKGLEXT
 	{ "1", "OpenGL Video Interface" },
 #endif
 	{ "2", "Software Video Interface" },
-	{ 1, 0 }
+	{ 0, 0 }
 };
 
 YuiRangeItem sndcores[] = {
@@ -80,7 +80,7 @@ YuiRangeItem sndcores[] = {
 #ifdef HAVE_LIBSDL
 	{ "1", "SDL Sound Interface" },
 #endif
-	{ 1, 0 }
+	{ 0, 0 }
 };
 
 const gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", 0 };
@@ -94,9 +94,7 @@ YuiRangeItem vidformats[] = {
 
 YuiRangeItem percores[] = {
 	{ "2", "Gtk Input Interface" },
-#ifdef USENEWPERINTERFACE
 	{ "3", "Joystick Input Interface" },
-#endif
 	{ 0, 0 }
 };
 
@@ -147,17 +145,17 @@ GtkWidget* create_dialog1(void) {
    */
   general = yui_page_new(keyfile);
 
-  box = yui_page_add(YUI_PAGE(general), "<b>Bios</b>");
+  box = yui_page_add(YUI_PAGE(general), _("Bios"));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "BiosPath", YUI_FILE_ENTRY_BROWSE, NULL));
 
-  box = yui_page_add(YUI_PAGE(general), "<b>Cdrom</b>");
+  box = yui_page_add(YUI_PAGE(general), _("Cdrom"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "CDROMCore", cdcores));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "CDROMDrive", YUI_FILE_ENTRY_BROWSE, NULL));
 
-  box = yui_page_add(YUI_PAGE(general), "<b>Save states</b>");
+  box = yui_page_add(YUI_PAGE(general), _("Save states"));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "StatePath", YUI_FILE_ENTRY_BROWSE | YUI_FILE_ENTRY_DIRECTORY, NULL));
   
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), general, gtk_label_new ("General"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), general, gtk_label_new (_("General")));
   gtk_widget_show_all(general);
 
   /*
@@ -165,16 +163,16 @@ GtkWidget* create_dialog1(void) {
    */
   video_sound = yui_page_new(keyfile);
 
-  box = yui_page_add(YUI_PAGE(video_sound), "<b>Video core</b>");
+  box = yui_page_add(YUI_PAGE(video_sound), _("Video core"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "VideoCore", vidcores));
 
-  box = yui_page_add(YUI_PAGE(video_sound), "<b>Resolution</b>");
+  box = yui_page_add(YUI_PAGE(video_sound), _("Resolution"));
   gtk_container_add(GTK_CONTAINER(box), yui_resolution_new(keyfile, "General"));
 
-  box = yui_page_add(YUI_PAGE(video_sound), "<b>Video Format</b>");
+  box = yui_page_add(YUI_PAGE(video_sound), _("Video Format"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "VideoFormat", vidformats));
   
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), video_sound, gtk_label_new ("Video"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), video_sound, gtk_label_new (_("Video")));
   gtk_widget_show_all(video_sound);
 
   /*
@@ -182,10 +180,10 @@ GtkWidget* create_dialog1(void) {
    */
   sound = yui_page_new(keyfile);
 
-  box = yui_page_add(YUI_PAGE(sound), "<b>Sound core</b>");
+  box = yui_page_add(YUI_PAGE(sound), _("Sound core"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "SoundCore", sndcores));
   
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), sound, gtk_label_new ("Sound"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), sound, gtk_label_new (_("Sound")));
   gtk_widget_show_all(sound);
 
   /*
@@ -193,7 +191,7 @@ GtkWidget* create_dialog1(void) {
    */
   cart_memory = yui_page_new(keyfile);
   
-  box = yui_page_add(YUI_PAGE(cart_memory), "<b>Cartridge</b>");
+  box = yui_page_add(YUI_PAGE(cart_memory), _("Cartridge"));
   {
      GtkWidget * w1, * w2, * w3;
 
@@ -211,13 +209,13 @@ GtkWidget* create_dialog1(void) {
      g_signal_connect(w1, "changed", G_CALLBACK(hide_show_cart_path), w2);
      g_signal_connect(w1, "changed", G_CALLBACK(hide_show_netlink), w3);
   
-     box = yui_page_add(YUI_PAGE(cart_memory), "<b>Memory</b>");
+     box = yui_page_add(YUI_PAGE(cart_memory), _("Memory"));
      gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "BackupRamPath", YUI_FILE_ENTRY_BROWSE, NULL));
 
-     box = yui_page_add(YUI_PAGE(cart_memory), "<b>Mpeg ROM</b>");
+     box = yui_page_add(YUI_PAGE(cart_memory), _("Mpeg ROM"));
      gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "MpegRomPath", YUI_FILE_ENTRY_BROWSE, NULL));
   
-     gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), cart_memory, gtk_label_new ("Cart/Memory"));
+     gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), cart_memory, gtk_label_new (_("Cart/Memory")));
      gtk_widget_show_all(cart_memory);
 
      if (yui_range_get_active(YUI_RANGE(w1)) == 8) gtk_widget_hide(w2); 
@@ -258,7 +256,7 @@ GtkWidget* create_dialog1(void) {
   
   gtk_box_pack_start (GTK_BOX (hbox22), table5, TRUE, TRUE, 0);
 
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), vbox17, gtk_label_new ("Input"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), vbox17, gtk_label_new (_("Input")));
   gtk_widget_show_all(vbox17);
 
   /*
@@ -267,18 +265,18 @@ GtkWidget* create_dialog1(void) {
 
   advanced = yui_page_new(keyfile);
   
-  box = yui_page_add(YUI_PAGE(advanced), "<b>Region</b>");
+  box = yui_page_add(YUI_PAGE(advanced), _("Region"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "Region", regions));
 
-  box = yui_page_add(YUI_PAGE(advanced), "<b>SH2 Interpreter</b>");
+  box = yui_page_add(YUI_PAGE(advanced), _("SH2 Interpreter"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "SH2Int", sh2interpreters));
 
 #ifdef HAVE_LIBMINI18N
-  box = yui_page_add(YUI_PAGE(advanced), "<b>Translation</b>");
+  box = yui_page_add(YUI_PAGE(advanced), _("Translation"));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "TranslationPath", YUI_FILE_ENTRY_BROWSE, NULL));
 #endif
   
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), advanced, gtk_label_new ("Advanced"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), advanced, gtk_label_new (_("Advanced")));
   gtk_widget_show_all(advanced);
 
   /*

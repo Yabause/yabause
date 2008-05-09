@@ -23,7 +23,7 @@
 
 #include <gtk/gtk.h>
 
-#ifdef HAVE_LIBGL
+#ifdef HAVE_LIBGTKGLEXT
 #include <GL/gl.h>
 #endif
 

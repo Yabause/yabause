@@ -21,7 +21,8 @@
 #include "debug.h"
 #include "peripheral.h"
 
-u16 buttonbits = 0xFFFF;
+PortData_struct PORTDATA1;
+PortData_struct PORTDATA2;
 
 PerInterface_struct * PERCore = NULL;
 extern PerInterface_struct * PERCoreList[];
@@ -65,194 +66,221 @@ void PerDeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerUpPressed(void) {
-   buttonbits &= 0xEFFF;
+void PerPadUpPressed(PerPad_struct * pad) {
+   *pad->padbits &= 0xEF;
    LOG("Up\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerUpReleased(void) {
-   buttonbits |= ~0xEFFF;
+void PerPadUpReleased(PerPad_struct * pad) {
+   *pad->padbits |= ~0xEF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerDownPressed(void) {
-   buttonbits &= 0xDFFF;
+void PerPadDownPressed(PerPad_struct * pad) {
+   *pad->padbits &= 0xDF;
    LOG("Down\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerDownReleased(void) {
-   buttonbits |= ~0xDFFF;
+void PerPadDownReleased(PerPad_struct * pad) {
+   *pad->padbits |= ~0xDF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerRightPressed(void) {
-   buttonbits &= 0x7FFF;
+void PerPadRightPressed(PerPad_struct * pad) {
+   *pad->padbits &= 0x7F;
    LOG("Right\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerRightReleased(void) {
-   buttonbits |= ~0x7FFF;
+void PerPadRightReleased(PerPad_struct * pad) {
+   *pad->padbits |= ~0x7F;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerLeftPressed(void) {
-   buttonbits &= 0xBFFF;
+void PerPadLeftPressed(PerPad_struct * pad) {
+   *pad->padbits &= 0xBF;
    LOG("Left\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerLeftReleased(void) {
-   buttonbits |= ~0xBFFF;
+void PerPadLeftReleased(PerPad_struct * pad) {
+   *pad->padbits |= ~0xBF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerStartPressed(void) {
-   buttonbits &= 0xF7FF;
+void PerPadStartPressed(PerPad_struct * pad) {
+   *pad->padbits &= 0xF7;
    LOG("Start\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerStartReleased(void) {
-   buttonbits |= ~0xF7FF;
+void PerPadStartReleased(PerPad_struct * pad) {
+   *pad->padbits |= ~0xF7;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerAPressed(void) {
-   buttonbits &= 0xFBFF;
+void PerPadAPressed(PerPad_struct * pad) {
+   *pad->padbits &= 0xFB;
    LOG("A\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerAReleased(void) {
-   buttonbits |= ~0xFBFF;
+void PerPadAReleased(PerPad_struct * pad) {
+   *pad->padbits |= ~0xFB;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerBPressed(void) {
-   buttonbits &= 0xFEFF;
+void PerPadBPressed(PerPad_struct * pad) {
+   *pad->padbits &= 0xFE;
    LOG("B\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerBReleased(void) {
-   buttonbits |= ~0xFEFF;
+void PerPadBReleased(PerPad_struct * pad) {
+   *pad->padbits |= ~0xFE;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerCPressed(void) {
-   buttonbits &= 0xFDFF;
+void PerPadCPressed(PerPad_struct * pad) {
+   *pad->padbits &= 0xFD;
    LOG("C\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerCReleased(void) {
-   buttonbits |= ~0xFDFF;
+void PerPadCReleased(PerPad_struct * pad) {
+   *pad->padbits |= ~0xFD;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerXPressed(void) {
-   buttonbits &= 0xFFBF;
+void PerPadXPressed(PerPad_struct * pad) {
+   *(pad->padbits + 1) &= 0xBF;
    LOG("X\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerXReleased(void) {
-   buttonbits |= ~0xFFBF;
+void PerPadXReleased(PerPad_struct * pad) {
+   *(pad->padbits + 1) |= ~0xBF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerYPressed(void) {
-   buttonbits &= 0xFFDF;
+void PerPadYPressed(PerPad_struct * pad) {
+   *(pad->padbits + 1) &= 0xDF;
    LOG("Y\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerYReleased(void) {
-   buttonbits |= ~0xFFDF;
+void PerPadYReleased(PerPad_struct * pad) {
+   *(pad->padbits + 1) |= ~0xDF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerZPressed(void) {
-   buttonbits &= 0xFFEF;
+void PerPadZPressed(PerPad_struct * pad) {
+   *(pad->padbits + 1) &= 0xEF;
    LOG("Z\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerZReleased(void) {
-   buttonbits |= ~0xFFEF;
+void PerPadZReleased(PerPad_struct * pad) {
+   *(pad->padbits + 1) |= ~0xEF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerRTriggerPressed(void) {
-   buttonbits &= 0xFF7F;
+void PerPadRTriggerPressed(PerPad_struct * pad) {
+   *(pad->padbits + 1) &= 0x7F;
    LOG("Right Trigger\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerRTriggerReleased(void) {
-   buttonbits |= ~0xFF7F;
+void PerPadRTriggerReleased(PerPad_struct * pad) {
+   *(pad->padbits + 1) |= ~0x7F;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerLTriggerPressed(void) {
-   buttonbits &= 0xFFF7;
+void PerPadLTriggerPressed(PerPad_struct * pad) {
+   *(pad->padbits + 1) &= 0xF7;
    LOG("Left Trigger\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerLTriggerReleased(void) {
-   buttonbits |= ~0xFFF7;
+void PerPadLTriggerReleased(PerPad_struct * pad) {
+   *(pad->padbits + 1) |= ~0xF7;
 }
 
-#ifdef USENEWPERINTERFACE
 //////////////////////////////////////////////////////////////////////////////
 
-void PerAddPeripheral(PortData_struct *port, int perid, int addoffset)
+void * PerAddPeripheral(PortData_struct *port, int perid)
 {
    int pernum = port->data[0] & 0xF;
    int i;
    int peroffset=1;
+   u8 size;
+   int current = 1;
 
    if (pernum == 0xF)
-     return;
+     return NULL;
 
    // if only one peripheral is connected use 0xF0, otherwise use 0x00 or 0x10
    if (pernum == 0)
-      port->data[0] = 0xF0 | (pernum + 1);
+   {
+      pernum = 1;
+      port->data[0] = 0xF1;
+   }
    else
-      port->data[0] = 0x10 | (pernum + 1);
+   {
+      if (pernum == 1)
+      {
+         u8 tmp = peroffset;
+         tmp += (port->data[peroffset] & 0xF) + 1;
 
-   // figure out where we're at, then add peripheral id
-   for (i = 0; i < pernum; i++)
-      peroffset += (port->data[peroffset] & 0xF);
+         for(i = 0;i < 5;i++)
+            port->data[tmp + i] = 0xFF;
+      }
+      pernum = 6;
+      port->data[0] = 0x16;
+
+      // figure out where we're at, then add peripheral id + 1
+      current = 0;
+      size = port->data[peroffset] & 0xF;
+      while ((current < pernum) && (size != 0xF))
+      {
+         peroffset += size + 1;
+         current++;
+         size = port->data[peroffset] & 0xF;
+      }
+
+      if (current == pernum)
+      {
+         return NULL;
+      }
+      current++;
+   }
 
    port->data[peroffset] = perid;
    peroffset++;
@@ -268,6 +296,17 @@ void PerAddPeripheral(PortData_struct *port, int perid, int addoffset)
          break;
       default: break;
    }
+
+   {
+      u8 tmp = peroffset;
+      tmp += (perid & 0xF);
+      for(i = 0;i < (pernum - current);i++)
+      {
+         port->data[tmp + i] = 0xFF;
+      }
+   }
+
+   return (port->data + (peroffset - 1));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -279,63 +318,111 @@ void PerRemovePeripheral(PortData_struct *port, int removeoffset)
 
 //////////////////////////////////////////////////////////////////////////////
 
-#endif
+typedef struct {
+	u8 name;
+	void (*Press)(PerPad_struct *);
+	void (*Release)(PerPad_struct *);
+} PerBaseConfig_struct;
 
 typedef struct {
 	u32 key;
-	const char * name;
-	void (*Press)(void);
-	void (*Release)(void);
+	PerBaseConfig_struct * base;
+	PerPad_struct * pad;
 } PerConfig_struct;
 
-PerConfig_struct perkeyconfig[] = {
-	{ 0 , "Up", PerUpPressed, PerUpReleased },
-	{ 0 , "Right", PerRightPressed, PerRightReleased },
-	{ 0 , "Down", PerDownPressed, PerDownReleased },
-	{ 0 , "Left", PerLeftPressed, PerLeftReleased },
-	{ 0 , "Right trigger", PerRTriggerPressed, PerRTriggerReleased },
-	{ 0 , "Left trigger", PerLTriggerPressed, PerLTriggerReleased },
-	{ 0 , "Start", PerStartPressed, PerStartReleased },
-	{ 0 , "A", PerAPressed, PerAReleased },
-	{ 0 , "B", PerBPressed, PerBReleased },
-	{ 0 , "C", PerCPressed, PerCReleased },
-	{ 0 , "X", PerXPressed, PerXReleased },
-	{ 0 , "Y", PerYPressed, PerYReleased },
-	{ 0 , "Z", PerZPressed, PerZReleased },
-	{ 0, 0, 0, 0 }
+PerBaseConfig_struct perkeybaseconfig[] = {
+	{ PERPAD_UP, PerPadUpPressed, PerPadUpReleased },
+	{ PERPAD_RIGHT, PerPadRightPressed, PerPadRightReleased },
+	{ PERPAD_DOWN, PerPadDownPressed, PerPadDownReleased },
+	{ PERPAD_LEFT, PerPadLeftPressed, PerPadLeftReleased },
+	{ PERPAD_RIGHT_TRIGGER, PerPadRTriggerPressed, PerPadRTriggerReleased },
+	{ PERPAD_LEFT_TRIGGER, PerPadLTriggerPressed, PerPadLTriggerReleased },
+	{ PERPAD_START, PerPadStartPressed, PerPadStartReleased },
+	{ PERPAD_A, PerPadAPressed, PerPadAReleased },
+	{ PERPAD_B, PerPadBPressed, PerPadBReleased },
+        { PERPAD_C, PerPadCPressed, PerPadCReleased },
+	{ PERPAD_X, PerPadXPressed, PerPadXReleased },
+	{ PERPAD_Y, PerPadYPressed, PerPadYReleased },
+	{ PERPAD_Z, PerPadZPressed, PerPadZReleased },
 };
 
-void PerKeyDown(u32 key) {
+static u32 perkeyconfigsize = 0;
+static PerConfig_struct * perkeyconfig = NULL;
+
+void PerKeyDown(u32 key)
+{
 	int i = 0;
 
-	while(perkeyconfig[i].name) {
-		if (key == perkeyconfig[i].key) {
-			perkeyconfig[i].Press();
+	while(i < perkeyconfigsize)
+	{
+		if (key == perkeyconfig[i].key)
+		{
+			perkeyconfig[i].base->Press(perkeyconfig[i].pad);
 		}
 		i++;
 	}
 }
 
-void PerKeyUp(u32 key) {
+void PerKeyUp(u32 key)
+{
 	int i = 0;
 
-	while(perkeyconfig[i].name) {
-		if (key == perkeyconfig[i].key) {
-			perkeyconfig[i].Release();
+	while(i < perkeyconfigsize)
+	{
+		if (key == perkeyconfig[i].key)
+		{
+			perkeyconfig[i].base->Release(perkeyconfig[i].pad);
 		}
 		i++;
 	}
 }
 
-void PerSetKey(u32 key, const char * name) {
+void PerSetKey(u32 key, u8 name, PerPad_struct * pad)
+{
 	int i = 0;
 
-	while(perkeyconfig[i].name) {
-		if (!strcmp(name, perkeyconfig[i].name)) {
+	while(i < perkeyconfigsize)
+	{
+		if ((name == perkeyconfig[i].base->name) && (pad == perkeyconfig[i].pad))
+		{
 			perkeyconfig[i].key = key;
 		}
 		i++;
 	}
+}
+
+void PerPortReset(void)
+{
+        PORTDATA1.data[0] = 0xF0;
+        PORTDATA1.size = 1;
+        PORTDATA2.data[0] = 0xF0;
+        PORTDATA2.size = 1;
+
+	perkeyconfigsize = 0;
+        if (perkeyconfig)
+           free(perkeyconfig);
+	perkeyconfig = NULL;
+}
+
+PerPad_struct * PerPadAdd(PortData_struct * port)
+{
+	u32 oldsize = perkeyconfigsize;
+	u32 i, j;
+	PerPad_struct * pad = PerAddPeripheral(port, 0x02);
+
+	if (!pad) return NULL;
+
+	perkeyconfigsize += 13;
+	perkeyconfig = realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
+	j = 0;
+	for(i = oldsize;i < perkeyconfigsize;i++)
+	{
+		perkeyconfig[i].base = perkeybaseconfig + j;
+		perkeyconfig[i].pad = pad;
+		j++;
+	}
+
+	return pad;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -346,51 +433,28 @@ int PERDummyInit(void);
 void PERDummyDeInit(void);
 int PERDummyHandleEvents(void);
 void PERDummyNothing(void);
-#ifdef USENEWPERINTERFACE
-PortData_struct *PERDummyGetPerDataP1(void);
-PortData_struct *PERDummyGetPerDataP2(void);
 
-static PortData_struct port1;
-static PortData_struct port2;
+//static PortData_struct port1;
+//static PortData_struct port2;
 
 u32 PERDummyScan(const char *);
 void PERDummyFlush(void);
-#endif
 
 PerInterface_struct PERDummy = {
 PERCORE_DUMMY,
 "Dummy Interface",
 PERDummyInit,
 PERDummyDeInit,
-#ifndef USENEWPERINTERFACE
-PERDummyHandleEvents
-#else
 PERDummyHandleEvents,
-PERDummyGetPerDataP1,
-PERDummyGetPerDataP2,
 PERDummyNothing,
 PERDummyScan,
 0,
 PERDummyFlush
-#endif
 };
 
 //////////////////////////////////////////////////////////////////////////////
 
 int PERDummyInit(void) {
-   PerUpReleased();
-   PerDownReleased();
-   PerRightReleased();
-   PerLeftReleased();
-   PerStartReleased();
-   PerAReleased();
-   PerBReleased();
-   PerCReleased();
-   PerXReleased();
-   PerYReleased();
-   PerZReleased();
-   PerRTriggerReleased();
-   PerLTriggerReleased();
 
    return 0;
 }
@@ -430,33 +494,9 @@ int PERDummyHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-#ifdef USENEWPERINTERFACE
-PortData_struct *PERDummyGetPerDataP1(void)
-{
-   return &port1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-PortData_struct *PERDummyGetPerDataP2(void)
-{
-   return &port2;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-PerInfo_struct *PERDummyGetList(void)
-{
-   // Returns a list of peripherals available along with information on each
-   // peripheral
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 u32 PERDummyScan(const char * name) {
+   return 0;
 }
 
 void PERDummyFlush(void) {
 }
-
-#endif

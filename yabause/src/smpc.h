@@ -50,14 +50,12 @@ typedef struct {
 extern Smpc * SmpcRegs;
 extern u8 * SmpcRegsT;
 
-#ifdef USENEWPERINTERFACE
 typedef struct 
 {
    int offset;
    int size;
    u8 data[256];
 } PortData_struct;
-#endif
 
 typedef struct {
    u8 dotsel; // 0 -> 320 | 1 -> 352
@@ -75,10 +73,8 @@ typedef struct {
    u8 regionsetting;
    u8 SMEM[4];
    s32 timing;
-#ifdef USENEWPERINTERFACE
    PortData_struct port1;
    PortData_struct port2;
-#endif
 } SmpcInternal;
 
 extern SmpcInternal * SmpcInternalVars;

@@ -40,7 +40,7 @@ void AllocAmendPrintString(const char *string1, const char *string2)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YabSetError(int type, void *extra)
+void YabSetError(int type, const void *extra)
 {
    char tempstr[512];
    SH2_struct *sh;

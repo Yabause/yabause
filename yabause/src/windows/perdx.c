@@ -18,16 +18,6 @@
 */
 
 #include <windows.h>
-#include <dinput.h>
-#ifdef __MINGW32__
-// I have to do this because for some reason because the dxerr8.h header is fubared
-const char*  __stdcall DXGetErrorString8A(HRESULT hr);
-#define DXGetErrorString8 DXGetErrorString8A
-const char*  __stdcall DXGetErrorDescription8A(HRESULT hr);
-#define DXGetErrorDescription8 DXGetErrorDescription8A
-#else
-#include <dxerr8.h>
-#endif
 #include "../debug.h"
 #include "../peripheral.h"
 #include "perdx.h"
@@ -57,16 +47,42 @@ GUID GUIDDevice[256]; // I hope that's enough
 u32 numguids=0;
 u32 numdevices=0;
 
-typedef struct
-{
-   LPDIRECTINPUTDEVICE8 lpDIDevice;
-   int type;
-   void (*up[256])(void);
-   void (*down[256])(void);
-} padconf_struct;
+u32 numpads=12;
+PerPad_struct *pad[12];
+padconf_struct paddevice[12];
 
-u32 numpads=1;
-padconf_struct pad[12];
+const int pad_names[] = {
+PERPAD_UP,
+PERPAD_DOWN,
+PERPAD_LEFT,
+PERPAD_RIGHT,
+PERPAD_A,
+PERPAD_B,
+PERPAD_C,
+PERPAD_X,
+PERPAD_Y,
+PERPAD_Z,
+PERPAD_LEFT_TRIGGER,
+PERPAD_RIGHT_TRIGGER,
+PERPAD_START
+};
+
+const char *pad_names2[] = {
+"Up",
+"Down",
+"Left",
+"Right",
+"A",
+"B",
+"C",
+"X",
+"Y",
+"Z",
+"L",
+"R",
+"Start",
+NULL
+};
 
 #define TYPE_KEYBOARD           0
 #define TYPE_JOYSTICK           1
@@ -99,28 +115,14 @@ BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SetupControlUpDown(u8 padnum, u8 controlcode, void (*downfunc)(), void (*upfunc)())
-{
-   pad[padnum].down[controlcode] = downfunc;
-   pad[padnum].up[controlcode] = upfunc;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void KeyStub(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 int PERDXInit(void)
 {
-   int i;
    DIPROPDWORD dipdw;
    char tempstr[512];
    HRESULT ret;
 
-   memset(pad, 0, sizeof(padconf_struct) * numpads);
+   memset(pad, 0, sizeof(pad));
+   memset(paddevice, 0, sizeof(paddevice));
 
    if ((ret = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION,
        &IID_IDirectInput8, (LPVOID *)&lpDI8, NULL)) != DI_OK)
@@ -173,27 +175,26 @@ int PERDXInit(void)
    // Make sure Keyboard is acquired already
    IDirectInputDevice8_Acquire(lpDIDevice[0]);
 
-   pad[0].lpDIDevice = lpDIDevice[0];
-   pad[0].type = TYPE_KEYBOARD;
+   paddevice[0].lpDIDevice = lpDIDevice[0];
+   paddevice[0].type = TYPE_KEYBOARD;
+   paddevice[i].emulatetype = 1;
 
-   for(i = 0; i < 256; i++)
-       SetupControlUpDown(0, i, KeyStub, KeyStub);
+   PerPortReset();
+   pad[0] = PerPadAdd(&PORTDATA1);
 
-   SetupControlUpDown(0, DIK_UP, PerUpPressed, PerUpReleased);
-   SetupControlUpDown(0, DIK_DOWN, PerDownPressed, PerDownReleased);
-   SetupControlUpDown(0, DIK_LEFT, PerLeftPressed, PerLeftReleased);
-   SetupControlUpDown(0, DIK_RIGHT, PerRightPressed, PerRightReleased);
-   SetupControlUpDown(0, DIK_K, PerAPressed, PerAReleased);
-   SetupControlUpDown(0, DIK_L, PerBPressed, PerBReleased);
-   SetupControlUpDown(0, DIK_M, PerCPressed, PerCReleased);
-   SetupControlUpDown(0, DIK_U, PerXPressed, PerXReleased);
-   SetupControlUpDown(0, DIK_I, PerYPressed, PerYReleased);
-   SetupControlUpDown(0, DIK_O, PerZPressed, PerZReleased);
-   SetupControlUpDown(0, DIK_X, PerLTriggerPressed, PerLTriggerReleased);
-   SetupControlUpDown(0, DIK_Z, PerRTriggerPressed, PerRTriggerReleased);
-   SetupControlUpDown(0, DIK_J, PerStartPressed, PerStartReleased);
-
-   numdevices = 1;
+   PerSetKey(DIK_UP, PERPAD_UP, pad[0]);
+   PerSetKey(DIK_DOWN, PERPAD_DOWN, pad[0]);
+   PerSetKey(DIK_LEFT, PERPAD_LEFT, pad[0]);
+   PerSetKey(DIK_RIGHT, PERPAD_RIGHT, pad[0]);
+   PerSetKey(DIK_K, PERPAD_A, pad[0]);
+   PerSetKey(DIK_L, PERPAD_B, pad[0]);
+   PerSetKey(DIK_M, PERPAD_C, pad[0]);
+   PerSetKey(DIK_U, PERPAD_X, pad[0]);
+   PerSetKey(DIK_I, PERPAD_Y, pad[0]);
+   PerSetKey(DIK_O, PERPAD_Z, pad[0]);
+   PerSetKey(DIK_X, PERPAD_LEFT_TRIGGER, pad[0]);
+   PerSetKey(DIK_Z, PERPAD_RIGHT_TRIGGER, pad[0]);
+   PerSetKey(DIK_J, PERPAD_START, pad[0]);
 
    return 0;
 }
@@ -216,39 +217,52 @@ void PERDXLoadDevices(char *inifilename)
 {
    char tempstr[MAX_PATH];
    char string1[20];
+   char string2[20];
    GUID guid;
    DIDEVCAPS didc;
-   int i, i2;
+   u32 i;
+   int i2;
    int buttonid;
    DIPROPDWORD dipdw;
 
+   PerPortReset();
+   memset(pad, 0, sizeof(pad));
+
    for (i = 0; i < numpads; i++)
    {
-      sprintf(string1, "Peripheral%d", i+1);
+      sprintf(string1, "Peripheral%d", (int)i+1);
 
       // Let's first fetch the guid of the device
       if (GetPrivateProfileString(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
          continue;
 
-      if (pad[i].lpDIDevice)
+
+      if (GetPrivateProfileString(string1, "EmulateType", "0", string2, MAX_PATH, inifilename))
       {
-         // Free the default keyboard
-         IDirectInputDevice8_Unacquire(pad[i].lpDIDevice);
-         IDirectInputDevice8_Release(pad[i].lpDIDevice);
+         paddevice[i].emulatetype = atoi(string2);
+         if (paddevice[i].emulatetype == 0)
+            continue;
       }
 
-      for(i2 = 0; i2 < 256; i2++)
-         SetupControlUpDown(i, i2, KeyStub, KeyStub);
+      if (paddevice[i].lpDIDevice)
+      {
+         // Free the default keyboard
+         IDirectInputDevice8_Unacquire(paddevice[i].lpDIDevice);
+         IDirectInputDevice8_Release(paddevice[i].lpDIDevice);
+      }
 
       StringToGUID(tempstr, &guid);
 
       // Ok, now that we've got the GUID of the device, let's set it up
-
       if (IDirectInput8_CreateDevice(lpDI8, &guid, &lpDIDevice[i],
           NULL) != DI_OK)
+      {
+         paddevice[i].lpDIDevice = NULL;
+         paddevice[i].emulatetype = 0;
          continue;
+      }
 
-      pad[i].lpDIDevice = lpDIDevice[i];
+      paddevice[i].lpDIDevice = lpDIDevice[i];
 
       didc.dwSize = sizeof(DIDEVCAPS);
 
@@ -259,14 +273,14 @@ void PERDXLoadDevices(char *inifilename)
       {
          if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIKeyboard) != DI_OK)
             continue;
-         pad[i].type = TYPE_KEYBOARD;
+         paddevice[i].type = TYPE_KEYBOARD;
       }       
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
                GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_JOYSTICK)
       {
          if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIJoystick2) != DI_OK)
             continue;
-         pad[i].type = TYPE_JOYSTICK;
+         paddevice[i].type = TYPE_JOYSTICK;
       }
 
       if (IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[i], YabWin,
@@ -285,47 +299,20 @@ void PERDXLoadDevices(char *inifilename)
 
       IDirectInputDevice8_Acquire(lpDIDevice[i]);
 
+      // Make sure we're added to the smpc list 
+      if (i < 6)
+         pad[i] = PerPadAdd(&PORTDATA1);
+      else
+         pad[i] = PerPadAdd(&PORTDATA2);
+
       // Now that we're all setup, let's fetch the controls from the ini
-      sprintf(string1, "Peripheral%d", i+1);
+      sprintf(string1, "Peripheral%d", (int)i+1);
 
-      buttonid = GetPrivateProfileInt(string1, "Up", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerUpPressed, PerUpReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "Down", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerDownPressed, PerDownReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "Left", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerLeftPressed, PerLeftReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "Right", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerRightPressed, PerRightReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "L", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerLTriggerPressed, PerLTriggerReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "R", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerRTriggerPressed, PerRTriggerReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "Start", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerStartPressed, PerStartReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "A", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerAPressed, PerAReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "B", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerBPressed, PerBReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "C", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerCPressed, PerCReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "X", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerXPressed, PerXReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "Y", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerYPressed, PerYReleased);
-
-      buttonid = GetPrivateProfileInt(string1, "Z", 0, inifilename);
-      SetupControlUpDown(i, buttonid, PerZPressed, PerZReleased);
+      for (i2 = 0; i2 < 13; i2++)
+      {
+         buttonid = GetPrivateProfileInt(string1, pad_names2[i2], 0, inifilename);
+         PerSetKey(buttonid, pad_names[i2], pad[i]);
+      }
    }
 }
 
@@ -356,50 +343,56 @@ void PERDXDeInit(void)
 
 void PollKeys(void)
 {
-   int i, i2;
+   u32 i;
+   DWORD i2;
    DWORD size=8;
    DIDEVICEOBJECTDATA didod[8];
    HRESULT hr;
 
    for (i = 0; i < numpads; i++)
    {
-      if (pad[i].lpDIDevice == NULL)
-         return;
+      if (paddevice[i].lpDIDevice == NULL)
+         continue;
 
-      hr = IDirectInputDevice8_Poll(pad[i].lpDIDevice);
+      hr = IDirectInputDevice8_Poll(paddevice[i].lpDIDevice);
 
       if (FAILED(hr))
       {
          if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
          {
             // Make sure device is acquired
-            while(IDirectInputDevice8_Acquire(pad[i].lpDIDevice) == DIERR_INPUTLOST) {}
-            return;
+            while(IDirectInputDevice8_Acquire(paddevice[i].lpDIDevice) == DIERR_INPUTLOST) {}
+            continue;
          }
       }
 
+      size = 8;
+
       // Poll events
-      if (IDirectInputDevice8_GetDeviceData(pad[i].lpDIDevice,
+      if (IDirectInputDevice8_GetDeviceData(paddevice[i].lpDIDevice,
           sizeof(DIDEVICEOBJECTDATA), didod, &size, 0) != DI_OK)
       {
          if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
          {
             // Make sure device is acquired
-            while(IDirectInputDevice8_Acquire(pad[i].lpDIDevice) == DIERR_INPUTLOST) {}
-            return;
+            while(IDirectInputDevice8_Acquire(paddevice[i].lpDIDevice) == DIERR_INPUTLOST) {}
+            continue;
          }
       }
 
-      switch (pad[i].type)
+      if (size == 0)
+         continue;
+
+      switch (paddevice[i].type)
       {
          case TYPE_KEYBOARD:
             // This probably could be optimized
             for (i2 = 0; i2 < size; i2++)
             {
                if (didod[i2].dwData & 0x80)
-                  pad[i].down[didod[i2].dwOfs]();
+                  PerKeyDown(didod[i2].dwOfs);
                else
-                  pad[i].up[didod[i2].dwOfs]();
+                  PerKeyUp(didod[i2].dwOfs);
             }
             break;
          case TYPE_JOYSTICK:
@@ -412,18 +405,18 @@ void PollKeys(void)
                {
                   if (didod[i2].dwData < 0x3FFF)
                   {
-                     pad[i].down[PAD_DIR_AXISLEFT]();
-                     pad[i].up[PAD_DIR_AXISRIGHT]();
+                     PerKeyDown(PAD_DIR_AXISLEFT);
+                     PerKeyUp(PAD_DIR_AXISRIGHT);
                   }
                   else if (didod[i2].dwData > 0xBFFF)
                   {
-                     pad[i].down[PAD_DIR_AXISRIGHT]();
-                     pad[i].up[PAD_DIR_AXISLEFT]();
+                     PerKeyDown(PAD_DIR_AXISRIGHT);
+                     PerKeyUp(PAD_DIR_AXISLEFT);
                   }
                   else
                   {
-                     pad[i].up[PAD_DIR_AXISLEFT]();
-                     pad[i].up[PAD_DIR_AXISRIGHT]();
+                     PerKeyUp(PAD_DIR_AXISLEFT);
+                     PerKeyUp(PAD_DIR_AXISRIGHT);
                   }
                }
                // Y Axis
@@ -431,18 +424,18 @@ void PollKeys(void)
                {
                   if (didod[i2].dwData < 0x3FFF)
                   {
-                     pad[i].down[PAD_DIR_AXISUP]();
-                     pad[i].up[PAD_DIR_AXISDOWN]();
+                     PerKeyDown(PAD_DIR_AXISUP);
+                     PerKeyUp(PAD_DIR_AXISDOWN);
                   }
                   else if (didod[i2].dwData > 0xBFFF)
                   {
-                     pad[i].down[PAD_DIR_AXISDOWN]();
-                     pad[i].up[PAD_DIR_AXISUP]();
+                     PerKeyDown(PAD_DIR_AXISDOWN);
+                     PerKeyUp(PAD_DIR_AXISUP);
                   }
                   else
                   {
-                     pad[i].up[PAD_DIR_AXISUP]();
-                     pad[i].up[PAD_DIR_AXISDOWN]();
+                     PerKeyUp(PAD_DIR_AXISUP);
+                     PerKeyUp(PAD_DIR_AXISDOWN);
                   }
                }
                else if (didod[i2].dwOfs == 0x20)
@@ -450,70 +443,70 @@ void PollKeys(void)
                   // POV Center
                   if (LOWORD(didod[i2].dwData) == 0xFFFF)
                   {
-                     pad[i].up[PAD_DIR_POVUP]();
-                     pad[i].up[PAD_DIR_POVRIGHT]();
-                     pad[i].up[PAD_DIR_POVDOWN]();
-                     pad[i].up[PAD_DIR_POVLEFT]();
+                     PerKeyUp(PAD_DIR_POVUP);
+                     PerKeyUp(PAD_DIR_POVRIGHT);
+                     PerKeyUp(PAD_DIR_POVDOWN);
+                     PerKeyUp(PAD_DIR_POVLEFT);
                   }
                   // POV Up
                   else if (didod[i2].dwData < 4500)
                   {
-                     pad[i].down[PAD_DIR_POVUP]();
-                     pad[i].up[PAD_DIR_POVRIGHT]();
-                     pad[i].up[PAD_DIR_POVLEFT]();
+                     PerKeyDown(PAD_DIR_POVUP);
+                     PerKeyUp(PAD_DIR_POVRIGHT);
+                     PerKeyUp(PAD_DIR_POVLEFT);
                   }
                   // POV Up-right
                   else if (didod[i2].dwData < 9000)
                   {
-                     pad[i].down[PAD_DIR_POVUP]();
-                     pad[i].down[PAD_DIR_POVRIGHT]();
+                     PerKeyDown(PAD_DIR_POVUP);
+                     PerKeyDown(PAD_DIR_POVRIGHT);
                   }
                   // POV Right
                   else if (didod[i2].dwData < 13500)
                   {
-                     pad[i].down[PAD_DIR_POVRIGHT]();
-                     pad[i].up[PAD_DIR_POVDOWN]();
-                     pad[i].up[PAD_DIR_POVUP]();
+                     PerKeyDown(PAD_DIR_POVRIGHT);
+                     PerKeyUp(PAD_DIR_POVDOWN);
+                     PerKeyUp(PAD_DIR_POVUP);
                   }
                   // POV Right-down
                   else if (didod[i2].dwData < 18000)
                   {
-                     pad[i].down[PAD_DIR_POVRIGHT]();
-                     pad[i].down[PAD_DIR_POVDOWN]();
+                     PerKeyDown(PAD_DIR_POVRIGHT);
+                     PerKeyDown(PAD_DIR_POVDOWN);
                   }
                   // POV Down
                   else if (didod[i2].dwData < 22500)
                   {
-                     pad[i].down[PAD_DIR_POVDOWN]();
-                     pad[i].up[PAD_DIR_POVLEFT]();
-                     pad[i].up[PAD_DIR_POVRIGHT]();
+                     PerKeyDown(PAD_DIR_POVDOWN);
+                     PerKeyUp(PAD_DIR_POVLEFT);
+                     PerKeyUp(PAD_DIR_POVRIGHT);
                   }
                   // POV Down-left
                   else if (didod[i2].dwData < 27000)
                   {
-                     pad[i].down[PAD_DIR_POVDOWN]();
-                     pad[i].down[PAD_DIR_POVLEFT]();
+                     PerKeyDown(PAD_DIR_POVDOWN);
+                     PerKeyDown(PAD_DIR_POVLEFT);
                   }
                   // POV Left
                   else if (didod[i2].dwData < 31500)
                   {
-                     pad[i].down[PAD_DIR_POVLEFT]();
-                     pad[i].up[PAD_DIR_POVUP]();
-                     pad[i].up[PAD_DIR_POVDOWN]();
+                     PerKeyDown(PAD_DIR_POVLEFT);
+                     PerKeyUp(PAD_DIR_POVUP);
+                     PerKeyUp(PAD_DIR_POVDOWN);
                   }
                   // POV Left-up
                   else if (didod[i2].dwData < 36000)
                   {
-                     pad[i].down[PAD_DIR_POVLEFT]();
-                     pad[i].down[PAD_DIR_POVUP]();
+                     PerKeyDown(PAD_DIR_POVLEFT);
+                     PerKeyDown(PAD_DIR_POVUP);
                   }
                }
                else if (didod[i2].dwOfs >= 0x30 && didod[i2].dwOfs <= 0xFF)
                {
                   if (didod[i2].dwData & 0x80)
-                     pad[i].down[didod[i2].dwOfs]();
+                     PerKeyDown(didod[i2].dwOfs);
                   else
-                     pad[i].up[didod[i2].dwOfs]();
+                     PerKeyUp(didod[i2].dwOfs);
                }
             }
             break;
@@ -545,7 +538,7 @@ BOOL CALLBACK EnumPeripheralsCallback2 (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
        GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_JOYSTICK ||
        GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_KEYBOARD)
    {
-      SendMessage((HWND)pvRef, CB_ADDSTRING, 0, (long)lpddi->tszInstanceName);
+      SendMessage((HWND)pvRef, CB_ADDSTRING, 0, (LPARAM)lpddi->tszInstanceName);
       memcpy(&GUIDDevice[numguids], &lpddi->guidInstance, sizeof(GUID));
       numguids++;
    }
@@ -566,7 +559,7 @@ void PERDXListDevices(HWND control)
    numguids = 0;
 
    SendMessage(control, CB_RESETCONTENT, 0, 0);
-   SendMessage(control, CB_ADDSTRING, 0, (long)"None");
+   SendMessage(control, CB_ADDSTRING, 0, (LPARAM)"None");
 
    IDirectInput8_EnumDevices(lpDI8temp, DI8DEVCLASS_ALL, EnumPeripheralsCallback2,
                              (LPVOID)control, DIEDFL_ATTACHEDONLY);
@@ -634,7 +627,13 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
    char tempstr[MAX_PATH];
    char string1[20];
    GUID guid;
-   int i;
+   u32 i;
+   int idlist[] = { IDC_UPTEXT, IDC_DOWNTEXT, IDC_LEFTTEXT, IDC_RIGHTTEXT,
+                    IDC_ATEXT, IDC_BTEXT, IDC_CTEXT,
+                    IDC_XTEXT, IDC_YTEXT, IDC_ZTEXT,
+                    IDC_LTEXT, IDC_RTEXT, IDC_STARTTEXT
+                  };
+
 
    sprintf(string1, "Peripheral%d", padnum+1);
 
@@ -695,140 +694,26 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
       {
          sprintf(string1, "Peripheral%d", padnum+1);
 
-         buttonid = GetPrivateProfileInt(string1, "Up", 0, inifilename);
-         controlmap[0] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_UPTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Down", 0, inifilename);
-         controlmap[1] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_DOWNTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Left", 0, inifilename);
-         controlmap[2] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_LEFTTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Right", 0, inifilename);
-         controlmap[3] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_RIGHTTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "L", 0, inifilename);
-         controlmap[4] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_LTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "R", 0, inifilename);
-         controlmap[5] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_RTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Start", 0, inifilename);
-         controlmap[6] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_STARTTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "A", 0, inifilename);
-         controlmap[7] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_ATEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "B", 0, inifilename);
-         controlmap[8] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_BTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "C", 0, inifilename);
-         controlmap[9] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_CTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "X", 0, inifilename);
-         controlmap[10] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_XTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Y", 0, inifilename);
-         controlmap[11] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_YTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Z", 0, inifilename);
-         controlmap[12] = buttonid;
-         ConvertKBIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_ZTEXT, tempstr);
+         for (i = 0; i < 13; i++)
+         {
+            buttonid = GetPrivateProfileInt(string1, pad_names2[i], 0, inifilename);
+            controlmap[i] = buttonid;
+            ConvertKBIDToName(buttonid, tempstr);
+            SetDlgItemText(hWnd, idlist[i], tempstr);
+         }
       }       
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
               GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_JOYSTICK)
       {
          sprintf(string1, "Peripheral%d", padnum+1);
 
-         buttonid = GetPrivateProfileInt(string1, "Up", 0, inifilename);
-         controlmap[0] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_UPTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Down", 0, inifilename);
-         controlmap[1] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_DOWNTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Left", 0, inifilename);
-         controlmap[2] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_LEFTTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Right", 0, inifilename);
-         controlmap[3] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_RIGHTTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "L", 0, inifilename);
-         controlmap[4] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_LTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "R", 0, inifilename);
-         controlmap[5] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_RTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Start", 0, inifilename);
-         controlmap[6] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_STARTTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "A", 0, inifilename);
-         controlmap[7] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_ATEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "B", 0, inifilename);
-         controlmap[8] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_BTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "C", 0, inifilename);
-         controlmap[9] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_CTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "X", 0, inifilename);
-         controlmap[10] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_XTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Y", 0, inifilename);
-         controlmap[11] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_YTEXT, tempstr);
-
-         buttonid = GetPrivateProfileInt(string1, "Z", 0, inifilename);
-         controlmap[12] = buttonid;
-         ConvertJoyIDToName(buttonid, tempstr);
-         SetDlgItemText(hWnd, IDC_ZTEXT, tempstr);
+         for (i = 0; i < 13; i++)
+         {
+            buttonid = GetPrivateProfileInt(string1, pad_names2[i], 0, inifilename);
+            controlmap[i] = buttonid;
+            ConvertJoyIDToName(buttonid, tempstr);
+            SetDlgItemText(hWnd, idlist[i], tempstr);
+         }
       }
 
       IDirectInputDevice8_Release(lpDIDevicetemp);       
@@ -984,7 +869,7 @@ LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    HRESULT hr;
    DWORD size;
    DIDEVICEOBJECTDATA didod[8];
-   int i;
+   DWORD i;
    DIDEVCAPS didc;
 
    switch (uMsg)

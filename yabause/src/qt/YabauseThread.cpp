@@ -146,11 +146,22 @@ void YabauseThread::reloadSettings()
 	
 	emit requestSize( QSize( s->value( "Video/Width", 0 ).toInt(), s->value( "Video/Height", 0 ).toInt() ) );
 	emit requestFullscreen( s->value( "Video/Fullscreen", false ).toBool() );
+
+	{
+		u8 * padbits;
+		u8 i = 0;
+
+		PerReset(&PORTDATA1);
+		padbits = PerPadAdd(&PORTDATA1);
 	
-	s->beginGroup( "Input/Keys" );
-	foreach ( const QString& ki, s->childKeys() )
-		PerSetKey( (u32)s->value( ki ).toString().toUInt(), ki.toAscii().constData() );
-	s->endGroup();
+		s->beginGroup( "Input/Keys" );
+		foreach ( const QString& ki, s->childKeys() )
+		{
+			PerSetKey( (u32)s->value( ki ).toString().toUInt(), i, padbits );
+			i++;
+		}
+		s->endGroup();
+	}
 }
 
 bool YabauseThread::emulationRunning()

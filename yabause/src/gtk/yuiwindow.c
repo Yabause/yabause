@@ -238,7 +238,7 @@ void yui_window_show_log(YuiWindow * yui) {
 }
 
 static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, YuiWindow * yui) {
-#ifdef HAVE_LIBGL
+#ifdef HAVE_LIBGTKGLEXT
 	glClear(GL_COLOR_BUFFER_BIT);
 #endif
 	yui_window_update(yui);

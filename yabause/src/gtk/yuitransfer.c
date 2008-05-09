@@ -21,6 +21,7 @@
 #include <gtk/gtk.h>
 
 #include "yuitransfer.h"
+#include "../core.h"
 
 static void yui_transfer_class_init	(YuiTransferClass * klass);
 static void yui_transfer_init		(YuiTransfer      * yfe);
@@ -74,8 +75,9 @@ static void yui_transfer_init (YuiTransfer * yt) {
   GtkWidget *radiobutton1;
   GtkWidget *radiobutton2;
   GtkWidget *radiobutton3;
+  const char * tmp;
 
-  gtk_window_set_title (GTK_WINDOW (yt), "File transfer");
+  gtk_window_set_title (GTK_WINDOW (yt), _("File transfer"));
 
   vbox1 = gtk_vbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (yt), vbox1);
@@ -84,17 +86,18 @@ static void yui_transfer_init (YuiTransfer * yt) {
   gtk_box_pack_start (GTK_BOX (vbox1), hbox1, FALSE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox1), 10);
 
-  label4 = gtk_label_new ("File");
+  tmp = _("File");
+  label4 = gtk_label_new (tmp);
   gtk_box_pack_start (GTK_BOX (hbox1), label4, FALSE, FALSE, 0);
   gtk_misc_set_alignment (GTK_MISC (label4), 0, 0.5);
-  gtk_label_set_width_chars (GTK_LABEL (label4), 4);
+  gtk_label_set_width_chars (GTK_LABEL (label4), strlen(tmp));
 
   yt->file_entry = gtk_entry_new ();
   g_signal_connect_swapped(yt->file_entry, "changed", G_CALLBACK(yui_transfer_check), yt);
   gtk_box_pack_start (GTK_BOX (hbox1), yt->file_entry, TRUE, TRUE, 0);
   gtk_entry_set_invisible_char (GTK_ENTRY (yt->file_entry), 9679);
 
-  button1 = gtk_button_new_with_mnemonic ("Browse");
+  button1 = gtk_button_new_with_mnemonic (_("Browse"));
   g_signal_connect(button1, "clicked", G_CALLBACK(yui_transfer_browse), yt->file_entry);
   gtk_box_pack_start (GTK_BOX (hbox1), button1, FALSE, FALSE, 0);
 
@@ -102,19 +105,19 @@ static void yui_transfer_init (YuiTransfer * yt) {
   gtk_box_pack_start (GTK_BOX (vbox1), hbox3, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox3), 10);
 
-  radiobutton1 = gtk_radio_button_new_with_mnemonic (NULL, "Load as executable");
+  radiobutton1 = gtk_radio_button_new_with_mnemonic (NULL, _("Load as executable"));
   g_signal_connect(radiobutton1, "toggled", G_CALLBACK(yui_transfer_load_exec), yt);
   gtk_box_pack_start (GTK_BOX (hbox3), radiobutton1, FALSE, FALSE, 0);
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton1_group);
   radiobutton1_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
 
-  radiobutton2 = gtk_radio_button_new_with_mnemonic (NULL, "Load");
+  radiobutton2 = gtk_radio_button_new_with_mnemonic (NULL, _("Load"));
   g_signal_connect(radiobutton2, "toggled", G_CALLBACK(yui_transfer_load), yt);
   gtk_box_pack_start (GTK_BOX (hbox3), radiobutton2, FALSE, FALSE, 0);
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton2), radiobutton1_group);
   radiobutton1_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton2));
 
-  radiobutton3 = gtk_radio_button_new_with_mnemonic (NULL, "Store");
+  radiobutton3 = gtk_radio_button_new_with_mnemonic (NULL, _("Store"));
   g_signal_connect(radiobutton3, "toggled", G_CALLBACK(yui_transfer_store), yt);
   gtk_box_pack_start (GTK_BOX (hbox3), radiobutton3, FALSE, FALSE, 0);
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton3), radiobutton1_group);
@@ -124,20 +127,22 @@ static void yui_transfer_init (YuiTransfer * yt) {
   gtk_box_pack_start (GTK_BOX (vbox1), hbox2, FALSE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox2), 10);
 
-  label2 = gtk_label_new ("From");
+  tmp = _("From");
+  label2 = gtk_label_new (tmp);
   gtk_box_pack_start (GTK_BOX (hbox2), label2, FALSE, FALSE, 0);
   gtk_misc_set_alignment (GTK_MISC (label2), 0, 0.5);
-  gtk_label_set_width_chars (GTK_LABEL (label2), 4);
+  gtk_label_set_width_chars (GTK_LABEL (label2), strlen(tmp));
 
   yt->from_entry = gtk_entry_new ();
   g_signal_connect_swapped(yt->from_entry, "changed", G_CALLBACK(yui_transfer_check), yt);
   gtk_box_pack_start (GTK_BOX (hbox2), yt->from_entry, TRUE, TRUE, 0);
   gtk_entry_set_invisible_char (GTK_ENTRY (yt->from_entry), 9679);
 
-  yt->to_label = gtk_label_new ("To");
+  tmp = _("To");
+  yt->to_label = gtk_label_new (tmp);
   gtk_box_pack_start (GTK_BOX (hbox2), yt->to_label, FALSE, FALSE, 0);
   gtk_misc_set_alignment (GTK_MISC (yt->to_label), 0, 0.5);
-  gtk_label_set_width_chars (GTK_LABEL (yt->to_label), 4);
+  gtk_label_set_width_chars (GTK_LABEL (yt->to_label), strlen(tmp));
 
   yt->to_entry = gtk_entry_new ();
   g_signal_connect_swapped(yt->to_entry, "changed", G_CALLBACK(yui_transfer_check), yt);
@@ -148,7 +153,7 @@ static void yui_transfer_init (YuiTransfer * yt) {
   gtk_box_pack_start (GTK_BOX (vbox1), hbuttonbox1, FALSE, TRUE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbuttonbox1), 10);
 
-  yt->transfer_button = gtk_button_new_with_mnemonic ("Transfer");
+  yt->transfer_button = gtk_button_new_with_mnemonic (_("Transfer"));
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), yt->transfer_button);
   g_signal_connect(yt->transfer_button, "clicked", G_CALLBACK(yui_transfer_exec), yt);
   GTK_WIDGET_SET_FLAGS (yt->transfer_button, GTK_CAN_DEFAULT);
@@ -158,7 +163,7 @@ static void yui_transfer_init (YuiTransfer * yt) {
   g_signal_connect_swapped(button5, "clicked", G_CALLBACK(gtk_widget_destroy), yt);
   GTK_WIDGET_SET_FLAGS (button5, GTK_CAN_DEFAULT);
 
-  gtk_widget_show_all (yt);
+  gtk_widget_show_all (GTK_WIDGET(yt));
 
 	gtk_widget_set_sensitive(GTK_WIDGET(yt->to_label), FALSE);
 	gtk_widget_set_sensitive(GTK_WIDGET(yt->to_entry), FALSE);
@@ -188,7 +193,7 @@ static void yui_transfer_browse(GtkWidget * widget, gpointer user_data) {
         gint result;
         const gchar * filename;
 
-        file_selector = gtk_file_chooser_dialog_new ("Please choose a file", NULL, GTK_FILE_CHOOSER_ACTION_OPEN,
+        file_selector = gtk_file_chooser_dialog_new (_("Please choose a file"), NULL, GTK_FILE_CHOOSER_ACTION_OPEN,
                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	filename = gtk_entry_get_text(GTK_ENTRY(user_data));
 	if (filename[0] != '\0')
