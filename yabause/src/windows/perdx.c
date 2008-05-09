@@ -177,7 +177,7 @@ int PERDXInit(void)
 
    paddevice[0].lpDIDevice = lpDIDevice[0];
    paddevice[0].type = TYPE_KEYBOARD;
-   paddevice[i].emulatetype = 1;
+   paddevice[0].emulatetype = 1;
 
    PerPortReset();
    pad[0] = PerPadAdd(&PORTDATA1);
