@@ -93,3 +93,21 @@ _DCCDGetStatus:
     .byte       0, 1, 1, 0, 0, 0, 3, 2
 .get_status_init_func:
     .long       _DCCDInit
+
+!   int DCCDDeInit(void)
+!       Deinitialize the CD Drive of the Dreamcast (i.e., undo the odd
+!       initialization stuff that the code does for Yabause).
+    .globl      _DCCDDeInit
+    .line       101
+_DCCDDeInit:
+    mov.l       .cdrom_reinit, r0
+    sts.l       pr, @-r15
+    jsr         @r0
+    nop
+    lds.l       @r15+, pr
+    rts
+    nop         ! Leave the return value from cdrom_reinit as the return here.
+
+    .align      4
+.cdrom_reinit:
+    .long       _cdrom_reinit

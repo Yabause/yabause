@@ -30,6 +30,7 @@
 /* These are defined in cd.s */
 extern int __gdc_change_data_type(void *param);
 extern int DCCDGetStatus(void);
+extern int DCCDDeInit(void);
 
 /* And these are still here (for now anyway) */
 int DCCDInit(const char *);
@@ -86,12 +87,6 @@ int DCCDInit(const char * cdrom_name)   {
 
     return 0;
 }
-
-int DCCDDeInit(void)    {
-    cdrom_reinit();
-    return 0;
-}
-
 
 s32 DCCDReadTOC(u32 * TOC)  {
     CDROM_TOC dctoc;
