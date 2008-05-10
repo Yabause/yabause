@@ -475,6 +475,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"32 Mbit Dram");
          SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"Netlink");
          SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"16 Mbit Rom");
+//         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"Japanese Modem");
 
          // Set Selected Cart Type
          SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_SETCURSEL, carttype, 0);
@@ -489,6 +490,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case CART_DRAM8MBIT:
             case CART_DRAM32MBIT:
             case CART_NETLINK:
+            case CART_JAPMODEM:
                EnableWindow(GetDlgItem(hDlg, IDC_CARTEDIT), FALSE);
                EnableWindow(GetDlgItem(hDlg, IDC_CARTBROWSE), FALSE);
                break;

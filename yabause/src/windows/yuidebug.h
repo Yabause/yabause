@@ -1,4 +1,4 @@
-/*  Copyright 2004-2007 Theo Berkau
+/*  Copyright 2004-2008 Theo Berkau
 
     This file is part of Yabause.
 
@@ -36,6 +36,8 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam);
+LRESULT CALLBACK SMPCDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam);
 LRESULT CALLBACK MemoryEditorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam);

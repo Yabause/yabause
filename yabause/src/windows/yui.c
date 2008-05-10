@@ -1084,6 +1084,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                YuiTempUnPause();
                break;
             }
+            case IDM_SMPCDEBUG:
+            {
+               YuiTempPause();
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SMPCDEBUG), hWnd, (DLGPROC)SMPCDebugDlgProc);
+               YuiTempUnPause();
+               break;
+            }
             case IDM_MEMORYEDITOR:
             {
                YuiTempPause();

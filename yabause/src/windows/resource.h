@@ -35,6 +35,7 @@
 #define IDD_BACKUPRAM                   130
 #define IDD_ERRORDEBUG                  131
 #define IDD_ABOUT                       132
+#define IDD_SMPCDEBUG                   133
 #define IDC_EDITTEXT1                   1001
 #define IDC_DISCTYPECB                  1001
 #define IDC_VIDEOCORECB                 1001
@@ -302,14 +303,17 @@
 #define IDM_LOADSTATE_F10               40077
 #define IDM_CAPTURESCREEN               40080
 #define IDM_HARDRESET                   40081
+#define IDC_INPUTREGLB                  40082
+#define IDC_OUTPUTREGLB                 40083
+#define IDC_SMPCSTATUSET                40084
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        133
-#define _APS_NEXT_COMMAND_VALUE         40082
+#define _APS_NEXT_RESOURCE_VALUE        134
+#define _APS_NEXT_COMMAND_VALUE         40085
 #define _APS_NEXT_CONTROL_VALUE         1108
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
