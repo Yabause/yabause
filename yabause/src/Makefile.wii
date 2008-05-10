@@ -27,7 +27,7 @@ include $(DEVKITPPC)/wii_rules
 
 TARGET = yabause.elf
 DDEFINES=
-VDEFINES=-DPACKAGE=\"yabause-wii\" -DVERSION=\"0.9.4\" -DWORDS_BIGENDIAN -DREENTRANT_SYSCALLS_PROVIDED
+VDEFINES=-DPACKAGE=\"yabause-wii\" -DVERSION=\"0.9.5\" -DWORDS_BIGENDIAN -DREENTRANT_SYSCALLS_PROVIDED
 MACHDEP = -DGEKKO -mcpu=750 -meabi -mhard-float
 CFLAGS=$(VDEFINES) $(DDEFINES) -g -O2 -mrvl -Wall $(MACHDEP) -I$(LIBOGC_INC)
 LDFLAGS= -g $(MACHDEP) -mrvl -Wl,-Map,$(notdir $@).map
@@ -37,10 +37,7 @@ error.o m68kcore.o m68kc68k.o m68kd.o memory.o netlink.o peripheral.o \
 profile.o scsp.o scu.o sh2core.o sh2idle.o sh2int.o sh2d.o smpc.o vdp1.o \
 vdp2.o vidshared.o vidsoft.o yabause.o ygl.o c68k/c68k.o c68k/c68kexec.o \
 wii/yui.o wii/cardio.o wii/perwii.o wii/sndwii.o \
-wii/wiisd/diskio.o wii/wiisd/sdio.o wii/wiisd/tff.o \
-wii/wiiuse/classic.o wii/wiiuse/dynamics.o wii/wiiuse/events.o \
-wii/wiiuse/guitar_hero_3.o wii/wiiuse/io.o wii/wiiuse/io_wii.o \
-wii/wiiuse/ir.o wii/wiiuse/nunchuk.o wii/wiiuse/wiiuse.o
+wii/wiisd/diskio.o wii/wiisd/sdio.o wii/wiisd/tff.o 
 DEPSDIR = $(CURDIR)
 export LD := $(CC)
 export LIBPATHS := -L$(LIBOGC_LIB)
