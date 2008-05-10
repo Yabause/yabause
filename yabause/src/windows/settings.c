@@ -1320,6 +1320,12 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          EnableWindow(GetDlgItem(hDlg, IDC_PORT1ATYPECB), TRUE);
          EnableWindow(GetDlgItem(hDlg, IDC_PORT2ATYPECB), TRUE);
 
+         if (!PERCore)
+         {
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB, CB_SETCURSEL, 1, 0);
+            EnableWindow(GetDlgItem(hDlg, IDC_PORT1ACFGPB), TRUE);            
+         }
+
          // Go through previous settings and figure out which controls to 
          // enable, etc.
          for (j = 0; j < numpads; j++)
