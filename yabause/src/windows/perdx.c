@@ -225,6 +225,8 @@ void PERDXLoadDevices(char *inifilename)
    int buttonid;
    DIPROPDWORD dipdw;
 
+   if (!PERCore)
+      return;
    PerPortReset();
    memset(pad, 0, sizeof(pad));
 
