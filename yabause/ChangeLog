@@ -27,6 +27,11 @@
  windows port:
   - Added pause emulation function.
   - Other bug fixes.
+ dreamcast port:
+  - Rewrote a large chunk of the Dreamcast CD Interface in
+    hand-optimized assembly.
+  - Enabled use of the emulated bios if there is no saturn.bin on
+    the CD.
  general:
   - Updated peripheral interface so both ports can now be used and
     multiple pads can now be connected to each port.
