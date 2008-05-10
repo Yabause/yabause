@@ -1011,6 +1011,53 @@ void FASTCALL ROM16MBITCs0WriteLong(u32 addr, u32 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// Sega Saturn Modem(Japanese)
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL JapModemCs0ReadByte(u32 addr)
+{
+   if (addr & 0x1)
+      return 0xA5;
+   else
+      return 0xFF;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL JapModemCs0ReadWord(u32 addr)
+{
+   return 0xFFA5;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL JapModemCs0ReadLong(u32 addr)
+{
+   return 0xFFA5FFA5;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL JapModemCs1ReadByte(u32 addr)
+{
+   return 0xA5;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL JapModemCs1ReadWord(u32 addr)
+{
+   return 0xA5A5;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL JapModemCs1ReadLong(u32 addr)
+{
+   return 0xA5A5A5A5;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // General Cart functions
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1296,6 +1343,32 @@ int CartInit(const char * filename, int type)
          CartridgeArea->Cs2WriteLong = &DummyCs2WriteLong;
          break;
       }
+      case CART_JAPMODEM: // Sega Saturn Modem(Japanese)
+      {
+         CartridgeArea->cartid = 0xFF;
+
+         CartridgeArea->Cs0ReadByte = &JapModemCs0ReadByte;
+         CartridgeArea->Cs0ReadWord = &JapModemCs0ReadWord;
+         CartridgeArea->Cs0ReadLong = &JapModemCs0ReadLong;
+         CartridgeArea->Cs0WriteByte = &DummyCs0WriteByte;
+         CartridgeArea->Cs0WriteWord = &DummyCs0WriteWord;
+         CartridgeArea->Cs0WriteLong = &DummyCs0WriteLong;
+
+         CartridgeArea->Cs1ReadByte = &JapModemCs1ReadByte;
+         CartridgeArea->Cs1ReadWord = &JapModemCs1ReadWord;
+         CartridgeArea->Cs1ReadLong = &JapModemCs1ReadLong;
+         CartridgeArea->Cs1WriteByte = &DummyCs1WriteByte;
+         CartridgeArea->Cs1WriteWord = &DummyCs1WriteWord;
+         CartridgeArea->Cs1WriteLong = &DummyCs1WriteLong;
+
+         CartridgeArea->Cs2ReadByte = &DummyCs2ReadByte;
+         CartridgeArea->Cs2ReadWord = &DummyCs2ReadWord;
+         CartridgeArea->Cs2ReadLong = &DummyCs2ReadLong;
+         CartridgeArea->Cs2WriteByte = &DummyCs2WriteByte;
+         CartridgeArea->Cs2WriteWord = &DummyCs2WriteWord;
+         CartridgeArea->Cs2WriteLong = &DummyCs2WriteLong;
+         break;
+      }
       default: // No Cart
       {
          CartridgeArea->cartid = 0xFF;
@@ -1337,11 +1410,11 @@ void CartDeInit(void)
       if (CartridgeArea->carttype == CART_PAR)
       {
          if (CartridgeArea->rom)
-        {
-			if (T123Save(CartridgeArea->rom, 0x40000, 2, CartridgeArea->filename) != 0)
-			YabSetError(YAB_ERR_FILEWRITE, (void *)CartridgeArea->filename);
-			T2MemoryDeInit(CartridgeArea->rom);
-		}
+         {
+            if (T123Save(CartridgeArea->rom, 0x40000, 2, CartridgeArea->filename) != 0)
+               YabSetError(YAB_ERR_FILEWRITE, (void *)CartridgeArea->filename);
+            T2MemoryDeInit(CartridgeArea->rom);
+         }
       }
       else
       {

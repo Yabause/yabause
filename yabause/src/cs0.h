@@ -33,6 +33,7 @@
 #define CART_DRAM32MBIT         7
 #define CART_NETLINK            8
 #define CART_ROM16MBIT          9
+#define CART_JAPMODEM          10
 
 typedef struct
 {
