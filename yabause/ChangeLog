@@ -1,9 +1,32 @@
 0.9.4 -> 0.9.5
- gtk port:
-  - Tagged most of gtk port strings to be translatable.
+ 68k:
+  - Added 1010 and 1111 line emulator support.
+ cd block:
+  - Reworked bin/cue support. Reading should be a lot more accurate
+    now on tracks 2 and greater.
+ emulated bios:
+  - Fixed a bug in BupGetDate year calculation.
+  - Fixed a bug where interrupt mask wasn't being set correctly when
+    using emulated bios.
+ smpc:
+  - Added support for SMPC NMIREQ command.
+  - Added reset button emulation.
  software video core:
   - Improved software renderer: window, line scroll, mosaic are now
     available and color offset and scroll screen has been fixed.
+ gtk port:
+  - Tagged most of gtk port strings to be translatable.
+ qt port:
+  - Added ability to specify address where binaries are loaded when
+    using command line.
+  - Other bug fixes.
+ wii port:
+  - Added support for bios and game loading from sd card.
+  - Added sound support.
+  - Added usb keyboard support.
+ windows port:
+  - Added pause emulation function.
+  - Other bug fixes.
  general:
   - Updated peripheral interface so both ports can now be used and
     multiple pads can now be connected to each port.
