@@ -31,7 +31,6 @@
 !       specified set of parameters. This is based on code from KallistiOS,
 !       but in assembly, obviously.
     .globl      ___gdc_change_data_type
-    .line       34
 ___gdc_change_data_type:
     mov.l       .gdc_syscall_vector, r0
     sts.l       pr, @-r15
@@ -48,27 +47,28 @@ ___gdc_change_data_type:
 !       Execute the BIOS syscall of the Dreamcast to get the GD drive status,
 !       translating that into the format expected by the core of Yabause.
     .globl      _DCCDGetStatus
-    .line       51
 _DCCDGetStatus:
     sts.l       pr, @-r15
 .status_startgame:
-    mov.l       .gdc_syscall_vector, r0
-    mov.l       .get_status_scratchpad, r4
+    mov.l       .gdc_syscall_vector, r1
+    mova        .get_status_scratchpad, r0
     mov         #4, r7
-    mov.l       @r0, r0
+    mov.l       @r1, r1
     mov         #0, r5
-    jsr         @r0
+    mov         r0, r4
+    jsr         @r1
     mov         #0, r6
     cmp/eq      #2, r0                      ! 2 = Disc change error
     bt          .status_reinit
     cmp/eq      #0, r0
     bf          .status_error
 .status_endgame:                            ! status in 1st entry in scratchpad
-    mov.l       .get_status_scratchpad, r1
-    mov.l       @r1, r0
-    mov.l       .get_status_return_value, r2
-    and         #0x07, r0
-    add         r2, r0
+    mova        .get_status_scratchpad, r0
+    mov         #0x07, r2
+    mov.l       @r0, r1
+    mova        .get_status_return_value, r0
+    and         r2, r1
+    add         r1, r0
     lds.l       @r15+, pr
     rts
     mov.b       @r0, r0
@@ -98,7 +98,6 @@ _DCCDGetStatus:
 !       Deinitialize the CD Drive of the Dreamcast (i.e., undo the odd
 !       initialization stuff that the code does for Yabause).
     .globl      _DCCDDeInit
-    .line       101
 _DCCDDeInit:
     mov.l       .cdrom_reinit, r0
     sts.l       pr, @-r15
@@ -111,7 +110,6 @@ _DCCDDeInit:
 !   int DCCDReadSectorFAD(u32 FAD, void *buffer)
 !       Read a single 2352 byte sector from the given position on the disc.
     .globl      _DCCDReadSectorFAD
-    .line       114
 _DCCDReadSectorFAD:
     sts.l       pr, @-r15
     mov         r4, r2
@@ -145,6 +143,41 @@ _DCCDReadSectorFAD:
     rts
     mov         #0, r0
 
+!   s32 DCCDReadTOC(u32 *TOC);
+!       Read the TOC of the CD inserted in the drive.
+!       Amusingly enough, I just realized that the format that Yabause expects
+!       and what the Dreamcast spews out are exactly the same. Go figure!
+    .globl      _DCCDReadTOC
+_DCCDReadTOC:
+    sts.l       pr, @-r15
+    mov.l       .cdrom_read_toc, r0
+    mov.l       r4, @-r15
+.readtoc_start:
+    jsr         @r0
+    mov         #0, r5
+    cmp/eq      #2, r0
+    bt          .readtoc_reinit
+    cmp/eq      #0, r0
+    add         #4, r15
+    bf/s        .readtoc_error
+    mov         #0xCC, r0
+    lds.l       @r15+, pr
+    extu.b      r0, r0
+    rts
+    shll        r0
+.readtoc_reinit:
+    mov.l       .DCCDInit, r0
+    jsr         @r0
+    mov         #0, r4
+    cmp/eq      #0, r0
+    mov.l       @r15, r4
+    bt/s        .readtoc_start
+    mov.l       .cdrom_read_toc, r0
+    add         #4, r15
+.readtoc_error:
+    rts
+    mov         #0, r0
+
     .align      4
 .cdrom_reinit:
     .long       _cdrom_reinit
@@ -152,6 +185,8 @@ _DCCDReadSectorFAD:
     .long       _cdrom_read_sectors
 .DCCDInit:
     .long       _DCCDInit
+.cdrom_read_toc:
+    .long       _cdrom_read_toc
 
     .section    .rodata
     .align      2

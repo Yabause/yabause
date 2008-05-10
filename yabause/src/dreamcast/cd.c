@@ -31,11 +31,11 @@
 extern int __gdc_change_data_type(void *param);
 extern int DCCDGetStatus(void);
 extern int DCCDDeInit(void);
+extern s32 DCCDReadTOC(u32 *);
+extern int DCCDReadSectorFAD(u32, void *);
 
 /* And these are still here (for now anyway) */
 int DCCDInit(const char *);
-s32 DCCDReadTOC(u32 *);
-int DCCDReadSectorFAD(u32, void *);
 
 /* This is mostly taken from the KallistiOS cdrom_reinit() function */
 int DCCDInit(const char * cdrom_name)   {
@@ -75,41 +75,4 @@ int DCCDInit(const char * cdrom_name)   {
     }
 
     return 0;
-}
-
-s32 DCCDReadTOC(u32 * TOC)  {
-    CDROM_TOC dctoc;
-    uint32 i;
-    int last = 0, rv;
-
-    memset(&dctoc, 0, sizeof(CDROM_TOC));
-
-    rv = cdrom_read_toc(&dctoc, 0);
-
-    if(rv == ERR_DISC_CHG || rv == ERR_NO_DISC)  {
-        rv = DCCDInit(NULL);
-
-        if(rv != 0) {
-            return 0;
-        }
-        else    {
-            rv = cdrom_read_toc(&dctoc, 0);
-            if(rv != ERR_OK)    {
-                return 0;
-            }
-        }
-    }
-
-    for(i = 0; i < 99; i++)	{
-        TOC[i] = dctoc.entry[i];
-        if(dctoc.entry[i] == 0xFFFFFFFF && last == 0)    {
-            last = i;
-        }
-    }
-
-    TOC[99] = dctoc.first;
-    TOC[100] = dctoc.last;
-    TOC[101] = dctoc.leadout_sector;
-
-    return 0xCC * 2;
 }
