@@ -26,28 +26,51 @@
     .text
     .align      2
 
-!   int __gdc_change_data_type(void *param)
-!       Execute the change data type BIOS syscall of the Dreamcast with the
-!       specified set of parameters. This is based on code from KallistiOS,
-!       but in assembly, obviously.
-    .globl      ___gdc_change_data_type
-___gdc_change_data_type:
-    mov.l       .gdc_syscall_vector, r0
+!   static int DCCDInit(const char *cdrom_name)
+!       Initialize the GD drive to read 2352 byte sectors.
+DCCDInit:
     sts.l       pr, @-r15
-    mov         #10, r7
-    mov.l       @r0, r0
+.do_reinit:
+    mov.l       .cdrom_exec_cmd, r0
     mov         #0, r5
     jsr         @r0
+    mov         #24, r4                 ! CMD_INIT
+    cmp/eq      #1, r0                  ! ERR_NO_DISC
+    bt          .init_return_success
+    cmp/eq      #3, r0                  ! ERR_SYS
+    bt          .init_return_error
+    mov.l       .gdc_syscall_vector, r1
+    mova       .DCCDInitParams, r0
+    mov         #10, r7
+    mov.l       @r1, r1
+    mov         r0, r4
     mov         #0, r6
+    jsr         @r1
+    mov         #0, r5
     lds.l       @r15+, pr
     rts
     nop
+.init_return_success:
+    lds.l       @r15+, pr
+    rts
+    mov         #0, r0
+.init_return_error:
+    lds.l       @r15+, pr
+    rts
+    mov         #-1, r0
+    .align 4
+.cdrom_exec_cmd:
+    .long       _cdrom_exec_cmd
+.DCCDInitParams:
+    .long       0       ! 0 = set
+    .long       4096    ! Magic value for RAW sector reads
+    .long       0x0400  ! Ditto
+    .long       2352    ! Sector Size? (Maybe not for RAW though?)
 
-!   int DCCDGetStatus(void)
+!   static int DCCDGetStatus(void)
 !       Execute the BIOS syscall of the Dreamcast to get the GD drive status,
 !       translating that into the format expected by the core of Yabause.
-    .globl      _DCCDGetStatus
-_DCCDGetStatus:
+DCCDGetStatus:
     sts.l       pr, @-r15
 .status_startgame:
     mov.l       .gdc_syscall_vector, r1
@@ -92,13 +115,12 @@ _DCCDGetStatus:
 .get_status_return_value:
     .byte       0, 1, 1, 0, 0, 0, 3, 2
 .get_status_init_func:
-    .long       _DCCDInit
+    .long       DCCDInit
 
-!   int DCCDDeInit(void)
+!   static int DCCDDeInit(void)
 !       Deinitialize the CD Drive of the Dreamcast (i.e., undo the odd
 !       initialization stuff that the code does for Yabause).
-    .globl      _DCCDDeInit
-_DCCDDeInit:
+DCCDDeInit:
     mov.l       .cdrom_reinit, r0
     sts.l       pr, @-r15
     jsr         @r0
@@ -107,10 +129,9 @@ _DCCDDeInit:
     rts
     nop         ! Leave the return value from cdrom_reinit as the return here.
 
-!   int DCCDReadSectorFAD(u32 FAD, void *buffer)
+!   static int DCCDReadSectorFAD(u32 FAD, void *buffer)
 !       Read a single 2352 byte sector from the given position on the disc.
-    .globl      _DCCDReadSectorFAD
-_DCCDReadSectorFAD:
+DCCDReadSectorFAD:
     sts.l       pr, @-r15
     mov         r4, r2
     mov.l       r4, @-r15
@@ -143,12 +164,11 @@ _DCCDReadSectorFAD:
     rts
     mov         #0, r0
 
-!   s32 DCCDReadTOC(u32 *TOC);
+!   static s32 DCCDReadTOC(u32 *TOC);
 !       Read the TOC of the CD inserted in the drive.
 !       Amusingly enough, I just realized that the format that Yabause expects
 !       and what the Dreamcast spews out are exactly the same. Go figure!
-    .globl      _DCCDReadTOC
-_DCCDReadTOC:
+DCCDReadTOC:
     sts.l       pr, @-r15
     mov.l       .cdrom_read_toc, r0
     mov.l       r4, @-r15
@@ -184,7 +204,7 @@ _DCCDReadTOC:
 .cdrom_read_sectors:
     .long       _cdrom_read_sectors
 .DCCDInit:
-    .long       _DCCDInit
+    .long       DCCDInit
 .cdrom_read_toc:
     .long       _cdrom_read_toc
 
@@ -200,8 +220,8 @@ _DCCDReadTOC:
 _ArchCD:
     .long       2
     .long       .CDInterfaceName
-    .long       _DCCDInit
-    .long       _DCCDDeInit
-    .long       _DCCDGetStatus
-    .long       _DCCDReadTOC
-    .long       _DCCDReadSectorFAD
+    .long       DCCDInit
+    .long       DCCDDeInit
+    .long       DCCDGetStatus
+    .long       DCCDReadTOC
+    .long       DCCDReadSectorFAD

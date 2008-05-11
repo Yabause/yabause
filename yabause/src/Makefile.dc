@@ -30,19 +30,13 @@ OBJS = bios.o cdbase.o cheat.o cs0.o cs1.o cs2.o debug.o error.o m68kd.o \
  m68kc68k.o
 C68K_OBJS = c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o
 ARCH_OBJS = dreamcast/yui.o dreamcast/perdc.o dreamcast/viddc.o \
- dreamcast/localtime.o dreamcast/cdC.o dreamcast/cdA.o
+ dreamcast/localtime.o dreamcast/cd.o
 
 c68k/c68kexec.o: c68k/gen68k
 
 c68k/gen68k: c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c
 	$(CC) $(CFLAGS) -DC68K_GEN -o $@ $^
 	cd c68k && ./gen68k
-
-dreamcast/cdC.o: dreamcast/cd.c
-	kos-cc -c dreamcast/cd.c -o dreamcast/cdC.o
-
-dreamcast/cdA.o: dreamcast/cd.s
-	kos-as dreamcast/cd.s -o dreamcast/cdA.o
 
 yabause.elf: $(OBJS) $(ARCH_OBJS) $(C68K_OBJS)
 	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) \
