@@ -31,7 +31,6 @@
 
 #ifdef Q_OS_WIN
 extern CDInterface SPTICD;
-//extern CDInterface ASPICD;
 #endif
 
 M68K_struct * M68KCoreList[] = {
@@ -67,7 +66,6 @@ CDInterface *CDCoreList[] = {
 &ArchCD,
 #else
 &SPTICD,
-//&ASPICD,
 #endif
 NULL
 };
@@ -93,8 +91,10 @@ NULL
 UIYabause* mUIYabause = 0;
 // settings object
 Settings* mSettings = 0;
+#ifdef HAVE_LIBMINI18N
 // current translation file
 char* mTranslationFile = 0;
+#endif
 
 extern "C" 
 {
@@ -125,18 +125,27 @@ Settings* QtYabause::settings()
 	return mSettings;
 }
 
-void QtYabause::setTranslationFile( const char* filePath )
-{
 #ifdef HAVE_LIBMINI18N
-	mini18n_set_locale( filePath );
-	delete mTranslationFile;
-	mTranslationFile = strdup( filePath );
-	QtYabause::retranslateApplication();
-#endif
+int QtYabause::setTranslationFile( const char* filePath )
+{
+	if ( mini18n_set_locale( filePath ) == 0 )
+	{
+		delete mTranslationFile;
+		mTranslationFile = strdup( filePath );
+		QtYabause::retranslateApplication();
+		return 0;
+	}
+	return -1;
 }
 
 const char* QtYabause::translationFile()
 { return mTranslationFile; }
+
+int QtYabause::logTranslation( const char* filePath )
+{ return mini18n_set_log( filePath ); }
+
+void QtYabause::closeTranslation()
+{ mini18n_close(); }
 
 void QtYabause::retranslateWidget( QWidget* widget )
 {
@@ -160,7 +169,7 @@ void QtYabause::retranslateWidget( QWidget* widget )
 		QLabel* l = qobject_cast<QLabel*>( widget );
 		l->setText( _( qPrintable( l->text() ) ) );
 	}
-	else if ( className == "QAbstractButton" )
+	else if ( className == "QAbstractButton" || widget->inherits( "QAbstractButton" ) )
 	{
 		QAbstractButton* ab = qobject_cast<QAbstractButton*>( widget );
 		ab->setText( _( qPrintable( ab->text() ) ) );
@@ -203,6 +212,9 @@ void QtYabause::retranslateWidget( QWidget* widget )
 			twi->setWhatsThis( i, _( qPrintable( twi->whatsThis( i ) ) ) );
 		}
 	}
+	// translate children
+	foreach ( QWidget* w, widget->findChildren<QWidget*>() )
+		retranslateWidget( w );
 }
 
 void QtYabause::retranslateApplication()
@@ -210,6 +222,8 @@ void QtYabause::retranslateApplication()
 	foreach ( QWidget* widget, QApplication::allWidgets() )
 		retranslateWidget( widget );
 }
+
+#endif // HAVE_LIBMINI18N
 
 const char* QtYabause::getCurrentCdSerial()
 { return cdip ? cdip->itemnum : 0; }
