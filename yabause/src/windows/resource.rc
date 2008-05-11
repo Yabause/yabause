@@ -86,7 +86,7 @@ BEGIN
         MENUITEM "68K",                         IDM_M68KDEBUG
         MENUITEM "SCU DSP",                     IDM_SCUDSPDEBUG
         MENUITEM "SCSP",                        IDM_SCSPDEBUG
-        MENUITEM "SMPC",                        IDM_SMPCDEBUG, INACTIVE
+        MENUITEM "SMPC",                        IDM_SMPCDEBUG, GRAYED
         MENUITEM "Memory Editor",               IDM_MEMORYEDITOR
     END
     POPUP "&Help"
