@@ -92,6 +92,8 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
 	connect( mYabauseThread, SIGNAL( error( const char* ) ), this, SLOT( appendLog( const char* ) ) );
+	// retranslate widgets
+	QtYabause::retranslateWidget( this );
 }
 
 void UIYabause::showEvent( QShowEvent* e )

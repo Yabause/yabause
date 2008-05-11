@@ -26,6 +26,9 @@ UIBackupRam::UIBackupRam( QWidget* p )
 	
 	// get save list for current devices
 	refreshSaveList();
+	
+	// retranslate widgets
+	QtYabause::retranslateWidget( this );
 }
 
 void UIBackupRam::refreshSaveList()

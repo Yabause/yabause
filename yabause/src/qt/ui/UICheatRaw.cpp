@@ -15,4 +15,7 @@ UICheatRaw::UICheatRaw( QWidget* p )
 	mButtonGroup->addButton( rbByte, CHEATTYPE_BYTEWRITE );
 	mButtonGroup->addButton( rbWord, CHEATTYPE_WORDWRITE );
 	mButtonGroup->addButton( rbLong, CHEATTYPE_LONGWRITE );
+	
+	// retranslate widgets
+	QtYabause::retranslateWidget( this );
 }

@@ -19,6 +19,9 @@ UICheats::UICheats( QWidget* p )
 		addCode( id );
 	// set save button state
 	pbSaveFile->setEnabled( cheatsCount );
+	
+	// retranslate widgets
+	QtYabause::retranslateWidget( this );
 }
 
 void UICheats::addCode( int id )

@@ -93,6 +93,9 @@ UISettings::UISettings( QWidget* p )
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbBrowse_clicked() ) );
 	foreach ( QPushButton* pb, wInput->findChildren<QPushButton*>() )
 		connect( pb, SIGNAL( clicked() ), this, SLOT( pbInputs_clicked() ) );
+	
+	// retranslate widgets
+	QtYabause::retranslateWidget( this );
 }
 
 void UISettings::requestFile( const QString& c, QLineEdit* e, const QString& filters )

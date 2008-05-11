@@ -36,6 +36,9 @@ UIWaitInput::UIWaitInput( PerInterface_struct* c, const QString& pk, QWidget* p 
 		// start input scan
 		mTimerInputScan->start();
 	}
+	
+	// retranslate widgets
+	QtYabause::retranslateWidget( this );
 }
 
 void UIWaitInput::keyPressEvent( QKeyEvent* e )

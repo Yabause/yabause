@@ -1,5 +1,11 @@
 #include "UICheatAR.h"
+#include "../QtYabause.h"
 
 UICheatAR::UICheatAR( QWidget* p )
 	: QDialog( p )
-{ setupUi( this ); }
+{
+	// setup dialog
+	setupUi( this );
+	// retranslate widgets
+	QtYabause::retranslateWidget( this );
+}
