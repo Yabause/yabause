@@ -32,13 +32,23 @@ int main( int argc, char** argv )
 	app.setApplicationName( QString( "Qt Yabause v%1 - A Beautiful And Under-rated Saturn Emulator" ).arg( VERSION ) );
 	// init settings
 	Settings::setIniInformations();
+#ifdef HAVE_LIBMINI18N
+	// set translation file
+	if ( QtYabause::setTranslationFile( qPrintable( app.applicationDirPath().append( "/french.txt" ) ) ) == -1 )
+		qWarning( _( "Can't set translation file" ) );
+	// set log file for untranslated strings
+	if ( QtYabause::logTranslation( qPrintable( app.applicationDirPath().append( "/french_log.txt" ) ) ) == -1 )
+		qWarning( _( "Can't log translation file" ) );
+#endif // HAVE_LIBMINI18N
 	// show main window
 	QtYabause::mainWindow()->setWindowTitle( app.applicationName() );
 	QtYabause::mainWindow()->show();
-	// set translation
-	QtYabause::setTranslationFile( qPrintable( app.applicationDirPath().append( "/french.ytf" ) ) );
 	// connection
 	QObject::connect( &app, SIGNAL( lastWindowClosed() ), &app, SLOT( quit() ) );
 	// exec application
-	return app.exec();
+	int i = app.exec();
+#ifdef HAVE_LIBMINI18N
+	QtYabause::closeTranslation();
+#endif // HAVE_LIBMINI18N
+	return i;
 }
