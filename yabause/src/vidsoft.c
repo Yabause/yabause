@@ -529,12 +529,13 @@ static INLINE void Vdp2MapCalcXY(vdp2draw_struct *info, int *x, int *y,
 {
    int planenum;
    int pagesize=info->pagewh*info->pagewh;
+   int cellwh=(8 * info->patternwh);
 
-   if ((x[0] / (8 * info->patternwh)) != oldcellx[0] ||
-       (y[0] / (8 * info->patternwh)) != oldcelly[0])
+   if ((x[0] / cellwh) != oldcellx[0] ||
+       (y[0] / cellwh) != oldcelly[0])
    {
-      oldcellx[0] = x[0] / (8 * info->patternwh);
-      oldcelly[0] = y[0] / (8 * info->patternwh);
+      oldcellx[0] = x[0] / cellwh;
+      oldcelly[0] = y[0] / cellwh;
 
       // Calculate which plane we're dealing with
       planenum = (y[0] / planepixelheight * info->mapwh) + (x[0] / planepixelwidth);
@@ -547,8 +548,8 @@ static INLINE void Vdp2MapCalcXY(vdp2draw_struct *info, int *x, int *y,
       // Figure out which page it's on(if plane size is not 1x1)
       info->addr += ((y[0] / pagepixelwh * pagesize * info->planew) +
                      (x[0] / pagepixelwh * pagesize) +
-                     ((y[0] % pagepixelwh) / (8 * info->patternwh) * info->pagewh) +
-                     ((x[0] % pagepixelwh) / (8 * info->patternwh))) * info->patterndatasize * 2;
+                     ((y[0] % pagepixelwh) / cellwh * info->pagewh) +
+                     ((x[0] % pagepixelwh) / cellwh)) * info->patterndatasize * 2;
 
       Vdp2PatternAddr(info); // Heh, this could be optimized
    }
@@ -736,6 +737,14 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
       {
          u32 color;
 
+         // If priority of screen is less than current top pixel and per
+         // pixel priority isn't used, skip it
+         if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
+         {
+            textdata++;
+            continue;
+         }
+
          // See if screen position is clipped, if it isn't, continue
          // Window 0
          if (!TestWindow(info->wctl, 0x2, 0x1, &clip[0], i, j))
@@ -848,6 +857,14 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
             for (i = 0; i < vdp2width; i++)
             {
                u32 color;
+ 
+               // If priority of screen is less than current top pixel and per
+               // pixel priority isn't used, skip it
+               if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
+               {
+                  textdata++;
+                  continue;
+               }
 
                x = GenerateRotatedXPos(info, parameter, i, j) & xmask; // This can definitely be optimized
                y = GenerateRotatedYPos(info, parameter, i, j) & ymask; // This can definitely be optimized
@@ -924,6 +941,14 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
          for (i = 0; i < vdp2width; i++)
          {
             u32 color;
+
+            // If priority of screen is less than current top pixel and per
+            // pixel priority isn't used, skip it
+            if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
+            {
+               textdata++;
+               continue;
+            }
 
             if (parameter->deltaKAx != 0)
             {
@@ -2813,7 +2838,7 @@ void VIDSoftVdp2DrawScreens(void)
 {
    int i;
 
-   for (i = 1; i < 8; i++)
+   for (i = 7; i > 0; i--)
    {   
       if (nbg3priority == i)
          Vdp2DrawNBG3();
