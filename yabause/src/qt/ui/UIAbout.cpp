@@ -19,12 +19,17 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "UIAbout.h"
+#include "../QtYabause.h"
 
 UIAbout::UIAbout( QWidget* p )
 	: QDialog( p )
 {
+	// setup dialog
 	setupUi( this );
 	if ( p && !p->isFullScreen() )
 		setWindowFlags( Qt::Sheet );
 	lInformations->setText( lInformations->text().arg( VERSION ) );
+	
+	// retranslate widgets
+	QtYabause::retranslateWidget( this );
 }
