@@ -23,6 +23,8 @@
 
 #include <QStringList>
 
+#include "../peripheral.h"
+
 YabauseThread::YabauseThread( QObject* o )
 	: QObject( o )
 {
@@ -148,10 +150,10 @@ void YabauseThread::reloadSettings()
 	emit requestFullscreen( s->value( "Video/Fullscreen", false ).toBool() );
 
 	{
-		u8 * padbits;
+		PerPad_struct * padbits;
 		u8 i = 0;
 
-		PerReset(&PORTDATA1);
+		PerPortReset();
 		padbits = PerPadAdd(&PORTDATA1);
 	
 		s->beginGroup( "Input/Keys" );

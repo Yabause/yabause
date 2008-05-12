@@ -56,13 +56,6 @@ int PERQTHandleEvents(void)
    return 0;
 }
 
-PerInfo_struct* PERQTGetList(void)
-{
-   // Returns a list of peripherals available along with information on each
-   // peripheral
-	return 0;
-}
-
 u32 PERQTScan(const char* name)
 { return 1; }
 

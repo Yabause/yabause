@@ -57,19 +57,6 @@ CONFIG(debug, debug|release) {
 	RCC_DIR	= $${BUILD_PATH}/release/.rcc
 }
 
-# include jsw library files
-unix:!mac:DEFINES	+= HAVE_LIBJSW=1 # this can be added by the configure script
-
-contains(DEFINES, HAVE_LIBJSW=1) {
-	include( 3rdparty/libjsw.pri )
-	
-	HEADERS	+= JSWHelper.h \
-		PerJSW.h
-		
-	SOURCES	+= JSWHelper.cpp \
-		PerJSW.cpp
-}
-
 FORMS	+= ui/UIYabause.ui \
 	ui/UISettings.ui \
 	ui/UIAbout.ui \
