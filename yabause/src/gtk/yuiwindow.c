@@ -33,13 +33,29 @@ static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpoin
 static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, YuiWindow * yui);
 
-static GtkActionEntry action_entries[] = {
-	{ "run" , "gtk-media-play", "Run", "<Ctrl>r", NULL, G_CALLBACK(yui_window_run) },
-	{ "pause" , "gtk-media-pause", "Pause", "<Ctrl>p", NULL, G_CALLBACK(yui_window_pause) },
-	{ "reset", NULL, "Reset", NULL, NULL, G_CALLBACK(yui_window_reset) },
-	{ "fullscreen", "gtk-fullscreen", "Fullscreen", "<Ctrl>f", NULL, G_CALLBACK(yui_window_toggle_fullscreen) },
-	{ "quit", "gtk-quit", "Quit", "<Ctrl>q", NULL, gtk_main_quit }
-};
+static void yui_window_create_actions(YuiWindow * yw) {
+	GtkAction * action;
+
+	action = gtk_action_new("run", _("Run"), NULL, "gtk-media-play");
+	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>r");
+	g_signal_connect(action, "activate", G_CALLBACK(yui_window_run), yw);
+
+	action = gtk_action_new("pause", _("Pause"), NULL, "gtk-media-pause");
+	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>p");
+	g_signal_connect(action, "activate", G_CALLBACK(yui_window_pause), yw);
+
+	action = gtk_action_new("reset", _("Reset"), NULL, NULL);
+	gtk_action_group_add_action_with_accel(yw->action_group, action, NULL);
+	g_signal_connect(action, "activate", G_CALLBACK(yui_window_reset), yw);
+
+	action = gtk_action_new("fullscreen", _("Fullscreen"), NULL, "gtk-fullscreen");
+	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>f");
+	g_signal_connect(action, "activate", G_CALLBACK(yui_window_toggle_fullscreen), yw);
+
+	action = gtk_action_new("quit", _("Quit"), NULL, "gtk-quit");
+	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>q");
+	g_signal_connect(action, "activate", G_CALLBACK(gtk_main_quit), yw);
+}
 
 GType yui_window_get_type (void) {
   static GType yfe_type = 0;
@@ -103,7 +119,7 @@ static void yui_window_init (YuiWindow * yw) {
 	GtkWidget * scroll;
 
 	yw->action_group = gtk_action_group_new("yui");
-	gtk_action_group_add_actions(yw->action_group, action_entries, sizeof(action_entries) / sizeof(GtkActionEntry), yw);
+	yui_window_create_actions(yw);
 	gtk_action_set_sensitive(gtk_action_group_get_action(yw->action_group, "pause"), FALSE);
 	gtk_action_set_sensitive(gtk_action_group_get_action(yw->action_group, "reset"), FALSE);
 	{
