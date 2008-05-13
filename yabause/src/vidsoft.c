@@ -614,12 +614,11 @@ static INLINE void Vdp2MapCalcXY(vdp2draw_struct *info, int *x, int *y,
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
+void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, int height)
 {
    int i, j;
    int x, y;
    clipping_struct clip[2];
-   u32 *textdata=vdp2framebuffer;
    int pagepixelwh;
    int planepixelwidth;
    int planepixelheight;
@@ -679,7 +678,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
 
    ReadLineWindowData(info, &linewnd0addr, &linewnd1addr);
 
-   for (j = 0; j < vdp2height; j++)
+   for (j = 0; j < height; j++)
    {
       int Y;
       // precalculate the coordinate for the line(it's faster) and do line
@@ -733,7 +732,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
       y &= ymask;
       Y=y;
 
-      for (i = 0; i < vdp2width; i++)
+      for (i = 0; i < width; i++)
       {
          u32 color;
 
@@ -992,7 +991,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       return;
    }
 
-   Vdp2DrawScroll(info);
+   Vdp2DrawScroll(info, vdp2framebuffer, vdp2width, vdp2height);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1138,7 +1137,7 @@ static void Vdp2DrawNBG0(void)
    if (info.enable == 1)
    {
       // NBG0 draw
-      Vdp2DrawScroll(&info);
+      Vdp2DrawScroll(&info, vdp2framebuffer, vdp2width, vdp2height);
    }
    else
    {
@@ -1201,7 +1200,7 @@ static void Vdp2DrawNBG1(void)
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL >> 8, Vdp2Regs->LSTA1.all);
    info.wctl = Vdp2Regs->WCTLA >> 8;
 
-   Vdp2DrawScroll(&info);
+   Vdp2DrawScroll(&info, vdp2framebuffer, vdp2width, vdp2height);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1240,7 +1239,7 @@ static void Vdp2DrawNBG2(void)
    info.wctl = Vdp2Regs->WCTLB;
    info.isbitmap = 0;
 
-   Vdp2DrawScroll(&info);
+   Vdp2DrawScroll(&info, vdp2framebuffer, vdp2width, vdp2height);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1280,7 +1279,7 @@ static void Vdp2DrawNBG3(void)
    info.wctl = Vdp2Regs->WCTLB >> 8;
    info.isbitmap = 0;
 
-   Vdp2DrawScroll(&info);
+   Vdp2DrawScroll(&info, vdp2framebuffer, vdp2width, vdp2height);
 }
 
 //////////////////////////////////////////////////////////////////////////////
