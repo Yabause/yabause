@@ -26,7 +26,7 @@
 #include "../memory.h"
 #include "../scu.h"
 #include "../sh2d.h"
-#include "../vdp2.h"
+#include "../vdp2debug.h"
 #include "../yui.h"
 #include "disasm.h"
 #include "hexedit.h"
@@ -813,10 +813,55 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+int SaveBitmap(const char *filename, int width, int height, u32 *data)
+{
+   BITMAPFILEHEADER fileheader;
+   BITMAPV4HEADER bmi;
+   FILE *fp;
+   int i;
+
+   if (!filename)
+      return -1;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+      return -1;
+
+   memset(&fileheader, 0, sizeof(fileheader));
+   fileheader.bfType = 'B' | ('M' << 8);
+   fileheader.bfSize = sizeof(fileheader) + sizeof(bmi) + (width * height * 4);
+   fileheader.bfOffBits = sizeof(fileheader)+sizeof(bmi);
+   fwrite((void *)&fileheader, 1, sizeof(fileheader), fp);
+
+   memset(&bmi, 0, sizeof(bmi));
+   bmi.bV4Size = sizeof(bmi);
+   bmi.bV4Planes = 1;
+   bmi.bV4BitCount = 32;
+   bmi.bV4V4Compression = BI_RGB | BI_BITFIELDS;
+   bmi.bV4RedMask = 0x000000FF;
+   bmi.bV4GreenMask = 0x0000FF00;
+   bmi.bV4BlueMask = 0x00FF0000;
+   bmi.bV4AlphaMask = 0xFF000000;
+   bmi.bV4Width = width;
+   bmi.bV4Height = -height;
+   fwrite((void *)&bmi, 1, sizeof(bmi), fp);
+
+   for (i = 0; i < height; i++)
+   {
+      fwrite(data, 1, width * sizeof(u32), fp);
+      data += width;
+   }
+   fclose(fp);
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
    char tempstr[1024];
+   char filename[MAX_PATH] = "\0";
 
    switch (uMsg)
    {
@@ -874,6 +919,18 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   }
                   default: break;
                }
+               return TRUE;
+            }
+            case IDC_VDP1SAVEBMPBT:
+            {
+               OPENFILENAME ofn;
+
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
+                        "Bitmap Files\0*.BMP\0All Files\0*.*\0",
+                        filename, sizeof(filename));
+
+               if (GetSaveFileName(&ofn))
+                  SaveBitmap(filename, vdp1texturew, vdp1textureh, vdp1texture);
 
                return TRUE;
             }
@@ -942,6 +999,144 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          EndDialog(hDlg, TRUE);
 
+         return TRUE;
+      }
+      default: break;
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                 LPARAM lParam)
+{
+   static u32 *vdp2texture;
+   static int width;
+   static int height;
+   char filename[MAX_PATH] = "\0";
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         vdp2texture = NULL;
+
+         SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_RESETCONTENT, 0, 0);
+         SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_ADDSTRING, 0, (LPARAM)"NBG0/RBG1");
+         SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_ADDSTRING, 0, (LPARAM)"NBG1");
+         SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_ADDSTRING, 0, (LPARAM)"NBG2");
+         SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_ADDSTRING, 0, (LPARAM)"NBG3");
+         SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_ADDSTRING, 0, (LPARAM)"RBG0");
+         SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_SETCURSEL, 0, 0);
+
+         vdp2texture = Vdp2DebugTexture(0, -1, 0x00FF00FF, &width, &height);
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_VDP2SCREENCB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case CBN_SELCHANGE:
+                  {
+                     u8 cursel = (u8)SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_GETCURSEL, 0, 0);
+
+                     if (vdp2texture)
+                        free(vdp2texture);
+
+                     vdp2texture = Vdp2DebugTexture(cursel, -1, 0x00FF00FF, &width, &height);
+                     InvalidateRect(hDlg, NULL, FALSE);
+                     UpdateWindow(hDlg);
+                     return TRUE;
+                  }
+                  default: break;
+               }
+
+               return TRUE;
+            }
+            case IDC_VDP2SAVEBMPBT:
+            {
+               OPENFILENAME ofn;
+
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
+                        "All Files\0*.*\0Bitmap Files\0*.BMP\0",
+                        filename, sizeof(filename));
+
+               if (GetSaveFileName(&ofn))
+                  SaveBitmap(filename, width, height, vdp2texture);
+
+               return TRUE;
+            }
+            case IDOK:
+               EndDialog(hDlg, TRUE);
+               return TRUE;
+            default: break;
+         }
+         break;
+      }
+      case WM_PAINT:
+      {
+         // Draw our texture box
+         PAINTSTRUCT ps;
+         HDC hdc;
+         BITMAPV4HEADER bmi;
+         int outw, outh;
+         RECT rect;
+
+         hdc = BeginPaint(GetDlgItem(hDlg, IDC_VDP2TEXTET), &ps);
+         GetClientRect(GetDlgItem(hDlg, IDC_VDP2TEXTET), &rect);
+         FillRect(hdc, &rect, (HBRUSH)GetStockObject(BLACK_BRUSH));
+
+         if (vdp2texture == NULL)
+         {
+            SetBkColor(hdc, RGB(0,0,0));
+            SetTextColor(hdc, RGB(255,255,255));
+            TextOut(hdc, 0, 0, "Not Available", 13);
+         }
+         else
+         {
+            memset(&bmi, 0, sizeof(bmi));
+            bmi.bV4Size = sizeof(bmi);
+            bmi.bV4Planes = 1;
+            bmi.bV4BitCount = 32;
+            bmi.bV4V4Compression = BI_RGB | BI_BITFIELDS;
+            bmi.bV4RedMask = 0x000000FF;
+            bmi.bV4GreenMask = 0x0000FF00;
+            bmi.bV4BlueMask = 0x00FF0000;
+            bmi.bV4AlphaMask = 0xFF000000;
+            bmi.bV4Width = width;
+            bmi.bV4Height = -height;
+
+            // Let's try to maintain a correct ratio
+            if (width > height)
+            {
+               outw = rect.right;
+               outh = rect.bottom * height / width;
+            }
+            else
+            {
+               outw = rect.right * width / height;
+               outh = rect.bottom;
+            }
+   
+            StretchDIBits(hdc, 0, 0, outw, outh, 0, 0, width, height, vdp2texture, (BITMAPINFO *)&bmi, DIB_RGB_COLORS, SRCCOPY);
+         }
+         EndPaint(GetDlgItem(hDlg, IDC_VDP2TEXTET), &ps);
+         break;
+      }
+      case WM_CLOSE:
+         EndDialog(hDlg, TRUE);
+
+         return TRUE;
+      case WM_DESTROY:
+      {
+         if (vdp2texture)
+            free(vdp2texture);
          return TRUE;
       }
       default: break;
@@ -1045,12 +1240,13 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          switch (LOWORD(wParam))
          {
             case IDOK:
-            {
                EndDialog(hDlg, TRUE);
-
+               return TRUE;
+            case IDC_VDP2VIEWER:
+            {
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_VDP2VIEWER), NULL, (DLGPROC)VDP2ViewerDlgProc);
                return TRUE;
             }
-
             default: break;
          }
          break;

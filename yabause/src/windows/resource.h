@@ -36,6 +36,8 @@
 #define IDD_ERRORDEBUG                  131
 #define IDD_ABOUT                       132
 #define IDD_SMPCDEBUG                   133
+#define IDD_DIALOG1                     134
+#define IDD_VDP2VIEWER                  134
 #define IDC_EDITTEXT1                   1001
 #define IDC_DISCTYPECB                  1001
 #define IDC_VIDEOCORECB                 1001
@@ -247,6 +249,11 @@
 #define IDC_CUSTOM1                     1106
 #define IDC_BUTTON1                     1107
 #define IDC_SAVETOFILE                  1107
+#define IDC_VDP2VIEWER                  1107
+#define IDC_VDP2SAVEBMPBT               1107
+#define IDC_VDP2SCREENCB                1108
+#define IDC_VDP2TEXTET                  1109
+#define IDC_VDP1SAVEBMPBT               1110
 #define IDM_CHOOSEBIOS                  40001
 #define IDM_CHOOSECDROM                 40002
 #define IDM_MEMTRANSFER                 40004
@@ -312,12 +319,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        134
+#define _APS_NEXT_RESOURCE_VALUE        135
 #define _APS_NEXT_COMMAND_VALUE         40085
-#define _APS_NEXT_CONTROL_VALUE         1108
+#define _APS_NEXT_CONTROL_VALUE         1111
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
 #endif
-
-
-
