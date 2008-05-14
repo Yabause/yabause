@@ -104,56 +104,31 @@ void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 
 void FASTCALL SH2undecoded(SH2_struct * sh)
 {
+   int vectnum;
+
    if (yabsys.emulatebios)
    {
       if (BiosHandleFunc(sh))
          return;
    }
 
-   if (sh->isslave)
-   {
-      int vectnum;
+   YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);      
 
-      YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);      
+   // Save regs.SR on stack
+   sh->regs.R[15]-=4;
+   MappedMemoryWriteLong(sh->regs.R[15],sh->regs.SR.all);
 
-      // Save regs.SR on stack
-      sh->regs.R[15]-=4;
-      MappedMemoryWriteLong(sh->regs.R[15],sh->regs.SR.all);
+   // Save regs.PC on stack
+   sh->regs.R[15]-=4;
+   MappedMemoryWriteLong(sh->regs.R[15],sh->regs.PC + 2);
 
-      // Save regs.PC on stack
-      sh->regs.R[15]-=4;
-      MappedMemoryWriteLong(sh->regs.R[15],sh->regs.PC + 2);
+   // What caused the exception? The delay slot or a general instruction?
+   // 4 for General Instructions, 6 for delay slot
+   vectnum = 4; //  Fix me
 
-      // What caused the exception? The delay slot or a general instruction?
-      // 4 for General Instructions, 6 for delay slot
-      vectnum = 4; //  Fix me
-
-      // Jump to Exception service routine
-      sh->regs.PC = MappedMemoryReadLong(sh->regs.VBR+(vectnum<<2));
-      sh->cycles++;
-   }
-   else
-   {
-      int vectnum;
-
-      YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);      
-
-      // Save regs.SR on stack
-      sh->regs.R[15]-=4;
-      MappedMemoryWriteLong(sh->regs.R[15],sh->regs.SR.all);
-
-      // Save regs.PC on stack
-      sh->regs.R[15]-=4;
-      MappedMemoryWriteLong(sh->regs.R[15],sh->regs.PC + 2);
-
-      // What caused the exception? The delay slot or a general instruction?
-      // 4 for General Instructions, 6 for delay slot
-      vectnum = 4; //  Fix me
-
-      // Jump to Exception service routine
-      sh->regs.PC = MappedMemoryReadLong(sh->regs.VBR+(vectnum<<2));
-      sh->cycles++;
-   }
+   // Jump to Exception service routine
+   sh->regs.PC = MappedMemoryReadLong(sh->regs.VBR+(vectnum<<2));
+   sh->cycles++;
 }
 
 //////////////////////////////////////////////////////////////////////////////
