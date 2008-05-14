@@ -36,15 +36,15 @@ static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, Yu
 static void yui_window_create_actions(YuiWindow * yw) {
 	GtkAction * action;
 
-	action = gtk_action_new("run", _("Run"), NULL, "gtk-media-play");
+	action = gtk_action_new("run", _("Run"), _("start emulation"), "gtk-media-play");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>r");
 	g_signal_connect(action, "activate", G_CALLBACK(yui_window_run), yw);
 
-	action = gtk_action_new("pause", _("Pause"), NULL, "gtk-media-pause");
+	action = gtk_action_new("pause", _("Pause"), _("pause emulation"), "gtk-media-pause");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>p");
 	g_signal_connect(action, "activate", G_CALLBACK(yui_window_pause), yw);
 
-	action = gtk_action_new("reset", _("Reset"), NULL, NULL);
+	action = gtk_action_new("reset", _("Reset"), _("reset emulation"), NULL);
 	gtk_action_group_add_action_with_accel(yw->action_group, action, NULL);
 	g_signal_connect(action, "activate", G_CALLBACK(yui_window_reset), yw);
 

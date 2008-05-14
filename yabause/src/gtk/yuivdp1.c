@@ -153,16 +153,10 @@ GtkWidget * yui_vdp1_new(YuiWindow * y) {
 		play_button = gtk_tool_button_new_from_stock("run");
 		gtk_action_connect_proxy(gtk_action_group_get_action(yv->yui->action_group, "run"), GTK_WIDGET(play_button));
 		gtk_toolbar_insert(GTK_TOOLBAR(yv->toolbar), GTK_TOOL_ITEM(play_button), -1);
-#if GTK_CHECK_VERSION(2,12,0)
-		gtk_widget_set_tooltip_text(GTK_WIDGET(play_button), "start emulation");
-#endif
 
 		pause_button = gtk_tool_button_new_from_stock("pause");
 		gtk_action_connect_proxy(gtk_action_group_get_action(yv->yui->action_group, "pause"), GTK_WIDGET(pause_button));
 		gtk_toolbar_insert(GTK_TOOLBAR(yv->toolbar), GTK_TOOL_ITEM(pause_button), -1);
-#if GTK_CHECK_VERSION(2,12,0)
-		gtk_widget_set_tooltip_text(GTK_WIDGET(pause_button), "pause emulation");
-#endif
 	}
 	yv->paused_handler = g_signal_connect_swapped(yv->yui, "paused", G_CALLBACK(yui_vdp1_update), yv);
 	yv->running_handler = g_signal_connect_swapped(yv->yui, "running", G_CALLBACK(yui_vdp1_clear), yv);

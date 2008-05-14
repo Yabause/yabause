@@ -119,9 +119,9 @@ static void yui_sh_init (YuiSh * sh2) {
   sh2->regListRenderer1 = gtk_cell_renderer_text_new();
   sh2->regListRenderer2 = gtk_cell_renderer_text_new();
   g_object_set(G_OBJECT(sh2->regListRenderer2), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL );
-  sh2->regListColumn1 = gtk_tree_view_column_new_with_attributes("Register", sh2->regListRenderer1, "text", 0, NULL);
+  sh2->regListColumn1 = gtk_tree_view_column_new_with_attributes(_("Register"), sh2->regListRenderer1, "text", 0, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(sh2->regList), sh2->regListColumn1);
-  sh2->regListColumn2 = gtk_tree_view_column_new_with_attributes("Value", sh2->regListRenderer2, "text", 1, NULL);
+  sh2->regListColumn2 = gtk_tree_view_column_new_with_attributes(_("Value"), sh2->regListRenderer2, "text", 1, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(sh2->regList), sh2->regListColumn2);
   gtk_box_pack_start( GTK_BOX( sh2->hboxmain ), sh2->regList, FALSE, FALSE, 0);
   g_signal_connect(G_OBJECT(sh2->regListRenderer2), "edited", GTK_SIGNAL_FUNC(yui_sh_editedReg), sh2 );
@@ -367,16 +367,10 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
 		play_button = gtk_tool_button_new_from_stock("run");
 		gtk_action_connect_proxy(gtk_action_group_get_action(yui->action_group, "run"), GTK_WIDGET(play_button));
 		gtk_toolbar_insert(GTK_TOOLBAR(sh2->toolbar), GTK_TOOL_ITEM(play_button), 0);
-#if GTK_CHECK_VERSION(2,12,0)
-		gtk_widget_set_tooltip_text(GTK_WIDGET(play_button), "start emulation");
-#endif
 
 		pause_button = gtk_tool_button_new_from_stock("pause");
 		gtk_action_connect_proxy(gtk_action_group_get_action(yui->action_group, "pause"), GTK_WIDGET(pause_button));
 		gtk_toolbar_insert(GTK_TOOLBAR(sh2->toolbar), GTK_TOOL_ITEM(pause_button), 1);
-#if GTK_CHECK_VERSION(2,12,0)
-		gtk_widget_set_tooltip_text(GTK_WIDGET(pause_button), "pause emulation");
-#endif
 
 		sh2->buttonStep = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
 		g_signal_connect(sh2->buttonStep, "clicked", G_CALLBACK(yui_sh_step), sh2);
