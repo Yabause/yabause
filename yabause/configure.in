@@ -115,8 +115,16 @@ case $host in
 		yabause_arch=macosx
 		major=`expr $host_os : "darwin\(@<:@^.@:>@*\)"` 	 
 		if test $major -ge 7 ; then
-			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch i386 -arch ppc"
-			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
+			sdkversion=0
+			for i in /Developer/MacOSX10.?.sdk; do
+        			j=`expr $i : "/Developer/MacOSX10.\(.\).sdk"`
+        			if test $j -gt $sdkversion ; then
+                			sdkversion=$j
+        			fi
+			done
+
+			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.$sdkversion.sdk -arch i386 -arch ppc"
+			LDFLAGS="$LDFLAGS -Wl,-syslibroot,/Developer/SDKs/MacOSX10.$sdkversion.sdk -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
 			AC_DEFINE(MAC_OS_X_VERSION_MAX_ALLOWED, MAC_OS_X_VERSION_10_3)
 		fi
 		;;
