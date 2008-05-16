@@ -159,6 +159,8 @@ static int nbg3priority=0;
 static int rbg0priority=0;
 static int outputwidth;
 static int outputheight;
+static int resxratio;
+static int resyratio;
 
 static char message[512];
 static int msglength;
@@ -629,6 +631,9 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
    u32 linewnd0addr, linewnd1addr;
    int xmask, ymask;
    u32 planetbl[16];
+
+   info->coordincx *= (float)resxratio;
+   info->coordincy *= (float)resyratio;
 
    if (!info->isbitmap)
    {
@@ -2864,31 +2869,35 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
    {
       case 0:
          vdp2width = 320;
+         resxratio=1;
          break;
       case 1:
          vdp2width = 352;
+         resxratio=1;
          break;
-      case 2:
-//         vdp2width = 640;
+      case 2: // 640
          vdp2width = 320;
+         resxratio=2;
          break;
-      case 3:
-//         vdp2width = 704;
+      case 3: // 704
          vdp2width = 352;
+         resxratio=2;
          break;
       case 4:
          vdp2width = 320;
+         resxratio=1;
          break;
       case 5:
          vdp2width = 352;
+         resxratio=1;
          break;
-      case 6:
-//         vdp2width = 640;
+      case 6: // 640
          vdp2width = 320;
+         resxratio=2;
          break;
-      case 7:
-//         vdp2width = 704;
+      case 7: // 704
          vdp2width = 352;
+         resxratio=2;
          break;
    }
 
@@ -2906,12 +2915,14 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
          break;
       default: break;
    }
+   resyratio=1;
 
    // Check for interlace
    switch ((TVMD >> 6) & 0x3)
    {
       case 3: // Double-density Interlace
 //         vdp2height *= 2;
+         resyratio=2;
          break;
       case 2: // Single-density Interlace
       case 0: // Non-interlace
