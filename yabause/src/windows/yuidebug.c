@@ -166,7 +166,7 @@ void YuiErrorMsg(const char *string)
       }
    }
    else
-      MessageBox (NULL, string, "Error",  MB_OK | MB_ICONINFORMATION);
+      MessageBox (YabWin, string, "Error",  MB_OK | MB_ICONINFORMATION);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -427,7 +427,7 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 void SH2BreakpointHandler (SH2_struct *context, u32 addr)
 {
    ScspMuteAudio();
-   MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
+   MessageBox (YabWin, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
 
    debugsh = context;
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), YabWin, (DLGPROC)SH2DebugDlgProc);
@@ -1304,7 +1304,7 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
 void M68KBreakpointHandler (u32 addr)
 {
    ScspMuteAudio();
-   MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
+   MessageBox (YabWin, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_M68KDEBUG), YabWin, (DLGPROC)M68KDebugDlgProc);
    ScspUnMuteAudio();
 }
@@ -1626,7 +1626,7 @@ void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
 void SCUDSPBreakpointHandler (u32 addr)
 {
    ScspMuteAudio();
-   MessageBox (NULL, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
+   MessageBox (YabWin, "Breakpoint Reached", "Notice",  MB_OK | MB_ICONINFORMATION);
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SCUDSPDEBUG), YabWin, (DLGPROC)SCUDSPDebugDlgProc);
    ScspUnMuteAudio();
 }
@@ -2409,7 +2409,7 @@ LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                   if (fp == NULL)
                   {
-                     MessageBox (NULL, "Unable to open file for writing", "Error",  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hDlg, "Unable to open file for writing", "Error",  MB_OK | MB_ICONINFORMATION);
                      return FALSE;
                   }
 
