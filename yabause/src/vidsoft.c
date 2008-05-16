@@ -414,10 +414,20 @@ static INLINE void ReadVdp2ColorOffset(vdp2draw_struct *info, int clofmask, int 
             info->cob |= 0xFFFFFF00;
       }
 
-      if (Vdp2Regs->CCCTL & ccmask)
-         info->PostPixelFetchCalc = &DoColorCalcWithColorOffset;
+      if (info->cor == 0 && info->cog == 0 && info->cob == 0)
+      {
+         if (Vdp2Regs->CCCTL & ccmask)
+            info->PostPixelFetchCalc = &DoColorCalc;
+         else
+            info->PostPixelFetchCalc = &DoNothing;
+      }
       else
-         info->PostPixelFetchCalc = &DoColorOffset;
+      {
+         if (Vdp2Regs->CCCTL & ccmask)
+            info->PostPixelFetchCalc = &DoColorCalcWithColorOffset;
+         else
+            info->PostPixelFetchCalc = &DoColorOffset;
+      }
    }
    else // color offset disable
    {
@@ -2737,10 +2747,20 @@ void VIDSoftVdp2DrawEnd(void)
                info.cob |= 0xFFFFFF00;
          }
 
-         if (Vdp2Regs->CCCTL & 0x40)
-            info.PostPixelFetchCalc = &DoColorCalcWithColorOffset;
+         if (info.cor == 0 && info.cog == 0 && info.cob == 0)
+         {
+            if (Vdp2Regs->CCCTL & 0x40)
+               info.PostPixelFetchCalc = &DoColorCalc;
+            else
+               info.PostPixelFetchCalc = &DoNothing;
+         }
          else
-            info.PostPixelFetchCalc = &DoColorOffset;
+         {
+            if (Vdp2Regs->CCCTL & 0x40)
+               info.PostPixelFetchCalc = &DoColorCalcWithColorOffset;
+            else
+               info.PostPixelFetchCalc = &DoColorOffset;
+         }
       }
       else // color offset disable
       {
