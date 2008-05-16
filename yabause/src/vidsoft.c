@@ -2824,6 +2824,7 @@ void VIDSoftVdp2DrawEnd(void)
          glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, message[i]);
       }
       glColor3f(1, 1, 1);
+      msglength = 0;
    }
 #endif
 
