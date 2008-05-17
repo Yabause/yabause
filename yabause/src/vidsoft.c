@@ -807,6 +807,34 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void GenerateRotatedVar(vdp2rotationparameter_struct *p, float *xmul, float *ymul, float *C, float *F)
+{
+   *xmul = p->Xst - p->Px;
+   *ymul = p->Yst - p->Py;
+   *C = p->C * (p->Zst - p->Pz);
+   *F = p->F * (p->Zst - p->Pz);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE int GenerateRotatedXPosFast(vdp2draw_struct *info, vdp2rotationparameter_struct *p, int x, float xmul, float ymul, float C)
+{
+   float Xsp = p->A * xmul + p->B * ymul + C;
+
+   return (int)(p->kx * (Xsp + p->dX * (float)x) + p->Xp);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE int GenerateRotatedYPosFast(vdp2draw_struct *info, vdp2rotationparameter_struct *p, int x, float xmul, float ymul, float F)
+{
+   float Ysp = p->D * xmul + p->E * ymul + F;
+
+   return (int)(p->ky * (Ysp + p->dY * (float)x) + p->Yp);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparameter_struct *parameter)
 {
    int i, j;
@@ -822,6 +850,9 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 
    if (!parameter->coefenab)
    {
+      float xmul, ymul, C, F;
+      GenerateRotatedVar(parameter, &xmul, &ymul, &C, &F);
+
       // Since coefficients aren't being used, we can simplify the drawing process
       if (IsScreenRotated(parameter))
       {
@@ -867,6 +898,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 
          for (j = 0; j < vdp2height; j++)
          {
+
             for (i = 0; i < vdp2width; i++)
             {
                u32 color;
@@ -879,8 +911,9 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                   continue;
                }
 
-               x = GenerateRotatedXPos(info, parameter, i, j) & xmask; // This can definitely be optimized
-               y = GenerateRotatedYPos(info, parameter, i, j) & ymask; // This can definitely be optimized
+               x = GenerateRotatedXPosFast(info, parameter, i, xmul, ymul, C) & xmask;
+               y = GenerateRotatedYPosFast(info, parameter, i, xmul, ymul, F) & ymask;
+               xmul += parameter->deltaXst;
 
                // Convert coordinates into graphics
                if (!info->isbitmap)
@@ -901,6 +934,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                textdata[0] = COLSAT2YAB32(info->priority, info->PostPixelFetchCalc(info, color));
                textdata++;
             }
+            ymul += parameter->deltaYst;
          }
 
          return;
@@ -908,7 +942,10 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    }
    else
    {
+      float xmul, ymul, C, F;
       u32 *textdata=vdp2framebuffer;
+
+      GenerateRotatedVar(parameter, &xmul, &ymul, &C, &F);
 
       // Rotation using Coefficient Tables(now this stuff just gets wacky. It
       // has to be done in software, no exceptions)
@@ -950,7 +987,6 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                                 ((float)parameter->coefdatasize)));
          }
 
-
          for (i = 0; i < vdp2width; i++)
          {
             u32 color;
@@ -979,8 +1015,9 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                continue;
             }
 
-            x = GenerateRotatedXPos(info, parameter, i, j) & xmask;
-            y = GenerateRotatedYPos(info, parameter, i, j) & ymask;
+            x = GenerateRotatedXPosFast(info, parameter, i, xmul, ymul, C) & xmask;
+            y = GenerateRotatedYPosFast(info, parameter, i, xmul, ymul, F) & ymask;
+            xmul += parameter->deltaXst;
 
             // Convert coordinates into graphics
             if (!info->isbitmap)
@@ -1001,6 +1038,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
             textdata[0] = COLSAT2YAB32(info->priority, info->PostPixelFetchCalc(info, color));
             textdata++;
          }
+         ymul += parameter->deltaYst;
       }
       return;
    }
