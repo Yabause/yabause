@@ -55,7 +55,7 @@ const char * mini18n(const char * source) {
 #ifdef MINI18N_LOG
 	const char * translated = mini18n_hash_value(hash, source);
 
-	if ((log) && (translated == source)) {
+	if ((log) && (hash) && (translated == source)) {
 		unsigned int i = 0;
 		unsigned int n = strlen(source);
 
