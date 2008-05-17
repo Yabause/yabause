@@ -514,7 +514,6 @@ static INLINE int TestWindow(int wctl, int enablemask, int inoutmask, clipping_s
             return 0;
       }
    }
-
    return 1;
 }
 
@@ -712,7 +711,7 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
             y = info->y;
          }
          else
-            y = info->y+((int)(info->coordincy*(float)(j / info->mosaicymask * info->mosaicymask)));
+            y = info->y+((int)(info->coordincy *(float)(info->mosaicymask > 1 ? (j / info->mosaicymask * info->mosaicymask) : j)));
          if (info->islinescroll & 0x4)
          {
             info->coordincx = (T1ReadLong(Vdp2Ram, info->linescrolltbl) & 0x7FF00) / (float)65536.0;
@@ -720,7 +719,7 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
          }
       }
       else
-         y = info->y+((int)(info->coordincy*(float)(j / info->mosaicymask * info->mosaicymask)));
+         y = info->y+((int)(info->coordincy *(float)(info->mosaicymask > 1 ? (j / info->mosaicymask * info->mosaicymask) : j)));
 
       // if line window is enabled, adjust clipping values
       if (info->islinewindow)
@@ -774,7 +773,7 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
             continue;
          }
 
-         x = info->x+((int)(info->coordincx*(float)(i / info->mosaicxmask * info->mosaicxmask)));
+         x = info->x+((int)(info->coordincx*(float)((info->mosaicxmask > 1) ? (i / info->mosaicxmask * info->mosaicxmask) : i)));
          x &= xmask;
 
          // Fetch Pixel, if it isn't transparent, continue
