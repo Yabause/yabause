@@ -49,7 +49,7 @@ void UIBackupRam::refreshSaveList()
 	
 	// set infos about blocks
 	BupGetStats( id, &fs, &ms );
-	lBlocks->setText( tr( "%1/%2 blocks free" ).arg( fs ).arg( ms ) );
+	lBlocks->setText( QtYabause::translate( "%1/%2 blocks free" ).arg( fs ).arg( ms ) );
 	
 	// enable/disable button delete according to available item
 	pbDelete->setEnabled( lwSaveList->count() );
@@ -76,25 +76,25 @@ void UIBackupRam::on_lwSaveList_itemSelectionChanged()
 		switch ( saves[id].language )
 		{
 			case 0:
-				leLanguage->setText( tr( "Japanese" ) );
+				leLanguage->setText( QtYabause::translate( "Japanese" ) );
 				break;
 			case 1:
-				leLanguage->setText( tr( "English" ) );
+				leLanguage->setText( QtYabause::translate( "English" ) );
 				break;
 			case 2:
-				leLanguage->setText( tr( "French" ) );
+				leLanguage->setText( QtYabause::translate( "French" ) );
 				break;
 			case 3:
-				leLanguage->setText( tr( "German" ) );
+				leLanguage->setText( QtYabause::translate( "German" ) );
 				break;
 			case 4:
-				leLanguage->setText( tr( "Spanish" ) );
+				leLanguage->setText( QtYabause::translate( "Spanish" ) );
 				break;
 			case 5:
-				leLanguage->setText( tr( "Italian" ) );
+				leLanguage->setText( QtYabause::translate( "Italian" ) );
 				break;
 			default:
-				leLanguage->setText( tr( "Unknow (%1)" ).arg( saves[id].language ) );
+				leLanguage->setText( QtYabause::translate( "Unknow (%1)" ).arg( saves[id].language ) );
 				break;
 		}
 		leDataSize->setText( QString::number( saves[id].datasize ) );
@@ -116,7 +116,7 @@ void UIBackupRam::on_pbDelete_clicked()
 	if ( QListWidgetItem* it = lwSaveList->selectedItems().value( 0 ) )
 	{
 		u32 id = cbDeviceList->itemData( cbDeviceList->currentIndex() ).toInt();
-		if ( CommonDialogs::question( tr( "Are you sure you want to delete '%1' ?" ).arg( it->text() ) ) )
+		if ( CommonDialogs::question( QtYabause::translate( "Are you sure you want to delete '%1' ?" ).arg( it->text() ) ) )
 		{
 			BupDeleteSave( id, it->text().toAscii().constData() );
 			refreshSaveList();
@@ -127,7 +127,7 @@ void UIBackupRam::on_pbDelete_clicked()
 void UIBackupRam::on_pbFormat_clicked()
 {
 	u32 id = cbDeviceList->itemData( cbDeviceList->currentIndex() ).toInt();
-	if ( CommonDialogs::question( tr( "Are you sure you want to format '%1' ?" ).arg( devices[id].name ) ) )
+	if ( CommonDialogs::question( QtYabause::translate( "Are you sure you want to format '%1' ?" ).arg( devices[id].name ) ) )
 	{
 		BupFormat( id );
 		refreshSaveList();

@@ -1,22 +1,22 @@
 /*  Copyright 2005 Guillaume Duhamel
-    Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
-    This file is part of Yabause.
+	This file is part of Yabause.
 
-    Yabause is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+	Yabause is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Yabause is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+	You should have received a copy of the GNU General Public License
+	along with Yabause; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "UIYabause.h"
 #include "../Settings.h"
@@ -237,10 +237,10 @@ void UIYabause::on_aFileOpenISO_triggered()
 	YabauseLocker locker( mYabauseThread );
 	if ( mYabauseThread->init() == -1 )
 	{
-		CommonDialogs::information( tr( "Yabause is not initialized, can't open ISO." ) );
+		CommonDialogs::information( QtYabause::translate( "Yabause is not initialized, can't open ISO." ) );
 		return;
 	}
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), tr( "Select your iso/cue/bin file" ), tr( "CD Images (*.iso *.cue *.bin)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin)" ) );
 	if ( !fn.isEmpty() )
 	{
 		QtYabause::settings()->setValue( "Recents/ISOs", fn );
@@ -259,10 +259,10 @@ void UIYabause::on_aFileOpenCDRom_triggered()
 	YabauseLocker locker( mYabauseThread );
 	if ( mYabauseThread->init() == -1 )
 	{
-		CommonDialogs::information( tr( "Yabause is not initialized, can't open CD Rom." ) );
+		CommonDialogs::information( QtYabause::translate( "Yabause is not initialized, can't open CD Rom." ) );
 		return;
 	}
-	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), tr( "Choose a cdrom drive/mount point" ) );
+	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), QtYabause::translate( "Choose a cdrom drive/mount point" ) );
 	if ( !fn.isEmpty() )
 	{
 		QtYabause::settings()->setValue( "Recents/CDs", fn );
@@ -285,7 +285,7 @@ void UIYabause::on_mFileSaveState_triggered( QAction* a )
 	qWarning() << "data" << a->data();
 	YabauseLocker locker( mYabauseThread );
 	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
-		CommonDialogs::information( tr( "Couldn't save state file" ) );
+		CommonDialogs::information( QtYabause::translate( "Couldn't save state file" ) );
 	else
 		refreshStatesActions();
 }
@@ -299,27 +299,27 @@ void UIYabause::on_mFileLoadState_triggered( QAction* a )
 	qWarning() << "data" << a->data();
 	YabauseLocker locker( mYabauseThread );
 	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
-		CommonDialogs::information( tr( "Couldn't load state file" ) );
+		CommonDialogs::information( QtYabause::translate( "Couldn't load state file" ) );
 }
 
 void UIYabause::on_aFileSaveStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getSaveFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Choose a file to save your state" ), tr( "Yabause Save State (*.yss )" ) );
+	const QString fn = CommonDialogs::getSaveFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), QtYabause::translate( "Choose a file to save your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
-		CommonDialogs::information( tr( "Couldn't save state file" ) );
+		CommonDialogs::information( QtYabause::translate( "Couldn't save state file" ) );
 }
 
 void UIYabause::on_aFileLoadStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), tr( "Select a file to load your state" ), tr( "Yabause Save State (*.yss )" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), QtYabause::translate( "Select a file to load your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabLoadState( fn.toAscii().constData() ) != 0 )
-		CommonDialogs::information( tr( "Couldn't load state file" ) );
+		CommonDialogs::information( QtYabause::translate( "Couldn't load state file" ) );
 	else
 		aEmulationRun->trigger();
 }
@@ -333,18 +333,18 @@ void UIYabause::on_aFileScreenshot_triggered()
 		if ( !filters.contains( ba, Qt::CaseInsensitive ) )
 			filters << QString( ba ).toLower();
 	for ( int i = 0; i < filters.count(); i++ )
-		filters[i] = tr( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
+		filters[i] = QtYabause::translate( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
 	
 	// take screenshot of gl view
 	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
 	// request a file to save to to user
-	const QString s = CommonDialogs::getSaveFileName( QString(), tr( "Choose a location for your screenshot" ), filters.join( ";;" ) );
+	const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
 	
 	// write image if ok
 	if ( !s.isEmpty() )
 		if ( !screenshot.save( s ) )
-			CommonDialogs::information( tr( "An error occur while writing the screenshot." ) );
+			CommonDialogs::information( QtYabause::translate( "An error occur while writing the screenshot." ) );
 }
 
 void UIYabause::on_aFileQuit_triggered()
@@ -390,7 +390,7 @@ void UIYabause::on_aToolsBackupManager_triggered()
 	YabauseLocker locker( mYabauseThread );
 	if ( mYabauseThread->init() == -1 )
 	{
-		CommonDialogs::information( tr( "Yabause is not initialized, can't manage backup ram." ) );
+		CommonDialogs::information( QtYabause::translate( "Yabause is not initialized, can't manage backup ram." ) );
 		return;
 	}
 	UIBackupRam( this ).exec();

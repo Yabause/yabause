@@ -31,16 +31,16 @@ void UICheats::addCode( int id )
 	switch ( mCheats[id].type )
 	{
 		case CHEATTYPE_ENABLE:
-			s = QString( "Enable Code : %1 %2" ).arg( (int)mCheats[id].addr, 8, 16, QChar( '0' ) ).arg( (int)mCheats[id].val, 8, 16, QChar( '0' ) );
+			s = QtYabause::translate( "Enable Code : %1 %2" ).arg( (int)mCheats[id].addr, 8, 16, QChar( '0' ) ).arg( (int)mCheats[id].val, 8, 16, QChar( '0' ) );
 			break;
 		case CHEATTYPE_BYTEWRITE:
-			s = QString( "Byte Write : %1 %2" ).arg( (int)mCheats[id].addr, 8, 16, QChar( '0' ) ).arg( (int)mCheats[id].val, 2, 16, QChar( '0' ) );
+			s = QtYabause::translate( "Byte Write : %1 %2" ).arg( (int)mCheats[id].addr, 8, 16, QChar( '0' ) ).arg( (int)mCheats[id].val, 2, 16, QChar( '0' ) );
 			break;
 		case CHEATTYPE_WORDWRITE:
-			s = QString( "Word Write : %1 %2" ).arg( (int)mCheats[id].addr, 8, 16, QChar( '0' ) ).arg( (int)mCheats[id].val, 4, 16, QChar( '0' ) );
+			s = QtYabause::translate( "Word Write : %1 %2" ).arg( (int)mCheats[id].addr, 8, 16, QChar( '0' ) ).arg( (int)mCheats[id].val, 4, 16, QChar( '0' ) );
 			break;
 		case CHEATTYPE_LONGWRITE:
-			s = QString( "Long Write : %1 %2" ).arg( (int)mCheats[id].addr, 8, 16, QChar( '0' ) ).arg( (int)mCheats[id].val, 8, 16, QChar( '0' ) );
+			s = QtYabause::translate( "Long Write : %1 %2" ).arg( (int)mCheats[id].addr, 8, 16, QChar( '0' ) ).arg( (int)mCheats[id].val, 8, 16, QChar( '0' ) );
 			break;
 		default:
 			break;
@@ -49,7 +49,7 @@ void UICheats::addCode( int id )
 	QTreeWidgetItem* it = new QTreeWidgetItem( twCheats );
 	it->setText( 0, s );
 	it->setText( 1, mCheats[id].desc );
-	it->setText( 2, mCheats[id].enable ? tr( "Enabled" ) : tr( "Disabled" ) );
+	it->setText( 2, mCheats[id].enable ? QtYabause::translate( "Enabled" ) : QtYabause::translate( "Disabled" ) );
 	// enable buttons
 	pbClear->setEnabled( true );
 	pbSaveFile->setEnabled( true );
@@ -61,14 +61,14 @@ void UICheats::addARCode( const QString& c, const QString& d )
 	// add code
 	if ( CheatAddARCode( c.toAscii().constData() ) != 0 )
 	{
-		CommonDialogs::information( tr( "Unable to add code" ) );
+		CommonDialogs::information( QtYabause::translate( "Unable to add code" ) );
 		return;
 	}
 	// change the description
 	int cheatsCount;
 	mCheats = CheatGetList( &cheatsCount );
 	if ( CheatChangeDescriptionByIndex( cheatsCount -1, d.toAscii().data() ) != 0 )
-		CommonDialogs::information( tr( "Unable to change description" ) );
+		CommonDialogs::information( QtYabause::translate( "Unable to change description" ) );
 	// add code in treewidget
 	addCode( cheatsCount -1 );
 }
@@ -82,20 +82,20 @@ void UICheats::addRawCode( int t, const QString& a, const QString& v, const QStr
 	u = a.toUInt( &b, 16 );
 	if ( !b )
 	{
-		CommonDialogs::information( tr( "Invalid Address" ) );
+		CommonDialogs::information( QtYabause::translate( "Invalid Address" ) );
 		return;
 	}
 	// check value
 	u = v.toUInt( &b, 16 );
 	if ( !b )
 	{
-		CommonDialogs::information( tr( "Invalid Value" ) );
+		CommonDialogs::information( QtYabause::translate( "Invalid Value" ) );
 		return;
 	}
 	// add value
 	if ( CheatAddCode( t, a.toUInt(), v.toUInt() ) != 0 )
 	{
-		CommonDialogs::information( tr( "Unable to add code" ) );
+		CommonDialogs::information( QtYabause::translate( "Unable to add code" ) );
 		return;
 	}
 	// get cheats and cheats count
@@ -103,7 +103,7 @@ void UICheats::addRawCode( int t, const QString& a, const QString& v, const QStr
 	mCheats = CheatGetList( &cheatsCount );
 	// change description
 	if ( CheatChangeDescriptionByIndex( cheatsCount -1, d.toAscii().data() ) != 0 )
-		CommonDialogs::information( tr( "Unable to change description" ) );
+		CommonDialogs::information( QtYabause::translate( "Unable to change description" ) );
 	// add code in treewidget
 	addCode( cheatsCount -1 );
 }
@@ -127,7 +127,7 @@ void UICheats::on_twCheats_itemDoubleClicked( QTreeWidgetItem* it, int )
 			else
 				CheatEnableCode( id );
 			// update treewidget item
-			it->setText( 2, mCheats[id].enable ? tr( "Enabled" ) : tr( "Disabled" ) );
+			it->setText( 2, mCheats[id].enable ? QtYabause::translate( "Enabled" ) : QtYabause::translate( "Disabled" ) );
 		}
 	}
 }
@@ -142,7 +142,7 @@ void UICheats::on_pbDelete_clicked()
 		// remove cheat
 		if ( CheatRemoveCodeByIndex( id ) != 0 )
 		{
-			CommonDialogs::information( tr( "Unable to remove code" ) );
+			CommonDialogs::information( QtYabause::translate( "Unable to remove code" ) );
 			return;
 		}
 		// delete item
@@ -181,15 +181,15 @@ void UICheats::on_pbRaw_clicked()
 
 void UICheats::on_pbSaveFile_clicked()
 {
-	const QString s = CommonDialogs::getSaveFileName( ".", tr( "Choose a cheat file to save to" ), tr( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
+	const QString s = CommonDialogs::getSaveFileName( ".", QtYabause::translate( "Choose a cheat file to save to" ), QtYabause::translate( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
 	if ( !s.isEmpty() )
 		if ( CheatSave( s.toAscii().constData() ) != 0 )
-			CommonDialogs::information( tr( "Unable to open file for loading" ) );
+			CommonDialogs::information( QtYabause::translate( "Unable to open file for loading" ) );
 }
 
 void UICheats::on_pbLoadFile_clicked()
 {
-	const QString s = CommonDialogs::getOpenFileName( ".", tr( "Choose a cheat file to open" ), tr( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
+	const QString s = CommonDialogs::getOpenFileName( ".", QtYabause::translate( "Choose a cheat file to open" ), QtYabause::translate( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
 	if ( !s.isEmpty() )
 	{
 		if ( CheatLoad( s.toAscii().constData() ) == 0 )
@@ -204,6 +204,6 @@ void UICheats::on_pbLoadFile_clicked()
 				addCode( i );
 		}
 		else
-			CommonDialogs::information( tr( "Unable to open file for saving" ) );
+			CommonDialogs::information( QtYabause::translate( "Unable to open file for saving" ) );
 	}
 }
