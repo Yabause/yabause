@@ -40,9 +40,6 @@ void PERSDLJoyDeInit(void);
 int PERSDLJoyHandleEvents(void);
 void PERSDLJoyNothing(void);
 
-static PortData_struct port1;
-static PortData_struct port2;
-
 u32 PERSDLJoyScan(const char *);
 void PERSDLJoyFlush(void);
 
