@@ -1,29 +1,29 @@
 /*  Copyright 2005 Guillaume Duhamel
-    Copyright 2005-2006 Theo Berkau
-    Copyright 2008 Filipe Azevedo
+	Copyright 2005-2006 Theo Berkau
+	Copyright 2008 Filipe Azevedo
 
-    This file is part of Yabause.
+	This file is part of Yabause.
 
-    Yabause is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+	Yabause is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Yabause is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+	You should have received a copy of the GNU General Public License
+	along with Yabause; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #ifdef HAVE_LIBSDL
 #ifdef __APPLE__
- #include <SDL/SDL.h>
+	#include <SDL/SDL.h>
 #else
- #include "SDL.h"
+	#include "SDL.h"
 #endif
 
 #include "debug.h"
@@ -32,6 +32,7 @@
 SDL_Joystick* mSDLJoystick1 = 0;
 #define SDL_MAX_AXIS_VALUE 32767
 #define SDL_MIN_AXIS_VALUE -32768
+#define SDL_MEDIUM_AXIS_VALUE (int)(SDL_MAX_AXIS_VALUE /2)
 #define SDL_BUTTON_PRESSED 1
 #define SDL_BUTTON_RELEASED 0
 
@@ -89,7 +90,7 @@ void PERSDLJoyDeInit(void) {
 	// close joystick
 	if ( mSDLJoystick1 )
 	{
-		 if ( SDL_JoystickOpened( 0 ) )
+		if ( SDL_JoystickOpened( 0 ) )
 			SDL_JoystickClose( mSDLJoystick1 );
 		mSDLJoystick1 = 0;
 	}
@@ -130,15 +131,15 @@ int PERSDLJoyHandleEvents(void) {
 		{
 			Sint16 cur = SDL_JoystickGetAxis( mSDLJoystick1, i );
 			
-			if ( cur == SDL_MIN_AXIS_VALUE )
+			if ( cur < -SDL_MEDIUM_AXIS_VALUE )
 			{
 				PerKeyUp( hashAxisSDL( i, SDL_MAX_AXIS_VALUE ) );
-				PerKeyDown( hashAxisSDL( i, cur ) );
+				PerKeyDown( hashAxisSDL( i, SDL_MIN_AXIS_VALUE ) );
 			}
-			else if ( cur == SDL_MAX_AXIS_VALUE )
+			else if ( cur > SDL_MEDIUM_AXIS_VALUE )
 			{
 				PerKeyUp( hashAxisSDL( i, SDL_MIN_AXIS_VALUE ) );
-				PerKeyDown( hashAxisSDL( i, cur ) );
+				PerKeyDown( hashAxisSDL( i, SDL_MAX_AXIS_VALUE ) );
 			}
 			else
 			{
@@ -184,9 +185,14 @@ u32 PERSDLJoyScan( const char* n ) {
 	for ( i = 0; i < SDL_JoystickNumAxes( mSDLJoystick1 ); i++ )
 	{
 		Sint16 cur = SDL_JoystickGetAxis( mSDLJoystick1, i );
-		if ( cur == SDL_MIN_AXIS_VALUE || cur == SDL_MAX_AXIS_VALUE )
+		if ( cur < -SDL_MEDIUM_AXIS_VALUE )
 		{
-			k = hashAxisSDL( i, cur );
+			k = hashAxisSDL( i, SDL_MIN_AXIS_VALUE );
+			break;
+		}
+		else if ( cur > SDL_MEDIUM_AXIS_VALUE )
+		{
+			k = hashAxisSDL( i, SDL_MAX_AXIS_VALUE );
 			break;
 		}
 	}
