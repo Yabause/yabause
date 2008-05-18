@@ -1,6 +1,6 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
-	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+		Copyright 2005-2006 Theo Berkau
+		Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
 
