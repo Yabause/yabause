@@ -1,22 +1,22 @@
 /*  Copyright 2005 Guillaume Duhamel
-    Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
-    This file is part of Yabause.
+	This file is part of Yabause.
 
-    Yabause is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+	Yabause is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
 
-    Yabause is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Yabause is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Yabause; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+	You should have received a copy of the GNU General Public License
+	along with Yabause; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "UISettings.h"
 #include "../Settings.h"
@@ -125,27 +125,29 @@ void UISettings::tbBrowse_clicked()
 	QToolButton* tb = qobject_cast<QToolButton*>( sender() );
 	
 	if ( tb == tbBios )
-		requestFile( tr( "Choose a bios file" ), leBios );
+		requestFile( QtYabause::translate( "Choose a bios file" ), leBios );
 	else if ( tb == tbCdRom )
 	{
 		if ( cbCdRom->currentText().contains( "dummy", Qt::CaseInsensitive ) )
 		{
-			CommonDialogs::information( tr( "The dummies cores don't need configuration." ) );
+			CommonDialogs::information( QtYabause::translate( "The dummies cores don't need configuration." ) );
 			return;
 		}
 		else if ( cbCdRom->currentText().contains( "iso", Qt::CaseInsensitive ) )
-			requestFile( tr( "Select your iso/cue/bin file" ), leCdRom, tr( "CD Images (*.iso *.cue *.bin)" ) );
+			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin)" ) );
 		else
-			requestFolder( tr( "Choose a cdrom drive/mount point" ), leCdRom );
+			requestFolder( QtYabause::translate( "Choose a cdrom drive/mount point" ), leCdRom );
 	}
 	else if ( tb == tbSaveStates )
-		requestFolder( tr( "Choose a folder to store save states" ), leSaveStates );
+		requestFolder( QtYabause::translate( "Choose a folder to store save states" ), leSaveStates );
+	else if ( tb == tbTranslation )
+		requestFile( QtYabause::translate( "Choose the translation file to use" ), leTranslation, QtYabause::translate( "Yabause Translation Files (*.yts)" ) );
 	else if ( tb == tbCartridge )
-		requestNewFile( tr( "Choose a cartridge file" ), leCartridge );
+		requestNewFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );
 	else if ( tb == tbMemory )
-		requestNewFile( tr( "Choose a memory file" ), leMemory );
+		requestNewFile( QtYabause::translate( "Choose a memory file" ), leMemory );
 	else if ( tb == tbMpegROM )
-		requestFile( tr( "Choose a mpeg rom" ), leMpegROM );
+		requestFile( QtYabause::translate( "Choose a mpeg rom" ), leMpegROM );
 }
 
 void UISettings::pbInputs_clicked()
@@ -211,6 +213,7 @@ void UISettings::loadSettings()
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	leSaveStates->setText( s->value( "General/SaveStates", QApplication::applicationDirPath() ).toString() );
+	leTranslation->setText( s->value( "General/Translation" ).toString() );
 
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
@@ -249,6 +252,7 @@ void UISettings::saveSettings()
 	s->setValue( "General/CdRom", cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	s->setValue( "General/CdRomISO", leCdRom->text() );
 	s->setValue( "General/SaveStates", leSaveStates->text() );
+	s->setValue( "General/Translation", leTranslation->text() );
 
 	// video
 	s->setValue( "Video/VideoCore", cbVideoCore->itemData( cbVideoCore->currentIndex() ).toInt() );
