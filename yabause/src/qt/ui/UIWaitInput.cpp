@@ -43,10 +43,9 @@ UIWaitInput::UIWaitInput( PerInterface_struct* c, const QString& pk, QWidget* p 
 
 void UIWaitInput::keyPressEvent( QKeyEvent* e )
 {
-	if ( mCore->id == PERCORE_QT && e->key() != Qt::Key_Escape )
+	if ( e->key() != Qt::Key_Escape )
 	{
 		mKeyString = QString::number( e->key() );
-		//PerSetKey( e->key(), mPadKey.toAscii().constData() );
 		QDialog::accept();
 	}
 	QWidget::keyPressEvent( e );
@@ -60,7 +59,7 @@ void UIWaitInput::inputScan_timeout()
 	k = mCore->Scan( ki );
 	if ( k != 0 )
 	{
-		delete sender();
+		sender()->deleteLater();
 		mKeyString = QString::number( k );
 		QDialog::accept();
 	}
