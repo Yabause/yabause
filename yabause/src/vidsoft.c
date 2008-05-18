@@ -449,7 +449,7 @@ static INLINE int Vdp2FetchPixel(vdp2draw_struct *info, int x, int y, u32 *color
    {
       case 0: // 4 BPP
          dot = T1ReadByte(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) / 2) & 0x7FFFF));
-         if (!(x & 0x1)) dot >>= 4; 
+         if (!(x & 0x1)) dot >>= 4;
          if (!(dot & 0xF) && info->transparencyenable) return 0;
          else
          {
@@ -540,13 +540,13 @@ static INLINE void Vdp2MapCalcXY(vdp2draw_struct *info, int *x, int *y,
 {
    int planenum;
    int pagesize=info->pagewh*info->pagewh;
-   int cellwh=(8 * info->patternwh);
+   int cellwh=(2 + info->patternwh);
 
-   if ((x[0] / cellwh) != oldcellx[0] ||
-       (y[0] / cellwh) != oldcelly[0])
+   if ((x[0] >> cellwh) != oldcellx[0] ||
+       (y[0] >> cellwh) != oldcelly[0])
    {
-      oldcellx[0] = x[0] / cellwh;
-      oldcelly[0] = y[0] / cellwh;
+      oldcellx[0] = x[0] >> cellwh;
+      oldcelly[0] = y[0] >> cellwh;
 
       // Calculate which plane we're dealing with
       planenum = (y[0] / planepixelheight * info->mapwh) + (x[0] / planepixelwidth);
@@ -559,8 +559,8 @@ static INLINE void Vdp2MapCalcXY(vdp2draw_struct *info, int *x, int *y,
       // Figure out which page it's on(if plane size is not 1x1)
       info->addr += ((y[0] / pagepixelwh * pagesize * info->planew) +
                      (x[0] / pagepixelwh * pagesize) +
-                     ((y[0] % pagepixelwh) / cellwh * info->pagewh) +
-                     ((x[0] % pagepixelwh) / cellwh)) * info->patterndatasize * 2;
+                     (((y[0] % pagepixelwh) >> cellwh) * info->pagewh) +
+                     ((x[0] % pagepixelwh) >> cellwh)) * info->patterndatasize * 2;
 
       Vdp2PatternAddr(info); // Heh, this could be optimized
    }
