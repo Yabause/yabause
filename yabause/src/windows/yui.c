@@ -95,7 +95,7 @@ NULL
 CDInterface *CDCoreList[] = {
 &DummyCD,
 &ISOCD,
-&SPTICD,
+&ArchCD,
 NULL
 };
 

@@ -31,7 +31,7 @@ static HANDLE thread_handle=INVALID_HANDLE_VALUE;
 static int drivestatus=0;
 static DWORD thread_id;
 
-CDInterface SPTICD = {
+CDInterface ArchCD = {
 CDCORE_SPTI,
 "Windows SPTI Driver",
 SPTICDInit,

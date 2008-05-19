@@ -37,7 +37,7 @@ int SPTICDGetStatus();
 s32 SPTICDReadTOC(u32 *);
 int SPTICDReadSectorFAD(u32, void *);
 
-extern CDInterface SPTICD;
+extern CDInterface ArchCD;
 
 int ASPICDInit(const char *);
 int ASPICDDeInit();
