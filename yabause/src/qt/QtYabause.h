@@ -62,14 +62,12 @@ namespace QtYabause
 {
 	UIYabause* mainWindow();
 	Settings* settings();
-#ifdef HAVE_LIBMINI18N
 	int setTranslationFile();
 	int logTranslation();
 	void closeTranslation();
 	QString translate( const QString& string );
 	void retranslateWidget( QWidget* widget );
 	void retranslateApplication();
-#endif // HAVE_LIBMINI18N
 
 	// get cd serial
 	const char* getCurrentCdSerial();

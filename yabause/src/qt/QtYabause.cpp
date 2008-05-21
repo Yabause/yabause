@@ -123,9 +123,9 @@ Settings* QtYabause::settings()
 	return mSettings;
 }
 
-#ifdef HAVE_LIBMINI18N
 int QtYabause::setTranslationFile()
 {
+#ifdef HAVE_LIBMINI18N
 	const QString s = settings()->value( "General/Translation" ).toString();
 	if ( s.isEmpty() )
 		return 0;
@@ -137,27 +137,43 @@ int QtYabause::setTranslationFile()
 			qWarning( "Can't log translation !" );
 		return 0;
 	}
+#endif
 	return -1;
 }
 
 int QtYabause::logTranslation()
 {
 	return 0;
+#ifdef HAVE_LIBMINI18N
 	const QString s = settings()->value( "General/Translation" ).toString().replace( ".yts", "_log.yts" );
 	if ( s.isEmpty() )
 		return 0;
 	const char* filePath = qstrdup( s.toLocal8Bit().constData() );
 	return mini18n_set_log( filePath );
+#else
+	return 0;
+#endif
 }
 
 void QtYabause::closeTranslation()
-{ mini18n_close(); }
+{
+#ifdef HAVE_LIBMINI18N
+	mini18n_close();
+#endif
+}
 
 QString QtYabause::translate( const QString& string )
-{ return QString::fromUtf8( _( string.toUtf8().constData() ) ); }
+{
+#ifdef HAVE_LIBMINI18N
+	return QString::fromUtf8( _( string.toUtf8().constData() ) );
+#else
+	return string;
+#endif
+}
 
 void QtYabause::retranslateWidget( QWidget* widget )
 {
+#ifdef HAVE_LIBMINI18N
 	if ( !widget )
 		return;
 	// translate all widget based members
@@ -230,15 +246,16 @@ void QtYabause::retranslateWidget( QWidget* widget )
 	// translate children
 	foreach ( QWidget* w, widget->findChildren<QWidget*>() )
 		retranslateWidget( w );
+#endif
 }
 
 void QtYabause::retranslateApplication()
 {
+#ifdef HAVE_LIBMINI18N
 	foreach ( QWidget* widget, QApplication::allWidgets() )
 		retranslateWidget( widget );
+#endif
 }
-
-#endif // HAVE_LIBMINI18N
 
 const char* QtYabause::getCurrentCdSerial()
 { return cdip ? cdip->itemnum : 0; }
