@@ -28,7 +28,7 @@ mac:QMAKE_CXXFLAGS	+= -DMAC_OS_X_VERSION_MIN_REQUIRED=MAC_OS_X_VERSION_MAX_ALLOW
 mac:QMAKE_CFLAGS	+= -DMAC_OS_X_VERSION_MIN_REQUIRED=MAC_OS_X_VERSION_MAX_ALLOWED
 RESOURCES	+= resources/resources.qrc
 mac:ICON	+= resources/icons/yabause.icns
-win32:RC_FILE	+= resources/icons/yabause.rc
+win32:RC_FILE	+= $$PWD/resources/icons/yabause.rc
 
 BUILD_PATH	= ./build
 BUILDER	= GNUMake

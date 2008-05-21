@@ -64,11 +64,7 @@ NULL
 CDInterface *CDCoreList[] = {
 &DummyCD,
 &ISOCD,
-#ifndef Q_OS_WIN
 &ArchCD,
-#else
-&SPTICD,
-#endif
 NULL
 };
 
@@ -310,11 +306,7 @@ VideoInterface_struct* QtYabause::getVDICore( int id )
 
 CDInterface QtYabause::defaultCDCore()
 {
-#ifdef Q_OS_WIN
-	return SPTICD;
-#else
 	return ArchCD;
-#endif
 }
 
 SoundInterface_struct QtYabause::defaultSNDCore()
