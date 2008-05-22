@@ -1,7 +1,7 @@
 /*  Copyright 2004-2005 Lucas Newman
     Copyright 2004-2005 Theo Berkau
     Copyright 2005 Weston Yager
-    Copyright 2006 Guillaume Duhamel
+    Copyright 2006-2008 Guillaume Duhamel
 
     This file is part of Yabause.
 
@@ -55,26 +55,51 @@ MacOSXCDReadSectorFAD
 };
 
 int hCDROM;
-char *BSDDeviceName = NULL;
 
-int MacOSXCDInit(const char *cdrom_name)
+int MacOSXCDInit(const char * useless_for_now)
 {
-	char *ExpandedName = NULL;
-	char *Device = strrchr(cdrom_name, '/');
+	CFMutableDictionaryRef  classesToMatch;
+	io_iterator_t mediaIterator;
+	io_object_t media;
+	char cdrom_name[ MAXPATHLEN ];
 
-	if (Device == NULL)
-		Device = cdrom_name;
-	else
-		Device++;
+	classesToMatch = IOServiceMatching(kIOCDMediaClass); 
+	CFDictionarySetValue(classesToMatch, CFSTR(kIOMediaEjectableKey),
+		kCFBooleanTrue); 
+	IOServiceGetMatchingServices(kIOMasterPortDefault,
+		classesToMatch, &mediaIterator);    
 
-	if ((hCDROM = opendev(Device, O_RDONLY, OPENDEV_PART, &ExpandedName)) == -1)
+	media = IOIteratorNext(mediaIterator);
+	
+	if(media)
 	{
-			return -1;
+		CFTypeRef path;
+
+		path = IORegistryEntryCreateCFProperty(media,
+			CFSTR(kIOBSDNameKey),
+			kCFAllocatorDefault, 0);
+
+		if (path)
+		{
+			size_t length;
+
+			strcpy(cdrom_name, _PATH_DEV);
+			strcat(cdrom_name, "r");
+			length = strlen(cdrom_name);
+
+			CFStringGetCString(path, cdrom_name + length,
+				MAXPATHLEN - length, kCFStringEncodingUTF8);
+
+			CFRelease(path);
+		}
+		IOObjectRelease(media);
 	}
-	
-	BSDDeviceName = malloc(strlen(ExpandedName)+1);
-	strcpy(BSDDeviceName, ExpandedName);
-	
+
+	if ((hCDROM = open(cdrom_name, O_RDONLY)) == -1)
+	{
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -82,15 +107,13 @@ int MacOSXCDDeInit()
 {
 	if (hCDROM != -1) 
 	{
-		free(BSDDeviceName);
-		BSDDeviceName = NULL;
 		close(hCDROM);
 	}
 	
 	return 0;
 }
 
-CDTOC *GetTOCFromCDPath(const char *BSDDeviceName)
+CDTOC * GetTOCFromCDPath()
 {
 	CFMutableDictionaryRef  classesToMatch;
 	io_iterator_t mediaIterator;
@@ -122,7 +145,7 @@ long MacOSXCDReadTOC(unsigned long *TOC)
   	int add150 = 150, tracks = 0;
 	u_char track;
 	int i, fad = 0;
-	CDTOC *cdTOC = GetTOCFromCDPath(BSDDeviceName);
+	CDTOC *cdTOC = GetTOCFromCDPath();
 	CDTOCDescriptor *pTrackDescriptors;
 	pTrackDescriptors = cdTOC->descriptors;
 
@@ -163,12 +186,10 @@ int MacOSXCDGetStatus(void)
 
 int MacOSXCDReadSectorFAD(unsigned long FAD, void *buffer) 
 {
-	//int blockSize;
 	int blockSize = 2352;
 	
 	if (hCDROM != -1) 
 	{
-		//ioctl(hCDROM, DKIOCGETBLOCKSIZE, &blockSize);
 		if (pread(hCDROM, buffer, blockSize, (FAD - 150) * blockSize))
 			return true;
 	}
