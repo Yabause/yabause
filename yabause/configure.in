@@ -241,7 +241,29 @@ AC_CONFIG_FILES([Makefile
 	autopackage/default.apspec
 ])
 if test x$yabause_yui = xqt ; then
-	AC_CONFIG_FILES([src/qt/Makefile.qmake:src/qt/yabause.pro], [$QMAKE src/qt/yabause.pro -o src/qt/Makefile.qmake], [QMAKE=$HAVE_QMAKE])
+	if test "x$cross_compiling" = "xyes" ; then
+		case $host in
+			*mingw*)
+				case $build in
+					*linux*)
+						qmake_spec="-win32 -spec mkspecs/win32-x11-g++"
+						;;
+					*darwin*)
+						qmake_spec="-win32 -spec mkspecs/win32-osx-g++"
+						;;
+					*)
+						AC_MSG_ERROR([cross-compiling $host port on $build is not supported yet])
+						;;
+				esac
+				;;
+			*)
+				AC_MSG_ERROR([cross-compiling $host port on $build is not supported yet])
+				;;
+		esac
+	fi
+	AC_CONFIG_FILES([src/qt/Makefile.qmake:src/qt/yabause.pro],
+			[( cd src/qt && $QMAKE yabause.pro $QMAKE_SPEC -o Makefile.qmake )],
+			[QMAKE=$HAVE_QMAKE QMAKE_SPEC="$qmake_spec"])
 fi
 
 AC_CONFIG_COMMANDS([src/c68k/Makefile], [cd src/c68k/ && $CONFIG_SHELL ./configure])
