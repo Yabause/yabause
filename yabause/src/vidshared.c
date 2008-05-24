@@ -20,6 +20,7 @@
 
 #include "vidshared.h"
 #include "vdp2.h"
+#include "debug.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -269,6 +270,180 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter)
          parameter->coefmode = (Vdp2Regs->KTCTL >> 10) & 0x3;
       }
    }
+
+   VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n"
+       "deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n"
+       "Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n"
+       "deltaKAst: %f deltaKAx: %f\n", 
+       parameter->Xst, parameter->Yst, parameter->Zst, parameter->deltaXst,
+       parameter->deltaYst, parameter->deltaX, parameter->deltaY,
+       parameter->A, parameter->B, parameter->C, parameter->D, parameter->E,
+       parameter->F, parameter->Px, parameter->Py, parameter->Pz,
+       parameter->Cx, parameter->Cy, parameter->Cz, parameter->Mx,
+       parameter->My, parameter->kx, parameter->ky, parameter->KAst,
+       parameter->deltaKAst, parameter->deltaKAx);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp2ReadRotationTableFP(int which, vdp2rotationparameterfp_struct *parameter)
+{
+   s32 i;
+   u32 addr;
+
+   addr = Vdp2Regs->RPTA.all << 1;
+
+   if (which == 0)
+   {
+      // Rotation Parameter A
+      addr &= 0x000FFF7C;
+      parameter->coefenab = Vdp2Regs->KTCTL & 0x1;
+      parameter->screenover = (Vdp2Regs->PLSZ >> 10) & 0x3;
+   }
+   else
+   {
+      // Rotation Parameter B
+      addr = (addr & 0x000FFFFC) | 0x00000080;
+      parameter->coefenab = Vdp2Regs->KTCTL & 0x100;
+      parameter->screenover = (Vdp2Regs->PLSZ >> 14) & 0x3;
+   }
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->Xst = (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->Yst = (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->Zst = (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->deltaXst = (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->deltaYst = (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->deltaX = (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->deltaY = (signed) ((i & 0x0007FFC0) | (i & 0x00040000 ? 0xFFFC0000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->A = (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->B = (signed) ((i & 0x000FFFC0) | ((i & 0x00080000) ? 0xFFF80000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->C = (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->D = (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->E = (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->F = (signed) ((i & 0x000FFFC0) | (i & 0x00080000 ? 0xFFF80000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadWord(Vdp2Ram, addr);
+   parameter->Px = tofixed((signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000)));
+   addr += 2;
+
+   i = T1ReadWord(Vdp2Ram, addr);
+   parameter->Py = tofixed((signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000)));
+   addr += 2;
+
+   i = T1ReadWord(Vdp2Ram, addr);
+   parameter->Pz = tofixed((signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000)));
+   addr += 4;
+
+   i = T1ReadWord(Vdp2Ram, addr);
+   parameter->Cx = tofixed((signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000)));
+   addr += 2;
+
+   i = T1ReadWord(Vdp2Ram, addr);
+   parameter->Cy = tofixed((signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000)));
+   addr += 2;
+
+   i = T1ReadWord(Vdp2Ram, addr);
+   parameter->Cz = tofixed((signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000)));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->Mx = (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->My = (signed) ((i & 0x3FFFFFC0) | (i & 0x20000000 ? 0xE0000000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->kx = (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000));
+   addr += 4;
+
+   i = T1ReadLong(Vdp2Ram, addr);
+   parameter->ky = (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000));
+   addr += 4;
+
+   if (parameter->coefenab)
+   {
+      // Read in coefficient values
+      i = T1ReadLong(Vdp2Ram, addr);
+      parameter->KAst = (unsigned)(i & 0xFFFFFFC0);
+      addr += 4;
+
+      i = T1ReadLong(Vdp2Ram, addr);
+      parameter->deltaKAst = (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000));
+      addr += 4;     
+
+      i = T1ReadLong(Vdp2Ram, addr);
+      parameter->deltaKAx = (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000));
+      addr += 4;
+
+      if (which == 0)
+      {
+         parameter->coefdatasize = (Vdp2Regs->KTCTL & 0x2 ? 2 : 4);
+         parameter->coeftbladdr = ((Vdp2Regs->KTAOF & 0x7) * 0x10000 + touint(parameter->KAst)) * parameter->coefdatasize;
+         parameter->coefmode = (Vdp2Regs->KTCTL >> 2) & 0x3;
+      }
+      else
+      {
+         parameter->coefdatasize = (Vdp2Regs->KTCTL & 0x200 ? 2 : 4);
+         parameter->coeftbladdr = (((Vdp2Regs->KTAOF >> 8) & 0x7) * 0x10000 + touint(parameter->KAst)) * parameter->coefdatasize;
+         parameter->coefmode = (Vdp2Regs->KTCTL >> 10) & 0x3;
+      }
+   }
+
+   VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n"
+       "deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n"
+       "Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n"
+       "deltaKAst: %f deltaKAx: %f\n", 
+       tofloat(parameter->Xst), tofloat(parameter->Yst),
+       tofloat(parameter->Zst), tofloat(parameter->deltaXst),
+       tofloat(parameter->deltaYst), tofloat(parameter->deltaX),
+       tofloat(parameter->deltaY), tofloat(parameter->A),
+       tofloat(parameter->B), tofloat(parameter->C), tofloat(parameter->D),
+       tofloat(parameter->E), tofloat(parameter->F), tofloat(parameter->Px),
+       tofloat(parameter->Py), tofloat(parameter->Pz), tofloat(parameter->Cx),
+       tofloat(parameter->Cy), tofloat(parameter->Cz), tofloat(parameter->Mx),
+       tofloat(parameter->My), tofloat(parameter->kx),
+       tofloat(parameter->ky), tofloat(parameter->KAst),
+       tofloat(parameter->deltaKAst), tofloat(parameter->deltaKAx));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -415,6 +590,28 @@ float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 ad
       i = T1ReadLong(Vdp2Ram, addr);
       parameter->msb = (i >> 31) & 0x1;
       return (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, u32 addr)
+{
+   s32 i;
+
+   if (parameter->coefdatasize == 2)
+   {
+      addr &= 0x7FFFE;
+      i = T1ReadWord(Vdp2Ram, addr);
+      parameter->msb = (i >> 15) & 0x1;
+      return (signed) ((i & 0x7FFF) | (i & 0x4000 ? 0xFFFFC000 : 0x00000000)) * 64;
+   }
+   else
+   {
+      addr &= 0x7FFFC;
+      i = T1ReadLong(Vdp2Ram, addr);
+      parameter->msb = (i >> 31) & 0x1;
+      return (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000));
    }
 }
 

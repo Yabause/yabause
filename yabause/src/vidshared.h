@@ -23,6 +23,7 @@
 
 #include "core.h"
 #include "vdp2.h"
+#include "debug.h"
 
 typedef struct
 {
@@ -108,14 +109,66 @@ typedef struct
    int msb;
 } vdp2rotationparameter_struct;
 
+#define FP_SIZE 16
+typedef s32 fixed32;
+
+typedef struct
+{
+   fixed32 Xst;
+   fixed32 Yst;
+   fixed32 Zst;
+   fixed32 deltaXst;
+   fixed32 deltaYst;
+   fixed32 deltaX;
+   fixed32 deltaY;
+   fixed32 A;
+   fixed32 B;
+   fixed32 C;
+   fixed32 D;
+   fixed32 E;
+   fixed32 F;
+   fixed32 Px;
+   fixed32 Py;
+   fixed32 Pz;
+   fixed32 Cx;
+   fixed32 Cy;
+   fixed32 Cz;
+   fixed32 Mx;
+   fixed32 My;
+   fixed32 kx;
+   fixed32 ky;
+   fixed32 KAst;
+   fixed32 deltaKAst;
+   fixed32 deltaKAx;
+   u32 coeftbladdr;
+   int coefenab;
+   int coefmode;
+   int coefdatasize;
+   fixed32 Xp;
+   fixed32 Yp;
+   fixed32 dX;
+   fixed32 dY;
+   int screenover;
+   int msb;
+} vdp2rotationparameterfp_struct;
+
+#define tofixed(v) ((v) * (1 << FP_SIZE))
+#define toint(v) ((v) >> FP_SIZE)
+#define touint(v) ((u16)((v) >> FP_SIZE))
+#define tofloat(v) ((float)(v) / (float)(1 << FP_SIZE))
+#define mulfixed(a,b) ((fixed32)((s64)(a) * (s64)(b) >> FP_SIZE))
+#define divfixed(a,b) (((s64)(a) << FP_SIZE) / (b))
+
 void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i);
 void FASTCALL Vdp2NBG1PlaneAddr(vdp2draw_struct *info, int i);
 void FASTCALL Vdp2NBG2PlaneAddr(vdp2draw_struct *info, int i);
 void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i);
 void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter);
+void Vdp2ReadRotationTableFP(int which, vdp2rotationparameterfp_struct *parameter);
 void FASTCALL Vdp2ParameterAPlaneAddr(vdp2draw_struct *info, int i);
 void FASTCALL Vdp2ParameterBPlaneAddr(vdp2draw_struct *info, int i);
 float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 addr);
+fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, u32 addr);
 
 void VideoInitGlut();
 
@@ -132,6 +185,16 @@ static INLINE int GenerateRotatedXPos(vdp2draw_struct *info, vdp2rotationparamet
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void GenerateRotatedVarFP(vdp2rotationparameterfp_struct *p, fixed32 *xmul, fixed32 *ymul, fixed32 *C, fixed32 *F)
+{
+   *xmul = p->Xst - p->Px;
+   *ymul = p->Yst - p->Py;
+   *C = mulfixed(p->C, (p->Zst - p->Pz));
+   *F = mulfixed(p->F, (p->Zst - p->Pz));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static INLINE int GenerateRotatedYPos(vdp2draw_struct *info, vdp2rotationparameter_struct *p, int x, int y)
 {
    float Ysp = p->D * ((p->Xst + p->deltaXst * y) - p->Px) +
@@ -139,6 +202,24 @@ static INLINE int GenerateRotatedYPos(vdp2draw_struct *info, vdp2rotationparamet
                p->F * (p->Zst - p->Pz);
 
    return (int)(p->ky * (Ysp + p->dY * (float)x) + p->Yp);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE int GenerateRotatedXPosFP(vdp2rotationparameterfp_struct *p, int x, fixed32 xmul, fixed32 ymul, fixed32 C)
+{
+   fixed32 Xsp = mulfixed(p->A, xmul) + mulfixed(p->B, ymul + C);
+
+   return touint(mulfixed(p->kx, (Xsp + mulfixed(p->dX, tofixed(x)))) + p->Xp);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE int GenerateRotatedYPosFP(vdp2rotationparameterfp_struct *p, int x, fixed32 xmul, fixed32 ymul, fixed32 F)
+{
+   fixed32 Ysp = mulfixed(p->D, xmul) + mulfixed(p->E, ymul) + F;
+
+   return touint(mulfixed(p->ky, (Ysp + mulfixed(p->dY, tofixed(x)))) + p->Yp);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -157,6 +238,24 @@ static INLINE void CalculateRotationValues(vdp2rotationparameter_struct *p)
          p->B * p->deltaY;
    p->dY=p->D * p->deltaX +
          p->E * p->deltaY;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void CalculateRotationValuesFP(vdp2rotationparameterfp_struct *p)
+{
+   p->Xp=mulfixed(p->A, (p->Px - p->Cx)) +
+         mulfixed(p->B, (p->Py - p->Cy)) +
+         mulfixed(p->C, (p->Pz - p->Cz)) +
+         p->Cx + p->Mx;
+   p->Yp=mulfixed(p->D, (p->Px - p->Cx)) +
+         mulfixed(p->E, (p->Py - p->Cy)) +
+         mulfixed(p->F, (p->Pz - p->Cz)) +
+         p->Cy + p->My;
+   p->dX=mulfixed(p->A, p->deltaX) +
+         mulfixed(p->B, p->deltaY);
+   p->dY=mulfixed(p->D, p->deltaX) +
+         mulfixed(p->E, p->deltaY);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -330,6 +429,22 @@ static INLINE int IsScreenRotated(vdp2rotationparameter_struct *parameter)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE int IsScreenRotatedFP(vdp2rotationparameterfp_struct *parameter)
+{
+  return (parameter->deltaXst == tofixed(0.0) &&
+          parameter->deltaYst == tofixed(1.0) &&
+          parameter->deltaX == tofixed(1.0) &&
+          parameter->deltaY == tofixed(0.0) &&
+          parameter->A == tofixed(1.0) &&
+          parameter->B == tofixed(0.0) &&
+          parameter->C == tofixed(0.0) &&
+          parameter->D == tofixed(0.0) &&
+          parameter->E == tofixed(1.0) &&
+          parameter->F == tofixed(0.0));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static INLINE void Vdp2ReadCoefficient(vdp2rotationparameter_struct *parameter, u32 addr)
 {
    switch (parameter->coefmode)
@@ -350,13 +465,52 @@ static INLINE void Vdp2ReadCoefficient(vdp2rotationparameter_struct *parameter, 
          if (parameter->coefdatasize == 2)
          {
             i = T1ReadWord(Vdp2Ram, addr);
+            parameter->msb = (i >> 15) & 0x1;
             parameter->Xp = (float) (signed) ((i & 0x7FFF) | (i & 0x4000 ? 0xFFFFC000 : 0x00000000)) / 4;
          }
          else
          {
             i = T1ReadLong(Vdp2Ram, addr);
-            parameter->Xp = (float) (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 256;
+            parameter->msb = (i >> 31) & 0x1;
+            parameter->Xp = (float) (signed) ((i & 0x007FFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 256;
          }
+         break;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void Vdp2ReadCoefficientFP(vdp2rotationparameterfp_struct *parameter, u32 addr)
+{
+   switch (parameter->coefmode)
+   {
+      case 0: // coefficient for kx and ky
+         parameter->kx = parameter->ky = Vdp2ReadCoefficientMode0_2FP(parameter, addr);
+         break;
+      case 1: // coefficient for kx
+         parameter->kx = Vdp2ReadCoefficientMode0_2FP(parameter, addr);
+         break;
+      case 2: // coefficient for ky
+         parameter->ky = Vdp2ReadCoefficientMode0_2FP(parameter, addr);
+         break;
+      case 3: // coefficient for Xp
+      {
+         s32 i;
+
+         if (parameter->coefdatasize == 2)
+         {
+            i = T1ReadWord(Vdp2Ram, addr);
+            parameter->msb = (i >> 15) & 0x1;
+            parameter->Xp = (signed) ((i & 0x7FFF) | (i & 0x4000 ? 0xFFFFC000 : 0x00000000)) * 16384;
+         }
+         else
+         {
+            i = T1ReadLong(Vdp2Ram, addr);
+            parameter->msb = (i >> 31) & 0x1;
+            parameter->Xp = (signed) ((i & 0x007FFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) * 256;
+         }
+
          break;
       }
    }
