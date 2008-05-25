@@ -61,6 +61,7 @@ typedef struct
    int draww;
    int drawh;
    int rotatenum;
+   int rotatemode;
    int mosaicxmask;
    int mosaicymask;
    int islinescroll;
@@ -151,6 +152,12 @@ typedef struct
    int screenover;
    int msb;
 } vdp2rotationparameterfp_struct;
+
+typedef struct
+{
+   int xstart, ystart;
+   int xend, yend;
+} clipping_struct;
 
 #define tofixed(v) ((v) * (1 << FP_SIZE))
 #define toint(v) ((v) >> FP_SIZE)
@@ -395,19 +402,71 @@ static INLINE void ReadLineScrollData(vdp2draw_struct *info, u16 mask, u32 tbl)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void ReadLineWindowData(vdp2draw_struct *info, u32 *linewnd0addr, u32 *linewnd1addr)
+static INLINE void ReadWindowData(int wctl, clipping_struct *clip)
 {
-   info->islinewindow = 0;
-
-   if (info->wctl & 0x2 && Vdp2Regs->LWTA0.all & 0x80000000)
+   if (wctl & 0x2)
    {
-      info->islinewindow |= 0x1;
+      clip[0].xstart = Vdp2Regs->WPSX0 >> 1; // fix me
+      clip[0].ystart = Vdp2Regs->WPSY0;
+      clip[0].xend = Vdp2Regs->WPEX0 >> 1; // fix me
+      clip[0].yend = Vdp2Regs->WPEY0;
+   }
+
+   if (wctl & 0x8)
+   {
+      clip[1].xstart = Vdp2Regs->WPSX1 >> 1; // fix me
+      clip[1].ystart = Vdp2Regs->WPSY1;
+      clip[1].xend = Vdp2Regs->WPEX1 >> 1; // fix me
+      clip[1].yend = Vdp2Regs->WPEY1;
+   }
+
+   if (wctl & 0x20)
+   {
+      // fix me
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void ReadLineWindowData(int *islinewindow, int wctl, u32 *linewnd0addr, u32 *linewnd1addr)
+{
+   islinewindow[0] = 0;
+
+   if (wctl & 0x2 && Vdp2Regs->LWTA0.all & 0x80000000)
+   {
+      islinewindow[0] |= 0x1;
       linewnd0addr[0] = (Vdp2Regs->LWTA0.all & 0x7FFFE) << 1;
    }
-   if (info->wctl & 0x8 && Vdp2Regs->LWTA1.all & 0x80000000)
+   if (wctl & 0x8 && Vdp2Regs->LWTA1.all & 0x80000000)
    {
-      info->islinewindow |= 0x2;
-      linewnd1addr[0] = (Vdp2Regs->LWTA0.all & 0x7FFFE) << 1;
+      islinewindow[0] |= 0x2;
+      linewnd1addr[0] = (Vdp2Regs->LWTA1.all & 0x7FFFE) << 1;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void ReadLineWindowClip(int islinewindow, clipping_struct *clip, u32 *linewnd0addr, u32 *linewnd1addr)
+{
+   if (islinewindow)
+   {
+      // Fetch new xstart and xend values from table
+      if (islinewindow & 0x1)
+      {
+         // Window 0
+         clip[0].xstart = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF) >> 1; // fix me
+         linewnd0addr[0]+=2;
+         clip[0].xend = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF) >> 1; // fix me
+         linewnd0addr[0]+=2;
+      }
+      if (islinewindow & 0x2)
+      {
+         // Window 1
+         clip[1].xstart = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF) >> 1; // fix me
+         linewnd1addr[0]+=2;
+         clip[1].xend = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF) >> 1; // fix me
+         linewnd1addr[0]+=2;
+      }
    }
 }
 

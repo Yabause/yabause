@@ -169,15 +169,6 @@ typedef struct { s16 x; s16 y; } vdp1vertex;
 
 typedef struct
 {
-   int xstart, ystart;
-   int xend, yend;
-   int pixeloffset;
-   int lineincrement;
-   int pixelincrement;
-} clipping_struct;
-
-typedef struct
-{
    int pagepixelwh;
    int planepixelwidth;
    int planepixelheight;
@@ -682,28 +673,8 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
    scrollx = info->x;
    scrolly = info->y;
 
-   if (info->wctl & 0x2)
-   {
-      clip[0].xstart = Vdp2Regs->WPSX0 >> 1; // fix me
-      clip[0].ystart = Vdp2Regs->WPSY0;
-      clip[0].xend = Vdp2Regs->WPEX0 >> 1; // fix me
-      clip[0].yend = Vdp2Regs->WPEY0;
-   }
-
-   if (info->wctl & 0x8)
-   {
-      clip[1].xstart = Vdp2Regs->WPSX1 >> 1; // fix me
-      clip[1].ystart = Vdp2Regs->WPSY1;
-      clip[1].xend = Vdp2Regs->WPEX1 >> 1; // fix me
-      clip[1].yend = Vdp2Regs->WPEY1;
-   }
-
-   if (info->wctl & 0x20)
-   {
-      // fix me
-   }
-
-   ReadLineWindowData(info, &linewnd0addr, &linewnd1addr);
+   ReadWindowData(info->wctl, clip);
+   ReadLineWindowData(&info->islinewindow, info->wctl, &linewnd0addr, &linewnd1addr);
 
    for (j = 0; j < height; j++)
    {
@@ -735,27 +706,7 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
          y = info->y+((int)(info->coordincy *(float)(info->mosaicymask > 1 ? (j / info->mosaicymask * info->mosaicymask) : j)));
 
       // if line window is enabled, adjust clipping values
-      if (info->islinewindow)
-      {
-         // Fetch new xstart and xend values from table
-         if (info->islinewindow & 0x1)
-         {
-            // Window 0
-            clip[0].xstart = (T1ReadWord(Vdp2Ram, linewnd0addr) & 0x3FF) >> 1; // fix me
-            linewnd0addr+=2;
-            clip[0].xend = (T1ReadWord(Vdp2Ram, linewnd0addr) & 0x3FF) >> 1; // fix me
-            linewnd0addr+=2;
-         }
-         else
-         {
-            // Window 1
-            clip[1].xstart = T1ReadWord(Vdp2Ram, linewnd1addr) & 0x3FF;
-            linewnd1addr+=2;
-            clip[1].xend = T1ReadWord(Vdp2Ram, linewnd1addr) & 0x3FF;
-            linewnd1addr+=2;
-         }
-      }
-
+      ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr);
       y &= sinfo.ymask;
       Y=y;
 
@@ -818,33 +769,52 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
 
 //////////////////////////////////////////////////////////////////////////////
 
+void SetupRotationInfo(vdp2draw_struct *info, vdp2rotationparameterfp_struct *p)
+{
+   if (info->rotatenum == 0)
+   {
+      Vdp2ReadRotationTableFP(0, p);
+      info->PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+   }
+   else
+   {
+      Vdp2ReadRotationTableFP(1, &p[1]);
+      info->PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparameterfp_struct *parameter)
 {
    int i, j;
    int x, y;
    screeninfo_struct sinfo;
+   vdp2rotationparameterfp_struct *p=&parameter[info->rotatenum];
 
-   if (!parameter->coefenab)
+   SetupRotationInfo(info, parameter);
+
+   if (!p->coefenab)
    {
       fixed32 xmul, ymul, C, F;
 
       // Since coefficients aren't being used, we can simplify the drawing process
-      if (IsScreenRotatedFP(parameter))
+      if (IsScreenRotatedFP(p))
       {
          // No rotation
-         info->x = touint(mulfixed(parameter->kx, (parameter->Xst - parameter->Px)) + parameter->Px + parameter->Mx);
-         info->y = touint(mulfixed(parameter->ky, (parameter->Yst - parameter->Py)) + parameter->Py + parameter->My);
-         info->coordincx = tofloat(parameter->kx);
-         info->coordincy = tofloat(parameter->ky);
+         info->x = touint(mulfixed(p->kx, (p->Xst - p->Px)) + p->Px + p->Mx);
+         info->y = touint(mulfixed(p->ky, (p->Yst - p->Py)) + p->Py + p->My);
+         info->coordincx = tofloat(p->kx);
+         info->coordincy = tofloat(p->ky);
       }
       else
       {
          u32 *textdata=vdp2framebuffer;
 
-         GenerateRotatedVarFP(parameter, &xmul, &ymul, &C, &F);
+         GenerateRotatedVarFP(p, &xmul, &ymul, &C, &F);
 
          // Do simple rotation
-         CalculateRotationValuesFP(parameter);
+         CalculateRotationValuesFP(p);
 
          SetupScreenVars(info, &sinfo);
 
@@ -862,9 +832,9 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                   continue;
                }
 
-               x = GenerateRotatedXPosFP(parameter, i, xmul, ymul, C) & sinfo.xmask;
-               y = GenerateRotatedYPosFP(parameter, i, xmul, ymul, F) & sinfo.ymask;
-               xmul += parameter->deltaXst;
+               x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
+               y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
+               xmul += p->deltaXst;
 
                // Convert coordinates into graphics
                if (!info->isbitmap)
@@ -883,7 +853,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                textdata[0] = COLSAT2YAB32(info->priority, info->PostPixelFetchCalc(info, color));
                textdata++;
             }
-            ymul += parameter->deltaYst;
+            ymul += p->deltaYst;
          }
 
          return;
@@ -895,23 +865,23 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
       fixed32 coefx, coefy;
       u32 *textdata=vdp2framebuffer;
 
-      GenerateRotatedVarFP(parameter, &xmul, &ymul, &C, &F);
+      GenerateRotatedVarFP(p, &xmul, &ymul, &C, &F);
 
       // Rotation using Coefficient Tables(now this stuff just gets wacky. It
       // has to be done in software, no exceptions)
-      CalculateRotationValuesFP(parameter);
+      CalculateRotationValuesFP(p);
 
       SetupScreenVars(info, &sinfo);
       coefx = coefy = 0;
 
       for (j = 0; j < vdp2height; j++)
       {
-         if (parameter->deltaKAx == 0)
+         if (p->deltaKAx == 0)
          {
-            Vdp2ReadCoefficientFP(parameter,
-                                  parameter->coeftbladdr +
+            Vdp2ReadCoefficientFP(p,
+                                  p->coeftbladdr +
                                   touint(coefy) *
-                                  parameter->coefdatasize);
+                                  p->coefdatasize);
          }
 
          for (i = 0; i < vdp2width; i++)
@@ -926,24 +896,24 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                continue;
             }
 
-            if (parameter->deltaKAx != 0)
+            if (p->deltaKAx != 0)
             {
-               Vdp2ReadCoefficientFP(parameter,
-                                     parameter->coeftbladdr +
-                                     touint(coefy + coefx) *
-                                     parameter->coefdatasize);
-               coefx += parameter->deltaKAx;
+               Vdp2ReadCoefficientFP(p,
+                                     p->coeftbladdr +
+                                     toint(coefy + coefx) *
+                                     p->coefdatasize);
+               coefx += p->deltaKAx;
             }
 
-            if (parameter->msb)
+            if (p->msb)
             {
                textdata++;
                continue;
             }
 
-            x = GenerateRotatedXPosFP(parameter, i, xmul, ymul, C) & sinfo.xmask;
-            y = GenerateRotatedYPosFP(parameter, i, xmul, ymul, F) & sinfo.ymask;
-            xmul += parameter->deltaXst;
+            x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
+            y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
+            xmul += p->deltaXst;
 
             // Convert coordinates into graphics
             if (!info->isbitmap)
@@ -962,9 +932,9 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             textdata[0] = COLSAT2YAB32(info->priority, info->PostPixelFetchCalc(info, color));
             textdata++;
          }
-         ymul += parameter->deltaYst;
+         ymul += p->deltaYst;
          coefx = 0;
-         coefy += parameter->deltaKAst;
+         coefy += p->deltaKAst;
       }
       return;
    }
@@ -1023,7 +993,7 @@ static void Vdp2DrawBackScreen(void)
 static void Vdp2DrawNBG0(void)
 {
    vdp2draw_struct info;
-   vdp2rotationparameterfp_struct parameter;
+   vdp2rotationparameterfp_struct parameter[2];
 
    if (Vdp2Regs->BGON & 0x20)
    {
@@ -1031,7 +1001,7 @@ static void Vdp2DrawNBG0(void)
       info.enable = Vdp2Regs->BGON & 0x20;
 
       // Read in Parameter B
-      Vdp2ReadRotationTableFP(1, &parameter);
+      Vdp2ReadRotationTableFP(1, &parameter[1]);
 
       if((info.isbitmap = Vdp2Regs->CHCTLA & 0x2) != 0)
       {
@@ -1052,8 +1022,8 @@ static void Vdp2DrawNBG0(void)
       }
 
       info.rotatenum = 1;
+      info.rotatemode = 0;
       info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
-      parameter.coefenab = Vdp2Regs->KTCTL & 0x100;
    }
    else if (Vdp2Regs->BGON & 0x1)
    {
@@ -1120,7 +1090,7 @@ static void Vdp2DrawNBG0(void)
    else
    {
       // RBG1 draw
-      Vdp2DrawRotationFP(&info, &parameter);
+      Vdp2DrawRotationFP(&info, parameter);
    }
 }
 
@@ -1265,7 +1235,7 @@ static void Vdp2DrawNBG3(void)
 static void Vdp2DrawRBG0(void)
 {
    vdp2draw_struct info;
-   vdp2rotationparameterfp_struct parameter;
+   vdp2rotationparameterfp_struct parameter[2];
 
    info.enable = Vdp2Regs->BGON & 0x10;
    info.priority = rbg0priority;
@@ -1282,27 +1252,28 @@ static void Vdp2DrawRBG0(void)
       case 0:
          // Parameter A
          info.rotatenum = 0;
+         info.rotatemode = 0;
          info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
          break;
       case 1:
          // Parameter B
          info.rotatenum = 1;
+         info.rotatemode = 0;
          info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
          break;
       case 2:
          // Parameter A+B switched via coefficients
-         // FIX ME(need to figure out which Parameter is being used)
       case 3:
-      default:
          // Parameter A+B switched via rotation parameter window
-         // FIX ME(need to figure out which Parameter is being used)
-         VDP2LOG("Rotation Parameter Mode %d not supported!\n", Vdp2Regs->RPMD & 0x3);
+      default:
          info.rotatenum = 0;
+         info.rotatemode = 1 + (Vdp2Regs->RPMD & 0x1);
          info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
          break;
    }
 
-   Vdp2ReadRotationTableFP(info.rotatenum, &parameter);
+   Vdp2ReadRotationTableFP(info.rotatenum, &parameter[info.rotatenum]);
+
    if((info.isbitmap = Vdp2Regs->CHCTLB & 0x200) != 0)
    {
       // Bitmap Mode
@@ -1346,7 +1317,7 @@ static void Vdp2DrawRBG0(void)
    info.islinescroll = 0;
    info.wctl = Vdp2Regs->WCTLC;
 
-   Vdp2DrawRotationFP(&info, &parameter);
+   Vdp2DrawRotationFP(&info, parameter);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2658,6 +2629,10 @@ void VIDSoftVdp2DrawEnd(void)
    vdp2draw_struct info;
    u32 *dst=dispbuffer;
    u32 *vdp2src=vdp2framebuffer;
+   int islinewindow;
+   clipping_struct clip[2];
+   u32 linewnd0addr, linewnd1addr;
+   int wctl;
 
    // Figure out whether to draw vdp1 framebuffer or vdp2 framebuffer pixels
    // based on priority
@@ -2732,10 +2707,35 @@ void VIDSoftVdp2DrawEnd(void)
             info.PostPixelFetchCalc = &DoNothing;
       }
 
+      wctl = Vdp2Regs->WCTLC >> 8;
+      ReadWindowData(wctl, clip);
+      ReadLineWindowData(&islinewindow, wctl, &linewnd0addr, &linewnd1addr);
+
       for (i2 = 0; i2 < vdp2height; i2++)
       {
+         ReadLineWindowClip(islinewindow, clip, &linewnd0addr, &linewnd1addr);
+
          for (i = 0; i < vdp2width; i++)
          {
+            // See if screen position is clipped, if it isn't, continue
+            // Window 0
+            if (!TestWindow(wctl, 0x2, 0x1, &clip[0], i, i2))
+            {
+               dst[0] = COLSATSTRIPPRIORITY(vdp2src[0]);
+               vdp2src++;
+               dst++;
+               continue;
+            }
+
+            // Window 1
+            if (!TestWindow(wctl, 0x8, 0x4, &clip[1], i, i2))
+            {
+               vdp2src++;
+               dst[0] = COLSATSTRIPPRIORITY(vdp2src[0]);
+               dst++;
+               continue;
+            }
+
             if (vdp1pixelsize == 2)
             {
                // 16-bit pixel size
