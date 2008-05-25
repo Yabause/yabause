@@ -120,7 +120,7 @@ static INLINE char *AddBitmapInfoString(char *outstring, int wh, int palnum, int
    }
 
    if (palnum & 0x10)
-   {              
+   {
       AddString(outstring, "Bitmap Special Color Calculation enabled\r\n");
    }
 
@@ -128,6 +128,55 @@ static INLINE char *AddBitmapInfoString(char *outstring, int wh, int palnum, int
    AddString(outstring, "Bitmap Palette Address = %X\r\n", (palnum & 0x7) << 4);
 
    return outstring;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void CalcWindowCoordinates(int num, int *hstart, int *vstart, int *hend, int *vend)
+{
+   if (num == 0)
+   {
+      // Window 0
+      *hstart = Vdp2Regs->WPSX0;
+      *vstart = Vdp2Regs->WPSY0 & 0x1FF;
+      *hend = Vdp2Regs->WPEX0;
+      *vend = Vdp2Regs->WPEY0 & 0x1FF;
+   }
+   else
+   {
+      // Window 1
+      *hstart = Vdp2Regs->WPSX1;
+      *vstart = Vdp2Regs->WPSY1 & 0x1FF;
+      *hend = Vdp2Regs->WPEX1;
+      *vend = Vdp2Regs->WPEY1 & 0x1FF;
+   }
+
+   switch ((Vdp2Regs->TVMD >> 1) & 0x3)
+   {
+      case 0: // Normal
+         *hstart = (*hstart >> 1) & 0x1FF;
+         *hend = (*hend >> 1) & 0x1FF;
+         break;
+      case 1: // Hi-Res
+         *hstart = *hstart & 0x3FF;
+         *hend = *hend & 0x3FF;
+         break;
+      case 2: // Exclusive Normal
+         *hstart = *hstart & 0x1FF;
+         *hend = *hend & 0x1FF;
+         break;
+      case 3: // Exclusive Hi-Res
+         *hstart = (*hstart & 0x3FF) >> 1;
+         *hend = (*hend & 0x3FF) >> 1;
+         break;
+   }
+
+   if ((Vdp2Regs->TVMD & 0xC0) == 0xC0)
+   {
+      // Double-density interlace
+      *vstart >>= 1;
+      *vend >>= 1;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -144,20 +193,18 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
       if (Vdp2Regs->LWTA0.all & 0x80000000)
       {
          // Line Window
+         AddString(outstring, "Line Window Table Address = %08lX\r\n", 0x05E00000 | ((Vdp2Regs->LWTA0.all & 0x7FFFE) << 1));
       }
       else
       {
          // Normal Window
-         hstart = Vdp2Regs->WPSX0 & 0x3FF;
-         vstart = Vdp2Regs->WPSY0 & 0x1FF;
-         hend = Vdp2Regs->WPEX0 & 0x3FF;
-         vend = Vdp2Regs->WPEY0 & 0x1FF;
+         CalcWindowCoordinates(0, &hstart, &vstart, &hend, &vend);
+         AddString(outstring, "Horizontal start = %d\r\n", hstart);
+         AddString(outstring, "Vertical start = %d\r\n", vstart);
+         AddString(outstring, "Horizontal end = %d\r\n", hend);
+         AddString(outstring, "Vertical end = %d\r\n", vend);
       }
 
-      AddString(outstring, "Horizontal start = %d\r\n", hstart);
-      AddString(outstring, "Vertical start = %d\r\n", vstart);
-      AddString(outstring, "Horizontal end = %d\r\n", hend);
-      AddString(outstring, "Vertical end = %d\r\n", vend);
       AddString(outstring, "Display %s of Window\r\n", (wctl & 0x1) ? "inside" : "outside");
    }
 
@@ -171,20 +218,18 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
       if (Vdp2Regs->LWTA1.all & 0x80000000)
       {
          // Line Window
+         AddString(outstring, "Line Table address = %08lX\r\n", 0x05E00000 | ((Vdp2Regs->LWTA1.all & 0x7FFFE) << 1));
       }
       else
       {
          // Normal Window
-         hstart = Vdp2Regs->WPSX1 & 0x3FF;
-         vstart = Vdp2Regs->WPSY1 & 0x1FF;
-         hend = Vdp2Regs->WPEX1 & 0x3FF;
-         vend = Vdp2Regs->WPEY1 & 0x1FF;
+         CalcWindowCoordinates(1, &hstart, &vstart, &hend, &vend);
+         AddString(outstring, "Horizontal start = %d\r\n", hstart);
+         AddString(outstring, "Vertical start = %d\r\n", vstart);
+         AddString(outstring, "Horizontal end = %d\r\n", hend);
+         AddString(outstring, "Vertical end = %d\r\n", vend);
       }
 
-      AddString(outstring, "Horizontal start = %d\r\n", hstart);
-      AddString(outstring, "Vertical start = %d\r\n", vstart);
-      AddString(outstring, "Horizontal end = %d\r\n", hend);
-      AddString(outstring, "Vertical end = %d\r\n", vend);
       AddString(outstring, "Display %s of Window\r\n", (wctl & 0x4) ? "outside" : "inside");
    }
 
@@ -203,7 +248,7 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
       if (wctl & 0x80)
       {
          // Whole screen window enabled
-         AddString(outstring, "Window enabled whole screen\r\n");      
+         AddString(outstring, "Window enabled whole screen\r\n");
       }
       else
       {
@@ -384,6 +429,7 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 {
    int patternwh=((Vdp2Regs->CHCTLB & 0x100) >> 8) + 1;
    u8 map[16];
+   int hstart, vstart, hend, vend;
 
    if (Vdp2Regs->BGON & 0x10)
    {
@@ -401,24 +447,42 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
             rotatenum = 0;
             coeftbl = Vdp2Regs->KTCTL & 0x1;
             coefmode = (Vdp2Regs->KTCTL >> 2) & 0x3;
+            AddString(outstring, "Using Parameter %C\r\n", 'A' + rotatenum);
             break;
          case 1:
             // Parameter B
             rotatenum = 1;
             coeftbl = Vdp2Regs->KTCTL & 0x100;
             coefmode = (Vdp2Regs->KTCTL >> 10) & 0x3;
+            AddString(outstring, "Using Parameter B\r\n");
             break;
          case 2:
             // Parameter A+B switched via coefficients
-            // FIX ME(need to figure out which Parameter is being used)
+            AddString(outstring, "Parameter A/B switched via coefficients\r\n");
             break;
          case 3:
             // Parameter A+B switched via rotation parameter window
-            // FIX ME(need to figure out which Parameter is being used)
+            AddString(outstring, "Parameter A/B switched parameter window\r\n");
+            if (Vdp2Regs->WCTLD & 0x2)
+            {
+               AddString(outstring, "Rotation Window 0 Enabled\r\n");
+               CalcWindowCoordinates(0, &hstart, &vstart, &hend, &vend);
+               AddString(outstring, "Horizontal start = %d\r\n", hstart);
+               AddString(outstring, "Vertical start = %d\r\n", vstart);
+               AddString(outstring, "Horizontal end = %d\r\n", hend);
+               AddString(outstring, "Vertical end = %d\r\n", vend);
+            }
+            else if (Vdp2Regs->WCTLD & 0x4)
+            {
+               AddString(outstring, "Rotation Window 1 Enabled\r\n");
+               CalcWindowCoordinates(1, &hstart, &vstart, &hend, &vend);
+               AddString(outstring, "Horizontal start = %d\r\n", hstart);
+               AddString(outstring, "Vertical start = %d\r\n", vstart);
+               AddString(outstring, "Horizontal end = %d\r\n", hend);
+               AddString(outstring, "Vertical end = %d\r\n", vend);
+            }
             break;
       }
-
-      AddString(outstring, "Using Parameter %C\r\n", 'A' + rotatenum);
 
       if (coeftbl)
       {
@@ -1772,22 +1836,22 @@ u32 *Vdp2DebugTexture(u32 screen, int tilenum, u32 transparentcolor, int *w, int
             case 0:
                // Parameter A
                info.rotatenum = 0;
+               info.rotatemode = 0;
                info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
                break;
             case 1:
                // Parameter B
                info.rotatenum = 1;
+               info.rotatemode = 0;
                info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
                break;
             case 2:
                // Parameter A+B switched via coefficients
-               // FIX ME(need to figure out which Parameter is being used)
             case 3:
-            default:
                // Parameter A+B switched via rotation parameter window
-               // FIX ME(need to figure out which Parameter is being used)
+            default:
                info.rotatenum = 0;
-               info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+               info.rotatemode = 1 + (Vdp2Regs->RPMD & 0x1);
                break;
          }
 
