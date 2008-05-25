@@ -24,14 +24,13 @@
 #include <malloc.h>
 #include <ogcsys.h>
 #include <gccore.h>
-#include <sdcard.h>
+#include <fat.h>
 #include "../cs0.h"
 #include "../m68kcore.h"
 #include "../peripheral.h"
 #include "../vidsoft.h"
 #include "../vdp2.h"
 #include "../yui.h"
-#include "cardio.h"
 #include "perwii.h"
 #include "sndwii.h"
 
@@ -122,11 +121,9 @@ int main(int argc, char **argv)
 {
    yabauseinit_struct yinit;
    int ret;
-   DIR *dir;
 
    VIDEO_Init();
    PAD_Init();
-   SDCARD_Init();
 
    SYS_SetResetCallback(reset);
    SYS_SetPowerCallback(powerdown);
@@ -164,22 +161,7 @@ int main(int argc, char **argv)
    if(rmode->viTVMode&VI_NON_INTERLACE) 
       VIDEO_WaitVSync();
 
-   CARDIO_Init();
-
-/*
-   printf("Please insert SD card with SD Gecko into gamecube slot A...\n");
-   for(;;)
-   {
-      VIDEO_WaitVSync();
-      if (SDCARD_ReadDir("dev0:\\", &dir) >= 1)
-      {
-         free(dir);
-         break;
-      }
-      else if (done)
-         exit(0);
-   }
-*/
+   fatInitDefault();
 
    memset(&yinit, 0, sizeof(yabauseinit_struct));
    yinit.percoretype = PERCORE_WIIKBD;
@@ -301,4 +283,3 @@ void OnScreenDebugMessage(char *string, ...)
    gotoxy(0, 1);
    va_end(arglist);
 }
-
