@@ -1089,6 +1089,12 @@ void FASTCALL Vdp2WriteLong(u32 addr, u32 val) {
          Vdp2Regs->WCTLA = val >> 16;
          Vdp2Regs->WCTLB = val & 0xFFFF;
          return;
+      case 0x0D8:
+         Vdp2Regs->LWTA0.all = val;
+         return;
+      case 0x0DC:
+         Vdp2Regs->LWTA1.all = val;
+         return;
       case 0x0E0:
          Vdp2Regs->SPCTL = val >> 16;
          Vdp2Regs->SDCTL = val & 0xFFFF;
