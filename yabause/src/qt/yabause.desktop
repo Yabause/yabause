@@ -1,10 +1,8 @@
 [Desktop Entry]
-Encoding=UTF-8
-Version=0.9.3
 Type=Application
 Name=Yabause
 Comment=Sega Saturn emulator
 TryExec=yabause
 Exec=yabause
-Icon=yabause.png
-Categories=KDE;Qt;Application;Game;
+Icon=yabause
+Categories=KDE;Qt;Game;
