@@ -131,7 +131,11 @@ case $host in
 			AC_DEFINE(MAC_OS_X_VERSION_MAX_ALLOWED, MAC_OS_X_VERSION_10_3)
 		fi
 		;;
-	*linux*) yabause_arch=linux;;
+	*linux*) yabause_arch=linux
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <linux/cdrom.h>]], [[int i = CDSL_CURRENT;]])],
+			[],
+			[AC_DEFINE(LINUX_CDROM_H_IS_BROKEN)])
+		;;
 	*cygwin*)
 		yabause_arch=windows
                 AC_DEFINE(_WIN32_IE, 0x0400)

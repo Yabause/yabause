@@ -26,6 +26,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef LINUX_CDROM_H_IS_BROKEN
+#include <limits.h>
+#endif
 
 #include "cdbase.h"
 #include "debug.h"

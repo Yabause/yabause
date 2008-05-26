@@ -34,10 +34,7 @@ libyabause_a_SOURCES = \
 	yabause.c yabause.h ygl.h ygl.c yui.h
 if COMPILE_C68K
 libyabause_a_SOURCES += c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c m68kc68k.c m68kc68k.h
-nodist_libyabause_a_SOURCES = c68k/c68k_ini.inc
-c68k/c68k_ini.inc:
-	cd c68k && ./gen68k$(EXEEXT)
-c68kexec.o: c68k/c68kexec.c c68k/c68k_ini.inc
+c68kexec.o: c68k/c68kexec.c
 	$(COMPILE) -O0 c68k/c68kexec.c -c -o c68kexec.o
 endif
 if ARCH_IS_FREEBSD
