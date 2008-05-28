@@ -6,3 +6,6 @@ gen68k_LDFLAGS = -DC68K_GEN
 
 all-local:
 	./gen68k$(EXEEXT)
+
+clean-local:
+	-rm *_*.inc
