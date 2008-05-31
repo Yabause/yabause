@@ -560,7 +560,22 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int YuiInit(void)
+void YuiPrintUsage()
+{
+   MessageBox (NULL, "Usage: yabause [OPTIONS]...\n"
+                     "-h\t\t--help\t\t\tPrint help and exit\n"
+                     "-b STRING\t--bios=STRING\t\tbios file\n"
+                     "-i STRING\t\t--iso=STRING\t\tiso/cue file\n"
+                     "-c STRING\t--cdrom=STRING\t\tcdrom path\n"
+                     "-ns\t\t--nosound\t\tturn sound off\n"
+                     "-f\t\t--fullscreen\t\tstart in fullscreen mode\n"
+                     "\t\t--binary=STRING:ADDRESS\tLoad binary file to address",
+                     "Command line usage",  MB_OK | MB_ICONINFORMATION);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YuiInit(LPSTR lpCmdLine)
 {
    MSG                         msg;
    DWORD inifilenamesize=0;
@@ -573,6 +588,11 @@ int YuiInit(void)
    int ret;
    int ip[4];
    INITCOMMONCONTROLSEX iccs;
+   char *argv=NULL;
+   int forcecdpath=1;
+   char filename[MAX_PATH];
+   u32 addr;
+   int loadexec=0;
 
    memset(&iccs, 0, sizeof(INITCOMMONCONTROLSEX));
    iccs.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -593,16 +613,46 @@ int YuiInit(void)
       // replace .exe with .ini
       sprintf(pinifilename, ".ini");
 
+#ifndef NO_CLI
+   // Just handle the basic args
+   argv = strtok(lpCmdLine, " ");
+
+   while (argv != NULL)
+   {
+      if (strcmp(argv, "-h") == 0 ||
+          strcmp(argv, "-?") == 0 ||
+          strcmp(argv, "--help") == 0)
+      {
+         // Show usage
+         YuiPrintUsage();
+         return 0;
+      }
+      else if ((strcmp(argv, "-i") == 0 && strtok(NULL, " \"")) ||
+                strstr(argv, "--iso=") ||
+               (strcmp(argv, "-c") == 0 && strtok(NULL, " \"")) ||
+                strstr(argv, "--cdrom="))
+      {
+         forcecdpath = 0;
+         break;
+      }
+
+      argv = strtok(NULL, " ");
+   }
+#endif
+
    if (GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
    {
-      nocorechange = 1;
-
-      // Startup Settings Configuration
-      if (DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+      if (forcecdpath)
       {
-         // exit program with error
-         MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
-         return -1;
+         nocorechange = 1;
+
+         // Startup Settings Configuration
+         if (DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+         {
+            // exit program with error
+            MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
+            return -1;
+         }
       }
    }
 
@@ -774,6 +824,59 @@ int YuiInit(void)
    GetPrivateProfileString("General", "WindowY", "0", tempstr, MAX_PATH, inifilename);
    yabwiny = atoi(tempstr);
 
+#ifndef NO_CLI
+   // Now that all the ini stuff is done, continue grabbing args
+   argv = strtok(lpCmdLine, " ");
+
+   while (argv != NULL)
+   {
+      if (strcmp(argv, "-b") == 0 && (argv = strtok(NULL, " ")))
+         strcpy(biosfilename, argv);
+      else if (strstr(argv, "--bios="))
+         sscanf(strchr(argv, '=')+1, "%[^\n]", biosfilename);
+      else if (strcmp(argv, "-i") == 0 && (argv = strtok(NULL, " ")))
+         strcpy(cdrompath, argv);
+      else if (strstr(argv, "--iso="))
+         sscanf(strchr(argv, '=')+1, "%[^\n]", cdrompath);
+      else if (strcmp(argv, "-c") == 0 && (argv = strtok(NULL, " ")))
+         strcpy(cdrompath, argv);
+      else if (strstr(argv, "--cdrom="))
+         sscanf(strchr(argv, '=')+1, "%[^\n]", cdrompath);
+      else if (strcmp(argv, "-ns") == 0 ||
+               strcmp(argv, "--nosound") == 0)
+         sndcoretype = SNDCORE_DUMMY;
+      else if (strcmp(argv, "-f") == 0 ||
+               strcmp(argv, "--fullscreen") == 0)
+         usefullscreenonstartup = TRUE;
+      else if (strstr(argv, "--binary="))
+      {
+         int count;
+         char *p;
+        
+         if ((count = sscanf(strchr(argv, '=')+1, "%[^\n]", filename)) == 0)
+            continue;
+
+         p = strrchr(filename, ':')+1;
+
+         if (sscanf(p, "%lx", &addr))
+         {
+            p = strrchr(filename, ':');
+            p[0] = '\0';
+         }
+         else
+            addr = 0x06004000;
+
+         loadexec = 1;
+      }
+      else
+      {
+         printf("Invalid argument %s\n", argv);
+         return 0;
+      }
+      argv = strtok(NULL, " ");
+   }
+#endif
+
    // Figure out how much of the screen is useable
    if (usecustomwindowsize)
    {
@@ -900,6 +1003,9 @@ YabauseSetup:
       SetFocus(YabWin);
    }
 
+   if (loadexec)
+      MappedMemoryLoadExec(filename, addr);
+
    while (!stop)
    {
       if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
@@ -956,6 +1062,9 @@ YabauseSetup:
    WritePrivateProfileString("General", "WindowX", tempstr, inifilename);
    sprintf(tempstr, "%d", yabwiny);
    WritePrivateProfileString("General", "WindowY", tempstr, inifilename);
+
+   if (argv)
+      LocalFree(argv);
 
    return 0;
 }
@@ -1373,7 +1482,7 @@ LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 {
-   if (YuiInit() != 0)
+   if (YuiInit(lpCmdLine) != 0)
       fprintf(stderr, "Error running Yabause\n");
 
    YabauseDeInit();
