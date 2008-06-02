@@ -29,7 +29,19 @@ AM_PROG_CC_C_O
 #################################################################################
 
 # checking for mini18n
-AC_CHECK_LIB(mini18n, mini18n)
+if test ! "x$MINI18N" = "x" ; then
+	OLDCPPFLAGS="$CPPFLAGS"
+	OLDLDFLAGS="$LDFLAGS"
+	CPPFLAGS="$CPPFLAGS -I$MINI18N/include"
+	LDFLAGS="$LDFLAGS -L$MINI18N/lib"
+
+	AC_CHECK_LIB(mini18n, mini18n, [], [
+		CPPFLAGS="$OLDCPPFLAGS"
+		LDFLAGS="$OLDLDFLAGS"
+		])
+else
+	AC_CHECK_LIB(mini18n, mini18n)
+fi
 
 # checking for variadic macros
 AC_MSG_CHECKING([[whether the compiled supports c99 variadic macros]])
