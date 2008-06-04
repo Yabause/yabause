@@ -28,4 +28,8 @@ all-local: Makefile.qmake
 
 clean-local: Makefile.qmake
 	$(MAKE) -f Makefile.qmake clean
+
+distclean-local: Makefile.qmake.Release Makefile.qmake.Debug
+	$(MAKE) -f Makefile.qmake.Release distclean
+	$(MAKE) -f Makefile.qmake.Debug distclean
 endif
