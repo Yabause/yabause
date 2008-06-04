@@ -1,5 +1,5 @@
-EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h JSWHelper.cpp JSWHelper.h \
-	main.cpp PerJSW.cpp PerJSW.h PerQt.c PerQt.h \
+EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h \
+	main.cpp PerQt.c PerQt.h \
 	QtYabause.cpp QtYabause.h Settings.cpp Settings.h yabause.desktop \
 	YabauseGL.cpp YabauseGL.h yabause.pro.in YabauseThread.cpp YabauseThread.h \
 	resources/resources.qrc \
