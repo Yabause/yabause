@@ -265,6 +265,10 @@ gboolean yui_settings_load(void) {
 	yinit.vidcoretype = g_key_file_get_integer(keyfile, "General", "VideoCore", 0);
 	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.vidcoretype)) {
 		VideoChangeCore(yinit.vidcoretype);
+		VIDCore->Resize(
+			GTK_WIDGET(YUI_WINDOW(yui)->area)->allocation.width,
+			GTK_WIDGET(YUI_WINDOW(yui)->area)->allocation.height,
+			FALSE);
 	}
 
 	/* sound core */
@@ -465,6 +469,10 @@ void yui_conf(void) {
 }
 
 void yui_resize(guint width, guint height, gboolean fullscreen) {
-	gtk_widget_set_size_request(YUI_WINDOW(yui)->area, width, height);
+	if (width <= 0) width = 1;
+	if (height <= 0) height = 1;
+
+	gtk_window_resize(GTK_WINDOW(yui), width, height + YUI_WINDOW(yui)->menu->allocation.height);
+
 	yui_window_set_fullscreen(YUI_WINDOW(yui), fullscreen);
 }
