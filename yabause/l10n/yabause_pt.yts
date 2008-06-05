@@ -1,0 +1,200 @@
+...|
+0|
+1|
+%1/%2 blocks free|
+%1 Images (*.%2)|
+2|
+23|
+3|
+4|
+41|
+5|
+503/512 blocks free|503/512 blocos livres
+510/512 blocks free|
+6|
+7|
+8|
+9|
+A|
+&About...|&Sobre...
+About|Sobre
+About...|Sobre...
+&Action Replay|
+Action Replay Code :|Código do Action Replay
+Add Action Replay Code|Adicionar Código do Action Replay
+Add Codes...|Adicionar Códigos...
+Add Raw Memory Code|Adicionar o Endereço Original da Memória
+Address :|Endereço :
+Advanced|
+<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|
+Are you sure you want to delete '%1' ?|
+Are you sure you want to format '%1' ?|
+B|
+Backup Manager|Gerenciador de Backups
+Backup Manager...|Gerenciador de Backups...
+Backup Ram Manager|Gerenciador da Ram de Backup
+Bios|
+Block Size :|Tamanho dos Blocos :
+Browse|Procurar
+Byte Write|Gravação dos Bytes
+C|
+Cancel|Cancelar
+Cannot initialize |Não pode inicializar
+Cart/Memory|
+Cartridge|Cartucho
+CD Images (*.iso *.cue *.bin)|
+Cd-Rom|
+Cheats File|Arquivo das Trapaças
+Cheats List|Lista de Trapaças
+Cheats List...|Lista de Trapaças
+Cheats|Trapaças
+Cheat Type|Tipo de Trapaça
+Choose a cdrom drive/mount point|
+Choose a cheat file to open|
+Choose a cheat file to save to|
+Choose a file to save your state|
+Choose a location for your screenshot|
+&Clear|&Limpar
+Close|Fechar
+Code|Código
+Comment :|Comentário :
+Data Size :|Tamanho dos Dados :
+_Debug|_Debug
+&Debug|&Debug
+&Delete|&Apagar
+Delete|Apagar
+Description|Descrição
+Description :|Descrição :
+Device List|Lista dos Dispositivos
+Disabled|
+Down|Pra baixo
+Emu-Compatibility|Compatibilidade com o Emu
+Emulation|Emulação
+Enable|Ativar
+Enabled|
+English|
+&File|&Arquivo
+File|Arquivo
+File Name :|Nome do Arquivo :
+File transfer|Transferência do arquivo
+<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVISO:</b> Códigos Mestres são <b>NOT</b> suportados.</font>
+Format|Formato
+FPS|FPS
+Frame Skip/Limiter|Frame Skip/Limitador
+French|
+From|De
+From File|Do Arquivo
+From File...|Do Arquivo
+&Fullscreen|Tela cheia
+Fullscreen|Tela cheia
+General|
+German|
+Height|Altura
+_Help|_Ajuda
+&Help|&Ajuda
+http://www.emu-compatibility.com/yabause/index.php?lang=uk|
+http://www.monkeystudio.org|
+Input|Entrada dos dados
+Invalid Address|
+Invalid Value|
+Italian|
+Japanese|
+L|
+Language :|Idioma :
+&Layer|Camada
+Layer|Camada
+Left|Esquerda
+Left trigger|Gatilho esquerdo
+Load as executable|Carregar como executável
+Load|Carregar
+&Load From File|&Carregar Do Arquivo
+Load State|Carregar State
+Log|Log
+Long Write|Gravação Longa
+M68K|
+Memory dump|Dump da memória
+Memory Dump|Dump da Memória
+Memory|Memória
+Mpeg ROM|ROM Mpeg
+MSH2|
+NBG0|
+NBG1|
+NBG2|
+NBG3|
+Ok|
+&OK|
+Open CD Rom|Abrir o CD Rom
+Open CD Rom...|Abrir o CD Rom...
+Open ISO|Abrir a ISO
+Open ISO...|Abrir a ISO...
+&Pause|&Pausar
+Pause|Pausar
+&Quit|&Sair
+Quit|Sair
+R|
+&Raw Memory Address|&Endereço Original da Memória
+RBG0|
+Region|Região
+&Reset|&Resetar
+Reset|Resetar
+Resolution|Resolução
+Right|Direita
+Right trigger|Gatilho direito
+R&un|E&xecutar
+Run|Executar
+Save Informations|Informações sobre os Saves
+Save List|Lista dos Saves
+Save|Salvar
+Save States|
+Save state|Save state
+Save State|Save State
+&Save To File|&Salvar Como Arquivo
+Screenshot|Screenshot
+SCSP|
+SCU-DSP|
+Select a file to load your state|
+Select your iso/cue/bin file|
+&Settings...|&Configurações...
+Settings|Configurações
+SH2 Interpreter|Interpretador SH2
+Sound Core|Núcleo do Som
+Sound|Som
+Spanish|
+SSH2|
+Start|Iniciar
+Status|
+Store|Armazenar
+To File...|Para o arquivo...
+To File|Para o Arquivo
+toolBar|Barra de ferramentas
+Tools|Ferramentas
+To|Para
+Transfer|Tranferência
+Transfer|Transferência
+Translation|
+Unable to add code|
+Unable to change description|
+Unable to open file for loading|
+Unable to open file for saving|
+Unable to remove code|
+Unknow (%1)|
+Up|Pra cima
+Value :|Valor :
+Vdp1|
+Vdp2|
+Video Core|Núcleo do Vídeo
+Video Driver|Driver de Vídeo
+Video Format|Formato do Vídeo
+Video|Vídeo
+_View|_Visualizar
+&View|&Visualizar
+Waiting Input...|Esperando a Entrada dos Dados...
+Width|Largura
+Word Write|Gravação das Palavras
+X|
+Y|
+Yabause Cheat Files (*.yct);;All Files (*)|
+Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Gui Qt do Yabause<br />Baseada no Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />O Time do Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Yabause Qt GUI|Interface Gráfica do Usuário em Qt do Yabause
+Yabause Save State (*.yss)|
+Z|

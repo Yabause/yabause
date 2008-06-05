@@ -1,0 +1,200 @@
+...|...
+0|
+1|
+%1/%2 blocks free|%1/%2 blocks libre
+%1 Images (*.%2)|Images %1 (*.%2)
+2|
+23|
+3|
+4|
+41|
+5|
+503/512 blocks free|503/512 blocs libre
+510/512 blocks free|510/512 blocks libre
+6|
+7|
+8|
+9|
+A|
+About...|A propos de...
+&About...|&A Propos De...
+About|A Propos De
+&Action Replay|
+Action Replay Code :|Code Action Replay :
+Add Action Replay Code|Ajouter un Code Action Replay
+Add Codes...|Ajouter un Code...
+Add Raw Memory Code|Ajouter un Code Mémoire Brut
+Address :|Adresse :
+Advanced|Avancé
+<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|
+Are you sure you want to delete '%1' ?|Etes vous sûr de vouloir supprimer '%1' ?
+Are you sure you want to format '%1' ?|Etes vous sûr de vouloir formater '%1' ?
+B|
+Backup Manager|Gestion des Sauvegardes
+Backup Manager...|Gestion des Sauvegardes
+Backup Ram Manager|Gestion des Sauvegardes
+Bios|
+Block Size :|Taille du Bloc :
+Browse|Parcourir
+Byte Write|Ecrire un Byte
+C|
+Cancel|Annuler
+Cannot initialize |Ne peut pas Initialiser
+Cart/Memory|Cartouche/Mémoire
+Cartridge|Cartouche
+CD Images (*.iso *.cue *.bin)|Images CD (*.iso *.cue *.bin)
+Cd-Rom|
+Cheats|
+Cheats File|Fichier Cheat
+Cheats List|Liste de Cheat
+Cheats List...|Liste de Cheat...
+Cheat Type|Type de Cheat
+Choose a cdrom drive/mount point|Choisissez un lecteur CD ou un point de montage
+Choose a cheat file to open|Choisissez un fichier de cheat à ouvrir
+Choose a cheat file to save to|Choisissez un fichier de cheat à enregistrer
+Choose a file to save your state|Choisissez un fichier où enregistrer l'état
+Choose a location for your screenshot|Choisissez un nom de fichier pour votre capture d'écran
+&Clear|&Effacer
+Close|Fermer
+Code|
+Comment :|Commentaire :
+Data Size :|Taille des Données :
+_Debug|_Débug
+&Debug|&Débug
+&Delete|&Effacer
+Delete|Effacer
+Description|
+Description :|
+Device List|Liste des Périphériques
+Disabled|Désactivé
+Down|Bas
+Emu-Compatibility|Emu-Compatibility
+Emulation|Emulation
+Enable|Activer
+Enabled|Activé
+English|Anglais
+&File|&Fichier
+File|Fichier
+File Name :|Nom du Fichier :
+File transfer|Transfert de Fichier
+<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVERTISSEMENT :</b> Les Codes Maîtres <b>NE SONT PAS</b> supportés.</font>
+Format|Formater
+FPS|FPS
+Frame Skip/Limiter|Saut d'Image/Limitateur
+French|Français
+From|A partir de
+From File|A Partir d'un Fichier
+From File...|A Partir d'un Fichier
+&Fullscreen|&Plein Ecran
+Fullscreen|Plein Ecran
+General|Général
+German|Allemand
+Height|Hauteur
+_Help|_Aide
+&Help|&Aide
+http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=fr
+http://www.monkeystudio.org|
+Input|Contrôleur
+Invalid Address|
+Invalid Value|
+Italian|Italien
+Japanese|Japonnais
+L|
+Language :|Langage :
+&Layer|&Couche
+Layer|Couche
+Layer|Couche	
+Left|Gauche
+Left trigger|Gâchette Gauche
+Load as executable|Charger en tant qu'Executable
+Load|Charger
+&Load From File|&Charger à Partir d'un Fichier
+Load State|Charger l'Etat
+Log|Journal
+Long Write|Ecrite un Long
+M68K|
+Memory dump|Copier la mémoire
+Memory Dump|Copier la Mémoire
+Memory|Mémoire
+Mpeg ROM|ROM MPEG
+MSH2|
+NBG0|
+NBG1|
+NBG2|
+NBG3|
+Ok|
+&OK|
+Open CD Rom|Ouvrir un CD ROM
+Open CD Rom...|Ouvrir un CD ROM...
+Open ISO|Ouvrir un Fichier ISO
+Open ISO...|Ouvrir un Fichier ISO...
+&Pause|&Pause
+Pause|Pause
+&Quit|&Quitter
+Quit|Quitter
+R|
+&Raw Memory Address|Adresse Mémoire &Brut
+RBG0|
+Region|Région
+&Reset|&Redémarrer
+Reset|Redémarrer
+Resolution|Résolution 
+Right|Droite
+Right trigger|Gâchette Droite
+R&un|L&ancer
+Run|Lancer
+Save Informations|Informations sur la Sauvegarde
+Save List|Liste des Sauvegardes
+Save|Sauvegarder
+Save state|Sauvegarder l'Etat
+Save State|Sauvegarder l'Etat
+Save States|Sauvegarde d'Etat
+&Save To File|&Sauvegarder Vers le Fichier
+Screenshot|Capture d'Ecran
+SCSP|
+SCU-DSP|
+Select a file to load your state|Choisissez un fichier pour charger l'état
+Select your iso/cue/bin file|Choisissez votre fichier iso/cue/bin
+&Settings...|Paramétres...
+Settings|Paramétres
+SH2 Interpreter|Interpréteur SH2
+Sound Core|Noyau Son
+Sound|Son
+Spanish|Espagnol
+SSH2|
+Start|Démarrer
+Status|Statut
+Store|Stocker
+To File|Vers un Fichier
+To File...|Vers un Fichier...
+toolBar|Barre d'Outils
+Tools|Outils
+To|Vers
+Transfer|Transfert
+Translation|Traduction
+Unable to add code|
+Unable to change description|
+Unable to open file for loading|
+Unable to open file for saving|
+Unable to remove code|
+Unknow (%1)|Inconnu (%1)
+Up|Haut
+Value :|Valeur :
+Vdp1|
+Vdp2|
+Video Core|Noyau vidéo
+Video Driver|Pilote Vidéo
+Video Format|Format Vidéo
+Video|Vidéo
+_View|_Visualiser
+&View|&Visualiser
+Waiting Input...|En Attente du Contrôleur
+Width|Largeur	
+Word Write|Ecrire un Word
+X|
+Y|
+Yabause Cheat Files (*.yct);;All Files (*)|Fichiers de  Cheat Yabause (*ycf);;Tout les Fichiers (*)
+Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|
+Yabause Qt GUI|Interface Graphique Qt pour Yabause
+Yabause Save State (*.yss)|Sauvegarde d'État Yabause (*.yss)
+Z|
