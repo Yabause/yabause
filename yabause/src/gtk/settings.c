@@ -154,7 +154,7 @@ GtkWidget* create_dialog1(void) {
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "CDROMCore", cdcores));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "CDROMDrive", YUI_FILE_ENTRY_BROWSE, NULL));
 
-  box = yui_page_add(YUI_PAGE(general), _("Save states"));
+  box = yui_page_add(YUI_PAGE(general), _("Save States"));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "StatePath", YUI_FILE_ENTRY_BROWSE | YUI_FILE_ENTRY_DIRECTORY, NULL));
   
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), general, gtk_label_new (_("General")));
@@ -165,7 +165,7 @@ GtkWidget* create_dialog1(void) {
    */
   video_sound = yui_page_new(keyfile);
 
-  box = yui_page_add(YUI_PAGE(video_sound), _("Video core"));
+  box = yui_page_add(YUI_PAGE(video_sound), _("Video Core"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "VideoCore", vidcores));
 
   box = yui_page_add(YUI_PAGE(video_sound), _("Resolution"));
@@ -182,7 +182,7 @@ GtkWidget* create_dialog1(void) {
    */
   sound = yui_page_new(keyfile);
 
-  box = yui_page_add(YUI_PAGE(sound), _("Sound core"));
+  box = yui_page_add(YUI_PAGE(sound), _("Sound Core"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "SoundCore", sndcores));
   
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), sound, gtk_label_new (_("Sound")));
