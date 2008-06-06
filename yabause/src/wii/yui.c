@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <malloc.h>
+#include <wiiuse/wpad.h>
 #include <ogcsys.h>
 #include <gccore.h>
 #include <fat.h>
@@ -33,6 +34,7 @@
 #include "../yui.h"
 #include "perwii.h"
 #include "sndwii.h"
+#include "menu.h"
 
 static u32 *xfb[2] = { NULL, NULL };
 int fbsel = 0;
@@ -40,6 +42,8 @@ static GXRModeObj *rmode = NULL;
 volatile int done=0;
 volatile int resetemu=0;
 int running=1;
+static void *_console_buffer = NULL;
+void __console_init_ex(void *conbuffer,int tgt_xstart,int tgt_ystart,int tgt_stride,int con_xres,int con_yres,int con_stride);
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -49,7 +53,8 @@ NULL
 
 PerInterface_struct *PERCoreList[] = {
 &PERDummy,
-&PERWIIKBD,
+&PERWiiKeyboard,
+&PERWiiClassic,
 NULL
 };
 
@@ -85,6 +90,7 @@ extern int vdp2width, vdp2height;
 
 void gotoxy(int x, int y);
 void OnScreenDebugMessage(char *string, ...);
+void DoMenu();
 
 void reset()
 {
@@ -119,16 +125,26 @@ int DVDStopMotor()
 
 int main(int argc, char **argv)
 {
-   yabauseinit_struct yinit;
-   int ret;
-
-   VIDEO_Init();
-   PAD_Init();
-
+   WPAD_Init();
    SYS_SetResetCallback(reset);
    SYS_SetPowerCallback(powerdown);
    DVDStopMotor();
 	
+   fatInitDefault();
+
+   DoMenu();
+
+   exit(0);
+   return 0;
+}
+
+int YuiExec()
+{
+   yabauseinit_struct yinit;
+   int ret;
+
+   VIDEO_Init();
+
    switch(VIDEO_GetCurrentTvMode()) 
    {
       case VI_NTSC:
@@ -148,8 +164,6 @@ int main(int argc, char **argv)
    // Allocate two buffers(may not be necessary)
    xfb[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
    xfb[1] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-
-   CON_Init(xfb[fbsel],20,30,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
 	
    VIDEO_Configure(rmode);
    VIDEO_ClearFrameBuffer (rmode, xfb[0], COLOR_BLACK);
@@ -161,10 +175,12 @@ int main(int argc, char **argv)
    if(rmode->viTVMode&VI_NON_INTERLACE) 
       VIDEO_WaitVSync();
 
-   fatInitDefault();
+   free(_console_buffer);
+   _console_buffer = malloc(10*10*VI_DISPLAY_PIX_SZ);
+   __console_init_ex(_console_buffer,10,10,rmode->fbWidth*VI_DISPLAY_PIX_SZ,10,10,10*VI_DISPLAY_PIX_SZ);
 
    memset(&yinit, 0, sizeof(yabauseinit_struct));
-   yinit.percoretype = PERCORE_WIIKBD;
+   yinit.percoretype = PERCORE_WIICLASSIC;
    yinit.sh2coretype = SH2CORE_INTERPRETER;
    yinit.vidcoretype = VIDCORE_SOFT;
    yinit.sndcoretype = SNDCORE_WII;
@@ -190,7 +206,6 @@ int main(int argc, char **argv)
    if ((ret = YabauseInit(&yinit)) == 0)
    {
       EnableAutoFrameSkip();
-
       VIDEO_ClearFrameBuffer(rmode, xfb[fbsel], COLOR_BLACK);
 
       while(!done)
@@ -204,7 +219,6 @@ int main(int argc, char **argv)
             SYS_SetResetCallback(reset);
          }
       }
-
       YabauseDeInit();
    }
    else
@@ -213,7 +227,6 @@ int main(int argc, char **argv)
          VIDEO_WaitVSync();
    }
 
-   exit(0);
    return 0;
 }
 
@@ -269,7 +282,7 @@ void YuiSwapBuffers()
 
 void gotoxy(int x, int y)
 {
-   printf("\033[%d%dH", x, y);
+   printf("\033[%d;%dH", y, x);
 }
 
 void OnScreenDebugMessage(char *string, ...)
@@ -282,4 +295,130 @@ void OnScreenDebugMessage(char *string, ...)
    printf("\n");
    gotoxy(0, 1);
    va_end(arglist);
+}
+
+int ClearMenu(const unsigned long *bmp)
+{
+   fbsel ^= 1;
+   memcpy (xfb[fbsel], bmp, MENU_SIZE * 2);
+   VIDEO_SetNextFramebuffer (xfb[fbsel]);
+   VIDEO_Flush ();
+   return 0;   
+}
+
+typedef struct
+{
+   char *name;
+   int (*func)();
+} menuitem_struct;
+
+int MenuNone()
+{
+   return 0;
+}
+
+menuitem_struct menuitem[] = {
+{ "Start emulation", YuiExec },
+{ "Load ISO/CUE", MenuNone },
+{ "Settings", MenuNone },
+{ "About", MenuNone },
+{ "Exit", NULL },
+{ NULL, NULL }
+};
+
+void InitMenu()
+{
+   VIDEO_Init();
+   switch(VIDEO_GetCurrentTvMode()) 
+   {
+      case VI_NTSC:
+         rmode = &TVNtsc480IntDf;
+	 break;
+      case VI_PAL:
+         rmode = &TVPal528IntDf;
+ 	 break;
+      case VI_MPAL:
+	 rmode = &TVMpal480IntDf;
+	 break;
+      default:
+         rmode = &TVNtsc480IntDf;
+	 break;
+   }
+
+   xfb[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+   xfb[1] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+   VIDEO_Configure(rmode);
+   VIDEO_ClearFrameBuffer (rmode, xfb[0], COLOR_BLACK);
+   VIDEO_ClearFrameBuffer (rmode, xfb[1], COLOR_BLACK);
+   VIDEO_SetNextFramebuffer(xfb[0]);
+   VIDEO_SetBlack(FALSE);
+   VIDEO_Flush();
+   VIDEO_WaitVSync();
+   if(rmode->viTVMode&VI_NON_INTERLACE) 
+      VIDEO_WaitVSync();
+   free(_console_buffer);
+   _console_buffer = malloc(280*100*VI_DISPLAY_PIX_SZ);
+   __console_init_ex(_console_buffer,180,200,rmode->fbWidth*VI_DISPLAY_PIX_SZ,280,100,280*VI_DISPLAY_PIX_SZ);
+}
+
+void DoMenu()
+{
+   int menuselect=0;
+   int i;
+   int nummenu=0;
+
+   InitMenu();
+
+   for (i = 0; menuitem[i].name != NULL; i++)
+      nummenu++;
+
+   for (;;)
+   {
+      VIDEO_WaitVSync();
+      WPAD_ScanPads();
+
+      // Get Wii Remote/Keyboard/etc. presses
+      if (WPAD_ButtonsDown(0) & WPAD_CLASSIC_BUTTON_UP ||
+          WPAD_ButtonsDown(0) & WPAD_BUTTON_RIGHT)
+      {
+         menuselect--;
+         if (menuselect < 0)
+            menuselect = nummenu-1;
+      }
+      else if (WPAD_ButtonsDown(0) & WPAD_CLASSIC_BUTTON_DOWN ||
+               WPAD_ButtonsDown(0) & WPAD_BUTTON_LEFT)
+      {          
+         menuselect++;
+         if (menuselect == nummenu)
+            menuselect = 0; 
+      }
+
+      if (WPAD_ButtonsDown(0) & WPAD_CLASSIC_BUTTON_A ||
+          WPAD_ButtonsDown(0) & WPAD_BUTTON_A ||
+          WPAD_ButtonsDown(0) & WPAD_BUTTON_2)
+      {
+          if (menuitem[menuselect].func)
+          {
+             if (menuitem[menuselect].func())
+                return;
+             InitMenu();
+          }
+          else
+             return;
+      }
+
+      // Draw menu
+      ClearMenu(menu_bmp);
+
+      // Draw menu items
+      gotoxy(0, 0);
+      for (i = 0; i < nummenu; i++)
+      {
+         if (menuselect == i)
+            printf("\033[%d;%dm", 30+9, 0);
+         else
+            printf("\033[%d;%dm", 30+7, 0);
+         printf("%s\n", menuitem[i].name);
+      }     
+   }
 }

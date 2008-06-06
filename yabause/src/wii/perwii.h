@@ -20,8 +20,18 @@
 #ifndef PERWII_H
 #define PERWII_H
 
-#define PERCORE_WIIKBD  2
+#define PERCORE_WIIKBD		2
+#define PERCORE_WIICLASSIC 	3
 
-extern PerInterface_struct PERWIIKBD;
+#define MSG_CONNECT	0
+#define MSG_DISCONNECT	1
+#define MSG_EVENT	2
 
+extern PerInterface_struct PERWiiKeyboard;
+extern PerInterface_struct PERWiiClassic;
+extern volatile int keystate;
+
+s32 KeyboardMenuCallback(s32 result, void *usrdata);
+s32 KeyboardConnectCallback(s32 result,void *usrdata);
+int KBDInit(s32 (*initcallback)(s32, void *), s32 (*runcallback)(s32, void *));
 #endif
