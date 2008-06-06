@@ -31,7 +31,7 @@ VDEFINES=-DPACKAGE=\"yabause-wii\" -DVERSION=\"0.9.5\" -DWORDS_BIGENDIAN -DREENT
 MACHDEP = -DGEKKO -mcpu=750 -meabi -mhard-float
 CFLAGS=$(VDEFINES) $(DDEFINES) -g -O2 -mrvl -Wall $(MACHDEP) -I$(LIBOGC_INC)
 LDFLAGS= -g $(MACHDEP) -mrvl -Wl,-Map,$(notdir $@).map
-LIBS := -lfat -logc -lm
+LIBS := -lfat -lwiiuse -lbte -logc -lm
 OBJS = bios.o cdbase.o cheat.o coffelf.o cs0.o cs1.o cs2.o debug.o \
 error.o m68kcore.o m68kc68k.o m68kd.o memory.o netlink.o peripheral.o \
 profile.o scsp.o scu.o sh2core.o sh2idle.o sh2int.o sh2d.o smpc.o vdp1.o \
