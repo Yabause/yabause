@@ -120,6 +120,15 @@ void hide_show_netlink(YuiRange * instance, gpointer data) {
 	}
 }
 
+void percore_changed(GtkWidget * widget, gpointer data) {
+	const char * core_s = percores[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))].value;
+	int core;
+	sscanf(core_s, "%d", &core);
+
+	PerDeInit();
+	PerInit(core);
+}
+
 GtkWidget* create_dialog1(void) {
   GtkWidget *dialog1;
   GtkWidget *notebook1;
@@ -236,6 +245,8 @@ GtkWidget* create_dialog1(void) {
   {
     GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
     GtkWidget * select_percore = yui_range_new(keyfile, "General", "PerCore", percores);
+
+    g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", percore_changed, NULL);
 
     gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
 

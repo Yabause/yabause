@@ -114,9 +114,9 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 		gtk_entry_set_text(GTK_ENTRY(entry), keyName );
 
 		if (PERCore) {
-			if (PERCore->canScan)
+			//if (PERCore->canScan)
 				g_signal_connect(entry, "focus-in-event", G_CALLBACK(yui_input_entry_focus_in), (gpointer) keys[row]);
-			else
+			//else
 				g_signal_connect(entry, "key-press-event", G_CALLBACK(yui_input_entry_keypress), (gpointer) keys[row]);
 		} else {
 			gtk_widget_set_sensitive(entry, FALSE);
@@ -134,6 +134,8 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 gboolean yui_input_entry_keypress(GtkWidget * widget, GdkEventKey * event, gpointer name) {
 	char tmp[100];
 
+	if (PERCore->canScan) return FALSE;
+
 	g_sprintf(tmp, "%d", event->keyval);
 	gtk_entry_set_text(GTK_ENTRY(widget), tmp);
 	g_key_file_set_integer(YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->keyfile,
@@ -144,6 +146,7 @@ gboolean yui_input_entry_keypress(GtkWidget * widget, GdkEventKey * event, gpoin
 }
 
 gboolean is_watching = FALSE;
+GtkEntry * entry_hack = NULL;
 
 gboolean watch_joy(gpointer name) {
 	u32 i = PERCore->Scan(name);
@@ -151,15 +154,21 @@ gboolean watch_joy(gpointer name) {
 	if (i == 0) {
 		return TRUE;
 	} else {
+		char tmp[100];
+
 		g_key_file_set_integer(keyfile, "Input", name, i);
+		g_sprintf(tmp, "%d", i);
+		gtk_entry_set_text(entry_hack, tmp);
 		is_watching = FALSE;
 		return FALSE;
 	}
 }
 
 gboolean yui_input_entry_focus_in(GtkWidget * widget, GdkEventFocus * event, gpointer name) {
+	if (! PERCore->canScan) return TRUE;
 
 	PERCore->Flush();
+	entry_hack = GTK_ENTRY(widget);
 
 	if (!is_watching) {
 		g_timeout_add(100, watch_joy, name);

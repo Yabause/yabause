@@ -56,6 +56,8 @@ PERSDLJoyScan,
 PERSDLJoyFlush
 };
 
+u32 * scan_status;
+
 //////////////////////////////////////////////////////////////////////////////
 
 int PERSDLJoyInit(void) {
@@ -78,6 +80,15 @@ int PERSDLJoyInit(void) {
 	{
 		PERSDLJoyDeInit();
 		return -1;
+	}
+
+	{
+		int i;
+		SDL_JoystickUpdate();
+
+		scan_status = malloc(sizeof(u32) * SDL_JoystickNumAxes( mSDLJoystick1 ));
+		for ( i = 0; i < SDL_JoystickNumAxes( mSDLJoystick1 ); i++ )
+			scan_status[i] = SDL_JoystickGetAxis( mSDLJoystick1, i );
 	}
 	
 	// success
@@ -170,13 +181,13 @@ int PERSDLJoyHandleEvents(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 u32 PERSDLJoyScan( const char* n ) {
-	// if no available joy
-	if ( !mSDLJoystick1 )
-		return 0;
-	
 	// init vars
 	int i;
 	u32 k = 0;
+
+	// if no available joy
+	if ( !mSDLJoystick1 )
+		return 0;
 	
 	// update joysticks states
 	SDL_JoystickUpdate();
@@ -185,15 +196,19 @@ u32 PERSDLJoyScan( const char* n ) {
 	for ( i = 0; i < SDL_JoystickNumAxes( mSDLJoystick1 ); i++ )
 	{
 		Sint16 cur = SDL_JoystickGetAxis( mSDLJoystick1, i );
-		if ( cur < -SDL_MEDIUM_AXIS_VALUE )
+
+		if (cur != scan_status[i])
 		{
-			k = hashAxisSDL( i, SDL_MIN_AXIS_VALUE );
-			break;
-		}
-		else if ( cur > SDL_MEDIUM_AXIS_VALUE )
-		{
-			k = hashAxisSDL( i, SDL_MAX_AXIS_VALUE );
-			break;
+			if ( cur < -SDL_MEDIUM_AXIS_VALUE )
+			{
+				k = hashAxisSDL( i, SDL_MIN_AXIS_VALUE );
+				break;
+			}
+			else if ( cur > SDL_MEDIUM_AXIS_VALUE )
+			{
+				k = hashAxisSDL( i, SDL_MAX_AXIS_VALUE );
+				break;
+			}
 		}
 	}
 
