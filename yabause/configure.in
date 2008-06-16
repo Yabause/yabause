@@ -1,7 +1,17 @@
 AC_INIT(yabause, 0.9.5)
 
+if test "x$host_alias" = "xpowerpc-gekko" ; then
+	echo "va falloir contourner config.guess"
+	config_guess_sucks=$host_alias
+	host_alias=powerpc
+fi
+
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
+
+if test ! "x$config_guess_sucks" = "x" ; then
+	host_alias=$config_guess_sucks
+fi
 
 # hack to reset host_alias when we're not cross compiling
 if test "x$host_alias" = "x$host"; then
@@ -217,6 +227,22 @@ LDFLAGS="$OLDLDFLAGS"
 YAB_CHECK_HOST_TOOLS(WINDRES, [windres])
 AC_CHECK_HEADER([windows.h], [yabause_available_yuis="windows $yabause_available_yuis"], [])
 
+# wii
+if test "x$host_alias" = "xpowerpc-gekko" ; then
+	if test "x$LIBOGC" = "x" ; then
+		AC_MSG_ERROR([Please set the LIBOGC variable])
+	else
+		CPPFLAGS="-I$LIBOGC/include $CPPFLAGS"
+		LDFLAGS="-L$LIBOGC/lib/wii $LDFLAGS"
+		CFLAGS="-mrvl -mcpu=750 -meabi -mhard-float $CFLAGS"
+		LIBS="-lfat -lwiiuse -lbte -logc -lm $LIBS"
+	fi
+
+	AC_DEFINE(GEKKO)
+
+	yabause_available_yuis="wii"
+fi
+
 # adding . as a fallback when no other port is available
 yabause_available_yuis="$yabause_available_yuis ."
 
@@ -253,6 +279,7 @@ AC_CONFIG_FILES([Makefile
 	src/gtk/Makefile
 	src/qt/Makefile
 	src/qt/yabause.pro
+	src/wii/Makefile
 	src/windows/Makefile
 	autopackage/default.apspec
 ])
@@ -288,6 +315,7 @@ AM_CONDITIONAL([YUI_IS_CARBON], [test ${yabause_yui} = "carbon"])
 AM_CONDITIONAL([YUI_IS_DREAMCAST], [test ${yabause_yui} = "dreamcast"])
 AM_CONDITIONAL([YUI_IS_GTK], [test ${yabause_yui} = "gtk"])
 AM_CONDITIONAL([YUI_IS_QT], [test ${yabause_yui} = "qt"])
+AM_CONDITIONAL([YUI_IS_WII], [test ${yabause_yui} = "wii"])
 AM_CONDITIONAL([YUI_IS_WINDOWS], [test ${yabause_yui} = "windows"])
 
 AM_CONDITIONAL([ARCH_IS_FREEBSD], [test ${yabause_arch} = "freebsd"])

@@ -16,6 +16,9 @@ endif
 if YUI_IS_QT
 YUI_SUBDIR=qt
 endif
+if YUI_IS_WII
+YUI_SUBDIR=wii
+endif
 if YUI_IS_WINDOWS
 YUI_SUBDIR=windows
 endif
