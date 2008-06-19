@@ -233,6 +233,9 @@ AC_CHECK_HEADER([windows.h], [yabause_available_yuis="windows $yabause_available
 
 # wii
 if test "x$host_alias" = "xpowerpc-gekko" ; then
+	if test \( "x$LIBOGC" = "x" \) -a \( ! "x$DEVKITPRO" = "x" \) ; then
+		LIBOGC="$DEVKITPRO/libogc"
+	fi
 	if test "x$LIBOGC" = "x" ; then
 		AC_MSG_ERROR([Please set the LIBOGC variable])
 	else
