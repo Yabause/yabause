@@ -279,6 +279,7 @@ AC_ARG_ENABLE(smpc-debug, AC_HELP_STRING(--enable-smpc-debug, enable smpc debug 
 AC_ARG_ENABLE(scsp-debug, AC_HELP_STRING(--enable-scsp-debug, enable scsp debug information) , AC_DEFINE(SCSP_DEBUG))
 
 AC_CONFIG_FILES([Makefile
+	l10n/Makefile
 	doc/Makefile
 	src/Makefile
 	src/carbon/Makefile

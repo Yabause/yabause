@@ -3,6 +3,7 @@ EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h \
 	QtYabause.cpp QtYabause.h Settings.cpp Settings.h yabause.desktop \
 	YabauseGL.cpp YabauseGL.h yabause.pro.in YabauseThread.cpp YabauseThread.h \
 	resources/resources.qrc \
+	resources/icons/controller.png \
 	resources/icons/made.png resources/icons/yabause.icns resources/icons/yabause.png resources/icons/yabause.rc \
 	resources/icons/actions/about.png resources/icons/actions/cd.png resources/icons/actions/fps.png \
 	resources/icons/actions/layer.png resources/icons/actions/no_fullscreen.png resources/icons/actions/quit.png \
