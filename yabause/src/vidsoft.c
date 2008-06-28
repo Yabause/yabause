@@ -2423,6 +2423,8 @@ int INLINE ClipLine(int *x1, int *y1, int *x2, int *y2)
    if (point1vis == 0 && point2vis == 0)
       return 0;
 
+   // Should be doing some clipping or something here
+
    return 1;
 }
 
