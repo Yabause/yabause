@@ -1,3 +1,38 @@
+0.9.5 -> 0.9.6
+ sdl joystick core:
+  - Fixed it...
+ software video core:
+  - Improvements and bug fixes.
+ carbon port:
+  - Added detection of sdk in the build process.
+  - Changed the cd core so that the first device found is used.
+    Users shouldn't have anything to set up when using cd device now.
+ gtk port:
+  - Tagged more strings to be translatable.
+  - Fixed bugs when setting a resolution in settings.
+  - Fixed controller settings so keys can now be configured even if
+    emulation is not started.
+ qt port:
+  - Removed libsjw core.
+ wii port:
+  - Updated to use the last devkitppc.
+  - Added support for classic controller and for wiimote, disabled
+    keyboard support.
+ windows port:
+  - Added command line support.
+ general:
+  - Updated copyright for some files where it was missing or
+    inaccurate.
+  - Fixes and improvements to the build process: fixed cross compilation
+    of Qt port, added Wii port support, found a better way to "trigger"
+    compilation of gen68k, fixed a bug when calling the sub-configure,
+    .inc files are now cleaned, added MINI18N variable support, forwarded
+    distclean rule to qt makefiles, configure now make sure the compiler
+    is a cross compiler when cross compiling
+  - Added a workaround for the "limits.h" problem... now distros should
+    fix their headers...
+  - Fixed the .desktop files for linux (gtk + qt ports)
+  - Added translation files for fr and pt in the repository.
 0.9.4 -> 0.9.5
  68k:
   - Added 1010 and 1111 line emulator support.

@@ -1,4 +1,4 @@
-AC_INIT(yabause, 0.9.5)
+AC_INIT(yabause, 0.9.6)
 
 if test "x$host_alias" = "xpowerpc-gekko" ; then
 	config_guess_sucks=$host_alias
