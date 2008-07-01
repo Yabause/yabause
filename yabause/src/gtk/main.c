@@ -471,8 +471,20 @@ void yui_conf(void) {
 }
 
 void yui_resize(guint width, guint height, gboolean fullscreen) {
-	if (width <= 0) width = 1;
-	if (height <= 0) height = 1;
+	if (width <= 0) width = 320;
+	if (height <= 0) height = 224;
+
+	if (g_key_file_get_integer(keyfile, "General", "KeepRatio", 0))
+	{
+		GdkGeometry geometry;
+		geometry.min_aspect = (float) width / height;
+		geometry.max_aspect = (float) width / height;
+		gtk_window_set_geometry_hints(yui, YUI_WINDOW(yui)->area, &geometry, GDK_HINT_ASPECT);
+	}
+	else
+	{
+		gtk_window_set_geometry_hints(yui, YUI_WINDOW(yui)->area, NULL, 0);
+	}
 
 	gtk_window_resize(GTK_WINDOW(yui), width, height + YUI_WINDOW(yui)->menu->allocation.height);
 

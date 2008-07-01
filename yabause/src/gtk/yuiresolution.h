@@ -43,6 +43,7 @@ struct _YuiResolution
 
 	GtkWidget * entry_w;
 	GtkWidget * entry_h;
+	GtkWidget * fullscreen;
 	GtkWidget * keep_ratio;
 
 	GKeyFile * keyfile;

@@ -201,13 +201,19 @@ GtkWidget * yui_window_new(YuiAction * act, GCallback ifunc, gpointer idata,
 }
 
 void yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui) {
+	static unsigned int beforefswidth = 1;
+	static unsigned int beforefsheight = 1;
+
 	yui->fullscreen = 1 - yui->fullscreen;
 	if (yui->fullscreen) {
+		beforefswidth = GTK_WIDGET(yui)->allocation.width;
+		beforefsheight = GTK_WIDGET(yui)->allocation.height;
 		gtk_widget_hide(yui->menu);
 		gtk_window_fullscreen(GTK_WINDOW(yui));
 	} else {
 		gtk_window_unfullscreen(GTK_WINDOW(yui));
 		gtk_widget_show(yui->menu);
+		gtk_window_resize(yui, beforefswidth, beforefsheight);
 	}
 }
 
