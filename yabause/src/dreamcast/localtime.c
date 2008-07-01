@@ -7,7 +7,9 @@
  * broken-down time.
  */
 
-/* Imported to KOS from Newlib 0.9.0 */
+/* This file was taken from newlib <http://sourceware.org/newlib>, it's a
+ * modified version of Arthur David Olsons localtime.c from tzcode which
+ * is under Public Domain */
 
 #include <stdlib.h>
 #include <time.h>
