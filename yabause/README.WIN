@@ -12,9 +12,9 @@
 
 
 1) Compiling instructions...................................20
-2) How to use Yabause.......................................61
-3) Contact information.....................................200
-4) Disclaimer..............................................215
+2) How to use Yabause.......................................62
+3) Contact information.....................................212
+4) Disclaimer..............................................228
 
 
 1 Compiling instructions______________________________________
@@ -150,7 +150,7 @@ equivalent button, and then when a new window pops up that says
 "waiting for input..." press a key/button and that will set the
 new setting for that control.
 
-Log Settings________________________________________________
+Log Settings__________________________________________________
 
 If you've compiled your own copy of Yabause with the processor
 define DEBUG, another tab will be available called "Log". This
@@ -202,6 +202,11 @@ Shift-F7 - Save State to slot 6
 Shift-F8 - Save State to slot 7
 Shift-F9 - Save State to slot 8
 Shift-F10 - Save State to slot 9
+
+Command-line Options__________________________________________
+
+You can also run the program using command-line options. To see a
+full list, run "yabause --help" in the command prompt.
 
 
 3 Contact information_________________________________________
