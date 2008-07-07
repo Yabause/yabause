@@ -686,7 +686,7 @@ int SmpcSaveState(FILE *fp)
 {
    int offset;
 
-   offset = StateWriteHeader(fp, "SMPC", 1);
+   offset = StateWriteHeader(fp, "SMPC", 2);
 
    // Write registers
    fwrite((void *)SmpcRegs->IREG, sizeof(u8), 7, fp);
@@ -723,7 +723,19 @@ int SmpcLoadState(FILE *fp, int version, int size)
    fread((void *)&SmpcRegs->EXLE, sizeof(u8), 1, fp);
 
    // Read internal variables
-   fread((void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
+   if (version == 1)
+   {
+      // This handles the problem caused by the version not being incremented
+      // when SmpcInternal was changed
+      if ((size - 48) == sizeof(SmpcInternal))
+         fread((void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
+      else if ((size - 48) == 24)
+         fread((void *)SmpcInternalVars, 24, 1, fp);
+      else
+         fseek(fp, size - 48, SEEK_CUR);
+   }
+   else
+      fread((void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
 
    // Read ID's of currently emulated peripherals(fix me)
 
