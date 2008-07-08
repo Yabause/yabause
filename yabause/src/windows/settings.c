@@ -942,17 +942,19 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             if (EnumDisplaySettings(NULL, i, &dmSettings) == FALSE)
                break;
-            if (dmSettings.dmBitsPerPel == 32 && dmSettings.dmDisplayFrequency == 60)
+            if (dmSettings.dmBitsPerPel == 32)
             {
                int index;
 
                sprintf(tempstr, "%dx%d", (int)dmSettings.dmPelsWidth, (int)dmSettings.dmPelsHeight);
-               index = (int)SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_ADDSTRING, 0, (LPARAM)tempstr);
+               if (SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_FINDSTRINGEXACT, 0, (LPARAM)tempstr) == CB_ERR)
+               {
+                  index = (int)SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_ADDSTRING, 0, (LPARAM)tempstr);
 
-
-               if (dmSettings.dmPelsWidth == fullscreenwidth &&
-                   dmSettings.dmPelsHeight == fullscreenheight)
-                  SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_SETCURSEL, index, 0);
+                  if (dmSettings.dmPelsWidth == fullscreenwidth &&
+                      dmSettings.dmPelsHeight == fullscreenheight)
+                     SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_SETCURSEL, index, 0);
+               }
             }
          }
 
