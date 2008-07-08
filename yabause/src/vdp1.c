@@ -1286,11 +1286,6 @@ void FASTCALL VIDDummyVdp2SetPriorityNBG1(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityNBG2(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityNBG3(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityRBG0(int priority);
-void VIDDummyVdp2ToggleDisplayNBG0(void);
-void VIDDummyVdp2ToggleDisplayNBG1(void);
-void VIDDummyVdp2ToggleDisplayNBG2(void);
-void VIDDummyVdp2ToggleDisplayNBG3(void);
-void VIDDummyVdp2ToggleDisplayRBG0(void);
 
 
 VideoInterface_struct VIDDummy = {
@@ -1321,12 +1316,7 @@ VIDDummyVdp2SetPriorityNBG0,
 VIDDummyVdp2SetPriorityNBG1,
 VIDDummyVdp2SetPriorityNBG2,
 VIDDummyVdp2SetPriorityNBG3,
-VIDDummyVdp2SetPriorityRBG0,
-VIDDummyVdp2ToggleDisplayNBG0,
-VIDDummyVdp2ToggleDisplayNBG1,
-VIDDummyVdp2ToggleDisplayNBG2,
-VIDDummyVdp2ToggleDisplayNBG3,
-VIDDummyVdp2ToggleDisplayRBG0
+VIDDummyVdp2SetPriorityRBG0
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1490,34 +1480,3 @@ void FASTCALL VIDDummyVdp2SetPriorityRBG0(int priority)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp2ToggleDisplayNBG0(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp2ToggleDisplayNBG1(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp2ToggleDisplayNBG2(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp2ToggleDisplayNBG3(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp2ToggleDisplayRBG0(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-

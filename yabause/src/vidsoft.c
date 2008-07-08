@@ -88,11 +88,6 @@ void FASTCALL VIDSoftVdp2SetPriorityNBG1(int priority);
 void FASTCALL VIDSoftVdp2SetPriorityNBG2(int priority);
 void FASTCALL VIDSoftVdp2SetPriorityNBG3(int priority);
 void FASTCALL VIDSoftVdp2SetPriorityRBG0(int priority);
-void VIDSoftVdp2ToggleDisplayNBG0(void);
-void VIDSoftVdp2ToggleDisplayNBG1(void);
-void VIDSoftVdp2ToggleDisplayNBG2(void);
-void VIDSoftVdp2ToggleDisplayNBG3(void);
-void VIDSoftVdp2ToggleDisplayRBG0(void);
 void VIDSoftOnScreenDebugMessage(char *string, ...);
 void VIDSoftVdp1SwapFrameBuffer(void);
 void VIDSoftVdp1EraseFrameBuffer(void);
@@ -126,11 +121,6 @@ VIDSoftVdp2SetPriorityNBG1,
 VIDSoftVdp2SetPriorityNBG2,
 VIDSoftVdp2SetPriorityNBG3,
 VIDSoftVdp2SetPriorityRBG0,
-VIDSoftVdp2ToggleDisplayNBG0,
-VIDSoftVdp2ToggleDisplayNBG1,
-VIDSoftVdp2ToggleDisplayNBG2,
-VIDSoftVdp2ToggleDisplayNBG3,
-VIDSoftVdp2ToggleDisplayRBG0,
 VIDSoftOnScreenDebugMessage,
 };
 
@@ -151,7 +141,6 @@ static int vdp1pixelsize;
 static int vdp1spritetype;
 int vdp2width;
 int vdp2height;
-static int vdp2disptoggle=0xFF;
 static int nbg0priority=0;
 static int nbg1priority=0;
 static int nbg2priority=0;
@@ -1075,7 +1064,7 @@ static void Vdp2DrawNBG0(void)
    ReadVdp2ColorOffset(&info, 0x1, 0x1);
    info.priority = nbg0priority;
 
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
       return;
 
    ReadMosaicData(&info, 0x1);
@@ -1141,7 +1130,7 @@ static void Vdp2DrawNBG1(void)
    info.priority = nbg1priority;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG1PlaneAddr;
 
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
       return;
 
    ReadMosaicData(&info, 0x2);
@@ -1179,7 +1168,7 @@ static void Vdp2DrawNBG2(void)
    info.priority = nbg2priority;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG2PlaneAddr;
 
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
       return;
 
    ReadMosaicData(&info, 0x4);
@@ -1219,7 +1208,7 @@ static void Vdp2DrawNBG3(void)
    info.priority = nbg3priority;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG3PlaneAddr;
 
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
       return;
 
    ReadMosaicData(&info, 0x8);
@@ -1239,7 +1228,7 @@ static void Vdp2DrawRBG0(void)
 
    info.enable = Vdp2Regs->BGON & 0x10;
    info.priority = rbg0priority;
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
       return;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x1000);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 8) & 0x3;
@@ -2947,41 +2936,6 @@ void FASTCALL VIDSoftVdp2SetPriorityNBG3(int priority)
 void FASTCALL VIDSoftVdp2SetPriorityRBG0(int priority)
 {
    rbg0priority = priority;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDSoftVdp2ToggleDisplayNBG0(void)
-{
-   vdp2disptoggle ^= 0x1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDSoftVdp2ToggleDisplayNBG1(void)
-{
-   vdp2disptoggle ^= 0x2;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDSoftVdp2ToggleDisplayNBG2(void)
-{
-   vdp2disptoggle ^= 0x4;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDSoftVdp2ToggleDisplayNBG3(void)
-{
-   vdp2disptoggle ^= 0x8;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDSoftVdp2ToggleDisplayRBG0(void)
-{
-   vdp2disptoggle ^= 0x10;
 }
 
 //////////////////////////////////////////////////////////////////////////////

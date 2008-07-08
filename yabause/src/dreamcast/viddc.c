@@ -155,7 +155,6 @@ static int vdp1cor = 0;
 static int vdp1cog = 0;
 static int vdp1cob = 0;
 
-static int vdp2disptoggle = 0xFF;
 static int nbg0priority = 0;
 static int nbg1priority = 0;
 static int nbg2priority = 0;
@@ -1868,7 +1867,7 @@ static int Vdp2DrawNBG0(void)
     */
    info.enable = Vdp2Regs->BGON & 0x1;
 
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
        return 0;
 
    info.transparencyenable = !(Vdp2Regs->BGON & 0x100);
@@ -2085,7 +2084,7 @@ static int Vdp2DrawNBG1(void)
 
    info.enable = Vdp2Regs->BGON & 0x2;
 
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
        return 0;
 
    info.transparencyenable = !(Vdp2Regs->BGON & 0x200);
@@ -2333,7 +2332,7 @@ static int Vdp2DrawNBG2(void)
 
    info.enable = Vdp2Regs->BGON & 0x4;
 
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
        return 0;
 
    info.transparencyenable = !(Vdp2Regs->BGON & 0x400);
@@ -2506,7 +2505,7 @@ static int Vdp2DrawNBG3(void)
 
    info.enable = Vdp2Regs->BGON & 0x8;
 
-   if (!(info.enable & vdp2disptoggle))
+   if (!(info.enable & Vdp2External.disptoggle))
        return 0;
 
    info.transparencyenable = !(Vdp2Regs->BGON & 0x800);
@@ -2825,26 +2824,6 @@ static void VIDDCVdp2SetPriorityRBG0(int priority)  {
     rbg0priority = priority;
 }
 
-static void VIDDCVdp2ToggleDisplayNBG0(void)    {
-    vdp2disptoggle ^= 0x01;
-}
-
-static void VIDDCVdp2ToggleDisplayNBG1(void)    {
-    vdp2disptoggle ^= 0x02;
-}
-
-static void VIDDCVdp2ToggleDisplayNBG2(void)    {
-    vdp2disptoggle ^= 0x04;
-}
-
-static void VIDDCVdp2ToggleDisplayNBG3(void)    {
-    vdp2disptoggle ^= 0x08;
-}
-
-static void VIDDCVdp2ToggleDisplayRBG0(void)    {
-    vdp2disptoggle ^= 0x10;
-}
-
 VideoInterface_struct VIDDC = {
     VIDCORE_DC,
     "Dreamcast PVR Video Interface",
@@ -2873,10 +2852,5 @@ VideoInterface_struct VIDDC = {
     VIDDCVdp2SetPriorityNBG1,
     VIDDCVdp2SetPriorityNBG2,
     VIDDCVdp2SetPriorityNBG3,
-    VIDDCVdp2SetPriorityRBG0,
-    VIDDCVdp2ToggleDisplayNBG0,
-    VIDDCVdp2ToggleDisplayNBG1,
-    VIDDCVdp2ToggleDisplayNBG2,
-    VIDDCVdp2ToggleDisplayNBG3,
-    VIDDCVdp2ToggleDisplayRBG0
+    VIDDCVdp2SetPriorityRBG0
 };

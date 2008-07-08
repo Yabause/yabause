@@ -30,6 +30,7 @@ u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
 Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
+Vdp2External_struct Vdp2External;
 
 static int autoframeskipenab=0;
 static int framestoskip=0;
@@ -246,6 +247,8 @@ void Vdp2Reset(void) {
 
    yabsys.VBlankLineCount = 224;
    Vdp2Internal.ColorMode = 0;
+
+   Vdp2External.disptoggle = 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1278,35 +1281,35 @@ int Vdp2LoadState(FILE *fp, int version, int size)
 
 void ToggleNBG0(void)
 {
-   VIDCore->Vdp2ToggleDisplayNBG0();
+   Vdp2External.disptoggle ^= 0x1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ToggleNBG1(void)
 {
-   VIDCore->Vdp2ToggleDisplayNBG1();
+   Vdp2External.disptoggle ^= 0x2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ToggleNBG2(void)
 {
-   VIDCore->Vdp2ToggleDisplayNBG2();
+   Vdp2External.disptoggle ^= 0x4;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ToggleNBG3(void)
 {
-   VIDCore->Vdp2ToggleDisplayNBG3();
+   Vdp2External.disptoggle ^= 0x8;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ToggleRBG0(void)
 {
-   VIDCore->Vdp2ToggleDisplayRBG0();
+   Vdp2External.disptoggle ^= 0x10;
 }
 
 //////////////////////////////////////////////////////////////////////////////

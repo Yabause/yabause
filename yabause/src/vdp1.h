@@ -58,11 +58,6 @@ typedef struct
    void FASTCALL (*Vdp2SetPriorityNBG2)(int);
    void FASTCALL (*Vdp2SetPriorityNBG3)(int);
    void FASTCALL (*Vdp2SetPriorityRBG0)(int);
-   void (*Vdp2ToggleDisplayNBG0)(void);
-   void (*Vdp2ToggleDisplayNBG1)(void);
-   void (*Vdp2ToggleDisplayNBG2)(void);
-   void (*Vdp2ToggleDisplayNBG3)(void);
-   void (*Vdp2ToggleDisplayRBG0)(void);
    void (*OnScreenDebugMessage)(char *string, ...);
 } VideoInterface_struct;
 

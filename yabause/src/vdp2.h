@@ -360,6 +360,13 @@ typedef struct {
 extern Vdp2Internal_struct Vdp2Internal;
 extern u64 lastticks;
 
+// struct for Vdp2 part that shouldn't be saved
+typedef struct {
+   int disptoggle;
+} Vdp2External_struct;
+
+extern Vdp2External_struct Vdp2External;
+
 int Vdp2Init(void);
 void Vdp2DeInit(void);
 void Vdp2Reset(void);
