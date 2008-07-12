@@ -246,7 +246,7 @@ GtkWidget* create_dialog1(void) {
     GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
     GtkWidget * select_percore = yui_range_new(keyfile, "General", "PerCore", percores);
 
-    g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", percore_changed, NULL);
+    g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", G_CALLBACK(percore_changed), NULL);
 
     gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
 

@@ -213,7 +213,7 @@ void yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui) {
 	} else {
 		gtk_window_unfullscreen(GTK_WINDOW(yui));
 		gtk_widget_show(yui->menu);
-		gtk_window_resize(yui, beforefswidth, beforefsheight);
+		gtk_window_resize(GTK_WINDOW(yui), beforefswidth, beforefsheight);
 	}
 }
 
