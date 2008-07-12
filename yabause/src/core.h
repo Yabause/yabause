@@ -147,4 +147,12 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
 #endif
 #endif
 
+//////////////////////////////////////////////////////////////////////////////
+
+#ifdef __GNUC__
+#define UNUSED __attribute ((unused))
+#else
+#define UNUSED
+#endif
+
 #endif

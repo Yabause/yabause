@@ -321,13 +321,13 @@ typedef void Dummy;
 Dummy * DummyInit(u32);
 void DummyDeInit(Dummy *);
 
-static INLINE u8 DummyReadByte(Dummy * d, u32 a) { return 0; }
-static INLINE u16 DummyReadWord(Dummy * d, u32 a) { return 0; }
-static INLINE u32 DummyReadLong(Dummy * d, u32 a) { return 0; }
+static INLINE u8 DummyReadByte(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
+static INLINE u16 DummyReadWord(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
+static INLINE u32 DummyReadLong(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
 
-static INLINE void DummyWriteByte(Dummy * d, u32 a, u8 v) {}
-static INLINE void DummyWriteWord(Dummy * d, u32 a, u16 v) {}
-static INLINE void DummyWriteLong(Dummy * d, u32 a, u32 v) {}
+static INLINE void DummyWriteByte(Dummy UNUSED * d, u32 UNUSED a, u8 UNUSED v) {}
+static INLINE void DummyWriteWord(Dummy UNUSED * d, u32 UNUSED a, u16 UNUSED v) {}
+static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) {}
 
 void MappedMemoryInit();
 u8 FASTCALL MappedMemoryReadByte(u32 addr);
