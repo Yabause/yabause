@@ -2386,7 +2386,6 @@ void VIDSoftVdp1PolygonDraw(void) {
 
 int INLINE ClipLine(int *x1, int *y1, int *x2, int *y2)
 {
-   // rewrite me
    int point1vis=0;
    int point2vis=0;
 
@@ -2412,7 +2411,28 @@ int INLINE ClipLine(int *x1, int *y1, int *x2, int *y2)
    if (point1vis == 0 && point2vis == 0)
       return 0;
 
-   // Should be doing some clipping or something here
+   if (point1vis == 0)
+   {
+      if (*x1 < vdp1clipxstart)
+          *x1 = vdp1clipxstart;
+      else if (*x1 > vdp1clipxend)
+          *x1 = vdp1clipxend;
+      if (*y1 < vdp1clipystart)
+          *y1 = vdp1clipystart;
+      else if (*y1 > vdp1clipyend)
+          *y1 = vdp1clipyend;
+   }
+   else
+   {
+      if (*x2 < vdp1clipxstart)
+          *x2 = vdp1clipxstart;
+      else if (*x2 > vdp1clipxend)
+          *x2 = vdp1clipxend;
+      if (*y2 < vdp1clipystart)
+          *y2 = vdp1clipystart;
+      else if (*y2 > vdp1clipyend)
+          *y2 = vdp1clipyend;
+   }
 
    return 1;
 }
