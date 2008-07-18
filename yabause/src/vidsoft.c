@@ -300,6 +300,9 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
       info->charaddr &= 0x3FFF;
 
    info->charaddr *= 0x20; // selon Runik
+   if (info->specialprimode == 1) {
+      info->priority = (info->priority & 0xC) | info->specialfunction;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -703,14 +706,6 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
       {
          u32 color;
 
-         // If priority of screen is less than current top pixel and per
-         // pixel priority isn't used, skip it
-         if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
-         {
-            textdata++;
-            continue;
-         }
-
          // See if screen position is clipped, if it isn't, continue
          // Window 0
          if (!TestWindow(info->wctl, 0x2, 0x1, &clip[0], i, j))
@@ -735,6 +730,14 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
             // Tile
             y=Y;
             Vdp2MapCalcXY(info, &x, &y, &sinfo);
+         }
+
+         // If priority of screen is less than current top pixel and per
+         // pixel priority isn't used, skip it
+         if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
+         {
+            textdata++;
+            continue;
          }
 
          if (!Vdp2FetchPixel(info, x, y, &color))
@@ -812,14 +815,6 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             for (i = 0; i < vdp2width; i++)
             {
                u32 color;
- 
-               // If priority of screen is less than current top pixel and per
-               // pixel priority isn't used, skip it
-               if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
-               {
-                  textdata++;
-                  continue;
-               }
 
                x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
                y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
@@ -830,6 +825,14 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                {
                   // Tile
                   Vdp2MapCalcXY(info, &x, &y, &sinfo);
+               }
+ 
+               // If priority of screen is less than current top pixel and per
+               // pixel priority isn't used, skip it
+               if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
+               {
+                  textdata++;
+                  continue;
                }
 
                // Fetch pixel
@@ -877,14 +880,6 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          {
             u32 color;
 
-            // If priority of screen is less than current top pixel and per
-            // pixel priority isn't used, skip it
-            if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
-            {
-               textdata++;
-               continue;
-            }
-
             if (p->deltaKAx != 0)
             {
                Vdp2ReadCoefficientFP(p,
@@ -909,6 +904,14 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             {
                // Tile
                Vdp2MapCalcXY(info, &x, &y, &sinfo);
+            }
+
+            // If priority of screen is less than current top pixel and per
+            // pixel priority isn't used, skip it
+            if (Vdp2GetPixelPriority(textdata[0]) > info->priority)
+            {
+               textdata++;
+               continue;
             }
 
             // Fetch pixel
