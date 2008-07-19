@@ -301,7 +301,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
 
    info->charaddr *= 0x20; // selon Runik
    if (info->specialprimode == 1) {
-      info->priority = (info->priority & 0xC) | info->specialfunction;
+      info->priority = (info->priority & 0xE) | (info->specialfunction & 1);
    }
 }
 
