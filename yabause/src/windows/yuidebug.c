@@ -1154,7 +1154,7 @@ LRESULT CALLBACK VDP2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
       {
-         char tempstr[2048];
+         char tempstr[VDP2_DEBUG_STRING_SIZE];
          int isscrenabled;
 
          // is NBG0/RBG1 enabled?

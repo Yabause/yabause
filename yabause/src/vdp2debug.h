@@ -20,6 +20,8 @@
 #ifndef VDP2DEBUG_H
 #define VDP2DEBUG_H
 
+#define VDP2_DEBUG_STRING_SIZE 2048
+
 void Vdp2DebugStatsRBG0(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG0(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG1(char *outstring, int *isenabled);

@@ -24,6 +24,7 @@
 #include "../vdp2.h"
 #include "../yabause.h"
 #include "settings.h"
+#include "../vdp2debug.h"
 
 static void yui_vdp2_class_init	(YuiVdp2Class * klass);
 static void yui_vdp2_init		(YuiVdp2      * yfe);
@@ -160,7 +161,7 @@ GtkWidget * yui_vdp2_new(YuiWindow * y) {
 }
 
 void yui_vdp2_update(YuiVdp2 * vdp2) {
-	gchar nameTemp[1024];
+	gchar nameTemp[VDP2_DEBUG_STRING_SIZE];
 	gboolean isscrenabled;
 
 	switch(vdp2->cursor) {
