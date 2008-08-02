@@ -122,6 +122,8 @@ static void yui_vdp2_init (YuiVdp2 * yv) {
 	gtk_window_set_default_size(GTK_WINDOW(yv), 500, 450);
 
 	gtk_paned_set_position(GTK_PANED(hpane), 120);
+
+	g_signal_connect(G_OBJECT(yv), "delete-event", GTK_SIGNAL_FUNC(yui_vdp2_destroy), NULL);
 }
 
 GtkWidget * yui_vdp2_new(YuiWindow * y) {
