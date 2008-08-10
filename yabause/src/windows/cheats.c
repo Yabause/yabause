@@ -18,6 +18,7 @@
 */
 
 #include <windows.h>
+#include <windowsx.h>
 #include <commctrl.h>
 #include "cheats.h"
 #include "../cheat.h"
@@ -88,6 +89,7 @@ LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
          SendDlgItemMessage(hDlg, IDC_CODE, EM_LIMITTEXT, 13, 0);
+         Button_Enable(GetDlgItem(hDlg, IDOK), FALSE);
          return TRUE;
       case WM_COMMAND:
       {
@@ -101,11 +103,16 @@ LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                GetDlgItemText(hDlg, IDC_CODE, code, 14);
 
-               // should verify text here
+               // Should verify text
+               if (strlen(code) < 12)
+               {
+                   MessageBox (hDlg, "Invalid code. Should be in the format: XXXXXXXX YYYY", "Error",  MB_OK | MB_ICONINFORMATION);
+                   return TRUE;
+               }
 
                if (CheatAddARCode(code) != 0)
                {
-                   MessageBox (hDlg, "Unable to add code", "Error",  MB_OK | MB_ICONINFORMATION);
+                   MessageBox (hDlg, "Invalid code. Should be in the format: XXXXXXXX YYYY", "Error",  MB_OK | MB_ICONINFORMATION);
                    return TRUE;
                }
 
@@ -123,6 +130,20 @@ LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDCANCEL:
             {
                EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            case IDC_CODE:
+            {
+               if (HIWORD(wParam) == EN_CHANGE)
+               {
+                  char text[14];
+                  LRESULT ret;
+
+                  if ((ret = GetDlgItemText(hDlg, IDC_CODEDESC, text, 14)) <= 0)
+                     Button_Enable(GetDlgItem(hDlg, IDOK), FALSE);
+                  else 
+                     Button_Enable(GetDlgItem(hDlg, IDOK), TRUE);
+               }
                return TRUE;
             }
             default: break;
