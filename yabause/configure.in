@@ -202,7 +202,7 @@ fi
 YAB_CHECK_HOST_TOOLS(HAVE_PKG, [pkg-config])
 
 if test ! x$HAVE_PKG = x ; then
-	if `$HAVE_PKG gtkglext-1.0` && test "x$use_opengl = xyes" ; then
+	if test "x$use_opengl" = "xyes" && `$HAVE_PKG gtkglext-1.0` ; then
 		yabause_available_yuis="gtk $yabause_available_yuis"
 		YUI_gtk_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
 		YUI_gtk_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
