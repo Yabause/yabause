@@ -37,7 +37,7 @@
 #include "../debug.h"
 #include "cheats.h"
 #include "../m68kcore.h"
-#ifndef _MSC_VER
+#ifdef NOC68K
 #include "../m68kc68k.h"
 #endif
 //#include "../m68khle.h"
@@ -114,7 +114,7 @@ NULL
 
 M68K_struct *M68KCoreList[] = {
 &M68KDummy,
-#ifndef _MSC_VER
+#ifndef NOC68K
 &M68KC68K,
 #endif
 //&M68KHLE,
@@ -450,7 +450,7 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
    else
       yinit.cdcoretype = CDCORE_ISO;
    //yinit.m68kcoretype = M68KCORE_HLE;
-#ifdef _MSC_VER
+#ifdef NOC68K
    yinit.m68kcoretype = M68KCORE_DEFAULT;
 #else
    yinit.m68kcoretype = M68KCORE_C68K;
@@ -939,7 +939,7 @@ YabauseSetup:
    else
       yinit.cdcoretype = CDCORE_ISO;
    //yinit.m68kcoretype = M68KCORE_HLE;
-#ifdef _MSC_VER
+#ifdef NOC68K
    yinit.m68kcoretype = M68KCORE_DEFAULT;
 #else
    yinit.m68kcoretype = M68KCORE_C68K;

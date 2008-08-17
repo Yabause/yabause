@@ -17,17 +17,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include <dsound.h>
-#ifdef __MINGW32__
-// I have to do this because for some reason because the dxerr8.h header is fubared
-const char*  __stdcall DXGetErrorString8A(HRESULT hr);
-#define DXGetErrorString8 DXGetErrorString8A
-const char*  __stdcall DXGetErrorDescription8A(HRESULT hr);
-#define DXGetErrorDescription8 DXGetErrorDescription8A
-#else
-#include <dxerr8.h>
-#endif
 #include <math.h>
+#include <dsound.h>
+#include "dx.h"
 #include "../scsp.h"
 #include "snddx.h"
 
