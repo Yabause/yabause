@@ -717,7 +717,7 @@ LRESULT HexEditCtl_KeyDown(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 
             // So long as it's an ANSI character, we're all good
             if (!GetKeyboardState(keystate) ||
-                !ToAscii(wParam, LOBYTE(HIWORD(lParam)), keystate, &key, 0))
+                !ToAscii((UINT)wParam, LOBYTE(HIWORD(lParam)), keystate, &key, 0))
                break;
             
             // Modify data in memory

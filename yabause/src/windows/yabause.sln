@@ -8,7 +8,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yabause", "yabause.vcproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gen68k", "gen68k.vcproj", "{EB71F858-B079-4A01-820E-BF7530E67ACE}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Yabause", "Installer\Installer.vdproj", "{40298F61-C97C-4FC3-993B-E78CFC4E9FDF}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Yabause Installer", "Installer\Installer.vdproj", "{40298F61-C97C-4FC3-993B-E78CFC4E9FDF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,8 +30,8 @@ Global
 		{6D979AD9-4479-4B63-87C9-1E75979F9327}.Debug with Threads|Win32.Build.0 = Debug with Threads|Win32
 		{6D979AD9-4479-4B63-87C9-1E75979F9327}.Debug|Win32.ActiveCfg = Debug with Netlink|Win32
 		{6D979AD9-4479-4B63-87C9-1E75979F9327}.Debug|Win32.Build.0 = Debug with Netlink|Win32
-		{6D979AD9-4479-4B63-87C9-1E75979F9327}.Release|Win32.ActiveCfg = Release|Win32
-		{6D979AD9-4479-4B63-87C9-1E75979F9327}.Release|Win32.Build.0 = Release|Win32
+		{6D979AD9-4479-4B63-87C9-1E75979F9327}.Release|Win32.ActiveCfg = Debug|Win32
+		{6D979AD9-4479-4B63-87C9-1E75979F9327}.Release|Win32.Build.0 = Debug|Win32
 		{EB71F858-B079-4A01-820E-BF7530E67ACE}.Debug - With Netlink|Win32.ActiveCfg = Debug|Win32
 		{EB71F858-B079-4A01-820E-BF7530E67ACE}.Debug - With Netlink|Win32.Build.0 = Debug|Win32
 		{EB71F858-B079-4A01-820E-BF7530E67ACE}.Debug no 68k|Win32.ActiveCfg = Release|Win32

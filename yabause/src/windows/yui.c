@@ -591,7 +591,7 @@ int YuiInit(LPSTR lpCmdLine)
    char *argv=NULL;
    int forcecdpath=1;
    char filename[MAX_PATH];
-   u32 addr;
+   u32 addr=0;
    int loadexec=0;
 
    memset(&iccs, 0, sizeof(INITCOMMONCONTROLSEX));

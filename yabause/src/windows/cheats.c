@@ -59,15 +59,15 @@ void AddCode(HWND hParent, int i)
    }
 
    itemdata.mask = LVIF_TEXT;
-   itemdata.iItem = SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETITEMCOUNT, 0, 0);
+   itemdata.iItem = (int)SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETITEMCOUNT, 0, 0);
    itemdata.iSubItem = 0;
    itemdata.pszText = (LPTSTR)code;
-   itemdata.cchTextMax = strlen(itemdata.pszText);
+   itemdata.cchTextMax = (int)strlen(itemdata.pszText);
    SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_INSERTITEM, 0, (LPARAM)&itemdata);
 
    itemdata.iSubItem = 1;
    itemdata.pszText = (LPTSTR)cheat[i].desc;
-   itemdata.cchTextMax = strlen(itemdata.pszText);
+   itemdata.cchTextMax = (int)strlen(itemdata.pszText);
    SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
 
    itemdata.iSubItem = 2;
@@ -76,7 +76,7 @@ void AddCode(HWND hParent, int i)
    else
       itemdata.pszText = "Disabled";
       
-   itemdata.cchTextMax = strlen(itemdata.pszText);
+   itemdata.cchTextMax = (int)strlen(itemdata.pszText);
    SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
 }
 
@@ -280,17 +280,17 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          coldata.mask = LVCF_TEXT | LVCF_WIDTH;
          coldata.pszText = "Code\0";
-         coldata.cchTextMax = strlen(coldata.pszText);
+         coldata.cchTextMax = (int)strlen(coldata.pszText);
          coldata.cx = 190;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)0, (LPARAM)&coldata);
 
          coldata.pszText = "Description\0";
-         coldata.cchTextMax = strlen(coldata.pszText);
+         coldata.cchTextMax = (int)strlen(coldata.pszText);
          coldata.cx = 111;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)1, (LPARAM)&coldata);
 
          coldata.pszText = "Status\0";
-         coldata.cchTextMax = strlen(coldata.pszText);
+         coldata.cchTextMax = (int)strlen(coldata.pszText);
          coldata.cx = 70;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)2, (LPARAM)&coldata);
 
@@ -374,9 +374,9 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_DELETECODE:
             {
-               int cursel=SendDlgItemMessage(hDlg, IDC_CHEATLIST,
-                                             LVM_GETNEXTITEM, -1,
-                                             LVNI_SELECTED);
+               int cursel=(int)SendDlgItemMessage(hDlg, IDC_CHEATLIST,
+                                                  LVM_GETNEXTITEM, -1,
+                                                  LVNI_SELECTED);
                if (cursel != -1)
                {
                   if (CheatRemoveCodeByIndex(cursel) != 0)
@@ -420,9 +420,9 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   case NM_DBLCLK:
                   {
-                     int cursel=SendDlgItemMessage(hDlg, IDC_CHEATLIST,
-                                                   LVM_GETNEXTITEM, -1,
-                                                   LVNI_SELECTED);
+                     int cursel=(int)SendDlgItemMessage(hDlg, IDC_CHEATLIST,
+                                                        LVM_GETNEXTITEM, -1,
+                                                        LVNI_SELECTED);
 
                      if (cursel != -1)
                      {                        
@@ -454,9 +454,9 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   }
                   case NM_CLICK:
                   {
-                     int cursel=SendDlgItemMessage(hDlg, IDC_CHEATLIST,
-                                                   LVM_GETNEXTITEM, -1,
-                                                   LVNI_SELECTED);
+                     int cursel=(int)SendDlgItemMessage(hDlg, IDC_CHEATLIST,
+                                                        LVM_GETNEXTITEM, -1,
+                                                        LVNI_SELECTED);
                      if (cursel != -1)
                         EnableWindow(GetDlgItem(hDlg, IDC_DELETECODE), TRUE);
                      else
