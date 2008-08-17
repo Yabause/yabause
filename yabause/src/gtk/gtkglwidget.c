@@ -62,7 +62,7 @@ int yui_gl_draw(YuiGl * glxarea) {
 			  (glxarea->pixels_width-buf_width)/2, (glxarea->pixels_height-buf_height)/2,
 			  buf_width, buf_height, GDK_RGB_DITHER_NONE, 0, 0);
 	} else {
-	  
+
 	  scaledpixbuf = gdk_pixbuf_scale_simple(pixbuf, 
 						 glxarea->pixels_width, glxarea->pixels_height, GDK_INTERP_NEAREST );
 	  gdk_draw_pixbuf(GTK_WIDGET(glxarea)->window, NULL, 
@@ -196,6 +196,8 @@ void yui_gl_dump_screen(YuiGl * glxarea) {
         if (glxarea->pixels == NULL) return;    
 
         glReadPixels(0, 0, glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
+#else
+	glxarea->pixels = dispbuffer;
 #endif
 }
 
