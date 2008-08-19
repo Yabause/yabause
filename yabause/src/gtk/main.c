@@ -300,6 +300,9 @@ gboolean yui_settings_load(void) {
 
         yinit.flags = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 
+	gtk_window_move(GTK_WINDOW(yui), g_key_file_get_integer(keyfile, "Gtk", "X", 0),
+					g_key_file_get_integer(keyfile, "Gtk", "Y", 0));
+
 	return mustRestart;
 }
 

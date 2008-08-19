@@ -114,6 +114,22 @@ gboolean  yui_window_log_delete(GtkWidget *widget, GdkEvent *event, YuiWindow *y
   return TRUE;   /* hide instead of killing */
 }
 
+static gboolean yui_window_moved(GtkWidget * widget, GdkEventConfigure * event, gpointer user_data) {
+	char buffer[512];
+
+	sprintf(buffer, "%d", event->x);
+	g_key_file_set_value(keyfile, "Gtk", "X", buffer);
+	sprintf(buffer, "%d", event->y);
+	g_key_file_set_value(keyfile, "Gtk", "Y", buffer);
+}
+
+extern gchar * inifile;
+
+static void yui_window_destroy() {
+	g_file_set_contents(inifile, g_key_file_to_data(keyfile, 0, 0), -1, 0);
+	gtk_main_quit();
+}
+
 static void yui_window_init (YuiWindow * yw) {
 	GtkAccelGroup * accel_group = gtk_accel_group_new();
 	GtkWidget * scroll;
@@ -160,9 +176,10 @@ static void yui_window_init (YuiWindow * yw) {
 	gtk_box_pack_start(GTK_BOX(yw->box), yw->area, TRUE, TRUE, 0);
 	gtk_widget_set_size_request(GTK_WIDGET(yw->area), 320, 224);
 
-	g_signal_connect(G_OBJECT(yw), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+	g_signal_connect(G_OBJECT(yw), "destroy", G_CALLBACK(yui_window_destroy), NULL);
 	g_signal_connect(G_OBJECT(yw), "key-press-event", G_CALLBACK(yui_window_keypress), yw);
 	g_signal_connect(G_OBJECT(yw), "key-release-event", G_CALLBACK(yui_window_keyrelease), yw);
+	g_signal_connect(G_OBJECT(yw), "configure-event", G_CALLBACK(yui_window_moved), yw);
 
 	yw->logpopup = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title( GTK_WINDOW( yw->logpopup ), "Yabause Logs" );
