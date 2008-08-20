@@ -58,6 +58,11 @@ CONFIG(debug, debug|release) {
 	RCC_DIR	= $${BUILD_PATH}/release/.rcc
 }
 
+prefix = @prefix@
+exec_prefix = $@exec_prefix@
+target.path = $@bindir@
+INSTALLS += target
+
 FORMS	+= ui/UIYabause.ui \
 	ui/UISettings.ui \
 	ui/UIAbout.ui \

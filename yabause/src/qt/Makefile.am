@@ -33,4 +33,10 @@ clean-local: Makefile.qmake
 distclean-local: Makefile.qmake.Release Makefile.qmake.Debug
 	$(MAKE) -f Makefile.qmake.Release distclean
 	$(MAKE) -f Makefile.qmake.Debug distclean
+
+install-exec-local: Makefile.qmake
+	$(MAKE) -f Makefile.qmake release-install
+
+uninstall-local: Makefile.qmake
+	$(MAKE) -f Makefile.qmake release-uninstall
 endif
