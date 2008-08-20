@@ -1300,7 +1300,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_SAVESTATE_F9:
             case IDM_SAVESTATE_F10:
                if (YabSaveStateSlot(ysspath, LOWORD(wParam)-IDM_SAVESTATE_F2) != 0)
-                  MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
+                  MessageBox (hWnd, "Couldn't save state file", "Error",  MB_OK | MB_ICONINFORMATION);
                break;
             case IDM_LOADSTATE_F2:
             case IDM_LOADSTATE_F3:
