@@ -958,7 +958,7 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          GetClientRect(GetDlgItem(hDlg, IDC_VDP1TEXTET), &rect);
          FillRect(hdc, &rect, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
-         if (vdp1texture == NULL)
+         if (vdp1texture == NULL || vdp1texturew == 0 || vdp1textureh == 0)
          {
             SetBkColor(hdc, RGB(0,0,0));
             SetTextColor(hdc, RGB(255,255,255));
