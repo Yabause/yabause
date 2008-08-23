@@ -333,6 +333,7 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
                         "Yabause Cheat Files\0*.YCT\0All Files\0*.*\0",
                         cheatfilename, sizeof(cheatfilename));
+               ofn.lpstrDefExt = "YCT";
 
                if (GetSaveFileName(&ofn))
                {
@@ -364,6 +365,17 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      {
                         // Add code to code list
                         AddCode(hDlg, i);
+                     }
+
+                     if (cheatnum == 0)
+                     {
+                        EnableWindow(GetDlgItem(hDlg, IDC_CLEARCODES), FALSE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_SAVETOFILE), FALSE);
+                     }
+                     else
+                     {
+                        EnableWindow(GetDlgItem(hDlg, IDC_CLEARCODES), TRUE);
+                        EnableWindow(GetDlgItem(hDlg, IDC_SAVETOFILE), TRUE);
                      }
                   }
                   else
