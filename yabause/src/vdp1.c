@@ -581,6 +581,8 @@ u32 Vdp1DebugGetCommandNumberAddr(u32 number)
             break;
       }
 
+      if (addr > 0x7FFE0)
+         return 0xFFFFFFFF;
       command = T1ReadWord(Vdp1Ram, addr);
       commandCounter++;    
    }
