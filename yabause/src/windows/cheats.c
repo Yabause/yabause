@@ -139,7 +139,7 @@ LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   char text[14];
                   LRESULT ret;
 
-                  if ((ret = GetDlgItemText(hDlg, IDC_CODEDESC, text, 14)) <= 0)
+                  if ((ret = GetDlgItemText(hDlg, IDC_CODE, text, 14)) <= 0)
                      Button_Enable(GetDlgItem(hDlg, IDOK), FALSE);
                   else 
                      Button_Enable(GetDlgItem(hDlg, IDOK), TRUE);
@@ -165,6 +165,9 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
          SendDlgItemMessage(hDlg, IDC_CODEADDR, EM_LIMITTEXT, 8, 0);
+         SendDlgItemMessage(hDlg, IDC_CODEVAL, EM_LIMITTEXT, 3, 0);
+         Button_Enable(GetDlgItem(hDlg, IDOK), FALSE);
+         SendDlgItemMessage(hDlg, IDC_CTBYTEWRITE, BM_SETCHECK, BST_CHECKED, 0);
          return TRUE;
       case WM_COMMAND:
       {
@@ -250,6 +253,21 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if (HIWORD(wParam) == BN_CLICKED)
                   SendDlgItemMessage(hDlg, IDC_CODEVAL, EM_LIMITTEXT, 10, 0);
                break;
+            }
+            case IDC_CODEADDR:
+            case IDC_CODEVAL:
+            {
+               if (HIWORD(wParam) == EN_CHANGE)
+               {
+                  char text[11];
+
+                  if (GetDlgItemText(hDlg, IDC_CODEADDR, text, 9) <= 0 ||
+                      GetDlgItemText(hDlg, IDC_CODEVAL, text, 11) <= 0)
+                     Button_Enable(GetDlgItem(hDlg, IDOK), FALSE);
+                  else 
+                     Button_Enable(GetDlgItem(hDlg, IDOK), TRUE);
+               }
+               return TRUE;
             }
             default: break;
          }
