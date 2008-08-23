@@ -1299,8 +1299,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_SAVESTATE_F8:
             case IDM_SAVESTATE_F9:
             case IDM_SAVESTATE_F10:
+               YuiTempPause();
                if (YabSaveStateSlot(ysspath, LOWORD(wParam)-IDM_SAVESTATE_F2) != 0)
                   MessageBox (hWnd, "Couldn't save state file", "Error",  MB_OK | MB_ICONINFORMATION);
+               YuiTempUnPause();
                break;
             case IDM_LOADSTATE_F2:
             case IDM_LOADSTATE_F3:
@@ -1311,8 +1313,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_LOADSTATE_F8:
             case IDM_LOADSTATE_F9:
             case IDM_LOADSTATE_F10:
+               YuiTempPause();
                if (YabLoadStateSlot(ysspath, LOWORD(wParam)-IDM_LOADSTATE_F2) != 0)
                   MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
+               YuiTempUnPause();
                break;
             case IDM_CAPTURESCREEN:
             {
