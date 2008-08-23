@@ -1050,6 +1050,11 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         free(vdp2texture);
 
                      vdp2texture = Vdp2DebugTexture(cursel, -1, 0x00FF00FF, &width, &height);
+                     if (vdp2texture == NULL)
+                        EnableWindow(GetDlgItem(hDlg, IDC_VDP2SAVEBMPBT), FALSE);
+                     else
+                        EnableWindow(GetDlgItem(hDlg, IDC_VDP2SAVEBMPBT), TRUE);
+
                      InvalidateRect(hDlg, NULL, FALSE);
                      UpdateWindow(hDlg);
                      return TRUE;
@@ -1064,9 +1069,9 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                OPENFILENAME ofn;
 
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
-                        "All Files\0*.*\0Bitmap Files\0*.BMP\0",
+                        "Bitmap Files\0*.BMP\0All Files\0*.*\0",
                         filename, sizeof(filename));
-
+               ofn.lpstrDefExt = "BMP";
                if (GetSaveFileName(&ofn))
                   SaveBitmap(filename, width, height, vdp2texture);
 
