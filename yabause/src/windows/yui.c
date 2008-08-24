@@ -963,7 +963,7 @@ YabauseSetup:
       {
          nocorechange = 1;
 
-         if (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+         if (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), YabWin, (DLGPROC)SettingsDlgProc) != TRUE)
          {
             // exit program with error
             MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
