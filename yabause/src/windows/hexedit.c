@@ -40,6 +40,7 @@ typedef struct
    int editmode;
    addrlist_struct *addrlist;
    int numaddr;
+   u32 maxaddr;
    int selstart, selend;
 } HexEditCtl_struct;
 
@@ -86,7 +87,7 @@ LRESULT InitHexEditCtl(HWND hwnd, WPARAM wParam, LPARAM lParam)
    GetScrollInfo(hwnd, SB_VERT, &cc->scrollinfo);
 
    // Set our newly created structure to the extra area                                                                                                SetCustCtrl(hwnd, ccp);
-   SetWindowLong(hwnd, 0, (LONG)cc);
+   SetWindowLongPtr(hwnd, 0, (LONG_PTR)cc);
    return TRUE;
 }
 
@@ -316,7 +317,7 @@ LRESULT HexEditCtl_OnPaint(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MoveCursor(HexEditCtl_struct *cc, int offset)
+void MoveCursor(HexEditCtl_struct *cc, int offset, int scrollpos)
 {
    static int pos;
    u32 addr;
@@ -508,6 +509,33 @@ void MoveCursor(HexEditCtl_struct *cc, int offset)
          }
       }
    }
+   else
+   {
+      u32 counter;
+      u32 counter2;
+      SCROLLINFO si;
+
+      si.cbSize = sizeof(SCROLLINFO);
+      si.fMask = SIF_RANGE | SIF_POS;
+      GetScrollInfo(cc->hwnd, SB_VERT, &si);
+
+      // Figure out where to jump to based on percentage
+      counter = (u32)((u64)cc->maxaddr * (u64)scrollpos / (u64)si.nMax);
+
+      for (i = 0, counter2=0; i < cc->numaddr; i++)
+      {
+         if ((counter2+cc->addrlist[i].end-cc->addrlist[i].start) > counter)
+         {
+            cc->addr=cc->addrlist[i].start+counter-counter2;
+            // round address
+            cc->addr -= (cc->addr % cc->maxcurx);
+            break;
+         }
+         counter2 +=cc->addrlist[i].end-cc->addrlist[i].start;
+      }
+
+      InvalidateRect(cc->hwnd, NULL, FALSE);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -589,7 +617,7 @@ LRESULT HexEditCtl_Vscroll(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
       {
          int oldcury=cc->cury;
          cc->cury = cc->maxcury-1;
-         MoveCursor(cc, cc->maxcurx);
+         MoveCursor(cc, cc->maxcurx, 0);
          cc->cury=oldcury;
          HexEditCtl_SetCaretPos(cc);
          return 0;
@@ -598,23 +626,25 @@ LRESULT HexEditCtl_Vscroll(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
       {
          int oldcury=cc->cury;
          cc->cury = 0;
-         MoveCursor(cc, -cc->maxcurx);
+         MoveCursor(cc, -cc->maxcurx, 0);
          cc->cury=oldcury;
          HexEditCtl_SetCaretPos(cc);
          return 0;
       }
       case SB_PAGEDOWN:
-         MoveCursor(cc, cc->maxcurx*cc->maxcury);
+         MoveCursor(cc, cc->maxcurx*cc->maxcury, 0);
          return 0;
       case SB_PAGEUP:
-         MoveCursor(cc, -(cc->maxcurx*cc->maxcury));
+         MoveCursor(cc, -(cc->maxcurx*cc->maxcury), 0);
          return 0;
       case SB_THUMBTRACK:
 //         cc->addr = 0xFFFFFF00 / 64 * HIWORD(wParam);
 //         InvalidateRect(cc->hwnd, NULL, FALSE);
+         MoveCursor(cc, 0, HIWORD(wParam));
          return 0;
       case SB_THUMBPOSITION:
          SetScrollPos(cc->hwnd, SB_VERT, HIWORD(wParam), TRUE);
+         MoveCursor(cc, 0, HIWORD(wParam));
          return 0;
       default:
          break;
@@ -633,22 +663,22 @@ LRESULT HexEditCtl_KeyDown(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
    switch (wParam)
    {
       case VK_LEFT:
-         MoveCursor(cc, -1);
+         MoveCursor(cc, -1, 0);
          break;
       case VK_UP:
-         MoveCursor(cc, -cc->maxcurx);
+         MoveCursor(cc, -cc->maxcurx, 0);
          break;
       case VK_DOWN:
-         MoveCursor(cc, cc->maxcurx);
+         MoveCursor(cc, cc->maxcurx, 0);
          break;
       case VK_RIGHT:
-         MoveCursor(cc, 1);
+         MoveCursor(cc, 1, 0);
          break;
       case VK_PRIOR:
-         MoveCursor(cc, -(cc->maxcurx*cc->maxcury));
+         MoveCursor(cc, -(cc->maxcurx*cc->maxcury), 0);
          break;
       case VK_NEXT:
-         MoveCursor(cc, (cc->maxcurx*cc->maxcury));
+         MoveCursor(cc, (cc->maxcurx*cc->maxcury), 0);
          break;
       case VK_END:
       {
@@ -737,7 +767,7 @@ LRESULT HexEditCtl_KeyDown(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-   HexEditCtl_struct *cc=(HexEditCtl_struct *)GetWindowLong(hwnd, 0);
+   HexEditCtl_struct *cc=(HexEditCtl_struct *)GetWindowLongPtr(hwnd, 0);
 
    switch(message)
    {
@@ -773,6 +803,7 @@ LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
       case HEX_SETADDRESSLIST:
       {
          addrlist_struct *addrlist;
+         int i;
 
          if (((addrlist_struct *)lParam) != NULL && wParam > 0)
          {
@@ -788,6 +819,8 @@ LRESULT CALLBACK HexEditCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             cc->numaddr = (int)wParam;
             cc->addr = cc->addrlist[0].start;
             cc->curx = cc->cury = 0;
+            for (i = 0, cc->maxaddr=0; i < cc->numaddr; i++)
+               cc->maxaddr += cc->addrlist[i].end-cc->addrlist[i].start;
             return 0;
          }
          return -1;

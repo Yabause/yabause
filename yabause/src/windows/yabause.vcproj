@@ -414,153 +414,6 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath="..\bios.c"
-				>
-			</File>
-			<File
-				RelativePath="..\cdbase.c"
-				>
-			</File>
-			<File
-				RelativePath="..\cheat.c"
-				>
-			</File>
-			<File
-				RelativePath="..\coffelf.c"
-				>
-			</File>
-			<File
-				RelativePath="..\cs0.c"
-				>
-			</File>
-			<File
-				RelativePath="..\cs1.c"
-				>
-			</File>
-			<File
-				RelativePath="..\cs2.c"
-				>
-			</File>
-			<File
-				RelativePath="..\debug.c"
-				>
-			</File>
-			<File
-				RelativePath="..\error.c"
-				>
-			</File>
-			<File
-				RelativePath="..\m68kc68k.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug with Threads|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug no 68k|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\m68kcore.c"
-				>
-			</File>
-			<File
-				RelativePath="..\m68kd.c"
-				>
-			</File>
-			<File
-				RelativePath="..\memory.c"
-				>
-			</File>
-			<File
-				RelativePath="..\netlink.c"
-				>
-			</File>
-			<File
-				RelativePath="..\peripheral.c"
-				>
-			</File>
-			<File
-				RelativePath="..\profile.c"
-				>
-			</File>
-			<File
-				RelativePath="..\scsp.c"
-				>
-			</File>
-			<File
-				RelativePath="..\scu.c"
-				>
-			</File>
-			<File
-				RelativePath="..\sh2core.c"
-				>
-			</File>
-			<File
-				RelativePath="..\sh2d.c"
-				>
-			</File>
-			<File
-				RelativePath="..\sh2idle.c"
-				>
-			</File>
-			<File
-				RelativePath="..\sh2int.c"
-				>
-			</File>
-			<File
-				RelativePath="..\smpc.c"
-				>
-			</File>
-			<File
-				RelativePath="..\vdp1.c"
-				>
-			</File>
-			<File
-				RelativePath="..\vdp2.c"
-				>
-			</File>
-			<File
-				RelativePath="..\vdp2debug.c"
-				>
-			</File>
-			<File
-				RelativePath="..\vidogl.c"
-				>
-			</File>
-			<File
-				RelativePath="..\vidshared.c"
-				>
-			</File>
-			<File
-				RelativePath="..\vidsoft.c"
-				>
-			</File>
-			<File
-				RelativePath="..\yabause.c"
-				>
-			</File>
-			<File
-				RelativePath="..\ygl.c"
-				>
-			</File>
 			<Filter
 				Name="windows specific"
 				>
@@ -650,18 +503,47 @@
 				</Filter>
 			</Filter>
 			<Filter
-				Name="68k core"
+				Name="emulation core"
 				>
 				<File
-					RelativePath="..\c68k\c68k.c"
+					RelativePath="..\bios.c"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\cdbase.c"
+					>
+				</File>
+				<File
+					RelativePath="..\cheat.c"
+					>
+				</File>
+				<File
+					RelativePath="..\coffelf.c"
+					>
+				</File>
+				<File
+					RelativePath="..\cs0.c"
+					>
+				</File>
+				<File
+					RelativePath="..\cs1.c"
+					>
+				</File>
+				<File
+					RelativePath="..\cs2.c"
+					>
+				</File>
+				<File
+					RelativePath="..\debug.c"
+					>
+				</File>
+				<File
+					RelativePath="..\error.c"
+					>
+				</File>
+				<File
+					RelativePath="..\m68kc68k.c"
+					>
 					<FileConfiguration
 						Name="Debug with Threads|Win32"
 						ExcludedFromBuild="true"
@@ -680,91 +562,199 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\c68k\c68k_ini.inc"
+					RelativePath="..\m68kcore.c"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-							Description="Building C68K inc files"
-							CommandLine="cd  $(InputDir) &amp;&amp; &quot;$(ProjectDir)\Release\gen68k.exe&quot;"
-							AdditionalDependencies="$(ProjectDir)\Release\gen68k.exe"
-							Outputs="c68k_ini.inc; c68k_op0.inc; c68k_op1.inc; c68k_op2.inc; c68k_op3.inc; c68k_op4.inc; c68k_op5.inc; c68k_op6.inc; c68k_op7.inc; c68k_op8.inc; c68k_op9.inc; c68k_opA.inc; c68k_opB.inc; c68k_opC.inc; c68k_opD.inc; c68k_opE.inc; c68k_opF.inc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-							Description="Building C68K inc files"
-							CommandLine="cd  $(InputDir) &amp;&amp; &quot;$(ProjectDir)\Release\gen68k.exe&quot;"
-							AdditionalDependencies="&quot;$(ProjectDir)\Release\gen68k.exe&quot;"
-							Outputs="c68k_ini.inc; c68k_op0.inc; c68k_op1.inc; c68k_op2.inc; c68k_op3.inc; c68k_op4.inc; c68k_op5.inc; c68k_op6.inc; c68k_op7.inc; c68k_op8.inc; c68k_op9.inc; c68k_opA.inc; c68k_opB.inc; c68k_opC.inc; c68k_opD.inc; c68k_opE.inc; c68k_opF.inc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug with Threads|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug no 68k|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-							Description=""
-							CommandLine=""
-							AdditionalDependencies=""
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\c68k\c68kexec.c"
+					RelativePath="..\m68kd.c"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-							Description="Building c68kexec"
-							CommandLine="cl /Od /Ob2 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_IE=0x400&quot; /D &quot;_WIN32_WINNT=0x400&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_CRT_NONSTDC_NO_DEPRECATE&quot; /D &quot;HAVE_C99_VARIADIC_MACROS&quot; /D &quot;HAVE_LIBGLUT&quot; /D &quot;HAVE_LIBGL&quot; /D &quot;NO_CLI&quot; /D &quot;USEM68KCORE&quot; /D &quot;VERSION=\&quot;0.9.6\&quot;&quot; /D &quot;C68K_NO_JUMP_TABLE&quot; /FD /MD /fp:fast /Fo&quot;$(IntDir)\\&quot; /Fd&quot;$(IntDir)\vc80.pdb&quot; /W0 /nologo /c /Wp64 /TC /errorReport:prompt  $(InputDir)$(InputFileName)"
-							AdditionalDependencies="c68k_ini.inc c68k_op0.inc c68k_op1.inc c68k_op2.inc c68k_op3.inc c68k_op4.inc c68k_op5.inc c68k_op6.inc c68k_op7.inc c68k_op8.inc c68k_op9.inc c68k_opA.inc c68k_opB.inc c68k_opC.inc c68k_opD.inc c68k_opE.inc c68k_opF.inc"
-							Outputs="$(TargetDir)$(InputName).obj"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCustomBuildTool"
-							CommandLine="cl /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_CRT_NONSTDC_NO_DEPRECATE&quot; /D &quot;_WIN32_IE=0x400&quot; /D &quot;_WIN32_WINNT=0x400&quot; /D &quot;HAVE_C99_VARIADIC_MACROS&quot; /D &quot;HAVE_LIBGLUT&quot; /D &quot;HAVE_LIBGL&quot; /D &quot;NO_CLI&quot; /D &quot;USEM68KCORE&quot; /D &quot;VERSION=\&quot;0.9.6\&quot;&quot; /D &quot;C68K_NO_JUMP_TABLE&quot; /Gm /EHsc /RTC1 /MDd /Fo&quot;$(IntDir)\\&quot; /Fd&quot;$(IntDir)\vc80.pdb&quot; /W0 /nologo /c /Wp64 /ZI /TC /errorReport:prompt $(InputDir)$(InputFileName)&#x0D;&#x0A;"
-							AdditionalDependencies="c68k_ini.inc c68k_op0.inc c68k_op1.inc c68k_op2.inc c68k_op3.inc c68k_op4.inc c68k_op5.inc c68k_op6.inc c68k_op7.inc c68k_op8.inc c68k_op9.inc c68k_opA.inc c68k_opB.inc c68k_opC.inc c68k_opD.inc c68k_opE.inc c68k_opF.inc"
-							Outputs="$(TargetDir)$(InputName).obj"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug with Threads|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug no 68k|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
+				<File
+					RelativePath="..\memory.c"
+					>
+				</File>
+				<File
+					RelativePath="..\netlink.c"
+					>
+				</File>
+				<File
+					RelativePath="..\peripheral.c"
+					>
+				</File>
+				<File
+					RelativePath="..\profile.c"
+					>
+				</File>
+				<File
+					RelativePath="..\scsp.c"
+					>
+				</File>
+				<File
+					RelativePath="..\scu.c"
+					>
+				</File>
+				<File
+					RelativePath="..\sh2core.c"
+					>
+				</File>
+				<File
+					RelativePath="..\sh2d.c"
+					>
+				</File>
+				<File
+					RelativePath="..\sh2idle.c"
+					>
+				</File>
+				<File
+					RelativePath="..\sh2int.c"
+					>
+				</File>
+				<File
+					RelativePath="..\smpc.c"
+					>
+				</File>
+				<File
+					RelativePath="..\vdp1.c"
+					>
+				</File>
+				<File
+					RelativePath="..\vdp2.c"
+					>
+				</File>
+				<File
+					RelativePath="..\vdp2debug.c"
+					>
+				</File>
+				<File
+					RelativePath="..\vidogl.c"
+					>
+				</File>
+				<File
+					RelativePath="..\vidshared.c"
+					>
+				</File>
+				<File
+					RelativePath="..\vidsoft.c"
+					>
+				</File>
+				<File
+					RelativePath="..\yabause.c"
+					>
+				</File>
+				<File
+					RelativePath="..\ygl.c"
+					>
+				</File>
+				<Filter
+					Name="68k core"
+					>
+					<File
+						RelativePath="..\c68k\c68k.c"
+						>
+						<FileConfiguration
+							Name="Debug with Threads|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug no 68k|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\c68k\c68k_ini.inc"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+								Description="Building C68K inc files"
+								CommandLine="cd  $(InputDir) &amp;&amp; &quot;$(ProjectDir)\Release\gen68k.exe&quot;&#x0D;&#x0A;"
+								AdditionalDependencies="$(ProjectDir)\Release\gen68k.exe"
+								Outputs="c68k_ini.inc; c68k_op0.inc; c68k_op1.inc; c68k_op2.inc; c68k_op3.inc; c68k_op4.inc; c68k_op5.inc; c68k_op6.inc; c68k_op7.inc; c68k_op8.inc; c68k_op9.inc; c68k_opA.inc; c68k_opB.inc; c68k_opC.inc; c68k_opD.inc; c68k_opE.inc; c68k_opF.inc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+								Description="Building C68K inc files"
+								CommandLine="cd  $(InputDir) &amp;&amp; &quot;$(ProjectDir)\Release\gen68k.exe&quot;&#x0D;&#x0A;"
+								AdditionalDependencies="&quot;$(ProjectDir)\Release\gen68k.exe&quot;"
+								Outputs="c68k_ini.inc; c68k_op0.inc; c68k_op1.inc; c68k_op2.inc; c68k_op3.inc; c68k_op4.inc; c68k_op5.inc; c68k_op6.inc; c68k_op7.inc; c68k_op8.inc; c68k_op9.inc; c68k_opA.inc; c68k_opB.inc; c68k_opC.inc; c68k_opD.inc; c68k_opE.inc; c68k_opF.inc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug with Threads|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug no 68k|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+								Description=""
+								CommandLine=""
+								AdditionalDependencies=""
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\c68k\c68kexec.c"
+						>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+								Description="Building c68kexec"
+								CommandLine="cl /Od /Ob2 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_IE=0x400&quot; /D &quot;_WIN32_WINNT=0x400&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_CRT_NONSTDC_NO_DEPRECATE&quot; /D &quot;HAVE_C99_VARIADIC_MACROS&quot; /D &quot;HAVE_LIBGLUT&quot; /D &quot;HAVE_LIBGL&quot; /D &quot;NO_CLI&quot; /D &quot;USEM68KCORE&quot; /D &quot;VERSION=\&quot;0.9.6\&quot;&quot; /D &quot;C68K_NO_JUMP_TABLE&quot; /FD /MD /fp:fast /Fo&quot;$(IntDir)\\&quot; /Fd&quot;$(IntDir)\vc80.pdb&quot; /W0 /nologo /c /Wp64 /TC /errorReport:prompt  $(InputDir)$(InputFileName)&#x0D;&#x0A;"
+								AdditionalDependencies="c68k_ini.inc c68k_op0.inc c68k_op1.inc c68k_op2.inc c68k_op3.inc c68k_op4.inc c68k_op5.inc c68k_op6.inc c68k_op7.inc c68k_op8.inc c68k_op9.inc c68k_opA.inc c68k_opB.inc c68k_opC.inc c68k_opD.inc c68k_opE.inc c68k_opF.inc"
+								Outputs="$(TargetDir)$(InputName).obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+								CommandLine="cl /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_CRT_NONSTDC_NO_DEPRECATE&quot; /D &quot;_WIN32_IE=0x400&quot; /D &quot;_WIN32_WINNT=0x400&quot; /D &quot;HAVE_C99_VARIADIC_MACROS&quot; /D &quot;HAVE_LIBGLUT&quot; /D &quot;HAVE_LIBGL&quot; /D &quot;NO_CLI&quot; /D &quot;USEM68KCORE&quot; /D &quot;VERSION=\&quot;0.9.6\&quot;&quot; /D &quot;C68K_NO_JUMP_TABLE&quot; /Gm /EHsc /RTC1 /MDd /Fo&quot;$(IntDir)\\&quot; /Fd&quot;$(IntDir)\vc80.pdb&quot; /W0 /nologo /c /Wp64 /ZI /TC /errorReport:prompt $(InputDir)$(InputFileName)&#x0D;&#x0A;"
+								AdditionalDependencies="c68k_ini.inc c68k_op0.inc c68k_op1.inc c68k_op2.inc c68k_op3.inc c68k_op4.inc c68k_op5.inc c68k_op6.inc c68k_op7.inc c68k_op8.inc c68k_op9.inc c68k_opA.inc c68k_opB.inc c68k_opC.inc c68k_opD.inc c68k_opE.inc c68k_opF.inc"
+								Outputs="$(TargetDir)$(InputName).obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug with Threads|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug no 68k|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
