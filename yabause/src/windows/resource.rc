@@ -511,8 +511,7 @@ IDD_BUTTONCONFIG DIALOGEX 0, 0, 110, 40
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE
 FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    CTEXT           "Waiting for input...",-1,0,6,110,12
-    DEFPUSHBUTTON   "",IDOK,-6,-6,1,1
+    CTEXT           "Waiting for input...",IDC_WAITINPUT,0,6,110,12
     PUSHBUTTON      "Cancel",IDC_CUSTOMCANCEL,35,20,40,14
 END
 

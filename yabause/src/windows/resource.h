@@ -56,6 +56,7 @@
 #define IDC_CHEATLIST                   1001
 #define IDC_EDTEXT                      1001
 #define IDC_VERSIONTEXT                 1001
+#define IDC_WAITINPUT                   1001
 #define IDC_EDITTEXT2                   1002
 #define IDC_DRIVELETTERCB               1002
 #define IDC_FULLSCREENSTARTUPCB         1002

@@ -882,6 +882,18 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
 
 //////////////////////////////////////////////////////////////////////////////
 
+HHOOK hook;
+
+LRESULT CALLBACK KeyboardHook(int code, WPARAM wParam, LPARAM lParam)
+{
+   if (code >= HC_ACTION)
+      return TRUE;
+
+   return CallNextHookEx(hook, code, wParam, lParam);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam)
 {
@@ -916,6 +928,8 @@ LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          if (!SetTimer(hDlg, 1, 100, NULL))
              return FALSE;
 
+         PostMessage(hDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hDlg, IDC_WAITINPUT), TRUE);
+         hook = SetWindowsHookEx(WH_KEYBOARD, KeyboardHook, y_hInstance, GetCurrentThreadId());
          return TRUE;
       }
       case WM_COMMAND:
@@ -1030,6 +1044,7 @@ LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_DESTROY:
       {
          KillTimer(hDlg, 1);
+         UnhookWindowsHookEx(hook);
          break;
       }
    }
