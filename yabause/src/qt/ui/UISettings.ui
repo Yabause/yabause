@@ -23,14 +23,27 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>487</width>
-        <height>329</height>
+        <width>491</width>
+        <height>335</height>
        </rect>
       </property>
       <attribute name="title" >
        <string>General</string>
       </attribute>
       <layout class="QGridLayout" >
+       <item row="10" column="0" >
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>20</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
        <item row="0" column="0" colspan="2" >
         <widget class="QLabel" name="lBios" >
          <property name="font" >
@@ -112,19 +125,6 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0" >
-        <spacer>
-         <property name="orientation" >
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0" >
-          <size>
-           <width>20</width>
-           <height>2</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item row="7" column="0" colspan="2" >
         <widget class="QLabel" name="lTranslation" >
          <property name="font" >
@@ -152,19 +152,6 @@
         </widget>
        </item>
       </layout>
-      <zorder>lBios</zorder>
-      <zorder>leBios</zorder>
-      <zorder>tbBios</zorder>
-      <zorder>lCdRom</zorder>
-      <zorder>cbCdRom</zorder>
-      <zorder>leCdRom</zorder>
-      <zorder>tbCdRom</zorder>
-      <zorder>lSaveStates</zorder>
-      <zorder>leSaveStates</zorder>
-      <zorder>tbSaveStates</zorder>
-      <zorder>lTranslation</zorder>
-      <zorder>leTranslation</zorder>
-      <zorder>tbTranslation</zorder>
      </widget>
      <widget class="QWidget" name="wVideo" >
       <property name="geometry" >
@@ -436,8 +423,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>487</width>
-        <height>329</height>
+        <width>491</width>
+        <height>335</height>
        </rect>
       </property>
       <attribute name="title" >
@@ -478,9 +465,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>Up</string>
-         </property>
          <property name="text" >
           <string>Up</string>
          </property>
@@ -488,9 +472,6 @@
        </item>
        <item row="3" column="1" >
         <widget class="QLabel" name="lUp" >
-         <property name="statusTip" >
-          <string>Up</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -507,9 +488,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>A</string>
-         </property>
          <property name="text" >
           <string>A</string>
          </property>
@@ -517,9 +495,6 @@
        </item>
        <item row="3" column="3" >
         <widget class="QLabel" name="lA" >
-         <property name="statusTip" >
-          <string>A</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -536,9 +511,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>Down</string>
-         </property>
          <property name="text" >
           <string>Down</string>
          </property>
@@ -546,9 +518,6 @@
        </item>
        <item row="4" column="1" >
         <widget class="QLabel" name="lDown" >
-         <property name="statusTip" >
-          <string>Down</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -565,9 +534,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>B</string>
-         </property>
          <property name="text" >
           <string>B</string>
          </property>
@@ -575,9 +541,6 @@
        </item>
        <item row="4" column="3" >
         <widget class="QLabel" name="lB" >
-         <property name="statusTip" >
-          <string>B</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -594,9 +557,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>Left</string>
-         </property>
          <property name="text" >
           <string>Left</string>
          </property>
@@ -604,9 +564,6 @@
        </item>
        <item row="5" column="1" >
         <widget class="QLabel" name="lLeft" >
-         <property name="statusTip" >
-          <string>Left</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -623,9 +580,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>C</string>
-         </property>
          <property name="text" >
           <string>C</string>
          </property>
@@ -633,9 +587,6 @@
        </item>
        <item row="5" column="3" >
         <widget class="QLabel" name="lC" >
-         <property name="statusTip" >
-          <string>C</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -652,9 +603,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>Right</string>
-         </property>
          <property name="text" >
           <string>Right</string>
          </property>
@@ -662,9 +610,6 @@
        </item>
        <item row="6" column="1" >
         <widget class="QLabel" name="lRight" >
-         <property name="statusTip" >
-          <string>Right</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -681,9 +626,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>X</string>
-         </property>
          <property name="text" >
           <string>X</string>
          </property>
@@ -691,9 +633,6 @@
        </item>
        <item row="6" column="3" >
         <widget class="QLabel" name="lX" >
-         <property name="statusTip" >
-          <string>X</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -710,9 +649,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>L</string>
-         </property>
          <property name="text" >
           <string>L</string>
          </property>
@@ -720,9 +656,6 @@
        </item>
        <item row="7" column="1" >
         <widget class="QLabel" name="lL" >
-         <property name="statusTip" >
-          <string>Left trigger</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -739,9 +672,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>Y</string>
-         </property>
          <property name="text" >
           <string>Y</string>
          </property>
@@ -749,9 +679,6 @@
        </item>
        <item row="7" column="3" >
         <widget class="QLabel" name="lY" >
-         <property name="statusTip" >
-          <string>Y</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -768,9 +695,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>R</string>
-         </property>
          <property name="text" >
           <string>R</string>
          </property>
@@ -778,9 +702,6 @@
        </item>
        <item row="8" column="1" >
         <widget class="QLabel" name="lR" >
-         <property name="statusTip" >
-          <string>Right trigger</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -797,9 +718,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>Z</string>
-         </property>
          <property name="text" >
           <string>Z</string>
          </property>
@@ -807,9 +725,6 @@
        </item>
        <item row="8" column="3" >
         <widget class="QLabel" name="lZ" >
-         <property name="statusTip" >
-          <string>Z</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>
@@ -826,9 +741,6 @@
            <height>16777215</height>
           </size>
          </property>
-         <property name="statusTip" >
-          <string>Start</string>
-         </property>
          <property name="text" >
           <string>Start</string>
          </property>
@@ -836,9 +748,6 @@
        </item>
        <item row="9" column="1" >
         <widget class="QLabel" name="lStart" >
-         <property name="statusTip" >
-          <string>Start</string>
-         </property>
          <property name="text" >
           <string>-</string>
          </property>

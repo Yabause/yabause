@@ -78,9 +78,6 @@ UISettings::UISettings( QWidget* p )
 	setupUi( this );
 	if ( p && !p->isFullScreen() )
 		setWindowFlags( Qt::Sheet );
-	
-	//if ( p && p->isVisible() )
-		//setWindowFlags( Qt::Sheet );
 
 	// load cores informations
 	loadCores();
@@ -162,9 +159,10 @@ void UISettings::pbInputs_clicked()
 	if ( c )
 	{
 		QPushButton* pb = qobject_cast<QPushButton*>( sender() );
-		UIWaitInput wi( c, pb->statusTip(), window() );
+		const QString key = pb->objectName().mid( 2 );
+		UIWaitInput wi( c, key, window() );
 		if ( wi.exec() )
-			wInput->findChild<QLabel*>( QString( "l%1" ).arg( pb->statusTip() ) )->setText( wi.keyString() );
+			wInput->findChild<QLabel*>( QString( "l%1" ).arg( key ) )->setText( wi.keyString() );
 	}
 }
 
@@ -235,7 +233,7 @@ void UISettings::loadSettings()
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore", QtYabause::defaultPERCore().id ).toInt() ) );
 	foreach ( QLabel* l, wInput->findChildren<QLabel*>() )
 		if ( l != lInput )
-			l->setText( s->value( QString( "Input/Keys/%1" ).arg( l->statusTip() ) ).toString() );
+			l->setText( s->value( QString( "Input/Keys/%1" ).arg( l->objectName().mid( 1 ) ) ).toString() );
 	
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
@@ -273,7 +271,8 @@ void UISettings::saveSettings()
 	// input
 	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );
 	foreach ( QLabel* l, wInput->findChildren<QLabel*>() )
-		s->setValue( QString( "Input/Keys/%1" ).arg( l->statusTip() ), l->text() );
+		if ( l != lInput )
+			s->setValue( QString( "Input/Keys/%1" ).arg( l->objectName().mid( 1 ) ), l->text() );
 	
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
