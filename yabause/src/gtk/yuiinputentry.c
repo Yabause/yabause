@@ -149,7 +149,14 @@ gboolean is_watching = FALSE;
 GtkEntry * entry_hack = NULL;
 
 gboolean watch_joy(gpointer name) {
-	u32 i = PERCore->Scan(name);
+	u32 i;
+
+	if (! PERCore->canScan) {
+		is_watching = FALSE;
+		return TRUE;
+	}
+
+	i = PERCore->Scan(name);
 
 	if (i == 0) {
 		return TRUE;
