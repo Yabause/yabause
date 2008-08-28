@@ -121,6 +121,8 @@ static gboolean yui_window_moved(GtkWidget * widget, GdkEventConfigure * event, 
 	g_key_file_set_value(keyfile, "Gtk", "X", buffer);
 	sprintf(buffer, "%d", event->y);
 	g_key_file_set_value(keyfile, "Gtk", "Y", buffer);
+
+	return FALSE;
 }
 
 extern gchar * inifile;
