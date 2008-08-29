@@ -131,7 +131,7 @@ GtkWidget* create_menu(YuiWindow * window1) {
     GtkWidget * savestate_save;
     GtkWidget * savestate_load;
 
-    savestate = gtk_menu_item_new_with_mnemonic(_("Save state"));
+    savestate = gtk_menu_item_new_with_mnemonic(_("Save State"));
     gtk_container_add(GTK_CONTAINER(menuitem1_menu), savestate);
 
     savestate_menu = gtk_menu_new();
