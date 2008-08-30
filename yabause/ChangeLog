@@ -1,3 +1,17 @@
+0.9.6 -> 0.9.7
+ vdp2
+  - Toggling a screen is now core indepedent.
+  - Added per-character priority.
+ gtk port
+  - Fixed fullscreen setting and added a keep ratio one.
+  - Fixed a bug in the vdp2 debugger that was causing the emu to crash.
+  - Full software mode can be compiled again.
+  - Fixed segfault when taking screenshots in full software mode.
+  - Fixed default value for region.
+  - Window position is now saved and restored when re-opening the emu.
+  - Fixed a problem when changing input cores.
+ qt port
+  - Improved compilation process: make (un)install now works.
 0.9.5 -> 0.9.6
  sdl joystick core:
   - Fixed it...
