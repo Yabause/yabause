@@ -1,8 +1,10 @@
 0.9.6 -> 0.9.7
- vdp2
+ vdp1:
+  - Added clipping for line-based drawing.
+ vdp2:
   - Toggling a screen is now core indepedent.
   - Added per-character priority.
- gtk port
+ gtk port:
   - Fixed fullscreen setting and added a keep ratio one.
   - Fixed a bug in the vdp2 debugger that was causing the emu to crash.
   - Full software mode can be compiled again.
@@ -10,8 +12,27 @@
   - Fixed default value for region.
   - Window position is now saved and restored when re-opening the emu.
   - Fixed a problem when changing input cores.
- qt port
+ qt port:
   - Improved compilation process: make (un)install now works.
+  - Fix crash when configuring input while using translated version.
+ windows port:
+  - Changed resolution list generation so it adds the resolution to the list,
+    regardless of whether it supports 60 hz or not.
+  - Fixed error when trying to add blank cheat code.
+  - Fixed all code that allowed the user to choose filename for saving so it
+    automatically places a default extension.
+  - Save and Clear buttons are now enabled when loading a cheat file.
+  - Fixed a bug with AR code adding where it was tracking the wrong edit
+    window.
+  - Fixed a bug when adding raw cheat codes.
+  - Fixed bugs in vdp1 debugger.
+  - Fixed a bug where saving/loading a save state and an error occured would
+    cause sound looping.
+  - Scroll bar in memory editor now works properly when you move the thumb
+    control.
+  - Added support for x64 builds in Visual Studio.
+ general:
+  - Fixed a bug that was causing older save states to fail.
 0.9.5 -> 0.9.6
  sdl joystick core:
   - Fixed it...
