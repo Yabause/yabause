@@ -12,9 +12,9 @@
 
 
 1) Compiling instructions...................................20
-2) How to use Yabause.......................................62
-3) Contact information.....................................212
-4) Disclaimer..............................................228
+2) How to use Yabause.......................................65
+3) Contact information.....................................215
+4) Disclaimer..............................................231
 
 
 1 Compiling instructions______________________________________
@@ -57,6 +57,9 @@ Load up IDE that comes with Visual C++/Visual Studio, go into the
 file menu, open an existing project. Go into the yabause's
 src/windows directory and open yabause.vcproj. Now all you have
 to do is build it like any other Visual C++ project.
+
+You can compile for either x86 or x64(for those using Windows XP
+x64 or Vista x64.
 
 
 2 How to use Yabause__________________________________________
