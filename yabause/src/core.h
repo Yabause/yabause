@@ -53,38 +53,46 @@
 #endif
 
 #ifndef GEKKO
-#if defined(__LP64__)
 typedef unsigned char u8;
 typedef unsigned short u16;
+
+typedef signed char s8;
+typedef signed short s16;
+
+#if defined(__LP64__)
+// Generic 64-bit
 typedef unsigned int u32;
 typedef unsigned long u64;
 typedef unsigned long pointer;
 
-typedef signed char s8;
-typedef signed short s16;
 typedef signed int s32;
 typedef signed long s64;
-#else
-typedef unsigned char u8;
-typedef unsigned short u16;
+
+#elif defined(_MSC_VER)
 typedef unsigned long u32;
-#ifdef _MSC_VER
 typedef unsigned __int64 u64;
-#else
 typedef unsigned long long u64;
+#ifdef _WIN64
+typedef __int64 pointer;
+#else
+typedef unsigned long pointer;
 #endif
+
+typedef signed long s32;
+typedef __int64 s64;
+typedef signed long long s64;
+
+#else
+// 32-bit Linux GCC/MINGW/etc.
+typedef unsigned long u32;
+typedef unsigned long long u64;
 typedef unsigned long pointer;
 
-typedef signed char s8;
-typedef signed short s16;
 typedef signed long s32;
-#ifdef _MSC_VER
-typedef __int64 s64;
-#else
 typedef signed long long s64;
 #endif
-#endif
 #else
+// Gamecube/Wii
 #include <gccore.h>
 typedef unsigned long pointer;
 #endif
