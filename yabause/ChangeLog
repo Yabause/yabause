@@ -1,9 +1,9 @@
 0.9.6 -> 0.9.7
  vdp1:
-  - Added clipping for line-based drawing.
+  - Added clipping for line-based drawing to software renderer.
  vdp2:
   - Toggling a screen is now core indepedent.
-  - Added per-character priority.
+  - Added per-character priority to software renderer.
  gtk port:
   - Fixed fullscreen setting and added a keep ratio one.
   - Fixed a bug in the vdp2 debugger that was causing the emu to crash.
