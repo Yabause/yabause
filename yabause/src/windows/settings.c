@@ -1724,12 +1724,13 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                ZeroMemory(&ofn, sizeof(ofn));
                ofn.lStructSize = sizeof(ofn);
                ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "All Files\0*.*\0Text Files\0*.txt\0";
+               ofn.lpstrFilter = "Text Files\0*.txt\0All Files\0*.*\0";
                ofn.nFilterIndex = 1;
                ofn.lpstrFile = logfilename;
                ofn.nMaxFile = sizeof(logfilename);
                ofn.Flags = OFN_OVERWRITEPROMPT;
- 
+               ofn.lpstrDefExt = "TXT";
+
                if (GetSaveFileName(&ofn))
                {
                   SetDlgItemText(hDlg, IDC_LOGFILENAMEET, logfilename);

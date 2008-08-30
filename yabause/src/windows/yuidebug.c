@@ -928,6 +928,7 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
                         "Bitmap Files\0*.BMP\0All Files\0*.*\0",
                         filename, sizeof(filename));
+               ofn.lpstrDefExt = "BMP";
 
                if (GetSaveFileName(&ofn))
                   SaveBitmap(filename, vdp1texturew, vdp1textureh, vdp1texture);
@@ -1072,6 +1073,7 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         "Bitmap Files\0*.BMP\0All Files\0*.*\0",
                         filename, sizeof(filename));
                ofn.lpstrDefExt = "BMP";
+
                if (GetSaveFileName(&ofn))
                   SaveBitmap(filename, width, height, vdp2texture);
 
@@ -1845,9 +1847,10 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // setup ofn structure
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
-                        "All Files\0*.*\0WAV Files\0*.WAV\0",
+                        "WAV Files\0*.WAV\0All Files\0*.*\0",
                         tempstr, sizeof(tempstr));
- 
+               ofn.lpstrDefExt = "WAV";
+
                if (GetSaveFileName(&ofn))
                   ScspSlotDebugAudioSaveWav(cursel, tempstr);
 
@@ -1863,8 +1866,9 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // setup ofn structure
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
-                        "All Files\0*.*\0Binary Files\0*.BIN\0",
+                        "Binary Files\0*.BIN\0All Files\0*.*\0",
                         tempstr, sizeof(tempstr));
+               ofn.lpstrDefExt = "BIN";
 
                if (GetSaveFileName(&ofn))
                   ScspSlotDebugSaveRegisters(cursel, tempstr);
@@ -2403,9 +2407,10 @@ LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // setup ofn structure
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
-                        "All Files\0*.*\0Text Files\0*.txt\0",
+                        "Text Files\0*.txt\0All Files\0*.*\0",
                         logfilename, sizeof(logfilename));
- 
+               ofn.lpstrDefExt = "TXT";
+
                if (GetSaveFileName(&ofn))
                {
                   FILE *fp=fopen(logfilename, "wb");

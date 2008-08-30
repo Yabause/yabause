@@ -1262,6 +1262,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd,
                         "Yabause Save State files\0*.YSS\0All Files\0*.*\0",
                         yssfilename, sizeof(yssfilename));
+               ofn.lpstrDefExt = "YSS";
 
                if (GetSaveFileName(&ofn))
                {
@@ -1326,7 +1327,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd,
                        "Bitmap Files\0*.BMP\0All Files\0*.*\0",
                        bmpfilename, sizeof(bmpfilename));
-               ofn.lpstrDefExt = "bmp";
+               ofn.lpstrDefExt = "BMP";
 
                if (GetSaveFileName(&ofn))
                {
