@@ -548,6 +548,10 @@ static void gen_jumptable(u32 base, u32 start1, u32 end1, u32 step1, u32 start2,
 #ifdef C68K_CONST_JUMP_TABLE
     u32 i, j, k;
 #endif
+#ifdef C68K_NO_JUMP_TABLE
+    u32 i, j, k;
+#endif
+
 
     base &= 0xFFFF;
     start1 &= 0xFFFF;
@@ -592,8 +596,6 @@ static void gen_jumptable(u32 base, u32 start1, u32 end1, u32 step1, u32 start2,
     else fprintf(ini_file, "\t\tJumpTable[0x%.4X] = &&OP_0x%.4X;\n", (int)base, (int)op);
 #endif
 #else
-    u32 i, j, k;
-
     if (step1 == 0) step1 = 1;
     if (step2 == 0) step2 = 1;
     if (step3 == 0) step3 = 1;
