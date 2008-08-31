@@ -2,7 +2,7 @@
  vdp1:
   - Added clipping for line-based drawing to software renderer.
  vdp2:
-  - Toggling a screen is now core indepedent.
+  - Toggling a screen is now core independent.
   - Added per-character priority to software renderer.
  gtk port:
   - Fixed fullscreen setting and added a keep ratio one.
