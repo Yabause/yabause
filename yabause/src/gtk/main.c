@@ -29,6 +29,7 @@
 #include "../vidogl.h"
 #include "../vidsoft.h"
 #include "../cs0.h"
+#include "../cs2.h"
 #include "../cdbase.h"
 #include "../scsp.h"
 #include "../sndsdl.h"

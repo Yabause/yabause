@@ -25,6 +25,7 @@
 
 #ifdef HAVE_LIBGTKGLEXT
 #include <GL/gl.h>
+#include <gtk/gtkgl.h>
 #endif
 
 G_BEGIN_DECLS

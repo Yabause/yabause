@@ -22,6 +22,7 @@
 #include <gtk/gtktable.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtkentry.h>
+#include <glib/gprintf.h>
 #include "yuiinputentry.h"
 #include "settings.h"
 

@@ -22,6 +22,7 @@
 
 #include "yuitransfer.h"
 #include "../core.h"
+#include "../memory.h"
 
 static void yui_transfer_class_init	(YuiTransferClass * klass);
 static void yui_transfer_init		(YuiTransfer      * yfe);

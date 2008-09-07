@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include "ygl.h"
 #include "yui.h"
+#include "vidshared.h"
 
 YglTextureManager * YglTM;
 Ygl * _Ygl;

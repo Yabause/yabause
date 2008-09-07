@@ -18,6 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "ygl.h"
 #include "vidshared.h"
 #include "vdp2.h"
 #include "debug.h"
