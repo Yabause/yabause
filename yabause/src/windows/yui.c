@@ -575,6 +575,56 @@ void YuiPrintUsage()
 
 //////////////////////////////////////////////////////////////////////////////
 
+int ParseStringEmbeddedSpaces(char *out)
+{
+   char *argv;
+   
+   if ((argv = strtok(NULL, " ")) != NULL)
+   {      
+      if (argv[0] == '\"')
+      {
+         strcpy(out, argv+1);
+
+         if ((argv = strtok(NULL, "\"")) != NULL)
+         {
+            strcat(out, " ");
+            strcat(out, argv);
+         }
+      }
+      else if (out != NULL)
+         strcpy(out, argv);
+      return TRUE;
+   }
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int ParseStringEmbeddedSpaces2(char *out, char *in)
+{
+   char *argv;
+   char tempstr[MAX_PATH];
+
+   if (sscanf(strchr(in, '=')+1, "%[^\n]", tempstr) == 0)
+      return FALSE;
+
+   if (tempstr[0] == '\"')
+   {
+      strcpy(out, tempstr+1);
+
+      if ((argv = strtok(NULL, "\"")) != NULL)
+      {
+         strcat(out, " ");
+         strcat(out, argv);
+      }
+   }
+   else if (out != NULL)
+      strcpy(out, tempstr);
+   return TRUE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int YuiInit(LPSTR lpCmdLine)
 {
    MSG                         msg;
@@ -593,6 +643,7 @@ int YuiInit(LPSTR lpCmdLine)
    char filename[MAX_PATH];
    u32 addr=0;
    int loadexec=0;
+   char *cmddup;
 
    memset(&iccs, 0, sizeof(INITCOMMONCONTROLSEX));
    iccs.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -615,7 +666,8 @@ int YuiInit(LPSTR lpCmdLine)
 
 #ifndef NO_CLI
    // Just handle the basic args
-   argv = strtok(lpCmdLine, " ");
+   cmddup = strdup(lpCmdLine);
+   argv = strtok(cmddup, " ");
 
    while (argv != NULL)
    {
@@ -625,12 +677,26 @@ int YuiInit(LPSTR lpCmdLine)
       {
          // Show usage
          YuiPrintUsage();
+         free(cmddup);
          return 0;
       }
-      else if ((strcmp(argv, "-i") == 0 && strtok(NULL, " \"")) ||
-                strstr(argv, "--iso=") ||
-               (strcmp(argv, "-c") == 0 && strtok(NULL, " \"")) ||
-                strstr(argv, "--cdrom="))
+      else if (strcmp(argv, "-i") == 0 ||
+               strcmp(argv, "-c") == 0)
+      {
+         if ((argv = strtok(NULL, " ")) != NULL)
+         {
+            if (argv[0] == '\"')
+            {
+               if ((argv = strtok(NULL, "\"")) == NULL)
+                  break;
+            }
+            forcecdpath = 0;
+            break;
+         }
+         break;
+      }
+      else if (strstr(argv, "--iso=") ||
+               strstr(argv, "--cdrom="))
       {
          forcecdpath = 0;
          break;
@@ -638,6 +704,8 @@ int YuiInit(LPSTR lpCmdLine)
 
       argv = strtok(NULL, " ");
    }
+
+   free(cmddup);
 #endif
 
    if (GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
@@ -825,23 +893,22 @@ int YuiInit(LPSTR lpCmdLine)
    yabwiny = atoi(tempstr);
 
 #ifndef NO_CLI
+   cmddup = strdup(lpCmdLine);
    // Now that all the ini stuff is done, continue grabbing args
-   argv = strtok(lpCmdLine, " ");
+   argv = strtok(cmddup, " ");
 
    while (argv != NULL)
    {
       if (strcmp(argv, "-b") == 0 && (argv = strtok(NULL, " ")))
-         strcpy(biosfilename, argv);
+         ParseStringEmbeddedSpaces(biosfilename);
       else if (strstr(argv, "--bios="))
-         sscanf(strchr(argv, '=')+1, "%[^\n]", biosfilename);
-      else if (strcmp(argv, "-i") == 0 && (argv = strtok(NULL, " ")))
-         strcpy(cdrompath, argv);
-      else if (strstr(argv, "--iso="))
-         sscanf(strchr(argv, '=')+1, "%[^\n]", cdrompath);
-      else if (strcmp(argv, "-c") == 0 && (argv = strtok(NULL, " ")))
-         strcpy(cdrompath, argv);
-      else if (strstr(argv, "--cdrom="))
-         sscanf(strchr(argv, '=')+1, "%[^\n]", cdrompath);
+         ParseStringEmbeddedSpaces2(biosfilename, argv);
+      else if (strcmp(argv, "-i") == 0 || 
+               strcmp(argv, "-c") == 0)
+         ParseStringEmbeddedSpaces(cdrompath);
+      else if (strstr(argv, "--iso=") || 
+               strstr(argv, "--cdrom="))
+         ParseStringEmbeddedSpaces2(cdrompath, argv);
       else if (strcmp(argv, "-ns") == 0 ||
                strcmp(argv, "--nosound") == 0)
          sndcoretype = SNDCORE_DUMMY;
@@ -853,7 +920,7 @@ int YuiInit(LPSTR lpCmdLine)
          int count;
          char *p;
         
-         if ((count = sscanf(strchr(argv, '=')+1, "%[^\n]", filename)) == 0)
+         if (!ParseStringEmbeddedSpaces2(filename, argv))
             continue;
 
          p = strrchr(filename, ':')+1;
@@ -875,6 +942,8 @@ int YuiInit(LPSTR lpCmdLine)
       }
       argv = strtok(NULL, " ");
    }
+
+   free(cmddup);
 #endif
 
    // Figure out how much of the screen is useable
