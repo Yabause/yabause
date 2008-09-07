@@ -37,7 +37,6 @@ static void yui_m68k_editedBp( GtkCellRendererText *cellrenderertext,
 			     gchar *arg2,
 			     YuiM68k *m68k);
 static void yui_m68k_step( GtkWidget* widget, YuiM68k * m68k );
-static void yui_m68k_step_over( GtkWidget* widget, YuiM68k * m68k );
 static void yui_m68k_breakpoint_handler(u32 addr);
 
 static YuiM68k *yui_m68k;
@@ -200,15 +199,6 @@ GtkWidget * yui_m68k_new(YuiWindow * y) {
   gtk_widget_show_all(GTK_WIDGET(yui_m68k));
   
   return dialog;
-}
-
-
-
-
-
-static void yuiUpcase( gchar* str ) {
-
-  for ( ; *str ; str++ ) if (( *str >= 'a' )&&( *str <= 'z' )) *str += 'A'-'a';
 }
 
 static void yui_m68k_update_reglist( YuiM68k *m68k, m68kregs_struct *regs) {

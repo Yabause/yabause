@@ -28,7 +28,6 @@
 
 static void yui_window_class_init	(YuiWindowClass * klass);
 static void yui_window_init		(YuiWindow      * yfe);
-static void yui_window_changed	(GtkWidget * widget, YuiWindow * yfe);
 static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, YuiWindow * yui);
@@ -237,18 +236,12 @@ void yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui) {
 }
 
 static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpointer user_data) {
-	int i = 0;
-	YuiWindow * yui = YUI_WINDOW(widget);
-
 	PerKeyDown(event->keyval);
 
 	return FALSE;
 }
 
 static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpointer user_data) {
-	int i = 0;
-	YuiWindow * yui = YUI_WINDOW(widget);
-
 	PerKeyUp(event->keyval);
 
 	return FALSE;

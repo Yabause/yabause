@@ -28,7 +28,6 @@
 static void yui_scsp_class_init	(YuiScspClass * klass);
 static void yui_scsp_init		(YuiScsp      * yfe);
 static void yui_scsp_spin_cursor_changed(GtkWidget * spin, YuiScsp * scsp);
-static void yui_scsp_view_cursor_changed(GtkWidget * view, YuiScsp * scsp);
 static void yui_scsp_clear(YuiScsp * scsp);
 
 GType yui_scsp_get_type (void) {
@@ -129,10 +128,7 @@ GtkWidget * yui_scsp_new(YuiWindow * y) {
 }
 
 void yui_scsp_fill(YuiScsp * scsp) {
-	gint i, j;
-	gchar * string;
 	gchar nameTemp[1024];
-	GtkTreeIter iter;
 
 	yui_scsp_clear(scsp);
 

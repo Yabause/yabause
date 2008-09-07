@@ -320,8 +320,6 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   GtkWidget * dialog;
   GClosure *closureF7; //, *closureF8;
   GtkAccelGroup *accelGroup;
-  codebreakpoint_struct *cbp;
-  memorybreakpoint_struct *cmbp;
   YuiSh * sh2;
   gint i;
   yui = y;
@@ -410,13 +408,6 @@ GtkWidget * yui_ssh_new(YuiWindow * y) {
   return GTK_WIDGET( yui_ssh = YUI_SH(yui_sh_new( y, FALSE )) );
 }
 
-
-
-static void yuiUpcase( gchar* str ) {
-
-  for ( ; *str ; str++ ) if (( *str >= 'a' )&&( *str <= 'z' )) *str += 'A'-'a';
-}
-
 static void SH2UpdateRegList( YuiSh *sh2, sh2regs_struct *regs) {
   /* refresh the registery list */
 
@@ -427,8 +418,7 @@ static void SH2UpdateRegList( YuiSh *sh2, sh2regs_struct *regs) {
   
   for (i = 0; i < 16; i++) {
     sprintf(regstr, "R%02d", i);
-    sprintf(valuestr, "%08x", (int)regs->R[i] );
-    yuiUpcase(valuestr);
+    sprintf(valuestr, "%08X", (int)regs->R[i] );
     if ( !i ) gtk_tree_model_get_iter_first( GTK_TREE_MODEL( sh2->regListStore ), &iter );
     else gtk_tree_model_iter_next( GTK_TREE_MODEL( sh2->regListStore ), &iter );
     gtk_list_store_set( GTK_LIST_STORE( sh2->regListStore ), &iter, 0, regstr, 1, valuestr, -1 );
@@ -436,8 +426,7 @@ static void SH2UpdateRegList( YuiSh *sh2, sh2regs_struct *regs) {
   
   #define SH2UPDATEREGLIST(rreg) \
   gtk_tree_model_iter_next( GTK_TREE_MODEL( sh2->regListStore ), &iter ); \
-  sprintf(valuestr, "%08x", (int)regs->rreg); \
-  yuiUpcase(valuestr); \
+  sprintf(valuestr, "%08X", (int)regs->rreg); \
   gtk_list_store_set( GTK_LIST_STORE( sh2->regListStore ), &iter, 0, #rreg, 1, valuestr, -1 );
   
   SH2UPDATEREGLIST(SR.all);
@@ -603,9 +592,7 @@ static void yui_sh_editedBp( GtkCellRendererText *cellrenderertext,
   /* breakpoint <arg1> has been set to address <arg2> */
 
   GtkTreeIter iter;
-  char bptext[10];
   char *endptr;
-  int i = atoi(arg1);
   u32 addr;
   gchar * oldaddr_s;
   u32 oldaddr;
@@ -640,10 +627,7 @@ static void yui_sh_editedMbp( GtkCellRendererText *cellrenderertext,
   /* breakpoint <arg1> has been set to address <arg2> */
   
   GtkTreeIter iter;
-  gchar bptext[20] = " -";
-  gchar *curs;
   gchar *endptr;
-  int i = atoi(arg1);
   u32 addr;
   memorybreakpoint_struct *cmbp;
   gchar * oldaddr_s, * flags_s;
@@ -696,10 +680,7 @@ static void yui_sh_editedMbpFlags( GtkCellRendererText *cellrenderertext,
   /* breakpoint <arg1> has been set to address <arg2> */
   
   GtkTreeIter iter;
-  gchar bptext[20] = " -";
-  gchar *curs;
   gchar *endptr;
-  int i = atoi(arg1);
   u32 addr;
   memorybreakpoint_struct *cmbp;
   gchar * addr_s;
@@ -993,7 +974,6 @@ void yui_sh_mbp_toggle_flag(GtkWidget * menuitem, gpointer user_data) {
 	u32 address, flags;
 	GtkTreeView * view;
 	char *endptr;
-	int i;
 
 	view  = GTK_TREE_VIEW(sh2->mbpList);
 
@@ -1070,14 +1050,6 @@ gint yui_sh_bp_popup(GtkWidget * widget, GdkEventButton * event, gpointer data)
   GdkEventButton *event_button;
   YuiSh * sh2 = data;
   GtkTreeView * view;
-  GtkTreeSelection * selection;
-  GtkTreeIter iter;
-  GtkTreeModel * model;
-  gchar * flags_s;
-  u32 flags;
-  char *endptr;
-  int i;
-  guint signal_id;
 
   g_return_val_if_fail (data != NULL, FALSE);
   g_return_val_if_fail (event != NULL, FALSE);

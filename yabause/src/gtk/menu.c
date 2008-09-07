@@ -63,8 +63,6 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *menuitem1;
   GtkWidget *menuitem1_menu;
   GtkWidget *new1;
-  GtkWidget *separatormenuitem1;
-  GtkWidget *quit1;
   GtkWidget *view1;
   GtkWidget *view1_menu;
   GtkWidget *fps1;

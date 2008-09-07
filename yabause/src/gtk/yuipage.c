@@ -73,7 +73,6 @@ GtkWidget * yui_page_add(YuiPage * yp, const gchar * name) {
 	GtkWidget * label;
 	GtkWidget * frame;
 	GtkWidget * box;
-	GtkWidget * widget;
 	gchar buffer[1024];
 
 	frame = gtk_frame_new(NULL);

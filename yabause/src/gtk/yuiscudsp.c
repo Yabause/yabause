@@ -202,25 +202,14 @@ GtkWidget * yui_scudsp_new(YuiWindow * y) {
 }
 
 
-
-
-
-static void yuiUpcase( gchar* str ) {
-
-  for ( ; *str ; str++ ) if (( *str >= 'a' )&&( *str <= 'z' )) *str += 'A'-'a';
-}
-
 static void yui_scudsp_update_reglist( YuiScudsp *scudsp, scudspregs_struct *regs) {
   /* refrescudsp the registery list */
 
   GtkTreeIter iter;
-  char regstr[32];
   char valuestr[32];
-  int i;
   
   gtk_tree_model_get_iter_first( GTK_TREE_MODEL( scudsp->regListStore ), &iter );
   sprintf(valuestr, "%d", regs->ProgControlPort.part.PR);
-  yuiUpcase(valuestr);
   gtk_list_store_set( GTK_LIST_STORE( scudsp->regListStore ), &iter, 0, "PR", 1, valuestr, -1 );
 
   #define SCUDSPUPDATEREGLISTp(rreg,format) \

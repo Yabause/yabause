@@ -31,7 +31,7 @@ static void yui_gl_class_init	(YuiGlClass * klass);
 static void yui_gl_init		(YuiGl      * yfe);
 static gboolean yui_gl_resize   (GtkWidget *w,GdkEventConfigure *event, gpointer data);
 
-int yui_gl_draw(YuiGl * glxarea) {
+void yui_gl_draw(YuiGl * glxarea) {
 #ifdef HAVE_LIBGTKGLEXT
 	GdkGLContext *glcontext = gtk_widget_get_gl_context (GTK_WIDGET(glxarea));
 	GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable (GTK_WIDGET(glxarea));
@@ -75,7 +75,7 @@ int yui_gl_draw(YuiGl * glxarea) {
 	glxarea->is_init = 1;
 }
 
-int yui_gl_draw_pause(YuiGl * glxarea) {
+void yui_gl_draw_pause(YuiGl * glxarea) {
 #ifdef HAVE_LIBGTKGLEXT
 	if (glxarea->pixels) {
 		/* The "correct" raster position would be (0, height) but it's not a
@@ -145,6 +145,8 @@ static gboolean yui_gl_hide_cursor(GtkWidget * widget, GdkEventMotion * event, g
 	}
 
 	beforehiding = 2;
+
+	return FALSE;
 }
 
 GtkWidget * yui_gl_new(void) {

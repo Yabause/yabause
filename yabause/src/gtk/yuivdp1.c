@@ -58,7 +58,7 @@ static void yui_vdp1_class_init (YuiVdp1Class * klass) {
 }
 
 static void yui_vdp1_init (YuiVdp1 * yv) {
-	GtkWidget * hbox, * vbox, * hbox2, * vbox2, * view;
+	GtkWidget * hbox, * vbox, * vbox2, * view;
 
 	gtk_window_set_title(GTK_WINDOW(yv), "VDP1");
 

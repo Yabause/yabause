@@ -58,8 +58,8 @@ struct _YuiGlClass
 GType		yui_gl_get_type		(void);
 GtkWidget *	yui_gl_new		(void);
 
-int		yui_gl_draw		(YuiGl *);
-int		yui_gl_draw_pause	(YuiGl *);
+void		yui_gl_draw		(YuiGl *);
+void		yui_gl_draw_pause	(YuiGl *);
 void		yui_gl_dump_screen	(YuiGl *);
 
 G_END_DECLS

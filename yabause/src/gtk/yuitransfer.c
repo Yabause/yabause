@@ -67,9 +67,7 @@ static void yui_transfer_init (YuiTransfer * yt) {
   GtkWidget *button1;
   GtkWidget *hbox2;
   GtkWidget *label2;
-  GtkWidget *checkbutton1;
   GtkWidget *hbuttonbox1;
-  GtkWidget *button4;
   GtkWidget *button5;
   GtkWidget *hbox3;
   GSList *radiobutton1_group = NULL;
@@ -218,7 +216,6 @@ static void yui_transfer_browse(GtkWidget * widget, gpointer user_data) {
 
 static void yui_transfer_exec(GtkWidget * widget, YuiTransfer * yt) {
 	guint32 from, to;
-	char * filename;
 
 	switch(yt->mode) {
 		case YUI_TRANSFER_LOAD:
