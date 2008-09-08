@@ -188,7 +188,11 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
           ChangeDisplaySettings(NULL,0);
           ShowCursor(TRUE);
           fullscreen = FALSE;
+          style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX;
+          exstyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
           SetMenu(YabWin, YabMenu);
+          width=windowwidth;
+          height=windowheight;
        }
        else
        {
