@@ -156,7 +156,6 @@ int safe_strcmp(const char * s1, const char * s2) {
 gboolean yui_settings_load(void) {
 	int i, tmp;
 	gchar * stmp;
-	gchar *biosPath;
 	gboolean mustRestart = FALSE;
 	PerPad_struct * padbits;
 
@@ -460,8 +459,7 @@ void yui_conf(void) {
                                 	                                        GTK_DIALOG_MODAL,
                                         	                                GTK_MESSAGE_WARNING,
                                                 	                        GTK_BUTTONS_OK,
-                                                        	                "You must restart Yabause before the changes take effect.",
-                                                                	        NULL);
+                                                        	                "You must restart Yabause before the changes take effect.");
 
                         	gtk_dialog_run (GTK_DIALOG(warningDlg));
                         	gtk_widget_destroy (warningDlg); 

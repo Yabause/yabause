@@ -431,13 +431,12 @@ int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
   return 1;
 }
 
-static u32 oldLoopBegin[2][2] = {{0,0},{0,0}};
+#ifdef IDLE_DETECT_VERBOSE
 static u32 idleCheckCount = 0;
 static u32 sh2cycleCount = 0;
 static u32 sh2oldCycleCount = 0;
 static u32 oldCheckCount = 0;
 
-#ifdef IDLE_DETECT_VERBOSE
 #define DROP_IDLE {\
     idleCheckCount += cycles - context->cycles; \
     context->cycles = cycles;}
@@ -458,7 +457,6 @@ static u32 oldCheckCount = 0;
 void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   // try to find an idle loop while interpreting
 
-  int i;
   u8 isDelayed = 0;
   u32 loopEnd;
   u32 loopBegin;
@@ -565,18 +563,22 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   if ( context->regs.PC != loopBegin ) return;
 
 #ifdef IDLE_DETECT_VERBOSE
-  if (( !~bDet )&&(loopBegin!=oldLoopBegin[context==MSH2][0])&&(loopBegin!=oldLoopBegin[context==MSH2][1])) {
-    char lineBuf[64];
-    u32 offset,end;
-    printf( "New %s idle loop at %X -- %X\n", (context==MSH2)?"master":"slave", loopBegin, loopEnd );
-    if ( loopEnd > loopBegin ) { offset = loopBegin; end = loopEnd; }
-    else { offset = loopEnd; end = loopBegin; }
-    for ( ; offset <= end ; offset+=2 ) {
-      SH2Disasm(offset, MappedMemoryReadWord(offset), 0, lineBuf);
-      printf( "%s\n", lineBuf );
+  {
+    static u32 oldLoopBegin[2][2] = {{0,0},{0,0}};
+
+    if (( !~bDet )&&(loopBegin!=oldLoopBegin[context==MSH2][0])&&(loopBegin!=oldLoopBegin[context==MSH2][1])) {
+      char lineBuf[64];
+      u32 offset,end;
+      printf( "New %s idle loop at %X -- %X\n", (context==MSH2)?"master":"slave", loopBegin, loopEnd );
+      if ( loopEnd > loopBegin ) { offset = loopBegin; end = loopEnd; }
+      else { offset = loopEnd; end = loopBegin; }
+      for ( ; offset <= end ; offset+=2 ) {
+        SH2Disasm(offset, MappedMemoryReadWord(offset), 0, lineBuf);
+        printf( "%s\n", lineBuf );
+      }
+      oldLoopBegin[context==MSH2][1] = oldLoopBegin[context==MSH2][0];
+      oldLoopBegin[context==MSH2][0] = loopBegin;
     }
-    oldLoopBegin[context==MSH2][1] = oldLoopBegin[context==MSH2][0];
-    oldLoopBegin[context==MSH2][0] = loopBegin;
   }
 #endif
   if ( !~bDet ) {
