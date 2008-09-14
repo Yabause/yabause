@@ -294,6 +294,12 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
          port->data[peroffset+1] = 0xFF;
          port->size = peroffset+2;
          break;
+      case 0xE3:
+         port->data[peroffset] = 0;
+         port->data[peroffset + 1] = 0;
+         port->data[peroffset + 2] = 0;
+         port->size = peroffset + 3;
+         break;
       default: break;
    }
 
@@ -423,6 +429,13 @@ PerPad_struct * PerPadAdd(PortData_struct * port)
 	}
 
 	return pad;
+}
+
+PerMouse_struct * PerMouseAdd(PortData_struct * port)
+{
+   PerMouse_struct * mouse = PerAddPeripheral(port, 0xE3);
+
+   return mouse;
 }
 
 //////////////////////////////////////////////////////////////////////////////

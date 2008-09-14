@@ -294,6 +294,8 @@ gboolean yui_settings_load(void) {
 	  i++;
 	}
 
+	PerMouseAdd(&PORTDATA1);
+
 	yui_resize(g_key_file_get_integer(keyfile, "General", "Width", 0),
 			g_key_file_get_integer(keyfile, "General", "Height", 0),
 			g_key_file_get_integer(keyfile, "General", "Fullscreen", 0));

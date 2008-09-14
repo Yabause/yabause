@@ -66,6 +66,12 @@ typedef struct
    u8 padbits[2];
 } PerPad_struct;
 
+typedef struct
+{
+   u8 perid;
+   u8 mousebits[3];
+} PerMouse_struct;
+
 extern PerInterface_struct PERDummy;
 
 int PerInit(int coreid);
@@ -119,5 +125,7 @@ void PerKeyDown(u32);
 void PerKeyUp(u32);
 void PerSetKey(u32, u8, PerPad_struct * pad);
 PerPad_struct * PerPadAdd(PortData_struct * port);
+
+PerMouse_struct * PerMouseAdd(PortData_struct * port);
 
 #endif
