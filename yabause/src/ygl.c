@@ -36,6 +36,11 @@ typedef struct
 static cache_struct *cachelist;
 static int cachelistsize=0;
 
+typedef struct
+{
+   int s, t, r, q;
+} texturecoordinate_struct;
+
 //////////////////////////////////////////////////////////////////////////////
 
 void YglTMInit(unsigned int w, unsigned int h) {
@@ -146,7 +151,7 @@ int YglInit(int width, int height, unsigned int depth) {
       if ((_Ygl->levels[i].quads = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int))) == NULL)
          return -1;
 
-      if ((_Ygl->levels[i].textcoords = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int))) == NULL)
+      if ((_Ygl->levels[i].textcoords = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int) * 2)) == NULL)
          return -1;
    }
 
@@ -179,7 +184,7 @@ int YglInit(int width, int height, unsigned int depth) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglDeInit(void) {
-   int i;
+   unsigned int i;
 
    YglTMDeInit();
 
@@ -209,48 +214,54 @@ void YglDeInit(void) {
 int * YglQuad(YglSprite * input, YglTexture * output) {
    unsigned int x, y;
    YglLevel *level;
-   int *tmp;
+   texturecoordinate_struct *tmp;
 
    level = &_Ygl->levels[input->priority];
 
    if (level->currentQuad == level->maxQuad) {
       level->maxQuad += 8;
       level->quads = (int *) realloc(level->quads, level->maxQuad * sizeof(int));
-      level->textcoords = (int *) realloc(level->textcoords, level->maxQuad * sizeof(int));
+      level->textcoords = (int *) realloc(level->textcoords, level->maxQuad * sizeof(int) * 2);
       YglCacheReset();
    }
 
-   tmp = level->textcoords + level->currentQuad;
+   tmp = (texturecoordinate_struct *)(level->textcoords + (level->currentQuad * 2));
 
    memcpy(level->quads + level->currentQuad, input->vertices, 8 * sizeof(int));
    level->currentQuad += 8;
    YglTMAllocate(output, input->w, input->h, &x, &y);
 
+   tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = 0; // these can stay at 0
+
    if (input->flip & 0x1) {
-      *tmp = *(tmp + 6) = x + input->w;
-      *(tmp + 2) = *(tmp + 4) = x;
+      tmp[0].s = tmp[3].s = x + input->w;
+      tmp[1].s = tmp[2].s = x;
    } else {
-      *tmp = *(tmp + 6) = x;
-      *(tmp + 2) = *(tmp + 4) = x + input->w;
+      tmp[0].s = tmp[3].s = x;
+      tmp[1].s = tmp[2].s = x + input->w;
+   }
+   if (input->flip & 0x2) {
+      tmp[0].t = tmp[1].t = y + input->h;
+      tmp[2].t = tmp[3].t = y;
+   } else {
+      tmp[0].t = tmp[1].t = y;
+      tmp[2].t = tmp[3].t = y + input->h;
    }
 
-   if (input->flip & 0x2) {
-      *(tmp + 1) = *(tmp + 3) = y + input->h;
-      *(tmp + 5) = *(tmp + 7) = y;
-   } else {
-      *(tmp + 1) = *(tmp + 3) = y;
-      *(tmp + 5) = *(tmp + 7) = y + input->h;
-   }
+   tmp[0].q = 1; // These need to be adjusted. I'm not sure what the correct
+   tmp[1].q = 1; // value is, or how to calculate it.
+   tmp[2].q = 1; //
+   tmp[3].q = 1; //
 
    switch(input->flip) {
       case 0:
-         return level->textcoords + level->currentQuad - 8;
+         return level->textcoords + ((level->currentQuad - 8) * 2); // upper left coordinates(0)
       case 1:
-         return level->textcoords + level->currentQuad - 6;
+         return level->textcoords + ((level->currentQuad - 6) * 2); // upper right coordinates(2)
       case 2:
-         return level->textcoords + level->currentQuad - 2;
+         return level->textcoords + ((level->currentQuad - 2) * 2); // lower left coordinates(6)
       case 3:
-         return level->textcoords + level->currentQuad - 4;
+         return level->textcoords + ((level->currentQuad - 4) * 2); // lower right coordinates(4)
    }
 
    return 0;
@@ -261,7 +272,7 @@ int * YglQuad(YglSprite * input, YglTexture * output) {
 void YglCachedQuad(YglSprite * input, int * cache) {
    YglLevel * level = _Ygl->levels + input->priority;
    unsigned int x,y;
-   int * tmp;
+   texturecoordinate_struct *tmp;
 
    x = *cache;
    y = *(cache + 1);
@@ -269,36 +280,42 @@ void YglCachedQuad(YglSprite * input, int * cache) {
    if (level->currentQuad == level->maxQuad) {
       level->maxQuad += 8;
       level->quads = (int *) realloc(level->quads, level->maxQuad * sizeof(int));
-      level->textcoords = (int *) realloc(level->textcoords, level->maxQuad * sizeof(int));
+      level->textcoords = (int *) realloc(level->textcoords, level->maxQuad * sizeof(int) * 2);
       YglCacheReset();
    }
 
-   tmp = level->textcoords + level->currentQuad;
+   tmp = (texturecoordinate_struct *)(level->textcoords + (level->currentQuad * 2));
 
    memcpy(level->quads + level->currentQuad, input->vertices, 8 * sizeof(int));
    level->currentQuad += 8;
 
+   tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = 0; // these can stay at 0
+
    if (input->flip & 0x1) {
-      *tmp = *(tmp + 6) = x + input->w;
-      *(tmp + 2) = *(tmp + 4) = x;
+      tmp[0].s = tmp[3].s = x + input->w;
+      tmp[1].s = tmp[2].s = x;
    } else {
-      *tmp = *(tmp + 6) = x;
-      *(tmp + 2) = *(tmp + 4) = x + input->w;
+      tmp[0].s = tmp[3].s = x;
+      tmp[1].s = tmp[2].s = x + input->w;
    }
    if (input->flip & 0x2) {
-      *(tmp + 1) = *(tmp + 3) = y + input->h;
-      *(tmp + 5) = *(tmp + 7) = y;
+      tmp[0].t = tmp[1].t = y + input->h;
+      tmp[2].t = tmp[3].t = y;
    } else {
-      *(tmp + 1) = *(tmp + 3) = y;
-      *(tmp + 5) = *(tmp + 7) = y + input->h;
+      tmp[0].t = tmp[1].t = y;
+      tmp[2].t = tmp[3].t = y + input->h;
    }
+
+   tmp[0].q = 1; // These need to be adjusted. I'm not sure what the correct
+   tmp[1].q = 1; // value is, or how to calculate it.
+   tmp[2].q = 1; //
+   tmp[3].q = 1; //
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void YglRender(void) {
    YglLevel * level;
-   int i;
 
    glEnable(GL_TEXTURE_2D);
 
@@ -310,13 +327,14 @@ void YglRender(void) {
       int vertices [] = { 0, 0, 320, 0, 320, 224, 0, 224 };
       int text [] = { 0, 0, YglTM->width, 0, YglTM->width, YglTM->height, 0, YglTM->height };
       glVertexPointer(2, GL_INT, 0, vertices);
-      glTexCoordPointer(2, GL_INT, 0, text);
+      glTexCoordPointer(4, GL_INT, 0, text);
       glDrawArrays(GL_QUADS, 0, 4);
    } else {
+      unsigned int i;
       for(i = 0;i < _Ygl->depth;i++) {
          level = _Ygl->levels + i;
          glVertexPointer(2, GL_INT, 0, level->quads);
-         glTexCoordPointer(2, GL_INT, 0, level->textcoords);
+         glTexCoordPointer(4, GL_INT, 0, level->textcoords);
          glDrawArrays(GL_QUADS, 0, level->currentQuad / 2);
       }
    }
@@ -325,6 +343,7 @@ void YglRender(void) {
 #ifndef _arch_dreamcast
 #if HAVE_LIBGLUT
    if (_Ygl->msglength > 0) {
+      int i;
       glColor3f(1.0f, 0.0f, 0.0f);
       glRasterPos2i(10, 22);
       for (i = 0; i < _Ygl->msglength; i++) {
@@ -342,7 +361,7 @@ void YglRender(void) {
 
 void YglReset(void) {
    YglLevel * level;
-   int i;
+   unsigned int i;
 
    glClear(GL_COLOR_BUFFER_BIT);
 
@@ -377,7 +396,7 @@ void YglOnScreenDebugMessage(char *string, ...) {
    va_start(arglist, string);
    vsprintf(_Ygl->message, string, arglist);
    va_end(arglist);
-   _Ygl->msglength = strlen(_Ygl->message);
+   _Ygl->msglength = (int)strlen(_Ygl->message);
 }
 
 //////////////////////////////////////////////////////////////////////////////
