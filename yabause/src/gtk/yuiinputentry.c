@@ -109,6 +109,7 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 		gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
 		entry = gtk_entry_new ();
+		gtk_entry_set_width_chars(GTK_ENTRY(entry), 10);
 
 		keyName = g_key_file_get_value(keyfile, group, keys[row], 0);
 		if ( !keyName ) keyName = "";
@@ -125,7 +126,6 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
   
 		gtk_table_attach(GTK_TABLE(widget), entry,  1, 2, row, row + 1,
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) (0), 0, 0);
-		gtk_entry_set_invisible_char (GTK_ENTRY (entry), 9679);
 		row++;
 	}
 

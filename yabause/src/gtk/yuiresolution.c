@@ -109,13 +109,11 @@ static void yui_resolution_init(YuiResolution * yr) {
   
 	gtk_table_attach (GTK_TABLE (yr), yr->entry_w, 1, 2, 0, 1,
         	(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) (0), 0, 0);
-	gtk_entry_set_invisible_char (GTK_ENTRY (yr->entry_w), 9679);
 
 	yr->entry_h = gtk_entry_new ();
   
 	gtk_table_attach (GTK_TABLE (yr), yr->entry_h, 1, 2, 1, 2,
         	(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) (0), 0, 0);
-	gtk_entry_set_invisible_char (GTK_ENTRY (yr->entry_h), 9679);
 
 	yr->fullscreen = gtk_check_button_new_with_mnemonic ("Fullscreen");
 	yr->keep_ratio = gtk_check_button_new_with_mnemonic ("Keep ratio");

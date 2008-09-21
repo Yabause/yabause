@@ -94,7 +94,6 @@ static void yui_transfer_init (YuiTransfer * yt) {
   yt->file_entry = gtk_entry_new ();
   g_signal_connect_swapped(yt->file_entry, "changed", G_CALLBACK(yui_transfer_check), yt);
   gtk_box_pack_start (GTK_BOX (hbox1), yt->file_entry, TRUE, TRUE, 0);
-  gtk_entry_set_invisible_char (GTK_ENTRY (yt->file_entry), 9679);
 
   button1 = gtk_button_new_with_mnemonic (_("Browse"));
   g_signal_connect(button1, "clicked", G_CALLBACK(yui_transfer_browse), yt->file_entry);
@@ -135,7 +134,6 @@ static void yui_transfer_init (YuiTransfer * yt) {
   yt->from_entry = gtk_entry_new ();
   g_signal_connect_swapped(yt->from_entry, "changed", G_CALLBACK(yui_transfer_check), yt);
   gtk_box_pack_start (GTK_BOX (hbox2), yt->from_entry, TRUE, TRUE, 0);
-  gtk_entry_set_invisible_char (GTK_ENTRY (yt->from_entry), 9679);
 
   tmp = _("To");
   yt->to_label = gtk_label_new (tmp);
@@ -146,7 +144,6 @@ static void yui_transfer_init (YuiTransfer * yt) {
   yt->to_entry = gtk_entry_new ();
   g_signal_connect_swapped(yt->to_entry, "changed", G_CALLBACK(yui_transfer_check), yt);
   gtk_box_pack_start (GTK_BOX (hbox2), yt->to_entry, TRUE, TRUE, 0);
-  gtk_entry_set_invisible_char (GTK_ENTRY (yt->to_entry), 9679);
 
   hbuttonbox1 = gtk_hbutton_box_new ();
   gtk_box_pack_start (GTK_BOX (vbox1), hbuttonbox1, FALSE, TRUE, 0);
