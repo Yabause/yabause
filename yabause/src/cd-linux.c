@@ -94,7 +94,7 @@ s32 LinuxCDReadTOC(u32 * TOC)
       if (ctTOCent.cdte_addr.lba == 0) add150 = 150;
       TOC[0] = ((ctTOCent.cdte_ctrl << 28) |
 	          (ctTOCent.cdte_adr << 24) |
-	           ctTOCent.cdte_addr.lba + add150);
+	           (ctTOCent.cdte_addr.lba + add150));
 
       // convert TOC to saturn format
       for (i = ctTOC.cdth_trk0 + 1; i <= ctTOC.cdth_trk1; i++)
@@ -148,6 +148,9 @@ int LinuxCDGetStatus(void) {
 		case CDS_TRAY_OPEN:
 			return 3;
 	}
+
+	// guess it's ok to say there's no disc here...
+	return 2;
 }
 
 int LinuxCDReadSectorFAD(u32 FAD, void *buffer) {
