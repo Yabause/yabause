@@ -318,7 +318,7 @@ if test x$yabause_yui = xqt ; then
 			[QMAKE=$HAVE_QMAKE QMAKE_SPEC="$qmake_spec"])
 fi
 
-AC_CONFIG_COMMANDS([src/c68k/Makefile], [( cd src/c68k/ && $CONFIG_SHELL ./configure )])
+AC_CONFIG_COMMANDS([src/c68k/Makefile], [( cd src/c68k/ && $CONFIG_SHELL ${ac_srcdir}/configure )])
 
 AM_CONDITIONAL([YUI_IS_CARBON], [test ${yabause_yui} = "carbon"])
 AM_CONDITIONAL([YUI_IS_DREAMCAST], [test ${yabause_yui} = "dreamcast"])

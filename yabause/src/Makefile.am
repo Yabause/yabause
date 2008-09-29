@@ -38,7 +38,7 @@ libyabause_a_SOURCES = \
 if COMPILE_C68K
 libyabause_a_SOURCES += c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c m68kc68k.c m68kc68k.h
 c68kexec.o: c68k/c68kexec.c
-	$(COMPILE) -O0 c68k/c68kexec.c -c -o c68kexec.o
+	$(COMPILE) -Ic68k -O0 $(srcdir)/c68k/c68kexec.c -c -o c68kexec.o
 endif
 if ARCH_IS_FREEBSD
 libyabause_a_SOURCES += cd-freebsd.c
