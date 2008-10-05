@@ -148,11 +148,20 @@ int YglInit(int width, int height, unsigned int depth) {
    for(i = 0;i < depth;i++) {
       _Ygl->levels[i].currentQuad = 0;
       _Ygl->levels[i].maxQuad = 8 * 2000;
+#ifdef USEMICSHADERS
+      _Ygl->levels[i].currentColors = 0;
+      _Ygl->levels[i].maxColors = 16 * 2000;
+#endif
       if ((_Ygl->levels[i].quads = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int))) == NULL)
          return -1;
 
       if ((_Ygl->levels[i].textcoords = (int *) malloc(_Ygl->levels[i].maxQuad * sizeof(int) * 2)) == NULL)
          return -1;
+
+#ifdef USEMICSHADERS
+      if ((_Ygl->levels[i].colors = (unsigned char *) malloc(_Ygl->levels[i].maxColors * sizeof(unsigned char))) == NULL)
+         return -1;
+#endif
    }
 
    YuiSetVideoAttribute(DOUBLEBUFFER, 1);
@@ -189,7 +198,7 @@ void YglDeInit(void) {
    YglTMDeInit();
 
    if (_Ygl)
-   {                   
+   {
       if (_Ygl->levels)
       {
          for (i = 0; i < _Ygl->depth; i++)
@@ -225,10 +234,25 @@ int * YglQuad(YglSprite * input, YglTexture * output) {
       YglCacheReset();
    }
 
+#ifdef USEMICSHADERS
+   if (level->currentColors == level->maxColors) {
+      level->maxColors += 16;
+      level->colors = (unsigned char *) realloc(level->colors, level->maxColors * sizeof(unsigned char));
+      YglCacheReset();
+   }
+#endif
+
    tmp = (texturecoordinate_struct *)(level->textcoords + (level->currentQuad * 2));
 
    memcpy(level->quads + level->currentQuad, input->vertices, 8 * sizeof(int));
+#ifdef USEMICSHADERS
+   memcpy(level->colors + level->currentColors, noMeshGouraud, 16 * sizeof(unsigned char));
+#endif
+
    level->currentQuad += 8;
+#ifdef USEMICSHADERS
+   level->currentColors += 16;
+#endif
    YglTMAllocate(output, input->w, input->h, &x, &y);
 
    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = 0; // these can stay at 0
@@ -269,6 +293,77 @@ int * YglQuad(YglSprite * input, YglTexture * output) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef USEMICSHADERS
+int * YglQuad2(YglSprite * input, YglTexture * output, YglColor * colors) {
+   unsigned int x, y;
+   YglLevel *level;
+   texturecoordinate_struct *tmp;
+
+   level = &_Ygl->levels[input->priority];
+
+   if (level->currentQuad == level->maxQuad) {
+      level->maxQuad += 8;
+      level->quads = (int *) realloc(level->quads, level->maxQuad * sizeof(int));
+      level->textcoords = (int *) realloc(level->textcoords, level->maxQuad * sizeof(int));
+      YglCacheReset();
+   }
+
+   if (level->currentColors == level->maxColors)
+   {
+	   level->maxColors += 16;
+	   level->colors = (unsigned char *) realloc(level->colors, level->maxColors * sizeof(unsigned char));
+	   YglCacheReset();
+   }
+
+   tmp = (texturecoordinate_struct *)(level->textcoords + (level->currentQuad * 2));
+
+   memcpy(level->quads + level->currentQuad, input->vertices, 8 * sizeof(int));
+   memcpy(level->colors + level->currentColors, colors, 16 * sizeof(unsigned char));
+
+   level->currentQuad += 8;
+   level->currentColors += 16;
+
+   YglTMAllocate(output, input->w, input->h, &x, &y);
+
+   tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = 0; // these can stay at 0
+
+   if (input->flip & 0x1) {
+      tmp[0].s = tmp[3].s = x + input->w;
+      tmp[1].s = tmp[2].s = x;
+   } else {
+      tmp[0].s = tmp[3].s = x;
+      tmp[1].s = tmp[2].s = x + input->w;
+   }
+   if (input->flip & 0x2) {
+      tmp[0].t = tmp[1].t = y + input->h;
+      tmp[2].t = tmp[3].t = y;
+   } else {
+      tmp[0].t = tmp[1].t = y;
+      tmp[2].t = tmp[3].t = y + input->h;
+   }
+
+   tmp[0].q = 1; // These need to be adjusted. I'm not sure what the correct
+   tmp[1].q = 1; // value is, or how to calculate it.
+   tmp[2].q = 1; //
+   tmp[3].q = 1; //
+
+   switch(input->flip) {
+      case 0:
+         return level->textcoords + ((level->currentQuad - 8) * 2); // upper left coordinates(0)
+      case 1:
+         return level->textcoords + ((level->currentQuad - 6) * 2); // upper right coordinates(2)
+      case 2:
+         return level->textcoords + ((level->currentQuad - 2) * 2); // lower left coordinates(6)
+      case 3:
+         return level->textcoords + ((level->currentQuad - 4) * 2); // lower right coordinates(4)
+   }
+
+   return 0;
+}
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
 void YglCachedQuad(YglSprite * input, int * cache) {
    YglLevel * level = _Ygl->levels + input->priority;
    unsigned int x,y;
@@ -284,10 +379,26 @@ void YglCachedQuad(YglSprite * input, int * cache) {
       YglCacheReset();
    }
 
+#ifdef USEMICSHADERS
+   if (level->currentColors == level->maxColors)
+   {
+      level->maxColors += 16;
+      level->colors = (unsigned char *) realloc(level->colors, level->maxColors * sizeof(unsigned char));
+      YglCacheReset();
+   }
+#endif
+
    tmp = (texturecoordinate_struct *)(level->textcoords + (level->currentQuad * 2));
 
    memcpy(level->quads + level->currentQuad, input->vertices, 8 * sizeof(int));
+#ifdef USEMICSHADERS
+   memcpy(level->colors + level->currentColors, noMeshGouraud, 16 * sizeof(unsigned char));
+#endif
+
    level->currentQuad += 8;
+#ifdef USEMICSHADERS
+   level->currentColors += 16;
+#endif
 
    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = 0; // these can stay at 0
 
@@ -314,19 +425,90 @@ void YglCachedQuad(YglSprite * input, int * cache) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef USEMICSHADERS
+void YglCachedQuad2(YglSprite * input, int * cache, YglColor * colors) {
+   YglLevel * level = _Ygl->levels + input->priority;
+   unsigned int x,y;
+   texturecoordinate_struct *tmp;
+
+   x = *cache;
+   y = *(cache + 1);
+
+   if (level->currentQuad == level->maxQuad) {
+      level->maxQuad += 8;
+      level->quads = (int *) realloc(level->quads, level->maxQuad * sizeof(int));
+      level->textcoords = (int *) realloc(level->textcoords, level->maxQuad * sizeof(int));
+      YglCacheReset();
+   }
+
+   if (level->currentColors == level->maxColors)
+   {
+	   level->maxColors += 16;
+	   level->colors = (unsigned char *) realloc(level->colors, level->maxColors * sizeof(unsigned char));
+	   YglCacheReset();
+   }
+
+   tmp = (texturecoordinate_struct *)(level->textcoords + (level->currentQuad * 2));
+
+   memcpy(level->quads + level->currentQuad, input->vertices, 8 * sizeof(int));
+   memcpy(level->colors + level->currentColors, colors, 16 * sizeof(unsigned char));
+
+   level->currentQuad += 8;
+   level->currentColors += 16;
+
+   tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = 0; // these can stay at 0
+
+   if (input->flip & 0x1) {
+      tmp[0].s = tmp[3].s = x + input->w;
+      tmp[1].s = tmp[2].s = x;
+   } else {
+      tmp[0].s = tmp[3].s = x;
+      tmp[1].s = tmp[2].s = x + input->w;
+   }
+   if (input->flip & 0x2) {
+      tmp[0].t = tmp[1].t = y + input->h;
+      tmp[2].t = tmp[3].t = y;
+   } else {
+      tmp[0].t = tmp[1].t = y;
+      tmp[2].t = tmp[3].t = y + input->h;
+   }
+
+   tmp[0].q = 1; // These need to be adjusted. I'm not sure what the correct
+   tmp[1].q = 1; // value is, or how to calculate it.
+   tmp[2].q = 1; //
+   tmp[3].q = 1; //
+}
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
 void YglRender(void) {
    YglLevel * level;
 
    glEnable(GL_TEXTURE_2D);
+#ifdef USEMICSHADERS
+   glShadeModel(GL_SMOOTH);
+#endif
 
    glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
 
    glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, YglTM->width, YglTM->yMax, GL_RGBA, GL_UNSIGNED_BYTE, YglTM->texture);
 
+#ifdef USEMICSHADERS
+   if (useShaders)
+   {
+     glEnableClientState(GL_COLOR_ARRAY);
+     pfglUseProgram(shaderProgram);
+   }
+#endif
+
    if(_Ygl->st) {
       int vertices [] = { 0, 0, 320, 0, 320, 224, 0, 224 };
       int text [] = { 0, 0, YglTM->width, 0, YglTM->width, YglTM->height, 0, YglTM->height };
       glVertexPointer(2, GL_INT, 0, vertices);
+#ifdef USEMICSHADERS
+      glColorPointer(4, GL_UNSIGNED_BYTE, 0, level->colors);
+#endif
       glTexCoordPointer(4, GL_INT, 0, text);
       glDrawArrays(GL_QUADS, 0, 4);
    } else {
@@ -334,10 +516,21 @@ void YglRender(void) {
       for(i = 0;i < _Ygl->depth;i++) {
          level = _Ygl->levels + i;
          glVertexPointer(2, GL_INT, 0, level->quads);
+#ifdef USEMICSHADERS
+         glColorPointer(4, GL_UNSIGNED_BYTE, 0, level->colors);
+#endif
          glTexCoordPointer(4, GL_INT, 0, level->textcoords);
          glDrawArrays(GL_QUADS, 0, level->currentQuad / 2);
       }
    }
+
+#ifdef USEMICSHADERS
+   if (useShaders)
+   {
+      glDisableClientState(GL_COLOR_ARRAY);
+      pfglUseProgram(0);
+   }
+#endif
 
    glDisable(GL_TEXTURE_2D);
 #ifndef _arch_dreamcast

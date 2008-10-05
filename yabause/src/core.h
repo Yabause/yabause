@@ -24,6 +24,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef STDCALL
+#define STDCALL
+#endif
+
 #ifndef FASTCALL
 #ifdef __MINGW32__
 #define FASTCALL __attribute__((fastcall))

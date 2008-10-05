@@ -222,7 +222,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                   if (temp & 0x8000)
                      *texture->textdata++ = COLOR_ADD(SAT2YAB1(alpha, temp), vdp1cor, vdp1cog, vdp1cob);
                   else
-                     *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(temp, alpha), vdp1cor, vdp1cog, vdp1cob);                     
+                     *texture->textdata++ = COLOR_ADD(Vdp2ColorRamGetColor(temp, alpha), vdp1cor, vdp1cog, vdp1cob);
                }
 
                j += 1;
@@ -359,7 +359,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, YglSprite *sprite)
    }
 
    {
-      u8 sprite_type = SPCLMD & 0xF;      
+      u8 sprite_type = SPCLMD & 0xF;
       switch(sprite_type)
       {
          case 0:
@@ -523,7 +523,7 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
    float vdp1w=1;
    float vdp1h=1;
 
-   // may need some tweaking  
+   // may need some tweaking
 
    // Figure out which vdp1 screen mode to use
    switch (Vdp1Regs->TVMR & 7)
@@ -607,7 +607,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
                *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xF) && info->transparencyenable) color = 0x00000000;
                else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
-               *texture->textdata++ = info->PostPixelFetchCalc(info, color);               
+               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
             }
             texture->textdata += texture->w;
          }
@@ -618,7 +618,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
             for(j = 0;j < info->cellw;j+=2)
             {
                u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
-               
+
                info->charaddr += 2;
                if (!(dot & 0xFF00) && info->transparencyenable) color = 0x00000000;
                else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), info->alpha);
@@ -686,7 +686,7 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    int * c;
    YglSprite tile;
 
-   tile.w = tile.h = info->patternpixelwh;   
+   tile.w = tile.h = info->patternpixelwh;
    tile.flip = info->flipfunction;
 
    if (info->specialprimode == 1)
@@ -742,7 +742,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
    {
       case 1:
       {
-         u16 tmp = T1ReadWord(Vdp2Ram, info->addr);         
+         u16 tmp = T1ReadWord(Vdp2Ram, info->addr);
 
          info->addr += 2;
          info->specialfunction = (info->supplementdata >> 9) & 0x1;
@@ -956,7 +956,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
    {
       case 0: // 4 BPP
          dot = T1ReadByte(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) / 2) & 0x7FFFF));
-         if (!(x & 0x1)) dot >>= 4; 
+         if (!(x & 0x1)) dot >>= 4;
          if (!(dot & 0xF) && info->transparencyenable) return 0x00000000;
          else return Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
       case 1: // 8 BPP
@@ -967,7 +967,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
          dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
          if ((dot == 0) && info->transparencyenable) return 0x00000000;
          else return Vdp2ColorRamGetColor(info->coloroffset + dot, info->alpha);
-      case 3: // 16 BPP(RGB)   
+      case 3: // 16 BPP(RGB)
          dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
          if (!(dot & 0x8000) && info->transparencyenable) return 0x00000000;
          else return SAT2YAB1(0xFF, dot);
@@ -1147,7 +1147,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                                 (x / pagepixelwh * pagesize) +
                                 ((y % pagepixelwh) / (8 * info->patternwh) * info->pagewh) +
                                 ((x % pagepixelwh) / (8 * info->patternwh))) * info->patterndatasize * 2;
-   
+
                   Vdp2PatternAddr(info); // Heh, this could be optimized
                }
 
@@ -1248,8 +1248,76 @@ static void SetSaturnResolution(int width, int height)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef USEMICSHADERS
+#ifndef GLchar
+#define GLchar GLbyte
+#endif
+
+#ifndef GL_FRAGMENT_SHADER
+#define GL_FRAGMENT_SHADER 0x8B30
+#endif
+#ifndef GL_VERTEX_SHADER
+#define GL_VERTEX_SHADER 0x8B31
+#endif
+
+GLuint (STDCALL *pfglCreateProgram)(void);
+GLuint (STDCALL *pfglCreateShader)(GLenum);
+void (STDCALL *pfglShaderSource)(GLuint,GLsizei,const GLchar **,const GLint *);
+void (STDCALL *pfglCompileShader)(GLuint);
+void (STDCALL *pfglAttachShader)(GLuint,GLuint);
+void (STDCALL *pfglLinkProgram)(GLuint);
+void (STDCALL *pfglUseProgram)(GLuint);
+GLint (STDCALL *pfglGetUniformLocation)(GLuint,const GLchar *);
+void (STDCALL *pfglUniform1i)(GLint,GLint);
+void (STDCALL *pfglGetShaderInfoLog)(GLuint,GLsizei,GLsizei *,GLchar *);
+
+GLuint shaderProgram;
+GLuint saturnMeshGouraudFragmentShader;
+int useShaders=0;
+
+// RGBA pattern that assures that no mesh effect or gouraud shading is applied
+const unsigned char noMeshGouraud[16] = {0x80,0x80,0x80,0xFF,0x80,0x80,0x80,0xFF,0x80,0x80,0x80,0xFF,0x80,0x80,0x80,0xFF};
+
+// This shader implements the mesh processing and gouraud shading of the VDP1.
+// Mesh processing is only applied when gl_Color.a==0 (set by VIDOGLVdp1PolygonDraw).
+const GLchar saturnMeshGouraudFragmentShaderCode[] = \
+"uniform sampler2D mytexture;\n" \
+"void main() {\n" \
+"  vec4 baseColor = texture2D(mytexture, gl_TexCoord[0].st);\n" \
+"  float red,green,blue;\n" \
+"  int xlsb = mod(floor(gl_FragCoord.x),2);\n" \
+"  int ylsb = mod(floor(gl_FragCoord.y),2);\n" \
+"  red = clamp(baseColor.r + (gl_Color.r - 0.5), 0.0, 1.0);\n" \
+"  green = clamp(baseColor.g + (gl_Color.g - 0.5), 0.0, 1.0);\n" \
+"  blue = clamp(baseColor.b + (gl_Color.b - 0.5), 0.0, 1.0);\n" \
+"  if (gl_Color.a == 0.0) {\n" \
+"    if ((xlsb+ylsb) != 1) {\n" \
+"      gl_FragColor = vec4(red, green, blue, baseColor.a);\n" \
+"    } else {\n" \
+"      gl_FragColor = vec4(red, green, blue, 0.0);\n" \
+"    }\n" \
+"  } else {\n" \
+"    gl_FragColor = vec4(red, green, blue, baseColor.a);\n" \
+"  }\n" \
+"}\n";
+const GLchar *saturnMeshGouraudFragmentShaderSource[] = {saturnMeshGouraudFragmentShaderCode, NULL};
+
+#ifdef HAVE_GLXGETPROCADDRESS
+void STDCALL * glXGetProcAddress(const char *szProcName);
+void STDCALL * (*yglGetProcAddress)(const char *szProcName) = glXGetProcAddress;
+#elif WIN32
+void STDCALL * wglGetProcAddress(const char *szProcName);
+void STDCALL * (*yglGetProcAddress)(const char *szProcName) = wglGetProcAddress;
+#endif
+#endif
+
 int VIDOGLInit(void)
 {
+#ifdef USEMICSHADERS
+   GLint mytexture;
+   char shaderInfoLog[256];
+#endif
+
    if (YglInit(1024, 1024, 8) != 0)
       return -1;
 
@@ -1257,6 +1325,51 @@ int VIDOGLInit(void)
 
    vdp1wratio = 1;
    vdp1hratio = 1;
+
+#ifdef USEMICSHADERS
+   // Set up fragment shader
+   useShaders = 0;
+   pfglCreateProgram = yglGetProcAddress("glCreateProgram");
+   pfglCreateShader = yglGetProcAddress("glCreateShader");
+   pfglCompileShader = yglGetProcAddress("glCompileShader");
+   pfglAttachShader = yglGetProcAddress("glAttachShader");
+   pfglLinkProgram = yglGetProcAddress("glLinkProgram");
+   pfglUseProgram = yglGetProcAddress("glUseProgram");
+   pfglShaderSource = yglGetProcAddress("glShaderSource");
+   pfglGetUniformLocation = yglGetProcAddress("glGetUniformLocation");
+   pfglUniform1i = yglGetProcAddress("glUniform1i");
+   pfglGetShaderInfoLog = yglGetProcAddress("glGetShaderInfoLog");
+
+   if (pfglCreateProgram && pfglCreateShader && pfglCompileShader && pfglShaderSource &&
+       pfglAttachShader && pfglLinkProgram && pfglUseProgram && pfglGetUniformLocation &&
+       pfglUniform1i)
+   {
+      shaderProgram = pfglCreateProgram();
+      if (shaderProgram)
+      {
+	     saturnMeshGouraudFragmentShader = pfglCreateShader(GL_FRAGMENT_SHADER);
+		 if (saturnMeshGouraudFragmentShader)
+		 {
+		    useShaders = 1;
+		    pfglShaderSource(saturnMeshGouraudFragmentShader, 1, saturnMeshGouraudFragmentShaderSource, NULL);
+		    pfglCompileShader(saturnMeshGouraudFragmentShader);
+            pfglGetShaderInfoLog(saturnMeshGouraudFragmentShader,255,NULL,shaderInfoLog);
+		    pfglAttachShader(shaderProgram, saturnMeshGouraudFragmentShader);
+		    pfglLinkProgram(shaderProgram);
+		    mytexture = pfglGetUniformLocation(shaderProgram, "mytexture");
+		    pfglUniform1i(mytexture, 0);
+		 }
+	  }
+   }
+
+
+   /*FILE *fp;
+   fp = fopen("yashader.txt", "wb");
+   fprintf(fp, "%p %p %p %p %p %p %p useShaders=%d\r\n",pfglCreateProgram,pfglCreateShader,pfglCompileShader,
+   pfglAttachShader,pfglLinkProgram,pfglUseProgram,pfglShaderSource,useShaders);
+   fputs(shaderInfoLog,fp);
+   fclose(fp);*/
+#endif
 
    return 0;
 }
@@ -1360,8 +1473,15 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    int * c;
+   int i;
    u32 tmp;
    s16 x, y;
+   u16 CMDPMOD;
+#ifdef USEMICSHADERS
+   YglColor colors;
+   u16 color2;
+   u8 mesh;
+#endif
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
@@ -1387,15 +1507,54 @@ void VIDOGLVdp1NormalSpriteDraw(void)
 
    Vdp1ReadPriority(&cmd, &sprite);
 
+   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+
+#ifdef USEMICSHADERS
+   mesh = 0xFF;
+   if (CMDPMOD & 0x100)
+      mesh = 0x00;
+
+   // Check if the Gouraud shading bit is set and the color mode is RGB
+   if ((CMDPMOD & 4) && ((CMDPMOD & 0x38) == 0x28))
+   {
+      for (i=0; i<4; i++)
+	  {
+	     color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+	     colors.rgba[(i << 2) + 0] = (color2 & 0x001F) << 3;
+             colors.rgba[(i << 2) + 1] = (color2 & 0x03E0) >> 2;
+             colors.rgba[(i << 2) + 2] = (color2 & 0x7C00) >> 7;
+	     colors.rgba[(i << 2) + 3] = mesh;
+	  }
+   }
+   else // No Gouraud shading, use same color for all 4 vertices
+   {
+	  for (i=0; i<4; i++)
+	  {
+	     colors.rgba[(i << 2) + 0] = 0x80;
+             colors.rgba[(i << 2) + 1] = 0x80;
+             colors.rgba[(i << 2) + 2] = 0x80;
+	     colors.rgba[(i << 2) + 3] = mesh;
+	  }
+   }
+#endif
+
    if (sprite.w > 0 && sprite.h > 1)
    {
       if ((c = YglIsCached(tmp)) != NULL)
       {
+#ifdef USEMICSHADERS
+         YglCachedQuad2(&sprite, c, &colors);
+#else
          YglCachedQuad(&sprite, c);
+#endif
          return;
-      } 
+      }
 
+#ifdef USEMICSHADERS
+      c = YglQuad2(&sprite, &texture, &colors);
+#else
       c = YglQuad(&sprite, &texture);
+#endif
       YglCache(tmp, c);
 
       Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -1410,9 +1569,16 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    int * c;
+   int i;
    u32 tmp;
    s16 rw=0, rh=0;
    s16 x, y;
+   u16 CMDPMOD;
+#ifdef USEMICSHADERS
+   YglColor colors;
+   u16 color2;
+   u8 mesh;
+#endif
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
@@ -1509,17 +1675,56 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    tmp <<= 16;
    tmp |= cmd.CMDCOLR;
 
+   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+
+#ifdef USEMICSHADERS
+   mesh = 0xFF;
+   if (CMDPMOD & 0x100)
+      mesh = 0x00;
+
+   // Check if the Gouraud shading bit is set and the color mode is RGB
+   if ((CMDPMOD & 4) && ((CMDPMOD & 0x38) == 0x28))
+   {
+      for (i=0; i<4; i++)
+	  {
+	     color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+	     colors.rgba[(i << 2) + 0] = (color2 & 0x001F) << 3;
+		 colors.rgba[(i << 2) + 1] = (color2 & 0x03E0) >> 2;
+		 colors.rgba[(i << 2) + 2] = (color2 & 0x7C00) >> 7;
+	     colors.rgba[(i << 2) + 3] = mesh;
+	  }
+   }
+   else // No Gouraud shading, use same color for all 4 vertices
+   {
+	  for (i=0; i<4; i++)
+	  {
+	     colors.rgba[(i << 2) + 0] = 0x80;
+		 colors.rgba[(i << 2) + 1] = 0x80;
+		 colors.rgba[(i << 2) + 2] = 0x80;
+	     colors.rgba[(i << 2) + 3] = mesh;
+	  }
+   }
+#endif
+
    Vdp1ReadPriority(&cmd, &sprite);
 
    if (sprite.w > 0 && sprite.h > 1)
    {
       if ((c = YglIsCached(tmp)) != NULL)
       {
+#ifdef USEMICSHADERS
+         YglCachedQuad2(&sprite, c, &colors);
+#else
          YglCachedQuad(&sprite, c);
+#endif
          return;
-      } 
+      }
 
+#ifdef USEMICSHADERS
+      c = YglQuad2(&sprite, &texture, &colors);
+#else
       c = YglQuad(&sprite, &texture);
+#endif
       YglCache(tmp, c);
 
       Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -1534,13 +1739,20 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    int * c;
+   int i;
    u32 tmp;
+   u16 CMDPMOD;
+#ifdef USEMICSHADERS
+   YglColor colors;
+   u16 color2;
+   u8 mesh;
+#endif
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
    sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
    sprite.h = cmd.CMDSIZE & 0xFF;
-	
+
    sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
    sprite.vertices[0] = (s32)((float)(cmd.CMDXA + Vdp1Regs->localX) * vdp1wratio);
@@ -1557,17 +1769,56 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    tmp <<= 16;
    tmp |= cmd.CMDCOLR;
 
+   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+
+#ifdef USEMICSHADERS
+   mesh = 0xFF;
+   if (CMDPMOD & 0x100)
+      mesh = 0x00;
+
+   // Check if the Gouraud shading bit is set and the color mode is RGB
+   if ((CMDPMOD & 4) && ((CMDPMOD & 0x38) == 0x28))
+   {
+      for (i=0; i<4; i++)
+	  {
+	     color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+	     colors.rgba[(i << 2) + 0] = (color2 & 0x001F) << 3;
+		 colors.rgba[(i << 2) + 1] = (color2 & 0x03E0) >> 2;
+		 colors.rgba[(i << 2) + 2] = (color2 & 0x7C00) >> 7;
+	     colors.rgba[(i << 2) + 3] = mesh;
+	  }
+   }
+   else // No Gouraud shading, use same color for all 4 vertices
+   {
+	  for (i=0; i<4; i++)
+	  {
+	     colors.rgba[(i << 2) + 0] = 0x80;
+		 colors.rgba[(i << 2) + 1] = 0x80;
+		 colors.rgba[(i << 2) + 2] = 0x80;
+	     colors.rgba[(i << 2) + 3] = mesh;
+	  }
+   }
+#endif
+
    Vdp1ReadPriority(&cmd, &sprite);
 
    if (sprite.w > 0 && sprite.h > 1)
    {
       if ((c = YglIsCached(tmp)) != NULL)
       {
+#ifdef USEMICSHADERS
+         YglCachedQuad2(&sprite, c, &colors);
+#else
          YglCachedQuad(&sprite, c);
+#endif
          return;
-      } 
+      }
 
+#ifdef USEMICSHADERS
+      c = YglQuad2(&sprite, &texture, &colors);
+#else
       c = YglQuad(&sprite, &texture);
+#endif
       YglCache(tmp, c);
 
       Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -1578,6 +1829,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
 void VIDOGLVdp1PolygonDraw(void)
 {
+   int i;
    s16 X[4];
    s16 Y[4];
    u16 color;
@@ -1585,6 +1837,11 @@ void VIDOGLVdp1PolygonDraw(void)
    u8 alpha;
    YglSprite polygon;
    YglTexture texture;
+#ifdef USEMICSHADERS
+   YglColor colors;
+   u8 mesh;
+   u16 color2;
+#endif
 
    X[0] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
    Y[0] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
@@ -1605,6 +1862,35 @@ void VIDOGLVdp1PolygonDraw(void)
 
    if (color == 0)
       alpha = 0;
+
+#ifdef USEMICSHADERS
+   mesh = 0xFF;
+   if (CMDPMOD & 0x100)
+      mesh = 0x00;
+
+   // Check if the Gouraud shading bit is set and the color mode is RGB
+   if ((CMDPMOD & 4) && ((CMDPMOD & 0x38) == 0x28))
+   {
+      for (i=0; i<4; i++)
+	  {
+	     color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+	     colors.rgba[(i << 2) + 0] = (color2 & 0x001F) << 3;
+		 colors.rgba[(i << 2) + 1] = (color2 & 0x03E0) >> 2;
+		 colors.rgba[(i << 2) + 2] = (color2 & 0x7C00) >> 7;
+	     colors.rgba[(i << 2) + 3] = mesh;
+	  }
+   }
+   else // No Gouraud shading, use same color for all 4 vertices
+   {
+	  for (i=0; i<4; i++)
+	  {
+	     colors.rgba[(i << 2) + 0] = 0x80;
+		 colors.rgba[(i << 2) + 1] = 0x80;
+		 colors.rgba[(i << 2) + 2] = 0x80;
+	     colors.rgba[(i << 2) + 3] = mesh;
+	  }
+   }
+#endif
 
    if (color & 0x8000)
       polygon.priority = Vdp2Regs->PRISA & 0x7;
@@ -1633,7 +1919,11 @@ void VIDOGLVdp1PolygonDraw(void)
    polygon.h = 1;
    polygon.flip = 0;
 
+#ifdef USEMICSHADERS
+   YglQuad2(&polygon, &texture, &colors);
+#else
    YglQuad(&polygon, &texture);
+#endif
 
    if (color & 0x8000)
       *texture.textdata = COLOR_ADD(SAT2YAB1(alpha,color), vdp1cor, vdp1cog, vdp1cob);
@@ -2172,7 +2462,7 @@ static void Vdp2DrawNBG2(void)
    info.transparencyenable = !(Vdp2Regs->BGON & 0x400);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 4) & 0x3;
 
-   info.colornumber = (Vdp2Regs->CHCTLB & 0x2) >> 1;	
+   info.colornumber = (Vdp2Regs->CHCTLB & 0x2) >> 1;
    info.mapwh = 2;
 
    ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 4);
@@ -2210,7 +2500,7 @@ static void Vdp2DrawNBG3(void)
    info.specialprimode = (Vdp2Regs->SFPRMD >> 6) & 0x3;
 
    info.colornumber = (Vdp2Regs->CHCTLB & 0x20) >> 5;
-	
+
    info.mapwh = 2;
 
    ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 6);

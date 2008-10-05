@@ -53,6 +53,13 @@
 
 #include "core.h"
 
+#ifdef USEMICSHADERS
+extern void (STDCALL *pfglUseProgram)(GLuint);
+extern GLuint shaderProgram;
+extern int useShaders;
+extern const unsigned char noMeshGouraud[16];
+#endif
+
 typedef struct {
 	int vertices[8];
 	unsigned int w;
@@ -65,6 +72,12 @@ typedef struct {
 	unsigned int * textdata;
 	unsigned int w;
 } YglTexture;
+
+#ifdef USEMICSHADERS
+typedef struct {
+	unsigned char rgba[4*4];
+} YglColor;
+#endif
 
 typedef struct {
 	unsigned int currentX;
@@ -87,6 +100,11 @@ typedef struct {
 	int * textcoords;
 	int currentQuad;
 	int maxQuad;
+#ifdef USEMICSHADERS
+	unsigned char * colors;
+	int currentColors;
+	int maxColors;
+#endif
 } YglLevel;
 
 typedef struct {
@@ -108,6 +126,10 @@ int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 int * YglQuad(YglSprite *, YglTexture *);
 void YglCachedQuad(YglSprite *, int *);
+#ifdef USEMICSHADERS
+int * YglQuad2(YglSprite *, YglTexture *, YglColor *);
+void YglCachedQuad2(YglSprite *, int *, YglColor *);
+#endif
 void YglRender(void);
 void YglReset(void);
 void YglShowTexture(void);
