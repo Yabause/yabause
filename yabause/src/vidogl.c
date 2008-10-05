@@ -29,6 +29,15 @@
 #include "ygl.h"
 #include "yui.h"
 
+#ifdef USEMICSHADERS
+#ifdef WIN32
+#include <windows.h>
+#include <wingdi.h>
+#elif HAVE_GLXGETPROCADDRESS
+#include <GL/glx.h>
+#endif
+#endif
+
 #if defined WORDS_BIGENDIAN
 #define SAT2YAB1(alpha,temp)		(alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
 #else
@@ -1303,10 +1312,8 @@ const GLchar saturnMeshGouraudFragmentShaderCode[] = \
 const GLchar *saturnMeshGouraudFragmentShaderSource[] = {saturnMeshGouraudFragmentShaderCode, NULL};
 
 #ifdef HAVE_GLXGETPROCADDRESS
-void STDCALL * glXGetProcAddress(const char *szProcName);
 void STDCALL * (*yglGetProcAddress)(const char *szProcName) = glXGetProcAddress;
 #elif WIN32
-void STDCALL * wglGetProcAddress(const char *szProcName);
 void STDCALL * (*yglGetProcAddress)(const char *szProcName) = wglGetProcAddress;
 #endif
 #endif

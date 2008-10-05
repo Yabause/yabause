@@ -54,7 +54,6 @@
 #include "core.h"
 
 #ifdef USEMICSHADERS
-extern void (STDCALL *pfglUseProgram)(GLuint);
 extern GLuint shaderProgram;
 extern int useShaders;
 extern const unsigned char noMeshGouraud[16];
