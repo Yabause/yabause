@@ -215,7 +215,7 @@ static INLINE int GenerateRotatedYPos(vdp2draw_struct *info, vdp2rotationparamet
 
 static INLINE int GenerateRotatedXPosFP(vdp2rotationparameterfp_struct *p, int x, fixed32 xmul, fixed32 ymul, fixed32 C)
 {
-   fixed32 Xsp = mulfixed(p->A, xmul) + mulfixed(p->B, ymul + C);
+   fixed32 Xsp = mulfixed(p->A, xmul) + mulfixed(p->B, ymul) + C;
 
    return touint(mulfixed(p->kx, (Xsp + mulfixed(p->dX, tofixed(x)))) + p->Xp);
 }

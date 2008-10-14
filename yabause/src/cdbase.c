@@ -24,6 +24,7 @@
 #include <assert.h>
 #include "cdbase.h"
 #include "error.h"
+#include "debug.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -453,7 +454,7 @@ int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
         }
 
 	if ((sector * bytesPerSector) >= isofilesize) {
-		printf("Warning: Trying to read beyond end of CD image! (sector: %d)\n", sector);
+		CDLOG("Warning: Trying to read beyond end of CD image! (sector: %d)\n", sector);
 		return 0;
 	}
 	
