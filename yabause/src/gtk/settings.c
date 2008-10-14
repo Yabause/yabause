@@ -62,7 +62,9 @@ YuiRangeItem carttypes[] = {
 YuiRangeItem cdcores[] = {
 	{ "0" , "Dummy CD" },
 	{ "1" , "ISO or CUE file" },
+#ifndef UNKNOWN_ARCH
 	{ "2" , "Cdrom device" },
+#endif
 	{ 0, 0 }
 };
 

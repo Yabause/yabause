@@ -13,7 +13,7 @@ if test ! "x$config_guess_sucks" = "x" ; then
 fi
 
 # hack to reset host_alias when we're not cross compiling
-if test "x$host_alias" = "x$host"; then
+if test "x$host_alias" = "x$build_alias"; then
 	host_alias=
 fi
 
@@ -153,8 +153,10 @@ case $host in
 			done
 			AC_ARG_WITH([sdk], AC_HELP_STRING(--with-sdk, [choose your sdk (macosx only)]), [sdkfile=$withval])
 
+			YAB_DEP_DISABLED
+
 			CFLAGS="$CFLAGS -mmacosx-version-min=10.3 -isysroot $sdkfile -arch i386 -arch ppc"
-			LDFLAGS="$LDFLAGS -Wl,-syslibroot,$sdkfile -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
+			LDFLAGS="$LDFLAGS -Wl,-macosx_version_min,10.3 -arch i386 -arch ppc"
 			AC_DEFINE(MAC_OS_X_VERSION_MAX_ALLOWED, MAC_OS_X_VERSION_10_3)
 		fi
 		;;
@@ -174,7 +176,10 @@ case $host in
 		;;
 	*freebsd*) yabause_arch=freebsd;;
 	*netbsd* | *openbsd*) yabause_arch=netbsd;;
-	*) yabause_arch=".";;
+	*)
+		yabause_arch="."
+		AC_DEFINE(UNKNOWN_ARCH)
+		;;
 esac
 AC_SUBST(yabause_arch)
 
