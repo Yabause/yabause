@@ -42,6 +42,11 @@
 #define PERPAD_Y	11
 #define PERPAD_Z	12
 
+#define PERMOUSE_LEFT	13
+#define PERMOUSE_MIDDLE	14
+#define PERMOUSE_RIGHT	15
+#define PERMOUSE_START	16
+
 extern PortData_struct PORTDATA1;
 extern PortData_struct PORTDATA2;
 
@@ -120,6 +125,18 @@ void PerPadRTriggerReleased(PerPad_struct * pad);
 
 void PerPadLTriggerPressed(PerPad_struct * pad);
 void PerPadLTriggerReleased(PerPad_struct * pad);
+
+void PerMouseLeftPressed(PerMouse_struct * mouse);
+void PerMouseLeftReleased(PerMouse_struct * mouse);
+
+void PerMouseMiddlePressed(PerMouse_struct * mouse);
+void PerMouseMiddleReleased(PerMouse_struct * mouse);
+
+void PerMouseRightPressed(PerMouse_struct * mouse);
+void PerMouseRightReleased(PerMouse_struct * mouse);
+
+void PerMouseStartPressed(PerMouse_struct * mouse);
+void PerMouseStartReleased(PerMouse_struct * mouse);
 
 void PerKeyDown(u32);
 void PerKeyUp(u32);
