@@ -1196,19 +1196,19 @@ int MappedMemoryAddMatch(u32 addr, u32 val, int searchtype, result_struct *resul
 
 static INLINE int SearchIncrementAndCheckBounds(result_struct *prevresults,
                                                 u32 *maxresults,
-                                                u32 numresults, u32 i,
+                                                u32 numresults, u32 *i,
                                                 u32 inc, u32 *newaddr,
                                                 u32 endaddr)
 {
    if (prevresults)
    {
-      if (i >= maxresults[0])
+      if (i[0] >= maxresults[0])
       {
          maxresults[0] = numresults;
          return 1;
       }
-      newaddr[0] = prevresults[i].addr;
-      i++;
+      newaddr[0] = prevresults[i[0]].addr;
+      i[0]++;
    }
    else
    {
@@ -1430,7 +1430,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
              if (issigned)
                 val = (s8)val;
 
-             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, i, addr+1, &newaddr, endaddr))
+             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, &i, addr+1, &newaddr, endaddr))
                 return results;
              break;
           case SEARCHWORD:
@@ -1439,13 +1439,13 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
              if (issigned)
                 val = (s16)val;
 
-             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, i, addr+2, &newaddr, endaddr))
+             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, &i, addr+2, &newaddr, endaddr))
                 return results;
              break;
           case SEARCHLONG:
              val = MappedMemoryReadLong(addr);
 
-             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, i, addr+4, &newaddr, endaddr))
+             if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, &i, addr+4, &newaddr, endaddr))
                 return results;
              break;
           default:
