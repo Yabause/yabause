@@ -25,27 +25,17 @@
 #include "smpc.h"
 #include "yabause.h"
 
+/** @defgroup peripheral Peripheral
+ *
+ * @brief This module provides two kind of functions
+ * - peripheral core management functions
+ * - controller ports management functions
+ *
+ * @{
+ */
+
 #define PERCORE_DEFAULT -1
 #define PERCORE_DUMMY 0
-
-#define PERPAD_UP	0
-#define PERPAD_RIGHT	1
-#define PERPAD_DOWN	2
-#define PERPAD_LEFT	3
-#define PERPAD_RIGHT_TRIGGER 4
-#define PERPAD_LEFT_TRIGGER 5
-#define PERPAD_START	6
-#define PERPAD_A	7
-#define PERPAD_B	8
-#define PERPAD_C	9
-#define PERPAD_X	10
-#define PERPAD_Y	11
-#define PERPAD_Z	12
-
-#define PERMOUSE_LEFT	13
-#define PERMOUSE_MIDDLE	14
-#define PERMOUSE_RIGHT	15
-#define PERMOUSE_START	16
 
 extern PortData_struct PORTDATA1;
 extern PortData_struct PORTDATA2;
@@ -63,7 +53,57 @@ typedef struct
    void (*Flush)(void);
 } PerInterface_struct;
 
+/** @brief Pointer to the current peripheral core.
+ *
+ * You should not set this manually but use
+ * PerInit() and PerDeInit() instead. */
 extern PerInterface_struct * PERCore;
+
+extern PerInterface_struct PERDummy;
+
+/**
+ * @brief Init a peripheral core
+ *
+ * Searches through the PERCoreList array for the given coreid.
+ * If found, PERCore is set to the address of that core and
+ * the core's Init function is called.
+ * 
+ * @param coreid the peripheral core to be used
+ * @return 0 if core has been inited, -1 otherwise
+ */
+int PerInit(int coreid);
+/**
+ * @brief De-init a peripheral core
+ *
+ * Calls the core's DeInit callback and set PERCore to NULL.
+ */
+void PerDeInit(void);
+
+/* port related functions */
+void * PerAddPeripheral(PortData_struct *port, int perid);
+void PerPortReset(void);
+
+void PerKeyDown(u32 key);
+void PerKeyUp(u32 key);
+void PerSetKey(u32 key, u8 name, void * controller);
+
+/** @defgroup pad Pad
+ *
+ * @{
+ */
+#define PERPAD_UP	0
+#define PERPAD_RIGHT	1
+#define PERPAD_DOWN	2
+#define PERPAD_LEFT	3
+#define PERPAD_RIGHT_TRIGGER 4
+#define PERPAD_LEFT_TRIGGER 5
+#define PERPAD_START	6
+#define PERPAD_A	7
+#define PERPAD_B	8
+#define PERPAD_C	9
+#define PERPAD_X	10
+#define PERPAD_Y	11
+#define PERPAD_Z	12
 
 typedef struct
 {
@@ -71,22 +111,13 @@ typedef struct
    u8 padbits[2];
 } PerPad_struct;
 
-typedef struct
-{
-   u8 perid;
-   u8 mousebits[3];
-} PerMouse_struct;
+/** @brief Adds a pad to one of the controller ports.
+ *
+ * @param port can be either &PORTDATA1 or &PORTDATA2
+ * @return pointer to a PerPad_struct or NULL if it fails
+ * */
+PerPad_struct * PerPadAdd(PortData_struct * port);
 
-extern PerInterface_struct PERDummy;
-
-int PerInit(int coreid);
-void PerDeInit(void);
-
-/* port related functions */
-void * PerAddPeripheral(PortData_struct *port, int perid);
-void PerPortReset(void);
-
-/* pad related functions */
 void PerPadUpPressed(PerPad_struct * pad);
 void PerPadUpReleased(PerPad_struct * pad);
 
@@ -125,6 +156,29 @@ void PerPadRTriggerReleased(PerPad_struct * pad);
 
 void PerPadLTriggerPressed(PerPad_struct * pad);
 void PerPadLTriggerReleased(PerPad_struct * pad);
+/** @} */
+
+/** @defgroup mouse Mouse
+ *
+ * @{
+ * */
+#define PERMOUSE_LEFT	13
+#define PERMOUSE_MIDDLE	14
+#define PERMOUSE_RIGHT	15
+#define PERMOUSE_START	16
+
+typedef struct
+{
+   u8 perid;
+   u8 mousebits[3];
+} PerMouse_struct;
+
+/** @brief Adds a mouse to one of the controller ports.
+ *
+ * @param port can be either &PORTDATA1 or &PORTDATA2
+ * @return pointer to a PerMouse_struct or NULL if it fails
+ * */
+PerMouse_struct * PerMouseAdd(PortData_struct * port);
 
 void PerMouseLeftPressed(PerMouse_struct * mouse);
 void PerMouseLeftReleased(PerMouse_struct * mouse);
@@ -137,12 +191,8 @@ void PerMouseRightReleased(PerMouse_struct * mouse);
 
 void PerMouseStartPressed(PerMouse_struct * mouse);
 void PerMouseStartReleased(PerMouse_struct * mouse);
+/** @} */
 
-void PerKeyDown(u32);
-void PerKeyUp(u32);
-void PerSetKey(u32, u8, PerPad_struct * pad);
-PerPad_struct * PerPadAdd(PortData_struct * port);
-
-PerMouse_struct * PerMouseAdd(PortData_struct * port);
+/** @} */
 
 #endif

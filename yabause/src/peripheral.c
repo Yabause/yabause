@@ -440,13 +440,13 @@ void PerKeyUp(u32 key)
 	}
 }
 
-void PerSetKey(u32 key, u8 name, PerPad_struct * pad)
+void PerSetKey(u32 key, u8 name, void * controller)
 {
 	int i = 0;
 
 	while(i < perkeyconfigsize)
 	{
-		if ((name == perkeyconfig[i].base->name) && (pad == perkeyconfig[i].controller))
+		if ((name == perkeyconfig[i].base->name) && (controller == perkeyconfig[i].controller))
 		{
 			perkeyconfig[i].key = key;
 		}

@@ -22,8 +22,11 @@
 
 #include "peripheral.h"
 
+/** @addtogroup peripheral
+ * @{ */
 #define PERCORE_SDLJOY 3
 
 extern PerInterface_struct PERSDLJoy;
+/** @} */
 
 #endif
