@@ -1,4 +1,4 @@
-/*  Copyright 2007 Theo Berkau
+/*  Copyright 2007-2008 Theo Berkau
 
     This file is part of Yabause.
 
@@ -29,6 +29,12 @@
 extern HINSTANCE y_hInstance;
 
 char cheatfilename[MAX_PATH] = "\0";
+
+typedef struct
+{
+   u32 addr;
+   u32 val;
+} addcode_struct;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -281,6 +287,55 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+LRESULT CALLBACK AddCodeDlgProc2(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                  LPARAM lParam)
+{
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         int cursel;
+         char text[MAX_PATH];
+         HWND hParent=GetParent(hDlg);
+         AddCodeDlgProc(hDlg, uMsg, wParam, lParam);
+
+         SendDlgItemMessage(hDlg, IDC_CTBYTEWRITE, BM_SETCHECK, 
+                            SendDlgItemMessage(hParent, IDC_8BITRB, BM_GETCHECK, 0, 0), 0);
+         SendDlgItemMessage(hDlg, IDC_CTWORDWRITE, BM_SETCHECK, 
+                            SendDlgItemMessage(hParent, IDC_16BITRB, BM_GETCHECK, 0, 0), 0);
+         SendDlgItemMessage(hDlg, IDC_CTLONGWRITE, BM_SETCHECK, 
+                            SendDlgItemMessage(hParent, IDC_32BITRB, BM_GETCHECK, 0, 0), 0);
+
+         // Get selected address and value, then set it to controls
+         if ((cursel=(int)SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETNEXTITEM, -1, LVNI_SELECTED)) != -1)
+         {
+            LVITEM item;
+
+            item.mask = LVIF_TEXT;
+            item.iItem = cursel;
+            item.iSubItem = 0;
+            item.pszText = text;
+            item.cchTextMax = sizeof(text);
+            SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETITEM, 0, (LPARAM)&item);
+            SetDlgItemText(hDlg, IDC_CODEADDR, text);
+
+            item.iSubItem = 1;
+            SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETITEM, 0, (LPARAM)&item);
+            SetDlgItemText(hDlg, IDC_CODEVAL, text);
+         }
+         else
+            return FALSE;
+        
+         return TRUE;
+      }
+      default: break;
+   }
+
+   return AddCodeDlgProc(hDlg, uMsg, wParam, lParam);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
@@ -514,15 +569,136 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 //////////////////////////////////////////////////////////////////////////////
 
 static result_struct *cheatresults=NULL;
-//static u32 numresults;
+static u32 numresults;
+static int searchtype=0;
+
+void GetSearchTypes(HWND hDlg)
+{
+   switch(searchtype & 0xC)
+   {
+      case SEARCHEXACT:
+         SendDlgItemMessage(hDlg, IDC_EXACTRB, BM_SETCHECK, BST_CHECKED, 0);
+         break;
+      case SEARCHLESSTHAN:
+         SendDlgItemMessage(hDlg, IDC_LESSTHANRB, BM_SETCHECK, BST_CHECKED, 0);
+         break;
+      case SEARCHGREATERTHAN:
+         SendDlgItemMessage(hDlg, IDC_GREATERTHANRB, BM_SETCHECK, BST_CHECKED, 0);
+         break;
+      default: break;
+   }
+
+   switch(searchtype & 0x70)
+   {
+      case SEARCHUNSIGNED:
+         SendDlgItemMessage(hDlg, IDC_UNSIGNEDRB, BM_SETCHECK, BST_CHECKED, 0);
+         break;
+      case SEARCHSIGNED:
+         SendDlgItemMessage(hDlg, IDC_SIGNEDRB, BM_SETCHECK, BST_CHECKED, 0);
+         break;
+      default: break;
+   }
+
+   switch(searchtype & 0x3)
+   {
+      case SEARCHBYTE:
+         SendDlgItemMessage(hDlg, IDC_8BITRB, BM_SETCHECK, BST_CHECKED, 0);
+         break;
+      case SEARCHWORD:
+         SendDlgItemMessage(hDlg, IDC_16BITRB, BM_SETCHECK, BST_CHECKED, 0);
+         break;
+      case SEARCHLONG:
+         SendDlgItemMessage(hDlg, IDC_32BITRB, BM_SETCHECK, BST_CHECKED, 0);
+         break;
+      default: break;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SetSearchTypes(HWND hDlg)
+{
+   searchtype = 0;
+   if (SendDlgItemMessage(hDlg, IDC_EXACTRB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+      searchtype |= SEARCHEXACT;
+   else if (SendDlgItemMessage(hDlg, IDC_LESSTHANRB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+      searchtype |= SEARCHLESSTHAN;
+   else
+      searchtype |= SEARCHGREATERTHAN;
+
+   if (SendDlgItemMessage(hDlg, IDC_UNSIGNEDRB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+      searchtype |= SEARCHUNSIGNED;
+   else
+      searchtype |= SEARCHSIGNED;
+
+   if (SendDlgItemMessage(hDlg, IDC_8BITRB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+      searchtype |= SEARCHBYTE;
+   else if (SendDlgItemMessage(hDlg, IDC_16BITRB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+      searchtype |= SEARCHWORD;
+   else
+      searchtype |= SEARCHLONG;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ListResults(HWND hDlg)
+{
+   u32 i;
+   char tempstr[11];
+
+   SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_DELETEALLITEMS, 0, 0);
+   EnableWindow(GetDlgItem(hDlg, IDC_CTADDCHEATBT), FALSE);
+
+   if (cheatresults)
+   {
+      // Show results
+      for (i = 0; i < numresults; i++)
+      {
+         LVITEM itemdata;
+
+         itemdata.mask = LVIF_TEXT;
+         itemdata.iItem = i;
+         itemdata.iSubItem = 0;
+         sprintf(tempstr, "%08X", cheatresults[i].addr);
+         itemdata.pszText = (LPTSTR)tempstr;
+         itemdata.cchTextMax = (int)strlen(itemdata.pszText);
+         SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTITEM, 0, (LPARAM)&itemdata);
+
+         itemdata.iSubItem = 1;
+         switch(searchtype & 0x3)
+         {
+            case SEARCHBYTE:
+               sprintf(tempstr, "%d", MappedMemoryReadByte(cheatresults[i].addr));
+               break;
+            case SEARCHWORD:
+               sprintf(tempstr, "%d", MappedMemoryReadWord(cheatresults[i].addr));
+               break;
+               case SEARCHLONG:
+               sprintf(tempstr, "%d", MappedMemoryReadLong(cheatresults[i].addr));
+               break;
+            default: break;
+         }
+
+         itemdata.pszText = (LPTSTR)tempstr;
+         itemdata.cchTextMax = (int)strlen(itemdata.pszText);
+         SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
 
 LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
+   char tempstr[11];
+
    switch (uMsg)
    {
       case WM_INITDIALOG:
       {
+         LVCOLUMN coldata;
+
          // If cheat search hasn't been started yet, disable search and add
          // cheat
          if (cheatresults == NULL)
@@ -532,16 +708,22 @@ LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             EnableWindow(GetDlgItem(hDlg, IDC_CTADDCHEATBT), FALSE);
          }
 
-         SendDlgItemMessage(hDlg, IDC_EXACTRB, BM_SETCHECK, BST_CHECKED, 0);
-         SendDlgItemMessage(hDlg, IDC_LESSTHANRB, BM_SETCHECK, BST_UNCHECKED, 0);
-         SendDlgItemMessage(hDlg, IDC_GREATERTHANRB, BM_SETCHECK, BST_UNCHECKED, 0);
+         ListView_SetExtendedListViewStyleEx(GetDlgItem(hDlg, IDC_CHEATLIST),
+                                             LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 
-         SendDlgItemMessage(hDlg, IDC_UNSIGNEDRB, BM_SETCHECK, BST_CHECKED, 0);
-         SendDlgItemMessage(hDlg, IDC_SIGNEDRB, BM_SETCHECK, BST_UNCHECKED, 0);
+         coldata.mask = LVCF_TEXT | LVCF_WIDTH;
+         coldata.pszText = "Address\0";
+         coldata.cchTextMax = (int)strlen(coldata.pszText);
+         coldata.cx = 190;
+         SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)0, (LPARAM)&coldata);
 
-         SendDlgItemMessage(hDlg, IDC_8BITRB, BM_SETCHECK, BST_CHECKED, 0);
-         SendDlgItemMessage(hDlg, IDC_16BITRB, BM_SETCHECK, BST_UNCHECKED, 0);
-         SendDlgItemMessage(hDlg, IDC_32BITRB, BM_SETCHECK, BST_UNCHECKED, 0);
+         coldata.pszText = "Value\0";
+         coldata.cchTextMax = (int)strlen(coldata.pszText);
+         coldata.cx = 111;
+         SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)1, (LPARAM)&coldata);
+
+         GetSearchTypes(hDlg);
+         ListResults(hDlg);
 
          return TRUE;
       }
@@ -559,23 +741,62 @@ LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   free(cheatresults);
 
                // Setup initial values
+               numresults = 0x100000;
+               SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_DELETEALLITEMS, 0, 0);
                break;
             case IDC_CTSEARCHBT:
+            {
                // Search low wram and high wram areas
+               SetSearchTypes(hDlg);
+               GetDlgItemText(hDlg, IDC_CHEATSEARCHET, tempstr, sizeof(tempstr));
+
+               cheatresults = MappedMemorySearch(0x06000000, 0x06100000, searchtype,
+                                                 tempstr, cheatresults, &numresults);
+
+               ListResults(hDlg);
                return TRUE;
+            }
             case IDC_CTADDCHEATBT:
+               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_ADDCODE), hDlg, (DLGPROC)AddCodeDlgProc2);
                return TRUE;
             case IDCANCEL:
             case IDOK:
             {
-               EndDialog(hDlg, TRUE);
+               PostMessage(hDlg, WM_CLOSE, 0, 0);
                return TRUE;
             }
             default: break;
          }
          break;
       }
+      case WM_CLOSE:
+         SetSearchTypes(hDlg);
+         EndDialog(hDlg, TRUE);
+         return TRUE;
+      case WM_NOTIFY:
+      {
+         LPNMHDR lpnm = (LPNMHDR)lParam;
 
+         switch (((LPNMHDR)lParam)->idFrom)
+         {
+            case IDC_CHEATLIST:
+               if (((LPNMHDR)lParam)->code == NM_CLICK)
+               {
+
+                  if (SendDlgItemMessage(hDlg, IDC_CHEATLIST,
+                                         LVM_GETNEXTITEM, -1,
+                                         LVNI_SELECTED) != -1)
+                     EnableWindow(GetDlgItem(hDlg, IDC_CTADDCHEATBT), TRUE);
+                  else
+                     EnableWindow(GetDlgItem(hDlg, IDC_CTADDCHEATBT), FALSE);
+
+                  break;
+               }
+               break;
+            default: break;
+         }
+         break;
+      }
       default: break;
    }
 
