@@ -79,9 +79,18 @@ int PerInit(int coreid);
  */
 void PerDeInit(void);
 
-/* port related functions */
+/** @brief Adds a peripheral
+ *
+ * You shouldn't directly use this function but
+ * PerPadAdd() or PerMouseAdd() instead.
+ */
 void * PerAddPeripheral(PortData_struct *port, int perid);
 void PerPortReset(void);
+/**
+ * Iterate the list of peripherals connected to a port
+ * and flush them if necesseray. This is needed for mouses.
+ */
+void PerFlush(PortData_struct * port);
 
 void PerKeyDown(u32 key);
 void PerKeyUp(u32 key);
@@ -191,6 +200,8 @@ void PerMouseRightReleased(PerMouse_struct * mouse);
 
 void PerMouseStartPressed(PerMouse_struct * mouse);
 void PerMouseStartReleased(PerMouse_struct * mouse);
+
+void PerMouseMove(PerMouse_struct * mouse, s32 dispx, s32 dispy);
 /** @} */
 
 /** @} */

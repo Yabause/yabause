@@ -283,6 +283,84 @@ void PerMouseStartReleased(PerMouse_struct * mouse) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void PerMouseMove(PerMouse_struct * mouse, s32 dispx, s32 dispy)
+{
+   int negx, negy, overflowx, overflowy;
+   u8 diffx, diffy;
+
+   negx = ((mouse->mousebits[0] >> 4) & 1);
+   negy = ((mouse->mousebits[0] >> 5) & 1);
+   overflowx = ((mouse->mousebits[0] >> 6) & 1);
+   overflowy = ((mouse->mousebits[0] >> 7) & 1);
+
+   if (negx) diffx = ~(mouse->mousebits[1]) & 0xFF;
+   else diffx = mouse->mousebits[1];
+   if (negy) diffy = ~(mouse->mousebits[2]) & 0xFF;
+   else diffy = mouse->mousebits[2];
+
+   if (dispx > 0)
+   {
+      if (negx)
+      {
+         if (dispx - diffx > 0)
+         {
+            diffx = dispx - diffx;
+            negx = 0;
+         }
+         else diffx -= -dispx;
+      }
+      else diffx += dispx;
+   }
+   else
+   {
+      if (negx) diffx += -dispx;
+      else
+      {
+         if (diffx + dispx > 0) diffx += dispx;
+         else
+         {
+            diffx = -dispx - diffx;
+            negx = 1;
+         }
+      }
+   }
+
+   if (dispy > 0)
+   {
+      if (negy)
+      {
+         if (dispy - diffy > 0)
+         {
+            diffy = dispy - diffy;
+            negy = 0;
+         }
+         else diffy -= -dispy;
+      }
+      else diffy += dispy;
+   }
+   else
+   {
+      if (negy) diffy += -dispy;
+      else
+      {
+         if (diffy + dispy > 0) diffy += dispy;
+         else
+         {
+            diffy = -dispy - diffy;
+            negy = 1;
+         }
+      }
+   }
+
+   mouse->mousebits[0] = (overflowy << 7) | (overflowx << 6) | (negy << 5) | (negx << 4) | (mouse->mousebits[0] & 0x0F);
+   if (negx) mouse->mousebits[1] = ~(diffx);
+   else mouse->mousebits[1] = diffx;
+   if (negy) mouse->mousebits[2] = ~(diffy);
+   else mouse->mousebits[2] = diffy;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void * PerAddPeripheral(PortData_struct *port, int perid)
 {
    int pernum = port->data[0] & 0xF;
@@ -368,6 +446,23 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
 void PerRemovePeripheral(PortData_struct *port, int removeoffset)
 {
    // stub
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerFlush(PortData_struct * port)
+{
+   /* FIXME this function only flush data if there's a mouse connected as
+    * first peripheral */
+  u8 perid = port->data[1];
+  if (perid == 0xE3)
+  {
+     PerMouse_struct * mouse = (port->data + 1);
+
+     mouse->mousebits[0] &= 0x0F;
+     mouse->mousebits[1] = 0;
+     mouse->mousebits[2] = 0;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -313,6 +313,8 @@ void SmpcINTBACKPeripheral(void) {
      port2 = &PORTDATA2;
      memcpy(&SmpcInternalVars->port1, port1, sizeof(PortData_struct));
      memcpy(&SmpcInternalVars->port2, port2, sizeof(PortData_struct));
+     PerFlush(&PORTDATA1);
+     PerFlush(&PORTDATA2);
      SmpcInternalVars->port1.offset = 0;
      SmpcInternalVars->port2.offset = 0;
   }
