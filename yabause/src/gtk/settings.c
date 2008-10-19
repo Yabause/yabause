@@ -87,6 +87,7 @@ YuiRangeItem sndcores[] = {
 
 const gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", 0 };
 const gchar * keys2[] = { "A", "B", "C", "X", "Y", "Z", "Start", 0 };
+const gchar * keys3[] = { "Left", "Middle", "Right", "Start", 0 };
 
 YuiRangeItem vidformats[] = {
 	{ "0", "NTSC" },
@@ -99,6 +100,11 @@ YuiRangeItem percores[] = {
 #ifdef HAVE_LIBSDL
 	{ "3", "Joystick Input Interface" },
 #endif
+	{ 0, 0 }
+};
+
+YuiRangeItem mousepercores[] = {
+	{ "2", "Gtk Input Interface" },
 	{ 0, 0 }
 };
 
@@ -131,22 +137,124 @@ void percore_changed(GtkWidget * widget, gpointer data) {
 	PerInit(core);
 }
 
+static void pertype_display_pad(GtkWidget * box)
+{
+   GtkWidget * table4, * table5;
+   GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
+   GtkWidget * select_percore = yui_range_new(keyfile, "General", "PerCore", percores);
+
+   g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", G_CALLBACK(percore_changed), NULL);
+
+   gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
+
+   gtk_container_set_border_width(GTK_CONTAINER(box_percore), 10);
+
+   gtk_box_pack_start(GTK_BOX (box_percore), select_percore, FALSE, FALSE, 0);
+
+   table4 = yui_input_entry_new(keyfile, "Input", keys1);
+
+   gtk_box_pack_start (GTK_BOX (box_percore), table4, TRUE, TRUE, 0);
+
+   gtk_box_pack_start (GTK_BOX (box), box_percore, TRUE, TRUE, 0);
+
+   gtk_box_pack_start (GTK_BOX (box), gtk_vseparator_new(), TRUE, TRUE, 0);
+
+   table5 = yui_input_entry_new(keyfile, "Input", keys2);
+
+   gtk_container_set_border_width(GTK_CONTAINER(table5), 10);
+  
+   gtk_box_pack_start (GTK_BOX (box), table5, TRUE, TRUE, 0);
+
+   gtk_widget_show_all(box);
+}
+
+static void mouse_speed_change(GtkWidget * range, gpointer data)
+{
+   g_key_file_set_double(keyfile, "General", "MouseSpeed", gtk_range_get_value(GTK_RANGE(range)));
+}
+
+static void pertype_display_mouse(GtkWidget * box)
+{
+   GtkWidget * scale;
+   GtkWidget * table5;
+   GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
+   GtkWidget * select_percore = yui_range_new(keyfile, "General", "MousePerCore", mousepercores);
+
+   g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", G_CALLBACK(percore_changed), NULL);
+   gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
+   gtk_container_set_border_width(GTK_CONTAINER(box_percore), 10);
+   gtk_box_pack_start(GTK_BOX (box_percore), select_percore, FALSE, FALSE, 0);
+
+   scale = gtk_hscale_new_with_range(0, 10, 0.1);
+   gtk_range_set_value(GTK_RANGE(scale), g_key_file_get_double(keyfile, "General", "MouseSpeed", NULL));
+   g_signal_connect(scale, "value-changed", G_CALLBACK(mouse_speed_change), NULL);
+   gtk_box_pack_start(GTK_BOX (box_percore), scale, FALSE, FALSE, 0);
+
+   gtk_box_pack_start (GTK_BOX (box), box_percore, TRUE, TRUE, 0);
+
+   gtk_box_pack_start (GTK_BOX (box), gtk_vseparator_new(), TRUE, TRUE, 0);
+
+   table5 = yui_input_entry_new(keyfile, "Mouse", keys3);
+   gtk_container_set_border_width(GTK_CONTAINER(table5), 10);
+   gtk_box_pack_start (GTK_BOX (box), table5, TRUE, TRUE, 0);
+
+   gtk_widget_show_all(box);
+}
+
+void pertype_changed(GtkWidget * widget, gpointer data) {
+	GtkTreePath * path;
+	gchar * strpath;
+	int i;
+	GtkWidget * box = data;
+	GList * children;
+	GtkWidget * child;
+
+	children = gtk_container_get_children(GTK_CONTAINER(box));
+	for(i = 1;i < 4;i++) {
+		child = g_list_nth_data(children, i);
+		if (child != NULL) gtk_widget_destroy(child);
+	}
+
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(widget), &path, NULL);
+
+	if (path) {
+		int i;
+
+		strpath = gtk_tree_path_to_string(path);
+		sscanf(strpath, "%d", &i);
+
+		switch(i) {
+			case 0:
+				g_key_file_set_integer(keyfile, "General", "PerType", PERPAD);
+				pertype_display_pad(box);
+				break;
+			case 1:
+				g_key_file_set_integer(keyfile, "General", "PerType", PERMOUSE);
+				pertype_display_mouse(box);
+				break;
+		}
+
+		g_free(strpath);
+		gtk_tree_path_free(path);
+	}
+}
+
 GtkWidget* create_dialog1(void) {
   GtkWidget *dialog1;
   GtkWidget *notebook1;
   GtkWidget *vbox17;
   GtkWidget *hbox22;
-  GtkWidget *table4;
-  GtkWidget *table5;
   GtkWidget *button11;
   GtkWidget *button12;
   GtkWidget * general, * video_sound, * cart_memory, *advanced, * sound;
   GtkWidget * box;
+  u8 perid;
 
   dialog1 = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog1), "Yabause configuration");
   gtk_window_set_icon_name (GTK_WINDOW (dialog1), "gtk-preferences");
   gtk_window_set_type_hint (GTK_WINDOW (dialog1), GDK_WINDOW_TYPE_HINT_DIALOG);
+  gtk_window_set_resizable(GTK_WINDOW(dialog1), FALSE);
 
   notebook1 = gtk_notebook_new ();
   gtk_widget_show(notebook1);
@@ -241,35 +349,58 @@ GtkWidget* create_dialog1(void) {
   vbox17 = gtk_vbox_new (FALSE, 0);
   
   hbox22 = gtk_hbox_new (FALSE, 0);
-  
-  gtk_box_pack_start (GTK_BOX (vbox17), hbox22, FALSE, TRUE, 0);
 
   {
-    GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
-    GtkWidget * select_percore = yui_range_new(keyfile, "General", "PerCore", percores);
+    GtkWidget * controllerscroll;
+    GtkTreeStore * controllerlist;
+    GtkWidget * controllerlistview;
+    GtkCellRenderer * controllerrenderer;
+    GtkTreeViewColumn * controllercolumn;
+    GtkTreeIter iter;
+    GtkTreePath * path;
 
-    g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", G_CALLBACK(percore_changed), NULL);
+    controllerscroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(controllerscroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
-    gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
+    controllerlist = gtk_tree_store_new(1, G_TYPE_STRING);
+    controllerlistview = gtk_tree_view_new_with_model(GTK_TREE_MODEL(controllerlist));
+    gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(controllerlistview), FALSE);
 
-    gtk_container_set_border_width(GTK_CONTAINER(box_percore), 10);
+    controllerrenderer = gtk_cell_renderer_text_new();
+    controllercolumn = gtk_tree_view_column_new_with_attributes("Controller", controllerrenderer, "text", 0, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW (controllerlistview), controllercolumn);
 
-    gtk_box_pack_start(GTK_BOX (box_percore), select_percore, FALSE, FALSE, 0);
+    gtk_tree_store_append(controllerlist, &iter, NULL);
+    gtk_tree_store_set(controllerlist, &iter, 0, "Pad", -1);
 
-    table4 = yui_input_entry_new(keyfile, "Input", keys1);
+    gtk_tree_store_append(controllerlist, &iter, NULL);
+    gtk_tree_store_set(controllerlist, &iter, 0, "Mouse", -1);
 
-    gtk_box_pack_start (GTK_BOX (box_percore), table4, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(controllerscroll), controllerlistview);
+    gtk_box_pack_start (GTK_BOX (hbox22), controllerscroll, TRUE, TRUE, 0);
 
-    gtk_box_pack_start (GTK_BOX (hbox22), box_percore, TRUE, TRUE, 0);
+    gtk_tree_view_expand_all(GTK_TREE_VIEW(controllerlistview));
+
+    g_signal_connect(controllerlistview, "cursor-changed", G_CALLBACK(pertype_changed), hbox22);
+    perid = g_key_file_get_integer(keyfile, "General", "PerType", NULL);
+    switch(perid)
+    {
+       case PERMOUSE:
+          path = gtk_tree_path_new_from_string("1");
+          break;
+       case PERPAD:
+       default:
+          path = gtk_tree_path_new_from_string("0");
+          break;
+    }
+          
+    gtk_tree_view_set_cursor(GTK_TREE_VIEW(controllerlistview), path, NULL, FALSE);
+    gtk_tree_path_free(path);
   }
-
-  gtk_box_pack_start (GTK_BOX (hbox22), gtk_vseparator_new(), TRUE, TRUE, 0);
-
-  table5 = yui_input_entry_new(keyfile, "Input", keys2);
-
-  gtk_container_set_border_width(GTK_CONTAINER(table5), 10);
   
-  gtk_box_pack_start (GTK_BOX (hbox22), table5, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox17), hbox22, TRUE, TRUE, 0);
+
+  //pertype_display_pad(hbox22);
 
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook1), vbox17, gtk_label_new (_("Input")));
   gtk_widget_show_all(vbox17);

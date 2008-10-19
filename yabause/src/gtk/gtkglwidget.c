@@ -23,6 +23,7 @@
 #include <gtk/gtkgl.h>
 #endif
 #include "../vidsoft.h"
+#include "../peripheral.h"
 
 #define X_NOSCALE 160
 #define Y_NOSCALE 120
@@ -138,7 +139,22 @@ gboolean gonna_hide(gpointer data) {
 	}
 }
 
+extern void * padbits;
+extern GKeyFile * keyfile;
+int oldx = 0;
+int oldy = 0;
+
 static gboolean yui_gl_hide_cursor(GtkWidget * widget, GdkEventMotion * event, gpointer user_data) {
+	if (*((u8 *) padbits) == PERMOUSE) {
+		int x = event->x;
+		int y = event->y;
+		double speed = g_key_file_get_double(keyfile, "General", "MouseSpeed", NULL);
+
+		PerMouseMove(padbits, speed * (x - oldx), -speed * (y - oldy));
+		oldx = x;
+		oldy = y;
+	}
+
 	if (beforehiding == 0) {
 		gdk_window_set_cursor(widget->window, NULL);
 		g_timeout_add(1000, gonna_hide, widget);
@@ -146,6 +162,40 @@ static gboolean yui_gl_hide_cursor(GtkWidget * widget, GdkEventMotion * event, g
 
 	beforehiding = 2;
 
+	return FALSE;
+}
+
+static gboolean yui_gl_button_press(GtkWidget * widget, GdkEventButton * event, gpointer user_data) {
+	if (*((u8 *) padbits) == PERMOUSE) {
+		switch(event->button) {
+			case 1:
+				PerMouseLeftPressed(padbits);
+				break;
+			case 2:
+				PerMouseMiddlePressed(padbits);
+				break;
+			case 3:
+				PerMouseRightPressed(padbits);
+				break;
+		}
+	}
+	return FALSE;
+}
+
+static gboolean yui_gl_button_release(GtkWidget * widget, GdkEventButton * event, gpointer user_data) {
+	if (*((u8 *) padbits) == PERMOUSE) {
+		switch(event->button) {
+			case 1:
+				PerMouseLeftReleased(padbits);
+				break;
+			case 2:
+				PerMouseMiddleReleased(padbits);
+				break;
+			case 3:
+				PerMouseRightReleased(padbits);
+				break;
+		}
+	}
 	return FALSE;
 }
 
@@ -175,9 +225,11 @@ GtkWidget * yui_gl_new(void) {
 
 	g_signal_connect (GTK_OBJECT(drawingArea),"configure_event", GTK_SIGNAL_FUNC(yui_gl_resize),0);
 
-	gtk_widget_set_events(drawingArea, GDK_POINTER_MOTION_MASK);
+	gtk_widget_set_events(drawingArea, GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
 
 	g_signal_connect(GTK_OBJECT(drawingArea), "motion-notify-event", GTK_SIGNAL_FUNC(yui_gl_hide_cursor),0);
+	g_signal_connect(GTK_OBJECT(drawingArea), "button-press-event", GTK_SIGNAL_FUNC(yui_gl_button_press),0);
+	g_signal_connect(GTK_OBJECT(drawingArea), "button-release-event", GTK_SIGNAL_FUNC(yui_gl_button_release),0);
 
 	return drawingArea;
 }

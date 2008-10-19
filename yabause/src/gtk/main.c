@@ -102,6 +102,7 @@ yabauseinit_struct yinit;
 
 const char * key_names[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger",
 	"Start", "A", "B", "C", "X", "Y", "Z", NULL };
+const char * mouse_key_names[] = { "Left", "Middle", "Right", "Start", NULL };
 
 int yui_main(gpointer data) {
 	PERCore->HandleEvents();
@@ -155,11 +156,13 @@ int safe_strcmp(const char * s1, const char * s2) {
 	}
 }
 
+extern void * padbits;
+void * padbits;
+
 gboolean yui_settings_load(void) {
 	int i, tmp;
 	gchar * stmp;
 	gboolean mustRestart = FALSE;
-	PerPad_struct * padbits;
 
 	g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
 
@@ -286,14 +289,28 @@ gboolean yui_settings_load(void) {
 	PerInit(yinit.percoretype);
 
 	PerPortReset();
-	padbits = PerPadAdd(&PORTDATA1);
+	switch(g_key_file_get_integer(keyfile, "General", "PerType", NULL))
+	{
+		case PERMOUSE:
+			padbits = PerMouseAdd(&PORTDATA1);
+			i = 0;
 
-	i = 0;
+			while(mouse_key_names[i]) {
+	  			u32 key = g_key_file_get_integer(keyfile, "Mouse", mouse_key_names[i], 0);
+		  		PerSetKey(key, i + 13, padbits);
+		  		i++;
+			}
+			break;
+		case PERPAD:
+		default:
+			padbits = PerPadAdd(&PORTDATA1);
+			i = 0;
 
-	while(key_names[i]) {
-	  u32 key = g_key_file_get_integer(keyfile, "Input", key_names[i], 0);
-	  PerSetKey(key, i, padbits);
-	  i++;
+			while(key_names[i]) {
+	  			u32 key = g_key_file_get_integer(keyfile, "Input", key_names[i], 0);
+		  		PerSetKey(key, i, padbits);
+		  		i++;
+			}
 	}
 
 	yui_resize(g_key_file_get_integer(keyfile, "General", "Width", 0),
