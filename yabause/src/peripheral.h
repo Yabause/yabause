@@ -34,6 +34,9 @@
  * @{
  */
 
+#define PERPAD   0x02
+#define PERMOUSE 0xE3
+
 #define PERCORE_DEFAULT -1
 #define PERCORE_DUMMY 0
 

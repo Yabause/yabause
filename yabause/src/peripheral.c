@@ -27,6 +27,48 @@ PortData_struct PORTDATA2;
 PerInterface_struct * PERCore = NULL;
 extern PerInterface_struct * PERCoreList[];
 
+typedef struct {
+	u8 name;
+	void (*Press)(void *);
+	void (*Release)(void *);
+} PerBaseConfig_struct;
+
+typedef struct {
+	u32 key;
+	PerBaseConfig_struct * base;
+	void * controller;
+} PerConfig_struct;
+
+#define PERCALLBACK(func) ((void (*) (void *)) func)
+
+PerBaseConfig_struct perkeybaseconfig[] = {
+	{ PERPAD_UP, PERCALLBACK(PerPadUpPressed), PERCALLBACK(PerPadUpReleased) },
+	{ PERPAD_RIGHT, PERCALLBACK(PerPadRightPressed), PERCALLBACK(PerPadRightReleased) },
+	{ PERPAD_DOWN, PERCALLBACK(PerPadDownPressed), PERCALLBACK(PerPadDownReleased) },
+	{ PERPAD_LEFT, PERCALLBACK(PerPadLeftPressed), PERCALLBACK(PerPadLeftReleased) },
+	{ PERPAD_RIGHT_TRIGGER, PERCALLBACK(PerPadRTriggerPressed), PERCALLBACK(PerPadRTriggerReleased) },
+	{ PERPAD_LEFT_TRIGGER, PERCALLBACK(PerPadLTriggerPressed), PERCALLBACK(PerPadLTriggerReleased) },
+	{ PERPAD_START, PERCALLBACK(PerPadStartPressed), PERCALLBACK(PerPadStartReleased) },
+	{ PERPAD_A, PERCALLBACK(PerPadAPressed), PERCALLBACK(PerPadAReleased) },
+	{ PERPAD_B, PERCALLBACK(PerPadBPressed), PERCALLBACK(PerPadBReleased) },
+        { PERPAD_C, PERCALLBACK(PerPadCPressed), PERCALLBACK(PerPadCReleased) },
+	{ PERPAD_X, PERCALLBACK(PerPadXPressed), PERCALLBACK(PerPadXReleased) },
+	{ PERPAD_Y, PERCALLBACK(PerPadYPressed), PERCALLBACK(PerPadYReleased) },
+	{ PERPAD_Z, PERCALLBACK(PerPadZPressed), PERCALLBACK(PerPadZReleased) },
+};
+
+PerBaseConfig_struct permousebaseconfig[] = {
+	{ PERMOUSE_LEFT, PERCALLBACK(PerMouseLeftPressed), PERCALLBACK(PerMouseLeftReleased) },
+	{ PERMOUSE_MIDDLE, PERCALLBACK(PerMouseMiddlePressed), PERCALLBACK(PerMouseMiddleReleased) },
+	{ PERMOUSE_RIGHT, PERCALLBACK(PerMouseRightPressed), PERCALLBACK(PerMouseRightReleased) },
+	{ PERMOUSE_START, PERCALLBACK(PerMouseStartPressed), PERCALLBACK(PerMouseStartReleased) },
+};
+
+static u32 perkeyconfigsize = 0;
+static PerConfig_struct * perkeyconfig = NULL;
+
+static void PerUpdateConfig(PerBaseConfig_struct * baseconfig, int nelems, void * controller);
+
 //////////////////////////////////////////////////////////////////////////////
 
 int PerInit(int coreid) {
@@ -368,6 +410,7 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
    int peroffset=1;
    u8 size;
    int current = 1;
+   void * controller;
 
    if (pernum == 0xF)
      return NULL;
@@ -415,12 +458,12 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
    // of port data
    switch (perid)
    {
-      case 0x02:
+      case PERPAD:
          port->data[peroffset] = 0xFF;
          port->data[peroffset+1] = 0xFF;
          port->size = peroffset+2;
          break;
-      case 0xE3:
+      case PERMOUSE:
          port->data[peroffset] = 0;
          port->data[peroffset + 1] = 0;
          port->data[peroffset + 2] = 0;
@@ -438,7 +481,17 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
       }
    }
 
-   return (port->data + (peroffset - 1));
+   controller = (port->data + (peroffset - 1));
+   switch (perid)
+   {
+      case PERPAD:
+         PerUpdateConfig(perkeybaseconfig, 13, controller);
+         break;
+      case PERMOUSE:
+         PerUpdateConfig(permousebaseconfig, 4, controller);
+         break;
+   }
+   return controller;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -467,46 +520,6 @@ void PerFlush(PortData_struct * port)
 
 //////////////////////////////////////////////////////////////////////////////
 
-typedef struct {
-	u8 name;
-	void (*Press)(void *);
-	void (*Release)(void *);
-} PerBaseConfig_struct;
-
-typedef struct {
-	u32 key;
-	PerBaseConfig_struct * base;
-	void * controller;
-} PerConfig_struct;
-
-#define PERCALLBACK(func) ((void (*) (void *)) func)
-
-PerBaseConfig_struct perkeybaseconfig[] = {
-	{ PERPAD_UP, PERCALLBACK(PerPadUpPressed), PERCALLBACK(PerPadUpReleased) },
-	{ PERPAD_RIGHT, PERCALLBACK(PerPadRightPressed), PERCALLBACK(PerPadRightReleased) },
-	{ PERPAD_DOWN, PERCALLBACK(PerPadDownPressed), PERCALLBACK(PerPadDownReleased) },
-	{ PERPAD_LEFT, PERCALLBACK(PerPadLeftPressed), PERCALLBACK(PerPadLeftReleased) },
-	{ PERPAD_RIGHT_TRIGGER, PERCALLBACK(PerPadRTriggerPressed), PERCALLBACK(PerPadRTriggerReleased) },
-	{ PERPAD_LEFT_TRIGGER, PERCALLBACK(PerPadLTriggerPressed), PERCALLBACK(PerPadLTriggerReleased) },
-	{ PERPAD_START, PERCALLBACK(PerPadStartPressed), PERCALLBACK(PerPadStartReleased) },
-	{ PERPAD_A, PERCALLBACK(PerPadAPressed), PERCALLBACK(PerPadAReleased) },
-	{ PERPAD_B, PERCALLBACK(PerPadBPressed), PERCALLBACK(PerPadBReleased) },
-        { PERPAD_C, PERCALLBACK(PerPadCPressed), PERCALLBACK(PerPadCReleased) },
-	{ PERPAD_X, PERCALLBACK(PerPadXPressed), PERCALLBACK(PerPadXReleased) },
-	{ PERPAD_Y, PERCALLBACK(PerPadYPressed), PERCALLBACK(PerPadYReleased) },
-	{ PERPAD_Z, PERCALLBACK(PerPadZPressed), PERCALLBACK(PerPadZReleased) },
-};
-
-PerBaseConfig_struct permousebaseconfig[] = {
-	{ PERMOUSE_LEFT, PERCALLBACK(PerMouseLeftPressed), PERCALLBACK(PerMouseLeftReleased) },
-	{ PERMOUSE_MIDDLE, PERCALLBACK(PerMouseMiddlePressed), PERCALLBACK(PerMouseMiddleReleased) },
-	{ PERMOUSE_RIGHT, PERCALLBACK(PerMouseRightPressed), PERCALLBACK(PerMouseRightReleased) },
-	{ PERMOUSE_START, PERCALLBACK(PerMouseStartPressed), PERCALLBACK(PerMouseStartReleased) },
-};
-
-static u32 perkeyconfigsize = 0;
-static PerConfig_struct * perkeyconfig = NULL;
-
 void PerKeyDown(u32 key)
 {
 	int i = 0;
@@ -520,6 +533,8 @@ void PerKeyDown(u32 key)
 		i++;
 	}
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 void PerKeyUp(u32 key)
 {
@@ -535,6 +550,8 @@ void PerKeyUp(u32 key)
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 void PerSetKey(u32 key, u8 name, void * controller)
 {
 	int i = 0;
@@ -549,6 +566,8 @@ void PerSetKey(u32 key, u8 name, void * controller)
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 void PerPortReset(void)
 {
         PORTDATA1.data[0] = 0xF0;
@@ -562,46 +581,36 @@ void PerPortReset(void)
 	perkeyconfig = NULL;
 }
 
-PerPad_struct * PerPadAdd(PortData_struct * port)
-{
-	u32 oldsize = perkeyconfigsize;
-	u32 i, j;
-	PerPad_struct * pad = PerAddPeripheral(port, 0x02);
+//////////////////////////////////////////////////////////////////////////////
 
-	if (!pad) return NULL;
-
-	perkeyconfigsize += 13;
-	perkeyconfig = realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
-	j = 0;
-	for(i = oldsize;i < perkeyconfigsize;i++)
-	{
-		perkeyconfig[i].base = perkeybaseconfig + j;
-		perkeyconfig[i].controller = pad;
-		j++;
-	}
-
-	return pad;
-}
-
-PerMouse_struct * PerMouseAdd(PortData_struct * port)
+void PerUpdateConfig(PerBaseConfig_struct * baseconfig, int nelems, void * controller)
 {
    u32 oldsize = perkeyconfigsize;
    u32 i, j;
-   PerMouse_struct * mouse = PerAddPeripheral(port, 0xE3);
 
-   if (!mouse) return NULL;
-
-   perkeyconfigsize += 4;
+   perkeyconfigsize += nelems;
    perkeyconfig = realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
    j = 0;
    for(i = oldsize;i < perkeyconfigsize;i++)
    {
-      perkeyconfig[i].base = permousebaseconfig + j;
-      perkeyconfig[i].controller = mouse;
+      perkeyconfig[i].base = baseconfig + j;
+      perkeyconfig[i].controller = controller;
       j++;
    }
+}
 
-   return mouse;
+//////////////////////////////////////////////////////////////////////////////
+
+PerPad_struct * PerPadAdd(PortData_struct * port)
+{
+   return PerAddPeripheral(port, PERPAD);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+PerMouse_struct * PerMouseAdd(PortData_struct * port)
+{
+   return PerAddPeripheral(port, PERMOUSE);
 }
 
 //////////////////////////////////////////////////////////////////////////////
