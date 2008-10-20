@@ -1,3 +1,11 @@
+0.9.7 -> 0.9.8
+ vdp2:
+  - Fixed a bug in software renderer with rotating
+    backgrounds.
+ gtk port:
+  - Interfaced mouse emulation.
+ general:
+  - Added mouse emulation.
 0.9.6 -> 0.9.7
  vdp1:
   - Added clipping for line-based drawing to software renderer.
