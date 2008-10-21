@@ -27,6 +27,10 @@
 #define SH2CORE_DEFAULT     -1
 #define MAX_INTERRUPTS 50
 
+#ifdef MACH
+#undef MACH
+#endif
+
 typedef struct
 {
    u32 R[16];
