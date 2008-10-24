@@ -8,4 +8,4 @@ yabause_SOURCES = \
 yabause_LDFLAGS = -mwindows -mthreads
 yabause_LDADD = ../libyabause.a resource.o -lmingw32 -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -ldxguid -ldinput8 -ldsound -ldxerr8
 resource.o: resource.rc resource.h
-	$(WINDRES) $< -o $@
+	$(WINDRES) $< -o $@ -I$(srcdir)
