@@ -288,12 +288,12 @@ AC_ARG_ENABLE(mic-shaders, AC_HELP_STRING(--enable-mic-shaders, enable OpenGL sh
 
 AC_CONFIG_FILES([Makefile
 	l10n/Makefile
-	doc/Makefile
 	doc/Doxyfile
 	src/Makefile
 	src/carbon/Makefile
 	src/dreamcast/Makefile
 	src/gtk/Makefile
+	src/gtk/doc/Makefile
 	src/qt/Makefile
 	src/qt/yabause.pro
 	src/wii/Makefile

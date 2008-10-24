@@ -1,3 +1,4 @@
+SUBDIRS = doc
 Applicationsdir = $(datadir)/applications
 Applications_DATA = yabause.desktop
 pixmapdir = $(datadir)/pixmaps
