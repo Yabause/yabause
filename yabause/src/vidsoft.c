@@ -2595,8 +2595,8 @@ void VIDSoftVdp1UserClipping(void)
 
 void VIDSoftVdp1SystemClipping(void)
 {
-   Vdp1Regs->systemclipX1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
-   Vdp1Regs->systemclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
+   Vdp1Regs->systemclipX1 = 0;
+   Vdp1Regs->systemclipY1 = 0;
    Vdp1Regs->systemclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
    Vdp1Regs->systemclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
 
