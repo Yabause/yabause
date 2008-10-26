@@ -2569,6 +2569,11 @@ void VIDSoftVdp1UserClipping(void)
    Vdp1Regs->userclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
    Vdp1Regs->userclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
 
+   vdp1clipxstart = Vdp1Regs->userclipX1;
+   vdp1clipxend = Vdp1Regs->userclipX2;
+   vdp1clipystart = Vdp1Regs->userclipY1;
+   vdp1clipyend = Vdp1Regs->userclipY2;
+
    // This needs work
    if (vdp1clipxstart > Vdp1Regs->systemclipX1)
       vdp1clipxstart = Vdp1Regs->userclipX1;
