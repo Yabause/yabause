@@ -23,8 +23,9 @@ TARGET = yabause.exe
 CC = gcc
 RC = windres
 #DDEFINES=-DDEBUG
+VERSION=0.9.7
 DDEFINES=
-VDEFINES=-DPACKAGE=\"yabause-win\" -DVERSION=\"0.9.7\" -DHAVE_LIBGLUT -DHAVE_LIBGL -D_WIN32_IE=0x0400
+VDEFINES=-DPACKAGE=\"yabause-win\" -DVERSION=\"$(VERSION)\" -DHAVE_LIBGLUT -DHAVE_LIBGL -D_WIN32_IE=0x0400
 CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -fno-strict-aliasing -Wall
 #CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fno-strict-aliasing -Wall -g
 CFLAGS2= -fomit-frame-pointer -fno-strict-aliasing -Wall 
@@ -45,6 +46,9 @@ windows/resource.o: windows/resource.rc windows/resource.h
 clean:
 	rm -f $(OBJS)
 	rm -f $(TARGET)
+
+installer:
+	makensis "/XOutFile ..\..\yabause-$(VERSION)-win.exe" windows\installer\installer.nsi
 
 cdbase.o: cdbase.h
 cs0.o: cs0.h core.h
