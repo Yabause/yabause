@@ -50,6 +50,10 @@ clean:
 installer:
 	makensis "/XOutFile ..\..\yabause-$(VERSION)-win.exe" windows\installer\installer.nsi
 
+release:
+	zip -9 yabause-$(VERSION)-win.zip * -i *.dll -i yabause.exe
+	cd .. && zip -9 src\yabause-$(VERSION)-win.zip * -i AUTHORS -i Changelog -i COPYING -i README -i README.WIN
+
 cdbase.o: cdbase.h
 cs0.o: cs0.h core.h
 cs1.o: cs1.h core.h
