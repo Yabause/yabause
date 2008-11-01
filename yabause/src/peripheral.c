@@ -110,7 +110,7 @@ void PerDeInit(void) {
 
 void PerPadUpPressed(PerPad_struct * pad) {
    *pad->padbits &= 0xEF;
-   LOG("Up\n");
+   SMPCLOG("Up\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -123,7 +123,7 @@ void PerPadUpReleased(PerPad_struct * pad) {
 
 void PerPadDownPressed(PerPad_struct * pad) {
    *pad->padbits &= 0xDF;
-   LOG("Down\n");
+   SMPCLOG("Down\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -136,7 +136,7 @@ void PerPadDownReleased(PerPad_struct * pad) {
 
 void PerPadRightPressed(PerPad_struct * pad) {
    *pad->padbits &= 0x7F;
-   LOG("Right\n");
+   SMPCLOG("Right\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -149,7 +149,7 @@ void PerPadRightReleased(PerPad_struct * pad) {
 
 void PerPadLeftPressed(PerPad_struct * pad) {
    *pad->padbits &= 0xBF;
-   LOG("Left\n");
+   SMPCLOG("Left\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -162,7 +162,7 @@ void PerPadLeftReleased(PerPad_struct * pad) {
 
 void PerPadStartPressed(PerPad_struct * pad) {
    *pad->padbits &= 0xF7;
-   LOG("Start\n");
+   SMPCLOG("Start\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -175,7 +175,7 @@ void PerPadStartReleased(PerPad_struct * pad) {
 
 void PerPadAPressed(PerPad_struct * pad) {
    *pad->padbits &= 0xFB;
-   LOG("A\n");
+   SMPCLOG("A\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -188,7 +188,7 @@ void PerPadAReleased(PerPad_struct * pad) {
 
 void PerPadBPressed(PerPad_struct * pad) {
    *pad->padbits &= 0xFE;
-   LOG("B\n");
+   SMPCLOG("B\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -201,7 +201,7 @@ void PerPadBReleased(PerPad_struct * pad) {
 
 void PerPadCPressed(PerPad_struct * pad) {
    *pad->padbits &= 0xFD;
-   LOG("C\n");
+   SMPCLOG("C\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -214,7 +214,7 @@ void PerPadCReleased(PerPad_struct * pad) {
 
 void PerPadXPressed(PerPad_struct * pad) {
    *(pad->padbits + 1) &= 0xBF;
-   LOG("X\n");
+   SMPCLOG("X\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -227,7 +227,7 @@ void PerPadXReleased(PerPad_struct * pad) {
 
 void PerPadYPressed(PerPad_struct * pad) {
    *(pad->padbits + 1) &= 0xDF;
-   LOG("Y\n");
+   SMPCLOG("Y\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -240,7 +240,7 @@ void PerPadYReleased(PerPad_struct * pad) {
 
 void PerPadZPressed(PerPad_struct * pad) {
    *(pad->padbits + 1) &= 0xEF;
-   LOG("Z\n");
+   SMPCLOG("Z\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -253,7 +253,7 @@ void PerPadZReleased(PerPad_struct * pad) {
 
 void PerPadRTriggerPressed(PerPad_struct * pad) {
    *(pad->padbits + 1) &= 0x7F;
-   LOG("Right Trigger\n");
+   SMPCLOG("Right Trigger\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -266,7 +266,7 @@ void PerPadRTriggerReleased(PerPad_struct * pad) {
 
 void PerPadLTriggerPressed(PerPad_struct * pad) {
    *(pad->padbits + 1) &= 0xF7;
-   LOG("Left Trigger\n");
+   SMPCLOG("Left Trigger\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////

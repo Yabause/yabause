@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
 	int i;
 #endif
 	LogStart();
-	LogChangeOutput( DEBUG_CALLBACK, YuiErrorMsg );
+	LogChangeOutput( DEBUG_STDERR, NULL );
 	inifile = g_build_filename(g_get_user_config_dir(), "yabause.ini", NULL);
 
 	if (! g_file_test(inifile, G_FILE_TEST_EXISTS)) {
