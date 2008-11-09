@@ -38,6 +38,8 @@
 #define IDD_SMPCDEBUG                   133
 #define IDD_DIALOG1                     134
 #define IDD_VDP2VIEWER                  134
+#define IDD_PADCONFIG1                  135
+#define IDD_MOUSECONFIG                 135
 #define IDC_EDITTEXT1                   1001
 #define IDC_DISCTYPECB                  1001
 #define IDC_VIDEOCORECB                 1001

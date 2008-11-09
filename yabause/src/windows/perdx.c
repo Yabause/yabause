@@ -24,6 +24,7 @@
 #include "../vdp1.h"
 #include "../vdp2.h"
 #include "../yui.h"
+#include "settings.h"
 #include "resource.h"
 
 int PERDXInit(void);
@@ -51,35 +52,27 @@ u32 numpads=12;
 PerPad_struct *pad[12];
 padconf_struct paddevice[12];
 
-const int pad_names[] = {
-PERPAD_UP,
-PERPAD_DOWN,
-PERPAD_LEFT,
-PERPAD_RIGHT,
-PERPAD_A,
-PERPAD_B,
-PERPAD_C,
-PERPAD_X,
-PERPAD_Y,
-PERPAD_Z,
-PERPAD_LEFT_TRIGGER,
-PERPAD_RIGHT_TRIGGER,
-PERPAD_START
-};
-
-const char *pad_names2[] = {
+const char *pad_names[] = {
 "Up",
+"Right",
 "Down",
 "Left",
-"Right",
+"R",
+"L",
+"Start",
 "A",
 "B",
 "C",
 "X",
 "Y",
 "Z",
-"L",
-"R",
+NULL
+};
+
+const char *mouse_names[] = {
+"A",
+"B",
+"C",
 "Start",
 NULL
 };
@@ -224,6 +217,8 @@ void PERDXLoadDevices(char *inifilename)
    int i2;
    int buttonid;
    DIPROPDWORD dipdw;
+   int id;
+   DWORD coopflags=DISCL_FOREGROUND | DISCL_NONEXCLUSIVE;
 
    if (!PERCore)
       return;
@@ -238,7 +233,6 @@ void PERDXLoadDevices(char *inifilename)
       if (GetPrivateProfileString(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
          continue;
 
-
       if (GetPrivateProfileString(string1, "EmulateType", "0", string2, MAX_PATH, inifilename))
       {
          paddevice[i].emulatetype = atoi(string2);
@@ -248,7 +242,7 @@ void PERDXLoadDevices(char *inifilename)
 
       if (paddevice[i].lpDIDevice)
       {
-         // Free the default keyboard
+         // Free the default keyboard, etc.
          IDirectInputDevice8_Unacquire(paddevice[i].lpDIDevice);
          IDirectInputDevice8_Release(paddevice[i].lpDIDevice);
       }
@@ -276,6 +270,7 @@ void PERDXLoadDevices(char *inifilename)
          if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIKeyboard) != DI_OK)
             continue;
          paddevice[i].type = TYPE_KEYBOARD;
+         coopflags |= DISCL_NOWINKEY;
       }       
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
                GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_JOYSTICK)
@@ -284,9 +279,17 @@ void PERDXLoadDevices(char *inifilename)
             continue;
          paddevice[i].type = TYPE_JOYSTICK;
       }
+      else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
+      {
+         if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIMouse2) != DI_OK)
+            continue;
+         paddevice[i].type = TYPE_MOUSE;
+         coopflags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
+      }
+
 
       if (IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[i], YabWin,
-          DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY) != DI_OK)
+          coopflags) != DI_OK)
          continue;
 
       dipdw.diph.dwSize = sizeof(DIPROPDWORD);
@@ -301,19 +304,47 @@ void PERDXLoadDevices(char *inifilename)
 
       IDirectInputDevice8_Acquire(lpDIDevice[i]);
 
-      // Make sure we're added to the smpc list 
+      switch(paddevice[i].emulatetype)
+      {
+         case 1: // Standard Pad
+            id = PERPAD;
+            break;
+         case 2: // Analog Pad
+         case 3: // Stunner
+         case 5: // Keyboard
+            id = 0;
+            break;
+         case 4: // Mouse
+            id = PERMOUSE;
+            break;
+         default: break;
+      }
+
+      // Make sure we're added to the smpc list
       if (i < 6)
-         pad[i] = PerPadAdd(&PORTDATA1);
+         pad[i] = PerAddPeripheral(&PORTDATA1, id);
       else
-         pad[i] = PerPadAdd(&PORTDATA2);
+         pad[i] = PerAddPeripheral(&PORTDATA2, id);
 
       // Now that we're all setup, let's fetch the controls from the ini
       sprintf(string1, "Peripheral%d", (int)i+1);
 
-      for (i2 = 0; i2 < 13; i2++)
+      if (paddevice[i].emulatetype != 3 &&
+          paddevice[i].emulatetype != 4)
       {
-         buttonid = GetPrivateProfileInt(string1, pad_names2[i2], 0, inifilename);
-         PerSetKey(buttonid, pad_names[i2], pad[i]);
+         for (i2 = 0; i2 < 13; i2++)
+         {
+            buttonid = GetPrivateProfileInt(string1, pad_names[i2], 0, inifilename);
+            PerSetKey(buttonid, i2, pad[i]);
+         }
+      }
+      else if (paddevice[i].emulatetype == 4)
+      {
+         for (i2 = 0; i2 < 4; i2++)
+         {
+            buttonid = GetPrivateProfileInt(string1, mouse_names[i2], 0, inifilename);
+            PerSetKey(buttonid, PERMOUSE_LEFT+i2, pad[i]);
+         }
       }
    }
 }
@@ -403,7 +434,7 @@ void PollKeys(void)
             for (i2 = 0; i2 < size; i2++)
             {
                // X Axis
-               if (didod[i2].dwOfs == 0)
+               if (didod[i2].dwOfs == DIJOFS_X)
                {
                   if (didod[i2].dwData < 0x3FFF)
                   {
@@ -422,7 +453,7 @@ void PollKeys(void)
                   }
                }
                // Y Axis
-               else if (didod[i2].dwOfs == 4)
+               else if (didod[i2].dwOfs == DIJOFS_Y)
                {
                   if (didod[i2].dwData < 0x3FFF)
                   {
@@ -439,8 +470,8 @@ void PollKeys(void)
                      PerKeyUp(PAD_DIR_AXISUP);
                      PerKeyUp(PAD_DIR_AXISDOWN);
                   }
-               }
-               else if (didod[i2].dwOfs == 0x20)
+               } 
+               else if (didod[i2].dwOfs == DIJOFS_POV(0))
                {
                   // POV Center
                   if (LOWORD(didod[i2].dwData) == 0xFFFF)
@@ -503,7 +534,7 @@ void PollKeys(void)
                      PerKeyDown(PAD_DIR_POVUP);
                   }
                }
-               else if (didod[i2].dwOfs >= 0x30 && didod[i2].dwOfs <= 0xFF)
+               else if (didod[i2].dwOfs >= DIJOFS_BUTTON(0) && didod[i2].dwOfs <= DIJOFS_BUTTON(127))
                {
                   if (didod[i2].dwData & 0x80)
                      PerKeyDown(didod[i2].dwOfs);
@@ -514,6 +545,23 @@ void PollKeys(void)
             break;
          }
          case TYPE_MOUSE:
+            for (i2 = 0; i2 < size; i2++)
+            {
+               if (didod[i2].dwOfs == DIMOFS_X)
+                  // X Axis                  
+                  PerMouseMove((PerMouse_struct *)pad[i], (s32)didod[i2].dwData, 0);
+               else if (didod[i2].dwOfs == DIMOFS_Y)
+                  // Y Axis
+                  PerMouseMove((PerMouse_struct *)pad[i], 0, 0-(s32)didod[i2].dwData);
+               else if (didod[i2].dwOfs >= DIMOFS_BUTTON0 && didod[i2].dwOfs <= DIMOFS_BUTTON7)
+               {
+                  // Mouse Buttons
+                  if (didod[i2].dwData & 0x80)
+                     PerKeyDown(didod[i2].dwOfs-DIMOFS_BUTTON0);
+                  else
+                     PerKeyUp(didod[i2].dwOfs-DIMOFS_BUTTON0);
+               }
+            }
             break;
          default: break;
       }
@@ -534,7 +582,7 @@ int PERDXHandleEvents(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-BOOL CALLBACK EnumPeripheralsCallback2 (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
+BOOL CALLBACK EnumPeripheralsCallbackGamepad (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
    if (GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_GAMEPAD ||
        GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_JOYSTICK ||
@@ -550,7 +598,35 @@ BOOL CALLBACK EnumPeripheralsCallback2 (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PERDXListDevices(HWND control)
+BOOL CALLBACK EnumPeripheralsCallbackKeyboard (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
+{
+   if (GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_KEYBOARD)
+   {
+      SendMessage((HWND)pvRef, CB_ADDSTRING, 0, (LPARAM)lpddi->tszInstanceName);
+      memcpy(&GUIDDevice[numguids], &lpddi->guidInstance, sizeof(GUID));
+      numguids++;
+   }
+
+   return DIENUM_CONTINUE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+BOOL CALLBACK EnumPeripheralsCallbackMouse (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
+{
+   if (GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_MOUSE)
+   {
+      SendMessage((HWND)pvRef, CB_ADDSTRING, 0, (LPARAM)lpddi->tszInstanceName);
+      memcpy(&GUIDDevice[numguids], &lpddi->guidInstance, sizeof(GUID));
+      numguids++;
+   }
+
+   return DIENUM_CONTINUE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PERDXListDevices(HWND control, int emulatetype)
 {
    LPDIRECTINPUT8 lpDI8temp = NULL;
 
@@ -563,8 +639,24 @@ void PERDXListDevices(HWND control)
    SendMessage(control, CB_RESETCONTENT, 0, 0);
    SendMessage(control, CB_ADDSTRING, 0, (LPARAM)"None");
 
-   IDirectInput8_EnumDevices(lpDI8temp, DI8DEVCLASS_ALL, EnumPeripheralsCallback2,
-                             (LPVOID)control, DIEDFL_ATTACHEDONLY);
+   switch(emulatetype)
+   {
+      case EMUTYPE_STANDARDPAD:
+      case EMUTYPE_ANALOGPAD:
+         IDirectInput8_EnumDevices(lpDI8temp, DI8DEVCLASS_ALL, EnumPeripheralsCallbackGamepad,
+                                   (LPVOID)control, DIEDFL_ATTACHEDONLY);
+         break;
+      case EMUTYPE_STUNNER:
+      case EMUTYPE_MOUSE:
+         IDirectInput8_EnumDevices(lpDI8temp, DI8DEVCLASS_ALL, EnumPeripheralsCallbackMouse,
+                                   (LPVOID)control, DIEDFL_ATTACHEDONLY);
+         break;
+      case EMUTYPE_KEYBOARD:
+         IDirectInput8_EnumDevices(lpDI8temp, DI8DEVCLASS_ALL, EnumPeripheralsCallbackKeyboard,
+                                   (LPVOID)control, DIEDFL_ATTACHEDONLY);
+         break;
+      default: break;
+   }
 
    IDirectInput8_Release(lpDI8temp);
 }
@@ -623,6 +715,15 @@ void ConvertJoyIDToName(int buttonid, char *string)
    }
 
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ConvertMouseIDToName(int buttonid, char *string)
+{
+   sprintf(string, "Button %d", buttonid+1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
 
 int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *inifilename)
 {
@@ -717,7 +818,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
 
          for (i = 0; i < 13; i++)
          {
-            buttonid = GetPrivateProfileInt(string1, pad_names2[i], 0, inifilename);
+            buttonid = GetPrivateProfileInt(string1, pad_names[i], 0, inifilename);
             controlmap[i] = buttonid;
             ConvertKBIDToName(buttonid, tempstr);
             SetDlgItemText(hWnd, idlist[i], tempstr);
@@ -730,9 +831,19 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
 
          for (i = 0; i < 13; i++)
          {
-            buttonid = GetPrivateProfileInt(string1, pad_names2[i], 0, inifilename);
+            buttonid = GetPrivateProfileInt(string1, pad_names[i], 0, inifilename);
             controlmap[i] = buttonid;
             ConvertJoyIDToName(buttonid, tempstr);
+            SetDlgItemText(hWnd, idlist[i], tempstr);
+         }
+      }
+      else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
+      {
+         for (i = 0; i < 13; i++)
+         {
+            buttonid = GetPrivateProfileInt(string1, pad_names[i], 0, inifilename);
+            controlmap[i] = buttonid;
+            ConvertMouseIDToName(buttonid, tempstr);
             SetDlgItemText(hWnd, idlist[i], tempstr);
          }
       }
@@ -794,6 +905,15 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
          return -1;
       }
    }
+   else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
+   {
+      if (IDirectInputDevice8_SetDataFormat(lpDIDevicetemp, &c_dfDIMouse2) != DI_OK)
+      {
+         IDirectInputDevice8_Release(lpDIDevicetemp);       
+         IDirectInput8_Release(lpDI8temp);
+         return -1;
+      }
+   }       
 
    if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_BUTTONCONFIG), hWnd, (DLGPROC)ButtonConfigDlgProc, (LPARAM)lpDIDevicetemp) == TRUE)
    {
@@ -816,7 +936,7 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
                GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_JOYSTICK)
       {
-         if (nextpress.dwOfs == 0)
+         if (nextpress.dwOfs == DIJOFS_X)
          {
             if (nextpress.dwData <= 0x8000)
             {
@@ -829,7 +949,7 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
                buttonid = 0x01;
             }
          }
-         else if (nextpress.dwOfs == 4)
+         else if (nextpress.dwOfs == DIJOFS_Y)
          {
             if (nextpress.dwData <= 0x8000)
             {
@@ -842,7 +962,7 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
                buttonid = 0x03;
             }
          }
-         else if (nextpress.dwOfs == 0x20)
+         else if (nextpress.dwOfs == DIJOFS_POV(0))
          {
             if (nextpress.dwData < 9000)
             {
@@ -865,11 +985,16 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
                buttonid = 0x07;
             }
          }
-         else if (nextpress.dwOfs >= 0x30)
+         else if (nextpress.dwOfs >= DIJOFS_BUTTON(0) && nextpress.dwOfs <= DIJOFS_BUTTON(127))
          {
             sprintf(buttonname, "Button %d", (int)(nextpress.dwOfs - 0x2F));
             buttonid = nextpress.dwOfs;
          }
+      }
+      else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
+      {
+         buttonid = nextpress.dwOfs-DIMOFS_BUTTON0;
+         sprintf(buttonname, "Button %d", buttonid+1);
       }
    }
 
@@ -1028,6 +1153,22 @@ LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      if (didod[i].dwData & 0x80)
                      {
                         // We're done. time to bail
+                        EndDialog(hDlg, TRUE);
+                        memcpy(&nextpress, &didod[i], sizeof(DIDEVICEOBJECTDATA));
+                        break;
+                     }
+                  }
+               }
+            }
+            else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
+            {
+               for (i = 0; i < size; i++)
+               {
+                  // Make sure it's a button press
+                  if (didod[i].dwOfs >= DIMOFS_BUTTON0 && didod[i].dwOfs <= DIMOFS_BUTTON7)
+                  {
+                     if (didod[i].dwData & 0x80)
+                     {
                         EndDialog(hDlg, TRUE);
                         memcpy(&nextpress, &didod[i], sizeof(DIDEVICEOBJECTDATA));
                         break;

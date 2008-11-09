@@ -921,7 +921,6 @@ int YuiInit(LPSTR lpCmdLine)
          usefullscreenonstartup = TRUE;
       else if (strstr(argv, "--binary="))
       {
-         int count;
          char *p;
         
          if (!ParseStringEmbeddedSpaces2(filename, argv))
@@ -1146,6 +1145,9 @@ YabauseSetup:
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
+   DIDEVCAPS didc;
+   int i;
+
    switch (uMsg)
    {
       case WM_COMMAND:
@@ -1465,18 +1467,46 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
              SpeedThrottleDisable();
          return 0L;
       }
-#ifndef USETHREADS
       case WM_ENTERMENULOOP:
       {
+#ifndef USETHREADS
          ScspMuteAudio();
+#endif
+         for (i = 0; i < 12; i++)
+         {
+            if (paddevice[i].lpDIDevice)
+            {
+               didc.dwSize = sizeof(DIDEVCAPS);
+
+               if (IDirectInputDevice8_GetCapabilities(paddevice[i].lpDIDevice, &didc) != DI_OK)
+                  continue;
+
+               if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
+                  IDirectInputDevice8_Unacquire(paddevice[i].lpDIDevice);
+            }
+         }
          return 0L;
       }
       case WM_EXITMENULOOP:
       {
+#ifndef USETHREADS
          ScspUnMuteAudio();
+#endif
+         for (i = 0; i < 12; i++)
+         {
+            if (paddevice[i].lpDIDevice)
+            {
+               didc.dwSize = sizeof(DIDEVCAPS);
+
+               if (IDirectInputDevice8_GetCapabilities(paddevice[i].lpDIDevice, &didc) != DI_OK)
+                  continue;
+
+               if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
+                  IDirectInputDevice8_Acquire(paddevice[i].lpDIDevice);
+            }
+         }
          return 0L;
       }
-#endif
       case WM_MOVE:
       {
          RECT rect;

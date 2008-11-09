@@ -96,6 +96,9 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam);
 
+LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam);
+
 LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 
@@ -1260,6 +1263,30 @@ LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+int ConvertEmulateTypeSelStringToID(HWND hDlg, int id)
+{
+   char text[MAX_PATH];
+
+   ComboBox_GetLBText(GetDlgItem(hDlg, id),
+                      ComboBox_GetCurSel(GetDlgItem(hDlg, id)),
+                      text);
+
+   if (strcmp(text, "Standard Pad") == 0)
+      return EMUTYPE_STANDARDPAD;
+   else if (strcmp(text, "Analog Pad") == 0)
+      return EMUTYPE_ANALOGPAD;
+   else if (strcmp(text, "Stunner") == 0)
+      return EMUTYPE_STUNNER;
+   else if (strcmp(text, "Mouse") == 0)
+      return EMUTYPE_MOUSE;
+   else if (strcmp(text, "Keyboard") == 0)
+      return EMUTYPE_KEYBOARD;
+   else
+      return EMUTYPE_NONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int configpadnum=0;
 
 LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
@@ -1292,7 +1319,9 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 /*
             SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Analog Pad");
             SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Stunner");
+*/
             SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Mouse");
+/*
             SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Keyboard");
 */
             SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_RESETCONTENT, 0, 0);
@@ -1301,13 +1330,14 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 /*
             SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Analog Pad");
             SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Stunner");
+*/
             SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Mouse");
+/*
             SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Keyboard");
 */
-            // finish me
             SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_SETCURSEL, 0, 0);
             EnableWindow(GetDlgItem(hDlg, IDC_PORT1ATYPECB+i), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_PORT1ACFGPB+i), FALSE);            
+            EnableWindow(GetDlgItem(hDlg, IDC_PORT1ACFGPB+i), FALSE);
 
             SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_SETCURSEL, 0, 0);
             EnableWindow(GetDlgItem(hDlg, IDC_PORT2ATYPECB+i), FALSE);
@@ -1334,11 +1364,15 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             if (paddevice[j].emulatetype != 0)
             {
-               int id;
+               int id=0;
                switch (pad[j]->perid)
                {
-                  case 0x02: // Standard Pad
+                  case PERPAD:
                      id = 1;
+                     break;
+                  case PERMOUSE:
+                     id = 2;
+                     break;
                   default: break;
                }
 
@@ -1419,7 +1453,12 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                switch (ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_PORT1ATYPECB+LOWORD(wParam)-IDC_PORT1ACFGPB)))
                {
                   case 1:
+                     // Standard Pad
                      DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_PADCONFIG), hDlg, (DLGPROC)PadConfigDlgProc, (LPARAM)LOWORD(wParam)-IDC_PORT1ACFGPB);
+                     break;
+                  case 2:
+                     // Mouse
+                     DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_MOUSECONFIG), hDlg, (DLGPROC)MouseConfigDlgProc, (LPARAM)LOWORD(wParam)-IDC_PORT1ACFGPB);
                      break;
                   default: break;
                }
@@ -1427,12 +1466,12 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDOK:
             {
                u32 i;
-               char string1[13], string2[3];
+               char string1[13], string2[32];
 
                for (i = 0; i < numpads; i++)
                {
-                  sprintf(string1, "Peripheral%d", i+1);
-                  sprintf(string2, "%d", ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_PORT1ATYPECB+i)));
+                  sprintf(string1, "Peripheral%ld", i+1);
+                  sprintf(string2, "%d", ConvertEmulateTypeSelStringToID(hDlg, IDC_PORT1ATYPECB+i));
                   WritePrivateProfileString(string1, "EmulateType", string2, inifilename);
                }
                EndDialog(hDlg, TRUE);
@@ -1483,54 +1522,36 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    static u8 cursel;
    static int controlmap[13];
    static int padnum;
+   static HWND hParent;
    int i;
 
    switch (uMsg)
    {
       case WM_INITDIALOG:
       {
-         PERDXListDevices(GetDlgItem(hDlg, IDC_DXDEVICECB));
          padnum = (int)lParam;
+         i = TabCtrl_GetCurSel(GetDlgItem(GetParent(hDlg), IDC_SETTINGSTAB));
+         hParent = dialoglist[i];
+         PERDXListDevices(GetDlgItem(hDlg, IDC_DXDEVICECB), ConvertEmulateTypeSelStringToID(hParent, IDC_PORT1ATYPECB+padnum));
 
          // Load settings from ini here, if necessary
          PERDXInitControlConfig(hDlg, padnum, controlmap, inifilename);
 
-         cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0);
-         if (cursel == 0)
-         {
-            // Disable all the controls
-            EnableWindow(GetDlgItem(hDlg, IDC_UPPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_LPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_RPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_APB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_BPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_CPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_XPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_YPB), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_ZPB), FALSE);
-         }
-         else
-         {
-            // Enable all the controls
-            EnableWindow(GetDlgItem(hDlg, IDC_UPPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_LPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_RPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_APB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_BPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_CPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_XPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_YPB), TRUE);
-            EnableWindow(GetDlgItem(hDlg, IDC_ZPB), TRUE);
-         }
+         cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0) ? TRUE : FALSE;
 
+         EnableWindow(GetDlgItem(hDlg, IDC_UPPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_LPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_RPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_APB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_BPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_CPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_XPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_YPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_ZPB), cursel);
          return TRUE;
       }
       case WM_COMMAND:
@@ -1570,7 +1591,7 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                for (i = 0; i < 13; i++)
                {
                   sprintf(string2, "%d", controlmap[i]);
-                  WritePrivateProfileString(string1, pad_names2[i], string2, inifilename);
+                  WritePrivateProfileString(string1, pad_names[i], string2, inifilename);
                }
 
                return TRUE;
@@ -1586,41 +1607,123 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   case CBN_SELCHANGE:
                   {
-                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0);
-                     if (cursel == 0)
-                     {
-                        // Disable all the controls
-                        EnableWindow(GetDlgItem(hDlg, IDC_UPPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_LPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_RPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_APB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_BPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_CPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_XPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_YPB), FALSE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_ZPB), FALSE);
-                     }
-                     else
-                     {
-                        // Enable all the controls
-                        EnableWindow(GetDlgItem(hDlg, IDC_UPPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_LPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_RPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_APB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_BPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_CPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_XPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_YPB), TRUE);
-                        EnableWindow(GetDlgItem(hDlg, IDC_ZPB), TRUE);
-                     }
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0) ? TRUE : FALSE;
+
+                     EnableWindow(GetDlgItem(hDlg, IDC_UPPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_LPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_RPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_APB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_BPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_XPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_YPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_ZPB), cursel);
+                     break;
+                  }
+                  default: break;
+               }
+               break;
+            }
+            default: break;
+         }
+
+         break;
+      }
+      case WM_DESTROY:
+      {
+         break;
+      }
+   }
+
+   return FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
+                                    LPARAM lParam)
+{
+   static u8 cursel;
+   static int controlmap[13];
+   static int padnum;
+   static HWND hParent;
+   static int emulatetype;
+   int i;
+
+   switch (uMsg)
+   {
+      case WM_INITDIALOG:
+      {
+         padnum = (int)lParam;
+         i = TabCtrl_GetCurSel(GetDlgItem(GetParent(hDlg), IDC_SETTINGSTAB));
+         hParent = dialoglist[i];
+         emulatetype = ConvertEmulateTypeSelStringToID(hParent, IDC_PORT1ATYPECB+padnum);
+         PERDXListDevices(GetDlgItem(hDlg, IDC_DXDEVICECB), emulatetype);
+
+         // Load settings from ini here, if necessary
+         PERDXInitControlConfig(hDlg, padnum, controlmap, inifilename);
+
+         cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0) ? TRUE : FALSE;
+
+         EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_APB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_BPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_CPB), cursel);
+         return TRUE;
+      }
+      case WM_COMMAND:
+      {
+         switch (LOWORD(wParam))
+         {
+            case IDC_STARTPB:
+            case IDC_APB:
+            case IDC_BPB:
+            case IDC_CPB:
+            {
+               DoControlConfig(hDlg, cursel-1, IDC_UPTEXT+(LOWORD(wParam)-IDC_UPPB), IDC_UPTEXT, controlmap);
+
+               return TRUE;
+            }
+            case IDOK:
+            {
+               char string1[20];
+               char string2[20];
+
+               EndDialog(hDlg, TRUE);
+
+               sprintf(string1, "Peripheral%d", padnum+1);
+
+               // Write GUID
+               PERDXWriteGUID(cursel-1, padnum, inifilename);
+
+               for (i = 0; i < 13; i++)
+               {
+                  sprintf(string2, "%d", controlmap[i]);
+                  WritePrivateProfileString(string1, pad_names[i], string2, inifilename);
+               }
+               return TRUE;
+            }
+            case IDCANCEL:
+            {
+               EndDialog(hDlg, FALSE);
+               return TRUE;
+            }
+            case IDC_DXDEVICECB:
+            {
+               switch(HIWORD(wParam))
+               {
+                  case CBN_SELCHANGE:
+                  {
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0) ? TRUE : FALSE;
+
+                     EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_APB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_BPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CPB), cursel);
                      break;
                   }
                   default: break;

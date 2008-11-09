@@ -30,8 +30,7 @@ extern PerInterface_struct PERDIRECTX;
 
 extern GUID GUIDDevice[256];
 extern u32 numguids;
-extern const int pad_names[];
-extern const char * pad_names2[];
+extern const char * pad_names[];
 extern PerPad_struct *pad[12];
 extern u32 numpads;
 
@@ -51,7 +50,7 @@ void KeyStub(PerPad_struct *pad);
 void SetupControlUpDown(u8 padnum, u8 controlcode, void (*downfunc)(PerPad_struct *), void (*upfunc)(PerPad_struct *));
 
 void PERDXLoadDevices(char *inifilename);
-void PERDXListDevices(HWND control);
+void PERDXListDevices(HWND control, int emulatetype);
 int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *inifilename);
 int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname);
 BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCTSTR inifilename);

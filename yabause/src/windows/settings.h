@@ -1,4 +1,4 @@
-/*  Copyright 2004-2005 Theo Berkau
+/*  Copyright 2004-2008 Theo Berkau
 
     This file is part of Yabause.
 
@@ -16,6 +16,9 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+
+#ifndef SETTINGS_H
+#define SETTINGS_H
 
 #include <windows.h>
 
@@ -70,3 +73,15 @@ extern int nocorechange;
 extern int changecore;
 extern int corechanged;
 #endif
+
+enum {
+   EMUTYPE_NONE=0,
+   EMUTYPE_STANDARDPAD,
+   EMUTYPE_ANALOGPAD,
+   EMUTYPE_STUNNER,
+   EMUTYPE_MOUSE,
+   EMUTYPE_KEYBOARD
+};
+
+#endif
+
