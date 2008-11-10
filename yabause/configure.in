@@ -285,6 +285,7 @@ AC_ARG_ENABLE(smpc-debug, AC_HELP_STRING(--enable-smpc-debug, enable smpc debug 
 AC_ARG_ENABLE(scsp-debug, AC_HELP_STRING(--enable-scsp-debug, enable scsp debug information) , AC_DEFINE(SCSP_DEBUG))
 AC_ARG_ENABLE(idle-debug, AC_HELP_STRING(--enable-idle-debug, enable idle cpu debug information) , AC_DEFINE(IDLE_DETECT_VERBOSE))
 AC_ARG_ENABLE(mic-shaders, AC_HELP_STRING(--enable-mic-shaders, enable OpenGL shaders for gouraud and mesh) , AC_DEFINE(USEMICSHADERS))
+AC_ARG_ENABLE(network, AC_HELP_STRING(--enable-network, enable network) , AC_DEFINE(USESOCKET))
 
 AC_CONFIG_FILES([Makefile
 	l10n/Makefile
