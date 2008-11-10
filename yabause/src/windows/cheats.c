@@ -750,6 +750,12 @@ LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SetSearchTypes(hDlg);
                GetDlgItemText(hDlg, IDC_CHEATSEARCHET, tempstr, sizeof(tempstr));
 
+               if (strcmp(tempstr, "") == 0)
+               {
+                  MessageBox (hDlg, "Please enter a value to search.", "Error",  MB_OK | MB_ICONINFORMATION);
+                  return TRUE;
+               }
+
                cheatresults = MappedMemorySearch(0x06000000, 0x06100000, searchtype,
                                                  tempstr, cheatresults, &numresults);
 
