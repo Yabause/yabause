@@ -2034,7 +2034,7 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDC_BUPFORMATBT:
             {
                sprintf(tempstr, "Are you sure you want to format %s?", devices[currentbupdevice].name);
-               if (MessageBox (hDlg, tempstr, "Confirm Delete",  MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+               if (MessageBox (hDlg, tempstr, "Confirm Delete",  MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) == IDYES)
                {
                   BupFormat(currentbupdevice);
                   RefreshSaveList(hDlg);

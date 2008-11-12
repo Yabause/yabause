@@ -1033,6 +1033,7 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_SETCURSEL, 0, 0);
 
          vdp2texture = Vdp2DebugTexture(0, -1, 0x00FF00FF, &width, &height);
+         EnableWindow(GetDlgItem(hDlg, IDC_VDP2SAVEBMPBT), vdp2texture ? TRUE : FALSE);
          return TRUE;
       }
       case WM_COMMAND:
@@ -1051,10 +1052,7 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         free(vdp2texture);
 
                      vdp2texture = Vdp2DebugTexture(cursel, -1, 0x00FF00FF, &width, &height);
-                     if (vdp2texture == NULL)
-                        EnableWindow(GetDlgItem(hDlg, IDC_VDP2SAVEBMPBT), FALSE);
-                     else
-                        EnableWindow(GetDlgItem(hDlg, IDC_VDP2SAVEBMPBT), TRUE);
+                     EnableWindow(GetDlgItem(hDlg, IDC_VDP2SAVEBMPBT), vdp2texture ? TRUE : FALSE);
 
                      InvalidateRect(hDlg, NULL, FALSE);
                      UpdateWindow(hDlg);
