@@ -888,6 +888,7 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
 
          vdp1texturew = vdp1textureh = 1;
+         EnableWindow(GetDlgItem(hDlg, IDC_VDP1SAVEBMPBT), vdp1texture ? TRUE : FALSE);
 
          return TRUE;
       }
@@ -912,6 +913,7 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         free(vdp1texture);
 
                      vdp1texture = Vdp1DebugTexture(cursel, &vdp1texturew, &vdp1textureh);
+                     EnableWindow(GetDlgItem(hDlg, IDC_VDP1SAVEBMPBT), vdp1texture ? TRUE : FALSE);
                      InvalidateRect(hDlg, NULL, FALSE);
                      UpdateWindow(hDlg);
 
@@ -930,7 +932,7 @@ LRESULT CALLBACK VDP1DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         filename, sizeof(filename));
                ofn.lpstrDefExt = "BMP";
 
-               if (GetSaveFileName(&ofn))
+               if (vdp1texture && GetSaveFileName(&ofn))
                   SaveBitmap(filename, vdp1texturew, vdp1textureh, vdp1texture);
 
                return TRUE;
