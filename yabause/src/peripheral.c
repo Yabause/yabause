@@ -627,6 +627,7 @@ void PERDummyNothing(void);
 
 u32 PERDummyScan(const char *);
 void PERDummyFlush(void);
+void PERDummyKeyName(u32 key, char * name, int size);
 
 PerInterface_struct PERDummy = {
 PERCORE_DUMMY,
@@ -638,6 +639,9 @@ PERDummyNothing,
 PERDummyScan,
 0,
 PERDummyFlush
+#ifdef PERKEYNAME
+,PERDummyKeyName
+#endif
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -672,5 +676,13 @@ u32 PERDummyScan(const char * name) {
    return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 void PERDummyFlush(void) {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PERDummyKeyName(u32 key, char * name, int size) {
+	*name = 0;
 }

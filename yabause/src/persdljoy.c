@@ -43,6 +43,7 @@ void PERSDLJoyNothing(void);
 
 u32 PERSDLJoyScan(const char *);
 void PERSDLJoyFlush(void);
+void PERSDLKeyName(u32 key, char * name, int size);
 
 PerInterface_struct PERSDLJoy = {
 PERCORE_SDLJOY,
@@ -54,6 +55,9 @@ PERSDLJoyNothing,
 PERSDLJoyScan,
 1,
 PERSDLJoyFlush
+#ifdef PERKEYNAME
+,PERSDLKeyName
+#endif
 };
 
 u32 * scan_status;
@@ -229,6 +233,11 @@ u32 PERSDLJoyScan( const char* n ) {
 }
 
 void PERSDLJoyFlush(void) {
+}
+
+void PERSDLKeyName(u32 key, char * name, int size)
+{
+   sprintf(name, "%x", key);
 }
 
 #endif
