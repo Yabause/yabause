@@ -130,11 +130,17 @@ void hide_show_netlink(YuiRange * instance, gpointer data) {
 
 void percore_changed(GtkWidget * widget, gpointer data) {
 	const char * core_s = percores[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))].value;
+	GList * entrylist = data;
 	int core;
 	sscanf(core_s, "%d", &core);
 
 	PerDeInit();
 	PerInit(core);
+
+	while(entrylist) {
+		yui_input_entry_update(entrylist->data);
+		entrylist = g_list_next(entrylist);
+	}
 }
 
 static void pertype_display_pad(GtkWidget * box)
@@ -142,8 +148,7 @@ static void pertype_display_pad(GtkWidget * box)
    GtkWidget * table4, * table5;
    GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
    GtkWidget * select_percore = yui_range_new(keyfile, "General", "PerCore", percores);
-
-   g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", G_CALLBACK(percore_changed), NULL);
+   GList * entrylist = NULL;
 
    gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
 
@@ -151,7 +156,8 @@ static void pertype_display_pad(GtkWidget * box)
 
    gtk_box_pack_start(GTK_BOX (box_percore), select_percore, FALSE, FALSE, 0);
 
-   table4 = yui_input_entry_new(keyfile, "Input", keys1);
+   table4 = yui_input_entry_new(keyfile, "Pad", keys1);
+   entrylist = g_list_append(entrylist, table4);
 
    gtk_box_pack_start (GTK_BOX (box_percore), table4, TRUE, TRUE, 0);
 
@@ -159,11 +165,14 @@ static void pertype_display_pad(GtkWidget * box)
 
    gtk_box_pack_start (GTK_BOX (box), gtk_vseparator_new(), TRUE, TRUE, 0);
 
-   table5 = yui_input_entry_new(keyfile, "Input", keys2);
+   table5 = yui_input_entry_new(keyfile, "Pad", keys2);
+   entrylist = g_list_append(entrylist, table5);
 
    gtk_container_set_border_width(GTK_CONTAINER(table5), 10);
   
    gtk_box_pack_start (GTK_BOX (box), table5, TRUE, TRUE, 0);
+
+   g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", G_CALLBACK(percore_changed), entrylist);
 
    gtk_widget_show_all(box);
 }
@@ -179,8 +188,8 @@ static void pertype_display_mouse(GtkWidget * box)
    GtkWidget * table5;
    GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
    GtkWidget * select_percore = yui_range_new(keyfile, "General", "MousePerCore", mousepercores);
+   GList * entrylist;
 
-   g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", G_CALLBACK(percore_changed), NULL);
    gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
    gtk_container_set_border_width(GTK_CONTAINER(box_percore), 10);
    gtk_box_pack_start(GTK_BOX (box_percore), select_percore, FALSE, FALSE, 0);
@@ -195,9 +204,11 @@ static void pertype_display_mouse(GtkWidget * box)
    gtk_box_pack_start (GTK_BOX (box), gtk_vseparator_new(), TRUE, TRUE, 0);
 
    table5 = yui_input_entry_new(keyfile, "Mouse", keys3);
+   entrylist = g_list_append(entrylist, table5);
    gtk_container_set_border_width(GTK_CONTAINER(table5), 10);
    gtk_box_pack_start (GTK_BOX (box), table5, TRUE, TRUE, 0);
 
+   g_signal_connect(GTK_COMBO_BOX(YUI_RANGE(select_percore)->combo), "changed", G_CALLBACK(percore_changed), entrylist);
    gtk_widget_show_all(box);
 }
 

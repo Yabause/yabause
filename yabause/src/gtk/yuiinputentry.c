@@ -95,12 +95,13 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 	GtkWidget * widget;
 	GtkWidget * label;
 	GtkWidget * entry;
-	gchar * keyName;
+	guint keyName;
 	int row = 0;
 
 	widget = GTK_WIDGET(g_object_new(yui_input_entry_get_type(), "key-file", keyfile, "group", group, NULL));
 
 	while(keys[row]) {
+		char tmp[100];
 		gtk_table_resize(GTK_TABLE(widget), row + 1, 2);
 		label = gtk_label_new(keys[row]);
   
@@ -111,9 +112,17 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 		entry = gtk_entry_new ();
 		gtk_entry_set_width_chars(GTK_ENTRY(entry), 10);
 
-		keyName = g_key_file_get_value(keyfile, group, keys[row], 0);
-		if ( !keyName ) keyName = "";
-		gtk_entry_set_text(GTK_ENTRY(entry), keyName );
+		sprintf(tmp, "%s.%s.1", group, keys[row]);
+		keyName = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
+		if (keyName > 0) {
+			char buffer[50];
+#ifdef PERKEYNAME
+			PERCore->KeyName(keyName, buffer, 50);
+#else
+			sprintf(buffer, "%x", keyName);
+#endif
+			gtk_entry_set_text(GTK_ENTRY(entry), buffer);
+		}
 
 		if (PERCore) {
 			//if (PERCore->canScan)
@@ -137,11 +146,15 @@ gboolean yui_input_entry_keypress(GtkWidget * widget, GdkEventKey * event, gpoin
 
 	if (PERCore->canScan) return FALSE;
 
-	g_sprintf(tmp, "%d", event->keyval);
+#ifdef PERKEYNAME
+	PERCore->KeyName(event->keyval, tmp, 100);
+#else
+	sprintf(tmp, "%x", event->keyval);
+#endif
 	gtk_entry_set_text(GTK_ENTRY(widget), tmp);
+	sprintf(tmp, "%s.%s.1", YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->group, name);
 	g_key_file_set_integer(YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->keyfile,
-		YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->group,
-		name, event->keyval);
+		PERCore->Name, tmp, event->keyval);
 
 	return TRUE;
 }
@@ -164,8 +177,13 @@ gboolean watch_joy(gpointer name) {
 	} else {
 		char tmp[100];
 
-		g_key_file_set_integer(keyfile, "Input", name, i);
-		g_sprintf(tmp, "%d", i);
+		sprintf(tmp, "Input.%s.1", name); // should be group.name
+		g_key_file_set_integer(keyfile, PERCore->Name, tmp, i);
+#ifdef PERKEYNAME
+		PERCore->KeyName(i, tmp, 100);
+#else
+		sprintf(tmp, "%x", i);
+#endif
 		gtk_entry_set_text(entry_hack, tmp);
 		is_watching = FALSE;
 		return FALSE;
@@ -184,4 +202,32 @@ gboolean yui_input_entry_focus_in(GtkWidget * widget, GdkEventFocus * event, gpo
 	}
 
 	return FALSE;
+}
+
+void yui_input_entry_update(YuiInputEntry * yie) {
+	GList * wlist = gtk_container_get_children(GTK_CONTAINER(yie));
+	u32 key;
+	GtkEntry * entry;
+	char tmp[100];
+
+	while(wlist) {
+		if (strcmp(gtk_widget_get_name(wlist->data), "GtkEntry") == 0) {
+			entry = wlist->data;
+		}
+		if (strcmp(gtk_widget_get_name(wlist->data), "GtkLabel") == 0) {
+			sprintf(tmp, "%s.%s.1", yie->group, gtk_label_get_text(wlist->data));
+                	key = g_key_file_get_integer(yie->keyfile, PERCore->Name, tmp, 0);
+			if (key > 0) {
+#ifdef PERKEYNAME
+				PERCore->KeyName(key, tmp, 100);
+#else
+				sprintf(tmp, "%x", key);
+#endif
+				gtk_entry_set_text(entry, tmp);
+			} else {
+				gtk_entry_set_text(entry, "");
+			}
+		}
+		wlist = g_list_next(wlist);
+	}
 }

@@ -296,7 +296,9 @@ gboolean yui_settings_load(void) {
 			i = 0;
 
 			while(mouse_key_names[i]) {
-	  			u32 key = g_key_file_get_integer(keyfile, "Mouse", mouse_key_names[i], 0);
+				char tmp[100];
+				sprintf(tmp, "Mouse.%s.1", mouse_key_names[i]);
+	  			u32 key = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
 		  		PerSetKey(key, i + 13, padbits);
 		  		i++;
 			}
@@ -307,7 +309,9 @@ gboolean yui_settings_load(void) {
 			i = 0;
 
 			while(key_names[i]) {
-	  			u32 key = g_key_file_get_integer(keyfile, "Input", key_names[i], 0);
+				char tmp[100];
+				sprintf(tmp, "Pad.%s.1", key_names[i]);
+	  			u32 key = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
 		  		PerSetKey(key, i, padbits);
 		  		i++;
 			}

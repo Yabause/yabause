@@ -31,6 +31,7 @@ void PERGTKNothing(void);
 
 u32 PERGTKScan(const char * name);
 void PERGTKFlush(void);
+void PERGTKKeyName(u32 key, char * name, int size);
 
 PerInterface_struct PERGTK = {
 PERCORE_GTK,
@@ -42,6 +43,9 @@ PERGTKNothing,
 PERGTKScan,
 0,
 PERGTKFlush
+#ifdef PERKEYNAME
+,PERGTKKeyName
+#endif
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -78,4 +82,11 @@ u32 PERGTKScan(const char * name) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PERGTKFlush(void) {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PERGTKKeyName(u32 key, char * name, int size)
+{
+   g_strlcpy(name, gdk_keyval_name(key), size);
 }

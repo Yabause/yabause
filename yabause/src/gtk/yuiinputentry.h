@@ -52,7 +52,7 @@ struct _YuiInputEntryClass {
 
 GType          yui_input_entry_get_type        (void);
 GtkWidget*     yui_input_entry_new             (GKeyFile * keyfile, const gchar * group, const gchar * keys[]);
-void           yui_input_entry_clear           (YuiInputEntry *yie);
+void           yui_input_entry_update          (YuiInputEntry *yie);
 
 G_END_DECLS
 
