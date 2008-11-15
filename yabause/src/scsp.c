@@ -3775,6 +3775,9 @@ int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename)
    chunk_struct data;
    long length;
 
+   if (scsp.slot[slotnum].lea == 0)
+      return 0;
+
    if ((fp = fopen(filename, "wb")) == NULL)
       return -1;
 
