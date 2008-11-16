@@ -200,7 +200,7 @@ static INLINE void T3WriteLong(T3Memory * mem, u32 addr, u32 val)
 static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
 {
    FILE *fp;
-   u32 filesize;
+   u32 filesize, filesizecheck;
    u8 *buffer;
    u32 i;
 
@@ -224,8 +224,10 @@ static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
       return -1;
    }
 
-   fread((void *)buffer, 1, filesize, fp);
+   filesizecheck = fread((void *)buffer, 1, filesize, fp);
    fclose(fp);
+
+   if (filesizecheck != filesize) return -1;
 
    switch (type)
    {
@@ -264,6 +266,7 @@ static INLINE int T123Save(void * mem, u32 size, int type, const char *filename)
    FILE *fp;
    u8 *buffer;
    u32 i;
+   u32 sizecheck;
 
    if (filename == NULL)
       return 0;
@@ -307,9 +310,11 @@ static INLINE int T123Save(void * mem, u32 size, int type, const char *filename)
       return -1;
    }
 
-   fwrite((void *)buffer, 1, size, fp);
+   sizecheck = fwrite((void *)buffer, 1, size, fp);
    fclose(fp);
    free(buffer);
+
+   if (sizecheck != size) return -1;
 
    return 0;
 }
