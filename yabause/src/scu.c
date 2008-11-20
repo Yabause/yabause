@@ -2202,14 +2202,15 @@ void ScuSendExternalInterrupt15(void) {
 int ScuSaveState(FILE *fp)
 {
    int offset;
+   IOCheck_struct check;
 
    offset = StateWriteHeader(fp, "SCU ", 1);
 
    // Write registers and internal variables
-   fwrite((void *)ScuRegs, sizeof(Scu), 1, fp);
+   ywrite(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
 
    // Write DSP area
-   fwrite((void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+   ywrite(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
 
    return StateFinishHeader(fp, offset);
 }
@@ -2218,11 +2219,13 @@ int ScuSaveState(FILE *fp)
 
 int ScuLoadState(FILE *fp, int version, int size)
 {
+   IOCheck_struct check;
+
    // Read registers and internal variables
-   fread((void *)ScuRegs, sizeof(Scu), 1, fp);
+   yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
 
    // Read DSP area
-   fread((void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+   yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
 
    return size;
 }

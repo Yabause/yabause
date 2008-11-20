@@ -687,22 +687,23 @@ void FASTCALL SmpcWriteLong(u32 addr, u32 val) {
 int SmpcSaveState(FILE *fp)
 {
    int offset;
+   IOCheck_struct check;
 
    offset = StateWriteHeader(fp, "SMPC", 2);
 
    // Write registers
-   fwrite((void *)SmpcRegs->IREG, sizeof(u8), 7, fp);
-   fwrite((void *)&SmpcRegs->COMREG, sizeof(u8), 1, fp);
-   fwrite((void *)SmpcRegs->OREG, sizeof(u8), 32, fp);
-   fwrite((void *)&SmpcRegs->SR, sizeof(u8), 1, fp);
-   fwrite((void *)&SmpcRegs->SF, sizeof(u8), 1, fp);
-   fwrite((void *)SmpcRegs->PDR, sizeof(u8), 2, fp);
-   fwrite((void *)SmpcRegs->DDR, sizeof(u8), 2, fp);
-   fwrite((void *)&SmpcRegs->IOSEL, sizeof(u8), 1, fp);
-   fwrite((void *)&SmpcRegs->EXLE, sizeof(u8), 1, fp);
+   ywrite(&check, (void *)SmpcRegs->IREG, sizeof(u8), 7, fp);
+   ywrite(&check, (void *)&SmpcRegs->COMREG, sizeof(u8), 1, fp);
+   ywrite(&check, (void *)SmpcRegs->OREG, sizeof(u8), 32, fp);
+   ywrite(&check, (void *)&SmpcRegs->SR, sizeof(u8), 1, fp);
+   ywrite(&check, (void *)&SmpcRegs->SF, sizeof(u8), 1, fp);
+   ywrite(&check, (void *)SmpcRegs->PDR, sizeof(u8), 2, fp);
+   ywrite(&check, (void *)SmpcRegs->DDR, sizeof(u8), 2, fp);
+   ywrite(&check, (void *)&SmpcRegs->IOSEL, sizeof(u8), 1, fp);
+   ywrite(&check, (void *)&SmpcRegs->EXLE, sizeof(u8), 1, fp);
 
    // Write internal variables
-   fwrite((void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
+   ywrite(&check, (void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
 
    // Write ID's of currently emulated peripherals(fix me)
 
@@ -713,16 +714,18 @@ int SmpcSaveState(FILE *fp)
 
 int SmpcLoadState(FILE *fp, int version, int size)
 {
+   IOCheck_struct check;
+
    // Read registers
-   fread((void *)SmpcRegs->IREG, sizeof(u8), 7, fp);
-   fread((void *)&SmpcRegs->COMREG, sizeof(u8), 1, fp);
-   fread((void *)SmpcRegs->OREG, sizeof(u8), 32, fp);
-   fread((void *)&SmpcRegs->SR, sizeof(u8), 1, fp);
-   fread((void *)&SmpcRegs->SF, sizeof(u8), 1, fp);
-   fread((void *)SmpcRegs->PDR, sizeof(u8), 2, fp);
-   fread((void *)SmpcRegs->DDR, sizeof(u8), 2, fp);
-   fread((void *)&SmpcRegs->IOSEL, sizeof(u8), 1, fp);
-   fread((void *)&SmpcRegs->EXLE, sizeof(u8), 1, fp);
+   yread(&check, (void *)SmpcRegs->IREG, sizeof(u8), 7, fp);
+   yread(&check, (void *)&SmpcRegs->COMREG, sizeof(u8), 1, fp);
+   yread(&check, (void *)SmpcRegs->OREG, sizeof(u8), 32, fp);
+   yread(&check, (void *)&SmpcRegs->SR, sizeof(u8), 1, fp);
+   yread(&check, (void *)&SmpcRegs->SF, sizeof(u8), 1, fp);
+   yread(&check, (void *)SmpcRegs->PDR, sizeof(u8), 2, fp);
+   yread(&check, (void *)SmpcRegs->DDR, sizeof(u8), 2, fp);
+   yread(&check, (void *)&SmpcRegs->IOSEL, sizeof(u8), 1, fp);
+   yread(&check, (void *)&SmpcRegs->EXLE, sizeof(u8), 1, fp);
 
    // Read internal variables
    if (version == 1)
@@ -730,14 +733,14 @@ int SmpcLoadState(FILE *fp, int version, int size)
       // This handles the problem caused by the version not being incremented
       // when SmpcInternal was changed
       if ((size - 48) == sizeof(SmpcInternal))
-         fread((void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
+         yread(&check, (void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
       else if ((size - 48) == 24)
-         fread((void *)SmpcInternalVars, 24, 1, fp);
+         yread(&check, (void *)SmpcInternalVars, 24, 1, fp);
       else
          fseek(fp, size - 48, SEEK_CUR);
    }
    else
-      fread((void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
+      yread(&check, (void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
 
    // Read ID's of currently emulated peripherals(fix me)
 

@@ -1743,6 +1743,7 @@ void SCITransmitByte(u8 val) {
 int SH2SaveState(SH2_struct *context, FILE *fp)
 {
    int offset;
+   IOCheck_struct check;
 
    // Write header
    if (context->isslave == 0)
@@ -1750,26 +1751,26 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
    else
    {
       offset = StateWriteHeader(fp, "SSH2", 1);
-      fwrite((void *)&yabsys.IsSSH2Running, 1, 1, fp);
+      ywrite(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
    }
 
    // Write registers
-   fwrite((void *)&context->regs, sizeof(sh2regs_struct), 1, fp);
+   ywrite(&check, (void *)&context->regs, sizeof(sh2regs_struct), 1, fp);
 
    // Write onchip registers
-   fwrite((void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
+   ywrite(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
 
    // Write internal variables
-   fwrite((void *)&context->frc, sizeof(context->frc), 1, fp);
-   fwrite((void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
-   fwrite((void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
-   fwrite((void *)context->AddressArray, sizeof(u32), 0x100, fp);
-   fwrite((void *)context->DataArray, sizeof(u8), 0x1000, fp);
-   fwrite((void *)&context->delay, sizeof(u32), 1, fp);
-   fwrite((void *)&context->cycles, sizeof(u32), 1, fp);
-   fwrite((void *)&context->isslave, sizeof(u8), 1, fp);
-   fwrite((void *)&context->isIdle, sizeof(u8), 1, fp);
-   fwrite((void *)&context->instruction, sizeof(u16), 1, fp);
+   ywrite(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
+   ywrite(&check, (void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
+   ywrite(&check, (void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
+   ywrite(&check, (void *)context->AddressArray, sizeof(u32), 0x100, fp);
+   ywrite(&check, (void *)context->DataArray, sizeof(u8), 0x1000, fp);
+   ywrite(&check, (void *)&context->delay, sizeof(u32), 1, fp);
+   ywrite(&check, (void *)&context->cycles, sizeof(u32), 1, fp);
+   ywrite(&check, (void *)&context->isslave, sizeof(u8), 1, fp);
+   ywrite(&check, (void *)&context->isIdle, sizeof(u8), 1, fp);
+   ywrite(&check, (void *)&context->instruction, sizeof(u16), 1, fp);
 
    return StateFinishHeader(fp, offset);
 }
@@ -1778,26 +1779,28 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 
 int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size)
 {
+   IOCheck_struct check;
+
    if (context->isslave == 1)
-      fread((void *)&yabsys.IsSSH2Running, 1, 1, fp);
+      yread(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
 
    // Read registers
-   fread((void *)&context->regs, sizeof(sh2regs_struct), 1, fp);
+   yread(&check, (void *)&context->regs, sizeof(sh2regs_struct), 1, fp);
 
    // Read onchip registers
-   fread((void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
+   yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
 
    // Read internal variables
-   fread((void *)&context->frc, sizeof(context->frc), 1, fp);
-   fread((void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
-   fread((void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
-   fread((void *)context->AddressArray, sizeof(u32), 0x100, fp);
-   fread((void *)context->DataArray, sizeof(u8), 0x1000, fp);
-   fread((void *)&context->delay, sizeof(u32), 1, fp);
-   fread((void *)&context->cycles, sizeof(u32), 1, fp);
-   fread((void *)&context->isslave, sizeof(u8), 1, fp);
-   fread((void *)&context->isIdle, sizeof(u8), 1, fp);
-   fread((void *)&context->instruction, sizeof(u16), 1, fp);
+   yread(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
+   yread(&check, (void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
+   yread(&check, (void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
+   yread(&check, (void *)context->AddressArray, sizeof(u32), 0x100, fp);
+   yread(&check, (void *)context->DataArray, sizeof(u8), 0x1000, fp);
+   yread(&check, (void *)&context->delay, sizeof(u32), 1, fp);
+   yread(&check, (void *)&context->cycles, sizeof(u32), 1, fp);
+   yread(&check, (void *)&context->isslave, sizeof(u8), 1, fp);
+   yread(&check, (void *)&context->isIdle, sizeof(u8), 1, fp);
+   yread(&check, (void *)&context->instruction, sizeof(u16), 1, fp);
 
    return size;
 }

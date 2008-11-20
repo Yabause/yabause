@@ -935,6 +935,7 @@ int YabSaveState(const char *filename)
    u32 i;
    FILE *fp;
    int offset;
+   IOCheck_struct check;
 
    if ((fp = fopen(filename, "wb")) == NULL)
       return -1;
@@ -951,11 +952,11 @@ int YabSaveState(const char *filename)
 
    // Write version(fix me)
    i = 1;
-   fwrite((void *)&i, sizeof(i), 1, fp);
+   ywrite(&check, (void *)&i, sizeof(i), 1, fp);
 
    // Skip the next 4 bytes for now
    i = 0;
-   fwrite((void *)&i, sizeof(i), 1, fp);
+   ywrite(&check, (void *)&i, sizeof(i), 1, fp);
 
    // Go through each area and write each state
    i += CartSaveState(fp);
@@ -971,25 +972,25 @@ int YabSaveState(const char *filename)
    offset = StateWriteHeader(fp, "OTHR", 1);
 
    // Other data
-   fwrite((void *)BupRam, 0x10000, 1, fp); // do we really want to save this?
-   fwrite((void *)HighWram, 0x100000, 1, fp);
-   fwrite((void *)LowWram, 0x100000, 1, fp);
+   ywrite(&check, (void *)BupRam, 0x10000, 1, fp); // do we really want to save this?
+   ywrite(&check, (void *)HighWram, 0x100000, 1, fp);
+   ywrite(&check, (void *)LowWram, 0x100000, 1, fp);
 
-   fwrite((void *)&yabsys.DecilineCount, sizeof(int), 1, fp);
-   fwrite((void *)&yabsys.LineCount, sizeof(int), 1, fp);
-   fwrite((void *)&yabsys.VBlankLineCount, sizeof(int), 1, fp);
-   fwrite((void *)&yabsys.MaxLineCount, sizeof(int), 1, fp);
-   fwrite((void *)&yabsys.DecilineStop, sizeof(int), 1, fp);
-   fwrite((void *)&yabsys.Duf, sizeof(int), 1, fp);
-   fwrite((void *)&yabsys.CycleCountII, sizeof(u32), 1, fp);
-   fwrite((void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
-   fwrite((void *)&yabsys.IsPal, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.DecilineCount, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.LineCount, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.VBlankLineCount, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.MaxLineCount, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.DecilineStop, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.Duf, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.CycleCountII, sizeof(u32), 1, fp);
+   ywrite(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
    i += StateFinishHeader(fp, offset);
 
    // Go back and update size
    fseek(fp, 8, SEEK_SET);
-   fwrite((void *)&i, sizeof(i), 1, fp);
+   ywrite(&check, (void *)&i, sizeof(i), 1, fp);
 
    fclose(fp);
 
@@ -1004,12 +1005,13 @@ int YabLoadState(const char *filename)
    char id[3];
    u8 endian;
    int version, size, chunksize;
+   IOCheck_struct check;
 
    if ((fp = fopen(filename, "rb")) == NULL)
       return -1;
 
    // Read signature
-   fread((void *)id, 1, 3, fp);
+   yread(&check, (void *)id, 1, 3, fp);
 
    if (strncmp(id, "YSS", 3) != 0)
    {
@@ -1018,9 +1020,9 @@ int YabLoadState(const char *filename)
    }
 
    // Read header
-   fread((void *)&endian, 1, 1, fp);
-   fread((void *)&version, 4, 1, fp);
-   fread((void *)&size, 4, 1, fp);
+   yread(&check, (void *)&endian, 1, 1, fp);
+   yread(&check, (void *)&version, 4, 1, fp);
+   yread(&check, (void *)&size, 4, 1, fp);
 
 #ifdef WORDS_BIGENDIAN
    if (endian == 1)
@@ -1136,19 +1138,19 @@ int YabLoadState(const char *filename)
       return -3;
    }
    // Other data
-   fread((void *)BupRam, 0x10000, 1, fp);
-   fread((void *)HighWram, 0x100000, 1, fp);
-   fread((void *)LowWram, 0x100000, 1, fp);
+   yread(&check, (void *)BupRam, 0x10000, 1, fp);
+   yread(&check, (void *)HighWram, 0x100000, 1, fp);
+   yread(&check, (void *)LowWram, 0x100000, 1, fp);
 
-   fread((void *)&yabsys.DecilineCount, sizeof(int), 1, fp);
-   fread((void *)&yabsys.LineCount, sizeof(int), 1, fp);
-   fread((void *)&yabsys.VBlankLineCount, sizeof(int), 1, fp);
-   fread((void *)&yabsys.MaxLineCount, sizeof(int), 1, fp);
-   fread((void *)&yabsys.DecilineStop, sizeof(int), 1, fp);
-   fread((void *)&yabsys.Duf, sizeof(int), 1, fp);
-   fread((void *)&yabsys.CycleCountII, sizeof(u32), 1, fp);
-   fread((void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
-   fread((void *)&yabsys.IsPal, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.DecilineCount, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.LineCount, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.VBlankLineCount, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.MaxLineCount, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.DecilineStop, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.Duf, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.CycleCountII, sizeof(u32), 1, fp);
+   yread(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
+   yread(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
    fclose(fp);
 

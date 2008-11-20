@@ -273,6 +273,7 @@ int CheatSave(const char *filename)
    FILE *fp;
    int i;
    int num;
+   IOCheck_struct check;
 
    if (!filename)
       return -1;
@@ -285,7 +286,7 @@ int CheatSave(const char *filename)
 #ifndef WORDS_BIGENDIAN
    DoubleWordSwap(num);
 #endif
-   fwrite((void *)&num, sizeof(int), 1, fp);
+   ywrite(&check, (void *)&num, sizeof(int), 1, fp);
 
    for(i = 0; i < numcheats; i++)
    {
@@ -299,13 +300,13 @@ int CheatSave(const char *filename)
       DoubleWordSwap(cheat.val);
       DoubleWordSwap(cheat.enable);
 #endif
-      fwrite((void *)&cheat.type, sizeof(int), 1, fp);
-      fwrite((void *)&cheat.addr, sizeof(u32), 1, fp);
-      fwrite((void *)&cheat.val, sizeof(u32), 1, fp);
+      ywrite(&check, (void *)&cheat.type, sizeof(int), 1, fp);
+      ywrite(&check, (void *)&cheat.addr, sizeof(u32), 1, fp);
+      ywrite(&check, (void *)&cheat.val, sizeof(u32), 1, fp);
       descsize = (u8)strlen(cheatlist[i].desc)+1;
-      fwrite((void *)&descsize, sizeof(u8), 1, fp);
-      fwrite((void *)cheatlist[i].desc, sizeof(char), descsize, fp);
-      fwrite((void *)&cheat.enable, sizeof(int), 1, fp);
+      ywrite(&check, (void *)&descsize, sizeof(u8), 1, fp);
+      ywrite(&check, (void *)cheatlist[i].desc, sizeof(char), descsize, fp);
+      ywrite(&check, (void *)&cheat.enable, sizeof(int), 1, fp);
    }
 
    fclose (fp);
@@ -321,6 +322,7 @@ int CheatLoad(const char *filename)
    int i;
    char id[4];
    char desc[256];
+   IOCheck_struct check;
 
    if (!filename)
       return -1;
@@ -328,7 +330,7 @@ int CheatLoad(const char *filename)
    if ((fp = fopen(filename, "rb")) == NULL)
       return -1;
 
-   fread((void *)id, 1, 4, fp);
+   yread(&check, (void *)id, 1, 4, fp);
    if (strncmp(id, "YCHT", 4) != 0)
    {
       fclose(fp);
@@ -337,7 +339,7 @@ int CheatLoad(const char *filename)
 
    CheatClearCodes();
 
-   fread((void *)&numcheats, sizeof(int), 1, fp);
+   yread(&check, (void *)&numcheats, sizeof(int), 1, fp);
 #ifndef WORDS_BIGENDIAN
    DoubleWordSwap(numcheats);
 #endif
@@ -353,13 +355,13 @@ int CheatLoad(const char *filename)
    {
       u8 descsize;
 
-      fread((void *)&cheatlist[i].type, sizeof(int), 1, fp);
-      fread((void *)&cheatlist[i].addr, sizeof(u32), 1, fp);
-      fread((void *)&cheatlist[i].val, sizeof(u32), 1, fp);
-      fread((void *)&descsize, sizeof(u8), 1, fp);
-      fread((void *)desc, sizeof(char), descsize, fp);
+      yread(&check, (void *)&cheatlist[i].type, sizeof(int), 1, fp);
+      yread(&check, (void *)&cheatlist[i].addr, sizeof(u32), 1, fp);
+      yread(&check, (void *)&cheatlist[i].val, sizeof(u32), 1, fp);
+      yread(&check, (void *)&descsize, sizeof(u8), 1, fp);
+      yread(&check, (void *)desc, sizeof(char), descsize, fp);
       CheatChangeDescriptionByIndex(i, desc);
-      fread((void *)&cheatlist[i].enable, sizeof(int), 1, fp);
+      yread(&check, (void *)&cheatlist[i].enable, sizeof(int), 1, fp);
 #ifndef WORDS_BIGENDIAN
       DoubleWordSwap(cheatlist[i].type);
       DoubleWordSwap(cheatlist[i].addr);

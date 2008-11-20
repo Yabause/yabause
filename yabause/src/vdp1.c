@@ -513,14 +513,15 @@ void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr) {
 int Vdp1SaveState(FILE *fp)
 {
    int offset;
+   IOCheck_struct check;
 
    offset = StateWriteHeader(fp, "VDP1", 1);
 
    // Write registers
-   fwrite((void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
+   ywrite(&check, (void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
 
    // Write VDP1 ram
-   fwrite((void *)Vdp1Ram, 0x80000, 1, fp);
+   ywrite(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
    return StateFinishHeader(fp, offset);
 }
@@ -529,11 +530,13 @@ int Vdp1SaveState(FILE *fp)
 
 int Vdp1LoadState(FILE *fp, int version, int size)
 {
+   IOCheck_struct check;
+
    // Read registers
-   fread((void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
+   yread(&check, (void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
 
    // Read VDP1 ram
-   fread((void *)Vdp1Ram, 0x80000, 1, fp);
+   yread(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
    return size;
 }

@@ -101,39 +101,56 @@ typedef signed long long s64;
 typedef unsigned long pointer;
 #endif
 
+typedef struct {
+	unsigned int size;
+	unsigned int done;
+} IOCheck_struct;
+
+static INLINE void ywrite(IOCheck_struct * check, void * ptr, size_t size, size_t nmemb, FILE * stream) {
+   check->done += fwrite(ptr, size, nmemb, stream);
+   check->size += size;
+}
+
+static INLINE void yread(IOCheck_struct * check, void * ptr, size_t size, size_t nmemb, FILE * stream) {
+   check->done += fread(ptr, size, nmemb, stream);
+   check->size += size;
+}
+
 static INLINE int StateWriteHeader(FILE *fp, const char *name, int version) {
-        fprintf(fp, name);
-	fwrite((void *)&version, sizeof(version), 1, fp);
-	fwrite((void *)&version, sizeof(version), 1, fp); // place holder for size
-	return ftell(fp);
+   IOCheck_struct check;
+   fprintf(fp, "%s", name);
+   ywrite(&check, (void *)&version, sizeof(version), 1, fp);
+   ywrite(&check, (void *)&version, sizeof(version), 1, fp); // place holder for size
+   return (check.done == check.size) ? ftell(fp) : -1;
 }
 
 static INLINE int StateFinishHeader(FILE *fp, int offset) {
-	int size = 0;
-	size = ftell(fp) - offset;
-	fseek(fp, offset - 4, SEEK_SET);
-	fwrite((void *)&size, sizeof(size), 1, fp); // write true size
-	fseek(fp, 0, SEEK_END);
-	return (size + 12);
+   IOCheck_struct check;
+   int size = 0;
+   size = ftell(fp) - offset;
+   fseek(fp, offset - 4, SEEK_SET);
+   ywrite(&check, (void *)&size, sizeof(size), 1, fp); // write true size
+   fseek(fp, 0, SEEK_END);
+   return (check.done == check.size) ? (size + 12) : -1;
 }
 
 static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *version, int *size) {
-	char id[4];
-        size_t ret;
+   char id[4];
+   size_t ret;
 
-	if ((ret = fread((void *)id, 1, 4, fp)) != 4)
-		return -1;
+   if ((ret = fread((void *)id, 1, 4, fp)) != 4)
+      return -1;
 
-	if (strncmp(name, id, 4) != 0)
-		return -2;
+   if (strncmp(name, id, 4) != 0)
+      return -2;
 
-	if ((ret = fread((void *)version, 4, 1, fp)) != 1)
-		return -1;
+   if ((ret = fread((void *)version, 4, 1, fp)) != 1)
+      return -1;
 
-	if (fread((void *)size, 4, 1, fp) != 1)
-		return -1;
+   if (fread((void *)size, 4, 1, fp) != 1)
+      return -1;
 
-	return 0;
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
