@@ -1375,7 +1375,10 @@ int VIDSoftInit(void)
 void VIDSoftDeInit(void)
 {
    if (dispbuffer)
+   {
       free(dispbuffer);
+      dispbuffer = NULL;
+   }
 
    if (vdp1framebuffer[0])
       free(vdp1framebuffer[0]);

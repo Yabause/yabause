@@ -54,6 +54,8 @@ void yui_gl_draw(YuiGl * glxarea) {
 	glxarea->pixels_rowstride = glxarea->pixels_width * 4;
 	glxarea->pixels_rowstride += (glxarea->pixels_rowstride % 4)? (4 - (glxarea->pixels_rowstride % 4)): 0;
 
+	if (dispbuffer == NULL) return;
+
 	pixbuf = gdk_pixbuf_new_from_data((const guchar *) dispbuffer, GDK_COLORSPACE_RGB, TRUE, 8,
 			buf_width, buf_height, buf_width*4, NULL, NULL);
 
