@@ -181,7 +181,7 @@ void VideoInitGlut();
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE int GenerateRotatedXPos(vdp2draw_struct *info, vdp2rotationparameter_struct *p, int x, int y)
+static INLINE int GenerateRotatedXPos(vdp2rotationparameter_struct *p, int x, int y)
 {
    float Xsp = p->A * ((p->Xst + p->deltaXst * y) - p->Px) +
                p->B * ((p->Yst + p->deltaYst * y) - p->Py) +
@@ -202,7 +202,7 @@ static INLINE void GenerateRotatedVarFP(vdp2rotationparameterfp_struct *p, fixed
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE int GenerateRotatedYPos(vdp2draw_struct *info, vdp2rotationparameter_struct *p, int x, int y)
+static INLINE int GenerateRotatedYPos(vdp2rotationparameter_struct *p, int x, int y)
 {
    float Ysp = p->D * ((p->Xst + p->deltaXst * y) - p->Px) +
                p->E * ((p->Yst + p->deltaYst * y) - p->Py) +

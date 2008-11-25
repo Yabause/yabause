@@ -1013,14 +1013,14 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
          if (info->isbitmap)
          {
             // Bitmap
-            info->vertices[0] = GenerateRotatedXPos(info, parameter, 0, 0);
-            info->vertices[1] = GenerateRotatedYPos(info, parameter, 0, 0);
-            info->vertices[2] = GenerateRotatedXPos(info, parameter, info->cellw-1, 0);
-            info->vertices[3] = GenerateRotatedYPos(info, parameter, info->cellw-1, 0);
-            info->vertices[4] = GenerateRotatedXPos(info, parameter, info->cellw-1, info->cellh-1);
-            info->vertices[5] = GenerateRotatedYPos(info, parameter, info->cellw-1, info->cellh-1);
-            info->vertices[6] = GenerateRotatedXPos(info, parameter, 0, info->cellh-1);
-            info->vertices[7] = GenerateRotatedYPos(info, parameter, 0, info->cellh-1);
+            info->vertices[0] = GenerateRotatedXPos(parameter, 0, 0);
+            info->vertices[1] = GenerateRotatedYPos(parameter, 0, 0);
+            info->vertices[2] = GenerateRotatedXPos(parameter, info->cellw-1, 0);
+            info->vertices[3] = GenerateRotatedYPos(parameter, info->cellw-1, 0);
+            info->vertices[4] = GenerateRotatedXPos(parameter, info->cellw-1, info->cellh-1);
+            info->vertices[5] = GenerateRotatedYPos(parameter, info->cellw-1, info->cellh-1);
+            info->vertices[6] = GenerateRotatedXPos(parameter, 0, info->cellh-1);
+            info->vertices[7] = GenerateRotatedYPos(parameter, 0, info->cellh-1);
 
             YglQuad((YglSprite *)info, texture);
             Vdp2DrawCell(info, texture);
@@ -1116,8 +1116,8 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                continue;
             }
 
-            x = GenerateRotatedXPos(info, parameter, i, j);
-            y = GenerateRotatedYPos(info, parameter, i, j);
+            x = GenerateRotatedXPos(parameter, i, j);
+            y = GenerateRotatedYPos(parameter, i, j);
 
             // Convert coordinates into graphics
             if (info->isbitmap)
