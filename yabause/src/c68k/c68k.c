@@ -143,12 +143,12 @@ void FASTCALL C68k_Add_Cycle(c68k_struc *cpu, s32 cycle)
 // Read / Write dummy functions
 ////////////////////////////////
 
-u32 FASTCALL C68k_Read_Dummy(const u32 adr)
+u32 FASTCALL C68k_Read_Dummy(UNUSED const u32 adr)
 {
     return 0;
 }
 
-void FASTCALL C68k_Write_Dummy(const u32 adr, u32 data)
+void FASTCALL C68k_Write_Dummy(UNUSED const u32 adr, UNUSED u32 data)
 {
 
 }
