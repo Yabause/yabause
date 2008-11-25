@@ -496,7 +496,7 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerRemovePeripheral(PortData_struct *port, int removeoffset)
+void PerRemovePeripheral(UNUSED PortData_struct *port, UNUSED int removeoffset)
 {
    // stub
 }
@@ -510,7 +510,7 @@ void PerFlush(PortData_struct * port)
   u8 perid = port->data[1];
   if (perid == 0xE3)
   {
-     PerMouse_struct * mouse = (port->data + 1);
+     PerMouse_struct * mouse = (PerMouse_struct *) (port->data + 1);
 
      mouse->mousebits[0] &= 0x0F;
      mouse->mousebits[1] = 0;
@@ -522,7 +522,7 @@ void PerFlush(PortData_struct * port)
 
 void PerKeyDown(u32 key)
 {
-	int i = 0;
+	unsigned int i = 0;
 
 	while(i < perkeyconfigsize)
 	{
@@ -538,7 +538,7 @@ void PerKeyDown(u32 key)
 
 void PerKeyUp(u32 key)
 {
-	int i = 0;
+	unsigned int i = 0;
 
 	while(i < perkeyconfigsize)
 	{
@@ -554,7 +554,7 @@ void PerKeyUp(u32 key)
 
 void PerSetKey(u32 key, u8 name, void * controller)
 {
-	int i = 0;
+	unsigned int i = 0;
 
 	while(i < perkeyconfigsize)
 	{
@@ -672,7 +672,7 @@ int PERDummyHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERDummyScan(const char * name) {
+u32 PERDummyScan(UNUSED const char * name) {
    return 0;
 }
 
@@ -683,6 +683,6 @@ void PERDummyFlush(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PERDummyKeyName(u32 key, char * name, int size) {
+void PERDummyKeyName(UNUSED u32 key, char * name, UNUSED int size) {
 	*name = 0;
 }
