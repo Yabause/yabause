@@ -461,7 +461,7 @@ u32 FASTCALL Vdp2ReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp2WriteByte(u32 addr, u8 val) {
+void FASTCALL Vdp2WriteByte(u32 addr, UNUSED u8 val) {
    LOG("VDP2 register byte write = %08X\n", addr);
    addr &= 0x1FF;
 }
@@ -1254,7 +1254,7 @@ int Vdp2SaveState(FILE *fp)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp2LoadState(FILE *fp, int version, int size)
+int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check;
 

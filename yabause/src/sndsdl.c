@@ -68,7 +68,7 @@ static u8 soundvolume;
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MixAudio(void *userdata, Uint8 *stream, int len) {
+void MixAudio(UNUSED void *userdata, Uint8 *stream, int len) {
 	int i;
 	Uint8* soundbuf = (Uint8*)stereodata16;
 

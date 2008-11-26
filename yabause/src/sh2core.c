@@ -1476,7 +1476,7 @@ void FASTCALL DataArrayWriteLong(u32 addr, u32 val)  {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FRTExec(u32 cycles) {
+void FRTExec(UNUSED u32 cycles) {
    u32 frcold;
    u32 frctemp;
 
@@ -1697,7 +1697,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
 // Input Capture Specific
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL MSH2InputCaptureWriteWord(u32 addr, u16 data)
+void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
 {
    // Set Input Capture Flag
    MSH2->onchip.FTCSR |= 0x80;
@@ -1712,7 +1712,7 @@ void FASTCALL MSH2InputCaptureWriteWord(u32 addr, u16 data)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SSH2InputCaptureWriteWord(u32 addr, u16 data)
+void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
 {
    // Set Input Capture Flag
    SSH2->onchip.FTCSR |= 0x80;
@@ -1735,7 +1735,7 @@ u8 SCIReceiveByte(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SCITransmitByte(u8 val) {
+void SCITransmitByte(UNUSED u8 val) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1777,7 +1777,7 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size)
+int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check;
 

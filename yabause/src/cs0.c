@@ -29,118 +29,118 @@ cartridge_struct *CartridgeArea;
 // Dummy/No Cart Functions
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL DummyCs0ReadByte(u32 addr)
+u8 FASTCALL DummyCs0ReadByte(UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL DummyCs0ReadWord(u32 addr)
+u16 FASTCALL DummyCs0ReadWord(UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL DummyCs0ReadLong(u32 addr)
+u32 FASTCALL DummyCs0ReadLong(UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs0WriteByte(u32 addr, u8 val)
+void FASTCALL DummyCs0WriteByte(UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs0WriteWord(u32 addr, u16 val)
+void FASTCALL DummyCs0WriteWord(UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs0WriteLong(u32 addr, u32 val)
+void FASTCALL DummyCs0WriteLong(UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL DummyCs1ReadByte(u32 addr)
+u8 FASTCALL DummyCs1ReadByte(UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL DummyCs1ReadWord(u32 addr)
+u16 FASTCALL DummyCs1ReadWord(UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL DummyCs1ReadLong(u32 addr)
+u32 FASTCALL DummyCs1ReadLong(UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs1WriteByte(u32 addr, u8 val)
+void FASTCALL DummyCs1WriteByte(UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs1WriteWord(u32 addr, u16 val)
+void FASTCALL DummyCs1WriteWord(UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs1WriteLong(u32 addr, u32 val)
+void FASTCALL DummyCs1WriteLong(UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL DummyCs2ReadByte(u32 addr)
+u8 FASTCALL DummyCs2ReadByte(UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL DummyCs2ReadWord(u32 addr)
+u16 FASTCALL DummyCs2ReadWord(UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL DummyCs2ReadLong(u32 addr)
+u32 FASTCALL DummyCs2ReadLong(UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs2WriteByte(u32 addr, u8 val)
+void FASTCALL DummyCs2WriteByte(UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs2WriteWord(u32 addr, u16 val)
+void FASTCALL DummyCs2WriteWord(UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DummyCs2WriteLong(u32 addr, u32 val)
+void FASTCALL DummyCs2WriteLong(UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
@@ -1024,35 +1024,35 @@ u8 FASTCALL JapModemCs0ReadByte(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL JapModemCs0ReadWord(u32 addr)
+u16 FASTCALL JapModemCs0ReadWord(UNUSED u32 addr)
 {
    return 0xFFA5;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL JapModemCs0ReadLong(u32 addr)
+u32 FASTCALL JapModemCs0ReadLong(UNUSED u32 addr)
 {
    return 0xFFA5FFA5;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL JapModemCs1ReadByte(u32 addr)
+u8 FASTCALL JapModemCs1ReadByte(UNUSED u32 addr)
 {
    return 0xA5;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL JapModemCs1ReadWord(u32 addr)
+u16 FASTCALL JapModemCs1ReadWord(UNUSED u32 addr)
 {
    return 0xA5A5;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL JapModemCs1ReadLong(u32 addr)
+u32 FASTCALL JapModemCs1ReadLong(UNUSED u32 addr)
 {
    return 0xA5A5A5A5;
 }
@@ -1485,7 +1485,7 @@ int CartSaveState(FILE * fp)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CartLoadState(FILE * fp, int version, int size)
+int CartLoadState(FILE * fp, UNUSED int version, int size)
 {
    int newtype;
 

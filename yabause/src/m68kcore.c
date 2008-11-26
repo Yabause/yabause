@@ -55,7 +55,7 @@ void M68KDummyDeInit(void) {
 void M68KDummyReset(void) {
 }
 
-s32 FASTCALL M68KDummyExec(s32 cycle) {
+s32 FASTCALL M68KDummyExec(UNUSED s32 cycle) {
 	T2WriteWord(SoundRam, 0x700, 0);
 	T2WriteWord(SoundRam, 0x710, 0);
 	T2WriteWord(SoundRam, 0x720, 0);
@@ -70,11 +70,11 @@ s32 FASTCALL M68KDummyExec(s32 cycle) {
 	return 0;
 }
 
-u32 M68KDummyGetDReg(u32 num) {
+u32 M68KDummyGetDReg(UNUSED u32 num) {
 	return 0;
 }
 
-u32 M68KDummyGetAReg(u32 num) {
+u32 M68KDummyGetAReg(UNUSED u32 num) {
 	return 0;
 }
 
@@ -94,40 +94,40 @@ u32 M68KDummyGetMSP(void) {
 	return 0;
 }
 
-void M68KDummySetDReg(u32 num, u32 val) {
+void M68KDummySetDReg(UNUSED u32 num, UNUSED u32 val) {
 }
 
-void M68KDummySetAReg(u32 num, u32 val) {
+void M68KDummySetAReg(UNUSED u32 num, UNUSED u32 val) {
 }
 
-void M68KDummySetPC(u32 val) {
+void M68KDummySetPC(UNUSED u32 val) {
 }
 
-void M68KDummySetSR(u32 val) {
+void M68KDummySetSR(UNUSED u32 val) {
 }
 
-void M68KDummySetUSP(u32 val) {
+void M68KDummySetUSP(UNUSED u32 val) {
 }
 
-void M68KDummySetMSP(u32 val) {
+void M68KDummySetMSP(UNUSED u32 val) {
 }
 
-void M68KDummySetFetch(u32 low_adr, u32 high_adr, pointer fetch_adr) {
+void M68KDummySetFetch(UNUSED u32 low_adr, UNUSED u32 high_adr, UNUSED pointer fetch_adr) {
 }
 
-void FASTCALL M68KDummySetIRQ(s32 level) {
+void FASTCALL M68KDummySetIRQ(UNUSED s32 level) {
 }
 
-void M68KDummySetReadB(M68K_READ *Func) {
+void M68KDummySetReadB(UNUSED M68K_READ *Func) {
 }
 
-void M68KDummySetReadW(M68K_READ *Func) {
+void M68KDummySetReadW(UNUSED M68K_READ *Func) {
 }
 
-void M68KDummySetWriteB(M68K_WRITE *Func) {
+void M68KDummySetWriteB(UNUSED M68K_WRITE *Func) {
 }
 
-void M68KDummySetWriteW(M68K_WRITE *Func) {
+void M68KDummySetWriteW(UNUSED M68K_WRITE *Func) {
 }
 
 M68K_struct M68KDummy = {

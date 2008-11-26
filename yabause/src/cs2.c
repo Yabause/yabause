@@ -420,7 +420,7 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Cs2WriteLong(u32 addr, u32 val) {
+void FASTCALL Cs2WriteLong(UNUSED u32 addr, UNUSED u32 val) {
    LOG("cs2\t: Long writing isn't implemented\n");
 //   T3WriteLong(Cs2Area->mem, addr, val);
 }
@@ -3432,7 +3432,7 @@ int Cs2SaveState(FILE * fp) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Cs2LoadState(FILE * fp, int version, int size) {
+int Cs2LoadState(FILE * fp, UNUSED int version, int size) {
    int i, i2;
    IOCheck_struct check;
 

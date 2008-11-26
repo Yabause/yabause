@@ -83,7 +83,7 @@ u32 FASTCALL FetchHWram(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL FetchInvalid(u32 addr)
+u32 FASTCALL FetchInvalid(UNUSED u32 addr)
 {
    return 0xFFFF;
 }
