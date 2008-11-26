@@ -897,7 +897,7 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DoNothing(void *info, u32 pixel)
+static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 {
    return pixel;
 }
@@ -1480,7 +1480,6 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    int * c;
-   int i;
    u32 tmp;
    s16 x, y;
    u16 CMDPMOD;
@@ -1488,6 +1487,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    YglColor colors;
    u16 color2;
    u8 mesh;
+   int i;
 #endif
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
@@ -1576,7 +1576,6 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    int * c;
-   int i;
    u32 tmp;
    s16 rw=0, rh=0;
    s16 x, y;
@@ -1585,6 +1584,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    YglColor colors;
    u16 color2;
    u8 mesh;
+   int i;
 #endif
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
@@ -1746,13 +1746,13 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    int * c;
-   int i;
    u32 tmp;
    u16 CMDPMOD;
 #ifdef USEMICSHADERS
    YglColor colors;
    u16 color2;
    u8 mesh;
+   int i;
 #endif
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
@@ -1836,7 +1836,6 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
 void VIDOGLVdp1PolygonDraw(void)
 {
-   int i;
    s16 X[4];
    s16 Y[4];
    u16 color;
@@ -1848,6 +1847,7 @@ void VIDOGLVdp1PolygonDraw(void)
    YglColor colors;
    u8 mesh;
    u16 color2;
+   int i;
 #endif
 
    X[0] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
