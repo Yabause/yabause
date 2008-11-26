@@ -40,7 +40,7 @@ u32 bDet, bChg;
    only depends on <src> register(s) (and potentially constant values,
    including memory content which is constant in an idle loop) */
 
-#define delayCheck(PC) SH2idleCheckIterate( fetchlist[(PC >> 20) & 0x0FF](PC), PC )
+#define delayCheck(PC) SH2idleCheckIterate( fetchlist[((PC) >> 20) & 0x0FF](PC), PC )
 
 #define implies(dest,src) if ( src ) bDet |= dest; else bChg |= dest;
 #define implies2(dest,dest2,src) if ( src ) bDet |= dest|dest2; else bChg |= dest|dest2;
