@@ -257,7 +257,7 @@ u32 FASTCALL Vdp1ReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1WriteByte(u32 addr, u8 val) {
+void FASTCALL Vdp1WriteByte(u32 addr, UNUSED u8 val) {
    addr &= 0xFF;
    LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
 }
@@ -295,7 +295,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1WriteLong(u32 addr, u32 val) {
+void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
    addr &= 0xFF;
    LOG("trying to long-write a Vdp1 register - %08X\n", addr);
 }
@@ -528,7 +528,7 @@ int Vdp1SaveState(FILE *fp)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp1LoadState(FILE *fp, int version, int size)
+int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check;
 
@@ -1291,6 +1291,7 @@ void FASTCALL VIDDummyVdp2SetPriorityNBG1(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityNBG2(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityNBG3(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityRBG0(int priority);
+void VIDDummyOnScreenDebugMessage(char * string, ...);
 
 
 VideoInterface_struct VIDDummy = {
@@ -1321,7 +1322,8 @@ VIDDummyVdp2SetPriorityNBG0,
 VIDDummyVdp2SetPriorityNBG1,
 VIDDummyVdp2SetPriorityNBG2,
 VIDDummyVdp2SetPriorityNBG3,
-VIDDummyVdp2SetPriorityRBG0
+VIDDummyVdp2SetPriorityRBG0,
+VIDDummyOnScreenDebugMessage
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1339,7 +1341,7 @@ void VIDDummyDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyResize(unsigned int i, unsigned int j, int on)
+void VIDDummyResize(UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on)
 {
 }
 
@@ -1450,38 +1452,42 @@ void VIDDummyVdp2DrawScreens(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp2SetResolution(u16 TVMD)
+void VIDDummyVdp2SetResolution(UNUSED u16 TVMD)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL VIDDummyVdp2SetPriorityNBG0(int priority)
+void FASTCALL VIDDummyVdp2SetPriorityNBG0(UNUSED int priority)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL VIDDummyVdp2SetPriorityNBG1(int priority)
+void FASTCALL VIDDummyVdp2SetPriorityNBG1(UNUSED int priority)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL VIDDummyVdp2SetPriorityNBG2(int priority)
+void FASTCALL VIDDummyVdp2SetPriorityNBG2(UNUSED int priority)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL VIDDummyVdp2SetPriorityNBG3(int priority)
+void FASTCALL VIDDummyVdp2SetPriorityNBG3(UNUSED int priority)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL VIDDummyVdp2SetPriorityRBG0(int priority)
+void FASTCALL VIDDummyVdp2SetPriorityRBG0(UNUSED int priority)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+void VIDDummyOnScreenDebugMessage(UNUSED char * string, ...)
+{
+}
