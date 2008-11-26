@@ -307,7 +307,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DoNothing(void *info, u32 pixel)
+static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 {
    return pixel;
 }
@@ -2390,7 +2390,7 @@ void VIDSoftVdp1PolygonDraw(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int INLINE ClipLine(int *x1, int *y1, int *x2, int *y2)
+INLINE int ClipLine(int *x1, int *y1, int *x2, int *y2)
 {
    int point1vis=0;
    int point2vis=0;
