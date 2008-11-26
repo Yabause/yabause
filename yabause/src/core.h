@@ -179,9 +179,26 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
 //////////////////////////////////////////////////////////////////////////////
 
 #ifdef __GNUC__
+
 #define UNUSED __attribute ((unused))
+
+#ifdef DEBUG
+#define USED_IF_DEBUG
 #else
+#define USED_IF_DEBUG __attribute ((unused))
+#endif
+
+#ifdef SMPC_DEBUG
+#define USED_IF_SMPC_DEBUG
+#else
+#define USED_IF_SMPC_DEBUG __attribute ((unused))
+#endif
+
+#else
+
 #define UNUSED
+#define USED_IF_DEBUG
+#define USED_IF_SMPC_DEBUG
 #endif
 
 #endif

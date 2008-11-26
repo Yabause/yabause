@@ -525,7 +525,7 @@ u8 FASTCALL SmpcReadByte(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL SmpcReadWord(u32 addr) {
+u16 FASTCALL SmpcReadWord(USED_IF_SMPC_DEBUG u32 addr) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register read word - %08X\n", addr);
    return 0;
@@ -533,7 +533,7 @@ u16 FASTCALL SmpcReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL SmpcReadLong(u32 addr) {
+u32 FASTCALL SmpcReadLong(USED_IF_SMPC_DEBUG u32 addr) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register read long - %08X\n", addr);
    return 0;
@@ -670,14 +670,14 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SmpcWriteWord(u32 addr, u16 val) {
+void FASTCALL SmpcWriteWord(USED_IF_SMPC_DEBUG u32 addr, UNUSED u16 val) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SmpcWriteLong(u32 addr, u32 val) {
+void FASTCALL SmpcWriteLong(USED_IF_SMPC_DEBUG u32 addr, UNUSED u32 val) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register write long - %08X\n", addr);
 }
