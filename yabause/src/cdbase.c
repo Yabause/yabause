@@ -66,7 +66,7 @@ ISOCDReadSectorFAD
 // Dummy Interface
 //////////////////////////////////////////////////////////////////////////////
 
-int DummyCDInit(const char *cdrom_name)
+int DummyCDInit(UNUSED const char *cdrom_name)
 {
 	// Initialization function. cdrom_name can be whatever you want it to be.
 	// Obviously with some ports(e.g. the dreamcast port) you probably won't
@@ -104,7 +104,7 @@ int DummyCDGetStatus()
 
 //////////////////////////////////////////////////////////////////////////////
 
-s32 DummyCDReadTOC(u32 *TOC)
+s32 DummyCDReadTOC(UNUSED u32 *TOC)
 {
 	// The format of TOC is as follows:
 	// TOC[0] - TOC[98] are meant for tracks 1-99. Each entry has the following
@@ -144,7 +144,7 @@ s32 DummyCDReadTOC(u32 *TOC)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int DummyCDReadSectorFAD(u32 FAD, void * buffer)
+int DummyCDReadSectorFAD(UNUSED u32 FAD, void * buffer)
 {
 	// This function is supposed to read exactly 1 -RAW- 2352-byte sector at
 	// the specified FAD address to buffer. Should return true if successful,

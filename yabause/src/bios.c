@@ -380,7 +380,7 @@ u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CheckHeader(u32 device)
+int CheckHeader(UNUSED u32 device)
 {
    return 0;
 }
@@ -409,7 +409,7 @@ int CalcSaveSize(u32 tableaddr, int blocksize)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 GetFreeSpace(u32 device, u32 size, u32 addr, u32 blocksize)
+u32 GetFreeSpace(UNUSED u32 device, u32 size, u32 addr, u32 blocksize)
 {
    u32 i;
    u32 usedblocks=0;
@@ -429,7 +429,7 @@ u32 GetFreeSpace(u32 device, u32 size, u32 addr, u32 blocksize)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FindSave(u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
+u32 FindSave(UNUSED u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
 {
    u32 i;
 
@@ -470,7 +470,7 @@ u32 FindSave(u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u3
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FindSave2(u32 device, const char *string, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
+u32 FindSave2(UNUSED u32 device, const char *string, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
 {
    u32 i;
 
@@ -1708,14 +1708,14 @@ void BupFormat(u32 device)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int BupCopySave(u32 srcdevice, u32 dstdevice, const char *savename)
+int BupCopySave(UNUSED u32 srcdevice, UNUSED u32 dstdevice, UNUSED const char *savename)
 {
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int BupImportSave(u32 device, const char *filename)
+int BupImportSave(UNUSED u32 device, const char *filename)
 {
    FILE *fp;
    u32 filesize;
@@ -1749,7 +1749,7 @@ int BupImportSave(u32 device, const char *filename)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int BupExportSave(u32 device, const char *savename, const char *filename)
+int BupExportSave(UNUSED u32 device, UNUSED const char *savename, UNUSED const char *filename)
 {
    return 0;
 }
