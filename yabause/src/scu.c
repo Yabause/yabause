@@ -1743,7 +1743,7 @@ void FASTCALL ScuWriteByte(u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteWord(u32 addr, u16 val) {
+void FASTCALL ScuWriteWord(u32 addr, UNUSED u16 val) {
    addr &= 0xFF;
    LOG("Unhandled SCU Register word write %08X\n", addr);
 }
@@ -1931,7 +1931,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
 
 void ScuTestInterruptMask()
 {
-   int i, i2;
+   unsigned int i, i2;
 
    // Handle SCU interrupts
    for (i = 0; i < ScuRegs->NumberOfInterrupts; i++)
@@ -2217,7 +2217,7 @@ int ScuSaveState(FILE *fp)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int ScuLoadState(FILE *fp, int version, int size)
+int ScuLoadState(FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check;
 

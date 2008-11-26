@@ -632,7 +632,7 @@ int YabauseQuickLoadGame(void)
    u32 addr;
    u32 size;
    u32 blocks;
-   int i, i2;
+   unsigned int i, i2;
    dirrec_struct dirrec;
 
    Cs2Area->outconcddev = Cs2Area->filter + 0;
