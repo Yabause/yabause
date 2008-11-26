@@ -465,7 +465,7 @@ static void scsp_slot_keyonoff(void)
                           A   D1 D2   R
 */
 
-static void scsp_env_null_next(slot_t *slot)
+static void scsp_env_null_next(UNUSED slot_t *slot)
 {
 	// only to prevent null call pointer...
 }
@@ -972,7 +972,10 @@ u16 scsp_slot_get_w(u32 s, u32 a)
 void scsp_set_b(u32 a, u8 d)
 {
 //      if (a != 0x41D) SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
-        if ((a != 0x408) && (a != 0x41D)) SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
+        if ((a != 0x408) && (a != 0x41D))
+	{
+		SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
+	}
 //      SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
 
 	scsp_ccr[a ^ 3] = d;
@@ -1136,7 +1139,10 @@ void scsp_set_b(u32 a, u8 d)
 
 void scsp_set_w(u32 a, u16 d)
 {
-        if ((a != 0x418) && (a != 0x41A) && (a != 0x422)) SCSPLOG("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
+        if ((a != 0x418) && (a != 0x41A) && (a != 0x422))
+	{
+		SCSPLOG("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
+	}
 //      SCSPLOG("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
 
 	*(u16 *)&scsp_ccr[a ^ 2] = d;
@@ -1258,7 +1264,10 @@ u8 scsp_get_b(u32 a)
 	a &= 0x3F;
 
 //      if (a != 0x21) SCSPLOG("r_b scsp : reg %.2X\n", a);
-        if ((a != 0x09) && (a != 0x21)) SCSPLOG("r_b scsp : reg %.2X\n", a);
+        if ((a != 0x09) && (a != 0x21))
+	{
+		SCSPLOG("r_b scsp : reg %.2X\n", a);
+	}
 //      if (a == 0x09) SCSPLOG("r_b scsp 09 = %.2X\n", ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0x1) << 7);
 //      SCSPLOG("r_b scsp : reg %.2X\n", a);
 
@@ -1309,7 +1318,10 @@ u16 scsp_get_w(u32 a)
 {
 	a = (a >> 1) & 0x1F;
 
-        if (a != 0x10) SCSPLOG("r_w scsp : reg %.2X\n", a * 2);
+        if (a != 0x10)
+	{
+		SCSPLOG("r_w scsp : reg %.2X\n", a * 2);
+	}
 
 	switch(a){
 
@@ -3893,14 +3905,14 @@ int SNDDummyReset()
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SNDDummyChangeVideoFormat(int vertfreq)
+int SNDDummyChangeVideoFormat(UNUSED int vertfreq)
 {
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SNDDummyUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples)
+void SNDDummyUpdateAudio(UNUSED u32 *leftchanbuffer, UNUSED u32 *rightchanbuffer, UNUSED u32 num_samples)
 {
 }
 
@@ -3937,7 +3949,7 @@ void SNDDummyUnMuteAudio()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SNDDummySetVolume(int volume)
+void SNDDummySetVolume(UNUSED int volume)
 {
 }
 
@@ -4048,7 +4060,7 @@ int SNDWavReset()
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SNDWavChangeVideoFormat(int vertfreq)
+int SNDWavChangeVideoFormat(UNUSED int vertfreq)
 {
    return 0;
 }
@@ -4095,7 +4107,7 @@ void SNDWavUnMuteAudio()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SNDWavSetVolume(int volume)
+void SNDWavSetVolume(UNUSED int volume)
 {
 }
 
