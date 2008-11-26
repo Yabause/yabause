@@ -60,7 +60,7 @@ PERSDLJoyFlush
 #endif
 };
 
-u32 * scan_status;
+s16 * scan_status;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -90,7 +90,7 @@ int PERSDLJoyInit(void) {
 		int i;
 		SDL_JoystickUpdate();
 
-		scan_status = malloc(sizeof(u32) * SDL_JoystickNumAxes( mSDLJoystick1 ));
+		scan_status = malloc(sizeof(s16) * SDL_JoystickNumAxes( mSDLJoystick1 ));
 		for ( i = 0; i < SDL_JoystickNumAxes( mSDLJoystick1 ); i++ )
 			scan_status[i] = SDL_JoystickGetAxis( mSDLJoystick1, i );
 	}
@@ -184,7 +184,7 @@ int PERSDLJoyHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERSDLJoyScan( const char* n ) {
+u32 PERSDLJoyScan( UNUSED const char* n ) {
 	// init vars
 	int i;
 	u32 k = 0;
@@ -235,7 +235,7 @@ u32 PERSDLJoyScan( const char* n ) {
 void PERSDLJoyFlush(void) {
 }
 
-void PERSDLKeyName(u32 key, char * name, int size)
+void PERSDLKeyName(u32 key, char * name, UNUSED int size)
 {
    sprintf(name, "%x", key);
 }
