@@ -74,7 +74,7 @@ int PERGTKHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERGTKScan(const char * name) {
+u32 PERGTKScan(UNUSED const char * name) {
 	g_print("this is wrong, the gtk peripheral can't scan\n");
 	return 1;
 }

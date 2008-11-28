@@ -20,6 +20,7 @@
 
 #include "yuiviewer.h"
 #include "gtkglwidget.h"
+#include "../core.h"
 
 static void yui_viewer_class_init	(YuiViewerClass * klass);
 static void yui_viewer_init		(YuiViewer      * yfe);
@@ -41,6 +42,7 @@ GType yui_viewer_get_type (void) {
         sizeof (YuiViewer),
 	0,
 	(GInstanceInitFunc) yui_viewer_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_DRAWING_AREA, "YuiViewer", &yfe_info, 0);
@@ -49,7 +51,7 @@ GType yui_viewer_get_type (void) {
   return yfe_type;
 }
 
-static void yui_viewer_class_init (YuiViewerClass * klass) {
+static void yui_viewer_class_init (UNUSED YuiViewerClass * klass) {
 }
 
 static gint

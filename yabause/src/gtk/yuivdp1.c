@@ -46,6 +46,7 @@ GType yui_vdp1_get_type (void) {
         sizeof (YuiVdp1),
 	0,
 	(GInstanceInitFunc) yui_vdp1_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiVdp1", &yfe_info, 0);
@@ -54,7 +55,7 @@ GType yui_vdp1_get_type (void) {
   return yfe_type;
 }
 
-static void yui_vdp1_class_init (YuiVdp1Class * klass) {
+static void yui_vdp1_class_init (UNUSED YuiVdp1Class * klass) {
 }
 
 static void yui_vdp1_init (YuiVdp1 * yv) {

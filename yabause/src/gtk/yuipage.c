@@ -23,6 +23,7 @@
 #include "yuirange.h"
 #include "yuiresolution.h"
 #include "yuipage.h"
+#include "../core.h"
 
 static void yui_page_class_init	(YuiPageClass * klass);
 static void yui_page_init		(YuiPage      * yfe);
@@ -43,6 +44,7 @@ GType yui_page_get_type (void) {
         sizeof (YuiPage),
 	0,
 	(GInstanceInitFunc) yui_page_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_VBOX, "YuiPage", &yfe_info, 0);
@@ -51,10 +53,10 @@ GType yui_page_get_type (void) {
   return yfe_type;
 }
 
-static void yui_page_class_init (YuiPageClass * klass) {
+static void yui_page_class_init (UNUSED YuiPageClass * klass) {
 }
 
-static void yui_page_init (YuiPage * yp) {
+static void yui_page_init (UNUSED YuiPage * yp) {
 }
 
 GtkWidget * yui_page_new(GKeyFile * keyfile) {

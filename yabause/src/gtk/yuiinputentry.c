@@ -45,6 +45,7 @@ GType yui_input_entry_get_type (void) {
 			sizeof (YuiInputEntry),
 			0,
 			(GInstanceInitFunc) yui_input_entry_init,
+			NULL,
 		};
 
 		yie_type = g_type_register_static (GTK_TYPE_TABLE, "YuiInputEntry", &yie_info, 0);

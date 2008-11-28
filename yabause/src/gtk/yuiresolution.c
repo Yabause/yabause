@@ -46,6 +46,7 @@ GType yui_resolution_get_type (void) {
 			sizeof (YuiResolution),
 			0,
 			(GInstanceInitFunc) yui_resolution_init,
+			NULL,
 		};
 
 		yie_type = g_type_register_static (GTK_TYPE_TABLE, "YuiResolution", &yie_info, 0);

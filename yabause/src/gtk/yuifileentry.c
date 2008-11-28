@@ -43,6 +43,7 @@ GType yui_file_entry_get_type (void) {
         sizeof (YuiFileEntry),
 	0,
 	(GInstanceInitFunc) yui_file_entry_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_HBOX, "YuiFileEntry", &yfe_info, 0);

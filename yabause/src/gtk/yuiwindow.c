@@ -72,6 +72,7 @@ GType yui_window_get_type (void) {
         sizeof (YuiWindow),
 	0,
 	(GInstanceInitFunc) yui_window_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiWindow", &yfe_info, 0);
@@ -93,17 +94,6 @@ static void yui_window_class_init (YuiWindowClass * klass) {
 
 static void yui_set_accel_group(gpointer action, gpointer group) {
 	gtk_action_set_accel_group(action, group);
-}
-
-void yui_popup( YuiWindow* w, gchar* text, GtkMessageType mType ) {
-  
-  GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(w),
-				   GTK_DIALOG_DESTROY_WITH_PARENT,
-				   mType,
-				   GTK_BUTTONS_CLOSE,
-				   text );
-  gtk_dialog_run (GTK_DIALOG (dialog));
-  gtk_widget_destroy (dialog);
 }
 
 gboolean  yui_window_log_delete(GtkWidget *widget, GdkEvent *event, YuiWindow *yw ) {

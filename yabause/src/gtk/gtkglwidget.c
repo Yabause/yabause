@@ -273,6 +273,7 @@ GType yui_gl_get_type (void) {
         sizeof (YuiGl),
 	0,
 	(GInstanceInitFunc) yui_gl_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_DRAWING_AREA, "YuiGl", &yfe_info, 0);
@@ -281,7 +282,7 @@ GType yui_gl_get_type (void) {
   return yfe_type;
 }
 
-static void yui_gl_class_init (YuiGlClass * klass) {
+static void yui_gl_class_init (UNUSED YuiGlClass * klass) {
 }
 
 static void yui_gl_init (YuiGl * y) {

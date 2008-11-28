@@ -46,6 +46,7 @@ GType yui_scsp_get_type (void) {
         sizeof (YuiScsp),
 	0,
 	(GInstanceInitFunc) yui_scsp_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiScsp", &yfe_info, 0);
@@ -54,7 +55,7 @@ GType yui_scsp_get_type (void) {
   return yfe_type;
 }
 
-static void yui_scsp_class_init (YuiScspClass * klass) {
+static void yui_scsp_class_init (UNUSED YuiScspClass * klass) {
 }
 
 static void yui_scsp_init (YuiScsp * yv) {

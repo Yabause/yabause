@@ -63,6 +63,7 @@ GType yui_mem_get_type (void) {
         sizeof (YuiMem),
 	0,
 	(GInstanceInitFunc) yui_mem_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiMem", &yfe_info, 0);
@@ -71,7 +72,7 @@ GType yui_mem_get_type (void) {
   return yfe_type;
 }
 
-static void yui_mem_class_init (YuiMemClass * klass) {
+static void yui_mem_class_init (UNUSED YuiMemClass * klass) {
 }
 
 static void yui_mem_init (YuiMem * yv) {

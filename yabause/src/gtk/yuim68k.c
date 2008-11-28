@@ -58,6 +58,7 @@ GType yui_m68k_get_type (void) {
         sizeof (YuiM68k),
 	0,
 	(GInstanceInitFunc) yui_m68k_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiM68k", &yfe_info, 0);
@@ -66,7 +67,7 @@ GType yui_m68k_get_type (void) {
   return yfe_type;
 }
 
-static void yui_m68k_class_init (YuiM68kClass * klass) {
+static void yui_m68k_class_init (UNUSED YuiM68kClass * klass) {
 }
 
 static void yui_m68k_init (YuiM68k * m68k) {

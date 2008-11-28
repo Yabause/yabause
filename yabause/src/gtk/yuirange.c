@@ -43,6 +43,7 @@ GType yui_range_get_type (void) {
         sizeof (YuiRange),
 	0,
 	(GInstanceInitFunc) yui_range_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_HBOX, "YuiRange", &yfe_info, 0);

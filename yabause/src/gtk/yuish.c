@@ -83,6 +83,7 @@ GType yui_sh_get_type (void) {
         sizeof (YuiSh),
 	0,
 	(GInstanceInitFunc) yui_sh_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiSh", &yfe_info, 0);
@@ -91,7 +92,7 @@ GType yui_sh_get_type (void) {
   return yfe_type;
 }
 
-static void yui_sh_class_init (YuiShClass * klass) {
+static void yui_sh_class_init (UNUSED YuiShClass * klass) {
 }
 
 static void yui_sh_init (YuiSh * sh2) {

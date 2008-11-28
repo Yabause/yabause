@@ -21,6 +21,7 @@
 #include "yuiscreenshot.h"
 #include "gtkglwidget.h"
 #include "yuiviewer.h"
+#include "../core.h"
 
 static void yui_screenshot_class_init	(YuiScreenshotClass * klass);
 static void yui_screenshot_init		(YuiScreenshot      * yfe);
@@ -43,6 +44,7 @@ GType yui_screenshot_get_type (void) {
         sizeof (YuiScreenshot),
 	0,
 	(GInstanceInitFunc) yui_screenshot_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiScreenshot", &yfe_info, 0);
@@ -51,7 +53,7 @@ GType yui_screenshot_get_type (void) {
   return yfe_type;
 }
 
-static void yui_screenshot_class_init (YuiScreenshotClass * klass) {
+static void yui_screenshot_class_init (UNUSED YuiScreenshotClass * klass) {
 }
 
 static YuiWindow * yui;
@@ -104,7 +106,7 @@ GtkWidget * yui_screenshot_new(YuiWindow * y) {
 	return dialog;
 }
 
-static void yui_screenshot_update(YuiScreenshot	* ys, gpointer data) {
+static void yui_screenshot_update(YuiScreenshot	* ys, UNUSED gpointer data) {
 	yui_gl_dump_screen(YUI_GL(yui->area));
 	yui_screenshot_draw(ys);
 }

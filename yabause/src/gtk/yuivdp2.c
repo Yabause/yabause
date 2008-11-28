@@ -47,6 +47,7 @@ GType yui_vdp2_get_type (void) {
         sizeof (YuiVdp2),
 	0,
 	(GInstanceInitFunc) yui_vdp2_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiVdp2", &yfe_info, 0);
@@ -55,7 +56,7 @@ GType yui_vdp2_get_type (void) {
   return yfe_type;
 }
 
-static void yui_vdp2_class_init (YuiVdp2Class * klass) {
+static void yui_vdp2_class_init (UNUSED YuiVdp2Class * klass) {
 }
 
 static void yui_vdp2_init (YuiVdp2 * yv) {
@@ -65,7 +66,7 @@ static void yui_vdp2_init (YuiVdp2 * yv) {
 	GtkWidget * hpane;
 	GtkWidget * view;
 	const char * screens[] = { "General", "NBG0/RBG1", "NBG1", "NBG2", "NBG3", "RBG0" };
-	int i;
+	unsigned int i;
 
 	gtk_window_set_title(GTK_WINDOW(yv), "VDP2");
 

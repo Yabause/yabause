@@ -49,6 +49,7 @@ GType yui_transfer_get_type (void) {
         sizeof (YuiTransfer),
 	0,
 	(GInstanceInitFunc) yui_transfer_init,
+        NULL,
       };
 
       yfe_type = g_type_register_static(GTK_TYPE_WINDOW, "YuiTransfer", &yfe_info, 0);
@@ -57,7 +58,7 @@ GType yui_transfer_get_type (void) {
   return yfe_type;
 }
 
-static void yui_transfer_class_init (YuiTransferClass * klass) {
+static void yui_transfer_class_init (UNUSED YuiTransferClass * klass) {
 }
 
 static void yui_transfer_init (YuiTransfer * yt) {
@@ -184,7 +185,7 @@ GtkWidget * yui_transfer_new(YuiWindow * yw) {
 	return entry;
 }
 
-static void yui_transfer_browse(GtkWidget * widget, gpointer user_data) {
+static void yui_transfer_browse(UNUSED GtkWidget * widget, gpointer user_data) {
         GtkWidget * file_selector;
         gint result;
         const gchar * filename;
@@ -211,7 +212,7 @@ static void yui_transfer_browse(GtkWidget * widget, gpointer user_data) {
         gtk_widget_destroy(file_selector);
 }
 
-static void yui_transfer_exec(GtkWidget * widget, YuiTransfer * yt) {
+static void yui_transfer_exec(UNUSED GtkWidget * widget, YuiTransfer * yt) {
 	guint32 from, to;
 
 	switch(yt->mode) {
