@@ -1,24 +1,10 @@
-...|...
-0|0
-1|1
 %1/%2 blocks free|%1/%2 bloques libres
 %1 Images (*.%2)|%1 Imágenes (*.%2)
-2|2
-23|23
-3|3
-4|4
-41|41
-5|5
 503/512 blocks free|503/512 bloques libres
 510/512 blocks free|510/512 bloques libres
-6|6
-7|7
-8|8
-9|9
-A|A
+About...|Acerca de...
 &About...|&Acerca de...
 About|Acerca de
-About...|Acerca de...
 &Action Replay|&Action Replay
 Action Replay Code :|Código de Action Replay
 Add Action Replay Code|Añadir Código de Action Replay
@@ -29,25 +15,28 @@ Advanced|Avanzado
 <a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>
 Are you sure you want to delete '%1' ?|¿Estás seguro de borrar '%1' ?
 Are you sure you want to format '%1' ?|¿Estás seguro de formatear '%1' ?
-B|B
 Backup Manager|Gestor de memoria de backup
 Backup Manager...|Gestor de memoria de backup...
+&Backup Ram Manager|Gestor de RAM de &backup
 Backup Ram Manager|Gestor de RAM de backup
 Bios|Bios
 Block Size :|Tamaño de bloque:
-Browse|Buscar
+&Browse|&Examinar
+Browse|Examinar
 Byte Write|Escritura de byte
-C|C
 Cancel|Cancelar
-Cannot initialize |Imposible iniciar
+Cannot initialize|Imposible iniciar
+&Capture Screen|&Capturar pantalla
 Cart/Memory|Cartucho/Memoria
 Cartridge|Cartucho
 CD Images (*.iso *.cue *.bin)|Imágenes de CD (*.iso *.cue *.bin)
-CD-Rom|CD-Rom
+Cd-Rom|Cd-Rom
+&Cheats|&Trucos
+Cheats|Trucos
 Cheats File|Archivo de trucos
+&Cheat List|Listado de &Trucos
 Cheats List|Lista de trucos
 Cheats List...|Lista de trucos...
-Cheats|Trucos
 Cheat Type|Tipo de truco
 Choose a cdrom drive/mount point|Selecciona una unidad de cdrom/punto de montaje
 Choose a cheat file to open|Selecciona un archivo de trucos para abrir
@@ -68,13 +57,16 @@ Description :|Descripción :
 Device List|Lista de Dispositivos
 Disabled|Desactivado
 Down|Abajo
+Download|Descargar
 Emu-Compatibility|Compatibilidad del emulador
 Emulation|Emulación
+End Address:|Dirección final:
 Enable|Activar
 Enabled|Activado
 English|Inglés
 &File|&Archivo
 File|Archivo
+File :|Archivo:
 File Name :|Nombre de archivo :
 File transfer|Transferencia de archivo
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVISO:</b> Códigos Maestros <b>NO</b> soportados.</font>
@@ -89,6 +81,7 @@ From File...|De archivo...
 Fullscreen|Pantalla completa
 General|General
 German|Alemán
+Hard Reset|Reiniciar en frío
 Height|Altura
 _Help|_Ayuda
 &Help|&Ayuda
@@ -99,7 +92,6 @@ Invalid Address|Dirección inválida
 Invalid Value|Valor inválido
 Italian|Italiano
 Japanese|Japonés
-L|L
 Language :|Idioma :
 &Layer|&Capa
 Layer|Capa
@@ -109,11 +101,15 @@ Load as executable|Cargar como ejecutable
 Load|Cargar
 &Load From File|&Cargar desde archivo
 Load State|Cargar estado
+Load State As|Cargar estado como
 Log|Log
 Long Write|Escritura larga
 M68K|M68K
 Memory dump|Volcado de memoria
 Memory Dump|Volcado de Memoria
+Memory Editor|Editor de memoria
+&Memory Transfer|Transferir &memoria
+Memory Transfer|Transferir memoria
 Memory|Memoria
 Mpeg ROM|ROM Mpeg
 MSH2|MSH2
@@ -131,7 +127,6 @@ Open ISO...|Abrir ISO...
 Pause|Pausar
 &Quit|&Sair
 Quit|Sair
-R|R
 &Raw Memory Address|&Dirección de memoria Raw
 RBG0|RBG0
 Region|Región
@@ -145,9 +140,9 @@ Run|Ejecutar
 Save Informations|Guardar informes
 Save List|Lista de salvaguardados
 Save|Salvar
-Save States|Guardar estados
-Save state|Guardar estado
 Save State|Guardar Estado
+Save State As|Guardar estado como
+Save States|Guardar estados
 &Save To File|&Guardar a archivo
 Screenshot|Captura de pantalla
 SCSP|SCSP
@@ -162,14 +157,14 @@ Sound|Sonido
 Spanish|Español
 SSH2|SSH2
 Start|Iniciar
+Start Address:|Dirección inicial:
 Status|Estado
 Store|Almacenar
-To File...|A archivo...
 To File|A archivo
+To File...|A archivo...
 toolBar|Barra de herramientas
 Tools|Herramientas
 To|Para
-Transfer|Transferencia
 Transfer|Transferencia
 Translation|Traducción
 Unable to add code|Imposible añadir código
@@ -179,9 +174,12 @@ Unable to open file for saving|Imposible abrir archivo para guardar
 Unable to remove code|Imposible eliminar código
 Unknow (%1)|Desconocido (%1)
 Up|Arriba
+Upload|Subir
 Value :|Valor :
 Vdp1|Vdp1
+VDP1|VDP1
 Vdp2|Vdp2
+VDP2|VDP2
 Video Core|Núcleo de Vídeo
 Video Driver|Driver de Vídeo
 Video Format|Formato de Vídeo
@@ -191,10 +189,7 @@ _View|_Ver
 Waiting Input...|Esperando Entrada de Datos...
 Width|Ancho
 Word Write|Escribir WORD
-X|X
-Y|Y
 Yabause Cheat Files (*.yct);;All Files (*)|Archivos de trucos para Yabause (*.yct);;Todos los archivos (*)
 Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Interfaz gráfica QT<br />Basada en Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />El equipo de Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Qt GUI|Interfaz gráfica Qt
 Yabause Save State (*.yss)|Salvaguardados de Yabause (*.yss)
-Z|Z
