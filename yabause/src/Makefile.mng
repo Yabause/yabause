@@ -23,7 +23,7 @@ TARGET = yabause.exe
 CC = gcc
 RC = windres
 #DDEFINES=-DDEBUG
-VERSION=0.9.7
+VERSION=0.9.8
 DDEFINES=
 VDEFINES=-DPACKAGE=\"yabause-win\" -DVERSION=\"$(VERSION)\" -DHAVE_LIBGLUT -DHAVE_LIBGL -D_WIN32_IE=0x0400
 CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -fno-strict-aliasing -Wall
