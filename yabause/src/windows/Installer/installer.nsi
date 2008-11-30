@@ -62,7 +62,7 @@ Section "${PROGNAME} Core Files"
   SetOutPath $INSTDIR
   
   ; Install list
-  File "..\Release\Yabause.exe"
+  File "..\..\Yabause.exe"
   File "..\..\..\AUTHORS"
   File "..\..\..\ChangeLog"
   File "..\..\..\COPYING"
