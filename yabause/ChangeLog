@@ -2,10 +2,27 @@
  vdp2:
   - Fixed a bug in software renderer with rotating
     backgrounds.
+ opengl video core:
+  - Added gouraud shading and mesh processing.
+    This is not enabled by default.
+ software video core:
+  - Fixed user clipping.
  gtk port:
-  - Interfaced mouse emulation.
+  - Added mouse support.
+  - Configuration dialog now displays key names instead
+    of values. Also made it so each different configuration
+    is saved. This broke compatibility with old .ini files.
+ windows port:
+  - Support for spaces in filenames when using CLI.
+  - Added mouse support.
+  - Added cheat search.
  general:
   - Added mouse emulation.
+  - Added de, es, it, pt-br and sv translations
+  - Support for "out of src" build.
+  - Fixed compilation for non supported platforms.
+    For instance this should fix compilation on dragonfly bsd.
+    Fixed compilation on GNU/Hurd too.
 0.9.6 -> 0.9.7
  vdp1:
   - Added clipping for line-based drawing to software renderer.
