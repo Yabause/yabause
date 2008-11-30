@@ -13,8 +13,8 @@
 
 1) Compiling instructions...................................20
 2) How to use Yabause.......................................65
-3) Contact information.....................................215
-4) Disclaimer..............................................231
+3) Contact information.....................................214
+4) Disclaimer..............................................230
 
 
 1 Compiling instructions______________________________________
@@ -144,14 +144,13 @@ slider underneath.
 Input Settings________________________________________________
 
 If you click on the "Input" tab another list of settings is
-displayed. Here you can choose which peripheral(s) emulate. For
-now you can only configure it to use up to a maximum of two
-standard pads. If you press "Config" another window will pop up.
-Here can set which device you'd like to use at the top of the
-window. Control settings can be changed by clicking on the
-equivalent button, and then when a new window pops up that says
-"waiting for input..." press a key/button and that will set the
-new setting for that control.
+displayed. Here you can choose which peripheral(s) emulate. If
+you press "Config" another window will pop up. Here can set which
+device you'd like to use at the top of the window. Control
+settings can be changed by clicking on the equivalent button, and
+then when a new window pops up that says "waiting for input..."
+press a key/button and that will set the new setting for that
+control.
 
 Log Settings__________________________________________________
 
