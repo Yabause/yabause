@@ -40,7 +40,7 @@ DCCDInit:
     cmp/eq      #3, r0                  ! ERR_SYS
     bt          .init_return_error
     mov.l       .gdc_syscall_vector, r1
-    mova       .DCCDInitParams, r0
+    mova        .DCCDInitParams, r0
     mov         #10, r7
     mov.l       @r1, r1
     mov         r0, r4
