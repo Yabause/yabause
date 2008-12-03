@@ -108,6 +108,27 @@ BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void LoadDefaultPort1A(void)
+{
+   pad[0] = PerPadAdd(&PORTDATA1);
+
+   PerSetKey(DIK_UP, PERPAD_UP, pad[0]);
+   PerSetKey(DIK_DOWN, PERPAD_DOWN, pad[0]);
+   PerSetKey(DIK_LEFT, PERPAD_LEFT, pad[0]);
+   PerSetKey(DIK_RIGHT, PERPAD_RIGHT, pad[0]);
+   PerSetKey(DIK_K, PERPAD_A, pad[0]);
+   PerSetKey(DIK_L, PERPAD_B, pad[0]);
+   PerSetKey(DIK_M, PERPAD_C, pad[0]);
+   PerSetKey(DIK_U, PERPAD_X, pad[0]);
+   PerSetKey(DIK_I, PERPAD_Y, pad[0]);
+   PerSetKey(DIK_O, PERPAD_Z, pad[0]);
+   PerSetKey(DIK_X, PERPAD_LEFT_TRIGGER, pad[0]);
+   PerSetKey(DIK_Z, PERPAD_RIGHT_TRIGGER, pad[0]);
+   PerSetKey(DIK_J, PERPAD_START, pad[0]);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int PERDXInit(void)
 {
    DIPROPDWORD dipdw;
@@ -173,22 +194,7 @@ int PERDXInit(void)
    paddevice[0].emulatetype = 1;
 
    PerPortReset();
-   pad[0] = PerPadAdd(&PORTDATA1);
-
-   PerSetKey(DIK_UP, PERPAD_UP, pad[0]);
-   PerSetKey(DIK_DOWN, PERPAD_DOWN, pad[0]);
-   PerSetKey(DIK_LEFT, PERPAD_LEFT, pad[0]);
-   PerSetKey(DIK_RIGHT, PERPAD_RIGHT, pad[0]);
-   PerSetKey(DIK_K, PERPAD_A, pad[0]);
-   PerSetKey(DIK_L, PERPAD_B, pad[0]);
-   PerSetKey(DIK_M, PERPAD_C, pad[0]);
-   PerSetKey(DIK_U, PERPAD_X, pad[0]);
-   PerSetKey(DIK_I, PERPAD_Y, pad[0]);
-   PerSetKey(DIK_O, PERPAD_Z, pad[0]);
-   PerSetKey(DIK_X, PERPAD_LEFT_TRIGGER, pad[0]);
-   PerSetKey(DIK_Z, PERPAD_RIGHT_TRIGGER, pad[0]);
-   PerSetKey(DIK_J, PERPAD_START, pad[0]);
-
+   LoadDefaultPort1A();
    return 0;
 }
 
@@ -219,6 +225,7 @@ void PERDXLoadDevices(char *inifilename)
    DIPROPDWORD dipdw;
    int id;
    DWORD coopflags=DISCL_FOREGROUND | DISCL_NONEXCLUSIVE;
+   BOOL loaddefault=TRUE;
 
    if (!PERCore)
       return;
@@ -239,6 +246,8 @@ void PERDXLoadDevices(char *inifilename)
          if (paddevice[i].emulatetype == 0)
             continue;
       }
+
+      loaddefault=FALSE;
 
       if (paddevice[i].lpDIDevice)
       {
@@ -326,6 +335,8 @@ void PERDXLoadDevices(char *inifilename)
       else
          pad[i] = PerAddPeripheral(&PORTDATA2, id);
 
+      loaddefault=FALSE;
+
       // Now that we're all setup, let's fetch the controls from the ini
       sprintf(string1, "Peripheral%d", (int)i+1);
 
@@ -347,6 +358,8 @@ void PERDXLoadDevices(char *inifilename)
          }
       }
    }
+   if (loaddefault)
+      LoadDefaultPort1A();
 }
 
 //////////////////////////////////////////////////////////////////////////////
