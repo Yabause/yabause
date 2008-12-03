@@ -35,7 +35,7 @@ distclean-local: Makefile.qmake.Release Makefile.qmake.Debug
 	$(MAKE) -f Makefile.qmake.Debug distclean
 
 install-exec-local: Makefile.qmake
-	$(MAKE) -f Makefile.qmake release-install
+	$(MAKE) -f Makefile.qmake release-install INSTALL_ROOT=$(DESTDIR)
 
 uninstall-local: Makefile.qmake
 	$(MAKE) -f Makefile.qmake release-uninstall
