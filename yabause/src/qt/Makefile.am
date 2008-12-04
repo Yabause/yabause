@@ -36,7 +36,15 @@ distclean-local: Makefile.qmake.Release Makefile.qmake.Debug
 
 install-exec-local: Makefile.qmake
 	$(MAKE) -f Makefile.qmake release-install INSTALL_ROOT=$(DESTDIR)
+	@dest=`echo "$(DESTDIR)$(bindir)/yabause" | sed '$(transform)'` ; \
+	if test \( -e "$(DESTDIR)$(bindir)/yabause" \) -a \( ! "$(DESTDIR)$(bindir)/yabause" = "$$dest" \) ; then \
+		mv "$(DESTDIR)$(bindir)/yabause" "$$dest" ; \
+	fi
 
 uninstall-local: Makefile.qmake
-	$(MAKE) -f Makefile.qmake release-uninstall
+	@dest=`echo "$(DESTDIR)$(bindir)/yabause" | sed '$(transform)'` ; \
+	if test \( -e "$$dest" \) -a \( ! "$(DESTDIR)$(bindir)/yabause" = "$$dest" \) ; then \
+		mv "$$dest" "$(DESTDIR)$(bindir)/yabause" ; \
+	fi
+	$(MAKE) -f Makefile.qmake release-uninstall INSTALL_ROOT=$(DESTDIR)
 endif
