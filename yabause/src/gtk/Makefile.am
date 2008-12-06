@@ -14,3 +14,25 @@ yabause_SOURCES = gtkglwidget.c gtkglwidget.h main.c settings.c menu.c gtk-compa
 	yuiviewer.c yuiviewer.h settings.h
 yabause_CFLAGS = $(YAB_CFLAGS)
 yabause_LDADD = ../libyabause.a $(YAB_LIBS)
+
+install-data-hook:
+	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" "$(DESTDIR)$(pixmapdir)/yabause.png" ; do \
+		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
+		fbase=`basename "$$f" $$fext` ; \
+		fdir=`dirname "$$f"` ; \
+		fdest="$$fdir"/`echo "$$fbase" | sed '$(transform)'`$$fext ; \
+		if test \( -e "$$f" \) -a \( ! "$$f" = "$$fdest" \) ; then \
+			echo " mv $$f $$fdest" ; \
+			mv "$$f" "$$fdest" ; \
+		fi ; \
+	done
+
+uninstall-hook:
+	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" "$(DESTDIR)$(pixmapdir)/yabause.png" ; do \
+		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
+		fbase=`basename "$$f" $$fext` ; \
+		fdir=`dirname "$$f"` ; \
+		fdest="$$fdir"/`echo "$$fbase" | sed '$(transform)'`$$fext ; \
+		echo " rm -f $$fdest" ; \
+		rm -f "$$fdest" ; \
+	done
