@@ -1,3 +1,7 @@
+Applicationsdir = $(datadir)/applications
+Applications_DATA = yabause.desktop
+pixmapdir = $(datadir)/pixmaps
+pixmap_DATA = resources/icons/yabause.png
 EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h \
 	main.cpp PerQt.c PerQt.h \
 	QtYabause.cpp QtYabause.h Settings.cpp Settings.h yabause.desktop \
@@ -47,4 +51,26 @@ uninstall-local: Makefile.qmake
 		mv "$$dest" "$(DESTDIR)$(bindir)/yabause" ; \
 	fi
 	$(MAKE) -f Makefile.qmake release-uninstall INSTALL_ROOT=$(DESTDIR)
+
+install-data-hook:
+	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" "$(DESTDIR)$(pixmapdir)/yabause.png" ; do \
+		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
+		fbase=`basename "$$f" $$fext` ; \
+		fdir=`dirname "$$f"` ; \
+		fdest="$$fdir"/`echo "$$fbase" | sed '$(transform)'`$$fext ; \
+		if test \( -e "$$f" \) -a \( ! "$$f" = "$$fdest" \) ; then \
+			echo " mv $$f $$fdest" ; \
+			mv "$$f" "$$fdest" ; \
+		fi ; \
+	done
+
+uninstall-hook:
+	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" "$(DESTDIR)$(pixmapdir)/yabause.png" ; do \
+		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
+		fbase=`basename "$$f" $$fext` ; \
+		fdir=`dirname "$$f"` ; \
+		fdest="$$fdir"/`echo "$$fbase" | sed '$(transform)'`$$fext ; \
+		echo " rm -f $$fdest" ; \
+		rm -f "$$fdest" ; \
+	done
 endif
