@@ -27,14 +27,79 @@ static mini18n_hash_t * hash = NULL;
 #ifdef MINI18N_LOG
 static FILE * log = NULL;
 #endif
+#ifdef _WIN32
+static char pathsep = '\\';
+#else
+static char pathsep = '/';
+#endif
+
+int mini18n_set_domain(const char * folder) {
+	char * lang;
+	char * country;
+	char * locale;
+	char * fulllocale;
+	char * tmp;
+
+	lang = strdup(getenv("LANG"));
+	if (lang == NULL) return -1;
+
+	tmp = strchr(lang, '@');
+	if (tmp != NULL) *tmp = '\0';
+	tmp = strchr(lang, '.');
+	if (tmp != NULL) *tmp = '\0';
+	tmp = strchr(lang, '_');
+	if (tmp != NULL) {
+		country = strdup(lang);
+		*tmp = '\0';
+	}
+
+	if (folder == NULL) {
+		locale = strdup(lang);
+		fulllocale = strdup(country);
+	} else {
+		char * pos;
+		size_t n = strlen(folder);
+
+		if (n == 0) {
+			locale = strdup(lang);
+			fulllocale = strdup(country);
+		} else {
+			size_t s;
+			int trailing = folder[n - 1] == pathsep ? 1 : 0;
+
+			s = n + strlen(lang) + 5 + (1 - trailing);
+			locale = malloc(s);
+
+			pos = locale;
+			pos += sprintf(pos, "%s", folder);
+			if (! trailing) pos += sprintf(pos, "%c", pathsep);
+			sprintf(pos, "%s.yts", lang);
+
+			s = n + strlen(country) + 5 + (1 - trailing);
+			fulllocale = malloc(s);
+
+			pos = fulllocale;
+			pos += sprintf(pos, "%s", folder);
+			if (! trailing) pos += sprintf(pos, "%c", pathsep);
+			sprintf(pos, "%s.yts", country);
+		}
+	}
+
+	if (mini18n_set_locale(fulllocale) == -1) {
+		return mini18n_set_locale(locale);
+	}
+
+	return 0;
+}
 
 int mini18n_set_locale(const char * locale) {
+	mini18n_hash_t * tmp = mini18n_hash_from_file(locale);
+
+	if (tmp == NULL) return -1;
+
 	mini18n_hash_free(hash);
 
-	hash = mini18n_hash_from_file(locale);
-	if (hash == NULL) {
-		return -1;
-	}
+	hash = tmp;
 
 	return 0;
 }

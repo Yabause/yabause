@@ -24,6 +24,7 @@
 #define _(source) (mini18n(source))
 #endif
 
+int mini18n_set_domain(const char * folder);
 int mini18n_set_locale(const char * locale);
 int mini18n_set_log(const char * filename);
 const char * mini18n(const char * source);
