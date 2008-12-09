@@ -366,6 +366,7 @@ int main(int argc, char *argv[]) {
 	yui_settings_init();
 
 #ifdef HAVE_LIBMINI18N
+	mini18n_set_domain(YTSDIR);
 	g_key_file_load_from_file(keyfile, inifile, G_KEY_FILE_NONE, 0);
 	mini18n_set_locale(g_key_file_get_value(keyfile, "General", "TranslationPath", NULL));
 #endif
