@@ -28,9 +28,50 @@ static mini18n_hash_t * hash = NULL;
 static FILE * log = NULL;
 #endif
 #ifdef _WIN32
+#include <windows.h>
 static char pathsep = '\\';
+
+static void mini18n_pv_get_locale(char ** lang, char ** country) {
+	char buffer[11];
+	int i;
+
+	*lang = malloc(3);
+	*country = malloc(6);
+
+	LCID locale = GetUserDefaultLCID();
+	GetLocaleInfo(locale, LOCALE_SABBREVLANGNAME, buffer, 10);
+	for(i = 0;i < 2;i++) {
+		(*lang)[i] = tolower(buffer[i]);
+		(*country)[i] = tolower(buffer[i]);
+	}
+	(*country)[i++] = '_';
+	GetLocaleInfo(locale, LOCALE_SABBREVCTRYNAME, buffer, 10);
+	for(;i < 5;i++) {
+		(*country)[i] = toupper(buffer[i - 3]);
+	}
+	(*lang)[2] = '\0';
+	(*country)[5] = '\0';
+}
 #else
 static char pathsep = '/';
+
+static void mini18n_pv_get_locale(char ** lang, char ** country) {
+	char * tmp;
+
+	*country = NULL;
+	*lang = strdup(getenv("LANG"));
+	if (*lang == NULL) return;
+
+	tmp = strchr(*lang, '@');
+	if (tmp != NULL) *tmp = '\0';
+	tmp = strchr(*lang, '.');
+	if (tmp != NULL) *tmp = '\0';
+	tmp = strchr(*lang, '_');
+	if (tmp != NULL) {
+		*country = strdup(*lang);
+		*tmp = '\0';
+	}
+}
 #endif
 
 int mini18n_set_domain(const char * folder) {
@@ -38,20 +79,8 @@ int mini18n_set_domain(const char * folder) {
 	char * country;
 	char * locale;
 	char * fulllocale;
-	char * tmp;
 
-	lang = strdup(getenv("LANG"));
-	if (lang == NULL) return -1;
-
-	tmp = strchr(lang, '@');
-	if (tmp != NULL) *tmp = '\0';
-	tmp = strchr(lang, '.');
-	if (tmp != NULL) *tmp = '\0';
-	tmp = strchr(lang, '_');
-	if (tmp != NULL) {
-		country = strdup(lang);
-		*tmp = '\0';
-	}
+	mini18n_pv_get_locale(&lang, &country);
 
 	if (folder == NULL) {
 		locale = strdup(lang);
