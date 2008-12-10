@@ -29,7 +29,7 @@ EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h \
 
 if YUI_IS_QT
 all-local: Makefile.qmake
-	$(MAKE) -f Makefile.qmake release
+	$(MAKE) -f Makefile.qmake release YTSDEF=-DYTSDIR=\\\"$(datadir)/$(PACKAGE)/yts\\\"
 
 clean-local: Makefile.qmake
 	$(MAKE) -f Makefile.qmake clean

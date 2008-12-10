@@ -122,6 +122,14 @@ Settings* QtYabause::settings()
 int QtYabause::setTranslationFile()
 {
 #ifdef HAVE_LIBMINI18N
+	if ( mini18n_set_domain( YTSDIR ) == 0 )
+	{
+		QtYabause::retranslateApplication();
+		if ( logTranslation() != 0 )
+			qWarning( "Can't log translation !" );
+		return 0;
+	}
+
 	const QString s = settings()->value( "General/Translation" ).toString();
 	if ( s.isEmpty() )
 		return 0;
