@@ -19,3 +19,16 @@ AC_DEFUN([YAB_DEP_DISABLED],
 run the configure script again with --disable-dependency-tracking])
 		fi
 	])
+
+AC_DEFUN([YAB_LINK_MINI18N],
+	[
+		AC_ARG_ENABLE(static-mini18n,
+			AC_HELP_STRING(--enable-static-mini18n, Use a static dependency on mini18n),
+			[use_static_mini18n=$enableval])
+		if test "x$use_static_mini18n" = "xyes" ; then
+			LIBS="-Wl,-Bstatic -lmini18n -Wl,-Bdynamic $LIBS"
+		else
+			LIBS="-lmini18n $LIBS"
+		fi
+		AC_DEFINE(HAVE_LIBMINI18N)
+	])

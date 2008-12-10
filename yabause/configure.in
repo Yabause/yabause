@@ -49,12 +49,12 @@ if test ! "x$MINI18N" = "x" ; then
 	CPPFLAGS="$CPPFLAGS -I$MINI18N/include"
 	LDFLAGS="$LDFLAGS -L$MINI18N/lib"
 
-	AC_CHECK_LIB(mini18n, mini18n, [], [
+	AC_CHECK_LIB(mini18n, mini18n, [YAB_LINK_MINI18N], [
 		CPPFLAGS="$OLDCPPFLAGS"
 		LDFLAGS="$OLDLDFLAGS"
 		])
 else
-	AC_CHECK_LIB(mini18n, mini18n)
+	AC_CHECK_LIB(mini18n, mini18n, [YAB_LINK_MINI18N])
 fi
 
 # checking for variadic macros
