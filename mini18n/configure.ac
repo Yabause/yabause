@@ -1,7 +1,13 @@
 AC_INIT(mini18n, 0.1)
 
 AC_CANONICAL_HOST
-AC_CANONICAL_TARGET
+
+case $host in
+	*mingw32*)
+		want_windows=yes
+		AC_DEFINE([HAVE_UTF16])
+		;;
+esac
 
 AM_INIT_AUTOMAKE(mini18n, 0.1)
 
@@ -18,5 +24,7 @@ AC_CONFIG_FILES([Makefile
 	src/Makefile
 	example/Makefile
 ])
+
+AM_CONDITIONAL([WANT_WINDOWS], [test x${want_windows} = "xyes"])
 
 AC_OUTPUT

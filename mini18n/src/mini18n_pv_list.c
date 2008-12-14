@@ -41,7 +41,7 @@ void mini18n_list_free(mini18n_list_t * list) {
 	}
 }
 
-mini18n_list_t * mini18n_list_add(mini18n_list_t * list, const char * key, const char * value) {
+mini18n_list_t * mini18n_list_add(mini18n_list_t * list, const char * key, mini18n_data_t * data, const char * value) {
 	mini18n_list_t * node;
 
 	node = malloc(sizeof(mini18n_list_t));
@@ -50,7 +50,8 @@ mini18n_list_t * mini18n_list_add(mini18n_list_t * list, const char * key, const
 	}
 
 	node->key = strdup(key);
-	node->value = strdup(value);
+	node->data = data;
+	node->value = node->data->dup(value);
 	node->next = list;
 
 	return node;
@@ -61,7 +62,7 @@ const char * mini18n_list_value(mini18n_list_t * list, const char * key) {
 
 	node = list;
 	while(node != NULL) {
-		if (!strcmp(key, node->key)) {
+		if (!node->data->cmp(key, node->key)) {
 			return node->value;
 		}
 

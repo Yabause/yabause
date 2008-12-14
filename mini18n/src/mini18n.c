@@ -19,14 +19,29 @@
 
 #include "mini18n.h"
 #include "mini18n_pv_hash.h"
+#include "mini18n_pv_conv.h"
+#ifdef _WIN32
+#include "mini18n_pv_conv_windows.h"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static mini18n_hash_t * hash = NULL;
+static mini18n_hash_t * hash[] = {
+	NULL,
+	NULL
+};
+static mini18n_conv_t * converters[] = {
+#ifdef _WIN32
+	&mini18n_conv_windows_utf16,
+#endif
+	NULL
+};
+
 #ifdef MINI18N_LOG
 static FILE * log = NULL;
 #endif
+
 #ifdef _WIN32
 #include <windows.h>
 static char pathsep = '\\';
@@ -126,9 +141,11 @@ int mini18n_set_locale(const char * locale) {
 
 	if (tmp == NULL) return -1;
 
-	mini18n_hash_free(hash);
+	mini18n_hash_free(hash[0]);
+	if (hash[1] != NULL) mini18n_hash_free(hash[1]);
 
-	hash = tmp;
+	hash[0] = tmp;
+	hash[1] = NULL;
 
 	return 0;
 }
@@ -146,10 +163,10 @@ int mini18n_set_log(const char * filename) {
 }
 
 const char * mini18n(const char * source) {
-#ifdef MINI18N_LOG
-	const char * translated = mini18n_hash_value(hash, source);
+	const char * translated = mini18n_hash_value(hash[0], source);
 
-	if ((log) && (hash) && (translated == source)) {
+#ifdef MINI18N_LOG
+	if ((log) && (hash[0]) && (translated == source)) {
 		unsigned int i = 0;
 		unsigned int n = strlen(source);
 
@@ -170,17 +187,40 @@ const char * mini18n(const char * source) {
 			fprintf(log, "|\n");
 
 		/* we add the non translated string to avoid duplicates in the log file */
-		mini18n_hash_add(hash, source, translated);
+		mini18n_hash_add(hash[0], source, translated);
 	}
+#endif
 
 	return translated;
-#else
-	return mini18n_hash_value(hash, source);
-#endif
+}
+
+void * mini18n_with_conversion(const char * source, unsigned int format) {
+	mini18n_conv_t * converter;
+	const void * conv;
+
+	if (hash[format] != NULL) {
+		conv = mini18n_hash_value(hash[format], source);
+		if (conv != source) return conv;
+	}
+
+	converter = *converters;
+
+	while(converter != NULL) {
+		if (converter->format == format) {
+			conv = converter->conv(mini18n(source));
+			if (hash[format] == NULL) hash[format] = mini18n_hash_init(converter->data);
+			mini18n_hash_add(hash[format], source, conv);
+			return conv;
+		}
+		converter++;
+	}
+
+	return "";
 }
 
 void mini18n_close(void) {
-	mini18n_hash_free(hash);
+	mini18n_hash_free(hash[0]);
+	if (hash[1] != NULL) mini18n_hash_free(hash[1]);
 #ifdef MINI18N_LOG
 	if (log) fclose(log);
 #endif

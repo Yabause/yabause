@@ -20,14 +20,21 @@
 #ifndef MINI18N_H
 #define MINI18N_H
 
+#define MINI18N_UTF16 1
+
 #ifndef _
 #define _(source) (mini18n(source))
+#endif
+
+#ifndef _16
+#define _16(source) (mini18n_with_conversion(source, MINI18N_UTF16))
 #endif
 
 int mini18n_set_domain(const char * folder);
 int mini18n_set_locale(const char * locale);
 int mini18n_set_log(const char * filename);
 const char * mini18n(const char * source);
+void * mini18n_with_conversion(const char * source, unsigned int format);
 void mini18n_close(void);
 
 #endif

@@ -27,10 +27,11 @@
 typedef struct _mini18n_hash_t mini18n_hash_t;
 
 struct _mini18n_hash_t {
+	mini18n_data_t * data;
 	mini18n_list_t * list[MINI18N_HASH_SIZE];
 };
 
-mini18n_hash_t * mini18n_hash_init();
+mini18n_hash_t * mini18n_hash_init(mini18n_data_t * data);
 void mini18n_hash_free(mini18n_hash_t * hash);
 void mini18n_hash_add(mini18n_hash_t * hash, const char * key, const char * value);
 const char * mini18n_hash_value(mini18n_hash_t * hash, const char * key);

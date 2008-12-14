@@ -17,23 +17,17 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef MINI18N_PV_LIST_H
-#define MINI18N_PV_LIST_H
-
 #include "mini18n_pv_data.h"
+#include <string.h>
 
-typedef struct _mini18n_list_t mini18n_list_t;
-
-struct _mini18n_list_t {
-	char * key;
-	mini18n_data_t * data;
-	char * value;
-	struct _mini18n_list_t * next;
+mini18n_data_t mini18n_str = {
+	strlen,
+	strdup,
+	strcmp
 };
 
-mini18n_list_t * mini18n_list_init();
-void mini18n_list_free(mini18n_list_t * list);
-mini18n_list_t * mini18n_list_add(mini18n_list_t * list, const char * key, mini18n_data_t * data, const char * value);
-const char * mini18n_list_value(mini18n_list_t * list, const char * key);
-
-#endif
+mini18n_data_t mini18n_wcs = {
+	wcslen,
+	wcsdup,
+	wcscmp
+};

@@ -17,23 +17,20 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef MINI18N_PV_LIST_H
-#define MINI18N_PV_LIST_H
+#include "mini18n.h"
+#include "mini18n_pv_conv_windows.h"
+#include <windows.h>
 
-#include "mini18n_pv_data.h"
+void * conv_windows_utf16(const char * source) {
+	WCHAR * utf16;
+	int needed = MultiByteToWideChar(CP_UTF8, 0, source, -1, NULL, 0);
+	utf16 = malloc(sizeof(WCHAR) * needed);
+	MultiByteToWideChar(CP_UTF8, 0, source, -1, utf16, needed);
+	return utf16;
+}
 
-typedef struct _mini18n_list_t mini18n_list_t;
-
-struct _mini18n_list_t {
-	char * key;
-	mini18n_data_t * data;
-	char * value;
-	struct _mini18n_list_t * next;
+mini18n_conv_t mini18n_conv_windows_utf16 = {
+	MINI18N_UTF16,
+	&mini18n_wcs,
+	conv_windows_utf16
 };
-
-mini18n_list_t * mini18n_list_init();
-void mini18n_list_free(mini18n_list_t * list);
-mini18n_list_t * mini18n_list_add(mini18n_list_t * list, const char * key, mini18n_data_t * data, const char * value);
-const char * mini18n_list_value(mini18n_list_t * list, const char * key);
-
-#endif

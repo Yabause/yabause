@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static int mini18n_hash_func(const char * key);
+static unsigned int mini18n_hash_func(mini18n_hash_t * hash, const char * key);
 
-mini18n_hash_t * mini18n_hash_init() {
+mini18n_hash_t * mini18n_hash_init(mini18n_data_t * data) {
 	mini18n_hash_t * hash;
 	int i;
 
@@ -33,6 +33,8 @@ mini18n_hash_t * mini18n_hash_init() {
 	if (hash == NULL) {
 		return NULL;
 	}
+
+	hash->data = data;
 
 	for(i = 0;i < MINI18N_HASH_SIZE;i++) {
 		hash->list[i] = mini18n_list_init();
@@ -56,28 +58,28 @@ void mini18n_hash_free(mini18n_hash_t * hash) {
 }
 
 void mini18n_hash_add(mini18n_hash_t * hash, const char * key, const char * value) {
-	int h;
+	unsigned int h;
 
-	h = mini18n_hash_func(key);
+	h = mini18n_hash_func(hash, key);
 
-	hash->list[h] = mini18n_list_add(hash->list[h], key, value);
+	hash->list[h] = mini18n_list_add(hash->list[h], key, hash->data, value);
 }
 
 const char * mini18n_hash_value(mini18n_hash_t * hash, const char * key) {
-	int h;
+	unsigned int h;
 
 	if (hash == NULL) {
 		return key;
 	}
 
-	h = mini18n_hash_func(key);
+	h = mini18n_hash_func(hash, key);
 
 	return mini18n_list_value(hash->list[h], key);
 }
 
-int mini18n_hash_func(const char * key) {
-	int i, s = 0;
-	int n = strlen(key);
+unsigned int mini18n_hash_func(mini18n_hash_t * hash, const char * key) {
+	unsigned int i, s = 0;
+	int n = hash->data->len(key);
 
 	for(i = 0;i < n;i++) {
 		s+= key[i];
@@ -94,7 +96,7 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 	mini18n_hash_t * hash;
 	FILE * f;
 
-	hash = mini18n_hash_init();
+	hash = mini18n_hash_init(&mini18n_str);
 	if (hash == NULL) {
 		return NULL;
 	}
