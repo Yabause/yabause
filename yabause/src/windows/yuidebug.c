@@ -320,6 +320,16 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
+void DebugMouseWheel(HWND hctl, WPARAM wParam)
+{
+   if (HIWORD(wParam) < 0x8000)
+      PostMessage(hctl, WM_VSCROLL, MAKEWPARAM(SB_LINEUP, 0), (LPARAM)NULL);
+   else if (HIWORD(wParam) >= 0x8000)
+      PostMessage(hctl, WM_VSCROLL, MAKEWPARAM(SB_LINEDOWN, 0), (LPARAM)NULL);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void SH2UpdateRegList(HWND hDlg, sh2regs_struct *regs)
 {
    char tempstr[128];
@@ -799,6 +809,9 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
          break;
       }
+      case WM_MOUSEWHEEL:
+         DebugMouseWheel(GetDlgItem(hDlg, IDC_DISASM), wParam);
+         return TRUE;
       case WM_CLOSE:
       {
          EndDialog(hDlg, TRUE);
@@ -1542,6 +1555,9 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
          break;
       }
+      case WM_MOUSEWHEEL:
+         DebugMouseWheel(GetDlgItem(hDlg, IDC_DISASM), wParam);
+         return TRUE;
       case WM_CLOSE:
       {
          EndDialog(hDlg, TRUE);
@@ -1768,6 +1784,9 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
          break;
       }
+      case WM_MOUSEWHEEL:
+         DebugMouseWheel(GetDlgItem(hDlg, IDC_DISASM), wParam);
+         return TRUE;
       case WM_CLOSE:
       {
          EndDialog(hDlg, TRUE);

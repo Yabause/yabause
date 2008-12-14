@@ -198,12 +198,6 @@ LRESULT CALLBACK DisasmCtl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
          break;
       case WM_VSCROLL:
          return DisasmCtl_Vscroll(cc, wParam, lParam);
-      case WM_MOUSEWHEEL:
-         if (HIWORD(wParam) < 0x8000)
-            return DisasmCtl_Vscroll(cc, SB_LINEUP, 0);
-         else if (HIWORD(wParam) >= 0x8000)
-            return DisasmCtl_Vscroll(cc, SB_LINEDOWN, 0);
-         break;
       case WM_LBUTTONDOWN:
          return 0;
       case WM_LBUTTONDBLCLK:
