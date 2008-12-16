@@ -19,6 +19,8 @@
 
 #include "mini18n_pv_data.h"
 #include <string.h>
+#define __USE_GNU
+#include <wchar.h>
 
 mini18n_data_t mini18n_str = {
 	strlen,
