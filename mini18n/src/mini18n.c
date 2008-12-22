@@ -49,11 +49,12 @@ static char pathsep = '\\';
 static void mini18n_pv_get_locale(char ** lang, char ** country) {
 	char buffer[11];
 	int i;
+   LCID locale;
 
 	*lang = malloc(3);
 	*country = malloc(6);
 
-	LCID locale = GetUserDefaultLCID();
+	locale = GetUserDefaultLCID();
 	GetLocaleInfo(locale, LOCALE_SABBREVLANGNAME, buffer, 10);
 	for(i = 0;i < 2;i++) {
 		(*lang)[i] = tolower(buffer[i]);
