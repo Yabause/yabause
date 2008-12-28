@@ -277,16 +277,46 @@ fi
 
 AC_SUBST(yabause_yui)
 
-AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug information) , AC_DEFINE(DEBUG))
-AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug information) , AC_DEFINE(VDP1_DEBUG))
-AC_ARG_ENABLE(vdp2-debug, AC_HELP_STRING(--enable-vdp2-debug, enable vdp2 debug information) , AC_DEFINE(VDP2_DEBUG))
-AC_ARG_ENABLE(cd-debug, AC_HELP_STRING(--enable-cd-debug, enable cdblock debug information) , AC_DEFINE(CDDEBUG))
-AC_ARG_ENABLE(smpc-debug, AC_HELP_STRING(--enable-smpc-debug, enable smpc debug information) , AC_DEFINE(SMPC_DEBUG))
-AC_ARG_ENABLE(scsp-debug, AC_HELP_STRING(--enable-scsp-debug, enable scsp debug information) , AC_DEFINE(SCSP_DEBUG))
-AC_ARG_ENABLE(idle-debug, AC_HELP_STRING(--enable-idle-debug, enable idle cpu debug information) , AC_DEFINE(IDLE_DETECT_VERBOSE))
-AC_ARG_ENABLE(mic-shaders, AC_HELP_STRING(--enable-mic-shaders, enable OpenGL shaders for gouraud and mesh) , AC_DEFINE(USEMICSHADERS))
-AC_ARG_ENABLE(network, AC_HELP_STRING(--enable-network, enable network) , AC_DEFINE(USESOCKET))
-AC_ARG_ENABLE(perkeyname, AC_HELP_STRING(--enable-perkeyname, use peripheral key name callback) , AC_DEFINE(PERKEYNAME))
+AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug information) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(DEBUG)
+	fi])
+AC_ARG_ENABLE(vdp1-debug, AC_HELP_STRING(--enable-vdp1-debug, enable vdp1 debug information) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(VDP1_DEBUG)
+	fi])
+AC_ARG_ENABLE(vdp2-debug, AC_HELP_STRING(--enable-vdp2-debug, enable vdp2 debug information) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(VDP2_DEBUG)
+	fi])
+AC_ARG_ENABLE(cd-debug, AC_HELP_STRING(--enable-cd-debug, enable cdblock debug information) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(CDDEBUG)
+	fi])
+AC_ARG_ENABLE(smpc-debug, AC_HELP_STRING(--enable-smpc-debug, enable smpc debug information) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(SMPC_DEBUG)
+	fi])
+AC_ARG_ENABLE(scsp-debug, AC_HELP_STRING(--enable-scsp-debug, enable scsp debug information) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(SCSP_DEBUG)
+	fi])
+AC_ARG_ENABLE(idle-debug, AC_HELP_STRING(--enable-idle-debug, enable idle cpu debug information) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(IDLE_DETECT_VERBOSE)
+	fi])
+AC_ARG_ENABLE(mic-shaders, AC_HELP_STRING(--enable-mic-shaders, enable OpenGL shaders for gouraud and mesh) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(USEMICSHADERS)
+	fi])
+AC_ARG_ENABLE(network, AC_HELP_STRING(--enable-network, enable network) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(USESOCKET)
+	fi])
+AC_ARG_ENABLE(perkeyname, AC_HELP_STRING(--enable-perkeyname, use peripheral key name callback) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(PERKEYNAME)
+	fi])
 
 AC_CONFIG_FILES([Makefile
 	l10n/Makefile
