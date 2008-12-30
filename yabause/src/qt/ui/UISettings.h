@@ -41,7 +41,7 @@ protected:
 
 protected slots:
 	void tbBrowse_clicked();
-	void pbInputs_clicked();
+	void on_cbInput_currentIndexChanged( int id );
 	void accept();
 };
 

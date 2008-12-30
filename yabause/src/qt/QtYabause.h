@@ -53,6 +53,7 @@ extern "C"
 }
 
 #include <QString>
+#include <QMap>
 
 class UIYabause;
 class Settings;
@@ -86,6 +87,10 @@ namespace QtYabause
 	VideoInterface_struct defaultVIDCore();
 	PerInterface_struct defaultPERCore();
 	SH2Interface_struct defaultSH2Core();
+	
+	// padsbits
+	QMap<uint, PerPad_struct*>* portPadsBits( uint portNumber );
+	void clearPadsBits();
 };
 
 #endif // QTYABAUSE_H

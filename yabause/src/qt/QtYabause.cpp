@@ -27,11 +27,6 @@
 #include <QGroupBox>
 #include <QTreeWidget>
 
-extern const QStringList PadKeys = QStringList()
-	<< "Up" << "Right" << "Down" << "Left"
-	<< "R" << "L" << "Start"
-	<< "A" << "B" << "C" << "X" << "Y" << "Z";
-
 // cores
 
 #ifdef Q_OS_WIN
@@ -89,6 +84,9 @@ NULL
 UIYabause* mUIYabause = 0;
 // settings object
 Settings* mSettings = 0;
+// ports padbits
+QMap<uint, PerPad_struct*> mPort1PadsBits;
+QMap<uint, PerPad_struct*> mPort2PadsBits;
 
 extern "C" 
 {
@@ -347,3 +345,24 @@ SH2Interface_struct QtYabause::defaultSH2Core()
 	return SH2Interpreter;
 }
 
+QMap<uint, PerPad_struct*>* QtYabause::portPadsBits( uint portNumber )
+{
+	switch ( portNumber )
+	{
+		case 1:
+			return &mPort1PadsBits;
+			break;
+		case 2:
+			return &mPort2PadsBits;
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+void QtYabause::clearPadsBits()
+{
+	mPort1PadsBits.clear();
+	mPort2PadsBits.clear();
+}

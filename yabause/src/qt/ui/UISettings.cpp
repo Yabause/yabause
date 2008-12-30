@@ -22,6 +22,7 @@
 #include "../Settings.h"
 #include "../CommonDialogs.h"
 #include "UIWaitInput.h"
+#include "UIPortManager.h"
 
 #include <QDir>
 #include <QList>
@@ -76,8 +77,15 @@ UISettings::UISettings( QWidget* p )
 {
 	// setup dialog
 	setupUi( this );
+	pmPort1->setPort( 1 );
+	pmPort1->loadSettings();
+	pmPort2->setPort( 2 );
+	pmPort2->loadSettings();
+	
 	if ( p && !p->isFullScreen() )
+	{
 		setWindowFlags( Qt::Sheet );
+	}
 
 	// load cores informations
 	loadCores();
@@ -87,9 +95,9 @@ UISettings::UISettings( QWidget* p )
 	
 	// connections
 	foreach ( QToolButton* tb, findChildren<QToolButton*>() )
+	{
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbBrowse_clicked() ) );
-	foreach ( QPushButton* pb, wInput->findChildren<QPushButton*>() )
-		connect( pb, SIGNAL( clicked() ), this, SLOT( pbInputs_clicked() ) );
+	}
 	
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
@@ -147,23 +155,14 @@ void UISettings::tbBrowse_clicked()
 		requestFile( QtYabause::translate( "Choose a mpeg rom" ), leMpegROM );
 }
 
-void UISettings::pbInputs_clicked()
+void UISettings::on_cbInput_currentIndexChanged( int id )
 {
-	// get per core id
-	int i = cbInput->itemData( cbInput->currentIndex() ).toInt();
+	PerInterface_struct* core = QtYabause::getPERCore( cbInput->itemData( id ).toInt() );
 	
-	// get percore pointer
-	PerInterface_struct* c = QtYabause::getPERCore( i );
-
-	// request user input
-	if ( c )
-	{
-		QPushButton* pb = qobject_cast<QPushButton*>( sender() );
-		const QString key = pb->objectName().mid( 2 );
-		UIWaitInput wi( c, key, window() );
-		if ( wi.exec() )
-			wInput->findChild<QLabel*>( QString( "l%1" ).arg( key ) )->setText( wi.keyString() );
-	}
+	Q_ASSERT( core );
+	
+	pmPort1->setCore( core );
+	pmPort2->setCore( core );
 }
 
 void UISettings::loadCores()
@@ -231,9 +230,6 @@ void UISettings::loadSettings()
 	
 	// input
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore", QtYabause::defaultPERCore().id ).toInt() ) );
-	foreach ( QLabel* l, wInput->findChildren<QLabel*>() )
-		if ( l != lInput )
-			l->setText( s->value( QString( "Input/Keys/%1" ).arg( l->objectName().mid( 1 ) ) ).toString() );
 	
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
@@ -270,9 +266,6 @@ void UISettings::saveSettings()
 	
 	// input
 	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );
-	foreach ( QLabel* l, wInput->findChildren<QLabel*>() )
-		if ( l != lInput )
-			s->setValue( QString( "Input/Keys/%1" ).arg( l->objectName().mid( 1 ) ), l->text() );
 	
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );

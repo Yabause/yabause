@@ -71,7 +71,9 @@ FORMS	+= ui/UIYabause.ui \
 	ui/UICheatAR.ui \
 	ui/UICheatRaw.ui \
 	ui/UIWaitInput.ui \
-	ui/UIBackupRam.ui
+	ui/UIBackupRam.ui \
+	ui/UIPortManager.ui \
+	ui/UIPadSetting.ui
 
 HEADERS	+= ui/UIYabause.h \
 	YabauseGL.h \
@@ -86,7 +88,9 @@ HEADERS	+= ui/UIYabause.h \
 	CommonDialogs.h \
 	PerQt.h \
 	ui/UIWaitInput.h \
-	ui/UIBackupRam.h
+	ui/UIBackupRam.h \
+	ui/UIPortManager.h \
+	ui/UIPadSetting.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -102,7 +106,6 @@ SOURCES	+= main.cpp \
 	CommonDialogs.cpp \
 	PerQt.c \
 	ui/UIWaitInput.cpp \
-	ui/UIBackupRam.cpp
-
-TRANSLATIONS	+= translations/yabause_fr.ts \
-	translations/yabause_pt.ts
+	ui/UIBackupRam.cpp \
+	ui/UIPortManager.cpp \
+	ui/UIPadSetting.cpp

@@ -6,7 +6,7 @@
     <x>0</x>
     <y>0</y>
     <width>507</width>
-    <height>411</height>
+    <height>413</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -19,14 +19,6 @@
       <number>0</number>
      </property>
      <widget class="QWidget" name="wGeneral" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>491</width>
-        <height>335</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>General</string>
       </attribute>
@@ -154,14 +146,6 @@
       </layout>
      </widget>
      <widget class="QWidget" name="wVideo" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>487</width>
-        <height>329</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>Video</string>
       </attribute>
@@ -263,14 +247,6 @@
       </layout>
      </widget>
      <widget class="QWidget" name="wSound" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>487</width>
-        <height>329</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>Sound</string>
       </attribute>
@@ -310,14 +286,6 @@
       </layout>
      </widget>
      <widget class="QWidget" name="wCartMemory" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>487</width>
-        <height>329</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>Cart/Memory</string>
       </attribute>
@@ -419,20 +387,18 @@
       </layout>
      </widget>
      <widget class="QWidget" name="wInput" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>491</width>
-        <height>335</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>Input</string>
       </attribute>
-      <layout class="QGridLayout" >
-       <item row="0" column="0" colspan="4" >
+      <layout class="QGridLayout" name="gridLayout" >
+       <item row="0" column="0" colspan="2" >
         <widget class="QLabel" name="lInput" >
+         <property name="sizePolicy" >
+          <sizepolicy vsizetype="Maximum" hsizetype="Preferred" >
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="font" >
           <font>
            <weight>75</weight>
@@ -447,358 +413,38 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0" colspan="4" >
+       <item row="1" column="0" colspan="2" >
         <widget class="QComboBox" name="cbInput" />
        </item>
-       <item row="2" column="0" colspan="4" >
-        <widget class="Line" name="line" >
-         <property name="orientation" >
-          <enum>Qt::Horizontal</enum>
+       <item row="2" column="0" >
+        <widget class="UIPortManager" name="pmPort1" >
+         <property name="sizePolicy" >
+          <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title" >
+          <string>Port 1</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="0" >
-        <widget class="QPushButton" name="pbUp" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
+       <item row="2" column="1" >
+        <widget class="UIPortManager" name="pmPort2" >
+         <property name="sizePolicy" >
+          <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <property name="text" >
-          <string>Up</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1" >
-        <widget class="QLabel" name="lUp" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
+         <property name="title" >
+          <string>Port 2</string>
          </property>
         </widget>
-       </item>
-       <item row="3" column="2" >
-        <widget class="QPushButton" name="pbA" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>A</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="3" >
-        <widget class="QLabel" name="lA" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" >
-        <widget class="QPushButton" name="pbDown" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>Down</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1" >
-        <widget class="QLabel" name="lDown" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="2" >
-        <widget class="QPushButton" name="pbB" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>B</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="3" >
-        <widget class="QLabel" name="lB" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0" >
-        <widget class="QPushButton" name="pbLeft" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>Left</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1" >
-        <widget class="QLabel" name="lLeft" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="2" >
-        <widget class="QPushButton" name="pbC" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>C</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="3" >
-        <widget class="QLabel" name="lC" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0" >
-        <widget class="QPushButton" name="pbRight" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>Right</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1" >
-        <widget class="QLabel" name="lRight" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="2" >
-        <widget class="QPushButton" name="pbX" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>X</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="3" >
-        <widget class="QLabel" name="lX" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="0" >
-        <widget class="QPushButton" name="pbL" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>L</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1" >
-        <widget class="QLabel" name="lL" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="2" >
-        <widget class="QPushButton" name="pbY" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>Y</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="3" >
-        <widget class="QLabel" name="lY" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0" >
-        <widget class="QPushButton" name="pbR" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>R</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="1" >
-        <widget class="QLabel" name="lR" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="2" >
-        <widget class="QPushButton" name="pbZ" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>Z</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="3" >
-        <widget class="QLabel" name="lZ" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="0" >
-        <widget class="QPushButton" name="pbStart" >
-         <property name="maximumSize" >
-          <size>
-           <width>80</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text" >
-          <string>Start</string>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="1" >
-        <widget class="QLabel" name="lStart" >
-         <property name="text" >
-          <string>-</string>
-         </property>
-         <property name="indent" >
-          <number>20</number>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="2" colspan="2" >
-        <spacer>
-         <property name="orientation" >
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType" >
-          <enum>QSizePolicy::Maximum</enum>
-         </property>
-         <property name="sizeHint" stdset="0" >
-          <size>
-           <width>20</width>
-           <height>21</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="10" column="1" colspan="2" >
-        <spacer>
-         <property name="orientation" >
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType" >
-          <enum>QSizePolicy::MinimumExpanding</enum>
-         </property>
-         <property name="sizeHint" stdset="0" >
-          <size>
-           <width>20</width>
-           <height>1</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </widget>
      <widget class="QWidget" name="wAdvanced" >
-      <property name="geometry" >
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>487</width>
-        <height>329</height>
-       </rect>
-      </property>
       <attribute name="title" >
        <string>Advanced</string>
       </attribute>
@@ -870,6 +516,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>UIPortManager</class>
+   <extends>QGroupBox</extends>
+   <header>ui/UIPortManager.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

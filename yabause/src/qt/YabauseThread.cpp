@@ -20,12 +20,13 @@
 */
 #include "YabauseThread.h"
 #include "Settings.h"
-
-#include <QStringList>
+#include "ui/UIPortManager.h"
+#include "ui/UIYabause.h"
 
 #include "../peripheral.h"
 
-extern const QStringList PadKeys;
+#include <QStringList>
+#include <QDebug>
 
 YabauseThread::YabauseThread( QObject* o )
 	: QObject( o )
@@ -107,6 +108,52 @@ bool YabauseThread::resetEmulation( bool fullreset )
 	return true;
 }
 
+void YabauseThread::reloadControllers()
+{
+	PerPortReset();
+	QtYabause::clearPadsBits();
+	
+	Settings* settings = QtYabause::settings();
+	
+	for ( uint port = 1; port < 3; port++ )
+	{
+		settings->beginGroup( QString( "Input/Port/%1/Id" ).arg( port ) );
+		QStringList ids = settings->childGroups();
+		settings->endGroup();
+		
+		ids.sort();
+		foreach ( const QString& id, ids )
+		{
+		
+			PerPad_struct* padbits = PerPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );
+			uint type = settings->value( QString( UIPortManager::mSettingsType ).arg( port ).arg( id ) ).toUInt();
+			
+			if ( type == PERPAD )
+			{
+				settings->beginGroup( QString( "Input/Port/%1/Id/%2/Controller/%3/Key" ).arg( port ).arg( id ).arg( type ) );
+				QStringList padKeys = settings->childKeys();
+				settings->endGroup();
+				
+				padKeys.sort();
+				foreach ( const QString& padKey, padKeys )
+				{
+					const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( padKey ) ).toString();
+					
+					PerSetKey( key.toUInt(), padKey.toUInt(), padbits );
+				}
+			}
+			else if ( type == PERMOUSE )
+			{
+				QtYabause::mainWindow()->appendLog( "Mouse controller type is not yet supported" );
+			}
+			else
+			{
+				QtYabause::mainWindow()->appendLog( "Invalid controller type" );
+			}
+		}
+	}
+}
+
 void YabauseThread::reloadSettings()
 {
 	//QMutexLocker l( &mMutex );
@@ -151,19 +198,7 @@ void YabauseThread::reloadSettings()
 	emit requestSize( QSize( s->value( "Video/Width", 0 ).toInt(), s->value( "Video/Height", 0 ).toInt() ) );
 	emit requestFullscreen( s->value( "Video/Fullscreen", false ).toBool() );
 
-	{
-		
-		PerPad_struct* padbits;
-		u8 i = 0;
-
-		PerPortReset();
-		padbits = PerPadAdd( &PORTDATA1 );
-		
-		s->beginGroup( "Input/Keys" );
-		foreach ( const QString& pk, PadKeys )
-			PerSetKey( (u32)s->value( pk ).toString().toUInt(), PadKeys.indexOf( pk ), padbits );
-		s->endGroup();
-	}
+	reloadControllers();
 }
 
 bool YabauseThread::emulationRunning()

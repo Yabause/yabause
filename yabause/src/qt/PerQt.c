@@ -57,7 +57,7 @@ int PERQTHandleEvents(void)
 }
 
 u32 PERQTScan(const char* name)
-{ return 1; }
+{ return 0; }
 
 void PERQTFlush(void)
 {}
