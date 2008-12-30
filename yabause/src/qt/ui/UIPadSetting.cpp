@@ -95,7 +95,7 @@ void UIPadSetting::setPadKey( u32 key )
 		.arg( PERPAD )
 		.arg( mPadKey );
 	
-	QtYabause::settings()->setValue( settingsKey, key );
+	QtYabause::settings()->setValue( settingsKey, (uint) key );
 	mPadButtons.key( mPadKey )->setIcon( QIcon( ":/actions/icons/actions/button_ok.png" ) );
 	mPadButtons.key( mPadKey )->setChecked( false );
 	lInfos->clear();
