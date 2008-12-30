@@ -124,31 +124,33 @@ void YabauseThread::reloadControllers()
 		ids.sort();
 		foreach ( const QString& id, ids )
 		{
-		
-			PerPad_struct* padbits = PerPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );
 			uint type = settings->value( QString( UIPortManager::mSettingsType ).arg( port ).arg( id ) ).toUInt();
 			
-			if ( type == PERPAD )
+			switch ( type )
 			{
-				settings->beginGroup( QString( "Input/Port/%1/Id/%2/Controller/%3/Key" ).arg( port ).arg( id ).arg( type ) );
-				QStringList padKeys = settings->childKeys();
-				settings->endGroup();
-				
-				padKeys.sort();
-				foreach ( const QString& padKey, padKeys )
+				case PERPAD:
 				{
-					const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( padKey ) ).toString();
+					PerPad_struct* padbits = PerPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );
 					
-					PerSetKey( key.toUInt(), padKey.toUInt(), padbits );
+					settings->beginGroup( QString( "Input/Port/%1/Id/%2/Controller/%3/Key" ).arg( port ).arg( id ).arg( type ) );
+					QStringList padKeys = settings->childKeys();
+					settings->endGroup();
+					
+					padKeys.sort();
+					foreach ( const QString& padKey, padKeys )
+					{
+						const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( padKey ) ).toString();
+						
+						PerSetKey( key.toUInt(), padKey.toUInt(), padbits );
+					}
+					break;
 				}
-			}
-			else if ( type == PERMOUSE )
-			{
-				QtYabause::mainWindow()->appendLog( "Mouse controller type is not yet supported" );
-			}
-			else
-			{
-				QtYabause::mainWindow()->appendLog( "Invalid controller type" );
+				case PERMOUSE:
+					QtYabause::mainWindow()->appendLog( "Mouse controller type is not yet supported" );
+					break;
+				default:
+					QtYabause::mainWindow()->appendLog( "Invalid controller type" );
+					break;
 			}
 		}
 	}
