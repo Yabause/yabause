@@ -280,9 +280,6 @@ void UIYabause::on_mFileSaveState_triggered( QAction* a )
 {
 	if ( a == aFileSaveStateAs )
 		return;
-	qWarning() << "text" << a->text();
-	qWarning() << "action" << a->objectName();
-	qWarning() << "data" << a->data();
 	YabauseLocker locker( mYabauseThread );
 	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
 		CommonDialogs::information( QtYabause::translate( "Couldn't save state file" ) );
@@ -294,9 +291,6 @@ void UIYabause::on_mFileLoadState_triggered( QAction* a )
 {
 	if ( a == aFileLoadStateAs )
 		return;
-	qWarning() << "text" << a->text();
-	qWarning() << "action" << a->objectName();
-	qWarning() << "data" << a->data();
 	YabauseLocker locker( mYabauseThread );
 	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
 		CommonDialogs::information( QtYabause::translate( "Couldn't load state file" ) );
