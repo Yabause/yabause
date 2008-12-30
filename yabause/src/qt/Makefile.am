@@ -23,6 +23,8 @@ EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h \
 	ui/UICheatAR.cpp ui/UICheatAR.h ui/UICheatAR.ui \
 	ui/UICheatRaw.cpp ui/UICheatRaw.h ui/UICheatRaw.ui \
 	ui/UICheats.cpp ui/UICheats.h ui/UICheats.ui \
+	ui/UIPadSetting.cpp ui/UIPadSetting.h ui/UIPadSetting.ui \
+	ui/UIPortManager.cpp ui/UIPortManager.h ui/UIPortManager.ui \
 	ui/UISettings.cpp ui/UISettings.h ui/UISettings.ui \
 	ui/UIWaitInput.cpp ui/UIWaitInput.h ui/UIWaitInput.ui \
 	ui/UIYabause.cpp ui/UIYabause.h ui/UIYabause.ui

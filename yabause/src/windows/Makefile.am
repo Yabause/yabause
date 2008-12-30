@@ -1,4 +1,4 @@
-EXTRA_DIST = cd.h yabause.vcproj yabause_logo.bmp logo.ico yabause.sln
+EXTRA_DIST = cd.h yabause.vcproj yabause_logo.bmp logo.ico yabause.sln gen68k.vcproj
 bin_PROGRAMS = yabause
 yabause_SOURCES = \
 	resource.h resource.rc settings.c settings.h yui.c \
