@@ -96,15 +96,16 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 	mini18n_hash_t * hash;
 	FILE * f;
 
-	hash = mini18n_hash_init(&mini18n_str);
-	if (hash == NULL) {
+	if (filename == NULL)
 		return NULL;
-	}
+
+	hash = mini18n_hash_init(&mini18n_str);
+	if (hash == NULL)
+		return NULL;
 
 	f = fopen(filename, "r");
-	if (f == NULL) {
+	if (f == NULL)
 		return NULL;
-	}
 
 	while (fgets(buffer, 1024, f)) {
 		int i = 0, j = 0, done = 0, state = 0, empty = 1;
