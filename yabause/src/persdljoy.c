@@ -273,7 +273,7 @@ void PERSDLJoyFlush(void) {
 
 void PERSDLKeyName(u32 key, char * name, UNUSED int size)
 {
-   sprintf(name, "%x", key);
+	sprintf(name, "%x", key);
 }
 
 #endif
