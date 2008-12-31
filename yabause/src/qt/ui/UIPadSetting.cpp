@@ -4,6 +4,8 @@
 
 #include <QKeyEvent>
 #include <QTimer>
+#include <QStylePainter>
+#include <QStyleOptionToolButton>
 
 UIPadSetting::UIPadSetting( PerInterface_struct* core, PerPad_struct* padbits, uint port, uint pad, QWidget* parent )
 	: QDialog( parent )
@@ -51,6 +53,7 @@ UIPadSetting::UIPadSetting( PerInterface_struct* core, PerPad_struct* padbits, u
 	
 	foreach ( QToolButton* tb, findChildren<QToolButton*>() )
 	{
+		tb->installEventFilter( this );
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbButton_clicked() ) );
 	}
 	
@@ -122,6 +125,36 @@ void UIPadSetting::loadPadSettings()
 	}
 }
 
+bool UIPadSetting::eventFilter( QObject* object, QEvent* event )
+{
+	if ( event->type() == QEvent::Paint )
+	{
+		QToolButton* tb = qobject_cast<QToolButton*>( object );
+		
+		if ( tb )
+		{
+			if ( tb->isChecked() )
+			{
+				QStylePainter sp( tb );
+				QStyleOptionToolButton options;
+				
+				options.initFrom( tb );
+				options.arrowType = Qt::NoArrow;
+				options.features = QStyleOptionToolButton::None;
+				options.icon = tb->icon();
+				options.iconSize = tb->iconSize();
+				options.state = QStyle::State_Enabled | QStyle::State_HasFocus | QStyle::State_On | QStyle::State_AutoRaise;
+				
+				sp.drawComplexControl( QStyle::CC_ToolButton, options );
+				
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
 void UIPadSetting::tbButton_clicked()
 {
 	QToolButton* tb = qobject_cast<QToolButton*>( sender() );
@@ -136,8 +169,7 @@ void UIPadSetting::tbButton_clicked()
 	}
 	else
 	{
-		tb->setChecked( false );
-		mPadButtons.key( mPadKey )->setFocus();
+		tb->setChecked( tb == mPadButtons.key( mPadKey ) );
 	}
 }
 

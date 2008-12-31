@@ -29,6 +29,8 @@ protected:
 	void keyPressEvent( QKeyEvent* event );
 	void setPadKey( u32 key );
 	void loadPadSettings();
+	
+	virtual bool eventFilter( QObject* object, QEvent* event );
 
 protected slots:
 	void tbButton_clicked();

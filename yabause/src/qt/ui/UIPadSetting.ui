@@ -9,6 +9,9 @@
     <height>323</height>
    </rect>
   </property>
+  <property name="focusPolicy" >
+   <enum>Qt::StrongFocus</enum>
+  </property>
   <property name="windowTitle" >
    <string>Pad Configuration</string>
   </property>
@@ -35,7 +38,7 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip" >
     <string>Up</string>
@@ -57,7 +60,10 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>X</string>
    </property>
    <property name="checkable" >
     <bool>true</bool>
@@ -76,7 +82,10 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Y</string>
    </property>
    <property name="checkable" >
     <bool>true</bool>
@@ -95,7 +104,10 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Z</string>
    </property>
    <property name="checkable" >
     <bool>true</bool>
@@ -114,7 +126,10 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>C</string>
    </property>
    <property name="checkable" >
     <bool>true</bool>
@@ -133,7 +148,10 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>B</string>
    </property>
    <property name="checkable" >
     <bool>true</bool>
@@ -152,7 +170,10 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>A</string>
    </property>
    <property name="checkable" >
     <bool>true</bool>
@@ -171,7 +192,7 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip" >
     <string>Start</string>
@@ -193,7 +214,7 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip" >
     <string>Right trigger</string>
@@ -215,7 +236,7 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip" >
     <string>Left trigger</string>
@@ -237,7 +258,7 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip" >
     <string>Down</string>
@@ -259,7 +280,7 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip" >
     <string>Right</string>
@@ -281,7 +302,7 @@
     </rect>
    </property>
    <property name="focusPolicy" >
-    <enum>Qt::StrongFocus</enum>
+    <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip" >
     <string>Left</string>
