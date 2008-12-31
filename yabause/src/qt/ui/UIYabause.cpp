@@ -123,10 +123,10 @@ void UIYabause::closeEvent( QCloseEvent* e )
 }
 
 void UIYabause::keyPressEvent( QKeyEvent* e )
-{ PerKeyDown( (PERCORE_QT << 16) | e->key() ); }
+{ PerKeyDown( e->key() ); }
 
 void UIYabause::keyReleaseEvent( QKeyEvent* e )
-{ PerKeyUp( (PERCORE_QT << 16) | e->key() ); }
+{ PerKeyUp( e->key() ); }
 
 void UIYabause::swapBuffers()
 { mYabauseGL->swapBuffers(); }

@@ -67,7 +67,7 @@ void UIPadSetting::keyPressEvent( QKeyEvent* e )
 	{
 		if ( e->key() != Qt::Key_Escape )
 		{
-			setPadKey( (PERCORE_QT << 16) | e->key() );
+			setPadKey( e->key() );
 		}
 		else
 		{
