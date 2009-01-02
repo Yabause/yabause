@@ -70,7 +70,7 @@ LRESULT DisasmCtl_OnPaint(DisasmCtl_struct *cc, WPARAM wParam, LPARAM lParam)
       ispc = (addr == cc->pc) ? TRUE : FALSE;
       x = 0;
       addr += cc->disinst(addr, text);
-      GetTextExtentPoint32(hdc, text, (int)strlen(text), &size);
+      GetTextExtentPoint32A(hdc, text, (int)strlen(text), &size);
       if (size.cy+y >= rect.bottom)
          break;
 
@@ -94,7 +94,7 @@ LRESULT DisasmCtl_OnPaint(DisasmCtl_struct *cc, WPARAM wParam, LPARAM lParam)
          SetTextColor(hdc, cc->text_color);
          SetBkColor(hdc, cc->bg_color);
       }
-      ExtTextOut(hdc, x, y, ETO_OPAQUE | ETO_CLIPPED, &clip, text, lstrlen(text), 0);
+      ExtTextOutA(hdc, x, y, ETO_OPAQUE | ETO_CLIPPED, &clip, text, strlen(text), 0);
       y += size.cy;
    }
 

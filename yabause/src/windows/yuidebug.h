@@ -48,7 +48,7 @@ LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                             LPARAM lParam);
 void UpdateLogCallback (char *string);
-void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const char *lpstrFilter, char *lpstrFile, DWORD nMaxFile);
+void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const LPCTSTR lpstrFilter, char *lpstrFile, DWORD nMaxFile);
 
 extern SH2_struct *debugsh;
 extern HWND LogWin;

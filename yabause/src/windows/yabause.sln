@@ -9,6 +9,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gen68k", "gen68k.vcproj", "{EB71F858-B079-4A01-820E-BF7530E67ACE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yabause Installer", "Installer\Installer.vcproj", "{8071F98F-88DB-409D-A383-8D698C36F9AA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6D979AD9-4479-4B63-87C9-1E75979F9327} = {6D979AD9-4479-4B63-87C9-1E75979F9327}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

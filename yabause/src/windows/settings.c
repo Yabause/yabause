@@ -118,12 +118,12 @@ void GenerateCDROMList(HWND hWnd)
    {
       sprintf(tempstr, "%c:\\", 'c' + i);
 
-      if (GetDriveType(tempstr) == DRIVE_CDROM)
+      if (GetDriveTypeA(tempstr) == DRIVE_CDROM)
       {
          drive_list[num_cdroms] = 'c' + i;
 
          sprintf(tempstr, "%c", 'C' + i);
-         SendDlgItemMessage(hWnd, IDC_DRIVELETTERCB, CB_ADDSTRING, 0, (LPARAM)tempstr);
+         SendDlgItemMessage(hWnd, IDC_DRIVELETTERCB, CB_ADDSTRING, 0, (LPARAM)_16(tempstr));
          num_cdroms++;
       } 
    }
@@ -133,7 +133,7 @@ void GenerateCDROMList(HWND hWnd)
 
 BOOL IsPathCdrom(const char *path)
 {
-   if (GetDriveType(cdrompath) == DRIVE_CDROM)
+   if (GetDriveTypeA(cdrompath) == DRIVE_CDROM)
       return TRUE;
    else
       return FALSE;
@@ -163,7 +163,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          i = 0;
 
          // Setup Tabs and create all the dialogs
-         tabitem.pszText = "Basic";
+         tabitem.pszText = _16("Basic");
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
@@ -172,7 +172,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       (DLGPROC)BasicSettingsDlgProc);
          i++;
 
-         tabitem.pszText = "Video";
+         tabitem.pszText = _16("Video");
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
@@ -181,7 +181,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       (DLGPROC)VideoSettingsDlgProc);
          i++;
 
-         tabitem.pszText = "Sound";
+         tabitem.pszText = _16("Sound");
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
@@ -190,7 +190,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       (DLGPROC)SoundSettingsDlgProc);
          i++;
 
-         tabitem.pszText = "Input";
+         tabitem.pszText = _16("Input");
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
@@ -200,7 +200,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          i++;
 
 #ifdef USESOCKET
-         tabitem.pszText = "Netlink";
+         tabitem.pszText = _16("Netlink");
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
@@ -211,7 +211,7 @@ LRESULT CALLBACK SettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 #endif
 
 #if DEBUG
-         tabitem.pszText = "Log";
+         tabitem.pszText = _16("Log");
          TabCtrl_InsertItem(GetDlgItem(hDlg, IDC_SETTINGSTAB), i, &tabitem);
 
          dialoglist[i] = CreateDialog(y_hInstance,
@@ -331,8 +331,8 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Disc Type Box
          SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (LPARAM)"CD");
-         SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (LPARAM)"Image");
+         SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("CD"));
+         SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Image"));
 
          // Drive Letter Box
          SendDlgItemMessage(hDlg, IDC_DRIVELETTERCB, CB_RESETCONTENT, 0, 0);
@@ -384,7 +384,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             SendDlgItemMessage(hDlg, IDC_DISCTYPECB, CB_SETCURSEL, 1, 0);
             EnableWindow(GetDlgItem(hDlg, IDC_IMAGEEDIT), TRUE);
             EnableWindow(GetDlgItem(hDlg, IDC_IMAGEBROWSE), TRUE);
-            SetDlgItemText(hDlg, IDC_IMAGEEDIT, cdrompath);
+            SetDlgItemText(hDlg, IDC_IMAGEEDIT, _16(cdrompath));
 
             EnableWindow(GetDlgItem(hDlg, IDC_DRIVELETTERCB), FALSE);
          }
@@ -408,23 +408,23 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup SH2 Core Combo box
          SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (LPARAM)"Fast Interpreter");
-         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (LPARAM)"Debug Interpreter");
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (LPARAM)_16("Fast Interpreter"));
+         SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_ADDSTRING, 0, (LPARAM)_16("Debug Interpreter"));
 
          // Set Selected SH2 Core
          SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_SETCURSEL, sh2coretype, 0);
 
          // Setup Region Combo box
          SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Auto-detect");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Japan(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Asia(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"North America(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Central/South America(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Korea(NTSC)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Asia(PAL)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Europe + others(PAL)");
-         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)"Central/South America(PAL)");
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("Auto-detect"));
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("Japan(NTSC)"));
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("Asia(NTSC)"));
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("North America(NTSC)"));
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("Central/South America(NTSC)"));
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("Korea(NTSC)"));
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("Asia(PAL)"));
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("Europe + others(PAL)"));
+         SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_ADDSTRING, 0, (LPARAM)_16("Central/South America(PAL)"));
 
          // Set Selected Region
          switch(regionid)
@@ -458,33 +458,33 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          }
 
          // Set Default Bios ROM File
-         SetDlgItemText(hDlg, IDC_BIOSEDIT, biosfilename);
+         SetDlgItemText(hDlg, IDC_BIOSEDIT, _16(biosfilename));
 
          // Set Default Backup RAM File
-         SetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, backupramfilename);
+         SetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, _16(backupramfilename));
 
          // Set Default MPEG ROM File
-         SetDlgItemText(hDlg, IDC_MPEGROMEDIT, mpegromfilename);
+         SetDlgItemText(hDlg, IDC_MPEGROMEDIT, _16(mpegromfilename));
 
          // Setup Cart Type Combo box
          SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"None");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"Pro Action Replay");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"4 Mbit Backup Ram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"8 Mbit Backup Ram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"16 Mbit Backup Ram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"32 Mbit Backup Ram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"8 Mbit Dram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"32 Mbit Dram");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"Netlink");
-         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"16 Mbit Rom");
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("None"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Pro Action Replay"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("4 Mbit Backup Ram"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("8 Mbit Backup Ram"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("16 Mbit Backup Ram"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("32 Mbit Backup Ram"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("8 Mbit Dram"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("32 Mbit Dram"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Netlink"));
+         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("16 Mbit Rom"));
 //         SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_ADDSTRING, 0, (LPARAM)"Japanese Modem");
 
          // Set Selected Cart Type
          SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_SETCURSEL, carttype, 0);
 
          // Set Default Cart File
-         SetDlgItemText(hDlg, IDC_CARTEDIT, cartfilename);
+         SetDlgItemText(hDlg, IDC_CARTEDIT, _16(cartfilename));
 
          // Set Cart File window status
          switch (carttype)
@@ -608,88 +608,125 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_IMAGEBROWSE:
             {
+               WCHAR tempwstr[MAX_PATH];
+               WCHAR filter[1024];
                OPENFILENAME ofn;
-               char tempstr[MAX_PATH];
 
                // setup ofn structure
                ZeroMemory(&ofn, sizeof(OPENFILENAME));
                ofn.lStructSize = sizeof(OPENFILENAME);
                ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "Supported image files (*.cue, *.iso)\0*.cue;*.iso\0Cue files (*.cue)\0*.cue\0Iso files (*.iso)\0*.iso\0All Files (*.*)\0*.*\0";
-               GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempstr, MAX_PATH);
-               ofn.lpstrFile = tempstr;
-               ofn.nMaxFile = sizeof(tempstr);
+
+               CreateFilter(filter, 1024,
+                  "Supported image files (*.cue, *.iso)", "*.cue;*.iso",
+                  "Cue files (*.cue)", "*.cue",
+                  "Iso files (*.iso)", "*.iso",
+                  "All files (*.*)", "*.*", NULL);
+
+               ofn.lpstrFilter = filter;
+               GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempwstr, MAX_PATH);
+               ofn.lpstrFile = tempwstr;
+               ofn.nMaxFile = sizeof(tempwstr);
                ofn.Flags = OFN_FILEMUSTEXIST;
 
                if (GetOpenFileName(&ofn))
                {
                   // adjust appropriate edit box
-                  SetDlgItemText(hDlg, IDC_IMAGEEDIT, tempstr);
+                  SetDlgItemText(hDlg, IDC_IMAGEEDIT, tempwstr);
                }
 
                return TRUE;
             }
             case IDC_BIOSBROWSE:
             {
+               WCHAR tempwstr[MAX_PATH];
+               WCHAR filter[1024];
                OPENFILENAME ofn;
                // setup ofn structure
                ZeroMemory(&ofn, sizeof(OPENFILENAME));
                ofn.lStructSize = sizeof(OPENFILENAME);
                ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "Binaries (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
-               ofn.lpstrFile = biosfilename;
-               ofn.nMaxFile = sizeof(biosfilename);
+
+               CreateFilter(filter, 1024,
+                  "Binaries (*.bin)", "*.bin",
+                  "All Files", "*.*", NULL);
+
+               ofn.lpstrFilter = filter;
+               GetDlgItemText(hDlg, IDC_BIOSEDIT, tempwstr, MAX_PATH);
+               ofn.lpstrFile = tempwstr;
+               ofn.nMaxFile = sizeof(tempwstr);
                ofn.Flags = OFN_FILEMUSTEXIST;
 
                if (GetOpenFileName(&ofn))
                {
                   // adjust appropriate edit box
-                  SetDlgItemText(hDlg, IDC_BIOSEDIT, biosfilename);
+                  SetDlgItemText(hDlg, IDC_BIOSEDIT, tempwstr);
+                  WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, biosfilename, MAX_PATH, NULL, NULL);
                }
 
                return TRUE;
             }
             case IDC_BACKUPRAMBROWSE:
             {
+               WCHAR tempwstr[MAX_PATH];
+               WCHAR filter[1024];
                OPENFILENAME ofn;
                // setup ofn structure
                ZeroMemory(&ofn, sizeof(OPENFILENAME));
                ofn.lStructSize = sizeof(OPENFILENAME);
                ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "Binaries (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
-               ofn.lpstrFile = backupramfilename;
-               ofn.nMaxFile = sizeof(backupramfilename);
+
+               CreateFilter(filter, 1024,
+                  "Binaries (*.bin)", "*.bin",
+                  "All Files", "*.*", NULL);
+
+               ofn.lpstrFilter = filter;
+               GetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, tempwstr, MAX_PATH);
+               ofn.lpstrFile = tempwstr;
+               ofn.nMaxFile = sizeof(tempwstr);
 
                if (GetOpenFileName(&ofn))
                {
                   // adjust appropriate edit box
-                  SetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, backupramfilename);
+                  SetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, tempwstr);
+                  WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, backupramfilename, MAX_PATH, NULL, NULL);
                }
 
                return TRUE;
             }
             case IDC_MPEGROMBROWSE:
             {
+               WCHAR tempwstr[MAX_PATH];
+               WCHAR filter[1024];
                OPENFILENAME ofn;
                // setup ofn structure
                ZeroMemory(&ofn, sizeof(OPENFILENAME));
                ofn.lStructSize = sizeof(OPENFILENAME);
                ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "Binaries (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
-               ofn.lpstrFile = mpegromfilename;
-               ofn.nMaxFile = sizeof(mpegromfilename);
+
+               CreateFilter(filter, 1024,
+                  "Binaries (*.bin)", "*.bin",
+                  "All Files", "*.*", NULL);
+
+               ofn.lpstrFilter = filter;
+               GetDlgItemText(hDlg, IDC_MPEGROMEDIT, tempwstr, MAX_PATH);
+               ofn.lpstrFile = tempwstr;
+               ofn.nMaxFile = sizeof(tempwstr);
                ofn.Flags = OFN_FILEMUSTEXIST;
 
                if (GetOpenFileName(&ofn))
                {
                   // adjust appropriate edit box
-                  SetDlgItemText(hDlg, IDC_MPEGROMEDIT, mpegromfilename);
+                  SetDlgItemText(hDlg, IDC_MPEGROMEDIT, tempwstr);
+                  WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, mpegromfilename, MAX_PATH, NULL, NULL);
                }
 
                return TRUE;
             }
             case IDC_CARTBROWSE:
             {
+               WCHAR tempwstr[MAX_PATH];
+               WCHAR filter[1024];
                OPENFILENAME ofn;
                u8 cursel=0;
 
@@ -697,9 +734,15 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                ZeroMemory(&ofn, sizeof(OPENFILENAME));
                ofn.lStructSize = sizeof(OPENFILENAME);
                ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "Binaries (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
-               ofn.lpstrFile = cartfilename;
-               ofn.nMaxFile = sizeof(cartfilename);
+
+               CreateFilter(filter, 1024,
+                  "Binaries (*.bin)", "*.bin",
+                  "All Files", "*.*", NULL);
+
+               ofn.lpstrFilter = filter;
+               GetDlgItemText(hDlg, IDC_CARTEDIT, tempwstr, MAX_PATH);
+               ofn.lpstrFile = tempwstr;
+               ofn.nMaxFile = sizeof(tempwstr);
 
                cursel = (u8)SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_GETCURSEL, 0, 0);
 
@@ -715,32 +758,38 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if (GetOpenFileName(&ofn))
                {
                   // adjust appropriate edit box
-                  SetDlgItemText(hDlg, IDC_CARTEDIT, cartfilename);
+                  SetDlgItemText(hDlg, IDC_CARTEDIT, tempwstr);
+                  WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, cartfilename, MAX_PATH, NULL, NULL);
                }
 
                return TRUE;
             }
             case IDOK:
             {
+               WCHAR tempwstr[MAX_PATH];
                char tempstr[MAX_PATH];
                char current_drive=0;
                BOOL imagebool;
                BOOL cdromchanged=FALSE;
 
                // Convert Dialog items back to variables
-               GetDlgItemText(hDlg, IDC_BIOSEDIT, biosfilename, MAX_PATH);
-               GetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, backupramfilename, MAX_PATH);
-               GetDlgItemText(hDlg, IDC_MPEGROMEDIT, mpegromfilename, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_BIOSEDIT, tempwstr, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, biosfilename, MAX_PATH, NULL, NULL);
+               GetDlgItemText(hDlg, IDC_BACKUPRAMEDIT, tempwstr, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, backupramfilename, MAX_PATH, NULL, NULL);
+               GetDlgItemText(hDlg, IDC_MPEGROMEDIT, tempwstr, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1,  mpegromfilename, MAX_PATH, NULL, NULL);
                carttype = (int)SendDlgItemMessage(hDlg, IDC_CARTTYPECB, CB_GETCURSEL, 0, 0);
-               GetDlgItemText(hDlg, IDC_CARTEDIT, cartfilename, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_CARTEDIT, tempwstr, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1,  cartfilename, MAX_PATH, NULL, NULL);
 
                // write path/filenames
-               WritePrivateProfileString("General", "BiosPath", biosfilename, inifilename);
-               WritePrivateProfileString("General", "BackupRamPath", backupramfilename, inifilename);
-               WritePrivateProfileString("General", "MpegRomPath", mpegromfilename, inifilename);
+               WritePrivateProfileStringA("General", "BiosPath", biosfilename, inifilename);
+               WritePrivateProfileStringA("General", "BackupRamPath", backupramfilename, inifilename);
+               WritePrivateProfileStringA("General", "MpegRomPath", mpegromfilename, inifilename);
 
                sprintf(tempstr, "%d", carttype);
-               WritePrivateProfileString("General", "CartType", tempstr, inifilename);
+               WritePrivateProfileStringA("General", "CartType", tempstr, inifilename);
 
                // figure out cart type, write cartfilename if necessary
                switch (carttype)
@@ -751,7 +800,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   case CART_BACKUPRAM16MBIT:
                   case CART_BACKUPRAM32MBIT:
                   case CART_ROM16MBIT:
-                     WritePrivateProfileString("General", "CartPath", cartfilename, inifilename);
+                     WritePrivateProfileStringA("General", "CartPath", cartfilename, inifilename);
                      break;
                   default: break;
                }
@@ -773,7 +822,8 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                else
                {
                   // retrieve image filename string instead
-                  GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempstr, MAX_PATH);
+                  GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempwstr, MAX_PATH);
+                  WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
 
                   if (strcmp(tempstr, cdrompath) != 0)
                   {
@@ -782,7 +832,7 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   }
                }
 
-               WritePrivateProfileString("General", "CDROMDrive", cdrompath, inifilename);
+               WritePrivateProfileStringA("General", "CDROMDrive", cdrompath, inifilename);
 
 /*
                // Convert ID to language string
@@ -811,13 +861,13 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   default:break;
                }
 
-//               WritePrivateProfileString("General", "BiosLanguage", tempstr, inifilename);
+//               WritePrivateProfileStringA("General", "BiosLanguage", tempstr, inifilename);
 */
                // Write SH2 core type
                sh2coretype = (char)SendDlgItemMessage(hDlg, IDC_SH2CORECB, CB_GETCURSEL, 0, 0);
 
                sprintf(tempstr, "%d", sh2coretype);
-               WritePrivateProfileString("General", "SH2Core", tempstr, inifilename);
+               WritePrivateProfileStringA("General", "SH2Core", tempstr, inifilename);
 
                // Convert Combo Box ID to Region ID
                regionid = (char)SendDlgItemMessage(hDlg, IDC_REGIONCB, CB_GETCURSEL, 0, 0);
@@ -825,36 +875,36 @@ LRESULT CALLBACK BasicSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                switch(regionid)
                {
                   case 0:
-                     WritePrivateProfileString("General", "Region", "Auto", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "Auto", inifilename);
                      break;
                   case 1:
-                     WritePrivateProfileString("General", "Region", "J", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "J", inifilename);
                      break;
                   case 2:
-                     WritePrivateProfileString("General", "Region", "T", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "T", inifilename);
                      break;
                   case 3:
-                     WritePrivateProfileString("General", "Region", "U", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "U", inifilename);
                      regionid = 4;
                      break;
                   case 4:
-                     WritePrivateProfileString("General", "Region", "B", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "B", inifilename);
                      regionid = 5;
                      break;
                   case 5:
-                     WritePrivateProfileString("General", "Region", "K", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "K", inifilename);
                      regionid = 6;
                      break;
                   case 6:
-                     WritePrivateProfileString("General", "Region", "A", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "A", inifilename);
                      regionid = 0xA;
                      break;
                   case 7:
-                     WritePrivateProfileString("General", "Region", "E", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "E", inifilename);
                      regionid = 0xC;
                      break;
                   case 8:
-                     WritePrivateProfileString("General", "Region", "L", inifilename);
+                     WritePrivateProfileStringA("General", "Region", "L", inifilename);
                      regionid = 0xD;
                      break;
                   default:
@@ -914,10 +964,10 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup Video Core Combo box
          SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (LPARAM)"None");
+         SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (LPARAM)_16("None"));
 
          for (i = 1; VIDCoreList[i] != NULL; i++)
-            SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (LPARAM)VIDCoreList[i]->Name);
+            SendDlgItemMessage(hDlg, IDC_VIDEOCORECB, CB_ADDSTRING, 0, (LPARAM)_16(VIDCoreList[i]->Name));
 
          // Set Selected Video Core
          for (i = 0; VIDCoreList[i] != NULL; i++)
@@ -950,9 +1000,9 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                int index;
 
                sprintf(tempstr, "%dx%d", (int)dmSettings.dmPelsWidth, (int)dmSettings.dmPelsHeight);
-               if (SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_FINDSTRINGEXACT, 0, (LPARAM)tempstr) == CB_ERR)
+               if (SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_FINDSTRINGEXACT, 0, (LPARAM)_16(tempstr)) == CB_ERR)
                {
-                  index = (int)SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_ADDSTRING, 0, (LPARAM)tempstr);
+                  index = (int)SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_ADDSTRING, 0, (LPARAM)_16(tempstr));
 
                   if (dmSettings.dmPelsWidth == fullscreenwidth &&
                       dmSettings.dmPelsHeight == fullscreenheight)
@@ -973,9 +1023,10 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup window width and height
          sprintf(tempstr, "%d", windowwidth);
-         SetDlgItemText(hDlg, IDC_WIDTHEDIT, tempstr);
+         _16(tempstr);
+         SetDlgItemText(hDlg, IDC_WIDTHEDIT, _16(tempstr));
          sprintf(tempstr, "%d", windowheight);
-         SetDlgItemText(hDlg, IDC_HEIGHTEDIT, tempstr);
+         SetDlgItemText(hDlg, IDC_HEIGHTEDIT, _16(tempstr));
 
          return TRUE;
       }
@@ -1000,6 +1051,7 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDOK:
             {
+               WCHAR tempwstr[MAX_PATH];
                char tempstr[MAX_PATH];
                int cursel;
                int newvidcoretype;
@@ -1014,7 +1066,7 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   vidcoretype = newvidcoretype;
                   vidcorechanged = TRUE;
                   sprintf(tempstr, "%d", vidcoretype);
-                  WritePrivateProfileString("Video", "VideoCore", tempstr, inifilename);
+                  WritePrivateProfileStringA("Video", "VideoCore", tempstr, inifilename);
                }
 
                if (SendDlgItemMessage(hDlg, IDC_AUTOFRAMESKIPCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
@@ -1030,52 +1082,54 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // Write Auto frameskip
                sprintf(tempstr, "%d", enableautofskip);
-               WritePrivateProfileString("Video", "AutoFrameSkip", tempstr, inifilename);
+               WritePrivateProfileStringA("Video", "AutoFrameSkip", tempstr, inifilename);
 
                // Write full screen on startup setting
                if (SendDlgItemMessage(hDlg, IDC_FULLSCREENSTARTUPCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
                   usefullscreenonstartup = 1;
-                  WritePrivateProfileString("Video", "UseFullScreenOnStartup", "1", inifilename);
+                  WritePrivateProfileStringA("Video", "UseFullScreenOnStartup", "1", inifilename);
                }
                else
                {
                   usefullscreenonstartup = 0;
-                  WritePrivateProfileString("Video", "UseFullScreenOnStartup", "0", inifilename);
+                  WritePrivateProfileStringA("Video", "UseFullScreenOnStartup", "0", inifilename);
                }
 
                // Write full screen size settings
                cursel = (int)SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETCURSEL, 0, 0);
                if (SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXTLEN, cursel, 0) <= MAX_PATH)
                {
-                  SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXT, cursel, (LPARAM)tempstr);
+                  SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXT, cursel, (LPARAM)_16(tempstr));
                   sscanf(tempstr, "%dx%d", &fullscreenwidth, &fullscreenheight);
                }
 
                sprintf(tempstr, "%d", fullscreenwidth);
-               WritePrivateProfileString("Video", "FullScreenWidth", tempstr, inifilename);
+               WritePrivateProfileStringA("Video", "FullScreenWidth", tempstr, inifilename);
                sprintf(tempstr, "%d", fullscreenheight);
-               WritePrivateProfileString("Video", "FullScreenHeight", tempstr, inifilename);
+               WritePrivateProfileStringA("Video", "FullScreenHeight", tempstr, inifilename);
 
                // Write use custom window size setting
                if (SendDlgItemMessage(hDlg, IDC_CUSTOMWINDOWCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
                   usecustomwindowsize = 1;
-                  WritePrivateProfileString("Video", "UseCustomWindowSize", "1", inifilename);
+                  WritePrivateProfileStringA("Video", "UseCustomWindowSize", "1", inifilename);
                }
                else
                {
                   usecustomwindowsize = 0;
-                  WritePrivateProfileString("Video", "UseCustomWindowSize", "0", inifilename);
+                  WritePrivateProfileStringA("Video", "UseCustomWindowSize", "0", inifilename);
                }
                
                // Write window width and height settings
-               GetDlgItemText(hDlg, IDC_WIDTHEDIT, tempstr, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_WIDTHEDIT, tempwstr, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
                windowwidth = atoi(tempstr);
-               WritePrivateProfileString("Video", "WindowWidth", tempstr, inifilename);
-               GetDlgItemText(hDlg, IDC_HEIGHTEDIT, tempstr, MAX_PATH);
+               WritePrivateProfileStringA("Video", "WindowWidth", tempstr, inifilename);
+               GetDlgItemText(hDlg, IDC_HEIGHTEDIT, tempwstr, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
                windowheight = atoi(tempstr);
-               WritePrivateProfileString("Video", "WindowHeight", tempstr, inifilename);
+               WritePrivateProfileStringA("Video", "WindowHeight", tempstr, inifilename);
 
                // Re-initialize Video
                if (vidcorechanged && nocorechange == 0)
@@ -1126,10 +1180,10 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup Sound Core Combo box
          SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (LPARAM)"None");
+         SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (LPARAM)_16("None"));
 
          for (i = 1; SNDCoreList[i] != NULL; i++)
-            SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (LPARAM)SNDCoreList[i]->Name);
+            SendDlgItemMessage(hDlg, IDC_SOUNDCORECB, CB_ADDSTRING, 0, (LPARAM)_16(SNDCoreList[i]->Name));
 
          // Set Selected Sound Core
          for (i = 0; SNDCoreList[i] != NULL; i++)
@@ -1165,13 +1219,13 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   sndcoretype = newsndcoretype;
                   sndcorechanged = TRUE;
                   sprintf(tempstr, "%d", sndcoretype);
-                  WritePrivateProfileString("Sound", "SoundCore", tempstr, inifilename);
+                  WritePrivateProfileStringA("Sound", "SoundCore", tempstr, inifilename);
                }
 
                // Write Volume
                sndvolume = (int)SendDlgItemMessage(hDlg, IDC_SLVOLUME, TBM_GETPOS, 0, 0);
                sprintf(tempstr, "%d", sndvolume);
-               WritePrivateProfileString("Sound", "Volume", tempstr, inifilename);
+               WritePrivateProfileStringA("Sound", "Volume", tempstr, inifilename);
                if (sndcorechanged && nocorechange == 0)
                {
 #ifndef USETHREADS
@@ -1210,6 +1264,7 @@ LRESULT CALLBACK SoundSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                         LPARAM lParam)
 {
+   WCHAR tempwstr[MAX_PATH];
    char tempstr[MAX_PATH];
 
    switch (uMsg)
@@ -1219,7 +1274,7 @@ LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SendDlgItemMessage(hDlg, IDC_LOCALREMOTEIP, IPM_SETADDRESS, 0, netlinklocalremoteip);
 
          sprintf(tempstr, "%d", netlinkport);
-         SetDlgItemText(hDlg, IDC_PORTET, tempstr);
+         SetDlgItemText(hDlg, IDC_PORTET, _16(tempstr));
 
          return TRUE;
       }
@@ -1234,12 +1289,13 @@ LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                // Local/Remote IP
                SendDlgItemMessage(hDlg, IDC_LOCALREMOTEIP, IPM_GETADDRESS, 0, (LPARAM)&netlinklocalremoteip);
                sprintf(tempstr, "%d.%d.%d.%d", (int)FIRST_IPADDRESS(netlinklocalremoteip), (int)SECOND_IPADDRESS(netlinklocalremoteip), (int)THIRD_IPADDRESS(netlinklocalremoteip), (int)FOURTH_IPADDRESS(netlinklocalremoteip));
-               WritePrivateProfileString("Netlink", "LocalRemoteIP", tempstr, inifilename);
+               WritePrivateProfileStringA("Netlink", "LocalRemoteIP", tempstr, inifilename);
 
                // Port Number
-               GetDlgItemText(hDlg, IDC_PORTET, tempstr, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_PORTET, tempwstr, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
                netlinkport = atoi(tempstr);
-               WritePrivateProfileString("Netlink", "Port", tempstr, inifilename);
+               WritePrivateProfileStringA("Netlink", "Port", tempstr, inifilename);
                return TRUE;
             }
             case IDCANCEL:
@@ -1265,11 +1321,13 @@ LRESULT CALLBACK NetlinkSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 int ConvertEmulateTypeSelStringToID(HWND hDlg, int id)
 {
+   WCHAR wtext[MAX_PATH];
    char text[MAX_PATH];
 
    ComboBox_GetLBText(GetDlgItem(hDlg, id),
                       ComboBox_GetCurSel(GetDlgItem(hDlg, id)),
-                      text);
+                      wtext);
+   WideCharToMultiByte(CP_ACP, 0, wtext, -1, text, MAX_PATH, NULL, NULL);
 
    if (strcmp(text, "Standard Pad") == 0)
       return EMUTYPE_STANDARDPAD;
@@ -1302,38 +1360,38 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          u32 j;
 
          SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"None");
-         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"Direct");
-         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"6-port Multitap");
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("None"));
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Direct"));
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("6-port Multitap"));
 
          SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"None");
-         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"Direct");
-         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)"6-port Multitap");
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("None"));
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Direct"));
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("6-port Multitap"));
 
          for (i = 0; i < 6; i++)
          {
             SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_RESETCONTENT, 0, 0);
-            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"None");
-            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Standard Pad");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("None"));
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Standard Pad"));
 /*
-            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Analog Pad");
-            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Stunner");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Analog Pad"));
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Stunner"));
 */
-            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Mouse");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Mouse"));
 /*
-            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Keyboard");
+            SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Keyboard"));
 */
             SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_RESETCONTENT, 0, 0);
-            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"None");
-            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Standard Pad");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("None"));
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Standard Pad"));
 /*
-            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Analog Pad");
-            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Stunner");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Analog Pad"));
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Stunner"));
 */
-            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Mouse");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Mouse"));
 /*
-            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)"Keyboard");
+            SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Keyboard"));
 */
             SendDlgItemMessage(hDlg, IDC_PORT1ATYPECB+i, CB_SETCURSEL, 0, 0);
             EnableWindow(GetDlgItem(hDlg, IDC_PORT1ATYPECB+i), FALSE);
@@ -1341,7 +1399,7 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
             SendDlgItemMessage(hDlg, IDC_PORT2ATYPECB+i, CB_SETCURSEL, 0, 0);
             EnableWindow(GetDlgItem(hDlg, IDC_PORT2ATYPECB+i), FALSE);
-            EnableWindow(GetDlgItem(hDlg, IDC_PORT2ACFGPB+i), FALSE);            
+            EnableWindow(GetDlgItem(hDlg, IDC_PORT2ACFGPB+i), FALSE);
          }
 
          SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_SETCURSEL, 1, 0);
@@ -1472,7 +1530,7 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   sprintf(string1, "Peripheral%ld", i+1);
                   sprintf(string2, "%d", ConvertEmulateTypeSelStringToID(hDlg, IDC_PORT1ATYPECB+i));
-                  WritePrivateProfileString(string1, "EmulateType", string2, inifilename);
+                  WritePrivateProfileStringA(string1, "EmulateType", string2, inifilename);
                }
                EndDialog(hDlg, TRUE);
                return TRUE;
@@ -1509,7 +1567,7 @@ void DoControlConfig(HWND hDlg, u8 cursel, int controlid, int basecontrolid, int
 
    if ((ret = PERDXFetchNextPress(hDlg, cursel, buttonname)) >= 0)
    {
-      SetDlgItemText(hDlg, controlid, buttonname);
+      SetDlgItemText(hDlg, controlid, _16(buttonname));
       controlmap[controlid - basecontrolid] = ret;
    }
 }
@@ -1591,7 +1649,7 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                for (i = 0; i < 13; i++)
                {
                   sprintf(string2, "%d", controlmap[i]);
-                  WritePrivateProfileString(string1, pad_names[i], string2, inifilename);
+                  WritePrivateProfileStringA(string1, pad_names[i], string2, inifilename);
                }
 
                return TRUE;
@@ -1703,7 +1761,7 @@ LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                for (i = 0; i < 13; i++)
                {
                   sprintf(string2, "%d", controlmap[i]);
-                  WritePrivateProfileString(string1, pad_names[i], string2, inifilename);
+                  WritePrivateProfileStringA(string1, pad_names[i], string2, inifilename);
                }
                return TRUE;
             }
@@ -1766,12 +1824,12 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          // Setup log type setting
          SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (LPARAM)"Write to File");
-         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (LPARAM)"Write to Window");
+         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Write to File"));
+         SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Write to Window"));
          SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_SETCURSEL, logtype, 0);
 
          // Setup log filename setting
-         SetDlgItemText(hDlg, IDC_LOGFILENAMEET, logfilename);
+         SetDlgItemText(hDlg, IDC_LOGFILENAMEET, _16(logfilename));
 
          return TRUE;
       }
@@ -1821,22 +1879,31 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             }
             case IDC_LOGBROWSEBT:
             {
+               WCHAR tempwstr[MAX_PATH];
+               WCHAR filter[1024];
                OPENFILENAME ofn;
 
                // setup ofn structure
                ZeroMemory(&ofn, sizeof(ofn));
                ofn.lStructSize = sizeof(ofn);
                ofn.hwndOwner = hDlg;
-               ofn.lpstrFilter = "Text Files\0*.txt\0All Files\0*.*\0";
+
+               CreateFilter(filter, 1024,
+                  "Text Files", "*.txt",
+                  "All Files", "*.*", NULL);
+
+               ofn.lpstrFilter = filter;
                ofn.nFilterIndex = 1;
-               ofn.lpstrFile = logfilename;
-               ofn.nMaxFile = sizeof(logfilename);
+               GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempwstr, MAX_PATH);
+               ofn.lpstrFile = tempwstr;
+               ofn.nMaxFile = sizeof(tempwstr);
                ofn.Flags = OFN_OVERWRITEPROMPT;
-               ofn.lpstrDefExt = "TXT";
+               ofn.lpstrDefExt = _16("TXT");
 
                if (GetSaveFileName(&ofn))
                {
-                  SetDlgItemText(hDlg, IDC_LOGFILENAMEET, logfilename);
+                  SetDlgItemText(hDlg, IDC_LOGFILENAMEET, tempwstr);
+                  WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, logfilename, MAX_PATH, NULL, NULL);
                }
 
                return TRUE;
@@ -1852,15 +1919,15 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   uselog = 0;
 
                sprintf(tempstr, "%d", uselog);
-               WritePrivateProfileString("Log", "Enable", tempstr, inifilename);
+               WritePrivateProfileStringA("Log", "Enable", tempstr, inifilename);
 
                // Write log type setting
                logtype = (int)SendDlgItemMessage(hDlg, IDC_LOGTYPECB, CB_GETCURSEL, 0, 0);
                sprintf(tempstr, "%d", logtype);
-               WritePrivateProfileString("Log", "Type", tempstr, inifilename);
+               WritePrivateProfileStringA("Log", "Type", tempstr, inifilename);
 
                // Write log filename
-               WritePrivateProfileString("Log", "Filename", logfilename, inifilename);
+               WritePrivateProfileStringA("Log", "Filename", logfilename, inifilename);
 
                EndDialog(hDlg, TRUE);
                return TRUE;
@@ -1905,11 +1972,11 @@ void RefreshSaveList(HWND hDlg)
    SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_RESETCONTENT, 0, 0);
 
    for (i = 0; i < numsaves; i++)
-      SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_ADDSTRING, 0, (LPARAM)saves[i].filename);
+      SendDlgItemMessageA(hDlg, IDC_BUPSAVELB, LB_ADDSTRING, 0, (LPARAM)saves[i].filename);
 
    BupGetStats(currentbupdevice, &freespace, &maxspace);
    sprintf(tempstr, "%d/%d blocks free", (int)freespace, (int)maxspace);
-   SetDlgItemText(hDlg, IDC_BUPFREESPACELT, tempstr);                     
+   SetDlgItemText(hDlg, IDC_BUPFREESPACELT, _16(tempstr));                     
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1932,7 +1999,7 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
          SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_RESETCONTENT, 0, 0);
          for (i = 0; i < numbupdevices; i++)
-            SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_ADDSTRING, 0, (LPARAM)devices[i].name);
+            SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_ADDSTRING, 0, (LPARAM)_16(devices[i].name));
 
          SendDlgItemMessage(hDlg, IDC_BUPDEVICECB, CB_SETCURSEL, 0, 0);
          RefreshSaveList(hDlg);
@@ -1968,7 +2035,7 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                      cursel = (u8)SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_GETCURSEL, 0, 0);
 
-                     SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_GETTEXT, cursel, (LPARAM)tempstr);
+                     SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_GETTEXT, cursel, (LPARAM)_16(tempstr));
 
                      for (i = 0; i < numsaves; i++)
                      {
@@ -1979,34 +2046,34 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                         }
                      }
 
-                     SetDlgItemText(hDlg, IDC_BUPFILENAMEET, saves[cursel].filename);
-                     SetDlgItemText(hDlg, IDC_BUPCOMMENTET, saves[cursel].comment);
+                     SetDlgItemText(hDlg, IDC_BUPFILENAMEET, _16(saves[cursel].filename));
+                     SetDlgItemText(hDlg, IDC_BUPCOMMENTET, _16(saves[cursel].comment));
                      switch(saves[cursel].language)
                      {
                         case 0:
-                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "Japanese");
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, _16("Japanese"));
                            break;
                         case 1:
-                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "English");
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, _16("English"));
                            break;
                         case 2:
-                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "French");
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, _16("French"));
                            break;
                         case 3:
-                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "German");
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, _16("German"));
                            break;
                         case 4:
-                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "Spanish");
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, _16("Spanish"));
                            break;
                         case 5:
-                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, "Italian");
+                           SetDlgItemText(hDlg, IDC_BUPLANGUAGEET, _16("Italian"));
                            break;
                         default: break;
                      }
                      sprintf(tempstr, "%d", (int)saves[cursel].datasize);
-                     SetDlgItemText(hDlg, IDC_BUPDATASIZEET, tempstr);
+                     SetDlgItemText(hDlg, IDC_BUPDATASIZEET, _16(tempstr));
                      sprintf(tempstr, "%d", saves[cursel].blocksize);
-                     SetDlgItemText(hDlg, IDC_BUPBLOCKSIZEET, tempstr);
+                     SetDlgItemText(hDlg, IDC_BUPBLOCKSIZEET, _16(tempstr));
                      return TRUE;
                   }
                   default: break;
@@ -2024,7 +2091,7 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                SendDlgItemMessage(hDlg, IDC_BUPSAVELB, LB_GETTEXT, cursel, (LPARAM)tempstr);
 
                sprintf(tempstr2, "Are you sure you want to delete %s?", tempstr);
-               if (MessageBox (hDlg, tempstr2, "Confirm Delete",  MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+               if (MessageBox (hDlg, _16(tempstr2), _16("Confirm Delete"),  MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
                {
                   BupDeleteSave(currentbupdevice, tempstr);
                   RefreshSaveList(hDlg);
@@ -2034,7 +2101,7 @@ LRESULT CALLBACK BackupRamDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDC_BUPFORMATBT:
             {
                sprintf(tempstr, "Are you sure you want to format %s?", devices[currentbupdevice].name);
-               if (MessageBox (hDlg, tempstr, "Confirm Delete",  MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) == IDYES)
+               if (MessageBox (hDlg, _16(tempstr), _16("Confirm Delete"),  MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) == IDYES)
                {
                   BupFormat(currentbupdevice);
                   RefreshSaveList(hDlg);
@@ -2118,7 +2185,7 @@ int CreateHelpBalloons(helpballoon_struct *hb)
       ti.hwnd = hb[i].hParent;
       ti.hinst = y_hInstance;
       ti.uId = 0;
-      ti.lpszText = hb[i].string;
+      ti.lpszText = _16(hb[i].string);
       GetClientRect(hb[i].hParent, &rect);
       ti.rect.left = rect.left;
       ti.rect.top = rect.top;
@@ -2145,6 +2212,33 @@ void DestroyHelpBalloons(helpballoon_struct *hb)
          hb[i].hWnd = NULL;
       }
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void CreateFilter(WCHAR * filter, size_t maxlen, ...)
+{
+   va_list list;
+   const char * str;
+   WCHAR * filterpos = filter;
+   int wrote;
+
+   va_start(list, maxlen);
+
+   str = va_arg(list, const char *);
+   while(str != NULL) {
+#ifdef __MINGW32_VERSION
+      wrote = swprintf(filterpos, _16(str));
+#else
+      wrote = swprintf(filterpos, maxlen, _16(str));
+#endif
+      filterpos += 1 + wrote;
+      maxlen -= 1 + wrote;
+      str = va_arg(list, const char *);
+   }
+   *filterpos = '\0';
+
+   va_end(list);
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -22,7 +22,7 @@
 
 #include "custctl.h"
 
-#define DISASM "YabauseDisassembler"
+#define DISASM TEXT("YabauseDisassembler")
 #define DIS_SETDISFUNC          WM_USER+11
 #define DIS_SETENDADDRESS       WM_USER+12
 #define DIS_GOTOADDRESS         WM_USER+13

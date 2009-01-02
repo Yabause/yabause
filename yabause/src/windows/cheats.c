@@ -23,6 +23,7 @@
 #include "cheats.h"
 #include "../cheat.h"
 #include "resource.h"
+#include "settings.h"
 #include "../memory.h"
 #include "yuidebug.h"
 
@@ -67,22 +68,22 @@ void AddCode(HWND hParent, int i)
    itemdata.mask = LVIF_TEXT;
    itemdata.iItem = (int)SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETITEMCOUNT, 0, 0);
    itemdata.iSubItem = 0;
-   itemdata.pszText = (LPTSTR)code;
-   itemdata.cchTextMax = (int)strlen(itemdata.pszText);
+   itemdata.pszText = _16(code);
+   itemdata.cchTextMax = (int)wcslen(itemdata.pszText);
    SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_INSERTITEM, 0, (LPARAM)&itemdata);
 
    itemdata.iSubItem = 1;
-   itemdata.pszText = (LPTSTR)cheat[i].desc;
-   itemdata.cchTextMax = (int)strlen(itemdata.pszText);
+   itemdata.pszText = _16(cheat[i].desc);
+   itemdata.cchTextMax = (int)wcslen(itemdata.pszText);
    SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
 
    itemdata.iSubItem = 2;
    if (cheat[i].enable)
-      itemdata.pszText = "Enabled";
+      itemdata.pszText = _16("Enabled");
    else
-      itemdata.pszText = "Disabled";
+      itemdata.pszText = _16("Disabled");
       
-   itemdata.cchTextMax = (int)strlen(itemdata.pszText);
+   itemdata.cchTextMax = (int)wcslen(itemdata.pszText);
    SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
 }
 
@@ -103,26 +104,30 @@ LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             case IDOK:
             {
+               WCHAR wcode[MAX_PATH];
+               WCHAR wdesc[MAX_PATH];
                char code[MAX_PATH];
                char desc[MAX_PATH];
                int cheatnum;
 
-               GetDlgItemText(hDlg, IDC_CODE, code, 14);
+               GetDlgItemText(hDlg, IDC_CODE, wcode, 14);
+               WideCharToMultiByte(CP_ACP, 0, wcode, -1, code, MAX_PATH, NULL, NULL);
 
                // Should verify text
                if (strlen(code) < 12)
                {
-                   MessageBox (hDlg, "Invalid code. Should be in the format: XXXXXXXX YYYY", "Error",  MB_OK | MB_ICONINFORMATION);
+                   MessageBox (hDlg, _16("Invalid code. Should be in the format: XXXXXXXX YYYY"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                    return TRUE;
                }
 
                if (CheatAddARCode(code) != 0)
                {
-                   MessageBox (hDlg, "Invalid code. Should be in the format: XXXXXXXX YYYY", "Error",  MB_OK | MB_ICONINFORMATION);
+                   MessageBox (hDlg, _16("Invalid code. Should be in the format: XXXXXXXX YYYY"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                    return TRUE;
                }
 
-               GetDlgItemText(hDlg, IDC_CODEDESC, desc, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_CODEDESC, wdesc, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, wdesc, -1, desc, MAX_PATH, NULL, NULL);
                CheatGetList(&cheatnum);
                CheatChangeDescriptionByIndex(cheatnum-1, desc);
                AddCode(GetParent(hDlg), cheatnum-1);
@@ -142,10 +147,10 @@ LRESULT CALLBACK AddARCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                if (HIWORD(wParam) == EN_CHANGE)
                {
-                  char text[14];
+                  WCHAR wtext[14];
                   LRESULT ret;
 
-                  if ((ret = GetDlgItemText(hDlg, IDC_CODE, text, 14)) <= 0)
+                  if ((ret = GetDlgItemText(hDlg, IDC_CODE, wtext, 14)) <= 0)
                      Button_Enable(GetDlgItem(hDlg, IDOK), FALSE);
                   else 
                      Button_Enable(GetDlgItem(hDlg, IDOK), TRUE);
@@ -181,6 +186,7 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             case IDOK:
             {
+               WCHAR tempwstr[MAX_PATH];
                char tempstr[MAX_PATH];
                char desc[MAX_PATH];
                int type;
@@ -189,18 +195,20 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                int cheatnum;
 
                // Get address
-               GetDlgItemText(hDlg, IDC_CODEADDR, tempstr, 9);
+               GetDlgItemText(hDlg, IDC_CODEADDR, tempwstr, 9);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
                if (sscanf(tempstr, "%08lX", &addr) != 1)
                {
-                  MessageBox (hDlg, "Invalid Address", "Error",  MB_OK | MB_ICONINFORMATION);
+                  MessageBox (hDlg, _16("Invalid Address"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                   return TRUE;
                }
 
                // Get value
-               GetDlgItemText(hDlg, IDC_CODEVAL, tempstr, 11);
+               GetDlgItemText(hDlg, IDC_CODEVAL, tempwstr, 11);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
                if (sscanf(tempstr, "%ld", &val) != 1)
                {
-                  MessageBox (hDlg, "Invalid Value", "Error",  MB_OK | MB_ICONINFORMATION);
+                  MessageBox (hDlg, _16("Invalid Value"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                   return TRUE;
                }
 
@@ -216,11 +224,12 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                if (CheatAddCode(type, addr, val) != 0)
                {
-                   MessageBox (hDlg, "Unable to add code", "Error",  MB_OK | MB_ICONINFORMATION);
+                   MessageBox (hDlg, _16("Unable to add code"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                    return TRUE;
                }
 
-               GetDlgItemText(hDlg, IDC_CODEDESC, desc, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_CODEDESC, tempwstr, MAX_PATH);
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, desc, MAX_PATH, NULL, NULL);
                CheatGetList(&cheatnum);
                CheatChangeDescriptionByIndex(cheatnum-1, desc);
                AddCode(GetParent(hDlg), cheatnum-1);
@@ -265,7 +274,7 @@ LRESULT CALLBACK AddCodeDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                if (HIWORD(wParam) == EN_CHANGE)
                {
-                  char text[11];
+                  WCHAR text[11];
 
                   if (GetDlgItemText(hDlg, IDC_CODEADDR, text, 9) <= 0 ||
                       GetDlgItemText(hDlg, IDC_CODEVAL, text, 11) <= 0)
@@ -314,14 +323,14 @@ LRESULT CALLBACK AddCodeDlgProc2(HWND hDlg, UINT uMsg, WPARAM wParam,
             item.mask = LVIF_TEXT;
             item.iItem = cursel;
             item.iSubItem = 0;
-            item.pszText = text;
-            item.cchTextMax = sizeof(text);
+            item.pszText = _16(text);
+            item.cchTextMax = sizeof(_16(text));
             SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETITEM, 0, (LPARAM)&item);
-            SetDlgItemText(hDlg, IDC_CODEADDR, text);
+            SetDlgItemText(hDlg, IDC_CODEADDR, _16(text));
 
             item.iSubItem = 1;
             SendDlgItemMessage(hParent, IDC_CHEATLIST, LVM_GETITEM, 0, (LPARAM)&item);
-            SetDlgItemText(hDlg, IDC_CODEVAL, text);
+            SetDlgItemText(hDlg, IDC_CODEVAL, _16(text));
          }
          else
             return FALSE;
@@ -352,18 +361,18 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                              LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 
          coldata.mask = LVCF_TEXT | LVCF_WIDTH;
-         coldata.pszText = "Code\0";
-         coldata.cchTextMax = (int)strlen(coldata.pszText);
+         coldata.pszText = _16("Code\0");
+         coldata.cchTextMax = (int)wcslen(coldata.pszText);
          coldata.cx = 190;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)0, (LPARAM)&coldata);
 
-         coldata.pszText = "Description\0";
-         coldata.cchTextMax = (int)strlen(coldata.pszText);
+         coldata.pszText = _16("Description\0");
+         coldata.cchTextMax = (int)wcslen(coldata.pszText);
          coldata.cx = 111;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)1, (LPARAM)&coldata);
 
-         coldata.pszText = "Status\0";
-         coldata.cchTextMax = (int)strlen(coldata.pszText);
+         coldata.pszText = _16("Status\0");
+         coldata.cchTextMax = (int)wcslen(coldata.pszText);
          coldata.cx = 70;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)2, (LPARAM)&coldata);
 
@@ -401,27 +410,35 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                break;
             case IDC_SAVETOFILE:
             {
+               WCHAR filter[1024];
                OPENFILENAME ofn;
 
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg,
-                        "Yabause Cheat Files\0*.YCT\0All Files\0*.*\0",
+               CreateFilter(filter, 1024,
+                  "Yabause Cheat Files", "*.YCT",
+                  "All files (*.*)", "*.*", NULL);
+
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter,
                         cheatfilename, sizeof(cheatfilename));
-               ofn.lpstrDefExt = "YCT";
+               ofn.lpstrDefExt = _16("YCT");
 
                if (GetSaveFileName(&ofn))
                {
                   if (CheatSave(cheatfilename) != 0)
-                     MessageBox (hDlg, "Unable to open file for saving", "Error",  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hDlg, _16("Unable to open file for saving"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                break;
             }
             case IDC_ADDFROMFILE:
             {
+               WCHAR filter[1024];
                OPENFILENAME ofn;
 
+               CreateFilter(filter, 1024,
+                  "Yabause Cheat Files", "*.YCT",
+                  "All files (*.*)", "*.*", NULL);
+
                // setup ofn structure
-               SetupOFN(&ofn, OFN_DEFAULTLOAD, hDlg,
-                        "Yabause Cheat Files\0*.YCT\0All Files\0*.*\0",
+               SetupOFN(&ofn, OFN_DEFAULTLOAD, hDlg, filter,
                         cheatfilename, sizeof(cheatfilename));
 
                if (GetOpenFileName(&ofn))
@@ -452,7 +469,7 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      }
                   }
                   else
-                     MessageBox (hDlg, "Unable to open file for saving", "Error",  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hDlg, _16("Unable to open file for saving"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
 
                break;
@@ -466,7 +483,7 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   if (CheatRemoveCodeByIndex(cursel) != 0)
                   {
-                     MessageBox (hDlg, "Unable to remove code", "Error",  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hDlg, _16("Unable to remove code"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                      return TRUE;
                   }
 
@@ -513,23 +530,23 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      {                        
                         // Enable or disable code
                         LVITEM itemdata;
-                        char tempstr[MAX_PATH];
+                        WCHAR tempwstr[MAX_PATH];
 
                         itemdata.mask = LVIF_TEXT;
                         itemdata.iItem = cursel;
                         itemdata.iSubItem = 2;
-                        itemdata.pszText = tempstr;
+                        itemdata.pszText = tempwstr;
                         itemdata.cchTextMax = MAX_PATH;
                         SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_GETITEM, 0, (LPARAM)&itemdata);
-                        if (strcmp(tempstr, "Enabled") == 0)
+                        if (wcscmp(tempwstr, _16("Enabled")) == 0)
                         {
                            CheatDisableCode(cursel);
-                           strcpy(tempstr, "Disabled");
+                           wcscpy(tempwstr, _16("Disabled"));
                         }
                         else
                         {
                            CheatEnableCode(cursel);
-                           strcpy(tempstr, "Enabled");
+                           wcscpy(tempwstr, _16("Enabled"));
                         }
 
                         SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
@@ -660,8 +677,8 @@ void ListResults(HWND hDlg)
          itemdata.iItem = i;
          itemdata.iSubItem = 0;
          sprintf(tempstr, "%08X", cheatresults[i].addr);
-         itemdata.pszText = (LPTSTR)tempstr;
-         itemdata.cchTextMax = (int)strlen(itemdata.pszText);
+         itemdata.pszText = _16(tempstr);
+         itemdata.cchTextMax = (int)wcslen(itemdata.pszText);
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTITEM, 0, (LPARAM)&itemdata);
 
          itemdata.iSubItem = 1;
@@ -679,8 +696,8 @@ void ListResults(HWND hDlg)
             default: break;
          }
 
-         itemdata.pszText = (LPTSTR)tempstr;
-         itemdata.cchTextMax = (int)strlen(itemdata.pszText);
+         itemdata.pszText = _16(tempstr);
+         itemdata.cchTextMax = (int)wcslen(itemdata.pszText);
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_SETITEM, 0, (LPARAM)&itemdata);
       }
    }
@@ -691,6 +708,7 @@ void ListResults(HWND hDlg)
 LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
+   WCHAR tempwstr[11];
    char tempstr[11];
 
    switch (uMsg)
@@ -703,7 +721,7 @@ LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // cheat
          if (cheatresults == NULL)
          {
-            SetDlgItemText(hDlg, IDC_CTSEARCHRESTARTBT, (LPCTSTR)"Start");
+            SetDlgItemText(hDlg, IDC_CTSEARCHRESTARTBT, _16("Start"));
             EnableWindow(GetDlgItem(hDlg, IDC_CTSEARCHBT), FALSE);
             EnableWindow(GetDlgItem(hDlg, IDC_CTADDCHEATBT), FALSE);
          }
@@ -712,13 +730,13 @@ LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                              LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 
          coldata.mask = LVCF_TEXT | LVCF_WIDTH;
-         coldata.pszText = "Address\0";
-         coldata.cchTextMax = (int)strlen(coldata.pszText);
+         coldata.pszText = _16("Address\0");
+         coldata.cchTextMax = (int)wcslen(coldata.pszText);
          coldata.cx = 190;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)0, (LPARAM)&coldata);
 
-         coldata.pszText = "Value\0";
-         coldata.cchTextMax = (int)strlen(coldata.pszText);
+         coldata.pszText = _16("Value\0");
+         coldata.cchTextMax = (int)wcslen(coldata.pszText);
          coldata.cx = 111;
          SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_INSERTCOLUMN, (WPARAM)1, (LPARAM)&coldata);
 
@@ -734,7 +752,7 @@ LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             case IDC_CTSEARCHRESTARTBT:
                if (cheatresults == NULL)
                {
-                  SetDlgItemText(hDlg, IDC_CTSEARCHRESTARTBT, (LPCTSTR)"Restart");
+                  SetDlgItemText(hDlg, IDC_CTSEARCHRESTARTBT, _16("Restart"));
                   EnableWindow(GetDlgItem(hDlg, IDC_CTSEARCHBT), TRUE);
                }
                else
@@ -748,11 +766,12 @@ LRESULT CALLBACK CheatSearchDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                // Search low wram and high wram areas
                SetSearchTypes(hDlg);
-               GetDlgItemText(hDlg, IDC_CHEATSEARCHET, tempstr, sizeof(tempstr));
+               GetDlgItemText(hDlg, IDC_CHEATSEARCHET, tempwstr, sizeof(tempwstr));
+               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
 
                if (strcmp(tempstr, "") == 0)
                {
-                  MessageBox (hDlg, "Please enter a value to search.", "Error",  MB_OK | MB_ICONINFORMATION);
+                  MessageBox (hDlg, _16("Please enter a value to search."), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                   return TRUE;
                }
 

@@ -224,7 +224,7 @@ static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
       return -1;
    }
 
-   filesizecheck = fread((void *)buffer, 1, filesize, fp);
+   filesizecheck = (u32)fread((void *)buffer, 1, filesize, fp);
    fclose(fp);
 
    if (filesizecheck != filesize) return -1;
@@ -310,7 +310,7 @@ static INLINE int T123Save(void * mem, u32 size, int type, const char *filename)
       return -1;
    }
 
-   sizecheck = fwrite((void *)buffer, 1, size, fp);
+   sizecheck = (u32)fwrite((void *)buffer, 1, size, fp);
    fclose(fp);
    free(buffer);
 

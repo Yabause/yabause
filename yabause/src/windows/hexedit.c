@@ -241,7 +241,7 @@ LRESULT HexEditCtl_OnPaint(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
    {
       x = 0;
       sprintf(text, "%08X  ", (int)addr);
-      GetTextExtentPoint32(hdc, text, (int)strlen(text), &size);
+      GetTextExtentPoint32A(hdc, text, (int)strlen(text), &size);
       if (size.cy+y >= rect.bottom)
          break;
 
@@ -256,7 +256,7 @@ LRESULT HexEditCtl_OnPaint(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
       clip.top = y;
       clip.right = clip.left+size.cx;
       SetTextColor(hdc, cc->text_color1);
-      ExtTextOut(hdc, x, y, ETO_OPAQUE | ETO_CLIPPED, &clip, text, lstrlen(text), 0);
+      ExtTextOutA(hdc, x, y, ETO_OPAQUE | ETO_CLIPPED, &clip, text, lstrlenA(text), 0);
       x += size.cx;
 
       // Draw the Hex values for the address
@@ -267,11 +267,11 @@ LRESULT HexEditCtl_OnPaint(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
          else
             SetTextColor(hdc, cc->text_color3);
          sprintf(text, "%02X%02X ", MappedMemoryReadByte(addr), MappedMemoryReadByte(addr+1));
-         GetTextExtentPoint32(hdc, text, (int)strlen(text), &size);
+         GetTextExtentPoint32A(hdc, text, (int)strlen(text), &size);
          clip.left = x;
          clip.top = y;
          clip.right = clip.left+size.cx;
-         ExtTextOut(hdc, x, y, ETO_OPAQUE | ETO_CLIPPED, &clip, text, lstrlen(text), 0);
+         ExtTextOutA(hdc, x, y, ETO_OPAQUE | ETO_CLIPPED, &clip, text, lstrlenA(text), 0);
          x += size.cx;
          addr += 2;
       }
@@ -289,11 +289,11 @@ LRESULT HexEditCtl_OnPaint(HexEditCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 
          text[0] = byte;
          text[1] = '\0';
-         GetTextExtentPoint32(hdc, text, (int)strlen(text), &size);
+         GetTextExtentPoint32A(hdc, text, (int)strlen(text), &size);
          clip.left = x;
          clip.top = y;
          clip.right = rect.right;
-         ExtTextOut(hdc, x, y, ETO_OPAQUE | ETO_CLIPPED, &clip, text, lstrlen(text), 0);
+         ExtTextOutA(hdc, x, y, ETO_OPAQUE | ETO_CLIPPED, &clip, text, lstrlenA(text), 0);
          x += size.cx;
          addr++;
       }
@@ -854,7 +854,7 @@ void InitHexEdit()
    WNDCLASSEX wc;
 
    wc.cbSize         = sizeof(wc);
-   wc.lpszClassName  = "YabauseHexEdit";
+   wc.lpszClassName  = _16("YabauseHexEdit");
    wc.hInstance      = GetModuleHandle(0);
    wc.lpfnWndProc    = HexEditCtl;
    wc.hCursor        = LoadCursor(NULL, IDC_ARROW);

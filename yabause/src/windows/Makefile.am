@@ -7,5 +7,6 @@ yabause_SOURCES = \
         yuidebug.c yuidebug.h dx.h
 yabause_LDFLAGS = -mwindows -mthreads
 yabause_LDADD = ../libyabause.a resource.o -lmingw32 -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -ldxguid -ldinput8 -ldsound -ldxerr8
+yabause_CPPFLAGS = -DUNICODE -D_UNICODE
 resource.o: resource.rc resource.h
 	$(WINDRES) $< -o $@ -I$(srcdir)

@@ -142,7 +142,7 @@ int PERDXInit(void)
        &IID_IDirectInput8, (LPVOID *)&lpDI8, NULL)) != DI_OK)
    {
       sprintf(tempstr, "DirectInput8Create error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
+      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
@@ -153,14 +153,14 @@ int PERDXInit(void)
        NULL)) != DI_OK)
    {
       sprintf(tempstr, "IDirectInput8_CreateDevice error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
+      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
    if ((ret = IDirectInputDevice8_SetDataFormat(lpDIDevice[0], &c_dfDIKeyboard)) != DI_OK)
    {
       sprintf(tempstr, "IDirectInputDevice8_SetDataFormat error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
+      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
@@ -168,7 +168,7 @@ int PERDXInit(void)
        DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY)) != DI_OK)
    {
       sprintf(tempstr, "IDirectInputDevice8_SetCooperativeLevel error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
+      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
@@ -182,7 +182,7 @@ int PERDXInit(void)
    if ((ret = IDirectInputDevice8_SetProperty(lpDIDevice[0], DIPROP_BUFFERSIZE, &dipdw.diph)) != DI_OK)
    {
       sprintf(tempstr, "IDirectInputDevice8_SetProperty error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, tempstr, "Error",  MB_OK | MB_ICONINFORMATION);
+      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
       return -1;
    }
 
@@ -237,10 +237,10 @@ void PERDXLoadDevices(char *inifilename)
       sprintf(string1, "Peripheral%d", (int)i+1);
 
       // Let's first fetch the guid of the device
-      if (GetPrivateProfileString(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
+      if (GetPrivateProfileStringA(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
          continue;
 
-      if (GetPrivateProfileString(string1, "EmulateType", "0", string2, MAX_PATH, inifilename))
+      if (GetPrivateProfileStringA(string1, "EmulateType", "0", string2, MAX_PATH, inifilename))
       {
          paddevice[i].emulatetype = atoi(string2);
          if (paddevice[i].emulatetype == 0)
@@ -345,7 +345,7 @@ void PERDXLoadDevices(char *inifilename)
       {
          for (i2 = 0; i2 < 13; i2++)
          {
-            buttonid = GetPrivateProfileInt(string1, pad_names[i2], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, pad_names[i2], 0, inifilename);
             PerSetKey(buttonid, i2, pad[i]);
          }
       }
@@ -353,7 +353,7 @@ void PERDXLoadDevices(char *inifilename)
       {
          for (i2 = 0; i2 < 4; i2++)
          {
-            buttonid = GetPrivateProfileInt(string1, mouse_names[i2], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, mouse_names[i2], 0, inifilename);
             PerSetKey(buttonid, PERMOUSE_LEFT+i2, pad[i]);
          }
       }
@@ -650,7 +650,7 @@ void PERDXListDevices(HWND control, int emulatetype)
    numguids = 0;
 
    SendMessage(control, CB_RESETCONTENT, 0, 0);
-   SendMessage(control, CB_ADDSTRING, 0, (LPARAM)"None");
+   SendMessage(control, CB_ADDSTRING, 0, (LPARAM)_16("None"));
 
    switch(emulatetype)
    {
@@ -688,7 +688,7 @@ void ConvertKBIDToName(int buttonid, char *string)
    if (buttonid & 0x80)
       buttonid += 0x80;
 
-   GetKeyNameText(buttonid << 16, string, MAX_PATH);
+   GetKeyNameTextA(buttonid << 16, string, MAX_PATH);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -744,17 +744,16 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
    char string1[20];
    GUID guid;
    u32 i;
-   int idlist[] = { IDC_UPTEXT, IDC_DOWNTEXT, IDC_LEFTTEXT, IDC_RIGHTTEXT,
+   int idlist[] = { IDC_UPTEXT, IDC_RIGHTTEXT, IDC_DOWNTEXT, IDC_LEFTTEXT,
+                    IDC_RTEXT, IDC_LTEXT, IDC_STARTTEXT,
                     IDC_ATEXT, IDC_BTEXT, IDC_CTEXT,
-                    IDC_XTEXT, IDC_YTEXT, IDC_ZTEXT,
-                    IDC_LTEXT, IDC_RTEXT, IDC_STARTTEXT
+                    IDC_XTEXT, IDC_YTEXT, IDC_ZTEXT
                   };
-
 
    sprintf(string1, "Peripheral%d", padnum+1);
 
    // Let's first fetch the guid of the device and see if we can get a match
-   if (GetPrivateProfileString(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
+   if (GetPrivateProfileStringA(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
    {
       if (padnum == 0)
       {
@@ -777,7 +776,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
          for (i = 0; i < 13; i++)
          {
             ConvertKBIDToName(controlmap[i], tempstr);
-            SetDlgItemText(hWnd, idlist[i], tempstr);
+            SetDlgItemText(hWnd, idlist[i], _16(tempstr));
          }
       }
       else
@@ -831,10 +830,11 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
 
          for (i = 0; i < 13; i++)
          {
-            buttonid = GetPrivateProfileInt(string1, pad_names[i], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, pad_names[i], 0, inifilename);
+            printf("%2d: %d\n", i, buttonid);
             controlmap[i] = buttonid;
             ConvertKBIDToName(buttonid, tempstr);
-            SetDlgItemText(hWnd, idlist[i], tempstr);
+            SetDlgItemText(hWnd, idlist[i], _16(tempstr));
          }
       }       
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
@@ -844,20 +844,20 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
 
          for (i = 0; i < 13; i++)
          {
-            buttonid = GetPrivateProfileInt(string1, pad_names[i], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, pad_names[i], 0, inifilename);
             controlmap[i] = buttonid;
             ConvertJoyIDToName(buttonid, tempstr);
-            SetDlgItemText(hWnd, idlist[i], tempstr);
+            SetDlgItemText(hWnd, idlist[i], _16(tempstr));
          }
       }
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
       {
          for (i = 0; i < 13; i++)
          {
-            buttonid = GetPrivateProfileInt(string1, pad_names[i], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, pad_names[i], 0, inifilename);
             controlmap[i] = buttonid;
             ConvertMouseIDToName(buttonid, tempstr);
-            SetDlgItemText(hWnd, idlist[i], tempstr);
+            SetDlgItemText(hWnd, idlist[i], _16(tempstr));
          }
       }
 
@@ -943,7 +943,7 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
          if (buttonid & 0x80)
             buttonid += 0x80;
 
-         GetKeyNameText(buttonid << 16, buttonname, MAX_PATH);
+         GetKeyNameTextA(buttonid << 16, buttonname, MAX_PATH);
          buttonid = nextpress.dwOfs;
       }
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
@@ -1214,7 +1214,7 @@ BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCTSTR inifilename)
    char string2[40];
    sprintf(string1, "Peripheral%d", padnum+1);
    sprintf(string2, "%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X", (int)GUIDDevice[guidnum].Data1, (int)GUIDDevice[guidnum].Data2, (int)GUIDDevice[guidnum].Data3, (int)GUIDDevice[guidnum].Data4[0], (int)GUIDDevice[guidnum].Data4[1], (int)GUIDDevice[guidnum].Data4[2], (int)GUIDDevice[guidnum].Data4[3], (int)GUIDDevice[guidnum].Data4[4], (int)GUIDDevice[guidnum].Data4[5], (int)GUIDDevice[guidnum].Data4[6], (int)GUIDDevice[guidnum].Data4[7]);
-   return WritePrivateProfileString(string1, "GUID", string2, inifilename);
+   return WritePrivateProfileStringA(string1, "GUID", string2, inifilename);
 }
 
 //////////////////////////////////////////////////////////////////////////////

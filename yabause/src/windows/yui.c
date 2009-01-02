@@ -538,17 +538,17 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
                Cs2ChangeCDCore(CDCORE_SPTI, cdrompath);
             else
                Cs2ChangeCDCore(CDCORE_ISO, cdrompath);
-            MessageBox (NULL, "Changed cd core", "Notice",  MB_OK | MB_ICONINFORMATION);
+            MessageBox (NULL, _16("Changed cd core"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
          }
          else if (changecore & 0x2)
          {
             VideoChangeCore(vidcoretype);
-            MessageBox (NULL, "Changed video core", "Notice",  MB_OK | MB_ICONINFORMATION);
+            MessageBox (NULL, _16("Changed video core"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
          }
          else if (changecore & 0x4)
          {
             ScspChangeSoundCore(sndcoretype);
-            MessageBox (NULL, "Changed sound core", "Notice",  MB_OK | MB_ICONINFORMATION);
+            MessageBox (NULL, _16("Changed sound core"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
          }
 
          changecore = 0;
@@ -566,15 +566,15 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
 
 void YuiPrintUsage()
 {
-   MessageBox (NULL, "Usage: yabause [OPTIONS]...\n"
+   MessageBox (NULL, _16("Usage: yabause [OPTIONS]...\n"
                      "-h\t\t--help\t\t\tPrint help and exit\n"
                      "-b STRING\t--bios=STRING\t\tbios file\n"
                      "-i STRING\t\t--iso=STRING\t\tiso/cue file\n"
                      "-c STRING\t--cdrom=STRING\t\tcdrom path\n"
                      "-ns\t\t--nosound\t\tturn sound off\n"
                      "-f\t\t--fullscreen\t\tstart in fullscreen mode\n"
-                     "\t\t--binary=STRING:ADDRESS\tLoad binary file to address",
-                     "Command line usage",  MB_OK | MB_ICONINFORMATION);
+                     "\t\t--binary=STRING:ADDRESS\tLoad binary file to address"),
+                     _16("Command line usage"),  MB_OK | MB_ICONINFORMATION);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -660,7 +660,7 @@ int YuiInit(LPSTR lpCmdLine)
    y_hInstance = GetModuleHandle(NULL);
 
    // get program pathname
-   inifilenamesize = GetModuleFileName(y_hInstance, inifilename, MAX_PATH);
+   inifilenamesize = GetModuleFileNameA(y_hInstance, inifilename, MAX_PATH);
 
    // set pointer to start of extension
 
@@ -712,7 +712,7 @@ int YuiInit(LPSTR lpCmdLine)
    free(cmddup);
 #endif
 
-   if (GetPrivateProfileString("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
+   if (GetPrivateProfileStringA("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
    {
       if (forcecdpath)
       {
@@ -722,20 +722,20 @@ int YuiInit(LPSTR lpCmdLine)
          if (DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
          {
             // exit program with error
-            MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
+            MessageBox (NULL, _16("yabause.ini must be properly setup before program can be used."), _16("Error"),  MB_OK | MB_ICONINFORMATION);
             return -1;
          }
       }
    }
 
-   GetPrivateProfileString("General", "BiosPath", "", biosfilename, MAX_PATH, inifilename);
-   GetPrivateProfileString("General", "BackupRamPath", "bkram.bin", backupramfilename, MAX_PATH, inifilename);
-   GetPrivateProfileString("General", "MpegRomPath", "", mpegromfilename, MAX_PATH, inifilename);
-   GetPrivateProfileString("General", "StatePath", "", ysspath, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "BiosPath", "", biosfilename, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "BackupRamPath", "bkram.bin", backupramfilename, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "MpegRomPath", "", mpegromfilename, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "StatePath", "", ysspath, MAX_PATH, inifilename);
    if (strcmp(ysspath, "") == 0)
-      GetCurrentDirectory(MAX_PATH, ysspath);
+      GetCurrentDirectoryA(MAX_PATH, ysspath);
 
-   GetPrivateProfileString("General", "CartType", "", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "CartType", "", tempstr, MAX_PATH, inifilename);
 
    // figure out cart type here, grab cartfilename if necessary
    carttype = atoi(tempstr);
@@ -748,20 +748,20 @@ int YuiInit(LPSTR lpCmdLine)
       case CART_BACKUPRAM16MBIT:
       case CART_BACKUPRAM32MBIT:
       case CART_ROM16MBIT:
-         GetPrivateProfileString("General", "CartPath", "", cartfilename, MAX_PATH, inifilename);
+         GetPrivateProfileStringA("General", "CartPath", "", cartfilename, MAX_PATH, inifilename);
          break;
       default: break;
    }
 
    // Grab Bios Language Settings
-//   GetPrivateProfileString("General", "BiosLanguage", "", tempstr, MAX_PATH, inifilename);
+//   GetPrivateProfileStringA("General", "BiosLanguage", "", tempstr, MAX_PATH, inifilename);
 
    // Grab SH2 Core Settings
-   GetPrivateProfileString("General", "SH2Core", "", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "SH2Core", "", tempstr, MAX_PATH, inifilename);
    sh2coretype = atoi(tempstr);
 
    // Grab Region Settings
-   GetPrivateProfileString("General", "Region", "", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "Region", "", tempstr, MAX_PATH, inifilename);
 
    if (strlen(tempstr) == 1)
    {
@@ -798,67 +798,67 @@ int YuiInit(LPSTR lpCmdLine)
       regionid = 0;
 
    // Grab Video Core Settings
-   GetPrivateProfileString("Video", "VideoCore", "-1", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Video", "VideoCore", "-1", tempstr, MAX_PATH, inifilename);
    vidcoretype = atoi(tempstr);
    if (vidcoretype == -1)
       vidcoretype = VIDCORE_OGL;
 
    // Grab Auto Frameskip Settings
-   GetPrivateProfileString("Video", "AutoFrameSkip", "0", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Video", "AutoFrameSkip", "0", tempstr, MAX_PATH, inifilename);
    enableautofskip = atoi(tempstr);
 
    // Grab Full Screen Settings
-   GetPrivateProfileString("Video", "UseFullScreenOnStartup", "0", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Video", "UseFullScreenOnStartup", "0", tempstr, MAX_PATH, inifilename);
    usefullscreenonstartup = atoi(tempstr);
 
-   GetPrivateProfileString("Video", "FullScreenWidth", "640", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Video", "FullScreenWidth", "640", tempstr, MAX_PATH, inifilename);
    fullscreenwidth = atoi(tempstr);
 
-   GetPrivateProfileString("Video", "FullScreenHeight", "480", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Video", "FullScreenHeight", "480", tempstr, MAX_PATH, inifilename);
    fullscreenheight = atoi(tempstr);
 
    // Grab Window Settings
-   GetPrivateProfileString("Video", "UseCustomWindowSize", "0", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Video", "UseCustomWindowSize", "0", tempstr, MAX_PATH, inifilename);
    usecustomwindowsize = atoi(tempstr);
 
-   GetPrivateProfileString("Video", "WindowWidth", "320", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Video", "WindowWidth", "320", tempstr, MAX_PATH, inifilename);
    windowwidth = atoi(tempstr);
 
-   GetPrivateProfileString("Video", "WindowHeight", "224", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Video", "WindowHeight", "224", tempstr, MAX_PATH, inifilename);
    windowheight = atoi(tempstr);
 
    // Grab Sound Core Settings
-   GetPrivateProfileString("Sound", "SoundCore", "-1", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Sound", "SoundCore", "-1", tempstr, MAX_PATH, inifilename);
    sndcoretype = atoi(tempstr);
 
    if (sndcoretype == -1)
       sndcoretype = SNDCORE_DIRECTX;
 
    // Grab Volume Settings
-   GetPrivateProfileString("Sound", "Volume", "100", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Sound", "Volume", "100", tempstr, MAX_PATH, inifilename);
    sndvolume = atoi(tempstr);
 
-   GetPrivateProfileString("General", "CartType", "", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "CartType", "", tempstr, MAX_PATH, inifilename);
 
    // Grab Netlink Settings
-   GetPrivateProfileString("Netlink", "LocalRemoteIP", "127.0.0.1", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Netlink", "LocalRemoteIP", "127.0.0.1", tempstr, MAX_PATH, inifilename);
    sscanf(tempstr, "%d.%d.%d.%d", ip, ip+1, ip+2, ip+3);
    netlinklocalremoteip = (DWORD)MAKEIPADDRESS(ip[0], ip[1], ip[2], ip[3]);
 
-   GetPrivateProfileString("Netlink", "Port", "7845", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Netlink", "Port", "7845", tempstr, MAX_PATH, inifilename);
    netlinkport = atoi(tempstr);
 
    sprintf(netlinksetting, "%d.%d.%d.%d\n%d", (int)FIRST_IPADDRESS(netlinklocalremoteip), (int)SECOND_IPADDRESS(netlinklocalremoteip), (int)THIRD_IPADDRESS(netlinklocalremoteip), (int)FOURTH_IPADDRESS(netlinklocalremoteip), netlinkport);
 
 #if DEBUG
    // Grab Logging settings
-   GetPrivateProfileString("Log", "Enable", "0", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Log", "Enable", "0", tempstr, MAX_PATH, inifilename);
    uselog = atoi(tempstr);
 
-   GetPrivateProfileString("Log", "Type", "0", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Log", "Type", "0", tempstr, MAX_PATH, inifilename);
    logtype = atoi(tempstr);
 
-   GetPrivateProfileString("Log", "Filename", "", logfilename, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("Log", "Filename", "", logfilename, MAX_PATH, inifilename);
 
    if (uselog)
    {
@@ -878,9 +878,9 @@ int YuiInit(LPSTR lpCmdLine)
                                   NULL,
                                   (DLGPROC)LogDlgProc);
             GetWindowRect(LogWin, &rect);
-            GetPrivateProfileString("Log", "WindowX", "0", tempstr, MAX_PATH, inifilename);
+            GetPrivateProfileStringA("Log", "WindowX", "0", tempstr, MAX_PATH, inifilename);
             ret = atoi(tempstr);
-            GetPrivateProfileString("Log", "WindowY", "0", tempstr, MAX_PATH, inifilename);
+            GetPrivateProfileStringA("Log", "WindowY", "0", tempstr, MAX_PATH, inifilename);
             SetWindowPos(LogWin, HWND_TOP, ret, atoi(tempstr), rect.right-rect.left, rect.bottom-rect.top, SWP_NOCOPYBITS | SWP_SHOWWINDOW);
             MainLog = DebugInit("main", DEBUG_CALLBACK, (char *)&UpdateLogCallback);
             break;
@@ -891,9 +891,9 @@ int YuiInit(LPSTR lpCmdLine)
 #endif
 
    // Get Window Position(if saved)
-   GetPrivateProfileString("General", "WindowX", "0", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "WindowX", "0", tempstr, MAX_PATH, inifilename);
    yabwinx = atoi(tempstr);
-   GetPrivateProfileString("General", "WindowY", "0", tempstr, MAX_PATH, inifilename);
+   GetPrivateProfileStringA("General", "WindowY", "0", tempstr, MAX_PATH, inifilename);
    yabwiny = atoi(tempstr);
 
 #ifndef NO_CLI
@@ -973,7 +973,7 @@ int YuiInit(LPSTR lpCmdLine)
    MyWndClass.hIcon = LoadIcon(y_hInstance, MAKEINTRESOURCE(IDI_ICON));
    MyWndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
    MyWndClass.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
-   MyWndClass.lpszClassName = "Yabause";
+   MyWndClass.lpszClassName = _16("Yabause");
    MyWndClass.lpszMenuName = NULL;
 
    YabMenu = LoadMenu(y_hInstance, MAKEINTRESOURCE(IDR_MENU));
@@ -984,8 +984,8 @@ int YuiInit(LPSTR lpCmdLine)
    sprintf(szAppName, "Yabause %s", VERSION);
 
    // Create new window
-   YabWin = CreateWindow("Yabause",            // class
-                         szAppName,            // caption
+   YabWin = CreateWindow(_16("Yabause"),       // class
+                         _16(szAppName),       // caption
                          WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |                                        
                          WS_THICKFRAME | WS_MINIMIZEBOX |   // style
                          WS_CLIPCHILDREN,
@@ -1038,7 +1038,7 @@ YabauseSetup:
          if (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), YabWin, (DLGPROC)SettingsDlgProc) != TRUE)
          {
             // exit program with error
-            MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
+            MessageBox (NULL, _16("yabause.ini must be properly setup before program can be used."), _16("Error"),  MB_OK | MB_ICONINFORMATION);
             return -1;
          }
 
@@ -1131,9 +1131,9 @@ YabauseSetup:
       DestroyMenu(YabMenu);
 
    sprintf(tempstr, "%d", yabwinx);
-   WritePrivateProfileString("General", "WindowX", tempstr, inifilename);
+   WritePrivateProfileStringA("General", "WindowX", tempstr, inifilename);
    sprintf(tempstr, "%d", yabwiny);
-   WritePrivateProfileString("General", "WindowY", tempstr, inifilename);
+   WritePrivateProfileStringA("General", "WindowY", tempstr, inifilename);
 
    if (argv)
       LocalFree(argv);
@@ -1330,37 +1330,45 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             }
             case IDM_SAVESTATEAS:
             {
+               WCHAR filter[1024];
                OPENFILENAME ofn;
 
                YuiTempPause();
 
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd,
-                        "Yabause Save State files\0*.YSS\0All Files\0*.*\0",
+               CreateFilter(filter, 1024,
+                  "Yabause Save State files", "*.YSS",
+                  "All files (*.*)", "*.*", NULL);
+
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
                         yssfilename, sizeof(yssfilename));
-               ofn.lpstrDefExt = "YSS";
+               ofn.lpstrDefExt = _16("YSS");
 
                if (GetSaveFileName(&ofn))
                {
                   if (YabSaveState(yssfilename) != 0)
-                     MessageBox (hWnd, "Couldn't save state file", "Error",  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hWnd, _16("Couldn't save state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                YuiTempUnPause();
                break;
             }
             case IDM_LOADSTATEAS:
             {
+               WCHAR filter[1024];
                OPENFILENAME ofn;
 
                YuiTempPause();
 
-               SetupOFN(&ofn, OFN_DEFAULTLOAD, hWnd,
-                        "Yabause Save State files\0*.YSS\0All Files\0*.*\0",
+               CreateFilter(filter, 1024,
+                  "Yabause Save State files", "*.YSS",
+                  "All files (*.*)", "*.*", NULL);
+
+               SetupOFN(&ofn, OFN_DEFAULTLOAD, hWnd, filter,
                         yssfilename, sizeof(yssfilename));
 
                if (GetOpenFileName(&ofn))
                {
                   if (YabLoadState(yssfilename) != 0)
-                     MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hWnd, _16("Couldn't load state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                YuiTempUnPause();
 
@@ -1377,7 +1385,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_SAVESTATE_F10:
                YuiTempPause();
                if (YabSaveStateSlot(ysspath, LOWORD(wParam)-IDM_SAVESTATE_F2) != 0)
-                  MessageBox (hWnd, "Couldn't save state file", "Error",  MB_OK | MB_ICONINFORMATION);
+                  MessageBox (hWnd, _16("Couldn't save state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                YuiTempUnPause();
                break;
             case IDM_LOADSTATE_F2:
@@ -1391,23 +1399,28 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_LOADSTATE_F10:
                YuiTempPause();
                if (YabLoadStateSlot(ysspath, LOWORD(wParam)-IDM_LOADSTATE_F2) != 0)
-                  MessageBox (hWnd, "Couldn't load state file", "Error",  MB_OK | MB_ICONINFORMATION);
+                  MessageBox (hWnd, _16("Couldn't load state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                YuiTempUnPause();
                break;
             case IDM_CAPTURESCREEN:
             {
+               WCHAR filter[1024];
                OPENFILENAME ofn;
                
                YuiTempPause();
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd,
-                       "Bitmap Files\0*.BMP\0All Files\0*.*\0",
+
+               CreateFilter(filter, 1024,
+                  "Bitmap Files", "*.BMP",
+                  "All files (*.*)", "*.*", NULL);
+
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
                        bmpfilename, sizeof(bmpfilename));
-               ofn.lpstrDefExt = "BMP";
+               ofn.lpstrDefExt = _16("BMP");
 
                if (GetSaveFileName(&ofn))
                {
                   if (YuiCaptureScreen(bmpfilename))
-                     MessageBox (hWnd, "Couldn't save capture file", "Error",  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hWnd, _16("Couldn't save capture file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                YuiTempUnPause();
                break;
@@ -1420,27 +1433,27 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             }
             case IDM_WEBSITE:
             {
-               ShellExecute(NULL, "open", "http://yabause.sourceforge.net", NULL, NULL, SW_SHOWNORMAL);
+               ShellExecuteA(NULL, "open", "http://yabause.sourceforge.net", NULL, NULL, SW_SHOWNORMAL);
                break;
             }
             case IDM_FORUM:
             {
-               ShellExecute(NULL, "open", "http://yabause.sourceforge.net/forums/", NULL, NULL, SW_SHOWNORMAL);
+               ShellExecuteA(NULL, "open", "http://yabause.sourceforge.net/forums/", NULL, NULL, SW_SHOWNORMAL);
                break;
             }
             case IDM_SUBMITBUGREPORT:
             {
-               ShellExecute(NULL, "open", "http://sourceforge.net/tracker/?func=add&group_id=89991&atid=592126", NULL, NULL, SW_SHOWNORMAL);
+               ShellExecuteA(NULL, "open", "http://sourceforge.net/tracker/?func=add&group_id=89991&atid=592126", NULL, NULL, SW_SHOWNORMAL);
                break;
             }
             case IDM_DONATE:
             {
-               ShellExecute(NULL, "open", "https://sourceforge.net/donate/index.php?group_id=89991", NULL, NULL, SW_SHOWNORMAL);
+               ShellExecuteA(NULL, "open", "https://sourceforge.net/donate/index.php?group_id=89991", NULL, NULL, SW_SHOWNORMAL);
                break;
             }
             case IDM_COMPATLIST:
             {
-               ShellExecute(NULL, "open", "http://www.emu-compatibility.com/yabause/index.php?lang=uk", NULL, NULL, SW_SHOWNORMAL);
+               ShellExecuteA(NULL, "open", "http://www.emu-compatibility.com/yabause/index.php?lang=uk", NULL, NULL, SW_SHOWNORMAL);
                break;
             }
             case IDM_ABOUT:
@@ -1557,7 +1570,7 @@ LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
          sprintf(tempstr, "Yabause v%s", VERSION);
-         SetDlgItemText(hDlg, IDC_VERSIONTEXT, tempstr);
+         SetDlgItemText(hDlg, IDC_VERSIONTEXT, _16(tempstr));
          return TRUE;
       case WM_COMMAND:
       {
@@ -1590,6 +1603,10 @@ LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 {
+#ifdef HAVE_LIBMINI18N
+   mini18n_set_domain("trans");
+#endif
+
    if (YuiInit(lpCmdLine) != 0)
       fprintf(stderr, "Error running Yabause\n");
 
@@ -1605,9 +1622,9 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       // Remember log window position
       GetWindowRect(LogWin, &rect);
       sprintf(text, "%ld", rect.left);
-      WritePrivateProfileString("Log", "WindowX", text, inifilename);
+      WritePrivateProfileStringA("Log", "WindowX", text, inifilename);
       sprintf(text, "%ld", rect.top);
-      WritePrivateProfileString("Log", "WindowY", text, inifilename);
+      WritePrivateProfileStringA("Log", "WindowY", text, inifilename);
 
       DestroyWindow(LogWin);
    }

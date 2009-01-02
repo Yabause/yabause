@@ -53,7 +53,7 @@ int SPTICDInit(const char *cdrom_name) {
    sprintf(pipe_name, "\\\\.\\?:");
    pipe_name[4] = cdrom_name[0];
 
-   if ((hCDROM = CreateFile(pipe_name, GENERIC_READ | GENERIC_WRITE,
+   if ((hCDROM = CreateFileA(pipe_name, GENERIC_READ | GENERIC_WRITE,
                             FILE_SHARE_READ | FILE_SHARE_WRITE,
                             NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
                             NULL)) == INVALID_HANDLE_VALUE)

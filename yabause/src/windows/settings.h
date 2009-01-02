@@ -83,5 +83,7 @@ enum {
    EMUTYPE_KEYBOARD
 };
 
+void CreateFilter(WCHAR * filter, size_t maxlen, ...);
+
 #endif
 
