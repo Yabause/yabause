@@ -21,6 +21,7 @@ TARGET	= yabause
 mac:TARGET	= Yabause
 CONFIG	+= debug_and_release x86 ppc
 QT	+= opengl
+INCLUDEPATH	+= . ui
 LIBS	+= -L../ -lyabause @LIBS@ @LDFLAGS@
 AC_DEFS = @DEFS@
 CPPFLAGS = @CPPFLAGS@
