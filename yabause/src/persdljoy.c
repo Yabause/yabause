@@ -178,12 +178,12 @@ int PERSDLJoyHandleEvents(void) {
 			else if ( cur > SDL_MEDIUM_AXIS_VALUE )
 			{
 				PerKeyUp( (joyId << 18) | SDL_MIN_AXIS_VALUE | i );
-				PerKeyDown( (joyId << 16) | SDL_MAX_AXIS_VALUE | i );
+				PerKeyDown( (joyId << 18) | SDL_MAX_AXIS_VALUE | i );
 			}
 			else
 			{
-				PerKeyUp( (joyId << 16) | SDL_MIN_AXIS_VALUE | i );
-				PerKeyUp( (joyId << 16) | SDL_MAX_AXIS_VALUE | i );
+				PerKeyUp( (joyId << 18) | SDL_MIN_AXIS_VALUE | i );
+				PerKeyUp( (joyId << 18) | SDL_MAX_AXIS_VALUE | i );
 			}
 		}
 		
@@ -194,11 +194,11 @@ int PERSDLJoyHandleEvents(void) {
 			
 			if ( buttonState == SDL_BUTTON_PRESSED )
 			{
-				PerKeyDown( (joyId << 16) | i +1 );
+				PerKeyDown( (joyId << 18) | i +1 );
 			}
 			else if ( buttonState == SDL_BUTTON_RELEASED )
 			{
-				PerKeyUp( (joyId << 16) | i +1 );
+				PerKeyUp( (joyId << 18) | i +1 );
 			}
 		}
 	}
@@ -259,7 +259,7 @@ u32 PERSDLJoyScan( UNUSED const char* n ) {
 		{
 			if ( SDL_JoystickGetButton( joy, i ) == SDL_BUTTON_PRESSED )
 			{
-				return (joyId << 16) | i +1;
+				return (joyId << 18) | i +1;
 				break;
 			}
 		}
