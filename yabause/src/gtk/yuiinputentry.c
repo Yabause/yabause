@@ -178,7 +178,7 @@ gboolean watch_joy(gpointer name) {
 	} else {
 		char tmp[100];
 
-		sprintf(tmp, "Input.%s.1", name); // should be group.name
+		sprintf(tmp, "Pad.%s.1", name); // should be group.name
 		g_key_file_set_integer(keyfile, PERCore->Name, tmp, i);
 #ifdef PERKEYNAME
 		PERCore->KeyName(i, tmp, 100);
