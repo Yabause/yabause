@@ -172,18 +172,18 @@ int PERSDLJoyHandleEvents(void) {
 			
 			if ( cur < -SDL_MEDIUM_AXIS_VALUE )
 			{
-				PerKeyUp( (joyId << 16) | (SDL_MAX_AXIS_VALUE + i) );
-				PerKeyDown( (joyId << 16) | (SDL_MIN_AXIS_VALUE + i) );
+				PerKeyUp( (joyId << 16) | ((SDL_MAX_AXIS_VALUE + i) & 0xFFFF) );
+				PerKeyDown( (joyId << 16) | ((SDL_MIN_AXIS_VALUE + i) & 0xFFFF) );
 			}
 			else if ( cur > SDL_MEDIUM_AXIS_VALUE )
 			{
-				PerKeyUp( (joyId << 16) | (SDL_MIN_AXIS_VALUE + i) );
-				PerKeyDown( (joyId << 16) | (SDL_MAX_AXIS_VALUE + i) );
+				PerKeyUp( (joyId << 16) | ((SDL_MIN_AXIS_VALUE + i) & 0xFFFF) );
+				PerKeyDown( (joyId << 16) | ((SDL_MAX_AXIS_VALUE + i) & 0xFFFF) );
 			}
 			else
 			{
-				PerKeyUp( (joyId << 16) | (SDL_MIN_AXIS_VALUE + i) );
-				PerKeyUp( (joyId << 16) | (SDL_MAX_AXIS_VALUE + i) );
+				PerKeyUp( (joyId << 16) | ((SDL_MIN_AXIS_VALUE + i) & 0xFFFF) );
+				PerKeyUp( (joyId << 16) | ((SDL_MAX_AXIS_VALUE + i) & 0xFFFF) );
 			}
 		}
 		
@@ -245,11 +245,11 @@ u32 PERSDLJoyScan( UNUSED const char* n ) {
 			{
 				if ( cur < -SDL_MEDIUM_AXIS_VALUE )
 				{
-					return (joyId << 16) | (SDL_MIN_AXIS_VALUE + i);
+					return (joyId << 16) | ((SDL_MIN_AXIS_VALUE + i) & 0xFFFF);
 				}
 				else if ( cur > SDL_MEDIUM_AXIS_VALUE )
 				{
-					return (joyId << 16) | (SDL_MAX_AXIS_VALUE + i);
+					return (joyId << 16) | ((SDL_MAX_AXIS_VALUE + i) & 0xFFFF);
 				}
 			}
 		}
