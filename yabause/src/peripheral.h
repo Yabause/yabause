@@ -120,6 +120,8 @@ void PerSetKey(u32 key, u8 name, void * controller);
 #define PERPAD_Y	11
 #define PERPAD_Z	12
 
+extern const char * PerPadNames[14];
+
 typedef struct
 {
    u8 perid;
@@ -181,6 +183,8 @@ void PerPadLTriggerReleased(PerPad_struct * pad);
 #define PERMOUSE_MIDDLE	14
 #define PERMOUSE_RIGHT	15
 #define PERMOUSE_START	16
+
+extern const char * PerMouseNames[5];
 
 typedef struct
 {

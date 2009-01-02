@@ -21,6 +21,33 @@
 #include "debug.h"
 #include "peripheral.h"
 
+const char * PerPadNames[] =
+{
+"Up",
+"Right",
+"Down",
+"Left",
+"R",
+"L",
+"Start",
+"A",
+"B",
+"C",
+"X",
+"Y",
+"Z",
+NULL
+};
+
+const char * PerMouseNames[] =
+{
+"A",
+"B",
+"C",
+"Start",
+NULL
+};
+
 PortData_struct PORTDATA1;
 PortData_struct PORTDATA2;
 
