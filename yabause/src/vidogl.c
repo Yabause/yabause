@@ -1907,9 +1907,9 @@ void VIDOGLVdp1PolygonDraw(void)
 
       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
-      polygon.priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1];
+      polygon.priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1] & 0x7;
 #else
-      polygon.priority = ((u8 *)&Vdp2Regs->PRISA)[priority];
+      polygon.priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
 #endif
    }
 
