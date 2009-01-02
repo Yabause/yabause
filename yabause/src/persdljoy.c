@@ -29,9 +29,9 @@
 #include "debug.h"
 #include "persdljoy.h"
 
-#define SDL_MAX_AXIS_VALUE 32767
-#define SDL_MIN_AXIS_VALUE -32768
-#define SDL_MEDIUM_AXIS_VALUE (int)(SDL_MAX_AXIS_VALUE /2)
+#define SDL_MAX_AXIS_VALUE 0x110000
+#define SDL_MIN_AXIS_VALUE 0x100000
+#define SDL_MEDIUM_AXIS_VALUE (int)(32768 / 2)
 #define SDL_BUTTON_PRESSED 1
 #define SDL_BUTTON_RELEASED 0
 
@@ -172,18 +172,18 @@ int PERSDLJoyHandleEvents(void) {
 			
 			if ( cur < -SDL_MEDIUM_AXIS_VALUE )
 			{
-				PerKeyUp( (joyId << 16) | ((SDL_MAX_AXIS_VALUE + i) & 0xFFFF) );
-				PerKeyDown( (joyId << 16) | ((SDL_MIN_AXIS_VALUE + i) & 0xFFFF) );
+				PerKeyUp( (joyId << 18) | SDL_MAX_AXIS_VALUE | i );
+				PerKeyDown( (joyId << 18) | SDL_MIN_AXIS_VALUE | i );
 			}
 			else if ( cur > SDL_MEDIUM_AXIS_VALUE )
 			{
-				PerKeyUp( (joyId << 16) | ((SDL_MIN_AXIS_VALUE + i) & 0xFFFF) );
-				PerKeyDown( (joyId << 16) | ((SDL_MAX_AXIS_VALUE + i) & 0xFFFF) );
+				PerKeyUp( (joyId << 18) | SDL_MIN_AXIS_VALUE | i );
+				PerKeyDown( (joyId << 16) | SDL_MAX_AXIS_VALUE | i );
 			}
 			else
 			{
-				PerKeyUp( (joyId << 16) | ((SDL_MIN_AXIS_VALUE + i) & 0xFFFF) );
-				PerKeyUp( (joyId << 16) | ((SDL_MAX_AXIS_VALUE + i) & 0xFFFF) );
+				PerKeyUp( (joyId << 16) | SDL_MIN_AXIS_VALUE | i );
+				PerKeyUp( (joyId << 16) | SDL_MAX_AXIS_VALUE | i );
 			}
 		}
 		
@@ -245,11 +245,11 @@ u32 PERSDLJoyScan( UNUSED const char* n ) {
 			{
 				if ( cur < -SDL_MEDIUM_AXIS_VALUE )
 				{
-					return (joyId << 16) | ((SDL_MIN_AXIS_VALUE + i) & 0xFFFF);
+					return (joyId << 18) | SDL_MIN_AXIS_VALUE | i;
 				}
 				else if ( cur > SDL_MEDIUM_AXIS_VALUE )
 				{
-					return (joyId << 16) | ((SDL_MAX_AXIS_VALUE + i) & 0xFFFF);
+					return (joyId << 18) | SDL_MAX_AXIS_VALUE | i;
 				}
 			}
 		}
