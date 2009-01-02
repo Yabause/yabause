@@ -225,6 +225,11 @@ int * YglQuad(YglSprite * input, YglTexture * output) {
    YglLevel *level;
    texturecoordinate_struct *tmp;
 
+   if (input->priority > 7) {
+      VDP1LOG("sprite with priority %d\n", input->priority);
+      return NULL;
+   }
+
    level = &_Ygl->levels[input->priority];
 
    if (level->currentQuad == level->maxQuad) {
