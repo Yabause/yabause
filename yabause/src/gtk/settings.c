@@ -85,9 +85,8 @@ YuiRangeItem sndcores[] = {
 	{ 0, 0 }
 };
 
-const gchar * keys1[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger", 0 };
+const gchar * keys1[] = { "Up", "Right", "Down", "Left", "R", "L", 0 };
 const gchar * keys2[] = { "A", "B", "C", "X", "Y", "Z", "Start", 0 };
-const gchar * keys3[] = { "Left", "Middle", "Right", "Start", 0 };
 
 YuiRangeItem vidformats[] = {
 	{ "0", "NTSC" },
@@ -203,7 +202,7 @@ static void pertype_display_mouse(GtkWidget * box)
 
    gtk_box_pack_start (GTK_BOX (box), gtk_vseparator_new(), TRUE, TRUE, 0);
 
-   table5 = yui_input_entry_new(keyfile, "Mouse", keys3);
+   table5 = yui_input_entry_new(keyfile, "Mouse", PerMouseNames);
    entrylist = g_list_append(entrylist, table5);
    gtk_container_set_border_width(GTK_CONTAINER(table5), 10);
    gtk_box_pack_start (GTK_BOX (box), table5, TRUE, TRUE, 0);

@@ -100,10 +100,6 @@ GtkWidget * yui;
 GKeyFile * keyfile;
 yabauseinit_struct yinit;
 
-const char * key_names[] = { "Up", "Right", "Down", "Left", "Right trigger", "Left trigger",
-	"Start", "A", "B", "C", "X", "Y", "Z", NULL };
-const char * mouse_key_names[] = { "Left", "Middle", "Right", "Start", NULL };
-
 int yui_main(gpointer data) {
 	PERCore->HandleEvents();
 	return TRUE;
@@ -295,9 +291,9 @@ gboolean yui_settings_load(void) {
 			padbits = PerMouseAdd(&PORTDATA1);
 			i = 0;
 
-			while(mouse_key_names[i]) {
+			while(PerMouseNames[i]) {
 				char tmp[100];
-				sprintf(tmp, "Mouse.%s.1", mouse_key_names[i]);
+				sprintf(tmp, "Mouse.%s.1", PerMouseNames[i]);
 	  			u32 key = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
 		  		PerSetKey(key, i + 13, padbits);
 		  		i++;
@@ -308,9 +304,9 @@ gboolean yui_settings_load(void) {
 			padbits = PerPadAdd(&PORTDATA1);
 			i = 0;
 
-			while(key_names[i]) {
+			while(PerPadNames[i]) {
 				char tmp[100];
-				sprintf(tmp, "Pad.%s.1", key_names[i]);
+				sprintf(tmp, "Pad.%s.1", PerPadNames[i]);
 	  			u32 key = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
 		  		PerSetKey(key, i, padbits);
 		  		i++;
