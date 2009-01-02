@@ -64,8 +64,8 @@ typedef struct {
 	s16* mScanStatus;
 } PERSDLJoystick;
 
-uint SDL_PERCORE_INITIALIZED = 0;
-uint SDL_PERCORE_JOYSTICKS_INITIALIZED = 0;
+unsigned int SDL_PERCORE_INITIALIZED = 0;
+unsigned int SDL_PERCORE_JOYSTICKS_INITIALIZED = 0;
 PERSDLJoystick* SDL_PERCORE_JOYSTICKS = 0;
 
 //////////////////////////////////////////////////////////////////////////////
