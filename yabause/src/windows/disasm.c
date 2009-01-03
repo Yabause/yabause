@@ -40,6 +40,8 @@ typedef struct
    int (*disinst)(u32 addr, char *string);
 } DisasmCtl_struct;
 
+#define DISASMLINES  23
+
 //////////////////////////////////////////////////////////////////////////////
 
 LRESULT DisasmCtl_OnPaint(DisasmCtl_struct *cc, WPARAM wParam, LPARAM lParam)
@@ -109,6 +111,18 @@ LRESULT DisasmCtl_OnPaint(DisasmCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////////////////////////
 
+LRESULT DisasmCtl_SetScrollPos(DisasmCtl_struct *cc)
+{
+   INT min, max;
+   u64 pos;
+
+   GetScrollRange(cc->hwnd, SB_VERT, &min, &max);
+   pos = ((u64)cc->addr) * (u64)max / (u64)(cc->e_addr-DISASMLINES);
+   SetScrollPos(cc->hwnd, SB_VERT, (int)pos, TRUE);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT DisasmCtl_Vscroll(DisasmCtl_struct *cc, WPARAM wParam, LPARAM lParam)
 {
    char text[MAX_PATH];
@@ -118,18 +132,22 @@ LRESULT DisasmCtl_Vscroll(DisasmCtl_struct *cc, WPARAM wParam, LPARAM lParam)
       case SB_LINEDOWN:
          cc->addr += cc->disinst(cc->addr, text);
          InvalidateRect(cc->hwnd, NULL, FALSE);
+         DisasmCtl_SetScrollPos(cc);
          return 0;
       case SB_LINEUP:
          cc->addr -= cc->disinst(cc->addr, text); // rework this
          InvalidateRect(cc->hwnd, NULL, FALSE);
+         DisasmCtl_SetScrollPos(cc);
          return 0;
       case SB_PAGEDOWN:
-         cc->addr += (cc->disinst(cc->addr, text) * 23); // this should allow for different window sizes and fonts and shouldn't rely on fixed instruction sizes
+         cc->addr += (cc->disinst(cc->addr, text) * DISASMLINES); // this should allow for different window sizes and fonts and shouldn't rely on fixed instruction sizes
          InvalidateRect(cc->hwnd, NULL, FALSE);
+         DisasmCtl_SetScrollPos(cc);
          return 0;
       case SB_PAGEUP:
-         cc->addr -= (cc->disinst(cc->addr, text) * 23); // this should allow for different window sizes and fonts and shouldn't rely on fixed instruction sizes
+         cc->addr -= (cc->disinst(cc->addr, text) * DISASMLINES); // this should allow for different window sizes and fonts and shouldn't rely on fixed instruction sizes
          InvalidateRect(cc->hwnd, NULL, FALSE);
+         DisasmCtl_SetScrollPos(cc);
          return 0;
       case SB_THUMBTRACK:
          cc->addr = HIWORD(wParam) << cc->scrollscale;
