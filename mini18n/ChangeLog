@@ -1,0 +1,5 @@
+*scratch* -> 0.1
+	* translation function
+	* translation+conversion function using platform
+	  specific backends
+	* automatic detection of platform locale
