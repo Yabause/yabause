@@ -18,6 +18,7 @@ AC_CHECK_HEADER([windows.h], [
 AC_ARG_ENABLE(log, AC_HELP_STRING(--enable-log, log non translated strings) , AC_DEFINE(MINI18N_LOG))
 
 AC_CONFIG_FILES([Makefile
+	doc/Doxyfile
 	src/Makefile
 	example/Makefile
 ])
