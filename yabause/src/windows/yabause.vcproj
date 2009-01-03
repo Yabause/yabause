@@ -59,7 +59,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;USEM68KCORE;VERSION=\&quot;0.9.8\&quot;;C68K_NO_JUMP_TABLE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;USEM68KCORE;VERSION=\&quot;0.9.8\&quot;;C68K_NO_JUMP_TABLE;HAVE_LIBMINI18N"
 				RuntimeLibrary="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
@@ -80,7 +80,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib dxguid.lib dinput8.lib dxerr9.lib dsound.lib"
+				AdditionalDependencies="comctl32.lib dxguid.lib dinput8.lib dxerr9.lib dsound.lib mini18n.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -116,9 +116,9 @@
 		<Configuration
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="1"
-			CharacterSet="0"
+			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -149,13 +149,13 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.9.8\&quot;;C68K_NO_JUMP_TABLE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;USEM68KCORE;VERSION=\&quot;0.9.8\&quot;;C68K_NO_JUMP_TABLE;HAVE_LIBMINI18N"
 				RuntimeLibrary="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -169,7 +169,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib dxguid.lib dinput8.lib dxerr9.lib dsound.lib"
+				AdditionalDependencies="comctl32.lib dxguid.lib dinput8.lib dxerr9.lib dsound.lib mini18n.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -290,7 +290,7 @@
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="0"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -427,7 +427,7 @@
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
-				Profile="true"
+				Profile="false"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -459,7 +459,7 @@
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="0"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -486,7 +486,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;NO_CLI;USEM68KCORE;VERSION=\&quot;0.9.8\&quot;;C68K_NO_JUMP_TABLE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_WIN32_IE=0x400;_WIN32_WINNT=0x400;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;HAVE_C99_VARIADIC_MACROS;HAVE_LIBGLUT;HAVE_LIBGL;USEM68KCORE;VERSION=\&quot;0.9.8\&quot;;C68K_NO_JUMP_TABLE;HAVE_LIBMINI18N"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -507,7 +507,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib dxguid.lib dinput8.lib dxerr9.lib dsound.lib"
+				AdditionalDependencies="comctl32.lib dxguid.lib dinput8.lib dxerr9.lib dsound.lib mini18n.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -627,7 +627,7 @@
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="0"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -794,7 +794,7 @@
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="0"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -925,7 +925,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							WarningLevel="2"
+							WarningLevel="3"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1169,354 +1169,6 @@
 					RelativePath="..\ygl.c"
 					>
 				</File>
-				<Filter
-					Name="68k core"
-					>
-					<File
-						RelativePath="..\c68k\c68k.c"
-						>
-						<FileConfiguration
-							Name="Debug with Threads|Win32"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Threads|x64"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug no 68k|Win32"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug no 68k|x64"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_ini.inc"
-						>
-						<FileConfiguration
-							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								Description="Building C68K inc files"
-								CommandLine="cd  $(InputDir) &amp;&amp; &quot;$(ProjectDir)\Release\gen68k.exe&quot;&#x0D;&#x0A;"
-								AdditionalDependencies="$(ProjectDir)\Release\gen68k.exe"
-								Outputs="c68k_ini.inc; c68k_op0.inc; c68k_op1.inc; c68k_op2.inc; c68k_op3.inc; c68k_op4.inc; c68k_op5.inc; c68k_op6.inc; c68k_op7.inc; c68k_op8.inc; c68k_op9.inc; c68k_opA.inc; c68k_opB.inc; c68k_opC.inc; c68k_opD.inc; c68k_opE.inc; c68k_opF.inc"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|x64"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								Description="Building C68K inc files"
-								CommandLine="cd  $(InputDir) &amp;&amp; &quot;$(ProjectDir)$(PlatformName)\Release\gen68k.exe&quot;&#x0D;&#x0A;"
-								AdditionalDependencies="$(ProjectDir)$(PlatformName)\Release\gen68k.exe"
-								Outputs="c68k_ini.inc; c68k_op0.inc; c68k_op1.inc; c68k_op2.inc; c68k_op3.inc; c68k_op4.inc; c68k_op5.inc; c68k_op6.inc; c68k_op7.inc; c68k_op8.inc; c68k_op9.inc; c68k_opA.inc; c68k_opB.inc; c68k_opC.inc; c68k_opD.inc; c68k_opE.inc; c68k_opF.inc"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Netlink|Win32"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Netlink|x64"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|x64"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								Description="Building C68K inc files"
-								CommandLine="cd  $(InputDir) &amp;&amp; &quot;$(ProjectDir)\Release\gen68k.exe&quot;&#x0D;&#x0A;"
-								AdditionalDependencies="&quot;$(ProjectDir)\Release\gen68k.exe&quot;"
-								Outputs="c68k_ini.inc; c68k_op0.inc; c68k_op1.inc; c68k_op2.inc; c68k_op3.inc; c68k_op4.inc; c68k_op5.inc; c68k_op6.inc; c68k_op7.inc; c68k_op8.inc; c68k_op9.inc; c68k_opA.inc; c68k_opB.inc; c68k_opC.inc; c68k_opD.inc; c68k_opE.inc; c68k_opF.inc"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Threads|Win32"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Threads|x64"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug no 68k|Win32"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								Description=""
-								CommandLine=""
-								AdditionalDependencies=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug no 68k|x64"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								Description=""
-								CommandLine=""
-								AdditionalDependencies=""
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op0.inc"
-						>
-						<FileConfiguration
-							Name="Release|Win32"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|x64"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Netlink|Win32"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Netlink|x64"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|x64"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Threads|Win32"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Threads|x64"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug no 68k|Win32"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug no 68k|x64"
-							>
-							<Tool
-								Name="INC file"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op1.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op2.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op3.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op4.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op5.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op6.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op7.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op8.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_op9.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_opA.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_opB.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_opC.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_opD.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_opE.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68k_opF.inc"
-						>
-					</File>
-					<File
-						RelativePath="..\c68k\c68kexec.c"
-						>
-						<FileConfiguration
-							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								Description="Building c68kexec"
-								CommandLine="cl /Od /Ob2 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_IE=0x400&quot; /D &quot;_WIN32_WINNT=0x400&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_CRT_NONSTDC_NO_DEPRECATE&quot; /D &quot;HAVE_C99_VARIADIC_MACROS&quot; /D &quot;HAVE_LIBGLUT&quot; /D &quot;HAVE_LIBGL&quot; /D &quot;NO_CLI&quot; /D &quot;USEM68KCORE&quot; /D &quot;VERSION=\&quot;0.9.8\&quot;&quot; /D &quot;C68K_NO_JUMP_TABLE&quot; /FD /MD /fp:fast /Fo&quot;$(IntDir)\\&quot; /Fd&quot;$(IntDir)\vc80.pdb&quot; /W0 /nologo /c /Wp64 /TC /errorReport:prompt  $(InputDir)$(InputFileName)&#x0D;&#x0A;"
-								AdditionalDependencies="c68k_ini.inc c68k_op0.inc c68k_op1.inc c68k_op2.inc c68k_op3.inc c68k_op4.inc c68k_op5.inc c68k_op6.inc c68k_op7.inc c68k_op8.inc c68k_op9.inc c68k_opA.inc c68k_opB.inc c68k_opC.inc c68k_opD.inc c68k_opE.inc c68k_opF.inc"
-								Outputs="$(ProjectDir)\$(IntDir)\$(InputName).obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|x64"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								Description="Building c68kexec"
-								CommandLine="cl /Od /Ob2 /Oy /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_IE=0x400&quot; /D &quot;_WIN32_WINNT=0x400&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_CRT_NONSTDC_NO_DEPRECATE&quot; /D &quot;HAVE_C99_VARIADIC_MACROS&quot; /D &quot;HAVE_LIBGLUT&quot; /D &quot;HAVE_LIBGL&quot; /D &quot;NO_CLI&quot; /D &quot;USEM68KCORE&quot; /D &quot;VERSION=\&quot;0.9.8\&quot;&quot; /D &quot;C68K_NO_JUMP_TABLE&quot; /FD /MD /fp:fast /Fo&quot;$(IntDir)\\&quot; /Fd&quot;$(IntDir)\vc80.pdb&quot; /W0 /nologo /c /Wp64 /TC /errorReport:prompt  $(InputDir)$(InputFileName)&#x0D;&#x0A;"
-								AdditionalDependencies="c68k_ini.inc c68k_op0.inc c68k_op1.inc c68k_op2.inc c68k_op3.inc c68k_op4.inc c68k_op5.inc c68k_op6.inc c68k_op7.inc c68k_op8.inc c68k_op9.inc c68k_opA.inc c68k_opB.inc c68k_opC.inc c68k_opD.inc c68k_opE.inc c68k_opF.inc"
-								Outputs="$(ProjectDir)\$(IntDir)\$(InputName).obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								CommandLine="cl /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_CRT_NONSTDC_NO_DEPRECATE&quot; /D &quot;_WIN32_IE=0x400&quot; /D &quot;_WIN32_WINNT=0x400&quot; /D &quot;HAVE_C99_VARIADIC_MACROS&quot; /D &quot;HAVE_LIBGLUT&quot; /D &quot;HAVE_LIBGL&quot; /D &quot;NO_CLI&quot; /D &quot;USEM68KCORE&quot; /D &quot;VERSION=\&quot;0.9.8\&quot;&quot; /D &quot;C68K_NO_JUMP_TABLE&quot; /Gm /EHsc /RTC1 /MDd /Fo&quot;$(IntDir)\\&quot; /Fd&quot;$(IntDir)\vc80.pdb&quot; /W0 /nologo /c /Wp64 /ZI /TC /errorReport:prompt $(InputDir)$(InputFileName)&#x0D;&#x0A;"
-								AdditionalDependencies="c68k_ini.inc;c68k_op0.inc;c68k_op1.inc;c68k_op2.inc;c68k_op3.inc;c68k_op4.inc;c68k_op5.inc;c68k_op6.inc;c68k_op7.inc;c68k_op8.inc;c68k_op9.inc;c68k_opA.inc;c68k_opB.inc;c68k_opC.inc;c68k_opD.inc;c68k_opE.inc;c68k_opF.inc"
-								Outputs="$(ProjectDir)\$(IntDir)\$(InputName).obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|x64"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								CommandLine="cl /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_CRT_NONSTDC_NO_DEPRECATE&quot; /D &quot;_WIN32_IE=0x400&quot; /D &quot;_WIN32_WINNT=0x400&quot; /D &quot;HAVE_C99_VARIADIC_MACROS&quot; /D &quot;HAVE_LIBGLUT&quot; /D &quot;HAVE_LIBGL&quot; /D &quot;NO_CLI&quot; /D &quot;USEM68KCORE&quot; /D &quot;VERSION=\&quot;0.9.8\&quot;&quot; /D &quot;C68K_NO_JUMP_TABLE&quot; /Gm /EHsc /RTC1 /MDd /Fo&quot;$(IntDir)\\&quot; /Fd&quot;$(IntDir)\vc80.pdb&quot; /W0 /nologo /c /Wp64 /ZI /TC /errorReport:prompt $(InputDir)$(InputFileName)&#x0D;&#x0A;"
-								AdditionalDependencies="c68k_ini.inc c68k_op0.inc c68k_op1.inc c68k_op2.inc c68k_op3.inc c68k_op4.inc c68k_op5.inc c68k_op6.inc c68k_op7.inc c68k_op8.inc c68k_op9.inc c68k_opA.inc c68k_opB.inc c68k_opC.inc c68k_opD.inc c68k_opE.inc c68k_opF.inc"
-								Outputs="$(ProjectDir)\$(IntDir)\$(InputName).obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Threads|Win32"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug with Threads|x64"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug no 68k|Win32"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug no 68k|x64"
-							ExcludedFromBuild="true"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-					</File>
-				</Filter>
 			</Filter>
 		</Filter>
 		<Filter

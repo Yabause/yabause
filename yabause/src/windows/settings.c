@@ -1578,6 +1578,7 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
    static u8 cursel;
+   static BOOL enablebuttons;
    static int controlmap[13];
    static int padnum;
    static HWND hParent;
@@ -1595,21 +1596,22 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // Load settings from ini here, if necessary
          PERDXInitControlConfig(hDlg, padnum, controlmap, inifilename);
 
-         cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0) ? TRUE : FALSE;
+         cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0);
+         enablebuttons = cursel ? TRUE : FALSE;
 
-         EnableWindow(GetDlgItem(hDlg, IDC_UPPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_LPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_RPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_APB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_BPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_CPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_XPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_YPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_ZPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_UPPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_LPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_RPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_APB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_BPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_CPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_XPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_YPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_ZPB), enablebuttons);
          return TRUE;
       }
       case WM_COMMAND:
@@ -1665,21 +1667,22 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   case CBN_SELCHANGE:
                   {
-                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0) ? TRUE : FALSE;
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0);
+                     enablebuttons = cursel ? TRUE : FALSE;
 
-                     EnableWindow(GetDlgItem(hDlg, IDC_UPPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_LPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_RPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_APB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_BPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_CPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_XPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_YPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_ZPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_UPPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_DOWNPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_LEFTPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_RIGHTPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_LPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_RPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_APB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_BPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_XPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_YPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_ZPB), enablebuttons);
                      break;
                   }
                   default: break;
@@ -1706,6 +1709,7 @@ LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
    static u8 cursel;
+   static BOOL enablebuttons;
    static int controlmap[13];
    static int padnum;
    static HWND hParent;
@@ -1725,12 +1729,13 @@ LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // Load settings from ini here, if necessary
          PERDXInitControlConfig(hDlg, padnum, controlmap, inifilename);
 
-         cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0) ? TRUE : FALSE;
+         cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0);
+         enablebuttons = cursel ? TRUE : FALSE;
 
-         EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_APB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_BPB), cursel);
-         EnableWindow(GetDlgItem(hDlg, IDC_CPB), cursel);
+         EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_APB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_BPB), enablebuttons);
+         EnableWindow(GetDlgItem(hDlg, IDC_CPB), enablebuttons);
          return TRUE;
       }
       case WM_COMMAND:
@@ -1776,12 +1781,13 @@ LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   case CBN_SELCHANGE:
                   {
-                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0) ? TRUE : FALSE;
+                     cursel = (u8)SendDlgItemMessage(hDlg, IDC_DXDEVICECB, CB_GETCURSEL, 0, 0);
+                     enablebuttons = cursel ? TRUE : FALSE;
 
-                     EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_APB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_BPB), cursel);
-                     EnableWindow(GetDlgItem(hDlg, IDC_CPB), cursel);
+                     EnableWindow(GetDlgItem(hDlg, IDC_STARTPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_APB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_BPB), enablebuttons);
+                     EnableWindow(GetDlgItem(hDlg, IDC_CPB), enablebuttons);
                      break;
                   }
                   default: break;
