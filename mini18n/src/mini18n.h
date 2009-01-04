@@ -39,6 +39,12 @@
  * @returns 0 on success, -1 otherwise
  */
 int mini18n_set_domain(const char * folder);
+/**
+ * @brief Load a translation from a file.
+ *
+ * @param filename of the translation to load.
+ * @returns 0 on success, -1 otherwise
+ */
 int mini18n_set_locale(const char * locale);
 int mini18n_set_log(const char * filename);
 /**
