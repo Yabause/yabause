@@ -24,10 +24,14 @@
 
 typedef struct _mini18n_data_t mini18n_data_t;
 
+typedef (*mini18n_len_func)(const void *);
+typedef (*mini18n_dup_func)(const void *);
+typedef (*mini18n_cmp_func)(const void *, const void *);
+
 struct _mini18n_data_t {
-	size_t (*len)(const void * data);
-	void * (*dup)(const void * data);
-	int    (*cmp)(const void * data1, const void * data2);
+	mini18n_len_func len;
+	mini18n_dup_func dup;
+	mini18n_cmp_func cmp;
 };
 
 extern mini18n_data_t mini18n_str;

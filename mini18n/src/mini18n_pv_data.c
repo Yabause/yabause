@@ -23,13 +23,13 @@
 #include <wchar.h>
 
 mini18n_data_t mini18n_str = {
-	strlen,
-	strdup,
-	strcmp
+	(mini18n_len_func) strlen,
+	(mini18n_dup_func) strdup,
+	(mini18n_cmp_func) strcmp
 };
 
 mini18n_data_t mini18n_wcs = {
-	wcslen,
-	wcsdup,
-	wcscmp
+	(mini18n_len_func) wcslen,
+	(mini18n_dup_func) wcsdup,
+	(mini18n_cmp_func) wcscmp
 };
