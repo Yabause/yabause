@@ -761,18 +761,18 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
          SendDlgItemMessage(hWnd, IDC_DXDEVICECB, CB_SETCURSEL, 1, 0);
 
          controlmap[0] = DIK_UP;
-         controlmap[1] = DIK_DOWN;
-         controlmap[2] = DIK_LEFT;
-         controlmap[3] = DIK_RIGHT;
-         controlmap[4] = DIK_K;
-         controlmap[5] = DIK_L;
-         controlmap[6] = DIK_M;
-         controlmap[7] = DIK_U;
-         controlmap[8] = DIK_I;
-         controlmap[9] = DIK_O;
-         controlmap[10] = DIK_X;
-         controlmap[11] = DIK_Z;
-         controlmap[12] = DIK_J;
+         controlmap[1] = DIK_RIGHT;
+         controlmap[2] = DIK_DOWN;
+         controlmap[3] = DIK_LEFT;
+         controlmap[4] = DIK_Z;
+         controlmap[5] = DIK_X;
+         controlmap[6] = DIK_J;
+         controlmap[7] = DIK_K;
+         controlmap[8] = DIK_L;
+         controlmap[9] = DIK_M;
+         controlmap[10] = DIK_U;
+         controlmap[11] = DIK_I;
+         controlmap[12] = DIK_O;
          for (i = 0; i < 13; i++)
          {
             ConvertKBIDToName(controlmap[i], tempstr);
