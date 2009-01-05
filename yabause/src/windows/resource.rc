@@ -33,6 +33,17 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Settings",                   IDM_SETTINGS
         MENUITEM "&Backup Ram Manager",         IDM_BACKUPRAMMANAGER
+        POPUP "Language", GRAYED
+        BEGIN
+            MENUITEM "Deutsch ",                    IDM_GERMAN
+            MENUITEM "English",                     IDM_ENGLISH
+            MENUITEM "Espanol",                     IDM_SPANISH
+            MENUITEM "Francais",                    IDM_FRENCH
+            MENUITEM "Italiano",                    IDM_ITALIAN
+            MENUITEM "Portugues",                   IDM_PORTUGUESE
+            MENUITEM "Portugues Brasileiro",        IDM_PORTUGUESEBRAZIL
+            MENUITEM "Svenska",                     IDM_SWEDISH
+        END
         MENUITEM SEPARATOR
         POPUP "Save State"
         BEGIN
@@ -67,7 +78,7 @@ BEGIN
     END
     POPUP "&Emulation"
     BEGIN
-        MENUITEM "Run",                         IDM_RUN, GRAYED
+        MENUITEM "Run",                         IDM_RUN
         MENUITEM "Pause",                       IDM_PAUSE
         MENUITEM SEPARATOR
         MENUITEM "Reset",                       IDM_RESET
@@ -87,7 +98,7 @@ BEGIN
         MENUITEM "68K",                         IDM_M68KDEBUG
         MENUITEM "SCU DSP",                     IDM_SCUDSPDEBUG
         MENUITEM "SCSP",                        IDM_SCSPDEBUG
-        MENUITEM "SMPC",                        IDM_SMPCDEBUG, GRAYED
+        MENUITEM "SMPC",                        IDM_SMPCDEBUG
         MENUITEM "Memory Editor",               IDM_MEMORYEDITOR
     END
     POPUP "&Help"
@@ -516,17 +527,21 @@ BEGIN
     PUSHBUTTON      "Cancel",IDC_CUSTOMCANCEL,35,20,40,14
 END
 
-IDD_LOGSETTINGS DIALOGEX 0, 0, 246, 73
+IDD_LOGSETTINGS DIALOGEX 0, 0, 246, 121
 STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "Courier New", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Log Settings",-1,3,2,240,68
-    CONTROL         "Enable Logging",IDC_USELOGCB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,70,10
-    LTEXT           "Log Type",-1,10,29,40,10
+    GROUPBOX        "Log Settings",IDC_STATIC,3,2,240,116
+    CONTROL         "Enable Emulation Logging",IDC_USELOGCB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,110,10
+    LTEXT           "Log Type",IDC_STATIC,10,29,40,10
     COMBOBOX        IDC_LOGTYPECB,49,28,85,33,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Log Filename",-1,10,44,61,10
+    LTEXT           "Emulation Log Filename",IDC_STATIC,10,44,93,10
     EDITTEXT        IDC_LOGFILENAMEET,10,53,189,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Browse",IDC_LOGBROWSEBT,203,53,33,12
+    CONTROL         "Enable mini18n Logging",IDC_USEMINI18NLOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,75,112,10
+    LTEXT           "mini18n Log Filename",IDC_STATIC,11,88,81,8
+    EDITTEXT        IDC_MINI18NLOGFILENAME,10,97,189,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_MINI18NLOGBROWSE,203,98,33,12
 END
 
 IDD_ADDARCODE DIALOGEX 0, 0, 186, 70
@@ -929,7 +944,7 @@ BEGIN
         LEFTMARGIN, 3
         RIGHTMARGIN, 243
         TOPMARGIN, 2
-        BOTTOMMARGIN, 70
+        BOTTOMMARGIN, 118
     END
 
     IDD_ADDARCODE, DIALOG

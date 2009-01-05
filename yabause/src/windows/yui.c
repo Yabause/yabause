@@ -1143,6 +1143,40 @@ YabauseSetup:
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ClearMenuChecks(HMENU hmenu, int startid, int endid)
+{
+   int i;
+
+   for (i = startid; i <= endid; i++)
+      CheckMenuItem(hmenu, i, MF_UNCHECKED);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ChangeLanguage(int id)
+{
+   static char *langfiles[] = {
+      "yabause_de.yts",
+      "yabause_en.yts",
+      "yabause_fr.yts",
+      "yabause_it.yts",
+      "yabause_pt.yts",
+      "yabause_pt_BR.yts",
+      "yabause_es.yts",
+      "yabause_sv.yts"
+   };
+
+   if (langfiles[id-IDM_GERMAN])
+   {
+      if (mini18n_set_locale(langfiles[id-IDM_GERMAN]) == -1)
+         return;
+   }
+
+   ClearMenuChecks(YabMenu, IDM_GERMAN, IDM_SPANISH);
+   CheckMenuItem(YabMenu, id, MF_CHECKED);
+}
+//////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
    DIDEVCAPS didc;
@@ -1217,6 +1251,16 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                YuiTempUnPause();
                break;
             }
+            case IDM_GERMAN:
+            case IDM_ENGLISH:
+            case IDM_FRENCH:
+            case IDM_ITALIAN:
+            case IDM_PORTUGUESE:
+            case IDM_PORTUGUESEBRAZIL:
+            case IDM_SPANISH:
+            case IDM_SWEDISH:
+               ChangeLanguage(LOWORD(wParam));
+               break;
             case IDM_MSH2DEBUG:
             {
                YuiTempPause();

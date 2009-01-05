@@ -1,4 +1,4 @@
-/*  Copyright 2004-2008 Theo Berkau
+/*  Copyright 2004-2009 Theo Berkau
 
     This file is part of Yabause.
 
@@ -44,6 +44,7 @@ char mpegromfilename[MAX_PATH] = "\0";
 char cartfilename[MAX_PATH] = "\0";
 char inifilename[MAX_PATH];
 char logfilename[MAX_PATH];
+char mini18nlogfilename[MAX_PATH];
 
 int num_cdroms=0;
 char drive_list[24];
@@ -66,6 +67,7 @@ int carttype;
 DWORD netlinklocalremoteip=MAKEIPADDRESS(127, 0, 0, 1);
 int netlinkport=7845;
 int uselog=0;
+int usemini18nlog=0;
 int logtype=0;
 int nocorechange = 0;
 #ifdef USETHREADS
@@ -1818,14 +1820,7 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          // Setup use log setting
-         if (uselog)
-         {
-            SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_SETCHECK, BST_CHECKED, 0);
-            SendMessage(hDlg, WM_COMMAND, IDC_USELOGCB, 0);
-         }
-         else
-            SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_SETCHECK, BST_UNCHECKED, 0);
-
+         SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_SETCHECK, uselog ? BST_CHECKED : BST_UNCHECKED, 0);
          SendMessage(hDlg, WM_COMMAND, IDC_USELOGCB, 0);
 
          // Setup log type setting
@@ -1837,6 +1832,9 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          // Setup log filename setting
          SetDlgItemText(hDlg, IDC_LOGFILENAMEET, _16(logfilename));
 
+         // mini18n log settings
+         SendDlgItemMessage(hDlg, IDC_USEMINI18NLOG, BM_SETCHECK, usemini18nlog ? BST_CHECKED : BST_UNCHECKED, 0);
+
          return TRUE;
       }
       case WM_COMMAND:
@@ -1845,7 +1843,7 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             case IDC_USELOGCB:
             {
-               if (SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+               if (SendDlgItemMessage(hDlg, LOWORD(wParam), BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
                   SendMessage(hDlg, WM_COMMAND, (CBN_SELCHANGE << 16) | IDC_LOGTYPECB, 0);
                   EnableWindow(GetDlgItem(hDlg, IDC_LOGTYPECB), TRUE);
@@ -1900,7 +1898,7 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                ofn.lpstrFilter = filter;
                ofn.nFilterIndex = 1;
-               GetDlgItemText(hDlg, IDC_IMAGEEDIT, tempwstr, MAX_PATH);
+               GetDlgItemText(hDlg, IDC_LOGFILENAMEET, tempwstr, MAX_PATH);
                ofn.lpstrFile = tempwstr;
                ofn.nMaxFile = sizeof(tempwstr);
                ofn.Flags = OFN_OVERWRITEPROMPT;
@@ -1909,6 +1907,48 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                if (GetSaveFileName(&ofn))
                {
                   SetDlgItemText(hDlg, IDC_LOGFILENAMEET, tempwstr);
+                  WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, logfilename, MAX_PATH, NULL, NULL);
+               }
+
+               return TRUE;
+            }
+            case IDC_USEMINI18NLOG:
+            {
+               BOOL enabled;
+
+               enabled = SendDlgItemMessage(hDlg, LOWORD(wParam), BM_GETCHECK, 0, 0) == BST_CHECKED ? TRUE : FALSE;
+
+               EnableWindow(GetDlgItem(hDlg, IDC_MINI18NLOGFILENAME), enabled);
+               EnableWindow(GetDlgItem(hDlg, IDC_MINI18NLOGBROWSE), enabled);
+
+               return TRUE;
+            }
+            case IDC_MINI18NLOGBROWSE:
+            {
+               WCHAR tempwstr[MAX_PATH];
+               WCHAR filter[1024];
+               OPENFILENAME ofn;
+
+               // setup ofn structure
+               ZeroMemory(&ofn, sizeof(ofn));
+               ofn.lStructSize = sizeof(ofn);
+               ofn.hwndOwner = hDlg;
+
+               CreateFilter(filter, 1024,
+                  "Yabause Translation Files", "*.YTS",
+                  "All Files", "*.*", NULL);
+
+               ofn.lpstrFilter = filter;
+               ofn.nFilterIndex = 1;
+               GetDlgItemText(hDlg, IDC_MINI18NLOGFILENAME, tempwstr, MAX_PATH);
+               ofn.lpstrFile = tempwstr;
+               ofn.nMaxFile = sizeof(tempwstr);
+               ofn.Flags = OFN_OVERWRITEPROMPT;
+               ofn.lpstrDefExt = _16("YTS");
+
+               if (GetSaveFileName(&ofn))
+               {
+                  SetDlgItemText(hDlg, IDC_MINI18NLOGFILENAME, tempwstr);
                   WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, logfilename, MAX_PATH, NULL, NULL);
                }
 
@@ -1934,6 +1974,18 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // Write log filename
                WritePrivateProfileStringA("Log", "Filename", logfilename, inifilename);
+
+               // Write use mini18n log setting
+               if (SendDlgItemMessage(hDlg, IDC_USELOGCB, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                  usemini18nlog = 1;
+               else
+                  usemini18nlog = 0;
+
+               sprintf(tempstr, "%d", usemini18nlog);
+               WritePrivateProfileStringA("Mini18nLog", "Enable", tempstr, inifilename);
+
+               // Write mini18n log filename
+               WritePrivateProfileStringA("Mini18nLog", "Filename", mini18nlogfilename, inifilename);
 
                EndDialog(hDlg, TRUE);
                return TRUE;

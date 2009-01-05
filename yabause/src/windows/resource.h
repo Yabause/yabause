@@ -254,9 +254,13 @@
 #define IDC_SAVETOFILE                  1107
 #define IDC_VDP2VIEWER                  1107
 #define IDC_VDP2SAVEBMPBT               1107
+#define IDC_MINI18NBROWSE               1107
+#define IDC_MINI18NLOGBROWSE            1107
 #define IDC_VDP2SCREENCB                1108
 #define IDC_VDP2TEXTET                  1109
 #define IDC_VDP1SAVEBMPBT               1110
+#define IDC_USEMINI18NLOG               1111
+#define IDC_MINI18NLOGFILENAME          1112
 #define IDM_CHOOSEBIOS                  40001
 #define IDM_CHOOSECDROM                 40002
 #define IDM_MEMTRANSFER                 40004
@@ -316,6 +320,15 @@
 #define IDC_INPUTREGLB                  40082
 #define IDC_OUTPUTREGLB                 40083
 #define IDC_SMPCSTATUSET                40084
+#define ID_FILE_LANGUAGE                40085
+#define IDM_GERMAN                      40086
+#define IDM_ENGLISH                     40087
+#define IDM_FRENCH                      40088
+#define IDM_ITALIAN                     40089
+#define IDM_PORTUGUESE                  40090
+#define IDM_PORTUGUESEBRAZIL            40091
+#define IDM_SWEDISH                     40092
+#define IDM_SPANISH                     40093
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -323,8 +336,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        135
-#define _APS_NEXT_COMMAND_VALUE         40085
-#define _APS_NEXT_CONTROL_VALUE         1111
+#define _APS_NEXT_COMMAND_VALUE         40103
+#define _APS_NEXT_CONTROL_VALUE         1113
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
 #endif
