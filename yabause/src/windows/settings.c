@@ -1102,7 +1102,7 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                cursel = (int)SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETCURSEL, 0, 0);
                if (SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXTLEN, cursel, 0) <= MAX_PATH)
                {
-                  SendDlgItemMessage(hDlg, IDC_FSSIZECB, CB_GETLBTEXT, cursel, (LPARAM)_16(tempstr));
+                  SendDlgItemMessageA(hDlg, IDC_FSSIZECB, CB_GETLBTEXT, cursel, (LPARAM)tempstr);
                   sscanf(tempstr, "%dx%d", &fullscreenwidth, &fullscreenheight);
                }
 
