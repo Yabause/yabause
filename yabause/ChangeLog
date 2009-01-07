@@ -1,3 +1,27 @@
+0.9.8 -> 0.9.9
+ opengl video core:
+  - Fixed a bug that was causing some games to
+    crash (albert odyssey, dragon ball, etc.)
+ gtk port:
+  - Automatic detection of current locale.
+ qt port:
+  - Added support of DESTDIR and --program-prefix
+  - Automatic detection of current locale.
+  - Added support for multiple players.
+ windows port:
+  - Fixed crash when going into settings.
+  - Fixed mouse wheel usage in disassembler.
+  - Rewrote as an unicode application.
+  - Fixed the key configuration problem.
+  - Fixed joypad support.
+  - Partial fix for mouse wheel and slider problem.
+  - Fixed fullscreen bug.
+ general:
+  - Hooks for renaming .desktop on installation.
+  - .yts file are now installed.
+  - Fixed parallel builds.
+  - SDL peripheral core now handles all connected
+    joysticks.
 0.9.7 -> 0.9.8
  vdp2:
   - Fixed a bug in software renderer with rotating
