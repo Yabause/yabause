@@ -8,7 +8,7 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
         _________________________________________
-        Copyright (c) 2002-2008 Yabause team
+        Copyright (c) 2002-2009 Yabause team
 
 
 1) Compiling instructions...................................20
@@ -19,9 +19,9 @@
 
 1 Compiling instructions______________________________________
 
-Yabause is written in C using the DirectX 8.0, OpenGL, and GLUT
-libraries, so you need a working C compiler(such as gcc) and
-these libraries, runtime and development packages:
+Yabause is written in C using the DirectX 8.0, OpenGL, GLUT, and
+mini18n libraries, so you need a working C compiler(such as gcc) 
+and these libraries, runtime and development packages:
 
   * You can find DirectX headers and libraries(for mingw) at
     http://alleg.sourceforge.net/wip.html as the file
@@ -34,6 +34,9 @@ these libraries, runtime and development packages:
 
   * Check google for GLUT. I haven't been able to find a good
     source for it.
+
+  * You can get mini18n from Yabause's sourceforge download page
+    here: http://sourceforge.net/project/showfiles.php?group_id=89991&package_id=304859
 
 Once these libraries installed, you should be ready to
 install Yabause.
@@ -55,7 +58,7 @@ can get both of them from Microsoft's website.
 
 Load up IDE that comes with Visual C++/Visual Studio, go into the
 file menu, open an existing project. Go into the yabause's
-src/windows directory and open yabause.vcproj. Now all you have
+src/windows directory and open yabause.sln. Now all you have
 to do is build it like any other Visual C++ project.
 
 You can compile for either x86 or x64(for those using Windows XP
