@@ -107,6 +107,8 @@ void UIYabause::showEvent( QShowEvent* e )
 		mYabauseThread->startEmulation();
 		// refresh states actions
 		refreshStatesActions();
+
+		mInit = true;
 	}
 }
 
