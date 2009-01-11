@@ -19,13 +19,13 @@
 # -*-shell-script-*-
 
 [Meta]
-RootName: @yabause.sf.net/yabause:$SOFTWAREVERSION
+RootName: @yabause.org/yabause:$SOFTWAREVERSION
 DisplayName: Yabause Sega Saturn Emulator
 ShortName: yabause
-Maintainer: Guillaume Duhamel <guillaume.duhamel@gmail.com>
-Packager: Guillaume Duhamel <guillaume.duhamel@gmail.com>
+Maintainer: Guillaume Duhamel <guillaume@yabause.org>
+Packager: Guillaume Duhamel <guillaume@yabause.org>
 Summary: Yabause is a Sega Saturn emulator.
-URL: http://yabause.sf.net/
+URL: http://yabause.org/
 License: GNU General Public License, Version 2
 SoftwareVersion: @VERSION@
 AutopackageTarget: 1.0
@@ -50,6 +50,7 @@ require @gtk.org/gtk 2.4
 # Put your installation script here
 installExe bin/yabause
 installDesktop "Game" share/applications/yabause.desktop
+installData share/yabause
 
 [Uninstall]
 # Usually just the following line is enough to uninstall everything
