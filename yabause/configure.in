@@ -138,8 +138,9 @@ fi
 # platform-specific features
 case $host in
 	*darwin*)
-		LIBS="$LIBS -framework IOKit"
 		yabause_arch=macosx
+		AC_DEFINE(YABAUSE_ARCH, [MACOSX])
+		LIBS="$LIBS -framework IOKit"
 		major=`expr $host_os : "darwin\(@<:@^.@:>@*\)"` 	 
 		if test $major -ge 7 ; then
 			sdkversion=0
@@ -160,28 +161,37 @@ case $host in
 			AC_DEFINE(MAC_OS_X_VERSION_MAX_ALLOWED, MAC_OS_X_VERSION_10_3)
 		fi
 		;;
-	*linux*) yabause_arch=linux
+	*linux*)
+		yabause_arch=linux
+		AC_DEFINE(YABAUSE_ARCH, [LINUX])
 		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <linux/cdrom.h>]], [[int i = CDSL_CURRENT;]])],
 			[],
 			[AC_DEFINE(LINUX_CDROM_H_IS_BROKEN)])
 		;;
 	*cygwin*)
 		yabause_arch=windows
+		AC_DEFINE(YABAUSE_ARCH, [WINDOWS])
                 AC_DEFINE(_WIN32_IE, 0x0400)
 		;;
 	*mingw32*)
-		AC_CHECK_HEADERS("wnaspi32.h", [], [], [#include <windows.h>])
 		yabause_arch=windows
+		AC_DEFINE(YABAUSE_ARCH, [WINDOWS])
+		AC_CHECK_HEADERS("wnaspi32.h", [], [], [#include <windows.h>])
                 AC_DEFINE(_WIN32_IE, 0x0400)
 		;;
-	*freebsd*) yabause_arch=freebsd;;
-	*netbsd* | *openbsd*) yabause_arch=netbsd;;
+	*freebsd*)
+		yabause_arch=freebsd
+		AC_DEFINE(YABAUSE_ARCH, [FREEBSD])
+		;;
+	*netbsd* | *openbsd*)
+		yabause_arch=netbsd
+		AC_DEFINE(YABAUSE_ARCH, [NETBSD])
+		;;
 	*)
 		yabause_arch="."
 		AC_DEFINE(UNKNOWN_ARCH)
 		;;
 esac
-AC_SUBST(yabause_arch)
 
 # users can turn c68k compilation off
 compile_c68k=yes
