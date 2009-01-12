@@ -147,7 +147,7 @@ int oldx = 0;
 int oldy = 0;
 
 static gboolean yui_gl_hide_cursor(GtkWidget * widget, GdkEventMotion * event, gpointer user_data) {
-	if (*((u8 *) padbits) == PERMOUSE) {
+	if (PerGetId(padbits) == PERMOUSE) {
 		int x = event->x;
 		int y = event->y;
 		double speed = g_key_file_get_double(keyfile, "General", "MouseSpeed", NULL);
@@ -168,7 +168,7 @@ static gboolean yui_gl_hide_cursor(GtkWidget * widget, GdkEventMotion * event, g
 }
 
 static gboolean yui_gl_button_press(GtkWidget * widget, GdkEventButton * event, gpointer user_data) {
-	if (*((u8 *) padbits) == PERMOUSE) {
+	if (PerGetId(padbits) == PERMOUSE) {
 		switch(event->button) {
 			case 1:
 				PerMouseLeftPressed(padbits);
@@ -185,7 +185,7 @@ static gboolean yui_gl_button_press(GtkWidget * widget, GdkEventButton * event, 
 }
 
 static gboolean yui_gl_button_release(GtkWidget * widget, GdkEventButton * event, gpointer user_data) {
-	if (*((u8 *) padbits) == PERMOUSE) {
+	if (PerGetId(padbits) == PERMOUSE) {
 		switch(event->button) {
 			case 1:
 				PerMouseLeftReleased(padbits);
