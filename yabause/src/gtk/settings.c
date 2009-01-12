@@ -97,7 +97,10 @@ YuiRangeItem vidformats[] = {
 YuiRangeItem percores[] = {
 	{ "2", "Gtk Input Interface" },
 #ifdef HAVE_LIBSDL
-	{ "3", "Joystick Input Interface" },
+	{ "3", "SDL Joystick Interface" },
+#endif
+#if YABAUSE_ARCH == LINUX
+	{ "4", "Linux Joystick Interface" },
 #endif
 	{ 0, 0 }
 };

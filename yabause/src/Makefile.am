@@ -44,7 +44,7 @@ if ARCH_IS_FREEBSD
 libyabause_a_SOURCES += cd-freebsd.c
 endif
 if ARCH_IS_LINUX
-libyabause_a_SOURCES += cd-linux.c
+libyabause_a_SOURCES += cd-linux.c perlinuxjoy.c perlinuxjoy.h
 endif
 if ARCH_IS_MACOSX
 libyabause_a_SOURCES += cd-macosx.c

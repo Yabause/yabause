@@ -34,6 +34,9 @@
 #include "../scsp.h"
 #include "../sndsdl.h"
 #include "../persdljoy.h"
+#if YABAUSE_ARCH == LINUX
+#include "../perlinuxjoy.h"
+#endif
 #include "../debug.h"
 #include "../m68kcore.h"
 #include "../m68kc68k.h"
@@ -66,6 +69,9 @@ PerInterface_struct *PERCoreList[] = {
 &PERGTK,
 #ifdef HAVE_LIBSDL
 &PERSDLJoy,
+#endif
+#if YABAUSE_ARCH == LINUX
+&PERLinuxJoy,
 #endif
 NULL
 };
