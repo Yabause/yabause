@@ -523,6 +523,14 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int PerGetId(void * peripheral)
+{
+   u8 * id = peripheral;
+   return *id;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void PerRemovePeripheral(UNUSED PortData_struct *port, UNUSED int removeoffset)
 {
    // stub

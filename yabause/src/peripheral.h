@@ -91,6 +91,7 @@ void PerDeInit(void);
  * PerPadAdd() or PerMouseAdd() instead.
  */
 void * PerAddPeripheral(PortData_struct *port, int perid);
+int PerGetId(void * peripheral);
 void PerPortReset(void);
 /**
  * Iterate the list of peripherals connected to a port
