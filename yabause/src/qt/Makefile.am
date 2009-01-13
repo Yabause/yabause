@@ -1,3 +1,4 @@
+SUBDIRS = doc
 Applicationsdir = $(datadir)/applications
 Applications_DATA = yabause.desktop
 pixmapdir = $(datadir)/pixmaps
@@ -55,7 +56,7 @@ uninstall-local: Makefile.qmake
 	$(MAKE) -f Makefile.qmake release-uninstall INSTALL_ROOT=$(DESTDIR)
 
 install-data-hook:
-	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" "$(DESTDIR)$(pixmapdir)/yabause.png" ; do \
+	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
 		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
 		fbase=`basename "$$f" $$fext` ; \
 		fdir=`dirname "$$f"` ; \
@@ -67,7 +68,7 @@ install-data-hook:
 	done
 
 uninstall-hook:
-	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" "$(DESTDIR)$(pixmapdir)/yabause.png" ; do \
+	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
 		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
 		fbase=`basename "$$f" $$fext` ; \
 		fdir=`dirname "$$f"` ; \

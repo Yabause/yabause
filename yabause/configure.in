@@ -338,6 +338,7 @@ AC_CONFIG_FILES([Makefile
 	src/gtk/doc/Makefile
 	src/qt/Makefile
 	src/qt/yabause.pro
+	src/qt/doc/Makefile
 	src/wii/Makefile
 	src/windows/Makefile
 	autopackage/default.apspec

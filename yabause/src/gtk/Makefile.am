@@ -17,7 +17,7 @@ yabause_LDADD = ../libyabause.a $(YAB_LIBS)
 yabause_CPPFLAGS = -DYTSDIR=\"$(datadir)/$(PACKAGE)/yts\"
 
 install-data-hook:
-	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" "$(DESTDIR)$(pixmapdir)/yabause.png" ; do \
+	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
 		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
 		fbase=`basename "$$f" $$fext` ; \
 		fdir=`dirname "$$f"` ; \
@@ -29,7 +29,7 @@ install-data-hook:
 	done
 
 uninstall-hook:
-	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" "$(DESTDIR)$(pixmapdir)/yabause.png" ; do \
+	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
 		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
 		fbase=`basename "$$f" $$fext` ; \
 		fdir=`dirname "$$f"` ; \
