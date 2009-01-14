@@ -75,8 +75,11 @@ static void mini18n_pv_get_locale(char ** lang, char ** country) {
 	char * tmp;
 
 	*country = NULL;
-	*lang = strdup(getenv("LANG"));
-	if (*lang == NULL) return;
+	*lang = NULL;
+	tmp = getenv("LANG");
+	if (tmp == NULL) return;
+
+	*lang = strdup(tmp);
 
 	tmp = strchr(*lang, '@');
 	if (tmp != NULL) *tmp = '\0';
@@ -97,6 +100,8 @@ int mini18n_set_domain(const char * folder) {
 	char * fulllocale;
 
 	mini18n_pv_get_locale(&lang, &country);
+
+	if (lang == NULL) return -1;
 
 	if (folder == NULL) {
 		locale = strdup(lang);
@@ -120,13 +125,17 @@ int mini18n_set_domain(const char * folder) {
 			if (! trailing) pos += sprintf(pos, "%c", pathsep);
 			sprintf(pos, "%s.yts", lang);
 
-			s = n + strlen(country) + 5 + (1 - trailing);
-			fulllocale = malloc(s);
+			if (country == NULL) {
+				fulllocale = NULL;
+			} else {
+				s = n + strlen(country) + 5 + (1 - trailing);
+				fulllocale = malloc(s);
 
-			pos = fulllocale;
-			pos += sprintf(pos, "%s", folder);
-			if (! trailing) pos += sprintf(pos, "%c", pathsep);
-			sprintf(pos, "%s.yts", country);
+				pos = fulllocale;
+				pos += sprintf(pos, "%s", folder);
+				if (! trailing) pos += sprintf(pos, "%c", pathsep);
+				sprintf(pos, "%s.yts", country);
+			}
 		}
 	}
 
