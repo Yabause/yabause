@@ -1,4 +1,4 @@
-LANGS=de es fr it pt pt_BR sv
+LANGS=de es fr it lt pt pt_BR sv
 
 dist-hook:
 	@for l in $(LANGS) ; do \
