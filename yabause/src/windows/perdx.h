@@ -23,6 +23,7 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include "dx.h"
+#include "../peripheral.h"
 
 #define PERCORE_DIRECTX 2
 

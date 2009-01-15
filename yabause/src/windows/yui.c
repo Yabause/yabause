@@ -32,7 +32,7 @@
 #include "perdx.h"
 #include "../cs0.h"
 #include "resource.h"
-#include "settings.h"
+#include "settings/settings.h"
 #include "cd.h"
 #include "../debug.h"
 #include "cheats.h"
@@ -41,7 +41,7 @@
 #include "../m68kc68k.h"
 #endif
 //#include "../m68khle.h"
-#include "yuidebug.h"
+#include "cpudebug/yuidebug.h"
 #include "disasm.h"
 #include "hexedit.h"
 
@@ -66,6 +66,7 @@ HGLRC YabHRC=NULL;
 BOOL isfullscreenset=FALSE;
 int yabwinx = 0;
 int yabwiny = 0;
+psp_struct settingspsp;
 
 static int redsize = 0;
 static int greensize = 0;
@@ -1240,7 +1241,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_SETTINGS:
             {
                YuiTempPause();
-               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), hWnd, (DLGPROC)SettingsDlgProc);
+               SettingsCreatePropertySheets(hWnd, TRUE, &settingspsp);
+               free(settingspsp.psp);
+               memset(&settingspsp, 0, sizeof(settingspsp));
                YuiTempUnPause();
                break;
             }

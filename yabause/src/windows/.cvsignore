@@ -1,0 +1,7 @@
+*.user
+*.o
+*.aps
+*.ncb
+*.suo
+Makefile
+Makefile.in

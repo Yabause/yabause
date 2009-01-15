@@ -24,7 +24,7 @@
 #include "../vdp1.h"
 #include "../vdp2.h"
 #include "../yui.h"
-#include "settings.h"
+#include "settings/settings.h"
 #include "resource.h"
 
 int PERDXInit(void);
