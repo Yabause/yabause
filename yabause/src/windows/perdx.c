@@ -52,23 +52,6 @@ u32 numpads=12;
 PerPad_struct *pad[12];
 padconf_struct paddevice[12];
 
-const char *pad_names[] = {
-"Up",
-"Right",
-"Down",
-"Left",
-"R",
-"L",
-"Start",
-"A",
-"B",
-"C",
-"X",
-"Y",
-"Z",
-NULL
-};
-
 const char *mouse_names[] = {
 "A",
 "B",
@@ -345,7 +328,7 @@ void PERDXLoadDevices(char *inifilename)
       {
          for (i2 = 0; i2 < 13; i2++)
          {
-            buttonid = GetPrivateProfileIntA(string1, pad_names[i2], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, PerPadNames[i2], 0, inifilename);
             PerSetKey(buttonid, i2, pad[i]);
          }
       }
@@ -830,7 +813,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
 
          for (i = 0; i < 13; i++)
          {
-            buttonid = GetPrivateProfileIntA(string1, pad_names[i], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, PerPadNames[i], 0, inifilename);
             printf("%2d: %d\n", i, buttonid);
             controlmap[i] = buttonid;
             ConvertKBIDToName(buttonid, tempstr);
@@ -844,7 +827,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
 
          for (i = 0; i < 13; i++)
          {
-            buttonid = GetPrivateProfileIntA(string1, pad_names[i], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, PerPadNames[i], 0, inifilename);
             controlmap[i] = buttonid;
             ConvertJoyIDToName(buttonid, tempstr);
             SetDlgItemText(hWnd, idlist[i], _16(tempstr));
@@ -854,7 +837,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
       {
          for (i = 0; i < 13; i++)
          {
-            buttonid = GetPrivateProfileIntA(string1, pad_names[i], 0, inifilename);
+            buttonid = GetPrivateProfileIntA(string1, PerPadNames[i], 0, inifilename);
             controlmap[i] = buttonid;
             ConvertMouseIDToName(buttonid, tempstr);
             SetDlgItemText(hWnd, idlist[i], _16(tempstr));

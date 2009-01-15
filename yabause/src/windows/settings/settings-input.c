@@ -379,7 +379,7 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                for (i = 0; i < 13; i++)
                {
                   sprintf(string2, "%d", controlmap[i]);
-                  WritePrivateProfileStringA(string1, pad_names[i], string2, inifilename);
+                  WritePrivateProfileStringA(string1, PerPadNames[i], string2, inifilename);
                }
 
                return TRUE;
@@ -494,7 +494,7 @@ LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                for (i = 0; i < 13; i++)
                {
                   sprintf(string2, "%d", controlmap[i]);
-                  WritePrivateProfileStringA(string1, pad_names[i], string2, inifilename);
+                  WritePrivateProfileStringA(string1, PerPadNames[i], string2, inifilename);
                }
                return TRUE;
             }
