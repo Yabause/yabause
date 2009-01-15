@@ -171,13 +171,13 @@ case $host in
 	*cygwin*)
 		yabause_arch=windows
 		AC_DEFINE(YABAUSE_ARCH, [WINDOWS])
-                AC_DEFINE(_WIN32_IE, 0x0400)
+                AC_DEFINE(_WIN32_IE, 0x0500)
 		;;
 	*mingw32*)
 		yabause_arch=windows
 		AC_DEFINE(YABAUSE_ARCH, [WINDOWS])
 		AC_CHECK_HEADERS("wnaspi32.h", [], [], [#include <windows.h>])
-                AC_DEFINE(_WIN32_IE, 0x0400)
+                AC_DEFINE(_WIN32_IE, 0x0500)
 		;;
 	*freebsd*)
 		yabause_arch=freebsd

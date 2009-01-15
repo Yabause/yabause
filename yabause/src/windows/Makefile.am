@@ -4,15 +4,15 @@ bin_PROGRAMS = yabause
 yabause_SOURCES = \
 	bup-manager.c cheats.c cheats.h custctl.c custctl.h disasm.c \
 	disasm.h dx.h hexedit.c hexedit.h resource.h resource.rc perdx.c \
-        perdx.h snddx.c snddx.h yui.c settings\settings.c settings\settings.h \
-        settings\settings-basic.c settings\settings-input.c settings\settings-log.c \
-	settings\settings-netlink.c settings\settings-sound.c settings\settings-video.c \
-	cpudebug\debug-68k.c cpudebug\debug-scsp.c cpudebug\debug-scu.c \
-	cpudebug\debug-sh2.c cpudebug\debug-smpc.c cpudebug\debug-vdp1.c \
-	cpudebug\debug-vdp2.c cpudebug\yuidebug.c cpudebug\yuidebug.h
+        perdx.h snddx.c snddx.h yui.c settings/settings.c settings/settings.h \
+        settings/settings-basic.c settings/settings-input.c settings/settings-log.c \
+	settings/settings-netlink.c settings/settings-sound.c settings/settings-video.c \
+	cpudebug/debug-68k.c cpudebug/debug-scsp.c cpudebug/debug-scu.c \
+	cpudebug/debug-sh2.c cpudebug/debug-smpc.c cpudebug/debug-vdp1.c \
+	cpudebug/debug-vdp2.c cpudebug/yuidebug.c cpudebug/yuidebug.h
 	
 yabause_LDFLAGS = -mwindows -mthreads
 yabause_LDADD = ../libyabause.a resource.o -lmingw32 -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -ldxguid -ldinput8 -ldsound -ldxerr8
-yabause_CPPFLAGS = -DUNICODE -D_UNICODE
+yabause_CPPFLAGS = -DUNICODE -D_UNICODE -I@srcdir@/settings -I@srcdir@/cpudebug
 resource.o: resource.rc resource.h
 	$(WINDRES) $< -o $@ -I$(srcdir)
