@@ -47,5 +47,3 @@ struct _YuiAction {
 
 extern YuiAction key_config[];
 */
-
-extern const char * key_names[];

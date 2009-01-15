@@ -45,11 +45,6 @@ AGLContext  myAGLContext = NULL;
 WindowRef   myWindow = NULL;
 yabauseinit_struct yinit;
 
-extern const char * key_names[] = {
-	"Up", "Right", "Down", "Left", "Right trigger", "Left trigger",
-	"Start", "A", "B", "C", "X", "Y", "Z", NULL
-};
-
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
 #ifdef HAVE_C68K
@@ -168,9 +163,9 @@ void read_settings(void) {
 	pad = PerPadAdd(&PORTDATA1);
 
 	i = 0;
-	while(key_names[i]) {
+	while(PerPadNames[i]) {
 		s = CFPreferencesCopyAppValue(
-			CFStringCreateWithCString(0, key_names[i], 0),
+			CFStringCreateWithCString(0, PerPadNames[i], 0),
 			kCFPreferencesCurrentApplication);
 		if (s)
 			PerSetKey(CFStringGetIntValue(s), i, pad);

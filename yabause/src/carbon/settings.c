@@ -175,10 +175,10 @@ void save_settings(WindowRef window) {
 	pad = PerPadAdd(&PORTDATA1);
 
 	i = 0;
-	while(key_names[i]) {
+	while(PerPadNames[i]) {
 		s = get_settings(window, 31 + i);
 		CFPreferencesSetAppValue(
-			CFStringCreateWithCString(0, key_names[i], 0),
+			CFStringCreateWithCString(0, PerPadNames[i], 0),
 			s, kCFPreferencesCurrentApplication);
 		PerSetKey(CFStringGetIntValue(s), i, pad);
 		i++;
@@ -215,9 +215,9 @@ void load_settings(WindowRef window) {
         kCFPreferencesCurrentApplication));
 
 	i = 0;
-	while(key_names[i]) {
+	while(PerPadNames[i]) {
 		set_settings(window, 31 + i, CFPreferencesCopyAppValue(
-			CFStringCreateWithCString(0, key_names[i], 0),
+			CFStringCreateWithCString(0, PerPadNames[i], 0),
 			kCFPreferencesCurrentApplication));
 		i++;
 	}
@@ -341,7 +341,7 @@ WindowRef CreateSettingsWindow() {
 
     id.signature = 'conf';
     i = 0;
-    while(key_names[i]) {
+    while(PerPadNames[i]) {
       id.id = 31 + i;
       GetControlByID(myWindow, &id, &control);
 
