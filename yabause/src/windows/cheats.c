@@ -23,9 +23,9 @@
 #include "cheats.h"
 #include "../cheat.h"
 #include "resource.h"
-#include "settings.h"
+#include "settings/settings.h"
 #include "../memory.h"
-#include "yuidebug.h"
+#include "cpudebug/yuidebug.h"
 
 extern HINSTANCE y_hInstance;
 
