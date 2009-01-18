@@ -719,8 +719,12 @@ int YuiInit(LPSTR lpCmdLine)
       {
          nocorechange = 1;
 
+         ret = SettingsCreatePropertySheets(NULL, TRUE, &settingspsp);
+         free(settingspsp.psp);
+         memset(&settingspsp, 0, sizeof(settingspsp));
+
          // Startup Settings Configuration
-         if (DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+         if (ret != TRUE)
          {
             // exit program with error
             MessageBox (NULL, _16("yabause.ini must be properly setup before program can be used."), _16("Error"),  MB_OK | MB_ICONINFORMATION);
@@ -1036,7 +1040,11 @@ YabauseSetup:
       {
          nocorechange = 1;
 
-         if (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), YabWin, (DLGPROC)SettingsDlgProc) != TRUE)
+         ret = SettingsCreatePropertySheets(NULL, TRUE, &settingspsp);
+         free(settingspsp.psp);
+         memset(&settingspsp, 0, sizeof(settingspsp));
+
+         if (ret != TRUE)
          {
             // exit program with error
             MessageBox (NULL, _16("yabause.ini must be properly setup before program can be used."), _16("Error"),  MB_OK | MB_ICONINFORMATION);
