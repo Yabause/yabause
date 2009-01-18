@@ -43,6 +43,9 @@ int ConvertEmulateTypeSelStringToID(HWND hDlg, int id)
    WCHAR wtext[MAX_PATH];
    char text[MAX_PATH];
 
+   if (!IsWindowEnabled(GetDlgItem(hDlg, id)))
+      return EMUTYPE_NONE;
+
    ComboBox_GetLBText(GetDlgItem(hDlg, id),
                       ComboBox_GetCurSel(GetDlgItem(hDlg, id)),
                       wtext);
@@ -185,6 +188,72 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          switch (LOWORD(wParam))
          {
+            case IDC_PORT1CONNTYPECB:
+            case IDC_PORT2CONNTYPECB:
+            {
+               int i, id, id2;
+
+               switch(HIWORD(wParam))
+               {
+                  case CBN_SELCHANGE:
+                     switch(ComboBox_GetCurSel((HWND)lParam))
+                     {
+                        case 0: // None
+                           if (LOWORD(wParam) == IDC_PORT1CONNTYPECB)
+                           {
+                              id = IDC_PORT1ATYPECB;
+                              id2 = IDC_PORT1ACFGPB;
+                           }
+                           else
+                           {
+                              id = IDC_PORT2ATYPECB;
+                              id2 = IDC_PORT2ACFGPB;
+                           }
+
+                           for (i = 0; i < 6; i++)
+                           {
+                              EnableWindow(GetDlgItem(hDlg, id+i), FALSE);
+                              EnableWindow(GetDlgItem(hDlg, id2+i), FALSE);
+                           }
+                           break;
+                        case 1: // Direct
+                           if (LOWORD(wParam) == IDC_PORT1CONNTYPECB)
+                           {
+                              id = IDC_PORT1ATYPECB;
+                              id2 = IDC_PORT1ACFGPB;
+                           }
+                           else
+                           {
+                              id = IDC_PORT2ATYPECB;
+                              id2 = IDC_PORT2ACFGPB;
+                           }
+
+                           EnableWindow(GetDlgItem(hDlg, id), TRUE);
+                           PostMessage(hDlg, WM_COMMAND, MAKEWPARAM(id, CBN_SELCHANGE), (LPARAM)GetDlgItem(hDlg, id));
+
+                           for (i = 1; i < 6; i++)
+                           {
+                              EnableWindow(GetDlgItem(hDlg, id+i), FALSE);
+                              EnableWindow(GetDlgItem(hDlg, id2+i), FALSE);
+                           }
+                           break;
+                        case 2: // Multi-tap
+                           id = (LOWORD(wParam) == IDC_PORT1CONNTYPECB ? IDC_PORT1ATYPECB : IDC_PORT2ATYPECB);
+
+                           for (i = 0; i < 6; i++)
+                           {
+                              EnableWindow(GetDlgItem(hDlg, id+i), TRUE);
+                              PostMessage(hDlg, WM_COMMAND, MAKEWPARAM(id+i, CBN_SELCHANGE), (LPARAM)GetDlgItem(hDlg, id+i));
+                           }
+                           break;
+                        default: break;
+                     }
+
+                     break;
+                  default: break;
+               }
+               break;
+            }
             case IDC_PORT1ATYPECB:
             case IDC_PORT1BTYPECB:
             case IDC_PORT1CTYPECB:
@@ -317,8 +386,8 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          padnum = (int)lParam;
-         i = TabCtrl_GetCurSel(GetDlgItem(GetParent(hDlg), IDC_SETTINGSTAB));
-         hParent = dialoglist[i];
+
+         hParent = PropSheet_GetCurrentPageHwnd(GetParent(hDlg));
          PERDXListDevices(GetDlgItem(hDlg, IDC_DXDEVICECB), ConvertEmulateTypeSelStringToID(hParent, IDC_PORT1ATYPECB+padnum));
 
          // Load settings from ini here, if necessary
@@ -449,8 +518,8 @@ LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          padnum = (int)lParam;
-         i = TabCtrl_GetCurSel(GetDlgItem(GetParent(hDlg), IDC_SETTINGSTAB));
-         hParent = dialoglist[i];
+
+         hParent = PropSheet_GetCurrentPageHwnd(GetParent(hDlg));
          emulatetype = ConvertEmulateTypeSelStringToID(hParent, IDC_PORT1ATYPECB+padnum);
          PERDXListDevices(GetDlgItem(hDlg, IDC_DXDEVICECB), emulatetype);
 

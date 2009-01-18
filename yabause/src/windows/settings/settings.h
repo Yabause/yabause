@@ -89,10 +89,6 @@ enum {
 
 void CreateFilter(WCHAR * filter, size_t maxlen, ...);
 
-#define MAX_SETTINGS_DIALOGS    6
-
-extern HWND dialoglist[MAX_SETTINGS_DIALOGS];
-
 typedef struct
 {
    PROPSHEETHEADER psh;
