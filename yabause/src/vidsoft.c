@@ -671,13 +671,14 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
    for (j = 0; j < height; j++)
    {
       int Y;
+      int linescrollx = 0;
       // precalculate the coordinate for the line(it's faster) and do line
       // scroll
       if (info->islinescroll)
       {
          if (info->islinescroll & 0x1)
          {
-            info->x = ((T1ReadLong(Vdp2Ram, info->linescrolltbl) >> 16) & 0x7FF) + scrollx;
+            linescrollx = (T1ReadLong(Vdp2Ram, info->linescrolltbl) >> 16) & 0x7FF;
             info->linescrolltbl += 4;
          }
          if (info->islinescroll & 0x2)
@@ -723,6 +724,11 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
 
          x = info->x+((int)(info->coordincx*(float)((info->mosaicxmask > 1) ? (i / info->mosaicxmask * info->mosaicxmask) : i)));
          x &= sinfo.xmask;
+         if (linescrollx)
+         {
+            x += linescrollx;
+            x &= 0x3FF;
+         }
 
          // Fetch Pixel, if it isn't transparent, continue
          if (!info->isbitmap)
