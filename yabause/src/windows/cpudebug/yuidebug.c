@@ -438,7 +438,7 @@ LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       {
          addr = (u32 *)lParam;
          sprintf(tempstr, "%08lX", addr[0]);
-         SetDlgItemText(hDlg, IDC_OFFSETET, _16(tempstr));
+         SetDlgItemTextA(hDlg, IDC_OFFSETET, tempstr);
 
          SendDlgItemMessage(hDlg, IDC_SPECIFYADDRRB, BM_SETCHECK, BST_CHECKED, 0);
          SendDlgItemMessage(hDlg, IDC_PRESETADDRRB, BM_SETCHECK, BST_UNCHECKED, 0);
@@ -449,7 +449,7 @@ LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_RESETCONTENT, 0, 0);
          for (i = 0; i < 13; i++)
          {
-            SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_ADDSTRING, 0, (LPARAM)hexaddrlist[i].name);
+            SendDlgItemMessageA(hDlg, IDC_PRESETLISTCB, CB_ADDSTRING, 0, (LPARAM)hexaddrlist[i].name);
             if (addr[0] >= hexaddrlist[i].start && addr[0] <= hexaddrlist[i].end)
                SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_SETCURSEL, i, 0);
          }
@@ -463,9 +463,8 @@ LRESULT CALLBACK GotoAddressDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                if (SendDlgItemMessage(hDlg, IDC_SPECIFYADDRRB, BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
-                  WCHAR tempwstr[MAX_PATH];
-                  GetDlgItemText(hDlg, IDC_OFFSETET, tempwstr, 9);
-                  wscanf(tempwstr, "%08lX", addr);
+                  GetDlgItemTextA(hDlg, IDC_OFFSETET, tempstr, 9);
+                  sscanf(tempstr, "%08lX", addr);
                }
                else
                   addr[0] = hexaddrlist[SendDlgItemMessage(hDlg, IDC_PRESETLISTCB, CB_GETCURSEL, 0, 0)].start;
