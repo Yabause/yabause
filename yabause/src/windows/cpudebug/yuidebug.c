@@ -36,7 +36,7 @@
 
 u32 mtrnssaddress=0x06004000;
 u32 mtrnseaddress=0x06100000;
-char mtrnsfilename[MAX_PATH] = "\0";
+TCHAR mtrnsfilename[MAX_PATH] = TEXT("\0");
 int mtrnsreadwrite=1;
 int mtrnssetpc=TRUE;
 
@@ -169,19 +169,19 @@ void YuiErrorMsg(const char *string)
 LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
-   char tempstr[256];
+   char tempstr[MAX_PATH];
 
    switch (uMsg)
    {
       case WM_INITDIALOG:
       {
-         SetDlgItemText(hDlg, IDC_EDITTEXT1, _16(mtrnsfilename));
+         SetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename);
 
          sprintf(tempstr, "%08X", (int)mtrnssaddress);
-         SetDlgItemText(hDlg, IDC_EDITTEXT2, _16(tempstr));
+         SetDlgItemTextA(hDlg, IDC_EDITTEXT2, tempstr);
 
          sprintf(tempstr, "%08X", (int)mtrnseaddress);
-         SetDlgItemText(hDlg, IDC_EDITTEXT3, _16(tempstr));
+         SetDlgItemTextA(hDlg, IDC_EDITTEXT3, tempstr);
 
          if (mtrnsreadwrite == 0)
          {
@@ -219,10 +219,10 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      "Binary Files", "*.BIN", NULL);
 
                   SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter,
-                           mtrnsfilename, sizeof(mtrnsfilename));
+                           mtrnsfilename, sizeof(mtrnsfilename)/sizeof(TCHAR));
 
                   if (GetSaveFileName(&ofn))
-                     SetDlgItemText(hDlg, IDC_EDITTEXT1, _16(mtrnsfilename));
+                     SetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename);
                }
                else
                {
@@ -235,26 +235,22 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                   // setup ofn structure
                   SetupOFN(&ofn, OFN_DEFAULTLOAD, hDlg, filter,
-                           mtrnsfilename, sizeof(mtrnsfilename));
+                           mtrnsfilename, sizeof(mtrnsfilename)/sizeof(TCHAR));
 
                   if (GetOpenFileName(&ofn))
-                     SetDlgItemText(hDlg, IDC_EDITTEXT1, _16(mtrnsfilename));
+                     SetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename);
                }
 
                return TRUE;
             }
             case IDOK:
             {
-               WCHAR tempwstr[MAX_PATH];
-               GetDlgItemText(hDlg, IDC_EDITTEXT1, tempwstr, MAX_PATH);
-               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, mtrnsfilename, MAX_PATH, NULL, NULL);
-
-               GetDlgItemText(hDlg, IDC_EDITTEXT2, tempwstr, 9);
-               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
+               GetDlgItemText(hDlg, IDC_EDITTEXT1, mtrnsfilename, MAX_PATH);
+               
+               GetDlgItemTextA(hDlg, IDC_EDITTEXT2, tempstr, 9);
                sscanf(tempstr, "%08lX", &mtrnssaddress);
 
-               GetDlgItemText(hDlg, IDC_EDITTEXT3, tempwstr, 9);
-               WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
+               GetDlgItemTextA(hDlg, IDC_EDITTEXT3, tempstr, 9);
                sscanf(tempstr, "%08lX", &mtrnseaddress);
 
                if ((mtrnseaddress - mtrnssaddress) < 0)
@@ -274,16 +270,17 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                {
                   // upload to ram and possibly execute
                   mtrnsreadwrite = 1;
+                  WideCharToMultiByte(CP_ACP, 0, mtrnsfilename, -1, tempstr, 1024, NULL, NULL);
 
                   // Is this a program?
                   if (SendMessage(GetDlgItem(hDlg, IDC_CHECKBOX1), BM_GETCHECK, 0, 0) == BST_CHECKED)
                   {
-                     MappedMemoryLoadExec(mtrnsfilename, mtrnssaddress);
+                     MappedMemoryLoadExec(tempstr, mtrnssaddress);
                      mtrnssetpc = TRUE;
                   }
                   else
                   {
-                     MappedMemoryLoad(mtrnsfilename, mtrnssaddress);
+                     MappedMemoryLoad(tempstr, mtrnssaddress);
                      mtrnssetpc = FALSE;
                   }
                }
