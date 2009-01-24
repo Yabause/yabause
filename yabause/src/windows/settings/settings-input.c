@@ -122,10 +122,11 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             EnableWindow(GetDlgItem(hDlg, IDC_PORT2ACFGPB+i), FALSE);
          }
 
-         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_SETCURSEL, 1, 0);
-         EnableWindow(GetDlgItem(hDlg, IDC_PORT1CONNTYPECB), FALSE);
-         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_SETCURSEL, 1, 0);
-         EnableWindow(GetDlgItem(hDlg, IDC_PORT2CONNTYPECB), FALSE);
+         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_SETCURSEL, porttype[0], 0);
+         PostMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_PORT1CONNTYPECB, CBN_SELCHANGE), (LPARAM)GetDlgItem(hDlg, IDC_PORT1CONNTYPECB));
+
+         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_SETCURSEL, porttype[1], 0);
+         PostMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_PORT2CONNTYPECB, CBN_SELCHANGE), (LPARAM)GetDlgItem(hDlg, IDC_PORT2CONNTYPECB));
 
          EnableWindow(GetDlgItem(hDlg, IDC_PORT1ATYPECB), TRUE);
          EnableWindow(GetDlgItem(hDlg, IDC_PORT2ATYPECB), TRUE);
@@ -320,14 +321,23 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 				case PSN_APPLY:
             {
-               u32 i;
+               u32 i, j;
                char string1[13], string2[32];
 
-               for (i = 0; i < numpads; i++)
+               for (i = 0; i < 2; i++)
                {
-                  sprintf(string1, "Peripheral%ld", i+1);
-                  sprintf(string2, "%d", ConvertEmulateTypeSelStringToID(hDlg, IDC_PORT1ATYPECB+i));
-                  WritePrivateProfileStringA(string1, "EmulateType", string2, inifilename);
+                  int cursel=(int)SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB+i, CB_GETCURSEL, 0, 0);
+
+                  sprintf(string1, "Port%dType", (int)i+1);
+                  sprintf(string2, "%d", cursel);
+                  WritePrivateProfileStringA("Input", string1, string2, inifilename);
+
+                  for (j = 0; j < 6; j++)
+                  {
+                     sprintf(string1, "Peripheral%ld%C", i+1, 'A'+j);
+                     sprintf(string2, "%d", ConvertEmulateTypeSelStringToID(hDlg, IDC_PORT1ATYPECB+(i*6)+j));
+                     WritePrivateProfileStringA(string1, "EmulateType", string2, inifilename);
+                  }
                }
 
                SetWindowLong(hDlg,	DWL_MSGRESULT, PSNRET_NOERROR);
@@ -440,7 +450,7 @@ LRESULT CALLBACK PadConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                EndDialog(hDlg, TRUE);
 
-               sprintf(string1, "Peripheral%d", padnum+1);
+               sprintf(string1, "Peripheral%d%C", ((padnum/6)+1), 'A'+(padnum%6));
 
                // Write GUID
                PERDXWriteGUID(cursel-1, padnum, inifilename);
@@ -555,7 +565,7 @@ LRESULT CALLBACK MouseConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                EndDialog(hDlg, TRUE);
 
-               sprintf(string1, "Peripheral%d", padnum+1);
+               sprintf(string1, "Peripheral%d%C", ((padnum/6)+1), 'A'+(padnum%6));
 
                // Write GUID
                PERDXWriteGUID(cursel-1, padnum, inifilename);

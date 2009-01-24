@@ -34,6 +34,7 @@ extern u32 numguids;
 extern const char * pad_names[];
 extern PerPad_struct *pad[12];
 extern u32 numpads;
+extern int porttype[2];
 
 typedef struct
 {

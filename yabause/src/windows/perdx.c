@@ -51,6 +51,7 @@ u32 numdevices=0;
 u32 numpads=12;
 PerPad_struct *pad[12];
 padconf_struct paddevice[12];
+int porttype[2];
 
 const char *mouse_names[] = {
 "A",
@@ -203,146 +204,213 @@ void PERDXLoadDevices(char *inifilename)
    GUID guid;
    DIDEVCAPS didc;
    u32 i;
-   int i2;
+   int j, i2;
    int buttonid;
    DIPROPDWORD dipdw;
    int id;
    DWORD coopflags=DISCL_FOREGROUND | DISCL_NONEXCLUSIVE;
    BOOL loaddefault=TRUE;
+   int numpads;
+   HRESULT hr;
 
    if (!PERCore)
       return;
    PerPortReset();
    memset(pad, 0, sizeof(pad));
 
-   for (i = 0; i < numpads; i++)
+   // Check Connection Type
+   if (GetPrivateProfileStringA("Input", "Port1Type", "", tempstr, MAX_PATH, inifilename) == 0)
    {
-      sprintf(string1, "Peripheral%d", (int)i+1);
-
-      // Let's first fetch the guid of the device
-      if (GetPrivateProfileStringA(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
-         continue;
-
-      if (GetPrivateProfileStringA(string1, "EmulateType", "0", string2, MAX_PATH, inifilename))
+      // Check if it's using the old ini settings for peripherals
+      if (GetPrivateProfileStringA("Peripheral1", "GUID", "", tempstr, MAX_PATH, inifilename) != 0)
       {
-         paddevice[i].emulatetype = atoi(string2);
-         if (paddevice[i].emulatetype == 0)
-            continue;
-      }
-
-      loaddefault=FALSE;
-
-      if (paddevice[i].lpDIDevice)
-      {
-         // Free the default keyboard, etc.
-         IDirectInputDevice8_Unacquire(paddevice[i].lpDIDevice);
-         IDirectInputDevice8_Release(paddevice[i].lpDIDevice);
-      }
-
-      StringToGUID(tempstr, &guid);
-
-      // Ok, now that we've got the GUID of the device, let's set it up
-      if (IDirectInput8_CreateDevice(lpDI8, &guid, &lpDIDevice[i],
-          NULL) != DI_OK)
-      {
-         paddevice[i].lpDIDevice = NULL;
-         paddevice[i].emulatetype = 0;
-         continue;
-      }
-
-      paddevice[i].lpDIDevice = lpDIDevice[i];
-
-      didc.dwSize = sizeof(DIDEVCAPS);
-
-      if (IDirectInputDevice8_GetCapabilities(lpDIDevice[i], &didc) != DI_OK)
-         continue;
-
-      if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_KEYBOARD)
-      {
-         if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIKeyboard) != DI_OK)
-            continue;
-         paddevice[i].type = TYPE_KEYBOARD;
-         coopflags |= DISCL_NOWINKEY;
-      }       
-      else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
-               GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_JOYSTICK)
-      {
-         if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIJoystick2) != DI_OK)
-            continue;
-         paddevice[i].type = TYPE_JOYSTICK;
-      }
-      else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
-      {
-         if (IDirectInputDevice8_SetDataFormat(lpDIDevice[i], &c_dfDIMouse2) != DI_OK)
-            continue;
-         paddevice[i].type = TYPE_MOUSE;
-         coopflags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
-      }
-
-
-      if (IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[i], YabWin,
-          coopflags) != DI_OK)
-         continue;
-
-      dipdw.diph.dwSize = sizeof(DIPROPDWORD);
-      dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-      dipdw.diph.dwObj = 0;
-      dipdw.diph.dwHow = DIPH_DEVICE;
-      dipdw.dwData = 8; // should be enough
-
-      // Setup Buffered input
-      if (IDirectInputDevice8_SetProperty(lpDIDevice[i], DIPROP_BUFFERSIZE, &dipdw.diph) != DI_OK)
-         continue;
-
-      IDirectInputDevice8_Acquire(lpDIDevice[i]);
-
-      switch(paddevice[i].emulatetype)
-      {
-         case 1: // Standard Pad
-            id = PERPAD;
-            break;
-         case 2: // Analog Pad
-         case 3: // Stunner
-         case 5: // Keyboard
-            id = 0;
-            break;
-         case 4: // Mouse
-            id = PERMOUSE;
-            break;
-         default: break;
-      }
-
-      // Make sure we're added to the smpc list
-      if (i < 6)
-         pad[i] = PerAddPeripheral(&PORTDATA1, id);
-      else
-         pad[i] = PerAddPeripheral(&PORTDATA2, id);
-
-      loaddefault=FALSE;
-
-      // Now that we're all setup, let's fetch the controls from the ini
-      sprintf(string1, "Peripheral%d", (int)i+1);
-
-      if (paddevice[i].emulatetype != 3 &&
-          paddevice[i].emulatetype != 4)
-      {
-         for (i2 = 0; i2 < 13; i2++)
+         // Convert to the newer type of settings
+         for (i = 0; i < 2; i++)
          {
-            buttonid = GetPrivateProfileIntA(string1, PerPadNames[i2], 0, inifilename);
-            PerSetKey(buttonid, i2, pad[i]);
+            sprintf(string1, "Port%dType", (int)i+1);
+            WritePrivateProfileStringA("Input", string1, "1", inifilename);
+
+            sprintf(string1, "Peripheral%d", (int)i+1);
+            sprintf(string2, "Peripheral%dA", (int)i+1);
+
+            if (GetPrivateProfileStringA(string1, "GUID", "", tempstr, MAX_PATH, inifilename))
+               WritePrivateProfileStringA(string2, "GUID", tempstr, inifilename);
+
+            if (GetPrivateProfileStringA(string1, "EmulateType", "", tempstr, MAX_PATH, inifilename))
+               WritePrivateProfileStringA(string2, "EmulateType", tempstr, inifilename);
+
+            for (i2 = 0; i2 < 13; i2++)
+            {
+               if (GetPrivateProfileStringA(string1, PerPadNames[i2], "", tempstr, MAX_PATH, inifilename))
+                  WritePrivateProfileStringA(string2, PerPadNames[i2], tempstr, inifilename);
+            }
          }
-      }
-      else if (paddevice[i].emulatetype == 4)
-      {
-         for (i2 = 0; i2 < 4; i2++)
+
+         // Remove old ini entries
+         for (i = 0; i < 12; i++)
          {
-            buttonid = GetPrivateProfileIntA(string1, mouse_names[i2], 0, inifilename);
-            PerSetKey(buttonid, PERMOUSE_LEFT+i2, pad[i]);
+            sprintf(string1, "Peripheral%d", (int)i+1);
+            WritePrivateProfileStringA(string1, NULL, NULL, inifilename);
+         }
+
+         loaddefault = FALSE;
+      }
+   }
+   else 
+      loaddefault = FALSE;
+
+   if (loaddefault)
+   {
+      LoadDefaultPort1A();
+      return;
+   }
+
+   // Load new type settings
+   for (i = 0; i < 2; i++)
+   {
+      sprintf(string1, "Port%dType", (int)i+1);
+
+      if (GetPrivateProfileStringA("Input", string1, "", tempstr, MAX_PATH, inifilename) != 0)
+      {
+         porttype[i] = atoi(tempstr);
+
+         switch(porttype[i])
+         {
+            case 1:
+               numpads = 1;
+               break;
+            case 2:
+               numpads = 6;
+               break;
+            default:
+               numpads = 0;
+               break;
+         }
+
+         // Load new type settings
+         for (j = 0; j < numpads; j++)
+         {
+            int padindex=(6*i)+j;
+            padconf_struct *curdevice=&paddevice[padindex];
+            sprintf(string1, "Peripheral%d%C", (int)i+1, 'A' + j);
+
+            // Let's first fetch the guid of the device
+            if (GetPrivateProfileStringA(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
+               continue;
+
+            if (GetPrivateProfileStringA(string1, "EmulateType", "0", string2, MAX_PATH, inifilename))
+            {
+               curdevice->emulatetype = atoi(string2);
+               if (curdevice->emulatetype == 0)
+                  continue;
+            }
+
+            if (curdevice->lpDIDevice)
+            {
+               // Free the default keyboard, etc.
+               IDirectInputDevice8_Unacquire(curdevice->lpDIDevice);
+               IDirectInputDevice8_Release(curdevice->lpDIDevice);
+            }
+
+            StringToGUID(tempstr, &guid);
+
+            // Ok, now that we've got the GUID of the device, let's set it up
+            if (IDirectInput8_CreateDevice(lpDI8, &guid, &lpDIDevice[padindex],
+               NULL) != DI_OK)
+            {
+               curdevice->lpDIDevice = NULL;
+               curdevice->emulatetype = 0;
+               continue;
+            }
+
+            curdevice->lpDIDevice = lpDIDevice[padindex];
+
+            didc.dwSize = sizeof(DIDEVCAPS);
+
+            if (IDirectInputDevice8_GetCapabilities(lpDIDevice[padindex], &didc) != DI_OK)
+               continue;
+
+            if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_KEYBOARD)
+            {
+               if (IDirectInputDevice8_SetDataFormat(lpDIDevice[padindex], &c_dfDIKeyboard) != DI_OK)
+                  continue;
+               curdevice->type = TYPE_KEYBOARD;
+               coopflags |= DISCL_NOWINKEY;
+            }       
+            else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
+               GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_JOYSTICK)
+            {
+               if (IDirectInputDevice8_SetDataFormat(lpDIDevice[padindex], &c_dfDIJoystick2) != DI_OK)
+                  continue;
+               curdevice->type = TYPE_JOYSTICK;
+            }
+            else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
+            {
+               if (IDirectInputDevice8_SetDataFormat(lpDIDevice[padindex], &c_dfDIMouse2) != DI_OK)
+                  continue;
+               curdevice->type = TYPE_MOUSE;
+               coopflags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
+            }
+
+            hr = IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[i], YabWin, coopflags);
+            if (FAILED(hr))
+               continue;
+
+            dipdw.diph.dwSize = sizeof(DIPROPDWORD);
+            dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+            dipdw.diph.dwObj = 0;
+            dipdw.diph.dwHow = DIPH_DEVICE;
+            dipdw.dwData = 8; // should be enough
+
+            // Setup Buffered input
+            if (IDirectInputDevice8_SetProperty(lpDIDevice[padindex], DIPROP_BUFFERSIZE, &dipdw.diph) != DI_OK)
+               continue;
+
+            IDirectInputDevice8_Acquire(lpDIDevice[padindex]);
+
+            switch(curdevice->emulatetype)
+            {
+               case 1: // Standard Pad
+                  id = PERPAD;
+                  break;
+               case 2: // Analog Pad
+               case 3: // Stunner
+               case 5: // Keyboard
+                  id = 0;
+                  break;
+               case 4: // Mouse
+                  id = PERMOUSE;
+                  break;
+               default: break;
+            }
+
+            // Make sure we're added to the smpc list
+            if (i == 0)
+               pad[padindex] = PerAddPeripheral(&PORTDATA1, id);
+            else
+               pad[padindex] = PerAddPeripheral(&PORTDATA2, id);
+
+            // Now that we're all setup, let's fetch the controls from the ini
+            if (curdevice->emulatetype != 3 &&
+               curdevice->emulatetype != 4)
+            {
+               for (i2 = 0; i2 < 13; i2++)
+               {
+                  buttonid = GetPrivateProfileIntA(string1, PerPadNames[i2], 0, inifilename);
+                  PerSetKey(buttonid, i2, pad[padindex]);
+               }
+            }
+            else if (curdevice->emulatetype == 4)
+            {
+               for (i2 = 0; i2 < 4; i2++)
+               {
+                  buttonid = GetPrivateProfileIntA(string1, mouse_names[i2], 0, inifilename);
+                  PerSetKey(buttonid, PERMOUSE_LEFT+i2, pad[padindex]);
+               }
+            }
          }
       }
    }
-   if (loaddefault)
-      LoadDefaultPort1A();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -733,7 +801,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
                     IDC_XTEXT, IDC_YTEXT, IDC_ZTEXT
                   };
 
-   sprintf(string1, "Peripheral%d", padnum+1);
+   sprintf(string1, "Peripheral%d%C", ((padnum/6)+1), 'A'+(padnum%6));
 
    // Let's first fetch the guid of the device and see if we can get a match
    if (GetPrivateProfileStringA(string1, "GUID", "", tempstr, MAX_PATH, inifilename) == 0)
@@ -809,7 +877,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
 
       if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_KEYBOARD)
       {
-         sprintf(string1, "Peripheral%d", padnum+1);
+         sprintf(string1, "Peripheral%d%C", ((padnum/6)+1), 'A'+(padnum%6));
 
          for (i = 0; i < 13; i++)
          {
@@ -823,7 +891,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
               GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_JOYSTICK)
       {
-         sprintf(string1, "Peripheral%d", padnum+1);
+         sprintf(string1, "Peripheral%d%C", ((padnum/6)+1), 'A'+(padnum%6));
 
          for (i = 0; i < 13; i++)
          {
@@ -1195,7 +1263,7 @@ BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCTSTR inifilename)
 {
    char string1[20];
    char string2[40];
-   sprintf(string1, "Peripheral%d", padnum+1);
+   sprintf(string1, "Peripheral%d%C", ((padnum/6)+1), 'A'+(padnum%6));
    sprintf(string2, "%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X", (int)GUIDDevice[guidnum].Data1, (int)GUIDDevice[guidnum].Data2, (int)GUIDDevice[guidnum].Data3, (int)GUIDDevice[guidnum].Data4[0], (int)GUIDDevice[guidnum].Data4[1], (int)GUIDDevice[guidnum].Data4[2], (int)GUIDDevice[guidnum].Data4[3], (int)GUIDDevice[guidnum].Data4[4], (int)GUIDDevice[guidnum].Data4[5], (int)GUIDDevice[guidnum].Data4[6], (int)GUIDDevice[guidnum].Data4[7]);
    return WritePrivateProfileStringA(string1, "GUID", string2, inifilename);
 }
