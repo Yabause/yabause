@@ -34,7 +34,8 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    static u32 *vdp2texture;
    static int width;
    static int height;
-   char filename[MAX_PATH] = "\0";
+   TCHAR filename[MAX_PATH] = TEXT("\0");
+   char tempstr[MAX_PATH];
 
    switch (uMsg)
    {
@@ -90,11 +91,14 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   "Bitmap Files", "*.BMP",
                   "All files (*.*)", "*.*", NULL);
 
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, filename, sizeof(filename));
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, filename, sizeof(filename)/sizeof(TCHAR));
                ofn.lpstrDefExt = _16("BMP");
 
                if (GetSaveFileName(&ofn))
-                  SaveBitmap(filename, width, height, vdp2texture);
+               {
+                  WideCharToMultiByte(CP_ACP, 0, filename, -1, tempstr, sizeof(tempstr), NULL, NULL);
+                  SaveBitmap(tempstr, width, height, vdp2texture);
+               }
 
                return TRUE;
             }
