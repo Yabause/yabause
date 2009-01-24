@@ -505,6 +505,7 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
       for(i = 0;i < (pernum - current);i++)
       {
          port->data[tmp + i] = 0xFF;
+         port->size++;
       }
    }
 
