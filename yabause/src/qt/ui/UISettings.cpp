@@ -169,35 +169,35 @@ void UISettings::loadCores()
 {
 	// CD Drivers
 	for ( int i = 0; CDCoreList[i] != NULL; i++ )
-		cbCdRom->addItem( CDCoreList[i]->Name, CDCoreList[i]->id );
+		cbCdRom->addItem( QtYabause::translate( CDCoreList[i]->Name ), CDCoreList[i]->id );
 	
 	// VDI Drivers
 	for ( int i = 0; VIDCoreList[i] != NULL; i++ )
-		cbVideoCore->addItem( VIDCoreList[i]->Name, VIDCoreList[i]->id );
+		cbVideoCore->addItem( QtYabause::translate( VIDCoreList[i]->Name ), VIDCoreList[i]->id );
 	
 	// Video Formats
 	foreach ( const Item& it, mVideoFromats )
-		cbVideoFormat->addItem( it.Name, it.id );
+		cbVideoFormat->addItem( QtYabause::translate( it.Name ), it.id );
 	
 	// SND Drivers
 	for ( int i = 0; SNDCoreList[i] != NULL; i++ )
-		cbSoundCore->addItem( SNDCoreList[i]->Name, SNDCoreList[i]->id );
+		cbSoundCore->addItem( QtYabause::translate( SNDCoreList[i]->Name ), SNDCoreList[i]->id );
 	
 	// Cartridge Types
 	foreach ( const Item& it, mCartridgeTypes )
-		cbCartridge->addItem( it.Name, it.id );
+		cbCartridge->addItem( QtYabause::translate( it.Name ), it.id );
 	
 	// Input Drivers
 	for ( int i = 0; PERCoreList[i] != NULL; i++ )
-		cbInput->addItem( PERCoreList[i]->Name, PERCoreList[i]->id );
+		cbInput->addItem( QtYabause::translate( PERCoreList[i]->Name ), PERCoreList[i]->id );
 	
 	// Regions
 	foreach ( const Item& it, mRegions )
-		cbRegion->addItem( it.Name, it.id );
+		cbRegion->addItem( QtYabause::translate( it.Name ), it.id );
 	
 	// SH2 Interpreters
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
-		cbSH2Interpreter->addItem( SH2CoreList[i]->Name, SH2CoreList[i]->id );
+		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
 }
 
 void UISettings::loadSettings()
