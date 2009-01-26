@@ -94,7 +94,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="cd $(SolutionDir)..\c68k &amp;&amp; $(TargetPath)"
+				CommandLine="cd &quot;$(SolutionDir)..\c68k&quot; &amp;&amp; &quot;$(TargetPath)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -246,7 +246,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="cd $(SolutionDir)..\c68k &amp;&amp; $(TargetPath)"
+				CommandLine="cd &quot;$(SolutionDir)..\c68k&quot; &amp;&amp; &quot;$(TargetPath)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -328,7 +328,7 @@
 		<Configuration
 			Name="Debug Threading|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="1"
 			CharacterSet="0"
 			>

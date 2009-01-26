@@ -68,15 +68,16 @@ int yabwinx = 0;
 int yabwiny = 0;
 psp_struct settingspsp;
 
+int oldbpp = 0;
 static int redsize = 0;
 static int greensize = 0;
 static int bluesize = 0;
 static int depthsize = 0;
 
-char yssfilename[MAX_PATH] = "\0";
+TCHAR yssfilename[MAX_PATH] = TEXT("\0");
 char ysspath[MAX_PATH] = "\0";
 char netlinksetting[80];
-char bmpfilename[MAX_PATH] = "\0";
+TCHAR bmpfilename[MAX_PATH] = TEXT("\0");
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 void YuiReleaseVideo(void);
@@ -169,7 +170,8 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
    }
 
    // Make sure any previously setup variables are released
-   YuiReleaseVideo();
+   if (oldbpp != bpp)
+      YuiReleaseVideo();
 
    if (fullscreen)
    {
@@ -228,44 +230,48 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
    }
 
    // Get the Device Context for our window
-   if ((YabHDC = GetDC(YabWin)) == NULL)
+   if (oldbpp != bpp)
    {
-      YuiReleaseVideo();
-      return -1;
-   }
+      if ((YabHDC = GetDC(YabWin)) == NULL)
+      {
+         YuiReleaseVideo();
+         return -1;
+      }
 
-   // Let's setup the Pixel format for the context
-   memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
-   pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-   pfd.nVersion = 1;
-   pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-   pfd.iPixelType = PFD_TYPE_RGBA;
-   pfd.cColorBits = bpp;
-   pfd.cRedBits = redsize;
-   pfd.cGreenBits = greensize;
-   pfd.cBlueBits = bluesize;
-   pfd.cAlphaBits = 0;
-   pfd.cAccumRedBits = 0;
-   pfd.cAccumGreenBits = 0;
-   pfd.cAccumBlueBits = 0;
-   pfd.cAccumAlphaBits = 0;
-   pfd.cAccumBits = pfd.cAccumRedBits + pfd.cAccumGreenBits +
-                    pfd.cAccumBlueBits + pfd.cAccumAlphaBits;
-   pfd.cDepthBits = depthsize;
-   pfd.cStencilBits = 0;
+      // Let's setup the Pixel format for the context
 
-   SetPixelFormat(YabHDC, ChoosePixelFormat(YabHDC, &pfd), &pfd);
+      memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+      pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+      pfd.nVersion = 1;
+      pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+      pfd.iPixelType = PFD_TYPE_RGBA;
+      pfd.cColorBits = bpp;
+      pfd.cRedBits = redsize;
+      pfd.cGreenBits = greensize;
+      pfd.cBlueBits = bluesize;
+      pfd.cAlphaBits = 0;
+      pfd.cAccumRedBits = 0;
+      pfd.cAccumGreenBits = 0;
+      pfd.cAccumBlueBits = 0;
+      pfd.cAccumAlphaBits = 0;
+      pfd.cAccumBits = pfd.cAccumRedBits + pfd.cAccumGreenBits +
+         pfd.cAccumBlueBits + pfd.cAccumAlphaBits;
+      pfd.cDepthBits = depthsize;
+      pfd.cStencilBits = 0;
 
-   if ((YabHRC = wglCreateContext(YabHDC)) == NULL)
-   {
-      YuiReleaseVideo();
-      return -1;
-   }
+      SetPixelFormat(YabHDC, ChoosePixelFormat(YabHDC, &pfd), &pfd);
 
-   if(wglMakeCurrent(YabHDC,YabHRC) == FALSE)
-   {
-      YuiReleaseVideo();
-      return -1;
+      if ((YabHRC = wglCreateContext(YabHDC)) == NULL)
+      {
+         YuiReleaseVideo();
+         return -1;
+      }
+
+      if(wglMakeCurrent(YabHDC,YabHRC) == FALSE)
+      {
+         YuiReleaseVideo();
+         return -1;
+      }
    }
 
    ShowWindow(YabWin,SW_SHOW);
@@ -281,6 +287,7 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
 
    screenwidth = width;
    screenheight = height;
+   oldbpp = bpp;
 
    return 0;
 }
@@ -444,7 +451,7 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
    yabauseinit_struct yinit;
    int ret;
 
-//YabauseSetup:
+YabauseSetup:
    memset(&yinit, 0, sizeof(yabauseinit_struct));
    yinit.percoretype = percoretype;
    yinit.sh2coretype = sh2coretype;
@@ -475,24 +482,23 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
 
    if ((ret = YabauseInit(&yinit)) < 0)
    {
-/*
       if (ret == -2)
       {
          nocorechange = 1;
 
-         if (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), NULL, (DLGPROC)SettingsDlgProc) != TRUE)
+         // Startup Settings Configuration
+         ret = (int)SettingsCreatePropertySheets(NULL, TRUE, &settingspsp);
+
+         free(settingspsp.psp);
+         memset(&settingspsp, 0, sizeof(settingspsp));
+
+         if (ret == TRUE)
          {
-            // exit program with error
-            MessageBox (NULL, "yabause.ini must be properly setup before program can be used.", "Error",  MB_OK | MB_ICONINFORMATION);
-            return -1;
+            YabauseDeInit();
+            goto YabauseSetup;
          }
-
-         YuiReleaseVideo();
-         YabauseDeInit();
-
-         goto YabauseSetup;
       }
-*/
+      PostMessage(YabWin, WM_CLOSE, 0, 0);
       return -1;
    }
 
@@ -539,18 +545,24 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
                Cs2ChangeCDCore(CDCORE_SPTI, cdrompath);
             else
                Cs2ChangeCDCore(CDCORE_ISO, cdrompath);
-            MessageBox (NULL, _16("Changed cd core"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
          }
          else if (changecore & 0x2)
          {
+            int coretype=vidcoretype;
+            corechanged=1;
             VideoChangeCore(vidcoretype);
-            MessageBox (NULL, _16("Changed video core"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
+            Sleep(0);
+            if (VIDCore && !VIDCore->IsFullscreen())
+            {
+               if (usecustomwindowsize)
+                  VIDCore->Resize(windowwidth, windowheight, 0);
+               else
+                  VIDCore->Resize(320, 224, 0);
+            }
          }
          else if (changecore & 0x4)
-         {
             ScspChangeSoundCore(sndcoretype);
-            MessageBox (NULL, _16("Changed sound core"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
-         }
+         
 
          changecore = 0;
          corechanged = 1;
@@ -560,6 +572,7 @@ DWORD WINAPI YabauseEmulate(LPVOID arg)
 
       Sleep(300);
    }
+   return 0;
 }
 #endif
 
@@ -719,7 +732,7 @@ int YuiInit(LPSTR lpCmdLine)
       {
          nocorechange = 1;
 
-         ret = SettingsCreatePropertySheets(NULL, TRUE, &settingspsp);
+         ret = (int)SettingsCreatePropertySheets(NULL, TRUE, &settingspsp);
          free(settingspsp.psp);
          memset(&settingspsp, 0, sizeof(settingspsp));
 
@@ -1040,7 +1053,7 @@ YabauseSetup:
       {
          nocorechange = 1;
 
-         ret = SettingsCreatePropertySheets(NULL, TRUE, &settingspsp);
+         ret = (int)SettingsCreatePropertySheets(NULL, TRUE, &settingspsp);
          free(settingspsp.psp);
          memset(&settingspsp, 0, sizeof(settingspsp));
 
@@ -1190,6 +1203,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
    DIDEVCAPS didc;
    int i;
+   char text[MAX_PATH];
 
    switch (uMsg)
    {
@@ -1395,12 +1409,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                   "All files (*.*)", "*.*", NULL);
 
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
-                        yssfilename, sizeof(yssfilename));
+                        yssfilename, sizeof(yssfilename)/sizeof(TCHAR));
                ofn.lpstrDefExt = _16("YSS");
 
                if (GetSaveFileName(&ofn))
                {
-                  if (YabSaveState(yssfilename) != 0)
+                  WideCharToMultiByte(CP_ACP, 0, yssfilename, -1, text, sizeof(text), NULL, NULL);
+                  if (YabSaveState(text) != 0)
                      MessageBox (hWnd, _16("Couldn't save state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                YuiTempUnPause();
@@ -1418,11 +1433,12 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                   "All files (*.*)", "*.*", NULL);
 
                SetupOFN(&ofn, OFN_DEFAULTLOAD, hWnd, filter,
-                        yssfilename, sizeof(yssfilename));
+                        yssfilename, sizeof(yssfilename)/sizeof(TCHAR));
 
                if (GetOpenFileName(&ofn))
                {
-                  if (YabLoadState(yssfilename) != 0)
+                  WideCharToMultiByte(CP_ACP, 0, yssfilename, -1, text, sizeof(text), NULL, NULL);
+                  if (YabLoadState(text) != 0)
                      MessageBox (hWnd, _16("Couldn't load state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                YuiTempUnPause();
@@ -1469,12 +1485,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                   "All files (*.*)", "*.*", NULL);
 
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
-                       bmpfilename, sizeof(bmpfilename));
+                       bmpfilename, sizeof(bmpfilename)/sizeof(TCHAR));
                ofn.lpstrDefExt = _16("BMP");
 
                if (GetSaveFileName(&ofn))
                {
-                  if (YuiCaptureScreen(bmpfilename))
+                  WideCharToMultiByte(CP_ACP, 0, bmpfilename, -1, text, sizeof(text), NULL, NULL);
+                  if (YuiCaptureScreen(text))
                      MessageBox (hWnd, _16("Couldn't save capture file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                YuiTempUnPause();

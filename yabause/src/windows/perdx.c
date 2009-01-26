@@ -94,6 +94,9 @@ BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 
 void LoadDefaultPort1A(void)
 {
+   porttype[0] = 1;
+   porttype[1] = 0;
+
    pad[0] = PerPadAdd(&PORTDATA1);
 
    PerSetKey(DIK_UP, PERPAD_UP, pad[0]);
@@ -1259,7 +1262,7 @@ LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
 //////////////////////////////////////////////////////////////////////////////
 
-BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCTSTR inifilename)
+BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCSTR inifilename)
 {
    char string1[20];
    char string2[40];

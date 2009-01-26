@@ -29,7 +29,7 @@
 
 extern HINSTANCE y_hInstance;
 
-char cheatfilename[MAX_PATH] = "\0";
+TCHAR cheatfilename[MAX_PATH] = TEXT("\0");
 
 typedef struct
 {
@@ -350,6 +350,7 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 {
    int cheatnum;
    int i;
+   char text[MAX_PATH];
 
    switch (uMsg)
    {
@@ -418,12 +419,13 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   "All files (*.*)", "*.*", NULL);
 
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter,
-                        cheatfilename, sizeof(cheatfilename));
+                        cheatfilename, sizeof(cheatfilename)/sizeof(TCHAR));
                ofn.lpstrDefExt = _16("YCT");
 
                if (GetSaveFileName(&ofn))
                {
-                  if (CheatSave(cheatfilename) != 0)
+                  WideCharToMultiByte(CP_ACP, 0, cheatfilename, -1, text, sizeof(text), NULL, NULL);
+                  if (CheatSave(text) != 0)
                      MessageBox (hDlg, _16("Unable to open file for saving"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                break;
@@ -439,11 +441,12 @@ LRESULT CALLBACK CheatListDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 
                // setup ofn structure
                SetupOFN(&ofn, OFN_DEFAULTLOAD, hDlg, filter,
-                        cheatfilename, sizeof(cheatfilename));
+                        cheatfilename, sizeof(cheatfilename)/sizeof(TCHAR));
 
                if (GetOpenFileName(&ofn))
                {
-                  if (CheatLoad(cheatfilename) == 0)
+                  WideCharToMultiByte(CP_ACP, 0, cheatfilename, -1, text, sizeof(text), NULL, NULL);
+                  if (CheatLoad(text) == 0)
                   {
                      EnableWindow(GetDlgItem(GetParent(hDlg), IDC_SAVETOFILE), TRUE);
                      SendDlgItemMessage(hDlg, IDC_CHEATLIST, LVM_DELETEALLITEMS, 0, 0);

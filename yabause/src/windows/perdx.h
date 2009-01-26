@@ -55,5 +55,5 @@ void PERDXLoadDevices(char *inifilename);
 void PERDXListDevices(HWND control, int emulatetype);
 int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *inifilename);
 int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname);
-BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCTSTR inifilename);
+BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCSTR inifilename);
 #endif
