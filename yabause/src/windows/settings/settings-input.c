@@ -79,15 +79,13 @@ LRESULT CALLBACK InputSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          int i;
          u32 j;
 
-         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("None"));
-         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Direct"));
-         SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("6-port Multitap"));
-
-         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_RESETCONTENT, 0, 0);
-         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("None"));
-         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("Direct"));
-         SendDlgItemMessage(hDlg, IDC_PORT2CONNTYPECB, CB_ADDSTRING, 0, (LPARAM)_16("6-port Multitap"));
+         for (i = 0; i < 2; i++)
+         {
+            SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB+i, CB_RESETCONTENT, 0, 0);
+            SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("None"));
+            SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("Direct"));
+            SendDlgItemMessage(hDlg, IDC_PORT1CONNTYPECB+i, CB_ADDSTRING, 0, (LPARAM)_16("6-port Multitap"));
+         }
 
          for (i = 0; i < 6; i++)
          {

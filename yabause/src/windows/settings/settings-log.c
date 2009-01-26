@@ -118,7 +118,7 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                ofn.nFilterIndex = 1;
                GetDlgItemText(hDlg, IDC_LOGFILENAMEET, tempwstr, MAX_PATH);
                ofn.lpstrFile = tempwstr;
-               ofn.nMaxFile = sizeof(tempwstr);
+               ofn.nMaxFile = sizeof(tempwstr)/sizeof(WCHAR);
                ofn.Flags = OFN_OVERWRITEPROMPT;
                ofn.lpstrDefExt = _16("TXT");
 
@@ -160,7 +160,7 @@ LRESULT CALLBACK LogSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                ofn.nFilterIndex = 1;
                GetDlgItemText(hDlg, IDC_MINI18NLOGFILENAME, tempwstr, MAX_PATH);
                ofn.lpstrFile = tempwstr;
-               ofn.nMaxFile = sizeof(tempwstr);
+               ofn.nMaxFile = sizeof(tempwstr)/sizeof(WCHAR);
                ofn.Flags = OFN_OVERWRITEPROMPT;
                ofn.lpstrDefExt = _16("YTS");
 

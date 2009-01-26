@@ -228,20 +228,21 @@ LRESULT CALLBACK VideoSettingsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                WritePrivateProfileStringA("Video", "WindowHeight", tempstr, inifilename);
 
                // Re-initialize Video
-               if (vidcorechanged && nocorechange == 0)
+#ifdef USETHREADS
+               if (nocorechange == 0)
                {
-#ifndef USETHREADS
-                  VideoChangeCore(vidcoretype);
-#else
                   corechanged = 0;
                   changecore |= 2;
                   while (corechanged == 0) { Sleep(0); }
-#endif
                }
+#else
+               if (vidcorechanged && nocorechange == 0)
+                  VideoChangeCore(vidcoretype);
 
                if (VIDCore && !VIDCore->IsFullscreen() && usecustomwindowsize)
                   VIDCore->Resize(windowwidth, windowheight, 0);
 
+#endif
                SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 					break;
             }
