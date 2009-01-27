@@ -661,7 +661,7 @@ void PERDummyNothing(void);
 //static PortData_struct port1;
 //static PortData_struct port2;
 
-u32 PERDummyScan(const char *);
+u32 PERDummyScan(void);
 void PERDummyFlush(void);
 void PERDummyKeyName(u32 key, char * name, int size);
 
@@ -708,7 +708,7 @@ int PERDummyHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERDummyScan(UNUSED const char * name) {
+u32 PERDummyScan(void) {
    return 0;
 }
 

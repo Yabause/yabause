@@ -177,7 +177,7 @@ void UIPadSetting::timer_timeout()
 {
 	u32 key = 0;
 	mCore->Flush();
-	key = mCore->Scan( mPadNames[ mPadKey ].toLocal8Bit().constData() );
+	key = mCore->Scan();
 	
 	if ( key != 0 )
 	{

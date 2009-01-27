@@ -51,7 +51,7 @@ typedef struct
    void (*DeInit)(void);
    int (*HandleEvents)(void);
    void (*PerSetButtonMapping)();
-   u32 (*Scan)(const char *);
+   u32 (*Scan)(void);
    int canScan;
    void (*Flush)(void);
 #ifdef PERKEYNAME

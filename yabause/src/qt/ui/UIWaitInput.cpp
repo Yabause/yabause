@@ -71,10 +71,9 @@ void UIWaitInput::keyPressEvent( QKeyEvent* e )
 
 void UIWaitInput::inputScan_timeout()
 {
-	const char* ki = mPadKey.toAscii().constData();
 	u32 k = 0;
 	mCore->Flush();
-	k = mCore->Scan( ki );
+	k = mCore->Scan();
 	if ( k != 0 )
 	{
 		sender()->deleteLater();

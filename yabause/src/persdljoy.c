@@ -40,7 +40,7 @@ void PERSDLJoyDeInit(void);
 int PERSDLJoyHandleEvents(void);
 void PERSDLJoyNothing(void);
 
-u32 PERSDLJoyScan(const char *);
+u32 PERSDLJoyScan(void);
 void PERSDLJoyFlush(void);
 void PERSDLKeyName(u32 key, char * name, int size);
 
@@ -215,7 +215,7 @@ int PERSDLJoyHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERSDLJoyScan( UNUSED const char* n ) {
+u32 PERSDLJoyScan( void ) {
 	// init vars
 	int joyId;
 	int i;

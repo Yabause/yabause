@@ -25,7 +25,7 @@ void PERQTDeInit(void);
 int PERQTHandleEvents(void);
 void PERQTNothing(void);
 
-u32 PERQTScan(const char* name);
+u32 PERQTScan(void);
 void PERQTFlush(void);
 
 PerInterface_struct PERQT = {
@@ -56,7 +56,7 @@ int PERQTHandleEvents(void)
 	return 0;
 }
 
-u32 PERQTScan(const char* name)
+u32 PERQTScan(void)
 { return 0; }
 
 void PERQTFlush(void)

@@ -171,7 +171,7 @@ gboolean watch_joy(gpointer name) {
 		return TRUE;
 	}
 
-	i = PERCore->Scan(name);
+	i = PERCore->Scan();
 
 	if (i == 0) {
 		return TRUE;
