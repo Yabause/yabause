@@ -875,6 +875,12 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
          free(p);
          return;
       }
+      else if(strcmp(p, ".ELF") == 0)
+      {
+         MappedMemoryLoadElf(filename);
+         free(p);
+         return;
+      }
 
       free(p);
    }

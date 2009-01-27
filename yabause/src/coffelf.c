@@ -1,4 +1,5 @@
 /*  Copyright 2007 Theo Berkau
+    Copyright 2009 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -18,6 +19,7 @@
 */
 
 #include "core.h"
+#include "debug.h"
 #include "sh2core.h"
 #include "yabause.h"
 
@@ -58,6 +60,42 @@ typedef struct
   u32 flags;
 } section_header_struct;
 
+typedef struct
+{
+  u8 ident[16];
+  u16 type;
+  u16 machine;
+  u32 version;
+  u32 entry;
+  u32 phdr;
+  u32 shdr;
+  u32 flags;
+  u16 hdrsize;
+  u16 phdrsize;
+  u16 phdrcount;
+  u16 shdrsize;
+  u16 shdrcount;
+  u16 shdrstridx;
+} elf_header_struct;
+
+#define ELF_MACHINE_SH    42
+
+typedef struct
+{
+  u32 name;
+  u32 type;
+  u32 flags;
+  u32 addr;
+  u32 offs;
+  u32 size;
+  u32 link;
+  u32 inf;
+  u32 align;
+  u32 esize;
+} elf_section_header_struct;
+
+#define ELF_SECTION_TYPE_NODATA  8
+#define ELF_SECTION_FLAG_ALLOC   2
 
 #define WordSwap(x) x = ((x & 0xFF00) >> 8) + ((x & 0x00FF) << 8);
 #define DoubleWordSwap(x) x = (((x & 0xFF000000) >> 24) + \
@@ -162,6 +200,10 @@ int MappedMemoryLoadCoff(const char *filename)
       free(buffer);
    }
 
+   // Clean up
+   free(section_headers);
+   fclose(fp);
+
    MSH2->regs.PC = aout_header.entrypoint;
    return 0;
 }
@@ -171,6 +213,167 @@ int MappedMemoryLoadCoff(const char *filename)
 
 int MappedMemoryLoadElf(const char *filename)
 {
+   elf_header_struct elf_hdr;
+   elf_section_header_struct *sections = NULL;
+   FILE *fp;
+   u16 i;
+   u32 j;
+   u8 *buffer;
+
+   fp = fopen(filename, "rb");
+
+   if(fp == NULL)
+      return -1;
+
+   fread(&elf_hdr, sizeof(elf_header_struct), 1, fp);
+#ifndef WORDS_BIGENDIAN
+   WordSwap(elf_hdr.type);
+   WordSwap(elf_hdr.machine);
+   DoubleWordSwap(elf_hdr.version);
+   DoubleWordSwap(elf_hdr.entry);
+   DoubleWordSwap(elf_hdr.phdr);
+   DoubleWordSwap(elf_hdr.shdr);
+   DoubleWordSwap(elf_hdr.flags);
+   WordSwap(elf_hdr.hdrsize);
+   WordSwap(elf_hdr.phdrsize);
+   WordSwap(elf_hdr.phdrcount);
+   WordSwap(elf_hdr.shdrsize);
+   WordSwap(elf_hdr.shdrcount);
+   WordSwap(elf_hdr.shdrstridx);
+#endif
+
+   LOG("Loading ELF file %s\n", filename);
+   LOG("Type: %d\n", elf_hdr.type);
+   LOG("Machine code: %d\n", elf_hdr.machine);
+   LOG("Version: %d\n", elf_hdr.version);
+   LOG("Entry point: 0x%08X\n", elf_hdr.entry);
+   LOG("Program header offset: %d\n", elf_hdr.phdr);
+   LOG("Section header offset: %d\n", elf_hdr.shdr);
+   LOG("Flags: %d\n", elf_hdr.flags);
+   LOG("ELF Header Size: %d\n", elf_hdr.hdrsize);
+   LOG("Program header size: %d\n", elf_hdr.phdrsize);
+   LOG("Program header count: %d\n", elf_hdr.phdrcount);
+   LOG("Section header size: %d\n", elf_hdr.shdrsize);
+   LOG("Section header count: %d\n", elf_hdr.shdrcount);
+   LOG("String table section: %d\n", elf_hdr.shdrstridx);
+
+   if(elf_hdr.ident[0] != 0x7F || elf_hdr.ident[1] != 'E' ||
+      elf_hdr.ident[2] != 'L' || elf_hdr.ident[3] != 'F' ||
+      elf_hdr.ident[4] != 1)
+   {
+      /* Doesn't appear to be a valid ELF file. */
+      fclose(fp);
+      return -1;
+   }
+
+   if(elf_hdr.ident[5] != 2)
+   {
+      /* Is not a big-endian file. */
+      fclose(fp);
+      return -1;
+   }
+
+   if(elf_hdr.machine != ELF_MACHINE_SH)
+   {
+      /* Not a SuperH ELF file. */
+      fclose(fp);
+      return -1;
+   }
+
+   /* Allocate space for the section headers. */
+   sections =
+      (elf_section_header_struct *)malloc(sizeof(elf_section_header_struct) *
+                                          elf_hdr.shdrcount);
+   if(sections == NULL)
+   {
+      fclose(fp);
+      return -2;
+   }
+
+   /* Look at the actual section headers. */
+   fseek(fp, elf_hdr.shdr, SEEK_SET);
+
+   /* Read in each section header. */
+   for(i = 0; i < elf_hdr.shdrcount; ++i)
+   {
+      fread(sections + i, sizeof(elf_section_header_struct), 1, fp);
+#ifndef WORDS_BIGENDIAN
+      DoubleWordSwap(sections[i].name);
+      DoubleWordSwap(sections[i].type);
+      DoubleWordSwap(sections[i].flags);
+      DoubleWordSwap(sections[i].addr);
+      DoubleWordSwap(sections[i].offs);
+      DoubleWordSwap(sections[i].size);
+      DoubleWordSwap(sections[i].link);
+      DoubleWordSwap(sections[i].inf);
+      DoubleWordSwap(sections[i].align);
+      DoubleWordSwap(sections[i].esize);
+#endif
+
+      LOG("Section header %d:\n", i);
+      LOG("Name index: %d\n", sections[i].name);
+      LOG("Type: %d\n", sections[i].type);
+      LOG("Flags: 0x%X\n", sections[i].flags);
+      LOG("In-memory address: 0x%08X\n", sections[i].addr);
+      LOG("In-file offset: %d\n", sections[i].offs);
+      LOG("Size: %d\n", sections[i].size);
+      LOG("Link field: %d\n", sections[i].link);
+      LOG("Info field: %d\n", sections[i].inf);
+      LOG("Alignment: %d\n", sections[i].align);
+      LOG("Entry size: %d\n", sections[i].esize);
+   }
+
+   YabauseResetNoLoad();
+
+   /* Set up the vector table area, etc. */
+   YabauseSpeedySetup();
+
+   /* Read in the sections and load them to RAM. */
+   for(i = 0; i < elf_hdr.shdrcount; ++i)
+   {
+      /* Does the header request actual storage for this section? */
+      if(sections[i].flags & ELF_SECTION_FLAG_ALLOC)
+      {
+         /* Check if the section contains data, or if its just a marker for a
+            section of zero bytes. */
+         if(sections[i].type == ELF_SECTION_TYPE_NODATA)
+         {
+            for(j = 0; j < sections[i].size; ++j)
+            {
+               MappedMemoryWriteByte(sections[i].addr + j, 0);
+            }
+         }
+         else
+         {
+            buffer = (u8 *)malloc(sections[i].size);
+
+            if(buffer == NULL)
+            {
+               fclose(fp);
+               free(sections);
+               return -2;
+            }
+
+            fseek(fp, sections[i].offs, SEEK_SET);
+            fread(buffer, 1, sections[i].size, fp);
+
+            for(j = 0; j < sections[i].size; ++j)
+            {
+               MappedMemoryWriteByte(sections[i].addr + j, buffer[j]);
+            }
+
+            free(buffer);
+         }
+      }
+   }
+
+   /* Clean up. */
+   free(sections);
+   fclose(fp);
+
+   /* Set up our entry point. */
+   MSH2->regs.PC = elf_hdr.entry;
+
    return 0;
 }
 
