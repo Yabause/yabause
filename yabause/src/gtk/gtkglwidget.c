@@ -253,7 +253,36 @@ void yui_gl_dump_screen(YuiGl * glxarea) {
 
         glReadPixels(0, 0, glxarea->pixels_width, glxarea->pixels_height, GL_RGB, GL_UNSIGNED_BYTE, glxarea->pixels);
 #else
-	glxarea->pixels = dispbuffer;
+	int buf_width, buf_height;
+	int i, j;
+	int size;
+	int cur = 0;
+	u8 * pixels;
+	u8 * buffer;
+
+	VIDSoftGetScreenSize( &buf_width, &buf_height );
+	size = buf_width * buf_height * 3;
+
+	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;
+	glxarea->pixels_height = GTK_WIDGET(glxarea)->allocation.height;
+	glxarea->pixels_rowstride = glxarea->pixels_width * 3;
+	glxarea->pixels_rowstride += (glxarea->pixels_rowstride % 4)? (4 - (glxarea->pixels_rowstride % 4)): 0;
+
+	if (! glxarea->pixels) glxarea->pixels = malloc(sizeof(u8) * size);
+
+	pixels = glxarea->pixels;
+	pixels += size - (buf_width * 3);
+	buffer = dispbuffer;
+
+	for(i = 0;i < buf_height;i++) {
+		for(j = 0;j < buf_width;j++) {
+			*pixels++ = buffer[cur];
+			*pixels++ = buffer[cur + 1];
+			*pixels++ = buffer[cur + 2];
+			cur += 4;
+		}
+		pixels -= buf_width * 6;
+	}
 #endif
 }
 
