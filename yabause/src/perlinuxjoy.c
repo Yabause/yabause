@@ -48,11 +48,13 @@ PERLinuxJoyFlush
 
 static int hJOY = -1;
 
+#define PACKEVENT(evt) ((evt.value < 0 ? 0x10000 : 0) | (evt.type << 8) | (evt.number))
+
 //////////////////////////////////////////////////////////////////////////////
 
 int PERLinuxJoyInit(void)
 {
-   hJOY = open("/dev/js0", O_RDONLY | O_NONBLOCK);
+   hJOY = open("/dev/input/js0", O_RDONLY | O_NONBLOCK);
 
    if (hJOY == -1) return -1;
 
@@ -80,15 +82,15 @@ int PERLinuxJoyHandleEvents(void)
 
    while (read(hJOY, &evt, sizeof(struct js_event)) > 0)
    {
-      printf("got event:\n");
-      printf(" - value  = %d\n", evt.value);
-      printf(" - type   = %d\n", evt.type);
-      printf(" - number = %d\n", evt.number);
-   }
-
-   // there was an error while reading events
-   if (errno != EAGAIN) {
-      return -1;
+      if (evt.value != 0)
+      {
+         PerKeyDown(PACKEVENT(evt));
+      }
+      else
+      {
+         PerKeyUp(PACKEVENT(evt));
+         PerKeyUp(0x10000 | PACKEVENT(evt));
+      }
    }
 
    // execute yabause
@@ -104,11 +106,20 @@ int PERLinuxJoyHandleEvents(void)
 //////////////////////////////////////////////////////////////////////////////
 
 u32 PERLinuxJoyScan( UNUSED const char* n ) {
-  return 0;
+   struct js_event evt;
+   while (read(hJOY, &evt, sizeof(struct js_event)) <= 0);
+
+   return PACKEVENT(evt);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 void PERLinuxJoyFlush(void) {
+   struct js_event evt;
+   while (read(hJOY, &evt, sizeof(struct js_event)) > 0);
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 void PERLinuxKeyName(u32 key, char * name, UNUSED int size)
 {
