@@ -139,7 +139,7 @@ fi
 case $host in
 	*darwin*)
 		yabause_arch=macosx
-		AC_DEFINE(YABAUSE_ARCH, [MACOSX])
+		AC_DEFINE([ARCH_IS_MACOSX])
 		LIBS="$LIBS -framework IOKit"
 		major=`expr $host_os : "darwin\(@<:@^.@:>@*\)"` 	 
 		if test $major -ge 7 ; then
@@ -163,29 +163,29 @@ case $host in
 		;;
 	*linux*)
 		yabause_arch=linux
-		AC_DEFINE(YABAUSE_ARCH, [LINUX])
+		AC_DEFINE([ARCH_IS_LINUX])
 		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <linux/cdrom.h>]], [[int i = CDSL_CURRENT;]])],
 			[],
 			[AC_DEFINE(LINUX_CDROM_H_IS_BROKEN)])
 		;;
 	*cygwin*)
 		yabause_arch=windows
-		AC_DEFINE(YABAUSE_ARCH, [WINDOWS])
+		AC_DEFINE([ARCH_IS_WINDOWS])
                 AC_DEFINE(_WIN32_IE, 0x0500)
 		;;
 	*mingw32*)
 		yabause_arch=windows
-		AC_DEFINE(YABAUSE_ARCH, [WINDOWS])
+		AC_DEFINE([ARCH_IS_WINDOWS])
 		AC_CHECK_HEADERS("wnaspi32.h", [], [], [#include <windows.h>])
                 AC_DEFINE(_WIN32_IE, 0x0500)
 		;;
 	*freebsd*)
 		yabause_arch=freebsd
-		AC_DEFINE(YABAUSE_ARCH, [FREEBSD])
+		AC_DEFINE([ARCH_IS_FREEBSD])
 		;;
 	*netbsd* | *openbsd*)
 		yabause_arch=netbsd
-		AC_DEFINE(YABAUSE_ARCH, [NETBSD])
+		AC_DEFINE([ARCH_IS_NETBSD])
 		;;
 	*)
 		yabause_arch="."

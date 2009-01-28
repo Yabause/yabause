@@ -34,7 +34,7 @@
 #include "../scsp.h"
 #include "../sndsdl.h"
 #include "../persdljoy.h"
-#if YABAUSE_ARCH == LINUX
+#ifdef ARCH_IS_LINUX
 #include "../perlinuxjoy.h"
 #endif
 #include "../debug.h"
@@ -70,7 +70,7 @@ PerInterface_struct *PERCoreList[] = {
 #ifdef HAVE_LIBSDL
 &PERSDLJoy,
 #endif
-#if YABAUSE_ARCH == LINUX
+#ifdef ARCH_IS_LINUX
 &PERLinuxJoy,
 #endif
 NULL

@@ -99,7 +99,7 @@ YuiRangeItem percores[] = {
 #ifdef HAVE_LIBSDL
 	{ "3", "SDL Joystick Interface" },
 #endif
-#if YABAUSE_ARCH == LINUX
+#ifdef ARCH_IS_LINUX
 	{ "4", "Linux Joystick Interface" },
 #endif
 	{ 0, 0 }
