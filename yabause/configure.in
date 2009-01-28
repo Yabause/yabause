@@ -140,7 +140,7 @@ case $host in
 	*darwin*)
 		yabause_arch=macosx
 		AC_DEFINE([ARCH_IS_MACOSX])
-		LIBS="$LIBS -framework IOKit"
+		LIBS="$LIBS -framework CoreFoundation -framework IOKit"
 		major=`expr $host_os : "darwin\(@<:@^.@:>@*\)"` 	 
 		if test $major -ge 7 ; then
 			sdkversion=0
