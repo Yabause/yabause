@@ -226,6 +226,23 @@ int MappedMemoryLoadElf(const char *filename)
       return -1;
 
    fread(&elf_hdr, sizeof(elf_header_struct), 1, fp);
+
+   if(elf_hdr.ident[0] != 0x7F || elf_hdr.ident[1] != 'E' ||
+      elf_hdr.ident[2] != 'L' || elf_hdr.ident[3] != 'F' ||
+      elf_hdr.ident[4] != 1)
+   {
+      /* Doesn't appear to be a valid ELF file. */
+      fclose(fp);
+      return -1;
+   }
+   
+   if(elf_hdr.ident[5] != 2)
+   {
+      /* Doesn't appear to be a big-endian file. */
+      fclose(fp);
+      return -1;
+   }
+
 #ifndef WORDS_BIGENDIAN
    WordSwap(elf_hdr.type);
    WordSwap(elf_hdr.machine);
@@ -256,22 +273,6 @@ int MappedMemoryLoadElf(const char *filename)
    LOG("Section header size: %d\n", elf_hdr.shdrsize);
    LOG("Section header count: %d\n", elf_hdr.shdrcount);
    LOG("String table section: %d\n", elf_hdr.shdrstridx);
-
-   if(elf_hdr.ident[0] != 0x7F || elf_hdr.ident[1] != 'E' ||
-      elf_hdr.ident[2] != 'L' || elf_hdr.ident[3] != 'F' ||
-      elf_hdr.ident[4] != 1)
-   {
-      /* Doesn't appear to be a valid ELF file. */
-      fclose(fp);
-      return -1;
-   }
-
-   if(elf_hdr.ident[5] != 2)
-   {
-      /* Is not a big-endian file. */
-      fclose(fp);
-      return -1;
-   }
 
    if(elf_hdr.machine != ELF_MACHINE_SH)
    {
