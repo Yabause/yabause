@@ -62,6 +62,9 @@
 				(l & 0xFF000000)
 #endif
 
+static void PushUserClipping(int mode);
+static void PopUserClipping(void);
+
 int VIDSoftInit(void);
 void VIDSoftDeInit(void);
 void VIDSoftResize(unsigned int, unsigned int, int);
@@ -1554,6 +1557,8 @@ void VIDSoftVdp1DistortedSpriteDraw() {
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
+  if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
+
   flipfunction = (cmd.CMDCTRL & 0x30) >> 4;
   {
     s32 vertices[8];
@@ -1737,6 +1742,8 @@ void VIDSoftVdp1DistortedSpriteDraw() {
     yN += yStepC;
     H += stepH;
   }
+
+  if (cmd.CMDPMOD & 0x0400) PopUserClipping();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1756,6 +1763,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
    u32 colorlut;
    
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
 
    x0 = cmd.CMDXA + Vdp1Regs->localX;
    y0 = cmd.CMDYA + Vdp1Regs->localY;
@@ -1944,6 +1952,7 @@ void VIDSoftVdp1NormalSpriteDraw(void)
      iPix += stepPix;
      h0 += stepH;
    }
+   if (cmd.CMDPMOD & 0x0400) PopUserClipping();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1964,6 +1973,7 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
    u32 colorlut;
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
 
    flip = (cmd.CMDCTRL & 0x30) >> 4;
    endCode = (( cmd.CMDPMOD & 0x80) == 0 )?1:0;
@@ -2229,6 +2239,7 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
      iPix += stepPix;
      h0 += stepH;
    }
+   if (cmd.CMDPMOD & 0x0400) PopUserClipping();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2249,6 +2260,9 @@ void VIDSoftVdp1PolygonDraw(void) {
   int zAplus, zBplus, zEminus;
   u16 *fb;
   u16 color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
+  u16 cmdpmod = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+
+  if (cmdpmod & 0x0400) PushUserClipping((cmdpmod >> 9) & 0x1);
 
   v[0].x = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
   v[1].x = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10));
@@ -2392,6 +2406,8 @@ void VIDSoftVdp1PolygonDraw(void) {
       }
     }
   }
+
+  if (cmdpmod & 0x0400) PopUserClipping();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2526,6 +2542,7 @@ void VIDSoftVdp1PolylineDraw(void)
    int X[4];
    int Y[4];
    u16 color;
+   u16 cmdpmod;
 
    X[0] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
    Y[0] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
@@ -2537,7 +2554,9 @@ void VIDSoftVdp1PolylineDraw(void)
    Y[3] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A));
 
    color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
-//   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+
+   cmdpmod = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+   if (cmdpmod & 0x0400) PushUserClipping((cmdpmod >> 9) & 0x1);
 
    if (ClipLine(&X[0], &Y[0], &X[1], &Y[1]))
       DrawLine(X[0], Y[0], X[1], Y[1], color);
@@ -2550,6 +2569,8 @@ void VIDSoftVdp1PolylineDraw(void)
 
    if (ClipLine(&X[3], &Y[3], &X[0], &Y[0]))
       DrawLine(X[3], Y[3], X[0], Y[0], color);
+
+   if (cmdpmod & 0x0400) PopUserClipping();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2557,16 +2578,20 @@ void VIDSoftVdp1PolylineDraw(void)
 void VIDSoftVdp1LineDraw(void)
 {
    int x1, y1, x2, y2;
+   u16 cmdpmod;
 
    x1 = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
    y1 = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
    x2 = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10));
    y2 = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12));
 
-//   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+   cmdpmod = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+   if (cmdpmod & 0x0400) PushUserClipping((cmdpmod >> 9) & 0x1);
 
    if (ClipLine(&x1, &y1, &x2, &y2))
       DrawLine(x1, y1, x2, y2, T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6));
+
+   if (cmdpmod & 0x0400) PopUserClipping();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2577,6 +2602,45 @@ void VIDSoftVdp1UserClipping(void)
    Vdp1Regs->userclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
    Vdp1Regs->userclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
    Vdp1Regs->userclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+
+#if 0
+   vdp1clipxstart = Vdp1Regs->userclipX1;
+   vdp1clipxend = Vdp1Regs->userclipX2;
+   vdp1clipystart = Vdp1Regs->userclipY1;
+   vdp1clipyend = Vdp1Regs->userclipY2;
+
+   // This needs work
+   if (vdp1clipxstart > Vdp1Regs->systemclipX1)
+      vdp1clipxstart = Vdp1Regs->userclipX1;
+   else
+      vdp1clipxstart = Vdp1Regs->systemclipX1;
+
+   if (vdp1clipxend < Vdp1Regs->systemclipX2)
+      vdp1clipxend = Vdp1Regs->userclipX2;
+   else
+      vdp1clipxend = Vdp1Regs->systemclipX2;
+
+   if (vdp1clipystart > Vdp1Regs->systemclipY1)
+      vdp1clipystart = Vdp1Regs->userclipY1;
+   else
+      vdp1clipystart = Vdp1Regs->systemclipY1;
+
+   if (vdp1clipyend < Vdp1Regs->systemclipY2)
+      vdp1clipyend = Vdp1Regs->userclipY2;
+   else
+      vdp1clipyend = Vdp1Regs->systemclipY2;
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void PushUserClipping(int mode)
+{
+   if (mode == 1)
+   {
+      VDP1LOG("User clipping mode 1 not implemented\n");
+      return;
+   }
 
    vdp1clipxstart = Vdp1Regs->userclipX1;
    vdp1clipxend = Vdp1Regs->userclipX2;
@@ -2603,6 +2667,16 @@ void VIDSoftVdp1UserClipping(void)
       vdp1clipyend = Vdp1Regs->userclipY2;
    else
       vdp1clipyend = Vdp1Regs->systemclipY2;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void PopUserClipping(void)
+{
+   vdp1clipxstart = Vdp1Regs->systemclipX1;
+   vdp1clipxend = Vdp1Regs->systemclipX2;
+   vdp1clipystart = Vdp1Regs->systemclipY1;
+   vdp1clipyend = Vdp1Regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
