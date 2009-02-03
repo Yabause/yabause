@@ -1273,7 +1273,7 @@ static void GenDBCC()
         // generate jump table
         gen_opjumptable(base + (cond << 8));
         // generate label & declarations
-        start_op(base + (cond << 8), GEN_RES);
+        start_op(base + (cond << 8), cond==COND_TR ? 0 : GEN_RES);
         
         if (cond != COND_TR)
         {

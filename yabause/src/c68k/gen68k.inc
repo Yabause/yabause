@@ -421,7 +421,11 @@ static c68k_op_info_struc op_info_table[OP_INFO_TABLE_LEN] =
 #endif
 };
 
+#ifndef C68K_NO_JUMP_TABLE
+#ifdef C68K_CONST_JUMP_TABLE
 static u16 op_jump_table[0x10000];
+#endif
+#endif
 
 // files where code is generated
 static FILE* ini_file = NULL;
@@ -683,6 +687,7 @@ static void adds_CCnt(char *str)
     wf_op("\tCCnt -= %s;\n", str);
 }
 
+#if 0  // FIXME: warning removal
 static void sub_CCnt(u32 cycle)
 {
     if (current_io_sav) wf_op("\tPOST_IO\n");
@@ -704,6 +709,7 @@ static void quick_fterminate_op(u32 cycle)
     wf_op("\tCCnt -= %d;\n", current_cycle + cycle);
     wf_op("\tgoto C68k_Exec_End;\n");
 }
+#endif
 
 static void fterminate_op(u32 cycle)
 {
@@ -1070,6 +1076,7 @@ static u32 has_ea2(u32 ea)
     return 0;
 }
 
+#if 0  // FIXME: warning removal
 static u32 _eamreg_to_ea(u32 eam, u32 reg)
 {
     if ((eam > 7) || (reg > 7)) return EA_ILLEGAL;
@@ -1079,6 +1086,7 @@ static u32 _eamreg_to_ea(u32 eam, u32 reg)
 	if (reg < 5) return (eam + reg);
 	return EA_ILLEGAL;
 }
+#endif
 
 static u32 _ea_to_eamreg(u32 ea)
 {

@@ -106,14 +106,17 @@ static const s32 c68k_exception_cycle_table[256] =
 // global variable
 ///////////////////
 
+#ifndef C68K_GEN
+
 #ifndef C68K_NO_JUMP_TABLE
 #ifndef C68K_CONST_JUMP_TABLE
 static void *JumpTable[0x10000];
 #endif
 #endif
 
-static u32 c68k_shiftop_mask[64][2];
 static u32 C68k_Initialised = 0;
+
+#endif  // C68K_GEN
 
 #ifdef NEOCD_HLE
 extern int img_display;
@@ -129,6 +132,7 @@ extern int img_display;
 
 s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
 {
+#ifndef C68K_GEN
 #if 0
     register c68k_struc *CPU asm ("ebx");
     register pointer PC asm ("esi");
@@ -147,6 +151,7 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
     pointer PC;
     s32 CCnt;
     u32 Opcode;
+#endif
 #endif
 
 #ifndef C68K_GEN
@@ -229,7 +234,6 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
     CPU->CycleSup = 0;
     CPU->Status |= C68K_RUNNING;
 
-C68k_Exec:
 #ifndef C68K_DEBUG
     NEXT
 #else
