@@ -27,7 +27,7 @@ typedef struct _mini18n_list_t mini18n_list_t;
 struct _mini18n_list_t {
 	char * key;
 	mini18n_data_t * data;
-	char * value;
+	void * value;
 	struct _mini18n_list_t * next;
 };
 

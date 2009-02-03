@@ -24,9 +24,9 @@
 
 typedef struct _mini18n_data_t mini18n_data_t;
 
-typedef (*mini18n_len_func)(const void *);
-typedef (*mini18n_dup_func)(const void *);
-typedef (*mini18n_cmp_func)(const void *, const void *);
+typedef size_t (*mini18n_len_func)(const void *);
+typedef void * (*mini18n_dup_func)(const void *);
+typedef int    (*mini18n_cmp_func)(const void *, const void *);
 
 struct _mini18n_data_t {
 	mini18n_len_func len;

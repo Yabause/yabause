@@ -204,7 +204,7 @@ const char * mini18n(const char * source) {
 	return translated;
 }
 
-void * mini18n_with_conversion(const char * source, unsigned int format) {
+const void * mini18n_with_conversion(const char * source, unsigned int format) {
 	mini18n_conv_t * converter;
 	const void * conv;
 

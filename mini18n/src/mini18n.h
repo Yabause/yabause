@@ -63,7 +63,7 @@ const char * mini18n(const char * source);
  * @param source String to translate.
  * @param format The format to convert the string to.
  */
-void * mini18n_with_conversion(const char * source, unsigned int format);
+const void * mini18n_with_conversion(const char * source, unsigned int format);
 void mini18n_close(void);
 
 /**
