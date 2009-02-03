@@ -119,6 +119,8 @@ static INLINE void yread(IOCheck_struct * check, void * ptr, size_t size, size_t
 static INLINE int StateWriteHeader(FILE *fp, const char *name, int version) {
    IOCheck_struct check;
    fprintf(fp, "%s", name);
+   check.done = 0;
+   check.size = 0;
    ywrite(&check, (void *)&version, sizeof(version), 1, fp);
    ywrite(&check, (void *)&version, sizeof(version), 1, fp); // place holder for size
    return (check.done == check.size) ? ftell(fp) : -1;

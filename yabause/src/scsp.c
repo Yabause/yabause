@@ -3046,7 +3046,7 @@ void ScspExec() {
       memset(scspchannel[1].data32, 0, sizeof(u32) * audiosize);
 
       scsp_update((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, audiosize);
-      SNDCore->UpdateAudio(scspchannel[0].data32, (s32 *)scspchannel[1].data32, audiosize);
+      SNDCore->UpdateAudio(scspchannel[0].data32, (u32 *)scspchannel[1].data32, audiosize);
    }
 }
 
@@ -3722,8 +3722,10 @@ u32 ScspSlotDebugAudio(slot_t *slot, u32 *workbuf, s16 *buf, u32 len)
 {
    u32 *bufL, *bufR;
 
-   scsp_bufL = bufL = workbuf;
-   scsp_bufR = bufR = workbuf+len;
+   bufL = workbuf;
+   bufR = workbuf+len;
+   scsp_bufL = (s32 *)bufL;
+   scsp_bufR = (s32 *)bufR;
 
    if (slot->ecnt >= SCSP_ENV_DE)
    {

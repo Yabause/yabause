@@ -196,7 +196,7 @@ u8 FASTCALL NetlinkReadByte(u32 addr)
 
 void FASTCALL NetlinkDoATResponse(const char *string)
 {
-   strcpy(&NetlinkArea->outbuffer[NetlinkArea->outbufferend], string);
+   strcpy((char *)&NetlinkArea->outbuffer[NetlinkArea->outbufferend], string);
    NetlinkArea->outbufferend += (u32)strlen(string);
    NetlinkArea->outbuffersize += (u32)strlen(string);
 }
@@ -207,7 +207,7 @@ int FASTCALL NetlinkFetchATParameter(u8 val, u32 *offset)
 {
    if (val >= '0' && val <= '9')
    {
-      *offset++;
+      (*offset)++;
       return (val - 0x30);
    }
    else
@@ -244,8 +244,8 @@ void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
             {
 
                if (val == 0x0D &&
-                   (strncmp(&NetlinkArea->inbuffer[NetlinkArea->inbufferstart], "AT", 2) == 0 ||
-                    strncmp(&NetlinkArea->inbuffer[NetlinkArea->inbufferstart], "at", 2) == 0)) // fix me
+                   (strncmp((char *)&NetlinkArea->inbuffer[NetlinkArea->inbufferstart], "AT", 2) == 0 ||
+                    strncmp((char *)&NetlinkArea->inbuffer[NetlinkArea->inbufferstart], "at", 2) == 0)) // fix me
                {
                   u32 i=NetlinkArea->inbufferstart+2;
                   int resultcode=NL_RESULTCODE_OK;
@@ -255,7 +255,7 @@ void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
 
                   // If echo is enabled, do it
                   if (NetlinkArea->isechoenab)
-                     NetlinkDoATResponse(NetlinkArea->inbuffer);
+                     NetlinkDoATResponse((char *)NetlinkArea->inbuffer);
 
                   // Handle AT command
                   while(NetlinkArea->inbuffer[i] != 0xD)

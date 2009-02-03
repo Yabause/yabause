@@ -452,6 +452,11 @@ int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
                break;
            }
         }
+	if (i == 100) {
+		// FIXME: Placeholder message; what's the actual error?  --AC
+		CDLOG("Warning: Sector not found");
+		return 0;
+	}
 
 	if ((sector * bytesPerSector) >= isofilesize) {
 		CDLOG("Warning: Trying to read beyond end of CD image! (sector: %d)\n", sector);

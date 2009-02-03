@@ -30,8 +30,9 @@
 
 #ifdef USE_OPENGL
 #include "ygl.h"
-#include "yui.h"
 #endif
+
+#include "yui.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -149,8 +150,10 @@ static int nbg1priority=0;
 static int nbg2priority=0;
 static int nbg3priority=0;
 static int rbg0priority=0;
+#ifdef USE_OPENGL
 static int outputwidth;
 static int outputheight;
+#endif
 static int resxratio;
 static int resyratio;
 
@@ -669,6 +672,7 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
    scrolly = info->y;
 
    ReadWindowData(info->wctl, clip);
+   linewnd0addr = linewnd1addr = 0;
    ReadLineWindowData(&info->islinewindow, info->wctl, &linewnd0addr, &linewnd1addr);
 
    for (j = 0; j < height; j++)
@@ -2723,9 +2727,6 @@ void VIDSoftVdp2DrawEnd(void)
    int i, i2;
    u16 pixel;
    u8 prioritytable[8];
-   int priority;
-   int shadow;
-   int colorcalc;
    u32 vdp1coloroffset;
    int colormode = Vdp2Regs->SPCTL & 0x20;
    vdp2draw_struct info;
@@ -2811,6 +2812,7 @@ void VIDSoftVdp2DrawEnd(void)
 
       wctl = Vdp2Regs->WCTLC >> 8;
       ReadWindowData(wctl, clip);
+      linewnd0addr = linewnd1addr = 0;
       ReadLineWindowData(&islinewindow, wctl, &linewnd0addr, &linewnd1addr);
 
       for (i2 = 0; i2 < vdp2height; i2++)
@@ -2865,6 +2867,10 @@ void VIDSoftVdp2DrawEnd(void)
                else
                {
                   // Color bank
+		  int priority;
+		  int shadow;
+		  int colorcalc;
+		  priority = 0;  // Avoid compiler warning
                   Vdp1ProcessSpritePixel(vdp1spritetype, &pixel, &shadow, &priority, &colorcalc);
                   if (prioritytable[priority] >= Vdp2GetPixelPriority(vdp2src[0]))
                      dst[0] = info.PostPixelFetchCalc(&info, COLSAT2YAB32(0xFF, Vdp2ColorRamGetColor(vdp1coloroffset + pixel)));

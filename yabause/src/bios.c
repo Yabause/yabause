@@ -745,6 +745,13 @@ void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
    // Fill in status variables
    ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
+   if (ret == 1)
+   {
+      // Error
+      sh->regs.R[0] = ret;
+      sh->regs.PC = sh->regs.PR;
+      return;
+   }
 
    // See if save exists already
    if ((block = FindSave(sh->regs.R[4], sh->regs.R[5], 2, size, addr, blocksize)) != 0)
@@ -960,6 +967,13 @@ void FASTCALL BiosBUPDelete(SH2_struct * sh)
 
    // Fill in status variables
    ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
+   if (ret == 1)
+   {
+      // Error
+      sh->regs.R[0] = ret;
+      sh->regs.PC = sh->regs.PR;
+      return;
+   }
 
    // See if save exists
    if ((block = FindSave(sh->regs.R[4], sh->regs.R[5], 2, size, addr, blocksize)) == 0)

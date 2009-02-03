@@ -1905,6 +1905,7 @@ void VIDOGLVdp1PolygonDraw(void)
    {
       int shadow, priority, colorcalc;
 
+      priority = 0;  // Avoid compiler warning
       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
       polygon.priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1] & 0x7;

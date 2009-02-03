@@ -1256,7 +1256,7 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
    switch (searchtype & 0x70)
    {
       case SEARCHSTRING:
-         strcpy(buf, searchstr);
+         strcpy((char *)buf, searchstr);
          break;
       case SEARCHREL8BIT:
       case SEARCHREL16BIT:

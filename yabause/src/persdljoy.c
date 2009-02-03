@@ -194,11 +194,11 @@ int PERSDLJoyHandleEvents(void) {
 			
 			if ( buttonState == SDL_BUTTON_PRESSED )
 			{
-				PerKeyDown( (joyId << 18) | i +1 );
+				PerKeyDown( (joyId << 18) | (i +1) );
 			}
 			else if ( buttonState == SDL_BUTTON_RELEASED )
 			{
-				PerKeyUp( (joyId << 18) | i +1 );
+				PerKeyUp( (joyId << 18) | (i +1) );
 			}
 		}
 	}
@@ -221,7 +221,6 @@ u32 PERSDLJoyScan( void ) {
 	int i;
 	SDL_Joystick* joy;
 	Sint16 cur;
-	Uint8 buttonState;
 	
 	// update joysticks states
 	SDL_JoystickUpdate();
@@ -259,7 +258,7 @@ u32 PERSDLJoyScan( void ) {
 		{
 			if ( SDL_JoystickGetButton( joy, i ) == SDL_BUTTON_PRESSED )
 			{
-				return (joyId << 18) | i +1;
+				return (joyId << 18) | (i +1);
 				break;
 			}
 		}
@@ -273,7 +272,7 @@ void PERSDLJoyFlush(void) {
 
 void PERSDLKeyName(u32 key, char * name, UNUSED int size)
 {
-	sprintf(name, "%x", key);
+	sprintf(name, "%x", (int)key);
 }
 
 #endif
