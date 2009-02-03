@@ -215,23 +215,23 @@ static void yui_m68k_update_reglist( YuiM68k *m68k, m68kregs_struct *regs) {
     if ( i==0 ) gtk_tree_model_get_iter_first( GTK_TREE_MODEL( yui_m68k->regListStore ), &iter );
     else gtk_tree_model_iter_next( GTK_TREE_MODEL( yui_m68k->regListStore ), &iter );
     sprintf(regstr, "D%d", i );
-    sprintf(valuestr, "%08x", regs->D[i]);
+    sprintf(valuestr, "%08x", (int)regs->D[i]);
     gtk_list_store_set( GTK_LIST_STORE( yui_m68k->regListStore ), &iter, 0, regstr, 1, valuestr, -1 );
   }
   for ( i = 0 ; i < 8 ; i++ ) {
     
     gtk_tree_model_iter_next( GTK_TREE_MODEL( yui_m68k->regListStore ), &iter );
     sprintf(regstr, "A%d", i );
-    sprintf(valuestr, "%08x", regs->A[i]);
+    sprintf(valuestr, "%08x", (int)regs->A[i]);
     gtk_list_store_set( GTK_LIST_STORE( yui_m68k->regListStore ), &iter, 0, regstr, 1, valuestr, -1 );
   }
 
   gtk_tree_model_iter_next( GTK_TREE_MODEL( yui_m68k->regListStore ), &iter );
-  sprintf(valuestr, "%08x", regs->SR);
+  sprintf(valuestr, "%08x", (int)regs->SR);
   gtk_list_store_set( GTK_LIST_STORE( yui_m68k->regListStore ), &iter, 0, "SR", 1, valuestr, -1 );
 
   gtk_tree_model_iter_next( GTK_TREE_MODEL( yui_m68k->regListStore ), &iter );
-  sprintf(valuestr, "%08x", regs->PC);
+  sprintf(valuestr, "%08x", (int)regs->PC);
   gtk_list_store_set( GTK_LIST_STORE( yui_m68k->regListStore ), &iter, 0, "PC", 1, valuestr, -1 );
 }
 

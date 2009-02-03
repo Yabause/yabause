@@ -153,7 +153,7 @@ gboolean yui_input_entry_keypress(GtkWidget * widget, GdkEventKey * event, gpoin
 	sprintf(tmp, "%x", event->keyval);
 #endif
 	gtk_entry_set_text(GTK_ENTRY(widget), tmp);
-	sprintf(tmp, "%s.%s.1", YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->group, name);
+	sprintf(tmp, "%s.%s.1", YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->group, (char *)name);
 	g_key_file_set_integer(YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->keyfile,
 		PERCore->Name, tmp, event->keyval);
 
@@ -178,12 +178,12 @@ gboolean watch_joy(gpointer name) {
 	} else {
 		char tmp[100];
 
-		sprintf(tmp, "Pad.%s.1", name); // should be group.name
+		sprintf(tmp, "Pad.%s.1", (char *)name); // should be group.name
 		g_key_file_set_integer(keyfile, PERCore->Name, tmp, i);
 #ifdef PERKEYNAME
 		PERCore->KeyName(i, tmp, 100);
 #else
-		sprintf(tmp, "%x", i);
+		sprintf(tmp, "%x", (int)i);
 #endif
 		gtk_entry_set_text(entry_hack, tmp);
 		is_watching = FALSE;
@@ -208,7 +208,7 @@ gboolean yui_input_entry_focus_in(GtkWidget * widget, GdkEventFocus * event, gpo
 void yui_input_entry_update(YuiInputEntry * yie) {
 	GList * wlist = gtk_container_get_children(GTK_CONTAINER(yie));
 	u32 key;
-	GtkEntry * entry;
+	GtkEntry * entry = NULL;
 	char tmp[100];
 
 	while(wlist) {
@@ -222,7 +222,7 @@ void yui_input_entry_update(YuiInputEntry * yie) {
 #ifdef PERKEYNAME
 				PERCore->KeyName(key, tmp, 100);
 #else
-				sprintf(tmp, "%x", key);
+				sprintf(tmp, "%x", (int)key);
 #endif
 				gtk_entry_set_text(entry, tmp);
 			} else {

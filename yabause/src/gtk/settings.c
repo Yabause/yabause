@@ -190,7 +190,7 @@ static void pertype_display_mouse(GtkWidget * box)
    GtkWidget * table5;
    GtkWidget * box_percore = gtk_vbox_new(FALSE, 10);
    GtkWidget * select_percore = yui_range_new(keyfile, "General", "MousePerCore", mousepercores);
-   GList * entrylist;
+   GList * entrylist = NULL;
 
    gtk_container_set_border_width(GTK_CONTAINER(select_percore), 0);
    gtk_container_set_border_width(GTK_CONTAINER(box_percore), 10);

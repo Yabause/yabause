@@ -428,7 +428,7 @@ int main(int argc, char *argv[]) {
 	 // Binary
 	 else if (strstr(argv[i], "--binary=")) {
 	    char binname[1024];
-	    u32 binaddress;
+	    unsigned int binaddress;
 	    int bincount;
 
 	    bincount = sscanf(argv[i] + strlen("--binary="), "%[^:]:%x", binname, &binaddress);

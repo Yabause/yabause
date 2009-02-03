@@ -240,7 +240,7 @@ static void yui_scudsp_update_reglist( YuiScudsp *scudsp, scudspregs_struct *reg
   SCUDSPUPDATEREGLIST(TOP,%02X);
   SCUDSPUPDATEREGLIST(LOP,%02X);
   gtk_tree_model_iter_next( GTK_TREE_MODEL( scudsp->regListStore ), &iter );
-  sprintf(valuestr, "%08X", ((u32)(regs->CT[0]))<<24 + ((u32)(regs->CT[1]))<<16 + ((u32)(regs->CT[2]))<<8 + ((u32)(regs->CT[3])) );
+  sprintf(valuestr, "%08X", (int)(((u32)(regs->CT[0]))<<24 | ((u32)(regs->CT[1]))<<16 | ((u32)(regs->CT[2]))<<8 | ((u32)(regs->CT[3]))) );
   gtk_list_store_set( GTK_LIST_STORE( scudsp->regListStore ), &iter, 0, "CT", 1, valuestr, -1 );
   SCUDSPUPDATEREGLISTx(RA,regs->RA0,%08X);
   SCUDSPUPDATEREGLISTx(WA,regs->WA0,%08X);

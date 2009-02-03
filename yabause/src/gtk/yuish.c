@@ -326,8 +326,12 @@ GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   yui = y;
 
   if (!( yui->state & YUI_IS_INIT )) {
-    yui_window_run(dialog, yui);
-    yui_window_pause(dialog, yui);
+    /* FIXME:  The first parameter seems to be ignored in these functions,
+     * so NULL is safe; it might be better to consider moving the "yui"
+     * argument first and calling g_signal_connect_swapped() to eliminate
+     * the unknown parameter.  --AC */
+    yui_window_run(NULL, yui);
+    yui_window_pause(NULL, yui);
   }
 
   if ( bMaster && yui_msh ) return GTK_WIDGET(yui_msh);
@@ -521,7 +525,7 @@ static void SH2UpdateCodeList( YuiSh *sh2, u32 addr) {
   char lineBuf[64];
   u32 offset;
   GtkTreeIter iter;
-  u32 address;
+  unsigned int address;
   char address_s[20];
   char command_s[64];
   codebreakpoint_struct *cbp;
@@ -537,7 +541,7 @@ static void SH2UpdateCodeList( YuiSh *sh2, u32 addr) {
   for (i = 0; i < 24; i++) {
     SH2Disasm(offset+2*i, MappedMemoryReadWord(offset+2*i), 0, lineBuf);
 
-    sscanf(lineBuf, "0x%8X: %[^\n]", &address, &command_s);
+    sscanf(lineBuf, "0x%8X: %[^\n]", &address, command_s);
     sprintf(address_s, "0x%08X", address);
 
     gtk_list_store_append(sh2->store, &iter);
@@ -594,9 +598,9 @@ static void yui_sh_editedBp( GtkCellRendererText *cellrenderertext,
 
   GtkTreeIter iter;
   char *endptr;
-  u32 addr;
+  unsigned int addr;
   gchar * oldaddr_s;
-  u32 oldaddr;
+  unsigned int oldaddr;
 
   gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( sh2->bpListStore ), &iter, arg1 );
 
@@ -629,10 +633,11 @@ static void yui_sh_editedMbp( GtkCellRendererText *cellrenderertext,
   
   GtkTreeIter iter;
   gchar *endptr;
-  u32 addr;
+  unsigned int addr;
   memorybreakpoint_struct *cmbp;
   gchar * oldaddr_s, * flags_s;
-  u32 oldaddr, flags;
+  unsigned int oldaddr;
+  u32 flags;
 
   cmbp = SH2GetMemoryBreakpointList(sh2->debugsh);
 
@@ -682,7 +687,7 @@ static void yui_sh_editedMbpFlags( GtkCellRendererText *cellrenderertext,
   
   GtkTreeIter iter;
   gchar *endptr;
-  u32 addr;
+  unsigned int addr;
   memorybreakpoint_struct *cmbp;
   gchar * addr_s;
 
@@ -799,7 +804,7 @@ void yui_sh_popup_add_bp(GtkMenuItem * menuitem, gpointer user_data) {
 	GtkTreeModel * model;
 	GtkTreeIter iter;
 	gchar * address_s;
-	u32 address;
+	unsigned int address;
 
 	selection = gtk_tree_view_get_selection(view);
 
@@ -828,7 +833,7 @@ void yui_sh_popup_del_bp(GtkMenuItem * menuitem, gpointer user_data) {
 	GtkTreeModel * model;
 	GtkTreeIter iter;
 	gchar * address_s;
-	u32 address;
+	unsigned int address;
 
 	selection = gtk_tree_view_get_selection(view);
 
@@ -853,7 +858,7 @@ void yui_sh_popup_del_bp(GtkMenuItem * menuitem, gpointer user_data) {
 static void yui_sh_bp_add(GtkEntry * entry, gpointer user_data) {
 	YuiSh * sh2 = user_data;
 	const gchar * address_s;
-	u32 address;
+	unsigned int address;
 
 	address_s = gtk_entry_get_text(entry);
 
@@ -880,7 +885,7 @@ static void yui_sh_button_bp_add(GtkWidget * widget, gpointer user_data) {
 static void yui_sh_mbp_add(GtkEntry * entry, gpointer user_data) {
 	YuiSh * sh2 = user_data;
 	const gchar * address_s;
-	u32 address;
+	unsigned int address;
 
 	address_s = gtk_entry_get_text(entry);
 
@@ -972,7 +977,8 @@ void yui_sh_mbp_toggle_flag(GtkWidget * menuitem, gpointer user_data) {
 	GtkTreeIter iter;
 	GtkTreeModel * model;
 	gchar * address_s, * flags_s;
-	u32 address, flags;
+	unsigned int address;
+	u32 flags;
 	GtkTreeView * view;
 	char *endptr;
 
@@ -1020,7 +1026,7 @@ void yui_sh_mbp_remove(GtkWidget * menuitem, gpointer user_data) {
 	GtkTreeIter iter;
 	GtkTreeModel * model;
 	gchar * address_s;
-	u32 address;
+	unsigned int address;
 	GtkTreeView * view;
 
 	view  = GTK_TREE_VIEW(sh2->mbpList);
@@ -1074,7 +1080,7 @@ void yui_sh_bp_remove(GtkWidget * menuitem, gpointer user_data) {
 	GtkTreeIter iter;
 	GtkTreeModel * model;
 	gchar * address_s;
-	u32 address;
+	unsigned int address;
 	GtkTreeView * view;
 
 	view  = GTK_TREE_VIEW(sh2->bpList);

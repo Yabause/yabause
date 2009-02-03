@@ -119,8 +119,8 @@ gboolean gonna_hide(gpointer data) {
 	beforehiding--;
 
 	if (beforehiding == 0) {
-		static unsigned char source_data[] = { 0 };
-		static unsigned char mask_data[] = { 0 };
+		static char source_data[] = { 0 };
+		static char mask_data[] = { 0 };
 
 		GdkCursor *cursor;
  		GdkPixmap *source, *mask;
