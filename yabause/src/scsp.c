@@ -2888,10 +2888,11 @@ int ScspChangeSoundCore(int coreid)
    {
       // Since it failed, instead of it being fatal, we'll just use the dummy
       // core instead
-      SNDCore = &SNDDummy;
 
       // This might be helpful though.
       YabSetError(YAB_ERR_CANNOTINIT, (void *)SNDCore->Name);
+
+      SNDCore = &SNDDummy;
    }
 
    return 0;
