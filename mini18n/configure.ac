@@ -7,8 +7,12 @@ AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE(mini18n, 0.1)
 
 AC_PROG_LIBTOOL
-
 AC_PROG_CC
+
+if test `expr x$CC : x$host_alias` -eq 0 ; then
+	AC_MSG_ERROR([$CC is not a cross compiler and we're cross-compiling.])
+fi
+
 AC_PROG_INSTALL
 
 AC_LANG(C)
