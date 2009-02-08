@@ -18,10 +18,17 @@
 */
 
 #include "mini18n_pv_hash.h"
+#include "mini18n_pv_file.h"
+#include "mini18n_pv_file_yts.h"
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+static mini18n_file_t * loaders[] = {
+	&mini18n_file_yts,
+	NULL
+};
 
 static unsigned int mini18n_hash_func(mini18n_hash_t * hash, const char * key);
 
@@ -90,11 +97,9 @@ unsigned int mini18n_hash_func(mini18n_hash_t * hash, const char * key) {
 }
 
 mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
-	char buffer[1024];
-	char key[1024];
-	char value[1024];
 	mini18n_hash_t * hash;
 	FILE * f;
+	mini18n_file_t * file;
 
 	if (filename == NULL)
 		return NULL;
@@ -107,60 +112,15 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 	if (f == NULL)
 		return NULL;
 
-	while (fgets(buffer, 1024, f)) {
-		int i = 0, j = 0, done = 0, state = 0, empty = 1;
-		char c;
-
-		while(!done && (i < 1024)) {
-			c = buffer[i];
-			switch(state) {
-				case 0:
-					switch(c) {
-						case '\\':
-							/* escape character, we're now in state 1 */
-							state = 1;
-							break;
-						case '|':
-							/* separator, we're done */
-							key[j] = '\0';
-							j = 0;
-							state = 2;
-							break;
-						default:
-							/* we're still reading the key */
-							key[j] = c;
-							j++;
-							break;
-					}
-					break;
-				case 1:
-					key[j] = c;
-					j++;
-					state = 0;
-					break;
-				case 2:
-					switch(c) {
-						case '\n':
-							value[j] = '\0';
-							done = 1;
-							break;
-						default:
-							empty = 0;
-							value[j] = c;
-							j++;
-							break;
-					}
-					break;
-			}
-			i++;
+	file = *loaders;
+	while(file != NULL) {
+		if (file->load(hash, f) == 0) {
+			fclose(f);
+			return hash;
 		}
-
-		if (done && !empty) {
-			mini18n_hash_add(hash, key, value);
-		}
+		file++;
 	}
 
 	fclose(f);
-
 	return hash;
 }
