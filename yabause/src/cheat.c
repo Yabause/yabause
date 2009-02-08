@@ -78,8 +78,8 @@ int CheatAddCode(int type, u32 addr, u32 val)
 
 int CheatAddARCode(const char *code)
 {
-   u32 addr;
-   u16 val;
+   unsigned long addr;
+   unsigned short val;
    sscanf(code, "%08lX %04hX", &addr, &val);
    switch (addr >> 28)
    {
@@ -180,8 +180,8 @@ int CheatRemoveCodeByIndex(int i)
 
 int CheatRemoveARCode(const char *code)
 {
-   u32 addr;
-   u16 val;
+   unsigned long addr;
+   unsigned short val;
    sscanf(code, "%08lX %04hX", &addr, &val);
 
    switch (addr >> 28)

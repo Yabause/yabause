@@ -1377,7 +1377,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
    u32 i=0;
    result_struct *results;
    u32 numresults=0;
-   u32 searchval;
+   unsigned long searchval;
    int issigned=0;
    u32 addr;
 
@@ -1405,11 +1405,11 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
          sscanf(searchstr, "%08lx", &searchval);
          break;
       case SEARCHUNSIGNED:
-         searchval = (u32)atoi(searchstr);
+         searchval = (unsigned long)atoi(searchstr);
          issigned = 0;
          break;
       case SEARCHSIGNED:
-         searchval = (u32)atoi(searchstr);
+         searchval = (unsigned long)atoi(searchstr);
          issigned = 1;
          break;
    }   

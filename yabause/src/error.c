@@ -77,18 +77,18 @@ void YabSetError(int type, const void *extra)
                           "R9 =  %08lX\tPR =   %08lX\n"
                           "R10 = %08lX\tPC =   %08lX\n"
                           "R11 = %08lX\n", sh->isslave ? "Slave" : "Master",
-                          sh->regs.R[0], sh->regs.R[12],
-                          sh->regs.R[1], sh->regs.R[13],
-                          sh->regs.R[2], sh->regs.R[14],
-                          sh->regs.R[3], sh->regs.R[15],
-                          sh->regs.R[4], sh->regs.SR.all,
-                          sh->regs.R[5], sh->regs.GBR,
-                          sh->regs.R[6], sh->regs.VBR,
-                          sh->regs.R[7], sh->regs.MACH,
-                          sh->regs.R[8], sh->regs.MACL,
-                          sh->regs.R[9], sh->regs.PR,
-                          sh->regs.R[10], sh->regs.PC,
-                          sh->regs.R[11]);
+                          (long)sh->regs.R[0], (long)sh->regs.R[12],
+                          (long)sh->regs.R[1], (long)sh->regs.R[13],
+                          (long)sh->regs.R[2], (long)sh->regs.R[14],
+                          (long)sh->regs.R[3], (long)sh->regs.R[15],
+                          (long)sh->regs.R[4], (long)sh->regs.SR.all,
+                          (long)sh->regs.R[5], (long)sh->regs.GBR,
+                          (long)sh->regs.R[6], (long)sh->regs.VBR,
+                          (long)sh->regs.R[7], (long)sh->regs.MACH,
+                          (long)sh->regs.R[8], (long)sh->regs.MACL,
+                          (long)sh->regs.R[9], (long)sh->regs.PR,
+                          (long)sh->regs.R[10], (long)sh->regs.PC,
+                          (long)sh->regs.R[11]);
          YuiErrorMsg(tempstr);
          break;
       case YAB_ERR_SH2READ:

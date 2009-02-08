@@ -193,7 +193,7 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
       if (Vdp2Regs->LWTA0.all & 0x80000000)
       {
          // Line Window
-         AddString(outstring, "Line Window Table Address = %08lX\r\n", 0x05E00000 | ((Vdp2Regs->LWTA0.all & 0x7FFFE) << 1));
+         AddString(outstring, "Line Window Table Address = %08lX\r\n", 0x05E00000UL | ((Vdp2Regs->LWTA0.all & 0x7FFFEUL) << 1));
       }
       else
       {
@@ -218,7 +218,7 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
       if (Vdp2Regs->LWTA1.all & 0x80000000)
       {
          // Line Window
-         AddString(outstring, "Line Table address = %08lX\r\n", 0x05E00000 | ((Vdp2Regs->LWTA1.all & 0x7FFFE) << 1));
+         AddString(outstring, "Line Table address = %08lX\r\n", 0x05E00000UL | ((Vdp2Regs->LWTA1.all & 0x7FFFEUL) << 1));
       }
       else
       {
@@ -373,7 +373,8 @@ static INLINE char *AddColorOffsetInfo(char *outstring, u16 offsetselectenab)
             b |= 0xFFFFFF00;
 
          AddString(outstring, "Color Offset B Enabled\r\n");
-         AddString(outstring, "R = %ld, G = %ld, B = %ld\r\n", r, g, b);
+         AddString(outstring, "R = %ld, G = %ld, B = %ld\r\n",
+		   (long)r, (long)g, (long)b);
       }
       else
       {
@@ -390,7 +391,8 @@ static INLINE char *AddColorOffsetInfo(char *outstring, u16 offsetselectenab)
             b |= 0xFFFFFF00;
 
          AddString(outstring, "Color Offset A Enabled\r\n");
-         AddString(outstring, "R = %ld, G = %ld, B = %ld\r\n", r, g, b);
+         AddString(outstring, "R = %ld, G = %ld, B = %ld\r\n",
+		   (long)r, (long)g, (long)b);
       }
    }
 
@@ -1554,7 +1556,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
       AddString(outstring, "Line Color Screen Stuff\r\n");
       AddString(outstring, "-----------------------\r\n");
       AddString(outstring, "Mode = %s\r\n", Vdp2Regs->LCTA.part.U & 0x8000 ? "Color per line" : "Single color");
-      AddString(outstring, "Address = %08lX\r\n", 0x05E00000 | ((Vdp2Regs->LCTA.all & 0x7FFFF) * 2));
+      AddString(outstring, "Address = %08lX\r\n", 0x05E00000UL | ((Vdp2Regs->LCTA.all & 0x7FFFFUL) * 2));
       AddString(outstring, "\r\n");
 
       // Back screen stuff

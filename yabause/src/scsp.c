@@ -3577,16 +3577,16 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
       AddString(outstring, "16-bit samples\r\n");
    }
 
-   AddString(outstring, "Start Address = %05lX\r\n", scsp.slot[slotnum].sa);
-   AddString(outstring, "Loop Start Address = %04lX\r\n", scsp.slot[slotnum].lsa >> SCSP_FREQ_LB);
-   AddString(outstring, "Loop End Address = %04lX\r\n", scsp.slot[slotnum].lea >> SCSP_FREQ_LB);
-   AddString(outstring, "Decay 1 Rate = %ld\r\n", scsp.slot[slotnum].dr);
-   AddString(outstring, "Decay 2 Rate = %ld\r\n", scsp.slot[slotnum].sr);
+   AddString(outstring, "Start Address = %05lX\r\n", (unsigned long)scsp.slot[slotnum].sa);
+   AddString(outstring, "Loop Start Address = %04lX\r\n", (unsigned long)scsp.slot[slotnum].lsa >> SCSP_FREQ_LB);
+   AddString(outstring, "Loop End Address = %04lX\r\n", (unsigned long)scsp.slot[slotnum].lea >> SCSP_FREQ_LB);
+   AddString(outstring, "Decay 1 Rate = %ld\r\n", (unsigned long)scsp.slot[slotnum].dr);
+   AddString(outstring, "Decay 2 Rate = %ld\r\n", (unsigned long)scsp.slot[slotnum].sr);
    if (scsp.slot[slotnum].eghold)
    {
       AddString(outstring, "EG Hold Enabled\r\n");
    }
-   AddString(outstring, "Attack Rate = %ld\r\n", scsp.slot[slotnum].ar);
+   AddString(outstring, "Attack Rate = %ld\r\n", (unsigned long)scsp.slot[slotnum].ar);
 
    if (scsp.slot[slotnum].lslnk)
    {
@@ -3595,11 +3595,11 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 
    if (scsp.slot[slotnum].krs != 0)
    {
-      AddString(outstring, "Key rate scaling = %ld\r\n", scsp.slot[slotnum].krs);
+      AddString(outstring, "Key rate scaling = %ld\r\n", (unsigned long)scsp.slot[slotnum].krs);
    }
 
    AddString(outstring, "Decay Level = %d\r\n", (scsp_r_w(slotoffset + 0xA) >> 5) & 0x1F);
-   AddString(outstring, "Release Rate = %ld\r\n", scsp.slot[slotnum].rr);
+   AddString(outstring, "Release Rate = %ld\r\n", (unsigned long)scsp.slot[slotnum].rr);
 
    if (scsp.slot[slotnum].swe)
    {
@@ -3611,7 +3611,7 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
       AddString(outstring, "Sound Direct Enabled\r\n");
    }
 
-   AddString(outstring, "Total Level = %ld\r\n", scsp.slot[slotnum].tl);
+   AddString(outstring, "Total Level = %ld\r\n", (unsigned long)scsp.slot[slotnum].tl);
 
    AddString(outstring, "Modulation Level = %d\r\n", scsp.slot[slotnum].mdl);
    AddString(outstring, "Modulation Input X = %d\r\n", scsp.slot[slotnum].mdx);
@@ -3651,43 +3651,43 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring)
 void ScspCommonControlRegisterDebugStats(char *outstring)
 {
    AddString(outstring, "Memory: %s\r\n", scsp.mem4b ? "4 Mbit" : "2 Mbit");
-   AddString(outstring, "Master volume: %ld\r\n", scsp.mvol);
-   AddString(outstring, "Ring buffer length: %ld\r\n", scsp.rbl);
-   AddString(outstring, "Ring buffer address: %08lX\r\n", scsp.rbp);
+   AddString(outstring, "Master volume: %ld\r\n", (unsigned long)scsp.mvol);
+   AddString(outstring, "Ring buffer length: %ld\r\n", (unsigned long)scsp.rbl);
+   AddString(outstring, "Ring buffer address: %08lX\r\n", (unsigned long)scsp.rbp);
    AddString(outstring, "\r\n");
 
    AddString(outstring, "Slot Status Registers\r\n");
    AddString(outstring, "-----------------\r\n");
-   AddString(outstring, "Monitor slot: %ld\r\n", scsp.mslc);
-   AddString(outstring, "Call address: %ld\r\n", scsp.ca);
+   AddString(outstring, "Monitor slot: %ld\r\n", (unsigned long)scsp.mslc);
+   AddString(outstring, "Call address: %ld\r\n", (unsigned long)scsp.ca);
    AddString(outstring, "\r\n");
 
    AddString(outstring, "DMA Registers\r\n");
    AddString(outstring, "-----------------\r\n");
-   AddString(outstring, "DMA memory address start: %08lX\r\n", scsp.dmea);
-   AddString(outstring, "DMA register address start: %08lX\r\n", scsp.drga);
-   AddString(outstring, "DMA Flags: %lX\r\n", scsp.dmlen);
+   AddString(outstring, "DMA memory address start: %08lX\r\n", (unsigned long)scsp.dmea);
+   AddString(outstring, "DMA register address start: %08lX\r\n", (unsigned long)scsp.drga);
+   AddString(outstring, "DMA Flags: %lX\r\n", (unsigned long)scsp.dmlen);
    AddString(outstring, "\r\n");
 
    AddString(outstring, "Timer Registers\r\n");
    AddString(outstring, "-----------------\r\n");
-   AddString(outstring, "Timer A counter: %02lX\r\n", scsp.timacnt >> 8);
+   AddString(outstring, "Timer A counter: %02lX\r\n", (unsigned long)scsp.timacnt >> 8);
    AddString(outstring, "Timer A increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timasd));
-   AddString(outstring, "Timer B counter: %02lX\r\n", scsp.timbcnt >> 8);
+   AddString(outstring, "Timer B counter: %02lX\r\n", (unsigned long)scsp.timbcnt >> 8);
    AddString(outstring, "Timer B increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timbsd));
-   AddString(outstring, "Timer C counter: %02lX\r\n", scsp.timccnt >> 8);
+   AddString(outstring, "Timer C counter: %02lX\r\n", (unsigned long)scsp.timccnt >> 8);
    AddString(outstring, "Timer C increment: Every %d sample(s)\r\n", (int)pow(2, (double)scsp.timcsd));
    AddString(outstring, "\r\n");
 
    AddString(outstring, "Interrupt Registers\r\n");
    AddString(outstring, "-----------------\r\n");
-   AddString(outstring, "Sound cpu interrupt pending: %04lX\r\n", scsp.scipd);
-   AddString(outstring, "Sound cpu interrupt enable: %04lX\r\n", scsp.scieb);
-   AddString(outstring, "Sound cpu interrupt level 0: %04lX\r\n", scsp.scilv0);
-   AddString(outstring, "Sound cpu interrupt level 1: %04lX\r\n", scsp.scilv1);
-   AddString(outstring, "Sound cpu interrupt level 2: %04lX\r\n", scsp.scilv2);
-   AddString(outstring, "Main cpu interrupt pending: %04lX\r\n", scsp.mcipd);
-   AddString(outstring, "Main cpu interrupt enable: %04lX\r\n", scsp.mcieb);
+   AddString(outstring, "Sound cpu interrupt pending: %04lX\r\n", (unsigned long)scsp.scipd);
+   AddString(outstring, "Sound cpu interrupt enable: %04lX\r\n", (unsigned long)scsp.scieb);
+   AddString(outstring, "Sound cpu interrupt level 0: %04lX\r\n", (unsigned long)scsp.scilv0);
+   AddString(outstring, "Sound cpu interrupt level 1: %04lX\r\n", (unsigned long)scsp.scilv1);
+   AddString(outstring, "Sound cpu interrupt level 2: %04lX\r\n", (unsigned long)scsp.scilv2);
+   AddString(outstring, "Main cpu interrupt pending: %04lX\r\n", (unsigned long)scsp.mcipd);
+   AddString(outstring, "Main cpu interrupt enable: %04lX\r\n", (unsigned long)scsp.mcieb);
    AddString(outstring, "\r\n");
 }
 

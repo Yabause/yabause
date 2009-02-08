@@ -46,7 +46,6 @@ void yui_gl_draw(YuiGl * glxarea) {
 #else
 	int buf_width, buf_height;
 	GdkPixbuf * pixbuf, * scaledpixbuf;
-	GdkRectangle rect = { 0, 0, GTK_WIDGET(glxarea)->allocation.width, GTK_WIDGET(glxarea)->allocation.height };
 	
 	VIDSoftGetScreenSize( &buf_width, &buf_height );
 	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;
