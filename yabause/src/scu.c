@@ -1517,6 +1517,39 @@ void ScuDspStep(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+int ScuDspSaveProgram(const char *filename) {
+   FILE *fp;
+   u32 i;
+   u8 *buffer;
+
+   if (!filename)
+      return -1;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+      return -1;
+
+   if ((buffer = (u8 *)malloc(sizeof(ScuDsp->ProgramRam))) == NULL)
+   {
+      fclose(fp);
+      return -2;
+   }
+
+   for (i = 0; i < 256; i++)
+   {
+      buffer[i * 4] = (u8)(ScuDsp->ProgramRam[i] >> 24);
+      buffer[(i * 4)+1] = (u8)(ScuDsp->ProgramRam[i] >> 16);
+      buffer[(i * 4)+2] = (u8)(ScuDsp->ProgramRam[i] >> 8);
+      buffer[(i * 4)+3] = (u8)ScuDsp->ProgramRam[i];
+   }
+
+   fwrite((void *)buffer, 1, sizeof(ScuDsp->ProgramRam), fp);
+   fclose(fp);
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void ScuDspGetRegisters(scudspregs_struct *regs) {
    if (regs != NULL) {
       memcpy(regs->ProgramRam, ScuDsp->ProgramRam, sizeof(u32) * 256);

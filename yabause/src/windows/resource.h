@@ -256,6 +256,7 @@
 #define IDC_VDP2SAVEBMPBT               1107
 #define IDC_MINI18NBROWSE               1107
 #define IDC_MINI18NLOGBROWSE            1107
+#define IDC_SAVEPROGRAM                 1107
 #define IDC_VDP2SCREENCB                1108
 #define IDC_VDP2TEXTET                  1109
 #define IDC_VDP1SAVEBMPBT               1110
