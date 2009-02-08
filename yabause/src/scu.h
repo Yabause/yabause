@@ -298,6 +298,7 @@ void ScuSendExternalInterrupt15(void);
 void ScuDspDisasm(u8 addr, char *outstring);
 void ScuDspStep(void);
 int ScuDspSaveProgram(const char *filename);
+int ScuDspSaveMD(const char *filename, int num);
 void ScuDspGetRegisters(scudspregs_struct *regs);
 void ScuDspSetRegisters(scudspregs_struct *regs);
 void ScuDspSetBreakpointCallBack(void (*func)(u32));

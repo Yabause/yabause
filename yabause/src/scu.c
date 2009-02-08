@@ -173,9 +173,9 @@ void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
          if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
             while(counter < TempTransferNumber) {
                u32 tmp = MappedMemoryReadLong(TempReadAddress);
-               MappedMemoryWriteWord(TempWriteAddress, tmp >> 16);
+               MappedMemoryWriteWord(TempWriteAddress, (u16)(tmp >> 16));
                TempWriteAddress += WriteAdd;
-               MappedMemoryWriteWord(TempWriteAddress, tmp & 0xFFFF);
+               MappedMemoryWriteWord(TempWriteAddress, (u16)tmp);
                TempWriteAddress += WriteAdd;
                TempReadAddress += ReadAdd;
                counter += 4;
@@ -223,9 +223,9 @@ void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
       if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
          while(counter < dmainfo->TransferNumber) {
             u32 tmp = MappedMemoryReadLong(dmainfo->ReadAddress);
-            MappedMemoryWriteWord(dmainfo->WriteAddress, tmp >> 16);
+            MappedMemoryWriteWord(dmainfo->WriteAddress, (u16)(tmp >> 16));
             dmainfo->WriteAddress += WriteAdd;
-            MappedMemoryWriteWord(dmainfo->WriteAddress, tmp & 0xFFFF);
+            MappedMemoryWriteWord(dmainfo->WriteAddress, (u16)tmp);
             dmainfo->WriteAddress += WriteAdd;
             dmainfo->ReadAddress += ReadAdd;
             counter += 4;
@@ -285,9 +285,9 @@ u32 readgensrc(u8 num)
          ScuDsp->CT[3]++;
          return val;
       case 0x9: // ALL
-         return ScuDsp->ALU.part.L;
+         return (u32)ScuDsp->ALU.part.L;
       case 0xA: // ALH
-         return ScuDsp->ALU.part.H;
+         return (u32)ScuDsp->ALU.part.H;
       default: break;
    }
 
@@ -328,22 +328,22 @@ void writed1busdest(u8 num, u32 val)
           ScuDsp->WA0 = val;
           return;
       case 0xA:
-          ScuDsp->LOP = val;
+          ScuDsp->LOP = (u16)val;
           return;
       case 0xB:
-          ScuDsp->TOP = val;
+          ScuDsp->TOP = (u8)val;
           return;
       case 0xC:
-          ScuDsp->CT[0] = val;
+          ScuDsp->CT[0] = (u8)val;
           return;
       case 0xD:
-          ScuDsp->CT[1] = val;
+          ScuDsp->CT[1] = (u8)val;
           return;
       case 0xE:
-          ScuDsp->CT[2] = val;
+          ScuDsp->CT[2] = (u8)val;
           return;
       case 0xF:
-          ScuDsp->CT[3] = val;
+          ScuDsp->CT[3] = (u8)val;
           return;
       default: break;
    }
@@ -383,7 +383,7 @@ void writeloadimdest(u8 num, u32 val)
           ScuDsp->WA0 = val;
           return;
       case 0xA: // LOP
-          ScuDsp->LOP = val;
+          ScuDsp->LOP = (u16)val;
           return;
       case 0xC: // PC->TOP, PC
           ScuDsp->TOP = ScuDsp->PC;
@@ -1543,6 +1543,39 @@ int ScuDspSaveProgram(const char *filename) {
    }
 
    fwrite((void *)buffer, 1, sizeof(ScuDsp->ProgramRam), fp);
+   fclose(fp);
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int ScuDspSaveMD(const char *filename, int num) {
+   FILE *fp;
+   u32 i;
+   u8 *buffer;
+
+   if (!filename)
+      return -1;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+      return -1;
+
+   if ((buffer = (u8 *)malloc(sizeof(ScuDsp->MD[num]))) == NULL)
+   {
+      fclose(fp);
+      return -2;
+   }
+
+   for (i = 0; i < 256; i++)
+   {
+      buffer[i * 4] = (u8)(ScuDsp->MD[num][i] >> 24);
+      buffer[(i * 4)+1] = (u8)(ScuDsp->MD[num][i] >> 16);
+      buffer[(i * 4)+2] = (u8)(ScuDsp->MD[num][i] >> 8);
+      buffer[(i * 4)+3] = (u8)ScuDsp->MD[num][i];
+   }
+
+   fwrite((void *)buffer, 1, sizeof(ScuDsp->MD[num]), fp);
    fclose(fp);
 
    return 0;
