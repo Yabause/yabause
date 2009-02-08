@@ -21,6 +21,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include <tchar.h>
 #include "../resource.h"
 #undef FASTCALL
 #include "../../memory.h"
@@ -67,7 +68,7 @@ u32 logsize=512;
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const LPCTSTR lpstrFilter, char *lpstrFile, DWORD nMaxFile)
+void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const LPCTSTR lpstrFilter, LPTSTR lpstrFile, DWORD nMaxFile)
 {
    ZeroMemory(ofn, sizeof(OPENFILENAME));
    ofn->lStructSize = sizeof(OPENFILENAME);
@@ -260,17 +261,18 @@ LRESULT CALLBACK MemTransferDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   return FALSE;
                }
 
+               WideCharToMultiByte(CP_ACP, 0, mtrnsfilename, -1, tempstr, sizeof(tempstr), NULL, NULL);
+
                if (SendMessage(GetDlgItem(hDlg, IDC_DOWNLOADMEM), BM_GETCHECK, 0, 0) == BST_CHECKED)
                {
                   // Let's do a ram dump
-                  MappedMemorySave(mtrnsfilename, mtrnssaddress, mtrnseaddress - mtrnssaddress);
+                  MappedMemorySave(tempstr, mtrnssaddress, mtrnseaddress - mtrnssaddress);
                   mtrnsreadwrite = 0;
                }
                else
                {
                   // upload to ram and possibly execute
                   mtrnsreadwrite = 1;
-                  WideCharToMultiByte(CP_ACP, 0, mtrnsfilename, -1, tempstr, 1024, NULL, NULL);
 
                   // Is this a program?
                   if (SendMessage(GetDlgItem(hDlg, IDC_CHECKBOX1), BM_GETCHECK, 0, 0) == BST_CHECKED)
@@ -851,20 +853,22 @@ LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
             {
                OPENFILENAME ofn;
                WCHAR filter[1024];
+               TCHAR filename[MAX_PATH]=TEXT("\0");
 
                CreateFilter(filter, 1024,
                   "Text Files", "*.txt",
                   "All files (*.*)", "*.*", NULL);
 
                // setup ofn structure
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, logfilename, sizeof(logfilename));
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, filename, sizeof(filename)/sizeof(TCHAR));
                ofn.lpstrDefExt = _16("TXT");
 
                if (GetSaveFileName(&ofn))
                {
-                  FILE *fp=fopen(logfilename, "wb");
+                  FILE *fp=_tfopen(filename, TEXT("wb"));
                   HLOCAL *localbuf=(HLOCAL *)SendDlgItemMessage(hDlg, IDC_LOGET, EM_GETHANDLE, 0, 0);
-                  unsigned char *buf;
+                  TCHAR *buf;
+                  char *buf2;                  
 
                   if (fp == NULL)
                   {
@@ -873,7 +877,12 @@ LRESULT CALLBACK LogDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                   }
 
                   buf = LocalLock(localbuf);
-                  fwrite((void *)buf, 1, strlen(buf), fp);
+                  if (buf2 = malloc(lstrlen(buf)+1))
+                  {
+                     WideCharToMultiByte(CP_ACP, 0, buf, -1, buf2, lstrlen(buf)+1, NULL, NULL);
+                     fwrite((void *)buf2, 1, strlen(buf2), fp);
+                     free(buf2);
+                  }
                   LocalUnlock(localbuf);
                   fclose(fp);
                }

@@ -21,6 +21,7 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <tchar.h>
 #undef FASTCALL
 #include "../../scsp.h"
 #include "../resource.h"
@@ -31,6 +32,7 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                                   LPARAM lParam)
 {
    char tempstr[2048];
+   TCHAR tempstr2[MAX_PATH];
    int i;
 
    switch (uMsg)
@@ -89,18 +91,21 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                WCHAR filter[1024];
 
                cursel = (u8)SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_GETCURSEL, 0, 0);
-               sprintf(tempstr, "channel%02d.wav", cursel);
+               _stprintf(tempstr2, TEXT("channel%02d.wav"), cursel);
 
                CreateFilter(filter, 1024,
                   "WAV Files", "*.WAV",
                   "All files (*.*)", "*.*", NULL);
 
                // setup ofn structure
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, tempstr, sizeof(tempstr));
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, tempstr2, sizeof(tempstr2)/sizeof(TCHAR));
                ofn.lpstrDefExt = _16("WAV");
 
                if (GetSaveFileName(&ofn))
+               {
+                  WideCharToMultiByte(CP_ACP, 0, tempstr2, -1, tempstr, sizeof(tempstr), NULL, NULL);
                   ScspSlotDebugAudioSaveWav(cursel, tempstr);
+               }
 
                return TRUE;
             }
@@ -111,18 +116,21 @@ LRESULT CALLBACK SCSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                WCHAR filter[1024];
 
                cursel = (u8)SendDlgItemMessage(hDlg, IDC_SCSPSLOTCB, CB_GETCURSEL, 0, 0);
-               sprintf(tempstr, "channel%02dregs.bin", cursel);
+               _stprintf(tempstr2, TEXT("channel%02dregs.bin"), cursel);
 
                CreateFilter(filter, 1024,
                   "Binary Files", "*.BIN",
                   "All files (*.*)", "*.*", NULL);
 
                // setup ofn structure
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, tempstr, sizeof(tempstr));
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, tempstr2, sizeof(tempstr2)/sizeof(TCHAR));
                ofn.lpstrDefExt = _16("BIN");
 
                if (GetSaveFileName(&ofn))
+               {
+                  WideCharToMultiByte(CP_ACP, 0, tempstr2, -1, tempstr, sizeof(tempstr), NULL, NULL);
                   ScspSlotDebugSaveRegisters(cursel, tempstr);
+               }
 
                return TRUE;
             }

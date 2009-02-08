@@ -53,7 +53,7 @@ void DebugMouseWheel(HWND hctl, WPARAM wParam);
 int SaveBitmap(const char *filename, int width, int height, u32 *data);
 
 void UpdateLogCallback (char *string);
-void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const LPCTSTR lpstrFilter, char *lpstrFile, DWORD nMaxFile);
+void SetupOFN(OPENFILENAME *ofn, int type, HWND hwnd, const LPCTSTR lpstrFilter, LPTSTR lpstrFile, DWORD nMaxFile);
 
 extern SH2_struct *debugsh;
 extern HWND LogWin;
