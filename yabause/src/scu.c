@@ -1544,6 +1544,7 @@ int ScuDspSaveProgram(const char *filename) {
 
    fwrite((void *)buffer, 1, sizeof(ScuDsp->ProgramRam), fp);
    fclose(fp);
+   free(buffer);
 
    return 0;
 }
@@ -1567,7 +1568,7 @@ int ScuDspSaveMD(const char *filename, int num) {
       return -2;
    }
 
-   for (i = 0; i < 256; i++)
+   for (i = 0; i < 64; i++)
    {
       buffer[i * 4] = (u8)(ScuDsp->MD[num][i] >> 24);
       buffer[(i * 4)+1] = (u8)(ScuDsp->MD[num][i] >> 16);
@@ -1577,6 +1578,7 @@ int ScuDspSaveMD(const char *filename, int num) {
 
    fwrite((void *)buffer, 1, sizeof(ScuDsp->MD[num]), fp);
    fclose(fp);
+   free(buffer);
 
    return 0;
 }
