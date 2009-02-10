@@ -200,6 +200,31 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                }
                break;
             }
+            case IDC_SAVEMD0:
+            case IDC_SAVEMD1:
+            case IDC_SAVEMD2:
+            case IDC_SAVEMD3:
+            {
+               OPENFILENAME ofn;
+               WCHAR filter[1024];
+               TCHAR tempstr2[MAX_PATH]=TEXT("");
+               char tempstr[MAX_PATH];
+
+               CreateFilter(filter, 1024,
+                  "Binary Files", "*.BIN",
+                  "All files (*.*)", "*.*", NULL);
+
+               // setup ofn structure
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hDlg, filter, tempstr2, sizeof(tempstr2)/sizeof(TCHAR));
+               ofn.lpstrDefExt = _16("BIN");
+
+               if (GetSaveFileName(&ofn))
+               {
+                  WideCharToMultiByte(CP_ACP, 0, tempstr2, -1, tempstr, sizeof(tempstr), NULL, NULL);
+                  ScuDspSaveMD(tempstr, LOWORD(wParam)-IDC_SAVEMD0);
+               }
+               break;
+            }
             case IDC_ADDCODEBP:
             {
                // add a code breakpoint

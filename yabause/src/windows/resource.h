@@ -262,6 +262,11 @@
 #define IDC_VDP1SAVEBMPBT               1110
 #define IDC_USEMINI18NLOG               1111
 #define IDC_MINI18NLOGFILENAME          1112
+#define IDC_SAVEMD0                     1114
+#define IDC_SAVEMD1                     1115
+#define IDC_SAVEMD2                     1116
+#define IDC_BUTTON5                     1117
+#define IDC_SAVEMD3                     1117
 #define IDM_CHOOSEBIOS                  40001
 #define IDM_CHOOSECDROM                 40002
 #define IDM_MEMTRANSFER                 40004
@@ -338,7 +343,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         40103
-#define _APS_NEXT_CONTROL_VALUE         1113
+#define _APS_NEXT_CONTROL_VALUE         1118
 #define _APS_NEXT_SYMED_VALUE           133
 #endif
 #endif
