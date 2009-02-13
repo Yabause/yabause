@@ -47,7 +47,7 @@
   #include "SDL.h"
  #endif
 #endif
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || !defined(HAVE_SYS_TIME_H)
 #include <time.h>
 #else
 #include <sys/time.h>
@@ -458,16 +458,16 @@ u64 YabauseGetTicks(void) {
    u64 ticks;
    QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
    return ticks;
-#elif defined(HAVE_LIBSDL)
-   return SDL_GetTicks();
 #elif defined(_arch_dreamcast)
    return (u64) timer_ms_gettime64();
-#elif defined(__APPLE__)
-   struct timeval Time;
-   gettimeofday(&Time, NULL);
-   return (u64)(Time.tv_usec/1000);
 #elif defined(GEKKO)  
    return gettime();
+#elif defined(HAVE_GETTIMEOFDAY)
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   return (u64)tv.tv_sec * 1000000 + tv.tv_usec;
+#elif defined(HAVE_LIBSDL)
+   return (u64)SDL_GetTicks();
 #endif
 }
 
@@ -478,9 +478,13 @@ void YabauseSetVideoFormat(int type) {
    yabsys.MaxLineCount = type ? 313 : 263;
 #ifdef WIN32
    QueryPerformanceFrequency((LARGE_INTEGER *)&yabsys.tickfreq);
-#elif defined(GEKKO)  
+#elif defined(_arch_dreamcast)
+   yabsys.tickfreq = 1000;
+#elif defined(GEKKO)
    yabsys.tickfreq = secs_to_ticks(1);
-#else
+#elif defined(HAVE_GETTIMEOFDAY)
+   yabsys.tickfreq = 1000000;
+#elif defined(HAVE_LIBSDL)
    yabsys.tickfreq = 1000;
 #endif
    yabsys.OneFrameTime = yabsys.tickfreq / (type ? 50 : 60);

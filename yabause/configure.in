@@ -42,6 +42,10 @@ AM_PROG_CC_C_O
 #										#
 #################################################################################
 
+# checking for gettimeofday
+AC_CHECK_HEADERS([sys/time.h])
+AC_CHECK_FUNCS([gettimeofday])
+
 # checking for mini18n
 if test ! "x$MINI18N" = "x" ; then
 	OLDCPPFLAGS="$CPPFLAGS"
