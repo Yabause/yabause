@@ -1501,7 +1501,7 @@ static void GenLogicaD(char op)
 
     if (current_size == SIZE_LONG)
     {
-        if (is_ea_memory(current_ea)) current_cycle += 2;
+        if (!is_ea_memory(current_ea)) current_cycle += 2;
         else current_cycle += 4;
     }
 
@@ -2030,7 +2030,7 @@ static void GenArithaD(char op)
 
     if (current_size == SIZE_LONG)
     {
-        if ((is_ea_memory(current_ea)) || (op == ' ')) current_cycle += 2;
+        if (!is_ea_memory(current_ea)) current_cycle += 2;
         else current_cycle += 4;
     }
 
@@ -2095,7 +2095,7 @@ static void GenArithA(char op)
     else
         start_all(GEN_ALL);
 
-    if ((current_size == SIZE_WORD) && (op != ' ') && (!is_ea_memory(current_ea))) current_cycle += 2;
+    if ((op != ' ') && ((current_size == SIZE_WORD) || (is_ea_memory(current_ea)))) current_cycle += 2;
 
     // read src
     _ea_calc(current_ea, current_op->reg_sft);
@@ -2870,9 +2870,10 @@ static void GenASRD()
 //    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
-    if (current_size == SIZE_LONG) current_cycle += 2;
 
     start_all(GEN_RES | GEN_SRC);
+
+    if (current_size == SIZE_LONG) current_cycle += 2;
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -2957,9 +2958,10 @@ static void GenLSRD()
 //    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
-    if (current_size == SIZE_LONG) current_cycle += 2;
 
     start_all(GEN_RES | GEN_SRC);
+
+    if (current_size == SIZE_LONG) current_cycle += 2;
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3028,9 +3030,10 @@ static void GenROXRD()
 //    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
-    if (current_size == SIZE_LONG) current_cycle += 2;
 
     start_all(GEN_RES | GEN_SRC);
+
+    if (current_size == SIZE_LONG) current_cycle += 2;
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3095,9 +3098,10 @@ static void GenRORD()
 //    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
-    if (current_size == SIZE_LONG) current_cycle += 2;
 
     start_all(GEN_RES | GEN_SRC);
+
+    if (current_size == SIZE_LONG) current_cycle += 2;
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3148,9 +3152,10 @@ static void GenASLD()
 //    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
-    if (current_size == SIZE_LONG) current_cycle += 2;
 
     start_all(GEN_RES | GEN_SRC);
+
+    if (current_size == SIZE_LONG) current_cycle += 2;
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3232,9 +3237,10 @@ static void GenLSLD()
 //    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
-    if (current_size == SIZE_LONG) current_cycle += 2;
 
     start_all(GEN_RES | GEN_SRC);
+
+    if (current_size == SIZE_LONG) current_cycle += 2;
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3311,9 +3317,10 @@ static void GenROXLD()
 //    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
-    if (current_size == SIZE_LONG) current_cycle += 2;
 
     start_all(GEN_RES | GEN_SRC);
+
+    if (current_size == SIZE_LONG) current_cycle += 2;
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");
@@ -3378,9 +3385,10 @@ static void GenROLD()
 //    u32 base = get_current_opcode_base();
 
     current_ea = EA_DREG;               // dst = Dx
-    if (current_size == SIZE_LONG) current_cycle += 2;
 
     start_all(GEN_RES | GEN_SRC);
+
+    if (current_size == SIZE_LONG) current_cycle += 2;
 
     wf_op("\tu32 sft;\n");
     wf_op("\n");

@@ -43,11 +43,13 @@
 
 #ifndef C68K_NO_JUMP_TABLE
 #define NEXT                    \
+    PRE_IO                      \
     Opcode = FETCH_WORD;        \
 	PC += 2;			        \
     goto *JumpTable[Opcode];
 #else
 #define NEXT                    \
+    PRE_IO                      \
     Opcode = FETCH_WORD;        \
 	PC += 2;			        \
     goto SwitchTable;
@@ -260,8 +262,6 @@
                                                     \
         if ((line == 7) || (line > CPU->flag_I))    \
         {                                           \
-            PRE_IO                                  \
-                                                    \
             /* get vector */                                        \
             CPU->IRQLine = 0;                                       \
             vect = CPU->Interrupt_CallBack(line);                   \
@@ -280,6 +280,8 @@
                 CPU->USP = CPU->A[7];       \
                 CPU->A[7] = tmpSP;          \
             }                               \
+                                            \
+            PRE_IO                          \
                                             \
             /* push PC and SR */            \
             PUSH_32_F(PC - CPU->BasePC)     \
