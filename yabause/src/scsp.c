@@ -2140,7 +2140,7 @@ void scsp_update_timer(u32 len)
          scsp_sound_interrupt(0x40);
       if (!(scsp.mcipd & 0x40))
          scsp_main_interrupt(0x40);
-      scsp.timacnt &= 0x00FF;
+      scsp.timacnt -= 0xFF00;
    }
 
    scsp.timbcnt += len << (8 - scsp.timbsd);
@@ -2151,7 +2151,7 @@ void scsp_update_timer(u32 len)
          scsp_sound_interrupt(0x80);
       if (!(scsp.mcipd & 0x80))
          scsp_main_interrupt(0x80);
-      scsp.timbcnt &= 0x00FF;
+      scsp.timbcnt -= 0xFF00;
    }
 
    scsp.timccnt += len << (8 - scsp.timcsd);
@@ -2162,7 +2162,7 @@ void scsp_update_timer(u32 len)
          scsp_sound_interrupt(0x100);
       if (!(scsp.mcipd & 0x100))
          scsp_main_interrupt(0x100);
-      scsp.timccnt &= 0x00FF;
+      scsp.timccnt -= 0xFF00;
    }
 
    // 1F interrupt can't be accurate here...
@@ -2475,11 +2475,11 @@ u32 FASTCALL scsp_r_d(u32 a)
 
 	if (a < 0x400)
 	{
-		return (scsp_slot_get_w(a >> 5, a + 0) << 16) + scsp_slot_get_w(a >> 5, a + 1);
+		return (scsp_slot_get_w(a >> 5, a + 0) << 16) + scsp_slot_get_w(a >> 5, a + 2);
 	}
 	else if (a < 0x600)
 	{
-		if (a < 0x440) return (scsp_get_w(a + 0) << 16) + scsp_get_w(a + 1);
+		if (a < 0x440) return (scsp_get_w(a + 0) << 16) + scsp_get_w(a + 2);
 	}
 	else if (a < 0x700)
 	{
