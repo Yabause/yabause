@@ -418,7 +418,8 @@ int YabauseExec(void) {
       }
 
       PROFILE_START("68K");
-      M68KExec(68);
+      M68KExec(72);  /* 11.3MHz / 60Hz / 262.5 lines / 10 calls per line */
+                     /* (or) .... 50Hz / 312.5 lines / 10 calls per line */
       PROFILE_STOP("68K");
 
       MSH2->cycles %= yabsys.DecilineStop;

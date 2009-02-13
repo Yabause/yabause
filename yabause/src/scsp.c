@@ -2966,27 +2966,34 @@ int ScspChangeVideoFormat(int type) {
 #ifdef __GNUC__
 __attribute__((noinline))
 #endif
-static void M68KExecBP(u32 cycles);
+static s32 M68KExecBP(s32 cycles);
 
-void M68KExec(u32 cycles) {
+static s32 savedcycles;  // Number of cycles left over from the last call
+
+void M68KExec(s32 cycles) {
    if (yabsys.IsM68KRunning)
    {
-      if (ScspInternalVars->numcodebreakpoints == 0)
+      if (savedcycles < cycles)
       {
-         M68K->Exec(cycles);
+         s32 cyclestoexec = cycles - savedcycles;
+         if (ScspInternalVars->numcodebreakpoints == 0)
+         {
+            savedcycles += M68K->Exec(cyclestoexec);
+         }
+         else
+         {
+            savedcycles += M68KExecBP(cyclestoexec);
+         }
       }
-      else
-      {
-         M68KExecBP(cycles);
-      }
+      savedcycles -= cycles;
    }
 }
 
 //----------------------------------------------------------------------------
 
-static void M68KExecBP(u32 cycles) {
-   u32 cyclestoexec=cycles;
-   u32 cyclesexecuted=0;
+static s32 M68KExecBP(s32 cycles) {
+   s32 cyclestoexec=cycles;
+   s32 cyclesexecuted=0;
    int i;
 
    while (cyclesexecuted < cyclestoexec)
@@ -3005,6 +3012,7 @@ static void M68KExecBP(u32 cycles) {
       cyclesexecuted += M68K->Exec(1);
 
    }
+   return cyclesexecuted;
 }
 
 //////////////////////////////////////////////////////////////////////////////

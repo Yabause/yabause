@@ -85,7 +85,7 @@ void ScspDeInit(void);
 void M68KReset(void);
 void ScspReset(void);
 int ScspChangeVideoFormat(int type);
-void M68KExec(u32 cycles);
+void M68KExec(s32 cycles);
 void ScspExec(void);
 void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
 int SoundSaveState(FILE *fp);
