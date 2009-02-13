@@ -2687,6 +2687,8 @@ static int scsp_alloc_bufs() {
    return 0;
 }
 
+static s32 savedcycles;  // Cycles left over from the last M68KExec() call
+
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL c68k_byte_read(const u32 adr) {
@@ -2960,6 +2962,7 @@ void ScspDeInit(void) {
 
 void M68KReset(void) {
    M68K->Reset();
+   savedcycles = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2990,8 +2993,6 @@ int ScspChangeVideoFormat(int type) {
 __attribute__((noinline))
 #endif
 static s32 M68KExecBP(s32 cycles);
-
-static s32 savedcycles;  // Number of cycles left over from the last call
 
 void M68KExec(s32 cycles) {
    if (yabsys.IsM68KRunning)

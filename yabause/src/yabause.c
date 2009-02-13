@@ -347,6 +347,9 @@ void YabauseResetButton(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseExec(void) {
+   int M68k_cycles;              // Integral M68k cycles to execute this time
+   static int M68k_centicycles;  // Fractional cycle counter for M68k
+
    int oneframeexec=0;
 
    while (!oneframeexec)
@@ -418,8 +421,14 @@ int YabauseExec(void) {
       }
 
       PROFILE_START("68K");
-      M68KExec(72);  /* 11.3MHz / 60Hz / 262.5 lines / 10 calls per line */
-                     /* (or) .... 50Hz / 312.5 lines / 10 calls per line */
+      /* 11.2896MHz / 60Hz / 262.5 lines / 10 calls/line = 71.68 cycles/call */
+      M68k_cycles = 71;
+      M68k_centicycles += 68;
+      if (M68k_centicycles >= 100) {
+         M68k_cycles++;
+         M68k_centicycles -= 100;
+      }
+      M68KExec(M68k_cycles);
       PROFILE_STOP("68K");
 
       MSH2->cycles %= yabsys.DecilineStop;
