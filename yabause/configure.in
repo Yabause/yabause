@@ -331,6 +331,10 @@ AC_ARG_ENABLE(perkeyname, AC_HELP_STRING(--enable-perkeyname, use peripheral key
 	[if test "x$enableval" = "xyes" ; then
 		AC_DEFINE(PERKEYNAME)
 	fi])
+AC_ARG_ENABLE(scsp-frame-accurate, AC_HELP_STRING(--enable-scsp-frame-accurate, [enable frame-accurate SCSP emulation (may cause skipping)]) ,
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(SCSP_FRAME_ACCURATE)
+	fi])
 
 AC_CONFIG_FILES([Makefile
 	l10n/Makefile
