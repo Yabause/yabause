@@ -418,7 +418,7 @@ int YabauseExec(void) {
       }
 
       PROFILE_START("68K");
-      M68KExec(170);
+      M68KExec(68);
       PROFILE_STOP("68K");
 
       MSH2->cycles %= yabsys.DecilineStop;

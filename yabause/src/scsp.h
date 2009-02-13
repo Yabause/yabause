@@ -60,7 +60,7 @@ typedef struct
 typedef struct
 {
   u32 scsptiming1;
-  float scsptiming2;
+  u32 scsptiming2;  // 16.16 fixed point
 
   m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
   int numcodebreakpoints;

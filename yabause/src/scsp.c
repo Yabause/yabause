@@ -2961,37 +2961,49 @@ int ScspChangeVideoFormat(int type) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/* Process breakpoints in a separate function to avoid unnecessary register
+ * spillage on the fast path (and to avoid too much block nesting) */
+#ifdef __GNUC__
+__attribute__((noinline))
+#endif
+static void M68KExecBP(u32 cycles);
+
 void M68KExec(u32 cycles) {
-   int i;
    if (yabsys.IsM68KRunning)
    {
       if (ScspInternalVars->numcodebreakpoints == 0)
       {
-         M68K->Exec((u32)((float)cycles / 2.5)); // almost correct
+         M68K->Exec(cycles);
       }
       else
       {
-         u32 cyclestoexec=(u32)((float)cycles / 2.5);
-         u32 cyclesexecuted=0;
+         M68KExecBP(cycles);
+      }
+   }
+}
 
-         for (;;)
-         {
-            // Make sure it isn't one of our breakpoints
-            for (i=0; i < ScspInternalVars->numcodebreakpoints; i++) {
-               if ((M68K->GetPC() == ScspInternalVars->codebreakpoint[i].addr) && ScspInternalVars->inbreakpoint == 0) {
-                  ScspInternalVars->inbreakpoint = 1;
-                  if (ScspInternalVars->BreakpointCallBack)
-                     ScspInternalVars->BreakpointCallBack(ScspInternalVars->codebreakpoint[i].addr);
-                     ScspInternalVars->inbreakpoint = 0;
-               }
-            }
+//----------------------------------------------------------------------------
 
-            // execute instructions individually
-            cyclesexecuted += M68K->Exec(1);
-          
-            if (cyclesexecuted >= cyclestoexec) break;
+static void M68KExecBP(u32 cycles) {
+   u32 cyclestoexec=cycles;
+   u32 cyclesexecuted=0;
+   int i;
+
+   while (cyclesexecuted < cyclestoexec)
+   {
+      // Make sure it isn't one of our breakpoints
+      for (i=0; i < ScspInternalVars->numcodebreakpoints; i++) {
+         if ((M68K->GetPC() == ScspInternalVars->codebreakpoint[i].addr) && ScspInternalVars->inbreakpoint == 0) {
+            ScspInternalVars->inbreakpoint = 1;
+            if (ScspInternalVars->BreakpointCallBack)
+               ScspInternalVars->BreakpointCallBack(ScspInternalVars->codebreakpoint[i].addr);
+            ScspInternalVars->inbreakpoint = 0;
          }
       }
+
+      // execute instructions individually
+      cyclesexecuted += M68K->Exec(1);
+
    }
 }
 
@@ -3028,8 +3040,9 @@ void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len) {
 void ScspExec() {
    u32 audiosize;
 
-   scsp_update_timer((u32)(ScspInternalVars->scsptiming2 + 2.7947)); // I should really be using integers, but oh well
-   ScspInternalVars->scsptiming2 = (ScspInternalVars->scsptiming2 + 2.7947) - (float)((u32)(ScspInternalVars->scsptiming2 + 2.7947)); 
+   ScspInternalVars->scsptiming2 += ((735<<16) + 263/2) / 263;
+   scsp_update_timer(ScspInternalVars->scsptiming2 >> 16); // Pass integer part
+   ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
    ScspInternalVars->scsptiming1++;
 
    if (ScspInternalVars->scsptiming1 >= 263)
