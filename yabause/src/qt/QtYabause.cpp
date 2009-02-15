@@ -68,6 +68,9 @@ SoundInterface_struct *SNDCoreList[] = {
 #ifdef HAVE_LIBSDL
 &SNDSDL,
 #endif
+#ifdef HAVE_LIBAL
+&SNDAL,
+#endif
 NULL
 };
 
