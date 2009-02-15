@@ -127,7 +127,7 @@ static void *sound_update_thd(void *ptr __attribute__((unused)))    {
     return NULL;
 }
 
-void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len)    {
+static void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len)    {
     u32 i;
 
     for (i = 0; i < len; i++)   {

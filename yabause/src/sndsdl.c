@@ -35,7 +35,7 @@ int SNDSDLInit();
 void SNDSDLDeInit();
 int SNDSDLReset();
 int SNDSDLChangeVideoFormat(int vertfreq);
-void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
+static void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
 void SNDSDLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
 u32 SNDSDLGetAudioSpace();
 void SNDSDLMuteAudio();
@@ -165,7 +165,7 @@ int SNDSDLChangeVideoFormat(int vertfreq)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len) {
+static void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len) {
    u32 i;
 
    for (i = 0; i < len; i++)
