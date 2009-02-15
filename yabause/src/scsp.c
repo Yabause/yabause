@@ -3012,7 +3012,7 @@ void M68KExec(s32 cycles) {
 
 //----------------------------------------------------------------------------
 
-static s32 M68KExecBP(s32 cycles) {
+static s32 FASTCALL M68KExecBP(s32 cycles) {
    s32 cyclestoexec=cycles;
    s32 cyclesexecuted=0;
    int i;
