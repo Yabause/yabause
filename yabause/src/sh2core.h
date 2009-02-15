@@ -331,7 +331,7 @@ typedef struct
    int (*Init)();
    void (*DeInit)();
    int (*Reset)();
-   void FASTCALL (*Exec)(SH2_struct *context, u32 cycles);
+   u32 FASTCALL (*Exec)(SH2_struct *context, u32 cycles);
 } SH2Interface_struct;
 
 extern SH2_struct *MSH2;
@@ -341,7 +341,7 @@ int SH2Init(int coreid);
 void SH2DeInit();
 void SH2Reset(SH2_struct *context);
 void SH2PowerOn(SH2_struct *context);
-void FASTCALL SH2Exec(SH2_struct *context, u32 cycles);
+u32 FASTCALL SH2Exec(SH2_struct *context, u32 cycles);
 void SH2SendInterrupt(SH2_struct *context, u8 vector, u8 level);
 void SH2NMI(SH2_struct *context);
 void SH2Step(SH2_struct *context);
