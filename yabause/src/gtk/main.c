@@ -33,6 +33,7 @@
 #include "../cdbase.h"
 #include "../scsp.h"
 #include "../sndsdl.h"
+#include "../sndal.h"
 #include "../persdljoy.h"
 #ifdef ARCH_IS_LINUX
 #include "../perlinuxjoy.h"
@@ -89,6 +90,9 @@ SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
 #ifdef HAVE_LIBSDL
 &SNDSDL,
+#endif
+#ifdef HAVE_LIBAL
+&SNDAL,
 #endif
 NULL
 };

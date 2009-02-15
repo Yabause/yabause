@@ -82,6 +82,9 @@ YuiRangeItem sndcores[] = {
 #ifdef HAVE_LIBSDL
 	{ "1", "SDL Sound Interface" },
 #endif
+#ifdef HAVE_LIBAL
+	{ "2", "OpenAL Sound Interface" },
+#endif
 	{ 0, 0 }
 };
 
