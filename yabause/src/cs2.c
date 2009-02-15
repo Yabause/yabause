@@ -668,18 +668,19 @@ void Cs2Reset(void) {
 void Cs2Exec(u32 timing) {
     Cs2Area->_periodiccycles += timing;
 
-    if (Cs2Area->_commandtiming > 0) {
-       if (Cs2Area->_commandtiming < timing)
-       {
-          Cs2Execute();
-          Cs2Area->_commandtiming = 0;
-       }
-       else
-          Cs2Area->_commandtiming -= timing;
-    }
+   if (Cs2Area->_commandtiming > 0)
+   {
+      if (Cs2Area->_commandtiming < timing)
+      {
+         Cs2Execute();
+         Cs2Area->_commandtiming = 0;
+      }
+      else
+         Cs2Area->_commandtiming -= timing;
+   }
 
-    if (Cs2Area->_periodiccycles >= Cs2Area->_periodictiming)
-    {
+   if (Cs2Area->_periodiccycles >= Cs2Area->_periodictiming)
+   {
       Cs2Area->_periodiccycles -= Cs2Area->_periodictiming; 
 
       // Get Drive's current status and compare with old status

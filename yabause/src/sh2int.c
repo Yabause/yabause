@@ -2649,7 +2649,7 @@ int SH2InterpreterReset()
 
 //////////////////////////////////////////////////////////////////////////////
 
-FASTCALL u32 SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
+FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
    while(context->cycles < cycles)
    {
@@ -2708,15 +2708,14 @@ FASTCALL u32 SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       }
 #endif
    }
-  return 0; // fix me
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
+FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
    if (context->isIdle)
-      SH2idleParse( context, cycles);
+      SH2idleParse(context, cycles);
    else
       SH2idleCheck(context, cycles);
 
@@ -2728,7 +2727,6 @@ FASTCALL u32 SH2InterpreterExec(SH2_struct *context, u32 cycles)
       // Execute it
       opcodes[context->instruction](context);
    }
-   return 0; // fix me
 }
 
 //////////////////////////////////////////////////////////////////////////////

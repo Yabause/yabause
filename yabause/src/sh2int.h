@@ -35,8 +35,8 @@ int SH2InterpreterInit();
 int SH2DebugInterpreterInit();
 void SH2InterpreterDeInit();
 int SH2InterpreterReset();
-u32 FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);
-u32 FASTCALL SH2DebugInterpreterExec(SH2_struct *context, u32 cycles);
+void FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);
+void FASTCALL SH2DebugInterpreterExec(SH2_struct *context, u32 cycles);
 
 extern SH2Interface_struct SH2Interpreter;
 extern SH2Interface_struct SH2DebugInterpreter;
