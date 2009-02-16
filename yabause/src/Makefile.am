@@ -47,7 +47,7 @@ if ARCH_IS_LINUX
 libyabause_a_SOURCES += cd-linux.c perlinuxjoy.c perlinuxjoy.h
 endif
 if ARCH_IS_MACOSX
-libyabause_a_SOURCES += cd-macosx.c
+libyabause_a_SOURCES += cd-macosx.c macjoy.c macjoy.h permacjoy.c permacjoy.h
 endif
 if ARCH_IS_NETBSD
 libyabause_a_SOURCES += cd-netbsd.c

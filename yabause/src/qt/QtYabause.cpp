@@ -53,6 +53,9 @@ PerInterface_struct *PERCoreList[] = {
 #ifdef HAVE_LIBSDL
 &PERSDLJoy,
 #endif
+#ifdef __APPLE__
+&PERMacJoy,
+#endif
 NULL
 };
 
