@@ -227,7 +227,7 @@ static void yui_transfer_exec(UNUSED GtkWidget * widget, YuiTransfer * yt) {
 		case YUI_TRANSFER_STORE:
 			sscanf(gtk_entry_get_text(GTK_ENTRY(yt->from_entry)), "%x", &from);
 			sscanf(gtk_entry_get_text(GTK_ENTRY(yt->to_entry)), "%x", &to);
-			MappedMemorySave(gtk_entry_get_text(GTK_ENTRY(yt->file_entry)), from, to);
+			MappedMemorySave(gtk_entry_get_text(GTK_ENTRY(yt->file_entry)), from, to - from);
 			break;
 	}
 
