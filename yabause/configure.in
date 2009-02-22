@@ -62,8 +62,8 @@ else
 fi
 
 # checking for variadic macros
-AC_MSG_CHECKING([[whether the compiled supports c99 variadic macros]])
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#define MACRO(...) puts(__VA_ARGS__)]], [[MACRO("foo");]]),
+AC_MSG_CHECKING([[whether the compiler supports c99 variadic macros]])
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#define MACRO(...) puts(__VA_ARGS__)]], [[extern int puts(const char *); MACRO("foo");]]),
 	AC_DEFINE(HAVE_C99_VARIADIC_MACROS)
 	AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
