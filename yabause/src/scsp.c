@@ -2687,6 +2687,7 @@ static int scsp_alloc_bufs() {
    return 0;
 }
 
+static s32 FASTCALL (*m68kexecptr)(s32 cycles);  // M68K->Exec or M68KExecBP
 static s32 savedcycles;  // Cycles left over from the last M68KExec() call
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2867,6 +2868,8 @@ int ScspInit(int coreid) {
    ScspInternalVars->BreakpointCallBack = NULL;
    ScspInternalVars->inbreakpoint = 0;
 
+   m68kexecptr = M68K->Exec;
+
    // Allocate enough memory for each channel buffer(may have to change)
    scspsoundlen = 44100 / 60; // assume it's NTSC timing
 #ifdef SCSP_FRAME_ACCURATE
@@ -2992,30 +2995,24 @@ int ScspChangeVideoFormat(int type) {
 #ifdef __GNUC__
 __attribute__((noinline))
 #endif
-static s32 M68KExecBP(s32 cycles);
+static s32 FASTCALL M68KExecBP(s32 cycles);
 
 void M68KExec(s32 cycles) {
-   if (yabsys.IsM68KRunning)
+   s32 newcycles = savedcycles - cycles;
+   if (LIKELY(yabsys.IsM68KRunning))
    {
-      if (savedcycles < cycles)
+      if (LIKELY(newcycles < 0))
       {
-         s32 cyclestoexec = cycles - savedcycles;
-         if (ScspInternalVars->numcodebreakpoints == 0)
-         {
-            savedcycles += M68K->Exec(cyclestoexec);
-         }
-         else
-         {
-            savedcycles += M68KExecBP(cyclestoexec);
-         }
+	 s32 cyclestoexec = -newcycles;
+	 newcycles += (*m68kexecptr)(cyclestoexec);
       }
-      savedcycles -= cycles;
+      savedcycles = newcycles;
    }
 }
 
 //----------------------------------------------------------------------------
 
-static s32 M68KExecBP(s32 cycles) {
+static s32 FASTCALL M68KExecBP(s32 cycles) {
    s32 cyclestoexec=cycles;
    s32 cyclesexecuted=0;
    int i;
@@ -3208,6 +3205,7 @@ int M68KAddCodeBreakpoint(u32 addr) {
 
      ScspInternalVars->codebreakpoint[ScspInternalVars->numcodebreakpoints].addr = addr;
      ScspInternalVars->numcodebreakpoints++;
+     m68kexecptr = M68KExecBP;
 
      return 0;
   }
@@ -3247,6 +3245,9 @@ int M68KDelCodeBreakpoint(u32 addr) {
             ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
             M68KSortCodeBreakpoints();
             ScspInternalVars->numcodebreakpoints--;
+            if (ScspInternalVars->numcodebreakpoints == 0) {
+               m68kexecptr = M68K->Exec;
+	    }
             return 0;
          }
       }
