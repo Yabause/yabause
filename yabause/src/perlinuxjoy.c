@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "perlinuxjoy.h"
 #include <linux/joystick.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 
@@ -123,5 +124,5 @@ void PERLinuxJoyFlush(void) {
 
 void PERLinuxKeyName(u32 key, char * name, UNUSED int size)
 {
-   sprintf(name, "%x", key);
+   sprintf(name, "%x", (int)key);
 }
