@@ -145,7 +145,7 @@ void SH2PowerOn(SH2_struct *context) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
+void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
    CurrentSH2 = context;
 
@@ -169,8 +169,6 @@ u32 FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
   
    FRTExec(cycles);
    WDTExec(cycles);
-
-   return 0; // fix me
 }
 
 //////////////////////////////////////////////////////////////////////////////
