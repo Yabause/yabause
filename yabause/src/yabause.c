@@ -411,13 +411,14 @@ int YabauseExec(void) {
 
       while (yabsys.CycleCountII > yabsys.Duf)
       {
+         /* Decrement the counter first, since ChangeTiming() may zero it */
+         yabsys.CycleCountII -= yabsys.Duf;
          PROFILE_START("SMPC");
          SmpcExec(10);
          PROFILE_STOP("SMPC");
          PROFILE_START("CDB");
          Cs2Exec(10);
          PROFILE_STOP("CDB");
-         yabsys.CycleCountII %= yabsys.Duf;
       }
 
       PROFILE_START("68K");
