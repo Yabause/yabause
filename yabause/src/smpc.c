@@ -345,8 +345,8 @@ void SmpcINTBACKPeripheral(void) {
      }
      else
      {
-        memcpy(SmpcRegs->OREG + oregoffset, SmpcInternalVars->port1.data, 32);
-        SmpcInternalVars->port2.offset += 32;
+        memcpy(SmpcRegs->OREG + oregoffset, SmpcInternalVars->port2.data, 32 - oregoffset);
+        SmpcInternalVars->port2.offset += 32 - oregoffset;
      }
   }
 
