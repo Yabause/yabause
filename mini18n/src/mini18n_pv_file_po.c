@@ -20,7 +20,7 @@
 #include "mini18n.h"
 #include "mini18n_pv_file_po.h"
 
-void * file_po_load(mini18n_hash_t * hash, FILE * f) {
+int file_po_load(mini18n_hash_t * hash, FILE * f) {
 	char buffer[1024];
 	char key[1024];
 	char value[1024];
@@ -85,6 +85,8 @@ void * file_po_load(mini18n_hash_t * hash, FILE * f) {
 			c++;
 		}
 	}
+
+	return 0;
 }
 
 mini18n_file_t mini18n_file_po = {

@@ -20,7 +20,7 @@
 #include "mini18n.h"
 #include "mini18n_pv_file_yts.h"
 
-void * file_yts_load(mini18n_hash_t * hash, FILE * f) {
+int file_yts_load(mini18n_hash_t * hash, FILE * f) {
 	char buffer[1024];
 	char key[1024];
 	char value[1024];
@@ -77,6 +77,8 @@ void * file_yts_load(mini18n_hash_t * hash, FILE * f) {
 			mini18n_hash_add(hash, key, value);
 		}
 	}
+
+	return 0;
 }
 
 mini18n_file_t mini18n_file_yts = {
