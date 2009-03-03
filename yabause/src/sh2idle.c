@@ -443,7 +443,7 @@ static u32 oldCheckCount = 0;
 #define IDLE_VERBOSE_SH2_COUNT {\
    sh2cycleCount += cycles; \
     if ( sh2cycleCount-sh2oldCycleCount > 0x4ffffff ) { \
-      fprintf( stderr, "%lu idle instructions dropped / %lu sh2 instructions parsed : %g \%\n", \
+      fprintf( stderr, "%lu idle instructions dropped / %lu sh2 instructions parsed : %g %%\n", \
 	       idleCheckCount-oldCheckCount, sh2cycleCount-sh2oldCycleCount, \
 	       (float)(idleCheckCount-oldCheckCount)/(sh2cycleCount-sh2oldCycleCount)*100 ); \
       oldCheckCount = idleCheckCount; \
@@ -569,7 +569,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
     if (( !~bDet )&&(loopBegin!=oldLoopBegin[context==MSH2][0])&&(loopBegin!=oldLoopBegin[context==MSH2][1])) {
       char lineBuf[64];
       u32 offset,end;
-      printf( "New %s idle loop at %X -- %X\n", (context==MSH2)?"master":"slave", loopBegin, loopEnd );
+      printf( "New %s idle loop at %X -- %X\n", (context==MSH2)?"master":"slave", (int)loopBegin, (int)loopEnd );
       if ( loopEnd > loopBegin ) { offset = loopBegin; end = loopEnd; }
       else { offset = loopEnd; end = loopBegin; }
       for ( ; offset <= end ; offset+=2 ) {
