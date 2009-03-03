@@ -108,12 +108,12 @@ typedef struct {
 
 static INLINE void ywrite(IOCheck_struct * check, void * ptr, size_t size, size_t nmemb, FILE * stream) {
    check->done += (unsigned int)fwrite(ptr, size, nmemb, stream);
-   check->size += (unsigned int)size;
+   check->size += (unsigned int)nmemb;
 }
 
 static INLINE void yread(IOCheck_struct * check, void * ptr, size_t size, size_t nmemb, FILE * stream) {
    check->done += (unsigned int)fread(ptr, size, nmemb, stream);
-   check->size += (unsigned int)size;
+   check->size += (unsigned int)nmemb;
 }
 
 static INLINE int StateWriteHeader(FILE *fp, const char *name, int version) {
