@@ -34,7 +34,7 @@ AutopackageTarget: 1.0
 This is a Sega Saturn emulator.
 
 [BuildPrepare]
-prepareBuild
+prepareBuild --enable-static-mini18n CFLAGS='-D_FORTIFY_SOURCE=0'
 
 [BuildUnprepare]
 unprepareBuild
