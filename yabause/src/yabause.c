@@ -407,7 +407,7 @@ int YabauseExec(void) {
          }
       }
 
-      yabsys.CycleCountII += MSH2->cycles;
+      yabsys.CycleCountII += yabsys.DecilineStop + MSH2->cycles;
 
       while (yabsys.CycleCountII > yabsys.Duf)
       {
@@ -432,9 +432,6 @@ int YabauseExec(void) {
       M68KExec(M68k_cycles);
       PROFILE_STOP("68K");
 
-      MSH2->cycles %= yabsys.DecilineStop;
-      if (yabsys.IsSSH2Running) 
-         SSH2->cycles %= yabsys.DecilineStop;
       PROFILE_STOP("Total Emulation");
    }
    return 0;
