@@ -68,6 +68,8 @@ typedef struct
    u32 linescrolltbl;
    int wctl;
    int islinewindow;
+   int isverticalscroll;
+   u32 verticalscrolltbl;
 } vdp2draw_struct;
 
 typedef struct
@@ -385,6 +387,19 @@ static INLINE void ReadMosaicData(vdp2draw_struct *info, u16 mask)
       info->mosaicxmask = 1;
       info->mosaicymask = 1;
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void ReadVerticalScrollData(vdp2draw_struct *info, u16 mask, u32 tbl)
+{
+   if (mask & 1)
+   {
+      info->isverticalscroll = mask & 0x1;
+      info->verticalscrolltbl = (tbl & 0x7FFFE) << 1;
+   }
+   else
+      info->isverticalscroll = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -1085,6 +1085,7 @@ static void Vdp2DrawNBG0(void)
 
    ReadMosaicData(&info, 0x1);
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL & 0xFF, Vdp2Regs->LSTA0.all);
+   ReadVerticalScrollData(&info, Vdp2Regs->SCRCTL & 0xFF, Vdp2Regs->VCSTA.all);
    info.wctl = Vdp2Regs->WCTLA;
 
    if (info.enable == 1)
@@ -1151,6 +1152,7 @@ static void Vdp2DrawNBG1(void)
 
    ReadMosaicData(&info, 0x2);
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL >> 8, Vdp2Regs->LSTA1.all);
+   ReadVerticalScrollData(&info, Vdp2Regs->SCRCTL >> 8, Vdp2Regs->VCSTA.all);
    info.wctl = Vdp2Regs->WCTLA >> 8;
 
    Vdp2DrawScroll(&info, vdp2framebuffer, vdp2width, vdp2height);
@@ -1189,6 +1191,7 @@ static void Vdp2DrawNBG2(void)
 
    ReadMosaicData(&info, 0x4);
    info.islinescroll = 0;
+   info.isverticalscroll = 0;
    info.wctl = Vdp2Regs->WCTLB;
    info.isbitmap = 0;
 
@@ -1229,6 +1232,7 @@ static void Vdp2DrawNBG3(void)
 
    ReadMosaicData(&info, 0x8);
    info.islinescroll = 0;
+   info.isverticalscroll = 0;
    info.wctl = Vdp2Regs->WCTLB >> 8;
    info.isbitmap = 0;
 
@@ -1320,6 +1324,7 @@ static void Vdp2DrawRBG0(void)
 
    ReadMosaicData(&info, 0x10);
    info.islinescroll = 0;
+   info.isverticalscroll = 0;
    info.wctl = Vdp2Regs->WCTLC;
 
    Vdp2DrawRotationFP(&info, parameter);
