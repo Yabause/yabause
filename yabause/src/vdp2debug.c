@@ -1134,7 +1134,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
       if (lineVerticalScrollReg & 0x1)
       {
          AddString(outstring, "Vertical Cell Scroll enabled\r\n");
-         AddString(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", 0x05E00000 + (int)(0x05E00000 + ((Vdp2Regs->VCSTA.all & 0x7FFFE) << 1)));
+         AddString(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", (int)(0x05E00000 + ((Vdp2Regs->VCSTA.all & 0x7FFFE) << 1)));
       }
 
       // Window Control
