@@ -194,7 +194,6 @@ typedef struct {
   u32 blockfreespace;
   block_struct block[MAX_BLOCKS];
   block_struct workblock;
-  block_struct cddablock;
 
   u32 curdirsect;
   u32 curdirsize;

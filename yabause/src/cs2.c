@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "error.h"
 #include "netlink.h"
+#include "scsp.h"
 #include "scu.h"
 #include "smpc.h"
 #include "yui.h"
@@ -626,9 +627,6 @@ void Cs2Reset(void) {
 
   Cs2Area->blockfreespace = 200;
 
-  Cs2Area->cddablock.size = -1;
-  memset(Cs2Area->cddablock.data, 0, 2352);
-
   // initialize TOC
   memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
 
@@ -836,12 +834,12 @@ void Cs2Command(void) {
 void Cs2SetTiming(int playing) {
   if (playing) {
      if (Cs2Area->speed1x == 1) // should also verify to make sure it's not reading cd audio
-        Cs2Area->_periodictiming = 13300;
+        Cs2Area->_periodictiming = 13333;
      else
-        Cs2Area->_periodictiming = 6700;
+        Cs2Area->_periodictiming = 6667;
   }
   else {
-     Cs2Area->_periodictiming = 16700;
+     Cs2Area->_periodictiming = 16667;
   }
 }
 
@@ -3203,11 +3201,9 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
      // if mode 2 track, setup the subheader values
      if (isaudio)
      {
-        // Audio data should really be passed onto the SCSP
         Cs2Area->speed1x = 1;
         Cs2SetTiming(1);
-        memcpy((void *)&Cs2Area->cddablock, (void *)&Cs2Area->workblock, sizeof(block_struct));
-        Cs2Area->cddablock.size = 2352;
+        ScspReceiveCDDA(Cs2Area->workblock.data);
         *partition = NULL;
         return 0;
      }

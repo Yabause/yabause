@@ -300,6 +300,12 @@ static u32		scsp_buf_pos;
 
 static scsp_t   scsp;                                           // SCSP structure
 
+static union {
+   u8 sectors[2][2352];
+   u8 data[2*2352];
+} cddabuf;
+static unsigned int cddanextin;  // Next sector buffer to receive into (0 or 1)
+static u32 cddaoutleft;          // Bytes of CDDA left to output
 
 ////////////////////////////////////////////////////////////////
 
@@ -2099,34 +2105,45 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
                 scsp_slot_update_p[(slot->lfofms == 31)?0:1][(slot->lfoems == 31)?0:1][(slot->pcm8b == 0)?1:0][(slot->disll == 31)?0:1][(slot->dislr == 31)?0:1](slot);
 	}
 
-        if (Cs2Area->cddablock.size > 0)
+        if (cddaoutleft > 0)
         {
-           u8 *buf=&Cs2Area->cddablock.data[2352 - Cs2Area->cddablock.size];
-           s32 out;
-
-           if (len > (Cs2Area->cddablock.size >> 2))
-                scsp_buf_len = (Cs2Area->cddablock.size >> 2);
+           if (len > cddaoutleft / 4)
+                scsp_buf_len = cddaoutleft / 4;
            else
                 scsp_buf_len = len;
 
            scsp_buf_pos = 0;
-          
-           for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+
+           /* May need to wrap around the buffer, so use nested loops */
+           while (scsp_buf_pos < scsp_buf_len)
            {
-                out = (s32)(s16)((buf[1] << 8) | buf[0]);
+              s32 temp = cddanextin*2352 - cddaoutleft;
+              s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
+              u8 *buf = &cddabuf.data[outpos];
 
-                if (out)
-                   scsp_bufL[scsp_buf_pos] += out;
+              u32 scsp_buf_target;
+              u32 this_len = scsp_buf_len - scsp_buf_pos;
+              if (this_len > (sizeof(cddabuf.data) - outpos) / 4)
+                 this_len = (sizeof(cddabuf.data) - outpos) / 4;
+              scsp_buf_target = scsp_buf_pos + this_len;
 
-                out = (s32)(s16)((buf[3] << 8) | buf[2]);
+              for(; scsp_buf_pos < scsp_buf_target; scsp_buf_pos++, buf += 4)
+              {
+                 s32 out;
 
-                if (out)
-                   scsp_bufR[scsp_buf_pos] += out;
+                 out = (s32)(s16)((buf[1] << 8) | buf[0]);
 
-                buf += 4;
+                 if (out)
+                    scsp_bufL[scsp_buf_pos] += out;
+
+                 out = (s32)(s16)((buf[3] << 8) | buf[2]);
+
+                 if (out)
+                    scsp_bufR[scsp_buf_pos] += out;
+              }
+
+              cddaoutleft -= this_len * 4;
            }
-
-           Cs2Area->cddablock.size -= (scsp_buf_len << 2);
         }
 }
 
@@ -3068,6 +3085,20 @@ void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ScspReceiveCDDA(const u8 *sector) {
+   memcpy(cddabuf.sectors[cddanextin], sector, 2352);
+   cddanextin = (cddanextin+1)
+                    % (sizeof(cddabuf.sectors) / sizeof(cddabuf.sectors[0]));
+   cddaoutleft += 2352;
+   if (cddaoutleft > sizeof(cddabuf.data))
+   {
+      SCSPLOG("WARNING: CDDA buffer overrun\n");
+      cddaoutleft = sizeof(cddabuf.data);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void ScspExec() {
    u32 audiosize;
 
@@ -3092,7 +3123,7 @@ void ScspExec() {
       }
       if (scspsoundoutleft + scspsoundlen > scspsoundbufsize) {
          u32 overrun = (scspsoundoutleft + scspsoundlen) - scspsoundbufsize;
-         SCSPLOG("Sound buffer overrun: %lu samples\n", (long)overrun);
+         SCSPLOG("WARNING: Sound buffer overrun, %lu samples\n", (long)overrun);
          scspsoundoutleft -= overrun;
       }
       bufL = (s32 *)&scspchannel[0].data32[scspsoundgenpos];
