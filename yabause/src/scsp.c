@@ -2357,6 +2357,7 @@ void FASTCALL scsp_w_w(u32 a, u16 d)
 	{
 		a &= 0x3ff;
 		*(u16 *)&scsp_dcr[a ^ 2] = d;
+		return;
 	}
 
         SCSPLOG("WARNING: scsp w_w to %08lx w/ %04x\n", a, d);
@@ -2396,6 +2397,7 @@ void FASTCALL scsp_w_d(u32 a, u32 d)
 	{
 		a &= 0x3ff;
 		*(u32 *)&scsp_dcr[a] = d;
+		return;
 	}
 
         SCSPLOG("WARNING: scsp w_d to %08lx w/ %08lx\n", a, d);
