@@ -1796,7 +1796,7 @@ void VIDSoftVdp1DistortedSpriteDraw() {
 void VIDSoftVdp1NormalSpriteDraw(void)
 {
    vdp1cmd_struct cmd;
-   s32 x0, y0, x1, y1, W, H;
+   s16 x0, y0, x1, y1, W, H;
    u8 flip, SPD, endCode;
    u16 colorbank;
    int type;
