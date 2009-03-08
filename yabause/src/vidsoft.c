@@ -708,6 +708,17 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
       // if line window is enabled, adjust clipping values
       ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr);
       y &= sinfo.ymask;
+
+      if (info->isverticalscroll)
+      {
+         // this is *wrong*, vertical scroll use a different value per cell
+         // info->verticalscrolltbl should be incremented by info->verticalscrollinc
+         // each time there's a cell change and reseted at the end of the line...
+         // or something like that :)
+         y += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
+         y &= 0x1FF;
+      }
+
       Y=y;
 
       for (i = 0; i < width; i++)
@@ -1085,7 +1096,17 @@ static void Vdp2DrawNBG0(void)
 
    ReadMosaicData(&info, 0x1);
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL & 0xFF, Vdp2Regs->LSTA0.all);
-   ReadVerticalScrollData(&info, Vdp2Regs->SCRCTL & 0xFF, Vdp2Regs->VCSTA.all);
+   if (Vdp2Regs->SCRCTL & 1)
+   {
+      info.isverticalscroll = 1;
+      info.verticalscrolltbl = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
+      if (Vdp2Regs->SCRCTL & 0x100)
+         info.verticalscrollinc = 8;
+      else
+         info.verticalscrollinc = 4;
+   }
+   else
+      info.isverticalscroll = 0;
    info.wctl = Vdp2Regs->WCTLA;
 
    if (info.enable == 1)
@@ -1152,7 +1173,22 @@ static void Vdp2DrawNBG1(void)
 
    ReadMosaicData(&info, 0x2);
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL >> 8, Vdp2Regs->LSTA1.all);
-   ReadVerticalScrollData(&info, Vdp2Regs->SCRCTL >> 8, Vdp2Regs->VCSTA.all);
+   if (Vdp2Regs->SCRCTL & 0x100)
+   {
+      info.isverticalscroll = 1;
+      if (Vdp2Regs->SCRCTL & 0x1)
+      {
+         info.verticalscrolltbl = 4 + ((Vdp2Regs->VCSTA.all & 0x7FFFE) << 1);
+         info.verticalscrollinc = 8;
+      }
+      else
+      {
+         info.verticalscrolltbl = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
+         info.verticalscrollinc = 4;
+      }
+   }
+   else
+      info.isverticalscroll = 0;
    info.wctl = Vdp2Regs->WCTLA >> 8;
 
    Vdp2DrawScroll(&info, vdp2framebuffer, vdp2width, vdp2height);
