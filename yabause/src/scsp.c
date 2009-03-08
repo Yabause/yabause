@@ -3091,9 +3091,9 @@ void ScspExec() {
          scspsoundgenpos = 0;
       }
       if (scspsoundoutleft + scspsoundlen > scspsoundbufsize) {
-         u32 underrun = (scspsoundoutleft + scspsoundlen) - scspsoundbufsize;
-         SCSPLOG("Sound buffer underrun: %lu samples", (long)underrun);
-         scspsoundoutleft -= underrun;
+         u32 overrun = (scspsoundoutleft + scspsoundlen) - scspsoundbufsize;
+         SCSPLOG("Sound buffer overrun: %lu samples\n", (long)overrun);
+         scspsoundoutleft -= overrun;
       }
       bufL = (s32 *)&scspchannel[0].data32[scspsoundgenpos];
       bufR = (s32 *)&scspchannel[1].data32[scspsoundgenpos];
