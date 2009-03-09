@@ -131,6 +131,8 @@ static INLINE int StateFinishHeader(FILE *fp, int offset) {
    int size = 0;
    size = ftell(fp) - offset;
    fseek(fp, offset - 4, SEEK_SET);
+   check.done = 0;
+   check.size = 0;
    ywrite(&check, (void *)&size, sizeof(size), 1, fp); // write true size
    fseek(fp, 0, SEEK_END);
    return (check.done == check.size) ? (size + 12) : -1;
