@@ -352,6 +352,8 @@ int YabauseExec(void) {
 
    int oneframeexec=0;
 
+   SetLagFrameFlag(1);
+
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
@@ -434,7 +436,10 @@ int YabauseExec(void) {
 
       PROFILE_STOP("Total Emulation");
    }
+   IncrementLagFrameCounter();
+   IncrementFrameCounter();
    return 0;
+   
 }
 
 //////////////////////////////////////////////////////////////////////////////

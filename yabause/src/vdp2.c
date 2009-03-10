@@ -47,6 +47,10 @@ static int fpsframecount=0;
 static u64 fpsticks;
 static int fpstoggle=0;
 
+static int framecounter;
+static int lagframecounter;
+static int LagFrameFlag;
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp2RamReadByte(u32 addr) {
@@ -283,7 +287,7 @@ void FPSDisplay(void)
 {
    if (fpstoggle)
    {
-      VIDCore->OnScreenDebugMessage("%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+      VIDCore->OnScreenDebugMessage("%02d/%02d FPS %d %d", fps, yabsys.IsPal ? 50 : 60, framecounter, lagframecounter);
 
       fpsframecount++;
       if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
@@ -1346,3 +1350,24 @@ void DisableAutoFrameSkip(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void IncrementLagFrameCounter(void)
+{
+   if(LagFrameFlag == 1)
+   lagframecounter++;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SetLagFrameFlag(int i)
+{
+   LagFrameFlag=i;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void IncrementFrameCounter(void)
+{
+   framecounter++;
+}
+
+//////////////////////////////////////////////////////////////////////////////

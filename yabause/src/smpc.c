@@ -317,6 +317,7 @@ void SmpcINTBACKPeripheral(void) {
      PerFlush(&PORTDATA2);
      SmpcInternalVars->port1.offset = 0;
      SmpcInternalVars->port2.offset = 0;
+     SetLagFrameFlag(0);
   }
 
   // Port 1
