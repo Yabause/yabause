@@ -424,9 +424,18 @@ int YabauseExec(void) {
       }
 
       PROFILE_START("68K");
-      /* 11.2896MHz / 60Hz / 262.5 lines / 10 calls/line = 71.68 cycles/call */
-      M68k_cycles = 71;
-      M68k_centicycles += 68;
+      if (yabsis.IsPal)
+      {
+         /* 11.2896MHz / 50Hz / 262.5 lines / 10 calls/line = 86.01 cycles/call */
+         M68k_cycles = 86;
+         M68k_centicycles += 1;
+      }
+      else
+      {
+         /* 11.2896MHz / 60Hz / 262.5 lines / 10 calls/line = 71.68 cycles/call */
+         M68k_cycles = 71;
+         M68k_centicycles += 68;
+      }
       if (M68k_centicycles >= 100) {
          M68k_cycles++;
          M68k_centicycles -= 100;
