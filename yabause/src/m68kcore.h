@@ -25,6 +25,7 @@
 #define M68KCORE_DEFAULT -1
 #define M68KCORE_DUMMY    0
 #define M68KCORE_C68K     1
+#define M68KCORE_Q68      2
 
 typedef u32 FASTCALL M68K_READ(const u32 adr);
 typedef void FASTCALL M68K_WRITE(const u32 adr, u32 data);
@@ -55,6 +56,7 @@ typedef struct {
 
 	void (*SetFetch)(u32 low_adr, u32 high_adr, pointer fetch_adr);
 	void FASTCALL (*SetIRQ)(s32 level);
+	void FASTCALL (*TouchMem)(u32 address);
 
 	void (*SetReadB)(M68K_READ *Func);
 	void (*SetReadW)(M68K_READ *Func);
@@ -68,5 +70,6 @@ int M68KInit(int coreid);
 
 extern M68K_struct M68KDummy;
 extern M68K_struct M68KC68K;
+extern M68K_struct M68KQ68;
 
 #endif

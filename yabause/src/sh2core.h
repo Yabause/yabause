@@ -319,9 +319,55 @@ typedef struct
    u32 cycles;
    u8 isslave;
    u8 isIdle;
+   u8 isSleeping;
    u16 instruction;
    u8 breakpointEnabled;
    breakpoint_struct bp;
+
+   /* Data used by PSP SH-2 core */
+   struct
+   {
+      /* Flag indicating whether we should check for interrupts (set by
+       * instructions that modify SR) */
+      int need_interrupt_check;
+
+      /* Currently-executing block */
+      struct JitEntry_ *current_entry;
+
+      /* PC at end of last SH2->Exec() call (used to detect interrupts) */
+      u32 current_PC;
+
+      /* Call stack for optimizing BSR/JSR/RTS */
+      void *call_stack;
+      /* Index of next call stack entry to write */
+      int call_stack_top;
+
+      /* Cached (most-recently-used) page index and associated pointer */
+      u32 cached_page;  // Bits 19-31 of the last used direct-access page
+      u8 *cached_ptr;   // Pointer to direct-access page memory
+
+      /* Pending branch type (to be executed after "delay" cycles) */
+      enum {SH2BRTYPE_NONE = 0, // No branch pending
+            SH2BRTYPE_DYNAMIC,  // Unconditional dynamic branch/jump
+            SH2BRTYPE_STATIC,   // Unconditional static (relative) branch
+            SH2BRTYPE_JSR,      // Subroutine call (either JSR or BSR)
+            SH2BRTYPE_RTS,
+            SH2BRTYPE_BT,
+            SH2BRTYPE_BF,
+            SH2BRTYPE_BT_S,
+            SH2BRTYPE_BF_S,
+           } branch_type;
+      u32 branch_target;    // Target address
+      u32 branch_cond;      // For SH2BRTYPE_BTF, nonzero if branch is taken
+
+      /* Saved values for optimized division (used when tracing) */
+      struct
+      {
+         u32 target_PC;     // PC of final DIV1 instruction (0 if none active)
+         int Rquo, Rrem;    // Register numbers (quotient and remainder)
+         u32 quo, rem, SR;  // Result values for registers
+      } div_data;
+   } psp;
 } SH2_struct;
 
 typedef struct
@@ -332,6 +378,7 @@ typedef struct
    void (*DeInit)();
    int (*Reset)();
    void FASTCALL (*Exec)(SH2_struct *context, u32 cycles);
+   void (*WriteNotify)(u32 start, u32 length);
 } SH2Interface_struct;
 
 extern SH2_struct *MSH2;
@@ -347,6 +394,7 @@ void SH2NMI(SH2_struct *context);
 void SH2Step(SH2_struct *context);
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r);
+void SH2WriteNotify(u32 start, u32 length);
 
 void SH2SetBreakpointCallBack(SH2_struct *context, void (*func)(void *, u32));
 int SH2AddCodeBreakpoint(SH2_struct *context, u32 addr);

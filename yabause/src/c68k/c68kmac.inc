@@ -41,23 +41,30 @@
 #define ROR_33(A, C)    (LSR_32(A, C) | LSL_32(A, 33-(C)))
 
 
+#ifdef TRACE_WITH_Q68
+extern void TRACE(int,c68k_struc*,int,int);
+#else
+# define TRACE(a,b,c,d) /*nothing*/
+#endif
 #ifndef C68K_NO_JUMP_TABLE
 #define NEXT                    \
     PRE_IO                      \
     Opcode = FETCH_WORD;        \
-	PC += 2;			        \
+    PC += 2;                    \
+    TRACE(PC, CPU, Opcode, CCnt); \
     goto *JumpTable[Opcode];
 #else
 #define NEXT                    \
     PRE_IO                      \
     Opcode = FETCH_WORD;        \
-	PC += 2;			        \
+    PC += 2;                    \
+    TRACE(PC, CPU, Opcode, CCnt); \
     goto SwitchTable;
 #endif
 
 #define RET(A)                  \
     CCnt -= (A);                \
-    if (CCnt <= 0) goto C68k_Exec_End;	\
+    if (CCnt <= 0) goto C68k_Exec_End; \
     NEXT
 
 #define SET_PC(A)               \

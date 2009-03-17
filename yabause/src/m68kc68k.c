@@ -19,12 +19,37 @@
 
 #include "m68kc68k.h"
 #include "c68k/c68k.h"
+#include "memory.h"
+#include "yabause.h"
+
+/**
+ * PROFILE_68K: Perform simple profiling of the 68000 emulation, reporting
+ * the average time per 68000 clock cycle.  (Realtime execution would be
+ * around 88.5 nsec/cycle.)
+ */
+// #define PROFILE_68K
+
+
+static u8 *SoundDummy=NULL;
 
 void M68KC68KInit(void) {
+	int i;
+
+	// Setup a 64k buffer filled with invalid 68k instructions to serve
+	// as a default map
+	if ((SoundDummy = T2MemoryInit(0x10000)) != NULL)
+		memset(SoundDummy, 0xFF, 0x10000);
+
+	for (i = 0; i < 0x100; i++)
+		M68K->SetFetch(i << 16, (i << 16) + 0xFFFF, (pointer)SoundDummy);
+
 	C68k_Init(&C68K, NULL); // not sure if I need the int callback or not
 }
 
 void M68KC68KDeInit(void) {
+	if (SoundDummy)
+		T2MemoryDeInit(SoundDummy);
+	SoundDummy = NULL;
 }
 
 void M68KC68KReset(void) {
@@ -32,7 +57,26 @@ void M68KC68KReset(void) {
 }
 
 s32 FASTCALL M68KC68KExec(s32 cycle) {
+#ifdef PROFILE_68K
+    static u32 tot_cycles = 0, tot_usec = 0, tot_ticks = 0, last_report = 0;
+    u32 start, end;
+    start = (u32) YabauseGetTicks();
+    int retval = C68k_Exec(&C68K, cycle);
+    end = (u32) YabauseGetTicks();
+    tot_cycles += cycle;
+    tot_ticks += end - start;
+    if (tot_cycles/1000000 > last_report) {
+        tot_usec += (u64)tot_ticks * 1000000 / yabsys.tickfreq;
+        tot_ticks = 0;
+        fprintf(stderr, "%ld cycles in %.3f sec = %.3f nsec/cycle\n",
+                (long)tot_cycles, (double)tot_usec/1000000,
+                ((double)tot_usec / (double)tot_cycles) * 1000);
+        last_report = tot_cycles/1000000;
+    }
+    return retval;
+#else
 	return C68k_Exec(&C68K, cycle);
+#endif
 }
 
 u32 M68KC68KGetDReg(u32 num) {
@@ -91,6 +135,10 @@ void FASTCALL M68KC68KSetIRQ(s32 level) {
 	C68k_Set_IRQ(&C68K, level);
 }
 
+void FASTCALL M68KC68KTouchMem(u32 address) {
+	/* nothing to do */
+}
+
 void M68KC68KSetReadB(M68K_READ *Func) {
 	C68k_Set_ReadB(&C68K, Func);
 }
@@ -128,6 +176,7 @@ M68K_struct M68KC68K = {
 	M68KC68KSetMSP,
 	M68KC68KSetFetch,
 	M68KC68KSetIRQ,
+	M68KC68KTouchMem,
 	M68KC68KSetReadB,
 	M68KC68KSetReadW,
 	M68KC68KSetWriteB,

@@ -161,7 +161,8 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
          context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts-1].level;
          context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts-1].vector << 2));
          context->NumberOfInterrupts--;
-	 context->isIdle = 0;
+         context->isIdle = 0;
+         context->isSleeping = 0;
       }
    }
 
@@ -251,6 +252,13 @@ void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r)
    if (r != NULL) {
       memcpy(&context->regs, r, sizeof(context->regs));
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2WriteNotify(u32 start, u32 length) {
+   if (SH2Core->WriteNotify)
+      SH2Core->WriteNotify(start, length);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1479,15 +1487,25 @@ void FASTCALL DataArrayWriteLong(u32 addr, u32 val)  {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FRTExec(UNUSED u32 cycles) {
+#ifdef PSP_TIMING_TWEAKS
+void FRTExec(u32 cycles)
+#else
+void FRTExec(UNUSED u32 cycles)
+#endif
+{
    u32 frcold;
    u32 frctemp;
 
    frcold = frctemp = (u32)CurrentSH2->onchip.FRC.all;
    
    // Increment FRC
+#ifdef PSP_TIMING_TWEAKS
+   frctemp += ((cycles + CurrentSH2->frc.leftover) / CurrentSH2->frc.div);
+   CurrentSH2->frc.leftover = (cycles + CurrentSH2->frc.leftover) % CurrentSH2->frc.div;
+#else
    frctemp += ((CurrentSH2->cycles + CurrentSH2->frc.leftover) / CurrentSH2->frc.div);
    CurrentSH2->frc.leftover = (CurrentSH2->cycles + CurrentSH2->frc.leftover) % CurrentSH2->frc.div;
+#endif
 
    // Check to see if there is or was a Output Compare A match
    if (frctemp >= CurrentSH2->onchip.OCRA && frcold < CurrentSH2->onchip.OCRA)

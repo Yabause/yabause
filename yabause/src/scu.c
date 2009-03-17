@@ -171,6 +171,7 @@ void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
          TempReadAddress &= 0x7FFFFFFF;
 
          if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
+            u32 start = TempWriteAddress;
             while(counter < TempTransferNumber) {
                u32 tmp = MappedMemoryReadLong(TempReadAddress);
                MappedMemoryWriteWord(TempWriteAddress, (u16)(tmp >> 16));
@@ -180,6 +181,7 @@ void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
                TempReadAddress += ReadAdd;
                counter += 4;
             }
+            SH2WriteNotify(start, TempWriteAddress - start);
          }
          else {
             LOG("indirect DMA, A Bus, not implemented\n");
@@ -221,6 +223,7 @@ void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
       }
 
       if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
+         u32 start = dmainfo->WriteAddress;
          while(counter < dmainfo->TransferNumber) {
             u32 tmp = MappedMemoryReadLong(dmainfo->ReadAddress);
             MappedMemoryWriteWord(dmainfo->WriteAddress, (u16)(tmp >> 16));
@@ -230,15 +233,18 @@ void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
             dmainfo->ReadAddress += ReadAdd;
             counter += 4;
          }
+         SH2WriteNotify(start, dmainfo->WriteAddress - start);
       }
       else {
          LOG("direct DMA, A Bus, not tested yet\n");
+         u32 start = dmainfo->WriteAddress;
          while(counter < dmainfo->TransferNumber) {
             MappedMemoryWriteLong(dmainfo->WriteAddress, MappedMemoryReadLong(dmainfo->ReadAddress));
             dmainfo->ReadAddress += ReadAdd;
             dmainfo->WriteAddress += WriteAdd;
             counter += 4;
          }
+         SH2WriteNotify(start, dmainfo->WriteAddress - start);
       }
       switch(dmainfo->mode) {
          case 0:
@@ -843,11 +849,13 @@ void ScuExec(u32 timing) {
                         ScuDsp->WA0 &= 0x01FFFFFF;
 
                         // DMA(H) [RAM], D0, ??
+                        u32 start = ScuDsp->WA0 << 2;
                         for (i = 0; i < transferNumber; i++)
                         {                        
                            MappedMemoryWriteLong(ScuDsp->WA0 << 2, readdmasrc((instruction >> 8) & 0x3, 1));
                            ScuDsp->WA0 += (addressAdd >> 2); 
                         }
+                        SH2WriteNotify(start, (ScuDsp->WA0 << 2) - start);
 
                         if (hold) ScuDsp->WA0 = WA0temp;
                      }

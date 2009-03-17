@@ -20,6 +20,9 @@
 #include "../core.h"
 #include "c68k.h"
 
+// #define TRACE_WITH_Q68  // Define to use Q68 tracing code to trace insns
+                           // (requires Q68 built in, of course)
+
 #ifdef NEOCD_HLE
 void    cdrom_load_files(void);
 void    neogeo_cdda_control(void);
@@ -126,6 +129,32 @@ extern int img_display;
 //////////////////////
 
 #include "c68kmac.inc"
+
+#ifndef C68K_GEN
+# ifdef TRACE_WITH_Q68
+#include "../q68/q68.h"
+static c68k_struc *TRACE_CPU;
+static uint32_t readw(uint32_t address) {
+    return TRACE_CPU->Read_Word(address);
+}
+/* Make our own version of the structure to avoid the overhead of dozens of
+ * function calls every instruction */
+static struct {
+    u32 D[8], A[8], PC, SR, USP, SSP, dummy[7];
+    void *readb, *readw, *writeb, *writew;
+} state = {.readw = readw};
+void TRACE(int PC,c68k_struc *CPU,int Opcode,int CCnt) {
+    static FILE *f;
+    if (!f) f = fopen("c68k.log", "w");
+    TRACE_CPU = CPU;
+    memcpy(state.D, CPU->D, 16*4);
+    state.PC = PC - 2 - CPU->BasePC;
+    state.SR = GET_SR;
+    if (f) q68_trace((Q68State *)&state, f,
+                     CPU->CycleToDo - CCnt, CPU->CycleToDo);
+}
+# endif  // TRACE_WITH_Q68
+#endif  // !C68K_GEN
 
 // main exec function
 //////////////////////
@@ -241,7 +270,7 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
     NEXT
 #else
     Opcode = FETCH_WORD;
-	PC += 2;
+    PC += 2;
     goto *JumpTable[Opcode];
 #endif
 #endif

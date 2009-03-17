@@ -59,9 +59,16 @@
 #include <ogc/lwp_watchdog.h>
 extern long long gettime();
 #endif
+#ifdef PSP
+#include "psp/common.h"
+#endif
 
-#define DONT_PROFILE
-#include "profile.h"
+#ifdef SYS_PROFILE_H
+ #include SYS_PROFILE_H
+#else
+ #define DONT_PROFILE
+ #include "profile.h"
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -356,20 +363,54 @@ int YabauseExec(void) {
 
    while (!oneframeexec)
    {
+#ifdef NO_DECILINE
+      const unsigned int sh2cycles = yabsys.DecilineStop * 10;
+#else
+      const unsigned int sh2cycles = yabsys.DecilineStop;
+#endif
+
       PROFILE_START("Total Emulation");
+
+#ifdef NO_DECILINE
+
+      PROFILE_START("MSH2");
+      SH2Exec(MSH2, sh2cycles - yabsys.DecilineStop);
+      PROFILE_STOP("MSH2");
+      PROFILE_START("SSH2");
+      if (yabsys.IsSSH2Running)
+         SH2Exec(SSH2, sh2cycles - yabsys.DecilineStop);
+      PROFILE_STOP("SSH2");
+
+      PROFILE_START("hblankin");
+      Vdp2HBlankIN();
+      PROFILE_STOP("hblankin");
+
       PROFILE_START("MSH2");
       SH2Exec(MSH2, yabsys.DecilineStop);
       PROFILE_STOP("MSH2");
-
       PROFILE_START("SSH2");
       if (yabsys.IsSSH2Running)
          SH2Exec(SSH2, yabsys.DecilineStop);
       PROFILE_STOP("SSH2");
 
+#else // !NO_DECILINE
+
+      PROFILE_START("MSH2");
+      SH2Exec(MSH2, sh2cycles);
+      PROFILE_STOP("MSH2");
+
+      PROFILE_START("SSH2");
+      if (yabsys.IsSSH2Running)
+         SH2Exec(SSH2, sh2cycles);
+      PROFILE_STOP("SSH2");
+
+#endif
+
       PROFILE_START("SCU");
-      ScuExec(yabsys.DecilineStop >> 1);
+      ScuExec(sh2cycles / 2);
       PROFILE_STOP("SCU");
 
+#ifndef NO_DECILINE
       yabsys.DecilineCount++;
       if(yabsys.DecilineCount == 9)
       {
@@ -379,6 +420,7 @@ int YabauseExec(void) {
          PROFILE_STOP("hblankin");
       }
       else if (yabsys.DecilineCount == 10)
+#endif
       {
          // HBlankOUT
          PROFILE_START("hblankout");
@@ -409,22 +451,50 @@ int YabauseExec(void) {
          }
       }
 
-      yabsys.CycleCountII += yabsys.DecilineStop + MSH2->cycles;
+#ifdef PSP_TIMING_TWEAKS
+      yabsys.CycleCountII += sh2cycles;
+#else
+      yabsys.CycleCountII += sh2cycles + MSH2->cycles;
+#endif
 
-      while (yabsys.CycleCountII > yabsys.Duf)
       {
-         /* Decrement the counter first, since ChangeTiming() may zero it */
-         yabsys.CycleCountII -= yabsys.Duf;
-         PROFILE_START("SMPC");
-         SmpcExec(10);
-         PROFILE_STOP("SMPC");
-         PROFILE_START("CDB");
-         Cs2Exec(10);
-         PROFILE_STOP("CDB");
+         u32 usec = 0;
+         while (yabsys.CycleCountII > yabsys.Duf)
+         {
+             yabsys.CycleCountII -= yabsys.Duf;
+             usec += 10;
+         }
+         if (usec > 0)
+         {
+            PROFILE_START("SMPC");
+            SmpcExec(usec);
+            PROFILE_STOP("SMPC");
+            PROFILE_START("CDB");
+            Cs2Exec(usec);
+            PROFILE_STOP("CDB");
+         }
       }
 
       PROFILE_START("68K");
-      if (yabsis.IsPal)
+#ifdef NO_DECILINE
+      if (yabsys.IsPal)
+      {
+         /* 11.2896MHz / 50Hz / 262.5 lines / 10 calls/line = 86.01 cycles/call */
+         M68k_cycles = 860;
+         M68k_centicycles += 10;
+      }
+      else
+      {
+         /* 11.2896MHz / 60Hz / 262.5 lines / 10 calls/line = 71.68 cycles/call */
+         M68k_cycles = 716;
+         M68k_centicycles += 80;
+      }
+      if (M68k_centicycles >= 100) {
+         M68k_cycles++;
+         M68k_centicycles -= 100;
+      }
+#else
+      if (yabsys.IsPal)
       {
          /* 11.2896MHz / 50Hz / 262.5 lines / 10 calls/line = 86.01 cycles/call */
          M68k_cycles = 86;
@@ -440,6 +510,7 @@ int YabauseExec(void) {
          M68k_cycles++;
          M68k_centicycles -= 100;
       }
+#endif
       M68KExec(M68k_cycles);
       PROFILE_STOP("68K");
 
@@ -484,6 +555,8 @@ u64 YabauseGetTicks(void) {
    return (u64) timer_ms_gettime64();
 #elif defined(GEKKO)  
    return gettime();
+#elif defined(PSP)
+   return sceKernelGetSystemTimeWide();
 #elif defined(HAVE_GETTIMEOFDAY)
    struct timeval tv;
    gettimeofday(&tv, NULL);
@@ -504,6 +577,8 @@ void YabauseSetVideoFormat(int type) {
    yabsys.tickfreq = 1000;
 #elif defined(GEKKO)
    yabsys.tickfreq = secs_to_ticks(1);
+#elif defined(PSP)
+   yabsys.tickfreq = 1000000;
 #elif defined(HAVE_GETTIMEOFDAY)
    yabsys.tickfreq = 1000000;
 #elif defined(HAVE_LIBSDL)

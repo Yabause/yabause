@@ -31,6 +31,13 @@
 #include "bios.h"
 #include "yabause.h"
 
+// #define SH2_TRACE  // Uncomment to enable tracing for debug interpreter
+
+#ifdef SH2_TRACE
+#include "sh2trace.h"
+#endif
+
+
 opcodefunc opcodes[0x10000];
 
 SH2Interface_struct SH2Interpreter = {
@@ -39,7 +46,8 @@ SH2Interface_struct SH2Interpreter = {
    SH2InterpreterInit,
    SH2InterpreterDeInit,
    SH2InterpreterReset,
-   SH2InterpreterExec
+   SH2InterpreterExec,
+   NULL  // SH2WriteNotify not used
 };
 
 SH2Interface_struct SH2DebugInterpreter = {
@@ -48,7 +56,8 @@ SH2Interface_struct SH2DebugInterpreter = {
    SH2DebugInterpreterInit,
    SH2InterpreterDeInit,
    SH2InterpreterReset,
-   SH2DebugInterpreterExec
+   SH2DebugInterpreterExec,
+   NULL  // SH2WriteNotify not used
 };
 
 fetchfunc fetchlist[0x100];
@@ -92,6 +101,10 @@ u32 FASTCALL FetchInvalid(UNUSED u32 addr)
 
 void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 {
+#ifdef SH2_TRACE
+   sh2_trace(sh, addr);
+#endif
+
    // Fetch Instruction
    sh->instruction = fetchlist[(addr >> 20) & 0x0FF](addr);
 
@@ -2655,6 +2668,10 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
    {
       SH2HandleBreakpoints(context);
 
+#ifdef SH2_TRACE
+      sh2_trace(context, context->regs.PC);
+#endif
+
 #ifdef EMULATEUBC
       // fix me
       int ubcainterrupt=0, ubcbinterrupt=0;
@@ -2708,6 +2725,10 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       }
 #endif
    }
+
+#ifdef SH2_TRACE
+   SH2_TRACE_ADD_CYCLES(cycles);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

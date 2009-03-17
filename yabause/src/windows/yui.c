@@ -119,6 +119,9 @@ M68K_struct *M68KCoreList[] = {
 #ifndef NOC68K
 &M68KC68K,
 #endif
+#ifdef HAVE_Q68
+&M68KQ68,
+#endif
 //&M68KHLE,
 NULL
 };

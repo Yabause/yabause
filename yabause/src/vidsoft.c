@@ -671,6 +671,8 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
    scrollx = info->x;
    scrolly = info->y;
 
+   clip[0].xstart = clip[0].ystart = clip[0].xend = clip[0].yend = 0;
+   clip[1].xstart = clip[1].ystart = clip[1].xend = clip[1].yend = 0;
    ReadWindowData(info->wctl, clip);
    linewnd0addr = linewnd1addr = 0;
    ReadLineWindowData(&info->islinewindow, info->wctl, &linewnd0addr, &linewnd1addr);
@@ -2852,6 +2854,8 @@ void VIDSoftVdp2DrawEnd(void)
       }
 
       wctl = Vdp2Regs->WCTLC >> 8;
+      clip[0].xstart = clip[0].ystart = clip[0].xend = clip[0].yend = 0;
+      clip[1].xstart = clip[1].ystart = clip[1].xend = clip[1].yend = 0;
       ReadWindowData(wctl, clip);
       linewnd0addr = linewnd1addr = 0;
       ReadLineWindowData(&islinewindow, wctl, &linewnd0addr, &linewnd1addr);

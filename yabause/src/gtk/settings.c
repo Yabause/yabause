@@ -29,6 +29,16 @@
 YuiRangeItem sh2interpreters[] = {
   { "0", "Fast Interpreter" },
   { "1", "Debug Interpreter" },
+#ifdef TEST_PSP_SH2
+  { "1486", "PSP Interpreter (for debugging)" },
+#endif
+  { 0, 0 }
+};
+
+YuiRangeItem m68kinterpreters[] = {
+  { "1", "Standard Interpreter" },
+  { "2", "Q68 Interpreter" },
+  { "0", "Disabled" },
   { 0, 0 }
 };
 
@@ -432,6 +442,9 @@ GtkWidget* create_dialog1(void) {
 
   box = yui_page_add(YUI_PAGE(advanced), _("SH2 Interpreter"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "SH2Int", sh2interpreters));
+
+  box = yui_page_add(YUI_PAGE(advanced), _("M68k Interpreter"));
+  gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "M68kInt", m68kinterpreters));
 
 #ifdef HAVE_LIBMINI18N
   box = yui_page_add(YUI_PAGE(advanced), _("Translation"));

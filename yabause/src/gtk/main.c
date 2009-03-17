@@ -42,6 +42,7 @@
 #include "../m68kcore.h"
 #include "../m68kc68k.h"
 #include "pergtk.h"
+#include "../psp/psp-sh2.h"
 
 #include "settings.h"
 
@@ -56,12 +57,18 @@ M68K_struct * M68KCoreList[] = {
 #ifdef HAVE_C68K
 &M68KC68K,
 #endif
+#ifdef HAVE_Q68
+&M68KQ68,
+#endif
 NULL
 };
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
 &SH2DebugInterpreter,
+#ifdef TEST_PSP_SH2
+&SH2PSP,
+#endif
 NULL
 };
 
@@ -268,6 +275,13 @@ gboolean yui_settings_load(void) {
 	tmp = yinit.sh2coretype;
 	yinit.sh2coretype = g_key_file_get_integer(keyfile, "General", "SH2Int", 0);
 	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.sh2coretype)) {
+		mustRestart = TRUE;
+	}
+
+	/* m68k */
+	tmp = yinit.m68kcoretype;
+	yinit.m68kcoretype = g_key_file_get_integer(keyfile, "General", "M68kInt", 0);
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.m68kcoretype)) {
 		mustRestart = TRUE;
 	}
 

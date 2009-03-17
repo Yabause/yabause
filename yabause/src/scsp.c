@@ -2671,7 +2671,6 @@ void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 //////////////////////////////////////////////////////////////////////////////
 
 u8 *SoundRam=NULL;
-u8 *SoundDummy=NULL;
 ScspInternal *ScspInternalVars;
 static SoundInterface_struct *SNDCore=NULL;
 extern SoundInterface_struct *SNDCoreList[];
@@ -2785,6 +2784,7 @@ void FASTCALL SoundRamWriteByte(u32 addr, u8 val) {
       return;
 
    T2WriteByte(SoundRam, addr, val);
+   M68K->TouchMem(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2812,6 +2812,7 @@ void FASTCALL SoundRamWriteWord(u32 addr, u16 val) {
       return;
 
    T2WriteWord(SoundRam, addr, val);
+   M68K->TouchMem(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2840,6 +2841,8 @@ void FASTCALL SoundRamWriteLong(u32 addr, u32 val) {
       return;
 
    T2WriteLong(SoundRam, addr, val);
+   M68K->TouchMem(addr);
+   M68K->TouchMem(addr+2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2848,9 +2851,6 @@ int ScspInit(int coreid) {
    int i;
 
    if ((SoundRam = T2MemoryInit(0x80000)) == NULL)
-      return -1;
-
-   if ((SoundDummy = T2MemoryInit(0x10000)) == NULL)
       return -1;
 
    if ((ScspInternalVars = (ScspInternal *)calloc(1, sizeof(ScspInternal))) == NULL)
@@ -2867,13 +2867,6 @@ int ScspInit(int coreid) {
    M68K->SetFetch(0x040000, 0x080000, (pointer)SoundRam);
    M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
    M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
-
-   // Setup a 64k buffer filled with invalid 68k instructions - we'll map it
-   // to the remaining area
-   memset(SoundDummy, 0xFF, 0x10000);
-
-   for (i = 0x10; i < 0x100; i++)
-      M68K->SetFetch(i << 16, (i << 16) + 0xFFFF, (pointer)SoundDummy);
 
    yabsys.IsM68KRunning = 0;
 
@@ -2975,9 +2968,6 @@ void ScspDeInit(void) {
       T2MemoryDeInit(SoundRam);
    SoundRam = NULL;
 
-   if (SoundDummy)
-      T2MemoryDeInit(SoundDummy);
-   SoundDummy = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

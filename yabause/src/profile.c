@@ -8,7 +8,7 @@
   You are free to use / modify / re-distribute this code.
 
   */
-#ifndef DONT_PROFILE
+#if !defined(SYS_PROFILE_H) && !defined(DONT_PROFILE)
 
 #include "profile.h"
 
@@ -184,5 +184,5 @@ void ProfileReset () {
   Init () ;
 }
 
-#endif /* DONT_PROFILE */
+#endif /* !SYS_PROFILE_H && !DONT_PROFILE */
 

@@ -13,6 +13,9 @@ endif
 if YUI_IS_GTK
 YUI_SUBDIR=gtk
 endif
+if YUI_IS_PSP
+YUI_SUBDIR=psp
+endif
 if YUI_IS_QT
 YUI_SUBDIR=qt
 endif
@@ -35,11 +38,29 @@ libyabause_a_SOURCES = \
 	smpc.c smpc.h scsp.c scsp.h sndal.c sndal.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
         vdp2.c vdp2.h vdp2debug.c vdp2debug.h vidogl.c vidogl.h vidshared.c vidshared.h vidsoft.c vidsoft.h \
 	yabause.c yabause.h ygl.h ygl.c yui.h
+
 if COMPILE_C68K
 libyabause_a_SOURCES += c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c m68kc68k.c m68kc68k.h
 c68kexec.o: c68k/c68kexec.c
 	$(COMPILE) -Ic68k -O0 $(srcdir)/c68k/c68kexec.c -c -o c68kexec.o
 endif
+
+if COMPILE_Q68
+libyabause_a_SOURCES += m68kq68.c q68/q68.c q68/q68-core.c q68/q68-disasm.c
+if Q68_USE_JIT
+libyabause_a_SOURCES += q68/q68-jit.c
+if CPU_IS_X86
+libyabause_a_SOURCES += q68/q68-jit-x86.S
+endif
+if CPU_IS_X64
+libyabause_a_SOURCES += q68/q68-jit-x86.S
+endif
+if CPU_IS_PSP
+libyabause_a_SOURCES += q68/q68-jit-psp.S
+endif
+endif
+endif
+
 if ARCH_IS_FREEBSD
 libyabause_a_SOURCES += cd-freebsd.c
 endif
@@ -54,4 +75,8 @@ libyabause_a_SOURCES += cd-netbsd.c
 endif
 if ARCH_IS_WINDOWS
 libyabause_a_SOURCES += cd-windows.c
+endif
+
+if TEST_PSP_SH2
+libyabause_a_SOURCES += psp/psp-sh2.c
 endif

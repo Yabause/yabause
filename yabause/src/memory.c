@@ -18,6 +18,9 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#ifdef PSP  // see FIXME in T1MemoryInit()
+# include <stdint.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -57,14 +60,34 @@ u8 *BupRam;
 
 u8 * T1MemoryInit(u32 size)
 {
+#ifdef PSP  // FIXME: could be ported to all arches, but requires stdint.h
+            //        for uintptr_t
+   u8 * base;
+   u8 * mem;
+
+   if ((base = calloc((size * sizeof(u8)) + sizeof(u8 *) + 64, 1)) == NULL)
+      return NULL;
+
+   mem = base + sizeof(u8 *);
+   mem = mem + (64 - ((uintptr_t) mem & 63));
+   *(u8 **)(mem - sizeof(u8 *)) = base; // Save base pointer below memory block
+
+   return mem;
+#else
    return calloc(size, sizeof(u8));
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void T1MemoryDeInit(u8 * mem)
 {
+#ifdef PSP
+   if (mem)
+      free(*(u8 **)(mem - sizeof(u8 *)));
+#else
    free(mem);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

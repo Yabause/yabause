@@ -1,0 +1,101 @@
+PSP-Specific Yabause Documentation
+==================================
+
+Important notice
+----------------
+PSP support for Yabause is experimental; please be aware that some things
+may not work well (or at all), and in particular there's no configuration
+interface yet.
+
+Also, please note that Yabause REQUIRES a PSP Slim (PSP-200x) or later.
+Yabause isn't (yet?) lean enough to run in 24MB of RAM.  Sorry!
+
+Compiling instructions
+----------------------
+To build for PSP, you'll need a recent (at least SVN r2450(*)) copy of the
+unofficial PSP SDK from http://ps2dev.org, along with the toolchain from
+the same site.  Ensure the PSP toolchain (psp-gcc) and tools (psp-prxgen,
+etc.) are in your $PATH, then configure Yabause with:
+
+    ./configure --host=psp [options...]
+
+(*) Note that the PSP SDK headers and libraries are, at least through
+    r2452, missing some functions required by Yabause.  If you get errors
+    about the functions sceKernelIcacheInvalidateAll or
+    sceKernelIcacheInvalidateRange, apply the patch found in
+    src/psp/icache-funcs-2450.patch to the PSP SDK source, recompile and
+    reinstall it, then rebuild Yabause.
+
+You can ignore the warning about the --build option that appears when you
+start the configure script.  You may also see a warning about "using cross
+tools not prefixed with host triplet"; you can usually ignore this as well,
+but if you get strange build errors related to libraries like SDL or
+OpenGL, try disabling the optional libraries with the options
+"--without-sdl" and "--without-opengl".
+
+The following options can be used when configuring for PSP:
+
+    --with-q68  (STRONGLY RECOMMENDED)
+        Enables the Q68 interpreter/translator for 68000 code.  Q68 is a
+        dynamic-translation-capable replacement for the C68K interpreter
+        included in Yabause, designed specifically for the PSP.
+
+    --without-c68k  (STRONGLY RECOMMENDED)
+        Disables the C68K interpreter for 68000 code.  If Q68 is used
+        instead, C68K can be disabled to save around 1.5MB of memory.
+
+    --enable-scsp-frame-accurate
+        Ensures that sound is emulated with accurate timing.  Enabling this
+        option can cause the sound to drop out when the emulation is slower
+        than realtime, but leaving it disabled (the default) can cause odd
+        sound glitches in games depending on emulation speed.
+
+    --disable-deciline  (recommended)
+        Decreases the precision of the emulation timing, reducing the
+        overhead associated with emulation.  This option is more or less
+        required for the PSP (otherwise emulation overhead alone takes up
+        a significant amount of time), but it may break some games.
+
+    --disable-psp-timing-tweaks
+        Normally, the emulation timing is adjusted slightly compared to PC
+        builds for better behavior on the PSP.  If you have games crash,
+        try turning off this adjustment with --disable-psp-timing-tweaks.
+        The adjustments can also be enabled on non-PSP platforms with
+        --enable-psp-timing-tweaks.
+
+    --enable-psp-debug
+        Enables printing of debug messages to standard error.
+
+    --enable-psp-profile
+        Enables printing of profiling statistics to standard error.
+        By default, statistics are output every 100 frames; edit
+        src/psp/psp-per.c to change this.  Note that profiling has a
+        significant impact on emulation speed.
+
+After the configure script completes, run "make" to build Yabause.  The
+build process will create an EBOOT.PBP file in the src/psp/ directory;
+create a directory for Yabause under /PSP/GAME on your memory stick (e.g.
+/PSP/GAME/YABAUSE) and copy EBOOT.PBP there.
+
+How to use Yabause (PSP-specific notes)
+---------------------------------------
+There is currently no way to configure Yabause, so copy the data you want
+to run into the same directory as EBOOT.PBP with the following filenames:
+
+    BIOS.BIN   -- BIOS image
+    CD.ISO     -- CD image (can also be a cuesheet)
+    BACKUP.BIN -- Backup RAM image (optional)
+
+The directional pad and analog stick can both be used to emulate the
+Saturn controller's directional pad.  Button controls are predefined as
+follows:
+
+    Start -- Start
+      A   -- Square
+      B   -- Cross
+      C   -- (unassigned)
+      X   -- Triangle
+      Y   -- Circle
+      Z   -- (unassigned)
+      L   -- L
+      R   -- R

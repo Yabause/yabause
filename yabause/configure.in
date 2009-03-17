@@ -3,6 +3,9 @@ AC_INIT(yabause, 0.9.9)
 if test "x$host_alias" = "xpowerpc-gekko" ; then
 	config_guess_sucks=$host_alias
 	host_alias=powerpc
+elif test "x$host_alias" = "xpsp" ; then
+	config_guess_sucks=$host_alias
+	host_alias=mips
 fi
 
 AC_CANONICAL_HOST
@@ -21,6 +24,34 @@ AM_INIT_AUTOMAKE([1.8.0])
 
 AC_PROG_RANLIB
 
+# Check for --host=psp now because we need to get the PSP SDK directory and
+# set linker flags/libraries
+if test "x$host_alias" = "xpsp" ; then
+	AC_MSG_CHECKING([for PSPSDK])
+	if test -z "$PSPSDK"; then
+		saved_IFS=$IFS
+		IFS=$PATH_SEPARATOR
+		for dir in $PATH; do
+			IFS=$saved_IFS
+			test -z "$dir" && dir=.
+			if test -x "$dir/psp-config"; then
+				PSPSDK=`"$dir/psp-config" -p`
+				test -n "$PSPSDK" && break
+			fi
+		done
+		IFS=$saved_IFS
+	fi
+	if test -n "$PSPSDK"; then
+		AC_MSG_RESULT([$PSPSDK])
+	else
+		AC_MSG_RESULT([not found])
+		AC_MSG_ERROR([Please set the PSPSDK variable])
+	fi
+	CFLAGS="-G0 -falign-functions=16 -I$PSPSDK/include -DNO_CLI $CFLAGS"
+	LDFLAGS="-specs=$PSPSDK/lib/prxspecs -Wl,-q,-T$PSPSDK/lib/linkfile.prx -L$PSPSDK/lib $LDFLAGS"
+	LIBS="$LIBS -lm -lc -lpspaudio -lpspctrl -lpspdisplay -lpspgu -lpspge -lpsppower -lpspuser"
+fi
+
 AC_PROG_CC
 
 if test `expr x$CC : x$host_alias` -eq 0 ; then
@@ -35,6 +66,19 @@ AC_LANG(C)
 AC_C_BIGENDIAN
 
 AM_PROG_CC_C_O
+AM_PROG_AS
+
+# Check what kind of CPU we're running on
+case "$target_cpu" in
+	x86|i?86)     yabause_cpu=x86; AC_DEFINE(CPU_X86);;
+	x86_64|amd64) yabause_cpu=x64; AC_DEFINE(CPU_X64);;
+	*)            if test "$host_alias" = psp; then
+	                  yabause_cpu=psp; AC_DEFINE(CPU_PSP)
+	              else
+	                  yabause_cpu=unknown
+	              fi;;
+esac
+
 
 #################################################################################
 #										#
@@ -62,8 +106,8 @@ else
 fi
 
 # checking for variadic macros
-AC_MSG_CHECKING([[whether the compiler supports c99 variadic macros]])
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#define MACRO(...) puts(__VA_ARGS__)]], [[extern int puts(const char *); MACRO("foo");]]),
+AC_MSG_CHECKING([[whether the compiled supports c99 variadic macros]])
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#define MACRO(...) puts(__VA_ARGS__)]], [[MACRO("foo");]]),
 	AC_DEFINE(HAVE_C99_VARIADIC_MACROS)
 	AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
@@ -215,8 +259,15 @@ case $host in
 		AC_DEFINE([ARCH_IS_NETBSD])
 		;;
 	*)
-		yabause_arch="."
-		AC_DEFINE(UNKNOWN_ARCH)
+		case $host_alias in
+			psp)
+				yabause_arch=psp
+				;;
+			*)
+				yabause_arch="."
+				AC_DEFINE(UNKNOWN_ARCH)
+				;;
+		esac
 		;;
 esac
 
@@ -227,6 +278,38 @@ if test x$compile_c68k = xyes ; then
 	AC_DEFINE(HAVE_C68K)
 fi
 AM_CONDITIONAL(COMPILE_C68K, test x$compile_c68k = xyes)
+
+# Q68 emulator is optional
+compile_q68=no
+AC_ARG_WITH(q68, AC_HELP_STRING(--with-q68, [include Q68 68k emulator (requires a C99-compliant compiler like GCC)]), [compile_q68=$withval])
+if test "x$compile_q68" = "xyes"; then
+	AC_DEFINE(HAVE_Q68)
+fi
+AM_CONDITIONAL(COMPILE_Q68, test "x$compile_q68" = "xyes")
+
+# JIT for Q68 can be disabled (and is automatically disabled on unsupported
+# systems)
+q68_use_jit=maybe
+AC_ARG_ENABLE(q68-jit, AC_HELP_STRING(--disable-q68-jit, [disable dynamic (Just-In-Time) translation for Q68]), [q68_use_jit=$enableval])
+case $yabause_cpu in
+	x86|x64|psp)
+		if test "x$q68_use_jit" = "xmaybe"; then
+			q68_use_jit=yes
+		fi
+		;;
+	*)
+		if test "x$q68_use_jit" = "xyes"; then
+			AC_MSG_ERROR([Q68 dynamic translation is not supported on this CPU]);
+		elif test "x$q68_use_jit" = "xmaybe"; then
+			AC_MSG_WARN([Disabling Q68 dynamic translation (not supported on this CPU)]);
+		fi
+		;;
+esac
+if test "x$q68_use_jit" = "xyes"; then
+	AC_DEFINE(Q68_USE_JIT)
+fi
+AM_CONDITIONAL([Q68_USE_JIT], test "x$q68_use_jit" = "xyes")
+
 
 #################################################################################
 #										#
@@ -297,6 +380,12 @@ if test "x$host_alias" = "xpowerpc-gekko" ; then
 	yabause_available_yuis="wii"
 fi
 
+# PSP
+if test "x$host_alias" = "xpsp" ; then
+	AC_DEFINE(PSP)
+	yabause_available_yuis="psp"
+fi
+
 # adding . as a fallback when no other port is available
 yabause_available_yuis="$yabause_available_yuis ."
 
@@ -317,6 +406,7 @@ if ! test "x$yabause_yui" = "x." ; then
 fi
 
 AC_SUBST(yabause_yui)
+
 
 AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug, enable general debug information) ,
 	[if test "x$enableval" = "xyes" ; then
@@ -358,10 +448,43 @@ AC_ARG_ENABLE(perkeyname, AC_HELP_STRING(--enable-perkeyname, use peripheral key
 	[if test "x$enableval" = "xyes" ; then
 		AC_DEFINE(PERKEYNAME)
 	fi])
-AC_ARG_ENABLE(scsp-frame-accurate, AC_HELP_STRING(--enable-scsp-frame-accurate, [enable frame-accurate SCSP emulation (may cause skipping)]) ,
+AC_ARG_ENABLE(scsp-frame-accurate, AC_HELP_STRING(--enable-scsp-frame-accurate, [enable frame-accurate SCSP emulation (may cause skipping)]),
 	[if test "x$enableval" = "xyes" ; then
 		AC_DEFINE(SCSP_FRAME_ACCURATE)
 	fi])
+AC_ARG_ENABLE(deciline, AC_HELP_STRING(--disable-deciline, [use less precise timing (increases speed)]),
+	[if test "x$enableval" = "xno" ; then
+		AC_DEFINE(NO_DECILINE)
+	fi])
+
+
+#### PSP options
+
+AC_ARG_ENABLE(psp-timing-tweaks, AC_HELP_STRING(--enable-psp-timing-tweaks, [adjust timing slightly for cleaner emulation on PSP]),
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE([PSP_TIMING_TWEAKS])
+	fi],
+	[if test "x$host_alias" = "xpsp" ; then
+		AC_DEFINE([PSP_TIMING_TWEAKS])
+	fi])
+
+AC_ARG_ENABLE(psp-debug, AC_HELP_STRING(--enable-psp-debug, [enable PSP debugging output]),
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE([PSP_DEBUG])
+	fi])
+
+AC_ARG_ENABLE(psp-profile, AC_HELP_STRING(--enable-psp-profile, [enable profiling on PSP port]),
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE([SYS_PROFILE_H], ["psp/profile.h"])
+	fi])
+
+AC_ARG_ENABLE(debug-psp-sh2, AC_HELP_STRING(--enable-debug-psp-sh2, [include PSP SH-2 core for testing]),
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE([TEST_PSP_SH2])
+	fi])
+AM_CONDITIONAL([TEST_PSP_SH2], [test "${enable_debug_psp_sh2}" = "yes"])
+
+### End PSP options
 
 AC_CONFIG_FILES([Makefile
 	l10n/Makefile
@@ -371,6 +494,7 @@ AC_CONFIG_FILES([Makefile
 	src/dreamcast/Makefile
 	src/gtk/Makefile
 	src/gtk/doc/Makefile
+	src/psp/Makefile
 	src/qt/Makefile
 	src/qt/yabause.pro
 	src/qt/doc/Makefile
@@ -421,6 +545,7 @@ AC_CONFIG_COMMANDS([src/c68k/Makefile], [( cd src/c68k/ && $CONFIG_SHELL ${ac_sr
 AM_CONDITIONAL([YUI_IS_CARBON], [test ${yabause_yui} = "carbon"])
 AM_CONDITIONAL([YUI_IS_DREAMCAST], [test ${yabause_yui} = "dreamcast"])
 AM_CONDITIONAL([YUI_IS_GTK], [test ${yabause_yui} = "gtk"])
+AM_CONDITIONAL([YUI_IS_PSP], [test ${yabause_yui} = "psp"])
 AM_CONDITIONAL([YUI_IS_QT], [test ${yabause_yui} = "qt"])
 AM_CONDITIONAL([YUI_IS_WII], [test ${yabause_yui} = "wii"])
 AM_CONDITIONAL([YUI_IS_WINDOWS], [test ${yabause_yui} = "windows"])
@@ -430,6 +555,11 @@ AM_CONDITIONAL([ARCH_IS_LINUX], [test ${yabause_arch} = "linux"])
 AM_CONDITIONAL([ARCH_IS_MACOSX], [test ${yabause_arch} = "macosx"])
 AM_CONDITIONAL([ARCH_IS_NETBSD], [test ${yabause_arch} = "netbsd"])
 AM_CONDITIONAL([ARCH_IS_WINDOWS], [test ${yabause_arch} = "windows"])
+
+AM_CONDITIONAL([CPU_IS_X86], [test ${yabause_cpu} = "x86"])
+AM_CONDITIONAL([CPU_IS_X64], [test ${yabause_cpu} = "x64"])
+AM_CONDITIONAL([CPU_IS_PSP], [test ${yabause_cpu} = "psp"])
+
 AC_OUTPUT
 
 echo "=================="
