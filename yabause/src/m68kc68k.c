@@ -40,10 +40,10 @@ void M68KC68KInit(void) {
 	if ((SoundDummy = T2MemoryInit(0x10000)) != NULL)
 		memset(SoundDummy, 0xFF, 0x10000);
 
-	for (i = 0; i < 0x100; i++)
-		M68K->SetFetch(i << 16, (i << 16) + 0xFFFF, (pointer)SoundDummy);
-
 	C68k_Init(&C68K, NULL); // not sure if I need the int callback or not
+
+	for (i = 0x10; i < 0x100; i++)
+		M68K->SetFetch(i << 16, (i << 16) + 0xFFFF, (pointer)SoundDummy);
 }
 
 void M68KC68KDeInit(void) {
