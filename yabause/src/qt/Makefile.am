@@ -65,6 +65,10 @@ install-data-hook:
 			echo " mv $$f $$fdest" ; \
 			mv "$$f" "$$fdest" ; \
 		fi ; \
+		nn=`echo yabause | sed '$(transform)'` ; \
+		ftmp=/tmp/$$RANDOM ; \
+		sed "s/Exec=yabause/Exec=$$nn/" $$fdest > $$ftmp ; \
+		mv $$ftmp $$fdest ; \
 	done
 
 uninstall-hook:
