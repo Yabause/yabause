@@ -325,20 +325,27 @@ if test ! x$HAVE_QMAKE = x ; then
 fi
 
 # gtk
-YAB_CHECK_HOST_TOOLS(HAVE_PKG, [pkg-config])
+want_gtk=yes
+AC_ARG_WITH(gtk, AC_HELP_STRING(--without-gtk, don't try to configure the gtk port), [want_gtk=$withval])
 
+YAB_CHECK_HOST_TOOLS(HAVE_PKG, [pkg-config])
 if test ! x$HAVE_PKG = x ; then
-	if test "x$use_opengl" = "xyes" ; then
-		if `$HAVE_PKG gtkglext-1.0` ; then
-			yabause_available_yuis="gtk $yabause_available_yuis"
-			YUI_gtk_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
-			YUI_gtk_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
-			AC_DEFINE(HAVE_LIBGTKGLEXT)
+	if test "x$want_gtk" = "xyes" && `$HAVE_PKG gtk+-2.0` ; then
+		if test "x$use_opengl" = "xyes" ; then
+			if `$HAVE_PKG gtkglext-1.0` ; then
+				yabause_available_yuis="gtk $yabause_available_yuis"
+				YUI_gtk_CFLAGS=`$HAVE_PKG gtkglext-1.0 --cflags`
+				YUI_gtk_LIBS=`$HAVE_PKG gtkglext-1.0 --libs`
+				AC_DEFINE(HAVE_LIBGTKGLEXT)
+			else
+				AC_MSG_NOTICE([Found OpenGL and Gtk+ but not libgtkglext.])
+				AC_MSG_NOTICE([You can either:])
+				AC_MSG_NOTICE([- install libgtkglext to compile a gtk port with OpenGL support])
+				AC_MSG_NOTICE([- re-run configure with --without-opengl flag to compile a gtk port without OpenGL support])
+				AC_MSG_NOTICE([- re-run configure with --without-gtk flag to disable gtk port compilation])
+				AC_MSG_ERROR([Can't go further, please install libgtkglext or re-run configure with --without-opengl or --without-gtk])
+			fi
 		else
-			AC_MSG_ERROR([Found OpenGL but not libgtkglext. Either install libgtkglext or re-run configure with --without-opengl flag])
-		fi
-	else
-		if `$HAVE_PKG gtk+-2.0` ; then
 			yabause_available_yuis="gtk $yabause_available_yuis"
 			YUI_gtk_CFLAGS=`$HAVE_PKG gtk+-2.0 --cflags`
 			YUI_gtk_LIBS=`$HAVE_PKG gtk+-2.0 --libs`
