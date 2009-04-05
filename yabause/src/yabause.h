@@ -93,4 +93,6 @@ extern yabsys_struct yabsys;
 extern void YuiErrorMsg(const char *string);
 extern void YuiSwapBuffers(void);
 
+int YabauseEmulate(void);
+
 #endif

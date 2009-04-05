@@ -40,6 +40,7 @@
 #include "vdp1.h"
 #include "vdp2.h"
 #include "yabause.h"
+#include "movie.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -966,6 +967,9 @@ int YabSaveState(const char *filename)
    int offset;
    IOCheck_struct check;
 
+   //use a second set of savestates for movies
+   MakeMovieStateName(filename);
+
    if ((fp = fopen(filename, "wb")) == NULL)
       return -1;
 
@@ -980,12 +984,15 @@ int YabSaveState(const char *filename)
 #endif
 
    // Write version(fix me)
-   i = 1;
+   i = 2;
    ywrite(&check, (void *)&i, sizeof(i), 1, fp);
 
    // Skip the next 4 bytes for now
    i = 0;
    ywrite(&check, (void *)&i, sizeof(i), 1, fp);
+
+   //write frame number
+   ywrite(&check, (void *)&framecounter, 4, 1, fp);
 
    // Go through each area and write each state
    i += CartSaveState(fp);
@@ -1015,6 +1022,9 @@ int YabSaveState(const char *filename)
    ywrite(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
+   //write the movie to the end of the savestate
+   SaveMovieInState(fp, check);
+
    i += StateFinishHeader(fp, offset);
 
    // Go back and update size
@@ -1033,11 +1043,15 @@ int YabLoadState(const char *filename)
    FILE *fp;
    char id[3];
    u8 endian;
-   int version, size, chunksize;
+   int version, size, chunksize, headersize;
    IOCheck_struct check;
+
+   MakeMovieStateName(filename);
 
    if ((fp = fopen(filename, "rb")) == NULL)
       return -1;
+
+   headersize = 0xC;
 
    // Read signature
    yread(&check, (void *)id, 1, 3, fp);
@@ -1052,6 +1066,23 @@ int YabLoadState(const char *filename)
    yread(&check, (void *)&endian, 1, 1, fp);
    yread(&check, (void *)&version, 4, 1, fp);
    yread(&check, (void *)&size, 4, 1, fp);
+   switch(version)
+   {
+      case 1:
+         /* This is the "original" version of the format */
+         break;
+      case 2:
+         /* version 2 adds video recording */
+         yread(&check, (void *)&framecounter, 4, 1, fp);
+         headersize = 0x10;
+         break;
+      default:
+         /* we're trying to open a save state using a future version
+          * of the YSS format, that won't work, sorry :) */
+         fclose(fp);
+         return -3;
+         break;
+   }
 
 #ifdef WORDS_BIGENDIAN
    if (endian == 1)
@@ -1067,12 +1098,13 @@ int YabLoadState(const char *filename)
 
    // Make sure size variable matches actual size minus header
    fseek(fp, 0, SEEK_END);
-   if (size != (ftell(fp) - 0xC))
+
+   if (size != (ftell(fp) - headersize))
    {
       fclose(fp);
       return -2;
    }
-   fseek(fp, 0xC, SEEK_SET);
+   fseek(fp, headersize, SEEK_SET);
 
    // Verify version here
 
@@ -1181,7 +1213,12 @@ int YabLoadState(const char *filename)
    yread(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    yread(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
+   if (version > 1) MovieReadState(fp, filename);
    fclose(fp);
+
+   // draw the screen again, but this doesn't work
+// VIDCore->Vdp2DrawScreens(); 
+// YuiSwapBuffers();
 
    ScspUnMuteAudio();
    return 0;

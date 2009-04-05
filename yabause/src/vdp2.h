@@ -397,6 +397,4 @@ void ToggleFullScreen(void);
 void EnableAutoFrameSkip(void);
 void DisableAutoFrameSkip(void);
 
-void SetLagFrameFlag(int i);
-
 #endif

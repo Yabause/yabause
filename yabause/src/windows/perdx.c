@@ -26,6 +26,7 @@
 #include "../yui.h"
 #include "settings/settings.h"
 #include "resource.h"
+#include "../movie.h"
 
 int PERDXInit(void);
 void PERDXDeInit(void);
@@ -637,14 +638,62 @@ void PollKeys(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int FrameAdvanceKeyDown=0;
+static DWORD tgtime;
+
 int PERDXHandleEvents(void)
 {
    PollKeys();
+
+   	if (Check_Skip_Key())
+	{
+		FrameAdvanceVariable = NeedAdvance;
+		tgtime = timeGetTime();
+	}
 
    if (YabauseExec() != 0)
       return -1;
 
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SkipKeyIsPressed=0;
+int DelayFactor = 5;
+
+int Check_Skip_Key()
+{
+	static time_t lastSkipTime = 0;
+	const int skipPressedNew = FrameAdvanceKeyDown;
+	static int checks = 0;
+
+	if(GetAsyncKeyState(VK_SPACE) & 0x8000)
+		FrameAdvanceKeyDown=1;
+	else
+		FrameAdvanceKeyDown=0;
+	
+	if(skipPressedNew && timeGetTime()-lastSkipTime >= 5)
+	{
+		checks++;
+		if(checks > 8000 + 60)
+			checks -= 8000;
+		lastSkipTime = timeGetTime();
+	}
+
+	if(skipPressedNew && (!SkipKeyIsPressed || ((checks > 60) && ((checks % DelayFactor) == 0))))
+	{
+		SkipKeyIsPressed=1;
+		return 1;
+	}
+	else {
+		if(!skipPressedNew && SkipKeyIsPressed)
+		{
+			SkipKeyIsPressed=0;
+			checks=0;
+		}
+		return 0;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////

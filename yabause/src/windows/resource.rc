@@ -73,6 +73,10 @@ BEGIN
         MENUITEM "Load State As",               IDM_LOADSTATEAS
         MENUITEM SEPARATOR
         MENUITEM "&Capture Screen",             IDM_CAPTURESCREEN
+		MENUITEM SEPARATOR
+        MENUITEM "Record Movie",                MENU_RECORD_MOVIE
+        MENUITEM "Replay Movie",                MENU_PLAY_MOVIE
+		MENUITEM "Stop Movie",                  MENU_STOP_MOVIE
         MENUITEM SEPARATOR
         MENUITEM "&Quit",                       IDM_EXIT
     END
@@ -743,6 +747,9 @@ BEGIN
     VK_F8,          IDM_LOADSTATE_F8,       VIRTKEY, NOINVERT
     VK_F9,          IDM_LOADSTATE_F9,       VIRTKEY, NOINVERT
     VK_F10,         IDM_LOADSTATE_F10,      VIRTKEY, NOINVERT
+	VK_F12,         IDM_FRAMEADVANCEPAUSE,  VIRTKEY, NOINVERT
+	"T",            IDM_TOGGLEREADONLY,     ASCII,   NOINVERT
+
 END
 
 

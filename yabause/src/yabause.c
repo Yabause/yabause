@@ -40,6 +40,7 @@
 #include "vdp2.h"
 #include "yui.h"
 #include "bios.h"
+#include "movie.h"
 #ifdef HAVE_LIBSDL
  #ifdef __APPLE__
   #include <SDL/SDL.h>
@@ -354,12 +355,42 @@ void YabauseResetButton(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseExec(void) {
+
+	//automatically advance lag frames, this should be optional later
+	if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){ 
+		FrameAdvanceVariable = NeedAdvance; //advance a frame
+		YabauseEmulate();
+		FrameAdvanceVariable = Paused; //pause next time
+		return(0);
+	}
+
+	if (FrameAdvanceVariable == Paused){
+		ScspMuteAudio();
+		return(0);
+	}
+  
+	if (FrameAdvanceVariable == NeedAdvance){  //advance a frame
+		FrameAdvanceVariable = Paused; //pause next time
+		ScspUnMuteAudio();
+		YabauseEmulate();
+	}
+	
+	if (FrameAdvanceVariable == RunNormal ) { //run normally
+		ScspUnMuteAudio();	
+		YabauseEmulate();
+	}
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YabauseEmulate(void) {
    int M68k_cycles;              // Integral M68k cycles to execute this time
    static int M68k_centicycles;  // Fractional cycle counter for M68k
 
    int oneframeexec=0;
 
-   SetLagFrameFlag(1);
+   DoMovie();
 
    while (!oneframeexec)
    {
@@ -516,10 +547,7 @@ int YabauseExec(void) {
 
       PROFILE_STOP("Total Emulation");
    }
-   IncrementLagFrameCounter();
-   IncrementFrameCounter();
    return 0;
-   
 }
 
 //////////////////////////////////////////////////////////////////////////////

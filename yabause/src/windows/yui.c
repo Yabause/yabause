@@ -44,6 +44,7 @@
 #include "cpudebug/yuidebug.h"
 #include "disasm.h"
 #include "hexedit.h"
+#include "../movie.h"
 
 #define DONT_PROFILE
 #include "../profile.h"
@@ -76,6 +77,10 @@ static int depthsize = 0;
 
 TCHAR yssfilename[MAX_PATH] = TEXT("\0");
 char ysspath[MAX_PATH] = "\0";
+
+TCHAR ymvfilename[MAX_PATH] = TEXT("\0");
+char ymvpath[MAX_PATH] = "\0";
+
 char netlinksetting[80];
 TCHAR bmpfilename[MAX_PATH] = TEXT("\0");
 
@@ -1448,6 +1453,61 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
                break;
             }
+			case MENU_RECORD_MOVIE:
+				{
+			   WCHAR filter[1024];
+               OPENFILENAME ofn;
+
+               YuiTempPause();
+
+               CreateFilter(filter, 1024,
+                  "Yabause Movie file", "*.YMV",
+                  "All files (*.*)", "*.*", NULL);
+
+               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
+                        ymvfilename, sizeof(ymvfilename)/sizeof(TCHAR));
+               ofn.lpstrDefExt = _16("YMV");
+
+               if (GetSaveFileName(&ofn))
+               {
+                  WideCharToMultiByte(CP_ACP, 0, ymvfilename, -1, text, sizeof(text), NULL, NULL);
+               SaveMovie(text);
+               }
+				}
+				break;
+
+
+			  case MENU_PLAY_MOVIE:
+            {
+               WCHAR filter[1024];
+               OPENFILENAME ofn;
+
+               YuiTempPause();
+
+               CreateFilter(filter, 1024,
+                  "Yabause Movie files", "*.YMV",
+                  "All files (*.*)", "*.*", NULL);
+
+               SetupOFN(&ofn, OFN_DEFAULTLOAD, hWnd, filter,
+                        ymvfilename, sizeof(ymvfilename)/sizeof(TCHAR));
+
+               if (GetOpenFileName(&ofn))
+               {
+                  WideCharToMultiByte(CP_ACP, 0, ymvfilename, -1, text, sizeof(text), NULL, NULL);
+                  PlayMovie(text);
+               }
+               YuiTempUnPause();
+               break;
+            }
+			case MENU_STOP_MOVIE:
+				StopMovie();
+				break;
+			case IDM_TOGGLEREADONLY:
+				MovieToggleReadOnly();
+				break;
+			case IDM_FRAMEADVANCEPAUSE:
+				PauseOrUnpause();
+				break;
             case IDM_SAVESTATE_F2:
             case IDM_SAVESTATE_F3:
             case IDM_SAVESTATE_F4:

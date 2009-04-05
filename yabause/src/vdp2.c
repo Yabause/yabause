@@ -25,6 +25,7 @@
 #include "sh2core.h"
 #include "vdp1.h"
 #include "yabause.h"
+#include "movie.h"
 
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
@@ -46,10 +47,6 @@ static int fps;
 static int fpsframecount=0;
 static u64 fpsticks;
 static int fpstoggle=0;
-
-static int framecounter;
-static int lagframecounter;
-static int LagFrameFlag;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -287,7 +284,7 @@ void FPSDisplay(void)
 {
    if (fpstoggle)
    {
-      VIDCore->OnScreenDebugMessage("%02d/%02d FPS %d %d", fps, yabsys.IsPal ? 50 : 60, framecounter, lagframecounter);
+      VIDCore->OnScreenDebugMessage("%02d/%02d FPS %d %d %s %s", fps, yabsys.IsPal ? 50 : 60, framecounter, lagframecounter, MovieStatus, InputDisplayString);
 
       fpsframecount++;
       if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
@@ -362,7 +359,8 @@ void Vdp2VBlankOUT(void) {
       if (framestoskip < 1)
          framestoskip = 6;
    }
-   else if (autoframeskipenab)
+   //when in frame advance, disable frame skipping
+   else if (autoframeskipenab && FrameAdvanceVariable == 0)
    {
       framecount++;
 
@@ -1346,28 +1344,6 @@ void EnableAutoFrameSkip(void)
 void DisableAutoFrameSkip(void)
 {
    autoframeskipenab = 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void IncrementLagFrameCounter(void)
-{
-   if(LagFrameFlag == 1)
-   lagframecounter++;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SetLagFrameFlag(int i)
-{
-   LagFrameFlag=i;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void IncrementFrameCounter(void)
-{
-   framecounter++;
 }
 
 //////////////////////////////////////////////////////////////////////////////

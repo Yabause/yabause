@@ -40,6 +40,9 @@
 #define IDD_VDP2VIEWER                  134
 #define IDD_PADCONFIG1                  135
 #define IDD_MOUSECONFIG                 135
+#define MENU_RECORD_MOVIE               141
+#define MENU_PLAY_MOVIE                 142
+#define MENU_STOP_MOVIE                 143
 #define IDC_EDITTEXT1                   1001
 #define IDC_DISCTYPECB                  1001
 #define IDC_VIDEOCORECB                 1001
@@ -335,6 +338,8 @@
 #define IDM_PORTUGUESEBRAZIL            40091
 #define IDM_SWEDISH                     40092
 #define IDM_SPANISH                     40093
+#define IDM_FRAMEADVANCEPAUSE           40096
+#define IDM_TOGGLEREADONLY				40098
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
