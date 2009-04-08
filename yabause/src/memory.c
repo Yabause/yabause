@@ -1043,7 +1043,7 @@ int YabLoadState(const char *filename)
    FILE *fp;
    char id[3];
    u8 endian;
-   int version, size, chunksize, headersize;
+   int headerversion, version, size, chunksize, headersize;
    IOCheck_struct check;
 
    MakeMovieStateName(filename);
@@ -1064,9 +1064,9 @@ int YabLoadState(const char *filename)
 
    // Read header
    yread(&check, (void *)&endian, 1, 1, fp);
-   yread(&check, (void *)&version, 4, 1, fp);
+   yread(&check, (void *)&headerversion, 4, 1, fp);
    yread(&check, (void *)&size, 4, 1, fp);
-   switch(version)
+   switch(headerversion)
    {
       case 1:
          /* This is the "original" version of the format */
@@ -1213,7 +1213,7 @@ int YabLoadState(const char *filename)
    yread(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    yread(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
-   if (version > 1) MovieReadState(fp, filename);
+   if (headerversion > 1) MovieReadState(fp, filename);
    fclose(fp);
 
    // draw the screen again, but this doesn't work
