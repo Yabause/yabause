@@ -1,3 +1,5 @@
+EXTRA_DIST = sh2-core.i icache-funcs-2450.patch
+
 # The ELF file is only an imtermediate target; the final target is EBOOT.PBP
 # (but keep the ELF and PRX files around for debugging/testing purposes)
 all-local: EBOOT.PBP

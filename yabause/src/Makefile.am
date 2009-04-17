@@ -34,7 +34,7 @@ libyabause_a_SOURCES = \
 	netlink.c netlink.h peripheral.h peripheral.c \
 	persdljoy.c persdljoy.h profile.c profile.h \
 	scu.c scu.h sh2core.c sh2core.h \
-	sh2d.c sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h \
+	sh2d.c sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h sh2trace.h \
 	smpc.c smpc.h scsp.c scsp.h sndal.c sndal.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
         vdp2.c vdp2.h vdp2debug.c vdp2debug.h vidogl.c vidogl.h vidshared.c vidshared.h vidsoft.c vidsoft.h \
 	yabause.c yabause.h ygl.h ygl.c yui.h
@@ -46,7 +46,8 @@ c68kexec.o: c68k/c68kexec.c
 endif
 
 if COMPILE_Q68
-libyabause_a_SOURCES += m68kq68.c q68/q68.c q68/q68-core.c q68/q68-disasm.c
+libyabause_a_SOURCES += m68kq68.c q68/q68.c q68/q68-core.c q68/q68-disasm.c \
+	q68/q68-const.h q68/q68.h q68/q68-internal.h q68/q68-jit.h q68/q68-jit-psp.h q68/q68-jit-x86.h
 if Q68_USE_JIT
 libyabause_a_SOURCES += q68/q68-jit.c
 if CPU_IS_X86
