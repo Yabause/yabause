@@ -235,9 +235,9 @@ void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
          }
          SH2WriteNotify(start, dmainfo->WriteAddress - start);
       }
-      else {
-         LOG("direct DMA, A Bus, not tested yet\n");
+      else {     
          u32 start = dmainfo->WriteAddress;
+		 LOG("direct DMA, A Bus, not tested yet\n");
          while(counter < dmainfo->TransferNumber) {
             MappedMemoryWriteLong(dmainfo->WriteAddress, MappedMemoryReadLong(dmainfo->ReadAddress));
             dmainfo->ReadAddress += ReadAdd;
@@ -844,12 +844,13 @@ void ScuExec(u32 timing) {
                      if (direction)
                      {
                         u32 WA0temp=ScuDsp->WA0;
+						u32 start;
 
                         // Looks like some bits are ignored on a real saturn(Grandia takes advantage of this)
                         ScuDsp->WA0 &= 0x01FFFFFF;
 
                         // DMA(H) [RAM], D0, ??
-                        u32 start = ScuDsp->WA0 << 2;
+                        start = ScuDsp->WA0 << 2;
                         for (i = 0; i < transferNumber; i++)
                         {                        
                            MappedMemoryWriteLong(ScuDsp->WA0 << 2, readdmasrc((instruction >> 8) & 0x3, 1));
