@@ -1532,7 +1532,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                if (GetSaveFileName(&ofn))
                {
                   WideCharToMultiByte(CP_ACP, 0, ymvfilename, -1, text, sizeof(text), NULL, NULL);
-               SaveMovie(text, 0);
+               SaveMovie(text);
                }
 				}
 				break;
