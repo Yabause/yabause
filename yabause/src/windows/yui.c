@@ -93,7 +93,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 void YuiReleaseVideo(void);
 
 int DRV_AviBegin(const char* fname, HWND HWnd);
-void DRV_AviVideoUpdate(const u16* buffer);
+void DRV_AviVideoUpdate(const u16* buffer, HWND HWnd);
 void DRV_AviEnd();
 
 SH2Interface_struct *SH2CoreList[] = {
@@ -423,7 +423,7 @@ void YuiCaptureVideo(void)
 	glReadPixels(0, 0, screenwidth, screenheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	SwapBuffers(YabHDC);
 
-	DRV_AviVideoUpdate(buf);
+	DRV_AviVideoUpdate(buf, YabWin);
 }
 
 //////////////////////////////////////////////////////////////////////////////

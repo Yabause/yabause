@@ -33,11 +33,11 @@ void EMU_PrintMessage(const char* msg) {
 //	LOG(msg);
 }
 
-int DRV_AviBegin(const char* fname);
+int DRV_AviBegin(const char* fname, HWND HWnd);
 void DRV_AviEnd();
 void DRV_AviSoundUpdate(void* soundData, int soundLen);
 int DRV_AviIsRecording();
-void DRV_AviVideoUpdate(const u16* buffer);
+void DRV_AviVideoUpdate(const u16* buffer, HWND HWnd);
 
 //extern PALETTEENTRY *color_palette;
 //extern WAVEFORMATEX wf;
@@ -311,7 +311,7 @@ static void do_video_conversion(const u8* buffer)
 }
 
 
-static int AviNextSegment()
+static int AviNextSegment(HWND HWnd)
 {
 	int ret;
 	char avi_fname[MAX_PATH];
@@ -321,7 +321,7 @@ static int AviNextSegment()
 	saved_avi_info=*avi_file;
 	use_prev_options=1;
 	avi_segnum++;
-	ret = DRV_AviBegin(avi_fname_temp);
+	ret = DRV_AviBegin(avi_fname_temp, HWnd);
 	use_prev_options=0;
 	strcpy(saved_avi_fname,avi_fname);
 	return ret;
@@ -394,7 +394,7 @@ int DRV_AviBegin(const char* fname, HWND HWnd)
 	return 1;
 }
 
-void DRV_AviVideoUpdate(const u16* buffer)
+void DRV_AviVideoUpdate(const u16* buffer, HWND HWnd)
 {
 	if(!avi_file || !avi_file->valid)
 		return;
@@ -415,7 +415,7 @@ void DRV_AviVideoUpdate(const u16* buffer)
 
 	// segment / split AVI when it's almost 2 GB (2000MB, to be precise)
 	if(!(avi_file->video_frames % 60) && avi_file->tBytes > 2097152000)
-		AviNextSegment();
+		AviNextSegment(HWnd);
 }
 
 void DRV_AviSoundUpdate(void* soundData, int soundLen)
