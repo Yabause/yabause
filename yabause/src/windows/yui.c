@@ -75,8 +75,13 @@ static int greensize = 0;
 static int bluesize = 0;
 static int depthsize = 0;
 
+int AVIRecording = 0;
+
 TCHAR yssfilename[MAX_PATH] = TEXT("\0");
 char ysspath[MAX_PATH] = "\0";
+
+TCHAR avifilename[MAX_PATH] = TEXT("\0");
+char avipath[MAX_PATH] = "\0";
 
 TCHAR ymvfilename[MAX_PATH] = TEXT("\0");
 char ymvpath[MAX_PATH] = "\0";
@@ -86,6 +91,10 @@ TCHAR bmpfilename[MAX_PATH] = TEXT("\0");
 
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 void YuiReleaseVideo(void);
+
+int DRV_AviBegin(const char* fname, HWND HWnd);
+void DRV_AviVideoUpdate(const u16* buffer);
+void DRV_AviEnd();
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
@@ -392,6 +401,29 @@ int YuiCaptureScreen(const char *filename)
    free(buf);
 
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YuiCaptureVideo(void)
+{
+	u8 *buf;
+	int totalsize=screenwidth * screenheight * sizeof(u32);
+
+	if(AVIRecording == 0)
+		return;
+
+	if ((buf = (u8 *)malloc(totalsize)) == NULL)
+	{
+		return;
+	}
+
+	SwapBuffers(YabHDC);
+	glReadBuffer(GL_BACK);
+	glReadPixels(0, 0, screenwidth, screenheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+	SwapBuffers(YabHDC);
+
+	DRV_AviVideoUpdate(buf);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1232,7 +1264,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                EnableMenuItem(YabMenu, IDM_RUN, MF_GRAYED);
                EnableMenuItem(YabMenu, IDM_PAUSE, MF_ENABLED);
                break;
-            }
+            }	
             case IDM_PAUSE:
             {
                YuiPause();
@@ -1453,6 +1485,35 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
                break;
             }
+			case IDM_FILE_RECORDAVI:
+				{
+					WCHAR filter[1024];
+					OPENFILENAME ofn;
+
+					YuiTempPause();
+
+					CreateFilter(filter, 1024,
+						"AVI Files *.avi)", "*.avi",
+						"All files (*.*)", "*.*", NULL);
+
+					SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
+						avifilename, sizeof(avifilename)/sizeof(TCHAR));
+					ofn.lpstrDefExt = _16("AVI");
+
+					if (GetSaveFileName(&ofn))
+					{
+						WideCharToMultiByte(CP_ACP, 0, avifilename, -1, text, sizeof(text), NULL, NULL);
+
+						DRV_AviBegin(text, hWnd);
+						AVIRecording=1;
+					}
+					YuiTempUnPause();
+					break;
+				}
+			case IDM_FILE_STOPAVI:
+				DRV_AviEnd();
+				AVIRecording=0;
+				break;
 			case MENU_RECORD_MOVIE:
 				{
 			   WCHAR filter[1024];
@@ -1471,11 +1532,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                if (GetSaveFileName(&ofn))
                {
                   WideCharToMultiByte(CP_ACP, 0, ymvfilename, -1, text, sizeof(text), NULL, NULL);
-               SaveMovie(text);
+               SaveMovie(text, 0);
                }
 				}
 				break;
-
 
 			  case MENU_PLAY_MOVIE:
             {

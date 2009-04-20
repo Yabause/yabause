@@ -3090,6 +3090,7 @@ void ScspReceiveCDDA(const u8 *sector) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScspExec() {
+	s16 stereodata16[(44100 / 50)*2];
    u32 audiosize;
 
    ScspInternalVars->scsptiming2 += ((735<<16) + 263/2) / 263;
@@ -3150,6 +3151,11 @@ void ScspExec() {
 
       scsp_update((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, audiosize);
       SNDCore->UpdateAudio(scspchannel[0].data32, (u32 *)scspchannel[1].data32, audiosize);
+	  #ifdef WIN32
+      ScspConvert32uto16s((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, (s16 *)stereodata16, audiosize);
+	  DRV_AviSoundUpdate(stereodata16, audiosize);
+	  #endif
+
    }
 #endif
 }

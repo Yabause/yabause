@@ -31,6 +31,8 @@
 int PERDXInit(void);
 void PERDXDeInit(void);
 int PERDXHandleEvents(void);
+void YuiCaptureVideo(void);
+int Check_Skip_Key();
 
 PerInterface_struct PERDIRECTX = {
 PERCORE_DIRECTX,
@@ -653,6 +655,8 @@ int PERDXHandleEvents(void)
 
    if (YabauseExec() != 0)
       return -1;
+
+   YuiCaptureVideo();
 
    return 0;
 }
