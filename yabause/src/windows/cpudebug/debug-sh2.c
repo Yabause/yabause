@@ -453,7 +453,7 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      sprintf(bptext, "%08X", (int)addr);
 
                      if (SH2AddCodeBreakpoint(debugsh, addr) == 0)
-                        SendMessage(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
+                        SendMessageA(GetDlgItem(hDlg, IDC_CODEBPLB), LB_ADDSTRING, 0, (LPARAM)bptext);
                      break;
                   }
                   default: break;

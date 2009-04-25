@@ -349,7 +349,7 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          char buf[9];
 
          sprintf(buf, "%08lX", memaddr);
-         SetDlgItemText(hDlg, IDC_EDITTEXT1, _16(buf));
+         SetDlgItemTextA(hDlg, IDC_EDITTEXT1, buf);
          return TRUE;
       }
       case WM_COMMAND:
@@ -358,12 +358,12 @@ LRESULT CALLBACK MemDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          {
             case IDOK:
             {
-               WCHAR buf[9];
+               char buf[9];
 
                EndDialog(hDlg, TRUE);
-               GetDlgItemText(hDlg, IDC_EDITTEXT1, buf, 11);
+               GetDlgItemTextA(hDlg, IDC_EDITTEXT1, buf, sizeof(buf));
 
-               wscanf(buf, "%08lx", &memaddr);
+               sscanf(buf, "%08lx", &memaddr);
 
                return TRUE;
             }
