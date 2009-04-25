@@ -1,5 +1,7 @@
 EXTRA_DIST = cd.h yabause.vcproj yabause_logo.bmp logo.ico yabause.sln gen68k.vcproj \
-	68klib.vcproj inc.rules
+	68klib.vcproj inc.rules Installer
+dist-hook:
+	rm -rf `find $(distdir)/Installer -name CVS`
 bin_PROGRAMS = yabause
 yabause_SOURCES = \
 	aviout.c bup-manager.c cheats.c cheats.h custctl.c custctl.h disasm.c \
