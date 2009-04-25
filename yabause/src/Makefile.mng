@@ -32,9 +32,9 @@ CFLAGS=$(VDEFINES) $(DDEFINES) -O3 -fomit-frame-pointer -fno-strict-aliasing -Wa
 CFLAGS2= -fomit-frame-pointer -fno-strict-aliasing -Wall 
 #CFLAGS2= -fno-strict-aliasing -Wall -g
 LDFLAGS=-lmingw32 -lopengl32 -lglut32 -lkernel32 -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm \
-       -lws2_32 -ldxguid -ldinput8 -ldxerr8 -ldsound -lmini18n -mwindows -mthreads
+       -lws2_32 -ldxguid -ldinput8 -ldxerr8 -ldsound -lmini18n -lvfw32 -mwindows -mthreads
 OBJS = bios.o cdbase.o cheat.o coffelf.o cs0.o cs1.o cs2.o debug.o error.o m68kcore.o \
-       m68kc68k.o m68kd.o memory.o netlink.o peripheral.o profile.o scsp.o scu.o sh2core.o \
+       m68kc68k.o m68kd.o memory.o movie.o netlink.o peripheral.o profile.o scsp.o scu.o sh2core.o \
        sh2idle.o sh2int.o sh2d.o smpc.o vdp1.o vdp2.o vdp2debug.o vidogl.o vidshared.o \
        vidsoft.o yabause.o ygl.o cd-windows.o c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o \
        windows/perdx.o windows/snddx.o windows/yui.o windows/cheats.o windows/resource.o \
@@ -43,7 +43,7 @@ OBJS = bios.o cdbase.o cheat.o coffelf.o cs0.o cs1.o cs2.o debug.o error.o m68kc
        windows/cpudebug/debug-sh2.o windows/cpudebug/debug-smpc.o windows/cpudebug/debug-vdp1.o \
        windows/cpudebug/debug-vdp2.o windows/settings/settings.o windows/settings/settings-basic.o \
        windows/settings/settings-input.o windows/settings/settings-log.o windows/settings/settings-netlink.o \
-       windows/settings/settings-sound.o windows/settings/settings-video.o windows\bup-manager.o
+       windows/settings/settings-sound.o windows/settings/settings-video.o windows\bup-manager.o windows\aviout.o
 
 all: $(TARGET)
 
