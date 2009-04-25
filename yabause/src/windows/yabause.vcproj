@@ -425,7 +425,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib dxguid.lib dinput8.lib dxerr9.lib dsound.lib mini18n.lib"
+				AdditionalDependencies="comctl32.lib dxguid.lib dinput8.lib dxerr9.lib dsound.lib mini18n.lib vfw32.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -554,6 +554,10 @@
 			<Filter
 				Name="windows specific"
 				>
+				<File
+					RelativePath=".\aviout.c"
+					>
+				</File>
 				<File
 					RelativePath=".\bup-manager.c"
 					>
@@ -764,6 +768,10 @@
 				</File>
 				<File
 					RelativePath="..\memory.c"
+					>
+				</File>
+				<File
+					RelativePath="..\movie.c"
 					>
 				</File>
 				<File
@@ -994,6 +1002,10 @@
 				</File>
 				<File
 					RelativePath="..\memory.h"
+					>
+				</File>
+				<File
+					RelativePath="..\movie.h"
 					>
 				</File>
 				<File
