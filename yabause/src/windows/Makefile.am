@@ -6,7 +6,8 @@ bin_PROGRAMS = yabause
 yabause_SOURCES = \
 	aviout.c bup-manager.c cheats.c cheats.h custctl.c custctl.h disasm.c \
 	disasm.h dx.h hexedit.c hexedit.h resource.h resource.rc perdx.c \
-        perdx.h snddx.c snddx.h yui.c yuiwin.h settings/settings.c settings/settings.h \
+        perdx.h ramwatch.c ramwatch.h snddx.c snddx.h yui.c yuiwin.h \
+	settings/settings.c settings/settings.h \
         settings/settings-basic.c settings/settings-input.c settings/settings-log.c \
 	settings/settings-netlink.c settings/settings-sound.c settings/settings-video.c \
 	cpudebug/debug-68k.c cpudebug/debug-scsp.c cpudebug/debug-scu.c \
