@@ -1,10 +1,10 @@
 #include "resource.h"
 #include "ramwatch.h"
-#include ".\settings\settings.h"
+#include "./settings/settings.h"
 #include "windows.h"
 #include "commctrl.h"
-#include ".\cpudebug\yuidebug.h"
-#include "..\cs2.h"
+#include "./cpudebug/yuidebug.h"
+#include "../cs2.h"
 
 extern HWND YabWin;
 extern HINSTANCE y_hInstance;
