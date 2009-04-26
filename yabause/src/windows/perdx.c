@@ -656,6 +656,7 @@ int PERDXHandleEvents(void)
    if (YabauseExec() != 0)
       return -1;
 
+   Update_RAM_Watch();
    YuiCaptureVideo();
 
    return 0;

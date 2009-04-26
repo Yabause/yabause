@@ -623,6 +623,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\ramwatch.c"
+					>
+				</File>
+				<File
 					RelativePath="snddx.c"
 					>
 				</File>
@@ -864,6 +868,10 @@
 					RelativePath="perdx.h"
 					>
 				</File>
+				<File	
+					RelativePath=".\ramwatch.h"
+					>
+				</File>			
 				<File
 					RelativePath="resource.h"
 					>

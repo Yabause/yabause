@@ -45,6 +45,7 @@
 #include "disasm.h"
 #include "hexedit.h"
 #include "../movie.h"
+#include "ramwatch.h"
 
 #define DONT_PROFILE
 #include "../profile.h"
@@ -1370,6 +1371,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                YuiTempUnPause();
                break;
             }
+		case ID_RAM_WATCH:
+			if(!RamWatchHWnd)
+			{
+				RamWatchHWnd = CreateDialog(y_hInstance, MAKEINTRESOURCE(IDD_RAMWATCH), hWnd, (DLGPROC) RamWatchProc);
+			}
+			else
+				SetForegroundWindow(RamWatchHWnd);
+			break;
             case IDM_SCSPDEBUG:
             {
                YuiTempPause();
