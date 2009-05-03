@@ -150,7 +150,7 @@ AC_ARG_WITH(opengl, AC_HELP_STRING(--without-opengl, don't use OpenGL), [use_ope
 if test x$use_opengl = xyes ; then
 	case $host in
 		*darwin*)
-			LIBS="$LIBS -framework Opengl"
+			LIBS="$LIBS -framework OpenGL"
 			AC_DEFINE(HAVE_LIBGL)
 			;;
 		*cygwin* | *mingw32*)
