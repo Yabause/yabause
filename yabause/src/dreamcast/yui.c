@@ -130,7 +130,7 @@ void DoGui()  {
     while(!start_pressed)   {
         offset = 64 * 640 + 64; /* 64 pixels in from the left, 64 down */
         
-        bfont_draw_str(vram_s + offset, 640, 0, "Yabause 0.9.9");
+        bfont_draw_str(vram_s + offset, 640, 0, "Yabause 0.9.10");
         offset += 640 * 128;
 
         if(phase == 0)  {
