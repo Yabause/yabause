@@ -2662,10 +2662,32 @@ int SH2InterpreterReset()
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
+{
+   if (15 > context->regs.SR.part.I) // Since UBC's interrupt are always level 15
+   {
+      context->regs.R[15] -= 4;
+      MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
+      context->regs.R[15] -= 4;
+      MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
+      context->regs.SR.part.I = 15;
+      context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (12 << 2));
+      LOG("interrupt successfully handled\n");
+   }
+   context->onchip.BRCR |= flag;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
+   
    while(context->cycles < cycles)
    {
+#ifdef EMULATEUBC   	   
+      int ubcinterrupt=0, ubcflag=0;
+#endif
+	
       SH2HandleBreakpoints(context);
 
 #ifdef SH2_TRACE
@@ -2673,27 +2695,40 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
 
 #ifdef EMULATEUBC
-      // fix me
-      int ubcainterrupt=0, ubcbinterrupt=0;
-      
-      if (context->onchip.BBRA & 0x10)
+      if (context->onchip.BBRA & (BBR_CPA_CPU | BBR_IDA_INST | BBR_RWA_READ)) // Break on cpu, instruction, read cycles
       {
-         if (context->onchip.BARA.all == context->regs.PC) // fix me
+         if (context->onchip.BARA.all == (context->regs.PC & (~context->onchip.BAMRA.all)))
          {
-            LOG("Trigger UBC interrupt: PC = %08X\n", context->regs.PC);
-            if (context->onchip.BRCR & 0x0400)
-               ubcainterrupt=1;
+            LOG("Trigger UBC A interrupt: PC = %08X\n", context->regs.PC);
+            if (!(context->onchip.BRCR & BRCR_PCBA))
+            {
+               // Break before instruction fetch
+	           SH2UBCInterrupt(context, BRCR_CMFCA);
+            }
             else
             {
+            	// Break after instruction fetch
+               ubcinterrupt=1;
+               ubcflag = BRCR_CMFCA;
             }
          }
       }
-      else if(context.onchip.BBRB & 0x10)
+      else if(context->onchip.BBRB & (BBR_CPA_CPU | BBR_IDA_INST | BBR_RWA_READ)) // Break on cpu, instruction, read cycles
       {
-         if (context.onchip.BRCR & 0x0004)
-            ubcainterrupt=1;
-         else
+         if (context->onchip.BARB.all == (context->regs.PC & (~context->onchip.BAMRB.all)))
          {
+            LOG("Trigger UBC B interrupt: PC = %08X\n", context->regs.PC);
+            if (!(context->onchip.BRCR & BRCR_PCBB))
+            {
+          	   // Break before instruction fetch
+       	       SH2UBCInterrupt(context, BRCR_CMFCB);
+            }
+            else
+            {
+               // Break after instruction fetch
+               ubcinterrupt=1;
+               ubcflag = BRCR_CMFCB;
+            }
          }
       }
 #endif
@@ -2705,24 +2740,8 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       opcodes[context->instruction](context);
 
 #ifdef EMULATEUBC
-      if (ubcainterrupt)
-      {
-         // handle interrupt
-         if (15 > context->regs.SR.part.I) // Since UBC's interrupt are always level 15
-         {
-            context->regs.R[15] -= 4;
-            MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
-            context->regs.R[15] -= 4;
-            MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
-            context->regs.SR.part.I = 15;
-            context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (12 << 2));
-            LOG("interrupt successfully handled\n");
-         }
-      }
-      else if (ubcbinterrupt)
-      {
-         // fix me
-      }
+	  if (ubcinterrupt)
+	     SH2UBCInterrupt(context, ubcflag);
 #endif
    }
 
@@ -2751,4 +2770,3 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-

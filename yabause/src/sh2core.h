@@ -31,6 +31,36 @@
 #undef MACH
 #endif
 
+// UBC Flags
+#define BBR_CPA_NONE			(0 << 6)
+#define BBR_CPA_CPU				(1 << 6)
+#define BBR_CPA_PER				(2 << 6)
+
+#define BBR_IDA_NONE			(0 << 4)
+#define BBR_IDA_INST	 		(1 << 4)
+#define BBR_IDA_DATA			(2 << 4)
+
+#define BBR_RWA_NONE			(0 << 2)
+#define BBR_RWA_READ	 		(1 << 2)
+#define BBR_RWA_WRITE			(2 << 2)
+
+#define BBR_SZA_NONE			(0 << 0)
+#define BBR_SZA_BYTE	 		(1 << 0)
+#define BBR_SZA_WORD			(2 << 0)
+#define BBR_SZA_LONGWORD	 	(3 << 0)
+
+#define BRCR_CMFCA				(1 << 15)
+#define BRCR_CMFPA				(1 << 14)
+#define BRCR_EBBA				(1 << 13)
+#define BRCR_UMD				(1 << 12)
+#define BRCR_PCBA				(1 << 10)
+
+#define BRCR_CMFCB				(1 << 7)
+#define BRCR_CMFPB				(1 << 6)
+#define BRCR_SEQ				(1 << 4)
+#define BRCR_DBEB				(1 << 3)
+#define BRCR_PCBB				(1 << 2)
+
 typedef struct
 {
    u32 R[16];
