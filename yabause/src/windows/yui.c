@@ -18,37 +18,57 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+#include "hotkey.h"
 #include <windows.h>
 #include <commctrl.h>
 #include <GL/gl.h>
 #undef FASTCALL
+extern "C" {
 #include "../cs2.h"
 #include "../vdp2.h"
 #include "../yui.h"
-#include "snddx.h"
 #include "../vidogl.h"
 #include "../vidsoft.h"
 #include "../peripheral.h"
-#include "perdx.h"
 #include "../cs0.h"
-#include "resource.h"
-#include "settings/settings.h"
-#include "cd.h"
 #include "../debug.h"
-#include "cheats.h"
 #include "../m68kcore.h"
+#include "../movie.h"
+#include "snddx.h"
+#include "cheats.h"
+#include "perdx.h"
+#include "cd.h"
+#include "aviout.h"
+#include "cpudebug/yuidebug.h"
+#include "disasm.h"
+#include "hexedit.h"
+#include "settings/settings.h"
+}
+
+#include "resource.h"
+#include "ram_search.h"
+
 #ifdef NOC68K
 #include "../m68kc68k.h"
 #endif
 //#include "../m68khle.h"
-#include "cpudebug/yuidebug.h"
-#include "disasm.h"
-#include "hexedit.h"
-#include "../movie.h"
-#include "ramwatch.h"
 
 #define DONT_PROFILE
+extern "C" {
 #include "../profile.h"
+#include "yuiwin.h"
+}
+#include "ramwatch.h"
+
+//Prototypes
+void ResetGame();
+void HardResetGame();
+void YuiPlayMovie(HWND hWnd);
+void YuiRecordMovie(HWND hWnd);
+void YuiScreenshot(HWND hWnd);
+void YuiRecordAvi(HWND hWnd);
+void YuiStopAvi();
+void WriteToINI();
 
 HANDLE emuthread=INVALID_HANDLE_VALUE;
 int KillEmuThread=0;
@@ -60,7 +80,6 @@ int yabwinh;
 int screenwidth;
 int screenheight;
 
-HINSTANCE y_hInstance;
 HWND YabWin=NULL;
 HMENU YabMenu=NULL;
 HDC YabHDC=NULL;
@@ -69,6 +88,7 @@ BOOL isfullscreenset=FALSE;
 int yabwinx = 0;
 int yabwiny = 0;
 psp_struct settingspsp;
+extern HWND RamSearchHWnd;
 
 int oldbpp = 0;
 static int redsize = 0;
@@ -93,43 +113,39 @@ TCHAR bmpfilename[MAX_PATH] = TEXT("\0");
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 void YuiReleaseVideo(void);
 
-int DRV_AviBegin(const char* fname, HWND HWnd);
-void DRV_AviVideoUpdate(const u16* buffer, HWND HWnd);
-void DRV_AviEnd();
-
-SH2Interface_struct *SH2CoreList[] = {
+extern "C" SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
 &SH2DebugInterpreter,
 NULL
 };
 
-PerInterface_struct *PERCoreList[] = {
+extern "C" PerInterface_struct *PERCoreList[] = {
 &PERDummy,
 &PERDIRECTX,
 NULL
 };
 
-CDInterface *CDCoreList[] = {
+extern "C" CDInterface *CDCoreList[] = {
 &DummyCD,
 &ISOCD,
 &ArchCD,
 NULL
 };
 
-SoundInterface_struct *SNDCoreList[] = {
+extern "C" SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
 &SNDDIRECTX,
 NULL
 };
 
-VideoInterface_struct *VIDCoreList[] = {
+extern "C" VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
 &VIDOGL,
 &VIDSoft,
 NULL
 };
 
-M68K_struct *M68KCoreList[] = {
+extern "C" M68K_struct *M68KCoreList[] = {
 &M68KDummy,
 #ifndef NOC68K
 &M68KC68K,
@@ -406,7 +422,14 @@ int YuiCaptureScreen(const char *filename)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YuiCaptureVideo(void)
+static void AviEnd()
+{
+	DRV_AviEnd();
+}
+	  	
+//////////////////////////////////////////////////////////////////////////////
+
+extern "C" void YuiCaptureVideo(void)
 {
 	u8 *buf;
 	int totalsize=screenwidth * screenheight * sizeof(u32);
@@ -424,7 +447,7 @@ void YuiCaptureVideo(void)
 	glReadPixels(0, 0, screenwidth, screenheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	SwapBuffers(YabHDC);
 
-	DRV_AviVideoUpdate(buf, YabWin);
+	DRV_AviVideoUpdate((const u16*)buf, YabWin);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -486,6 +509,14 @@ void YuiTempUnPause()
 
 
 //////////////////////////////////////////////////////////////////////////////
+
+//adelikat: TODO: This should be the only pause function called for menu & hotkey items
+void TogglePause()
+{
+	PauseOrUnpause();
+}
+//////////////////////////////////////////////////////////////////////////////
+
 #ifdef USETHREADS
 DWORD WINAPI YabauseEmulate(LPVOID arg)
 {
@@ -621,7 +652,7 @@ YabauseSetup:
 
 void YuiPrintUsage()
 {
-   MessageBox (NULL, _16("Usage: yabause [OPTIONS]...\n"
+   MessageBox (NULL, (LPCWSTR)_16("Usage: yabause [OPTIONS]...\n"
                      "-h\t\t--help\t\t\tPrint help and exit\n"
                      "-b STRING\t--bios=STRING\t\tbios file\n"
                      "-i STRING\t\t--iso=STRING\t\tiso/cue file\n"
@@ -629,7 +660,7 @@ void YuiPrintUsage()
                      "-ns\t\t--nosound\t\tturn sound off\n"
                      "-f\t\t--fullscreen\t\tstart in fullscreen mode\n"
                      "\t\t--binary=STRING:ADDRESS\tLoad binary file to address"),
-                     _16("Command line usage"),  MB_OK | MB_ICONINFORMATION);
+                     (LPCWSTR)_16("Command line usage"),  MB_OK | MB_ICONINFORMATION);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -767,6 +798,8 @@ int YuiInit(LPSTR lpCmdLine)
    free(cmddup);
 #endif
 
+   LoadHotkeyConfig();
+
    if (GetPrivateProfileStringA("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
    {
       if (forcecdpath)
@@ -781,7 +814,7 @@ int YuiInit(LPSTR lpCmdLine)
          if (ret != TRUE)
          {
             // exit program with error
-            MessageBox (NULL, _16("yabause.ini must be properly setup before program can be used."), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+            MessageBox (NULL, (LPCWSTR)_16("yabause.ini must be properly setup before program can be used."), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
             return -1;
          }
       }
@@ -909,6 +942,27 @@ int YuiInit(LPSTR lpCmdLine)
 
    sprintf(netlinksetting, "%d.%d.%d.%d\n%d", (int)FIRST_IPADDRESS(netlinklocalremoteip), (int)SECOND_IPADDRESS(netlinklocalremoteip), (int)THIRD_IPADDRESS(netlinklocalremoteip), (int)FOURTH_IPADDRESS(netlinklocalremoteip), netlinkport);
 
+	// Grab RamWatch Settings
+	GetPrivateProfileStringA("RamWatch", "AutoLoad", "0", tempstr, MAX_PATH, inifilename);
+	AutoRWLoad = atoi(tempstr);
+	GetPrivateProfileStringA("RamWatch", "SaveWindowPos", "0", tempstr, MAX_PATH, inifilename);
+	RWSaveWindowPos = atoi(tempstr);
+	GetPrivateProfileStringA("RamWatch", "Ram_x", "0", tempstr, MAX_PATH, inifilename);
+	ramw_x = atoi(tempstr);
+	GetPrivateProfileStringA("RamWatch", "Ram_y", "0", tempstr, MAX_PATH, inifilename);
+	ramw_y = atoi(tempstr);
+	for(int i = 0; i < MAX_RECENT_WATCHES; i++)
+		{
+			char str[256];
+			sprintf(str, "Recent Watch %d", i+1);
+			GetPrivateProfileStringA("Watches", str, "", &rw_recent_files[i][0], 1024, inifilename);
+		}
+	
+	// Grab OSD Toggle setting
+	GetPrivateProfileStringA("Video", "OSD Display", "0", tempstr, MAX_PATH, inifilename);
+	int x = atoi(tempstr);
+	SetOSDToggle(x);
+
 #if DEBUG
    // Grab Logging settings
    GetPrivateProfileStringA("Log", "Enable", "0", tempstr, MAX_PATH, inifilename);
@@ -1032,7 +1086,7 @@ int YuiInit(LPSTR lpCmdLine)
    MyWndClass.hIcon = LoadIcon(y_hInstance, MAKEINTRESOURCE(IDI_ICON));
    MyWndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
    MyWndClass.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
-   MyWndClass.lpszClassName = _16("Yabause");
+   MyWndClass.lpszClassName = (LPCWSTR)_16("Yabause");
    MyWndClass.lpszMenuName = NULL;
 
    YabMenu = LoadMenu(y_hInstance, MAKEINTRESOURCE(IDR_MENU));
@@ -1043,8 +1097,8 @@ int YuiInit(LPSTR lpCmdLine)
    sprintf(szAppName, "Yabause %s", VERSION);
 
    // Create new window
-   YabWin = CreateWindow(_16("Yabause"),       // class
-                         _16(szAppName),       // caption
+   YabWin = CreateWindow((LPCWSTR)_16("Yabause"),       // class
+                         (LPCWSTR)_16(szAppName),       // caption
                          WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |                                        
                          WS_THICKFRAME | WS_MINIMIZEBOX |   // style
                          WS_CLIPCHILDREN,
@@ -1101,7 +1155,7 @@ YabauseSetup:
          if (ret != TRUE)
          {
             // exit program with error
-            MessageBox (NULL, _16("yabause.ini must be properly setup before program can be used."), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+            MessageBox (NULL, (LPCWSTR)_16("yabause.ini must be properly setup before program can be used."), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
             return -1;
          }
 
@@ -1138,6 +1192,13 @@ YabauseSetup:
       SetFocus(YabWin);
    }
 
+   if (AutoRWLoad)
+   {
+	  //Open Ram Watch if its auto-load setting is checked
+	  OpenRWRecentFile(0);	
+	  RamWatchHWnd = CreateDialog(y_hInstance, MAKEINTRESOURCE(IDD_RAMWATCH), YabWin, (DLGPROC) RamWatchProc);	
+   }
+
    if (loadexec)
       MappedMemoryLoadExec(filename, addr);
 
@@ -1145,7 +1206,14 @@ YabauseSetup:
    {
       if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
       {
-         if (TranslateAccelerator(YabWin, hAccel, &msg) == 0)
+         if (RamWatchHWnd && IsDialogMessage(RamWatchHWnd, &msg))
+		 {
+			if(msg.message == WM_KEYDOWN) // send keydown messages to the dialog (for accelerators, and also needed for the Alt key to work)
+				SendMessage(RamWatchHWnd, msg.message, msg.wParam, msg.lParam);
+			continue;
+		 }
+
+		 if (TranslateAccelerator(YabWin, hAccel, &msg) == 0)
          {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -1238,8 +1306,8 @@ void ChangeLanguage(int id)
    ClearMenuChecks(YabMenu, IDM_GERMAN, IDM_SPANISH);
    CheckMenuItem(YabMenu, id, MF_CHECKED);
 }
-//////////////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////////////
 LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
    DIDEVCAPS didc;
@@ -1259,32 +1327,27 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                YuiTempUnPause();
                break;
             }
-            case IDM_RUN:
+          /*  case IDM_RUN:
             {
                YuiUnPause();
                EnableMenuItem(YabMenu, IDM_RUN, MF_GRAYED);
                EnableMenuItem(YabMenu, IDM_PAUSE, MF_ENABLED);
                break;
             }	
-            case IDM_PAUSE:
+            */
+			case IDM_PAUSE:
             {
-               YuiPause();
-               EnableMenuItem(YabMenu, IDM_PAUSE, MF_GRAYED);
-               EnableMenuItem(YabMenu, IDM_RUN, MF_ENABLED);
+               TogglePause();
                break;
             }
             case IDM_RESET:
             {
-               YuiTempPause();
-               YabauseResetButton();
-               YuiTempUnPause();
+               ResetGame();
                break;
             }
             case IDM_HARDRESET:
             {
-               YuiTempPause();
-               YabauseReset();
-               YuiTempUnPause();
+               HardResetGame();
                break;
             }
             case IDM_CHEATSEARCH:
@@ -1309,14 +1372,81 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                memset(&settingspsp, 0, sizeof(settingspsp));
                YuiTempUnPause();
                break;
-            }
-            case IDM_BACKUPRAMMANAGER:
-            {
-               YuiTempPause();
-               DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_BACKUPRAM), hWnd, (DLGPROC)BackupRamDlgProc);
+			}
+			case ID_RAM_SEARCH:
+				if(!RamSearchHWnd)
+				{
+					InitRamSearch();
+					RamSearchHWnd = CreateDialog(y_hInstance, MAKEINTRESOURCE(IDD_RAMSEARCH), hWnd, (DLGPROC) RamSearchProc);
+				}
+				else
+					SetForegroundWindow(RamSearchHWnd);
+				break;
+
+			case IDM_HOTKEY_CONFIG:
+				{
+
+					DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_KEYCUSTOM), hWnd, DlgHotkeyConfig);
+
+				}
+				break;
+			case IDM_BACKUPRAMMANAGER:
+				{
+					YuiTempPause();
+					DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_BACKUPRAM), hWnd, (DLGPROC)BackupRamDlgProc);
                YuiTempUnPause();
                break;
             }
+			case IDM_OPENCUEISO:
+				{
+					YuiTempPause();
+
+					WCHAR tempwstr[MAX_PATH];
+					WCHAR filter[1024];
+					OPENFILENAME ofn;
+
+					// setup ofn structure
+					ZeroMemory(&ofn, sizeof(OPENFILENAME));
+					ofn.lStructSize = sizeof(OPENFILENAME);
+					ofn.hwndOwner = hWnd;
+
+					CreateFilter(filter, 1024,
+						"Supported image files (*.cue, *.iso)", "*.cue;*.iso",
+						"Cue files (*.cue)", "*.cue",
+						"Iso files (*.iso)", "*.iso",
+						"All files (*.*)", "*.*", NULL);
+
+					ofn.lpstrFilter = filter;
+					GetDlgItemText(hWnd, IDC_IMAGEEDIT, tempwstr, MAX_PATH);
+					ofn.lpstrFile = tempwstr;
+					ofn.nMaxFile = sizeof(tempwstr);
+					ofn.Flags = OFN_FILEMUSTEXIST;
+
+					if (GetOpenFileName(&ofn))
+					{
+						char tempstr[512];
+
+						WideCharToMultiByte(CP_ACP, 0, tempwstr, -1, tempstr, MAX_PATH, NULL, NULL);
+
+						if (strcmp(tempstr, cdrompath) != 0)
+						{
+							strcpy(cdrompath, tempstr);
+					//		cdromchanged = TRUE;
+						}
+
+					WritePrivateProfileStringA("General", "CDROMDrive", cdrompath, inifilename);
+#ifndef USETHREADS
+					Cs2ChangeCDCore(CDCORE_ISO, cdrompath);
+#else
+					corechanged = 0;
+					changecore |= 1;
+					while (corechanged == 0) { Sleep(0); }
+#endif
+					YabauseReset();
+					}
+
+					YuiTempUnPause();
+				}
             case IDM_GERMAN:
             case IDM_ENGLISH:
             case IDM_FRENCH:
@@ -1459,13 +1589,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
                SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
                         yssfilename, sizeof(yssfilename)/sizeof(TCHAR));
-               ofn.lpstrDefExt = _16("YSS");
+               ofn.lpstrDefExt = (LPCWSTR)_16("YSS");
 
                if (GetSaveFileName(&ofn))
                {
                   WideCharToMultiByte(CP_ACP, 0, yssfilename, -1, text, sizeof(text), NULL, NULL);
                   if (YabSaveState(text) != 0)
-                     MessageBox (hWnd, _16("Couldn't save state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hWnd, (LPCWSTR)_16("Couldn't save state file"), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                YuiTempUnPause();
                break;
@@ -1488,86 +1618,24 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                {
                   WideCharToMultiByte(CP_ACP, 0, yssfilename, -1, text, sizeof(text), NULL, NULL);
                   if (YabLoadState(text) != 0)
-                     MessageBox (hWnd, _16("Couldn't load state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+                     MessageBox (hWnd, (LPCWSTR)_16("Couldn't load state file"), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
                }
                YuiTempUnPause();
 
                break;
             }
 			case IDM_FILE_RECORDAVI:
-				{
-					WCHAR filter[1024];
-					OPENFILENAME ofn;
-
-					YuiTempPause();
-
-					CreateFilter(filter, 1024,
-						"AVI Files *.avi)", "*.avi",
-						"All files (*.*)", "*.*", NULL);
-
-					SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
-						avifilename, sizeof(avifilename)/sizeof(TCHAR));
-					ofn.lpstrDefExt = _16("AVI");
-
-					if (GetSaveFileName(&ofn))
-					{
-						WideCharToMultiByte(CP_ACP, 0, avifilename, -1, text, sizeof(text), NULL, NULL);
-
-						DRV_AviBegin(text, hWnd);
-						AVIRecording=1;
-					}
-					YuiTempUnPause();
-					break;
-				}
+				YuiRecordAvi(hWnd);
+				break;
 			case IDM_FILE_STOPAVI:
-				DRV_AviEnd();
-				AVIRecording=0;
+				YuiStopAvi();
 				break;
 			case MENU_RECORD_MOVIE:
-				{
-			   WCHAR filter[1024];
-               OPENFILENAME ofn;
-
-               YuiTempPause();
-
-               CreateFilter(filter, 1024,
-                  "Yabause Movie file", "*.YMV",
-                  "All files (*.*)", "*.*", NULL);
-
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
-                        ymvfilename, sizeof(ymvfilename)/sizeof(TCHAR));
-               ofn.lpstrDefExt = _16("YMV");
-
-               if (GetSaveFileName(&ofn))
-               {
-                  WideCharToMultiByte(CP_ACP, 0, ymvfilename, -1, text, sizeof(text), NULL, NULL);
-               SaveMovie(text);
-               }
-				}
+				YuiRecordMovie(hWnd);
 				break;
-
-			  case MENU_PLAY_MOVIE:
-            {
-               WCHAR filter[1024];
-               OPENFILENAME ofn;
-
-               YuiTempPause();
-
-               CreateFilter(filter, 1024,
-                  "Yabause Movie files", "*.YMV",
-                  "All files (*.*)", "*.*", NULL);
-
-               SetupOFN(&ofn, OFN_DEFAULTLOAD, hWnd, filter,
-                        ymvfilename, sizeof(ymvfilename)/sizeof(TCHAR));
-
-               if (GetOpenFileName(&ofn))
-               {
-                  WideCharToMultiByte(CP_ACP, 0, ymvfilename, -1, text, sizeof(text), NULL, NULL);
-                  PlayMovie(text);
-               }
-               YuiTempUnPause();
-               break;
-            }
+			case MENU_PLAY_MOVIE:
+               YuiPlayMovie(hWnd);
+			   break;
 			case MENU_STOP_MOVIE:
 				StopMovie();
 				break;
@@ -1588,7 +1656,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_SAVESTATE_F10:
                YuiTempPause();
                if (YabSaveStateSlot(ysspath, LOWORD(wParam)-IDM_SAVESTATE_F2) != 0)
-                  MessageBox (hWnd, _16("Couldn't save state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+                  MessageBox (hWnd, (LPCWSTR)_16("Couldn't save state file"), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
                YuiTempUnPause();
                break;
             case IDM_LOADSTATE_F2:
@@ -1602,40 +1670,19 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             case IDM_LOADSTATE_F10:
                YuiTempPause();
                if (YabLoadStateSlot(ysspath, LOWORD(wParam)-IDM_LOADSTATE_F2) != 0)
-                  MessageBox (hWnd, _16("Couldn't load state file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+                  MessageBox (hWnd, (LPCWSTR)_16("Couldn't load state file"), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
                YuiTempUnPause();
                break;
             case IDM_CAPTURESCREEN:
-            {
-               WCHAR filter[1024];
-               OPENFILENAME ofn;
-               
-               YuiTempPause();
-
-               CreateFilter(filter, 1024,
-                  "Bitmap Files", "*.BMP",
-                  "All files (*.*)", "*.*", NULL);
-
-               SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
-                       bmpfilename, sizeof(bmpfilename)/sizeof(TCHAR));
-               ofn.lpstrDefExt = _16("BMP");
-
-               if (GetSaveFileName(&ofn))
-               {
-                  WideCharToMultiByte(CP_ACP, 0, bmpfilename, -1, text, sizeof(text), NULL, NULL);
-                  if (YuiCaptureScreen(text))
-                     MessageBox (hWnd, _16("Couldn't save capture file"), _16("Error"),  MB_OK | MB_ICONINFORMATION);
-               }
-               YuiTempUnPause();
-               break;
-            }
+				YuiScreenshot(hWnd);
+				break;
             case IDM_EXIT:
             {
                ScspMuteAudio();
                PostMessage(hWnd, WM_CLOSE, 0, 0);
                break;
             }
-            case IDM_WEBSITE:
+			case IDM_WEBSITE:
             {
                ShellExecuteA(NULL, "open", "http://yabause.sourceforge.net", NULL, NULL, SW_SHOWNORMAL);
                break;
@@ -1659,7 +1706,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
             {
                ShellExecuteA(NULL, "open", "http://www.emu-compatibility.com/yabause/index.php?lang=uk", NULL, NULL, SW_SHOWNORMAL);
                break;
-            }
+            }			
             case IDM_ABOUT:
             {
                YuiTempPause();
@@ -1671,19 +1718,29 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
          return 0L;
       }
-      case WM_KEYDOWN:
-      {
-         if(wParam == VK_OEM_3) // ~ key
-            SpeedThrottleEnable();
 
-         return 0L;
-      }
-      case WM_KEYUP:
-      {
-         if(wParam == VK_OEM_3) // ~ key
-             SpeedThrottleDisable();
-         return 0L;
-      }
+	case WM_KEYDOWN:
+		//	if(wParam != VK_PAUSE)
+		//		break;
+	case WM_SYSKEYDOWN:
+	case WM_CUSTKEYDOWN:
+		{
+			int modifiers = GetModifiers(wParam);
+			if(!HandleKeyMessage(wParam,lParam, modifiers))
+				return 0;
+			break;
+		}
+	case WM_KEYUP:
+		//	if(wParam != VK_PAUSE)
+		//		break;
+	case WM_SYSKEYUP:
+	case WM_CUSTKEYUP:
+		{
+			int modifiers = GetModifiers(wParam);
+			HandleKeyUp(wParam, lParam, modifiers);
+		}
+		break;
+
       case WM_ENTERMENULOOP:
       {
 #ifndef USETHREADS
@@ -1702,7 +1759,16 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
                   IDirectInputDevice8_Unacquire(paddevice[i].lpDIDevice);
             }
          }
-         return 0L;
+
+		EnableMenuItem(YabMenu, IDM_FILE_RECORDAVI, MF_BYCOMMAND | (!DRV_AviIsRecording())? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_FILE_STOPAVI,   MF_BYCOMMAND | (DRV_AviIsRecording()) ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, MENU_RECORD_MOVIE,  MF_BYCOMMAND | (!IsMovieLoaded())     ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, MENU_PLAY_MOVIE,    MF_BYCOMMAND | (!IsMovieLoaded())     ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, MENU_STOP_MOVIE,    MF_BYCOMMAND | (IsMovieLoaded())      ? MF_ENABLED : MF_GRAYED);
+		
+		CheckMenuItem(YabMenu, IDM_PAUSE, FrameAdvanceVariable ? MF_CHECKED:MF_UNCHECKED);
+		
+		return 0L;
       }
       case WM_EXITMENULOOP:
       {
@@ -1740,9 +1806,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       }
       case WM_CLOSE:
       {
-         stop = 1;
-         PostQuitMessage(0);
-         return 0L;
+         if (AskSave())
+		 {
+			 stop = 1;
+			 PostQuitMessage(0);
+			 WriteToINI();
+			 return 0L;
+		 }
       }
       case WM_SIZE:
       {
@@ -1757,7 +1827,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
          return 0L;
       }
       case WM_DESTROY:
-         return 0L;
+         if (AskSave())
+		 {
+			stop = 1;
+			PostQuitMessage(0);
+			WriteToINI();
+			return 0L;
+		 }
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -1774,7 +1850,7 @@ LRESULT CALLBACK AboutDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
    {
       case WM_INITDIALOG:
          sprintf(tempstr, "Yabause v%s", VERSION);
-         SetDlgItemText(hDlg, IDC_VERSIONTEXT, _16(tempstr));
+         SetDlgItemText(hDlg, IDC_VERSIONTEXT, (LPCWSTR)_16(tempstr));
          return TRUE;
       case WM_COMMAND:
       {
@@ -1811,6 +1887,9 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
    mini18n_set_domain("trans");
 #endif
 
+   InitCustomControls();
+   InitCustomKeys(&CustomKeys);
+
    if (YuiInit(lpCmdLine) != 0)
       fprintf(stderr, "Error running Yabause\n");
 
@@ -1836,4 +1915,171 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
    return 0;
 }
 
+//adelikat
+//All WritePrivateProfile calls should go here and be called only on Yabause close (or a possible save config menu option)
+void WriteToINI()
+{
+	char text[10];
+	
+	//RamWatch
+	WritePrivateProfileStringA("RamWatch", "AutoLoad", AutoRWLoad ? "1" : "0", inifilename);
+	WritePrivateProfileStringA("RamWatch", "SaveWindowPos", RWSaveWindowPos ? "1" : "0", inifilename);
+	sprintf(text, "%ld", ramw_x);
+	WritePrivateProfileStringA("RamWatch", "Ram_x", text, inifilename);
+	sprintf(text, "%ld", ramw_y);
+	WritePrivateProfileStringA("RamWatch", "Ram_y", text, inifilename);
+	for(int i = 0; i < MAX_RECENT_WATCHES; i++)
+	{
+		char str[256];
+		sprintf(str, "Recent Watch %d", i+1);
+		WritePrivateProfileStringA("Watches", str, &rw_recent_files[i][0], inifilename);	
+	}
+
+	//OSD Display
+	//extern int fpstoggle;
+	sprintf(text, "%1d", GetOSDToggle());
+	WritePrivateProfileStringA("Video", "OSD Display", text, inifilename);
+}
+
 //////////////////////////////////////////////////////////////////////////////
+
+void ResetGame()
+{
+	YuiTempPause();
+    YabauseResetButton();
+    YuiTempUnPause();
+}
+
+void HardResetGame()
+{
+	YuiTempPause();
+    YabauseReset();
+    YuiTempUnPause();
+}
+
+void SaveState(int num) {
+
+	YuiTempPause();
+	if (YabSaveStateSlot(ysspath, num) != 0)
+		MessageBox (YabWin, (LPCWSTR)_16("Couldn't save state file"), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
+	YuiTempUnPause();
+}
+
+void LoadState(int num) {
+
+	YuiTempPause();
+	if (YabLoadStateSlot(ysspath, num) != 0)
+		MessageBox (YabWin, (LPCWSTR)_16("Couldn't load state file"), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
+	Update_RAM_Search();
+	Update_RAM_Watch();
+	YuiTempUnPause();
+}
+
+void YuiPlayMovie(HWND hWnd) 
+{
+	char text[MAX_PATH];
+	WCHAR filter[1024];
+	OPENFILENAME ofn;
+
+	YuiTempPause();
+	CreateFilter(filter, 1024,
+		"Yabause Movie files", "*.YMV",
+		"All files (*.*)", "*.*", NULL);
+	SetupOFN(&ofn, OFN_DEFAULTLOAD, hWnd, filter,
+	ymvfilename, sizeof(ymvfilename)/sizeof(TCHAR));
+
+	if (GetOpenFileName(&ofn))
+	{
+		WideCharToMultiByte(CP_ACP, 0, ymvfilename, -1, text, sizeof(text), NULL, NULL);
+		PlayMovie(text);
+	}
+	YuiTempUnPause();
+}
+
+void YuiRecordMovie(HWND hWnd)
+{
+	char text[MAX_PATH];
+	WCHAR filter[1024];
+	OPENFILENAME ofn;
+
+	YuiTempPause();
+	CreateFilter(filter, 1024,
+		"Yabause Movie file", "*.YMV",
+		"All files (*.*)", "*.*", NULL);
+
+	SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
+	ymvfilename, sizeof(ymvfilename)/sizeof(TCHAR));
+	ofn.lpstrDefExt = (LPCWSTR)_16("YMV");
+
+	if (GetSaveFileName(&ofn))
+	{
+		WideCharToMultiByte(CP_ACP, 0, ymvfilename, -1, text, sizeof(text), NULL, NULL);
+		SaveMovie(text);
+	}
+}
+
+void ToggleFullScreenHK() {
+
+	// Normally I should be using the function provided in vdp2.c,
+	// but it doesn't support odd custom resolutions.
+	if (isfullscreenset)
+		VIDCore->Resize(windowwidth, windowheight, 0);
+	else
+		VIDCore->Resize(fullscreenwidth, fullscreenheight, 1);
+}
+					
+void YuiScreenshot(HWND hWnd)
+{
+	OPENFILENAME ofn;
+    char text[MAX_PATH];        
+	WCHAR filter[1024];
+	YuiTempPause();
+
+	CreateFilter(filter, 1024,
+	  "Bitmap Files", "*.BMP",
+	  "All files (*.*)", "*.*", NULL);
+
+	SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
+		   bmpfilename, sizeof(bmpfilename)/sizeof(TCHAR));
+	ofn.lpstrDefExt = (LPCWSTR)_16("BMP");
+
+	if (GetSaveFileName(&ofn))
+	{
+	  WideCharToMultiByte(CP_ACP, 0, bmpfilename, -1, text, sizeof(text), NULL, NULL);
+	  if (YuiCaptureScreen(text))
+		 MessageBox (hWnd, (LPCWSTR)_16("Couldn't save capture file"), (LPCWSTR)_16("Error"),  MB_OK | MB_ICONINFORMATION);
+	}
+	YuiTempUnPause();
+}
+
+void YuiRecordAvi(HWND hWnd)
+{
+	WCHAR filter[1024];
+	char text[MAX_PATH];
+	OPENFILENAME ofn;
+
+	YuiTempPause();
+
+	CreateFilter(filter, 1024,
+		"AVI Files *.avi)", "*.avi",
+		"All files (*.*)", "*.*", NULL);
+
+	SetupOFN(&ofn, OFN_DEFAULTSAVE, hWnd, filter,
+		avifilename, sizeof(avifilename)/sizeof(TCHAR));
+	ofn.lpstrDefExt = (LPCWSTR)_16("AVI");
+
+	if (GetSaveFileName(&ofn))
+	{
+		WideCharToMultiByte(CP_ACP, 0, avifilename, -1, text, sizeof(text), NULL, NULL);
+
+		DRV_AviBegin(text, hWnd);
+		AVIRecording=1;
+	}
+	YuiTempUnPause();
+}
+
+void YuiStopAvi()
+{
+	DRV_AviEnd();
+	AVIRecording=0;
+}

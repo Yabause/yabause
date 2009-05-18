@@ -24,6 +24,7 @@
 #include "vfw.h"
 #include "stdio.h"
 #include "settings/settings.h"
+#include "aviout.h"
 
 void EMU_PrintError(const char* msg) {
 //	LOG(msg);
@@ -33,11 +34,7 @@ void EMU_PrintMessage(const char* msg) {
 //	LOG(msg);
 }
 
-int DRV_AviBegin(const char* fname, HWND HWnd);
-void DRV_AviEnd();
-void DRV_AviSoundUpdate(void* soundData, int soundLen);
-int DRV_AviIsRecording();
-void DRV_AviVideoUpdate(const u16* buffer, HWND HWnd);
+
 
 //extern PALETTEENTRY *color_palette;
 //extern WAVEFORMATEX wf;
@@ -399,7 +396,7 @@ void DRV_AviVideoUpdate(const u16* buffer, HWND HWnd)
 	if(!avi_file || !avi_file->valid)
 		return;
 
-	do_video_conversion(buffer);
+	do_video_conversion((const u8*)buffer);
 
     if(FAILED(AVIStreamWrite(avi_file->compressed_streams[VIDEO_STREAM],
                                  avi_file->video_frames, 1, avi_file->convert_buffer,
@@ -446,7 +443,6 @@ void DRV_AviEnd()
 	// Don't display if we're just starting another segment
 	if(avi_file->tBytes <= 2097152000) {
 		EMU_PrintMessage("AVI recording ended.");
-//		SetMessageToDisplay("AVI recording ended.");
 	}
 
 	avi_destroy(&avi_file);

@@ -31,7 +31,7 @@
 int PERDXInit(void);
 void PERDXDeInit(void);
 int PERDXHandleEvents(void);
-void YuiCaptureVideo(void);
+//void YuiCaptureVideo(void);
 int Check_Skip_Key();
 
 PerInterface_struct PERDIRECTX = {
@@ -42,8 +42,8 @@ PERDXDeInit,
 PERDXHandleEvents
 };
 
-extern HWND YabWin;
-extern HINSTANCE y_hInstance;
+HWND YabWin;
+HINSTANCE y_hInstance;
 
 LPDIRECTINPUT8 lpDI8 = NULL;
 LPDIRECTINPUTDEVICE8 lpDIDevice[256]; // I hope that's enough
@@ -639,7 +639,7 @@ void PollKeys(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+int Check_Skip_Key();
 int FrameAdvanceKeyDown=0;
 static DWORD tgtime;
 
@@ -656,6 +656,7 @@ int PERDXHandleEvents(void)
    if (YabauseExec() != 0)
       return -1;
 
+   Update_RAM_Search();
    Update_RAM_Watch();
    YuiCaptureVideo();
 

@@ -13,6 +13,74 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_ACCELERATOR1 ACCELERATORS 
+BEGIN
+    "N",            RAMMENU_FILE_NEW,       VIRTKEY, CONTROL, NOINVERT
+    "O",            RAMMENU_FILE_OPEN,      VIRTKEY, CONTROL, NOINVERT
+    "S",            RAMMENU_FILE_SAVE,      VIRTKEY, CONTROL, NOINVERT
+    "S",            RAMMENU_FILE_SAVEAS,    VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "A",            IDC_C_WATCH_DUPLICATE,  VIRTKEY, NOINVERT
+    "E",            IDC_C_WATCH_EDIT,       VIRTKEY, NOINVERT
+    "D",            IDC_C_WATCH_DOWN,       VIRTKEY, NOINVERT
+    "U",            IDC_C_WATCH_UP,         VIRTKEY, NOINVERT
+    "N",            IDC_C_WATCH,            VIRTKEY, NOINVERT
+    "R",            IDC_C_WATCH_REMOVE,     VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_PROMPT DIALOGEX 0, 0, 159, 82
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Input Prompt"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Ok",IDOK,20,54,50,14
+    PUSHBUTTON      "Cancel",ID_CANCEL,89,54,50,14
+    EDITTEXT        IDC_PROMPT_EDIT,20,32,119,14,ES_AUTOHSCROLL
+    LTEXT           "",IDC_PROMPT_TEXT,7,15,145,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_PROMPT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 152
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 75
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // English (Canada) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENC)
@@ -23,109 +91,104 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_CAN
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
-//
-
-IDR_MENU MENU 
-BEGIN
-    POPUP "&File"
-    BEGIN
-        MENUITEM "&Memory Transfer",            IDM_MEMTRANSFER
-        MENUITEM SEPARATOR
-        MENUITEM "&Settings",                   IDM_SETTINGS
-        MENUITEM "&Backup Ram Manager",         IDM_BACKUPRAMMANAGER
-        POPUP "Language", GRAYED
-        BEGIN
-            MENUITEM "Deutsch ",                    IDM_GERMAN
-            MENUITEM "English",                     IDM_ENGLISH
-            MENUITEM "Espanol",                     IDM_SPANISH
-            MENUITEM "Francais",                    IDM_FRENCH
-            MENUITEM "Italiano",                    IDM_ITALIAN
-            MENUITEM "Portugues",                   IDM_PORTUGUESE
-            MENUITEM "Portugues Brasileiro",        IDM_PORTUGUESEBRAZIL
-            MENUITEM "Svenska",                     IDM_SWEDISH
-        END
-        MENUITEM SEPARATOR
-        POPUP "Save State"
-        BEGIN
-            MENUITEM "1",                           IDM_SAVESTATE_F2
-            MENUITEM "2",                           IDM_SAVESTATE_F3
-            MENUITEM "3",                           IDM_SAVESTATE_F4
-            MENUITEM "4",                           IDM_SAVESTATE_F5
-            MENUITEM "5",                           IDM_SAVESTATE_F6
-            MENUITEM "6",                           IDM_SAVESTATE_F7
-            MENUITEM "7",                           IDM_SAVESTATE_F8
-            MENUITEM "8",                           IDM_SAVESTATE_F9
-            MENUITEM "9",                           IDM_SAVESTATE_F10
-        END
-        POPUP "Load State"
-        BEGIN
-            MENUITEM "1",                           IDM_LOADSTATE_F2
-            MENUITEM "2",                           IDM_LOADSTATE_F3
-            MENUITEM "3",                           IDM_LOADSTATE_F4
-            MENUITEM "4",                           IDM_LOADSTATE_F5
-            MENUITEM "5",                           IDM_LOADSTATE_F6
-            MENUITEM "6",                           IDM_LOADSTATE_F7
-            MENUITEM "7",                           IDM_LOADSTATE_F8
-            MENUITEM "8",                           IDM_LOADSTATE_F9
-            MENUITEM "9",                           IDM_LOADSTATE_F10
-        END
-        MENUITEM "Save State As",               IDM_SAVESTATEAS
-        MENUITEM "Load State As",               IDM_LOADSTATEAS
-        MENUITEM SEPARATOR
-        MENUITEM "&Capture Screen",             IDM_CAPTURESCREEN
-		MENUITEM SEPARATOR
-        MENUITEM "Record Movie",                MENU_RECORD_MOVIE
-        MENUITEM "Replay Movie",                MENU_PLAY_MOVIE
-		MENUITEM "Stop Movie",                  MENU_STOP_MOVIE
-        MENUITEM SEPARATOR
-  	    MENUITEM "Record AVI",                  IDM_FILE_RECORDAVI
-        MENUITEM "Stop AVI",                    IDM_FILE_STOPAVI
-        MENUITEM SEPARATOR
-        MENUITEM "&Quit",                       IDM_EXIT
-    END
-    POPUP "&Emulation"
-    BEGIN
-        MENUITEM "Run",                         IDM_RUN
-        MENUITEM "Pause",                       IDM_PAUSE
-        MENUITEM SEPARATOR
-        MENUITEM "Reset",                       IDM_RESET
-        MENUITEM "Hard Reset",                  IDM_HARDRESET
-    END
-    POPUP "&Cheats"
-    BEGIN
-        MENUITEM "&Cheat List",                 IDM_CHEATLIST
-        MENUITEM "Cheat &Search",               IDM_CHEATSEARCH
-    END
-    POPUP "&Debug"
-    BEGIN
-        MENUITEM "Master SH2",                  IDM_MSH2DEBUG
-        MENUITEM "Slave SH2",                   IDM_SSH2DEBUG
-        MENUITEM "VDP1",                        IDM_VDP1DEBUG
-        MENUITEM "VDP2",                        IDM_VDP2DEBUG
-        MENUITEM "68K",                         IDM_M68KDEBUG
-        MENUITEM "SCU DSP",                     IDM_SCUDSPDEBUG
-        MENUITEM "SCSP",                        IDM_SCSPDEBUG
-        MENUITEM "SMPC",                        IDM_SMPCDEBUG
-        MENUITEM "Memory Editor",               IDM_MEMORYEDITOR
-        MENUITEM "RAM Watch",                   ID_RAM_WATCH
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&Website",                    IDM_WEBSITE
-        MENUITEM "&Forum",                      IDM_FORUM
-        MENUITEM "&Submit a bug report",        IDM_SUBMITBUGREPORT
-        MENUITEM "&Donate to Yabause",          IDM_DONATE
-        MENUITEM "EC &Compatibility list",      IDM_COMPATLIST
-        MENUITEM "&About Yabause",              IDM_ABOUT
-    END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog
 //
+
+IDD_KEYCUSTOM DIALOGEX 0, 0, 382, 180
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION
+CAPTION "Customize Special Keys"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "OK",IDOK,16,159,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,66,159,50,14
+    RTEXT           "Item #01",IDC_LABEL_HK1,2,7,80,8
+    RTEXT           "Item #02",IDC_LABEL_HK2,2,20,80,8
+    RTEXT           "Item #03",IDC_LABEL_HK3,2,33,80,8
+    RTEXT           "Item #04",IDC_LABEL_HK4,2,47,80,8
+    RTEXT           "Item #05",IDC_LABEL_HK5,2,60,80,8
+    RTEXT           "Item #06",IDC_LABEL_HK6,2,72,80,8
+    RTEXT           "Item #07",IDC_LABEL_HK7,2,85,80,8
+    RTEXT           "Item #08",IDC_LABEL_HK8,2,98,80,8
+    RTEXT           "Item #09",IDC_LABEL_HK9,2,111,80,8
+    RTEXT           "Item #10",IDC_LABEL_HK10,2,124,80,8
+    RTEXT           "Item #11",IDC_LABEL_HK11,192,7,80,8
+    RTEXT           "Item #12",IDC_LABEL_HK12,192,20,80,8
+    RTEXT           "Item #13",IDC_LABEL_HK13,192,33,80,8
+    RTEXT           "Item #14",IDC_LABEL_HK14,192,47,80,8
+    RTEXT           "Item #15",IDC_LABEL_HK15,192,60,80,8
+    RTEXT           "Item #16",IDC_LABEL_HK16,192,72,80,8
+    RTEXT           "Item #17",IDC_LABEL_HK17,192,85,80,8
+    RTEXT           "Item #18",IDC_LABEL_HK18,192,98,80,8
+    RTEXT           "Item #19",IDC_LABEL_HK19,192,111,80,8
+    RTEXT           "Item #20",IDC_LABEL_HK20,192,124,80,8
+    CONTROL         "",IDC_HOTKEY1,"InputCustomHot",WS_TABSTOP,86,5,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY2,"InputCustomHot",WS_TABSTOP,86,18,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY3,"InputCustomHot",WS_TABSTOP,86,31,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY4,"InputCustomHot",WS_TABSTOP,86,45,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY5,"InputCustomHot",WS_TABSTOP,86,58,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY6,"InputCustomHot",WS_TABSTOP,86,70,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY7,"InputCustomHot",WS_TABSTOP,86,83,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY8,"InputCustomHot",WS_TABSTOP,86,96,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY9,"InputCustomHot",WS_TABSTOP,86,109,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY10,"InputCustomHot",WS_TABSTOP,86,122,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY11,"InputCustomHot",WS_TABSTOP,276,5,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY12,"InputCustomHot",WS_TABSTOP,276,18,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY13,"InputCustomHot",WS_TABSTOP,276,31,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY14,"InputCustomHot",WS_TABSTOP,276,45,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY15,"InputCustomHot",WS_TABSTOP,276,58,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY16,"InputCustomHot",WS_TABSTOP,276,70,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY17,"InputCustomHot",WS_TABSTOP,276,83,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY18,"InputCustomHot",WS_TABSTOP,276,96,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY19,"InputCustomHot",WS_TABSTOP,276,109,98,12,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_HOTKEY20,"InputCustomHot",WS_TABSTOP,276,122,98,12,WS_EX_CLIENTEDGE
+    LTEXT           "Blue means the hotkey is already mapped.\nPink means it conflicts with a game button.\nRed means it's reserved by Windows.\nA hotkey can be disabled using Escape.",IDC_LABEL_BLUE,238,140,136,32
+    COMBOBOX        IDC_HKCOMBO,16,141,168,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_RAMSEARCH DIALOGEX 0, 0, 287, 292
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " RAM Search"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_RAMLIST,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA | WS_BORDER | WS_TABSTOP,9,9,214,151,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "&Search",IDC_C_SEARCH,226,9,52,16
+    PUSHBUTTON      "&Add Cheat",IDC_C_ADDCHEAT,226,145,52,16,WS_DISABLED
+    PUSHBUTTON      "&Watch",IDC_C_WATCH,226,127,52,16
+    PUSHBUTTON      "&Reset",IDC_C_RESET,226,27,52,16
+    PUSHBUTTON      "&Eliminate",IDC_C_ELIMINATE,226,109,52,16
+    GROUPBOX        "Comparison Operator",IDC_STATIC,10,166,102,118,0,WS_EX_TRANSPARENT
+    CONTROL         "Less Than",IDC_LESSTHAN,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,14,178,95,11
+    CONTROL         "Greater Than",IDC_MORETHAN,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,191,95,11
+    CONTROL         "Less Than or Equal To",IDC_NOMORETHAN,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,204,95,11
+    CONTROL         "Greater Than or Equal To",IDC_NOLESSTHAN,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,217,95,11
+    CONTROL         "Equal To",IDC_EQUALTO,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,230,95,11
+    CONTROL         "Not Equal To",IDC_DIFFERENTFROM,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,243,95,11
+    CONTROL         "Different By:",IDC_DIFFERENTBY,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,256,52,11
+    CONTROL         "Modulo",IDC_MODULO,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,269,35,11
+    EDITTEXT        IDC_EDIT_DIFFBY,69,255,38,12,ES_UPPERCASE | ES_AUTOHSCROLL | WS_DISABLED
+    EDITTEXT        IDC_EDIT_MODBY,51,267,38,12,ES_UPPERCASE | ES_AUTOHSCROLL | WS_DISABLED
+    GROUPBOX        "Compare To / By",IDC_STATIC,118,166,153,58,0,WS_EX_TRANSPARENT
+    CONTROL         "Previous Value",IDC_PREVIOUSVALUE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,121,176,67,10
+    CONTROL         "Specific Value:",IDC_SPECIFICVALUE,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,121,187,67,10
+    CONTROL         "Specific Address:",IDC_SPECIFICADDRESS,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,121,198,67,10
+    CONTROL         "Number of Changes:",IDC_NUMBEROFCHANGES,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,121,209,76,10
+    EDITTEXT        IDC_EDIT_COMPAREVALUE,203,183,63,12,ES_UPPERCASE | ES_AUTOHSCROLL | WS_DISABLED
+    EDITTEXT        IDC_EDIT_COMPAREADDRESS,203,195,63,12,ES_UPPERCASE | ES_AUTOHSCROLL | WS_DISABLED
+    EDITTEXT        IDC_EDIT_COMPARECHANGES,203,207,63,12,ES_UPPERCASE | ES_AUTOHSCROLL | WS_DISABLED
+    GROUPBOX        "Data Type / Display",IDC_STATIC,196,227,75,44,0,WS_EX_TRANSPARENT
+    CONTROL         "Signed",IDC_SIGNED,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,200,237,67,9
+    CONTROL         "Unsigned",IDC_UNSIGNED,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,200,248,67,9
+    CONTROL         "Hexadecimal",IDC_HEX,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,200,259,67,9
+    CONTROL         "Autosearch",IDC_C_AUTOSEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,273,52,11
+    GROUPBOX        "Data Size",IDC_STATIC,117,227,73,57,0,WS_EX_TRANSPARENT
+    CONTROL         "1 byte",IDC_1_BYTE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,121,237,61,11
+    CONTROL         "2 bytes",IDC_2_BYTES,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,121,248,61,11
+    CONTROL         "4 bytes",IDC_4_BYTES,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,121,259,61,11
+    CONTROL         "Check Misaligned",IDC_MISALIGN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,272,65,8
+    PUSHBUTTON      "&Clear Change Counts",IDC_C_RESET_CHANGES,226,46,52,20,BS_MULTILINE
+    PUSHBUTTON      "&Undo",IDC_C_UNDO,226,69,52,16,WS_DISABLED
+    LTEXT           "Is",IDC_STATIC,92,270,12,8
+END
 
 IDD_EDITWATCH DIALOGEX 0, 0, 181, 95
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -162,34 +225,6 @@ BEGIN
     PUSHBUTTON      "Add Cheat",IDC_C_ADDCHEAT,222,140,42,16,WS_DISABLED
     GROUPBOX        "Watches",IDC_STATIC,222,11,42,125
     CONTROL         "",ID_WATCHES_UPDOWN,"msctls_updown32",WS_TABSTOP,232,23,19,36
-END
-
-RAMWATCH_MENU MENU 
-BEGIN
-    POPUP "File"
-    BEGIN
-        MENUITEM "&New list\tCtrl N",           RAMMENU_FILE_NEW
-        MENUITEM "&Open...\tCtrl O",            RAMMENU_FILE_OPEN
-        MENUITEM "&Save\tCtrl S",               RAMMENU_FILE_SAVE
-        MENUITEM "Sa&ve As...\tCtrl Shift S",   RAMMENU_FILE_SAVEAS
-        MENUITEM "&Append file...",             RAMMENU_FILE_APPEND
-        MENUITEM "Recent",                      RAMMENU_FILE_RECENT
-        MENUITEM SEPARATOR
-        MENUITEM "Auto-&load",                  RAMMENU_FILE_AUTOLOAD
-        MENUITEM "Save Window Position",        RAMMENU_FILE_SAVEWINDOW
-        MENUITEM SEPARATOR
-        MENUITEM "&Close\tAlt F4",              IDCANCEL
-    END
-    POPUP "Watches"
-    BEGIN
-        MENUITEM "&New Watch\tN",               IDC_C_WATCH
-        MENUITEM "&Edit Watch\tE",              IDC_C_WATCH_EDIT
-        MENUITEM "&Remove Watch\tR",            IDC_C_WATCH_REMOVE
-        MENUITEM "Duplicate Watch\tA",          IDC_C_WATCH_DUPLICATE
-        MENUITEM SEPARATOR
-        MENUITEM "Move Up\tU",                  IDC_C_WATCH_UP
-        MENUITEM "Move Down\tD",                IDC_C_WATCH_DOWN
-    END
 END
 
 IDD_MEMTRANSFER DIALOGEX 100, 100, 174, 90
@@ -350,7 +385,7 @@ BEGIN
     PUSHBUTTON      "Save slot registers",IDC_SCSPSLOTREGSAVE,115,212,83,14
     GROUPBOX        "Slot Info",-1,3,0,153,208
     LTEXT           "Slot Number",-1,8,9,70,10
-    COMBOBOX        IDC_SCSPSLOTCB,58,7,35,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,0x8000000L
+    COMBOBOX        IDC_SCSPSLOTCB,58,7,35,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_NOACTIVATE
     EDITTEXT        IDC_SCSPSLOTET,7,24,144,172,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
     GROUPBOX        "Common Control Registers",-1,159,0,182,208
     EDITTEXT        IDC_SCSPCOMMONREGET,163,10,174,195,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
@@ -383,7 +418,7 @@ BEGIN
     LTEXT           "Address:",-1,7,24,36,11
     EDITTEXT        IDC_OFFSETET,42,23,36,12,ES_UPPERCASE
     GROUPBOX        "",-1,85,16,101,22
-    COMBOBOX        IDC_PRESETLISTCB,88,23,96,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,0x8000000L
+    COMBOBOX        IDC_PRESETLISTCB,88,23,96,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_NOACTIVATE
     DEFPUSHBUTTON   "&OK",IDOK,52,42,40,14
     PUSHBUTTON      "&Cancel",IDCANCEL,97,42,40,14
 END
@@ -396,7 +431,7 @@ BEGIN
     GROUPBOX        "Search criteria",-1,4,4,182,41
     LTEXT           "Type:",-1,9,14,36,11
     LTEXT           "Value:",-1,9,31,36,11
-    COMBOBOX        IDC_SEARCHTYPECB,34,13,96,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,0x8000000L
+    COMBOBOX        IDC_SEARCHTYPECB,34,13,96,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_NOACTIVATE
     EDITTEXT        IDC_SEARCHMEMET,34,29,148,12
     GROUPBOX        "Options",-1,4,49,182,36
     LTEXT           "Start Address:",-1,9,59,58,11
@@ -453,7 +488,7 @@ BEGIN
     EDITTEXT        IDC_IMAGEEDIT,10,38,189,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Browse",IDC_IMAGEBROWSE,203,38,33,12
     LTEXT           "SH2 Core",-1,10,55,60,10
-    COMBOBOX        IDC_SH2CORECB,10,64,92,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,0x8000000L
+    COMBOBOX        IDC_SH2CORECB,10,64,92,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,WS_EX_NOACTIVATE
     LTEXT           "Region",-1,109,55,115,10
     COMBOBOX        IDC_REGIONCB,109,64,127,87,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Bios ROM File",-1,10,81,73,10
@@ -786,85 +821,6 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Accelerator
-//
-
-IDR_MAIN_ACCEL ACCELERATORS 
-BEGIN
-    VK_RETURN,      IDM_TOGGLEFULLSCREEN,   VIRTKEY, ALT, NOINVERT
-    "1",            IDM_TOGGLENBG0,         ASCII,  NOINVERT
-    "2",            IDM_TOGGLENBG1,         ASCII,  NOINVERT
-    "3",            IDM_TOGGLENBG2,         ASCII,  NOINVERT
-    "4",            IDM_TOGGLENBG3,         ASCII,  NOINVERT
-    "5",            IDM_TOGGLERBG0,         ASCII,  NOINVERT
-    "6",            IDM_TOGGLEVDP1,         ASCII,  NOINVERT
-    VK_F1,          IDM_TOGGLEFPS,          VIRTKEY, NOINVERT
-    VK_F2,          IDM_SAVESTATE_F2,       VIRTKEY, SHIFT, NOINVERT
-    VK_F3,          IDM_SAVESTATE_F3,       VIRTKEY, SHIFT, NOINVERT
-    VK_F4,          IDM_SAVESTATE_F4,       VIRTKEY, SHIFT, NOINVERT
-    VK_F5,          IDM_SAVESTATE_F5,       VIRTKEY, SHIFT, NOINVERT
-    VK_F6,          IDM_SAVESTATE_F6,       VIRTKEY, SHIFT, NOINVERT
-    VK_F7,          IDM_SAVESTATE_F7,       VIRTKEY, SHIFT, NOINVERT
-    VK_F8,          IDM_SAVESTATE_F8,       VIRTKEY, SHIFT, NOINVERT
-    VK_F9,          IDM_SAVESTATE_F9,       VIRTKEY, SHIFT, NOINVERT
-    VK_F10,         IDM_SAVESTATE_F10,      VIRTKEY, SHIFT, NOINVERT
-    VK_F2,          IDM_LOADSTATE_F2,       VIRTKEY, NOINVERT
-    VK_F3,          IDM_LOADSTATE_F3,       VIRTKEY, NOINVERT
-    VK_F4,          IDM_LOADSTATE_F4,       VIRTKEY, NOINVERT
-    VK_F5,          IDM_LOADSTATE_F5,       VIRTKEY, NOINVERT
-    VK_F6,          IDM_LOADSTATE_F6,       VIRTKEY, NOINVERT
-    VK_F7,          IDM_LOADSTATE_F7,       VIRTKEY, NOINVERT
-    VK_F8,          IDM_LOADSTATE_F8,       VIRTKEY, NOINVERT
-    VK_F9,          IDM_LOADSTATE_F9,       VIRTKEY, NOINVERT
-    VK_F10,         IDM_LOADSTATE_F10,      VIRTKEY, NOINVERT
-	VK_F12,         IDM_FRAMEADVANCEPAUSE,  VIRTKEY, NOINVERT
-	"T",            IDM_TOGGLEREADONLY,     ASCII,   NOINVERT
-
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_ICON                ICON                    "logo.ico"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Bitmap
-//
-
-IDB_BITMAP              BITMAP                  "yabause_logo.bmp"
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE 
-BEGIN
-    "#include <windows.h>\r\0"
-END
-
-3 TEXTINCLUDE 
-BEGIN
-    "\r\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // DESIGNINFO
 //
 
@@ -1106,6 +1062,178 @@ BEGIN
         BOTTOMMARGIN, 101
     END
 END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Open Cue / ISO",             IDM_OPENCUEISO
+        MENUITEM SEPARATOR
+        MENUITEM "&Memory Transfer",            IDM_MEMTRANSFER
+        MENUITEM SEPARATOR
+        MENUITEM "&Settings",                   IDM_SETTINGS
+		MENUITEM "Hotkey Config",               IDM_HOTKEY_CONFIG
+        MENUITEM "&Backup Ram Manager",         IDM_BACKUPRAMMANAGER
+        POPUP "Language", GRAYED
+        BEGIN
+            MENUITEM "Deutsch ",                    IDM_GERMAN
+            MENUITEM "English",                     IDM_ENGLISH
+            MENUITEM "Espanol",                     IDM_SPANISH
+            MENUITEM "Francais",                    IDM_FRENCH
+            MENUITEM "Italiano",                    IDM_ITALIAN
+            MENUITEM "Portugues",                   IDM_PORTUGUESE
+            MENUITEM "Portugues Brasileiro",        IDM_PORTUGUESEBRAZIL
+            MENUITEM "Svenska",                     IDM_SWEDISH
+        END
+        MENUITEM SEPARATOR
+        POPUP "Save State"
+        BEGIN
+            MENUITEM "1",                           IDM_SAVESTATE_F2
+            MENUITEM "2",                           IDM_SAVESTATE_F3
+            MENUITEM "3",                           IDM_SAVESTATE_F4
+            MENUITEM "4",                           IDM_SAVESTATE_F5
+            MENUITEM "5",                           IDM_SAVESTATE_F6
+            MENUITEM "6",                           IDM_SAVESTATE_F7
+            MENUITEM "7",                           IDM_SAVESTATE_F8
+            MENUITEM "8",                           IDM_SAVESTATE_F9
+            MENUITEM "9",                           IDM_SAVESTATE_F10
+        END
+        POPUP "Load State"
+        BEGIN
+            MENUITEM "1",                           IDM_LOADSTATE_F2
+            MENUITEM "2",                           IDM_LOADSTATE_F3
+            MENUITEM "3",                           IDM_LOADSTATE_F4
+            MENUITEM "4",                           IDM_LOADSTATE_F5
+            MENUITEM "5",                           IDM_LOADSTATE_F6
+            MENUITEM "6",                           IDM_LOADSTATE_F7
+            MENUITEM "7",                           IDM_LOADSTATE_F8
+            MENUITEM "8",                           IDM_LOADSTATE_F9
+            MENUITEM "9",                           IDM_LOADSTATE_F10
+        END
+        MENUITEM "Save State As...",            IDM_SAVESTATEAS
+        MENUITEM "Load State As...",            IDM_LOADSTATEAS
+        MENUITEM SEPARATOR
+        MENUITEM "&Capture Screen",             IDM_CAPTURESCREEN
+        MENUITEM SEPARATOR
+        MENUITEM "Record Movie...",             MENU_RECORD_MOVIE
+        MENUITEM "&Play Movie...",              MENU_PLAY_MOVIE
+        MENUITEM "&Stop Movie",                 MENU_STOP_MOVIE
+        MENUITEM SEPARATOR
+        MENUITEM "Record AVI...",               IDM_FILE_RECORDAVI
+        MENUITEM "Stop AVI",                    IDM_FILE_STOPAVI
+        MENUITEM SEPARATOR
+        MENUITEM "&Quit",                       IDM_EXIT
+    END
+    POPUP "&Emulation"
+    BEGIN
+        MENUITEM "Pause",                       IDM_PAUSE
+        MENUITEM SEPARATOR
+        MENUITEM "Reset",                       IDM_RESET
+        MENUITEM "Hard Reset",                  IDM_HARDRESET
+    END
+    POPUP "&Tools"
+    BEGIN
+	    MENUITEM "RAM Watch...",                ID_RAM_WATCH
+        MENUITEM "RAM Search...",               ID_RAM_SEARCH
+        MENUITEM "&Cheat List...",              IDM_CHEATLIST
+        MENUITEM "Cheat &Search...",            IDM_CHEATSEARCH
+    END
+    POPUP "&Debug"
+    BEGIN
+        MENUITEM "Master SH2...",               IDM_MSH2DEBUG
+        MENUITEM "Slave SH2...",                IDM_SSH2DEBUG
+        MENUITEM "VDP1...",                     IDM_VDP1DEBUG
+        MENUITEM "VDP2...",                     IDM_VDP2DEBUG
+        MENUITEM "68K...",                      IDM_M68KDEBUG
+        MENUITEM "SCU DSP...",                  IDM_SCUDSPDEBUG
+        MENUITEM "SCSP...",                     IDM_SCSPDEBUG
+        MENUITEM "SMPC...",                     IDM_SMPCDEBUG
+        MENUITEM "Memory Editor...",            IDM_MEMORYEDITOR
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Website",                    IDM_WEBSITE, INACTIVE
+        MENUITEM "&Forum",                      IDM_FORUM, INACTIVE
+        MENUITEM "&Submit a bug report",        IDM_SUBMITBUGREPORT, INACTIVE
+        MENUITEM "&Donate to Yabause",          IDM_DONATE, INACTIVE
+        MENUITEM "EC &Compatibility list",      IDM_COMPATLIST, INACTIVE
+        MENUITEM "&About Yabause",              IDM_ABOUT
+    END
+END
+
+RAMWATCH_MENU MENU 
+BEGIN
+    POPUP "File"
+    BEGIN
+        MENUITEM "&New list\tCtrl N",           RAMMENU_FILE_NEW
+        MENUITEM "&Open...\tCtrl O",            RAMMENU_FILE_OPEN
+        MENUITEM "&Save\tCtrl S",               RAMMENU_FILE_SAVE
+        MENUITEM "Sa&ve As...\tCtrl Shift S",   RAMMENU_FILE_SAVEAS
+        MENUITEM "&Append file...",             RAMMENU_FILE_APPEND
+        MENUITEM "Recent",                      RAMMENU_FILE_RECENT
+        MENUITEM SEPARATOR
+        MENUITEM "Auto-&load",                  RAMMENU_FILE_AUTOLOAD
+        MENUITEM "Save Window Position",        RAMMENU_FILE_SAVEWINDOW
+        MENUITEM SEPARATOR
+        MENUITEM "&Close\tAlt F4",              IDCANCEL
+    END
+    POPUP "Watches"
+    BEGIN
+        MENUITEM "&New Watch\tN",               IDC_C_WATCH
+        MENUITEM "&Edit Watch\tE",              IDC_C_WATCH_EDIT
+        MENUITEM "&Remove Watch\tR",            IDC_C_WATCH_REMOVE
+        MENUITEM "Duplicate Watch\tA",          IDC_C_WATCH_DUPLICATE
+        MENUITEM SEPARATOR
+        MENUITEM "Move Up\tU",                  IDC_C_WATCH_UP
+        MENUITEM "Move Down\tD",                IDC_C_WATCH_DOWN
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON                ICON                    "logo.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP              BITMAP                  "yabause_logo.bmp"
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include <windows.h>\r\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\0"
+END
+
 #endif    // APSTUDIO_INVOKED
 
 #endif    // English (Canada) resources
