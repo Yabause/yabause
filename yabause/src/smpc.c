@@ -185,6 +185,21 @@ void SmpcCKCHG320() {
    SH2NMI(MSH2);
 }
 
+struct movietime {
+
+	int tm_year;
+	int tm_wday;
+	int tm_mon;
+	int tm_mday;
+	int tm_hour;
+	int tm_min;
+	int tm_sec;
+};
+
+static struct movietime movietime;
+int totalseconds;
+int noon= 43200;
+
 //////////////////////////////////////////////////////////////////////////////
 
 void SmpcINTBACKStatus(void) {
@@ -219,6 +234,34 @@ void SmpcINTBACKStatus(void) {
    SmpcRegs->OREG[5] = ((times.tm_hour / 10) << 4) | (times.tm_hour % 10);
    SmpcRegs->OREG[6] = ((times.tm_min / 10) << 4) | (times.tm_min % 10);
    SmpcRegs->OREG[7] = ((times.tm_sec / 10) << 4) | (times.tm_sec % 10);
+
+   if(Movie.Status == Recording || Movie.Status == Playback) {
+	   movietime.tm_year=0x62;
+	   movietime.tm_wday=0x04;
+	   movietime.tm_mday=0x01;
+	   movietime.tm_mon=0;
+	   totalseconds = ((framecounter / 60) + noon);
+
+	   movietime.tm_sec=totalseconds % 60;
+	   movietime.tm_min=totalseconds/60;
+	   movietime.tm_hour=movietime.tm_min/60;
+
+	   //convert to sane numbers
+	   movietime.tm_min=movietime.tm_min % 60;
+	   movietime.tm_hour=movietime.tm_hour % 24;
+
+	   year[0] = (1900 + movietime.tm_year) / 1000;
+	   year[1] = ((1900 + movietime.tm_year) % 1000) / 100;
+	   year[2] = (((1900 + movietime.tm_year) % 1000) % 100) / 10;
+	   year[3] = (((1900 + movietime.tm_year) % 1000) % 100) % 10;
+	   SmpcRegs->OREG[1] = (year[0] << 4) | year[1];
+	   SmpcRegs->OREG[2] = (year[2] << 4) | year[3];
+	   SmpcRegs->OREG[3] = (movietime.tm_wday << 4) | (movietime.tm_mon + 1);
+	   SmpcRegs->OREG[4] = ((movietime.tm_mday / 10) << 4) | (movietime.tm_mday % 10);
+	   SmpcRegs->OREG[5] = ((movietime.tm_hour / 10) << 4) | (movietime.tm_hour % 10);
+	   SmpcRegs->OREG[6] = ((movietime.tm_min / 10) << 4) | (movietime.tm_min % 10);
+	   SmpcRegs->OREG[7] = ((movietime.tm_sec / 10) << 4) | (movietime.tm_sec % 10);
+   }
 
    // write cartidge data in OREG8
    SmpcRegs->OREG[8] = 0; // FIXME : random value
