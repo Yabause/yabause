@@ -93,6 +93,7 @@ void FASTCALL VIDSoftVdp2SetPriorityNBG2(int priority);
 void FASTCALL VIDSoftVdp2SetPriorityNBG3(int priority);
 void FASTCALL VIDSoftVdp2SetPriorityRBG0(int priority);
 void VIDSoftOnScreenDebugMessage(char *string, ...);
+void VIDSoftGetGlSize(int *width, int *height);
 void VIDSoftVdp1SwapFrameBuffer(void);
 void VIDSoftVdp1EraseFrameBuffer(void);
 
@@ -126,6 +127,7 @@ VIDSoftVdp2SetPriorityNBG2,
 VIDSoftVdp2SetPriorityNBG3,
 VIDSoftVdp2SetPriorityRBG0,
 VIDSoftOnScreenDebugMessage,
+VIDSoftGetGlSize,
 };
 
 u32 *dispbuffer=NULL;
@@ -3149,3 +3151,9 @@ void VIDSoftVdp1EraseFrameBuffer(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftGetGlSize(int *width, int *height)
+{
+   *width = outputwidth;
+   *height = outputheight;
+}

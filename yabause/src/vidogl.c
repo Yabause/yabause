@@ -90,6 +90,7 @@ void FASTCALL VIDOGLVdp2SetPriorityNBG1(int priority);
 void FASTCALL VIDOGLVdp2SetPriorityNBG2(int priority);
 void FASTCALL VIDOGLVdp2SetPriorityNBG3(int priority);
 void FASTCALL VIDOGLVdp2SetPriorityRBG0(int priority);
+void YglGetGlSize(int *width, int *height);
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -120,7 +121,8 @@ VIDOGLVdp2SetPriorityNBG1,
 VIDOGLVdp2SetPriorityNBG2,
 VIDOGLVdp2SetPriorityNBG3,
 VIDOGLVdp2SetPriorityRBG0,
-YglOnScreenDebugMessage
+YglOnScreenDebugMessage,
+YglGetGlSize
 };
 
 static float vdp1wratio=1;
@@ -138,6 +140,9 @@ static int nbg3priority=0;
 static int rbg0priority=0;
 
 static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
+
+static int GlHeight=320;
+static int GlWidth=224;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1407,6 +1412,9 @@ void VIDOGLResize(unsigned int w, unsigned int h, int on)
    glViewport(0, 0, w, h);
 
    SetSaturnResolution(vdp2width, vdp2height);
+
+   GlHeight=h;
+   GlWidth=w;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2746,5 +2754,11 @@ void FASTCALL VIDOGLVdp2SetPriorityRBG0(int priority)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+void YglGetGlSize(int *width, int *height)
+{
+   *width = GlWidth;
+   *height = GlHeight;
+}
 
 #endif

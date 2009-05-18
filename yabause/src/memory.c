@@ -42,6 +42,17 @@
 #include "yabause.h"
 #include "movie.h"
 
+#ifdef HAVE_LIBGL
+#define USE_OPENGL
+#endif
+
+#ifdef USE_OPENGL
+#include "ygl.h"
+#endif
+
+#include "vidsoft.h"
+#include "vidogl.h"
+
 //////////////////////////////////////////////////////////////////////////////
 
 writebytefunc WriteByteList[0x1000];
@@ -966,6 +977,11 @@ int YabSaveState(const char *filename)
    FILE *fp;
    int offset;
    IOCheck_struct check;
+   u8 *buf;
+   int totalsize;
+   int outputwidth;
+   int outputheight;
+   int movieposition;
 
    //use a second set of savestates for movies
    MakeMovieStateName(filename);
@@ -992,6 +1008,9 @@ int YabSaveState(const char *filename)
    ywrite(&check, (void *)&i, sizeof(i), 1, fp);
 
    //write frame number
+   ywrite(&check, (void *)&framecounter, 4, 1, fp);
+
+   //this will be updated with the movie position later
    ywrite(&check, (void *)&framecounter, 4, 1, fp);
 
    // Go through each area and write each state
@@ -1022,6 +1041,29 @@ int YabSaveState(const char *filename)
    ywrite(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
+   VIDCore->GetGlSize(&outputwidth, &outputheight);
+
+   totalsize=outputwidth * outputheight * sizeof(u32);
+
+   if ((buf = (u8 *)malloc(totalsize)) == NULL)
+   {
+      return -2;
+   }
+
+   YuiSwapBuffers();
+   #ifdef USE_OPENGL
+   glPixelZoom(1,1);
+   glReadBuffer(GL_BACK);
+   glReadPixels(0, 0, outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+   #endif
+   YuiSwapBuffers();
+
+   ywrite(&check, (void *)&outputwidth, sizeof(outputwidth), 1, fp);
+   ywrite(&check, (void *)&outputheight, sizeof(outputheight), 1, fp);
+
+   ywrite(&check, (void *)buf, totalsize, 1, fp);
+
+   movieposition=ftell(fp);
    //write the movie to the end of the savestate
    SaveMovieInState(fp, check);
 
@@ -1030,6 +1072,8 @@ int YabSaveState(const char *filename)
    // Go back and update size
    fseek(fp, 8, SEEK_SET);
    ywrite(&check, (void *)&i, sizeof(i), 1, fp);
+   fseek(fp, 16, SEEK_SET);
+   ywrite(&check, (void *)&movieposition, sizeof(movieposition), 1, fp);
 
    fclose(fp);
 
@@ -1045,6 +1089,13 @@ int YabLoadState(const char *filename)
    u8 endian;
    int headerversion, version, size, chunksize, headersize;
    IOCheck_struct check;
+   u8* buf;
+   int totalsize;
+   int outputwidth;
+   int outputheight;
+   int curroutputwidth;
+   int curroutputheight;
+   int movieposition;
 
    MakeMovieStateName(filename);
 
@@ -1074,7 +1125,9 @@ int YabLoadState(const char *filename)
       case 2:
          /* version 2 adds video recording */
          yread(&check, (void *)&framecounter, 4, 1, fp);
-         headersize = 0x10;
+		 movieposition=ftell(fp);
+		 yread(&check, (void *)&movieposition, 4, 1, fp);
+         headersize = 0x14;
          break;
       default:
          /* we're trying to open a save state using a future version
@@ -1213,12 +1266,41 @@ int YabLoadState(const char *filename)
    yread(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    yread(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
-   if (headerversion > 1) MovieReadState(fp, filename);
-   fclose(fp);
+   if (headerversion > 1) {
 
-   // draw the screen again, but this doesn't work
-// VIDCore->Vdp2DrawScreens(); 
-// YuiSwapBuffers();
+   yread(&check, (void *)&outputwidth, sizeof(outputwidth), 1, fp);
+   yread(&check, (void *)&outputheight, sizeof(outputheight), 1, fp);
+
+   totalsize=outputwidth * outputheight * sizeof(u32);
+
+   if ((buf = (u8 *)malloc(totalsize)) == NULL)
+   {
+      return -2;
+   }
+
+   yread(&check, (void *)buf, totalsize, 1, fp);
+
+   YuiSwapBuffers();
+
+   #ifdef USE_OPENGL
+   if(VIDCore->id == VIDCORE_SOFT)
+     glRasterPos2i(0, outputheight);
+   if(VIDCore->id == VIDCORE_OGL)
+	 glRasterPos2i(0, outputheight/2);
+   #endif
+
+   VIDCore->GetGlSize(&curroutputwidth, &curroutputheight);
+   #ifdef USE_OPENGL
+   glPixelZoom((float)curroutputwidth / (float)outputwidth, ((float)curroutputheight / (float)outputheight));
+   glDrawPixels(outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+   #endif
+   YuiSwapBuffers();
+
+   fseek(fp, movieposition, SEEK_SET);
+   MovieReadState(fp, filename);
+   }
+   
+   fclose(fp);
 
    ScspUnMuteAudio();
    return 0;
