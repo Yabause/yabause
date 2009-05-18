@@ -1,34 +1,25 @@
-/*
+/*  
+    This file is part of Yabause.
 
-****MOVIE TODO****
+    Yabause is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
 
-NOW
+    Yabause is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-Update the screen when a state is loaded, even if the emulator is paused
-
-Input currently will "stick" after playback, reset input after playback is done
-
-LATER
-
-Setting the internal clock constantly to 0 might not be a good idea, neither is setting it to the computer's clock
-
-Port 2 isn't recorded/only 8 bytes recorded of port 1
-
-No movie header
-No hotkey remapping
-
-No slowdown modes - Yabause's current throttling methods need to be discussed more
-No export to avi
-No recording power on/resets
-No recording CD changes
-Movie format needs to load settings
-Real record/save movie dialogs for Windows
-
+    You should have received a copy of the GNU General Public License
+    along with Yabause; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-
 #include "peripheral.h"
 #include "scsp.h"
 #include "movie.h"
+#include "cs2.h"
+#include "yabause.h"
 
 int RecordingFileOpened;
 int PlaybackFileOpened;
@@ -36,13 +27,48 @@ int PlaybackFileOpened;
 struct MovieStruct Movie;
 
 char MovieStatus[40];
+int movieLoaded = 0;	//Boolean value, 1 if a movie is playing or recording
 
 //Counting
 int framecounter;
 int lagframecounter;
 int LagFrameFlag;
-
 int FrameAdvanceVariable=0;
+
+int headersize=512;
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ReadHeader(FILE* fp) {
+
+	fseek(fp, 0, SEEK_SET);
+
+	fseek(fp, 172, SEEK_SET);
+	fread(&Movie.Rerecords, sizeof(Movie.Rerecords), 1, fp);
+
+	fseek(fp, headersize, SEEK_SET);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void WriteHeader(FILE* fp) {
+
+	fseek(fp, 0, SEEK_SET);
+
+	fwrite("YMV", sizeof("YMV"), 1, fp);
+	fwrite(VERSION, sizeof(VERSION), 1, fp);
+	fwrite(cdip->cdinfo, sizeof(cdip->cdinfo), 1, fp);
+	fwrite(cdip->itemnum, sizeof(cdip->itemnum), 1, fp);
+	fwrite(cdip->version, sizeof(cdip->version), 1, fp);
+	fwrite(cdip->date, sizeof(cdip->date), 1, fp);
+	fwrite(cdip->gamename, sizeof(cdip->gamename), 1, fp);
+	fwrite(cdip->region, sizeof(cdip->region), 1, fp);
+	fwrite(&Movie.Rerecords, sizeof(Movie.Rerecords), 1, fp);
+	fwrite(&yabsys.emulatebios, sizeof(yabsys.emulatebios), 1, fp);
+	fwrite(&yabsys.IsPal, sizeof(yabsys.IsPal), 1, fp);
+
+	fseek(fp, headersize, SEEK_SET);
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -102,7 +128,7 @@ void IncrementLagAndFrameCounter(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int framelength=8;
+int framelength=16;
 
 void DoMovie(void) {
 
@@ -117,15 +143,21 @@ void DoMovie(void) {
 		for (x = 0; x < 8; x++) {
 			fwrite(&PORTDATA1.data[x], 1, 1, Movie.fp);
 		}
+		for (x = 0; x < 8; x++) {
+			fwrite(&PORTDATA2.data[x], 1, 1, Movie.fp);
+		}
 	}
 
 	if(Movie.Status == Playback) {
 		for (x = 0; x < 8; x++) {
 			fread(&PORTDATA1.data[x], 1, 1, Movie.fp);
 		}
+		for (x = 0; x < 8; x++) {
+			fread(&PORTDATA2.data[x], 1, 1, Movie.fp);
+		}
 
 		//if we get to the end of the movie
-		if((ftell(Movie.fp)/framelength) >= Movie.Frames) {
+		if(((ftell(Movie.fp)-headersize)/framelength) >= Movie.Frames) {
 			fclose(Movie.fp);
 			PlaybackFileOpened=0;
 			Movie.Status = Stopped;
@@ -154,22 +186,24 @@ void DoMovie(void) {
 
 void MovieLoadState(const char * filename) {
 
-	int headersize=0;
 
 	if (Movie.ReadOnly == 1 && Movie.Status == Playback)  {
 		//Movie.Status = Playback;
-		fseek (Movie.fp,headersize+framecounter * framelength,SEEK_SET);
+		fseek (Movie.fp,headersize+(framecounter * framelength),SEEK_SET);
 	}
 
-	if(Movie.Status == Recording)
-		fseek (Movie.fp,headersize+framecounter * framelength,SEEK_SET);
+	if(Movie.Status == Recording) {
+		fseek (Movie.fp,headersize+(framecounter * framelength),SEEK_SET);
+		Movie.Rerecords++;
+	}
 
 	if(Movie.Status == Playback && Movie.ReadOnly == 0) {
 		Movie.Status = Recording;
 		RecordingFileOpened=1;
 		strcpy(MovieStatus, "Recording Resumed");
 		TruncateMovie(Movie);
-		fseek (Movie.fp,headersize+framecounter * framelength,SEEK_SET);
+		fseek (Movie.fp,headersize+(framecounter * framelength),SEEK_SET);
+		Movie.Rerecords++;
 	}
 }
 
@@ -181,7 +215,7 @@ void TruncateMovie(struct MovieStruct Movie) {
 	//potential garbage data at the end
 
 	struct MovieBufferStruct tempbuffer;
-
+/*//TODO
 	fseek(Movie.fp,0,SEEK_SET);
 	tempbuffer=ReadMovieIntoABuffer(Movie.fp);
 	fclose(Movie.fp);
@@ -192,7 +226,7 @@ void TruncateMovie(struct MovieStruct Movie) {
 	fclose(Movie.fp);
 
 	Movie.fp=fopen(Movie.filename,"r+b");
-
+*/
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -206,7 +240,7 @@ int MovieGetSize(FILE* fp) {
 	fseek (fp,0,SEEK_END);
 	size=ftell(fp);
 
-	Movie.Frames=size/ framelength;
+	Movie.Frames=(size-headersize)/ framelength;
 
 	fseek(fp, fpos, SEEK_SET); //reset back to correct pos
 	return(size);
@@ -218,13 +252,15 @@ void MovieToggleReadOnly(void) {
 
 	if(Movie.Status == Playback) {
 
-		if(Movie.ReadOnly == 1) {
+		if(Movie.ReadOnly == 1) 
+		{
 			Movie.ReadOnly=0;
-			strcpy(MovieStatus, "Read+Write");
+			DisplayMessage("Movie is now read+write.");
 		}
-		else {
+		else 
+		{
 			Movie.ReadOnly=1;
-			strcpy(MovieStatus, "Read Only");
+			DisplayMessage("Movie is now read only.");
 		}
 	}
 }
@@ -234,6 +270,7 @@ void MovieToggleReadOnly(void) {
 void StopMovie(void) {
 
 	if(Movie.Status == Recording && RecordingFileOpened) {
+		WriteHeader(Movie.fp);
 		fclose(Movie.fp);
 		RecordingFileOpened=0;
 		Movie.Status = Stopped;
@@ -268,6 +305,8 @@ int SaveMovie(const char *filename) {
 	framecounter=0;
 	Movie.Status=Recording;
 	strcpy(MovieStatus, "Recording Started");
+	Movie.Rerecords=0;
+	WriteHeader(Movie.fp);
 	YabauseReset();
 	return 0;
 }
@@ -293,6 +332,7 @@ int PlayMovie(const char *filename) {
 	Movie.Status=Playback;
 	Movie.Size = MovieGetSize(Movie.fp);
 	strcpy(MovieStatus, "Playback Started");
+	ReadHeader(Movie.fp);
 	YabauseReset();
 	return 0;
 }
@@ -332,12 +372,16 @@ void ReadMovieInState(FILE* fp) {
 
 		fpos=ftell(fp);//where we are in the savestate
 		fread(&tempbuffer.size, 4, 1, fp);//size
-		tempbuffer.data = (char*) malloc (sizeof(char)*tempbuffer.size);
+		if ((tempbuffer.data = (u8 *)malloc(tempbuffer.size)) == NULL)
+		{
+			return;
+		}
 		fread(tempbuffer.data, 1, tempbuffer.size, fp);//movie
 		fseek(fp, fpos, SEEK_SET);//reset savestate position
 
 		rewind(Movie.fp);
 		fwrite(tempbuffer.data, 1, tempbuffer.size, Movie.fp);
+		rewind(Movie.fp);
 	}
 }
 
@@ -394,6 +438,16 @@ void PauseOrUnpause(void) {
 		FrameAdvanceVariable=RunNormal;	
 		ScspUnMuteAudio();
 	}
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int IsMovieLoaded()
+{
+	if (RecordingFileOpened || PlaybackFileOpened)
+		return 1;
+	else
+		return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

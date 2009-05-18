@@ -27,6 +27,9 @@
 #include "yabause.h"
 #include "movie.h"
 
+char OSDMessage[32] = "";	//adelikat: For showing on screen messages such as savestate loaded/saved
+int OSDMessageTimer = 120;
+
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
 Vdp2 * Vdp2Regs;
@@ -47,6 +50,26 @@ static int fps;
 static int fpsframecount=0;
 static u64 fpsticks;
 static int fpstoggle=0;
+
+//////////////////////////////////////////////////////////////////////////////
+int GetOSDToggle()
+{
+	return fpstoggle;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void SetOSDToggle(int toggle)
+{
+	fpstoggle = toggle;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//adelikat: This function will handle the OSDMessage variable properly, it should be used by other functions for displaying information to the user
+void DisplayMessage(const char* str)
+{
+	strcpy(OSDMessage, str);
+	OSDMessageTimer = 120;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -284,8 +307,11 @@ void FPSDisplay(void)
 {
    if (fpstoggle)
    {
-      VIDCore->OnScreenDebugMessage("%02d/%02d FPS %d %d %s %s", fps, yabsys.IsPal ? 50 : 60, framecounter, lagframecounter, MovieStatus, InputDisplayString);
-
+      if (!OSDMessageTimer)
+		OSDMessage[0] = 0;
+	  VIDCore->OnScreenDebugMessage("%02d/%02d FPS %d %d %s %s %s", fps, yabsys.IsPal ? 50 : 60, framecounter, lagframecounter, MovieStatus, InputDisplayString, OSDMessage);
+	  if (OSDMessageTimer > 0)
+		  OSDMessageTimer--;
       fpsframecount++;
       if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
       {
