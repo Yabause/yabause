@@ -55,7 +55,7 @@ extern "C" HINSTANCE y_hInstance;
 
 extern HWND RamWatchHWnd;
 
-WCHAR Str_Tmp[1024];
+static WCHAR Str_Tmp[1024];
 
 int Rom_Size; //TODO
 unsigned char* Rom_Data; //TODO

@@ -31,9 +31,9 @@ extern "C" {
 #include "../vdp1.h"
 #include "./settings/settings.h"
 
+static HWND YabWin;
+static HINSTANCE y_hInstance;
 }
-extern "C" HWND YabWin;
-extern "C" HINSTANCE y_hInstance;
 
 extern void TogglePause();	//adelikat: TODO: maybe there should be a driver.h or a main.h to put this and the handles in
 extern void ResetGame();

@@ -12,16 +12,19 @@ extern "C" {
 #include "../memory.h"
 #include "./settings/settings.h"
 #include "./cpudebug/yuidebug.h"
+#include <ctype.h>
 }
 #include "windows.h"
 #include "commctrl.h"
 
-extern "C" HWND YabWin;
-extern "C" HINSTANCE y_hInstance;
+extern "C" {
+static HWND YabWin;
+static HINSTANCE y_hInstance;
+}
 
 HWND RamWatchHWnd = NULL;
 
-char Str_Tmp[1024];
+static char Str_Tmp[1024];
 char Rom_Name[64] = "test"; //TODO
 
 static HMENU ramwatchmenu;
