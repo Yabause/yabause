@@ -19,6 +19,8 @@
 #ifndef MOVIE_H
 #define MOVIE_H
 
+#include "core.h"
+
 #define Stopped	  1
 #define Recording 2
 #define Playback  3

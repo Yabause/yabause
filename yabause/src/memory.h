@@ -341,8 +341,13 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr);
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern u8 *HighWram;
+#ifdef __cplusplus
+}
+#endif
 extern u8 *LowWram;
 extern u8 *BiosRom;
 extern u8 *BupRam;
