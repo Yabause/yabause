@@ -3,6 +3,7 @@
 
 #include "resource.h"
 #include "ramwatch.h"
+#include "ram_search.h"
 
 
 
@@ -742,13 +743,6 @@ void RemoveWatch(int watchIndex)
 		rswatches[i] = rswatches[i+1];
 	WatchCount--;
 }
-
-int IsHardwareRAMAddressValid(unsigned int address) {
-
-	return 1;
-
-
-};
 
 char s;
 char t;

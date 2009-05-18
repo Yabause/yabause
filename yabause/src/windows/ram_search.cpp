@@ -42,7 +42,7 @@
 #include <list>
 #include <vector>
 #ifdef _WIN32
-   #include "BaseTsd.h"
+ //  #include "BaseTsd.h"
    typedef INT_PTR intptr_t;
 #else
    #include "stdint.h"
