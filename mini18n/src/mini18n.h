@@ -20,6 +20,10 @@
 #ifndef MINI18N_H
 #define MINI18N_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @file */
 
 #define MINI18N_UTF16 1
@@ -85,5 +89,9 @@ void mini18n_close(void);
  * \section extending Extending
  *
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
