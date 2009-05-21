@@ -79,6 +79,7 @@ int yabwinw;
 int yabwinh;
 int screenwidth;
 int screenheight;
+int AlreadyStarted;
 
 HWND YabWin=NULL;
 HMENU YabMenu=NULL;
@@ -715,13 +716,14 @@ int ParseStringEmbeddedSpaces2(char *out, char *in)
 
 //////////////////////////////////////////////////////////////////////////////
 
+yabauseinit_struct yinit;
+
 int YuiInit(LPSTR lpCmdLine)
 {
    MSG                         msg;
    DWORD inifilenamesize=0;
    char *pinifilename;
    char tempstr[MAX_PATH];
-   yabauseinit_struct yinit;
    HACCEL hAccel;
    static char szAppName[128];
    WNDCLASS MyWndClass;
@@ -729,7 +731,7 @@ int YuiInit(LPSTR lpCmdLine)
    int ip[4];
    INITCOMMONCONTROLSEX iccs;
    char *argv=NULL;
-   int forcecdpath=1;
+   int forcecdpath=0;
    char filename[MAX_PATH];
    u32 addr=0;
    int loadexec=0;
@@ -1142,6 +1144,8 @@ YabauseSetup:
    yinit.netlinksetting = netlinksetting;
    yinit.flags = VIDEOFORMATTYPE_NTSC;
 
+   if (GetPrivateProfileStringA("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) != 0) {
+
    if ((ret = YabauseInit(&yinit)) < 0)
    {
       if (ret == -2)
@@ -1172,6 +1176,17 @@ YabauseSetup:
    else if (usecustomwindowsize)
       VIDCore->Resize(windowwidth, windowheight, 0);
 
+   AlreadyStarted=true;
+   }
+   else {
+
+      SetMenu(YabWin, YabMenu);
+
+      ShowWindow(YabWin,SW_SHOW);
+      SetForegroundWindow(YabWin);
+      SetFocus(YabWin);
+   }
+
    PERDXLoadDevices(inifilename);
 
    stop = 0;
@@ -1201,6 +1216,10 @@ YabauseSetup:
 
    if (loadexec)
       MappedMemoryLoadExec(filename, addr);
+
+   if ((strcmp (cdrompath,"") == 0)) {
+   paused=true;
+   }
 
    while (!stop)
    {
@@ -1270,6 +1289,21 @@ YabauseSetup:
       LocalFree(argv);
 
    return 0;
+}
+
+extern "C" void StartGame(){
+
+	if(!AlreadyStarted) {
+
+	YabauseInit(&yinit);
+	paused=false;
+	VideoChangeCore(vidcoretype);
+
+	if (VIDCore && !VIDCore->IsFullscreen() && usecustomwindowsize)
+		VIDCore->Resize(windowwidth, windowheight, 0);
+	AlreadyStarted=1;
+	}
+	
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1433,6 +1467,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 							strcpy(cdrompath, tempstr);
 					//		cdromchanged = TRUE;
 						}
+						StartGame();
 
 					WritePrivateProfileStringA("General", "CDROMDrive", cdrompath, inifilename);
 #ifndef USETHREADS
@@ -1765,6 +1800,44 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 		EnableMenuItem(YabMenu, MENU_RECORD_MOVIE,  MF_BYCOMMAND | (!IsMovieLoaded())     ? MF_ENABLED : MF_GRAYED);
 		EnableMenuItem(YabMenu, MENU_PLAY_MOVIE,    MF_BYCOMMAND | (!IsMovieLoaded())     ? MF_ENABLED : MF_GRAYED);
 		EnableMenuItem(YabMenu, MENU_STOP_MOVIE,    MF_BYCOMMAND | (IsMovieLoaded())      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_RESET,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_HARDRESET,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_MSH2DEBUG,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SSH2DEBUG,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_VDP1DEBUG,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_VDP2DEBUG,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_M68KDEBUG,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SCUDSPDEBUG,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SCSPDEBUG,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SMPCDEBUG,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_MEMORYEDITOR,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_BACKUPRAMMANAGER,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F2,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F3,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F4,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F5,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F6,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F7,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F8,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F9,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATE_F10,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F2,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F3,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F4,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F5,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F6,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F7,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F8,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F9,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATE_F10,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_SAVESTATEAS,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_LOADSTATEAS,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, MENU_RECORD_MOVIE,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, MENU_PLAY_MOVIE,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_FILE_RECORDAVI,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, ID_RAM_WATCH,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, ID_RAM_SEARCH,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
+		EnableMenuItem(YabMenu, IDM_MEMTRANSFER,    MF_BYCOMMAND | (AlreadyStarted)      ? MF_ENABLED : MF_GRAYED);
 		
 		CheckMenuItem(YabMenu, IDM_PAUSE, FrameAdvanceVariable ? MF_CHECKED:MF_UNCHECKED);
 		
