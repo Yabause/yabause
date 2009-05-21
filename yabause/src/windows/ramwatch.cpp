@@ -18,8 +18,8 @@ extern "C" {
 #include "commctrl.h"
 
 extern "C" {
-static HWND YabWin;
-static HINSTANCE y_hInstance;
+extern HWND YabWin;
+extern HINSTANCE y_hInstance;
 }
 
 HWND RamWatchHWnd = NULL;
