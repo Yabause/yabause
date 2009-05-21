@@ -30,7 +30,7 @@ extern "C" {
 #include "../vdp2.h"
 #include "../vdp1.h"
 #include "./settings/settings.h"
-
+char inifilename[MAX_PATH];
 static HWND YabWin;
 static HINSTANCE y_hInstance;
 }
@@ -1047,7 +1047,7 @@ static void set_hotkeyinfo(HWND hDlg)
 	// disable unused controls
 	for (; i < NUM_HOTKEY_CONTROLS; i++) {
 		SendDlgItemMessage(hDlg, IDC_HOTKEY_Table[i], WM_USER+44, 0, 0);
-		SetDlgItemText(hDlg, IDC_LABEL_HK_Table[i], (LPCWSTR)INPUTCONFIG_LABEL_UNUSED);
+		SetDlgItemText(hDlg, IDC_LABEL_HK_Table[i], (LPCWSTR)_16(INPUTCONFIG_LABEL_UNUSED));
 		ShowWindow(GetDlgItem(hDlg, IDC_HOTKEY_Table[i]), SW_HIDE);
 	}
 }
