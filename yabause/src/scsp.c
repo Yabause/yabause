@@ -3090,7 +3090,11 @@ void ScspReceiveCDDA(const u8 *sector) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScspExec() {
+#ifdef SCSP_FRAME_ACCURATE
+	s16 stereodata16[(44100 / 60) * 16];//11760
+#else
 	s16 stereodata16[(44100 / 50)*2];
+#endif
    u32 audiosize;
 
    ScspInternalVars->scsptiming2 += ((735<<16) + 263/2) / 263;
