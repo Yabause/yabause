@@ -1,3 +1,15 @@
+0.9.9 -> 0.9.10
+ software video core:
+  - Added line scroll emulation.
+ windows port:
+  - Added 12 player support.
+  - Fixed a bug that was causing the memory transfer dialog
+    to register the wrong filename after pressing "Browse".
+  - Fixed bugs in Goto Address dialog.
+  - Fixed a bug that was causing the vdp2 viewer dialog
+    to register the wrong filename after pressing "Browse".
+ general:
+  - Added Lithuanian translation.
 0.9.8 -> 0.9.9
  opengl video core:
   - Fixed a bug that was causing some games to
