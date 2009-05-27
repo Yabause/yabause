@@ -1,6 +1,9 @@
 0.9.9 -> 0.9.10
  software video core:
   - Added line scroll emulation.
+  - Improved user clipping.
+ gtk port
+  - Gtk port is now compiling on Mac OS X
  windows port:
   - Added 12 player support.
   - Fixed a bug that was causing the memory transfer dialog
@@ -10,6 +13,9 @@
     to register the wrong filename after pressing "Browse".
  general:
   - Added Lithuanian translation.
+  - New sound core using OpenAL.
+  - Added joystick core for Mac OS X.
+  - Added a PSP port.
 0.9.8 -> 0.9.9
  opengl video core:
   - Fixed a bug that was causing some games to
