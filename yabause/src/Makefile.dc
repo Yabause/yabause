@@ -22,7 +22,7 @@ all: yabause.bin
 
 include $(KOS_BASE)/Makefile.rules
 
-KOS_CFLAGS += -I. -DDEBUG -DNO_CLI
+KOS_CFLAGS += -I. -DDEBUG -DNO_CLI -DVERSION="0.9.10"
 
 OBJS = bios.o cdbase.o cheat.o cs0.o cs1.o cs2.o debug.o error.o m68kd.o \
  memory.o netlink.o peripheral.o profile.o scsp.o scu.o sh2core.o sh2idle.o \
