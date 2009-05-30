@@ -2,6 +2,8 @@
  software video core:
   - Added line scroll emulation.
   - Improved user clipping.
+  - Added some basic vertical scroll emulation, enough to get
+    Sonic Jam working.
  gtk port
   - Gtk port is now compiling on Mac OS X.
   - Fixed full software screenshots.
@@ -29,8 +31,6 @@
     enabled with --enable-scsp-frame-accurate configure switch).
   - Added a new 68000 emulation core.
   - Fixed save states.
-  - Added some basic vertical scroll emulation, enough to get
-    Sonic Jam working.
 0.9.8 -> 0.9.9
  opengl video core:
   - Fixed a bug that was causing some games to
