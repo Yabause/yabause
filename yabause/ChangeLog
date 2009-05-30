@@ -14,6 +14,9 @@
   - Fixed a bug that was causing the vdp2 viewer dialog
     to register the wrong filename after pressing "Browse".
   - Added MD saving in SCU DSP debug dialog.
+  - Added new Ram Watch dialog.
+  - Added video recording feature.
+  - Added move recording feature.
  general:
   - Added Lithuanian translation.
   - New sound core using OpenAL.
