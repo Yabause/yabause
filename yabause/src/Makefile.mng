@@ -43,7 +43,7 @@ OBJS = bios.o cdbase.o cheat.o coffelf.o cs0.o cs1.o cs2.o debug.o error.o m68kc
        windows/cpudebug/debug-sh2.o windows/cpudebug/debug-smpc.o windows/cpudebug/debug-vdp1.o \
        windows/cpudebug/debug-vdp2.o windows/settings/settings.o windows/settings/settings-basic.o \
        windows/settings/settings-input.o windows/settings/settings-log.o windows/settings/settings-netlink.o \
-       windows/settings/settings-sound.o windows/settings/settings-video.o windows\bup-manager.o windows\aviout.o
+       windows/settings/settings-sound.o windows/settings/settings-video.o windows\bup-manager.o windows\aviout.o windows\ramwatch.o
 
 all: $(TARGET)
 
