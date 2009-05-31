@@ -1,4 +1,8 @@
 0.9.9 -> 0.9.10
+ scsp/68k:
+  - Added code to make SCSP emulation frame-accurate (optional,
+    enabled with --enable-scsp-frame-accurate configure switch).
+  - Added a new 68000 emulation core.
  software video core:
   - Added line scroll emulation.
   - Improved user clipping.
@@ -27,9 +31,6 @@
   - Added a PSP port.
   - Added support for loading ELF binaries.
   - Now using gettimeofday when available for better resolution.
-  - Added code to make SCSP emulation frame-accurate (optional,
-    enabled with --enable-scsp-frame-accurate configure switch).
-  - Added a new 68000 emulation core.
   - Fixed save states.
 0.9.8 -> 0.9.9
  opengl video core:
