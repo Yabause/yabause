@@ -1,3 +1,21 @@
+/*	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+
+	This file is part of Yabause.
+
+	Yabause is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+
+	Yabause is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Yabause; if not, write to the Free Software
+	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 #include "UIPortManager.h"
 #include "UIPadSetting.h"
 #include "../CommonDialogs.h"
@@ -20,21 +38,21 @@ UIPortManager::UIPortManager( QWidget* parent )
 	mPort = -1;
 	mCore = 0;
 	setupUi( this );
-	
+
 	foreach ( QComboBox* cb, findChildren<QComboBox*>( QRegExp( "cbTypeController*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
 	{
 		cb->addItem( QtYabause::translate( "None" ), 0 );
 		cb->addItem( QtYabause::translate( "Pad" ), PERPAD );
 		cb->addItem( QtYabause::translate( "Mouse" ), PERMOUSE );
-		
+
 		connect( cb, SIGNAL( currentIndexChanged( int ) ), this, SLOT( cbTypeController_currentIndexChanged( int ) ) );
 	}
-	
+
 	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbSetJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
 	{
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbSetJoystick_clicked() ) );
 	}
-	
+
 	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbClearJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
 	{
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbClearJoystick_clicked() ) );
@@ -65,24 +83,24 @@ void UIPortManager::loadSettings()
 		cb->setCurrentIndex( 0 );
 		cb->blockSignals( blocked );
 	}
-	
+
 	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbSetJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
 	{
 		tb->setEnabled( false );
 	}
-	
+
 	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbClearJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
 	{
 		tb->setEnabled( false );
 	}
-	
+
 	// load settings
 	Settings* settings = QtYabause::settings();
-	
+
 	settings->beginGroup( QString( "Input/Port/%1/Id" ).arg( mPort ) );
 	QStringList ids = settings->childGroups();
 	settings->endGroup();
-	
+
 	ids.sort();
 	foreach ( const QString& id, ids )
 	{
@@ -98,7 +116,7 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 	QList<QToolButton*> buttons = frame->findChildren<QToolButton*>();
 	uint type = qobject_cast<QComboBox*>( sender() )->itemData( id ).toInt();
 	uint controllerId = frame->objectName().remove( "fController" ).toUInt();
-	
+
 	switch ( type )
 	{
 		case PERPAD:
@@ -111,7 +129,7 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 			buttons.at( 1 )->setEnabled( false );
 			break;
 	}
-	
+
 	Settings* settings = QtYabause::settings();
 	settings->setValue( QString( mSettingsType ).arg( mPort ).arg( controllerId ), type );
 }
@@ -119,24 +137,24 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 void UIPortManager::tbSetJoystick_clicked()
 {
 	uint controllerId = sender()->objectName().remove( "tbSetJoystick" ).toUInt();
-	
+
 	QMap<uint, PerPad_struct*>& padsbits = *QtYabause::portPadsBits( mPort );
-	
+
 	PerPad_struct* padBits = padsbits[ controllerId ];
-	
+
 	if ( !padBits )
 	{
 		padBits = PerPadAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
-		
+
 		if ( !padBits )
 		{
 			CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
 			return;
 		}
-		
+
 		padsbits[ controllerId ] = padBits;
 	}
-	
+
 	UIPadSetting ups( mCore, padBits, mPort, controllerId, this );
 	ups.exec();
 }
@@ -147,9 +165,9 @@ void UIPortManager::tbClearJoystick_clicked()
 	const QString group = QString( "Input/Port/%1/Id/%2" ).arg( mPort ).arg( controllerId );
 	Settings* settings = QtYabause::settings();
 	uint type = settings->value( QString( mSettingsType ).arg( mPort ).arg( controllerId ), 0 ).toUInt();
-	
+
 	settings->remove( group );
-	
+
 	if ( type > 0 )
 	{
 		settings->setValue( QString( mSettingsType ).arg( mPort ).arg( controllerId ), type );
