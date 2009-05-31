@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/IOCFPlugIn.h>
-#include <IOKit/hid/IOHIDLib.h>
-#include <IOKit/hid/IOHidUsageTables.h>
+#include <IOKit/Hid/IOHIDLib.h>
+#include <IOKit/Hid/IOHidUsageTables.h>
 #include <CoreFoundation/CoreFoundation.h>
 
 #include "macjoy.h"
