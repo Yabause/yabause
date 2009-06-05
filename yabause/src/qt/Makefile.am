@@ -7,6 +7,8 @@ EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h \
 	main.cpp PerQt.c PerQt.h \
 	QtYabause.cpp QtYabause.h Settings.cpp Settings.h yabause.desktop \
 	YabauseGL.cpp YabauseGL.h yabause.pro.in YabauseThread.cpp YabauseThread.h \
+	mkspecs/win32-osx-g++/qmake.conf mkspecs/win32-osx-g++/qplatformdefs.h \
+	mkspecs/win32-x11-g++/qmake.conf mkspecs/win32-x11-g++/qplatformdefs.h \
 	resources/resources.qrc \
 	resources/icons/controller.png \
 	resources/icons/made.png resources/icons/yabause.icns resources/icons/yabause.png resources/icons/yabause.rc \
