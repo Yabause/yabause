@@ -320,7 +320,7 @@ VideoInterface_struct* QtYabause::getVDICore( int id )
 
 CDInterface QtYabause::defaultCDCore()
 {
-#ifndef UNKNOW_ARCH
+#ifndef UNKNOWN_ARCH
 	return ArchCD;
 #else
 	return DummyCD;
