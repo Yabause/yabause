@@ -464,6 +464,10 @@ AC_ARG_ENABLE(deciline, AC_HELP_STRING(--disable-deciline, [use less precise tim
 	[if test "x$enableval" = "xno" ; then
 		AC_DEFINE(NO_DECILINE)
 	fi])
+AC_ARG_ENABLE(exec-from-cache, AC_HELP_STRING(--enable-exec-from-cache, [allow code execution from 0xC0000000]),
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(EXEC_FROM_CACHE)
+	fi])
 
 
 #### PSP options

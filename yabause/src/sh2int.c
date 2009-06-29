@@ -106,6 +106,10 @@ void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 #endif
 
    // Fetch Instruction
+#ifdef EXEC_FROM_CACHE
+   if ((addr & 0xC0000000) == 0xC0000000) sh->instruction = DataArrayReadWord(addr);
+   else
+#endif
    sh->instruction = fetchlist[(addr >> 20) & 0x0FF](addr);
 
    // Execute it
@@ -2734,6 +2738,10 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
 
       // Fetch Instruction
+#ifdef EXEC_FROM_CACHE
+      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
+      else
+#endif
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it
