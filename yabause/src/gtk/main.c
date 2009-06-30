@@ -435,6 +435,12 @@ int main(int argc, char *argv[]) {
          else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0) {
 	    yinit.sndcoretype = 0;
 	 }
+	 // Autoload
+	 else if (strcmp(argv[i], "--autoload") == 0) {
+            yui_window_start(NULL, YUI_WINDOW(yui));
+            YuiLoadState();
+            yui_window_run(NULL, YUI_WINDOW(yui));
+	 }
 	 // Autostart
 	 else if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "--autostart") == 0) {
             yui_window_run(NULL, YUI_WINDOW(yui));
