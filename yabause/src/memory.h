@@ -334,7 +334,7 @@ static INLINE void DummyWriteByte(Dummy UNUSED * d, u32 UNUSED a, u8 UNUSED v) {
 static INLINE void DummyWriteWord(Dummy UNUSED * d, u32 UNUSED a, u16 UNUSED v) {}
 static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) {}
 
-void MappedMemoryInit();
+void MappedMemoryInit(void);
 u8 FASTCALL MappedMemoryReadByte(u32 addr);
 u16 FASTCALL MappedMemoryReadWord(u32 addr);
 u32 FASTCALL MappedMemoryReadLong(u32 addr);

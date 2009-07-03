@@ -31,10 +31,10 @@
 #define INSTRUCTION_CD(x) (x & 0x00FF)
 #define INSTRUCTION_BCD(x) (x & 0x0FFF)
 
-int SH2InterpreterInit();
-int SH2DebugInterpreterInit();
-void SH2InterpreterDeInit();
-int SH2InterpreterReset();
+int SH2InterpreterInit(void);
+int SH2DebugInterpreterInit(void);
+void SH2InterpreterDeInit(void);
+int SH2InterpreterReset(void);
 void FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);
 void FASTCALL SH2DebugInterpreterExec(SH2_struct *context, u32 cycles);
 

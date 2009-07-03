@@ -83,9 +83,9 @@ int SmpcInit(u8 regionid);
 void SmpcDeInit(void);
 void SmpcRecheckRegion(void);
 void SmpcReset(void);
-void SmpcResetButton();
+void SmpcResetButton(void);
 void SmpcExec(s32 t);
-void SmpcINTBACKEnd();
+void SmpcINTBACKEnd(void);
 
 u8 FASTCALL	SmpcReadByte(u32);
 u16 FASTCALL	SmpcReadWord(u32);

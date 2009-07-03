@@ -404,9 +404,9 @@ typedef struct
 {
    int id;
    const char *Name;
-   int (*Init)();
-   void (*DeInit)();
-   int (*Reset)();
+   int (*Init)(void);
+   void (*DeInit)(void);
+   int (*Reset)(void);
    void FASTCALL (*Exec)(SH2_struct *context, u32 cycles);
    void (*WriteNotify)(u32 start, u32 length);
 } SH2Interface_struct;
@@ -415,7 +415,7 @@ extern SH2_struct *MSH2;
 extern SH2_struct *SSH2;
 
 int SH2Init(int coreid);
-void SH2DeInit();
+void SH2DeInit(void);
 void SH2Reset(SH2_struct *context);
 void SH2PowerOn(SH2_struct *context);
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles);

@@ -50,7 +50,7 @@ typedef struct
    int (*Init)(void);
    void (*DeInit)(void);
    int (*HandleEvents)(void);
-   void (*PerSetButtonMapping)();
+   void (*PerSetButtonMapping)(void);
    u32 (*Scan)(void);
    int canScan;
    void (*Flush)(void);
