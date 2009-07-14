@@ -37,15 +37,21 @@ int main(int argc, char ** argv)
          {
             switch(state)
             {
-               case 0:
-                  if (*c == '"')
+               case 0: /* initial state */
+                  switch(*c)
                   {
-                     pos = 0;
-                     state = 1;
+                     case '"':
+                        pos = 0;
+                        state = 1;
+                        break;
+                     case '#':
+                        pos = 0;
+                        state = 2;
+                        break;
                   }
                   outbuf[opos++] = *c;
                   break;
-               case 1:
+               case 1: /* reading string */
                   if (*c == '"')
                   {
                      key[pos] = 0;
@@ -54,9 +60,47 @@ int main(int argc, char ** argv)
                      outbuf[opos++] = *c;
                   }
                   else
-                  {
                      key[pos++] = *c;
+                  break;
+               case 2: /* preprocessor directive */
+                  if (*c == ' ')
+                  {
+                     key[pos] = 0;
+                     opos += sprintf(outbuf + opos, "%s", key);
+                     if (!strcmp(key, "pragma")) 
+                     {
+                        pos = 0;
+                        state = 3;
+                     }
+                     else
+                        state = 0;
+                     outbuf[opos++] = *c;
                   }
+                  else
+                     key[pos++] = *c;
+                  break;
+               case 3: /* pragma directive */
+                  if (*c == '(')
+                  {
+                     key[pos] = 0;
+                     opos += sprintf(outbuf + opos, "%s", key);
+                     if (!strcmp(key, "code_page"))
+                        state = 4;
+                     else
+                        state = 0;
+                     outbuf[opos++] = *c;
+                  }
+                  else
+                     key[pos++] = *c;
+                  break;
+               case 4: /* code_page */
+                  if (*c == ')')
+                  {
+                     opos += sprintf(outbuf + opos, "%d", 65001);
+                     state = 0;
+                     outbuf[opos++] = *c;
+                  }
+                  break;
             }
             c++;
          }
