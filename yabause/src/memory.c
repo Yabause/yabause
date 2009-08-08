@@ -984,7 +984,9 @@ int YabSaveState(const char *filename)
    int movieposition;
 
    //use a second set of savestates for movies
-   MakeMovieStateName(filename);
+   filename = MakeMovieStateName(filename);
+   if (!filename)
+      return -1;
 
    if ((fp = fopen(filename, "wb")) == NULL)
       return -1;
@@ -1097,7 +1099,9 @@ int YabLoadState(const char *filename)
    int curroutputheight;
    int movieposition;
 
-   MakeMovieStateName(filename);
+   filename = MakeMovieStateName(filename);
+   if (!filename)
+      return -1;
 
    if ((fp = fopen(filename, "rb")) == NULL)
       return -1;

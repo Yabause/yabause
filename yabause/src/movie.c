@@ -407,10 +407,21 @@ struct MovieBufferStruct ReadMovieIntoABuffer(FILE* fp) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MakeMovieStateName(const char *filename) {
+const char *MakeMovieStateName(const char *filename) {
 
-	if(Movie.Status == Recording || Movie.Status == Playback)
-		strcat ( filename, "movie");
+	static char *retbuf = NULL;  // Save the pointer to avoid memory leaks
+	if(Movie.Status == Recording || Movie.Status == Playback) {
+		const unsigned long newsize = strlen(filename) + 5 + 1;
+		free(retbuf);
+		retbuf = malloc(newsize);
+		if (!retbuf) {
+			return NULL;  // out of memory
+		}
+		snprintf(retbuf, newsize, "%smovie", filename);
+		return retbuf;
+	} else {
+		return filename;  // unchanged
+	}
 
 }
 

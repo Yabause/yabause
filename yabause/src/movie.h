@@ -69,7 +69,7 @@ int SaveMovie(const char *filename);
 int PlayMovie(const char *filename);
 void StopMovie(void);
 
-void MakeMovieStateName(const char *filename);
+const char *MakeMovieStateName(const char *filename);
 
 void MovieReadState(FILE* fp, const char * filename);
 
