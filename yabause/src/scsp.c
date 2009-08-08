@@ -3012,8 +3012,8 @@ void M68KExec(s32 cycles) {
    {
       if (LIKELY(newcycles < 0))
       {
-	 s32 cyclestoexec = -newcycles;
-	 newcycles += (*m68kexecptr)(cyclestoexec);
+         s32 cyclestoexec = -newcycles;
+         newcycles += (*m68kexecptr)(cyclestoexec);
       }
       savedcycles = newcycles;
    }
@@ -3090,10 +3090,12 @@ void ScspReceiveCDDA(const u8 *sector) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScspExec() {
-#ifdef SCSP_FRAME_ACCURATE
-	s16 stereodata16[(44100 / 60) * 16];//11760
-#else
-	s16 stereodata16[(44100 / 50)*2];
+#ifdef WIN32
+# ifdef SCSP_FRAME_ACCURATE
+   s16 stereodata16[(44100 / 60) * 16];//11760
+# else
+   s16 stereodata16[(44100 / 50)*2];
+# endif
 #endif
    u32 audiosize;
 
@@ -3144,10 +3146,10 @@ void ScspExec() {
       SNDCore->UpdateAudio(&scspchannel[0].data32[outstart],
                            &scspchannel[1].data32[outstart], audiosize);
       scspsoundoutleft -= audiosize;
-	  #ifdef WIN32
+# ifdef WIN32
       ScspConvert32uto16s(&scspchannel[0].data32[outstart], &scspchannel[1].data32[outstart], (s16 *)stereodata16, audiosize);
-	  DRV_AviSoundUpdate(stereodata16, audiosize);
-	  #endif
+      DRV_AviSoundUpdate(stereodata16, audiosize);
+# endif
    }
 #else // !SCSP_FRAME_ACCURATE
    if ((audiosize = SNDCore->GetAudioSpace()))
@@ -3159,10 +3161,10 @@ void ScspExec() {
 
       scsp_update((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, audiosize);
       SNDCore->UpdateAudio(scspchannel[0].data32, (u32 *)scspchannel[1].data32, audiosize);
-	  #ifdef WIN32
+# ifdef WIN32
       ScspConvert32uto16s((s32 *)scspchannel[0].data32, (s32 *)scspchannel[1].data32, (s16 *)stereodata16, audiosize);
-	  DRV_AviSoundUpdate(stereodata16, audiosize);
-	  #endif
+      DRV_AviSoundUpdate(stereodata16, audiosize);
+# endif
 
    }
 #endif
@@ -3284,7 +3286,7 @@ int M68KDelCodeBreakpoint(u32 addr) {
             ScspInternalVars->numcodebreakpoints--;
             if (ScspInternalVars->numcodebreakpoints == 0) {
                m68kexecptr = M68K->Exec;
-	    }
+            }
             return 0;
          }
       }
@@ -4053,10 +4055,10 @@ u32 SNDDummyGetAudioSpace()
    static int i = 0;
    i++;
    if (i == 55) {
-	i = 0;
-   	return 85;
+      i = 0;
+      return 85;
    } else {
-        return 0;
+      return 0;
    }
 }
 
@@ -4211,10 +4213,10 @@ u32 SNDWavGetAudioSpace()
    static int i = 0;
    i++;
    if (i == 55) {
-	i = 0;
-   	return 85;
+      i = 0;
+      return 85;
    } else {
-        return 0;
+      return 0;
    }
 }
 

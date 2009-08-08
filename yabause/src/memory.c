@@ -983,6 +983,9 @@ int YabSaveState(const char *filename)
    int outputheight;
    int movieposition;
 
+   check.done = 0;
+   check.size = 0;
+
    //use a second set of savestates for movies
    filename = MakeMovieStateName(filename);
    if (!filename)

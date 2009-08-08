@@ -1263,9 +1263,6 @@ static void SetSaturnResolution(int width, int height)
 //////////////////////////////////////////////////////////////////////////////
 
 #ifdef USEMICSHADERS
-#ifndef GLchar
-#define GLchar GLbyte
-#endif
 
 #ifndef GL_FRAGMENT_SHADER
 #define GL_FRAGMENT_SHADER 0x8B30
@@ -1317,7 +1314,7 @@ const GLchar saturnMeshGouraudFragmentShaderCode[] = \
 const GLchar *saturnMeshGouraudFragmentShaderSource[] = {saturnMeshGouraudFragmentShaderCode, NULL};
 
 #ifdef HAVE_GLXGETPROCADDRESS
-void STDCALL * (*yglGetProcAddress)(const char *szProcName) = glXGetProcAddress;
+void STDCALL * (*yglGetProcAddress)(const char *szProcName) = (void STDCALL *(*)(const char *))glXGetProcAddress;
 #elif WIN32
 void STDCALL * (*yglGetProcAddress)(const char *szProcName) = wglGetProcAddress;
 #endif
@@ -1327,7 +1324,7 @@ int VIDOGLInit(void)
 {
 #ifdef USEMICSHADERS
    GLint mytexture;
-   char shaderInfoLog[256];
+   GLchar shaderInfoLog[256];
 #endif
 
    if (YglInit(1024, 1024, 8) != 0)
@@ -1365,10 +1362,10 @@ int VIDOGLInit(void)
 		    useShaders = 1;
 		    pfglShaderSource(saturnMeshGouraudFragmentShader, 1, saturnMeshGouraudFragmentShaderSource, NULL);
 		    pfglCompileShader(saturnMeshGouraudFragmentShader);
-            pfglGetShaderInfoLog(saturnMeshGouraudFragmentShader,255,NULL,shaderInfoLog);
+		    pfglGetShaderInfoLog(saturnMeshGouraudFragmentShader,255,NULL,shaderInfoLog);
 		    pfglAttachShader(shaderProgram, saturnMeshGouraudFragmentShader);
 		    pfglLinkProgram(shaderProgram);
-		    mytexture = pfglGetUniformLocation(shaderProgram, "mytexture");
+		    mytexture = pfglGetUniformLocation(shaderProgram, (const GLchar *)"mytexture");
 		    pfglUniform1i(mytexture, 0);
 		 }
 	  }

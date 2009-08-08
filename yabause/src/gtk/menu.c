@@ -30,7 +30,7 @@
 #include "yuimem.h"
 #include "yuiscreenshot.h"
 
-void ToggleFLimiter (GtkWidget* widget, gpointer user_data)
+static void ToggleFLimiter (GtkWidget* widget, gpointer user_data)
 {
 	if (gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (widget)))
 		EnableAutoFrameSkip ();
@@ -38,7 +38,7 @@ void ToggleFLimiter (GtkWidget* widget, gpointer user_data)
 		DisableAutoFrameSkip ();
 }
 
-void openAboutDialog(GtkWidget * w, gpointer data) {
+static void openAboutDialog(GtkWidget * w, gpointer data) {
 	gtk_show_about_dialog(data,
 		"name", "Yabause",
 		"version", VERSION,
@@ -46,13 +46,13 @@ void openAboutDialog(GtkWidget * w, gpointer data) {
 		NULL);
 }
 
-void YuiSaveState() {
+void YuiSaveState(void) {
   char * dir = g_key_file_get_value(keyfile, "General", "StatePath", NULL);
 
   YabSaveStateSlot(dir, 1);
 }
 
-void YuiLoadState() {
+void YuiLoadState(void) {
   char * dir = g_key_file_get_value(keyfile, "General", "StatePath", NULL);
 
   YabLoadStateSlot(dir, 1);

@@ -140,5 +140,27 @@ int * YglIsCached(u32);
 void YglCache(u32, int *);
 void YglCacheReset(void);
 
+#ifdef USEMICSHADERS
+
+#if 0  // Does anything need this?  It breaks a bunch of prototypes if
+       // GLchar is typedef'd instead of #define'd  --AC
+#ifndef GLchar
+#define GLchar GLbyte
+#endif
+#endif  // 0
+
+extern GLuint (STDCALL *pfglCreateProgram)(void);
+extern GLuint (STDCALL *pfglCreateShader)(GLenum);
+extern void (STDCALL *pfglShaderSource)(GLuint,GLsizei,const GLchar **,const GLint *);
+extern void (STDCALL *pfglCompileShader)(GLuint);
+extern void (STDCALL *pfglAttachShader)(GLuint,GLuint);
+extern void (STDCALL *pfglLinkProgram)(GLuint);
+extern void (STDCALL *pfglUseProgram)(GLuint);
+extern GLint (STDCALL *pfglGetUniformLocation)(GLuint,const GLchar *);
+extern void (STDCALL *pfglUniform1i)(GLint,GLint);
+extern void (STDCALL *pfglGetShaderInfoLog)(GLuint,GLsizei,GLsizei *,GLchar *);
+
+#endif
+
 #endif
 #endif

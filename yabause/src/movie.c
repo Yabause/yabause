@@ -19,6 +19,7 @@
 #include "scsp.h"
 #include "movie.h"
 #include "cs2.h"
+#include "vdp2.h"  // for DisplayMessage() prototype
 #include "yabause.h"
 
 int RecordingFileOpened;
@@ -214,8 +215,8 @@ void TruncateMovie(struct MovieStruct Movie) {
 	//when we resume recording, shorten the movie so that there isn't 
 	//potential garbage data at the end
 
-	struct MovieBufferStruct tempbuffer;
 /*//TODO
+	struct MovieBufferStruct tempbuffer;
 	fseek(Movie.fp,0,SEEK_SET);
 	tempbuffer=ReadMovieIntoABuffer(Movie.fp);
 	fclose(Movie.fp);
@@ -372,7 +373,7 @@ void ReadMovieInState(FILE* fp) {
 
 		fpos=ftell(fp);//where we are in the savestate
 		fread(&tempbuffer.size, 4, 1, fp);//size
-		if ((tempbuffer.data = (u8 *)malloc(tempbuffer.size)) == NULL)
+		if ((tempbuffer.data = (char *)malloc(tempbuffer.size)) == NULL)
 		{
 			return;
 		}

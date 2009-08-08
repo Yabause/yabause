@@ -512,7 +512,8 @@ void YglRender(void) {
       int text [] = { 0, 0, YglTM->width, 0, YglTM->width, YglTM->height, 0, YglTM->height };
       glVertexPointer(2, GL_INT, 0, vertices);
 #ifdef USEMICSHADERS
-      glColorPointer(4, GL_UNSIGNED_BYTE, 0, level->colors);
+      // FIXME: this needs to be defined  --AC
+      //glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
 #endif
       glTexCoordPointer(4, GL_INT, 0, text);
       glDrawArrays(GL_QUADS, 0, 4);

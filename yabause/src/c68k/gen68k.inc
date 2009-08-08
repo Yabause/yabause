@@ -983,7 +983,7 @@ static void set_neg_flag()
 	}
 }
 
-char* get_cond_as_cond(u32 cond, u32 notvar)
+static char* get_cond_as_cond(u32 cond, u32 notvar)
 {
     if (notvar) cond ^= 1;
 
