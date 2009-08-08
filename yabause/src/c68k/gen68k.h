@@ -56,7 +56,7 @@ typedef struct __c68k_op_info_struc {
     s8  reg2_sft;
     s8  ea_supported[12 + 1];
     s8  ea2_supported[12 + 1];
-    void (*genfunc)();
+    void (*genfunc)(void);
 } c68k_op_info_struc;
 
 

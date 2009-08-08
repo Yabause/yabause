@@ -50,7 +50,7 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen);
 
 /* Tells the yui to exchange front and back video buffers. This may end
    up being moved to the Video Core. */
-void YuiSwapBuffers();
+void YuiSwapBuffers(void);
 
 //////////////////////////////////////////////////////////////////////////////
 // Helper functions(you can use these in your own port)

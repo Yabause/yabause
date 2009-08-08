@@ -30,7 +30,7 @@ libyabause_a_SOURCES = \
         bios.c bios.h cdbase.c cdbase.h cheat.c cheat.h coffelf.c coffelf.h \
         core.h cs0.c cs0.h cs1.c cs1.h cs2.c cs2.h \
 	debug.c debug.h error.c error.h memory.c memory.h \
-	m68kcore.c m68kcore.h m68kd.c movie.c movie.h \
+	m68kcore.c m68kcore.h m68kd.c m68kd.h movie.c movie.h \
 	netlink.c netlink.h peripheral.h peripheral.c \
 	persdljoy.c persdljoy.h profile.c profile.h \
 	scu.c scu.h sh2core.c sh2core.h \

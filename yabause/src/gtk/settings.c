@@ -123,7 +123,7 @@ YuiRangeItem mousepercores[] = {
 	{ 0, 0 }
 };
 
-void hide_show_cart_path(YuiRange * instance, gpointer data) {
+static void hide_show_cart_path(YuiRange * instance, gpointer data) {
 	gint i = yui_range_get_active(instance);
 
 	if (i == 8) {
@@ -133,7 +133,7 @@ void hide_show_cart_path(YuiRange * instance, gpointer data) {
 	}
 }
 
-void hide_show_netlink(YuiRange * instance, gpointer data) {
+static void hide_show_netlink(YuiRange * instance, gpointer data) {
 	gint i = yui_range_get_active(instance);
 
 	if (i != 8) {
@@ -143,7 +143,7 @@ void hide_show_netlink(YuiRange * instance, gpointer data) {
 	}
 }
 
-void percore_changed(GtkWidget * widget, gpointer data) {
+static void percore_changed(GtkWidget * widget, gpointer data) {
 	const char * core_s = percores[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))].value;
 	GList * entrylist = data;
 	int core;
@@ -227,7 +227,7 @@ static void pertype_display_mouse(GtkWidget * box)
    gtk_widget_show_all(box);
 }
 
-void pertype_changed(GtkWidget * widget, gpointer data) {
+static void pertype_changed(GtkWidget * widget, gpointer data) {
 	GtkTreePath * path;
 	gchar * strpath;
 	int i;

@@ -86,6 +86,8 @@ void SmpcReset(void);
 void SmpcResetButton(void);
 void SmpcExec(s32 t);
 void SmpcINTBACKEnd(void);
+void SmpcCKCHG320(void);
+void SmpcCKCHG352(void);
 
 u8 FASTCALL	SmpcReadByte(u32);
 u16 FASTCALL	SmpcReadWord(u32);

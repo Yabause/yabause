@@ -632,6 +632,23 @@ const char *q68_disassemble(Q68State *state, uint32_t address,
 
 /*************************************************************************/
 
+#ifdef PSP
+/**
+ * HEXIT:  Helper routine for q68_trace() to print a value in hexadecimal.
+ * q68_trace() for why we don't just use printf().
+ */
+static inline void HEXIT(char * const ptr, uint32_t val, int ndigits)
+{
+    while (ndigits-- > 0) {
+        const int digit = val & 0xF;
+        val >>= 4;
+        ptr[ndigits] = (digit>9 ? digit+7+'0' : digit+'0');
+    }
+}
+#endif
+
+/*----------------------------------*/
+
 /**
  * q68_trace:  Output a trace for the instruction at the current PC.
  *
@@ -655,13 +672,6 @@ void q68_trace(Q68State *state, FILE *fp, int cycles_done, int cycle_limit)
     static char buf2[] =
         "    D: ........ ........ ........ ........ ........ ........ ........ ........\n"
         "    A: ........ ........ ........ ........ ........ ........ ........ ........\n";
-    auto inline void HEXIT(char * const ptr, uint32_t val, int ndigits) {
-        while (ndigits-- > 0) {
-            const int digit = val & 0xF;
-            val >>= 4;
-            ptr[ndigits] = (digit>9 ? digit+7+'0' : digit+'0');
-        }
-    }
 
     if (nwords > 3) {  // We can only fit 3 words on the line
         nwords = 3;

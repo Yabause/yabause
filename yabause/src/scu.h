@@ -304,8 +304,8 @@ void ScuDspSetRegisters(scudspregs_struct *regs);
 void ScuDspSetBreakpointCallBack(void (*func)(u32));
 int ScuDspAddCodeBreakpoint(u32 addr);
 int ScuDspDelCodeBreakpoint(u32 addr);
-scucodebreakpoint_struct *ScuDspGetBreakpointList();
-void ScuDspClearCodeBreakpoints();
+scucodebreakpoint_struct *ScuDspGetBreakpointList(void);
+void ScuDspClearCodeBreakpoints(void);
 int ScuSaveState(FILE *fp);
 int ScuLoadState(FILE *fp, int version, int size);
 

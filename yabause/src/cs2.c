@@ -2380,7 +2380,7 @@ void Cs2MpegSetWindow(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2MpegSetBorderColor() {
+void Cs2MpegSetBorderColor(void) {
    // fix me(should be setting border color)
 
    doMPEGReport(Cs2Area->status);
@@ -2389,7 +2389,7 @@ void Cs2MpegSetBorderColor() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2MpegSetFade() {
+void Cs2MpegSetFade(void) {
    // fix me(should be setting fade setting)
 
    doMPEGReport(Cs2Area->status);
@@ -2407,7 +2407,7 @@ void Cs2MpegSetVideoEffects(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2MpegSetLSI() {
+void Cs2MpegSetLSI(void) {
    // fix me(should be setting the LSI, among other things)
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
 }

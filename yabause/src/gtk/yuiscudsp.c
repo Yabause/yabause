@@ -375,7 +375,7 @@ static void yui_scudsp_editedBp( GtkCellRendererText *cellrenderertext,
   gtk_list_store_set( GTK_LIST_STORE( scudsp->bpListStore ), &iter, 0, bptext, -1 );
 }
 
-static void debugPauseLoop() { /* secondary gtk event loop for the "breakpoint pause" state */
+static void debugPauseLoop(void) { /* secondary gtk event loop for the "breakpoint pause" state */
 
   while ( !(yui->state & YUI_IS_RUNNING) )
     if ( gtk_main_iteration() ) return;

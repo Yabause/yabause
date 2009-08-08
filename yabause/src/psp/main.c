@@ -19,6 +19,7 @@
 */
 
 #include "../yabause.h"
+#include "../yui.h"
 #include "../cdbase.h"
 #include "../cs0.h"
 #include "../debug.h"

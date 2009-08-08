@@ -52,7 +52,7 @@ static u64 fpsticks;
 static int fpstoggle=0;
 
 //////////////////////////////////////////////////////////////////////////////
-int GetOSDToggle()
+int GetOSDToggle(void)
 {
 	return fpstoggle;
 }
@@ -303,7 +303,7 @@ void Vdp2HBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FPSDisplay(void)
+static void FPSDisplay(void)
 {
    if (fpstoggle)
    {

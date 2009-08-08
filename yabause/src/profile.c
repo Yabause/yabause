@@ -62,7 +62,7 @@ static entry_t* AddTag (char* str_tag) {
 }
 
 /* Compare function for 'qsort' */
-int CompareEntries (const void* p_1, const void* p_2) {
+static int CompareEntries (const void* p_1, const void* p_2) {
   entry_t* p_entry1, *p_entry2 ;
   /* Cast elements to entry_t type */
   p_entry1 = (entry_t*) p_1 ;
@@ -72,7 +72,7 @@ int CompareEntries (const void* p_1, const void* p_2) {
 }
 
 /* Called on the first start-call. It receives the start-time */
-void Init () {
+static void Init (void) {
   memset (g_tag, 0, sizeof (g_tag)) ;
   /* Retreive the time */
   g_init_time = clock () ;
@@ -83,7 +83,7 @@ void Init () {
 
 /* Prints profiling statistice to stdout, 
 sorted by percentage (descending) */
-void ProfilePrint () {
+void ProfilePrint (void) {
   int i ;
   long l_prof_time ;
   if (g_i_hwm == 0) {
@@ -180,7 +180,7 @@ void ProfileStop (char* str_tag) {
 }
 
 /* Resets the profiler. */
-void ProfileReset () {
+void ProfileReset (void) {
   Init () ;
 }
 

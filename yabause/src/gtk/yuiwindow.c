@@ -96,7 +96,7 @@ static void yui_set_accel_group(gpointer action, gpointer group) {
 	gtk_action_set_accel_group(action, group);
 }
 
-gboolean  yui_window_log_delete(GtkWidget *widget, GdkEvent *event, YuiWindow *yw ) {
+static gboolean yui_window_log_delete(GtkWidget *widget, GdkEvent *event, YuiWindow *yw ) {
 
   yui_window_show_log( yw );
 

@@ -51,9 +51,9 @@ void ProfileStart (char* str_tag) ;
 /* Stops timer for given tag and add time to total time for this tag */
 void ProfileStop (char* str_tag) ;
 /* Prints result to stdout */
-void ProfilePrint () ;
+void ProfilePrint (void) ;
 /* Resets the profiler. */
-void ProfileReset () ;
+void ProfileReset (void) ;
 
 #ifdef __cplusplus
 }

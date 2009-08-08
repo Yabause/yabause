@@ -32,7 +32,7 @@
 
 static u8 *SoundDummy=NULL;
 
-void M68KC68KInit(void) {
+static void M68KC68KInit(void) {
 	int i;
 
 	// Setup a 64k buffer filled with invalid 68k instructions to serve
@@ -46,17 +46,17 @@ void M68KC68KInit(void) {
 		M68K->SetFetch(i << 16, (i << 16) + 0xFFFF, (pointer)SoundDummy);
 }
 
-void M68KC68KDeInit(void) {
+static void M68KC68KDeInit(void) {
 	if (SoundDummy)
 		T2MemoryDeInit(SoundDummy);
 	SoundDummy = NULL;
 }
 
-void M68KC68KReset(void) {
+static void M68KC68KReset(void) {
 	C68k_Reset(&C68K);
 }
 
-s32 FASTCALL M68KC68KExec(s32 cycle) {
+static s32 FASTCALL M68KC68KExec(s32 cycle) {
 #ifdef PROFILE_68K
     static u32 tot_cycles = 0, tot_usec = 0, tot_ticks = 0, last_report = 0;
     u32 start, end;
@@ -79,79 +79,79 @@ s32 FASTCALL M68KC68KExec(s32 cycle) {
 #endif
 }
 
-u32 M68KC68KGetDReg(u32 num) {
+static u32 M68KC68KGetDReg(u32 num) {
 	return C68k_Get_DReg(&C68K, num);
 }
 
-u32 M68KC68KGetAReg(u32 num) {
+static u32 M68KC68KGetAReg(u32 num) {
 	return C68k_Get_AReg(&C68K, num);
 }
 
-u32 M68KC68KGetPC(void) {
+static u32 M68KC68KGetPC(void) {
 	return C68k_Get_PC(&C68K);
 }
 
-u32 M68KC68KGetSR(void) {
+static u32 M68KC68KGetSR(void) {
 	return C68k_Get_SR(&C68K);
 }
 
-u32 M68KC68KGetUSP(void) {
+static u32 M68KC68KGetUSP(void) {
 	return C68k_Get_USP(&C68K);
 }
 
-u32 M68KC68KGetMSP(void) {
+static u32 M68KC68KGetMSP(void) {
 	return C68k_Get_MSP(&C68K);
 }
 
-void M68KC68KSetDReg(u32 num, u32 val) {
+static void M68KC68KSetDReg(u32 num, u32 val) {
 	C68k_Set_DReg(&C68K, num, val);
 }
 
-void M68KC68KSetAReg(u32 num, u32 val) {
+static void M68KC68KSetAReg(u32 num, u32 val) {
 	C68k_Set_AReg(&C68K, num, val);
 }
 
-void M68KC68KSetPC(u32 val) {
+static void M68KC68KSetPC(u32 val) {
 	C68k_Set_PC(&C68K, val);
 }
 
-void M68KC68KSetSR(u32 val) {
+static void M68KC68KSetSR(u32 val) {
 	C68k_Set_SR(&C68K, val);
 }
 
-void M68KC68KSetUSP(u32 val) {
+static void M68KC68KSetUSP(u32 val) {
 	C68k_Set_USP(&C68K, val);
 }
 
-void M68KC68KSetMSP(u32 val) {
+static void M68KC68KSetMSP(u32 val) {
 	C68k_Set_MSP(&C68K, val);
 }
 
-void M68KC68KSetFetch(u32 low_adr, u32 high_adr, pointer fetch_adr) {
+static void M68KC68KSetFetch(u32 low_adr, u32 high_adr, pointer fetch_adr) {
 	C68k_Set_Fetch(&C68K, low_adr, high_adr, fetch_adr);
 }
 
-void FASTCALL M68KC68KSetIRQ(s32 level) {
+static void FASTCALL M68KC68KSetIRQ(s32 level) {
 	C68k_Set_IRQ(&C68K, level);
 }
 
-void FASTCALL M68KC68KTouchMem(u32 address) {
+static void FASTCALL M68KC68KTouchMem(u32 address) {
 	/* nothing to do */
 }
 
-void M68KC68KSetReadB(M68K_READ *Func) {
+static void M68KC68KSetReadB(M68K_READ *Func) {
 	C68k_Set_ReadB(&C68K, Func);
 }
 
-void M68KC68KSetReadW(M68K_READ *Func) {
+static void M68KC68KSetReadW(M68K_READ *Func) {
 	C68k_Set_ReadW(&C68K, Func);
 }
 
-void M68KC68KSetWriteB(M68K_WRITE *Func) {
+static void M68KC68KSetWriteB(M68K_WRITE *Func) {
 	C68k_Set_WriteB(&C68K, Func);
 }
 
-void M68KC68KSetWriteW(M68K_WRITE *Func) {
+static void M68KC68KSetWriteW(M68K_WRITE *Func) {
 	C68k_Set_WriteW(&C68K, Func);
 }
 

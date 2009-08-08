@@ -291,7 +291,7 @@ int SH2AddCodeBreakpoint(SH2_struct *context, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SH2SortCodeBreakpoints(SH2_struct *context) {
+static void SH2SortCodeBreakpoints(SH2_struct *context) {
    int i, i2;
    u32 tmp;
 
@@ -361,7 +361,7 @@ void SH2ClearCodeBreakpoints(SH2_struct *context) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
+static u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -396,7 +396,7 @@ u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
+static u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -431,7 +431,7 @@ u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
+static u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -466,7 +466,7 @@ u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
+static void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -506,7 +506,7 @@ void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
+static void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -546,7 +546,7 @@ void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
+static void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -586,7 +586,7 @@ void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CheckForMemoryBreakpointDupes(SH2_struct *context, u32 addr, u32 flag, int *which)
+static int CheckForMemoryBreakpointDupes(SH2_struct *context, u32 addr, u32 flag, int *which)
 {
    int i;
 
@@ -716,7 +716,7 @@ int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SH2SortMemoryBreakpoints(SH2_struct *context) {
+static void SH2SortMemoryBreakpoints(SH2_struct *context) {
    int i, i2;
    memorybreakpoint_struct tmp;
 

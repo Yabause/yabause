@@ -24,6 +24,10 @@
 #include "debug.h"
 #include "vdp2.h"
 
+/* Forward declaration to avoid a warning (this is exported to vdp2debug.c) */
+void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, int height);
+
+
 #ifdef HAVE_LIBGL
 #define USE_OPENGL
 #endif
@@ -322,7 +326,7 @@ static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL DoColorOffset(void *info, u32 pixel)
+static u32 FASTCALL DoColorOffset(void *info, u32 pixel)
 {
     return COLOR_ADD(pixel, ((vdp2draw_struct *)info)->cor,
                      ((vdp2draw_struct *)info)->cog,
@@ -522,7 +526,7 @@ static INLINE int TestWindow(int wctl, int enablemask, int inoutmask, clipping_s
 
 //////////////////////////////////////////////////////////////////////////////
 
-void GeneratePlaneAddrTable(vdp2draw_struct *info, u32 *planetbl)
+static void GeneratePlaneAddrTable(vdp2draw_struct *info, u32 *planetbl)
 {
    int i;
 
@@ -789,7 +793,7 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SetupRotationInfo(vdp2draw_struct *info, vdp2rotationparameterfp_struct *p)
+static void SetupRotationInfo(vdp2draw_struct *info, vdp2rotationparameterfp_struct *p)
 {
    if (info->rotatenum == 0)
    {
@@ -2293,7 +2297,7 @@ void VIDSoftVdp1ScaledSpriteDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int fcmpy_vdp1vertex( const void* v1, const void* v2 ) {
+static int fcmpy_vdp1vertex( const void* v1, const void* v2 ) {
 
   return ( ((vdp1vertex*)v1)->y <= ((vdp1vertex*)v2)->y )? -1 : 1;
 }
@@ -2461,7 +2465,7 @@ void VIDSoftVdp1PolygonDraw(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-INLINE int ClipLine(int *x1, int *y1, int *x2, int *y2)
+static INLINE int ClipLine(int *x1, int *y1, int *x2, int *y2)
 {
    int point1vis=0;
    int point2vis=0;
@@ -2516,7 +2520,7 @@ INLINE int ClipLine(int *x1, int *y1, int *x2, int *y2)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL DrawLine(int x1, int y1, int x2, int y2, u16 color)
+static void FASTCALL DrawLine(int x1, int y1, int x2, int y2, u16 color)
 {
    // Uses Bresenham's line algorithm(eventually this should be changed over
    // to Wu's symmetric double step

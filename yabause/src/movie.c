@@ -40,7 +40,7 @@ int headersize=512;
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ReadHeader(FILE* fp) {
+static void ReadHeader(FILE* fp) {
 
 	fseek(fp, 0, SEEK_SET);
 
@@ -52,7 +52,7 @@ void ReadHeader(FILE* fp) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void WriteHeader(FILE* fp) {
+static void WriteHeader(FILE* fp) {
 
 	fseek(fp, 0, SEEK_SET);
 
@@ -73,7 +73,7 @@ void WriteHeader(FILE* fp) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ClearInput(void) {
+static void ClearInput(void) {
 
 	//do something....
 }
@@ -88,7 +88,7 @@ const char* Spaces2[8]  = {"", "", "", " ", " ", " ", " ", " "};
 char str[40];
 char InputDisplayString[40];
 
-void SetInputDisplayCharacters(void) {
+static void SetInputDisplayCharacters(void) {
 
 	int x;
 
@@ -119,7 +119,7 @@ void SetInputDisplayCharacters(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void IncrementLagAndFrameCounter(void)
+static void IncrementLagAndFrameCounter(void)
 {
 	if(LagFrameFlag == 1)
 		lagframecounter++;
@@ -232,7 +232,7 @@ void TruncateMovie(struct MovieStruct Movie) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int MovieGetSize(FILE* fp) {
+static int MovieGetSize(FILE* fp) {
 	int size;
 	int fpos;
 
@@ -454,7 +454,7 @@ void PauseOrUnpause(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int IsMovieLoaded()
+int IsMovieLoaded(void)
 {
 	if (RecordingFileOpened || PlaybackFileOpened)
 		return 1;

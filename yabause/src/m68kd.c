@@ -18,6 +18,8 @@
 */
 
 #include "core.h"
+#include "m68kd.h"
+#include "scsp.h"  // for c68k_word_read()
 
 typedef struct
 {
@@ -27,11 +29,9 @@ typedef struct
    int (*disasm)(u32, u16, char *);
 } m68kdis_struct;
 
-u32 FASTCALL c68k_word_read(const u32 adr);
-
 //////////////////////////////////////////////////////////////////////////////
 
-int setsizestr(u16 size, char *outstring)
+static int setsizestr(u16 size, char *outstring)
 {
    switch (size & 0x3)
    {
@@ -48,7 +48,7 @@ int setsizestr(u16 size, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int setsizestr2(u16 size, char *outstring)
+static int setsizestr2(u16 size, char *outstring)
 {
    switch (size & 0x3)
    {
@@ -65,7 +65,7 @@ int setsizestr2(u16 size, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int setimmstr(u32 addr, u16 size, int *addsize, char *outstring)
+static int setimmstr(u32 addr, u16 size, int *addsize, char *outstring)
 {
    switch (size & 0x3)
    {
@@ -85,7 +85,7 @@ int setimmstr(u32 addr, u16 size, int *addsize, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int seteafieldstr(u32 addr, u16 modereg, int *addsize, char *outstring)
+static int seteafieldstr(u32 addr, u16 modereg, int *addsize, char *outstring)
 {
    switch ((modereg >> 3) & 0x7)
    {
@@ -146,7 +146,7 @@ int seteafieldstr(u32 addr, u16 modereg, int *addsize, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int setcondstr(u16 cond, char *outstring)
+static int setcondstr(u16 cond, char *outstring)
 {
    switch (cond & 0xF)
    {
@@ -206,7 +206,7 @@ int setcondstr(u16 cond, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int setbranchdispstr(u32 addr, u16 op, int *addsize, char *outstring)
+static int setbranchdispstr(u32 addr, u16 op, int *addsize, char *outstring)
 {
    if ((op & 0xFF) == 0xFF)
    {
@@ -227,7 +227,7 @@ int setbranchdispstr(u32 addr, u16 op, int *addsize, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disabcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disabcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -238,7 +238,7 @@ int disabcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disadd(u32 addr, u16 op, char *outstring)
+static int disadd(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -264,7 +264,7 @@ int disadd(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disadda(u32 addr, u16 op, char *outstring)
+static int disadda(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -280,7 +280,7 @@ int disadda(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disaddi(u32 addr, u16 op, char *outstring)
+static int disaddi(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -294,7 +294,7 @@ int disaddi(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disaddq(u32 addr, u16 op, char *outstring)
+static int disaddq(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -308,7 +308,7 @@ int disaddq(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disaddx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disaddx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -319,7 +319,7 @@ int disaddx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disand(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disand(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -330,7 +330,7 @@ int disand(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disandi(u32 addr, u16 op, char *outstring)
+static int disandi(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -345,7 +345,7 @@ int disandi(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disanditoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disanditoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -356,7 +356,7 @@ int disanditoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disasl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disasl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -367,7 +367,7 @@ int disasl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disasr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disasr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -378,7 +378,7 @@ int disasr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbcc(u32 addr, u16 op, char *outstring)
+static int disbcc(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -390,7 +390,7 @@ int disbcc(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbkpt(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disbkpt(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -401,7 +401,7 @@ int disbkpt(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbra(u32 addr, u16 op, char *outstring)
+static int disbra(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -412,7 +412,7 @@ int disbra(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbchg(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disbchg(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -423,7 +423,7 @@ int disbchg(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbclrd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disbclrd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -434,7 +434,7 @@ int disbclrd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbclrs(u32 addr, u16 op, char *outstring)
+static int disbclrs(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -447,7 +447,7 @@ int disbclrs(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbsetd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disbsetd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -458,7 +458,7 @@ int disbsetd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbsets(u32 addr, u16 op, char *outstring)
+static int disbsets(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -471,7 +471,7 @@ int disbsets(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbtstd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disbtstd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -482,7 +482,7 @@ int disbtstd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbtsts(u32 addr, u16 op, char *outstring)
+static int disbtsts(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -495,7 +495,7 @@ int disbtsts(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disbsr(u32 addr, u16 op, char *outstring)
+static int disbsr(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -506,7 +506,7 @@ int disbsr(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dischk(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dischk(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -517,7 +517,7 @@ int dischk(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disclr(u32 addr, u16 op, char *outstring)
+static int disclr(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -530,7 +530,7 @@ int disclr(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disdbcc(u32 addr, u16 op, char *outstring)
+static int disdbcc(u32 addr, u16 op, char *outstring)
 {
    outstring += sprintf(outstring, "db");
    outstring += setcondstr(op >> 8, outstring);
@@ -541,7 +541,7 @@ int disdbcc(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int discmpb(u32 addr, u16 op, char *outstring)
+static int discmpb(u32 addr, u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "cmp.b   ");
@@ -552,7 +552,7 @@ int discmpb(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int discmpw(u32 addr, u16 op, char *outstring)
+static int discmpw(u32 addr, u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "cmp.w   ");
@@ -563,7 +563,7 @@ int discmpw(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int discmpl(u32 addr, u16 op, char *outstring)
+static int discmpl(u32 addr, u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "cmp.l   ");
@@ -574,7 +574,7 @@ int discmpl(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int discmpaw(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int discmpaw(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -585,7 +585,7 @@ int discmpaw(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int discmpal(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int discmpal(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -596,7 +596,7 @@ int discmpal(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int discmpi(u32 addr, u16 op, char *outstring)
+static int discmpi(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -611,7 +611,7 @@ int discmpi(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disdivs(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disdivs(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -622,7 +622,7 @@ int disdivs(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disdivu(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disdivu(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -633,7 +633,7 @@ int disdivu(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int discmpm(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int discmpm(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -644,7 +644,7 @@ int discmpm(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int diseorb(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int diseorb(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -655,7 +655,7 @@ int diseorb(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int diseorw(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int diseorw(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -666,7 +666,7 @@ int diseorw(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int diseorl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int diseorl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -677,7 +677,7 @@ int diseorl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int diseori(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int diseori(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -688,7 +688,7 @@ int diseori(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int diseoritoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int diseoritoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "eori to ccr");
@@ -698,7 +698,7 @@ int diseoritoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disexg(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disexg(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -709,7 +709,7 @@ int disexg(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disext(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disext(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -720,7 +720,7 @@ int disext(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disillegal(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disillegal(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    sprintf(outstring, "illegal");
    return 2;
@@ -728,7 +728,7 @@ int disillegal(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disjmp(u32 addr, u16 op, char *outstring)
+static int disjmp(u32 addr, u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "jmp ");
@@ -738,7 +738,7 @@ int disjmp(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disjsr(u32 addr, u16 op, char *outstring)
+static int disjsr(u32 addr, u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "jsr     ");
@@ -748,7 +748,7 @@ int disjsr(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dislea(u32 addr, u16 op, char *outstring)
+static int dislea(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -760,7 +760,7 @@ int dislea(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dislink(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dislink(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "link");
@@ -770,7 +770,7 @@ int dislink(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dislsl(UNUSED u32 addr, u16 op, char *outstring)
+static int dislsl(UNUSED u32 addr, u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "lsl");
@@ -781,7 +781,7 @@ int dislsl(UNUSED u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dislsr(UNUSED u32 addr, u16 op, char *outstring)
+static int dislsr(UNUSED u32 addr, u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "lsr");
@@ -792,7 +792,7 @@ int dislsr(UNUSED u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismove(u32 addr, u16 op, char *outstring)
+static int dismove(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -807,7 +807,7 @@ int dismove(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismovea(u32 addr, u16 op, char *outstring)
+static int dismovea(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -820,7 +820,7 @@ int dismovea(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismovetoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dismovetoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -831,7 +831,7 @@ int dismovetoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismovefromsr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dismovefromsr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -842,7 +842,7 @@ int dismovefromsr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismovetosr(u32 addr, u16 op, char *outstring)
+static int dismovetosr(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -854,7 +854,7 @@ int dismovetosr(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismovem(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dismovem(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    outstring += sprintf(outstring, "movem");
    // fix me
@@ -863,7 +863,7 @@ int dismovem(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismovep(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dismovep(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -874,7 +874,7 @@ int dismovep(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismoveq(UNUSED u32 addr, u16 op, char *outstring)
+static int dismoveq(UNUSED u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -884,7 +884,7 @@ int dismoveq(UNUSED u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismuls(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dismuls(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -895,7 +895,7 @@ int dismuls(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dismulu(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dismulu(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -906,7 +906,7 @@ int dismulu(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disnbcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disnbcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -917,7 +917,7 @@ int disnbcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disneg(u32 addr, u16 op, char *outstring)
+static int disneg(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -930,7 +930,7 @@ int disneg(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disnegx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disnegx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -941,7 +941,7 @@ int disnegx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disnop(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disnop(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    sprintf(outstring, "nop");
    return 2;
@@ -949,7 +949,7 @@ int disnop(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disnot(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disnot(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -960,7 +960,7 @@ int disnot(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disor(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disor(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -971,7 +971,7 @@ int disor(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disori(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disori(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -982,7 +982,7 @@ int disori(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disoritoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disoritoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -993,7 +993,7 @@ int disoritoccr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dispea(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dispea(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1004,7 +1004,7 @@ int dispea(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disrol(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disrol(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1015,7 +1015,7 @@ int disrol(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disror(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disror(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1026,7 +1026,7 @@ int disror(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disroxl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disroxl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1037,7 +1037,7 @@ int disroxl(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disroxr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disroxr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1048,7 +1048,7 @@ int disroxr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disrtr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disrtr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    sprintf(outstring, "rtr");
    return 2;
@@ -1056,7 +1056,7 @@ int disrtr(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disrts(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disrts(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    sprintf(outstring, "rts");
    return 2;
@@ -1064,7 +1064,7 @@ int disrts(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dissbcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dissbcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1075,7 +1075,7 @@ int dissbcd(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disscc(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disscc(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1086,7 +1086,7 @@ int disscc(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dissub(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dissub(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1097,7 +1097,7 @@ int dissub(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dissuba(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dissuba(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1108,7 +1108,7 @@ int dissuba(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dissubi(u32 addr, u16 op, char *outstring)
+static int dissubi(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -1123,7 +1123,7 @@ int dissubi(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dissubq(u32 addr, u16 op, char *outstring)
+static int dissubq(u32 addr, u16 op, char *outstring)
 {
    int size=2;
 
@@ -1136,7 +1136,7 @@ int dissubq(u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int dissubx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int dissubx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1147,7 +1147,7 @@ int dissubx(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disswap(UNUSED u32 addr, u16 op, char *outstring)
+static int disswap(UNUSED u32 addr, u16 op, char *outstring)
 {
    sprintf(outstring, "swap d%d", op & 0x7);
    return 2;
@@ -1155,7 +1155,7 @@ int disswap(UNUSED u32 addr, u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int distas(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int distas(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1166,7 +1166,7 @@ int distas(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int distrap(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int distrap(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1177,7 +1177,7 @@ int distrap(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int distrapv(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int distrapv(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    sprintf(outstring, "trapv");
    return 2;
@@ -1185,7 +1185,7 @@ int distrapv(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int distst(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int distst(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
 
@@ -1196,7 +1196,7 @@ int distst(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int disunlk(UNUSED u32 addr, UNUSED u16 op, char *outstring)
+static int disunlk(UNUSED u32 addr, UNUSED u16 op, char *outstring)
 {
    int size=2;
    outstring += sprintf(outstring, "unlk");

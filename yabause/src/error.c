@@ -25,7 +25,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 
-void AllocAmendPrintString(const char *string1, const char *string2)
+static void AllocAmendPrintString(const char *string1, const char *string2)
 {
    char *string;
 

@@ -82,7 +82,7 @@ static int NetworkReceive(void *buffer, int maxlength);
 
 //////////////////////////////////////////////////////////////////////////////
 
-void NetlinkLSRChange(u8 val)
+UNUSED static void NetlinkLSRChange(u8 val)
 {
    // If IER bit 2 is set and if any of the error or alarms bits are set(and
    // they weren't previously), trigger an interrupt
@@ -97,7 +97,10 @@ void NetlinkLSRChange(u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void NetlinkMSRChange(u8 set, u8 clear)
+#ifndef USESOCKET
+UNUSED
+#endif
+static void NetlinkMSRChange(u8 set, u8 clear)
 {
    u8 change;
 
@@ -195,7 +198,7 @@ u8 FASTCALL NetlinkReadByte(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL NetlinkDoATResponse(const char *string)
+static void FASTCALL NetlinkDoATResponse(const char *string)
 {
    strcpy((char *)&NetlinkArea->outbuffer[NetlinkArea->outbufferend], string);
    NetlinkArea->outbufferend += (u32)strlen(string);
@@ -204,7 +207,7 @@ void FASTCALL NetlinkDoATResponse(const char *string)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int FASTCALL NetlinkFetchATParameter(u8 val, u32 *offset)
+static int FASTCALL NetlinkFetchATParameter(u8 val, u32 *offset)
 {
    if (val >= '0' && val <= '9')
    {

@@ -163,7 +163,7 @@ gboolean yui_input_entry_keypress(GtkWidget * widget, GdkEventKey * event, gpoin
 gboolean is_watching = FALSE;
 GtkEntry * entry_hack = NULL;
 
-gboolean watch_joy(gpointer name) {
+static gboolean watch_joy(gpointer name) {
 	u32 i;
 
 	if (! PERCore->canScan) {

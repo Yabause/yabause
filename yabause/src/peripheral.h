@@ -92,6 +92,7 @@ void PerDeInit(void);
  */
 void * PerAddPeripheral(PortData_struct *port, int perid);
 int PerGetId(void * peripheral);
+void PerRemovePeripheral(PortData_struct *port, int removeoffset);
 void PerPortReset(void);
 /**
  * Iterate the list of peripherals connected to a port

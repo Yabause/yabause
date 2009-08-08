@@ -114,19 +114,19 @@ void SmpcReset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcSSHON() {
+static void SmpcSSHON(void) {
    YabauseStartSlave();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcSSHOFF() {
+static void SmpcSSHOFF(void) {
    YabauseStopSlave();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcSNDON() {
+static void SmpcSNDON(void) {
    M68KReset();
    yabsys.IsM68KRunning = 1;
    SmpcRegs->OREG[31] = 0x6;
@@ -134,14 +134,14 @@ void SmpcSNDON() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcSNDOFF() {
+static void SmpcSNDOFF(void) {
    yabsys.IsM68KRunning = 0;
    SmpcRegs->OREG[31] = 0x7;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcCKCHG352() {
+void SmpcCKCHG352(void) {
    // Reset VDP1, VDP2, SCU, and SCSP
    Vdp1Reset();  
    Vdp2Reset();  
@@ -164,7 +164,7 @@ void SmpcCKCHG352() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcCKCHG320() {
+void SmpcCKCHG320(void) {
    // Reset VDP1, VDP2, SCU, and SCSP
    Vdp1Reset();  
    Vdp2Reset();  
@@ -202,7 +202,7 @@ int noon= 43200;
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcINTBACKStatus(void) {
+static void SmpcINTBACKStatus(void) {
    // return time, cartidge, zone, etc. data
    int i;
    struct tm times;
@@ -303,7 +303,7 @@ void SmpcINTBACKStatus(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcINTBACKPeripheral(void) {
+static void SmpcINTBACKPeripheral(void) {
   int oregoffset;
   PortData_struct *port1, *port2;
 
@@ -411,7 +411,7 @@ void SmpcINTBACKPeripheral(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcINTBACK() {
+static void SmpcINTBACK(void) {
    SmpcRegs->SF = 1;
 
    if (SmpcInternalVars->intback) {
@@ -441,13 +441,13 @@ void SmpcINTBACK() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcINTBACKEnd() {
+void SmpcINTBACKEnd(void) {
    SmpcInternalVars->intback = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcSETSMEM() {
+static void SmpcSETSMEM(void) {
    int i;
 
    for(i = 0;i < 4;i++)
@@ -458,14 +458,14 @@ void SmpcSETSMEM() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcNMIREQ() {
+static void SmpcNMIREQ(void) {
    SH2SendInterrupt(MSH2, 0xB, 16);
    SmpcRegs->OREG[31] = 0x18;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcResetButton() {
+void SmpcResetButton(void) {
    // If RESD isn't set, send an NMI request to the MSH2.
    if (SmpcInternalVars->resd)
       return;
@@ -475,14 +475,14 @@ void SmpcResetButton() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcRESENAB() {
+static void SmpcRESENAB(void) {
   SmpcInternalVars->resd = 0;
   SmpcRegs->OREG[31] = 0x19;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcRESDISA() {
+static void SmpcRESDISA(void) {
   SmpcInternalVars->resd = 1;
   SmpcRegs->OREG[31] = 0x1A;
 }
@@ -586,7 +586,7 @@ u32 FASTCALL SmpcReadLong(USED_IF_SMPC_DEBUG u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SmpcSetTiming(void) {
+static void SmpcSetTiming(void) {
    switch(SmpcRegs->COMREG) {
       case 0x0:
          SMPCLOG("smpc\t: MSHON not implemented\n");

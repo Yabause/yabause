@@ -260,7 +260,7 @@ void Cs2SetCommandTiming(u8 cmd);
 void Cs2GetStatus(void);                   // 0x00
 void Cs2GetHardwareInfo(void);             // 0x01
 void Cs2GetToc(void);                      // 0x02
-void Cs2GetSessionInfo();                  // 0x03
+void Cs2GetSessionInfo(void);              // 0x03
 void Cs2InitializeCDSystem(void);          // 0x04
 // Open Tray                               // 0x05
 void Cs2EndDataTransfer(void);             // 0x06

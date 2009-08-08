@@ -22,6 +22,7 @@
 #include "debug.h"
 #include "sh2core.h"
 #include "bios.h"
+#include "smpc.h"
 
 static u8 sh2masklist[0x20] = {
 0xF0, 0xE0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80,
@@ -42,9 +43,6 @@ static u32 scumasklist[0x20] = {
 };
 
 u32 interruptlist[2][0x80];
-
-void SmpcCKCHG320();
-void SmpcCKCHG352();
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -125,7 +123,7 @@ void BiosInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
+static void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
 {
 //   LOG("BiosSetScuInterrupt. vector = %02X, func = %08X\n", sh->regs.R[4], sh->regs.R[5]);
 
@@ -145,7 +143,7 @@ void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
+static void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
 {
    // check me
 //   LOG("BiosGetScuInterrupt\n"); 
@@ -158,7 +156,7 @@ void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
+static void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
 {
 //   LOG("BiosSetSh2Interrupt\n");
 
@@ -178,7 +176,7 @@ void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosGetSh2Interrupt(SH2_struct * sh)
+static void FASTCALL BiosGetSh2Interrupt(SH2_struct * sh)
 {
    // check me
 //   LOG("BiosGetSh2Interrupt\n");
@@ -191,7 +189,7 @@ void FASTCALL BiosGetSh2Interrupt(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
+static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
 {
    // check me
    LOG("BiosSetScuInterruptMask\n");
@@ -209,7 +207,7 @@ void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
+static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
 {
    u32 newmask;
 
@@ -231,21 +229,21 @@ void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosCDINIT2(SH2_struct * sh)
+static void FASTCALL BiosCDINIT2(SH2_struct * sh)
 {
    sh->regs.PC = sh->regs.PR;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosCDINIT1(SH2_struct * sh)
+static void FASTCALL BiosCDINIT1(SH2_struct * sh)
 {
    sh->regs.PC = sh->regs.PR;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosGetSemaphore(SH2_struct * sh)
+static void FASTCALL BiosGetSemaphore(SH2_struct * sh)
 {
    u8 temp;
 
@@ -266,7 +264,7 @@ void FASTCALL BiosGetSemaphore(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosClearSemaphore(SH2_struct * sh)
+static void FASTCALL BiosClearSemaphore(SH2_struct * sh)
 {
    // check me
    LOG("BiosClearSemaphore\n");
@@ -279,7 +277,7 @@ void FASTCALL BiosClearSemaphore(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
+static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
 {
    LOG("BiosChangeSystemClock\n");
 
@@ -295,7 +293,7 @@ void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosChangeScuInterruptPriority(SH2_struct * sh)
+static void FASTCALL BiosChangeScuInterruptPriority(SH2_struct * sh)
 {
    int i;
 
@@ -318,7 +316,7 @@ void FASTCALL BiosChangeScuInterruptPriority(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosExecuteCDPlayer(SH2_struct * sh)
+static void FASTCALL BiosExecuteCDPlayer(SH2_struct * sh)
 {
    LOG("BiosExecuteCDPlayer\n");
 
@@ -327,7 +325,7 @@ void FASTCALL BiosExecuteCDPlayer(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosPowerOnMemoryClear(SH2_struct * sh)
+static void FASTCALL BiosPowerOnMemoryClear(SH2_struct * sh)
 {
    LOG("BiosPowerOnMemoryClear\n");
 
@@ -336,7 +334,7 @@ void FASTCALL BiosPowerOnMemoryClear(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosCheckMPEGCard(SH2_struct * sh)
+static void FASTCALL BiosCheckMPEGCard(SH2_struct * sh)
 {
    LOG("BiosCheckMPEGCard\n");
 
@@ -345,7 +343,7 @@ void FASTCALL BiosCheckMPEGCard(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
+static u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
 {
    switch(device)
    {
@@ -380,14 +378,14 @@ u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CheckHeader(UNUSED u32 device)
+static int CheckHeader(UNUSED u32 device)
 {
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CalcSaveSize(u32 tableaddr, int blocksize)
+static int CalcSaveSize(u32 tableaddr, int blocksize)
 {
    int numblocks=0;
 
@@ -409,7 +407,7 @@ int CalcSaveSize(u32 tableaddr, int blocksize)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 GetFreeSpace(UNUSED u32 device, u32 size, u32 addr, u32 blocksize)
+static u32 GetFreeSpace(UNUSED u32 device, u32 size, u32 addr, u32 blocksize)
 {
    u32 i;
    u32 usedblocks=0;
@@ -429,7 +427,7 @@ u32 GetFreeSpace(UNUSED u32 device, u32 size, u32 addr, u32 blocksize)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FindSave(UNUSED u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
+static u32 FindSave(UNUSED u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
 {
    u32 i;
 
@@ -470,7 +468,7 @@ u32 FindSave(UNUSED u32 device, u32 stringaddr, u32 blockoffset, u32 size, u32 a
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FindSave2(UNUSED u32 device, const char *string, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
+static u32 FindSave2(UNUSED u32 device, const char *string, u32 blockoffset, u32 size, u32 addr, u32 blocksize)
 {
    u32 i;
 
@@ -509,14 +507,14 @@ u32 FindSave2(UNUSED u32 device, const char *string, u32 blockoffset, u32 size, 
 
 //////////////////////////////////////////////////////////////////////////////
 
-void DeleteSave(u32 addr, u32 blockoffset, u32 blocksize)
+static void DeleteSave(u32 addr, u32 blockoffset, u32 blocksize)
 {
     MappedMemoryWriteByte(addr + (blockoffset * blocksize * 2) + 0x1, 0x00);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 *GetFreeBlocks(u32 addr, u32 blocksize, u32 numblocks, u32 size)
+static u16 *GetFreeBlocks(u32 addr, u32 blocksize, u32 numblocks, u32 size)
 {
    u8 *blocktbl;
    u16 *freetbl;
@@ -581,7 +579,7 @@ u16 *GetFreeBlocks(u32 addr, u32 blocksize, u32 numblocks, u32 size)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, int *numblocks, int *blocksread)
+static u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, int *numblocks, int *blocksread)
 {
    u16 *blocktbl;
    int i=0;
@@ -618,7 +616,7 @@ u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, int *num
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPInit(SH2_struct * sh)
+static void FASTCALL BiosBUPInit(SH2_struct * sh)
 {
 //   LOG("BiosBUPInit. arg1 = %08X, arg2 = %08X, arg3 = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6]);
 
@@ -666,7 +664,7 @@ void FASTCALL BiosBUPInit(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPSelectPartition(SH2_struct * sh)
+static void FASTCALL BiosBUPSelectPartition(SH2_struct * sh)
 {
    LOG("BiosBUPSelectPartition. PR = %08X\n", sh->regs.PR);
 
@@ -676,7 +674,7 @@ void FASTCALL BiosBUPSelectPartition(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPFormat(SH2_struct * sh)
+static void FASTCALL BiosBUPFormat(SH2_struct * sh)
 {
 //   LOG("BiosBUPFormat. PR = %08X\n", sh->regs.PR);
 
@@ -688,7 +686,7 @@ void FASTCALL BiosBUPFormat(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPStatus(SH2_struct * sh)
+static void FASTCALL BiosBUPStatus(SH2_struct * sh)
 {
    u32 size;
    u32 addr;
@@ -727,7 +725,7 @@ void FASTCALL BiosBUPStatus(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPWrite(SH2_struct * sh)
+static void FASTCALL BiosBUPWrite(SH2_struct * sh)
 {
    u32 size;
    u32 addr;
@@ -884,7 +882,7 @@ void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPRead(SH2_struct * sh)
+static void FASTCALL BiosBUPRead(SH2_struct * sh)
 {
    u32 size;
    u32 addr;
@@ -955,7 +953,7 @@ void FASTCALL BiosBUPRead(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPDelete(SH2_struct * sh)
+static void FASTCALL BiosBUPDelete(SH2_struct * sh)
 {
    u32 size;
    u32 addr;
@@ -993,7 +991,7 @@ void FASTCALL BiosBUPDelete(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPDirectory(SH2_struct * sh)
+static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
 {
    u32 size;
    u32 addr;
@@ -1086,7 +1084,7 @@ void FASTCALL BiosBUPDirectory(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPVerify(SH2_struct * sh)
+static void FASTCALL BiosBUPVerify(SH2_struct * sh)
 {
    u32 size;
    u32 addr;
@@ -1165,7 +1163,7 @@ void FASTCALL BiosBUPVerify(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ConvertMonthAndDay(u32 data, u32 monthaddr, u32 dayaddr, int type)
+static void ConvertMonthAndDay(u32 data, u32 monthaddr, u32 dayaddr, int type)
 {
    int i;
    u16 monthtbl[11] = { 31, 31+28, 31+28+31, 31+28+31+30, 31+28+31+30+31,
@@ -1213,7 +1211,7 @@ void ConvertMonthAndDay(u32 data, u32 monthaddr, u32 dayaddr, int type)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPGetDate(SH2_struct * sh)
+static void FASTCALL BiosBUPGetDate(SH2_struct * sh)
 {
    u32 date;
    u32 div;
@@ -1259,7 +1257,7 @@ void FASTCALL BiosBUPGetDate(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosBUPSetDate(SH2_struct * sh)
+static void FASTCALL BiosBUPSetDate(SH2_struct * sh)
 {
    u32 date;
    u8 data;
@@ -1304,7 +1302,7 @@ void FASTCALL BiosBUPSetDate(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
+static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
 {
    // Save R0-R7, PR, GBR, and old Interrupt mask to stack
    sh->regs.R[15] -= 4;
@@ -1349,7 +1347,7 @@ void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
+static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 {
    u32 oldmask;
 

@@ -3715,7 +3715,7 @@ static void Gen0xFAC3()
 
 // main function
 /////////////////
-int main()
+int main(void)
 {
     u32 i;
     u32 s;

@@ -101,7 +101,7 @@ int CheatAddARCode(const char *code)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int FindCheat(int type, u32 addr, u32 val)
+static int FindCheat(int type, u32 addr, u32 val)
 {
    int i;
 

@@ -76,157 +76,157 @@
 
 #define	OP_ILLEGAL      0x4AFC
 
-static void GenORI();
-static void GenORICCR();
-static void GenORISR();
-static void GenANDI();
-static void GenANDICCR();
-static void GenANDISR();
-static void GenEORI();
-static void GenEORICCR();
-static void GenEORISR();
-static void GenSUBI();
-static void GenADDI();
-static void GenCMPI();
-static void GenBTSTn();
-static void GenBCHGn();
-static void GenBCLRn();
-static void GenBSETn();
-static void GenBTST();
-static void GenBCHG();
-static void GenBCLR();
-static void GenBSET();
-static void GenMOVEPWaD();
-static void GenMOVEPLaD();
-static void GenMOVEPWDa();
-static void GenMOVEPLDa();
-static void GenMOVEB();
-static void GenMOVEL();
-static void GenMOVEW();
-static void GenMOVEAL();
-static void GenMOVEAW();
-static void GenNEGX();
-static void GenCLR();
-static void GenNEG();
-static void GenNOT();
-static void GenMOVESRa();
-static void GenMOVEaSR();
-static void GenMOVEaCCR();
-static void GenNBCD();
-static void GenPEA();
-static void GenSWAP();
-static void GenMOVEMaR();
-static void GenEXT();
-static void GenTST();
-static void GenTAS();
-static void GenILLEGAL();
-static void GenMOVEMRa();
-static void GenTRAP();
-static void GenLINK();
-static void GenLINKA7();
-static void GenULNK();
-static void GenULNKA7();
-static void GenMOVEAUSP();
-static void GenMOVEUSPA();
-static void GenRESET();
-static void GenNOP();
-static void GenSTOP();
-static void GenRTE();
-static void GenRTS();
-static void GenTRAPV();
-static void GenRTR();
-static void GenJSR();
-static void GenJMP();
-static void GenCHK();
-static void GenLEA();
-static void GenSTCC();
-static void GenDBCC();
-static void GenADDQ();
-static void GenSUBQ();
-static void GenBCC();
-static void GenBCC16();
-static void GenBRA();
-static void GenBRA16();
-static void GenBSR();
-static void GenBSR16();
-static void GenMOVEQ();
-static void GenORaD();
-static void GenORDa();
-static void GenSBCD();
-static void GenSBCDM();
-static void GenSBCD7M();
-static void GenSBCDM7();
-static void GenSBCD7M7();
-static void GenDIVU();
-static void GenDIVS();
-static void GenSUBaD();
-static void GenSUBDa();
-static void GenSUBX();
-static void GenSUBXM();
-static void GenSUBX7M();
-static void GenSUBXM7();
-static void GenSUBX7M7();
-static void GenSUBA();
-static void GenCMP();
-static void GenCMPM();
-static void GenCMP7M();
-static void GenCMPM7();
-static void GenCMP7M7();
-static void GenEORDa();
-static void GenCMPA();
-static void GenANDaD();
-static void GenANDDa();
-static void GenABCD();
-static void GenABCDM();
-static void GenABCD7M();
-static void GenABCDM7();
-static void GenABCD7M7();
-static void GenMULU();
-static void GenMULS();
-static void GenEXGDD();
-static void GenEXGAA();
-static void GenEXGAD();
-static void GenADDaD();
-static void GenADDDa();
-static void GenADDX();
-static void GenADDXM();
-static void GenADDX7M();
-static void GenADDXM7();
-static void GenADDX7M7();
-static void GenADDA();
-static void GenASRk();
-static void GenLSRk();
-static void GenROXRk();
-static void GenRORk();
-static void GenASLk();
-static void GenLSLk();
-static void GenROXLk();
-static void GenROLk();
-static void GenASRD();
-static void GenLSRD();
-static void GenROXRD();
-static void GenRORD();
-static void GenASLD();
-static void GenLSLD();
-static void GenROXLD();
-static void GenROLD();
-static void GenASR();
-static void GenLSR();
-static void GenROXR();
-static void GenROR();
-static void GenASL();
-static void GenLSL();
-static void GenROXL();
-static void GenROL();
-static void Gen1010();
-static void Gen1111();
+static void GenORI(void);
+static void GenORICCR(void);
+static void GenORISR(void);
+static void GenANDI(void);
+static void GenANDICCR(void);
+static void GenANDISR(void);
+static void GenEORI(void);
+static void GenEORICCR(void);
+static void GenEORISR(void);
+static void GenSUBI(void);
+static void GenADDI(void);
+static void GenCMPI(void);
+static void GenBTSTn(void);
+static void GenBCHGn(void);
+static void GenBCLRn(void);
+static void GenBSETn(void);
+static void GenBTST(void);
+static void GenBCHG(void);
+static void GenBCLR(void);
+static void GenBSET(void);
+static void GenMOVEPWaD(void);
+static void GenMOVEPLaD(void);
+static void GenMOVEPWDa(void);
+static void GenMOVEPLDa(void);
+static void GenMOVEB(void);
+static void GenMOVEL(void);
+static void GenMOVEW(void);
+static void GenMOVEAL(void);
+static void GenMOVEAW(void);
+static void GenNEGX(void);
+static void GenCLR(void);
+static void GenNEG(void);
+static void GenNOT(void);
+static void GenMOVESRa(void);
+static void GenMOVEaSR(void);
+static void GenMOVEaCCR(void);
+static void GenNBCD(void);
+static void GenPEA(void);
+static void GenSWAP(void);
+static void GenMOVEMaR(void);
+static void GenEXT(void);
+static void GenTST(void);
+static void GenTAS(void);
+static void GenILLEGAL(void);
+static void GenMOVEMRa(void);
+static void GenTRAP(void);
+static void GenLINK(void);
+static void GenLINKA7(void);
+static void GenULNK(void);
+static void GenULNKA7(void);
+static void GenMOVEAUSP(void);
+static void GenMOVEUSPA(void);
+static void GenRESET(void);
+static void GenNOP(void);
+static void GenSTOP(void);
+static void GenRTE(void);
+static void GenRTS(void);
+static void GenTRAPV(void);
+static void GenRTR(void);
+static void GenJSR(void);
+static void GenJMP(void);
+static void GenCHK(void);
+static void GenLEA(void);
+static void GenSTCC(void);
+static void GenDBCC(void);
+static void GenADDQ(void);
+static void GenSUBQ(void);
+static void GenBCC(void);
+static void GenBCC16(void);
+static void GenBRA(void);
+static void GenBRA16(void);
+static void GenBSR(void);
+static void GenBSR16(void);
+static void GenMOVEQ(void);
+static void GenORaD(void);
+static void GenORDa(void);
+static void GenSBCD(void);
+static void GenSBCDM(void);
+static void GenSBCD7M(void);
+static void GenSBCDM7(void);
+static void GenSBCD7M7(void);
+static void GenDIVU(void);
+static void GenDIVS(void);
+static void GenSUBaD(void);
+static void GenSUBDa(void);
+static void GenSUBX(void);
+static void GenSUBXM(void);
+static void GenSUBX7M(void);
+static void GenSUBXM7(void);
+static void GenSUBX7M7(void);
+static void GenSUBA(void);
+static void GenCMP(void);
+static void GenCMPM(void);
+static void GenCMP7M(void);
+static void GenCMPM7(void);
+static void GenCMP7M7(void);
+static void GenEORDa(void);
+static void GenCMPA(void);
+static void GenANDaD(void);
+static void GenANDDa(void);
+static void GenABCD(void);
+static void GenABCDM(void);
+static void GenABCD7M(void);
+static void GenABCDM7(void);
+static void GenABCD7M7(void);
+static void GenMULU(void);
+static void GenMULS(void);
+static void GenEXGDD(void);
+static void GenEXGAA(void);
+static void GenEXGAD(void);
+static void GenADDaD(void);
+static void GenADDDa(void);
+static void GenADDX(void);
+static void GenADDXM(void);
+static void GenADDX7M(void);
+static void GenADDXM7(void);
+static void GenADDX7M7(void);
+static void GenADDA(void);
+static void GenASRk(void);
+static void GenLSRk(void);
+static void GenROXRk(void);
+static void GenRORk(void);
+static void GenASLk(void);
+static void GenLSLk(void);
+static void GenROXLk(void);
+static void GenROLk(void);
+static void GenASRD(void);
+static void GenLSRD(void);
+static void GenROXRD(void);
+static void GenRORD(void);
+static void GenASLD(void);
+static void GenLSLD(void);
+static void GenROXLD(void);
+static void GenROLD(void);
+static void GenASR(void);
+static void GenLSR(void);
+static void GenROXR(void);
+static void GenROR(void);
+static void GenASL(void);
+static void GenLSL(void);
+static void GenROXL(void);
+static void GenROL(void);
+static void Gen1010(void);
+static void Gen1111(void);
 #ifdef NEOCD_HLE
-static void Gen0xFABE();
-static void Gen0xFABF();
-static void Gen0xFAC0();
-static void Gen0xFAC1();
-static void Gen0xFAC2();
-static void Gen0xFAC3();
+static void Gen0xFABE(void);
+static void Gen0xFABF(void);
+static void Gen0xFAC0(void);
+static void Gen0xFAC1(void);
+static void Gen0xFAC2(void);
+static void Gen0xFAC3(void);
 #endif
 
 #ifdef NEOCD_HLE
@@ -517,7 +517,7 @@ static const u32 movem_cycle_table[16] =
 // general emitter function
 ////////////////////////////
 
-static u32 prepare_generate()
+static u32 prepare_generate(void)
 {
     char filename[32];
 
@@ -757,7 +757,7 @@ static void mem_op(char* fmt, ...)
 // flag emitter function
 /////////////////////////
 
-static void set_logic_flag()
+static void set_logic_flag(void)
 {
     wf_op("\tCPU->flag_C = 0;\n");
     wf_op("\tCPU->flag_V = 0;\n");
@@ -778,7 +778,7 @@ static void set_logic_flag()
 	}
 }
 
-static void set_logicl_flag()
+static void set_logicl_flag(void)
 {
     wf_op("\tCPU->flag_C = 0;\n");
     wf_op("\tCPU->flag_V = 0;\n");
@@ -801,7 +801,7 @@ static void set_logicl_flag()
 	}
 }
 
-static void set_add_flag()
+static void set_add_flag(void)
 {
     switch(current_size)
     {
@@ -827,7 +827,7 @@ static void set_add_flag()
 	}
 }
 
-static void set_addx_flag()
+static void set_addx_flag(void)
 {
     switch(current_size)
     {
@@ -853,7 +853,7 @@ static void set_addx_flag()
 	}
 }
 
-static void set_sub_flag()
+static void set_sub_flag(void)
 {
     switch(current_size)
     {
@@ -879,7 +879,7 @@ static void set_sub_flag()
 	}
 }
 
-static void set_subx_flag()
+static void set_subx_flag(void)
 {
     switch(current_size)
     {
@@ -905,7 +905,7 @@ static void set_subx_flag()
 	}
 }
 
-static void set_cmp_flag()
+static void set_cmp_flag(void)
 {
     switch(current_size)
     {
@@ -931,7 +931,7 @@ static void set_cmp_flag()
 	}
 }
 
-static void set_negx_flag()
+static void set_negx_flag(void)
 {
     switch(current_size)
     {
@@ -957,7 +957,7 @@ static void set_negx_flag()
 	}
 }
 
-static void set_neg_flag()
+static void set_neg_flag(void)
 {
     switch(current_size)
     {
@@ -1529,7 +1529,7 @@ rsft);
 // misc function
 /////////////////
 
-static u32 get_current_opcode_base()
+static u32 get_current_opcode_base(void)
 {
     u32 base;
 

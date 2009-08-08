@@ -40,6 +40,7 @@
 #include "vdp1.h"
 #include "vdp2.h"
 #include "yabause.h"
+#include "yui.h"
 #include "movie.h"
 
 #ifdef HAVE_LIBGL
@@ -142,7 +143,7 @@ void DummyDeInit(UNUSED Dummy * d)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL UnhandledMemoryReadByte(USED_IF_DEBUG u32 addr)
+static u8 FASTCALL UnhandledMemoryReadByte(USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled byte read %08X\n", (unsigned int)addr);
    return 0;
@@ -150,7 +151,7 @@ u8 FASTCALL UnhandledMemoryReadByte(USED_IF_DEBUG u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL UnhandledMemoryReadWord(USED_IF_DEBUG u32 addr)
+static u16 FASTCALL UnhandledMemoryReadWord(USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled word read %08X\n", (unsigned int)addr);
    return 0;
@@ -158,7 +159,7 @@ u16 FASTCALL UnhandledMemoryReadWord(USED_IF_DEBUG u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL UnhandledMemoryReadLong(USED_IF_DEBUG u32 addr)
+static u32 FASTCALL UnhandledMemoryReadLong(USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled long read %08X\n", (unsigned int)addr);
    return 0;
@@ -166,162 +167,161 @@ u32 FASTCALL UnhandledMemoryReadLong(USED_IF_DEBUG u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL UnhandledMemoryWriteByte(USED_IF_DEBUG u32 addr, UNUSED u8 val)
+static void FASTCALL UnhandledMemoryWriteByte(USED_IF_DEBUG u32 addr, UNUSED u8 val)
 {
    LOG("Unhandled byte write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL UnhandledMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val)
+static void FASTCALL UnhandledMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
    LOG("Unhandled word write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL UnhandledMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val)
+static void FASTCALL UnhandledMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
    LOG("Unhandled long write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL HighWramMemoryReadByte(u32 addr)
+static u8 FASTCALL HighWramMemoryReadByte(u32 addr)
 {
    return T2ReadByte(HighWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL HighWramMemoryReadWord(u32 addr)
+static u16 FASTCALL HighWramMemoryReadWord(u32 addr)
 {
    return T2ReadWord(HighWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL HighWramMemoryReadLong(u32 addr)
+static u32 FASTCALL HighWramMemoryReadLong(u32 addr)
 {
    return T2ReadLong(HighWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL HighWramMemoryWriteByte(u32 addr, u8 val)
+static void FASTCALL HighWramMemoryWriteByte(u32 addr, u8 val)
 {
    T2WriteByte(HighWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL HighWramMemoryWriteWord(u32 addr, u16 val)
+static void FASTCALL HighWramMemoryWriteWord(u32 addr, u16 val)
 {
    T2WriteWord(HighWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL HighWramMemoryWriteLong(u32 addr, u32 val)
+static void FASTCALL HighWramMemoryWriteLong(u32 addr, u32 val)
 {
    T2WriteLong(HighWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL LowWramMemoryReadByte(u32 addr)
+static u8 FASTCALL LowWramMemoryReadByte(u32 addr)
 {
    return T2ReadByte(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL LowWramMemoryReadWord(u32 addr)
+static u16 FASTCALL LowWramMemoryReadWord(u32 addr)
 {
    return T2ReadWord(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL LowWramMemoryReadLong(u32 addr)
+static u32 FASTCALL LowWramMemoryReadLong(u32 addr)
 {
    return T2ReadLong(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL LowWramMemoryWriteByte(u32 addr, u8 val)
+static void FASTCALL LowWramMemoryWriteByte(u32 addr, u8 val)
 {
    T2WriteByte(LowWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL LowWramMemoryWriteWord(u32 addr, u16 val)
+static void FASTCALL LowWramMemoryWriteWord(u32 addr, u16 val)
 {
    T2WriteWord(LowWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL LowWramMemoryWriteLong(u32 addr, u32 val)
+static void FASTCALL LowWramMemoryWriteLong(u32 addr, u32 val)
 {
    T2WriteLong(LowWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL BiosRomMemoryReadByte(u32 addr)
+static u8 FASTCALL BiosRomMemoryReadByte(u32 addr)
 {
    return T2ReadByte(BiosRom, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL BiosRomMemoryReadWord(u32 addr)
+static u16 FASTCALL BiosRomMemoryReadWord(u32 addr)
 {
    return T2ReadWord(BiosRom, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL BiosRomMemoryReadLong(u32 addr)
+static u32 FASTCALL BiosRomMemoryReadLong(u32 addr)
 {
    return T2ReadLong(BiosRom, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosRomMemoryWriteByte(UNUSED u32 addr, UNUSED u8 val)
+static void FASTCALL BiosRomMemoryWriteByte(UNUSED u32 addr, UNUSED u8 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BiosRomMemoryWriteWord(UNUSED u32 addr, UNUSED u16 val)
+static void FASTCALL BiosRomMemoryWriteWord(UNUSED u32 addr, UNUSED u16 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-
-void FASTCALL BiosRomMemoryWriteLong(UNUSED u32 addr, UNUSED u32 val)
+static void FASTCALL BiosRomMemoryWriteLong(UNUSED u32 addr, UNUSED u32 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL BupRamMemoryReadByte(u32 addr)
+static u8 FASTCALL BupRamMemoryReadByte(u32 addr)
 {
    return T1ReadByte(BupRam, addr & 0xFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL BupRamMemoryReadWord(USED_IF_DEBUG u32 addr)
+static u16 FASTCALL BupRamMemoryReadWord(USED_IF_DEBUG u32 addr)
 {
    LOG("bup\t: BackupRam read word - %08X\n", addr);
    return 0;
@@ -329,7 +329,7 @@ u16 FASTCALL BupRamMemoryReadWord(USED_IF_DEBUG u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL BupRamMemoryReadLong(USED_IF_DEBUG u32 addr)
+static u32 FASTCALL BupRamMemoryReadLong(USED_IF_DEBUG u32 addr)
 {
    LOG("bup\t: BackupRam read long - %08X\n", addr);
    return 0;
@@ -337,31 +337,31 @@ u32 FASTCALL BupRamMemoryReadLong(USED_IF_DEBUG u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
+static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
 {
    T1WriteByte(BupRam, (addr & 0xFFFF) | 0x1, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BupRamMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val)
+static void FASTCALL BupRamMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
    LOG("bup\t: BackupRam write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL BupRamMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val)
+static void FASTCALL BupRamMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
    LOG("bup\t: BackupRam write long - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FillMemoryArea(unsigned short start, unsigned short end,
-                    readbytefunc r8func, readwordfunc r16func,
-                    readlongfunc r32func, writebytefunc w8func,
-                    writewordfunc w16func, writelongfunc w32func)
+static void FillMemoryArea(unsigned short start, unsigned short end,
+                           readbytefunc r8func, readwordfunc r16func,
+                           readlongfunc r32func, writebytefunc w8func,
+                           writewordfunc w16func, writelongfunc w32func)
 {
    int i;
 
@@ -1341,7 +1341,7 @@ int YabLoadStateSlot(const char *dirpath, u8 slot)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int MappedMemoryAddMatch(u32 addr, u32 val, int searchtype, result_struct *result, u32 *numresults)
+static int MappedMemoryAddMatch(u32 addr, u32 val, int searchtype, result_struct *result, u32 *numresults)
 {
    result[numresults[0]].addr = addr;
    result[numresults[0]].val = val;

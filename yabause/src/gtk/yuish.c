@@ -317,7 +317,7 @@ static void yui_sh_init (YuiSh * sh2) {
 }
 
 
-GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
+static GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   GtkWidget * dialog;
   GClosure *closureF7; //, *closureF8;
   GtkAccelGroup *accelGroup;
@@ -723,7 +723,7 @@ static void yui_sh_editedMbpFlags( GtkCellRendererText *cellrenderertext,
   SH2UpdateMemoryBreakpointList(sh2);
 }
 
-static void debugPauseLoop() { /* secondary gtk event loop for the "breakpoint pause" state */
+static void debugPauseLoop(void) { /* secondary gtk event loop for the "breakpoint pause" state */
 
   while ( !(yui->state & YUI_IS_RUNNING) )
     if ( gtk_main_iteration() ) return;

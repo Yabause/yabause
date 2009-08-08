@@ -543,7 +543,7 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 Vdp1DebugGetCommandNumberAddr(u32 number)
+static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
 {
    u32 addr = 0;
    u32 returnAddr = 0xFFFFFFFF;

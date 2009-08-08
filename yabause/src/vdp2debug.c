@@ -18,7 +18,9 @@
 */
 
 #include "vdp2.h"
+#include "vdp2debug.h"
 #include "vidshared.h"
+#include "vidsoft.h"
 
 void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, int height);
 
@@ -132,7 +134,7 @@ static INLINE char *AddBitmapInfoString(char *outstring, int wh, int palnum, int
 
 //////////////////////////////////////////////////////////////////////////////
 
-void CalcWindowCoordinates(int num, int *hstart, int *vstart, int *hend, int *vend)
+static void CalcWindowCoordinates(int num, int *hstart, int *vstart, int *hend, int *vend)
 {
    if (num == 0)
    {
@@ -1666,7 +1668,7 @@ static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ClearTextureToColor(u32 *texture, u32 color, int w, int h)
+static void ClearTextureToColor(u32 *texture, u32 color, int w, int h)
 {
    int i;
    

@@ -10,8 +10,7 @@ yabause_elf_SOURCES = display.c main.c profile.c psp-per.c psp-sh2.c \
                       psp-sound.c psp-video.c sys.c texcache.c \
                       common.h display.h mips.h profile.h psp-per.h \
                       psp-sh2.h psp-sound.h psp-video.h sys.h texcache.h
-# Can't use -Wstrict-prototypes without cleaning up ../*.h
-yabause_elf_CFLAGS = $(YAB_CFLAGS) -Wmissing-prototypes #-Wstrict-prototypes 
+yabause_elf_CFLAGS = $(YAB_CFLAGS)
 yabause_elf_LDADD = ../libyabause.a $(YAB_LIBS)
 
 yabause.prx: yabause.elf

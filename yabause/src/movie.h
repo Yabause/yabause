@@ -75,7 +75,7 @@ void MovieReadState(FILE* fp, const char * filename);
 
 void PauseOrUnpause(void);
 
-int IsMovieLoaded();
+int IsMovieLoaded(void);
 
 extern int framecounter;
 extern int LagFrameFlag;

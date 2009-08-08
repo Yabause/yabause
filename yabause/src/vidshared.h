@@ -180,7 +180,7 @@ void FASTCALL Vdp2ParameterBPlaneAddr(vdp2draw_struct *info, int i);
 float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 addr);
 fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, u32 addr);
 
-void VideoInitGlut();
+void VideoInitGlut(void);
 
 //////////////////////////////////////////////////////////////////////////////
 

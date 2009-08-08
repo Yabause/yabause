@@ -18,6 +18,7 @@
 */
 
 #include "sh2core.h"
+#include "sh2idle.h"
 #include "sh2int.h"
 #include "sh2d.h"
 #include "memory.h"
@@ -81,7 +82,7 @@ u32 bDet, bChg;
 #define srcPR (bDet & destPR)
 #define isConst(src) if ( (bDet & destCONST) && !src ) return 0; 
 
-int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
+static int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
   // update bDet after execution of <instruction>
   // return 0 : cannot continue idle check, probably because of a memory write
 
