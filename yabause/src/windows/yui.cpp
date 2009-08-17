@@ -1482,6 +1482,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 
 					YuiTempUnPause();
 				}
+				break;
             case IDM_GERMAN:
             case IDM_ENGLISH:
             case IDM_FRENCH:
