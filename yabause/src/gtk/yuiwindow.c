@@ -31,6 +31,7 @@ static void yui_window_init		(YuiWindow      * yfe);
 static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, YuiWindow * yui);
+static void yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui);
 
 static void yui_window_create_actions(YuiWindow * yw) {
 	GtkAction * action;

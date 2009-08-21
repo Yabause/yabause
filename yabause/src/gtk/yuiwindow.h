@@ -79,7 +79,6 @@ struct _YuiWindowClass {
 GType		yui_window_get_type	(void);
 GtkWidget *	yui_window_new		(YuiAction * act, GCallback ifunc, gpointer idata,
 					GSourceFunc rfunc, GCallback resetfunc);
-void		yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui);
 void		yui_window_update	(YuiWindow * yui);
 void		yui_window_log		(YuiWindow * yui, const char * message);
 void		yui_window_show_log	(YuiWindow * yui);
