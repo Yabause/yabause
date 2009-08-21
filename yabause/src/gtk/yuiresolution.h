@@ -39,19 +39,18 @@ typedef struct _YuiResolutionClass  YuiResolutionClass;
 
 struct _YuiResolution
 {
-	GtkTable table;
+	GtkHBox table;
 
 	GtkWidget * entry_w;
 	GtkWidget * entry_h;
-	GtkWidget * fullscreen;
-	GtkWidget * keep_ratio;
+	GtkWidget * options;
 
 	GKeyFile * keyfile;
 	gchar * group;
 };
 
 struct _YuiResolutionClass {
-	GtkTableClass parent_class;
+	GtkHBoxClass parent_class;
 
 	void (* yui_resolution) (YuiResolution *yie);
 };
