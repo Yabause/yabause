@@ -30,14 +30,6 @@
 #include "yuimem.h"
 #include "yuiscreenshot.h"
 
-static void ToggleFLimiter (GtkWidget* widget, gpointer user_data)
-{
-	if (gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (widget)))
-		EnableAutoFrameSkip ();
-	else
-		DisableAutoFrameSkip ();
-}
-
 static void openAboutDialog(GtkWidget * w, gpointer data) {
 	gtk_show_about_dialog(data,
 		"name", "Yabause",
@@ -120,7 +112,10 @@ GtkWidget* create_menu(YuiWindow * window1) {
   g_signal_connect_swapped(screenshot, "activate", G_CALLBACK(yui_screenshot_new), window1);
 
   frameLimiter = gtk_check_menu_item_new_with_mnemonic (_("Frame Skip/Limiter"));
-  g_signal_connect (frameLimiter, "activate", G_CALLBACK (ToggleFLimiter), NULL);
+  {
+    GtkAction * action = gtk_action_group_get_action(window1->action_group, "frameskip");
+    gtk_action_connect_proxy(action, frameLimiter);
+  }
   gtk_container_add (GTK_CONTAINER (menuitem1_menu), frameLimiter);
 
   {

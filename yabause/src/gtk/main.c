@@ -344,6 +344,8 @@ static gboolean yui_settings_load(void) {
 
         yinit.flags = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 
+	yui_window_set_frameskip(yui, g_key_file_get_integer(keyfile, "General", "Frameskip", NULL));
+
 	return mustRestart;
 }
 
@@ -450,6 +452,13 @@ int main(int argc, char *argv[]) {
 	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
             yui_window_set_fullscreen(YUI_WINDOW(yui), TRUE);
 	 }
+         // Auto frame skip
+         else if (strstr(argv[i], "--autoframeskip=")) {
+            int fscount;
+            int fsenable;
+            fscount = sscanf(argv[i] + strlen("--autoframeskip="), "%d", &fsenable);
+            if (fscount > 0) yui_window_set_frameskip(yui, fsenable);
+         }
 	 // Binary
 	 else if (strstr(argv[i], "--binary=")) {
 	    char binname[1024];

@@ -32,9 +32,11 @@ static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpoin
 static gboolean yui_window_keyrelease(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, YuiWindow * yui);
 static void yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui);
+static void yui_window_toggle_frameskip(GtkWidget * w, YuiWindow * yui);
 
 static void yui_window_create_actions(YuiWindow * yw) {
 	GtkAction * action;
+	GtkToggleAction * taction;
 
 	action = gtk_action_new("run", _("Run"), _("start emulation"), "gtk-media-play");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>r");
@@ -51,6 +53,10 @@ static void yui_window_create_actions(YuiWindow * yw) {
 	action = gtk_action_new("fullscreen", _("Fullscreen"), NULL, "gtk-fullscreen");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>f");
 	g_signal_connect(action, "activate", G_CALLBACK(yui_window_toggle_fullscreen), yw);
+
+	taction = gtk_toggle_action_new("frameskip", _("Frame Skip/Limiter"), NULL, NULL);
+	gtk_action_group_add_action_with_accel(yw->action_group, GTK_ACTION(taction), NULL);
+	g_signal_connect(taction, "activate", G_CALLBACK(yui_window_toggle_frameskip), yw);
 
 	action = gtk_action_new("quit", _("Quit"), NULL, "gtk-quit");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>q");
@@ -224,6 +230,16 @@ void yui_window_toggle_fullscreen(GtkWidget * w, YuiWindow * yui) {
 	}
 }
 
+void yui_window_toggle_frameskip(GtkWidget * w, YuiWindow * yui) {
+	GtkAction * action = gtk_action_group_get_action(yui->action_group, "frameskip");
+	gboolean active = gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(action));
+
+	if (active)
+		EnableAutoFrameSkip ();
+	else
+		DisableAutoFrameSkip ();
+}
+
 static gboolean yui_window_keypress(GtkWidget *widget, GdkEventKey *event, gpointer user_data) {
 	PerKeyDown(event->keyval);
 
@@ -325,4 +341,9 @@ void yui_window_set_fullscreen(YuiWindow * yui, gboolean f) {
 		gtk_widget_show(yui->menu);
 	}
 	yui->fullscreen = f;
+}
+
+void yui_window_set_frameskip(YuiWindow * yui, gboolean f) {
+	GtkAction * action = gtk_action_group_get_action(yui->action_group, "frameskip");
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(action), f);
 }

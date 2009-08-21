@@ -1,3 +1,7 @@
+0.9.10 -> ?
+ gtk port:
+  - Added command line option to enable/disable frame skipping / limiting.
+  - Added frame skipping/limiting configuration in settings.
 0.9.9 -> 0.9.10
  scsp/68k:
   - Added code to make SCSP emulation frame-accurate (optional,
