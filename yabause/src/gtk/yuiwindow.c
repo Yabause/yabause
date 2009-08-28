@@ -40,15 +40,15 @@ static void yui_window_create_actions(YuiWindow * yw) {
 
 	action = gtk_action_new("run", _("Run"), _("start emulation"), "gtk-media-play");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>r");
-	g_signal_connect(action, "activate", G_CALLBACK(yui_window_run), yw);
+	g_signal_connect_swapped(action, "activate", G_CALLBACK(yui_window_run), yw);
 
 	action = gtk_action_new("pause", _("Pause"), _("pause emulation"), "gtk-media-pause");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>p");
-	g_signal_connect(action, "activate", G_CALLBACK(yui_window_pause), yw);
+	g_signal_connect_swapped(action, "activate", G_CALLBACK(yui_window_pause), yw);
 
 	action = gtk_action_new("reset", _("Reset"), _("reset emulation"), NULL);
 	gtk_action_group_add_action_with_accel(yw->action_group, action, NULL);
-	g_signal_connect(action, "activate", G_CALLBACK(yui_window_reset), yw);
+	g_signal_connect_swapped(action, "activate", G_CALLBACK(yui_window_reset), yw);
 
 	action = gtk_action_new("fullscreen", _("Fullscreen"), NULL, "gtk-fullscreen");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>f");
@@ -283,7 +283,7 @@ static void yui_window_keep_clean(GtkWidget * widget, GdkEventExpose * event, Yu
 	yui_window_update(yui);
 }
 
-void yui_window_start(GtkWidget * w, YuiWindow * yui) {
+void yui_window_start(YuiWindow * yui) {
 	if ((yui->state & YUI_IS_INIT) == 0) {
 	  if (((int (*)(gpointer)) yui->init_func)(yui->init_data) == 0) {
 	    yui->state |= YUI_IS_INIT;
@@ -293,8 +293,8 @@ void yui_window_start(GtkWidget * w, YuiWindow * yui) {
 	}
 }
 
-void yui_window_run(GtkWidget * w, YuiWindow * yui) {
-	yui_window_start(w, yui);
+void yui_window_run(YuiWindow * yui) {
+	yui_window_start(yui);
 
 	if ((yui->state & YUI_IS_INIT) && ((yui->state & YUI_IS_RUNNING) == 0)) {
 		ScspUnMuteAudio();
@@ -306,7 +306,7 @@ void yui_window_run(GtkWidget * w, YuiWindow * yui) {
 	}
 }
 
-void yui_window_pause(GtkWidget * w, YuiWindow * yui) {
+void yui_window_pause(YuiWindow * yui) {
 	if (yui->state & YUI_IS_RUNNING) {
 		yui_gl_dump_screen(YUI_GL(yui->area));
 		ScspMuteAudio();
@@ -318,7 +318,7 @@ void yui_window_pause(GtkWidget * w, YuiWindow * yui) {
 	}
 }
 
-void yui_window_reset(GtkWidget * w, YuiWindow * yui) {
+void yui_window_reset(YuiWindow * yui) {
 	if (yui->state & YUI_IS_INIT) {
 		yui->reset_func();
 	}

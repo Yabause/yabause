@@ -440,13 +440,13 @@ int main(int argc, char *argv[]) {
 	 }
 	 // Autoload
 	 else if (strcmp(argv[i], "--autoload") == 0) {
-            yui_window_start(NULL, YUI_WINDOW(yui));
+            yui_window_start(YUI_WINDOW(yui));
             YuiLoadState();
-            yui_window_run(NULL, YUI_WINDOW(yui));
+            yui_window_run(YUI_WINDOW(yui));
 	 }
 	 // Autostart
 	 else if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "--autostart") == 0) {
-            yui_window_run(NULL, YUI_WINDOW(yui));
+            yui_window_run(YUI_WINDOW(yui));
 	 }
 	 // Fullscreen
 	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
@@ -469,7 +469,7 @@ int main(int argc, char *argv[]) {
 	    if (bincount > 0) {
 	       if (bincount < 2) binaddress = 0x06004000;
 
-               yui_window_run(NULL, YUI_WINDOW(yui));
+               yui_window_run(YUI_WINDOW(yui));
 	       MappedMemoryLoadExec(binname, binaddress);
 	    }
 	 }

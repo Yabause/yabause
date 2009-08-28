@@ -141,8 +141,8 @@ GtkWidget * yui_m68k_new(YuiWindow * y) {
   yui_m68k = YUI_M68K(dialog);
 
   if (!( yui->state & YUI_IS_INIT )) {
-    yui_window_run(dialog, yui);
-    yui_window_pause(dialog, yui);
+    yui_window_run(yui);
+    yui_window_pause(yui);
   }
 
   M68KSetBreakpointCallBack(&yui_m68k_breakpoint_handler);
@@ -340,7 +340,7 @@ static void debugPauseLoop(void) { /* secondary gtk event loop for the "breakpoi
 
 static void yui_m68k_breakpoint_handler (u32 addr) {
 
-  yui_window_pause(NULL, yui);
+  yui_window_pause(yui);
   {
     m68kregs_struct regs;
     YuiM68k* m68k = YUI_M68K(yui_m68k_new( yui ));

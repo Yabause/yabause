@@ -330,8 +330,8 @@ static GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
      * so NULL is safe; it might be better to consider moving the "yui"
      * argument first and calling g_signal_connect_swapped() to eliminate
      * the unknown parameter.  --AC */
-    yui_window_run(NULL, yui);
-    yui_window_pause(NULL, yui);
+    yui_window_run(yui);
+    yui_window_pause(yui);
   }
 
   if ( bMaster && yui_msh ) return GTK_WIDGET(yui_msh);
@@ -731,7 +731,7 @@ static void debugPauseLoop(void) { /* secondary gtk event loop for the "breakpoi
 
 static void SH2BreakpointHandler (SH2_struct *context, u32 addr) {
 
-  yui_window_pause(NULL, yui);
+  yui_window_pause(yui);
   {
     sh2regs_struct sh2regs;
     YuiSh* sh2 = YUI_SH(yui_sh_new( yui, context == MSH2 ));
