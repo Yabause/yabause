@@ -281,7 +281,7 @@ static void yui_m68k_update_codelist( YuiM68k *m68k, u32 addr) {
 static void yui_m68k_step( GtkWidget* widget, YuiM68k * m68k ) {
 
   M68KStep();
-  yui_window_invalidate( widget, yui ); /* update all dialogs, including us */
+  yui_window_invalidate( yui ); /* update all dialogs, including us */
 }
 
 static void yui_m68k_editedReg( GtkCellRendererText *cellrenderertext,
@@ -304,7 +304,7 @@ static void yui_m68k_editedReg( GtkCellRendererText *cellrenderertext,
     m68ksetRegister( m68k, i, addr );
     gtk_list_store_set( GTK_LIST_STORE( m68k->regListStore ), &iter, 1, bptext, -1 );
   }
-  yui_window_invalidate( NULL, yui );
+  yui_window_invalidate( yui );
 }
 
 static void yui_m68k_editedBp( GtkCellRendererText *cellrenderertext,

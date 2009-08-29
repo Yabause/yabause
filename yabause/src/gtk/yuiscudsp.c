@@ -324,7 +324,7 @@ static void yui_scudsp_update_codelist( YuiScudsp *scudsp, u32 addr) {
 static void yui_scudsp_step( GtkWidget* widget, YuiScudsp * scudsp ) {
 
   ScuDspStep();
-  yui_window_invalidate( widget, yui ); /* update all dialogs, including us */
+  yui_window_invalidate( yui ); /* update all dialogs, including us */
 }
 
 static void yui_scudsp_editedReg( GtkCellRendererText *cellrenderertext,
@@ -347,7 +347,7 @@ static void yui_scudsp_editedReg( GtkCellRendererText *cellrenderertext,
     scudspsetRegister( scudsp, i, addr );
     gtk_list_store_set( GTK_LIST_STORE( scudsp->regListStore ), &iter, 1, bptext, -1 );
   }
-  yui_window_invalidate( NULL, yui );
+  yui_window_invalidate( yui );
 }
 
 static void yui_scudsp_editedBp( GtkCellRendererText *cellrenderertext,

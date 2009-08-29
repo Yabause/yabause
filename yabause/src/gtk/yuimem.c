@@ -275,7 +275,7 @@ static void yui_mem_content_changed( GtkCellRendererText *cellrenderertext,
       }
     }
   }
-  yui_window_invalidate(GTK_WIDGET(ym), ym->yui);
+  yui_window_invalidate(ym->yui);
 }
 
 static void yui_mem_update(YuiMem * ym) {

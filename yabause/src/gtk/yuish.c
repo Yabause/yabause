@@ -564,7 +564,7 @@ static void SH2UpdateCodeList( YuiSh *sh2, u32 addr) {
 static void yui_sh_step( GtkWidget* widget, YuiSh * sh2 ) {
 
   SH2Step(sh2->debugsh);
-  yui_window_invalidate( widget, yui ); /* update all dialogs, including us */
+  yui_window_invalidate( yui ); /* update all dialogs, including us */
 }
 
 static void yui_sh_editedReg( GtkCellRendererText *cellrenderertext,
@@ -587,7 +587,7 @@ static void yui_sh_editedReg( GtkCellRendererText *cellrenderertext,
     sh2setRegister( sh2, i, addr );
     gtk_list_store_set( GTK_LIST_STORE( sh2->regListStore ), &iter, 1, bptext, -1 );
   }
-  yui_window_invalidate( NULL, yui );
+  yui_window_invalidate( yui );
 }
 
 static void yui_sh_editedBp( GtkCellRendererText *cellrenderertext,
