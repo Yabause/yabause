@@ -64,7 +64,6 @@ struct _YuiWindow {
 	GCallback reset_func;
 
 	guint state;
-	gboolean fullscreen;
 
 	GtkActionGroup * action_group;
 };
