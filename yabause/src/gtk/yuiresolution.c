@@ -23,6 +23,8 @@
 #include <gtk/gtklabel.h>
 #include <gtk/gtkentry.h>
 #include <gtk/gtkcheckbutton.h>
+#include <gtk/gtkhbox.h>
+#include <gtk/gtkcombobox.h>
 #include "yuiresolution.h"
 
 static void yui_resolution_class_init          (YuiResolutionClass *klass);

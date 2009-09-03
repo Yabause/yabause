@@ -324,7 +324,7 @@ void yui_window_reset(YuiWindow * yui) {
 	}
 }
 
-void yui_window_invalidate(YuiWindow * yui ) {
+void yui_window_invalidate(YuiWindow * yui) {
 
   /* Emit a pause signal while already in pause means refresh all debug views */
 

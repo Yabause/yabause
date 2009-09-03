@@ -85,8 +85,9 @@ void		yui_window_start	(YuiWindow * yui);
 void		yui_window_run		(YuiWindow * yui);
 void		yui_window_pause	(YuiWindow * yui);
 void		yui_window_reset	(YuiWindow * yui);
-void            yui_window_invalidate   (YuiWindow * yui );
-void		yui_window_set_fullscreen(YuiWindow * w, gboolean f);
+void            yui_window_invalidate   (YuiWindow * yui);
+void		yui_window_set_fullscreen(YuiWindow * yui, gboolean f);
+void		yui_window_set_frameskip(YuiWindow * yui, gboolean f);
 
 G_END_DECLS
 

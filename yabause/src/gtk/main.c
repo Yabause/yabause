@@ -344,7 +344,7 @@ static gboolean yui_settings_load(void) {
 
         yinit.flags = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 
-	yui_window_set_frameskip(yui, g_key_file_get_integer(keyfile, "General", "Frameskip", NULL));
+	yui_window_set_frameskip(YUI_WINDOW(yui), g_key_file_get_integer(keyfile, "General", "Frameskip", NULL));
 
 	return mustRestart;
 }
@@ -457,7 +457,8 @@ int main(int argc, char *argv[]) {
             int fscount;
             int fsenable;
             fscount = sscanf(argv[i] + strlen("--autoframeskip="), "%d", &fsenable);
-            if (fscount > 0) yui_window_set_frameskip(yui, fsenable);
+            if (fscount > 0)
+               yui_window_set_frameskip(YUI_WINDOW(yui), fsenable);
          }
 	 // Binary
 	 else if (strstr(argv[i], "--binary=")) {
