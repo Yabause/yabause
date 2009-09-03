@@ -326,10 +326,6 @@ static GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   yui = y;
 
   if (!( yui->state & YUI_IS_INIT )) {
-    /* FIXME:  The first parameter seems to be ignored in these functions,
-     * so NULL is safe; it might be better to consider moving the "yui"
-     * argument first and calling g_signal_connect_swapped() to eliminate
-     * the unknown parameter.  --AC */
     yui_window_run(yui);
     yui_window_pause(yui);
   }
