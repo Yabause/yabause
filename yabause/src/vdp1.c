@@ -505,7 +505,7 @@ void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr) {
    cmd->CMDYC = T1ReadWord(Vdp1Ram, addr + 0x16);
    cmd->CMDXD = T1ReadWord(Vdp1Ram, addr + 0x18);
    cmd->CMDYD = T1ReadWord(Vdp1Ram, addr + 0x1A);
-   cmd->CMDGRDA = T1ReadWord(Vdp1Ram, addr + 0x1B);
+   cmd->CMDGRDA = T1ReadWord(Vdp1Ram, addr + 0x1C);
 }
 
 //////////////////////////////////////////////////////////////////////////////

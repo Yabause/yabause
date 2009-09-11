@@ -2026,9 +2026,28 @@ void ResetGame()
 
 void HardResetGame()
 {
-	YuiTempPause();
-    YabauseReset();
-    YuiTempUnPause();
+   YuiTempPause();
+
+   yinit.percoretype = percoretype;
+   yinit.sh2coretype = sh2coretype;
+   yinit.vidcoretype = vidcoretype;
+   yinit.sndcoretype = sndcoretype;
+   yinit.carttype = carttype;
+   yinit.regionid = regionid;
+   yinit.biospath = biosfilename;
+   yinit.cdpath = cdrompath;
+   yinit.buppath = backupramfilename;
+   yinit.mpegpath = mpegromfilename;
+   yinit.cartpath = cartfilename;
+   yinit.netlinksetting = netlinksetting
+
+   YabauseInit(&yinit);
+   VideoChangeCore(vidcoretype);
+
+   if (VIDCore && !VIDCore->IsFullscreen() && usecustomwindowsize)
+      VIDCore->Resize(windowwidth, windowheight, 0);
+   YabauseReset();
+   YuiTempUnPause();
 }
 
 void SaveState(int num) {

@@ -33,10 +33,10 @@ typedef struct
    int priority;
 
    int mapwh;
-   int planew, planeh;
-   int pagewh;
-   int patternwh;
-   int patterndatasize;
+   int planew, planew_bits, planeh, planeh_bits;
+   int pagewh, pagewh_bits;
+   int patternwh, patternwh_bits;
+   int patterndatasize, patterndatasize_bits;
    int specialfunction;
    u32 addr, charaddr, paladdr;
    int colornumber;
@@ -340,16 +340,19 @@ static INLINE void ReadPlaneSize(vdp2draw_struct *info, u16 reg)
    {
       case 0:
          info->planew = info->planeh = 1;
+		 info->planew_bits = info->planeh_bits = 0;
          break;
       case 1:
-         info->planew = 2;
-         info->planeh = 1;
+         info->planew = 2; info->planew_bits = 1;
+         info->planeh = 1; info->planeh_bits = 0;
          break;
       case 3:
          info->planew = info->planeh = 2;
+		 info->planew_bits = info->planeh_bits = 1;
          break;
       default: // Not sure what 0x2 does, though a few games seem to use it
          info->planew = info->planeh = 1;
+		 info->planew_bits = info->planeh_bits = 0;
          break;
    }
 }
@@ -359,16 +362,29 @@ static INLINE void ReadPlaneSize(vdp2draw_struct *info, u16 reg)
 static INLINE void ReadPatternData(vdp2draw_struct *info, u16 pnc, int chctlwh)
 {
    if(pnc & 0x8000)
+   {
       info->patterndatasize = 1;
+	  info->patterndatasize_bits = 0;
+   }
    else
+   {
       info->patterndatasize = 2;
+	  info->patterndatasize_bits = 1;
+   }
 
    if(chctlwh)
+   {
       info->patternwh = 2;
+	  info->patternwh_bits = 1;
+   }
    else
+   {
       info->patternwh = 1;
+	  info->patternwh_bits = 0;
+   }
 
-   info->pagewh = 64/info->patternwh;
+   info->pagewh = 64>>info->patternwh_bits;
+   info->pagewh_bits = 6-info->patternwh_bits;
    info->cellw = info->cellh = 8;
    info->supplementdata = pnc & 0x3FF;
    info->auxmode = (pnc & 0x4000) >> 14;
