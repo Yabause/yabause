@@ -2039,7 +2039,7 @@ void HardResetGame()
    yinit.buppath = backupramfilename;
    yinit.mpegpath = mpegromfilename;
    yinit.cartpath = cartfilename;
-   yinit.netlinksetting = netlinksetting
+   yinit.netlinksetting = netlinksetting;
 
    YabauseInit(&yinit);
    VideoChangeCore(vidcoretype);
