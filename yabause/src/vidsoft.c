@@ -43,15 +43,15 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
 #include <limits.h>
 
 #if defined WORDS_BIGENDIAN
-INLINE u32 COLSAT2YAB16(int priority,u32 temp)            { return (priority | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27); }
-INLINE u32 COLSAT2YAB32(int priority,u32 temp)            { return (((temp & 0xFF) << 24) | ((temp & 0xFF00) << 8) | ((temp & 0xFF0000) >> 8) | priority); }
-INLINE u32 COLSAT2YAB32_2(int priority,u32 temp1,u32 temp2)   { return (((temp2 & 0xFF) << 24) | ((temp2 & 0xFF00) << 8) | ((temp1 & 0xFF) << 8) | priority); }
-INLINE u32 COLSATSTRIPPRIORITY(u32 pixel)              { return (pixel | 0xFF); }
+static INLINE u32 COLSAT2YAB16(int priority,u32 temp)            { return (priority | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27); }
+static INLINE u32 COLSAT2YAB32(int priority,u32 temp)            { return (((temp & 0xFF) << 24) | ((temp & 0xFF00) << 8) | ((temp & 0xFF0000) >> 8) | priority); }
+static INLINE u32 COLSAT2YAB32_2(int priority,u32 temp1,u32 temp2)   { return (((temp2 & 0xFF) << 24) | ((temp2 & 0xFF00) << 8) | ((temp1 & 0xFF) << 8) | priority); }
+static INLINE u32 COLSATSTRIPPRIORITY(u32 pixel)              { return (pixel | 0xFF); }
 #else
-INLINE u32 COLSAT2YAB16(int priority,u32 temp) { return (priority << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9); }
-INLINE u32 COLSAT2YAB32(int priority, u32 temp) { return (priority << 24 | (temp & 0xFF0000) | (temp & 0xFF00) | (temp & 0xFF)); }
-INLINE u32 COLSAT2YAB32_2(int priority,u32 temp1,u32 temp2)   { return (priority << 24 | ((temp1 & 0xFF) << 16) | (temp2 & 0xFF00) | (temp2 & 0xFF)); }
-INLINE u32 COLSATSTRIPPRIORITY(u32 pixel) { return (0xFF000000 | pixel); }
+static INLINE u32 COLSAT2YAB16(int priority,u32 temp) { return (priority << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9); }
+static INLINE u32 COLSAT2YAB32(int priority, u32 temp) { return (priority << 24 | (temp & 0xFF0000) | (temp & 0xFF00) | (temp & 0xFF)); }
+static INLINE u32 COLSAT2YAB32_2(int priority,u32 temp1,u32 temp2)   { return (priority << 24 | ((temp1 & 0xFF) << 16) | (temp2 & 0xFF00) | (temp2 & 0xFF)); }
+static INLINE u32 COLSATSTRIPPRIORITY(u32 pixel) { return (0xFF000000 | pixel); }
 #endif
 
 #define COLOR_ADDt(b)		(b>0xFF?0xFF:(b<0?0:b))
@@ -687,6 +687,7 @@ static INLINE void SetupScreenVars(vdp2draw_struct *info, screeninfo_struct *sin
       sinfo->screenheight=0;
       sinfo->oldcellx=0;
       sinfo->oldcelly=0;
+      sinfo->oldcellcheck=0;
       sinfo->xmask = info->cellw-1;
       sinfo->ymask = info->cellh-1;
    }
@@ -731,8 +732,8 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, u32 *textdata, int width, in
 					mosaic_table[i][j] = j/m*m;
 			}
 	   }
-	   mosaic_x = &mosaic_table[info->mosaicxmask-1];
-	   mosaic_y = &mosaic_table[info->mosaicymask-1];
+	   mosaic_x = mosaic_table[info->mosaicxmask-1];
+	   mosaic_y = mosaic_table[info->mosaicymask-1];
    }
 
    for (j = 0; j < height; j++)
@@ -1634,7 +1635,7 @@ static INLINE u16  Vdp1ReadPattern64k( u32 base, u32 offset ) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-INLINE u32 alphablend16(u32 d, u32 s, u32 level)
+static INLINE u32 alphablend16(u32 d, u32 s, u32 level)
 {
 	int r,g,b,sr,sg,sb,dr,dg,db;
 
@@ -1662,7 +1663,7 @@ int currentPixelIsVisible;
 int characterWidth;
 int characterHeight;
 
-int getpixel(int linenumber, int currentlineindex) {
+static int getpixel(int linenumber, int currentlineindex) {
 	
 	u32 characterAddress;
 	u32 colorlut;
@@ -1670,7 +1671,7 @@ int getpixel(int linenumber, int currentlineindex) {
 	u8 SPD;
 	int endcode;
 	int endcodesEnabled;
-	int untexturedColor;
+	int untexturedColor = 0;
 	int isTextured = 1;
 	int currentShape = cmd.CMDCTRL & 0x7;
 	int flip;
@@ -1779,7 +1780,7 @@ int getpixel(int linenumber, int currentlineindex) {
 	return 0;
 }
 
-int gouraudAdjust( int color, int tableValue )
+static int gouraudAdjust( int color, int tableValue )
 {
 	color += (tableValue - 0x10);
 
@@ -1789,7 +1790,7 @@ int gouraudAdjust( int color, int tableValue )
 	return color;
 }
 
-void putpixel(int x, int y) {
+static void putpixel(int x, int y) {
 
 	u16* iPix = &((u16 *)vdp1backframebuffer)[(y * vdp1width) + x];
 	int mesh = cmd.CMDPMOD & 0x0100;
@@ -1875,7 +1876,7 @@ void putpixel(int x, int y) {
 }
 
 //TODO consolidate the following 3 functions
-int bresenham( int x1, int y1, int x2, int y2, int x[], int y[])
+static int bresenham( int x1, int y1, int x2, int y2, int x[], int y[])
 {
 	int dx, dy, xf, yf, a, b, c, i;
 
@@ -1938,7 +1939,7 @@ int bresenham( int x1, int y1, int x2, int y2, int x[], int y[])
 	}
 }
 
-int DrawLine( int x1, int y1, int x2, int y2, double linenumber, double texturestep, double xredstep, double xgreenstep, double xbluestep)
+static int DrawLine( int x1, int y1, int x2, int y2, double linenumber, double texturestep, double xredstep, double xgreenstep, double xbluestep)
 {
 	int dx, dy, xf, yf, a, b, c, i;
 	int endcodesdetected=0;
@@ -2049,7 +2050,7 @@ int DrawLine( int x1, int y1, int x2, int y2, double linenumber, double textures
 	}
 }
 
-int getlinelength(int x1, int y1, int x2, int y2) {
+static int getlinelength(int x1, int y1, int x2, int y2) {
 	int dx, dy, xf, yf, a, b, c, i;
 
 	if (x2>x1) {
@@ -2105,7 +2106,7 @@ int getlinelength(int x1, int y1, int x2, int y2) {
 	}
 }
 
-INLINE double interpolate(double start, double end, int numberofsteps) {
+static INLINE double interpolate(double start, double end, int numberofsteps) {
 
 	double stepvalue = 0;
 
@@ -2140,7 +2141,7 @@ COLOR gouraudB;
 COLOR gouraudC;
 COLOR gouraudD;
 
-void gouraudTable()
+static void gouraudTable(void)
 {
 	int gouraudTableAddress;
 
@@ -2163,14 +2164,14 @@ int yright[1000];
 //this is why endcodes are possible
 //this is also the reason why half-transparent shading causes moire patterns
 //and the reason why gouraud shading can be applied to a single line draw command
-void drawQuad(s32 tl_x, s32 tl_y, s32 bl_x, s32 bl_y, s32 tr_x, s32 tr_y, s32 br_x, s32 br_y){
+static void drawQuad(s32 tl_x, s32 tl_y, s32 bl_x, s32 bl_y, s32 tr_x, s32 tr_y, s32 br_x, s32 br_y){
 
 	int totalleft;
 	int totalright;
 	int total;
 	int i;
 
-	COLOR_PARAMS topLeftToBottomLeftColorStep, topRightToBottomRightColorStep;
+	COLOR_PARAMS topLeftToBottomLeftColorStep = {0,0,0}, topRightToBottomRightColorStep = {0,0,0};
 		
 	//how quickly we step through the line arrays
 	double leftLineStep = 1;
@@ -2307,7 +2308,6 @@ void VIDSoftVdp1ScaledSpriteDraw(){
 	s32 topLeftx,topLefty,topRightx,topRighty,bottomRightx,bottomRighty,bottomLeftx,bottomLefty;
 	int spriteWidth;
 	int spriteHeight;
-	int flip = 0;
 	int x0,y0,x1,y1;
 	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
@@ -2426,7 +2426,7 @@ void VIDSoftVdp1DistortedSpriteDraw() {
 	drawQuad(xa,ya,xd,yd,xb,yb,xc,yc);
 }
 
-void gouraudLineSetup(double * redstep, double * greenstep, double * bluestep, int length, COLOR table1, COLOR table2) {
+static void gouraudLineSetup(double * redstep, double * greenstep, double * bluestep, int length, COLOR table1, COLOR table2) {
 
 	gouraudTable();
 
