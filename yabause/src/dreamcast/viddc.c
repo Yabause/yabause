@@ -1,5 +1,5 @@
 /*  Copyright 2003-2006 Guillaume Duhamel
-    Copyright 2004-2007 Lawrence Sebald
+    Copyright 2004-2009 Lawrence Sebald
     Copyright 2004-2006 Theo Berkau
     Copyright 2006 Fabien Coulon
 
@@ -123,10 +123,10 @@ static struct sprite_info cache[1024];
 int cached_spr = 0;
 
 /* Polygon Headers */
-static pvr_poly_hdr_t op_poly_hdr;
-static pvr_poly_hdr_t tr_poly_hdr;
-static pvr_poly_ic_hdr_t tr_sprite_hdr;
-static pvr_poly_ic_hdr_t pt_sprite_hdr;
+static pvr_sprite_hdr_t op_poly_hdr;
+static pvr_sprite_hdr_t tr_poly_hdr;
+static pvr_sprite_hdr_t tr_sprite_hdr;
+static pvr_sprite_hdr_t pt_sprite_hdr;
 
 /* DMA Vertex Buffers 256KB Each */
 static uint8 vbuf_opaque[1024 * 256] __attribute__((aligned(32)));
@@ -235,7 +235,7 @@ static uint16 Vdp2ColorRamGetColor(u32 colorindex)   {
     return 0;
 }
 
-static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_poly_ic_hdr_t *hdr) {
+static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
     u32 charAddr = cmd->CMDSRCA << 3;
     uint16 dot, dot2;
     int queuepos = 0;
@@ -840,7 +840,6 @@ static void Vdp2DrawCell(vdp2draw_struct *info)
     int i, i2;
     clipping_struct clip;
     u32 newcharaddr;
-    int addrincrement=1;
 
     HandleClipping(info, &clip);
 
@@ -1181,7 +1180,7 @@ static void Vdp2DrawMap(vdp2draw_struct *info)
 }
 
 static int VIDDCInit(void)  {
-    pvr_poly_cxt_t op_poly_cxt, tr_poly_cxt;
+    pvr_sprite_cxt_t op_poly_cxt, tr_poly_cxt;
     pvr_sprite_cxt_t pt_sprite_cxt, tr_sprite_cxt;
 
     vid_set_mode(DM_320x240, PM_RGB565);
@@ -1205,14 +1204,14 @@ static int VIDDCInit(void)  {
 
     sq_set(tex_space, 0xFF, 1024 * 1024 * 2);
 
-    pvr_poly_cxt_col(&op_poly_cxt, PVR_LIST_OP_POLY);
-    pvr_poly_cxt_col(&tr_poly_cxt, PVR_LIST_TR_POLY);
+    pvr_sprite_cxt_col(&op_poly_cxt, PVR_LIST_OP_POLY);
+    pvr_sprite_cxt_col(&tr_poly_cxt, PVR_LIST_TR_POLY);
 
     op_poly_cxt.gen.culling = PVR_CULLING_NONE;
     tr_poly_cxt.gen.culling = PVR_CULLING_NONE;
 
-    pvr_poly_compile(&op_poly_hdr, &op_poly_cxt);
-    pvr_poly_compile(&tr_poly_hdr, &tr_poly_cxt);
+    pvr_sprite_compile(&op_poly_hdr, &op_poly_cxt);
+    pvr_sprite_compile(&tr_poly_hdr, &tr_poly_cxt);
 
     pvr_sprite_cxt_txr(&tr_sprite_cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 |
                        PVR_TXRFMT_NONTWIDDLED, 1024, 1024, tex_space,
@@ -1226,6 +1225,8 @@ static int VIDDCInit(void)  {
 
     pvr_sprite_compile(&tr_sprite_hdr, &tr_sprite_cxt);
     pvr_sprite_compile(&pt_sprite_hdr, &pt_sprite_cxt);
+
+    tr_sprite_hdr.argb = PVR_PACK_COLOR(0.5f, 1.0f, 1.0f, 1.0f);
 
     priority_levels[0] = 0.0f;
     priority_levels[1] = 1.0f;
@@ -1328,7 +1329,6 @@ static void VIDDCVdp1NormalSpriteDraw(void) {
     cur_spr.h = cmd.CMDSIZE & 0xFF;
 
     if ((cmd.CMDPMOD & 0x07) == 0x03) {
-        tr_sprite_hdr.a = 0.5f;
         list = PVR_LIST_TR_POLY;
         num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
 
@@ -1336,10 +1336,9 @@ static void VIDDCVdp1NormalSpriteDraw(void) {
             return;
         else
             pvr_list_prim(PVR_LIST_TR_POLY, &tr_sprite_hdr,
-                          sizeof(pvr_poly_ic_hdr_t));
+                          sizeof(pvr_sprite_hdr_t));
     }
     else    {
-        pt_sprite_hdr.a = 1.0f;
         num = Vdp1ReadTexture(&cmd, &pt_sprite_hdr);
         list = PVR_LIST_PT_POLY;
         
@@ -1347,7 +1346,7 @@ static void VIDDCVdp1NormalSpriteDraw(void) {
             return;
         else
             pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr,
-                          sizeof(pvr_poly_ic_hdr_t));
+                          sizeof(pvr_sprite_hdr_t));
     }
 
     z = Vdp1ReadPriority(&cmd);
@@ -1396,7 +1395,6 @@ static void VIDDCVdp1ScaledSpriteDraw(void) {
     cur_spr.h = cmd.CMDSIZE & 0xFF;
 
     if((cmd.CMDPMOD & 0x07) == 0x03)    {
-        tr_sprite_hdr.a = 0.5f;
         list = PVR_LIST_TR_POLY;
         num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
 
@@ -1404,10 +1402,9 @@ static void VIDDCVdp1ScaledSpriteDraw(void) {
             return;
         else
             pvr_list_prim(PVR_LIST_TR_POLY, &tr_sprite_hdr,
-                          sizeof(pvr_poly_ic_hdr_t));
+                          sizeof(pvr_sprite_hdr_t));
     }
     else    {
-        pt_sprite_hdr.a = 1.0f;
         num = Vdp1ReadTexture(&cmd, &pt_sprite_hdr);
         list = PVR_LIST_PT_POLY;
 
@@ -1415,7 +1412,7 @@ static void VIDDCVdp1ScaledSpriteDraw(void) {
             return;
         else
             pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr,
-                          sizeof(pvr_poly_ic_hdr_t));
+                          sizeof(pvr_sprite_hdr_t));
     }
 
     // Setup Zoom Point
@@ -1534,7 +1531,6 @@ static void VIDDCVdp1DistortedSpriteDraw(void)  {
     cur_spr.h = cmd.CMDSIZE & 0xFF;
 
     if((cmd.CMDPMOD & 0x7) == 0x3) {
-        tr_sprite_hdr.a = 0.5f;
         list = PVR_LIST_TR_POLY;
         num = Vdp1ReadTexture(&cmd, &tr_sprite_hdr);
 
@@ -1542,10 +1538,9 @@ static void VIDDCVdp1DistortedSpriteDraw(void)  {
             return;
         else
             pvr_list_prim(PVR_LIST_TR_POLY, &tr_sprite_hdr,
-                          sizeof(pvr_poly_ic_hdr_t));
+                          sizeof(pvr_sprite_hdr_t));
     }
     else    {
-        pt_sprite_hdr.a = 1.0f;
         num = Vdp1ReadTexture(&cmd, &pt_sprite_hdr);
         list = PVR_LIST_PT_POLY;
 
@@ -1553,7 +1548,7 @@ static void VIDDCVdp1DistortedSpriteDraw(void)  {
             return;
         else
             pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr,
-                          sizeof(pvr_poly_ic_hdr_t));
+                          sizeof(pvr_sprite_hdr_t));
     }
 
     z = Vdp1ReadPriority(&cmd);
@@ -1591,8 +1586,9 @@ static void VIDDCVdp1PolygonDraw(void)  {
     u16 color;
     u16 CMDPMOD;
     u8 alpha, z;
-    pvr_vertex_t vert;
     pvr_list_t list;
+    pvr_sprite_col_t spr;
+    pvr_sprite_hdr_t *hdr;
 
     X[0] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C);
     Y[0] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E);
@@ -1614,47 +1610,41 @@ static void VIDDCVdp1PolygonDraw(void)  {
     if((CMDPMOD & 0x0007) == 0x0003)    {
         alpha = 0x80;
         list = PVR_LIST_TR_POLY;
-        pvr_list_prim(PVR_LIST_TR_POLY, &tr_poly_hdr, sizeof(pvr_poly_hdr_t));
+        hdr = &tr_poly_hdr;
     }
     else    {
         alpha = 0xFF;
         list = PVR_LIST_OP_POLY;
-        pvr_list_prim(PVR_LIST_OP_POLY, &op_poly_hdr, sizeof(pvr_poly_hdr_t));
+        hdr = &op_poly_hdr;
     }
 
     if(color & 0x8000)  {
-        vert.argb = COLOR_ADD32(SAT2YAB32(alpha, color), vdp1cor, vdp1cog,
-                              vdp1cob);
+        hdr->argb = COLOR_ADD32(SAT2YAB32(alpha, color), vdp1cor, vdp1cog,
+                                vdp1cob);
     }
     else    {
-        vert.argb = COLOR_ADD32(Vdp2ColorRamGetColor32(color, alpha), vdp1cor, 
-                              vdp1cog, vdp1cob);
+        hdr->argb = COLOR_ADD32(Vdp2ColorRamGetColor32(color, alpha), vdp1cor, 
+                                vdp1cog, vdp1cob);
     }
+
+    pvr_list_prim(list, hdr, sizeof(pvr_sprite_hdr_t));
 
     z = Vdp2Regs->PRISA & 0x07;
 
-    vert.flags = PVR_CMD_VERTEX;
-    vert.u = 0.0f;
-    vert.v = 0.0f;
-    vert.oargb = 0;
-    vert.z = priority_levels[z];
+    spr.flags = PVR_CMD_VERTEX_EOL;
+    spr.d1 = spr.d2 = spr.d3 = spr.d4 = 0;
+    spr.az = spr.bz = spr.cz = priority_levels[z];
 
-    vert.x = X[3];
-    vert.y = Y[3];
-    pvr_list_prim(list, &vert, sizeof(vert));
+    spr.ax = X[0];
+    spr.ay = Y[0];
+    spr.bx = X[1];
+    spr.by = Y[1];
+    spr.cx = X[2];
+    spr.cy = Y[2];
+    spr.dx = X[3];
+    spr.dy = Y[3];
 
-    vert.x = X[0];
-    vert.y = Y[0];
-    pvr_list_prim(list, &vert, sizeof(vert));
-
-    vert.x = X[2];
-    vert.y = Y[2];
-    pvr_list_prim(list, &vert, sizeof(vert));
-
-    vert.flags = PVR_CMD_VERTEX_EOL;
-    vert.x = X[1];
-    vert.y = Y[1];
-    pvr_list_prim(list, &vert, sizeof(vert));
+    pvr_list_prim(list, &spr, sizeof(pvr_sprite_col_t));
 
     priority_levels[z] += 0.000001f;
 }
@@ -1722,7 +1712,7 @@ static u16 DoColorCalcWithColorOffset(void *info, u16 pixel)
 static void Vdp2DrawBackScreen()    {
     u32 scrAddr;
     u16 dot;
-    pvr_vertex_t vert;
+    pvr_sprite_col_t spr;
 
     if(Vdp2Regs->VRSIZE & 0x8000)
         scrAddr = (((Vdp2Regs->BKTAU & 0x07) << 16) | Vdp2Regs->BKTAL) << 1;
@@ -1735,55 +1725,47 @@ static void Vdp2DrawBackScreen()    {
         for(i = 0; i < vdp2height; ++i)    {
             dot = T1ReadWord(Vdp2Ram, scrAddr);
             scrAddr += 2;
-            
+
+            op_poly_hdr.argb = SAT2YAB32(0xFF, dot);
             pvr_list_prim(PVR_LIST_OP_POLY, &op_poly_hdr,
-                          sizeof(pvr_poly_hdr_t));
-            vert.argb = SAT2YAB32(0xFF, dot);
-            vert.oargb = 0;
-            vert.u = vert.v = 0.0f;
-            vert.z = 0.1f;
-            vert.flags = PVR_CMD_VERTEX;
-            
-            vert.x = 0.0f;
-            vert.y = i + 1;
-            pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(pvr_vertex_t));
-            
-            vert.y = i;
-            pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(pvr_vertex_t));
-            
-            vert.x = vdp2width;
-            vert.y = i + 1;
-            pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(pvr_vertex_t));
-            
-            vert.flags = PVR_CMD_VERTEX_EOL;
-            vert.y = i;
-            pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(pvr_vertex_t));
+                          sizeof(pvr_sprite_hdr_t));
+
+            spr.flags = PVR_CMD_VERTEX_EOL;
+            spr.ax = 0.0f;
+            spr.ay = i + 1;
+            spr.az = 0.1f;
+            spr.bx = 0.0f;
+            spr.by = i;
+            spr.bz = 0.1f;
+            spr.cx = vdp2width;
+            spr.cy = i;
+            spr.cz = 0.1f;
+            spr.dx = vdp2width;
+            spr.dy = i + 1;
+            spr.d1 = spr.d2 = spr.d3 = spr.d4 = 0;
+            pvr_list_prim(PVR_LIST_OP_POLY, &spr, sizeof(pvr_sprite_col_t));
         }
     }
     else    {
         dot = T1ReadWord(Vdp2Ram, scrAddr);
 
-        pvr_list_prim(PVR_LIST_OP_POLY, &op_poly_hdr, sizeof(pvr_poly_hdr_t));
-        vert.argb = SAT2YAB32(0xFF, dot);
-        vert.oargb = 0;
-        vert.u = vert.v = 0.0f;
-        vert.z = 0.1f;
-        vert.flags = PVR_CMD_VERTEX;
+        op_poly_hdr.argb = SAT2YAB32(0xFF, dot);
+        pvr_list_prim(PVR_LIST_OP_POLY, &op_poly_hdr, sizeof(pvr_sprite_hdr_t));
 
-        vert.x = 0.0f;
-        vert.y = vdp2height;
-        pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(pvr_vertex_t));
-
-        vert.y = 0.0f;
-        pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(pvr_vertex_t));
-
-        vert.x = vdp2width;
-        vert.y = vdp2height;
-        pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(pvr_vertex_t));
-
-        vert.flags = PVR_CMD_VERTEX_EOL;
-        vert.y = 0.0f;
-        pvr_list_prim(PVR_LIST_OP_POLY, &vert, sizeof(pvr_vertex_t));
+        spr.flags = PVR_CMD_VERTEX_EOL;
+        spr.ax = 0.0f;
+        spr.ay = vdp2height;
+        spr.az = 0.1f;
+        spr.bx = 0.0f;
+        spr.by = 0.0f;
+        spr.bz = 0.1f;
+        spr.cx = vdp2width;
+        spr.cy = 0.0f;
+        spr.cz = 0.1f;
+        spr.dx = vdp2width;
+        spr.dy = vdp2height;
+        spr.d1 = spr.d2 = spr.d3 = spr.d4 = 0;
+        pvr_list_prim(PVR_LIST_OP_POLY, &spr, sizeof(pvr_sprite_col_t));
     }
 }
 
@@ -1859,8 +1841,6 @@ static void Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i)
 static int Vdp2DrawNBG0(void)
 {
    vdp2draw_struct info;
-   int i, i2;
-   u32 linescrolladdr;
 
    /* FIXME should start by checking if it's a normal
     * or rotate scroll screen
@@ -2658,7 +2638,7 @@ static void Vdp2Draw(int priority)  {
     pt_sprite_hdr.mode3 = ((cur_vdp2 & 0x00FFFFF8) >> 3) | 
                           (PVR_TXRFMT_NONTWIDDLED);
 
-    pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr, sizeof(pvr_poly_ic_hdr_t));
+    pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr, sizeof(pvr_sprite_hdr_t));
 
     sprite.flags = PVR_CMD_VERTEX_EOL;
     sprite.ax = 0;
