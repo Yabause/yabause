@@ -1060,6 +1060,9 @@ static int opADSQ(Q68State *state, uint32_t opcode)
     const int is_sub = opcode & 0x0100;
     INSN_GET_COUNT;
     INSN_GET_SIZE;
+    if (EA_MODE(opcode) == EA_ADDRESS_REG && size == 1) {
+        size = 2;  // ADDQ.W #imm,An is equivalent to ADDQ.L #imm,An
+    }
     const int bytes = SIZE_TO_BYTES(size);
     const int shift = bytes*8 - 1;
     const uint32_t valuemask = ~(~1 << shift);

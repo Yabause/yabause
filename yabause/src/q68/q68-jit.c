@@ -2243,6 +2243,9 @@ static int opADSQ(Q68State *state, uint32_t opcode)
     const int is_sub = opcode & 0x0100;
     INSN_GET_COUNT;
     INSN_GET_SIZE;
+    if (EA_MODE(opcode) == EA_ADDRESS_REG && size == 1) {
+        size = 2;  // ADDQ.W #imm,An is equivalent to ADDQ.L #imm,An
+    }
 
     JIT_EMIT_GET_OP1_IMMEDIATE(current_entry, count);
 
@@ -2255,11 +2258,7 @@ static int opADSQ(Q68State *state, uint32_t opcode)
     const int do_cc = cc_needed(state, opcode);
     if (is_sub) {
         if (EA_MODE(opcode) == EA_ADDRESS_REG) {
-            if (size == SIZE_W) {
-                JIT_EMIT_SUB_W(current_entry);
-            } else {  // size == SIZE_L
-                JIT_EMIT_SUB_L(current_entry);
-            }
+            JIT_EMIT_SUB_L(current_entry);
         } else {
             if (size == SIZE_B) {
                 JIT_EMIT_SUB_B(current_entry);
@@ -2274,11 +2273,7 @@ static int opADSQ(Q68State *state, uint32_t opcode)
         }
     } else {
         if (EA_MODE(opcode) == EA_ADDRESS_REG) {
-            if (size == SIZE_W) {
-                JIT_EMIT_ADDA_W(current_entry);
-            } else {  // size == SIZE_L
-                JIT_EMIT_ADD_L(current_entry);
-            }
+            JIT_EMIT_ADD_L(current_entry);
         } else {
             if (size == SIZE_B) {
                 JIT_EMIT_ADD_B(current_entry);

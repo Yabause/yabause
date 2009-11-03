@@ -113,8 +113,10 @@ static const struct {
     {0xFFF8, 0x4840, "SWAP.W D<reg0>"},
     {0xFFF8, 0x4848, "???"},
     {0xFFC0, 0x4840, "PEA.L <ea.w>"},
+    {0xFFF8, 0x4880, "EXT.W D<reg0>"},
     {0xFFF8, 0x48A0, "MOVEM.W <tsilger>,-(A<reg0>)"},
     {0xFFC0, 0x4880, "MOVEM.W <reglist>,<ea.w>"},
+    {0xFFF8, 0x48C0, "EXT.L D<reg0>"},
     {0xFFF8, 0x48E0, "MOVEM.L <tsilger>,-(A<reg0>)"},
     {0xFFC0, 0x48C0, "MOVEM.L <reglist>,<ea.l>"},
 
@@ -124,8 +126,6 @@ static const struct {
     {0xFFFF, 0x4AFC, "ILLEGAL"},
     {0xFFC0, 0x4AC0, "TAS <ea.b>"},
 
-    {0xFFF8, 0x4C80, "EXT.W D<reg0>"},
-    {0xFFF8, 0x4CC0, "EXT.L D<reg0>"},
     {0xFFC0, 0x4C80, "MOVEM.W <ea.w>,<reglist>"},
     {0xFFC0, 0x4CC0, "MOVEM.L <ea.l>,<reglist>"},
 
