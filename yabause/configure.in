@@ -186,7 +186,7 @@ fi
 
 # checking for OpenAL (can be used for sound)
 use_openal=yes
-AC_ARG_WITH(openal, AC_HELP_STRING(--without-openal, don't use OpenAL), [use_openal=$withval])
+AC_ARG_WITH(openal, AC_HELP_STRING(--without-openal, "don't use OpenAL"), [use_openal=$withval])
 
 if test x$use_openal = xyes ; then
 	case $host in
@@ -199,6 +199,7 @@ if test x$use_openal = xyes ; then
 			# won't work right now.
 			;;
 		*)
+			AC_CHECK_LIB(pthread, main)
 			AC_CHECK_LIB(openal, alBufferData, [
 				LIBS="$LIBS -lopenal"
 				AC_DEFINE(HAVE_LIBAL)
