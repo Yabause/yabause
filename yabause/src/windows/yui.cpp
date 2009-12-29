@@ -800,7 +800,9 @@ int YuiInit(LPSTR lpCmdLine)
    free(cmddup);
 #endif
 
+#ifdef USEHOTKEY
    LoadHotkeyConfig();
+#endif
 
    if (GetPrivateProfileStringA("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) == 0)
    {
@@ -1420,7 +1422,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			case IDM_HOTKEY_CONFIG:
 				{
 					YuiTempPause();
+#ifdef USEHOTKEY
 					DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_KEYCUSTOM), hWnd, DlgHotkeyConfig);
+#endif
 					YuiTempUnPause();
 				}
 				break;
@@ -1759,6 +1763,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 		//	if(wParam != VK_PAUSE)
 		//		break;
 	case WM_SYSKEYDOWN:
+#ifdef USEHOTKEY
 	case WM_CUSTKEYDOWN:
 		{
 			int modifiers = GetModifiers(wParam);
@@ -1776,7 +1781,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			HandleKeyUp(wParam, lParam, modifiers);
 		}
 		break;
-
+#endif
       case WM_ENTERMENULOOP:
       {
 #ifndef USETHREADS
@@ -1961,8 +1966,10 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
    mini18n_set_domain("trans");
 #endif
 
+#ifdef USEHOTKEY
    InitCustomControls();
    InitCustomKeys(&CustomKeys);
+#endif
 
    if (YuiInit(lpCmdLine) != 0)
       fprintf(stderr, "Error running Yabause\n");
