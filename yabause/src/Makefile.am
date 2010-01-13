@@ -33,8 +33,8 @@ libyabause_a_SOURCES = \
 	m68kcore.c m68kcore.h m68kd.c m68kd.h movie.c movie.h \
 	netlink.c netlink.h peripheral.h peripheral.c \
 	persdljoy.c persdljoy.h profile.c profile.h \
-	scu.c scu.h sh2core.c sh2core.h \
-	sh2d.c sh2d.h sh2idle.c sh2idle.h sh2int.c sh2int.h sh2trace.h \
+	scu.c scu.h sh2core.c sh2core.h sh2d.c sh2d.h \
+	sh2idle.c sh2idle.h sh2int.c sh2int.h sh2trace.c sh2trace.h \
 	smpc.c smpc.h scsp.c scsp.h sndal.c sndal.h sndsdl.c sndsdl.h vdp1.c vdp1.h \
         vdp2.c vdp2.h vdp2debug.c vdp2debug.h vidogl.c vidogl.h vidshared.c vidshared.h vidsoft.c vidsoft.h \
 	yabause.c yabause.h ygl.h ygl.c yui.h
@@ -79,5 +79,8 @@ libyabause_a_SOURCES += cd-windows.c
 endif
 
 if TEST_PSP_SH2
-libyabause_a_SOURCES += psp/psp-sh2.c
+libyabause_a_SOURCES += psp/psp-sh2.c psp/rtl.c psp/rtlexec.c psp/rtlinsn.c \
+                        psp/rtlopt.c psp/rtlunit.c psp/sh2.c \
+                        psp/sh2-interpret.c psp/sh2-opcodeinfo.c \
+                        psp/sh2-optimize.c 
 endif

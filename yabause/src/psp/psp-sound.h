@@ -21,6 +21,8 @@
 #ifndef PSP_SOUND_H
 #define PSP_SOUND_H
 
+#include "../scsp.h"  // for SoundInterface_struct
+
 /*************************************************************************/
 
 /* Module interface definition */

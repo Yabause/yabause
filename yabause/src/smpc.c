@@ -32,13 +32,20 @@
 #include "yabause.h"
 #include "movie.h"
 
+#ifdef _arch_dreamcast
+# include "dreamcast/localtime.h"
+#endif
+#ifdef PSP
+# include "psp/localtime.h"
+#endif
+
 Smpc * SmpcRegs;
 u8 * SmpcRegsT;
 SmpcInternal * SmpcInternalVars;
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SmpcInit(u8 regionid) {
+int SmpcInit(u8 regionid, int clocksync, u32 basetime) {
    if ((SmpcRegsT = (u8 *) calloc(1, sizeof(Smpc))) == NULL)
       return -1;
  
@@ -49,6 +56,8 @@ int SmpcInit(u8 regionid) {
   
    SmpcInternalVars->regionsetting = regionid;
    SmpcInternalVars->regionid = regionid;
+   SmpcInternalVars->clocksync = clocksync;
+   SmpcInternalVars->basetime = basetime ? basetime : time(NULL);
 
    return 0;
 }
@@ -213,15 +222,17 @@ static void SmpcINTBACKStatus(void) {
    //SmpcRegs->OREG[0] = 0x0 | (SmpcInternalVars->resd << 6);  // goto setclock/setlanguage screen
     
    // write time data in OREG1-7
-   tmp = time(NULL);
+   if (SmpcInternalVars->clocksync) {
+      tmp = SmpcInternalVars->basetime + ((u64)framecounter * 1001 / 60000);
+   } else {
+      tmp = time(NULL);
+   }
 #ifdef WIN32
    memcpy(&times, localtime(&tmp), sizeof(times));
-#elif !defined(_arch_dreamcast)
-   localtime_r(&tmp, &times);
-#else
-   struct tm * internal_localtime_r(const time_t * tim_p, struct tm *res);
-
+#elif defined(_arch_dreamcast) || defined(PSP)
    internal_localtime_r(&tmp, &times);
+#else
+   localtime_r(&tmp, &times);
 #endif
    year[0] = (1900 + times.tm_year) / 1000;
    year[1] = ((1900 + times.tm_year) % 1000) / 100;
@@ -734,7 +745,7 @@ int SmpcSaveState(FILE *fp)
    int offset;
    IOCheck_struct check;
 
-   offset = StateWriteHeader(fp, "SMPC", 2);
+   offset = StateWriteHeader(fp, "SMPC", 3);
 
    // Write registers
    ywrite(&check, (void *)SmpcRegs->IREG, sizeof(u8), 7, fp);
@@ -760,6 +771,7 @@ int SmpcSaveState(FILE *fp)
 int SmpcLoadState(FILE *fp, int version, int size)
 {
    IOCheck_struct check;
+   int internalsizev2 = sizeof(SmpcInternal) - 8;
 
    // Read registers
    yread(&check, (void *)SmpcRegs->IREG, sizeof(u8), 7, fp);
@@ -777,13 +789,15 @@ int SmpcLoadState(FILE *fp, int version, int size)
    {
       // This handles the problem caused by the version not being incremented
       // when SmpcInternal was changed
-      if ((size - 48) == sizeof(SmpcInternal))
-         yread(&check, (void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
+      if ((size - 48) == internalsizev2)
+         yread(&check, (void *)SmpcInternalVars, internalsizev2, 1, fp);
       else if ((size - 48) == 24)
          yread(&check, (void *)SmpcInternalVars, 24, 1, fp);
       else
          fseek(fp, size - 48, SEEK_CUR);
    }
+   else if (version == 2)
+      yread(&check, (void *)SmpcInternalVars, internalsizev2, 1, fp);
    else
       yread(&check, (void *)SmpcInternalVars, sizeof(SmpcInternal), 1, fp);
 

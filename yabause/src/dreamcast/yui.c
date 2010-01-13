@@ -92,6 +92,8 @@ int YuiInit(void)   {
     yinit.cartpath = NULL;
     yinit.frameskip = 0;
     yinit.flags = VIDEOFORMATTYPE_NTSC;
+    yinit.clocksync = 0;
+    yinit.basetime = 0;
 
     if(YabauseInit(&yinit) != 0)
       return -1;

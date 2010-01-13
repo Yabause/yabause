@@ -191,6 +191,14 @@
 
 /*************************************************************************/
 
+/* For the PSP, we need to avoid local data here sharing a cache line with
+ * data in other files due to the lack of SC/ME cache coherency */
+#ifdef PSP
+static __attribute__((aligned(64),used)) int dummy_top;
+#endif
+
+/*----------------------------------*/
+
 /* Entry into which translated code is currently being stored (set by
  * q68_jit_translate(), used by opcode translation functions) */
 static Q68JitEntry *current_entry;
@@ -214,6 +222,12 @@ static struct {
     uint32_t m68k_target;   // Branch target (68000 address)
     uint32_t native_offset; // Offset of native branch instruction to update
 } unres_branches[Q68_JIT_UNRES_BRANCH_SIZE];
+
+/*----------------------------------*/
+
+#ifdef PSP  // As above
+static __attribute__((aligned(64),used)) int dummy_bottom;
+#endif
 
 /*-----------------------------------------------------------------------*/
 
@@ -311,7 +325,7 @@ static int op_EXG(Q68State *state, uint32_t opcode);
 
 /* Main table of instruction implemenation functions; table index is bits
  * 15-12 and 8-6 of the opcode (ABCD ...E FG.. .... -> 0ABC DEFG). */
-static OpcodeFunc *opcode_table[128] = {
+static OpcodeFunc * const opcode_table[128] = {
     op_imm, op_imm, op_imm, op_imm, op_bit, op_bit, op_bit, op_bit,  // 00
     opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE,  // 10
     opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE,  // 20
@@ -335,7 +349,7 @@ static OpcodeFunc *opcode_table[128] = {
 
 /* Subtable for instructions in the $4xxx (miscellaneous) group; table index
  * is bits 11-9 and 7-6 of the opcode (1000 ABC0 DE.. .... -> 000A BCDE). */
-static OpcodeFunc *opcode_4xxx_table[32] = {
+static OpcodeFunc * const opcode_4xxx_table[32] = {
     op4alu, op4alu, op4alu, opMVSR,  // 40xx
     op4alu, op4alu, op4alu, op_ill,  // 42xx
     op4alu, op4alu, op4alu, opMVSR,  // 44xx
@@ -348,7 +362,7 @@ static OpcodeFunc *opcode_4xxx_table[32] = {
 
 /* Sub-subtable for instructions in the $4E40-$4E7F range, used by opmisc();
  * index is bits 5-3 of the opcode. */
-static OpcodeFunc *opcode_4E4x_table[8] = {
+static OpcodeFunc * const opcode_4E4x_table[8] = {
     opTRAP, opTRAP, opLINK, opUNLK,
     opMUSP, opMUSP, op4E7x, op_ill,
 };
@@ -403,6 +417,12 @@ int q68_jit_init(Q68State *state)
     /* Make sure page table is clear (so writes before processor reset
      * don't trigger JIT clearing */
     memset(state->jit_pages, 0, sizeof(state->jit_pages));
+
+    /* Set default memory management functions */
+    state->jit_malloc  = malloc;
+    state->jit_realloc = realloc;
+    state->jit_free    = free;
+    state->jit_flush   = NULL;
 
 #ifdef Q68_DISABLE_ADDRESS_ERROR
     /* Hack to avoid compiler warnings about unused functions */
@@ -565,8 +585,10 @@ Q68JitEntry *q68_jit_translate(Q68State *state, uint32_t address)
         }
         if (UNLIKELY(index == hashval)) {
             /* Out of entries, so clear the oldest one and use it */
+#ifdef Q68_JIT_VERBOSE
             DMSG("No free slots for code at $%06X, clearing oldest ($%06X)",
                  (int)address, (int)state->jit_table[oldest].m68k_start);
+#endif
             clear_entry(state, &state->jit_table[oldest]);
             index = oldest;
         }
@@ -575,7 +597,7 @@ Q68JitEntry *q68_jit_translate(Q68State *state, uint32_t address)
 
     /* Initialize the new entry */
 
-    current_entry->native_code = malloc(Q68_JIT_BLOCK_EXPAND_SIZE);
+    current_entry->native_code = state->jit_malloc(Q68_JIT_BLOCK_EXPAND_SIZE);
     if (!current_entry->native_code) {
         DMSG("No memory for code at $%06X", address);
         current_entry = NULL;
@@ -587,6 +609,7 @@ Q68JitEntry *q68_jit_translate(Q68State *state, uint32_t address)
     }
     state->jit_hashchain[hashval] = current_entry;
     current_entry->prev = NULL;
+    current_entry->state = state;
     current_entry->m68k_start = address;
     current_entry->native_size = Q68_JIT_BLOCK_EXPAND_SIZE;
     current_entry->native_length = 0;
@@ -641,9 +664,8 @@ Q68JitEntry *q68_jit_translate(Q68State *state, uint32_t address)
     ) {
         JIT_PAGE_SET(state, index);
     }
-    JIT_FLUSH_CACHE();
-    void *newptr = realloc(current_entry->native_code,
-                           current_entry->native_length);
+    void *newptr = state->jit_realloc(current_entry->native_code,
+                                      current_entry->native_length);
     if (newptr) {
         current_entry->native_code = newptr;
         current_entry->native_size = current_entry->native_length;
@@ -655,6 +677,9 @@ Q68JitEntry *q68_jit_translate(Q68State *state, uint32_t address)
 
     Q68JitEntry *retval = current_entry;
     current_entry = NULL;
+    if (state->jit_flush) {
+        state->jit_flush();
+    }
     return retval;
 }
 
@@ -692,33 +717,31 @@ Q68JitEntry *q68_jit_find(Q68State *state, uint32_t address)
 /*-----------------------------------------------------------------------*/
 
 /**
- * q68_jit_run:  Run translated 68000 code for the given number of cycles.
+ * q68_jit_run:  Run translated 68000 code.
  *
  * [Parameters]
  *           state: Processor state block
- *          cycles: Number of clock cycles to execute
+ *     cycle_limit: Clock cycle limit on execution (code will stop when
+ *                     state->cycles >= cycles)
  *     address_ptr: Pointer to translated block to execute; will be cleared
  *                     to NULL on return if the end of the block was reached
  * [Return value]
- *     Number of clock cycles actually executed
+ *     None
  */
-int q68_jit_run(Q68State *state, int cycles, Q68JitEntry **entry_ptr)
+void q68_jit_run(Q68State *state, uint32_t cycle_limit,
+                 Q68JitEntry **entry_ptr)
 {
     Q68JitEntry *entry = *entry_ptr;
-#ifdef Q68_TRACE
-    cycles = 1;  // Force stopping after every instruction
-#endif
-    const int cycles_to_do = cycles;
-    int cycles_done = 0;
 
   again:
     entry->timestamp = state->jit_timestamp;
     state->jit_timestamp++;
     entry->running = 1;
-    cycles = JIT_CALL(state, cycles, &entry->exec_address);
+    int cycles = JIT_CALL(state, cycle_limit - state->cycles,
+                          &entry->exec_address);
     entry->running = 0;
     state->jit_abort = 0;
-    cycles_done += cycles & 0x3FFF;
+    state->cycles += cycles & 0x3FFF;
 
     if (UNLIKELY(entry->must_clear)) {
         clear_entry(state, entry);
@@ -735,7 +758,7 @@ int q68_jit_run(Q68State *state, int cycles, Q68JitEntry **entry_ptr)
                     entry->exec_address =
                         state->jit_callstack[top].return_native;
                     state->jit_callstack_top = top;
-                    if (cycles_done < cycles_to_do) {
+                    if (state->cycles < cycle_limit) {
                         goto again;
                     } else {
                         break;
@@ -759,7 +782,7 @@ int q68_jit_run(Q68State *state, int cycles, Q68JitEntry **entry_ptr)
      * exception pending, and there's already a translated block at the
      * next PC, jump right to it so we don't incur the extra overhead of
      * returning to the caller */
-    if (!entry && cycles_done < cycles_to_do && !state->exception) {
+    if (!entry && state->cycles < cycle_limit && !state->exception) {
         entry = q68_jit_find(state, state->PC);
         if (entry) {
             goto again;
@@ -767,7 +790,6 @@ int q68_jit_run(Q68State *state, int cycles, Q68JitEntry **entry_ptr)
     }
 
     *entry_ptr = entry;
-    return cycles_done;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -810,7 +832,9 @@ void q68_jit_clear(Q68State *state, uint32_t address)
 void q68_jit_clear_page(Q68State *state, uint32_t address)
 {
     const uint32_t page = address >> Q68_JIT_PAGE_BITS;
+#ifdef Q68_JIT_VERBOSE
     DMSG("WARNING: jit_clear_page($%06X)", page << Q68_JIT_PAGE_BITS);
+#endif
 
     int index;
     for (index = 0; index < Q68_JIT_TABLE_SIZE; index++) {
@@ -873,7 +897,9 @@ void q68_jit_clear_write(Q68State *state, uint32_t address, uint32_t size)
      * the beginning of a block. */
     int found = 0;
     uint32_t start = address + size, end = address + (size-1);
+#ifdef Q68_JIT_VERBOSE
     DMSG("WARNING: jit_clear_write($%06X,%d)", (int)address, (int)size);
+#endif
     for (index = 0; index < Q68_JIT_TABLE_SIZE; index++) {
         if (state->jit_table[index].m68k_start == 0) {
             continue;
@@ -902,15 +928,19 @@ void q68_jit_clear_write(Q68State *state, uint32_t address, uint32_t size)
     }
 
     /* Add the blacklist entry */
+#ifdef Q68_JIT_VERBOSE
     DMSG("Blacklisting $%06X...$%06X", (int)start, (int)end);
+#endif
     /* First see if this overlaps with another entry */
     found = 0;
     for (index = 0; index < Q68_JIT_BLACKLIST_SIZE; index++) {
         if (state->jit_blacklist[index].m68k_start <= end
          && state->jit_blacklist[index].m68k_end >= start) {
+#ifdef Q68_JIT_VERBOSE
             DMSG("(Merging with $%06X...%06X)",
                  (int)state->jit_blacklist[index].m68k_start,
                  (int)state->jit_blacklist[index].m68k_end);
+#endif
             if (start > state->jit_blacklist[index].m68k_start) {
                 start = state->jit_blacklist[index].m68k_start;
             }
@@ -979,6 +1009,7 @@ static int translate_insn(Q68State *state, Q68JitEntry *entry)
     state->current_PC = jit_PC;
 
     /* Emit a cycle count check if appropriate */
+#ifdef Q68_JIT_LOOSE_TIMING
     if ((opcode & 0xFF00) == 0x6100  // Bcc
      || (opcode & 0xF0F8) == 0x50C8  // DBcc
      || (opcode & 0xFFF0) == 0x4E40  // TRAP
@@ -987,15 +1018,20 @@ static int translate_insn(Q68State *state, Q68JitEntry *entry)
      ||  opcode           == 0x4E73  // RTE
      ||  opcode           == 0x4E75  // RTS
      ||  opcode           == 0x4E77  // RTR
-#ifdef Q68_M68K_TESTER  // Define when linking with m68k-tester
+# ifdef Q68_M68K_TESTER  // Define when linking with m68k-tester
      ||  opcode           == 0x7100  // m68k-tester abort opcode
-#endif
-#ifdef Q68_TRACE
-     || 1  // Always check
-#endif
+# endif
     ) {
+#endif
         JIT_EMIT_CHECK_CYCLES(current_entry);
+#ifdef Q68_JIT_LOOSE_TIMING
     }
+#endif
+
+    /* Add a trace call if we're tracing */
+#ifdef Q68_TRACE
+    JIT_EMIT_TRACE(current_entry);
+#endif
 
     /* Translate the instruction itself and update the 68000 PC */
     PC_updated = 0;
@@ -1044,7 +1080,7 @@ static void clear_entry(Q68State *state, Q68JitEntry *entry)
 
     /* Free the native code */
     state->jit_total_data -= entry->native_size;
-    free(entry->native_code);
+    state->jit_free(entry->native_code);
     entry->native_code = NULL;
 
     /* Clear the entry from the table and hash chain */
@@ -1109,9 +1145,9 @@ static void clear_oldest_entry(Q68State *state)
 static int expand_buffer(Q68JitEntry *entry)
 {
     const uint32_t newsize = entry->native_size + Q68_JIT_BLOCK_EXPAND_SIZE;
-    void *newptr = realloc(entry->native_code, newsize);
+    void *newptr = entry->state->jit_realloc(entry->native_code, newsize);
     if (!newptr) {
-        DMSG("out of memory");
+        DMSG("Out of memory");
         return 0;
     }
     entry->native_code = newptr;
@@ -2380,6 +2416,24 @@ static int op_Bcc(Q68State *state, uint32_t opcode)
         return 0;
     } else {
         int32_t offset;
+#ifdef Q68_OPTIMIZE_IDLE
+        /* FIXME: Temporary hack to improve PSP performance */
+        if (target == 0x1066
+         && ((cond == COND_EQ && state->current_PC - 2 == 0x001092)
+          || (cond == COND_PL && state->current_PC - 2 == 0x0010B4))
+        ) {
+            /* BIOS intro animation */
+            JIT_EMIT_ADD_CYCLES(current_entry,
+                                468);  // Length of one loop when idle
+        } else if (target == 0x10BC
+                && ((cond == COND_PL && state->current_PC - 2 == 0x001122)
+                 || (cond == COND_T  && state->current_PC - 2 == 0x00116A))
+        ) {
+            /* Azel: Panzer Dragoon RPG (JP) */
+            JIT_EMIT_ADD_CYCLES(current_entry, 
+                                178*4);  // Assuming a cycle_limit of 768
+        }
+#endif
         if (target < state->current_PC) {
             offset = btcache_lookup(target);
         } else {

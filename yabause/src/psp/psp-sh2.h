@@ -21,6 +21,8 @@
 #ifndef PSP_SH2_H
 #define PSP_SH2_H
 
+#include "../sh2core.h"  // for SH2Interface_struct
+
 /*************************************************************************/
 
 /* Module interface definition */

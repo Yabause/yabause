@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include "localtime.h"
 
 #define SECSPERMIN	60L
 #define MINSPERHOUR	60L

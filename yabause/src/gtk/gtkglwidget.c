@@ -269,9 +269,9 @@ void yui_gl_dump_screen(YuiGl * glxarea) {
 
 	if (! glxarea->pixels) glxarea->pixels = malloc(sizeof(u8) * size);
 
-	pixels = glxarea->pixels;
+	pixels = (u8 *)glxarea->pixels;
 	pixels += size - (buf_width * 3);
-	buffer = dispbuffer;
+	buffer = (u8 *)dispbuffer;
 
 	for(i = 0;i < buf_height;i++) {
 		for(j = 0;j < buf_width;j++) {

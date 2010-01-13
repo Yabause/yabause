@@ -25,6 +25,13 @@
 #include "sh2core.h"
 #include "yabause.h"
 
+#ifdef OPTIMIZED_DMA
+# include "cs2.h"
+# include "scsp.h"
+# include "vdp1.h"
+# include "vdp2.h"
+#endif
+
 Scu * ScuRegs;
 scudspregs_struct * ScuDsp;
 scubp_struct * ScuBP;
@@ -37,13 +44,13 @@ int ScuInit(void) {
    int i;
 
    if ((ScuRegs = (Scu *) calloc(1, sizeof(Scu))) == NULL)
-		return -1;
+      return -1;
 
    if ((ScuDsp = (scudspregs_struct *) calloc(1, sizeof(scudspregs_struct))) == NULL)
-		return -1;
+      return -1;
 
    if ((ScuBP = (scubp_struct *) calloc(1, sizeof(scubp_struct))) == NULL)
-		return -1;
+      return -1;
 
    for (i = 0; i < MAX_BREAKPOINTS; i++)
       ScuBP->codebreakpoint[i].addr = 0xFFFFFFFF;
@@ -103,6 +110,292 @@ void ScuReset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef OPTIMIZED_DMA
+
+// Table of memory types for DMA optimization, in 512k (1<<19 byte) units:
+//    0x00 = no special handling
+//    0x12 = VDP1/2 RAM (8-bit organized, 16-bit copy unit)
+//    0x22 = M68K RAM (16-bit organized, 16-bit copy unit)
+//    0x23 = VDP2 color RAM (16-bit organized, 16-bit copy unit)
+//    0x24 = SH-2 RAM (16-bit organized, 32-bit copy unit)
+static const u8 DMAMemoryType[0x20000000>>19] = {
+   [0x00200000>>19] = 0x24,
+   [0x00280000>>19] = 0x24,
+   [0x05A00000>>19] = 0x22,
+   [0x05A80000>>19] = 0x22,
+   [0x05C00000>>19] = 0x12,
+   [0x05C00000>>19] = 0x12,
+   [0x05E00000>>19] = 0x12,
+   [0x05E80000>>19] = 0x12,
+   [0x05F00000>>19] = 0x23,
+   [0x06000000>>19] = 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
+                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
+                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
+                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
+                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
+                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
+                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
+                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
+};
+
+// Function to return the native pointer for an optimized address
+#ifdef __GNUC__
+__attribute__((always_inline))  // Force it inline for better performance
+#endif
+static INLINE void *DMAMemoryPointer(u32 address) {
+   u32 page = (address & 0x1FF80000) >> 19;
+   switch (DMAMemoryType[page]) {
+      case 0x12:
+         switch (page) {
+            case 0x05C00000>>19: return &Vdp1Ram[address & 0x7FFFF];
+            case 0x05E00000>>19: // fall through
+            case 0x05E80000>>19: return &Vdp2Ram[address & 0x7FFFF];
+            default: return NULL;
+         }
+      case 0x22:
+         return &SoundRam[address & 0x7FFFF];
+      case 0x23:
+         return &Vdp2ColorRam[address & 0xFFF];
+      case 0x24:
+         if (page == 0x00200000>>19) {
+            return &LowWram[address & 0xFFFFF];
+         } else {
+            return &HighWram[address & 0xFFFFF];
+         }
+      default:
+         return NULL;
+   }
+}
+
+#endif  // OPTIMIZED_DMA
+
+static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
+                  u32 WriteAddress, unsigned int WriteAdd,
+                  u32 TransferSize)
+{
+   if (ReadAdd == 0) {
+      // DMA fill
+
+#ifdef OPTIMIZED_DMA
+      if (ReadAddress == 0x25818000 && WriteAdd == 4) {
+         // Reading from the CD buffer, so optimize if possible.
+         if ((WriteAddress & 0x1E000000) == 0x06000000) {
+            Cs2RapidCopyT2(&HighWram[WriteAddress & 0xFFFFF], TransferSize/4);
+            SH2WriteNotify(WriteAddress, TransferSize);
+            return;
+         }
+         else if ((WriteAddress & 0x1FF00000) == 0x00200000) {
+            Cs2RapidCopyT2(&LowWram[WriteAddress & 0xFFFFF], TransferSize/4);
+            SH2WriteNotify(WriteAddress, TransferSize);
+            return;
+         }
+      }
+#endif
+
+      // Is it a constant source or a register whose value can change from
+      // read to read?
+      int constant_source = ((ReadAddress & 0x1FF00000) == 0x00200000)
+                         || ((ReadAddress & 0x1E000000) == 0x06000000)
+                         || ((ReadAddress & 0x1FF00000) == 0x05A00000)
+                         || ((ReadAddress & 0x1DF00000) == 0x05C00000);
+
+      if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
+            && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
+         // Fill a 32-bit value in 16-bit units.  We have to be careful to
+         // avoid misaligned 32-bit accesses, because some hardware (e.g.
+         // PSP) crashes on such accesses.
+         if (constant_source) {
+            u32 counter = 0;
+            u32 val;
+            if (ReadAddress & 2) {  // Avoid misaligned access
+               val = MappedMemoryReadWord(ReadAddress) << 16
+                   | MappedMemoryReadWord(ReadAddress+2);
+            } else {
+               val = MappedMemoryReadLong(ReadAddress);
+            }
+            while (counter < TransferSize) {
+               MappedMemoryWriteWord(WriteAddress, (u16)(val >> 16));
+               WriteAddress += WriteAdd;
+               MappedMemoryWriteWord(WriteAddress, (u16)val);
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         } else {
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               MappedMemoryWriteWord(WriteAddress,
+                                     MappedMemoryReadWord(ReadAddress));
+               WriteAddress += WriteAdd;
+               MappedMemoryWriteWord(WriteAddress,
+                                     MappedMemoryReadWord(ReadAddress+2));
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         }
+      }
+      else {
+         // Fill in 32-bit units (always aligned).
+         u32 start = WriteAddress;
+         if (constant_source) {
+            u32 val = MappedMemoryReadLong(ReadAddress);
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               MappedMemoryWriteLong(WriteAddress, val);
+               ReadAddress += ReadAdd;
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         } else {
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               MappedMemoryWriteLong(WriteAddress,
+                                     MappedMemoryReadLong(ReadAddress));
+               ReadAddress += ReadAdd;
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         }
+         // Inform the SH-2 core in case it was a write to main RAM.
+         SH2WriteNotify(start, WriteAddress - start);
+      }
+
+   }
+
+   else {
+      // DMA copy
+
+#ifdef OPTIMIZED_DMA
+      int source_type = DMAMemoryType[(ReadAddress  & 0x1FF80000) >> 19];
+      int dest_type   = DMAMemoryType[(WriteAddress & 0x1FF80000) >> 19];
+      if (WriteAdd == ((dest_type & 0x2) ? 2 : 4)) {
+         // Writes don't skip any bytes, so use an optimized copy algorithm
+         // if possible.
+         const u8 *source_ptr = DMAMemoryPointer(ReadAddress);
+         u8 *dest_ptr = DMAMemoryPointer(WriteAddress);
+# ifdef WORDS_BIGENDIAN
+         if ((source_type & 0x30) && (dest_type & 0x30)) {
+            // Source and destination are both directly accessible.
+            memcpy(dest_ptr, source_ptr, TransferSize);
+            if (dest_type == 0x24) {
+               SH2WriteNotify(WriteAddress, TransferSize);
+            } else if (dest_type == 0x22) {
+               M68KWriteNotify(WriteAddress, TransferSize);
+            }
+            return;
+         }
+# else  // !WORDS_BIGENDIAN
+         if (source_type & dest_type & 0x10) {
+            // Source and destination are both 8-bit organized.
+            memcpy(dest_ptr, source_ptr, TransferSize);
+            return;
+         }
+         else if (source_type & dest_type & 0x20) {
+            // Source and destination are both 16-bit organized.
+            memcpy(dest_ptr, source_ptr, TransferSize);
+            if (dest_type == 0x24) {
+               SH2WriteNotify(WriteAddress, TransferSize);
+            } else if (dest_type == 0x22) {
+               M68KWriteNotify(WriteAddress, TransferSize);
+            }
+            return;
+         }
+         else if ((source_type | dest_type) >> 4 == 0x3) {
+            // Need to convert between 8-bit and 16-bit organization.
+            if ((ReadAddress | WriteAddress) & 2) {  // Avoid misaligned access
+               const u16 *source_16 = (u16 *)source_ptr;
+               u16 *dest_16 = (u16 *)dest_ptr;
+               u32 counter;
+               for (counter = 0; counter < TransferSize-6;
+                     counter += 8, source_16 += 4, dest_16 += 4) {
+                  // Use "unsigned int" rather than "u16" because some
+                  // compilers try too hard to keep the high bits zero,
+                  // thus wasting cycles on every iteration.
+                  unsigned int val0 = BSWAP16(source_16[0]);
+                  unsigned int val1 = BSWAP16(source_16[1]);
+                  unsigned int val2 = BSWAP16(source_16[2]);
+                  unsigned int val3 = BSWAP16(source_16[3]);
+                  dest_16[0] = val0;
+                  dest_16[1] = val1;
+                  dest_16[2] = val2;
+                  dest_16[3] = val3;
+               }
+               for (; counter < TransferSize;
+                     counter += 2, source_16++, dest_16++) {
+                  *dest_16 = BSWAP16(*source_16);
+               }
+            }
+            else {  // 32-bit aligned accesses possible
+               const u32 *source_32 = (u32 *)source_ptr;
+               u32 *dest_32 = (u32 *)dest_ptr;
+               u32 counter;
+               for (counter = 0; counter < TransferSize-12;
+                     counter += 16, source_32 += 4, dest_32 += 4) {
+                  u32 val0 = BSWAP16(source_32[0]);
+                  u32 val1 = BSWAP16(source_32[1]);
+                  u32 val2 = BSWAP16(source_32[2]);
+                  u32 val3 = BSWAP16(source_32[3]);
+                  dest_32[0] = val0;
+                  dest_32[1] = val1;
+                  dest_32[2] = val2;
+                  dest_32[3] = val3;
+               }
+               for (; counter < TransferSize;
+                     counter += 4, source_32++, dest_32++) {
+                  *dest_32 = BSWAP16(*source_32);
+               }
+            }
+            return;
+         }
+# endif  // WORDS_BIGENDIAN
+      }
+#endif  // OPTIMIZED_DMA
+
+      if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
+          && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
+         // Copy in 16-bit units, avoiding misaligned accesses.
+         u32 counter = 0;
+         if (ReadAddress & 2) {  // Avoid misaligned access
+            u16 tmp = MappedMemoryReadWord(ReadAddress);
+            MappedMemoryWriteWord(WriteAddress, tmp);
+            WriteAddress += WriteAdd;
+            ReadAddress += 2;
+            counter += 2;
+         }
+         while (counter < TransferSize-2) {
+            u32 tmp = MappedMemoryReadLong(ReadAddress);
+            MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
+            WriteAddress += WriteAdd;
+            MappedMemoryWriteWord(WriteAddress, (u16)tmp);
+            WriteAddress += WriteAdd;
+            ReadAddress += 4;
+            counter += 4;
+         }
+         if (counter < TransferSize) {
+            u16 tmp = MappedMemoryReadWord(ReadAddress);
+            MappedMemoryWriteWord(WriteAddress, tmp);
+            WriteAddress += WriteAdd;
+            ReadAddress += 2;
+            counter += 2;
+         }
+      }
+      else {
+         u32 counter = 0;
+         u32 start = WriteAddress;
+         while (counter < TransferSize) {
+            MappedMemoryWriteLong(WriteAddress, MappedMemoryReadLong(ReadAddress));
+            ReadAddress += 4;
+            WriteAddress += WriteAdd;
+            counter += 4;
+         }
+         /* Inform the SH-2 core in case it was a write to main RAM */
+         SH2WriteNotify(start, WriteAddress - start);
+      }
+
+   }  // Fill / copy
+}
+
+//////////////////////////////////////
+
 static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
    u8 ReadAdd, WriteAdd;
 
@@ -143,52 +436,16 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 
    if (dmainfo->ModeAddressUpdate & 0x1000000) {
       // Indirect DMA
-      u32 TempReadAddress;
-      u32 TempWriteAddress;
-      u32 TempTransferNumber;
-      u32 test, test2;
 
       for (;;) {
-         u32 counter = 0;
+         u32 ThisTransferSize = MappedMemoryReadLong(dmainfo->WriteAddress);
+         u32 ThisWriteAddress = MappedMemoryReadLong(dmainfo->WriteAddress+4);
+         u32 ThisReadAddress  = MappedMemoryReadLong(dmainfo->WriteAddress+8);
 
-         TempTransferNumber=MappedMemoryReadLong(dmainfo->WriteAddress);
-         TempWriteAddress=MappedMemoryReadLong(dmainfo->WriteAddress+4);
-         TempReadAddress=MappedMemoryReadLong(dmainfo->WriteAddress+8);
-         test = TempWriteAddress & 0x1FFFFFFF;
-         test2 = TempReadAddress & 0x80000000;
+         DoDMA(ThisReadAddress & 0x7FFFFFFF, ReadAdd, ThisWriteAddress,
+               WriteAdd, ThisTransferSize);
 
-         if (dmainfo->mode > 0) {
-            TempTransferNumber &= 0xFFF;
-
-            if (TempTransferNumber == 0)
-               TempTransferNumber = 0x1000;
-         }
-         else {
-            if (TempTransferNumber == 0)
-               TempTransferNumber = 0x100000;
-         }
-
-         TempReadAddress &= 0x7FFFFFFF;
-
-         if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
-            u32 start = TempWriteAddress;
-            while(counter < TempTransferNumber) {
-               u32 tmp = MappedMemoryReadLong(TempReadAddress);
-               MappedMemoryWriteWord(TempWriteAddress, (u16)(tmp >> 16));
-               TempWriteAddress += WriteAdd;
-               MappedMemoryWriteWord(TempWriteAddress, (u16)tmp);
-               TempWriteAddress += WriteAdd;
-               TempReadAddress += ReadAdd;
-               counter += 4;
-            }
-            SH2WriteNotify(start, TempWriteAddress - start);
-         }
-         else {
-            LOG("indirect DMA, A Bus, not implemented\n");
-         }
-
-
-         if (test2)
+         if (ThisReadAddress & 0x80000000)
             break;
 
          dmainfo->WriteAddress+= 0xC;
@@ -208,8 +465,6 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
    }
    else {
       // Direct DMA
-      u32 counter = 0;
-      u32 test = dmainfo->WriteAddress & 0x1FFFFFFF;
 
       if (dmainfo->mode > 0) {
          dmainfo->TransferNumber &= 0xFFF;
@@ -222,30 +477,9 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
             dmainfo->TransferNumber = 0x100000;
       }
 
-      if ((test >= 0x5A00000) && (test < 0x5FF0000)) {
-         u32 start = dmainfo->WriteAddress;
-         while(counter < dmainfo->TransferNumber) {
-            u32 tmp = MappedMemoryReadLong(dmainfo->ReadAddress);
-            MappedMemoryWriteWord(dmainfo->WriteAddress, (u16)(tmp >> 16));
-            dmainfo->WriteAddress += WriteAdd;
-            MappedMemoryWriteWord(dmainfo->WriteAddress, (u16)tmp);
-            dmainfo->WriteAddress += WriteAdd;
-            dmainfo->ReadAddress += ReadAdd;
-            counter += 4;
-         }
-         SH2WriteNotify(start, dmainfo->WriteAddress - start);
-      }
-      else {     
-         u32 start = dmainfo->WriteAddress;
-		 LOG("direct DMA, A Bus, not tested yet\n");
-         while(counter < dmainfo->TransferNumber) {
-            MappedMemoryWriteLong(dmainfo->WriteAddress, MappedMemoryReadLong(dmainfo->ReadAddress));
-            dmainfo->ReadAddress += ReadAdd;
-            dmainfo->WriteAddress += WriteAdd;
-            counter += 4;
-         }
-         SH2WriteNotify(start, dmainfo->WriteAddress - start);
-      }
+      DoDMA(dmainfo->ReadAddress, ReadAdd, dmainfo->WriteAddress, WriteAdd,
+            dmainfo->TransferNumber);
+
       switch(dmainfo->mode) {
          case 0:
             ScuSendLevel0DMAEnd();
@@ -844,7 +1078,7 @@ void ScuExec(u32 timing) {
                      if (direction)
                      {
                         u32 WA0temp=ScuDsp->WA0;
-						u32 start;
+                        u32 start;
 
                         // Looks like some bits are ignored on a real saturn(Grandia takes advantage of this)
                         ScuDsp->WA0 &= 0x01FFFFFF;

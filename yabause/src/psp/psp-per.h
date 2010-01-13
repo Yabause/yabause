@@ -21,6 +21,8 @@
 #ifndef PSP_PER_H
 #define PSP_PER_H
 
+#include "../peripheral.h"  // for PerInterface_struct
+
 /*************************************************************************/
 
 /* Module interface definition */

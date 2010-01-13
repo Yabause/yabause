@@ -36,6 +36,21 @@
  */
 extern const char *psp_strerror(const int32_t code);
 
+/*----------------------------------*/
+
+/**
+ * sys_load_module:  Load (and start) a PSP module.
+ *
+ * [Parameters]
+ *        module: Module pathname
+ *     partition: Memory partition (PSP_MEMORY_PARTITON_*)
+ * [Return value]
+ *     Module ID (nonnegative) on success, error code (negative) on failure
+ */
+extern SceUID sys_load_module(const char *module, int partition);
+
+/*----------------------------------*/
+
 /**
  * sys_start_thread:  Start a new thread, returning the created thread
  * handle.
@@ -64,6 +79,19 @@ extern int32_t sys_start_thread(const char *name, void *entry, int priority,
  *     Nonzero if the thread was deleted, else zero
  */
 extern int sys_delete_thread_if_stopped(SceUID thread, int *status_ret);
+
+/*----------------------------------*/
+
+/**
+ * sys_setup_callbacks:  Set up the system callbacks (HOME button and
+ * power status change).
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     Nonzero on success, zero on error
+ */
+extern int sys_setup_callbacks(void);
 
 /**************************************************************************/
 

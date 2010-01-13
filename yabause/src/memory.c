@@ -69,6 +69,11 @@ u8 *LowWram;
 u8 *BiosRom;
 u8 *BupRam;
 
+/* This flag is set to 1 on every write to backup RAM.  Ports can freely
+ * check or clear this flag to determine when backup RAM has been written,
+ * e.g. for implementing autosave of backup RAM. */
+u8 BupRamWritten;
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 * T1MemoryInit(u32 size)
@@ -340,6 +345,7 @@ static u32 FASTCALL BupRamMemoryReadLong(USED_IF_DEBUG u32 addr)
 static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
 {
    T1WriteByte(BupRam, (addr & 0xFFFF) | 0x1, val);
+   BupRamWritten = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////

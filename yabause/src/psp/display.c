@@ -18,10 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include "../yabause.h"
-
 #include "common.h"
+
 #include "display.h"
+#include "gu.h"
 #include "sys.h"
 
 /*************************************************************************/
@@ -41,8 +41,7 @@ static uint8_t work_surface;
 
 /* Pointers into VRAM */
 static void *surfaces[2];       // Display buffers
-static uint16_t *depth_buffer;  // 3D depth buffer
-static uint8_t *vram_spare_ptr; // Spare VRAM (above depth buffer)
+static uint8_t *vram_spare_ptr; // Spare VRAM (above display buffers)
 static uint8_t *vram_top;       // Top of VRAM
 
 /* Display list */
@@ -53,6 +52,12 @@ static uint8_t __attribute__((aligned(64))) display_list[3*1024*1024];
 /* Semaphore flag to indicate whether there is a buffer swap pending; while
  * true, the main thread must not access any other variables */
 static int swap_pending;
+
+/* System clock after the sceDisplayWaitVblankStart() starting the last frame*/
+static uint32_t last_frame_start;
+
+/* Number of frames between the last two calls to sceDisplayWaitVblankStart()*/
+static unsigned int last_frame_length;
 
 /*************************************************************************/
 
@@ -82,7 +87,7 @@ int display_init(void)
 
     /* Clear out VRAM */
     memset(sceGeEdramGetAddr(), 0, sceGeEdramGetSize());
-    sceKernelDcacheWritebackAll();
+    sceKernelDcacheWritebackInvalidateAll();
 
     /* Set display mode */
     int32_t res = sceDisplaySetMode(0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
@@ -104,8 +109,7 @@ int display_init(void)
     for (i = 0; i < lenof(surfaces); i++) {
         surfaces[i] = vram_addr + i*frame_size;
     }
-    depth_buffer = (uint16_t *)(vram_addr + lenof(surfaces)*frame_size);
-    vram_spare_ptr = (uint8_t *)(depth_buffer + DISPLAY_STRIDE*DISPLAY_HEIGHT);
+    vram_spare_ptr = (uint8_t *)(vram_addr + lenof(surfaces)*frame_size);
     vram_top = vram_addr + vram_size;
     displayed_surface = 0;
     work_surface = 1;
@@ -116,12 +120,12 @@ int display_init(void)
                           display_mode, PSP_DISPLAY_SETBUF_IMMEDIATE);
 
     /* Set up the GU library */
-    sceGuInit();
-    sceGuStart(GU_DIRECT, display_list);
-    sceGuDispBuffer(DISPLAY_WIDTH, DISPLAY_HEIGHT,
-                    surfaces[displayed_surface], DISPLAY_STRIDE);
-    sceGuFinish();
-    sceGuSync(0, 0);
+    guInit();
+    guStart(GU_DIRECT, display_list);
+    guDispBuffer(DISPLAY_WIDTH, DISPLAY_HEIGHT,
+                 surfaces[displayed_surface], DISPLAY_STRIDE);
+    guFinish();
+    guSync(0, 0);
 
     /* Success */
     initted = 1;
@@ -188,21 +192,6 @@ uint32_t *display_work_buffer(void)
 /*-----------------------------------------------------------------------*/
 
 /**
- * display_depth_buffer:  Return a pointer to the 3D depth buffer.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     Pointer to the 3D depth buffer
- */
-uint16_t *display_depth_buffer(void)
-{
-    return depth_buffer;
-}
-
-/*-----------------------------------------------------------------------*/
-
-/**
  * display_spare_vram:  Return a pointer to the VRAM spare area.
  *
  * [Parameters]
@@ -247,22 +236,27 @@ void display_begin_frame(void)
         sceKernelDelayThread(100);  // 0.1ms
     }
 
-    sceGuStart(GU_DIRECT, display_list);
+    guStart(GU_DIRECT, display_list);
 
-    /* Register the various display pointers */
-    sceGuDrawBuffer(GU_PSM_8888, display_work_buffer(), DISPLAY_STRIDE);
-    sceGuDepthBuffer(depth_buffer, DISPLAY_STRIDE);
+    /* We don't use a depth buffer, so disable depth buffer writing */
+    guDepthMask(GU_TRUE);
 
-    /* Clear the work surface and depth buffer */
-    sceGuDisable(GU_SCISSOR_TEST);
-    sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
+    /* Clear the work surface--make sure to use the base pointer here, not
+     * the effective pointer, lest we stomp on spare VRAM while using the
+     * second buffer */
+    guDrawBuffer(GU_PSM_8888, surfaces[work_surface], DISPLAY_STRIDE);
+    guDisable(GU_SCISSOR_TEST);
+    guClear(GU_COLOR_BUFFER_BIT);
+    guCommit();
+
+    /* Register the effective work surface pointer */
+    guDrawBuffer(GU_PSM_8888, display_work_buffer(), DISPLAY_STRIDE);
 
     /* Set up drawing area parameters */
-    sceGuViewport(2048, 2048, display_width, display_height);
-    sceGuOffset(2048 - display_height/2, 2048 - display_height/2);
-    sceGuDepthRange(65535, 0);
-    sceGuScissor(0, 0, display_width, display_height);
-    sceGuEnable(GU_SCISSOR_TEST);
+    guViewport(2048, 2048, display_width, display_height);
+    guOffset(2048 - display_height/2, 2048 - display_height/2);
+    guScissor(0, 0, display_width, display_height);
+    guEnable(GU_SCISSOR_TEST);
 
 }
 
@@ -280,7 +274,28 @@ void display_begin_frame(void)
  */
 void display_end_frame(void)
 {
-    sceGuFinish();
+    guFinish();
+#if 0
+guSync(0,0);
+static int frame;if(frame>=230&&frame<236){
+char buf[100];FILE*f;static char mem[0x200000];
+sprintf(buf,"frame%d.dlist",frame);
+f=fopen(buf,"w");setvbuf(f,NULL,_IOFBF,0x200000);
+fwrite(display_list,sizeof(display_list),1,f);fclose(f);
+sprintf(buf,"frame%d.ppm",frame);
+char*src=(char*)display_work_buffer(),*dest=mem;
+dest+=sprintf(dest,"P6\n%d %d 255\n",display_width,display_height);
+int y;for(y=0;y<display_height;y++,src+=(512-display_width)*4){
+int x;for(x=0;x<display_width;x++,src+=4,dest+=3){dest[0]=src[0];dest[1]=src[1];dest[2]=src[2];}}
+f=fopen(buf,"w");setvbuf(f,NULL,_IOFBF,0x200000);
+fwrite(mem,dest-mem,1,f);fclose(f);
+sprintf(buf,"frame%d.vram",frame);
+memcpy(mem,display_spare_vram(),0x4200000-(uintptr_t)display_spare_vram());
+f=fopen(buf,"w");setvbuf(f,NULL,_IOFBF,0x200000);
+fwrite(mem,0x4200000-(uintptr_t)display_spare_vram(),1,f);fclose(f);
+}
+frame++;
+#endif
     swap_pending = 1;
     /* Give the new thread a slightly higher priority than us, or else it
      * won't actually get a chance to run */
@@ -290,13 +305,35 @@ void display_end_frame(void)
         DMSG("Failed to start buffer swap thread");
         swap_pending = 0;
         /* Do it ourselves */
-        sceGuSync(0, 0);
+        guSync(0, 0);
         sceDisplaySetFrameBuf(surfaces[work_surface], DISPLAY_STRIDE,
                               display_mode, PSP_DISPLAY_SETBUF_NEXTFRAME);
         displayed_surface = work_surface;
         work_surface = (work_surface + 1) % lenof(surfaces);
         sceDisplayWaitVblankStart();
+        const uint32_t now = sceKernelGetSystemTimeLow();
+        const uint32_t last_frame_time = now - last_frame_start;
+        const uint32_t time_unit = (1001000+30)/60;
+        last_frame_length = (last_frame_time + time_unit/2) / time_unit;
+        last_frame_start = now;
     }
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * display_last_frame_length:  Returns the length of time the last frame
+ * was displayed, in hardware frame (1/59.94sec) units.  Only valid between
+ * display_begin_frame() and display_end_frame().
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     Length of time the last frame was displayed
+ */
+unsigned int display_last_frame_length(void)
+{
+    return last_frame_length;
 }
 
 /*************************************************************************/
@@ -325,9 +362,9 @@ void display_blit(const void *src, int src_width, int src_height,
     const unsigned int xofs = ((uintptr_t)src & 0x3F) / 4;
     const uint32_t * const src_aligned = (const uint32_t *)src - xofs;
 
-    sceGuCopyImage(GU_PSM_8888, xofs, 0, src_width, src_height, src_stride,
-                   src_aligned, dest_x, dest_y, DISPLAY_STRIDE,
-                   display_work_buffer());
+    guCopyImage(GU_PSM_8888, xofs, 0, src_width, src_height, src_stride,
+                src_aligned, dest_x, dest_y, DISPLAY_STRIDE,
+                display_work_buffer());
 
 #elif 1  // Method 2: Draw as a texture (slower, but more general)
 
@@ -339,13 +376,11 @@ void display_blit(const void *src, int src_width, int src_height,
     /* Set up the vertex array (it's faster to draw multiple vertical
      * strips than try to blit the whole thing at once) */
     const int nstrips = (src_width + 15) / 16;
-    struct {uint16_t u, v, x, y, z;} *vertices;
-    vertices = sceGuGetMemory(sizeof(*vertices) * (2*nstrips));
-    if (!vertices) {
-        DMSG("Failed to get vertex memory (%d bytes)",
-             sizeof(*vertices) * nstrips);
-        return;
-    }
+    struct {
+        uint16_t u, v;
+        int16_t x, y, z;
+    } *vertices = guGetMemory(sizeof(*vertices) * (2*nstrips));
+    /* Note that guGetMemory() never fails, so we don't check for failure */
     int i, x;
     for (i = 0, x = 0; x < src_width; i += 2, x += 16) {
         int thiswidth = 16;
@@ -365,18 +400,19 @@ void display_blit(const void *src, int src_width, int src_height,
     }
 
     /* Draw the array */
-    sceGuEnable(GU_TEXTURE_2D);
-    sceGuTexFilter(GU_NEAREST, GU_NEAREST);
-    sceGuTexWrap(GU_CLAMP, GU_CLAMP);
-    sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGB);
+    guEnable(GU_TEXTURE_2D);
+    guTexFilter(GU_NEAREST, GU_NEAREST);
+    guTexWrap(GU_CLAMP, GU_CLAMP);
+    guTexFunc(GU_TFX_REPLACE, GU_TCC_RGB);
     /* Always use a 512x512 texture size (the GE can only handle sizes that
      * are powers of 2, and the size itself doesn't seem to affect speed) */
-    sceGuTexImage(0, 512, 512, src_stride, src_aligned);
-    sceGuTexMode(GU_PSM_8888, 0, 0, 0);
-    sceGuDrawArray(GU_SPRITES,
-                   GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
-                   2*nstrips, NULL, vertices);
-    sceGuDisable(GU_TEXTURE_2D);
+    guTexFlush();
+    guTexMode(GU_PSM_8888, 0, 0, 0);
+    guTexImage(0, 512, 512, src_stride, src_aligned);
+    guDrawArray(GU_SPRITES,
+                GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
+                2*nstrips, NULL, vertices);
+    guDisable(GU_TEXTURE_2D);
 
 #else  // Method 3: Copy using the CPU (slowest)
 
@@ -388,7 +424,6 @@ void display_blit(const void *src, int src_width, int src_height,
     ) {
         memcpy(dest32, src32, src_width*4);
     }
-    sceKernelDcacheWritebackAll();
 
 #endif
 }
@@ -421,12 +456,10 @@ void display_blit_scaled(const void *src, int src_width, int src_height,
     const uint32_t * const src_aligned = (const uint32_t *)src - xofs;
 
     /* Set up the vertex array (4 vertices for a 2-triangle strip) */
-    struct {uint16_t u, v, x, y, z;} *vertices;
-    vertices = sceGuGetMemory(sizeof(*vertices) * 4);
-    if (!vertices) {
-        DMSG("Failed to get vertex memory (%d bytes)", sizeof(*vertices) * 4);
-        return;
-    }
+    struct {
+        uint16_t u, v;
+        int16_t x, y, z;
+    } *vertices = guGetMemory(sizeof(*vertices) * 4);
     vertices[0].u = xofs;
     vertices[0].v = 0;
     vertices[0].x = dest_x;
@@ -449,16 +482,49 @@ void display_blit_scaled(const void *src, int src_width, int src_height,
     vertices[3].z = 0;
 
     /* Draw the array */
-    sceGuEnable(GU_TEXTURE_2D);
-    sceGuTexFilter(GU_LINEAR, GU_LINEAR);
-    sceGuTexWrap(GU_CLAMP, GU_CLAMP);
-    sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGB);
-    sceGuTexImage(0, 512, 512, src_stride, src_aligned);
-    sceGuTexMode(GU_PSM_8888, 0, 0, 0);
-    sceGuDrawArray(GU_TRIANGLE_STRIP,
-                   GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
-                   4, NULL, vertices);
-    sceGuDisable(GU_TEXTURE_2D);
+    guEnable(GU_TEXTURE_2D);
+    guTexFilter(GU_LINEAR, GU_LINEAR);
+    guTexWrap(GU_CLAMP, GU_CLAMP);
+    guTexFunc(GU_TFX_REPLACE, GU_TCC_RGB);
+    guTexFlush();
+    guTexMode(GU_PSM_8888, 0, 0, 0);
+    guTexImage(0, 512, 512, src_stride, src_aligned);
+    guDrawArray(GU_TRIANGLE_STRIP,
+                GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
+                4, NULL, vertices);
+    guDisable(GU_TEXTURE_2D);
+}
+
+/*************************************************************************/
+
+/**
+ * display_fill_box:  Draw a filled box with a specified color.
+ *
+ * [Parameters]
+ *     x1, y1: Upper-left coordinates of box
+ *     x2, y2: Lower-right coordinates of box
+ *      color: Color to fill with (0xAABBGGRR)
+ * [Return value]
+ *     None
+ */
+void display_fill_box(int x1, int y1, int x2, int y2, uint32_t color)
+{
+    struct {
+        uint32_t color;
+        int16_t x, y, z, pad;
+    } *vertices = guGetMemory(sizeof(*vertices) * 2);
+    vertices[0].color = color;
+    vertices[0].x = x1;
+    vertices[0].y = y1;
+    vertices[0].z = 0;
+    vertices[1].color = color;
+    vertices[1].x = x2 + 1;
+    vertices[1].y = y2 + 1;
+    vertices[1].z = 0;
+
+    guDrawArray(GU_SPRITES,
+                GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
+                2, NULL, vertices);
 }
 
 /*************************************************************************/
@@ -466,7 +532,7 @@ void display_blit_scaled(const void *src, int src_width, int src_height,
 /*************************************************************************/
 
 /**
- * buffer_swap_thread:  Call sceGuSync(), swap the display and work
+ * buffer_swap_thread:  Call guSync(), swap the display and work
  * surfaces, wait for the following vertical blank, and clear the
  * "swap_pending" variable to false.  Designed to run as a background
  * thread while the main emulation proceeds.
@@ -478,12 +544,17 @@ void display_blit_scaled(const void *src, int src_width, int src_height,
  */
 static int buffer_swap_thread(SceSize args, void *argp)
 {
-    sceGuSync(0, 0);
+    guSync(0, 0);
     sceDisplaySetFrameBuf(surfaces[work_surface], DISPLAY_STRIDE,
                           display_mode, PSP_DISPLAY_SETBUF_NEXTFRAME);
     displayed_surface = work_surface;
     work_surface = (work_surface + 1) % lenof(surfaces);
     sceDisplayWaitVblankStart();
+    const uint32_t now = sceKernelGetSystemTimeLow();
+    const uint32_t last_frame_time = now - last_frame_start;
+    const uint32_t time_unit = (1001000+30)/60;
+    last_frame_length = (last_frame_time + time_unit/2) / time_unit;
+    last_frame_start = now;
     swap_pending = 0;
     sceKernelExitDeleteThread(0);
 }

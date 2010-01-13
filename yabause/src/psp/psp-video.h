@@ -21,6 +21,8 @@
 #ifndef PSP_VIDEO_H
 #define PSP_VIDEO_H
 
+#include "../vdp1.h"  // for VideoInterface_struct
+
 /*************************************************************************/
 
 /* Module interface definition */
@@ -30,6 +32,21 @@ extern VideoInterface_struct VIDPSP;
 #define VIDCORE_PSP  0x5CE  // "SCE"
 
 /*-----------------------------------------------------------------------*/
+
+/**
+ * psp_video_infoline:  Display an information line on the bottom of the
+ * screen.  The text will be displayed for one frame only; call this
+ * function every frame to keep the text visible.
+ *
+ * [Parameters]
+ *     color: Text color (0xAABBGGRR)
+ *      text: Text string
+ * [Return value]
+ *     None
+ */
+extern void psp_video_infoline(uint32_t color, const char *text);
+
+/*************************************************************************/
 
 /**
  * global_clut_16, global_clut_#2:  Global color lookup table (from VDP2
@@ -42,7 +59,7 @@ extern VideoInterface_struct VIDPSP;
 extern uint16_t global_clut_16[0x800];
 extern uint32_t global_clut_32[0x800];
 
-/*************************************************************************/
+/*-----------------------------------------------------------------------*/
 
 /**
  * adjust_color_16_32:  Adjust the components of a 16-bit color value,

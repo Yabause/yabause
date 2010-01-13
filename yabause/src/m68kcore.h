@@ -34,11 +34,12 @@ typedef struct {
 	int id;
 	const char *Name;
 
-	void (*Init)(void);
+	int (*Init)(void);
 	void (*DeInit)(void);
 	void (*Reset)(void);
 
-	s32  FASTCALL (*Exec)(s32 cycle);
+	s32 FASTCALL (*Exec)(s32 cycle);
+        void (*Sync)(void);
 
 	u32 (*GetDReg)(u32 num);
 	u32 (*GetAReg)(u32 num);
@@ -56,7 +57,7 @@ typedef struct {
 
 	void (*SetFetch)(u32 low_adr, u32 high_adr, pointer fetch_adr);
 	void FASTCALL (*SetIRQ)(s32 level);
-	void FASTCALL (*TouchMem)(u32 address);
+	void FASTCALL (*WriteNotify)(u32 address, u32 size);
 
 	void (*SetReadB)(M68K_READ *Func);
 	void (*SetReadW)(M68K_READ *Func);

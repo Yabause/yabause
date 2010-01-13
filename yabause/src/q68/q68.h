@@ -85,6 +85,8 @@ extern Q68State *q68_create(void);
  */
 extern void q68_destroy(Q68State *state);
 
+/*----------------------------------*/
+
 /**
  * q68_set_irq:  Set the interrupt request (IRQ) input to the processor.
  *
@@ -123,6 +125,30 @@ extern void q68_set_writeb_func(Q68State *state, Q68WriteFunc func);
 extern void q68_set_writew_func(Q68State *state, Q68WriteFunc func);
 
 /**
+ * q68_set_jit_memory_funcs:  Set alternate memory management functions to
+ * be used for allocating native code blocks when dynamic translation is
+ * enabled.  If not set, the standard system malloc()/realloc()/free()
+ * functions are used and no cache flushing is performed.  This function
+ * has no effect if dynamic translation is not enabled.
+ *
+ * [Parameters]
+ *            state: Processor state block
+ *      malloc_func: Function for allocating a memory block
+ *     realloc_func: Function for adjusting the size of a memory block
+ *        free_func: Function for freeing a memory block
+ *       flush_func: Function for flushing the native CPU cache (NULL if none)
+ * [Return value]
+ *     None
+ */
+extern void q68_set_jit_memory_funcs(Q68State *state,
+                                     void *(*malloc_func)(size_t size),
+                                     void *(*realloc_func)(void *ptr, size_t size),
+                                     void (*free_func)(void *ptr),
+                                     void (*flush_func)(void));
+
+/*----------------------------------*/
+
+/**
  * q68_get_{dreg,areg,pc,sr,usp,ssp}:  Return the current value of the
  * specified register.
  *
@@ -157,18 +183,21 @@ extern void q68_set_sr(Q68State *state, uint16_t value);
 extern void q68_set_usp(Q68State *state, uint32_t value);
 extern void q68_set_ssp(Q68State *state, uint32_t value);
 
+/*----------------------------------*/
+
 /**
  * q68_touch_memory:  Clear any cached translations covering the given
- * address.  Users should call this function whenever 68000-accessible
+ * address range.  Users should call this function whenever 68000-accessible
  * memory is modified by an external agent.
  *
  * [Parameters]
  *       state: Processor state block
- *     address: 68000 address of modified data (byte or word)
+ *     address: 68000 address of modified data
+ *        size: Size of modified data (in bytes)
  * [Return value]
  *     None
  */
-extern void q68_touch_memory(Q68State *state, uint32_t address);
+extern void q68_touch_memory(Q68State *state, uint32_t address, uint32_t size);
 
 /*-----------------------------------------------------------------------*/
 
@@ -210,19 +239,38 @@ extern int q68_run(Q68State *state, int cycles);
 extern const char *q68_disassemble(Q68State *state, uint32_t address,
                                    int *nwords_ret);
 
+/*----------------------------------*/
+
+/**
+ * q68_trace_init:  Initialize the tracing code.
+ *
+ * [Parameters]
+ *     state: Processor state block
+ * [Return value]
+ *     None
+ */
+extern void q68_trace_init(Q68State *state_);
+
+/**
+ * q68_trace_add_cycles:  Add the given number of cycles to the global
+ * accumulator.
+ *
+ * [Parameters]
+ *     cycles: Number of cycles to add
+ * [Return value]
+ *     None
+ */
+extern void q68_trace_add_cycles(int32_t cycles);
+
 /**
  * q68_trace:  Output a trace for the instruction at the current PC.
  *
  * [Parameters]
- *           state: Processor state block
- *              fp: File pointer (stdio) to which trace should be written
- *     cycles_done: Number of cycles processed so far during this call
- *     cycle_limit: Total number of cycles to be processed this call
+ *     None
  * [Return value]
  *     None
  */
-extern void q68_trace(Q68State *state, FILE *fp, int cycles_done,
-                      int cycle_limit);
+extern void q68_trace(void);
 
 /*************************************************************************/
 /*************************************************************************/

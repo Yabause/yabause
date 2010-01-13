@@ -37,6 +37,7 @@ const char * const prof_names[PROF__END] = {
     [PROF_SCU            ] = "SCU",
     [PROF_SSH2           ] = "SSH2",
     [PROF_CDB            ] = "CDB",
+    [PROF_CDIO           ] = "CDIO",
     [PROF_SMPC           ] = "SMPC",
     [PROF_hblankin       ] = "hblankin",
     [PROF_hblankout      ] = "hblankout",

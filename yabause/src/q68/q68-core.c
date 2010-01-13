@@ -140,7 +140,7 @@ static int op_EXG(Q68State *state, uint32_t opcode);
 
 /* Main table of instruction implemenation functions; table index is bits
  * 15-12 and 8-6 of the opcode (ABCD ...E FG.. .... -> 0ABC DEFG). */
-static OpcodeFunc *opcode_table[128] = {
+static OpcodeFunc * const opcode_table[128] = {
     op_imm, op_imm, op_imm, op_imm, op_bit, op_bit, op_bit, op_bit,  // 00
     opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE,  // 10
     opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE, opMOVE,  // 20
@@ -164,7 +164,7 @@ static OpcodeFunc *opcode_table[128] = {
 
 /* Subtable for instructions in the $4xxx (miscellaneous) group; table index
  * is bits 11-9 and 7-6 of the opcode (1000 ABC0 DE.. .... -> 000A BCDE). */
-static OpcodeFunc *opcode_4xxx_table[32] = {
+static OpcodeFunc * const opcode_4xxx_table[32] = {
     op4alu, op4alu, op4alu, opMVSR,  // 40xx
     op4alu, op4alu, op4alu, op_ill,  // 42xx
     op4alu, op4alu, op4alu, opMVSR,  // 44xx
@@ -177,7 +177,7 @@ static OpcodeFunc *opcode_4xxx_table[32] = {
 
 /* Sub-subtable for instructions in the $4E40-$4E7F range, used by opmisc();
  * index is bits 5-3 of the opcode. */
-static OpcodeFunc *opcode_4E4x_table[8] = {
+static OpcodeFunc * const opcode_4E4x_table[8] = {
     opTRAP, opTRAP, opLINK, opUNLK,
     opMUSP, opMUSP, op4E7x, op_ill,
 };
@@ -221,6 +221,9 @@ void q68_reset(Q68State *state)
 #ifdef Q68_USE_JIT
     q68_jit_reset(state);
 #endif
+#ifdef Q68_TRACE
+    q68_trace_init(state);
+#endif
 
     state->A[7] = READU32(state, 0x000000);
     state->PC = READU32(state, 0x000004);
@@ -240,37 +243,25 @@ void q68_reset(Q68State *state)
  */
 int q68_run(Q68State *state, int cycles)
 {
-#ifdef Q68_TRACE
-    static FILE *f;
-    if (!f) {
-        f = fopen("q68.log", "w");
-    }
-#endif
-
     /* Check for pending interrupts */
     check_interrupt(state);
 
     /* Run the virtual processor */
-    int cycles_done = 0;
-    while (cycles_done < cycles) {
+    state->cycles = 0;
+    while (state->cycles < cycles) {
         if (UNLIKELY(state->halted)) {
             /* If we're halted, consume all remaining cycles */
-            cycles_done = cycles;
+            state->cycles = cycles;
             break;
         }
         if (UNLIKELY(state->exception)) {
             int exception = state->exception;
             state->exception = 0;
-            cycles_done += take_exception(state, exception);
-            if (cycles_done >= cycles) {
+            state->cycles += take_exception(state, exception);
+            if (state->cycles >= cycles) {
                 break;
             }
         }
-#ifdef Q68_TRACE
-        if (f) {
-            q68_trace(state, f, cycles_done, cycles);
-        }
-#endif
 #ifdef Q68_USE_JIT
         if (!state->jit_running) {
             state->jit_running = q68_jit_find(state, state->PC);
@@ -279,8 +270,7 @@ int q68_run(Q68State *state, int cycles)
             }
         }
         if (state->jit_running) {
-            cycles_done += q68_jit_run(state, cycles - cycles_done,
-                                       &state->jit_running);
+            q68_jit_run(state, cycles, &state->jit_running);
         } else {
 #endif
 #ifndef Q68_DISABLE_ADDRESS_ERROR
@@ -288,9 +278,12 @@ int q68_run(Q68State *state, int cycles)
                 state->fault_addr = state->PC;
                 state->fault_status = FAULT_STATUS_IN_INSN
                                     | FAULT_STATUS_RW_READ;
-                cycles_done += take_exception(state, EX_ADDRESS_ERROR);
+                state->cycles += take_exception(state, EX_ADDRESS_ERROR);
                 continue;
             }
+#endif
+#ifdef Q68_TRACE
+            q68_trace();
 #endif
             const unsigned int opcode = IFETCH(state);
             state->current_PC = state->PC;
@@ -301,19 +294,17 @@ int q68_run(Q68State *state, int cycles)
 #ifdef COUNT_OPCODES
             q68_ops[index]++;
 #endif
-            cycles_done += (*opcode_table[index])(state, opcode);
+            state->cycles += (*opcode_table[index])(state, opcode);
 #ifdef Q68_USE_JIT
         }
 #endif
-    }  // while (cycles_done < cycles && !state->halted)
+    }  // while (state->cycles < cycles && !state->halted)
 
 #ifdef Q68_TRACE
-    if (f) {
-        fflush(f);
-    }
+    q68_trace_add_cycles(state->cycles);
 #endif
 
-    return cycles_done;
+    return state->cycles;
 }
 
 /*************************************************************************/

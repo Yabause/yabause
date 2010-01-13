@@ -21,7 +21,7 @@
 #include <gdk/gdkkeysyms.h>
 
 #include "yuim68k.h"
-#include "../scsp.h"
+#include "../m68kd.h"
 #include "../yabause.h"
 #include "settings.h"
 

@@ -23,6 +23,7 @@
 #undef FASTCALL
 #include "../disasm.h"
 #include "../resource.h"
+#include "../../m68kd.h"
 #include "../../scsp.h"
 #include "yuidebug.h"
 #include "../yuiwin.h"

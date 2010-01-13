@@ -24,24 +24,6 @@
 /*************************************************************************/
 
 /**
- * PSP_TEXCACHE_SIZE:  Number of entries in the texture cache.  Should be a
- * prime number.
- */
-#ifndef PSP_TEXCACHE_SIZE
-# define PSP_TEXCACHE_SIZE 1009
-#endif
-
-/**
- * PSP_CLUTCACHE_SIZE:  Number of entries in the color lookup table cache.
- * Should be a prime number.
- */
-#ifndef PSP_CLUTCACHE_SIZE
-# define PSP_CLUTCACHE_SIZE 1009
-#endif
-
-/*************************************************************************/
-
-/**
  * texcache_reset:  Reset the texture cache.
  *
  * [Parameters]
@@ -64,7 +46,8 @@ extern void texcache_reset(void);
  *     Texture key (zero on error)
  */
 extern uint32_t texcache_cache_sprite(uint16_t CMDSRCA, uint16_t CMDPMOD,
-                                      uint16_t CMDCOLR, int width, int height,
+                                      uint16_t CMDCOLR,
+                                      unsigned int width, unsigned int height,
                                       int rofs, int gofs, int bofs);
 
 /**
@@ -112,8 +95,9 @@ extern void texcache_load_tile(uint32_t address, int pixfmt, int transparent,
  * [Return value]
  *     None
  */
-extern void texcache_load_bitmap(uint32_t address, int width, int height,
-                                 int stride, int pixfmt, int transparent,
+extern void texcache_load_bitmap(uint32_t address, unsigned int width,
+                                 unsigned int height, unsigned int stride,
+                                 int pixfmt, int transparent,
                                  uint16_t color_base, uint16_t color_ofs,
                                  int rofs, int gofs, int bofs);
 

@@ -31,7 +31,10 @@ typedef struct
    int cellw, cellh;
    int flipfunction;
    int priority;
+   /* The above fields MUST NOT BE CHANGED (including inserting new fields)
+    * unless YglSprite is also updated in ygl.h */
 
+   int cellw_bits, cellh_bits;
    int mapwh;
    int planew, planew_bits, planeh, planeh_bits;
    int pagewh, pagewh_bits;
@@ -317,17 +320,17 @@ static INLINE void ReadBitmapSize(vdp2draw_struct *info, u16 bm, int mask)
 {
    switch(bm & mask)
    {
-      case 0: info->cellw = 512;
-              info->cellh = 256;
+      case 0: info->cellw = 512;  info->cellw_bits = 9;
+              info->cellh = 256;  info->cellh_bits = 8;
               break;
-      case 1: info->cellw = 512;
-              info->cellh = 512;
+      case 1: info->cellw = 512;  info->cellw_bits = 9;
+              info->cellh = 512;  info->cellh_bits = 9;
               break;
-      case 2: info->cellw = 1024;
-              info->cellh = 256;
+      case 2: info->cellw = 1024; info->cellw_bits = 10;
+              info->cellh = 256;  info->cellh_bits = 8;
               break;
-      case 3: info->cellw = 1024;
-              info->cellh = 512;
+      case 3: info->cellw = 1024; info->cellw_bits = 10;
+              info->cellh = 512;  info->cellh_bits = 9;
               break;
    }
 }
@@ -386,6 +389,7 @@ static INLINE void ReadPatternData(vdp2draw_struct *info, u16 pnc, int chctlwh)
    info->pagewh = 64>>info->patternwh_bits;
    info->pagewh_bits = 6-info->patternwh_bits;
    info->cellw = info->cellh = 8;
+   info->cellw_bits = info->cellh_bits = 3;
    info->supplementdata = pnc & 0x3FF;
    info->auxmode = (pnc & 0x4000) >> 14;
 }

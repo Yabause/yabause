@@ -78,16 +78,6 @@ extern uint32_t *display_disp_buffer(void);
 extern uint32_t *display_work_buffer(void);
 
 /**
- * display_depth_buffer:  Return a pointer to the 3D depth buffer.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     Pointer to the 3D depth buffer
- */
-extern uint16_t *display_depth_buffer(void);
-
-/**
  * display_spare_vram:  Return a pointer to the VRAM spare area.
  *
  * [Parameters]
@@ -131,6 +121,18 @@ extern void display_begin_frame(void);
  */
 extern void display_end_frame(void);
 
+/**
+ * display_last_frame_length:  Returns the length of time the last frame
+ * was displayed, in hardware frame (1/59.94sec) units.  Only valid between
+ * display_begin_frame() and display_end_frame().
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     Length of time the last frame was displayed
+ */
+extern unsigned int display_last_frame_length(void);
+
 /*----------------------------------*/
 
 /**
@@ -169,6 +171,18 @@ extern void display_blit(const void *src, int src_width, int src_height,
 extern void display_blit_scaled(const void *src, int src_width, int src_height,
                                 int src_stride, int dest_x, int dest_y,
                                 int dest_width, int dest_height);
+
+/**
+ * display_fill_box:  Draw a filled box with a specified color.
+ *
+ * [Parameters]
+ *     x1, y1: Upper-left coordinates of box
+ *     x2, y2: Lower-right coordinates of box
+ *      color: Color to fill with (0xAABBGGRR)
+ * [Return value]
+ *     None
+ */
+extern void display_fill_box(int x1, int y1, int x2, int y2, uint32_t color);
 
 /*************************************************************************/
 

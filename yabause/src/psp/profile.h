@@ -35,6 +35,7 @@ enum {
     PROF_SCU,
     PROF_SSH2,
     PROF_CDB,
+    PROF_CDIO,
     PROF_SMPC,
     PROF_hblankin,
     PROF_hblankout,
@@ -59,6 +60,7 @@ enum {
      strcmp((name),"SCU"            ) == 0 ? PROF_SCU             :     \
      strcmp((name),"SSH2"           ) == 0 ? PROF_SSH2            :     \
      strcmp((name),"CDB"            ) == 0 ? PROF_CDB             :     \
+     strcmp((name),"CDIO"           ) == 0 ? PROF_CDIO            :     \
      strcmp((name),"SMPC"           ) == 0 ? PROF_SMPC            :     \
      strcmp((name),"hblankin"       ) == 0 ? PROF_hblankin        :     \
      strcmp((name),"hblankout"      ) == 0 ? PROF_hblankout       :     \

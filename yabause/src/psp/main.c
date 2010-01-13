@@ -1,4 +1,4 @@
-/*  src/psp/main.c: PSP entry point and core interface routines
+/*  src/psp/main.c: PSP entry point and main loop
     Copyright 2009 Andrew Church
 
     This file is part of Yabause.
@@ -18,111 +18,82 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include "../yabause.h"
-#include "../yui.h"
-#include "../cdbase.h"
-#include "../cs0.h"
-#include "../debug.h"
-#include "../m68kcore.h"
-#include "../peripheral.h"
-#include "../scsp.h"
-#include "../sh2core.h"
-#include "../sh2int.h"
-#include "../vidsoft.h"
-
 #include "common.h"
-#include "display.h"
-#include "sys.h"
-#include "psp-per.h"
-#include "psp-sh2.h"
-#include "psp-sound.h"
+
+#include "../memory.h"
+#include "../peripheral.h"
+
+#include "config.h"
+#include "control.h"
+#include "init.h"
+#include "menu.h"
+#include "misc.h"
 #include "psp-video.h"
 
+#ifdef SYS_PROFILE_H
+# include "profile.h"  // Can only be ours
+#endif
+
+/*************************************************************************/
+/************************ PSP module information *************************/
 /*************************************************************************/
 
-/* PSP module information */
-PSP_MODULE_INFO("Yabause", 0, 0, 2);
+#define MODULE_FLAGS     0
+#define MODULE_VERSION   0
+#define MODULE_REVISION  9
+
+PSP_MODULE_INFO("Yabause", MODULE_FLAGS, MODULE_VERSION, MODULE_REVISION);
 const PSP_MAIN_THREAD_PRIORITY(THREADPRI_MAIN);
 const PSP_MAIN_THREAD_STACK_SIZE_KB(128);
-const PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER | PSP_THREAD_ATTR_VFPU);
+const PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
 const PSP_HEAP_SIZE_KB(-64);  // Leave 64k for thread stacks
 
-/* Main thread handle */
-static SceUID main_thread;
+/*************************************************************************/
+/****************************** Global data ******************************/
+/*************************************************************************/
 
-/* Program directory (determined from argv[0]) */
-static char progpath[256];
+/* Program directory (determined from argv[0], and exported) */
+char progpath[256];
 
-/* Various data file paths (read from command-line options or .ini file) */
-//static char inipath[256] = "yabause.ini";
-static char biospath[256] = "bios.bin";
-static char cdpath[256] = "cd.iso";
-static char buppath[256] = "backup.bin";
-//static char mpegpath[256] = "";
-//static char cartpath[256] = "";
+/* Saturn control pad handle (set at initialization time, and used by menu
+ * code to change button assignments) */
+void *padbits;
 
-/*-----------------------------------------------------------------------*/
+/* Flag indicating whether the ME is available for use */
+int me_available;
 
-/* Interface data */
+/*************************************************************************/
+/****************************** Local data *******************************/
+/*************************************************************************/
 
-M68K_struct *M68KCoreList[] = {
-    &M68KDummy,
-#ifdef HAVE_C68K
-    &M68KC68K,
-#endif
-#ifdef HAVE_Q68
-    &M68KQ68,
-#endif
-    NULL
-};
+/* Have we successfully initialized the Yabause core? */
+static int initted;
 
-SH2Interface_struct *SH2CoreList[] = {
-    &SH2Interpreter,
-    &SH2DebugInterpreter,
-    &SH2PSP,
-    NULL
-};
+/* Flag indicating whether the menu is currently displayed */
+static int in_menu;
 
-PerInterface_struct *PERCoreList[] = {
-    &PERDummy,
-    &PERPSP,
-    NULL
-};
+/* Delay timer for backup RAM autosave */
+static int bup_autosave_timer;
+#define BUP_AUTOSAVE_DELAY  60  // frames
 
-CDInterface *CDCoreList[] = {
-    &DummyCD,
-    &ISOCD,
-    NULL
-};
+/* Timer for autosave overlay message */
+static int bup_autosave_info_timer;
+#define BUP_AUTOSAVE_INFO_TIME  300  // frames
 
-SoundInterface_struct *SNDCoreList[] = {
-    &SNDDummy,
-    &SNDPSP,
-    NULL
-};
-
-VideoInterface_struct *VIDCoreList[] = {
-    &VIDDummy,
-    &VIDPSP,
-    &VIDSoft,
-    NULL
-};
+/* Text and color for autosave overlay message */
+#define BUP_AUTOSAVE_INFO_TEXT   "Backup RAM saved."
+#define BUP_AUTOSAVE_INFO_COLOR  0xFF55FF40  // TEXT_COLOR_OK from menu.c
 
 /*-----------------------------------------------------------------------*/
 
 /* Local routine declarations */
 
-static void init_psp(int argc, char **argv);
-static void load_settings(void);
-static void init_yabause(void);
-
-static void get_base_directory(const char *argv0, char *buffer, int bufsize);
-static int callback_thread(void);
-static int exit_callback(int arg1, int arg2, void *common);
-static int power_callback(int unknown, int power_info, void *common);
+static void iterate_main_loop(void);
+static void emulate_one_frame(void);
+static void check_autosave(void);
 
 /*************************************************************************/
-/****************** Entry point and initialization code ******************/
+/************************** Program entry point **************************/
 /*************************************************************************/
 
 /**
@@ -137,348 +108,151 @@ static int power_callback(int unknown, int power_info, void *common);
  */
 int main(int argc, char **argv)
 {
+    in_menu = 0;
+    bup_autosave_timer = 0;
+    bup_autosave_info_timer = 0;
+
     init_psp(argc, argv);
-    load_settings();
-    init_yabause();
-    for (;;) {
-        if (PERCore->HandleEvents() != 0) {
-            sceKernelExitGame();
-        }
-    }
-}
-
-/*************************************************************************/
-
-/**
- * init_psp:  Perform PSP-related initialization and command-line option
- * parsing.  Aborts the program if an error occurs.
- *
- * [Parameters]
- *     argc: Command line argument count
- *     argv: Command line argument vector
- * [Return value]
- *     None
- */
-static void init_psp(int argc, char **argv)
-{
-    /* Set the CPU to maximum speed, because boy, do we need it */
-    scePowerSetClockFrequency(333, 333, 166);
-
-    /* Determine the program's base directory and change to it */
-    get_base_directory(argv[0], progpath, sizeof(progpath));
-    if (*progpath) {
-        sceIoChdir(progpath);
-    }
-
-    /* Retrieve the main thread's handle */
-    main_thread = sceKernelGetThreadId();
-
-    /* Start the system callback monitoring thread */
-    SceUID thid = sys_start_thread(
-        "YabauseCallbackThread", callback_thread, THREADPRI_SYSTEM_CB,
-        0x1000, 0, NULL
-    );
-    if (thid < 0) {
-        DMSG("sys_start_thread(callback_thread) failed: %s",
-             psp_strerror(thid));
-        sceKernelExitGame();
-    }
-
-    /* Initialize the display hardware */
-    if (!display_init()) {
-        DMSG("Failed to initialize display");
-        sceKernelExitGame();
-    }
-}
-
-/*-----------------------------------------------------------------------*/
-
-/**
- * load_settings:  Load settings from the default settings file, if available.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     None
- */
-static void load_settings(void)
-{
-    // FIXME: not implemented
-}
-
-/*-----------------------------------------------------------------------*/
-
-/**
- * init_yabause:  Initialize the emulator core.  Aborts the program if an
- * error occurs.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     None
- */
-static void init_yabause(void)
-{
-    yabauseinit_struct yinit;
-
-    /* Set up general defaults */
-    memset(&yinit, 0, sizeof(yinit));
-    yinit.m68kcoretype = M68KCORE_Q68;
-    yinit.percoretype = PERCORE_PSP;
-    yinit.sh2coretype = SH2CORE_PSP;
-    yinit.vidcoretype = VIDCORE_PSP;
-    yinit.sndcoretype = SNDCORE_PSP;
-    yinit.cdcoretype = CDCORE_ISO;
-    yinit.carttype = CART_NONE;
-    yinit.regionid = 0;
-    yinit.biospath = biospath;
-    yinit.cdpath = cdpath;
-    yinit.buppath = buppath;
-    yinit.mpegpath = NULL;
-    yinit.cartpath = NULL;
-    yinit.flags = VIDEOFORMATTYPE_NTSC;
-
-    /* Initialize controller settings */
-    PerInit(yinit.percoretype);
-    PerPortReset();
-    void *padbits = PerPadAdd(&PORTDATA1);
-    static const struct {
-        uint8_t key;      // Key index from peripheral.h
-        uint16_t button;  // PSP button index (PSP_CTRL_*)
-    } buttons[] = {
-        {PERPAD_UP,             PSP_CTRL_UP},
-        {PERPAD_RIGHT,          PSP_CTRL_RIGHT},
-        {PERPAD_DOWN,           PSP_CTRL_DOWN},
-        {PERPAD_LEFT,           PSP_CTRL_LEFT},
-        {PERPAD_RIGHT_TRIGGER,  PSP_CTRL_RTRIGGER},
-        {PERPAD_LEFT_TRIGGER,   PSP_CTRL_LTRIGGER},
-        {PERPAD_START,          PSP_CTRL_START},
-        {PERPAD_A,              PSP_CTRL_SQUARE},
-        {PERPAD_B,              PSP_CTRL_CROSS},
-        {PERPAD_C,              0},
-        {PERPAD_X,              PSP_CTRL_TRIANGLE},
-        {PERPAD_Y,              PSP_CTRL_CIRCLE},
-        {PERPAD_Z,              0},
-    };
-    int i;
-    for (i = 0; i < lenof(buttons); i++) {
-        PerSetKey(buttons[i].button, buttons[i].key, padbits);
-    }
-
-    /* Initialize emulator state */
-    if (YabauseInit(&yinit) != 0) {
-        DMSG("YabauseInit() failed!");
-        sceKernelExitGame();
-    }
-    ScspUnMuteAudio();
-}
-
-/*************************************************************************/
-
-/**
- * get_base_directory:  Extract the program's base directory from argv[0].
- * Stores the empty string in the destination buffer if the base directory
- * cannot be determined.
- *
- * [Parameters]
- *       argv0: Value of argv[0]
- *      buffer: Buffer to store directory path into
- *     bufsize: Size of buffer
- * [Return value]
- *     None
- */
-static void get_base_directory(const char *argv0, char *buffer, int bufsize)
-{
-    *buffer = 0;
-    if (argv0) {
-        const char *s = strrchr(argv0, '/');
-        if (s != NULL) {
-            int n = snprintf(buffer, bufsize, "%.*s", s - argv0, argv0);
-            if (n >= bufsize) {
-                DMSG("argv[0] too long: %s", argv0);
-                *buffer = 0;
-            }
+    config_load();
+    if (!config_get_start_in_emu()) {
+        /* Don't initialize yet -- the user may need to set filenames first. */
+        menu_open();
+        in_menu = 1;
+    } else {
+        if (init_yabause()) {
+            initted = 1;
         } else {
-            DMSG("argv[0] has no directory: %s", argv0);
+            /* Start in the menu so the user sees the error message. */
+            menu_open();
+            in_menu = 1;
         }
-    } else {
-        DMSG("argv[0] is NULL!");
-    }
-}
-
-/*-----------------------------------------------------------------------*/
-
-/**
- * callback_thread:  Thread for monitoring HOME button and power status
- * notification callbacks.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     Does not return
- */
-static int callback_thread(void)
-{
-    /* Note: We can turn off the HOME button menu with
-     * sceImposeSetHomePopup(0) if we want to create our own */
-    SceUID cbid;
-    cbid = sceKernelCreateCallback("YabauseExitCallback",
-                                   exit_callback, NULL);
-    if (cbid < 0) {
-        DMSG("sceKernelCreateCallback(exit_callback) failed: %s",
-             psp_strerror(cbid));
-    } else {
-        sceKernelRegisterExitCallback(cbid);
-    }
-
-    cbid = sceKernelCreateCallback("YabausePowerCallback",
-                                   power_callback, NULL);
-    if (cbid < 0) {
-        DMSG("sceKernelCreateCallback(exit_callback) failed: %s",
-             psp_strerror(cbid));
-    } else {
-        scePowerRegisterCallback(0, cbid);
     }
 
     for (;;) {
-        sceKernelSleepThreadCB();
+        iterate_main_loop();
     }
-
-    return 0;  // Avoid compiler warning
 }
 
-/*-----------------------------------------------------------------------*/
+/*************************************************************************/
+/*********** Main loop iteration routine and helper functions ************/
+/*************************************************************************/
 
 /**
- * exit_callback:  HOME button callback.  Exits the program immediately.
+ * iterate_main_loop:  Run one iteration of the main loop.  Either emulates
+ * one Saturn frame or runs the menu for one PSP frame.
  *
  * [Parameters]
- *     arg1, arg2, common: Unused
+ *     buttons: Current state of PSP control buttons
  * [Return value]
- *     Does not return
+ *     None
  */
-static int exit_callback(int arg1, int arg2, void *common)
+static void iterate_main_loop(void)
 {
-    psp_sound_exit();
-    sceKernelExitGame();
-}
+    const uint32_t MIN_WAIT = (1001000/60)*9/10;  // Allow minor fluctuations
+    static uint32_t last_frame_time = 0;
+    uint32_t now;
+    while ((now = sceKernelGetSystemTimeLow()) - last_frame_time < MIN_WAIT) {
+        sceDisplayWaitVblankStart();
+    }
+    last_frame_time = now;
 
-/*-----------------------------------------------------------------------*/
+    control_update();
 
-/**
- * power_callback:  Power status notification callback.  Handles suspend
- * and resume events.
- *
- * [Parameters]
- *        unknown: Unused
- *     power_info: Power status
- *         common: Unused
- * [Return value]
- *     Always zero
- */
-static int power_callback(int unknown, int power_info, void *common)
-{
-    if (power_info & PSP_POWER_CB_SUSPENDING) {
-        sceKernelSuspendThread(main_thread);
-        psp_sound_pause();
-    } else if (power_info & PSP_POWER_CB_RESUMING) {
-        /* Restore the current directory.  It takes time for the memory
-         * stick to be recognized, so wait up to 3 seconds before giving up. */
-        uint32_t start = sceKernelGetSystemTimeLow();
-        int res;
-        do {
-            res = sceIoChdir(progpath);
-            if (res < 0) {
-                sceKernelDelayThread(1000000/10);  // 0.1 sec
+    if (control_new_buttons() & PSP_CTRL_SELECT) {
+        if (in_menu) {
+            if (!initted && !init_yabause()) {
+                /* We failed to start the emulator, so stay in the menu. */
+            } else {
+                initted = 1;  // In case we just successfully initialized
+                menu_close();
+                in_menu = 0;
             }
-        } while (res < 0 && sceKernelGetSystemTimeLow()-start < 3*1000000);
-        if (res < 0) {
-            DMSG("Restore current directory (%s) failed: %s",
-                 progpath, psp_strerror(res));
-        }
-        /* Resume program */
-        psp_sound_unpause();
-        sceKernelResumeThread(main_thread);
-    }
-    return 0;
-}
-
-/*************************************************************************/
-/******************** Yabause core interface routines ********************/
-/*************************************************************************/
-
-/**
- * YuiErrorMsg:  Report an error to the user.
- *
- * [Parameters]
- *     string: Error message string
- * [Return value]
- *     None
- */
-void YuiErrorMsg(const char *string)
-{
-    fprintf(stderr, "%s", string);
-}
-
-/*************************************************************************/
-
-/**
- * YuiSwapBuffers:  Swap the front and back display buffers.  Called by the
- * software renderer.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     None
- */
-void YuiSwapBuffers(void)
-{
-    if (!dispbuffer) {
-        return;
-    }
-
-    /* Make sure all video buffer data is flushed to memory */
-    sceKernelDcacheWritebackAll();
-
-    /* Calculate display size (shrink interlaced/hi-res displays by half) */
-    int width_in, height_in, width_out, height_out;
-    VIDSoftGetScreenSize(&width_in, &height_in);
-    if (width_in <= DISPLAY_WIDTH) {
-        width_out = width_in;
-    } else {
-        width_out = width_in / 2;
-    }
-    if (height_in <= DISPLAY_HEIGHT) {
-        height_out = height_in;
-    } else {
-        height_out = height_in / 2;
-    }
-    int x = (DISPLAY_WIDTH - width_out) / 2;
-    int y = (DISPLAY_HEIGHT - height_out) / 2;
-
-    display_begin_frame();
-    if (width_out == width_in && height_out == height_in) {
-        display_blit(dispbuffer, width_in, height_in, width_in, x, y);
-    } else {
-        /* The PSP can't draw textures larger than 512x512, so if we're
-         * drawing a high-resolution buffer, split it in half.  The height
-         * will never be greater than 512, so we don't need to check for a
-         * vertical split. */
-        if (width_in > 512) {
-            const uint32_t *dispbuffer32 = (const uint32_t *)dispbuffer;
-            display_blit_scaled(dispbuffer32, width_in/2, height_in,
-                                width_in, x, y, width_out/2, height_out);
-            dispbuffer32 += width_in/2;
-            x += width_out/2;
-            display_blit_scaled(dispbuffer32, width_in/2, height_in,
-                                width_in, x, y, width_out/2, height_out);
         } else {
-            display_blit_scaled(dispbuffer, width_in, height_in, width_in,
-                                x, y, width_out, height_out);
+            menu_open();
+            in_menu = 1;
         }
     }
-    display_end_frame();
-    sceDisplayWaitVblankStart();
+
+    if (in_menu) {
+        menu_run();
+    } else {
+        emulate_one_frame();
+    }
+}
+
+/*************************************************************************/
+
+/**
+ * emulate_one_frame:  Run the emulator for one frame.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     None
+ */
+static void emulate_one_frame(void)
+{
+#if defined(PSP_DEBUG) || defined(SYS_PROFILE_H)  // Unused otherwise
+    static int frame = 0;
+    DMSG("frame %d", frame);
+    frame++;
+#endif
+
+    PERCore->HandleEvents();  // Also runs the actual emulation
+
+    check_autosave();
+
+    /* Reset the screensaver timeout, so people don't have to deal with
+     * the backlight dimming during FMV */
+    scePowerTick(0);
+
+#ifdef SYS_PROFILE_H  // Print out profiling info every 100 frames
+    if (frame % 100 == 0) {
+        PROFILE_PRINT();
+        PROFILE_RESET();
+    }
+#endif
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * check_autosave:  Check whether to autosave backup RAM and/or display the
+ * autosave message.  Should be called exactly once per emulated frame.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     None
+ */
+static void check_autosave(void)
+{
+    if (BupRamWritten) {
+        /* Wait BUP_AUTOSAVE_DELAY frames from the last write before we
+         * update the file, so we don't update on every frame while the
+         * emulated game is saving its data. */
+        bup_autosave_timer = BUP_AUTOSAVE_DELAY;
+        BupRamWritten = 0;
+    } else if (bup_autosave_timer > 0) {
+        bup_autosave_timer--;
+        if (bup_autosave_timer == 0) {
+            save_backup_ram();
+            bup_autosave_info_timer = BUP_AUTOSAVE_INFO_TIME;
+        }
+    }
+
+    if (bup_autosave_info_timer > 0) {
+        uint32_t color;
+        if (bup_autosave_info_timer >= BUP_AUTOSAVE_INFO_TIME / 2) {
+            color = BUP_AUTOSAVE_INFO_COLOR;
+        } else {
+            const uint32_t alpha = 
+                (255 * bup_autosave_info_timer) / (BUP_AUTOSAVE_INFO_TIME / 2);
+            color = alpha<<24 | (BUP_AUTOSAVE_INFO_COLOR & 0x00FFFFFF);
+        }
+        psp_video_infoline(color, BUP_AUTOSAVE_INFO_TEXT);
+        bup_autosave_info_timer--;
+    }
 }
 
 /*************************************************************************/

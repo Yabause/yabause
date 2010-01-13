@@ -119,26 +119,33 @@
 /* SPECIAL functions ("funct" field) */
 
 #define __SP_SLL      000
-#define __SP_SRL      002
+#define __SP_SRL      002  // Overloaded with ROR
 #define __SP_SRA      003
 #define __SP_SLLV     004
-#define __SP_SRLV     006
+#define __SP_SRLV     006  // Overloaded with RORV
 #define __SP_SRAV     007
 
 #define __SP_JR       010
 #define __SP_JALR     011
 #define __SP_MOVZ     012
 #define __SP_MOVN     013
+#define __SP_SYSCALL  014
+#define __SP_BREAK    015
+#define __SP_SYNC     017
 
 #define __SP_MFHI     020
 #define __SP_MTHI     021
 #define __SP_MFLO     022
 #define __SP_MTLO     023
+#define __SP_CLZ      026  // Allegrex only (in this opcode)
+#define __SP_CLO      027  // Allegrex only (in this opcode)
 
 #define __SP_MULT     030
 #define __SP_MULTU    031
 #define __SP_DIV      032
 #define __SP_DIVU     033
+#define __SP_MADD     034
+#define __SP_MADDU    035
 
 #define __SP_ADD      040
 #define __SP_ADDU     041
@@ -151,6 +158,10 @@
 
 #define __SP_SLT      052
 #define __SP_SLTU     053
+#define __SP_MAX      054  // Allegrex only
+#define __SP_MIN      055  // Allegrex only
+#define __SP_MSUB     056  // Allegrex only (in this opcode)
+#define __SP_MSUBU    057  // Allegrex only (in this opcode)
 
 /* REGIMM functions ("rt" field) */
 
@@ -169,7 +180,12 @@
 #define __AL_EXT      000
 #define __AL_INS      004
 
-#define __AL_SEX      040  // Sign EXtend (SEB/SEH depending on shamt)
+#define __AL_MISC     040  // Miscellaneous instructions (selected by shamt)
+#define __ALMISC_WSBH 002  // Or anything even from 000 through 016
+#define __ALMISC_WSBW 003  // Or anything odd from 001 through 017
+#define __ALMISC_SEB  020  // Or 021-023
+#define __ALMISC_BITREV 024 //Or 025-027, 034-037
+#define __ALMISC_SEH  030  // Or 031-033
 
 /*-----------------------------------------------------------------------*/
 
@@ -183,6 +199,9 @@
 
 #define __MIPS_ALLEGREX(rs,rt,rd,shamt,funct) \
     __MIPS_INSN_REG(ALLEGREX, rs, rt, rd, shamt, __AL_##funct)
+
+#define __MIPS_ALMISC(rs,rt,rd,funct) \
+    __MIPS_INSN_REG(ALLEGREX, rs, rt, rd, __ALMISC_##funct, __AL_MISC)
 
 /*-----------------------------------------------------------------------*/
 
@@ -205,6 +224,7 @@
 #define MIPS_BGEZL(rs,offset)   __MIPS_REGIMM((rs), BGEZL, (offset))
 #define MIPS_BGTZ(rs,offset)    __MIPS_INSN_IMM(BGTZ, (rs), 0, (offset))
 #define MIPS_BGTZL(rs,offset)   __MIPS_INSN_IMM(BGTZL, (rs), 0, (offset))
+#define MIPS_BITREV(rd,rt)      __MIPS_ALMISC(0, (rt), (rd), BITREV)
 #define MIPS_BLEZ(rs,offset)    __MIPS_INSN_IMM(BLEZ, (rs), 0, (offset))
 #define MIPS_BLEZL(rs,offset)   __MIPS_INSN_IMM(BLEZL, (rs), 0, (offset))
 #define MIPS_BLTZ(rs,offset)    __MIPS_REGIMM((rs), BLTZ, (offset))
@@ -213,6 +233,9 @@
 #define MIPS_BLTZL(rs,offset)   __MIPS_REGIMM((rs), BLTZL, (offset))
 #define MIPS_BNE(rs,rt,offset)  __MIPS_INSN_IMM(BNE, (rs), (rt),  (offset))
 #define MIPS_BNEL(rs,rt,offset) __MIPS_INSN_IMM(BNEL, (rs), (rt),  (offset))
+
+#define MIPS_CLO(rd,rs)         __MIPS_SPECIAL((rs), 0, (rd), 0, CLO)
+#define MIPS_CLZ(rd,rs)         __MIPS_SPECIAL((rs), 0, (rd), 0, CLZ)
 
 #define MIPS_DIV(rs,rt)         __MIPS_SPECIAL((rs), (rt), 0, 0, DIV)
 #define MIPS_DIVU(rs,rt)        __MIPS_SPECIAL((rs), (rt), 0, 0, DIVU)
@@ -237,10 +260,16 @@
 #define MIPS_LWL(rt,offset,base) __MIPS_INSN_IMM(LWL, (base), (rt), (offset))
 #define MIPS_LWR(rt,offset,base) __MIPS_INSN_IMM(LWR, (base), (rt), (offset))
 
+#define MIPS_MADD(rs,rt)        __MIPS_SPECIAL((rs), (rt), 0, 0, MADD)
+#define MIPS_MADDU(rs,rt)       __MIPS_SPECIAL((rs), (rt), 0, 0, MADDU)
+#define MIPS_MAX(rd,rs,rt)      __MIPS_SPECIAL((rs), (rt), (rd), 0, MAX)
 #define MIPS_MFHI(rd)           __MIPS_SPECIAL(0, 0, (rd), 0, MFHI)
 #define MIPS_MFLO(rd)           __MIPS_SPECIAL(0, 0, (rd), 0, MFLO)
+#define MIPS_MIN(rd,rs,rt)      __MIPS_SPECIAL((rs), (rt), (rd), 0, MIN)
 #define MIPS_MOVN(rd,rs,rt)     __MIPS_SPECIAL((rs), (rt), (rd), 0, MOVN)
 #define MIPS_MOVZ(rd,rs,rt)     __MIPS_SPECIAL((rs), (rt), (rd), 0, MOVZ)
+#define MIPS_MSUB(rs,rt)        __MIPS_SPECIAL((rs), (rt), 0, 0, MSUB)
+#define MIPS_MSUBU(rs,rt)       __MIPS_SPECIAL((rs), (rt), 0, 0, MSUBU)
 #define MIPS_MTHI(rs)           __MIPS_SPECIAL((rs), 0, 0, 0, MTHI)
 #define MIPS_MTLO(rs)           __MIPS_SPECIAL((rs), 0, 0, 0, MTLO)
 #define MIPS_MULT(rs,rt)        __MIPS_SPECIAL((rs), (rt), 0, 0, MULT)
@@ -251,9 +280,12 @@
 #define MIPS_OR(rd,rs,rt)       __MIPS_SPECIAL((rs), (rt), (rd), 0, OR)
 #define MIPS_ORI(rt,rs,imm)     __MIPS_INSN_IMM(ORI, (rs), (rt), (imm))
 
+#define MIPS_ROR(rd,rt,sa)      __MIPS_SPECIAL(1, (rt), (rd), (sa), SRL)
+#define MIPS_RORV(rd,rt,rs)     __MIPS_SPECIAL((rs), (rt), (rd), 1, SRLV)
+
 #define MIPS_SB(rt,offset,base) __MIPS_INSN_IMM(SB, (base), (rt), (offset))
-#define MIPS_SEB(rd,rt)         __MIPS_ALLEGREX(0, (rt), (rd), 16, SEX)
-#define MIPS_SEH(rd,rt)         __MIPS_ALLEGREX(0, (rt), (rd), 24, SEX)
+#define MIPS_SEB(rd,rt)         __MIPS_ALMISC(0, (rt), (rd), SEB)
+#define MIPS_SEH(rd,rt)         __MIPS_ALMISC(0, (rt), (rd), SEH)
 #define MIPS_SH(rt,offset,base) __MIPS_INSN_IMM(SH, (base), (rt), (offset))
 #define MIPS_SLL(rd,rt,sa)      __MIPS_SPECIAL(0, (rt), (rd), (sa), SLL)
 #define MIPS_SLLV(rd,rt,rs)     __MIPS_SPECIAL((rs), (rt), (rd), 0, SLLV)
@@ -271,6 +303,9 @@
 #define MIPS_SWL(rt,offset,base) __MIPS_INSN_IMM(SWL, (base), (rt), (offset))
 #define MIPS_SWR(rt,offset,base) __MIPS_INSN_IMM(SWR, (base), (rt), (offset))
 
+#define MIPS_WSBH(rd,rt)        __MIPS_ALMISC(0, (rt), (rd), WSBH)
+#define MIPS_WSBW(rd,rt)        __MIPS_ALMISC(0, (rt), (rd), WSBW)
+
 #define MIPS_XOR(rd,rs,rt)      __MIPS_SPECIAL((rs), (rt), (rd), 0, XOR)
 #define MIPS_XORI(rt,rs,imm)    __MIPS_INSN_IMM(XORI, (rs), (rt), (imm))
 
@@ -285,7 +320,7 @@
 #define MIPS_BNEZ(rs,offset)    MIPS_BNE((rs), MIPS_zero, (offset))
 #define MIPS_BNEZL(rs,offset)   MIPS_BNEL((rs), MIPS_zero, (offset))
 
-#define MIPS_MOVE(rd,rs)        MIPS_ADDU((rd), (rs), 0)
+#define MIPS_MOVE(rd,rs)        MIPS_ADDU((rd), (rs), MIPS_zero)
 
 #define MIPS_NEG(rd,rs)         MIPS_SUBU((rd), MIPS_zero, (rs))
 #define MIPS_NOP()              MIPS_SLL(MIPS_zero, MIPS_zero, 0)  // 0x0000000

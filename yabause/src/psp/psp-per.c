@@ -18,16 +18,15 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include "../yabause.h"
+#include "common.h"
+
 #include "../peripheral.h"
 
-#include "common.h"
+#include "control.h"
 #include "psp-per.h"
 
-#ifdef SYS_PROFILE_H
-# include "profile.h"  // Can only be ours
-#endif
-
+/*************************************************************************/
+/************************* Interface definition **************************/
 /*************************************************************************/
 
 /* Interface function declarations (must come before interface definition) */
@@ -56,12 +55,6 @@ PerInterface_struct PERPSP = {
 };
 
 /*************************************************************************/
-
-/* Local routine declarations */
-
-static void check_pad(void);
-
-/*************************************************************************/
 /************************** Interface functions **************************/
 /*************************************************************************/
 
@@ -75,8 +68,7 @@ static void check_pad(void);
  */
 static int psp_per_init(void)
 {
-    sceCtrlSetSamplingCycle(0);
-    sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
+    /* Nothing to do */
     return 0;
 }
 
@@ -92,7 +84,7 @@ static int psp_per_init(void)
  */
 static void psp_per_deinit(void)
 {
-    /* We don't implement shutting down, so nothing to do */
+    /* Nothing to do */
 }
 
 /*************************************************************************/
@@ -101,6 +93,9 @@ static void psp_per_deinit(void)
  * psp_per_handle_events:  Process pending peripheral events, and run one
  * iteration of the emulation.
  *
+ * For the PSP, the main loop is located in main.c; we only update the
+ * current button status here.
+ *
  * [Parameters]
  *     None
  * [Return value]
@@ -108,25 +103,25 @@ static void psp_per_deinit(void)
  */
 static int psp_per_handle_events(void)
 {
-#if defined(PSP_DEBUG) || defined(SYS_PROFILE_H)  // Unused otherwise
-    static int frame = 0;
-    DMSG("frame %d", frame);
-    frame++;
-#endif
+    static uint32_t last_buttons;
 
-    check_pad();
+    const uint32_t buttons = control_state();
+    uint32_t changed_buttons = buttons ^ last_buttons;
+    last_buttons = buttons;
 
-    if (YabauseExec() != 0) {
-        return -1;
+    int i;
+    for (i = 0; i < 16; i++) {
+        const uint32_t button = 1 << i;
+        if (changed_buttons & button) {
+            if (buttons & button) {
+                PerKeyDown(button);
+            } else {
+                PerKeyUp(button);
+            }
+        }
     }
 
-#ifdef SYS_PROFILE_H  // Print out profiling info every 100 frames
-    if (frame % 100 == 0) {
-        PROFILE_PRINT();
-        PROFILE_RESET();
-    }
-#endif
-
+    YabauseExec();
     return 0;
 }
 
@@ -152,58 +147,6 @@ static void psp_per_key_name(u32 key, char *name, int size)
 }
 
 #endif  // PERKEYNAME
-
-/*************************************************************************/
-/**************************** Local routines *****************************/
-/*************************************************************************/
-
-/**
- * check_pad:  Check the PSP control pad for input and map it to Saturn
- * controller input.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     None
- */
-static void check_pad(void)
-{
-    static uint32_t last_buttons;  // Previous value of pad_data.Buttons
-
-    SceCtrlData pad_data;
-    sceCtrlPeekBufferPositive(&pad_data, 1);
-
-    /* If the directional pad isn't being used, check the analog pad instead */
-    if (!(pad_data.Buttons & 0x00F0)) {
-        if (pad_data.Lx < 32) {
-            pad_data.Buttons |= PSP_CTRL_LEFT;
-        } else if (pad_data.Lx >= 224) {
-            pad_data.Buttons |= PSP_CTRL_RIGHT;
-        }
-        if (pad_data.Ly < 32) {
-            pad_data.Buttons |= PSP_CTRL_UP;
-        } else if (pad_data.Ly >= 224) {
-            pad_data.Buttons |= PSP_CTRL_DOWN;
-        }
-    }
-
-    /* Check for changed buttons and send them to the core */
-    uint32_t changed_buttons = pad_data.Buttons ^ last_buttons;
-    int i;
-    for (i = 0; i < 16; i++) {
-        const uint32_t button = 1 << i;
-        if (changed_buttons & button) {
-            if (pad_data.Buttons & button) {
-                PerKeyDown(button);
-            } else {
-                PerKeyUp(button);
-            }
-        }
-    }
-
-    /* Save the current input state for next time */
-    last_buttons = pad_data.Buttons;
-}
 
 /*************************************************************************/
 /*************************************************************************/

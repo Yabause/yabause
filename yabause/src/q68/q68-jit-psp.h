@@ -82,18 +82,6 @@ static inline void JIT_FIXUP_BRANCH(Q68JitEntry *entry, uint32_t offset,
 }
 
 /*************************************************************************/
-
-/**
- * JIT_FLUSH_CACHE:  Flush the CPU's caches, if necessary.  Called after a
- * block of 68000 code has been translated.
- */
-static inline void JIT_FLUSH_CACHE(void)
-{
-    sceKernelDcacheWritebackInvalidateAll();
-    sceKernelIcacheInvalidateAll();
-}
-
-/*************************************************************************/
 /*************************************************************************/
 
 /*
@@ -265,6 +253,11 @@ extern const int JIT_PSPOFS_EXCEPTION;
 extern const int JIT_PSPOFS_ADDRESS_ERROR_EA;
 extern const int JIT_PSPOFS_ADDRESS_ERROR_SP;
 GEN_EMIT(EPILOGUE)
+
+#ifdef Q68_TRACE
+/* Trace the current instruction */
+GEN_EMIT(TRACE)
+#endif
 
 /* Add the specified number of cycles to the cycle counter */
 GEN_EMIT_1(ADD_CYCLES, int16_t, cycles)

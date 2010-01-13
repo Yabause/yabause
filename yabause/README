@@ -28,6 +28,7 @@ For installation/how to use informations, check the ports
 specific README files:
 
   * README.DC for the dreamcast port
+  * README.PSP for the PSP port
   * README.LIN for the linux port
   * README.MAC for the mac port
   * README.WIN for the windows port

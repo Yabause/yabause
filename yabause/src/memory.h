@@ -39,7 +39,7 @@ static INLINE u16 T1ReadWord(u8 * mem, u32 addr)
 #ifdef WORDS_BIGENDIAN
    return *((u16 *) (mem + addr));
 #else
-   return (mem[addr] << 8) | mem[addr + 1];
+   return BSWAP16(*((u16 *) (mem + addr)));
 #endif
 }
 
@@ -48,8 +48,7 @@ static INLINE u32 T1ReadLong(u8 * mem, u32 addr)
 #ifdef WORDS_BIGENDIAN
    return *((u32 *) (mem + addr));
 #else
-   return (mem[addr] << 24 | mem[addr + 1] << 16 |
-           mem[addr + 2] << 8 | mem[addr + 3]);
+   return BSWAP32(*((u32 *) (mem + addr)));
 #endif
 }
 
@@ -63,8 +62,7 @@ static INLINE void T1WriteWord(u8 * mem, u32 addr, u16 val)
 #ifdef WORDS_BIGENDIAN
    *((u16 *) (mem + addr)) = val;
 #else
-   mem[addr] = val >> 8;
-   mem[addr + 1] = val & 0xFF;
+   *((u16 *) (mem + addr)) = BSWAP16(val);
 #endif
 }
 
@@ -73,10 +71,7 @@ static INLINE void T1WriteLong(u8 * mem, u32 addr, u32 val)
 #ifdef WORDS_BIGENDIAN
    *((u32 *) (mem + addr)) = val;
 #else
-   mem[addr] = (u8)(val >> 24);
-   mem[addr + 1] = (u8)(val >> 16);
-   mem[addr + 2] = (u8)(val >> 8);
-   mem[addr + 3] = (u8)val;
+   *((u32 *) (mem + addr)) = BSWAP32(val);
 #endif
 }
 
@@ -104,7 +99,7 @@ static INLINE u32 T2ReadLong(u8 * mem, u32 addr)
 #ifdef WORDS_BIGENDIAN
    return *((u32 *) (mem + addr));
 #else
-   return *((u16 *) (mem + addr)) << 16 | *((u16 *) (mem + addr + 2));
+   return WSWAP32(*((u32 *) (mem + addr)));
 #endif
 }
 
@@ -127,8 +122,7 @@ static INLINE void T2WriteLong(u8 * mem, u32 addr, u32 val)
 #ifdef WORDS_BIGENDIAN
    *((u32 *) (mem + addr)) = val;
 #else
-   *((u16 *) (mem + addr)) = (u16)(val >> 16);
-   *((u16 *) (mem + addr + 2)) = (u16)val;
+   *((u32 *) (mem + addr)) = WSWAP32(val);
 #endif
 }
 
@@ -351,6 +345,7 @@ extern u8 *HighWram;
 extern u8 *LowWram;
 extern u8 *BiosRom;
 extern u8 *BupRam;
+extern u8 BupRamWritten;
 
 typedef void (FASTCALL *writebytefunc)(u32, u8);
 typedef void (FASTCALL *writewordfunc)(u32, u16);

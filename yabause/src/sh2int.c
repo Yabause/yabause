@@ -31,10 +31,25 @@
 #include "bios.h"
 #include "yabause.h"
 
-// #define SH2_TRACE  // Uncomment to enable tracing for debug interpreter
+// #define SH2_TRACE  // Uncomment to enable tracing
 
 #ifdef SH2_TRACE
-#include "sh2trace.h"
+# include "sh2trace.h"
+# define MappedMemoryWriteByte(a,v)  do { \
+    uint32_t __a = (a), __v = (v);        \
+    sh2_trace_writeb(__a, __v);           \
+    MappedMemoryWriteByte(__a, __v);      \
+} while (0)
+# define MappedMemoryWriteWord(a,v)  do { \
+    uint32_t __a = (a), __v = (v);        \
+    sh2_trace_writew(__a, __v);           \
+    MappedMemoryWriteWord(__a, __v);      \
+} while (0)
+# define MappedMemoryWriteLong(a,v)  do { \
+    uint32_t __a = (a), __v = (v);        \
+    sh2_trace_writel(__a, __v);           \
+    MappedMemoryWriteLong(__a, __v);      \
+} while (0)
 #endif
 
 
@@ -2658,10 +2673,9 @@ void SH2InterpreterDeInit()
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SH2InterpreterReset()
+void SH2InterpreterReset()
 {
    // Reset any internal variables here
-   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2683,9 +2697,38 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void SH2HandleInterrupts(SH2_struct *context)
+{
+   if (context->NumberOfInterrupts != 0)
+   {
+      if (context->interrupts[context->NumberOfInterrupts-1].level > context->regs.SR.part.I)
+      {
+         context->regs.R[15] -= 4;
+         MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
+         context->regs.R[15] -= 4;
+         MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
+         context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts-1].level;
+         context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts-1].vector << 2));
+         context->NumberOfInterrupts--;
+         context->isIdle = 0;
+         context->isSleeping = 0;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
-   
+#ifdef SH2_TRACE
+   /* Avoid accumulating leftover cycles multiple times, since the trace
+    * code automatically adds state->cycles to the cycle accumulator when
+    * printing a trace line */
+   sh2_trace_add_cycles(-(context->cycles));
+#endif
+
+   SH2HandleInterrupts(context);
+
    while(context->cycles < cycles)
    {
 #ifdef EMULATEUBC   	   
@@ -2754,7 +2797,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
    }
 
 #ifdef SH2_TRACE
-   SH2_TRACE_ADD_CYCLES(cycles);
+   sh2_trace_add_cycles(context->cycles);
 #endif
 }
 
@@ -2762,6 +2805,8 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
 FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
+   SH2HandleInterrupts(context);
+
    if (context->isIdle)
       SH2idleParse(context, cycles);
    else

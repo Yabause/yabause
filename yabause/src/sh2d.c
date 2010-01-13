@@ -237,7 +237,9 @@ void SH2Disasm(u32 v_addr, u16 op, int mode, char *string)
                {
                   sprintf(string,tab[i].mnem, (op & 0xff) * tab[i].dat + 4);
                   string+=strlen(string);
-                  sprintf(string," ; 0x%08X", (op & 0xff) * tab[i].dat + 4 + (unsigned int)v_addr);
+                  sprintf(string," ; 0x%08X",
+                          ((op & 0xff) * tab[i].dat + 4 + (unsigned int)v_addr)
+                          & 0xfffffffc);
                }
                else
                   sprintf(string,tab[i].mnem, (op & 0xff) * tab[i].dat);
@@ -270,8 +272,9 @@ void SH2Disasm(u32 v_addr, u16 op, int mode, char *string)
                sprintf(string,tab[i].mnem, (op & 0xff) * tab[i].dat + 4,
                        (op >> 8) & 0xf);
                string+=strlen(string);
-               sprintf(string," ; 0x%08X", (op & 0xff) * tab[i].dat + 4 +
-                       ((unsigned int)v_addr & 0xfffffffc));
+               sprintf(string," ; 0x%08X",
+                       ((op & 0xff) * tab[i].dat + 4 + (unsigned int)v_addr)
+                       & 0xfffffffc);
             }
          }
          else if (tab[i].format == I_F)

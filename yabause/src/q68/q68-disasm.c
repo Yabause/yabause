@@ -27,6 +27,8 @@
 #include "q68-internal.h"
 
 /*************************************************************************/
+/********************** 68k instruction disassembly **********************/
+/*************************************************************************/
 
 /* Disassembly table.  The first entry matching a given instruction is used. */
 
@@ -171,14 +173,14 @@ static const struct {
     {0xFFC0, 0x56C0, "SNE.B <ea.b>"},
     {0xFFF8, 0x57C8, "DBEQ D<reg0>,<pcrel16>"},
     {0xFFC0, 0x57C0, "SEQ.B <ea.b>"},
-    {0xFFF8, 0x58C8, "DBPL D<reg0>,<pcrel16>"},
-    {0xFFC0, 0x58C0, "SPL.B <ea.b>"},
-    {0xFFF8, 0x59C8, "DBMI D<reg0>,<pcrel16>"},
-    {0xFFC0, 0x59C0, "SMI.B <ea.b>"},
-    {0xFFF8, 0x5AC8, "DBVC D<reg0>,<pcrel16>"},
-    {0xFFC0, 0x5AC0, "SVC.B <ea.b>"},
-    {0xFFF8, 0x5BC8, "DBVS D<reg0>,<pcrel16>"},
-    {0xFFC0, 0x5BC0, "SVS.B <ea.b>"},
+    {0xFFF8, 0x58C8, "DBVC D<reg0>,<pcrel16>"},
+    {0xFFC0, 0x58C0, "SVC.B <ea.b>"},
+    {0xFFF8, 0x59C8, "DBVS D<reg0>,<pcrel16>"},
+    {0xFFC0, 0x59C0, "SVS.B <ea.b>"},
+    {0xFFF8, 0x5AC8, "DBPL D<reg0>,<pcrel16>"},
+    {0xFFC0, 0x5AC0, "SPL.B <ea.b>"},
+    {0xFFF8, 0x5BC8, "DBMI D<reg0>,<pcrel16>"},
+    {0xFFC0, 0x5BC0, "SMI.B <ea.b>"},
     {0xFFF8, 0x5CC8, "DBLT D<reg0>,<pcrel16>"},
     {0xFFC0, 0x5CC0, "SLT.B <ea.b>"},
     {0xFFF8, 0x5DC8, "DBGE D<reg0>,<pcrel16>"},
@@ -206,14 +208,14 @@ static const struct {
     {0xFF00, 0x6600, "BNE.S <pcrel8>"},
     {0xFFFF, 0x6700, "BEQ.W <pcrel16>"},
     {0xFF00, 0x6700, "BEQ.S <pcrel8>"},
-    {0xFFFF, 0x6800, "BPL.W <pcrel16>"},
-    {0xFF00, 0x6800, "BPL.S <pcrel8>"},
-    {0xFFFF, 0x6900, "BMI.W <pcrel16>"},
-    {0xFF00, 0x6900, "BMI.S <pcrel8>"},
-    {0xFFFF, 0x6A00, "BVC.W <pcrel16>"},
-    {0xFF00, 0x6A00, "BVC.S <pcrel8>"},
-    {0xFFFF, 0x6B00, "BVS.W <pcrel16>"},
-    {0xFF00, 0x6B00, "BVS.S <pcrel8>"},
+    {0xFFFF, 0x6800, "BVC.W <pcrel16>"},
+    {0xFF00, 0x6800, "BVC.S <pcrel8>"},
+    {0xFFFF, 0x6900, "BVS.W <pcrel16>"},
+    {0xFF00, 0x6900, "BVS.S <pcrel8>"},
+    {0xFFFF, 0x6A00, "BPL.W <pcrel16>"},
+    {0xFF00, 0x6A00, "BPL.S <pcrel8>"},
+    {0xFFFF, 0x6B00, "BMI.W <pcrel16>"},
+    {0xFF00, 0x6B00, "BMI.S <pcrel8>"},
     {0xFFFF, 0x6C00, "BLT.W <pcrel16>"},
     {0xFF00, 0x6C00, "BLT.S <pcrel8>"},
     {0xFFFF, 0x6D00, "BGE.W <pcrel16>"},
@@ -631,11 +633,59 @@ const char *q68_disassemble(Q68State *state, uint32_t address,
 }
 
 /*************************************************************************/
+/*********************** Execution tracing support ***********************/
+/*************************************************************************/
+
+/* Processor state block to use in tracing */
+static Q68State *state;
+
+/* File pointer for trace output */
+static FILE *logfile;
+
+/* Cycle accumulator */
+static uint64_t total_cycles;
+
+/* Range of cycles to trace */
+static const uint64_t trace_start = 000000000ULL;  // First cycle to trace
+static const uint64_t trace_stop  = 600000000ULL;  // Last cycle to trace + 1
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * q68_trace_init:  Initialize the tracing code.
+ *
+ * [Parameters]
+ *     state: Processor state block
+ * [Return value]
+ *     None
+ */
+void q68_trace_init(Q68State *state_)
+{
+    state = state_;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * q68_trace_add_cycles:  Add the given number of cycles to the global
+ * accumulator.
+ *
+ * [Parameters]
+ *     cycles: Number of cycles to add
+ * [Return value]
+ *     None
+ */
+extern void q68_trace_add_cycles(int32_t cycles)
+{
+    total_cycles += cycles;
+}
+
+/*-----------------------------------------------------------------------*/
 
 #ifdef PSP
 /**
  * HEXIT:  Helper routine for q68_trace() to print a value in hexadecimal.
- * q68_trace() for why we don't just use printf().
+ * See q68_trace() for why we don't just use printf().
  */
 static inline void HEXIT(char * const ptr, uint32_t val, int ndigits)
 {
@@ -653,90 +703,122 @@ static inline void HEXIT(char * const ptr, uint32_t val, int ndigits)
  * q68_trace:  Output a trace for the instruction at the current PC.
  *
  * [Parameters]
- *           state: Processor state block
- *              fp: File pointer (stdio) to which trace should be written
- *     cycles_done: Number of cycles processed so far during this call
- *     cycle_limit: Total number of cycles to be processed this call
+ *     None
  * [Return value]
  *     None
  */
-void q68_trace(Q68State *state, FILE *fp, int cycles_done, int cycle_limit)
+void q68_trace(void)
 {
-    int nwords = 1, i;
-    const char *disassembled = q68_disassemble(state, state->PC, &nwords);
+    const uint64_t cycles = total_cycles + state->cycles;
+
+    if (cycles < trace_start) {
+
+        /* Before first instruction: do nothing */
+
+    } else if (cycles >= trace_stop) {
+
+        /* After last instruction: close log file if it's open */
+        if (logfile) {
+#ifdef __linux__
+            pclose(logfile);
+#else
+            fclose(logfile);
+#endif
+            logfile = NULL;
+        }
+
+    } else {
+
+        if (!logfile) {
+#ifdef __linux__
+            logfile = popen("gzip -3 >q68.log.gz", "w");
+#else
+            logfile = fopen("q68.log", "w");
+#endif
+            if (UNLIKELY(!logfile)) {
+                perror("Failed to open trace logfile");
+                return;
+            }
+            setvbuf(logfile, NULL, _IOFBF, 65536);
+        }
+
+        int nwords = 1, i;
+        const char *disassembled = q68_disassemble(state, state->PC, &nwords);
 
 #ifdef PSP  // because the cleaner fprintf() version is just too slow
-    int dislen = strlen(disassembled);
-    static char buf1[] =
-        "$......: .... .... ....  ..........................  SR=.... .....  clk=.../...\n";
-    static char buf2[] =
-        "    D: ........ ........ ........ ........ ........ ........ ........ ........\n"
-        "    A: ........ ........ ........ ........ ........ ........ ........ ........\n";
+        int dislen = strlen(disassembled);
+        static char buf1[] =
+            "......: .... .... ....  ..........................  SR=.... .....  [..........]\n";
+        static char buf2[] =
+            "    D: ........ ........ ........ ........ ........ ........ ........ ........\n"
+            "    A: ........ ........ ........ ........ ........ ........ ........ ........\n";
 
-    if (nwords > 3) {  // We can only fit 3 words on the line
-        nwords = 3;
-    }
-    HEXIT(&buf1[1], state->PC, 6);
-    for (i = 0; i < nwords; i++) {
-        HEXIT(&buf1[9+5*i], READU16(state, state->PC+2*i), 4);
-    }
-    if (i < 3) {
-        memset(&buf1[9+5*i], ' ', 4+5*(2-i));
-    }
-    if (dislen > 26) {  // Pathologically long text needs special handling
-        fprintf(fp, "%.23s  %-26s  SR=%04X %c%c%c%c%c  clk=%3d/%d\n",
-                buf1, disassembled, (int)state->SR,
+        if (nwords > 3) {  // We can only fit 3 words on the line
+            nwords = 3;
+        }
+        HEXIT(&buf1[0], state->PC, 6);
+        for (i = 0; i < nwords; i++) {
+            HEXIT(&buf1[8+5*i], READU16(state, state->PC+2*i), 4);
+        }
+        if (i < 3) {
+            memset(&buf1[8+5*i], ' ', 4+5*(2-i));
+        }
+        if (dislen > 26) {  // Pathologically long text needs special handling
+            fprintf(logfile, "%.22s  %-26s  SR=%04X %c%c%c%c%c  [%10lld]\n",
+                    buf1, disassembled, (int)state->SR,
+                    state->SR & SR_X ? 'X' : '.', state->SR & SR_N ? 'N' : '.',
+                    state->SR & SR_Z ? 'Z' : '.', state->SR & SR_V ? 'V' : '.',
+                    state->SR & SR_C ? 'C' : '.', (unsigned long long)cycles);
+        } else {
+            memcpy(&buf1[24], disassembled, dislen);
+            if (dislen < 26) {
+                memset(&buf1[24+dislen], ' ', 26-dislen);
+            }
+            HEXIT(&buf1[55], state->SR, 4);
+            buf1[60] = state->SR & SR_X ? 'X' : '.';
+            buf1[61] = state->SR & SR_N ? 'N' : '.';
+            buf1[62] = state->SR & SR_Z ? 'Z' : '.';
+            buf1[63] = state->SR & SR_V ? 'V' : '.';
+            buf1[64] = state->SR & SR_C ? 'C' : '.';
+            snprintf(&buf1[68], sizeof(buf1)-68, "%10lld]\n",
+                     (unsigned long long)cycles);
+            fwrite(buf1, 1, strlen(buf1), logfile);
+        }
+        for (i = 0; i < 8; i++) {
+            HEXIT(&buf2[ 7+9*i], state->D[i], 8);
+            HEXIT(&buf2[86+9*i], state->A[i], 8);
+        }
+        fwrite(buf2, 1, sizeof(buf2)-1, logfile);
+#else  // !PSP
+        char hexbuf[100];
+        int hexlen = 0;
+
+        if (nwords > 3) {  // We can only fit 3 words on the line
+            nwords = 3;
+        }
+        for (i = 0; i < nwords && hexlen < sizeof(hexbuf)-5; i++) {
+            hexlen += snprintf(hexbuf+hexlen, sizeof(hexbuf)-hexlen,
+                               "%s%04X", hexlen==0 ? "" : " ",
+                               (int)READU16(state, state->PC+2*i));
+        }
+
+        fprintf(logfile, "%06X: %-14s  %-26s  SR=%04X %c%c%c%c%c  [%10llu]\n"
+                         "    D: %08X %08X %08X %08X %08X %08X %08X %08X\n"
+                         "    A: %08X %08X %08X %08X %08X %08X %08X %08X\n",
+                (int)state->PC, hexbuf, disassembled, (int)state->SR,
                 state->SR & SR_X ? 'X' : '.', state->SR & SR_N ? 'N' : '.',
                 state->SR & SR_Z ? 'Z' : '.', state->SR & SR_V ? 'V' : '.',
-                state->SR & SR_C ? 'C' : '.', cycles_done, cycle_limit);
-    } else {
-        memcpy(&buf1[25], disassembled, dislen);
-        if (dislen < 26) {
-            memset(&buf1[25+dislen], ' ', 26-dislen);
-        }
-        HEXIT(&buf1[56], state->SR, 4);
-        buf1[61] = state->SR & SR_X ? 'X' : '.';
-        buf1[62] = state->SR & SR_N ? 'N' : '.';
-        buf1[63] = state->SR & SR_Z ? 'Z' : '.';
-        buf1[64] = state->SR & SR_V ? 'V' : '.';
-        buf1[65] = state->SR & SR_C ? 'C' : '.';
-        snprintf(&buf1[72], sizeof(buf1)-72, "%3d/%d\n",
-                 cycles_done, cycle_limit);
-        fwrite(buf1, 1, strlen(buf1), fp);
-    }
-    for (i = 0; i < 8; i++) {
-        HEXIT(&buf2[ 7+9*i], state->D[i], 8);
-        HEXIT(&buf2[86+9*i], state->A[i], 8);
-    }
-    fwrite(buf2, 1, sizeof(buf2)-1, fp);
-#else
-    char hexbuf[100];
-    int hexlen = 0;
+                state->SR & SR_C ? 'C' : '.', (unsigned long long)cycles,
+                (int)state->D[0], (int)state->D[1], (int)state->D[2],
+                (int)state->D[3], (int)state->D[4], (int)state->D[5],
+                (int)state->D[6], (int)state->D[7],
+                (int)state->A[0], (int)state->A[1], (int)state->A[2],
+                (int)state->A[3], (int)state->A[4], (int)state->A[5],
+                (int)state->A[6], (int)state->A[7]
+            );
+#endif  // PSP
 
-    if (nwords > 3) {  // We can only fit 3 words on the line
-        nwords = 3;
-    }
-    for (i = 0; i < nwords && hexlen < sizeof(hexbuf)-5; i++) {
-        hexlen += snprintf(hexbuf+hexlen, sizeof(hexbuf)-hexlen,
-                           "%s%04X", hexlen==0 ? "" : " ",
-                           (int)READU16(state, state->PC+2*i));
-    }
-
-    fprintf(fp, "$%06X: %-14s  %-26s  SR=%04X %c%c%c%c%c  clk=%3d/%d\n"
-                "    D: %08X %08X %08X %08X %08X %08X %08X %08X\n"
-                "    A: %08X %08X %08X %08X %08X %08X %08X %08X\n",
-            (int)state->PC, hexbuf, disassembled, (int)state->SR,
-            state->SR & SR_X ? 'X' : '.', state->SR & SR_N ? 'N' : '.',
-            state->SR & SR_Z ? 'Z' : '.', state->SR & SR_V ? 'V' : '.',
-            state->SR & SR_C ? 'C' : '.', cycles_done, cycle_limit,
-            (int)state->D[0], (int)state->D[1], (int)state->D[2],
-            (int)state->D[3], (int)state->D[4], (int)state->D[5],
-            (int)state->D[6], (int)state->D[7],
-            (int)state->A[0], (int)state->A[1], (int)state->A[2],
-            (int)state->A[3], (int)state->A[4], (int)state->A[5],
-            (int)state->A[6], (int)state->A[7]
-    );
-#endif
+    }  // current_cycles >= trace_start && current_cycles < trace_stop
 }
 
 /*************************************************************************/

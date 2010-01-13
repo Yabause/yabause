@@ -72,8 +72,14 @@ int SH2Init(int coreid)
       }
    }
 
-   if (SH2Core)
-      SH2Core->Init();
+   if (SH2Core) {
+      if (SH2Core->Init() != 0) {
+         free(MSH2);
+         free(SSH2);
+         MSH2 = SSH2 = NULL;
+         return -1;
+      }
+   }
 
    return 0;
 }
@@ -148,23 +154,6 @@ void SH2PowerOn(SH2_struct *context) {
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
    CurrentSH2 = context;
-
-   // Handle interrupts
-   if (context->NumberOfInterrupts != 0)
-   {
-      if (context->interrupts[context->NumberOfInterrupts-1].level > context->regs.SR.part.I)
-      {
-         context->regs.R[15] -= 4;
-         MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
-         context->regs.R[15] -= 4;
-         MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
-         context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts-1].level;
-         context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts-1].vector << 2));
-         context->NumberOfInterrupts--;
-         context->isIdle = 0;
-         context->isSleeping = 0;
-      }
-   }
 
    SH2Core->Exec(context, cycles);
 
@@ -1487,11 +1476,7 @@ void FASTCALL DataArrayWriteLong(u32 addr, u32 val)  {
 
 //////////////////////////////////////////////////////////////////////////////
 
-#ifdef PSP_TIMING_TWEAKS
 void FRTExec(u32 cycles)
-#else
-void FRTExec(UNUSED u32 cycles)
-#endif
 {
    u32 frcold;
    u32 frctemp;
@@ -1499,13 +1484,8 @@ void FRTExec(UNUSED u32 cycles)
    frcold = frctemp = (u32)CurrentSH2->onchip.FRC.all;
    
    // Increment FRC
-#ifdef PSP_TIMING_TWEAKS
    frctemp += ((cycles + CurrentSH2->frc.leftover) / CurrentSH2->frc.div);
    CurrentSH2->frc.leftover = (cycles + CurrentSH2->frc.leftover) % CurrentSH2->frc.div;
-#else
-   frctemp += ((CurrentSH2->cycles + CurrentSH2->frc.leftover) / CurrentSH2->frc.div);
-   CurrentSH2->frc.leftover = (CurrentSH2->cycles + CurrentSH2->frc.leftover) % CurrentSH2->frc.div;
-#endif
 
    // Check to see if there is or was a Output Compare A match
    if (frctemp >= CurrentSH2->onchip.OCRA && frcold < CurrentSH2->onchip.OCRA)

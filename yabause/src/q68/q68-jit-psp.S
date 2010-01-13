@@ -93,17 +93,22 @@ Q68State_fault_opcode   =  96
 Q68State_fault_status   =  98
 Q68State_halted         = 100
 Q68State_irq            = 104
-Q68State_readb_func     = 108
-Q68State_readw_func     = 112
-Q68State_writeb_func    = 116
-Q68State_writew_func    = 120
-Q68State_jit_running    = 124
-Q68State_jit_abort      = 128
-Q68State_jit_table      = 132
-Q68State_jit_hashchain  = 136
-Q68State_jit_total_data = 140
-Q68State_jit_timestamp  = 144
-Q68State_jit_blacklist  = 148
+Q68State_cycles         = 108
+Q68State_readb_func     = 112
+Q68State_readw_func     = 116
+Q68State_writeb_func    = 120
+Q68State_writew_func    = 124
+Q68State_jit_malloc     = 128
+Q68State_jit_realloc    = 132
+Q68State_jit_free       = 136
+Q68State_jit_flush      = 140
+Q68State_jit_running    = 144
+Q68State_jit_abort      = 148
+Q68State_jit_table      = 152
+Q68State_jit_hashchain  = 156
+Q68State_jit_total_data = 160
+Q68State_jit_timestamp  = 164
+Q68State_jit_blacklist  = 168
 Q68State_jit_in_blist   = Q68State_jit_blacklist + (12 * Q68_JIT_BLACKLIST_SIZE)
 Q68State_jit_blist_num  = Q68State_jit_in_blist + 4
 Q68State_jit_callstack_top = Q68State_jit_blist_num + 4
@@ -698,6 +703,21 @@ DEFOFS(ADDRESS_ERROR_SP)
 DEFLABEL(EPILOGUE)
 	TERMINATE
 DEFSIZE(EPILOGUE)
+
+/*************************************************************************/
+
+/**
+ * TRACE:  Trace the current instruction.
+ */
+DEFLABEL(TRACE)
+	lw $s3, Q68State_cycles($s0)
+	addu $t0, $s3, $s2
+	sw $t0, Q68State_cycles($s0)
+	sw $s4, Q68State_PC($s0)
+	jal q68_trace
+	sw $s5, Q68State_SR($s0)
+	sw $s3, Q68State_cycles($s0)
+DEFSIZE(TRACE)
 
 /*************************************************************************/
 

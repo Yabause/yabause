@@ -334,82 +334,60 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
     case 0x90028: return ((Cs2Area->reg.MPEGRGB << 16) | Cs2Area->reg.MPEGRGB);
     case 0x18000:
                   // transfer data
-                  switch (Cs2Area->datatranstype) {
-                    case 0:
-                            // get sector
+                  if (Cs2Area->datatranstype != -1)
+                  {
+                     // get sector
 
-                            // Make sure we still have sectors to transfer
-                            if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
-                            {
-                               // Transfer Data
-                               val = (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset] << 24) +
-                                     (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset + 1] << 16) +
-                                     (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset + 2] << 8) +
-                                      Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset + 3];
+                     // Make sure we still have sectors to transfer
+                     if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
+                     {
+                        // Transfer Data
+                        const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+#ifdef WORDS_BIGENDIAN
+                        val = *((const u32 *) ptr);
+#else
+                        val = BSWAP32(*((const u32 *) ptr));
+#endif
 
-                               // increment datatransoffset/cdwnum
-                               Cs2Area->cdwnum += 4;
-                               Cs2Area->datatransoffset += 4;
+                        // increment datatransoffset/cdwnum
+                        Cs2Area->cdwnum += 4;
+                        Cs2Area->datatransoffset += 4;
 
-                               // Make sure we're not beyond the sector size boundry
-                               if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size)
-                               {
-                                  Cs2Area->datatransoffset = 0;
-                                  Cs2Area->datanumsecttrans++;
-                               }
-                            }
+                        // Make sure we're not beyond the sector size boundry
+                        if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size)
+                        {
+                           Cs2Area->datatransoffset = 0;
+                           Cs2Area->datanumsecttrans++;
+                        }
+                     }
+                     else
+                     {
+                        if (Cs2Area->datatranstype == 2)
+                        {
+                           // Ok, so we don't have any more sectors to
+                           // transfer, might as well delete them all.
 
-                            break;
-                    case 2:
-                            // get then delete sector
+                           Cs2Area->datatranstype = -1;
 
-                            // Make sure we still have sectors to transfer
-                            if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
-                            {
-                               // Transfer Data
-                               val = (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos+Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset] << 24) +
-                                     (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos+Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset + 1] << 16) +
-                                     (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos+Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset + 2] << 8) +
-                                      Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos+Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset + 3];
+                           // free blocks
+                           for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
+                           {
+                              Cs2FreeBlock(Cs2Area->datatranspartition->block[i]);
+                              Cs2Area->datatranspartition->block[i] = NULL;
+                              Cs2Area->datatranspartition->blocknum[i] = 0xFF;
+                           }
 
-                               // increment datatransoffset/cdwnum
-                               Cs2Area->cdwnum += 4;
-                               Cs2Area->datatransoffset += 4;
+                           // sort remaining blocks
+                           Cs2SortBlocks(Cs2Area->datatranspartition);
 
-                               // Make sure we're not beyond the sector size boundry
-                               if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size)
-                               {
-                                  Cs2Area->datatransoffset = 0;
-                                  Cs2Area->datanumsecttrans++;
-                               }
-                            }
-                            else
-                            {
-                               // Ok, so we don't have any more sectors to
-                               // transfer, might as well delete them all.
+                           Cs2Area->datatranspartition->size -= Cs2Area->cdwnum;
+                           Cs2Area->datatranspartition->numblocks -= Cs2Area->datasectstotrans;
 
-                               Cs2Area->datatranstype = -1;
-
-                               // free blocks
-                               for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
-                               {
-                                  Cs2FreeBlock(Cs2Area->datatranspartition->block[i]);
-                                  Cs2Area->datatranspartition->block[i] = NULL;
-                                  Cs2Area->datatranspartition->blocknum[i] = 0xFF;
-                               }
-
-                               // sort remaining blocks
-                               Cs2SortBlocks(Cs2Area->datatranspartition);
-
-                               Cs2Area->datatranspartition->size -= Cs2Area->cdwnum;
-                               Cs2Area->datatranspartition->numblocks -= Cs2Area->datasectstotrans;
-
-                               CDLOG("cs2\t: datatranspartition->size = %x\n", Cs2Area->datatranspartition->size);
-                            }
-                            break;
-                    default: break;
+                           CDLOG("cs2\t: datatranspartition->size = %x\n", Cs2Area->datatranspartition->size);
+                        }
+                     }
                   }
-	          break;
+                  break;
     default:
              LOG("cs2\t: Undocumented register read %08X\n", addr);
 //             val = T3ReadLong(Cs2Area->mem, addr);
@@ -428,11 +406,166 @@ void FASTCALL Cs2WriteLong(UNUSED u32 addr, UNUSED u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/* Copy "count" 32-bit words from the CD buffer to type-1 memory "dest" (a
+ * native pointer), as though 0x25818000 had been read that many times */
+
+void FASTCALL Cs2RapidCopyT1(void *dest, u32 count)
+{
+   u8 *dest8 = (u8 *) dest;
+
+   if (Cs2Area->datatranstype != -1)
+   {
+      // Copy as many sectors as we have left, one sector at a time
+
+      while (count > 0 && Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
+      {
+         const u8 *src = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+         const u32 size = Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size;
+         const u32 max = size - Cs2Area->datatransoffset;
+         const u32 copy = (max < count*4) ? max : count*4;
+         memcpy(dest8, src, copy);
+         dest8 += copy;
+         count -= copy/4;
+         Cs2Area->datatransoffset += copy;
+         Cs2Area->cdwnum += copy;
+
+         // Update the sector index if we reached the end of the sector
+         if (Cs2Area->datatransoffset >= size)
+         {
+            Cs2Area->datatransoffset = 0;
+            Cs2Area->datanumsecttrans++;
+         }
+      }
+
+      // If we're in delete mode and we read through everything in memory,
+      // delete the sectors
+      if (Cs2Area->datatranstype == 2
+       && Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
+      {
+         Cs2Area->datatranstype = -1;
+
+         u32 i;
+         for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
+         {
+            Cs2FreeBlock(Cs2Area->datatranspartition->block[i]);
+            Cs2Area->datatranspartition->block[i] = NULL;
+            Cs2Area->datatranspartition->blocknum[i] = 0xFF;
+         }
+
+         Cs2SortBlocks(Cs2Area->datatranspartition);
+
+         Cs2Area->datatranspartition->size -= Cs2Area->cdwnum;
+         Cs2Area->datatranspartition->numblocks -= Cs2Area->datasectstotrans;
+
+         CDLOG("cs2\t: datatranspartition->size = %x\n", Cs2Area->datatranspartition->size);
+      }
+   }
+
+   if (count > 0)    
+   {
+      // We tried to copy more data than was stored, so fill the rest of
+      // the buffer with dummy data
+      memset(dest8, 0xCD, count*4);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+/* Copy "count" 32-bit words from the CD buffer to type-2 memory "dest" (a
+ * native pointer), as though 0x25818000 had been read that many times */
+
+void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
+{
+   u32 *dest32 = (u32 *) dest;
+
+   if (Cs2Area->datatranstype != -1)
+   {
+      // Copy as many sectors as we have left, one sector at a time; copy
+      // four words at a time where possible to improve data parallelism
+
+      while (count > 0 && Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
+      {
+         const u8 *src = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+         const u32 size = Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size;
+         const u32 max = size - Cs2Area->datatransoffset;
+         const u32 copy = (max < count*4) ? max : count*4;
+         u32 i = 0;
+         if (copy >= 16) {
+            for (; i < copy-12; i += 16, src += 16, dest32 += 4)
+            {
+               u32 word0, word1, word2, word3;
+#ifdef WORDS_BIGENDIAN
+               word0 = ((u32 *)src)[0];
+               word1 = ((u32 *)src)[1];
+               word2 = ((u32 *)src)[2];
+               word3 = ((u32 *)src)[3];
+#else
+               word0 = BSWAP16(((u32 *)src)[0]);
+               word1 = BSWAP16(((u32 *)src)[1]);
+               word2 = BSWAP16(((u32 *)src)[2]);
+               word3 = BSWAP16(((u32 *)src)[3]);
+#endif
+               dest32[0] = word0;
+               dest32[1] = word1;
+               dest32[2] = word2;
+               dest32[3] = word3;
+            }
+         }
+         for (; i < copy; i += 4, src += 4, dest32++)
+         {
+#ifdef WORDS_BIGENDIAN
+            *dest32 = *(u32 *)src;
+#else
+            *dest32 = BSWAP16(*(u32 *)src);
+#endif
+         }
+         count -= copy/4;
+         Cs2Area->datatransoffset += copy;
+         Cs2Area->cdwnum += copy;
+
+         if (Cs2Area->datatransoffset >= size)
+         {
+            Cs2Area->datatransoffset = 0;
+            Cs2Area->datanumsecttrans++;
+         }
+      }
+
+      if (Cs2Area->datatranstype == 2
+       && Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
+      {
+         Cs2Area->datatranstype = -1;
+
+         u32 i;
+         for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
+         {
+            Cs2FreeBlock(Cs2Area->datatranspartition->block[i]);
+            Cs2Area->datatranspartition->block[i] = NULL;
+            Cs2Area->datatranspartition->blocknum[i] = 0xFF;
+         }
+
+         Cs2SortBlocks(Cs2Area->datatranspartition);
+
+         Cs2Area->datatranspartition->size -= Cs2Area->cdwnum;
+         Cs2Area->datatranspartition->numblocks -= Cs2Area->datasectstotrans;
+
+         CDLOG("cs2\t: datatranspartition->size = %x\n", Cs2Area->datatranspartition->size);
+      }
+   }
+
+   if (count > 0)    
+   {
+      memset(dest32, 0xCD, count*4);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *netlinksetting) {
    int ret;
 
    if ((Cs2Area = (Cs2 *) malloc(sizeof(Cs2))) == NULL)
       return -1;
+   memset(Cs2Area, 0, sizeof(*Cs2Area));
 
    Cs2Area->carttype = carttype;
    Cs2Area->mpegpath = mpegpath;
@@ -572,6 +705,7 @@ void Cs2Reset(void) {
   Cs2Area->isdiskchanged = 1;
   Cs2Area->isbufferfull = 0;
   Cs2Area->isonesectorstored = 0;
+  Cs2Area->isaudio = 0;
 
   Cs2Area->reg.CR1 = ( 0 <<8) | 'C';
   Cs2Area->reg.CR2 = ('D'<<8) | 'B';
@@ -725,6 +859,7 @@ void Cs2Exec(u32 timing) {
                case 0:
                   // Sector Read OK
                   Cs2Area->FAD++;
+                  Cs2Area->cdi->ReadAheadFAD(Cs2Area->FAD);
 
                   if (playpartition != NULL)
                   {
@@ -825,6 +960,19 @@ void Cs2Exec(u32 timing) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/* Returns the number of (emulated) microseconds before the next sector
+ * will have been completely read in */
+int Cs2GetTimeToNextSector(void) {
+   if ((Cs2Area->status & 0xF) != CDB_STAT_PLAY) {
+      return 0;
+   } else {
+      int time = Cs2Area->_periodictiming - Cs2Area->_periodiccycles;
+      return time<0 ? 0 : time;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void Cs2Command(void) {
   Cs2Area->_command = 1;
 }
@@ -833,7 +981,7 @@ void Cs2Command(void) {
 
 void Cs2SetTiming(int playing) {
   if (playing) {
-     if (Cs2Area->speed1x == 1) // should also verify to make sure it's not reading cd audio
+     if (Cs2Area->isaudio || Cs2Area->speed1x == 1)
         Cs2Area->_periodictiming = 13333;
      else
         Cs2Area->_periodictiming = 6667;
@@ -1381,6 +1529,7 @@ void Cs2PlayDisc(void) {
 
   Cs2Area->status = CDB_STAT_PLAY;
   Cs2Area->playtype = CDB_PLAYTYPE_SECTOR;
+  Cs2Area->cdi->ReadAheadFAD(Cs2Area->FAD);
 
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
@@ -2148,6 +2297,7 @@ void Cs2ReadFile(void) {
 
   Cs2Area->status = CDB_STAT_PLAY;
   Cs2Area->playtype = CDB_PLAYTYPE_FILE;
+  Cs2Area->cdi->ReadAheadFAD(Cs2Area->FAD);
 
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
@@ -2613,24 +2763,22 @@ void Cs2FreeBlock(block_struct * blk) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2SortBlocks(partition_struct * part) {
-  u32 i, i2;
-  block_struct * blktmp;
-  u8 blktmp2;
+  unsigned int from, to;
 
-  for (i = 0; i < (MAX_BLOCKS-1); i++)
+  for (from = to = 0; from < MAX_BLOCKS; from++)
   {
-     for (i2 = i+1; i2 < MAX_BLOCKS; i2++)
+     if (part->block[from] != NULL)
      {
-        if (part->block[i] == NULL && part->block[i2] != NULL)
+        if (to != from)
         {
-           blktmp = part->block[i];
-           part->block[i] = part->block[i2];
-           part->block[i2] = blktmp;
-           blktmp2 = part->blocknum[i];
-           part->blocknum[i] = part->blocknum[i2];
-           part->blocknum[i2] = blktmp2;
+           part->block[to] = part->block[from];
         }
+        to++;
      }
+  }
+
+  for (; to < MAX_BLOCKS; to++) {
+      part->block[to] = NULL;
   }
 }
 
@@ -3198,11 +3346,13 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
 
      if (memcmp(syncheader, Cs2Area->workblock.data, 12) != 0) isaudio = 1;
 
+     // force 1x speed if reading from an audio track
+     Cs2Area->isaudio = isaudio;
+     Cs2SetTiming(1);
+
      // if mode 2 track, setup the subheader values
      if (isaudio)
      {
-        Cs2Area->speed1x = 1;
-        Cs2SetTiming(1);
         ScspReceiveCDDA(Cs2Area->workblock.data);
         *partition = NULL;
         return 0;
@@ -3341,7 +3491,7 @@ int Cs2SaveState(FILE * fp) {
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
 
-   offset = StateWriteHeader(fp, "CS2 ", 1);
+   offset = StateWriteHeader(fp, "CS2 ", 2);
 
    // Write cart type
    ywrite(&check, (void *) &Cs2Area->carttype, 4, 1, fp);
@@ -3375,6 +3525,7 @@ int Cs2SaveState(FILE * fp) {
    ywrite(&check, (void *) &Cs2Area->isdiskchanged, 1, 1, fp);
    ywrite(&check, (void *) &Cs2Area->isbufferfull, 1, 1, fp);
    ywrite(&check, (void *) &Cs2Area->speed1x, 1, 1, fp);
+   ywrite(&check, (void *) &Cs2Area->isaudio, 1, 1, fp);
    ywrite(&check, (void *) &Cs2Area->transfileinfo, 1, 12, fp);
    ywrite(&check, (void *) &Cs2Area->lastbuffer, 1, 1, fp);
    ywrite(&check, (void *) &Cs2Area->_command, 1, 1, fp);
@@ -3429,7 +3580,7 @@ int Cs2SaveState(FILE * fp) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Cs2LoadState(FILE * fp, UNUSED int version, int size) {
+int Cs2LoadState(FILE * fp, int version, int size) {
    int i, i2;
    IOCheck_struct check;
 
@@ -3467,6 +3618,8 @@ int Cs2LoadState(FILE * fp, UNUSED int version, int size) {
    yread(&check, (void *)&Cs2Area->isdiskchanged, 1, 1, fp);
    yread(&check, (void *)&Cs2Area->isbufferfull, 1, 1, fp);
    yread(&check, (void *)&Cs2Area->speed1x, 1, 1, fp);
+   if (version > 1)
+      yread(&check, (void *)&Cs2Area->isaudio, 1, 1, fp);
    yread(&check, (void *)&Cs2Area->transfileinfo, 1, 12, fp);
    yread(&check, (void *)&Cs2Area->lastbuffer, 1, 1, fp);
    yread(&check, (void *)&Cs2Area->_command, 1, 1, fp);

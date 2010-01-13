@@ -51,11 +51,12 @@
 
 /* Interface function declarations (must come before interface definition) */
 
-static void m68kq68_init(void);
+static int m68kq68_init(void);
 static void m68kq68_deinit(void);
 static void m68kq68_reset(void);
 
 static FASTCALL s32 m68kq68_exec(s32 cycles);
+static void m68kq68_sync(void);
 
 static u32 m68kq68_get_dreg(u32 num);
 static u32 m68kq68_get_areg(u32 num);
@@ -72,7 +73,7 @@ static void m68kq68_set_usp(u32 val);
 static void m68kq68_set_ssp(u32 val);
 
 static FASTCALL void m68kq68_set_irq(s32 level);
-static FASTCALL void m68kq68_touch_mem(u32 address);
+static FASTCALL void m68kq68_write_notify(u32 address, u32 size);
 
 static void m68kq68_set_fetch(u32 low_addr, u32 high_addr, pointer fetch_addr);
 static void m68kq68_set_readb(M68K_READ *func);
@@ -95,37 +96,38 @@ static void writew_trampoline(uint32_t address, uint32_t data);
 /* Module interface definition */
 
 M68K_struct M68KQ68 = {
-    .id        = M68KCORE_Q68,
-    .Name      = "Q68 68k Emulator Interface",
+    .id          = M68KCORE_Q68,
+    .Name        = "Q68 68k Emulator Interface",
 
-    .Init      = m68kq68_init,
-    .DeInit    = m68kq68_deinit,
-    .Reset     = m68kq68_reset,
+    .Init        = m68kq68_init,
+    .DeInit      = m68kq68_deinit,
+    .Reset       = m68kq68_reset,
 
-    .Exec      = m68kq68_exec,
+    .Exec        = m68kq68_exec,
+    .Sync        = m68kq68_sync,
 
-    .GetDReg   = m68kq68_get_dreg,
-    .GetAReg   = m68kq68_get_areg,
-    .GetPC     = m68kq68_get_pc,
-    .GetSR     = m68kq68_get_sr,
-    .GetUSP    = m68kq68_get_usp,
-    .GetMSP    = m68kq68_get_ssp,
+    .GetDReg     = m68kq68_get_dreg,
+    .GetAReg     = m68kq68_get_areg,
+    .GetPC       = m68kq68_get_pc,
+    .GetSR       = m68kq68_get_sr,
+    .GetUSP      = m68kq68_get_usp,
+    .GetMSP      = m68kq68_get_ssp,
 
-    .SetDReg   = m68kq68_set_dreg,
-    .SetAReg   = m68kq68_set_areg,
-    .SetPC     = m68kq68_set_pc,
-    .SetSR     = m68kq68_set_sr,
-    .SetUSP    = m68kq68_set_usp,
-    .SetMSP    = m68kq68_set_ssp,
+    .SetDReg     = m68kq68_set_dreg,
+    .SetAReg     = m68kq68_set_areg,
+    .SetPC       = m68kq68_set_pc,
+    .SetSR       = m68kq68_set_sr,
+    .SetUSP      = m68kq68_set_usp,
+    .SetMSP      = m68kq68_set_ssp,
 
-    .SetIRQ    = m68kq68_set_irq,
-    .TouchMem  = m68kq68_touch_mem,
+    .SetIRQ      = m68kq68_set_irq,
+    .WriteNotify = m68kq68_write_notify,
 
-    .SetFetch  = m68kq68_set_fetch,
-    .SetReadB  = m68kq68_set_readb,
-    .SetReadW  = m68kq68_set_readw,
-    .SetWriteB = m68kq68_set_writeb,
-    .SetWriteW = m68kq68_set_writew,
+    .SetFetch    = m68kq68_set_fetch,
+    .SetReadB    = m68kq68_set_readb,
+    .SetReadW    = m68kq68_set_readw,
+    .SetWriteB   = m68kq68_set_writeb,
+    .SetWriteW   = m68kq68_set_writew,
 };
 
 /*-----------------------------------------------------------------------*/
@@ -154,19 +156,20 @@ static M68K_WRITE *real_writeb, *real_writew;
  * [Parameters]
  *     None
  * [Return value]
- *     None
+ *     Zero on success, negative on failure
  */
-static void m68kq68_init(void)
+static int m68kq68_init(void)
 {
     if (!(state = q68_create())) {
-        /* FIXME: Need to be able to return failure */
-        return;
+        return -1;
     }
     q68_set_irq(state, 0);
     q68_set_readb_func(state, dummy_read);
     q68_set_readw_func(state, dummy_read);
     q68_set_writeb_func(state, dummy_write);
     q68_set_writew_func(state, dummy_write);
+
+    return 0;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -251,6 +254,21 @@ static FASTCALL s32 m68kq68_exec(s32 cycles)
 #else  // !PROFILE_68K
     return q68_run(state, cycles);
 #endif
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * m68kq68_sync:  Wait for background execution to finish.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     None
+ */
+static void m68kq68_sync(void)
+{
+    /* Nothing to do */
 }
 
 /*************************************************************************/
@@ -356,17 +374,18 @@ static FASTCALL void m68kq68_set_irq(s32 level)
 /*-----------------------------------------------------------------------*/
 
 /**
- * m68kq68_touch_mem:  Inform the 68k emulator that the given address has
- * been modified.
+ * m68kq68_write_notify:  Inform the 68k emulator that the given address
+ * range has been modified.
  *
  * [Parameters]
  *     address: 68000 address of modified data
+ *        size: Size of modified data in bytes
  * [Return value]
  *     None
  */
-static FASTCALL void m68kq68_touch_mem(u32 address)
+static FASTCALL void m68kq68_write_notify(u32 address, u32 size)
 {
-    q68_touch_memory(state, address);
+    q68_touch_memory(state, address, size);
 }
 
 /*************************************************************************/

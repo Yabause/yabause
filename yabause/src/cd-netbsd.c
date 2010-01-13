@@ -30,11 +30,12 @@
 #include "cdbase.h"
 #include "debug.h"
 
-int NetBSDCDInit(const char *);
-int NetBSDCDDeInit(void);
-s32 NetBSDCDReadTOC(u32 *);
-int NetBSDCDGetStatus(void);
-int NetBSDCDReadSectorFAD(u32, void *);
+static int NetBSDCDInit(const char *);
+static void NetBSDCDDeInit(void);
+static s32 NetBSDCDReadTOC(u32 *);
+static int NetBSDCDGetStatus(void);
+static int NetBSDCDReadSectorFAD(u32, void *);
+static void NetBSDCDReadAheadFAD(u32);
 
 CDInterface ArchCD = {
        CDCORE_ARCH,
@@ -43,12 +44,13 @@ CDInterface ArchCD = {
        NetBSDCDDeInit,
        NetBSDCDGetStatus,
        NetBSDCDReadTOC,
-       NetBSDCDReadSectorFAD
+       NetBSDCDReadSectorFAD,
+       NetBSDCDReadAheadFAD,
 };
 
-int hCDROM;
+static int hCDROM;
 
-int NetBSDCDInit(const char * cdrom_name) {
+static int NetBSDCDInit(const char * cdrom_name) {
        if ((hCDROM = open(cdrom_name, O_RDONLY | O_NONBLOCK)) == -1) {
                LOG("CDInit (%s) failed\n", cdrom_name);
                return -1;
@@ -58,19 +60,16 @@ int NetBSDCDInit(const char * cdrom_name) {
        return 0;
 }
 
-int NetBSDCDDeInit(void) {
-       if (hCDROM == -1) {
-               return -1;
+static void NetBSDCDDeInit(void) {
+       if (hCDROM != -1) {
+               close(hCDROM);
        }
-       close(hCDROM);
 
        LOG("CDDeInit OK\n");
-
-       return 0;
 }
 
 
-s32 NetBSDCDReadTOC(u32 * TOC)
+static s32 NetBSDCDReadTOC(u32 * TOC)
 {
    int success;
    struct ioc_toc_header ctTOC;
@@ -135,7 +134,7 @@ s32 NetBSDCDReadTOC(u32 * TOC)
    return 0;
 }
 
-int NetBSDCDGetStatus(void) {
+static int NetBSDCDGetStatus(void) {
        // 0 - CD Present, disc spinning
        // 1 - CD Present, disc not spinning
        // 2 - CD not present
@@ -145,7 +144,7 @@ int NetBSDCDGetStatus(void) {
        return 0;
 }
 
-int NetBSDCDReadSectorFAD(u32 FAD, void *buffer) {
+static int NetBSDCDReadSectorFAD(u32 FAD, void *buffer) {
        static const s8 syncHdr[] = {
            0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
            0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00 };
@@ -160,4 +159,9 @@ int NetBSDCDReadSectorFAD(u32 FAD, void *buffer) {
        }
 
        return 0;
+}
+
+static void NetBSDCDReadAheadFAD(UNUSED u32 FAD)
+{
+       // No-op
 }

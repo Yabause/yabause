@@ -75,11 +75,13 @@ typedef struct {
    s32 timing;
    PortData_struct port1;
    PortData_struct port2;
+   u8 clocksync;
+   u32 basetime;  // Safe until early 2106.  After that you're on your own (:
 } SmpcInternal;
 
 extern SmpcInternal * SmpcInternalVars;
 
-int SmpcInit(u8 regionid);
+int SmpcInit(u8 regionid, int clocksync, u32 basetime);
 void SmpcDeInit(void);
 void SmpcRecheckRegion(void);
 void SmpcReset(void);

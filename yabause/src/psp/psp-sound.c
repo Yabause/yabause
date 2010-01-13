@@ -18,13 +18,32 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include "../yabause.h"
+#include "common.h"
+
 #include "../scsp.h"
 
-#include "common.h"
 #include "sys.h"
 #include "psp-sound.h"
 
+/*************************************************************************/
+/************************* Configuration options *************************/
+/*************************************************************************/
+
+/**
+ * DUMP_AUDIO:  When defined, the program will write a dump of all audio
+ * data sent to the hardware (including filler data sent when the emulator
+ * falls behind real time) to "audio.pcm" in the current directory.
+ *
+ * The actual file writing is performed on each call to
+ * psp_sound_update_audio(), and will only perform correctly if this
+ * function is called at least once per sizeof(dump_buffer) bytes of audio
+ * data sent to the hardware.  In particular, opening the configuration
+ * menu will cause some samples to be lost.
+ */
+// #define DUMP_AUDIO
+
+/*************************************************************************/
+/************************* Interface definition **************************/
 /*************************************************************************/
 
 /* Interface function declarations (must come before interface definition) */
@@ -59,6 +78,8 @@ SoundInterface_struct SNDPSP = {
 };
 
 /*************************************************************************/
+/****************************** Local data *******************************/
+/*************************************************************************/
 
 /* Playback rate in Hz (unchangeable) */
 #define PLAYBACK_RATE  44100
@@ -67,22 +88,28 @@ SoundInterface_struct SNDPSP = {
  * but greater lag) */
 #define BUFFER_SIZE  512
 
-/* Buffer descriptors for left and right channels, implementing a lockless
+/*
+ * Buffer descriptors for left and right channels, implementing a lockless
  * ring buffer with the following semantics:
- *     WRITER (main program) waits for .write_ready to become nonzero, then
- *         writes BUFFER_SIZE samples of data into .buffer[.next_free] and
- *         sets .write_ready to zero.
- *     READER (playback thread) waits for .write_ready to become zero,
- *         submits .buffer[.next_free] to the OS (which blocks until the
- *         previous buffer finishes playing), updates .next_free to point
- *         to the other playback buffer (0 or 1), and sets .write_ready to
- *         nonzero.
+ *    WRITER (main program) waits for .write_ready to become nonzero, then
+ *       writes BUFFER_SIZE samples of data into .buffer[.next_free] and
+ *       sets .write_ready to zero.
+ *    READER (playback thread) waits for .write_ready to become zero,
+ *       submits .buffer[.next_free] to the OS (which blocks until the
+ *       previous buffer finishes playing), updates .next_free to point
+ *       to the other playback buffer (0 or 1), and sets .write_ready to
+ *       nonzero.
+ *
+ * Note that at least three buffers are required in the ring buffer:
+ *    - One currently being played by the hardware.
+ *    - One queued for playback by the hardware.
+ *    - One into which the main program is writing.
  */
 typedef struct PSPSoundBufferDesc_ {
+    __attribute__((aligned(64))) int16_t buffer[4][BUFFER_SIZE*2];
     int started;      // Nonzero if channel is playing
     int channel;      // Channel number allocated for this buffer
-    int16_t buffer[2][BUFFER_SIZE*2];
-    int next_free;    // Index of next buffer to store data into
+    unsigned int next_free; // Index of next buffer to store data into
     int write_ready;  // When nonzero, data can be written to buffer[next_free]
     /* Internal use: */
     SceUID thread;    // Playback thread handle
@@ -95,6 +122,11 @@ static int saved_samples = 0;
 
 /* Mute flag (used by Mute and UnMute methods) */
 static int muted = 1;
+
+#ifdef DUMP_AUDIO
+/* Audio output file */
+static int dump_fd;
+#endif
 
 /*-----------------------------------------------------------------------*/
 
@@ -122,6 +154,15 @@ static int psp_sound_init(void)
         /* Already initialized! */
         return 0;
     }
+
+#ifdef DUMP_AUDIO
+    dump_fd = sceIoOpen("audio.pcm",
+                        PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0600);
+    if (dump_fd < 0) {
+        DMSG("open(audio.pcm): %s", psp_strerror(errno));
+        dump_fd = 0;
+    }
+#endif
 
     if (!start_channel(&stereo_buffer)) {
         DMSG("Failed to start playback");
@@ -461,14 +502,41 @@ static int playback_thread(SceSize args, void *argp)
 {
     PSPSoundBufferDesc * const buffer_desc = *(PSPSoundBufferDesc **)argp;
 
+    /* Temporary buffer for dummy audio data when the emulator falls behind
+     * real time (filled with the last sample sent to avoid clicks).  This
+     * thread is only launched once, so "static" is safe. */
+    static uint32_t dummy_buffer[BUFFER_SIZE];  // 1 stereo sample = 32 bits
+    static uint32_t last_sample;                // Last stereo sample played
+
     while (!buffer_desc->stop) {
-        while (buffer_desc->write_ready) {
-            sceKernelDelayThread(10000);  // 0.01 sec
+        const void *buffer;
+        if (!buffer_desc->write_ready) {  // i.e., ready for playback
+            buffer = buffer_desc->buffer[buffer_desc->next_free];
+            last_sample = ((const uint32_t *)buffer)[BUFFER_SIZE - 1];
+            buffer_desc->next_free =
+                (buffer_desc->next_free + 1) % lenof(buffer_desc->buffer);
+            buffer_desc->write_ready = 1;
+        } else {
+            const uint32_t sample = last_sample;  // Help out optimizer
+            uint32_t *ptr32 = dummy_buffer;
+            unsigned int i;
+            for (i = 0; i < BUFFER_SIZE; i += 8) {
+                ptr32[i+0] = sample;
+                ptr32[i+1] = sample;
+                ptr32[i+2] = sample;
+                ptr32[i+3] = sample;
+                ptr32[i+4] = sample;
+                ptr32[i+5] = sample;
+                ptr32[i+6] = sample;
+                ptr32[i+7] = sample;
+            }
+            buffer = dummy_buffer;
         }
         sceAudioOutputBlocking(buffer_desc->channel, muted ? 0 : 0x8000,
-                               buffer_desc->buffer[buffer_desc->next_free]);
-        buffer_desc->next_free = (buffer_desc->next_free + 1) % 2;
-        buffer_desc->write_ready = 1;
+                               buffer);
+#ifdef DUMP_AUDIO
+        sceIoWrite(dump_fd, buffer, BUFFER_SIZE*4);
+#endif
     }
 
     sceAudioChRelease(buffer_desc->channel);

@@ -1,26 +1,66 @@
-EXTRA_DIST = sh2-core.i icache-funcs-2450.patch
+EXTRA_DIST = icache-funcs-2450.patch psp-logo.png sh2-core.i
+CLEANFILES = yabause.prx yabause.sfo EBOOT.PBP
 
-# The ELF file is only an imtermediate target; the final target is EBOOT.PBP
-# (but keep the ELF and PRX files around for debugging/testing purposes)
-all-local: EBOOT.PBP
-.SECONDARY: yabause.elf yabause.prx
+# yabause.{elf,prx} are only intermediate targets; the final target is
+# EBOOT.PBP (but we keep the ELF/PRX files around for testing purposes).
+if BUILD_ME_TEST
+me_test=me-test.prx
+else
+me_test=
+endif
+all-local: EBOOT.PBP me.prx $(me_test)
+.SECONDARY: yabause.elf yabause.prx me.elf me-test.elf
 
-noinst_PROGRAMS = yabause.elf
-yabause_elf_SOURCES = display.c main.c profile.c psp-per.c psp-sh2.c \
-                      psp-sound.c psp-video.c sys.c texcache.c \
-                      common.h display.h mips.h profile.h psp-per.h \
-                      psp-sh2.h psp-sound.h psp-video.h sys.h texcache.h
-yabause_elf_CFLAGS = $(YAB_CFLAGS)
-yabause_elf_LDADD = ../libyabause.a $(YAB_LIBS)
+########
 
-yabause.prx: yabause.elf
+noinst_PROGRAMS = yabause.elf me.elf me-test.elf
+
+yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
+                      init.c localtime.c main.c menu.c misc.c profile.c \
+                      psp-cd.c psp-m68k.c psp-per.c psp-sh2.c psp-sound.c \
+                      psp-video.c \
+                      rtl.c rtl-mips.c rtlexec.c rtlinsn.c rtlopt.c rtlunit.c \
+                      sh2.c sh2-interpret.c sh2-opcodeinfo.c sh2-optimize.c \
+                      sys.c texcache.c yui.c \
+                      melib.S me-utility.c \
+                      \
+                      common.h config.h control.h display.h filesel.h font.h \
+                      gu.h init.h localtime.h menu.h misc.h profile.h \
+                      psp-cd.h psp-m68k.h psp-per.h psp-sh2.h psp-sound.h \
+                      psp-video.h \
+                      rtl.h rtl-internal.h rtl-mips.h \
+                      sh2.h sh2-internal.h \
+                      sys.h texcache.h \
+                      me-utility.h
+yabause_elf_CFLAGS = $(YAB_CFLAGS) -Wpointer-arith -Wshadow
+yabause_elf_LDADD = ../libyabause.a $(YAB_LIBS) -lpspsdk
+
+me_elf_SOURCES = me.c me.h me-exp.c
+me_elf_CFLAGS = -Wpointer-arith -Wshadow
+me_elf_LDFLAGS = -nostartfiles
+me_elf_LIBS = -lpspkernel
+me.elf: $(me_elf_OBJECTS)
+	$(me_elf_LINK) $(me_elf_OBJECTS) $(me_elf_LDADD) $(me_elf_LIBS)
+
+me_test_elf_SOURCES = me-test.c me-utility.c me-utility.h melib.S
+me_test_elf_CFLAGS = -Wpointer-arith -Wshadow
+me_test_elf_LIBS = -lc -lpspuser
+me-test.elf: $(me_test_elf_OBJECTS)
+	$(me_test_elf_LINK) $(me_test_elf_OBJECTS) $(me_test_elf_LDADD) $(me_test_elf_LIBS)
+
+########
+
+.elf.prx:
 	psp-fixup-imports $<
 	psp-prxgen $< $@
 
+me-exp.c: me.exp
+	psp-build-exports -b $< >$@
+melib.S: me.exp
+	psp-build-exports -s $<
+
 yabause.sfo:
-#	mksfo "Yabause $(PACKAGE_VERSION)" $@
 	mksfoex -d MEMSIZE=1 "Yabause $(PACKAGE_VERSION)" $@
 
-EBOOT.PBP: yabause.prx yabause.sfo
-	pack-pbp $@ yabause.sfo NULL NULL NULL NULL NULL yabause.prx NULL
-#	pack-pbp $@ yabause.sfo icon0.png NULL NULL pic1.png NULL yabause.prx NULL
+EBOOT.PBP: psp-logo.png yabause.prx yabause.sfo
+	pack-pbp $@ yabause.sfo $< NULL NULL NULL NULL yabause.prx NULL

@@ -38,11 +38,12 @@
 
 #include "cdbase.h"
 
-int MacOSXCDInit(const char *);
-int MacOSXCDDeInit();
-int MacOSXCDGetStatus();
-long MacOSXCDReadTOC(unsigned long *);
-int MacOSXCDReadSectorFAD(unsigned long, void *);
+static int MacOSXCDInit(const char *);
+static void MacOSXCDDeInit(void);
+static int MacOSXCDGetStatus(void);
+static s32 MacOSXCDReadTOC(u32 *);
+static int MacOSXCDReadSectorFAD(u32, void *);
+static void MacOSXCDReadAheadFAD(u32);
 
 CDInterface ArchCD = {
 CDCORE_ARCH,
@@ -51,12 +52,13 @@ MacOSXCDInit,
 MacOSXCDDeInit,
 MacOSXCDGetStatus,
 MacOSXCDReadTOC,
-MacOSXCDReadSectorFAD
+MacOSXCDReadSectorFAD,
+MacOSXCDReadAheadFAD,
 };
 
-int hCDROM;
+static int hCDROM;
 
-int MacOSXCDInit(const char * useless_for_now)
+static int MacOSXCDInit(const char * useless_for_now)
 {
 	CFMutableDictionaryRef  classesToMatch;
 	io_iterator_t mediaIterator;
@@ -103,17 +105,15 @@ int MacOSXCDInit(const char * useless_for_now)
 	return 0;
 }
 
-int MacOSXCDDeInit() 
+static void MacOSXCDDeInit(void) 
 {
 	if (hCDROM != -1) 
 	{
 		close(hCDROM);
 	}
-	
-	return 0;
 }
 
-CDTOC * GetTOCFromCDPath()
+static CDTOC * GetTOCFromCDPath(void)
 {
 	CFMutableDictionaryRef  classesToMatch;
 	io_iterator_t mediaIterator;
@@ -140,7 +140,7 @@ CDTOC * GetTOCFromCDPath()
 	return TOC;
 }
 
-long MacOSXCDReadTOC(unsigned long *TOC) 
+static s32 MacOSXCDReadTOC(u32 *TOC) 
 {
   	int add150 = 150, tracks = 0;
 	u_char track;
@@ -172,7 +172,7 @@ long MacOSXCDReadTOC(unsigned long *TOC)
 	return (0xCC * 2);
 }
 
-int MacOSXCDGetStatus(void) 
+static int MacOSXCDGetStatus(void) 
 {
 	// 0 - CD Present, disc spinning
 	// 1 - CD Present, disc not spinning
@@ -184,7 +184,7 @@ int MacOSXCDGetStatus(void)
 	return 0;
 }
 
-int MacOSXCDReadSectorFAD(unsigned long FAD, void *buffer) 
+static int MacOSXCDReadSectorFAD(u32 FAD, void *buffer) 
 {
 	int blockSize = 2352;
 	
@@ -197,3 +197,7 @@ int MacOSXCDReadSectorFAD(unsigned long FAD, void *buffer)
 	return false;
 }
 
+static void MacOSXCDReadAheadFAD(UNUSED u32 FAD)
+{
+	// No-op
+}

@@ -26,6 +26,7 @@
 /* Info structure for translated code blocks */
 struct Q68JitEntry_ {
     Q68JitEntry *next, *prev; // Hash table collision chain pointers
+    Q68State *state;          // Associated processor state block
     uint32_t m68k_start;      // Code start address in 68000 address space
                               //    (zero indicates a free entry)
     uint32_t m68k_end;        // Code end address in 68000 address space

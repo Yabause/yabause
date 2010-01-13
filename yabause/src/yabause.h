@@ -42,6 +42,8 @@ typedef struct
    const char *netlinksetting;
    int flags;
    int frameskip;
+   int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
+   u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -57,6 +59,7 @@ void print_usage(const char *program_name);
 void YabauseChangeTiming(int freqtype);
 int YabauseInit(yabauseinit_struct *init);
 void YabauseDeInit(void);
+void YabauseSetDecilineMode(int on);
 void YabauseResetNoLoad(void);
 void YabauseReset(void);
 void YabauseResetButton(void);
@@ -70,6 +73,7 @@ int YabauseQuickLoadGame(void);
 
 typedef struct
 {
+   int DecilineMode;
    int DecilineCount;
    int LineCount;
    int VBlankLineCount;

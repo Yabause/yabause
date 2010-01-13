@@ -164,6 +164,12 @@ DCCDReadSectorFAD:
     rts
     mov         #0, r0
 
+!   static int DCCDReadAheadFAD(u32 FAD)
+!       No-op (for the moment).
+DCCDReadAheadFAD:
+    rts
+    nop
+
 !   static s32 DCCDReadTOC(u32 *TOC);
 !       Read the TOC of the CD inserted in the drive.
 !       Amusingly enough, I just realized that the format that Yabause expects
@@ -225,3 +231,4 @@ _ArchCD:
     .long       DCCDGetStatus
     .long       DCCDReadTOC
     .long       DCCDReadSectorFAD
+    .long       DCCDReadAheadFAD

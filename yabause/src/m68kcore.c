@@ -46,7 +46,8 @@ int M68KInit(int coreid) {
    return 0;
 }
 
-static void M68KDummyInit(void) {
+static int M68KDummyInit(void) {
+	return 0;
 }
 
 static void M68KDummyDeInit(void) {
@@ -68,6 +69,9 @@ static s32 FASTCALL M68KDummyExec(UNUSED s32 cycle) {
 	T2WriteWord(SoundRam, 0x790, 0);
 	T2WriteWord(SoundRam, 0x792, 0);
 	return 0;
+}
+
+static void M68KDummySync(void) {
 }
 
 static u32 M68KDummyGetDReg(UNUSED u32 num) {
@@ -118,7 +122,7 @@ static void M68KDummySetFetch(UNUSED u32 low_adr, UNUSED u32 high_adr, UNUSED po
 static void FASTCALL M68KDummySetIRQ(UNUSED s32 level) {
 }
 
-static void FASTCALL M68KDummyTouchMem(u32 address) {
+static void FASTCALL M68KDummyWriteNotify(u32 address, u32 size) {
 }
 
 static void M68KDummySetReadB(UNUSED M68K_READ *Func) {
@@ -140,6 +144,7 @@ M68K_struct M68KDummy = {
 	M68KDummyDeInit,
 	M68KDummyReset,
 	M68KDummyExec,
+	M68KDummySync,
 	M68KDummyGetDReg,
 	M68KDummyGetAReg,
 	M68KDummyGetPC,
@@ -154,7 +159,7 @@ M68K_struct M68KDummy = {
 	M68KDummySetMSP,
 	M68KDummySetFetch,
 	M68KDummySetIRQ,
-	M68KDummyTouchMem,
+	M68KDummyWriteNotify,
 	M68KDummySetReadB,
 	M68KDummySetReadW,
 	M68KDummySetWriteB,

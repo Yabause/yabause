@@ -18,12 +18,26 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include "../yabause.h"
-
 #include "common.h"
+
+#include "psp-sound.h"
 #include "sys.h"
 
 /*************************************************************************/
+
+/* Main thread handle (used by callback routines) */
+static SceUID main_thread;
+
+/*----------------------------------*/
+
+/* Local routine declarations */
+
+static int callback_thread(void);
+static int exit_callback(int arg1, int arg2, void *common);
+static int power_callback(int unknown, int power_info, void *common);
+
+/*************************************************************************/
+/************************** Interface functions **************************/
 /*************************************************************************/
 
 /**
@@ -56,6 +70,43 @@ const char *psp_strerror(const int32_t code)
         snprintf(return_buf, sizeof(return_buf), "%08X", code);
     }
     return return_buf;
+}
+
+/*************************************************************************/
+
+/**
+ * sys_load_module:  Load (and start) a PSP module.
+ *
+ * [Parameters]
+ *        module: Module pathname
+ *     partition: Memory partition (PSP_MEMORY_PARTITON_*)
+ * [Return value]
+ *     Module ID (nonnegative) on success, error code (negative) on failure
+ */
+SceUID sys_load_module(const char *module, int partition)
+{
+    SceKernelLMOption lmopts;
+    memset(&lmopts, 0, sizeof(lmopts));
+    lmopts.size     = sizeof(lmopts);
+    lmopts.mpidtext = partition;
+    lmopts.mpiddata = partition;
+    lmopts.position = 0;
+    lmopts.access   = 1;
+
+    SceUID modid = sceKernelLoadModule(module, 0, &lmopts);
+    if (modid < 0) {
+        return modid;
+    }
+
+    int dummy;
+    int res = sceKernelStartModule(modid, strlen(module)+1, (char *)module,
+                                   &dummy, NULL);
+    if (res < 0) {
+        sceKernelUnloadModule(modid);
+        return res;
+    }
+
+    return modid;
 }
 
 /*************************************************************************/
@@ -135,6 +186,135 @@ int sys_delete_thread_if_stopped(SceUID thread, int *status_ret)
         *status_ret = res;
     }
     return 1;
+}
+
+/*************************************************************************/
+
+/**
+ * sys_setup_callbacks:  Set up the system callbacks (HOME button and
+ * power status change).
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     Nonzero on success, zero on error
+ */
+int sys_setup_callbacks(void)
+{
+    /* Retrieve the main thread's handle */
+    main_thread = sceKernelGetThreadId();
+
+    /* Start the callback monitoring thread */
+    SceUID thid = sys_start_thread(
+        "YabauseCallbackThread", callback_thread, THREADPRI_SYSTEM_CB,
+        0x1000, 0, NULL
+    );
+    if (thid < 0) {
+        DMSG("sys_start_thread(callback_thread) failed: %s",
+             psp_strerror(thid));
+        return 0;
+    }
+
+    return 1;
+}
+
+/*************************************************************************/
+/************* System callback thread and callback routines **************/
+/*************************************************************************/
+
+/**
+ * callback_thread:  Thread for monitoring HOME button and power status
+ * notification callbacks.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     Does not return
+ */
+static int callback_thread(void)
+{
+    /* Note: We can turn off the HOME button menu with
+     * sceImposeSetHomePopup(0) if we want to create our own */
+    SceUID cbid;
+    cbid = sceKernelCreateCallback("YabauseExitCallback",
+                                   exit_callback, NULL);
+    if (cbid < 0) {
+        DMSG("sceKernelCreateCallback(exit_callback) failed: %s",
+             psp_strerror(cbid));
+    } else {
+        sceKernelRegisterExitCallback(cbid);
+    }
+
+    cbid = sceKernelCreateCallback("YabausePowerCallback",
+                                   power_callback, NULL);
+    if (cbid < 0) {
+        DMSG("sceKernelCreateCallback(exit_callback) failed: %s",
+             psp_strerror(cbid));
+    } else {
+        scePowerRegisterCallback(0, cbid);
+    }
+
+    for (;;) {
+        sceKernelSleepThreadCB();
+    }
+
+    return 0;  // Avoid compiler warning
+}
+
+/*************************************************************************/
+
+/**
+ * exit_callback:  HOME button callback.  Exits the program immediately.
+ *
+ * [Parameters]
+ *     arg1, arg2, common: Unused
+ * [Return value]
+ *     Does not return
+ */
+static int exit_callback(int arg1, int arg2, void *common)
+{
+    psp_sound_exit();
+    sceKernelExitGame();
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * power_callback:  Power status notification callback.  Handles suspend
+ * and resume events.
+ *
+ * [Parameters]
+ *        unknown: Unused
+ *     power_info: Power status
+ *         common: Unused
+ * [Return value]
+ *     Always zero
+ */
+static int power_callback(int unknown, int power_info, void *common)
+{
+    if (power_info & PSP_POWER_CB_SUSPENDING) {
+        sceKernelSuspendThread(main_thread);
+        psp_sound_pause();
+    } else if (power_info & PSP_POWER_CB_RESUMING) {
+        /* Restore the current directory.  It takes time for the memory
+         * stick to be recognized, so wait up to 3 seconds before giving up. */
+        uint32_t start = sceKernelGetSystemTimeLow();
+        int res;
+        do {
+            res = sceIoChdir(progpath);
+            if (res < 0) {
+                sceKernelDelayThread(1000000/10);  // 0.1 sec
+            }
+        } while (res < 0 && sceKernelGetSystemTimeLow()-start < 3*1000000);
+        if (res < 0) {
+            DMSG("Restore current directory (%s) failed: %s",
+                 progpath, psp_strerror(res));
+        }
+        /* Resume program */
+        psp_sound_unpause();
+        sceKernelResumeThread(main_thread);
+    }
+    return 0;
 }
 
 /*************************************************************************/

@@ -175,6 +175,7 @@ void * padbits;
 
 static gboolean yui_settings_load(void) {
 	int i, tmp;
+	long tmptime;
 	gchar * stmp;
 	gboolean mustRestart = FALSE;
 
@@ -306,6 +307,37 @@ static gboolean yui_settings_load(void) {
 
 	/* peripheral core */
 	yinit.percoretype = g_key_file_get_integer(keyfile, "General", "PerCore", 0);
+
+	/* audio sync */
+	tmp = g_key_file_get_boolean(keyfile, "General", "AudioSync", 0);
+	ScspSetFrameAccurate(tmp);
+
+	/* clock sync */
+	tmp = yinit.clocksync;
+	yinit.clocksync = g_key_file_get_boolean(keyfile, "General", "ClockSync", 0);
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.clocksync)) {
+		mustRestart = TRUE;
+	}
+	tmptime = yinit.basetime;
+	tmp = g_key_file_get_boolean(keyfile, "General", "FixedBaseTime", 0);
+	if (tmp && yinit.clocksync) {
+		/* Find timestamp of 1998-01-01 12:00 in the local time zone */
+		time_t utc = 883656000;  // 1998-01-01 12:00 UTC
+		struct tm tm;
+		localtime_r(&utc, &tm);
+		long local = tm.tm_hour*3600 + tm.tm_min*60 + tm.tm_sec;
+		if (tm.tm_mday == 2)  // 1998-01-02
+			local += 86400;
+		else if (tm.tm_mday == 31)  // 1997-12-31
+			local -= 86400;
+		long noon = 12*3600 + 0*60 + 0;
+		yinit.basetime = (long)utc + (noon - local);
+	} else {
+		yinit.basetime = 0;
+	}
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmptime != yinit.basetime)) {
+		mustRestart = TRUE;
+	}
 
 	PerInit(yinit.percoretype);
 

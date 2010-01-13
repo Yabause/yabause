@@ -182,6 +182,38 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*
+ * BSWAP16(x) swaps two bytes in a 16-bit value (AABB -> BBAA) or adjacent
+ * bytes in a 32-bit value (AABBCCDD -> BBAADDCC).
+ *
+ * BSWAP32(x) reverses four bytes in a 32-bit value (AABBCCDD -> DDCCBBAA).
+ *
+ * WSWAP32(x) swaps two 16-bit words in a 32-bit value (AABBCCDD -> CCDDAABB).
+ *
+ * Any of these can be left undefined if there is no platform-specific
+ * optimization for them; the defaults below will then be used instead.
+ */
+
+#ifdef PSP
+# define BSWAP16(x)  __builtin_allegrex_wsbh((x))
+# define BSWAP32(x)  __builtin_allegrex_wsbw((x))
+# define WSWAP32(x)  __builtin_allegrex_rotr((x), 16)
+#endif
+
+/* Defaults: */
+
+#ifndef BSWAP16
+# define BSWAP16(x)  (((x)>>8 & 0x00FF00FF) | ((x) & 0x00FF00FF) << 8)
+#endif
+#ifndef BSWAP32
+# define BSWAP32(x)  ((x)>>24 | ((x)>>8 & 0xFF00) | ((x) & 0xFF00)<<8 | (x)<<24)
+#endif
+#ifndef WSWAP32
+# define WSWAP32(x)  ((x)>>16 | (x)<<16)
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
 #ifdef __GNUC__
 
 #define UNUSED __attribute ((unused))
