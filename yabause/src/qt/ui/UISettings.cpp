@@ -158,6 +158,7 @@ void UISettings::tbBrowse_clicked()
 void UISettings::on_cbInput_currentIndexChanged( int id )
 {
 	PerInterface_struct* core = QtYabause::getPERCore( cbInput->itemData( id ).toInt() );
+        core->Init();
 	
 	Q_ASSERT( core );
 	
