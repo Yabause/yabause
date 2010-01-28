@@ -1,5 +1,6 @@
 /*  Copyright 2006 Guillaume Duhamel
     Copyright 2006 Anders Montonen
+    Copyright 2010 Alex Marshall
 
     This file is part of Yabause.
 
@@ -20,13 +21,60 @@
 
 #include <unistd.h>
 #include <Carbon/Carbon.h>
+#include <ApplicationServices/ApplicationServices.h>
 #include "settings.h"
 
 #define		TAB_ID 	 	128
 #define		TAB_SIGNATURE	'tabs'
 int tabList[] = {129, 130, 131, 132};
 
+int loadtype = 0;
 ControlRef oldTab;
+
+int mystrnlen(char* in, int maxlen)
+{
+	int len;
+	for(len = 0; (*in != 0) && (len < maxlen); len++, in++);
+	return len;
+}
+
+unsigned int mytoi(char* in)
+{
+	unsigned int out = 0;
+	int length = 0;
+	int i;
+	int format = 0;		/* Decimal */
+	if((in[0] == '0') && (in[1] == 'x')) {
+		in += 2;
+		format = 1;	/* Hexadecimal */
+	}else if(in[0] == '$') {
+		in += 1;
+		format = 1;	/* Hexadecimal */
+	}else if((in[0] == 'H') && (in[1] == '\'')) {
+		in += 2;
+		format = 1;	/* Hexadecimal */
+	}
+	length = mystrnlen(in, 11);
+	for(i = 0; i < length; i++) {
+		switch(format) {
+			case 0:	/* Decimal */
+				out *= 10;
+				if((in[i] >= '0') && (in[i] <= '9'))
+					out += in[i] - '0';
+				break;
+			case 1:	/* Hexadecimal */
+				out <<= 4;
+				if((in[i] >= '0') && (in[i] <= '9'))
+					out += in[i] - '0';
+				if((in[i] >= 'A') && (in[i] <= 'F'))
+					out += (in[i] - 'A') + 0xA;
+				if((in[i] >= 'a') && (in[i] <= 'f'))
+					out += (in[i] - 'a') + 0xA;
+				break;
+		}
+	}
+	return out;
+}
 
 void SelectItemOfTabControl(ControlRef tabControl)
 {
@@ -223,6 +271,36 @@ void load_settings(WindowRef window) {
 	}
 }
 
+int load_file_core(char* file, char* addr, int type)
+{
+	unsigned int adr;
+	int ret = -1;
+	if(addr == NULL)
+		adr = 0;
+	else
+		adr = mytoi(addr);
+	switch(type) {
+		case 0:
+			ret = MappedMemoryLoad(file, adr);
+			break;
+		case 1:
+			MappedMemoryLoadExec(file, adr);
+			ret = 0;
+			break;
+	}
+	return ret;
+}
+
+void load_file(WindowRef window, int type) {
+	char addrbuf[12];
+	char filebuf[256];
+	int ret = -1;
+	CFStringGetCString(get_settings(window, 1), filebuf, 256, kCFStringEncodingUTF8);
+	CFStringGetCString(get_settings(window, 2), addrbuf,  12, kCFStringEncodingUTF8);
+	ret = load_file_core(filebuf, addrbuf, type);
+	(void)(ret);	/* We need to do something about bad return values... */
+}
+
 OSStatus SettingsWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent, void* userData)
 {
   OSStatus result = eventNotHandledErr;
@@ -367,3 +445,47 @@ WindowRef CreateSettingsWindow() {
   return myWindow;
 }
 
+OSStatus LoadWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent, void* userData)
+{
+  OSStatus result = eventNotHandledErr;
+  switch (GetEventKind (theEvent))
+    {
+    case kEventWindowClose:
+      {
+        WindowRef window;
+        GetEventParameter(theEvent, kEventParamDirectObject, typeWindowRef,
+          0, sizeof(typeWindowRef), 0, &window);
+
+        load_file(window, loadtype);
+			
+        DisposeWindow(window);
+      }
+      result = noErr;
+      break;
+    }
+  return (result);
+}
+
+WindowRef CreateLoadWindow(int type) {
+  WindowRef myWindow;
+  IBNibRef nib;
+  int* hack;
+  EventTypeSpec eventList[] = {
+    { kEventClassWindow, kEventWindowClose }
+  };
+
+  CreateNibReference(CFSTR("load_dialog"), &nib);
+  CreateWindowFromNib(nib, CFSTR("Dialog"), &myWindow);
+
+  InstallTabHandler(myWindow);
+  hack = malloc(sizeof(int));
+  loadtype = type;
+  InstallBrowseHandler(myWindow, 50, 1);  /* File */
+  ShowWindow(myWindow);
+
+  InstallWindowEventHandler(myWindow,
+                            NewEventHandlerUPP (LoadWindowEventHandler),
+                            GetEventTypeCount(eventList),
+                            eventList, myWindow, NULL);
+  return myWindow;
+}

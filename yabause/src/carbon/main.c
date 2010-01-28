@@ -1,5 +1,6 @@
 /*  Copyright 2006 Guillaume Duhamel
     Copyright 2006 Anders Montonen
+    Copyright 2010 Alex Marshall
 
     This file is part of Yabause.
 
@@ -22,24 +23,30 @@
 #include <Carbon/Carbon.h>
 #include <AGL/agl.h>
 
+#include "../core.h"
+#include "../memory.h"
 #include "settings.h"
 #include "cpustatus.h"
+#include "../yabause.h"
 
-#define YUI_MENU_EMULATION  1
-#define YUI_MENU_DEBUG      2
+#define YUI_MENU_EMULATION		1
+#define YUI_MENU_DEBUG			2
 
-#define YUI_COMMAND_RUN		 1
-#define YUI_COMMAND_PAUSE 	 2
-#define YUI_COMMAND_RESUME   3
-#define YUI_COMMAND_SHOW_CPU 4
-#define YUI_COMMAND_HIDE_CPU 5
-#define YUI_COMMAND_TOGGLE_NBG0	6
-#define YUI_COMMAND_TOGGLE_NBG1	7
-#define YUI_COMMAND_TOGGLE_NBG2	8
-#define YUI_COMMAND_TOGGLE_NBG3	9
-#define YUI_COMMAND_TOGGLE_RBG0	10
-#define YUI_COMMAND_TOGGLE_VDP1	11
-#define YUI_COMMAND_TOGGLE_FULLSCREEN   12
+#define YUI_COMMAND_RESET		1
+#define YUI_COMMAND_PAUSE		2
+#define YUI_COMMAND_RESUME		3
+#define YUI_COMMAND_SHOW_CPU		4
+#define YUI_COMMAND_HIDE_CPU		5
+#define YUI_COMMAND_TOGGLE_NBG0		6
+#define YUI_COMMAND_TOGGLE_NBG1		7
+#define YUI_COMMAND_TOGGLE_NBG2		8
+#define YUI_COMMAND_TOGGLE_NBG3		9
+#define YUI_COMMAND_TOGGLE_RBG0		10
+#define YUI_COMMAND_TOGGLE_VDP1		11
+#define YUI_COMMAND_TOGGLE_FULLSCREEN	12
+#define YUI_COMMAND_LOAD_BINARY		13
+#define YUI_COMMAND_LOAD_AND_EXECUTE	14
+#define YUI_COMMAND_SAVE_BINARY		15
 
 AGLContext  myAGLContext = NULL;
 WindowRef   myWindow = NULL;
@@ -90,6 +97,7 @@ NULL
 };
 
 static EventLoopTimerRef EventTimer;
+int load_file_core(char* file, char* addr, int type);
 
 void YuiIdle(EventLoopTimerRef a, void * b)
 {
@@ -272,11 +280,8 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
             YabauseDeInit();
             QuitApplicationEventLoop();
             break;
-          case YUI_COMMAND_RUN:
-              YuiRun();
-              menu = GetMenuRef(YUI_MENU_EMULATION);
-              ChangeMenuItemAttributes(menu, 2, 0, kMenuItemAttrHidden);
-              ChangeMenuItemAttributes(menu, 3, kMenuItemAttrHidden, 0);
+          case YUI_COMMAND_RESET:
+              YabauseReset();
               break;
           case YUI_COMMAND_PAUSE:
               YuiPause(1);
@@ -355,7 +360,16 @@ OSStatus MyWindowEventHandler (EventHandlerCallRef myHandler, EventRef theEvent,
                 ToggleFullScreen();
             }
             break;
-          default:
+        case YUI_COMMAND_LOAD_BINARY:
+            CreateLoadWindow(0);
+            break;
+        case YUI_COMMAND_LOAD_AND_EXECUTE:
+            CreateLoadWindow(1);
+            break;
+        case YUI_COMMAND_SAVE_BINARY:
+//            MappedMemorySave(file, address, size);
+            break;
+        default:
             ret = eventNotHandledErr;
             printf("unhandled command\n");
             break;
@@ -463,7 +477,7 @@ static OSStatus MySetWindowAsDrawableObject  (WindowRef window)
 
 }
 
-int main () {
+int main(int argc, char* argv[]) {
   MenuRef menu;
   EventLoopTimerRef nextFrameTimer;
   IBNibRef menuNib;
@@ -477,6 +491,10 @@ int main () {
   EnableMenuCommand(NULL, kHICommandPreferences);
 
   read_settings();
+
+  YuiRun();
+  if(argc >= 2)
+    load_file_core(argv[1], (argc >= 3) ? argv[2] : NULL, 1);
 
   RunApplicationEventLoop();
 
