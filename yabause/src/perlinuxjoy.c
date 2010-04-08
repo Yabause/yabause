@@ -123,7 +123,7 @@ u32 PERLinuxJoyScan(void) {
 void PERLinuxJoyFlush(void) {
    struct js_event evt;
 
-   if (hJOY == -1) return 0;
+   if (hJOY == -1) return;
 
    while (read(hJOY, &evt, sizeof(struct js_event)) > 0);
 }
