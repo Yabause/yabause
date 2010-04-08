@@ -22,7 +22,7 @@ yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       rtl.c rtl-mips.c rtlexec.c rtlinsn.c rtlopt.c rtlunit.c \
                       sh2.c sh2-interpret.c sh2-opcodeinfo.c sh2-optimize.c \
                       sys.c texcache.c yui.c \
-                      melib.S me-utility.c \
+                      me-utility.c \
                       \
                       common.h config.h control.h display.h filesel.h font.h \
                       gu.h init.h localtime.h menu.h misc.h profile.h \
@@ -32,17 +32,20 @@ yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       sh2.h sh2-internal.h \
                       sys.h texcache.h \
                       me-utility.h
+nodist_yabause_elf_SOURCES = melib.S 
 yabause_elf_CFLAGS = $(YAB_CFLAGS) -Wpointer-arith -Wshadow
 yabause_elf_LDADD = ../libyabause.a $(YAB_LIBS) -lpspsdk
 
-me_elf_SOURCES = me.c me.h me-exp.c
+me_elf_SOURCES = me.c me.h
+nodist_me_elf_SOURCES = me-exp.c
 me_elf_CFLAGS = -Wpointer-arith -Wshadow
 me_elf_LDFLAGS = -nostartfiles
 me_elf_LIBS = -lpspkernel
 me.elf: $(me_elf_OBJECTS)
 	$(me_elf_LINK) $(me_elf_OBJECTS) $(me_elf_LDADD) $(me_elf_LIBS)
 
-me_test_elf_SOURCES = me-test.c me-utility.c me-utility.h melib.S
+me_test_elf_SOURCES = me-test.c me-utility.c me-utility.h
+nodist_me_test_elf_SOURCES = melib.S
 me_test_elf_CFLAGS = -Wpointer-arith -Wshadow
 me_test_elf_LIBS = -lc -lpspuser
 me-test.elf: $(me_test_elf_OBJECTS)
