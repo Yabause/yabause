@@ -81,6 +81,8 @@ int PERLinuxJoyHandleEvents(void)
 {
    struct js_event evt;
 
+   if (hJOY == -1) return -1;
+
    while (read(hJOY, &evt, sizeof(struct js_event)) > 0)
    {
       if (evt.value != 0)
@@ -108,7 +110,10 @@ int PERLinuxJoyHandleEvents(void)
 
 u32 PERLinuxJoyScan(void) {
    struct js_event evt;
-   while (read(hJOY, &evt, sizeof(struct js_event)) <= 0);
+
+   if (hJOY == -1) return 0;
+
+   if (read(hJOY, &evt, sizeof(struct js_event)) <= 0) return 0;
 
    return PACKEVENT(evt);
 }
@@ -117,6 +122,9 @@ u32 PERLinuxJoyScan(void) {
 
 void PERLinuxJoyFlush(void) {
    struct js_event evt;
+
+   if (hJOY == -1) return 0;
+
    while (read(hJOY, &evt, sizeof(struct js_event)) > 0);
 }
 
