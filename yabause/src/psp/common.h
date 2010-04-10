@@ -176,10 +176,16 @@ static inline CONST_FUNCTION int iroundf(float x) {return (int)floorf(x+0.5f);}
  *     func_name(file:line): message
  * printf()-style format tokens and arguments are allowed, and no newline
  * is required at the end.  The format string must be a literal string
- * constant. */
-#define DMSG(msg,...) \
-    fprintf(stderr, "%s(%s:%d): " msg "\n", __FUNCTION__, __FILE__, __LINE__ \
-            , ## __VA_ARGS__)
+ * constant.  Note that we sprintf() into a buffer and write the buffer
+ * rather than calling fprintf() directly because fprintf() makes multiple
+ * low-level write calls, which can slow the program down significantly
+ * depending on PSPlink's responsiveness on the PC host. */
+/* global shared */ char DMSG_buffer[10000];
+#define DMSG(msg,...)  do { \
+    snprintf(DMSG_buffer, sizeof(DMSG_buffer), "%s(%s:%d): " msg "\n", \
+             __FUNCTION__, __FILE__, __LINE__ , ## __VA_ARGS__); \
+    fputs(DMSG_buffer, stderr); \
+} while (0)
 
 /* Timing macro.  Start timing with DSTART(); DEND() will then print the
  * elapsed time in microseconds.  Both must occur at the same level of

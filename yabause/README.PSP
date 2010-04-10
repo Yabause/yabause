@@ -379,7 +379,7 @@ A: Try pressing Select to open the Yabause menu.
         determine whether the crash occurs or not), and disable only that
         option to keep the emulator running as fast as possible.
 
-      * If the menu does option, then one likely cause is a timing issue;
+      * If the menu does open, then one likely cause is a timing issue;
         this can be seen, for example, when starting Dead or Alive with the
         "Use more precise emulation timing" option disabled.  Try enabling
         this option under the "Configure advanced emulation options" menu
@@ -570,8 +570,8 @@ for parallel execution, both because of its time consumption and because
 of its limited connection to other Saturn components (the 68k can only
 access sound RAM and SCSP hardware registers).
 
-The following steps are taken to avoid data corruption due to the lack of
-cache coherency:
+When use of the Media Engine is enabled, the following steps are taken
+to avoid data corruption due to the lack of cache coherency:
 
 * All accesses to sound RAM from the main CPU are performed through
   uncacheable memory (0x4nnnnnnn); only the ME is permitted to cache
@@ -591,7 +591,7 @@ cache coherency:
 
 * The ME flushes its cache (writeback and invalidate) after each iteration
   of the execute function, ensuring that data seen by each CPU is never
-  more than one iteration old.
+  more than one main loop iteration old.
 
 * All calls to the Q68 interpreter core other than initialization and
   cleanup are performed on the ME.  (However, this does not completely

@@ -1,5 +1,6 @@
 EXTRA_DIST = icache-funcs-2450.patch psp-logo.png sh2-core.i
-CLEANFILES = yabause.prx yabause.sfo EBOOT.PBP
+CLEANFILES = me.elf me.prx me-exp.c me-test.elf me-test.prx melib.S \
+             yabause.elf yabause.prx yabause.sfo EBOOT.PBP
 
 # yabause.{elf,prx} are only intermediate targets; the final target is
 # EBOOT.PBP (but we keep the ELF/PRX files around for testing purposes).
@@ -18,7 +19,8 @@ noinst_PROGRAMS = yabause.elf me.elf me-test.elf
 yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       init.c localtime.c main.c menu.c misc.c profile.c \
                       psp-cd.c psp-m68k.c psp-per.c psp-sh2.c psp-sound.c \
-                      psp-video.c \
+                      psp-video.c psp-video-bitmap.c psp-video-rotate.c \
+                      psp-video-tilemap.c \
                       rtl.c rtl-mips.c rtlexec.c rtlinsn.c rtlopt.c rtlunit.c \
                       sh2.c sh2-interpret.c sh2-opcodeinfo.c sh2-optimize.c \
                       sys.c texcache.c yui.c \
@@ -27,7 +29,7 @@ yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       common.h config.h control.h display.h filesel.h font.h \
                       gu.h init.h localtime.h menu.h misc.h profile.h \
                       psp-cd.h psp-m68k.h psp-per.h psp-sh2.h psp-sound.h \
-                      psp-video.h \
+                      psp-video.h psp-video-internal.h \
                       rtl.h rtl-internal.h rtl-mips.h \
                       sh2.h sh2-internal.h \
                       sys.h texcache.h \

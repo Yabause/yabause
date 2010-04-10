@@ -1,5 +1,5 @@
 /*  src/psp/psp-video.h: PSP video interface module header
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -24,6 +24,8 @@
 #include "../vdp1.h"  // for VideoInterface_struct
 
 /*************************************************************************/
+/********* Module interface and global-use routine declarations **********/
+/*************************************************************************/
 
 /* Module interface definition */
 extern VideoInterface_struct VIDPSP;
@@ -31,7 +33,7 @@ extern VideoInterface_struct VIDPSP;
 /* Unique module ID (must be different from any in ../{vdp1,vid*}.h) */
 #define VIDCORE_PSP  0x5CE  // "SCE"
 
-/*-----------------------------------------------------------------------*/
+/*************************************************************************/
 
 /**
  * psp_video_infoline:  Display an information line on the bottom of the
@@ -47,9 +49,20 @@ extern VideoInterface_struct VIDPSP;
 extern void psp_video_infoline(uint32_t color, const char *text);
 
 /*************************************************************************/
+/************ Internal utility data and routine declarations *************/
+/*************************************************************************/
+
+/* Vertex data structure for GU drawing */
+
+typedef struct VertexUVXYZ_ {
+    int16_t u, v;
+    int16_t x, y, z;
+} VertexUVXYZ;
+
+/*************************************************************************/
 
 /**
- * global_clut_16, global_clut_#2:  Global color lookup table (from VDP2
+ * global_clut_16, global_clut_32:  Global color lookup table (from VDP2
  * color RAM), in 16- and 32-bit formats.  Each array is indexed by the
  * color index value used in sprites and tiles; when the VDP2 is in 32-bit
  * color mode (Vdp2Internal.ColorMode == 2), indices 0x400-0x7FF are a
@@ -110,6 +123,22 @@ static inline uint32_t adjust_color_32_32(uint32_t color, int32_t rofs,
          | (color & 0xFF000000);
 }
 
+/*************************************************************************/
+
+/**
+ * pspGuGetMemoryMerge:  Acquire a block of memory from the GE display
+ * list.  Similar to sceGuGetMemory(), but if the most recent display list
+ * operation was also a pspGuGetMemoryMerge() call, merge the two blocks
+ * together to avoid long chains of jump instructions in the display list.
+ *
+ * [Parameters]
+ *     size: Size of block to allocate, in bytes
+ * [Return value]
+ *     Allocated block
+ */
+void *pspGuGetMemoryMerge(uint32_t size);
+
+/*************************************************************************/
 /*************************************************************************/
 
 #endif  // PSP_VIDEO_H
