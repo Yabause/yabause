@@ -1,6 +1,6 @@
 /*  src/psp/sh2-interpret.c: Instruction interpreter for SH-2 emulator
                              (mostly for debugging)
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -29,10 +29,6 @@
 
 #include "sh2.h"
 #include "sh2-internal.h"
-
-#ifdef TRACE
-# include "../sh2trace.h"
-#endif
 
 /*************************************************************************/
 /***************** SH-2 interpreted execution interface ******************/
@@ -202,12 +198,13 @@
 /* Load from, store to, or add constants to state block fields */
 #define LOAD_STATE(reg,field)        ((reg) = state->field)
 #define LOAD_STATE_PTR(reg,field)    ((reg) = (uintptr_t)state->field)
-#define LOAD_STATE_SR_T(reg)         ((reg) = state->regs.SR.part.T)
+#define LOAD_STATE_SR_T(reg)         ((reg) = (state->SR & SR_T) >> SR_T_SHIFT)
 #define STORE_STATE(field,reg)       (state->field = (reg))
-#define STORE_STATE_PC(value)        (state->regs.PC = (value))
+#define STORE_STATE_PC(value)        (state->PC = (value))
 #define STORE_STATE_B(field,reg)     (state->field = (reg))
 #define STORE_STATE_PTR(field,reg)   (state->field = (void *)(reg))
-#define STORE_STATE_SR_T(reg)        (state->regs.SR.part.T = (reg))
+#define STORE_STATE_SR_T(reg)        (state->SR &= ~SR_T, \
+                                      state->SR |= ((reg) & 1) << SR_T_SHIFT)
 #define FLUSH_STATE_SR_T()           /*nothing*/
 #define RESET_STATE_SR_T()           /*nothing*/
 #define ADDI_STATE(field,imm,reg)    (state->field = (reg) + (imm))
@@ -236,7 +233,7 @@
     ((dest) = MappedMemoryReadLong((address)))
 
 #ifdef TRACE
-# define LOG_STORE(address,src,type)  sh2_trace_write##type((address), (src))
+# define LOG_STORE(address,src,type)  ((*trace_write##type##_callback)((address), (src)))
 #else
 # define LOG_STORE(address,src,type)  /*nothing*/
 #endif
@@ -263,40 +260,40 @@
 
 /* Execute an SH-2 load or store through an SH-2 register */
 #define SH2_LOAD_REG_B(dest,sh2reg,offset,postinc)  do {        \
-    SH2_LOAD_B(dest, state->regs.R[sh2reg] + (offset));         \
+    SH2_LOAD_B(dest, state->R[sh2reg] + (offset));         \
     if (postinc) {                                              \
-        state->regs.R[sh2reg] += 1;                             \
+        state->R[sh2reg] += 1;                             \
     }                                                           \
 } while (0)
 #define SH2_LOAD_REG_W(dest,sh2reg,offset,postinc)  do {        \
-    SH2_LOAD_W(dest, state->regs.R[sh2reg] + (offset));         \
+    SH2_LOAD_W(dest, state->R[sh2reg] + (offset));         \
     if (postinc) {                                              \
-        state->regs.R[sh2reg] += 2;                             \
+        state->R[sh2reg] += 2;                             \
     }                                                           \
 } while (0)
 #define SH2_LOAD_REG_L(dest,sh2reg,offset,postinc)  do {        \
-    SH2_LOAD_L(dest, state->regs.R[sh2reg] + (offset));         \
+    SH2_LOAD_L(dest, state->R[sh2reg] + (offset));         \
     if (postinc) {                                              \
-        state->regs.R[sh2reg] += 4;                             \
+        state->R[sh2reg] += 4;                             \
     }                                                           \
 } while (0)
 #define SH2_STORE_REG_B(sh2reg,src,offset,predec)  do {         \
     if (predec) {                                               \
-        state->regs.R[sh2reg] -= 1;                             \
+        state->R[sh2reg] -= 1;                             \
     }                                                           \
-    SH2_STORE_B(state->regs.R[sh2reg] + (offset), src);         \
+    SH2_STORE_B(state->R[sh2reg] + (offset), src);         \
 } while (0)
 #define SH2_STORE_REG_W(sh2reg,src,offset,predec)  do {         \
     if (predec) {                                               \
-        state->regs.R[sh2reg] -= 2;                             \
+        state->R[sh2reg] -= 2;                             \
     }                                                           \
-    SH2_STORE_W(state->regs.R[sh2reg] + (offset), src);         \
+    SH2_STORE_W(state->R[sh2reg] + (offset), src);         \
 } while (0)
 #define SH2_STORE_REG_L(sh2reg,src,offset,predec)  do {         \
     if (predec) {                                               \
-        state->regs.R[sh2reg] -= 4;                             \
+        state->R[sh2reg] -= 4;                             \
     }                                                           \
-    SH2_STORE_L(state->regs.R[sh2reg] + (offset), src);         \
+    SH2_STORE_L(state->R[sh2reg] + (offset), src);         \
 } while (0)
 
 /* Branches (within an SH-2 instruction's RTL code) */
@@ -328,7 +325,7 @@
 #define state_reg   ((uintptr_t)state)
 
 /* Access the state block directly for the PC */
-#define cur_PC      (state->regs.PC)
+#define cur_PC      (state->PC)
 
 /* No direct fetching */
 #define fetch       ((uint16_t *)NULL)  // uint16_t * to avoid compiler errors
@@ -420,18 +417,18 @@
  *
  * [Parameters]
  *          state: SH-2 processor state
- *     initial_PC: Equal to state->regs.PC (used by OPTIMIZE_IDLE)
+ *     initial_PC: Equal to state->PC (used by OPTIMIZE_IDLE)
  *         jumped: Local register tracking whether a jump was performed
  * [Return value]
  *     Decoded SH-2 opcode
  */
 #define DECODE_INSN_PARAMS \
-    SH2_struct *state, uint32_t initial_PC, int jumped
+    SH2State *state, uint32_t initial_PC, int jumped
 #define RECURSIVE_DECODE(address)  do {         \
-    const uint32_t saved_PC = state->regs.PC;   \
-    state->regs.PC = (address);                 \
+    const uint32_t saved_PC = state->PC;   \
+    state->PC = (address);                 \
     interpret_insn(state);                      \
-    state->regs.PC = saved_PC;                  \
+    state->PC = saved_PC;                  \
 } while (0)
 #include "sh2-core.i"
 
@@ -446,20 +443,20 @@
  * [Return value]
  *     None
  */
-void interpret_insn(SH2_struct *state)
+void interpret_insn(SH2State *state)
 {
     /* Make sure we're not trying to execute from an odd address */
-    if (UNLIKELY(state->regs.PC & 1)) {
+    if (UNLIKELY(state->PC & 1)) {
         /* Push SR and PC */
-        state->regs.R[15] -= 4;
-        MappedMemoryWriteLong(state->regs.R[15], state->regs.SR.all);
-        state->regs.R[15] -= 4;
-        MappedMemoryWriteLong(state->regs.R[15], state->regs.PC);
+        state->R[15] -= 4;
+        MappedMemoryWriteLong(state->R[15], state->SR);
+        state->R[15] -= 4;
+        MappedMemoryWriteLong(state->R[15], state->PC);
         /* Jump to the instruction address error exception vector (9) */
-        state->regs.PC = MappedMemoryReadLong(9<<2);
+        state->PC = MappedMemoryReadLong(9<<2);
     }
 
-    decode_insn(state, state->regs.PC, 0);
+    decode_insn(state, state->PC, 0);
 }
 
 /*************************************************************************/

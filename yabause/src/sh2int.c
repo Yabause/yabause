@@ -58,20 +58,72 @@ opcodefunc opcodes[0x10000];
 SH2Interface_struct SH2Interpreter = {
    SH2CORE_INTERPRETER,
    "SH2 Interpreter",
+
    SH2InterpreterInit,
    SH2InterpreterDeInit,
    SH2InterpreterReset,
    SH2InterpreterExec,
+
+   SH2InterpreterGetRegisters,
+   SH2InterpreterGetGPR,
+   SH2InterpreterGetSR,
+   SH2InterpreterGetGBR,
+   SH2InterpreterGetVBR,
+   SH2InterpreterGetMACH,
+   SH2InterpreterGetMACL,
+   SH2InterpreterGetPR,
+   SH2InterpreterGetPC,
+
+   SH2InterpreterSetRegisters,
+   SH2InterpreterSetGPR,
+   SH2InterpreterSetSR,
+   SH2InterpreterSetGBR,
+   SH2InterpreterSetVBR,
+   SH2InterpreterSetMACH,
+   SH2InterpreterSetMACL,
+   SH2InterpreterSetPR,
+   SH2InterpreterSetPC,
+
+   SH2InterpreterSendInterrupt,
+   SH2InterpreterGetInterrupts,
+   SH2InterpreterSetInterrupts,
+
    NULL  // SH2WriteNotify not used
 };
 
 SH2Interface_struct SH2DebugInterpreter = {
    SH2CORE_DEBUGINTERPRETER,
    "SH2 Debugger Interpreter",
+
    SH2DebugInterpreterInit,
    SH2InterpreterDeInit,
    SH2InterpreterReset,
    SH2DebugInterpreterExec,
+
+   SH2InterpreterGetRegisters,
+   SH2InterpreterGetGPR,
+   SH2InterpreterGetSR,
+   SH2InterpreterGetGBR,
+   SH2InterpreterGetVBR,
+   SH2InterpreterGetMACH,
+   SH2InterpreterGetMACL,
+   SH2InterpreterGetPR,
+   SH2InterpreterGetPC,
+
+   SH2InterpreterSetRegisters,
+   SH2InterpreterSetGPR,
+   SH2InterpreterSetSR,
+   SH2InterpreterSetGBR,
+   SH2InterpreterSetVBR,
+   SH2InterpreterSetMACH,
+   SH2InterpreterSetMACL,
+   SH2InterpreterSetPR,
+   SH2InterpreterSetPC,
+
+   SH2InterpreterSendInterrupt,
+   SH2InterpreterGetInterrupts,
+   SH2InterpreterSetInterrupts,
+
    NULL  // SH2WriteNotify not used
 };
 
@@ -2820,6 +2872,186 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
       // Execute it
       opcodes[context->instruction](context);
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterGetRegisters(SH2_struct *context, sh2regs_struct *regs)
+{
+   memcpy(regs, &context->regs, sizeof(sh2regs_struct));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SH2InterpreterGetGPR(SH2_struct *context, int num)
+{
+    return context->regs.R[num];
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SH2InterpreterGetSR(SH2_struct *context)
+{
+    return context->regs.SR.all;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SH2InterpreterGetGBR(SH2_struct *context)
+{
+    return context->regs.GBR;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SH2InterpreterGetVBR(SH2_struct *context)
+{
+    return context->regs.VBR;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SH2InterpreterGetMACH(SH2_struct *context)
+{
+    return context->regs.MACH;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SH2InterpreterGetMACL(SH2_struct *context)
+{
+    return context->regs.MACL;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SH2InterpreterGetPR(SH2_struct *context)
+{
+    return context->regs.PR;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 SH2InterpreterGetPC(SH2_struct *context)
+{
+    return context->regs.PC;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetRegisters(SH2_struct *context, const sh2regs_struct *regs)
+{
+   memcpy(&context->regs, regs, sizeof(sh2regs_struct));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetGPR(SH2_struct *context, int num, u32 value)
+{
+    context->regs.R[num] = value;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetSR(SH2_struct *context, u32 value)
+{
+    context->regs.SR.all = value;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetGBR(SH2_struct *context, u32 value)
+{
+    context->regs.GBR = value;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetVBR(SH2_struct *context, u32 value)
+{
+    context->regs.VBR = value;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetMACH(SH2_struct *context, u32 value)
+{
+    context->regs.MACH = value;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetMACL(SH2_struct *context, u32 value)
+{
+    context->regs.MACL = value;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetPR(SH2_struct *context, u32 value)
+{
+    context->regs.PR = value;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetPC(SH2_struct *context, u32 value)
+{
+    context->regs.PC = value;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
+{
+   u32 i, i2;
+   interrupt_struct tmp;
+
+   // Make sure interrupt doesn't already exist
+   for (i = 0; i < context->NumberOfInterrupts; i++)
+   {
+      if (context->interrupts[i].vector == vector)
+         return;
+   }
+
+   context->interrupts[context->NumberOfInterrupts].level = level;
+   context->interrupts[context->NumberOfInterrupts].vector = vector;
+   context->NumberOfInterrupts++;
+
+   // Sort interrupts
+   for (i = 0; i < (context->NumberOfInterrupts-1); i++)
+   {
+      for (i2 = i+1; i2 < context->NumberOfInterrupts; i2++)
+      {
+         if (context->interrupts[i].level > context->interrupts[i2].level)
+         {
+            tmp.level = context->interrupts[i].level;
+            tmp.vector = context->interrupts[i].vector;
+            context->interrupts[i].level = context->interrupts[i2].level;
+            context->interrupts[i].vector = context->interrupts[i2].vector;
+            context->interrupts[i2].level = tmp.level;
+            context->interrupts[i2].vector = tmp.vector;
+         }
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SH2InterpreterGetInterrupts(SH2_struct *context,
+                                interrupt_struct interrupts[MAX_INTERRUPTS])
+{
+   memcpy(interrupts, context->interrupts, sizeof(interrupt_struct) * MAX_INTERRUPTS);
+   return context->NumberOfInterrupts;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2InterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
+                                 const interrupt_struct interrupts[MAX_INTERRUPTS])
+{
+   memcpy(context->interrupts, interrupts, sizeof(interrupt_struct) * MAX_INTERRUPTS);
+   context->NumberOfInterrupts = num_interrupts;
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -932,7 +932,9 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
    YabauseSpeedySetup();
 
    MappedMemoryLoad(filename, pc);
+   SH2GetRegisters(MSH2, &MSH2->regs);
    MSH2->regs.PC = pc;
+   SH2SetRegisters(MSH2, &MSH2->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////

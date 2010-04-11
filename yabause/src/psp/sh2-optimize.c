@@ -1,5 +1,5 @@
 /*  src/psp/sh2-optimize.c: Optimization routines for SH-2 emulator
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -1189,47 +1189,47 @@ unsigned int can_optimize_variable_shift(
 
 /*----------------------------------*/
 
-static int BIOS_000025AC_detect(SH2_struct *state, uint32_t address,
+static int BIOS_000025AC_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void BIOS_000025AC(SH2_struct *state);
+static FASTCALL void BIOS_000025AC(SH2State *state);
 
-static int BIOS_00002EFA_detect(SH2_struct *state, uint32_t address,
+static int BIOS_00002EFA_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void BIOS_00002EFA(SH2_struct *state);
+static FASTCALL void BIOS_00002EFA(SH2State *state);
 
-static int BIOS_06010D22_detect(SH2_struct *state, uint32_t address,
+static int BIOS_06010D22_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void BIOS_06010D22(SH2_struct *state);
+static FASTCALL void BIOS_06010D22(SH2State *state);
 
 /*----------------------------------*/
 
-static int Azel_0600614C_detect(SH2_struct *state, uint32_t address,
+static int Azel_0600614C_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void Azel_0600614C(SH2_struct *state);
+static FASTCALL void Azel_0600614C(SH2State *state);
 
-static int Azel_0600C59C_detect(SH2_struct *state, uint32_t address,
+static int Azel_0600C59C_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void Azel_0600C59C(SH2_struct *state);
+static FASTCALL void Azel_0600C59C(SH2State *state);
 
-static int Azel_0600FCB0_detect(SH2_struct *state, uint32_t address,
+static int Azel_0600FCB0_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void Azel_0600FCB0(SH2_struct *state);
+static FASTCALL void Azel_0600FCB0(SH2State *state);
 
-static int Azel_06010F24_detect(SH2_struct *state, uint32_t address,
+static int Azel_06010F24_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void Azel_06010F24(SH2_struct *state);
+static FASTCALL void Azel_06010F24(SH2State *state);
 
-static int Azel_0603A22C_detect(SH2_struct *state, uint32_t address,
+static int Azel_0603A22C_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void Azel_0603A22C(SH2_struct *state);
+static FASTCALL void Azel_0603A22C(SH2State *state);
 
-static int Azel_0603A242_detect(SH2_struct *state, uint32_t address,
+static int Azel_0603A242_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void Azel_0603A242(SH2_struct *state);
+static FASTCALL void Azel_0603A242(SH2State *state);
 
-static int Azel_0603DD6E_detect(SH2_struct *state, uint32_t address,
+static int Azel_0603DD6E_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
-static FASTCALL void Azel_0603DD6E(SH2_struct *state);
+static FASTCALL void Azel_0603DD6E(SH2State *state);
 
 /*----------------------------------*/
 
@@ -1240,10 +1240,10 @@ static const struct {
 
     /* Routine to detect whether to use this translation; returns the
      * number of 16-bit words processed (nonzero) to use it, else zero */
-    int (*detect)(SH2_struct *state, uint32_t address, const uint16_t *fetch);
+    int (*detect)(SH2State *state, uint32_t address, const uint16_t *fetch);
 
     /* Routine that implements the SH-2 code */
-    FASTCALL void (*execute)(SH2_struct *state);
+    FASTCALL void (*execute)(SH2State *state);
 
 } hand_tuned_table[] = {
 
@@ -1280,7 +1280,7 @@ static const struct {
  *     Length of block in 16-bit words (nonzero) if successfully translated,
  *     zero on error or if there is no suitable hand-tuned translation
  */
-unsigned int optimize_by_hand(SH2_struct *state, uint32_t address,
+unsigned int optimize_by_hand(SH2State *state, uint32_t address,
                               const uint16_t *fetch, RTLBlock *rtl)
 {
     int i;
@@ -1345,7 +1345,7 @@ unsigned int optimize_by_hand(SH2_struct *state, uint32_t address,
 
 /* 0x000025AC: Peripheral detection(?) loop */
 
-static int BIOS_000025AC_detect(SH2_struct *state, uint32_t address,
+static int BIOS_000025AC_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[-2] == 0x4C0B  // jsr @r12
@@ -1365,39 +1365,40 @@ static int BIOS_000025AC_detect(SH2_struct *state, uint32_t address,
         ? 12 : 0;
 }
 
-static FASTCALL void BIOS_000025AC(SH2_struct *state)
+static FASTCALL void BIOS_000025AC(SH2State *state)
 {
-    if (UNLIKELY(state->regs.R[0])) {
-        state->regs.SR.all &= ~SR_T;
-        state->regs.PC += 2*12;
+    if (UNLIKELY(state->R[0])) {
+        state->SR &= ~SR_T;
+        state->PC += 2*12;
         state->cycles += 5;
         return;
     }
 
-    state->regs.R[2] = state->regs.R[13];
-    state->regs.SR.part.T = (state->regs.R[13] > state->regs.R[14]);
-    if (UNLIKELY(state->regs.R[13]++ > state->regs.R[14])) {
-        state->regs.R[0] = 0;
-        state->regs.PC += 2*18;
+    state->R[2] = state->R[13];
+    state->SR &= ~SR_T;
+    state->SR |= (state->R[13] > state->R[14]) << SR_T_SHIFT;
+    if (UNLIKELY(state->R[13]++ > state->R[14])) {
+        state->R[0] = 0;
+        state->PC += 2*18;
         state->cycles += 11;
         return;
     }
 
-    if (LIKELY(state->regs.R[13]+15 <= state->regs.R[14])) {
-        state->regs.R[13] += 15;
+    if (LIKELY(state->R[13]+15 <= state->R[14])) {
+        state->R[13] += 15;
         state->cycles += 15*76 + 15;
     } else {
         state->cycles += 15;
     }
-    state->regs.PR = state->regs.PC;
-    state->regs.PC = state->regs.R[12];
+    state->PR = state->PC;
+    state->PC = state->R[12];
 }
 
 /*-----------------------------------------------------------------------*/
 
 /* 0x00002EFA: CD read loop */
 
-static int BIOS_00002EFA_detect(SH2_struct *state, uint32_t address,
+static int BIOS_00002EFA_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[0] == 0x6503  // mov r0, r5
@@ -1413,36 +1414,36 @@ static int BIOS_00002EFA_detect(SH2_struct *state, uint32_t address,
         ? 10 : 0;
 }
 
-static FASTCALL void BIOS_00002EFA(SH2_struct *state)
+static FASTCALL void BIOS_00002EFA(SH2State *state)
 {
     uint8_t *page_base;
 
-    if (UNLIKELY(state->regs.R[0] != 0x25818000)
-     || UNLIKELY(!(page_base = direct_pages[state->regs.R[14]>>19]))
+    if (UNLIKELY(state->R[0] != 0x25818000)
+     || UNLIKELY(!(page_base = direct_pages[state->R[14]>>19]))
     ) {
-        state->regs.R[5] = state->regs.R[0];
-        state->regs.PC += 2;
+        state->R[5] = state->R[0];
+        state->PC += 2;
         state->cycles += 1;
         return;
     }
 
-    state->regs.R[5] = state->regs.R[0];
-    state->regs.SR.all |= SR_T;  // Always ends up set from here down
+    state->R[5] = state->R[0];
+    state->SR |= SR_T;  // Always ends up set from here down
 
-    int32_t count = state->regs.R[11];
-    int32_t i = state->regs.R[12];
+    int32_t count = state->R[11];
+    int32_t i = state->R[12];
     int32_t left = count - i;
     if (UNLIKELY(left <= 0)) {
-        state->regs.R[4] = i;
-        state->regs.PC += 2*10;
+        state->R[4] = i;
+        state->PC += 2*10;
         state->cycles += 5;
         return;
     }
 
-    uint8_t *ptr = page_base + state->regs.R[14];
-    state->regs.R[4] = count;
-    state->regs.R[14] += left*4;
-    state->regs.PC += 2*10;
+    uint8_t *ptr = page_base + state->R[14];
+    state->R[4] = count;
+    state->R[14] += left*4;
+    state->PC += 2*10;
     state->cycles += 7*left + (4-1);
 
     /* Call the copy routine last to avoid unnecessary register saves and
@@ -1454,7 +1455,7 @@ static FASTCALL void BIOS_00002EFA(SH2_struct *state)
 
 /* 0x06010D22: 3-D intro animation idle loop */
 
-static int BIOS_06010D22_detect(SH2_struct *state, uint32_t address,
+static int BIOS_06010D22_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return (fetch[-2] & 0xF000) == 0xBA45  // bsr 0x60101AC  [only wastes time]
@@ -1466,16 +1467,16 @@ static int BIOS_06010D22_detect(SH2_struct *state, uint32_t address,
         ? 4 : 0;
 }
 
-static FASTCALL void BIOS_06010D22(SH2_struct *state)
+static FASTCALL void BIOS_06010D22(SH2State *state)
 {
     uint32_t address = T2ReadLong(HighWram, 0x10D68);
-    state->regs.R[0] = MappedMemoryReadWord(address);
-    if (state->regs.R[0]) {
-        state->regs.SR.all &= ~SR_T;
-        state->cycles = state->psp.cycle_limit;
+    state->R[0] = MappedMemoryReadWord(address);
+    if (state->R[0]) {
+        state->SR &= ~SR_T;
+        state->cycles = state->cycle_limit;
     } else {
-        state->regs.SR.all |= SR_T;
-        state->regs.PC += 8;
+        state->SR |= SR_T;
+        state->PC += 8;
         state->cycles += 4;
     }
 }
@@ -1488,7 +1489,7 @@ static FASTCALL void BIOS_06010D22(SH2_struct *state)
 
 /* 0x600614C: Idle loop with a JSR */
 
-static int Azel_0600614C_detect(SH2_struct *state, uint32_t address,
+static int Azel_0600614C_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[-2] == 0x4B0B  // jsr @r11
@@ -1496,21 +1497,21 @@ static int Azel_0600614C_detect(SH2_struct *state, uint32_t address,
         && fetch[ 0] == 0x60E2  // mov.l @r14, r0
         && fetch[ 1] == 0x2008  // tst r0, r0
         && fetch[ 2] == 0x8BFA  // bf fetch[-2]
-        && state->regs.R[14]>>20 == 0x060
+        && state->R[14]>>20 == 0x060
         ? 3 : 0;
 }
 
-static FASTCALL void Azel_0600614C(SH2_struct *state)
+static FASTCALL void Azel_0600614C(SH2State *state)
 {
-    state->regs.R[0] = T2ReadLong(HighWram, state->regs.R[14] & 0xFFFFF);
-    if (state->regs.R[0]) {
-        state->regs.SR.all &= ~SR_T;
-        state->regs.PR = state->regs.PC;
-        state->regs.PC = state->regs.R[11];
-        state->cycles = state->psp.cycle_limit;
+    state->R[0] = T2ReadLong(HighWram, state->R[14] & 0xFFFFF);
+    if (state->R[0]) {
+        state->SR &= ~SR_T;
+        state->PR = state->PC;
+        state->PC = state->R[11];
+        state->cycles = state->cycle_limit;
     } else {
-        state->regs.SR.all |= SR_T;
-        state->regs.PC += 2*3;
+        state->SR |= SR_T;
+        state->PC += 2*3;
         state->cycles += 3;
     }
 }
@@ -1519,27 +1520,27 @@ static FASTCALL void Azel_0600614C(SH2_struct *state)
 
 /* 0x600C59C: SSH2 idle loop */
 
-static int Azel_0600C59C_detect(SH2_struct *state, uint32_t address,
+static int Azel_0600C59C_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[0] == 0x60C0  // mov.b @r12, r0
         && fetch[1] == 0x600C  // extu.b r0, r0
         && fetch[2] == 0xC880  // tst #0x80, r0
         && fetch[3] == 0x89FB  // bt fetch[0]
-        && state->regs.R[12] == 0xFFFFFE11
+        && state->R[12] == 0xFFFFFE11
         ? 4 : 0;
 }
 
-static FASTCALL void Azel_0600C59C(SH2_struct *state)
+static FASTCALL void Azel_0600C59C(SH2State *state)
 {
-    state->regs.R[0] = (uint8_t)(state->onchip.FTCSR);
-    if (LIKELY(!(state->regs.R[0] & 0x80))) {
+    state->R[0] = (uint8_t)(((SH2_struct *)(state->userdata))->onchip.FTCSR);
+    if (LIKELY(!(state->R[0] & 0x80))) {
         /* This loop has already been executed once in the fall-in case,
          * so SR.T will already be set. */
-        state->cycles = state->psp.cycle_limit;
+        state->cycles = state->cycle_limit;
     } else {
-        state->regs.SR.all &= ~SR_T;
-        state->regs.PC += 2*4;
+        state->SR &= ~SR_T;
+        state->PC += 2*4;
         state->cycles += 4;
     }
 }
@@ -1548,7 +1549,7 @@ static FASTCALL void Azel_0600C59C(SH2_struct *state)
 
 /* 0x600FCB0: Mysterious routine called frequently from 0x6006148 */
 
-static int Azel_0600FCB0_detect(SH2_struct *state, uint32_t address,
+static int Azel_0600FCB0_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[-2] == 0x000B  // rts
@@ -1584,27 +1585,27 @@ static int Azel_0600FCB0_detect(SH2_struct *state, uint32_t address,
         ? 4 : 0;
 }
 
-static FASTCALL void Azel_0600FCB0(SH2_struct *state)
+static FASTCALL void Azel_0600FCB0(SH2State *state)
 {
-    state->regs.R[3] = 0x604B68C;
+    state->R[3] = 0x604B68C;
     uint8_t *r3_ptr = (uint8_t *)(HighWram + 0x4B68C);
 
-    state->regs.R[0] = r3_ptr[0^1];
-    if (!state->regs.R[0]) {
-        state->regs.SR.all |= SR_T;
-        state->regs.PC = state->regs.PR;
+    state->R[0] = r3_ptr[0^1];
+    if (!state->R[0]) {
+        state->SR |= SR_T;
+        state->PC = state->PR;
         state->cycles += 9;
         return;
     }
 
     // No need to set SR, as the next code takes care of that
-    state->regs.PC += 2*4;
+    state->PC += 2*4;
     state->cycles += 4;
 #if 0
-    state->regs.R[0] = r3_ptr[1^1];
-    if (!state->regs.R[0]) {
-        state->regs.SR.all |= SR_T;
-        state->regs.PC += 88;
+    state->R[0] = r3_ptr[1^1];
+    if (!state->R[0]) {
+        state->SR |= SR_T;
+        state->PC += 88;
         state->cycles += 9;
         return;
     }
@@ -1615,7 +1616,7 @@ static FASTCALL void Azel_0600FCB0(SH2_struct *state)
 
 /* 0x6010F24/0x6010F52: Bitmap copy loop (for movies) */
 
-static int Azel_06010F24_detect(SH2_struct *state, uint32_t address,
+static int Azel_06010F24_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[ 0] == 0x6693  // mov r9, r6
@@ -1629,15 +1630,15 @@ static int Azel_06010F24_detect(SH2_struct *state, uint32_t address,
         // fetch[ 8] == 0x1F31  // {mov.l r3, @(4,r15) | tst r3, r3}
         && fetch[ 9] == 0x8FF5  // bf/s fetch[0]
         && fetch[10] == 0x3DCC  // add r12, r13
-        && state->regs.R[13]>>20 == 0x25E
+        && state->R[13]>>20 == 0x25E
         ? 11 : 0;
 }
 
-static FASTCALL void Azel_06010F24(SH2_struct *state)
+static FASTCALL void Azel_06010F24(SH2State *state)
 {
-    const uint32_t src_addr = state->regs.R[14];
-    const uint32_t dest_addr = state->regs.R[13];
-    const uint32_t size = state->regs.R[9];
+    const uint32_t src_addr = state->R[14];
+    const uint32_t dest_addr = state->R[13];
+    const uint32_t size = state->R[9];
     const uint32_t *src = (const uint32_t *)(HighWram + (src_addr & 0xFFFFF));
     uint32_t *dest = (uint32_t *)(Vdp2Ram + (dest_addr & 0xFFFFF));
 
@@ -1653,23 +1654,23 @@ static FASTCALL void Azel_06010F24(SH2_struct *state)
         dest[3] = BSWAP16(word3);
     }
 
-    state->regs.R[14] = src_addr + state->regs.R[8];
-    state->regs.R[13] = dest_addr + state->regs.R[12];
+    state->R[14] = src_addr + state->R[8];
+    state->R[13] = dest_addr + state->R[12];
 
     /* Conveniently, the counter is always stored in R3 when we get here
      * (it's first loaded when the loop is executed on the fall-in case)
      * and the stack variables are never referenced once their respective
      * loops complete, so we don't have to worry about which loop we're in. */
-    unsigned int counter = state->regs.R[3];
+    unsigned int counter = state->R[3];
     counter--;
-    state->regs.R[3] = counter;
+    state->R[3] = counter;
 
     if (counter != 0) {
-        state->regs.SR.all &= ~SR_T;
+        state->SR &= ~SR_T;
         state->cycles += 290;
     } else {
-        state->regs.SR.all |= SR_T;
-        state->regs.PC += 2*11;
+        state->SR |= SR_T;
+        state->PC += 2*11;
         state->cycles += 289;
     }
 }
@@ -1678,7 +1679,7 @@ static FASTCALL void Azel_06010F24(SH2_struct *state)
 
 /* 0x603A22C: Wrapper for 0x603A242 that jumps in with a BRA */
 
-static int Azel_0603A22C_detect(SH2_struct *state, uint32_t address,
+static int Azel_0603A22C_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[0] == 0xA009  // bra 0x603A242
@@ -1686,10 +1687,10 @@ static int Azel_0603A22C_detect(SH2_struct *state, uint32_t address,
         ? 2 : 0;
 }
 
-static FASTCALL void Azel_0603A22C(SH2_struct *state)
+static FASTCALL void Azel_0603A22C(SH2State *state)
 {
-    state->regs.R[7] = 0;
-    state->regs.PC += 0x16;
+    state->R[7] = 0;
+    state->PC += 0x16;
     Azel_0603A242(state);
 }
 
@@ -1697,7 +1698,7 @@ static FASTCALL void Azel_0603A22C(SH2_struct *state)
 
 /* 0x603A242: CD command execution routine */
 
-static int Azel_0603A242_detect(SH2_struct *state, uint32_t address,
+static int Azel_0603A242_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[0] == 0x2FE6  // mov.l r14, @-r15
@@ -1711,28 +1712,28 @@ static int Azel_0603A242_detect(SH2_struct *state, uint32_t address,
 static int Azel_0603A242_state = 0;
 static int Azel_0603A242_cmd51_count = 0;  // Count of sequential 0x51 commands
 
-static FASTCALL void Azel_0603A242(SH2_struct *state)
+static FASTCALL void Azel_0603A242(SH2State *state)
 {
     if (Azel_0603A242_state == 0) {
-        const uint32_t r4 = state->regs.R[4];
+        const uint32_t r4 = state->R[4];
         uint16_t *ptr_6053278 = (uint16_t *)(&HighWram[0x53278]);
         *ptr_6053278 |= Cs2ReadWord(0x90008);
         if ((*ptr_6053278 & r4) != r4) {
-            state->regs.R[0] = -1;
-            state->regs.PC = state->regs.PR;
+            state->R[0] = -1;
+            state->PC = state->PR;
             state->cycles += 77;
             return;
         }
         if (!(*ptr_6053278 & 1)) {
-            state->regs.R[0] = -2;
-            state->regs.PC = state->regs.PR;
+            state->R[0] = -2;
+            state->PC = state->PR;
             state->cycles += 82;
             return;
         }
 
         Cs2WriteWord(0x90008, ~(r4 | 1));
         *ptr_6053278 &= ~1;
-        const uint32_t r5 = state->regs.R[5];
+        const uint32_t r5 = state->R[5];
         uintptr_t r5_base = (uintptr_t)direct_pages[r5>>19];
         const uint16_t *r5_ptr = (const uint16_t *)(r5_base + r5);
         Cs2WriteWord(0x90018, r5_ptr[0]);
@@ -1756,13 +1757,13 @@ static FASTCALL void Azel_0603A242(SH2_struct *state)
             Azel_0603A242_state = 2;
         } else {
             /* Technically a timeout loop, but we assume no timeouts */
-            state->cycles = state->psp.cycle_limit;
+            state->cycles = state->cycle_limit;
         }
         return;
     }
 
     if (Azel_0603A242_state == 2) {
-        const uint32_t r6 = state->regs.R[6];
+        const uint32_t r6 = state->R[6];
         uintptr_t r6_base = (uintptr_t)direct_pages[r6>>19];
         uint16_t *r6_ptr = (uint16_t *)(r6_base + r6);
         const unsigned int CR1 = Cs2ReadWord(0x90018);
@@ -1792,22 +1793,22 @@ static FASTCALL void Azel_0603A242(SH2_struct *state)
         r6_ptr[3] = CR4;
         uint16_t *dest = (uint16_t *)&HighWram[0x5329C];
         *((uint8_t *)dest + 1) = CR1>>8;
-        if (state->regs.R[7]) {
+        if (state->R[7]) {
             dest[2] = CR1<<8 | CR2>>8;
             dest[3] = CR2<<8 | CR3>>8;
             dest[4] = CR3 & 0xFF;
             dest[5] = CR4;
         }
-        state->regs.R[0] = 0;
+        state->R[0] = 0;
 #if defined(TRACE) || defined(TRACE_STEALTH) || defined(TRACE_LITE)
-        state->regs.R[1] = ~0xF0;
-        state->regs.R[2] = 0;
-        state->regs.R[3] = ~0xF0;
-        state->regs.R[4] = state->regs.R[15] - 12;
-        state->regs.R[5] = 0x605329C;
-        state->regs.SR.all &= ~SR_T;
+        state->R[1] = ~0xF0;
+        state->R[2] = 0;
+        state->R[3] = ~0xF0;
+        state->R[4] = state->R[15] - 12;
+        state->R[5] = 0x605329C;
+        state->SR &= ~SR_T;
 #endif
-        state->regs.PC = state->regs.PR;
+        state->PC = state->PR;
         state->cycles += 121;
         Azel_0603A242_state = 0;
         return;
@@ -1819,7 +1820,7 @@ static FASTCALL void Azel_0603A242(SH2_struct *state)
 /* 0x0603DD6E: CD read routine (actually a generalized copy routine, but
  * doesn't seem to be used for anything else) */
 
-static int Azel_0603DD6E_detect(SH2_struct *state, uint32_t address,
+static int Azel_0603DD6E_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     return fetch[0] == 0x2448  // tst r4, r4
@@ -1831,24 +1832,25 @@ static int Azel_0603DD6E_detect(SH2_struct *state, uint32_t address,
         ? 31 : 0;
 }
 
-static FASTCALL void Azel_0603DD6E(SH2_struct *state)
+static FASTCALL void Azel_0603DD6E(SH2State *state)
 {
-    int32_t len = MappedMemoryReadLong(state->regs.R[15]);
-    uint32_t dest = state->regs.R[4];
+    int32_t len = MappedMemoryReadLong(state->R[15]);
+    uint32_t dest = state->R[4];
 
-    if (UNLIKELY(state->regs.R[5] != 1)
-     || UNLIKELY(state->regs.R[6] != 0x25818000)
-     || UNLIKELY(state->regs.R[7] != 0)
+    if (UNLIKELY(state->R[5] != 1)
+     || UNLIKELY(state->R[6] != 0x25818000)
+     || UNLIKELY(state->R[7] != 0)
      || UNLIKELY(len <= 0)
      || UNLIKELY((len & 3) != 0)
     ) {
-        state->regs.SR.part.T = (state->regs.R[4] == 0);
-        state->regs.PC += 2;
+        state->SR &= ~SR_T;
+        state->SR |= (state->R[4] == 0) << SR_T_SHIFT;
+        state->PC += 2;
         state->cycles += 1;
         return;
     }
 
-    state->regs.PC = state->regs.PR;
+    state->PC = state->PR;
     state->cycles += 30 + len*2;
 
     const uint32_t dest_page = dest>>19;

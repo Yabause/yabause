@@ -125,6 +125,8 @@ void BiosInit(void)
 
 static void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
 //   LOG("BiosSetScuInterrupt. vector = %02X, func = %08X\n", sh->regs.R[4], sh->regs.R[5]);
 
    if (sh->regs.R[5] == 0)
@@ -139,12 +141,15 @@ static void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
    }
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    // check me
 //   LOG("BiosGetScuInterrupt\n"); 
 
@@ -152,12 +157,15 @@ static void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
    sh->cycles += 5;
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
 //   LOG("BiosSetSh2Interrupt\n");
 
    if (sh->regs.R[5] == 0)
@@ -172,12 +180,15 @@ static void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
    }
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosGetSh2Interrupt(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    // check me
 //   LOG("BiosGetSh2Interrupt\n");
 
@@ -185,12 +196,15 @@ static void FASTCALL BiosGetSh2Interrupt(SH2_struct * sh)
    sh->cycles += 5;
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    // check me
    LOG("BiosSetScuInterruptMask\n");
 
@@ -203,6 +217,7 @@ static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
    sh->cycles += 17;
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -210,6 +225,8 @@ static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
 static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
 {
    u32 newmask;
+
+   SH2GetRegisters(sh, &sh->regs);
 
 //   LOG("BiosChangeScuInterruptMask\n");
 
@@ -225,20 +242,25 @@ static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
    sh->cycles += 20;
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosCDINIT2(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosCDINIT1(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -246,6 +268,8 @@ static void FASTCALL BiosCDINIT1(SH2_struct * sh)
 static void FASTCALL BiosGetSemaphore(SH2_struct * sh)
 {
    u8 temp;
+
+   SH2GetRegisters(sh, &sh->regs);
 
    // check me
    LOG("BiosGetSemaphore\n");
@@ -260,12 +284,15 @@ static void FASTCALL BiosGetSemaphore(SH2_struct * sh)
    
    sh->cycles += 11;
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosClearSemaphore(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    // check me
    LOG("BiosClearSemaphore\n");
 
@@ -273,12 +300,15 @@ static void FASTCALL BiosClearSemaphore(SH2_struct * sh)
 
    sh->cycles += 5;
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosChangeSystemClock\n");
 
    MappedMemoryWriteLong(0x06000324, sh->regs.R[4]);
@@ -289,6 +319,7 @@ static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
       SmpcCKCHG352();
   
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -296,6 +327,8 @@ static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
 static void FASTCALL BiosChangeScuInterruptPriority(SH2_struct * sh)
 {
    int i;
+
+   SH2GetRegisters(sh, &sh->regs);
 
    // check me
 //   LOG("BiosChangeScuInterruptPriority\n");
@@ -312,33 +345,43 @@ static void FASTCALL BiosChangeScuInterruptPriority(SH2_struct * sh)
 
    sh->cycles += 186;
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosExecuteCDPlayer(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosExecuteCDPlayer\n");
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosPowerOnMemoryClear(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosPowerOnMemoryClear\n");
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosCheckMPEGCard(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosCheckMPEGCard\n");
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -618,6 +661,8 @@ static u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, i
 
 static void FASTCALL BiosBUPInit(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
 //   LOG("BiosBUPInit. arg1 = %08X, arg2 = %08X, arg3 = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6]);
 
    // Setup Function table
@@ -660,28 +705,35 @@ static void FASTCALL BiosBUPInit(SH2_struct * sh)
    // cycles need to be incremented
 
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosBUPSelectPartition(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosBUPSelectPartition. PR = %08X\n", sh->regs.PR);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosBUPFormat(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
 //   LOG("BiosBUPFormat. PR = %08X\n", sh->regs.PR);
 
    BupFormat(sh->regs.R[4]);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -694,6 +746,8 @@ static void FASTCALL BiosBUPStatus(SH2_struct * sh)
    u32 ret;
    u32 freeblocks=0;
 
+   SH2GetRegisters(sh, &sh->regs);
+
 //   LOG("BiosBUPStatus. arg1 = %d, arg2 = %d, arg3 = %08X, PR = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6], sh->regs.PR);
 
    // Fill in status variables
@@ -705,6 +759,7 @@ static void FASTCALL BiosBUPStatus(SH2_struct * sh)
       // Error
       sh->regs.R[0] = ret;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -721,6 +776,7 @@ static void FASTCALL BiosBUPStatus(SH2_struct * sh)
 
    sh->regs.R[0] = ret; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -739,6 +795,8 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    u32 datasize;
    u32 i;
 
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosBUPWrite. arg1 = %d, arg2 = %08X, arg3 = %08X, arg4 = %d, PR = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6], sh->regs.R[7], sh->regs.PR);
 
    // Fill in status variables
@@ -748,6 +806,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
       // Error
       sh->regs.R[0] = ret;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -762,6 +821,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
          // Nope, let's bail instead
          sh->regs.R[0] = 6;
          sh->regs.PC = sh->regs.PR;
+         SH2SetRegisters(sh, &sh->regs);
          return;
       }
 
@@ -781,6 +841,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
       // Nope, time to bail
       sh->regs.R[0] = 4;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -790,6 +851,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
       // Just return an error that might make sense
       sh->regs.R[0] = 8;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -878,6 +940,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -895,6 +958,8 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
    int blocksread;
    u32 datasize;
 
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosBUPRead\n", sh->regs.PR);
 
    ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
@@ -904,6 +969,7 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
       // Error
       sh->regs.R[0] = ret;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -913,6 +979,7 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
       // save doesn't exist
       sh->regs.R[0] = 5;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -926,6 +993,7 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
       // Just return an error that might make sense
       sh->regs.R[0] = 8;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -949,6 +1017,7 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -961,6 +1030,8 @@ static void FASTCALL BiosBUPDelete(SH2_struct * sh)
    u32 block;
    u32 ret;
 
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosBUPDelete. PR = %08X\n", sh->regs.PR);
 
    // Fill in status variables
@@ -970,6 +1041,7 @@ static void FASTCALL BiosBUPDelete(SH2_struct * sh)
       // Error
       sh->regs.R[0] = ret;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -980,6 +1052,7 @@ static void FASTCALL BiosBUPDelete(SH2_struct * sh)
 
       sh->regs.R[0] = 5;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -987,6 +1060,7 @@ static void FASTCALL BiosBUPDelete(SH2_struct * sh)
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1000,6 +1074,8 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
    u32 i;
    char filename[12];
    u32 blockoffset=2;
+
+   SH2GetRegisters(sh, &sh->regs);
 
 //   int findmatch = MappedMemoryReadByte(sh->regs.R[5]);
 
@@ -1015,6 +1091,7 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
       // Error
       sh->regs.R[0] = ret;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -1080,6 +1157,7 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
 
    sh->regs.R[0] = i; // returns the number of successfully read dir entries
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1097,6 +1175,8 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
    int numblocks;
    int blocksread;
 
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosBUPVerify. PR = %08X\n", sh->regs.PR);
 
    ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
@@ -1106,6 +1186,7 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
       // Error
       sh->regs.R[0] = ret;
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -1115,6 +1196,7 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
       // Since the save doesn't exist, let's bail with an error
       sh->regs.R[0] = 5; // Not found
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -1128,6 +1210,7 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
       // Just return an error that might make sense
       sh->regs.R[0] = 8; // Broken
       sh->regs.PC = sh->regs.PR;
+      SH2SetRegisters(sh, &sh->regs);
       return;
    }
 
@@ -1140,6 +1223,7 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
          // Ok, the data doesn't match
          sh->regs.R[0] = 7; // No match
          sh->regs.PC = sh->regs.PR;
+         SH2SetRegisters(sh, &sh->regs);
          return;
       }
 
@@ -1159,6 +1243,7 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1218,6 +1303,8 @@ static void FASTCALL BiosBUPGetDate(SH2_struct * sh)
    u32 yearoffset;
    u32 yearremainder;
 
+   SH2GetRegisters(sh, &sh->regs);
+
    LOG("BiosBUPGetDate. PR = %08X\n", sh->regs.PR);
 
    date = sh->regs.R[4];
@@ -1253,6 +1340,7 @@ static void FASTCALL BiosBUPGetDate(SH2_struct * sh)
    MappedMemoryWriteByte(sh->regs.R[5], (u8)(((div / 0x5B5) * 4) + yearoffset));
    
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1267,6 +1355,8 @@ static void FASTCALL BiosBUPSetDate(SH2_struct * sh)
                         31+28+31+30+31+30+31+31, 31+28+31+30+31+30+31+31+30,
                         31+28+31+30+31+30+31+31+30+31,
                         31+28+31+30+31+30+31+31+30+31+30 };
+
+   SH2GetRegisters(sh, &sh->regs);
 
    LOG("BiosBUPSetDate. PR = %08X\n", sh->regs.PR);
 
@@ -1298,12 +1388,15 @@ static void FASTCALL BiosBUPSetDate(SH2_struct * sh)
 
    sh->regs.R[0] = date;
    sh->regs.PC = sh->regs.PR;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    // Save R0-R7, PR, GBR, and old Interrupt mask to stack
    sh->regs.R[15] -= 4;
    MappedMemoryWriteLong(sh->regs.R[15], sh->regs.R[0]);
@@ -1343,6 +1436,7 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
 //   LOG("Interrupt PC = %08X. Read from %08X\n", sh->regs.PC, 0x06000900+(vector << 2));
 
    sh->cycles += 33;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1350,6 +1444,8 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
 static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 {
    u32 oldmask;
+
+   SH2GetRegisters(sh, &sh->regs);
 
    // Restore R0-R7, PR, GBR, and old Interrupt mask from stack
    sh->regs.GBR = MappedMemoryReadLong(sh->regs.R[15]);
@@ -1385,12 +1481,15 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
    sh->regs.R[15] += 4;
 
    sh->cycles += 24;
+   SH2SetRegisters(sh, &sh->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int FASTCALL BiosHandleFunc(SH2_struct * sh)
 {
+   SH2GetRegisters(sh, &sh->regs);
+
    // Let's see if it's a bios function
    switch((sh->regs.PC - 0x200) >> 2)
    {

@@ -550,9 +550,11 @@ int YabauseEmulate(void) {
 void YabauseStartSlave(void) {
    if (yabsys.emulatebios)
    {
+      SH2GetRegisters(SSH2, &SSH2->regs);
       SSH2->regs.R[15] = 0x06001000;
       SSH2->regs.VBR = 0x06000400;
       SSH2->regs.PC = MappedMemoryReadLong(0x06000250);
+      SH2SetRegisters(SSH2, &SSH2->regs);
    }
    else
       SH2PowerOn(SSH2);
@@ -682,6 +684,7 @@ void YabauseSpeedySetup(void)
    Cs2Area->satauth = 4;
 
    // Set Master SH2 registers accordingly
+   SH2GetRegisters(MSH2, &MSH2->regs);
    for (i = 0; i < 15; i++)
       MSH2->regs.R[i] = 0x00000000;
    MSH2->regs.R[15] = 0x06002000;
@@ -691,6 +694,7 @@ void YabauseSpeedySetup(void)
    MSH2->regs.MACH = 0x00000000;
    MSH2->regs.MACL = 0x00000000;
    MSH2->regs.PR = 0x00000000;
+   SH2SetRegisters(MSH2, &MSH2->regs);
 
    // Set SCU registers to sane states
    ScuRegs->D1AD = ScuRegs->D2AD = 0;
@@ -894,7 +898,9 @@ int YabauseQuickLoadGame(void)
       }
 
       // Now setup SH2 registers to start executing at ip code
+      SH2GetRegisters(MSH2, &MSH2->regs);
       MSH2->regs.PC = 0x06002E00;
+      SH2SetRegisters(MSH2, &MSH2->regs);
    }
    else
    {

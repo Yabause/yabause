@@ -29,8 +29,8 @@
 #include "rtl-mips.h"
 
 #ifdef RTL_TRACE_STEALTH_FOR_SH2
-# include "../sh2core.h"
-# include "../sh2trace.h"
+# include "sh2.h"
+# include "sh2-internal.h"
 #endif
 
 /*************************************************************************/
@@ -247,7 +247,7 @@ static const uint32_t code_save_regs_state[] = {
     MIPS_SW(MIPS_v1, 68, MIPS_sp),
     /* Copy the current register values in the SH-2 state block (which may
      * not be up to date) to the stack */
-    MIPS_ADDIU(MIPS_a0, MIPS_at, offsetof(SH2_struct,regs)),
+    MIPS_MOVE(MIPS_a0, MIPS_at),
     MIPS_ADDIU(MIPS_a1, MIPS_sp, 4*18),
     MIPS_ADDIU(MIPS_a2, MIPS_a0, 4*23),
     MIPS_LW(MIPS_v1, 0, MIPS_a0),
@@ -257,7 +257,7 @@ static const uint32_t code_save_regs_state[] = {
     MIPS_SW(MIPS_v1, -4, MIPS_a1),
     /* Copy the current cycle count to the stack (leaving a copy in $v1)
      * and return */
-    MIPS_LW(MIPS_v1, offsetof(SH2_struct,cycles), MIPS_at),
+    MIPS_LW(MIPS_v1, offsetof(SH2State,cycles), MIPS_at),
     MIPS_JR(MIPS_ra),
     MIPS_SW(MIPS_v1, 0, MIPS_a1),
 };
@@ -267,7 +267,7 @@ static const uint32_t code_save_regs_state[] = {
  * in $at */
 static const uint32_t code_restore_regs_state[] = {
     /* Restore values to the SH-2 state block */
-    MIPS_ADDIU(MIPS_a0, MIPS_at, offsetof(SH2_struct,regs)),
+    MIPS_MOVE(MIPS_a0, MIPS_at),
     MIPS_ADDIU(MIPS_a1, MIPS_sp, 4*18),
     MIPS_ADDIU(MIPS_a2, MIPS_a0, 4*23),
     MIPS_LW(MIPS_v1, 0, MIPS_a1),
@@ -276,7 +276,7 @@ static const uint32_t code_restore_regs_state[] = {
     MIPS_BNE(MIPS_a0, MIPS_a2, -4),
     MIPS_SW(MIPS_v1, -4, MIPS_a0),
     MIPS_LW(MIPS_v1, 0, MIPS_a1),
-    MIPS_SW(MIPS_v1, offsetof(SH2_struct,cycles), MIPS_at),
+    MIPS_SW(MIPS_v1, offsetof(SH2State,cycles), MIPS_at),
     /* Restore all MIPS caller-saved registers */
     MIPS_LW(MIPS_v1, 64, MIPS_sp),
     MIPS_MTLO(MIPS_v1),
@@ -3297,8 +3297,7 @@ static unsigned int sh2_stealth_trace_insn(RTLBlock * const block,
     for (sh2_reg = 0; mask != 0; mask >>= 1, sh2_reg++) {
         if (mask & 1) {
             APPEND(MIPS_LW(MIPS_v1, 4*sh2_reg, MIPS_a0));
-            APPEND(MIPS_SW(MIPS_v1,
-                           offsetof(SH2_struct,regs) + 4*sh2_reg, MIPS_at));
+            APPEND(MIPS_SW(MIPS_v1, 4*sh2_reg, MIPS_at));
         }
     }
 
@@ -3317,7 +3316,7 @@ static unsigned int sh2_stealth_trace_insn(RTLBlock * const block,
         }
     }
     APPEND(MIPS_ADDI(MIPS_v1, MIPS_v1, cached_cycles));
-    APPEND(MIPS_SW(MIPS_v1, offsetof(SH2_struct,cycles), MIPS_at));
+    APPEND(MIPS_SW(MIPS_v1, offsetof(SH2State,cycles), MIPS_at));
 
     /* Call the trace routine (if the instruction isn't nulled out) */
     if (cond_reg) {
@@ -3337,7 +3336,7 @@ static unsigned int sh2_stealth_trace_insn(RTLBlock * const block,
     }
     APPEND(MIPS_LUI(MIPS_a1, (insn->src_imm & 0x7FFF0000) >> 16));
     APPEND(MIPS_ORI(MIPS_a1, MIPS_a1, insn->src_imm & 0xFFFF));
-    APPEND(MIPS_JAL(((uintptr_t)sh2_trace & 0x0FFFFFFC) >> 2));
+    APPEND(MIPS_JAL(((uintptr_t)trace_insn_callback & 0x0FFFFFFC) >> 2));
     APPEND(MIPS_MOVE(MIPS_a0, MIPS_at));
 
     /* Restore everything back the way it was */
@@ -3800,17 +3799,16 @@ static unsigned int sh2_stealth_cache_reg(RTLBlock * const block,
                 if (IS_SPILLED(1)) {
                     APPEND(MIPS_LW(MIPS_v1,
                                    block->regs[1].stack_offset, MIPS_sp));
-                    APPEND(MIPS_LW(MIPS_v1,
-                                   offsetof(SH2_struct,regs.SR), MIPS_v1));
+                    APPEND(MIPS_LW(MIPS_v1, offsetof(SH2State,SR), MIPS_v1));
                 } else {
-                    APPEND(MIPS_LW(MIPS_v1, offsetof(SH2_struct,regs.SR),
+                    APPEND(MIPS_LW(MIPS_v1, offsetof(SH2State,SR),
                                    block->regs[1].native_reg));
                 }
                 block->sh2_regcache_mask |= 1<<16;
             } else {
                 APPEND(MIPS_LW(MIPS_v1, cache_ptr & 0xFFFF, MIPS_a0));
             }
-            APPEND(MIPS_INS(MIPS_v1, mips_reg, 0, 1));
+            APPEND(MIPS_INS(MIPS_v1, mips_reg, SR_T_SHIFT, 1));
             APPEND(MIPS_SW(MIPS_v1, cache_ptr & 0xFFFF, MIPS_a0));
             APPEND(MIPS_LW(MIPS_a0, 0, MIPS_sp));
             APPEND(MIPS_ADDIU(MIPS_sp, MIPS_sp, 8));
@@ -3872,9 +3870,9 @@ static unsigned int sh2_stealth_trace_store(RTLBlock * const block,
 
     uintptr_t funcptr;
     switch (insn->src_imm & 0xFFFF) {
-      case 1: funcptr = (uintptr_t)sh2_trace_writeb; break;
-      case 2: funcptr = (uintptr_t)sh2_trace_writew; break;
-      case 4: funcptr = (uintptr_t)sh2_trace_writel; break;
+      case 1: funcptr = (uintptr_t)trace_storeb_callback; break;
+      case 2: funcptr = (uintptr_t)trace_storew_callback; break;
+      case 4: funcptr = (uintptr_t)trace_storel_callback; break;
       default:
         DMSG("Invalid store trace type %u", insn->src_imm & 0xFF);
         break;

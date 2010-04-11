@@ -62,7 +62,7 @@
         ALLOC_REG(name);                            \
         MOVEI(name, REG_GETVALUE((reg)) & (mask));  \
     } else {                                        \
-        LOAD_STATE_ALLOC(name, regs.field);         \
+        LOAD_STATE_ALLOC(name, field);              \
     }
 #define GET_R0    GET_REG(R0,   REG_R(0),  R[0],   0xFFFFFFFF)
 #define GET_R0_W  GET_REG(R0,   REG_R(0),  R[0],   0xFFFF)
@@ -75,21 +75,21 @@
 #define GET_GBR   GET_REG(GBR,  REG_GBR,   GBR,    0xFFFFFFFF)
 /* These are generally unknown, so don't waste time on checking them */
 #define GET_SR    FLUSH_STATE_SR_T(); \
-                  DECLARE_REG(SR);   LOAD_STATE_ALLOC(SR,   regs.SR.all)
+                  DECLARE_REG(SR);   LOAD_STATE_ALLOC(SR,   SR)
 #define GET_SR_T  DECLARE_REG(T);    LOAD_STATE_SR_T (T)
-#define GET_VBR   DECLARE_REG(VBR);  LOAD_STATE_ALLOC(VBR,  regs.VBR)
-#define GET_MACH  DECLARE_REG(MACH); LOAD_STATE_ALLOC(MACH, regs.MACH)
-#define GET_MACL  DECLARE_REG(MACL); LOAD_STATE_ALLOC(MACL, regs.MACL)
-#define GET_PR    DECLARE_REG(PR);   LOAD_STATE_ALLOC(PR,   regs.PR)
+#define GET_VBR   DECLARE_REG(VBR);  LOAD_STATE_ALLOC(VBR,  VBR)
+#define GET_MACH  DECLARE_REG(MACH); LOAD_STATE_ALLOC(MACH, MACH)
+#define GET_MACL  DECLARE_REG(MACL); LOAD_STATE_ALLOC(MACL, MACL)
+#define GET_PR    DECLARE_REG(PR);   LOAD_STATE_ALLOC(PR,   PR)
 
 /* MACH/MACL may be overwritten in the same register by the MAC.[WL] insns,
  * so STS MAC uses these macros to force creation of a new register */
-#define GET_MACH_COPY  DEFINE_REG(MACH); LOAD_STATE_COPY(MACH, regs.MACH)
-#define GET_MACL_COPY  DEFINE_REG(MACL); LOAD_STATE_COPY(MACL, regs.MACL)
+#define GET_MACH_COPY  DEFINE_REG(MACH); LOAD_STATE_COPY(MACH, MACH)
+#define GET_MACL_COPY  DEFINE_REG(MACL); LOAD_STATE_COPY(MACL, MACL)
 
 /* Versions used by load/store macros to retain the cached offset */
 #define GET_REG_KEEPOFS(name,field) \
-    DECLARE_REG(name); LOAD_STATE_ALLOC_KEEPOFS(name, regs.field)
+    DECLARE_REG(name); LOAD_STATE_ALLOC_KEEPOFS(name, field)
 #define GET_R0_KEEPOFS   GET_REG_KEEPOFS(R0,  R[0])
 #define GET_R15_KEEPOFS  GET_REG_KEEPOFS(R15, R[15])
 #define GET_Rn_KEEPOFS   GET_REG_KEEPOFS(Rn,  R[n])
@@ -105,35 +105,35 @@
 
 #define COPY_FROM_Rn(dest)                      \
     DECLARE_REG(value);                         \
-    if (!STATE_CACHE_FIXED_REG_WRITABLE(regs.dest)) { \
-        STATE_CACHE_CLEAR_FIXED_REG(regs.dest); \
+    if (!STATE_CACHE_FIXED_REG_WRITABLE(dest)) { \
+        STATE_CACHE_CLEAR_FIXED_REG(dest);      \
     }                                           \
-    if (STATE_CACHE_FIXED_REG(regs.R[n]) && !STATE_CACHE_FIXED_REG(regs.dest)){\
+    if (STATE_CACHE_FIXED_REG(R[n]) && !STATE_CACHE_FIXED_REG(dest)) { \
         ALLOC_REG(value);                       \
-        LOAD_STATE_COPY(value, regs.R[n]);      \
+        LOAD_STATE_COPY(value, R[n]);           \
     } else {                                    \
-        LOAD_STATE_ALLOC(value, regs.R[n]);     \
+        LOAD_STATE_ALLOC(value, R[n]);          \
     }                                           \
-    if (offsetof(SH2_struct,regs.SR) == offsetof(SH2_struct,regs.dest)) { \
+    if (offsetof(SH2State,SR) == offsetof(SH2State,dest)) { \
         RESET_STATE_SR_T();                     \
     }                                           \
-    STORE_STATE(regs.dest, value)
+    STORE_STATE(dest, value)
 
 #define COPY_TO_Rn(src)                         \
     DECLARE_REG(value);                         \
-    if (offsetof(SH2_struct,regs.SR) == offsetof(SH2_struct,regs.src)) { \
+    if (offsetof(SH2State,SR) == offsetof(SH2State,src)) { \
         FLUSH_STATE_SR_T();                     \
     }                                           \
-    if (!STATE_CACHE_FIXED_REG_WRITABLE(regs.R[n])) { \
-        STATE_CACHE_CLEAR_FIXED_REG(regs.R[n]); \
+    if (!STATE_CACHE_FIXED_REG_WRITABLE(R[n])) { \
+        STATE_CACHE_CLEAR_FIXED_REG(R[n]);      \
     }                                           \
-    if (STATE_CACHE_FIXED_REG(regs.src) && !STATE_CACHE_FIXED_REG(regs.R[n])){\
+    if (STATE_CACHE_FIXED_REG(src) && !STATE_CACHE_FIXED_REG(R[n])) { \
         ALLOC_REG(value);                       \
-        LOAD_STATE_COPY(value, regs.src);       \
+        LOAD_STATE_COPY(value, src);            \
     } else {                                    \
-        LOAD_STATE_ALLOC(value, regs.src);      \
+        LOAD_STATE_ALLOC(value, src);           \
     }                                           \
-    STORE_STATE(regs.R[n], value)
+    STORE_STATE(R[n], value)
 
 /* Local convenience macro for creating result registers to be stored in a
  * state block field */
@@ -153,33 +153,32 @@
 
 /* Local convenience macros for storing values to SH-2 registers */
 
-#define SET_R0(reg)    STORE_STATE(regs.R[0],   (reg))
-#define SET_R15(reg)   STORE_STATE(regs.R[15],  (reg))
-#define SET_Rn(reg)    STORE_STATE(regs.R[n],   (reg))
-#define SET_Rm(reg)    STORE_STATE(regs.R[m],   (reg))
-#define SET_SR(reg)    RESET_STATE_SR_T(); \
-                       STORE_STATE(regs.SR.all, (reg))
-#define SET_SR_T(reg)  STORE_STATE_SR_T((reg))
-#define SET_GBR(reg)   STORE_STATE(regs.GBR,    (reg))
-#define SET_VBR(reg)   STORE_STATE(regs.VBR,    (reg))
-#define SET_MACH(reg)  STORE_STATE(regs.MACH,   (reg))
-#define SET_MACL(reg)  STORE_STATE(regs.MACL,   (reg))
-#define SET_PR(reg)    STORE_STATE(regs.PR,     (reg))
-#define SET_PC(reg)    STORE_STATE(regs.PC,     (reg))
+#define SET_R0(reg)    STORE_STATE(R[0], (reg))
+#define SET_R15(reg)   STORE_STATE(R[15],(reg))
+#define SET_Rn(reg)    STORE_STATE(R[n], (reg))
+#define SET_Rm(reg)    STORE_STATE(R[m], (reg))
+#define SET_SR(reg)    RESET_STATE_SR_T(); STORE_STATE(SR, (reg))
+#define SET_SR_T(reg)  STORE_STATE_SR_T ((reg))
+#define SET_GBR(reg)   STORE_STATE(GBR,  (reg))
+#define SET_VBR(reg)   STORE_STATE(VBR,  (reg))
+#define SET_MACH(reg)  STORE_STATE(MACH, (reg))
+#define SET_MACL(reg)  STORE_STATE(MACL, (reg))
+#define SET_PR(reg)    STORE_STATE(PR,   (reg))
+#define SET_PC(reg)    STORE_STATE(PC,   (reg))
 
 /* Set PC to a known value */
 #define SET_PC_KNOWN(value)  STORE_STATE_PC((value))
 
 /* Local convenience macros for adding constants to SH-2 registers */
 
-#define ADDI_R0(imm)         ADDI_STATE(regs.R[0],  (imm), R0)
-#define ADDI_R15(imm)        ADDI_STATE(regs.R[15], (imm), R15)
-#define ADDI_Rn(imm)         ADDI_STATE(regs.R[n],  (imm), Rn)
-#define ADDI_Rm(imm)         ADDI_STATE(regs.R[m],  (imm), Rm)
-#define ADDI_R0_NOREG(imm)   ADDI_STATE_NOREG(regs.R[0],  (imm))
-#define ADDI_R15_NOREG(imm)  ADDI_STATE_NOREG(regs.R[15], (imm))
-#define ADDI_Rn_NOREG(imm)   ADDI_STATE_NOREG(regs.R[n],  (imm))
-#define ADDI_Rm_NOREG(imm)   ADDI_STATE_NOREG(regs.R[m],  (imm))
+#define ADDI_R0(imm)         ADDI_STATE(R[0],  (imm), R0)
+#define ADDI_R15(imm)        ADDI_STATE(R[15], (imm), R15)
+#define ADDI_Rn(imm)         ADDI_STATE(R[n],  (imm), Rn)
+#define ADDI_Rm(imm)         ADDI_STATE(R[m],  (imm), Rm)
+#define ADDI_R0_NOREG(imm)   ADDI_STATE_NOREG(R[0],  (imm))
+#define ADDI_R15_NOREG(imm)  ADDI_STATE_NOREG(R[15], (imm))
+#define ADDI_Rn_NOREG(imm)   ADDI_STATE_NOREG(R[n],  (imm))
+#define ADDI_Rm_NOREG(imm)   ADDI_STATE_NOREG(R[m],  (imm))
 
 /* Local convenience macro for updating the cycle count */
 
@@ -223,8 +222,8 @@
         GET_Rm_KEEPOFS;                         \
         DEFINE_REG(address);                    \
         ADD(address, R0, Rm);                   \
-        const int32_t offset = STATE_CACHE_OFFSET(regs.R[0]) \
-                             + STATE_CACHE_OFFSET(regs.R[m]); \
+        const int32_t offset = STATE_CACHE_OFFSET(R[0]) \
+                             + STATE_CACHE_OFFSET(R[m]); \
         DECLARE_REG(offset_addr);               \
         if (offset) {                           \
             ALLOC_REG(offset_addr);             \
@@ -264,7 +263,7 @@
 
 #define LOAD_disp_GBR(size,dest,offset)         \
     GET_GBR_KEEPOFS;                            \
-    const int32_t final_offset = STATE_CACHE_OFFSET(regs.GBR) + (offset); \
+    const int32_t final_offset = STATE_CACHE_OFFSET(GBR) + (offset); \
     DECLARE_REG(address);                       \
     if (final_offset) {                         \
         ALLOC_REG(address);                     \
@@ -278,7 +277,7 @@
     DECLARE_REG(address);                       \
     GET_GBR_KEEPOFS;                            \
     if (REG_GETKNOWN(REG_R(0)) == 0xFFFFFFFF) { \
-        const int32_t offset = STATE_CACHE_OFFSET(regs.GBR) \
+        const int32_t offset = STATE_CACHE_OFFSET(GBR) \
                              + REG_GETVALUE(REG_R(0)); \
         if (offset) {                           \
             ALLOC_REG(address);                 \
@@ -290,8 +289,8 @@
         GET_R0_KEEPOFS;                         \
         DEFINE_REG(temp);                       \
         ADD(temp, R0, GBR);                     \
-        const int32_t offset = STATE_CACHE_OFFSET(regs.GBR) \
-                             + STATE_CACHE_OFFSET(regs.R[0]); \
+        const int32_t offset = STATE_CACHE_OFFSET(GBR) \
+                             + STATE_CACHE_OFFSET(R[0]); \
         if (offset) {                           \
             ALLOC_REG(address);                 \
             ADDI(address, temp, offset);        \
@@ -334,8 +333,8 @@
         GET_Rn_KEEPOFS;                         \
         DEFINE_REG(address);                    \
         ADD(address, R0, Rn);                   \
-        const int32_t offset = STATE_CACHE_OFFSET(regs.R[0]) \
-                             + STATE_CACHE_OFFSET(regs.R[n]); \
+        const int32_t offset = STATE_CACHE_OFFSET(R[0]) \
+                             + STATE_CACHE_OFFSET(R[n]); \
         DECLARE_REG(offset_addr);               \
         if (offset) {                           \
             ALLOC_REG(offset_addr);             \
@@ -356,7 +355,7 @@
 
 #define STORE_disp_GBR(size,value,offset)       \
     GET_GBR_KEEPOFS;                            \
-    const int32_t final_offset = STATE_CACHE_OFFSET(regs.GBR) + (offset); \
+    const int32_t final_offset = STATE_CACHE_OFFSET(GBR) + (offset); \
     DECLARE_REG(address);                       \
     if (final_offset) {                         \
         ALLOC_REG(address);                     \
@@ -494,7 +493,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
     DEFINE_REG(trace_PC);
     MOVEI(trace_PC, cur_PC);
     DEFINE_REG(trace_funcptr);
-    MOVEA(trace_funcptr, sh2_trace);
+    MOVEA(trace_funcptr, trace_insn_callback);
     CALL_NORET(state_reg, trace_PC, trace_funcptr);
 #endif
 
@@ -510,7 +509,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
      * fall-off-the-end is detected properly; we'll set it later if we
      * branch after this instruction */
 
-    state->psp.just_branched = 0;
+    state->just_branched = 0;
 
     /* Record the number of cycles used by this instruction (any additional
      * cycles necessary are added by the individual opcode handlers) */
@@ -537,7 +536,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           // $0xx2
           case 0x02: {  // STC SR,Rn
             DEBUG_PRINT_ONCE("STC SR,Rn");
-            COPY_TO_Rn(SR.all);
+            COPY_TO_Rn(SR);
             REG_SETKNOWN(REG_R(n), 0);
             PTR_CLEAR(n);
             break;
@@ -561,19 +560,18 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           // $0xx3
           case 0x03: {  // BSRF Rn
             DEBUG_PRINT_ONCE("BSRF Rn");
-            DEFINE_RESULT_REG(ret_addr, regs.PR);
+            DEFINE_RESULT_REG(ret_addr, PR);
             MOVEI(ret_addr, cur_PC + 4);
             SET_PR(ret_addr);
             if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
-                state->psp.branch_type = SH2BRTYPE_STATIC;
-                state->psp.branch_target =
-                    (cur_PC + 4) + REG_GETVALUE(REG_R(n));
+                state->branch_type = SH2BRTYPE_STATIC;
+                state->branch_target = (cur_PC + 4) + REG_GETVALUE(REG_R(n));
             } else {
-                state->psp.branch_type = SH2BRTYPE_DYNAMIC;
+                state->branch_type = SH2BRTYPE_DYNAMIC;
                 GET_Rn;
                 DEFINE_REG(target);
                 ADD(target, ret_addr, Rn);
-                state->psp.branch_target_reg = target;
+                state->branch_target_reg = target;
             }
             state->delay = 1;
             cur_cycles += 1;
@@ -588,24 +586,23 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                     fetch, cur_PC, &Rcount, &count_max, &Rshift, &type, NULL
                 );
                 if (num_insns) {
-                    state->psp.varshift_target_PC = cur_PC + 2*num_insns;
-                    state->psp.varshift_type      = type;
-                    state->psp.varshift_Rcount    = Rcount;
-                    state->psp.varshift_max       = count_max;
-                    state->psp.varshift_Rshift    = Rshift;
+                    state->varshift_target_PC = cur_PC + 2*num_insns;
+                    state->varshift_type      = type;
+                    state->varshift_Rcount    = Rcount;
+                    state->varshift_max       = count_max;
+                    state->varshift_Rshift    = Rshift;
                 }
             }
 #endif
             if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
-                state->psp.branch_type = SH2BRTYPE_STATIC;
-                state->psp.branch_target =
-                    (cur_PC + 4) + REG_GETVALUE(REG_R(n));
+                state->branch_type = SH2BRTYPE_STATIC;
+                state->branch_target = (cur_PC + 4) + REG_GETVALUE(REG_R(n));
             } else {
-                state->psp.branch_type = SH2BRTYPE_DYNAMIC;
+                state->branch_type = SH2BRTYPE_DYNAMIC;
                 GET_Rn;
                 DEFINE_REG(target);
                 ADDI(target, Rn, cur_PC + 4);
-                state->psp.branch_target_reg = target;
+                state->branch_target_reg = target;
             }
             state->delay = 1;
             cur_cycles += 1;
@@ -653,7 +650,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEBUG_PRINT_ONCE("MUL.L Rm,Rn");
             GET_Rn;
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.MACL);
+            DEFINE_RESULT_REG(result, MACL);
             MUL(result, Rn, Rm);
             SET_MACL(result);
             CLEAR_MAC_IS_ZERO();
@@ -678,10 +675,10 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           }
           case 0x28: {  // CLRMAC
             DEBUG_PRINT_ONCE("CLRMAC");
-            DEFINE_RESULT_REG(MACH, regs.MACH);
+            DEFINE_RESULT_REG(MACH, MACH);
             MOVEI(MACH, 0);
             SET_MACH(MACH);
-            DEFINE_RESULT_REG(MACL, regs.MACL);
+            DEFINE_RESULT_REG(MACL, MACL);
             MOVEI(MACL, 0);
             SET_MACL(MACL);
             SET_MAC_IS_ZERO();
@@ -697,7 +694,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x19: {  // DIV0U
             DEBUG_PRINT_ONCE("DIV0U");
             GET_SR;
-            DEFINE_RESULT_REG(new_SR, regs.SR);
+            DEFINE_RESULT_REG(new_SR, SR);
             ANDI(new_SR, SR, ~(SR_T | SR_Q | SR_M));
             SET_SR(new_SR);
 #ifdef OPTIMIZE_DIVISION
@@ -736,7 +733,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                                       && REG_GETVALUE(Rhi) == 0);
                 const int safe_division =
                     (optimization_flags & SH2_OPTIMIZE_ASSUME_SAFE_DIVISION);
-                state->psp.division_target_PC = cur_PC + div_bits*4;
+                state->division_target_PC = cur_PC + div_bits*4;
                 if (!is_32bit && !safe_division) {
                     /* Flush cached data since we jump out from inside the
                      * runtime conditional */
@@ -748,11 +745,11 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 }
                 /* Load operands */
                 DECLARE_REG(lo);
-                LOAD_STATE_ALLOC(lo, regs.R[Rlo]);
+                LOAD_STATE_ALLOC(lo, R[Rlo]);
                 DECLARE_REG(div);
-                LOAD_STATE_ALLOC(div, regs.R[Rdiv]);
+                LOAD_STATE_ALLOC(div, R[Rdiv]);
                 DECLARE_REG(hi);
-                LOAD_STATE_ALLOC(hi, regs.R[Rhi]);
+                LOAD_STATE_ALLOC(hi, R[Rhi]);
                 /* Define output registers (shared across all cases) */
                 DEFINE_REG(quotient);
                 DEFINE_REG(remainder);
@@ -934,7 +931,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 /* Process the division result */
                 DEFINE_REG(new_T);
                 ANDI(new_T, quotient, 1);  // Low bit to T flag
-                DEFINE_RESULT_REG(quo_out, regs.R[Rlo]);
+                DEFINE_RESULT_REG(quo_out, R[Rlo]);
                 if (div_bits < 32) {
                     DEFINE_REG(quo_temp);
                     SRLI(quo_temp, quotient, 1);
@@ -942,19 +939,19 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 } else {
                     SRLI(quo_out, quotient, 1);
                 }
-                STORE_STATE(regs.R[Rlo], quo_out);
+                STORE_STATE(R[Rlo], quo_out);
                 REG_SETKNOWN(REG_R(Rlo), 0);
                 DEFINE_REG(temp0);
                 SUB(temp0, remainder, div);
                 DEFINE_REG(rem_out);
                 SELECT(rem_out, remainder, temp0, new_T);
-                STORE_STATE(regs.R[Rhi], rem_out);
+                STORE_STATE(R[Rhi], rem_out);
                 REG_SETKNOWN(REG_R(Rhi), 0);
                 DEFINE_REG(SR_temp);
                 OR(SR_temp, new_SR, new_T);
                 DEFINE_REG(new_Q);
                 XORI(new_Q, new_T, 1);
-                DEFINE_RESULT_REG(SR_out, regs.SR);
+                DEFINE_RESULT_REG(SR_out, SR);
                 BFINS(SR_out, SR_temp, new_Q, SR_Q_SHIFT, 1);
                 SET_SR(SR_out);
                 /* Skip over the step-by-step emulation */
@@ -964,7 +961,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 if (!is_32bit && !safe_division) {
                     ADD_CYCLES();
                     SET_PC_KNOWN(cur_PC + (2 + skipped_insns*2));
-                    state->psp.branch_target = cur_PC + (2 + skipped_insns*2);
+                    state->branch_target = cur_PC + (2 + skipped_insns*2);
                     FLUSH_STATE_CACHE();
                     JUMP_STATIC();
                     DEFINE_LABEL(div0u_not_safe);
@@ -988,7 +985,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           // $0xxA
           case 0x0A: {  // STS MACH,Rn
             DEBUG_PRINT_ONCE("STS MACH,Rn");
-            if (STATE_CACHE_FIXED_REG_WRITABLE(regs.R[n])) {
+            if (STATE_CACHE_FIXED_REG_WRITABLE(R[n])) {
                 COPY_TO_Rn(MACH);
             } else {
                 /* Make sure Rn gets a copy of the register so it's not
@@ -1002,7 +999,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           }
           case 0x1A: {  // STS MACL,Rn
             DEBUG_PRINT_ONCE("STS MACL,Rn");
-            if (STATE_CACHE_FIXED_REG_WRITABLE(regs.R[n])) {
+            if (STATE_CACHE_FIXED_REG_WRITABLE(R[n])) {
                 COPY_TO_Rn(MACL);
             } else {
                 GET_MACL_COPY;
@@ -1023,9 +1020,9 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           // $0xxB
           case 0x0B: {  // RTS
             DEBUG_PRINT_ONCE("RTS");
-            state->psp.branch_type = SH2BRTYPE_DYNAMIC;
+            state->branch_type = SH2BRTYPE_DYNAMIC;
             GET_PR;
-            state->psp.branch_target_reg = PR;
+            state->branch_target_reg = PR;
             state->delay = 1;
             cur_cycles += 1;
             break;
@@ -1034,14 +1031,14 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEBUG_PRINT_ONCE("SLEEP");
             DEFINE_REG(imm_1);
             MOVEI(imm_1, 1);
-            STORE_STATE_B(isSleeping, imm_1);
+            STORE_STATE_B(asleep, imm_1);
             /* The dual setting of need_interrupt_check here (via micro-ops
              * and directly) is intentional.  When interpreting, they do
              * the same thing; when translating, the direct setting of
              * need_interrupt_check informs the translator not to optimize
              * out the return to the main loop. */
-            STORE_STATE_B(psp.need_interrupt_check, imm_1);
-            state->psp.need_interrupt_check = 1;
+            STORE_STATE_B(need_interrupt_check, imm_1);
+            state->need_interrupt_check = 1;
             cur_cycles += 2;
             break;
           }
@@ -1058,15 +1055,15 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 REG_SETKNOWN(REG_R(15), 0);
             }
             REG_SETKNOWN(REG_R(15), REG_GETKNOWN(REG_R(15)) & 7);
-            state->psp.branch_type = SH2BRTYPE_DYNAMIC;
-            state->psp.branch_target_reg = new_PC;
-            DEFINE_RESULT_REG(new_SR_3F3, regs.SR);
+            state->branch_type = SH2BRTYPE_DYNAMIC;
+            state->branch_target_reg = new_PC;
+            DEFINE_RESULT_REG(new_SR_3F3, SR);
             ANDI(new_SR_3F3, new_SR, 0x3F3);
             SET_SR(new_SR_3F3);
             DEFINE_REG(imm_1);
             MOVEI(imm_1, 1);
-            STORE_STATE_B(psp.need_interrupt_check, imm_1);
-            state->psp.need_interrupt_check = 1;
+            STORE_STATE_B(need_interrupt_check, imm_1);
+            state->need_interrupt_check = 1;
             state->delay = 1;
             cur_cycles += 3;
             break;
@@ -1078,7 +1075,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x8C: case 0x9C: case 0xAC: case 0xBC:
           case 0xCC: case 0xDC: case 0xEC: case 0xFC: {  // MOV.B @(R0,Rm),Rn
             DEBUG_PRINT_ONCE("MOV.B @(R0,Rm),Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_R0_Rm(B, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -1092,7 +1089,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x8D: case 0x9D: case 0xAD: case 0xBD:
           case 0xCD: case 0xDD: case 0xED: case 0xFD: {  // MOV.W @(R0,Rm),Rn
             DEBUG_PRINT_ONCE("MOV.W @(R0,Rm),Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_R0_Rm(W, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -1106,7 +1103,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x8E: case 0x9E: case 0xAE: case 0xBE:
           case 0xCE: case 0xDE: case 0xEE: case 0xFE: {  // MOV.L @(R0,Rm),Rn
             DEBUG_PRINT_ONCE("MOV.L @(R0,Rm),Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_R0_Rm(L, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -1129,8 +1126,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
             /* Do the actual multiplication and addition */
             if (MAC_IS_ZERO()) {
-                DEFINE_RESULT_REG(new_MACL, regs.MACL);
-                DEFINE_RESULT_REG(new_MACH, regs.MACH);
+                DEFINE_RESULT_REG(new_MACL, MACL);
+                DEFINE_RESULT_REG(new_MACH, MACH);
                 MULS_64(new_MACL, value_m, value_n, new_MACH);
                 SET_MACL(new_MACL);
                 SET_MACH(new_MACH);
@@ -1261,7 +1258,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             BFINS(SR_withQ, SR_withM, new_Q, SR_Q_SHIFT, 1);
             DEFINE_REG(new_T);
             XOR(new_T, new_M, new_Q);
-            DEFINE_RESULT_REG(new_SR, regs.SR);
+            DEFINE_RESULT_REG(new_SR, SR);
             BFINS(new_SR, SR_withQ, new_T, SR_T_SHIFT, 1);
             SET_SR(new_SR);
 #ifdef OPTIMIZE_DIVISION
@@ -1277,7 +1274,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 # endif
                 const int safe_division =
                     (optimization_flags & SH2_OPTIMIZE_ASSUME_SAFE_DIVISION);
-                state->psp.division_target_PC = cur_PC + 128;
+                state->division_target_PC = cur_PC + 128;
                 if (!safe_division) {
                     /* Flush cached data since we jump out from inside the
                      * runtime conditional */
@@ -1289,11 +1286,11 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 }
                 /* Load operands */
                 DECLARE_REG(lo);
-                LOAD_STATE_ALLOC(lo, regs.R[Rlo]);
+                LOAD_STATE_ALLOC(lo, R[Rlo]);
                 DECLARE_REG(div);
-                LOAD_STATE_ALLOC(div, regs.R[Rdiv]);
+                LOAD_STATE_ALLOC(div, R[Rdiv]);
                 DECLARE_REG(hi);
-                LOAD_STATE_ALLOC(hi, regs.R[Rhi]);
+                LOAD_STATE_ALLOC(hi, R[Rhi]);
                 /* Define output registers (shared across all cases) */
                 DEFINE_REG(quotient);
                 DEFINE_REG(remainder);
@@ -1322,9 +1319,9 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 DEFINE_REG(lo_sign);
                 SRLI(lo_sign, lo, 31);  // Get dividend sign bit
                 /* Note: SSA violations for state block optimization */
-                DEFINE_RESULT_REG(quo_out, regs.R[Rlo]);
-                DEFINE_RESULT_REG(rem_out, regs.R[Rhi]);
-                DEFINE_RESULT_REG(final_SR, regs.SR);
+                DEFINE_RESULT_REG(quo_out, R[Rlo]);
+                DEFINE_RESULT_REG(rem_out, R[Rhi]);
+                DEFINE_RESULT_REG(final_SR, SR);
                 CREATE_LABEL(div0s_final);
                 CREATE_LABEL(div0s_neg_dividend);
                 GOTO_IF_NZ(div0s_neg_dividend, lo_sign); {
@@ -1391,16 +1388,16 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                     SELECT(rem_nQ, rem_nQ_temp, remainder, remainder);
                     SELECT(rem_out, rem_Q, rem_nQ, new_Q2);
                 } DEFINE_LABEL(div0s_final);
-                STORE_STATE(regs.R[Rlo], quo_out);
+                STORE_STATE(R[Rlo], quo_out);
                 REG_SETKNOWN(REG_R(Rlo), 0);
-                STORE_STATE(regs.R[Rhi], rem_out);
+                STORE_STATE(R[Rhi], rem_out);
                 REG_SETKNOWN(REG_R(Rhi), 0);
                 /* Skip over the step-by-step emulation */
                 cur_cycles += 64;  // 1 cycle was already added
                 if (!safe_division) {
                     ADD_CYCLES();
                     SET_PC_KNOWN(cur_PC + 130);
-                    state->psp.branch_target = cur_PC + 130;
+                    state->branch_target = cur_PC + 130;
                     FLUSH_STATE_CACHE();
                     JUMP_STATIC();
                     DEFINE_LABEL(div0s_not_safe);
@@ -1436,7 +1433,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             }
             GET_Rn;
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             AND(result, Rn, Rm);
             SET_Rn(result);
             /* A bit in the result of an AND operation is known iff (1) the
@@ -1454,8 +1451,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0xA: {  // XOR Rm,Rn
             DEBUG_PRINT_ONCE("XOR Rm,Rn");
-            if (m == n) {  // XOR Rm,Rn is a common idiom for clearing Rn
-                DEFINE_RESULT_REG(result, regs.R[n]);
+            if (m == n) {  // XOR Rn,Rn is a common idiom for clearing Rn
+                DEFINE_RESULT_REG(result, R[n]);
                 MOVEI(result, 0);
                 SET_Rn(result);
                 REG_SETKNOWN(REG_R(n), 0xFFFFFFFF);
@@ -1463,7 +1460,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             } else {
                 GET_Rn;
                 GET_Rm;
-                DEFINE_RESULT_REG(result, regs.R[n]);
+                DEFINE_RESULT_REG(result, R[n]);
                 XOR(result, Rn, Rm);
                 SET_Rn(result);
                 /* A bit in the result of an XOR operation is known iff the
@@ -1484,7 +1481,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             }
             GET_Rn;
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             OR(result, Rn, Rm);
             SET_Rn(result);
             /* A bit in the result of an OR operation is known iff (1) the
@@ -1538,7 +1535,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEFINE_REG(shift_Rn);
             SRLI(shift_Rn, Rn, 16);
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             BFINS(result, shift_Rn, Rm, 16, 16);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), REG_GETKNOWN(REG_R(m)) << 16
@@ -1557,7 +1554,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             GET_Rm;
             DEFINE_REG(ext_Rm);
             ANDI(ext_Rm, Rm, 0xFFFF);
-            DEFINE_RESULT_REG(result, regs.MACL);
+            DEFINE_RESULT_REG(result, MACL);
             MUL(result, ext_Rn, ext_Rm);
             SET_MACL(result);
             CLEAR_MAC_IS_ZERO();
@@ -1576,7 +1573,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             SLLI(temp_Rm, Rm, 16);
             DEFINE_REG(ext_Rm);
             SRAI(ext_Rm, temp_Rm, 16);
-            DEFINE_RESULT_REG(result, regs.MACL);
+            DEFINE_RESULT_REG(result, MACL);
             MUL(result, ext_Rn, ext_Rm);
             SET_MACL(result);
             CLEAR_MAC_IS_ZERO();
@@ -1649,7 +1646,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             GET_Rm;
             DEFINE_REG(temp1);
             /* Note: SSA violation for state block optimization */
-            DEFINE_RESULT_REG(final_Rn, regs.R[n]);
+            DEFINE_RESULT_REG(final_Rn, R[n]);
             CREATE_LABEL(div1_MeqQ);
             CREATE_LABEL(div1_continue);
             GOTO_IF_Z(div1_MeqQ, M_xor_Q); {
@@ -1673,16 +1670,16 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             XOR(new_T, final_Q, M_bit);
             DEFINE_REG(final_T);
             XORI(final_T, new_T, 1);
-            DEFINE_RESULT_REG(final_SR, regs.SR);
+            DEFINE_RESULT_REG(final_SR, SR);
             BFINS(final_SR, SR_withQ, final_T, SR_T_SHIFT, 1);
             SET_SR(final_SR);
 #ifdef OPTIMIZE_DIVISION
-            if (cur_PC == state->psp.division_target_PC) {
+            if (cur_PC == state->division_target_PC) {
                 /* Flush cached state block fields here so they don't get
                  * picked up on the optimized path */
                 ADD_CYCLES();
                 FLUSH_STATE_CACHE();
-                state->psp.division_target_PC = 0;
+                state->division_target_PC = 0;
             }
 #endif
             break;
@@ -1692,8 +1689,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEBUG_PRINT_ONCE("DMULU.L Rm,Rn");
             GET_Rn;
             GET_Rm;
-            DEFINE_RESULT_REG(lo, regs.MACL);
-            DEFINE_RESULT_REG(hi, regs.MACH);
+            DEFINE_RESULT_REG(lo, MACL);
+            DEFINE_RESULT_REG(hi, MACH);
             MULU_64(lo, Rn, Rm, hi);
             SET_MACL(lo);
             SET_MACH(hi);
@@ -1724,8 +1721,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x8: {  // SUB Rm,Rn
             DEBUG_PRINT_ONCE("SUB Rm,Rn");
-            if (m == n) {  // SUB Rm,Rn is an alternate way to clear Rn
-                DEFINE_RESULT_REG(result, regs.R[n]);
+            if (m == n) {  // SUB Rn,Rn is an alternate way to clear Rn
+                DEFINE_RESULT_REG(result, R[n]);
                 MOVEI(result, 0);
                 SET_Rn(result);
                 REG_SETKNOWN(REG_R(n), 0xFFFFFFFF);
@@ -1733,7 +1730,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             } else {
                 GET_Rn;
                 GET_Rm;
-                DEFINE_RESULT_REG(result, regs.R[n]);
+                DEFINE_RESULT_REG(result, R[n]);
                 SUB(result, Rn, Rm);
                 SET_Rn(result);
                 REG_SETKNOWN(REG_R(n), 0);
@@ -1749,7 +1746,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                            // commonly used in signed division
                 DEFINE_REG(zero);
                 MOVEI(zero, 0);
-                DEFINE_RESULT_REG(result, regs.R[n]);
+                DEFINE_RESULT_REG(result, R[n]);
                 SUB(result, zero, T);
                 SET_Rn(result);
                 REG_SETKNOWN(REG_R(n), 0);
@@ -1762,7 +1759,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 SUB(temp, Rn, Rm);
                 DEFINE_REG(borrow1);
                 SLTU(borrow1, Rn, temp);
-                DEFINE_RESULT_REG(result, regs.R[n]);
+                DEFINE_RESULT_REG(result, R[n]);
                 SUB(result, temp, T);
                 SET_Rn(result);
                 REG_SETKNOWN(REG_R(n), 0);
@@ -1785,7 +1782,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEBUG_PRINT_ONCE("SUBV Rm,Rn");
             GET_Rn;
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             SUB(result, Rn, Rm);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), 0);
@@ -1806,7 +1803,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEBUG_PRINT_ONCE("ADD Rm,Rn");
             GET_Rn;
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             ADD(result, Rn, Rm);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), 0);
@@ -1829,8 +1826,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEBUG_PRINT_ONCE("DMULS.L Rm,Rn");
             GET_Rn;
             GET_Rm;
-            DEFINE_RESULT_REG(lo, regs.MACL);
-            DEFINE_RESULT_REG(hi, regs.MACH);
+            DEFINE_RESULT_REG(lo, MACL);
+            DEFINE_RESULT_REG(hi, MACH);
             MULS_64(lo, Rn, Rm, hi);
             SET_MACL(lo);
             SET_MACH(hi);
@@ -1848,7 +1845,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             ADD(temp, Rn, Rm);
             DEFINE_REG(carry1);
             SLTU(carry1, temp, Rn);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             ADD(result, temp, T);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), 0);
@@ -1865,7 +1862,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEBUG_PRINT_ONCE("ADDV Rm,Rn");
             GET_Rn;
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             ADD(result, Rn, Rm);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), 0);
@@ -1912,7 +1909,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                  * If _this_ instruction is in a delay slot, we don't try
                  * to optimize at all because the next instruction executed
                  * may not be the next one in the code stream.  Note that
-                 * we check state->psp.branch_type rather than state->delay
+                 * we check state->branch_type rather than state->delay
                  * because the latter is cleared at the top of this routine.
                  */
                 GET_NEXT_OPCODE_FOR_SHIFT_CACHE;
@@ -1928,7 +1925,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             const unsigned int shift_count = 1;
 #endif
             DEFINE_REG(new_T);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             if (shift_count > 32) {
                 /* Completely shifted out (including T bit) */
                 MOVEI(new_T, 0);
@@ -1960,7 +1957,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x10: {  // DT Rn
             DEBUG_PRINT_ONCE("DT Rn");
             GET_Rn;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
 #ifdef OPTIMIZE_DELAY
             if (fetch && INSN_IS_AVAILABLE(1) && fetch[1]==0x8BFD){
                 /* It's a DT/BF loop, so eat as many iterations as we can.
@@ -2004,10 +2001,10 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                  * However, we _should_ make use of a fixed register if one
                  * is available. */
                 DECLARE_REG(cycle_limit);
-                cycle_limit = STATE_CACHE_FIXED_REG(psp.cycle_limit);
+                cycle_limit = STATE_CACHE_FIXED_REG(cycle_limit);
                 if (!cycle_limit) {
                     ALLOC_REG(cycle_limit);
-                    LOAD_STATE(cycle_limit, psp.cycle_limit);
+                    LOAD_STATE(cycle_limit, cycle_limit);
                 }
                 DEFINE_REG(temp);
                 ADDI(temp, cycle_limit, 4-1);  // Round the result up
@@ -2075,7 +2072,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             const unsigned int shift_count = 1;
 #endif
             DEFINE_REG(new_T);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             if (shift_count > 32) {
                 MOVEI(new_T, 0);
                 MOVE(result, 0);
@@ -2131,7 +2128,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 #endif
             GET_Rn;
             DEFINE_REG(new_T);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             if (shift_count >= 32) {
                 SRAI(result, Rn, 31);
                 ANDI(new_T, result, 1);
@@ -2218,7 +2215,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEFINE_REG(new_T);
             BFEXT(new_T, Rn, (32 - rotate_count) & 31, 1);
             SET_SR_T(new_T);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             RORI(result, Rn, (32 - rotate_count) & 31);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n),
@@ -2240,7 +2237,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             SET_SR_T(new_T);
             DEFINE_REG(temp);
             SLLI(temp, Rn, 1);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             OR(result, temp, T);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), REG_GETKNOWN(REG_R(n)) << 1);
@@ -2268,7 +2265,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEFINE_REG(new_T);
             BFEXT(new_T, Rn, (rotate_count + 31) & 31, 1);
             SET_SR_T(new_T);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             RORI(result, Rn, rotate_count);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n),
@@ -2300,7 +2297,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             SET_SR_T(new_T);
             DEFINE_REG(temp);
             SRLI(temp, Rn, 1);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             BFINS(result, temp, T, 31, 1);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), REG_GETKNOWN(REG_R(n)) >> 1);
@@ -2312,7 +2309,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           // $4xx6
           case 0x06: {  // LDS.L @Rn+,MACH
             DEBUG_PRINT_ONCE("LDS.L @Rn+,MACH");
-            DEFINE_RESULT_REG(value, regs.MACH);
+            DEFINE_RESULT_REG(value, MACH);
             LOAD_Rn_inc(L, value);
             SET_MACH(value);
             CLEAR_MAC_IS_ZERO();
@@ -2320,7 +2317,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           }
           case 0x16: {  // LDS.L @Rn+,MACL
             DEBUG_PRINT_ONCE("LDS.L @Rn+,MACL");
-            DEFINE_RESULT_REG(value, regs.MACL);
+            DEFINE_RESULT_REG(value, MACL);
             LOAD_Rn_inc(L, value);
             SET_MACL(value);
             CLEAR_MAC_IS_ZERO();
@@ -2328,7 +2325,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           }
           case 0x26: {  // LDS.L @Rn+,PR
             DEBUG_PRINT_ONCE("LDS.L @Rn+,PR");
-            DEFINE_RESULT_REG(value, regs.PR);
+            DEFINE_RESULT_REG(value, PR);
             LOAD_Rn_inc(L, value);
             SET_PR(value);
             break;
@@ -2339,19 +2336,19 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEBUG_PRINT_ONCE("LDC.L @Rn+,SR");
             DEFINE_REG(value);
             LOAD_Rn_inc(L, value);
-            DEFINE_RESULT_REG(new_SR, regs.SR);
+            DEFINE_RESULT_REG(new_SR, SR);
             ANDI(new_SR, value, 0x3F3);
             SET_SR(new_SR);
             DEFINE_REG(imm_1);
             MOVEI(imm_1, 1);
-            STORE_STATE_B(psp.need_interrupt_check, imm_1);
-            state->psp.need_interrupt_check = 1;
+            STORE_STATE_B(need_interrupt_check, imm_1);
+            state->need_interrupt_check = 1;
             cur_cycles += 2;
             break;
           }
           case 0x17: {  // LDC.L @Rn+,GBR
             DEBUG_PRINT_ONCE("LDC.L @Rn+,GBR");
-            DEFINE_RESULT_REG(value, regs.GBR);
+            DEFINE_RESULT_REG(value, GBR);
             LOAD_Rn_inc(L, value);
             SET_GBR(value);
             REG_SETKNOWN(REG_GBR, 0);
@@ -2360,7 +2357,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           }
           case 0x27: {  // LDC.L @Rn+,VBR
             DEBUG_PRINT_ONCE("LDC.L @Rn+,VBR");
-            DEFINE_RESULT_REG(value, regs.VBR);
+            DEFINE_RESULT_REG(value, VBR);
             LOAD_Rn_inc(L, value);
             SET_VBR(value);
             cur_cycles += 2;
@@ -2406,7 +2403,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 #else  // !OPTIMIZE_SHIFT_SEQUENCES
             const unsigned int shift_count = this_count;
 #endif
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             if (shift_count >= 32) {
                 MOVEI(result, 0);
                 REG_SETKNOWN(REG_R(n), 0xFFFFFFFF);
@@ -2467,7 +2464,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 #else  // !OPTIMIZE_SHIFT_SEQUENCES
             const unsigned int shift_count = this_count;
 #endif
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             if (shift_count >= 32) {
                 MOVEI(result, 0);
                 REG_SETKNOWN(REG_R(n), 0xFFFFFFFF);
@@ -2492,16 +2489,16 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             /* Make sure we load a _copy_ of Rn, so a subsequent overwrite
              * of the register by a MADD instruction doesn't modify the
              * value of Rn as well. */
-            DEFINE_RESULT_REG(Rn, regs.MACH);
-            LOAD_STATE_COPY(Rn, regs.R[n]);
+            DEFINE_RESULT_REG(Rn, MACH);
+            LOAD_STATE_COPY(Rn, R[n]);
             SET_MACH(Rn);
             CLEAR_MAC_IS_ZERO();
             break;
           }
           case 0x1A: {  // LDS Rn,MACL
             DEBUG_PRINT_ONCE("LDS Rn,MACL");
-            DEFINE_RESULT_REG(Rn, regs.MACL);
-            LOAD_STATE_COPY(Rn, regs.R[n]);
+            DEFINE_RESULT_REG(Rn, MACL);
+            LOAD_STATE_COPY(Rn, R[n]);
             SET_MACL(Rn);
             CLEAR_MAC_IS_ZERO();
             break;
@@ -2515,16 +2512,16 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           // $4xxB
           case 0x0B: {  // JSR @Rn
             DEBUG_PRINT_ONCE("JSR @Rn");
-            DEFINE_RESULT_REG(ret_addr, regs.PR);
+            DEFINE_RESULT_REG(ret_addr, PR);
             MOVEI(ret_addr, cur_PC + 4);
             SET_PR(ret_addr);
             if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
-                state->psp.branch_type = SH2BRTYPE_STATIC;
-                state->psp.branch_target = REG_GETVALUE(REG_R(n));
+                state->branch_type = SH2BRTYPE_STATIC;
+                state->branch_target = REG_GETVALUE(REG_R(n));
             } else {
-                state->psp.branch_type = SH2BRTYPE_DYNAMIC;
+                state->branch_type = SH2BRTYPE_DYNAMIC;
                 GET_Rn;
-                state->psp.branch_target_reg = Rn;
+                state->branch_target_reg = Rn;
             }
             state->delay = 1;
             cur_cycles += 1;
@@ -2546,12 +2543,12 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x2B: {  // JMP @Rn
             DEBUG_PRINT_ONCE("JMP @Rn");
             if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
-                state->psp.branch_type = SH2BRTYPE_STATIC;
-                state->psp.branch_target = REG_GETVALUE(REG_R(n));
+                state->branch_type = SH2BRTYPE_STATIC;
+                state->branch_target = REG_GETVALUE(REG_R(n));
             } else {
-                state->psp.branch_type = SH2BRTYPE_DYNAMIC;
+                state->branch_type = SH2BRTYPE_DYNAMIC;
                 GET_Rn;
-                state->psp.branch_target_reg = Rn;
+                state->branch_target_reg = Rn;
             }
             state->delay = 1;
             cur_cycles += 1;
@@ -2562,13 +2559,13 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x0E: {  // LDC Rn,SR
             DEBUG_PRINT_ONCE("LDC Rn,SR");
             GET_Rn;
-            DEFINE_RESULT_REG(new_SR, regs.SR);
+            DEFINE_RESULT_REG(new_SR, SR);
             ANDI(new_SR, Rn, 0x3F3);
             SET_SR(new_SR);
             DEFINE_REG(imm_1);
             MOVEI(imm_1, 1);
-            STORE_STATE_B(psp.need_interrupt_check, imm_1);
-            state->psp.need_interrupt_check = 1;
+            STORE_STATE_B(need_interrupt_check, imm_1);
+            state->need_interrupt_check = 1;
             break;
           }
           case 0x1E: {  // LDC Rn,GBR
@@ -2602,9 +2599,9 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DECLARE_REG(old_MACL);
             if (!CAN_OMIT_MAC_S_CHECK) {
                 ALLOC_REG(old_MACH);
-                LOAD_STATE_COPY(old_MACH, regs.MACH);
+                LOAD_STATE_COPY(old_MACH, MACH);
                 ALLOC_REG(old_MACL);
-                LOAD_STATE_COPY(old_MACL, regs.MACL);
+                LOAD_STATE_COPY(old_MACL, MACL);
             } else {  // Not needed, but avoid a compiler warning
                 old_MACH = 0;
                 old_MACL = 0;
@@ -2612,8 +2609,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
             /* Do the actual multiplication and addition */
             if (MAC_IS_ZERO()) {
-                DEFINE_RESULT_REG(new_MACL, regs.MACL);
-                DEFINE_RESULT_REG(new_MACH, regs.MACH);
+                DEFINE_RESULT_REG(new_MACL, MACL);
+                DEFINE_RESULT_REG(new_MACH, MACH);
                 MULS_64(new_MACL, value_m, value_n, new_MACH);
                 SET_MACL(new_MACL);
                 SET_MACH(new_MACH);
@@ -2686,7 +2683,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
       case 0x5: {  // MOV.L @(disp,Rm),Rn
         DEBUG_PRINT_ONCE("MOV.L @(disp,Rm),Rn");
         const int disp = (opcode & 0xF) * 4;
-        DEFINE_RESULT_REG(value, regs.R[n]);
+        DEFINE_RESULT_REG(value, R[n]);
         LOAD_disp_Rm(L, value, disp);
         SET_Rn(value);
         REG_SETKNOWN(REG_R(n), 0);
@@ -2702,7 +2699,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x0: {  // MOV.B @Rm,Rn
             DEBUG_PRINT_ONCE("MOV.B @Rm,Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_Rm(B, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2712,7 +2709,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x1: {  // MOV.W @Rm,Rn
             DEBUG_PRINT_ONCE("MOV.W @Rm,Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_Rm(W, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2722,7 +2719,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x2: {  // MOV.L @Rm,Rn
             DEBUG_PRINT_ONCE("MOV.L @Rm,Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_Rm(L, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2735,17 +2732,17 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x3: {  // MOV Rm,Rn
             DEBUG_PRINT_ONCE("MOV Rm,Rn");
-            if (state->psp.pending_select && !in_delay) {
-                state->psp.pending_select = 0;
+            if (state->pending_select && !in_delay) {
+                state->pending_select = 0;
                 GET_Rm;
                 GET_Rn;
-                DEFINE_RESULT_REG(selected, regs.R[n]);
-                if (state->psp.select_sense) {
+                DEFINE_RESULT_REG(selected, R[n]);
+                if (state->select_sense) {
                     /* If select_sense is nonzero, the branch was a BT or BT/S,
                      * meaning we _skip_ the new value if SR.T is set. */
-                    SELECT(selected, Rn, Rm, state->psp.branch_cond_reg);
+                    SELECT(selected, Rn, Rm, state->branch_cond_reg);
                 } else {
-                    SELECT(selected, Rm, Rn, state->psp.branch_cond_reg);
+                    SELECT(selected, Rm, Rn, state->branch_cond_reg);
                 }
                 SET_Rn(selected);
                 REG_SETKNOWN(REG_R(n), 0);
@@ -2761,7 +2758,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x4: {  // MOV.B @Rm+,Rn
             DEBUG_PRINT_ONCE("MOV.B @Rm+,Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_Rm_inc(B, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2771,7 +2768,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x5: {  // MOV.W @Rm+,Rn
             DEBUG_PRINT_ONCE("MOV.W @Rm+,Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_Rm_inc(W, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2781,7 +2778,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x6: {  // MOV.L @Rm+,Rn
             DEBUG_PRINT_ONCE("MOV.L @Rm+,Rn");
-            DEFINE_RESULT_REG(value, regs.R[n]);
+            DEFINE_RESULT_REG(value, R[n]);
             LOAD_Rm_inc(L, value);
             SET_Rn(value);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2795,7 +2792,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x7: {  // NOT Rm,Rn
             DEBUG_PRINT_ONCE("NOT Rm,Rn");
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             NOT(result, Rm);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), REG_GETKNOWN(REG_R(m)));
@@ -2811,7 +2808,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
              * keep the high halfword unchanged */
             DEFINE_REG(temp);
             BSWAPH(temp, Rm);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             BFINS(result, Rm, temp, 0, 16);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), (REG_GETKNOWN(REG_R(m)) & 0xFFFF0000)
@@ -2827,7 +2824,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x9: {  // SWAP.W Rm,Rn
             DEBUG_PRINT_ONCE("SWAP.W Rm,Rn");
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             HSWAPW(result, Rm);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), (REG_GETKNOWN(REG_R(m)) & 0xFFFF0000) >> 16
@@ -2851,7 +2848,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             SET_SR_T(new_T);
             DEFINE_REG(temp);
             SUB(temp, zero, Rm);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             SUB(result, temp, T);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2864,7 +2861,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             GET_Rm;
             DEFINE_REG(zero);
             MOVEI(zero, 0);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             SUB(result, zero, Rm);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2875,7 +2872,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0xC: {  // EXTU.B Rm,Rn
             DEBUG_PRINT_ONCE("EXTU.B Rm,Rn");
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             ANDI(result, Rm, 0xFF);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), REG_GETKNOWN(REG_R(m)) | 0xFFFFFF00);
@@ -2887,7 +2884,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0xD: {  // EXTU.W Rm,Rn
             DEBUG_PRINT_ONCE("EXTU.W Rm,Rn");
             GET_Rm;
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             ANDI(result, Rm, 0xFFFF);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), REG_GETKNOWN(REG_R(m)) | 0xFFFF0000);
@@ -2901,7 +2898,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             GET_Rm;
             DEFINE_REG(temp);
             SLLI(temp, Rm, 24);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             SRAI(result, temp, 24);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n),
@@ -2917,7 +2914,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             GET_Rm;
             DEFINE_REG(temp);
             SLLI(temp, Rm, 16);
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             SRAI(result, temp, 16);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n),
@@ -2937,18 +2934,18 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
       case 0x7: {  // ADD #imm,Rn
         DEBUG_PRINT_ONCE("ADD #imm,Rn");
         const int8_t imm = opcode & 0xFF;
-        if (state->psp.pending_select && !in_delay) {
-            state->psp.pending_select = 0;
+        if (state->pending_select && !in_delay) {
+            state->pending_select = 0;
             GET_Rn;
             DEFINE_REG(result);
             ADDI(result, Rn, (int32_t)imm);
-            DEFINE_RESULT_REG(selected, regs.R[n]);
-            if (state->psp.select_sense) {
+            DEFINE_RESULT_REG(selected, R[n]);
+            if (state->select_sense) {
                 /* If select_sense is nonzero, the branch was a BT or BT/S,
                  * meaning we _skip_ the new value if SR.T is set. */
-                SELECT(selected, Rn, result, state->psp.branch_cond_reg);
+                SELECT(selected, Rn, result, state->branch_cond_reg);
             } else {
-                SELECT(selected, result, Rn, state->psp.branch_cond_reg);
+                SELECT(selected, result, Rn, state->branch_cond_reg);
             }
             SET_Rn(selected);
             REG_SETKNOWN(REG_R(n), 0);
@@ -2985,7 +2982,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x4: {  // MOV.B @(disp,Rm),R0
             DEBUG_PRINT_ONCE("MOV.B @(disp,Rm),R0");
             const int disp = opcode & 0xF;
-            DEFINE_RESULT_REG(value, regs.R[0]);
+            DEFINE_RESULT_REG(value, R[0]);
             LOAD_disp_Rm(B, value, disp);
             SET_R0(value);
             REG_SETKNOWN(REG_R(0), 0);
@@ -2996,7 +2993,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x5: {  // MOV.W @(disp,Rm),R0
             DEBUG_PRINT_ONCE("MOV.W @(disp,Rm),R0");
             const int disp = (opcode & 0xF) * 2;
-            DEFINE_RESULT_REG(value, regs.R[0]);
+            DEFINE_RESULT_REG(value, R[0]);
             LOAD_disp_Rm(W, value, disp);
             SET_R0(value);
             REG_SETKNOWN(REG_R(0), 0);
@@ -3033,28 +3030,28 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 SELECT(new_cycles, inc_cycles, cycles, T);
                 STORE_STATE(cycles, new_cycles);
                 if (BRANCH_IS_SELECT(cur_PC)) {
-                    state->psp.pending_select = 1;
-                    state->psp.select_sense = 1;
-                    state->psp.branch_cond_reg = T;
+                    state->pending_select = 1;
+                    state->select_sense = 1;
+                    state->branch_cond_reg = T;
                 }
                 break;
             }
             const int disp = ((int32_t)(opcode & 0xFF) << 24) >> 23;
-            state->psp.branch_type = SH2BRTYPE_BT;
-            state->psp.branch_targets_rts = BRANCH_TARGETS_RTS(cur_PC);
-            state->psp.loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
-            state->psp.branch_cycles = 2;
-            if (state->psp.branch_targets_rts) {
+            state->branch_type = SH2BRTYPE_BT;
+            state->branch_targets_rts = BRANCH_TARGETS_RTS(cur_PC);
+            state->loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
+            state->branch_cycles = 2;
+            if (state->branch_targets_rts) {
                 GET_PR;
-                state->psp.branch_target_reg = PR;
-                state->psp.branch_cycles += 3;
+                state->branch_target_reg = PR;
+                state->branch_cycles += 3;
             } else if (BRANCH_IS_THREADED(cur_PC)) {
-                state->psp.branch_target = BRANCH_THREAD_TARGET(cur_PC);
-                state->psp.branch_cycles += BRANCH_THREAD_COUNT(cur_PC) * 3;
+                state->branch_target = BRANCH_THREAD_TARGET(cur_PC);
+                state->branch_cycles += BRANCH_THREAD_COUNT(cur_PC) * 3;
             } else {
-                state->psp.branch_target = (cur_PC + 4) + disp;
+                state->branch_target = (cur_PC + 4) + disp;
             }
-            state->psp.branch_cond_reg = T;
+            state->branch_cond_reg = T;
             break;
           }
 
@@ -3071,28 +3068,28 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 SELECT(new_cycles, cycles, inc_cycles, T);
                 STORE_STATE(cycles, new_cycles);
                 if (BRANCH_IS_SELECT(cur_PC)) {
-                    state->psp.pending_select = 1;
-                    state->psp.select_sense = 0;
-                    state->psp.branch_cond_reg = T;
+                    state->pending_select = 1;
+                    state->select_sense = 0;
+                    state->branch_cond_reg = T;
                 }
                 break;
             }
             const int disp = ((int32_t)(opcode & 0xFF) << 24) >> 23;
-            state->psp.branch_type = SH2BRTYPE_BF;
-            state->psp.branch_targets_rts = BRANCH_TARGETS_RTS(cur_PC);
-            state->psp.loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
-            state->psp.branch_cycles = 2;
-            if (state->psp.branch_targets_rts) {
+            state->branch_type = SH2BRTYPE_BF;
+            state->branch_targets_rts = BRANCH_TARGETS_RTS(cur_PC);
+            state->loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
+            state->branch_cycles = 2;
+            if (state->branch_targets_rts) {
                 GET_PR;
-                state->psp.branch_target_reg = PR;
-                state->psp.branch_cycles += 3;
+                state->branch_target_reg = PR;
+                state->branch_cycles += 3;
             } else if (BRANCH_IS_THREADED(cur_PC)) {
-                state->psp.branch_target = BRANCH_THREAD_TARGET(cur_PC);
-                state->psp.branch_cycles += BRANCH_THREAD_COUNT(cur_PC) * 3;
+                state->branch_target = BRANCH_THREAD_TARGET(cur_PC);
+                state->branch_cycles += BRANCH_THREAD_COUNT(cur_PC) * 3;
             } else {
-                state->psp.branch_target = (cur_PC + 4) + disp;
+                state->branch_target = (cur_PC + 4) + disp;
             }
-            state->psp.branch_cond_reg = T;
+            state->branch_cond_reg = T;
             break;
           }
 
@@ -3113,28 +3110,28 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 STORE_STATE(cycles, new_cycles);
                 break;
             } else if (BRANCH_IS_SELECT(cur_PC)) {
-                state->psp.pending_select = 1;
-                state->psp.select_sense = 1;
-                state->psp.branch_cond_reg = T;
+                state->pending_select = 1;
+                state->select_sense = 1;
+                state->branch_cond_reg = T;
                 state->delay = 1;
                 break;
             }
             const int disp = ((int32_t)(opcode & 0xFF) << 24) >> 23;
-            state->psp.branch_type = SH2BRTYPE_BT_S;
-            state->psp.branch_targets_rts = BRANCH_TARGETS_RTS(cur_PC);
-            state->psp.loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
-            state->psp.branch_cycles = 1;
-            if (state->psp.branch_targets_rts) {
+            state->branch_type = SH2BRTYPE_BT_S;
+            state->branch_targets_rts = BRANCH_TARGETS_RTS(cur_PC);
+            state->loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
+            state->branch_cycles = 1;
+            if (state->branch_targets_rts) {
                 GET_PR;
-                state->psp.branch_target_reg = PR;
-                state->psp.branch_cycles += 3;
+                state->branch_target_reg = PR;
+                state->branch_cycles += 3;
             } else if (BRANCH_IS_THREADED(cur_PC)) {
-                state->psp.branch_target = BRANCH_THREAD_TARGET(cur_PC);
-                state->psp.branch_cycles += BRANCH_THREAD_COUNT(cur_PC) * 3;
+                state->branch_target = BRANCH_THREAD_TARGET(cur_PC);
+                state->branch_cycles += BRANCH_THREAD_COUNT(cur_PC) * 3;
             } else {
-                state->psp.branch_target = (cur_PC + 4) + disp;
+                state->branch_target = (cur_PC + 4) + disp;
             }
-            state->psp.branch_cond_reg = T;
+            state->branch_cond_reg = T;
             state->delay = 1;
             /* Unlike the other delayed branch instructions, we don't add
              * the extra cycle for conditional branches until we actually
@@ -3145,7 +3142,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DECLARE_REG(cycles);
             LOAD_STATE_ALLOC(cycles, cycles);
             DEFINE_REG(inc_cycles);
-            ADDI(inc_cycles, cycles, state->psp.branch_cycles);
+            ADDI(inc_cycles, cycles, state->branch_cycles);
             DEFINE_RESULT_REG(new_cycles, cycles);
             SELECT(new_cycles, inc_cycles, cycles, T);
             STORE_STATE(cycles, new_cycles);
@@ -3167,34 +3164,34 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 STORE_STATE(cycles, new_cycles);
                 break;
             } else if (BRANCH_IS_SELECT(cur_PC)) {
-                state->psp.pending_select = 1;
-                state->psp.select_sense = 0;
-                state->psp.branch_cond_reg = T;
+                state->pending_select = 1;
+                state->select_sense = 0;
+                state->branch_cond_reg = T;
                 state->delay = 1;
                 break;
             }
             const int disp = ((int32_t)(opcode & 0xFF) << 24) >> 23;
-            state->psp.branch_type = SH2BRTYPE_BF_S;
-            state->psp.branch_targets_rts = BRANCH_TARGETS_RTS(cur_PC);
-            state->psp.loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
-            state->psp.branch_cycles = 1;
-            if (state->psp.branch_targets_rts) {
+            state->branch_type = SH2BRTYPE_BF_S;
+            state->branch_targets_rts = BRANCH_TARGETS_RTS(cur_PC);
+            state->loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
+            state->branch_cycles = 1;
+            if (state->branch_targets_rts) {
                 GET_PR;
-                state->psp.branch_target_reg = PR;
-                state->psp.branch_cycles += 3;
+                state->branch_target_reg = PR;
+                state->branch_cycles += 3;
             } else if (BRANCH_IS_THREADED(cur_PC)) {
-                state->psp.branch_target = BRANCH_THREAD_TARGET(cur_PC);
-                state->psp.branch_cycles += BRANCH_THREAD_COUNT(cur_PC) * 3;
+                state->branch_target = BRANCH_THREAD_TARGET(cur_PC);
+                state->branch_cycles += BRANCH_THREAD_COUNT(cur_PC) * 3;
             } else {
-                state->psp.branch_target = (cur_PC + 4) + disp;
+                state->branch_target = (cur_PC + 4) + disp;
             }
-            state->psp.branch_cond_reg = T;
+            state->branch_cond_reg = T;
             state->delay = 1;
 #ifdef TRACE_LIKE_SH2INT
             DECLARE_REG(cycles);
             LOAD_STATE_ALLOC(cycles, cycles);
             DEFINE_REG(inc_cycles);
-            ADDI(inc_cycles, cycles, state->psp.branch_cycles);
+            ADDI(inc_cycles, cycles, state->branch_cycles);
             DEFINE_RESULT_REG(new_cycles, cycles);
             SELECT(new_cycles, cycles, inc_cycles, T);
             STORE_STATE(cycles, new_cycles);
@@ -3212,7 +3209,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
         DEBUG_PRINT_ONCE("MOV.W @(disp,PC),Rn");
         const int disp = (opcode & 0xFF) * 2;
         const uint32_t address = cur_PC + 4 + disp;
-        DEFINE_RESULT_REG(value, regs.R[n]);
+        DEFINE_RESULT_REG(value, R[n]);
         SH2_LOAD_ABS_W(value, address);
         SET_Rn(value);
         REG_SETKNOWN(REG_R(n), 0);
@@ -3227,15 +3224,15 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             break;
         }
         if (BRANCH_TARGETS_RTS(cur_PC)) {
-            state->psp.branch_type = SH2BRTYPE_DYNAMIC;
+            state->branch_type = SH2BRTYPE_DYNAMIC;
             GET_PR;
-            state->psp.branch_target_reg = PR;
+            state->branch_target_reg = PR;
             cur_cycles += 3;
         } else {
-            state->psp.loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
+            state->loop_to_jsr = BRANCH_IS_LOOP_TO_JSR(cur_PC);
             const int disp = ((int32_t)(opcode & 0xFFF) << 20) >> 19;
-            state->psp.branch_type = SH2BRTYPE_STATIC;
-            state->psp.branch_target = (cur_PC + 4) + disp;
+            state->branch_type = SH2BRTYPE_STATIC;
+            state->branch_target = (cur_PC + 4) + disp;
         }
         state->delay = 1;
         cur_cycles += 1;
@@ -3245,11 +3242,11 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
       case 0xB: {  // BSR label
         DEBUG_PRINT_ONCE("BSR label");
         const int disp = ((int32_t)(opcode & 0xFFF) << 20) >> 19;
-        DEFINE_RESULT_REG(ret_addr, regs.PR);
+        DEFINE_RESULT_REG(ret_addr, PR);
         MOVEI(ret_addr, cur_PC + 4);
         SET_PR(ret_addr);
-        state->psp.branch_type = SH2BRTYPE_STATIC;
-        state->psp.branch_target = (cur_PC + 4) + disp;
+        state->branch_type = SH2BRTYPE_STATIC;
+        state->branch_target = (cur_PC + 4) + disp;
         state->delay = 1;
         cur_cycles += 1;
         break;
@@ -3291,7 +3288,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x4: {  // MOV.B @(disp,GBR),R0
             DEBUG_PRINT_ONCE("MOV.B @(disp,GBR),R0");
-            DEFINE_RESULT_REG(value, regs.R[0]);
+            DEFINE_RESULT_REG(value, R[0]);
             LOAD_disp_GBR(B, value, imm);
             SET_R0(value);
             REG_SETKNOWN(REG_R(0), 0);
@@ -3301,7 +3298,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x5: {  // MOV.W @(disp,GBR),R0
             DEBUG_PRINT_ONCE("MOV.W @(disp,GBR),R0");
-            DEFINE_RESULT_REG(value, regs.R[0]);
+            DEFINE_RESULT_REG(value, R[0]);
             LOAD_disp_GBR(W, value, imm*2);
             SET_R0(value);
             REG_SETKNOWN(REG_R(0), 0);
@@ -3311,7 +3308,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x6: {  // MOV.L @(disp,GBR),R0
             DEBUG_PRINT_ONCE("MOV.L @(disp,GBR),R0");
-            DEFINE_RESULT_REG(value, regs.R[0]);
+            DEFINE_RESULT_REG(value, R[0]);
             LOAD_disp_GBR(L, value, imm*4);
             SET_R0(value);
             REG_SETKNOWN(REG_R(0), 0);
@@ -3321,7 +3318,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0x7: {  // MOVA @(disp,PC),R0
             DEBUG_PRINT_ONCE("MOVA @(disp,PC),R0");
-            DEFINE_RESULT_REG(address, regs.R[0]);
+            DEFINE_RESULT_REG(address, R[0]);
             MOVEI(address, (cur_PC & ~3) + 4 + imm*4);
             SET_R0(address);
             REG_SETKNOWN(REG_R(0), 0xFFFFFFFF);
@@ -3350,11 +3347,11 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                     DMSG("Optimizing variable shift at 0x%08X", (int)cur_PC);
 # endif
                     DECLARE_REG(Rshift);
-                    LOAD_STATE_ALLOC(Rshift, regs.R[shift_reg]);
+                    LOAD_STATE_ALLOC(Rshift, R[shift_reg]);
                     DEFINE_REG(count);
                     ANDI(count, R0, count_mask);  // count_reg is always 0
                     DEFINE_REG(new_T);
-                    DEFINE_RESULT_REG(result, regs.R[shift_reg]);
+                    DEFINE_RESULT_REG(result, R[shift_reg]);
                     if (shift_type == 0) {
                         SRLI(new_T, Rshift, 31);
                         SLL(result, Rshift, count);
@@ -3362,7 +3359,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                         ANDI(new_T, Rshift, 1);
                         SRL(result, Rshift, count);
                     }
-                    STORE_STATE(regs.R[shift_reg], result);
+                    STORE_STATE(R[shift_reg], result);
                     /* SR.T is only set if the shift count is odd */
                     GET_SR_T;
                     DEFINE_REG(test);
@@ -3400,7 +3397,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0x9: {  // AND #imm,R0
             DEBUG_PRINT_ONCE("AND #imm,R0");
             GET_R0;
-            DEFINE_RESULT_REG(result, regs.R[0]);
+            DEFINE_RESULT_REG(result, R[0]);
             ANDI(result, R0, imm);
             SET_R0(result);
             REG_SETKNOWN(REG_R(0), REG_GETKNOWN(REG_R(0)) | ~imm);
@@ -3411,7 +3408,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0xA: {  // XOR #imm,R0
             DEBUG_PRINT_ONCE("XOR #imm,R0");
             GET_R0;
-            DEFINE_RESULT_REG(result, regs.R[0]);
+            DEFINE_RESULT_REG(result, R[0]);
             XORI(result, R0, imm);
             SET_R0(result);
             REG_SETVALUE(REG_R(0), REG_GETVALUE(REG_R(0)) ^ imm);
@@ -3421,7 +3418,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case 0xB: {  // OR #imm,R0
             DEBUG_PRINT_ONCE("OR #imm,R0");
             GET_R0;
-            DEFINE_RESULT_REG(result, regs.R[0]);
+            DEFINE_RESULT_REG(result, R[0]);
             ORI(result, R0, imm);
             SET_R0(result);
             REG_SETKNOWN(REG_R(0), REG_GETKNOWN(REG_R(0)) | imm);
@@ -3485,7 +3482,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
         DEBUG_PRINT_ONCE("MOV.L @(disp,PC),Rn");
         const int disp = (opcode & 0xFF) * 4;
         const uint32_t address = (cur_PC & ~3) + 4 + disp;
-        DEFINE_RESULT_REG(value, regs.R[n]);
+        DEFINE_RESULT_REG(value, R[n]);
         SH2_LOAD_ABS_L(value, address);
         REG_SETKNOWN(REG_R(n), 0);
         SET_Rn(value);
@@ -3497,23 +3494,23 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
       case 0xE: {  // MOV #imm,Rn
         DEBUG_PRINT_ONCE("MOV #imm,Rn");
         const int8_t imm = opcode & 0xFF;
-        if (state->psp.pending_select && !in_delay) {
-            state->psp.pending_select = 0;
+        if (state->pending_select && !in_delay) {
+            state->pending_select = 0;
             GET_Rn;
             DEFINE_REG(result);
             MOVEI(result, (int32_t)imm);
-            DEFINE_RESULT_REG(selected, regs.R[n]);
-            if (state->psp.select_sense) {
+            DEFINE_RESULT_REG(selected, R[n]);
+            if (state->select_sense) {
                 /* If select_sense is nonzero, the branch was a BT or BT/S,
                  * meaning we _skip_ the new value if SR.T is set. */
-                SELECT(selected, Rn, result, state->psp.branch_cond_reg);
+                SELECT(selected, Rn, result, state->branch_cond_reg);
             } else {
-                SELECT(selected, result, Rn, state->psp.branch_cond_reg);
+                SELECT(selected, result, Rn, state->branch_cond_reg);
             }
             SET_Rn(selected);
             REG_SETKNOWN(REG_R(n), 0);
         } else {
-            DEFINE_RESULT_REG(result, regs.R[n]);
+            DEFINE_RESULT_REG(result, R[n]);
             MOVEI(result, (int32_t)imm);
             SET_Rn(result);
             REG_SETKNOWN(REG_R(n), 0xFFFFFFFF);
@@ -3541,35 +3538,35 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
     /* Handle any pending branches */
 
-    if (UNLIKELY(state->psp.branch_type != SH2BRTYPE_NONE && !state->delay)) {
+    if (UNLIKELY(state->branch_type != SH2BRTYPE_NONE && !state->delay)) {
 
         int is_idle = 0;
 
 #ifdef OPTIMIZE_IDLE
-        if ((state->psp.branch_type == SH2BRTYPE_STATIC
-             || ((state->psp.branch_type == SH2BRTYPE_BT
-                  || state->psp.branch_type == SH2BRTYPE_BF
-                  || state->psp.branch_type == SH2BRTYPE_BT_S
-                  || state->psp.branch_type == SH2BRTYPE_BF_S)
-                 && !state->psp.branch_targets_rts))
-         && state->psp.branch_target >= initial_PC
-         && state->psp.branch_target < cur_PC
-         && (cur_PC - state->psp.branch_target) / 2 <= OPTIMIZE_IDLE_MAX_INSNS
+        if ((state->branch_type == SH2BRTYPE_STATIC
+             || ((state->branch_type == SH2BRTYPE_BT
+                  || state->branch_type == SH2BRTYPE_BF
+                  || state->branch_type == SH2BRTYPE_BT_S
+                  || state->branch_type == SH2BRTYPE_BF_S)
+                 && !state->branch_targets_rts))
+         && state->branch_target >= initial_PC
+         && state->branch_target < cur_PC
+         && (cur_PC - state->branch_target) / 2 <= OPTIMIZE_IDLE_MAX_INSNS
          && fetch
         ) {
-            const int num_insns = (cur_PC - state->psp.branch_target) / 2;
+            const int num_insns = (cur_PC - state->branch_target) / 2;
             is_idle = can_optimize_idle((fetch+1) - num_insns,
-                                        state->psp.branch_target, num_insns);
+                                        state->branch_target, num_insns);
 # ifdef JIT_DEBUG_VERBOSE
             if (is_idle) {
                 DMSG("Found idle loop at 0x%08X (%d instructions)",
-                     (int)state->psp.branch_target, num_insns);
+                     (int)state->branch_target, num_insns);
             }
 # endif
         }
 #endif
 
-        switch (state->psp.branch_type) {
+        switch (state->branch_type) {
 
           case SH2BRTYPE_NONE:  // Avoid a compiler warning
             break;
@@ -3579,27 +3576,27 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 /* See delay loop handling in DT for why we don't use
                  * LOAD_STATE_ALLOC here. */
                 DECLARE_REG(cycle_limit);
-                cycle_limit = STATE_CACHE_FIXED_REG(psp.cycle_limit);
+                cycle_limit = STATE_CACHE_FIXED_REG(cycle_limit);
                 if (!cycle_limit) {
                     ALLOC_REG(cycle_limit);
-                    LOAD_STATE(cycle_limit, psp.cycle_limit);
+                    LOAD_STATE(cycle_limit, cycle_limit);
                 }
                 STORE_STATE(cycles, cycle_limit);
             }
-            if (state->psp.loop_to_jsr) {
+            if (state->loop_to_jsr) {
                 /* Clear the flag now, or else it'll get picked up if the
                  * subroutine call is a BSR or the target register is known */
-                state->psp.loop_to_jsr = 0;
-                const uint32_t target = state->psp.branch_target;
+                state->loop_to_jsr = 0;
+                const uint32_t target = state->branch_target;
                 RECURSIVE_DECODE(target);
                 RECURSIVE_DECODE(target+2);
                 /* The flush/jump will be performed by the subroutine call */
             } else {
-                SET_PC_KNOWN(state->psp.branch_target);
+                SET_PC_KNOWN(state->branch_target);
                 FLUSH_STATE_CACHE();
                 JUMP_STATIC();
             }
-            state->psp.just_branched = 1;
+            state->just_branched = 1;
             break;
           }
 
@@ -3610,12 +3607,12 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             CREATE_LABEL(label_do_varshift);
             int doing_varshift = 0;
             DECLARE_REG(Rcount);
-            if (state->psp.varshift_target_PC) {
+            if (state->varshift_target_PC) {
                 doing_varshift = 1;
                 DEFINE_REG(test);
-                LOAD_STATE_ALLOC(Rcount, regs.R[state->psp.varshift_Rcount]);
+                LOAD_STATE_ALLOC(Rcount, R[state->varshift_Rcount]);
                 SLTUI(test, Rcount,
-                      (state->psp.varshift_target_PC + 1) - cur_PC);
+                      (state->varshift_target_PC + 1) - cur_PC);
                 GOTO_IF_NZ(label_do_varshift, test);
                 SAVE_STATE_CACHE();
             } else {  // Not needed, but avoid a compiler warning
@@ -3624,14 +3621,14 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 #endif
             if (is_idle) {
                 DECLARE_REG(cycle_limit);
-                cycle_limit = STATE_CACHE_FIXED_REG(psp.cycle_limit);
+                cycle_limit = STATE_CACHE_FIXED_REG(cycle_limit);
                 if (!cycle_limit) {
                     ALLOC_REG(cycle_limit);
-                    LOAD_STATE(cycle_limit, psp.cycle_limit);
+                    LOAD_STATE(cycle_limit, cycle_limit);
                 }
                 STORE_STATE(cycles, cycle_limit);
             }
-            SET_PC(state->psp.branch_target_reg);
+            SET_PC(state->branch_target_reg);
             FLUSH_STATE_CACHE();
             JUMP();
 #ifdef OPTIMIZE_VARIABLE_SHIFTS
@@ -3640,17 +3637,17 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 DEFINE_LABEL(label_do_varshift);
                 /* A branch distance of zero means the maximum count */
                 DEFINE_REG(count_2_max);
-                MOVEI(count_2_max, state->psp.varshift_max * 2);
+                MOVEI(count_2_max, state->varshift_max * 2);
                 DEFINE_REG(count_2);
                 SUB(count_2, count_2_max, Rcount);
                 DEFINE_REG(count);
                 SRLI(count, count_2, 1);
                 DECLARE_REG(Rshift);
-                LOAD_STATE_ALLOC(Rshift, regs.R[state->psp.varshift_Rshift]);
+                LOAD_STATE_ALLOC(Rshift, R[state->varshift_Rshift]);
                 DEFINE_RESULT_REG(new_Rshift,
-                                  regs.R[state->psp.varshift_Rshift]);
+                                  R[state->varshift_Rshift]);
                 DEFINE_REG(new_T);
-                switch (state->psp.varshift_type) {
+                switch (state->varshift_type) {
                   case 0: {
                     DEFINE_REG(temp);
                     SUBI(temp, count, 1);
@@ -3693,10 +3690,10 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                     break;
                   default:
                     DMSG("Invalid shift type %u at 0x%X",
-                         state->psp.varshift_type, (unsigned int)cur_PC - 4);
+                         state->varshift_type, (unsigned int)cur_PC - 4);
                     break;
                 }
-                STORE_STATE(regs.R[state->psp.varshift_Rshift], new_Rshift);
+                STORE_STATE(R[state->varshift_Rshift], new_Rshift);
                 GET_SR_T;
                 DEFINE_REG(final_T);
                 SELECT(final_T, new_T, T, count);
@@ -3706,13 +3703,13 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 DEFINE_RESULT_REG(new_cycles, cycles);
                 ADD(new_cycles, cycles, count);
                 STORE_STATE(cycles, new_cycles);
-                INC_PC_BY(state->psp.varshift_target_PC - cur_PC);
+                INC_PC_BY(state->varshift_target_PC - cur_PC);
                 /* We fall through in this case, so don't set the
                  * just_branched flag */
                 break;
             }
 #endif  // OPTIMIZE_VARIABLE_SHIFTS
-            state->psp.just_branched = 1;
+            state->just_branched = 1;
             break;
           }  // case SH2BRTYPE_DYNAMIC
 
@@ -3721,66 +3718,66 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           case SH2BRTYPE_BT_S:
           case SH2BRTYPE_BF_S: {
             DECLARE_REG(cycle_limit);
-            cycle_limit = STATE_CACHE_FIXED_REG(psp.cycle_limit);
+            cycle_limit = STATE_CACHE_FIXED_REG(cycle_limit);
             if (!cycle_limit) {
                 ALLOC_REG(cycle_limit);
-                LOAD_STATE(cycle_limit, psp.cycle_limit);
+                LOAD_STATE(cycle_limit, cycle_limit);
             }
             DECLARE_REG(cycles);
             LOAD_STATE_ALLOC_KEEPOFS(cycles, cycles);
-            if (STATE_CACHE_FIXED_REG(regs.SR)) {
+            if (STATE_CACHE_FIXED_REG(SR)) {
                 FLUSH_STATE_SR_T();  // Avoid needing to flush it twice
             }
             SAVE_STATE_CACHE();
             CREATE_LABEL(bt_bf_nobranch);
-            if (state->psp.branch_type == SH2BRTYPE_BT
-             || state->psp.branch_type == SH2BRTYPE_BT_S
+            if (state->branch_type == SH2BRTYPE_BT
+             || state->branch_type == SH2BRTYPE_BT_S
             ) {
-                GOTO_IF_Z(bt_bf_nobranch, state->psp.branch_cond_reg);
+                GOTO_IF_Z(bt_bf_nobranch, state->branch_cond_reg);
             } else {
-                GOTO_IF_NZ(bt_bf_nobranch, state->psp.branch_cond_reg);
+                GOTO_IF_NZ(bt_bf_nobranch, state->branch_cond_reg);
             }
             if (is_idle) {
                 STORE_STATE(cycles, cycle_limit);
             } else
 #ifdef TRACE_LIKE_SH2INT
-            if (state->psp.branch_type == SH2BRTYPE_BT || state->psp.branch_type == SH2BRTYPE_BF)
+            if (state->branch_type == SH2BRTYPE_BT || state->branch_type == SH2BRTYPE_BF)
 #endif
             {
                 DEFINE_RESULT_REG(new_cycles, cycles);
                 ADDI(new_cycles, cycles,
-                     state->psp.branch_cycles + STATE_CACHE_OFFSET(cycles));
+                     state->branch_cycles + STATE_CACHE_OFFSET(cycles));
                 STORE_STATE(cycles, new_cycles);
             }
-            if (state->psp.branch_targets_rts) {
-                SET_PC(state->psp.branch_target_reg);
+            if (state->branch_targets_rts) {
+                SET_PC(state->branch_target_reg);
                 FLUSH_STATE_CACHE();
                 JUMP();
-            } else if (state->psp.loop_to_jsr) {
-                state->psp.loop_to_jsr = 0;
-                const uint32_t target = state->psp.branch_target;
+            } else if (state->loop_to_jsr) {
+                state->loop_to_jsr = 0;
+                const uint32_t target = state->branch_target;
                 RECURSIVE_DECODE(target);
                 RECURSIVE_DECODE(target+2);
             } else {
-                SET_PC_KNOWN(state->psp.branch_target);
+                SET_PC_KNOWN(state->branch_target);
                 WRITEBACK_STATE_CACHE(); // Avoid stores of fixed registers
                 JUMP_STATIC();
             }
             DEFINE_LABEL(bt_bf_nobranch);
             RESTORE_STATE_CACHE();
-            /* We don't set state->psp.just_branched here, because the code
+            /* We don't set state->just_branched here, because the code
              * will fall through if the condition isn't met */
             break;
           }  // case SH2BRTYPE_B{T,F}{,_S}
 
-        }  // switch (state->psp.branch_type)
+        }  // switch (state->branch_type)
 
-        state->psp.branch_type = SH2BRTYPE_NONE;
+        state->branch_type = SH2BRTYPE_NONE;
 #ifdef OPTIMIZE_VARIABLE_SHIFTS
-        state->psp.varshift_target_PC = 0;
+        state->varshift_target_PC = 0;
 #endif
-        state->psp.branch_targets_rts = 0;
-        state->psp.loop_to_jsr = 0;
+        state->branch_targets_rts = 0;
+        state->loop_to_jsr = 0;
 
     }  // if we need to branch
 

@@ -37,6 +37,29 @@ void SH2InterpreterDeInit(void);
 void SH2InterpreterReset(void);
 void FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);
 void FASTCALL SH2DebugInterpreterExec(SH2_struct *context, u32 cycles);
+void SH2InterpreterGetRegisters(SH2_struct *context, sh2regs_struct *regs);
+u32 SH2InterpreterGetGPR(SH2_struct *context, int num);
+u32 SH2InterpreterGetSR(SH2_struct *context);
+u32 SH2InterpreterGetGBR(SH2_struct *context);
+u32 SH2InterpreterGetVBR(SH2_struct *context);
+u32 SH2InterpreterGetMACH(SH2_struct *context);
+u32 SH2InterpreterGetMACL(SH2_struct *context);
+u32 SH2InterpreterGetPR(SH2_struct *context);
+u32 SH2InterpreterGetPC(SH2_struct *context);
+void SH2InterpreterSetRegisters(SH2_struct *context, const sh2regs_struct *regs);
+void SH2InterpreterSetGPR(SH2_struct *context, int num, u32 value);
+void SH2InterpreterSetSR(SH2_struct *context, u32 value);
+void SH2InterpreterSetGBR(SH2_struct *context, u32 value);
+void SH2InterpreterSetVBR(SH2_struct *context, u32 value);
+void SH2InterpreterSetMACH(SH2_struct *context, u32 value);
+void SH2InterpreterSetMACL(SH2_struct *context, u32 value);
+void SH2InterpreterSetPR(SH2_struct *context, u32 value);
+void SH2InterpreterSetPC(SH2_struct *context, u32 value);
+void SH2InterpreterSendInterrupt(SH2_struct *context, u8 level, u8 vector);
+int SH2InterpreterGetInterrupts(SH2_struct *context,
+                                interrupt_struct interrupts[MAX_INTERRUPTS]);
+void SH2InterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
+                                 const interrupt_struct interrupts[MAX_INTERRUPTS]);
 
 extern SH2Interface_struct SH2Interpreter;
 extern SH2Interface_struct SH2DebugInterpreter;

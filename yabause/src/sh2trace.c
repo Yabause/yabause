@@ -27,7 +27,7 @@
 /*************************************************************************/
 
 /* Define BINARY_LOG to log traces in a binary format (faster than text) */
-#define BINARY_LOG
+// #define BINARY_LOG
 
 /* Define GZIP_LOG to compress log as it's created */
 #ifdef __linux__
@@ -199,7 +199,7 @@ FASTCALL void sh2_trace(SH2_struct *state, uint32_t address)
         buf.opcode = opcode;
         /* sh2int leaves the branch target in regs.PC during a delay slot,
          * so insert the proper PC manually */
-        memcpy(buf.regs, &state->regs, 4*22);
+        SH2GetRegisters(state, (sh2regs_struct *)buf.regs);
         buf.regs[22] = address;
         buf.cycles = current_cycles;
         buf.pad[0] = 0;
@@ -207,6 +207,8 @@ FASTCALL void sh2_trace(SH2_struct *state, uint32_t address)
         fwrite(&buf, sizeof(buf), 1, logfile);
 
 #else  // !BINARY_LOG
+
+        SH2GetRegisters(state, &state->regs);
 
         char buf[100];
         SH2Disasm(address, opcode, 0, buf);

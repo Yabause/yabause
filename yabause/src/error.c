@@ -64,6 +64,7 @@ void YabSetError(int type, const void *extra)
          break;
       case YAB_ERR_SH2INVALIDOPCODE:
          sh = (SH2_struct *)extra;
+         SH2GetRegisters(sh, &sh->regs);
          sprintf(tempstr, "%s SH2 invalid opcode\n\n"
                           "R0 =  %08lX\tR12 =  %08lX\n"
                           "R1 =  %08lX\tR13 =  %08lX\n"

@@ -93,9 +93,6 @@
 #include "sh2.h"
 #include "sh2-internal.h"
 
-#if defined(TRACE) || defined(TRACE_STEALTH) || defined(TRACE_LITE)
-# include "../sh2trace.h"
-#endif
 #ifdef JIT_DEBUG_TRACE
 # include "../sh2d.h"
 #endif
@@ -104,11 +101,21 @@
 /******************* Local data and other declarations *******************/
 /*************************************************************************/
 
+/* List of all allocated state blocks (iterated over when clearing a JIT
+ * entry or taking other actions that may affect all active processors) */
+SH2State *state_list;
+
 /* Bitmask indicating which optional optimizations are enabled */
 uint32_t optimization_flags;
 
 /* Callback function for invalid instructions */
 SH2InvalidOpcodeCallback *invalid_opcode_callback;
+
+/* Callback functions for tracing */
+SH2TraceInsnCallback *trace_insn_callback;
+SH2TraceAccessCallback *trace_storeb_callback;
+SH2TraceAccessCallback *trace_storew_callback;
+SH2TraceAccessCallback *trace_storel_callback;
 
 /*************************************************************************/
 
@@ -411,11 +418,8 @@ static uint16_t pointer_local;
 /* Array indicating which SH-2 state block fields are cached in RTL
  * registers; if the rtlreg field is nonzero, the field should be accessed
  * through that RTL register rather than being loaded from the state block.
- * Indexed by the word offset into SH2_struct.regs, i.e.:
- *     (offsetof(SH2_struct,regs.REG) - offsetof(SH2_struct,regs)) / 4
- * except that state->cycles and state->psp.cycle_limit are given the
- * values 23 and 24 rather than their actual offsets (significantly larger
- * values); the index for a given structure offset can be found by calling
+ * Indexed by the word offset into SH2State, i.e. offsetof(SH2State,REG) / 4
+ * The index for a given structure offset can be found by calling
  * state_cache_index(offsetof(...)), which returns -1 if the given field
  * cannot be cached. */
 static struct {
@@ -441,24 +445,19 @@ static uint32_t cached_SR_T, saved_cached_SR_T;
 /* Nonzero if SR.T is dirty */
 static uint8_t dirty_SR_T, saved_dirty_SR_T;
 
-/* Cached known value of state->regs.PC (overrides state_cache if nonzero) */
+/* Cached known value of state->PC (overrides state_cache if nonzero) */
 static uint32_t cached_PC, saved_cached_PC;
 
-/* Last value actually stored to state->regs.PC */
+/* Last value actually stored to state->PC */
 static uint32_t stored_PC, saved_stored_PC;
 
-/* Function to convert a state block offset to an state_cache[] index */
+/* Function to convert a state block offset to a state_cache[] index */
 #ifdef __GNUC__
 __attribute__((const))
 #endif
 static inline int state_cache_index(const uint32_t offset) {
-    if (offset == offsetof(SH2_struct,cycles)) {
-        return 23;
-    } else if (offset == offsetof(SH2_struct,psp.cycle_limit)) {
-        return 24;
-    } else if (offset >= offsetof(SH2_struct,regs)
-            && offset < offsetof(SH2_struct,regs) + 23*4) {
-        return (offset - offsetof(SH2_struct,regs)) / 4;
+    if (offset < 25*4) {
+        return offset / 4;
     } else {
         return -1;
     }
@@ -469,13 +468,7 @@ static inline int state_cache_index(const uint32_t offset) {
 __attribute__((const))
 #endif
 static inline uint32_t state_cache_field(const int index) {
-    if (index == 23) {
-        return offsetof(SH2_struct,cycles);
-    } else if (index == 24) {
-        return offsetof(SH2_struct,psp.cycle_limit);
-    } else {
-        return offsetof(SH2_struct,regs) + index*4;
-    }
+    return index * 4;
 }
 
 #endif  // OPTIMIZE_STATE_BLOCK
@@ -515,7 +508,7 @@ static uint32_t loop_invariant_pointers;
 #if defined(__GNUC__) && defined(TRACE_LIKE_SH2INT)  // Not used in this case
 __attribute__((unused))
 #endif
-static int check_interrupts(SH2_struct *state);
+static int check_interrupts(SH2State *state);
 
 /*----------------------------------*/
 
@@ -523,11 +516,11 @@ static int check_interrupts(SH2_struct *state);
 
 static JitEntry *jit_find(uint32_t address);
 
-static JitEntry *jit_translate(SH2_struct *state, uint32_t address);
+static JitEntry *jit_translate(SH2State *state, uint32_t address);
 
-static inline void jit_exec(SH2_struct *state, JitEntry *entry);
+static inline void jit_exec(SH2State *state, JitEntry *entry);
 
-static FASTCALL void jit_clear_write(SH2_struct *state, uint32_t address);
+static FASTCALL void jit_clear_write(SH2State *state, uint32_t address);
 static void jit_clear_range(uint32_t address, uint32_t size);
 static void jit_clear_all(void);
 static void jit_blacklist_range(uint32_t start, uint32_t end);
@@ -545,8 +538,8 @@ __attribute__((const)) static inline int timestamp_compare(
 
 /*----------------------------------*/
 
-static int translate_block(SH2_struct *state, JitEntry *entry);
-static int setup_pointers(SH2_struct * const state, JitEntry * const entry,
+static int translate_block(SH2State *state, JitEntry *entry);
+static int setup_pointers(SH2State * const state, JitEntry * const entry,
                           const unsigned int state_reg,
                           const int skip_preconditions,
                           unsigned int * const invalidate_label_ptr);
@@ -567,7 +560,7 @@ static inline int optimize_branch_select(
     unsigned int opcode, uint32_t target);
 #endif
 
-static int translate_insn(SH2_struct *state, JitEntry *entry,
+static int translate_insn(SH2State *state, JitEntry *entry,
                           unsigned int state_reg, int recursing);
 #ifdef JIT_BRANCH_PREDICT_STATIC
 static int add_static_branch_terminator(JitEntry *entry,
@@ -591,12 +584,19 @@ static void clear_state_cache(int clear_fixed);
 
 #endif  // ENABLE_JIT
 
+/*-----------------------------------------------------------------------*/
+
+/* Dummy, do-nothing callback function used as a default trace callback
+ * so that the caller doesn't have to check for a NULL function pointer */
+static void dummy_callback(void) {}
+
 /*************************************************************************/
 /********************** External interface routines **********************/
 /*************************************************************************/
 
 /**
- * sh2_init:  Initialize the SH-2 core.
+ * sh2_init:  Initialize the SH-2 core.  Must be called before creating any
+ * virtual processors.
  *
  * [Parameters]
  *     None
@@ -611,31 +611,13 @@ int sh2_init(void)
     /* Default to no optimizations; let the caller decide what to enable */
     optimization_flags = 0;
 
+    /* Set the dummy callback function in the trace callback pointers */
+    trace_insn_callback = (SH2TraceInsnCallback *)dummy_callback;
+    trace_storeb_callback = (SH2TraceAccessCallback *)dummy_callback;
+    trace_storew_callback = (SH2TraceAccessCallback *)dummy_callback;
+    trace_storel_callback = (SH2TraceAccessCallback *)dummy_callback;
+
     return 1;
-}
-
-/*-----------------------------------------------------------------------*/
-
-/**
- * sh2_cleanup:  Perform cleanup for the SH-2 core.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     None
- */
-void sh2_cleanup(void)
-{
-    /* Clear direct-access pointers */
-    memset(direct_pages, 0, sizeof(direct_pages));
-    memset(fetch_pages, 0, sizeof(fetch_pages));
-    memset(byte_direct_pages, 0, sizeof(byte_direct_pages));
-#ifdef ENABLE_JIT
-    memset(direct_jit_pages, 0, sizeof(direct_jit_pages));
-#endif
-
-    /* Clear the invalid opcode callback */
-    invalid_opcode_callback = NULL;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -712,13 +694,64 @@ void sh2_set_invalid_opcode_callback(SH2InvalidOpcodeCallback *funcptr)
     invalid_opcode_callback = funcptr;
 }
 
+/*----------------------------------*/
+
+/**
+ * sh2_set_trace_insn_callback:  Set a callback function to be used for
+ * tracing instructions as they are executed.  The function is only called
+ * if tracing is enabled in the SH-2 core.
+ *
+ * [Parameters]
+ *     funcptr: Callback function pointer (NULL to unset a previously-set
+ *                 function)
+ * [Return value]
+ *     None
+ */
+void sh2_set_trace_insn_callback(SH2TraceInsnCallback *funcptr)
+{
+    trace_insn_callback =
+        funcptr ? funcptr : (SH2TraceInsnCallback *)dummy_callback;
+}
+
+/*----------------------------------*/
+
+/**
+ * sh2_set_trace_store[bwl]_callback:  Set a callback function to be used
+ * for tracing 1-, 2-, or 4-byte write accesses, respectively.  The
+ * function is only called if tracing is enabled in the SH-2 core.
+ *
+ * [Parameters]
+ *     funcptr: Callback function pointer (NULL to unset a previously-set
+ *                 function)
+ * [Return value]
+ *     None
+ */
+void sh2_set_trace_storeb_callback(SH2TraceAccessCallback *funcptr)
+{
+    trace_storeb_callback =
+        funcptr ? funcptr : (SH2TraceAccessCallback *)dummy_callback;
+}
+
+void sh2_set_trace_storew_callback(SH2TraceAccessCallback *funcptr)
+{
+    trace_storew_callback =
+        funcptr ? funcptr : (SH2TraceAccessCallback *)dummy_callback;
+}
+
+void sh2_set_trace_storel_callback(SH2TraceAccessCallback *funcptr)
+{
+    trace_storel_callback =
+        funcptr ? funcptr : (SH2TraceAccessCallback *)dummy_callback;
+}
+
+
 /*-----------------------------------------------------------------------*/
 
 /**
  * sh2_alloc_direct_write_buffer:  Allocate a buffer which can be passed
  * as the write_buffer parameter to sh2_set_direct_access().  The buffer
  * should be freed with free() when no longer needed, but no earlier than
- * calling sh2_cleanup().
+ * calling sh2_destroy() for all active virtual processors.
  *
  * [Parameters]
  *     size: Size of SH-2 address region to be marked as directly accessible
@@ -847,25 +880,99 @@ void sh2_set_byte_direct_access(uint32_t sh2_address, void *native_address,
     }
 }
 
-/*-----------------------------------------------------------------------*/
+/*************************************************************************/
 
 /**
- * sh2_reset:  Reset the SH-2 core.
+ * sh2_create:  Create a new virtual SH-2 processor.
  *
  * [Parameters]
  *     None
  * [Return value]
+ *     SH-2 processor state block (NULL on error)
+ */
+SH2State *sh2_create(void)
+{
+    SH2State *state;
+
+    state = malloc(sizeof(*state));
+    if (!state) {
+        DMSG("Out of memory allocating state block");
+        goto error_return;
+    }
+    state->next = state_list;
+    state_list = state;
+
+    /* Allocate interrupt stack */
+    state->interrupt_stack =
+        malloc(sizeof(*state->interrupt_stack) * INTERRUPT_STACK_SIZE);
+    if (!state->interrupt_stack) {
+        DMSG("Out of memory allocating interrupt stack");
+        goto error_free_state;
+    }
+
+    return state;
+
+  error_free_state:
+    free(state);
+  error_return:
+    return NULL;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * sh2_destroy:  Destroy a virtual SH-2 processor.
+ *
+ * [Parameters]
+ *     state: SH-2 processor state block
+ * [Return value]
  *     None
  */
-void sh2_reset(void)
+void sh2_destroy(SH2State *state)
 {
-    MSH2->psp.current_entry = NULL;
-    MSH2->psp.branch_type = SH2BRTYPE_NONE;
-    MSH2->psp.division_target_PC = 0;
+    if (!state) {
+        return;
+    }
 
-    SSH2->psp.current_entry = NULL;
-    SSH2->psp.branch_type = SH2BRTYPE_NONE;
-    SSH2->psp.division_target_PC = 0;
+    SH2State **prev_ptr;
+    for (prev_ptr = &state_list; *prev_ptr; prev_ptr = &((*prev_ptr)->next)) {
+        if ((*prev_ptr) == state) {
+            break;
+        }
+    }
+    if (!*prev_ptr) {
+        DMSG("%p not found in state list", state);
+        return;
+    }
+    (*prev_ptr) = state->next;
+
+    free(state->interrupt_stack);
+    free(state);
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * sh2_reset:  Reset a virtual SH-2 processor.
+ *
+ * [Parameters]
+ *     state: SH-2 processor state block
+ * [Return value]
+ *     None
+ */
+void sh2_reset(SH2State *state)
+{
+    state->delay = 0;
+    state->asleep = 0;
+    state->need_interrupt_check = 0;
+    state->interrupt_stack_top = 0;
+    state->current_entry = NULL;
+    state->branch_type = SH2BRTYPE_NONE;
+    state->pending_select = 0;
+    state->just_branched = 0;
+    state->cached_shift_count = 0;
+    state->varshift_target_PC = 0;
+    state->division_target_PC = 0;
 
 #ifdef ENABLE_JIT
     memset(blacklist, 0, sizeof(blacklist));
@@ -887,24 +994,20 @@ void sh2_reset(void)
  * [Return value]
  *     None
  */
-void sh2_run(SH2_struct *state, uint32_t cycles)
+void sh2_run(SH2State *state, uint32_t cycles)
 {
-#if defined(TRACE) || defined(TRACE_STEALTH) || defined(TRACE_LITE)
+#if defined(TRACE_LITE) || defined(TRACE_LIKE_SH2INT)
     /* Remember the number of cycles we started with */
     const uint32_t init_cycles = state->cycles;
-    /* Avoid accumulating leftover cycles multiple times, since the trace
-     * code automatically adds state->cycles to the cycle accumulator when
-     * printing a trace line */
-    sh2_trace_add_cycles(-init_cycles);
 #endif
 
     /* Always check for interrupts the first time through the loop */
-    state->psp.need_interrupt_check = 1;
+    state->need_interrupt_check = 1;
 
     /* In TRACE_LITE mode, trace a single instruction at the current PC
      * before we start executing */
 #ifdef TRACE_LITE
-    sh2_trace(state, state->regs.PC);
+    (*trace_insn_callback)((SH2_struct *)state, state->PC);
 #endif
 
     /* Loop until we've consumed the requested number of execution cycles.
@@ -912,65 +1015,65 @@ void sh2_run(SH2_struct *state, uint32_t cycles)
      * either at translation time or by the if() below the interpret_insn()
      * call. */
 
-    state->psp.cycle_limit = cycles;
-    while (state->cycles < state->psp.cycle_limit) {
+    state->cycle_limit = cycles;
+    while (state->cycles < state->cycle_limit) {
 
         /* If SR was just changed or the processor is sleeping, check
          * whether any interrupts are pending */
 #ifdef TRACE_LIKE_SH2INT
         if (state->cycles > init_cycles) {
             /* sh2int.c only checks for interrupts once per run() call */
-            if (state->isSleeping) {
+            if (state->asleep) {
                 // Execute the SLEEP instruction again
-                state->isSleeping = 0;
+                state->asleep = 0;
             }
         } else
 #endif
-        if (UNLIKELY(state->psp.need_interrupt_check)) {
+        if (UNLIKELY(state->need_interrupt_check)) {
             if (!check_interrupts(state)) {
                 /* If the processor is sleeping and there are no interrupts
                  * pending, consume all remaining cycles */
-                if (state->isSleeping) {
+                if (state->asleep) {
 #ifdef TRACE_LIKE_SH2INT
-                    state->isSleeping = 0;
+                    state->asleep = 0;
 #else
-                    state->cycles = state->psp.cycle_limit;
+                    state->cycles = state->cycle_limit;
                     break;
 #endif
                 }
             }
-            state->psp.need_interrupt_check = 0;
+            state->need_interrupt_check = 0;
         }
 
         /* If we don't have a current native code block, search for one and
          * translate if necessary */
 #ifdef ENABLE_JIT
-        if (UNLIKELY(!state->psp.current_entry)) {
+        if (UNLIKELY(!state->current_entry)) {
 #ifdef PSP_TIME_TRANSLATION
             static uint32_t total, count;
             const uint32_t a = sceKernelGetSystemTimeLow();
 #endif
-            state->psp.current_entry = jit_translate(state, state->regs.PC);
+            state->current_entry = jit_translate(state, state->PC);
 #ifdef PSP_TIME_TRANSLATION
             const uint32_t b = sceKernelGetSystemTimeLow();
             total += b-a;
-            count += ((state->psp.current_entry->sh2_end + 1)
-                      - state->psp.current_entry->sh2_start) / 2;
+            count += ((state->current_entry->sh2_end + 1)
+                      - state->current_entry->sh2_start) / 2;
             DMSG("%u/%u = %.3f us/insn", total, count, (float)total/count);
 #endif
         }
 
         /* If we (now) have a native code block, execute from it */
-        if (LIKELY(state->psp.current_entry)) {
+        if (LIKELY(state->current_entry)) {
 
 #ifdef TRACE_LITE_VERBOSE
             if (state->cycles > init_cycles) {
-                sh2_trace(state, state->regs.PC);
+                (*trace_insn_callback)(state, state->PC);
             }
 #endif
-            JitEntry * const current_entry = state->psp.current_entry;
+            JitEntry * const current_entry = state->current_entry;
             jit_exec(state, current_entry);
-            const uint32_t new_PC = state->regs.PC;
+            const uint32_t new_PC = state->PC;
 #if JIT_BRANCH_PREDICTION_SLOTS > 0
             BranchTargetInfo * const predicted = &current_entry->predicted[0];
             JitEntry * const pred_entry = predicted->entry;
@@ -978,7 +1081,7 @@ void sh2_run(SH2_struct *state, uint32_t cycles)
              * first one specially for increased speed if it's a correct
              * prediction */
             if (predicted->target != 0 && new_PC == predicted->target) {
-                state->psp.current_entry = pred_entry;
+                state->current_entry = pred_entry;
             } else {
 # if JIT_BRANCH_PREDICTION_SLOTS > 1
                 /* First see if it's in any other slot */
@@ -987,7 +1090,7 @@ void sh2_run(SH2_struct *state, uint32_t cycles)
                     if (predicted[i].target != 0
                      && new_PC == predicted[i].target
                     ) {
-                        state->psp.current_entry = predicted[i].entry;
+                        state->current_entry = predicted[i].entry;
 #ifdef JIT_BRANCH_PREDICTION_FLOAT
                         /* Shift it up to the previous slot so we can find
                          * it faster next time.  If we have any code that
@@ -1022,23 +1125,23 @@ void sh2_run(SH2_struct *state, uint32_t cycles)
                         break;
                     }
                 }
-                state->psp.current_entry =
+                state->current_entry =
                     update_branch_target(&predicted[i], new_PC);
               found:;
 # else  // JIT_BRANCH_PREDICTION_SLOTS == 1
-                state->psp.current_entry =
+                state->current_entry =
                     update_branch_target(predicted, new_PC);
 # endif
             }
 #else  // branch prediction disabled
-            state->psp.current_entry = jit_find(new_PC);
+            state->current_entry = jit_find(new_PC);
 #endif
             if (UNLIKELY(current_entry->must_clear)) {
                 /* A purge was requested, so clear the just-executed entry */
                 clear_entry(current_entry);
             }
 
-        } else {  // !state->psp.current_entry
+        } else {  // !state->current_entry
 
             /* We couldn't translate the code at this address, so interpret
              * it instead */
@@ -1051,10 +1154,10 @@ void sh2_run(SH2_struct *state, uint32_t cycles)
                  * conditional branch as a delay slot.  (Note that when
                  * interpreting, the branch_cond_reg field holds the
                  * actual value of the condition.) */
-                if (!(state->psp.branch_type == SH2BRTYPE_BT_S
-                      && !state->psp.branch_cond_reg)
-                 && !(state->psp.branch_type == SH2BRTYPE_BF_S
-                      && state->psp.branch_cond_reg)
+                if (!(state->branch_type == SH2BRTYPE_BT_S
+                      && !state->branch_cond_reg)
+                 && !(state->branch_type == SH2BRTYPE_BF_S
+                      && state->branch_cond_reg)
                 ) {
                     /* Make sure we interpret the delay slot immediately,
                      * so (1) we don't try to translate it as the beginning
@@ -1067,14 +1170,10 @@ void sh2_run(SH2_struct *state, uint32_t cycles)
             }
 
 #ifdef ENABLE_JIT
-        }  // if (state->psp.current_entry)
+        }  // if (state->current_entry)
 #endif
 
-    }  // while (state->cycles < state->psp.cycle_limit)
-
-#if defined(TRACE) || defined(TRACE_STEALTH) || defined(TRACE_LITE)
-    sh2_trace_add_cycles(state->cycles);
-#endif
+    }  // while (state->cycles < state->cycle_limit)
 
 #if defined(ENABLE_JIT) && defined(JIT_PROFILE)
     static int cycles_for_profile;
@@ -1177,6 +1276,55 @@ void sh2_run(SH2_struct *state, uint32_t cycles)
 /*************************************************************************/
 
 /**
+ * sh2_signal_interrupt:  Signal an interrupt to a virtual SH-2 processor.
+ * The interrupt is ignored if another interrupt on the same vector has
+ * already been signalled.
+ *
+ * [Parameters]
+ *      state: SH-2 processor state block
+ *     vector: Interrupt vector (0-127)
+ *      level: Interrupt level (0-15, or 16 for NMI)
+ * [Return value]
+ *     None
+ */
+void sh2_signal_interrupt(SH2State *state, unsigned int vector,
+                          unsigned int level)
+{
+    int i;
+
+    if (UNLIKELY(state->interrupt_stack_top >= INTERRUPT_STACK_SIZE)) {
+        DMSG("WARNING: dropped interrupt <%u,%u> due to full stack",
+             vector, level);
+        DMSG("Interrupt stack:");
+        for (i = state->interrupt_stack_top - 1; i >= 0; i--) {
+            DMSG("   <%3u,%2u>", state->interrupt_stack[i].vector,
+                 state->interrupt_stack[i].level);
+        }
+        return;
+    }
+
+    for (i = 0; i < state->interrupt_stack_top; i++) {
+        if (state->interrupt_stack[i].vector == vector) {
+            return;  // This interrupt is already raised
+        }
+    }
+
+    for (i = 0; i < state->interrupt_stack_top; i++) {
+        if (state->interrupt_stack[i].level > level) {
+            memmove(&state->interrupt_stack[i+1], &state->interrupt_stack[i],
+                    sizeof(*state->interrupt_stack)
+                        * (state->interrupt_stack_top - i));
+            break;
+        }
+    }
+    state->interrupt_stack[i].level = level;
+    state->interrupt_stack[i].vector = vector;
+    state->interrupt_stack_top++;
+}
+
+/*************************************************************************/
+
+/**
  * sh2_write_notify:  Called when an external agent modifies memory.
  * Used here to clear any JIT translations in the modified range.
  *
@@ -1206,31 +1354,33 @@ void sh2_write_notify(uint32_t address, uint32_t size)
  * [Return value]
  *     Nonzero if an interrupt was services, else zero
  */
-static int check_interrupts(SH2_struct *state)
+static int check_interrupts(SH2State *state)
 {
-    if (state->NumberOfInterrupts > 0) {
-        const int level = state->interrupts[state->NumberOfInterrupts-1].level;
-        if (level > state->regs.SR.part.I) {
+    if (state->interrupt_stack_top > 0) {
+        const int level =
+            state->interrupt_stack[state->interrupt_stack_top-1].level;
+        if (level > ((state->SR & SR_I) >> SR_I_SHIFT)) {
             const int vector =
-                state->interrupts[state->NumberOfInterrupts-1].vector;
-            state->regs.R[15] -= 4;
+                state->interrupt_stack[state->interrupt_stack_top-1].vector;
+            state->R[15] -= 4;
 #if defined(TRACE) || defined(TRACE_STEALTH)
-            sh2_trace_writel(state->regs.R[15], state->regs.SR.all);
+            (*trace_storel_callback)(state->R[15], state->SR);
 #endif
-            MappedMemoryWriteLong(state->regs.R[15], state->regs.SR.all);
-            state->regs.R[15] -= 4;
+            MappedMemoryWriteLong(state->R[15], state->SR);
+            state->R[15] -= 4;
 #if defined(TRACE) || defined(TRACE_STEALTH)
-            sh2_trace_writel(state->regs.R[15], state->regs.PC);
+            (*trace_storel_callback)(state->R[15], state->PC);
 #endif
-            MappedMemoryWriteLong(state->regs.R[15], state->regs.PC);
-            state->regs.SR.part.I = level;
-            state->regs.PC =
-                MappedMemoryReadLong(state->regs.VBR + (vector << 2));
+            MappedMemoryWriteLong(state->R[15], state->PC);
+            state->SR &= ~SR_I;
+            state->SR |= level << SR_I_SHIFT;
+            state->PC =
+                MappedMemoryReadLong(state->VBR + (vector << 2));
 #ifdef ENABLE_JIT
-            state->psp.current_entry = jit_find(state->regs.PC);
+            state->current_entry = jit_find(state->PC);
 #endif
-            state->isSleeping = 0;
-            state->NumberOfInterrupts--;
+            state->asleep = 0;
+            state->interrupt_stack_top--;
             return 1;
         }
     }
@@ -1279,7 +1429,7 @@ static JitEntry *jit_find(uint32_t address)
  * [Return value]
  *     Translated block, or NULL on error
  */
-static JitEntry *jit_translate(SH2_struct *state, uint32_t address)
+static JitEntry *jit_translate(SH2State *state, uint32_t address)
 {
     JitEntry *entry;
     int index;
@@ -1466,7 +1616,7 @@ static JitEntry *jit_translate(SH2_struct *state, uint32_t address)
  * [Return value]
  *     None
  */
-static FASTCALL void jit_clear_write(SH2_struct *state, uint32_t address)
+static FASTCALL void jit_clear_write(SH2State *state, uint32_t address)
 {
     int index;
 
@@ -1664,8 +1814,10 @@ static void jit_clear_all(void)
     jit_lralist.lra_next = &jit_lralist;
     jit_lralist.lra_prev = &jit_lralist;
     jit_total_data = 0;
-    MSH2->psp.current_entry = NULL;
-    SSH2->psp.current_entry = NULL;
+    SH2State *state;
+    for (state = state_list; state; state = state->next) {
+        state->current_entry = NULL;
+    }
 }
 
 /*-----------------------------------------------------------------------*/
@@ -1843,11 +1995,11 @@ static void clear_entry(JitEntry *entry)
 
     /* Make sure the non-active processor isn't trying to use this entry
      * (if so, clear it out) */
-    if (UNLIKELY(MSH2->psp.current_entry == entry)) {
-        MSH2->psp.current_entry = NULL;
-    }
-    if (UNLIKELY(SSH2->psp.current_entry == entry)) {
-        SSH2->psp.current_entry = NULL;
+    SH2State *state;
+    for (state = state_list; state; state = state->next) {
+        if (state->current_entry == entry) {
+            state->current_entry = NULL;
+        }
     }
 
     /* Free the native code, if any */
@@ -2199,7 +2351,7 @@ __attribute__((const)) static inline int timestamp_compare(
 /* Loads */
 
 #define LOAD_STATE(reg,field) \
-    ASSERT(__LOAD_STATE(entry, state_reg, (reg), offsetof(SH2_struct,field)))
+    ASSERT(__LOAD_STATE(entry, state_reg, (reg), offsetof(SH2State,field)))
 static inline int __LOAD_STATE(const JitEntry * const entry,
                                const uint32_t state_reg,
                                const uint32_t reg, const uint32_t offset)
@@ -2245,7 +2397,7 @@ static inline int __LOAD_STATE(const JitEntry * const entry,
 
 /* Load from a state block field, but don't change the state block cache */
 #define LOAD_STATE_COPY(reg,field) \
-    ASSERT(__LOAD_STATE_COPY(entry, state_reg, (reg), offsetof(SH2_struct,field)))
+    ASSERT(__LOAD_STATE_COPY(entry, state_reg, (reg), offsetof(SH2State,field)))
 static inline int __LOAD_STATE_COPY(const JitEntry * const entry,
                                     const uint32_t state_reg,
                                     const uint32_t reg, const uint32_t offset)
@@ -2275,7 +2427,7 @@ static inline int __LOAD_STATE_COPY(const JitEntry * const entry,
  * aliasing the register.) */
 #define LOAD_STATE_ALLOC(reg,field) \
     ASSERT(reg = __LOAD_STATE_ALLOC(entry, state_reg, \
-                                    offsetof(SH2_struct,field)))
+                                    offsetof(SH2State,field)))
 static inline uint32_t __LOAD_STATE_ALLOC(const JitEntry * const entry,
                                           const uint32_t state_reg,
                                           const uint32_t offset)
@@ -2307,7 +2459,7 @@ static inline uint32_t __LOAD_STATE_ALLOC(const JitEntry * const entry,
  * reassigned. */
 #define LOAD_STATE_ALLOC_KEEPOFS(reg,field) \
     ASSERT(reg = __LOAD_STATE_ALLOC_KEEPOFS(entry, state_reg, \
-                                            offsetof(SH2_struct,field)))
+                                            offsetof(SH2State,field)))
 static inline uint32_t __LOAD_STATE_ALLOC_KEEPOFS(const JitEntry * const entry,
                                                   const uint32_t state_reg,
                                                   const uint32_t offset)
@@ -2324,7 +2476,7 @@ static inline uint32_t __LOAD_STATE_ALLOC_KEEPOFS(const JitEntry * const entry,
 }
 
 #define LOAD_STATE_PTR(reg,field) \
-    LOAD_PTR((reg), state_reg, offsetof(SH2_struct,field))
+    LOAD_PTR((reg), state_reg, offsetof(SH2State,field))
 
 #define LOAD_STATE_SR_T(reg) \
     ASSERT(reg = __LOAD_STATE_SR_T(entry, state_reg))
@@ -2337,7 +2489,7 @@ static inline uint32_t __LOAD_STATE_SR_T(const JitEntry * const entry,
     }
 #endif
     DECLARE_REG(temp);
-    LOAD_STATE_ALLOC(temp, regs.SR);
+    LOAD_STATE_ALLOC(temp, SR);
     DEFINE_REG(reg);
     ANDI(reg, temp, SR_T);
 #ifdef OPTIMIZE_STATE_BLOCK
@@ -2349,12 +2501,12 @@ static inline uint32_t __LOAD_STATE_SR_T(const JitEntry * const entry,
 /* Stores */
 
 #define STORE_STATE(field,reg) \
-    ASSERT(__STORE_STATE(entry, state_reg, offsetof(SH2_struct,field), (reg)))
+    ASSERT(__STORE_STATE(entry, state_reg, offsetof(SH2State,field), (reg)))
 static inline int __STORE_STATE(const JitEntry * const entry,
                                 const uint32_t state_reg,
                                 const uint16_t offset, const uint32_t reg)
 {
-    if (offset == offsetof(SH2_struct,regs.R[15])
+    if (offset == offsetof(SH2State,R[15])
      && (optimization_flags & SH2_OPTIMIZE_STACK)
     ) {
 #ifdef JIT_DEBUG_VERBOSE
@@ -2395,7 +2547,7 @@ static inline int __STORE_STATE(const JitEntry * const entry,
             state_cache[index].rtlreg = reg;
         }
         state_cache[index].offset = 0;
-        if (index == state_cache_index(offsetof(SH2_struct,regs.PC))) {
+        if (index == state_cache_index(offsetof(SH2State,PC))) {
             cached_PC = 0;
             stored_PC = 0;
         }
@@ -2420,10 +2572,10 @@ static inline int __STORE_STATE_PC(const JitEntry * const entry,
                                    const uint32_t value)
 {
 #ifdef OPTIMIZE_STATE_BLOCK
-    const int index_PC = state_cache_index(offsetof(SH2_struct,regs.PC));
+    const int index_PC = state_cache_index(offsetof(SH2State,PC));
     if (!state_cache[index_PC].fixed && value != 0) {
         if (stored_PC == value) {
-            /* state->regs.PC is already correct, so just clear the cache */
+            /* state->PC is already correct, so just clear the cache */
             if (state_cache[index_PC].rtlreg) {
 # ifdef TRACE_STEALTH
                 APPEND(NOP, 0, 0xB0000000 | index_PC<<16, 0, 0);
@@ -2448,14 +2600,14 @@ static inline int __STORE_STATE_PC(const JitEntry * const entry,
 #endif
     DEFINE_REG(reg);
     MOVEI(reg, value);
-    return __STORE_STATE(entry, state_reg, offsetof(SH2_struct,regs.PC), reg);
+    return __STORE_STATE(entry, state_reg, offsetof(SH2State,PC), reg);
 }
 
 #define STORE_STATE_B(field,reg) \
-    STORE_B(state_reg, (reg), offsetof(SH2_struct,field))
+    STORE_B(state_reg, (reg), offsetof(SH2State,field))
 
 #define STORE_STATE_PTR(field,reg) \
-    STORE_PTR(state_reg, (reg), offsetof(SH2_struct,field))
+    STORE_PTR(state_reg, (reg), offsetof(SH2State,field))
 
 #define STORE_STATE_SR_T(reg) \
     ASSERT(__STORE_STATE_SR_T(entry, state_reg, (reg)))
@@ -2471,10 +2623,10 @@ static inline int __STORE_STATE_SR_T(const JitEntry * const entry,
 # endif
 #else
     DEFINE_REG(old_SR);
-    LOAD_W(old_SR, state_reg, offsetof(SH2_struct,regs.SR));
+    LOAD_W(old_SR, state_reg, offsetof(SH2State,SR));
     DEFINE_REG(new_SR);
     BFINS(new_SR, old_SR, (reg), SR_T_SHIFT, 1);
-    STORE_W(state_reg, new_SR, offsetof(SH2_struct,regs.SR));
+    STORE_W(state_reg, new_SR, offsetof(SH2State,SR));
 #endif
     return 1;
 }
@@ -2485,9 +2637,9 @@ static inline int __FLUSH_STATE_SR_T(const JitEntry * const entry,
 {
 #ifdef OPTIMIZE_STATE_BLOCK
     if (dirty_SR_T) {
-        const int index_SR = state_cache_index(offsetof(SH2_struct,regs.SR));
+        const int index_SR = state_cache_index(offsetof(SH2State,SR));
         DECLARE_REG(old_SR);
-        LOAD_STATE_ALLOC(old_SR, regs.SR);
+        LOAD_STATE_ALLOC(old_SR, SR);
         DECLARE_REG(new_SR);
         if (state_cache[index_SR].fixed) {
             new_SR = old_SR;
@@ -2495,7 +2647,7 @@ static inline int __FLUSH_STATE_SR_T(const JitEntry * const entry,
             ALLOC_REG(new_SR);
         }
         BFINS(new_SR, old_SR, cached_SR_T, SR_T_SHIFT, 1);
-        STORE_STATE(regs.SR, new_SR);
+        STORE_STATE(SR, new_SR);
         cached_SR_T = 0;
         dirty_SR_T = 0;
     }
@@ -2512,10 +2664,10 @@ static inline int __FLUSH_STATE_SR_T(const JitEntry * const entry,
 /* Adds */
 
 #define ADDI_STATE(field,imm,reg) \
-    ASSERT(__ADDI_STATE(entry, state_reg, (reg), offsetof(SH2_struct,field), \
+    ASSERT(__ADDI_STATE(entry, state_reg, (reg), offsetof(SH2State,field), \
            (imm)))
 #define ADDI_STATE_NOREG(field,imm) \
-    ASSERT(__ADDI_STATE(entry, state_reg, 0, offsetof(SH2_struct,field), \
+    ASSERT(__ADDI_STATE(entry, state_reg, 0, offsetof(SH2State,field), \
            (imm)))
 static inline int __ADDI_STATE(const JitEntry * const entry,
                                const uint32_t state_reg, uint32_t cur_reg,
@@ -2565,7 +2717,7 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
     DEFINE_REG(result);
     ADDI(result, cur_reg, imm);
     STORE_W(state_reg, result, offset);
-    if (offset == offsetof(SH2_struct,regs.R[15])
+    if (offset == offsetof(SH2State,R[15])
      && (optimization_flags & SH2_OPTIMIZE_STACK)
      && stack_pointer
     ) {
@@ -2725,17 +2877,17 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
 #define CAN_OMIT_MAC_S_CHECK    (can_optimize_mac_nosat)
 
 /* Get or set whether the MACL/MACH pair is known to be zero */
-#define MAC_IS_ZERO()           (state->psp.mac_is_zero)
-#define SET_MAC_IS_ZERO()       (state->psp.mac_is_zero = 1)
-#define CLEAR_MAC_IS_ZERO()     (state->psp.mac_is_zero = 0)
+#define MAC_IS_ZERO()           (state->mac_is_zero)
+#define SET_MAC_IS_ZERO()       (state->mac_is_zero = 1)
+#define CLEAR_MAC_IS_ZERO()     (state->mac_is_zero = 0)
 
 /*----------------------------------*/
 
 /* Get, add to, or clear the cached shift count */
 #define CAN_CACHE_SHIFTS()      1
-#define CACHED_SHIFT_COUNT()    (state->psp.cached_shift_count)
-#define ADD_TO_SHIFT_CACHE(n)   (state->psp.cached_shift_count += (n))
-#define CLEAR_SHIFT_CACHE()     (state->psp.cached_shift_count = 0)
+#define CACHED_SHIFT_COUNT()    (state->cached_shift_count)
+#define ADD_TO_SHIFT_CACHE(n)   (state->cached_shift_count += (n))
+#define CLEAR_SHIFT_CACHE()     (state->cached_shift_count = 0)
 
 /*----------------------------------*/
 
@@ -2887,8 +3039,8 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
 /* Return the cached offset for the given state block field, or 0 if none */
 #ifdef OPTIMIZE_CONSTANT_ADDS
 # define STATE_CACHE_OFFSET(field) \
-    (state_cache_index(offsetof(SH2_struct,field)) >= 0 \
-     ? state_cache[state_cache_index(offsetof(SH2_struct,field))].offset \
+    (state_cache_index(offsetof(SH2State,field)) >= 0 \
+     ? state_cache[state_cache_index(offsetof(SH2State,field))].offset \
      : 0)
 #else
 # define STATE_CACHE_OFFSET(field)  0
@@ -2898,9 +3050,9 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
  * or 0 if none */
 #ifdef OPTIMIZE_STATE_BLOCK
 # define STATE_CACHE_FIXED_REG(field) \
-    (state_cache_index(offsetof(SH2_struct,field)) >= 0 \
-     && state_cache[state_cache_index(offsetof(SH2_struct,field))].fixed \
-     ? state_cache[state_cache_index(offsetof(SH2_struct,field))].rtlreg \
+    (state_cache_index(offsetof(SH2State,field)) >= 0 \
+     && state_cache[state_cache_index(offsetof(SH2State,field))].fixed \
+     ? state_cache[state_cache_index(offsetof(SH2State,field))].rtlreg \
      : 0)
 #else
 # define STATE_CACHE_FIXED_REG(field)  0
@@ -2910,9 +3062,9 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
  * can be modified */
 #ifdef OPTIMIZE_STATE_BLOCK
 # define STATE_CACHE_FIXED_REG_WRITABLE(field) \
-    (state_cache_index(offsetof(SH2_struct,field)) >= 0 \
-     ? state_cache[state_cache_index(offsetof(SH2_struct,field))].fixed \
-       && state_cache[state_cache_index(offsetof(SH2_struct,field))].flush \
+    (state_cache_index(offsetof(SH2State,field)) >= 0 \
+     ? state_cache[state_cache_index(offsetof(SH2State,field))].fixed \
+       && state_cache[state_cache_index(offsetof(SH2State,field))].flush \
      : 0)
 #else
 # define STATE_CACHE_FIXED_REG_WRITABLE(field)  0
@@ -2921,9 +3073,9 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
 /* Clear any fixed RTL register for the given state block field */
 #ifdef OPTIMIZE_STATE_BLOCK
 # define STATE_CACHE_CLEAR_FIXED_REG(field)  do { \
-    if (state_cache_index(offsetof(SH2_struct,field)) >= 0) { \
-        state_cache[state_cache_index(offsetof(SH2_struct,field))].fixed = 0; \
-        state_cache[state_cache_index(offsetof(SH2_struct,field))].flush = 0; \
+    if (state_cache_index(offsetof(SH2State,field)) >= 0) { \
+        state_cache[state_cache_index(offsetof(SH2State,field))].fixed = 0; \
+        state_cache[state_cache_index(offsetof(SH2State,field))].flush = 0; \
     } \
 } while (0)
 #else
@@ -3221,7 +3373,7 @@ static int do_load_abs(const JitEntry *entry, uint32_t dest, uint32_t address,
  */
 static int do_load_reg(const JitEntry *entry, uint32_t dest,
                        unsigned int sh2reg, int32_t offset, unsigned int type,
-                       int postinc, const SH2_struct *state,
+                       int postinc, const SH2State *state,
                        uint32_t state_reg)
 {
     const int postinc_size =
@@ -3229,7 +3381,7 @@ static int do_load_reg(const JitEntry *entry, uint32_t dest,
         type==SH2_ACCESS_TYPE_L ? 4 : type==SH2_ACCESS_TYPE_W ? 2 : 1;
 
 #ifdef OPTIMIZE_STATE_BLOCK
-    offset += state_cache[state_cache_index(offsetof(SH2_struct,regs.R[sh2reg]))].offset;
+    offset += state_cache[state_cache_index(offsetof(SH2State,R[sh2reg]))].offset;
 #endif
 
     if (!pointer_status[sh2reg].known && pointer_status[sh2reg].source != 0) {
@@ -3258,7 +3410,7 @@ static int do_load_reg(const JitEntry *entry, uint32_t dest,
     if (pointer_status[sh2reg].known) {
 
         DECLARE_REG(address);
-        LOAD_STATE_ALLOC_KEEPOFS(address, regs.R[sh2reg]);
+        LOAD_STATE_ALLOC_KEEPOFS(address, R[sh2reg]);
 
         if (pointer_status[sh2reg].rtl_basereg) {
 
@@ -3382,7 +3534,7 @@ static int do_load_reg(const JitEntry *entry, uint32_t dest,
     } else {  // !pointer_status[sh2reg].known
 
         DECLARE_REG(address);
-        LOAD_STATE_ALLOC_KEEPOFS(address, regs.R[sh2reg]);
+        LOAD_STATE_ALLOC_KEEPOFS(address, R[sh2reg]);
         if (optimization_flags & SH2_OPTIMIZE_POINTERS) {
             if (!pointer_status[sh2reg].rtl_basereg) {
                 DEFINE_REG(page);
@@ -3414,7 +3566,7 @@ static int do_load_reg(const JitEntry *entry, uint32_t dest,
     }
 
     if (postinc_size) {
-        ADDI_STATE_NOREG(regs.R[sh2reg], postinc_size);
+        ADDI_STATE_NOREG(R[sh2reg], postinc_size);
     }
     return 1;
 }
@@ -3440,10 +3592,10 @@ static inline int log_store(const JitEntry *entry, uint32_t address,
 {
 #if defined(TRACE)
 
-    static void * const logfuncs[] = {
-        [SH2_ACCESS_TYPE_B] = sh2_trace_writeb,
-        [SH2_ACCESS_TYPE_W] = sh2_trace_writew,
-        [SH2_ACCESS_TYPE_L] = sh2_trace_writel,
+    static SH2TraceAccessCallback ** const logfunc_ptrs[] = {
+        [SH2_ACCESS_TYPE_B] = &trace_storeb_callback,
+        [SH2_ACCESS_TYPE_W] = &trace_storew_callback,
+        [SH2_ACCESS_TYPE_L] = &trace_storel_callback,
     };
     DEFINE_REG(funcptr);
     DECLARE_REG(addr_param);
@@ -3456,7 +3608,7 @@ static inline int log_store(const JitEntry *entry, uint32_t address,
     } else {
         addr_param = address;
     }
-    MOVEA(funcptr, logfuncs[type]);
+    MOVEA(funcptr, *logfunc_ptrs[type]);
     CALL_NORET(addr_param, src, funcptr);
 
 #elif defined(TRACE_STEALTH)
@@ -3775,8 +3927,7 @@ static int do_store_abs(const JitEntry *entry, uint32_t address, uint32_t src,
  */
 static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
                         uint32_t src, int32_t offset, unsigned int type,
-                        int predec, const SH2_struct *state,
-                        uint32_t state_reg)
+                        int predec, const SH2State *state, uint32_t state_reg)
 {
     /* Half of a JIT page, in bytes (used when deciding whether to perform
      * a check for overwrites of translated code) */
@@ -3787,11 +3938,11 @@ static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
         type==SH2_ACCESS_TYPE_L ? 4 :
         type==SH2_ACCESS_TYPE_W ? 2 : 1;
     if (predec_size) {
-        ADDI_STATE_NOREG(regs.R[sh2reg], -predec_size);
+        ADDI_STATE_NOREG(R[sh2reg], -predec_size);
     }
 
 #ifdef OPTIMIZE_STATE_BLOCK
-    offset += state_cache[state_cache_index(offsetof(SH2_struct,regs.R[sh2reg]))].offset;
+    offset += state_cache[state_cache_index(offsetof(SH2State,R[sh2reg]))].offset;
 #endif
 
     if (!pointer_status[sh2reg].known && pointer_status[sh2reg].source != 0) {
@@ -3819,7 +3970,7 @@ static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
     }
 
     DECLARE_REG(address);
-    LOAD_STATE_ALLOC_KEEPOFS(address, regs.R[sh2reg]);
+    LOAD_STATE_ALLOC_KEEPOFS(address, R[sh2reg]);
 
     if (pointer_status[sh2reg].known) {
 
@@ -4129,7 +4280,7 @@ static int check_cycles(const JitEntry *entry, uint32_t state_reg)
     DECLARE_REG(cycles);
     LOAD_STATE_ALLOC(cycles, cycles);
     DECLARE_REG(cycle_limit);
-    LOAD_STATE_ALLOC(cycle_limit, psp.cycle_limit);
+    LOAD_STATE_ALLOC(cycle_limit, cycle_limit);
     DEFINE_REG(test);
     SLTS(test, cycles, cycle_limit);
     CREATE_LABEL(no_interrupt);
@@ -4163,7 +4314,7 @@ static int check_cycles_and_goto(const JitEntry *entry, uint32_t state_reg,
     DECLARE_REG(cycles);
     LOAD_STATE_ALLOC(cycles, cycles);
     DECLARE_REG(cycle_limit);
-    LOAD_STATE_ALLOC(cycle_limit, psp.cycle_limit);
+    LOAD_STATE_ALLOC(cycle_limit, cycle_limit);
     DEFINE_REG(test);
     SLTS(test, cycles, cycle_limit);
     GOTO_IF_NZ(label, test);
@@ -4177,7 +4328,7 @@ static int check_cycles_and_goto(const JitEntry *entry, uint32_t state_reg,
 
 /**
  * branch_static:  Generate code to branch to a static address.  The
- * address is assumed to be stored in state->psp.branch_target.
+ * address is assumed to be stored in state->branch_target.
  * Implements the JUMP_STATIC() macro used by the decoding core.
  *
  * [Parameters]
@@ -4187,22 +4338,21 @@ static int check_cycles_and_goto(const JitEntry *entry, uint32_t state_reg,
  * [Return value]
  *     Nonzero on success, zero on failure
  */
-static int branch_static(SH2_struct *state, JitEntry *entry,
-                         uint32_t state_reg)
+static int branch_static(SH2State *state, JitEntry *entry, uint32_t state_reg)
 {
-    if (state->psp.branch_target < jit_PC
-     && state->psp.branch_target != entry->sh2_start
+    if (state->branch_target < jit_PC
+     && state->branch_target != entry->sh2_start
     ) {
         FLUSH_STATE_CACHE();
         RETURN();
         return 1;
     }
 
-    uint32_t target_label = btcache_lookup(state->psp.branch_target);
+    uint32_t target_label = btcache_lookup(state->branch_target);
     if (!target_label) {
 #ifdef JIT_DEBUG_VERBOSE
         DMSG("Unresolved branch from %08X to %08X", jit_PC - 2,
-             (int)state->psp.branch_target);
+             (int)state->branch_target);
 #endif
         target_label = rtl_alloc_label(entry->rtl);
         if (UNLIKELY(!target_label)) {
@@ -4214,14 +4364,14 @@ static int branch_static(SH2_struct *state, JitEntry *entry,
             RETURN();
             return 1;
         }
-        if (!record_unresolved_branch(entry, state->psp.branch_target,
+        if (!record_unresolved_branch(entry, state->branch_target,
                                       target_label)) {
             return 0;
         }
     }
 
 #ifndef TRACE_LIKE_SH2INT  // Always check cycles for sh2int compatibility
-    if (state->psp.branch_target < jit_PC) {
+    if (state->branch_target < jit_PC) {
 #endif
         check_cycles_and_goto(entry, state_reg, target_label);
 #ifndef TRACE_LIKE_SH2INT
@@ -4247,7 +4397,7 @@ static int branch_static(SH2_struct *state, JitEntry *entry,
  * [Return value]
  *     Nonzero on success, zero on failure
  */
-static int opcode_init(SH2_struct *state, JitEntry *entry, uint32_t state_reg,
+static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
                        unsigned int opcode, int recursing)
 {
     unsigned int index;
@@ -4271,14 +4421,14 @@ static int opcode_init(SH2_struct *state, JitEntry *entry, uint32_t state_reg,
     if (!state->delay) {
         check_cycles(entry, state_reg);
     } else {  // It's a delayed-branch instruction
-        if (state->psp.branch_type == SH2BRTYPE_BT_S
-         || state->psp.branch_type == SH2BRTYPE_BF_S
+        if (state->branch_type == SH2BRTYPE_BT_S
+         || state->branch_type == SH2BRTYPE_BF_S
         ) {
             CREATE_LABEL(no_branch);
-            if (state->psp.branch_type == SH2BRTYPE_BT_S) {
-                GOTO_IF_NZ(no_branch, state->psp.branch_cond_reg);
+            if (state->branch_type == SH2BRTYPE_BT_S) {
+                GOTO_IF_NZ(no_branch, state->branch_cond_reg);
             } else {
-                GOTO_IF_Z(no_branch, state->psp.branch_cond_reg);
+                GOTO_IF_Z(no_branch, state->branch_cond_reg);
             }
             check_cycles(entry, state_reg);
             DEFINE_LABEL(no_branch);
@@ -4373,14 +4523,14 @@ static int opcode_init(SH2_struct *state, JitEntry *entry, uint32_t state_reg,
         if (!state->delay) {
             check_cycles(entry, state_reg);
         } else {  // It's a delayed-branch instruction
-            if (state->psp.branch_type == SH2BRTYPE_BT_S
-             || state->psp.branch_type == SH2BRTYPE_BF_S
+            if (state->branch_type == SH2BRTYPE_BT_S
+             || state->branch_type == SH2BRTYPE_BF_S
             ) {
                 CREATE_LABEL(no_branch);
-                if (state->psp.branch_type == SH2BRTYPE_BT_S) {
-                    GOTO_IF_NZ(no_branch, state->psp.branch_cond);
+                if (state->branch_type == SH2BRTYPE_BT_S) {
+                    GOTO_IF_NZ(no_branch, state->branch_cond);
                 } else {
-                    GOTO_IF_Z(no_branch, state->psp.branch_cond);
+                    GOTO_IF_Z(no_branch, state->branch_cond);
                 }
                 check_cycles(entry, state_reg);
                 DEFINE_LABEL(no_branch);
@@ -4484,13 +4634,13 @@ static int opcode_init(SH2_struct *state, JitEntry *entry, uint32_t state_reg,
      */
 #ifdef TRACE_STEALTH
     APPEND(NOP, 0, 0x80000000 | jit_PC, 0, 0);
-    if (state->psp.pending_select && !state->delay) {
-        APPEND(NOP, 0, 0x9F000000 | (!state->psp.select_sense) << 16
-                                  | state->psp.branch_cond_reg, 0, 0);
+    if (state->pending_select && !state->delay) {
+        APPEND(NOP, 0, 0x9F000000 | (!state->select_sense) << 16
+                                  | state->branch_cond_reg, 0, 0);
     }
 # ifdef OPTIMIZE_STATE_BLOCK
     APPEND(NOP, 0, 0x98000000 | STATE_CACHE_OFFSET(cycles), 0, 0);
-    APPEND(NOP, 0, 0x90000000 | state_cache[state_cache_index(offsetof(SH2_struct,cycles))].rtlreg, 0, 0);
+    APPEND(NOP, 0, 0x90000000 | state_cache[state_cache_index(offsetof(SH2State,cycles))].rtlreg, 0, 0);
 # else
     APPEND(NOP, 0, 0x98000000, 0, 0);
     APPEND(NOP, 0, 0x90000000, 0, 0);
@@ -4515,7 +4665,7 @@ static int opcode_init(SH2_struct *state, JitEntry *entry, uint32_t state_reg,
  * [Return value]
  *     Nonzero on success, zero on error
  */
-static int translate_block(SH2_struct *state, JitEntry *entry)
+static int translate_block(SH2State *state, JitEntry *entry)
 {
     const uint16_t *fetch_base =
         (const uint16_t *)fetch_pages[entry->sh2_start >> 19];
@@ -4564,21 +4714,21 @@ static int translate_block(SH2_struct *state, JitEntry *entry)
     clear_state_cache(1);  // Should always be clear here, but just in case
     stored_PC = entry->sh2_start;  // So loops can skip the store if optimized
 #endif
-    state->psp.just_branched = 0;
-    state->psp.mac_is_zero = 0;
-    state->psp.cached_shift_count = 0;
+    state->just_branched = 0;
+    state->mac_is_zero = 0;
+    state->cached_shift_count = 0;
 #ifdef OPTIMIZE_VARIABLE_SHIFTS
-    state->psp.varshift_target_PC = 0;
+    state->varshift_target_PC = 0;
 #endif
 #ifdef OPTIMIZE_DIVISION
-    state->psp.division_target_PC = 0;
+    state->division_target_PC = 0;
 #endif
 
     /* Check whether saturation code can potentially be optimized out of
      * MAC instructions. */
 
     can_optimize_mac_nosat = (optimization_flags & SH2_OPTIMIZE_MAC_NOSAT)
-                          && !(state->regs.SR.all & SR_S);
+                          && !(state->SR & SR_S);
 
     /* Mark which registers are currently valid pointers.  Note that we
      * currently can't detect ROM pointers, because the pointer analysis
@@ -4588,10 +4738,10 @@ static int translate_block(SH2_struct *state, JitEntry *entry)
     pointer_regs = 0;
     if (optimization_flags & SH2_OPTIMIZE_POINTERS) {
         for (index = 0; index < 16; index++) {
-            if ((state->regs.R[index] & 0xDFF00000) == 0x00200000
-             || (state->regs.R[index] & 0xDE000000) == 0x06000000
-             || (state->regs.R[index] & 0xDFF80000) == 0x05C00000
-             || (state->regs.R[index] & 0xDFF00000) == 0x05E00000
+            if ((state->R[index] & 0xDFF00000) == 0x00200000
+             || (state->R[index] & 0xDE000000) == 0x06000000
+             || (state->R[index] & 0xDFF80000) == 0x05C00000
+             || (state->R[index] & 0xDFF00000) == 0x05E00000
             ) {
                 pointer_regs |= 1 << index;
             }
@@ -4623,13 +4773,13 @@ static int translate_block(SH2_struct *state, JitEntry *entry)
 #ifdef OPTIMIZE_LOOP_REGISTERS
     if (can_optimize_loop) {
         loop_live_registers |=
-              1<<state_cache_index(offsetof(SH2_struct,cycles))
-            | 1<<state_cache_index(offsetof(SH2_struct,psp.cycle_limit));
+              1<<state_cache_index(offsetof(SH2State,cycles))
+            | 1<<state_cache_index(offsetof(SH2State,cycle_limit));
         loop_load_registers |=
-              1<<state_cache_index(offsetof(SH2_struct,cycles))
-            | 1<<state_cache_index(offsetof(SH2_struct,psp.cycle_limit));
+              1<<state_cache_index(offsetof(SH2State,cycles))
+            | 1<<state_cache_index(offsetof(SH2State,cycle_limit));
         loop_changed_registers |=
-              1<<state_cache_index(offsetof(SH2_struct,cycles));
+              1<<state_cache_index(offsetof(SH2State,cycles));
 # ifdef JIT_DEBUG_VERBOSE
         DMSG("Optimizing loop at %08X: live=%08X load=%08X changed=%08X"
              " invptr=%08X", entry->sh2_start, loop_live_registers,
@@ -4690,7 +4840,7 @@ static int translate_block(SH2_struct *state, JitEntry *entry)
             ASSERT(invalidate_label = rtl_alloc_label(entry->rtl));
         }
         DECLARE_REG(SR);
-        LOAD_STATE_ALLOC(SR, regs.SR);
+        LOAD_STATE_ALLOC(SR, SR);
         DEFINE_REG(S);
         ANDI(S, SR, SR_S);
         GOTO_IF_NZ(invalidate_label, S);
@@ -4766,7 +4916,7 @@ static int translate_block(SH2_struct *state, JitEntry *entry)
      * block. */
 
 #ifdef JIT_BRANCH_PREDICT_STATIC
-    entry->num_static_branches = state->psp.just_branched ? 0 : 1;
+    entry->num_static_branches = state->just_branched ? 0 : 1;
     for (index = 0; index < lenof(unres_branches); index++) {
         if (unres_branches[index].sh2_target != 0) {
             entry->num_static_branches++;
@@ -4791,11 +4941,11 @@ static int translate_block(SH2_struct *state, JitEntry *entry)
     /* Flush the state block cache and terminate the code if it can fall
      * off the end of the block. */
 
-    if (!state->psp.just_branched) {
+    if (!state->just_branched) {
         ASSERT(writeback_state_cache(entry, state_reg, 1));
         clear_state_cache(0);
 #ifdef JIT_BRANCH_PREDICT_STATIC
-        if (state->psp.need_interrupt_check) {
+        if (state->need_interrupt_check) {
             /* We're returning after LDC SR, so we have to pass control
              * back to the main loop to check for interrupts */
             RETURN();
@@ -4895,7 +5045,7 @@ static int translate_block(SH2_struct *state, JitEntry *entry)
  * [Return value]
  *     Nonzero on success, zero on error
  */
-static int setup_pointers(SH2_struct * const state, JitEntry * const entry,
+static int setup_pointers(SH2State * const state, JitEntry * const entry,
                           const unsigned int state_reg,
                           const int skip_preconditions,
                           unsigned int * const invalidate_label_ptr)
@@ -4915,7 +5065,7 @@ static int setup_pointers(SH2_struct * const state, JitEntry * const entry,
                  * make sure the pointer is still valid (unless it's the
                  * stack pointer and we're optimizing), then assign a base
                  * register. */
-                const uint32_t reg_address = state->regs.R[index];
+                const uint32_t reg_address = state->R[index];
                 const unsigned int addr_shift =
                     ((reg_address & 0x0F000000) == 0x05000000) ? 19 : 20;
                 if (index != 15 || !(optimization_flags & SH2_OPTIMIZE_STACK)){
@@ -4924,7 +5074,7 @@ static int setup_pointers(SH2_struct * const state, JitEntry * const entry,
                                    rtl_alloc_label(entry->rtl));
                     }
                     DECLARE_REG(regval);
-                    LOAD_STATE_ALLOC(regval, regs.R[index]);
+                    LOAD_STATE_ALLOC(regval, R[index]);
                     DEFINE_REG(highbits);
                     SRLI(highbits, regval, addr_shift);
                     DEFINE_REG(test);
@@ -4944,7 +5094,7 @@ static int setup_pointers(SH2_struct * const state, JitEntry * const entry,
                     direct_jit_pages[reg_address>>19];
                 if (index == 15 && (optimization_flags & SH2_OPTIMIZE_STACK)) {
                     DECLARE_REG(regval);
-                    LOAD_STATE_ALLOC(regval, regs.R[index]);
+                    LOAD_STATE_ALLOC(regval, R[index]);
                     DEFINE_REG(ptrreg);
                     ADD(ptrreg, basereg, regval);
                     stack_pointer = ptrreg;
@@ -4961,7 +5111,7 @@ static int setup_pointers(SH2_struct * const state, JitEntry * const entry,
                                    rtl_alloc_label(entry->rtl));
                 }
                 DECLARE_REG(regval);
-                LOAD_STATE_ALLOC(regval, regs.R[index]);
+                LOAD_STATE_ALLOC(regval, R[index]);
                 DEFINE_REG(page);
                 SRLI(page, regval, 19);
                 DEFINE_REG(page_ofs);
@@ -5810,12 +5960,12 @@ static inline void check_loop_registers(
     /* And other register indices */
     const unsigned int R0  = 0;
     const unsigned int R15 = 15;
-    const unsigned int SR  = state_cache_index(offsetof(SH2_struct,regs.SR));
-    const unsigned int GBR = state_cache_index(offsetof(SH2_struct,regs.GBR));
-    const unsigned int VBR = state_cache_index(offsetof(SH2_struct,regs.VBR));
-    const unsigned int MACH= state_cache_index(offsetof(SH2_struct,regs.MACH));
-    const unsigned int MACL= state_cache_index(offsetof(SH2_struct,regs.MACL));
-    const unsigned int PR  = state_cache_index(offsetof(SH2_struct,regs.PR));
+    const unsigned int SR  = state_cache_index(offsetof(SH2State,SR));
+    const unsigned int GBR = state_cache_index(offsetof(SH2State,GBR));
+    const unsigned int VBR = state_cache_index(offsetof(SH2State,VBR));
+    const unsigned int MACH= state_cache_index(offsetof(SH2State,MACH));
+    const unsigned int MACL= state_cache_index(offsetof(SH2State,MACL));
+    const unsigned int PR  = state_cache_index(offsetof(SH2State,PR));
     #define SR_GBR_VBR(x)    ((x)==0 ? SR : (x)==1 ? GBR : VBR)
     #define MACH_MACL_PR(x)  ((x)==0 ? MACH : (x)==1 ? MACL : PR)
 
@@ -6052,7 +6202,7 @@ static inline int optimize_branch_select(
  *                Bit 31 is 1 if execution stopped due to a subroutine
  *                   call, else 0
  */
-static inline void jit_exec(SH2_struct *state, JitEntry *entry)
+static inline void jit_exec(SH2State *state, JitEntry *entry)
 {
     jit_timestamp++;
     entry->running = 1;
@@ -6070,7 +6220,7 @@ static inline void jit_exec(SH2_struct *state, JitEntry *entry)
 
 #else  // !JIT_DEBUG_INTERPRET_RTL
 
-    const void (*native_code)(SH2_struct *state) = entry->native_code;
+    const void (*native_code)(SH2State *state) = entry->native_code;
 # ifdef JIT_PROFILE
     /* For systems that have an efficient way to measure execution time
      * (such as a performance counter register), we could use that to
@@ -6123,7 +6273,7 @@ static inline void jit_exec(SH2_struct *state, JitEntry *entry)
  */
 
 #define DECODE_INSN_PARAMS \
-    const uint16_t *fetch, SH2_struct *state, JitEntry *entry, \
+    const uint16_t *fetch, SH2State *state, JitEntry *entry, \
     const unsigned int state_reg, const int recursing
 
 #ifdef TRACE
@@ -6159,7 +6309,7 @@ static inline void jit_exec(SH2_struct *state, JitEntry *entry)
  * [Return value]
  *     Nonzero on success, zero on error
  */
-static int translate_insn(SH2_struct *state, JitEntry *entry,
+static int translate_insn(SH2State *state, JitEntry *entry,
                           unsigned int state_reg, int recursing)
 {
     /* Get a fetch pointer for the current PC */
@@ -6223,7 +6373,7 @@ static int add_static_branch_terminator(JitEntry *entry,
     DECLARE_REG(cycles);
     LOAD_STATE_ALLOC(cycles, cycles);
     DECLARE_REG(cycle_limit);
-    LOAD_STATE_ALLOC(cycle_limit, psp.cycle_limit);
+    LOAD_STATE_ALLOC(cycle_limit, cycle_limit);
     DEFINE_REG(native_target);
     LOAD_PTR(native_target, bti, offsetof(BranchTargetInfo,native_target));
     DEFINE_REG(can_continue);
@@ -6232,7 +6382,7 @@ static int add_static_branch_terminator(JitEntry *entry,
     /* If we already have a prediction, jump to it (or return if we're out
      * of cycles) */
     GOTO_IF_Z(label_not_predicted, predicted_entry);
-    STORE_STATE_PTR(psp.current_entry, predicted_entry);
+    STORE_STATE_PTR(current_entry, predicted_entry);
     GOTO_IF_Z(label_return, can_continue);
     RETURN_TO(native_target);
 
@@ -6246,7 +6396,7 @@ static int add_static_branch_terminator(JitEntry *entry,
     MOVEA(ptr_update_branch_target, update_branch_target);
     DEFINE_REG(new_entry);
     CALL(new_entry, bti, addr_reg, ptr_update_branch_target);
-    STORE_STATE_PTR(psp.current_entry, new_entry);
+    STORE_STATE_PTR(current_entry, new_entry);
     GOTO_IF_Z(label_return, new_entry);
     DEFINE_REG(new_target);
 #ifdef JIT_DEBUG_INTERPRET_RTL
@@ -6406,13 +6556,13 @@ static int writeback_state_cache(const JitEntry *entry, unsigned int state_reg,
 #ifdef OPTIMIZE_STATE_BLOCK
 
     if (dirty_SR_T) {
-        const int index_SR = state_cache_index(offsetof(SH2_struct,regs.SR));
+        const int index_SR = state_cache_index(offsetof(SH2State,SR));
         DECLARE_REG(old_SR);
         if (state_cache[index_SR].rtlreg) {
             old_SR = state_cache[index_SR].rtlreg;
         } else {
             ALLOC_REG(old_SR);
-            LOAD_W(old_SR, state_reg, offsetof(SH2_struct,regs.SR));
+            LOAD_W(old_SR, state_reg, offsetof(SH2State,SR));
         }
         DECLARE_REG(new_SR);
         if (state_cache[index_SR].fixed) {
@@ -6432,7 +6582,7 @@ static int writeback_state_cache(const JitEntry *entry, unsigned int state_reg,
          || (flush_fixed && state_cache[index].flush)
         ) {
             DECLARE_REG(rtlreg);
-            if (index == state_cache_index(offsetof(SH2_struct,regs.PC))
+            if (index == state_cache_index(offsetof(SH2State,PC))
              && cached_PC != 0
             ) {
                 ALLOC_REG(rtlreg);
@@ -6460,7 +6610,7 @@ static int writeback_state_cache(const JitEntry *entry, unsigned int state_reg,
             if (!state_cache[index].fixed || flush_fixed) {
                 STORE_W(state_reg, rtlreg, state_cache_field(index));
                 state_dirty &= ~(1 << index);
-                if (index == state_cache_index(offsetof(SH2_struct,regs.PC))) {
+                if (index == state_cache_index(offsetof(SH2State,PC))) {
                     stored_PC = 0;
                 }
 # ifdef TRACE_STEALTH

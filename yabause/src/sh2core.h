@@ -354,80 +354,44 @@ typedef struct
    u8 breakpointEnabled;
    breakpoint_struct bp;
 
-   /* Data used by PSP SH-2 core */
-   struct
-   {
-      /* Clock cycle limit for execution */
-      u32 cycle_limit;
-
-      /* Flag indicating whether we should check for interrupts (set by
-       * instructions that modify SR) */
-      u8 need_interrupt_check;
-
-      /* Currently-executing block */
-      struct JitEntry_ *current_entry;
-
-      /* Pending branch type (to be executed after "delay" instructions) */
-      enum {SH2BRTYPE_NONE = 0, // No branch pending
-            SH2BRTYPE_STATIC,   // Unconditional static (relative) branch
-            SH2BRTYPE_DYNAMIC,  // Unconditional dynamic branch
-            SH2BRTYPE_BT,       // Conditional static branch
-            SH2BRTYPE_BF,
-            SH2BRTYPE_BT_S,
-            SH2BRTYPE_BF_S,
-           } branch_type;
-      u32 branch_target;        // Target address (used by decoder)
-      u16 branch_target_reg;    // RTL register containing target address
-      u16 branch_cond_reg;      // For SH2BRTYPE_BT etc or pending_select,
-                                //    RTL register containing value of T bit
-      u16 branch_cycles;        // For conditional branches, number of cycles
-                                //    to add when branching
-      u8 branch_targets_rts;    // Nonzero if this branch targets an RTS/NOP
-      u8 loop_to_jsr;		// Nonzero if this branch is a loop branch
-                                //    targeting a JSR/BSR/BSRF which
-                                //    immediately precedes the current block
-      u8 pending_select;        // Nonzero if we're processing a branch which
-                                //    acts like a SELECT (?:) operation
-      u8 select_sense;          // For pending_select, nonzero if it's a BT
-                                //    or BT/S, zero if a BF or BF/S
-      u8 just_branched;         // Nonzero if we just executed a branch
-                                //    (used to determine whether a block of
-                                //    code can fall off the end)
-
-      /* Flag indicating whether MACH/MACL are known to be zero (used to
-       * optimize MAC instructions) */
-      u8 mac_is_zero;
-
-      /* Cached shift count (used to merge successive shift operations) */
-      u8 cached_shift_count;
-
-      /* Data for optimization of variable shifts */
-      u32 varshift_target_PC;   // First instruction following a variable
-                                //    shift sequence implemented with BRAF
-                                //    (0 if not in such a sequence)
-      u8 varshift_type;         // Type of variable shift
-      u8 varshift_Rcount;       // Count register for variable shifts
-      u8 varshift_max;          // Maximum count for variable shifts
-      u8 varshift_Rshift;       // Target register for variable shifts
-
-      /* Data for optimization of division operations */
-      u32 division_target_PC;   // PC of final DIV1 instruction (0 if not
-                                //    in the middle of an optimized division)
-      struct {
-         u16 Rquo, Rrem;    // Register numbers (quotient and remainder)
-         u32 quo, rem, SR;  // Result values for registers
-      } div_data;
-   } psp;
 } SH2_struct;
 
 typedef struct
 {
    int id;
    const char *Name;
+
    int (*Init)(void);
    void (*DeInit)(void);
    void (*Reset)(void);
    void FASTCALL (*Exec)(SH2_struct *context, u32 cycles);
+
+   void (*GetRegisters)(SH2_struct *context, sh2regs_struct *regs);
+   u32 (*GetGPR)(SH2_struct *context, int num);
+   u32 (*GetSR)(SH2_struct *context);
+   u32 (*GetGBR)(SH2_struct *context);
+   u32 (*GetVBR)(SH2_struct *context);
+   u32 (*GetMACH)(SH2_struct *context);
+   u32 (*GetMACL)(SH2_struct *context);
+   u32 (*GetPR)(SH2_struct *context);
+   u32 (*GetPC)(SH2_struct *context);
+
+   void (*SetRegisters)(SH2_struct *context, const sh2regs_struct *regs);
+   void (*SetGPR)(SH2_struct *context, int num, u32 value);
+   void (*SetSR)(SH2_struct *context, u32 value);
+   void (*SetGBR)(SH2_struct *context, u32 value);
+   void (*SetVBR)(SH2_struct *context, u32 value);
+   void (*SetMACH)(SH2_struct *context, u32 value);
+   void (*SetMACL)(SH2_struct *context, u32 value);
+   void (*SetPR)(SH2_struct *context, u32 value);
+   void (*SetPC)(SH2_struct *context, u32 value);
+
+   void (*SendInterrupt)(SH2_struct *context, u8 vector, u8 level);
+   int (*GetInterrupts)(SH2_struct *context,
+                        interrupt_struct interrupts[MAX_INTERRUPTS]);
+   void (*SetInterrupts)(SH2_struct *context, int num_interrupts,
+                         const interrupt_struct interrupts[MAX_INTERRUPTS]);
+
    void (*WriteNotify)(u32 start, u32 length);
 } SH2Interface_struct;
 

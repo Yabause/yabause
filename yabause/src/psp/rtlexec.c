@@ -39,8 +39,8 @@
 #include "rtl-internal.h"
 
 #ifdef RTL_TRACE_STEALTH_FOR_SH2
-# include "../sh2core.h"
-# include "../sh2trace.h"
+# include "sh2.h"
+# include "sh2-internal.h"
 #endif
 
 /*************************************************************************/
@@ -207,8 +207,8 @@ static inline int rtl_execute_insn(RTLBlock *block, uint32_t *index_ptr,
         if (insn->src_imm >> 28 == 0x8 || insn->src_imm >> 28 == 0xA) {
             /* Trace an instruction */
 
-            SH2_struct *sh2 = (SH2_struct *)state;
-            uint32_t *sh2_regs = (uint32_t *)&sh2->regs;
+            SH2State *sh2 = (SH2State *)state;
+            uint32_t *sh2_regs = (uint32_t *)&sh2;
             uint32_t saveregs[23];
             memcpy(saveregs, sh2_regs, sizeof(saveregs));
             uint32_t mask = block->sh2_regcache_mask;
@@ -240,7 +240,7 @@ static inline int rtl_execute_insn(RTLBlock *block, uint32_t *index_ptr,
             const uint32_t old_cycles = sh2->cycles;
             sh2->cycles = cached_cycles;
             if (do_trace) {
-                sh2_trace(sh2, insn->src_imm & 0x7FFFFFFF);
+                (*trace_insn_callback)(sh2, insn->src_imm & 0x7FFFFFFF);
             }
             sh2->cycles = old_cycles;
             memcpy(sh2_regs, saveregs, sizeof(saveregs));
@@ -264,11 +264,11 @@ static inline int rtl_execute_insn(RTLBlock *block, uint32_t *index_ptr,
             if (rtl_reg) {
                 if (sh2_reg & 0x80) {  // Used for SR.T
                     if (!(block->sh2_regcache_mask & 1<<16)) {
-                        SH2_struct *sh2 = (SH2_struct *)state;
-                        block->sh2_regcache[16] = sh2->regs.SR.all & ~1;
+                        SH2State *sh2 = (SH2State *)state;
+                        block->sh2_regcache[16] = sh2->SR & ~SR_T;
                         block->sh2_regcache_mask |= 1<<16;
                     } else {
-                        block->sh2_regcache[16] &= ~1;
+                        block->sh2_regcache[16] &= ~SR_T;
                     }
                     block->sh2_regcache[16] |= block->regs[rtl_reg].value;
                 } else {
@@ -311,9 +311,9 @@ static inline int rtl_execute_insn(RTLBlock *block, uint32_t *index_ptr,
             PRECOND(op>>28 == 0xE, return 1);
             const uint32_t src = block->regs[op & 0xFFFF].value;
             switch (insn->src_imm & 0xFFFF) {
-              case 1: sh2_trace_writeb(address, src); break;
-              case 2: sh2_trace_writew(address, src); break;
-              case 4: sh2_trace_writel(address, src); break;
+              case 1: (*trace_storeb_callback)(address, src); break;
+              case 2: (*trace_storew_callback)(address, src); break;
+              case 4: (*trace_storel_callback)(address, src); break;
               default:
                 DMSG("Invalid store trace type %u", insn->src_imm & 0xFF);
                 break;

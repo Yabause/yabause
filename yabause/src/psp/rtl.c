@@ -40,8 +40,8 @@
  * reducing the number of distinct operations that must be handled.
  * Note that most SH-2 instructions break down into multiple RTL
  * instructions; for example, "AND #imm,R0" might translate to:
- *     LOAD_IMM reg1, #offsetof(SH2_struct,regs.R[0])
- *     ADD      reg2, state_reg, reg1 // state_reg holds the SH2_struct pointer
+ *     LOAD_IMM reg1, #offsetof(SH2State,R[0])
+ *     ADD      reg2, state_reg, reg1 // state_reg holds the SH2State pointer
  *     LOAD_W   reg3, (reg2)
  *     LOAD_IMM reg4, #imm
  *     AND      reg5, reg3, reg4

@@ -24,12 +24,14 @@
 #include "../error.h"
 #include "../memory.h"
 #include "../sh2core.h"
+#include "../sh2trace.h"
 #include "../vdp1.h"
 #include "../vdp2.h"
 
 #include "config.h"
 #include "psp-sh2.h"
 #include "sh2.h"
+#include "sh2-internal.h"  // For TRACE, etc. (so we don't call sh2_trace_add_cycles() if not needed)
 
 /*************************************************************************/
 /************************* Interface definition **************************/
@@ -41,24 +43,84 @@ static int psp_sh2_init(void);
 static void psp_sh2_deinit(void);
 static void psp_sh2_reset(void);
 static FASTCALL void psp_sh2_exec(SH2_struct *state, u32 cycles);
+
+static void psp_sh2_get_registers(SH2_struct *yabause_state,
+                                  sh2regs_struct *regs);
+static u32 psp_sh2_get_GPR(SH2_struct *yabause_state, int num);
+static u32 psp_sh2_get_SR(SH2_struct *yabause_state);
+static u32 psp_sh2_get_GBR(SH2_struct *yabause_state);
+static u32 psp_sh2_get_VBR(SH2_struct *yabause_state);
+static u32 psp_sh2_get_MACH(SH2_struct *yabause_state);
+static u32 psp_sh2_get_MACL(SH2_struct *yabause_state);
+static u32 psp_sh2_get_PR(SH2_struct *yabause_state);
+static u32 psp_sh2_get_PC(SH2_struct *yabause_state);
+
+static void psp_sh2_set_registers(SH2_struct *yabause_state,
+                                  const sh2regs_struct *regs);
+static void psp_sh2_set_GPR(SH2_struct *yabause_state, int num, u32 value);
+static void psp_sh2_set_SR(SH2_struct *yabause_state, u32 value);
+static void psp_sh2_set_GBR(SH2_struct *yabause_state, u32 value);
+static void psp_sh2_set_VBR(SH2_struct *yabause_state, u32 value);
+static void psp_sh2_set_MACH(SH2_struct *yabause_state, u32 value);
+static void psp_sh2_set_MACL(SH2_struct *yabause_state, u32 value);
+static void psp_sh2_set_PR(SH2_struct *yabause_state, u32 value);
+static void psp_sh2_set_PC(SH2_struct *yabause_state, u32 value);
+
+static void psp_sh2_send_interrupt(SH2_struct *yabause_state,
+                                   u8 vector, u8 level);
+static int psp_sh2_get_interrupts(SH2_struct *yabause_state,
+                                  interrupt_struct interrupts[MAX_INTERRUPTS]);
+static void psp_sh2_set_interrupts(SH2_struct *yabause_state,
+                                   int num_interrupts,
+                                   const interrupt_struct interrupts[MAX_INTERRUPTS]);
+
 static void psp_sh2_write_notify(u32 start, u32 length);
 
 
 /* Module interface definition */
 
 SH2Interface_struct SH2PSP = {
-    .id          = SH2CORE_PSP,
-    .Name        = "PSP SH-2 Core",
-    .Init        = psp_sh2_init,
-    .DeInit      = psp_sh2_deinit,
-    .Reset       = psp_sh2_reset,
-    .Exec        = psp_sh2_exec,
-    .WriteNotify = psp_sh2_write_notify,
+    .id            = SH2CORE_PSP,
+    .Name          = "PSP SH-2 Core",
+
+    .Init          = psp_sh2_init,
+    .DeInit        = psp_sh2_deinit,
+    .Reset         = psp_sh2_reset,
+    .Exec          = psp_sh2_exec,
+
+    .GetRegisters  = psp_sh2_get_registers,
+    .GetGPR        = psp_sh2_get_GPR,
+    .GetSR         = psp_sh2_get_SR,
+    .GetGBR        = psp_sh2_get_GBR,
+    .GetVBR        = psp_sh2_get_VBR,
+    .GetMACH       = psp_sh2_get_MACH,
+    .GetMACL       = psp_sh2_get_MACL,
+    .GetPR         = psp_sh2_get_PR,
+    .GetPC         = psp_sh2_get_PC,
+
+    .SetRegisters  = psp_sh2_set_registers,
+    .SetGPR        = psp_sh2_set_GPR,
+    .SetSR         = psp_sh2_set_SR,
+    .SetGBR        = psp_sh2_set_GBR,
+    .SetVBR        = psp_sh2_set_VBR,
+    .SetMACH       = psp_sh2_set_MACH,
+    .SetMACL       = psp_sh2_set_MACL,
+    .SetPR         = psp_sh2_set_PR,
+    .SetPC         = psp_sh2_set_PC,
+
+    .SendInterrupt = psp_sh2_send_interrupt,
+    .GetInterrupts = psp_sh2_get_interrupts,
+    .SetInterrupts = psp_sh2_set_interrupts,
+
+    .WriteNotify   = psp_sh2_write_notify,
 };
 
 /*************************************************************************/
 /************************ Local data definitions *************************/
 /*************************************************************************/
+
+/* Master and slave SH-2 state blocks */
+static SH2State *master_SH2, *slave_SH2;
 
 /* Write buffers for low and high RAM */
 static void *write_buffer_lram, *write_buffer_hram;
@@ -66,8 +128,9 @@ static void *write_buffer_lram, *write_buffer_hram;
 /*-----------------------------------------------------------------------*/
 
 /* Local function declarations */
-static void invalid_opcode_handler(SH2_struct *state, uint32_t PC,
+static void invalid_opcode_handler(SH2State *state, uint32_t PC,
                                    uint16_t opcode);
+static FASTCALL void trace_insn_handler(SH2State *state, uint32_t address);
 
 /*************************************************************************/
 /********************** External interface routines **********************/
@@ -83,6 +146,14 @@ static void invalid_opcode_handler(SH2_struct *state, uint32_t PC,
  */
 static int psp_sh2_init(void)
 {
+    master_SH2 = sh2_create();
+    slave_SH2 = sh2_create();
+    if (!master_SH2 || !slave_SH2) {
+        return -1;
+    }
+    master_SH2->userdata = MSH2;
+    slave_SH2->userdata = SSH2;
+
     write_buffer_lram = sh2_alloc_direct_write_buffer(0x100000);
     write_buffer_hram = sh2_alloc_direct_write_buffer(0x100000);
     if (UNLIKELY(!write_buffer_lram) || UNLIKELY(!write_buffer_hram)) {
@@ -118,6 +189,10 @@ static int psp_sh2_init(void)
     sh2_set_jit_data_limit(200*1000000);
 #endif
     sh2_set_invalid_opcode_callback(invalid_opcode_handler);
+    sh2_set_trace_insn_callback(trace_insn_handler);
+    sh2_set_trace_storeb_callback((SH2TraceAccessCallback *)sh2_trace_writeb);
+    sh2_set_trace_storew_callback((SH2TraceAccessCallback *)sh2_trace_writew);
+    sh2_set_trace_storel_callback((SH2TraceAccessCallback *)sh2_trace_writel);
 
     return 0;
 }
@@ -134,7 +209,8 @@ static int psp_sh2_init(void)
  */
 static void psp_sh2_deinit(void)
 {
-    sh2_cleanup();
+    sh2_destroy(master_SH2);
+    sh2_destroy(slave_SH2);
 
     free(write_buffer_lram);
     free(write_buffer_hram);
@@ -230,7 +306,8 @@ static void psp_sh2_reset(void)
 #undef SET_EXEC_PAGE
 #undef SET_BYTE_PAGE
 
-    sh2_reset();
+    sh2_reset(master_SH2);
+    sh2_reset(slave_SH2);
 }
 
 /*************************************************************************/
@@ -239,14 +316,256 @@ static void psp_sh2_reset(void)
  * psp_sh2_exec:  Execute instructions for the given number of clock cycles.
  *
  * [Parameters]
- *      state: SH-2 processor state
- *     cycles: Number of clock cycles to execute
+ *     yabause_state: Yabause SH-2 context structure
+ *            cycles: Number of clock cycles to execute
  * [Return value]
  *     None
  */
-static FASTCALL void psp_sh2_exec(SH2_struct *state, u32 cycles)
+static FASTCALL void psp_sh2_exec(SH2_struct *yabause_state, u32 cycles)
 {
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+
+    state->cycles = yabause_state->cycles;
+
+#if defined(TRACE) || defined(TRACE_STEALTH) || defined(TRACE_LITE)
+    /* Avoid accumulating leftover cycles multiple times, since the trace
+     * code automatically adds state->cycles to the cycle accumulator when
+     * printing a trace line */
+    sh2_trace_add_cycles(-(state->cycles));
+#endif
     sh2_run(state, cycles);
+#if defined(TRACE) || defined(TRACE_STEALTH) || defined(TRACE_LITE)
+    sh2_trace_add_cycles(state->cycles);
+#endif
+
+    yabause_state->cycles = state->cycles;
+}
+
+/*************************************************************************/
+
+/**
+ * psp_sh2_get_registers:  Retrieve the values of all SH-2 registers.
+ *
+ * [Parameters]
+ *     yabause_state: Yabause SH-2 context structure
+ *              regs: Structure to receive register values
+ * [Return value]
+ *     None
+ */
+static void psp_sh2_get_registers(SH2_struct *yabause_state,
+                                  sh2regs_struct *regs)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    memcpy(regs, state, sizeof(*regs));
+}
+
+/*----------------------------------*/
+
+/**
+ * psp_sh2_get_{GPR,SR,GBR,VBR,MACH,MACL,PR,PC}:  Return the value of the
+ * named register.
+ *
+ * [Parameters]
+ *     yabause_state: Yabause SH-2 context structure
+ *               num: General purpose register number to get (get_GPR() only)
+ * [Return value]
+ *     Register's value
+ */
+static u32 psp_sh2_get_GPR(SH2_struct *yabause_state, int num)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    return state->R[num];
+}
+
+static u32 psp_sh2_get_SR(SH2_struct *yabause_state)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    return state->SR;
+}
+
+static u32 psp_sh2_get_GBR(SH2_struct *yabause_state)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    return state->GBR;
+}
+
+static u32 psp_sh2_get_VBR(SH2_struct *yabause_state)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    return state->VBR;
+}
+
+static u32 psp_sh2_get_MACH(SH2_struct *yabause_state)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    return state->MACH;
+}
+
+static u32 psp_sh2_get_MACL(SH2_struct *yabause_state)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    return state->MACL;
+}
+
+static u32 psp_sh2_get_PR(SH2_struct *yabause_state)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    return state->PR;
+}
+
+static u32 psp_sh2_get_PC(SH2_struct *yabause_state)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    return state->PC;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * psp_sh2_set_registers:  Set the values of all SH-2 registers.
+ *
+ * [Parameters]
+ *     yabause_state: Yabause SH-2 context structure
+ *              regs: Structure containing new values for registers
+ * [Return value]
+ *     None
+ */
+static void psp_sh2_set_registers(SH2_struct *yabause_state,
+                                  const sh2regs_struct *regs)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    memcpy(state, regs, sizeof(*regs));
+}
+
+/*----------------------------------*/
+
+/**
+ * psp_sh2_set_{GPR,SR,GBR,VBR,MACH,MACL,PR,PC}:  Set the value of the
+ * named register.
+ *
+ * [Parameters]
+ *     yabause_state: Yabause SH-2 context structure
+ *               num: General purpose register number to get (get_GPR() only)
+ *             value: New value for register
+ * [Return value]
+ *     None
+ */
+static void psp_sh2_set_GPR(SH2_struct *yabause_state, int num, u32 value)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->R[num] = value;
+}
+
+static void psp_sh2_set_SR(SH2_struct *yabause_state, u32 value)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->SR = value;
+}
+
+static void psp_sh2_set_GBR(SH2_struct *yabause_state, u32 value)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->GBR = value;
+}
+
+static void psp_sh2_set_VBR(SH2_struct *yabause_state, u32 value)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->VBR = value;
+}
+
+static void psp_sh2_set_MACH(SH2_struct *yabause_state, u32 value)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->MACH = value;
+}
+
+static void psp_sh2_set_MACL(SH2_struct *yabause_state, u32 value)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->MACL = value;
+}
+
+static void psp_sh2_set_PR(SH2_struct *yabause_state, u32 value)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->PR = value;
+}
+
+static void psp_sh2_set_PC(SH2_struct *yabause_state, u32 value)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->PC = value;
+}
+
+/*************************************************************************/
+
+/**
+ * psp_sh2_send_interrupt:  Send an interrupt to the given SH-2 processor.
+ *
+ * [Parameters]
+ *     yabause_state: Yabause SH-2 context structure
+ * [Return value]
+ *     None
+ */
+static void psp_sh2_send_interrupt(SH2_struct *yabause_state,
+                                   u8 vector, u8 level)
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    if (UNLIKELY(vector > 127)) {
+        return;
+    }
+    sh2_signal_interrupt(state, vector, level);
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * psp_sh2_set_interrupts:  Set the state of the interrupt stack.
+ *
+ * [Parameters]
+ *     yabause_state: Yabause SH-2 context structure
+ *        interrupts: Array to receive interrupt data
+ * [Return value]
+ *     Number of pending interrupts
+ */
+static int psp_sh2_get_interrupts(SH2_struct *yabause_state,
+                                  interrupt_struct interrupts[MAX_INTERRUPTS])
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    int i;
+    for (i = 0; i < state->interrupt_stack_top && i < MAX_INTERRUPTS; i++) {
+        interrupts[i].level = state->interrupt_stack[i].level;
+        interrupts[i].vector = state->interrupt_stack[i].vector;
+    }
+    return state->interrupt_stack_top;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * psp_sh2_set_interrupts:  Set the state of the interrupt stack.
+ *
+ * [Parameters]
+ *      yabause_state: Yabause SH-2 context structure
+ *     num_interrupts: Number of pending interrupts
+ *         interrupts: Array of pending interrupts
+ * [Return value]
+ *     None
+ */
+static void psp_sh2_set_interrupts(SH2_struct *yabause_state,
+                                   int num_interrupts,
+                                   const interrupt_struct interrupts[MAX_INTERRUPTS])
+{
+    SH2State *state = (yabause_state == MSH2) ? master_SH2 : slave_SH2;
+    state->interrupt_stack_top = 0;
+    int i;
+    for (i = 0; i < num_interrupts; i++) {
+        if (UNLIKELY(interrupts[i].vector > 127)) {
+            return;
+        }
+        sh2_signal_interrupt(state, interrupts[i].vector, interrupts[i].level);
+    }
 }
 
 /*************************************************************************/
@@ -270,8 +589,8 @@ static void psp_sh2_write_notify(u32 address, u32 size)
 /*************************************************************************/
 
 /**
- * SH2InvalidOpcodeCallback:  Type of an invalid opcode callback function,
- * as passed to sh2_set_invalid_opcode_callback().
+ * invalid_opcode_handler:  Callback function for invalid opcodes detected
+ * in the instruction stream.
  *
  * [Parameters]
  *      state: Processor state block pointer
@@ -280,15 +599,35 @@ static void psp_sh2_write_notify(u32 address, u32 size)
  * [Return value]
  *     None
  */
-static void invalid_opcode_handler(SH2_struct *state, uint32_t PC,
+static void invalid_opcode_handler(SH2State *state, uint32_t PC,
                                    uint16_t opcode)
 {
-    state->instruction = opcode;
-    /* Hack for translation so the error shows at least PC properly */
-    const uint32_t saved_PC = state->regs.PC;
-    state->regs.PC = PC;
-    YabSetError(YAB_ERR_SH2INVALIDOPCODE, state);
-    state->regs.PC = saved_PC;
+    SH2_struct *yabause_state = (SH2_struct *)(state->userdata);
+    uint32_t saved_PC = state->PC;
+    state->PC = PC;  // Show the proper PC in the error message
+    yabause_state->instruction = opcode;
+    YabSetError(YAB_ERR_SH2INVALIDOPCODE, yabause_state);
+    state->PC = saved_PC;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * trace_insn_handler:  Callback function for tracing instructions.
+ * Updates the appropriate Yabause SH2_struct's registers and cycle count,
+ * then calls out to the common SH-2 tracing functionality.
+ *
+ * [Parameters]
+ *       state: Processor state block pointer
+ *     address: Address of instruction to trace
+ * [Return value]
+ *     None
+ */
+static FASTCALL void trace_insn_handler(SH2State *state, uint32_t address)
+{
+    SH2_struct *yabause_state = (SH2_struct *)(state->userdata);
+    yabause_state->cycles = state->cycles;
+    sh2_trace(yabause_state, address);
 }
 
 /*************************************************************************/

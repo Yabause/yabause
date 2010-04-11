@@ -109,14 +109,14 @@ void SH2Reset(SH2_struct *context)
    
    // Reset general registers
    for (i = 0; i < 15; i++)
-      context->regs.R[i] = 0x00000000;
-                   
-   context->regs.SR.all = 0x000000F0;
-   context->regs.GBR = 0x00000000;
-   context->regs.VBR = 0x00000000;
-   context->regs.MACH = 0x00000000;
-   context->regs.MACL = 0x00000000;
-   context->regs.PR = 0x00000000;
+      SH2Core->SetGPR(context, i, 0x00000000);
+
+   SH2Core->SetSR(context, 0x000000F0);
+   SH2Core->SetGBR(context, 0x00000000);
+   SH2Core->SetVBR(context, 0x00000000);
+   SH2Core->SetMACH(context, 0x00000000);
+   SH2Core->SetMACL(context, 0x00000000);
+   SH2Core->SetPR(context, 0x00000000);
 
    // Internal variables
    context->delay = 0x00000000;
@@ -133,7 +133,7 @@ void SH2Reset(SH2_struct *context)
 
    // Reset Interrupts
    memset((void *)context->interrupts, 0, sizeof(interrupt_struct) * MAX_INTERRUPTS);
-   context->NumberOfInterrupts = 0;
+   SH2Core->SetInterrupts(context, 0, context->interrupts);
 
    // Core specific reset
    SH2Core->Reset();
@@ -145,8 +145,9 @@ void SH2Reset(SH2_struct *context)
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2PowerOn(SH2_struct *context) {
-   context->regs.PC = MappedMemoryReadLong(context->regs.VBR);
-   context->regs.R[15] = MappedMemoryReadLong(context->regs.VBR+4);
+   u32 VBR = SH2Core->GetVBR(context);
+   SH2Core->SetPC(context, MappedMemoryReadLong(VBR));
+   SH2Core->SetGPR(context, 15, MappedMemoryReadLong(VBR+4));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -170,36 +171,7 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 
 void SH2SendInterrupt(SH2_struct *context, u8 vector, u8 level)
 {
-   u32 i, i2;
-   interrupt_struct tmp;
-
-   // Make sure interrupt doesn't already exist
-   for (i = 0; i < context->NumberOfInterrupts; i++)
-   {
-      if (context->interrupts[i].vector == vector)
-         return;
-   }
-
-   context->interrupts[context->NumberOfInterrupts].level = level;
-   context->interrupts[context->NumberOfInterrupts].vector = vector;
-   context->NumberOfInterrupts++;
-
-   // Sort interrupts
-   for (i = 0; i < (context->NumberOfInterrupts-1); i++)
-   {
-      for (i2 = i+1; i2 < context->NumberOfInterrupts; i2++)
-      {
-         if (context->interrupts[i].level > context->interrupts[i2].level)
-         {
-            tmp.level = context->interrupts[i].level;
-            tmp.vector = context->interrupts[i].vector;
-            context->interrupts[i].level = context->interrupts[i2].level;
-            context->interrupts[i].vector = context->interrupts[i2].vector;
-            context->interrupts[i2].level = tmp.level;
-            context->interrupts[i2].vector = tmp.vector;
-         }
-      }
-   }
+   SH2Core->SendInterrupt(context, vector, level);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -214,14 +186,14 @@ void SH2NMI(SH2_struct *context)
 
 void SH2Step(SH2_struct *context)
 {
-   u32 tmp = context->regs.PC;
+   u32 tmp = SH2Core->GetPC(context);
 
    // Execute 1 instruction
    SH2Exec(context, context->cycles+1);
 
    // Sometimes it doesn't always execute one instruction,
    // let's make sure it did
-   if (tmp == context->regs.PC)
+   if (tmp == SH2Core->GetPC(context))
       SH2Exec(context, context->cycles+1);
 }
 
@@ -230,7 +202,7 @@ void SH2Step(SH2_struct *context)
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r)
 {
    if (r != NULL) {
-      memcpy(r, &context->regs, sizeof(context->regs));
+      SH2Core->GetRegisters(context, r);
    }
 }
 
@@ -239,7 +211,7 @@ void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r)
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r)
 {
    if (r != NULL) {
-      memcpy(&context->regs, r, sizeof(context->regs));
+      SH2Core->SetRegisters(context, r);
    }
 }
 
@@ -894,7 +866,7 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
 */
          return CurrentSH2->onchip.SSR;
       case 0x005:
-//         LOG("Receive Data Register read: %02X PC = %08X\n", CurrentSH2->onchip.RDR, CurrentSH2->regs.PC);
+//         LOG("Receive Data Register read: %02X PC = %08X\n", CurrentSH2->onchip.RDR, SH2Core->GetPC(CurrentSH2));
          return CurrentSH2->onchip.RDR;
       case 0x011:
          return CurrentSH2->onchip.FTCSR;
@@ -1006,7 +978,7 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          CurrentSH2->onchip.SCR = val;
          return;
       case 0x003:
-//         LOG("Transmit Data Register write: %02X. PC = %08X\n", val, CurrentSH2->regs.PC);
+//         LOG("Transmit Data Register write: %02X. PC = %08X\n", val, SH2Core->GetPC(CurrentSH2));
          CurrentSH2->onchip.TDR = val;
          return;
       case 0x004:
@@ -1745,6 +1717,7 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 {
    int offset;
    IOCheck_struct check;
+   sh2regs_struct regs;
 
    // Write header
    if (context->isslave == 0)
@@ -1756,13 +1729,15 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
    }
 
    // Write registers
-   ywrite(&check, (void *)&context->regs, sizeof(sh2regs_struct), 1, fp);
+   SH2GetRegisters(context, &regs);
+   ywrite(&check, (void *)&regs, sizeof(sh2regs_struct), 1, fp);
 
    // Write onchip registers
    ywrite(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
 
    // Write internal variables
    ywrite(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
+   context->NumberOfInterrupts = SH2Core->GetInterrupts(context, context->interrupts);
    ywrite(&check, (void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
    ywrite(&check, (void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
    ywrite(&check, (void *)context->AddressArray, sizeof(u32), 0x100, fp);
@@ -1781,12 +1756,14 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check;
+   sh2regs_struct regs;
 
    if (context->isslave == 1)
       yread(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
 
    // Read registers
-   yread(&check, (void *)&context->regs, sizeof(sh2regs_struct), 1, fp);
+   yread(&check, (void *)&regs, sizeof(sh2regs_struct), 1, fp);
+   SH2SetRegisters(context, &regs);
 
    // Read onchip registers
    yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
@@ -1795,6 +1772,7 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
    yread(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
    yread(&check, (void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
    yread(&check, (void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
+   SH2Core->SetInterrupts(context, context->NumberOfInterrupts, context->interrupts);
    yread(&check, (void *)context->AddressArray, sizeof(u32), 0x100, fp);
    yread(&check, (void *)context->DataArray, sizeof(u8), 0x1000, fp);
    yread(&check, (void *)&context->delay, sizeof(u32), 1, fp);
