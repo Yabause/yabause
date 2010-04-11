@@ -19,8 +19,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef PSP_RTL_H
-#define PSP_RTL_H
+#ifndef RTL_H
+#define RTL_H
 
 /*************************************************************************/
 
@@ -285,7 +285,7 @@ extern void rtl_destroy_block(RTLBlock *block);
 
 /*************************************************************************/
 
-#endif  // PSP_RTL_H
+#endif  // RTL_H
 
 /*
  * Local variables:

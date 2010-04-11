@@ -18,8 +18,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef PSP_SH2_RTL_INTERNAL_H
-#define PSP_SH2_RTL_INTERNAL_H
+#ifndef RTL_INTERNAL_H
+#define RTL_INTERNAL_H
 
 /*************************************************************************/
 /************************* Configuration options *************************/
@@ -688,7 +688,7 @@ extern const char *rtl_describe_register(const RTLRegister *reg, int is_exec);
 /*************************************************************************/
 /*************************************************************************/
 
-#endif  // PSP_SH2_RTL_INTERNAL_H
+#endif  // RTL_INTERNAL_H
 
 /*
  * Local variables:

@@ -22,6 +22,7 @@ yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       psp-video.c psp-video-bitmap.c psp-video-rotate.c \
                       psp-video-tilemap.c \
                       rtl.c rtl-mips.c rtlexec.c rtlinsn.c rtlopt.c rtlunit.c \
+                      satopt-sh2.c \
                       sh2.c sh2-interpret.c sh2-opcodeinfo.c sh2-optimize.c \
                       sys.c texcache.c yui.c \
                       me-utility.c \
@@ -31,6 +32,7 @@ yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       psp-cd.h psp-m68k.h psp-per.h psp-sh2.h psp-sound.h \
                       psp-video.h psp-video-internal.h \
                       rtl.h rtl-internal.h rtl-mips.h \
+                      satopt-sh2.h \
                       sh2.h sh2-internal.h \
                       sys.h texcache.h \
                       me-utility.h

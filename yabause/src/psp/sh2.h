@@ -1,5 +1,5 @@
 /*  src/psp/sh2.h: SH-2 emulator header
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -23,6 +23,9 @@
 
 #ifndef SH2CORE_H
 # include "../sh2core.h"
+#endif
+#ifndef RTL_H
+# include "rtl.h"
 #endif
 
 /*************************************************************************/
@@ -277,6 +280,44 @@ struct SH2State_ {
 /*----------------------------------*/
 
 /**
+ * SH2OptimizeCallback:  Type of an optimization callback function, as
+ * passed to sh2_set_manual_optimization_callback().
+ *
+ * [Parameters]
+ *       state: Processor state block pointer
+ *     address: Address from which to translate
+ *       fetch: Pointer corresponding to "address" from which opcodes can
+ *                 be fetched
+ *         rtl: RTL block in which to generate optimized code
+ * [Return value]
+ *     Length of translated block in instructions (nonzero) if optimized
+ *     code was generated, else zero
+ * [Notes]
+ *     If the callback function returns nonzero, indicating that code was
+ *     generated, it must call rtl_finalize_block(rtl) before returning.
+ *     If the function returns zero, it must not call any RTL functions
+ *     on the passed-in block.
+ */
+typedef unsigned int SH2OptimizeCallback(SH2State *state, uint32_t address,
+                                         const uint16_t *fetch, RTLBlock *rtl);
+
+/*----------------------------------*/
+
+/**
+ * SH2CacheFlushCallback:  Type of a cache flush callback function, as
+ * passed to sh2_set_cache_flush_callback().
+ *
+ * [Parameters]
+ *      start: Pointer to start of range
+ *     length: Length of range in bytes
+ * [Return value]
+ *     None
+ */
+typedef void SH2CacheFlushCallback(void *start, uint32_t length);
+
+/*----------------------------------*/
+
+/**
  * SH2InvalidOpcodeCallback:  Type of an invalid opcode callback function,
  * as passed to sh2_set_invalid_opcode_callback().
  *
@@ -345,7 +386,7 @@ extern uint32_t sh2_get_optimizations(void);
 /**
  * sh2_set_jit_data_limit:  Set the limit on the total size of translated
  * code, in bytes of native code (or bytes of RTL data when using the RTL
- * interpreter).  Does nothing if dynamic translation is disablde.
+ * interpreter).  Does nothing if dynamic translation is disabled.
  *
  * [Parameters]
  *     limit: Total JIT data size limit
@@ -353,6 +394,36 @@ extern uint32_t sh2_get_optimizations(void);
  *     None
  */
 extern void sh2_set_jit_data_limit(uint32_t limit);
+
+/**
+ * sh2_set_manual_optimization_callback:  Set a callback function to be
+ * called when beginning to analyze a new block of SH-2 code.  If the
+ * function returns nonzero, it is assumed to have translated a block
+ * starting at the given address into an optimized RTL instruction stream,
+ * and the normal block analysis and translation is skipped.
+ *
+ * [Parameters]
+ *     funcptr: Callback function pointer (NULL to unset a previously-set
+ *                 function)
+ * [Return value]
+ *     None
+ */
+extern void sh2_set_manual_optimization_callback(SH2OptimizeCallback *funcptr);
+
+/**
+ * sh2_set_cache_flush_callback:  Set a callback function to be called when
+ * a range of addresses should be flushed from the native CPU's caches.
+ * This is called in preparation for executing a newly-translated block of
+ * code, so the given range must be flushed from both data and instruction
+ * caches.
+ *
+ * [Parameters]
+ *     funcptr: Callback function pointer (NULL to unset a previously-set
+ *                 function)
+ * [Return value]
+ *     None
+ */
+extern void sh2_set_cache_flush_callback(SH2CacheFlushCallback *funcptr);
 
 /**
  * sh2_set_invalid_opcode_callback:  Set a callback function to be called

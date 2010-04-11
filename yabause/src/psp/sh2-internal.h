@@ -506,13 +506,6 @@
 #endif
 
 /**
- * OPTIMIZE_HAND_TUNED_CASES:  When defined, translates specific known
- * blocks of code into hand-tuned RTL instruction streams.  See the
- * relevant code in sh2-optimize.c for details.
- */
-#define OPTIMIZE_HAND_TUNED_CASES
-
-/**
  * JIT_OPTIMIZE_FLAGS:  Specifies the optimizations that should be
  * performed on the generated RTL code.  See RTLOPT_* in sh2-rtl.h for
  * details on the available flags.
@@ -695,7 +688,6 @@
 # undef OPTIMIZE_BRANCH_THREAD
 # undef OPTIMIZE_BRANCH_SELECT
 # undef OPTIMIZE_LOOP_TO_JSR
-# undef OPTIMIZE_HAND_TUNED_CASES
 #endif
 
 #ifdef TRACE_STEALTH
@@ -720,6 +712,12 @@
 /* Bitmask indicating which optional optimizations are enabled */
 extern uint32_t optimization_flags;
 
+/* Callback function for manual/special-case optimization */
+extern SH2OptimizeCallback *manual_optimization_callback;
+
+/* Callback function for native CPU cache flushing */
+extern SH2CacheFlushCallback *cache_flush_callback;
+
 /* Callback function for invalid instructions */
 extern SH2InvalidOpcodeCallback *invalid_opcode_callback;
 
@@ -729,11 +727,13 @@ extern SH2TraceAccessCallback *trace_storeb_callback;
 extern SH2TraceAccessCallback *trace_storew_callback;
 extern SH2TraceAccessCallback *trace_storel_callback;
 
+#ifdef ENABLE_JIT
 /* Page tables (exported for use in sh2-optimize.c) */
 extern uint8_t *direct_pages[0x2000];
 extern uint8_t *fetch_pages[0x2000];
 extern uint8_t *byte_direct_pages[0x2000];
 extern uint8_t *direct_jit_pages[0x2000];
+#endif
 
 /******** sh2-interpret.c ********/
 
@@ -944,26 +944,6 @@ extern unsigned int can_optimize_variable_shift(
     const uint8_t **cycles_ret);
 
 #endif  // OPTIMIZE_VARIABLE_SHIFTS
-
-#ifdef OPTIMIZE_HAND_TUNED_CASES
-
-/**
- * optimize_by_hand:  Attempt to translate code starting at the given
- * address into a hand-tuned RTL instruction stream.
- *
- * [Parameters]
- *       state: SH-2 processor state block
- *     address: Starting address of block
- *       fetch: Opcode fetch pointer corresponding to address
- *         rtl: RTLBlock into which to store translated code, if successful
- * [Return value]
- *     Length of block in 16-bit words (nonzero) if successfully translated,
- *     zero on error or if there is no suitable hand-tuned translation
- */
-extern unsigned int optimize_by_hand(SH2State *state, uint32_t address,
-                                     const uint16_t *fetch, RTLBlock *rtl);
-
-#endif  // OPTIMIZE_HAND_TUNED_CASES
 
 /*************************************************************************/
 /*************************************************************************/

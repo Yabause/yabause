@@ -18,8 +18,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef PSP_MIPS_H
-#define PSP_MIPS_H
+#ifndef RTL_MIPS_H
+#define RTL_MIPS_H
 
 /*************************************************************************/
 
@@ -328,7 +328,7 @@
 
 /*************************************************************************/
 
-#endif  // PSP_MIPS_H
+#endif  // RTL_MIPS_H
 
 /*
  * Local variables:

@@ -1,5 +1,5 @@
 /*  src/psp/sh2.c: SH-2 emulator with dynamic translation support
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -96,6 +96,9 @@
 #ifdef JIT_DEBUG_TRACE
 # include "../sh2d.h"
 #endif
+#ifdef JIT_DEBUG_INTERPRET_RTL
+# include "rtl-internal.h"  // For sizeof(RTL*)
+#endif
 
 /*************************************************************************/
 /******************* Local data and other declarations *******************/
@@ -107,6 +110,15 @@ SH2State *state_list;
 
 /* Bitmask indicating which optional optimizations are enabled */
 uint32_t optimization_flags;
+
+/* Callback function for manual/special-case optimization */
+SH2OptimizeCallback *manual_optimization_callback;
+
+/* Callback function for native CPU cache flushing */
+SH2CacheFlushCallback *cache_flush_callback;
+
+/* Callback function for flushing native CPU caches */
+SH2CacheFlushCallback *cache_flush_callback;
 
 /* Callback function for invalid instructions */
 SH2InvalidOpcodeCallback *invalid_opcode_callback;
@@ -663,7 +675,7 @@ uint32_t sh2_get_optimizations(void)
 /**
  * sh2_set_jit_data_limit:  Set the limit on the total size of translated
  * code, in bytes of native code (or bytes of RTL data when using the RTL
- * interpreter).  Does nothing if dynamic translation is disablde.
+ * interpreter).  Does nothing if dynamic translation is disabled.
  *
  * [Parameters]
  *     limit: Total JIT data size limit
@@ -678,6 +690,46 @@ void sh2_set_jit_data_limit(uint32_t limit)
 }
 
 /*-----------------------------------------------------------------------*/
+
+/**
+ * sh2_set_manual_optimization_callback:  Set a callback function to be
+ * called when beginning to analyze a new block of SH-2 code.  If the
+ * function returns nonzero, it is assumed to have translated a block
+ * starting at the given address into an optimized RTL instruction stream,
+ * and the normal block analysis and translation is skipped.
+ *
+ * [Parameters]
+ *     funcptr: Callback function pointer (NULL to unset a previously-set
+ *                 function)
+ * [Return value]
+ *     None
+ */
+void sh2_set_manual_optimization_callback(SH2OptimizeCallback *funcptr)
+{
+    manual_optimization_callback = funcptr;
+}
+
+/*----------------------------------*/
+
+/**
+ * sh2_set_cache_flush_callback:  Set a callback function to be called when
+ * a range of addresses should be flushed from the native CPU's caches.
+ * This is called in preparation for executing a newly-translated block of
+ * code, so the given range must be flushed from both data and instruction
+ * caches.
+ *
+ * [Parameters]
+ *     funcptr: Callback function pointer (NULL to unset a previously-set
+ *                 function)
+ * [Return value]
+ *     None
+ */
+void sh2_set_cache_flush_callback(SH2CacheFlushCallback *funcptr)
+{
+    cache_flush_callback = funcptr;
+}
+
+/*----------------------------------*/
 
 /**
  * sh2_set_invalid_opcode_callback:  Set a callback function to be called
@@ -798,6 +850,7 @@ void *sh2_alloc_direct_write_buffer(uint32_t size)
 void sh2_set_direct_access(uint32_t sh2_address, void *native_address,
                            uint32_t size, int readable, void *write_buffer)
 {
+#ifdef ENABLE_JIT
     if (UNLIKELY(((sh2_address | size) & ((1<<19)-1)) != 0)) {
         DMSG("sh2_address (0x%08X) and size (0x%X) must be aligned to a"
              " 19-bit page", sh2_address, size);
@@ -809,30 +862,25 @@ void sh2_set_direct_access(uint32_t sh2_address, void *native_address,
     if (native_address) {
         void * const target =
             (void *)((uintptr_t)native_address - (first_page << 19));
-#ifdef ENABLE_JIT
         void * const jit_target = write_buffer
             ? (void *)((uintptr_t)write_buffer
                        - (first_page << (19 - JIT_PAGE_BITS)))
             : NULL;
-#endif
         unsigned int page;
         for (page = first_page; page <= last_page; page++) {
             fetch_pages[page] = target;
             direct_pages[page] = readable ? target : NULL;
-#ifdef ENABLE_JIT
             direct_jit_pages[page] = jit_target;
-#endif
         }
     } else {
         unsigned int page;
         for (page = first_page; page <= last_page; page++) {
             fetch_pages[page] = NULL;
             direct_pages[page] = NULL;
-#ifdef ENABLE_JIT
             direct_jit_pages[page] = NULL;
-#endif
         }
     }
+#endif  // ENABLE_JIT
 }
 
 /*-----------------------------------------------------------------------*/
@@ -857,6 +905,7 @@ void sh2_set_direct_access(uint32_t sh2_address, void *native_address,
 void sh2_set_byte_direct_access(uint32_t sh2_address, void *native_address,
                                 uint32_t size)
 {
+#ifdef ENABLE_JIT
     if (UNLIKELY(((sh2_address | size) & ((1<<19)-1)) != 0)) {
         DMSG("sh2_address (0x%08X) and size (0x%X) must be aligned to a"
              " 19-bit page", sh2_address, size);
@@ -878,6 +927,7 @@ void sh2_set_byte_direct_access(uint32_t sh2_address, void *native_address,
             byte_direct_pages[page] = NULL;
         }
     }
+#endif  // ENABLE_JIT
 }
 
 /*************************************************************************/
@@ -1587,16 +1637,11 @@ static JitEntry *jit_translate(SH2State *state, uint32_t address)
      * later allocated by rtl_execute_block()); we assume average ratios of
      * 5:8 insns:regs, and 1:8 insns:units (we don't bother with labels
      * since they only require 2 bytes each and are generally less than 10%
-     * of insns).  The sizes below are accurate for 32-bit systems. */
-    const unsigned int sizeof_RTLInsn     =  12;
-    const unsigned int sizeof_RTLRegister =  40;
-    const unsigned int sizeof_RTLUnit     = 228;
-    const unsigned int sizeof_RTLBlock    = 604;
-    const uint32_t insns_size =
-        *(uint32_t *)((uint8_t *)entry->rtl + sizeof(void *));
-    entry->native_length = ((sizeof_RTLInsn+2)
-                            + sizeof_RTLRegister*5/8
-                            + sizeof_RTLUnit/8) * insns_size + sizeof_RTLBlock;
+     * of insns). */
+    entry->native_length = ((sizeof(RTLInsn)+2)
+                            + sizeof(RTLRegister)*5/8
+                            + sizeof(RTLUnit)/8) * entry->rtl->insns_size
+                         + sizeof(RTLBlock);
 #endif
     jit_total_data += entry->native_length;
 
@@ -2105,7 +2150,8 @@ static void clear_oldest_entry(void)
 /*************************************************************************/
 
 /**
- * flush_native_cache:  Flush a range of addresses from native CPU's caches.
+ * flush_native_cache:  Flush a range of addresses from the native CPU's
+ * caches.
  *
  * [Parameters]
  *      start: Pointer to start of range
@@ -2115,10 +2161,9 @@ static void clear_oldest_entry(void)
  */
 static inline void flush_native_cache(void *start, uint32_t length)
 {
-#ifdef PSP  // Protect so we can test this on other platforms
-    sceKernelDcacheWritebackInvalidateRange(start, length);
-    sceKernelIcacheInvalidateRange(start, length);
-#endif
+    if (cache_flush_callback) {
+        (*cache_flush_callback)(start, length);
+    }
 }
 
 /*************************************************************************/
@@ -2423,7 +2468,7 @@ static inline int __LOAD_STATE_COPY(const JitEntry * const entry,
  * that a register obtained from this macro MUST NOT be reassigned, since
  * it may be shared; if reassignment is necessary, use DEFINE_REG() and
  * LOAD_STATE() instead.  (The MAC.* instructions are exceptions to this
- * rule, since all other users of MACH/MACW use LOAD_STATE_COPY() to avoid
+ * rule, since all other users of MACH/MACL use LOAD_STATE_COPY() to avoid
  * aliasing the register.) */
 #define LOAD_STATE_ALLOC(reg,field) \
     ASSERT(reg = __LOAD_STATE_ALLOC(entry, state_reg, \
@@ -4673,23 +4718,24 @@ static int translate_block(SH2State *state, JitEntry *entry)
 
     unsigned int index;
 
-    /* If hand-tuned optimizations are enabled, check for a match at this
-     * address, and use the hand-tuned translation if found. */
+    /* If a manual optimization callback has been provided, check for a
+     * match at this address, and use the optimized translation if found. */
 
-#ifdef OPTIMIZE_HAND_TUNED_CASES
-    const uint16_t *fetch =
-        (const uint16_t *)((uintptr_t)fetch_base + entry->sh2_start);
-    const unsigned int hand_tuned_len =
-        optimize_by_hand(state, entry->sh2_start, fetch, entry->rtl);
-    if (hand_tuned_len) {
-# ifdef JIT_DEBUG_VERBOSE
-        DMSG("Using hand-tuned code for 0x%08X + %u insns",
-             entry->sh2_start, hand_tuned_len);
-# endif
-        entry->sh2_end = entry->sh2_start + hand_tuned_len*2 - 1;
-        return 1;
-    }
+    if (manual_optimization_callback) {
+        const uint16_t *fetch =
+            (const uint16_t *)((uintptr_t)fetch_base + entry->sh2_start);
+        const unsigned int hand_tuned_len =
+            (*manual_optimization_callback)(state, entry->sh2_start,
+                                            fetch, entry->rtl);
+        if (hand_tuned_len) {
+#ifdef JIT_DEBUG_VERBOSE
+            DMSG("Using hand-tuned code for 0x%08X + %u insns",
+                 entry->sh2_start, hand_tuned_len);
 #endif
+            entry->sh2_end = entry->sh2_start + hand_tuned_len*2 - 1;
+            return 1;
+        }
+    }
 
     /* Clear out translation state. */
 
@@ -6229,13 +6275,13 @@ static inline void jit_exec(SH2State *state, JitEntry *entry)
      * to a kernel routine that costs hundreds of cycles (where a short
      * block of code may finish in as few as 10 cycles), and we can't even
      * get a cycle-accurate count.  Oh well... it's better than nothing. */
-#  ifdef PSP
+#  if defined(PSP)
     const uint32_t start = sceKernelGetSystemTimeLow();
 #  endif
 # endif
     (*native_code)(state);
 # ifdef JIT_PROFILE
-#  ifdef PSP
+#  if defined(PSP)
     entry->exec_time += sceKernelGetSystemTimeLow() - start;
 #  else
     entry->exec_time++;  // Default is to just count each call as 1 time unit

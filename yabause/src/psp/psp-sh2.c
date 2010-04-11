@@ -30,8 +30,11 @@
 
 #include "config.h"
 #include "psp-sh2.h"
+#include "rtl.h"
 #include "sh2.h"
 #include "sh2-internal.h"  // For TRACE, etc. (so we don't call sh2_trace_add_cycles() if not needed)
+
+#include "satopt-sh2.h"
 
 /*************************************************************************/
 /************************* Interface definition **************************/
@@ -128,6 +131,7 @@ static void *write_buffer_lram, *write_buffer_hram;
 /*-----------------------------------------------------------------------*/
 
 /* Local function declarations */
+static void flush_caches(void *start, uint32_t length);
 static void invalid_opcode_handler(SH2State *state, uint32_t PC,
                                    uint16_t opcode);
 static FASTCALL void trace_insn_handler(SH2State *state, uint32_t address);
@@ -188,6 +192,8 @@ static int psp_sh2_init(void)
     /* Give the SH-2 core some breathing room for saving RTL blocks */
     sh2_set_jit_data_limit(200*1000000);
 #endif
+    sh2_set_manual_optimization_callback(saturn_optimize_sh2);
+    sh2_set_cache_flush_callback(flush_caches);
     sh2_set_invalid_opcode_callback(invalid_opcode_handler);
     sh2_set_trace_insn_callback(trace_insn_handler);
     sh2_set_trace_storeb_callback((SH2TraceAccessCallback *)sh2_trace_writeb);
@@ -587,6 +593,25 @@ static void psp_sh2_write_notify(u32 address, u32 size)
 /*************************************************************************/
 /**************************** Local functions ****************************/
 /*************************************************************************/
+
+/**
+ * flush_caches:  Callback function to flush the native CPU's caches.
+ *
+ * [Parameters]
+ *      start: Pointer to start of range
+ *     length: Length of range in bytes
+ * [Return value]
+ *     None
+ */
+static void flush_caches(void *start, uint32_t length)
+{
+#ifdef PSP  // Protect so we can test this SH-2 core on other platforms
+    sceKernelDcacheWritebackInvalidateRange(start, length);
+    sceKernelIcacheInvalidateRange(start, length);
+#endif
+}
+
+/*-----------------------------------------------------------------------*/
 
 /**
  * invalid_opcode_handler:  Callback function for invalid opcodes detected
