@@ -1,10 +1,10 @@
-.TH YABAUSE 1 "October 20, 2008" "yabause-0.9.7"
+.TH YABAUSE 1 "April 16, 2010" "yabause-0.9.11"
 .SH NAME
 yabause \- Yet Another Buggy And Uncomplete Saturn Emulator
 .SH SYNOPSIS
 .B yabause
 [ \fB\-afh\fP ] [ \fB\-ns\fP ] [ \fB\-b <BIOS>\fP ] [ \fB\-c <CDROM>\fP ] [ \fB\-i <ISO>\fP ]
-[ \fB\-\-binary=<FILE>[:<ADDRESS>]\fP ]
+[ \fB\-\-binary=<BINARY>[:<ADDRESS>]\fP ]
 .SH DESCRIPTION
 \fBYabause\fP is a Sega Saturn emulator. \fBYabause\fP needs either a bios file, a game or a binary to run.
 Games can be loaded from a real cd device or from dump files.
@@ -13,13 +13,13 @@ Games can be loaded from a real cd device or from dump files.
 .BI \-a
 .TP
 .BI \-\-autostart
-Automaticaly start emulation.
+Automatically start emulation.
 .TP
 .BI \-\-autoframeskip=0|1
 Enable or disable auto frame skipping / limiting.
 .TP
-.BI \-\-autostart
-Automaticaly start emulation and load a save state.
+.BI \-\-autoload
+Automatically start emulation and load a save state.
 .TP
 .BI \-b
 .TP
@@ -28,8 +28,8 @@ Choose a bios file.
 .TP
 .BI \-\-binary
 Use a binary file. Content of the file will be loaded to 0x06004000 and execution will start from that address.
-You can provide an alternative address to load and run the binary with the \-\-binary=<FILE>:<ADDRESS> syntax.
-When using this option, emulation is automaticaly started and you shouldn't use it in cunjunction with \-a.
+You can provide an alternative address to load and run the binary with the \-\-binary=<BINARY>:<ADDRESS> syntax.
+When using this option, emulation is automatically started and you shouldn't use it in cunjunction with \-a.
 This option is intended for homebrew developers wanting to test their programs in \fBYabause\fP.
 .TP
 .BI \-c
@@ -38,6 +38,8 @@ This option is intended for homebrew developers wanting to test their programs i
 Choose the cdrom device.
 .TP
 .BI \-f
+.TP
+.BI \-\-fullscreen
 Start the emulator in fullscreen.
 .TP
 .BI \-h
@@ -50,14 +52,23 @@ Choose a dump file. The dump can be either in iso or bin/cue file format.
 .TP
 .BI \-ns
 .TP
-.BI \-\-no\-sound
+.BI \-\-nosound
 Turns sound off. This option actually set the sound core to the dummy one.
 .SH FILES
 .TP
+\fB<BINARY>\fR
+An executable for the Saturn, usually with a BIN extension.
+.TP
 \fB<BIOS>\fR
 A Saturn ROM BIOS image.
+.TP
+\fB<CDROM>\fR
+A CDROM device file.
+.TP
+\fB<ISO>\fR
+A Saturn game dump.
 .SH AUTHORS
-Copyright (c) 2002-2008 Yabause Team
+Copyright (c) 2002-2010 Yabause Team
 
 Web:	http://yabause.org
 
