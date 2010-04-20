@@ -40,10 +40,11 @@ typedef struct
    const char *mpegpath;
    const char *cartpath;
    const char *netlinksetting;
-   int flags;
+   int videoformattype;
    int frameskip;
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
    u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)
+   int usethreads;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -71,6 +72,9 @@ void YabauseSetVideoFormat(int type);
 void YabauseSpeedySetup(void);
 int YabauseQuickLoadGame(void);
 
+#define YABSYS_TIMING_BITS  20
+#define YABSYS_TIMING_MASK  ((1 << YABSYS_TIMING_BITS) - 1)
+
 typedef struct
 {
    int DecilineMode;
@@ -78,11 +82,13 @@ typedef struct
    int LineCount;
    int VBlankLineCount;
    int MaxLineCount;
-   int DecilineStop;
-   u32 Duf;
-   u32 CycleCountII;
+   u32 DecilineStop;  // Fixed point
+   u32 SH2CycleFrac;  // Fixed point
+   u32 DecilineUsec;  // Fixed point
+   u32 UsecFrac;      // Fixed point
    int CurSH2FreqType;
    int IsPal;
+   u8 UseThreads;
    u8 IsSSH2Running;
    u8 IsM68KRunning;
    u64 OneFrameTime;

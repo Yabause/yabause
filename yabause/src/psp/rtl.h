@@ -110,7 +110,7 @@ typedef enum RTLOpcode_ {
                         //    [conceptually, "insert src2 into src1"]
 
     RTLOP_LOAD_IMM,     // dest = IMMEDIATE(src1)  [src1 is a 32-bit immediate]
-    RTLOP_LOAD_ADDR,    // dest= IMMEDIATE(src1)  [src1 is a native pointer]
+    RTLOP_LOAD_ADDR,    // dest = IMMEDIATE(src1)  [src1 is a native pointer]
     RTLOP_LOAD_PARAM,   // dest = PARAM(src1)  [src1 is a function param index]
 
     /* Note: the load/store byte offset ("other") must be in [-32768,+32767] */

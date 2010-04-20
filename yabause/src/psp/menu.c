@@ -60,7 +60,7 @@ static uint8_t repeat_timer;     // Counts down from REPEAT_{DELAY,RATE}
 /*----------------------------------*/
 
 /* FIXME: This menu stuff is all messy and copy-pastey because I'm too
-          lazy to do it properly at the moment.  I hate writing UIs.   */
+          lazy to do it properly at the moment.  I hate writing UIs. */
 
 /* Currently selected menu and menu option */
 
@@ -1676,8 +1676,8 @@ static void draw_menu(void)
                 y += line_height;
                 x = font_printf(75, y, -1, TEXT_COLOR_INFO, "is ");
                 x = font_printf(x, y, -1, TEXT_COLOR_NG, "EXPERIMENTAL");
-                font_printf(x, y, -1, TEXT_COLOR_INFO, " and may slow things"
-                            " down; see the manual.");
+                font_printf(x, y, -1, TEXT_COLOR_INFO, "; see the manual"
+                            " for details.");
                 y += line_height;
                 font_printf(75, y, -1, TEXT_COLOR_NG, "You must restart"
                             " Yabause after changing this option.");

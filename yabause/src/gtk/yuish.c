@@ -460,7 +460,7 @@ static void sh2setRegister( YuiSh *sh2, int nReg, u32 value ) {
 }
 
 void SH2UpdateBreakpointList(YuiSh * sh2) {
-  codebreakpoint_struct *cbp;
+  const codebreakpoint_struct *cbp;
   int i;
 
   gtk_list_store_clear(GTK_LIST_STORE( sh2->bpListStore ));
@@ -481,7 +481,7 @@ void SH2UpdateBreakpointList(YuiSh * sh2) {
 }
 
 void SH2UpdateMemoryBreakpointList(YuiSh * sh2) {
-  memorybreakpoint_struct *cmbp;
+  const memorybreakpoint_struct *cmbp;
   int i;
 
   gtk_list_store_clear( sh2->mbpListStore );

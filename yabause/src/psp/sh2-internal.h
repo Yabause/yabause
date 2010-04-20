@@ -25,10 +25,6 @@
 # include "sh2.h"
 #endif
 
-#ifndef RTL_H
-# include "rtl.h"  // RTLBlock needed for optimize_by_hand() declaration
-#endif
-
 /*************************************************************************/
 /************************* Configuration options *************************/
 /*************************************************************************/
@@ -507,8 +503,8 @@
 
 /**
  * JIT_OPTIMIZE_FLAGS:  Specifies the optimizations that should be
- * performed on the generated RTL code.  See RTLOPT_* in sh2-rtl.h for
- * details on the available flags.
+ * performed on the generated RTL code.  See RTLOPT_* in rtl.h for details
+ * on the available flags.
  */
 #ifndef JIT_OPTIMIZE_FLAGS
 # define JIT_OPTIMIZE_FLAGS 0  // Optimization doesn't currently win us much
@@ -544,8 +540,8 @@
  * functions itself, thus not affecting the behavior of the RTL code.
  * (This requires significantly more overhead than regular tracing with the
  * TRACE option.)  Note that it is also necessary to define
- * RTL_TRACE_STEALTH_FOR_SH2 in sh2-rtl-internal.h to enable support for
- * this option.
+ * RTL_TRACE_STEALTH_FOR_SH2 in rtl-internal.h to enable support for this
+ * option.
  *
  * Due to optimization (such as clobbering of dead registers),
  * TRACE_STEALTH is likely to not work correctly with native code.
@@ -564,7 +560,7 @@
  *
  * TRACE and TRACE_STEALTH take precedence over TRACE_LITE; if either of
  * the former two are defined, TRACE_LITE is ignored rather than causing a
- * duplicate trace to be output at the beginning of a psp_sh2_exec() call.
+ * duplicate trace to be output at the beginning of an sh2_run() call.
  */
 // #define TRACE_LITE
 
@@ -761,10 +757,10 @@ extern void interpret_insn(SH2State *state);
 #define SH2_OPCODE_INFO_USES_Rm         (1<< 1) // Uses the value of Rm
 #define SH2_OPCODE_INFO_USES_Rn         (1<< 2) // Uses the value of Rn
 #define SH2_OPCODE_INFO_USES_R15        (1<< 3) // Uses the value of R15
-#define SH2_OPCODE_INFO_SETS_R0         (1<< 4) // Uses the value of R0
+#define SH2_OPCODE_INFO_SETS_R0         (1<< 4) // Sets the value of R0
                                       /* 1<< 5 is unused */
-#define SH2_OPCODE_INFO_SETS_Rn         (1<< 6) // Uses the value of Rn
-#define SH2_OPCODE_INFO_SETS_SR_T       (1<< 7)
+#define SH2_OPCODE_INFO_SETS_Rn         (1<< 6) // Sets the value of Rn
+#define SH2_OPCODE_INFO_SETS_SR_T       (1<< 7) // Sets the value of SR.T
 #define SH2_OPCODE_INFO_ACCESSES_GBR    (1<< 8) // Accesses memory through GBR
 #define SH2_OPCODE_INFO_ACCESSES_Rm     (1<< 9) // Accesses memory through Rm
 #define SH2_OPCODE_INFO_ACCESSES_Rn     (1<<10) // Accesses memory through Rn
@@ -827,7 +823,10 @@ extern int32_t get_opcode_info(uint16_t opcode);
  * can_optimize_idle:  Return whether the given sequence of instructions
  * forms an "idle loop", in which the processor remains in a constant state
  * (or repeating sequence of states) indefinitely until a certain external
- * event occurs (such as a change in the value of a memory-mapped register).
+ * event occurs, such as an interrupt or a change in the value of a memory-
+ * mapped register.  If an idle loop is detected, also return information
+ * allowing the loop to be translated into a faster sequence of native
+ * instructions.
  *
  * The sequence of instructions is assumed to end with a branch instruction
  * to the beginning of the sequence (possibly including a delay slot).

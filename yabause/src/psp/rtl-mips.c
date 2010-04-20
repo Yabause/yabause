@@ -2119,7 +2119,7 @@ static inline unsigned int translate_insn(RTLBlock * const block,
         }
 #endif  // RTL_TRACE_STEALTH_FOR_SH2
         if (insn->src_imm != 0) {
-            /* Debugging stuff from JIT_DEBUG_INSERT_PC (psp-sh2.c) */
+            /* Debugging stuff from JIT_DEBUG_INSERT_PC (sh2.c) */
             const uint32_t addr = insn->src_imm;
             APPEND(MIPS_LUI(MIPS_zero, addr>>16));
             APPEND(MIPS_ORI(MIPS_zero, MIPS_zero, addr & 0xFFFF));

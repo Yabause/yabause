@@ -97,7 +97,7 @@ LRESULT CALLBACK M68KDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          m68kregs_struct m68kregs;
-         m68kcodebreakpoint_struct *cbp;
+         const m68kcodebreakpoint_struct *cbp;
          char tempstr[10];
          int i;
 

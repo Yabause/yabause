@@ -210,8 +210,8 @@ typedef struct {
   mpegstm_struct mpegstm[2];
 
   int _command;
-  u32 _periodiccycles;
-  u32 _periodictiming;
+  u32 _periodiccycles;  // microseconds * 3
+  u32 _periodictiming;  // microseconds * 3
   u32 _commandtiming;
   CDInterface * cdi;
 

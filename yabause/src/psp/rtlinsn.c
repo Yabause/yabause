@@ -284,7 +284,6 @@ static int make_alui_2op(RTLBlock *block, RTLInsn *insn, unsigned int dest,
 #ifdef OPERAND_SANITY_CHECKS
     PRECOND(dest != 0 && dest < block->next_reg, return 0);
     PRECOND(src1 != 0 && src1 < block->next_reg, return 0);
-    PRECOND(src2 != 0 && src2 < block->next_reg, return 0);
 #endif
 
     insn->dest = dest;

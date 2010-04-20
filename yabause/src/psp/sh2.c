@@ -1397,7 +1397,7 @@ void sh2_write_notify(uint32_t address, uint32_t size)
 
 /**
  * check_interrupts:  Check whether there are any pending interrupts, and
- * service the highest-priority one if so.  Helper function for sh2_exec().
+ * service the highest-priority one if so.  Helper function for sh2_run().
  *
  * [Parameters]
  *     state: Processor state block
@@ -1424,8 +1424,7 @@ static int check_interrupts(SH2State *state)
             MappedMemoryWriteLong(state->R[15], state->PC);
             state->SR &= ~SR_I;
             state->SR |= level << SR_I_SHIFT;
-            state->PC =
-                MappedMemoryReadLong(state->VBR + (vector << 2));
+            state->PC = MappedMemoryReadLong(state->VBR + (vector << 2));
 #ifdef ENABLE_JIT
             state->current_entry = jit_find(state->PC);
 #endif
@@ -2624,7 +2623,7 @@ static inline int __STORE_STATE_PC(const JitEntry * const entry,
             if (state_cache[index_PC].rtlreg) {
 # ifdef TRACE_STEALTH
                 APPEND(NOP, 0, 0xB0000000 | index_PC<<16, 0, 0);
-#endif
+# endif
             }
             cached_PC = 0;
             state_cache[index_PC].rtlreg = 0;

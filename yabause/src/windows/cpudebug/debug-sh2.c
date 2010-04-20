@@ -119,8 +119,8 @@ LRESULT CALLBACK SH2DebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          sh2regs_struct sh2regs;
-         codebreakpoint_struct *cbp;
-         memorybreakpoint_struct *mbp;
+         const codebreakpoint_struct *cbp;
+         const memorybreakpoint_struct *mbp;
          char tempstr[10];
          int i;
 

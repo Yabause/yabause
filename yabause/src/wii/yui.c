@@ -201,7 +201,7 @@ int YuiExec()
    yinit.mpegpath = NULL;
    yinit.cartpath = NULL;
    yinit.netlinksetting = NULL;
-   yinit.flags = VIDEOFORMATTYPE_NTSC;
+   yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 
    // Hijack the fps display
    VIDSoft.OnScreenDebugMessage = OnScreenDebugMessage;

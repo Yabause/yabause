@@ -504,6 +504,15 @@ GtkWidget* create_dialog1(void) {
                      G_CALLBACK(disable_enable_fixed_base_time), button2);
   }
 
+  box = yui_page_add(YUI_PAGE(advanced), _("Threads"));
+  {
+    GtkWidget *button = yui_check_button_new(
+        _("Use multithreaded emulation (EXPERIMENTAL!)"),
+        keyfile, "General", "UseThreads"
+    );
+    gtk_container_add(GTK_CONTAINER(box), button);
+  }
+
 #ifdef HAVE_LIBMINI18N
   box = yui_page_add(YUI_PAGE(advanced), _("Translation"));
   gtk_container_add(GTK_CONTAINER(box), yui_file_entry_new(keyfile, "General", "TranslationPath", YUI_FILE_ENTRY_BROWSE, NULL));

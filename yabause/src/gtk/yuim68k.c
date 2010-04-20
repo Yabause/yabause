@@ -131,7 +131,7 @@ GtkWidget * yui_m68k_new(YuiWindow * y) {
   GtkWidget * dialog;
   GClosure *closureF7;
   GtkAccelGroup *accelGroup;
-  m68kcodebreakpoint_struct *cbp;
+  const m68kcodebreakpoint_struct *cbp;
   gint i;
   yui = y;
 

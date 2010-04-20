@@ -1,5 +1,5 @@
 /*  src/psp/me.c: PSP Media Engine access library
-    Copyright 2009 Andrew Church
+    Copyright 2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -796,6 +796,8 @@ __attribute__((section(".text.me"), noreturn)) void me_loop(void)
 {
     volatile MEMessageBlock * const message_block = (volatile MEMessageBlock *)
         ((uintptr_t)&message_block_buffer | 0xA0000000);
+
+    asm("move $k0, %0" : : "r" (ME_K0_MAGIC));
 
     for (;;) {
         message_block->idle = 1;

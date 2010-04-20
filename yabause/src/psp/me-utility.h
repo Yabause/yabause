@@ -1,5 +1,5 @@
 /*  src/psp/me-utility.h: PSP Media Engine utility routine header
-    Copyright 2009 Andrew Church
+    Copyright 2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -22,6 +22,24 @@
 #define ME_UTILITY_H
 
 /*************************************************************************/
+
+/**
+ * meUtilityIsME:  Return whether the current CPU is the ME (nonzero) or
+ * the SC (zero).
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     Nonzero if executing on the ME, zero if executing on the SC
+ */
+static inline int meUtilityIsME(void)
+{
+    int test;
+    asm("xor %0, $k0, %1" : "=r" (test) : "r" (ME_K0_MAGIC));
+    return test == 0;
+}
+
+/*----------------------------------*/
 
 /**
  * meUtilityIcacheInvalidateAll:  Invalidate all entries in the Media

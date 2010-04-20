@@ -1,5 +1,5 @@
 /*  src/psp/me.h: PSP Media Engine access library header
-    Copyright 2009 Andrew Church
+    Copyright 2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -33,6 +33,12 @@ enum {
     /* No Media Engine interrupt is pending */
     ME_ERROR_NO_INTERRUPT = 0x90000003,
 };
+
+/*----------------------------------*/
+
+/* Magic value stored in $k0 to indicate that code is running on the ME */
+
+#define ME_K0_MAGIC  0x3E3E3E3E
 
 /*************************************************************************/
 

@@ -698,11 +698,11 @@ static const IdleInfo idle_table_main[16] = {
  *     0x100A: ...
  * While admittedly somewhat contrived, this example has no net effect on
  * system state because R0 is decremented at the end of each loop; but
- * because postincrement addressing mode is used, the value of R0 cannot
- * be considered a constant, so the loop is not treated as idle.  (A more
- * sophisticated algorithm could track such changes in value and determine
- * their cumulative effect, but in most cases the simplistic algorithm we
- * use is sufficient.)
+ * because R0 is used both in a postincrement memory access and as the
+ * target of an ADD, its value cannot be considered a constant, so the
+ * loop is not treated as idle.  (A more sophisticated algorithm could
+ * track such changes in value and determine their cumulative effect, but
+ * in most cases the simplistic algorithm we use is sufficient.)
  *
  * As an exception to the above, if a register is modified before it is
  * used by another instruction, the register becomes a "don't care" for
@@ -721,9 +721,10 @@ static const IdleInfo idle_table_main[16] = {
  * can_optimize_idle:  Return whether the given sequence of instructions
  * forms an "idle loop", in which the processor remains in a constant state
  * (or repeating sequence of states) indefinitely until a certain external
- * event occurs (such as a change in the value of a memory-mapped register).
- * If an idle loop is detected, also return information allowing the loop
- * to be translated into a faster sequence of native instructions.
+ * event occurs, such as an interrupt or a change in the value of a memory-
+ * mapped register.  If an idle loop is detected, also return information
+ * allowing the loop to be translated into a faster sequence of native
+ * instructions.
  *
  * The sequence of instructions is assumed to end with a branch instruction
  * to the beginning of the sequence (possibly including a delay slot).

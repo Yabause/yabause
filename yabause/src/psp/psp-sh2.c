@@ -196,9 +196,9 @@ static int psp_sh2_init(void)
     sh2_set_cache_flush_callback(flush_caches);
     sh2_set_invalid_opcode_callback(invalid_opcode_handler);
     sh2_set_trace_insn_callback(trace_insn_handler);
-    sh2_set_trace_storeb_callback((SH2TraceAccessCallback *)sh2_trace_writeb);
-    sh2_set_trace_storew_callback((SH2TraceAccessCallback *)sh2_trace_writew);
-    sh2_set_trace_storel_callback((SH2TraceAccessCallback *)sh2_trace_writel);
+    sh2_set_trace_storeb_callback(sh2_trace_writeb);
+    sh2_set_trace_storew_callback(sh2_trace_writew);
+    sh2_set_trace_storel_callback(sh2_trace_writel);
 
     return 0;
 }

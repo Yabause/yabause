@@ -127,7 +127,7 @@ LRESULT CALLBACK SCUDSPDebugDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
       case WM_INITDIALOG:
       {
          scudspregs_struct dspregs;
-         scucodebreakpoint_struct *cbp;
+         const scucodebreakpoint_struct *cbp;
          char tempstr[10];
          int i;
 

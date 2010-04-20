@@ -101,39 +101,30 @@ void print_usage(const char *program_name) {
 
 void YabauseChangeTiming(int freqtype) {
    // Setup all the variables related to timing
+
+   const double freq_base = 39375000.0 / 11.0;  // i.e. 3.57954545... MHz
+   const double freq_mult = (freqtype == CLKTYPE_26MHZ) ? 7.5 : 8.0;
+   const double freq_shifted = freq_base * freq_mult * (1 << YABSYS_TIMING_BITS);
+   const double usec_shifted = 1.0e6 * (1 << YABSYS_TIMING_BITS);
+   const double deciline_time = yabsys.IsPal ? 1.0 /  50        / 313 / 10
+                                             : 1.0 / (60/1.001) / 263 / 10;
+
    yabsys.DecilineCount = 0;
    yabsys.LineCount = 0;
    yabsys.CurSH2FreqType = freqtype;
-
-   switch (freqtype)
-   {
-      case CLKTYPE_26MHZ:
-         if (!yabsys.IsPal)
-            yabsys.DecilineStop = 26846587 / 263 / 10 / 60; // I'm guessing this is wrong
-         else
-            yabsys.DecilineStop = 26846587 / 312 / 10 / 50; // I'm guessing this is wrong
-
-         yabsys.Duf = 26846587 / 100000;
-
-         break;
-      case CLKTYPE_28MHZ:
-         if (!yabsys.IsPal)
-            yabsys.DecilineStop = 28636360 / 263 / 10 / 60; // I'm guessing this is wrong
-         else
-            yabsys.DecilineStop = 28636360 / 312 / 10 / 50; // I'm guessing this is wrong
-
-         yabsys.Duf = 28636360 / 100000;
-         break;
-      default: break;
-   }
-
-   yabsys.CycleCountII = 0;
+   yabsys.DecilineStop = (u32) (freq_shifted * deciline_time + 0.5);
+   yabsys.SH2CycleFrac = 0;
+   yabsys.DecilineUsec = (u32) (usec_shifted * deciline_time + 0.5);
+   yabsys.UsecFrac = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseInit(yabauseinit_struct *init)
-{     
+{
+   // Need to set this first, so init routines see it
+   yabsys.UseThreads = init->usethreads;
+
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
    {
@@ -229,7 +220,7 @@ int YabauseInit(yabauseinit_struct *init)
 
    MappedMemoryInit();
 
-   YabauseSetVideoFormat(init->flags & 0x1);
+   YabauseSetVideoFormat(init->videoformattype);
    YabauseChangeTiming(CLKTYPE_26MHZ);
    yabsys.DecilineMode = 1;
 
@@ -395,22 +386,26 @@ int YabauseExec(void) {
 
 int YabauseEmulate(void) {
 
-   const unsigned int sh2cycles =
+   const u32 cyclesinc =
       yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop * 10;
+   const u32 usecinc =
+      yabsys.DecilineMode ? yabsys.DecilineUsec : yabsys.DecilineUsec * 10;
+#ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
    if (yabsys.IsPal)
    {
-      /* 11.2896MHz / 50Hz / 262.5 lines / 10 calls/line = 86.01 cycles/call */
-      m68kcycles = yabsys.DecilineMode ? 86 : 860;
-      m68kcenticycles = yabsys.DecilineMode ? 1 : 10;
+      /* 11.2896MHz / 50Hz / 313 lines / 10 calls/line = 72.20 cycles/call */
+      m68kcycles = yabsys.DecilineMode ? 72 : 722;
+      m68kcenticycles = yabsys.DecilineMode ? 20 : 0;
    }
    else
    {
-      /* 11.2896MHz / 60Hz / 262.5 lines / 10 calls/line = 71.68 cycles/call */
+      /* 11.2896MHz / 60Hz / 263 lines / 10 calls/line = 71.62 cycles/call */
       m68kcycles = yabsys.DecilineMode ? 71 : 716;
-      m68kcenticycles = yabsys.DecilineMode ? 68 : 80;
+      m68kcenticycles = yabsys.DecilineMode ? 62 : 20;
    }
+#endif
 
    int oneframeexec = 0;
 
@@ -422,6 +417,14 @@ int YabauseEmulate(void) {
 
       if (yabsys.DecilineMode) {
 
+         // Since we run the SCU with half the number of cycles we send
+         // to SH2Exec(), we always compute an even number of cycles here
+         // and leave any odd remainder in SH2CycleFrac.
+         u32 sh2cycles;
+         yabsys.SH2CycleFrac += cyclesinc;
+         sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
+         yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
+
          PROFILE_START("MSH2");
          SH2Exec(MSH2, sh2cycles);
          PROFILE_STOP("MSH2");
@@ -430,6 +433,12 @@ int YabauseEmulate(void) {
          if (yabsys.IsSSH2Running)
             SH2Exec(SSH2, sh2cycles);
          PROFILE_STOP("SSH2");
+
+#ifdef USE_SCSP2
+         PROFILE_START("SCSP");
+         ScspExec(1);
+         PROFILE_STOP("SCSP");
+#endif
 
          yabsys.DecilineCount++;
          if(yabsys.DecilineCount == 9)
@@ -440,14 +449,24 @@ int YabauseEmulate(void) {
             PROFILE_STOP("hblankin");
          }
 
+         PROFILE_START("SCU");
+         ScuExec(sh2cycles / 2);
+         PROFILE_STOP("SCU");
+
       } else {  // !DecilineMode
 
+         const u32 decilinecycles = yabsys.DecilineStop >> YABSYS_TIMING_BITS;
+         u32 sh2cycles;
+         yabsys.SH2CycleFrac += cyclesinc;
+         sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
+         yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
+
          PROFILE_START("MSH2");
-         SH2Exec(MSH2, sh2cycles - yabsys.DecilineStop);
+         SH2Exec(MSH2, sh2cycles - decilinecycles);
          PROFILE_STOP("MSH2");
          PROFILE_START("SSH2");
          if (yabsys.IsSSH2Running)
-            SH2Exec(SSH2, sh2cycles - yabsys.DecilineStop);
+            SH2Exec(SSH2, sh2cycles - decilinecycles);
          PROFILE_STOP("SSH2");
 
          PROFILE_START("hblankin");
@@ -455,22 +474,30 @@ int YabauseEmulate(void) {
          PROFILE_STOP("hblankin");
 
          PROFILE_START("MSH2");
-         SH2Exec(MSH2, yabsys.DecilineStop);
+         SH2Exec(MSH2, decilinecycles);
          PROFILE_STOP("MSH2");
          PROFILE_START("SSH2");
          if (yabsys.IsSSH2Running)
-            SH2Exec(SSH2, yabsys.DecilineStop);
+            SH2Exec(SSH2, decilinecycles);
          PROFILE_STOP("SSH2");
+
+#ifdef USE_SCSP2
+         PROFILE_START("SCSP");
+         ScspExec(10);
+         PROFILE_STOP("SCSP");
+#endif
+
+         PROFILE_START("SCU");
+         ScuExec(sh2cycles / 2);
+         PROFILE_STOP("SCU");
 
       }  // if (yabsys.DecilineMode)
 
+#ifndef USE_SCSP2
       PROFILE_START("68K");
       M68KSync();  // Wait for the previous iteration to finish
       PROFILE_STOP("68K");
-
-      PROFILE_START("SCU");
-      ScuExec(sh2cycles / 2);
-      PROFILE_STOP("SCU");
+#endif
 
       if (!yabsys.DecilineMode || yabsys.DecilineCount == 10)
       {
@@ -478,9 +505,11 @@ int YabauseEmulate(void) {
          PROFILE_START("hblankout");
          Vdp2HBlankOUT();
          PROFILE_STOP("hblankout");
+#ifndef USE_SCSP2
          PROFILE_START("SCSP");
          ScspExec();
          PROFILE_STOP("SCSP");
+#endif
          yabsys.DecilineCount = 0;
          yabsys.LineCount++;
          if (yabsys.LineCount == yabsys.VBlankLineCount)
@@ -503,26 +532,16 @@ int YabauseEmulate(void) {
          }
       }
 
-      yabsys.CycleCountII += sh2cycles;
+      yabsys.UsecFrac += usecinc;
+      PROFILE_START("SMPC");
+      SmpcExec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
+      PROFILE_STOP("SMPC");
+      PROFILE_START("CDB");
+      Cs2Exec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
+      PROFILE_STOP("CDB");
+      yabsys.UsecFrac &= YABSYS_TIMING_MASK;
 
-      {
-         u32 usec = 0;
-         while (yabsys.CycleCountII > yabsys.Duf)
-         {
-             yabsys.CycleCountII -= yabsys.Duf;
-             usec += 10;
-         }
-         if (usec > 0)
-         {
-            PROFILE_START("SMPC");
-            SmpcExec(usec);
-            PROFILE_STOP("SMPC");
-            PROFILE_START("CDB");
-            Cs2Exec(usec);
-            PROFILE_STOP("CDB");
-         }
-      }
-
+#ifndef USE_SCSP2
       {
 	 static int saved_centicycles;
          int cycles;
@@ -537,11 +556,15 @@ int YabauseEmulate(void) {
          M68KExec(cycles);
          PROFILE_STOP("68K");
       }
+#endif
 
       PROFILE_STOP("Total Emulation");
    }
 
+#ifndef USE_SCSP2
    M68KSync();
+#endif
+
    return 0;
 }
 
@@ -609,7 +632,8 @@ void YabauseSetVideoFormat(int type) {
 #elif defined(HAVE_LIBSDL)
    yabsys.tickfreq = 1000;
 #endif
-   yabsys.OneFrameTime = yabsys.tickfreq / (type ? 50 : 60);
+   yabsys.OneFrameTime =
+      type ? (yabsys.tickfreq / 50) : (yabsys.tickfreq * 1001 / 60000);
    Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
    ScspChangeVideoFormat(type);
    YabauseChangeTiming(yabsys.CurSH2FreqType);

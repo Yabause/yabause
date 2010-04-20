@@ -233,7 +233,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.buppath = 0;
 	mYabauseConf.mpegpath = 0;
 	mYabauseConf.cartpath = 0;
-	mYabauseConf.flags = VIDEOFORMATTYPE_NTSC;
+	mYabauseConf.videoformattype = VIDEOFORMATTYPE_NTSC;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

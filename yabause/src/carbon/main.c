@@ -163,7 +163,7 @@ void read_settings(void) {
     if (s)
         yinit.cartpath = strdup(CFStringGetCStringPtr(s, 0));
     
-	yinit.flags = VIDEOFORMATTYPE_NTSC;
+	yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	
 	s = CFPreferencesCopyAppValue(CFSTR("AutoFrameSkip"),
 		kCFPreferencesCurrentApplication);

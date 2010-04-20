@@ -147,7 +147,7 @@
  * - Writes through R15 will never overwrite SH-2 program code.
  *
  * This optimization will cause the translated code to behave incorrectly
- * or crash the host program if either of the assumptions above is violated.
+ * or crash the host program if any of the assumptions above is violated.
  */
 #define SH2_OPTIMIZE_STACK  (1<<7)
 
@@ -218,7 +218,8 @@ struct SH2State_ {
           SH2BRTYPE_BF_S,
     } branch_type;
     uint32_t branch_target;     // Target address (used by decoder)
-    uint16_t branch_target_reg; // RTL register containing target address
+    uint32_t branch_target_reg; // RTL register containing target address
+                                //    (must be 32-bit for interpreter's sake)
     uint16_t branch_cond_reg;   // For SH2BRTYPE_BT etc or pending_select,
                                 //    RTL register containing value of T bit
     uint16_t branch_cycles;     // For conditional branches, number of cycles

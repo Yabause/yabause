@@ -131,7 +131,7 @@ GtkWidget * yui_scudsp_new(YuiWindow * y) {
   GtkWidget * dialog;
   GClosure *closureF7;
   GtkAccelGroup *accelGroup;
-  scucodebreakpoint_struct *cbp;
+  const scucodebreakpoint_struct *cbp;
   gint i;
   yui = y;
 

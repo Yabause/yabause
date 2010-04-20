@@ -91,7 +91,7 @@ int YuiInit(void)   {
     yinit.mpegpath = NULL;
     yinit.cartpath = NULL;
     yinit.frameskip = 0;
-    yinit.flags = VIDEOFORMATTYPE_NTSC;
+    yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.clocksync = 0;
     yinit.basetime = 0;
 

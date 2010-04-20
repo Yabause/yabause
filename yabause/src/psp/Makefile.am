@@ -1,4 +1,5 @@
-EXTRA_DIST = icache-funcs-2450.patch psp-logo.png sh2-core.i
+EXTRA_DIST = icache-funcs-2450.patch me-sectstart.c me-sectend.c \
+             psp-logo.png sh2-core.i
 CLEANFILES = me.elf me.prx me-exp.c me-test.elf me-test.prx melib.S \
              yabause.elf yabause.prx yabause.sfo EBOOT.PBP
 
@@ -24,7 +25,7 @@ yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       rtl.c rtl-mips.c rtlexec.c rtlinsn.c rtlopt.c rtlunit.c \
                       satopt-sh2.c \
                       sh2.c sh2-interpret.c sh2-opcodeinfo.c sh2-optimize.c \
-                      sys.c texcache.c yui.c \
+                      sys.c texcache.c threads.c yui.c \
                       me-utility.c \
                       \
                       common.h config.h control.h display.h filesel.h font.h \
@@ -36,9 +37,17 @@ yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       sh2.h sh2-internal.h \
                       sys.h texcache.h \
                       me-utility.h
+yabause_elf_DEPENDENCIES = me-sectstart.$(OBJEXT) me-sectend.$(OBJEXT)
 nodist_yabause_elf_SOURCES = melib.S 
 yabause_elf_CFLAGS = $(YAB_CFLAGS) -Wpointer-arith -Wshadow
 yabause_elf_LDADD = ../libyabause.a $(YAB_LIBS) -lpspsdk
+yabause.elf: $(yabause_elf_OBJECTS) $(yabause_elf_DEPENDENCIES) ../libyabause.a
+	$(yabause_elf_LINK) \
+		me-sectstart.$(OBJEXT) \
+		$(yabause_elf_OBJECTS) \
+		$(yabause_elf_LDADD) \
+		$(LIBS) \
+		me-sectend.$(OBJEXT)
 
 me_elf_SOURCES = me.c me.h
 nodist_me_elf_SOURCES = me-exp.c

@@ -149,7 +149,7 @@ static void yui_settings_init(void) {
 	yinit.buppath = buppath;
 	yinit.mpegpath = mpegpath;
 	yinit.cartpath = cartpath;
-        yinit.flags = VIDEOFORMATTYPE_NTSC;
+        yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 }
 
 gchar * inifile;
@@ -339,6 +339,13 @@ static gboolean yui_settings_load(void) {
 		mustRestart = TRUE;
 	}
 
+	/* threads */
+	tmp = g_key_file_get_boolean(keyfile, "General", "UseThreads", 0);
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.usethreads)) {
+		mustRestart = TRUE;
+	}
+	yinit.usethreads = tmp;
+
 	PerInit(yinit.percoretype);
 
 	PerPortReset();
@@ -374,7 +381,7 @@ static gboolean yui_settings_load(void) {
 			g_key_file_get_integer(keyfile, "General", "Height", 0),
 			g_key_file_get_integer(keyfile, "General", "Fullscreen", 0));
 
-        yinit.flags = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
+        yinit.videoformattype = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 
 	yui_window_set_frameskip(YUI_WINDOW(yui), g_key_file_get_integer(keyfile, "General", "Frameskip", NULL));
 

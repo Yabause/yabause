@@ -1,5 +1,5 @@
 /*  src/psp/me-test.c: Test program for PSP Media Engine access library
-    Copyright 2009 Andrew Church
+    Copyright 2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -61,6 +61,8 @@ static int test_meResult(void);
 static int test_meException(void);
 static int test_meStop(void);
 static int test_restart(void);
+static int test_meIsME_SC(void);
+static int test_meIsME_ME(void);
 static int test_meInterruptWait(void);
 static int test_meInterruptPoll(void);
 static int test_meInterruptClear(void);
@@ -76,6 +78,7 @@ static int mefunc_store_456(void *param);
 static int mefunc_delay_and_store_789(void *param);
 static int mefunc_count_forever(void *param);
 static int mefunc_address_error(void *param);
+static int mefunc_return_IsME(void *param);
 static int mefunc_send_interrupt(void *param);
 static int mefunc_dcache_read(void *param);
 static int mefunc_dcache_write(void *param);
@@ -112,6 +115,9 @@ static TestInfo tests[] = {
     {"meException",      "meWait",          test_meException},
     {"meStop",           "meResult",        test_meStop},
     {"restart",          "meStop",          test_restart},
+
+    {"meIsME-SC",        "restart",         test_meIsME_SC},
+    {"meIsME-ME",        "meIsME-SC",       test_meIsME_ME},
 
     {"meInterruptWait",  "restart",         test_meInterruptWait},
     {"meInterruptPoll",  "meInterruptWait", test_meInterruptPoll},
@@ -610,6 +616,67 @@ static int test_restart(void)
     if ((res = meResult()) != 123) {
         fprintf(stderr, "meResult() #2 gave wrong result (expected 123, got"
                 " %d)\n", res);
+        return 0;
+    }
+
+    return 1;
+}
+
+/*************************************************************************/
+
+/**
+ * test_meIsME_SC:  Test that meUtilityIsME() properly returns zero when
+ * executing on the SC.
+ *
+ * Assumes that test_restart() has passed.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     Nonzero if the test passes, zero if it fails
+ */
+static int test_meIsME_SC(void)
+{
+    int res = meUtilityIsME();
+
+    if (res != 0) {
+        fprintf(stderr, "meUtilityIsME() returned nonzero (%d) on SC\n", res);
+        return 0;
+    }
+
+    return 1;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * test_meIsME_ME:  Test that meUtilityIsME() properly returns nonzero when
+ * executing on the ME.
+ *
+ * Assumes that test_meIsME() has passed.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     Nonzero if the test passes, zero if it fails
+ */
+static int test_meIsME_ME(void)
+{
+    int res;
+
+    if ((res = meCall(mefunc_return_IsME, NULL)) != 0) {
+        fprintf(stderr, "meCall() failed: %08X\n", res);
+        return 0;
+    }
+
+    if ((res = meWait()) != 0) {
+        fprintf(stderr, "meWait() failed: %08X\n", res);
+        return 0;
+    }
+
+    if ((res = meResult()) == 0) {
+        fprintf(stderr, "meResult() gave wrong result (expected nonzero,"
+                " got 0)\n");
         return 0;
     }
 
@@ -1213,6 +1280,21 @@ static int mefunc_address_error(void *param)
 {
     int dummy = 321;
     return *(int *)((uintptr_t)&dummy | 1);
+}
+
+/*************************************************************************/
+
+/**
+ * mefunc_return_IsME():  Return the value returned by meUtilityIsME().
+ *
+ * [Parameters]
+ *     param: Unused
+ * [Return value]
+ *     Nonzero
+ */
+static int mefunc_return_IsME(void *param)
+{
+    return meUtilityIsME();
 }
 
 /*************************************************************************/

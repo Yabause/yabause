@@ -551,7 +551,7 @@ YabauseSetup:
    yinit.mpegpath = mpegromfilename;
    yinit.cartpath = cartfilename;
    yinit.netlinksetting = netlinksetting;
-   yinit.flags = VIDEOFORMATTYPE_NTSC;
+   yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 
    if ((ret = YabauseInit(&yinit)) < 0)
    {
@@ -1144,7 +1144,7 @@ YabauseSetup:
    yinit.mpegpath = mpegromfilename;
    yinit.cartpath = cartfilename;
    yinit.netlinksetting = netlinksetting;
-   yinit.flags = VIDEOFORMATTYPE_NTSC;
+   yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 
    if (GetPrivateProfileStringA("General", "CDROMDrive", "", cdrompath, MAX_PATH, inifilename) != 0) {
 

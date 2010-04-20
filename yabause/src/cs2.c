@@ -798,7 +798,7 @@ void Cs2Reset(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2Exec(u32 timing) {
-    Cs2Area->_periodiccycles += timing;
+    Cs2Area->_periodiccycles += timing * 3;
 
    if (Cs2Area->_commandtiming > 0)
    {
@@ -966,7 +966,8 @@ int Cs2GetTimeToNextSector(void) {
    if ((Cs2Area->status & 0xF) != CDB_STAT_PLAY) {
       return 0;
    } else {
-      int time = Cs2Area->_periodictiming - Cs2Area->_periodiccycles;
+      // Round up, since the caller wants to know when it'll be safe to check
+      int time = (Cs2Area->_periodictiming - Cs2Area->_periodiccycles + 2) / 3;
       return time<0 ? 0 : time;
    }
 }
@@ -982,12 +983,12 @@ void Cs2Command(void) {
 void Cs2SetTiming(int playing) {
   if (playing) {
      if (Cs2Area->isaudio || Cs2Area->speed1x == 1)
-        Cs2Area->_periodictiming = 13333;
+        Cs2Area->_periodictiming = 40000;  // 13333.333... * 3
      else
-        Cs2Area->_periodictiming = 6667;
+        Cs2Area->_periodictiming = 20000;  // 6666.666... * 3
   }
   else {
-     Cs2Area->_periodictiming = 16667;
+     Cs2Area->_periodictiming = 50000;  // 16666.666... * 3
   }
 }
 
@@ -3529,7 +3530,10 @@ int Cs2SaveState(FILE * fp) {
    ywrite(&check, (void *) &Cs2Area->transfileinfo, 1, 12, fp);
    ywrite(&check, (void *) &Cs2Area->lastbuffer, 1, 1, fp);
    ywrite(&check, (void *) &Cs2Area->_command, 1, 1, fp);
-   ywrite(&check, (void *) &Cs2Area->_periodictiming, 4, 1, fp);
+   {
+      u32 temp = (Cs2Area->_periodictiming + 3) / 3;
+      ywrite(&check, (void *) &temp, 4, 1, fp);
+   }
    ywrite(&check, (void *) &Cs2Area->_commandtiming, 4, 1, fp);
    ywrite(&check, (void *) &Cs2Area->outconcddevnum, 1, 1, fp);
    ywrite(&check, (void *) &Cs2Area->outconmpegfbnum, 1, 1, fp);
@@ -3623,7 +3627,12 @@ int Cs2LoadState(FILE * fp, int version, int size) {
    yread(&check, (void *)&Cs2Area->transfileinfo, 1, 12, fp);
    yread(&check, (void *)&Cs2Area->lastbuffer, 1, 1, fp);
    yread(&check, (void *)&Cs2Area->_command, 1, 1, fp);
-   yread(&check, (void *)&Cs2Area->_periodictiming, 4, 1, fp);
+   {
+      u32 temp;
+      yread(&check, (void *)&temp, 4, 1, fp);
+      // Derive the actual, accurate value (always a multiple of 10)
+      Cs2Area->_periodictiming = ((temp * 3) / 10) * 10;
+   }
    yread(&check, (void *)&Cs2Area->_commandtiming, 4, 1, fp);
    yread(&check, (void *)&Cs2Area->outconcddevnum, 1, 1, fp);
    if (Cs2Area->outconcddevnum == 0xFF)

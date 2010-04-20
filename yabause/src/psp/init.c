@@ -183,12 +183,13 @@ int init_yabause(void)
     yinit.buppath = config_get_path_bup();
     yinit.mpegpath = NULL;
     yinit.cartpath = NULL;
-    yinit.flags = VIDEOFORMATTYPE_NTSC;
+    yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.clocksync = config_get_clock_sync();
     const time_t basetime = 883656000;  // 1998-01-01 12:00 UTC
     yinit.basetime = config_get_clock_fixed_time()
                      ? basetime - localtime_utc_offset()
                      : 0;
+    yinit.usethreads = 1;
 
     /* Initialize controller settings */
     PerInit(yinit.percoretype);

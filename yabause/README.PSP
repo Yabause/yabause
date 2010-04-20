@@ -508,14 +508,15 @@ algorithm generally are of course welcome.
 <<< Use of the Media Engine >>>
 
 Aside from the two SH-2 cores, a third major consumer of CPU time is the
-MC68000 ("68k") CPU used in the SCSP, the Saturn's sound processor.
-While most games don't run particularly complex code on the 68k, it is
-nonetheless a proper CPU in its own right, and requires a fair amount of
-time to emulate.  Currently, the PSP port of Yabause has the ability to
-make use of the PSP's Media Engine CPU to process 68k instructions in
-parallel with the rest of the emulation, but this use of the Media
-Engine is a considerable departure from Sony's design and thus a risky
-endeavor.
+SCSP, the Saturn's sound processor, and particularly the MC68EC000
+("68k") CPU used therein.  While most games don't run particularly complex
+code on the 68k, it is nonetheless a proper CPU in its own right, and
+requires a fair amount of time to emulate; multi-channel FM background
+music takes time to generate as well.  Currently, the PSP port of Yabause
+has the ability to make use of the PSP's Media Engine CPU to process 68k
+instructions and audio generation in parallel with the rest of the
+emulation, but this use of the Media Engine is a considerable departure
+from Sony's design and thus a risky endeavor.
 
 The primary difficulty with using the ME as a "second core" in the sense
 of the multi-core processors used in PCs is that of cache coherency.
@@ -547,7 +548,7 @@ This illustrates two problems caused by the lack of cache coherency:
   be written with the same value it had when the cache line was loaded
   by that CPU.  In particular, if the other CPU had already flushed the
   cache line, that change will be clobbered--for example (here "SC" is
-  the main CPU and "ME" is the media engine):
+  the main CPU and "ME" is the Media Engine):
 
         Time    Operation     SC cache    ME cache    Memory    Desired
         ----    ----------    --------    --------    ------    -------
@@ -562,54 +563,55 @@ This illustrates two problems caused by the lack of cache coherency:
 
 In order for Yabause to have even a hope of stable operation, therefore,
 the use of both CPUs' caches must be carefully controlled to avoid data
-loss.  This problem is exacerbated by the (current) lack of a
-multithreaded design in the Yabause core, making it difficult to isolate
-individual parts of the emulation for independent execution.  Within
-these constraints, the 68k CPU emulation was seen as the best candidate
-for parallel execution, both because of its time consumption and because
-of its limited connection to other Saturn components (the 68k can only
-access sound RAM and SCSP hardware registers).
+loss.
 
 When use of the Media Engine is enabled, the following steps are taken
 to avoid data corruption due to the lack of cache coherency:
 
-* All accesses to sound RAM from the main CPU are performed through
-  uncacheable memory (0x4nnnnnnn); only the ME is permitted to cache
-  sound RAM.  (Sound RAM is allocated on a cache-aligned address to
-  ensure that it is not polluted by cached accesses to nearby data.)
+* SCSP state variables are divided into separate, 64-byte (cache-line)
+  aligned data sections, based on which thread (the main Yabause thread,
+  running on the SC, or the SCSP thread, running on the ME) writes to
+  them.
 
-* All write accesses to SCSP registers are performed by the main CPU.
-  When the 68k accesses an SCSP register, the access is sent via an
-  interrupt to a thread running on the main CPU.
+* SCSP state variables are accessed using uncached (0x4nnnnnnn) addresses
+  in two cases: when _reading_ data written by the other CPU (to avoid an
+  old value getting stuck in the cache), and when _writing_ data which is
+  also written by the other CPU (to avoid the cache line clobbering problem
+  described above).
 
-* _Read_ accesses to SCSP registers are (by default, changeable with a
-  #define) performed on the ME.  To avoid the ME seeing stale data in
-  memory, SCSP state is written out from the main CPU's cache whenever
-  an SCSP register is written, and certain registers (specifically CA,
-  MCIPD, and SCIPD) are written through the cache whenever they are
-  updated by means other than a write access.
+* The SC's data cache is flushed (written back and invalidated) immediately
+  before waiting for the SCSP thread to finish processing, e.g. for
+  ScspReset().  The data cache is written back on every ScspExec() call,
+  but it is _not_ flushed for performance reasons.
 
-* The ME flushes its cache (writeback and invalidate) after each iteration
-  of the execute function, ensuring that data seen by each CPU is never
-  more than one main loop iteration old.
+* The ME's data cache is flushed after each iteration of the SCSP thread
+  loop.  This flushing is not coded directly into scsp.c, but instead
+  takes place in the YabThreadYield() and YabThreadSleep() implementations.
+  (These functions are naturally meaningless on the ME, but since the SCSP
+  thread calls one or the other at the end of each loop, it's a convenient
+  place to flush the cache.)
 
-* All calls to the Q68 interpreter core other than initialization and
-  cleanup are performed on the ME.  (However, this does not completely
-  avoid the potential for cache inconsistencies, since malloc() as used
-  in Q68 initialization code does not return cache-aligned blocks.)
+* When dynamic translation of 68k code is enabled, all generated code is
+  stored in a separately allocated pool and managed with custom memory
+  allocation functions (local_malloc() and friends in psp-m68k.c), since
+  the standard memory management functions are not designed to work with
+  the ME and would likely cause a crash due to cache desynchronization.
+  (As a note, however, there is a potential for cache clobbering due to
+  the memory blocks allocated by the Q68 initialization code, which are
+  not guaranteed to be cache-aligned.)
 
-* When dynamic translation is enabled, all dynamically-generated native
-  code is stored in ME-local EDRAM to avoid any possibility of cache line
-  pollution.  (This has the added benefit of faster execution, since the
-  ME does not need to contend with other system components for access to
-  main memory.)
+In general, using the ME provides a moderate speed improvement (10-15%) to
+overall emulation speed.  There are, however, some cases in which the lack
+of cache coherency could cause games to misbehave or even crash Yabause:
 
-In addition, 68k execution is only allowed to occur while the main CPU is
-processing SH-2 emulation, to minimize the possibility of SCSP access
-interrupts occurring at inopportune times (such as while generating audio
-output).
+* If a game writes (from the SH-2) to a portion of sound RAM containing 68k
+  program code while the 68k is executing, the 68k may execute incorrect
+  code, or the dynamic translation memory pool may be corrupted.  Normally,
+  games should only load code while the 68k is stopped, but there may be
+  cases when the SH-2 writes to a variable in sound RAM which is located in
+  the same region as 68k code, thus triggering this issue.
 
-At present, use of the Media Engine does not show a significant benefit,
-and in fact hurts frame rate in some cases.  Further work in parallelizing
-Yabause (perhaps moving the entire SCSP emulation to the ME) might provide
-better performance.
+* Games which rely on the precise relative timing of the SH-2 and 68k
+  processors are likely to fail in any multithreaded emulator, but are more
+  likely to fail when using the ME due to delays in data being written out
+  from the data caches.

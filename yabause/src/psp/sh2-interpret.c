@@ -187,13 +187,13 @@
 #define LOAD_PTR(dest,address,offset) \
     ((dest) = *(uintptr_t *)((address)+(offset)))
 #define STORE_B(address,src,offset) \
-    (*(uint8_t *)(address) = ((src)+(offset)))
+    (*(uint8_t *)((address)+(offset)) = (src))
 #define STORE_H(address,src,offset) \
-    (*(uint16_t *)(address) = ((src)+(offset)))
+    (*(uint16_t *)((address)+(offset)) = (src))
 #define STORE_W(address,src,offset) \
-    (*(uint32_t *)(address) = ((src)+(offset)))
+    (*(uint32_t *)((address)+(offset)) = (src))
 #define STORE_PTR(address,src,offset) \
-    (*(uintptr_t *)(address) = ((src)+(offset)))
+    (*(uintptr_t *)((address)+(offset)) = (src))
 
 /* Load from, store to, or add constants to state block fields */
 #define LOAD_STATE(reg,field)        ((reg) = state->field)
@@ -233,7 +233,7 @@
     ((dest) = MappedMemoryReadLong((address)))
 
 #ifdef TRACE
-# define LOG_STORE(address,src,type)  ((*trace_write##type##_callback)((address), (src)))
+# define LOG_STORE(address,src,type)  ((*trace_store##type##_callback)((address), (src)))
 #else
 # define LOG_STORE(address,src,type)  /*nothing*/
 #endif
@@ -260,40 +260,40 @@
 
 /* Execute an SH-2 load or store through an SH-2 register */
 #define SH2_LOAD_REG_B(dest,sh2reg,offset,postinc)  do {        \
-    SH2_LOAD_B(dest, state->R[sh2reg] + (offset));         \
+    SH2_LOAD_B(dest, state->R[sh2reg] + (offset));              \
     if (postinc) {                                              \
-        state->R[sh2reg] += 1;                             \
+        state->R[sh2reg] += 1;                                  \
     }                                                           \
 } while (0)
 #define SH2_LOAD_REG_W(dest,sh2reg,offset,postinc)  do {        \
-    SH2_LOAD_W(dest, state->R[sh2reg] + (offset));         \
+    SH2_LOAD_W(dest, state->R[sh2reg] + (offset));              \
     if (postinc) {                                              \
-        state->R[sh2reg] += 2;                             \
+        state->R[sh2reg] += 2;                                  \
     }                                                           \
 } while (0)
 #define SH2_LOAD_REG_L(dest,sh2reg,offset,postinc)  do {        \
-    SH2_LOAD_L(dest, state->R[sh2reg] + (offset));         \
+    SH2_LOAD_L(dest, state->R[sh2reg] + (offset));              \
     if (postinc) {                                              \
-        state->R[sh2reg] += 4;                             \
+        state->R[sh2reg] += 4;                                  \
     }                                                           \
 } while (0)
 #define SH2_STORE_REG_B(sh2reg,src,offset,predec)  do {         \
     if (predec) {                                               \
-        state->R[sh2reg] -= 1;                             \
+        state->R[sh2reg] -= 1;                                  \
     }                                                           \
-    SH2_STORE_B(state->R[sh2reg] + (offset), src);         \
+    SH2_STORE_B(state->R[sh2reg] + (offset), src);              \
 } while (0)
 #define SH2_STORE_REG_W(sh2reg,src,offset,predec)  do {         \
     if (predec) {                                               \
-        state->R[sh2reg] -= 2;                             \
+        state->R[sh2reg] -= 2;                                  \
     }                                                           \
-    SH2_STORE_W(state->R[sh2reg] + (offset), src);         \
+    SH2_STORE_W(state->R[sh2reg] + (offset), src);              \
 } while (0)
 #define SH2_STORE_REG_L(sh2reg,src,offset,predec)  do {         \
     if (predec) {                                               \
-        state->R[sh2reg] -= 4;                             \
+        state->R[sh2reg] -= 4;                                  \
     }                                                           \
-    SH2_STORE_L(state->R[sh2reg] + (offset), src);         \
+    SH2_STORE_L(state->R[sh2reg] + (offset), src);              \
 } while (0)
 
 /* Branches (within an SH-2 instruction's RTL code) */

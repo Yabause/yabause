@@ -3803,11 +3803,17 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
 /*************************************************************************/
 
+#undef GET_REG
 #undef GET_R0
+#undef GET_R0_W
+#undef GET_R0_B
 #undef GET_R15
 #undef GET_Rn
 #undef GET_Rm
+#undef GET_Rm_W
+#undef GET_Rm_B
 #undef GET_SR
+#undef GET_SR_T
 #undef GET_GBR
 #undef GET_VBR
 #undef GET_MACH
@@ -3815,12 +3821,23 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 #undef GET_PR
 #undef GET_MACH_COPY
 #undef GET_MACL_COPY
+#undef GET_REG_KEEPOFS
+#undef GET_R0_KEEPOFS
+#undef GET_R15_KEEPOFS
+#undef GET_Rn_KEEPOFS
+#undef GET_Rm_KEEPOFS
+#undef GET_GBR_KEEPOFS
+
+#undef COPY_FROM_Rn
+#undef COPY_TO_Rn
+#undef DEFINE_RESULT_REG
 
 #undef SET_R0
 #undef SET_R15
 #undef SET_Rn
 #undef SET_Rm
 #undef SET_SR
+#undef SET_SR_T
 #undef SET_GBR
 #undef SET_VBR
 #undef SET_MACH
@@ -3828,6 +3845,16 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 #undef SET_PR
 #undef SET_PC
 #undef SET_PC_KNOWN
+
+#undef ADDI_R0
+#undef ADDI_R15
+#undef ADDI_Rn
+#undef ADDI_Rm
+#undef ADDI_R0_NOREG
+#undef ADDI_R15_NOREG
+#undef ADDI_Rn_NOREG
+#undef ADDI_Rm_NOREG
+#undef ADD_CYCLES
 
 #undef INCDEC_B
 #undef INCDEC_W
@@ -3848,6 +3875,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 #undef STORE_disp_GBR
 #undef STORE_SAVED_R0_GBR
 
+#undef TAKE_EXCEPTION
+#undef GET_NEXT_OPCODE_FOR_SHIFT_CACHE
 #undef DEBUG_PRINT_ONCE
 
 /*************************************************************************/

@@ -478,6 +478,11 @@ AC_ARG_ENABLE(optimized-dma, AC_HELP_STRING(--enable-optimized-dma, [use optimiz
 	[if test "x$enableval" = "xyes" ; then
 		AC_DEFINE(OPTIMIZED_DMA)
 	fi])
+AC_ARG_ENABLE(new-scsp, AC_HELP_STRING(--enable-new-scsp, [enable experimental new SCSP implementation]),
+	[if test "x$enableval" = "xyes" ; then
+		AC_DEFINE(USE_SCSP2)
+	fi])
+AM_CONDITIONAL([USE_SCSP2], [test "${enable_new_scsp}" = "yes"])
 
 
 #### PSP options

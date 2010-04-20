@@ -1,4 +1,4 @@
-/*  src/psp/sh2-rtl-internal.h: Internal-use declarations for RTL
+/*  src/psp/rtl-internal.h: Internal-use declarations for RTL
     Copyright 2009 Andrew Church
 
     This file is part of Yabause.
@@ -221,7 +221,7 @@
 
 /**
  * RTL_TRACE_STEALTH_FOR_SH2:  Enable SH-2 stealth tracing (see the
- * documentation for TRACE_STEALTH in psp-sh2.c).
+ * documentation for TRACE_STEALTH in sh2.c).
  */
 #define RTL_TRACE_STEALTH_FOR_SH2
 
@@ -381,7 +381,7 @@ typedef struct RTLUnit_ {
 
 /**
  * RTLBlock:  State information used in translating a block of code.  The
- * RTLBlock type is defined in sh2-rtl.h.
+ * RTLBlock type itself is defined in rtl.h.
  */
 struct RTLBlock_ {
     RTLInsn *insns;             // Instruction array
@@ -451,6 +451,19 @@ struct RTLBlock_ {
     uint32_t sh2_regcache_mask; // Bitmask of cached registers
 #endif
 };
+
+/*************************************************************************/
+/***************************** Miscellaneous *****************************/
+/*************************************************************************/
+
+/* We use the PRECOND() macro from common.h for precondition checking; if
+ * CHECK_PRECONDITIONS is _not_ defined, then redefine PRECOND() here to do
+ * nothing. */
+
+#ifndef CHECK_PRECONDITIONS
+# undef PRECOND
+# define PRECOND(condition,fail_action)  /*nothing*/
+#endif
 
 /*************************************************************************/
 /**************** Library-internal function declarations *****************/
@@ -671,19 +684,6 @@ extern const char *rtl_decode_insn(const RTLBlock *block, uint32_t index, int is
 extern const char *rtl_describe_register(const RTLRegister *reg, int is_exec);
 
 #endif  // RTL_TRACE_GENERATE || RTL_TRACE_EXECUTE
-
-/*************************************************************************/
-/***************************** Miscellaneous *****************************/
-/*************************************************************************/
-
-/* We use the PRECOND() macro from common.h for precondition checking; if
- * CHECK_PRECONDITIONS is _not_ defined, then redefine PRECOND() here to do
- * nothing. */
-
-#ifndef CHECK_PRECONDITIONS
-# undef PRECOND
-# define PRECOND(condition,fail_action)  /*nothing*/
-#endif
 
 /*************************************************************************/
 /*************************************************************************/

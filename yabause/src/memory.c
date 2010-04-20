@@ -979,6 +979,17 @@ void FormatBackupRam(void *mem, u32 size)
 
 //////////////////////////////////////////////////////////////////////////////
 
+// FIXME: Here's a (possibly incomplete) list of data that should be added
+// to the next version of the save state file:
+//    yabsys.DecilineStop (new format)
+//    yabsys.SH2CycleFrac (new field)
+//    yabsys.DecilineUSed (new field)
+//    yabsys.UsecFrac (new field)
+//    [scsp2.c] It would be nice to redo the format entirely because so
+//              many fields have changed format/size from the old scsp.c
+//    [scsp2.c] scsp_clock, scsp_clock_frac, ScspState.sample_timer (timing)
+//    [scsp2.c] cdda_buf, cdda_next_in, cdda_next_out (CDDA buffer)
+
 int YabSaveState(const char *filename)
 {
    u32 i;
@@ -990,6 +1001,8 @@ int YabSaveState(const char *filename)
    int outputwidth;
    int outputheight;
    int movieposition;
+   int temp;
+   u32 temp32;
 
    check.done = 0;
    check.size = 0;
@@ -1048,9 +1061,12 @@ int YabSaveState(const char *filename)
    ywrite(&check, (void *)&yabsys.LineCount, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.VBlankLineCount, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.MaxLineCount, sizeof(int), 1, fp);
-   ywrite(&check, (void *)&yabsys.DecilineStop, sizeof(int), 1, fp);
-   ywrite(&check, (void *)&yabsys.Duf, sizeof(int), 1, fp);
-   ywrite(&check, (void *)&yabsys.CycleCountII, sizeof(u32), 1, fp);
+   temp = yabsys.DecilineStop >> YABSYS_TIMING_BITS;
+   ywrite(&check, (void *)&temp, sizeof(int), 1, fp);
+   temp = (yabsys.CurSH2FreqType == CLKTYPE_26MHZ) ? 268 : 286;
+   ywrite(&check, (void *)&temp, sizeof(int), 1, fp);
+   temp32 = (yabsys.UsecFrac * temp / 10) >> YABSYS_TIMING_BITS;
+   ywrite(&check, (void *)&temp32, sizeof(u32), 1, fp);
    ywrite(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
 
@@ -1109,6 +1125,8 @@ int YabLoadState(const char *filename)
    int curroutputwidth;
    int curroutputheight;
    int movieposition;
+   int temp;
+   u32 temp32;
 
    filename = MakeMovieStateName(filename);
    if (!filename)
@@ -1275,11 +1293,13 @@ int YabLoadState(const char *filename)
    yread(&check, (void *)&yabsys.LineCount, sizeof(int), 1, fp);
    yread(&check, (void *)&yabsys.VBlankLineCount, sizeof(int), 1, fp);
    yread(&check, (void *)&yabsys.MaxLineCount, sizeof(int), 1, fp);
-   yread(&check, (void *)&yabsys.DecilineStop, sizeof(int), 1, fp);
-   yread(&check, (void *)&yabsys.Duf, sizeof(int), 1, fp);
-   yread(&check, (void *)&yabsys.CycleCountII, sizeof(u32), 1, fp);
+   yread(&check, (void *)&temp, sizeof(int), 1, fp);
+   yread(&check, (void *)&temp, sizeof(int), 1, fp);
+   yread(&check, (void *)&temp32, sizeof(u32), 1, fp);
    yread(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    yread(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
+   YabauseChangeTiming(yabsys.CurSH2FreqType);
+   yabsys.UsecFrac = (temp32 << YABSYS_TIMING_BITS) * temp / 10;
 
    if (headerversion > 1) {
 

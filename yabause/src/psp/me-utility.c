@@ -1,5 +1,5 @@
 /*  src/psp/me-utility.c: PSP Media Engine utility routines
-    Copyright 2009 Andrew Church
+    Copyright 2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -18,6 +18,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#include <stdint.h>
+#include "me.h"
 #include "me-utility.h"
 
 /*************************************************************************/

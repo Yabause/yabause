@@ -1,4 +1,4 @@
-/*  src/psp/mips.h: Macros for generating MIPS machine code
+/*  src/psp/rtl-mips.h: Macros for generating MIPS machine code
     Copyright 2009 Andrew Church
 
     This file is part of Yabause.
