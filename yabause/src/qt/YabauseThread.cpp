@@ -99,7 +99,7 @@ bool YabauseThread::resetEmulation( bool fullreset )
 		return false;
 	if ( VideoChangeCore( mYabauseConf.vidcoretype ) != 0 )
 		return false;
-	if ( ScspChangeVideoFormat( mYabauseConf.flags ) != 0 )
+	if ( ScspChangeVideoFormat( mYabauseConf.videoformattype ) != 0 )
 		return false;
 	if ( ScspChangeSoundCore( mYabauseConf.sndcoretype ) != 0 )
 		return false;
@@ -195,7 +195,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.buppath = strdup( s->value( "Memory/Path", mYabauseConf.buppath ).toString().toAscii().constData() );
 	mYabauseConf.mpegpath = strdup( s->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toAscii().constData() );
 	mYabauseConf.cartpath = strdup( s->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toAscii().constData() );
-	mYabauseConf.flags = s->value( "Video/VideoFormat", mYabauseConf.flags ).toInt();
+	mYabauseConf.videoformattype = s->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
 	
 	emit requestSize( QSize( s->value( "Video/Width", 0 ).toInt(), s->value( "Video/Height", 0 ).toInt() ) );
 	emit requestFullscreen( s->value( "Video/Fullscreen", false ).toBool() );
