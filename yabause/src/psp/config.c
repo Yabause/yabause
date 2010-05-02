@@ -40,6 +40,7 @@ static char path_bup[256] = "backup.bin";
 /* General settings */
 static int start_in_emu = 0;
 static int use_me = 1;
+static uint32_t me_writeback_period = 1;
 static int bup_autosave = 1;
 
 /* Button configuration */
@@ -203,6 +204,17 @@ void config_load(void)
         } else if (stricmp(name, "use_me") == 0) {
             parse_int(PATH_INI, line, name, value, &use_me);
 
+        } else if (stricmp(name, "me_writeback_period") == 0) {
+            parse_uint32(PATH_INI, line, name, value, &me_writeback_period);
+            if (!me_writeback_period
+             || (me_writeback_period & (me_writeback_period - 1))
+            ) {
+                fprintf(stderr, "config_load(): Invalid value %u for"
+                        " me_writeback_period (must be a power of 2)\n",
+                        me_writeback_period);
+                me_writeback_period = 1;
+            }
+
         } else if (stricmp(name, "bup_autosave") == 0) {
             parse_int(PATH_INI, line, name, value, &bup_autosave);
 
@@ -319,6 +331,7 @@ int config_save(void)
      || fprintf(f, "path_bup=%s\n",             path_bup               ) < 0
      || fprintf(f, "start_in_emu=%d\n",         start_in_emu           ) < 0
      || fprintf(f, "use_me=%d\n",               use_me                 ) < 0
+     || fprintf(f, "me_writeback_period=%u\n",  me_writeback_period    ) < 0
      || fprintf(f, "bup_autosave=%d\n",         bup_autosave           ) < 0
      || fprintf(f, "button.A=%u\n",             button[CONFIG_BUTTON_A]) < 0
      || fprintf(f, "button.B=%u\n",             button[CONFIG_BUTTON_B]) < 0
@@ -390,6 +403,11 @@ int config_get_start_in_emu(void)
 int config_get_use_me(void)
 {
     return use_me;
+}
+
+uint32_t config_get_me_writeback_period(void)
+{
+    return me_writeback_period;
 }
 
 int config_get_bup_autosave(void)
@@ -535,6 +553,17 @@ int config_set_start_in_emu(int value)
 int config_set_use_me(int value)
 {
     use_me = value ? 1 : 0;
+    return 1;
+}
+
+int config_set_me_writeback_period(uint32_t value)
+{
+    if (value == 0 || (value & (value-1))) {
+        fprintf(stderr, "config_set_me_writeback_period(): Invalid period %u"
+                " (must be a power of 2)\n", value);
+        return 0;
+    }
+    me_writeback_period = value;
     return 1;
 }
 

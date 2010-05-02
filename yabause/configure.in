@@ -91,6 +91,12 @@ esac
 AC_CHECK_HEADERS([sys/time.h])
 AC_CHECK_FUNCS([gettimeofday])
 
+# checking for floorf (C99 single-precision math)
+OLDLIBS="$LIBS"
+LIBS="$LIBS -lm"
+AC_CHECK_FUNCS([floorf])
+LIBS="$OLDLIBS"
+
 # checking for mini18n
 if test ! "x$MINI18N" = "x" ; then
 	OLDCPPFLAGS="$CPPFLAGS"

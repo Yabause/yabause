@@ -142,6 +142,7 @@ typedef enum AdvancedMenuOption_ {
     OPT_ADVANCED_SH2_RECOMPILER = 0,
     OPT_ADVANCED_SH2_OPTIMIZE,
     OPT_ADVANCED_USE_ME,
+    OPT_ADVANCED_ME_WRITEBACK_PERIOD,
     OPT_ADVANCED_DECILINE_MODE,
     OPT_ADVANCED_AUDIO_SYNC,
     OPT_ADVANCED_CLOCK_SYNC,
@@ -511,9 +512,28 @@ static void process_input_menu(const uint32_t buttons,
 
     } else if (new_buttons & (PSP_CTRL_LEFT | PSP_CTRL_RIGHT)) {
         const int dir = (new_buttons & PSP_CTRL_RIGHT) ? 1 : -1;
-        if (cur_menu == MENU_FRAME_SKIP && cur_option == OPT_FRAME_SKIP_NUM) {
+
+        if (cur_menu == MENU_FRAME_SKIP
+         && cur_option == OPT_FRAME_SKIP_NUM
+        ) {
             const int new_num = config_get_frameskip_num() + dir;
             if (!config_set_frameskip_num(new_num)) {
+                status_text = "Failed to change fixed frame skip count!";
+                status_color = TEXT_COLOR_NG;
+                status_timer = STATUS_DISPTIME;
+            }
+
+        } else if (cur_menu == MENU_ADVANCED
+                && cur_option == OPT_ADVANCED_ME_WRITEBACK_PERIOD
+        ) {
+            const unsigned int period = config_get_me_writeback_period();
+            unsigned int new_period = (dir > 0) ? period<<1 : period>>1;
+            if (new_period < 1) {
+                new_period = 1;
+            } else if (new_period > 64) {  // Should be more than enough
+                new_period = 64;
+            }
+            if (!config_set_me_writeback_period(new_period)) {
                 status_text = "Failed to change fixed frame skip count!";
                 status_color = TEXT_COLOR_NG;
                 status_timer = STATUS_DISPTIME;
@@ -939,6 +959,10 @@ static void process_option_advanced(const uint32_t buttons)
                 status_timer = STATUS_DISPTIME;
             }
         }
+        break;
+
+      case OPT_ADVANCED_ME_WRITEBACK_PERIOD:
+        /* Don't do anything for the confirm button */
         break;
 
       case OPT_ADVANCED_DECILINE_MODE:
@@ -1618,14 +1642,14 @@ static void draw_menu(void)
       case MENU_ADVANCED:
         font_printf(DISPLAY_WIDTH/2, menu_title_y, 0, TEXT_COLOR_INFO,
                     "Configure advanced emulation options");
-        y = menu_center_y - (6*line_height + line_height/2 + FONT_HEIGHT) / 2;
+        y = menu_center_y - (7*(line_height-2) + (line_height-2)/2 + FONT_HEIGHT) / 2;
         draw_menu_option(OPT_ADVANCED_SH2_RECOMPILER, menu_left_edge, y,
                          "[%c] Use SH-2 recompiler",
                          config_get_module_sh2()==SH2CORE_PSP ? '*' : ' ');
-        y += line_height;
+        y += line_height-2;
         draw_menu_option(OPT_ADVANCED_SH2_OPTIMIZE, menu_left_edge, y,
                          "    Select SH-2 optimizations...");
-        y += line_height*3/2;
+        y += (line_height-2)*3/2;
         if (me_available) {
             draw_menu_option(OPT_ADVANCED_USE_ME, menu_left_edge, y,
                              "[%c] Use Media Engine for emulation",
@@ -1635,19 +1659,31 @@ static void draw_menu(void)
                                       "[%c] Use Media Engine for emulation",
                                       config_get_use_me() ? '*' : ' ');
         }
-        y += line_height;
+        y += line_height-2;
+        if (me_available && config_get_use_me()) {
+            draw_menu_option(OPT_ADVANCED_ME_WRITEBACK_PERIOD,
+                             menu_left_edge, y,
+                             "    ME cache writeback frequency: [1/%-2u]",
+                             config_get_me_writeback_period());
+        } else {
+            draw_disabled_menu_option(OPT_ADVANCED_ME_WRITEBACK_PERIOD,
+                                      menu_left_edge, y,
+                                      "    ME cache writeback frequency: [1/%-2u]",
+                                      config_get_me_writeback_period());
+        }
+        y += line_height-2;
         draw_menu_option(OPT_ADVANCED_DECILINE_MODE, menu_left_edge, y,
                          "[%c] Use more precise emulation timing",
                          config_get_deciline_mode() ? '*' : ' ');
-        y += line_height;
+        y += line_height-2;
         draw_menu_option(OPT_ADVANCED_AUDIO_SYNC, menu_left_edge, y,
                          "[%c] Sync audio output to emulation",
                          config_get_audio_sync() ? '*' : ' ');
-        y += line_height;
+        y += line_height-2;
         draw_menu_option(OPT_ADVANCED_CLOCK_SYNC, menu_left_edge, y,
                          "[%c] Sync Saturn clock to emulation",
                          config_get_clock_sync() ? '*' : ' ');
-        y += line_height;
+        y += line_height-2;
         draw_menu_option(OPT_ADVANCED_CLOCK_FIXED_TIME, menu_left_edge, y,
                          "[%c] Always start from 1998-01-01 12:00",
                          config_get_clock_fixed_time() ? '*' : ' ');
@@ -1681,6 +1717,26 @@ static void draw_menu(void)
                 y += line_height;
                 font_printf(75, y, -1, TEXT_COLOR_NG, "You must restart"
                             " Yabause after changing this option.");
+                y += line_height;
+            } else {
+                font_printf(75, y, -1, TEXT_COLOR_NG, "The Media Engine access"
+                            " library (me.prx) was not found,");
+                y += line_height;
+                font_printf(75, y, -1, TEXT_COLOR_NG, "so the Media Engine"
+                            " cannot be used for emulation.");
+                y += line_height;
+            }
+            break;
+          case OPT_ADVANCED_ME_WRITEBACK_PERIOD:
+            if (me_available) {
+                font_printf(75, y, -1, TEXT_COLOR_INFO, "The relative"
+                            " frequency of data cache synchronization when");
+                y += line_height;
+                font_printf(75, y, -1, TEXT_COLOR_INFO, "using the Media"
+                            " Engine for emulation.  1/1 is safest;");
+                y += line_height;
+                font_printf(75, y, -1, TEXT_COLOR_INFO, "lower frequencies"
+                            " may run faster, but may also crash.");
                 y += line_height;
             } else {
                 font_printf(75, y, -1, TEXT_COLOR_NG, "The Media Engine access"

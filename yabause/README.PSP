@@ -196,8 +196,35 @@ The main menu contains six options:
         * "Configure hardware rendering settings..."
 
           This option opens another submenu which allows you to change
-          certain aspects of the hardware video renderer's behavior,
-          including smoothing (antialiasing) of graphics.
+          certain aspects of the hardware video renderer's behavior:
+
+             * "Smooth textures and sprites"
+
+               When enabled, smoothing (antialiasing) is applied to all
+               3-D textures and sprites drawn on the screen.  This can
+               make 3-D environments look smoother than on a real Saturn,
+               but it will also cause zoomed sprites to look blurry, which
+               may not be the game's intended behavior.
+
+             * "Smooth high-resolution graphics"
+
+               When enabled, high-resolution graphics (which ordinarly
+               would not fit on the PSP's screen) are displayed by
+               averaging adjacent pixels to give a smoother look to the
+               display; this can particularly help in reading small text
+               on a high-resolution screen.  However, this smoothing is
+               significantly slower than the default method of just
+               skipping every second pixel.
+
+             * "Enable rotated/distorted graphics"
+
+               Allows the display of rotated or distorted graphics to be
+               disabled entirely.  Most such graphics cannot be rendered
+               by the PSP's hardware, so Yabause has to draw them in
+               software, which can be a major source of slowdown.
+
+          Note that none of the above options have any effect when the
+          software video renderer is in use.
 
         * "Configure frame-skip settings..."
 
@@ -263,6 +290,18 @@ The main menu contains six options:
           This option only takes effect when Yabause is started, so if
           you change it, make sure you select "Save options" in the main
           menu and then quit and restart Yabause.
+
+        * "ME cache writeback frequency"
+
+          Sets the frequency at which the main CPU and Media Engine caches
+          are synchronized, relative to the frequency of code execution on
+          the Media Engine.  The default frequency of 1/1 is safest; lower
+          frequencies (1/2, 1/4, and so on) can increase emulation speed,
+          but are also more likely to cause crashes depending on the
+          particular game.
+
+          Naturally, this option has no effect if the Media Engine is not
+          being used for emulation.
 
         * "Use more precise emulation timing"
 
@@ -579,10 +618,17 @@ to avoid data corruption due to the lack of cache coherency:
   also written by the other CPU (to avoid the cache line clobbering problem
   described above).
 
+* Sound RAM is accessed _with_ caching (except in one case described
+  below), because forcing every sound RAM access through an uncached
+  pointer causes significant slowdown.  Instead, cached CPU data is written
+  back to RAM at strategic points.
+
 * The SC's data cache is flushed (written back and invalidated) immediately
   before waiting for the SCSP thread to finish processing, e.g. for
   ScspReset().  The data cache is written back on every ScspExec() call,
-  but it is _not_ flushed for performance reasons.
+  but it is _not_ flushed for performance reasons; instead, sound RAM read
+  accesses from the SC are made through uncached addresses, as with SCSP
+  state variables above.
 
 * The ME's data cache is flushed after each iteration of the SCSP thread
   loop.  This flushing is not coded directly into scsp.c, but instead

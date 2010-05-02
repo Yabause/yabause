@@ -131,7 +131,7 @@ struct RotationParams_ {
  *    uint32_t pagemap[8][8];
  */
 #define INIT_PAGEMAP(pagemap,set)  do {                                 \
-    int plane_aoffset = ((Vdp2Regs->MPOFR >> ((set^1) * 4)) & 7) << 6;  \
+    int plane_aoffset = ((Vdp2Regs->MPOFR >> ((set) * 4)) & 7) << 6;    \
     const uint8_t *plane_map = set ? (const uint8_t *)&Vdp2Regs->MPABRB \
                                    : (const uint8_t *)&Vdp2Regs->MPABRA;\
     const int plane_bits     = info->planew_bits + info->planeh_bits;   \
@@ -206,9 +206,9 @@ struct RotationParams_ {
  * compiler to use known values rather than having to repeatedly check and
  * branch on the tile size, giving a speed increase of 3-5%.  Greater
  * optimization could be achieved by pulling such tests further out of the
- * critical path, at the cost of code size explosion (one alternative
+ * critical path, at the cost of code size explosion; one alternative
  * would be dynamic compilation/assembly of rotation code based on the
- * graphics layer's parameters).
+ * graphics layer's parameters.
  */
 #define CALC_PIXELNUM(pagemap)  do {                                    \
     srcx &= srcx_mask;                                                  \
@@ -713,9 +713,9 @@ static void render_mode0_region(uint32_t *pixelbuf, vdp2draw_struct *info,
                 }
             }
 
-        }  // if (param->coefenab)
+        }  // if (!param->coefenab)
 
-    }  // for (; y < ylim; y++, coef_y += coef_dy)
+    }  // for (y = y0; y < ylim; y++, coef_y += coef_dy)
 }
 
 /*-----------------------------------------------------------------------*/
@@ -886,7 +886,7 @@ static void render_mode1(uint32_t *pixelbuf, vdp2draw_struct *info,
                 *dest = (*get_pixel)(info, pixelnum);
             }
 
-        }  // if (param->coefenab)
+        }
 
     }  // for (y = 0; y < disp_height; y++, coef_y += coef_dy)
 }

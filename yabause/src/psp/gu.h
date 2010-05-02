@@ -411,6 +411,12 @@ extern void guSync(const int mode, const int target);
 
 /**** Inline functions ****/
 
+static inline void guAlphaFunc(const int func, const int value, const int mask)
+{
+    extern uint32_t *gu_list;
+    *gu_list++ = GECMD_ALPHATEST<<24 | mask<<16 | value<<8 | func;
+}
+
 static inline void guAmbientColor(const uint32_t color)
 {
     extern uint32_t *gu_list;
@@ -648,11 +654,24 @@ static inline void guEnable(const int mode)
     }
 }
 
+static inline void guLogicalOp(const int op)
+{
+    extern uint32_t *gu_list;
+    *gu_list++ = GECMD_LOGIC_OP<<24 | op;
+}
+
 static inline void guOffset(const int xofs, const int yofs)
 {
     extern uint32_t *gu_list;
     *gu_list++ = GECMD_XOFFSET<<24 | xofs<<4;
     *gu_list++ = GECMD_YOFFSET<<24 | yofs<<4;
+}
+
+static inline void guPixelMask(const unsigned int mask)
+{
+    extern uint32_t *gu_list;
+    *gu_list++ = GECMD_COLOR_MASK<<24 | (mask & 0xFFFFFF);
+    *gu_list++ = GECMD_ALPHA_MASK<<24 | mask>>24;
 }
 
 static inline void guScissor(const int left, const int top,
@@ -674,6 +693,18 @@ static inline void guShadeModel(const int mode)
 {
     extern uint32_t *gu_list;
     *gu_list++ = GECMD_SHADE_MODE<<24 | mode;
+}
+
+static inline void guStencilFunc(const int func, const int ref, const int mask)
+{
+    extern uint32_t *gu_list;
+    *gu_list++ = GECMD_STENCILTEST<<24 | mask<<16 | ref<<8 | func;
+}
+
+static inline void guStencilOp(const int fail, const int zfail, const int zpass)
+{
+    extern uint32_t *gu_list;
+    *gu_list++ = GECMD_STENCIL_OP<<24 | zpass<<16 | zfail<<8 | fail;
 }
 
 static inline void guTexFilter(const int min, const int mag)
@@ -763,6 +794,8 @@ static inline void guViewport(const int cx, const int cy,
 
 #ifdef USE_SCEGU
 
+#define guAlphaFunc(func,value,mask) \
+    sceGuAlphaFunc((func), (value), (mask))
 #define guAmbientColor(color) \
     sceGuAmbientColor((color))
 #define guBlendFunc(func,src,dest,srcfix,destfix) \
@@ -800,14 +833,22 @@ static inline void guViewport(const int cx, const int cy,
     sceGuGetMemory((size))
 #define guInit() \
     sceGuInit()
+#define guLogicalOp(op) \
+    sceGuLogicalOp((op))
 #define guOffset(xofs,yofs) \
     sceGuOffset((xofs), (yofs))
+#define guPixelMask(mask) \
+    sceGuPixelMask((mask))
 #define guScissor(left,top,width,height) \
     sceGuScissor((left), (top), (width), (height))
 #define guShadeModel(mode) \
     sceGuShadeModel((mode))
 #define guStart(type,list) \
     sceGuStart((type), (list))
+#define guStencilFunc(func,ref,mask) \
+    sceGuStencilFunc((func), (ref), (mask))
+#define guStencilOp(fail,zfail,zpass) \
+    sceGuStencilOp((fail), (zfail), (zpass))
 #define guSync(mode,target) \
     sceGuSync((mode), (target))
 #define guTexFilter(min,mag) \

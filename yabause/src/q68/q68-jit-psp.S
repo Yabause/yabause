@@ -685,15 +685,17 @@ _PROLOGUE_ADDRESS_ERROR_SP:  // Stack address error (address in $a1,
 DEFSIZE(PROLOGUE)
 
 
-/* Offset definitions used for branching to termination code */
-#define DEFOFS(name) \
+/* Offset definitions used for branching to termination code; "branchofs"
+ * is the offset in _instructions_ (not bytes) from the beginning of the
+ * named fragment */
+#define DEFOFS(name,branchofs) \
     .globl JIT_PSPOFS_##name; \
     .type JIT_PSPOFS_##name, @object; \
-    JIT_PSPOFS_##name: .int _PROLOGUE_##name - _PROLOGUE_TOP
-DEFOFS(TERMINATE)
-DEFOFS(EXCEPTION)
-DEFOFS(ADDRESS_ERROR_EA)
-DEFOFS(ADDRESS_ERROR_SP)
+    JIT_PSPOFS_##name: .int _PROLOGUE_##name - _PROLOGUE_TOP - 4*branchofs
+DEFOFS(TERMINATE, 0)
+DEFOFS(EXCEPTION, 0)
+DEFOFS(ADDRESS_ERROR_EA, 2)
+DEFOFS(ADDRESS_ERROR_SP, 4)
 
 /*-----------------------------------------------------------------------*/
 

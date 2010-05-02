@@ -100,6 +100,20 @@ extern uint32_t display_spare_vram_size(void);
 /*----------------------------------*/
 
 /**
+ * display_alloc_vram:  Allocate memory from the spare VRAM area, aligned
+ * to a multiple of 64 bytes.  All allocated VRAM will be automatically
+ * freed at the next call to display_begin_frame().
+ *
+ * [Parameters]
+ *     size: Amount of memory to allocate, in bytes
+ * [Return value]
+ *     Pointer to allocated memory, or NULL on failure (out of memory)
+ */
+extern void *display_alloc_vram(uint32_t size);
+
+/*----------------------------------*/
+
+/**
  * display_begin_frame:  Begin processing for a frame.
  *
  * [Parameters]

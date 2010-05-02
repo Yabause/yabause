@@ -317,7 +317,7 @@ void YabauseResetNoLoad(void) {
    Cs2Reset();
    ScuReset();
    ScspReset();
-   yabsys.IsM68KRunning = 0;
+   M68KStop();
    Vdp1Reset();
    Vdp2Reset();
    SmpcReset();

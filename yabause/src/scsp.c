@@ -2737,6 +2737,7 @@ static int scsp_alloc_bufs(void) {
    return 0;
 }
 
+static u8 IsM68KRunning;
 static s32 FASTCALL (*m68kexecptr)(s32 cycles);  // M68K->Exec or M68KExecBP
 static s32 savedcycles;  // Cycles left over from the last M68KExec() call
 
@@ -2901,7 +2902,7 @@ int ScspInit(int coreid) {
    M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
    M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
 
-   yabsys.IsM68KRunning = 0;
+   IsM68KRunning = 0;
 
    scsp_init(SoundRam, &c68k_interrupt_handler, &scu_interrupt_handler);
    ScspInternalVars->scsptiming1 = 0;
@@ -3006,9 +3007,16 @@ void ScspDeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void M68KReset(void) {
+void M68KStart(void) {
    M68K->Reset();
    savedcycles = 0;
+   IsM68KRunning = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void M68KStop(void) {
+   IsM68KRunning = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3042,7 +3050,7 @@ static s32 FASTCALL M68KExecBP(s32 cycles);
 
 void M68KExec(s32 cycles) {
    s32 newcycles = savedcycles - cycles;
-   if (LIKELY(yabsys.IsM68KRunning))
+   if (LIKELY(IsM68KRunning))
    {
       if (LIKELY(newcycles < 0))
       {
@@ -3371,7 +3379,7 @@ int SoundSaveState(FILE *fp)
    offset = StateWriteHeader(fp, "SCSP", 2);
 
    // Save 68k registers first
-   ywrite(&check, (void *)&yabsys.IsM68KRunning, 1, 1, fp);
+   ywrite(&check, (void *)&IsM68KRunning, 1, 1, fp);
 
    for (i = 0; i < 8; i++)
    {      
@@ -3472,7 +3480,7 @@ int SoundLoadState(FILE *fp, int version, int size)
    IOCheck_struct check;
 
    // Read 68k registers first
-   yread(&check, (void *)&yabsys.IsM68KRunning, 1, 1, fp);
+   yread(&check, (void *)&IsM68KRunning, 1, 1, fp);
 
    for (i = 0; i < 8; i++) {
       yread(&check, (void *)&temp, 4, 1, fp);

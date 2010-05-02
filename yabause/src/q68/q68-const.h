@@ -25,6 +25,11 @@
 
 /* Configuration constants */
 
+/* Maximum size in bytes of a 68k code block for translation */
+#ifndef Q68_JIT_MAX_BLOCK_SIZE
+# define Q68_JIT_MAX_BLOCK_SIZE 4096
+#endif
+
 /* Size of pages used in checking for writes to already-translated code
  * (1 page = 1<<Q68_JIT_PAGE_BITS bytes) */
 #ifndef Q68_JIT_PAGE_BITS

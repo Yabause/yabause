@@ -1,5 +1,5 @@
 /*  src/psp/psp-video.c: PSP video interface module
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
     Based on src/vidogl.c by Guillaume Duhamel and others
 
     This file is part of Yabause.
@@ -190,9 +190,11 @@ static uint32_t vdp1_convert_color(uint16_t color16, int textured,
 static uint32_t vdp1_get_cmd_color(vdp1cmd_struct *cmd);
 static uint32_t vdp1_get_cmd_color_pri(vdp1cmd_struct *cmd, int textured,
                                        int *priority_ret);
-static uint16_t vdp1_process_sprite_color(uint16_t color16, int *priority_ret);
+static uint16_t vdp1_process_sprite_color(uint16_t color16, int *priority_ret,
+                                          int *alpha_ret);
 static uint32_t vdp1_cache_sprite_texture(
-    vdp1cmd_struct *cmd, int width, int height, int *priority_ret);
+    vdp1cmd_struct *cmd, int width, int height, int *priority_ret,
+    int *alpha_ret);
 static inline void vdp1_queue_render(
     int priority, uint32_t texture_key, int primitive,
     int vertex_type, int count, const void *indices, const void *vertices);
@@ -628,6 +630,9 @@ static void psp_vdp2_draw_start(void)
         return;
     }
 
+    /* Apply any game-specific optimizations or tweaks */
+    psp_video_apply_tweaks();
+
     /* Load the global color lookup tables from VDP2 color RAM */
     const uint16_t *cram = (const uint16_t *)Vdp2ColorRam;
     if (Vdp2Internal.ColorMode == 2) {  // 32-bit color table
@@ -956,11 +961,12 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
     /* Get the polygon color and priority, and load the texture if it's
      * a sprite */
 
-    int priority;
+    int priority, sprite_alpha;
     uint32_t color32 = vdp1_get_cmd_color_pri(cmd, textured, &priority);
     uint32_t texture_key;
     if (textured) {
-        texture_key = vdp1_cache_sprite_texture(cmd, width, height, &priority);
+        texture_key = vdp1_cache_sprite_texture(cmd, width, height,
+                                                &priority, &sprite_alpha);
         if (UNLIKELY(!texture_key)) {
             DMSG("WARNING: failed to cache texture for A=(%d,%d) B=(%d,%d)"
                  " C=(%d,%d) D=(%d,%d)",
@@ -969,8 +975,38 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
                  cmd->CMDXC + Vdp1Regs->localX, cmd->CMDYC + Vdp1Regs->localY,
                  cmd->CMDXD + Vdp1Regs->localX, cmd->CMDYD + Vdp1Regs->localY);
         }
+        /* Convert alpha to 0-255 */
+        sprite_alpha = (sprite_alpha << 3) | (sprite_alpha >> 2);
     } else {
         texture_key = 0;
+        sprite_alpha = 0;
+    }
+
+    /* Apply alpha depending on the color calculation settings */
+
+    if (Vdp2Regs->CCCTL & 0x40) {
+        const unsigned int ref_priority = Vdp2Regs->SPCTL>>8 & 0x7;
+        switch (Vdp2Regs->SPCTL>>12 & 0x3) {
+          case 0:
+            if (priority <= ref_priority) {
+                color32 = (sprite_alpha << 24) | (color32 & 0x00FFFFFF);
+            }
+            break;
+          case 1:
+            if (priority == ref_priority) {
+                color32 = (sprite_alpha << 24) | (color32 & 0x00FFFFFF);
+            }
+            break;
+          case 2:
+            if (priority >= ref_priority) {
+                color32 = (sprite_alpha << 24) | (color32 & 0x00FFFFFF);
+            }
+            break;
+          case 3:
+            /* Alpha blending enabled based on high bit of color value
+             * (not supported in this renderer) */
+            break;
+        }
     }
 
     /* We don't support mesh shading; treat it as half-alpha instead */
@@ -1131,7 +1167,8 @@ static uint32_t vdp1_get_cmd_color_pri(vdp1cmd_struct *cmd, int textured,
         *priority_ret = Vdp2Regs->PRISA & 7;
     } else {
         *priority_ret = 0;  // Default if not set by SPCTL
-        vdp1_process_sprite_color(color16, priority_ret);
+        int alpha_unused;  // FIXME: is this used by non-sprite quads as well?
+        vdp1_process_sprite_color(color16, priority_ret, &alpha_unused);
     }
     return vdp1_convert_color(color16, textured, cmd->CMDPMOD);
 }
@@ -1139,10 +1176,9 @@ static uint32_t vdp1_get_cmd_color_pri(vdp1cmd_struct *cmd, int textured,
 /*-----------------------------------------------------------------------*/
 
 /**
- * vdp1_process_sprite_color:  Return the color index mask and priority
- * value selected by the given color register value and the VDP2 SPCTL
- * register.  Derived from vidshared.h:Vdp1ProcessSpritePixel(), but
- * ignores the unused colorcalc and shadow parameters.
+ * vdp1_process_sprite_color:  Return the color index mask, priority index,
+ * and alpha (color calculation) index selected by the given color register
+ * value and the VDP2 SPCTL register.
  *
  * [Parameters]
  *          color16: 16-bit color register value
@@ -1150,61 +1186,25 @@ static uint32_t vdp1_get_cmd_color_pri(vdp1cmd_struct *cmd, int textured,
  * [Return value]
  *     Mask to apply to CMDCOLR register
  */
-static uint16_t vdp1_process_sprite_color(uint16_t color16, int *priority_ret)
+static uint16_t vdp1_process_sprite_color(uint16_t color16, int *priority_ret,
+                                          int *alpha_ret)
 {
-    switch (Vdp2Regs->SPCTL & 0x0F) {
-      case  0:
-        *priority_ret = (color16 & 0xC000) >> 14;
-        return 0x7FF;
-      case  1:
-        *priority_ret = (color16 & 0xE000) >> 13;
-        return 0x7FF;
-      case  2:
-        *priority_ret = (color16 & 0x8000) >> 15;
-        return 0x7FF;
-      case  3:
-        *priority_ret = (color16 & 0x6000) >> 13;
-        return 0x7FF;
-      case  4:
-        *priority_ret = (color16 & 0x7000) >> 12;
-        return 0x3FF;
-      case  5:
-        *priority_ret = (color16 & 0x7000) >> 12;
-        return 0x7FF;
-      case  6:
-        *priority_ret = (color16 & 0x7000) >> 12;
-        return 0x3FF;
-      case  7:
-        *priority_ret = (color16 & 0x7000) >> 12;
-        return 0x1FF;
-      case  8:
-        *priority_ret = (color16 & 0x0080) >>  7;
-        return 0x7F;
-      case  9:
-        *priority_ret = (color16 & 0x0080) >>  7;
-        return 0x3F;
-      case 10:
-        *priority_ret = (color16 & 0x00C0) >>  6;
-        return 0x3F;
-      case 11:
-        *priority_ret = 0;
-        return 0x3F;
-      case 12:
-        *priority_ret = (color16 & 0x0080) >>  7;
-        return 0xFF;
-      case 13:
-        *priority_ret = (color16 & 0x0080) >>  7;
-        return 0xFF;
-      case 14:
-        *priority_ret = (color16 & 0x00C0) >>  6;
-        return 0xFF;
-      case 15:
-        *priority_ret = 0;
-        return 0xFF;
-      default:  // Impossible, but avoid a "may not return a value" warning
-        *priority_ret = 0;
-        return 0;
-    }
+    const uint8_t priority_shift[16] =
+        { 14, 13, 14, 13,  13, 12, 12, 12,  7, 7, 6, 0,  7, 7, 6, 0 };
+    const uint8_t priority_mask[16] =
+        {  3,  7,  1,  3,   3,  7,  7,  7,  1, 1, 3, 0,  1, 1, 3, 0 };
+    const uint8_t alpha_shift[16] =
+        { 11, 11, 11, 11,  10, 11, 10,  9,  0, 6, 0, 6,  0, 6, 0, 6 };
+    const uint8_t alpha_mask[16] =
+        {  7,  3,  7,  3,   7,  1,  3,  7,  0, 1, 0, 3,  0, 1, 0, 3 };
+    const uint16_t color_mask[16] =
+        { 0x7FF, 0x7FF, 0x7FF, 0x7FF,  0x3FF, 0x7FF, 0x3FF, 0x1FF,
+           0x7F,  0x3F,  0x3F,  0x3F,   0xFF,  0xFF,  0xFF,  0xFF };
+
+    const unsigned int type = Vdp2Regs->SPCTL & 0xF;
+    *priority_ret = (color16 >> priority_shift[type]) & priority_mask[type];
+    *alpha_ret    = (color16 >>    alpha_shift[type]) &    alpha_mask[type];
+    return color_mask[type];
 }
 
 /*************************************************************************/
@@ -1218,14 +1218,16 @@ static uint16_t vdp1_process_sprite_color(uint16_t color16, int *priority_ret)
  *            width: Sprite width (pixels; passed in to avoid recomputation)
  *           height: Sprite height (pixels; passed in to avoid recomputation)
  *     priority_ret: Pointer to variable to receive priority value
+ *        alpha_ret: Pointer to variable to receive alpha value (0-31)
  * [Return value]
  *     Cached texture key, or zero on error
  */
 static uint32_t vdp1_cache_sprite_texture(
-    vdp1cmd_struct *cmd, int width, int height, int *priority_ret)
+    vdp1cmd_struct *cmd, int width, int height, int *priority_ret,
+    int *alpha_ret)
 {
     uint16_t CMDCOLR = cmd->CMDCOLR;
-    int regnum = 0;  // Default value
+    int pri_reg = 0, alpha_reg = 0;  // Default value
     if (!((Vdp2Regs->SPCTL & 0x20) && (cmd->CMDCOLR & 0x8000))) {
         uint16_t color16 = cmd->CMDCOLR;
         int is_lut = 1;
@@ -1243,10 +1245,11 @@ static uint32_t vdp1_cache_sprite_texture(
             }
         }
         if (is_lut) {
-            CMDCOLR &= vdp1_process_sprite_color(color16, &regnum);
+            CMDCOLR &= vdp1_process_sprite_color(color16, &pri_reg, &alpha_reg);
         }
     }
-    *priority_ret = ((uint8_t *)&Vdp2Regs->PRISA)[regnum] & 0x7;
+    *priority_ret = ((uint8_t *)&Vdp2Regs->PRISA)[pri_reg] & 0x7;
+    *alpha_ret = 0x1F - (((uint8_t *)&Vdp2Regs->CCRSA)[alpha_reg] & 0x1F);
 
     /* Cache the texture data and return the key */
     
@@ -1604,7 +1607,7 @@ static void vdp2_draw_graphics(int layer)
             info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % info.cellh);
             break;
           case BG_RBG0:
-            /* Coordinate rotation is handled separately; nothing to do here */
+            /* Transformation is handled separately; nothing to do here */
             break;
           default:
             DMSG("info.isbitmap set for invalid layer %d", layer);
@@ -1618,8 +1621,8 @@ static void vdp2_draw_graphics(int layer)
             info.mapwh = 2;
             ReadPlaneSize(&info, Vdp2Regs->PLSZ >> (2*layer));
         }
-        const int scx_mask = (512 * info.planew) - 1;
-        const int scy_mask = (512 * info.planeh) - 1;
+        const int scx_mask = (512 * info.planew * info.mapwh) - 1;
+        const int scy_mask = (512 * info.planeh * info.mapwh) - 1;
         switch (layer) {
           case BG_NBG0:
             info.x = - (Vdp2Regs->SCXIN0 & scx_mask);
@@ -1710,6 +1713,9 @@ static void vdp2_draw_graphics(int layer)
           case BG_NBG1:
             if (info.colornumber == 1 && !smooth_hires) {
                 draw_map_func = &vdp2_draw_bitmap_t8;
+            } else if (info.colornumber == 4 && !smooth_hires
+                       && info.coordincx == 1 && info.coordincy == 1) {
+                draw_map_func = &vdp2_draw_bitmap_32;
             } else {
                 draw_map_func = &vdp2_draw_bitmap;
             }

@@ -21,7 +21,7 @@ yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
                       init.c localtime.c main.c menu.c misc.c profile.c \
                       psp-cd.c psp-m68k.c psp-per.c psp-sh2.c psp-sound.c \
                       psp-video.c psp-video-bitmap.c psp-video-rotate.c \
-                      psp-video-tilemap.c \
+                      psp-video-tilemap.c psp-video-tweaks.c \
                       rtl.c rtl-mips.c rtlexec.c rtlinsn.c rtlopt.c rtlunit.c \
                       satopt-sh2.c \
                       sh2.c sh2-interpret.c sh2-opcodeinfo.c sh2-optimize.c \

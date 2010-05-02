@@ -279,7 +279,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             if (dest_type == 0x24) {
                SH2WriteNotify(WriteAddress, TransferSize);
             } else if (dest_type == 0x22) {
-               M68KWriteNotify(WriteAddress, TransferSize);
+               M68KWriteNotify(WriteAddress & 0x7FFFF, TransferSize);
             }
             return;
          }
@@ -295,7 +295,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             if (dest_type == 0x24) {
                SH2WriteNotify(WriteAddress, TransferSize);
             } else if (dest_type == 0x22) {
-               M68KWriteNotify(WriteAddress, TransferSize);
+               M68KWriteNotify(WriteAddress & 0x7FFFF, TransferSize);
             }
             return;
          }

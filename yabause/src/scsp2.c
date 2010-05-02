@@ -67,8 +67,9 @@
 // The "PSP_*" macros scattered throughout the file are to support the
 // execution of the SCSP thread on the Media Engine CPU (ME) in the PSP.
 // The ME lacks cache coherence with the main CPU (SC), so special care
-// needs to be taken to avoid bugs arising from inconsistent cache states.
-// These macros are all no-ops on other platforms.
+// needs to be taken to avoid bugs arising from inconsistent cache states;
+// see the technical notes in README.PSP for details.  These macros are all
+// no-ops on other platforms.
 
 //-------------------------------------------------------------------------
 // PSP cache management macros
@@ -78,6 +79,7 @@
 # include "psp/common.h"
 # include "psp/me.h"
 # include "psp/me-utility.h"
+# include "psp/misc.h"  // psp_writeback_cache_for_scsp() declaration
 
 // Data section management (to avoid cache line collisions between CPUs)
 # define PSP_SECTION(name) \
@@ -97,6 +99,8 @@
 # define PSP_FLUSH_ALL() \
    sceKernelDcacheWritebackInvalidateAll()
 
+// Uncached pointer access
+# define PSP_UCPTR(ptr) ((typeof(&*ptr))((uint32_t)(ptr) | 0x40000000))
 // Uncached variable access (either read or write)
 # define PSP_UC(var) (*((typeof(&var))((uint32_t)(&var) | 0x40000000)))
 
@@ -108,6 +112,7 @@
 # define PSP_WRITEBACK_CACHE(ptr,len)   /*nothing*/
 # define PSP_WRITEBACK_ALL()            /*nothing*/
 # define PSP_FLUSH_ALL()                /*nothing*/
+# define PSP_UCPTR(ptr)                 ptr
 # define PSP_UC(var)                    var
 
 #endif
@@ -490,19 +495,20 @@ PSP_SECTION(sc_write)
 PSP_SECTION(sc_write)
    static volatile u8 scsp_thread_running;
 
+// Buffer for external (SH-2) SCSP writes (only _size is written by both
+// CPUs, but we keep all three in the same section for cache safety)
+PSP_SECTION(both_write)
+   static volatile u8 scsp_write_buffer_size;  // 0 = nothing buffered
+PSP_SECTION(both_write)
+   static volatile u16 scsp_write_buffer_address;
+PSP_SECTION(both_write)
+   static volatile u32 scsp_write_buffer_data;
+
 // SCSP register value cache (caching handled separately)
 #ifdef PSP
 __attribute__((aligned(64)))
 #endif
 static u16 scsp_regcache[0x1000/2];
-
-// Buffer for external (SH-2) SCSP writes
-PSP_SECTION(both_write)
-   static volatile u8 scsp_write_buffer_size;  // 0 = nothing buffered
-PSP_SECTION(sc_write)
-   static volatile u16 scsp_write_buffer_address;
-PSP_SECTION(sc_write)
-   static volatile u32 scsp_write_buffer_data;
 
 // CDDA input buffer and read/write pointers
 PSP_SECTION(sc_write)
@@ -539,12 +545,13 @@ static s32 *scsp_bufR;            // Base pointer for right channel
 static u32 cdda_delay;
 
 // M68K-related data
+static u8 m68k_running;            // Nonzero if M68K execution is enabled
 static s32 FASTCALL (*m68k_execf)(s32 cycles);  // M68K->Exec or M68KExecBP
 static s32 m68k_saved_cycles;      // Requested minus actual cycles executed
 static M68KBreakpointInfo m68k_breakpoint[M68K_MAX_BREAKPOINTS];
 static int m68k_num_breakpoints;
 static void (*M68KBreakpointCallback)(u32);
-static int m68k_in_breakpoint;
+static u8 m68k_in_breakpoint;
 
 //-------------------------------------------------------------------------
 // Local function declarations
@@ -905,8 +912,7 @@ int ScspInit(int coreid, void (*interrupt_handler)(void))
    M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
    M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
 
-   yabsys.IsM68KRunning = 0;
-
+   m68k_running = 0;
    m68k_execf = M68K->Exec;
    m68k_saved_cycles = 0;
    for (i = 0; i < MAX_BREAKPOINTS; i++)
@@ -928,7 +934,7 @@ int ScspInit(int coreid, void (*interrupt_handler)(void))
    scsp_thread_running = 0;
    if (yabsys.UseThreads)
    {
-      scsp_thread_running = 1;
+      scsp_thread_running = 1;  // Set now so the thread doesn't quit instantly
       if (YabThreadStart(YAB_THREAD_SCSP, ScspThread) < 0)
       {
          SCSPLOG("Failed to start SCSP thread\n");
@@ -944,6 +950,9 @@ int ScspInit(int coreid, void (*interrupt_handler)(void))
 //-------------------------------------------------------------------------
 
 // ScspReset:  Reset the SCSP to its power-on state.
+
+// FIXME/SCSP1:  Should this also stop the M68K?  Calling patterns seem
+// inconsistent -- YabauseResetNoLoad stops it, but SmpcCKCHG{320,352} don't.
 
 void ScspReset(void)
 {
@@ -1167,10 +1176,14 @@ void ScspExec(int decilines)
 
    if (scsp_thread_running)
    {
-      PSP_WRITEBACK_ALL();
-      YabThreadWake(YAB_THREAD_SCSP);
+#ifdef PSP
+      psp_writeback_cache_for_scsp();
+#endif
       while (scsp_clock_target - PSP_UC(scsp_clock) > SCSP_CLOCK_MAX_EXEC)
+      {
+         YabThreadWake(YAB_THREAD_SCSP);
          YabThreadYield();
+      }
    }
    else
       ScspDoExec(scsp_clock_target - scsp_clock);
@@ -1183,15 +1196,15 @@ void ScspExec(int decilines)
 
 static void ScspThread(void)
 {
-   while (scsp_thread_running)
+   while (PSP_UC(scsp_thread_running))
    {
       const u8 write_size = PSP_UC(scsp_write_buffer_size);
       u32 clock_cycles;
 
       if (write_size != 0)
       {
-         const u32 address = scsp_write_buffer_address;
-         const u32 data = scsp_write_buffer_data;
+         const u32 address = PSP_UC(scsp_write_buffer_address);
+         const u32 data = PSP_UC(scsp_write_buffer_data);
          if (write_size == 1)
             ScspWriteByteDirect(address, data);
          else if (write_size == 2)
@@ -1204,7 +1217,7 @@ static void ScspThread(void)
          PSP_UC(scsp_write_buffer_size) = 0;
       }
 
-      clock_cycles = scsp_clock_target - scsp_clock;
+      clock_cycles = PSP_UC(scsp_clock_target) - scsp_clock;
       if (clock_cycles > SCSP_CLOCK_MAX_EXEC)
          clock_cycles = SCSP_CLOCK_MAX_EXEC;
       if (clock_cycles > 0)
@@ -1414,7 +1427,7 @@ static void ScspGenerateAudioForCDDA(s32 *bufL, s32 *bufR, u32 samples)
    {
       const u32 next_out = cdda_next_out;  // Save volatile value locally
       const s32 temp = (PSP_UC(cdda_next_in) * 2352) - next_out;
-      const s32 out_left = (temp < 0) ? sizeof(cdda_buf) - next_out : temp;
+      const u32 out_left = (temp < 0) ? sizeof(cdda_buf) - next_out : temp;
       const u32 this_len = (samples > out_left/4) ? out_left/4 : samples;
       const u8 *buf = &cdda_buf.data[next_out];
       const u8 *top = buf + this_len*4;
@@ -1457,7 +1470,7 @@ u8 FASTCALL SoundRamReadByte(u32 address)
       if (address > 0x7FFFF)
          return 0xFF;
    }
-   return T2ReadByte(SoundRam, address);
+   return T2ReadByte(PSP_UCPTR(SoundRam), address);
 }
 
 u16 FASTCALL SoundRamReadWord(u32 address)
@@ -1470,7 +1483,7 @@ u16 FASTCALL SoundRamReadWord(u32 address)
       if (address > 0x7FFFF)
          return 0xFFFF;
    }
-   return T2ReadWord(SoundRam, address);
+   return T2ReadWord(PSP_UCPTR(SoundRam), address);
 }
 
 u32 FASTCALL SoundRamReadLong(u32 address)
@@ -1483,7 +1496,7 @@ u32 FASTCALL SoundRamReadLong(u32 address)
       if (address > 0x7FFFF)
          return 0xFFFFFFFF;
    }
-   return T2ReadLong(SoundRam, address);
+   return T2ReadLong(PSP_UCPTR(SoundRam), address);
 }
 
 //----------------------------------//
@@ -1574,9 +1587,9 @@ void FASTCALL ScspWriteByte(u32 address, u8 data)
 {
    if (scsp_thread_running)
    {
-      scsp_write_buffer_address = address & 0xFFF;
-      scsp_write_buffer_data = data;
-      scsp_write_buffer_size = 1;
+      PSP_UC(scsp_write_buffer_address) = address & 0xFFF;
+      PSP_UC(scsp_write_buffer_data) = data;
+      PSP_UC(scsp_write_buffer_size) = 1;
       while (PSP_UC(scsp_write_buffer_size) != 0)
       {
          YabThreadWake(YAB_THREAD_SCSP);
@@ -1592,9 +1605,9 @@ void FASTCALL ScspWriteWord(u32 address, u16 data)
 {
    if (scsp_thread_running)
    {
-      scsp_write_buffer_address = address & 0xFFF;
-      scsp_write_buffer_data = data;
-      scsp_write_buffer_size = 2;
+      PSP_UC(scsp_write_buffer_address) = address & 0xFFF;
+      PSP_UC(scsp_write_buffer_data) = data;
+      PSP_UC(scsp_write_buffer_size) = 2;
       while (PSP_UC(scsp_write_buffer_size) != 0)
       {
          YabThreadWake(YAB_THREAD_SCSP);
@@ -1610,9 +1623,9 @@ void FASTCALL ScspWriteLong(u32 address, u32 data)
 {
    if (scsp_thread_running)
    {
-      scsp_write_buffer_address = address & 0xFFF;
-      scsp_write_buffer_data = data;
-      scsp_write_buffer_size = 4;
+      PSP_UC(scsp_write_buffer_address) = address & 0xFFF;
+      PSP_UC(scsp_write_buffer_data) = data;
+      PSP_UC(scsp_write_buffer_size) = 4;
       while (PSP_UC(scsp_write_buffer_size) != 0)
       {
          YabThreadWake(YAB_THREAD_SCSP);
@@ -1677,7 +1690,7 @@ int SoundSaveState(FILE *fp)
    offset = StateWriteHeader(fp, "SCSP", 2);
 
    // Save 68k registers first
-   ywrite(&check, (void *)&yabsys.IsM68KRunning, 1, 1, fp);
+   ywrite(&check, (void *)&m68k_running, 1, 1, fp);
    for (i = 0; i < 8; i++)
    {
       temp = M68K->GetDReg(i);
@@ -1793,7 +1806,7 @@ int SoundSaveState(FILE *fp)
 
 //-------------------------------------------------------------------------
 
-// SoundSaveState:  Load the current SCSP state from the given file.
+// SoundLoadState:  Load the current SCSP state from the given file.
 
 int SoundLoadState(FILE *fp, int version, int size)
 {
@@ -1813,7 +1826,7 @@ int SoundLoadState(FILE *fp, int version, int size)
    }
 
    // Read 68k registers first
-   yread(&check, (void *)&yabsys.IsM68KRunning, 1, 1, fp);
+   yread(&check, (void *)&m68k_running, 1, 1, fp);
    for (i = 0; i < 8; i++)
    {
       yread(&check, (void *)&temp, 4, 1, fp);
@@ -3288,7 +3301,7 @@ static void ScspClearInterrupts(u16 mask, int target)
 
 static void ScspRunM68K(u32 cycles)
 {
-   if (LIKELY(yabsys.IsM68KRunning))
+   if (LIKELY(m68k_running))
    {
       s32 new_cycles = m68k_saved_cycles + cycles;
       if (LIKELY(new_cycles > 0))
@@ -3335,9 +3348,9 @@ static s32 FASTCALL M68KExecBP(s32 cycles)
 // M68K management routines
 ///////////////////////////////////////////////////////////////////////////
 
-// M68KReset:  Reset the M68K processor to its power-on state.
+// M68KStart:  Start the M68K processor running.
 
-void M68KReset(void)
+void M68KStart(void)
 {
    if (scsp_thread_running)
    {
@@ -3351,6 +3364,30 @@ void M68KReset(void)
 
    M68K->Reset();
    m68k_saved_cycles = 0;
+
+   m68k_running = 1;
+
+   if (scsp_thread_running)
+      PSP_WRITEBACK_ALL();
+}
+
+//-------------------------------------------------------------------------
+
+// M68KStop:  Halt the M68K processor.
+
+void M68KStop(void)
+{
+   if (scsp_thread_running)
+   {
+      PSP_FLUSH_ALL();
+      while (PSP_UC(scsp_clock) != scsp_clock_target)
+      {
+         YabThreadWake(YAB_THREAD_SCSP);
+         YabThreadYield();
+      }
+   }
+
+   m68k_running = 0;
 
    if (scsp_thread_running)
       PSP_WRITEBACK_ALL();

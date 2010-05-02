@@ -90,7 +90,6 @@ typedef struct
    int IsPal;
    u8 UseThreads;
    u8 IsSSH2Running;
-   u8 IsM68KRunning;
    u64 OneFrameTime;
    u64 tickfreq;
    int emulatebios;

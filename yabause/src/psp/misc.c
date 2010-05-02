@@ -81,6 +81,28 @@ extern int save_backup_ram(void)
 }
 
 /*************************************************************************/
+
+/**
+ * psp_writeback_cache_for_scsp:  Write back all dirty data from the SC's
+ * cache for an ScspExec() call, depending on the writeback frequency
+ * selected by the user.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     None
+ */
+void psp_writeback_cache_for_scsp(void)
+{
+    static uint32_t counter;
+
+    counter++;
+    if (!(counter & (config_get_me_writeback_period() - 1))) {
+        sceKernelDcacheWritebackAll();
+    }
+}
+
+/*************************************************************************/
 /*************************************************************************/
 
 /*

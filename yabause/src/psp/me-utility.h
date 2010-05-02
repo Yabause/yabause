@@ -1,5 +1,5 @@
 /*  src/psp/me-utility.h: PSP Media Engine utility routine header
-    Copyright 2010 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 

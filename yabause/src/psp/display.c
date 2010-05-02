@@ -40,9 +40,10 @@ static uint8_t displayed_surface;
 static uint8_t work_surface;
 
 /* Pointers into VRAM */
-static void *surfaces[2];       // Display buffers
-static uint8_t *vram_spare_ptr; // Spare VRAM (above display buffers)
-static uint8_t *vram_top;       // Top of VRAM
+static void *surfaces[2];         // Display buffers
+static uint8_t *vram_spare_ptr;   // Spare VRAM (above display buffers)
+static uint8_t *vram_next_alloc;  // Next spare address to allocate
+static uint8_t *vram_top;         // Top of VRAM
 
 /* Display list */
 /* Size note:  A single VDP2 background layer, if at resolution 704x512,
@@ -110,6 +111,7 @@ int display_init(void)
         surfaces[i] = vram_addr + i*frame_size;
     }
     vram_spare_ptr = (uint8_t *)(vram_addr + lenof(surfaces)*frame_size);
+    vram_next_alloc = vram_spare_ptr;
     vram_top = vram_addr + vram_size;
     displayed_surface = 0;
     work_surface = 1;
@@ -222,6 +224,31 @@ uint32_t display_spare_vram_size(void)
 /*************************************************************************/
 
 /**
+ * display_alloc_vram:  Allocate memory from the spare VRAM area, aligned
+ * to a multiple of 64 bytes.  All allocated VRAM will be automatically
+ * freed at the next call to display_begin_frame().
+ *
+ * [Parameters]
+ *     size: Amount of memory to allocate, in bytes
+ * [Return value]
+ *     Pointer to allocated memory, or NULL on failure (out of memory)
+ */
+void *display_alloc_vram(uint32_t size)
+{
+    if (vram_next_alloc + size > vram_top) {
+        return NULL;
+    }
+    void *ptr = vram_next_alloc;
+    vram_next_alloc += size;
+    if ((uintptr_t)vram_next_alloc & 0x3F) {  // Make sure it stays aligned
+        vram_next_alloc += 0x40 - ((uintptr_t)vram_next_alloc & 0x3F);
+    }
+    return ptr;
+}
+
+/*************************************************************************/
+
+/**
  * display_begin_frame:  Begin processing for a frame.
  *
  * [Parameters]
@@ -235,6 +262,8 @@ void display_begin_frame(void)
     while (swap_pending) {
         sceKernelDelayThread(100);  // 0.1ms
     }
+
+    vram_next_alloc = vram_spare_ptr;
 
     guStart(GU_DIRECT, display_list);
 
@@ -275,27 +304,6 @@ void display_begin_frame(void)
 void display_end_frame(void)
 {
     guFinish();
-#if 0
-guSync(0,0);
-static int frame;if(frame>=230&&frame<236){
-char buf[100];FILE*f;static char mem[0x200000];
-sprintf(buf,"frame%d.dlist",frame);
-f=fopen(buf,"w");setvbuf(f,NULL,_IOFBF,0x200000);
-fwrite(display_list,sizeof(display_list),1,f);fclose(f);
-sprintf(buf,"frame%d.ppm",frame);
-char*src=(char*)display_work_buffer(),*dest=mem;
-dest+=sprintf(dest,"P6\n%d %d 255\n",display_width,display_height);
-int y;for(y=0;y<display_height;y++,src+=(512-display_width)*4){
-int x;for(x=0;x<display_width;x++,src+=4,dest+=3){dest[0]=src[0];dest[1]=src[1];dest[2]=src[2];}}
-f=fopen(buf,"w");setvbuf(f,NULL,_IOFBF,0x200000);
-fwrite(mem,dest-mem,1,f);fclose(f);
-sprintf(buf,"frame%d.vram",frame);
-memcpy(mem,display_spare_vram(),0x4200000-(uintptr_t)display_spare_vram());
-f=fopen(buf,"w");setvbuf(f,NULL,_IOFBF,0x200000);
-fwrite(mem,0x4200000-(uintptr_t)display_spare_vram(),1,f);fclose(f);
-}
-frame++;
-#endif
     swap_pending = 1;
     /* Give the new thread a slightly higher priority than us, or else it
      * won't actually get a chance to run */

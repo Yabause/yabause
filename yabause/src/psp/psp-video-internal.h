@@ -49,6 +49,19 @@ extern void vdp2_draw_bitmap(vdp2draw_struct *info,
 extern void vdp2_draw_bitmap_t8(vdp2draw_struct *info,
                                 const clipping_struct *clip);
 
+/**
+ * vdp2_draw_bitmap_32:  Draw a 32-bit ARGB1888 unscaled graphics layer
+ * bitmap.
+ *
+ * [Parameters]
+ *     info: Graphics layer data
+ *     clip: Clipping window data
+ * [Return value]
+ *     None
+ */
+extern void vdp2_draw_bitmap_32(vdp2draw_struct *info,
+                                const clipping_struct *clip);
+
 /*----------------------------------*/
 
 /**
@@ -116,6 +129,22 @@ extern void vdp2_draw_map_16x16(vdp2draw_struct *info,
  */
 extern void vdp2_draw_map_16x16_t8(vdp2draw_struct *info,
                                    const clipping_struct *clip);
+
+/*************************************************************************/
+/**************** Game-specific optimizations and tweaks *****************/
+/*************************************************************************/
+
+/**
+ * psp_video_apply_tweaks:  Apply game-specific optimizations and tweaks
+ * for faster/better PSP video output.  Called at the beginning of drawing
+ * each frame.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     None
+ */
+extern void psp_video_apply_tweaks(void);
 
 /*************************************************************************/
 /**************** Other utility routines and declarations ****************/
@@ -290,6 +319,32 @@ static inline uint32_t *vdp2_gen_t8_clut(
     }
     if (transparent) {
         clut[0] = 0x00000000;
+    }
+    return clut;
+}
+
+/*----------------------------------*/
+
+/**
+ * vdp2_gen_32_clut:  Generate a 256-color color table for one color
+ * component of a 32-bit pixel given the color offset value.  Helper
+ * routine for the 32bpp bitmap drawing function.
+ *
+ * [Parameters]
+ *           color_base: Base color index
+ *            color_ofs: Color offset (ORed with pixel value)
+ *          transparent: Nonzero if color index 0 should be transparent
+ *     rofs, gofs, bofs: Red/green/blue adjustment values
+ * [Return value]
+ *     Allocated color table pointer
+ */
+static inline uint32_t *vdp2_gen_32_clut(int ofs)
+{
+    uint32_t *clut = pspGuGetMemoryMerge(256*4 + 60);
+    clut = (uint32_t *)(((uintptr_t)clut + 63) & -64);  // Must be aligned
+    int i;
+    for (i = 0; i < 256; i++) {
+        clut[i] = 0xFF000000 | (bound(i+ofs, 0, 255) * 0x010101);
     }
     return clut;
 }

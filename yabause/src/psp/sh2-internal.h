@@ -502,6 +502,17 @@
 #endif
 
 /**
+ * OPTIMIZE_POINTERS_BLOCK_BREAK_THRESHOLD:  Specifies the number of
+ * references to an unoptimizable pointer which will cause the block to be
+ * terminated immediately before the first access (thus providing another
+ * chance to optimize the pointer).  A value of 1 will be treated as 2; a
+ * value of 0 disables this check entirely.
+ */
+#ifndef OPTIMIZE_POINTERS_BLOCK_BREAK_THRESHOLD
+# define OPTIMIZE_POINTERS_BLOCK_BREAK_THRESHOLD 3
+#endif
+
+/**
  * JIT_OPTIMIZE_FLAGS:  Specifies the optimizations that should be
  * performed on the generated RTL code.  See RTLOPT_* in rtl.h for details
  * on the available flags.

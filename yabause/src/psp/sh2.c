@@ -5371,7 +5371,9 @@ static int scan_block(JitEntry *entry, uint32_t address)
          * optimization. */
 
         if (optimization_flags & SH2_OPTIMIZE_POINTERS) {
+
             optimize_pointers(opcode, opcode_info, pointer_map);
+
             /* If we're looking at a MAC instruction beyond the beginning
              * of the block, and at least one of the source registers to
              * the MAC is an unknown pointer, terminate the block before
@@ -5411,6 +5413,71 @@ static int scan_block(JitEntry *entry, uint32_t address)
                     last_clrmac_bcm = block_contains_mac;
                 }
             }  // if ((opt_flags & SH2_OPTIMIZE_POINTERS_MAC) && etc.)
+
+#if OPTIMIZE_POINTERS_BLOCK_BREAK_THRESHOLD > 0
+            /* If this instruction accesses through a non-optimizable
+             * pointer, and there are more accesses to the same pointer in
+             * subsequent instructions, terminate the block before this
+             * instruction.  (Again, don't do this if we're in a delay
+             * slot.) */
+            int pointer_reg = -1;
+            if (opcode_info & SH2_OPCODE_INFO_ACCESSES_Rn) {
+                pointer_reg = opcode>>8 & 0xF;
+            } else if (opcode_info & SH2_OPCODE_INFO_ACCESSES_Rm) {
+                pointer_reg = opcode>>4 & 0xF;
+            }
+            /* First make sure this isn't an instruction that overwrites
+             * the same register it uses as a pointer. */
+            if (((opcode_info & SH2_OPCODE_INFO_SETS_R0) && pointer_reg == 0)
+             || ((opcode_info & SH2_OPCODE_INFO_SETS_Rn)
+                 && pointer_reg == (opcode>>8 & 0xF))
+            ) {
+                pointer_reg = -1;
+            }
+            if (pointer_reg >= 0
+             && pointer_map[pointer_reg] == 31
+             && !now_in_delay
+            ) {
+                unsigned int accesses = 1;
+                int i;
+                for (i = 1; i < max_len - block_len; i++) {
+                    const unsigned int opcode2 = fetch[i];
+                    const unsigned int n = opcode2>>8 & 0xF;
+                    const unsigned int m = opcode2>>8 & 0xF;
+                    const uint32_t info2 = get_opcode_info(opcode2);
+                    int access_reg = -1;
+                    if (info2 & SH2_OPCODE_INFO_ACCESSES_Rn) {
+                        access_reg = n;
+                    } else if (opcode_info & SH2_OPCODE_INFO_ACCESSES_Rm) {
+                        access_reg = m;
+                    }
+                    if (access_reg == pointer_reg) {
+                        accesses++;
+                        if (accesses >= OPTIMIZE_POINTERS_BLOCK_BREAK_THRESHOLD) {
+# ifdef JIT_DEBUG_VERBOSE
+                            DMSG("Breaking block from %08X at %08X due to"
+                                 " unoptimizable pointer in r%d\n",
+                                 start_address, address, pointer_reg);
+# endif
+                            goto abort_scan;
+                        }
+                    }
+                    if (((info2 & SH2_OPCODE_INFO_SETS_R0) && pointer_reg == 0)
+                     || ((info2 & SH2_OPCODE_INFO_SETS_Rn) && pointer_reg == n)
+                     || (info2 & (SH2_OPCODE_INFO_BRANCH_UNCOND
+                                  | SH2_OPCODE_INFO_BRANCH_COND))
+                    ) {
+                        /* The pointer register was overwritten, or a
+                         * branch interrupted the block, so stop checking.
+                         * (We stop even for conditional branches, so we
+                         * don't break a block for the first access when
+                         * that access is immediately followed by a check. */
+                        break;
+                    }
+                }
+            }  // if (pointer_reg >= 0 && etc.)
+#endif  // OPTIMIZE_POINTERS_BLOCK_BREAK_THRESHOLD > 0
+
         }  // if (optimization_flags & SH2_OPTIMIZE_POINTERS)
 
 #ifdef OPTIMIZE_LOOP_REGISTERS

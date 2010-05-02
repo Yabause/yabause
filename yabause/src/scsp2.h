@@ -110,7 +110,8 @@ extern int ScspSlotDebugSaveRegisters(u8 slotnum, const char *filename);
 extern int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename);
 extern void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dest, u32 len);
 
-extern void M68KReset(void);
+extern void M68KStart(void);
+extern void M68KStop(void);
 extern void M68KStep(void);
 extern void M68KWriteNotify(u32 address, u32 size);
 extern void M68KGetRegisters(M68KRegs *regs);

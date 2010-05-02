@@ -136,15 +136,14 @@ static void SmpcSSHOFF(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 static void SmpcSNDON(void) {
-   M68KReset();
-   yabsys.IsM68KRunning = 1;
+   M68KStart();
    SmpcRegs->OREG[31] = 0x6;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void SmpcSNDOFF(void) {
-   yabsys.IsM68KRunning = 0;
+   M68KStop();
    SmpcRegs->OREG[31] = 0x7;
 }
 

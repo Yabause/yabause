@@ -41,29 +41,31 @@
  *     ...  // Draw a single tile based on "info" and "vertices"
  * } TILE_LOOP_END;
  *
- * where "tilesize" is 8 or 16 (info->patternwh * 8).
+ * where "tilesize" is 8 or 16 (info->patternwh * 8).  Note that we iterate
+ * over the highest-level "maps" twice to handle wraparound.
  */
 
 #define TILE_LOOP_BEGIN(tilesize)  \
     int x1start = info->x;                                              \
-    int y1;                                                             \
-    for (y1 = 0; y1 < info->mapwh && info->y < info->drawh; y1++) {     \
+    unsigned int y1;                                                    \
+    for (y1 = 0; y1 < info->mapwh*2 && info->y < info->drawh; y1++) {   \
         int y2start = info->y;                                          \
         info->x = x1start;                                              \
-        int x1;                                                         \
-        for (x1 = 0; x1 < info->mapwh && info->x < info->draww; x1++) { \
-            info->PlaneAddr(info, (y1 * info->mapwh) + x1);             \
+        unsigned int x1;                                                \
+        for (x1 = 0; x1 < info->mapwh*2 && info->x < info->draww; x1++) {\
+            info->PlaneAddr(info, ((y1 % info->mapwh) * info->mapwh)    \
+                            + (x1 % info->mapwh));                      \
             int x2start = info->x;                                      \
             info->y = y2start;                                          \
-            int y2;                                                     \
+            unsigned int y2;                                            \
             for (y2 = 0; y2 < info->planeh; y2++) {                     \
                 int y3start = info->y;                                  \
                 info->x = x2start;                                      \
-                int x2;                                                 \
+                unsigned int x2;                                        \
                 for (x2 = 0; x2 < info->planew; x2++) {                 \
                     int x3start = info->x;                              \
                     info->y = y3start;                                  \
-                    int y3;                                             \
+                    unsigned int y3;                                    \
                     for (y3 = 0; y3 < info->pagewh;                     \
                          y3++, info->y += (tilesize)                    \
                     ) {                                                 \
@@ -74,7 +76,7 @@
                             continue;                                   \
                         }                                               \
                         info->x = x3start;                              \
-                        int x3;                                         \
+                        unsigned int x3;                                \
                         for (x3 = 0; x3 < info->pagewh;                 \
                              x3++, info->x += (tilesize),               \
                                    info->addr += info->patterndatasize * 2 \

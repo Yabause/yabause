@@ -1,5 +1,5 @@
-/*  src/psp/misc.h: PSP support routine header
-    Copyright 2009 Andrew Church
+/*  src/psp/psp-video-tweaks.c: Game-specific tweaks for PSP video module
+    Copyright 2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -18,37 +18,43 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef PSP_MISC_H
-#define PSP_MISC_H
+#include "common.h"
 
+#include "../memory.h"
+#include "../vdp2.h"
+#include "../vidshared.h"
+
+#include "psp-video.h"
+#include "psp-video-internal.h"
+
+/*************************************************************************/
+/************************** Interface functions **************************/
 /*************************************************************************/
 
 /**
- * save_backup_ram:  Save the contents of backup RAM to the configured
- * file.
- *
- * [Parameters]
- *     None
- * [Return value]
- *     Nonzero on success, zero on failure
- */
-extern int save_backup_ram(void);
-
-/**
- * psp_writeback_cache_for_scsp:  Write back all dirty data from the SC's
- * cache for an ScspExec() call, depending on the writeback frequency
- * selected by the user.
+ * psp_video_apply_tweaks:  Apply game-specific optimizations and tweaks
+ * for faster/better PSP video output.  Called at the beginning of drawing
+ * each frame.
  *
  * [Parameters]
  *     None
  * [Return value]
  *     None
  */
-extern void psp_writeback_cache_for_scsp(void);
+extern void psp_video_apply_tweaks(void)
+{
+    /**** Panzer Dragoon Saga: Display movies with transparency ****
+     **** disabled to improve playback speed.                   ****/
+
+    if (memcmp(HighWram+0x42F34, "APDNAR\0003", 8) == 0) {
+        if ((Vdp2Regs->CHCTLA & 0x0070) == 0x0040) {
+            Vdp2Regs->BGON |= 0x0100;
+        }
+    }
+}
 
 /*************************************************************************/
-
-#endif  // PSP_MISC_H
+/*************************************************************************/
 
 /*
  * Local variables:

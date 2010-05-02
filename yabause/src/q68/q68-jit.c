@@ -630,8 +630,9 @@ Q68JitEntry *q68_jit_translate(Q68State *state, uint32_t address)
     /* Translate a block of 68000 code */
 
     jit_PC = address;
+    const uint32_t limit = address + Q68_JIT_MAX_BLOCK_SIZE;
     int done = 0;
-    while (!done) {
+    while (!done && jit_PC < limit) {
         /* Make sure we haven't entered a blacklisted block */
         for (index = 0; index < Q68_JIT_BLACKLIST_SIZE; index++) {
             if (UNLIKELY(address >= state->jit_blacklist[index].m68k_start

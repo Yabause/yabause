@@ -101,9 +101,6 @@ struct CLUTInfo_ {
 
 /*************************************************************************/
 
-/* Pointer to next available and top VRAM addresses */
-uint8_t *vram_next, *vram_top;
-
 /* Cached texture hash table and associated data buffer */
 static TexInfo *tex_table[TEXCACHE_HASH_SIZE];
 static TexInfo tex_buffer[TEXCACHE_SIZE];
@@ -193,9 +190,6 @@ void texcache_reset(void)
             clut_cache[i][j].size = 0;
         }
     }
-
-    vram_next = display_spare_vram();
-    vram_top = vram_next + display_spare_vram_size();
 }
 
 /*************************************************************************/
@@ -425,8 +419,8 @@ static void load_texture(const TexInfo *tex)
 /*************************************************************************/
 
 /**
- * alloc_vram:  Allocate memory from the spare VRAM area.  All allocated
- * VRAM will be automatically freed after the frame has been drawn.
+ * alloc_vram:  Allocate memory from the spare VRAM area, returning a
+ * pointer to the area in the uncached address region (0x4nnnnnnn).
  *
  * [Parameters]
  *     size: Amount of memory to allocate, in bytes
@@ -435,13 +429,9 @@ static void load_texture(const TexInfo *tex)
  */
 static void *alloc_vram(uint32_t size)
 {
-    if (vram_next + size > vram_top) {
+    void *ptr = display_alloc_vram(size);
+    if (!ptr) {
         return NULL;
-    }
-    void *ptr = vram_next;
-    vram_next += size;
-    if ((uintptr_t)vram_next & 0x3F) {  // Make sure it stays aligned
-        vram_next += 0x40 - ((uintptr_t)vram_next & 0x3F);
     }
     return (void *)((uint32_t)ptr | 0x40000000);
 }
@@ -928,7 +918,7 @@ static inline int cache_texture_32(
     tex->clut_address = NULL;
 
     uint32_t *dest = (uint32_t *)tex->vram_address;
-    if (rofs || gofs || bofs) {
+    if (rofs || gofs || bofs || (width & 3)) {
         const uint32_t trans_pixel = 0x00000000
                                    | (rofs>=0 ? rofs<< 0 : 0)
                                    | (gofs>=0 ? gofs<< 8 : 0)
@@ -956,24 +946,188 @@ static inline int cache_texture_32(
              y++, src += (stride - width) * 4, dest += tex->stride - width
         ) {
             uint32_t *dest_top = dest + width;
-            for (; dest < dest_top; src += 4, dest++) {
-                int8_t a = src[0];
-                uint8_t r = src[3], g = src[2], b = src[1];
-                *dest = (transparent && a >= 0) ? 0 :
-                    0xFF000000 | r<<0 | g<<8 | b<<16;
+#if 0  // FIXME: GCC fails at optimizing this
+            for (; dest != dest_top; src += 16, dest += 4) {
+                const int32_t pixel0 = BSWAP32(((const int32_t *)src)[0]);
+                const int32_t pixel1 = BSWAP32(((const int32_t *)src)[1]);
+                const int32_t pixel2 = BSWAP32(((const int32_t *)src)[2]);
+                const int32_t pixel3 = BSWAP32(((const int32_t *)src)[3]);
+                dest[0] = (transparent && pixel0 >= 0) ? 0 : 0xFF000000|pixel0;
+                dest[1] = (transparent && pixel1 >= 0) ? 0 : 0xFF000000|pixel1;
+                dest[2] = (transparent && pixel2 >= 0) ? 0 : 0xFF000000|pixel2;
+                dest[3] = (transparent && pixel3 >= 0) ? 0 : 0xFF000000|pixel3;
             }
             if (outwidth > width) {
                 *dest = dest[-1];
             }
+#else
+            if (transparent) {
+                int32_t pixel0, pixel1, pixel2, pixel3, temp;
+                asm(".set push; .set noreorder\n"
+                    "0:\n"
+                    "lw %[pixel0], 0(%[src])\n"
+                    "lw %[pixel1], 4(%[src])\n"
+                    "lw %[pixel2], 8(%[src])\n"
+                    "lw %[pixel3], 12(%[src])\n"
+                    "addiu %[src], %[src], 16\n"
+                    "addiu %[dest], %[dest], 16\n"
+                    "wsbw %[pixel0], %[pixel0]\n"
+                    "wsbw %[pixel1], %[pixel1]\n"
+                    "wsbw %[pixel2], %[pixel2]\n"
+                    "wsbw %[pixel3], %[pixel3]\n"
+                    "slti %[temp], %[pixel0], 0\n"
+                    "or %[pixel0], %[pixel0], %[xFF000000]\n"
+                    "movz %[pixel0], $zero, %[temp]\n"
+                    "slti %[temp], %[pixel1], 0\n"
+                    "or %[pixel1], %[pixel1], %[xFF000000]\n"
+                    "movz %[pixel1], $zero, %[temp]\n"
+                    "slti %[temp], %[pixel2], 0\n"
+                    "or %[pixel2], %[pixel2], %[xFF000000]\n"
+                    "movz %[pixel2], $zero, %[temp]\n"
+                    "slti %[temp], %[pixel3], 0\n"
+                    "or %[pixel3], %[pixel3], %[xFF000000]\n"
+                    "movz %[pixel3], $zero, %[temp]\n"
+                    "sw %[pixel0], -16(%[dest])\n"
+                    "sw %[pixel1], -12(%[dest])\n"
+                    "sw %[pixel2], -8(%[dest])\n"
+                    "bne %[dest], %[dest_top], 0b\n"
+                    "sw %[pixel3], -4(%[dest])\n"
+                    "sltu %[pixel0], %[width], %[outwidth]\n"
+                    "bnezl %[pixel0], 1f\n"
+                    "sw %[pixel1], 0(%[dest])\n"
+                    "1:\n"
+                    ".set pop"
+                    : [src] "=&r" (src), [dest] "=&r" (dest),
+                      [pixel0] "=&r" (pixel0), [pixel1] "=&r" (pixel1),
+                      [pixel2] "=&r" (pixel2), [pixel3] "=&r" (pixel3),
+                      [temp] "=&r" (temp)
+                    : "0" (src), "1" (dest), [dest_top] "r" (dest_top),
+                      [xFF000000] "r" (0xFF000000),
+                      [width] "r" (width), [outwidth] "r" (outwidth)
+                );
+            } else {
+                int32_t pixel0, pixel1, pixel2, pixel3;
+                asm(".set push; .set noreorder\n"
+                    "0:\n"
+                    "lw %[pixel0], 0(%[src])\n"
+                    "lw %[pixel1], 4(%[src])\n"
+                    "lw %[pixel2], 8(%[src])\n"
+                    "lw %[pixel3], 12(%[src])\n"
+                    "addiu %[src], %[src], 16\n"
+                    "addiu %[dest], %[dest], 16\n"
+                    "wsbw %[pixel0], %[pixel0]\n"
+                    "wsbw %[pixel1], %[pixel1]\n"
+                    "wsbw %[pixel2], %[pixel2]\n"
+                    "wsbw %[pixel3], %[pixel3]\n"
+                    "or %[pixel0], %[pixel0], %[xFF000000]\n"
+                    "or %[pixel1], %[pixel1], %[xFF000000]\n"
+                    "or %[pixel2], %[pixel2], %[xFF000000]\n"
+                    "or %[pixel3], %[pixel3], %[xFF000000]\n"
+                    "sw %[pixel0], -16(%[dest])\n"
+                    "sw %[pixel1], -12(%[dest])\n"
+                    "sw %[pixel2], -8(%[dest])\n"
+                    "bne %[dest], %[dest_top], 0b\n"
+                    "sw %[pixel3], -4(%[dest])\n"
+                    "sltu %[pixel0], %[width], %[outwidth]\n"
+                    "bnezl %[pixel0], 1f\n"
+                    "sw %[pixel1], 0(%[dest])\n"
+                    "1:\n"
+                    ".set pop"
+                    : [src] "=&r" (src), [dest] "=&r" (dest),
+                      [pixel0] "=&r" (pixel0), [pixel1] "=&r" (pixel1),
+                      [pixel2] "=&r" (pixel2), [pixel3] "=&r" (pixel3)
+                    : "0" (src), "1" (dest), [dest_top] "r" (dest_top),
+                      [xFF000000] "r" (0xFF000000),
+                      [width] "r" (width), [outwidth] "r" (outwidth)
+                );
+            }
+#endif
         }
     } else {
         uint32_t *dest_top = dest + (width*height);
-        for (; dest < dest_top; src += 4, dest++) {
-            int8_t a = src[0];
-            uint8_t r = src[3], g = src[2], b = src[1];
-            *dest = (transparent && a >= 0) ? 0 :
-                0xFF000000 | r<<0 | g<<8 | b<<16;
+#if 0  // FIXME: as above
+        for (; dest != dest_top; src += 16, dest += 4) {
+            const int32_t pixel0 = BSWAP32(((const int32_t *)src)[0]);
+            const int32_t pixel1 = BSWAP32(((const int32_t *)src)[1]);
+            const int32_t pixel2 = BSWAP32(((const int32_t *)src)[2]);
+            const int32_t pixel3 = BSWAP32(((const int32_t *)src)[3]);
+            dest[0] = (transparent && pixel0 >= 0) ? 0 : 0xFF000000|pixel0;
+            dest[1] = (transparent && pixel1 >= 0) ? 0 : 0xFF000000|pixel1;
+            dest[2] = (transparent && pixel2 >= 0) ? 0 : 0xFF000000|pixel2;
+            dest[3] = (transparent && pixel3 >= 0) ? 0 : 0xFF000000|pixel3;
         }
+#else
+        if (transparent) {
+            int32_t pixel0, pixel1, pixel2, pixel3, temp;
+            asm(".set push; .set noreorder\n"
+                "0:\n"
+                "lw %[pixel0], 0(%[src])\n"
+                "lw %[pixel1], 4(%[src])\n"
+                "lw %[pixel2], 8(%[src])\n"
+                "lw %[pixel3], 12(%[src])\n"
+                "addiu %[src], %[src], 16\n"
+                "addiu %[dest], %[dest], 16\n"
+                "wsbw %[pixel0], %[pixel0]\n"
+                "wsbw %[pixel1], %[pixel1]\n"
+                "wsbw %[pixel2], %[pixel2]\n"
+                "wsbw %[pixel3], %[pixel3]\n"
+                "slti %[temp], %[pixel0], 0\n"
+                "or %[pixel0], %[pixel0], %[xFF000000]\n"
+                "movz %[pixel0], $zero, %[temp]\n"
+                "slti %[temp], %[pixel1], 0\n"
+                "or %[pixel1], %[pixel1], %[xFF000000]\n"
+                "movz %[pixel1], $zero, %[temp]\n"
+                "slti %[temp], %[pixel2], 0\n"
+                "or %[pixel2], %[pixel2], %[xFF000000]\n"
+                "movz %[pixel2], $zero, %[temp]\n"
+                "slti %[temp], %[pixel3], 0\n"
+                "or %[pixel3], %[pixel3], %[xFF000000]\n"
+                "movz %[pixel3], $zero, %[temp]\n"
+                "sw %[pixel0], -16(%[dest])\n"
+                "sw %[pixel1], -12(%[dest])\n"
+                "sw %[pixel2], -8(%[dest])\n"
+                "bne %[dest], %[dest_top], 0b\n"
+                "sw %[pixel3], -4(%[dest])\n"
+                ".set pop"
+                : [src] "=&r" (src), [dest] "=&r" (dest),
+                  [pixel0] "=&r" (pixel0), [pixel1] "=&r" (pixel1),
+                  [pixel2] "=&r" (pixel2), [pixel3] "=&r" (pixel3),
+                  [temp] "=&r" (temp)
+                : "0" (src), "1" (dest), [dest_top] "r" (dest_top),
+                  [xFF000000] "r" (0xFF000000)
+            );
+        } else {
+            int32_t pixel0, pixel1, pixel2, pixel3;
+            asm(".set push; .set noreorder\n"
+                "0:\n"
+                "lw %[pixel0], 0(%[src])\n"
+                "lw %[pixel1], 4(%[src])\n"
+                "lw %[pixel2], 8(%[src])\n"
+                "lw %[pixel3], 12(%[src])\n"
+                "addiu %[src], %[src], 16\n"
+                "addiu %[dest], %[dest], 16\n"
+                "wsbw %[pixel0], %[pixel0]\n"
+                "wsbw %[pixel1], %[pixel1]\n"
+                "wsbw %[pixel2], %[pixel2]\n"
+                "wsbw %[pixel3], %[pixel3]\n"
+                "or %[pixel0], %[pixel0], %[xFF000000]\n"
+                "or %[pixel1], %[pixel1], %[xFF000000]\n"
+                "or %[pixel2], %[pixel2], %[xFF000000]\n"
+                "or %[pixel3], %[pixel3], %[xFF000000]\n"
+                "sw %[pixel0], -16(%[dest])\n"
+                "sw %[pixel1], -12(%[dest])\n"
+                "sw %[pixel2], -8(%[dest])\n"
+                "bne %[dest], %[dest_top], 0b\n"
+                "sw %[pixel3], -4(%[dest])\n"
+                ".set pop"
+                : [src] "=&r" (src), [dest] "=&r" (dest),
+                  [pixel0] "=&r" (pixel0), [pixel1] "=&r" (pixel1),
+                  [pixel2] "=&r" (pixel2), [pixel3] "=&r" (pixel3)
+                : "0" (src), "1" (dest), [dest_top] "r" (dest_top),
+                  [xFF000000] "r" (0xFF000000)
+            );
+        }
+#endif
     }
     if (outheight > height) {
         memcpy(dest, dest - tex->stride, tex->stride * 4);

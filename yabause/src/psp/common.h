@@ -110,6 +110,10 @@ extern int me_available;
 
 /*----------------------------------*/
 
+/* Minimum/maximum values */
+#define min(a,b)  ((a) < (b) ? (a) : (b))
+#define max(a,b)  ((a) > (b) ? (a) : (b))
+
 /* Get the length of an array */
 #define lenof(a)  (sizeof((a)) / sizeof((a)[0]))
 /* Bound a value between two limits (inclusive) */

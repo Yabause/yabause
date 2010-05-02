@@ -1,5 +1,5 @@
 /*  src/psp/psp-sound.c: PSP sound output module
-    Copyright 2010 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 

@@ -44,6 +44,40 @@
 #endif
 
 /*************************************************************************/
+
+/* Convenience macro for rounding a float down to the next lower value */
+
+#if defined(PSP)
+static __attribute((always_inline,const)) inline int32_t IFLOORF(float n)
+{
+    int32_t result;
+    float dummy;
+    asm("floor.w.s %[dummy],%[n]; mfc1 %[result],%[dummy]"
+        : [result] "=r" (result), [dummy] "=f" (dummy)
+        : [n] "f" (n)
+    );
+    return result;
+}
+#elif defined(HAVE_FLOORF)
+# define IFLOORF(n) ((int32_t)floorf((n)))
+#else
+# define IFLOORF(n) ((int32_t)floor((n)))
+#endif
+
+/*************************************************************************/
+
+/* Simple checksum routine for block validity detection */
+
+static uint32_t checksum(const uint16_t *ptr, unsigned int count)
+{
+    uint32_t sum = 0;
+    while (count-- > 0) {
+        sum += *ptr++;
+    }
+    return sum;
+}
+
+/*************************************************************************/
 /********************** Optimization routine table ***********************/
 /*************************************************************************/
 
@@ -67,6 +101,10 @@ static int BIOS_06010D22_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
 static FASTCALL void BIOS_06010D22(SH2State *state);
 
+static int BIOS_0602E630_detect(SH2State *state, uint32_t address,
+                                const uint16_t *fetch);
+static FASTCALL void BIOS_0602E630(SH2State *state);
+
 /*----------------------------------*/
 
 static int Azel_0600614C_detect(SH2State *state, uint32_t address,
@@ -77,8 +115,6 @@ static int Azel_0600C59C_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
 static FASTCALL void Azel_0600C59C(SH2State *state);
 
-static int Azel_0600FCB0_detect(SH2State *state, uint32_t address,
-                                const uint16_t *fetch);
 static FASTCALL void Azel_0600FCB0(SH2State *state);
 
 static int Azel_06010F24_detect(SH2State *state, uint32_t address,
@@ -89,12 +125,8 @@ static int Azel_0603A22C_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch);
 static FASTCALL void Azel_0603A22C(SH2State *state);
 
-static int Azel_0603A242_detect(SH2State *state, uint32_t address,
-                                const uint16_t *fetch);
 static FASTCALL void Azel_0603A242(SH2State *state);
 
-static int Azel_0603DD6E_detect(SH2State *state, uint32_t address,
-                                const uint16_t *fetch);
 static FASTCALL void Azel_0603DD6E(SH2State *state);
 
 /*----------------------------------*/
@@ -104,30 +136,37 @@ static const struct {
     /* Start address applicable to this translation */
     uint32_t address;
 
-    /* Routine to detect whether to use this translation; returns the
-     * number of 16-bit words processed (nonzero) to use it, else zero */
-    int (*detect)(SH2State *state, uint32_t address, const uint16_t *fetch);
-
     /* Routine that implements the SH-2 code */
     FASTCALL void (*execute)(SH2State *state);
 
+    /* Routine to detect whether to use this translation; returns the
+     * number of 16-bit words processed (nonzero) to use it, else zero.
+     * If NULL, the checksum is checked instead */
+    int (*detect)(SH2State *state, uint32_t address, const uint16_t *fetch);
+
+    /* Checksum and block length (in instructions) if detect == NULL */
+    uint32_t sum;
+    unsigned int length;
+
 } hand_tuned_table[] = {
 
-    {0x00001CFC, BIOS_000025AC_detect, BIOS_000025AC},  // 1.00 JP
-    {0x000025AC, BIOS_000025AC_detect, BIOS_000025AC},  // 1.01 JP / UE
-    {0x00002658, BIOS_00002EFA_detect, BIOS_00002EFA},  // 1.00 JP
-    {0x00002EFA, BIOS_00002EFA_detect, BIOS_00002EFA},  // 1.01 JP / UE
-    {0x06010D22, BIOS_06010D22_detect, BIOS_06010D22},  // JP
-    {0x06010D36, BIOS_06010D22_detect, BIOS_06010D22},  // UE
+    {0x00001CFC, BIOS_000025AC, BIOS_000025AC_detect},  // 1.00 JP
+    {0x000025AC, BIOS_000025AC, BIOS_000025AC_detect},  // 1.01 JP / UE
+    {0x00002658, BIOS_00002EFA, BIOS_00002EFA_detect},  // 1.00 JP
+    {0x00002EFA, BIOS_00002EFA, BIOS_00002EFA_detect},  // 1.01 JP / UE
+    {0x06010D22, BIOS_06010D22, BIOS_06010D22_detect},  // JP
+    {0x06010D36, BIOS_06010D22, BIOS_06010D22_detect},  // UE
+    {0x0602E630, BIOS_0602E630, BIOS_0602E630_detect},  // JP
+    {0x0603A630, BIOS_0602E630, BIOS_0602E630_detect},  // UE
 
-    {0x0600614C, Azel_0600614C_detect, Azel_0600614C},
-    {0x0600C59C, Azel_0600C59C_detect, Azel_0600C59C},
-    {0x0600FCB0, Azel_0600FCB0_detect, Azel_0600FCB0},
-    {0x06010F24, Azel_06010F24_detect, Azel_06010F24},
-    {0x06010F52, Azel_06010F24_detect, Azel_06010F24},
-    {0x0603A22C, Azel_0603A22C_detect, Azel_0603A22C},
-    {0x0603A242, Azel_0603A242_detect, Azel_0603A242},
-    {0x0603DD6E, Azel_0603DD6E_detect, Azel_0603DD6E},
+    {0x0600614C, Azel_0600614C, Azel_0600614C_detect},
+    {0x0600C59C, Azel_0600C59C, Azel_0600C59C_detect},
+    {0x0600FCB0, Azel_0600FCB0, .sum = 0x9D430, .length = 28},
+    {0x06010F24, Azel_06010F24, Azel_06010F24_detect},
+    {0x06010F52, Azel_06010F24, Azel_06010F24_detect},
+    {0x0603A22C, Azel_0603A22C, Azel_0603A22C_detect},
+    {0x0603A242, Azel_0603A242, .sum = 0x11703E, .length = 49},
+    {0x0603DD6E, Azel_0603DD6E, .sum = 0xBB96E, .length = 31},
 
 };
 
@@ -159,41 +198,50 @@ unsigned int saturn_optimize_sh2(SH2State *state, uint32_t address,
 #ifdef ENABLE_JIT
     int i;
     for (i = 0; i < lenof(hand_tuned_table); i++) {
-        const unsigned int num_insns =
-            (hand_tuned_table[i].address == address
-             && hand_tuned_table[i].detect(state, address, fetch));
-        if (num_insns > 0) {
-#ifdef JIT_DEBUG_TRACE
-            unsigned int n;
-            for (n = 0; n < num_insns; n++) {
-                char tracebuf[100];
-                SH2Disasm(address + n*2, fetch[n], 0, tracebuf);
-                fprintf(stderr, "%08X: %04X  %s\n",
-                        address + n*2, fetch[n], tracebuf+12);
-            }
-#endif
-            const uint32_t state_reg = rtl_alloc_register(rtl);
-            const uint32_t funcptr = rtl_alloc_register(rtl);
-            if (UNLIKELY(!state_reg)
-             || UNLIKELY(!funcptr)
-             || UNLIKELY(!rtl_add_insn(rtl, RTLOP_LOAD_PARAM, state_reg,
-                                       0, 0, 0))
-             || UNLIKELY(!rtl_add_insn(rtl, RTLOP_LOAD_ADDR, funcptr,
-                                       (uintptr_t)hand_tuned_table[i].execute,
-                                       0, 0))
-             || UNLIKELY(!rtl_add_insn(rtl, RTLOP_CALL, 0,
-                                       state_reg, 0, funcptr))
-             || UNLIKELY(!rtl_add_insn(rtl, RTLOP_RETURN, 0, 0, 0, 0))
-            ) {
-                DMSG("Failed to create RTL block");
-                return 0;
-            }
-            if (UNLIKELY(!rtl_finalize_block(rtl))) {
-                DMSG("Failed to finalize RTL block");
-                return 0;
-            }
-            return num_insns;
+        if (hand_tuned_table[i].address != address) {
+            continue;
         }
+        unsigned int num_insns;
+        if (hand_tuned_table[i].detect) {
+            num_insns = hand_tuned_table[i].detect(state, address, fetch);
+            if (!num_insns) {
+                continue;
+            }
+        } else {
+            num_insns = hand_tuned_table[i].length;
+            const uint32_t sum = checksum(fetch, num_insns);
+            if (sum != hand_tuned_table[i].sum) {
+                continue;
+            }
+        }
+#ifdef JIT_DEBUG_TRACE
+        unsigned int n;
+        for (n = 0; n < num_insns; n++) {
+            char tracebuf[100];
+            SH2Disasm(address + n*2, fetch[n], 0, tracebuf);
+            fprintf(stderr, "%08X: %04X  %s\n",
+                    address + n*2, fetch[n], tracebuf+12);
+        }
+#endif
+        const uint32_t state_reg = rtl_alloc_register(rtl);
+        const uint32_t funcptr = rtl_alloc_register(rtl);
+        if (UNLIKELY(!state_reg)
+         || UNLIKELY(!funcptr)
+         || UNLIKELY(!rtl_add_insn(rtl, RTLOP_LOAD_PARAM, state_reg, 0, 0, 0))
+         || UNLIKELY(!rtl_add_insn(rtl, RTLOP_LOAD_ADDR, funcptr,
+                                   (uintptr_t)hand_tuned_table[i].execute,
+                                   0, 0))
+         || UNLIKELY(!rtl_add_insn(rtl, RTLOP_CALL, 0, state_reg, 0, funcptr))
+         || UNLIKELY(!rtl_add_insn(rtl, RTLOP_RETURN, 0, 0, 0, 0))
+        ) {
+            DMSG("Failed to create RTL block");
+            return 0;
+        }
+        if (UNLIKELY(!rtl_finalize_block(rtl))) {
+            DMSG("Failed to finalize RTL block");
+            return 0;
+        }
+        return num_insns;
     }
 #endif  // ENABLE_JIT
 
@@ -339,7 +387,7 @@ static FASTCALL void BIOS_00002EFA(SH2State *state)
 static int BIOS_06010D22_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
-    return (fetch[-2] & 0xF000) == 0xBA45  // bsr 0x60101AC  [only wastes time]
+    return (fetch[-2] & 0xF000) == 0xB000  // bsr 0x60101AC  [only wastes time]
         && fetch[-1] == 0xE41E  // mov #30, r4
         && fetch[ 0] == 0xD011  // mov.l @(0x6010D68,pc), r0
         && fetch[ 1] == 0x6001  // mov.w @r0, r0
@@ -350,8 +398,9 @@ static int BIOS_06010D22_detect(SH2State *state, uint32_t address,
 
 static FASTCALL void BIOS_06010D22(SH2State *state)
 {
-    uint32_t address = T2ReadLong(HighWram, 0x10D68);
-    state->R[0] = MappedMemoryReadWord(address);
+    const uint32_t address =
+        T2ReadLong(HighWram, (state->PC + 4 + 0x11*4) & 0xFFFFC);
+    state->R[0] = T2ReadWord(HighWram, address & 0xFFFFF);
     if (state->R[0]) {
         state->SR &= ~SR_T;
         state->cycles = state->cycle_limit;
@@ -360,6 +409,464 @@ static FASTCALL void BIOS_06010D22(SH2State *state)
         state->PC += 8;
         state->cycles += 4;
     }
+}
+
+/*-----------------------------------------------------------------------*/
+
+/* 0x0602E630: Coordinate transformation */
+
+static int BIOS_0602E630_is_UE;
+
+static int BIOS_0602E630_detect(SH2State *state, uint32_t address,
+                                const uint16_t *fetch)
+{
+    if (address == 0x602E630 && checksum(fetch,612) == 0xA87EE4) {
+        BIOS_0602E630_is_UE = 0;
+        return 612;
+    }
+    if (address == 0x603A630 && checksum(fetch,600) == 0xA9F4CC) {
+        BIOS_0602E630_is_UE = 1;
+        return 600;
+    }
+    return 0;
+}
+
+static FASTCALL void BIOS_0602E630(SH2State *state)
+{
+    int32_t counter;
+
+    const uint32_t R11 = T2ReadLong(HighWram, (state->R[4] & 0xFFFFF) + 64);
+    int16_t * const R12_ptr = (int16_t *)&HighWram[
+        T2ReadLong(HighWram, (state->PC+11*2 + 4 + 0x7B*4) & 0xFFFFC)
+        & 0xFFFFF];
+    int32_t * const R13_ptr = (int32_t *)&HighWram[
+        T2ReadLong(HighWram, (state->PC+12*2 + 4 + 0x7B*4) & 0xFFFFC)
+        & 0xFFFFF];
+
+    const uint32_t M_R7 =
+        T2ReadLong(HighWram, (state->PC+24*2 + 4 + 0x76*4) & 0xFFFFC);
+    const int32_t * const M = (const int32_t *)&HighWram[
+        T2ReadLong(HighWram, M_R7 & 0xFFFFF) & 0xFFFFF];
+
+    const uint32_t R5 = T2ReadLong(HighWram, (state->R[4] & 0xFFFFF) + 56) + 4;
+    counter = (int16_t)T2ReadWord(HighWram, (R5 - 4) & 0xFFFFF);
+    state->cycles += 30;
+
+    if (counter > 0) {
+
+        /* 0x602E66E */
+
+#ifdef PSP
+# define DO_MULT(dest_all,dest_z,index) \
+    int32_t dest_all, dest_z;                                           \
+    do {                                                                \
+        int32_t temp_x, temp_y, temp_z;                                 \
+        asm(".set push; .set noreorder\n"                               \
+            "lw %[temp_z], %[idx]*16+8(%[M])\n"                         \
+            "lw %[temp_x], %[idx]*16+0(%[M])\n"                         \
+            "lw %[temp_y], %[idx]*16+4(%[M])\n"                         \
+            "ror %[temp_z], %[temp_z], 16\n"                            \
+            "mult %[temp_z], %[in_z]\n"                                 \
+            "ror %[temp_x], %[temp_x], 16\n"                            \
+            "ror %[temp_y], %[temp_y], 16\n"                            \
+            "mfhi %[temp_z]\n"                                          \
+            "mflo %[dst_z]\n"                                           \
+            "madd %[temp_x], %[in_x]\n"                                 \
+            "sll %[temp_z], %[temp_z], 16\n"                            \
+            "srl %[dst_z], %[dst_z], 16\n"                              \
+            "lw %[temp_x], %[idx]*16+12(%[M])\n"                        \
+            "madd %[temp_y], %[in_y]\n"                                 \
+            "or %[dst_z], %[dst_z], %[temp_z]\n"                        \
+            "ror %[temp_z], %[temp_x], 16\n"                            \
+            "mfhi %[temp_x]\n"                                          \
+            "mflo %[temp_y]\n"                                          \
+            "sll %[temp_x], %[temp_x], 16\n"                            \
+            "srl %[temp_y], %[temp_y], 16\n"                            \
+            "or %[dst_all], %[temp_x], %[temp_y]\n"                     \
+            "addu %[dst_all], %[dst_all], %[temp_z]\n"                  \
+            ".set pop"                                                  \
+            : [dst_all] "=r" (dest_all), [dst_z] "=&r" (dest_z),        \
+              [temp_x] "=&r" (temp_x), [temp_y] "=&r" (temp_y),         \
+              [temp_z] "=&r" (temp_z)                                   \
+            : [M] "r" (M), [idx] "i" (index), [in_x] "r" (in_x),        \
+              [in_y] "r" (in_y), [in_z] "r" (in_z)                      \
+            : "hi", "lo"                                                \
+        );                                                              \
+    } while (0)
+#else  // !PSP
+# define GET_M(i)  ((int64_t)(int32_t)WSWAP32(M[(i)]))
+# define DO_MULT(dest_all,dest_z,index) \
+    const int32_t dest_z = ((int64_t)in_z * GET_M((index)*4+2)) >> 16;  \
+    int32_t dest_all = (((int64_t)in_x * GET_M((index)*4+0)             \
+                       + (int64_t)in_y * GET_M((index)*4+1)             \
+                       + (int64_t)in_z * GET_M((index)*4+2)) >> 16)     \
+                     + GET_M((index)*4+3);
+#endif
+
+        const uint32_t testflag =
+            T2ReadLong(HighWram, (state->R[4] & 0xFFFFF) + 20);
+        const int32_t *in = (const int32_t *)&HighWram[R5 & 0xFFFFF];
+        int32_t *out = R13_ptr;
+        int16_t *coord_out = R12_ptr;
+
+        do {
+            const int32_t in_x = WSWAP32(in[0]);
+            const int32_t in_y = WSWAP32(in[1]);
+            const int32_t in_z = WSWAP32(in[2]);
+
+            DO_MULT(out_z, zz, 2);
+            if (out_z < 0 && testflag) {
+                out_z += out_z >> 3;
+            }
+            out[2] = WSWAP32(out_z);
+            out[14] = WSWAP32(out_z - (zz<<1));
+
+            DO_MULT(out_x, zx, 0);
+            out[0] = WSWAP32(out_x);
+            out[12] = WSWAP32(out_x - (zx<<1));
+
+            DO_MULT(out_y, zy, 1);
+            out[1] = WSWAP32(out_y);
+            out[13] = WSWAP32(out_y - (zy<<1));
+
+            /* The result gets truncated to 16 bits here, so we don't need
+             * to worry about the 32->24 bit precision loss with floats.
+             * (There are only a few pixels out of place during the entire
+             * animation as a result of rounding error.) */
+            const float coord_mult = 192.0f / out_z;
+            *coord_out++ = (int16_t)IFLOORF(out_x * coord_mult);
+            *coord_out++ = (int16_t)IFLOORF(out_y * coord_mult);
+
+            in += 3;
+            out += 3;
+            counter -= 2;
+            state->cycles += 110;  // Minimum value
+        } while (counter > 0);
+
+        state->cycles += 19;
+
+#undef GET_M
+#undef DO_MULT
+
+    }  // if (counter > 0)
+
+    /* 0x602E840 */
+
+    /* Offset for second-half local data accesses */
+    const int UE_PC_offset = (BIOS_0602E630_is_UE ? -12*2 : 0);
+
+    counter = (int16_t)T2ReadWord(HighWram, R11 & 0xFFFFF);
+    state->cycles += 19;
+
+int savc=counter;
+    if (counter > 0) {
+
+#ifdef PSP
+# define DOT3_16(v,x,y,z)  __extension__({                              \
+    int32_t __temp1, __temp2, __result;                                 \
+    asm(".set push; .set noreorder\n"                                   \
+        "lw %[temp1], 0(%[V])\n"                                        \
+        "lw %[temp2], 4(%[V])\n"                                        \
+        "ror %[temp1], %[temp1], 16\n"                                  \
+        "mult %[temp1], %[X]\n"                                         \
+        "lw %[temp1], 8(%[V])\n"                                        \
+        "ror %[temp2], %[temp2], 16\n"                                  \
+        "madd %[temp2], %[Y]\n"                                         \
+        "ror %[temp1], %[temp1], 16\n"                                  \
+        "madd %[temp1], %[Z]\n"                                         \
+        "mflo %[result]\n"                                              \
+        "mfhi %[temp1]\n"                                               \
+        "sra %[result], %[result], 16\n"                                \
+        "ins %[result], %[temp1], 16, 16\n"                             \
+        ".set pop"                                                      \
+        : [temp1] "=&r" (__temp1), [temp2] "=&r" (__temp2),             \
+          [result] "=r" (__result)                                      \
+        : [V] "r" (v), [X] "r" (x), [Y] "r" (y), [Z] "r" (z)            \
+        : "hi", "lo"                                                    \
+    );                                                                  \
+    __result;                                                           \
+})
+# define DOT3_32(v,x,y,z)  __extension__({                              \
+    int32_t __temp1, __temp2, __result;                                 \
+    asm(".set push; .set noreorder\n"                                   \
+        "lw %[temp1], 0(%[V])\n"                                        \
+        "lw %[temp2], 4(%[V])\n"                                        \
+        "ror %[temp1], %[temp1], 16\n"                                  \
+        "mult %[temp1], %[X]\n"                                         \
+        "lw %[temp1], 8(%[V])\n"                                        \
+        "ror %[temp2], %[temp2], 16\n"                                  \
+        "madd %[temp2], %[Y]\n"                                         \
+        "ror %[temp1], %[temp1], 16\n"                                  \
+        "madd %[temp1], %[Z]\n"                                         \
+        "mfhi %[result]\n"                                              \
+        ".set pop"                                                      \
+        : [temp1] "=&r" (__temp1), [temp2] "=&r" (__temp2),             \
+          [result] "=r" (__result)                                      \
+        : [V] "r" (v), [X] "r" (x), [Y] "r" (y), [Z] "r" (z)            \
+        : "hi", "lo"                                                    \
+    );                                                                  \
+    __result;                                                           \
+})
+#else  // !PSP
+# define DOT3_16(v,x,y,z)                                               \
+    (((int64_t)(int32_t)WSWAP32((v)[0]) * (int64_t)(int32_t)(x)         \
+    + (int64_t)(int32_t)WSWAP32((v)[1]) * (int64_t)(int32_t)(y)         \
+    + (int64_t)(int32_t)WSWAP32((v)[2]) * (int64_t)(int32_t)(z)) >> 16)
+# define DOT3_32(v,x,y,z)                                               \
+    (((int64_t)(int32_t)WSWAP32((v)[0]) * (int64_t)(int32_t)(x)         \
+    + (int64_t)(int32_t)WSWAP32((v)[1]) * (int64_t)(int32_t)(y)         \
+    + (int64_t)(int32_t)WSWAP32((v)[2]) * (int64_t)(int32_t)(z)) >> 32)
+#endif
+
+        state->cycles += 68 + 95*(counter-2);
+
+        /* 0x602E850 */
+
+        const int32_t *in = (const int32_t *)&HighWram[(R11 & 0xFFFFF) + 28];
+        const int32_t *coord_in = &R13_ptr[12];
+        const uint32_t out_address =
+            T2ReadLong(HighWram, (state->PC+264*2 + 4 + 0xA2*4 + UE_PC_offset) & 0xFFFFC);
+        int32_t *out = (int32_t *)&HighWram[out_address & 0xFFFFF];
+        int16_t *coord_out = &R12_ptr[8];
+
+        const uint16_t *R6_ptr = (const uint16_t *)&HighWram[
+            (T2ReadLong(HighWram, (state->R[4] & 0xFFFFF) + 60) & 0xFFFFF)
+            + 4];
+        const uint32_t flag_address =
+            T2ReadLong(HighWram, (state->PC+348*2 + 4 + 0x79*4 + UE_PC_offset) & 0xFFFFC);
+        int16_t *flag = (int16_t *)&HighWram[flag_address & 0xFFFFF];
+
+        {
+            const int32_t M_2  = WSWAP32(M[ 2]);
+            const int32_t M_6  = WSWAP32(M[ 6]);
+            const int32_t M_10 = WSWAP32(M[10]);
+
+            out[0] = WSWAP32(-M_2);
+            out[1] = WSWAP32(-M_6);
+            out[2] = WSWAP32(-M_10);
+            const int32_t *in0_0 =
+                (const int32_t *)((uintptr_t)R13_ptr + R6_ptr[3]);
+            R6_ptr += 10;
+            const int32_t test_0 = DOT3_32(in0_0, -M_2, -M_6, -M_10);
+            *flag++ = (test_0 < 0) ? 64 : -1;
+            out += 3;
+            counter--;
+
+            out[0] = WSWAP32(M_2);
+            out[1] = WSWAP32(M_6);
+            out[2] = WSWAP32(M_10);
+            const int32_t *in0_1 =
+                (const int32_t *)((uintptr_t)R13_ptr + R6_ptr[3]);
+            R6_ptr += 10;
+            const int32_t test_1 = DOT3_32(in0_1, M_2, M_6, M_10);
+            *flag++ = (test_1 < 0) ? 64 : -1;
+            out += 3;
+            counter--;
+        }
+
+        do {
+            const int32_t in_x = WSWAP32(in[0]);
+            const int32_t in_y = WSWAP32(in[1]);
+            const int32_t in_z = WSWAP32(in[2]);
+
+            const int32_t out_x = DOT3_16(&M[0], in_x, in_y, in_z);
+            const int32_t out_y = DOT3_16(&M[4], in_x, in_y, in_z);
+            const int32_t out_z = DOT3_16(&M[8], in_x, in_y, in_z);
+
+            out[0] = WSWAP32(out_x);
+            out[1] = WSWAP32(out_y);
+            out[2] = WSWAP32(out_z);
+
+            const float coord_mult = 192.0f / (int32_t)WSWAP32(coord_in[2]);
+            *coord_out++ =
+                (int16_t)IFLOORF((int32_t)WSWAP32(coord_in[0]) * coord_mult);
+            *coord_out++ =
+                (int16_t)IFLOORF((int32_t)WSWAP32(coord_in[1]) * coord_mult);
+            coord_in += 3;
+
+            const int32_t *in0 =
+                (const int32_t *)((uintptr_t)R13_ptr + R6_ptr[3]);
+            R6_ptr += 10;
+            const int32_t test = DOT3_32(in0, out_x, out_y, out_z);
+            *flag++ = (test < 0) ? 64 : -1;
+
+            in += 3;
+            out += 3;
+            counter--;
+        } while (counter > 0);
+
+#undef DOT3_16
+#undef DOT3_32
+
+    }  // if (counter > 0)
+
+    /* 0x602E914 */
+    /* Note: At this point, all GPRs except R9, R12, R13, and R15 are dead */
+
+    const int16_t *flag = (const int16_t *)&HighWram[
+        T2ReadLong(HighWram, (state->PC+572*2 + 4 + 0x0F*4 + UE_PC_offset) & 0xFFFFC)
+        & 0xFFFFF];
+    const int32_t *R1_ptr = (const int32_t *)&HighWram[
+        T2ReadLong(HighWram, (state->PC+378*2 + 4 + 0x6C*4 + UE_PC_offset) & 0xFFFFC)
+        & 0xFFFFF];
+    const uint16_t *R6_ptr = (const uint16_t *)&HighWram[
+        T2ReadLong(HighWram, (state->R[4] & 0xFFFFF) + 60) & 0xFFFFF];
+    const int32_t *R7_ptr = (const int32_t *)&HighWram[
+        T2ReadLong(HighWram, (state->PC+371*2 + 4 + 0x6D*4 + UE_PC_offset) & 0xFFFFC)
+        & 0xFFFFF];
+    uint32_t *R9_ptr = (uint32_t *)&HighWram[
+        T2ReadLong(HighWram, (state->PC+9*2 + 4 + 0x7A*4) & 0xFFFFC)
+        & 0xFFFFF];
+    uint16_t *R10_ptr = (uint16_t *)&HighWram[
+        T2ReadLong(HighWram, (state->PC+370*2 + 4 + 0x73*4 + UE_PC_offset) & 0xFFFFC)
+        & 0xFFFFF];
+
+    const int32_t limit = *R6_ptr;
+    R6_ptr += 2;
+    state->cycles += 13;
+
+if(savc!=limit)printf("BOGUS savc=%d limit=%d\n",savc,limit); //FIXME temp
+    for (counter = 0; counter < limit; counter++, R7_ptr += 3, R6_ptr += 10, state->cycles += 7) {
+
+        /* 0x602EAA8 */
+
+        if (flag[counter] < 0) {
+            state->cycles += 8;
+            continue;
+        }
+        state->cycles += 9;
+
+        /* 0x602E924 */
+
+#ifdef PSP
+        int32_t R2;
+        {
+            int32_t temp1, temp2, temp3;
+            asm(".set push; .set noreorder\n"
+                "lw %[temp1], 0(%[R7_ptr])\n"
+                "lw %[temp2], 0(%[R1_ptr])\n"
+                "lw %[temp3], 4(%[R7_ptr])\n"
+                "ror %[temp1], %[temp1], 16\n"
+                "ror %[temp2], %[temp2], 16\n"
+                "mult %[temp1], %[temp2]\n"
+                "lw %[temp1], 4(%[R1_ptr])\n"
+                "lw %[temp2], 8(%[R7_ptr])\n"
+                "ror %[temp3], %[temp3], 16\n"
+                "ror %[temp1], %[temp1], 16\n"
+                "madd %[temp3], %[temp1]\n"
+                "lw %[temp3], 8(%[R1_ptr])\n"
+                "ror %[temp2], %[temp2], 16\n"
+                "ror %[temp3], %[temp3], 16\n"
+                "madd %[temp2], %[temp3]\n"
+                "mflo %[temp1]\n"
+                "mfhi %[temp2]\n"
+                "sra %[temp1], %[temp1], 16\n"
+                "addiu %[temp2], %[temp2], 1\n"
+                "ins %[temp1], %[temp2], 16, 16\n"
+                "sra %[temp1], %[temp1], 10\n"
+                "max %[temp1], %[temp1], $zero\n"
+                "min %[R2], %[temp1], %[cst_127]\n"
+                ".set pop"
+                : [R2] "=r" (R2), [temp1] "=&r" (temp1),
+                  [temp2] "=&r" (temp2), [temp3] "=&r" (temp3)
+                : [R7_ptr] "r" (R7_ptr), [R1_ptr] "r" (R1_ptr),
+                  [cst_127] "r" (127)
+                : "hi", "lo"
+            );
+        }
+#else  // !PSP
+        const int32_t mac =
+           ((int64_t) (int32_t)WSWAP32(R7_ptr[0]) * (int32_t)WSWAP32(R1_ptr[0])
+          + (int64_t) (int32_t)WSWAP32(R7_ptr[1]) * (int32_t)WSWAP32(R1_ptr[1])
+          + (int64_t) (int32_t)WSWAP32(R7_ptr[2]) * (int32_t)WSWAP32(R1_ptr[2])
+          ) >> 16;
+        const int32_t R2_temp = (mac + 0x10000) >> 10;
+        const int32_t R2 = R2_temp < 0 ? 0 : R2_temp > 127 ? 127 : R2_temp;
+#endif
+        uint16_t * const R9_data16 =
+            (uint16_t *)&HighWram[WSWAP32(*R9_ptr) & 0xFFFFF];
+        *R9_data16 = *R6_ptr;
+        uint32_t * const R9_data32 = (uint32_t *)((uintptr_t)R9_data16 + 4);
+        state->cycles += 23;
+
+        /* 0x602E93C */
+
+        int32_t R3;
+        switch (R6_ptr[1] & 0xFF) {
+          case 0x00:
+            R9_data32[0] = *(uint32_t *)&R12_ptr[ 0];
+            R9_data32[1] = *(uint32_t *)&R12_ptr[ 2];
+            R9_data32[2] = *(uint32_t *)&R12_ptr[ 4];
+            R9_data32[3] = *(uint32_t *)&R12_ptr[ 6];
+            R3 = WSWAP32(R13_ptr[5]) + WSWAP32(R13_ptr[11]);
+            break;
+
+          case 0x30:
+            R9_data32[0] = *(uint32_t *)&R12_ptr[ 8];
+            R9_data32[1] = *(uint32_t *)&R12_ptr[14];
+            R9_data32[2] = *(uint32_t *)&R12_ptr[12];
+            R9_data32[3] = *(uint32_t *)&R12_ptr[10];
+            R3 = WSWAP32(R13_ptr[17]) + WSWAP32(R13_ptr[23]);
+            break;
+
+          case 0x60:
+            R9_data32[0] = *(uint32_t *)&R12_ptr[ 0];
+            R9_data32[1] = *(uint32_t *)&R12_ptr[ 8];
+            R9_data32[2] = *(uint32_t *)&R12_ptr[10];
+            R9_data32[3] = *(uint32_t *)&R12_ptr[ 2];
+            R3 = WSWAP32(R13_ptr[5]) + WSWAP32(R13_ptr[14]);
+            break;
+
+          case 0x90:
+            R9_data32[0] = *(uint32_t *)&R12_ptr[ 4];
+            R9_data32[1] = *(uint32_t *)&R12_ptr[12];
+            R9_data32[2] = *(uint32_t *)&R12_ptr[14];
+            R9_data32[3] = *(uint32_t *)&R12_ptr[ 6];
+            R3 = WSWAP32(R13_ptr[8]) + WSWAP32(R13_ptr[23]);
+            break;
+
+          case 0xC0:
+            R9_data32[0] = *(uint32_t *)&R12_ptr[ 2];
+            R9_data32[1] = *(uint32_t *)&R12_ptr[10];
+            R9_data32[2] = *(uint32_t *)&R12_ptr[12];
+            R9_data32[3] = *(uint32_t *)&R12_ptr[ 4];
+            R3 = WSWAP32(R13_ptr[5]) + WSWAP32(R13_ptr[20]);
+            break;
+
+          default:  // case 0xF0
+            R9_data32[0] = *(uint32_t *)&R12_ptr[ 0];
+            R9_data32[1] = *(uint32_t *)&R12_ptr[ 6];
+            R9_data32[2] = *(uint32_t *)&R12_ptr[14];
+            R9_data32[3] = *(uint32_t *)&R12_ptr[ 8];
+            R3 = WSWAP32(R13_ptr[11]) + WSWAP32(R13_ptr[14]);
+            break;
+        }
+        state->cycles += 25;  // Approximate
+
+        /* 0x602EA60 */
+
+        const uint32_t R2_tableaddr = WSWAP32(*(const uint32_t *)&R6_ptr[8]);
+        const uint16_t *R2_table =
+            (const uint16_t *)&HighWram[R2_tableaddr & 0xFFFFF];
+        R9_data16[21] = R2_table[R2];
+        *R9_ptr = WSWAP32(WSWAP32(*R9_ptr) + 48);
+
+        if (!BIOS_0602E630_is_UE && R3 < -0x30000 && (R6_ptr[1] & 0xFF00)) {
+            R3 = -R3;
+        }
+        R3 >>= 1;
+        uint32_t *R3_buffer = (uint32_t *)&HighWram[
+            T2ReadLong(HighWram, (state->PC+558*2 + 4 + 0x17*4 + UE_PC_offset) & 0xFFFFC)
+            & 0xFFFFF];
+        R3_buffer[(*R10_ptr)++] = WSWAP32(R3);
+
+        state->cycles += 29;  // Approximate
+    }
+
+    /* 0x602EAB8 */
+
+    state->PC = state->PR;
+    state->cycles += 10;
 }
 
 /*************************************************************************/
@@ -429,42 +936,6 @@ static FASTCALL void Azel_0600C59C(SH2State *state)
 /*-----------------------------------------------------------------------*/
 
 /* 0x600FCB0: Mysterious routine called frequently from 0x6006148 */
-
-static int Azel_0600FCB0_detect(SH2State *state, uint32_t address,
-                                const uint16_t *fetch)
-{
-    return fetch[-2] == 0x000B  // rts
-        && fetch[-1] == 0x0009  // nop
-        && fetch[ 0] == 0xD30D  // mov.l @(0x38,pc), r3  [0x604B68C]
-        && fetch[ 1] == 0x8430  // mov.b @(0,r3), r0
-        && fetch[ 2] == 0x2008  // tst r0, r0
-        && fetch[ 3] == 0x89F9  // bt fetch[-2]
-        && fetch[ 4] == 0x8431  // mov.b @(1,r3), r0
-        && fetch[ 5] == 0x2008  // tst r0, r0
-        && fetch[ 6] == 0x8950  // bt fetch[88]
-        && fetch[ 7] == 0x4001  // shlr r0
-        && fetch[ 8] == 0x8B62  // bf fetch[108]
-        && fetch[ 9] == 0x5435  // mov.l @(20,r3), r4
-        && fetch[10] == 0x5536  // mov.l @(24,r3), r5
-        && fetch[11] == 0x5631  // mov.l @(4,r3), r6
-        && fetch[12] == 0x5732  // mov.l @(8,r3), r7
-        && fetch[13] == 0x4710  // dt r7
-        && fetch[14] == 0x8F03  // bf/s fetch[19]
-        && fetch[15] == 0x4601  // shlr r6
-        && fetch[16] == 0x6644  // mov.b @r4+, r6
-        && fetch[17] == 0xE708  // mov #8, r7
-        && fetch[18] == 0x4601  // shlr r6
-        && fetch[19] == 0x8B09  // bf 0x600FCEC
-        && fetch[20] == 0x6144  // mov.b @r4+, r1
-        && fetch[21] == 0x1345  // mov.l r4, @(20,r3)
-        && fetch[22] == 0x2510  // mov.b r1, @r5
-        && fetch[23] == 0x7501  // add #1, r5
-        && fetch[24] == 0x1356  // mov.l r5, @(24,r3)
-        && fetch[25] == 0x1361  // mov.l r6, @(4,r3)
-        && fetch[26] == 0x000B  // rts
-        && fetch[27] == 0x1372  // mov.l r7, @(8,r3)
-        ? 4 : 0;
-}
 
 static FASTCALL void Azel_0600FCB0(SH2State *state)
 {
@@ -579,17 +1050,6 @@ static FASTCALL void Azel_0603A22C(SH2State *state)
 
 /* 0x603A242: CD command execution routine */
 
-static int Azel_0603A242_detect(SH2State *state, uint32_t address,
-                                const uint16_t *fetch)
-{
-    return fetch[0] == 0x2FE6  // mov.l r14, @-r15
-        && fetch[1] == 0x2FD6  // mov.l r13, @-r15
-        && fetch[2] == 0x6D63  // mov r6, r13
-        && fetch[3] == 0xD332  // mov.l @(0x603A314,pc), r3  [0x6037036]
-        // etc. (we assume the rest is as expected)
-        ? 49 : 0;
-}
-
 static int Azel_0603A242_state = 0;
 static int Azel_0603A242_cmd51_count = 0;  // Count of sequential 0x51 commands
 
@@ -701,18 +1161,6 @@ static FASTCALL void Azel_0603A242(SH2State *state)
 /* 0x0603DD6E: CD read routine (actually a generalized copy routine, but
  * doesn't seem to be used for anything else) */
 
-static int Azel_0603DD6E_detect(SH2State *state, uint32_t address,
-                                const uint16_t *fetch)
-{
-    return fetch[0] == 0x2448  // tst r4, r4
-        && fetch[1] == 0x2FE6  // mov.l r14, @-r15
-        && fetch[2] == 0x2FD6  // mov.l r13, @-r15
-        && fetch[3] == 0x6D63  // mov r6, r13
-        && fetch[3] == 0x8D16  // bt/s 0x603DDA6
-        // etc. (we assume the rest is as expected)
-        ? 31 : 0;
-}
-
 static FASTCALL void Azel_0603DD6E(SH2State *state)
 {
     int32_t len = MappedMemoryReadLong(state->R[15]);
@@ -752,7 +1200,8 @@ static FASTCALL void Azel_0603DD6E(SH2State *state)
 
     if ((dest & 0x1FF00000) == 0x05A00000) {
         Cs2RapidCopyT2(SoundRam + (dest & 0x7FFFF), len/4);
-        M68KWriteNotify(dest, len);
+        M68KWriteNotify(dest & 0x7FFFF, len);
+        return;
     }
 
     for (; len > 0; len -= 4, dest += 4) {

@@ -221,13 +221,13 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
 /* Defaults: */
 
 #ifndef BSWAP16
-# define BSWAP16(x)  (((x)>>8 & 0x00FF00FF) | ((x) & 0x00FF00FF) << 8)
+# define BSWAP16(x)  (((u32)(x)>>8 & 0x00FF00FF) | ((u32)(x) & 0x00FF00FF) << 8)
 #endif
 #ifndef BSWAP32
-# define BSWAP32(x)  ((x)>>24 | ((x)>>8 & 0xFF00) | ((x) & 0xFF00)<<8 | (x)<<24)
+# define BSWAP32(x)  ((u32)(x)>>24 | ((u32)(x)>>8 & 0xFF00) | ((u32)(x) & 0xFF00)<<8 | (u32)(x)<<24)
 #endif
 #ifndef WSWAP32
-# define WSWAP32(x)  ((x)>>16 | (x)<<16)
+# define WSWAP32(x)  ((u32)(x)>>16 | (u32)(x)<<16)
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
