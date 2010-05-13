@@ -27,6 +27,7 @@ extern "C" {
 /** @file */
 
 #define MINI18N_UTF16 1
+#define MINI18N_FORMAT_COUNT 1
 
 #ifndef _
 #define _(source) (mini18n(source))
