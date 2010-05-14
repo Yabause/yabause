@@ -74,8 +74,8 @@ static void yui_scsp_init (YuiScsp * yv) {
 
 	{
 		GtkWidget * scroll = gtk_scrolled_window_new(NULL, NULL);
-		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 		GtkWidget * text = gtk_text_view_new();
+		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 		gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
 		gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(text), FALSE);
 		yv->buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text));

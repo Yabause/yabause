@@ -86,6 +86,10 @@ static void MixAudio(UNUSED void *userdata, Uint8 *stream, int len) {
 
 static int SNDSDLInit(void)
 {
+   //samples should be a power of 2 according to SDL-doc
+   //so normalize it to the nearest power of 2 here
+   u32 normSamples = 512;
+
    SDL_InitSubSystem(SDL_INIT_AUDIO);
 //   if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0);
 //      return -1;
@@ -97,9 +101,6 @@ static int SNDSDLInit(void)
    audiofmt.callback = MixAudio;
    audiofmt.userdata = NULL;
 
-   //samples should be a power of 2 according to SDL-doc
-   //so normalize it to the nearest power of 2 here
-   u32 normSamples = 512;
    while (normSamples < audiofmt.samples) 
       normSamples <<= 1;
 

@@ -385,6 +385,7 @@ int YabauseExec(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseEmulate(void) {
+   int oneframeexec = 0;
 
    const u32 cyclesinc =
       yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop * 10;
@@ -406,8 +407,6 @@ int YabauseEmulate(void) {
       m68kcenticycles = yabsys.DecilineMode ? 62 : 20;
    }
 #endif
-
-   int oneframeexec = 0;
 
    DoMovie();
 

@@ -21,13 +21,13 @@
 #ifndef SH2TRACE_H
 #define SH2TRACE_H
 
-#include <stdint.h>
+#include "core.h"
 
-extern FASTCALL uint64_t sh2_cycle_count(void);
-extern FASTCALL void sh2_trace_add_cycles(int32_t cycles);
-extern FASTCALL void sh2_trace_writeb(uint32_t address, uint32_t value);
-extern FASTCALL void sh2_trace_writew(uint32_t address, uint32_t value);
-extern FASTCALL void sh2_trace_writel(uint32_t address, uint32_t value);
-extern FASTCALL void sh2_trace(SH2_struct *state, uint32_t address);
+extern FASTCALL u64 sh2_cycle_count(void);
+extern FASTCALL void sh2_trace_add_cycles(s32 cycles);
+extern FASTCALL void sh2_trace_writeb(u32 address, u32 value);
+extern FASTCALL void sh2_trace_writew(u32 address, u32 value);
+extern FASTCALL void sh2_trace_writel(u32 address, u32 value);
+extern FASTCALL void sh2_trace(SH2_struct *state, u32 address);
 
 #endif  // SH2TRACE_H

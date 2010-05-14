@@ -209,8 +209,8 @@ static gboolean yui_settings_load(void) {
 
 	/* region */
 	{
-		tmp = yinit.regionid;
 		char * region = g_key_file_get_value(keyfile, "General", "Region", 0);
+		tmp = yinit.regionid;
 		if ((region == 0) || !strcmp(region, "Auto")) {
 			yinit.regionid = 0;
 		} else {
@@ -324,13 +324,14 @@ static gboolean yui_settings_load(void) {
 		/* Find timestamp of 1998-01-01 12:00 in the local time zone */
 		time_t utc = 883656000;  // 1998-01-01 12:00 UTC
 		struct tm tm;
+		long local, noon;
 		localtime_r(&utc, &tm);
-		long local = tm.tm_hour*3600 + tm.tm_min*60 + tm.tm_sec;
+		local = tm.tm_hour*3600 + tm.tm_min*60 + tm.tm_sec;
 		if (tm.tm_mday == 2)  // 1998-01-02
 			local += 86400;
 		else if (tm.tm_mday == 31)  // 1997-12-31
 			local -= 86400;
-		long noon = 12*3600 + 0*60 + 0;
+		noon = 12*3600 + 0*60 + 0;
 		yinit.basetime = (long)utc + (noon - local);
 	} else {
 		yinit.basetime = 0;
@@ -357,8 +358,9 @@ static gboolean yui_settings_load(void) {
 
 			while(PerMouseNames[i]) {
 				char tmp[100];
+				u32 key;
 				sprintf(tmp, "Mouse.%s.1", PerMouseNames[i]);
-	  			u32 key = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
+	  			key = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
 		  		PerSetKey(key, i + 13, padbits);
 		  		i++;
 			}
@@ -370,8 +372,9 @@ static gboolean yui_settings_load(void) {
 
 			while(PerPadNames[i]) {
 				char tmp[100];
+				u32 key;
 				sprintf(tmp, "Pad.%s.1", PerPadNames[i]);
-	  			u32 key = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
+	  			key = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
 		  		PerSetKey(key, i, padbits);
 		  		i++;
 			}

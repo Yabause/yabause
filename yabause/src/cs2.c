@@ -442,9 +442,10 @@ void FASTCALL Cs2RapidCopyT1(void *dest, u32 count)
       if (Cs2Area->datatranstype == 2
        && Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
       {
+         u32 i;
+
          Cs2Area->datatranstype = -1;
 
-         u32 i;
          for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
          {
             Cs2FreeBlock(Cs2Area->datatranspartition->block[i]);
@@ -533,9 +534,10 @@ void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
       if (Cs2Area->datatranstype == 2
        && Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
       {
+         u32 i;
+
          Cs2Area->datatranstype = -1;
 
-         u32 i;
          for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
          {
             Cs2FreeBlock(Cs2Area->datatranspartition->block[i]);

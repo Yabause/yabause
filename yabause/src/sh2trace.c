@@ -18,7 +18,6 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include <stdint.h>
 #include <stdio.h>
 #include "sh2core.h"
 #include "sh2d.h"
@@ -40,42 +39,42 @@
 
 /*----------------------------------*/
 
-static const uint64_t trace_start =  000000000ULL;  // First cycle to trace
-static const uint64_t trace_stop  = 2800000000ULL;  // Last cycle to trace + 1
+static const u64 trace_start =  000000000ULL;  // First cycle to trace
+static const u64 trace_stop  = 2800000000ULL;  // Last cycle to trace + 1
 
 /*----------------------------------*/
 
 static FILE *logfile;                // Trace log file
-static uint64_t cycle_accum = 0;     // Global cycle accumulator
-static uint64_t current_cycles = 0;  // Cycle count on last call to sh2_trace()
+static u64 cycle_accum = 0;     // Global cycle accumulator
+static u64 current_cycles = 0;  // Cycle count on last call to sh2_trace()
 
 /*************************************************************************/
 
-FASTCALL uint64_t sh2_cycle_count(void)
+FASTCALL u64 sh2_cycle_count(void)
 {
     return current_cycles;
 }
 
 /*-----------------------------------------------------------------------*/
 
-FASTCALL void sh2_trace_add_cycles(int32_t cycles)
+FASTCALL void sh2_trace_add_cycles(s32 cycles)
 {
     cycle_accum += cycles;
 }
 
 /*-----------------------------------------------------------------------*/
 
-FASTCALL void sh2_trace_writeb(uint32_t address, uint32_t value)
+FASTCALL void sh2_trace_writeb(u32 address, u32 value)
 {
     if (logfile) {
         value &= 0xFF;
 #ifdef BINARY_LOG
         struct {
-            uint16_t id;  // 1 = byte store
-            uint16_t pad1;
-            uint32_t address;
-            uint32_t value;
-            uint32_t pad2;
+            u16 id;  // 1 = byte store
+            u16 pad1;
+            u32 address;
+            u32 value;
+            u32 pad2;
         } buf;
         buf.id = 1;
         buf.pad1 = 0;
@@ -92,17 +91,17 @@ FASTCALL void sh2_trace_writeb(uint32_t address, uint32_t value)
     }
 }
 
-FASTCALL void sh2_trace_writew(uint32_t address, uint32_t value)
+FASTCALL void sh2_trace_writew(u32 address, u32 value)
 {
     if (logfile) {
         value &= 0xFFFF;
 #ifdef BINARY_LOG
         struct {
-            uint16_t id;  // 2 = word store
-            uint16_t pad1;
-            uint32_t address;
-            uint32_t value;
-            uint32_t pad2;
+            u16 id;  // 2 = word store
+            u16 pad1;
+            u32 address;
+            u32 value;
+            u32 pad2;
         } buf;
         buf.id = 2;
         buf.pad1 = 0;
@@ -119,16 +118,16 @@ FASTCALL void sh2_trace_writew(uint32_t address, uint32_t value)
     }
 }
 
-FASTCALL void sh2_trace_writel(uint32_t address, uint32_t value)
+FASTCALL void sh2_trace_writel(u32 address, u32 value)
 {
     if (logfile) {
 #ifdef BINARY_LOG
         struct {
-            uint16_t id;  // 4 = long store
-            uint16_t pad1;
-            uint32_t address;
-            uint32_t value;
-            uint32_t pad2;
+            u16 id;  // 4 = long store
+            u16 pad1;
+            u32 address;
+            u32 value;
+            u32 pad2;
         } buf;
         buf.id = 4;
         buf.pad1 = 0;
@@ -147,7 +146,16 @@ FASTCALL void sh2_trace_writel(uint32_t address, uint32_t value)
 
 /*-----------------------------------------------------------------------*/
 
-FASTCALL void sh2_trace(SH2_struct *state, uint32_t address)
+INLINE void HEXIT(char * const ptr, u32 val, int ndigits);
+void HEXIT(char * const ptr, u32 val, int ndigits) {
+    while (ndigits-- > 0) {
+        const int digit = val & 0xF;
+        val >>= 4;
+        ptr[ndigits] = (digit>9 ? digit+7+'0' : digit+'0');
+    }
+}
+
+FASTCALL void sh2_trace(SH2_struct *state, u32 address)
 {
     current_cycles = cycle_accum + state->cycles;
 
@@ -168,6 +176,11 @@ FASTCALL void sh2_trace(SH2_struct *state, uint32_t address)
         }
 
     } else {
+        u16 opcode;
+        char buf[100];
+        /* This looks ugly, but it's faster than fprintf() in this case */
+        static char regbuf[] = "  R0: XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX\n  R8: XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX\n  PR: XXXXXXXX  SR: XXX  MAC: XXXXXXXX/XXXXXXXX  GBR: XXXXXXXX  VBR: XXXXXXXX\n";
+        int i;
 
         if (!logfile) {
             const char *filename = "sh2.log";
@@ -184,16 +197,16 @@ FASTCALL void sh2_trace(SH2_struct *state, uint32_t address)
             setvbuf(logfile, NULL, _IOFBF, 65536);
         }
 
-        uint16_t opcode = MappedMemoryReadWord(address);
+        opcode = MappedMemoryReadWord(address);
 
 #ifdef BINARY_LOG
 
         struct {
-            uint16_t id;  // 1/2/4 = store; 0x80 = MSH2 insn; 0x81 = SSH2 insn
-            uint16_t opcode;
-            uint32_t regs[23];
-            uint64_t cycles;
-            uint32_t pad[2];
+            u16 id;  // 1/2/4 = store; 0x80 = MSH2 insn; 0x81 = SSH2 insn
+            u16 opcode;
+            u32 regs[23];
+            u64 cycles;
+            u32 pad[2];
         } buf;
         buf.id = state==SSH2 ? 0x81 : 0x80;
         buf.opcode = opcode;
@@ -210,7 +223,6 @@ FASTCALL void sh2_trace(SH2_struct *state, uint32_t address)
 
         SH2GetRegisters(state, &state->regs);
 
-        char buf[100];
         SH2Disasm(address, opcode, 0, buf);
         fprintf(logfile, "[%c] %08X: %04X  %-44s [%12llu]\n",
                 state==SSH2 ? 'S' : 'M', (int)address, (int)opcode, buf+12,
@@ -221,17 +233,6 @@ FASTCALL void sh2_trace(SH2_struct *state, uint32_t address)
                 (unsigned long long)current_cycles);
 #endif
 
-        /* This looks ugly, but it's faster than fprintf() in this case */
-        static char regbuf[] = "  R0: XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX\n  R8: XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX\n  PR: XXXXXXXX  SR: XXX  MAC: XXXXXXXX/XXXXXXXX  GBR: XXXXXXXX  VBR: XXXXXXXX\n";
-        auto inline void HEXIT(char * const ptr, uint32_t val, int ndigits);
-        void HEXIT(char * const ptr, uint32_t val, int ndigits) {
-            while (ndigits-- > 0) {
-                const int digit = val & 0xF;
-                val >>= 4;
-                ptr[ndigits] = (digit>9 ? digit+7+'0' : digit+'0');
-            }
-        }
-        int i;
         for (i = 0; i < 16; i++) {
             HEXIT(i>=8 ? &regbuf[12+i*9] : &regbuf[6+i*9], state->regs.R[i], 8);
         }

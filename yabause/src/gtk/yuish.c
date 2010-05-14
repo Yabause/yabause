@@ -470,10 +470,10 @@ void SH2UpdateBreakpointList(YuiSh * sh2) {
   for (i = 0; i < MAX_BREAKPOINTS-1; i++) {
     
     if (cbp[i].addr != 0xFFFFFFFF) {
+      gchar tempstr[20];
       GtkTreeIter iter;
       gtk_list_store_append( GTK_LIST_STORE( sh2->bpListStore ), &iter );
       
-      gchar tempstr[20];
       sprintf(tempstr, "%08X", (int)cbp[i].addr);
       gtk_list_store_set( GTK_LIST_STORE( sh2->bpListStore ), &iter, 0, tempstr, -1 );
     }
@@ -686,6 +686,7 @@ static void yui_sh_editedMbpFlags( GtkCellRendererText *cellrenderertext,
   unsigned int addr;
   memorybreakpoint_struct *cmbp;
   gchar * addr_s;
+  u32 flags = 0;
 
   cmbp = SH2GetMemoryBreakpointList(sh2->debugsh);
 
@@ -699,7 +700,6 @@ static void yui_sh_editedMbpFlags( GtkCellRendererText *cellrenderertext,
 
   endptr = arg2;
     
-  u32 flags = 0;
   while ( *endptr ) {
       
     switch (*endptr) {

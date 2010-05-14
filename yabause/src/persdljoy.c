@@ -71,6 +71,8 @@ PERSDLJoystick* SDL_PERCORE_JOYSTICKS = 0;
 //////////////////////////////////////////////////////////////////////////////
 
 int PERSDLJoyInit(void) {
+	int i, j;
+
 	// does not need init if already done
 	if ( SDL_PERCORE_INITIALIZED )
 	{
@@ -87,7 +89,6 @@ int PERSDLJoyInit(void) {
 	SDL_JoystickEventState( SDL_IGNORE );
 	
 	// open joysticks
-	int i, j;
 	SDL_PERCORE_JOYSTICKS_INITIALIZED = SDL_NumJoysticks();
 	SDL_PERCORE_JOYSTICKS = malloc(sizeof(PERSDLJoystick) * SDL_PERCORE_JOYSTICKS_INITIALIZED);
 	for ( i = 0; i < SDL_PERCORE_JOYSTICKS_INITIALIZED; i++ )
@@ -146,14 +147,14 @@ void PERSDLJoyNothing(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int PERSDLJoyHandleEvents(void) {
-	// update joysticks states
-	SDL_JoystickUpdate();
-	
 	int joyId;
 	int i;
 	SDL_Joystick* joy;
 	Sint16 cur;
 	Uint8 buttonState;
+	
+	// update joysticks states
+	SDL_JoystickUpdate();
 	
 	// check each joysticks
 	for ( joyId = 0; joyId < SDL_PERCORE_JOYSTICKS_INITIALIZED; joyId++ )
