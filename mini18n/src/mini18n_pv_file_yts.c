@@ -52,7 +52,16 @@ int file_yts_load(mini18n_hash_t * hash, FILE * f) {
 					}
 					break;
 				case 1:
-					key[j] = c;
+					switch(c) {
+						case 'n':
+							key[j] = '\n';
+							break;
+						case 't':
+							key[j] = '\t';
+							break;
+						default:
+							key[j] = c;
+					}
 					j++;
 					state = 0;
 					break;
@@ -62,12 +71,31 @@ int file_yts_load(mini18n_hash_t * hash, FILE * f) {
 							value[j] = '\0';
 							done = 1;
 							break;
+						case '\\':
+							/* escape character, move to state 3 */
+							state = 3;
+							break;
 						default:
 							empty = 0;
 							value[j] = c;
 							j++;
 							break;
 					}
+					break;
+				case 3:
+					switch(c) {
+						case 'n':
+							value[j] = '\n';
+							break;
+						case 't':
+							value[j] = '\t';
+							break;
+						default:
+							value[j] = c;
+					}
+					j++;
+					state = 2;
+					empty = 0;
 					break;
 			}
 			i++;
