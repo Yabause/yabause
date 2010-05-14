@@ -221,6 +221,11 @@ static int make_alu_1op(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const src1reg = &block->regs[src1];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_RESULT;
+    if (insn->opcode == RTLOP_MOVE) {
+        destreg->unique_pointer = src1reg->unique_pointer;
+    } else {
+        destreg->unique_pointer = 0;
+    }
     destreg->result.opcode = insn->opcode;
     destreg->result.second_res = 0;
     destreg->result.is_imm = 0;
@@ -258,6 +263,7 @@ static int make_alu_2op(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const src2reg = &block->regs[src2];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_RESULT;
+    destreg->unique_pointer = 0;
     destreg->result.opcode = insn->opcode;
     destreg->result.second_res = 0;
     destreg->result.is_imm = 0;
@@ -294,6 +300,7 @@ static int make_alui_2op(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const src1reg = &block->regs[src1];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_RESULT;
+    destreg->unique_pointer = 0;
     destreg->result.opcode = insn->opcode;
     destreg->result.second_res = 0;
     destreg->result.is_imm = 1;
@@ -335,6 +342,7 @@ static int make_alu_2op_2dest(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     const uint32_t insn_index = block->num_insns;
     if (dest != 0) {
         destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_RESULT;
+        destreg->unique_pointer = 0;
         destreg->result.opcode = insn->opcode;
         destreg->result.second_res = 0;
         destreg->result.is_imm = 0;
@@ -344,6 +352,7 @@ static int make_alu_2op_2dest(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     }
     if (other != 0) {
         dest2reg->source = dest2reg->source ? RTLREG_UNKNOWN : RTLREG_RESULT;
+        dest2reg->unique_pointer = 0;
         dest2reg->result.opcode = insn->opcode;
         dest2reg->result.second_res = 1;
         dest2reg->result.is_imm = 0;
@@ -386,6 +395,7 @@ static int make_select(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const condreg = &block->regs[other];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_RESULT;
+    destreg->unique_pointer = 0;
     destreg->result.opcode = insn->opcode;
     destreg->result.second_res = 0;
     destreg->result.is_imm = 0;
@@ -403,7 +413,7 @@ static int make_select(RTLBlock *block, RTLInsn *insn, unsigned int dest,
 /*-----------------------------------------------------------------------*/
 
 /**
- * make_madd:  Encode a MADDU or MADDS instruction.
+ * make_madd:  Encode an MADDU or MADDS instruction.
  */
 static int make_madd(RTLBlock *block, RTLInsn *insn, unsigned int dest,
                      uintptr_t src1, uint32_t src2, unsigned int other)
@@ -429,8 +439,10 @@ static int make_madd(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const dest2reg = &block->regs[other];
     const uint32_t insn_index = block->num_insns;
     destreg->source = RTLREG_UNKNOWN;  // Always UNKNOWN, since we modify it
+    destreg->unique_pointer = 0;
     MARK_LIVE(destreg, dest);
     dest2reg->source = RTLREG_UNKNOWN;
+    dest2reg->unique_pointer = 0;
     MARK_LIVE(dest2reg, other);
     MARK_LIVE(src1reg, src1);
     MARK_LIVE(src2reg, src2);
@@ -470,6 +482,7 @@ static int make_bitfield(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const src2reg = &block->regs[src2];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_RESULT;
+    destreg->unique_pointer = 0;
     destreg->result.opcode = insn->opcode;
     destreg->result.second_res = 0;
     destreg->result.is_imm = 0;
@@ -507,6 +520,7 @@ static int make_load_imm(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const destreg = &block->regs[dest];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_CONSTANT;
+    destreg->unique_pointer = 0;
     destreg->value = src1;
     MARK_LIVE(destreg, dest);
 
@@ -534,6 +548,7 @@ static int make_load_addr(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const destreg = &block->regs[dest];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_CONSTANT;
+    destreg->unique_pointer = 0;
     destreg->value = src1;
     MARK_LIVE(destreg, dest);
 
@@ -561,6 +576,7 @@ static int make_load_param(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const destreg = &block->regs[dest];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_PARAMETER;
+    destreg->unique_pointer = 0;
     destreg->param_index = src1;
     MARK_LIVE(destreg, dest);
 
@@ -581,7 +597,7 @@ static int make_load(RTLBlock *block, RTLInsn *insn, unsigned int dest,
 #ifdef OPERAND_SANITY_CHECKS
     PRECOND(dest != 0 && dest < block->next_reg, return 0);
     PRECOND(src1 != 0 && src1 < block->next_reg, return 0);
-    PRECOND(other >= -0x8000 && other <= 0x7FFF, return 0);
+    PRECOND((int)other >= -0x8000 && (int)other <= 0x7FFF, return 0);
 #endif
 
     /* Lookup tables for destreg->memory.{size,is_signed} */
@@ -604,6 +620,7 @@ static int make_load(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     RTLRegister * const src1reg = &block->regs[src1];
     const uint32_t insn_index = block->num_insns;
     destreg->source = destreg->source ? RTLREG_UNKNOWN : RTLREG_MEMORY;
+    destreg->unique_pointer = 0;
     destreg->memory.addr_reg = src1;
     destreg->memory.offset = other;
     const unsigned int opcode = insn->opcode;
@@ -629,7 +646,7 @@ static int make_store(RTLBlock *block, RTLInsn *insn, unsigned int dest,
 #ifdef OPERAND_SANITY_CHECKS
     PRECOND(dest != 0 && dest < block->next_reg, return 0);
     PRECOND(src1 != 0 && src1 < block->next_reg, return 0);
-    PRECOND(other >= -0x8000 && other <= 0x7FFF, return 0);
+    PRECOND((int)other >= -0x8000 && (int)other <= 0x7FFF, return 0);
 #endif
 
     insn->dest = dest;
@@ -832,6 +849,7 @@ static int make_call(RTLBlock *block, RTLInsn *insn, unsigned int dest,
     insn->target = other;
     if (dest) {
         destreg->source = RTLREG_UNKNOWN;
+        destreg->unique_pointer = 0;
         MARK_LIVE(destreg, dest);
     }
     if (src1) {

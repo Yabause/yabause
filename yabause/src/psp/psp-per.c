@@ -106,7 +106,7 @@ static int psp_per_handle_events(void)
     static uint32_t last_buttons;
 
     const uint32_t buttons = control_state();
-    uint32_t changed_buttons = buttons ^ last_buttons;
+    const uint32_t changed_buttons = buttons ^ last_buttons;
     last_buttons = buttons;
 
     int i;

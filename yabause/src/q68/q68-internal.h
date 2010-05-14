@@ -1,5 +1,5 @@
 /*  src/q68/q68-internal.h: Internal declarations/definitions used by Q68
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -179,14 +179,14 @@ struct Q68State_ {
 
     /**** Environment settings ****/
 
-    /* Memory read/write functions */
+    /* Native memory allocation functions */
+    void *(*malloc_func)(size_t size);
+    void *(*realloc_func)(void *ptr, size_t size);
+    void (*free_func)(void *ptr);
+
+    /* 68k memory read/write functions */
     Q68ReadFunc *readb_func, *readw_func;
     Q68WriteFunc *writeb_func, *writew_func;
-
-    /* Native memory allocation functions (for JIT) */
-    void *(*jit_malloc)(size_t size);
-    void *(*jit_realloc)(void *ptr, size_t size);
-    void (*jit_free)(void *ptr);
 
     /* Native cache flushing function (for JIT) */
     void (*jit_flush)(void);

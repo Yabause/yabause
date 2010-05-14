@@ -491,14 +491,15 @@ void meExceptionGetData(uint32_t *BadVAddr_ret, uint32_t *Status_ret,
  * should automatically trigger an exception on the main CPU.  If enabled,
  * any call to mePoll() or meWait() when an exception is pending will cause
  * an address error exception to be generated on the main CPU, with
- * exception status information loaded into the following registers:
- *     $t8 = Status
- *     $t9 = Cause
- *     $k0 = EPC or ErrorEPC (depending on the exception type)
- *     $k1 = BadVAddr
- *     $gp = Media Engine's $sp
- *     $sp = main CPU's $sp (unchanged)
- * and all other general-purpose registers copied from the Media Engine.
+ * exception status information stored in a buffer pointed to by $gp:
+ *     0($gp) = Status
+ *     4($gp) = Cause
+ *     8($gp)= EPC or ErrorEPC (depending on the exception type)
+ *    12($gp) = BadVAddr
+ *    16($gp) = Media Engine's $sp
+ *    20($gp) = Media Engine's $gp
+ * All general-purpose registers other than $sp and $gp, as well as $hi and
+ * $lo, are copied from the Media Engine.
  *
  * Unlike other functions in this library, this function can be called even
  * when the ME is not running, and it will always succeed.
@@ -620,10 +621,12 @@ static void maybe_raise_exception(void)
 {
     volatile MEMessageBlock * const message_block = (volatile MEMessageBlock *)
         ((uintptr_t)&message_block_buffer | 0xA0000000);
+    static uint32_t exception_info[6];
 
     if (exceptions_are_fatal && message_block->exception) {
         asm volatile(".set push; .set noreorder; .set noat\n"
                      "move $at, %[exception_registers]\n"
+                     "move $gp, %[exception_info]\n"
                      "lw $t8, %[Status]($at)\n"
                      "lw $t9, %[Cause]($at)\n"
                      "lw $k0, %[EPC]($at)\n"
@@ -632,11 +635,18 @@ static void maybe_raise_exception(void)
                      "lw $k0, %[ErrorEPC]($at)\n"
                      "1:\n"
                      "lw $k1, %[BadVAddr]($at)\n"
-                     "lw $gp, 116($at)\n"
+                     "lw $v0, 120($at)\n"
+                     "lw $v1, 116($at)\n"
+                     "sw $t8, 0($gp)\n"
+                     "sw $t9, 4($gp)\n"
+                     "sw $k0, 8($gp)\n"
+                     "sw $k1, 12($gp)\n"
+                     "sw $v0, 16($gp)\n"
+                     "sw $v1, 20($gp)\n"
                      "lw $v0, 128($at)\n"
+                     "lw $v1, 132($at)\n"
                      "mthi $v0\n"
-                     "lw $v0, 132($at)\n"
-                     "mtlo $v0\n"
+                     "mtlo $v1\n"
                      "lw $v0, 8($at)\n"
                      "lw $v1, 12($at)\n"
                      "lw $a0, 16($at)\n"
@@ -659,13 +669,18 @@ static void maybe_raise_exception(void)
                      "lw $s5, 84($at)\n"
                      "lw $s6, 88($at)\n"
                      "lw $s7, 92($at)\n"
+                     "lw $t8, 96($at)\n"
+                     "lw $t9, 100($at)\n"
+                     "lw $k0, 104($at)\n"
+                     "lw $k1, 108($at)\n"
                      "lw $fp, 120($at)\n"
                      "lw $ra, 124($at)\n"
                      "lw $at, 4($at)\n"
-                     "lw $zero, 1($zero)\n"
+                     "sw $zero, -16162($zero)\n"
                      ".set pop"
-                     : /* no outputs */
-                     : [exception_registers] "r" (&exception_registers),
+                     : "=m" (exception_info)
+                     : [exception_info] "r" (&exception_info),
+                       [exception_registers] "r" (&exception_registers),
                        "m" (exception_registers),
                        [Status] "i" (offsetof(MEExceptionRegs,Status)),
                        [Cause] "i" (offsetof(MEExceptionRegs,Cause)),

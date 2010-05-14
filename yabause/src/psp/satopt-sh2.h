@@ -24,20 +24,27 @@
 /*************************************************************************/
 
 /**
- * saturn_optimize_sh2:  Attempt to translate SH-2 code starting at the
- * given address into a hand-tuned RTL instruction stream.
+ * saturn_optimize_sh2:  Search for and return, if available, a native
+ * implementation of the SH-2 routine starting at the given address.
  *
  * [Parameters]
- *       state: SH-2 processor state block
- *     address: Starting address of block
- *       fetch: Opcode fetch pointer corresponding to address
- *         rtl: RTLBlock into which to store translated code, if successful
+ *        state: Processor state block pointer
+ *      address: Address from which to translate
+ *        fetch: Pointer corresponding to "address" from which opcodes can
+ *                  be fetched
+ *     func_ret: Pointer to variable to receive address of native function
+ *                  implementing this routine if return value is nonzero
+ *     for_fold: Nonzero if the callback is being called to look up a
+ *                  subroutine for folding, zero if being called for a
+ *                  full block translation
  * [Return value]
- *     Length of block in 16-bit words (nonzero) if successfully translated,
- *     zero on error or if there is no suitable hand-tuned translation
+ *     Length of translated block in instructions (nonzero) if optimized
+ *     code was generated, else zero
  */
 extern unsigned int saturn_optimize_sh2(SH2State *state, uint32_t address,
-                                        const uint16_t *fetch, RTLBlock *rtl);
+                                        const uint16_t *fetch,
+                                        SH2NativeFunctionPointer *func_ret,
+                                        int for_fold);
 
 /*************************************************************************/
 

@@ -1,5 +1,5 @@
 /*  src/q68/q68.h: Q68 main header
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -76,6 +76,21 @@ typedef struct Q68State_ Q68State;
 extern Q68State *q68_create(void);
 
 /**
+ * q68_create_ex:  Create a new virtual processor, using the specified
+ * functions for all memory allocation.
+ *
+ * [Parameters]
+ *      malloc_func: Function for allocating a memory block
+ *     realloc_func: Function for adjusting the size of a memory block
+ *        free_func: Function for freeing a memory block
+ * [Return value]
+ *     Processor state block on success, NULL on error
+ */
+extern Q68State *q68_create_ex(void *(*malloc_func)(size_t size),
+                               void *(*realloc_func)(void *ptr, size_t size),
+                               void (*free_func)(void *ptr));
+
+/**
  * q68_destroy:  Free all resources used by a virtual processor.
  *
  * [Parameters]
@@ -125,26 +140,18 @@ extern void q68_set_writeb_func(Q68State *state, Q68WriteFunc func);
 extern void q68_set_writew_func(Q68State *state, Q68WriteFunc func);
 
 /**
- * q68_set_jit_memory_funcs:  Set alternate memory management functions to
- * be used for allocating native code blocks when dynamic translation is
- * enabled.  If not set, the standard system malloc()/realloc()/free()
- * functions are used and no cache flushing is performed.  This function
- * has no effect if dynamic translation is not enabled.
+ * q68_set_jit_flush_func:  Set a function to be used to flush the native
+ * CPU's caches after a block of 68k code has been translated into native
+ * code.  If not set, no cache flushing is performed.  This function has no
+ * effect if dynamic translation is not enabled.
  *
  * [Parameters]
- *            state: Processor state block
- *      malloc_func: Function for allocating a memory block
- *     realloc_func: Function for adjusting the size of a memory block
- *        free_func: Function for freeing a memory block
- *       flush_func: Function for flushing the native CPU cache (NULL if none)
+ *          state: Processor state block
+ *     flush_func: Function for flushing the native CPU's caches (NULL if none)
  * [Return value]
  *     None
  */
-extern void q68_set_jit_memory_funcs(Q68State *state,
-                                     void *(*malloc_func)(size_t size),
-                                     void *(*realloc_func)(void *ptr, size_t size),
-                                     void (*free_func)(void *ptr),
-                                     void (*flush_func)(void));
+extern void q68_set_jit_flush_func(Q68State *state, void (*flush_func)(void));
 
 /*----------------------------------*/
 

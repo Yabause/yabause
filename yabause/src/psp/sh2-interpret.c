@@ -330,8 +330,9 @@
 /* No direct fetching */
 #define fetch       ((uint16_t *)NULL)  // uint16_t * to avoid compiler errors
 
-/* No pre-decode processing needed */
+/* No pre- or post-decode processing needed */
 #define OPCODE_INIT(opcode)  /*nothing*/
+#define OPCODE_DONE(opcode)  /*nothing*/
 
 /* cur_PC and REG_PC are the same thing, so only need to update one of them
  * (but only do so for the default case if we didn't already set the PC via
@@ -377,7 +378,7 @@
 #define PTR_SETLOCAL(reg)       /*nothing*/
 #define PTR_SET_SOURCE(reg,address)  /*nothing*/
 #define PTR_CHECK(reg)          0
-#define PTR_COPY(reg,new)       /*nothing*/
+#define PTR_COPY(reg,new,for_add)    /*nothing*/
 #define PTR_CLEAR(reg)          /*nothing*/
 
 /* Save the current cache state */
@@ -401,13 +402,17 @@
 #define STATE_CACHE_CLEAR_FIXED_REG(field)  /*nothing*/
 
 /* Check the status of a branch instruction */
-#define BRANCH_FALLS_THROUGH(addr)  0
-#define BRANCH_TARGETS_RTS(addr)    0
-#define BRANCH_IS_THREADED(addr)    0
-#define BRANCH_THREAD_TARGET(addr)  0
-#define BRANCH_THREAD_COUNT(addr)   0
-#define BRANCH_IS_SELECT(addr)      0
-#define BRANCH_IS_LOOP_TO_JSR(addr) 0
+#define BRANCH_FALLS_THROUGH(addr)          0
+#define BRANCH_TARGETS_RTS(addr)            0
+#define BRANCH_IS_THREADED(addr)            0
+#define BRANCH_THREAD_TARGET(addr)          0
+#define BRANCH_THREAD_COUNT(addr)           0
+#define BRANCH_IS_SELECT(addr)              0
+#define BRANCH_IS_LOOP_TO_JSR(addr)         0
+#define BRANCH_IS_FOLDABLE_SUBROUTINE(addr) 0
+#define BRANCH_FOLD_TARGET(addr)            0
+#define BRANCH_FOLD_TARGET_FETCH(addr)      NULL
+#define BRANCH_FOLD_NATIVE_FUNC(addr)       NULL
 
 /*************************************************************************/
 
@@ -424,11 +429,11 @@
  */
 #define DECODE_INSN_PARAMS \
     SH2State *state, uint32_t initial_PC, int jumped
-#define RECURSIVE_DECODE(address)  do {         \
-    const uint32_t saved_PC = state->PC;   \
-    state->PC = (address);                 \
+#define RECURSIVE_DECODE(address,is_last)  do { \
+    const uint32_t saved_PC = state->PC;        \
+    state->PC = (address);                      \
     interpret_insn(state);                      \
-    state->PC = saved_PC;                  \
+    state->PC = saved_PC;                       \
 } while (0)
 #include "sh2-core.i"
 

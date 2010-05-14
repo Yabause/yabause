@@ -734,14 +734,14 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 const int safe_division =
                     (optimization_flags & SH2_OPTIMIZE_ASSUME_SAFE_DIVISION);
                 state->division_target_PC = cur_PC + div_bits*4;
-                if (!is_32bit && !safe_division) {
+                if (!safe_division) {
                     /* Flush cached data since we jump out from inside the
-                     * runtime conditional */
+                     * runtime conditional. */
                     ADD_CYCLES();
                     FLUSH_STATE_CACHE();
                 } else {
                     /* No need to flush data because we omit the
-                     * unoptimzied code entirely */
+                     * unoptimized code entirely. */
                 }
                 /* Load operands */
                 DECLARE_REG(lo);
@@ -958,7 +958,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 const unsigned int skipped_insns =
                     div_bits*2 - (skip_first_rotcl ? 1 : 0);
                 cur_cycles += skipped_insns;
-                if (!is_32bit && !safe_division) {
+                if (!safe_division) {
                     ADD_CYCLES();
                     SET_PC_KNOWN(cur_PC + (2 + skipped_insns*2));
                     state->branch_target = cur_PC + (2 + skipped_insns*2);
@@ -1020,10 +1020,14 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           // $0xxB
           case 0x0B: {  // RTS
             DEBUG_PRINT_ONCE("RTS");
-            state->branch_type = SH2BRTYPE_DYNAMIC;
-            GET_PR;
-            state->branch_target_reg = PR;
-            state->delay = 1;
+            /* We don't do anything if this is an RTS from a folded
+             * subroutine, since that's handled by our caller. */
+            if (!state->folding_subroutine) {
+                state->branch_type = SH2BRTYPE_DYNAMIC;
+                GET_PR;
+                state->branch_target_reg = PR;
+                state->delay = 1;
+            }
             cur_cycles += 1;
             break;
           }
@@ -1727,6 +1731,21 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 SET_Rn(result);
                 REG_SETKNOWN(REG_R(n), 0xFFFFFFFF);
                 REG_SETVALUE(REG_R(n), 0);
+                PTR_CLEAR(n);
+            } else if (REG_GETKNOWN(REG_R(m)) == 0xFFFFFFFF) {
+                /* Optimize subtraction a constants */
+                const int32_t Rm_value = REG_GETVALUE(REG_R(m));
+                ADDI_Rn_NOREG(-Rm_value);
+                if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
+                    REG_SETVALUE(REG_R(n), REG_GETVALUE(REG_R(n)) - Rm_value);
+                } else {
+                    REG_SETKNOWN(REG_R(n), 0);
+                }
+                if (PTR_CHECK(m)) {
+                    /* Subtracting a pointer from anything does not leave
+                     * a valid pointer. */
+                    PTR_CLEAR(n);
+                }
             } else {
                 GET_Rn;
                 GET_Rm;
@@ -1734,8 +1753,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 SUB(result, Rn, Rm);
                 SET_Rn(result);
                 REG_SETKNOWN(REG_R(n), 0);
+                PTR_CLEAR(n);
             }
-            PTR_CLEAR(n);
             break;
           }
 
@@ -1763,11 +1782,6 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 SUB(result, temp, T);
                 SET_Rn(result);
                 REG_SETKNOWN(REG_R(n), 0);
-                if (PTR_CHECK(m)) {
-                    /* Subtracting a pointer from anything does not leave
-                     * a valid pointer. */
-                    PTR_CLEAR(n);
-                }
                 PTR_CLEAR(n);
                 DEFINE_REG(borrow2);
                 SLTU(borrow2, temp, result);
@@ -1801,22 +1815,55 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
           case 0xC: {  // ADD Rm,Rn
             DEBUG_PRINT_ONCE("ADD Rm,Rn");
-            GET_Rn;
-            GET_Rm;
-            DEFINE_RESULT_REG(result, R[n]);
-            ADD(result, Rn, Rm);
-            SET_Rn(result);
-            REG_SETKNOWN(REG_R(n), 0);
-            if (PTR_CHECK(m)) {
-                if (PTR_CHECK(n)) {
-                    /* Adding a pointer to a pointer is invalid, so clear
-                     * pointer info for the result register. */
-                    PTR_CLEAR(n);
+            if (REG_GETKNOWN(REG_R(m)) == 0xFFFFFFFF) {
+                /* Optimize addition of a constant */
+                const int32_t Rm_value = REG_GETVALUE(REG_R(m));
+                ADDI_Rn_NOREG(Rm_value);
+                if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
+                    REG_SETVALUE(REG_R(n), REG_GETVALUE(REG_R(n)) + Rm_value);
                 } else {
-                    /* ADD Rptr,Rn is equivalent to "MOV Rptr,Rn" followed
-                     * by "ADD old_value_of_Rn,Rn", which we treat as a
-                     * pointer result. */
-                    PTR_COPY(m, n);
+                    REG_SETKNOWN(REG_R(n), 0);
+                }
+                if (PTR_CHECK(m)) {
+                    if (PTR_CHECK(n)) {
+                        PTR_CLEAR(n);
+                    } else {
+                        PTR_COPY(m, n, 1);
+                    }
+                }
+            } else if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
+                /* Treat this like MOV Rm,Rn; ADD old_Rn,Rn and optimize
+                 * as above */
+                const int32_t old_Rn_value = REG_GETVALUE(REG_R(n));
+                const int old_PTR_CHECK = PTR_CHECK(n);
+                COPY_TO_Rn(R[m]);
+                PTR_COPY(m, n, 0);
+                ADDI_Rn_NOREG(old_Rn_value);
+                REG_SETKNOWN(REG_R(n), 0);
+                if (old_PTR_CHECK) {
+                    /* We lost the old pointer data in the PTR_COPY() above,
+                     * so just give up and mark it as not a pointer.
+                     * Hopefully this case won't be too common. */
+                    PTR_CLEAR(n);
+                }
+            } else {  // Neither operand is a known constant
+                GET_Rn;
+                GET_Rm;
+                DEFINE_RESULT_REG(result, R[n]);
+                ADD(result, Rn, Rm);
+                SET_Rn(result);
+                REG_SETKNOWN(REG_R(n), 0);
+                if (PTR_CHECK(m)) {
+                    if (PTR_CHECK(n)) {
+                        /* Adding a pointer to a pointer is invalid, so
+                         * clear pointer info for the result register. */
+                        PTR_CLEAR(n);
+                    } else {
+                        /* ADD Rptr,Rn is equivalent to "MOV Rptr,Rn"
+                         * followed by "ADD old_value_of_Rn,Rn", which we
+                         * treat as a pointer result. */
+                        PTR_COPY(m, n, 1);
+                    }
                 }
             }
             break;
@@ -2515,7 +2562,11 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEFINE_RESULT_REG(ret_addr, PR);
             MOVEI(ret_addr, cur_PC + 4);
             SET_PR(ret_addr);
-            if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
+            if (BRANCH_IS_FOLDABLE_SUBROUTINE(cur_PC)) {
+                state->branch_type = SH2BRTYPE_FOLDED;
+                state->branch_target = BRANCH_FOLD_TARGET(cur_PC);
+                state->branch_fold_native = BRANCH_FOLD_NATIVE_FUNC(cur_PC);
+            } else if (REG_GETKNOWN(REG_R(n)) == 0xFFFFFFFF) {
                 state->branch_type = SH2BRTYPE_STATIC;
                 state->branch_target = REG_GETVALUE(REG_R(n));
             } else {
@@ -2751,7 +2802,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 COPY_TO_Rn(R[m]);
                 REG_SETKNOWN(REG_R(n), REG_GETKNOWN(REG_R(m)));
                 REG_SETVALUE(REG_R(n), REG_GETVALUE(REG_R(m)));
-                PTR_COPY(m, n);
+                PTR_COPY(m, n, 0);
             }
             break;
           }
@@ -3245,8 +3296,14 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
         DEFINE_RESULT_REG(ret_addr, PR);
         MOVEI(ret_addr, cur_PC + 4);
         SET_PR(ret_addr);
-        state->branch_type = SH2BRTYPE_STATIC;
-        state->branch_target = (cur_PC + 4) + disp;
+        if (BRANCH_IS_FOLDABLE_SUBROUTINE(cur_PC)) {
+            state->branch_type = SH2BRTYPE_FOLDED;
+            state->branch_target = BRANCH_FOLD_TARGET(cur_PC);
+            state->branch_fold_native = BRANCH_FOLD_NATIVE_FUNC(cur_PC);
+        } else {
+            state->branch_type = SH2BRTYPE_STATIC;
+            state->branch_target = (cur_PC + 4) + disp;
+        }
         state->delay = 1;
         cur_cycles += 1;
         break;
@@ -3588,8 +3645,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                  * subroutine call is a BSR or the target register is known */
                 state->loop_to_jsr = 0;
                 const uint32_t target = state->branch_target;
-                RECURSIVE_DECODE(target);
-                RECURSIVE_DECODE(target+2);
+                RECURSIVE_DECODE(target, 0);
+                RECURSIVE_DECODE(target+2, 1);
                 /* The flush/jump will be performed by the subroutine call */
             } else {
                 SET_PC_KNOWN(state->branch_target);
@@ -3756,8 +3813,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             } else if (state->loop_to_jsr) {
                 state->loop_to_jsr = 0;
                 const uint32_t target = state->branch_target;
-                RECURSIVE_DECODE(target);
-                RECURSIVE_DECODE(target+2);
+                RECURSIVE_DECODE(target, 0);
+                RECURSIVE_DECODE(target+2, 1);
             } else {
                 SET_PC_KNOWN(state->branch_target);
                 WRITEBACK_STATE_CACHE(); // Avoid stores of fixed registers
@@ -3769,6 +3826,59 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
              * will fall through if the condition isn't met */
             break;
           }  // case SH2BRTYPE_B{T,F}{,_S}
+
+          case SH2BRTYPE_FOLDED: {
+            /* Handle cleanup for this instruction first. */
+            OPCODE_DONE(opcode);
+            /* Clear branch_type now (rather than at the end) so the
+             * recursive decode doesn't see it. */
+            state->branch_type = SH2BRTYPE_NONE;
+            /* If it's a native implementation, just call it (but remember
+             * to update PC and flush the state block cache first). */
+            if (state->branch_fold_native) {
+                SET_PC_KNOWN(state->branch_target);
+                FLUSH_STATE_CACHE();
+                unsigned int i;
+                for (i = 0; i < 8; i++) {
+                    PTR_CLEAR(i);
+                    REG_SETKNOWN(REG_R(i), 0);
+                }
+                DEFINE_REG(funcptr_reg);
+                MOVEA(funcptr_reg, state->branch_fold_native);
+                CALL_NORET(state_reg, 0, funcptr_reg);
+            } else {
+                /* Fold in the contents of the called subroutine.  We don't
+                 * accept subroutines with branches in the first place, so
+                 * we just recursively decode one instruction at a time
+                 * until we reach RTS, then process the RTS manually,
+                 * decode the delay slot, and start back up with the
+                 * instruction after the BSR/JSR's delay slot. */
+                state->folding_subroutine = 1;
+                uint32_t sub_PC = state->branch_target;
+                const uint16_t *sub_fetch =
+                    BRANCH_FOLD_TARGET_FETCH(state->branch_target);
+                for (;;) {
+                    uint16_t sub_opcode;
+                    if (sub_fetch) {
+                        sub_opcode = *sub_fetch++;
+                    } else {
+                        sub_opcode = MappedMemoryReadWord(sub_PC);
+                    }
+                    if (sub_opcode == 0x000B) {  // RTS
+                        break;
+                    }
+                    RECURSIVE_DECODE(sub_PC, 0);
+                    sub_PC += 2;
+                }
+                RECURSIVE_DECODE(sub_PC, 0);
+                RECURSIVE_DECODE(sub_PC+2, 1);
+                state->folding_subroutine = 0;
+                DEFINE_REG(post_fold_PC);
+                MOVEI(post_fold_PC, cur_PC);
+                SET_PC(post_fold_PC);
+            }  // if (state->branch_fold_native)
+            break;
+          }  // case SH2BRTYPE_FOLDED
 
         }  // switch (state->branch_type)
 
@@ -3795,8 +3905,10 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
         TAKE_EXCEPTION(state->delay ? 6 : 4, PC);
     }
 
-    /* All done; return the instruction's opcode to the caller */
+    /* All done; perform any cleanup requested and return the instruction's
+     * opcode to the caller. */
 
+    OPCODE_DONE(opcode);
     return opcode;
 
 }  // End of decode_insn()

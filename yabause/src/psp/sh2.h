@@ -33,7 +33,7 @@
 /**** Optimization flags used with sh2_{set,get}_optimizations() ****/
 
 /**
- * SH2_OPTIMIZE_ASSUME_SAFE_DIVISION:  When defined, optimizes division
+ * SH2_OPTIMIZE_ASSUME_SAFE_DIVISION:  When enabled, optimizes division
  * operations by assuming that quotients in division operations will not
  * overflow and that division by zero will not occur.
  *
@@ -43,7 +43,7 @@
 #define SH2_OPTIMIZE_ASSUME_SAFE_DIVISION  (1<<0)
 
 /**
- * SH2_OPTIMIZE_BRANCH_TO_RTS:  When defined, optimizes static branch
+ * SH2_OPTIMIZE_BRANCH_TO_RTS:  When enabled, optimizes static branch
  * instructions (BRA, BT, BF, BT/S, BF/S) which target a "RTS; NOP" pair by
  * performing the RTS operation at the same time as the branch.
  *
@@ -132,7 +132,7 @@
 #define SH2_OPTIMIZE_POINTERS_MAC  (1<<6)
 
 /**
- * SH2_OPTIMIZE_STACK:  When defined, optimizes accesses to the stack by
+ * SH2_OPTIMIZE_STACK:  When enabled, optimizes accesses to the stack by
  * making the following assumptions:
  *
  * - The R15 register will always point to a directly-accessible region of
@@ -150,6 +150,25 @@
  * or crash the host program if any of the assumptions above is violated.
  */
 #define SH2_OPTIMIZE_STACK  (1<<7)
+
+/**
+ * SH2_OPTIMIZE_FOLD_SUBROUTINES:  When enabled, optimizes calls to short
+ * subroutines which contain no branches (other than the terminating RTS)
+ * by folding the instructions into the calling routine, thus omitting the
+ * jump and return completely.  Whether a subroutine qualifies as "short"
+ * is determined by the value of OPTIMIZE_FOLD_SUBROUTINES_MAX_LENGTH in
+ * sh2-internal.h.
+ *
+ * This optimization assumes that any subroutines so called will not be
+ * modified unless the calling routine is also modified, and that any JSR
+ * target addresses loaded from PC-relative addresses are constants; the
+ * translated code will behave incorrectly or crash if either of these
+ * assumptions is violated.
+ *
+ * This optimization can cause the timing of cycle count checks to change,
+ * and therefore alters trace output in all trace modes.
+ */
+#define SH2_OPTIMIZE_FOLD_SUBROUTINES  (1<<8)
 
 /*-----------------------------------------------------------------------*/
 
@@ -179,12 +198,12 @@ struct SH2State_ {
     /* Clock cycle limit for the current sh2_run() call */
     uint32_t cycle_limit;
 
-    /*--- Fields below this line are not cached in translated code ---*/
+    /*---- Fields below this line are not cached in translated code ----*/
 
     /* User data pointer (not used by SH-2 emulation) */
     void *userdata;
 
-    /**** Private data (do not touch!) ****/
+    /*================== Private data (do not touch!) ==================*/
 
     /* Flag indicating a delayed branch */
     uint8_t delay;
@@ -216,10 +235,13 @@ struct SH2State_ {
           SH2BRTYPE_BF,
           SH2BRTYPE_BT_S,
           SH2BRTYPE_BF_S,
+          SH2BRTYPE_FOLDED,     // Subroutine call that will be folded
     } branch_type;
     uint32_t branch_target;     // Target address (used by decoder)
     uint32_t branch_target_reg; // RTL register containing target address
                                 //    (must be 32-bit for interpreter's sake)
+    void *branch_fold_native;   // For subroutine folding, address of native
+                                //    implementation or NULL if none
     uint16_t branch_cond_reg;   // For SH2BRTYPE_BT etc or pending_select,
                                 //    RTL register containing value of T bit
     uint16_t branch_cycles;     // For conditional branches, number of cycles
@@ -228,6 +250,7 @@ struct SH2State_ {
     uint8_t loop_to_jsr;        // Nonzero if this branch is a loop branch
                                 //    targeting a JSR/BSR/BSRF which
                                 //    immediately precedes the current block
+    uint8_t folding_subroutine; // Nonzero if we're folding a subroutine
     uint8_t pending_select;     // Nonzero if we're processing a branch which
                                 //    acts like a SELECT (?:) operation
     uint8_t select_sense;       // For pending_select, nonzero if it's a BT
@@ -260,6 +283,17 @@ struct SH2State_ {
         uint32_t quo, rem, SR;  // Result values for registers
     } div_data;
 
+    /*--- Data used only during translation (invalid at other times) ---*/
+
+    /* Block currently being translated */
+    struct JitEntry_ *translate_entry;
+
+    /* Flag indicating whether Rn of the current instruction should be
+     * treated as a data pointer (for data pointer load hints) */
+    uint8_t make_Rn_data_pointer;
+
+    /*-------------- Miscellaneous data management fields --------------*/
+
     /* Pointer for linked list of all allocated state blocks */
     SH2State *next;
 };
@@ -281,26 +315,48 @@ struct SH2State_ {
 /*----------------------------------*/
 
 /**
+ * SH2NativeFunction:  Type of a native function implementing an SH-2
+ * routine.  Used for returning native implementstions from the manual
+ * optimization callback.
+ *
+ * [Parameters]
+ *     state: Processor state block pointer
+ * [Return value]
+ *     None
+ */
+typedef FASTCALL void (*SH2NativeFunctionPointer)(SH2State *state);
+
+/*----------------------------------*/
+
+/**
  * SH2OptimizeCallback:  Type of an optimization callback function, as
  * passed to sh2_set_manual_optimization_callback().
  *
  * [Parameters]
- *       state: Processor state block pointer
- *     address: Address from which to translate
- *       fetch: Pointer corresponding to "address" from which opcodes can
- *                 be fetched
- *         rtl: RTL block in which to generate optimized code
+ *        state: Processor state block pointer
+ *      address: Address from which to translate
+ *        fetch: Pointer corresponding to "address" from which opcodes can
+ *                  be fetched
+ *     func_ret: Pointer to variable to receive address of native function
+ *                  implementing this routine if return value is nonzero
+ *     for_fold: Nonzero if the callback is being called to look up a
+ *                  subroutine for folding, zero if being called for a
+ *                  full block translation
  * [Return value]
- *     Length of translated block in instructions (nonzero) if optimized
- *     code was generated, else zero
+ *     Length of translated block in instructions (nonzero) if a native
+ *     function is returned, else zero
  * [Notes]
- *     If the callback function returns nonzero, indicating that code was
- *     generated, it must call rtl_finalize_block(rtl) before returning.
- *     If the function returns zero, it must not call any RTL functions
- *     on the passed-in block.
+ *     (1) If the callback function returns nonzero, indicating that a
+ *         native implementation is available, it must store an appropriate
+ *         function pointer in *func_ret.
+ *     (2) If for_fold is nonzero, any function returned must leave all
+ *         registers except R0-R7, MACH/MACL, and PC unmodified (as
+ *         specified by the SH-2 ABI).
  */
 typedef unsigned int SH2OptimizeCallback(SH2State *state, uint32_t address,
-                                         const uint16_t *fetch, RTLBlock *rtl);
+                                         const uint16_t *fetch,
+                                         SH2NativeFunctionPointer *func_ret,
+                                         int for_fold);
 
 /*----------------------------------*/
 
@@ -523,6 +579,75 @@ extern void sh2_set_direct_access(uint32_t sh2_address, void *native_address,
  */
 extern void sh2_set_byte_direct_access(uint32_t sh2_address, void *native_address,
                                        uint32_t size);
+
+/**
+ * sh2_optimize_hint_data_pointer_load:  Provide a hint to the optimizer
+ * that the load or ALU instruction at the given address loads a pointer to
+ * a 16-bit direct-access data region.  If pointer optimization (the
+ * SH2_OPTIMIZE_POINTERS flag) is enabled, accesses through the register so
+ * loaded will automatically use direct access to SH-2 memory, and will
+ * bypass the code overwrite checks normally executed for store operations.
+ * If pointer optimization is disabled, this hint has no effect.
+ *
+ * The effect of calling this function from any context other than within
+ * the manual optimization callback, or of specifying an instruction which
+ * does not set the register specified by the Rn field of the opcode, is
+ * undefined.
+ *
+ * [Parameters]
+ *       state: Processor state block pointer passed to callback function
+ *     address: Address of load instruction to mark as loading a data pointer
+ * [Return value]
+ *     None
+ */
+extern void sh2_optimize_hint_data_pointer_load(SH2State *state, uint32_t address);
+
+/**
+ * sh2_optimize_hint_data_pointer_register:  Provide a hint to the
+ * optimizer that the given general-purpose register (R0 through R15)
+ * contains a pointer to a direct-access data region at the start of the
+ * block, and the memory region pointed to will not change over the life
+ * of the block.  If pointer optimization (the SH2_OPTIMIZE_POINTERS flag)
+ * is enabled, accesses through that register (as long as the register's
+ * value is unchanged) will automatically use direct access to SH-2 memory,
+ * and will bypass the code overwrite checks normally executed for store
+ * operations; furthermore, the register's value will not be verified for
+ * address validity at block start time, unlike dynamically-detected
+ * pointers which are verified each time the block is called.  If pointer
+ * optimization is disabled, this hint has no effect.
+ *
+ * The effect of calling this function from any context other than within
+ * the manual optimization callback is undefined.
+ *
+ * [Parameters]
+ *      state: Processor state block pointer passed to callback function
+ *     regnum: General-purpose register to mark as containing a data pointer
+ * [Return value]
+ *     None
+ */
+extern void sh2_optimize_hint_data_pointer_register(SH2State *state,
+                                                    unsigned int regnum);
+
+/**
+ * sh2_optimize_hint_constant_register:  Provide a hint to the optimizer
+ * that the given general-purpose register (R0 through R15) contains a
+ * value which will be constant at block entry for the life of the block.
+ * Instructions which use the register as a source operand may be optimized
+ * to use the constant value rather than loading the register, and if
+ * subroutine folding (the SH2_OPTIMIZE_FOLD_SUBROUTINES flag) is enabled,
+ * JSRs through that register will be considered for subroutine folding
+ * using the address contained in that register at translation time.
+ *
+ * The effect of calling this function from any context other than within
+ * the manual optimization callback is undefined.
+ *
+ * [Parameters]
+ *      state: Processor state block pointer passed to callback function
+ *     regnum: General-purpose register to mark as containing a data pointer
+ * [Return value]
+ *     None
+ */
+extern void sh2_optimize_hint_constant_register(SH2State *state, unsigned int regnum);
 
 /*----------------------------------*/
 

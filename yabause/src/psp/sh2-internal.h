@@ -513,6 +513,16 @@
 #endif
 
 /**
+ * OPTIMIZE_FOLD_SUBROUTINES_MAX_LENGTH:  Specifies the maximum number of
+ * instructions in a subroutine (excluding the terminating RTS and its
+ * delay slot) for the subroutine to qualify as foldable for the
+ * SH2_OPTIMIZE_FOLD_SUBROUTINES optimization.
+ */
+#ifndef OPTIMIZE_FOLD_SUBROUTINES_MAX_LENGTH
+# define OPTIMIZE_FOLD_SUBROUTINES_MAX_LENGTH 16
+#endif
+
+/**
  * JIT_OPTIMIZE_FLAGS:  Specifies the optimizations that should be
  * performed on the generated RTL code.  See RTLOPT_* in rtl.h for details
  * on the available flags.
@@ -636,12 +646,16 @@
 
 /**
  * JIT_PROFILE:  When defined, counts the number of times each code block
- * is executed and the time spent in execution, reporting the most frequent
- * callees every JIT_PROFILE_INTERVAL SH-2 clock cycles.
+ * is executed and the time spent in execution.  Every JIT_PROFILE_INTERVAL
+ * SH-2 clock cycles, the first JIT_PROFILE_TOP callees in terms of
+ * execution time and number of calls are printed.
  */
 // #define JIT_PROFILE
 #ifndef JIT_PROFILE_INTERVAL
 # define JIT_PROFILE_INTERVAL 50000000
+#endif
+#ifndef JIT_PROFILE_TOP
+# define JIT_PROFILE_TOP 10
 #endif
 
 /**

@@ -1,5 +1,5 @@
 /*  src/psp/texcache.c: PSP texture cache management
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -111,11 +111,12 @@ static CLUTInfo clut_cache[128][CLUT_ENTRIES];
 
 /* Hash functions */
 #define HASHKEY_TEXTURE_SPRITE(CMDSRCA,CMDPMOD,CMDCOLR) \
-    ((CMDSRCA) | ((CMDPMOD>>3 & 7) >= 5 ? 0 : (CMDCOLR&0xFF)<<16) \
+    ((CMDSRCA) | ((CMDPMOD>>3 & 7) >= 5 ? 0 : (CMDCOLR&0x7FF)<<16) \
                | ((CMDPMOD>>3 & 15) << 27) | 0x80000000)
-#define HASHKEY_TEXTURE_TILE(address,pixfmt,color_base,color_ofs,transparent) \
-    ((address>>3) | (pixfmt >= 3 ? 0 : ((color_ofs|color_base)&0x7FF)<<16) \
-                  | (pixfmt<<27) | (transparent<<30) )
+#define HASHKEY_TEXTURE_TILE(tilesize,address,pixfmt,color_base,color_ofs,transparent) \
+    (tilesize>>4 | (address>>3 & ~1) \
+                 | (pixfmt >= 3 ? 0 : ((color_ofs|color_base)&0x7FF)<<16) \
+                 | (pixfmt<<27) | (transparent<<30))
 #define HASH_TEXTURE(key)  ((key) % TEXCACHE_HASH_SIZE)
 
 /*************************************************************************/
@@ -133,11 +134,16 @@ static void *alloc_vram(uint32_t size);
 
 __attribute__((always_inline)) static inline int cache_sprite(
     TexInfo *tex, uint16_t CMDSRCA, uint16_t CMDPMOD, uint16_t CMDCOLR,
-    unsigned int width, unsigned int height, int rofs, int gofs, int bofs);
+    uint16_t pixel_mask, unsigned int width, unsigned int height, int rofs,
+    int gofs, int bofs);
 __attribute__((always_inline)) static inline int cache_tile(
     TexInfo *tex, uint32_t address, unsigned int width, unsigned int height,
-    unsigned int stride, int pixfmt, int transparent,
+    unsigned int stride, int array, int pixfmt, int transparent,
     uint16_t color_base, uint16_t color_ofs, int rofs, int gofs, int bofs);
+__attribute__((always_inline)) static inline int cache_single_tile(
+    TexInfo *tex, const uint8_t *src, unsigned int width, unsigned int height,
+    unsigned int stride, int pixfmt, int transparent,
+    uint16_t color_base, int rofs, int gofs, int bofs);
 
 __attribute__((always_inline)) static inline int cache_texture_t4(
     TexInfo *tex, const uint8_t *src,
@@ -160,10 +166,11 @@ __attribute__((always_inline)) static inline int cache_texture_32(
 
 __attribute__((always_inline)) static inline int gen_clut(
     TexInfo *tex, unsigned int size, uint32_t color_base, uint8_t color_ofs,
-    int rofs, int gofs, int bofs, int transparent);
+    int rofs, int gofs, int bofs, int transparent, int endcodes,
+    int can_shadow);
 __attribute__((always_inline)) static inline int gen_clut_t4ind(
-    TexInfo *tex, const uint8_t *color_lut, int rofs,
-    int gofs, int bofs, int transparent);
+    TexInfo *tex, const uint8_t *color_lut, uint16_t pixel_mask,
+    int rofs, int gofs, int bofs, int transparent, int endcodes);
 
 /*************************************************************************/
 /************************** Interface routines ***************************/
@@ -201,20 +208,21 @@ void texcache_reset(void)
  *
  * [Parameters]
  *     CMDSRCA, CMDPMOD, CMDCOLR: Values of like-named fields in VDP1 command
+ *                    pixel_mask: Mask to apply to paletted pixel data
  *                 width, height: Size of texture (in pixels)
  *              rofs, gofs, bofs: Color offset values for texture
  * [Return value]
  *     Texture key (zero on error)
  */
 uint32_t texcache_cache_sprite(uint16_t CMDSRCA, uint16_t CMDPMOD,
-                               uint16_t CMDCOLR,
+                               uint16_t CMDCOLR, uint16_t pixel_mask,
                                unsigned int width, unsigned int height,
                                int rofs, int gofs, int bofs)
 {
     const uint32_t tex_key = HASHKEY_TEXTURE_SPRITE(CMDSRCA, CMDPMOD, CMDCOLR);
     uint32_t tex_hash;
     if (find_texture(tex_key, &tex_hash)) {
-        /* Already cached, so just return the key */
+        /* Already cached, so just return the key. */
         return tex_key;
     }
 
@@ -223,7 +231,7 @@ uint32_t texcache_cache_sprite(uint16_t CMDSRCA, uint16_t CMDPMOD,
         DMSG("Texture buffer full, can't cache");
         return 0;
     }
-    if (UNLIKELY(!cache_sprite(tex, CMDSRCA, CMDPMOD, CMDCOLR,
+    if (UNLIKELY(!cache_sprite(tex, CMDSRCA, CMDPMOD, CMDCOLR, pixel_mask,
                                width, height, rofs, gofs, bofs))) {
         return 0;
     }
@@ -256,10 +264,11 @@ void texcache_load_sprite(uint32_t key)
 /*-----------------------------------------------------------------------*/
 
 /**
- * texcache_load_tile:  Load the specified 8x8 tile texture into the GE
- * registers for drawing.  If the texture is not cached, caches it first.
+ * texcache_load_tile:  Load the specified 8x8 or 16x16 tile texture into
+ * the GE registers for drawing, first caching the texture if necessary.
  *
  * [Parameters]
+ *             tilesize: Pixel size (width and height) of tile, either 8 or 16
  *              address: Tile data address within VDP2 RAM
  *               pixfmt: Tile pixel format
  *          transparent: Nonzero if index 0 or alpha 0 should be transparent
@@ -269,12 +278,14 @@ void texcache_load_sprite(uint32_t key)
  * [Return value]
  *     None
  */
-void texcache_load_tile(uint32_t address, int pixfmt, int transparent,
+void texcache_load_tile(int tilesize, uint32_t address,
+                        int pixfmt, int transparent,
                         uint16_t color_base, uint16_t color_ofs,
                         int rofs, int gofs, int bofs)
 {
-    const uint32_t tex_key = HASHKEY_TEXTURE_TILE(address, pixfmt, color_base,
-                                                  color_ofs, transparent);
+    const uint32_t tex_key =
+        HASHKEY_TEXTURE_TILE(tilesize, address, pixfmt, color_base,
+                             color_ofs, transparent);
     uint32_t tex_hash;
     TexInfo *tex = find_texture(tex_key, &tex_hash);
 
@@ -284,13 +295,14 @@ void texcache_load_tile(uint32_t address, int pixfmt, int transparent,
             DMSG("Texture buffer full, can't cache");
             return;
         }
-        if (UNLIKELY(!cache_tile(tex, address, 8, 8, 8, pixfmt, transparent,
+        if (UNLIKELY(!cache_tile(tex, address, tilesize, tilesize, 8,
+                                 tilesize/8, pixfmt, transparent,
                                  color_base, color_ofs, rofs, gofs, bofs))) {
             return;
         }
     }  // if (!tex)
 
-    /* Load the texture data (and color table, if appropriate) */
+    /* Load the texture data (and color table, if appropriate). */
     load_texture(tex);
 }
 
@@ -298,7 +310,7 @@ void texcache_load_tile(uint32_t address, int pixfmt, int transparent,
 
 /**
  * texcache_load_bitmap:  Load the specified bitmap texture into the GE
- * registers for drawing.  If the texture is not cached, caches it first.
+ * registers for drawing, first caching the texture if necessary.
  *
  * [Parameters]
  *              address: Bitmap data address within VDP2 RAM
@@ -318,8 +330,9 @@ void texcache_load_bitmap(uint32_t address, unsigned int width,
                           uint16_t color_base, uint16_t color_ofs,
                           int rofs, int gofs, int bofs)
 {
-    const uint32_t tex_key = HASHKEY_TEXTURE_TILE(address, pixfmt, color_base,
-                                                  color_ofs, transparent);
+    const uint32_t tex_key =
+        HASHKEY_TEXTURE_TILE(8, address, pixfmt, color_base,
+                             color_ofs, transparent);
     uint32_t tex_hash;
     TexInfo *tex = find_texture(tex_key, &tex_hash);
 
@@ -329,14 +342,14 @@ void texcache_load_bitmap(uint32_t address, unsigned int width,
             DMSG("Texture buffer full, can't cache");
             return;
         }
-        if (UNLIKELY(!cache_tile(tex, address, width, height, stride,
+        if (UNLIKELY(!cache_tile(tex, address, width, height, stride, 1,
                                  pixfmt, transparent,
                                  color_base, color_ofs, rofs, gofs, bofs))) {
             return;
         }
     }  // if (!tex)
 
-    /* Load the texture data (and color table, if appropriate) */
+    /* Load the texture data (and color table, if appropriate). */
     load_texture(tex);
 }
 
@@ -439,12 +452,13 @@ static void *alloc_vram(uint32_t size)
 /*************************************************************************/
 
 /**
- * cache_sprite:  Cache a texture from sprite (VDP2) memory.  Implements
+ * cache_sprite:  Cache a texture from sprite (VDP1) memory.  Implements
  * caching code for texcache_cache_sprite().
  *
  * [Parameters]
  *                           tex: TexInfo structure for caching texture
  *     CMDSRCA, CMDPMOD, CMDCOLR: Values of like-named fields in VDP1 command
+ *                    pixel_mask: Mask to apply to paletted pixel data
  *                 width, height: Size of texture (in pixels)
  *              rofs, gofs, bofs: Color offset values for texture
  * [Return value]
@@ -452,11 +466,13 @@ static void *alloc_vram(uint32_t size)
  */
 static inline int cache_sprite(
     TexInfo *tex, uint16_t CMDSRCA, uint16_t CMDPMOD, uint16_t CMDCOLR,
-    unsigned int width, unsigned int height, int rofs, int gofs, int bofs)
+    uint16_t pixel_mask, unsigned int width, unsigned int height, int rofs,
+    int gofs, int bofs)
 {
     const uint32_t address = CMDSRCA << 3;
     const int pixfmt = CMDPMOD>>3 & 7;
     const int transparent = !(CMDPMOD & 0x40);
+    const int endcodes = !(CMDPMOD & 0x80);
     uint32_t color_base = (Vdp2Regs->CRAOFB & 0x0070) << 4;
 
     if (UNLIKELY(address + (pixfmt<=1 ? width/2 : pixfmt<=4 ? width : width*2) * height > 0x80000)) {
@@ -466,36 +482,42 @@ static inline int cache_sprite(
 
     tex->width  = 1 << (32 - __builtin_clz(width-1));
     tex->height = 1 << (32 - __builtin_clz(height-1));
+    tex->vram_address = NULL;
 
     const uint8_t *src = Vdp1Ram + address;
     switch (pixfmt) {
       case 0:
+        CMDCOLR &= pixel_mask;
         return gen_clut(tex, 16,
                         color_base + (CMDCOLR & 0x7F0), CMDCOLR & 0x00F,
-                        rofs, gofs, bofs, transparent)
+                        rofs, gofs, bofs, transparent, endcodes,
+                        ((CMDCOLR | 0xF) & pixel_mask) == pixel_mask)
             && cache_texture_t4(tex, src, width, height, width);
       case 1:
-        return gen_clut_t4ind(tex, Vdp1Ram + (CMDCOLR << 3),
-                              rofs, gofs, bofs, transparent)
+        return gen_clut_t4ind(tex, Vdp1Ram + (CMDCOLR << 3), pixel_mask,
+                              rofs, gofs, bofs, transparent, endcodes)
             && cache_texture_t4(tex, src, width, height, width);
       case 2:
         return gen_clut(tex, 64,
                         color_base + (CMDCOLR & 0x7C0), CMDCOLR & 0x03F,
-                        rofs, gofs, bofs, transparent)
+                        rofs, gofs, bofs, transparent, endcodes,
+                        ((CMDCOLR | 0x3F) & pixel_mask) == pixel_mask)
             && cache_texture_t8(tex, src, 0x3F, width, height, width);
       case 3:
         return gen_clut(tex, 128,
                         color_base + (CMDCOLR & 0x780), CMDCOLR & 0x07F,
-                        rofs, gofs, bofs, transparent)
+                        rofs, gofs, bofs, transparent, endcodes,
+                        ((CMDCOLR | 0x7F) & pixel_mask) == pixel_mask)
             && cache_texture_t8(tex, src, 0x7F, width, height, width);
       case 4:
         return gen_clut(tex, 256,
                         color_base + (CMDCOLR & 0x700), CMDCOLR & 0x0FF,
-                        rofs, gofs, bofs, transparent)
+                        rofs, gofs, bofs, transparent, endcodes,
+                        ((CMDCOLR | 0xFF) & pixel_mask) == pixel_mask)
             && cache_texture_t8(tex, src, 0xFF, width, height, width);
       default:
         DMSG("unsupported pixel mode %d, assuming 16-bit", pixfmt);
-        /* fall through to... */
+        /* Fall through to... */
       case 5:
         return cache_texture_16(tex, src, width, height, width,
                                 rofs, gofs, bofs, transparent);
@@ -513,6 +535,8 @@ static inline int cache_sprite(
  *              address: Bitmap data address within VDP2 RAM
  *        width, height: Size of texture (in pixels)
  *               stride: Line size of source data (in pixels)
+ *                array: Number of VDP2 cells across and down texture
+ *                          (2 for 16x16 tiles, 1 otherwise)
  *               pixfmt: Bitmap pixel format
  *          transparent: Nonzero if index 0 or alpha 0 should be transparent
  *           color_base: Color table base (for indexed formats)
@@ -523,7 +547,7 @@ static inline int cache_sprite(
  */
 static inline int cache_tile(
     TexInfo *tex, uint32_t address, unsigned int width, unsigned int height,
-    unsigned int stride, int pixfmt, int transparent,
+    unsigned int stride, int array, int pixfmt, int transparent,
     uint16_t color_base, uint16_t color_ofs, int rofs, int gofs, int bofs)
 {
     if (UNLIKELY(address + (pixfmt==0 ? width/2 : pixfmt==1 ? width*1 : pixfmt<=3 ? width*2 : width*4) * height > 0x80000)) {
@@ -534,18 +558,105 @@ static inline int cache_tile(
     tex->width  = 1 << (32 - __builtin_clz(width-1));
     tex->height = 1 << (32 - __builtin_clz(height-1));
 
+    if (pixfmt == 0) {
+        if (!gen_clut(tex, 16,
+                      color_base + (color_ofs & 0x7F0), color_ofs & 0x00F,
+                      rofs, gofs, bofs, transparent, 0, 0)) {
+            return 0;
+        }
+    } else if (pixfmt == 1) {
+        if (!gen_clut(tex, 256,
+                      color_base + (color_ofs & 0x700), color_ofs & 0x0FF,
+                      rofs, gofs, bofs, transparent, 0, 0)) {
+            return 0;
+        }
+    }
+
     const uint8_t *src = Vdp2Ram + address;
+
+    if (array == 2) {
+
+        static const uint8_t in_bpp_array[5] = {4, 8, 16, 16, 32};
+        static const uint8_t out_bpp_shift_array[5] = {2, 3, 5, 5, 5};
+        const int in_bpp = in_bpp_array[pixfmt];
+        const int out_bpp_shift = out_bpp_shift_array[pixfmt];
+
+        if (out_bpp_shift == 2) {
+            tex->pixfmt = GU_PSM_T4;
+            tex->stride = 32;
+        } else if (out_bpp_shift == 3) {
+            tex->pixfmt = GU_PSM_T8;
+            tex->stride = 16;
+        } else {
+            tex->pixfmt = GU_PSM_8888;
+            tex->stride = 16;
+        }
+        tex->vram_address =
+            alloc_vram(((tex->stride * 16) << out_bpp_shift) / 8);
+        if (UNLIKELY(!tex->vram_address)) {
+            DMSG("VRAM buffer full, can't cache");
+            return 0;
+        }
+        void * const saved_vram_address = tex->vram_address;
+
+        /* Fake out the texture_cache_X() functions so they don't try to
+         * draw boundary pixels. */
+        tex->width = tex->height = 8;
+
+        unsigned int i;
+        for (i = 0; i < 4; i++) {
+            tex->vram_address = 
+                (void *)((uintptr_t)saved_vram_address
+                         + (i%2 ? 1 << out_bpp_shift : 0)
+                         + (i/2 ? (tex->stride << out_bpp_shift) : 0));
+            if (!cache_single_tile(tex, src, 8, 8, 8, pixfmt, transparent,
+                                   color_base, rofs, gofs, bofs)) {
+                return 0;
+            }
+            src += in_bpp * 8;
+        }
+
+        tex->width = tex->height = 16;
+        tex->vram_address = saved_vram_address;
+        return 1;
+
+    } else {  // array == 1
+
+        tex->vram_address = NULL;
+        return cache_single_tile(tex, src, width, height, stride, pixfmt,
+                                 transparent, color_base, rofs, gofs, bofs);
+
+    }
+}
+
+/*----------------------------------*/
+
+/**
+ * cache_single_tile:  Cache a single tile's texture from tile (VDP2)
+ * memory.  Called 4 times from cache_tile() for 16x16-pixel tiles.
+ *
+ * [Parameters]
+ *                  tex: TexInfo structure for caching texture
+ *                  src: Pointer to data within VDP2 RAM
+ *        width, height: Size of texture (in pixels)
+ *               stride: Line size of source data (in pixels)
+ *               pixfmt: Bitmap pixel format
+ *          transparent: Nonzero if index 0 or alpha 0 should be transparent
+ *           color_base: Color table base (for indexed formats)
+ *     rofs, gofs, bofs: Color offset values for texture
+ * [Return value]
+ *     Nonzero on success, zero on error
+ */
+static inline int cache_single_tile(
+    TexInfo *tex, const uint8_t *src, unsigned int width, unsigned int height,
+    unsigned int stride, int pixfmt, int transparent,
+    uint16_t color_base, int rofs, int gofs, int bofs)
+{
     switch (pixfmt) {
       case 0:
-        return gen_clut(tex, 16,
-                        color_base + (color_ofs & 0x7F0), color_ofs & 0x00F,
-                        rofs, gofs, bofs, transparent)
-            && cache_texture_t4(tex, src, width, height, stride);
+        return cache_texture_t4(tex, src, width, height, stride);
       case 1:
-        return gen_clut(tex, 256,
-                        color_base + (color_ofs & 0x700), color_ofs & 0x0FF,
-                        rofs, gofs, bofs, transparent)
-            && cache_texture_t8(tex, src, 0xFF, width, height, stride);
+        return cache_texture_t8(tex, src, 0xFF, width, height, stride);
       case 2:
         return cache_texture_t16(tex, src, color_base, width, height,
                                  stride, rofs, gofs, bofs, transparent);
@@ -586,18 +697,26 @@ static inline int cache_texture_t4(
     const int outwidth  = width  + (width  == tex->width  ? 0 : 1);
     const int outheight = height + (height == tex->height ? 0 : 1);
 
-    tex->pixfmt = GU_PSM_T4;
-    tex->stride = (outwidth+31) & -32;
-    tex->vram_address = alloc_vram((tex->stride/2) * outheight);
-    if (UNLIKELY(!tex->vram_address)) {
-        DMSG("VRAM buffer full, can't cache");
-        return 0;
+    if (!tex->vram_address) {
+        tex->pixfmt = GU_PSM_T4;
+        tex->stride = (outwidth+31) & -32;
+        tex->vram_address = alloc_vram((tex->stride/2) * outheight);
+        if (UNLIKELY(!tex->vram_address)) {
+            DMSG("VRAM buffer full, can't cache");
+            return 0;
+        }
     }
 
+    /* Cache the value of this locally so we don't have to load it on
+     * every loop. */
+    const unsigned int tex_stride = tex->stride;
+
     uint8_t *dest = (uint8_t *)tex->vram_address;
-    if (stride != tex->stride) {
+
+    if (stride != tex_stride) {
+
         int y;
-        for (y = 0; y < height; y++, dest += tex->stride/2 - stride/2) {
+        for (y = 0; y < height; y++, dest += tex_stride/2 - stride/2) {
             uint8_t *dest_top = dest + stride/2;
             for (; dest < dest_top; src += 4, dest += 4) {
                 const uint32_t src_word = *(const uint32_t *)src;
@@ -608,16 +727,20 @@ static inline int cache_texture_t4(
                 *dest = dest[-1] >> 4;  // Copy last pixel
             }
         }
-    } else {
-        uint8_t *dest_top = dest + (height * (tex->stride/2));
+
+    } else {  // stride == tex_stride
+
+        uint8_t *dest_top = dest + (height * (tex_stride/2));
         for (; dest < dest_top; src += 4, dest += 4) {
             const uint32_t src_word = *(const uint32_t *)src;
             *(uint32_t *)dest = ((src_word & 0x0F0F0F0F) << 4)
                               | ((src_word >> 4) & 0x0F0F0F0F);
         }
+
     }
+
     if (outheight > height) {
-        memcpy(dest, dest - tex->stride/2, tex->stride/2);
+        memcpy(dest, dest - tex_stride/2, tex_stride/2);
     }
 
     return 1;
@@ -644,16 +767,21 @@ static inline int cache_texture_t8(
     const int outwidth  = width  + (width  == tex->width  ? 0 : 1);
     const int outheight = height + (height == tex->height ? 0 : 1);
 
-    tex->pixfmt = GU_PSM_T8;
-    tex->stride = (outwidth+15) & -16;
-    tex->vram_address = alloc_vram(tex->stride * outheight);
-    if (UNLIKELY(!tex->vram_address)) {
-        DMSG("VRAM buffer full, can't cache");
-        return 0;
+    if (!tex->vram_address) {
+        tex->pixfmt = GU_PSM_T8;
+        tex->stride = (outwidth+15) & -16;
+        tex->vram_address = alloc_vram(tex->stride * outheight);
+        if (UNLIKELY(!tex->vram_address)) {
+            DMSG("VRAM buffer full, can't cache");
+            return 0;
+        }
     }
 
+    const unsigned int tex_stride = tex->stride;
     uint8_t *dest = (uint8_t *)tex->vram_address;
+
     if (pixmask != 0xFF) {
+
         const uint32_t pixmask32 = pixmask * 0x01010101;
         if (stride == 8) {  // Optimize this case (dest->stride == 16)
             int y;
@@ -665,7 +793,7 @@ static inline int cache_texture_t8(
             }
         } else {
             int y;
-            for (y = 0; y < height; y++, dest += tex->stride - stride) {
+            for (y = 0; y < height; y++, dest += tex_stride - stride) {
                 int x;
                 for (x = 0; x < stride; x += 8, src += 8, dest += 8) {
                     const uint32_t pix0_3 = *(const uint32_t *)(src+0);
@@ -675,25 +803,33 @@ static inline int cache_texture_t8(
                 }
             }
         }
+
     } else if (stride == 8) {
+
         int y;
         for (y = 0; y < height; y++, src += 8, dest += 16) {
             *(uint32_t *)(dest+0) = *(const uint32_t *)(src+0);
             *(uint32_t *)(dest+4) = *(const uint32_t *)(src+4);
         }
-    } else if (stride != tex->stride) {
+
+    } else if (stride != tex_stride) {
+
         int y;
-        for (y = 0; y < height; y++, src += stride, dest += tex->stride) {
+        for (y = 0; y < height; y++, src += stride, dest += tex_stride) {
             memcpy(dest, src, width);
             if (outwidth > width) {
                 dest[width] = dest[width-1];
             }
         }
+
     } else {
+
         memcpy(dest, src, stride * height);
+
     }
+
     if (outheight > height) {
-        memcpy(dest, dest - tex->stride, tex->stride);
+        memcpy(dest, dest - tex_stride, tex_stride);
     }
 
     return 1;
@@ -723,25 +859,30 @@ static inline int cache_texture_t16(
     const int outwidth  = width  + (width  == tex->width  ? 0 : 1);
     const int outheight = height + (height == tex->height ? 0 : 1);
 
-    tex->pixfmt = GU_PSM_8888;
-    tex->stride = (outwidth+3) & -4;
-    tex->vram_address = alloc_vram(tex->stride * outheight * 4);
-    if (UNLIKELY(!tex->vram_address)) {
-        DMSG("VRAM buffer full, can't cache");
-        return 0;
+    if (!tex->vram_address) {
+        tex->pixfmt = GU_PSM_8888;
+        tex->stride = (outwidth+3) & -4;
+        tex->vram_address = alloc_vram(tex->stride * outheight * 4);
+        if (UNLIKELY(!tex->vram_address)) {
+            DMSG("VRAM buffer full, can't cache");
+            return 0;
+        }
+        tex->clut_address = NULL;
     }
-    tex->clut_address = NULL;
 
+    const unsigned int tex_stride = tex->stride;
     uint32_t *dest = (uint32_t *)tex->vram_address;
     const uint32_t *clut_32 = &global_clut_32[color_base];
+
     if (rofs || gofs || bofs) {
+
         const uint32_t trans_pixel = 0x00000000
                                    | (rofs>=0 ? rofs<< 0 : 0)
                                    | (gofs>=0 ? gofs<< 8 : 0)
                                    | (bofs>=0 ? bofs<<16 : 0);
         int y;
         for (y = 0; y < height;
-             y++, src += (stride - width) * 2, dest += tex->stride - width
+             y++, src += (stride - width) * 2, dest += tex_stride - width
         ) {
             uint32_t *dest_top = dest + width;
             for (; dest < dest_top; src += 2, dest++) {
@@ -757,10 +898,12 @@ static inline int cache_texture_t16(
                 *dest = dest[-1];
             }
         }
-    } else if (width != stride || width != tex->stride) {
+
+    } else if (width != stride || width != tex_stride) {
+
         int y;
         for (y = 0; y < height;
-             y++, src += (stride - width) * 2, dest += tex->stride - width
+             y++, src += (stride - width) * 2, dest += tex_stride - width
         ) {
             uint32_t *dest_top = dest + width;
             for (; dest < dest_top; src += 4, dest += 2) {
@@ -773,7 +916,9 @@ static inline int cache_texture_t16(
                 *dest = dest[-1];
             }
         }
+
     } else {
+
         uint32_t *dest_top = dest + (width*height);
         for (; dest < dest_top; src += 4, dest += 2) {
             uint16_t pixel0 = src[0]<<8 | src[1];
@@ -781,9 +926,11 @@ static inline int cache_texture_t16(
             dest[0] = (transparent && !pixel0) ? 0 : clut_32[pixel0 & 0x7FF];
             dest[1] = (transparent && !pixel1) ? 0 : clut_32[pixel1 & 0x7FF];
         }
+
     }
+
     if (outheight > height) {
-        memcpy(dest, dest - tex->stride, tex->stride * 4);
+        memcpy(dest, dest - tex_stride, tex_stride * 4);
     }
 
     return 1;
@@ -812,24 +959,29 @@ static inline int cache_texture_16(
     const int outwidth  = width  + (width  == tex->width  ? 0 : 1);
     const int outheight = height + (height == tex->height ? 0 : 1);
 
-    tex->pixfmt = GU_PSM_8888;
-    tex->stride = (outwidth+3) & -4;
-    tex->vram_address = alloc_vram(tex->stride * outheight * 4);
-    if (UNLIKELY(!tex->vram_address)) {
-        DMSG("VRAM buffer full, can't cache");
-        return 0;
+    if (!tex->vram_address) {
+        tex->pixfmt = GU_PSM_8888;
+        tex->stride = (outwidth+3) & -4;
+        tex->vram_address = alloc_vram(tex->stride * outheight * 4);
+        if (UNLIKELY(!tex->vram_address)) {
+            DMSG("VRAM buffer full, can't cache");
+            return 0;
+        }
+        tex->clut_address = NULL;
     }
-    tex->clut_address = NULL;
 
+    const unsigned int tex_stride = tex->stride;
     uint32_t *dest = (uint32_t *)tex->vram_address;
+
     if (rofs || gofs || bofs) {
+
         const uint32_t trans_pixel = 0x00000000
                                    | (rofs>=0 ? rofs<< 0 : 0)
                                    | (gofs>=0 ? gofs<< 8 : 0)
                                    | (bofs>=0 ? bofs<<16 : 0);
         int y;
         for (y = 0; y < height;
-             y++, src += (stride - width) * 2, dest += tex->stride - width
+             y++, src += (stride - width) * 2, dest += tex_stride - width
         ) {
             uint32_t *dest_top = dest + width;
             for (; dest < dest_top; src += 2, dest++) {
@@ -841,10 +993,12 @@ static inline int cache_texture_16(
                 *dest = dest[-1];
             }
         }
-    } else if (width != stride || width != tex->stride) {
+
+    } else if (width != stride || width != tex_stride) {
+
         int y;
         for (y = 0; y < height;
-             y++, src += (stride - width) * 2, dest += tex->stride - width
+             y++, src += (stride - width) * 2, dest += tex_stride - width
         ) {
             uint32_t *dest_top = dest + width;
             for (; dest < dest_top; src += 4, dest += 2) {
@@ -863,7 +1017,9 @@ static inline int cache_texture_16(
                 *dest = dest[-1];
             }
         }
+
     } else {
+
         uint32_t *dest_top = dest + (width*height);
         for (; dest < dest_top; src += 4, dest += 2) {
             uint16_t pixel0 = src[0]<<8 | src[1];
@@ -877,9 +1033,11 @@ static inline int cache_texture_16(
                            | (pixel1 & 0x03E0) << 6
                            | (pixel1 & 0x001F) << 3;
         }
+
     }
+
     if (outheight > height) {
-        memcpy(dest, dest - tex->stride, tex->stride * 4);
+        memcpy(dest, dest - tex_stride, tex_stride * 4);
     }
 
     return 1;
@@ -908,24 +1066,29 @@ static inline int cache_texture_32(
     const int outwidth  = width  + (width  == tex->width  ? 0 : 1);
     const int outheight = height + (height == tex->height ? 0 : 1);
 
-    tex->pixfmt = GU_PSM_8888;
-    tex->stride = (outwidth+3) & -4;
-    tex->vram_address = alloc_vram(tex->stride * outheight * 4);
-    if (UNLIKELY(!tex->vram_address)) {
-        DMSG("VRAM buffer full, can't cache");
-        return 0;
+    if (!tex->vram_address) {
+        tex->pixfmt = GU_PSM_8888;
+        tex->stride = (outwidth+3) & -4;
+        tex->vram_address = alloc_vram(tex->stride * outheight * 4);
+        if (UNLIKELY(!tex->vram_address)) {
+            DMSG("VRAM buffer full, can't cache");
+            return 0;
+        }
+        tex->clut_address = NULL;
     }
-    tex->clut_address = NULL;
 
+    const unsigned int tex_stride = tex->stride;
     uint32_t *dest = (uint32_t *)tex->vram_address;
+
     if (rofs || gofs || bofs || (width & 3)) {
+
         const uint32_t trans_pixel = 0x00000000
                                    | (rofs>=0 ? rofs<< 0 : 0)
                                    | (gofs>=0 ? gofs<< 8 : 0)
                                    | (bofs>=0 ? bofs<<16 : 0);
         int y;
         for (y = 0; y < height;
-             y++, src += (stride - width) * 4, dest += tex->stride - width
+             y++, src += (stride - width) * 4, dest += tex_stride - width
         ) {
             uint32_t *dest_top = dest + width;
             for (; dest < dest_top; src += 4, dest++) {
@@ -940,13 +1103,15 @@ static inline int cache_texture_32(
                 *dest = dest[-1];
             }
         }
+
     } else if (width != stride) {
+
         int y;
         for (y = 0; y < height;
-             y++, src += (stride - width) * 4, dest += tex->stride - width
+             y++, src += (stride - width) * 4, dest += tex_stride - width
         ) {
             uint32_t *dest_top = dest + width;
-#if 0  // FIXME: GCC fails at optimizing this
+#if 0  // GCC fails at optimizing this
             for (; dest != dest_top; src += 16, dest += 4) {
                 const int32_t pixel0 = BSWAP32(((const int32_t *)src)[0]);
                 const int32_t pixel1 = BSWAP32(((const int32_t *)src)[1]);
@@ -1043,9 +1208,11 @@ static inline int cache_texture_32(
             }
 #endif
         }
+
     } else {
+
         uint32_t *dest_top = dest + (width*height);
-#if 0  // FIXME: as above
+#if 0  // As above
         for (; dest != dest_top; src += 16, dest += 4) {
             const int32_t pixel0 = BSWAP32(((const int32_t *)src)[0]);
             const int32_t pixel1 = BSWAP32(((const int32_t *)src)[1]);
@@ -1128,9 +1295,11 @@ static inline int cache_texture_32(
             );
         }
 #endif
+
     }
+
     if (outheight > height) {
-        memcpy(dest, dest - tex->stride, tex->stride * 4);
+        memcpy(dest, dest - tex_stride, tex_stride * 4);
     }
 
     return 1;
@@ -1144,21 +1313,27 @@ static inline int cache_texture_32(
  * texture.
  *
  * [Parameters]
+ *                  tex: TexInfo structure for color table
  *                 size: Number of color entries to generate
  *           color_base: Base color index
  *            color_ofs: Color index offset ORed together with pixel
  *     rofs, gofs, bofs: Color offset values for texture
  *          transparent: Nonzero if pixel value 0 should be transparent
+ *             endcodes: Nonzero if pixel value 0b11...11 should be transparent
+ *           can_shadow: Nonzero if pixel value 0b11...10 is a shadow pixel
  * [Return value]
  *     Nonzero on success, zero on error
  */
 static inline int gen_clut(
     TexInfo *tex, unsigned int size, uint32_t color_base, uint8_t color_ofs,
-    int rofs, int gofs, int bofs, int transparent)
+    int rofs, int gofs, int bofs, int transparent, int endcodes,
+    int can_shadow)
 {
     tex->clut_size = size;
 
-    if (!transparent && !color_ofs && !rofs && !gofs && !bofs) {
+    if (!endcodes && !transparent && !can_shadow && !color_ofs
+     && !rofs && !gofs && !bofs
+    ) {
         /* There are no changes to apply to the palette, so just use the
          * global CLUT directly. */
         tex->clut_address = &global_clut_32[color_base + color_ofs];
@@ -1168,7 +1343,8 @@ static inline int gen_clut(
     const uint32_t color_set = (rofs & 0x1FF) <<  0
                              | (gofs & 0x1FF) <<  9
                              | (bofs & 0x1FF) << 18
-                             | (transparent ? 1<<27 : 0);
+                             | (transparent ? 1<<27 : 0)
+                             | (endcodes ? 1<<28 : 0);
     const unsigned int cache_slot = color_base >> 4;
     unsigned int cache_entry;
     for (cache_entry = 0; cache_entry < CLUT_ENTRIES; cache_entry++) {
@@ -1203,6 +1379,7 @@ static inline int gen_clut(
 
     uint32_t *dest = (uint32_t *)tex->clut_address;
     int i;
+
     if (transparent) {
         /* Apply the color offset values even though it's transparent;
          * this prevents dark rims around interpolated textures when
@@ -1215,6 +1392,7 @@ static inline int gen_clut(
     } else {
         i = 0;
     }
+
     const uint32_t *clut_32 = &global_clut_32[color_base];
     if (rofs || gofs || bofs) {
         for (; i < size; i++, dest++) {
@@ -1227,6 +1405,20 @@ static inline int gen_clut(
         }
     }
 
+    if (endcodes) {
+        dest[-1] = 0x00000000
+                 | (rofs>=0 ? rofs<< 0 : 0)
+                 | (gofs>=0 ? gofs<< 8 : 0)
+                 | (bofs>=0 ? bofs<<16 : 0);
+    }
+
+    if (can_shadow) {
+        dest[-2] = 0x80000000
+                 | (rofs>=0 ? rofs<< 0 : 0)
+                 | (gofs>=0 ? gofs<< 8 : 0)
+                 | (bofs>=0 ? bofs<<16 : 0);
+    }
+
     return 1;
 }
 
@@ -1237,15 +1429,18 @@ static inline int gen_clut(
  * indexed texture.
  *
  * [Parameters]
+ *                  tex: TexInfo structure for color table
  *            color_lut: Pointer to VDP1 color lookup table
+ *           pixel_mask: Mask to apply to palette indices in lookup table
  *     rofs, gofs, bofs: Color offset values for texture
  *          transparent: Nonzero if pixel value 0 should be transparent
+ *             endcodes: Nonzero if pixel value 0b11...11 should be transparent
  * [Return value]
  *     Nonzero on success, zero on error
  */
 static inline int gen_clut_t4ind(
-    TexInfo *tex, const uint8_t *color_lut,
-    int rofs, int gofs, int bofs, int transparent)
+    TexInfo *tex, const uint8_t *color_lut, uint16_t pixel_mask,
+    int rofs, int gofs, int bofs, int transparent, int endcodes)
 {
     tex->clut_size = 16;
 
@@ -1257,6 +1452,7 @@ static inline int gen_clut_t4ind(
 
     uint32_t *dest = (uint32_t *)tex->clut_address;
     int i;
+
     if (transparent) {
         *dest++ = 0x00000000
                 | (rofs>=0 ? rofs<< 0 : 0)
@@ -1266,29 +1462,49 @@ static inline int gen_clut_t4ind(
     } else {
         i = 0;
     }
+
     const uint32_t *clut_32 = global_clut_32;
     if (rofs || gofs || bofs) {
         for (; i < 16; i++, dest++) {
-            const uint16_t color16 =
-                (uint16_t)color_lut[i*2]<<8 | color_lut[i*2+1];
+            uint16_t color16 = (uint16_t)color_lut[i*2]<<8 | color_lut[i*2+1];
             if (color16 & 0x8000) {
                 *dest = adjust_color_16_32(color16, rofs, gofs, bofs);
             } else {
-                *dest = adjust_color_32_32(clut_32[color16], rofs, gofs, bofs);
+                color16 &= pixel_mask;
+                if (color16 == pixel_mask - 1) {
+                    *dest = 0x80000000
+                          | (rofs>=0 ? rofs<< 0 : 0)
+                          | (gofs>=0 ? gofs<< 8 : 0)
+                          | (bofs>=0 ? bofs<<16 : 0);
+                } else {
+                    *dest = adjust_color_32_32(clut_32[color16],
+                                               rofs, gofs, bofs);
+                }
             }
         }
     } else {
         for (; i < 16; i++, dest++) {
-            const uint16_t color16 =
-                (uint16_t)color_lut[i*2]<<8 | color_lut[i*2+1];
+            uint16_t color16 = (uint16_t)color_lut[i*2]<<8 | color_lut[i*2+1];
             if (color16 & 0x8000) {
                 *dest = 0xFF000000 | (color16 & 0x7C00) << 9
                                    | (color16 & 0x03E0) << 6
                                    | (color16 & 0x001F) << 3;
             } else {
-                *dest = clut_32[color16];
+                color16 &= pixel_mask;
+                if (color16 == pixel_mask - 1) {
+                    *dest = 0x80000000;
+                } else {
+                    *dest = clut_32[color16];
+                }
             }
         }
+    }
+
+    if (endcodes) {
+        dest[-1] = 0x00000000
+                 | (rofs>=0 ? rofs<< 0 : 0)
+                 | (gofs>=0 ? gofs<< 8 : 0)
+                 | (bofs>=0 ? bofs<<16 : 0);
     }
 
     return 1;

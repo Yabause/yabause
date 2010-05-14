@@ -35,18 +35,20 @@ Installing from source
 ----------------------
 To build Yabause for PSP from the source code, you'll need a recent (at
 least SVN r2450(*)) copy of the unofficial PSP SDK from http://ps2dev.org,
-along with the toolchain from the same site.  Ensure the PSP toolchain
-(psp-gcc) and tools (psp-prxgen, etc.) are in your $PATH, then configure
-Yabause with:
+along with the toolchain from the same site; Gentoo Linux users can also
+download a Portage overlay from http://achurch.org/portage-psp.tar.bz2 and
+"emerge pspsdk".  Ensure that the PSP toolchain (psp-gcc) and tools
+(psp-prxgen, etc.) are in your $PATH, then configure Yabause with:
 
     ./configure --host=psp [options...]
 
 (*) Note that the PSP SDK headers and libraries are, at least through
-    r2452, missing some functions required by Yabause.  If you get errors
+    r2493, missing some functions required by Yabause.  If you get errors
     about the functions sceKernelIcacheInvalidateAll or
     sceKernelIcacheInvalidateRange, apply the patch found in
     src/psp/icache-funcs-2450.patch to the PSP SDK source, recompile and
-    reinstall it, then rebuild Yabause.
+    reinstall it, then rebuild Yabause.  This patch is already included if
+    you build the SDK from the Gentoo Portage overlay.
 
 You can ignore the warning about the --build option that appears when you
 start the configure script.  You may also see a warning about "using cross
@@ -89,11 +91,12 @@ as follows:
     CD.ISO     -- CD image (can also be a *.CUE file)
     BACKUP.BIN -- Backup RAM image (will be created if it does not exist)
 
-Pressing the Select button after starting up Yabause will bring up a menu
-allowing you to choose other files; see below for details.  If you do not
-already have a backup RAM image, just leave the backup RAM filename at its
-default setting, and the file will be created the first time backup RAM is
-saved.
+You can choose other files from the Yabause configuration menu, which is
+displayed the first time you start Yabause and can also be brought up at
+any time by pressing the Select button; see below for details.  If you do
+not already have a backup RAM image, just leave the backup RAM filename at
+its default setting, and the file will be created the first time backup RAM
+is saved.
 
 The directional pad and analog stick can both be used to emulate the
 Saturn controller's directional pad.  The default button controls are as
@@ -112,9 +115,9 @@ follows:
 Button controls can be changed via the configuration menu.
 
 
-The PSP configuration menu
---------------------------
-When you first run Yabause, the PSP configuration menu will be displayed,
+The Yabause PSP configuration menu
+----------------------------------
+When you first run Yabause, the configuration menu will be displayed,
 allowing you to choose the CD image you want to run and configure other
 Yabause options.  You can also press Select while the emulator is running
 to bring up the menu; the emulator will remain paused while you have the
@@ -128,8 +131,8 @@ The main menu contains six options:
 
         * "Start emulator immediately"
 
-          Causes the emulator to start immediately when you run Yabause,
-          instead of showing the configuration menu.
+          When enabled, the emulator will start running immediately when
+          you load Yabause, instead of showing the configuration menu.
 
         * "Select BIOS/CD/backup files..."
 
@@ -147,7 +150,8 @@ The main menu contains six options:
           your Memory Stick whenever you save your game in the emulator.
           The emulator will display "Backup RAM saved." on the screen for
           a short time when an autosave occurs.  Note that the emulator
-          may pause for a fraction of a second while autosaving.
+          may pause for a fraction of a second while autosaving.  This
+          option is enabled by default.
 
           Be aware that backup RAM is _not_ saved to the Memory Stick
           when you quit Yabause; if you disable this option,  you need to
@@ -182,16 +186,16 @@ The main menu contains six options:
           These options allow you to choose between the PSP-specific
           hardware renderer and the default software renderer built into
           Yabause for displaying Saturn graphics.  The hardware renderer
-          is significantly faster, and for simple 2-D graphcs can run at
+          is significantly faster; for simple 2-D graphics, it can run at
           a full 60fps without frame skipping (if the game program itself
-          can be emulated quickly enough); however, a number of more
+          can be emulated quickly enough).  However, a number of more
           complex graphics features are not supported, so if a game does
           not display correctly, try using the software renderer instead.
 
           The selected renderer can be changed while the emulator is
           running without disturbing your game in progress.  However,
-          changing the renderer may cause the screen to momentarily
-          blank out.
+          changing the renderer may cause the screen to blank out or
+          display corrupted graphics for a short time.
 
         * "Configure hardware rendering settings..."
 
@@ -218,10 +222,24 @@ The main menu contains six options:
 
              * "Enable rotated/distorted graphics"
 
-               Allows the display of rotated or distorted graphics to be
-               disabled entirely.  Most such graphics cannot be rendered
-               by the PSP's hardware, so Yabause has to draw them in
-               software, which can be a major source of slowdown.
+               Selects whether to display rotated or distorted graphics
+               at all.  Most such graphics cannot be rendered by the
+               PSP's hardware, so Yabause has to draw them in software,
+               which can be a major source of slowdown.  Disabling this
+               option will turn such graphics off entirely.  This option
+               is enabled by default.
+
+             * "Optimize rotated/distorted graphics"
+
+               When enabled, Yabause will try to detect certain types of
+               rotated or distorted graphics which can be approximated by
+               PSP hardware operations such as 3D transformations, and use
+               the PSP's hardware to draw them quickly.  However, this
+               will often result in graphics that look different from the
+               game as played on an actual Saturn, so this option can be
+               used to disable the optimizations and draw the graphcs more
+               accurately (at the expense of speed).  This option is
+               enabled by default.
 
           Note that none of the above options have any effect when the
           software video renderer is in use.
@@ -229,20 +247,60 @@ The main menu contains six options:
         * "Configure frame-skip settings..."
 
           This option opens another submenu which allows you to configure
-          the hardware renderer's frame-skip behavior (frame skipping is
-          not supported by the software renderer).  Full automatic frame
-          skipping is not yet implemented, but you can select options to
-          adjust the manual frame skip setting based on what kind of
-          graphics are being displayed.
+          the hardware renderer's frame-skip behavior:
+
+             * "Frame-skip mode"
+
+               This option is intended to allow you to switch between
+               manual setting and automatic adjustment of frame-skip
+               parameters.  However, automatic mode is not yet
+               implemented, so always leave this set on "Manual".
+
+             * "Number of frames to skip"
+
+               In Manual mode, sets the number of frames to skip for every
+               frame drawn.  0 means "draw every frame", 1 means "draw
+               every second frame" (skip 1 frame for every frame drawn),
+               and so on.
+
+             * "Limit to 30fps for interlaced display"
+
+               Always skip at least one frame when drawing interlaced
+               (high-resolution) screens.  Has no effect unless the number
+               of frames to skip is set to zero.  This option is enabled
+               by default.
+
+             * "Halve framerate for rotated backgrounds"
+
+               Reduce the frame rate by half (in other words, skip every
+               second frame that would otherwise be drawn) when rotated or
+               distorted background graphics are displayed.  Since rotation
+               and distortion take a long time to process on the PSP, this
+               option can help keep games playable even when they make use
+               of these Saturn hardware features.  This option is enabled
+               by default.
+
+               Note that this option does not apply to rotated or
+               distorted graphics which are displayed using an optimized
+               algorithm (see the "Optimize rotated/distorted graphics"
+               option above).
+
+          Frame skipping is not supported by the software renderer, so
+          none of these options will have any effect when the software
+          renderer is in use.
 
         * "Show FPS"
 
-          When enabled, the emulator's current frames per second (FPS)
-          will be displayed in the upper-left corner of the screen as
-          "FPS: X.XX (Y.YY)".  The number "X.XX" is the average frame
-          rate, calculated from the last few seconds of emulation, while
-          the number "Y.YY" is the instantaneous frame rate--i.e., the
-          reciprocal of the time it took to display the last frame.
+          When enabled, the emulator's current speed in emulated frames per
+          second (FPS) will be displayed in the upper-left corner of the
+          screen as "FPS: XX.X (Y/Z)".  The number "XX.X" is the average
+          frame rate, calculated from the last few seconds of emulation;
+          "Y" shows the number of Saturn frames emulated since the previous
+          frame was shown, while "Z" is the actual time that passed in
+          60ths of a second.  (Thus, the instantaneous frame rate can be
+          calculated as (Y/Z)*60.)
+
+          This option has no effect when the software renderer is in use.
 
    * "Configure advanced settings..."
 
@@ -277,13 +335,15 @@ The main menu contains six options:
           the menu as the emulator recompiles SH-2 code using the new
           options.
 
+          All optimizations are enabled by default.
+
         * "Use Media Engine for emulation"
 
           Enables the use of the PSP's Media Engine CPU to handle part
           of the emulation in parallel with the main CPU.  This can
           provide a moderate boost to emulation speed; however, since
           the Media Engine is not designed for this sort of parallel
-          processing, some games may actually run slower or even crash.
+          processing, some games may behave incorrectly or even crash.
           As such, this option is still considered experimental; use it
           at your own risk.
 
@@ -297,8 +357,8 @@ The main menu contains six options:
           are synchronized, relative to the frequency of code execution on
           the Media Engine.  The default frequency of 1/1 is safest; lower
           frequencies (1/2, 1/4, and so on) can increase emulation speed,
-          but are also more likely to cause crashes depending on the
-          particular game.
+          but are also more likely to cause sound glitches, crashes, or
+          other incorrect behavior depending on the particular game.
 
           Naturally, this option has no effect if the Media Engine is not
           being used for emulation.
@@ -335,13 +395,16 @@ The main menu contains six options:
                out (as described above) whenever the emulator takes more
                than 1/60th of a second to process an emulated frame.
 
+          This option is enabled by default.
+
         * "Sync Saturn clock to emulation"
 
           When enabled, the Saturn's internal clock is synchronized with
           the emulation, rather than following real time regardless of
           emulation speed.  If the emulator is running slow, for example,
           this option will slow the Saturn's clock down to match the speed
-          at which the emulator is running.
+          at which the emulator is running.  This option is enabled by
+          default.
 
         * "Always start from 1998-01-01 12:00"
 
@@ -401,8 +464,13 @@ A: C'est la vie.  The PSP is unfortunately just not powerful enough to
 
       * Try turning on the "Use Media Engine for emulation" option in the
         "Configure advanced emulation options" menu, but note that this
-        option is experimental and may cause your game to run more slowly
-        or even crash.
+        option is experimental and may cause your game to misbehave or even
+        crash.
+
+      * If the Media Engine is enabled, try lowering the cache writeback
+        frequency in the "advanced emulation options" menu.  Typically,
+        1/4 to 1/8 will provide a noticeable speed increase over 1/1, while
+        1/16 and lower are not likely to have much effect.
 
 Q: "My game suddenly froze!"
 
@@ -447,13 +515,13 @@ These processors run at either 26 or 28 MHz, and they use a RISC-like
 instruction set in which most instructions execute in one clock cycle, so
 in a worst-case scenario Yabause would need to process 56 million SH-2
 instructions per second--on top of sound, video, and other hardware
-emulation--to maintain full speed.  But the PSP's Allegrex CPU(*) runs at
-a maximum of 333MHz, meaning that the SH-2 emulator must be able to
+emulation--to maintain full speed.  But the PSP's single(*) Allegrex CPU
+runs at a maximum of 333MHz, meaning that the SH-2 emulator must be able to
 execute each instruction (including accessing the register file, swapping
 byte order in memory accesses, updating the SH-2 clock cycle counter, and
 so on) within at most 6 native clock cycles for full-speed emulation.  In
 fact, the demands of emulating the other Saturn hardware reduce this to
-something closer to 2-3 native clock cycles.
+something closer to 4 native clock cycles.
 
 (*) The PSP actually has a second CPU, the Media Engine, but limitations
     of the PSP architecture make it unsuitable for use as a full-fledged
@@ -538,8 +606,7 @@ hurdles to fast emulation.  For example:
   the CD data to be loaded, and additionally some games read CD data
   directly out of the CD data register rather than using DMA to load the
   data into memory.  Currently, the only way to speed up such code blocks
-  is through handwritten translation (see OPTIMIZE_HAND_TUNED_CASES in
-  src/psp/sh2-optimize.c).
+  is through handwritten translation (see src/psp/satopt-sh2.c).
 
 Patches to either speed up specific games or to improve the translation
 algorithm generally are of course welcome.
@@ -564,7 +631,7 @@ do not implement cache coherency; this means that neither CPU knows what
 the other CPU has in its cache, and one CPU may inadvertently clobber the
 other's changes, causing stores to memory to get lost.  As an example,
 consider these two simple loops, operating in parallel on a two-element
-array initialized to {1,1} that fits within a single cache line:
+array initialized to {1,1} that resides in a single cache line:
 
         Core 1                       Core 2
         ------                       ------
@@ -607,10 +674,10 @@ loss.
 When use of the Media Engine is enabled, the following steps are taken
 to avoid data corruption due to the lack of cache coherency:
 
-* SCSP state variables are divided into separate, 64-byte (cache-line)
-  aligned data sections, based on which thread (the main Yabause thread,
-  running on the SC, or the SCSP thread, running on the ME) writes to
-  them.
+* SCSP state variables used for inter-thread communication are divided into
+  separate, 64-byte (cache-line) aligned data sections, based on which
+  thread (the main Yabause thread, running on the SC, or the SCSP thread,
+  running on the ME) writes to them.
 
 * SCSP state variables are accessed using uncached (0x4nnnnnnn) addresses
   in two cases: when _reading_ data written by the other CPU (to avoid an
@@ -625,10 +692,11 @@ to avoid data corruption due to the lack of cache coherency:
 
 * The SC's data cache is flushed (written back and invalidated) immediately
   before waiting for the SCSP thread to finish processing, e.g. for
-  ScspReset().  The data cache is written back on every ScspExec() call,
-  but it is _not_ flushed for performance reasons; instead, sound RAM read
-  accesses from the SC are made through uncached addresses, as with SCSP
-  state variables above.
+  ScspReset().  The data cache is written back on every ScspExec() call
+  (though the writeback frequency may be reduced through the configuration
+  menu), but it is _not_ flushed for performance reasons; instead, sound
+  RAM read accesses from the SC are made through uncached addresses, as
+  with SCSP state variables above.
 
 * The ME's data cache is flushed after each iteration of the SCSP thread
   loop.  This flushing is not coded directly into scsp.c, but instead
@@ -637,14 +705,12 @@ to avoid data corruption due to the lack of cache coherency:
   thread calls one or the other at the end of each loop, it's a convenient
   place to flush the cache.)
 
-* When dynamic translation of 68k code is enabled, all generated code is
-  stored in a separately allocated pool and managed with custom memory
-  allocation functions (local_malloc() and friends in psp-m68k.c), since
-  the standard memory management functions are not designed to work with
-  the ME and would likely cause a crash due to cache desynchronization.
-  (As a note, however, there is a potential for cache clobbering due to
-  the memory blocks allocated by the Q68 initialization code, which are
-  not guaranteed to be cache-aligned.)
+* The 68k state block, along with dynamically-generated native code when
+  dynamic translation is enabled, is stored in a separately allocated pool
+  and managed with custom memory allocation functions (local_malloc() and
+  friends in psp-m68k.c), since the standard memory management functions
+  are not designed to work with the ME and would likely cause a crash due
+  to cache desynchronization.
 
 In general, using the ME provides a moderate speed improvement (10-15%) to
 overall emulation speed.  There are, however, some cases in which the lack

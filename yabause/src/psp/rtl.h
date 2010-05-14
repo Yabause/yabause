@@ -211,6 +211,22 @@ extern int rtl_add_insn(RTLBlock *block, RTLOpcode opcode, uint32_t dest,
 extern uint32_t rtl_alloc_register(RTLBlock *block);
 
 /**
+ * rtl_register_set_unique_pointer:  Mark the given register as being a
+ * "unique pointer", which points to a region of memory which will never
+ * be accessed except through this register (or another register copied
+ * from it).  This function must be called after adding the instruction
+ * which sets the register, and if the register's value is subsequently
+ * modified, its "unique pointer" status will be cancelled.
+ *
+ * [Parameters]
+ *      block: RTLBlock containing register to mark
+ *     regnum: Register number to mark
+ * [Return value]
+ *     Nonzero on success, zero on error
+ */
+extern int rtl_register_set_unique_pointer(RTLBlock *block, uint32_t regnum);
+
+/**
  * rtl_alloc_label:  Allocate a new label for use in the given block.
  *
  * [Parameters]

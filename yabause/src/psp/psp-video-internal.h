@@ -22,6 +22,14 @@
 #define PSP_VIDEO_INTERNAL_H
 
 /*************************************************************************/
+/************************** Internal constants ***************************/
+/*************************************************************************/
+
+/* Graphics layer identifiers. */
+
+enum {BG_NBG0 = 0, BG_NBG1, BG_NBG2, BG_NBG3, BG_RBG0};
+
+/*************************************************************************/
 /******************* Map drawing routine declarations ********************/
 /*************************************************************************/
 
@@ -147,6 +155,39 @@ extern void vdp2_draw_map_16x16_t8(vdp2draw_struct *info,
 extern void psp_video_apply_tweaks(void);
 
 /*************************************************************************/
+
+/**
+ * CustomDrawRoutine:  Type of a custom drawing routine for a graphics
+ * layer, used with psp_video_set_draw_routine().
+ *
+ * [Parameters]
+ *     info: Graphics layer data
+ *     clip: Clipping window data
+ * [Return value]
+ *     Nonzero if the graphics layer was drawn, zero if not
+ */
+typedef int CustomDrawRoutine(vdp2draw_struct *info,
+                              const clipping_struct *clip);
+
+/**
+ * psp_video_set_draw_routine:  Set a custom drawing routine for a specific
+ * graphics layer.  If "is_fast" is true when setting a routine for RBG0,
+ * the frame rate will not be halved regardless of the related setting in
+ * the configuration menu.
+ *
+ * [Parameters]
+ *       layer: Graphics layer (BG_*)
+ *        func: Drawing routine (NULL to clear any previous setting)
+ *     is_fast: For BG_RBG0, indicates whether the routine is fast enough
+ *                 to be considered a non-distorted layer for the purposes
+ *                 of frame rate adjustment; ignored for other layers
+ * [Return value]
+ *     None
+ */
+extern void psp_video_set_draw_routine(int layer, CustomDrawRoutine *func,
+                                       int is_fast);
+
+/*************************************************************************/
 /**************** Other utility routines and declarations ****************/
 /*************************************************************************/
 
@@ -269,13 +310,12 @@ static inline void vdp2_calc_pattern_address_16x16(vdp2draw_struct *info)
         }
         if (!info->auxmode) {
             info->flipfunction = (data >> 10) & 0x3;
-            info->charaddr = (info->supplementdata & 0xF) << 10
+            info->charaddr = (info->supplementdata & 0xC) << 10
                            | (data & 0x3FF) << 2
                            | (info->supplementdata & 0x3);
         } else {
             info->flipfunction = 0;
-            info->charaddr = (info->supplementdata & 0xC) << 10
-                           | (data & 0xFFF) << 2
+            info->charaddr = (data & 0xFFF) << 2
                            | (info->supplementdata & 0x3);
         }
     } else {  // patterndatasize == 2

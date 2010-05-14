@@ -158,14 +158,15 @@ extern void meExceptionGetData(uint32_t *BadVAddr_ret, uint32_t *Status_ret,
  * should automatically trigger an exception on the main CPU.  If enabled,
  * any call to mePoll() or meWait() when an exception is pending will cause
  * an address error exception to be generated on the main CPU, with
- * exception status information loaded into the following registers:
- *     $t8 = Status
- *     $t9 = Cause
- *     $k0 = EPC or ErrorEPC (depending on the exception type)
- *     $k1 = BadVAddr
- *     $gp = Media Engine's $sp
- *     $sp = main CPU's $sp (unchanged)
- * and all other general-purpose registers copied from the Media Engine.
+ * exception status information stored in a buffer pointed to by $gp:
+ *     0($gp) = Status
+ *     4($gp) = Cause
+ *     8($gp)= EPC or ErrorEPC (depending on the exception type)
+ *    12($gp) = BadVAddr
+ *    16($gp) = Media Engine's $sp
+ *    20($gp) = Media Engine's $gp
+ * All general-purpose registers other than $sp and $gp, as well as $hi and
+ * $lo, are copied from the Media Engine.
  *
  * Unlike other functions in this library, this function can be called even
  * when the ME is not running, and it will always succeed.

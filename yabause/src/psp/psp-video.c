@@ -146,14 +146,25 @@ static unsigned int frames_skipped;
 static float average_fps;
 
 /* Flag indicating whether graphics should be drawn this frame */
-static int draw_graphics;
+static uint8_t draw_graphics;
 
 /* Background priorities (NBG0, NBG1, NBG2, NBG3, RBG0) */
-static int bg_priority[5];
-enum {BG_NBG0 = 0, BG_NBG1, BG_NBG2, BG_NBG3, BG_RBG0};
+static uint8_t bg_priority[5];
 
 /* VDP1 color component offset values (-0xFF...+0xFF) */
 static int32_t vdp1_rofs, vdp1_gofs, vdp1_bofs;
+
+/*----------------------------------*/
+
+/* Custom drawing function specified for each background layer */
+static CustomDrawRoutine *custom_draw_func[5];
+
+/* Is the RBG0 drawing function fast enough to consider it a normal layer
+ * for timing purposes? */
+static uint8_t RBG0_draw_func_is_fast;
+
+/* Did we draw a fast RBG0 this frame? */
+static uint8_t drew_fast_RBG0;
 
 /*----------------------------------*/
 
@@ -220,13 +231,13 @@ static void vdp2_draw_graphics(int layer);
  */
 static int psp_video_init(void)
 {
-    /* Set some reasonable defaults */
+    /* Set some reasonable defaults. */
     disp_width = 320;
     disp_height = 224;
     disp_xscale = 0;
     disp_yscale = 0;
 
-    /* Always draw the first frame */
+    /* Always draw the first frame. */
     frames_to_skip = 0;
     frames_skipped = 0;
 
@@ -245,7 +256,7 @@ static int psp_video_init(void)
  */
 static void psp_video_deinit(void)
 {
-    /* We don't implement shutting down, so nothing to do */
+    /* We don't implement shutting down, so nothing to do. */
 }
 
 /*************************************************************************/
@@ -321,6 +332,33 @@ void psp_video_infoline(uint32_t color, const char *text)
 }
 
 /*************************************************************************/
+
+/**
+ * psp_video_set_draw_routine:  Set a custom drawing routine for a specific
+ * graphics layer.  If "is_fast" is true when setting a routine for RBG0,
+ * the frame rate will not be halved regardless of the related setting in
+ * the configuration menu.
+ *
+ * [Parameters]
+ *       layer: Graphics layer (BG_*)
+ *        func: Drawing routine (NULL to clear any previous setting)
+ *     is_fast: For BG_RBG0, indicates whether the routine is fast enough
+ *                 to be considered a non-distorted layer for the purposes
+ *                 of frame rate adjustment; ignored for other layers
+ * [Return value]
+ *     None
+ */
+void psp_video_set_draw_routine(int layer, CustomDrawRoutine *func,
+                                int is_fast)
+{
+    PRECOND(layer >= BG_NBG0 && layer <= BG_RBG0, return);
+    custom_draw_func[layer] = func;
+    if (layer == BG_RBG0) {
+        RBG0_draw_func_is_fast = is_fast;
+    }
+}
+
+/*************************************************************************/
 /******************* VDP1-specific interface functions *******************/
 /*************************************************************************/
 
@@ -334,7 +372,7 @@ void psp_video_infoline(uint32_t color, const char *text)
  */
 static int psp_vdp1_reset(void)
 {
-    /* Nothing to do */
+    /* Nothing to do. */
     return 0;
 }
 
@@ -354,13 +392,13 @@ static void psp_vdp1_draw_start(void)
         return;
     }
 
-    /* Clear out all the rendering queues (just to be sure) */
+    /* Clear out all the rendering queues (just to be safe). */
     int priority;
     for (priority = 0; priority < 8; priority++) {
         vdp1_queue[priority].len = 0;
     }
 
-    /* Get the color offsets */
+    /* Get the color offsets. */
     vdp2_get_color_offsets(1<<6, &vdp1_rofs, &vdp1_gofs, &vdp1_bofs);
 }
 
@@ -429,12 +467,12 @@ static void psp_vdp1_scaled_sprite_draw(void)
     Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
     if (!(cmd.CMDCTRL & 0x0F00)) {
-        /* Direct specification of the size */
+        /* Size is directly specified. */
         cmd.CMDXC++;           cmd.CMDYC++;
         cmd.CMDXB = cmd.CMDXC; cmd.CMDYB = cmd.CMDYA;
         cmd.CMDXD = cmd.CMDXA; cmd.CMDYD = cmd.CMDYC;
     } else {
-        /* Scale around a particular point (left/top, center, right/bottom) */
+        /* Scale around a particular point (left/top, center, right/bottom). */
         int new_w = cmd.CMDXB + 1;
         int new_h = cmd.CMDYB + 1;
         if ((cmd.CMDCTRL & 0x300) == 0x200) {
@@ -625,15 +663,15 @@ static void psp_vdp2_draw_start(void)
 {
     /* If we're skipping this frame, we don't do anything, not even start
      * a new output frame (because that forces a VBlank sync, which may
-     * waste time if the previous frame completed quickly) */
+     * waste time if the previous frame completed quickly). */
     if (frames_skipped < frames_to_skip) {
         return;
     }
 
-    /* Apply any game-specific optimizations or tweaks */
+    /* Apply any game-specific optimizations or tweaks. */
     psp_video_apply_tweaks();
 
-    /* Load the global color lookup tables from VDP2 color RAM */
+    /* Load the global color lookup tables from VDP2 color RAM. */
     const uint16_t *cram = (const uint16_t *)Vdp2ColorRam;
     if (Vdp2Internal.ColorMode == 2) {  // 32-bit color table
         int i;
@@ -660,20 +698,20 @@ static void psp_vdp2_draw_start(void)
         }
     }
 
-    /* Start a new frame */
+    /* Start a new frame. */
     display_set_size(disp_width >> disp_xscale, disp_height >> disp_yscale);
     display_begin_frame();
     texcache_reset();
 
-    /* Initialize the render state */
+    /* Initialize the render state. */
     guTexFilter(GU_NEAREST, GU_NEAREST);
     guTexWrap(GU_CLAMP, GU_CLAMP);
     guTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
     guBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
     guEnable(GU_BLEND);  // We treat everything as alpha-enabled
 
-    /* Reset the draw-graphics flag (will be set by draw_screens() if
-     * graphics are active) */
+    /* Reset the draw-graphics flag (it will be set by draw_screens() if
+     * graphics are active). */
     draw_graphics = 0;
 }
 
@@ -691,10 +729,10 @@ static void psp_vdp2_draw_end(void)
 {
     if (frames_skipped >= frames_to_skip) {
 
-        /* Draw all graphics by priority */
+        /* Draw all graphics by priority. */
         int priority;
         for (priority = 0; priority < 8; priority++) {
-            /* Draw background graphics first */
+            /* Draw background graphics first... */
             if (draw_graphics && priority > 0) {
                 if (bg_priority[BG_NBG3] == priority) {
                     vdp2_draw_graphics(BG_NBG3);
@@ -712,9 +750,9 @@ static void psp_vdp2_draw_end(void)
                     vdp2_draw_graphics(BG_RBG0);
                 }
             }
-            /* Then draw sprites on top */
+            /* Then draw sprites on top... */
             vdp1_run_queue(priority);
-            /* And clear the rendering queue */
+            /* And clear the rendering queue. */
             vdp1_queue[priority].len = 0;
         }
 
@@ -736,19 +774,15 @@ static void psp_vdp2_draw_end(void)
             average_fps = (average_fps * weight) + (fps * (1-weight));
         }
         if (config_get_show_fps()) {
-            unsigned int show_fps = iroundf(fps*10);
+            unsigned int show_fps = iroundf(average_fps*10);
             if (show_fps > 600) {
                 /* FPS may momentarily exceed 60.0 due to timing jitter,
                  * but we never show more than 60.0. */
                 show_fps = 600;
             }
-            unsigned int show_avg = iroundf(average_fps*10);
-            if (show_avg > 600) {
-                show_avg = 600;
-            }
             font_printf((disp_width >> disp_xscale) - 2, 2, 1, 0xAAFF8040,
-                        "FPS: %2d.%d (%2d.%d)", show_avg/10, show_avg%10,
-                        show_fps/10, show_fps%10);
+                        "FPS: %2d.%d (%d/%2d)", show_fps/10, show_fps%10,
+                        frame_count, frame_length);
         }
 
         if (infoline_text) {
@@ -761,7 +795,7 @@ static void psp_vdp2_draw_end(void)
 
         display_end_frame();
 
-    }  // if (frames_to_skip >= frames_skipped )
+    }  // if (frames_skipped >= frames_to_skip)
 
     if (frames_skipped < frames_to_skip) {
         frames_skipped++;
@@ -774,7 +808,7 @@ static void psp_vdp2_draw_end(void)
             frames_to_skip = config_get_frameskip_num();
         }
         if ((Vdp2Regs->BGON & Vdp2External.disptoggle & (1 << BG_RBG0))
-         && config_get_enable_rotate()
+         && config_get_enable_rotate() && !drew_fast_RBG0
         ) {
             frames_to_skip += 1 + frames_to_skip;
         }
@@ -783,6 +817,7 @@ static void psp_vdp2_draw_end(void)
         ) {
             frames_to_skip = 1;
         }
+        drew_fast_RBG0 = 0;
     }
 }
 
@@ -802,10 +837,10 @@ static void psp_vdp2_draw_screens(void)
         return;
     }
 
-    /* Draw the background color(s) */
+    /* Draw the background color(s). */
     vdp2_draw_bg();
 
-    /* Flag the background graphics to be drawn */
+    /* Flag the background graphics to be drawn. */
     draw_graphics = 1;
 }
 
@@ -821,7 +856,7 @@ static void psp_vdp2_draw_screens(void)
  */
 static void psp_vdp2_set_resolution(u16 TVMD)
 {
-    /* Set the display width from bits 0-1 */
+    /* Set the display width from bits 0-1. */
     disp_width = (TVMD & 1) ? 352 : 320;
     if (TVMD & 2) {
         disp_width *= 2;
@@ -829,14 +864,14 @@ static void psp_vdp2_set_resolution(u16 TVMD)
 
     /* Set the display height from bits 4-5.  Note that 0x30 is an invalid
      * value for these bits and should not occur in practice; valid heights
-     * are 0x00=224, 0x10=240, and (for PAL) 0x20=256 */
+     * are 0x00=224, 0x10=240, and (for PAL) 0x20=256. */
     disp_height = 224 + (TVMD & 0x30);
     if ((TVMD & 0xC0) == 0xC0) {
         disp_height *= 2;  // Interlaced mode
     }
 
     /* Hi-res or interlaced displays won't fit on the PSP screen, so cut
-     * everything in half when using them */
+     * everything in half when using them. */
     disp_xscale = (disp_width  > 352);
     disp_yscale = (disp_height > 256);
 }
@@ -892,13 +927,13 @@ static void FASTCALL psp_vdp2_set_priority_RBG0(int priority)
  */
 static void vdp1_draw_lines(vdp1cmd_struct *cmd, int poly)
 {
-    /* Get the line color and priority */
+    /* Get the line color and priority. */
     // FIXME: vidogl.c suggests that the priority processing done for
     // sprites and polygons is not done here; is that correct?
     const uint32_t color32 = vdp1_get_cmd_color(cmd);
     const int priority = Vdp2Regs->PRISA & 0x7;
 
-    /* Set up the vertex array */
+    /* Set up the vertex array. */
     int nvertices = poly ? 5 : 2;
     struct {uint32_t color; int16_t x, y, z, pad;} *vertices;
     vertices = pspGuGetMemoryMerge(sizeof(*vertices) * nvertices);
@@ -922,7 +957,7 @@ static void vdp1_draw_lines(vdp1cmd_struct *cmd, int poly)
         vertices[4] = vertices[0];
     }
 
-    /* Queue the line(s) */
+    /* Queue the line(s). */
     vdp1_queue_render(priority, 0, GU_LINE_STRIP,
                       GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
                       nvertices, NULL, vertices);
@@ -942,24 +977,70 @@ static void vdp1_draw_lines(vdp1cmd_struct *cmd, int poly)
 static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
 {
     /* Get the width, height, and flip arguments for sprites (unused for
-     * untextured polygons) */
+     * untextured polygons). */
 
-    int width, height, flip_h, flip_v;
+    int width, height;
+    unsigned int gouraud_flip = 0;  // XOR bitmask for Gouraud color addresses
     if (textured) {
         width  = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
         height = cmd->CMDSIZE & 0xFF;
-        if (width == 0 || height < 2) {
+        if (width == 0 || height == 0) {
             return;
         }
-        flip_h = cmd->CMDCTRL & 0x10;  // Flip horizontally?
-        flip_v = cmd->CMDCTRL & 0x20;  // Flip vertically?
+        /* If flipping is specified, swap the relevant coordinates in the
+         * "cmd" structure; this helps avoid texture glitches when the
+         * vertex order of a texture is changed (e.g. Panzer Dragoon RPG).
+         * We use inline assembly so we can load and store in 32-bit units
+         * without GCC complaining about strict aliasing violations. */
+        if (cmd->CMDCTRL & 0x10) {  // Flip horizontally?
+            gouraud_flip ^= 2;
+            uint32_t tempA, tempB, tempC, tempD;
+            asm(".set push; .set noreorder\n"
+                "lw %[tempA], 12(%[cmd])\n"
+                "lw %[tempB], 16(%[cmd])\n"
+                "lw %[tempC], 20(%[cmd])\n"
+                "lw %[tempD], 24(%[cmd])\n"
+                "sw %[tempB], 12(%[cmd])\n"
+                "sw %[tempA], 16(%[cmd])\n"
+                "sw %[tempD], 20(%[cmd])\n"
+                "sw %[tempC], 24(%[cmd])\n"
+                ".set pop"
+                : [tempA] "=&r" (tempA), [tempB] "=&r" (tempB),
+                  [tempC] "=&r" (tempC), [tempD] "=&r" (tempD),
+                  "=m" (cmd->CMDXA), "=m" (cmd->CMDYA), "=m" (cmd->CMDXB),
+                  "=m" (cmd->CMDYB), "=m" (cmd->CMDXC), "=m" (cmd->CMDYC),
+                  "=m" (cmd->CMDXD), "=m" (cmd->CMDYD)
+                : [cmd] "r" (cmd)
+            );
+        }
+        if (cmd->CMDCTRL & 0x20) {  // Flip vertically?
+            gouraud_flip ^= 6;
+            uint32_t tempA, tempB, tempC, tempD;
+            asm(".set push; .set noreorder\n"
+                "lw %[tempA], 12(%[cmd])\n"
+                "lw %[tempB], 16(%[cmd])\n"
+                "lw %[tempC], 20(%[cmd])\n"
+                "lw %[tempD], 24(%[cmd])\n"
+                "sw %[tempD], 12(%[cmd])\n"
+                "sw %[tempC], 16(%[cmd])\n"
+                "sw %[tempB], 20(%[cmd])\n"
+                "sw %[tempA], 24(%[cmd])\n"
+                ".set pop"
+                : [tempA] "=&r" (tempA), [tempB] "=&r" (tempB),
+                  [tempC] "=&r" (tempC), [tempD] "=&r" (tempD),
+                  "=m" (cmd->CMDXA), "=m" (cmd->CMDYA), "=m" (cmd->CMDXB),
+                  "=m" (cmd->CMDYB), "=m" (cmd->CMDXC), "=m" (cmd->CMDYC),
+                  "=m" (cmd->CMDXD), "=m" (cmd->CMDYD)
+                : [cmd] "r" (cmd)
+            );
+        }
     } else {
-        width = height = flip_h = flip_v = 0;
+        width = height = 0;
     }
 
 
     /* Get the polygon color and priority, and load the texture if it's
-     * a sprite */
+     * a sprite. */
 
     int priority, sprite_alpha;
     uint32_t color32 = vdp1_get_cmd_color_pri(cmd, textured, &priority);
@@ -982,7 +1063,7 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
         sprite_alpha = 0;
     }
 
-    /* Apply alpha depending on the color calculation settings */
+    /* Apply alpha depending on the color calculation settings. */
 
     if (Vdp2Regs->CCCTL & 0x40) {
         const unsigned int ref_priority = Vdp2Regs->SPCTL>>8 & 0x7;
@@ -1009,35 +1090,31 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
         }
     }
 
-    /* We don't support mesh shading; treat it as half-alpha instead */
+    /* We don't support mesh shading; treat it as half-alpha instead. */
 
     if (cmd->CMDPMOD & 0x100) {  // Mesh shading bit
         const unsigned int alpha = color32 >> 24;
         color32 = ((alpha+1)/2) << 24 | (color32 & 0x00FFFFFF);
     }
 
-    /* If it's a Gouraud-shaded polygon, pick up the four corner colors */
+    /* If it's a Gouraud-shaded polygon, pick up the four corner colors. */
 
     uint32_t color_A, color_B, color_C, color_D;
     if (cmd->CMDPMOD & 4) {  // Gouraud shading bit
         const uint32_t alpha = color32 & 0xFF000000;
         uint16_t color16;
-        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 0);
-        color_A = alpha | (color16 & 0x7C00) << 9
-                        | (color16 & 0x03E0) << 6
-                        | (color16 & 0x001F) << 3;
-        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 2);
-        color_B = alpha | (color16 & 0x7C00) << 9
-                        | (color16 & 0x03E0) << 6
-                        | (color16 & 0x001F) << 3;
-        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 4);
-        color_C = alpha | (color16 & 0x7C00) << 9
-                        | (color16 & 0x03E0) << 6
-                        | (color16 & 0x001F) << 3;
-        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 6);
-        color_D = alpha | (color16 & 0x7C00) << 9
-                        | (color16 & 0x03E0) << 6
-                        | (color16 & 0x001F) << 3;
+        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (0 ^ gouraud_flip));
+        color_A = alpha | (adjust_color_16_32(color16, vdp1_rofs, vdp1_gofs,
+                                              vdp1_bofs) & 0x00FFFFFF);
+        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (2 ^ gouraud_flip));
+        color_B = alpha | (adjust_color_16_32(color16, vdp1_rofs, vdp1_gofs,
+                                              vdp1_bofs) & 0x00FFFFFF);
+        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (4 ^ gouraud_flip));
+        color_C = alpha | (adjust_color_16_32(color16, vdp1_rofs, vdp1_gofs,
+                                              vdp1_bofs) & 0x00FFFFFF);
+        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (6 ^ gouraud_flip));
+        color_D = alpha | (adjust_color_16_32(color16, vdp1_rofs, vdp1_gofs,
+                                              vdp1_bofs) & 0x00FFFFFF);
     } else {
         color_A = color_B = color_C = color_D = color32;
     }
@@ -1051,32 +1128,32 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
 
     struct {int16_t u, v; uint32_t color; int16_t x, y, z, pad;} *vertices;
     vertices = pspGuGetMemoryMerge(sizeof(*vertices) * 4);
-    vertices[0].u = (flip_h ? width : 0);
-    vertices[0].v = (flip_v ? height : 0);
+    vertices[0].u = 0;
+    vertices[0].v = 0;
     vertices[0].color = color_A;
     vertices[0].x = (cmd->CMDXA + Vdp1Regs->localX) >> disp_xscale;
     vertices[0].y = (cmd->CMDYA + Vdp1Regs->localY) >> disp_yscale;
     vertices[0].z = 0;
-    vertices[1].u = (flip_h ? 0 : width);
-    vertices[1].v = (flip_v ? height : 0);
+    vertices[1].u = width;
+    vertices[1].v = 0;
     vertices[1].color = color_B;
     vertices[1].x = (cmd->CMDXB + Vdp1Regs->localX) >> disp_xscale;
     vertices[1].y = (cmd->CMDYB + Vdp1Regs->localY) >> disp_yscale;
     vertices[1].z = 0;
-    vertices[2].u = (flip_h ? width : 0);
-    vertices[2].v = (flip_v ? 0 : height);
+    vertices[2].u = 0;
+    vertices[2].v = height;
     vertices[2].color = color_D;
     vertices[2].x = (cmd->CMDXD + Vdp1Regs->localX) >> disp_xscale;
     vertices[2].y = (cmd->CMDYD + Vdp1Regs->localY) >> disp_yscale;
     vertices[2].z = 0;
-    vertices[3].u = (flip_h ? 0 : width);
-    vertices[3].v = (flip_v ? 0 : height);
+    vertices[3].u = width;
+    vertices[3].v = height;
     vertices[3].color = color_C;
     vertices[3].x = (cmd->CMDXC + Vdp1Regs->localX) >> disp_xscale;
     vertices[3].y = (cmd->CMDYC + Vdp1Regs->localY) >> disp_yscale;
     vertices[3].z = 0;
 
-    /* Queue the draw operation */
+    /* Queue the draw operation. */
 
     vdp1_queue_render(priority, texture_key,
                       GU_TRIANGLE_STRIP, GU_TEXTURE_16BIT | GU_COLOR_8888
@@ -1226,36 +1303,39 @@ static uint32_t vdp1_cache_sprite_texture(
     vdp1cmd_struct *cmd, int width, int height, int *priority_ret,
     int *alpha_ret)
 {
-    uint16_t CMDCOLR = cmd->CMDCOLR;
+    uint16_t pixel_mask = 0xFFFF;
     int pri_reg = 0, alpha_reg = 0;  // Default value
-    if (!((Vdp2Regs->SPCTL & 0x20) && (cmd->CMDCOLR & 0x8000))) {
-        uint16_t color16 = cmd->CMDCOLR;
-        int is_lut = 1;
-        if ((cmd->CMDPMOD>>3 & 7) == 1) {
-            /* Indirect T4 texture; see whether the first pixel references
-             * a LUT or uses raw RGB values */
-            uint32_t addr = cmd->CMDSRCA << 3;
-            uint8_t pixel = T1ReadByte(Vdp1Ram, addr);
-            uint32_t colortable = cmd->CMDCOLR << 3;
-            uint16_t value = T1ReadWord(Vdp1Ram, (pixel>>4)*2 + colortable);
-            if (value & 0x8000) {
-                is_lut = 0;
-            } else {
-                color16 = value;
-            }
-        }
-        if (is_lut) {
-            CMDCOLR &= vdp1_process_sprite_color(color16, &pri_reg, &alpha_reg);
+
+    int is_palette = 1;
+    uint16_t color16 = cmd->CMDCOLR;
+    const int pixfmt = cmd->CMDPMOD>>3 & 7;
+    if (pixfmt == 5) {
+        is_palette = 0;
+    } else if (pixfmt == 1) {
+        /* Indirect T4 texture; see whether the first pixel references
+         * color RAM or uses raw RGB values. */
+        uint32_t addr = cmd->CMDSRCA << 3;
+        uint8_t pixel = T1ReadByte(Vdp1Ram, addr) >> 4;
+        uint32_t colortable = cmd->CMDCOLR << 3;
+        uint16_t value = T1ReadWord(Vdp1Ram, colortable + pixel*2);
+        if (value & 0x8000) {
+            is_palette = 0;
+        } else {
+            color16 = value;
         }
     }
+    if (is_palette) {
+        pixel_mask = vdp1_process_sprite_color(color16, &pri_reg, &alpha_reg);
+    }
+
     *priority_ret = ((uint8_t *)&Vdp2Regs->PRISA)[pri_reg] & 0x7;
     *alpha_ret = 0x1F - (((uint8_t *)&Vdp2Regs->CCRSA)[alpha_reg] & 0x1F);
 
-    /* Cache the texture data and return the key */
+    /* Cache the texture data and return the key. */
     
-    return texcache_cache_sprite(cmd->CMDSRCA, cmd->CMDPMOD, CMDCOLR,
-                                 width, height, vdp1_rofs, vdp1_gofs,
-                                 vdp1_bofs);
+    return texcache_cache_sprite(cmd->CMDSRCA, cmd->CMDPMOD, cmd->CMDCOLR,
+                                 pixel_mask, width, height, vdp1_rofs,
+                                 vdp1_gofs, vdp1_bofs);
 }
 
 /*************************************************************************/
@@ -1278,7 +1358,7 @@ static inline void vdp1_queue_render(
     int priority, uint32_t texture_key, int primitive,
     int vertex_type, int count, const void *indices, const void *vertices)
 {
-    /* Expand the queue if necessary */
+    /* Expand the queue if necessary. */
     if (UNLIKELY(vdp1_queue[priority].len >= vdp1_queue[priority].size)) {
         const int newsize = vdp1_queue[priority].size + VDP1_QUEUE_EXPAND_SIZE;
         VDP1RenderData * const newqueue = realloc(vdp1_queue[priority].queue,
@@ -1292,7 +1372,7 @@ static inline void vdp1_queue_render(
         vdp1_queue[priority].size  = newsize;
     }
 
-    /* Record the data passed in */
+    /* Record the data passed in. */
     const int index = vdp1_queue[priority].len++;
     VDP1RenderData * const entry = &vdp1_queue[priority].queue[index];
     entry->texture_key = texture_key;
@@ -1513,12 +1593,15 @@ static void vdp2_draw_graphics(int layer)
     if (!(Vdp2Regs->BGON & Vdp2External.disptoggle & (1 << layer))) {
         return;
     }
+    if (layer == BG_RBG0 && !config_get_enable_rotate()) {
+        return;
+    }
 
-    /* Check whether we should smooth the graphics */
+    /* Check whether we should smooth the graphics. */
     const int smooth_hires =
         (disp_width > 352 || disp_height > 272) && config_get_smooth_hires();
 
-    /* Find out whether it's a bitmap or not */
+    /* Find out whether it's a bitmap or not. */
     switch (layer) {
       case BG_NBG0: info.isbitmap = Vdp2Regs->CHCTLA & 0x0002; break;
       case BG_NBG1: info.isbitmap = Vdp2Regs->CHCTLA & 0x0200; break;
@@ -1526,7 +1609,7 @@ static void vdp2_draw_graphics(int layer)
       default:      info.isbitmap = 0; break;
     }
 
-    /* Determine color-related data */
+    /* Determine color-related data. */
     info.transparencyenable = !(Vdp2Regs->BGON & (0x100 << layer));
     /* FIXME: specialprimode is not actually supported by the map drawing
      * functions */
@@ -1562,7 +1645,7 @@ static void vdp2_draw_graphics(int layer)
     vdp2_get_color_offsets(1 << layer, (int32_t *)&info.cor,
                            (int32_t *)&info.cog, (int32_t *)&info.cob);
 
-    /* Extract rotation information for RBG0 */
+    /* Extract rotation information for RBG0. */
     if (layer == BG_RBG0) {
         switch (Vdp2Regs->RPMD & 3) {
           case 0:
@@ -1584,7 +1667,7 @@ static void vdp2_draw_graphics(int layer)
         }
     }
 
-    /* Determine tilemap/bitmap size and display offset */
+    /* Determine tilemap/bitmap size and display offset. */
     if (info.isbitmap) {
         if (layer == BG_RBG0) {
             ReadBitmapSize(&info, Vdp2Regs->CHCTLB >> 10, 0x3);
@@ -1607,7 +1690,7 @@ static void vdp2_draw_graphics(int layer)
             info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % info.cellh);
             break;
           case BG_RBG0:
-            /* Transformation is handled separately; nothing to do here */
+            /* Transformation is handled separately; nothing to do here. */
             break;
           default:
             DMSG("info.isbitmap set for invalid layer %d", layer);
@@ -1650,7 +1733,7 @@ static void vdp2_draw_graphics(int layer)
         }
     }
 
-    /* Determine coordinate scaling */
+    /* Determine coordinate scaling. */
     // FIXME: scaled graphics may be distorted because integers are used
     // for vertex coordinates
     switch (layer) {
@@ -1673,7 +1756,7 @@ static void vdp2_draw_graphics(int layer)
         info.coordincy /= 2;
     }
 
-    /* Get clipping data */
+    /* Get clipping data. */
     info.wctl = ((uint8_t *)&Vdp2Regs->WCTLA)[layer];
     clip[0].xstart = 0; clip[0].xend = disp_width;
     clip[0].ystart = 0; clip[0].yend = disp_height;
@@ -1699,56 +1782,71 @@ static void vdp2_draw_graphics(int layer)
     info.draww = (int)((float)(disp_width  >> disp_xscale) / info.coordincx);
     info.drawh = (int)((float)(disp_height >> disp_yscale) / info.coordincy);
 
-    /* Select a rendering function based on the tile layout and format */
-    void (*draw_map_func)(vdp2draw_struct *info, const clipping_struct *clip);
-    if (layer == BG_RBG0) {
-        draw_map_func = &vdp2_draw_map_rotated;
-    } else if (info.isbitmap) {
-        switch (layer) {
-          case BG_NBG0:
-            if ((Vdp2Regs->SCRCTL & 7) == 7) {
-                DMSG("WARNING: line scrolling not supported");
-            }
-            /* fall through */
-          case BG_NBG1:
-            if (info.colornumber == 1 && !smooth_hires) {
-                draw_map_func = &vdp2_draw_bitmap_t8;
-            } else if (info.colornumber == 4 && !smooth_hires
-                       && info.coordincx == 1 && info.coordincy == 1) {
-                draw_map_func = &vdp2_draw_bitmap_32;
-            } else {
-                draw_map_func = &vdp2_draw_bitmap;
-            }
-            break;
-          default:
-            DMSG("info.isbitmap set for invalid layer %d", layer);
-            return;
-        }
-    } else if (info.patternwh == 2) {
-        if (info.colornumber == 1 && !smooth_hires) {
-            draw_map_func = &vdp2_draw_map_16x16_t8;
-        } else {
-            draw_map_func = &vdp2_draw_map_16x16;
-        }
-    } else {
-        if (info.colornumber == 1 && !smooth_hires) {
-            draw_map_func = &vdp2_draw_map_8x8_t8;
-        } else {
-            draw_map_func = &vdp2_draw_map_8x8;
-        }
-    }
-
-    /* Set up for rendering */
+    /* Set up for rendering. */
     guEnable(GU_TEXTURE_2D);
     guAmbientColor(info.alpha<<24 | 0xFFFFFF);
     if (smooth_hires) {
         guTexFilter(GU_LINEAR, GU_LINEAR);
     }
 
-    /* Render the graphics */
-    (*draw_map_func)(&info, clip);
+    /* If a custom drawing function has been specified for this layer, call
+     * it first. */
+    int custom_draw_succeeded = 0;
+    if (custom_draw_func[layer]) {
+        custom_draw_succeeded = (*custom_draw_func[layer])(&info, clip);
+        if (custom_draw_succeeded && layer == BG_RBG0) {
+            drew_fast_RBG0 = RBG0_draw_func_is_fast;
+        }
+    }
 
-    /* All done */
+    if (!custom_draw_succeeded) {
+
+        /* Select a rendering function based on the tile layout and format. */
+        void (*draw_map_func)(vdp2draw_struct *info,
+                              const clipping_struct *clip);
+        if (layer == BG_RBG0) {
+            draw_map_func = &vdp2_draw_map_rotated;
+        } else if (info.isbitmap) {
+            switch (layer) {
+              case BG_NBG0:
+                if ((Vdp2Regs->SCRCTL & 7) == 7) {
+                    DMSG("WARNING: line scrolling not supported");
+                }
+                /* fall through */
+              case BG_NBG1:
+                if (info.colornumber == 1 && !smooth_hires) {
+                    draw_map_func = &vdp2_draw_bitmap_t8;
+                } else if (info.colornumber == 4 && !smooth_hires
+                           && info.coordincx == 1 && info.coordincy == 1) {
+                    draw_map_func = &vdp2_draw_bitmap_32;
+                } else {
+                    draw_map_func = &vdp2_draw_bitmap;
+                }
+                break;
+              default:
+                DMSG("info.isbitmap set for invalid layer %d", layer);
+                return;
+            }
+        } else if (info.patternwh == 2) {
+            if (info.colornumber == 1 && !smooth_hires) {
+                draw_map_func = &vdp2_draw_map_16x16_t8;
+            } else {
+                draw_map_func = &vdp2_draw_map_16x16;
+            }
+        } else {
+            if (info.colornumber == 1 && !smooth_hires) {
+                draw_map_func = &vdp2_draw_map_8x8_t8;
+            } else {
+                draw_map_func = &vdp2_draw_map_8x8;
+            }
+        }
+
+        /* Render the graphics. */
+        (*draw_map_func)(&info, clip);
+
+    }  // if (!custom_draw_succeeded)
+
+    /* All done. */
     if (smooth_hires) {
         guTexFilter(GU_NEAREST, GU_NEAREST);
     }
@@ -1780,7 +1878,7 @@ static uint32_t merge_last_size;
  */
 void *pspGuGetMemoryMerge(uint32_t size)
 {
-    /* Make sure size is 32-bit aligned */
+    /* Make sure size is 32-bit aligned. */
     size = (size + 3) & -4;
 
     /* Start off by allocating the block normally.  Ideally, we'd check

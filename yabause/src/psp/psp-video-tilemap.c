@@ -101,7 +101,7 @@
 
 /*----------------------------------*/
 
-/* Declare tiledatasize as the size of a single tile's data in bytes */
+/* Declare tiledatasize as the size of a single tile's data in bytes. */
 #define GET_TILEDATASIZE \
     int tiledatasize;                                           \
     switch (info->colornumber) {                                \
@@ -114,12 +114,12 @@
                  tiledatasize = 0; break;                        \
     }
 
-/* Allocate memory for "vertspertile" vertices per tile */
-#define GET_VERTICES(vertspertile)                              \
+/* Allocate memory for "vertspertile" vertices per "size"x"size" tile. */
+#define GET_VERTICES(size,vertspertile)                         \
     /* We add 4 here to handle up to 15 pixels of partial tiles \
      * on each edge of the display area */                      \
-    const int tilew = info->draww / 8 + 4;                      \
-    const int tileh = info->drawh / 8 + 4;                      \
+    const int tilew = info->draww / (size) + 4;                 \
+    const int tileh = info->drawh / (size) + 4;                 \
     const int nvertices = tilew * tileh * (vertspertile);       \
     VertexUVXYZ *vertices = pspGuGetMemoryMerge(sizeof(*vertices) * nvertices);
 
@@ -132,29 +132,29 @@
     int cur_palette = -1;  /* So it's always set the first time */ \
     guClutMode(GU_PSM_8888, 0, 0xFF, 0);
 
-/* Set the texture pixel format for 8-bit indexed tiles. 16-byte-wide
+/* Set the texture pixel format for 8-bit indexed tiles.  16-byte-wide
  * textures are effectively swizzled already, so set the swizzled flag for
  * whatever speed boost it gives us. */
 #define INIT_T8_TEXTURE                                         \
     guTexMode(GU_PSM_T8, 0, 0, 1);
 
-/* Set the vertex type for 8-bit indexed tiles */
+/* Set the vertex type for 8-bit indexed tiles. */
 #define INIT_T8_VERTEX                                          \
     guVertexFormat(GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D);
 
-/* Initialize the work buffer pointers for 8-bit indexed tiles */
+/* Initialize the work buffer pointers for 8-bit indexed tiles. */
 #define INIT_T8_WORK_BUFFER                                     \
     uint32_t * const work_buffer_0 = display_work_buffer();     \
     uint32_t * const work_buffer_1 = work_buffer_0 + DISPLAY_STRIDE;
 
 /* Initialize a variable for tracking empty tiles (initialize with an
- * impossible address so it matches nothing by default) */
+ * impossible address so it matches nothing by default). */
 #define INIT_EMPTY_TILE                                         \
     uint32_t empty_tile_addr = 1;
 
 /*----------------------------------*/
 
-/* Check whether this is a known empty tile, and skip the loop body if so */
+/* Check whether this is a known empty tile, and skip the loop body if so. */
 static const uint8_t CHECK_EMPTY_TILE_bppshift_lut[8] = {2,3,4,4,5,5,5,5};
 #define CHECK_EMPTY_TILE(tilesize)                              \
     if (info->charaddr == empty_tile_addr) {                    \
@@ -179,12 +179,13 @@ static const uint8_t CHECK_EMPTY_TILE_bppshift_lut[8] = {2,3,4,4,5,5,5,5};
         }                                                       \
     }
 
-/* Declare flip_* and priority with the proper values */
-#define GET_FLIP_PRI                                            \
-    const int flip_u0 = (info->flipfunction & 1) << 3;          \
-    const int flip_u1 = flip_u0 ^ 8;                            \
-    const int flip_v0 = (info->flipfunction & 2) << 2;          \
-    const int flip_v1 = flip_v0 ^ 8;                            \
+/* Declare flip_* and priority with the proper values for "size"x"size"
+ * tiles (either 8x8 or 16x16). */
+#define GET_FLIP_PRI(size)                                      \
+    const int flip_u0 = (info->flipfunction & 1) << ((size)==16 ? 4 : 3); \
+    const int flip_u1 = flip_u0 ^ (size);                       \
+    const int flip_v0 = (info->flipfunction & 2) << ((size)==16 ? 3 : 2); \
+    const int flip_v1 = flip_v0 ^ (size);                       \
     int priority;                                               \
     if (info->specialprimode == 1) {                            \
         priority = (info->priority & ~1) | info->specialfunction; \
@@ -192,7 +193,7 @@ static const uint8_t CHECK_EMPTY_TILE_bppshift_lut[8] = {2,3,4,4,5,5,5,5};
         priority = info->priority;                              \
     }
 
-/* Declare flip_* and priority for 8-bit indexed tiles */
+/* Declare flip_* and priority for 8-bit indexed tiles. */
 static const int flip_t8_u[4][4] =
     { {0,8,8,16}, {8,0,16,8}, {8,16,0,8}, {16,8,8,0} };
 #define GET_FLIP_PRI_T8                                         \
@@ -209,7 +210,7 @@ static const int flip_t8_u[4][4] =
         priority = info->priority;                              \
     }
 
-/* Update the current palette for an 8-bit indexed tile, if necessary */
+/* Update the current palette for an 8-bit indexed tile, if necessary. */
 #define UPDATE_T8_PALETTE                                       \
     if (info->paladdr != cur_palette) {                         \
         cur_palette = info->paladdr;                            \
@@ -225,7 +226,7 @@ static const int flip_t8_u[4][4] =
         }                                                       \
     }
 
-/* Define 2 vertices for a generic 8x8 tile */
+/* Define 2 vertices for a generic 8x8 or 16x16 tile. */
 #define SET_VERTICES(tilex,tiley,xsize,ysize)                   \
     vertices[0].u = flip_u0;                                    \
     vertices[0].v = flip_v0;                                    \
@@ -238,7 +239,7 @@ static const int flip_t8_u[4][4] =
     vertices[1].y = (tiley) + (ysize);                          \
     vertices[1].z = 0;
 
-/* Define 2 vertices for the even lines of an 8-bit indexed 8x8 tile */
+/* Define 2 vertices for the even lines of an 8-bit indexed 8x8 tile. */
 #define SET_VERTICES_T8_EVEN(tilex,tiley,xsize,ysize)           \
     vertices[0].u = flip_u0;                                    \
     vertices[0].v = yofs + flip_v0;                             \
@@ -251,7 +252,7 @@ static const int flip_t8_u[4][4] =
     vertices[1].y = ((tiley) + (ysize)) / 2;                    \
     vertices[1].z = 0;
 
-/* Define 2 vertices for the odd lines of an 8-bit indexed 8x8 tile */
+/* Define 2 vertices for the odd lines of an 8-bit indexed 8x8 tile. */
 #define SET_VERTICES_T8_ODD(tilex,tiley,xsize,ysize)            \
     vertices[2].u = flip_u2;                                    \
     vertices[2].v = flip_v0;                                    \
@@ -264,26 +265,26 @@ static const int flip_t8_u[4][4] =
     vertices[3].y = ((tiley) + (ysize)) / 2;                    \
     vertices[3].z = 0;
 
-/* Load the texture pointer for an 8-bit indexed 8x8 tile */
+/* Load the texture pointer for an 8-bit indexed 8x8 tile. */
 #define LOAD_T8_TILE                                            \
     guTexFlush();                                               \
     guTexImage(0, 512, 512, 16, src);
 
-/* Set the even-lines work buffer for 8-bit indexed 8x8 tiles */
+/* Set the even-lines work buffer for 8-bit indexed 8x8 tiles. */
 #define SET_T8_BUFFER_0                                         \
     guDrawBuffer(GU_PSM_8888, work_buffer_0, DISPLAY_STRIDE*2);
 
 /* Draw the even lines of an 8-bit indexed 8x8 tile */
-#define RENDER_T8_EVEN \
+#define RENDER_T8_EVEN                                          \
     guVertexPointer(vertices);                                  \
     guDrawPrimitive(GU_SPRITES, 2);
 
-/* Set the odd-lines work buffer for 8-bit indexed 8x8 tiles */
+/* Set the odd-lines work buffer for 8-bit indexed 8x8 tiles. */
 #define SET_T8_BUFFER_1                                         \
     guDrawBuffer(GU_PSM_8888, work_buffer_1, DISPLAY_STRIDE*2);
 
-/* Draw the odd lines of an 8-bit indexed 8x8 tile */
-#define RENDER_T8_ODD \
+/* Draw the odd lines of an 8-bit indexed 8x8 tile. */
+#define RENDER_T8_ODD                                           \
     guVertexPointer(vertices+2);                                \
     guDrawPrimitive(GU_SPRITES, 2);
 
@@ -304,16 +305,16 @@ static const int flip_t8_u[4][4] =
 void vdp2_draw_map_8x8(vdp2draw_struct *info, const clipping_struct *clip)
 {
     /* Allocate vertex memory and perform other initialization */
-    GET_VERTICES(2);
+    GET_VERTICES(8, 2);
     INIT_EMPTY_TILE;
 
     /* Loop through tiles */
     TILE_LOOP_BEGIN(8) {
         CHECK_EMPTY_TILE(8);
-        GET_FLIP_PRI;
+        GET_FLIP_PRI(8);
         SET_VERTICES(info->x * info->coordincx, info->y * info->coordincy,
                      8 * info->coordincx, 8 * info->coordincy);
-        texcache_load_tile(info->charaddr, info->colornumber,
+        texcache_load_tile(8, info->charaddr, info->colornumber,
                            info->transparencyenable,
                            info->coloroffset, info->paladdr << 4,
                            info->cor, info->cog, info->cob);
@@ -346,7 +347,7 @@ void vdp2_draw_map_8x8_t8(vdp2draw_struct *info, const clipping_struct *clip)
     /* Allocate vertex memory and perform other initialization.  Note that
      * we need 2 sprites to draw each tile if we're not optimizing
      * interlaced graphics. */
-    GET_VERTICES(interlaced ? 2 : 4);
+    GET_VERTICES(8, interlaced ? 2 : 4);
     INIT_T8_PALETTE;
     INIT_T8_TEXTURE;
     INIT_T8_VERTEX;
@@ -415,31 +416,24 @@ void vdp2_draw_map_16x16(vdp2draw_struct *info, const clipping_struct *clip)
     GET_TILEDATASIZE;
 
     /* Allocate vertex memory and perform other initialization */
-    GET_VERTICES(2);
+    GET_VERTICES(16, 2);
     INIT_EMPTY_TILE;
 
     /* Loop through tiles */
     TILE_LOOP_BEGIN(16) {
         CHECK_EMPTY_TILE(16);
-        GET_FLIP_PRI;
+        GET_FLIP_PRI(16);
 
-        /* Draw four consecutive tiles in a 2x2 pattern */
-        int tilenum;
-        for (tilenum = 0; tilenum < 4; tilenum++) {
-            const int tilex = info->x + (8 * (tilenum % 2));
-            const int tiley = info->y + (8 * (tilenum / 2));
-            SET_VERTICES(tilex * info->coordincx, tiley * info->coordincy,
-                         8 * info->coordincx, 8 * info->coordincy);
-            texcache_load_tile(info->charaddr, info->colornumber,
-                               info->transparencyenable,
-                               info->coloroffset, info->paladdr << 4,
-                               info->cor, info->cog, info->cob);
-            guDrawArray(GU_SPRITES,
-                        GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
-                        2, NULL, vertices);
-            vertices += 2;
-            info->charaddr += tiledatasize;
-        }
+        SET_VERTICES(info->x * info->coordincx, info->y * info->coordincy,
+                     16 * info->coordincx, 16 * info->coordincy);
+        texcache_load_tile(16, info->charaddr, info->colornumber,
+                           info->transparencyenable,
+                           info->coloroffset, info->paladdr << 4,
+                           info->cor, info->cog, info->cob);
+        guDrawArray(GU_SPRITES,
+                    GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
+                    2, NULL, vertices);
+        vertices += 2;
     } TILE_LOOP_END;
 }
 
@@ -461,7 +455,7 @@ void vdp2_draw_map_16x16_t8(vdp2draw_struct *info, const clipping_struct *clip)
     const int interlaced = (disp_height > 272);
 
     /* Allocate vertex memory and perform other initialization */
-    GET_VERTICES(interlaced ? 2 : 4);
+    GET_VERTICES(8, interlaced ? 2 : 4);
     INIT_T8_PALETTE;
     INIT_T8_TEXTURE;
     INIT_T8_VERTEX;

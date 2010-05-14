@@ -1,5 +1,5 @@
 /*  src/psp/psp-m68k.c: PSP M68k emulator interface (uses Q68)
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -143,15 +143,7 @@ static void local_free(void *ptr);
  */
 static int psp_m68k_init(void)
 {
-    if (!(q68_state = q68_create())) {
-        DMSG("Failed to create Q68 state block");
-        return -1;
-    }
-    q68_set_irq(q68_state, 0);
-    q68_set_jit_memory_funcs(q68_state, local_malloc, local_realloc,
-                             local_free, flush_cache);
-
-    /* Allocate a memory block for the JIT code arena; make sure it's
+    /* Allocate a memory block for the Q68 memory pool; make sure it's
      * 64-byte aligned to avoid cache line collisions */
     const uint32_t jit_arena_size = 2 * 1024 * 1024;
     jit_arena_base = malloc(jit_arena_size + (64*2-1));
@@ -163,6 +155,13 @@ static int psp_m68k_init(void)
     }
     local_malloc_init((void *)(((uintptr_t)jit_arena_base + 0x3F) & -0x40),
                       jit_arena_size);
+
+    if (!(q68_state = q68_create_ex(local_malloc, local_realloc, local_free))) {
+        DMSG("Failed to create Q68 state block");
+        return -1;
+    }
+    q68_set_irq(q68_state, 0);
+    q68_set_jit_flush_func(q68_state, flush_cache);
 
     return 0;
 }

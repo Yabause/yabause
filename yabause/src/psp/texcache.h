@@ -40,13 +40,14 @@ extern void texcache_reset(void);
  *
  * [Parameters]
  *     CMDSRCA, CMDPMOD, CMDCOLR: Values of like-named fields in VDP1 command
+ *                    pixel_mask: Mask to apply to paletted pixel data
  *                 width, height: Size of texture (in pixels)
  *              rofs, gofs, bofs: Color offset values for texture
  * [Return value]
  *     Texture key (zero on error)
  */
 extern uint32_t texcache_cache_sprite(uint16_t CMDSRCA, uint16_t CMDPMOD,
-                                      uint16_t CMDCOLR,
+                                      uint16_t CMDCOLR, uint16_t pixel_mask,
                                       unsigned int width, unsigned int height,
                                       int rofs, int gofs, int bofs);
 
@@ -62,10 +63,11 @@ extern uint32_t texcache_cache_sprite(uint16_t CMDSRCA, uint16_t CMDPMOD,
 extern void texcache_load_sprite(uint32_t key);
 
 /**
- * texcache_load_tile:  Load the specified tile texture into the GE
- * registers for drawing.  If the texture is not cached, caches it first.
+ * texcache_load_tile:  Load the specified 8x8 or 16x16 tile texture into
+ * the GE registers for drawing, first caching the texture if necessary.
  *
  * [Parameters]
+ *             tilesize: Pixel size (width and height) of tile, either 8 or 16
  *              address: Tile data address within VDP2 RAM
  *               pixfmt: Tile pixel format
  *          transparent: Nonzero if index 0 or alpha 0 should be transparent
@@ -75,13 +77,14 @@ extern void texcache_load_sprite(uint32_t key);
  * [Return value]
  *     None
  */
-extern void texcache_load_tile(uint32_t address, int pixfmt, int transparent,
+extern void texcache_load_tile(int tilesize, uint32_t address,
+                               int pixfmt, int transparent,
                                uint16_t color_base, uint16_t color_ofs,
                                int rofs, int gofs, int bofs);
 
 /**
  * texcache_load_bitmap:  Load the specified bitmap texture into the GE
- * registers for drawing.  If the texture is not cached, caches it first.
+ * registers for drawing, first caching the texture if necessary.
  *
  * [Parameters]
  *              address: Bitmap data address within VDP2 RAM

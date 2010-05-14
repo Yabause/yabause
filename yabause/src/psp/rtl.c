@@ -155,6 +155,7 @@ RTLBlock *rtl_create_block(void)
     block->next_reg = 1;
     block->first_live_reg = 0;
     block->last_live_reg = 0;
+    block->unique_pointer_index = 1;
 
     block->finalized = 0;
 
@@ -372,6 +373,37 @@ unsigned int rtl_alloc_register(RTLBlock *block)
     const unsigned int reg_index = block->next_reg++;
     memset(&block->regs[reg_index], 0, sizeof(block->regs[reg_index]));
     return reg_index;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * rtl_register_set_unique_pointer:  Mark the given register as being a
+ * "unique pointer", which points to a region of memory which will never
+ * be accessed except through this register (or another register copied
+ * from it).  This function must be called after adding the instruction
+ * which sets the register, and if the register's value is subsequently
+ * modified, its "unique pointer" status will be cancelled.
+ *
+ * [Parameters]
+ *      block: RTLBlock containing register to mark
+ *     regnum: Register number to mark
+ * [Return value]
+ *     Nonzero on success, zero on error
+ */
+int rtl_register_set_unique_pointer(RTLBlock *block, uint32_t regnum)
+{
+    PRECOND(block != NULL, return 0);
+    PRECOND(!block->finalized, return 0);
+    PRECOND(block->regs != NULL, return 0);
+    PRECOND(regnum != 0 && regnum < block->next_reg, return 0);
+
+    if (block->unique_pointer_index == 0) {  // i.e. it wrapped around
+        DMSG("Unique pointer index overflow at register r%u", regnum);
+        return 0;
+    }
+    block->regs[regnum].unique_pointer = block->unique_pointer_index++;
+    return 1;
 }
 
 /*-----------------------------------------------------------------------*/

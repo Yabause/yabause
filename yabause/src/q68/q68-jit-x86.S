@@ -1,6 +1,6 @@
 /*  src/q68/q68-jit-x86.S: x86 (32/64-bit) dynamic translation implementation
                            for Q68
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -87,13 +87,13 @@ Q68State_fault_status   =  98
 Q68State_halted         = 100
 Q68State_irq            = 104
 Q68State_cycles         = 108
-Q68State_readb_func     = 112
-Q68State_readw_func     = 120
-Q68State_writeb_func    = 128
-Q68State_writew_func    = 136
-Q68State_jit_malloc     = 144
-Q68State_jit_realloc    = 152
-Q68State_jit_free       = 160
+Q68State_malloc_func    = 112
+Q68State_realloc_func   = 120
+Q68State_free_func      = 128
+Q68State_readb_func     = 136
+Q68State_readw_func     = 144
+Q68State_writeb_func    = 152
+Q68State_writew_func    = 160
 Q68State_jit_flush      = 168
 Q68State_jit_running    = 176
 Q68State_jit_abort      = 184
@@ -160,13 +160,13 @@ Q68State_fault_status   =  98
 Q68State_halted         = 100
 Q68State_irq            = 104
 Q68State_cycles         = 108
-Q68State_readb_func     = 112
-Q68State_readw_func     = 116
-Q68State_writeb_func    = 120
-Q68State_writew_func    = 124
-Q68State_jit_malloc     = 128
-Q68State_jit_realloc    = 132
-Q68State_jit_free       = 136
+Q68State_malloc_func    = 112
+Q68State_realloc_func   = 116
+Q68State_free_func      = 120
+Q68State_readb_func     = 124
+Q68State_readw_func     = 128
+Q68State_writeb_func    = 132
+Q68State_writew_func    = 136
 Q68State_jit_flush      = 140
 Q68State_jit_running    = 144
 Q68State_jit_abort      = 148

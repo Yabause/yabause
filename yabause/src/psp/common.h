@@ -110,10 +110,6 @@ extern int me_available;
 
 /*----------------------------------*/
 
-/* Minimum/maximum values */
-#define min(a,b)  ((a) < (b) ? (a) : (b))
-#define max(a,b)  ((a) > (b) ? (a) : (b))
-
 /* Get the length of an array */
 #define lenof(a)  (sizeof((a)) / sizeof((a)[0]))
 /* Bound a value between two limits (inclusive) */
@@ -140,9 +136,17 @@ extern int me_available;
 # define CONST_FUNCTION  /*nothing*/
 #endif
 
+/* Force a function to be inlined if possible (use in place of "inline") */
+#ifdef __GNUC__
+# define ALWAYS_INLINE inline __attribute__((always_inline))
+#else
+# define ALWAYS_INLINE inline
+#endif
+
 /*----------------------------------*/
 
-/* Convert a float to an int (optimized for PSP) */
+/* Convert a float to an int (optimized for PSP, but with alternate
+ * versions for testing on other systems) */
 
 #ifdef PSP
 
@@ -150,24 +154,29 @@ extern int me_available;
 static inline CONST_FUNCTION int32_t name(const float x) {              \
     float dummy;                                                        \
     int32_t result;                                                     \
-    asm(".set push; .set noreorder\n" insn "\n.set pop"                 \
-         : [result] "=r" (result), [dummy] "=f" (dummy) : [x] "f" (x)); \
+    asm(insn : [result] "=r" (result), [dummy] "=f" (dummy) : [x] "f" (x)); \
     return result;                                                      \
 }
 
-DEFINE_IFUNC(ifloorf, "floor.w.s %[dummy],%[x]; mfc1 %[result],%[dummy]; nop")
-DEFINE_IFUNC(iceilf,  "ceil.w.s  %[dummy],%[x]; mfc1 %[result],%[dummy]; nop")
-DEFINE_IFUNC(itruncf, "trunc.w.s %[dummy],%[x]; mfc1 %[result],%[dummy]; nop")
-DEFINE_IFUNC(iroundf, "round.w.s %[dummy],%[x]; mfc1 %[result],%[dummy]; nop")
+DEFINE_IFUNC(ifloorf, "floor.w.s %[dummy],%[x]; mfc1 %[result],%[dummy]")
+DEFINE_IFUNC(iceilf,  "ceil.w.s  %[dummy],%[x]; mfc1 %[result],%[dummy]")
+DEFINE_IFUNC(itruncf, "trunc.w.s %[dummy],%[x]; mfc1 %[result],%[dummy]")
+DEFINE_IFUNC(iroundf, "round.w.s %[dummy],%[x]; mfc1 %[result],%[dummy]")
 
-#else  // !PSP
+#elif HAVE_FLOORF
 
 static inline CONST_FUNCTION int ifloorf(float x) {return (int)floorf(x);}
 static inline CONST_FUNCTION int iceilf (float x) {return (int)ceilf(x);}
-/* truncf()/roundf() are C99 only */
+static inline CONST_FUNCTION int itruncf(float x) {return (int)truncf(x);}
+static inline CONST_FUNCTION int iroundf(float x) {return (int)roundf(x);}
+
+#else  // !PSP && !HAVE_FLOORF --> use double-precision floor() and ceil()
+
+static inline CONST_FUNCTION int ifloorf(float x) {return (int)floor(x);}
+static inline CONST_FUNCTION int iceilf (float x) {return (int)ceil(x);}
 static inline CONST_FUNCTION int itruncf(float x)
-    {return (x)<0 ? (int)-floorf(-x) : (int)floorf(x);}
-static inline CONST_FUNCTION int iroundf(float x) {return (int)floorf(x+0.5f);}
+    {return (x)<0 ? (int)-floor(-x) : (int)floor(x);}
+static inline CONST_FUNCTION int iroundf(float x) {return (int)floor(x+0.5f);}
 
 #endif
 

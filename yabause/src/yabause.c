@@ -102,9 +102,10 @@ void print_usage(const char *program_name) {
 void YabauseChangeTiming(int freqtype) {
    // Setup all the variables related to timing
 
-   const double freq_base = 39375000.0 / 11.0;  // i.e. 3.57954545... MHz
-   const double freq_mult = (freqtype == CLKTYPE_26MHZ) ? 7.5 : 8.0;
-   const double freq_shifted = freq_base * freq_mult * (1 << YABSYS_TIMING_BITS);
+   const double freq_base = yabsys.IsPal ? 28437500.0
+      : (39375000.0 / 11.0) * 8.0;  // i.e. 8 * 3.579545... = 28.636363... MHz
+   const double freq_mult = (freqtype == CLKTYPE_26MHZ) ? 15.0/16.0 : 1.0;
+   const double freq_shifted = (freq_base * freq_mult) * (1 << YABSYS_TIMING_BITS);
    const double usec_shifted = 1.0e6 * (1 << YABSYS_TIMING_BITS);
    const double deciline_time = yabsys.IsPal ? 1.0 /  50        / 313 / 10
                                              : 1.0 / (60/1.001) / 263 / 10;
@@ -317,7 +318,6 @@ void YabauseResetNoLoad(void) {
    Cs2Reset();
    ScuReset();
    ScspReset();
-   M68KStop();
    Vdp1Reset();
    Vdp2Reset();
    SmpcReset();

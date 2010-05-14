@@ -279,6 +279,7 @@ typedef enum RTLRegType_ {
  */
 typedef struct RTLRegister_ RTLRegister;
 struct RTLRegister_ {
+    /* Basic register information */
     uint8_t source;             // Register source (RTLRegType)
     uint8_t live;               // Nonzero if this register has been referenced
                                 //    (this field is never cleared once set)
@@ -286,6 +287,15 @@ struct RTLRegister_ {
     uint32_t birth;             // First RTL insn index when register is live
                                 //    (if SSA, insn index where it's assigned)
     uint32_t death;             // Last RTL insn index when register is live
+
+    /* Unique pointer information.  The "unique_pointer" field has the
+     * property that all registers with the same nonzero value for
+     * "unique_pointer" are native addresses which point to the same region
+     * of memory, and that region of memory will only be accessed through
+     * a register with the same "unique_pointer" value. */
+    uint16_t unique_pointer;
+
+    /* Register value information */
     union {
         uintptr_t value;        // Value of register for RTLREG_CONSTANT;
                                 //    also used during interpreted execution
@@ -404,6 +414,7 @@ struct RTLBlock_ {
     uint16_t next_reg;          // Next register number to allocate
     uint16_t first_live_reg;    // First register in live range list
     uint16_t last_live_reg;     // Last register in live range list
+    uint16_t unique_pointer_index; // Next value for RTLRegister.unique_pointer
 
     uint8_t finalized;          // Nonzero if block has been finalized
 

@@ -825,7 +825,7 @@ int can_optimize_idle(const uint16_t *insn_ptr, uint32_t PC,
  *     Rhi = !Q ? remainder : (remainder - Rdiv)
  * If the number of repetitions of ROTCL Rlo / DIV1 Rdiv,Rhi is less than
  * 32, the result is equivalent to shifting the dividend right (32-N) bits
- * where N is the repetition count, except that the low N bits of the
+ * where N is the repetition count, except that the low (32-N) bits of the
  * dividend remain in the most-significant bits of Rlo.
  *
  * Signed 64bit/32bit division (where the dividend is a 32-bit signed value

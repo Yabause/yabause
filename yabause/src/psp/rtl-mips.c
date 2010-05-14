@@ -172,7 +172,7 @@ static uint32_t last_insn(const RTLBlock * const block);
 static uint32_t pop_insn(RTLBlock * const block);
 
 static int append_float(RTLBlock * const block, const uint32_t insn,
-                        int latency);
+                        const int latency);
 static int append_branch(RTLBlock * const block, const uint32_t insn);
 
 static int append_prologue(RTLBlock * const block);
@@ -189,6 +189,7 @@ static int append_epilogue(RTLBlock * const block);
 static CONST_FUNC inline int insn_rs(const uint32_t opcode);
 static CONST_FUNC inline int insn_rt(const uint32_t opcode);
 static CONST_FUNC inline int insn_rd(const uint32_t opcode);
+static CONST_FUNC inline int insn_imm(const uint32_t opcode);
 
 static CONST_FUNC inline int insn_is_load(const uint32_t opcode);
 static CONST_FUNC inline int insn_is_store(const uint32_t opcode);
@@ -384,6 +385,37 @@ int rtl_translate_block_mips(RTLBlock *block, void **code_ret,
     PRECOND(block->label_unitmap != NULL, return 0);
     PRECOND(code_ret != NULL, return 0);
     PRECOND(size_ret != NULL, return 0);
+
+    /* Handle manually-optimized cases specially for increased efficiency */
+    if (block->num_insns == 4
+     && block->insns[0].opcode == RTLOP_LOAD_PARAM
+     && block->insns[0].src_imm == 0
+     && block->insns[1].opcode == RTLOP_LOAD_ADDR
+     && block->insns[2].opcode == RTLOP_CALL
+     && block->insns[2].src1 == block->insns[0].dest
+     && block->insns[2].target == block->insns[1].dest
+     && block->insns[3].opcode == RTLOP_RETURN
+    ) {
+        const unsigned int length = 16;
+        uint32_t *code = malloc(length);
+        if (!code) {
+            DMSG("No memory for native buffer (%u bytes)", length);
+            return 0;
+        }
+        if ((uintptr_t)code >> 28 == block->insns[1].src_addr >> 28) {
+            code[0] = MIPS_J((block->insns[1].src_addr & 0x0FFFFFFF) >> 2);
+            code[1] = MIPS_NOP();
+        } else {
+            code[0] = MIPS_LUI(MIPS_at, block->insns[1].src_addr >> 16);
+            code[1] = MIPS_ORI(MIPS_at, MIPS_at,
+                               block->insns[1].src_addr & 0xFFFF);
+            code[2] = MIPS_JR(MIPS_at);
+            code[3] = MIPS_NOP();
+        }
+        *code_ret = code;
+        *size_ret = length;
+        return 1;
+    }
 
     /* Initialize translation-specific fields */
     block->native_buffer = NULL;
@@ -683,8 +715,10 @@ static inline int allocate_regs_insn(RTLBlock * const block,
 #endif
         block->regs[insn->dest].last_used = insn_index;
         clean_active_list(block, insn_index);
-        if (merge_constant_register(block, unit_index, insn_index,
-                                    insn->dest)) {
+        if (!block->regs[insn->dest].native_allocated
+         && merge_constant_register(block, unit_index, insn_index,
+                                    insn->dest)
+        ) {
             insn->opcode = RTLOP_NOP;
             insn->src_imm = 0;
             return 1;
@@ -1300,7 +1334,6 @@ static int merge_constant_register(RTLBlock * const block,
     PRECOND(block->regs != NULL, return 0);
     PRECOND(unit_index < block->num_units, return 0);
     PRECOND(reg_index < block->next_reg, return 0);
-    PRECOND(block->regs[reg_index].source == RTLREG_CONSTANT, return 0);
     PRECOND(!block->regs[reg_index].native_allocated, return 0);
 
     RTLRegister * const reg = &block->regs[reg_index];
@@ -1459,8 +1492,6 @@ static int optimize_immediate(RTLBlock * const block,
             return 0);
     PRECOND(block->insns[insn_index].dest != 0
             && block->insns[insn_index].dest < block->next_reg, return 0);
-    PRECOND(block->regs[block->insns[insn_index].dest].source==RTLREG_CONSTANT,
-            return 0);
 
     RTLInsn *insn = &block->insns[insn_index];
     const uint32_t imm_index = insn[0].dest;
@@ -2129,16 +2160,27 @@ static inline unsigned int translate_insn(RTLBlock * const block,
       /*----------------------------*/
 
       case RTLOP_MOVE:
-        MAP_REGISTER(src1, 1, 0);
-        /* Note: we have to map the output operand _after_ all the input
-         * operands, or else the output operand will get spilled if it
-         * shares a hardware register with an input operand.  (This isn't
-         * actually true with the current allocation scheme, since we never
-         * share hardware registers between multiple live RTL registers,
-         * but it's applicable in general, and it doesn't hurt anything to
-         * do it this way.) */
-        MAP_REGISTER(dest, 0, 0);
-        APPEND(MIPS_MOVE(dest, src1));
+        if (block->regs[insn->src1].mips.is_in_hilo
+         && block->regs[insn->src1].death == insn_index
+        ) {
+            /* Handle this case specially--if we did it the usual way,
+             * we'd waste a cycle with MFHI/MFLO to src1 followed by a
+             * MOVE from src1 to dest. */
+            MAP_REGISTER(dest, 0, 0);
+            APPEND(block->regs[insn->src1].mips.is_in_hilo | dest<<11);
+            block->regs[insn->src1].mips.is_in_hilo = 0;
+        } else {
+            MAP_REGISTER(src1, 1, 0);
+            /* Note: we have to map the output operand _after_ all the input
+             * operands, or else the output operand will get spilled if it
+             * shares a hardware register with an input operand.  (This isn't
+             * actually true with the current allocation scheme, since we never
+             * share hardware registers between multiple live RTL registers,
+             * but it's applicable in general, and it doesn't hurt anything to
+             * do it this way.) */
+            MAP_REGISTER(dest, 0, 0);
+            APPEND(MIPS_MOVE(dest, src1));
+        }
         MAYBE_SAVE(dest);
         return 1;
 
@@ -3002,7 +3044,7 @@ static int append_mult_div(RTLBlock * const block, const RTLInsn * const insn,
     int src1, src2;
     MAP_REGISTER(src1, 1, insn->src2);
     MAP_REGISTER(src2, 1, insn->src1);
-    const int float_distance = ((opcode & 0x3E) == __SP_DIV) ? 20 : 6;
+    const int float_distance = ((opcode & 0x3E) == __SP_DIV) ? 35 : 6;
     APPEND_FLOAT(opcode | src1<<21 | src2<<16, float_distance);
     if (insn->dest) {
         if (block->regs[insn->dest].frame_allocated) {
@@ -3875,7 +3917,7 @@ static unsigned int sh2_stealth_trace_store(RTLBlock * const block,
       case 4: funcptr = (uintptr_t)trace_storel_callback; break;
       default:
         DMSG("Invalid store trace type %u", insn->src_imm & 0xFF);
-        break;
+        return 0;
     }
 
     uint32_t op = insn[num_insns++].src_imm;
@@ -4027,11 +4069,14 @@ static int resolve_branches(RTLBlock * const block)
             }
             int32_t offset = (int16_t)(opcode & 0xFFFF);
             const uint32_t *target = native_ptr + (1+offset);
+            unsigned int limit = 16;  // Watch out for infinite loops
             while ((*target>>16 == MIPS_B(0)>>16
                     || *target>>16 == MIPS_B_LABEL(0)>>16
                     || *target == MIPS_B_EPILOGUE_RET_CONST)
                 && (native_ptr[1] == MIPS_NOP() || target[1] == MIPS_NOP())
+                && limit > 0
             ) {
+                limit--;
                 if (target[1] != MIPS_NOP()) {
                     native_ptr[1] = target[1];  // Must have been a NOP
                     opcode = likely_opcode;
@@ -4203,7 +4248,8 @@ static uint32_t pop_insn(RTLBlock * const block)
  * divide instruction) to the given block.  If possible (and if
  * MIPS_OPTIMIZE_SCHEDULING is enabled), float the instruction upwards to
  * obtain a distance of at least "latency" instructions before the next
- * instruction.
+ * instruction.  Preceding instructions in the same dependency chain are
+ * also floated upwards to preserve correctness.
  *
  * [Parameters]
  *       block: RTL block to append to
@@ -4213,46 +4259,72 @@ static uint32_t pop_insn(RTLBlock * const block)
  *     Nonzero on success, zero on error
  */
 static int append_float(RTLBlock * const block, const uint32_t insn,
-                        int latency)
+                        const int latency)
 {
 #ifndef MIPS_OPTIMIZE_SCHEDULING
     return append_insn(block, insn);
 #else
 
     PRECOND(block != NULL, return 0);
-    PRECOND(insn_is_load(insn) || (insn & 0xFC00003C) == __SP_MULT, return 0);
+    PRECOND(insn_is_load(insn)
+            || (insn & 0xFC00003C) == __SP_MULT
+            || (insn & 0xFC00003E) == __SP_MADD
+            || (insn & 0xFC00003E) == __SP_MSUB, return 0);
 
-    /* Does the sequence have a load or store instruction? */
-    int has_mem = insn_is_load(insn);
+    /* Does the dependency chain ending with the new instruction have a
+     * load or store instruction?  If so, do we know where it points? */
 
-    /* First add the instruction to the block */
+    int has_mem;
+    unsigned int unique_pointer;
+    uint32_t unique_pointer_birth;
+    if (insn_is_load(insn)) {  // We're never called for stores
+        has_mem = 1;
+        PRECOND(block->mips.reg_map[insn_rs(insn)] != NULL, return 0);
+        unique_pointer = block->mips.reg_map[insn_rs(insn)]->unique_pointer;
+        unique_pointer_birth = block->mips.reg_map[insn_rs(insn)]->birth;
+    } else {
+        has_mem = 0;
+        unique_pointer = 0;
+    }
+
+    /* First add the instruction to the block. */
+
     if (UNLIKELY(!append_insn(block, insn))) {
         return 0;
     }
 
-    /* Extract registers used and set by this instruction */
+    /* Extract registers used and set by this instruction; we'll add to
+     * these sets all registers used by preceding instructions in the
+     * dependency chain. */
+
     uint32_t regs_used = insn_regs_used(insn);
     uint32_t regs_set  = insn_regs_set(insn);
 
     /* Scan backwards, up to the beginning of the unit or preceding branch
      * delay slot, to find instructions that can be placed below this one,
-     * and move them below the current instruction */
+     * and move them below the current instruction. */
+
     uint32_t * const unit_start = (uint32_t *)
         ((uint8_t *)block->native_buffer + block->mips.unit_start);
     uint32_t *insn_ptr = (uint32_t *)
         ((uint8_t *)block->native_buffer + (block->native_length - 4));
     uint32_t * const target = insn_ptr - (latency-1);
     uint32_t *search;
+
     for (search = insn_ptr - 1; search >= unit_start; search--) {
+
         /* If the preceding instruction is a jump or branch, stop here.
          * If this is the first instruction in the unit, the preceding
          * instruction can't be a jump or branch (if it was, a delay slot
-         * instruction would have been added at the end of the unit). */
+         * instruction would have been added after it at the end of the
+         * unit). */
+
         if (search > unit_start
          && (insn_is_jump(search[-1]) || insn_is_branch(search[-1]))
         ) {
             break;
         }
+
         /* An instruction is independent of a following sequence of
          * instructions if that instruction:
          *    1) Does not set a register used in the following sequence
@@ -4267,38 +4339,68 @@ static int append_float(RTLBlock * const block, const uint32_t insn,
          * We explicitly do not move load or store instructions across
          * other load or store instructions, so as to maintain ordering of
          * memory accesses (otherwise, we might try to load from an address
-         * before the store that updates it) and to avoid introduce a stall
-         * by shifting a previous load farther down the code stream. */
+         * before the store that updates it) and to avoid introducing a
+         * stall by shifting a previous load farther down the code stream.
+         * However, we _do_ float a load above a preceding store if we know
+         * that the store and load point to different addresses; i.e., if
+         * at least one of the registers is a unique pointer, and they do
+         * not reference the same unique address. */
+
         const uint32_t this_used = insn_regs_used(*search);
         const uint32_t this_set  = insn_regs_set(*search);
-        if (!(this_set & (regs_used | regs_set))
-         && !(this_used & regs_set)
-         && !(has_mem && (insn_is_load(*search) || insn_is_store(*search)))
+        int this_is_mem;
+        if (insn_is_load(*search)) {
+            this_is_mem = 1;
+        } else if (insn_is_store(*search)) {
+            // FIXME: We don't currently save unique pointer data with the
+            // generated MIPS instructions, so for now we assume that the
+            // current register is the only one pointing to this unique
+            // region.  This works at the moment because the state block
+            // pointer is the only register we mark as a unique pointer,
+            // but could break in other cases.
+            if (unique_pointer == 0 || insn_rs(insn) != insn_rs(*search)) {
+                this_is_mem = 1;
+            } else {
+                PRECOND(block->mips.reg_map[insn_rs(*search)] != NULL,
+                        return 0);
+                this_is_mem = (insn_imm(insn) == insn_imm(*search));
+            }
+        } else {
+            this_is_mem = 0;
+        }
+        if ((this_set & (regs_used | regs_set)) != 0
+         || (this_used & regs_set) != 0
+         || (has_mem && this_is_mem)
         ) {
-            /* Move this instruction immediately below the one we added */
+            /* Add this register's used and set registers to the dependency
+             * chain's cumulative set. */
+            regs_used |= this_used;
+            regs_set  |= this_set;
+            /* If it was a load or store instruction, record that fact. */
+            if (insn_is_load(*search) || insn_is_store(*search)) {
+                has_mem = 1;
+                /* Register assignments may have changed, so we don't know
+                 * for certain what the register pointed to at the time, so
+                 * play it safe. */
+                unique_pointer = 0;
+            }
+        } else {
+            /* Move this instruction immediately below the one we added. */
             const uint32_t move_insn = *search;
             uint32_t *move_ptr;
             for (move_ptr = search; move_ptr < insn_ptr; move_ptr++) {
                 *move_ptr = *(move_ptr + 1);
             }
             *move_ptr = move_insn;
-            /* The instruction we added has now moved one word up */
+            /* The instruction we added has now moved one word up. */
             insn_ptr--;
-            /* If we've achieved the requested distance, stop */
+            /* If we've achieved the requested distance, stop. */
             if (insn_ptr <= target) {
                 break;
             }
-        } else {
-            /* Add this register's used and set registers to the sequence's
-             * cumulative set */
-            regs_used |= this_used;
-            regs_set  |= this_set;
-            /* If it was a load or store instruction, record that fact */
-            if (insn_is_load(*search) || insn_is_store(*search)) {
-                has_mem = 1;
-            }
         }
-    }
+
+    }  // for (search = insn_ptr - 1; search >= unit_start; search--)
 
     return 1;
 
@@ -4522,6 +4624,22 @@ static inline int insn_rt(const uint32_t opcode)
 static inline int insn_rd(const uint32_t opcode)
 {
     return (opcode >> 11) & 0x1F;
+}
+
+/*----------------------------------*/
+
+/**
+ * insn_imm:  Return the 16-bit immediate value specified in the given
+ * instruction.
+ *
+ * [Parameters]
+ *     opcode: Instruction opcode
+ * [Return value]
+ *     16-bit immediate value as a signed integer
+ */
+static inline int insn_imm(const uint32_t opcode)
+{
+    return (int)(int16_t)opcode;
 }
 
 /*************************************************************************/

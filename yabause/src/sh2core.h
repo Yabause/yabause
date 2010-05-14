@@ -330,7 +330,7 @@ typedef struct
    struct
    {
       u32 leftover;
-      u32 div;
+      u32 shift;
    } frc;
 
    struct
@@ -338,7 +338,7 @@ typedef struct
         int isenable;
         int isinterval;
         u32 leftover;
-        u32 div;
+        u32 shift;
    } wdt;
 
    interrupt_struct interrupts[MAX_INTERRUPTS];

@@ -1,6 +1,6 @@
 /*  src/q68/q68.c: Quick-and-dirty MC68000 emulator with dynamic
                    translation support
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -60,16 +60,39 @@
  */
 Q68State *q68_create(void)
 {
+    return q68_create_ex(malloc, realloc, free);
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * q68_create_ex:  Create a new virtual processor, using the specified
+ * functions for all memory allocation.
+ *
+ * [Parameters]
+ *      malloc_func: Function for allocating a memory block
+ *     realloc_func: Function for adjusting the size of a memory block
+ *        free_func: Function for freeing a memory block
+ * [Return value]
+ *     Processor state block on success, NULL on error
+ */
+Q68State *q68_create_ex(void *(*malloc_func)(size_t size),
+                        void *(*realloc_func)(void *ptr, size_t size),
+                        void (*free_func)(void *ptr))
+{
     Q68State *state;
 
-    state = malloc(sizeof(*state));
+    state = (*malloc_func)(sizeof(*state));
     if (!state) {
         return NULL;
     }
+    state->malloc_func  = malloc_func;
+    state->realloc_func = realloc_func;
+    state->free_func    = free_func;
 
 #ifdef Q68_USE_JIT
     if (!q68_jit_init(state)) {
-        free(state);
+        state->free_func(state);
         return NULL;
     }
 #endif
@@ -93,7 +116,7 @@ void q68_destroy(Q68State *state)
 #ifdef Q68_USE_JIT
     q68_jit_cleanup(state);
 #endif
-    free(state);
+    state->free_func(state);
 }
 
 /*************************************************************************/
@@ -158,30 +181,19 @@ void q68_set_writew_func(Q68State *state, Q68WriteFunc func)
 /*-----------------------------------------------------------------------*/
 
 /**
- * q68_set_jit_memory_funcs:  Set alternate memory management functions to
- * be used for allocating native code blocks when dynamic translation is
- * enabled.  If not set, the standard system malloc()/realloc()/free()
- * functions are used and no cache flushing is performed.  This function
- * has no effect if dynamic translation is not enabled.
+ * q68_set_jit_flush_func:  Set a function to be used to flush the native
+ * CPU's caches after a block of 68k code has been translated into native
+ * code.  If not set, no cache flushing is performed.  This function has no
+ * effect if dynamic translation is not enabled.
  *
  * [Parameters]
- *            state: Processor state block
- *      malloc_func: Function for allocating a memory block
- *     realloc_func: Function for adjusting the size of a memory block
- *        free_func: Function for freeing a memory block
- *       flush_func: Function for flushing the native CPU cache (NULL if none)
+ *          state: Processor state block
+ *     flush_func: Function for flushing the native CPU's caches (NULL if none)
  * [Return value]
  *     None
  */
-void q68_set_jit_memory_funcs(Q68State *state,
-                              void *(*malloc_func)(size_t size),
-                              void *(*realloc_func)(void *ptr, size_t size),
-                              void (*free_func)(void *ptr),
-                              void (*flush_func)(void))
+void q68_set_jit_flush_func(Q68State *state, void (*flush_func)(void))
 {
-    state->jit_malloc  = malloc_func;
-    state->jit_realloc = realloc_func;
-    state->jit_free    = free_func;
     state->jit_flush   = flush_func;
 }
 

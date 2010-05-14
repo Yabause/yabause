@@ -151,6 +151,12 @@ void YabThreadYield(void)
          * the cache to ensure the SC can see our updates. */
         meUtilityDcacheWritebackInvalidateAll();
     } else {
+#ifdef PSP_DEBUG
+        if (thread_data[YAB_THREAD_SCSP].handle) {
+            /* ME is running, so check for ME exceptions */
+            (void) mePoll();
+        }
+#endif
         sceKernelDelayThread(0);
     }
 }
@@ -189,7 +195,16 @@ void YabThreadSleep(void)
  */
 void YabThreadWake(unsigned int id)
 {
-    if (id != YAB_THREAD_SCSP && thread_data[id].handle) {
+    if (!thread_data[id].handle) {
+        return;  // Thread is not running
+    }
+
+    if (id == YAB_THREAD_SCSP) {
+#ifdef PSP_DEBUG
+        /* Check for ME exceptions */
+        (void) mePoll();
+#endif
+    } else {
         sceKernelWakeupThread(thread_data[id].handle);
     }
 }

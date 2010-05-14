@@ -1,5 +1,5 @@
 /*  src/q68/q68-jit.c: Dynamic translation support for Q68
-    Copyright 2009 Andrew Church
+    Copyright 2009-2010 Andrew Church
 
     This file is part of Yabause.
 
@@ -395,13 +395,14 @@ static OpcodeFunc * const opcode_4E4x_table[8] = {
  */
 int q68_jit_init(Q68State *state)
 {
-    state->jit_table = malloc(sizeof(*state->jit_table) * Q68_JIT_TABLE_SIZE);
+    state->jit_table =
+        state->malloc_func(sizeof(*state->jit_table) * Q68_JIT_TABLE_SIZE);
     if (!state->jit_table) {
         DMSG("No memory for JIT table");
         goto error_return;
     }
     state->jit_hashchain =
-        malloc(sizeof(*state->jit_hashchain) * Q68_JIT_TABLE_SIZE);
+        state->malloc_func(sizeof(*state->jit_hashchain) * Q68_JIT_TABLE_SIZE);
     if (!state->jit_hashchain) {
         DMSG("No memory for JIT hash chain table");
         goto error_free_jit_table;
@@ -418,10 +419,7 @@ int q68_jit_init(Q68State *state)
      * don't trigger JIT clearing */
     memset(state->jit_pages, 0, sizeof(state->jit_pages));
 
-    /* Set default memory management functions */
-    state->jit_malloc  = malloc;
-    state->jit_realloc = realloc;
-    state->jit_free    = free;
+    /* Default to no cache flush function */
     state->jit_flush   = NULL;
 
 #ifdef Q68_DISABLE_ADDRESS_ERROR
@@ -435,7 +433,7 @@ int q68_jit_init(Q68State *state)
     return 1;
 
   error_free_jit_table:
-    free(state->jit_table);
+    state->free_func(state->jit_table);
     state->jit_table = NULL;
   error_return:
     return 0;
@@ -490,9 +488,9 @@ void q68_jit_reset(Q68State *state)
 void q68_jit_cleanup(Q68State *state)
 {
     q68_jit_reset(state);
-    free(state->jit_hashchain);
+    state->free_func(state->jit_hashchain);
     state->jit_hashchain = NULL;
-    free(state->jit_table);
+    state->free_func(state->jit_table);
     state->jit_table = NULL;
 }
 
@@ -597,7 +595,7 @@ Q68JitEntry *q68_jit_translate(Q68State *state, uint32_t address)
 
     /* Initialize the new entry */
 
-    current_entry->native_code = state->jit_malloc(Q68_JIT_BLOCK_EXPAND_SIZE);
+    current_entry->native_code = state->malloc_func(Q68_JIT_BLOCK_EXPAND_SIZE);
     if (!current_entry->native_code) {
         DMSG("No memory for code at $%06X", address);
         current_entry = NULL;
@@ -665,8 +663,8 @@ Q68JitEntry *q68_jit_translate(Q68State *state, uint32_t address)
     ) {
         JIT_PAGE_SET(state, index);
     }
-    void *newptr = state->jit_realloc(current_entry->native_code,
-                                      current_entry->native_length);
+    void *newptr = state->realloc_func(current_entry->native_code,
+                                       current_entry->native_length);
     if (newptr) {
         current_entry->native_code = newptr;
         current_entry->native_size = current_entry->native_length;
@@ -1081,7 +1079,7 @@ static void clear_entry(Q68State *state, Q68JitEntry *entry)
 
     /* Free the native code */
     state->jit_total_data -= entry->native_size;
-    state->jit_free(entry->native_code);
+    state->free_func(entry->native_code);
     entry->native_code = NULL;
 
     /* Clear the entry from the table and hash chain */
@@ -1146,7 +1144,7 @@ static void clear_oldest_entry(Q68State *state)
 static int expand_buffer(Q68JitEntry *entry)
 {
     const uint32_t newsize = entry->native_size + Q68_JIT_BLOCK_EXPAND_SIZE;
-    void *newptr = entry->state->jit_realloc(entry->native_code, newsize);
+    void *newptr = entry->state->realloc_func(entry->native_code, newsize);
     if (!newptr) {
         DMSG("Out of memory");
         return 0;

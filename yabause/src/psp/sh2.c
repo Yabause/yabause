@@ -273,10 +273,18 @@ static uint8_t word_info[JIT_INSNS_PER_BLOCK];
 #define WORD_INFO_LOOP_JSR  (1<<5)  // 1: branch at this address targets a
                                     //       JSR/BSR/BSRF + delay slot
                                     //       immediately preceding the block
+#define WORD_INFO_FOLDABLE  (1<<6)  // 1: BSR/JSR at this address jumps to
+                                    //       a foldable subroutine
 
 /* Branch target flag array (indicates which words in the current block
  * are targeted by branches within the same block) */
 static uint32_t is_branch_target[(JIT_INSNS_PER_BLOCK+31)/32];
+
+/* Subroutine call target array (used for subroutine folding) */
+static uint32_t subroutine_target[JIT_INSNS_PER_BLOCK];
+
+/* Native implementation function pointers for folded subroutines */
+static SH2NativeFunctionPointer subroutine_native[JIT_INSNS_PER_BLOCK];
 
 /* Threaded branch target array (indicates targets for branches marked with
  * WORD_INFO_THREADED) */
@@ -324,12 +332,23 @@ static struct {
 
 /*----------------------------------*/
 
+/* Should we ignore optimization hints?  (Used when checking for
+ * optimizable subroutines to be folded.) */
+static uint8_t ignore_optimization_hints;
+
+/*----------------------------------*/
+
 /* True if we can optimize out the MAC saturation check in this block
  * (i.e. S was clear on entry and has not been modified) */
 static uint8_t can_optimize_mac_nosat;
 
 /* True if the current block contains any MAC instructions */
 static uint8_t block_contains_mac;
+
+/*----------------------------------*/
+
+/* Bitmask of registers hinted as having constant values on block entry */
+static uint16_t is_constant_entry_reg;
 
 /*----------------------------------*/
 
@@ -341,7 +360,7 @@ static uint32_t reg_value[17];    // Value of known bits in each register
 #define REG_R(n)  (n)
 #define REG_GBR   16
 /* PC is always constant when translating, and the remaining registers are
- * generally unknown, so we don't waste time tracking them */
+ * generally unknown, so we don't waste time tracking them. */
 
 #endif  // OPTIMIZE_KNOWN_VALUES
 
@@ -350,6 +369,7 @@ static uint32_t reg_value[17];    // Value of known bits in each register
 /* Status of each register when viewed as a load/store address */
 
 static struct {
+
     /*
      * Status of the register:
      *    known == 0: Value is not a translation-time constant.
@@ -362,9 +382,11 @@ static struct {
      */
     int8_t known;
 
-    /* For known == 0 and rtl_basereg != 0, nonzero if the direct_jit_pages[]
-     * entry for this pointer has been checked, else zero. */
-    uint8_t checked_djp;
+    /*
+     * Nonzero if this register is known to point to only data, and
+     * therefore the JIT overwrite checks can be skipped.
+     */
+    uint8_t data_only;
 
     /*
      * Type of memory pointed to by the register:
@@ -373,10 +395,21 @@ static struct {
      */
     uint8_t type;
 
-    /* Nonzero if the "check_offset" field is valid. */
+    /*
+     * For known == 0 && rtl_basereg != 0 && !data_only, nonzero if the
+     * direct_jit_pages[] entry for this pointer has already been checked,
+     * else zero.
+     */
+    uint8_t checked_djp;
+
+    /*
+     * Nonzero if the "check_offset" field is valid.
+     */
     uint8_t checked;
 
-    /* Last offset at which a JIT check was performed. */
+    /*
+     * Last offset at which a JIT check was performed.
+     */
     int16_t check_offset;
 
     /*
@@ -402,11 +435,24 @@ static struct {
      */
     uint16_t rtl_basereg;
 
-    /* Base pointer for JIT page bitmap (only if known > 0 && type == 2) */
+    /*
+     * RTL register containing a native pointer for direct memory access
+     * (equal to rtl_basereg plus the register's value), or zero if no
+     * such register has yet been created.  Only used if known != 0.
+     */
+    uint16_t rtl_ptrreg;
+
+    /*
+     * Base pointer for JIT page bitmap.  Only used for statically-known,
+     * 16-bit, non-data pointers (known > 0 && type == 2 && !data_only).
+     */
     uint8_t *djp_base;
 
-    /* Source address if this register was loaded from local data */
+    /*
+     * Source address if this register was loaded from local data.
+     */
     uint32_t source;
+
 } pointer_status[16];
 
 /* Register holding the native address corresponding to the stack pointer
@@ -422,6 +468,13 @@ static uint16_t pointer_used;
 
 /* Bitmask of general-purpose registers containing local data addresses */
 static uint16_t pointer_local;
+
+/* Bitmask of general-purpose registers hinted to contain data pointers */
+static uint16_t is_data_pointer_reg;
+
+/* Array of flags indicating instructions which load data pointers
+ * (optimization hint) */
+static uint32_t is_data_pointer_load[(JIT_INSNS_PER_BLOCK+31)/32];
 
 /*----------------------------------*/
 
@@ -507,7 +560,7 @@ static uint32_t loop_changed_registers;
  * addressing or ADD #imm) throughout the body of a loop */
 static uint32_t loop_invariant_pointers;
 
-#endif
+#endif  // OPTIMIZE_LOOP_REGISTERS
 
 /*-----------------------------------------------------------------------*/
 
@@ -556,9 +609,10 @@ static int setup_pointers(SH2State * const state, JitEntry * const entry,
                           const int skip_preconditions,
                           unsigned int * const invalidate_label_ptr);
 
-static int scan_block(JitEntry *entry, uint32_t address);
+static int scan_block(SH2State *state, JitEntry *entry, uint32_t address);
 static inline void optimize_pointers(
-    unsigned int opcode, uint32_t opcode_info, uint8_t pointer_map[16]);
+    uint32_t start_address, uint32_t address, unsigned int opcode,
+    uint32_t opcode_info, uint8_t pointer_map[16]);
 static inline void optimize_pointers_mac(
     uint32_t address, unsigned int opcode, uint8_t pointer_map[16],
     uint32_t last_clrmac, int *stop_ret, int *rollback_ret);
@@ -571,9 +625,13 @@ static inline int optimize_branch_select(
     uint32_t start_address, uint32_t address, const uint16_t *fetch,
     unsigned int opcode, uint32_t target);
 #endif
+static int optimize_fold_subroutine(
+    SH2State *state, const uint32_t start_address, uint32_t address,
+    const uint32_t target, const uint16_t delay_slot, uint8_t pointer_map[16],
+    uint32_t local_constant[16], SH2NativeFunctionPointer *native_ret);
 
 static int translate_insn(SH2State *state, JitEntry *entry,
-                          unsigned int state_reg, int recursing);
+                          unsigned int state_reg, int recursing, int is_last);
 #ifdef JIT_BRANCH_PREDICT_STATIC
 static int add_static_branch_terminator(JitEntry *entry,
                                         unsigned int state_reg,
@@ -930,6 +988,137 @@ void sh2_set_byte_direct_access(uint32_t sh2_address, void *native_address,
 #endif  // ENABLE_JIT
 }
 
+/*-----------------------------------------------------------------------*/
+
+/**
+ * sh2_optimize_hint_data_pointer_load:  Provide a hint to the optimizer
+ * that the load or ALU instruction at the given address loads a pointer to
+ * a 16-bit direct-access data region.  If pointer optimization (the
+ * SH2_OPTIMIZE_POINTERS flag) is enabled, accesses through the register so
+ * loaded will automatically use direct access to SH-2 memory, and will
+ * bypass the code overwrite checks normally executed for store operations.
+ * If pointer optimization is disabled, this hint has no effect.
+ *
+ * The effect of calling this function from any context other than within
+ * the manual optimization callback, or of specifying an instruction which
+ * does not set the register specified by the Rn field of the opcode, is
+ * undefined.
+ *
+ * [Parameters]
+ *       state: Processor state block pointer passed to callback function
+ *     address: Address of load instruction to mark as loading a data pointer
+ * [Return value]
+ *     None
+ */
+void sh2_optimize_hint_data_pointer_load(SH2State *state, uint32_t address)
+{
+    PRECOND(state != NULL, return);
+    PRECOND(state->translate_entry != NULL, return);
+
+#ifdef ENABLE_JIT
+
+    if (ignore_optimization_hints) {
+        return;
+    }
+    if (!(optimization_flags & SH2_OPTIMIZE_POINTERS)) {
+        return;
+    }
+
+    if (address >= state->translate_entry->sh2_start) {
+        const unsigned int insn_index =
+            (address - state->translate_entry->sh2_start) / 2;
+        if (insn_index < lenof(is_data_pointer_load) * 32) {
+            is_data_pointer_load[insn_index / 32] |= 1 << (insn_index % 32);
+        }
+    }
+
+#endif  // ENABLE_JIT
+}
+
+/*----------------------------------*/
+
+/**
+ * sh2_optimize_hint_data_pointer_register:  Provide a hint to the
+ * optimizer that the given general-purpose register (R0 through R15)
+ * contains a pointer to a direct-access data region at the start of the
+ * block, and the memory region pointed to will not change over the life
+ * of the block.  If pointer optimization (the SH2_OPTIMIZE_POINTERS flag)
+ * is enabled, accesses through that register (as long as the register's
+ * value is unchanged) will automatically use direct access to SH-2 memory,
+ * and will bypass the code overwrite checks normally executed for store
+ * operations; furthermore, the register's value will not be verified for
+ * address validity at block start time, unlike dynamically-detected
+ * pointers which are verified each time the block is called.  If pointer
+ * optimization is disabled, this hint has no effect.
+ *
+ * The effect of calling this function from any context other than within
+ * the manual optimization callback is undefined.
+ *
+ * [Parameters]
+ *      state: Processor state block pointer passed to callback function
+ *     regnum: General-purpose register to mark as containing a data pointer
+ * [Return value]
+ *     None
+ */
+void sh2_optimize_hint_data_pointer_register(SH2State *state,
+                                             unsigned int regnum)
+{
+    PRECOND(state != NULL, return);
+    PRECOND(state->translate_entry != NULL, return);
+    PRECOND(regnum < 16, return);
+
+#ifdef ENABLE_JIT
+
+    if (ignore_optimization_hints) {
+        return;
+    }
+    if (!(optimization_flags & SH2_OPTIMIZE_POINTERS)) {
+        return;
+    }
+
+    is_data_pointer_reg |= 1 << regnum;
+
+#endif  // ENABLE_JIT
+}
+
+/*----------------------------------*/
+
+/**
+ * sh2_optimize_hint_constant_register:  Provide a hint to the optimizer
+ * that the given general-purpose register (R0 through R15) contains a
+ * value which will be constant at block entry for the life of the block.
+ * Instructions which use the register as a source operand may be optimized
+ * to use the constant value rather than loading the register, and if
+ * subroutine folding (the SH2_OPTIMIZE_FOLD_SUBROUTINES flag) is enabled,
+ * JSRs through that register will be considered for subroutine folding
+ * using the address contained in that register at translation time.
+ *
+ * The effect of calling this function from any context other than within
+ * the manual optimization callback is undefined.
+ *
+ * [Parameters]
+ *      state: Processor state block pointer passed to callback function
+ *     regnum: General-purpose register to mark as containing a data pointer
+ * [Return value]
+ *     None
+ */
+void sh2_optimize_hint_constant_register(SH2State *state, unsigned int regnum)
+{
+    PRECOND(state != NULL, return);
+    PRECOND(state->translate_entry != NULL, return);
+    PRECOND(regnum < 16, return);
+
+#ifdef ENABLE_JIT
+
+    if (ignore_optimization_hints) {
+        return;
+    }
+
+    is_constant_entry_reg |= 1 << regnum;
+
+#endif // ENABLE_JIT
+}
+
 /*************************************************************************/
 
 /**
@@ -1018,6 +1207,7 @@ void sh2_reset(SH2State *state)
     state->interrupt_stack_top = 0;
     state->current_entry = NULL;
     state->branch_type = SH2BRTYPE_NONE;
+    state->folding_subroutine = 0;
     state->pending_select = 0;
     state->just_branched = 0;
     state->cached_shift_count = 0;
@@ -1046,8 +1236,7 @@ void sh2_reset(SH2State *state)
  */
 void sh2_run(SH2State *state, uint32_t cycles)
 {
-#if defined(TRACE_LITE) || defined(TRACE_LIKE_SH2INT)
-    /* Remember the number of cycles we started with */
+#ifdef TRACE_LIKE_SH2INT
     const uint32_t init_cycles = state->cycles;
 #endif
 
@@ -1057,7 +1246,7 @@ void sh2_run(SH2State *state, uint32_t cycles)
     /* In TRACE_LITE mode, trace a single instruction at the current PC
      * before we start executing */
 #ifdef TRACE_LITE
-    (*trace_insn_callback)((SH2_struct *)state, state->PC);
+    (*trace_insn_callback)(state, state->PC);
 #endif
 
     /* Loop until we've consumed the requested number of execution cycles.
@@ -1231,25 +1420,27 @@ void sh2_run(SH2State *state, uint32_t cycles)
     if (cycles_for_profile >= JIT_PROFILE_INTERVAL) {
 
         cycles_for_profile = 0;
-        int topten[10];
+        int top[JIT_PROFILE_TOP];
         unsigned int i;
 
-        fprintf(stderr, "=============== Top ten callees by time: ===============\n");
-        memset(topten, -1, sizeof(topten));
+        fprintf(stderr, "\n");
+
+        fprintf(stderr, "================= Top callees by time: =================\n");
+        memset(top, -1, sizeof(top));
         for (i = 0; i < lenof(jit_table); i++) {
             if (!jit_table[i].sh2_start) {
                 continue;
             }
             unsigned int j;
-            for (j = 0; j < 10; j++) {
-                if (topten[j] < 0
-                 || jit_table[i].exec_time > jit_table[topten[j]].exec_time
+            for (j = 0; j < lenof(top); j++) {
+                if (top[j] < 0
+                 || jit_table[i].exec_time > jit_table[top[j]].exec_time
                 ) {
                     unsigned int k;
-                    for (k = 9; k > j; k--) {
-                        topten[k] = topten[k-1];
+                    for (k = lenof(top)-1; k > j; k--) {
+                        top[k] = top[k-1];
                     }
-                    topten[j] = i;
+                    top[j] = i;
                     break;
                 }
             }
@@ -1262,34 +1453,34 @@ void sh2_run(SH2State *state, uint32_t cycles)
 # endif
                                  "   SH2 cyc.   Native/SH2   # calls   Block addr\n");
         fprintf(stderr, "---------   --------   ----------   -------   ----------\n");
-        for (i = 0; i < 10 && topten[i] >= 0; i++) {
+        for (i = 0; i < lenof(top) && top[i] >= 0; i++) {
             fprintf(stderr, "%9lld %10d %12.3f %9d   0x%08X\n",
-                    (unsigned long long)jit_table[topten[i]].exec_time,
-                    jit_table[topten[i]].cycle_count,
-                    (double)jit_table[topten[i]].exec_time
-                        / (double)jit_table[topten[i]].cycle_count,
-                    jit_table[topten[i]].call_count,
-                    jit_table[topten[i]].sh2_start);
+                    (unsigned long long)jit_table[top[i]].exec_time,
+                    jit_table[top[i]].cycle_count,
+                    (double)jit_table[top[i]].exec_time
+                        / (double)jit_table[top[i]].cycle_count,
+                    jit_table[top[i]].call_count,
+                    jit_table[top[i]].sh2_start);
         }
         fprintf(stderr, "========================================================\n");
 
 
-        fprintf(stderr, "============ Top ten callees by call count: ============\n");
-        memset(topten, -1, sizeof(topten));
+        fprintf(stderr, "============== Top callees by call count: ==============\n");
+        memset(top, -1, sizeof(top));
         for (i = 0; i < lenof(jit_table); i++) {
             if (!jit_table[i].sh2_start) {
                 continue;
             }
             unsigned int j;
-            for (j = 0; j < 10; j++) {
-                if (topten[j] < 0
-                 || jit_table[i].call_count > jit_table[topten[j]].call_count
+            for (j = 0; j < lenof(top); j++) {
+                if (top[j] < 0
+                 || jit_table[i].call_count > jit_table[top[j]].call_count
                 ) {
                     unsigned int k;
-                    for (k = 9; k > j; k--) {
-                        topten[k] = topten[k-1];
+                    for (k = lenof(top)-1; k > j; k--) {
+                        top[k] = top[k-1];
                     }
-                    topten[j] = i;
+                    top[j] = i;
                     break;
                 }
             }
@@ -1302,14 +1493,14 @@ void sh2_run(SH2State *state, uint32_t cycles)
 # endif
                                  "   SH2 cyc.   Native/SH2   # calls   Block addr\n");
         fprintf(stderr, "---------   --------   ----------   -------   ----------\n");
-        for (i = 0; i < 10 && topten[i] >= 0; i++) {
+        for (i = 0; i < lenof(top) && top[i] >= 0; i++) {
             fprintf(stderr, "%9lld %10d %12.3f %9d   0x%08X\n",
-                    (unsigned long long)jit_table[topten[i]].exec_time,
-                    jit_table[topten[i]].cycle_count,
-                    (double)jit_table[topten[i]].exec_time
-                        / (double)jit_table[topten[i]].cycle_count,
-                    jit_table[topten[i]].call_count,
-                    jit_table[topten[i]].sh2_start);
+                    (unsigned long long)jit_table[top[i]].exec_time,
+                    jit_table[top[i]].cycle_count,
+                    (double)jit_table[top[i]].exec_time
+                        / (double)jit_table[top[i]].cycle_count,
+                    jit_table[top[i]].call_count,
+                    jit_table[top[i]].sh2_start);
         }
         fprintf(stderr, "========================================================\n");
 
@@ -1547,11 +1738,15 @@ static JitEntry *jit_translate(SH2State *state, uint32_t address)
     jit_freelist.next = entry->next;
     jit_freelist.next->prev = &jit_freelist;
 
+    /* Store the entry pointer in the state block, for reference by other
+     * functions */
+    state->translate_entry = entry;
+
     /* Initialize the new entry */
     entry->rtl = rtl_create_block();
     if (!entry->rtl) {
         DMSG("No memory for code at 0x%08X", address);
-        return NULL;
+        goto fail;
     }
     const int hashval = JIT_HASH(address);
     entry->next = jit_hashchain[hashval];
@@ -1603,8 +1798,7 @@ static JitEntry *jit_translate(SH2State *state, uint32_t address)
         } else {
             jit_blacklist_range(address, address+1);
         }
-        clear_entry(entry);
-        return NULL;
+        goto clear_and_fail;
     }
 
     /* Translate from RTL to native code */
@@ -1612,8 +1806,7 @@ static JitEntry *jit_translate(SH2State *state, uint32_t address)
     if (UNLIKELY(!rtl_translate_block(entry->rtl, &entry->native_code,
                                       &entry->native_length))) {
         DMSG("Failed to translate block at 0x%08X", entry->sh2_start);
-        clear_entry(entry);
-        return NULL;
+        goto clear_and_fail;
     }
     /* Make sure the new code isn't masked by cached data */
     flush_native_cache(entry->native_code, entry->native_length);
@@ -1645,7 +1838,15 @@ static JitEntry *jit_translate(SH2State *state, uint32_t address)
     jit_total_data += entry->native_length;
 
     /* All done */
+    state->translate_entry = NULL;
     return entry;
+
+    /* Error handling */
+  clear_and_fail:
+    clear_entry(entry);
+  fail:
+    state->translate_entry = NULL;
+    return NULL;
 }
 
 /*************************************************************************/
@@ -2200,7 +2401,7 @@ __attribute__((const)) static inline int timestamp_compare(
  * of an address for generating optimal native load/store code */
 #ifdef __mips__
 # define ADDR_HI(address)  (((uintptr_t)(address) + 0x8000) & 0xFFFF0000)
-# define ADDR_LO(address)  ((uintptr_t)(address) & 0xFFFF)
+# define ADDR_LO(address)  ((int16_t)((uintptr_t)(address) & 0xFFFF))
 #else
 # define ADDR_HI(address)  ((uintptr_t)address)
 # define ADDR_LO(address)  0
@@ -2432,6 +2633,11 @@ static inline int __LOAD_STATE(const JitEntry * const entry,
             state_cache[index].rtlreg = reg;
             state_cache[index].offset = 0;
         }
+        if (index < 16) {
+            /* We changed the stored value, so we have to generate a new
+             * direct pointer on the next access. */
+            pointer_status[index].rtl_ptrreg = 0;
+        }
         return 1;
     }
 #endif
@@ -2570,7 +2776,9 @@ static inline int __STORE_STATE(const JitEntry * const entry,
             DEFINE_REG(base);
             pointer_status[15].known = 1;
             pointer_status[15].type = 2;
+            pointer_status[15].data_only = 1;
             pointer_status[15].rtl_basereg = base;
+            pointer_status[15].rtl_ptrreg = 0; // stack_pointer is used instead
             DEFINE_REG(new_sp);
             stack_pointer = new_sp;
         }
@@ -2589,6 +2797,9 @@ static inline int __STORE_STATE(const JitEntry * const entry,
             }
         } else {
             state_cache[index].rtlreg = reg;
+        }
+        if (index < 16) {
+            pointer_status[index].rtl_ptrreg = 0;
         }
         state_cache[index].offset = 0;
         if (index == state_cache_index(offsetof(SH2State,PC))) {
@@ -2739,6 +2950,9 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
                 DEFINE_REG(newreg);
                 ADDI(newreg, state_cache[index].rtlreg, new_offset);
                 state_cache[index].rtlreg = newreg;
+                if (index < 16) {
+                    pointer_status[index].rtl_ptrreg = 0;
+                }
             }
             state_cache[index].offset = 0;
         }
@@ -2877,9 +3091,13 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
 #define initial_PC  (entry->sh2_start)
 #define cur_PC      jit_PC
 
-/* Pre-decode processing is implemented by a separate function defined below */
+/* Pre- and post-decode processing is implemented by separate functions
+ * defined below */
 #define OPCODE_INIT(opcode) \
     ASSERT(opcode_init(state, entry, state_reg, (opcode), recursing))
+#define OPCODE_DONE(opcode) \
+    ASSERT(opcode_done(state, entry, state_reg, (opcode), recursing))
+
 
 /* Need to update both jit_PC and state->PC */
 #define INC_PC()  do {                  \
@@ -2910,7 +3128,8 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
 /* Return whether the word at "offset" words from the current instruction
  * is available for peephole optimization */
 #define INSN_IS_AVAILABLE(offset) \
-    (jit_PC + (offset)*2 <= entry->sh2_end \
+    (recursing ? !is_last :                                                   \
+     jit_PC + (offset)*2 <= entry->sh2_end                                    \
      && (word_info[(jit_PC - entry->sh2_start)/2 + (offset)] & WORD_INFO_CODE)\
      && !(is_branch_target[((jit_PC - entry->sh2_start) / 2 + (offset)) / 32] \
           & (1 << (((jit_PC - entry->sh2_start) / 2 + (offset)) % 32))))
@@ -2979,13 +3198,16 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
 #define PTR_CHECK(reg)  (pointer_status[(reg)].known != 0 \
                          || pointer_status[(reg)].rtl_basereg != 0)
 
-/* Copy pointer status for a MOVE Rm,Rn instruction */
-#define PTR_COPY(reg,new)  do {                         \
+/* Copy pointer status for a MOVE Rm,Rn or ADD Rm,Rn instruction */
+#define PTR_COPY(reg,new,for_add)  do {                 \
     const unsigned int __reg = (reg);                   \
     const unsigned int __new = (new);                   \
     pointer_status[__new] = pointer_status[__reg];      \
     if (pointer_status[__reg].known) {                  \
         pointer_status[__new].known = -1;               \
+    }                                                   \
+    if (for_add) {                                      \
+        pointer_status[__new].rtl_ptrreg = 0;           \
     }                                                   \
     if (PTR_ISLOCAL(__reg)) {                           \
         pointer_local |= 1<<__new;                      \
@@ -3000,6 +3222,7 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
     if (__reg != 15 || !(optimization_flags & SH2_OPTIMIZE_STACK)) { \
         pointer_status[__reg].known = 0;                \
         pointer_status[__reg].rtl_basereg = 0;          \
+        pointer_status[__reg].rtl_ptrreg = 0;           \
         pointer_status[__reg].source = 0;               \
         pointer_local &= ~(1<<__reg);                   \
     }                                                   \
@@ -3159,6 +3382,20 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
     ((addr) >= entry->sh2_start && (addr) <= entry->sh2_end \
      ? word_info[((addr) - entry->sh2_start) / 2] & WORD_INFO_LOOP_JSR \
      : 0)
+
+#define BRANCH_IS_FOLDABLE_SUBROUTINE(addr) \
+    ((addr) >= entry->sh2_start && (addr) <= entry->sh2_end \
+     ? word_info[((addr) - entry->sh2_start) / 2] & WORD_INFO_FOLDABLE \
+     : 0)
+
+#define BRANCH_FOLD_TARGET(addr) \
+    (subroutine_target[((addr) - entry->sh2_start) / 2])
+
+#define BRANCH_FOLD_TARGET_FETCH(addr) \
+    ((const uint16_t *)((uintptr_t)fetch_pages[(addr) >> 19] + (addr)))
+
+#define BRANCH_FOLD_NATIVE_FUNC(addr) \
+    (subroutine_native[((addr) - entry->sh2_start) / 2])
 
 /*************************************************************************/
 /************* Helper functions for SH-2 -> RTL translation **************/
@@ -3432,6 +3669,7 @@ static int do_load_reg(const JitEntry *entry, uint32_t dest,
         const uint32_t address =
             MappedMemoryReadLong(pointer_status[sh2reg].source);
         pointer_status[sh2reg].known = -1;  // Only tentatively known
+        pointer_status[sh2reg].data_only = 0;
         if ((address & 0xDFF00000) == 0x00200000
          || (address & 0xDE000000) == 0x06000000
         ) {
@@ -3449,6 +3687,7 @@ static int do_load_reg(const JitEntry *entry, uint32_t dest,
         } else {
             pointer_status[sh2reg].rtl_basereg = 0;
         }
+        pointer_status[sh2reg].rtl_ptrreg = 0;
     }
 
     if (pointer_status[sh2reg].known) {
@@ -3468,14 +3707,18 @@ static int do_load_reg(const JitEntry *entry, uint32_t dest,
                     ptr = stack_pointer;
                 }
             } else {
-                ALLOC_REG(ptr);
                 if (offset < -0x8000 || offset > 0x7FFF) {
                     DEFINE_REG(offset_addr);
                     ADDI(offset_addr, address, offset);
                     offset = 0;
+                    ALLOC_REG(ptr);
                     ADD(ptr, pointer_status[sh2reg].rtl_basereg, offset_addr);
+                } else if (pointer_status[sh2reg].rtl_ptrreg) {
+                    ptr = pointer_status[sh2reg].rtl_ptrreg;
                 } else {
+                    ALLOC_REG(ptr);
                     ADD(ptr, pointer_status[sh2reg].rtl_basereg, address);
+                    pointer_status[sh2reg].rtl_ptrreg = ptr;
                 }
             }
             switch (type) {
@@ -3592,6 +3835,7 @@ static int do_load_reg(const JitEntry *entry, uint32_t dest,
                 DEFINE_REG(basereg);
                 LOAD_PTR(basereg, dp_ptr, ADDR_LO(direct_pages));
                 pointer_status[sh2reg].rtl_basereg = basereg;
+                pointer_status[sh2reg].rtl_ptrreg = 0;
                 pointer_status[sh2reg].checked_djp = 0;
             }
             ASSERT(do_load_common(entry, dest, address, offset, type,
@@ -3993,6 +4237,7 @@ static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
         const uint32_t address =
             MappedMemoryReadLong(pointer_status[sh2reg].source);
         pointer_status[sh2reg].known = -1;  // Only tentatively known
+        pointer_status[sh2reg].data_only = 0;
         pointer_status[sh2reg].checked = 0;
         if ((address & 0xDFF00000) == 0x00200000
          || (address & 0xDE000000) == 0x06000000
@@ -4011,6 +4256,7 @@ static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
         } else {
             pointer_status[sh2reg].rtl_basereg = 0;
         }
+        pointer_status[sh2reg].rtl_ptrreg = 0;
     }
 
     DECLARE_REG(address);
@@ -4034,15 +4280,21 @@ static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
                     ptr = stack_pointer;
                 }
             } else {
-                ALLOC_REG(ptr);
                 if (offset < -0x8000 || offset > 0x7FFF) {
                     DEFINE_REG(offset_addr);
                     ADDI(offset_addr, address, offset);
                     ptr_offset = 0;
+                    ALLOC_REG(ptr);
                     ADD(ptr, pointer_status[sh2reg].rtl_basereg, offset_addr);
                 } else {
                     ptr_offset = offset;
-                    ADD(ptr, pointer_status[sh2reg].rtl_basereg, address);
+                    if (pointer_status[sh2reg].rtl_ptrreg) {
+                        ptr = pointer_status[sh2reg].rtl_ptrreg;
+                    } else {
+                        ALLOC_REG(ptr);
+                        ADD(ptr, pointer_status[sh2reg].rtl_basereg, address);
+                        pointer_status[sh2reg].rtl_ptrreg = ptr;
+                    }
                 }
             }
             switch (type) {
@@ -4097,6 +4349,8 @@ static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
             /* See if we need to check for overwrites of translated code */
             int need_jit_check = 1;
             if (sh2reg == 15 && (optimization_flags & SH2_OPTIMIZE_STACK)) {
+                need_jit_check = 0;
+            } else if (pointer_status[sh2reg].data_only) {
                 need_jit_check = 0;
             } else if (pointer_status[sh2reg].type != 2) {
                 need_jit_check = 0;
@@ -4226,6 +4480,7 @@ static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
                 DEFINE_REG(basereg);
                 SELECT(basereg, page_ptr, djppage_ptr, djppage_ptr);
                 pointer_status[sh2reg].rtl_basereg = basereg;
+                pointer_status[sh2reg].rtl_ptrreg = 0;
                 pointer_status[sh2reg].checked_djp = 1;
             } else if (!pointer_status[sh2reg].checked_djp) {
                 /* This register was first used in a load, so we don't yet
@@ -4384,8 +4639,9 @@ static int check_cycles_and_goto(const JitEntry *entry, uint32_t state_reg,
  */
 static int branch_static(SH2State *state, JitEntry *entry, uint32_t state_reg)
 {
-    if (state->branch_target < jit_PC
-     && state->branch_target != entry->sh2_start
+    if ((state->branch_target < jit_PC
+         && state->branch_target != entry->sh2_start)
+     || state->branch_target > entry->sh2_end
     ) {
         FLUSH_STATE_CACHE();
         RETURN();
@@ -4412,6 +4668,8 @@ static int branch_static(SH2State *state, JitEntry *entry, uint32_t state_reg)
                                       target_label)) {
             return 0;
         }
+        unsigned int index = (state->branch_target - entry->sh2_start) / 2;
+        is_branch_target[index/32] |= 1 << (index % 32);
     }
 
 #ifndef TRACE_LIKE_SH2INT  // Always check cycles for sh2int compatibility
@@ -4503,7 +4761,7 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
         value      = reg_value    [REG_R(0)] & reg_value    [REG_R(n)];
 # endif
     } else if (opcode == 0x002B || (opcode & 0xFF00) == 0xC300) {
-        is_pointer = PTR_ISVALID(15);
+        is_pointer = PTR_CHECK(15);
 # ifdef OPTIMIZE_KNOWN_VALUES
         knownbits  = reg_knownbits[REG_R(15)];
         value      = reg_value    [REG_R(15)];
@@ -4515,7 +4773,7 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
         value      = reg_value    [REG_R(0)] & reg_value    [REG_R(m)];
 # endif
     } else if ((opcode & 0xB00F) == 0x000F) {
-        is_pointer = PTR_ISVALID(n) && PTR_ISVALID(m);
+        is_pointer = PTR_CHECK(n) && PTR_CHECK(m);
 # ifdef OPTIMIZE_KNOWN_VALUES
         knownbits  = reg_knownbits[REG_R(n)] & reg_knownbits[REG_R(m)];
         value      = reg_value    [REG_R(n)] & reg_value    [REG_R(m)];
@@ -4523,7 +4781,7 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
     } else if ((opcode & 0xF000) == 0x1000
             || (opcode & 0xF00A) == 0x2000 || (opcode & 0xF00B) == 0x2002
             || (opcode & 0xF00A) == 0x4002 || (opcode & 0xF0FF) == 0x401B) {
-        is_pointer = PTR_ISVALID(n);
+        is_pointer = PTR_CHECK(n);
 # ifdef OPTIMIZE_KNOWN_VALUES
         knownbits  = reg_knownbits[REG_R(n)];
         value      = reg_value    [REG_R(n)];
@@ -4531,7 +4789,7 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
     } else if ((opcode & 0xF000) == 0x5000
             || (opcode & 0xF00A) == 0x6000 || (opcode & 0xF00B) == 0x6002
             || (opcode & 0xFA00) == 0x8000) {
-        is_pointer = PTR_ISVALID(m);
+        is_pointer = PTR_CHECK(m);
 # ifdef OPTIMIZE_KNOWN_VALUES
         knownbits  = reg_knownbits[REG_R(m)];
         value      = reg_value    [REG_R(m)];
@@ -4572,9 +4830,9 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
             ) {
                 CREATE_LABEL(no_branch);
                 if (state->branch_type == SH2BRTYPE_BT_S) {
-                    GOTO_IF_NZ(no_branch, state->branch_cond);
+                    GOTO_IF_NZ(no_branch, state->branch_cond_reg);
                 } else {
-                    GOTO_IF_Z(no_branch, state->branch_cond);
+                    GOTO_IF_Z(no_branch, state->branch_cond_reg);
                 }
                 check_cycles(entry, state_reg);
                 DEFINE_LABEL(no_branch);
@@ -4592,7 +4850,7 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
      */
     int cached_label = 0;
     index = (jit_PC - initial_PC) / 2;
-    if (!recursing && is_branch_target[index/32] & (1 << (index % 32))) {
+    if (!recursing && (is_branch_target[index/32] & (1 << (index % 32)))) {
         CLEAR_MAC_IS_ZERO();
 #ifdef JIT_DEBUG
         if (UNLIKELY(CACHED_SHIFT_COUNT() != 0)) {
@@ -4613,8 +4871,12 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
                 pointer_status[reg].rtl_basereg = 0;
                 pointer_status[reg].source = 0;
             }
-            pointer_local = 0;  // Known registers never appear here
+            /* Always reset this to avoid having too many long-lived
+             * registers (see setup_pointers()); we'll regenerate it as
+             * needed. */
+            pointer_status[reg].rtl_ptrreg = 0;
         }
+        pointer_local = 0;  // Known registers never appear here
         ASSERT(writeback_state_cache(entry, state_reg, 0));
         clear_state_cache(0);
         btcache[btcache_index].sh2_address = jit_PC;
@@ -4663,7 +4925,22 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
     }
 
     /*
-     * (6) If enabled, insert a dummy instruction indicating the current
+     * (6) If this is not a recursive decode and this instruction is hinted
+     *     as loading a data pointer, set a flag so that we will generate
+     *     RTL to load the base pointer after the instruction completes;
+     *     otherwise, clear the flag.  (Note that the hint flag will never
+     *     be set if pointer optimization is disabled, so we don't need to
+     *     check again here.)
+     */
+    index = (jit_PC - initial_PC) / 2;
+    if (!recursing && (is_data_pointer_load[index/32] & (1 << (index % 32)))) {
+        state->make_Rn_data_pointer = 1;
+    } else {
+        state->make_Rn_data_pointer = 0;
+    }
+
+    /*
+     * (7) If enabled, insert a dummy instruction indicating the current
      *     SH-2 PC.  Do this after the label so the instruction isn't
      *     optimized away as part of a dead code block following a branch.
      */
@@ -4672,7 +4949,7 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
 #endif
 
     /*
-     * (7) If TRACE_STEALTH is enabled, insert coded NOPs to inform the
+     * (8) If TRACE_STEALTH is enabled, insert coded NOPs to inform the
      *     RTL interpreter of cached values and direct it to trace the
      *     instruction.
      */
@@ -4689,6 +4966,61 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
     APPEND(NOP, 0, 0x98000000, 0, 0);
     APPEND(NOP, 0, 0x90000000, 0, 0);
 # endif
+#endif
+
+    return 1;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * opcode_done:  Perform post-decode processing for an instruction.
+ * Implements the OPCODE_DONE() macro used by the decoding core.
+ *
+ * [Parameters]
+ *         state: Processor state block
+ *         entry: Block being translated
+ *     state_reg: RTL register holding state block pointer
+ *        opcode: SH-2 opcode of instruction being decoded
+ *     recursing: Nonzero if this is a recursive decode, else zero
+ * [Return value]
+ *     Nonzero on success, zero on failure
+ */
+static int opcode_done(SH2State *state, JitEntry *entry, uint32_t state_reg,
+                       unsigned int opcode, int recursing)
+{
+    /*
+     * (1) If this instruction is hinted as loading a data pointer,
+     *     generate RTL to set up a base pointer register for the SH-2
+     *     register identified by the Rn field of this instruction.
+     */
+    if (state->make_Rn_data_pointer) {
+        const unsigned int n = opcode>>8 & 0xF;
+
+        DECLARE_REG(Rn);
+        LOAD_STATE_ALLOC_KEEPOFS(Rn, R[n]);
+        DEFINE_REG(page);
+        SRLI(page, Rn, 19);
+        DEFINE_REG(dp_base);
+        MOVEA(dp_base, ADDR_HI(direct_pages));
+        DEFINE_REG(table_offset);
+        SLLI(table_offset, page, LOG2_SIZEOF_PTR);
+        DEFINE_REG(dp_ptr);
+        ADD(dp_ptr, dp_base, table_offset);
+        DEFINE_REG(page_ptr);
+        LOAD_PTR(page_ptr, dp_ptr, ADDR_LO(direct_pages));
+        pointer_status[n].known = -1;
+        pointer_status[n].type = 2;
+        pointer_status[n].data_only = 1;
+        pointer_status[n].rtl_basereg = page_ptr;
+    }
+
+    /*
+     * (2) If tracing, write all cached SH-2 registers back to the state
+     *     block so traces show the correct values at each instruction.
+     */
+#ifdef TRACE
+    ASSERT(writeback_state_cache(entry, state_reg, 1));
 #endif
 
     return 1;
@@ -4717,25 +5049,6 @@ static int translate_block(SH2State *state, JitEntry *entry)
 
     unsigned int index;
 
-    /* If a manual optimization callback has been provided, check for a
-     * match at this address, and use the optimized translation if found. */
-
-    if (manual_optimization_callback) {
-        const uint16_t *fetch =
-            (const uint16_t *)((uintptr_t)fetch_base + entry->sh2_start);
-        const unsigned int hand_tuned_len =
-            (*manual_optimization_callback)(state, entry->sh2_start,
-                                            fetch, entry->rtl);
-        if (hand_tuned_len) {
-#ifdef JIT_DEBUG_VERBOSE
-            DMSG("Using hand-tuned code for 0x%08X + %u insns",
-                 entry->sh2_start, hand_tuned_len);
-#endif
-            entry->sh2_end = entry->sh2_start + hand_tuned_len*2 - 1;
-            return 1;
-        }
-    }
-
     /* Clear out translation state. */
 
     memset(is_branch_target, 0, sizeof(is_branch_target));
@@ -4752,21 +5065,84 @@ static int translate_block(SH2State *state, JitEntry *entry)
         reg_value[index] = 0;
     }
 #endif
+    ignore_optimization_hints = 0;
+    is_constant_entry_reg = 0;
     memset(pointer_status, 0, sizeof(pointer_status));
     stack_pointer = 0;
     pointer_local = 0;
+    is_data_pointer_reg = 0;
+    memset(is_data_pointer_load, 0, sizeof(is_data_pointer_load));
 #ifdef OPTIMIZE_STATE_BLOCK
     clear_state_cache(1);  // Should always be clear here, but just in case
     stored_PC = entry->sh2_start;  // So loops can skip the store if optimized
 #endif
+    state->branch_type = SH2BRTYPE_NONE;
+    state->branch_target = 0;
+    state->branch_target_reg = 0;
+    state->branch_fold_native = 0;
+    state->branch_cond_reg = 0;
+    state->branch_cycles = 0;
+    state->branch_targets_rts = 0;
+    state->loop_to_jsr = 0;
+    state->folding_subroutine = 0;
+    state->pending_select = 0;
+    state->select_sense = 0;
     state->just_branched = 0;
     state->mac_is_zero = 0;
     state->cached_shift_count = 0;
-#ifdef OPTIMIZE_VARIABLE_SHIFTS
     state->varshift_target_PC = 0;
-#endif
-#ifdef OPTIMIZE_DIVISION
+    state->varshift_type = 0;
+    state->varshift_Rcount = 0;
+    state->varshift_max = 0;
+    state->varshift_Rshift = 0;
     state->division_target_PC = 0;
+    state->div_data.Rquo = 0;
+    state->div_data.Rrem = 0;
+    state->div_data.quo = 0;
+    state->div_data.rem = 0;
+    state->div_data.SR = 0;
+
+    /* If a manual optimization callback has been provided, check for a
+     * match at this address, and use the optimized translation if found.
+     * (This must be done after clearing state, because the callback may
+     * set optimization hints and return zero.) */
+
+    if (manual_optimization_callback) {
+        const uint16_t *fetch =
+            (const uint16_t *)((uintptr_t)fetch_base + entry->sh2_start);
+        SH2NativeFunctionPointer hand_tuned_function;
+        const unsigned int hand_tuned_len =
+            (*manual_optimization_callback)(state, entry->sh2_start,
+                                            fetch, &hand_tuned_function, 0);
+        if (hand_tuned_len > 0) {
+#ifdef JIT_DEBUG_VERBOSE
+            DMSG("Using hand-tuned code for 0x%08X + %u insns",
+                 entry->sh2_start, hand_tuned_len);
+#endif
+            DEFINE_REG(state_reg);
+            APPEND(LOAD_PARAM, state_reg, 0, 0, 0);
+            DEFINE_REG(funcptr_reg);
+            MOVEA(funcptr_reg, hand_tuned_function);
+            CALL_NORET(state_reg, 0, funcptr_reg);
+            RETURN();
+            ASSERT(rtl_finalize_block(entry->rtl));
+            entry->sh2_end = entry->sh2_start + hand_tuned_len*2 - 1;
+            return 1;
+        }
+    }
+
+    /* If any registers were marked as constant on entry, load their
+     * values into the known-constant array. */
+
+#ifdef OPTIMIZE_KNOWN_VALUES
+    if (is_constant_entry_reg) {
+        for (index = 0; index < 16; index++) {
+            if (is_constant_entry_reg & (1<<index)) {
+                reg_knownbits[index] = 0xFFFFFFFF;
+                reg_value[index] = state->R[index];
+            }
+        }
+    }
 #endif
 
     /* Check whether saturation code can potentially be optimized out of
@@ -4797,7 +5173,7 @@ static int translate_block(SH2State *state, JitEntry *entry)
      * determine what parts of it are translatable code, and to perform
      * pre-translation checks for various optimizations. */
 
-    unsigned int block_len = scan_block(entry, entry->sh2_start);
+    unsigned int block_len = scan_block(state, entry, entry->sh2_start);
     if (!block_len) {
         DMSG("Failed to find any translatable instructions at 0x%08X",
              entry->sh2_start);
@@ -4806,10 +5182,11 @@ static int translate_block(SH2State *state, JitEntry *entry)
     entry->sh2_end = entry->sh2_start + block_len*2 - 1;
 
     /* Preload the state block pointer (first function argument) into an
-     * RTL register. */
+     * RTL register, and mark it as a unique pointer. */
 
     DEFINE_REG(state_reg);
     APPEND(LOAD_PARAM, state_reg, 0, 0, 0);
+    ASSERT(rtl_register_set_unique_pointer(entry->rtl, state_reg));
 
     /* If we have an optimizable loop, prepare RTL registers for all SH-2
      * registers live in the loop as well as the cycle count and limit, up
@@ -4938,7 +5315,7 @@ static int translate_block(SH2State *state, JitEntry *entry)
     while (jit_PC <= entry->sh2_end) {
         index = (jit_PC - entry->sh2_start) / 2;
         if (word_info[index] & WORD_INFO_CODE) {
-            if (UNLIKELY(!translate_insn(state, entry, state_reg, 0))) {
+            if (UNLIKELY(!translate_insn(state, entry, state_reg, 0, 0))) {
                 DMSG("Failed to translate instruction at 0x%08X",
                      entry->sh2_start + index*2);
                 return 0;
@@ -5099,21 +5476,27 @@ static int setup_pointers(SH2State * const state, JitEntry * const entry,
 
     for (index = 0; index < lenof(pointer_status); index++) {
         if ((pointer_used & 1<<index)
-         && (((optimization_flags & SH2_OPTIMIZE_STACK) && index == 15)
-             || (!skip_preconditions
-                 && (optimization_flags & SH2_OPTIMIZE_POINTERS)))
+            && (((optimization_flags & SH2_OPTIMIZE_STACK) && index == 15)
+                || ((optimization_flags & SH2_OPTIMIZE_POINTERS)
+                    && (!skip_preconditions
+                        || (is_data_pointer_reg & 1<<index))))
         ) {
             pointer_status[index].known = 1;
+            pointer_status[index].data_only =
+                (is_data_pointer_reg & 1<<index) != 0;
             pointer_status[index].checked = 0;
-            if (pointer_regs & 1<<index) {
+            if ((pointer_regs | is_data_pointer_reg) & 1<<index) {
                 /* It's a directly accessible address; check at runtime to
                  * make sure the pointer is still valid (unless it's the
-                 * stack pointer and we're optimizing), then assign a base
+                 * stack pointer and we're optimizing, or the register has
+                 * been hinted as safe to optimize), then assign a base
                  * register. */
                 const uint32_t reg_address = state->R[index];
                 const unsigned int addr_shift =
                     ((reg_address & 0x0F000000) == 0x05000000) ? 19 : 20;
-                if (index != 15 || !(optimization_flags & SH2_OPTIMIZE_STACK)){
+                if (!(index == 15 && (optimization_flags & SH2_OPTIMIZE_STACK))
+                 && !(is_data_pointer_reg & 1<<index)
+                ) {
                     if (!*invalidate_label_ptr) {
                         ASSERT(*invalidate_label_ptr =
                                    rtl_alloc_label(entry->rtl));
@@ -5135,6 +5518,12 @@ static int setup_pointers(SH2State * const state, JitEntry * const entry,
                     MOVEA(basereg, direct_pages[reg_address>>19]);
                 }
                 pointer_status[index].rtl_basereg = basereg;
+                /* We don't immediately load a direct pointer in order to
+                 * minimize the number of long-lived registers (one base
+                 * register instead of lots of direct pointer registers);
+                 * the direct pointer will be created as needed and
+                 * discarded at branch points. */
+                pointer_status[index].rtl_ptrreg = 0;
                 pointer_status[index].djp_base =
                     direct_jit_pages[reg_address>>19];
                 if (index == 15 && (optimization_flags & SH2_OPTIMIZE_STACK)) {
@@ -5169,10 +5558,12 @@ static int setup_pointers(SH2State * const state, JitEntry * const entry,
                 LOAD_PTR(test, djp_ptr, ADDR_LO(direct_jit_pages));
                 GOTO_IF_NZ(*invalidate_label_ptr, test);
                 pointer_status[index].rtl_basereg = 0;
+                pointer_status[index].rtl_ptrreg = 0;
             }
         } else {
             pointer_status[index].known = 0;
             pointer_status[index].rtl_basereg = 0;
+            pointer_status[index].rtl_ptrreg = 0;
         }
     }
 
@@ -5188,6 +5579,7 @@ static int setup_pointers(SH2State * const state, JitEntry * const entry,
  * array.
  *
  * [Parameters]
+ *       state: Processor state block pointer
  *       entry: Translated block data structure
  *     address: Start of block in SH-2 address space
  * [Return value]
@@ -5202,7 +5594,7 @@ static int setup_pointers(SH2State * const state, JitEntry * const entry,
  *          loop_live_registers, loop_load_registers, loop_changed_registers,
  *          and loop_invariant_pointers appropriately
  */
-static int scan_block(JitEntry *entry, uint32_t address)
+static int scan_block(SH2State *state, JitEntry *entry, uint32_t address)
 {
     const uint32_t start_address = address;  // Save the block's start address
 
@@ -5210,6 +5602,8 @@ static int scan_block(JitEntry *entry, uint32_t address)
     PRECOND(fetch_base != NULL, return 0);
     const uint16_t *fetch =
         (const uint16_t *)((uintptr_t)fetch_base + address);
+
+    unsigned int index;
 
     memset(word_info, 0, sizeof(word_info));
 
@@ -5221,7 +5615,7 @@ static int scan_block(JitEntry *entry, uint32_t address)
     unsigned int fallthru_source = 0; // Location of branch (word_info[] index)
 
     /* Remember whether we've seen something write to SR (we don't clear
-     * the can-translate flag unless we see a MAC instruction _after_ a
+     * the can-optimize flag unless we see a MAC instruction _after_ a
      * write to SR, since the SR write could just be restoring it at the
      * end of the subroutine) */
     int sr_was_changed = 0;
@@ -5240,11 +5634,34 @@ static int scan_block(JitEntry *entry, uint32_t address)
      * so we can track pointer values through MOV instructions.  A value of
      * 31 is inserted for registers which have been overwritten with other
      * values (so we don't attempt to mark the original register indices as
-     * "used"); a value of 30 indicates that the register has been loaded
-     * with a MOVA instruction and thus points to nearby memory. */
+     * "used"); a value of 30 indicates that the register is known to be a
+     * pointer (either by being loaded with a MOVA instruction or from an
+     * optimization hint) but does not derive from a specific register. */
     uint8_t pointer_map[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-    /* Clear the current set of registers used as pointers */
+    /* Clear the current set of registers used as pointers. */
     pointer_used = 0;
+
+    /* Track which registers have values loaded via MOV @(disp,PC) for
+     * subroutine folding.  A value of 1 (an impossible target address)
+     * indicates that the register has not been so loaded.  We assume that
+     * any PC-relative load subsequently used in a JSR is a constant. */
+    uint32_t local_constant[16] = {1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1};
+    for (index = 0; index < 16; index++) {
+        if (is_constant_entry_reg & (1<<index)) {
+            /* We don't bother checking here whether the value is
+             * actually a valid address; we assume that if a JSR
+             * through this register is executed, it must be valid. */
+            local_constant[index] = state->R[index];
+        }
+    }
+    /* We also need to remember the state of each register at every branch
+     * target; if a particular instruction can be reached from multiple
+     * sources or does not fall through from the preceding instruction, the
+     * contents of registers will need to be updated appropriately. */
+    static uint32_t local_constant_per_insn[JIT_INSNS_PER_BLOCK][16];
+    int is_local_branch = 0;
+    unsigned int local_branch_target_index = 0;
+    int local_branch_is_new = 0;
 
 #ifdef OPTIMIZE_LOOP_REGISTERS
     /* Initialize loop optimization tracking state; also keep track of
@@ -5273,8 +5690,6 @@ static int scan_block(JitEntry *entry, uint32_t address)
     int loop_noload_registers_set = 0;
     int at_branch = 0;
 #endif
-
-    unsigned int index;
 
 
     /* Find the maximum length of this block: either JIT_INSNS_PER_BLOCK or
@@ -5354,6 +5769,16 @@ static int scan_block(JitEntry *entry, uint32_t address)
             fallthru_target = fallthru_source = 0;
         }
 
+        /* If this is a branch target, update the local constant list used
+         * by subroutine folding. */
+
+        if (is_branch_target[block_len/32] & (1 << (block_len%32))) {
+            unsigned int reg;
+            for (reg = 0; reg < 16; reg++) {
+                local_constant[reg] = local_constant_per_insn[block_len][reg];
+            }
+        }
+
         /* Check for MAC.[WL] optimizations. */
 
         if (optimization_flags & SH2_OPTIMIZE_MAC_NOSAT) {
@@ -5372,7 +5797,8 @@ static int scan_block(JitEntry *entry, uint32_t address)
 
         if (optimization_flags & SH2_OPTIMIZE_POINTERS) {
 
-            optimize_pointers(opcode, opcode_info, pointer_map);
+            optimize_pointers(start_address, address, opcode, opcode_info,
+                              pointer_map);
 
             /* If we're looking at a MAC instruction beyond the beginning
              * of the block, and at least one of the source registers to
@@ -5497,7 +5923,7 @@ static int scan_block(JitEntry *entry, uint32_t address)
             check_loop_registers(opcode, opcode_info);
         }
 
-#endif
+#endif  // OPTIMIZE_LOOP_REGISTERS
 
         /* If the instruction is a static branch within the potential range
          * of this block, record the target; also check for optimizations. */
@@ -5505,7 +5931,7 @@ static int scan_block(JitEntry *entry, uint32_t address)
         if ((opcode & 0xF900) == 0x8900  // B[TF]{,_S}
          || (opcode & 0xF000) == 0xA000  // BRA
         ) {
-            int disp;
+            int32_t disp;
             if ((opcode & 0xF000) == 0xA000) {
                 disp = opcode & 0xFFF;
                 disp <<= 20;  // Sign-extend
@@ -5628,20 +6054,102 @@ static int scan_block(JitEntry *entry, uint32_t address)
             if (target > address) {
                 const uint32_t target_index = (target - start_address) / 2;
                 if (target_index < lenof(is_branch_target)*32) {
+                    is_local_branch = 1;
+                    local_branch_target_index = target_index;
                     const uint32_t flag = 1 << (target_index % 32);
-#ifdef OPTIMIZE_BRANCH_FALLTHRU
-                    if (!(is_branch_target[target_index/32] & flag)) {
+                    if (is_branch_target[target_index/32] & flag) {
+                        /* There's already another branch targeting the
+                         * same instruction.  After processing any delay
+                         * slot, we'll need to clear any constants from
+                         * the target's local constant table which differ
+                         * from the current known register values. */
+                        local_branch_is_new = 0;
+                    } else {
                         /* This is the first time we've seen this target;
                          * remember it in case we can fall through. */
+#ifdef OPTIMIZE_BRANCH_FALLTHRU
                         fallthru_target = target_index;
                         fallthru_source = block_len;
-                    }
 #endif
+                        local_branch_is_new = 1;
+                    }
                     is_branch_target[target_index/32] |= flag;
                 }
             }
           skip_branch_target_check:;  // From branch optimization above
         }
+
+        /* If this is a BSR or a JSR to a known target, see whether it can
+         * be folded into the current block. */
+
+        if (optimization_flags & SH2_OPTIMIZE_FOLD_SUBROUTINES) {
+
+            /* First check for PC-relative loads so we can track JSR
+             * target addresses. */
+            if ((opcode & 0xB000) == 0x9000) {
+                const unsigned int n = opcode>>8 & 0xF;
+                const unsigned int disp = opcode & 0xFF;
+                if (opcode & 0x4000) {  // MOV.L
+                    const unsigned int offset = (address&2 ? 1 : 2) + 2*disp;
+                    local_constant[n] = fetch[offset]<<16 | fetch[offset+1];
+                } else {  // MOV.W
+                    const unsigned int offset = 2 + disp;
+                    local_constant[n] = fetch[offset];
+                }
+            } else {
+                if (opcode_info & SH2_OPCODE_INFO_SETS_R0) {
+                    local_constant[0] = 1;
+                }
+                if (opcode_info & SH2_OPCODE_INFO_SETS_Rn) {
+                    local_constant[opcode>>8 & 0xF] = 1;
+                }
+                if (opcode_info & (SH2_OPCODE_INFO_ACCESS_POSTINC
+                                   | SH2_OPCODE_INFO_ACCESS_PREDEC)) {
+                    if (opcode_info & SH2_OPCODE_INFO_ACCESSES_Rm) {
+                        local_constant[opcode>>4 & 0xF] = 1;
+                    }
+                    if (opcode_info & SH2_OPCODE_INFO_ACCESSES_Rn) {
+                        local_constant[opcode>>8 & 0xF] = 1;
+                    }
+                    if (opcode_info & SH2_OPCODE_INFO_ACCESSES_R15) {
+                        local_constant[15] = 1;
+                    }
+                }
+            }
+
+            /* Now see if this is an optimizable call. */
+            uint32_t target = 1; // 1 = not a subroutine call or unknown target
+            if ((opcode & 0xF000) == 0xB000) {  // BSR label
+                int32_t disp = opcode & 0xFFF;
+                disp <<= 20;  // Sign-extend
+                disp >>= 19;  // And double
+                target = (address + 4) + disp;
+            } else if ((opcode & 0xF0FF) == 0x400B) {  // JSR @Rn
+                const unsigned int n = opcode>>8 & 0xF;
+                if (local_constant[n]) {
+                    target = local_constant[n];
+                }
+            }
+            if (target != 1
+             && optimize_fold_subroutine(state, start_address, address,
+                                         target, fetch[1],
+                                         pointer_map, local_constant,
+                                         &subroutine_native[block_len])
+            ) {
+                word_info[block_len] |= WORD_INFO_FOLDABLE;
+                subroutine_target[block_len] = target;
+#ifdef OPTIMIZE_LOOP_REGISTERS
+                /* Subroutine folding and loop optimization don't currently
+                 * play together well, so disable loop optimization if we
+                 * fold a subroutine into the current block.  (FIXME: this
+                 * is a loss if the loop has already ended; better to just
+                 * not fold and break the block instead in that case?) */
+                is_loop = 0;
+                can_optimize_loop = 0;
+#endif
+            }
+
+        }  // if (optimization_flags & SH2_OPTIMIZE_FOLD_SUBROUTINES)
 
         /* Check whether this is an instruction with a delay slot. */
 
@@ -5651,8 +6159,30 @@ static int scan_block(JitEntry *entry, uint32_t address)
          * instruction; when we get past its delay slot (if applicable),
          * we'll check whether to end the block. */
 
-        at_uncond_branch |= ((opcode_info & SH2_OPCODE_INFO_BRANCH_UNCOND)
-                          || opcode == 0x001B);  // SLEEP
+        at_uncond_branch |=
+            (((opcode_info & SH2_OPCODE_INFO_BRANCH_UNCOND)
+              && !(word_info[block_len] & WORD_INFO_FOLDABLE))
+             || opcode == 0x001B);  // SLEEP
+
+        /* If we have a pending local branch, update the local constant
+         * table as appropriate. */
+
+        if (is_local_branch && !delay) {
+            is_local_branch = 0;
+            unsigned int reg;
+            if (local_branch_is_new) {
+                for (reg = 0; reg < 16; reg++) {
+                    local_constant_per_insn[local_branch_target_index][reg]
+                        = local_constant[reg];
+                }
+            } else {
+                for (reg = 0; reg < 16; reg++) {
+                    if (local_constant_per_insn[local_branch_target_index][reg] != local_constant[reg]) {
+                        local_constant_per_insn[local_branch_target_index][reg] = 1;
+                    }
+                }
+            }
+        }
 
         /* If we have a pending branch and we're past its delay slot
          * (if applicable), update loop optimization state. */
@@ -5675,7 +6205,7 @@ static int scan_block(JitEntry *entry, uint32_t address)
                 final_invariant_pointers = loop_invariant_pointers;
                 at_loop_branch = 0;
             }
-#if !defined(TRACE) && !defined(TRACE_STEALTH) && !defined(TRACE_LITE)
+# if !defined(TRACE) && !defined(TRACE_STEALTH) && !defined(TRACE_LITE)
             /* If this is a branch back to the beginning of the loop from
              * the middle, followed by more loop body code, then any
              * registers first set below this branch will still have the
@@ -5690,13 +6220,13 @@ static int scan_block(JitEntry *entry, uint32_t address)
              * register set here.  If we're _not_ tracing, we omit this
              * "else" and let the noload registers continue to accumulate. */
             else
-#endif
+# endif
             if (!loop_noload_registers_set) {
                 loop_noload_registers = loop_changed_registers;
                 loop_noload_registers_set = 1;
             }
-        }
-#endif
+        }  // if (at_branch && !delay)
+#endif  // OPTIMIZE_LOOP_REGISTERS
 
         /* If this is an instruction that loads SR (LDC ...,SR), terminate
          * the block after the next instruction (since the SH-2 ignores
@@ -5799,7 +6329,7 @@ static int scan_block(JitEntry *entry, uint32_t address)
                 }
 #endif
             }  // if next insn is not a branch target
-        }  // if (at_uncond_branch && !delay)
+        }  // if (at_uncond_branch && !delay && !end_block)
 
         /* Check whether we've hit the instruction limit.  To avoid the
          * potential for problems arising from an instruction with a delay
@@ -5888,16 +6418,37 @@ static int scan_block(JitEntry *entry, uint32_t address)
  * assumed to be a pointer.  Helper function for scan_block().
  *
  * [Parameters]
- *          opcode: Opcode of current instruction
- *     opcode_info: Information about current instruction
- *     pointer_map: pointer_map[] array pointer from scan_block()
+ *     start_address: Start address of block, or 1 for subroutine fold checks
+ *           address: Address of current instruction
+ *            opcode: Opcode of current instruction
+ *       opcode_info: Information about current instruction
+ *       pointer_map: pointer_map[] array pointer from scan_block()
  * [Return value]
  *     None
  */
 static inline void optimize_pointers(
-    unsigned int opcode, uint32_t opcode_info, uint8_t pointer_map[16])
+    uint32_t start_address, uint32_t address, unsigned int opcode,
+    uint32_t opcode_info, uint8_t pointer_map[16])
 {
-    if ((opcode & 0xF00F) == 0x6003) {  // MOV Rm,Rn
+    const unsigned int index = (address - start_address) / 2;
+    if (start_address != 1
+     && (is_data_pointer_load[index/32] & (1 << (index % 32)))
+    ) {
+
+        const unsigned int n = opcode>>8 & 0xF;
+        pointer_map[n] = 30;
+#ifdef JIT_DEBUG
+        if (!(opcode_info & SH2_OPCODE_INFO_SETS_Rn)) {
+            DMSG("WARNING: %08X marked as data pointer load but does not"
+                 " set Rn!", address);
+# ifdef JIT_DEBUG_VERBOSE
+        } else {
+            DMSG("%08X marked as data pointer load for R%u", address, n);
+# endif
+        }
+#endif
+
+    } else if ((opcode & 0xF00F) == 0x6003) {  // MOV Rm,Rn
 
         const unsigned int n = opcode>>8 & 0xF;
         const unsigned int m = opcode>>4 & 0xF;
@@ -6297,6 +6848,134 @@ static inline int optimize_branch_select(
 
 #endif  // OPTIMIZE_BRANCH_SELECT
 
+/*-----------------------------------------------------------------------*/
+
+/**
+ * optimize_fold_subroutine:  Determine whether the code sequence starting
+ * at the SH-2 address "target" qualifies as a foldable subroutine.  If so,
+ * update the pointer_map[] array with any changes as a result of the
+ * subroutine.
+ *
+ * [Parameters]
+ *              state: Processor state block pointer
+ *      start_address: Start address of block
+ *            address: Address of subroutine call
+ *             target: Target address of subroutine call
+ *         delay_slot: Instruction word in delay slot of subroutine call
+ *        pointer_map: pointer_map[] array pointer from scan_block()
+ *     local_constant: local_constant[] array pointer from scan_block()
+ *         native_ret: Pointer to variable to receive native implementation
+ *                        function address if the routine is to be folded
+ *                        using a native implementation, NULL if the routine
+ *                        is to be folded by translating instructions
+ * [Return value]
+ *     Nonzero if subroutine is foldable, else zero
+ */
+static int optimize_fold_subroutine(
+    SH2State *state, const uint32_t start_address, uint32_t address,
+    const uint32_t target, const uint16_t delay_slot, uint8_t pointer_map[16],
+    uint32_t local_constant[16], SH2NativeFunctionPointer *native_ret)
+{
+    const uint16_t *fetch_base = (const uint16_t *)fetch_pages[target >> 19];
+    if (fetch_base == NULL) {
+        return 0;  // Unfetchable, therefore unoptimizable
+    }
+    const uint16_t *fetch =
+        (const uint16_t *)((uintptr_t)fetch_base + target);
+    const uint16_t * const start = fetch;
+    const uint16_t * const limit =
+        fetch + OPTIMIZE_FOLD_SUBROUTINES_MAX_LENGTH + 2;
+
+    /* First see if there's a native implementation which we can call. */
+
+    if (manual_optimization_callback) {
+        ignore_optimization_hints = 1;
+        const unsigned int hand_tuned_len =
+            (*manual_optimization_callback)(state, target, fetch,
+                                            native_ret, 1);
+        ignore_optimization_hints = 0;
+        if (hand_tuned_len > 0) {
+#ifdef JIT_DEBUG_VERBOSE
+            DMSG("Using hand-tuned code to fold subroutine at 0x%08X", target);
+#endif
+            /* We assume all of R0-R7 have been destroyed. */
+            unsigned int reg;
+            for (reg = 0; reg < 8; reg++) {
+                pointer_map[reg] = 31;
+                local_constant[reg] = 1;
+            }
+            return 1;
+        }
+    }
+
+    /* Make a local copy of optimization state data, so we can revert if
+     * we discover that the subroutine can't be optimized. */
+
+    uint8_t saved_pointer_map[16];
+    memcpy(saved_pointer_map, pointer_map, 16);
+    const uint16_t saved_pointer_used = pointer_used;
+
+    /* Scan the delay slot, then each instruction in the subroutine.
+     * Branches (or similar instructions) are not permitted in delay
+     * slots, so we assume the instruction is a simple one. */
+
+    if (optimization_flags & SH2_OPTIMIZE_POINTERS) {
+        optimize_pointers(start_address, address+2, delay_slot,
+                          get_opcode_info(delay_slot), pointer_map);
+    }
+
+    for (address = target;
+         !(fetch >= start+2 && fetch[-2] == 0x000B);
+         address += 2, fetch++
+    ) {
+        if (fetch > limit) {
+            return 0;  // Subroutine is too long
+        }
+        const uint16_t opcode = *fetch;
+        const uint32_t opcode_info = get_opcode_info(opcode);
+        if (opcode == 0x000B) {  // RTS
+            /* Ignore; we'll catch it after the delay slot */
+        } else if (opcode_info & (SH2_OPCODE_INFO_BRANCH_UNCOND
+                                  | SH2_OPCODE_INFO_BRANCH_COND)) {
+            goto fail;  // Branches break optimization
+        } else if ((optimization_flags & SH2_OPTIMIZE_POINTERS_MAC)
+                   && (opcode & 0xB00F) == 0x000F) {  // MAC.[WL]
+            const int n = opcode>>8 & 0xF;
+            const int m = opcode>>4 & 0xF;
+            if (pointer_map[n] == 31
+             || (pointer_map[n] != 30 && !(pointer_regs & (1<<pointer_map[n])))
+             || pointer_map[m] == 31
+             || (pointer_map[m] != 30 && !(pointer_regs & (1<<pointer_map[m])))
+            ) {
+                /* This MAC can't be optimized in the current context, so
+                 * let the subroutine call go through as normal--we may be
+                 * able to optimize the MAC pointers that way. */
+                goto fail;
+            }
+        } else if ((opcode & 0xF0FF) == 0x4007) {  // LDC Rn,SR
+            goto fail;  // LDC ...,SR can cause an interrupt, so don't optimize
+        } else if ((opcode & 0xF0FF) == 0x001B) {  // SLEEP
+            goto fail;  // SLEEP will always break the block, so don't optimize
+        }
+        if (optimization_flags & SH2_OPTIMIZE_POINTERS) {
+            optimize_pointers(target, address, opcode, opcode_info,
+                              pointer_map);
+        }
+        // FIXME: update local_constant[] too
+    }
+
+    /* The subroutine is small and simple enough to optimize by translation. */
+    *native_ret = NULL;
+    return 1;
+
+    /* Roll back the optimization state if the subroutine can't be
+     * optimized. */
+  fail:
+    memcpy(pointer_map, saved_pointer_map, 16);
+    pointer_used = saved_pointer_used;
+    return 0;
+}
+
 /*************************************************************************/
 
 /**
@@ -6376,6 +7055,8 @@ static inline void jit_exec(SH2State *state, JitEntry *entry)
  *         entry: Block being translated
  *     state_reg: RTL register holding state block pointer
  *     recursing: Nonzero if this is a recursive decode, else zero
+ *       is_last: Nonzero if this is the last instruction of a recursive
+ *                   decode, else zero
  * [Return value]
  *     Decoded SH-2 opcode (nonzero) on success, zero on error
  * [Notes]
@@ -6386,7 +7067,7 @@ static inline void jit_exec(SH2State *state, JitEntry *entry)
 
 #define DECODE_INSN_PARAMS \
     const uint16_t *fetch, SH2State *state, JitEntry *entry, \
-    const unsigned int state_reg, const int recursing
+    const unsigned int state_reg, const int recursing, const int is_last
 
 #ifdef TRACE
 # define TRACE_WRITEBACK_FOR_RECURSIVE_DECODE \
@@ -6394,10 +7075,10 @@ static inline void jit_exec(SH2State *state, JitEntry *entry)
 #else
 # define TRACE_WRITEBACK_FOR_RECURSIVE_DECODE  /*nothing*/
 #endif
-#define RECURSIVE_DECODE(address)  do {         \
+#define RECURSIVE_DECODE(address,is_last)  do { \
     const uint32_t saved_PC = jit_PC;           \
     jit_PC = (address);                         \
-    if (UNLIKELY(!translate_insn(state, entry, state_reg, 1))) { \
+    if (UNLIKELY(!translate_insn(state, entry, state_reg, 1, (is_last)))) { \
         return 0;                               \
     }                                           \
     TRACE_WRITEBACK_FOR_RECURSIVE_DECODE;       \
@@ -6418,11 +7099,13 @@ static inline void jit_exec(SH2State *state, JitEntry *entry)
  *     state_reg: RTL register holding state block pointer
  *     recursing: Nonzero if this is a recursive decode (for inserting
  *                   copies of instructions from other locations), else zero
+ *       is_last: Nonzero if this is the last instruction in a recursively
+ *                   decoded sequence, else zero
  * [Return value]
  *     Nonzero on success, zero on error
  */
 static int translate_insn(SH2State *state, JitEntry *entry,
-                          unsigned int state_reg, int recursing)
+                          unsigned int state_reg, int recursing, int is_last)
 {
     /* Get a fetch pointer for the current PC */
     const uint16_t *fetch_base = (const uint16_t *)fetch_pages[cur_PC >> 19];
@@ -6431,16 +7114,10 @@ static int translate_insn(SH2State *state, JitEntry *entry,
 
     /* Process the instruction */
     const unsigned int opcode =
-        decode_insn(fetch, state, entry, state_reg, recursing);
+        decode_insn(fetch, state, entry, state_reg, recursing, is_last);
     if (UNLIKELY(!opcode)) {
         return 0;
     }
-
-    /* If tracing, write all cached SH-2 registers back to the state block
-     * so traces show the correct values */
-#ifdef TRACE
-    ASSERT(writeback_state_cache(entry, state_reg, 1));
-#endif
 
 #ifdef TRACE_LIKE_SH2INT
     if (opcode == 0x001B) {  // Make sure we don't get stuck on a SLEEP
@@ -6711,6 +7388,9 @@ static int writeback_state_cache(const JitEntry *entry, unsigned int state_reg,
                 ADDI(rtlreg, state_cache[index].rtlreg,
                      state_cache[index].offset);
                 state_cache[index].rtlreg = rtlreg;
+                if (index < 16) {
+                    pointer_status[index].rtl_ptrreg = 0;
+                }
                 if (index == 15 && stack_pointer) {
                     ADDI(stack_pointer, stack_pointer,
                          state_cache[index].offset);

@@ -124,11 +124,11 @@ void SH2Reset(SH2_struct *context)
    context->isIdle = 0;
 
    context->frc.leftover = 0;
-   context->frc.div = 8;
+   context->frc.shift = 3;
  
    context->wdt.isenable = 0;
    context->wdt.isinterval = 1;
-   context->wdt.div = 2;
+   context->wdt.shift = 1;
    context->wdt.leftover = 0;
 
    // Reset Interrupts
@@ -1000,6 +1000,7 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          return;
       case 0x011:
          CurrentSH2->onchip.FTCSR = (CurrentSH2->onchip.FTCSR & (val & 0xFE)) | (val & 0x1);
+         return;
       case 0x012:
          CurrentSH2->onchip.FRC.part.H = val;
          return;
@@ -1024,13 +1025,13 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          switch (val & 3)
          {
             case 0:
-               CurrentSH2->frc.div = 8;
+               CurrentSH2->frc.shift = 3;
                break;
             case 1:
-               CurrentSH2->frc.div = 32;
+               CurrentSH2->frc.shift = 5;
                break;
             case 2:
-               CurrentSH2->frc.div = 128;
+               CurrentSH2->frc.shift = 7;
                break;
             case 3:
                LOG("FRT external input clock not implemented.\n");
@@ -1121,28 +1122,28 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
             switch (val & 7)
             {
                case 0:
-                  CurrentSH2->wdt.div = 2;
+                  CurrentSH2->wdt.shift = 1;
                   break;
                case 1:
-                  CurrentSH2->wdt.div = 64;
+                  CurrentSH2->wdt.shift = 6;
                   break;
                case 2:
-                  CurrentSH2->wdt.div = 128;
+                  CurrentSH2->wdt.shift = 7;
                   break;
                case 3:
-                  CurrentSH2->wdt.div = 256;
+                  CurrentSH2->wdt.shift = 8;
                   break;
                case 4:
-                  CurrentSH2->wdt.div = 512;
+                  CurrentSH2->wdt.shift = 9;
                   break;
                case 5:
-                  CurrentSH2->wdt.div = 1024;
+                  CurrentSH2->wdt.shift = 10;
                   break;
                case 6:
-                  CurrentSH2->wdt.div = 4096;
+                  CurrentSH2->wdt.shift = 12;
                   break;
                case 7:
-                  CurrentSH2->wdt.div = 8192;
+                  CurrentSH2->wdt.shift = 13;
                   break;
             }
 
@@ -1452,12 +1453,14 @@ void FRTExec(u32 cycles)
 {
    u32 frcold;
    u32 frctemp;
+   u32 mask;
 
    frcold = frctemp = (u32)CurrentSH2->onchip.FRC.all;
+   mask = (1 << CurrentSH2->frc.shift) - 1;
    
    // Increment FRC
-   frctemp += ((cycles + CurrentSH2->frc.leftover) / CurrentSH2->frc.div);
-   CurrentSH2->frc.leftover = (cycles + CurrentSH2->frc.leftover) % CurrentSH2->frc.div;
+   frctemp += ((cycles + CurrentSH2->frc.leftover) >> CurrentSH2->frc.shift);
+   CurrentSH2->frc.leftover = (cycles + CurrentSH2->frc.leftover) & mask;
 
    // Check to see if there is or was a Output Compare A match
    if (frctemp >= CurrentSH2->onchip.OCRA && frcold < CurrentSH2->onchip.OCRA)
@@ -1506,13 +1509,15 @@ void FRTExec(u32 cycles)
 
 void WDTExec(u32 cycles) {
    u32 wdttemp;
+   u32 mask;
 
    if (!CurrentSH2->wdt.isenable || CurrentSH2->onchip.WTCSR & 0x80 || CurrentSH2->onchip.RSTCSR & 0x80)
       return;
 
    wdttemp = (u32)CurrentSH2->onchip.WTCNT;
-   wdttemp += ((cycles + CurrentSH2->wdt.leftover) / CurrentSH2->wdt.div);
-   CurrentSH2->wdt.leftover = (cycles + CurrentSH2->wdt.leftover) % CurrentSH2->wdt.div;
+   mask = (1 << CurrentSH2->wdt.shift) - 1;
+   wdttemp += ((cycles + CurrentSH2->wdt.leftover) >> CurrentSH2->wdt.shift);
+   CurrentSH2->wdt.leftover = (cycles + CurrentSH2->wdt.leftover) & mask;
 
    // Are we overflowing?
    if (wdttemp > 0xFF)
@@ -1736,7 +1741,17 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
    ywrite(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
 
    // Write internal variables
+   // FIXME: write the clock divisor rather than the shift amount for
+   // backward compatibility (fix this next time the save state version
+   // is updated)
+   context->frc.shift = 1 << context->frc.shift;
    ywrite(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
+   {
+      u32 div = context->frc.shift;
+      context->frc.shift = 0;
+      while ((div >>= 1) != 0)
+         context->frc.shift++;
+   }
    context->NumberOfInterrupts = SH2Core->GetInterrupts(context, context->interrupts);
    ywrite(&check, (void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
    ywrite(&check, (void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
@@ -1770,6 +1785,12 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
 
    // Read internal variables
    yread(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);
+   {  // FIXME: backward compatibility hack (see SH2SaveState() comment)
+      u32 div = context->frc.shift;
+      context->frc.shift = 0;
+      while ((div >>= 1) != 0)
+         context->frc.shift++;
+   }
    yread(&check, (void *)context->interrupts, sizeof(interrupt_struct), MAX_INTERRUPTS, fp);
    yread(&check, (void *)&context->NumberOfInterrupts, sizeof(u32), 1, fp);
    SH2Core->SetInterrupts(context, context->NumberOfInterrupts, context->interrupts);

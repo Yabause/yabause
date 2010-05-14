@@ -321,9 +321,13 @@ static void render_mode0_region(uint32_t *pixelbuf, vdp2draw_struct *info,
                                 RotationParams param_set[2], int which,
                                 unsigned int x0, unsigned int y0,
                                 unsigned int xlim, unsigned int ylim);
+
 static void render_mode1(uint32_t *pixelbuf, vdp2draw_struct *info,
                          const clipping_struct *clip,
                          RotationParams param_set[2]);
+static int mode1_is_split_screen(const RotationParams param_set[2],
+                                 int *top_set_ret, int *switch_y_ret);
+
 static void render_mode2(uint32_t *pixelbuf, vdp2draw_struct *info,
                          const clipping_struct *clip,
                          RotationParams param_set[2]);
@@ -415,12 +419,6 @@ static int (*get_coef_table[2][4])(RotationParams *, const void *) = {
  */
 void vdp2_draw_map_rotated(vdp2draw_struct *info, const clipping_struct *clip)
 {
-    /* See if rotated graphics are enabled in the first place. */
-
-    if (!config_get_enable_rotate()) {
-        return;
-    }
-
     /* Parse rotation parameters. */
 
     static __attribute__((aligned(16))) RotationParams param_set[2];
@@ -736,18 +734,12 @@ static void render_mode1(uint32_t *pixelbuf, vdp2draw_struct *info,
                          const clipping_struct *clip,
                          RotationParams param_set[2])
 {
-    if (!param_set[0].coefenab) {
-        /* If parameter set A doesn't have coefficients enabled, set B can
-         * never be selected, so this is just the same as mode 0. */
-        return render_mode0(pixelbuf, info, clip, param_set, 0);
-    }
-
     /* Set up a second vdp2draw_struct for the second parameter set. */
 
     vdp2draw_struct *info0 = info;
     vdp2draw_struct info1_buf = *info;
     vdp2draw_struct *info1 = &info1_buf;
-    info->charaddr = ((Vdp2Regs->MPOFR >> 4) & 7) << 17;
+    info1->charaddr = ((Vdp2Regs->MPOFR >> 4) & 7) << 17;
     info1->planew_bits = (Vdp2Regs->PLSZ >> 12) & 1;
     info1->planeh_bits = (Vdp2Regs->PLSZ >> 13) & 1;
     info1->planew = 1 << info->planew_bits;
@@ -756,6 +748,24 @@ static void render_mode1(uint32_t *pixelbuf, vdp2draw_struct *info,
         DMSG("WARNING: mixed plane sizes not supported for RPMD=2"
              " (set A: %dx%d, set B: %dx%d)", info0->planew, info0->planeh,
              info1->planew, info1->planeh);
+    }
+
+    /* If set A has one coefficient per row, it might simply be splitting
+     * the screen into two differently-rendered regions (such as sky and
+     * ground).  We can potentially draw that more efficiently as mode 0. */
+
+    int top_set, switch_y;
+    if (mode1_is_split_screen(param_set, &top_set, &switch_y)) {
+        if (switch_y < 0) {
+            return render_mode0(pixelbuf, info, clip, param_set, top_set);
+        } else {
+            render_mode0_region(pixelbuf, top_set==0 ? info0 : info1,
+                                param_set, top_set,
+                                0, 0, disp_width, switch_y);
+            return render_mode0_region(pixelbuf, top_set==0 ? info1 : info0,
+                                       param_set, top_set ^ 1,
+                                       0, switch_y, disp_width, disp_height);
+        }
     }
 
     /* Precalculate tilemap/bitmap coordinate masks, shift counts, and
@@ -889,6 +899,95 @@ static void render_mode1(uint32_t *pixelbuf, vdp2draw_struct *info,
         }
 
     }  // for (y = 0; y < disp_height; y++, coef_y += coef_dy)
+}
+
+/*----------------------------------*/
+
+/**
+ * mode1_is_split_screen:  Return whether the parameters and coefficients
+ * for a mode 1 rotated/distorted graphics layer have the effect of
+ * splitting the screen into a top and bottom region, each with one of the
+ * two parameter sets.  Parameters which specify a single parameter set for
+ * the entire screen are considered to be a split screen with an empty
+ * bottom portion for the purposes of this function.
+ *
+ * If this function returns true, *top_set_ret will be set to the index of
+ * the parameter set used for the top line of the screen, and *switch_y_ret
+ * will be set to the first line at which the other parameter set is used.
+ * If the entire screen uses a single parameter set (effectively mode 0),
+ * *switch_y_ret will be set to -1.
+ *
+ * [Parameters]
+ *        param_set: Array of rotation parameter sets
+ *      top_set_ret: Pointer to variable to receive the index of the
+ *                      parameter set used on screen line 0
+ *     switch_y_ret: Pointer to variable to receive the first line at which
+ *                      the alternate parameter set is used
+ * [Return value]
+ *     True (nonzero) if the rotation parameters have the effect of
+ *     splitting the screen, else false (zero)
+ */
+static int mode1_is_split_screen(const RotationParams param_set[2],
+                                 int *top_set_ret, int *switch_y_ret)
+{
+    /* If parameter set A doesn't have coefficients enabled, set B can
+     * never be selected, so this is just the same as mode 0 with set A. */
+
+    if (!param_set[0].coefenab) {
+        *top_set_ret = 0;
+        *switch_y_ret = -1;
+        return 1;
+    }
+
+    /* If there is more than one coefficient per line, assume that the
+     * rotation operation is more complex than a simple split-screen effect. */
+
+    if (param_set[0].deltaKAx != 0) {
+        return 0;
+    }
+
+    /* Scan over the set A coefficients (now known to be one per line) and
+     * see how many times the selected set changes. */
+
+    int cur_set = -1;
+    *top_set_ret = -1;
+    *switch_y_ret = -1;
+
+    /* These are intentionally float rather than FIXEDFLOAT, as in
+     * render_mode0_region(). */
+    float coef0_dy = FIXED_TOFLOAT(param_set[0].deltaKAst);
+    float coef0_y = 0;
+    int y;
+
+    for (y = 0; y < disp_height; y++, coef0_y += coef0_dy) {
+
+        const uint32_t coef0_addr = param_set[0].coeftbladdr
+            + (ifloorf(coef0_y) << param_set[0].coefdatashift);
+        const uint8_t * const coef0_ptr = Vdp2Ram + (coef0_addr & 0x7FFFF);
+        /* VDP memory is organized by bytes, so coef0_ptr is now pointing
+         * to the top byte of the coefficient value regardless of the data
+         * size setting. */
+        const int set = (*(int8_t *)coef0_ptr < 0) ? 1 : 0;
+
+        if (y == 0) {
+            *top_set_ret = cur_set = set;
+        } else if (set != cur_set) {
+            if (*switch_y_ret < 0) {
+                *switch_y_ret = y;
+            } else {
+                /* This is the second change we've seen, so it's not a
+                 * split-screen effect. */
+printf("set change 2 at %d\n",y);
+                return 0;
+            }
+            cur_set = set;
+        }
+
+    }
+
+    /* If we got this far, it must be a split-screen effect. */
+
+    return 1;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -1036,11 +1135,17 @@ static void get_rotation_parameters(vdp2draw_struct *info, int which,
      *              (  [   1   ])
      *
      * where the "*" operator is multiplication by components (not matrix
-     * multiplication), and M is the 3x2 constant matrix product:
+     * multiplication), M is the 2x3 constant matrix product:
      *
      *         [A  B  C] [deltaX  deltaXst  (Xst - Px)]
      *     M = [D  E  F] [deltaY  deltaYst  (Yst - Py)]
      *                   [  0        0      (Zst - Pz)]
+     *
+     * and <Xp,Yp> is a constant vector computed as:
+     *
+     *     [Xp]   ([A  B  C] [Px - Cx])   [Cx]   [Mx]
+     *     [Yp] = ([D  E  F] [Py - Cy]) + [Cy] + [My]
+     *            (          [Pz - Cz])
      */
 
     param_ret->mat11 = FIXED_MULT(param_ret->A, param_ret->deltaX)
@@ -1247,7 +1352,7 @@ static int get_rotation_coefficient_size4_mode2(RotationParams *param,
 #ifdef USE_FIXED_POINT
         (data << 8) >> 8;
 #else
-        (float)(data << 8) / 65536.0f;
+        (float)(data << 8) / 16777216.0f;
 #endif
     return 1;
 }

@@ -989,6 +989,8 @@ void FormatBackupRam(void *mem, u32 size)
 //              many fields have changed format/size from the old scsp.c
 //    [scsp2.c] scsp_clock, scsp_clock_frac, ScspState.sample_timer (timing)
 //    [scsp2.c] cdda_buf, cdda_next_in, cdda_next_out (CDDA buffer)
+//    [sh2core.c] frc.div changed to frc.shift
+//    [sh2core.c] wdt probably needs to be written as well
 
 int YabSaveState(const char *filename)
 {

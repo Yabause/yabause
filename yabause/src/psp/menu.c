@@ -127,8 +127,9 @@ typedef enum RenderMenuOption_ {
     OPT_RENDER_SMOOTH_TEXTURES = 0,
     OPT_RENDER_SMOOTH_HIRES,
     OPT_RENDER_ENABLE_ROTATE,
+    OPT_RENDER_OPTIMIZE_ROTATE,
 } RenderMenuOption;
-#define OPT_RENDER__MAX  OPT_RENDER_ENABLE_ROTATE
+#define OPT_RENDER__MAX  OPT_RENDER_OPTIMIZE_ROTATE
 
 typedef enum FrameSkipMenuOption_ {
     OPT_FRAME_SKIP_AUTO = 0,
@@ -152,15 +153,18 @@ typedef enum AdvancedMenuOption_ {
 
 typedef enum OptimizeMenuOption_ {
     OPT_OPTIMIZE_ASSUME_SAFE_DIVISION = 0,
+    OPT_OPTIMIZE_FOLD_SUBROUTINES,
     OPT_OPTIMIZE_BRANCH_TO_RTS,
     OPT_OPTIMIZE_LOCAL_ACCESSES,
     OPT_OPTIMIZE_POINTERS,
     OPT_OPTIMIZE_POINTERS_MAC,
     OPT_OPTIMIZE_LOCAL_POINTERS,
     OPT_OPTIMIZE_STACK,
+#if 0  // FIXME: out of space on the screen; this should be the least dangerous
     OPT_OPTIMIZE_MAC_NOSAT,
+#endif
 } OptimizeMenuOption;
-#define OPT_OPTIMIZE__MAX  OPT_OPTIMIZE_MAC_NOSAT
+#define OPT_OPTIMIZE__MAX  OPT_OPTIMIZE_STACK
 
 static uint8_t cur_option;
 
@@ -526,17 +530,19 @@ static void process_input_menu(const uint32_t buttons,
         } else if (cur_menu == MENU_ADVANCED
                 && cur_option == OPT_ADVANCED_ME_WRITEBACK_PERIOD
         ) {
-            const unsigned int period = config_get_me_writeback_period();
-            unsigned int new_period = (dir > 0) ? period<<1 : period>>1;
-            if (new_period < 1) {
-                new_period = 1;
-            } else if (new_period > 64) {  // Should be more than enough
-                new_period = 64;
-            }
-            if (!config_set_me_writeback_period(new_period)) {
-                status_text = "Failed to change fixed frame skip count!";
-                status_color = TEXT_COLOR_NG;
-                status_timer = STATUS_DISPTIME;
+            if (me_available && config_get_use_me()) {
+                const unsigned int period = config_get_me_writeback_period();
+                unsigned int new_period = (dir > 0) ? period<<1 : period>>1;
+                if (new_period < 1) {
+                    new_period = 1;
+                } else if (new_period > 64) {  // Should be more than enough
+                    new_period = 64;
+                }
+                if (!config_set_me_writeback_period(new_period)) {
+                    status_text = "Failed to change fixed frame skip count!";
+                    status_color = TEXT_COLOR_NG;
+                    status_timer = STATUS_DISPTIME;
+                }
             }
         }
 
@@ -884,6 +890,14 @@ static void process_option_render(const uint32_t buttons)
         }
         break;
 
+      case OPT_RENDER_OPTIMIZE_ROTATE:
+        if (!config_set_optimize_rotate(!config_get_optimize_rotate())) {
+            status_text = "Failed to change option!";
+            status_color = TEXT_COLOR_NG;
+            status_timer = STATUS_DISPTIME;
+        }
+        break;
+
     }
 }
 
@@ -1010,6 +1024,9 @@ static void process_option_optimize(const uint32_t buttons)
       case OPT_OPTIMIZE_ASSUME_SAFE_DIVISION:
         optflags ^= SH2_OPTIMIZE_ASSUME_SAFE_DIVISION;
         break;
+      case OPT_OPTIMIZE_FOLD_SUBROUTINES:
+        optflags ^= SH2_OPTIMIZE_FOLD_SUBROUTINES;
+        break;
       case OPT_OPTIMIZE_BRANCH_TO_RTS:
         optflags ^= SH2_OPTIMIZE_BRANCH_TO_RTS;
         break;
@@ -1028,9 +1045,11 @@ static void process_option_optimize(const uint32_t buttons)
       case OPT_OPTIMIZE_STACK:
         optflags ^= SH2_OPTIMIZE_STACK;
         break;
+#if 0  // FIXME: out of space on the screen
       case OPT_OPTIMIZE_MAC_NOSAT:
         optflags ^= SH2_OPTIMIZE_MAC_NOSAT;
         break;
+#endif
     }
 
     if (!config_set_sh2_optimizations(optflags)) {
@@ -1516,7 +1535,7 @@ static void draw_menu(void)
       case MENU_RENDER:
         font_printf(DISPLAY_WIDTH/2, menu_title_y, 0, TEXT_COLOR_INFO,
                     "Configure hardware rendering settings");
-        y = menu_center_y - (2*line_height + FONT_HEIGHT) / 2;
+        y = menu_center_y - (3*line_height + FONT_HEIGHT) / 2;
         draw_menu_option(OPT_RENDER_SMOOTH_TEXTURES, menu_left_edge, y,
                          "[%c] Smooth textures and sprites",
                          config_get_smooth_textures() ? '*' : ' ');
@@ -1528,6 +1547,10 @@ static void draw_menu(void)
         draw_menu_option(OPT_RENDER_ENABLE_ROTATE, menu_left_edge, y,
                          "[%c] Enable rotated/distorted graphics",
                          config_get_enable_rotate() ? '*' : ' ');
+        y += line_height;
+        draw_menu_option(OPT_RENDER_OPTIMIZE_ROTATE, menu_left_edge, y,
+                         "[%c] Optimize rotated/distorted graphics",
+                         config_get_optimize_rotate() ? '*' : ' ');
         y = menu_help_y;
         switch ((RenderMenuOption)cur_option) {
           case OPT_RENDER_SMOOTH_TEXTURES:
@@ -1560,6 +1583,17 @@ static void draw_menu(void)
                         " significantly.  Disable this option to");
             y += line_height;
             font_printf(75, y, -1, TEXT_COLOR_INFO, "turn them off.");
+            y += line_height;
+            break;
+          case OPT_RENDER_OPTIMIZE_ROTATE:
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "Some types of rotated"
+                        " graphics can be drawn quickly,");
+            y += line_height;
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "at the expense of"
+                        " accuracy.  Disable this option to");
+            y += line_height;
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "always use the"
+                        " accurate (but slow) drawing method.");
             y += line_height;
             break;
         }
@@ -1801,6 +1835,10 @@ static void draw_menu(void)
                          "[%c] Assume safe division operations",
                          optflags & SH2_OPTIMIZE_ASSUME_SAFE_DIVISION ? '*' : ' ');
         y += line_height-2;
+        draw_menu_option(OPT_OPTIMIZE_FOLD_SUBROUTINES, menu_left_edge, y,
+                         "[%c] Fold short subroutines into callers",
+                         optflags & SH2_OPTIMIZE_FOLD_SUBROUTINES ? '*' : ' ');
+        y += line_height-2;
         draw_menu_option(OPT_OPTIMIZE_BRANCH_TO_RTS, menu_left_edge, y,
                          "[%c] Optimize branch/return pairs",
                          optflags & SH2_OPTIMIZE_BRANCH_TO_RTS ? '*' : ' ');
@@ -1824,10 +1862,12 @@ static void draw_menu(void)
         draw_menu_option(OPT_OPTIMIZE_STACK, menu_left_edge, y,
                          "[%c] Optimize stack accesses",
                          optflags & SH2_OPTIMIZE_STACK ? '*' : ' ');
+#if 0  // FIXME: out of space on the screen
         y += line_height-2;
         draw_menu_option(OPT_OPTIMIZE_MAC_NOSAT, menu_left_edge, y,
                          "[%c] Optimize unsaturated multiplication",
                          optflags & SH2_OPTIMIZE_MAC_NOSAT ? '*' : ' ');
+#endif
         y = menu_help_y;
         switch ((OptimizeMenuOption)cur_option) {
           case OPT_OPTIMIZE_ASSUME_SAFE_DIVISION:
@@ -1836,6 +1876,17 @@ static void draw_menu(void)
             y += line_height;
             font_printf(75, y, -1, TEXT_COLOR_INFO, "will not overflow"
                         " and division by zero will not occur.");
+            y += line_height;
+            break;
+          case OPT_OPTIMIZE_FOLD_SUBROUTINES:
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "Fold (inline) short,"
+                        " simple subroutines into the");
+            y += line_height;
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "routines which call"
+                        " them.  May cause crashes");
+            y += line_height;
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "with games that use"
+                        " self-modifying code.");
             y += line_height;
             break;
           case OPT_OPTIMIZE_BRANCH_TO_RTS:
@@ -1886,6 +1937,7 @@ static void draw_menu(void)
                         " the SH-2 stack.");
             y += line_height;
             break;
+#if 0  // FIXME: out of space on the screen
           case OPT_OPTIMIZE_MAC_NOSAT:
             font_printf(75, y, -1, TEXT_COLOR_INFO, "Speed up multiply-and"
                         "-accumulate operations which are");
@@ -1893,6 +1945,7 @@ static void draw_menu(void)
             font_printf(75, y, -1, TEXT_COLOR_INFO, "known not to use"
                         " saturation.");
             y += line_height;
+#endif
         }
         break;
       }

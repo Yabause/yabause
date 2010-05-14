@@ -66,7 +66,7 @@
  *   out the updates of the list pointer variable after each instruction,
  *   saving a significant amount of code.  In an optimal case where all
  *   function parameters are constant, such as
- *      sceGuTexFilter(GU_NEAREST, GU_NEAREST)
+ *      sceGuTexFilter(GU_NEAREST, GU_NEAREST);
  *   execution time can be reduced from >20 cycles to 3 (or even 2) cycles
  *   per call.
  *
@@ -153,8 +153,8 @@ typedef enum GECommand_ {
     GECMD_PATCH_PRIM    = 0x37,
     GECMD_PATCH_FRONT   = 0x38,
                        // 0x39 undefined
-    GECMD_WORLD_START   = 0x3A,
-    GECMD_WORLD_UPLOAD  = 0x3B,
+    GECMD_MODEL_START   = 0x3A,
+    GECMD_MODEL_UPLOAD  = 0x3B,
     GECMD_VIEW_START    = 0x3C,
     GECMD_VIEW_UPLOAD   = 0x3D,
     GECMD_PROJ_START    = 0x3E,
@@ -516,8 +516,10 @@ static inline void guDepthMask(const int mask)
 static inline void guDepthRange(const int near, const int far)
 {
     extern uint32_t *gu_list;
-    *gu_list++ = GECMD_ZSCALE<<24 | trim_float((far - near) / 2.0f);
-    *gu_list++ = GECMD_ZPOS<<24   | trim_float((far + near) / 2.0f);
+    *gu_list++ = GECMD_ZSCALE<<24    | trim_float((far - near) / 2.0f);
+    *gu_list++ = GECMD_ZPOS<<24      | trim_float((far + near) / 2.0f);
+    *gu_list++ = GECMD_CLIP_NEAR<<24 | (near<far ? near : far);
+    *gu_list++ = GECMD_CLIP_FAR<<24  | (near<far ? far : near);
 }
 
 static inline void guDisable(const int mode)
@@ -689,6 +691,60 @@ static inline void guScissor(const int left, const int top,
     }
 }
 
+/*
+ * Note:  As with sceGuSetMatrix(), 4x3 matrices are laid out in a 4x4
+ * array as follows:
+ *    { {_11, _12, _13, _ignored},
+ *      {_21, _22, _23, _ignored},
+ *      {_31, _32, _33, _ignored},
+ *      {_41, _42, _43, _ignored} }
+ */
+static inline void guSetMatrix(int type, const float *matrix)
+{
+    extern uint32_t *gu_list;
+    if (type == GU_MODEL) {
+        *gu_list++ = GECMD_MODEL_START<<24;
+        unsigned int i;
+        for (i = 0; i < 4; i++) {
+            unsigned int j;
+            for (j = 0; j < 3; j++) {
+                *gu_list++ = GECMD_MODEL_UPLOAD<<24
+                           | trim_float(matrix[i*4+j]);
+            }
+        }
+    } else if (type == GU_VIEW) {
+        *gu_list++ = GECMD_VIEW_START<<24;
+        unsigned int i;
+        for (i = 0; i < 4; i++) {
+            unsigned int j;
+            for (j = 0; j < 3; j++) {
+                *gu_list++ = GECMD_VIEW_UPLOAD<<24
+                           | trim_float(matrix[i*4+j]);
+            }
+        }
+    } else if (type == GU_PROJECTION) {
+        *gu_list++ = GECMD_PROJ_START<<24;
+        unsigned int i;
+        for (i = 0; i < 4; i++) {
+            unsigned int j;
+            for (j = 0; j < 4; j++) {
+                *gu_list++ = GECMD_PROJ_UPLOAD<<24
+                           | trim_float(matrix[i*4+j]);
+            }
+        }
+    } else if (type == GU_TEXTURE) {
+        *gu_list++ = GECMD_TEXTURE_START<<24;
+        unsigned int i;
+        for (i = 0; i < 4; i++) {
+            unsigned int j;
+            for (j = 0; j < 3; j++) {
+                *gu_list++ = GECMD_TEXTURE_UPLOAD<<24
+                           | trim_float(matrix[i*4+j]);
+            }
+        }
+    }
+}
+
 static inline void guShadeModel(const int mode)
 {
     extern uint32_t *gu_list;
@@ -841,6 +897,8 @@ static inline void guViewport(const int cx, const int cy,
     sceGuPixelMask((mask))
 #define guScissor(left,top,width,height) \
     sceGuScissor((left), (top), (width), (height))
+#define guSetMatrix(type,matrix) \
+    sceGuSetMatrix((type), (const ScePspFMatrix *)(matrix))
 #define guShadeModel(mode) \
     sceGuShadeModel((mode))
 #define guStart(type,list) \

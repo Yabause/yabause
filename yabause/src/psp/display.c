@@ -67,6 +67,8 @@ static unsigned int last_frame_length;
 __attribute__((noreturn))
     static int buffer_swap_thread(SceSize args, void *argp);
 
+static void do_buffer_swap(void);
+
 /*************************************************************************/
 /*************************************************************************/
 
@@ -281,11 +283,14 @@ void display_begin_frame(void)
     /* Register the effective work surface pointer */
     guDrawBuffer(GU_PSM_8888, display_work_buffer(), DISPLAY_STRIDE);
 
-    /* Set up drawing area parameters */
+    /* Set up drawing area parameters (we set the depth parameters too,
+     * just in case a custom drawing routine wants to use 3D coordinates) */
     guViewport(2048, 2048, display_width, display_height);
-    guOffset(2048 - display_height/2, 2048 - display_height/2);
+    guOffset(2048 - display_width/2, 2048 - display_height/2);
     guScissor(0, 0, display_width, display_height);
     guEnable(GU_SCISSOR_TEST);
+    guDepthRange(65535, 0);
+    guDisable(GU_DEPTH_TEST);
 
 }
 
@@ -306,24 +311,13 @@ void display_end_frame(void)
     guFinish();
     swap_pending = 1;
     /* Give the new thread a slightly higher priority than us, or else it
-     * won't actually get a chance to run */
+     * won't actually get a chance to run. */
     if (sys_start_thread("YabauseBufferSwapThread", buffer_swap_thread,
                          sceKernelGetThreadCurrentPriority() - 1,
                          0x1000, 0, NULL) < 0) {
         DMSG("Failed to start buffer swap thread");
         swap_pending = 0;
-        /* Do it ourselves */
-        guSync(0, 0);
-        sceDisplaySetFrameBuf(surfaces[work_surface], DISPLAY_STRIDE,
-                              display_mode, PSP_DISPLAY_SETBUF_NEXTFRAME);
-        displayed_surface = work_surface;
-        work_surface = (work_surface + 1) % lenof(surfaces);
-        sceDisplayWaitVblankStart();
-        const uint32_t now = sceKernelGetSystemTimeLow();
-        const uint32_t last_frame_time = now - last_frame_start;
-        const uint32_t time_unit = (1001000+30)/60;
-        last_frame_length = (last_frame_time + time_unit/2) / time_unit;
-        last_frame_start = now;
+        do_buffer_swap();  // Do it ourselves
     }
 }
 
@@ -540,10 +534,9 @@ void display_fill_box(int x1, int y1, int x2, int y2, uint32_t color)
 /*************************************************************************/
 
 /**
- * buffer_swap_thread:  Call guSync(), swap the display and work
- * surfaces, wait for the following vertical blank, and clear the
- * "swap_pending" variable to false.  Designed to run as a background
- * thread while the main emulation proceeds.
+ * buffer_swap_thread:  Perform a buffer swap and clear the "swap_pending"
+ * variable to false.  Designed to run as a background thread while the
+ * main emulation proceeds.
  *
  * [Parameters]
  *     args, argp: Thread argument size and pointer (unused)
@@ -552,19 +545,48 @@ void display_fill_box(int x1, int y1, int x2, int y2, uint32_t color)
  */
 static int buffer_swap_thread(SceSize args, void *argp)
 {
+    do_buffer_swap();
+    swap_pending = 0;
+    sceKernelExitDeleteThread(0);
+}
+
+/*----------------------------------*/
+
+/**
+ * do_buffer_swap:  Perform a display buffer swap (call guSync(), swap the
+ * display and work surfaces, wait for the following vertical blank, and
+ * calculate the length of time between this newly displayed frame and the
+ * previous one).  Called either from the buffer swap thread or (if the
+ * swap thread fails to start) from the main thread.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     None
+ */
+static void do_buffer_swap(void)
+{
     guSync(0, 0);
     sceDisplaySetFrameBuf(surfaces[work_surface], DISPLAY_STRIDE,
                           display_mode, PSP_DISPLAY_SETBUF_NEXTFRAME);
     displayed_surface = work_surface;
     work_surface = (work_surface + 1) % lenof(surfaces);
     sceDisplayWaitVblankStart();
+
+    /* Update the frame length variables.  If this is the first frame
+     * we've drawn (signaled by last_frame_start == 0), just set a frame
+     * length of 1 (1/60 sec) since we have nothing to compare it against. */
     const uint32_t now = sceKernelGetSystemTimeLow();
     const uint32_t last_frame_time = now - last_frame_start;
     const uint32_t time_unit = (1001000+30)/60;
-    last_frame_length = (last_frame_time + time_unit/2) / time_unit;
-    last_frame_start = now;
-    swap_pending = 0;
-    sceKernelExitDeleteThread(0);
+    if (last_frame_start != 0) {
+        last_frame_length = (last_frame_time + time_unit/2) / time_unit;
+    } else {
+        last_frame_length = 1;
+    }
+    /* Make sure we don't accidentally signal the next frame as the
+     * first frame drawn. */
+    last_frame_start = (now != 0) ? now : 1;
 }
 
 /*************************************************************************/

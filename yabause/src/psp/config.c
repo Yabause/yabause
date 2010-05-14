@@ -39,7 +39,7 @@ static char path_bup[256] = "backup.bin";
 
 /* General settings */
 static int start_in_emu = 0;
-static int use_me = 1;
+static int use_me = 0;
 static uint32_t me_writeback_period = 1;
 static int bup_autosave = 1;
 
@@ -61,6 +61,7 @@ static int module_video = VIDCORE_PSP;
 static int smooth_textures = 0;
 static int smooth_hires = 0;
 static int enable_rotate = 1;
+static int optimize_rotate = 1;
 static int frameskip_auto = 0;
 static int frameskip_num = 0;
 static int frameskip_interlace = 1;
@@ -69,6 +70,7 @@ static int show_fps = 0;
 
 static uint32_t sh2_optimizations = SH2_OPTIMIZE_ASSUME_SAFE_DIVISION
                                   | SH2_OPTIMIZE_BRANCH_TO_RTS
+                                  | SH2_OPTIMIZE_FOLD_SUBROUTINES
                                   | SH2_OPTIMIZE_LOCAL_ACCESSES
                                   | SH2_OPTIMIZE_LOCAL_POINTERS
                                   | SH2_OPTIMIZE_MAC_NOSAT
@@ -79,6 +81,7 @@ static uint32_t sh2_optimizations = SH2_OPTIMIZE_ASSUME_SAFE_DIVISION
  * their default values when loading the config file) */
 #define SH2_KNOWN_OPTIMIZATIONS  (SH2_OPTIMIZE_ASSUME_SAFE_DIVISION \
                                 | SH2_OPTIMIZE_BRANCH_TO_RTS \
+                                | SH2_OPTIMIZE_FOLD_SUBROUTINES \
                                 | SH2_OPTIMIZE_LOCAL_ACCESSES \
                                 | SH2_OPTIMIZE_LOCAL_POINTERS \
                                 | SH2_OPTIMIZE_MAC_NOSAT \
@@ -251,6 +254,9 @@ void config_load(void)
         } else if (stricmp(name, "enable_rotate") == 0) {
             parse_int(PATH_INI, line, name, value, &enable_rotate);
 
+        } else if (stricmp(name, "optimize_rotate") == 0) {
+            parse_int(PATH_INI, line, name, value, &optimize_rotate);
+
         } else if (stricmp(name, "frameskip_auto") == 0) {
             parse_int(PATH_INI, line, name, value, &frameskip_auto);
 
@@ -344,6 +350,7 @@ int config_save(void)
      || fprintf(f, "smooth_textures=%d\n",      smooth_textures        ) < 0
      || fprintf(f, "smooth_hires=%d\n",         smooth_hires           ) < 0
      || fprintf(f, "enable_rotate=%d\n",        enable_rotate          ) < 0
+     || fprintf(f, "optimize_rotate=%d\n",      optimize_rotate        ) < 0
      || fprintf(f, "frameskip_auto=%d\n",       frameskip_auto         ) < 0
      || fprintf(f, "frameskip_num=%d\n",        frameskip_num          ) < 0
      || fprintf(f, "frameskip_interlace=%d\n",  frameskip_interlace    ) < 0
@@ -444,6 +451,11 @@ int config_get_smooth_hires(void)
 int config_get_enable_rotate(void)
 {
     return enable_rotate;
+}
+
+int config_get_optimize_rotate(void)
+{
+    return optimize_rotate;
 }
 
 int config_get_frameskip_auto(void)
@@ -607,6 +619,12 @@ int config_set_smooth_hires(int value)
 int config_set_enable_rotate(int value)
 {
     enable_rotate = value ? 1 : 0;
+    return 1;
+}
+
+int config_set_optimize_rotate(int value)
+{
+    optimize_rotate = value ? 1 : 0;
     return 1;
 }
 
