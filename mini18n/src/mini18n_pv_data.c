@@ -1,4 +1,5 @@
 /*  Copyright 2008 Guillaume Duhamel
+    Copyright 2010 Lawrence Sebald
   
     This file is part of mini18n.
   
@@ -21,6 +22,27 @@
 #include <string.h>
 #define __USE_GNU
 #include <wchar.h>
+
+#ifndef HAVE_WCSDUP
+#include <stdlib.h>
+#include <errno.h>
+
+/* wcsdup isn't technically part of C99 or anything, so there's at least a
+   possibility it isn't defined on the system. */
+static wchar_t *wcsdup(const wchar_t *string) {
+    size_t len = wcslen(string) + 1;
+    wchar_t *rv = (wchar_t *)malloc(len * sizeof(wchar_t));
+
+    if(!rv) {
+        errno = ENOMEM;
+        return (wchar_t *)0;
+    }
+
+    /* wcsncpy will return rv, so this works. */
+    return wcsncpy(rv, string, len);
+}
+    
+#endif /* !HAVE_WCSDUP */
 
 mini18n_data_t mini18n_str = {
 	(mini18n_len_func) strlen,

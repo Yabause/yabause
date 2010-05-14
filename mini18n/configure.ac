@@ -21,6 +21,11 @@ AC_CHECK_HEADER([windows.h], [
 	AC_DEFINE([HAVE_UTF16])
 	want_windows=yes], [])
 
+# This function doesn't seem to exist on Mac OS X (at least in 10.6), and its
+# not technically part of C99, so check for it, and provide a suitable
+# replacement if its not actually available.
+AC_CHECK_FUNCS([wcsdup])
+
 AC_ARG_ENABLE(log, AC_HELP_STRING(--enable-log, log non translated strings) , AC_DEFINE(MINI18N_LOG))
 
 AC_CONFIG_FILES([Makefile
