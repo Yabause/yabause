@@ -1276,11 +1276,11 @@ static void ScspDoExec(u32 cycles)
       u32 this_samples = 0;
       u32 this_cycles = cycles_left;
       if (scsp.scieb & (1 << SCSP_INTERRUPT_TIMER_A))
-         this_cycles = min(this_cycles, ScspTimerCyclesLeft(scsp.tima, scsp.tactl));
+         this_cycles = MIN(this_cycles, ScspTimerCyclesLeft(scsp.tima, scsp.tactl));
       if (scsp.scieb & (1 << SCSP_INTERRUPT_TIMER_B))
-         this_cycles = min(this_cycles, ScspTimerCyclesLeft(scsp.timb, scsp.tbctl));
+         this_cycles = MIN(this_cycles, ScspTimerCyclesLeft(scsp.timb, scsp.tbctl));
       if (scsp.scieb & (1 << SCSP_INTERRUPT_TIMER_C))
-         this_cycles = min(this_cycles, ScspTimerCyclesLeft(scsp.timc, scsp.tcctl));
+         this_cycles = MIN(this_cycles, ScspTimerCyclesLeft(scsp.timc, scsp.tcctl));
 
       scsp.sample_timer += this_cycles;
       this_samples = scsp.sample_timer >> 8;

@@ -443,11 +443,11 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
     const float coef_index_LL = coef_base + (disp_height - 1) * coef_dy;
     const float coef_index_LR = coef_index_LL + coef_right_offset;
     const uint32_t first_coef_index =
-        min(min(ifloorf(coef_index_UL), ifloorf(coef_index_UR)),
-            min(ifloorf(coef_index_LL), ifloorf(coef_index_LR)));
+        MIN(MIN(ifloorf(coef_index_UL), ifloorf(coef_index_UR)),
+            MIN(ifloorf(coef_index_LL), ifloorf(coef_index_LR)));
     const uint32_t last_coef_index =
-        max(max(ifloorf(coef_index_UL), ifloorf(coef_index_UR)),
-            max(ifloorf(coef_index_LL), ifloorf(coef_index_LR)));
+        MAX(MAX(ifloorf(coef_index_UL), ifloorf(coef_index_UR)),
+            MAX(ifloorf(coef_index_LL), ifloorf(coef_index_LR)));
     const uint32_t num_coefs = last_coef_index + first_coef_index - 1;
 
     int ground_is_zero;

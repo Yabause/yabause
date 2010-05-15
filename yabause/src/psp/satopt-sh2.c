@@ -2168,7 +2168,7 @@ static ALWAYS_INLINE void Azel_0601F762(
 
     switch (state->R[9] & 0xF0) {
       case 0x00:
-        r1 = max(max(r1, r2), max(r3, r5));
+        r1 = MAX(MAX(r1, r2), MAX(r3, r5));
         state->cycles += 21;
       l_601F7F4:
         r1 = ((int64_t)r1 * (int64_t)mult) >> 32;
@@ -2181,7 +2181,7 @@ static ALWAYS_INLINE void Azel_0601F762(
         break;
 
       default:
-        r1 = min(min(r1, r2), min(r3, r5));
+        r1 = MIN(MIN(r1, r2), MIN(r3, r5));
         state->cycles += 21;
         goto l_601F7F4;
 
