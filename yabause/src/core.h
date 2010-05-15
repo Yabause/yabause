@@ -202,10 +202,10 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
 
 /* Minimum/maximum values */
 
-#undef min
-#undef max
-#define min(a,b)  ((a) < (b) ? (a) : (b))
-#define max(a,b)  ((a) > (b) ? (a) : (b))
+#undef MIN
+#undef MAX
+#define MIN(a,b)  ((a) < (b) ? (a) : (b))
+#define MAX(a,b)  ((a) > (b) ? (a) : (b))
 
 //////////////////////////////////////////////////////////////////////////////
 
