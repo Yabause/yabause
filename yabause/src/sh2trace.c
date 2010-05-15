@@ -146,14 +146,16 @@ FASTCALL void sh2_trace_writel(u32 address, u32 value)
 
 /*-----------------------------------------------------------------------*/
 
-INLINE void HEXIT(char * const ptr, u32 val, int ndigits);
-void HEXIT(char * const ptr, u32 val, int ndigits) {
+#ifndef BINARY_LOG
+static INLINE void HEXIT(char * const ptr, u32 val, int ndigits)
+{
     while (ndigits-- > 0) {
         const int digit = val & 0xF;
         val >>= 4;
         ptr[ndigits] = (digit>9 ? digit+7+'0' : digit+'0');
     }
 }
+#endif
 
 FASTCALL void sh2_trace(SH2_struct *state, u32 address)
 {
@@ -177,10 +179,20 @@ FASTCALL void sh2_trace(SH2_struct *state, u32 address)
 
     } else {
         u16 opcode;
+#ifdef BINARY_LOG
+        struct {
+            u16 id;  // 1/2/4 = store; 0x80 = MSH2 insn; 0x81 = SSH2 insn
+            u16 opcode;
+            u32 regs[23];
+            u64 cycles;
+            u32 pad[2];
+        } buf;
+#else
         char buf[100];
         /* This looks ugly, but it's faster than fprintf() in this case */
         static char regbuf[] = "  R0: XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX\n  R8: XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX\n  PR: XXXXXXXX  SR: XXX  MAC: XXXXXXXX/XXXXXXXX  GBR: XXXXXXXX  VBR: XXXXXXXX\n";
         int i;
+#endif
 
         if (!logfile) {
             const char *filename = "sh2.log";
@@ -201,13 +213,6 @@ FASTCALL void sh2_trace(SH2_struct *state, u32 address)
 
 #ifdef BINARY_LOG
 
-        struct {
-            u16 id;  // 1/2/4 = store; 0x80 = MSH2 insn; 0x81 = SSH2 insn
-            u16 opcode;
-            u32 regs[23];
-            u64 cycles;
-            u32 pad[2];
-        } buf;
         buf.id = state==SSH2 ? 0x81 : 0x80;
         buf.opcode = opcode;
         /* sh2int leaves the branch target in regs.PC during a delay slot,
