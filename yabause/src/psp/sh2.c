@@ -77,8 +77,8 @@
  *
  * Note that a fair amount of voodoo is required to allow tracing of
  * instructions from translated RTL code.  Reading code located between
- * #ifdef TRACE{,_LIKE_SH2INT,_STEALTH} and the corresponding #else or
- * #endif may be dangerous to your health.
+ * #ifdef TRACE{,_STEALTH} and the corresponding #else or #endif may be
+ * dangerous to your health.
  */
 
 /*************************************************************************/
@@ -570,19 +570,16 @@ static uint32_t loop_invariant_pointers;
 
 /* Local function declarations */
 
-#if defined(__GNUC__) && defined(TRACE_LIKE_SH2INT)  // Not used in this case
-__attribute__((unused))
-#endif
-static int check_interrupts(SH2State *state);
-
-/*----------------------------------*/
-
-#ifdef ENABLE_JIT  // Through the rest of the functions
+#ifdef ENABLE_JIT  // Through the function declarations
 
 static JitEntry *jit_find(uint32_t address);
+static NOINLINE JitEntry *jit_find_noinline(uint32_t address);
 
-static JitEntry *jit_translate(SH2State *state, uint32_t address);
+static NOINLINE JitEntry *jit_translate(SH2State *state, uint32_t address);
 
+#if defined(PSP) && !defined(JIT_DEBUG_INTERPRET_RTL)
+__attribute__((unused))  // We use custom assembly in this case
+#endif
 static inline void jit_exec(SH2State *state, JitEntry *entry);
 
 static FASTCALL void jit_clear_write(SH2State *state, uint32_t address);
@@ -593,7 +590,16 @@ static void jit_blacklist_range(uint32_t start, uint32_t end);
 static FASTCALL void jit_mark_purged(uint32_t address);
 static int jit_check_purged(uint32_t address);
 
-static void clear_entry(JitEntry *entry);
+#if JIT_BRANCH_PREDICTION_SLOTS > 0
+static NOINLINE JitEntry *jit_predict_branch(BranchTargetInfo *predicted,
+                                             const uint32_t target);
+#endif
+
+#ifdef JIT_PROFILE
+static NOINLINE void jit_print_profile(void);
+#endif
+
+static NOINLINE void clear_entry(JitEntry *entry);
 static void clear_oldest_entry(void);
 
 static inline void flush_native_cache(void *start, uint32_t length);
@@ -704,10 +710,6 @@ int sh2_init(void)
  */
 void sh2_set_optimizations(uint32_t flags)
 {
-#ifdef TRACE_LIKE_SH2INT
-    flags &= ~(SH2_OPTIMIZE_BRANCH_TO_RTS | SH2_OPTIMIZE_POINTERS_MAC);
-#endif
-
     if (flags != optimization_flags) {
 #ifdef ENABLE_JIT
         jit_clear_all();
@@ -1000,9 +1002,9 @@ void sh2_set_byte_direct_access(uint32_t sh2_address, void *native_address,
  * If pointer optimization is disabled, this hint has no effect.
  *
  * The effect of calling this function from any context other than within
- * the manual optimization callback, or of specifying an instruction which
- * does not set the register specified by the Rn field of the opcode, is
- * undefined.
+ * the manual optimization callback, or of specifying an instruction other
+ * than MOVA which does not set the register specified by the Rn field of
+ * the opcode, is undefined.
  *
  * [Parameters]
  *       state: Processor state block pointer passed to callback function
@@ -1234,282 +1236,292 @@ void sh2_reset(SH2State *state)
  * [Return value]
  *     None
  */
+#ifdef PSP
+__attribute__((aligned(64)))
+#endif
 void sh2_run(SH2State *state, uint32_t cycles)
 {
-#ifdef TRACE_LIKE_SH2INT
-    const uint32_t init_cycles = state->cycles;
+    /* Update the JIT timestamp counter once per call */
+    jit_timestamp++;
+
+    /* Save this in the state block for use by translated code */
+    state->cycle_limit = cycles;
+
+    /* Check for interrupts before we start executing (this will wake up
+     * the processor if necessary) */
+    if (UNLIKELY(check_interrupts(state))) {
+#ifdef ENABLE_JIT
+        state->current_entry = jit_find(state->PC);
 #endif
+    }
 
-    /* Always check for interrupts the first time through the loop */
-    state->need_interrupt_check = 1;
+    /* If the processor is sleeping, consume all remaining cycles */
+    if (UNLIKELY(state->asleep)) {
+        state->cycles = state->cycle_limit;
+        return;
+    }
 
-    /* In TRACE_LITE mode, trace a single instruction at the current PC
-     * before we start executing */
-#ifdef TRACE_LITE
+    /* In TRACE_LITE (but not TRACE_LITE_VERBOSE) mode, trace a single
+     * instruction at the current PC before we start executing */
+#if defined(TRACE_LITE) && !defined(TRACE_LITE_VERBOSE)
     (*trace_insn_callback)(state, state->PC);
 #endif
 
+    /* Load this for faster access during the loop */
+    JitEntry *current_entry = state->current_entry;
+
     /* Loop until we've consumed the requested number of execution cycles.
      * There's no need to check state->delay here, because it's handled
-     * either at translation time or by the if() below the interpret_insn()
-     * call. */
+     * either at translation time or by interpret_insn() call. */
 
-    state->cycle_limit = cycles;
-    while (state->cycles < state->cycle_limit) {
+    const uint32_t cycle_limit = state->cycle_limit;
 
-        /* If SR was just changed or the processor is sleeping, check
-         * whether any interrupts are pending */
-#ifdef TRACE_LIKE_SH2INT
-        if (state->cycles > init_cycles) {
-            /* sh2int.c only checks for interrupts once per run() call */
-            if (state->asleep) {
-                // Execute the SLEEP instruction again
-                state->asleep = 0;
-            }
-        } else
-#endif
-        if (UNLIKELY(state->need_interrupt_check)) {
-            if (!check_interrupts(state)) {
-                /* If the processor is sleeping and there are no interrupts
-                 * pending, consume all remaining cycles */
-                if (state->asleep) {
-#ifdef TRACE_LIKE_SH2INT
-                    state->asleep = 0;
-#else
-                    state->cycles = state->cycle_limit;
-                    break;
-#endif
-                }
-            }
-            state->need_interrupt_check = 0;
-        }
+#if !defined(ENABLE_JIT)
 
-        /* If we don't have a current native code block, search for one and
-         * translate if necessary */
-#ifdef ENABLE_JIT
-        if (UNLIKELY(!state->current_entry)) {
-#ifdef PSP_TIME_TRANSLATION
-            static uint32_t total, count;
-            const uint32_t a = sceKernelGetSystemTimeLow();
-#endif
-            state->current_entry = jit_translate(state, state->PC);
-#ifdef PSP_TIME_TRANSLATION
-            const uint32_t b = sceKernelGetSystemTimeLow();
-            total += b-a;
-            count += ((state->current_entry->sh2_end + 1)
-                      - state->current_entry->sh2_start) / 2;
-            DMSG("%u/%u = %.3f us/insn", total, count, (float)total/count);
-#endif
+    while (state->cycles < cycle_limit) {
+        interpret_insn(state);
+    }
+
+#else  // ENABLE_JIT
+
+# if defined(PSP) && !defined(JIT_DEBUG_INTERPRET_RTL)
+
+    /* GCC's optimizer fails horribly on this loop, so we have no choice
+     * but to write it ourselves. */
+
+#  ifdef JIT_PROFILE
+    uint32_t start_cycles, start;  // As in jit_exec()
+#  endif
+
+    asm(".set push; .set noreorder\n"
+
+        "lw $t0, %[cycles](%[state])\n"
+        "beqz %[current_entry], 5f\n"
+        "sltu $v0, $t0, %[cycle_limit]\n"
+        /* In the non-trace, non-profile case, this NOP aligns the top of
+         * the loop to a 64-byte (cache-line) boundary, so that the quick-
+         * predict critical path fits within a single cache line.  This
+         * provides a noticeable (sometimes >5%) boost to performance. */
+        "nop\n"
+
+        // Loop top, quick restart point (jit_translate() call is at the end)
+        "1:\n"
+        "beqz $v0, 9f\n"
+
+        // Resume point after block translation
+        "2:\n"
+#  ifdef TRACE_LITE_VERBOSE
+        "move $a0, %[state]\n"
+        "jalr %[trace_insn_callback]\n"
+        "lw $a1, %[PC](%[state])\n"
+#  endif
+
+        // jit_exec(state, current_entry);
+#  ifdef JIT_PROFILE
+#   ifndef TRACE_LITE_VERBOSE
+        "nop\n"  // Fill branch delay slot from above
+#   endif
+        "jal sceKernelGetSystemTimeLow\n"
+        "lw %[start_cycles], %[cycles](%[state])\n"
+        "move %[start], $v0\n"
+#  endif
+
+        "lw $v0, %[native_code](%[current_entry])\n"
+        "li $v1, 1\n"
+        "sb $v1, %[running](%[current_entry])\n"
+        "jalr $v0\n"
+        "move $a0, %[state]\n"
+
+#  ifdef JIT_PROFILE
+        "jal sceKernelGetSystemTimeLow\n"
+        "nop\n"
+        "lw $v1, %[cycles](%[state])\n"
+        "lw $a0, %[call_count](%[current_entry])\n"
+        "lw $a1, %[cycle_count](%[current_entry])\n"
+        "lw $a2, %[exec_time](%[current_entry])\n"
+        "lw $a3, %[exec_time]+4(%[current_entry])\n"
+        "addiu $a0, $a0, 1\n"
+        "subu $v1, $v1, %[start_cycles]\n"
+        "addu $a1, $a1, $v1\n"
+        "subu $v0, $v0, %[start]\n"
+        "addu $v0, $a2, $v0\n"
+        "sltu $v1, $v0, $a2\n"
+        "addu $a3, $a3, $v1\n"
+        "sw $a0, %[call_count](%[current_entry])\n"
+        "sw $a1, %[cycle_count](%[current_entry])\n"
+        "sw $v0, %[exec_time](%[current_entry])\n"
+        "sw $a3, %[exec_time]+4(%[current_entry])\n"
+#  endif
+
+        // Preload data used below
+        "lbu $v0, %[must_clear](%[current_entry])\n"
+        "lw $t0, %[cycles](%[state])\n"
+#  if JIT_BRANCH_PREDICTION_SLOTS > 0
+        "lw $a1, %[PC](%[state])\n"
+        "lw $t1, %[predicted_target](%[current_entry])\n"
+#  endif
+
+        // Clear current_entry->running and check must_clear
+        "bnez $v0, 8f\n"
+        "sb $zero, %[running](%[current_entry])\n"
+
+#  if JIT_BRANCH_PREDICTION_SLOTS > 0
+        // Check for a quickly-predicted branch
+        "sltu $v0, $t0, %[cycle_limit]\n"
+        "beql $a1, $t1, 1b\n"
+        "lw %[current_entry], %[predicted_entry](%[current_entry])\n"
+        // Otherwise call jit_predict_branch() to get the next block
+        "jal %[jit_predict_branch]\n"
+        "addiu $a0, %[current_entry], %[predicted]\n"
+#  else
+        // Branch prediction is disabled, so just look up a block manually
+        "jal %[jit_find_noinline]\n"
+        "lw $a0, %[PC](%[state])\n"
+#  endif
+        // Loop back if we found a block, else translate it
+        "3:\n"
+        "lw $t0, %[cycles](%[state])\n"
+        "4:\n"
+        "move %[current_entry], $v0\n"
+        "bnez %[current_entry], 1b\n"
+        "sltu $v0, $t0, %[cycle_limit]\n"
+
+        // Cycle check and jit_translate() call for not-found blocks
+        "5:\n"
+        "beqz $v0, 9f\n"
+        "move $a0, %[state]\n"
+        "6:\n"
+        "jal %[jit_translate]\n"
+        "lw $a1, %[PC](%[state])\n"
+        "bnez $v0, 2b\n"
+        "move %[current_entry], $v0\n"
+
+        // interpret_insn() call for translation failure
+        "jal interpret_insn\n"
+        "move $a0, %[state]\n"
+        "jal %[jit_find_noinline]\n"
+        "lw $a0, %[PC](%[state])\n"
+        "b 4b\n"
+        "lw $t0, %[cycles](%[state])\n"
+
+        // clear_entry() and jit_find_noinline() for purged blocks
+        "8:\n"
+        "jal %[clear_entry]\n"
+        "move $a0, %[current_entry]\n"
+        "jal %[jit_find_noinline]\n"
+        "lw $a0, %[PC](%[state])\n"
+        "b 4b\n"
+        "lw $t0, %[cycles](%[state])\n"
+
+        // End of loop
+        "9:\n"
+        ".set pop"
+        : [current_entry] "=r" (current_entry),
+#  ifdef JIT_PROFILE
+          [start_cycles] "=&r" (start_cycles),
+          [start] "=&r" (start),
+#  endif
+          "=m" (*state)
+        : [state] "r" (state), [cycle_limit] "r" (cycle_limit),
+          "0" (current_entry),
+#  ifdef TRACE_LITE_VERBOSE
+          [trace_insn_callback] "r" (trace_insn_callback),
+#  endif
+          [PC] "i" (offsetof(SH2State,PC)),
+          [cycles] "i" (offsetof(SH2State,cycles)),
+          [native_code] "i" (offsetof(JitEntry,native_code)),
+          [running] "i" (offsetof(JitEntry,running)),
+          [must_clear] "i" (offsetof(JitEntry,must_clear)),
+#  if JIT_BRANCH_PREDICTION_SLOTS > 0
+          [predicted] "i" (offsetof(JitEntry,predicted)),
+          [predicted_target] "i" (offsetof(JitEntry,predicted[0].target)),
+          [predicted_entry] "i" (offsetof(JitEntry,predicted[0].entry)),
+#  endif
+#  ifdef JIT_PROFILE
+          [call_count] "i" (offsetof(JitEntry,call_count)),
+          [cycle_count] "i" (offsetof(JitEntry,cycle_count)),
+          [exec_time] "i" (offsetof(JitEntry,exec_time)),
+#  endif
+#  if JIT_BRANCH_PREDICTION_SLOTS > 0
+          [jit_predict_branch] "S" (jit_predict_branch),
+#  endif
+          [jit_translate] "S" (jit_translate),
+          [clear_entry] "S" (clear_entry),
+          [jit_find_noinline] "S" (jit_find_noinline)
+        : "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1",
+          "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "ra"
+    );
+
+# else  // !(PSP && !JIT_DEBUG_INTERPRET_RTL)
+
+    while (state->cycles < cycle_limit) {
+
+        /* If we don't have a current native code block, translate from
+         * the current address */
+        if (UNLIKELY(!current_entry)) {
+            current_entry = jit_translate(state, state->PC);
         }
 
         /* If we (now) have a native code block, execute from it */
-        if (LIKELY(state->current_entry)) {
+        if (LIKELY(current_entry)) {
+          quick_restart:;
 
-#ifdef TRACE_LITE_VERBOSE
-            if (state->cycles > init_cycles) {
-                (*trace_insn_callback)(state, state->PC);
-            }
-#endif
-            JitEntry * const current_entry = state->current_entry;
-            jit_exec(state, current_entry);
-            const uint32_t new_PC = state->PC;
-#if JIT_BRANCH_PREDICTION_SLOTS > 0
-            BranchTargetInfo * const predicted = &current_entry->predicted[0];
-            JitEntry * const pred_entry = predicted->entry;
-            /* Even if we're using multiple prediction slots, handle the
-             * first one specially for increased speed if it's a correct
-             * prediction */
-            if (predicted->target != 0 && new_PC == predicted->target) {
-                state->current_entry = pred_entry;
-            } else {
-# if JIT_BRANCH_PREDICTION_SLOTS > 1
-                /* First see if it's in any other slot */
-                unsigned int i;
-                for (i = 1; i < JIT_BRANCH_PREDICTION_SLOTS; i++) {
-                    if (predicted[i].target != 0
-                     && new_PC == predicted[i].target
-                    ) {
-                        state->current_entry = predicted[i].entry;
-#ifdef JIT_BRANCH_PREDICTION_FLOAT
-                        /* Shift it up to the previous slot so we can find
-                         * it faster next time.  If we have any code that
-                         * alternates between two branch targets, we're
-                         * going to take a major performance hit... */
-                        BranchTargetInfo *this_next = predicted[i].next;
-                        BranchTargetInfo *this_prev = predicted[i].prev;
-                        uint32_t this_target = predicted[i].target;
-                        JitEntry *this_entry = predicted[i].entry;
-                        predicted[i].target = predicted[i-1].target;
-                        predicted[i].entry  = predicted[i-1].entry;
-                        if (predicted[i].entry) {
-                            predicted[i].next = predicted[i-1].next;
-                            predicted[i].prev = predicted[i-1].prev;
-                            predicted[i].next->prev = &predicted[i];
-                            predicted[i].prev->next = &predicted[i];
-                        }
-                        predicted[i-1].next   = this_next;
-                        predicted[i-1].prev   = this_prev;
-                        predicted[i-1].target = this_target;
-                        predicted[i-1].entry  = this_entry;
-                        this_next->prev = &predicted[i-1];
-                        this_prev->next = &predicted[i-1];
-#endif  // JIT_BRANCH_PREDICTION_FLOAT
-                        goto found;
-                    }
-                }
-                /* Update the first empty slot, or the last slot if none
-                 * are empty */
-                for (i = 0; i < JIT_BRANCH_PREDICTION_SLOTS-1; i++) {
-                    if (predicted[i].target == 0) {
-                        break;
-                    }
-                }
-                state->current_entry =
-                    update_branch_target(&predicted[i], new_PC);
-              found:;
-# else  // JIT_BRANCH_PREDICTION_SLOTS == 1
-                state->current_entry =
-                    update_branch_target(predicted, new_PC);
+# ifdef TRACE_LITE_VERBOSE
+            (*trace_insn_callback)(state, state->PC);
 # endif
-            }
-#else  // branch prediction disabled
-            state->current_entry = jit_find(new_PC);
-#endif
+            jit_exec(state, current_entry);
+
+# if JIT_BRANCH_PREDICTION_SLOTS > 0
+            const uint32_t new_PC = state->PC;
+            BranchTargetInfo * const predicted = &current_entry->predicted[0];
+
             if (UNLIKELY(current_entry->must_clear)) {
                 /* A purge was requested, so clear the just-executed entry */
                 clear_entry(current_entry);
+                current_entry = jit_find_noinline(new_PC);
+                continue;
             }
 
-        } else {  // !state->current_entry
+            /* Even if we're using multiple prediction slots, handle the
+             * first one specially for increased speed if it's a correct
+             * prediction; we make the safe (for all practical purposes)
+             * assumption that the target PC is not zero */
+            if (new_PC == predicted->target) {
+                current_entry = predicted->entry;
+                if (LIKELY(state->cycles < cycle_limit)) {
+                    goto quick_restart;
+                }
+            } else {
+                current_entry = jit_predict_branch(predicted, new_PC);
+            }
+# else  // branch prediction disabled
+            if (UNLIKELY(current_entry->must_clear)) {
+                clear_entry(current_entry);
+            }
+            current_entry = jit_find_noinline(state->PC);
+# endif
+
+        } else {  // !current_entry
 
             /* We couldn't translate the code at this address, so interpret
              * it instead */
+            interpret_insn(state);
 
+        }  // if (current_entry)
+
+    }  // while (state->cycles < cycle_limit)
+
+# endif  // PSP && !JIT_DEBUG_INTERPRET_RTL
 #endif  // ENABLE_JIT
 
-            interpret_insn(state);
-            if (UNLIKELY(state->delay)) {
-                /* Don't treat the instruction after a not-taken
-                 * conditional branch as a delay slot.  (Note that when
-                 * interpreting, the branch_cond_reg field holds the
-                 * actual value of the condition.) */
-                if (!(state->branch_type == SH2BRTYPE_BT_S
-                      && !state->branch_cond_reg)
-                 && !(state->branch_type == SH2BRTYPE_BF_S
-                      && state->branch_cond_reg)
-                ) {
-                    /* Make sure we interpret the delay slot immediately,
-                     * so (1) we don't try to translate it as the beginning
-                     * of a block and (2) we don't let any exceptions get
-                     * in the way (SH7604 manual page 75, section 4.6.1:
-                     * exceptions are not accepted when processing a delay
-                     * slot). */
-                    interpret_insn(state);
-                }
-            }
-
-#ifdef ENABLE_JIT
-        }  // if (state->current_entry)
-#endif
-
-    }  // while (state->cycles < state->cycle_limit)
+    state->current_entry = current_entry;
 
 #if defined(ENABLE_JIT) && defined(JIT_PROFILE)
     static int cycles_for_profile;
-    cycles_for_profile += cycles;
+    cycles_for_profile += state->cycle_limit;
     if (cycles_for_profile >= JIT_PROFILE_INTERVAL) {
-
         cycles_for_profile = 0;
-        int top[JIT_PROFILE_TOP];
-        unsigned int i;
-
-        fprintf(stderr, "\n");
-
-        fprintf(stderr, "================= Top callees by time: =================\n");
-        memset(top, -1, sizeof(top));
-        for (i = 0; i < lenof(jit_table); i++) {
-            if (!jit_table[i].sh2_start) {
-                continue;
-            }
-            unsigned int j;
-            for (j = 0; j < lenof(top); j++) {
-                if (top[j] < 0
-                 || jit_table[i].exec_time > jit_table[top[j]].exec_time
-                ) {
-                    unsigned int k;
-                    for (k = lenof(top)-1; k > j; k--) {
-                        top[k] = top[k-1];
-                    }
-                    top[j] = i;
-                    break;
-                }
-            }
-        }
-        fprintf(stderr,
-# ifdef JIT_DEBUG_INTERPRET_RTL
-                        "RTL insns"
-# else
-                        "Exec time"
-# endif
-                                 "   SH2 cyc.   Native/SH2   # calls   Block addr\n");
-        fprintf(stderr, "---------   --------   ----------   -------   ----------\n");
-        for (i = 0; i < lenof(top) && top[i] >= 0; i++) {
-            fprintf(stderr, "%9lld %10d %12.3f %9d   0x%08X\n",
-                    (unsigned long long)jit_table[top[i]].exec_time,
-                    jit_table[top[i]].cycle_count,
-                    (double)jit_table[top[i]].exec_time
-                        / (double)jit_table[top[i]].cycle_count,
-                    jit_table[top[i]].call_count,
-                    jit_table[top[i]].sh2_start);
-        }
-        fprintf(stderr, "========================================================\n");
-
-
-        fprintf(stderr, "============== Top callees by call count: ==============\n");
-        memset(top, -1, sizeof(top));
-        for (i = 0; i < lenof(jit_table); i++) {
-            if (!jit_table[i].sh2_start) {
-                continue;
-            }
-            unsigned int j;
-            for (j = 0; j < lenof(top); j++) {
-                if (top[j] < 0
-                 || jit_table[i].call_count > jit_table[top[j]].call_count
-                ) {
-                    unsigned int k;
-                    for (k = lenof(top)-1; k > j; k--) {
-                        top[k] = top[k-1];
-                    }
-                    top[j] = i;
-                    break;
-                }
-            }
-        }
-        fprintf(stderr,
-# ifdef JIT_DEBUG_INTERPRET_RTL
-                        "RTL insns"
-# else
-                        "Exec time"
-# endif
-                                 "   SH2 cyc.   Native/SH2   # calls   Block addr\n");
-        fprintf(stderr, "---------   --------   ----------   -------   ----------\n");
-        for (i = 0; i < lenof(top) && top[i] >= 0; i++) {
-            fprintf(stderr, "%9lld %10d %12.3f %9d   0x%08X\n",
-                    (unsigned long long)jit_table[top[i]].exec_time,
-                    jit_table[top[i]].cycle_count,
-                    (double)jit_table[top[i]].exec_time
-                        / (double)jit_table[top[i]].cycle_count,
-                    jit_table[top[i]].call_count,
-                    jit_table[top[i]].sh2_start);
-        }
-        fprintf(stderr, "========================================================\n");
-
-        for (i = 0; i < lenof(jit_table); i++) {
-            jit_table[i].call_count = 0;
-            jit_table[i].cycle_count = 0;
-            jit_table[i].exec_time = 0;
-        }
-
+        jit_print_profile();
     }  // if (cycles_for_profile >= JIT_PROFILE_INTERVAL)
 #endif  // ENABLE_JIT && JIT_PROFILE
 }
@@ -1588,14 +1600,16 @@ void sh2_write_notify(uint32_t address, uint32_t size)
 
 /**
  * check_interrupts:  Check whether there are any pending interrupts, and
- * service the highest-priority one if so.  Helper function for sh2_run().
+ * service the highest-priority one if so.
  *
  * [Parameters]
  *     state: Processor state block
  * [Return value]
- *     Nonzero if an interrupt was services, else zero
+ *     Nonzero if an interrupt was serviced, else zero
+ * [Notes]
+ *     This routine is exported for use by sh2-interpret.c.
  */
-static int check_interrupts(SH2State *state)
+FASTCALL int check_interrupts(SH2State *state)
 {
     if (state->interrupt_stack_top > 0) {
         const int level =
@@ -1616,9 +1630,6 @@ static int check_interrupts(SH2State *state)
             state->SR &= ~SR_I;
             state->SR |= level << SR_I_SHIFT;
             state->PC = MappedMemoryReadLong(state->VBR + (vector << 2));
-#ifdef ENABLE_JIT
-            state->current_entry = jit_find(state->PC);
-#endif
             state->asleep = 0;
             state->interrupt_stack_top--;
             return 1;
@@ -1636,7 +1647,9 @@ static int check_interrupts(SH2State *state)
 /*************************************************************************/
 
 /**
- * jit_find:  Find the translated block for a given address, if any.
+ * jit_find, jit_find_noinline:  Find the translated block for a given
+ * address, if any.  jit_find_noinline() is explicitly marked NOINLINE to
+ * minimize register pressure when called from sh2_run().
  *
  * [Parameters]
  *     address: Start address in SH-2 address space
@@ -1656,6 +1669,11 @@ static JitEntry *jit_find(uint32_t address)
     return NULL;
 }
 
+static NOINLINE JitEntry *jit_find_noinline(uint32_t address)
+{
+    return jit_find(address);
+}
+
 /*************************************************************************/
 
 /**
@@ -1669,10 +1687,18 @@ static JitEntry *jit_find(uint32_t address)
  * [Return value]
  *     Translated block, or NULL on error
  */
-static JitEntry *jit_translate(SH2State *state, uint32_t address)
+static NOINLINE JitEntry *jit_translate(SH2State *state, uint32_t address)
 {
     JitEntry *entry;
     int index;
+
+#ifdef PSP_TIME_TRANSLATION
+    static uint32_t total, count;
+    const uint32_t a = sceKernelGetSystemTimeLow();
+#endif
+
+    /* Update the timestamp on every call */
+    jit_timestamp++;
 
     /* First check for untranslatable addresses */
     if (UNLIKELY(address == 0)) {
@@ -1837,6 +1863,13 @@ static JitEntry *jit_translate(SH2State *state, uint32_t address)
 #endif
     jit_total_data += entry->native_length;
 
+#ifdef PSP_TIME_TRANSLATION
+    const uint32_t b = sceKernelGetSystemTimeLow();
+    total += b-a;
+    count += ((current_entry->sh2_end + 1) - current_entry->sh2_start) / 2;
+    DMSG("%u/%u = %.3f us/insn", total, count, (float)total/count);
+#endif
+
     /* All done */
     state->translate_entry = NULL;
     return entry;
@@ -1877,7 +1910,7 @@ static FASTCALL void jit_clear_write(SH2State *state, uint32_t address)
     }
 
 #ifdef JIT_DEBUG
-    DMSG("WARNING: jit_clear_write(0x%08X)", address);
+    DMSG("WARNING: jit_clear_write(0x%08X) from PC %08X", address, state->PC);
 #endif
 
     /* Clear any translations on the affected page */
@@ -1914,8 +1947,8 @@ static FASTCALL void jit_clear_write(SH2State *state, uint32_t address)
         unsigned int oldest = 0;
         for (index = 0; index < lenof(pending_blacklist); index++) {
             if (pending_blacklist[index].address == address) {
-                if (pending_blacklist[index].timestamp + JIT_PURGE_EXPIRE
-                    < jit_timestamp
+                if (jit_timestamp - pending_blacklist[index].timestamp 
+                    > JIT_PURGE_EXPIRE
                 ) {
                     pending_blacklist[index].count = 0;
                 }
@@ -2222,6 +2255,179 @@ static int jit_check_purged(uint32_t address)
 }
 
 /*************************************************************************/
+
+#if JIT_BRANCH_PREDICTION_SLOTS > 0
+
+/**
+ * jit_predict_branch:  Attempt to predict a branch to "target" using the
+ * prediction array "predicted", and update the prediction table as
+ * appropriate.  Helper function for sh2_run(), called after the first
+ * prediction table entry has been checked.
+ *
+ * [Parameters]
+ *        target: Target SH-2 address
+ *     predicted: JitEntry.predicted array from current translated block
+ * [Return value]
+ *     Translated block for target address, or NULL if none was found
+ */
+static NOINLINE JitEntry *jit_predict_branch(BranchTargetInfo *predicted,
+                                             const uint32_t target)
+{
+# if JIT_BRANCH_PREDICTION_SLOTS > 1
+    /* First see if it's in any slot other than the first */
+    unsigned int i;
+    for (i = 1; i < JIT_BRANCH_PREDICTION_SLOTS; i++) {
+        if (predicted[i].target != 0 && target == predicted[i].target) {
+            JitEntry *result = predicted[i].entry;
+#  ifdef JIT_BRANCH_PREDICTION_FLOAT
+            /* Shift it up to the previous slot so we can find it faster next
+             * time.  If we have any code that alternates between two branch
+             * targets, we're going to take a major performance hit... */
+            BranchTargetInfo *this_next = predicted[i].next;
+            BranchTargetInfo *this_prev = predicted[i].prev;
+            uint32_t this_target = predicted[i].target;
+            JitEntry *this_entry = predicted[i].entry;
+            predicted[i].target = predicted[i-1].target;
+            predicted[i].entry  = predicted[i-1].entry;
+            if (predicted[i].entry) {
+                predicted[i].next = predicted[i-1].next;
+                predicted[i].prev = predicted[i-1].prev;
+                predicted[i].next->prev = &predicted[i];
+                predicted[i].prev->next = &predicted[i];
+            }
+            predicted[i-1].next   = this_next;
+            predicted[i-1].prev   = this_prev;
+            predicted[i-1].target = this_target;
+            predicted[i-1].entry  = this_entry;
+            this_next->prev = &predicted[i-1];
+            this_prev->next = &predicted[i-1];
+#  endif  // JIT_BRANCH_PREDICTION_FLOAT
+            return result;
+        }
+    }
+    /* Update the first empty slot, or the last slot if none are empty */
+    for (i = 0; i < JIT_BRANCH_PREDICTION_SLOTS-1; i++) {
+        if (predicted[i].target == 0) {
+            break;
+        }
+    }
+    return update_branch_target(&predicted[i], target);
+# else  // JIT_BRANCH_PREDICTION_SLOTS == 1
+    return update_branch_target(predicted, target);
+# endif
+}
+
+#endif  // JIT_BRANCH_PREDICTION_SLOTS > 0
+
+/*************************************************************************/
+
+#ifdef JIT_PROFILE
+
+/**
+ * jit_print_profile:  Print profiling statistics for translated code.
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     None
+ */
+static NOINLINE void jit_print_profile(void)
+{
+    int top[JIT_PROFILE_TOP];
+    unsigned int i;
+
+    printf("\n");
+
+    printf("================= Top callees by time: =================\n");
+    memset(top, -1, sizeof(top));
+    for (i = 0; i < lenof(jit_table); i++) {
+        if (!jit_table[i].sh2_start) {
+            continue;
+        }
+        unsigned int j;
+        for (j = 0; j < lenof(top); j++) {
+            if (top[j] < 0
+                || jit_table[i].exec_time > jit_table[top[j]].exec_time
+                ) {
+                unsigned int k;
+                for (k = lenof(top)-1; k > j; k--) {
+                    top[k] = top[k-1];
+                }
+                top[j] = i;
+                break;
+            }
+        }
+    }
+    printf(
+# ifdef JIT_DEBUG_INTERPRET_RTL
+           "RTL insns"
+# else
+           "Exec time"
+# endif
+                    "   SH2 cyc.   Native/SH2   # calls   Block addr\n");
+    printf("---------   --------   ----------   -------   ----------\n");
+    for (i = 0; i < lenof(top) && top[i] >= 0; i++) {
+        printf("%9lld %10d %12.3f %9d   0x%08X\n",
+                (unsigned long long)jit_table[top[i]].exec_time,
+                jit_table[top[i]].cycle_count,
+                (double)jit_table[top[i]].exec_time
+                / (double)jit_table[top[i]].cycle_count,
+                jit_table[top[i]].call_count,
+                jit_table[top[i]].sh2_start);
+    }
+    printf("========================================================\n");
+
+
+    printf("============== Top callees by call count: ==============\n");
+    memset(top, -1, sizeof(top));
+    for (i = 0; i < lenof(jit_table); i++) {
+        if (!jit_table[i].sh2_start) {
+            continue;
+        }
+        unsigned int j;
+        for (j = 0; j < lenof(top); j++) {
+            if (top[j] < 0
+                || jit_table[i].call_count > jit_table[top[j]].call_count
+                ) {
+                unsigned int k;
+                for (k = lenof(top)-1; k > j; k--) {
+                    top[k] = top[k-1];
+                }
+                top[j] = i;
+                break;
+            }
+        }
+    }
+    printf(
+# ifdef JIT_DEBUG_INTERPRET_RTL
+           "RTL insns"
+# else
+           "Exec time"
+# endif
+                    "   SH2 cyc.   Native/SH2   # calls   Block addr\n");
+    printf("---------   --------   ----------   -------   ----------\n");
+    for (i = 0; i < lenof(top) && top[i] >= 0; i++) {
+        printf("%9lld %10d %12.3f %9d   0x%08X\n",
+                (unsigned long long)jit_table[top[i]].exec_time,
+                jit_table[top[i]].cycle_count,
+                (double)jit_table[top[i]].exec_time
+                / (double)jit_table[top[i]].cycle_count,
+                jit_table[top[i]].call_count,
+                jit_table[top[i]].sh2_start);
+    }
+    printf("========================================================\n");
+
+    for (i = 0; i < lenof(jit_table); i++) {
+        jit_table[i].call_count = 0;
+        jit_table[i].cycle_count = 0;
+        jit_table[i].exec_time = 0;
+    }
+
+}
+
+#endif  // JIT_PROFILE
+
+/*************************************************************************/
 /***************** Dynamic translation utility routines ******************/
 /*************************************************************************/
 
@@ -2234,7 +2440,7 @@ static int jit_check_purged(uint32_t address)
  * [Return value]
  *     None
  */
-static void clear_entry(JitEntry *entry)
+static NOINLINE void clear_entry(JitEntry *entry)
 {
     PRECOND(entry != NULL, return);
 
@@ -3078,7 +3284,7 @@ static inline int __ADDI_STATE(const JitEntry * const entry,
 #define CALL_NORET(arg1,arg2,func) \
     APPEND(CALL, 0, (arg1), (arg2), (func))
 
-/* Return from the native code */
+/* Return from the current block */
 #define RETURN()  APPEND(RETURN, 0, 0, 0, 0)
 
 /* Chain to a different native routine */
@@ -4571,7 +4777,7 @@ static int do_store_reg(const JitEntry *entry, unsigned int sh2reg,
  * [Return value]
  *    Nonzero on success, zero on error
  */
-#if defined(__GNUC__) && !defined(JIT_ACCURATE_ACCESS_TIMING) && !defined(TRACE_LIKE_SH2INT)
+#if defined(__GNUC__) && !defined(JIT_ACCURATE_ACCESS_TIMING)
 __attribute__((unused))
 #endif
 static int check_cycles(const JitEntry *entry, uint32_t state_reg)
@@ -4672,15 +4878,11 @@ static int branch_static(SH2State *state, JitEntry *entry, uint32_t state_reg)
         is_branch_target[index/32] |= 1 << (index % 32);
     }
 
-#ifndef TRACE_LIKE_SH2INT  // Always check cycles for sh2int compatibility
     if (state->branch_target < jit_PC) {
-#endif
         check_cycles_and_goto(entry, state_reg, target_label);
-#ifndef TRACE_LIKE_SH2INT
     } else {
         APPEND(GOTO, 0, 0, 0, target_label);
     }
-#endif
     return 1;
 }
 
@@ -4715,41 +4917,14 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
 #endif
 
     /*
-     * (2) If TRACE_LIKE_SH2INT is enabled, check the cycle count (as long
-     *     as this is not a delay slot), so that interrupts are recognized
-     *     at the same time as with sh2int.
-     */
-#ifdef TRACE_LIKE_SH2INT
-    if (!state->delay) {
-        check_cycles(entry, state_reg);
-    } else {  // It's a delayed-branch instruction
-        if (state->branch_type == SH2BRTYPE_BT_S
-         || state->branch_type == SH2BRTYPE_BF_S
-        ) {
-            CREATE_LABEL(no_branch);
-            if (state->branch_type == SH2BRTYPE_BT_S) {
-                GOTO_IF_NZ(no_branch, state->branch_cond_reg);
-            } else {
-                GOTO_IF_Z(no_branch, state->branch_cond_reg);
-            }
-            check_cycles(entry, state_reg);
-            DEFINE_LABEL(no_branch);
-        }
-    }
-#endif
-
-    /*
-     * (3) In JIT_ACCURATE_ACCESS_TIMING mode, determine whether the
+     * (2) In JIT_ACCURATE_ACCESS_TIMING mode, determine whether the
      *     instruction performs a load or store that might not be to
      *     ROM/RAM, and check the cycle count if so.  (This is done before
      *     the branch target for optimization reasons, since a cycle check
      *     or unconditional interrupt/termination is always performed on a
      *     branch.)
-     *
-     *     We skip this in TRACE_LIKE_SH2INT mode since we check the cycle
-     *     count unconditionally above.
      */
-#if defined(JIT_ACCURATE_ACCESS_TIMING) && !defined(TRACE_LIKE_SH2INT)
+#if defined(JIT_ACCURATE_ACCESS_TIMING)
     const unsigned int n = opcode>>8 & 0xF;
     const unsigned int m = opcode>>4 & 0xF;
     int is_pointer;
@@ -4839,7 +5014,7 @@ static int opcode_init(SH2State *state, JitEntry *entry, uint32_t state_reg,
             }
         }
     }
-#endif  // JIT_ACCURATE_ACCESS_TIMING && !TRACE_LIKE_SH2INT
+#endif  // JIT_ACCURATE_ACCESS_TIMING
 
     /*
      * (4) If this is not a recursive decode and the current address is the
@@ -4992,10 +5167,12 @@ static int opcode_done(SH2State *state, JitEntry *entry, uint32_t state_reg,
     /*
      * (1) If this instruction is hinted as loading a data pointer,
      *     generate RTL to set up a base pointer register for the SH-2
-     *     register identified by the Rn field of this instruction.
+     *     register identified by the Rn field of this instruction (or R0,
+     *     if the instruction is MOVA @(disp,PC),R0).
      */
     if (state->make_Rn_data_pointer) {
-        const unsigned int n = opcode>>8 & 0xF;
+        const unsigned int n =
+            ((opcode & 0xFF00) == 0xC700) ? 0 : opcode>>8 & 0xF;
 
         DECLARE_REG(Rn);
         LOAD_STATE_ALLOC_KEEPOFS(Rn, R[n]);
@@ -5088,6 +5265,7 @@ static int translate_block(SH2State *state, JitEntry *entry)
     state->pending_select = 0;
     state->select_sense = 0;
     state->just_branched = 0;
+    state->need_interrupt_check = 0;
     state->mac_is_zero = 0;
     state->cached_shift_count = 0;
     state->varshift_target_PC = 0;
@@ -5367,15 +5545,8 @@ static int translate_block(SH2State *state, JitEntry *entry)
         ASSERT(writeback_state_cache(entry, state_reg, 1));
         clear_state_cache(0);
 #ifdef JIT_BRANCH_PREDICT_STATIC
-        if (state->need_interrupt_check) {
-            /* We're returning after LDC SR, so we have to pass control
-             * back to the main loop to check for interrupts */
-            RETURN();
-        } else {
-            /* Standard static branch prediction */
-            ASSERT(add_static_branch_terminator(
-                       entry, state_reg, next_code_address, branch_num++));
-        }
+        ASSERT(add_static_branch_terminator(
+                   entry, state_reg, next_code_address, branch_num++));
 #else
         need_return = 1;
 #endif
@@ -6435,18 +6606,25 @@ static inline void optimize_pointers(
      && (is_data_pointer_load[index/32] & (1 << (index % 32)))
     ) {
 
-        const unsigned int n = opcode>>8 & 0xF;
-        pointer_map[n] = 30;
-#ifdef JIT_DEBUG
-        if (!(opcode_info & SH2_OPCODE_INFO_SETS_Rn)) {
-            DMSG("WARNING: %08X marked as data pointer load but does not"
-                 " set Rn!", address);
-# ifdef JIT_DEBUG_VERBOSE
-        } else {
-            DMSG("%08X marked as data pointer load for R%u", address, n);
-# endif
-        }
+        if ((opcode & 0xFF00) == 0xC700) {  // MOVA
+            pointer_map[0] = 30;
+#ifdef JIT_DEBUG_VERBOSE
+            DMSG("%08X marked as data pointer load for R0", address);
 #endif
+        } else {
+            const unsigned int n = opcode>>8 & 0xF;
+            pointer_map[n] = 30;
+#ifdef JIT_DEBUG
+            if (!(opcode_info & SH2_OPCODE_INFO_SETS_Rn)) {
+                DMSG("WARNING: %08X marked as data pointer load but does not"
+                     " set Rn!", address);
+# ifdef JIT_DEBUG_VERBOSE
+            } else {
+                DMSG("%08X marked as data pointer load for R%u", address, n);
+# endif
+            }
+#endif
+        }
 
     } else if ((opcode & 0xF00F) == 0x6003) {  // MOV Rm,Rn
 
@@ -6895,6 +7073,9 @@ static int optimize_fold_subroutine(
                                             native_ret, 1);
         ignore_optimization_hints = 0;
         if (hand_tuned_len > 0) {
+            if (*native_ret == NULL) {
+                return 0;  // Folding was refused by the callback.
+            }
 #ifdef JIT_DEBUG_VERBOSE
             DMSG("Using hand-tuned code to fold subroutine at 0x%08X", target);
 #endif
@@ -6929,7 +7110,7 @@ static int optimize_fold_subroutine(
          address += 2, fetch++
     ) {
         if (fetch > limit) {
-            return 0;  // Subroutine is too long
+            goto fail;  // Subroutine is too long
         }
         const uint16_t opcode = *fetch;
         const uint32_t opcode_info = get_opcode_info(opcode);
@@ -6987,15 +7168,10 @@ static int optimize_fold_subroutine(
  *     address: Address to execute from, or NULL to execute from the
  *                 beginning of the block
  * [Return value]
- *          NULL: End of block was reached
- *     (void *)1: Returned from subroutine
- *     Otherwise: Bits 0-30 are next address to execute
- *                Bit 31 is 1 if execution stopped due to a subroutine
- *                   call, else 0
+ *     None
  */
 static inline void jit_exec(SH2State *state, JitEntry *entry)
 {
-    jit_timestamp++;
     entry->running = 1;
 
 #ifdef JIT_PROFILE
@@ -7012,6 +7188,7 @@ static inline void jit_exec(SH2State *state, JitEntry *entry)
 #else  // !JIT_DEBUG_INTERPRET_RTL
 
     const void (*native_code)(SH2State *state) = entry->native_code;
+
 # ifdef JIT_PROFILE
     /* For systems that have an efficient way to measure execution time
      * (such as a performance counter register), we could use that to
@@ -7065,6 +7242,7 @@ static inline void jit_exec(SH2State *state, JitEntry *entry)
  *     value of this routine will always be nonzero on success.
  */
 
+#define DECODE_INSN_INLINE  inline
 #define DECODE_INSN_PARAMS \
     const uint16_t *fetch, SH2State *state, JitEntry *entry, \
     const unsigned int state_reg, const int recursing, const int is_last
@@ -7118,12 +7296,6 @@ static int translate_insn(SH2State *state, JitEntry *entry,
     if (UNLIKELY(!opcode)) {
         return 0;
     }
-
-#ifdef TRACE_LIKE_SH2INT
-    if (opcode == 0x001B) {  // Make sure we don't get stuck on a SLEEP
-        jit_PC += 2;
-    }
-#endif
 
     return 1;
 }

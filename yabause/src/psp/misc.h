@@ -42,9 +42,9 @@ extern int save_backup_ram(void);
  * [Parameters]
  *     None
  * [Return value]
- *     None
+ *     Nonzero if writeback was skipped, zero if writeback was executed
  */
-extern void psp_writeback_cache_for_scsp(void);
+extern int psp_writeback_cache_for_scsp(void);
 
 /*************************************************************************/
 

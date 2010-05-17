@@ -164,6 +164,30 @@ The main menu contains six options:
           Stick.  If you have auto-save disabled, you should use this
           option to save backup RAM before quitting Yabause.
 
+        * "Save backup RAM as..."
+
+          Allows you to enter a new filename (using the PSP's built-in
+          on-screen keyboard) for the backup RAM save file.  This can be
+          useful if you want to keep separate backup RAM files for
+          different games, or if you want to save more slots than a game
+          normally allows.  Yabause will immediately save backup RAM to
+          the filename you enter, and will also use that filename when
+          later auto-saving backup RAM (or when you manually use "Save
+          backup RAM now").  However, the new filename will only be used
+          until you quit Yabause, unless you select "Save options" on the
+          main menu.
+
+          Note that the emulator will _not_ be reset when you use this
+          option, so you can feel free to select it while playing a game.
+          (However, don't select it while the game is in the middle of
+          loading or saving, as this can corrupt backup RAM -- just as if
+          you tried to remove the PSP's Memory Stick while saving a game
+          on your PSP.)
+
+          NOTE: For reasons currently unknown, the top part of the
+          on-screen keyboard display may flicker or appear corrupted.
+          However, text can be entered as usual.
+
    * "Configure controller buttons..."
 
      This opens a submenu which allows you to configure which PSP button
@@ -337,31 +361,62 @@ The main menu contains six options:
 
           All optimizations are enabled by default.
 
-        * "Use Media Engine for emulation"
+        * "Configure Media Engine options..."
 
-          Enables the use of the PSP's Media Engine CPU to handle part
-          of the emulation in parallel with the main CPU.  This can
-          provide a moderate boost to emulation speed; however, since
-          the Media Engine is not designed for this sort of parallel
-          processing, some games may behave incorrectly or even crash.
-          As such, this option is still considered experimental; use it
-          at your own risk.
+          This option opens up another submenu with options for
+          configuring the Media Engine:
 
-          This option only takes effect when Yabause is started, so if
-          you change it, make sure you select "Save options" in the main
-          menu and then quit and restart Yabause.
+             * "Use Media Engine for emulation"
 
-        * "ME cache writeback frequency"
+               Enables the use of the PSP's Media Engine CPU to handle part
+               of the emulation in parallel with the main CPU.  This can
+               provide a moderate boost to emulation speed; however, since
+               the Media Engine is not designed for this sort of parallel
+               processing, some games may behave incorrectly or even crash.
+               As such, this option is still considered experimental; use
+               it at your own risk.
 
-          Sets the frequency at which the main CPU and Media Engine caches
-          are synchronized, relative to the frequency of code execution on
-          the Media Engine.  The default frequency of 1/1 is safest; lower
-          frequencies (1/2, 1/4, and so on) can increase emulation speed,
-          but are also more likely to cause sound glitches, crashes, or
-          other incorrect behavior depending on the particular game.
+               IMPORTANT:  It is not currently possible to suspend the PSP
+               while the Media Engine is in use.  If you start Yabause with
+               the Media Engine enabled, the "suspend" function of the
+               PSP's power switch will be disabled, so you must save your
+               game inside the emulator and exit Yabause before putting the
+               PSP into suspend mode.
 
-          Naturally, this option has no effect if the Media Engine is not
-          being used for emulation.
+               This option only takes effect when Yabause is started, so if
+               you change it, make sure you select "Save options" in the
+               main menu and then quit and restart Yabause.
+
+             * "Cache writeback frequency"
+     
+               Sets the frequency at which the main CPU and Media Engine
+               caches are synchronized, relative to the frequency of code
+               execution on the Media Engine.  The default frequency of 1/1
+               is safest; lower frequencies (1/2, 1/4, and so on) can
+               increase emulation speed, but are also more likely to cause
+               sound glitches, crashes, or other incorrect behavior
+               depending on the particular game.  However, adjusting the
+               size of the write-through region (see below) can mitigate
+               these problems for some games.
+
+               Naturally, this option has no effect if the Media Engine is
+               not being used for emulation.
+
+             * "Sound RAM write-through region"
+
+               Sets the size of the region at the beginning of sound RAM
+               which is written through the PSP's cache.  Writing through
+               the cache is an order of magnitude slower than normal
+               operation, so setting this to a large value can slow down
+               games significantly.  However, most games only use a small
+               portion of sound RAM for communication with the sound CPU,
+               so by tuning this value appropriately, you may be able to
+               reduce the cache writeback frequency (see above) while still
+               getting stable operation.  From experimentation, a value of
+               2k seems to work well for some games.
+
+               Naturally, this option has no effect if the Media Engine is
+               not being used for emulation.
 
         * "Use more precise emulation timing"
 

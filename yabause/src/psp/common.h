@@ -88,6 +88,7 @@ extern int sceKernelExitDeleteThread(int status) __attribute__((noreturn));
 enum {
     THREADPRI_MAIN      = 32,
     THREADPRI_CD_READ   = 25,
+    THREADPRI_UTILITY   = 21,
     THREADPRI_SOUND     = 20,
     THREADPRI_SYSTEM_CB = 15,
 };
@@ -103,6 +104,9 @@ extern void *padbits;
 
 /* Flag indicating whether the ME is available for use */
 extern int me_available;
+
+/* Have we successfully initialized the Yabause core? */
+extern int yabause_initted;
 
 /**************************************************************************/
 
@@ -138,9 +142,16 @@ extern int me_available;
 
 /* Force a function to be inlined if possible (use in place of "inline") */
 #ifdef __GNUC__
-# define ALWAYS_INLINE inline __attribute__((always_inline))
+# define ALWAYS_INLINE  inline __attribute__((always_inline))
 #else
-# define ALWAYS_INLINE inline
+# define ALWAYS_INLINE  inline
+#endif
+
+/* Prevent a function from being inlined */
+#ifdef __GNUC__
+# define NOINLINE  __attribute__((noinline))
+#else
+# define NOINLINE  /*nothing*/
 #endif
 
 /*----------------------------------*/

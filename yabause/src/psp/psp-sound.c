@@ -20,14 +20,16 @@
 
 #include "common.h"
 
+#include "../memory.h"
 #include "../scsp.h"
 
+#include "config.h"
 #include "me.h"
 #include "me-utility.h"
 #include "sys.h"
 #include "psp-sound.h"
 
-/* Macro for uncached access to structure fields */
+/* Macro for uncached access to variables / structure fields */
 #define UNCACHED(var) (*((typeof(&var))((uint32_t)(&var) | 0x40000000)))
 
 /*************************************************************************/
@@ -85,11 +87,11 @@ SoundInterface_struct SNDPSP = {
 
 /* Playback buffer size in samples (larger values = less chance of skipping
  * but greater lag) */
-#define BUFFER_SIZE  512
+#define BUFFER_SIZE  256
 
 /* Number of BUFFER_SIZE-sized audio buffers in the playback buffer (see
  * description below) */
-#define NUM_BUFFERS  4
+#define NUM_BUFFERS  8
 
 /*
  * Playback buffer descriptor, implementing a lockless ring buffer with the
@@ -111,8 +113,9 @@ SoundInterface_struct SNDPSP = {
  *    - One currently being played by the hardware.
  *    - One queued for playback by the hardware.
  *    - One into which the main program is writing.
- * At least four buffers are recommended in order to avoid truncation of
- * audio data whose size is not aligned with the end of a buffer.
+ * A minimum of at least four buffers is recommended to allow overflow
+ * room, since the sample generation rate will typically not be locked to
+ * the hardware playback rate.
  */
 typedef struct PSPSoundBufferDesc_ {
     __attribute__((aligned(64))) int16_t buffer[NUM_BUFFERS][BUFFER_SIZE*2];
@@ -120,7 +123,7 @@ typedef struct PSPSoundBufferDesc_ {
     __attribute__((aligned(64)))
     volatile uint8_t write_ready[NUM_BUFFERS];
                       // When nonzero, data can be stored in buffer[next_write]
-    /* Start a new cache line here (this is written by the ME) */
+    /* Start a new cache line here (these are written by the ME) */
     __attribute__((aligned(64)))
     unsigned int next_write;
                       // Index of next buffer to store data into
@@ -148,9 +151,21 @@ static int muted = 1;
 static int dump_fd;
 #endif
 
+/*----------------------------------*/
+
+/* Uncached pointer to sound RAM (to save generating it on every access) */
+static uint8_t *SoundRam_uncached;
+
 /*-----------------------------------------------------------------------*/
 
 /* Local function declarations */
+
+static FASTCALL u8 psp_SoundRamReadByte(u32 address);
+static FASTCALL u16 psp_SoundRamReadWord(u32 address);
+static FASTCALL u32 psp_SoundRamReadLong(u32 address);
+static FASTCALL void psp_SoundRamWriteByte(u32 address, u8 data);
+static FASTCALL void psp_SoundRamWriteWord(u32 address, u16 data);
+static FASTCALL void psp_SoundRamWriteLong(u32 address, u32 data);
 
 static int start_channel(PSPSoundBufferDesc *buffer_desc);
 void stop_channel(PSPSoundBufferDesc *buffer_desc);
@@ -189,6 +204,21 @@ static int psp_sound_init(void)
         return -1;
     }
 
+    /* If the Media Engine is in use, reassign the sound RAM access
+     * functions so we read/write through the cache as appropriate. */
+    if (me_available && config_get_use_me()) {
+        SoundRam_uncached = (uint8_t *)((uintptr_t)SoundRam | 0x40000000);
+        unsigned int i;
+        for (i = 0x5A0; i < 0x5B0; i++) {
+            ReadByteList [i] = psp_SoundRamReadByte;
+            ReadWordList [i] = psp_SoundRamReadWord;
+            ReadLongList [i] = psp_SoundRamReadLong;
+            WriteByteList[i] = psp_SoundRamWriteByte;
+            WriteWordList[i] = psp_SoundRamWriteWord;
+            WriteLongList[i] = psp_SoundRamWriteLong;
+        }
+    }
+
     return 0;
 }
 
@@ -205,6 +235,16 @@ static int psp_sound_init(void)
 static void psp_sound_deinit(void)
 {
     stop_channel(&stereo_buffer);
+
+    unsigned int i;
+    for (i = 0x5A0; i < 0x5B0; i++) {
+        ReadByteList [i] = SoundRamReadByte;
+        ReadWordList [i] = SoundRamReadWord;
+        ReadLongList [i] = SoundRamReadLong;
+        WriteByteList[i] = SoundRamWriteByte;
+        WriteWordList[i] = SoundRamWriteWord;
+        WriteLongList[i] = SoundRamWriteLong;
+    }
 }
 
 /*-----------------------------------------------------------------------*/
@@ -263,7 +303,7 @@ static void psp_sound_update_audio(u32 *leftchanbuffer, u32 *rightchanbuffer,
      || num_samples > BUFFER_SIZE - stereo_buffer.saved_samples
     ) {
         if (!meUtilityIsME()) {  // Can't write to stderr on the ME
-            DMSG("invalid parameters: %p %p %u (status: wr=%d ss=%d)",
+            DMSG("Invalid parameters: %p %p %u (status: wr=%d ss=%d)",
                  leftchanbuffer, rightchanbuffer, (unsigned int)num_samples,
                  UNCACHED(stereo_buffer.write_ready[next_write]),
                  stereo_buffer.saved_samples);
@@ -420,6 +460,89 @@ void psp_sound_exit(void)
 }
 
 /*************************************************************************/
+/* Sound RAM access functions (for use when the 68k is running on the ME) */
+/*************************************************************************/
+
+/**
+ * psp_SoundRamRead{Byte,Word,Long}:  Sound RAM read access functions for
+ * use when the sound CPU is being emulated on the Media Engine.  These
+ * functions access sound RAM using uncached pointers.
+ *
+ * 2Mbit mode (MEM4MB == 0) is not supported by these functions.
+ *
+ * [Parameters]
+ *     address: Address to read from
+ * [Return value]
+ *     Data loaded from given address
+ */
+static FASTCALL u8 psp_SoundRamReadByte(u32 address)
+{
+    address &= 0x7FFFF;
+    return T2ReadByte(SoundRam_uncached, address);
+}
+
+static FASTCALL u16 psp_SoundRamReadWord(u32 address)
+{
+    address &= 0x7FFFF;
+    return T2ReadWord(SoundRam_uncached, address);
+}
+
+static FASTCALL u32 psp_SoundRamReadLong(u32 address)
+{
+    address &= 0x7FFFF;
+    return T2ReadLong(SoundRam_uncached, address);
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * psp_SoundRamWrite{Byte,Word,Long}:  Sound RAM write access functions for
+ * use when the sound CPU is being emulated on the Media Engine.  These
+ * functions do _not_ access sound RAM using uncached pointers; data is
+ * assumed to be flushed by the SCSP at periodic intervals.
+ *
+ * 2Mbit mode (MEM4MB == 0) is not supported by these functions.
+ *
+ * [Parameters]
+ *     address: Address to write to
+ *        data: Data to store
+ * [Return value]
+ *     None
+ */
+static FASTCALL void psp_SoundRamWriteByte(u32 address, u8 data)
+{
+    address &= 0x7FFFF;
+    if (address < config_get_me_uncached_boundary()) {
+        T2WriteByte(SoundRam_uncached, address, data);
+    } else {
+        T2WriteByte(SoundRam, address, data);
+    }
+    M68KWriteNotify(address, 1);
+}
+
+static FASTCALL void psp_SoundRamWriteWord(u32 address, u16 data)
+{
+    address &= 0x7FFFF;
+    if (address < config_get_me_uncached_boundary()) {
+        T2WriteWord(SoundRam_uncached, address, data);
+    } else {
+        T2WriteWord(SoundRam, address, data);
+    }
+    M68KWriteNotify(address, 2);
+}
+
+static FASTCALL void psp_SoundRamWriteLong(u32 address, u32 data)
+{
+    address &= 0x7FFFF;
+    if (address < config_get_me_uncached_boundary()) {
+        T2WriteLong(SoundRam_uncached, address, data);
+    } else {
+        T2WriteLong(SoundRam, address, data);
+    }
+    M68KWriteNotify(address, 4);
+}
+
+/*************************************************************************/
 /****************** Low-level audio channel management *******************/
 /*************************************************************************/
 
@@ -548,6 +671,7 @@ static int playback_thread(SceSize args, void *argp)
 
     while (!buffer_desc->stop) {
         const unsigned int next_play = buffer_desc->next_play;
+//static int x;int now=sceKernelGetSystemTimeLow();if(now-x>100000){printf("--- audio stat: %u %u %u %u cp=%u np=%u nw=%u\n",UNCACHED(buffer_desc->write_ready[0]),UNCACHED(buffer_desc->write_ready[1]),UNCACHED(buffer_desc->write_ready[2]),UNCACHED(buffer_desc->write_ready[3]),buffer_desc->cur_play,next_play,UNCACHED(buffer_desc->next_write));x=now;}
         if (!UNCACHED(buffer_desc->write_ready[next_play])) {  // i.e., ready for playback
             const void *buffer = buffer_desc->buffer[next_play];
             last_sample = ((const uint32_t *)buffer)[BUFFER_SIZE - 1];

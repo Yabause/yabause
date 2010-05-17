@@ -101,8 +101,22 @@
 
 /*----------------------------------*/
 
+/* Set up the clipping region for the graphics layer; half_height should be
+ * 1 when rendering T8 tiles with the double-stride, two-pass optimization */
+#define SET_CLIP_REGION(half_height)                            \
+    guScissor(clip->xstart,                                     \
+              half_height ? clip->ystart/2 : clip->ystart,      \
+              clip->xend,                                       \
+              half_height ? clip->yend/2 : clip->yend)
+
+/* Reset the clipping region to default */
+#define UNSET_CLIP_REGION                                       \
+    guScissor(0, 0, disp_width, disp_height)
+
+/*----------------------------------*/
+
 /* Declare tiledatasize as the size of a single tile's data in bytes. */
-#define GET_TILEDATASIZE \
+#define GET_TILEDATASIZE                                        \
     int tiledatasize;                                           \
     switch (info->colornumber) {                                \
         case 0:  /*  4bpp */ tiledatasize = 8*8/2; break;       \
@@ -305,6 +319,7 @@ static const int flip_t8_u[4][4] =
 void vdp2_draw_map_8x8(vdp2draw_struct *info, const clipping_struct *clip)
 {
     /* Allocate vertex memory and perform other initialization */
+    SET_CLIP_REGION(0);
     GET_VERTICES(8, 2);
     INIT_EMPTY_TILE;
 
@@ -323,6 +338,9 @@ void vdp2_draw_map_8x8(vdp2draw_struct *info, const clipping_struct *clip)
                     2, NULL, vertices);
         vertices += 2;
     } TILE_LOOP_END;
+
+    /* Reset locally-changed GE settings */
+    UNSET_CLIP_REGION;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -347,6 +365,7 @@ void vdp2_draw_map_8x8_t8(vdp2draw_struct *info, const clipping_struct *clip)
     /* Allocate vertex memory and perform other initialization.  Note that
      * we need 2 sprites to draw each tile if we're not optimizing
      * interlaced graphics. */
+    SET_CLIP_REGION(!interlaced);
     GET_VERTICES(8, interlaced ? 2 : 4);
     INIT_T8_PALETTE;
     INIT_T8_TEXTURE;
@@ -392,8 +411,9 @@ void vdp2_draw_map_8x8_t8(vdp2draw_struct *info, const clipping_struct *clip)
         }
     } TILE_LOOP_END;
 
+    /* Reset locally-changed GE settings */
+    UNSET_CLIP_REGION;
     if (!interlaced) {
-        /* Restore stride to normal */
         guDrawBuffer(GU_PSM_8888, work_buffer_0, DISPLAY_STRIDE);
     }
 }
@@ -416,6 +436,7 @@ void vdp2_draw_map_16x16(vdp2draw_struct *info, const clipping_struct *clip)
     GET_TILEDATASIZE;
 
     /* Allocate vertex memory and perform other initialization */
+    SET_CLIP_REGION(0);
     GET_VERTICES(16, 2);
     INIT_EMPTY_TILE;
 
@@ -435,6 +456,9 @@ void vdp2_draw_map_16x16(vdp2draw_struct *info, const clipping_struct *clip)
                     2, NULL, vertices);
         vertices += 2;
     } TILE_LOOP_END;
+
+    /* Reset locally-changed GE settings */
+    UNSET_CLIP_REGION;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -455,6 +479,7 @@ void vdp2_draw_map_16x16_t8(vdp2draw_struct *info, const clipping_struct *clip)
     const int interlaced = (disp_height > 272);
 
     /* Allocate vertex memory and perform other initialization */
+    SET_CLIP_REGION(!interlaced);
     GET_VERTICES(8, interlaced ? 2 : 4);
     INIT_T8_PALETTE;
     INIT_T8_TEXTURE;
@@ -502,6 +527,8 @@ void vdp2_draw_map_16x16_t8(vdp2draw_struct *info, const clipping_struct *clip)
         }
     } TILE_LOOP_END;
 
+    /* Reset locally-changed GE settings */
+    UNSET_CLIP_REGION;
     if (!interlaced) {
         guDrawBuffer(GU_PSM_8888, work_buffer_0, DISPLAY_STRIDE);
     }

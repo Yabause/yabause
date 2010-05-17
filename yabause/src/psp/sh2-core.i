@@ -26,7 +26,10 @@
  * instruction, and returns the instruction's opcode.  The parameter list
  * is set by the caller using
  *     #define DECODE_INSN_PARAMS ...
- * and should be "void" (without quotes) if no parameters are used.
+ * and should be "void" (without quotes) if no parameters are used.  The
+ * caller may also #define DECODE_INSN_INLINE to any inline-related
+ * keyword, including ALWAYS_INLINE or NOINLINE; if not defined, no such
+ * keyword will be used.
  *
  * The following identifiers must be either defined as macros or passed to
  * decode_insn() as parameters:
@@ -461,6 +464,10 @@
 
 /*************************************************************************/
 
+#ifndef DECODE_INSN_INLINE
+# define DECODE_INSN_INLINE  /*nothing*/
+#endif
+
 /**
  * decode_insn:  Decode a single SH-2 instruction.  Implements
  * translate_insn() using the shared decoder core.
@@ -470,7 +477,7 @@
  * [Return value]
  *     Decoded SH-2 opcode, or value returned by micro-ops
  */
-static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
+static DECODE_INSN_INLINE unsigned int decode_insn(DECODE_INSN_PARAMS)
 {
     uint16_t opcode;
 
@@ -1033,17 +1040,23 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
           }
           case 0x1B: {  // SLEEP
             DEBUG_PRINT_ONCE("SLEEP");
-            DEFINE_REG(imm_1);
-            MOVEI(imm_1, 1);
-            STORE_STATE_B(asleep, imm_1);
-            /* The dual setting of need_interrupt_check here (via micro-ops
-             * and directly) is intentional.  When interpreting, they do
-             * the same thing; when translating, the direct setting of
-             * need_interrupt_check informs the translator not to optimize
-             * out the return to the main loop. */
-            STORE_STATE_B(need_interrupt_check, imm_1);
-            state->need_interrupt_check = 1;
             cur_cycles += 2;
+            ADD_CYCLES();
+            FLUSH_STATE_CACHE();
+            DEFINE_REG(check_interrupts_funcptr);
+            MOVEA(check_interrupts_funcptr, check_interrupts);
+            DEFINE_REG(result);
+            CALL(result, state_reg, 0, check_interrupts_funcptr);
+            CREATE_LABEL(sleep_intr);
+            GOTO_IF_NZ(sleep_intr, result); {
+                DEFINE_REG(imm_1);
+                MOVEI(imm_1, 1);
+                STORE_STATE_B(asleep, imm_1);
+                DEFINE_REG(cycle_limit);
+                LOAD_STATE(cycle_limit, cycle_limit);
+                STORE_STATE(cycles, cycle_limit);
+            } DEFINE_LABEL(sleep_intr);
+            RETURN();
             break;
           }
           case 0x2B: {  // RTE
@@ -1059,15 +1072,13 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                 REG_SETKNOWN(REG_R(15), 0);
             }
             REG_SETKNOWN(REG_R(15), REG_GETKNOWN(REG_R(15)) & 7);
-            state->branch_type = SH2BRTYPE_DYNAMIC;
+            state->branch_type = SH2BRTYPE_RTE;
             state->branch_target_reg = new_PC;
             DEFINE_RESULT_REG(new_SR_3F3, SR);
             ANDI(new_SR_3F3, new_SR, 0x3F3);
             SET_SR(new_SR_3F3);
             DEFINE_REG(imm_1);
             MOVEI(imm_1, 1);
-            STORE_STATE_B(need_interrupt_check, imm_1);
-            state->need_interrupt_check = 1;
             state->delay = 1;
             cur_cycles += 3;
             break;
@@ -1267,11 +1278,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             SET_SR(new_SR);
 #ifdef OPTIMIZE_DIVISION
             int Rlo, Rhi = n, Rdiv = m;   // Register numbers
-            int can_optimize = !in_delay;
-            if (LIKELY(can_optimize) && fetch) {
-                can_optimize = can_optimize_div0s(fetch+1, cur_PC+2,
-                                                  Rhi, &Rlo, Rdiv);
-            }
+            const int can_optimize = !in_delay && fetch
+                && can_optimize_div0s(fetch+1, cur_PC+2, Rhi, &Rlo, Rdiv);
             if (can_optimize) {
 # ifdef JIT_DEBUG_VERBOSE
                 DMSG("Optimizing signed division at 0x%08X", (int)cur_PC);
@@ -2386,11 +2394,8 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEFINE_RESULT_REG(new_SR, SR);
             ANDI(new_SR, value, 0x3F3);
             SET_SR(new_SR);
-            DEFINE_REG(imm_1);
-            MOVEI(imm_1, 1);
-            STORE_STATE_B(need_interrupt_check, imm_1);
-            state->need_interrupt_check = 1;
             cur_cycles += 2;
+            state->need_interrupt_check = 1;
             break;
           }
           case 0x17: {  // LDC.L @Rn+,GBR
@@ -2613,9 +2618,6 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             DEFINE_RESULT_REG(new_SR, SR);
             ANDI(new_SR, Rn, 0x3F3);
             SET_SR(new_SR);
-            DEFINE_REG(imm_1);
-            MOVEI(imm_1, 1);
-            STORE_STATE_B(need_interrupt_check, imm_1);
             state->need_interrupt_check = 1;
             break;
           }
@@ -3189,15 +3191,6 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
              * branch; this avoids having to add a variable number of
              * cycles to the cycle counter and thus breaking compile-time
              * accumulation of cycles with OPTIMIZE_CONSTANT_ADDS. */
-#ifdef TRACE_LIKE_SH2INT
-            DECLARE_REG(cycles);
-            LOAD_STATE_ALLOC(cycles, cycles);
-            DEFINE_REG(inc_cycles);
-            ADDI(inc_cycles, cycles, state->branch_cycles);
-            DEFINE_RESULT_REG(new_cycles, cycles);
-            SELECT(new_cycles, inc_cycles, cycles, T);
-            STORE_STATE(cycles, new_cycles);
-#endif
             break;
           }
 
@@ -3238,15 +3231,6 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             }
             state->branch_cond_reg = T;
             state->delay = 1;
-#ifdef TRACE_LIKE_SH2INT
-            DECLARE_REG(cycles);
-            LOAD_STATE_ALLOC(cycles, cycles);
-            DEFINE_REG(inc_cycles);
-            ADDI(inc_cycles, cycles, state->branch_cycles);
-            DEFINE_RESULT_REG(new_cycles, cycles);
-            SELECT(new_cycles, cycles, inc_cycles, T);
-            STORE_STATE(cycles, new_cycles);
-#endif
             break;
           }
 
@@ -3587,9 +3571,6 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
 
     /* Update the PC and cycle count */
 
-#ifdef TRACE_LIKE_SH2INT
-    if (opcode != 0x001B)  // sh2int spins on SLEEP without changing the PC
-#endif
     INC_PC();
     ADD_CYCLES();
 
@@ -3748,6 +3729,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
                   default:
                     DMSG("Invalid shift type %u at 0x%X",
                          state->varshift_type, (unsigned int)cur_PC - 4);
+                    MOVEI(new_T, 0);
                     break;
                 }
                 STORE_STATE(R[state->varshift_Rshift], new_Rshift);
@@ -3769,6 +3751,16 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             state->just_branched = 1;
             break;
           }  // case SH2BRTYPE_DYNAMIC
+
+          case SH2BRTYPE_RTE: {
+            SET_PC(state->branch_target_reg);
+            FLUSH_STATE_CACHE();
+            DEFINE_REG(check_interrupts_funcptr);
+            MOVEA(check_interrupts_funcptr, check_interrupts);
+            CALL_NORET(state_reg, 0, check_interrupts_funcptr);
+            JUMP();
+            break;
+          }  // case SH2BRTYPE_RTE
 
           case SH2BRTYPE_BT:
           case SH2BRTYPE_BF:
@@ -3796,11 +3788,7 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
             }
             if (is_idle) {
                 STORE_STATE(cycles, cycle_limit);
-            } else
-#ifdef TRACE_LIKE_SH2INT
-            if (state->branch_type == SH2BRTYPE_BT || state->branch_type == SH2BRTYPE_BF)
-#endif
-            {
+            } else {
                 DEFINE_RESULT_REG(new_cycles, cycles);
                 ADDI(new_cycles, cycles,
                      state->branch_cycles + STATE_CACHE_OFFSET(cycles));
@@ -3890,6 +3878,21 @@ static inline unsigned int decode_insn(DECODE_INSN_PARAMS)
         state->loop_to_jsr = 0;
 
     }  // if we need to branch
+
+    /* Check for interrupts if necessary */
+
+    if (state->need_interrupt_check) {
+        state->need_interrupt_check = 0;
+        FLUSH_STATE_CACHE();
+        DEFINE_REG(check_interrupts_funcptr);
+        MOVEA(check_interrupts_funcptr, check_interrupts);
+        DEFINE_REG(result);
+        CALL(result, state_reg, 0, check_interrupts_funcptr);
+        CREATE_LABEL(nointr);
+        GOTO_IF_Z(nointr, result); {
+            RETURN();
+        } DEFINE_LABEL(nointr);
+    }
 
     /* Invalid opcode handler (jumped to on detection of an invalid opcode) */
 

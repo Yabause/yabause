@@ -90,15 +90,18 @@ extern int save_backup_ram(void)
  * [Parameters]
  *     None
  * [Return value]
- *     None
+ *     Nonzero if writeback was executed, zero if writeback was skipped
  */
-void psp_writeback_cache_for_scsp(void)
+int psp_writeback_cache_for_scsp(void)
 {
     static uint32_t counter;
 
     counter++;
     if (!(counter & (config_get_me_writeback_period() - 1))) {
         sceKernelDcacheWritebackAll();
+        return 1;
+    } else {
+        return 0;
     }
 }
 

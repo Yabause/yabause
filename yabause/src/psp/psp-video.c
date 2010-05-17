@@ -29,9 +29,10 @@
 #include "display.h"
 #include "font.h"
 #include "gu.h"
-#include "texcache.h"
 #include "psp-video.h"
 #include "psp-video-internal.h"
+#include "texcache.h"
+#include "timing.h"
 
 /*************************************************************************/
 /************************* Interface definition **************************/
@@ -124,6 +125,12 @@ unsigned int disp_width, disp_height;
 /* Scale (right-shift) applied to X and Y coordinates */
 unsigned int disp_xscale, disp_yscale;
 
+/* Total number of frames to skip before we draw the next one */
+unsigned int frames_to_skip;
+
+/* Number of frames skipped so far since we drew the last one */
+unsigned int frames_skipped;
+
 /*-----------------------------------------------------------------------*/
 
 /**** Internal data ****/
@@ -135,12 +142,6 @@ static char *infoline_text;
 static uint32_t infoline_color;
 
 /*----------------------------------*/
-
-/* Total number of frames to skip before we draw the next one */
-static unsigned int frames_to_skip;
-
-/* Number of frames skipped so far since we drew the last one */
-static unsigned int frames_skipped;
 
 /* Current average frame rate (rolling average) */
 static float average_fps;
@@ -661,15 +662,17 @@ static int psp_vdp2_reset(void)
  */
 static void psp_vdp2_draw_start(void)
 {
+    /* Apply any game-specific optimizations or tweaks.  (This may involve
+     * adjusting the frame-skip variables, so we call it before the
+     * frame-skip check.) */
+    psp_video_apply_tweaks();
+
     /* If we're skipping this frame, we don't do anything, not even start
      * a new output frame (because that forces a VBlank sync, which may
      * waste time if the previous frame completed quickly). */
     if (frames_skipped < frames_to_skip) {
         return;
     }
-
-    /* Apply any game-specific optimizations or tweaks. */
-    psp_video_apply_tweaks();
 
     /* Load the global color lookup tables from VDP2 color RAM. */
     const uint16_t *cram = (const uint16_t *)Vdp2ColorRam;
@@ -799,6 +802,7 @@ static void psp_vdp2_draw_end(void)
 
     if (frames_skipped < frames_to_skip) {
         frames_skipped++;
+        timing_skip_next_sync();  // Let the emulation continue uninterrupted
     } else {
         frames_skipped = 0;
         if (config_get_frameskip_auto()) {

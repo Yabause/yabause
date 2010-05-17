@@ -1185,16 +1185,20 @@ void ScspDeInit(void)
 
 void ScspExec(int decilines)
 {
+   u32 new_target;
+
    scsp_clock_frac += scsp_clock_inc * decilines;
-   scsp_clock_target += scsp_clock_frac >> 20;
+   new_target = scsp_clock_target + (scsp_clock_frac >> 20);
+   scsp_clock_target = new_target;
    scsp_clock_frac &= 0xFFFFF;
 
    if (scsp_thread_running)
    {
 #ifdef PSP
-      psp_writeback_cache_for_scsp();
+      if (!psp_writeback_cache_for_scsp())
+          PSP_UC(scsp_clock_target) = new_target; // Push just this one through
 #endif
-      while (scsp_clock_target - PSP_UC(scsp_clock) > SCSP_CLOCK_MAX_EXEC)
+      while (new_target - PSP_UC(scsp_clock) > SCSP_CLOCK_MAX_EXEC)
       {
          YabThreadWake(YAB_THREAD_SCSP);
          YabThreadYield();
@@ -1206,7 +1210,7 @@ void ScspExec(int decilines)
       }
    }
    else
-      ScspDoExec(scsp_clock_target - scsp_clock);
+      ScspDoExec(new_target - scsp_clock);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1487,30 +1491,18 @@ static void ScspGenerateAudioForCDDA(s32 *bufL, s32 *bufR, u32 samples)
 u8 FASTCALL SoundRamReadByte(u32 address)
 {
    address &= scsp.sound_ram_mask;
-#ifdef PSP
-   if (scsp_thread_running)
-      return T2ReadByte(PSP_UCPTR(SoundRam), address);
-#endif
    return T2ReadByte(SoundRam, address);
 }
 
 u16 FASTCALL SoundRamReadWord(u32 address)
 {
    address &= scsp.sound_ram_mask;
-#ifdef PSP
-   if (scsp_thread_running)
-      return T2ReadWord(PSP_UCPTR(SoundRam), address);
-#endif
    return T2ReadWord(SoundRam, address);
 }
 
 u32 FASTCALL SoundRamReadLong(u32 address)
 {
    address &= scsp.sound_ram_mask;
-#ifdef PSP
-   if (scsp_thread_running)
-      return T2ReadLong(PSP_UCPTR(SoundRam), address);
-#endif
    return T2ReadLong(SoundRam, address);
 }
 

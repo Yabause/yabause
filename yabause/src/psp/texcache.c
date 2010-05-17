@@ -489,7 +489,7 @@ static inline int cache_sprite(
       case 0:
         CMDCOLR &= pixel_mask;
         return gen_clut(tex, 16,
-                        color_base + (CMDCOLR & 0x7F0), CMDCOLR & 0x00F,
+                        (color_base + CMDCOLR) & 0x7F0, CMDCOLR & 0x00F,
                         rofs, gofs, bofs, transparent, endcodes,
                         ((CMDCOLR | 0xF) & pixel_mask) == pixel_mask)
             && cache_texture_t4(tex, src, width, height, width);
@@ -499,19 +499,19 @@ static inline int cache_sprite(
             && cache_texture_t4(tex, src, width, height, width);
       case 2:
         return gen_clut(tex, 64,
-                        color_base + (CMDCOLR & 0x7C0), CMDCOLR & 0x03F,
+                        (color_base + CMDCOLR) & 0x7C0, CMDCOLR & 0x03F,
                         rofs, gofs, bofs, transparent, endcodes,
                         ((CMDCOLR | 0x3F) & pixel_mask) == pixel_mask)
             && cache_texture_t8(tex, src, 0x3F, width, height, width);
       case 3:
         return gen_clut(tex, 128,
-                        color_base + (CMDCOLR & 0x780), CMDCOLR & 0x07F,
+                        (color_base + CMDCOLR) & 0x780, CMDCOLR & 0x07F,
                         rofs, gofs, bofs, transparent, endcodes,
                         ((CMDCOLR | 0x7F) & pixel_mask) == pixel_mask)
             && cache_texture_t8(tex, src, 0x7F, width, height, width);
       case 4:
         return gen_clut(tex, 256,
-                        color_base + (CMDCOLR & 0x700), CMDCOLR & 0x0FF,
+                        (color_base + CMDCOLR) & 0x700, CMDCOLR & 0x0FF,
                         rofs, gofs, bofs, transparent, endcodes,
                         ((CMDCOLR | 0xFF) & pixel_mask) == pixel_mask)
             && cache_texture_t8(tex, src, 0xFF, width, height, width);
@@ -560,13 +560,13 @@ static inline int cache_tile(
 
     if (pixfmt == 0) {
         if (!gen_clut(tex, 16,
-                      color_base + (color_ofs & 0x7F0), color_ofs & 0x00F,
+                      (color_base + color_ofs) & 0x7F0, color_ofs & 0x00F,
                       rofs, gofs, bofs, transparent, 0, 0)) {
             return 0;
         }
     } else if (pixfmt == 1) {
         if (!gen_clut(tex, 256,
-                      color_base + (color_ofs & 0x700), color_ofs & 0x0FF,
+                      (color_base + color_ofs) & 0x700, color_ofs & 0x0FF,
                       rofs, gofs, bofs, transparent, 0, 0)) {
             return 0;
         }

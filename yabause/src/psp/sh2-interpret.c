@@ -319,6 +319,9 @@
     (*__func)((arg1), (arg2)); \
 } while (0)
 
+/* Return from the current block */
+#define RETURN()                 return 0
+
 /*-----------------------------------------------------------------------*/
 
 /* We don't have "registers", so alias state_reg directly to the pointer */
@@ -425,8 +428,9 @@
  *     initial_PC: Equal to state->PC (used by OPTIMIZE_IDLE)
  *         jumped: Local register tracking whether a jump was performed
  * [Return value]
- *     Decoded SH-2 opcode
+ *     Decoded SH-2 opcode (not used)
  */
+#define DECODE_INSN_INLINE  NOINLINE
 #define DECODE_INSN_PARAMS \
     SH2State *state, uint32_t initial_PC, int jumped
 #define RECURSIVE_DECODE(address,is_last)  do { \
@@ -462,6 +466,22 @@ void interpret_insn(SH2State *state)
     }
 
     decode_insn(state, state->PC, 0);
+
+    if (UNLIKELY(state->delay)) {
+        /* Don't treat the instruction after a not-taken conditional branch
+         * as a delay slot.  (Note that when interpreting, the
+         * branch_cond_reg field holds the actual value of the condition.) */
+        if (!(state->branch_type == SH2BRTYPE_BT_S && !state->branch_cond_reg)
+         && !(state->branch_type == SH2BRTYPE_BF_S && state->branch_cond_reg)
+        ) {
+            /* Make sure we interpret the delay slot immediately, so (1) we
+             * don't try to translate it as the beginning of a block and
+             * (2) we don't let any exceptions get in the way (SH7604
+             * manual page 75, section 4.6.1: exceptions are not accepted
+             * when processing a delay slot). */
+            decode_insn(state, state->PC, 0);
+        }
+    }
 }
 
 /*************************************************************************/

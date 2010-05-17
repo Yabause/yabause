@@ -197,6 +197,12 @@ extern unsigned int disp_width, disp_height;
 /* Scale (right-shift) applied to X and Y coordinates */
 extern unsigned int disp_xscale, disp_yscale;
 
+/* Total number of frames to skip before we draw the next one */
+extern unsigned int frames_to_skip;
+
+/* Number of frames skipped so far since we drew the last one */
+extern unsigned int frames_skipped;
+
 /*************************************************************************/
 
 /**

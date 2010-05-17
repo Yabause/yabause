@@ -447,12 +447,14 @@ static inline void guCallList(const void * const list)
 static inline void guClear(const int mode)
 {
     extern uint32_t *gu_list;
+    extern uint32_t gu_clear_color_stencil;
+    extern uint16_t gu_clear_depth;
     struct {uint32_t color, xy, z;} *vertices;
     vertices = guGetMemory(sizeof(*vertices) * 2);
     vertices[0].color = 0;
     vertices[0].xy = 0;
-    vertices[0].z = 0;
-    vertices[1].color = 0;
+    vertices[0].z = gu_clear_depth;
+    vertices[1].color = gu_clear_color_stencil;
     vertices[1].xy = 480 | 272<<16;
     vertices[1].z = 0;
     *gu_list++ = GECMD_CLEAR_MODE<<24     | mode<<8 | 1;
@@ -463,6 +465,25 @@ static inline void guClear(const int mode)
     *gu_list++ = GECMD_VERTEX_POINTER<<24 | ADDRESS_LO(vertices);
     *gu_list++ = GECMD_DRAW_PRIMITIVE<<24 | GU_SPRITES<<16 | 2;
     *gu_list++ = GECMD_CLEAR_MODE<<24     | 0;
+}
+
+static inline void guClearColor(const uint32_t color)
+{
+    extern uint32_t gu_clear_color_stencil;
+    gu_clear_color_stencil = (gu_clear_color_stencil & 0xFF000000)
+                           | (color & 0x00FFFFFF);
+}
+
+static inline void guClearDepth(const unsigned int depth)
+{
+    extern uint16_t gu_clear_depth;
+    gu_clear_depth = depth;
+}
+
+static inline void guClearStencil(const unsigned int stencil)
+{
+    extern uint32_t gu_clear_color_stencil;
+    gu_clear_color_stencil = (gu_clear_color_stencil & 0xFFFFFF) | stencil<<24;
 }
 
 static inline void guClutLoad(const int count, const void * const address)
@@ -505,6 +526,12 @@ static inline void guDepthBuffer(const void * const address, const int stride)
     extern uint32_t *gu_list;
     *gu_list++ = GECMD_DEPTH_ADDRESS<<24 | ADDRESS_LO(address);
     *gu_list++ = GECMD_DEPTH_STRIDE<<24  | ADDRESS_HI(address) | stride;
+}
+
+static inline void guDepthFunc(const int function)
+{
+    extern uint32_t *gu_list;
+    *gu_list++ = GECMD_DEPTHTEST<<24 | function;
 }
 
 static inline void guDepthMask(const int mask)
@@ -793,6 +820,13 @@ static inline void guTexImage(const int level, const int width,
     *gu_list++ = (GECMD_TEX0_SIZE+level)<<24    | log2_height<<8 | log2_width;
 }
 
+static inline void guTexLevelMode(const int mode, const float bias)
+{
+    extern uint32_t *gu_list;
+    const int bias_int = (int)(bias*16 + 0.5f) & 0xFF;
+    *gu_list++ = GECMD_TEXTURE_BIAS<<24 | bias_int<<16 | mode;
+}
+
 static inline void guTexMode(const int format, const int mipmaps,
                              const int unknown, const int swizzle)
 {
@@ -800,6 +834,12 @@ static inline void guTexMode(const int format, const int mipmaps,
     *gu_list++ = GECMD_TEXTURE_MODE<<24   | (mipmaps ? mipmaps-1 : 0) << 16
                                           | swizzle;
     *gu_list++ = GECMD_TEXTURE_PIXFMT<<24 | format;
+}
+
+static inline void guTexSlope(const float slope)
+{
+    extern uint32_t *gu_list;
+    *gu_list++ = GECMD_TEXTURE_SLOPE<<24 | trim_float(slope);
 }
 
 static inline void guTexWrap(const int u_mode, const int v_mode)
@@ -860,6 +900,12 @@ static inline void guViewport(const int cx, const int cy,
     sceGuCallList((list))
 #define guClear(mode) \
     sceGuClear((mode))
+#define guClearColor(color) \
+    sceGuClearColor((color))
+#define guClearDepth(depth) \
+    sceGuClearDepth((depth))
+#define guClearStencil(stencil) \
+    sceGuClearStencil((stencil))
 #define guClutLoad(count,address) \
     sceGuClutLoad((count), (address))
 #define guClutMode(format,shift,mask,unknown) \
@@ -869,6 +915,8 @@ static inline void guViewport(const int cx, const int cy,
                    (src_ptr), (dest_x), (dest_y), (dest_stride), (dest_ptr))
 #define guDepthBuffer(address,stride) \
     sceGuDepthBuffer((address), (stride))
+#define guDepthFunc(function) \
+    sceGuDepthFunc((function))
 #define guDepthMask(mask) \
     sceGuDepthMask((mask))
 #define guDepthRange(near,far) \
@@ -898,7 +946,7 @@ static inline void guViewport(const int cx, const int cy,
 #define guScissor(left,top,width,height) \
     sceGuScissor((left), (top), (width), (height))
 #define guSetMatrix(type,matrix) \
-    sceGuSetMatrix((type), (const ScePspFMatrix *)(matrix))
+    sceGuSetMatrix((type), (const ScePspFMatrix4 *)(matrix))
 #define guShadeModel(mode) \
     sceGuShadeModel((mode))
 #define guStart(type,list) \
@@ -917,8 +965,12 @@ static inline void guViewport(const int cx, const int cy,
     sceGuTexFunc((func), (alpha))
 #define guTexImage(level,width,height,stride,address) \
     sceGuTexImage((level), (width), (height), (stride), (address))
+#define guTexLevelMode(mode, bias) \
+    sceGuTexLevelMode((mode), (bias))
 #define guTexMode(format,mipmaps,unknown,swizzle) \
     sceGuTexMode((format), (mipmaps), (unknown), (swizzle))
+#define guTexSlope(slope) \
+    sceGuTexSlope((slope))
 #define guTexWrap(u_mode,v_mode) \
     sceGuTexWrap((u_mode), (v_mode))
 #define guViewport(cx,cy,width,height) \

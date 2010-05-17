@@ -212,10 +212,6 @@ struct SH2State_ {
      * a SLEEP instruction) */
     uint8_t asleep;
 
-    /* Flag indicating whether we should check for interrupts (set by
-     * instructions that modify SR) */
-    uint8_t need_interrupt_check;
-
     /* Pending interrupt stack */
     struct {
         uint8_t vector;
@@ -235,6 +231,7 @@ struct SH2State_ {
           SH2BRTYPE_BF,
           SH2BRTYPE_BT_S,
           SH2BRTYPE_BF_S,
+          SH2BRTYPE_RTE,        // Return from exception (dynamic branch)
           SH2BRTYPE_FOLDED,     // Subroutine call that will be folded
     } branch_type;
     uint32_t branch_target;     // Target address (used by decoder)
@@ -258,6 +255,10 @@ struct SH2State_ {
     uint8_t just_branched;      // Nonzero if we just executed a branch
                                 //    (used to determine whether a block of
                                 //    code can fall off the end)
+
+    /* Flag indicating that an interrupt check is required after this
+     * instruction */
+    uint8_t need_interrupt_check;
 
     /* Flag indicating whether MACH/MACL are known to be zero (used to
      * optimize MAC instructions) */
@@ -348,7 +349,10 @@ typedef FASTCALL void (*SH2NativeFunctionPointer)(SH2State *state);
  * [Notes]
  *     (1) If the callback function returns nonzero, indicating that a
  *         native implementation is available, it must store an appropriate
- *         function pointer in *func_ret.
+ *         function pointer in *func_ret.  However, if for_fold is nonzero,
+ *         the function may return NULL in *func_ret to indicate that the
+ *         routine at the given address is not to be folded even if folding
+ *         would be possible.
  *     (2) If for_fold is nonzero, any function returned must leave all
  *         registers except R0-R7, MACH/MACL, and PC unmodified (as
  *         specified by the SH-2 ABI).

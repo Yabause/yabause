@@ -152,6 +152,14 @@ int YabauseInit(yabauseinit_struct *init)
 
    bupfilename = init->buppath;
 
+   if (CartInit(init->cartpath, init->carttype) != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, _("Cartridge"));
+      return -1;
+   }
+
+   MappedMemoryInit();
+
    if (VideoInit(init->vidcoretype) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("Video"));
@@ -162,12 +170,6 @@ int YabauseInit(yabauseinit_struct *init)
    if (PerInit(init->percoretype) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("Peripheral"));
-      return -1;
-   }
-
-   if (CartInit(init->cartpath, init->carttype) != 0)
-   {
-      YabSetError(YAB_ERR_CANNOTINIT, _("Cartridge"));
       return -1;
    }
 
@@ -218,8 +220,6 @@ int YabauseInit(yabauseinit_struct *init)
       YabSetError(YAB_ERR_CANNOTINIT, _("Cheat System"));
       return -1;
    }
-
-   MappedMemoryInit();
 
    YabauseSetVideoFormat(init->videoformattype);
    YabauseChangeTiming(CLKTYPE_26MHZ);

@@ -39,6 +39,10 @@ uint32_t *gu_list;
 uint32_t gu_scissorcmd_min, gu_scissorcmd_max;
 uint8_t gu_scissor_enabled;
 
+/* Color/stencil (combined) value and depth value for clear operations */
+uint16_t gu_clear_depth;
+uint32_t gu_clear_color_stencil;
+
 /*----------------------------------*/
 
 /**** Data used only within this file ****/

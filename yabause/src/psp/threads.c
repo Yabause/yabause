@@ -82,6 +82,10 @@ int YabThreadStart(unsigned int id, void (*func)(void))
                  id, thread_data[id].name, psp_strerror(res));
             return -1;
         }
+        /* Attempting to suspend the PSP will currently cause a crash,
+         * so prevent suspending entirely.  (This is documented in the
+         * README.PSP file.) */
+        scePowerLock(0);
         thread_data[id].handle = 1;  // Anything nonzero will do
     } else {
         int32_t res = sys_start_thread(thread_data[id].name, func,

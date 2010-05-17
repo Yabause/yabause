@@ -541,16 +541,6 @@
 // #define TRACE
 
 /**
- * TRACE_LIKE_SH2INT:  When defined, alters certain behaviors to match the
- * core interpreter (../sh2int.c).  This option is intended only for
- * verifying the accuracy of the instruction decoder and should be disabled
- * for normal usage.
- *
- * If TRACE is not defined, TRACE_LIKE_SH2INT is ignored.
- */
-// #define TRACE_LIKE_SH2INT
-
-/**
  * TRACE_STEALTH:  When defined, all instructions and all store operations
  * are traced in a way that does not affect the behavior of the generated
  * code.  Where TRACE inserts RTL instructions to flush cached values and
@@ -687,28 +677,9 @@
 # undef TRACE_OPTIMIZED_DIVISION
 #endif
 
-#ifndef TRACE
-# undef TRACE_LIKE_SH2INT
-#endif
-
 #ifdef TRACE
 # undef TRACE_STEALTH
 # undef TRACE_LITE
-#endif
-
-#ifdef TRACE_LIKE_SH2INT
-# undef JIT_ACCURATE_LDC_SR_TIMING
-# undef OPTIMIZE_IDLE
-# undef OPTIMIZE_DELAY
-# undef OPTIMIZE_DIVISION
-# undef TRACE_OPTIMIZED_DIVISION
-# undef OPTIMIZE_SHIFT_SEQUENCES
-# undef OPTIMIZE_VARIABLE_SHIFTS
-# undef OPTIMIZE_KNOWN_VALUES
-# undef OPTIMIZE_BRANCH_FALLTHRU
-# undef OPTIMIZE_BRANCH_THREAD
-# undef OPTIMIZE_BRANCH_SELECT
-# undef OPTIMIZE_LOOP_TO_JSR
 #endif
 
 #ifdef TRACE_STEALTH
@@ -755,6 +726,17 @@ extern uint8_t *fetch_pages[0x2000];
 extern uint8_t *byte_direct_pages[0x2000];
 extern uint8_t *direct_jit_pages[0x2000];
 #endif
+
+/**
+ * check_interrupts:  Check whether there are any pending interrupts, and
+ * service the highest-priority one if so.
+ *
+ * [Parameters]
+ *     state: Processor state block
+ * [Return value]
+ *     Nonzero if an interrupt was serviced, else zero
+ */
+extern FASTCALL int check_interrupts(SH2State *state);
 
 /******** sh2-interpret.c ********/
 

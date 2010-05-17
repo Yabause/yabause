@@ -18,24 +18,24 @@ all-local: EBOOT.PBP me.prx $(me_test)
 noinst_PROGRAMS = yabause.elf me.elf me-test.elf
 
 yabause_elf_SOURCES = config.c control.c display.c filesel.c font.c gu.c \
-                      init.c localtime.c main.c menu.c misc.c profile.c \
+                      init.c localtime.c main.c menu.c misc.c osk.c profile.c \
                       psp-cd.c psp-m68k.c psp-per.c psp-sh2.c psp-sound.c \
                       psp-video.c psp-video-bitmap.c psp-video-rotate.c \
                       psp-video-tilemap.c psp-video-tweaks.c \
                       rtl.c rtl-mips.c rtlexec.c rtlinsn.c rtlopt.c rtlunit.c \
                       satopt-sh2.c \
                       sh2.c sh2-interpret.c sh2-opcodeinfo.c sh2-optimize.c \
-                      sys.c texcache.c threads.c yui.c \
+                      sys.c texcache.c threads.c timing.c yui.c \
                       me-utility.c \
                       \
                       common.h config.h control.h display.h filesel.h font.h \
-                      gu.h init.h localtime.h menu.h misc.h profile.h \
+                      gu.h init.h localtime.h menu.h misc.h osk.h profile.h \
                       psp-cd.h psp-m68k.h psp-per.h psp-sh2.h psp-sound.h \
                       psp-video.h psp-video-internal.h \
                       rtl.h rtl-internal.h rtl-mips.h \
                       satopt-sh2.h \
                       sh2.h sh2-internal.h \
-                      sys.h texcache.h \
+                      sys.h texcache.h timing.h \
                       me-utility.h
 yabause_elf_DEPENDENCIES = me-sectstart.$(OBJEXT) me-sectend.$(OBJEXT)
 nodist_yabause_elf_SOURCES = melib.S 

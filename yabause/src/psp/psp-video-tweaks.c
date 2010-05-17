@@ -33,13 +33,6 @@
 /****************************** Local data *******************************/
 /*************************************************************************/
 
-/* General-purpose cache buffer.  Can be used by individual optimizers to
- * cache data across multiple frames. */
-
-static __attribute__((aligned(64))) uint8_t tweak_cache_buffer[512*1024];
-
-/*-----------------------------------------------------------------------*/
-
 /* Local routine declarations */
 
 static int Azel_draw_NBG1(vdp2draw_struct *info,
@@ -79,8 +72,32 @@ extern void psp_video_apply_tweaks(void)
 
     if (memcmp(HighWram+0x42F34, "APDNAR\0003", 8) == 0) {
 
-        /* Display movies with transparency disabled to improve playback
-         * speed. */
+        /* For reasons unknown (but possibly an emulator bug), VDP1 and
+         * RBG0 are one frame out of sync, with RBG0 lagging behind.
+         * However, if the game is in 30fps mode and we're also skipping
+         * one frame (or in fact any number of odd frames) per frame drawn,
+         * we can hide this lag by always skipping the frame in which the
+         * VDP1 command table is updated.  The game finalizes the command
+         * list by updating the jump target at VDP1 address 0x00082, so we
+         * watch for changes and use that to sync the frame skipper. */
+        static uint8_t just_adjusted = 0; // Avoid infinite loops, just in case
+        static uint16_t last_00082 = 0xFFFF;  // Impossible value
+        const uint16_t this_00082 = T1ReadWord(Vdp1Ram, 0x00082);
+        const int game_framerate = T2ReadLong(HighWram, 0x4BC94);
+        if (!just_adjusted
+         && game_framerate == 2
+         && this_00082 != last_00082
+         && frames_to_skip % 2 == 1
+         && frames_skipped % 2 == 1
+        ) {
+            frames_skipped--;
+            just_adjusted = 1;
+        } else {
+            just_adjusted = 0;
+        }
+        last_00082 = this_00082;
+
+        /* Display movies with transparency disabled to improve draw speed. */
         if ((Vdp2Regs->CHCTLA & 0x0070) == 0x0040) {
             Vdp2Regs->BGON |= 0x0100;
         }
@@ -113,11 +130,17 @@ static uint8_t Azel_RBG0_cached;
 /* Palette indices (0-7) for sky (flat) and ground (scaled) planes. */
 static uint8_t Azel_sky_palette, Azel_ground_palette;
 
+/* Does the sky wrap vertically? */
+static uint8_t Azel_sky_wrap_v;
+
 /* VDP2 plane addresses for sky and ground planes. */
 static uint32_t Azel_sky_plane_address, Azel_ground_plane_address;
 
 /* Checksum for plane data. */
 static uint32_t Azel_plane_data_checksum;
+
+/* Pixel buffers for cached plane data. */
+static uint8_t *Azel_sky_cache, *Azel_ground_cache;
 
 /*-----------------------------------------------------------------------*/
 
@@ -293,27 +316,43 @@ static void Azel_cache_RBG0(void)
         return;
     }
 
+    /* Allocate a cache buffer if we haven't done so yet.  (We don't free
+     * the buffers once we allocate them, on the assumption that only one
+     * game will be played per Yabause boot.) */
+
+    if (!Azel_sky_cache) {
+        uint8_t *base = malloc(63 + 512*512 + 512*512);
+        if (!base) {
+            DMSG("No memory for sky/ground pixel buffers");
+            return;
+        }
+        uintptr_t base_aligned = ((uintptr_t)base + 63) & -64;
+        Azel_sky_cache = (uint8_t *)base_aligned;
+        Azel_ground_cache = (uint8_t *)(base_aligned + 512*512);
+    }
+
     /* Cache the graphics data (two 512x512-pixel planes) in
-     * tweak_cache_buffer as 512x512 T8 swizzled textures. */
+     * Azel_{sky,ground}_cache as 512x512 T8 swizzled textures. */
 
     Azel_cache_plane(sky_plane_address,
                      (supplementdata & 0xC) << 15 | (supplementdata & 3) << 5,
-                     tweak_cache_buffer);
+                     Azel_sky_cache);
     Azel_cache_plane(ground_plane_address,
                      (supplementdata & 0xC) << 15 | (supplementdata & 3) << 5,
-                     tweak_cache_buffer + 512*512);
+                     Azel_ground_cache);
 
     /* Record other data in relevant variables and set the cached flag. */
 
     Azel_sky_palette = Vdp2Ram[sky_plane_address] >> 4;
     Azel_ground_palette = Vdp2Ram[ground_plane_address] >> 4;
+    Azel_sky_wrap_v = (Vdp2Regs->MPEFRB == Vdp2Regs->MPABRB);
     Azel_sky_plane_address = sky_plane_address;
     Azel_ground_plane_address = ground_plane_address;
     Azel_plane_data_checksum = checksum;
     Azel_RBG0_cached = 1;
 }
 
-/*-----------------------------------------------------------------------*/
+/*----------------------------------*/
 
 /**
  * Azel_cache_plane:  Cache a single plane of graphics data as a 512x512
@@ -356,8 +395,8 @@ static void Azel_cache_plane(uint32_t plane_address, uint32_t tile_base,
                         const uint32_t pix4_7 =
                             ((const uint32_t *)tile_data)[1];
                         if (flip_x) {
-                            ((uint32_t *)y_ptr)[1] = BSWAP32(pix4_7);
-                            ((uint32_t *)y_ptr)[0] = BSWAP32(pix0_3);
+                            ((uint32_t *)y_ptr)[0] = BSWAP32(pix4_7);
+                            ((uint32_t *)y_ptr)[1] = BSWAP32(pix0_3);
                         } else {
                             ((uint32_t *)y_ptr)[0] = pix0_3;
                             ((uint32_t *)y_ptr)[1] = pix4_7;
@@ -396,7 +435,7 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
     }
     const uint32_t param_address = (Vdp2Regs->RPTA.all << 1) & 0x7FF7C;
     const uint32_t coef_base_high = (Vdp2Regs->KTAOF & 1) << 18;
-    if (Vdp2Regs->KTCTL != 0x0001) {
+    if ((Vdp2Regs->KTCTL & 0x0F0F) != 0x0001) {
         DMSG("Can't optimize RBG0 (bad KTCTL=%04X)", Vdp2Regs->KTCTL);
         return 0;
     }
@@ -838,13 +877,17 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
             Azel_transform_coordinates(vertices[i].x, vertices[i].y,
                                        &vertices[i].u, &vertices[i].v,
                                        sky_M, sky_kx, sky_ky, sky_Xp, sky_Yp);
+            /* We deliberately shift the "sky" portion down by 2 pixels
+             * because there are occasionally transparent gaps where the
+             * background color shows through (e.g. 禁止区域). */
+            vertices[i].v -= 2;
         }
 
         guClutMode(GU_PSM_8888, 0, 255, 0);
         guClutLoad(32, sky_clut);
         guTexMode(GU_PSM_T8, 0, 0, 1);
-        guTexImage(0, 512, 512, 512, tweak_cache_buffer);
-        guTexWrap(GU_REPEAT, GU_CLAMP); // Sky textures only wrap horizontally.
+        guTexImage(0, 512, 512, 512, Azel_sky_cache);
+        guTexWrap(GU_REPEAT, Azel_sky_wrap_v ? GU_REPEAT : GU_CLAMP);
         guTexFlush();
         guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_2D | vertex_type,
                     nverts[sky_coord_set], NULL, vertices);
@@ -862,7 +905,7 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
     guClutMode(GU_PSM_8888, 0, 255, 0);
     guClutLoad(32, ground_clut);
     guTexMode(GU_PSM_T8, 0, 0, 1);
-    guTexImage(0, 512, 512, 512, tweak_cache_buffer + 512*512);
+    guTexImage(0, 512, 512, 512, Azel_ground_cache);
     guTexWrap(GU_REPEAT, GU_REPEAT);
     guTexFlush();
 
@@ -916,7 +959,7 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
                                        ground_M, kx, ky, ground_Xp, ground_Yp);
         }
         guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_2D | vertex_type,
-                    4, NULL, vertices);
+                    nverts[ground_coord_set], NULL, vertices);
 
     } else {
 
@@ -983,8 +1026,14 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
             vertices[i].u /= 512;
             vertices[i].v /= 512;
             if (do_shimmer) {
-                vertices[i].u *= 11;  // Fake the "shimmering" effect.
-                vertices[i].v *= 11;
+                /* Fake the "shimmering" effect with a simple sinusoidal
+                 * offset.  The PSP doesn't have enough hardware operators
+                 * to do what we really want (which is multiply each
+                 * texture coordinate by a*sin(b*y/z), where a and b are
+                 * constants). */
+                const float step =
+                    (sceKernelGetSystemTimeLow() & 0x7FFFFF) / (float)0x800000;
+                vertices[i].v += 0.01f * sinf(step * (2 * (float)M_PI));
             }
             vertices[i].x = (vertices[i].x - disp_width/2)  * vertices[i].z;
             vertices[i].y = (vertices[i].y - disp_height/2) * vertices[i].z;
