@@ -21,10 +21,13 @@
 #ifndef PSP_TEXCACHE_H
 #define PSP_TEXCACHE_H
 
+#include "../vdp1.h"
+
 /*************************************************************************/
 
 /**
- * texcache_reset:  Reset the texture cache.
+ * texcache_reset:  Reset the texture cache, including all persistent
+ * textures.
  *
  * [Parameters]
  *     None
@@ -34,22 +37,34 @@
 extern void texcache_reset(void);
 
 /**
- * texcache_cache_sprite:  Cache the given sprite texture if it has not
- * been cached already.  Returns a texture key for later use in loading the
- * texture.
+ * texcache_clean:  Clean all transient textures from the texture cache.
+ * Persistent textures are not affected.
  *
  * [Parameters]
- *     CMDSRCA, CMDPMOD, CMDCOLR: Values of like-named fields in VDP1 command
- *                    pixel_mask: Mask to apply to paletted pixel data
- *                 width, height: Size of texture (in pixels)
- *              rofs, gofs, bofs: Color offset values for texture
+ *     None
+ * [Return value]
+ *     None
+ */
+extern void texcache_clean(void);
+
+/**
+ * texcache_cache_sprite:  Cache the given sprite texture if it has not
+ * been cached already.  Returns a texture key for later use in loading the
+ * texture.  The texture width must be a multiple of 8.
+ *
+ * [Parameters]
+ *               cmd: VDP1 command structure
+ *        pixel_mask: Mask to apply to paletted pixel data
+ *     width, height: Size of texture (in pixels)
+ *        persistent: Nonzero to cache this texture persistently across
+ *                       frames, zero to cache the texture for this frame only
  * [Return value]
  *     Texture key (zero on error)
  */
-extern uint32_t texcache_cache_sprite(uint16_t CMDSRCA, uint16_t CMDPMOD,
-                                      uint16_t CMDCOLR, uint16_t pixel_mask,
+extern uint32_t texcache_cache_sprite(const vdp1cmd_struct *cmd,
+                                      uint16_t pixel_mask,
                                       unsigned int width, unsigned int height,
-                                      int rofs, int gofs, int bofs);
+                                      int persistent);
 
 /**
  * texcache_load_sprite:  Load the sprite texture indicated by the given
@@ -74,17 +89,21 @@ extern void texcache_load_sprite(uint32_t key);
  *           color_base: Color table base (for indexed formats)
  *            color_ofs: Color table offset (for indexed formats)
  *     rofs, gofs, bofs: Color offset values for texture
+ *           persistent: Nonzero to cache this texture persistently across
+ *                          frames, zero to cache the texture for this
+ *                          frame only
  * [Return value]
  *     None
  */
 extern void texcache_load_tile(int tilesize, uint32_t address,
                                int pixfmt, int transparent,
                                uint16_t color_base, uint16_t color_ofs,
-                               int rofs, int gofs, int bofs);
+                               int rofs, int gofs, int bofs, int persistent);
 
 /**
  * texcache_load_bitmap:  Load the specified bitmap texture into the GE
- * registers for drawing, first caching the texture if necessary.
+ * registers for drawing, first caching the texture if necessary.  The
+ * texture width must be a multiple of 8.
  *
  * [Parameters]
  *              address: Bitmap data address within VDP2 RAM
@@ -95,6 +114,9 @@ extern void texcache_load_tile(int tilesize, uint32_t address,
  *           color_base: Color table base (for indexed formats)
  *            color_ofs: Color table offset (for indexed formats)
  *     rofs, gofs, bofs: Color offset values for texture
+ *           persistent: Nonzero to cache this texture persistently across
+ *                          frames, zero to cache the texture for this
+ *                          frame only
  * [Return value]
  *     None
  */
@@ -102,7 +124,7 @@ extern void texcache_load_bitmap(uint32_t address, unsigned int width,
                                  unsigned int height, unsigned int stride,
                                  int pixfmt, int transparent,
                                  uint16_t color_base, uint16_t color_ofs,
-                                 int rofs, int gofs, int bofs);
+                                 int rofs, int gofs, int bof, int persistent);
 
 /*************************************************************************/
 

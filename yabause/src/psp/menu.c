@@ -128,7 +128,8 @@ typedef enum VideoMenuOption_ {
 #define OPT_VIDEO__MAX  OPT_VIDEO_SHOW_FPS
 
 typedef enum RenderMenuOption_ {
-    OPT_RENDER_SMOOTH_TEXTURES = 0,
+    OPT_RENDER_CACHE_TEXTURES = 0,
+    OPT_RENDER_SMOOTH_TEXTURES,
     OPT_RENDER_SMOOTH_HIRES,
     OPT_RENDER_ENABLE_ROTATE,
     OPT_RENDER_OPTIMIZE_ROTATE,
@@ -1007,6 +1008,14 @@ static void process_option_render(const uint32_t buttons)
 {
     switch ((RenderMenuOption)cur_option) {
 
+      case OPT_RENDER_CACHE_TEXTURES:
+        if (!config_set_cache_textures(!config_get_cache_textures())) {
+            status_text = "Failed to change option!";
+            status_color = TEXT_COLOR_NG;
+            status_timer = STATUS_DISPTIME;
+        }
+        break;
+
       case OPT_RENDER_SMOOTH_TEXTURES:
         if (!config_set_smooth_textures(!config_get_smooth_textures())) {
             status_text = "Failed to change option!";
@@ -1861,7 +1870,11 @@ static void draw_menu(void)
       case MENU_RENDER:
         font_printf(DISPLAY_WIDTH/2, menu_title_y, 0, TEXT_COLOR_INFO,
                     "Configure hardware rendering settings");
-        y = menu_center_y - (3*line_height + FONT_HEIGHT) / 2;
+        y = menu_center_y - (4*line_height + FONT_HEIGHT) / 2;
+        draw_menu_option(OPT_RENDER_CACHE_TEXTURES, menu_left_edge, y,
+                         "[%c] Aggressively cache pixel data",
+                         config_get_cache_textures() ? '*' : ' ');
+        y += line_height;
         draw_menu_option(OPT_RENDER_SMOOTH_TEXTURES, menu_left_edge, y,
                          "[%c] Smooth textures and sprites",
                          config_get_smooth_textures() ? '*' : ' ');
@@ -1879,6 +1892,16 @@ static void draw_menu(void)
                          config_get_optimize_rotate() ? '*' : ' ');
         y = menu_help_y;
         switch ((RenderMenuOption)cur_option) {
+          case OPT_RENDER_CACHE_TEXTURES:
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "Try to cache native"
+                        " pixel data to speed up drawing.");
+            y += line_height;
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "This may cause the"
+                        " wrong graphics to be shown in");
+            y += line_height;
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "rare cases.");
+            y += line_height;
+            break;
           case OPT_RENDER_SMOOTH_TEXTURES:
             font_printf(75, y, -1, TEXT_COLOR_INFO, "Apply smoothing"
                         " (antialiasing) to textures and sprites.");
@@ -1897,7 +1920,7 @@ static void draw_menu(void)
             font_printf(75, y, -1, TEXT_COLOR_INFO, "This can make high"
                         "-resolution screens look clearer, but");
             y += line_height;
-            font_printf(75, y, -1, TEXT_COLOR_INFO, "will also slow down"
+            font_printf(75, y, -1, TEXT_COLOR_INFO, "may also slow down"
                         " the emulator.");
             y += line_height;
             break;

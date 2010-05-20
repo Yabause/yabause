@@ -106,8 +106,9 @@
 #define SET_CLIP_REGION(half_height)                            \
     guScissor(clip->xstart,                                     \
               half_height ? clip->ystart/2 : clip->ystart,      \
-              clip->xend,                                       \
-              half_height ? clip->yend/2 : clip->yend)
+              clip->xend - clip->xstart,                        \
+              half_height ? clip->yend/2 - clip->ystart/2       \
+                          : clip->yend - clip->ystart)
 
 /* Reset the clipping region to default */
 #define UNSET_CLIP_REGION                                       \
@@ -332,7 +333,8 @@ void vdp2_draw_map_8x8(vdp2draw_struct *info, const clipping_struct *clip)
         texcache_load_tile(8, info->charaddr, info->colornumber,
                            info->transparencyenable,
                            info->coloroffset, info->paladdr << 4,
-                           info->cor, info->cog, info->cob);
+                           info->cor, info->cog, info->cob,
+                           vdp2_is_persistent(info->charaddr));
         guDrawArray(GU_SPRITES,
                     GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
                     2, NULL, vertices);
@@ -450,7 +452,8 @@ void vdp2_draw_map_16x16(vdp2draw_struct *info, const clipping_struct *clip)
         texcache_load_tile(16, info->charaddr, info->colornumber,
                            info->transparencyenable,
                            info->coloroffset, info->paladdr << 4,
-                           info->cor, info->cog, info->cob);
+                           info->cor, info->cog, info->cob,
+                           vdp2_is_persistent(info->charaddr));
         guDrawArray(GU_SPRITES,
                     GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
                     2, NULL, vertices);

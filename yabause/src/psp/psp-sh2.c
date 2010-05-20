@@ -183,6 +183,7 @@ static int psp_sh2_init(void)
 #else  // !PSP
     sh2_set_optimizations(SH2_OPTIMIZE_ASSUME_SAFE_DIVISION
                         | SH2_OPTIMIZE_BRANCH_TO_RTS
+                        | SH2_OPTIMIZE_FOLD_SUBROUTINES
                         | SH2_OPTIMIZE_LOCAL_ACCESSES
                         | SH2_OPTIMIZE_LOCAL_POINTERS
                         | SH2_OPTIMIZE_MAC_NOSAT

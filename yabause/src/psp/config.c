@@ -59,6 +59,7 @@ static int module_sh2 = SH2CORE_PSP;
 static int module_video = VIDCORE_PSP;
 
 /* Display settings */
+static int cache_textures = 1;
 static int smooth_textures = 0;
 static int smooth_hires = 0;
 static int enable_rotate = 1;
@@ -252,6 +253,9 @@ void config_load(void)
         } else if (stricmp(name, "module_video") == 0) {
             parse_int(PATH_INI, line, name, value, &module_video);
 
+        } else if (stricmp(name, "cache_textures") == 0) {
+            parse_int(PATH_INI, line, name, value, &cache_textures);
+
         } else if (stricmp(name, "smooth_textures") == 0) {
             parse_int(PATH_INI, line, name, value, &smooth_textures);
 
@@ -355,6 +359,7 @@ int config_save(void)
      || fprintf(f, "button.Z=%u\n",             button[CONFIG_BUTTON_Z]) < 0
      || fprintf(f, "module_sh2=%d\n",           module_sh2             ) < 0
      || fprintf(f, "module_video=%d\n",         module_video           ) < 0
+     || fprintf(f, "cache_textures=%d\n",       cache_textures         ) < 0
      || fprintf(f, "smooth_textures=%d\n",      smooth_textures        ) < 0
      || fprintf(f, "smooth_hires=%d\n",         smooth_hires           ) < 0
      || fprintf(f, "enable_rotate=%d\n",        enable_rotate          ) < 0
@@ -449,6 +454,11 @@ int config_get_module_sh2(void)
 int config_get_module_video(void)
 {
     return module_video;
+}
+
+int config_get_cache_textures(void)
+{
+    return cache_textures;
 }
 
 int config_get_smooth_textures(void)
@@ -625,6 +635,12 @@ int config_set_module_sh2(int value)
 int config_set_module_video(int value)
 {
     module_video = value;
+    return 1;
+}
+
+int config_set_cache_textures(int value)
+{
+    cache_textures = value ? 1 : 0;
     return 1;
 }
 

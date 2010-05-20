@@ -78,9 +78,12 @@ void vdp2_draw_bitmap(vdp2draw_struct *info, const clipping_struct *clip)
     /* Draw the bitmap */
     texcache_load_bitmap(
         info->charaddr,
-        vertices[1].u - vertices[0].u, vertices[1].v - vertices[0].v,
+        (vertices[1].u - vertices[0].u + 7) & -8,
+        vertices[1].v - vertices[0].v,
         info->cellw, info->colornumber, info->transparencyenable,
-        info->coloroffset, info->paladdr << 4, info->cor, info->cog, info->cob
+        info->coloroffset, info->paladdr << 4,
+        info->cor, info->cog, info->cob,
+        0  // Bitmaps are likely to change, so don't cache them persistently
     );
     guDrawArray(GU_SPRITES,
                 GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,

@@ -6202,9 +6202,17 @@ static int scan_block(SH2State *state, JitEntry *entry, uint32_t address)
 #endif
 
 #ifdef OPTIMIZE_LOOP_TO_JSR
-            /* If this is a backward branch to two instructions before the
-             * beginning of the block, record whether the targeted
-             * instruction is a subroutine call (JSR, BSR, or BSRF). */
+            /* If this is a backward branch to two instructions before
+             * the beginning of the block, record whether the targeted
+             * instruction is a subroutine call (JSR, BSR, or BSRF).
+             * In this case, also mark the following instruction as a
+             * branch target, because we're effectively flipping the
+             * sense of the branch and skipping the call and delay slot
+             * on the opposite condition.  (If we don't do this, side
+             * effects of the delay slot such as generating a native
+             * pointer register for an SH-2 pointer won't be forgotten in
+             * the fall-through case, causing the fall-through code to use
+             * uninitialized registers and potentially crash.) */
             if (target == start_address - 4) {
                 unsigned int target_insn = fetch[2+(disp/2)];
                 if ((target_insn & 0xF0FF) == 0x400B  // JSR @Rn
@@ -6212,6 +6220,23 @@ static int scan_block(SH2State *state, JitEntry *entry, uint32_t address)
                  || (target_insn & 0xF0FF) == 0x0003  // BSRF Rn
                 ) {
                     word_info[block_len] |= WORD_INFO_LOOP_JSR;
+                    uint32_t false_target;
+                    if (opcode_info & SH2_OPCODE_INFO_BRANCH_DELAYED) {
+                        false_target = address+2;
+                    } else {
+                        false_target = address+4;
+                    }
+                    const uint32_t target_index =
+                        (false_target - start_address) / 2;
+                    is_local_branch = 1;
+                    local_branch_target_index = target_index;
+                    const uint32_t flag = 1 << (target_index % 32);
+                    local_branch_is_new = !(is_branch_target[index/32] & flag);
+                    is_branch_target[target_index/32] |= flag;
+                    /* We don't set the OPTIMIZE_BRANCH_FALLTHRU variables
+                     * because the branch itself does _not_ fall through;
+                     * this branch target handling is only a hack to avoid
+                     * overoptimization. */
                 }
             }
 #endif

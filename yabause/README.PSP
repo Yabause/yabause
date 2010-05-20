@@ -226,6 +226,17 @@ The main menu contains six options:
           This option opens another submenu which allows you to change
           certain aspects of the hardware video renderer's behavior:
 
+             * "Aggressively cache pixel data"
+
+               When enabled, Yabause will try to store a copy of all
+               graphic data in the PSP's native pixel format, to speed up
+               drawing.  However, Yabause may not always notice when the
+               data is changed, causing incorrect graphics to appear.
+               (This can be fixed by disabling the option, exiting the
+               menu for a moment, then re-enabling the option.)  When
+               disabled, all graphics are redrawn from the Saturn data
+               every frame.  This option is enabled by default.
+
              * "Smooth textures and sprites"
 
                When enabled, smoothing (antialiasing) is applied to all

@@ -33,24 +33,15 @@
 /****************************** Local data *******************************/
 /*************************************************************************/
 
-/* Local routine declarations */
+/* Local routine declarations (internal helpers are declared in their
+ * respective sections) */
 
 static int Azel_draw_NBG1(vdp2draw_struct *info,
                           const clipping_struct *clip);
 static void Azel_reset_cache(void);
 static void Azel_cache_RBG0(void);
-static void Azel_cache_plane(uint32_t plane_address, uint32_t tile_base,
-                             uint8_t *dest);
 static int Azel_draw_RBG0(vdp2draw_struct *info,
                           const clipping_struct *clip);
-static void Azel_get_rotation_matrix(uint32_t address, float matrix[2][3],
-                                     float *kx_ret, float *ky_ret,
-                                     float *Xp_ret, float *Yp_ret);
-static void Azel_transform_coordinates(const float x, const float y,
-                                       float *u_ret, float *v_ret,
-                                       float M[2][3],
-                                       const float kx, const float ky,
-                                       const float Xp, const float Yp);
 
 /*************************************************************************/
 /************************** Interface function ***************************/
@@ -106,6 +97,27 @@ extern void psp_video_apply_tweaks(void)
          * line scrolling. */
         psp_video_set_draw_routine(BG_NBG1, Azel_draw_NBG1, 0);
 
+        /* Fix bogus sprite alpha setting in the Uru underwater tunnel.
+         * (The alpha setting gets ignored on a real Saturn due to priority
+         * idiosyncrasies.) */
+        if (Vdp2Regs->SPCTL == 0x1523
+         && Vdp2Regs->CCCTL == 0x0053
+         && Vdp2Regs->SFCCMD == 0x0008
+         && Vdp2Regs->PRISA == 0x0405
+         && Vdp2Regs->PRINA == 0x0604
+         && Vdp2Regs->CCRSA == 0x000C
+         && Vdp2Regs->CCRNA == 0x101F
+         && Vdp2Regs->PNCN1 == 0xC100
+         && Vdp2Regs->MPABN1 == 0x0B0B
+         && Vdp2Regs->MPCDN1 == 0x0B0B
+         && Vdp2Regs->RPTA.all == 0x14000
+         && T1ReadLong(Vdp2Ram, 0x28054) == 0x80640000
+         && T1ReadLong(Vdp2Ram, 0x28058) == 0x10000
+         && (int32_t)T1ReadLong(Vdp2Ram, 0x20190 + 223*4) < 0
+        ) {
+            Vdp2Regs->CCRSA &= 0xFF00;
+        }
+
         /* Draw sky/ground RBG0 graphics more efficiently, if requested. */
         if (config_get_optimize_rotate() && (Vdp2Regs->BGON & 0x0010)) {
             Azel_cache_RBG0();
@@ -124,6 +136,16 @@ extern void psp_video_apply_tweaks(void)
 
 /**** Azel: Panzer Dragoon RPG (JP) optimizers ****/
 
+/*-----------------------------------------------------------------------*/
+
+/* Exported variables for RBG0 slope and first coefficient reciprocal,
+ * set by the optimized RBG0 coefficient generator in satopt-sh2.c. */
+#define SLOPE_UNSET  1e10f
+float psp_video_tweaks_Azel_RBG0_slope = SLOPE_UNSET;
+float psp_video_tweaks_Azel_RBG0_first_recip;
+
+/*----------------------------------*/
+
 /* Do we have data for RBG0 cached? */
 static uint8_t Azel_RBG0_cached;
 
@@ -133,6 +155,9 @@ static uint8_t Azel_sky_palette, Azel_ground_palette;
 /* Does the sky wrap vertically? */
 static uint8_t Azel_sky_wrap_v;
 
+/* Is the ground texture already reduced by half? */
+static uint8_t Azel_ground_reduced;
+
 /* VDP2 plane addresses for sky and ground planes. */
 static uint32_t Azel_sky_plane_address, Azel_ground_plane_address;
 
@@ -141,6 +166,34 @@ static uint32_t Azel_plane_data_checksum;
 
 /* Pixel buffers for cached plane data. */
 static uint8_t *Azel_sky_cache, *Azel_ground_cache;
+
+/* Data structure used for coordinate calculation. */
+struct Azel_RBG0_coord {int x, y, overdraw_x, overdraw_y;};
+
+/*----------------------------------*/
+
+static void Azel_cache_plane(uint32_t plane_address, uint32_t tile_base,
+                             uint8_t *dest);
+static void Azel_make_mipmap(const uint8_t *in, unsigned int size,
+                             uint8_t *out, unsigned int stride);
+static void Azel_get_rotation_matrix(uint32_t address, float matrix[2][3],
+                                     float *kx_ret, float *ky_ret,
+                                     float *Xp_ret, float *Yp_ret);
+static void Azel_transform_coordinates(const float x, const float y,
+                                       float *u_ret, float *v_ret,
+                                       float M[2][3],
+                                       const float kx, const float ky,
+                                       const float Xp, const float Yp);
+static inline void Azel_compute_switch(
+    uint32_t coef_base, uint32_t coef_switch_index,
+    const uint32_t coef_index_UL, const uint32_t coef_index_UR,
+    const uint32_t coef_index_LL, const uint32_t coef_index_LR,
+    float coef_dx, float coef_dy,
+    int *switch_x0, int *switch_y0, int *switch_x1, int *switch_y1);
+static inline void Azel_compute_vertices(
+    int UL_is_sky, int UR_is_sky, int LL_is_sky, int LR_is_sky,
+    int switch_x0, int switch_y0, int switch_x1, int switch_y1,
+    struct Azel_RBG0_coord coord[2][5], unsigned int nverts[2]);
 
 /*-----------------------------------------------------------------------*/
 
@@ -253,12 +306,16 @@ static void Azel_cache_RBG0(void)
     const unsigned int planewh_A = Vdp2Regs->PLSZ>>8 & 0x3;
     const unsigned int planewh_B = Vdp2Regs->PLSZ>>12 & 0x3;
     const unsigned int rpmd = Vdp2Regs->RPMD & 0x3;
+    const unsigned int raovr = Vdp2Regs->PLSZ>>10 & 0x3;
+    const unsigned int raopn = Vdp2Regs->OVPNRA;
     if (colornumber != 1 || patternwh != 2 || patterndatasize != 2
-     || auxmode || planewh_A != 0 || planewh_B != 0 || rpmd != 2
+     || auxmode || planewh_A != 0 || planewh_B != 0 
+     || (rpmd != 2 && !(rpmd == 0 && raovr == 1 && raopn == 0x5000))
     ) {
         DMSG("Wrong RBG0 format for cache: colornumber=%u patternwh=%u"
-             " patterndatasize=%u auxmode=%u planewh=%u/%u", colornumber,
-             patternwh, patterndatasize, auxmode, planewh_A, planewh_B);
+             " patterndatasize=%u auxmode=%u planewh=%u/%u rpmd=%u",
+             colornumber, patternwh, patterndatasize, auxmode, planewh_A,
+             planewh_B, rpmd);
         Azel_RBG0_cached = 0;
         return;
     }
@@ -321,7 +378,8 @@ static void Azel_cache_RBG0(void)
      * game will be played per Yabause boot.) */
 
     if (!Azel_sky_cache) {
-        uint8_t *base = malloc(63 + 512*512 + 512*512);
+        uint8_t *base = malloc(63 + 512*512
+                                  + 512*512 + 256*256 + 128*128 + 64*64);
         if (!base) {
             DMSG("No memory for sky/ground pixel buffers");
             return;
@@ -332,14 +390,55 @@ static void Azel_cache_RBG0(void)
     }
 
     /* Cache the graphics data (two 512x512-pixel planes) in
-     * Azel_{sky,ground}_cache as 512x512 T8 swizzled textures. */
+     * Azel_{sky,ground}_cache as 512x512 T8 swizzled textures.  Also add
+     * mipmaps for the ground texture to improve drawing performance for
+     * distant regions. */
 
     Azel_cache_plane(sky_plane_address,
                      (supplementdata & 0xC) << 15 | (supplementdata & 3) << 5,
                      Azel_sky_cache);
-    Azel_cache_plane(ground_plane_address,
-                     (supplementdata & 0xC) << 15 | (supplementdata & 3) << 5,
-                     Azel_ground_cache);
+    if ((Vdp2Regs->RPMD & 3) == 0
+     && Vdp2Regs->MPABRA == 0x0100
+     && Vdp2Regs->MPEFRA == 0x0203
+    ) {
+        /* Special case for the dome area of the Uru underground dungeon,
+         * which is a shrunken 1024x1024 map.  We reduce it to 512x512 and
+         * adjust the scale factors appropriately when drawing. */
+        Azel_ground_reduced = 1;
+        uint8_t *temp = malloc(512*512);
+        if (!temp) {
+            DMSG("No temporary memory for reducing dome RBG0");
+            return;
+        }
+        Azel_cache_plane(ground_plane_address,
+                         (supplementdata & 0xC)<<15 | (supplementdata & 3)<<5,
+                         temp);
+        Azel_make_mipmap(temp, 512, Azel_ground_cache, 512);
+        Azel_cache_plane(ground_plane_address + 0x800,
+                         (supplementdata & 0xC)<<15 | (supplementdata & 3)<<5,
+                         temp);
+        Azel_make_mipmap(temp, 512, Azel_ground_cache + 256*8, 512);
+        Azel_cache_plane(ground_plane_address + 0x1800,
+                         (supplementdata & 0xC)<<15 | (supplementdata & 3)<<5,
+                         temp);
+        Azel_make_mipmap(temp, 512, Azel_ground_cache + 512*256, 512);
+        Azel_cache_plane(ground_plane_address + 0x1000,
+                         (supplementdata & 0xC)<<15 | (supplementdata & 3)<<5,
+                         temp);
+        Azel_make_mipmap(temp, 512, Azel_ground_cache + 512*256 + 256*8, 512);
+        free(temp);
+    } else {
+        Azel_ground_reduced = 0;
+        Azel_cache_plane(ground_plane_address,
+                         (supplementdata & 0xC)<<15 | (supplementdata & 3)<<5,
+                         Azel_ground_cache);
+    }
+    Azel_make_mipmap(Azel_ground_cache, 512,
+                     Azel_ground_cache + 512*512, 256);
+    Azel_make_mipmap(Azel_ground_cache + 512*512, 256,
+                     Azel_ground_cache + 512*512 + 256*256, 128);
+    Azel_make_mipmap(Azel_ground_cache + 512*512 + 256*256, 128,
+                     Azel_ground_cache + 512*512 + 256*256 + 128*128, 64);
 
     /* Record other data in relevant variables and set the cached flag. */
 
@@ -350,6 +449,7 @@ static void Azel_cache_RBG0(void)
     Azel_ground_plane_address = ground_plane_address;
     Azel_plane_data_checksum = checksum;
     Azel_RBG0_cached = 1;
+    psp_video_tweaks_Azel_RBG0_slope = SLOPE_UNSET;
 }
 
 /*----------------------------------*/
@@ -408,6 +508,85 @@ static void Azel_cache_plane(uint32_t plane_address, uint32_t tile_base,
     }  // tile_y
 }
 
+/*----------------------------------*/
+
+/**
+ * Azel_make_mipmap:  Create a half-size mipmap from the given pixel buffer
+ * by dropping every second pixel.
+ *
+ * [Parameters]
+ *         in: Input pixel buffer
+ *       size: Size (width and height) of input pixel buffer
+ *        out: Output pixel buffer
+ *     stride: Line length of output buffer (normally size/2)
+ * [Return value]
+ *     None
+ */
+static void Azel_make_mipmap(const uint8_t *in, unsigned int size,
+                             uint8_t *out, unsigned int stride)
+{
+#define SHRINK                          \
+    asm(".set push; .set noreorder\n"   \
+        "srl %[temp], %[a], 16\n"       \
+        "ins %[a], %[temp], 8, 8\n"     \
+        "ins %[a], %[b], 16, 8\n"       \
+        "srl %[b], %[b], 16\n"          \
+        "ins %[a], %[b], 24, 8\n"       \
+        "srl %[temp], %[c], 16\n"       \
+        "ins %[c], %[temp], 8, 8\n"     \
+        "ins %[c], %[d], 16, 8\n"       \
+        "srl %[d], %[d], 16\n"          \
+        "ins %[c], %[d], 24, 8\n"       \
+        ".set pop"                      \
+        : [a] "=r" (a), [b] "=r" (b), [c] "=r" (c), [d] "=r" (d), \
+          [temp] "=&r" (temp)           \
+        : "0" (a), "1" (b), "2" (c), "3" (d) \
+    )
+
+    unsigned int y;
+    for (y = 0; y < size; y += 16, in += size*8, out += (stride - size/2)*8) {
+        unsigned int x;
+        for (x = 0; x < size; x += 32, in += 128, out += 64) {
+            unsigned int line;
+            for (line = 0; line < 4; line++, in += 32, out += 16) {
+                uint32_t a, b, c, d, temp;
+
+                a = ((const uint32_t *)in)[0];
+                b = ((const uint32_t *)in)[1];
+                c = ((const uint32_t *)in)[2];
+                d = ((const uint32_t *)in)[3];
+                SHRINK;
+                ((uint32_t *)out)[0] = a;
+                ((uint32_t *)out)[1] = c;
+
+                a = ((const uint32_t *)in)[32];
+                b = ((const uint32_t *)in)[33];
+                c = ((const uint32_t *)in)[34];
+                d = ((const uint32_t *)in)[35];
+                SHRINK;
+                ((uint32_t *)out)[2] = a;
+                ((uint32_t *)out)[3] = c;
+
+                a = ((const uint32_t *)in)[size*2+0];
+                b = ((const uint32_t *)in)[size*2+1];
+                c = ((const uint32_t *)in)[size*2+2];
+                d = ((const uint32_t *)in)[size*2+3];
+                SHRINK;
+                ((uint32_t *)out)[16] = a;
+                ((uint32_t *)out)[17] = c;
+
+                a = ((const uint32_t *)in)[size*2+32];
+                b = ((const uint32_t *)in)[size*2+33];
+                c = ((const uint32_t *)in)[size*2+34];
+                d = ((const uint32_t *)in)[size*2+35];
+                SHRINK;
+                ((uint32_t *)out)[18] = a;
+                ((uint32_t *)out)[19] = c;
+            }
+        }
+    }
+}
+
 /*-----------------------------------------------------------------------*/
 
 /**
@@ -426,13 +605,20 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
         return 0;
     }
 
-    /* Make sure it's a mode-1 layer with 4-byte, mode-0 coefficients
-     * for the ground (set A) and no coefficients for the sky (set B). */
+    /* Make sure it's an RPMD mode 2 layer with 4-byte, mode-0 coefficients
+     * for the ground (set A) and no coefficients for the sky (set B).
+     * However, also allow mode 0 with certain parameter settings used in
+     * the Uru underground dungeon. */
 
-    if (info->rotatemode != 1) {
+    if ((Vdp2Regs->RPMD & 3) != 2
+     && !((Vdp2Regs->RPMD & 3) == 0
+          && (Vdp2Regs->PLSZ>>10 & 3) == 1
+          && Vdp2Regs->OVPNRA == 0x5000)
+    ) {
         DMSG("Can't optimize RBG0 (bad rotatemode=%d)", info->rotatemode);
         return 0;
     }
+    const int has_sky = ((Vdp2Regs->RPMD & 3) == 2);
     const uint32_t param_address = (Vdp2Regs->RPTA.all << 1) & 0x7FF7C;
     const uint32_t coef_base_high = (Vdp2Regs->KTAOF & 1) << 18;
     if ((Vdp2Regs->KTCTL & 0x0F0F) != 0x0001) {
@@ -527,72 +713,21 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
     int switch_x0, switch_y0, switch_x1, switch_y1;
 
     if (has_switch) {
-
-        switch_x0 = switch_y0 = switch_x1 = switch_y1 = -1;
-
-        if (coef_dx == 0) {
-
-            switch_x0 = 0;
-            switch_y0 = iceilf((coef_switch_index - coef_base) / coef_dy);
-            switch_x1 = disp_width;
-            switch_y1 = switch_y0;
-
-        } else if (coef_dy == 0) {
-
-            switch_x0 = iceilf((coef_switch_index - coef_base) / coef_dx);
-            switch_y0 = 0;
-            switch_x1 = switch_x0;
-            switch_y1 = disp_height;
-
-        } else {  // coef_dx != 0 && coef_dy != 0
-
-            const float top_x = (coef_switch_index - coef_index_UL) / coef_dx;
-            if (top_x > -1 && top_x <= disp_width) {
-                switch_x0 = iceilf(top_x);
-                switch_y0 = 0;
-            }
-            const float bottom_x = (coef_switch_index - coef_index_LL) / coef_dx;
-            if (bottom_x > -1 && bottom_x <= disp_width) {
-                switch_x1 = iceilf(bottom_x);
-                switch_y1 = disp_height;
-            }
-            const float left_y = (coef_switch_index - coef_index_UL) / coef_dy;
-            if (left_y > -1 && left_y <= disp_height) {
-                if (switch_x0 < 0) {
-                    switch_x0 = 0;
-                    switch_y0 = iceilf(left_y);
-                } else if (switch_x1 < 0) {
-                    switch_x1 = 0;
-                    switch_y1 = iceilf(left_y);
-                }
-            }
-            const float right_y = (coef_switch_index - coef_index_UR) / coef_dy;
-            if (right_y > -1 && right_y <= disp_height) {
-                if (switch_x0 < 0) {
-                    switch_x0 = disp_width;
-                    switch_y0 = iceilf(right_y);
-                } else if (switch_x1 < 0) {
-                    switch_x1 = disp_width;
-                    switch_y1 = iceilf(right_y);
-                }
-            }
-
-        }
-
-        if (switch_x0 < 0 || switch_x1 < 0) {
+        Azel_compute_switch(coef_base, coef_switch_index, coef_index_UL,
+                            coef_index_UR, coef_index_LL, coef_index_LR,
+                            coef_dx, coef_dy, &switch_x0, &switch_y0,
+                            &switch_x1, &switch_y1);
+        if (UNLIKELY(switch_x0 < 0 || switch_x1 < 0)) {
             DMSG("Failed to find swith line endpoints (base=%05X dx=%.3f"
                  " dy=%.3f", ifloorf(coef_base)*4, coef_dx, coef_dy);
             return 0;
         }
-
     } else {  // !has_switch
-
         /* Set the switch line at the bottom of the screen for simplicity. */
         switch_x0 = 0;
         switch_y0 = disp_height;
         switch_x1 = disp_width;
         switch_y1 = disp_height;
-
     }  // if (has_switch)
 
     /* Work out the vertex coordinates of the sky and ground regions.
@@ -606,7 +741,7 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
      * -1 to indicate the direction each coordinate should be shifted for
      * overdrawing when rendering the sky region. */
 
-    struct {int x, y, overdraw_x, overdraw_y;} coord[2][5];
+    struct Azel_RBG0_coord coord[2][5];
     unsigned int nverts[2];
 
     const int UL_is_sky =
@@ -618,6 +753,809 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
     const int LR_is_sky =
         ((uint32_t)T1ReadLong(Vdp2Ram, ifloorf(coef_index_LR)*4) >= 0x800000);
 
+    Azel_compute_vertices(UL_is_sky, UR_is_sky, LL_is_sky, LR_is_sky,
+                          switch_x0, switch_y0, switch_x1, switch_y1,
+                          coord, nverts);
+
+    const unsigned int sky_coord_set = UL_is_sky ? 0 : 1;
+    unsigned int ground_coord_set = sky_coord_set ^ 1;  // May be changed later
+
+    /* Generate color tables for the two background portions. */
+
+    void *sky_clut, *ground_clut;
+    sky_clut = vdp2_gen_t8_clut(Azel_sky_palette << 8, 0,
+                                info->transparencyenable,
+                                info->cor, info->cog, info->cob);
+    if (!sky_clut) {
+        DMSG("Failed to generate sky CLUT (palette %u)", Azel_sky_palette);
+        return 0;
+    }
+    ground_clut = vdp2_gen_t8_clut(Azel_ground_palette << 8, 0,
+                                   info->transparencyenable,
+                                   info->cor, info->cog, info->cob);
+    if (!ground_clut) {
+        DMSG("Failed to generate ground CLUT (palette %u)",
+             Azel_ground_palette);
+        return 0;
+    }
+
+    /* Set up a vertex structure for rendering. */
+
+    struct {float u, v, x, y, z;} *vertices;
+    const uint32_t vertex_type = GU_TEXTURE_32BITF | GU_VERTEX_32BITF;
+
+    /* Draw the sky (flat) portion of the background.  We overdraw by one
+     * pixel in each direction to avoid the possibility of undrawn pixels
+     * along the switch (horizon) line, since the ground coordinates are
+     * adjusted by the Z factor and may end up slightly different from the
+     * original values in the coord[] array. */
+
+    if (has_sky && nverts[sky_coord_set] > 0) {
+
+        vertices = guGetMemory(sizeof(*vertices) * nverts[sky_coord_set]);
+        unsigned int i;
+        for (i = 0; i < nverts[sky_coord_set]; i++) {
+            vertices[i].x =
+                coord[sky_coord_set][i].x + coord[sky_coord_set][i].overdraw_x;
+            vertices[i].y =
+                coord[sky_coord_set][i].y + coord[sky_coord_set][i].overdraw_y;
+            vertices[i].z = 0;
+            Azel_transform_coordinates(vertices[i].x, vertices[i].y,
+                                       &vertices[i].u, &vertices[i].v,
+                                       sky_M, sky_kx, sky_ky, sky_Xp, sky_Yp);
+            /* We deliberately shift the "sky" portion 2 pixels in the
+             * overdraw direction because there are occasionally
+             * transparent gaps where the background color shows through
+             * (e.g. 禁止区域). */
+            if (UL_is_sky || UR_is_sky) {
+                vertices[i].v -= 2;
+            } else {
+                vertices[i].v += 2;
+            }
+        }
+
+        guClutMode(GU_PSM_8888, 0, 255, 0);
+        guClutLoad(32, sky_clut);
+        guTexMode(GU_PSM_T8, 0, 0, 1);
+        guTexImage(0, 512, 512, 512, Azel_sky_cache);
+        guTexWrap(GU_REPEAT, Azel_sky_wrap_v ? GU_REPEAT : GU_CLAMP);
+        guTexFlush();
+        guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_2D | vertex_type,
+                    nverts[sky_coord_set], NULL, vertices);
+
+    }  // if (nverts[sky_coord_set] > 0)
+
+    /* Draw the ground (scaled) portion of the background.  The scale
+     * factors in the coefficient table are essentially distance (Z)
+     * values, so we set up a projection matrix that allows us to draw
+     * a small number of 3D triangles instead of rendering each line
+     * individually.  For ease of coordinate handling, the projection
+     * matrix maps 3D coordinate (x,y,1) directly to screen coordinate
+     * (x+disp_width/2,y+disp_height/2). */
+
+    guClutMode(GU_PSM_8888, 0, 255, 0);
+    guClutLoad(32, ground_clut);
+    guTexMode(GU_PSM_T8, 0, 0, 1);
+    if (has_sky) {
+        guTexWrap(GU_REPEAT, GU_REPEAT);
+    } else {  // Uru underground special case.
+        guTexWrap(GU_CLAMP, GU_CLAMP);
+    }
+
+    float Mproj[4][4];
+    Mproj[0][0] = 2.0f / disp_width;
+    Mproj[0][1] = 0;
+    Mproj[0][2] = 0;
+    Mproj[0][3] = 0;
+    Mproj[1][0] = 0;
+    Mproj[1][1] = -2.0f / disp_height;
+    Mproj[1][2] = 0;
+    Mproj[1][3] = 0;
+    Mproj[2][0] = 0;
+    Mproj[2][1] = 0;
+    Mproj[2][2] = 1.0f / 128;  // Coefficient value range is [0,128).
+    Mproj[2][3] = 1;
+    Mproj[3][0] = 0;
+    Mproj[3][1] = 0;
+    Mproj[3][2] = 0;
+    Mproj[3][3] = 0;
+    guSetMatrix(GU_PROJECTION, &Mproj[0][0]);
+
+    if (nverts[ground_coord_set] == 0) {
+
+        /* Nothing to do. */
+
+    } else if (ground_is_zero) {
+
+        /* Degenerate case: ground coefficients are all zero.  This
+         * should only happen while changing scenes, so we don't bother
+         * drawing anything. */
+
+    } else if (coef_switch_index == last_coef_index) {
+
+        /* Degenerate case: only one ground coefficient (we also come here
+         * if we detect a slope of zero).  We can't compute appropriate 3D
+         * coordinates for this case, but since it's effectively flat like
+         * the sky, just draw it that way. */
+
+      draw_as_flat:;
+        const int32_t data = T1ReadLong(Vdp2Ram, coef_switch_index * 4);
+        const float kx = data / 65536.0f;
+        const float ky = kx;
+
+        vertices = guGetMemory(sizeof(*vertices) * nverts[ground_coord_set]);
+        unsigned int i;
+        for (i = 0; i < nverts[ground_coord_set]; i++) {
+            vertices[i].x = coord[ground_coord_set][i].x;
+            vertices[i].y = coord[ground_coord_set][i].y;
+            vertices[i].z = 0;
+            Azel_transform_coordinates(vertices[i].x, vertices[i].y,
+                                       &vertices[i].u, &vertices[i].v,
+                                       ground_M, kx, ky, ground_Xp, ground_Yp);
+        }
+        if (kx >= 6.0f) {
+            guTexImage(0,  64,  64,  64,
+                       Azel_ground_cache + 512*512 + 256*256 + 128*128);
+        } else if (kx >= 3.0f) {
+            guTexImage(0, 128, 128, 128, Azel_ground_cache + 512*512 + 256*256);
+        } else if (kx >= 1.5f) {
+            guTexImage(0, 256, 256, 256, Azel_ground_cache + 512*512);
+        } else {
+            guTexImage(0, 512, 512, 512, Azel_ground_cache);
+        }
+        guTexFlush();
+        guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_2D | vertex_type,
+                    nverts[ground_coord_set], NULL, vertices);
+
+    } else {
+
+        /* Determine the indices of the first and last ground coefficients. */
+
+        uint32_t first_ground_index, last_ground_index;
+        if ((uint32_t)T1ReadLong(Vdp2Ram, first_coef_index * 4) < 0x800000) {
+            first_ground_index = first_coef_index;
+            if (has_switch) {
+                last_ground_index = coef_switch_index - 1;
+            } else {
+                last_ground_index = last_coef_index;
+            }
+        } else {
+            first_ground_index = coef_switch_index;
+            last_ground_index = last_coef_index;
+        }
+
+        /* Compute the approximate plane slope from the average of the
+         * slopes from the first coefficient to all other coefficients.
+         * (For certain "ground" textures, like water, the actual
+         * coefficients are modulated by a small amount to produce a
+         * "shimmering" effect, so they won't give a single, consistent
+         * result from one coefficient to the next; thus we take the
+         * average and use that instead.)
+         *
+         * If we have a hint from the satopt-sh2.c optimizer, we use that
+         * instead; however, it seems to be delayed by a frame, so we use
+         * a local static variable to accomplish the same thing. */
+
+        static float slope_hint_delayed = SLOPE_UNSET;
+        static float first_recip_hint_delayed;
+        const float slope_hint = slope_hint_delayed;
+        const float first_recip_hint = first_recip_hint_delayed;
+        slope_hint_delayed = psp_video_tweaks_Azel_RBG0_slope;
+        first_recip_hint_delayed = psp_video_tweaks_Azel_RBG0_first_recip;
+
+        float slope = 0;
+        const int32_t first_data = T1ReadLong(Vdp2Ram, first_ground_index * 4);
+        float first_recip;
+        if (slope_hint != SLOPE_UNSET && slope_hint_delayed != SLOPE_UNSET) {
+            slope = slope_hint;
+            first_recip = first_recip_hint;
+            /* This may be slightly off (e.g. due to an out-of-range
+             * coefficient), so adjust as necessary. */
+            float diff;
+            if (slope > 0) {
+                diff = first_recip - 65536.0f/first_data;
+            } else {
+                const float last_recip =
+                    first_recip + slope * (last_ground_index - first_ground_index);
+                const float recip_test =
+                    65536.0f / (int32_t)T1ReadLong(Vdp2Ram, last_ground_index * 4);
+                diff = last_recip - recip_test;
+            }
+            if (fabsf(diff) > (slope/2)) {
+                first_recip -= roundf(diff / fabsf(slope)) * fabsf(slope);
+            }
+        } else {
+            first_recip = 65536.0f / first_data;
+            uint32_t i;
+            for (i = first_ground_index + 1; i <= last_ground_index; i++) {
+                const int32_t data = T1ReadLong(Vdp2Ram, i * 4);
+                const float recip = 65536.0f / data;
+                slope += (recip - first_recip) / (i - first_ground_index);
+            }
+            slope /= last_ground_index - first_ground_index;
+        }
+
+        if (slope == 0) {  // Avoid division by zero below.
+            goto draw_as_flat;
+        }
+
+        /* Go over the coefficient list and find the variance from the
+         * linear slope we just derived, to determine whether or not we
+         * need to apply our own "shimmering" effect. */
+
+        float variance = 0;
+        uint32_t index;
+        for (index = first_ground_index; index <= last_ground_index; index++) {
+            const int32_t data = T1ReadLong(Vdp2Ram, index * 4);
+            const float recip = 65536.0f / data;
+            const float expected =
+                first_recip + slope * (index - first_ground_index);
+            const float error = (recip - expected) / slope;
+            variance += error * error;
+        }
+        variance /= last_ground_index - first_ground_index + 1;
+        const int do_shimmer = (variance > 0.01f);
+        const float shimmer_step =
+            (sceKernelGetSystemTimeLow() & 0x7FFFFF) / (float)0x800000;
+
+        /* If the entire screen is "ground" and the slope is positive,
+         * move the switch line to the top of the screen so we draw
+         * the proper portion as mipmapped. */
+
+        if (switch_y0 == disp_height && slope > 0) {
+            switch_y0 = switch_y1 = 0;
+        }
+
+        /* If the ground plane needs to be split into separate mipmapped
+         * and normal regions, first draw the distant (mipmapped) part of
+         * the plane.
+         * FIXME: This section is making me nauseous, which is a sign that
+         * it's poorly written and desperately needs refactoring--or perhaps
+         * a complete rethinking...
+         */
+
+        index = (slope > 0) ? first_ground_index : last_ground_index + 1;
+        int32_t mipmap_scale;
+        for (mipmap_scale = 8;
+             mipmap_scale > 1 && (slope > 0 ? index <= last_ground_index
+                                            : index > first_ground_index);
+             mipmap_scale /= 2
+        ) {
+
+            /* Find the index of the coefficient at which the mipmap scale
+             * switches.  We normally use mipmaps only at scales above the
+             * mipmap's level, but we're more aggressive about using
+             * mipmaps in water areas because we need the speed in Uru. */
+
+            const float mipmap_scale_recip =
+                (do_shimmer ? 2.0f : 1.0f) / mipmap_scale;
+            const int32_t mipmap_switch_offset =
+                iceilf((mipmap_scale_recip - first_recip) / slope);
+            if (mipmap_switch_offset < 0) {
+                continue;
+            }
+            uint32_t mipmap_switch_index =
+                first_ground_index + mipmap_switch_offset;
+            if (mipmap_switch_index > last_ground_index + 1) {
+                mipmap_switch_index = last_ground_index + 1;
+            }
+            if (slope > 0) {
+                /* If there's only a small section to draw for this mipmap
+                 * level, skip this iteration and draw it as part of the
+                 * next, since we'll probably get better use of the GE's
+                 * texture cache that way. */
+                if (mipmap_switch_index <= index + 4) {
+                    continue;
+                }
+                /* If we've covered the entire region with this mipmap
+                 * level--or if this would leave only a small amount to
+                 * draw with the next level, which again would make poor
+                 * use of the texture cache, break out of the loop and let
+                 * the last pass handle it with the already-computed
+                 * vertices.  Note that we explicitly don't update "index"
+                 * in this case so the last pass is not skipped. */
+                if (mipmap_switch_index > last_ground_index - 4) {
+                    break;
+                }
+            } else {  // slope < 0
+                if (mipmap_switch_index >= index - 4) {
+                    continue;
+                }
+                if (index <= first_ground_index + 4) {
+                    index--;
+                }
+            }
+            index = mipmap_switch_index;  // Save it for next time around.
+
+            /* Compute switch line coordinates for the mipmap line. */
+
+            int mipmap_x0, mipmap_y0, mipmap_x1, mipmap_y1;
+            Azel_compute_switch(coef_base, mipmap_switch_index, coef_index_UL,
+                                coef_index_UR, coef_index_LL, coef_index_LR,
+                                coef_dx, coef_dy, &mipmap_x0, &mipmap_y0,
+                                &mipmap_x1, &mipmap_y1);
+
+            /* Compute vertices for the mipmapped region.  This is a
+             * rectangle if the horizon line is horizontal or vertical, but
+             * may be a four-, five-, or six-sided polygon if the horizon
+             * is tilted. */
+
+            struct {int x, y;} mipmap_coords[6];
+            unsigned int mipmap_nverts;
+            if (coef_dx == 0 || coef_dy == 0) {
+                mipmap_coords[0].x = switch_x0;
+                mipmap_coords[0].y = switch_y0;
+                mipmap_coords[1].x = switch_x1;
+                mipmap_coords[1].y = switch_y1;
+                mipmap_coords[2].x = mipmap_x0;
+                mipmap_coords[2].y = mipmap_y0;
+                mipmap_coords[3].x = mipmap_x1;
+                mipmap_coords[3].y = mipmap_y1;
+                mipmap_nverts = 4;
+            } else {
+                /* First determine which line is on top (has smaller
+                 * Y coordinates), to simplify computations.  We make use
+                 * of the knowledge that Azel_compute_switch() assigns
+                 * coordinates in the preference order top > left > right
+                 * > bottom edge.  Also swap the lower line's coordinates
+                 * if necessary so they are in the same order as the upper
+                 * line; depending on the position of the lines, the
+                 * preference order may result in coordinates being
+                 * swapped. */
+                int switch_is_top, invert_second;
+                if (switch_y0 == 0) {
+                    if (mipmap_y0 != 0) {
+                        switch_is_top = 1;
+                        invert_second = (switch_x1 < switch_x0
+                                         && mipmap_x0 == 0);
+                    } else if (switch_x1 < switch_x0) {
+                        switch_is_top = (switch_x0 < mipmap_x0);
+                        invert_second = 0;
+                    } else {
+                        switch_is_top = (switch_x0 > mipmap_x0);
+                        invert_second = 0;
+                    }
+                } else if (mipmap_y0 == 0) {
+                    switch_is_top = 0;
+                        invert_second = (mipmap_x1 < mipmap_x0
+                                         && switch_x0 == 0);
+                } else if (switch_x0 == mipmap_x0) {
+                    switch_is_top = (switch_y0 < mipmap_y0);
+                    invert_second = 0;
+                } else {
+                    /* One line connects the left and right edges, while
+                     * the other runs from the right edge to the bottom.
+                     * The line connecting the left and right edges is on
+                     * top, and the coordinate order is switched. */
+                    switch_is_top = (switch_x0 == 0);
+                    invert_second = 1;
+                }
+                const int x0 = switch_is_top ? switch_x0 : mipmap_x0;
+                const int y0 = switch_is_top ? switch_y0 : mipmap_y0;
+                const int x1 = switch_is_top ? switch_x1 : mipmap_x1;
+                const int y1 = switch_is_top ? switch_y1 : mipmap_y1;
+                const int x2 = (invert_second
+                                ? (switch_is_top ? mipmap_x1 : switch_x1)
+                                : (switch_is_top ? mipmap_x0 : switch_x0));
+                const int y2 = (invert_second
+                                ? (switch_is_top ? mipmap_y1 : switch_y1)
+                                : (switch_is_top ? mipmap_y0 : switch_y0));
+                const int x3 = (invert_second
+                                ? (switch_is_top ? mipmap_x0 : switch_x0)
+                                : (switch_is_top ? mipmap_x1 : switch_x1));
+                const int y3 = (invert_second
+                                ? (switch_is_top ? mipmap_y0 : switch_y0)
+                                : (switch_is_top ? mipmap_y1 : switch_y1));
+                /* The first two vertices are always the endpoints of the
+                 * top line.  Depending on where the region is located on
+                 * the screen, one or two corners may also be included; we
+                 * insert either a corner or an endpoint of the lower line
+                 * as vertices 2 and 3, then add any remaining endpoints as
+                 * vertices 4 and 5 if necessary. */
+                mipmap_nverts = 4;
+                mipmap_coords[0].x = x0;
+                mipmap_coords[0].y = y0;
+                mipmap_coords[1].x = x1;
+                mipmap_coords[1].y = y1;
+                if ((y0 == 0 && x0 != 0 && x0 != disp_width) && y2 != 0) {
+                    /* Region includes the upper-left or upper-right corner. */
+                    mipmap_coords[2].y = 0;
+                    if (x2 == 0) {
+                        mipmap_coords[2].x = 0;
+                    } else {
+                        mipmap_coords[2].x = disp_width;
+                    }
+                    mipmap_coords[mipmap_nverts].x = x2;
+                    mipmap_coords[mipmap_nverts].y = y2;
+                    mipmap_nverts++;
+                    if (x1 == 0 && y1 != disp_height && x3 != 0) {
+                        /* Region also includes the lower-left corner. */
+                        mipmap_coords[3].x = 0;
+                        mipmap_coords[3].y = disp_height;
+                        mipmap_coords[mipmap_nverts].x = x3;
+                        mipmap_coords[mipmap_nverts].y = y3;
+                        mipmap_nverts++;
+                    } else if (x1 == disp_width && y1 != disp_height
+                               && x3 != disp_width) {
+                        /* Region also includes the lower-right corner. */
+                        mipmap_coords[3].x = disp_width;
+                        mipmap_coords[3].y = disp_height;
+                        mipmap_coords[mipmap_nverts].x = x3;
+                        mipmap_coords[mipmap_nverts].y = y3;
+                        mipmap_nverts++;
+                    } else {
+                        mipmap_coords[3].x = x3;
+                        mipmap_coords[3].y = y3;
+                    }
+                } else if ((x0 == 0 && y0 != 0 && y0 != disp_height) && x2 != 0) {
+                    /* Region includes the lower-left corner.  (In this
+                     * case, the top line slants up-and-right and ends on
+                     * the right edge of the screen.) */
+                    mipmap_coords[2].x = 0;
+                    mipmap_coords[2].y = disp_height;
+                    mipmap_coords[mipmap_nverts].x = x2;
+                    mipmap_coords[mipmap_nverts].y = y2;
+                    mipmap_nverts++;
+                    mipmap_coords[3].x = x3;
+                    mipmap_coords[3].y = y3;
+                } else {
+                    /* Endpoint 0 of the horizon and mipmap lines are on
+                     * the same edge of the screen. */
+                    mipmap_coords[2].x = x2;
+                    mipmap_coords[2].y = y2;
+                    if ((y0 == 0 || x0 == disp_width)
+                     && (x1 == 0 && y1 != disp_height)
+                     && x3 != 0
+                    ) {
+                        /* Region includes the lower-left corner. */
+                        mipmap_coords[3].x = 0;
+                        mipmap_coords[3].y = disp_height;
+                        mipmap_coords[mipmap_nverts].x = x3;
+                        mipmap_coords[mipmap_nverts].y = y3;
+                        mipmap_nverts++;
+                    } else if ((y0 == 0 || x0 == 0)
+                            && (x1 == disp_width && y1 != disp_height)
+                            && x3 != disp_width
+                    ) {
+                        /* Region includes the lower-right corner. */
+                        mipmap_coords[3].x = disp_width;
+                        mipmap_coords[3].y = disp_height;
+                        mipmap_coords[mipmap_nverts].x = x3;
+                        mipmap_coords[mipmap_nverts].y = y3;
+                        mipmap_nverts++;
+                    } else {
+                        mipmap_coords[3].x = x3;
+                        mipmap_coords[3].y = y3;
+                    }
+                }
+            }
+
+            /* Draw the mipmapped region computed above. */
+
+            vertices = guGetMemory(sizeof(*vertices) * mipmap_nverts);
+            unsigned int i;
+            for (i = 0; i < mipmap_nverts; i++) {
+                vertices[i].x = mipmap_coords[i].x;
+                vertices[i].y = mipmap_coords[i].y;
+                const float coef_offset = coef_base
+                                        + vertices[i].x * coef_dx
+                                        + vertices[i].y * coef_dy
+                                        - first_ground_index;
+                vertices[i].z = 1 / (first_recip + coef_offset * slope);
+                Azel_transform_coordinates(vertices[i].x, vertices[i].y,
+                                           &vertices[i].u, &vertices[i].v,
+                                           ground_M,
+                                           vertices[i].z, vertices[i].z,
+                                           ground_Xp, ground_Yp);
+                vertices[i].u /= 512;
+                vertices[i].v /= 512;
+                if (do_shimmer) {
+                    vertices[i].v += 0.01f * sinf(shimmer_step * (2*(float)M_PI));
+                }
+                vertices[i].x = (vertices[i].x - disp_width/2)  * vertices[i].z;
+                vertices[i].y = (vertices[i].y - disp_height/2) * vertices[i].z;
+            }
+            const unsigned int texture_size = 512 / mipmap_scale;
+            const uint8_t *texture_data = Azel_ground_cache;
+            for (i = 512; i > texture_size; i /= 2) {
+                texture_data += i * i;
+            }
+            guTexImage(0, texture_size, texture_size, texture_size,
+                       texture_data);
+            guTexFlush();
+            guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_3D | vertex_type,
+                        mipmap_nverts, NULL, vertices);
+
+            /* Recompute the vertex sets based on the mipmap line, so the
+             * final render iteration (with the full-size ground texture)
+             * skips the part we just drew.  Since Azel_compute_vertices()
+             * uses the *_is_sky variables to determine whether the top or
+             * bottom portion is "ground", we need to tweak those variables
+             * in case the entire screen is "ground" so we get the proper
+             * region registered.  Note that we don't check the actual
+             * coefficients, because that may give incorrect results due to
+             * the "shimmering" effect; instead, we compare the coefficient
+             * indices to the mipmap switch index. */
+
+            int UL_sky_2, UR_sky_2, LL_sky_2, LR_sky_2;
+            if (slope > 0) {
+                UL_sky_2 = (coef_index_UL < mipmap_switch_index);
+                UR_sky_2 = (coef_index_UR < mipmap_switch_index);
+                LL_sky_2 = (coef_index_LL < mipmap_switch_index);
+                LR_sky_2 = (coef_index_LR < mipmap_switch_index);
+            } else {
+                UL_sky_2 = (coef_index_UL >= mipmap_switch_index);
+                UR_sky_2 = (coef_index_UR >= mipmap_switch_index);
+                LL_sky_2 = (coef_index_LL >= mipmap_switch_index);
+                LR_sky_2 = (coef_index_LR >= mipmap_switch_index);
+            }
+            Azel_compute_vertices(UL_sky_2, UR_sky_2, LL_sky_2, LR_sky_2,
+                                  mipmap_x0, mipmap_y0, mipmap_x1, mipmap_y1,
+                                  coord, nverts);
+            ground_coord_set = (UL_sky_2 ? 1 : 0);
+
+            /* Copy the mipmap line coordinates to switch_* for the next
+             * mipmap loop. */
+
+            switch_x0 = mipmap_x0;
+            switch_y0 = mipmap_y0;
+            switch_x1 = mipmap_x1;
+            switch_y1 = mipmap_y1;
+
+        }  // if using mipmap
+
+        /* Generate and render vertices for the lowest-scale portion of the
+         * the plane, if any. */
+
+        if (slope > 0 ? index <= last_ground_index
+                      : index > first_ground_index) {
+            vertices = guGetMemory(sizeof(*vertices) * nverts[ground_coord_set]);
+            unsigned int i;
+            for (i = 0; i < nverts[ground_coord_set]; i++) {
+                vertices[i].x = coord[ground_coord_set][i].x;
+                vertices[i].y = coord[ground_coord_set][i].y;
+                const float coef_offset = coef_base
+                                        + vertices[i].x * coef_dx
+                                        + vertices[i].y * coef_dy
+                                        - first_ground_index;
+                vertices[i].z = 1 / (first_recip + coef_offset * slope);
+                Azel_transform_coordinates(vertices[i].x, vertices[i].y,
+                                           &vertices[i].u, &vertices[i].v,
+                                           ground_M,
+                                           vertices[i].z, vertices[i].z,
+                                           ground_Xp, ground_Yp);
+                vertices[i].u /= (Azel_ground_reduced ? 1024 : 512);
+                vertices[i].v /= (Azel_ground_reduced ? 1024 : 512);
+                if (do_shimmer) {
+                    /* Fake the "shimmering" effect with a simple sinusoidal
+                     * offset.  The PSP doesn't have enough hardware operators
+                     * to do what we really want (which is multiply each
+                     * texture coordinate by a*sin(b*y/z), where a and b are
+                     * constants). */
+                    vertices[i].v += 0.01f * sinf(shimmer_step * (2*(float)M_PI));
+                }
+                vertices[i].x = (vertices[i].x - disp_width/2)  * vertices[i].z;
+                vertices[i].y = (vertices[i].y - disp_height/2) * vertices[i].z;
+            }
+            const unsigned int texture_size = 512 / mipmap_scale;
+            const uint8_t *texture_data = Azel_ground_cache;
+            for (i = 512; i > texture_size; i /= 2) {
+                texture_data += i * i;
+            }
+            guTexImage(0, texture_size, texture_size, texture_size,
+                       texture_data);
+            guTexFlush();
+            guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_3D | vertex_type,
+                        nverts[ground_coord_set], NULL, vertices);
+        }
+
+    }  // if (ground_min == ground_max)
+
+    /* All done.  Make sure to reset the wrapping flags since other code
+     * will expect wraparound to be disabled. */
+
+    guTexWrap(GU_CLAMP, GU_CLAMP);
+    return 1;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * Azel_get_rotation_matrix:  Calculate the rotation matrix and scaling
+ * parameters for a sky or ground parameter set.  Helper function for
+ * Azel_draw_RBG0().
+ *
+ * [Parameters]
+ *     address: Address of parameter set in VDP2 RAM
+ *           M: Pointer to 2x3 array to receive rotation matrix values
+ *      kx_ret: Pointer to variable to receive X scale value (NULL allowed)
+ *      ky_ret: Pointer to variable to receive Y scale value (NULL allowed)
+ *      Xp_ret: Pointer to variable to receive X offset value
+ *      Yp_ret: Pointer to variable to receive Y offset value
+ * [Return value]
+ *     None
+ */
+static void Azel_get_rotation_matrix(uint32_t address, float M[2][3],
+                                     float *kx_ret, float *ky_ret,
+                                     float *Xp_ret, float *Yp_ret)
+{
+    /* The GET_* macros are borrowed from psp-video-rotate.c. */
+
+    #define GET_SHORT(nbits) \
+        (address += 2, (int32_t)((int16_t)T1ReadWord(Vdp2Ram,address-2) \
+                                 << (16-nbits)) >> (16-nbits))
+    #define GET_SIGNED_FLOAT(nbits) \
+        (address += 4, ((((int32_t)T1ReadLong(Vdp2Ram,address-4) \
+                      << (32-nbits)) >> (32-nbits)) & ~0x3F) / 65536.0f)
+    #define GET_UNSIGNED_FLOAT(nbits) \
+        (address += 4, (((uint32_t)T1ReadLong(Vdp2Ram,address-4) \
+                      & (0xFFFFFFFFU >> (32-nbits))) & ~0x3F) / 65536.0f)
+
+    const float Xst      = GET_SIGNED_FLOAT(29);
+    const float Yst      = GET_SIGNED_FLOAT(29);
+    const float Zst      = GET_SIGNED_FLOAT(29);
+    const float deltaXst = GET_SIGNED_FLOAT(19);
+    const float deltaYst = GET_SIGNED_FLOAT(19);
+    const float deltaX   = GET_SIGNED_FLOAT(19);
+    const float deltaY   = GET_SIGNED_FLOAT(19);
+    const float A        = GET_SIGNED_FLOAT(20);
+    const float B        = GET_SIGNED_FLOAT(20);
+    const float C        = GET_SIGNED_FLOAT(20);
+    const float D        = GET_SIGNED_FLOAT(20);
+    const float E        = GET_SIGNED_FLOAT(20);
+    const float F        = GET_SIGNED_FLOAT(20);
+    const float Px       = GET_SHORT(14);
+    const float Py       = GET_SHORT(14);
+    const float Pz       = GET_SHORT(14);
+    address += 2;
+    const float Cx       = GET_SHORT(14);
+    const float Cy       = GET_SHORT(14);
+    const float Cz       = GET_SHORT(14);
+    address += 2;
+    const float Mx       = GET_SIGNED_FLOAT(30);
+    const float My       = GET_SIGNED_FLOAT(30);
+    const float kx       = GET_SIGNED_FLOAT(24);
+    const float ky       = GET_SIGNED_FLOAT(24);
+
+    #undef GET_SHORT
+    #undef GET_SIGNED_FLOAT
+    #undef GET_UNSIGNED_FLOAT
+
+    M[0][0] = (A * deltaX)     + (B * deltaY);
+    M[0][1] = (A * deltaXst)   + (B * deltaYst);
+    M[0][2] = (A * (Xst - Px)) + (B * (Yst - Py)) + (C * (Zst - Pz));
+    M[1][0] = (D * deltaX)     + (E * deltaY);
+    M[1][1] = (D * deltaXst)   + (E * deltaYst);
+    M[1][2] = (D * (Xst - Px)) + (E * (Yst - Py)) + (F * (Zst - Pz));
+    *Xp_ret = (A * (Px - Cx))  + (B * (Py - Cy))  + (C * (Pz - Cz))  + Cx + Mx;
+    *Yp_ret = (D * (Px - Cx))  + (E * (Py - Cy))  + (F * (Pz - Cz))  + Cy + My;
+
+    if (kx_ret) {
+        *kx_ret = kx;
+    }
+    if (ky_ret) {
+        *ky_ret = ky;
+    }
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * Azel_transform_coordinates:  Transform screen to texture coordinates
+ * given the rotation matrix and scaling parameters for a sky or ground
+ * parameter set.  Helper function for Azel_draw_RBG0().
+ *
+ * [Parameters]
+ *             x, y: Screen coordinates to transform
+ *     u_ret, v_ret: Pointers to variables to receive transformed coordinates
+ *                M: Pointer to 2x3 array containing rotation matrix values
+ *           kx, ky: X/Y scale values
+ *           Xp, Yp: X/Y offset values
+ * [Return value]
+ *     None
+ */
+static void Azel_transform_coordinates(const float x, const float y,
+                                       float *u_ret, float *v_ret,
+                                       float M[2][3],
+                                       const float kx, const float ky,
+                                       const float Xp, const float Yp)
+{
+    *u_ret = (M[0][0]*x + M[0][1]*y + M[0][2]) * kx + Xp;
+    *v_ret = (M[1][0]*x + M[1][1]*y + M[1][2]) * ky + Yp;
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * Azel_compute_switch:  Compute the endpoints of the switch (horizon) line
+ * between sky and ground.  Helper function for Azel_draw_RBG0().
+ *
+ * [Parameters]
+ *     All parameters are local variables or pointers thereto passed from
+ *     Azel_draw_RBG0()
+ * [Return value]
+ *     None
+ */
+static inline void Azel_compute_switch(
+    uint32_t coef_base, uint32_t coef_switch_index,
+    const uint32_t coef_index_UL, const uint32_t coef_index_UR,
+    const uint32_t coef_index_LL, const uint32_t coef_index_LR,
+    float coef_dx, float coef_dy,
+    int *switch_x0, int *switch_y0, int *switch_x1, int *switch_y1)
+{
+    *switch_x0 = *switch_y0 = *switch_x1 = *switch_y1 = -1;
+
+    if (coef_dx == 0) {
+
+        *switch_x0 = 0;
+        *switch_y0 = iceilf((coef_switch_index - coef_base) / coef_dy);
+        *switch_x1 = disp_width;
+        *switch_y1 = *switch_y0;
+
+    } else if (coef_dy == 0) {
+
+        *switch_x0 = iceilf((coef_switch_index - coef_base) / coef_dx);
+        *switch_y0 = 0;
+        *switch_x1 = *switch_x0;
+        *switch_y1 = disp_height;
+
+    } else {  // coef_dx != 0 && coef_dy != 0
+
+        const float top_x =
+            (int32_t)(coef_switch_index - coef_index_UL) / coef_dx;
+        if (top_x > -1 && top_x <= disp_width) {
+            *switch_x0 = iceilf(top_x);
+            *switch_y0 = 0;
+        }
+        const float bottom_x =
+            (int32_t)(coef_switch_index - coef_index_LL) / coef_dx;
+        if (bottom_x > -1 && bottom_x <= disp_width) {
+            *switch_x1 = iceilf(bottom_x);
+            *switch_y1 = disp_height;
+        }
+        const float left_y =
+            (int32_t)(coef_switch_index - coef_index_UL) / coef_dy;
+        if (left_y > -1 && left_y <= disp_height) {
+            if (*switch_x0 < 0) {
+                *switch_x0 = 0;
+                *switch_y0 = iceilf(left_y);
+            } else if (*switch_x1 < 0) {
+                *switch_x1 = 0;
+                *switch_y1 = iceilf(left_y);
+            }
+        }
+        const float right_y =
+            (int32_t)(coef_switch_index - coef_index_UR) / coef_dy;
+        if (right_y > -1 && right_y <= disp_height) {
+            if (*switch_x0 < 0) {
+                *switch_x0 = disp_width;
+                *switch_y0 = iceilf(right_y);
+            } else if (*switch_x1 < 0) {
+                *switch_x1 = disp_width;
+                *switch_y1 = iceilf(right_y);
+            }
+        }
+
+    }
+}
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * Azel_compute_vertices:  Compute the two sets of vertices for drawing
+ * sky and ground sections of an RBG0 layer.  Helper function for
+ * Azel_draw_RBG0().
+ *
+ * [Parameters]
+ *     All parameters are local variables/arrays passed from Azel_draw_RBG0()
+ * [Return value]
+ *     None
+ */
+static inline void Azel_compute_vertices(
+    int UL_is_sky, int UR_is_sky, int LL_is_sky, int LR_is_sky,
+    int switch_x0, int switch_y0, int switch_x1, int switch_y1,
+    struct Azel_RBG0_coord coord[2][5], unsigned int nverts[2])
+{
     coord[0][0].x = 0;
     coord[0][0].y = 0;
     coord[0][0].overdraw_x = -1;
@@ -830,330 +1768,6 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
         nverts[1] = 5;
 
     }
-
-    const unsigned int sky_coord_set = UL_is_sky ? 0 : 1;
-    const unsigned int ground_coord_set = sky_coord_set ^ 1;
-
-    /* Generate color tables for the two background portions. */
-
-    void *sky_clut, *ground_clut;
-    sky_clut = vdp2_gen_t8_clut(Azel_sky_palette << 8, 0,
-                                info->transparencyenable,
-                                info->cor, info->cog, info->cob);
-    if (!sky_clut) {
-        DMSG("Failed to generate sky CLUT (palette %u)", Azel_sky_palette);
-        return 0;
-    }
-    ground_clut = vdp2_gen_t8_clut(Azel_ground_palette << 8, 0,
-                                   info->transparencyenable,
-                                   info->cor, info->cog, info->cob);
-    if (!ground_clut) {
-        DMSG("Failed to generate ground CLUT (palette %u)",
-             Azel_ground_palette);
-        return 0;
-    }
-
-    /* Set up a vertex structure for rendering. */
-
-    struct {float u, v, x, y, z;} *vertices;
-    const uint32_t vertex_type = GU_TEXTURE_32BITF | GU_VERTEX_32BITF;
-
-    /* Draw the sky (flat) portion of the background.  We overdraw by one
-     * pixel in each direction to avoid the possibility of undrawn pixels
-     * along the switch (horizon) line, since the ground coordinates are
-     * adjusted by the Z factor and may end up slightly different from the
-     * original values in the coord[] array. */
-
-    if (nverts[sky_coord_set] > 0) {
-
-        vertices = guGetMemory(sizeof(*vertices) * nverts[sky_coord_set]);
-        unsigned int i;
-        for (i = 0; i < nverts[sky_coord_set]; i++) {
-            vertices[i].x =
-                coord[sky_coord_set][i].x + coord[sky_coord_set][i].overdraw_x;
-            vertices[i].y =
-                coord[sky_coord_set][i].y + coord[sky_coord_set][i].overdraw_y;
-            vertices[i].z = 0;
-            Azel_transform_coordinates(vertices[i].x, vertices[i].y,
-                                       &vertices[i].u, &vertices[i].v,
-                                       sky_M, sky_kx, sky_ky, sky_Xp, sky_Yp);
-            /* We deliberately shift the "sky" portion down by 2 pixels
-             * because there are occasionally transparent gaps where the
-             * background color shows through (e.g. 禁止区域). */
-            vertices[i].v -= 2;
-        }
-
-        guClutMode(GU_PSM_8888, 0, 255, 0);
-        guClutLoad(32, sky_clut);
-        guTexMode(GU_PSM_T8, 0, 0, 1);
-        guTexImage(0, 512, 512, 512, Azel_sky_cache);
-        guTexWrap(GU_REPEAT, Azel_sky_wrap_v ? GU_REPEAT : GU_CLAMP);
-        guTexFlush();
-        guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_2D | vertex_type,
-                    nverts[sky_coord_set], NULL, vertices);
-
-    }  // if (nverts[sky_coord_set] > 0)
-
-    /* Draw the ground (scaled) portion of the background.  The scale
-     * factors in the coefficient table are essentially distance (Z)
-     * values, so we set up a projection matrix that allows us to draw
-     * a small number of 3D triangles instead of rendering each line
-     * individually.  For ease of coordinate handling, the projection
-     * matrix maps 3D coordinate (x,y,1) directly to screen coordinate
-     * (x+disp_width/2,y+disp_height/2). */
-
-    guClutMode(GU_PSM_8888, 0, 255, 0);
-    guClutLoad(32, ground_clut);
-    guTexMode(GU_PSM_T8, 0, 0, 1);
-    guTexImage(0, 512, 512, 512, Azel_ground_cache);
-    guTexWrap(GU_REPEAT, GU_REPEAT);
-    guTexFlush();
-
-    float Mproj[4][4];
-    Mproj[0][0] = 2.0f / disp_width;
-    Mproj[0][1] = 0;
-    Mproj[0][2] = 0;
-    Mproj[0][3] = 0;
-    Mproj[1][0] = 0;
-    Mproj[1][1] = -2.0f / disp_height;
-    Mproj[1][2] = 0;
-    Mproj[1][3] = 0;
-    Mproj[2][0] = 0;
-    Mproj[2][1] = 0;
-    Mproj[2][2] = 1.0f / 128;  // Coefficient value range is [0,128).
-    Mproj[2][3] = 1;
-    Mproj[3][0] = 0;
-    Mproj[3][1] = 0;
-    Mproj[3][2] = 0;
-    Mproj[3][3] = 0;
-    guSetMatrix(GU_PROJECTION, &Mproj[0][0]);
-
-    if (nverts[ground_coord_set] == 0) {
-
-        /* Nothing to do. */
-
-    } else if (ground_is_zero) {
-
-        /* Degenerate case: ground coefficients are all zero.  This
-         * should only happen while changing scenes, so we don't bother
-         * drawing anything. */
-
-    } else if (coef_switch_index == last_coef_index) {
-
-        /* Degenerate case: only one ground coefficient.  We can't compute
-         * appropriate 3D coordinates for this case, but since it's
-         * effectively flat like the sky, just draw it that way. */
-
-        const int32_t data = T1ReadLong(Vdp2Ram, coef_switch_index * 4);
-        const float kx = data / 65536.0f;
-        const float ky = kx;
-
-        vertices = guGetMemory(sizeof(*vertices) * nverts[ground_coord_set]);
-        unsigned int i;
-        for (i = 0; i < nverts[ground_coord_set]; i++) {
-            vertices[i].x = coord[ground_coord_set][i].x;
-            vertices[i].y = coord[ground_coord_set][i].y;
-            vertices[i].z = 0;
-            Azel_transform_coordinates(vertices[i].x, vertices[i].y,
-                                       &vertices[i].u, &vertices[i].v,
-                                       ground_M, kx, ky, ground_Xp, ground_Yp);
-        }
-        guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_2D | vertex_type,
-                    nverts[ground_coord_set], NULL, vertices);
-
-    } else {
-
-        /* Compute the approximate plane slope from the first and last
-         * coefficients.  (For certain "ground" textures, like water, the
-         * actual coefficients are modulated by a small amount to produce
-         * a "shimmering" effect, so they won't give a single, consistent
-         * result from one coefficient to the next; thus we take the
-         * average and use that instead.) */
-
-        uint32_t first_ground_index, last_ground_index;
-        if ((uint32_t)T1ReadLong(Vdp2Ram, first_coef_index * 4) < 0x800000) {
-            first_ground_index = first_coef_index;
-            if (has_switch) {
-                last_ground_index = coef_switch_index;
-            } else {
-                last_ground_index = last_coef_index;
-            }
-        } else {
-            first_ground_index = coef_switch_index;
-            last_ground_index = last_coef_index;
-        }
-
-        const int32_t first_data = T1ReadLong(Vdp2Ram, first_ground_index * 4);
-        const float first_recip = 65536.0f / first_data;
-        const int32_t last_data = T1ReadLong(Vdp2Ram, last_ground_index * 4);
-        const float last_recip = 65536.0f / last_data;
-        const float slope = (last_recip - first_recip)
-                          / (last_ground_index - first_ground_index);
-
-        /* Go over the coefficient list and find the variance from the
-         * linear slope we just derived, to determine whether or not we
-         * need to apply our own "shimmering" effect. */
-
-        float variance = 0;
-        uint32_t index;
-        for (index = first_ground_index; index < last_ground_index; index++) {
-            const int32_t data = T1ReadLong(Vdp2Ram, index * 4);
-            const float recip = 65536.0f / data;
-            const float expected =
-                first_recip + slope * (index - first_ground_index);
-            const float error = (recip - expected) / slope;
-            variance += error * error;
-        }
-        variance /= last_ground_index - first_ground_index;
-        const int do_shimmer = (variance > 0.01f);
-
-        /* Generate and render vertices for the plane. */
-
-        vertices = guGetMemory(sizeof(*vertices) * nverts[ground_coord_set]);
-        unsigned int i;
-        for (i = 0; i < nverts[ground_coord_set]; i++) {
-            vertices[i].x = coord[ground_coord_set][i].x;
-            vertices[i].y = coord[ground_coord_set][i].y;
-            const float coef_offset = coef_base
-                                    + vertices[i].x * coef_dx
-                                    + vertices[i].y * coef_dy
-                                    - first_ground_index;
-            vertices[i].z = 1 / (first_recip + coef_offset * slope);
-            Azel_transform_coordinates(vertices[i].x, vertices[i].y,
-                                       &vertices[i].u, &vertices[i].v,
-                                       ground_M, vertices[i].z, vertices[i].z,
-                                       ground_Xp, ground_Yp);
-            vertices[i].u /= 512;
-            vertices[i].v /= 512;
-            if (do_shimmer) {
-                /* Fake the "shimmering" effect with a simple sinusoidal
-                 * offset.  The PSP doesn't have enough hardware operators
-                 * to do what we really want (which is multiply each
-                 * texture coordinate by a*sin(b*y/z), where a and b are
-                 * constants). */
-                const float step =
-                    (sceKernelGetSystemTimeLow() & 0x7FFFFF) / (float)0x800000;
-                vertices[i].v += 0.01f * sinf(step * (2 * (float)M_PI));
-            }
-            vertices[i].x = (vertices[i].x - disp_width/2)  * vertices[i].z;
-            vertices[i].y = (vertices[i].y - disp_height/2) * vertices[i].z;
-        }
-        guDrawArray(GU_TRIANGLE_STRIP, GU_TRANSFORM_3D | vertex_type,
-                    nverts[ground_coord_set], NULL, vertices);
-
-    }  // if (ground_min == ground_max)
-
-    /* All done.  Make sure to reset the wrapping flags since other code
-     * will expect wraparound to be disabled. */
-
-    guTexWrap(GU_CLAMP, GU_CLAMP);
-    return 1;
-}
-
-/*-----------------------------------------------------------------------*/
-
-/**
- * Azel_get_rotation_matrix:  Calculate the rotation matrix and scaling
- * parameters for a sky or ground parameter set.  Helper function for
- * Azel_draw_RBG0().
- *
- * [Parameters]
- *     address: Address of parameter set in VDP2 RAM
- *           M: Pointer to 2x3 array to receive rotation matrix values
- *      kx_ret: Pointer to variable to receive X scale value (NULL allowed)
- *      ky_ret: Pointer to variable to receive Y scale value (NULL allowed)
- *      Xp_ret: Pointer to variable to receive X offset value
- *      Yp_ret: Pointer to variable to receive Y offset value
- * [Return value]
- *     None
- */
-static void Azel_get_rotation_matrix(uint32_t address, float M[2][3],
-                                     float *kx_ret, float *ky_ret,
-                                     float *Xp_ret, float *Yp_ret)
-{
-    /* The GET_* macros are borrowed from psp-video-rotate.c. */
-
-    #define GET_SHORT(nbits) \
-        (address += 2, (int32_t)((int16_t)T1ReadWord(Vdp2Ram,address-2) \
-                                 << (16-nbits)) >> (16-nbits))
-    #define GET_SIGNED_FLOAT(nbits) \
-        (address += 4, ((((int32_t)T1ReadLong(Vdp2Ram,address-4) \
-                      << (32-nbits)) >> (32-nbits)) & ~0x3F) / 65536.0f)
-    #define GET_UNSIGNED_FLOAT(nbits) \
-        (address += 4, (((uint32_t)T1ReadLong(Vdp2Ram,address-4) \
-                      & (0xFFFFFFFFU >> (32-nbits))) & ~0x3F) / 65536.0f)
-
-    const float Xst      = GET_SIGNED_FLOAT(29);
-    const float Yst      = GET_SIGNED_FLOAT(29);
-    const float Zst      = GET_SIGNED_FLOAT(29);
-    const float deltaXst = GET_SIGNED_FLOAT(19);
-    const float deltaYst = GET_SIGNED_FLOAT(19);
-    const float deltaX   = GET_SIGNED_FLOAT(19);
-    const float deltaY   = GET_SIGNED_FLOAT(19);
-    const float A        = GET_SIGNED_FLOAT(20);
-    const float B        = GET_SIGNED_FLOAT(20);
-    const float C        = GET_SIGNED_FLOAT(20);
-    const float D        = GET_SIGNED_FLOAT(20);
-    const float E        = GET_SIGNED_FLOAT(20);
-    const float F        = GET_SIGNED_FLOAT(20);
-    const float Px       = GET_SHORT(14);
-    const float Py       = GET_SHORT(14);
-    const float Pz       = GET_SHORT(14);
-    address += 2;
-    const float Cx       = GET_SHORT(14);
-    const float Cy       = GET_SHORT(14);
-    const float Cz       = GET_SHORT(14);
-    address += 2;
-    const float Mx       = GET_SIGNED_FLOAT(30);
-    const float My       = GET_SIGNED_FLOAT(30);
-    const float kx       = GET_SIGNED_FLOAT(24);
-    const float ky       = GET_SIGNED_FLOAT(24);
-
-    #undef GET_SHORT
-    #undef GET_SIGNED_FLOAT
-    #undef GET_UNSIGNED_FLOAT
-
-    M[0][0] = (A * deltaX)     + (B * deltaY);
-    M[0][1] = (A * deltaXst)   + (B * deltaYst);
-    M[0][2] = (A * (Xst - Px)) + (B * (Yst - Py)) + (C * (Zst - Pz));
-    M[1][0] = (D * deltaX)     + (E * deltaY);
-    M[1][1] = (D * deltaXst)   + (E * deltaYst);
-    M[1][2] = (D * (Xst - Px)) + (E * (Yst - Py)) + (F * (Zst - Pz));
-    *Xp_ret = (A * (Px - Cx))  + (B * (Py - Cy))  + (C * (Pz - Cz))  + Cx + Mx;
-    *Yp_ret = (D * (Px - Cx))  + (E * (Py - Cy))  + (F * (Pz - Cz))  + Cy + My;
-
-    if (kx_ret) {
-        *kx_ret = kx;
-    }
-    if (ky_ret) {
-        *ky_ret = ky;
-    }
-}
-
-/*-----------------------------------------------------------------------*/
-
-/**
- * Azel_transform_coordinates:  Transform screen to texture coordinates
- * given the rotation matrix and scaling parameters for a sky or ground
- * parameter set.  Helper function for Azel_draw_RBG0().
- *
- * [Parameters]
- *             x, y: Screen coordinates to transform
- *     u_ret, v_ret: Pointers to variables to receive transformed coordinates
- *                M: Pointer to 2x3 array containing rotation matrix values
- *           kx, ky: X/Y scale values
- *           Xp, Yp: X/Y offset values
- * [Return value]
- *     None
- */
-static void Azel_transform_coordinates(const float x, const float y,
-                                       float *u_ret, float *v_ret,
-                                       float M[2][3],
-                                       const float kx, const float ky,
-                                       const float Xp, const float Yp)
-{
-    *u_ret = (M[0][0]*x + M[0][1]*y + M[0][2]) * kx + Xp;
-    *v_ret = (M[1][0]*x + M[1][1]*y + M[1][2]) * ky + Yp;
 }
 
 /*************************************************************************/

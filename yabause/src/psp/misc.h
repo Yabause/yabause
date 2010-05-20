@@ -46,6 +46,49 @@ extern int save_backup_ram(void);
  */
 extern int psp_writeback_cache_for_scsp(void);
 
+/*-----------------------------------------------------------------------*/
+
+/**
+ * checksum_fast16, checksum_fast32:  Perform a fast checksum of 16-bit or
+ * 32-bit words in a block by simply summing all words and returning the
+ * cumulative 32-bit total.
+ *
+ * [Parameters]
+ *       ptr: Pointer to memory block to checksum
+ *     count: Number of 16-bit or 32-bit words in block
+ * [Return value]
+ *     Block checksum
+ */
+static inline uint32_t checksum_fast16(const uint16_t *ptr, unsigned int count)
+{
+    uint32_t sum = 0;
+    for (; count >= 4; count -= 4) {
+        sum += *ptr++;
+        sum += *ptr++;
+        sum += *ptr++;
+        sum += *ptr++;
+    }
+    while (count--) {
+        sum += *ptr++;
+    }
+    return sum;
+}
+
+static inline uint32_t checksum_fast32(const uint32_t *ptr, unsigned int count)
+{
+    uint32_t sum = 0;
+    for (; count >= 4; count -= 4) {
+        sum += *ptr++;
+        sum += *ptr++;
+        sum += *ptr++;
+        sum += *ptr++;
+    }
+    while (count--) {
+        sum += *ptr++;
+    }
+    return sum;
+}
+
 /*************************************************************************/
 
 #endif  // PSP_MISC_H

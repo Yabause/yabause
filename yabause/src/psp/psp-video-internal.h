@@ -21,6 +21,10 @@
 #ifndef PSP_VIDEO_INTERNAL_H
 #define PSP_VIDEO_INTERNAL_H
 
+#include "../vdp1.h"
+#include "../vdp2.h"
+#include "../vidshared.h"
+
 /*************************************************************************/
 /************************** Internal constants ***************************/
 /*************************************************************************/
@@ -202,6 +206,22 @@ extern unsigned int frames_to_skip;
 
 /* Number of frames skipped so far since we drew the last one */
 extern unsigned int frames_skipped;
+
+/* VDP1 color component offset values (-0xFF...+0xFF) */
+extern int32_t vdp1_rofs, vdp1_gofs, vdp1_bofs;
+
+/*************************************************************************/
+
+/**
+ * vdp2_is_persistent:  Return whether the tile at the given address in
+ * VDP2 RAM is persistently cacheable.
+ *
+ * [Parameters]
+ *     address: Tile address in VDP2 RAM
+ * [Return value]
+ *     Nonzero if tile texture can be persistently cached, else zero
+ */
+extern int vdp2_is_persistent(uint32_t address);
 
 /*************************************************************************/
 

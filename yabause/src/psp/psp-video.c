@@ -29,6 +29,7 @@
 #include "display.h"
 #include "font.h"
 #include "gu.h"
+#include "misc.h"
 #include "psp-video.h"
 #include "psp-video-internal.h"
 #include "texcache.h"
@@ -131,6 +132,9 @@ unsigned int frames_to_skip;
 /* Number of frames skipped so far since we drew the last one */
 unsigned int frames_skipped;
 
+/* VDP1 color component offset values (-0xFF...+0xFF) */
+int32_t vdp1_rofs, vdp1_gofs, vdp1_bofs;
+
 /*-----------------------------------------------------------------------*/
 
 /**** Internal data ****/
@@ -152,9 +156,6 @@ static uint8_t draw_graphics;
 /* Background priorities (NBG0, NBG1, NBG2, NBG3, RBG0) */
 static uint8_t bg_priority[5];
 
-/* VDP1 color component offset values (-0xFF...+0xFF) */
-static int32_t vdp1_rofs, vdp1_gofs, vdp1_bofs;
-
 /*----------------------------------*/
 
 /* Custom drawing function specified for each background layer */
@@ -164,8 +165,8 @@ static CustomDrawRoutine *custom_draw_func[5];
  * for timing purposes? */
 static uint8_t RBG0_draw_func_is_fast;
 
-/* Did we draw a fast RBG0 this frame? */
-static uint8_t drew_fast_RBG0;
+/* Did we draw a slow RBG0 this frame? */
+static uint8_t drew_slow_RBG0;
 
 /*----------------------------------*/
 
@@ -191,10 +192,25 @@ static VDP1RenderQueue vdp1_queue[8];
 /* Amount to expand a queue's array when it gets full */
 #define VDP1_QUEUE_EXPAND_SIZE  1000
 
+/*----------------------------------*/
+
+/* Flags indicating whether each 4k page of VDP1/2 RAM contains any
+ * persistently-cached texture data */
+static uint8_t vdp1_page_cached[0x80], vdp2_page_cached[0x80];
+
+/* Checksum of each VDP1/2 RAM page containing cached texture data */
+static uint32_t vdp1_page_checksum[0x80], vdp2_page_checksum[0x80];
+
+/* State of color offset settings at last cache reset */
+static uint32_t vdp1_cached_cofs;
+static uint32_t vdp2_cached_cofs_regs;  // CLOFEN<<16 | CLOFSL
+static uint32_t vdp2_cached_cofs_A, vdp2_cached_cofs_B;
+
 /*************************************************************************/
 
 /**** Local function declarations ****/
 
+static int vdp1_is_persistent(vdp1cmd_struct *cmd);
 static void vdp1_draw_lines(vdp1cmd_struct *cmd, int poly);
 static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured);
 static uint32_t vdp1_convert_color(uint16_t color16, int textured,
@@ -357,6 +373,28 @@ void psp_video_set_draw_routine(int layer, CustomDrawRoutine *func,
     if (layer == BG_RBG0) {
         RBG0_draw_func_is_fast = is_fast;
     }
+}
+
+/*************************************************************************/
+
+/**
+ * vdp2_is_persistent:  Return whether the tile at the given address in
+ * VDP2 RAM is persistently cacheable.
+ *
+ * [Parameters]
+ *     address: Tile address in VDP2 RAM
+ * [Return value]
+ *     Nonzero if tile texture can be persistently cached, else zero
+ */
+int vdp2_is_persistent(uint32_t address)
+{
+    const unsigned int page = address >> 12;
+    if (!vdp2_page_cached[page]) {
+        vdp2_page_checksum[page] =
+            checksum_fast32((const uint32_t *)(Vdp2Ram + (page<<12)), 1024);
+        vdp2_page_cached[page] = 1;
+    }
+    return 1;
 }
 
 /*************************************************************************/
@@ -704,7 +742,67 @@ static void psp_vdp2_draw_start(void)
     /* Start a new frame. */
     display_set_size(disp_width >> disp_xscale, disp_height >> disp_yscale);
     display_begin_frame();
-    texcache_reset();
+
+    /* Clear the texture cache of transient data; also clear persistent
+     * data if any source RAM or color offsets were changed, or if
+     * persistent caching is disabled in the first place. */
+    const uint32_t vdp1_cofs = (vdp1_rofs & 0x1FF) << 18
+                             | (vdp1_gofs & 0x1FF) <<  9
+                             | (vdp1_bofs & 0x1FF) <<  0;
+    const uint32_t vdp2_cofs_regs = Vdp2Regs->CLOFEN << 16 | Vdp2Regs->CLOFSL;
+    const uint32_t vdp2_cofs_A = (Vdp2Regs->COAR & 0x1FF) << 18
+                               | (Vdp2Regs->COAG & 0x1FF) <<  9
+                               | (Vdp2Regs->COAB & 0x1FF) <<  0;
+    const uint32_t vdp2_cofs_B = (Vdp2Regs->COBR & 0x1FF) << 18
+                               | (Vdp2Regs->COBG & 0x1FF) <<  9
+                               | (Vdp2Regs->COBB & 0x1FF) <<  0;
+    int need_reset = 0;
+    if (!config_get_cache_textures()) {
+        need_reset = 1;
+    } else if (vdp1_cofs      != vdp1_cached_cofs
+            || vdp2_cofs_regs != vdp2_cached_cofs_regs
+            || vdp2_cofs_A    != vdp2_cached_cofs_A
+            || vdp2_cofs_B    != vdp2_cached_cofs_B) {
+        DMSG("Color offsets changed, clearing cache");
+        need_reset = 1;
+    } else {
+        unsigned int page;
+        for (page = 0; page < 0x80; page++) {
+            if (vdp1_page_cached[page]) {
+                const uint32_t sum =
+                    checksum_fast32((const uint32_t *)(Vdp1Ram + (page<<12)), 1024);
+                if (sum != vdp1_page_checksum[page]) {
+                    DMSG("VDP1 page 0x%05X checksum changed (%08X -> %08X),"
+                         " clearing cache",
+                         page<<12, vdp1_page_checksum[page], sum);
+                    need_reset = 1;
+                    break;
+                }
+            }
+            if (vdp2_page_cached[page]) {
+                const uint32_t sum =
+                    checksum_fast32((const uint32_t *)(Vdp2Ram + (page<<12)), 1024);
+                if (sum != vdp2_page_checksum[page]) {
+                    DMSG("VDP2 page 0x%05X checksum changed (%08X -> %08X),"
+                         " clearing cache",
+                         page<<12, vdp2_page_checksum[page], sum);
+                    need_reset = 1;
+                    break;
+                }
+            }
+        }
+    }
+    if (need_reset) {
+        texcache_reset();
+        memset(vdp1_page_cached, 0, sizeof(vdp1_page_cached));
+        memset(vdp2_page_cached, 0, sizeof(vdp2_page_cached));
+    } else {
+        texcache_clean();
+    }
+    vdp1_cached_cofs = vdp1_cofs;
+    vdp2_cached_cofs_regs = vdp2_cofs_regs;
+    vdp2_cached_cofs_A = vdp2_cofs_A;
+    vdp2_cached_cofs_B = vdp2_cofs_B;
 
     /* Initialize the render state. */
     guTexFilter(GU_NEAREST, GU_NEAREST);
@@ -811,9 +909,7 @@ static void psp_vdp2_draw_end(void)
         } else {
             frames_to_skip = config_get_frameskip_num();
         }
-        if ((Vdp2Regs->BGON & Vdp2External.disptoggle & (1 << BG_RBG0))
-         && config_get_enable_rotate() && !drew_fast_RBG0
-        ) {
+        if (drew_slow_RBG0) {
             frames_to_skip += 1 + frames_to_skip;
         }
         if (disp_height > 272 && frames_to_skip == 0
@@ -821,7 +917,7 @@ static void psp_vdp2_draw_end(void)
         ) {
             frames_to_skip = 1;
         }
-        drew_fast_RBG0 = 0;
+        drew_slow_RBG0 = 0;
     }
 }
 
@@ -921,6 +1017,42 @@ static void FASTCALL psp_vdp2_set_priority_RBG0(int priority)
 /*************************************************************************/
 
 /**
+ * vdp1_is_persistent:  Return whether the given sprite drawing command
+ * identifies a texture in a persistently-cacheable area of VDP1 RAM.
+ *
+ * [Parameters]
+ *     cmd: VDP1 command structure
+ * [Return value]
+ *     Nonzero if texture can be persistently cached, else zero
+ */
+static int vdp1_is_persistent(vdp1cmd_struct *cmd)
+{
+    const unsigned int first_page = cmd->CMDSRCA >> 9;
+    const unsigned int width_8    = (cmd->CMDSIZE >> 8) & 0x3F;
+    const unsigned int height     = cmd->CMDSIZE & 0xFF;
+    const unsigned int last_page  = (cmd->CMDSRCA + (width_8 * height)) >> 9;
+    unsigned int page;
+    for (page = first_page; page <= last_page; page++) {
+        if (!vdp1_page_cached[page]) {
+            vdp1_page_checksum[page] =
+                checksum_fast32((const uint32_t *)(Vdp1Ram + (page<<12)), 1024);
+            vdp1_page_cached[page] = 1;
+        }
+    }
+    if ((cmd->CMDPMOD>>3 & 7) == 1) {
+        page = cmd->CMDCOLR >> 9;
+        if (!vdp1_page_cached[page]) {
+            vdp1_page_checksum[page] =
+                checksum_fast32((const uint32_t *)(Vdp1Ram + (page<<12)), 1024);
+            vdp1_page_cached[page] = 1;
+        }
+    }
+    return 1;
+}
+
+/*************************************************************************/
+
+/**
  * vdp1_draw_lines:  Draw one or four lines based on the given VDP1 command.
  *
  * [Parameters]
@@ -993,21 +1125,22 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
         }
         /* If flipping is specified, swap the relevant coordinates in the
          * "cmd" structure; this helps avoid texture glitches when the
-         * vertex order of a texture is changed (e.g. Panzer Dragoon RPG).
+         * vertex order of a texture is changed (e.g. Panzer Dragoon Saga).
          * We use inline assembly so we can load and store in 32-bit units
          * without GCC complaining about strict aliasing violations. */
-        if (cmd->CMDCTRL & 0x10) {  // Flip horizontally?
-            gouraud_flip ^= 2;
+        switch (cmd->CMDCTRL & 0x30) {
+          case 0x10: {  // Flip horizontally
+            gouraud_flip = 2;
             uint32_t tempA, tempB, tempC, tempD;
             asm(".set push; .set noreorder\n"
                 "lw %[tempA], 12(%[cmd])\n"
                 "lw %[tempB], 16(%[cmd])\n"
                 "lw %[tempC], 20(%[cmd])\n"
                 "lw %[tempD], 24(%[cmd])\n"
-                "sw %[tempB], 12(%[cmd])\n"
                 "sw %[tempA], 16(%[cmd])\n"
-                "sw %[tempD], 20(%[cmd])\n"
+                "sw %[tempB], 12(%[cmd])\n"
                 "sw %[tempC], 24(%[cmd])\n"
+                "sw %[tempD], 20(%[cmd])\n"
                 ".set pop"
                 : [tempA] "=&r" (tempA), [tempB] "=&r" (tempB),
                   [tempC] "=&r" (tempC), [tempD] "=&r" (tempD),
@@ -1016,19 +1149,20 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
                   "=m" (cmd->CMDXD), "=m" (cmd->CMDYD)
                 : [cmd] "r" (cmd)
             );
-        }
-        if (cmd->CMDCTRL & 0x20) {  // Flip vertically?
-            gouraud_flip ^= 6;
+            break;
+          }  // case 0x10
+          case 0x20: {  // Flip vertically
+            gouraud_flip = 6;
             uint32_t tempA, tempB, tempC, tempD;
             asm(".set push; .set noreorder\n"
                 "lw %[tempA], 12(%[cmd])\n"
                 "lw %[tempB], 16(%[cmd])\n"
                 "lw %[tempC], 20(%[cmd])\n"
                 "lw %[tempD], 24(%[cmd])\n"
-                "sw %[tempD], 12(%[cmd])\n"
-                "sw %[tempC], 16(%[cmd])\n"
-                "sw %[tempB], 20(%[cmd])\n"
                 "sw %[tempA], 24(%[cmd])\n"
+                "sw %[tempB], 20(%[cmd])\n"
+                "sw %[tempC], 16(%[cmd])\n"
+                "sw %[tempD], 12(%[cmd])\n"
                 ".set pop"
                 : [tempA] "=&r" (tempA), [tempB] "=&r" (tempB),
                   [tempC] "=&r" (tempC), [tempD] "=&r" (tempD),
@@ -1037,7 +1171,31 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
                   "=m" (cmd->CMDXD), "=m" (cmd->CMDYD)
                 : [cmd] "r" (cmd)
             );
-        }
+            break;
+          }  // case 0x20
+          case 0x30: {  // Flip horizontally and vertically
+            gouraud_flip = 4;
+            uint32_t tempA, tempB, tempC, tempD;
+            asm(".set push; .set noreorder\n"
+                "lw %[tempA], 12(%[cmd])\n"
+                "lw %[tempB], 16(%[cmd])\n"
+                "lw %[tempC], 20(%[cmd])\n"
+                "lw %[tempD], 24(%[cmd])\n"
+                "sw %[tempA], 20(%[cmd])\n"
+                "sw %[tempB], 24(%[cmd])\n"
+                "sw %[tempC], 12(%[cmd])\n"
+                "sw %[tempD], 16(%[cmd])\n"
+                ".set pop"
+                : [tempA] "=&r" (tempA), [tempB] "=&r" (tempB),
+                  [tempC] "=&r" (tempC), [tempD] "=&r" (tempD),
+                  "=m" (cmd->CMDXA), "=m" (cmd->CMDYA), "=m" (cmd->CMDXB),
+                  "=m" (cmd->CMDYB), "=m" (cmd->CMDXC), "=m" (cmd->CMDYC),
+                  "=m" (cmd->CMDXD), "=m" (cmd->CMDYD)
+                : [cmd] "r" (cmd)
+            );
+            break;
+          }  // case 0x30
+        }  // switch (cmd->CMDCTRL & 0x30)
     } else {
         width = height = 0;
     }
@@ -1106,19 +1264,39 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
     uint32_t color_A, color_B, color_C, color_D;
     if (cmd->CMDPMOD & 4) {  // Gouraud shading bit
         const uint32_t alpha = color32 & 0xFF000000;
-        uint16_t color16;
-        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (0 ^ gouraud_flip));
-        color_A = alpha | (adjust_color_16_32(color16, vdp1_rofs, vdp1_gofs,
-                                              vdp1_bofs) & 0x00FFFFFF);
-        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (2 ^ gouraud_flip));
-        color_B = alpha | (adjust_color_16_32(color16, vdp1_rofs, vdp1_gofs,
-                                              vdp1_bofs) & 0x00FFFFFF);
-        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (4 ^ gouraud_flip));
-        color_C = alpha | (adjust_color_16_32(color16, vdp1_rofs, vdp1_gofs,
-                                              vdp1_bofs) & 0x00FFFFFF);
-        color16 = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (6 ^ gouraud_flip));
-        color_D = alpha | (adjust_color_16_32(color16, vdp1_rofs, vdp1_gofs,
-                                              vdp1_bofs) & 0x00FFFFFF);
+        if (vdp1_rofs | vdp1_gofs | vdp1_bofs) {
+            unsigned int temp_A, temp_B, temp_C, temp_D;
+            temp_A = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (0^gouraud_flip));
+            temp_B = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (2^gouraud_flip));
+            temp_C = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (4^gouraud_flip));
+            temp_D = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (6^gouraud_flip));
+            color_A = alpha | (adjust_color_16_32(temp_A, vdp1_rofs, vdp1_gofs,
+                                                  vdp1_bofs) & 0x00FFFFFF);
+            color_B = alpha | (adjust_color_16_32(temp_B, vdp1_rofs, vdp1_gofs,
+                                                  vdp1_bofs) & 0x00FFFFFF);
+            color_C = alpha | (adjust_color_16_32(temp_C, vdp1_rofs, vdp1_gofs,
+                                                  vdp1_bofs) & 0x00FFFFFF);
+            color_D = alpha | (adjust_color_16_32(temp_D, vdp1_rofs, vdp1_gofs,
+                                                  vdp1_bofs) & 0x00FFFFFF);
+        } else {
+            unsigned int temp_A, temp_B, temp_C, temp_D;
+            temp_A = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (0^gouraud_flip));
+            temp_B = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (2^gouraud_flip));
+            temp_C = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (4^gouraud_flip));
+            temp_D = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + (6^gouraud_flip));
+            color_A = alpha | (temp_A & 0x7C00) << 9
+                            | (temp_A & 0x03E0) << 6
+                            | (temp_A & 0x001F) << 3;
+            color_B = alpha | (temp_B & 0x7C00) << 9
+                            | (temp_B & 0x03E0) << 6
+                            | (temp_B & 0x001F) << 3;
+            color_C = alpha | (temp_C & 0x7C00) << 9
+                            | (temp_C & 0x03E0) << 6
+                            | (temp_C & 0x001F) << 3;
+            color_D = alpha | (temp_D & 0x7C00) << 9
+                            | (temp_D & 0x03E0) << 6
+                            | (temp_D & 0x001F) << 3;
+        }
     } else {
         color_A = color_B = color_C = color_D = color32;
     }
@@ -1270,15 +1448,15 @@ static uint32_t vdp1_get_cmd_color_pri(vdp1cmd_struct *cmd, int textured,
 static uint16_t vdp1_process_sprite_color(uint16_t color16, int *priority_ret,
                                           int *alpha_ret)
 {
-    const uint8_t priority_shift[16] =
+    static const uint8_t priority_shift[16] =
         { 14, 13, 14, 13,  13, 12, 12, 12,  7, 7, 6, 0,  7, 7, 6, 0 };
-    const uint8_t priority_mask[16] =
+    static const uint8_t priority_mask[16] =
         {  3,  7,  1,  3,   3,  7,  7,  7,  1, 1, 3, 0,  1, 1, 3, 0 };
-    const uint8_t alpha_shift[16] =
+    static const uint8_t alpha_shift[16] =
         { 11, 11, 11, 11,  10, 11, 10,  9,  0, 6, 0, 6,  0, 6, 0, 6 };
-    const uint8_t alpha_mask[16] =
+    static const uint8_t alpha_mask[16] =
         {  7,  3,  7,  3,   7,  1,  3,  7,  0, 1, 0, 3,  0, 1, 0, 3 };
-    const uint16_t color_mask[16] =
+    static const uint16_t color_mask[16] =
         { 0x7FF, 0x7FF, 0x7FF, 0x7FF,  0x3FF, 0x7FF, 0x3FF, 0x1FF,
            0x7F,  0x3F,  0x3F,  0x3F,   0xFF,  0xFF,  0xFF,  0xFF };
 
@@ -1310,25 +1488,25 @@ static uint32_t vdp1_cache_sprite_texture(
     uint16_t pixel_mask = 0xFFFF;
     int pri_reg = 0, alpha_reg = 0;  // Default value
 
-    int is_palette = 1;
+    int is_indexed = 1;
     uint16_t color16 = cmd->CMDCOLR;
     const int pixfmt = cmd->CMDPMOD>>3 & 7;
     if (pixfmt == 5) {
-        is_palette = 0;
+        is_indexed = 0;
     } else if (pixfmt == 1) {
         /* Indirect T4 texture; see whether the first pixel references
          * color RAM or uses raw RGB values. */
-        uint32_t addr = cmd->CMDSRCA << 3;
-        uint8_t pixel = T1ReadByte(Vdp1Ram, addr) >> 4;
-        uint32_t colortable = cmd->CMDCOLR << 3;
-        uint16_t value = T1ReadWord(Vdp1Ram, colortable + pixel*2);
+        const uint32_t addr = cmd->CMDSRCA << 3;
+        const uint8_t pixel = T1ReadByte(Vdp1Ram, addr) >> 4;
+        const uint32_t colortable = cmd->CMDCOLR << 3;
+        const uint16_t value = T1ReadWord(Vdp1Ram, colortable + pixel*2);
         if (value & 0x8000) {
-            is_palette = 0;
+            is_indexed = 0;
         } else {
             color16 = value;
         }
     }
-    if (is_palette) {
+    if (is_indexed) {
         pixel_mask = vdp1_process_sprite_color(color16, &pri_reg, &alpha_reg);
     }
 
@@ -1337,9 +1515,8 @@ static uint32_t vdp1_cache_sprite_texture(
 
     /* Cache the texture data and return the key. */
     
-    return texcache_cache_sprite(cmd->CMDSRCA, cmd->CMDPMOD, cmd->CMDCOLR,
-                                 pixel_mask, width, height, vdp1_rofs,
-                                 vdp1_gofs, vdp1_bofs);
+    return texcache_cache_sprite(cmd, pixel_mask, width, height,
+                                 vdp1_is_persistent(cmd));
 }
 
 /*************************************************************************/
@@ -1768,6 +1945,16 @@ static void vdp2_draw_graphics(int layer)
     clip[1].ystart = 0; clip[1].yend = disp_height;
     ReadWindowData(info.wctl, clip);
 
+    /* Check for a zero-size clip window, which some games seem to use to
+     * temporarily disable a screen. */
+    if (clip[0].xstart >= clip[0].xend
+     || clip[0].ystart >= clip[0].yend
+     || clip[1].xstart >= clip[1].xend
+     || clip[1].ystart >= clip[1].yend
+    ) {
+        return;
+    }
+
     info.priority = bg_priority[layer];
     switch (layer) {
         case BG_NBG0: info.PlaneAddr = (void *)Vdp2NBG0PlaneAddr; break;
@@ -1799,7 +1986,7 @@ static void vdp2_draw_graphics(int layer)
     if (custom_draw_func[layer]) {
         custom_draw_succeeded = (*custom_draw_func[layer])(&info, clip);
         if (custom_draw_succeeded && layer == BG_RBG0) {
-            drew_fast_RBG0 = RBG0_draw_func_is_fast;
+            drew_slow_RBG0 = !RBG0_draw_func_is_fast;
         }
     }
 
@@ -1847,6 +2034,9 @@ static void vdp2_draw_graphics(int layer)
 
         /* Render the graphics. */
         (*draw_map_func)(&info, clip);
+        if (layer == BG_RBG0) {
+            drew_slow_RBG0 = 1;
+        }
 
     }  // if (!custom_draw_succeeded)
 

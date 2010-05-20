@@ -37,6 +37,7 @@
 #include "sh2.h"
 #include "sh2-internal.h"
 
+#include "misc.h"
 #include "satopt-sh2.h"
 
 #ifdef JIT_DEBUG_TRACE
@@ -127,19 +128,6 @@
 # define VDP_SWAPL(x)      BSWAP32(x)
 # define RAM_VDP_SWAPL(x)  BSWAP16(x)  // BSWAP32(WSWAP32(x)) == BSWAP16(x)
 #endif
-
-/*************************************************************************/
-
-/* Simple checksum routine for block validity detection. */
-
-static inline uint32_t checksum(const uint16_t *ptr, unsigned int count)
-{
-    uint32_t sum = 0;
-    while (count-- > 0) {
-        sum += *ptr++;
-    }
-    return sum;
-}
 
 /*************************************************************************/
 /********************** Optimization routine table ***********************/
@@ -248,7 +236,7 @@ static const struct {
 
     /* Routine to detect whether to use this translation; returns the
      * number of 16-bit words processed (nonzero) to use it, else zero.
-     * If NULL, the checksum is checked instead */
+     * If NULL, the checksum is checked instead. */
     int (*detect)(SH2State *state, uint32_t address, const uint16_t *fetch);
 
     /* Checksum and block length (in instructions) if detect == NULL. */
@@ -519,7 +507,7 @@ unsigned int saturn_optimize_sh2(SH2State *state, uint32_t address,
             }
         } else {
             num_insns = hand_tuned_table[i].length;
-            const uint32_t sum = checksum(fetch, num_insns);
+            const uint32_t sum = checksum_fast16(fetch, num_insns);
             if (sum != hand_tuned_table[i].sum) {
                 continue;
             }
@@ -831,7 +819,7 @@ static int BIOS_060115B6_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
     const uint32_t jsr_address = HRAM_LOADL(state->PC & -4, 4 + 0x22*4);
-    return checksum(fetch, 5) == 0x3081A
+    return checksum_fast16(fetch, 5) == 0x3081A
         && BIOS_0602E630_detect(state, jsr_address,
                                 fetch + ((jsr_address - address) >> 1))
         ? 5 : 0;
@@ -852,7 +840,7 @@ static FASTCALL void BIOS_060115B6(SH2State *state)
 static int BIOS_060115D4_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
-    return checksum(fetch-10, 21) == 0x8E03C ? 11 : 0;
+    return checksum_fast16(fetch-10, 21) == 0x8E03C ? 11 : 0;
 }
 
 static FASTCALL void BIOS_060115D4(SH2State *state)
@@ -917,11 +905,11 @@ static int BIOS_0602E630_is_UE;
 static int BIOS_0602E630_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
-    if (address == 0x602E630 && checksum(fetch,612) == 0xA87EE4) {
+    if (address == 0x602E630 && checksum_fast16(fetch,612) == 0xA87EE4) {
         BIOS_0602E630_is_UE = 0;
         return 612;
     }
-    if (address == 0x603A630 && checksum(fetch,600) == 0xA9F4CC) {
+    if (address == 0x603A630 && checksum_fast16(fetch,600) == 0xA9F4CC) {
         BIOS_0602E630_is_UE = 1;
         return 600;
     }
@@ -1424,7 +1412,10 @@ static FASTCALL void Azel_0600614C(SH2State *state)
 
 /*-----------------------------------------------------------------------*/
 
-/* 0x60061F0: RBG0 parameter generation for sky/ground backgrounds */
+/* 0x60061F0: RBG0 parameter generation for sky/ground backgrounds.  We
+ * also store the slope set here in a video tweak parameter, so the code
+ * doesn't have to re-derive it from the coefficients (which may be mangled
+ * by the "shimmering" effect added to water). */
 
 static FASTCALL void Azel_060061F0(SH2State *state)
 {
@@ -1435,10 +1426,17 @@ static FASTCALL void Azel_060061F0(SH2State *state)
     const uint32_t out_address = HRAM_LOADL(state->R[15], 0);
     int32_t *out = (int32_t *)HRAM_PTR(out_address);
 
+    extern float psp_video_tweaks_Azel_RBG0_slope;
+    extern float psp_video_tweaks_Azel_RBG0_first_recip;
+
     if (r4 < 0) {
         r4 = -r4;
         r5 = -r5;
         delta = -delta;
+    }
+
+    if (r4 != 0) {
+        psp_video_tweaks_Azel_RBG0_slope = (float)-delta / (float)r4;
     }
 
     const float r4_scaled = r4 * 65536.0f;
@@ -1511,6 +1509,9 @@ static FASTCALL void Azel_060061F0(SH2State *state)
     state->PC = state->PR;
     state->cycles += 15 + (counter * 32) + (counter%2 ? 10 : 0);
 
+    if (r4 != 0) {
+        psp_video_tweaks_Azel_RBG0_first_recip = (float)r5 / (float)r4;
+    }
     for (; counter != 0; counter--, out++) {
         *out = RAM_SWAPL(ifloorf(r4_scaled / (float)r5));
         r5 -= delta;
@@ -1599,7 +1600,7 @@ static NOINLINE void Azel_0600C5A4(SH2State *state)
 static int Azel_0600C5B4_detect(SH2State *state, uint32_t address,
                                 const uint16_t *fetch)
 {
-    return checksum(fetch-6, 24) == 0x93C29 ? 24 : 0;
+    return checksum_fast16(fetch-6, 24) == 0x93C29 ? 24 : 0;
 }
 
 static FASTCALL void Azel_0600C5B4(SH2State *state)
