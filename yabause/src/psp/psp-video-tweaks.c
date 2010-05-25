@@ -36,6 +36,7 @@
 /* Local routine declarations (internal helpers are declared in their
  * respective sections) */
 
+static void Azel_fix_registers(void);
 static int Azel_draw_NBG1(vdp2draw_struct *info,
                           const clipping_struct *clip);
 static void Azel_reset_cache(void);
@@ -88,35 +89,12 @@ extern void psp_video_apply_tweaks(void)
         }
         last_00082 = this_00082;
 
-        /* Display movies with transparency disabled to improve draw speed. */
-        if ((Vdp2Regs->CHCTLA & 0x0070) == 0x0040) {
-            Vdp2Regs->BGON |= 0x0100;
-        }
+        /* Fix bogus/suboptimal register settings. */
+        Azel_fix_registers();
 
         /* Apply the top/bottom black border to NBG1 implemented using
          * line scrolling. */
         psp_video_set_draw_routine(BG_NBG1, Azel_draw_NBG1, 0);
-
-        /* Fix bogus sprite alpha setting in the Uru underwater tunnel.
-         * (The alpha setting gets ignored on a real Saturn due to priority
-         * idiosyncrasies.) */
-        if (Vdp2Regs->SPCTL == 0x1523
-         && Vdp2Regs->CCCTL == 0x0053
-         && Vdp2Regs->SFCCMD == 0x0008
-         && Vdp2Regs->PRISA == 0x0405
-         && Vdp2Regs->PRINA == 0x0604
-         && Vdp2Regs->CCRSA == 0x000C
-         && Vdp2Regs->CCRNA == 0x101F
-         && Vdp2Regs->PNCN1 == 0xC100
-         && Vdp2Regs->MPABN1 == 0x0B0B
-         && Vdp2Regs->MPCDN1 == 0x0B0B
-         && Vdp2Regs->RPTA.all == 0x14000
-         && T1ReadLong(Vdp2Ram, 0x28054) == 0x80640000
-         && T1ReadLong(Vdp2Ram, 0x28058) == 0x10000
-         && (int32_t)T1ReadLong(Vdp2Ram, 0x20190 + 223*4) < 0
-        ) {
-            Vdp2Regs->CCRSA &= 0xFF00;
-        }
 
         /* Draw sky/ground RBG0 graphics more efficiently, if requested. */
         if (config_get_optimize_rotate() && (Vdp2Regs->BGON & 0x0010)) {
@@ -194,6 +172,97 @@ static inline void Azel_compute_vertices(
     int UL_is_sky, int UR_is_sky, int LL_is_sky, int LR_is_sky,
     int switch_x0, int switch_y0, int switch_x1, int switch_y1,
     struct Azel_RBG0_coord coord[2][5], unsigned int nverts[2]);
+
+/*-----------------------------------------------------------------------*/
+
+/**
+ * Azel_fix_registers:  Fix VDP2 registers which are set improperly (but do
+ * not exhibit problems on a real Saturn due to hardware idiosyncrasies) or
+ * inefficiently (so that they waste more resources than necessary).
+ *
+ * [Parameters]
+ *     None
+ * [Return value]
+ *     None
+ */
+static void Azel_fix_registers(void)
+{
+    /* Fix bogus sprite alpha setting in the Uru underwater tunnel. */
+    if (Vdp2Regs->PNCN1 == 0xC100
+     && Vdp2Regs->MPABN1 == 0x0B0B
+     && Vdp2Regs->MPCDN1 == 0x0B0B
+     && Vdp2Regs->RPTA.all == 0x14000
+     && T1ReadLong(Vdp2Ram, 0x28054) == 0x80640000
+     && T1ReadLong(Vdp2Ram, 0x28058) == 0x10000
+     && (int32_t)T1ReadLong(Vdp2Ram, 0x20190 + 223*4) < 0
+     && Vdp2Regs->SPCTL == 0x1523
+     && Vdp2Regs->CCCTL == 0x0053
+     && Vdp2Regs->SFCCMD == 0x0008
+     && Vdp2Regs->PRISA == 0x0405
+     && Vdp2Regs->PRINA == 0x0604
+     && Vdp2Regs->CCRSA == 0x000C
+     && Vdp2Regs->CCRNA == 0x101F
+    ) {
+        Vdp2Regs->CCRSA &= 0xFF00;
+    }
+
+    /* Fix bogus sprite alpha setting in the imperial base. */
+    if (Vdp2Regs->BGON == 0x011B
+     && Vdp2Regs->SFSEL == 0x0002
+     && Vdp2Regs->CHCTLA == 0x0101
+     && Vdp2Regs->CHCTLB == 0x1100
+     && Vdp2Regs->PNCN0 == 0x8080
+     && Vdp2Regs->PNCN1 == 0xC100
+     && Vdp2Regs->PLSZ == 0x0000
+     && Vdp2Regs->MPABN0 == 0x3E3E
+     && Vdp2Regs->MPABN0 == 0x3E3E
+     && Vdp2Regs->MPABN1 == 0x0B0B
+     && Vdp2Regs->MPCDN1 == 0x0B0B
+     && T1ReadLong(Vdp2Ram, 0x1F000) == 0x02010202
+     && T1ReadLong(Vdp2Ram, 0x1008C) == 0x99889999
+     && Vdp2Regs->SPCTL == 0x1423
+     && (Vdp2Regs->CCCTL & ~0x0010) == 0x0143
+     && Vdp2Regs->SFCCMD == 0x0008
+     && Vdp2Regs->PRISA == 0x0404
+     && (Vdp2Regs->PRINA & ~0x0001) == 0x0604
+     && (Vdp2Regs->PRINA & 0xF) == (Vdp2Regs->CCCTL>>4 & 0xF)
+     && Vdp2Regs->CCRSA == 0x180D
+     && Vdp2Regs->CCRNA == 0x1017
+    ) {
+        Vdp2Regs->CCRSA &= 0xFF00;
+    }
+
+    /* Fix missing(?) alpha setting for the NBG0 cloud overlay used in
+     * Mel-Kava and in Atolm battles.  (NBG0 is at the third-highest
+     * priority level; how does it get color calculation enabled in the
+     * first place?) */
+    if ((Vdp2Regs->BGON & ~0x0100) == 0x001B
+     && Vdp2Regs->SFSEL == 0x0002
+     && Vdp2Regs->CHCTLA == 0x0101
+     && Vdp2Regs->CHCTLB == 0x1100
+     && (Vdp2Regs->PNCN0 & ~0x0020) == 0x8080
+     && Vdp2Regs->PNCN1 == 0xC100
+     && Vdp2Regs->PLSZ == 0x0000
+     && Vdp2Regs->MPABN0 == 0x3C3C
+     && Vdp2Regs->MPABN0 == 0x3C3C
+     && Vdp2Regs->MPABN1 == 0x0B0B
+     && Vdp2Regs->MPCDN1 == 0x0B0B
+     && T1ReadLong(Vdp2Ram, 0x1E000) == 0x02010202
+     && T1ReadLong(Vdp2Ram, 0x100F8) == 0x11111222
+     && (Vdp2Regs->CCCTL & ~0x0010) == 0x0103
+     && Vdp2Regs->SFCCMD == 0x0008
+     && (Vdp2Regs->PRINA & ~0x0001) == 0x0604
+     && (Vdp2Regs->PRINA & 0x1) == (Vdp2Regs->CCCTL>>4 & 0x1)
+     && Vdp2Regs->CCRNA == 0x1000
+    ) {
+        Vdp2Regs->CCRNA |= 0x0017;
+    }
+
+    /* Display movies with transparency disabled to improve draw speed. */
+    if ((Vdp2Regs->CHCTLA & 0x0070) == 0x0040) {
+        Vdp2Regs->BGON |= 0x0100;
+    }
+}
 
 /*-----------------------------------------------------------------------*/
 
@@ -601,6 +670,11 @@ static void Azel_make_mipmap(const uint8_t *in, unsigned int size,
 static int Azel_draw_RBG0(vdp2draw_struct *info,
                           const clipping_struct *clip)
 {
+    /* Define a macro to read a coefficient as a signed value, given its
+     * index (longword offset into VDP2 RAM).  coef_mask is defined below. */
+    #define READ_COEF(index) \
+        ((int32_t)T1ReadLong(Vdp2Ram, (index)*4) & coef_mask)
+
     if (!Azel_RBG0_cached) {
         return 0;
     }
@@ -656,6 +730,11 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
      * these as sky lines in order to avoid mathematical trouble when
      * drawing.  Due to this, we optimize the (data > 0 && data < 0x800000)
      * test into ((unsigned)data < 0x800000) for more efficient processing.
+     * However, there are some areas (such as Mel-Kava) which intentionally
+     * store data into the upper 8 bits, which we detect by finding four
+     * consecutive coefficients with upper 8 bits between 0x01-0x7F and
+     * lower 24 bits less than 0x800000; in that case we mask off bits
+     * 24-30 when reading the coefficients.
      *
      * We also check to see whether the ground coefficients are zero (as
      * seems to happen sometimes during a scene change) in order to avoid
@@ -675,16 +754,32 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
             MAX(ifloorf(coef_index_LL), ifloorf(coef_index_LR)));
     const uint32_t num_coefs = last_coef_index + first_coef_index - 1;
 
+    int high_bits_used_count = 0;
+    int32_t coef_mask = -1;
     int ground_is_zero;
     unsigned int coef_switch_index;
 
-    if ((uint32_t)T1ReadLong(Vdp2Ram, first_coef_index * 4) >= 0x800000) {
+  retry_coef_scan:
+
+    if ((uint32_t)READ_COEF(first_coef_index) >= 0x800000) {
 
         ground_is_zero = 0;
         unsigned int offset;
         for (offset = 0; offset < num_coefs; offset++) {
-            const uint32_t coef_address = (first_coef_index + offset) * 4;
-            const uint32_t data = T1ReadLong(Vdp2Ram, coef_address);
+            const uint32_t data = READ_COEF(first_coef_index + offset);
+            if (coef_mask == -1) {
+                if ((data>>24 >= 0x01 && data>>24 <= 0x7F)
+                 && (data & 0xFFFFFF) < 0x800000
+                ) {
+                    high_bits_used_count++;
+                    if (high_bits_used_count >= 4) {
+                        coef_mask = (int32_t)0x80FFFFFF;
+                        goto retry_coef_scan;
+                    }
+                } else {
+                    high_bits_used_count = 0;
+                }
+            }
             if (data < 0x800000) {
                 ground_is_zero = (data == 0);
                 break;
@@ -694,11 +789,10 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
 
     } else {
 
-        ground_is_zero = (T1ReadLong(Vdp2Ram, first_coef_index * 4) == 0);
+        ground_is_zero = (READ_COEF(first_coef_index) == 0);
         unsigned int offset;
         for (offset = 0; offset < num_coefs; offset++) {
-            const uint32_t coef_address = (first_coef_index + offset) * 4;
-            const uint32_t data = T1ReadLong(Vdp2Ram, coef_address);
+            const uint32_t data = READ_COEF(first_coef_index + offset);
             if (data >= 0x800000) {
                 break;
             }
@@ -745,13 +839,13 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
     unsigned int nverts[2];
 
     const int UL_is_sky =
-        ((uint32_t)T1ReadLong(Vdp2Ram, ifloorf(coef_index_UL)*4) >= 0x800000);
+        ((uint32_t)READ_COEF(ifloorf(coef_index_UL)) >= 0x800000);
     const int UR_is_sky =
-        ((uint32_t)T1ReadLong(Vdp2Ram, ifloorf(coef_index_UR)*4) >= 0x800000);
+        ((uint32_t)READ_COEF(ifloorf(coef_index_UR)) >= 0x800000);
     const int LL_is_sky =
-        ((uint32_t)T1ReadLong(Vdp2Ram, ifloorf(coef_index_LL)*4) >= 0x800000);
+        ((uint32_t)READ_COEF(ifloorf(coef_index_LL)) >= 0x800000);
     const int LR_is_sky =
-        ((uint32_t)T1ReadLong(Vdp2Ram, ifloorf(coef_index_LR)*4) >= 0x800000);
+        ((uint32_t)READ_COEF(ifloorf(coef_index_LR)) >= 0x800000);
 
     Azel_compute_vertices(UL_is_sky, UR_is_sky, LL_is_sky, LR_is_sky,
                           switch_x0, switch_y0, switch_x1, switch_y1,
@@ -836,9 +930,9 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
     guClutMode(GU_PSM_8888, 0, 255, 0);
     guClutLoad(32, ground_clut);
     guTexMode(GU_PSM_T8, 0, 0, 1);
-    if (has_sky) {
+    if ((Vdp2Regs->PLSZ>>10 & 3) == 0) {
         guTexWrap(GU_REPEAT, GU_REPEAT);
-    } else {  // Uru underground special case.
+    } else {
         guTexWrap(GU_CLAMP, GU_CLAMP);
     }
 
@@ -879,7 +973,7 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
          * the sky, just draw it that way. */
 
       draw_as_flat:;
-        const int32_t data = T1ReadLong(Vdp2Ram, coef_switch_index * 4);
+        const int32_t data = READ_COEF(coef_switch_index);
         const float kx = data / 65536.0f;
         const float ky = kx;
 
@@ -912,7 +1006,7 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
         /* Determine the indices of the first and last ground coefficients. */
 
         uint32_t first_ground_index, last_ground_index;
-        if ((uint32_t)T1ReadLong(Vdp2Ram, first_coef_index * 4) < 0x800000) {
+        if ((uint32_t)READ_COEF(first_coef_index) < 0x800000) {
             first_ground_index = first_coef_index;
             if (has_switch) {
                 last_ground_index = coef_switch_index - 1;
@@ -944,31 +1038,33 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
         first_recip_hint_delayed = psp_video_tweaks_Azel_RBG0_first_recip;
 
         float slope = 0;
-        const int32_t first_data = T1ReadLong(Vdp2Ram, first_ground_index * 4);
+        const int32_t first_data = READ_COEF(first_ground_index);
         float first_recip;
         if (slope_hint != SLOPE_UNSET && slope_hint_delayed != SLOPE_UNSET) {
             slope = slope_hint;
             first_recip = first_recip_hint;
-            /* This may be slightly off (e.g. due to an out-of-range
-             * coefficient), so adjust as necessary. */
-            float diff;
-            if (slope > 0) {
-                diff = first_recip - 65536.0f/first_data;
-            } else {
-                const float last_recip =
-                    first_recip + slope * (last_ground_index - first_ground_index);
-                const float recip_test =
-                    65536.0f / (int32_t)T1ReadLong(Vdp2Ram, last_ground_index * 4);
-                diff = last_recip - recip_test;
-            }
-            if (fabsf(diff) > (slope/2)) {
-                first_recip -= roundf(diff / fabsf(slope)) * fabsf(slope);
+            if (slope != 0) {
+                /* This may be slightly off (e.g. due to an out-of-range
+                 * coefficient), so adjust as necessary. */
+                float diff;
+                if (slope > 0) {
+                    diff = first_recip - 65536.0f/first_data;
+                } else {
+                    const float last_recip =
+                        first_recip + slope * (last_ground_index - first_ground_index);
+                    const float recip_test =
+                        65536.0f / READ_COEF(last_ground_index);
+                    diff = last_recip - recip_test;
+                }
+                if (fabsf(diff) > (slope/2)) {
+                    first_recip -= roundf(diff / fabsf(slope)) * fabsf(slope);
+                }
             }
         } else {
             first_recip = 65536.0f / first_data;
             uint32_t i;
             for (i = first_ground_index + 1; i <= last_ground_index; i++) {
-                const int32_t data = T1ReadLong(Vdp2Ram, i * 4);
+                const int32_t data = READ_COEF(i);
                 const float recip = 65536.0f / data;
                 slope += (recip - first_recip) / (i - first_ground_index);
             }
@@ -986,7 +1082,7 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
         float variance = 0;
         uint32_t index;
         for (index = first_ground_index; index <= last_ground_index; index++) {
-            const int32_t data = T1ReadLong(Vdp2Ram, index * 4);
+            const int32_t data = READ_COEF(index);
             const float recip = 65536.0f / data;
             const float expected =
                 first_recip + slope * (index - first_ground_index);
@@ -1241,7 +1337,8 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
                                         + vertices[i].x * coef_dx
                                         + vertices[i].y * coef_dy
                                         - first_ground_index;
-                vertices[i].z = 1 / (first_recip + coef_offset * slope);
+                vertices[i].z =
+                    1 / MAX(first_recip + coef_offset * slope, 1/127.5f);
                 Azel_transform_coordinates(vertices[i].x, vertices[i].y,
                                            &vertices[i].u, &vertices[i].v,
                                            ground_M,
@@ -1318,7 +1415,8 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
                                         + vertices[i].x * coef_dx
                                         + vertices[i].y * coef_dy
                                         - first_ground_index;
-                vertices[i].z = 1 / (first_recip + coef_offset * slope);
+                vertices[i].z =
+                    1 / MAX(first_recip + coef_offset * slope, 1/127.5f);
                 Azel_transform_coordinates(vertices[i].x, vertices[i].y,
                                            &vertices[i].u, &vertices[i].v,
                                            ground_M,
@@ -1356,6 +1454,8 @@ static int Azel_draw_RBG0(vdp2draw_struct *info,
 
     guTexWrap(GU_CLAMP, GU_CLAMP);
     return 1;
+
+    #undef READ_COEF
 }
 
 /*-----------------------------------------------------------------------*/

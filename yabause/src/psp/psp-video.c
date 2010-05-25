@@ -1069,24 +1069,66 @@ static void vdp1_draw_lines(vdp1cmd_struct *cmd, int poly)
     const uint32_t color32 = vdp1_get_cmd_color(cmd);
     const int priority = Vdp2Regs->PRISA & 0x7;
 
+    /* If it's Gouraud-shaded, pick up the four endpoint colors.  (Only
+     * the first two of these are used for single lines.) */
+    uint32_t color_A, color_B, color_C, color_D;
+    if (cmd->CMDPMOD & 4) {  // Gouraud shading bit
+        const uint32_t alpha = color32 & 0xFF000000;
+        if (vdp1_rofs | vdp1_gofs | vdp1_bofs) {
+            unsigned int temp_A, temp_B, temp_C, temp_D;
+            temp_A = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 0);
+            temp_B = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 2);
+            temp_C = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 4);
+            temp_D = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 6);
+            color_A = alpha | (adjust_color_16_32(temp_A, vdp1_rofs, vdp1_gofs,
+                                                  vdp1_bofs) & 0x00FFFFFF);
+            color_B = alpha | (adjust_color_16_32(temp_B, vdp1_rofs, vdp1_gofs,
+                                                  vdp1_bofs) & 0x00FFFFFF);
+            color_C = alpha | (adjust_color_16_32(temp_C, vdp1_rofs, vdp1_gofs,
+                                                  vdp1_bofs) & 0x00FFFFFF);
+            color_D = alpha | (adjust_color_16_32(temp_D, vdp1_rofs, vdp1_gofs,
+                                                  vdp1_bofs) & 0x00FFFFFF);
+        } else {
+            unsigned int temp_A, temp_B, temp_C, temp_D;
+            temp_A = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 0);
+            temp_B = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 2);
+            temp_C = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 4);
+            temp_D = T1ReadWord(Vdp1Ram, (cmd->CMDGRDA<<3) + 6);
+            color_A = alpha | (temp_A & 0x7C00) << 9
+                            | (temp_A & 0x03E0) << 6
+                            | (temp_A & 0x001F) << 3;
+            color_B = alpha | (temp_B & 0x7C00) << 9
+                            | (temp_B & 0x03E0) << 6
+                            | (temp_B & 0x001F) << 3;
+            color_C = alpha | (temp_C & 0x7C00) << 9
+                            | (temp_C & 0x03E0) << 6
+                            | (temp_C & 0x001F) << 3;
+            color_D = alpha | (temp_D & 0x7C00) << 9
+                            | (temp_D & 0x03E0) << 6
+                            | (temp_D & 0x001F) << 3;
+        }
+    } else {
+        color_A = color_B = color_C = color_D = color32;
+    }
+
     /* Set up the vertex array. */
     int nvertices = poly ? 5 : 2;
     struct {uint32_t color; int16_t x, y, z, pad;} *vertices;
     vertices = pspGuGetMemoryMerge(sizeof(*vertices) * nvertices);
-    vertices[0].color = color32;
+    vertices[0].color = color_A;
     vertices[0].x = (cmd->CMDXA + Vdp1Regs->localX) >> disp_xscale;
     vertices[0].y = (cmd->CMDYA + Vdp1Regs->localY) >> disp_yscale;
     vertices[0].z = 0;
-    vertices[1].color = color32;
+    vertices[1].color = color_B;
     vertices[1].x = (cmd->CMDXB + Vdp1Regs->localX) >> disp_xscale;
     vertices[1].y = (cmd->CMDYB + Vdp1Regs->localY) >> disp_xscale;
     vertices[1].z = 0;
     if (poly) {
-        vertices[2].color = color32;
+        vertices[2].color = color_C;
         vertices[2].x = (cmd->CMDXC + Vdp1Regs->localX) >> disp_xscale;
         vertices[2].y = (cmd->CMDYC + Vdp1Regs->localY) >> disp_yscale;
         vertices[2].z = 0;
-        vertices[3].color = color32;
+        vertices[3].color = color_D;
         vertices[3].x = (cmd->CMDXD + Vdp1Regs->localX) >> disp_xscale;
         vertices[3].y = (cmd->CMDYD + Vdp1Regs->localY) >> disp_yscale;
         vertices[3].z = 0;
@@ -1222,7 +1264,7 @@ static void vdp1_draw_quad(vdp1cmd_struct *cmd, int textured)
         sprite_alpha = (sprite_alpha << 3) | (sprite_alpha >> 2);
     } else {
         texture_key = 0;
-        sprite_alpha = 0;
+        sprite_alpha = 0xFF;
     }
 
     /* Apply alpha depending on the color calculation settings. */

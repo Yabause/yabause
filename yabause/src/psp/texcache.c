@@ -1434,7 +1434,7 @@ static inline int cache_texture_t8(
             }
         } else if (stride == 16) {
             uint8_t *dest_top = dest + (height * stride);
-            for (; dest != dest_top; dest++) {
+            for (; dest != dest_top; dest += 16) {
                 const uint32_t src_word0 = ((const uint32_t *)src)[0];
                 const uint32_t src_word1 = ((const uint32_t *)src)[1];
                 const uint32_t src_word2 = ((const uint32_t *)src)[2];
@@ -1485,7 +1485,7 @@ static inline int cache_texture_t8(
             }
         } else if (stride == 16) {
             uint8_t *dest_top = dest + (height * stride);
-            for (; dest != dest_top; dest++) {
+            for (; dest != dest_top; dest += 16) {
                 const uint32_t src_word0 = ((const uint32_t *)src)[0];
                 const uint32_t src_word1 = ((const uint32_t *)src)[1];
                 const uint32_t src_word2 = ((const uint32_t *)src)[2];

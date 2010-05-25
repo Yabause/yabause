@@ -5924,18 +5924,24 @@ static int scan_block(SH2State *state, JitEntry *entry, uint32_t address)
         /* If we're not in a delay slot, check whether we just fell through
          * from a branch, and clear the fall-through variables. */
 
+        int at_fallthru = 0;
+        const uint32_t saved_fallthru_source = fallthru_source;
+        const uint32_t saved_fallthru_target = fallthru_target;
         if (!now_in_delay && fallthru_target) {
             if (block_len == fallthru_target) {
 #ifdef JIT_DEBUG_VERBOSE
-                DMSG("Marking branch at 0x%08X as fall-through",
-                     start_address + fallthru_source*2);
+                DMSG("Continuing at %08X from fall-through branch at %08X",
+                     address, start_address + fallthru_source*2);
 #endif
-                word_info[fallthru_source] |= WORD_INFO_FALLTHRU;
-                /* Also clear the branch target flag so we don't set a
-                 * label (which would break the basic unit and cause an
-                 * optimization barrier). */
-                const uint32_t flag = 1 << (fallthru_target % 32);
-                is_branch_target[fallthru_target/32] &= ~flag;
+                /* We don't actually update the word_info[] table until we
+                 * have successfully scanned this instruction.  If we
+                 * marked the branch as fall-through here but later decided
+                 * to terminate the block for optimization reasons (e.g.
+                 * unoptimizable pointers) before this instruction, the
+                 * generated RTL would incorrectly set the PC to the
+                 * instruction following the branch instead of the branch
+                 * target. */
+                at_fallthru = 1;
             }
             fallthru_target = fallthru_source = 0;
         }
@@ -6448,6 +6454,28 @@ static int scan_block(SH2State *state, JitEntry *entry, uint32_t address)
 #else
             end_block = 1;
 #endif
+        }
+
+        /* If this instruction is the target of a preceding fall-through
+         * branch, update the word_info[] and is_branch_target[] tables
+         * to reflect that.
+         *
+         * IMPORTANT:  Once this code is executed, it is CRITICAL that this
+         * instruction be included in the scanned block, or incorrect code
+         * will result!  See the earlier code that sets at_fallthru for an
+         * explanation. */
+
+        if (at_fallthru) {
+#ifdef JIT_DEBUG_VERBOSE
+            DMSG("Marking branch at 0x%08X as fall-through",
+                 start_address + saved_fallthru_source*2);
+#endif
+            word_info[saved_fallthru_source] |= WORD_INFO_FALLTHRU;
+            /* Also clear the branch target flag so we don't set a label
+             * (which would break the basic unit and cause an optimization
+             * barrier). */
+            const uint32_t flag = 1 << (saved_fallthru_target % 32);
+            is_branch_target[saved_fallthru_target/32] &= ~flag;
         }
 
         /* If we have a pending unconditional branch and we're past its
