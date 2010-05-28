@@ -33,13 +33,19 @@ int file_po_load(mini18n_hash_t * hash, FILE * f) {
 		while(*c != '\0') {
 			switch(state) {
 				case 0:
-					if (*c == '#') break;
+					if (*c == '#') {
+						state = 7;
+						break;
+					}
 
 					if (!strncmp(c, "msgid", 5)) {
 						i = 0;
 						state = 1;
+						break;
 					}
-					break;
+
+					/* unexpected char at state 0, should not be a po file, bye */
+					return -1;
 				case 1:
 					while(*c != '"') c++;
 					state = 2;
@@ -80,6 +86,10 @@ int file_po_load(mini18n_hash_t * hash, FILE * f) {
 						i = 0;
 						state = 1;
 					}
+					break;
+				case 7: /* comment */
+					while (*c != '\n') c++;
+					state = 0;
 					break;
 			}
 			c++;
