@@ -1384,7 +1384,7 @@ static FASTCALL void Azel_0600614C(SH2State *state)
     uint32_t r3_test;
     asm("lbu %0, %1(%2)"
         : "=r" (r3_test)
-        : "i" (0x4B68D - 0x50000 /*((r3 & 0xFFFFF) ^ 1) - r3_HI*/), "r" (HighWram + r3_HI));
+        : "i" (((r3 & 0xFFFFF) ^ 1) - r3_HI), "r" (HighWram + r3_HI));
 #else
     const uint32_t r3_test = HRAM_LOADB(r3, 0);
 #endif

@@ -73,6 +73,13 @@ The following additional options can be used when configuring for PSP:
         functionality of the Media Engine access library included with
         Yabause.  Only useful for debugging or extending the library.
 
+Note that if you build with optimization disabled (-O0) or at too low a
+level, you may get compilation errors in src/psp/satopt-sh2.c.  -O3 is
+recommended; set this flag in the CFLAGS environment variable before
+running the "configure" script.  For example, if you use the "bash" shell:
+
+    CFLAGS=-O3 ./configure --host=psp [options...]
+
 After the configure script completes, run "make" to build Yabause.  The
 build process will create the EBOOT.PBP and me.prx (note that the latter
 is lowercase) files in the src/psp/ subdirectory; create a directory for
@@ -327,7 +334,7 @@ The main menu contains six options:
         * "Show FPS"
 
           When enabled, the emulator's current speed in emulated frames per
-          second (FPS) will be displayed in the upper-left corner of the
+          second (FPS) will be displayed in the upper-right corner of the
           screen as "FPS: XX.X (Y/Z)".  The number "XX.X" is the average
           frame rate, calculated from the last few seconds of emulation;
           "Y" shows the number of Saturn frames emulated since the previous
