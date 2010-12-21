@@ -109,8 +109,10 @@ mini18n_hash_t * mini18n_hash_from_file(const char * filename) {
 		return NULL;
 
 	f = fopen(filename, "r");
-	if (f == NULL)
+	if (f == NULL) {
+		mini18n_hash_free(hash);
 		return NULL;
+	}
 
 	file = *loaders;
 	while(file != NULL) {
