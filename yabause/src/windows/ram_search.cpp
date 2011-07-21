@@ -48,6 +48,7 @@
 
 #include "resource.h"
 
+#include <ctype.h>
 //#include "common.h"
 //#include "NDSSystem.h"
 #include "ramwatch.h"
