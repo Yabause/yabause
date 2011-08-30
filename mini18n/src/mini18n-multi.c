@@ -107,7 +107,7 @@ static void mini18n_pv_get_locale(char ** lang, char ** country) {
 #endif
 
 int mini18n_load_system(mini18n_t lang, const char * folder) {
-	mini18n_t * impl = lang;
+	mini18n_lang_t * impl = lang;
 	char * lang_s;
 	char * country;
 	char * locale;
