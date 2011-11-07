@@ -17,10 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include "dreamcast/perdc.h"
-#include "yabause.h"
-#include "yui.h"
-#include "vdp2.h"
+#include "perdc.h"
+#include "../yabause.h"
+#include "../yui.h"
+#include "../vdp2.h"
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h>

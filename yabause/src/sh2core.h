@@ -363,7 +363,7 @@ typedef struct
 
    int (*Init)(void);
    void (*DeInit)(void);
-   void (*Reset)(void);
+   void (*Reset)(SH2_struct *context);
    void FASTCALL (*Exec)(SH2_struct *context, u32 cycles);
 
    void (*GetRegisters)(SH2_struct *context, sh2regs_struct *regs);
@@ -397,6 +397,7 @@ typedef struct
 
 extern SH2_struct *MSH2;
 extern SH2_struct *SSH2;
+extern SH2Interface_struct *SH2Core;
 
 int SH2Init(int coreid);
 void SH2DeInit(void);
@@ -460,5 +461,9 @@ void FASTCALL SSH2InputCaptureWriteWord(u32 addr, u16 data);
 
 int SH2SaveState(SH2_struct *context, FILE *fp);
 int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
+
+#if defined(SH2_DYNAREC)
+extern SH2Interface_struct SH2Dynarec;
+#endif
 
 #endif

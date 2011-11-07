@@ -117,7 +117,7 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 
 void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ...) {
   va_list l;
-  static char strtmp[256];
+  static char strtmp[512];
   static int strhash;
   
   if (d == NULL)

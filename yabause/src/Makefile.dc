@@ -23,14 +23,17 @@ all: yabause.bin
 include $(KOS_BASE)/Makefile.rules
 
 KOS_CFLAGS += -I. -DDEBUG -DNO_CLI -DVERSION="0.9.10"
+KOS_ASFLAGS += -g
 
 OBJS = bios.o cdbase.o cheat.o cs0.o cs1.o cs2.o debug.o error.o m68kd.o \
  memory.o netlink.o peripheral.o profile.o scsp.o scu.o sh2core.o sh2idle.o \
  sh2int.o sh2d.o smpc.o vdp1.o vdp2.o yabause.o m68kcore.o coffelf.o \
- m68kc68k.o movie.o
+ m68kc68k.o movie.o snddummy.o
 C68K_OBJS = c68k/c68k.o c68k/c68kexec.o c68k/gen68k.o
 ARCH_OBJS = dreamcast/yui.o dreamcast/perdc.o dreamcast/viddc.o \
- dreamcast/localtime.o dreamcast/cd.o
+ dreamcast/localtime.o dreamcast/cd.o dreamcast/sh2rec/sh2rec.o \
+ dreamcast/sh2rec/sh2rec_htab.o dreamcast/sh2rec/sh2exec.o \
+ dreamcast/sh2rec/sh2rec_mem.o
 
 c68k/c68kexec.o: c68k/gen68k
 
@@ -39,17 +42,13 @@ c68k/gen68k: c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c
 	cd c68k && ./gen68k
 
 yabause.elf: $(OBJS) $(ARCH_OBJS) $(C68K_OBJS)
-	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) \
-	-o $@ $(KOS_START) $^ \
-	-lm $(KOS_LIBS)
+	kos-cc -o $@ $^ -lm
 
 yabause.bin: yabause.elf
 	$(KOS_OBJCOPY) -R .stack -O binary yabause.elf yabause.bin
 
 cdtest.elf: dreamcast/cd.o tools/cdtest.o
-	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) \
-	-o $@ $(KOS_START) $^ \
-	 $(KOS_LIBS)
+	kos-cc -o $@ $^
 
 cdtest.bin: cdtest.elf
 	$(KOS_OBJCOPY) -R .stack -O binary cdtest.elf cdtest.bin

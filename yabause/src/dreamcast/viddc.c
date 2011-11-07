@@ -21,8 +21,8 @@
 */
 
 #include "viddc.h"
-#include "debug.h"
-#include "vdp2.h"
+#include "../debug.h"
+#include "../vdp2.h"
 
 #include <dc/video.h>
 #include <dc/pvr.h>

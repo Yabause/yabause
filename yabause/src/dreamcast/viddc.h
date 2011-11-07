@@ -20,7 +20,7 @@
 #ifndef VIDDC_H
 #define VIDDC_H
 
-#include "vdp1.h"
+#include "../vdp1.h"
 
 #define VIDCORE_DC	3
 extern VideoInterface_struct VIDDC;

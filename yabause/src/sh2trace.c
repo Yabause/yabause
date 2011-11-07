@@ -66,8 +66,6 @@ FASTCALL void sh2_trace_add_cycles(s32 cycles)
 
 FASTCALL void sh2_trace_writeb(u32 address, u32 value)
 {
-    if (logfile) {
-        value &= 0xFF;
 #ifdef BINARY_LOG
         struct {
             u16 id;  // 1 = byte store
@@ -76,6 +74,10 @@ FASTCALL void sh2_trace_writeb(u32 address, u32 value)
             u32 value;
             u32 pad2;
         } buf;
+#endif
+    if (logfile) {
+        value &= 0xFF;
+#ifdef BINARY_LOG
         buf.id = 1;
         buf.pad1 = 0;
         buf.address = address;
@@ -93,8 +95,6 @@ FASTCALL void sh2_trace_writeb(u32 address, u32 value)
 
 FASTCALL void sh2_trace_writew(u32 address, u32 value)
 {
-    if (logfile) {
-        value &= 0xFFFF;
 #ifdef BINARY_LOG
         struct {
             u16 id;  // 2 = word store
@@ -103,6 +103,10 @@ FASTCALL void sh2_trace_writew(u32 address, u32 value)
             u32 value;
             u32 pad2;
         } buf;
+#endif
+    if (logfile) {
+        value &= 0xFFFF;
+#ifdef BINARY_LOG
         buf.id = 2;
         buf.pad1 = 0;
         buf.address = address;

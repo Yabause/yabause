@@ -26,9 +26,18 @@ const char*  __stdcall DXGetErrorString8A(HRESULT hr);
 const char*  __stdcall DXGetErrorDescription8A(HRESULT hr);
 #define DXGetErrorDescription8 DXGetErrorDescription8A
 #else
+#ifndef DXERRH_IS_BROKEN
 #include <dxerr9.h>
+
 #define DXGetErrorString8 DXGetErrorString9A 
 #define DXGetErrorDescription8 DXGetErrorDescription9A
+#else
+#include <dxerr.h>
+
+#define DXGetErrorString8 DXGetErrorStringA
+#define DXGetErrorDescription8 DXGetErrorDescriptionA
+
+#endif
 #endif
 
 #endif

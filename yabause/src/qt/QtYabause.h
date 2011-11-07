@@ -59,12 +59,14 @@ extern "C"
 
 class UIYabause;
 class Settings;
+class VolatileSettings;
 class QWidget;
 
 namespace QtYabause
 {
 	UIYabause* mainWindow();
 	Settings* settings();
+	VolatileSettings* volatileSettings();
 	int setTranslationFile();
 	int logTranslation();
 	void closeTranslation();

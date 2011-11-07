@@ -1,5 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
-    Copyright 2004-2008 Lawrence Sebald
+    Copyright 2004-2010 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -27,39 +27,41 @@
 #include <dc/maple/controller.h>
 #include <kos/fs.h>
 
-#include "yui.h"
-#include "peripheral.h"
-#include "cs0.h"
-#include "m68kcore.h"
-#include "m68kc68k.h"
-#include "dreamcast/perdc.h"
-#include "dreamcast/viddc.h"
+#include "../yui.h"
+#include "../peripheral.h"
+#include "../cs0.h"
+#include "../m68kcore.h"
+#include "../m68kc68k.h"
+#include "perdc.h"
+#include "viddc.h"
+#include "sh2rec/sh2rec.h"
 
 SH2Interface_struct *SH2CoreList[] = {
-&SH2Interpreter,
-NULL
+    &SH2Interpreter,
+    &SH2Dynarec,
+    NULL
 };
 
 PerInterface_struct *PERCoreList[] = {
-&PERDC,
-NULL
+    &PERDC,
+    NULL
 };
 
 CDInterface *CDCoreList[] = {
-&ArchCD,
-&DummyCD,
-NULL
+    &ArchCD,
+    &DummyCD,
+    NULL
 };
 
 SoundInterface_struct *SNDCoreList[] = {
-&SNDDummy,
-NULL
+    &SNDDummy,
+    NULL
 };
 
 VideoInterface_struct *VIDCoreList[] = {
-&VIDDummy,
-&VIDDC,
-NULL
+    &VIDDummy,
+    &VIDDC,
+    NULL
 };
 
 M68K_struct * M68KCoreList[] = {
@@ -74,11 +76,11 @@ M68K_struct * M68KCoreList[] = {
 static const char *bios = "/ram/saturn.bin";
 static int emulate_bios = 0;
 
-int YuiInit(void)   {
+int YuiInit(int sh2core)   {
     yabauseinit_struct yinit;
 
     yinit.percoretype = PERCORE_DC;
-    yinit.sh2coretype = SH2CORE_DEFAULT;
+    yinit.sh2coretype = sh2core;
     yinit.vidcoretype = VIDCORE_DC;
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.sndcoretype = SNDCORE_DUMMY;
@@ -114,7 +116,7 @@ void YuiSwapBuffers(void)   {
     /* Nothing here. */
 }
 
-void DoGui()  {
+int DoGui()  {
     struct coord    {
         int x;
         int y;
@@ -125,6 +127,7 @@ void DoGui()  {
     int offset;
     int start_pressed = 0;
     int phase = 0;
+    int core = SH2CORE_INTERPRETER;
 
     srand(time(NULL));
 
@@ -199,19 +202,33 @@ void DoGui()  {
 
                 start_pressed = 1;
             }
+
+            if(st->buttons & CONT_Y) {
+                core = SH2CORE_DYNAREC;
+
+                if(phase == 0)  {
+                    emulate_bios = 1;
+                }
+
+                start_pressed = 1;
+            }
         MAPLE_FOREACH_END()
 
         vid_waitvbl();
         vid_flip(1);
     }
+
+    return core;
 }
 
 int main(int argc, char *argv[])    {
+    int core;
+
     printf("...\n");
 
     bfont_set_encoding(BFONT_CODE_ISO8859_1);
-    DoGui();
-    YuiInit();
+    core = DoGui();
+    YuiInit(core);
 
     return 0;
 }

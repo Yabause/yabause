@@ -223,12 +223,12 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          } else {
             u32 counter = 0;
             while (counter < TransferSize) {
-               MappedMemoryWriteWord(WriteAddress,
-                                     MappedMemoryReadWord(ReadAddress));
+               u32 tmp = MappedMemoryReadLong(ReadAddress);
+               MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
                WriteAddress += WriteAdd;
-               MappedMemoryWriteWord(WriteAddress,
-                                     MappedMemoryReadWord(ReadAddress+2));
+               MappedMemoryWriteWord(WriteAddress, (u16)tmp);
                WriteAddress += WriteAdd;
+               ReadAddress += ReadAdd;
                counter += 4;
             }
          }

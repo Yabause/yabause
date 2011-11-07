@@ -17,6 +17,18 @@ yabause_CFLAGS = $(YAB_CFLAGS)
 yabause_LDADD = ../libyabause.a $(YAB_LIBS)
 yabause_CPPFLAGS = -DYTSDIR=\"$(datadir)/$(PACKAGE)/yts\"
 
+if ARCH_IS_LINUX
+if CPU_IS_X64
+yabause_CFLAGS += -DSH2_DYNAREC=1
+endif
+if CPU_IS_X86
+yabause_CFLAGS += -DSH2_DYNAREC=1
+endif
+if CPU_IS_ARM
+yabause_CFLAGS += -DSH2_DYNAREC=1 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp
+endif
+endif
+
 install-data-hook:
 	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
 		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \

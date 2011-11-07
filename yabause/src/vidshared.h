@@ -74,7 +74,22 @@ typedef struct
    int isverticalscroll;
    u32 verticalscrolltbl;
    int verticalscrollinc;
+   
+   // WindowMode
+   u8  LogicWin;    // Window Logic AND OR
+   u8  bEnWin0;     // Enable Window0
+   u8  bEnWin1;     // Enable Window1
+   u8  WindowArea0; // Window Area Mode 0
+   u8  WindowArea1; // Window Area Mode 1
+   
 } vdp2draw_struct;
+
+typedef struct 
+{
+   int  WinShowLine;
+	int WinHStart;
+	int WinHEnd;
+} vdp2WindowInfo;
 
 typedef struct
 {

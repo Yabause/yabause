@@ -24,7 +24,7 @@
 #include "../../cs0.h"
 #include "../../cs2.h"
 #include "../resource.h"
-#include "../yabause.h"
+#include "../../yabause.h"
 #include "settings.h"
 
 char biosfilename[MAX_PATH] = "\0";

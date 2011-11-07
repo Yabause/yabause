@@ -20,7 +20,7 @@
 #ifndef PERDC_H
 #define PERDC_H
 
-#include "peripheral.h"
+#include "../peripheral.h"
 
 #define PERCORE_DC 2
 

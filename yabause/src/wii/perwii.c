@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <ogcsys.h>
 #include <wiiuse/wpad.h>
+#include <ogc/ipc.h>
 #include "../peripheral.h"
 #include "../vdp1.h"
 #include "../vdp2.h"

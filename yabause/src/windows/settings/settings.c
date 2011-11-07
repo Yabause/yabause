@@ -204,3 +204,18 @@ INT_PTR SettingsCreatePropertySheets(HWND hParent, BOOL ismodal, psp_struct *psp
    psplist->psh.pfnCallback = NULL;
    return PropertySheet(&psplist->psh);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+#ifndef HAVE_LIBMINI18N
+
+LPWSTR _16(const char *string)
+{
+   static WCHAR wstring[1024];
+   MultiByteToWideChar(CP_ACP, MB_COMPOSITE, string, -1, wstring, sizeof(wstring) / sizeof(WCHAR));	
+   return wstring;
+}
+
+#endif
+
+

@@ -1322,6 +1322,7 @@ void ClearMenuChecks(HMENU hmenu, int startid, int endid)
 
 void ChangeLanguage(int id)
 {
+#ifdef HAVE_LIBMINI18N
    static char *langfiles[] = {
       "yabause_de.yts",
       "yabause_en.yts",
@@ -1341,6 +1342,7 @@ void ChangeLanguage(int id)
 
    ClearMenuChecks(YabMenu, IDM_GERMAN, IDM_SPANISH);
    CheckMenuItem(YabMenu, id, MF_CHECKED);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

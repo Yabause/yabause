@@ -429,7 +429,10 @@ static void SmpcINTBACK(void) {
       ScuSendSystemManager();
       return;
    }
-   if ((SmpcInternalVars->intbackIreg0 = SmpcRegs->IREG[0]) != 0) {
+
+   //we think rayman sets 0x40 so that it breaks the intback command immediately when it blocks, 
+   //rather than having to set 0x40 in response to an interrupt
+   if (SmpcInternalVars->intbackIreg0 = (SmpcRegs->IREG[0] & 1)) {
       // Return non-peripheral data
       SmpcInternalVars->firstPeri = 1;
       SmpcInternalVars->intback = (SmpcRegs->IREG[1] & 0x8) >> 3; // does the program want peripheral data too?

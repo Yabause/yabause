@@ -24,6 +24,10 @@
 #include <prsht.h>
 #include "../../core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
    char *string;
@@ -98,6 +102,14 @@ typedef struct
 
 BOOL CreatePropertySheet(psp_struct *psplist, LPCTSTR lpTemplate, LPCTSTR pszTitle, DLGPROC pfnDlgProc);
 INT_PTR SettingsCreatePropertySheets(HWND hParent, BOOL ismodal, psp_struct *psplist);
+
+#ifndef HAVE_LIBMINI18N
+LPWSTR _16(const char *string);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

@@ -73,6 +73,7 @@ AM_PROG_AS
 case "$target_cpu" in
 	x86|i?86)     yabause_cpu=x86; AC_DEFINE(CPU_X86);;
 	x86_64|amd64) yabause_cpu=x64; AC_DEFINE(CPU_X64);;
+	armv7*) yabause_cpu=arm; AC_DEFINE(CPU_ARM);;
 	*)            if test "$host_alias" = psp; then
 	                  yabause_cpu=psp; AC_DEFINE(CPU_PSP)
 	              else
@@ -584,6 +585,7 @@ AM_CONDITIONAL([ARCH_IS_MACOSX], [test ${yabause_arch} = "macosx"])
 AM_CONDITIONAL([ARCH_IS_NETBSD], [test ${yabause_arch} = "netbsd"])
 AM_CONDITIONAL([ARCH_IS_WINDOWS], [test ${yabause_arch} = "windows"])
 
+AM_CONDITIONAL([CPU_IS_ARM], [test ${yabause_cpu} = "arm"])
 AM_CONDITIONAL([CPU_IS_X86], [test ${yabause_cpu} = "x86"])
 AM_CONDITIONAL([CPU_IS_X64], [test ${yabause_cpu} = "x64"])
 AM_CONDITIONAL([CPU_IS_PSP], [test ${yabause_cpu} = "psp"])

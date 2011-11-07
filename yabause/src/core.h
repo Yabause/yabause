@@ -56,6 +56,14 @@
 #endif 
 #endif
 
+#ifdef GEKKO
+/* Wii have both stdint.h and "yabause" definitions of fixed
+size types */
+#include <gccore.h>
+typedef unsigned long pointer;
+
+#else /* ! GEKKO */
+
 #ifdef HAVE_STDINT_H
 
 #include <stdint.h>
@@ -71,7 +79,6 @@ typedef uintptr_t pointer;
 
 #else  // !HAVE_STDINT_H
 
-#ifndef GEKKO
 typedef unsigned char u8;
 typedef unsigned short u16;
 
@@ -111,13 +118,9 @@ typedef signed long s32;
 typedef signed long long s64;
 #endif
 
-#else
-// Gamecube/Wii
-#include <gccore.h>
-typedef unsigned long pointer;
-#endif
-
 #endif  // !HAVE_STDINT_H
+
+#endif // !GEKKO
 
 typedef struct {
 	unsigned int size;

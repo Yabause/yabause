@@ -1,0 +1,19 @@
+project(yabause)
+
+cmake_minimum_required(VERSION 2.8)
+
+set(YAB_VERSION_MAJOR 0)
+set(YAB_VERSION_MINOR 9)
+set(YAB_VERSION_PATCH 11)
+
+set(CPACK_SOURCE_GENERATOR TGZ)
+set(CPACK_PACKAGE_VERSION_MAJOR ${YAB_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${YAB_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${YAB_VERSION_PATCH})
+set(CPAKE_PACKAGE_VENDOR "Yabause team")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
+include(CPack)
+
+add_subdirectory(doc)
+add_subdirectory(l10n)
+add_subdirectory(src)

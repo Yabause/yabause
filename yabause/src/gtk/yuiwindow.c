@@ -61,6 +61,36 @@ static void yui_window_create_actions(YuiWindow * yw) {
 	action = gtk_action_new("quit", _("Quit"), NULL, "gtk-quit");
 	gtk_action_group_add_action_with_accel(yw->action_group, action, "<Ctrl>q");
 	g_signal_connect(action, "activate", G_CALLBACK(gtk_main_quit), yw);
+
+	taction = gtk_toggle_action_new("toggle_vdp1", _("VDP1"), NULL, NULL);
+	gtk_toggle_action_set_active(taction, TRUE);
+	gtk_action_group_add_action_with_accel(yw->action_group, GTK_ACTION(taction), NULL);
+	g_signal_connect(taction, "activate", G_CALLBACK(ToggleVDP1), NULL);
+
+	taction = gtk_toggle_action_new("toggle_nbg0", _("NBG0"), NULL, NULL);
+	gtk_toggle_action_set_active(taction, TRUE);
+	gtk_action_group_add_action_with_accel(yw->action_group, GTK_ACTION(taction), NULL);
+	g_signal_connect(taction, "activate", G_CALLBACK(ToggleNBG0), NULL);
+
+	taction = gtk_toggle_action_new("toggle_nbg1", _("NBG1"), NULL, NULL);
+	gtk_toggle_action_set_active(taction, TRUE);
+	gtk_action_group_add_action_with_accel(yw->action_group, GTK_ACTION(taction), NULL);
+	g_signal_connect(taction, "activate", G_CALLBACK(ToggleNBG1), NULL);
+
+	taction = gtk_toggle_action_new("toggle_nbg2", _("NBG2"), NULL, NULL);
+	gtk_toggle_action_set_active(taction, TRUE);
+	gtk_action_group_add_action_with_accel(yw->action_group, GTK_ACTION(taction), NULL);
+	g_signal_connect(taction, "activate", G_CALLBACK(ToggleNBG2), NULL);
+
+	taction = gtk_toggle_action_new("toggle_nbg3", _("NBG3"), NULL, NULL);
+	gtk_toggle_action_set_active(taction, TRUE);
+	gtk_action_group_add_action_with_accel(yw->action_group, GTK_ACTION(taction), NULL);
+	g_signal_connect(taction, "activate", G_CALLBACK(ToggleNBG3), NULL);
+
+	taction = gtk_toggle_action_new("toggle_rbg0", _("RBG0"), NULL, NULL);
+	gtk_toggle_action_set_active(taction, TRUE);
+	gtk_action_group_add_action_with_accel(yw->action_group, GTK_ACTION(taction), NULL);
+	g_signal_connect(taction, "activate", G_CALLBACK(ToggleRBG0), NULL);
 }
 
 GType yui_window_get_type (void) {

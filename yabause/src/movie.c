@@ -418,7 +418,7 @@ const char *MakeMovieStateName(const char *filename) {
 		if (!retbuf) {
 			return NULL;  // out of memory
 		}
-		snprintf(retbuf, newsize, "%smovie", filename);
+		sprintf(retbuf, "%smovie", filename);
 		return retbuf;
 	} else {
 		return filename;  // unchanged

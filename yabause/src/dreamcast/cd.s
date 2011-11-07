@@ -222,7 +222,7 @@ DCCDReadTOC:
     .data
     .align      4
     .globl      _ArchCD
-    .size       _ArchCD, 28
+    .size       _ArchCD, 32
 _ArchCD:
     .long       2
     .long       .CDInterfaceName

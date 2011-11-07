@@ -42,7 +42,7 @@
 #include "bios.h"
 #include "movie.h"
 #ifdef HAVE_LIBSDL
- #ifdef __APPLE__
+ #if defined(__APPLE__) || defined(GEKKO)
   #include <SDL/SDL.h>
  #else
   #include "SDL.h"
@@ -58,7 +58,6 @@
 #endif
 #ifdef GEKKO
 #include <ogc/lwp_watchdog.h>
-extern long long gettime();
 #endif
 #ifdef PSP
 #include "psp/common.h"
@@ -242,6 +241,12 @@ int YabauseInit(yabauseinit_struct *init)
 
    yabsys.usequickload = 0;
 
+   #if defined(SH2_DYNAREC)
+   if(SH2Core->id==2) {
+     sh2_dynarec_init();
+   }
+   #endif
+
    YabauseResetNoLoad();
 
    if (yabsys.usequickload || yabsys.emulatebios)
@@ -383,6 +388,9 @@ int YabauseExec(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifndef USE_SCSP2
+int saved_centicycles;
+#endif
 
 int YabauseEmulate(void) {
    int oneframeexec = 0;
@@ -394,6 +402,7 @@ int YabauseEmulate(void) {
 #ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
+   
    if (yabsys.IsPal)
    {
       /* 11.2896MHz / 50Hz / 313 lines / 10 calls/line = 72.20 cycles/call */
@@ -409,6 +418,16 @@ int YabauseEmulate(void) {
 #endif
 
    DoMovie();
+
+   #if defined(SH2_DYNAREC)
+   if(SH2Core->id==2) {
+     if (yabsys.IsPal)
+       YabauseDynarecOneFrameExec(722,0); // m68kcycles,m68kcenticycles
+     else
+       YabauseDynarecOneFrameExec(716,20);
+     return 0;
+   }
+   #endif
 
    while (!oneframeexec)
    {
@@ -542,7 +561,6 @@ int YabauseEmulate(void) {
 
 #ifndef USE_SCSP2
       {
-	 static int saved_centicycles;
          int cycles;
 
          PROFILE_START("68K");
@@ -850,6 +868,8 @@ int YabauseQuickLoadGame(void)
          lgpartition->numblocks = 0;
       }
 
+      SH2WriteNotify(0x6002000, blocks<<11);
+
       // Ok, now that we've loaded the ip, now it's time to load the
       // First Program
 
@@ -919,6 +939,8 @@ int YabauseQuickLoadGame(void)
          lgpartition->blocknum[lgpartition->numblocks - 1] = 0xFF;
          lgpartition->numblocks = 0;
       }
+
+      SH2WriteNotify(addr, blocks<<11);
 
       // Now setup SH2 registers to start executing at ip code
       SH2GetRegisters(MSH2, &MSH2->regs);

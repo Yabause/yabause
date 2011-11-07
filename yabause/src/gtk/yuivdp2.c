@@ -26,6 +26,9 @@
 #include "settings.h"
 #include "../vdp2debug.h"
 
+static void yui_vdp2_sync(GtkAction * action, YuiVdp2 * yv);
+static const char * yui_vdp2_action_names[] = { NULL, "toggle_nbg0", "toggle_nbg1", "toggle_nbg2", "toggle_nbg3", "toggle_rbg0" };
+
 static void yui_vdp2_class_init	(YuiVdp2Class * klass);
 static void yui_vdp2_init		(YuiVdp2      * yfe);
 static void yui_vdp2_clear(YuiVdp2 * vdp2);
@@ -59,6 +62,37 @@ GType yui_vdp2_get_type (void) {
 static void yui_vdp2_class_init (UNUSED YuiVdp2Class * klass) {
 }
 
+static void yui_vdp2_toggle(GtkCellRendererToggle * crt, const gchar * path, YuiVdp2 * yv) {
+	int val;
+	GtkAction * action = NULL;
+
+	sscanf(path, "%d", &val);
+	if (! yui_vdp2_action_names[val]) return;
+
+	action = gtk_action_group_get_action(yv->yui->action_group, yui_vdp2_action_names[val]);
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(action), ! gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(action)));
+}
+
+static void yui_vdp2_sync(GtkAction * action, YuiVdp2 * yv) {
+	GtkTreeIter iter;
+    const gchar * name;
+
+    name = gtk_action_get_name(action) + 7;
+
+    if (!strcmp("nbg0", name))
+	    gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(yv->store), &iter, "1");
+    else if (!strcmp("nbg1", name))
+	    gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(yv->store), &iter, "2");
+    else if (!strcmp("nbg2", name))
+	    gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(yv->store), &iter, "3");
+    else if (!strcmp("nbg3", name))
+	    gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(yv->store), &iter, "4");
+    else if (!strcmp("rbg0", name))
+	    gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(yv->store), &iter, "5");
+
+	gtk_list_store_set(yv->store, &iter, 1, gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(action)), -1);
+}
+
 static void yui_vdp2_init (YuiVdp2 * yv) {
 	GtkWidget * text;
 	GtkWidget * scroll;
@@ -81,7 +115,7 @@ static void yui_vdp2_init (YuiVdp2 * yv) {
 	hpane = gtk_hpaned_new();
 	gtk_container_add(GTK_CONTAINER(box), hpane);
 
-	yv->store = gtk_list_store_new(1, G_TYPE_STRING);
+	yv->store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	view = gtk_tree_view_new_with_model(GTK_TREE_MODEL (yv->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
 	{
@@ -94,6 +128,12 @@ static void yui_vdp2_init (YuiVdp2 * yv) {
 
 		renderer = gtk_cell_renderer_text_new();
 		column = gtk_tree_view_column_new_with_attributes("Command", renderer, "text", 0, NULL);
+		gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
+
+		renderer = gtk_cell_renderer_toggle_new();
+		gtk_cell_renderer_toggle_set_activatable(GTK_CELL_RENDERER_TOGGLE(renderer), TRUE);
+		g_signal_connect(renderer, "toggled", G_CALLBACK(yui_vdp2_toggle), yv);
+		column = gtk_tree_view_column_new_with_attributes("Command", renderer, "active", 1, NULL);
 		gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
 
 		gtk_container_add(GTK_CONTAINER(scroll), view);
@@ -130,6 +170,7 @@ static void yui_vdp2_init (YuiVdp2 * yv) {
 GtkWidget * yui_vdp2_new(YuiWindow * y) {
 	GtkWidget * dialog;
 	YuiVdp2 * yv;
+	int i;
 	
 	dialog = GTK_WIDGET(g_object_new(yui_vdp2_get_type(), NULL));
 	yv = YUI_VDP2(dialog);	
@@ -154,6 +195,16 @@ GtkWidget * yui_vdp2_new(YuiWindow * y) {
 	}
 	yv->paused_handler = g_signal_connect_swapped(yv->yui, "paused", G_CALLBACK(yui_vdp2_update), yv);
 	yv->running_handler = g_signal_connect_swapped(yv->yui, "running", G_CALLBACK(yui_vdp2_clear), yv);
+
+	for(i = 0;i < (sizeof(yui_vdp2_action_names) / sizeof(yui_vdp2_action_names[0]));i++) {
+		GtkAction * action;
+
+		if (! yui_vdp2_action_names[i]) continue;
+
+		action = gtk_action_group_get_action(yv->yui->action_group, yui_vdp2_action_names[i]);
+		yui_vdp2_sync(action, yv);
+		g_signal_connect(action, "toggled", G_CALLBACK(yui_vdp2_sync), yv);
+	}
 
 	if ((yv->yui->state & (YUI_IS_RUNNING | YUI_IS_INIT)) == YUI_IS_INIT)
 		yui_vdp2_update(yv);

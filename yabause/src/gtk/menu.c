@@ -159,35 +159,12 @@ GtkWidget* create_menu(YuiWindow * window1) {
   layer1_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (layer1), layer1_menu);
 
-  vdp3 = gtk_check_menu_item_new_with_mnemonic ("Vdp1");
-  gtk_container_add (GTK_CONTAINER (layer1_menu), vdp3);
-  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (vdp3), TRUE);
-  g_signal_connect(vdp3, "activate", G_CALLBACK(ToggleVDP1), 0);
-
-  nbg1 = gtk_check_menu_item_new_with_mnemonic ("NBG0");
-  gtk_container_add (GTK_CONTAINER (layer1_menu), nbg1);
-  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (nbg1), TRUE);
-  g_signal_connect(nbg1, "activate", G_CALLBACK(ToggleNBG0), 0);
-
-  nbg2 = gtk_check_menu_item_new_with_mnemonic ("NBG1");
-  gtk_container_add (GTK_CONTAINER (layer1_menu), nbg2);
-  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (nbg2), TRUE);
-  g_signal_connect(nbg2, "activate", G_CALLBACK(ToggleNBG1), 0);
-
-  nbg3 = gtk_check_menu_item_new_with_mnemonic ("NBG2");
-  gtk_container_add (GTK_CONTAINER (layer1_menu), nbg3);
-  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (nbg3), TRUE);
-  g_signal_connect(nbg3, "activate", G_CALLBACK(ToggleNBG2), 0);
-
-  nbg4 = gtk_check_menu_item_new_with_mnemonic ("NBG3");
-  gtk_container_add (GTK_CONTAINER (layer1_menu), nbg4);
-  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (nbg4), TRUE);
-  g_signal_connect(nbg4, "activate", G_CALLBACK(ToggleNBG3), 0);
-
-  rbg1 = gtk_check_menu_item_new_with_mnemonic ("RBG1");
-  gtk_container_add (GTK_CONTAINER (layer1_menu), rbg1);
-  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (rbg1), TRUE);
-  g_signal_connect(rbg1, "activate", G_CALLBACK(ToggleRBG0), 0);
+  gtk_container_add(GTK_CONTAINER(layer1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "toggle_vdp1")));
+  gtk_container_add(GTK_CONTAINER(layer1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "toggle_nbg0")));
+  gtk_container_add(GTK_CONTAINER(layer1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "toggle_nbg1")));
+  gtk_container_add(GTK_CONTAINER(layer1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "toggle_nbg2")));
+  gtk_container_add(GTK_CONTAINER(layer1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "toggle_nbg3")));
+  gtk_container_add(GTK_CONTAINER(layer1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "toggle_rbg0")));
 
   gtk_container_add(GTK_CONTAINER(view1_menu), gtk_action_create_menu_item(gtk_action_group_get_action(window1->action_group, "fullscreen")));
 

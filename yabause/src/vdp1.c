@@ -118,6 +118,7 @@ void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 Vdp1 * Vdp1Regs;
+Vdp1External_struct Vdp1External;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -132,7 +133,7 @@ int Vdp1Init(void) {
    if ((Vdp1FrameBuffer = T1MemoryInit(0x80000)) == NULL)
       return -1;
 
-   Vdp1Regs->disptoggle = 1;
+   Vdp1External.disptoggle = 1;
 
    return 0;
 }
@@ -312,7 +313,7 @@ void Vdp1Draw(void) {
    if (!Vdp1Regs->PTMR)
       return;
 
-   if (!Vdp1Regs->disptoggle)
+   if (!Vdp1External.disptoggle)
    {
       Vdp1NoDraw();
       return;
@@ -1258,7 +1259,7 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
 
 void ToggleVDP1(void)
 {
-   Vdp1Regs->disptoggle ^= 1;
+   Vdp1External.disptoggle ^= 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////

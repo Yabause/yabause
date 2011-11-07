@@ -2,6 +2,7 @@
     Copyright 2004-2005 Theo Berkau
     Copyright 2005 Weston Yager
     Copyright 2006-2008 Guillaume Duhamel
+    Copyright 2010 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -186,12 +187,35 @@ static int MacOSXCDGetStatus(void)
 
 static int MacOSXCDReadSectorFAD(u32 FAD, void *buffer) 
 {
-	int blockSize = 2352;
+	const int blockSize = 2352;
+#ifdef CRAB_REWRITE
+    const int cacheBlocks = 32;
+    static u8 cache[blockSize * cacheBlocks];
+    static u32 cacheFAD = 0xFFFFFF00;
+#endif
 	
 	if (hCDROM != -1) 
 	{
+#ifdef CRAB_REWRITE
+        /* See if the block we are looking for is in the cache already... */
+        if(FAD < cacheFAD || FAD >= cacheFAD + cacheBlocks) {
+            /* Cache miss, read some blocks from the cd, then we'll hit the
+               cache below. */
+            if(!pread(hCDROM, cache, blockSize * cacheBlocks,
+                      (FAD - 150) * blockSize)) {
+                return 0;
+            }
+
+            cacheFAD = FAD;
+        }
+
+        /* Cache hit, copy the block out. */
+        memcpy(buffer, cache + (blockSize * (FAD - cacheFAD)), blockSize);
+        return 1;
+#else
 		if (pread(hCDROM, buffer, blockSize, (FAD - 150) * blockSize))
 			return true;
+#endif
 	}
 	
 	return false;

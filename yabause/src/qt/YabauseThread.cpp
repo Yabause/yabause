@@ -20,6 +20,7 @@
 */
 #include "YabauseThread.h"
 #include "Settings.h"
+#include "VolatileSettings.h"
 #include "ui/UIPortManager.h"
 #include "ui/UIYabause.h"
 
@@ -46,6 +47,17 @@ void YabauseThread::startEmulation()
 	mPause = true;
 	reloadSettings();
 	initEmulation();
+
+	VolatileSettings * vsettings = QtYabause::volatileSettings();
+
+	if (vsettings->value("autostart").toBool())
+	{
+		runEmulation();
+		if (vsettings->value("autostart/binary").toBool())
+			MappedMemoryLoadExec(
+				vsettings->value("autostart/binary/filename").toString().toLocal8Bit().constData(),
+				vsettings->value("autostart/binary/address").toUInt());
+	}
 }
 
 void YabauseThread::stopEmulation()
@@ -74,6 +86,9 @@ bool YabauseThread::runEmulation()
 	mPause = false;
 	mTimerId = startTimer( 0 );
 	ScspUnMuteAudio();
+
+	emit run();
+
 	return true;
 }
 
@@ -83,6 +98,8 @@ void YabauseThread::pauseEmulation()
 	mRunning = true;
 	killTimer( mTimerId );
 	ScspMuteAudio();
+
+	emit pause();
 }
 
 bool YabauseThread::resetEmulation( bool fullreset )
@@ -105,6 +122,9 @@ bool YabauseThread::resetEmulation( bool fullreset )
 		return false;
 	if ( fullreset )
 		YabauseReset();
+
+	emit reset();
+
 	return true;
 }
 
@@ -161,6 +181,7 @@ void YabauseThread::reloadSettings()
 	//QMutexLocker l( &mMutex );
 	// get settings pointer
 	Settings* s = QtYabause::settings();
+	VolatileSettings* vs = QtYabause::volatileSettings();
 	
 	// reset yabause conf
 	resetYabauseConf();
@@ -171,7 +192,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.sh2coretype = s->value( "Advanced/SH2Interpreter", mYabauseConf.sh2coretype ).toInt();
 	mYabauseConf.vidcoretype = s->value( "Video/VideoCore", mYabauseConf.vidcoretype ).toInt();
 	mYabauseConf.sndcoretype = s->value( "Sound/SoundCore", mYabauseConf.sndcoretype ).toInt();
-	mYabauseConf.cdcoretype = s->value( "General/CdRom", mYabauseConf.cdcoretype ).toInt();
+	mYabauseConf.cdcoretype = vs->value( "General/CdRom", mYabauseConf.cdcoretype ).toInt();
 	mYabauseConf.carttype = s->value( "Cartridge/Type", mYabauseConf.carttype ).toInt();
 	const QString r = s->value( "Advanced/Region", mYabauseConf.regionid ).toString();
 	if ( r.isEmpty() || r == "Auto" )
@@ -190,15 +211,15 @@ void YabauseThread::reloadSettings()
 			case 'L': mYabauseConf.regionid = 0xD; break;
 		}
 	}
-	mYabauseConf.biospath = strdup( s->value( "General/Bios", mYabauseConf.biospath ).toString().toAscii().constData() );
-	mYabauseConf.cdpath = strdup( s->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toAscii().constData() );
+	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toAscii().constData() );
+	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toAscii().constData() );
 	mYabauseConf.buppath = strdup( s->value( "Memory/Path", mYabauseConf.buppath ).toString().toAscii().constData() );
 	mYabauseConf.mpegpath = strdup( s->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toAscii().constData() );
 	mYabauseConf.cartpath = strdup( s->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toAscii().constData() );
 	mYabauseConf.videoformattype = s->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
 	
 	emit requestSize( QSize( s->value( "Video/Width", 0 ).toInt(), s->value( "Video/Height", 0 ).toInt() ) );
-	emit requestFullscreen( s->value( "Video/Fullscreen", false ).toBool() );
+	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 
 	reloadControllers();
 }

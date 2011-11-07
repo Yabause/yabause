@@ -92,6 +92,9 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
 	connect( mYabauseThread, SIGNAL( error( const char* ) ), this, SLOT( appendLog( const char* ) ) );
+	connect( mYabauseThread, SIGNAL( pause() ), this, SLOT( pause() ) );
+	connect( mYabauseThread, SIGNAL( reset() ), this, SLOT( reset() ) );
+	connect( mYabauseThread, SIGNAL( run() ), this, SLOT( run() ) );
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
 }
@@ -349,25 +352,13 @@ void UIYabause::on_aFileQuit_triggered()
 void UIYabause::on_aEmulationRun_triggered()
 {
 	if ( mYabauseThread->emulationPaused() )
-	{
-		if ( mYabauseThread->runEmulation() )
-		{
-			aEmulationRun->setEnabled( false );
-			aEmulationPause->setEnabled( true );
-			aEmulationReset->setEnabled( true );
-		}
-	}
+		mYabauseThread->runEmulation();
 }
 
 void UIYabause::on_aEmulationPause_triggered()
 {
 	if ( !mYabauseThread->emulationPaused() )
-	{
-		aEmulationRun->setEnabled( true );
-		aEmulationPause->setEnabled( false );
-		aEmulationReset->setEnabled( true );
 		mYabauseThread->pauseEmulation();
-	}
 }
 
 void UIYabause::on_aEmulationReset_triggered()
@@ -487,4 +478,23 @@ void UIYabause::on_cbVideoDriver_currentIndexChanged( int id )
 		if ( VideoChangeCore( core->id ) == 0 )
 			mYabauseGL->updateView( mYabauseGL->size() );
 	}
+}
+
+void UIYabause::pause()
+{
+	aEmulationRun->setEnabled( true );
+	aEmulationPause->setEnabled( false );
+	aEmulationReset->setEnabled( true );
+}
+
+void UIYabause::reset()
+{
+	mYabauseGL->updateView( mYabauseGL->size() );
+}
+
+void UIYabause::run()
+{
+	aEmulationRun->setEnabled( false );
+	aEmulationPause->setEnabled( true );
+	aEmulationReset->setEnabled( true );
 }

@@ -94,7 +94,7 @@ typedef struct {
    u16 MODR;
 
    u32 addr;
-   int disptoggle;
+   int disptoggle_dont_use_me; // not used anymore, see Vdp1External_struct
 
    u16 localX;
    u16 localY;
@@ -111,6 +111,13 @@ typedef struct {
 } Vdp1;
 
 extern Vdp1 * Vdp1Regs;
+
+// struct for Vdp1 part that shouldn't be saved
+typedef struct {
+   int disptoggle;
+} Vdp1External_struct;
+
+extern Vdp1External_struct Vdp1External;
 
 typedef struct
 {

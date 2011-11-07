@@ -27,7 +27,7 @@
 
 SH2_struct *MSH2=NULL;
 SH2_struct *SSH2=NULL;
-static SH2_struct *CurrentSH2;
+SH2_struct *CurrentSH2;
 SH2Interface_struct *SH2Core=NULL;
 extern SH2Interface_struct *SH2CoreList[];
 
@@ -136,7 +136,7 @@ void SH2Reset(SH2_struct *context)
    SH2Core->SetInterrupts(context, 0, context->interrupts);
 
    // Core specific reset
-   SH2Core->Reset();
+   SH2Core->Reset(context);
 
    // Reset Onchip modules
    OnchipReset(context);
@@ -868,22 +868,66 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
       case 0x005:
 //         LOG("Receive Data Register read: %02X PC = %08X\n", CurrentSH2->onchip.RDR, SH2Core->GetPC(CurrentSH2));
          return CurrentSH2->onchip.RDR;
+      case 0x010:
+         return CurrentSH2->onchip.TIER;
       case 0x011:
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
          return CurrentSH2->onchip.FRC.part.H;
       case 0x013:
          return CurrentSH2->onchip.FRC.part.L;
+      case 0x014:
+         if (!(CurrentSH2->onchip.TOCR & 0x10))
+            return CurrentSH2->onchip.OCRA >> 8;
+         else
+            return CurrentSH2->onchip.OCRB >> 8;
+      case 0x015:
+         if (!(CurrentSH2->onchip.TOCR & 0x10))
+            return CurrentSH2->onchip.OCRA & 0xFF;
+         else
+            return CurrentSH2->onchip.OCRB & 0xFF;
       case 0x016:
          return CurrentSH2->onchip.TCR;
       case 0x017:
          return CurrentSH2->onchip.TOCR;
+      case 0x018:
+         return CurrentSH2->onchip.FICR >> 8;
+      case 0x019:
+         return CurrentSH2->onchip.FICR & 0xFF;
+      case 0x060:
+         return CurrentSH2->onchip.IPRB >> 8;
+      case 0x062:
+         return CurrentSH2->onchip.VCRA >> 8;
+      case 0x063:
+         return CurrentSH2->onchip.VCRA & 0xFF;
+      case 0x064:
+         return CurrentSH2->onchip.VCRB >> 8;
+      case 0x065:
+         return CurrentSH2->onchip.VCRB & 0xFF;
+      case 0x066:
+         return CurrentSH2->onchip.VCRC >> 8;
+      case 0x067:
+         return CurrentSH2->onchip.VCRC & 0xFF;
+      case 0x068:
+         return CurrentSH2->onchip.VCRD >> 8;
       case 0x080:
          return CurrentSH2->onchip.WTCSR;
       case 0x081:
          return CurrentSH2->onchip.WTCNT;
       case 0x092:
          return CurrentSH2->onchip.CCR;
+      case 0x0E0:
+         return CurrentSH2->onchip.ICR >> 8;
+      case 0x0E1:
+         return CurrentSH2->onchip.ICR & 0xFF;
+      case 0x0E2:
+         return CurrentSH2->onchip.IPRA >> 8;
+      case 0x0E3:
+         return CurrentSH2->onchip.IPRA & 0xFF;
+      case 0x0E4:
+         return CurrentSH2->onchip.VCRWDT >> 8;
+      case 0x0E5:
+         return CurrentSH2->onchip.VCRWDT & 0xFF;
       default:
          LOG("Unhandled Onchip byte read %08X\n", (int)addr);
          break;
@@ -899,10 +943,34 @@ u16 FASTCALL OnchipReadWord(u32 addr) {
    {
       case 0x060:
          return CurrentSH2->onchip.IPRB;
+      case 0x062:
+         return CurrentSH2->onchip.VCRA;
+      case 0x064:
+         return CurrentSH2->onchip.VCRB;
+      case 0x066:
+         return CurrentSH2->onchip.VCRC;
+      case 0x068:
+         return CurrentSH2->onchip.VCRD;
       case 0x0E0:
          return CurrentSH2->onchip.ICR;
       case 0x0E2:
          return CurrentSH2->onchip.IPRA;
+      case 0x0E4:
+         return CurrentSH2->onchip.VCRWDT;
+      case 0x1E2: // real BCR1 register is located at 0x1E2-0x1E3; Sega Rally OK
+         return CurrentSH2->onchip.BCR1;
+      case 0x1E6:
+         return CurrentSH2->onchip.BCR2;
+      case 0x1EA:
+         return CurrentSH2->onchip.WCR;
+      case 0x1EE:
+         return CurrentSH2->onchip.MCR;
+      case 0x1F2:
+         return CurrentSH2->onchip.RTCSR;
+      case 0x1F6:
+         return CurrentSH2->onchip.RTCNT;
+      case 0x1FA:
+         return CurrentSH2->onchip.RTCOR;
       default:
          LOG("Unhandled Onchip word read %08X\n", (int)addr);
          return 0;
@@ -940,14 +1008,42 @@ u32 FASTCALL OnchipReadLong(u32 addr) {
       case 0x11C: // Acts as a separate register, but is set to the same value
       case 0x13C: // as DVDNTL after division
          return CurrentSH2->onchip.DVDNTUL;
+      case 0x180:
+         return CurrentSH2->onchip.SAR0;
+      case 0x184:
+         return CurrentSH2->onchip.DAR0;
+      case 0x188:
+         return CurrentSH2->onchip.TCR0;
       case 0x18C:
          return CurrentSH2->onchip.CHCR0;
+      case 0x190:
+         return CurrentSH2->onchip.SAR1;
+      case 0x194:
+         return CurrentSH2->onchip.DAR1;
+      case 0x198:
+         return CurrentSH2->onchip.TCR1;
       case 0x19C:
          return CurrentSH2->onchip.CHCR1;
+      case 0x1A0:
+         return CurrentSH2->onchip.VCRDMA0;
+      case 0x1A8:
+         return CurrentSH2->onchip.VCRDMA1;
       case 0x1B0:
          return CurrentSH2->onchip.DMAOR;
       case 0x1E0:
          return CurrentSH2->onchip.BCR1;
+      case 0x1E4:
+         return CurrentSH2->onchip.BCR2;
+      case 0x1E8:
+         return CurrentSH2->onchip.WCR;
+      case 0x1EC:
+         return CurrentSH2->onchip.MCR;
+      case 0x1F0:
+         return CurrentSH2->onchip.RTCSR;
+      case 0x1F4:
+         return CurrentSH2->onchip.RTCNT;
+      case 0x1F8:
+         return CurrentSH2->onchip.RTCOR;
       default:
          LOG("Unhandled Onchip long read %08X\n", (int)addr);
          return 0;
@@ -1112,6 +1208,18 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
       case 0x060:
          CurrentSH2->onchip.IPRB = val & 0xFF00;
          return;
+      case 0x062:
+         CurrentSH2->onchip.VCRA = val & 0x7F7F;
+         return;
+      case 0x064:
+         CurrentSH2->onchip.VCRB = val & 0x7F7F;
+         return;
+      case 0x066:
+         CurrentSH2->onchip.VCRC = val & 0x7F7F;
+         return;
+      case 0x068:
+         CurrentSH2->onchip.VCRD = val & 0x7F7F;
+         return;
       case 0x080:
          // This and RSTCSR have got to be the most wackiest register
          // mappings I've ever seen
@@ -1174,6 +1282,9 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
          return;
       case 0x0E2:
          CurrentSH2->onchip.IPRA = val & 0xFFF0;
+         return;
+      case 0x0E4:
+         CurrentSH2->onchip.VCRWDT = val & 0x7F7F;
          return;
       case 0x108:
       case 0x128:
@@ -1662,6 +1773,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
             *TCR = 0;
             break;
       }
+      SH2WriteNotify(destInc<0?*DAR:*DAR-i*destInc,i*abs(destInc));
    }
 
    if (*CHCR & 0x4)
@@ -1801,6 +1913,16 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
    yread(&check, (void *)&context->isslave, sizeof(u8), 1, fp);
    yread(&check, (void *)&context->isIdle, sizeof(u8), 1, fp);
    yread(&check, (void *)&context->instruction, sizeof(u16), 1, fp);
+
+   #if defined(SH2_DYNAREC)
+   if(SH2Core->id==2) {
+     invalidate_all_pages();
+     if (context->isslave == 1) {
+       // If the slave SH2 isn't running, make sure the dynarec stops it
+       if(!yabsys.IsSSH2Running) SH2Core->Reset(SSH2);
+     }
+   }
+   #endif
 
    return size;
 }

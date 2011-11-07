@@ -91,6 +91,8 @@ int PERMacJoyInit(void) {
     }
 
     initted = 1;
+
+    return 0;
 }
 
 void PERMacJoyDeInit(void)  {
@@ -239,5 +241,5 @@ void PERMacJoyFlush(void)   {
 }
 
 void PERMacJoyKeyName(u32 key, char *name, int size)    {
-    snprintf(name, size, "%x", key);
+    snprintf(name, size, "%x", (unsigned int)key);
 }
