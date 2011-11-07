@@ -1,11 +1,10 @@
 SUBDIRS = doc
 Applicationsdir = $(datadir)/applications
-Applications_DATA = yabause.desktop
 pixmapdir = $(datadir)/pixmaps
 pixmap_DATA = resources/icons/yabause.png
 EXTRA_DIST = CommonDialogs.cpp CommonDialogs.h \
 	main.cpp PerQt.c PerQt.h \
-	QtYabause.cpp QtYabause.h Settings.cpp Settings.h yabause.desktop \
+	QtYabause.cpp QtYabause.h Settings.cpp Settings.h \
 	YabauseGL.cpp YabauseGL.h yabause.pro.in YabauseThread.cpp YabauseThread.h \
 	mkspecs/win32-osx-g++/qmake.conf mkspecs/win32-osx-g++/qplatformdefs.h \
 	mkspecs/win32-x11-g++/qmake.conf mkspecs/win32-x11-g++/qplatformdefs.h \
@@ -56,30 +55,4 @@ uninstall-local: Makefile.qmake
 		mv "$$dest" "$(DESTDIR)$(bindir)/yabause" ; \
 	fi
 	$(MAKE) -f Makefile.qmake release-uninstall INSTALL_ROOT=$(DESTDIR)
-
-install-data-hook:
-	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
-		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
-		fbase=`basename "$$f" $$fext` ; \
-		fdir=`dirname "$$f"` ; \
-		fdest="$$fdir"/`echo "$$fbase" | sed '$(transform)'`$$fext ; \
-		if test \( -e "$$f" \) -a \( ! "$$f" = "$$fdest" \) ; then \
-			echo " mv $$f $$fdest" ; \
-			mv "$$f" "$$fdest" ; \
-		fi ; \
-		nn=`echo yabause | sed '$(transform)'` ; \
-		ftmp=/tmp/$$RANDOM ; \
-		sed "s/Exec=yabause/Exec=$$nn/" $$fdest > $$ftmp ; \
-		mv $$ftmp $$fdest ; \
-	done
-
-uninstall-hook:
-	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
-		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
-		fbase=`basename "$$f" $$fext` ; \
-		fdir=`dirname "$$f"` ; \
-		fdest="$$fdir"/`echo "$$fbase" | sed '$(transform)'`$$fext ; \
-		echo " rm -f $$fdest" ; \
-		rm -f "$$fdest" ; \
-	done
 endif

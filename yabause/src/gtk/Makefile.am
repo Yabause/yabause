@@ -1,10 +1,9 @@
 SUBDIRS = doc
 Applicationsdir = $(datadir)/applications
-Applications_DATA = yabause.desktop
 pixmapdir = $(datadir)/pixmaps
 pixmap_DATA = yabause.png
 bin_PROGRAMS = yabause
-EXTRA_DIST = yabause.desktop yabause.png
+EXTRA_DIST = yabause.png
 
 yabause_SOURCES = gtkglwidget.c gtkglwidget.h main.c settings.c menu.c gtk-compat.c gtk-compat.h \
 	yuifileentry.c yuifileentry.h yuirange.c yuirange.h yuiinputentry.c yuiinputentry.h yuipage.c yuipage.h \
@@ -28,29 +27,3 @@ if CPU_IS_ARM
 yabause_CFLAGS += -DSH2_DYNAREC=1 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp
 endif
 endif
-
-install-data-hook:
-	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
-		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
-		fbase=`basename "$$f" $$fext` ; \
-		fdir=`dirname "$$f"` ; \
-		fdest="$$fdir"/`echo "$$fbase" | sed '$(transform)'`$$fext ; \
-		if test \( -e "$$f" \) -a \( ! "$$f" = "$$fdest" \) ; then \
-			echo " mv $$f $$fdest" ; \
-			mv "$$f" "$$fdest" ; \
-		fi ; \
-		nn=`echo yabause | sed '$(transform)'` ; \
-		ftmp=/tmp/$$RANDOM ; \
-		sed "s/Exec=yabause/Exec=$$nn/" $$fdest > $$ftmp ; \
-		mv $$ftmp $$fdest ; \
-	done
-
-uninstall-hook:
-	@for f in "$(DESTDIR)$(Applicationsdir)/yabause.desktop" ; do \
-		fext=`echo $$f | sed 's,.\+\(\.[^.]\+\)$$,\1,'` ; \
-		fbase=`basename "$$f" $$fext` ; \
-		fdir=`dirname "$$f"` ; \
-		fdest="$$fdir"/`echo "$$fbase" | sed '$(transform)'`$$fext ; \
-		echo " rm -f $$fdest" ; \
-		rm -f "$$fdest" ; \
-	done
