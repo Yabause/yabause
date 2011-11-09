@@ -727,6 +727,20 @@ void ll_add(struct ll_entry **head,int vaddr,void *addr)
   *head=new_entry;
 }
 
+// Add to linked list only if there is not an existing record
+void ll_add_nodup(struct ll_entry **head,int vaddr,void *addr)
+{
+  struct ll_entry *ptr;
+  ptr=*head;
+  while(ptr!=NULL) {
+    if(ptr->vaddr==vaddr) {
+      return;
+    }
+    ptr=ptr->next;
+  }
+  ll_add(head,vaddr,addr);
+}
+
 // Check if an address is already compiled
 // but don't return addresses which are about to expire from the cache
 void *check_addr(u32 vaddr)
@@ -1060,7 +1074,7 @@ void clean_blocks(u32 page)
               inv_debug("INV: Restored %x (%x/%x)\n",head->vaddr, (int)head->addr, (int)clean_addr);
               //printf("page=%x, addr=%x\n",page,head->vaddr);
               //assert(head->vaddr>>12==(page|0x80000));
-              ll_add(jump_in+page,head->vaddr,clean_addr);
+              ll_add_nodup(jump_in+page,head->vaddr,clean_addr);
               int *ht_bin=hash_table[((head->vaddr>>16)^head->vaddr)&0xFFFF];
               if(ht_bin[0]==head->vaddr) {
                 ht_bin[1]=(int)clean_addr; // Replace existing entry
@@ -7932,7 +7946,7 @@ int sh2_recompile_block(int addr)
         assem_debug("jump_in: %x\n",start+i*2);
         ll_add(jump_dirty+page,vaddr,(void *)out);
         int entry_point=do_dirty_stub(i);
-        ll_add(jump_in+page,vaddr,(void *)entry_point);
+        ll_add_nodup(jump_in+page,vaddr,(void *)entry_point);
         if((itype[i]==CJUMP||itype[i]==SJUMP)&&ccstub_return[i]) set_jump_target(ccstub_return[i],entry_point);
 
         // If there was an existing entry in the hash table,
