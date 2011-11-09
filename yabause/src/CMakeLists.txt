@@ -340,7 +340,6 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 	set(CMAKE_C_FLAGS "-O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 
-set(YAB_VERSION "${YAB_VERSION_MAJOR}.${YAB_VERSION_MINOR}.${YAB_VERSION_PATCH}")
 add_definitions(-DPACKAGE=\"yabause\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
