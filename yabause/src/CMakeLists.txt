@@ -166,18 +166,6 @@ if (WIN32)
 	set(yabause_SOURCES ${yabause_SOURCES} cd-windows.c)
 endif (WIN32)
 
-# MinGW ddk
-if ( WIN32 AND MINGW )
-	# Find ntddcdrm.h
-	check_include_file("ddk/ntddcdrm.h" NTDDCDRM_H_FOUND)
-	
-	if ( NOT NTDDCDRM_H_FOUND )
-		message(STATUS "Could not find ddk/ntddcdrm.h")
-	endif ( NOT NTDDCDRM_H_FOUND )
-	
-	set(yabause_SOURCES ${yabause_SOURCES} cd-windows.c)
-endif ( WIN32 AND MINGW )
-
 if (WII)
 	set(CMAKE_C_FLAGS "-mrvl -mcpu=750 -meabi -mhard-float")
 	add_definitions(-DGEKKO=1)

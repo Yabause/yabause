@@ -20,13 +20,8 @@
 
 #ifndef CD_HH
 #define CD_HH
-#ifdef __GNUC__
-#include <ddk/ntddcdrm.h>
-#include <ddk/ntddscsi.h>
-#else
 #include <ntddcdrm.h>
 #include <ntddscsi.h>
-#endif
 #ifdef HAVE_WNASPI32_H
 #include <wnaspi32.h>
 #endif
