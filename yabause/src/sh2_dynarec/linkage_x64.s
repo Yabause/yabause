@@ -25,6 +25,8 @@
 .globl YabauseDynarecOneFrameExec
 	.type	YabauseDynarecOneFrameExec, @function
 YabauseDynarecOneFrameExec:
+/* (arg1/edi - m68kcycles) */
+/* (arg2/esi - m68kcenticycles) */
 	push	%rbp
 	mov	%rsp, %rbp
 	mov	master_ip, %rax
@@ -37,13 +39,12 @@ YabauseDynarecOneFrameExec:
 	push	%rcx /* zero */
 	push	%rcx
 	push	%rcx
+	push	%rcx
 	call	.+5
 	mov	%esi,-60(%rbp) /* m68kcenticycles */
 	mov	%edi,-64(%rbp) /* m68kcycles */
-	mov	%rax,-72(%rbp) /* overwrite return address */
+	mov	%rax,-80(%rbp) /* overwrite return address */
 /* Stack frame:
-   (arg2 - m68kcenticycles)
-   (arg1 - m68kcycles)
    return address (0)
    rbp (8/0)
    save rbx (16/8)
@@ -57,14 +58,16 @@ YabauseDynarecOneFrameExec:
    scucycles (64/56)
    m68kcenticycles (68/60)
    m68kcycles (72/64)
-   ret address/master_ip (80/72) (alternate rsp at call)
-   save %rax (88/80)
-   save %rcx (96/88)
-   save %rdx (104/96)
-   save %rsi (112/104)
-   save %rdi (120/112)
-   next return address (128/120) (esp at call)
-   total = 128 */
+   space for alignment (80/72)
+   ret address/master_ip (88/80) (alternate rsp at call)
+   save %rax (96/88)
+   save %rcx (104/96)
+   save %rdx (112/104)
+   save %rsi (120/112)
+   save %rdi (128/120)
+   space for alignment (136/128) (rsp at call)
+   next return address (144/136)
+   total = 144 */
 /*   usecinc?
    cyclesinc?*/
 
@@ -108,12 +111,12 @@ newline:
 .globl master_handle_interrupts
 	.type	master_handle_interrupts, @function
 master_handle_interrupts:
-	mov	-72(%rbp), %rax /* get return address */
+	mov	-80(%rbp), %rax /* get return address */
 	mov	%rax, master_ip
 	call	DynarecMasterHandleInterrupts
 	mov	master_ip, %rax
 	mov	master_cc, %esi
-	mov	%rax,-72(%rbp) /* overwrite return address */
+	mov	%rax,-80(%rbp) /* overwrite return address */
 	sub	%ebx, %esi
 	ret	/* jmp master_ip */
 	.size	master_handle_interrupts, .-master_handle_interrupts
@@ -121,7 +124,7 @@ master_handle_interrupts:
 .globl slave_entry
 	.type	slave_entry, @function
 slave_entry:
-	mov	20(%rsp), %ebx /* sh2cycles */
+	mov	28(%rsp), %ebx /* sh2cycles */
 	mov	%esi, master_cc
 	mov	%ebx, %edi
 	call	FRTExec
@@ -153,7 +156,7 @@ slave_handle_interrupts:
 .globl cc_interrupt
 	.type	cc_interrupt, @function
 cc_interrupt: /* slave */
-	mov	20(%rsp), %ebx /* sh2cycles */
+	mov	28(%rsp), %ebx /* sh2cycles */
 	mov	%rbp, slave_ip
 	mov	%esi, slave_cc
 	mov	%ebx, %edi
@@ -164,7 +167,7 @@ cc_interrupt: /* slave */
 .globl cc_interrupt_master
 	.type	cc_interrupt_master, @function
 cc_interrupt_master:
-	lea	72(%rsp), %rbp
+	lea	80(%rsp), %rbp
 	mov	-44(%rbp), %eax /* decilinecount */
 	mov	-48(%rbp), %ebx /* decilinecycles */
 	inc	%eax
@@ -207,7 +210,7 @@ cc_interrupt_master:
 nextline:
 	call	finishline
 	jmp	newline
-finishline: /* CHECK - Stack align? */
+finishline:
       /*const u32 usecinc = yabsys.DecilineUsec * 10;*/
 	mov	decilineusec_p, %rax
 	mov	UsecFrac_p, %rbx
@@ -218,6 +221,7 @@ finishline: /* CHECK - Stack align? */
 	add	%edi, %edi
       /*yabsys.UsecFrac += usecinc;*/
 	add	%edx, %edi
+	add	$-8, %rsp /* Align stack */
       /*SmpcExec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
       /*Cs2Exec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
       /*yabsys.UsecFrac &= YABSYS_TIMING_MASK;*/
@@ -242,6 +246,7 @@ finishline: /* CHECK - Stack align? */
 	adc	$0, %edi
 	mov	%ecx, saved_centicycles
 	call	M68KExec
+	add	$8, %rsp /* Align stack */
 	ret
 vblankin:
 	call	SmpcINTBACKEnd
@@ -262,7 +267,7 @@ nextframe:
 	jne	.A5
 .A4:
 	mov	(%rsp), %rax
-	add	$32, %rsp
+	add	$40, %rsp
 	mov	%rax, master_ip
 	pop	%r15 /* restore callee-save registers */
 	pop	%r14
