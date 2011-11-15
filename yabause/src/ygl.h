@@ -65,7 +65,13 @@ typedef struct {
 	unsigned int h;
 	int flip;
 	int priority;
+	int dst;
 } YglSprite;
+
+typedef struct {
+	float x;
+	float y;
+} YglCache;
 
 typedef struct {
 	unsigned int * textdata;
@@ -96,7 +102,7 @@ void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, uns
 
 typedef struct {
 	int * quads;
-	int * textcoords;
+	float * textcoords;
 	int currentQuad;
 	int maxQuad;
 #ifdef USEMICSHADERS
@@ -123,11 +129,11 @@ int YglGLInit(int, int);
 int YglScreenInit(int r, int g, int b, int d);
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
-int * YglQuad(YglSprite *, YglTexture *);
-void YglCachedQuad(YglSprite *, int *);
+float * YglQuad(YglSprite *, YglTexture *,YglCache * c);
+void YglCachedQuad(YglSprite *, YglCache *);
 #ifdef USEMICSHADERS
-int * YglQuad2(YglSprite *, YglTexture *, YglColor *);
-void YglCachedQuad2(YglSprite *, int *, YglColor *);
+float * YglQuad2(YglSprite *, YglTexture *, YglColor *,YglCache * c);
+void YglCachedQuad2(YglSprite *, YglCache *, YglColor *);
 #endif
 void YglRender(void);
 void YglReset(void);
@@ -135,9 +141,8 @@ void YglShowTexture(void);
 void YglChangeResolution(int, int);
 void YglOnScreenDebugMessage(char *, ...);
 
-
-int * YglIsCached(u32);
-void YglCache(u32, int *);
+int YglIsCached(u32,YglCache *);
+void YglCacheAdd(u32,YglCache *);
 void YglCacheReset(void);
 
 #ifdef USEMICSHADERS
