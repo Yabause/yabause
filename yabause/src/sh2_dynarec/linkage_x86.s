@@ -222,6 +222,7 @@ finishline: /* CHECK - Stack align? */
 	add	%esi, %esi
       /*yabsys.UsecFrac += usecinc;*/
 	add	%edx, %esi
+	add	$-8, %esp /* Align stack */
       /*SmpcExec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
       /*Cs2Exec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
       /*yabsys.UsecFrac &= YABSYS_TIMING_MASK;*/
@@ -248,7 +249,7 @@ finishline: /* CHECK - Stack align? */
 	mov	%ecx, saved_centicycles
 	mov	%eax, (%esp) /* cycles */
 	call	M68KExec
-	pop	%eax /* junk */
+	add	$12, %esp
 	ret
 vblankin:
 	call	SmpcINTBACKEnd

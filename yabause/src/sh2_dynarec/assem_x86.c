@@ -2747,8 +2747,8 @@ void save_regs(u32 reglist)
       }
     }
   }
-  if(slave) emit_addimm(ESP,-(3-count)*4,ESP); // slave has master's return address on stack
-  else emit_addimm(ESP,-(4-count)*4,ESP);
+  if(slave) emit_addimm(ESP,-(4-count)*4,ESP); // slave has master's return address on stack
+  else emit_addimm(ESP,-(5-count)*4,ESP);
 }
 // Restore registers after function call
 void restore_regs(u32 reglist)
@@ -2756,8 +2756,8 @@ void restore_regs(u32 reglist)
   int hr;
   reglist&=0x7; // only save the caller-save registers, %eax, %ecx, %edx
   int count=count_bits(reglist);
-  if(slave) emit_addimm(ESP,(3-count)*4,ESP);
-  else emit_addimm(ESP,(4-count)*4,ESP);
+  if(slave) emit_addimm(ESP,(4-count)*4,ESP);
+  else emit_addimm(ESP,(5-count)*4,ESP);
   if(count) {
     for(hr=HOST_REGS-1;hr>=0;hr--) {
       if(hr!=EXCLUDE_REG) {
