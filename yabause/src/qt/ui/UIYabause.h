@@ -39,12 +39,12 @@ public:
 		mRunning = mThread->emulationRunning();
 		mPaused = mThread->emulationPaused();
 		if ( mRunning && !mPaused )
-			mThread->pauseEmulation();
+			mThread->pauseEmulation( true, false );
 	}
 	~YabauseLocker()
 	{
 		if ( ( mRunning && !mPaused ) /*|| mForceRun*/ )
-			mThread->runEmulation();
+			mThread->pauseEmulation( false, false );
 	}
 
 protected:
@@ -78,11 +78,11 @@ protected:
 
 public slots:
 	void appendLog( const char* msg );
-	void pause();
+	void pause( bool paused );
 	void reset();
-	void run();
 
 protected slots:
+	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
 	void fullscreenRequested( bool fullscreen );
 	void refreshStatesActions();
@@ -106,7 +106,7 @@ protected slots:
 	void on_aToolsCheatsList_triggered();
 	void on_aToolsTransfer_triggered();
 	// view menu
-	void on_aViewFPS_triggered();
+	void on_aViewFPS_triggered( bool toggled );
 	void on_aViewLayerVdp1_triggered();
 	void on_aViewLayerNBG0_triggered();
 	void on_aViewLayerNBG1_triggered();

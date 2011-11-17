@@ -20,6 +20,7 @@
 */
 #include "UIYabause.h"
 #include "../Settings.h"
+#include "../VolatileSettings.h"
 #include "UISettings.h"
 #include "UIBackupRam.h"
 #include "UICheats.h"
@@ -68,11 +69,9 @@ UIYabause::UIYabause( QWidget* parent )
 		cbVideoDriver->addItem( VIDCoreList[i]->Name, VIDCoreList[i]->id );
 	cbVideoDriver->blockSignals( false );
 	// create glcontext
-	mYabauseGL = new YabauseGL;
+	mYabauseGL = new YabauseGL( this );
 	// and set it as central application widget
 	setCentralWidget( mYabauseGL );
-	// set focus proxy to the mainwindow
-	mYabauseGL->setFocusProxy( this );
 	// create log widget
 	teLog = new QTextEdit( this );
 	teLog->setReadOnly( true );
@@ -91,39 +90,33 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
-	connect( mYabauseThread, SIGNAL( error( const char* ) ), this, SLOT( appendLog( const char* ) ) );
-	connect( mYabauseThread, SIGNAL( pause() ), this, SLOT( pause() ) );
+	connect( mYabauseThread, SIGNAL( error( const QString&, bool ) ), this, SLOT( errorReceived( const QString&, bool ) ) );
+	connect( mYabauseThread, SIGNAL( pause( bool ) ), this, SLOT( pause( bool ) ) );
 	connect( mYabauseThread, SIGNAL( reset() ), this, SLOT( reset() ) );
-	connect( mYabauseThread, SIGNAL( run() ), this, SLOT( run() ) );
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
 }
 
 void UIYabause::showEvent( QShowEvent* e )
 {
+	QMainWindow::showEvent( e );
+	
 	if ( !mInit )
 	{
-		// start log
 		LogStart();
 		LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
-		// start emulation
-		mYabauseThread->startEmulation();
-		// refresh states actions
-		refreshStatesActions();
-
+		aEmulationRun->trigger();
+		VolatileSettings* vs = QtYabause::volatileSettings();
+		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
+		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
 		mInit = true;
 	}
 }
 
 void UIYabause::closeEvent( QCloseEvent* e )
 {
-	// pause emulation
 	aEmulationPause->trigger();
-	// stop emulation
-	mYabauseThread->stopEmulation();
-	// stop log
 	LogStop();
-	// close dialog
 	QMainWindow::closeEvent( e );
 }
 
@@ -140,6 +133,10 @@ void UIYabause::appendLog( const char* s )
 {
 	teLog->moveCursor( QTextCursor::End );
 	teLog->append( s );
+	
+	if ( !mLogDock->isVisible() ) {
+		mLogDock->setVisible( true );
+	}
 }
 
 bool UIYabause::eventFilter( QObject* o, QEvent* e )
@@ -147,6 +144,16 @@ bool UIYabause::eventFilter( QObject* o, QEvent* e )
 	if ( e->type() == QEvent::Hide )
 		setFocus();
 	return QMainWindow::eventFilter( o, e );
+}
+
+void UIYabause::errorReceived( const QString& error, bool internal )
+{
+	if ( internal ) {
+		appendLog( error.toLocal8Bit().constData() );
+	}
+	else {
+		CommonDialogs::information( error );
+	}
 }
 
 void UIYabause::sizeRequested( const QSize& s )
@@ -201,7 +208,7 @@ void UIYabause::refreshStatesActions()
 	// get states files of this game
 	const QString serial = QtYabause::getCurrentCdSerial();
 	const QString mask = QString( "%1_*.yss" ).arg( serial );
-	const QString statesPath = QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString();
+	const QString statesPath = QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString();
 	QRegExp rx( QString( mask ).replace( '*', "(\\d+)") );
 	QDir d( statesPath );
 	foreach ( const QFileInfo& fi, d.entryInfoList( QStringList( mask ), QDir::Files | QDir::Readable, QDir::Name | QDir::IgnoreCase ) )
@@ -232,7 +239,11 @@ void UIYabause::on_aFileSettings_triggered()
 	YabauseLocker locker( mYabauseThread );
 	if ( UISettings( window() ).exec() )
 	{
-		if ( mYabauseThread->resetEmulation() )
+		VolatileSettings* vs = QtYabause::volatileSettings();
+		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
+		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
+		
+		if ( mYabauseThread->pauseEmulation( true, true ) )
 			refreshStatesActions();
 	}
 }
@@ -240,44 +251,44 @@ void UIYabause::on_aFileSettings_triggered()
 void UIYabause::on_aFileOpenISO_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	if ( mYabauseThread->init() == -1 )
-	{
-		CommonDialogs::information( QtYabause::translate( "Yabause is not initialized, can't open ISO." ) );
-		return;
-	}
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin)" ) );
 	if ( !fn.isEmpty() )
 	{
+		VolatileSettings* vs = QtYabause::volatileSettings();
+		const int currentCDCore = vs->value( "General/CdRom" ).toInt();
+		const QString currentCdRomISO = vs->value( "General/CdRomISO" ).toString();
+		
 		QtYabause::settings()->setValue( "Recents/ISOs", fn );
-		if ( Cs2ChangeCDCore( ISOCD.id, strdup( fn.toAscii().constData() ) ) == 0 )
-		{
-			YabauseReset();
-			if ( !aEmulationRun->isChecked() )
-				aEmulationRun->trigger();
-			refreshStatesActions();
-		}
+		
+		vs->setValue( "autostart", false );
+		vs->setValue( "General/CdRom", ISOCD.id );
+		vs->setValue( "General/CdRomISO", fn );
+		
+		mYabauseThread->pauseEmulation( false, true );
+		
+		refreshStatesActions();
 	}
 }
 
 void UIYabause::on_aFileOpenCDRom_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	if ( mYabauseThread->init() == -1 )
-	{
-		CommonDialogs::information( QtYabause::translate( "Yabause is not initialized, can't open CD Rom." ) );
-		return;
-	}
-	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::settings()->value( "Recents/CDs" ).toString(), QtYabause::translate( "Choose a cdrom drive/mount point" ) );
+	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::volatileSettings()->value( "Recents/CDs" ).toString(), QtYabause::translate( "Choose a cdrom drive/mount point" ) );
 	if ( !fn.isEmpty() )
 	{
+		VolatileSettings* vs = QtYabause::volatileSettings();
+		const int currentCDCore = vs->value( "General/CdRom" ).toInt();
+		const QString currentCdRomISO = vs->value( "General/CdRomISO" ).toString();
+		
 		QtYabause::settings()->setValue( "Recents/CDs", fn );
-		if ( Cs2ChangeCDCore( QtYabause::defaultCDCore().id, strdup( fn.toAscii().constData() ) ) == 0 )
-		{
-			YabauseReset();
-			if ( !aEmulationRun->isChecked() )
-				aEmulationRun->trigger();
-			refreshStatesActions();
-		}
+		
+		vs->setValue( "autostart", false );
+		vs->setValue( "General/CdRom", QtYabause::defaultCDCore().id );
+		vs->setValue( "General/CdRomISO", fn );
+		
+		mYabauseThread->pauseEmulation( false, true );
+		
+		refreshStatesActions();
 	}
 }
 
@@ -286,7 +297,7 @@ void UIYabause::on_mFileSaveState_triggered( QAction* a )
 	if ( a == aFileSaveStateAs )
 		return;
 	YabauseLocker locker( mYabauseThread );
-	if ( YabSaveStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
+	if ( YabSaveStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
 		CommonDialogs::information( QtYabause::translate( "Couldn't save state file" ) );
 	else
 		refreshStatesActions();
@@ -297,14 +308,14 @@ void UIYabause::on_mFileLoadState_triggered( QAction* a )
 	if ( a == aFileLoadStateAs )
 		return;
 	YabauseLocker locker( mYabauseThread );
-	if ( YabLoadStateSlot( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
+	if ( YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
 		CommonDialogs::information( QtYabause::translate( "Couldn't load state file" ) );
 }
 
 void UIYabause::on_aFileSaveStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getSaveFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), QtYabause::translate( "Choose a file to save your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
+	const QString fn = CommonDialogs::getSaveFileName( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), QtYabause::translate( "Choose a file to save your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
@@ -314,7 +325,7 @@ void UIYabause::on_aFileSaveStateAs_triggered()
 void UIYabause::on_aFileLoadStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::settings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), QtYabause::translate( "Select a file to load your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), QtYabause::translate( "Select a file to load your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabLoadState( fn.toAscii().constData() ) != 0 )
@@ -352,17 +363,17 @@ void UIYabause::on_aFileQuit_triggered()
 void UIYabause::on_aEmulationRun_triggered()
 {
 	if ( mYabauseThread->emulationPaused() )
-		mYabauseThread->runEmulation();
+		mYabauseThread->pauseEmulation( false, false );
 }
 
 void UIYabause::on_aEmulationPause_triggered()
 {
 	if ( !mYabauseThread->emulationPaused() )
-		mYabauseThread->pauseEmulation();
+		mYabauseThread->pauseEmulation( true, false );
 }
 
 void UIYabause::on_aEmulationReset_triggered()
-{ mYabauseThread->resetEmulation( true ); }
+{ mYabauseThread->resetEmulation(); }
 
 void UIYabause::on_aEmulationFrameSkipLimiter_toggled( bool toggled )
 {
@@ -375,7 +386,7 @@ void UIYabause::on_aEmulationFrameSkipLimiter_toggled( bool toggled )
 void UIYabause::on_aToolsBackupManager_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	if ( mYabauseThread->init() == -1 )
+	if ( mYabauseThread->init() < 0 )
 	{
 		CommonDialogs::information( QtYabause::translate( "Yabause is not initialized, can't manage backup ram." ) );
 		return;
@@ -392,8 +403,10 @@ void UIYabause::on_aToolsCheatsList_triggered()
 void UIYabause::on_aToolsTransfer_triggered()
 {}
 
-void UIYabause::on_aViewFPS_triggered()
-{ ToggleFPS(); }
+void UIYabause::on_aViewFPS_triggered( bool toggled )
+{
+	SetOSDToggle(toggled ? 1 : 0);
+}
 
 void UIYabause::on_aViewLayerVdp1_triggered()
 { ToggleVDP1(); }
@@ -476,25 +489,20 @@ void UIYabause::on_cbVideoDriver_currentIndexChanged( int id )
 	if ( core )
 	{
 		if ( VideoChangeCore( core->id ) == 0 )
-			mYabauseGL->updateView( mYabauseGL->size() );
+			mYabauseGL->updateView();
 	}
 }
 
-void UIYabause::pause()
+void UIYabause::pause( bool paused )
 {
-	aEmulationRun->setEnabled( true );
-	aEmulationPause->setEnabled( false );
-	aEmulationReset->setEnabled( true );
+	mYabauseGL->updateView();
+	
+	aEmulationRun->setEnabled( paused );
+	aEmulationPause->setEnabled( !paused );
+	aEmulationReset->setEnabled( !paused );
 }
 
 void UIYabause::reset()
 {
-	mYabauseGL->updateView( mYabauseGL->size() );
-}
-
-void UIYabause::run()
-{
-	aEmulationRun->setEnabled( false );
-	aEmulationPause->setEnabled( true );
-	aEmulationReset->setEnabled( true );
+	mYabauseGL->updateView();
 }
