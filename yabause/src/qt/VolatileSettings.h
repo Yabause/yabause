@@ -3,15 +3,17 @@
 
 #include <QString>
 #include <QVariant>
-#include <QMap>
+#include <QHash>
 
 class VolatileSettings
 {
 protected:
-	QMap<QString, QVariant> mValues;
+	QHash<QString, QVariant> mValues;
 
 public:
+	void clear();
 	void setValue(const QString & key, const QVariant & value);
+	void removeValue(const QString& key);
 	QVariant value(const QString & key, const QVariant & defaultValue = QVariant()) const;
 };
 

@@ -2,11 +2,19 @@
 #include "Settings.h"
 #include "QtYabause.h"
 
-#include <iostream>
+void VolatileSettings::clear()
+{
+	mValues.clear();
+}
 
 void VolatileSettings::setValue(const QString & key, const QVariant & value)
 {
 	mValues[key] = value;
+}
+
+void VolatileSettings::removeValue(const QString & key)
+{
+	mValues.remove(key);
 }
 
 QVariant VolatileSettings::value(const QString & key, const QVariant & defaultValue) const
