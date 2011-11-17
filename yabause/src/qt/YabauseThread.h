@@ -33,6 +33,7 @@ class YabauseThread : public QObject
 	
 public:
 	YabauseThread( QObject* owner = 0 );
+	virtual ~YabauseThread();
 	
 	yabauseinit_struct* yabauseConf();
 	bool emulationRunning();
@@ -43,7 +44,6 @@ protected:
 	yabauseinit_struct mYabauseConf;
 	QMutex mMutex;
 	bool mPause;
-	bool mRunning;
 	int mTimerId;
 	int mInit;
 	
@@ -53,23 +53,17 @@ protected:
 	void timerEvent( QTimerEvent* );
 
 public slots:
-	void startEmulation();
-	void stopEmulation();
-	
-	bool runEmulation();
-	void pauseEmulation();
-	bool resetEmulation( bool fullReset = false );
+	bool pauseEmulation( bool pause, bool reset );
+	bool resetEmulation();
 	void reloadControllers();
 	void reloadSettings();
 
 signals:
 	void requestSize( const QSize& size );
 	void requestFullscreen( bool fullscreen );
-	void error( const char* error );
-
-	void pause();
+	void error( const QString& error, bool internal = true );
+	void pause( bool paused );
 	void reset();
-	void run();
 };
 
 #endif // YABAUSETHREAD_H
