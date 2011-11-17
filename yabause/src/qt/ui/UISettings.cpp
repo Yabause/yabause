@@ -212,6 +212,8 @@ void UISettings::loadSettings()
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	leSaveStates->setText( s->value( "General/SaveStates", QApplication::applicationDirPath() ).toString() );
 	leTranslation->setText( s->value( "General/Translation" ).toString() );
+	cbEnableFrameSkipLimiter->setChecked( s->value( "General/EnableFrameSkipLimiter" ).toBool() );
+	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
 
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
@@ -248,6 +250,8 @@ void UISettings::saveSettings()
 	s->setValue( "General/CdRomISO", leCdRom->text() );
 	s->setValue( "General/SaveStates", leSaveStates->text() );
 	s->setValue( "General/Translation", leTranslation->text() );
+	s->setValue( "General/EnableFrameSkipLimiter", cbEnableFrameSkipLimiter->isChecked() );
+	s->setValue( "General/ShowFPS", cbShowFPS->isChecked() );
 
 	// video
 	s->setValue( "Video/VideoCore", cbVideoCore->itemData( cbVideoCore->currentIndex() ).toInt() );
