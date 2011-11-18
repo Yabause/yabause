@@ -27,12 +27,14 @@
 #include <QDir>
 #include <QList>
 
+extern "C" {
 extern M68K_struct* M68KCoreList[];
 extern SH2Interface_struct* SH2CoreList[];
 extern PerInterface_struct* PERCoreList[];
 extern CDInterface* CDCoreList[];
 extern SoundInterface_struct* SNDCoreList[];
 extern VideoInterface_struct* VIDCoreList[];
+}
 
 struct Item
 {

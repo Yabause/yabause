@@ -34,6 +34,7 @@
 extern CDInterface SPTICD;
 #endif
 
+extern "C" {
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
 #ifdef HAVE_C68K
@@ -91,6 +92,8 @@ VideoInterface_struct *VIDCoreList[] = {
 &VIDSoft,
 NULL
 };
+
+}
 
 // main window
 UIYabause* mUIYabause = 0;
