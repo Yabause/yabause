@@ -50,6 +50,7 @@ extern "C"
 	
 	#include "PerQt.h"
 #ifdef Q_OS_WIN
+	#include <windows.h>
 	#include "../windows/cd.h"
 #endif
 }
