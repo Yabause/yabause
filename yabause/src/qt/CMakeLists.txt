@@ -12,6 +12,9 @@ endif (NOT QT4_FOUND)
 set( QT_USE_QTCORE TRUE )
 set( QT_USE_QTGUI TRUE )
 set( QT_USE_QTOPENGL TRUE )
+if (WIN32)
+	set( QT_USE_QTMAIN TRUE )
+endif()
 
 # dunno what it does exactly ... but seem required
 include( ${QT_USE_FILE} )
