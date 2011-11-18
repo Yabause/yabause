@@ -5155,7 +5155,7 @@ void disassemble_inst(int i)
 
 void sh2_dynarec_init()
 {
-  printf("Init new dynarec\n");
+  //printf("Init new dynarec\n");
   out=(u8 *)BASE_ADDR;
   if (mmap (out, 1<<TARGET_SIZE_2,
             PROT_READ | PROT_WRITE | PROT_EXEC,
