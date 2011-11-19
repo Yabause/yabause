@@ -39,7 +39,9 @@
 
 #include <QDebug>
 
-extern "C" extern VideoInterface_struct *VIDCoreList[];
+extern "C" {
+extern VideoInterface_struct *VIDCoreList[];
+}
 
 //#define USE_UNIFIED_TITLE_TOOLBAR
 
