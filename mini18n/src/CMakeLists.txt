@@ -1,0 +1,29 @@
+set(mini18n_SOURCES
+    mini18n.c
+    mini18n-multi.c
+    mini18n_pv_data.c
+    mini18n_pv_file_po.c
+    mini18n_pv_file_yts.c
+    mini18n_pv_hash.c
+    mini18n_pv_list.c)
+
+if(WIN32)
+    set(mini18n_SOURCES ${mini18n_SOURCES} mini18n_pv_conv_windows.c)
+    add_definitions(-DHAVE_UTF16=1)
+endif()
+
+include(CheckFunctionExists)
+check_function_exists(wcsdup HAVE_WCSDUP)
+if (HAVE_WCSDUP)
+    add_definitions(-DHAVE_WCSDUP=1)
+endif ()
+
+add_library(mini18n-shared SHARED ${mini18n_SOURCES})
+set_target_properties(mini18n-shared PROPERTIES OUTPUT_NAME mini18n)
+add_library(mini18n-static STATIC ${mini18n_SOURCES})
+set_target_properties(mini18n-static PROPERTIES OUTPUT_NAME mini18n)
+
+install(TARGETS mini18n-shared DESTINATION "lib")
+install(TARGETS mini18n-static DESTINATION "lib")
+install(FILES mini18n.h DESTINATION "include")
+install(FILES mini18n-multi.h DESTINATION "include")
