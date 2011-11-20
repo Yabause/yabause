@@ -54,7 +54,6 @@ set( yabause_qt_HEADERS
 	QtYabause.h
 	CommonDialogs.h
 	PerQt.h
-	VolatileSettings.h
 	Arguments.h )
 
 # C headers needing moc
@@ -70,6 +69,7 @@ set( yabause_qt_MOC_HEADERS
 	ui/UIPortManager.h
 	ui/UIPadSetting.h
 	YabauseGL.h
+	VolatileSettings.h
 	Settings.h
 	YabauseThread.h )
 

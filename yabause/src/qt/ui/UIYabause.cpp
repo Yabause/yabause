@@ -46,7 +46,16 @@ extern VideoInterface_struct *VIDCoreList[];
 //#define USE_UNIFIED_TITLE_TOOLBAR
 
 void qAppendLog( const char* s )
-{ QtYabause::mainWindow()->appendLog( s ); }
+{
+	UIYabause* ui = QtYabause::mainWindow( false );
+	
+	if ( ui ) {
+		ui->appendLog( s );
+	}
+	else {
+		qWarning( s );
+	}
+}
 
 UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )

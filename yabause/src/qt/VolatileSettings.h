@@ -1,12 +1,15 @@
 #ifndef VOLATILESETTINGS_H
 #define VOLATILESETTINGS_H
 
+#include <QObject>
 #include <QString>
 #include <QVariant>
 #include <QHash>
 
-class VolatileSettings
+class VolatileSettings : public QObject
 {
+	Q_OBJECT
+	
 protected:
 	QHash<QString, QVariant> mValues;
 

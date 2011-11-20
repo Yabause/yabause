@@ -50,7 +50,7 @@ extern "C"
 	
 	#include "PerQt.h"
 #ifdef Q_OS_WIN
-	#include <windows.h>
+	#include <qt_windows.h>
 	#include "../windows/cd.h"
 #endif
 }
@@ -65,9 +65,9 @@ class QWidget;
 
 namespace QtYabause
 {
-	UIYabause* mainWindow();
-	Settings* settings();
-	VolatileSettings* volatileSettings();
+	UIYabause* mainWindow( bool create = true );
+	Settings* settings( bool create = true );
+	VolatileSettings* volatileSettings( bool create = true );
 	int setTranslationFile();
 	int logTranslation();
 	void closeTranslation();

@@ -27,6 +27,7 @@
 #include <QLabel>
 #include <QGroupBox>
 #include <QTreeWidget>
+#include <QPointer>
 
 // cores
 
@@ -96,10 +97,10 @@ NULL
 }
 
 // main window
-UIYabause* mUIYabause = 0;
+QPointer<UIYabause> mUIYabause = 0;
 // settings object
-Settings* mSettings = 0;
-VolatileSettings* mVolatileSettings = 0;
+QPointer<Settings> mSettings = 0;
+QPointer<VolatileSettings> mVolatileSettings = 0;
 // ports padbits
 QMap<uint, PerPad_struct*> mPort1PadsBits;
 QMap<uint, PerPad_struct*> mPort2PadsBits;
@@ -119,23 +120,23 @@ extern "C"
 	{ QtYabause::mainWindow()->swapBuffers(); }
 }
 
-UIYabause* QtYabause::mainWindow()
+UIYabause* QtYabause::mainWindow( bool create )
 {
-	if ( !mUIYabause )
+	if ( !mUIYabause && create )
 		mUIYabause = new UIYabause;
 	return mUIYabause;
 }
 
-Settings* QtYabause::settings()
+Settings* QtYabause::settings( bool create )
 {
-	if ( !mSettings )
+	if ( !mSettings && create )
 		mSettings = new Settings();
 	return mSettings;
 }
 
-VolatileSettings* QtYabause::volatileSettings()
+VolatileSettings* QtYabause::volatileSettings( bool create )
 {
-	if ( !mVolatileSettings )
+	if ( !mVolatileSettings && create )
 		mVolatileSettings = new VolatileSettings();
 	return mVolatileSettings;
 }
