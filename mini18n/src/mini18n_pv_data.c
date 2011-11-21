@@ -50,8 +50,24 @@ mini18n_data_t mini18n_str = {
 	(mini18n_cmp_func) strcmp
 };
 
+
+#ifndef HAVE_WCS_POINTERS
+size_t wcslen_wrapper(const wchar_t *s) {
+	return wcslen(s);
+}
+int wcscmp_wrapper(const wchar_t *s1, const wchar_t *s2) {
+	return wcscmp(s1, s2);
+}
+
+mini18n_data_t mini18n_wcs = {
+	(mini18n_len_func) wcslen_wrapper,
+	(mini18n_dup_func) wcsdup,
+	(mini18n_cmp_func) wcscmp_wrapper
+};
+#else
 mini18n_data_t mini18n_wcs = {
 	(mini18n_len_func) wcslen,
 	(mini18n_dup_func) wcsdup,
 	(mini18n_cmp_func) wcscmp
 };
+#endif
