@@ -25,19 +25,19 @@ Block Size :|Tamanho dos Blocos :
 Browse|Explorar
 Byte Write|Gravação do Byte
 Cancel|Cancelar
-Cannot initialize|Não foi possível inicializar
+Cannot initialize|Não consegue inicializar
 &Capture Screen|&Capturar Tela
 Cart/Memory|Cartucho/Memória
 Cartridge|Cartucho
 CD Images (*.iso *.cue *.bin)|Imagens de CD (*.iso *.cue *.bin)
 Cd-Rom|Cd-Rom
 &Cheats|&Códigos
-Cheats|Códigos
-Cheats File|Arquivo de Códigos
-&Cheat List|Lista de &Códigos
-Cheats List|Lista de Códigos
-Cheats List...|Lista de Códigos...
-Cheat Type|Tipo de Código
+Cheats|Trapaças
+Cheats File|Arquivo das Trapaças
+&Cheat List|Lista de &Trapaças
+Cheats List|Lista de Trapaças
+Cheats List...|Lista de Trapaças...
+Cheat Type|Tipo de Trapaça
 Choose a cdrom drive/mount point|Escolha um drive de cdrom/ponto de montagem
 Choose a cheat file to open|Escolha um arquivo de códigos para abrir
 Choose a cheat file to save to|Escolha um arquivo de códigos para salvar
@@ -71,7 +71,7 @@ File Name :|Nome do Arquivo :
 File transfer|Transferência de arquivo
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVISO:</b> Códigos Mestres <b>NÃO</b> são suportados.</font>
 Format|Formato
-FPS|QPS
+FPS|FPS
 Frame Skip/Limiter|Frame Skip/Limitador
 French|Francês
 From|De
@@ -81,7 +81,7 @@ From File...|Do Arquivo...
 Fullscreen|Tela cheia
 General|Geral
 German|Alemão
-Hard Reset|Hard Reset
+Hard Reset|Reset Rígido
 Height|Altura
 _Help|_Ajuda
 &Help|&Ajuda
@@ -112,17 +112,20 @@ Memory Editor|Editor de Memória
 Memory Transfer|Transferência de Memória
 Memory|Memória
 Mpeg ROM|ROM Mpeg
+Mouse|Mouse
 MSH2|MSH2
 NBG0|NBG0
 NBG1|NBG1
 NBG2|NBG2
 NBG3|NBG3
+None|Nenhum
 Ok|Ok
 &OK|&OK
 Open CD Rom|Abrir o CD Rom
 Open CD Rom...|Abrir o CD Rom...
 Open ISO|Abrir a ISO
 Open ISO...|Abrir a ISO...
+Pad|Pad
 &Pause|&Pausar
 Pause|Pausar
 &Quit|&Sair
@@ -130,8 +133,8 @@ Quit|Sair
 &Raw Memory Address|&Endereço da Memória Original
 RBG0|RBG0
 Region|Região
-&Reset|&Reiniciar
-Reset|Reiniciar
+&Reset|&Resetar
+Reset|Resetar
 Resolution|Resolução
 Right|Direita
 Right trigger|Gatilho direito
@@ -158,7 +161,7 @@ Spanish|Espanhol
 SSH2|SSH2
 Start|Iniciar
 Start Address:|Endereço Inicial:
-Status|Estado
+Status|Status
 Store|Armazenar
 To File|Para o Arquivo
 To File...|Para o Arquivo...
@@ -192,4 +195,4 @@ Word Write|Gravação das Palavras
 Yabause Cheat Files (*.yct);;All Files (*)|Arquivos das Trapaças do Yabause (*.yct);;Todos os Arquivos (*)
 Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Gui Qt do Yabause<br />Baseada no Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />O Time do Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Qt GUI|GUI Qt do Yabause
-Yabause Save State (*.yss)|Save State do Yabause
+Yabause Save State (*.yss)|Save State do Yabause (*.yss)

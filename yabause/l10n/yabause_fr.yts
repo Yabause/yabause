@@ -1,7 +1,7 @@
 %1/%2 blocks free|%1/%2 blocs libre
 %1 Images (*.%2)|Images %1 (*.%2)
 503/512 blocks free|503/512 blocs libre
-510/512 blocks free|510/512 blocks libre
+510/512 blocks free|510/512 blocs libre
 About...|A Propos De...
 &About...|&A Propos De...
 About|A Propos De
@@ -76,7 +76,7 @@ Frame Skip/Limiter|Saut d'Image/Limitateur
 French|Français
 From|A Partir De
 From File|A Partir d'un Fichier
-From File...|A Partir d'un Fichier
+From File...|A Partir d'un Fichier...
 &Fullscreen|&Plein Ecran
 Fullscreen|Plein Ecran
 General|Général
@@ -91,7 +91,7 @@ Input|Contrôleur
 Invalid Address|Adresse Invalide
 Invalid Value|Valeur Invalide
 Italian|Italien
-Japanese|Japonnais
+Japanese|Japonais
 Language :|Langage :
 &Layer|&Couche
 Layer|Couche
@@ -112,17 +112,20 @@ Memory Editor|Editeur de Mémoire
 Memory Transfer|Transfert de Mémoire
 Memory|Mémoire
 Mpeg ROM|ROM MPEG
+Mouse|Souris
 MSH2|MSH2
 NBG0|NBG0
 NBG1|NBG1
 NBG2|NBG2
 NBG3|NBG3
+None|Aucun
 Ok|Ok
 &OK|&OK
 Open CD Rom|Ouvrir un CD ROM
 Open CD Rom...|Ouvrir un CD ROM...
 Open ISO|Ouvrir un Fichier ISO
 Open ISO...|Ouvrir un Fichier ISO...
+Pad|Manette
 &Pause|&Pause
 Pause|Pause
 &Quit|&Quitter

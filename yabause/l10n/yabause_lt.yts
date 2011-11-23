@@ -10,11 +10,11 @@ Action Replay Code :|Veiksmo pakartojimo kodas:
 Add Action Replay Code|Pridėti veiksmo pakartojimo kodą:
 Add Codes...|Pridėti kodų...
 Add Raw Memory Code|Pridėti "Raw" atminties kodą
-Address :|Adresas :
+Address :|Adresas&#160;:
 Advanced|Papildoma
-<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|<a href="<a href="http://www.monkeystudio.org" class="external free" title="http://www.monkeystudio.org" rel="nofollow">http://www.monkeystudio.org</a>"><img src=":/icons/icons/made.png"></a>
-Are you sure you want to delete '%1' ?|Ar tu įsitikinęs,kad nori ištrinti '%1' ?
-Are you sure you want to format '%1' ?|Ar tu įsitikinęs,kad nori suformatuoti '%1' ?
+<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|<a href="<a href="http://www.monkeystudio.org" class="external free" rel="nofollow">http://www.monkeystudio.org</a>"><img src=":/icons/icons/made.png"></a>
+Are you sure you want to delete '%1' ?|Ar tu įsitikinęs,kad nori ištrinti '%1'&#160;?
+Are you sure you want to format '%1' ?|Ar tu įsitikinęs,kad nori suformatuoti '%1'&#160;?
 Backup Manager|Atsarginių failų tvarkyklė
 Backup Manager...|Atsarginių failų tvarkyklė...
 &Backup Ram Manager|&Atsarginės darbinės atminties tvarkyklė
@@ -53,7 +53,7 @@ _Debug|_Taisyti klaidas
 &Delete|&Trinti
 Delete|Trinti
 Description|Aprašymas
-Description :|Aprašymas :
+Description :|Aprašymas&#160;:
 Device List|Įrenginių sąrašas
 Disabled|Neįgalinta
 Down|Žemyn
@@ -85,14 +85,14 @@ Hard Reset|"Gilus" perkrovimas
 Height|Aukštis
 _Help|_Pagalba
 &Help|&Pagalba
-http://www.emu-compatibility.com/yabause/index.php?lang=uk|<a href="http://www.emu-compatibility.com/yabause/index.php?lang=uk" class="external free" title="http://www.emu-compatibility.com/yabause/index.php?lang=uk" rel="nofollow">http://www.emu-compatibility.com/yabause/index.php?lang=uk</a>
-http://www.monkeystudio.org|<a href="http://www.monkeystudio.org" class="external free" title="http://www.monkeystudio.org" rel="nofollow">http://www.monkeystudio.org</a>
+http://www.emu-compatibility.com/yabause/index.php?lang=uk|<a href="http://www.emu-compatibility.com/yabause/index.php?lang=uk" class="external free" rel="nofollow">http://www.emu-compatibility.com/yabause/index.php?lang=uk</a>
+http://www.monkeystudio.org|<a href="http://www.monkeystudio.org" class="external free" rel="nofollow">http://www.monkeystudio.org</a>
 Input|Įvedimas
 Invalid Address|Neteisingas adresas
 Invalid Value|Neteisinga vertė
 Italian|Italų
 Japanese|Japonų
-Language :|Kalba :
+Language :|Kalba&#160;:
 &Layer|&Sluoksniai
 Layer|Sluoksniai
 Left|Kairė
@@ -190,6 +190,6 @@ Waiting Input...|Laukiama įvedimo
 Width|Plotis
 Word Write|Žodžių rašymas
 Yabause Cheat Files (*.yct);;All Files (*)|Yabause kodų failai (*.yct);;Visi failai (*)
-Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Paremtas pagal Yabause 0.9.5<br /><a href="<a href="http://yabause.org" class="external free" title="http://yabause.org" rel="nofollow">http://yabause.org</a>"><a href="http://yabause.org" class="external free" title="http://yabause.org" rel="nofollow">http://yabause.org</a></a><br />Yabause komanda<br /><a href="<a href="mailto:pasnox@gmail.com" class="external free" title="mailto:pasnox@gmail.com" rel="nofollow">mailto:pasnox@gmail.com</a>">Filipe AZEVEDO</a>
+Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Paremtas pagal Yabause 0.9.5<br /><a href="<a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a>"><a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a></a><br />Yabause komanda<br /><a href="<a href="mailto:pasnox@gmail.com" class="external free" rel="nofollow">mailto:pasnox@gmail.com</a>">Filipe AZEVEDO</a>
 Yabause Qt GUI|Yabause Qt grafinė sąsaja
 Yabause Save State (*.yss)|Yabause žaidimo išsaugojimo failas (*.yss)
