@@ -4,7 +4,7 @@
     For now, autotools based build and "custom" build systems are still supported.
   - New PSP port
   - New Cocoa port
-  - Added a dynamic recompiling SH2 core
+  - Added a dynamic recompiling SH2 core for x86 and ARM
   - New SCSP implementation
   - Major update of the software renderer from the yabause-rr team
   - Added an option to allow to execute from the cache
