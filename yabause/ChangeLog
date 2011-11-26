@@ -1,7 +1,28 @@
-0.9.10 -> ?
+0.9.10 -> 0.9.11
+ general:
+  - Now using CMake as the default build system.
+    For now, autotools based build and "custom" build systems are still supported.
+  - New PSP port
+  - New Cocoa port
+  - Added a dynamic recompiling SH2 core
+  - New SCSP implementation
+  - Major update of the software renderer from the yabause-rr team
+  - Added an option to allow to execute from the cache
+  - Improvements to the OpenGL renderer
+ carbon port:
+  - Improvements
  gtk port:
   - Added command line option to enable/disable frame skipping / limiting.
   - Added frame skipping/limiting configuration in settings.
+  - Added --autoload command line option
+  - Vdp2 layers can be toggled from the Vdp2 debug window
+ qt port:
+  - Added command line support
+ wii port:
+  - Merged some stuff from the wiibrew fork, mostly related to SH2 emulation
+ windows port:
+  - Fixed the XBox controller driver
+  - Fixed the "open iso then cancel bug"
 0.9.9 -> 0.9.10
  scsp/68k:
   - Added code to make SCSP emulation frame-accurate (optional,
