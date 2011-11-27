@@ -2,7 +2,6 @@
  general:
   - Now using CMake as the default build system.
     For now, autotools based build and "custom" build systems are still supported.
-  - New PSP port
   - New Cocoa port
   - Added a dynamic recompiling SH2 core for x86 and ARM
   - New SCSP implementation
@@ -16,6 +15,9 @@
   - Added frame skipping/limiting configuration in settings.
   - Added --autoload command line option
   - Vdp2 layers can be toggled from the Vdp2 debug window
+ psp port:
+  - Added support for Media Engine CPU
+  - Improvements to the PSP port 
  qt port:
   - Added command line support
  wii port:
