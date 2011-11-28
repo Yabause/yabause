@@ -68,6 +68,8 @@ static void FlipToggle(NSMenuItem *item) {
 
 - (void)awakeFromNib
 {
+    NSUserDefaults *p = [NSUserDefaults standardUserDefaults];
+
     controller = self;
     _running = NO;
     _paused = NO;
@@ -75,6 +77,15 @@ static void FlipToggle(NSMenuItem *item) {
     _emuThd = nil;
     _bramFile = NULL;
     _doneExecuting = NO;
+
+    if([p boolForKey:@"Enable Frameskip"]) {
+        [frameskip setState:NSOnState];
+        EnableAutoFrameSkip();
+    }
+    else {
+        [frameskip setState:NSOffState];
+        DisableAutoFrameSkip();
+    }
 }
 
 - (void)dealloc
@@ -162,13 +173,17 @@ static void FlipToggle(NSMenuItem *item) {
 
 - (IBAction)toggleFrameskip:(id)sender
 {
+    NSUserDefaults *p = [NSUserDefaults standardUserDefaults];
+
     if([sender state] == NSOnState) {
         DisableAutoFrameSkip();
         [sender setState:NSOffState];
+        [p setBool:NO forKey:@"Enable Frameskip"];
     }
     else {
         EnableAutoFrameSkip();
         [sender setState:NSOnState];
+        [p setBool:YES forKey:@"Enable Frameskip"];
     }
 }
 
