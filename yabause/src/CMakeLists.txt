@@ -24,6 +24,11 @@ else()
 	set(yabause_SOURCES ${yabause_SOURCES} scsp.c)
 endif()
 
+# math library
+if (UNIX)
+    set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "m")
+endif()
+
 # Bigendian
 include(TestBigEndian)
 test_big_endian(WORDS_BIGENDIAN)
