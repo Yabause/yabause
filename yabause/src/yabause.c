@@ -269,11 +269,6 @@ int YabauseInit(yabauseinit_struct *init)
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseDeInit(void) {
-   #if defined(SH2_DYNAREC)
-   if(SH2Core->id==2) {
-     sh2_dynarec_cleanup();
-   }
-   #endif
    SH2DeInit();
 
    if (BiosRom)

@@ -8113,7 +8113,9 @@ void SH2InterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
 
 int SH2DynarecInit(void) {return 0;}
 
-void SH2DynarecDeInit() {}
+void SH2DynarecDeInit() {
+  sh2_dynarec_cleanup();
+}
    
 void FASTCALL SH2DynarecExec(SH2_struct *context, u32 cycles) {
   printf("SH2DynarecExec called! oops\n");
