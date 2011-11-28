@@ -53,7 +53,7 @@ void qAppendLog( const char* s )
 		ui->appendLog( s );
 	}
 	else {
-		qWarning( s );
+		qWarning( "%s", s );
 	}
 }
 
