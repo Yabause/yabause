@@ -146,7 +146,7 @@
     </message>
     <message>
         <location filename="../ui/UIBackupRam.ui" line="70"/>
-        <source>Save Informations</source>
+        <source>Save Information</source>
         <translation>Salvar as Informações</translation>
     </message>
     <message>

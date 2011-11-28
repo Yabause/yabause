@@ -67,7 +67,7 @@
    <item row="1" column="1" >
     <widget class="QGroupBox" name="gbSaveInformations" >
      <property name="title" >
-      <string>Save Informations</string>
+      <string>Save Information</string>
      </property>
      <layout class="QVBoxLayout" >
       <item>
