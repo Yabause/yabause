@@ -61,5 +61,5 @@ configure_file(yabause.desktop.in ${YAB_PORT_NAME}.desktop)
 
 install(TARGETS yabause-gtk DESTINATION "bin")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${YAB_PORT_NAME}.desktop DESTINATION "share/applications")
-install(FILES "doc/yabause.1" DESTINATION "share/man/man1" RENAME "${YAB_PORT_NAME}.1")
+install(FILES "doc/yabause.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
 install(FILES "yabause.png" DESTINATION "share/pixmaps")

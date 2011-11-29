@@ -358,6 +358,11 @@ macro(yab_port_success YAB_TARGET)
 	set(YAB_PORT_BUILT TRUE PARENT_SCOPE)
 endmacro(yab_port_success)
 
+set(YAB_MAN_DIR "share/man")
+if (NOT $ENV{PKGMANDIR} STREQUAL "")
+    set(YAB_MAN_DIR $ENV{PKGMANDIR})
+endif ()
+
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
 set(YAB_PORTS "gtk;qt;windows;dreamcast;wii" CACHE STRING "List of ports to build")
