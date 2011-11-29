@@ -50,14 +50,14 @@ YuiRangeItem m68kinterpreters[] = {
 
 YuiRangeItem regions[] = {
 	{ "Auto" , "Auto-detect" },
-	{ "J" , "Japan" },
-	{ "T", "Asia" },
-	{ "U", "North America" },
-	{ "B", "Central/South America" },
-	{ "K", "Korea" },
-	{ "A", "Asia" },
-	{ "E", "Europe + others" },
-	{ "L", "Central/South America" },
+	{ "J" , "Japan (NTSC)" },
+	{ "T", "Asia (NTSC)" },
+	{ "U", "North America (NTSC)" },
+	{ "B", "Central/South America (NTSC)" },
+	{ "K", "Korea (NTSC)" },
+	{ "A", "Asia (PAL)" },
+	{ "E", "Europe + others (PAL)" },
+	{ "L", "Central/South America (PAL)" },
 	{ 0, 0 }
 };
 

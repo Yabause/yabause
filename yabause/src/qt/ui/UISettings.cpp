@@ -49,14 +49,14 @@ typedef QList<Item> Items;
 
 const Items mRegions = Items()
 	<< Item( "Auto" , "Auto-detect" )
-	<< Item( "J" , "Japan" )
-	<< Item( "T", "Asia" )
-	<< Item( "U", "North America" )
-	<< Item( "B", "Central/South America" )
-	<< Item( "K", "Korea" )
-	<< Item( "A", "Asia" )
-	<< Item( "E", "Europe + others" )
-	<< Item( "L", "Central/South America" );
+	<< Item( "J" , "Japan (NTSC)" )
+	<< Item( "T", "Asia (NTSC)" )
+	<< Item( "U", "North America (NTSC)" )
+	<< Item( "B", "Central/South America (NTSC)" )
+	<< Item( "K", "Korea (NTSC)" )
+	<< Item( "A", "Asia (PAL)" )
+	<< Item( "E", "Europe + others (PAL)" )
+	<< Item( "L", "Central/South America (PAL)" );
 
 const Items mCartridgeTypes = Items()
 	<< Item( "0", "None" )
