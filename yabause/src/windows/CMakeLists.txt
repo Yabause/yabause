@@ -12,20 +12,14 @@ endif ( NOT ntddcdrm_INCLUDE_DIR )
 
 add_definitions(-D_WIN32_IE=0x0500 -D_WIN32_WINNT=0x0500 -DUNICODE -D_UNICODE)
 
-if (MSVC)
-        # Find DirectX SDK
-        find_path(DirectX_INCLUDE_DIR dxerr9.h
-		  "$ENV{DXSDK_DIR}/Include")
-        if (NOT DirectX_INCLUDE_DIR)
-		find_path(DirectX_INCLUDE_DIR "dxerr.h"
-			  "$ENV{DXSDK_DIR}/Include")
-		if (DirectX_INCLUDE_DIR)
-			set(DXERRH_IS_BROKEN 1 CACHE INTERNAL "dxerr is broken")
-                endif (DirectX_INCLUDE_DIR)
-	endif(NOT DirectX_INCLUDE_DIR)
-else (MSVC)
-	find_path(DirectX_INCLUDE_DIR dxerr9.h)
-endif(MSVC)
+# Find DirectX SDK
+find_path(DirectX_INCLUDE_DIR dxerr9.h "$ENV{DXSDK_DIR}/Include")
+if (NOT DirectX_INCLUDE_DIR)
+	find_path(DirectX_INCLUDE_DIR "dxerr.h" "$ENV{DXSDK_DIR}/Include")
+	if (DirectX_INCLUDE_DIR)
+		set(DXERRH_IS_BROKEN 1 CACHE INTERNAL "dxerr is broken")
+        endif (DirectX_INCLUDE_DIR)
+endif(NOT DirectX_INCLUDE_DIR)
 
 find_library(DirectX_GUID_LIBRARY dxguid "$ENV{DXSDK_DIR}/Lib/x86" "$ENV{DXSDK_DIR}/Lib")
 find_library(DirectX_INPUT8_LIBRARY dinput8 "$ENV{DXSDK_DIR}/Lib/x86" "$ENV{DXSDK_DIR}/Lib")
@@ -33,25 +27,17 @@ find_library(DirectX_SOUND_LIBRARY dsound "$ENV{DXSDK_DIR}/Lib/x86" "$ENV{DXSDK_
 
 if (DXERRH_IS_BROKEN)
 	find_library(DirectX_ERR_LIBRARY dxerr "$ENV{DXSDK_DIR}/Lib/x86" "$ENV{DXSDK_DIR}/Lib")
-else(DXERRH_IS_BROKEN)
-	if (MINGW)
-		find_library(DirectX_ERR_LIBRARY dxerr8 "$ENV{DXSDK_DIR}/Lib/x86" "$ENV{DXSDK_DIR}/Lib")
-	else (MINGW)
-		find_library(DirectX_ERR_LIBRARY dxerr9 "$ENV{DXSDK_DIR}/Lib/x86" "$ENV{DXSDK_DIR}/Lib")
-	endif(MINGW)
-endif(DXERRH_IS_BROKEN)
+elseif(MINGW)
+	find_library(DirectX_ERR_LIBRARY dxerr8 "$ENV{DXSDK_DIR}/Lib/x86" "$ENV{DXSDK_DIR}/Lib")
+else()
+	find_library(DirectX_ERR_LIBRARY dxerr9 "$ENV{DXSDK_DIR}/Lib/x86" "$ENV{DXSDK_DIR}/Lib")
+endif()
 
 if (DirectX_INCLUDE_DIR AND DirectX_GUID_LIBRARY AND DirectX_INPUT8_LIBRARY AND DirectX_SOUND_LIBRARY AND DirectX_ERR_LIBRARY)
 	set(DIRECTX_FOUND "found")
 	set(DIRECTX_LIBRARIES ${DirectX_GUID_LIBRARY} ${DirectX_INPUT8_LIBRARY} ${DirectX_SOUND_LIBRARY} ${DirectX_ERR_LIBRARY})
 	include_directories(${DirectX_INCLUDE_DIR})
 endif ()
-
-if (MINGW)
-#	include(CheckIncludeFile)
-#	check_include_file("dxerr9.h" DIRECTX_FOUND)
-        	set(DIRECTX_FOUND "found")
-endif(MINGW)
 
 # DirectX
 if (DIRECTX_FOUND)
