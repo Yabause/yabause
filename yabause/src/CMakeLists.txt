@@ -131,7 +131,7 @@ endif (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT M
 
 if (MINI18N_FOUND)
 	if (UNIX)
-		add_definitions(-DYTSDIR=\"${CMAKE_INSTALL_PREFIX}/share/${PACKAGE}/yts\")
+		add_definitions(-DYTSDIR=\"${CMAKE_INSTALL_PREFIX}/share/${YAB_PACKAGE}/yts\")
 	elseif (WIN32)
 		add_definitions(-DYTSDIR=\"trans\")
 	endif()
@@ -333,7 +333,7 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 	set(CMAKE_C_FLAGS "-O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 
-add_definitions(-DPACKAGE=\"yabause\")
+add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
 add_library(yabause ${yabause_SOURCES})
