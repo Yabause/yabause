@@ -102,6 +102,7 @@
         CGDisplayShowCursor(d);
 
         [self exitFullScreenModeWithOptions:nil];
+        [[self window] makeFirstResponder:self];
     }
 
     if(err == kCGErrorSuccess)  {
