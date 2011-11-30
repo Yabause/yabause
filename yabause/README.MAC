@@ -8,7 +8,7 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
            ____________________________________
-           Copyright (c) 2002-2009 Yabause team
+           Copyright (c) 2002-2011 Yabause team
 
 
 1) Introduction.............................................19
@@ -24,69 +24,64 @@ information check the README file.
 
 2 Compiling instructions______________________________________
 
-Yabause is written in C using the AGL, Carbon, IOKIit and
-OpenGL libraries. Those librarires should be include with you
-Mac OS X system.
+Yabause is written in C and Objective C using the Cocoa,
+IOKit, OpenGL, and CoreAudio frameworks. All of these
+frameworks should be installed by default on your Mac OS X
+system. You must have the Mac OS X 10.6 SDK installed by the
+Xcode installer in order to build Yabause. In addition, you
+will need at least Xcode 3.2.
 
-Yabause can also use the SDL library:
+Once you have Xcode installed, you should be ready to build
+Yabause.
 
-  * http://www.libsdl.org/
-
-Once these libraries are installed, you should be ready to
-install Yabause.
-
-Uncompress the Yabause source archive, move to the newly
-created directory, type
-
-    ./configure --disable-dependency-tracking --disable-shared
-
-then
-
-    make
-
-it will generate one program: "yabause" in the "src/carbon"
-directory and copy it in the Yabause.app bundle.
-
-You can also pass the --enable-debug, --enable-vdp1-debug,
---enable-cd-debug options to the configure script, Yabause
-will then print debug messages on the error standard output.
-(Use the --help flag for a complete list of options.)
-
-You can then use Yabause by opening the bundle with:
-"open Yabause.app" or with the Mac OS X finder.
+Uncompress the Yabause source archive, and open the
+Yabause.xcodeproj in the src/cocoa directory. From there it
+should be as easy as hitting the Build or Build and Run
+button in Xcode. This should generate a Yabause.app file
+that can be run just like any other application bundle on
+Mac OS X.
 
 
 3 How to use Yabause__________________________________________
 
 Before using Yabause, you need to configure a few things in
-the Preferences dialog (Yabause>Preferences).
+the Preferences dialog (Yabause > Preferences).
 
 
 3.1 Configuration_____________________________________________
 
 First, set the BIOS path.
-Yabause can run some games without a BIOS, but most of them
-needs it. If you want to use the emulated BIOS, just let the
-BIOS entry blank.
+Yabause can run some games without a BIOS, but many of them
+need it. If you want to use the emulated BIOS, select the
+checkbox for that.
 
-Next, set the cdrom device.
-It can be a cd device, an iso or a cue file. Set the cd type
-accordingly.
+Next, set up the video and sound cores. For the video core,
+you have 4 options:
+1. OpenGL Hardware Video Core - Potentially the fastest video
+   core choice, at least with a discrete video card. However,
+   it is also the least accurate.
+2. Software Video Core - The most accurate video core you can
+   use, but also the slowest.
+3. Grand Central Dispatch Software Core - A multithreaded
+   version of the Software Video Core. On a multi-core system
+   this should be significantly faster than the Software core
+   with a similar accuracy level.
+4. Disable Video - Does exactly what it sounds like.
 
-The last thing you have to configure is the keys.
+For the sound core, you only have two options:
+1. Core Audio Sound Core - The default sound core. Select
+   this one if you want sound.
+2. Disable Sound - Does exactly what it sounds like.
+
+Next, set up keys for input. Go to the Input tab, and
+configure each button (at least on Controller 1). For the
+moment, this is limited to keyboard input only.
+
+There are other options you can configure as well in here,
+including BRAM (for saving), a MPEG ROM (for games that use
+the VideoCD/MPEG card), and a cartridge for the cartridge
+port on the Saturn.
 
 Once eveything is set, you can start emulation with the
-"Yabause>run" entry.
-
-
-3.2 Command line arguments____________________________________
-
--b (or --bios=)
-    Specify bios file.
--c (or --cdrom=)
-    Specify cd device. You can know which file is used as cd
-    device by looking in /etc/fstab. It is commonly something
-    like /dev/hdc or /dev/hdd for IDE devices and /dev/scd0
-    for SCSI devices.
--i (or --iso=)
-    Specify iso file.
+"File > Run BIOS" or "File > Run CDROM" entry. Don't use the
+Run BIOS entry if you're using BIOS emulation.
