@@ -1,4 +1,4 @@
-/*  Copyright 2006 Guillaume Duhamel
+/*  Copyright 2006-2011 Guillaume Duhamel
     Copyright 2006 Fabien Coulon
 
     This file is part of Yabause.
@@ -29,24 +29,54 @@
 
 #include "../scsp.h"
 
-YuiRangeItem sh2interpreters[] = {
-  { "0", "Fast Interpreter" },
-  { "1", "Debug Interpreter" },
-#ifdef SH2_DYNAREC
-  { "2", "Dynamic Recompiler" },
-#endif
-#ifdef TEST_PSP_SH2
-  { "1486", "PSP Interpreter (for debugging)" },
-#endif
-  { 0, 0 }
-};
+typedef struct {
+	int id;
+	const char *Name;
+} GenericInterface_struct;
 
-YuiRangeItem m68kinterpreters[] = {
-  { "1", "Standard Interpreter" },
-  { "2", "Q68 Interpreter" },
-  { "0", "Disabled" },
-  { 0, 0 }
-};
+void cores_to_range(void * pointer, YuiRangeItem ** items) {
+	GenericInterface_struct ** cores;
+	GenericInterface_struct * core;
+	int i;
+
+	if (*items != NULL) return;
+
+	cores = pointer;
+
+	i = 0;
+	core = cores[i];
+	while(core) {
+		i++;
+		core = cores[i];
+	}
+	*items = malloc(sizeof(YuiRangeItem) * (i + 1));
+	i = 0;
+	core = cores[i];
+	while(core) {
+		char buffer[1024];
+		(*items)[i].name = strdup(core->Name);
+		sprintf(buffer, "%d", core->id);
+		(*items)[i].value = strdup(buffer);
+		i++;
+		core = cores[i];
+	}
+	(*items)[i].name = NULL;
+	(*items)[i].value = NULL;
+}
+
+extern CDInterface *SH2CoreList[];
+extern CDInterface *M68KCoreList[];
+extern CDInterface *CDCoreList[];
+extern CDInterface *VIDCoreList[];
+extern CDInterface *SNDCoreList[];
+extern CDInterface *PERCoreList[];
+
+YuiRangeItem * sh2interpreters = NULL;
+YuiRangeItem * m68kinterpreters = NULL;
+YuiRangeItem * cdcores = NULL;
+YuiRangeItem * vidcores = NULL;
+YuiRangeItem * sndcores = NULL;
+YuiRangeItem * percores = NULL;
 
 YuiRangeItem regions[] = {
 	{ "Auto" , "Auto-detect" },
@@ -75,52 +105,12 @@ YuiRangeItem carttypes[] = {
 	{ 0, 0 }
 };
 
-YuiRangeItem cdcores[] = {
-	{ "0" , "Dummy CD" },
-	{ "1" , "ISO or CUE file" },
-#ifndef UNKNOWN_ARCH
-	{ "2" , "Cdrom device" },
-#endif
-	{ 0, 0 }
-};
-
-YuiRangeItem vidcores[] = {
-	{ "0", "Dummy Video Interface" },
-#ifdef HAVE_LIBGTKGLEXT
-	{ "1", "OpenGL Video Interface" },
-#endif
-	{ "2", "Software Video Interface" },
-	{ 0, 0 }
-};
-
-YuiRangeItem sndcores[] = {
-	{ "0", "Dummy Sound Interface" },
-#ifdef HAVE_LIBSDL
-	{ "1", "SDL Sound Interface" },
-#endif
-#ifdef HAVE_LIBAL
-	{ "2", "OpenAL Sound Interface" },
-#endif
-	{ 0, 0 }
-};
-
 const gchar * keys1[] = { "Up", "Right", "Down", "Left", "R", "L", 0 };
 const gchar * keys2[] = { "A", "B", "C", "X", "Y", "Z", "Start", 0 };
 
 YuiRangeItem vidformats[] = {
 	{ "0", "NTSC" },
 	{ "1", "PAL" },
-	{ 0, 0 }
-};
-
-YuiRangeItem percores[] = {
-	{ "2", "Gtk Input Interface" },
-#ifdef HAVE_LIBSDL
-	{ "3", "SDL Joystick Interface" },
-#endif
-#ifdef ARCH_IS_LINUX
-	{ "4", "Linux Joystick Interface" },
-#endif
 	{ 0, 0 }
 };
 
@@ -294,6 +284,13 @@ GtkWidget* create_dialog1(void) {
   GtkWidget * general, * video_sound, * cart_memory, *advanced, * sound;
   GtkWidget * box;
   u8 perid;
+
+  cores_to_range(SH2CoreList, &sh2interpreters);
+  cores_to_range(M68KCoreList, &m68kinterpreters);
+  cores_to_range(CDCoreList, &cdcores);
+  cores_to_range(VIDCoreList, &vidcores);
+  cores_to_range(SNDCoreList, &sndcores);
+  cores_to_range(PERCoreList, &percores);
 
   dialog1 = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog1), "Yabause configuration");

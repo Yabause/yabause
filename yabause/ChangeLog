@@ -1,3 +1,6 @@
+0.9.11 -> 0.9.12
+ gtk
+  - The gtk port now use the core names from the Yabause library
 0.9.10 -> 0.9.11
  general:
   - Now using CMake as the default build system.
