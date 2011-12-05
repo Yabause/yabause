@@ -3691,6 +3691,25 @@ void ujump_assemble(int i,struct regstat *i_regs)
     if(i_regmap[temp]==PTEMP) emit_movimm((int)hash_table[((return_address>>16)^return_address)&0xFFFF],temp);
   }
   #endif
+  if(rt1[i]==PR) {
+    if(rt1[i+1]==PR||rt2[i+1]==PR) {
+      // Delay slot abuse, set PR before executing delay slot
+      int rt;
+      unsigned int return_address;
+      rt=get_reg(regs[i].regmap,PR);
+      return_address=start+i*2+4;
+      assert(rt>=0);
+      if(rt>=0) {
+        #ifdef REG_PREFETCH
+        if(temp>=0) 
+        {
+          if(i_regmap[temp]!=PTEMP) emit_movimm((int)hash_table[((return_address>>16)^return_address)&0xFFFF],temp);
+        }
+        #endif
+        emit_movimm(return_address,rt); // PC into link register
+      }
+    }
+  }
   ds_assemble(i+1,i_regs);
   u64 bc_unneeded=regs[i].u;
   bc_unneeded|=1LL<<rt1[i];
@@ -3700,13 +3719,14 @@ void ujump_assemble(int i,struct regstat *i_regs)
   if(rt1[i]==PR) {
     int rt;
     unsigned int return_address;
-    assert(rt1[i+1]!=PR);
-    assert(rt2[i+1]!=PR);
+    assert(rs1[i+1]!=PR);
+    assert(rs2[i+1]!=PR);
+    assert(rs3[i+1]!=PR);
     rt=get_reg(branch_regs[i].regmap,PR);
     assem_debug("branch(%d): eax=%d ecx=%d edx=%d ebx=%d ebp=%d esi=%d edi=%d\n",i,branch_regs[i].regmap[0],branch_regs[i].regmap[1],branch_regs[i].regmap[2],branch_regs[i].regmap[3],branch_regs[i].regmap[5],branch_regs[i].regmap[6],branch_regs[i].regmap[7]);
     //assert(rt>=0);
     return_address=start+i*2+4;
-    if(rt>=0) {
+    if(rt>=0&&rt1[i+1]!=PR&&rt2[i+1]!=PR) {
       #ifdef USE_MINI_HT
       if(internal_branch(return_address)) {
         int temp=rt+1;
@@ -3803,6 +3823,24 @@ void rjump_assemble(int i,struct regstat *i_regs)
     if(rh>=0) do_preload_rhash(rh);
   }
   #endif
+  if(rt1[i]==PR) {
+    if(rt1[i+1]==PR||rt2[i+1]==PR) {
+      // Delay slot abuse, set PR before executing delay slot
+      int rt,return_address;
+      rt=get_reg(regs[i].regmap,rt1[i]);
+      assert(rt>=0);
+      if(rt>=0) {
+        return_address=start+i*2+4;
+        #ifdef REG_PREFETCH
+        if(temp>=0) 
+        {
+          if(i_regmap[temp]!=PTEMP) emit_movimm((int)hash_table[((return_address>>16)^return_address)&0xFFFF],temp);
+        }
+        #endif
+        emit_movimm(return_address,rt); // PC into link register
+      }
+    }
+  }
   ds_assemble(i+1,i_regs);
   u64 bc_unneeded=regs[i].u;
   bc_unneeded|=1LL<<rt1[i];
@@ -3812,11 +3850,12 @@ void rjump_assemble(int i,struct regstat *i_regs)
   load_regs(regs[i].regmap,branch_regs[i].regmap,rs1[i],CCREG,CCREG);
   if(rt1[i]==PR) {
     int rt,return_address;
-    assert(rt1[i+1]!=rt1[i]);
-    assert(rt2[i+1]!=rt1[i]);
+    assert(rs1[i+1]!=PR);
+    assert(rs2[i+1]!=PR);
+    assert(rs3[i+1]!=PR);
     rt=get_reg(branch_regs[i].regmap,rt1[i]);
     assem_debug("branch(%d): eax=%d ecx=%d edx=%d ebx=%d ebp=%d esi=%d edi=%d\n",i,branch_regs[i].regmap[0],branch_regs[i].regmap[1],branch_regs[i].regmap[2],branch_regs[i].regmap[3],branch_regs[i].regmap[5],branch_regs[i].regmap[6],branch_regs[i].regmap[7]);
-    if(rt>=0) {
+    if(rt>=0&&rt1[i+1]!=PR&&rt2[i+1]!=PR) {
       return_address=start+i*2+4;
       #ifdef REG_PREFETCH
       if(temp>=0) 
