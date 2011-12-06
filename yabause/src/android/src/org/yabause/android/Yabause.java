@@ -29,6 +29,9 @@ import android.util.Log;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MenuInflater;
 
 class YabauseRunnable implements Runnable
 {
@@ -64,6 +67,11 @@ class YabauseRunnable implements Runnable
             
             handler.post(this);
         }
+    }
+
+    public boolean paused()
+    {
+        return paused;
     }
 }
 
@@ -104,6 +112,42 @@ public class Yabause extends Activity
     {
         super.onDestroy();
         Log.v(TAG, "this is the end...");
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.emulation, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.pause:
+            yabauseThread.pause();
+            return true;
+        case R.id.quit:
+            this.finish();
+            return true;
+        case R.id.resume:
+            yabauseThread.resume();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (yabauseThread.paused()) {
+            menu.setGroupVisible(R.id.paused, true);
+            menu.setGroupVisible(R.id.running, false);
+        } else {
+            menu.setGroupVisible(R.id.paused, false);
+            menu.setGroupVisible(R.id.running, true);
+        }
+        return true;
     }
 
     static {
