@@ -25,6 +25,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -32,18 +33,24 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
+import android.app.Dialog;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.content.DialogInterface;
 
 class YabauseRunnable implements Runnable
 {
-    public static native void init(Bitmap bitmap);
+    public static native int init(Yabause yabause, Bitmap bitmap);
     public static native void exec();
+    private boolean inited;
     private boolean paused;
     private Handler handler;
 
-    public YabauseRunnable(Bitmap bitmap)
+    public YabauseRunnable(Yabause yabause, Bitmap bitmap)
     {
         handler = new Handler();
-        init(bitmap);
+        int ok = init(yabause, bitmap);
+        inited = (ok == 0);
     }
 
     public void pause()
@@ -61,7 +68,7 @@ class YabauseRunnable implements Runnable
 
     public void run()
     {
-        if (! paused)
+        if (inited && (! paused))
         {
             exec();
             
@@ -75,10 +82,23 @@ class YabauseRunnable implements Runnable
     }
 }
 
+class YabauseHandler extends Handler {
+    private Yabause yabause;
+
+    public YabauseHandler(Yabause yabause) {
+        this.yabause = yabause;
+    }
+
+    public void handleMessage(Message msg) {
+        yabause.showDialog(msg.what, msg.getData());
+    }
+}
+
 public class Yabause extends Activity
 {
     private static final String TAG = "Yabause";
     private YabauseRunnable yabauseThread;
+    private YabauseHandler handler;
 
     /** Called when the activity is first created. */
     @Override
@@ -88,7 +108,8 @@ public class Yabause extends Activity
         YabauseView view = new YabauseView(this);
         setContentView(view);
 
-        yabauseThread = new YabauseRunnable(view.bitmap);
+        handler = new YabauseHandler(this);
+        yabauseThread = new YabauseRunnable(this, view.bitmap);
     }
 
     @Override
@@ -148,6 +169,33 @@ public class Yabause extends Activity
             menu.setGroupVisible(R.id.running, true);
         }
         return true;
+    }
+
+    @Override
+    public Dialog onCreateDialog(int id, Bundle args) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(args.getString("message"))
+            .setCancelable(false)
+            .setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    Yabause.this.finish();
+                }
+            })
+            .setPositiveButton("Ignore", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                }
+            });
+        AlertDialog alert = builder.create();
+        return alert;
+    }
+
+    private void errorMsg(String msg) {
+        Message message = handler.obtainMessage();
+        Bundle bundle = new Bundle();
+        bundle.putString("message", msg);
+        message.setData(bundle);
+        handler.sendMessage(message);
     }
 
     static {
