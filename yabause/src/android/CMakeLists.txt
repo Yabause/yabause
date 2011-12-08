@@ -26,6 +26,7 @@ add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/libs/armeabi/libyabause.so"
 	COMMAND "${NDK_BUILD}"
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/jni/libyabause.a"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/jni/yui.c"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
