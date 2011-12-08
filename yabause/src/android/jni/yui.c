@@ -129,6 +129,7 @@ jint
 Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab, jobject bitmap )
 {
     yabauseinit_struct yinit;
+    int res;
 
     yabause = (*env)->NewGlobalRef(env, yab);
     __android_log_print(ANDROID_LOG_INFO, "yabause", "yabause = %p", yabause);
@@ -150,7 +151,11 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     yinit.cartpath = cartpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 
-    return YabauseInit(&yinit);
+    res = YabauseInit(&yinit);
+
+    PerPortReset();
+
+    return res;
 }
 
 void
