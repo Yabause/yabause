@@ -39,4 +39,17 @@ add_custom_command(
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_custom_target(yabause-android ALL DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/bin/Yabause-debug.apk")
+add_custom_command(
+	OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/bin/Yabause-release-unsigned.apk"
+	COMMAND "ant" ARGS "release"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/libs/armeabi/libyabause.so"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/org/yabause/android/Yabause.java"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_custom_target(yabause-android ALL DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/bin/Yabause-release-unsigned.apk")
+else()
+    add_custom_target(yabause-android ALL DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/bin/Yabause-debug.apk")
+endif()
