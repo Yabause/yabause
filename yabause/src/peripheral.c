@@ -667,7 +667,7 @@ void PERDummyKeyName(u32 key, char * name, int size);
 
 PerInterface_struct PERDummy = {
 PERCORE_DUMMY,
-"Dummy Interface",
+"Dummy Input Interface",
 PERDummyInit,
 PERDummyDeInit,
 PERDummyHandleEvents,
