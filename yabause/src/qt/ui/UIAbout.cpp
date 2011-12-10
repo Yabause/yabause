@@ -28,8 +28,8 @@ UIAbout::UIAbout( QWidget* p )
 	setupUi( this );
 	if ( p && !p->isFullScreen() )
 		setWindowFlags( Qt::Sheet );
-	lInformations->setText( lInformations->text().arg( VERSION ) );
-	
-	// retranslate widgets
-	QtYabause::retranslateWidget( this );
+
+	/* here we don't use QtYabause::retranslateWidget because it would search for the
+	string with the current value of VERSION instead of the string with %1 in it... */
+	lInformations->setText( QtYabause::translate( lInformations->text() ).arg( VERSION ));
 }
