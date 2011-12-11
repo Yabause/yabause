@@ -22,14 +22,11 @@ package org.yabause.android;
 import java.lang.Runnable;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
@@ -37,6 +34,7 @@ import android.app.Dialog;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
+import org.yabause.android.YabauseView;
 
 class YabauseRunnable implements Runnable
 {
@@ -105,9 +103,10 @@ public class Yabause extends Activity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        YabauseView view = new YabauseView(this);
-        setContentView(view);
 
+        setContentView(R.layout.main);
+
+        YabauseView view = (YabauseView) findViewById(R.id.yabause_view);
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this, view.bitmap);
     }
@@ -200,23 +199,5 @@ public class Yabause extends Activity
 
     static {
         System.loadLibrary("yabause");
-    }
-}
-
-class YabauseView extends View {
-    public Bitmap bitmap;
-
-    public YabauseView(Context context) {
-        super(context);
-
-        final int W = 320;
-        final int H = 240;
-
-        bitmap = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
-    }
-
-    @Override protected void onDraw(Canvas canvas) {
-        canvas.drawBitmap(bitmap, 0, 0, null);
-        invalidate();
     }
 }
