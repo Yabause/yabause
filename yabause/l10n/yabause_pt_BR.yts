@@ -12,7 +12,6 @@ Add Codes...|Adicionar Códigos...
 Add Raw Memory Code|Adicionar o Código da Memória Original
 Address :|Endereço :
 Advanced|Avançado
-<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>
 Are you sure you want to delete '%1' ?|Você tem certeza que você quer apagar '%1' ?
 Are you sure you want to format '%1' ?|Você tem certeza que você quer formatar '%1' ?
 Backup Manager|Gerenciador de Backups
@@ -58,6 +57,10 @@ Device List|Lista de Dispositivos
 Disabled|Desativado
 Down|Pra baixo
 Download|Baixar
+Dummy CD Drive|Imitação do Drive de CD
+Dummy Input Interface|Imitação da Interface de Entrada de Dados
+Dummy Sound Interface|Imitação da Interface de Som
+Dummy Video Interface|Imitação da Interface de Vídeo
 Emu-Compatibility|Compatibilidade com o Emu
 Emulation|Emulação
 End Address:|Endereço Final:
@@ -90,6 +93,7 @@ http://www.monkeystudio.org|http://www.monkeystudio.org
 Input|Controles
 Invalid Address|Endereço Inválido
 Invalid Value|Valor Inválido
+ISO-File Virtual Drive|Drive Virtual do Arquivo-ISO
 Italian|Italiano
 Japanese|Japonês
 Language :|Idioma :
@@ -125,9 +129,11 @@ Open CD Rom|Abrir o CD Rom
 Open CD Rom...|Abrir o CD Rom...
 Open ISO|Abrir a ISO
 Open ISO...|Abrir a ISO...
+OpenGL Video Interface|Interface de Vídeo do OpenGL
 Pad|Pad
 &Pause|&Pausar
 Pause|Pausar
+Qt Keyboard Input Interface|Interface da Entrada de Dados do Teclado do Qt
 &Quit|&Sair
 Quit|Sair
 &Raw Memory Address|&Endereço da Memória Original
@@ -150,11 +156,15 @@ Save States|Salvar os States
 Screenshot|Screenshot
 SCSP|SCSP
 SCU-DSP|SCU-DSP
+SDL Joystick Interface|Interface SDL do Joystick
+SDL Sound Interface|Interface de Som SDL
 Select a file to load your state|Selecione um arquivo para carregar seu state
 Select your iso/cue/bin file|Selecione seu arquivo iso/cue/bin
 &Settings...|&Configurações...
 Settings|Configurações
+SH2 Debugger Interpreter|Interpretador do Debugger SH2
 SH2 Interpreter|Interpretador SH2
+Software Video Interface|Interface de Vídeo do Software
 Sound Core|Núcleo do Som
 Sound|Som
 Spanish|Espanhol
@@ -191,8 +201,9 @@ _View|_Visualizar
 &View|&Visualizar
 Waiting Input...|Esperando a Entrada dos Dados...
 Width|Largura
+Windows SPTI Driver|Drive SPTI do Windows
 Word Write|Gravação das Palavras
 Yabause Cheat Files (*.yct);;All Files (*)|Arquivos das Trapaças do Yabause (*.yct);;Todos os Arquivos (*)
-Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Gui Qt do Yabause<br />Baseada no Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />O Time do Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Gui Qt do Yabause<br />Baseada no Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />O Time Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Qt GUI|GUI Qt do Yabause
 Yabause Save State (*.yss)|Save State do Yabause (*.yss)
