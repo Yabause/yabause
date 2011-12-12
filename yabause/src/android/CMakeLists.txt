@@ -30,12 +30,19 @@ add_custom_command(
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+set(yabause_android_RES "${CMAKE_CURRENT_SOURCE_DIR}/res/layout/main.xml")
+set(yabause_android_SRC
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/org/yabause/android/Yabause.java"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/org/yabause/android/YabauseView.java"
+)
+
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/bin/Yabause-debug.apk"
 	COMMAND "ant" ARGS "debug"
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/libs/armeabi/libyabause.so"
-	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/org/yabause/android/Yabause.java"
+	DEPENDS ${yabause_android_SRC}
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml"
+	DEPENDS ${yabause_android_RES}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
@@ -43,8 +50,9 @@ add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/bin/Yabause-release-unsigned.apk"
 	COMMAND "ant" ARGS "release"
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/libs/armeabi/libyabause.so"
-	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/org/yabause/android/Yabause.java"
+	DEPENDS ${yabause_android_SRC}
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml"
+	DEPENDS ${yabause_android_RES}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
