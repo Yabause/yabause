@@ -52,4 +52,8 @@ public class YabauseView extends View {
         canvas.drawBitmap(bitmap, 0, 0, null);
         invalidate();
     }
+
+    @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        setMeasuredDimension(320, 240);
+    }
 }
