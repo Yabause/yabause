@@ -21,15 +21,15 @@
 #include <android/bitmap.h>
 #include <android/log.h>
 
-#include "../../yabause.h"
-#include "../../scsp.h"
-#include "../../vidsoft.h"
-#include "../../peripheral.h"
-#include "../../m68kcore.h"
-#include "../../sh2core.h"
-#include "../../sh2int.h"
-#include "../../cdbase.h"
-#include "../../cs2.h"
+#include "yabause.h"
+#include "scsp.h"
+#include "vidsoft.h"
+#include "peripheral.h"
+#include "m68kcore.h"
+#include "sh2core.h"
+#include "sh2int.h"
+#include "cdbase.h"
+#include "cs2.h"
 
 static JavaVM * yvm;
 static jobject yabause;
