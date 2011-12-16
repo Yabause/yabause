@@ -8,13 +8,13 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
         _________________________________________
-        Copyright (c) 2002-2009 Yabause team
+        Copyright (c) 2002-2011 Yabause team
 
 
 1) Compiling instructions...................................20
-2) How to use Yabause.......................................65
-3) Contact information.....................................214
-4) Disclaimer..............................................230
+2) How to use Yabause.......................................68
+3) Contact information.....................................217
+4) Disclaimer..............................................233
 
 
 1 Compiling instructions______________________________________
@@ -217,7 +217,7 @@ full list, run "yabause --help" in the command prompt.
 3 Contact information_________________________________________
 
 General inquiries should go to:
-E-mail:	guillaume.duhamel@gmail.com
+E-mail:	guillaume@yabause.org
 E-mail: cwx@cyberwarriorx.com
 
 Windows Port-related inquiries should go to:
