@@ -8,13 +8,13 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
            ____________________________________
-           Copyright (c) 2002-2009 Yabause team
+           Copyright (c) 2002-2011 Yabause team
 
 
 1) Introduction.............................................20
-2) Staff/Thanks.............................................38
-3) Contact information......................................72
-4) Disclaimer...............................................82
+2) Staff/Thanks.............................................39
+3) Contact information......................................75
+4) Disclaimer...............................................86
 
 
 1 Introduction________________________________________________
@@ -28,11 +28,12 @@ For installation/how to use information, check the ports
 specific README files:
 
   * README.DC for the dreamcast port
-  * README.PSP for the PSP port
   * README.LIN for the linux port
   * README.MAC for the mac port
-  * README.WIN for the windows port
+  * README.PSP for the PSP port
   * README.QT for the crossplatform Qt 4 port
+  * README.WII for the WII port
+  * README.WIN for the windows port
 
 
 2 Staff/Thanks________________________________________________
@@ -56,7 +57,7 @@ Thanks to:
     for winning the "Find a name for my emu" contest, for
     his contribution to this README and for this nice web
     site he did.
-    http://rom.jalix.org
+    http://romanito.free.fr/
 
   * Stefano and all of segadev for their help.
 
@@ -73,7 +74,7 @@ Thanks to:
 
 3 Contact information_________________________________________
 
-E-mail:	guillaume.duhamel@gmail.com
+E-mail:	guillaume@yabause.org
 Web:    http://yabause.org
 IRC:    irc://irc.freenode.net/yabause
 
@@ -100,4 +101,3 @@ Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301  USA
 
 See the GNU General Public License details in COPYING.
-
