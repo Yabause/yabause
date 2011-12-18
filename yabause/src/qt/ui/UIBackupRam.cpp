@@ -112,7 +112,7 @@ void UIBackupRam::on_lwSaveList_itemSelectionChanged()
 				leLanguage->setText( QtYabause::translate( "Italian" ) );
 				break;
 			default:
-				leLanguage->setText( QtYabause::translate( "Unknow (%1)" ).arg( saves[id].language ) );
+				leLanguage->setText( QtYabause::translate( "Unknown (%1)" ).arg( saves[id].language ) );
 				break;
 		}
 		leDataSize->setText( QString::number( saves[id].datasize ) );

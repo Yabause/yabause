@@ -106,7 +106,7 @@ void YabSetError(int type, const void *extra)
          break;
       case YAB_ERR_UNKNOWN:
       default:
-         YuiErrorMsg(_("Unknown error occured\n"));
+         YuiErrorMsg(_("Unknown error occurred\n"));
          break;
    }
 }
