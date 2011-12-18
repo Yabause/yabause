@@ -72,6 +72,7 @@ namespace QtYabause
 	int logTranslation();
 	void closeTranslation();
 	QString translate( const QString& string );
+	void retranslateWidgetOnly( QWidget* widget );
 	void retranslateWidget( QWidget* widget );
 	void retranslateApplication();
 

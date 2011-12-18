@@ -197,12 +197,11 @@ QString QtYabause::translate( const QString& string )
 #endif
 }
 
-void QtYabause::retranslateWidget( QWidget* widget )
+void QtYabause::retranslateWidgetOnly( QWidget* widget )
 {
 #ifdef HAVE_LIBMINI18N
 	if ( !widget )
 		return;
-	// translate all widget based members
 	widget->setAccessibleDescription( translate( widget->accessibleDescription() ) );
 	widget->setAccessibleName( translate( widget->accessibleName() ) );
 	widget->setStatusTip( translate( widget->statusTip() ) );
@@ -211,6 +210,16 @@ void QtYabause::retranslateWidget( QWidget* widget )
 	widget->setWhatsThis( translate( widget->whatsThis() ) );
 	widget->setWindowIconText( translate( widget->windowIconText() ) );
 	widget->setWindowTitle( translate( widget->windowTitle() ) );
+#endif
+}
+
+void QtYabause::retranslateWidget( QWidget* widget )
+{
+#ifdef HAVE_LIBMINI18N
+	if ( !widget )
+		return;
+	// translate all widget based members
+	retranslateWidgetOnly( widget );
 	// get class name
 	const QString className = widget->metaObject()->className();
 	if ( className == "QWidget" )

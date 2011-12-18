@@ -32,4 +32,6 @@ UIAbout::UIAbout( QWidget* p )
 	/* here we don't use QtYabause::retranslateWidget because it would search for the
 	string with the current value of VERSION instead of the string with %1 in it... */
 	lInformations->setText( QtYabause::translate( lInformations->text() ).arg( VERSION ));
+
+	QtYabause::retranslateWidgetOnly( this );
 }
