@@ -632,7 +632,7 @@ div1_negative_divisor:
 	.type	macl, @function
 macl:
 	/* ebx = sr */
-	/* esi = multiplicand address */
+	/* ebp = multiplicand address */
 	/* edi = multiplicand address */
 	/* eax = return MACL */
 	/* edx = return MACH */
@@ -640,12 +640,12 @@ macl:
 	push	%eax /* MACL */
 	mov	%edi, %eax
 	call	MappedMemoryReadLong
-	mov	%eax, %ebp
-	mov	%esi, %eax
+	mov	%eax, %esi
+	mov	%ebp, %eax
 	call	MappedMemoryReadLong
-	add	$4, %esi
+	add	$4, %ebp
 	add	$4, %edi
-	imul	%ebp
+	imul	%esi
 	add	(%esp), %eax /* MACL */
 	adc	4(%esp), %edx /* MACH */
 	add	$8, %esp
@@ -653,15 +653,15 @@ macl:
 	jne	macl_saturation
 	ret
 macl_saturation:
-	mov	$0xFFFF8000, %ebp
+	mov	$0xFFFF8000, %esi
 	xor	%ecx, %ecx
-	cmp	%ebp, %edx
-	cmovl	%ebp, %edx
+	cmp	%esi, %edx
+	cmovl	%esi, %edx
 	cmovl	%ecx, %eax
-	not	%ebp
+	not	%esi
 	not	%ecx
-	cmp	%ebp, %edx
-	cmovg	%ebp, %edx
+	cmp	%esi, %edx
+	cmovg	%esi, %edx
 	cmovg	%ecx, %eax
 	ret
 	.size	macl, .-macl
@@ -670,7 +670,7 @@ macl_saturation:
 	.type	macw, @function
 macw:
 	/* ebx = sr */
-	/* esi = multiplicand address */
+	/* ebp = multiplicand address */
 	/* edi = multiplicand address */
 	/* eax = return MACL */
 	/* edx = return MACH */
@@ -678,13 +678,13 @@ macw:
 	push	%eax /* MACL */
 	mov	%edi, %eax
 	call	MappedMemoryReadWord
-	movswl	%ax, %ebp
-	mov	%esi, %eax
+	movswl	%ax, %esi
+	mov	%ebp, %eax
 	call	MappedMemoryReadWord
 	movswl	%ax, %eax
-	add	$2, %esi
+	add	$2, %ebp
 	add	$2, %edi
-	imul	%ebp
+	imul	%esi
 	test	$0x2, %bl
 	jne	macw_saturation
 	add	(%esp), %eax /* MACL */
@@ -692,13 +692,13 @@ macw:
 	add	$8, %esp
 	ret
 macw_saturation:
-	mov	(%esp), %ebp
-	sar	$31, %ebp
+	mov	(%esp), %esi
+	sar	$31, %esi
 	add	(%esp), %eax /* MACL */
-	adc	%ebp, %edx
-	mov	$0x80000000, %ebp
+	adc	%esi, %edx
+	mov	$0x80000000, %esi
 	mov	$0x7FFFFFFF, %ecx
-	add	%eax, %ebp
+	add	%eax, %esi
 	adc	$0, %edx
 	cmovne	%ecx, %eax
 	not	%ecx

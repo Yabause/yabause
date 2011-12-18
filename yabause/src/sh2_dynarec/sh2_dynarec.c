@@ -1651,7 +1651,7 @@ void complex_alloc(struct regstat *current,int i)
   }
   if(opcode[i]==0&&opcode2[i]==15) { // MAC.L
     #if defined(__i386__) || defined(__x86_64__)
-    alloc_x86_reg(current,i,rs1[i],ESI);
+    alloc_x86_reg(current,i,rs1[i],EBP);
     alloc_x86_reg(current,i,rs2[i],EDI);
     alloc_x86_reg(current,i,SR,EBX);
     alloc_all(current,i);
@@ -1679,7 +1679,7 @@ void complex_alloc(struct regstat *current,int i)
   }
   if(opcode[i]==4&&opcode2[i]==15) { // MAC.W
     #if defined(__i386__) || defined(__x86_64__)
-    alloc_x86_reg(current,i,rs1[i],ESI);
+    alloc_x86_reg(current,i,rs1[i],EBP);
     alloc_x86_reg(current,i,rs2[i],EDI);
     alloc_x86_reg(current,i,SR,EBX);
     alloc_all(current,i);
@@ -2799,7 +2799,7 @@ void complex_assemble(int i,struct regstat *i_regs)
     // If both registers are the same, the register is incremented twice.
     // Pre-increment one of the function arguments.
     #if defined(__i386__) || defined(__x86_64__)
-    if(rs1[i]==rs2[i]) {emit_mov(EDI,ESI);emit_addimm(EDI,4,EDI);}
+    if(rs1[i]==rs2[i]) {emit_mov(EDI,EBP);emit_addimm(EDI,4,EDI);}
     #else
     #if defined(__arm__)
     if(rs1[i]==rs2[i]) {emit_mov(6,5);emit_addimm(6,4,6);}
@@ -2825,7 +2825,7 @@ void complex_assemble(int i,struct regstat *i_regs)
     // If both registers are the same, the register is incremented twice.
     // Pre-increment one of the function arguments.
     #if defined(__i386__) || defined(__x86_64__)
-    if(rs1[i]==rs2[i]) {emit_mov(EDI,ESI);emit_addimm(EDI,2,EDI);}
+    if(rs1[i]==rs2[i]) {emit_mov(EDI,EBP);emit_addimm(EDI,2,EDI);}
     #else
     #if defined(__arm__)
     if(rs1[i]==rs2[i]) {emit_mov(6,5);emit_addimm(6,2,6);}
@@ -4312,6 +4312,11 @@ void sjump_assemble(int i,struct regstat *i_regs)
       // load regs
       load_regs(regs[i].regmap,branch_regs[i].regmap,rs1[i+1],rs2[i+1],rs3[i+1]);
       address_generation(i+1,&branch_regs[i],0);
+      if(itype[i+1]==COMPLEX) {
+        if((opcode[i+1]|4)==4&&opcode2[i+1]==15) { // MAC.W/MAC.L
+          load_regs(regs[i].regmap,branch_regs[i].regmap,MACL,MACH,MACH);
+        }
+      }
       load_regs(regs[i].regmap,branch_regs[i].regmap,CCREG,CCREG,CCREG);
       ds_assemble(i+1,&branch_regs[i]);
       cc=get_reg(branch_regs[i].regmap,CCREG);
@@ -4347,28 +4352,13 @@ void sjump_assemble(int i,struct regstat *i_regs)
                     ds_unneeded);
       load_regs(regs[i].regmap,branch_regs[i].regmap,rs1[i+1],rs2[i+1],rs3[i+1]);
       address_generation(i+1,&branch_regs[i],0);
+      if(itype[i+1]==COMPLEX) {
+        if((opcode[i+1]|4)==4&&opcode2[i+1]==15) { // MAC.W/MAC.L
+          load_regs(regs[i].regmap,branch_regs[i].regmap,MACL,MACH,MACH);
+        }
+      }
       load_regs(regs[i].regmap,branch_regs[i].regmap,CCREG,CCREG,CCREG);
       ds_assemble(i+1,&branch_regs[i]);
-      /*cc=get_reg(branch_regs[i].regmap,CCREG);
-      //if(cc==-1&&!likely[i]) {
-      if(cc==-1) {
-        // Cycle count isn't in a register, temporarily load it then write it out
-        emit_loadreg(CCREG,HOST_CCREG);
-        emit_addimm_and_set_flags(CLOCK_DIVIDER*(cycles[i]+cycles[i+1]),HOST_CCREG);
-        //int jaddr=(int)out;
-        //emit_jns(0);
-        //add_stub(CC_STUB,jaddr,(int)out,0,i,start+i*2+4,NOTTAKEN,0);
-        emit_storereg(CCREG,HOST_CCREG);
-      }
-      else{
-        cc=get_reg(i_regmap,CCREG);
-        assert(cc==HOST_CCREG);
-        emit_addimm_and_set_flags(CLOCK_DIVIDER*(cycles[i]+cycles[i+1]),cc);
-        //int jaddr=(int)out;
-        //emit_jns(0);
-        //add_stub(CC_STUB,jaddr,(int)out,0,i,start+i*2+4,likely[i]?NULLDS:NOTTAKEN,0);
-        //add_stub(CC_STUB,jaddr,(int)out,0,i,start+i*2+4,NOTTAKEN,0);
-      }*/
     }
   }
 }
@@ -6370,7 +6360,15 @@ int sh2_recompile_block(int addr)
             current.isdoingcp=0;
             current.wasdoingcp=0;
             regs[i].wasdoingcp=0;
-            alloc_reg(&current,i,SR);
+          }
+          else
+          if(itype[i+1]==COMPLEX) {
+            // The MAC and DIV instructions make function calls which
+            // do not save registers.  Do the branch and update the
+            // cycle count first.
+            current.isdoingcp=0;
+            current.wasdoingcp=0;
+            regs[i].wasdoingcp=0;
           }
           else
           {
@@ -6517,7 +6515,7 @@ int sh2_recompile_block(int addr)
         case SJUMP:
           alloc_cc(&current,i-1);
           dirty_reg(&current,CCREG);
-          if(rt1[i]==TBIT||rt2[i]==TBIT||rt1[i]==SR||rt2[i]==SR) {
+          if(rt1[i]==TBIT||rt2[i]==TBIT||rt1[i]==SR||rt2[i]==SR||itype[i]==COMPLEX) {
             // The delay slot overwrote the branch condition
             // Delay slot goes after the test (in order)
             current.u=branch_unneeded_reg[i-1]&~((1LL<<rs1[i])|(1LL<<rs2[i]));
