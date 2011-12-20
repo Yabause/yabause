@@ -27,7 +27,7 @@ add_custom_command(
 
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Yabause.app/Contents/MacOS/yabause"
-	COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/yabause-carbon" "${CMAKE_CURRENT_BINARY_DIR}/Yabause.app/Contents/MacOS/yabause"
+	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:yabause-carbon> "${CMAKE_CURRENT_BINARY_DIR}/Yabause.app/Contents/MacOS/yabause"
 	DEPENDS yabause-carbon
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Yabause.app/Contents/MacOS"
 )
