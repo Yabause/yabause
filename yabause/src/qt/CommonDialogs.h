@@ -28,7 +28,7 @@ namespace CommonDialogs
 {
 	bool question( const QString& message, const QString& caption = QT_TRANSLATE_NOOP( "CommonDialogs", "Question..." ) );
 	void warning( const QString& message, const QString& caption = QT_TRANSLATE_NOOP( "CommonDialogs", "Warning..." ) );
-	void information( const QString& message, const QString& caption = QT_TRANSLATE_NOOP( "CommonDialogs", "Information..." ) );
+	void information( const QString& message, const QString& caption = "Information..." );
 	QString getItem( const QStringList items, const QString& label, const QString& caption = QT_TRANSLATE_NOOP( "CommonDialogs", "Get Item..." ) );
 	QString getSaveFileName( const QString& directory = QString(), const QString& caption = QT_TRANSLATE_NOOP( "CommonDialogs", "Get Save File Name..." ), const QString& filter = QString() );
 	QString getOpenFileName( const QString& directory = QString(), const QString& caption = QT_TRANSLATE_NOOP( "CommonDialogs", "Get Open File Name..." ), const QString& filter = QString() );

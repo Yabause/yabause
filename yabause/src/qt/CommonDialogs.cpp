@@ -17,6 +17,7 @@
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 #include "CommonDialogs.h"
+#include "QtYabause.h"
 
 bool CommonDialogs::question( const QString& m, const QString& c )
 { return QMessageBox::question( QApplication::activeWindow(), c, m, QMessageBox::Yes | QMessageBox::No, QMessageBox::No ) == QMessageBox::Yes; }
@@ -25,7 +26,7 @@ void CommonDialogs::warning( const QString& m, const QString& c )
 { QMessageBox::warning( QApplication::activeWindow(), c, m ); }
 
 void CommonDialogs::information( const QString& m, const QString& c )
-{ QMessageBox::information( QApplication::activeWindow(), c, m ); }
+{ QMessageBox::information( QApplication::activeWindow(), QtYabause::translate( c ), m ); }
 
 QString CommonDialogs::getItem( const QStringList i, const QString& l, const QString& c )
 {
