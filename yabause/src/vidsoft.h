@@ -28,7 +28,4 @@ extern u32 *dispbuffer;
 
 extern VideoInterface_struct VIDSoft;
 
-void VIDSoftGetScreenSize(int *width, int *height);
 #endif
-
-

@@ -88,7 +88,7 @@ void YuiSwapBuffers(void)
 
     /* Calculate display size (shrink interlaced/hi-res displays by half) */
     int width_in, height_in, width_out, height_out;
-    VIDSoftGetScreenSize(&width_in, &height_in);
+    VIDCore->GetGlSize(&width_in, &height_in);
     if (width_in <= DISPLAY_WIDTH) {
         width_out = width_in;
     } else {

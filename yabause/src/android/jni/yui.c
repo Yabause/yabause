@@ -113,7 +113,7 @@ void YuiSwapBuffers(void)
     AndroidBitmap_lockPixels(env, ybitmap, &pixels);
 
     buffer = dispbuffer;
-    VIDSoftGetScreenSize(&buf_width, &buf_height);
+    VIDCore->GetGlSize(&buf_width, &buf_height);
     for(y = 0;y < info.height;y++) {
         for(x = 0;x < info.width;x++) {
             *((uint32_t *) pixels + x) = *(buffer + x);

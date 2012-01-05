@@ -46,8 +46,8 @@ void yui_gl_draw(YuiGl * glxarea) {
 #else
 	int buf_width, buf_height;
 	GdkPixbuf * pixbuf, * scaledpixbuf;
-	
-	VIDSoftGetScreenSize( &buf_width, &buf_height );
+
+	VIDCore->GetGlSize( &buf_width, &buf_height );
 	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;
 	glxarea->pixels_height = GTK_WIDGET(glxarea)->allocation.height;
 	glxarea->pixels_rowstride = glxarea->pixels_width * 4;
@@ -259,7 +259,7 @@ void yui_gl_dump_screen(YuiGl * glxarea) {
 	u8 * pixels;
 	u8 * buffer;
 
-	VIDSoftGetScreenSize( &buf_width, &buf_height );
+	VIDCore->GetGlSize( &buf_width, &buf_height );
 	size = buf_width * buf_height * 3;
 
 	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;

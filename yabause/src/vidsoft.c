@@ -2978,14 +2978,6 @@ void VIDSoftOnScreenDebugMessage(char *string, ...)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftGetScreenSize(int *width, int *height)
-{
-   *width = vdp2width;
-   *height = vdp2height;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 void VIDSoftVdp1SwapFrameBuffer(void)
 {
    u8 *temp = vdp1frontframebuffer;
