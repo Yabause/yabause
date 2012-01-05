@@ -12,13 +12,16 @@ Add Codes...|Ajouter un Code...
 Add Raw Memory Code|Ajouter un Code Mémoire Brut
 Address :|Adresse :
 Advanced|Avancé
+Asia (NTSC)|Asie (NTSC)
+Asia (PAL)|Asie (PAL)
 Are you sure you want to delete '%1' ?|Etes vous sûr de vouloir supprimer '%1' ?
 Are you sure you want to format '%1' ?|Etes vous sûr de vouloir formater '%1' ?
+Auto-detect|Détection Auto
 Backup Manager|Gestion des Sauvegardes
 Backup Manager...|Gestion des Sauvegardes...
 &Backup Ram Manager|&Gestion des Sauvegardes
 Backup Ram Manager|Gestion des Sauvegardes
-Bios|Bios
+Bios|Bios :
 Block Size :|Taille du Bloc :
 &Browse|&Parcourir
 Browse|Parcourir
@@ -27,9 +30,11 @@ Cancel|Annuler
 Cannot initialize|Ne peut pas Initialiser
 &Capture Screen|&Capture d'Ecran
 Cart/Memory|Cartouche/Mémoire
-Cartridge|Cartouche
+Cartridge|Cartouche :
 CD Images (*.iso *.cue *.bin)|Images CD (*.iso *.cue *.bin)
-Cd-Rom|CD-Rom
+Cd-Rom|CD-Rom :
+Central/South America (NTSC)|Amérique du Sud/Centrale (NTSC)
+Central/South America (PAL)|Amérique du Sud/Centrale (PAL)
 &Cheats|&Cheats
 Cheats|Cheats
 Cheats File|Fichier Cheat
@@ -67,6 +72,7 @@ End Address:|Adresse de Fin :
 Enable|Activer
 Enabled|Activé
 English|Anglais
+Europe + others (PAL)|Europe + Autres (PAL)
 &File|&Fichier
 File|Fichier
 File :|Fichier :
@@ -85,17 +91,20 @@ Fullscreen|Plein Ecran
 General|Général
 German|Allemand
 Hard Reset|Redémarrage Matériel
-Height|Hauteur
+Height|Hauteur :
 _Help|_Aide
 &Help|&Aide
 http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=fr
 http://www.monkeystudio.org|http://www.monkeystudio.org
-Input|Contrôleur
+Information...|Information...
+Input|Contrôleur :
 Invalid Address|Adresse Invalide
 Invalid Value|Valeur Invalide
 ISO-File Virtual Drive|Lecteur de Fichier ISO Virtuel
 Italian|Italien
+Japan (NTSC)|Japon (NTSC)
 Japanese|Japonais
+Korea (NTSC)|Corée (NTSC)
 Language :|Langage :
 &Layer|&Couche
 Layer|Couche
@@ -114,8 +123,8 @@ Memory Dump|Copier la Mémoire
 Memory Editor|Editeur de Mémoire
 &Memory Transfer|&Transfert de Mémoire
 Memory Transfer|Transfert de Mémoire
-Memory|Mémoire
-Mpeg ROM|ROM MPEG
+Memory|Mémoire :
+Mpeg ROM|ROM MPEG :
 Mouse|Souris
 MSH2|MSH2
 NBG0|NBG0
@@ -123,6 +132,7 @@ NBG1|NBG1
 NBG2|NBG2
 NBG3|NBG3
 None|Aucun
+North America (NTSC)|Amérique du Nord (NTSC)
 Ok|Ok
 &OK|&OK
 Open CD Rom|Ouvrir un CD ROM
@@ -138,10 +148,10 @@ Qt Keyboard Input Interface|Interface Qt du Clavier
 Quit|Quitter
 &Raw Memory Address|Adresse Mémoire &Brut
 RBG0|RBG0
-Region|Région
+Region|Région :
 &Reset|&Redémarrer
 Reset|Redémarrer
-Resolution|Résolution
+Resolution|Résolution :
 Right|Droite
 Right trigger|Gâchette Droite
 R&un|L&ancer
@@ -151,7 +161,7 @@ Save List|Liste des Sauvegardes
 Save|Sauvegarder
 Save State|Sauvegarder l'Etat
 Save State As|Sauvegarder l'Etat sous
-Save States|Sauvegarde d'Etat
+Save States|Sauvegarde d'Etat :
 &Save To File|&Sauvegarder Vers le Fichier
 Screenshot|Capture d'Ecran
 SCSP|SCSP
@@ -163,9 +173,9 @@ Select your iso/cue/bin file|Choisissez votre fichier iso/cue/bin
 &Settings...|&Paramétres...
 Settings|Paramétres
 SH2 Debugger Interpreter|Interpréteur de Débugeur SH2
-SH2 Interpreter|Interpréteur SH2
+SH2 Interpreter|Interpréteur SH2 :
 Software Video Interface|Interface Vidéo Logiciel
-Sound Core|Noyau Son
+Sound Core|Noyau Son :
 Sound|Son
 Spanish|Espagnol
 SSH2|SSH2
@@ -179,7 +189,7 @@ toolBar|Barre d'Outils
 Tools|Outils
 To|Vers
 Transfer|Transfert
-Translation|Traduction
+Translation|Traduction :
 Unable to add code|Ne peut pas ajouter de Code
 Unable to change description|Ne peut pas changer la Description
 Unable to open file for loading|Ne peut pas ouvrir le fichier à Charger
@@ -193,14 +203,14 @@ Vdp1|Vdp1
 VDP1|VDP1
 Vdp2|Vdp2
 VDP2|VDP2
-Video Core|Noyau vidéo
+Video Core|Noyau Vidéo :
 Video Driver|Pilote Vidéo
-Video Format|Format Vidéo
+Video Format|Format Vidéo :
 Video|Vidéo
 _View|_Visualiser
 &View|&Visualiser
 Waiting Input...|En Attente du Contrôleur
-Width|Largeur
+Width|Largeur :
 Windows SPTI Driver|Pilote Windows SPTI
 Word Write|Ecrire un Word
 Yabause Cheat Files (*.yct);;All Files (*)|Fichiers de  Cheat Yabause (*ycf);;Tous les Fichiers (*)
