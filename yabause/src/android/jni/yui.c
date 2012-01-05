@@ -130,6 +130,7 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
 {
     yabauseinit_struct yinit;
     int res;
+    void * padbits;
 
     yabause = (*env)->NewGlobalRef(env, yab);
     __android_log_print(ANDROID_LOG_INFO, "yabause", "yabause = %p", yabause);
@@ -154,6 +155,11 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     res = YabauseInit(&yinit);
 
     PerPortReset();
+    padbits = PerPadAdd(&PORTDATA1);
+    PerSetKey(1, PERPAD_LEFT, padbits);
+    PerSetKey(4, PERPAD_UP, padbits);
+    PerSetKey(6, PERPAD_DOWN, padbits);
+    PerSetKey(9, PERPAD_RIGHT, padbits);
 
     return res;
 }
@@ -162,6 +168,20 @@ void
 Java_org_yabause_android_YabauseRunnable_exec( JNIEnv* env )
 {
     YabauseExec();
+}
+
+void
+Java_org_yabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key )
+{
+    __android_log_print(ANDROID_LOG_INFO, "yabause", "press = %d", key);
+    PerKeyDown(key);
+}
+
+void
+Java_org_yabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key )
+{
+    __android_log_print(ANDROID_LOG_INFO, "yabause", "release = %d", key);
+    PerKeyUp(key);
 }
 
 jint JNI_OnLoad(JavaVM * vm, void * reserved)

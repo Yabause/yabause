@@ -35,18 +35,40 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
 import org.yabause.android.YabauseView;
+import android.widget.ImageView;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
+
+class InputHandler extends Handler {
+    private YabauseRunnable yr;
+
+    public InputHandler(YabauseRunnable yr) {
+        this.yr = yr;
+    }
+
+    public void handleMessage(Message msg) {
+        if (msg.arg1 == 1) {
+            yr.press(msg.arg2);
+        } else if (msg.arg1 == 2) {
+            yr.release(msg.arg2);
+        }
+    }
+}
 
 class YabauseRunnable implements Runnable
 {
     public static native int init(Yabause yabause, Bitmap bitmap);
     public static native void exec();
+    public static native void press(int key);
+    public static native void release(int key);
     private boolean inited;
     private boolean paused;
-    private Handler handler;
+    public InputHandler handler;
 
     public YabauseRunnable(Yabause yabause, Bitmap bitmap)
     {
-        handler = new Handler();
+        handler = new InputHandler(this);
         int ok = init(yabause, bitmap);
         inited = (ok == 0);
     }
@@ -92,7 +114,7 @@ class YabauseHandler extends Handler {
     }
 }
 
-public class Yabause extends Activity
+public class Yabause extends Activity implements OnTouchListener
 {
     private static final String TAG = "Yabause";
     private YabauseRunnable yabauseThread;
@@ -109,6 +131,9 @@ public class Yabause extends Activity
         YabauseView view = (YabauseView) findViewById(R.id.yabause_view);
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this, view.bitmap);
+
+        ImageView pad = (ImageView) findViewById(R.id.yabause_pad);
+        pad.setOnTouchListener(this);
     }
 
     @Override
@@ -187,6 +212,29 @@ public class Yabause extends Activity
             });
         AlertDialog alert = builder.create();
         return alert;
+    }
+
+    public boolean onTouch(View v, MotionEvent event) {
+        int action = event.getActionMasked();
+        Log.v(TAG, "" + event.getX() + " " + event.getY());
+        float x = event.getX();
+        float y = event.getY();
+        int keyx = (int) ((x - 10) / 30);
+        int keyy = (int) ((y - 10) / 30);
+        int key = (keyx << 2) | keyy;
+        int keya = 0;
+        if (action == event.ACTION_DOWN) {
+            keya = 1;
+        } else if (action == event.ACTION_UP) {
+            keya = 2;
+        }
+
+        Message message = handler.obtainMessage();
+        message.arg1 = keya;
+        message.arg2 = key;
+        yabauseThread.handler.sendMessage(message);
+
+        return true;
     }
 
     private void errorMsg(String msg) {

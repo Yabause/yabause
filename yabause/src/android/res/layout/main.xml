@@ -7,7 +7,13 @@
 <org.yabause.android.YabauseView
     android:id="@+id/yabause_view"
     android:layout_width="fill_parent" 
-    android:layout_height="fill_parent" 
+    android:layout_height="wrap_content" 
+    />
+<ImageView
+    android:id="@+id/yabause_pad"
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" 
+    android:src="@drawable/pad"
     />
 </LinearLayout>
 
