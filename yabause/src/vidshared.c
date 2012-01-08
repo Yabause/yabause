@@ -261,28 +261,29 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter)
       if (which == 0)
       {
          parameter->coefdatasize = (Vdp2Regs->KTCTL & 0x2 ? 2 : 4);
-         parameter->coeftbladdr = ((Vdp2Regs->KTAOF & 0x7) * 0x10000 + parameter->KAst) * parameter->coefdatasize;
+         parameter->coeftbladdr = ((Vdp2Regs->KTAOF & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
          parameter->coefmode = (Vdp2Regs->KTCTL >> 2) & 0x3;
       }
       else
       {
          parameter->coefdatasize = (Vdp2Regs->KTCTL & 0x200 ? 2 : 4);
-         parameter->coeftbladdr = (((Vdp2Regs->KTAOF >> 8) & 0x7) * 0x10000 + parameter->KAst) * parameter->coefdatasize;
+         parameter->coeftbladdr = (((Vdp2Regs->KTAOF >> 8) & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
          parameter->coefmode = (Vdp2Regs->KTCTL >> 10) & 0x3;
       }
    }
+   
 
    VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n"
        "deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n"
        "Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n"
-       "deltaKAst: %f deltaKAx: %f\n", 
+       "deltaKAst: %f deltaKAx: %f kadr %08X\n", 
        parameter->Xst, parameter->Yst, parameter->Zst, parameter->deltaXst,
        parameter->deltaYst, parameter->deltaX, parameter->deltaY,
        parameter->A, parameter->B, parameter->C, parameter->D, parameter->E,
        parameter->F, parameter->Px, parameter->Py, parameter->Pz,
        parameter->Cx, parameter->Cy, parameter->Cz, parameter->Mx,
        parameter->My, parameter->kx, parameter->ky, parameter->KAst,
-       parameter->deltaKAst, parameter->deltaKAx);
+       parameter->deltaKAst, parameter->deltaKAx,parameter->coeftbladdr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -629,6 +630,7 @@ void VideoInitGlut()
    if (!glutinited)
    {
       glutInit(&fake_argc, fake_argv);
+      glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_STENCIL);
       glutinited = 1;
    }
 #endif

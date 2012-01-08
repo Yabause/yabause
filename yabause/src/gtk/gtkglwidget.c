@@ -212,7 +212,7 @@ GtkWidget * yui_gl_new(void) {
 		GDK_GL_DOUBLEBUFFER,
 
 		GDK_GL_DEPTH_SIZE ,1,
-
+        GDK_GL_STENCIL_SIZE ,8,
 		GDK_GL_ATTRIB_LIST_NONE 
 	};
 #endif

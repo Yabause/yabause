@@ -20,6 +20,7 @@
 */
 
 #include "vidsoft.h"
+#include "ygl.h"
 #include "vidshared.h"
 #include "debug.h"
 #include "vdp2.h"

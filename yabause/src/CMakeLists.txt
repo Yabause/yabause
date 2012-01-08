@@ -13,7 +13,7 @@ set(yabause_SOURCES
 	peripheral.c profile.c
 	scu.c sh2core.c sh2d.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
-	yabause.c ygl.c)
+	yabause.c ygl.c yglshader.c)
 
 # new SCSP
 option(YAB_USE_SCSP2 "Use the new SCSP implementation.")

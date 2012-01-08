@@ -25,7 +25,11 @@
 #include <string.h>
 
 #ifndef STDCALL
+#ifdef _MSC_VER
+#define STDCALL __stdcall
+#else
 #define STDCALL
+#endif
 #endif
 
 #ifndef FASTCALL

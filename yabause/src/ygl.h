@@ -21,6 +21,8 @@
 #ifdef HAVE_LIBGL
 #ifdef _MSC_VER
 #include <windows.h>
+#include <GL/gl.h>
+#include "windows/glext.h"
 #endif
 
 #ifdef HAVE_LIBSDL
@@ -53,11 +55,6 @@
 
 #include "core.h"
 
-#ifdef USEMICSHADERS
-extern GLuint shaderProgram;
-extern int useShaders;
-extern const unsigned char noMeshGouraud[16];
-#endif
 
 typedef struct {
 	int vertices[8];
@@ -66,6 +63,8 @@ typedef struct {
 	int flip;
 	int priority;
 	int dst;
+    int uclipmode;
+    int blendmode;
 } YglSprite;
 
 typedef struct {
@@ -78,11 +77,6 @@ typedef struct {
 	unsigned int w;
 } YglTexture;
 
-#ifdef USEMICSHADERS
-typedef struct {
-	unsigned char rgba[4*4];
-} YglColor;
-#endif
 
 typedef struct {
 	unsigned int currentX;
@@ -100,27 +94,65 @@ void YglTMDeInit(void);
 void YglTMReset(void);
 void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 
+enum
+{
+	PG_NORMAL=0,
+	PG_VFP1_GOURAUDSAHDING,
+    PG_VFP1_STARTUSERCLIP,
+    PG_VFP1_ENDUSERCLIP,
+    PG_VFP1_HALFTRANS,    
+    PG_VFP1_GOURAUDSAHDING_HALFTRANS, 
+    PG_VDP2_ADDBLEND,
+    PG_VDP2_DRAWFRAMEBUFF,    
+	PG_MAX,
+};
+
 typedef struct {
-	int * quads;
-	float * textcoords;
-	int currentQuad;
-	int maxQuad;
-#ifdef USEMICSHADERS
-	unsigned char * colors;
-	int currentColors;
-	int maxColors;
-#endif
+   int prgid;
+   GLuint prg;
+   int * quads;
+   float * textcoords;
+   float * vertexAttribute;
+   int currentQuad;
+   int maxQuad;
+   int vaid;
+   char uClipMode;
+   short ux1,uy1,ux2,uy2;
+   int blendmode;
+   int (*setupUniform)(void *);
+   int (*cleanupUniform)(void *);
+} YglProgram;
+
+typedef struct {
+   int prgcount;
+   int prgcurrent;
+   int uclipcurrent;
+   short ux1,uy1,ux2,uy2;
+   int blendmode;
+   YglProgram * prg;
 } YglLevel;
 
 typedef struct {
-	GLuint texture;
-	int st;
-	char message[512];
-	int msglength;
-	unsigned int width;
-	unsigned int height;
-	unsigned int depth;
-	YglLevel * levels;
+   GLuint texture;
+   int st;
+   char message[512];
+   int msglength;
+   unsigned int width;
+   unsigned int height;
+   unsigned int depth;
+   
+   // VDP1 Info
+   int vdp1_maxpri;
+   int vdp1_minpri;
+   
+   // VDP1 Framebuffer
+   int rwidth;
+   int rheight;
+   int drawframe;
+   GLuint rboid;
+   GLuint vdp1fbo;
+   GLuint vdp1FrameBuff[2];    
+   YglLevel * levels;
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -131,39 +163,82 @@ int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 float * YglQuad(YglSprite *, YglTexture *,YglCache * c);
 void YglCachedQuad(YglSprite *, YglCache *);
-#ifdef USEMICSHADERS
-float * YglQuad2(YglSprite *, YglTexture *, YglColor *,YglCache * c);
-void YglCachedQuad2(YglSprite *, YglCache *, YglColor *);
-#endif
 void YglRender(void);
 void YglReset(void);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
 void YglOnScreenDebugMessage(char *, ...);
+void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache);
+int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c);
 
 int YglIsCached(u32,YglCache *);
 void YglCacheAdd(u32,YglCache *);
 void YglCacheReset(void);
 
-#ifdef USEMICSHADERS
+// 0.. no belnd, 1.. Alpha, 2.. Add 
+int YglSetLevelBlendmode( int pri, int mode );
 
-#if 0  // Does anything need this?  It breaks a bunch of prototypes if
+
+#if 1  // Does anything need this?  It breaks a bunch of prototypes if
        // GLchar is typedef'd instead of #define'd  --AC
 #ifndef GLchar
 #define GLchar GLbyte
 #endif
 #endif  // 0
 
-extern GLuint (STDCALL *pfglCreateProgram)(void);
-extern GLuint (STDCALL *pfglCreateShader)(GLenum);
-extern void (STDCALL *pfglShaderSource)(GLuint,GLsizei,const GLchar **,const GLint *);
-extern void (STDCALL *pfglCompileShader)(GLuint);
-extern void (STDCALL *pfglAttachShader)(GLuint,GLuint);
-extern void (STDCALL *pfglLinkProgram)(GLuint);
-extern void (STDCALL *pfglUseProgram)(GLuint);
-extern GLint (STDCALL *pfglGetUniformLocation)(GLuint,const GLchar *);
-extern void (STDCALL *pfglUniform1i)(GLint,GLint);
-extern void (STDCALL *pfglGetShaderInfoLog)(GLuint,GLsizei,GLsizei *,GLchar *);
+#ifdef __APPLE__
+
+#else
+
+extern GLuint (STDCALL *glCreateProgram)(void);
+extern GLuint (STDCALL *glCreateShader)(GLenum);
+extern void (STDCALL *glShaderSource)(GLuint,GLsizei,const GLchar **,const GLint *);
+extern void (STDCALL *glCompileShader)(GLuint);
+extern void (STDCALL *glAttachShader)(GLuint,GLuint);
+extern void (STDCALL *glLinkProgram)(GLuint);
+extern void (STDCALL *glUseProgram)(GLuint);
+extern GLint (STDCALL *glGetUniformLocation)(GLuint,const GLchar *);
+extern void (STDCALL *glUniform1i)(GLint,GLint);
+extern void (STDCALL *glGetShaderInfoLog)(GLuint,GLsizei,GLsizei *,GLchar *);
+extern void (STDCALL *glVertexAttribPointer)(GLuint index,GLint size, GLenum type, GLboolean normalized, GLsizei stride,const void *pointer);
+extern void (STDCALL *glBindAttribLocation)( GLuint program, GLuint index, const GLchar * name);
+extern void (STDCALL *glGetProgramiv)( GLuint    program, GLenum pname, GLint * params);
+extern void (STDCALL *glGetShaderiv)(GLuint shader,GLenum pname,GLint *    params);
+extern GLint (STDCALL *glGetAttribLocation)(GLuint program,const GLchar *    name);
+
+extern void (STDCALL *glEnableVertexAttribArray)(GLuint index);
+extern void (STDCALL *glDisableVertexAttribArray)(GLuint index);
+
+
+//GL_ARB_framebuffer_object
+extern PFNGLISRENDERBUFFERPROC glIsRenderbuffer;
+extern PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer;
+extern PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers;
+extern PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers;
+extern PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage;
+extern PFNGLGETRENDERBUFFERPARAMETERIVPROC glGetRenderbufferParameteriv;
+extern PFNGLISFRAMEBUFFERPROC glIsFramebuffer;
+extern PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
+extern PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers;
+extern PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers;
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus;
+extern PFNGLFRAMEBUFFERTEXTURE1DPROC glFramebufferTexture1D;
+extern PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D;
+extern PFNGLFRAMEBUFFERTEXTURE3DPROC glFramebufferTexture3D;
+extern PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer;
+extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
+extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
+extern PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
+extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisample;
+extern PFNGLFRAMEBUFFERTEXTURELAYERPROC glFramebufferTextureLayer;
+
+extern PFNGLUNIFORM4FPROC glUniform4f;
+extern PFNGLUNIFORM1FPROC glUniform1f;
+extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+
+#ifdef WIN32
+extern PFNGLACTIVETEXTUREPROC glActiveTexture;
+#endif
 
 #endif
 

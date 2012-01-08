@@ -25,72 +25,12 @@
 #include "vdp2.h"
 #include "debug.h"
 
-typedef struct
-{
-   int vertices[8];
-   int cellw, cellh;
-   int flipfunction;
-   int priority;
-   int dst;
-   /* The above fields MUST NOT BE CHANGED (including inserting new fields)
-    * unless YglSprite is also updated in ygl.h */
-
-   int cellw_bits, cellh_bits;
-   int mapwh;
-   int planew, planew_bits, planeh, planeh_bits;
-   int pagewh, pagewh_bits;
-   int patternwh, patternwh_bits;
-   int patterndatasize, patterndatasize_bits;
-   int specialfunction;
-   u32 addr, charaddr, paladdr;
-   int colornumber;
-   int isbitmap;
-   u16 supplementdata;
-   int auxmode;
-   int enable;
-   int x, y;
-   int alpha;
-   int coloroffset;
-   int transparencyenable;
-   int specialprimode;
-
-   s32 cor;
-   s32 cog;
-   s32 cob;
-
-   float coordincx, coordincy;
-   void FASTCALL (* PlaneAddr)(void *, int);
-   u32 FASTCALL (* PostPixelFetchCalc)(void *, u32);
-   int patternpixelwh;
-   int draww;
-   int drawh;
-   int rotatenum;
-   int rotatemode;
-   int mosaicxmask;
-   int mosaicymask;
-   int islinescroll;
-   u32 linescrolltbl;
-   int wctl;
-   int islinewindow;
-   int isverticalscroll;
-   u32 verticalscrolltbl;
-   int verticalscrollinc;
-   
-   // WindowMode
-   u8  LogicWin;    // Window Logic AND OR
-   u8  bEnWin0;     // Enable Window0
-   u8  bEnWin1;     // Enable Window1
-   u8  WindowArea0; // Window Area Mode 0
-   u8  WindowArea1; // Window Area Mode 1
-   
-} vdp2draw_struct;
-
 typedef struct 
 {
-   int  WinShowLine;
-	int WinHStart;
-	int WinHEnd;
-} vdp2WindowInfo;
+   short LineScrollValH;
+   short LineScrollValV;
+   int CoordinateIncH;
+} vdp2Lineinfo;
 
 typedef struct
 {
@@ -130,7 +70,110 @@ typedef struct
    float dY;
    int screenover;
    int msb;
+   
+   void FASTCALL (* PlaneAddr)(void *, int);
+   u32 charaddr;
+   int planew, planew_bits, planeh, planeh_bits;
+   int MaxH,MaxV;
+
+   float Xsp;
+   float Ysp;   
+   float dx;
+   float dy;
+   float lkx;
+   float lky;   
+   int KtablV;
+   int ShiftPaneX;
+   int ShiftPaneY;   
+   int MskH;
+   int MskV;
+   u32 lineaddr;
+   u32 PlaneAddrv[16];
+   
 } vdp2rotationparameter_struct;
+
+typedef struct 
+{
+   int  WinShowLine;
+    int WinHStart;
+    int WinHEnd;
+} vdp2WindowInfo;
+
+typedef struct
+{
+   int vertices[8];
+   int cellw, cellh;
+   int flipfunction;
+   int priority;
+   int dst;
+   int uclipmode;
+   int blendmode;
+   /* The above fields MUST NOT BE CHANGED (including inserting new fields)
+    * unless YglSprite is also updated in ygl.h */
+
+   int cellw_bits, cellh_bits;
+   int mapwh;
+   int planew, planew_bits, planeh, planeh_bits;
+   int pagewh, pagewh_bits;
+   int patternwh, patternwh_bits;
+   int patterndatasize, patterndatasize_bits;
+   int specialfunction;
+   int specialcolormode;
+   u32 addr, charaddr, paladdr;
+   int colornumber;
+   int isbitmap;
+   u16 supplementdata;
+   int auxmode;
+   int enable;
+   int x, y;
+   int sh,sv;
+   int alpha;
+   int coloroffset;
+   int transparencyenable;
+   int specialprimode;
+
+   s32 cor;
+   s32 cog;
+   s32 cob;
+
+   float coordincx, coordincy;
+   void FASTCALL (* PlaneAddr)(void *, int);
+   u32 FASTCALL (* PostPixelFetchCalc)(void *, u32);
+   int patternpixelwh;
+   int draww;
+   int drawh;
+   int rotatenum;
+   int rotatemode;
+   int mosaicxmask;
+   int mosaicymask;
+   int islinescroll;
+   u32 linescrolltbl;
+   u32 lineinc;
+   vdp2Lineinfo * lineinfo;
+   int wctl;
+   int islinewindow;
+   int isverticalscroll;
+   u32 verticalscrolltbl;
+   int verticalscrollinc;
+   
+   // WindowMode
+   u8  LogicWin;    // Window Logic AND OR
+   u8  bEnWin0;     // Enable Window0
+   u8  bEnWin1;     // Enable Window1
+   u8  WindowArea0; // Window Area Mode 0
+   u8  WindowArea1; // Window Area Mode 1
+   
+   // Rotate Screen
+   vdp2WindowInfo * pWinInfo;
+   int WindwAreaMode;
+   vdp2rotationparameter_struct * FASTCALL (*GetKValueA)(vdp2rotationparameter_struct*,int);
+   vdp2rotationparameter_struct * FASTCALL (*GetKValueB)(vdp2rotationparameter_struct*,int);   
+   vdp2rotationparameter_struct * FASTCALL (*GetRParam)(void *, int h,int v);
+   u32 LineColorBase;
+   
+} vdp2draw_struct;
+
+
 
 #define FP_SIZE 16
 typedef s32 fixed32;
@@ -353,6 +396,33 @@ static INLINE void ReadBitmapSize(vdp2draw_struct *info, u16 bm, int mask)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void ReadPlaneSizeR(vdp2rotationparameter_struct *info, u16 reg)
+{
+   switch(reg & 0x3)
+   {
+      case 0:
+         info->planew = info->planeh = 1;
+         info->planew_bits = info->planeh_bits = 0;
+         break;
+      case 1:
+         info->planew = 2; info->planew_bits = 1;
+         info->planeh = 1; info->planeh_bits = 0;
+         break;
+      case 3:
+         info->planew = info->planeh = 2;
+         info->planew_bits = info->planeh_bits = 1;
+         break;
+      default: // Not sure what 0x2 does, though a few games seem to use it
+         info->planew = info->planeh = 1;
+         info->planew_bits = info->planeh_bits = 0;
+         break;
+   }
+   
+
+}
+
+
+
 static INLINE void ReadPlaneSize(vdp2draw_struct *info, u16 reg)
 {
    switch(reg & 0x3)
@@ -424,7 +494,7 @@ static INLINE void ReadMosaicData(vdp2draw_struct *info, u16 mask)
       info->mosaicxmask = 1;
       info->mosaicymask = 1;
    }
-}
+} 
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -434,9 +504,13 @@ static INLINE void ReadLineScrollData(vdp2draw_struct *info, u16 mask, u32 tbl)
    {
       info->islinescroll = (mask >> 1) & 0x7;
       info->linescrolltbl = (tbl & 0x7FFFE) << 1;
+	   info->lineinc = 1 << ((mask >> 4) & 0x03);
    }
    else
+   {
       info->islinescroll = 0;
+	  info->lineinc = 0;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -747,6 +821,15 @@ static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int
       default: break;
    }
 }
+
+#define VDPLINE_SZ(a) ((a)&0x04)
+#define VDPLINE_SY(a) ((a)&0x02)
+#define VDPLINE_SX(a) ((a)&0x01)
+#define OVERMODE_REPEAT      0
+#define OVERMODE_SELPATNAME  1
+#define OVERMODE_TRANSE      2
+#define OVERMODE_512         3
+
 
 //////////////////////////////////////////////////////////////////////////////
 

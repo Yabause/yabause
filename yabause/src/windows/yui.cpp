@@ -292,7 +292,7 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
       pfd.cAccumBits = pfd.cAccumRedBits + pfd.cAccumGreenBits +
          pfd.cAccumBlueBits + pfd.cAccumAlphaBits;
       pfd.cDepthBits = depthsize;
-      pfd.cStencilBits = 0;
+      pfd.cStencilBits = 8;
 
       SetPixelFormat(YabHDC, ChoosePixelFormat(YabHDC, &pfd), &pfd);
 
