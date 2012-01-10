@@ -677,6 +677,8 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0010);
+      
+      AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>8)&0x03);
    }
    else
    {
@@ -952,6 +954,9 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0001);
+      
+      AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>0)&0x03);
+         
    }
    else
    {
@@ -1163,6 +1168,8 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0002);
+      
+      AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>2)&0x03);
    }
    else
      // disabled
@@ -1297,6 +1304,8 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0004);
+      
+      AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>4)&0x03);
    }
    else
    {
@@ -1434,6 +1443,8 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0008);
+      
+      AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>6)&0x03);
    }
    else
    {

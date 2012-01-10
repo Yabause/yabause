@@ -1492,6 +1492,7 @@ void YglRenderFrameBuffer( int from , int to ) {
    glDrawArrays(GL_TRIANGLES, 0, 6);
 	
    glPopMatrix();
+   glMatrixMode(GL_MODELVIEW);
 }
 
 
