@@ -313,6 +313,63 @@ int Ygl_uniformEndUserClip(void * p )
 int Ygl_cleanupEndUserClip(void * p ){return 0;}
 
 
+int Ygl_uniformStartVDP2Window(void * p )
+{
+   YglProgram * prg;
+   prg = p;
+   
+
+   glEnable(GL_STENCIL_TEST);
+   glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
+   
+  
+   if( prg->bwin0 && !prg->bwin1 )
+   {
+      if( prg->logwin0 )
+      {
+         glStencilFunc(GL_EQUAL,0x01,0x01);
+      }else{
+         glStencilFunc(GL_NOTEQUAL,0x01,0x01);
+      }
+   }else if( !prg->bwin0 && prg->bwin1 ) {
+      
+      if( prg->logwin1 )
+      {
+         glStencilFunc(GL_EQUAL,0x02,0x02);
+      }else{
+         glStencilFunc(GL_NOTEQUAL,0x02,0x02);
+      }
+   }else if( prg->bwin0 && prg->bwin1 ) {
+       // and
+      if( prg->winmode == 0x0 )
+      {
+         glStencilFunc(GL_EQUAL,0x03,0x03);
+            
+      // OR
+      }else if( prg->winmode == 0x01 )
+      {
+          glStencilFunc(GL_LEQUAL,0x01,0x03);
+         
+      }
+   }
+
+   return 0;
+}
+
+int Ygl_cleanupStartVDP2Window(void * p ){return 0;}
+
+int Ygl_uniformEndVDP2Window(void * p )
+{
+   YglProgram * prg;
+   prg = p;
+   glDisable(GL_STENCIL_TEST);
+   glStencilFunc(GL_ALWAYS,0,0xFF);
+   return 0;
+}
+
+int Ygl_cleanupEndVDP2Window(void * p ){return 0;}
+
+
 /*------------------------------------------------------------------------------------
  *  VDP2 Draw Frame buffer Operation
  * ----------------------------------------------------------------------------------*/
@@ -338,7 +395,7 @@ const GLchar Yglprg_vdp2_drawfb_f[] = \
 "  vec2 addr = gl_TexCoord[0].st;\n" \
 "  vec4 fbColor = texture2D(vdp1FrameBuffer,addr);\n" \
 "  int additional = int(fbColor.a * 255.0);\n" \
-"   float alpha = float(int(additional/8)*8)/255; \n" \
+"   float alpha = float(int(additional/8)*8)/255.0; \n" \
 "   float depth = (fbColor.a-alpha)*255.0/10.0 + 0.05; \n" \
 "  if( depth < from || depth > to ){ discard; return; }\n" \
 "  gl_FragColor = fbColor; \n" \
@@ -543,6 +600,14 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformAddBlend;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupAddBlend;
+   }else if( prgid == PG_VDP2_STARTWINDOW )
+   {
+      level->prg[level->prgcurrent].setupUniform = Ygl_uniformStartVDP2Window;
+      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupStartVDP2Window;
+   }else if( prgid == PG_VDP2_ENDWINDOW )
+   {
+      level->prg[level->prgcurrent].setupUniform = Ygl_uniformEndVDP2Window;
+      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupEndVDP2Window;   
    }else{
       level->prg[level->prgcurrent].setupUniform = NULL;
    }

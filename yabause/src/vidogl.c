@@ -149,6 +149,8 @@ static int m_b1WindowChg;
 static vdp2Lineinfo lineNBG0[512];
 static vdp2Lineinfo lineNBG1[512];
 
+
+
 // Rotate Screen
 static vdp2rotationparameter_struct  paraA;
 static vdp2rotationparameter_struct  paraB;
@@ -227,6 +229,11 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       }
    }
 
+   if( (cmd->CMDPMOD & 0x7)==0x03 )
+   {
+      alpha = 0x80;
+   }
+   
    alpha |= priority;
    
    switch((cmd->CMDPMOD >> 3) & 0x7)
@@ -828,16 +835,20 @@ static void Vdp2GenerateWindowInfo(void)
         // Line Table mode
         if( (Vdp2Regs->LWTA0.part.U & 0x8000) )
         {
+            int preHStart = -1;
+            int preHEnd = -1;
+            
             // start address
             LineWinAddr = (u32)((( (Vdp2Regs->LWTA0.part.U & 0x07) << 15) | (Vdp2Regs->LWTA0.part.L >> 1) ) << 2);
-
+            _Ygl->win0_vertexcnt = 0;
+            
             for( v = 0; v < vdp2height; v++ )
             {
                 if( v < Vdp2Regs->WPSY0 || v > Vdp2Regs->WPEY0 )
                 {
                     if( m_vWindinfo0[v].WinShowLine ) m_b0WindowChg = 1;
                     m_vWindinfo0[v].WinShowLine = 0;
-                    
+
                 }else{
                     short HStart = Vdp2RamReadWord(LineWinAddr + (v << 2) );
                     short HEnd   = Vdp2RamReadWord(LineWinAddr + (v << 2) + 2);
@@ -855,13 +866,45 @@ static void Vdp2GenerateWindowInfo(void)
                         m_vWindinfo0[v].WinHStart = HStart;
                         m_vWindinfo0[v].WinHEnd   = HEnd;
                         m_vWindinfo0[v].WinShowLine = 1;
+                        
+                        if( v == Vdp2Regs->WPSY0 )
+                        {
+                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= HStart;
+                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v;                    
+                           _Ygl->win0_vertexcnt++;
+                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= HEnd;
+                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v; 
+                           _Ygl->win0_vertexcnt++;
+                           
+                        }else if( ( HStart != preHStart || HEnd != preHEnd) || v == (Vdp2Regs->WPEY0-1) )
+                        {
+                           if( (v-1) != _Ygl->win0v[(_Ygl->win0_vertexcnt-1)*2+1] )
+                           {
+                              _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= preHStart;
+                              _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v-1;                    
+                              _Ygl->win0_vertexcnt++;
+                              _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= preHEnd;
+                              _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v-1; 
+                              _Ygl->win0_vertexcnt++;                           
+                           }
+                           
+                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= HStart;
+                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v;                    
+                           _Ygl->win0_vertexcnt++;
+                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= HEnd;
+                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v; 
+                           _Ygl->win0_vertexcnt++;                           
+                        }
+                        
+                        preHStart = HStart;
+                        preHEnd = HEnd;
 
                     }else{
                         if( m_vWindinfo0[v].WinShowLine ) m_b0WindowChg = 1;
                         m_vWindinfo0[v].WinHStart = 0;
                         m_vWindinfo0[v].WinHEnd   = 0;
                         m_vWindinfo0[v].WinShowLine = 0;
-
+                        
                     }
                 }
             }
@@ -888,18 +931,34 @@ static void Vdp2GenerateWindowInfo(void)
                     m_vWindinfo0[v].WinShowLine = 1;
                 }
             }
+            
+            _Ygl->win0v[0]= Vdp2Regs->WPSX0 >> HShift;
+            _Ygl->win0v[1]= Vdp2Regs->WPSY0;
+            _Ygl->win0v[2]= Vdp2Regs->WPEX0 >> HShift;
+            _Ygl->win0v[3]= Vdp2Regs->WPSY0;
+            _Ygl->win0v[4]= Vdp2Regs->WPSX0 >> HShift;
+            _Ygl->win0v[5]= Vdp2Regs->WPEY0;
+            _Ygl->win0v[6]= Vdp2Regs->WPEX0 >> HShift;
+            _Ygl->win0v[7]= Vdp2Regs->WPEY0;
+            _Ygl->win0_vertexcnt = 4;
 
         }
-
-
+               
     // there is no Window BG
     }else{
+       if( m_vWindinfo0_size != 0 )
+       {
+          m_b0WindowChg = 1;
+       }
+
+       
         if( m_vWindinfo0 != NULL )
         {
             free(m_vWindinfo0);
             m_vWindinfo0 = NULL;
         }
         m_vWindinfo0_size = 0;
+        _Ygl->win0_vertexcnt = 0;
 
     }
 
@@ -932,6 +991,10 @@ static void Vdp2GenerateWindowInfo(void)
         // LineTable mode
         if( (Vdp2Regs->LWTA1.part.U & 0x8000) )
         {
+            int preHStart = -1;
+            int preHEnd = -1;
+           
+            _Ygl->win1_vertexcnt = 0;
             // start address for Window table
             LineWinAddr = (u32)((( (Vdp2Regs->LWTA1.part.U & 0x07) << 15) | (Vdp2Regs->LWTA1.part.L >> 1) ) << 2);
             
@@ -962,6 +1025,39 @@ static void Vdp2GenerateWindowInfo(void)
                         if( m_vWindinfo1[v].WinShowLine ) m_b1WindowChg = 1;
                         m_vWindinfo1[v].WinShowLine = 0;
                     }
+
+                        if( v == Vdp2Regs->WPSY1  )
+                        {
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HStart;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v;                    
+                           _Ygl->win1_vertexcnt++;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v; 
+                           _Ygl->win1_vertexcnt++;
+                           
+                        }else if( ( HStart != preHStart || HEnd != preHEnd) || v == (Vdp2Regs->WPEY1-1) )
+                        {
+                           if( (v-1) != _Ygl->win1v[(_Ygl->win1_vertexcnt-1)*2+1] )
+                           {
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= preHStart;
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v-1;                    
+                              _Ygl->win1_vertexcnt++;
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= preHEnd;
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v-1; 
+                              _Ygl->win1_vertexcnt++;                           
+                           }
+                           
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HStart;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v;                    
+                           _Ygl->win1_vertexcnt++;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v; 
+                           _Ygl->win1_vertexcnt++;                           
+                        }
+                        
+                        preHStart = HStart;
+                        preHEnd = HEnd;
+                    
                 }
             }
 
@@ -986,11 +1082,26 @@ static void Vdp2GenerateWindowInfo(void)
                     m_vWindinfo1[v].WinShowLine = 1;
                 }
             }
+            
+            _Ygl->win1v[0]= Vdp2Regs->WPSX1 >> HShift;
+            _Ygl->win1v[1]= Vdp2Regs->WPSY1;
+            _Ygl->win1v[2]= Vdp2Regs->WPEX1 >> HShift;
+            _Ygl->win1v[3]= Vdp2Regs->WPSY1;
+            _Ygl->win1v[4]= Vdp2Regs->WPSX1 >> HShift;
+            _Ygl->win1v[5]= Vdp2Regs->WPEY1;
+            _Ygl->win1v[6]= Vdp2Regs->WPEX1 >> HShift;
+            _Ygl->win1v[7]= Vdp2Regs->WPEY1;
+            _Ygl->win1_vertexcnt = 4;            
 
         }
 
     // no BG uses Window1
     }else{
+       
+       if( m_vWindinfo1_size != 0 )
+       {
+          m_b1WindowChg = 1;
+       }
 
         if( m_vWindinfo1 != NULL )
         {
@@ -998,14 +1109,15 @@ static void Vdp2GenerateWindowInfo(void)
             m_vWindinfo1 = NULL;
         }
         m_vWindinfo1_size = 0;
+        _Ygl->win1_vertexcnt = 0;
     }
-
-    if( m_b1WindowChg || m_b0WindowChg )
-    {
-        //if you need event callback, call it here.
-        m_b0WindowChg = 0;
-        m_b1WindowChg = 0;
-    }
+    
+   if( m_b1WindowChg || m_b0WindowChg )
+   {
+       YglNeedToUpdateWindow();
+       m_b0WindowChg = 0;
+       m_b1WindowChg = 0;      
+   }
 
 }
 
@@ -1481,33 +1593,8 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
          info->x += tile.w;
          info->y += tile.h;
          return;
-      }else if( winmode > 0 && winmode <= 3) // partly inside, needs special function
-      { 
-
-         YglQuad(&tile, texture,&c);
-         //YglCache(cacheaddr, c); // nocache
-         switch(info->patternwh)
-         {
-         case 1:
-            Vdp2DrawInsideCell(info, texture);
-            break;
-         case 2:
-            texture->w += 8;
-            Vdp2DrawInsideCell(info, texture);
-            texture->textdata -= (texture->w + 8) * 8 - 8;
-            Vdp2DrawInsideCell(info, texture);
-            texture->textdata -= 8;
-            Vdp2DrawInsideCell(info, texture);
-            texture->textdata -= (texture->w + 8) * 8 - 8;
-            Vdp2DrawInsideCell(info, texture);
-            break;
-         }
-         info->x += tile.w;
-         info->y += tile.h;
-         return;
-
-      }else{ // all inside, draw normally
       }
+  
    }
 
    if (1 == YglIsCached(cacheaddr,&c) )
@@ -2125,6 +2212,7 @@ void VIDOGLResize(unsigned int w, unsigned int h, int on)
    
    YglGLInit(2048, 1024);
    glViewport(0, 0, w, h);
+   YglNeedToUpdateWindow();
 
    SetSaturnResolution(vdp2width, vdp2height);
 
@@ -3129,6 +3217,9 @@ static void Vdp2DrawNBG0(void)
    info.WindowArea1 = (Vdp2Regs->WCTLA >> 2) & 0x01; 
    info.LogicWin    = (Vdp2Regs->WCTLA >> 7 ) & 0x01;
    
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
+   
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL & 0xFF, Vdp2Regs->LSTA0.all);
    info.lineinfo = lineNBG0;
    Vdp2GenLineinfo( &info );
@@ -3199,6 +3290,10 @@ static void Vdp2DrawNBG0(void)
       // RBG1 draw
       Vdp2DrawRotation(&info, &parameter, &texture);
    }
+   
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglEndWindow(&info);
+   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3275,6 +3370,9 @@ static void Vdp2DrawNBG1(void)
    info.WindowArea1 = (Vdp2Regs->WCTLA >> 10) & 0x01; 
    info.LogicWin    = (Vdp2Regs->WCTLA >> 15 ) & 0x01;
    
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
+   
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL >> 8, Vdp2Regs->LSTA1.all);
    info.lineinfo = lineNBG1;
    Vdp2GenLineinfo( &info );
@@ -3334,6 +3432,9 @@ static void Vdp2DrawNBG1(void)
    }
    else
       Vdp2DrawMap(&info, &texture);
+   
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglEndWindow(&info);   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3390,11 +3491,17 @@ static void Vdp2DrawNBG2(void)
    info.WindowArea1 = (Vdp2Regs->WCTLB >> 2) & 0x01;    
    info.LogicWin    = (Vdp2Regs->WCTLB >> 7 ) & 0x01;
    
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
+   
    info.islinescroll = 0;
    info.linescrolltbl = 0;
    info.lineinc = 0;   
 
    Vdp2DrawMap(&info, &texture);
+   
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglEndWindow(&info);   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3452,11 +3559,17 @@ static void Vdp2DrawNBG3(void)
    info.WindowArea1 = (Vdp2Regs->WCTLB >> 10) & 0x01;
    info.LogicWin    = (Vdp2Regs->WCTLB >> 15 ) & 0x01;
 
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
+   
    info.islinescroll = 0;
    info.linescrolltbl = 0;
    info.lineinc = 0;   
    
    Vdp2DrawMap(&info, &texture);
+   
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglEndWindow(&info);   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3595,6 +3708,7 @@ static void Vdp2DrawRBG0(void)
       }
    }
    
+   
    paraA.screenover = (Vdp2Regs->PLSZ >> 10)  & 0x03;
    paraB.screenover = (Vdp2Regs->PLSZ >> 14)  & 0x03;
 
@@ -3729,7 +3843,21 @@ static void Vdp2DrawRBG0(void)
 
    ReadVdp2ColorOffset(&info, 0x10);
    info.coordincx = info.coordincy = 1;
+   
+   // Window Mode
+   info.bEnWin0 = (Vdp2Regs->WCTLC >> 1) &0x01;
+   info.WindowArea0 = (Vdp2Regs->WCTLC >> 0) & 0x01;  
+   info.bEnWin1 = (Vdp2Regs->WCTLC >> 3) &0x01;
+   info.WindowArea1 = (Vdp2Regs->WCTLC >> 2) & 0x01;    
+   info.LogicWin    = (Vdp2Regs->WCTLC >> 7 ) & 0x01;
+
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
+   
    Vdp2DrawRotation(&info, &parameter, &texture);
+   
+   if( info.bEnWin0 || info.bEnWin1 )
+      YglEndWindow(&info);   
 }
 
 //////////////////////////////////////////////////////////////////////////////

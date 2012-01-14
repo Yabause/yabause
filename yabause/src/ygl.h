@@ -96,15 +96,17 @@ void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, uns
 
 enum
 {
-	PG_NORMAL=0,
-	PG_VFP1_GOURAUDSAHDING,
-    PG_VFP1_STARTUSERCLIP,
-    PG_VFP1_ENDUSERCLIP,
-    PG_VFP1_HALFTRANS,    
-    PG_VFP1_GOURAUDSAHDING_HALFTRANS, 
-    PG_VDP2_ADDBLEND,
-    PG_VDP2_DRAWFRAMEBUFF,    
-	PG_MAX,
+   PG_NORMAL=0,
+   PG_VFP1_GOURAUDSAHDING,
+   PG_VFP1_STARTUSERCLIP,
+   PG_VFP1_ENDUSERCLIP,
+   PG_VFP1_HALFTRANS,    
+   PG_VFP1_GOURAUDSAHDING_HALFTRANS, 
+   PG_VDP2_ADDBLEND,
+   PG_VDP2_DRAWFRAMEBUFF,    
+   PG_VDP2_STARTWINDOW,
+   PG_VDP2_ENDWINDOW,    
+   PG_MAX,
 };
 
 typedef struct {
@@ -119,6 +121,7 @@ typedef struct {
    char uClipMode;
    short ux1,uy1,ux2,uy2;
    int blendmode;
+   int bwin0,logwin0,bwin1,logwin1,winmode;
    int (*setupUniform)(void *);
    int (*cleanupUniform)(void *);
 } YglProgram;
@@ -151,11 +154,19 @@ typedef struct {
    int drawframe;
    GLuint rboid;
    GLuint vdp1fbo;
-   GLuint vdp1FrameBuff[2];    
+   GLuint vdp1FrameBuff[2];  
+   
+   int bUpdateWindow;
+   int win0v[512*4];
+   int win0_vertexcnt;
+   int win1v[512*4];
+   int win1_vertexcnt;
+
    YglLevel * levels;
 }  Ygl;
 
 extern Ygl * _Ygl;
+
 
 int YglGLInit(int, int);
 int YglScreenInit(int r, int g, int b, int d);
@@ -171,6 +182,9 @@ void YglOnScreenDebugMessage(char *, ...);
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache);
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c);
 
+void YglStartWindow( YglSprite * input, int win0, int logwin0, int win1, int logwin1, int mode );
+void YglEndWindow( YglSprite * input );
+
 int YglIsCached(u32,YglCache *);
 void YglCacheAdd(u32,YglCache *);
 void YglCacheReset(void);
@@ -178,6 +192,9 @@ void YglCacheReset(void);
 // 0.. no belnd, 1.. Alpha, 2.. Add 
 int YglSetLevelBlendmode( int pri, int mode );
 
+int Ygl_uniformVDP2DrawFramebuffer( float from, float to , float * offsetcol );
+
+void YglNeedToUpdateWindow();
 
 #if 1  // Does anything need this?  It breaks a bunch of prototypes if
        // GLchar is typedef'd instead of #define'd  --AC
