@@ -1,7 +1,7 @@
 /*  Copyright 2003-2006 Guillaume Duhamel
     Copyright 2004 Lawrence Sebald
     Copyright 2004-2007 Theo Berkau
-
+ 
     This file is part of Yabause.
 
     Yabause is free software; you can redistribute it and/or modify
@@ -204,25 +204,27 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
    
    alpha = 0xF8;
-
-   switch( (Vdp2Regs->SPCTL>>12)&0x03 ) 
+   if( ((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01  )
    {
-   case 0:
-      if( priority <= ((Vdp2Regs->SPCTL>>8)&0x07) )
-        alpha = 0xF8-((colorcl<<3)&0xF8);      
-      break;
-   case 1:
-      if( priority == ((Vdp2Regs->SPCTL>>8)&0x07) )
-        alpha = 0xF8-((colorcl<<3)&0xF8);      
-      break;
-   case 2:
-      if( priority >= ((Vdp2Regs->SPCTL>>8)&0x07) )
-        alpha = 0xF8-((colorcl<<3)&0xF8);      
-      break;
-   case 3:
-      //if( priority <= (Vdp2Regs->SPCTL>>8)&0x07 )
-     //   alpha = 0xF8-((colorcl<<3)&0xF8);      
-      break;
+      switch( (Vdp2Regs->SPCTL>>12)&0x03 ) 
+      {
+      case 0:
+         if( priority <= ((Vdp2Regs->SPCTL>>8)&0x07) )
+         alpha = 0xF8-((colorcl<<3)&0xF8);      
+         break;
+      case 1:
+         if( priority == ((Vdp2Regs->SPCTL>>8)&0x07) )
+         alpha = 0xF8-((colorcl<<3)&0xF8);      
+         break;
+      case 2:
+         if( priority >= ((Vdp2Regs->SPCTL>>8)&0x07) )
+         alpha = 0xF8-((colorcl<<3)&0xF8);      
+         break;
+      case 3:
+         //if( priority <= (Vdp2Regs->SPCTL>>8)&0x07 )
+      //   alpha = 0xF8-((colorcl<<3)&0xF8);      
+         break;
+      }
    }
 
    alpha |= priority;
@@ -309,25 +311,28 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                         colorcl =  ((u8 *)&Vdp2Regs->CCRSA)[colorcl]&0x1F;
 #endif
                         alpha = 0xF8;
-                        switch( (Vdp2Regs->SPCTL>>12)&0x03 ) 
+                        if( ((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01  )
                         {
-                        case 0:
-                           if( priority <= ((Vdp2Regs->SPCTL>>8)&0x07) )
-                           alpha = 0xF8-((colorcl<<3)&0xF8);      
-                           break;
-                        case 1:
-                           if( priority == ((Vdp2Regs->SPCTL>>8)&0x07) )
-                           alpha = 0xF8-((colorcl<<3)&0xF8);      
-                           break;
-                        case 2:
-                           if( priority >= ((Vdp2Regs->SPCTL>>8)&0x07) )
-                           alpha = 0xF8-((colorcl<<3)&0xF8);      
-                           break;
-                        case 3:
-                           //if( priority <= (Vdp2Regs->SPCTL>>8)&0x07 )
-                        //   alpha = 0xF8-((colorcl<<3)&0xF8);      
-                           break;
-                        }                     
+                           switch( (Vdp2Regs->SPCTL>>12)&0x03 ) 
+                           {
+                           case 0:
+                              if( priority <= ((Vdp2Regs->SPCTL>>8)&0x07) )
+                              alpha = 0xF8-((colorcl<<3)&0xF8);      
+                              break;
+                           case 1:
+                              if( priority == ((Vdp2Regs->SPCTL>>8)&0x07) )
+                              alpha = 0xF8-((colorcl<<3)&0xF8);      
+                              break;
+                           case 2:
+                              if( priority >= ((Vdp2Regs->SPCTL>>8)&0x07) )
+                              alpha = 0xF8-((colorcl<<3)&0xF8);      
+                              break;
+                           case 3:
+                              //if( priority <= (Vdp2Regs->SPCTL>>8)&0x07 )
+                           //   alpha = 0xF8-((colorcl<<3)&0xF8);      
+                              break;
+                           }                     
+                        }
                         alpha |= priority;
                         *texture->textdata++ = Vdp2ColorRamGetColor(temp, alpha);
                      }
@@ -369,25 +374,28 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                         colorcl =  ((u8 *)&Vdp2Regs->CCRSA)[colorcl]&0x1F;
 #endif
                         alpha = 0xF8;
-                        switch( (Vdp2Regs->SPCTL>>12)&0x03 ) 
+                        if( ((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01  )
                         {
-                        case 0:
-                           if( priority <= ((Vdp2Regs->SPCTL>>8)&0x07) )
-                           alpha = 0xF8-((colorcl<<3)&0xF8);      
-                           break;
-                        case 1:
-                           if( priority == ((Vdp2Regs->SPCTL>>8)&0x07) )
-                           alpha = 0xF8-((colorcl<<3)&0xF8);      
-                           break;
-                        case 2:
-                           if( priority >= ((Vdp2Regs->SPCTL>>8)&0x07) )
-                           alpha = 0xF8-((colorcl<<3)&0xF8);      
-                           break;
-                        case 3:
-                           //if( priority <= (Vdp2Regs->SPCTL>>8)&0x07 )
-                           // alpha = 0xF8-((colorcl<<3)&0xF8);      
-                           break;
-                        } 
+                           switch( (Vdp2Regs->SPCTL>>12)&0x03 ) 
+                           {
+                           case 0:
+                              if( priority <= ((Vdp2Regs->SPCTL>>8)&0x07) )
+                              alpha = 0xF8-((colorcl<<3)&0xF8);      
+                              break;
+                           case 1:
+                              if( priority == ((Vdp2Regs->SPCTL>>8)&0x07) )
+                              alpha = 0xF8-((colorcl<<3)&0xF8);      
+                              break;
+                           case 2:
+                              if( priority >= ((Vdp2Regs->SPCTL>>8)&0x07) )
+                              alpha = 0xF8-((colorcl<<3)&0xF8);      
+                              break;
+                           case 3:
+                              //if( priority <= (Vdp2Regs->SPCTL>>8)&0x07 )
+                              // alpha = 0xF8-((colorcl<<3)&0xF8);      
+                              break;
+                           } 
+                        }
                         alpha |= priority;
                         *texture->textdata++ = Vdp2ColorRamGetColor(temp, alpha);
                      }
