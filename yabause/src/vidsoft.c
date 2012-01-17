@@ -669,6 +669,7 @@ static INLINE void SetupScreenVars(vdp2draw_struct *info, screeninfo_struct *sin
       sinfo->screenheight=info->mapwh*sinfo->planepixelheight;
       sinfo->oldcellx=-1;
       sinfo->oldcelly=-1;
+      sinfo->oldcellcheck=-1;
       sinfo->xmask = sinfo->screenwidth-1;
       sinfo->ymask = sinfo->screenheight-1;
       GeneratePlaneAddrTable(info, sinfo->planetbl);
