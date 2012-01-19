@@ -363,6 +363,7 @@ void Vdp1Draw(void) {
                break;
             default: // Abort
                VDP1LOG("vdp1\t: Bad command: %x\n",  command);
+               Vdp1Regs->EDSR |= 2;
                VIDCore->Vdp1DrawEnd();
                Vdp1Regs->LOPR = Vdp1Regs->addr >> 3;
                Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
@@ -449,6 +450,7 @@ void Vdp1NoDraw(void) {
                break;
             default: // Abort
                VDP1LOG("vdp1\t: Bad command: %x\n",  command);
+               Vdp1Regs->EDSR |= 2;
                VIDCore->Vdp1DrawEnd();
                Vdp1Regs->LOPR = Vdp1Regs->addr >> 3;
                Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
