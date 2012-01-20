@@ -2162,8 +2162,6 @@ int yleft[1000];
 int xright[1000];
 int yright[1000];
 
-#define EXT11(a) (a = a & 0x400 ? a | 0xFFFFFC00 : a & 0x000003FF)
-
 //a real vdp1 draws with arbitrary lines
 //this is why endcodes are possible
 //this is also the reason why half-transparent shading causes moire patterns
@@ -2183,15 +2181,6 @@ static void drawQuad(s32 tl_x, s32 tl_y, s32 bl_x, s32 bl_y, s32 tr_x, s32 tr_y,
 
 	//a lookup table for the gouraud colors
 	COLOR colors[4];
-
-    EXT11(tl_x);
-    EXT11(tl_y);
-    EXT11(bl_x);
-    EXT11(bl_y);
-    EXT11(tr_x);
-    EXT11(tr_y);
-    EXT11(br_x);
-    EXT11(br_y);
 
 	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 	characterWidth = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
