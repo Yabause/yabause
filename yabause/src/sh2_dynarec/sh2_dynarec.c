@@ -550,6 +550,9 @@ void lsn(unsigned char hsn[], int i, int *preferred_reg)
       hsn[MOREG]=0;
     }
   }
+  if(itype[i]==SYSTEM && opcode[i]==12) { // TRAPA
+    hsn[MOREG]=0;
+  }
   // Don't remove the miniht registers
   if(itype[i]==UJUMP||itype[i]==RJUMP)
   {
