@@ -610,6 +610,7 @@ int YglProgramChange( YglLevel * level, int prgid )
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupEndVDP2Window;   
    }else{
       level->prg[level->prgcurrent].setupUniform = NULL;
+      level->prg[level->prgcurrent].cleanupUniform = NULL;
    }
    return 0;
    

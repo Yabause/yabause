@@ -177,6 +177,12 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
 static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int * colorcl );
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture);
 
+u32 FASTCALL Vdp2ColorRamGetColorCM01SC0(vdp2draw_struct * info, u32 colorindex, int alpha );
+u32 FASTCALL Vdp2ColorRamGetColorCM01SC1(vdp2draw_struct * info, u32 colorindex, int alpha );
+u32 FASTCALL Vdp2ColorRamGetColorCM01SC3(vdp2draw_struct * info, u32 colorindex, int alpha );
+u32 FASTCALL Vdp2ColorRamGetColorCM2(vdp2draw_struct * info, u32 colorindex, int alpha );
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 
@@ -796,6 +802,81 @@ static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
    return 0;
 }
 
+u32 FASTCALL Vdp2ColorRamGetColorCM01SC0(vdp2draw_struct * info, u32 colorindex, int alpha )
+{
+   u32 tmp;
+   tmp = T2ReadWord(Vdp2ColorRam, (colorindex<<1) & 0xFFF);
+   return SAT2YAB1(alpha,tmp);
+}
+
+u32 FASTCALL Vdp2ColorRamGetColorCM01SC1(vdp2draw_struct * info, u32 colorindex, int alpha )
+{
+   u32 tmp;
+   tmp = T2ReadWord(Vdp2ColorRam, (colorindex<<1) & 0xFFF);   
+   if( (info->specialcolorfunction & 1) == 0 )
+   {
+      return SAT2YAB1(0xFF,tmp);
+   }
+   return SAT2YAB1(alpha,tmp);
+}
+
+u32 FASTCALL Vdp2ColorRamGetColorCM01SC3(vdp2draw_struct * info, u32 colorindex, int alpha )
+{
+   u32 tmp;
+   colorindex <<= 1;
+   tmp = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
+   if( ((tmp & 0x8000) == 0) )
+   {
+      return SAT2YAB1(0xFF,tmp);
+   }
+   return SAT2YAB1(alpha,tmp);
+}
+
+u32 FASTCALL Vdp2ColorRamGetColorCM2(vdp2draw_struct * info, u32 colorindex, int alpha )
+{
+   u32 tmp1, tmp2;
+   colorindex <<= 2;
+   colorindex &= 0xFFF;
+   tmp1 = T2ReadWord(Vdp2ColorRam, colorindex);
+   tmp2 = T2ReadWord(Vdp2ColorRam, colorindex+2);
+   return SAT2YAB2(alpha, tmp1, tmp2);   
+}
+
+static int Vdp2SetGetColor( vdp2draw_struct * info )
+{
+   switch(Vdp2Internal.ColorMode)
+   {
+      case 0:
+      case 1:
+         switch( info->specialcolormode )
+         {
+         case 0:
+            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC0;
+            break;
+         case 1:
+            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC1;
+            break;
+         case 2:
+            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC0; // Not Supported Yet!
+            break;
+         case 3:
+            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC3;
+            break;
+         default:             
+            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC0;
+            break;
+         }
+         break;
+      case 2:
+         info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM2;
+         break;
+      default: 
+         info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC0;
+         break;
+   }   
+   return 0;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // Window
 
@@ -1261,120 +1342,6 @@ void Vdp2GenLineinfo( vdp2draw_struct *info )
       
    }
 }
-//////////////////////////////////////////////////////////////////////////////
-static void FASTCALL Vdp2DrawInsideCell(vdp2draw_struct *info, YglTexture *texture)
-{
-   u32 color;
-   int i, j;
-
-   switch(info->colornumber)
-   {
-      case 0: // 4 BPP
-         for(i = 0;i < info->cellh;i++)
-         {
-            for(j = 0;j < info->cellw;j+=4)
-            {
-               u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
-
-               info->charaddr += 2;
-               if( Vdp2CheckWindowDot(info, info->x+j, info->y+i )==0) color = 0x00000000;
-               else if (!(dot & 0xF000) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF000) >> 12)), info->alpha);
-               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-               
-               if( Vdp2CheckWindowDot(info, info->x+j+1, info->y+i )==0) color = 0x00000000;
-               else if (!(dot & 0xF00) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF00) >> 8)), info->alpha);
-               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-               
-               if( Vdp2CheckWindowDot(info, info->x+j+2, info->y+i )==0) color = 0x00000000;
-               else if (!(dot & 0xF0) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF0) >> 4)), info->alpha);
-               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-               
-               if( Vdp2CheckWindowDot(info, info->x+j+3, info->y+i )==0) color = 0x00000000;
-               else if (!(dot & 0xF) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
-               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-            }
-            texture->textdata += texture->w;
-         }
-         break;
-      case 1: // 8 BPP
-         for(i = 0;i < info->cellh;i++)
-         {
-            for(j = 0;j < info->cellw;j+=2)
-            {
-               u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
-
-               info->charaddr += 2;
-               if( Vdp2CheckWindowDot(info, info->x+j, info->y+i )==0) color = 0x00000000;
-               else if (!(dot & 0xFF00) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), info->alpha);
-               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-               
-               if( Vdp2CheckWindowDot(info, info->x+j+1, info->y+i )==0) color = 0x00000000;
-               else if (!(dot & 0xFF) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
-               *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-            }
-            texture->textdata += texture->w;
-         }
-         break;
-    case 2: // 16 BPP(palette)
-      for(i = 0;i < info->cellh;i++)
-      {
-        for(j = 0;j < info->cellw;j++)
-        {
-          u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
-          
-          if( Vdp2CheckWindowDot(info, info->x+j, info->y+i )==0) color = 0x00000000;
-          else if ((dot == 0) && info->transparencyenable) color = 0x00000000;
-          else color = Vdp2ColorRamGetColor(info->coloroffset + dot, info->alpha);
-          info->charaddr += 2;
-          *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-    }
-        texture->textdata += texture->w;
-      }
-      break;
-    case 3: // 16 BPP(RGB)
-      for(i = 0;i < info->cellh;i++)
-      {
-        for(j = 0;j < info->cellw;j++)
-        {
-          u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
-          info->charaddr += 2;
-          
-          if( Vdp2CheckWindowDot(info, info->x+j, info->y+i )==0) color = 0x00000000;
-          else if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
-            else color = SAT2YAB1(0xFF, dot);
-          *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-        }
-        texture->textdata += texture->w;
-      }
-      break;
-    case 4: // 32 BPP
-      for(i = 0;i < info->cellh;i++)
-      {
-        for(j = 0;j < info->cellw;j++)
-        {
-          u16 dot1, dot2;
-          dot1 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
-          info->charaddr += 2;
-          dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
-          info->charaddr += 2;
-          
-          if( Vdp2CheckWindowDot(info, info->x+j, info->y+i )==0) color = 0x00000000;
-          else if (!(dot1 & 0x8000) && info->transparencyenable) color = 0x00000000;
-          else color = SAT2YAB2(info->alpha, dot1, dot2);
-          *texture->textdata++ = info->PostPixelFetchCalc(info, color);
-        }
-        texture->textdata += texture->w;
-      }
-      break;
-  }
-}
-
 
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 {
@@ -1392,16 +1359,16 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 
                info->charaddr += 2;
                if (!(dot & 0xF000) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF000) >> 12)), info->alpha);
+               else color = info->Vdp2ColorRamGetColor(info,info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF000) >> 12)), info->alpha);
                *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xF00) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF00) >> 8)), info->alpha);
+               else color = info->Vdp2ColorRamGetColor(info,info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF00) >> 8)), info->alpha);
                *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xF0) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF0) >> 4)), info->alpha);
+               else color = info->Vdp2ColorRamGetColor(info,info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF0) >> 4)), info->alpha);
                *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xF) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
+               else color = info->Vdp2ColorRamGetColor(info,info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
                *texture->textdata++ = info->PostPixelFetchCalc(info, color);
             }
             texture->textdata += texture->w;
@@ -1416,10 +1383,10 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 
                info->charaddr += 2;
                if (!(dot & 0xFF00) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), info->alpha);
+               else color = info->Vdp2ColorRamGetColor(info,info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), info->alpha);
                *texture->textdata++ = info->PostPixelFetchCalc(info, color);
                if (!(dot & 0xFF) && info->transparencyenable) color = 0x00000000;
-               else color = Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
+               else color = info->Vdp2ColorRamGetColor(info,info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
                *texture->textdata++ = info->PostPixelFetchCalc(info, color);
             }
             texture->textdata += texture->w;
@@ -1432,7 +1399,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
         {
           u16 dot = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
           if ((dot == 0) && info->transparencyenable) color = 0x00000000;
-          else color = Vdp2ColorRamGetColor(info->coloroffset + dot, info->alpha);
+          else color = info->Vdp2ColorRamGetColor(info,info->coloroffset + dot, info->alpha);
           info->charaddr += 2;
           *texture->textdata++ = info->PostPixelFetchCalc(info, color);
     }
@@ -1639,6 +1606,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
 
          info->addr += 2;
          info->specialfunction = (info->supplementdata >> 9) & 0x1;
+         info->specialcolorfunction = (info->supplementdata >> 8) & 0x1;
 
          switch(info->colornumber)
          {
@@ -1690,6 +1658,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
          info->flipfunction = (tmp1 & 0xC000) >> 14;
          info->paladdr = (tmp1 & 0x7F);
          info->specialfunction = (tmp1 & 0x2000) >> 13;
+         info->specialcolorfunction = (tmp1 & 0x1000) >> 12;
          break;
       }
    }
@@ -1794,6 +1763,8 @@ static u32 FASTCALL DoColorOffset(void *info, u32 pixel)
                      ((vdp2draw_struct *)info)->cog,
                      ((vdp2draw_struct *)info)->cob);
 }
+
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3217,12 +3188,14 @@ static void Vdp2DrawNBG0(void)
    info.WindowArea1 = (Vdp2Regs->WCTLA >> 2) & 0x01; 
    info.LogicWin    = (Vdp2Regs->WCTLA >> 7 ) & 0x01;
    
+   
    if( info.bEnWin0 || info.bEnWin1 )
       YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
    
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL & 0xFF, Vdp2Regs->LSTA0.all);
    info.lineinfo = lineNBG0;
    Vdp2GenLineinfo( &info );
+   Vdp2SetGetColor( &info );
 
    if (info.enable == 1)
    {
@@ -3376,7 +3349,8 @@ static void Vdp2DrawNBG1(void)
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL >> 8, Vdp2Regs->LSTA1.all);
    info.lineinfo = lineNBG1;
    Vdp2GenLineinfo( &info );
-
+   Vdp2SetGetColor( &info );
+   
    if (info.isbitmap)
    {
        if(info.islinescroll)
@@ -3490,6 +3464,8 @@ static void Vdp2DrawNBG2(void)
    info.bEnWin1 = (Vdp2Regs->WCTLB >> 3) &0x01;
    info.WindowArea1 = (Vdp2Regs->WCTLB >> 2) & 0x01;    
    info.LogicWin    = (Vdp2Regs->WCTLB >> 7 ) & 0x01;
+
+   Vdp2SetGetColor( &info );   
    
    if( info.bEnWin0 || info.bEnWin1 )
       YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
@@ -3558,6 +3534,8 @@ static void Vdp2DrawNBG3(void)
    info.bEnWin1 = (Vdp2Regs->WCTLB >> 11) &0x01;
    info.WindowArea1 = (Vdp2Regs->WCTLB >> 10) & 0x01;
    info.LogicWin    = (Vdp2Regs->WCTLB >> 15 ) & 0x01;
+   
+   Vdp2SetGetColor( &info );   
 
    if( info.bEnWin0 || info.bEnWin1 )
       YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
@@ -3850,6 +3828,8 @@ static void Vdp2DrawRBG0(void)
    info.bEnWin1 = (Vdp2Regs->WCTLC >> 3) &0x01;
    info.WindowArea1 = (Vdp2Regs->WCTLC >> 2) & 0x01;    
    info.LogicWin    = (Vdp2Regs->WCTLC >> 7 ) & 0x01;
+   
+   Vdp2SetGetColor( &info );   
 
    if( info.bEnWin0 || info.bEnWin1 )
       YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);

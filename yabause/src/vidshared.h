@@ -99,7 +99,8 @@ typedef struct
     int WinHEnd;
 } vdp2WindowInfo;
 
-typedef struct
+
+typedef struct 
 {
    int vertices[8];
    int cellw, cellh;
@@ -118,6 +119,7 @@ typedef struct
    int patternwh, patternwh_bits;
    int patterndatasize, patterndatasize_bits;
    int specialfunction;
+   int specialcolorfunction;
    int specialcolormode;
    u32 addr, charaddr, paladdr;
    int colornumber;
@@ -138,7 +140,8 @@ typedef struct
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int);
-   u32 FASTCALL (* PostPixelFetchCalc)(void *, u32);
+   u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int );
+   u32 FASTCALL (*PostPixelFetchCalc)(void *, u32);
    int patternpixelwh;
    int draww;
    int drawh;
