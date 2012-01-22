@@ -199,8 +199,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    u32 dot;
    u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
    u8 END = ((cmd->CMDPMOD & 0x80) != 0);
+   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
    u32 alpha = 0xFF;
    VDP1LOG("Making new sprite %08X\n", charAddr);
+   
    
 
    if( (cmd->CMDPMOD & 0x20) == 0)
@@ -235,7 +237,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       }
    }
 
-   if( (cmd->CMDPMOD & 0x7)==0x03 )
+   if( (cmd->CMDPMOD & 0x7)==0x03 || (cmd->CMDPMOD & 0x100) )
    {
       alpha = 0x80;
    }
@@ -262,12 +264,14 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                // Pixel 1
                if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( (dot >> 4) == 0x0F &!END ) *texture->textdata++ = 0x00;
+               else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, alpha);
                j += 1;
 
                // Pixel 2
                if (((dot & 0xF) == 0) && !SPD) *texture->textdata++  = 0x00;
                else if( (dot & 0xF) == 0x0F &!END ) *texture->textdata++ = 0x00;
+               else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, alpha);
                j += 1;
 
@@ -284,6 +288,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          u16 temp2;
          u32 colorLut = cmd->CMDCOLR * 8;
          u16 i;
+         u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
          
          for(i = 0;i < sprite->h;i++)
          {
@@ -308,8 +313,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                }else{
                   temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
                   if (temp & 0x8000)
-                     *texture->textdata++ = SAT2YAB1(alpha, temp);
-                  else if( temp != 0x0000)
+                  {
+                     if( MSB ) *texture->textdata++ = (alpha<<24);
+                     else *texture->textdata++ = SAT2YAB1(alpha, temp);
+                  }else if( temp != 0x0000)
                   {
                      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &priority, &colorcl);
                      if( shadow != 0 ) 
@@ -347,10 +354,13 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                            }                     
                         }
                         alpha |= priority;
-                        *texture->textdata++ = Vdp2ColorRamGetColor(temp, alpha);
+                        if( MSB ) *texture->textdata++ = (alpha<<24);
+                        else *texture->textdata++ = Vdp2ColorRamGetColor(temp+colorOffset, alpha);
+                        
                      }
-                  }else
+                  }else{
                      *texture->textdata++ = 0x0;
+                  }
                }
 
                j += 1;
@@ -370,8 +380,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                   temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
                   
                   if (temp & 0x8000)
-                     *texture->textdata++ = SAT2YAB1(alpha, temp);
-                  else if( temp != 0x0000)
+                  {
+                     if( MSB ) *texture->textdata++ = (alpha<<24);
+                     else *texture->textdata++ = SAT2YAB1(alpha, temp);
+                  }else if( temp != 0x0000)
                   {
                      
                      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &priority, &colorcl);
@@ -410,7 +422,8 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                            } 
                         }
                         alpha |= priority;
-                        *texture->textdata++ = Vdp2ColorRamGetColor(temp, alpha);
+                        if( MSB ) *texture->textdata++ = (alpha<<24);
+                        else *texture->textdata++ = Vdp2ColorRamGetColor(temp+colorOffset, alpha);
                      }
                   }else
                      *texture->textdata++ = 0x0;
@@ -441,6 +454,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( dot==0xFF&!END ) *texture->textdata++ = 0x00;
+               else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
             texture->textdata += texture->w;
@@ -463,6 +477,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( dot == 0xFF & !END ) *texture->textdata++ = 0x00;
+               else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
             texture->textdata += texture->w;
@@ -485,6 +500,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( dot == 0xFF & !END ) *texture->textdata++ = 0x0;
+               else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
             texture->textdata += texture->w;
@@ -505,6 +521,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
                if (!(dot & 0x8000) && !SPD) *texture->textdata++ = 0x00;
                else if( dot == 0x7FFF & !END ) *texture->textdata++ = 0x0;
+               else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = SAT2YAB1(alpha, dot);
             }
             texture->textdata += texture->w;
@@ -1009,6 +1026,7 @@ static void Vdp2GenerateWindowInfo(void)
                     if( m_vWindinfo0[v].WinShowLine ) m_b0WindowChg = 1;
                     m_vWindinfo0[v].WinShowLine = 0;
                 }else{
+                   if( m_vWindinfo0[v].WinShowLine == 0) m_b0WindowChg = 1;
                     m_vWindinfo0[v].WinShowLine = 1;
                 }
             }
@@ -1160,6 +1178,7 @@ static void Vdp2GenerateWindowInfo(void)
                     if( m_vWindinfo1[v].WinShowLine ) m_b1WindowChg = 1;
                     m_vWindinfo1[v].WinShowLine = 0;
                 }else{
+                   if( m_vWindinfo1[v].WinShowLine == 0) m_b1WindowChg = 1;
                     m_vWindinfo1[v].WinShowLine = 1;
                 }
             }
@@ -2319,7 +2338,13 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    // Half trans parent to VDP1 Framebuffer
    if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
    {
+      tmp |= 0x00010000;
       sprite.blendmode = 0x80;
+   }
+   
+   if((CMDPMOD & 0x8000) != 0)
+   {
+      tmp |= 0x00020000;
    }
 
    if( (CMDPMOD & 4)  )
@@ -2489,8 +2514,16 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    // Half trans parent to VDP1 Framebuffer
    if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
    {
+      tmp |= 0x00010000;
       sprite.blendmode = 0x80;
    }  
+   
+   // MSB
+   if((CMDPMOD & 0x8000) != 0)
+   {
+      tmp |= 0x00020000;
+   }
+   
    
    if ( (CMDPMOD & 4) )
    {
@@ -2586,9 +2619,16 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    // Half trans parent to VDP1 Framebuffer
    if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
    {
+      tmp |= 0x00010000;
       sprite.blendmode = 0x80;
    }   
 
+   // MSB
+   if((CMDPMOD & 0x8000) != 0)
+   {
+      tmp |= 0x00020000;
+   }
+   
    // Check if the Gouraud shading bit is set and the color mode is RGB
    if ( (CMDPMOD & 4) )
    {
