@@ -259,9 +259,9 @@ void nullf() {}
 // This is called from the recompiled BRAF/BSRF instructions
 void *get_addr(u32 vaddr)
 {
+  struct ll_entry *head;
   u32 page=(vaddr&0xDFFFFFFF)>>12;
   if(page>1024) page=1024+(page&1023);
-  struct ll_entry *head;
   //printf("TRACE: count=%d next=%d (get_addr %x,page %d)\n",Count,next_interupt,vaddr,page);
   head=jump_in[page];
   while(head!=NULL) {
@@ -286,6 +286,8 @@ void *get_addr(u32 vaddr)
       // Don't restore blocks which are about to expire from the cache
       if((((u32)head->addr-(u32)out)<<(32-TARGET_SIZE_2))>0x60000000+(MAX_OUTPUT_BLOCK_SIZE<<(32-TARGET_SIZE_2)))
       if(verify_dirty(head->addr)) {
+        u32 start,end;
+        int *ht_bin;
         //printf("restore candidate: %x (%d) d=%d\n",vaddr,page,(cached_code[vaddr>>15]>>((vaddr>>12)&7))&1);
         //invalid_code[vaddr>>12]=0;
         cached_code[vaddr>>15]|=1<<((vaddr>>12)&7);
@@ -298,7 +300,6 @@ void *get_addr(u32 vaddr)
         memory_map[(vaddr^0x20000000)>>12]|=0x40000000;
         #endif
         restore_candidate[page>>3]|=1<<(page&7);
-        u32 start,end;
         get_bounds((pointer)head->addr,&start,&end);
         if(start-(u32)HighWram<0x100000) {
           u32 vstart=start-(u32)HighWram+0x6000000;
@@ -318,7 +319,7 @@ void *get_addr(u32 vaddr)
             cached_code_words[((vstart<4194304?vstart:((vstart|0x400000)&0x7fffff))+i)>>5]|=1<<(((vstart+i)>>2)&7);
           }
         }
-        int *ht_bin=hash_table[((vaddr>>16)^vaddr)&0xFFFF];
+        ht_bin=hash_table[((vaddr>>16)^vaddr)&0xFFFF];
         if(ht_bin[0]==vaddr) {
           ht_bin[1]=(int)head->addr; // Replace existing entry
         }
@@ -748,6 +749,8 @@ void ll_add_nodup(struct ll_entry **head,int vaddr,void *addr)
 // but don't return addresses which are about to expire from the cache
 void *check_addr(u32 vaddr)
 {
+  struct ll_entry *head;
+  u32 page;
   u32 *ht_bin=hash_table[((vaddr>>16)^vaddr)&0xFFFF];
   if(ht_bin[0]==vaddr) {
     if(((ht_bin[1]-MAX_OUTPUT_BLOCK_SIZE-(u32)out)<<(32-TARGET_SIZE_2))>0x60000000+(MAX_OUTPUT_BLOCK_SIZE<<(32-TARGET_SIZE_2)))
@@ -757,9 +760,8 @@ void *check_addr(u32 vaddr)
     if(((ht_bin[3]-MAX_OUTPUT_BLOCK_SIZE-(u32)out)<<(32-TARGET_SIZE_2))>0x60000000+(MAX_OUTPUT_BLOCK_SIZE<<(32-TARGET_SIZE_2)))
       if(isclean(ht_bin[3])) return (void *)ht_bin[3];
   }
-  u32 page=(vaddr&0xDFFFFFFF)>>12;
+  page=(vaddr&0xDFFFFFFF)>>12;
   if(page>1024) page=1024+(page&1023);
-  struct ll_entry *head;
   head=jump_in[page];
   while(head!=NULL) {
     if(head->vaddr==vaddr) {
@@ -849,8 +851,9 @@ void ll_kill_pointers(struct ll_entry *head,int addr,int shift)
     if(((ptr>>shift)==(addr>>shift)) ||
        (((ptr-MAX_OUTPUT_BLOCK_SIZE)>>shift)==(addr>>shift)))
     {
+      u32 host_addr;
       inv_debug("EXP: Kill pointer at %x (%x)\n",(int)head->addr,head->vaddr);
-      u32 host_addr=(u32)kill_pointer(head->addr);
+      host_addr=(u32)kill_pointer(head->addr);
       #ifdef __arm__
         needs_clear_cache[(host_addr-(u32)BASE_ADDR)>>17]|=1<<(((host_addr-(u32)BASE_ADDR)>>12)&31);
       #endif
@@ -876,8 +879,9 @@ void invalidate_page(u32 page)
   head=jump_out[page];
   jump_out[page]=0;
   while(head!=NULL) {
+    u32 host_addr;
     inv_debug("INVALIDATE: kill pointer to %x (%x)\n",head->vaddr,(int)head->addr);
-    u32 host_addr=(u32)kill_pointer(head->addr);
+    host_addr=(u32)kill_pointer(head->addr);
     #ifdef __arm__
       needs_clear_cache[(host_addr-(u32)BASE_ADDR)>>17]|=1<<(((host_addr-(u32)BASE_ADDR)>>12)&31);
     #endif
@@ -896,11 +900,11 @@ void invalidate_blocks(u32 firstblock,u32 lastblock)
   last=lastblock<1024?lastblock:1024+(lastblock&1023);
   // Invalidate the adjacent pages if a block crosses a 4K boundary
   for(block=firstblock;block<=lastblock;block++) {
+    struct ll_entry *head;
     page=block&0xDFFFF;
     if(page>1024) page=1024+(page&1023);
     inv_debug("INVALIDATE: %x..%x (%d)\n",firstblock<<12,lastblock<<12,page);
     //inv_debug("invalid_code[block]=%d\n",invalid_code[block]);
-    struct ll_entry *head;
     head=jump_dirty[page];
     //printf("page=%d vpage=%d\n",page,vpage);
     while(head!=NULL) {
@@ -1074,11 +1078,12 @@ void clean_blocks(u32 page)
           if(!inv) {
             void * clean_addr=(void *)get_clean_addr((int)head->addr);
             if((((u32)clean_addr-(u32)out)<<(32-TARGET_SIZE_2))>0x60000000+(MAX_OUTPUT_BLOCK_SIZE<<(32-TARGET_SIZE_2))) {
+              int *ht_bin;
               inv_debug("INV: Restored %x (%x/%x)\n",head->vaddr, (int)head->addr, (int)clean_addr);
               //printf("page=%x, addr=%x\n",page,head->vaddr);
               //assert(head->vaddr>>12==(page|0x80000));
               ll_add_nodup(jump_in+page,head->vaddr,clean_addr);
-              int *ht_bin=hash_table[((head->vaddr>>16)^head->vaddr)&0xFFFF];
+              ht_bin=hash_table[((head->vaddr>>16)^head->vaddr)&0xFFFF];
               if(ht_bin[0]==head->vaddr) {
                 ht_bin[1]=(int)clean_addr; // Replace existing entry
               }
@@ -2180,6 +2185,7 @@ void shiftimm_assemble(int i,struct regstat *i_regs)
 
 void load_assemble(int i,struct regstat *i_regs)
 {
+  int dummy;
   int s,o,t,addr,map=-1,cache=-1;
   int offset;
   int jaddr=0;
@@ -2266,7 +2272,7 @@ void load_assemble(int i,struct regstat *i_regs)
   {
     if(can_direct_read(constaddr)) constaddr=map_address(constaddr);
   }
-  int dummy=(t!=get_reg(i_regs->regmap,rt1[i])); // ignore loads to unneeded reg
+  dummy=(t!=get_reg(i_regs->regmap,rt1[i])); // ignore loads to unneeded reg
   if(opcode[i]==12&&opcode2[i]==12) // TST.B
     dummy=i_regs->u&(1LL<<TBIT);
   if (size==0) { // MOV.B
@@ -3601,10 +3607,11 @@ void do_cc(int i,signed char i_regmap[],int *adj,int addr,int taken,int invert)
 
 void do_ccstub(int n)
 {
+  int i;
   literal_pool(256);
   assem_debug("do_ccstub %x\n",start+stubs[n][4]*2);
   set_jump_target(stubs[n][1],(pointer)out);
-  int i=stubs[n][4];
+  i=stubs[n][4];
   if(stubs[n][6]==NODS) {
     if(itype[i+1]==LOAD&&rs1[i+1]==rt1[i+1]&&addrmode[i+1]!=DUALIND&&addrmode[i+1]!=GBRIND) {
       int hr=get_reg(regs[i].regmap,rs1[i+1]);
@@ -3817,7 +3824,8 @@ void rjump_assemble(int i,struct regstat *i_regs)
 {
   signed char *i_regmap=i_regs->regmap;
   int temp;
-  int rs,cc,adj;
+  int rs,cc,adj,rh,ht;
+  u64 bc_unneeded;
   rs=get_reg(branch_regs[i].regmap,rs1[i]);
   assert(rs>=0);
   if(!((i_regs->wasdoingcp>>rs)&1)) {
@@ -3875,7 +3883,7 @@ void rjump_assemble(int i,struct regstat *i_regs)
     }
   }
   ds_assemble(i+1,i_regs);
-  u64 bc_unneeded=regs[i].u;
+  bc_unneeded=regs[i].u;
   bc_unneeded|=1LL<<rt1[i];
   bc_unneeded&=~(1LL<<rs1[i]);
   wb_invalidate(regs[i].regmap,branch_regs[i].regmap,regs[i].dirty,
@@ -3905,8 +3913,8 @@ void rjump_assemble(int i,struct regstat *i_regs)
   cc=get_reg(branch_regs[i].regmap,CCREG);
   assert(cc==HOST_CCREG);
   #ifdef USE_MINI_HT
-  int rh=get_reg(branch_regs[i].regmap,RHASH);
-  int ht=get_reg(branch_regs[i].regmap,RHTBL);
+  rh=get_reg(branch_regs[i].regmap,RHASH);
+  ht=get_reg(branch_regs[i].regmap,RHTBL);
   if(rs1[i]==PR) {
     if(regs[i].regmap[rh]!=RHASH) do_preload_rhash(rh);
     do_preload_rhtbl(ht);
@@ -3916,7 +3924,6 @@ void rjump_assemble(int i,struct regstat *i_regs)
   if(opcode[i]==0&&opcode2[i]==11&&opcode3[i]==2) {
     // Return From Exception (RTE) - pop PC and SR from stack
     //printf("RTE\n");
-    temp=get_reg(branch_regs[i].regmap,RTEMP);
     int map=get_reg(branch_regs[i].regmap,MOREG);
     int cache=get_reg(branch_regs[i].regmap,MMREG);
     int sp=get_reg(branch_regs[i].regmap,15);
@@ -3924,6 +3931,7 @@ void rjump_assemble(int i,struct regstat *i_regs)
     int jaddr=0;
     unsigned int hr;
     u32 reglist=0;
+    temp=get_reg(branch_regs[i].regmap,RTEMP);
     for(hr=0;hr<HOST_REGS;hr++) {
       if(i_regs->regmap[hr]>=0) reglist|=1<<hr;
     }
@@ -4043,13 +4051,14 @@ void cjump_assemble(int i,struct regstat *i_regs)
   signed char *i_regmap=i_regs->regmap;
   int cc;
   int match;
-  match=match_bt(regs[i].regmap,regs[i].dirty,ba[i]);
-  assem_debug("match=%d\n",match);
   int sr;
   int unconditional=0,nop=0;
   int adj;
   int invert=0;
-  int internal=internal_branch(ba[i]);
+  int internal;
+  match=match_bt(regs[i].regmap,regs[i].dirty,ba[i]);
+  assem_debug("match=%d\n",match);
+  internal=internal_branch(ba[i]);
   if(i==(ba[i]-start)>>1) assem_debug("idle loop\n");
   if(!match) invert=1;
   #ifdef CORTEX_A8_BRANCH_PREDICTION_HACK
@@ -4084,8 +4093,9 @@ void cjump_assemble(int i,struct regstat *i_regs)
     }
   }
   else if(nop) {
+    int jaddr;
     emit_addimm_and_set_flags(CLOCK_DIVIDER*(ccadj[i]+2),cc);
-    int jaddr=(int)out;
+    jaddr=(int)out;
     emit_jns(0);
     add_stub(CC_STUB,jaddr,(int)out,0,i,start+i*2+4,NOTTAKEN,0);
   }
@@ -4160,12 +4170,13 @@ void sjump_assemble(int i,struct regstat *i_regs)
   int cc;
   int adj;
   int match;
-  match=match_bt(branch_regs[i].regmap,branch_regs[i].dirty,ba[i]);
-  assem_debug("match=%d\n",match);
   int sr;
   int unconditional=0,nop=0;
   int invert=0;
   int internal=internal_branch(ba[i]);
+  match=match_bt(branch_regs[i].regmap,branch_regs[i].dirty,ba[i]);
+  assem_debug("match=%d\n",match);
+  internal=internal_branch(ba[i]);
   if(i==(ba[i]-start)>>1) assem_debug("idle loop\n");
   if(!match) invert=1;
   #ifdef CORTEX_A8_BRANCH_PREDICTION_HACK
@@ -4183,12 +4194,13 @@ void sjump_assemble(int i,struct regstat *i_regs)
   assert(cc==HOST_CCREG);
 
   if(ooo[i]) {
+    u64 bc_unneeded;
     // Out of order execution (delay slot first)
     //printf("OOOE\n");
     do_cc(i,regs[i].regmap,&adj,start+i*2,NODS,invert);
     address_generation(i+1,i_regs,regs[i].regmap_entry);
     ds_assemble(i+1,i_regs);
-    u64 bc_unneeded=regs[i].u;
+    bc_unneeded=regs[i].u;
     bc_unneeded&=~((1LL<<rs1[i])|(1LL<<rs2[i]));
     wb_invalidate(regs[i].regmap,branch_regs[i].regmap,regs[i].dirty,
                   bc_unneeded);
@@ -4219,8 +4231,9 @@ void sjump_assemble(int i,struct regstat *i_regs)
       }
     }
     else if(nop) {
+      int jaddr;
       emit_addimm_and_set_flags(CLOCK_DIVIDER*(ccadj[i]+2),cc);
-      int jaddr=(int)out;
+      jaddr=(int)out;
       emit_jns(0);
       add_stub(CC_STUB,jaddr,(int)out,0,i,start+i*2+4,NOTTAKEN,0);
     }
@@ -4293,6 +4306,7 @@ void sjump_assemble(int i,struct regstat *i_regs)
   {
     // In-order execution (branch first)
     //printf("IOE\n");
+    u64 ds_unneeded;
     pointer taken=0,nottaken=0,nottaken1=0;
     do_cc(i,regs[i].regmap,&adj,start+i*2,NODS,1);
     if(!unconditional&&!nop) {
@@ -4310,7 +4324,7 @@ void sjump_assemble(int i,struct regstat *i_regs)
         emit_jne(2);
       }
     } // if(!unconditional)
-    u64 ds_unneeded=regs[i].u;
+    ds_unneeded=regs[i].u;
     ds_unneeded&=~((1LL<<rs1[i+1])|(1LL<<rs2[i+1])|(1LL<<rs3[i+1]));
     // branch taken
     if(!nop) {
@@ -4378,10 +4392,11 @@ void system_assemble(int i,struct regstat *i_regs)
   assert(ccreg==HOST_CCREG);
   assert(!is_delayslot);
   if(opcode[i]==0&&opcode2[i]==11&&opcode3[i]==1) { // SLEEP
+    pointer jaddr, return_address;
     emit_addimm(HOST_CCREG,CLOCK_DIVIDER*ccadj[i],HOST_CCREG);
-    pointer jaddr=(pointer)out;
+    jaddr=(pointer)out;
     emit_jns(0);
-    pointer return_address=(pointer)out;
+    return_address=(pointer)out;
     emit_zeroreg(HOST_CCREG);
     set_jump_target(jaddr,(pointer)out);
     add_stub(CC_STUB,(int)out,return_address,0,i,start+i*2,TAKEN,0);
@@ -4393,11 +4408,11 @@ void system_assemble(int i,struct regstat *i_regs)
     emit_jmp(return_address);
   }
   else {
-    assert(opcode[i]==12); // TRAPA
     int b,t,sr,st,map=-1,cache=-1;
     int jaddr=0;
     unsigned int hr;
     u32 reglist=0;
+    assert(opcode[i]==12); // TRAPA
     t=get_reg(i_regs->regmap,-1);
     b=get_reg(i_regs->regmap,VBR);
     sr=get_reg(i_regs->regmap,SR);
