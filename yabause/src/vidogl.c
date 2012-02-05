@@ -729,10 +729,11 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             sprite_register = (*reg_src & 0xC0) >> 6;
 #ifdef WORDS_BIGENDIAN
             *priority = sprprilist[sprite_register^1] & 0x7;
+            *colorcl =  cclist[1]&0x1F;            
 #else
             *priority = sprprilist[sprite_register] & 0x7;
-#endif
             *colorcl =  cclist[0]&0x1F;
+#endif
             if (not_lut) cmd->CMDCOLR &= 0xFF;
             break;
          case 15:
@@ -1570,7 +1571,15 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    tile.vertices[5] = (info->y + tile.h) * info->coordincy;
    tile.vertices[6] = info->x * info->coordincx;
    tile.vertices[7] = (info->y + tile.h) * info->coordincy;
-
+   
+   // Screen culling
+   if( tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height || tile.vertices[2] < 0 || tile.vertices[5] < 0 )
+   {   
+      info->x += tile.w;
+      info->y += tile.h;      
+      return;
+   }
+   
    if( (info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincy == 1.0f )
    {                                                 // coordinate inc is not supported yet.
       winmode=Vdp2CheckWindowRange( info,info->x,info->y,tile.w,tile.h);
@@ -1582,7 +1591,7 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
       }
   
    }
-
+   
    if (1 == YglIsCached(cacheaddr,&c) )
    {
       YglCachedQuad(&tile, &c);
@@ -1747,6 +1756,7 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
 {
    int i, j;
    int X, Y;
+   int xx,yy;
 
    X = info->x;
 
@@ -1754,16 +1764,26 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
    info->draww = (int)((float)vdp2width / info->coordincx);
    info->drawh = (int)((float)vdp2height / info->coordincy);
 
-   for(i = 0;i < info->mapwh;i++)
+   i=0;
+   yy = info->y;
+   while( yy < vdp2height )
    {
       Y = info->y;
-      info->x = X;
-      for(j = 0;j < info->mapwh;j++)
+      j=0;
+      info->x = X;      
+      xx = info->x;
+      while( xx < vdp2width )
       {
          info->y = Y;
          info->PlaneAddr(info, info->mapwh * i + j);
-          Vdp2DrawPlane(info, texture);
+         Vdp2DrawPlane(info, texture);
+         j++;
+         j &= (info->mapwh-1);
+         xx += (info->cellw*info->pagewh*info->planew) * info->coordincx;
       }
+      i++;
+      i&=(info->mapwh-1);      
+      yy += (info->cellh*info->pagewh*info->planeh) * info->coordincy;
    }
 }
 
@@ -2738,7 +2758,6 @@ void VIDOGLVdp1PolygonDraw(void)
    else
    {
       int shadow, colorcalc;
-
       priority = 0;  // Avoid compiler warning
       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
@@ -2783,6 +2802,7 @@ void VIDOGLVdp1PolygonDraw(void)
    {
       alpha = 0x80;
    }
+
         
    alpha |= priority;
    
@@ -3242,6 +3262,9 @@ static void Vdp2DrawNBG0(void)
       // NBG0 draw
       if (info.isbitmap)
       {
+         int xx,yy;
+         int isCached = 0;
+      
          if(info.islinescroll) // Nights Movie
          {
             info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
@@ -3250,48 +3273,34 @@ static void Vdp2DrawNBG0(void)
             info.y = 0;
          }
 
-         info.vertices[0] = info.x * info.coordincx;
-         info.vertices[1] = info.y * info.coordincy;
-         info.vertices[2] = (info.x + info.cellw) * info.coordincx;
-         info.vertices[3] = info.y * info.coordincy;
-         info.vertices[4] = (info.x + info.cellw) * info.coordincx;
-         info.vertices[5] = (info.y + info.cellh) * info.coordincy;
-         info.vertices[6] = info.x * info.coordincx;
-         info.vertices[7] = (info.y + info.cellh) * info.coordincy;
-
-         YglQuad((YglSprite *)&info, &texture,&tmpc);
-         Vdp2DrawCell(&info, &texture);
-
-         // Handle Scroll Wrapping(Let's see if we even need do to it to begin
-         // with)
-         if (info.x < (vdp2width - info.cellw))
+         yy = info.y;
+         while( yy < vdp2height )
          {
-            info.vertices[0] = (info.x+info.cellw) * info.coordincx;
-            info.vertices[2] = (info.x + (info.cellw<<1)) * info.coordincx;
-            info.vertices[4] = (info.x + (info.cellw<<1)) * info.coordincx;
-            info.vertices[6] = (info.x+info.cellw) * info.coordincx;
-
-            YglCachedQuad((YglSprite *)&info, &tmpc);
-
-            if (info.y < (vdp2height - info.cellh))
+            xx = info.x;
+            while( xx < vdp2width )
             {
-               info.vertices[1] = (info.y+info.cellh) * info.coordincy;
-               info.vertices[3] = (info.y + (info.cellh<<1)) * info.coordincy;
-               info.vertices[5] = (info.y + (info.cellh<<1)) * info.coordincy;
-               info.vertices[7] = (info.y+info.cellh) * info.coordincy;
+               info.vertices[0] = xx * info.coordincx;
+               info.vertices[1] = yy * info.coordincy;
+               info.vertices[2] = (xx + info.cellw) * info.coordincx;
+               info.vertices[3] = yy * info.coordincy;
+               info.vertices[4] = (xx + info.cellw) * info.coordincx;
+               info.vertices[5] = (yy + info.cellh) * info.coordincy;
+               info.vertices[6] = xx * info.coordincx;
+               info.vertices[7] = (yy + info.cellh) * info.coordincy;            
 
-               YglCachedQuad((YglSprite *)&info, &tmpc);
+               if( isCached == 0 )
+               {
+                  YglQuad((YglSprite *)&info, &texture,&tmpc);
+                  Vdp2DrawCell(&info, &texture);               
+                  isCached = 1;
+               }else{
+                  YglCachedQuad((YglSprite *)&info, &tmpc);
+               }
+               xx += info.cellw* info.coordincx;
             }
+            yy += info.cellh* info.coordincy;
          }
-         else if (info.y < (vdp2height - info.cellh))
-         {
-            info.vertices[1] = (info.y+info.cellh) * info.coordincy;
-            info.vertices[3] = (info.y + (info.cellh<<1)) * info.coordincy;
-            info.vertices[5] = (info.y + (info.cellh<<1)) * info.coordincy;
-            info.vertices[7] = (info.y+info.cellh) * info.coordincy;
-
-            YglCachedQuad((YglSprite *)&info, &tmpc);
-         }
+      
       }
       else
       {
@@ -3393,56 +3402,44 @@ static void Vdp2DrawNBG1(void)
    
    if (info.isbitmap)
    {
-       if(info.islinescroll)
-       {
-           info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
-           info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
-           info.x = 0;
-           info.y = 0;
-       }
-
-      info.vertices[0] = info.x * info.coordincx;
-      info.vertices[1] = info.y * info.coordincy;
-      info.vertices[2] = (info.x + info.cellw) * info.coordincx;
-      info.vertices[3] = info.y * info.coordincy;
-      info.vertices[4] = (info.x + info.cellw) * info.coordincx;
-      info.vertices[5] = (info.y + info.cellh) * info.coordincy;
-      info.vertices[6] = info.x * info.coordincx;
-      info.vertices[7] = (info.y + info.cellh) * info.coordincy;
-
-      YglQuad((YglSprite *)&info, &texture,&tmpc);
-      Vdp2DrawCell(&info, &texture);
-
-      // Handle Scroll Wrapping(Let's see if we even need do to it to begin
-      // with)
-      if (info.x < (vdp2width - info.cellw))
+      int xx,yy;
+      int isCached = 0;
+      if(info.islinescroll)
       {
-         info.vertices[0] = (info.x+info.cellw) * info.coordincx;
-         info.vertices[2] = (info.x + (info.cellw<<1)) * info.coordincx;
-         info.vertices[4] = (info.x + (info.cellw<<1)) * info.coordincx;
-         info.vertices[6] = (info.x+info.cellw) * info.coordincx;
-
-         YglCachedQuad((YglSprite *)&info, &tmpc);
-
-         if (info.y < (vdp2height - info.cellh))
+          info.sh = (Vdp2Regs->SCXIN1 & 0x7FF);
+          info.sv = (Vdp2Regs->SCYIN1 & 0x7FF);
+          info.x = 0;
+          info.y = 0;
+      }
+      
+      yy = info.y;
+      while( yy < vdp2height )
+      {
+         xx = info.x;
+         while( xx < vdp2width )
          {
-            info.vertices[1] = (info.y+info.cellh) * info.coordincy;
-            info.vertices[3] = (info.y + (info.cellh<<1)) * info.coordincy;
-            info.vertices[5] = (info.y + (info.cellh<<1)) * info.coordincy;
-            info.vertices[7] = (info.y+info.cellh) * info.coordincy;
+            info.vertices[0] = xx * info.coordincx;
+            info.vertices[1] = yy * info.coordincy;
+            info.vertices[2] = (xx + info.cellw) * info.coordincx;
+            info.vertices[3] = yy * info.coordincy;
+            info.vertices[4] = (xx + info.cellw) * info.coordincx;
+            info.vertices[5] = (yy + info.cellh) * info.coordincy;
+            info.vertices[6] = xx * info.coordincx;
+            info.vertices[7] = (yy + info.cellh) * info.coordincy;            
 
-            YglCachedQuad((YglSprite *)&info, &tmpc);
+            if( isCached == 0 )
+            {
+               YglQuad((YglSprite *)&info, &texture,&tmpc);
+               Vdp2DrawCell(&info, &texture);               
+               isCached = 1;
+            }else{
+               YglCachedQuad((YglSprite *)&info, &tmpc);
+            }
+            xx += info.cellw* info.coordincx;
          }
+         yy += info.cellh* info.coordincy;
       }
-      else if (info.y < (vdp2height - info.cellh))
-      {
-         info.vertices[1] = (info.y+info.cellh) * info.coordincy;
-         info.vertices[3] = (info.y + (info.cellh<<1)) * info.coordincy;
-         info.vertices[5] = (info.y + (info.cellh<<1)) * info.coordincy;
-         info.vertices[7] = (info.y+info.cellh) * info.coordincy;
-
-         YglCachedQuad((YglSprite *)&info, &tmpc);
-      }
+      
    }
    else
       Vdp2DrawMap(&info, &texture);
