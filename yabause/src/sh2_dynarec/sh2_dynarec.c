@@ -5345,22 +5345,20 @@ int sh2_recompile_block(int addr)
     rlist();
   }*/
   //rlist();
+  int cached_addr;
   start = (u32)addr&~1;
   slave = (u32)addr&1;
+  cached_addr = start&~0x20000000;
   //assert(((u32)addr&1)==0);
-  if ((int)addr >= 0x00000000 && (int)addr < 0x00100000) {
+  if (cached_addr >= 0x00000000 && cached_addr < 0x00100000) {
     source = (u16 *)((void *)BiosRom+(start & 0x7FFFF));
     pagelimit = (addr|0x7FFFF) + 1;
   }
-  else if ((int)addr >= 0x20000000 && (int)addr < 0x20100000) {
-    source = (u16 *)((void *)BiosRom+(start & 0x7FFFF));
-    pagelimit = (addr|0x7FFFF) + 1;
-  }
-  else if ((int)addr >= 0x00200000 && (int)addr < 0x00300000) {
+  else if (cached_addr >= 0x00200000 && cached_addr < 0x00300000) {
     source = (u16 *)((void *)LowWram+(start & 0xFFFFF));
     pagelimit = (addr|0xFFFFF) + 1;
   }
-  else if ((int)addr >= 0x06000000 && (int)addr < 0x08000000) {
+  else if (cached_addr >= 0x06000000 && cached_addr < 0x08000000) {
     source = (u16 *)((void *)HighWram+(start & 0xFFFFF));
     pagelimit = (addr|0xFFFFF) + 1;
   }
