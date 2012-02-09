@@ -800,10 +800,10 @@ void YglStartWindow( YglSprite * input, int win0, int logwin0, int win1, int log
    
 }
 
-void YglEndWindow( YglSprite * input )
+void YglEndWindow( vdp2draw_struct * info )
 {
    YglLevel   *level;
-   level = &_Ygl->levels[input->priority];
+   level = &_Ygl->levels[info->priority];
    YglProgramChange(level,PG_VDP2_ENDWINDOW);
 }
 
