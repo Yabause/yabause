@@ -785,11 +785,11 @@ void YglDeInit(void) {
       free(cachelist);
 }
 
-void YglStartWindow( YglSprite * input, int win0, int logwin0, int win1, int logwin1, int mode )
+void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode )
 {
    YglLevel   *level;
    YglProgram *program;
-   level = &_Ygl->levels[input->priority];
+   level = &_Ygl->levels[info->priority];
    YglProgramChange(level,PG_VDP2_STARTWINDOW);
    program = &level->prg[level->prgcurrent];
    program->bwin0 = win0;

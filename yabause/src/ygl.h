@@ -182,7 +182,7 @@ void YglOnScreenDebugMessage(char *, ...);
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache);
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c);
 
-void YglStartWindow( YglSprite * input, int win0, int logwin0, int win1, int logwin1, int mode );
+void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode );
 void YglEndWindow( vdp2draw_struct * info );
 
 int YglIsCached(u32,YglCache *);
