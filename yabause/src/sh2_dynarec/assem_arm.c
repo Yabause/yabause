@@ -20,9 +20,9 @@
 
 extern void *dynarec_local;
 extern u32 memory_map[1048576];
-extern u32 mini_ht_master[32][2]  __attribute__((aligned(8)));
-extern u32 mini_ht_slave[32][2]  __attribute__((aligned(8)));
-extern u8 restore_candidate[512]  __attribute__((aligned(4)));
+ALIGNED(8) extern u32 mini_ht_master[32][2];
+ALIGNED(8) extern u32 mini_ht_slave[32][2];
+ALIGNED(4) extern u8 restore_candidate[512];
 
 void FASTCALL WriteInvalidateLong(u32 addr, u32 val);
 void FASTCALL WriteInvalidateWord(u32 addr, u32 val);

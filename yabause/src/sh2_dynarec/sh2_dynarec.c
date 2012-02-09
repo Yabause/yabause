@@ -118,8 +118,8 @@ struct ll_entry
   struct ll_entry *jump_in[2048];
   struct ll_entry *jump_out[2048];
   struct ll_entry *jump_dirty[2048];
-  u32 hash_table[65536][4]  __attribute__((aligned(16)));
-  char shadow[2097152]  __attribute__((aligned(16)));
+  ALIGNED(16) u32 hash_table[65536][4];
+  ALIGNED(16) char shadow[2097152];
   void *copy;
   int expirep;
   unsigned int stop_after_jal;

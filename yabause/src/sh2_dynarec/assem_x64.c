@@ -19,9 +19,9 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 u64 memory_map[1048576];
-u32 mini_ht_master[32][2]  __attribute__((aligned(8)));
-u32 mini_ht_slave[32][2]  __attribute__((aligned(8)));
-u8 restore_candidate[512]  __attribute__((aligned(4)));
+ALIGNED(8) u32 mini_ht_master[32][2];
+ALIGNED(8) u32 mini_ht_slave[32][2];
+ALIGNED(4) u8 restore_candidate[512];
 int rccount;
 int master_reg[22];
 int master_cc; // Cycle count

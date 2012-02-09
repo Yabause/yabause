@@ -24,6 +24,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef ALIGNED
+#define ALIGNED(x) __attribute__((aligned(x)))
+#endif
+
 #ifndef STDCALL
 #ifdef _MSC_VER
 #define STDCALL __stdcall
