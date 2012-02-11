@@ -167,7 +167,7 @@ if test x$use_opengl = xyes ; then
 			;;
 		*linux* | *bsd*)
 			AC_PATH_XTRA
-			LIBS="$LIBS $X_LIBS"
+			LIBS="$LIBS $X_LIBS -lm"
 			CFLAGS="$CFLAGS $X_CFLAGS"
 
 			AC_CHECK_LIB(GL, glEnable, [
@@ -332,6 +332,14 @@ if test "x$q68_use_jit" = "xyes"; then
 fi
 AM_CONDITIONAL([Q68_USE_JIT], test "x$q68_use_jit" = "xyes")
 
+# Allow disabling of dynarec
+AC_ARG_ENABLE(dynarec, AC_HELP_STRING(--disable-dynarec, [Disable dynarec core]), [], [use_dynarec=yes])
+
+if test "x$use_dynarec" = "xyes"; then
+	AC_DEFINE(USE_DYNAREC)
+fi
+
+AM_CONDITIONAL([USE_DYNAREC], test "x$use_dynarec" = "xyes")
 
 #################################################################################
 #										#

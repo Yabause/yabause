@@ -76,6 +76,7 @@ libyabause_a_SOURCES += cd-freebsd.c thr-dummy.c
 endif
 if ARCH_IS_LINUX
 libyabause_a_SOURCES += cd-linux.c perlinuxjoy.c perlinuxjoy.h thr-linux.c
+if USE_DYNAREC
 if CPU_IS_X64
 libyabause_a_SOURCES += sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_x64.s
 AM_CFLAGS = -DSH2_DYNAREC=1
@@ -87,6 +88,7 @@ endif
 if CPU_IS_ARM
 libyabause_a_SOURCES += sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm.s
 AM_CFLAGS = -DSH2_DYNAREC=1 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp
+endif
 endif
 endif
 if ARCH_IS_MACOSX
