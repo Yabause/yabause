@@ -38,6 +38,8 @@
 
 #undef ScspInit  // Disable compatibility alias
 
+extern SoundInterface_struct *SNDCoreList[];  // Defined by each port
+
 ///////////////////////////////////////////////////////////////////////////
 
 // This SCSP implementation is designed to be runnable as an independent

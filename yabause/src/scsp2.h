@@ -50,8 +50,6 @@ typedef struct
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
 
-extern SoundInterface_struct *SNDCoreList[];  // Defined by each port
-
 ///////////////////////////////////////////////////////////////////////////
 
 // Parameter block for M68K{Get,Set}Registers()
