@@ -770,14 +770,14 @@ static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int
       case 0x8:
       {
          // Type 8(1-bit priority, 7-bit color data)
-         *priority = *pixel >> 7;
+         *priority = (*pixel >> 7) & 0x1;
          *pixel &= 0x7F;
          break;
       }
       case 0x9:
       {
          // Type 9(1-bit priority, 1-bit color calculation, 6-bit color data)
-         *priority = *pixel >> 7;
+         *priority = (*pixel >> 7) & 0x1;
          *colorcalc = (*pixel >> 6) & 0x1;
          *pixel &= 0x3F;
          break;
@@ -785,40 +785,40 @@ static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int
       case 0xA:
       {
          // Type A(2-bit priority, 6-bit color data)
-         *priority = *pixel >> 6;
+         *priority = (*pixel >> 6) & 0x3;
          *pixel &= 0x3F;
          break;
       }
       case 0xB:
       {
          // Type B(2-bit color calculation, 6-bit color data)
-         *colorcalc = *pixel >> 6;
+         *colorcalc = (*pixel >> 6) & 0x3;
          *pixel &= 0x3F;
          break;
       }
       case 0xC:
       {
          // Type C(1-bit special priority, 8-bit color data - bit 7 is shared)
-         *priority = *pixel >> 7;
+         *priority = (*pixel >> 7) & 0x1;
          break;
       }
       case 0xD:
       {
          // Type D(1-bit special priority, 1-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
-         *priority = *pixel >> 7;
+         *priority = (*pixel >> 7) & 0x1;
          *colorcalc = (*pixel >> 6) & 0x1;
          break;
       }
       case 0xE:
       {
          // Type E(2-bit special priority, 8-bit color data - bits 6 and 7 are shared)
-         *priority = *pixel >> 6;
+         *priority = (*pixel >> 6) & 0x3;
          break;
       }
       case 0xF:
       {
          // Type F(2-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
-         *colorcalc = *pixel >> 6;
+         *colorcalc = (*pixel >> 6) & 0x3;
          break;
       }
       default: break;
