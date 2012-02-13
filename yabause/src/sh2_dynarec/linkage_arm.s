@@ -128,16 +128,20 @@ YabauseDynarecOneFrameExec:
 	str	r2, [r12, #decilinecount-dynarec_local-28]
 	ldr	r14, [r12, #master_ip-dynarec_local-28]
 newline:
-	movw	r0, #:lower16:decilinestop_p
-	movt	r0, #:upper16:decilinestop_p
-	movw	r1, #:lower16:yabsys_timing_bits
-	movt	r1, #:upper16:yabsys_timing_bits
-	movw	r2, #:lower16:SH2CycleFrac_p
+	/*movw	r0, #:lower16:decilinestop_p*/
+	/*movt	r0, #:upper16:decilinestop_p*/
+	ldr	r0, .dspptr
+	/*movw	r1, #:lower16:yabsys_timing_bits*/
+	/*movt	r1, #:upper16:yabsys_timing_bits*/
+	ldr	r1, .ytbptr
+	/*movw	r2, #:lower16:SH2CycleFrac_p*/
+	ldr	r2, .scfptr
 	ldr	r0, [r0] /* pointer to decilinestop */
-	movt	r2, #:upper16:SH2CycleFrac_p
-	movw	r3, #:lower16:yabsys_timing_mask
+	/*movt	r2, #:upper16:SH2CycleFrac_p*/
+	/*movw	r3, #:lower16:yabsys_timing_mask*/
+	ldr	r3, .ytmptr
 	ldr	r1, [r1] /* yabsys_timing_bits */
-	movt	r3, #:upper16:yabsys_timing_mask
+	/*movt	r3, #:upper16:yabsys_timing_mask*/
 	ldr	r2, [r2] /* pointer to SH2CycleFrac */
 	ldr	r0, [r0] /* decilinestop */
 	ldr	r3, [r3] /* yabsys_timing_mask */
@@ -150,15 +154,18 @@ newline:
 	add	r6, r6, r6, lsl #3 /* decilinecycles*9 */
 	add	r3, r3, r3
 	add	r5, r5, r4 /* cyclesinc+=SH2CycleFrac */
-	movw	r7, #:lower16:MSH2
-	movt	r7, #:upper16:MSH2
+	/*movw	r7, #:lower16:MSH2*/
+	/*movt	r7, #:upper16:MSH2*/
+	ldr	r7, .msh2ptr
 	orr	r3, r3, #1 /* ((YABSYS_TIMING_MASK << 1) | 1) */
-	movw	r8, #:lower16:NumberOfInterruptsOffset
-	movt	r8, #:upper16:NumberOfInterruptsOffset
+	/*movw	r8, #:lower16:NumberOfInterruptsOffset*/
+	/*movt	r8, #:upper16:NumberOfInterruptsOffset*/
+	ldr	r8, .nioptr
 	and	r3, r5, r3 /* SH2CycleFrac &= ... */
 	lsr	r5, r5, r1 /* scucycles */
-	movw	r9, #:lower16:CurrentSH2
-	movt	r9, #:upper16:CurrentSH2
+	/*movw	r9, #:lower16:CurrentSH2*/
+	/*movt	r9, #:upper16:CurrentSH2*/
+	ldr	r9, .csh2ptr
 	ldr	r7, [r7] /* MSH2 */
 	ldr	r8, [r8] /* NumberOfInterruptsOffset */
 	str	r5, [fp, #scucycles-dynarec_local]
@@ -182,6 +189,38 @@ master_handle_interrupts:
 	mov	pc, r14
 .dlptr:
 	.word	dynarec_local+28
+.dspptr:
+	.word	decilinestop_p
+.ytbptr:
+	.word	yabsys_timing_bits
+.scfptr:
+	.word	SH2CycleFrac_p
+.ytmptr:
+	.word	yabsys_timing_mask
+.msh2ptr:
+	.word	MSH2
+.ssh2ptr:
+	.word	SSH2
+.nioptr:
+	.word	NumberOfInterruptsOffset
+.csh2ptr:
+	.word	CurrentSH2
+.lcpptr:
+	.word	linecount_p
+.vlcpptr:
+	.word	vblanklinecount_p
+.mlcpptr:
+	.word	maxlinecount_p
+.dupptr:
+	.word	decilineusec_p
+.ufpptr:
+	.word	UsecFrac_p
+.scptr:
+	.word	saved_centicycles
+.icptr:
+	.word	invalidate_count
+.ccptr:
+	.word	cached_code
 	.size	YabauseDynarecOneFrameExec, .-YabauseDynarecOneFrameExec
 
 	.global	slave_entry
@@ -194,16 +233,19 @@ slave_entry:
 	ldr	r0, [fp, #sh2cycles-dynarec_local]
 	bl	WDTExec
 	ldr	r4, [fp, #slave_ip-dynarec_local]
-	movw	r7, #:lower16:SSH2
-	movt	r7, #:upper16:SSH2
+	/*movw	r7, #:lower16:SSH2*/
+	/*movt	r7, #:upper16:SSH2*/
+	ldr	r7, .ssh2ptr
 	tst	r4, r4
 	beq	cc_interrupt_master
-	movw	r8, #:lower16:NumberOfInterruptsOffset
+	/*movw	r8, #:lower16:NumberOfInterruptsOffset*/
 	ldr	r6, [fp, #sh2cycles-dynarec_local]
-	movt	r8, #:upper16:NumberOfInterruptsOffset
-	movw	r9, #:lower16:CurrentSH2
+	/*movt	r8, #:upper16:NumberOfInterruptsOffset*/
+	ldr	r8, .nioptr
+	/*movw	r9, #:lower16:CurrentSH2*/
+	ldr	r9, .csh2ptr
 	ldr	r7, [r7]
-	movt	r9, #:upper16:CurrentSH2
+	/*movt	r9, #:upper16:CurrentSH2*/
 	ldr	r8, [r8]
 	str	r7, [r9] /* CurrentSH2 */
 	ldr	r12, [r7, r8]
@@ -242,12 +284,15 @@ cc_interrupt_master:
 	str	r6, [fp, #sh2cycles-dynarec_local]
 	ldr	r14, [fp, #master_ip-dynarec_local]
 .A1:
-	movw	r7, #:lower16:MSH2
-	movt	r7, #:upper16:MSH2
-	movw	r8, #:lower16:NumberOfInterruptsOffset
-	movt	r8, #:upper16:NumberOfInterruptsOffset
-	movw	r9, #:lower16:CurrentSH2
-	movt	r9, #:upper16:CurrentSH2
+	/*movw	r7, #:lower16:MSH2*/
+	/*movt	r7, #:upper16:MSH2*/
+	/*movw	r8, #:lower16:NumberOfInterruptsOffset*/
+	/*movt	r8, #:upper16:NumberOfInterruptsOffset*/
+	/*movw	r9, #:lower16:CurrentSH2*/
+	/*movt	r9, #:upper16:CurrentSH2*/
+	ldr	r7, .msh2ptr
+	ldr	r8, .nioptr
+	ldr	r9, .csh2ptr
 	ldr	r7, [r7] /* MSH2 */
 	ldr	r8, [r8] /* NumberOfInterruptsOffset */
 	ldr	r12, [r7, r8]
@@ -264,14 +309,17 @@ cc_interrupt_master:
 .A3:
 	ldr	r0, [fp, #scucycles-dynarec_local]
 	bl	ScuExec
-	movw	r4, #:lower16:linecount_p
-	movt	r4, #:upper16:linecount_p
+	/*movw	r4, #:lower16:linecount_p*/
+	/*movt	r4, #:upper16:linecount_p*/
+	ldr	r4, .lcpptr
 	bl	M68KSync
-	movw	r5, #:lower16:vblanklinecount_p
-	movt	r5, #:upper16:vblanklinecount_p
+	/*movw	r5, #:lower16:vblanklinecount_p*/
+	/*movt	r5, #:upper16:vblanklinecount_p*/
+	ldr	r5, .vlcpptr
 	bl	Vdp2HBlankOUT
-	movw	r6, #:lower16:maxlinecount_p
-	movt	r6, #:upper16:maxlinecount_p
+	/*movw	r6, #:lower16:maxlinecount_p*/
+	/*movt	r6, #:upper16:maxlinecount_p*/
+	ldr	r6, .mlcpptr
 	bl	ScspExec
 	ldr	r4, [r4] /* pointer to linecount */
 	ldr	r5, [r5] /* pointer to vblanklinecount */
@@ -290,14 +338,18 @@ cc_interrupt_master:
 nextline:
 	/* finishline */
       /*const u32 usecinc = yabsys.DecilineUsec * 10;*/
-	movw	r3, #:lower16:decilineusec_p
-	movt	r3, #:upper16:decilineusec_p
-	movw	r5, #:lower16:UsecFrac_p
-	movt	r5, #:upper16:UsecFrac_p
-	movw	r8, #:lower16:yabsys_timing_bits
-	movt	r8, #:upper16:yabsys_timing_bits
-	movw	r9, #:lower16:yabsys_timing_mask
-	movt	r9, #:upper16:yabsys_timing_mask
+	/*movw	r3, #:lower16:decilineusec_p*/
+	/*movt	r3, #:upper16:decilineusec_p*/
+	ldr	r3, .dupptr
+	/*movw	r5, #:lower16:UsecFrac_p*/
+	/*movt	r5, #:upper16:UsecFrac_p*/
+	ldr	r5, .ufpptr
+	/*movw	r8, #:lower16:yabsys_timing_bits*/
+	/*movt	r8, #:upper16:yabsys_timing_bits*/
+	ldr	r8, .ytbptr
+	/*movw	r9, #:lower16:yabsys_timing_mask*/
+	/*movt	r9, #:upper16:yabsys_timing_mask*/
+	ldr	r9, .ytmptr
 	ldr	r3, [r3] /* pointer to decilineusec */
 	ldr	r5, [r5] /* pointer to usecfrac */
 	ldr	r8, [r8] /* yabsys_timing_bits */
@@ -314,9 +366,10 @@ nextline:
 	lsr	r0, r10, r8
 	and	r10, r10, r9
 	bl	Cs2Exec
-	movw	r8, #:lower16:saved_centicycles
+	/*movw	r8, #:lower16:saved_centicycles*/
 	str	r10, [r5] /* usecfrac */
-	movt	r8, #:upper16:saved_centicycles
+	/*movt	r8, #:upper16:saved_centicycles*/
+	ldr	r8, .scptr
 	ldr	r1, [fp, #m68kcenticycles-dynarec_local]
 	ldr	r2, [r8]
 	ldr	r0, [fp, #m68kcycles-dynarec_local]
@@ -333,9 +386,10 @@ nextframe:
 	str	r1, [r4] /* linecount=0 */
 	bl	M68KSync
 	ldr	r2, [fp, #rccount-dynarec_local]
-	movw	r0, #:lower16:invalidate_count /* FIX: Put into dynarec_local? */
+	/*movw	r0, #:lower16:invalidate_count /* FIX: Put into dynarec_local? */
 	add	r3, fp, #restore_candidate-dynarec_local
-	movt	r0, #:upper16:invalidate_count
+	/*movt	r0, #:upper16:invalidate_count*/
+	ldr	r0, .icptr
 	add	r2, r2, #1
 	and	r2, r2, #0x3f
 	str	r2, [fp, #rccount-dynarec_local]
@@ -672,9 +726,10 @@ verify_code:
 	.global	WriteInvalidateLong
 	.type	WriteInvalidateLong, %function
 WriteInvalidateLong:
-	movw	r12, #:lower16:cached_code
+	/*movw	r12, #:lower16:cached_code*/
 	lsr	r2, r0, #17
-	movt	r12, #:upper16:cached_code
+	/*movt	r12, #:upper16:cached_code*/
+	ldr	r12, .ccptr
 	lsr	r3, r0, #12
 	ldr	r2, [r12, r2, lsl #2]
 	mov	r12, #1
@@ -689,13 +744,17 @@ WriteInvalidateLong:
 	.global	WriteInvalidateWord
 	.type	WriteInvalidateWord, %function
 WriteInvalidateWord:
-	movw	r12, #:lower16:cached_code
+	/*movw	r12, #:lower16:cached_code*/
 	lsr	r2, r0, #17
-	movt	r12, #:upper16:cached_code
+	/*movt	r12, #:upper16:cached_code*/
+	ldr	r12, .ccptr
 	lsr	r3, r0, #12
+	bic	r1, r1, #0xFF000000
 	ldr	r2, [r12, r2, lsl #2]
 	mov	r12, #1
-	movt	r1, #0
+	/*movt	r1, #0*/
+	/*uxth	r1, r1*/
+	bic	r1, r1, #0xFF0000
 	tst	r12, r2, ror r3
 	beq	MappedMemoryWriteWord
 	push	{r0, r1, r2, lr}
@@ -712,9 +771,10 @@ WriteInvalidateByteSwapped:
 	.global	WriteInvalidateByte
 	.type	WriteInvalidateByte, %function
 WriteInvalidateByte:
-	movw	r12, #:lower16:cached_code
+	/*movw	r12, #:lower16:cached_code*/
 	lsr	r2, r0, #17
-	movt	r12, #:upper16:cached_code
+	/*movt	r12, #:upper16:cached_code*/
+	ldr	r12, .ccptr
 	lsr	r3, r0, #12
 	ldr	r2, [r12, r2, lsl #2]
 	mov	r12, #1
@@ -840,14 +900,18 @@ macw:
 	mov	r9, r1 /* MACH */
 	mov	r0, r6
 	bl	MappedMemoryReadWord
-	sxth	r10, r0
+	/*sxth	r10, r0*/
+	lsl	r10, r0, #16
 	mov	r0, r5
 	bl	MappedMemoryReadWord
 	add	r5, r5, #2
 	add	r6, r6, #2
-	sxth	r12, r0
+	lsl	r12, r0, #16
+	/*sxth	r12, r0*/
 	mov	r0, r8
 	mov	r1, r9
+	asr	r10, r10, #16
+	asr	r12, r12, #16
 	mov	r14, r7
 	smlal	r0, r1, r10, r12
 	tst	r4, #2
@@ -865,9 +929,10 @@ macw_saturation:
 	.global	master_handle_bios
 	.type	master_handle_bios, %function
 master_handle_bios:
-	movw	r1, #:lower16:MSH2
+	/*movw	r1, #:lower16:MSH2*/
 	str	r0, [fp, #master_pc-dynarec_local]
-	movt	r1, #:upper16:MSH2
+	/*movt	r1, #:upper16:MSH2*/
+	ldr	r1, .msh2ptr
 	str	r10, [fp, #master_cc-dynarec_local]
 	str	r14, [fp, #master_ip-dynarec_local]
 	ldr	r0, [r1] /* MSH2 */
@@ -881,9 +946,10 @@ master_handle_bios:
 	.global	slave_handle_bios
 	.type	slave_handle_bios, %function
 slave_handle_bios:
-	movw	r1, #:lower16:SSH2
+	/*movw	r1, #:lower16:SSH2*/
 	str	r0, [fp, #slave_pc-dynarec_local]
-	movt	r1, #:upper16:SSH2
+	/*movt	r1, #:upper16:SSH2*/
+	ldr	r1, .ssh2ptr
 	str	r10, [fp, #slave_cc-dynarec_local]
 	str	r14, [fp, #slave_ip-dynarec_local]
 	ldr	r0, [r1] /* SSH2 */
