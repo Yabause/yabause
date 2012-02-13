@@ -2725,7 +2725,7 @@ void SH2InterpreterDeInit()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SH2InterpreterReset()
+void SH2InterpreterReset(UNUSED SH2_struct *context)
 {
    // Reset any internal variables here
 }
