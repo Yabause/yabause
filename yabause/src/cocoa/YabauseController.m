@@ -195,14 +195,14 @@ static void FlipToggle(NSMenuItem *item) {
 
             /* Mute the audio before we actually pause otherwise the user might
                not like the result... */
-            ScspMuteAudio();
+            ScspMuteAudio(SCSP_MUTE_SYSTEM);
             [_runLock lock];
             [sender setState:NSOnState];
         }
         else {
             _paused = NO;
             [_runLock unlock];
-            ScspUnMuteAudio();
+            ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
             [sender setState:NSOffState];
         }
     }
@@ -310,7 +310,7 @@ static void FlipToggle(NSMenuItem *item) {
        drawing to nothingness. */
     [[view openGLContext] makeCurrentContext];
 
-    ScspUnMuteAudio();
+    ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 
     while(_running) {
         /* If we get paused from the GUI, we'll end up waiting in this lock
@@ -331,7 +331,7 @@ static void FlipToggle(NSMenuItem *item) {
         [_runLock unlock];
     }
 
-    ScspMuteAudio();
+    ScspMuteAudio(SCSP_MUTE_SYSTEM);
 
     _doneExecuting = YES;
     [pool release];

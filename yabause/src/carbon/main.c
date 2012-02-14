@@ -191,12 +191,12 @@ static void YuiPause(const int Pause)
     if(Pause)
     {
         Interval = kEventDurationForever;
-        ScspMuteAudio();
+        ScspMuteAudio(SCSP_MUTE_SYSTEM);
     }
     else
     {
         Interval = 16*kEventDurationMillisecond;
-        ScspUnMuteAudio();
+        ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
     }
 
     SetEventLoopTimerNextFireTime(EventTimer, Interval);

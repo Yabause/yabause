@@ -31,6 +31,9 @@
 #define SNDCORE_DUMMY   0
 #define SNDCORE_WAV     10  // Should be 1, but left as is for backward compat
 
+#define SCSP_MUTE_SYSTEM    1
+#define SCSP_MUTE_USER      2
+
 typedef struct
 {
    int id;
@@ -79,8 +82,8 @@ extern void ScspReset(void);
 extern int ScspChangeSoundCore(int coreid);
 extern int ScspChangeVideoFormat(int type);
 extern void ScspSetFrameAccurate(int on);
-extern void ScspMuteAudio(void);
-extern void ScspUnMuteAudio(void);
+extern void ScspMuteAudio(int flags);
+extern void ScspUnMuteAudio(int flags);
 extern void ScspSetVolume(int volume);
 extern void ScspDeInit(void);
 

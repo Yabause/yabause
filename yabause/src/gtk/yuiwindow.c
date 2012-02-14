@@ -327,7 +327,7 @@ void yui_window_run(YuiWindow * yui) {
 	yui_window_start(yui);
 
 	if ((yui->state & YUI_IS_INIT) && ((yui->state & YUI_IS_RUNNING) == 0)) {
-		ScspUnMuteAudio();
+		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 		g_idle_add(yui->run_func, GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_RUNNING_SIGNAL], 0);
 		yui->state |= YUI_IS_RUNNING;
@@ -339,7 +339,7 @@ void yui_window_run(YuiWindow * yui) {
 void yui_window_pause(YuiWindow * yui) {
 	if (yui->state & YUI_IS_RUNNING) {
 		yui_gl_dump_screen(YUI_GL(yui->area));
-		ScspMuteAudio();
+		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 		g_idle_remove_by_data(GINT_TO_POINTER(1));
 		g_signal_emit(G_OBJECT(yui), yui_window_signals[YUI_WINDOW_PAUSED_SIGNAL], 0);
 		yui->state &= ~YUI_IS_RUNNING;

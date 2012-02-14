@@ -459,7 +459,7 @@ void YuiPause()
    stop = 1;
    while (!stopped) { Sleep(0); }
 #endif
-   ScspMuteAudio();
+   ScspMuteAudio(SCSP_MUTE_SYSTEM);
    paused = 1;
 }
 
@@ -469,7 +469,7 @@ void YuiUnPause()
 {
    if (paused)
    {
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 #ifdef USETHREADS
       stop = 0;
 #endif
@@ -486,10 +486,10 @@ void YuiTempPause()
    {
       stop = 1;
       while (!stopped) { Sleep(0); }
-      ScspMuteAudio();
+      ScspMuteAudio(SCSP_MUTE_SYSTEM);
    }
 #else
-   ScspMuteAudio();
+   ScspMuteAudio(SCSP_MUTE_SYSTEM);
 #endif
 }
 
@@ -500,11 +500,11 @@ void YuiTempUnPause()
 #ifdef USETHREADS
    if (!paused)
    {
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       stop = 0;
    }
 #else
-   ScspUnMuteAudio();
+   ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 #endif
 }
 
@@ -1720,7 +1720,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 				break;
             case IDM_EXIT:
             {
-               ScspMuteAudio();
+               ScspMuteAudio(SCSP_MUTE_SYSTEM);
                PostMessage(hWnd, WM_CLOSE, 0, 0);
                break;
             }
@@ -1787,7 +1787,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       case WM_ENTERMENULOOP:
       {
 #ifndef USETHREADS
-         ScspMuteAudio();
+         ScspMuteAudio(SCSP_MUTE_SYSTEM);
 #endif
          for (i = 0; i < 12; i++)
          {
@@ -1854,7 +1854,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
       case WM_EXITMENULOOP:
       {
 #ifndef USETHREADS
-         ScspUnMuteAudio();
+         ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 #endif
          for (i = 0; i < 12; i++)
          {

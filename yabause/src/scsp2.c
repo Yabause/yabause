@@ -1132,15 +1132,19 @@ void ScspSetFrameAccurate(int on)
 // ScspMuteAudio, ScspUnMuteAudio:  Mute or unmute the sound output.  Does
 // not affect actual SCSP processing.
 
-void ScspMuteAudio(void)
+static int scsp_mute_flags = 0;
+
+void ScspMuteAudio(int flags)
 {
-   if (SNDCore)
+   scsp_mute_flags |= flags;
+   if (SNDCore && scsp_mute_flags)
       SNDCore->MuteAudio();
 }
 
-void ScspUnMuteAudio(void)
+void ScspUnMuteAudio(int flags)
 {
-   if (SNDCore)
+   scsp_mute_flags &= ~flags;
+   if (SNDCore && (scsp_mute_flags == 0))
       SNDCore->UnMuteAudio();
 }
 

@@ -3259,15 +3259,21 @@ void M68KSetRegisters(m68kregs_struct *regs) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ScspMuteAudio() {
-   if (SNDCore)
+static int scsp_mute_flags = 0;
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ScspMuteAudio(int flags) {
+   scsp_mute_flags |= flags;
+   if (SNDCore && scsp_mute_flags)
       SNDCore->MuteAudio();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ScspUnMuteAudio() {
-   if (SNDCore)
+void ScspUnMuteAudio(int flags) {
+   scsp_mute_flags &= ~flags;
+   if (SNDCore && (scsp_mute_flags == 0))
       SNDCore->UnMuteAudio();
 }
 

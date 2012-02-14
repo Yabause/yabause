@@ -444,11 +444,11 @@ void PauseOrUnpause(void) {
 
 	if(FrameAdvanceVariable == RunNormal) {
 		FrameAdvanceVariable=Paused;
-		ScspMuteAudio();
+		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 	}
 	else {
 		FrameAdvanceVariable=RunNormal;	
-		ScspUnMuteAudio();
+		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 	}
 }
 

@@ -225,7 +225,7 @@ int init_yabause(void)
     }
     YabauseSetDecilineMode(config_get_deciline_mode());
     ScspSetFrameAccurate(config_get_audio_sync());
-    ScspUnMuteAudio();
+    ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 
     /* Success */
     menu_set_error(NULL);

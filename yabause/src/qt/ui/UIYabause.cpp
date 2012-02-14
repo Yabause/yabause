@@ -485,9 +485,9 @@ void UIYabause::on_aVideoDriver_triggered()
 void UIYabause::on_cbSound_toggled( bool toggled )
 {
 	if ( toggled )
-		ScspUnMuteAudio();
+		ScspUnMuteAudio(SCSP_MUTE_USER);
 	else
-		ScspMuteAudio();
+		ScspMuteAudio(SCSP_MUTE_USER);
 	cbSound->setIcon( QIcon( toggled ? ":/actions/sound.png" : ":/actions/mute.png" ) );
 }
 

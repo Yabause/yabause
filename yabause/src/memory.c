@@ -1196,13 +1196,13 @@ int YabLoadState(const char *filename)
 
    // Verify version here
 
-   ScspMuteAudio();
+   ScspMuteAudio(SCSP_MUTE_SYSTEM);
    
    if (StateCheckRetrieveHeader(fp, "CART", &version, &chunksize) != 0)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    CartLoadState(fp, version, chunksize);
@@ -1211,7 +1211,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    Cs2LoadState(fp, version, chunksize);
@@ -1220,7 +1220,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    SH2LoadState(MSH2, fp, version, chunksize);
@@ -1229,7 +1229,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    SH2LoadState(SSH2, fp, version, chunksize);
@@ -1238,7 +1238,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    SoundLoadState(fp, version, chunksize);
@@ -1247,7 +1247,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    ScuLoadState(fp, version, chunksize);
@@ -1256,7 +1256,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    SmpcLoadState(fp, version, chunksize);
@@ -1265,7 +1265,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    Vdp1LoadState(fp, version, chunksize);
@@ -1274,7 +1274,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    Vdp2LoadState(fp, version, chunksize);
@@ -1283,7 +1283,7 @@ int YabLoadState(const char *filename)
    {
       fclose(fp);
       // Revert back to old state here
-      ScspUnMuteAudio();
+      ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    // Other data
@@ -1339,7 +1339,7 @@ int YabLoadState(const char *filename)
    
    fclose(fp);
 
-   ScspUnMuteAudio();
+   ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
    return 0;
 }
 

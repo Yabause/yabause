@@ -66,10 +66,10 @@ void M68KUpdateRegList(HWND hDlg, m68kregs_struct *regs)
 
 void M68KBreakpointHandler (u32 addr)
 {
-   ScspMuteAudio();
+   ScspMuteAudio(SCSP_MUTE_SYSTEM);
    MessageBox (YabWin, _16("Breakpoint Reached"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_M68KDEBUG), YabWin, (DLGPROC)M68KDebugDlgProc);
-   ScspUnMuteAudio();
+   ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 }
 
 //////////////////////////////////////////////////////////////////////////////

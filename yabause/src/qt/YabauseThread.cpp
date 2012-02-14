@@ -82,12 +82,12 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 	mPause = pause;
 	
 	if ( mPause ) {
-		ScspMuteAudio();
+		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 		killTimer( mTimerId );
 		mTimerId = -1;
 	}
 	else {
-		ScspUnMuteAudio();
+		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 		mTimerId = startTimer( 0 );
 	}
 	

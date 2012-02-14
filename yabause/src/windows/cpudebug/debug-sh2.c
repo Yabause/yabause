@@ -93,12 +93,12 @@ void SH2UpdateCodeList(HWND hDlg, u32 addr)
 
 void SH2BreakpointHandler (SH2_struct *context, u32 addr)
 {
-   ScspMuteAudio();
+   ScspMuteAudio(SCSP_MUTE_SYSTEM);
    MessageBox (YabWin, _16("Breakpoint Reached"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
 
    debugsh = context;
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SH2DEBUG), YabWin, (DLGPROC)SH2DebugDlgProc);
-   ScspUnMuteAudio();
+   ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 }
 
 //////////////////////////////////////////////////////////////////////////////

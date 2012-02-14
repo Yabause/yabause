@@ -370,18 +370,18 @@ int YabauseExec(void) {
 	}
 
 	if (FrameAdvanceVariable == Paused){
-		ScspMuteAudio();
+		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 		return(0);
 	}
   
 	if (FrameAdvanceVariable == NeedAdvance){  //advance a frame
 		FrameAdvanceVariable = Paused; //pause next time
-		ScspUnMuteAudio();
+		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 		YabauseEmulate();
 	}
 	
 	if (FrameAdvanceVariable == RunNormal ) { //run normally
-		ScspUnMuteAudio();	
+		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);	
 		YabauseEmulate();
 	}
 	return 0;

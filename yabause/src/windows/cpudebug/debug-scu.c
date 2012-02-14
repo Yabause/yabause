@@ -104,10 +104,10 @@ void SCUDSPUpdateCodeList(HWND hDlg, u8 addr)
 
 void SCUDSPBreakpointHandler (u32 addr)
 {
-   ScspMuteAudio();
+   ScspMuteAudio(SCSP_MUTE_SYSTEM);
    MessageBox (YabWin, _16("Breakpoint Reached"), _16("Notice"),  MB_OK | MB_ICONINFORMATION);
    DialogBox(y_hInstance, MAKEINTRESOURCE(IDD_SCUDSPDEBUG), YabWin, (DLGPROC)SCUDSPDebugDlgProc);
-   ScspUnMuteAudio();
+   ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 }
 
 //////////////////////////////////////////////////////////////////////////////

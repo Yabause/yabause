@@ -32,6 +32,9 @@
 #define SNDCORE_DUMMY   0
 #define SNDCORE_WAV     10 // should really be 1, but I'll probably break people's stuff
 
+#define SCSP_MUTE_SYSTEM    1
+#define SCSP_MUTE_USER      2
+
 typedef struct
 {
    int id;
@@ -102,8 +105,8 @@ void ScspSlotDebugStats(u8 slotnum, char *outstring);
 void ScspCommonControlRegisterDebugStats(char *outstring);
 int ScspSlotDebugSaveRegisters(u8 slotnum, const char *filename);
 int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename);
-void ScspMuteAudio(void);
-void ScspUnMuteAudio(void);
+void ScspMuteAudio(int flags);
+void ScspUnMuteAudio(int flags);
 void ScspSetVolume(int volume);
 
 void FASTCALL scsp_w_b(u32, u8);
