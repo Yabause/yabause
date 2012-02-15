@@ -1037,7 +1037,7 @@ static void scsp_set_b(u32 a, u8 d)
 		scsp_midi_out_send(d);
 		return;
 
-        case 0x08: // MSLC/CA
+        case 0x08: // MSLC
 		scsp.mslc = (d >> 3) & 0x1F;
 		scsp_update_monitor();
 		return;
@@ -1313,8 +1313,8 @@ static u8 scsp_get_b(u32 a)
         case 0x07: // MOBUF
 		return scsp_midi_out_read();
 
-        case 0x08: // MSLC/CA(highest 3 bits)
-		return (scsp.mslc << 3) | (scsp.ca >> 8);
+        case 0x08: // CA(highest 3 bits)
+		return (scsp.ca >> 8);
 
 	case 0x09: // CA(lowest bit)/SGC/EG
 		return (scsp.ca & 0xE0) | (scsp.sgc << 5) | scsp.eg;
@@ -1362,8 +1362,8 @@ static u16 scsp_get_w(u32 a)
         case 0x03: // MOBUF
 		return scsp_midi_out_read();
 
-        case 0x04: // MSLC/CA/SGC/EG
-		return (scsp.mslc << 11) | (scsp.ca & 0x780) | (scsp.sgc << 5) | scsp.eg;
+        case 0x04: // CA/SGC/EG
+		return (scsp.ca & 0x780) | (scsp.sgc << 5) | scsp.eg;
 
         case 0x0C: // TACTL
                 return (scsp.timasd << 8);
