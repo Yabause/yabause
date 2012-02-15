@@ -2713,6 +2713,7 @@ struct sounddata {
 } scspchannel[2];
 
 static u32 scspsoundlen;        // Samples to output per frame
+static u32 scsplines;           // Lines per frame
 static u32 scspsoundbufs;       // Number of "scspsoundlen"-sample buffers
 static u32 scspsoundbufsize;    // scspsoundlen * scspsoundbufs
 static int scspframeaccurate;   // True to generate frame-accurate audio
@@ -2918,6 +2919,7 @@ int ScspInit(int coreid) {
 
    // Allocate enough memory for each channel buffer(may have to change)
    scspsoundlen = 44100 / 60; // assume it's NTSC timing
+   scsplines = 213;
    scspsoundbufs = 10; // should be enough to prevent skipping
    scspsoundbufsize = scspsoundlen * scspsoundbufs;
    if (scsp_alloc_bufs() < 0)
@@ -3029,6 +3031,7 @@ void ScspReset(void) {
 
 int ScspChangeVideoFormat(int type) {
    scspsoundlen = 44100 / (type ? 50 : 60);
+   scsplines = type ? 313 : 263;
    scspsoundbufsize = scspsoundlen * scspsoundbufs;
 
    if (scsp_alloc_bufs() < 0)
@@ -3144,16 +3147,16 @@ void ScspExec() {
 #endif
    u32 audiosize;
 
-   ScspInternalVars->scsptiming2 += ((735<<16) + 263/2) / 263;
+   ScspInternalVars->scsptiming2 += ((scspsoundlen<<16) + scsplines/2) / scsplines;
    scsp_update_timer(ScspInternalVars->scsptiming2 >> 16); // Pass integer part
    ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
    ScspInternalVars->scsptiming1++;
 
-   if (ScspInternalVars->scsptiming1 >= 263)
+   if (ScspInternalVars->scsptiming1 >= scsplines)
    {
       s32 *bufL, *bufR;
 
-      ScspInternalVars->scsptiming1 -= 263;
+      ScspInternalVars->scsptiming1 -= scsplines;
       ScspInternalVars->scsptiming2 = 0;
 
       if (scspframeaccurate) {
