@@ -125,7 +125,7 @@ void scsp_midi_out_send(u8 data);
 u8 scsp_midi_in_read(void);
 u8 scsp_midi_out_read(void);
 void scsp_update(s32 *bufL, s32 *bufR, u32 len);
-void scsp_update_ca(void);
+void scsp_update_monitor(void);
 void scsp_update_timer(u32 len);
 
 u32 FASTCALL c68k_word_read(const u32 adr);

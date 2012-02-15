@@ -34,7 +34,7 @@
 // $402 ---- ---1 1222 2222 1:RBL ring buffer length 2:RBP lead address								-
 // $404 ---1 2345 6666 6666 1:MOFULL out fifo full 2:MOEMP empty 3:MIOVF overflow 4:MIFULL in 5:MIEMP 6:MIBUF	*
 // $406 ---- ---- 1111 1111 1:MOBUF midi output data buffer										*
-// $408 1111 1222 2--- ---- 1:MSLC monitor slot 2:CA call address									*!
+// $408 1111 1222 2334 4444 1:MSLC monitor slot 2:CA call address 3:SGC Slot phase 4:EG Slot volume						*!
 // $40a ---- ---- ---- ----															-
 // $40c ---- ---- ---- ----															-
 // $40e ---- ---- ---- ----															-
@@ -122,10 +122,10 @@
 #define SCSP_MIDI_OUT_EMP	0x08
 #define SCSP_MIDI_OUT_FUL	0x10
 
-#define SCSP_ENV_RELEASE	0				// Enveloppe phase
-#define SCSP_ENV_SUBSTAIN	1
-#define SCSP_ENV_DECAY		2
-#define SCSP_ENV_ATTACK		3
+#define SCSP_ENV_RELEASE	3				// Enveloppe phase
+#define SCSP_ENV_SUBSTAIN	2
+#define SCSP_ENV_DECAY		1
+#define SCSP_ENV_ATTACK		0
 
 #define SCSP_FREQ_HB		19				// Freq counter int part
 #define SCSP_FREQ_LB		10				// Freq counter float part
@@ -242,6 +242,8 @@ typedef struct scsp_t
 
 	u32	mslc;			// monitor slot
 	u32	ca;			// call address
+	u32	sgc;			// phase
+	u32	eg;			// volume
 
 	u32	dmea;			// dma memory address start
 	u32	drga;			// dma register address start
@@ -969,24 +971,25 @@ static void scsp_slot_set_w(u32 s, s32 a, u16 d)
 
 static u8 scsp_slot_get_b(u32 s, u32 a)
 {
-	a &= 0x1F;
+        u8 val = scsp_isr[a ^ 3];
 
-        SCSPLOG("r_b slot %d : reg %.2X\n", s, a);
+        // Mask out keyonx
+	if ((a & 0x1F) == 0x00) val &= 0xEF;
 
-	if (a == 0x00) return scsp_isr[a ^ 3] & 0xEF;
+        SCSPLOG("r_b slot %d (%.2X) : reg %.2X = %.2X\n", s, a, a & 0x1F, val);
 
-	return scsp_isr[a ^ 3];
+	return val;
 }
 
 static u16 scsp_slot_get_w(u32 s, u32 a)
 {
-        a &= 0x1E;
+        u16 val = *(u16 *)&scsp_isr[a ^ 2];
 
-        SCSPLOG("r_w slot %d : reg %.2X\n", s, a);
+        if ((a & 0x1E) == 0x00) return val &= 0xEFFF;
 
-        if (a == 0x00) return *(u16 *)&scsp_isr[a ^ 2] & 0xEFFF;
+        SCSPLOG("r_w slot %d (%.2X) : reg %.2X = %.4X\n", s, a, a & 0x1E, val);
 
-        return *(u16 *)&scsp_isr[a ^ 2];
+        return val;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1036,7 +1039,7 @@ static void scsp_set_b(u32 a, u8 d)
 
         case 0x08: // MSLC/CA
 		scsp.mslc = (d >> 3) & 0x1F;
-		scsp_update_ca();
+		scsp_update_monitor();
 		return;
 
         case 0x12: // DMEAL(high byte)
@@ -1196,9 +1199,9 @@ static void scsp_set_w(u32 a, u16 d)
 		scsp_midi_out_send(d & 0xFF);
 		return;
 
-        case 0x04: // MSLC/CA
+        case 0x04: // MSLC
 		scsp.mslc = (d >> 11) & 0x1F;
-		scsp_update_ca();
+		scsp_update_monitor();
 		return;
 
         case 0x09: // DMEAL
@@ -1311,10 +1314,10 @@ static u8 scsp_get_b(u32 a)
 		return scsp_midi_out_read();
 
         case 0x08: // MSLC/CA(highest 3 bits)
-		return scsp.ca >> 8;
+		return (scsp.mslc << 3) | (scsp.ca >> 8);
 
-        case 0x09: // CA(lowest bit)
-		return scsp.ca & 0xFF;
+	case 0x09: // CA(lowest bit)/SGC/EG
+		return (scsp.ca & 0xE0) | (scsp.sgc << 5) | scsp.eg;
 
         case 0x1E: // SCIEB(high byte)
                 return (scsp.scieb >> 8);
@@ -1359,8 +1362,17 @@ static u16 scsp_get_w(u32 a)
         case 0x03: // MOBUF
 		return scsp_midi_out_read();
 
-        case 0x04: // MSLC/CA
-		return scsp.ca;
+        case 0x04: // MSLC/CA/SGC/EG
+		return (scsp.mslc << 11) | (scsp.ca & 0x780) | (scsp.sgc << 5) | scsp.eg;
+
+        case 0x0C: // TACTL
+                return (scsp.timasd << 8);
+
+        case 0x0D: // TBCTL
+                return (scsp.timbsd << 8);
+
+        case 0x0E: // TCCTL
+                return (scsp.timcsd << 8);
 
         case 0x0F: // SCIEB
                 return scsp.scieb;
@@ -2165,11 +2177,16 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len)
         }
 }
 
-void scsp_update_ca()
+void scsp_update_monitor()
 {
-   scsp.ca = ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
+   slot_t *slot = &scsp.slot[scsp.mslc];
+   scsp.ca = ((slot->fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
+   scsp.sgc = slot->ecurp;
+   scsp.eg = 0x1f;
 #ifdef PSP
    WRITE_THROUGH(scsp.ca);
+   WRITE_THROUGH(scsp.sgc);
+   WRITE_THROUGH(scsp.eg);
 #endif
 }
 
@@ -3219,7 +3236,7 @@ void ScspExec() {
       }
    }  // if (scspframeaccurate)
 
-   scsp_update_ca();
+   scsp_update_monitor();
 }
 
 //////////////////////////////////////////////////////////////////////////////
