@@ -2614,6 +2614,7 @@ void scsp_reset(void)
 	{
 		memset(slot, 0, sizeof(slot_t));
 		slot->ecnt = SCSP_ENV_DE;		// slot off
+		slot->ecurp = SCSP_ENV_RELEASE;
 		slot->dislr = slot->disll = 31;	// direct level sound off
 		slot->efslr = slot->efsll = 31;	// effect level sound off
 	}
