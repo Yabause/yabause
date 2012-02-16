@@ -313,6 +313,7 @@ typedef struct SlotState_struct
    s32  env_step_d;     // Envelope counter increment for decay phase
    s32  env_step_s;     // Envelope counter increment for sustain phase
    s32  env_step_r;     // Envelope counter increment for release phase
+   s32  last_env;       // Last calculated envelope multiplier
    u8   krs_shift;      // Shift count corresponding to KRS
    s32  sl_target;      // Compare value corresponding to SL
    s32  tl_mult;        // Envelope volume multiplier corresponding to TL
@@ -364,6 +365,8 @@ typedef struct ScspState_struct {
    // $408
    u8   mslc;           // [15:11] Monitor slot
    u8   ca;             // [10:7] Call address
+   u8   sgc;            // [6:5] Envelope phase
+   u8   eg;             // [4:0] Envelope volume
 
    // $40A..$410 unused (possibly used in the model 2 SCSP?)
 
@@ -577,6 +580,7 @@ static u8 FASTCALL ScspReadByteDirect(u32 address);
 static u16 FASTCALL ScspReadWordDirect(u32 address);
 static void FASTCALL ScspWriteByteDirect(u32 address, u8 data);
 static void FASTCALL ScspWriteWordDirect(u32 address, u16 data);
+static u16 ScspReadMonitor(void);
 static void ScspDoKeyOnOff(void);
 static void ScspKeyOn(SlotState *slot);
 static void ScspKeyOff(SlotState *slot);
@@ -637,6 +641,7 @@ static void FASTCALL audiogen_##tag(SlotState *slot, u32 len)               \
          s32 env = scsp_env_table[ENV_POS] * slot->tl_mult >> SCSP_TL_BITS; \
          if (A)                                                             \
             env -= slot->lfo_am_wave[LFO_POS] >> slot->lfo_am_shift;        \
+         slot->last_env = env;                                              \
                                                                             \
          /* Apply envelope / channel volume to waveform data and output */  \
          if (LIKELY(env > 0))                                               \
@@ -1556,10 +1561,8 @@ u16 FASTCALL ScspReadWord(u32 address)
    {
       case 0x404:  // MIDI in
          return 0xFF;  // Not even supported, so don't bother trying
-      case 0x408:  // MSLC/CA
-         return scsp.mslc << 11
-              | ((scsp.slot[scsp.mslc].addr_counter
-                  >> (SCSP_FREQ_LOW_BITS + 12)) & 0xF) << 7;
+      case 0x408:  // CA/SGC/EG
+         return ScspReadMonitor();
       default:
          return PSP_UC(scsp_regcache[address >> 1]);
    }
@@ -2411,16 +2414,40 @@ static u8 FASTCALL ScspReadByteDirect(u32 address)
 
 //----------------------------------//
 
+static u16 ScspReadMonitor(void)
+{
+   u8 ca, sgc, eg;
+
+   ca = (scsp.slot[scsp.mslc].addr_counter >> (SCSP_FREQ_LOW_BITS + 12)) & 0xF;
+
+   switch (scsp.slot[scsp.mslc].env_phase) {
+      case SCSP_ENV_ATTACK:
+         sgc = 0;
+         break;
+      case SCSP_ENV_DECAY:
+         sgc = 1;
+         break;
+      case SCSP_ENV_SUSTAIN:
+         sgc = 2;
+         break;
+      case SCSP_ENV_RELEASE:
+         sgc = 3;
+         break;
+   }
+
+   eg = 0x1f - (scsp.slot[scsp.mslc].last_env >> 27);
+
+   return (ca << 7) | (sgc << 5) | eg;
+}
+
 static u16 FASTCALL ScspReadWordDirect(u32 address)
 {
    switch (address)
    {
       case 0x404:  // MIDI in
          return ScspMidiIn();
-      case 0x408:  // MSLC/CA
-         return scsp.mslc << 11
-              | ((scsp.slot[scsp.mslc].addr_counter
-                  >> (SCSP_FREQ_LOW_BITS + 12)) & 0xF) << 7;
+      case 0x408:  // CA/SGC/EG
+         return ScspReadMonitor();
       default:
          return PSP_UC(scsp_regcache[address >> 1]);
    }
@@ -2811,7 +2838,7 @@ static void FASTCALL ScspWriteWordDirect(u32 address, u16 data)
                break;
 
             case 0x08:
-               data &= 0x7800;  // CA is not writable
+               data &= 0x7800;  // CA/SGC/EG are not writable
                scsp.mslc   = (data >> 11) & 0x1F;
                break;
 
