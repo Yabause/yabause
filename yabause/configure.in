@@ -167,7 +167,7 @@ if test x$use_opengl = xyes ; then
 			;;
 		*linux* | *bsd*)
 			AC_PATH_XTRA
-			LIBS="$LIBS $X_LIBS -lm"
+			LIBS="$LIBS $X_LIBS"
 			CFLAGS="$CFLAGS $X_CFLAGS"
 
 			AC_CHECK_LIB(GL, glEnable, [
@@ -243,6 +243,7 @@ case $host in
 		;;
 	*linux*)
 		yabause_arch=linux
+		LIBS="$LIBS -lm"
 		AC_DEFINE([ARCH_IS_LINUX])
 		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <linux/cdrom.h>]], [[int i = CDSL_CURRENT;]])],
 			[],
