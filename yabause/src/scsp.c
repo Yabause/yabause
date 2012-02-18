@@ -183,6 +183,7 @@ typedef struct slot_t
 	s32	eincr;		// enveloppe step adder for release
 	s32	ecmp;			// enveloppe compare to raise next phase
 	u32	ecurp;		// enveloppe current phase (attack / decay / release ...)
+        s32     last_env;       // Last calculated envelope multiplier
 
 	void	(*enxt)(struct slot_t *);	// enveloppe function pointer for next phase event
 
@@ -1406,10 +1407,10 @@ static u16 scsp_get_w(u32 a)
                 out = (s32) slot->buf16[slot->fcnt >> SCSP_FREQ_LB];
 
 #define SCSP_GET_ENV            \
-                env = scsp_env_table[slot->ecnt >> SCSP_ENV_LB] * slot->tl / 1024;
+                slot->last_env = env = scsp_env_table[slot->ecnt >> SCSP_ENV_LB] * slot->tl / 1024;
 
 #define SCSP_GET_ENV_LFO        \
-                env = (scsp_env_table[slot->ecnt >> SCSP_ENV_LB] * slot->tl / 1024) - (slot->lfoemw[(slot->lfocnt >> SCSP_LFO_LB) & SCSP_LFO_MASK] >> slot->lfoems);
+                slot->last_env = env = (scsp_env_table[slot->ecnt >> SCSP_ENV_LB] * slot->tl / 1024) - (slot->lfoemw[(slot->lfocnt >> SCSP_LFO_LB) & SCSP_LFO_MASK] >> slot->lfoems);
 
 #define SCSP_OUT_8B_L		\
 		if ((out) && (env > 0))							\
@@ -2182,7 +2183,7 @@ void scsp_update_monitor()
    slot_t *slot = &scsp.slot[scsp.mslc];
    scsp.ca = ((slot->fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
    scsp.sgc = slot->ecurp;
-   scsp.eg = 0x1f;
+   scsp.eg = 0x1f - (slot->last_env >> (SCSP_ENV_HB - 5));
 #ifdef PSP
    WRITE_THROUGH(scsp.ca);
    WRITE_THROUGH(scsp.sgc);
