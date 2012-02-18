@@ -195,12 +195,16 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
 // Terrible, but I'm not sure how to do the equivalent in inline
 #ifdef HAVE_C99_VARIADIC_MACROS
 #define AddString(s, ...) \
-   sprintf(s, __VA_ARGS__); \
-   s += strlen(s)
+   { \
+      sprintf(s, __VA_ARGS__); \
+      s += strlen(s); \
+   }
 #else
 #define AddString(s, r...) \
-   sprintf(s, ## r); \
-   s += strlen(s)
+   { \
+      sprintf(s, ## r); \
+      s += strlen(s); \
+   }
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
