@@ -180,7 +180,7 @@ typedef struct slot_t
   u32 finct;   // non adjusted phase step
 
   s32 ecnt;    // envelope counter
-  s32 einc;    // envelope current step adder
+  s32 *einc;    // envelope current step adder
   s32 einca;   // envelope step adder for attack
   s32 eincd;   // envelope step adder for decay 1
   s32 eincs;   // envelope step adder for decay 2
@@ -463,7 +463,7 @@ scsp_slot_keyon (slot_t *slot)
                                       // should convert decay to attack?)
       slot->env = 0;                  // reset envelope
 
-      slot->einc = slot->einca;       // envelope counter step is attack step
+      slot->einc = &slot->einca;      // envelope counter step is attack step
       slot->ecurp = SCSP_ENV_ATTACK;  // current envelope phase is attack
       slot->ecmp = SCSP_ENV_AE;       // limit reach to next event (Attack End)
       slot->enxt = scsp_attack_next;  // function pointer to next event
@@ -481,7 +481,7 @@ scsp_slot_keyoff (slot_t *slot)
       // if we still are in attack phase at release time, convert attack to decay
       if (slot->ecurp == SCSP_ENV_ATTACK)
         slot->ecnt = SCSP_ENV_DE - slot->ecnt;
-      slot->einc = slot->eincr;
+      slot->einc = &slot->eincr;
       slot->ecmp = SCSP_ENV_DE;
       slot->ecurp = SCSP_ENV_RELEASE;
       slot->enxt = scsp_release_next;
@@ -524,7 +524,7 @@ scsp_release_next (slot_t *slot)
   // end of release happened, update to process the next phase...
 
   slot->ecnt = SCSP_ENV_DE;
-  slot->einc = 0;
+  slot->einc = NULL;
   slot->ecmp = SCSP_ENV_DE + 1;
   slot->enxt = scsp_env_null_next;
 }
@@ -535,7 +535,7 @@ scsp_sustain_next (slot_t *slot)
   // end of sustain happened, update to process the next phase...
 
   slot->ecnt = SCSP_ENV_DE;
-  slot->einc = 0;
+  slot->einc = NULL;
   slot->ecmp = SCSP_ENV_DE + 1;
   slot->enxt = scsp_env_null_next;
 }
@@ -546,7 +546,7 @@ scsp_decay_next (slot_t *slot)
   // end of decay happened, update to process the next phase...
 
   slot->ecnt = slot->sl;
-  slot->einc = slot->eincs;
+  slot->einc = &slot->eincs;
   slot->ecmp = SCSP_ENV_DE;
   slot->ecurp = SCSP_ENV_SUSTAIN;
   slot->enxt = scsp_sustain_next;
@@ -558,7 +558,7 @@ scsp_attack_next (slot_t *slot)
   // end of attack happened, update to process the next phase...
 
   slot->ecnt = SCSP_ENV_DS;
-  slot->einc = slot->eincd;
+  slot->einc = &slot->eincd;
   slot->ecmp = slot->sl;
   slot->ecurp = SCSP_ENV_DECAY;
   slot->enxt = scsp_decay_next;
@@ -566,6 +566,19 @@ scsp_attack_next (slot_t *slot)
 
 ////////////////////////////////////////////////////////////////
 // Slot Access
+
+static void
+scsp_slot_refresh_einc (slot_t *slot, u32 adsr_bitmask)
+{
+  if (slot->arp && (adsr_bitmask & 0x1))
+    slot->einca = slot->arp[(14 - slot->fsft) >> slot->krs];
+  if (slot->drp && (adsr_bitmask & 0x2))
+    slot->eincd = slot->drp[(14 - slot->fsft) >> slot->krs];
+  if (slot->srp && (adsr_bitmask & 0x4))
+    slot->eincs = slot->srp[(14 - slot->fsft) >> slot->krs];
+  if (slot->rrp && (adsr_bitmask & 0x8))
+    slot->eincr = slot->rrp[(14 - slot->fsft) >> slot->krs];
+}
 
 static void
 scsp_slot_set_b (u32 s, u32 a, u8 d)
@@ -646,8 +659,7 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
       else
         slot->drp = &scsp_null_rate[0];
 
-      slot->eincs = slot->srp[(14 - slot->fsft) >> slot->krs];
-      slot->eincd = slot->drp[(14 - slot->fsft) >> slot->krs];
+      scsp_slot_refresh_einc (slot, 0x2 | 0x4);
       return;
 
     case 0x09: // D1R(lowest 2 bits)/EGHOLD/AR
@@ -665,8 +677,7 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
       else
         slot->arp = &scsp_null_rate[0];
 
-      slot->eincd = slot->drp[(14 - slot->fsft) >> slot->krs];
-      slot->einca = slot->arp[(14 - slot->fsft) >> slot->krs];
+      scsp_slot_refresh_einc (slot, 0x1 | 0x2);
       return;
 
     case 0x0A: // LPSLNK/KRS/DL(highest 2 bits)
@@ -681,6 +692,8 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
       slot->sl &= 0xE0 << SCSP_ENV_LB;
       slot->sl += (d & 3) << (8 + SCSP_ENV_LB);
       slot->sl += SCSP_ENV_DS; // adjusted for envelope compare (ecmp)
+
+      scsp_slot_refresh_einc (slot, 0xF);
       return;
 
     case 0x0B: // DL(lowest 3 bits)/RR
@@ -694,7 +707,7 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
       else
         slot->rrp = &scsp_null_rate[0];
 
-      slot->eincr = slot->rrp[(14 - slot->fsft) >> slot->krs];
+      scsp_slot_refresh_einc (slot, 0x8);
       return;
 
     case 0x0C: // STWINH/SDIR
@@ -724,6 +737,8 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
 
       slot->finct = (slot->finct & 0x7F80) + ((d & 3) << (8 + 7));
       slot->finc = (0x20000 + slot->finct) >> slot->fsft;
+
+      scsp_slot_refresh_einc (slot, 0xF);
       return;
 
     case 0x11: // FNS(low byte)
@@ -923,9 +938,7 @@ scsp_slot_set_w (u32 s, s32 a, u16 d)
       else
         slot->arp = &scsp_null_rate[0];
 
-      slot->einca = slot->arp[(14 - slot->fsft) >> slot->krs];
-      slot->eincd = slot->drp[(14 - slot->fsft) >> slot->krs];
-      slot->eincs = slot->srp[(14 - slot->fsft) >> slot->krs];
+      scsp_slot_refresh_einc (slot, 0x1 | 0x2 | 0x4);
       return;
 
     case 0x0A: // LPSLNK/KRS/DL/RR
@@ -945,7 +958,7 @@ scsp_slot_set_w (u32 s, s32 a, u16 d)
       else
         slot->rrp = &scsp_null_rate[0];
 
-      slot->eincr = slot->rrp[(14 - slot->fsft) >> slot->krs];
+      scsp_slot_refresh_einc (slot, 0xF);
       return;
 
     case 0x0C: // STWINH/SDIR
@@ -967,6 +980,8 @@ scsp_slot_set_w (u32 s, s32 a, u16 d)
         slot->fsft = (((d >> 11) & 7) ^ 7);
 
       slot->finc = ((0x400 + (d & 0x3FF)) << 7) >> slot->fsft;
+
+      scsp_slot_refresh_einc (slot, 0xF);
       return;
 
     case 0x12: // LFORE/LFOF/PLFOWS/PLFOS/ALFOWS/ALFOS
@@ -1617,10 +1632,11 @@ scsp_get_w (u32 a)
     }
 
 #define SCSP_UPDATE_ENV \
-  if ((slot->ecnt += slot->einc) >= slot->ecmp) \
-    {                                           \
-      slot->enxt(slot);                         \
-      if (slot->ecnt >= SCSP_ENV_DE) return;    \
+  if (slot->einc) slot->ecnt += *slot->einc; \
+  if (slot->ecnt >= slot->ecmp)              \
+    {                                        \
+      slot->enxt(slot);                      \
+      if (slot->ecnt >= SCSP_ENV_DE) return; \
     }
 
 #define SCSP_UPDATE_LFO \
@@ -3761,7 +3777,18 @@ SoundSaveState (FILE *fp)
       ywrite (&check, (void *)&scsp.slot[i].key, 1, 1, fp);
       ywrite (&check, (void *)&scsp.slot[i].fcnt, 4, 1, fp);
       ywrite (&check, (void *)&scsp.slot[i].ecnt, 4, 1, fp);
-      ywrite (&check, (void *)&scsp.slot[i].einc, 4, 1, fp);
+
+      if (scsp.slot[i].einc == &scsp.slot[i].einca)
+        ywrite (&check, (void *)0, 4, 1, fp);
+      else if (scsp.slot[i].einc == &scsp.slot[i].eincd)
+        ywrite (&check, (void *)1, 4, 1, fp);
+      else if (scsp.slot[i].einc == &scsp.slot[i].eincs)
+        ywrite (&check, (void *)2, 4, 1, fp);
+      else if (scsp.slot[i].einc == &scsp.slot[i].eincr)
+        ywrite (&check, (void *)3, 4, 1, fp);
+      else
+        ywrite (&check, (void *)4, 4, 1, fp);
+
       ywrite (&check, (void *)&scsp.slot[i].ecmp, 4, 1, fp);
       ywrite (&check, (void *)&scsp.slot[i].ecurp, 4, 1, fp);
 
@@ -3871,10 +3898,32 @@ SoundLoadState (FILE *fp, int version, int size)
       // Read slot internal variables
       for (i = 0; i < 32; i++)
         {
+          s32 einc;
+
           yread (&check, (void *)&scsp.slot[i].key, 1, 1, fp);
           yread (&check, (void *)&scsp.slot[i].fcnt, 4, 1, fp);
           yread (&check, (void *)&scsp.slot[i].ecnt, 4, 1, fp);
-          yread (&check, (void *)&scsp.slot[i].einc, 4, 1, fp);
+
+          yread (&check, (void *)&einc, 4, 1, fp);
+          switch (einc)
+            {
+            case 0:
+              scsp.slot[i].einc = &scsp.slot[i].einca;
+              break;
+            case 1:
+              scsp.slot[i].einc = &scsp.slot[i].eincd;
+              break;
+            case 2:
+              scsp.slot[i].einc = &scsp.slot[i].eincs;
+              break;
+            case 3:
+              scsp.slot[i].einc = &scsp.slot[i].eincr;
+              break;
+            default:
+              scsp.slot[i].einc = NULL;
+              break;
+            }
+
           yread (&check, (void *)&scsp.slot[i].ecmp, 4, 1, fp);
           yread (&check, (void *)&scsp.slot[i].ecurp, 4, 1, fp);
 
@@ -4349,7 +4398,7 @@ ScspSlotDebugAudioSaveWav (u8 slotnum, const char *filename)
   // Clear out the phase counter, etc.
   slot.fcnt = 0;
   slot.ecnt = SCSP_ENV_AS;
-  slot.einc = slot.einca;
+  slot.einc = &slot.einca;
   slot.ecmp = SCSP_ENV_AE;
   slot.ecurp = SCSP_ENV_ATTACK;
   slot.enxt = scsp_attack_next;
