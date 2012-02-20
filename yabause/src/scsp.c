@@ -2837,8 +2837,8 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 
   for (i = 0; i < SCSP_ENV_LEN; i++)
     {
-      // Attack Curve (x^4 ?)
-      x = pow (((double)(SCSP_ENV_MASK - i) / (double)SCSP_ENV_LEN), 4);
+      // Attack Curve (x^7 ?)
+      x = pow (((double)(SCSP_ENV_MASK - i) / (double)SCSP_ENV_LEN), 7);
       x *= (double)SCSP_ENV_LEN;
       scsp_env_table[i] = SCSP_ENV_MASK - (s32)x;
 
