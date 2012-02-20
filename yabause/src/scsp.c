@@ -2853,7 +2853,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
       j += 1 << (i >> 2);
 
       // lfo freq
-      x = 172.3 / (double) (j);
+      x = (SCSP_FREQ / 256.0) / (double)j;
 
       // converting lfo freq in lfo step
       scsp_lfo_step[31 - i] = scsp_round(x * ((double)SCSP_LFO_LEN /
