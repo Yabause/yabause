@@ -1974,7 +1974,7 @@ static int DrawLineCallback(int x, int y, int i, void *data)
 	return 0;
 }
 
-static int DrawLine( int x1, int y1, int x2, int y2, double linenumber, double texturestep, double xredstep, double xgreenstep, double xbluestep)
+static int DrawLine( int x1, int y1, int x2, int y2, int greedy, double linenumber, double texturestep, double xredstep, double xgreenstep, double xbluestep)
 {
 	DrawLineData data;
 
@@ -1986,7 +1986,7 @@ static int DrawLine( int x1, int y1, int x2, int y2, double linenumber, double t
 	data.endcodesdetected = 0;
 	data.previousStep = 123456789;
 
-	return iterateOverLine(x1, y1, x2, y2, 1, &data, DrawLineCallback);
+	return iterateOverLine(x1, y1, x2, y2, greedy, &data, DrawLineCallback);
 }
 
 static INLINE double interpolate(double start, double end, int numberofsteps) {
@@ -2169,6 +2169,7 @@ static void drawQuad(s32 tl_x, s32 tl_y, s32 bl_x, s32 bl_y, s32 tr_x, s32 tr_y,
 			yleft[(int)(i*leftLineStep)],
 			xright[(int)(i*rightLineStep)],
 			yright[(int)(i*rightLineStep)],
+			1,
 			ytexturestep*i, 
 			xtexturestep,
 			leftToRightStep.r,
@@ -2356,19 +2357,19 @@ void VIDSoftVdp1PolylineDraw(void)
 
 	length = iterateOverLine(X[0], Y[0], X[1], Y[1], 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudA, gouraudB);
-	DrawLine(X[0], Y[0], X[1], Y[1], 0,0,redstep,greenstep,bluestep);
+	DrawLine(X[0], Y[0], X[1], Y[1], 0, 0,0,redstep,greenstep,bluestep);
 
 	length = iterateOverLine(X[1], Y[1], X[2], Y[2], 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudB, gouraudC);
-	DrawLine(X[1], Y[1], X[2], Y[2], 0,0,redstep,greenstep,bluestep);
+	DrawLine(X[1], Y[1], X[2], Y[2], 0, 0,0,redstep,greenstep,bluestep);
 
 	length = iterateOverLine(X[2], Y[2], X[3], Y[3], 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudD, gouraudC);
-	DrawLine(X[3], Y[3], X[2], Y[2], 0,0,redstep,greenstep,bluestep);
+	DrawLine(X[3], Y[3], X[2], Y[2], 0, 0,0,redstep,greenstep,bluestep);
 
 	length = iterateOverLine(X[3], Y[3], X[0], Y[0], 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudA,gouraudD);
-	DrawLine(X[0], Y[0], X[3], Y[3], 0,0,redstep,greenstep,bluestep);
+	DrawLine(X[0], Y[0], X[3], Y[3], 0, 0,0,redstep,greenstep,bluestep);
 }
 
 void VIDSoftVdp1LineDraw(void)
@@ -2386,7 +2387,7 @@ void VIDSoftVdp1LineDraw(void)
 
 	length = iterateOverLine(x1, y1, x2, y2, 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&bluestep,&greenstep,length, gouraudA, gouraudB);
-	DrawLine(x1, y1, x2, y2, 0,0,redstep,greenstep,bluestep);
+	DrawLine(x1, y1, x2, y2, 0, 0,0,redstep,greenstep,bluestep);
 }
 
 //////////////////////////////////////////////////////////////////////////////
