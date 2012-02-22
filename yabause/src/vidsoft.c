@@ -1877,235 +1877,116 @@ static void putpixel(int x, int y) {
 	}
 }
 
-//TODO consolidate the following 3 functions
-static int bresenham( int x1, int y1, int x2, int y2, int x[], int y[])
-{
-	int dx, dy, xf, yf, a, b, c, i;
+static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *data,
+			   int (*line_callback)(int x, int y, int i, void *data)) {
+	int i, a, ax, ay, dx, dy;
 
-	if (x2>x1) {
-		dx = x2-x1;
-		xf = 1;
-	}
-	else {
-		dx = x1-x2;
-		xf = -1;
-	}
-
-	if (y2>y1) {
-		dy = y2-y1;
-		yf = 1;
-	}
-	else {
-		dy = y1-y2;
-		yf = -1;
-	}
+	a = i = 0;
+	dx = x2 - x1;
+	dy = y2 - y1;
+	ax = (dx >= 0) ? 1 : -1;
+	ay = (dy >= 0) ? 1 : -1;
 
 	//burning rangers tries to draw huge shapes
 	//this will at least let it run
-	if(dx > 999 || dy > 999)
+	if(abs(dx) > 999 || abs(dy) > 999)
 		return INT_MAX;
 
-	if (dx>dy) {
-		a = dy+dy;
-		c = a-dx;
-		b = c-dx;
-		for (i=0;i<=dx;i++) {
-			x[i] = x1; y[i] = y1;
-			x1 += xf;
-			if (c<0) {
-				c += a;
-			}
-			else {
-				c += b;
-				y1 += yf;
-			}
-		}
-		return dx+1;
-	}
-	else {
-		a = dx+dx;
-		c = a-dy;
-		b = c-dy;
-		for (i=0;i<=dy;i++) {
-			x[i] = x1; y[i] = y1;
-			y1 += yf;
-			if (c<0) {
-				c += a;
-			}
-			else {
-				c += b;
-				x1 += xf;
+	if (abs(dx) > abs(dy)) {
+		if (ax != ay) dx = -dx;
+
+		for (; x1 != x2; x1 += ax, i++) {
+			if (line_callback && line_callback(x1, y1, i, data) != 0) return i + 1;
+
+			a += dy;
+			if (abs(a) >= abs(dx)) {
+				a -= dx;
+				y1 += ay;
+				if (greedy) {
+					i ++;
+					if (line_callback && line_callback(x1, y1, i, data) != 0) return i + 1;
+				}
 			}
 		}
-		return dy+1;
+
+		// If the line isn't greedy here, we end up with gaps that don't occur on the Saturn
+		if (/*(i == 0) || (y1 != y2)*/1) {
+			if (line_callback) line_callback(x2, y2, i, data);
+			i ++;
+		}
+	} else {
+		if (ax != ay) dy = -dy;
+
+		for (; y1 != y2; y1 += ay, i++) {
+			if (line_callback && line_callback(x1, y1, i, data) != 0) return i + 1;
+
+			a += dx;
+			if (abs(a) >= abs(dy)) {
+				a -= dy;
+				x1 += ax;
+				if (greedy) {
+					i ++;
+					if (line_callback && line_callback(x1, y1, i, data) != 0) return i + 1;
+				}
+			}
+		}
+
+		if (/*(i == 0) || (y1 != y2)*/1) {
+			if (line_callback) line_callback(x2, y2, i, data);
+			i ++;
+		}
 	}
+
+	return i;
+}
+
+typedef struct {
+	double linenumber;
+	double texturestep;
+	double xredstep;
+	double xgreenstep;
+	double xbluestep;
+	int endcodesdetected;
+	int previousStep;
+} DrawLineData;
+
+static int DrawLineCallback(int x, int y, int i, void *data)
+{
+	DrawLineData *linedata = data;
+
+	leftColumnColor.r += linedata->xredstep;
+	leftColumnColor.g += linedata->xgreenstep;
+	leftColumnColor.b += linedata->xbluestep;
+
+	if (getpixel(linedata->linenumber, (int)i * linedata->texturestep)) {
+		if (currentPixel != linedata->previousStep) {
+			linedata->previousStep = (int)i * linedata->texturestep;
+			linedata->endcodesdetected ++;
+		}
+	} else {
+		putpixel(x, y);
+	}
+
+	linedata->previousStep = currentPixel;
+
+	if (linedata->endcodesdetected == 2) return -1;
+
+	return 0;
 }
 
 static int DrawLine( int x1, int y1, int x2, int y2, double linenumber, double texturestep, double xredstep, double xgreenstep, double xbluestep)
 {
-	int dx, dy, xf, yf, a, b, c, i;
-	int endcodesdetected=0;
-	int previousStep = 123456789;
+	DrawLineData data;
 
-	if (x2>x1) {
-		dx = x2-x1;
-		xf = 1;
-	}
-	else {
-		dx = x1-x2;
-		xf = -1;
-	}
+	data.linenumber = linenumber;
+	data.texturestep = texturestep;
+	data.xredstep = xredstep;
+	data.xgreenstep = xgreenstep;
+	data.xbluestep = xbluestep;
+	data.endcodesdetected = 0;
+	data.previousStep = 123456789;
 
-	if (y2>y1) {
-		dy = y2-y1;
-		yf = 1;
-	}
-	else {
-		dy = y1-y2;
-		yf = -1;
-	}
-
-	if (dx>dy) {
-		a = dy+dy;
-		c = a-dx;
-		b = c-dx;
-		for (i=0;i<=dx;i++) {
-			leftColumnColor.r+=xredstep;
-			leftColumnColor.g+=xgreenstep;
-			leftColumnColor.b+=xbluestep;
-
-			if(getpixel(linenumber,(int)i*texturestep)) {
-				if(currentPixel != previousStep) {
-					previousStep = (int)i*texturestep;
-					endcodesdetected++;
-				}
-			}
-			else
-				putpixel(x1,y1);
-
-			previousStep = currentPixel;
-
-			if(endcodesdetected==2)
-				break;
-
-			x1 += xf;
-			if (c<0) {
-				c += a;
-			}
-			else {
-				getpixel(linenumber,(int)i*texturestep);
-				putpixel(x1,y1);
-				c += b;
-				y1 += yf;
-/*
-				//same as sega's way, but just move the code down here instead
-				//and use the pixel we already have instead of the next one
-				if(xf>1&&yf>1) putpixel(x1,y1-1); //case 1
-				if(xf<1&&yf<1) putpixel(x1,y1+1); //case 2
-				if(xf<1&&yf>1) putpixel(x1+1,y1); //case 7
-				if(xf>1&&yf<1) putpixel(x1-1,y1); //case 8*/
-			}
-		}
-		return dx+1;
-	}
-	else {
-		a = dx+dx;
-		c = a-dy;
-		b = c-dy;	
-	for (i=0;i<=dy;i++) {
-			leftColumnColor.r+=xredstep;
-			leftColumnColor.g+=xgreenstep;
-			leftColumnColor.b+=xbluestep;
-
-			if(getpixel(linenumber,(int)i*texturestep)) {
-				if(currentPixel != previousStep) {
-					previousStep = (int)i*texturestep;
-					endcodesdetected++;
-				}
-			}
-			else
-				putpixel(x1,y1);
-
-			previousStep = currentPixel;
-
-			if(endcodesdetected==2)
-				break;
-
-			y1 += yf;
-			if (c<0) {
-				c += a;
-			}
-			else {
-				getpixel(linenumber,(int)i*texturestep);
-				putpixel(x1,y1);
-				c += b;
-				x1 += xf;
-/*				
-				if(xf>1&&yf>1) putpixel(x1,y1-1); //case 3
-				if(xf<1&&yf<1) putpixel(x1,y1+1); //case 4
-				if(xf<1&&yf>1) putpixel(x1+1,y1); //case 5
-				if(xf>1&&yf<1) putpixel(x1-1,y1); //case 6*/
-
-			}
-		}
-		return dy+1;
-	}
-}
-
-static int getlinelength(int x1, int y1, int x2, int y2) {
-	int dx, dy, xf, yf, a, b, c, i;
-
-	if (x2>x1) {
-		dx = x2-x1;
-		xf = 1;
-	}
-	else {
-		dx = x1-x2;
-		xf = -1;
-	}
-
-	if (y2>y1) {
-		dy = y2-y1;
-		yf = 1;
-	}
-	else {
-		dy = y1-y2;
-		yf = -1;
-	}
-
-	if (dx>dy) {
-		a = dy+dy;
-		c = a-dx;
-		b = c-dx;
-		for (i=0;i<=dx;i++) {
-
-			x1 += xf;
-			if (c<0) {
-				c += a;
-			}
-			else {
-				c += b;
-				y1 += yf;
-			}
-		}
-		return dx+1;
-	}
-	else {
-		a = dx+dx;
-		c = a-dy;
-		b = c-dy;	
-	for (i=0;i<=dy;i++) {
-			y1 += yf;
-			if (c<0) {
-				c += a;
-			}
-			else {
-				c += b;
-				x1 += xf;
-			}
-		}
-		return dy+1;
-	}
+	return iterateOverLine(x1, y1, x2, y2, 1, &data, DrawLineCallback);
 }
 
 static INLINE double interpolate(double start, double end, int numberofsteps) {
@@ -2162,6 +2043,16 @@ int yleft[1000];
 int xright[1000];
 int yright[1000];
 
+static int
+storeLineCoords(int x, int y, int i, void *arrays) {
+	int **intArrays = arrays;
+
+	intArrays[0][i] = x;
+	intArrays[1][i] = y;
+
+	return 0;
+}
+
 //a real vdp1 draws with arbitrary lines
 //this is why endcodes are possible
 //this is also the reason why half-transparent shading causes moire patterns
@@ -2172,6 +2063,7 @@ static void drawQuad(s32 tl_x, s32 tl_y, s32 bl_x, s32 bl_y, s32 tr_x, s32 tr_y,
 	int totalright;
 	int total;
 	int i;
+	int *intarrays[2];
 
 	COLOR_PARAMS topLeftToBottomLeftColorStep = {0,0,0}, topRightToBottomRightColorStep = {0,0,0};
 		
@@ -2186,8 +2078,10 @@ static void drawQuad(s32 tl_x, s32 tl_y, s32 bl_x, s32 bl_y, s32 tr_x, s32 tr_y,
 	characterWidth = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
 	characterHeight = cmd.CMDSIZE & 0xFF;
 
-	totalleft  = bresenham(tl_x,tl_y,bl_x,bl_y,xleft,yleft);
-	totalright = bresenham(tr_x,tr_y,br_x,br_y,xright,yright);
+	intarrays[0] = xleft; intarrays[1] = yleft;
+	totalleft  = iterateOverLine(tl_x, tl_y, bl_x, bl_y, 0, intarrays, storeLineCoords);
+	intarrays[0] = xright; intarrays[1] = yright;
+	totalright  = iterateOverLine(tr_x, tr_y, br_x, br_y, 0, intarrays, storeLineCoords);
 
 	//just for now since burning rangers will freeze up trying to draw huge shapes
 	if(totalleft == INT_MAX || totalright == INT_MAX)
@@ -2236,11 +2130,12 @@ static void drawQuad(s32 tl_x, s32 tl_y, s32 bl_x, s32 bl_y, s32 tr_x, s32 tr_y,
 		COLOR_PARAMS leftToRightStep = {0,0,0};
 
 		//get the length of the line we are about to draw
-		xlinelength = getlinelength(
+		xlinelength = iterateOverLine(
 			xleft[(int)(i*leftLineStep)],
 			yleft[(int)(i*leftLineStep)],
 			xright[(int)(i*rightLineStep)],
-			yright[(int)(i*rightLineStep)]);
+			yright[(int)(i*rightLineStep)],
+			1, NULL, NULL);
 
 		//so from 0 to the width of the texture / the length of the line is how far we need to step
 		xtexturestep=interpolate(0,characterWidth,xlinelength);
@@ -2459,19 +2354,19 @@ void VIDSoftVdp1PolylineDraw(void)
 	X[3] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x18));
 	Y[3] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A));
 
-	length = getlinelength(X[0], Y[0], X[1], Y[1]);
+	length = iterateOverLine(X[0], Y[0], X[1], Y[1], 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudA, gouraudB);
 	DrawLine(X[0], Y[0], X[1], Y[1], 0,0,redstep,greenstep,bluestep);
 
-	length = getlinelength(X[1], Y[1], X[2], Y[2]);
+	length = iterateOverLine(X[1], Y[1], X[2], Y[2], 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudB, gouraudC);
 	DrawLine(X[1], Y[1], X[2], Y[2], 0,0,redstep,greenstep,bluestep);
 
-	length = getlinelength(X[2], Y[2], X[3], Y[3]);
+	length = iterateOverLine(X[2], Y[2], X[3], Y[3], 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudD, gouraudC);
 	DrawLine(X[3], Y[3], X[2], Y[2], 0,0,redstep,greenstep,bluestep);
 
-	length = getlinelength(X[3], Y[3], X[0], Y[0]);
+	length = iterateOverLine(X[3], Y[3], X[0], Y[0], 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudA,gouraudD);
 	DrawLine(X[0], Y[0], X[3], Y[3], 0,0,redstep,greenstep,bluestep);
 }
@@ -2489,7 +2384,7 @@ void VIDSoftVdp1LineDraw(void)
 	x2 = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10));
 	y2 = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12));
 
-	length = getlinelength(x1, y1, x2, y2);
+	length = iterateOverLine(x1, y1, x2, y2, 1, NULL, NULL);
 	gouraudLineSetup(&redstep,&bluestep,&greenstep,length, gouraudA, gouraudB);
 	DrawLine(x1, y1, x2, y2, 0,0,redstep,greenstep,bluestep);
 }
