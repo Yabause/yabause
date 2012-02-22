@@ -1902,9 +1902,19 @@ static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *dat
 			if (abs(a) >= abs(dx)) {
 				a -= dx;
 				y1 += ay;
+
+				// Make sure we 'fill holes' the same as the Saturn
 				if (greedy) {
 					i ++;
-					if (line_callback && line_callback(x1, y1, i, data) != 0) return i + 1;
+					if (ax == ay) {
+						if (line_callback &&
+						    line_callback(x1 + ax, y1 - ay, i, data) != 0)
+							return i + 1;
+					} else {
+						if (line_callback &&
+						    line_callback(x1, y1, i, data) != 0)
+							return i + 1;
+					}
 				}
 			}
 		}
@@ -1924,9 +1934,18 @@ static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *dat
 			if (abs(a) >= abs(dy)) {
 				a -= dy;
 				x1 += ax;
+
 				if (greedy) {
 					i ++;
-					if (line_callback && line_callback(x1, y1, i, data) != 0) return i + 1;
+					if (ay == ax) {
+						if (line_callback &&
+						    line_callback(x1, y1, i, data) != 0)
+							return i + 1;
+					} else {
+						if (line_callback &&
+						    line_callback(x1 - ax, y1 + ay, i, data) != 0)
+							return i + 1;
+					}
 				}
 			}
 		}
