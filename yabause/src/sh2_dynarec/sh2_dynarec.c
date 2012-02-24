@@ -120,7 +120,7 @@ struct ll_entry
   struct ll_entry *jump_dirty[2048];
   ALIGNED(16) u32 hash_table[65536][4];
   ALIGNED(16) char shadow[2097152];
-  void *copy;
+  char *copy;
   int expirep;
   unsigned int stop_after_jal;
   //char invalid_code[0x100000];
@@ -812,7 +812,7 @@ void ll_remove_matching_addrs(struct ll_entry **head,int addr,int shift)
   struct ll_entry *next;
   while(*head) {
     if(((u32)((*head)->addr)>>shift)==(addr>>shift) || 
-       ((u32)((*head)->addr-MAX_OUTPUT_BLOCK_SIZE)>>shift)==(addr>>shift))
+       ((u32)(((char *)(*head)->addr)-MAX_OUTPUT_BLOCK_SIZE)>>shift)==(addr>>shift))
     {
       inv_debug("EXP: Remove pointer to %x (%x)\n",(int)(*head)->addr,(*head)->vaddr);
       remove_hash((*head)->vaddr);
@@ -5333,6 +5333,7 @@ int sh2_recompile_block(int addr)
   unsigned int writelimit=0xFFFFFFFF;
   u32 p_constmap[SH2_REGS];
   u32 p_isconst=0;
+  int cached_addr;
 
   //if(Count==365117028) tracedebug=1;
   assem_debug("NOTCOMPILED: addr = %x -> %x\n", (int)addr, (int)out);
@@ -5345,21 +5346,20 @@ int sh2_recompile_block(int addr)
     rlist();
   }*/
   //rlist();
-  int cached_addr;
   start = (u32)addr&~1;
   slave = (u32)addr&1;
   cached_addr = start&~0x20000000;
   //assert(((u32)addr&1)==0);
   if (cached_addr >= 0x00000000 && cached_addr < 0x00100000) {
-    source = (u16 *)((void *)BiosRom+(start & 0x7FFFF));
+    source = (u16 *)((char *)BiosRom+(start & 0x7FFFF));
     pagelimit = (addr|0x7FFFF) + 1;
   }
   else if (cached_addr >= 0x00200000 && cached_addr < 0x00300000) {
-    source = (u16 *)((void *)LowWram+(start & 0xFFFFF));
+    source = (u16 *)((char *)LowWram+(start & 0xFFFFF));
     pagelimit = (addr|0xFFFFF) + 1;
   }
   else if (cached_addr >= 0x06000000 && cached_addr < 0x08000000) {
-    source = (u16 *)((void *)HighWram+(start & 0xFFFFF));
+    source = (u16 *)((char *)HighWram+(start & 0xFFFFF));
     pagelimit = (addr|0xFFFFF) + 1;
   }
   else {
@@ -8033,7 +8033,7 @@ int sh2_recompile_block(int addr)
     }
   }
   // External Branch Targets (jump_in)
-  if(copy+slen*2+4>(void *)shadow+sizeof(shadow)) copy=shadow;
+  if(copy+slen*2+4>shadow+sizeof(shadow)) copy=shadow;
   for(i=0;i<slen;i++)
   {
     if(bt[i]||i==0)
