@@ -612,6 +612,7 @@ fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, 
    {
       addr &= 0x7FFFC;
       i = T1ReadLong(Vdp2Ram, addr);
+      parameter->linescreen = (i >> 24) & 0x7F;
       parameter->msb = (i >> 31) & 0x1;
       return (signed) ((i & 0x00FFFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000));
    }

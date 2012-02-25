@@ -121,6 +121,7 @@ typedef struct
    int specialfunction;
    int specialcolorfunction;
    int specialcolormode;
+   int specialcode;
    u32 addr, charaddr, paladdr;
    int colornumber;
    int isbitmap;
@@ -158,6 +159,7 @@ typedef struct
    int isverticalscroll;
    u32 verticalscrolltbl;
    int verticalscrollinc;
+   int linescreen;
    
    // WindowMode
    u8  LogicWin;    // Window Logic AND OR
@@ -219,6 +221,7 @@ typedef struct
    fixed32 dY;
    int screenover;
    int msb;
+   int linescreen;
 } vdp2rotationparameterfp_struct;
 
 typedef struct
@@ -683,6 +686,7 @@ static INLINE void Vdp2ReadCoefficientFP(vdp2rotationparameterfp_struct *paramet
          {
             i = T1ReadLong(Vdp2Ram, addr);
             parameter->msb = (i >> 31) & 0x1;
+            parameter->linescreen = (i >> 24) & 0x7F;
             parameter->Xp = (signed) ((i & 0x007FFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) * 256;
          }
 

@@ -38,9 +38,9 @@ libyabause_a_SOURCES = \
 	scu.c scu.h sh2core.c sh2core.h sh2d.c sh2d.h \
 	sh2idle.c sh2idle.h sh2int.c sh2int.h sh2trace.c sh2trace.h \
 	smpc.c smpc.h sndal.c sndal.h snddummy.c sndsdl.c sndsdl.h sndwav.c \
-	threads.h vdp1.c vdp1.h vdp2.c vdp2.h vdp2debug.c vdp2debug.h \
-	vidogl.c vidogl.h vidshared.c vidshared.h vidsoft.c vidsoft.h \
-	yabause.c yabause.h ygl.h ygl.c yglshader.c yui.h
+	threads.h titan/titan.c titan/titan.h vdp1.c vdp1.h vdp2.c vdp2.h \
+	vdp2debug.c vdp2debug.h vidogl.c vidogl.h vidshared.c vidshared.h \
+	vidsoft.c vidsoft.h yabause.c yabause.h ygl.h ygl.c yglshader.c yui.h
 
 if USE_SCSP2
 libyabause_a_SOURCES += scsp2.c scsp2.h
