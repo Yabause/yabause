@@ -7,15 +7,15 @@ typedef u32 (*TitanBlendFunc)(u32 top, u32 bottom);
 
 static struct TitanContext {
    u32 * dispbuffer;
-   /* for now both screens and line-screens are stored here
-   but we should only store one value / line for line-screens */
-   u32 * vdp2framebuffer[11];
+   u32 * vdp2framebuffer[8];
+   u32 * linescreen[4];
    int vdp2width;
    int vdp2height;
    TitanBlendFunc blend;
 } tt_context = {
    NULL,
-   { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+   { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+   { NULL, NULL, NULL, NULL },
    320,
    224
 };
@@ -105,11 +105,19 @@ int TitanInit()
    if ((tt_context.dispbuffer = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
       return -1;
 
-   for(i = 0;i < 11;i++)
+   for(i = 0;i < 8;i++)
    {
       if ((tt_context.vdp2framebuffer[i] = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
          return -1;
       memset(tt_context.vdp2framebuffer[i], 0, sizeof(u32) * 704 * 512);
+   }
+
+   /* linescreen 0 is not initialized as it's not used... */
+   for(i = 1;i < 4;i++)
+   {
+      if ((tt_context.linescreen[i] = (u32 *)calloc(sizeof(u32), 512)) == NULL)
+         return -1;
+      memset(tt_context.linescreen[i], 0, sizeof(u32) * 512);
    }
 
    return 0;
@@ -125,8 +133,11 @@ int TitanDeInit()
       tt_context.dispbuffer = NULL;
    }
 
-   for(i = 0;i < 11;i++)
+   for(i = 0;i < 8;i++)
       free(tt_context.vdp2framebuffer[i]);
+
+   for(i = 1;i < 4;i++)
+      free(tt_context.linescreen[i]);
 
    return 0;
 }
@@ -162,11 +173,8 @@ void TitanPutLineHLine(int linescreen, s32 y, u32 color)
    if (linescreen == 0) return;
 
    {
-      u32 * buffer = tt_context.vdp2framebuffer[7 + linescreen] + (y * tt_context.vdp2width);
-      int i;
-
-      for (i = 0; i < tt_context.vdp2width; i++)
-         buffer[i] = color;
+      u32 * buffer = tt_context.linescreen[linescreen] + y;
+      *buffer = color;
    }
 }
 
@@ -178,7 +186,7 @@ void TitanPutPixel(int priority, s32 x, s32 y, u32 color, int linescreen)
       int pos = (y * tt_context.vdp2width) + x;
       u32 * buffer = tt_context.vdp2framebuffer[priority] + pos;
       if (linescreen)
-         color = TitanBlendPixelsTop(color, tt_context.vdp2framebuffer[7 + linescreen][pos]);
+         color = TitanBlendPixelsTop(color, tt_context.linescreen[linescreen][y]);
       *buffer = color;
    }
 }
