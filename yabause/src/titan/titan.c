@@ -153,18 +153,12 @@ u32 * TitanGetDispBuffer()
    return tt_context.dispbuffer;
 }
 
-void TitanPutBackPixel(s32 x, s32 y, u32 color)
+void TitanPutBackHLine(s32 y, u32 color)
 {
-   u32 * buffer = tt_context.vdp2framebuffer[0] + (y * tt_context.vdp2width) + x;
-   *buffer = color;
-}
-
-void TitanPutBackHLine(s32 x, s32 y, s32 width, u32 color)
-{
-   u32 * buffer = tt_context.vdp2framebuffer[0] + (y * tt_context.vdp2width) + x;
+   u32 * buffer = tt_context.vdp2framebuffer[0] + (y * tt_context.vdp2width);
    int i;
 
-   for (i = 0; i < width; i++)
+   for (i = 0; i < tt_context.vdp2width; i++)
       buffer[i] = color;
 }
 

@@ -1024,8 +1024,7 @@ static void Vdp2DrawBackScreen(void)
    {
       // Draw Black
       for (j = 0; j < vdp2height; j++)
-         for (i = 0; i < vdp2width; i++)
-            TitanPutBackPixel(i, j, COLSAT2YAB32(0x3F, 0));
+         TitanPutBackHLine(j, COLSAT2YAB32(0x3F, 0));
    }
    else
    {
@@ -1046,7 +1045,7 @@ static void Vdp2DrawBackScreen(void)
             dot = T1ReadWord(Vdp2Ram, scrAddr);
             scrAddr += 2;
 
-            TitanPutBackHLine(0, i, vdp2width, COLSAT2YAB16(0x3F, dot));
+            TitanPutBackHLine(i, COLSAT2YAB16(0x3F, dot));
          }
       }
       else
@@ -1055,8 +1054,7 @@ static void Vdp2DrawBackScreen(void)
          dot = T1ReadWord(Vdp2Ram, scrAddr);
 
          for (j = 0; j < vdp2height; j++)
-            for (i = 0; i < vdp2width; i++)
-               TitanPutBackPixel(i, j, COLSAT2YAB16(0x3F, dot));
+            TitanPutBackHLine(j, COLSAT2YAB16(0x3F, dot));
       }
    }
 }
