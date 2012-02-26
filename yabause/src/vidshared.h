@@ -236,6 +236,7 @@ typedef struct
 #define tofloat(v) ((float)(v) / (float)(1 << FP_SIZE))
 #define mulfixed(a,b) ((fixed32)((s64)(a) * (s64)(b) >> FP_SIZE))
 #define divfixed(a,b) (((s64)(a) << FP_SIZE) / (b))
+#define decipart(v) (v & ((1 << FP_SIZE) - 1))
 
 void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i);
 void FASTCALL Vdp2NBG1PlaneAddr(vdp2draw_struct *info, int i);

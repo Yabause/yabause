@@ -921,7 +921,8 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
    else
    {
       fixed32 xmul, ymul, C, F;
-      fixed32 coefx, coefy;
+      u32 coefx, coefy;
+      u32 rcoefx, rcoefy;
       u32 lineAddr, lineColor, lineInc;
       u16 lineColorAddr;
 
@@ -933,6 +934,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
       SetupScreenVars(info, &sinfo);
       coefx = coefy = 0;
+      rcoefx = rcoefy = 0;
 
       if (info->linescreen)
       {
@@ -954,7 +956,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          {
             Vdp2ReadCoefficientFP(p,
                                   p->coeftbladdr +
-                                  touint(coefy) *
+                                  (coefy + touint(rcoefy)) *
                                   p->coefdatasize);
          }
 
@@ -974,9 +976,10 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             {
                Vdp2ReadCoefficientFP(p,
                                      p->coeftbladdr +
-                                     toint(coefy + coefx) *
+                                     (coefy + coefx + toint(rcoefx + rcoefy)) *
                                      p->coefdatasize);
-               coefx += p->deltaKAx;
+               coefx += toint(p->deltaKAx);
+               rcoefx += decipart(p->deltaKAx);
             }
 
             if (p->msb)
@@ -1005,7 +1008,9 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          }
          ymul += p->deltaYst;
          coefx = 0;
-         coefy += p->deltaKAst;
+         rcoefx = 0;
+         coefy += toint(p->deltaKAst);
+         rcoefy += decipart(p->deltaKAst);
       }
       return;
    }
