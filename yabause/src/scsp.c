@@ -3774,20 +3774,24 @@ SoundSaveState (FILE *fp)
   // Write slot internal variables
   for (i = 0; i < 32; i++)
     {
+      s32 einc;
+
       ywrite (&check, (void *)&scsp.slot[i].key, 1, 1, fp);
       ywrite (&check, (void *)&scsp.slot[i].fcnt, 4, 1, fp);
       ywrite (&check, (void *)&scsp.slot[i].ecnt, 4, 1, fp);
 
       if (scsp.slot[i].einc == &scsp.slot[i].einca)
-        ywrite (&check, (void *)0, 4, 1, fp);
+        einc = 0;
       else if (scsp.slot[i].einc == &scsp.slot[i].eincd)
-        ywrite (&check, (void *)1, 4, 1, fp);
+        einc = 1;
       else if (scsp.slot[i].einc == &scsp.slot[i].eincs)
-        ywrite (&check, (void *)2, 4, 1, fp);
+        einc = 2;
       else if (scsp.slot[i].einc == &scsp.slot[i].eincr)
-        ywrite (&check, (void *)3, 4, 1, fp);
+        einc = 3;
       else
-        ywrite (&check, (void *)4, 4, 1, fp);
+        einc = 4;
+
+      ywrite (&check, (void *)&einc, 4, 1, fp);
 
       ywrite (&check, (void *)&scsp.slot[i].ecmp, 4, 1, fp);
       ywrite (&check, (void *)&scsp.slot[i].ecurp, 4, 1, fp);
