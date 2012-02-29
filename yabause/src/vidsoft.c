@@ -1658,7 +1658,7 @@ void VIDSoftVdp1DrawStart(void)
       {
          // Normal 8-bit
          vdp1width = 1024;
-         vdp1width = 256;
+         vdp1height = 256;
       }
 
       vdp1pixelsize = 1;
@@ -1867,6 +1867,47 @@ static int gouraudAdjust( int color, int tableValue )
 	return color;
 }
 
+static void putpixel8(int x, int y) {
+
+    u8 * iPix = &vdp1backframebuffer[((y / 2) * vdp1width) + (x / 2)];
+    int mesh = cmd.CMDPMOD & 0x0100;
+    int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
+    int currentShape = cmd.CMDCTRL & 0x7;
+    int isTextured=1;
+
+    currentPixel &= 0xFF;
+
+    if(mesh && (x^y)&1)
+        return;
+
+    if(currentShape == 4 || currentShape == 5 || currentShape == 6)
+        isTextured = 0;
+
+    if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
+
+    if (x >= vdp1clipxstart &&
+        x < vdp1clipxend &&
+        y >= vdp1clipystart &&
+        y < vdp1clipyend)
+    {}
+    else
+        return;
+
+    if (cmd.CMDPMOD & 0x0400) PopUserClipping();
+
+    if ( SPD || (currentPixel & currentPixelIsVisible))
+    {
+        switch( cmd.CMDPMOD & 0x7 )//we want bits 0,1,2
+        {
+        default:
+        case 0:	// replace
+            if (!((currentPixel == 0) && !SPD))
+                *(iPix) = currentPixel;
+            break;
+        }
+    }
+}
+
 static void putpixel(int x, int y) {
 
 	u16* iPix = &((u16 *)vdp1backframebuffer)[(y * vdp1width) + x];
@@ -2057,9 +2098,11 @@ static int DrawLineCallback(int x, int y, int i, void *data)
 			linedata->previousStep = (int)i * linedata->texturestep;
 			linedata->endcodesdetected ++;
 		}
-	} else {
+	} else if (vdp1pixelsize == 2) {
 		putpixel(x, y);
-	}
+	} else {
+		putpixel8(x, y);
+    }
 
 	linedata->previousStep = currentPixel;
 
@@ -2748,7 +2791,14 @@ void VIDSoftVdp2DrawEnd(void)
                if (pixel != 0)
                {
                   // Color bank(fix me)
-                  LOG("8-bit Color Bank draw - %02X\n", pixel);
+                  int priority;
+                  int shadow = 0;
+                  int colorcalc;
+                  u8 alpha = 0xFF;
+                  priority = 0;  // Avoid compiler warning
+                  Vdp1ProcessSpritePixel(vdp1spritetype, &pixel, &shadow, &priority, &colorcalc);
+                  TitanPutPixel(prioritytable[priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, Vdp2ColorRamGetColor(vdp1coloroffset + pixel))), 0);
+
                }
             }
          }
@@ -2955,10 +3005,21 @@ void VIDSoftVdp1EraseFrameBuffer(void)
    w = ((Vdp1Regs->EWRR >> 6) & 0x3F8) + 8;
    if (w > vdp1width) w = vdp1width;
 
-   for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
+   if (vdp1pixelsize == 2)
    {
-      for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
-         ((u16 *)vdp1backframebuffer)[(i2 * vdp1width) + i] = Vdp1Regs->EWDR;
+      for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
+      {
+         for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
+            ((u16 *)vdp1backframebuffer)[(i2 * vdp1width) + i] = Vdp1Regs->EWDR;
+      }
+   }
+   else
+   {
+      for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
+      {
+         for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
+            vdp1backframebuffer[(i2 * vdp1width) + i] = Vdp1Regs->EWDR & 0xFF;
+      }
    }
 }
 
