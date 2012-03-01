@@ -148,6 +148,7 @@ u8 *vdp1backframebuffer;
 
 static int vdp1width;
 static int vdp1height;
+static int vdp1interlace;
 static int vdp1clipxstart;
 static int vdp1clipxend;
 static int vdp1clipystart;
@@ -1646,6 +1647,10 @@ int VIDSoftVdp1Reset(void)
 
 void VIDSoftVdp1DrawStart(void)
 {
+   if (Vdp1Regs->FBCR & 8)
+      vdp1interlace = 2;
+   else
+      vdp1interlace = 1;
    if (Vdp1Regs->TVMR & 0x1)
    {
       if (Vdp1Regs->TVMR & 0x2)
@@ -1869,7 +1874,7 @@ static int gouraudAdjust( int color, int tableValue )
 
 static void putpixel8(int x, int y) {
 
-    u8 * iPix = &vdp1backframebuffer[((y / 2) * vdp1width) + (x / 2)];
+    u8 * iPix = &vdp1backframebuffer[((y / vdp1interlace) * vdp1width) + (x / 2)];
     int mesh = cmd.CMDPMOD & 0x0100;
     int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
     int currentShape = cmd.CMDCTRL & 0x7;
