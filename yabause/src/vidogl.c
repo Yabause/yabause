@@ -1563,6 +1563,8 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
       tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
    else
       tile.priority = info->priority;
+   
+ 
    tile.vertices[0] = info->x * info->coordincx;
    tile.vertices[1] = info->y * info->coordincy;
    tile.vertices[2] = (info->x + tile.w) * info->coordincx;
@@ -1571,6 +1573,7 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    tile.vertices[5] = (info->y + tile.h) * info->coordincy;
    tile.vertices[6] = info->x * info->coordincx;
    tile.vertices[7] = (info->y + tile.h) * info->coordincy;
+   
    
    // Screen culling
    if( tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height || tile.vertices[2] < 0 || tile.vertices[5] < 0 )
@@ -1765,13 +1768,13 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
    info->drawh = (int)((float)vdp2height / info->coordincy);
 
    i=0;
-   yy = info->y;
+   yy = info->y*info->coordincy;
    while( yy < vdp2height )
    {
       Y = info->y;
       j=0;
       info->x = X;      
-      xx = info->x;
+      xx = info->x*info->coordincx;
       while( xx < vdp2width )
       {
          info->y = Y;
@@ -1779,11 +1782,11 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
          Vdp2DrawPlane(info, texture);
          j++;
          j &= (info->mapwh-1);
-         xx += (info->cellw*info->pagewh*info->planew) * info->coordincx;
+         xx += (info->patternpixelwh*info->pagewh*info->planew) * info->coordincx;
       }
       i++;
       i&=(info->mapwh-1);      
-      yy += (info->cellh*info->pagewh*info->planeh) * info->coordincy;
+      yy += (info->patternpixelwh*info->pagewh*info->planeh) * info->coordincy;
    }
 }
 
@@ -3131,7 +3134,7 @@ static void Vdp2DrawLineColorScreen(void)
 {
 }
 
-
+ 
 //////////////////////////////////////////////////////////////////////////////
 
 static void Vdp2DrawNBG0(void)
@@ -3144,6 +3147,9 @@ static void Vdp2DrawNBG0(void)
    vdp2rotationparameter_struct parameter;
    info.dst=0;
    info.uclipmode=0;
+   
+   info.coordincx = 1.0f;
+   info.coordincy = 1.0f;
 
    if (Vdp2Regs->BGON & 0x20)
    {
@@ -3207,14 +3213,38 @@ static void Vdp2DrawNBG0(void)
          ReadPatternData(&info, Vdp2Regs->PNCN0, Vdp2Regs->CHCTLA & 0x1);
       }
 
-      info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN0.all & 0x7FF00);
-      info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00);
+      if( (Vdp2Regs->ZMXN0.all & 0x7FF00) == 0 )
+         info.coordincx = 1.0f; 
+      else
+         info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN0.all & 0x7FF00);
+      
+      switch(Vdp2Regs->ZMCTL&0x03)
+      {
+      case 0:
+         break;
+      case 1:
+         if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
+         break;
+      case 2:
+      case 3:
+         if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
+         break;
+      }
+
+      if( (Vdp2Regs->ZMYN0.all & 0x7FF00) == 0 )
+         info.coordincx = 1.0f; 
+      else
+         info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00);
+      
       info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG0PlaneAddr;
+      
+
+      
    }
    else
       // Not enabled
       return;
-
+   
    info.transparencyenable = !(Vdp2Regs->BGON & 0x100);
    info.specialprimode   = Vdp2Regs->SFPRMD & 0x3;
    info.specialcolormode = Vdp2Regs->SFCCMD & 0x3;
@@ -3376,9 +3406,31 @@ static void Vdp2DrawNBG1(void)
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x70) << 4;
    ReadVdp2ColorOffset(&info, 0x2);
-   info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00);
-   info.coordincy = (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00);
 
+   if( (Vdp2Regs->ZMXN1.all & 0x7FF00) == 0 )
+      info.coordincx = 1.0f; 
+   else
+      info.coordincx = (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00);
+      
+   switch((Vdp2Regs->ZMCTL>>8)&0x03)
+   {
+   case 0:
+      break;
+   case 1:
+      if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
+      break;
+   case 2:
+   case 3:
+      if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
+      break;
+   }
+
+      if( (Vdp2Regs->ZMYN1.all & 0x7FF00) == 0 )
+         info.coordincx = 1.0f; 
+      else
+         info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN1.all & 0x7FF00);
+      
+      
    info.priority = nbg1priority;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG1PlaneAddr;
 
@@ -3399,6 +3451,14 @@ static void Vdp2DrawNBG1(void)
    info.lineinfo = lineNBG1;
    Vdp2GenLineinfo( &info );
    Vdp2SetGetColor( &info );
+#if 0   
+   if(info->islinescroll)
+   {
+      int y = info->y;
+      if( VDPLINE_SX(info->islinescroll) ) info->x += info->lineinfo[y].LineScrollValH;
+      if( VDPLINE_SY(info->islinescroll) )info->y += info->lineinfo[y].LineScrollValH;
+   }  
+#endif   
    
    if (info.isbitmap)
    {
