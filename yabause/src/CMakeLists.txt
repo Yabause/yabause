@@ -12,6 +12,7 @@ set(yabause_SOURCES
 	netlink.c
 	peripheral.c profile.c
 	scu.c sh2core.c sh2d.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
+	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c ygl.c yglshader.c)
 
@@ -346,7 +347,6 @@ add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
 add_library(yabause ${yabause_SOURCES})
-target_link_libraries(yabause titan)
 
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)
@@ -379,5 +379,3 @@ set(YAB_PORTS "gtk;qt;windows;dreamcast;wii;carbon" CACHE STRING "List of ports 
 foreach(PORT IN LISTS YAB_PORTS)
 	add_subdirectory(${PORT})
 endforeach(PORT)
-
-add_subdirectory(titan)
