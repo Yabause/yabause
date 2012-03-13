@@ -99,6 +99,8 @@ typedef struct
     int WinHEnd;
 } vdp2WindowInfo;
 
+typedef u32 FASTCALL (*Vdp2ColorRamGetColor_func)(void *, u32 , int);
+typedef vdp2rotationparameter_struct * FASTCALL (*Vdp2GetRParam_func)(void *, int, int);
 
 typedef struct 
 {

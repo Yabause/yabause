@@ -869,27 +869,27 @@ static int Vdp2SetGetColor( vdp2draw_struct * info )
          switch( info->specialcolormode )
          {
          case 0:
-            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC0;
+            info->Vdp2ColorRamGetColor = (Vdp2ColorRamGetColor_func) Vdp2ColorRamGetColorCM01SC0;
             break;
          case 1:
-            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC1;
+            info->Vdp2ColorRamGetColor = (Vdp2ColorRamGetColor_func) Vdp2ColorRamGetColorCM01SC1;
             break;
          case 2:
-            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC0; // Not Supported Yet!
+            info->Vdp2ColorRamGetColor = (Vdp2ColorRamGetColor_func) Vdp2ColorRamGetColorCM01SC0; // Not Supported Yet!
             break;
          case 3:
-            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC3;
+            info->Vdp2ColorRamGetColor = (Vdp2ColorRamGetColor_func) Vdp2ColorRamGetColorCM01SC3;
             break;
          default:             
-            info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC0;
+            info->Vdp2ColorRamGetColor = (Vdp2ColorRamGetColor_func) Vdp2ColorRamGetColorCM01SC0;
             break;
          }
          break;
       case 2:
-         info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM2;
+         info->Vdp2ColorRamGetColor = (Vdp2ColorRamGetColor_func) Vdp2ColorRamGetColorCM2;
          break;
       default: 
-         info->Vdp2ColorRamGetColor = Vdp2ColorRamGetColorCM01SC0;
+         info->Vdp2ColorRamGetColor = (Vdp2ColorRamGetColor_func) Vdp2ColorRamGetColorCM01SC0;
          break;
    }   
    return 0;
@@ -2318,7 +2318,6 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    YglCache cash;
-   float* pcache;   
    u32 tmp;
    s16 x, y;
    u16 CMDPMOD;
@@ -2389,7 +2388,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
             return;
          }
 
-         pcache = YglQuadGrowShading(&sprite, &texture,col,&cash);
+         YglQuadGrowShading(&sprite, &texture,col,&cash);
          YglCacheAdd(tmp,&cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
          return;
@@ -2406,7 +2405,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
             return;
          }
 
-         pcache = YglQuad(&sprite, &texture,&cash);
+         YglQuad(&sprite, &texture,&cash);
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -2422,7 +2421,6 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    YglCache cash;
-   float* pcache;   
    u32 tmp;
    s16 rw=0, rh=0;
    s16 x, y;
@@ -2567,7 +2565,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
             return;
          }
 
-         pcache = YglQuadGrowShading(&sprite, &texture,col,&cash);
+         YglQuadGrowShading(&sprite, &texture,col,&cash);
          YglCacheAdd(tmp,&cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
          return;
@@ -2584,7 +2582,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
             return;
          }
 
-         pcache = YglQuad(&sprite, &texture,&cash);
+         YglQuad(&sprite, &texture,&cash);
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -2602,7 +2600,6 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    YglSprite sprite;
    YglTexture texture;
    YglCache cash;
-   float * pcache;
    u32 tmp;
    u16 CMDPMOD;
    u16 color2;
@@ -2672,8 +2669,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
             return;
          }
 
-         pcache = YglQuadGrowShading(&sprite, &texture,col,&cash);
-         //pcache = YglQuad(&sprite, &texture,&c);
+         YglQuadGrowShading(&sprite, &texture,col,&cash);
+         //YglQuad(&sprite, &texture,&c);
          YglCacheAdd(tmp,&cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
          return;
@@ -2690,7 +2687,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
             return;
          }
 
-         pcache = YglQuad(&sprite, &texture,&cash);
+         YglQuad(&sprite, &texture,&cash);
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -3729,27 +3726,27 @@ static void Vdp2DrawRBG0(void)
    {
       if(!(paraA.coefenab))
       {
-         info.GetRParam = vdp2RGetParamMode00NoK;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode00NoK;
       }else{
-         info.GetRParam = vdp2RGetParamMode00WithK;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode00WithK;
       }
 
    }else if( Vdp2Regs->RPMD == 0x01 )
    {
       if(!(paraB.coefenab))
       {
-         info.GetRParam = vdp2RGetParamMode01NoK;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode01NoK;
       }else{
-         info.GetRParam = vdp2RGetParamMode01WithK;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode01WithK;
       }
 
    }else if( Vdp2Regs->RPMD == 0x02 )
    {
       if(!(paraA.coefenab))
       {
-         info.GetRParam = vdp2RGetParamMode02NoK;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode02NoK;
       }else{
-         info.GetRParam = vdp2RGetParamMode02WithKA;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode02WithKA;
       }
 
    }else if( Vdp2Regs->RPMD == 0x03 )
@@ -3770,16 +3767,16 @@ static void Vdp2DrawRBG0(void)
 
       if( paraA.coefenab == 0 && paraB.coefenab == 0 )
       {
-         info.GetRParam = vdp2RGetParamMode03NoK;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode03NoK;
       }else if( paraA.coefenab == 1 && paraB.coefenab == 0 )
       {
-         info.GetRParam = vdp2RGetParamMode03WithKA;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode03WithKA;
       }else if( paraA.coefenab == 0 && paraB.coefenab == 1  )
       {
-         info.GetRParam = vdp2RGetParamMode03WithKB;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode03WithKB;
       }else if( paraA.coefenab == 1 && paraB.coefenab == 1  )
       {
-         info.GetRParam = vdp2RGetParamMode03WithK;
+         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode03WithK;
       }
    }
    
