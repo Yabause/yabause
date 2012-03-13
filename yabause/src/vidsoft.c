@@ -315,56 +315,6 @@ static INLINE u32 FASTCALL DoColorOffset(void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE u32 FASTCALL DoColorCalc(void *info, u32 pixel)
-{
-#if 0
-   u8 oldr, oldg, oldb;
-   u8 r, g, b;
-   u32 oldpixel = 0x00FFFFFF; // fix me
-
-   static int topratio[32] = {
-      31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16,
-      15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
-   };
-   static int bottomratio[32] = {
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-      17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
-   };
-
-   // separate color components for top and second pixel
-   r = (pixel & 0xFF) * topratio[((vdp2draw_struct *)info)->alpha] >> 5;
-   g = ((pixel >> 8) & 0xFF) * topratio[((vdp2draw_struct *)info)->alpha] >> 5;
-   b = ((pixel >> 16) & 0xFF) * topratio[((vdp2draw_struct *)info)->alpha] >> 5;
-
-#ifdef WORDS_BIGENDIAN
-   oldr = ((oldpixel >> 24) & 0xFF) * bottomratio[((vdp2draw_struct *)info)->alpha] >> 5;
-   oldg = ((oldpixel >> 16) & 0xFF) * bottomratio[((vdp2draw_struct *)info)->alpha] >> 5;
-   oldb = ((oldpixel >> 8) & 0xFF) * bottomratio[((vdp2draw_struct *)info)->alpha] >> 5;
-#else
-   oldr = (oldpixel & 0xFF) * bottomratio[((vdp2draw_struct *)info)->alpha] >> 5;
-   oldg = ((oldpixel >> 8) & 0xFF) * bottomratio[((vdp2draw_struct *)info)->alpha] >> 5;
-   oldb = ((oldpixel >> 16) & 0xFF) * bottomratio[((vdp2draw_struct *)info)->alpha] >> 5;
-#endif
-
-   // add color components and reform the pixel
-   pixel = ((b + oldb) << 16) | ((g + oldg) << 8) | (r + oldr);
-#endif
-   return pixel;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE u32 FASTCALL DoColorCalcWithColorOffset(void *info, u32 pixel)
-{
-   pixel = DoColorCalc(info, pixel);
-
-   return COLOR_ADD(pixel, ((vdp2draw_struct *)info)->cor,
-                    ((vdp2draw_struct *)info)->cog,
-                    ((vdp2draw_struct *)info)->cob);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static INLINE void ReadVdp2ColorOffset(vdp2draw_struct *info, int clofmask, int ccmask)
 {
    if (Vdp2Regs->CLOFEN & clofmask)
@@ -402,27 +352,12 @@ static INLINE void ReadVdp2ColorOffset(vdp2draw_struct *info, int clofmask, int 
       }
 
       if (info->cor == 0 && info->cog == 0 && info->cob == 0)
-      {
-         if (Vdp2Regs->CCCTL & ccmask)
-            info->PostPixelFetchCalc = &DoColorCalc;
-         else
-            info->PostPixelFetchCalc = &DoNothing;
-      }
+         info->PostPixelFetchCalc = &DoNothing;
       else
-      {
-         if (Vdp2Regs->CCCTL & ccmask)
-            info->PostPixelFetchCalc = &DoColorCalcWithColorOffset;
-         else
-            info->PostPixelFetchCalc = &DoColorOffset;
-      }
+         info->PostPixelFetchCalc = &DoColorOffset;
    }
    else // color offset disable
-   {
-      if (Vdp2Regs->CCCTL & ccmask)
-         info->PostPixelFetchCalc = &DoColorCalc;
-      else
-         info->PostPixelFetchCalc = &DoNothing;
-   }
+      info->PostPixelFetchCalc = &DoNothing;
 
 }
 
