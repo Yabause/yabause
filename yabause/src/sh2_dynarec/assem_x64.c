@@ -103,7 +103,7 @@ void *kill_pointer(void *stub)
 {
   u32 i_ptr=*((u32 *)(stub+6));
   *((u32 *)i_ptr)=(u32)stub-(u32)i_ptr-4;
-  return i_ptr;
+  return (void *)i_ptr;
 }
 pointer get_pointer(void *stub)
 {

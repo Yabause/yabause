@@ -5309,7 +5309,7 @@ void SH2DynarecReset(SH2_struct *context) {
 
   //printf("SH2DynarecReset\n");
   if(context==MSH2) master_cc=0;
-  if(context==SSH2) slave_ip=slave_cc=0;
+  if(context==SSH2) { slave_ip=(void*)0; slave_cc=0; }
 }
 
 void sh2_dynarec_cleanup()
