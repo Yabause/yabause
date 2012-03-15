@@ -1696,6 +1696,11 @@ void VIDSoftVdp1DrawStart(void)
    }
 
    VIDSoftVdp1EraseFrameBuffer();
+
+   vdp1clipxstart = Vdp1Regs->userclipX1 = Vdp1Regs->systemclipX1 = 0;
+   vdp1clipystart = Vdp1Regs->userclipY1 = Vdp1Regs->systemclipY1 = 0;
+   vdp1clipxend = Vdp1Regs->userclipX2 = Vdp1Regs->systemclipX2 = vdp1width;
+   vdp1clipyend = Vdp1Regs->userclipY2 = Vdp1Regs->systemclipY2 = vdp1height;
 }
 
 //////////////////////////////////////////////////////////////////////////////
