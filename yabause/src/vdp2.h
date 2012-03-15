@@ -401,4 +401,6 @@ void DisplayMessage(const char* str);
 int GetOSDToggle(void);
 void SetOSDToggle(int toggle);
 
+Vdp2 * Vdp2RestoreRegs(int line);
+
 #endif

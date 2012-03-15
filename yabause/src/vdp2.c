@@ -36,6 +36,8 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
+static Vdp2 Vdp2Lines[270];
+
 static int autoframeskipenab=0;
 static int framestoskip=0;
 static int framesskipped=0;
@@ -299,6 +301,15 @@ void Vdp2HBlankIN(void) {
 
 void Vdp2HBlankOUT(void) {
    Vdp2Regs->TVSTAT &= ~0x0004;
+
+   if (yabsys.LineCount < 270)
+      memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+Vdp2 * Vdp2RestoreRegs(int line) {
+   return line > 270 ? NULL : Vdp2Lines + line;
 }
 
 //////////////////////////////////////////////////////////////////////////////
