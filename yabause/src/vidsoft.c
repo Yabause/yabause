@@ -315,46 +315,43 @@ static INLINE u32 FASTCALL DoColorOffset(void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void ReadVdp2ColorOffset(vdp2draw_struct *info, int clofmask, int ccmask)
+static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int clofmask, int ccmask)
 {
-   if (Vdp2Regs->CLOFEN & clofmask)
+   if (regs->CLOFEN & clofmask)
    {
       // color offset enable
-      if (Vdp2Regs->CLOFSL & clofmask)
+      if (regs->CLOFSL & clofmask)
       {
          // color offset B
-         info->cor = Vdp2Regs->COBR & 0xFF;
-         if (Vdp2Regs->COBR & 0x100)
+         info->cor = regs->COBR & 0xFF;
+         if (regs->COBR & 0x100)
             info->cor |= 0xFFFFFF00;
 
-         info->cog = Vdp2Regs->COBG & 0xFF;
-         if (Vdp2Regs->COBG & 0x100)
+         info->cog = regs->COBG & 0xFF;
+         if (regs->COBG & 0x100)
             info->cog |= 0xFFFFFF00;
 
-         info->cob = Vdp2Regs->COBB & 0xFF;
-         if (Vdp2Regs->COBB & 0x100)
+         info->cob = regs->COBB & 0xFF;
+         if (regs->COBB & 0x100)
             info->cob |= 0xFFFFFF00;
       }
       else
       {
          // color offset A
-         info->cor = Vdp2Regs->COAR & 0xFF;
-         if (Vdp2Regs->COAR & 0x100)
+         info->cor = regs->COAR & 0xFF;
+         if (regs->COAR & 0x100)
             info->cor |= 0xFFFFFF00;
 
-         info->cog = Vdp2Regs->COAG & 0xFF;
-         if (Vdp2Regs->COAG & 0x100)
+         info->cog = regs->COAG & 0xFF;
+         if (regs->COAG & 0x100)
             info->cog |= 0xFFFFFF00;
 
-         info->cob = Vdp2Regs->COAB & 0xFF;
-         if (Vdp2Regs->COAB & 0x100)
+         info->cob = regs->COAB & 0xFF;
+         if (regs->COAB & 0x100)
             info->cob |= 0xFFFFFF00;
       }
 
-      if (info->cor == 0 && info->cog == 0 && info->cob == 0)
-         info->PostPixelFetchCalc = &DoNothing;
-      else
-         info->PostPixelFetchCalc = &DoColorOffset;
+      info->PostPixelFetchCalc = &DoColorOffset;
    }
    else // color offset disable
       info->PostPixelFetchCalc = &DoNothing;
@@ -715,6 +712,8 @@ void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height)
 
       Y=y;
 
+      info->LoadLineParams(info, j);
+
       for (i = 0; i < width; i++)
       {
          u32 color;
@@ -825,6 +824,8 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
          for (j = 0; j < vdp2height; j++)
          {
+            info->LoadLineParams(info, j);
+
             for (i = 0; i < vdp2width; i++)
             {
                u32 color;
@@ -903,6 +904,8 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             lineAddr += lineInc;
             TitanPutLineHLine(info->linescreen, j, COLSAT2YAB32(0x3F, lineColor));
          }
+
+         info->LoadLineParams(info, j);
 
          for (i = 0; i < vdp2width; i++)
          {
@@ -1042,6 +1045,17 @@ static void Vdp2DrawLineScreen(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static void LoadLineParamsNBG0(vdp2draw_struct * info, int line)
+{
+   Vdp2 * regs;
+
+   regs = Vdp2RestoreRegs(line);
+   if (regs == NULL) return;
+   ReadVdp2ColorOffset(regs, info, 0x1, 0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void Vdp2DrawNBG0(void)
 {
    vdp2draw_struct info;
@@ -1137,7 +1151,7 @@ static void Vdp2DrawNBG0(void)
       info.linescreen = 1;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7) << 8;
-   ReadVdp2ColorOffset(&info, 0x1, 0x1);
+   ReadVdp2ColorOffset(Vdp2Regs, &info, 0x1, 0x1);
    info.priority = nbg0priority;
 
    if (!(info.enable & Vdp2External.disptoggle))
@@ -1158,6 +1172,8 @@ static void Vdp2DrawNBG0(void)
       info.isverticalscroll = 0;
    info.wctl = Vdp2Regs->WCTLA;
 
+   info.LoadLineParams = (void (*)(void *, int)) LoadLineParamsNBG0;
+
    if (info.enable == 1)
    {
       // NBG0 draw
@@ -1168,6 +1184,17 @@ static void Vdp2DrawNBG0(void)
       // RBG1 draw
       Vdp2DrawRotationFP(&info, parameter);
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void LoadLineParamsNBG1(vdp2draw_struct * info, int line)
+{
+   Vdp2 * regs;
+
+   regs = Vdp2RestoreRegs(line);
+   if (regs == NULL) return;
+   ReadVdp2ColorOffset(regs, info, 0x2, 0x2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1222,7 +1249,7 @@ static void Vdp2DrawNBG1(void)
       info.linescreen = 1;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x70) << 4;
-   ReadVdp2ColorOffset(&info, 0x2, 0x2);
+   ReadVdp2ColorOffset(Vdp2Regs, &info, 0x2, 0x2);
    info.coordincx = (Vdp2Regs->ZMXN1.all & 0x7FF00) / (float) 65536;
    info.coordincy = (Vdp2Regs->ZMYN1.all & 0x7FF00) / (float) 65536;
 
@@ -1252,7 +1279,20 @@ static void Vdp2DrawNBG1(void)
       info.isverticalscroll = 0;
    info.wctl = Vdp2Regs->WCTLA >> 8;
 
+   info.LoadLineParams = (void (*)(void *, int)) LoadLineParamsNBG1;
+
    Vdp2DrawScroll(&info, vdp2width, vdp2height);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void LoadLineParamsNBG2(vdp2draw_struct * info, int line)
+{
+   Vdp2 * regs;
+
+   regs = Vdp2RestoreRegs(line);
+   if (regs == NULL) return;
+   ReadVdp2ColorOffset(regs, info, 0x4, 0x4);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1288,7 +1328,7 @@ static void Vdp2DrawNBG2(void)
       info.linescreen = 1;
 
    info.coloroffset = Vdp2Regs->CRAOFA & 0x700;
-   ReadVdp2ColorOffset(&info, 0x4, 0x4);
+   ReadVdp2ColorOffset(Vdp2Regs, &info, 0x4, 0x4);
    info.coordincx = info.coordincy = 1;
 
    info.priority = nbg2priority;
@@ -1303,7 +1343,20 @@ static void Vdp2DrawNBG2(void)
    info.wctl = Vdp2Regs->WCTLB;
    info.isbitmap = 0;
 
+   info.LoadLineParams = (void (*)(void *, int)) LoadLineParamsNBG2;
+
    Vdp2DrawScroll(&info, vdp2width, vdp2height);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void LoadLineParamsNBG3(vdp2draw_struct * info, int line)
+{
+   Vdp2 * regs;
+
+   regs = Vdp2RestoreRegs(line);
+   if (regs == NULL) return;
+   ReadVdp2ColorOffset(regs, info, 0x8, 0x8);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1340,7 +1393,7 @@ static void Vdp2DrawNBG3(void)
       info.linescreen = 1;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7000) >> 4;
-   ReadVdp2ColorOffset(&info, 0x8, 0x8);
+   ReadVdp2ColorOffset(Vdp2Regs, &info, 0x8, 0x8);
    info.coordincx = info.coordincy = 1;
 
    info.priority = nbg3priority;
@@ -1355,7 +1408,20 @@ static void Vdp2DrawNBG3(void)
    info.wctl = Vdp2Regs->WCTLB >> 8;
    info.isbitmap = 0;
 
+   info.LoadLineParams = (void (*)(void *, int)) LoadLineParamsNBG3;
+
    Vdp2DrawScroll(&info, vdp2width, vdp2height);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void LoadLineParamsRBG0(vdp2draw_struct * info, int line)
+{
+   Vdp2 * regs;
+
+   regs = Vdp2RestoreRegs(line);
+   if (regs == NULL) return;
+   ReadVdp2ColorOffset(regs, info, 0x10, 0x10);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1450,7 +1516,7 @@ static void Vdp2DrawRBG0(void)
 
    info.coloroffset = (Vdp2Regs->CRAOFB & 0x7) << 8;
 
-   ReadVdp2ColorOffset(&info, 0x10, 0x10);
+   ReadVdp2ColorOffset(Vdp2Regs, &info, 0x10, 0x10);
    info.coordincx = info.coordincy = 1;
 
    ReadMosaicData(&info, 0x10);
@@ -1458,7 +1524,20 @@ static void Vdp2DrawRBG0(void)
    info.isverticalscroll = 0;
    info.wctl = Vdp2Regs->WCTLC;
 
+   info.LoadLineParams = (void (*)(void *, int)) LoadLineParamsRBG0;
+
    Vdp2DrawRotationFP(&info, parameter);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void LoadLineParamsSprite(vdp2draw_struct * info, int line)
+{
+   Vdp2 * regs;
+
+   regs = Vdp2RestoreRegs(line);
+   if (regs == NULL) return;
+   ReadVdp2ColorOffset(regs, info, 0x40, 0x40);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2633,7 +2712,7 @@ void VIDSoftVdp2DrawEnd(void)
       vdp1coloroffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
       vdp1spritetype = Vdp2Regs->SPCTL & 0xF;
 
-      ReadVdp2ColorOffset(&info, 0x40, 0x40);
+      ReadVdp2ColorOffset(Vdp2Regs, &info, 0x40, 0x40);
 
       wctl = Vdp2Regs->WCTLC >> 8;
       clip[0].xstart = clip[0].ystart = clip[0].xend = clip[0].yend = 0;
@@ -2645,6 +2724,8 @@ void VIDSoftVdp2DrawEnd(void)
       for (i2 = 0; i2 < vdp2height; i2++)
       {
          ReadLineWindowClip(islinewindow, clip, &linewnd0addr, &linewnd1addr);
+
+         LoadLineParamsSprite(&info, i2);
 
          for (i = 0; i < vdp2width; i++)
          {
