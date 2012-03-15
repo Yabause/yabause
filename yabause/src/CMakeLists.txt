@@ -263,12 +263,6 @@ foreach(DEBUG IN LISTS YAB_DEBUG)
 	endif (${DEBUG} STREQUAL "main")
 endforeach(DEBUG)
 
-# Mic shaders
-option(YAB_SHADERS "Enable OpenGL shaders for gouraud and mesh")
-if (GLXGETPROCADDRESS_OK AND YAB_SHADERS)
-	add_definitions(-DUSEMICSHADERS=1)
-endif()
-
 # Network
 option(YAB_NETWORK "Enable network")
 if (YAB_NETWORK)
