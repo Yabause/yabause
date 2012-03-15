@@ -1052,6 +1052,7 @@ static void LoadLineParamsNBG0(vdp2draw_struct * info, int line)
    regs = Vdp2RestoreRegs(line);
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x1, 0x1);
+   info->specialprimode = regs->SFPRMD & 0x3;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1195,6 +1196,7 @@ static void LoadLineParamsNBG1(vdp2draw_struct * info, int line)
    regs = Vdp2RestoreRegs(line);
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x2, 0x2);
+   info->specialprimode = (regs->SFPRMD >> 2) & 0x3;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1293,6 +1295,7 @@ static void LoadLineParamsNBG2(vdp2draw_struct * info, int line)
    regs = Vdp2RestoreRegs(line);
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x4, 0x4);
+   info->specialprimode = (regs->SFPRMD >> 4) & 0x3;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1357,6 +1360,7 @@ static void LoadLineParamsNBG3(vdp2draw_struct * info, int line)
    regs = Vdp2RestoreRegs(line);
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x8, 0x8);
+   info->specialprimode = (regs->SFPRMD >> 6) & 0x3;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1422,6 +1426,7 @@ static void LoadLineParamsRBG0(vdp2draw_struct * info, int line)
    regs = Vdp2RestoreRegs(line);
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x10, 0x10);
+   info->specialprimode = (regs->SFPRMD >> 8) & 0x3;
 }
 
 //////////////////////////////////////////////////////////////////////////////
