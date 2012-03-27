@@ -21,9 +21,16 @@
 #ifndef YABAUSEGL_H
 #define YABAUSEGL_H
 
+#ifdef HAVE_LIBGL
 #include <QGLWidget>
 
 class YabauseGL : public QGLWidget
+#else
+#include <QWidget>
+#include <QImage>
+
+class YabauseGL : public QWidget
+#endif
 {
 	Q_OBJECT
 	
@@ -31,6 +38,11 @@ public:
 	YabauseGL( QWidget* parent = 0 );
 	
 	void updateView( const QSize& size = QSize() );
+#ifndef HAVE_LIBGL
+	virtual void swapBuffers() const;
+	QImage grabFrameBuffer(bool withAlpha = false);
+	virtual void paintEvent( QPaintEvent * event );
+#endif
 
 protected:
 	virtual void showEvent( QShowEvent* event );

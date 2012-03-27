@@ -11,7 +11,9 @@ endif (NOT QT4_FOUND)
 
 set( QT_USE_QTCORE TRUE )
 set( QT_USE_QTGUI TRUE )
-set( QT_USE_QTOPENGL TRUE )
+if( YAB_WANT_OPENGL )
+	set( QT_USE_QTOPENGL TRUE )
+endif()
 if (WIN32)
 	set( QT_USE_QTMAIN TRUE )
 endif()
@@ -89,11 +91,16 @@ set( yabause_qt_SOURCES
 	ui/UIBackupRam.cpp
 	ui/UIPortManager.cpp
 	ui/UIPadSetting.cpp
-	YabauseGL.cpp
 	Settings.cpp
 	VolatileSettings.cpp
 	YabauseThread.cpp
 	Arguments.cpp )
+
+if( YAB_WANT_OPENGL )
+	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseGL.cpp )
+else()
+	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseSoftGL.cpp )
+endif()
 
 QT4_ADD_RESOURCES( yabause_qt_RCC_RESOURCES ${yabause_qt_RESOURCES} )
 QT4_WRAP_UI( yabause_qt_UI_FORMS ${yabause_qt_FORMS} )
