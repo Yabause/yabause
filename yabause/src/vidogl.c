@@ -1687,7 +1687,14 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
          info->addr += 4;
          info->charaddr = tmp2 & 0x7FFF;
          info->flipfunction = (tmp1 & 0xC000) >> 14;
-         info->paladdr = (tmp1 & 0x7F);
+         switch(info->colornumber) {
+            case 0:
+               info->paladdr = (tmp1 & 0x7F) << 4;
+               break;
+            default:
+               info->paladdr = ((tmp1 & 0x7) << 12);
+               break;
+         }
          info->specialfunction = (tmp1 & 0x2000) >> 13;
          info->specialcolorfunction = (tmp1 & 0x1000) >> 12;
          break;
