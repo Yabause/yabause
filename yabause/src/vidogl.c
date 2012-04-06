@@ -1692,7 +1692,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
                info->paladdr = (tmp1 & 0x7F) << 4;
                break;
             default:
-               info->paladdr = ((tmp1 & 0x7) << 12);
+               info->paladdr = ((tmp1 & 0x70) << 4);
                break;
          }
          info->specialfunction = (tmp1 & 0x2000) >> 13;
