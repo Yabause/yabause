@@ -2779,11 +2779,13 @@ void VIDSoftVdp2DrawEnd(void)
                else
                {
                   // Color bank
-		  int priority;
-		  int shadow = 0;
-		  int colorcalc;
+                  int priority;
+                  int shadow = 0;
+                  int colorcalc;
                   u8 alpha = 0xFF;
-		  priority = 0;  // Avoid compiler warning
+                  priority = 0;  // Avoid compiler warning
+                  u32 dot;
+
                   Vdp1ProcessSpritePixel(vdp1spritetype, &pixel, &shadow, &priority, &colorcalc);
                   if (shadow)
                   {
@@ -2795,6 +2797,8 @@ void VIDSoftVdp2DrawEnd(void)
                      }
                      continue;
                   }
+
+                  dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
 
                   if (Vdp2Regs->CCCTL & 0x40)
                   {
@@ -2815,10 +2819,15 @@ void VIDSoftVdp2DrawEnd(void)
                               alpha = colorcalctable[colorcalc];
                            }
                            break;
+                        case 3:
+                           if (dot & 0x80000000) {
+                              alpha = colorcalctable[colorcalc];
+                           }
+                           break;
                      }
                   }
 
-                  TitanPutPixel(prioritytable[priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, Vdp2ColorRamGetColor(vdp1coloroffset + pixel))), 0);
+                  TitanPutPixel(prioritytable[priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0);
                }
             }
             else
