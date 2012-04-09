@@ -341,6 +341,11 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 	set(CMAKE_C_FLAGS "-O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 
+# Warnings defined to know when we're breaking compilation with MSVC
+if (CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wdeclaration-after-statement")
+endif ()
+
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
