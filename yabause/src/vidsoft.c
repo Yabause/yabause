@@ -2779,11 +2779,10 @@ void VIDSoftVdp2DrawEnd(void)
                else
                {
                   // Color bank
-                  int priority;
+                  int priority = 0;
                   int shadow = 0;
                   int colorcalc;
                   u8 alpha = 0xFF;
-                  priority = 0;  // Avoid compiler warning
                   u32 dot;
 
                   Vdp1ProcessSpritePixel(vdp1spritetype, &pixel, &shadow, &priority, &colorcalc);
