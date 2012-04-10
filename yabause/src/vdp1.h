@@ -115,6 +115,8 @@ extern Vdp1 * Vdp1Regs;
 // struct for Vdp1 part that shouldn't be saved
 typedef struct {
    int disptoggle;
+   int manualerase;
+   int manualchange;
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;
