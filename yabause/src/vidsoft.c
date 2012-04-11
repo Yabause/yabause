@@ -2781,7 +2781,7 @@ void VIDSoftVdp2DrawEnd(void)
                   // Color bank
                   int priority = 0;
                   int shadow = 0;
-                  int colorcalc;
+                  int colorcalc = 0;
                   u8 alpha = 0xFF;
                   u32 dot;
 
