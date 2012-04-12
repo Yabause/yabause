@@ -30,6 +30,7 @@
 #include "sh2int.h"
 #include "cdbase.h"
 #include "cs2.h"
+#include "debug.h"
 
 static JavaVM * yvm;
 static jobject yabause;
@@ -184,6 +185,11 @@ Java_org_yabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint
     PerKeyUp(key);
 }
 
+void log_callback(char * message)
+{
+    __android_log_print(ANDROID_LOG_INFO, "yabause", "%s", message);
+}
+
 jint JNI_OnLoad(JavaVM * vm, void * reserved)
 {
     JNIEnv * env;
@@ -191,6 +197,9 @@ jint JNI_OnLoad(JavaVM * vm, void * reserved)
         return -1;
 
     yvm = vm;
+
+    LogStart();
+    LogChangeOutput(DEBUG_CALLBACK, (char *) log_callback);
 
     return JNI_VERSION_1_6;
 }
