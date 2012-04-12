@@ -21,6 +21,7 @@
 #include <android/bitmap.h>
 #include <android/log.h>
 
+#include "../../config.h"
 #include "yabause.h"
 #include "scsp.h"
 #include "vidsoft.h"
@@ -56,6 +57,9 @@ NULL
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
 &SH2DebugInterpreter,
+#ifdef SH2_DYNAREC
+&SH2Dynarec,
+#endif
 NULL
 };
 
@@ -140,7 +144,11 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
 
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
+#ifdef SH2_DYNAREC
+    yinit.sh2coretype = 2;
+#else
     yinit.sh2coretype = SH2CORE_DEFAULT;
+#endif
     yinit.vidcoretype = VIDCORE_SOFT;
     yinit.sndcoretype = SNDCORE_DUMMY;
     yinit.cdcoretype = CDCORE_DEFAULT;
