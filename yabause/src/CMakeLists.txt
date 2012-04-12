@@ -187,8 +187,8 @@ endif()
 # SH2 dynamic recompiler
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
-option(YAB_SH2_DYNAREC "SH2 dynamic recompiler" ON)
-if (YAB_SH2_DYNAREC)
+option(SH2_DYNAREC "SH2 dynamic recompiler" ON)
+if (SH2_DYNAREC)
 	if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 			enable_language(ASM-ATT)
@@ -219,7 +219,7 @@ if (YAB_SH2_DYNAREC)
 			add_definitions(-DSH2_DYNAREC=1 -DHAVE_ARMv6=1 -DHAVE_ARMv7=1)
 		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 	endif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-endif (YAB_SH2_DYNAREC)
+endif (SH2_DYNAREC)
 
 # c68k
 option(YAB_WANT_C68K "enable c68k compilation" ON)
@@ -382,3 +382,5 @@ set(YAB_PORTS "gtk;qt;windows;dreamcast;wii;carbon" CACHE STRING "List of ports 
 foreach(PORT IN LISTS YAB_PORTS)
 	add_subdirectory(${PORT})
 endforeach(PORT)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
