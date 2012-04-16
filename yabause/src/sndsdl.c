@@ -65,6 +65,7 @@ static u32 soundlen;
 static u32 soundbufsize;
 static SDL_AudioSpec audiofmt;
 static u8 soundvolume;
+static int muted = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -77,7 +78,7 @@ static void MixAudio(UNUSED void *userdata, Uint8 *stream, int len) {
 	{
 		if (soundpos >= soundbufsize)
 			soundpos = 0;
-		stream[i] = soundbuf[soundpos];
+		stream[i] = muted ? audiofmt.silence : soundbuf[soundpos];
 		soundpos++;
 	}
 }
@@ -233,14 +234,14 @@ static u32 SNDSDLGetAudioSpace(void)
 
 static void SNDSDLMuteAudio(void)
 {
-   SDL_PauseAudio(1);
+   muted = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void SNDSDLUnMuteAudio(void)
 {
-   SDL_PauseAudio(0);
+   muted = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
