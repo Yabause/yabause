@@ -39,7 +39,7 @@ public:
 	
 	void updateView( const QSize& size = QSize() );
 #ifndef HAVE_LIBGL
-	virtual void swapBuffers() const;
+	virtual void swapBuffers();
 	QImage grabFrameBuffer(bool withAlpha = false);
 	virtual void paintEvent( QPaintEvent * event );
 #endif

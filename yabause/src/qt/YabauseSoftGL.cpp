@@ -46,8 +46,9 @@ void YabauseGL::updateView( const QSize& s )
 {
 }
 
-void YabauseGL::swapBuffers() const
+void YabauseGL::swapBuffers()
 {
+	this->update(this->rect());
 }
 
 QImage YabauseGL::grabFrameBuffer(bool withAlpha)
@@ -67,5 +68,4 @@ void YabauseGL::paintEvent( QPaintEvent * event )
 	image = image.rgbSwapped();
 	QPainter p(this);
 	p.drawImage(this->rect(), image);
-	this->update(this->rect());
 }
