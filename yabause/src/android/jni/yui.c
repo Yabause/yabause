@@ -174,6 +174,12 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
 }
 
 void
+Java_org_yabause_android_YabauseRunnable_deinit( JNIEnv* env )
+{
+    YabauseDeInit();
+}
+
+void
 Java_org_yabause_android_YabauseRunnable_exec( JNIEnv* env )
 {
     YabauseExec();
