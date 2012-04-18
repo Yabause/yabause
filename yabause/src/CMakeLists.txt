@@ -399,4 +399,11 @@ foreach(PORT IN LISTS YAB_PORTS)
 	add_subdirectory(${PORT})
 endforeach(PORT)
 
+# this is stupid, but CMake automatic definitions are based on variables...
+if (YAB_WANT_C68K)
+	set(HAVE_C68K ON)
+endif()
+if (YAB_WANT_Q68)
+	set(HAVE_Q68 ON)
+endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)

@@ -55,7 +55,7 @@ add_custom_command(
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a"
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/../libyabause.a ${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a
-	DEPENDS yabause
+	DEPENDS yabause "${CMAKE_CURRENT_BINARY_DIR}/../config.h"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/local.properties"
 )
 
