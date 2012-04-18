@@ -225,7 +225,6 @@ public class Yabause extends Activity implements OnTouchListener
 
     public boolean onTouch(View v, MotionEvent event) {
         int action = event.getActionMasked();
-        Log.v(TAG, "" + event.getX() + " " + event.getY());
         float x = event.getX();
         float y = event.getY();
         int keyx = (int) ((x - 10) / 30);

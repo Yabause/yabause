@@ -95,9 +95,7 @@ void YuiErrorMsg(const char *string)
         return;
 
     yclass = (*env)->GetObjectClass(env, yabause);
-    __android_log_print(ANDROID_LOG_INFO, "yabause", "yclass = %p", yclass);
     errorMsg = (*env)->GetMethodID(env, yclass, "errorMsg", "(Ljava/lang/String;)V");
-    __android_log_print(ANDROID_LOG_INFO, "yabause", "errorMsg = %p", errorMsg);
     message = (*env)->NewStringUTF(env, string);
     (*env)->CallVoidMethod(env, yabause, errorMsg, message);
 }
@@ -138,9 +136,7 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     void * padbits;
 
     yabause = (*env)->NewGlobalRef(env, yab);
-    __android_log_print(ANDROID_LOG_INFO, "yabause", "yabause = %p", yabause);
     ybitmap = (*env)->NewGlobalRef(env, bitmap);
-    __android_log_print(ANDROID_LOG_INFO, "yabause", "ybitmap = %p", ybitmap);
 
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
@@ -188,14 +184,12 @@ Java_org_yabause_android_YabauseRunnable_exec( JNIEnv* env )
 void
 Java_org_yabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key )
 {
-    __android_log_print(ANDROID_LOG_INFO, "yabause", "press = %d", key);
     PerKeyDown(key);
 }
 
 void
 Java_org_yabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key )
 {
-    __android_log_print(ANDROID_LOG_INFO, "yabause", "release = %d", key);
     PerKeyUp(key);
 }
 
