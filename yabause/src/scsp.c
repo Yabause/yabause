@@ -341,6 +341,11 @@ static void scsp_decay_next(slot_t *slot);
 static void scsp_attack_next(slot_t *slot);
 static void scsp_slot_update_keyon(slot_t *slot);
 
+//////////////////////////////////////////////////////////////////////////////
+
+static int scsp_mute_flags = 0;
+static int scsp_volume = 100;
+
 ////////////////////////////////////////////////////////////////
 // Misc
 
@@ -3248,6 +3253,13 @@ ScspChangeSoundCore (int coreid)
       SNDCore = &SNDDummy;
     }
 
+  if (SNDCore)
+    {
+      if (scsp_mute_flags) SNDCore->MuteAudio();
+      else SNDCore->UnMuteAudio();
+      SNDCore->SetVolume(scsp_volume);
+    }
+
   return 0;
 }
 
@@ -3598,10 +3610,6 @@ M68KSetRegisters (m68kregs_struct *regs)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static int scsp_mute_flags = 0;
-
-//////////////////////////////////////////////////////////////////////////////
-
 void
 ScspMuteAudio (int flags)
 {
@@ -3625,6 +3633,7 @@ ScspUnMuteAudio (int flags)
 void
 ScspSetVolume (int volume)
 {
+  scsp_volume = volume;
   if (SNDCore)
     SNDCore->SetVolume (volume);
 }

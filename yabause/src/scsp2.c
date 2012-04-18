@@ -598,6 +598,9 @@ static void ScspClearInterrupts(u16 mask, int target);
 static void ScspRunM68K(u32 cycles);
 static s32 FASTCALL M68KExecBP(s32 cycles);
 
+static int scsp_mute_flags = 0;
+static int scsp_volume = 100;
+
 ///////////////////////////////////////////////////////////////////////////
 // Single-slot audio generation routines and corresponding table.  The
 // table is indexed by:
@@ -1103,6 +1106,13 @@ int ScspChangeSoundCore(int coreid)
       SNDCore = &SNDDummy;
    }
 
+   if (SNDCore)
+   {
+      if (scsp_mute_flags) SNDCore->MuteAudio();
+      else SNDCore->UnMuteAudio();
+      SNDCore->SetVolume(scsp_volume);
+   }
+
    return 0;
 }
 
@@ -1137,8 +1147,6 @@ void ScspSetFrameAccurate(int on)
 // ScspMuteAudio, ScspUnMuteAudio:  Mute or unmute the sound output.  Does
 // not affect actual SCSP processing.
 
-static int scsp_mute_flags = 0;
-
 void ScspMuteAudio(int flags)
 {
    scsp_mute_flags |= flags;
@@ -1160,6 +1168,7 @@ void ScspUnMuteAudio(int flags)
 
 void ScspSetVolume(int volume)
 {
+   scsp_volume = volume;
    if (SNDCore)
       SNDCore->SetVolume(volume);
 }
