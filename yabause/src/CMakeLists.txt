@@ -184,6 +184,8 @@ if (WII)
 	include_directories(/opt/devkitpro/libogc/include/)
 endif()
 
+option(YAB_WANT_ARM7 "Build a binary with arm7 support")
+
 # SH2 dynamic recompiler
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
@@ -225,6 +227,9 @@ if (SH2_DYNAREC)
 			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
 			add_definitions(-DSH2_DYNAREC=1)
 			add_definitions(-DANDROID=1)
+			if (YAB_WANT_ARM7)
+				add_definitions(-DHAVE_ARMv6=1 -DHAVE_ARMv7=1)
+			endif()
 		endif ()
 	endif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 endif (SH2_DYNAREC)
