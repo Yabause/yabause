@@ -116,8 +116,9 @@ void UIYabause::showEvent( QShowEvent* e )
 	{
 		LogStart();
 		LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
-		aEmulationRun->trigger();
 		VolatileSettings* vs = QtYabause::volatileSettings();
+		if ( vs->value( "autostart" ).toBool() )
+			aEmulationRun->trigger();
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
 		mInit = true;

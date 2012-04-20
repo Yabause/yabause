@@ -216,6 +216,7 @@ void UISettings::loadSettings()
 	leTranslation->setText( s->value( "General/Translation" ).toString() );
 	cbEnableFrameSkipLimiter->setChecked( s->value( "General/EnableFrameSkipLimiter" ).toBool() );
 	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
+	cbAutostart->setChecked( s->value( "autostart" ).toBool() );
 
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
@@ -254,6 +255,7 @@ void UISettings::saveSettings()
 	s->setValue( "General/Translation", leTranslation->text() );
 	s->setValue( "General/EnableFrameSkipLimiter", cbEnableFrameSkipLimiter->isChecked() );
 	s->setValue( "General/ShowFPS", cbShowFPS->isChecked() );
+	s->setValue( "autostart", cbAutostart->isChecked() );
 
 	// video
 	s->setValue( "Video/VideoCore", cbVideoCore->itemData( cbVideoCore->currentIndex() ).toInt() );
