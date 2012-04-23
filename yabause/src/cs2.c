@@ -2757,6 +2757,7 @@ block_struct * Cs2AllocateBlock(u8 * blocknum) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2FreeBlock(block_struct * blk) {
+  if (blk == NULL) return;
   blk->size = -1;
   Cs2Area->blockfreespace++;
   Cs2Area->isbufferfull = 0;
