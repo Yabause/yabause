@@ -39,18 +39,9 @@ Vdp2External_struct Vdp2External;
 static Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
-static int framestoskip=0;
-static int framesskipped=0;
 static int throttlespeed=0;
-static int skipnextframe=0;
 u64 lastticks=0;
-static u64 curticks=0;
-static u64 diffticks=0;
-static u32 framecount=0;
-static u64 onesecondticks=0;
 static int fps;
-static int fpsframecount=0;
-static u64 fpsticks;
 static int fpstoggle=0;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -316,6 +307,9 @@ Vdp2 * Vdp2RestoreRegs(int line) {
 
 static void FPSDisplay(void)
 {
+   static int fpsframecount = 0;
+   static u64 fpsticks;
+
    if (fpstoggle)
    {
       if (!OSDMessageTimer)
@@ -355,6 +349,14 @@ void SpeedThrottleDisable(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2VBlankOUT(void) {
+   static int framestoskip = 0;
+   static int framesskipped = 0;
+   static int skipnextframe = 0;
+   static u64 curticks = 0;
+   static u64 diffticks = 0;
+   static u32 framecount = 0;
+   static u64 onesecondticks = 0;
+
    Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
 
    if (!skipnextframe)
