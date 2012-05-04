@@ -63,6 +63,11 @@ class YabauseRunnable implements Runnable
     public static native void exec();
     public static native void press(int key);
     public static native void release(int key);
+    public static native int initViewport( int width, int hieght);
+    public static native int drawScreen();
+    public static native int lockGL();
+    public static native int unlockGL();
+    
     private boolean inited;
     private boolean paused;
     public InputHandler handler;
@@ -138,7 +143,8 @@ public class Yabause extends Activity implements OnTouchListener
 
         YabauseView view = (YabauseView) findViewById(R.id.yabause_view);
         handler = new YabauseHandler(this);
-        yabauseThread = new YabauseRunnable(this, view.bitmap);
+        yabauseThread = new YabauseRunnable(this,null);
+        view.setYabauseRunnable(yabauseThread);
 
         ImageView pad = (ImageView) findViewById(R.id.yabause_pad);
         pad.setOnTouchListener(this);
