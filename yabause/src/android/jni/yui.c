@@ -47,8 +47,9 @@
 #include <GLES/glext.h>
 #include <pthread.h>
 
+#include "sndaudiotrack.h"
 
-static JavaVM * yvm;
+JavaVM * yvm;
 static jobject yabause;
 static jobject ybitmap;
 
@@ -107,6 +108,7 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
+&SNDAudioTrack,
 NULL
 };
 
@@ -347,7 +349,7 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
     yinit.vidcoretype = VIDCORE_SOFT;
-    yinit.sndcoretype = SNDCORE_DUMMY;
+    yinit.sndcoretype = SNDCORE_AUDIOTRACK;
     yinit.cdcoretype = CDCORE_DEFAULT;
     yinit.carttype = CART_NONE;
     yinit.regionid = 0;
@@ -366,6 +368,8 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     PerSetKey(4, PERPAD_UP, padbits);
     PerSetKey(6, PERPAD_DOWN, padbits);
     PerSetKey(9, PERPAD_RIGHT, padbits);
+
+    ScspSetFrameAccurate(1);
 
     return res;
 }
