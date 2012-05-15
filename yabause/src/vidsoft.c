@@ -26,10 +26,6 @@
 #include "vdp2.h"
 #include "titan/titan.h"
 
-/* Forward declaration to avoid a warning (this is exported to vdp2debug.c) */
-void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height);
-
-
 #ifdef HAVE_LIBGL
 #define USE_OPENGL
 #endif
@@ -629,7 +625,7 @@ static u8 FASTCALL GetAlpha(vdp2draw_struct * info, u32 color)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height)
+static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height)
 {
    int i, j;
    int x, y;
@@ -2916,6 +2912,30 @@ void VIDSoftVdp2DrawScreens(void)
          Vdp2DrawNBG0();
       if (rbg0priority == i)
          Vdp2DrawRBG0();
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftVdp2DrawScreen(int screen)
+{
+   switch(screen)
+   {
+      case 0:
+         Vdp2DrawNBG0();
+         break;
+      case 1:
+         Vdp2DrawNBG1();
+         break;
+      case 2:
+         Vdp2DrawNBG2();
+         break;
+      case 3:
+         Vdp2DrawNBG3();
+         break;
+      case 4:
+         Vdp2DrawRBG0();
+         break;
    }
 }
 

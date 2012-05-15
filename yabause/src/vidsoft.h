@@ -28,4 +28,6 @@ extern u32 *dispbuffer;
 
 extern VideoInterface_struct VIDSoft;
 
+void VIDSoftVdp2DrawScreen(int screen);
+
 #endif
