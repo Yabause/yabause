@@ -356,23 +356,35 @@ void Vdp2VBlankOUT(void) {
    static u64 diffticks = 0;
    static u32 framecount = 0;
    static u64 onesecondticks = 0;
+   static VideoInterface_struct * saved = NULL;
 
    Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
 
+   if (skipnextframe && (! saved))
+   {
+      saved = VIDCore;
+      VIDCore = &VIDDummy;
+   }
+   else if (saved && (! skipnextframe))
+   {
+      VIDCore = saved;
+      saved = NULL;
+   }
+
+   VIDCore->Vdp2DrawStart();
+
+   if (Vdp2Regs->TVMD & 0x8000) {
+      VIDCore->Vdp2DrawScreens();
+      Vdp1Draw();
+   }
+   else
+      Vdp1NoDraw();
+
+   FPSDisplay();
+   VIDCore->Vdp2DrawEnd();
+
    if (!skipnextframe)
    {
-      VIDCore->Vdp2DrawStart();
-
-      if (Vdp2Regs->TVMD & 0x8000) {
-         VIDCore->Vdp2DrawScreens();
-         Vdp1Draw();
-      }
-      else
-         Vdp1NoDraw();
-
-      FPSDisplay();
-      VIDCore->Vdp2DrawEnd();
-
       framesskipped = 0;
 
       if (framestoskip > 0)
@@ -386,7 +398,6 @@ void Vdp2VBlankOUT(void) {
          skipnextframe = 0;
       else
          skipnextframe = 1;
-      Vdp1NoDraw();
 
       framesskipped++;
    }
