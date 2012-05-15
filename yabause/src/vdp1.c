@@ -31,6 +31,9 @@ u8 * Vdp1FrameBuffer;
 VideoInterface_struct *VIDCore=NULL;
 extern VideoInterface_struct *VIDCoreList[];
 
+static void Vdp1DrawNoCheck(void);
+static void Vdp1NoDrawNoCheck(void);
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp1RamReadByte(u32 addr) {
@@ -280,6 +283,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
          break;
       case 0x4:
          Vdp1Regs->PTMR = val;
+         if (val == 1) Vdp1DrawNoCheck();
          break;
       case 0x6:
          Vdp1Regs->EWDR = val;
@@ -307,15 +311,12 @@ void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1Draw(void) {
+static void Vdp1DrawNoCheck(void) {
    u32 returnAddr;
    u32 commandCounter;
    u16 command;
 
    VIDCore->Vdp1DrawStart();
-
-   if (!Vdp1Regs->PTMR)
-      return;
 
    if (!Vdp1External.disptoggle)
    {
@@ -410,16 +411,17 @@ void Vdp1Draw(void) {
    VIDCore->Vdp1DrawEnd();
 }
 
+void Vdp1Draw(void) {
+   if (Vdp1Regs->PTMR == 2)
+      Vdp1DrawNoCheck();
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp1NoDraw(void) {
+static void Vdp1NoDrawNoCheck(void) {
    u32 returnAddr;
    u32 commandCounter;
    u16 command;
-
-   // Only when PTMR's not set do we not parse commands
-   if (!Vdp1Regs->PTMR)
-      return;
 
    Vdp1Regs->addr = 0;
    returnAddr = 0xFFFFFFFF;
@@ -493,6 +495,11 @@ void Vdp1NoDraw(void) {
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
    ScuSendDrawEnd();
+}
+
+void Vdp1NoDraw(void) {
+   if (Vdp1Regs->PTMR == 2)
+      Vdp1NoDrawNoCheck();
 }
 
 //////////////////////////////////////////////////////////////////////////////

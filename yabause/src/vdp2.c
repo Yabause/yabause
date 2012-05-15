@@ -271,6 +271,7 @@ void Vdp2Reset(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2VBlankIN(void) {
+   VIDCore->Vdp2DrawEnd();
    Vdp2Regs->TVSTAT |= 0x0008;
    ScuSendVBlankIN();
 
@@ -381,7 +382,6 @@ void Vdp2VBlankOUT(void) {
       Vdp1NoDraw();
 
    FPSDisplay();
-   VIDCore->Vdp2DrawEnd();
 
    if (!skipnextframe)
    {
