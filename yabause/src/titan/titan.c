@@ -25,14 +25,12 @@
 typedef u32 (*TitanBlendFunc)(u32 top, u32 bottom);
 
 static struct TitanContext {
-   u32 * dispbuffer;
    u32 * vdp2framebuffer[8];
    u32 * linescreen[4];
    int vdp2width;
    int vdp2height;
    TitanBlendFunc blend;
 } tt_context = {
-   NULL,
    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
    { NULL, NULL, NULL, NULL },
    320,
@@ -121,9 +119,6 @@ int TitanInit()
 {
    int i;
 
-   if ((tt_context.dispbuffer = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
-      return -1;
-
    for(i = 0;i < 8;i++)
    {
       if ((tt_context.vdp2framebuffer[i] = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
@@ -146,12 +141,6 @@ int TitanDeInit()
 {
    int i;
 
-   if (tt_context.dispbuffer)
-   {
-      free(tt_context.dispbuffer);
-      tt_context.dispbuffer = NULL;
-   }
-
    for(i = 0;i < 8;i++)
       free(tt_context.vdp2framebuffer[i]);
 
@@ -165,11 +154,6 @@ void TitanSetResolution(int width, int height)
 {
    tt_context.vdp2width = width;
    tt_context.vdp2height = height;
-}
-
-u32 * TitanGetDispBuffer()
-{
-   return tt_context.dispbuffer;
 }
 
 void TitanPutBackHLine(s32 y, u32 color)
@@ -217,7 +201,7 @@ void TitanPutHLine(int priority, s32 x, s32 y, s32 width, u32 color)
    }
 }
 
-void TitanRender(int blend_mode)
+void TitanRender(u32 * dispbuffer, int blend_mode)
 {
    u32 dot;
    int i, p;
@@ -233,7 +217,7 @@ void TitanRender(int blend_mode)
       dot = TitanDigPixel(&p, i);
       if (dot)
       {
-         tt_context.dispbuffer[i] = TitanFixAlpha(dot);
+         dispbuffer[i] = TitanFixAlpha(dot);
       }
    }
 }

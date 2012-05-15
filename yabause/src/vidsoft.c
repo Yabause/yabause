@@ -1559,7 +1559,8 @@ int VIDSoftInit(void)
    if (TitanInit() == -1)
       return -1;
 
-   dispbuffer = TitanGetDispBuffer();
+   if ((dispbuffer = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
+      return -1;
 
    // Initialize VDP1 framebuffer 1
    if ((vdp1framebuffer[0] = (u8 *)calloc(sizeof(u8), 0x40000)) == NULL)
@@ -1611,8 +1612,11 @@ int VIDSoftInit(void)
 
 void VIDSoftDeInit(void)
 {
-   TitanDeInit();
+   if (dispbuffer)
+   {
+      free(dispbuffer);
       dispbuffer = NULL;
+   }
 
    if (vdp1framebuffer[0])
       free(vdp1framebuffer[0]);
@@ -2850,7 +2854,7 @@ void VIDSoftVdp2DrawEnd(void)
          }
       }
    }
-   TitanRender(Vdp2Regs->CCCTL & 0x200 ? TITAN_BLEND_BOTTOM : TITAN_BLEND_TOP);
+   TitanRender(dispbuffer, Vdp2Regs->CCCTL & 0x200 ? TITAN_BLEND_BOTTOM : TITAN_BLEND_TOP);
 
    VIDSoftVdp1SwapFrameBuffer();
 
