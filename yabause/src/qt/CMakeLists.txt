@@ -96,7 +96,7 @@ set( yabause_qt_SOURCES
 	YabauseThread.cpp
 	Arguments.cpp )
 
-if( YAB_WANT_OPENGL )
+if( OPENGL_FOUND )
 	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseGL.cpp )
 else()
 	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseSoftGL.cpp )
