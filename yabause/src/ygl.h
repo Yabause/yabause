@@ -19,7 +19,7 @@
 */
 
 #ifdef HAVE_LIBGL
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <windows.h>
 #include <GL/gl.h>
 #include "windows/glext.h"

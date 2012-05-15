@@ -51,7 +51,7 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
          SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_ADDSTRING, 0, (LPARAM)_16("RBG0"));
          SendDlgItemMessage(hDlg, IDC_VDP2SCREENCB, CB_SETCURSEL, 0, 0);
 
-         vdp2texture = Vdp2DebugTexture(0, -1, 0x00FF00FF, &width, &height);
+         vdp2texture = Vdp2DebugTexture(0, &width, &height);
          EnableWindow(GetDlgItem(hDlg, IDC_VDP2SAVEBMPBT), vdp2texture ? TRUE : FALSE);
          return TRUE;
       }
@@ -70,7 +70,7 @@ LRESULT CALLBACK VDP2ViewerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
                      if (vdp2texture)
                         free(vdp2texture);
 
-                     vdp2texture = Vdp2DebugTexture(cursel, -1, 0x00FF00FF, &width, &height);
+                     vdp2texture = Vdp2DebugTexture(cursel, &width, &height);
                      EnableWindow(GetDlgItem(hDlg, IDC_VDP2SAVEBMPBT), vdp2texture ? TRUE : FALSE);
 
                      InvalidateRect(hDlg, NULL, FALSE);
