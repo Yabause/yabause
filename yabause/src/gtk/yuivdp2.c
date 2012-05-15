@@ -25,6 +25,7 @@
 #include "../yabause.h"
 #include "settings.h"
 #include "../vdp2debug.h"
+#include "yuiviewer.h"
 
 static void yui_vdp2_sync(GtkAction * action, YuiVdp2 * yv);
 static const char * yui_vdp2_action_names[] = { NULL, "toggle_nbg0", "toggle_nbg1", "toggle_nbg2", "toggle_nbg3", "toggle_rbg0" };
@@ -33,6 +34,7 @@ static void yui_vdp2_class_init	(YuiVdp2Class * klass);
 static void yui_vdp2_init		(YuiVdp2      * yfe);
 static void yui_vdp2_clear(YuiVdp2 * vdp2);
 static void yui_vdp2_view_cursor_changed(GtkWidget * view, YuiVdp2 * vdp2);
+static void yui_vdp2_draw(YuiVdp2 * vdp2, u32 * texture, int w, int h);
 
 GType yui_vdp2_get_type (void) {
   static GType yfe_type = 0;
@@ -144,7 +146,7 @@ static void yui_vdp2_init (YuiVdp2 * yv) {
 	scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_paned_pack2(GTK_PANED(hpane), scroll, TRUE, TRUE);
-	box2 = gtk_vbox_new(FALSE, 10);
+	box2 = gtk_vpaned_new();
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll), box2);
 
 	for(i = 0;i < (sizeof(screens) / sizeof(screens[0]));i++) {
@@ -156,9 +158,22 @@ static void yui_vdp2_init (YuiVdp2 * yv) {
 	text = gtk_text_view_new();
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(text), FALSE);
-	gtk_container_add(GTK_CONTAINER(box2), text);
+	{
+		GtkWidget * scroll = gtk_scrolled_window_new(NULL, NULL);
+		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+		gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll), text);
+		gtk_paned_pack1(GTK_PANED(box2), scroll, FALSE, TRUE);
+	}
 
 	yv->buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
+
+	yv->image = yui_viewer_new();
+	{
+		GtkWidget * scroll = gtk_scrolled_window_new(NULL, NULL);
+		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+		gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroll), yv->image);
+		gtk_paned_pack2(GTK_PANED(box2), scroll, TRUE, TRUE);
+	}
 
 	gtk_window_set_default_size(GTK_WINDOW(yv), 500, 450);
 
@@ -218,6 +233,8 @@ void yui_vdp2_update(YuiVdp2 * vdp2) {
 	gchar nameTemp[VDP2_DEBUG_STRING_SIZE];
 	gboolean isscrenabled;
 
+	yui_viewer_clear(YUI_VIEWER(vdp2->image));
+
 	switch(vdp2->cursor) {
 		case 0:
 			Vdp2DebugStatsGeneral(nameTemp, &isscrenabled);  
@@ -237,6 +254,13 @@ void yui_vdp2_update(YuiVdp2 * vdp2) {
 		case 5:
 			Vdp2DebugStatsRBG0(nameTemp, &isscrenabled);  
 			break;
+	}
+
+	if (vdp2->cursor > 0) {
+		u32 * texture;
+		int w, h;
+		texture = Vdp2DebugTexture(vdp2->cursor - 1, &w, &h);
+		yui_vdp2_draw(vdp2, texture, w, h);
 	}
 
 	if (isscrenabled) {
@@ -274,5 +298,21 @@ void yui_vdp2_view_cursor_changed(GtkWidget * view, YuiVdp2 * vdp2) {
 
 		g_free(strpath);
 		gtk_tree_path_free(path);
+	}
+}
+
+static void yui_vdp2_draw(YuiVdp2 * vdp2, u32 * texture, int w, int h) {
+	GdkPixbuf * pixbuf;
+	int rowstride;
+
+	if ((texture != NULL) && (w > 0) && (h > 0)) {
+		rowstride = w * 4;
+		rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
+		pixbuf = gdk_pixbuf_new_from_data((const guchar *) texture, GDK_COLORSPACE_RGB, TRUE, 8,
+			w, h, rowstride, NULL, NULL);
+
+		yui_viewer_draw_pixbuf(YUI_VIEWER(vdp2->image), pixbuf, w, h);
+
+		g_object_unref(pixbuf);
 	}
 }

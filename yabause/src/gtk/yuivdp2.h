@@ -42,6 +42,7 @@ struct _YuiVdp2
 {
   GtkWindow dialog;
 
+  GtkWidget * image;
   GtkTextBuffer * buffer;
   GtkWidget * toolbar;
 
