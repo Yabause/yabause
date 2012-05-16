@@ -36,20 +36,22 @@ QString getIniFile( const QString& s )
 	return QString( "%1/%2.ini" ).arg( QApplication::applicationDirPath() ).arg( s );
 #else
 	/*
-	We used to store the ini file in ~/.yabause/yabause.ini
+	We used to store the ini file in ~/.$SOMETHING/$SOMETHING.ini, were $SOMETHING could
+	be at least yabause or yabause-qt
 	With release 0.9.12 we moved to the XDG compliant location ~/.config/yabause/qt/yabause.ini
-	This code is copying the content from the old location to the new.
+	and we don't want this location to depends on the program name anymore.
+	This code is trying to copy the content from the old location to the new.
 	In the future, we may drop support for the old location and rewrite the following to:
 
-	return QString( "%1/.config/%2/qt/%2.ini" ).arg( QDir::homePath() ).arg( s );
+	return QString( "%1/.config/yabause/qt/yabause.ini" ).arg( QDir::homePath() );
 	*/
 
-	QString xdginifile = QString( "%1/.config/%2/qt/%2.ini" ).arg( QDir::homePath() ).arg( s );
+	QString xdginifile = QString( "%1/.config/yabause/qt/yabause.ini" ).arg( QDir::homePath() );
 	QString oldinifile = QString( "%1/.%2/%2.ini" ).arg( QDir::homePath() ).arg( s );
 
 	if ( QFile::exists( oldinifile ) and not QFile::exists( xdginifile ) )
 	{
-		QString xdgpath = QString( "%1/.config/%2/qt" ).arg( QDir::homePath() ).arg( s );
+		QString xdgpath = QString( "%1/.config/yabause/qt" ).arg( QDir::homePath() );
 		if ( ! QFile::exists( xdgpath ) )
 		{
 			// for some reason, Qt doesn't provide a static mkpath method O_o
