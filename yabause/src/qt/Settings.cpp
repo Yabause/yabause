@@ -65,7 +65,13 @@ QString getIniFile( const QString& s )
 
 Settings::Settings( QObject* o )
 	: QSettings( QDir::convertSeparators( getIniFile( mProgramName ) ), QSettings::IniFormat, o )
-{ beginGroup( mProgramVersion ); }
+{
+	/*
+	This used to be "beginGroup( mProgramVersion );" so users would lose their
+	config with each new release...
+	*/
+	beginGroup( "0.9.11" );
+}
 
 Settings::~Settings()
 { endGroup(); }
