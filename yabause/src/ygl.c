@@ -548,8 +548,6 @@ int YglInit(int width, int height, unsigned int depth) {
    unsigned int i,j;
    GLuint status;
 
-   VideoInitGlut();
-
    YglTMInit(width, height);
    
    if ((_Ygl = (Ygl *) malloc(sizeof(Ygl))) == NULL)
@@ -1712,19 +1710,8 @@ void YglRender(void) {
 
    glDisable(GL_TEXTURE_2D);
    glUseProgram(0);
-#ifndef _arch_dreamcast
-#if HAVE_LIBGLUT
-   if (_Ygl->msglength > 0) {
-      int i;
-      glColor3f(1.0f, 0.0f, 0.0f);
-      glRasterPos2i(10, 22);
-      for (i = 0; i < _Ygl->msglength; i++) {
-         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, _Ygl->message[i]);
-      }
-      glColor3f(1, 1, 1);
-   }
-#endif
-#endif
+
+   OSDDisplayMessages();
 
    YuiSwapBuffers();
 

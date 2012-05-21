@@ -10,6 +10,7 @@ set(yabause_SOURCES
 	error.c
 	m68kcore.c m68kd.c memory.c movie.c
 	netlink.c
+	osdcore.c
 	peripheral.c profile.c
 	scu.c sh2core.c sh2d.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c

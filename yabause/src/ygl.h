@@ -33,19 +33,11 @@
  #endif
 #endif
 #ifndef _arch_dreamcast
-#if HAVE_LIBGLUT
-    #ifdef __APPLE__
-        #include <GLUT/glut.h>
-    #else
-        #include <GL/glut.h>
-    #endif
-#else
     #ifdef __APPLE__
         #include <OpenGL/gl.h>
     #else
         #include <GL/gl.h>
     #endif
-#endif
 #endif
 #include <stdarg.h>
 #include <string.h>

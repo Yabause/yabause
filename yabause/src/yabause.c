@@ -41,6 +41,7 @@
 #include "yui.h"
 #include "bios.h"
 #include "movie.h"
+#include "osdcore.h"
 #ifdef HAVE_LIBSDL
  #if defined(__APPLE__) || defined(GEKKO)
   #include <SDL/SDL.h>
@@ -226,6 +227,8 @@ int YabauseInit(yabauseinit_struct *init)
 
    if (init->frameskip)
       EnableAutoFrameSkip();
+
+   OSDInit(OSDCORE_DEFAULT);
 
    if (init->biospath != NULL && strlen(init->biospath))
    {

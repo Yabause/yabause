@@ -22,6 +22,8 @@
 #define VDP2_H
 
 #include "memory.h"
+/* This include is not *needed*, it's here to avoid breaking ports */
+#include "osdcore.h"
 
 extern u8 * Vdp2Ram;
 extern u8 * Vdp2ColorRam;
@@ -374,7 +376,6 @@ void Vdp2VBlankIN(void);
 void Vdp2HBlankIN(void);
 void Vdp2HBlankOUT(void);
 void Vdp2VBlankOUT(void);
-void ToggleFPS(void);
 void SpeedThrottleEnable(void);
 void SpeedThrottleDisable(void);
 
@@ -396,10 +397,6 @@ void ToggleRBG0(void);
 void ToggleFullScreen(void);
 void EnableAutoFrameSkip(void);
 void DisableAutoFrameSkip(void);
-
-void DisplayMessage(const char* str);
-int GetOSDToggle(void);
-void SetOSDToggle(int toggle);
 
 Vdp2 * Vdp2RestoreRegs(int line);
 

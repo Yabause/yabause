@@ -619,23 +619,3 @@ fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, 
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-void VideoInitGlut()
-{
-#ifdef HAVE_LIBGLUT
-#ifndef WIN32
-   int fake_argc = 1;
-   char * fake_argv[] = { "yabause" };
-   static int glutinited = 0;
-
-   if (!glutinited)
-   {
-      glutInit(&fake_argc, fake_argv);
-      glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_STENCIL);
-      glutinited = 1;
-   }
-#endif
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////
