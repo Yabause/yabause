@@ -27,6 +27,7 @@
 
 int TitanInit();
 int TitanDeInit();
+void TitanReset();
 
 void TitanSetResolution(int width, int height);
 

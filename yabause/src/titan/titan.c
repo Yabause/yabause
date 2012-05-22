@@ -150,6 +150,17 @@ int TitanDeInit()
    return 0;
 }
 
+void TitanReset()
+{
+   int i;
+
+   for(i = 0;i < 8;i++)
+      memset(tt_context.vdp2framebuffer[i], 0, sizeof(u32) * 704 * 512);
+
+   for(i = 1;i < 4;i++)
+      memset(tt_context.linescreen[i], 0, sizeof(u32) * 512);
+}
+
 void TitanSetResolution(int width, int height)
 {
    tt_context.vdp2width = width;
