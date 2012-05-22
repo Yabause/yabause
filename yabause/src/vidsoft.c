@@ -2713,6 +2713,7 @@ void VIDSoftVdp2DrawEnd(void)
    clipping_struct clip[2];
    u32 linewnd0addr, linewnd1addr;
    int wctl;
+   clipping_struct colorcalcwindow;
 
    // Figure out whether to draw vdp1 framebuffer or vdp2 framebuffer pixels
    // based on priority
@@ -2749,6 +2750,9 @@ void VIDSoftVdp2DrawEnd(void)
       ReadWindowData(wctl, clip);
       linewnd0addr = linewnd1addr = 0;
       ReadLineWindowData(&islinewindow, wctl, &linewnd0addr, &linewnd1addr);
+
+      /* color calculation window: in => no color calc, out => color calc */
+      ReadWindowData(Vdp2Regs->WCTLD >> 8, &colorcalcwindow);
 
       for (i2 = 0; i2 < vdp2height; i2++)
       {
@@ -2811,7 +2815,7 @@ void VIDSoftVdp2DrawEnd(void)
 
                   dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
 
-                  if (Vdp2Regs->CCCTL & 0x40)
+                  if (TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow, i, i2) && (Vdp2Regs->CCCTL & 0x40))
                   {
                      /* Sprite color calculation */
                      switch(SPCCCS) {
