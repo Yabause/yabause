@@ -634,6 +634,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
    screeninfo_struct sinfo;
    int scrollx, scrolly;
    int *mosaic_y, *mosaic_x;
+   clipping_struct colorcalcwindow;
 
    info->coordincx *= (float)resxratio;
    info->coordincy *= (float)resyratio;
@@ -648,6 +649,9 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
    ReadWindowData(info->wctl, clip);
    linewnd0addr = linewnd1addr = 0;
    ReadLineWindowData(&info->islinewindow, info->wctl, &linewnd0addr, &linewnd1addr);
+
+   /* color calculation window: in => no color calc, out => color calc */
+   ReadWindowData(Vdp2Regs->WCTLD >> 8, &colorcalcwindow);
 
    {
 	   static int tables_initialized = 0;
@@ -771,7 +775,16 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
          // We almost need to know well ahead of time what the top
          // and second pixel is in order to work this.
 
-         TitanPutPixel(info->priority, i, j, COLSAT2YAB32(GetAlpha(info, color), info->PostPixelFetchCalc(info, color)), info->linescreen);
+         {
+            u8 alpha;
+            /* if we're in the valid area of the color calculation window, don't do color calculation */
+            if (!TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow, i, j))
+               alpha = 0x3F;
+            else
+               alpha = GetAlpha(info, color);
+
+            TitanPutPixel(info->priority, i, j, COLSAT2YAB32(alpha, info->PostPixelFetchCalc(info, color)), info->linescreen);
+         }
       }
    }    
 }
