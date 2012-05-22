@@ -261,6 +261,7 @@ void yui_vdp2_update(YuiVdp2 * vdp2) {
 		int w, h;
 		texture = Vdp2DebugTexture(vdp2->cursor - 1, &w, &h);
 		yui_vdp2_draw(vdp2, texture, w, h);
+		free(texture);
 	}
 
 	if (isscrenabled) {
