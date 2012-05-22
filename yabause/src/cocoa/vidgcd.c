@@ -1582,7 +1582,6 @@ int VIDGCDInit(void)
    msglength = 0;
 #endif
 
-   VideoInitGlut();
    return 0;
 }
 
@@ -2987,35 +2986,9 @@ void VIDGCDVdp2DrawEnd(void)
     glDrawPixels(vdp2width, vdp2height, GL_RGBA, GL_UNSIGNED_BYTE, vdp2framebuffer);
 #endif
 
-#if HAVE_LIBGLUT
-   if (msglength > 0) {
-#ifdef CRAB_REWRITE
-       int i;
 #endif
-	   int LeftX=9;
-	   int Width=500;
-	   int TxtY=11;
-	   int Height=13;
+   OSDDisplayMessages();
 
-	 glBegin(GL_POLYGON);
-        glColor3f(0, 0, 0);
-        glVertex2i(LeftX, TxtY);
-        glVertex2i(LeftX + Width, TxtY);
-        glVertex2i(LeftX + Width, TxtY + Height);
-        glVertex2i(LeftX, TxtY + Height);
-    glEnd();
-
-      glColor3f(1.0f, 1.0f, 1.0f);
-      glRasterPos2i(10, 22);
-      for (i = 0; i < msglength; i++) {
-         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, message[i]);
-      }
-      glColor3f(1, 1, 1);
-      msglength = 0;
-   }
-#endif
-
-#endif
    YuiSwapBuffers();
 }
 

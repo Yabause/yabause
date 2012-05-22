@@ -71,6 +71,7 @@
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		F07BF9E414A1C2C500775818 /* yglshader.c in Sources */ = {isa = PBXBuildFile; fileRef = F07BF9E314A1C2C500775818 /* yglshader.c */; };
 		F07E62CB15054DCC00DF8A4E /* titan.c in Sources */ = {isa = PBXBuildFile; fileRef = F07E62CA15054DCC00DF8A4E /* titan.c */; };
+		F0E47FAD156C34EC001A1B51 /* osdcore.c in Sources */ = {isa = PBXBuildFile; fileRef = F0E47FAC156C34EC001A1B51 /* osdcore.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -207,6 +208,8 @@
 		F07BF9E314A1C2C500775818 /* yglshader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = yglshader.c; path = ../yglshader.c; sourceTree = SOURCE_ROOT; };
 		F07E62CA15054DCC00DF8A4E /* titan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = titan.c; path = ../titan/titan.c; sourceTree = SOURCE_ROOT; };
 		F07E62CC15054DF500DF8A4E /* titan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = titan.h; path = ../titan/titan.h; sourceTree = SOURCE_ROOT; };
+		F0E47FAC156C34EC001A1B51 /* osdcore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = osdcore.c; path = ../osdcore.c; sourceTree = SOURCE_ROOT; };
+		F0E47FAE156C34FB001A1B51 /* osdcore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = osdcore.h; path = ../osdcore.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -331,6 +334,8 @@
 		2A7D3972115BA0DD00DE3BD1 /* Emulation Core */ = {
 			isa = PBXGroup;
 			children = (
+				F0E47FAE156C34FB001A1B51 /* osdcore.h */,
+				F0E47FAC156C34EC001A1B51 /* osdcore.c */,
 				F07E62CC15054DF500DF8A4E /* titan.h */,
 				F07E62CA15054DCC00DF8A4E /* titan.c */,
 				F07BF9E314A1C2C500775818 /* yglshader.c */,
@@ -604,6 +609,7 @@
 				2A1145191385E5010087C872 /* YabauseButtonFormatter.m in Sources */,
 				F07BF9E414A1C2C500775818 /* yglshader.c in Sources */,
 				F07E62CB15054DCC00DF8A4E /* titan.c in Sources */,
+				F0E47FAD156C34EC001A1B51 /* osdcore.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
