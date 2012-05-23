@@ -136,49 +136,12 @@ static INLINE char *AddBitmapInfoString(char *outstring, int wh, int palnum, int
 
 static void CalcWindowCoordinates(int num, int *hstart, int *vstart, int *hend, int *vend)
 {
-   if (num == 0)
-   {
-      // Window 0
-      *hstart = Vdp2Regs->WPSX0;
-      *vstart = Vdp2Regs->WPSY0 & 0x1FF;
-      *hend = Vdp2Regs->WPEX0;
-      *vend = Vdp2Regs->WPEY0 & 0x1FF;
-   }
-   else
-   {
-      // Window 1
-      *hstart = Vdp2Regs->WPSX1;
-      *vstart = Vdp2Regs->WPSY1 & 0x1FF;
-      *hend = Vdp2Regs->WPEX1;
-      *vend = Vdp2Regs->WPEY1 & 0x1FF;
-   }
-
-   switch ((Vdp2Regs->TVMD >> 1) & 0x3)
-   {
-      case 0: // Normal
-         *hstart = (*hstart >> 1) & 0x1FF;
-         *hend = (*hend >> 1) & 0x1FF;
-         break;
-      case 1: // Hi-Res
-         *hstart = *hstart & 0x3FF;
-         *hend = *hend & 0x3FF;
-         break;
-      case 2: // Exclusive Normal
-         *hstart = *hstart & 0x1FF;
-         *hend = *hend & 0x1FF;
-         break;
-      case 3: // Exclusive Hi-Res
-         *hstart = (*hstart & 0x3FF) >> 1;
-         *hend = (*hend & 0x3FF) >> 1;
-         break;
-   }
-
-   if ((Vdp2Regs->TVMD & 0xC0) == 0xC0)
-   {
-      // Double-density interlace
-      *vstart >>= 1;
-      *vend >>= 1;
-   }
+   clipping_struct clip;
+   ReadWindowCoordinates(num, &clip);
+   *hstart = clip.xstart;
+   *vstart = clip.ystart;
+   *hend = clip.xend;
+   *vend = clip.yend;
 }
 
 //////////////////////////////////////////////////////////////////////////////

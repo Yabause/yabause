@@ -649,10 +649,8 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
    ReadWindowData(info->wctl, clip);
    linewnd0addr = linewnd1addr = 0;
    ReadLineWindowData(&info->islinewindow, info->wctl, &linewnd0addr, &linewnd1addr);
-
    /* color calculation window: in => no color calc, out => color calc */
    ReadWindowData(Vdp2Regs->WCTLD >> 8, &colorcalcwindow);
-
    {
 	   static int tables_initialized = 0;
 	   static int mosaic_table[16][1024];
@@ -724,23 +722,27 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
       for (i = 0; i < width; i++)
       {
          u32 color;
+         /* I'm really not sure about this... but I think the way we handle
+         high resolution gets in the way with window process. I may be wrong...
+         This was added for Cotton Boomerang */
+         int resxi = i * resxratio;
 
          // See if screen position is clipped, if it isn't, continue
 		 // AND window logic
-		 if(!TestWindow(info->wctl, 0x2, 0x1, &clip[0], i, j) && !TestWindow(info->wctl, 0x8, 0x4, &clip[1], i, j) && (info->wctl & 0x80) == 0x80)
+		 if(!TestWindow(info->wctl, 0x2, 0x1, &clip[0], resxi, j) && !TestWindow(info->wctl, 0x8, 0x4, &clip[1], resxi, j) && (info->wctl & 0x80) == 0x80)
 		 {
 			 continue;
 		 }
 		 //OR window logic
 		 else if ((info->wctl & 0x80) == 0)
 		 {
-			 if (!TestWindow(info->wctl, 0x2, 0x1, &clip[0], i, j))
+			 if (!TestWindow(info->wctl, 0x2, 0x1, &clip[0], resxi, j))
 			 {
 				 continue;
 			 }
 
 			 // Window 1
-			 if (!TestWindow(info->wctl, 0x8, 0x4, &clip[1], i,j))
+			 if (!TestWindow(info->wctl, 0x8, 0x4, &clip[1], resxi, j))
 			 {
 				 continue;
 			 }

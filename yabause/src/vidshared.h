@@ -521,24 +521,68 @@ static INLINE void ReadLineScrollData(vdp2draw_struct *info, u16 mask, u32 tbl)
    }
 }
 
+
+//////////////////////////////////////////////////////////////////////////////
+
+static INLINE void ReadWindowCoordinates(int num, clipping_struct * clip)
+{
+   if (num == 0)
+   {
+      // Window 0
+      clip->xstart = Vdp2Regs->WPSX0;
+      clip->ystart = Vdp2Regs->WPSY0 & 0x1FF;
+      clip->xend = Vdp2Regs->WPEX0;
+      clip->yend = Vdp2Regs->WPEY0 & 0x1FF;
+   }
+   else
+   {
+      // Window 1
+      clip->xstart = Vdp2Regs->WPSX1;
+      clip->ystart = Vdp2Regs->WPSY1 & 0x1FF;
+      clip->xend = Vdp2Regs->WPEX1;
+      clip->yend = Vdp2Regs->WPEY1 & 0x1FF;
+   }
+
+   switch ((Vdp2Regs->TVMD >> 1) & 0x3)
+   {
+      case 0: // Normal
+         clip->xstart = (clip->xstart >> 1) & 0x1FF;
+         clip->xend = (clip->xend >> 1) & 0x1FF;
+         break;
+      case 1: // Hi-Res
+         clip->xstart = clip->xstart & 0x3FF;
+         clip->xend = clip->xend & 0x3FF;
+         break;
+      case 2: // Exclusive Normal
+         clip->xstart = clip->xstart & 0x1FF;
+         clip->xend = clip->xend & 0x1FF;
+         break;
+      case 3: // Exclusive Hi-Res
+         clip->xstart = (clip->xstart & 0x3FF) >> 1;
+         clip->xend = (clip->xend & 0x3FF) >> 1;
+         break;
+   }
+
+   if ((Vdp2Regs->TVMD & 0xC0) == 0xC0)
+   {
+      // Double-density interlace
+      clip->ystart >>= 1;
+      clip->yend >>= 1;
+   }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 static INLINE void ReadWindowData(int wctl, clipping_struct *clip)
 {
    if (wctl & 0x2)
    {
-      clip[0].xstart = Vdp2Regs->WPSX0 >> 1; // fix me
-      clip[0].ystart = Vdp2Regs->WPSY0;
-      clip[0].xend = Vdp2Regs->WPEX0 >> 1; // fix me
-      clip[0].yend = Vdp2Regs->WPEY0;
+      ReadWindowCoordinates(0, clip);
    }
 
    if (wctl & 0x8)
    {
-      clip[1].xstart = Vdp2Regs->WPSX1 >> 1; // fix me
-      clip[1].ystart = Vdp2Regs->WPSY1;
-      clip[1].xend = Vdp2Regs->WPEX1 >> 1; // fix me
-      clip[1].yend = Vdp2Regs->WPEY1;
+      ReadWindowCoordinates(1, clip + 1);
    }
 
    if (wctl & 0x20)
