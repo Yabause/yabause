@@ -619,17 +619,17 @@ static INLINE void ReadLineWindowClip(int islinewindow, clipping_struct *clip, u
       if (islinewindow & 0x1)
       {
          // Window 0
-         clip[0].xstart = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF) >> 1; // fix me
+         clip[0].xstart = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF);
          linewnd0addr[0]+=2;
-         clip[0].xend = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF) >> 1; // fix me
+         clip[0].xend = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF);
          linewnd0addr[0]+=2;
       }
       if (islinewindow & 0x2)
       {
          // Window 1
-         clip[1].xstart = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF) >> 1; // fix me
+         clip[1].xstart = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF);
          linewnd1addr[0]+=2;
-         clip[1].xend = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF) >> 1; // fix me
+         clip[1].xend = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF);
          linewnd1addr[0]+=2;
       }
    }
