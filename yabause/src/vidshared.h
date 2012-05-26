@@ -623,6 +623,26 @@ static INLINE void ReadLineWindowClip(int islinewindow, clipping_struct *clip, u
          linewnd0addr[0]+=2;
          clip[0].xend = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF);
          linewnd0addr[0]+=2;
+
+         switch ((Vdp2Regs->TVMD >> 1) & 0x3)
+         {
+            case 0: // Normal
+               clip[0].xstart = (clip[0].xstart >> 1) & 0x1FF;
+               clip[0].xend = (clip[0].xend >> 1) & 0x1FF;
+               break;
+            case 1: // Hi-Res
+               clip[0].xstart = clip[0].xstart & 0x3FF;
+               clip[0].xend = clip[0].xend & 0x3FF;
+               break;
+            case 2: // Exclusive Normal
+               clip[0].xstart = clip[0].xstart & 0x1FF;
+               clip[0].xend = clip[0].xend & 0x1FF;
+               break;
+            case 3: // Exclusive Hi-Res
+               clip[0].xstart = (clip[0].xstart & 0x3FF) >> 1;
+               clip[0].xend = (clip[0].xend & 0x3FF) >> 1;
+               break;
+         }
       }
       if (islinewindow & 0x2)
       {
@@ -631,6 +651,26 @@ static INLINE void ReadLineWindowClip(int islinewindow, clipping_struct *clip, u
          linewnd1addr[0]+=2;
          clip[1].xend = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF);
          linewnd1addr[0]+=2;
+
+         switch ((Vdp2Regs->TVMD >> 1) & 0x3)
+         {
+            case 0: // Normal
+               clip[1].xstart = (clip[1].xstart >> 1) & 0x1FF;
+               clip[1].xend = (clip[1].xend >> 1) & 0x1FF;
+               break;
+            case 1: // Hi-Res
+               clip[1].xstart = clip[1].xstart & 0x3FF;
+               clip[1].xend = clip[1].xend & 0x3FF;
+               break;
+            case 2: // Exclusive Normal
+               clip[1].xstart = clip[1].xstart & 0x1FF;
+               clip[1].xend = clip[1].xend & 0x1FF;
+               break;
+            case 3: // Exclusive Hi-Res
+               clip[1].xstart = (clip[1].xstart & 0x3FF) >> 1;
+               clip[1].xend = (clip[1].xend & 0x3FF) >> 1;
+               break;
+         }
       }
    }
 }
