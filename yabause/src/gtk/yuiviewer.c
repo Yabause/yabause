@@ -149,6 +149,9 @@ void yui_viewer_save(YuiViewer * yv) {
 }
 
 void yui_viewer_draw_pixbuf(YuiViewer * yv, GdkPixbuf * pixbuf, int w, int h) {
+	if (yv->pixbuf) {
+		g_object_unref(yv->pixbuf);
+	}
 	yv->pixbuf = g_object_ref(pixbuf);
 	yv->w = w;
 	yv->h = h;

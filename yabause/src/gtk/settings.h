@@ -46,4 +46,6 @@ void yui_resize(guint, guint, gboolean);
 
 void gtk_yui_toggle_fullscreen(void);
 
+void yui_texture_free(guchar *pixels, gpointer data);
+
 #endif

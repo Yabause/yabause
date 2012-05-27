@@ -261,7 +261,6 @@ void yui_vdp2_update(YuiVdp2 * vdp2) {
 		int w, h;
 		texture = Vdp2DebugTexture(vdp2->cursor - 1, &w, &h);
 		yui_vdp2_draw(vdp2, texture, w, h);
-		free(texture);
 	}
 
 	if (isscrenabled) {
@@ -310,7 +309,7 @@ static void yui_vdp2_draw(YuiVdp2 * vdp2, u32 * texture, int w, int h) {
 		rowstride = w * 4;
 		rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
 		pixbuf = gdk_pixbuf_new_from_data((const guchar *) texture, GDK_COLORSPACE_RGB, TRUE, 8,
-			w, h, rowstride, NULL, NULL);
+			w, h, rowstride, yui_texture_free, NULL);
 
 		yui_viewer_draw_pixbuf(YUI_VIEWER(vdp2->image), pixbuf, w, h);
 

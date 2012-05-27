@@ -198,7 +198,7 @@ void yui_vdp1_fill(YuiVdp1 * vdp1) {
  				rowstride = wtext * 4;
  				rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
 				pixbuftext = gdk_pixbuf_new_from_data((const guchar *) icontext, GDK_COLORSPACE_RGB, TRUE, 8,
-					wtext, htext, rowstride, NULL, NULL);
+					wtext, htext, rowstride, yui_texture_free, NULL);
 
 				ratio = (float) 16 / htext;
 				if (htext > 16) {

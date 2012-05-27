@@ -540,3 +540,7 @@ GtkWidget* create_dialog1(void) {
 
   return dialog1;
 }
+
+void yui_texture_free(guchar *pixels, gpointer data) {
+  free(pixels);
+}
