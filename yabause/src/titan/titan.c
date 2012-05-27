@@ -25,12 +25,14 @@
 typedef u32 (*TitanBlendFunc)(u32 top, u32 bottom);
 
 static struct TitanContext {
+   int inited;
    u32 * vdp2framebuffer[8];
    u32 * linescreen[4];
    int vdp2width;
    int vdp2height;
    TitanBlendFunc blend;
 } tt_context = {
+   0,
    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
    { NULL, NULL, NULL, NULL },
    320,
@@ -119,20 +121,29 @@ int TitanInit()
 {
    int i;
 
-   for(i = 0;i < 8;i++)
+   if (! tt_context.inited)
    {
-      if ((tt_context.vdp2framebuffer[i] = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
-         return -1;
-      memset(tt_context.vdp2framebuffer[i], 0, sizeof(u32) * 704 * 512);
+      for(i = 0;i < 8;i++)
+      {
+         if ((tt_context.vdp2framebuffer[i] = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
+            return -1;
+      }
+
+      /* linescreen 0 is not initialized as it's not used... */
+      for(i = 1;i < 4;i++)
+      {
+         if ((tt_context.linescreen[i] = (u32 *)calloc(sizeof(u32), 512)) == NULL)
+            return -1;
+      }
+
+      tt_context.inited = 1;
    }
 
-   /* linescreen 0 is not initialized as it's not used... */
+   for(i = 0;i < 8;i++)
+      memset(tt_context.vdp2framebuffer[i], 0, sizeof(u32) * 704 * 512);
+
    for(i = 1;i < 4;i++)
-   {
-      if ((tt_context.linescreen[i] = (u32 *)calloc(sizeof(u32), 512)) == NULL)
-         return -1;
       memset(tt_context.linescreen[i], 0, sizeof(u32) * 512);
-   }
 
    return 0;
 }
@@ -148,17 +159,6 @@ int TitanDeInit()
       free(tt_context.linescreen[i]);
 
    return 0;
-}
-
-void TitanReset()
-{
-   int i;
-
-   for(i = 0;i < 8;i++)
-      memset(tt_context.vdp2framebuffer[i], 0, sizeof(u32) * 704 * 512);
-
-   for(i = 1;i < 4;i++)
-      memset(tt_context.linescreen[i], 0, sizeof(u32) * 512);
 }
 
 void TitanSetResolution(int width, int height)

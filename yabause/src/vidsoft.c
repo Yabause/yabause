@@ -2914,6 +2914,12 @@ void VIDSoftVdp2DrawScreens(void)
 
 void VIDSoftVdp2DrawScreen(int screen)
 {
+   VIDSoftVdp2SetResolution(Vdp2Regs->TVMD);
+   VIDSoftVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
+   VIDSoftVdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
+   VIDSoftVdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
+   VIDSoftVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
+   VIDSoftVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
    switch(screen)
    {
       case 0:
