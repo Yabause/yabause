@@ -280,7 +280,7 @@ static void yui_vdp1_draw(YuiVdp1 * vdp1) {
  		rowstride = vdp1->w * 4;
  		rowstride += (rowstride % 4)? (4 - (rowstride % 4)): 0;
  		pixbuf = gdk_pixbuf_new_from_data((const guchar *) vdp1->texture, GDK_COLORSPACE_RGB, TRUE, 8,
- 			vdp1->w, vdp1->h, rowstride, NULL, NULL);
+			vdp1->w, vdp1->h, rowstride, yui_texture_free, NULL);
  
  		yui_viewer_draw_pixbuf(YUI_VIEWER(vdp1->image), pixbuf, vdp1->w, vdp1->h);
  
