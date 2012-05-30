@@ -1894,6 +1894,13 @@ static int getpixel(int linenumber, int currentlineindex) {
 			currentPixel = Vdp1ReadPattern64k( characterAddress + (linenumber*characterWidth*2), currentlineindex );
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
+
+			/* the transparent pixel in 16bpp is supposed to be 0x0000
+			but some games use pixels with invalid values and expect
+			them to be transparent (see vdp1 doc p. 92) */
+			if (!(currentPixel & 0x8000) && !SPD)
+				currentPixel = 0;
+
 			currentPixelIsVisible = 0xffff;
 			break;
 	}
