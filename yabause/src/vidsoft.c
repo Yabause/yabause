@@ -2855,14 +2855,44 @@ void VIDSoftVdp2DrawEnd(void)
                if (pixel != 0)
                {
                   // Color bank(fix me)
-                  int priority;
+                  int priority = 0;
                   int shadow = 0;
-                  int colorcalc;
+                  int colorcalc = 0;
                   u8 alpha = 0xFF;
-                  priority = 0;  // Avoid compiler warning
-                  Vdp1ProcessSpritePixel(vdp1spritetype, &pixel, &shadow, &priority, &colorcalc);
-                  TitanPutPixel(prioritytable[priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, Vdp2ColorRamGetColor(vdp1coloroffset + pixel))), 0);
+                  u32 dot;
 
+                  Vdp1ProcessSpritePixel(vdp1spritetype, &pixel, &shadow, &priority, &colorcalc);
+
+                  dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
+
+                  if (TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow, i, i2) && (Vdp2Regs->CCCTL & 0x40))
+                  {
+                     /* Sprite color calculation */
+                     switch(SPCCCS) {
+                        case 0:
+                           if (prioritytable[priority] <= SPCCN) {
+                              alpha = colorcalctable[colorcalc];
+                           }
+                           break;
+                        case 1:
+                           if (prioritytable[priority] == SPCCN) {
+                              alpha = colorcalctable[colorcalc];
+                           }
+                           break;
+                        case 2:
+                           if (prioritytable[priority] >= SPCCN) {
+                              alpha = colorcalctable[colorcalc];
+                           }
+                           break;
+                        case 3:
+                           if (dot & 0x80000000) {
+                              alpha = colorcalctable[colorcalc];
+                           }
+                           break;
+                     }
+                  }
+
+                  TitanPutPixel(prioritytable[priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0);
                }
             }
          }
