@@ -445,6 +445,18 @@ static INLINE int TestWindow(int wctl, int enablemask, int inoutmask, clipping_s
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE int TestBothWindow(int wctl, clipping_struct *clip, int x, int y)
+{
+    if ((wctl & 0x80) == 0x80)
+        /* AND logic, returns 0 only if both the windows are active */
+        return TestWindow(wctl, 0x2, 0x1, &clip[0], x, y) || TestWindow(wctl, 0x8, 0x4, &clip[1], x, y);
+    else
+        /* OR logic, returns 0 if one of the windows is active */
+        return TestWindow(wctl, 0x2, 0x1, &clip[0], x, y) && TestWindow(wctl, 0x8, 0x4, &clip[1], x, y);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static INLINE void GeneratePlaneAddrTable(vdp2draw_struct *info, u32 *planetbl)
 {
    int i;
@@ -728,25 +740,10 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
          int resxi = i * resxratio;
 
          // See if screen position is clipped, if it isn't, continue
-		 // AND window logic
-		 if(!TestWindow(info->wctl, 0x2, 0x1, &clip[0], resxi, j) && !TestWindow(info->wctl, 0x8, 0x4, &clip[1], resxi, j) && (info->wctl & 0x80) == 0x80)
-		 {
-			 continue;
-		 }
-		 //OR window logic
-		 else if ((info->wctl & 0x80) == 0)
-		 {
-			 if (!TestWindow(info->wctl, 0x2, 0x1, &clip[0], resxi, j))
-			 {
-				 continue;
-			 }
-
-			 // Window 1
-			 if (!TestWindow(info->wctl, 0x8, 0x4, &clip[1], resxi, j))
-			 {
-				 continue;
-			 }
-		 }
+         if (!TestBothWindow(info->wctl, clip, resxi, j))
+         {
+            continue;
+         }
 
          //x = info->x+((int)(info->coordincx*(float)((info->mosaicxmask > 1) ? (i / info->mosaicxmask * info->mosaicxmask) : i)));
 		 x = info->x + mosaic_x[i]*info->coordincx;
@@ -780,7 +777,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
          {
             u8 alpha;
             /* if we're in the valid area of the color calculation window, don't do color calculation */
-            if (!TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow[0], i, j))
+            if (!TestBothWindow(Vdp2Regs->WCTLD >> 8, colorcalcwindow, i, j))
                alpha = 0x3F;
             else
                alpha = GetAlpha(info, color);
@@ -2772,14 +2769,7 @@ void VIDSoftVdp2DrawEnd(void)
          for (i = 0; i < vdp2width; i++)
          {
             // See if screen position is clipped, if it isn't, continue
-            // Window 0
-            if (!TestWindow(wctl, 0x2, 0x1, &clip[0], i, i2))
-            {
-               continue;
-            }
-
-            // Window 1
-            if (!TestWindow(wctl, 0x8, 0x4, &clip[1], i, i2))
+            if (!TestBothWindow(wctl, clip, i, i2))
             {
                continue;
             }
@@ -2824,7 +2814,7 @@ void VIDSoftVdp2DrawEnd(void)
 
                   dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
 
-                  if (TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow[0], i, i2) && (Vdp2Regs->CCCTL & 0x40))
+                  if (TestBothWindow(Vdp2Regs->WCTLD >> 8, colorcalcwindow, i, i2) && (Vdp2Regs->CCCTL & 0x40))
                   {
                      /* Sprite color calculation */
                      switch(SPCCCS) {
@@ -2872,7 +2862,7 @@ void VIDSoftVdp2DrawEnd(void)
 
                   dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
 
-                  if (TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow[0], i, i2) && (Vdp2Regs->CCCTL & 0x40))
+                  if (TestBothWindow(Vdp2Regs->WCTLD >> 8, colorcalcwindow, i, i2) && (Vdp2Regs->CCCTL & 0x40))
                   {
                      /* Sprite color calculation */
                      switch(SPCCCS) {
