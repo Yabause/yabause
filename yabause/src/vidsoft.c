@@ -634,7 +634,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
    screeninfo_struct sinfo;
    int scrollx, scrolly;
    int *mosaic_y, *mosaic_x;
-   clipping_struct colorcalcwindow;
+   clipping_struct colorcalcwindow[2];
 
    info->coordincx *= (float)resxratio;
    info->coordincy *= (float)resyratio;
@@ -650,7 +650,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
    linewnd0addr = linewnd1addr = 0;
    ReadLineWindowData(&info->islinewindow, info->wctl, &linewnd0addr, &linewnd1addr);
    /* color calculation window: in => no color calc, out => color calc */
-   ReadWindowData(Vdp2Regs->WCTLD >> 8, &colorcalcwindow);
+   ReadWindowData(Vdp2Regs->WCTLD >> 8, colorcalcwindow);
    {
 	   static int tables_initialized = 0;
 	   static int mosaic_table[16][1024];
@@ -780,7 +780,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
          {
             u8 alpha;
             /* if we're in the valid area of the color calculation window, don't do color calculation */
-            if (!TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow, i, j))
+            if (!TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow[0], i, j))
                alpha = 0x3F;
             else
                alpha = GetAlpha(info, color);
@@ -2722,7 +2722,7 @@ void VIDSoftVdp2DrawEnd(void)
    clipping_struct clip[2];
    u32 linewnd0addr, linewnd1addr;
    int wctl;
-   clipping_struct colorcalcwindow;
+   clipping_struct colorcalcwindow[2];
 
    // Figure out whether to draw vdp1 framebuffer or vdp2 framebuffer pixels
    // based on priority
@@ -2761,7 +2761,7 @@ void VIDSoftVdp2DrawEnd(void)
       ReadLineWindowData(&islinewindow, wctl, &linewnd0addr, &linewnd1addr);
 
       /* color calculation window: in => no color calc, out => color calc */
-      ReadWindowData(Vdp2Regs->WCTLD >> 8, &colorcalcwindow);
+      ReadWindowData(Vdp2Regs->WCTLD >> 8, colorcalcwindow);
 
       for (i2 = 0; i2 < vdp2height; i2++)
       {
@@ -2824,7 +2824,7 @@ void VIDSoftVdp2DrawEnd(void)
 
                   dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
 
-                  if (TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow, i, i2) && (Vdp2Regs->CCCTL & 0x40))
+                  if (TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow[0], i, i2) && (Vdp2Regs->CCCTL & 0x40))
                   {
                      /* Sprite color calculation */
                      switch(SPCCCS) {
@@ -2872,7 +2872,7 @@ void VIDSoftVdp2DrawEnd(void)
 
                   dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
 
-                  if (TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow, i, i2) && (Vdp2Regs->CCCTL & 0x40))
+                  if (TestWindow(Vdp2Regs->WCTLD >> 8, 2, 1, &colorcalcwindow[0], i, i2) && (Vdp2Regs->CCCTL & 0x40))
                   {
                      /* Sprite color calculation */
                      switch(SPCCCS) {
