@@ -241,7 +241,7 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
       case 0x14:
          return Vdp1Regs->COPR;
       case 0x16:
-         return Vdp1Regs->MODR;
+         return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
       default:
          LOG("trying to read a Vdp1 write-only register\n");
    }
