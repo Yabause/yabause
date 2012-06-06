@@ -2153,7 +2153,10 @@ static int DrawLineCallback(int x, int y, int i, void *data)
 			linedata->endcodesdetected ++;
 		}
 	} else if (vdp1pixelsize == 2) {
-		putpixel(x, y);
+		if (Vdp1Regs->TVMR & 2) {
+			putpixel(y, (vdp1height - x));
+		} else
+			putpixel(x, y);
 	} else {
 		putpixel8(x, y);
     }
