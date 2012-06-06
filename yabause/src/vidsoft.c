@@ -847,7 +847,6 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
                x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
                y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
-               xmul += p->deltaXst;
 
                // Convert coordinates into graphics
                if (!info->isbitmap)
@@ -864,6 +863,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
                TitanPutPixel(info->priority, i, j, COLSAT2YAB32(GetAlpha(info, color), info->PostPixelFetchCalc(info, color)), info->linescreen);
             }
+            xmul += p->deltaXst;
             ymul += p->deltaYst;
          }
 
@@ -943,7 +943,6 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
             x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
             y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
-            xmul += p->deltaXst;
 
             // Convert coordinates into graphics
             if (!info->isbitmap)
@@ -960,6 +959,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
             TitanPutPixel(info->priority, i, j, COLSAT2YAB32(GetAlpha(info, color), info->PostPixelFetchCalc(info, color)), info->linescreen);
          }
+         xmul += p->deltaXst;
          ymul += p->deltaYst;
          coefx = 0;
          rcoefx = 0;
