@@ -2728,6 +2728,9 @@ void VIDSoftVdp2DrawEnd(void)
       int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
       int SPCCN = (Vdp2Regs->SPCTL >> 8) & 0x7;
       u8 colorcalctable[8];
+      vdp2rotationparameterfp_struct p;
+      int x, y;
+
       prioritytable[0] = Vdp2Regs->PRISA & 0x7;
       prioritytable[1] = (Vdp2Regs->PRISA >> 8) & 0x7;
       prioritytable[2] = Vdp2Regs->PRISB & 0x7;
@@ -2760,6 +2763,9 @@ void VIDSoftVdp2DrawEnd(void)
       /* color calculation window: in => no color calc, out => color calc */
       ReadWindowData(Vdp2Regs->WCTLD >> 8, colorcalcwindow);
 
+      if (Vdp1Regs->TVMR & 2)
+         Vdp2ReadRotationTableFP(0, &p);
+
       for (i2 = 0; i2 < vdp2height; i2++)
       {
          ReadLineWindowClip(islinewindow, clip, &linewnd0addr, &linewnd1addr);
@@ -2774,10 +2780,20 @@ void VIDSoftVdp2DrawEnd(void)
                continue;
             }
 
+            if (Vdp1Regs->TVMR & 2) {
+               x = (touint(p.Xst + i * p.deltaX + i2 * p.deltaXst)) & (vdp1width - 1);
+               y = (touint(p.Yst + i * p.deltaY + i2 * p.deltaYst)) & (vdp1height - 1);
+            }
+            else
+            {
+               x = i;
+               y = i2;
+            }
+
             if (vdp1pixelsize == 2)
             {
                // 16-bit pixel size
-               pixel = ((u16 *)vdp1frontframebuffer)[(i2 * vdp1width) + i];
+               pixel = ((u16 *)vdp1frontframebuffer)[(y * vdp1width) + x];
 
                if (pixel == 0)
                   ;
@@ -2847,7 +2863,7 @@ void VIDSoftVdp2DrawEnd(void)
             else
             {
                // 8-bit pixel size
-               pixel = vdp1frontframebuffer[(i2 * vdp1width) + i];
+               pixel = vdp1frontframebuffer[(y * vdp1width) + x];
 
                if (pixel != 0)
                {
