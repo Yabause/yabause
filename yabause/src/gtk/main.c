@@ -413,14 +413,16 @@ int main(int argc, char *argv[]) {
 		// no inifile found, but it could be in the old location
 		gchar * oldinifile = g_build_filename(g_get_user_config_dir(), "yabause.ini", NULL);
 
+		// we need to create the directory for the new file anyways
+		gchar * xdgpath = g_build_filename(g_get_user_config_dir(), "yabause", "gtk", NULL);
+
+		if (! g_file_test(xdgpath, G_FILE_TEST_EXISTS))
+			g_mkdir_with_parents(xdgpath, 0755);
+		g_free(xdgpath);
+
 		if (g_file_test(oldinifile, G_FILE_TEST_EXISTS)) {
 			// ok, we found an old .ini file, let's copy the content
 			gchar * data;
-			gchar * xdgpath = g_build_filename(g_get_user_config_dir(), "yabause", "gtk", NULL);
-
-			if (! g_file_test(xdgpath, G_FILE_TEST_EXISTS))
-				g_mkdir_with_parents(xdgpath, 0755);
-			g_free(xdgpath);
 
 			g_file_get_contents(oldinifile, &data, NULL, NULL);
 			g_file_set_contents(inifile, data, -1, NULL);

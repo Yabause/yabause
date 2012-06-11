@@ -49,7 +49,7 @@ QString getIniFile( const QString& s )
 	QString xdginifile = QString( "%1/.config/yabause/qt/yabause.ini" ).arg( QDir::homePath() );
 	QString oldinifile = QString( "%1/.%2/%2.ini" ).arg( QDir::homePath() ).arg( s );
 
-	if ( QFile::exists( oldinifile ) and not QFile::exists( xdginifile ) )
+	if ( not QFile::exists( xdginifile ) )
 	{
 		QString xdgpath = QString( "%1/.config/yabause/qt" ).arg( QDir::homePath() );
 		if ( ! QFile::exists( xdgpath ) )
@@ -58,7 +58,9 @@ QString getIniFile( const QString& s )
 			QDir dir;
 			dir.mkpath( xdgpath );
 		}
-		QFile::copy( oldinifile, xdginifile );
+
+		if ( QFile::exists( oldinifile ) )
+			QFile::copy( oldinifile, xdginifile );
 	}
 
 	return xdginifile;
