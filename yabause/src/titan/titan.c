@@ -212,6 +212,17 @@ void TitanPutHLine(int priority, s32 x, s32 y, s32 width, u32 color)
    }
 }
 
+void TitanPutShadow(int priority, s32 x, s32 y)
+{
+   if (priority == 0) return;
+
+   {
+      int pos = (y * tt_context.vdp2width) + x;
+      u32 * buffer = tt_context.vdp2framebuffer[priority] + pos;
+      *buffer = *buffer ? TitanBlendPixelsTop(0x20000000, *buffer) : 0x20000000;
+   }
+}
+
 void TitanRender(u32 * dispbuffer, int blend_mode)
 {
    u32 dot;

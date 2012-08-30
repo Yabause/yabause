@@ -37,6 +37,8 @@ void TitanPutLineHLine(int linescreen, s32 y, u32 color);
 void TitanPutPixel(int priority, s32 x, s32 y, u32 color, int linescreen);
 void TitanPutHLine(int priority, s32 x, s32 y, s32 width, u32 color);
 
+void TitanPutShadow(int priority, s32 x, s32 y);
+
 void TitanRender(u32 * dispbuffer, int blend_mode);
 
 #endif
