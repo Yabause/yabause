@@ -2141,15 +2141,17 @@ typedef struct {
 
 static int DrawLineCallback(int x, int y, int i, void *data)
 {
+	int currentStep;
 	DrawLineData *linedata = data;
 
 	leftColumnColor.r += linedata->xredstep;
 	leftColumnColor.g += linedata->xgreenstep;
 	leftColumnColor.b += linedata->xbluestep;
 
-	if (getpixel(linedata->linenumber, (int)i * linedata->texturestep)) {
-		if (currentPixel != linedata->previousStep) {
-			linedata->previousStep = (int)i * linedata->texturestep;
+	currentStep = (int)i * linedata->texturestep;
+	if (getpixel(linedata->linenumber, currentStep)) {
+		if (currentStep != linedata->previousStep) {
+			linedata->previousStep = currentStep;
 			linedata->endcodesdetected ++;
 		}
 	} else if (vdp1pixelsize == 2) {
