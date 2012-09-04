@@ -93,6 +93,8 @@ void OSDPushMessage(int msgtype, int ttl, const char * format, ...)
    va_list arglist;
    char message[1024];
 
+   if (ttl == 0) return;
+
    va_start(arglist, format);
    vsprintf(message, format, arglist);
    va_end(arglist);
@@ -110,9 +112,10 @@ void OSDDisplayMessages(void)
    if (OSD == NULL) return;
 
    for(i = 0;i < OSDMSG_COUNT;i++)
-      if ((osdmessages[i].hidden == 0) && (osdmessages[i].timeleft > 0))
+      if (osdmessages[i].timeleft > 0)
       {
-         OSD->DisplayMessage(osdmessages + i);
+         if (osdmessages[i].hidden == 0)
+            OSD->DisplayMessage(osdmessages + i);
          osdmessages[i].timeleft--;
          if (osdmessages[i].timeleft == 0) free(osdmessages[i].message);
       }
@@ -214,7 +217,6 @@ OSD_struct OSDGlut = {
 
 int OSDGlutInit(void)
 {
-#ifndef WIN32
    int fake_argc = 1;
    char * fake_argv[] = { "yabause" };
    static int glutinited = 0;
@@ -225,7 +227,7 @@ int OSDGlutInit(void)
       glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_STENCIL);
       glutinited = 1;
    }
-#endif
+
    return 0;
 }
 
