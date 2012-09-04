@@ -623,7 +623,7 @@ static u8 FASTCALL GetAlpha(vdp2draw_struct * info, u32 color)
    if (((info->specialcolormode == 1) || (info->specialcolormode == 2)) && ((info->specialcolorfunction & 1) == 0)) {
       /* special color calculation mode 1 and 2 enables color calculation only when special color function = 1 */
       return 0x3F;
-   } else if ((info->specialcolormode == 2)) {
+   } else if (info->specialcolormode == 2) {
       /* special color calculation 2 enables color calculation according to lower bits of the color */
       if ((info->specialcode & (1 << ((color & 0xF) >> 1))) == 0) {
          return 0x3F;

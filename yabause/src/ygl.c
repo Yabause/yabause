@@ -140,7 +140,7 @@ GLchar s_msg_no_opengl2[]="Your GPU driver does not support OpenGL 2.0.\nOpenGL 
 void STDCALL glGetShaderivdmy(GLuint shader,GLenum pname,GLint *    params)
 {
    if( pname == GL_COMPILE_STATUS ) *params = GL_FALSE;
-   if( pname == GL_INFO_LOG_LENGTH ) *params = strlen(s_msg_no_opengl2)+1;
+   if( pname == GL_INFO_LOG_LENGTH ) *params = strlen((const char *) s_msg_no_opengl2)+1;
    return;
 }
 void STDCALL glGetShaderInfoLogdmy(GLuint a,GLsizei b,GLsizei *c,GLchar *d)
@@ -161,7 +161,7 @@ GLAPI GLboolean APIENTRY glIsFramebufferdmy (GLuint framebuffer){return GL_FALSE
 GLAPI void APIENTRY glBindFramebufferdmy (GLenum target, GLuint framebuffer){}
 GLAPI void APIENTRY glDeleteFramebuffersdmy (GLsizei n, const GLuint *framebuffers){}
 GLAPI void APIENTRY glGenFramebuffersdmy (GLsizei n, GLuint *framebuffers){}
-GLAPI GLenum APIENTRY glCheckFramebufferStatusdmy (GLenum target){}
+GLAPI GLenum APIENTRY glCheckFramebufferStatusdmy (GLenum target){return 0;}
 GLAPI void APIENTRY glFramebufferTexture1Ddmy (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level){}
 GLAPI void APIENTRY glFramebufferTexture2Ddmy (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level){}
 GLAPI void APIENTRY glFramebufferTexture3Ddmy (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset){}
@@ -611,7 +611,7 @@ int YglInit(int width, int height, unsigned int depth) {
    glCreateProgram = (GLuint (STDCALL *)(void)) yglGetProcAddress("glCreateProgram");
    if( glCreateProgram == NULL )
    {
-      YuiErrorMsg(s_msg_no_opengl2);
+      YuiErrorMsg((const char *) s_msg_no_opengl2);
       glCreateProgram = glCreateProgramdmy;
    }
    glCreateShader = (GLuint (STDCALL *)(GLenum))yglGetProcAddress("glCreateShader");

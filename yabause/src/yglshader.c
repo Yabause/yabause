@@ -414,6 +414,8 @@ int Ygl_uniformVDP2DrawFramebuffer( float from, float to , float * offsetcol )
    glUniform1f(idfrom,from);
    glUniform1f(idto,to);
    glUniform4f(idcoloroffset,offsetcol[0],offsetcol[1],offsetcol[2],offsetcol[3]);
+
+   return 0;
 }
  
 

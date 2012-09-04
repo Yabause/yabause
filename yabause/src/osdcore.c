@@ -84,6 +84,8 @@ int OSDChangeCore(int coreid)
 {
    OSDDeInit();
    OSDInit(coreid);
+
+   return 0;
 }
 
 void OSDPushMessage(int msgtype, int ttl, const char * format, ...)

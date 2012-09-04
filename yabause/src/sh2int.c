@@ -1053,7 +1053,7 @@ static void FASTCALL SH2macl(SH2_struct * sh)
    sh->regs.R[m] += 4;
 
    if ((s32) (tempn^tempm) < 0)
-      fnLmL =- 1;
+      fnLmL = -1;
    else
       fnLmL = 0;
    if (tempn < 0)

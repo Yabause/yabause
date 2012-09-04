@@ -263,14 +263,14 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
                // Pixel 1
                if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( (dot >> 4) == 0x0F &!END ) *texture->textdata++ = 0x00;
+               else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, alpha);
                j += 1;
 
                // Pixel 2
                if (((dot & 0xF) == 0) && !SPD) *texture->textdata++  = 0x00;
-               else if( (dot & 0xF) == 0x0F &!END ) *texture->textdata++ = 0x00;
+               else if( ((dot & 0xF) == 0x0F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, alpha);
                j += 1;
@@ -453,7 +453,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( dot==0xFF&!END ) *texture->textdata++ = 0x00;
+               else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
@@ -476,7 +476,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( dot == 0xFF & !END ) *texture->textdata++ = 0x00;
+               else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
@@ -499,7 +499,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( dot == 0xFF & !END ) *texture->textdata++ = 0x0;
+               else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x0;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
@@ -520,7 +520,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
                //if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
                if (!(dot & 0x8000) && !SPD) *texture->textdata++ = 0x00;
-               else if( dot == 0x7FFF & !END ) *texture->textdata++ = 0x0;
+               else if( (dot == 0x7FFF) && !END ) *texture->textdata++ = 0x0;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = SAT2YAB1(alpha, dot);
             }

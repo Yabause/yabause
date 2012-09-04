@@ -188,6 +188,9 @@ int Ygl_uniformVDP2DrawFramebuffer( float from, float to , float * offsetcol );
 
 void YglNeedToUpdateWindow();
 
+int YglProgramInit();
+int YglProgramChange( YglLevel * level, int prgid );
+
 #if 1  // Does anything need this?  It breaks a bunch of prototypes if
        // GLchar is typedef'd instead of #define'd  --AC
 #ifndef GLchar
