@@ -46,7 +46,7 @@ namespace Arguments
 	static Option availableOptions[] =
 	{
 		{ NULL,  "--autoframeskip=", "0|1", "Enable or disable auto frame skipping / limiting.",  2, autoframeskip },
-		{ NULL,  "--autoload", NULL,        "Automatically start emulation and load a save state.",1, autoload },
+		{ NULL,  "--autoload=", "<SAVESTATE>", "Automatically start emulation and load a save state.",1, autoload },
 		{ "-a",  "--autostart", NULL,       "Automatically start emulation.",                      1, autostart },
 		{ NULL,  "--binary=", "<FILE>[:ADDRESS]", "Use a binary file.",                           1, binary },
 		{ "-b",  "--bios=", "<BIOS>",       "Choose a bios file.",                                3, bios },
@@ -107,6 +107,10 @@ namespace Arguments
 
 	void autoload(const QString& param)
 	{
+		VolatileSettings * vs = QtYabause::volatileSettings();
+		vs->setValue("autostart", true);
+		vs->setValue("autostart/load", true);
+		vs->setValue("autostart/load/slot", param.toInt());
 	}
 
 	void autostart(const QString& param)
