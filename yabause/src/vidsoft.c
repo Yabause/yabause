@@ -1931,8 +1931,9 @@ static void putpixel8(int x, int y) {
 
     currentPixel &= 0xFF;
 
-    if(mesh && (x^y)&1)
+    if(mesh && (((x / 2) ^ (y / vdp1interlace)) & 1)) {
         return;
+    }
 
     if(currentShape == 4 || currentShape == 5 || currentShape == 6)
         isTextured = 0;
