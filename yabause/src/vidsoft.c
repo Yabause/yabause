@@ -1906,7 +1906,7 @@ static int getpixel(int linenumber, int currentlineindex) {
 		currentPixel = untexturedColor;
 
 	//force the MSB to be on if MSBON is set
-	currentPixel |= cmd.CMDPMOD & (1 << 15);
+	//currentPixel |= cmd.CMDPMOD & (1 << 15);
 
 	return 0;
 }
@@ -1989,6 +1989,17 @@ static void putpixel(int x, int y) {
 
 	if (cmd.CMDPMOD & 0x0400) PopUserClipping();
 
+	if ((cmd.CMDPMOD & (1 << 15)) && ((Vdp2Regs->SPCTL & 0x10) == 0))
+	{
+		if (currentPixel && *iPix) {
+			*iPix = (*iPix & 0x7BDE) >> 1;
+			return;
+		}
+		if (currentPixel) {
+			*iPix = 0x8000;
+			return;
+		}
+	}
 
 	if ( SPD || (currentPixel & currentPixelIsVisible))
 	{
