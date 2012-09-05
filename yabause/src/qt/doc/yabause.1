@@ -1,14 +1,19 @@
-.TH YABAUSE 1 "November 21, 2011" "yabause-0.9.11"
+.TH YABAUSE 1 "September 5, 2012" "yabause-0.9.12"
 .SH NAME
 yabause \- Yet Another Buggy And Uncomplete Saturn Emulator
 .SH SYNOPSIS
 .B yabause
 [ \fB\-afh\fP ] [ \fB\-b <BIOS>\fP | \fB\-nb\fP ] [ \fB\-i <ISO>\fP ]
+[ \fB\-\-autoload=<SLOT>\fP ]
+[ \fB\-\-autostart\fP ]
 [ \fB\-\-binary=<BINARY>[:<ADDRESS>]\fP ]
 .SH DESCRIPTION
 \fBYabause\fP is a Sega Saturn emulator. \fBYabause\fP needs either a bios file, a game or a binary to run.
 Games can be loaded from a real cd device or from dump files.
 .SH OPTIONS
+.TP
+.BI \-\-autoload
+Automatically start emulation and load a savestate.
 .TP
 .BI \-a
 .TP
@@ -33,7 +38,7 @@ Use the emulated bios.
 \fB<BIOS>\fR
 A Saturn ROM BIOS image.
 .SH AUTHORS
-Copyright (c) 2002-2011 Yabause Team
+Copyright (c) 2002-2012 Yabause Team
 
 Web:	http://yabause.org
 
