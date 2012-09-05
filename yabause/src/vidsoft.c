@@ -2725,7 +2725,7 @@ void VIDSoftVdp2DrawEnd(void)
 
    // Figure out whether to draw vdp1 framebuffer or vdp2 framebuffer pixels
    // based on priority
-   if (Vdp1External.disptoggle)
+   if (Vdp1External.disptoggle && (Vdp2Regs->TVMD & 0x8000))
    {
       int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
       int SPCCN = (Vdp2Regs->SPCTL >> 8) & 0x7;
