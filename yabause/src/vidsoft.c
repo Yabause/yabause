@@ -1991,12 +1991,8 @@ static void putpixel(int x, int y) {
 
 	if ((cmd.CMDPMOD & (1 << 15)) && ((Vdp2Regs->SPCTL & 0x10) == 0))
 	{
-		if (currentPixel && *iPix) {
-			*iPix = (*iPix & 0x7BDE) >> 1;
-			return;
-		}
 		if (currentPixel) {
-			*iPix = 0x8000;
+			*iPix |= 0x8000;
 			return;
 		}
 	}
@@ -2840,6 +2836,11 @@ void VIDSoftVdp2DrawEnd(void)
                         /* sprite window, not handled yet... we avoid displaying garbage */
                      } else {
                         /* msb shadow */
+                        if (pixel)
+                        {
+                            dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
+                            TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(0x3F, dot)), 0);
+                        }
                         TitanPutShadow(prioritytable[spi.priority], i, i2);
                      }
                      continue;
