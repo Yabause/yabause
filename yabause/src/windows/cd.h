@@ -31,8 +31,8 @@
 #define CDCORE_ASPI     3
 
 int SPTICDInit(const char *);
-void SPTICDDeInit();
-int SPTICDGetStatus();
+void SPTICDDeInit(void);
+int SPTICDGetStatus(void);
 s32 SPTICDReadTOC(u32 *);
 int SPTICDReadSectorFAD(u32, void *);
 void SPTICDReadAheadFAD(u32);
