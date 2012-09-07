@@ -26,6 +26,11 @@ else()
 	set(yabause_SOURCES ${yabause_SOURCES} scsp.c)
 endif()
 
+# disable strdup warning in MSVC
+if (MSVC)
+	add_definitions(/wd4996)
+endif ()
+
 # math library
 if (UNIX)
     set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "m")
@@ -251,7 +256,7 @@ if (YAB_WANT_C68K)
 	include_directories(${CMAKE_CURRENT_BINARY_DIR}/c68k)
 	set(yabause_SOURCES ${yabause_SOURCES} c68k/c68kexec.c c68k/c68k.c c68k/gen68k.c m68kc68k.c)
 	if (MSVC)
-		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "/Od")
+		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "/Od /wd4146")
 	else()
 		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "-O0")
 	endif()
