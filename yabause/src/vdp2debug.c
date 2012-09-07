@@ -512,7 +512,7 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
          else
          {
             AddString(outstring, "Pattern Name data size = 1 word\r\n");
-            AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 16));
+            AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 14) & 0x1);
             AddString(outstring, "Special Priority bit = %d\r\n", (supplementdata >> 9) & 0x1);
             AddString(outstring, "Special Color Calculation bit = %d\r\n", (supplementdata >> 8) & 0x1);
             AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
@@ -715,7 +715,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          else
          {
             AddString(outstring, "Pattern Name data size = 1 word\r\n");
-            AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 16));
+            AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 14) & 0x1);
             AddString(outstring, "Special Priority bit = %d\r\n", (supplementdata >> 9) & 0x1);
             AddString(outstring, "Special Color Calculation bit = %d\r\n", (supplementdata >> 8) & 0x1);
             AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
@@ -978,7 +978,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
          else
          {
             AddString(outstring, "Pattern Name data size = 1 word\r\n");
-            AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 16));
+            AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 14) & 0x1);
             AddString(outstring, "Special Priority bit = %d\r\n", (supplementdata >> 9) & 0x1);
             AddString(outstring, "Special Color Calculation bit = %d\r\n", (supplementdata >> 8) & 0x1);
             AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
@@ -1178,7 +1178,7 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
       else
       {
          AddString(outstring, "Pattern Name data size = 1 word\r\n");
-         AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 16));
+         AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 14) & 0x1);
          AddString(outstring, "Special Priority bit = %d\r\n", (supplementdata >> 9) & 0x1);
          AddString(outstring, "Special Color Calculation bit = %d\r\n", (supplementdata >> 8) & 0x1);
          AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
@@ -1316,7 +1316,7 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
       else
       {
          AddString(outstring, "Pattern Name data size = 1 word\r\n");
-         AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 16));
+         AddString(outstring, "Character Number Supplement bit = %d\r\n", (supplementdata >> 14) & 0x1);
          AddString(outstring, "Special Priority bit = %d\r\n", (supplementdata >> 9) & 0x1);
          AddString(outstring, "Special Color Calculation bit = %d\r\n", (supplementdata >> 8) & 0x1);
          AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
