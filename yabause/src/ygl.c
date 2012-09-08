@@ -66,6 +66,18 @@ void STDCALL * (*yglGetProcAddress)(const char *szProcName) = (void STDCALL *(*)
 
 #ifdef __APPLE__
 
+#ifndef HAVE_FBO
+#define glBindFramebuffer glBindFramebufferEXT
+#define glBindRenderbuffer glBindRenderbufferEXT
+#define glCheckFramebufferStatus glCheckFramebufferStatusEXT
+#define glDeleteRenderbuffers glDeleteRenderbuffersEXT
+#define glFramebufferRenderbuffer glFramebufferRenderbufferEXT
+#define glFramebufferTexture2D glFramebufferTexture2DEXT
+#define glGenFramebuffers glGenFramebuffersEXT
+#define glGenRenderbuffers glGenRenderbuffersEXT
+#define glRenderbufferStorage glRenderbufferStorageEXT
+#endif
+
 #else
 
 // extention function pointers

@@ -148,8 +148,13 @@ endif()
 if (APPLE)
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY NAMES CoreFoundation )
 	FIND_LIBRARY(IOKIT_LIBRARY NAMES IOKit )
-	set(yabause_SOURCES ${yabause_SOURCES} macjoy.c permacjoy.c cd-macosx.c)
+	set(yabause_SOURCES ${yabause_SOURCES} macjoy.c permacjoy.c cd-macosx.c sndmac.c)
 	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${COREFOUNDATION_LIBRARY} ${IOKIT_LIBRARY})
+
+	check_function_exists(glBindRenderbuffer HAVE_FBO)
+	if (HAVE_FBO)
+		add_definitions(-DHAVE_FBO=1)
+	endif()
 endif (APPLE)
 
 # Visual Studio
