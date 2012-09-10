@@ -1938,17 +1938,20 @@ static void putpixel8(int x, int y) {
     if(currentShape == 4 || currentShape == 5 || currentShape == 6)
         isTextured = 0;
 
-    if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
+    {
+        int clipped;
 
-    if (x >= vdp1clipxstart &&
-        x < vdp1clipxend &&
-        y >= vdp1clipystart &&
-        y < vdp1clipyend)
-    {}
-    else
-        return;
+        if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
 
-    if (cmd.CMDPMOD & 0x0400) PopUserClipping();
+        clipped = ! (x >= vdp1clipxstart &&
+            x < vdp1clipxend &&
+            y >= vdp1clipystart &&
+            y < vdp1clipyend);
+
+        if (cmd.CMDPMOD & 0x0400) PopUserClipping();
+
+        if (clipped) return;
+    }
 
     if ( SPD || (currentPixel & currentPixelIsVisible))
     {
@@ -1977,17 +1980,20 @@ static void putpixel(int x, int y) {
 	if(currentShape == 4 || currentShape == 5 || currentShape == 6)
 		isTextured = 0;
 
-	if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
+	{
+		int clipped;
 
-	if (x >= vdp1clipxstart &&
-		x < vdp1clipxend &&
-		y >= vdp1clipystart &&
-		y < vdp1clipyend)
-	{}
-	else
-		return;
+		if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
 
-	if (cmd.CMDPMOD & 0x0400) PopUserClipping();
+		clipped = ! (x >= vdp1clipxstart &&
+			x < vdp1clipxend &&
+			y >= vdp1clipystart &&
+			y < vdp1clipyend);
+
+		if (cmd.CMDPMOD & 0x0400) PopUserClipping();
+
+		if (clipped) return;
+	}
 
 	if ((cmd.CMDPMOD & (1 << 15)) && ((Vdp2Regs->SPCTL & 0x10) == 0))
 	{
