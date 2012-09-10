@@ -2897,6 +2897,11 @@ void VIDSoftVdp2DrawEnd(void)
                   u32 dot;
 
                   Vdp1GetSpritePixelInfo(vdp1spritetype, &pixel, &spi);
+                  if (spi.normalshadow)
+                  {
+                     TitanPutShadow(prioritytable[spi.priority], i, i2);
+                     continue;
+                  }
 
                   dot = Vdp2ColorRamGetColor(vdp1coloroffset + pixel);
 

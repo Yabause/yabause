@@ -911,7 +911,7 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
       {
          // Type C(1-bit special priority, 8-bit color data - bit 7 is shared)
          spi->priority = (*pixel >> 7) & 0x1;
-         spi->normalshadow = (*pixel == 0x7E);
+         spi->normalshadow = (*pixel == 0xFE);
          break;
       }
       case 0xD:
@@ -919,21 +919,21 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
          // Type D(1-bit special priority, 1-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
          spi->priority = (*pixel >> 7) & 0x1;
          spi->colorcalc = (*pixel >> 6) & 0x1;
-         spi->normalshadow = (*pixel == 0x3E);
+         spi->normalshadow = (*pixel == 0xFE);
          break;
       }
       case 0xE:
       {
          // Type E(2-bit special priority, 8-bit color data - bits 6 and 7 are shared)
          spi->priority = (*pixel >> 6) & 0x3;
-         spi->normalshadow = (*pixel == 0x3E);
+         spi->normalshadow = (*pixel == 0xFE);
          break;
       }
       case 0xF:
       {
          // Type F(2-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
          spi->colorcalc = (*pixel >> 6) & 0x3;
-         spi->normalshadow = (*pixel == 0x3E);
+         spi->normalshadow = (*pixel == 0xFE);
          break;
       }
       default: break;
