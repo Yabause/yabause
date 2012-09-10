@@ -25,6 +25,10 @@
 #include "memory.h"
 #include "yabause.h"
 
+#if defined(SH2_DYNAREC)
+#include "sh2_dynarec/sh2_dynarec.h"
+#endif
+
 SH2_struct *MSH2=NULL;
 SH2_struct *SSH2=NULL;
 SH2_struct *CurrentSH2;

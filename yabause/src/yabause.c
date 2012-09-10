@@ -71,6 +71,10 @@
  #include "profile.h"
 #endif
 
+#if defined(SH2_DYNAREC)
+#include "sh2_dynarec/sh2_dynarec.h"
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;

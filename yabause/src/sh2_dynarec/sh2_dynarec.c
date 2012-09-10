@@ -29,6 +29,7 @@
 #include "../memory.h"
 #include "../sh2core.h"
 #include "../yabause.h"
+#include "sh2_dynarec.h"
 
 #ifdef __i386__
 #include "assem_x86.h"
@@ -248,7 +249,7 @@ int tracedebug=0;
 
 //#define DEBUG_CYCLE_COUNT 1
 
-void nullf() {}
+void nullf(const char *format, ...) {}
 //#define assem_debug printf
 //#define inv_debug printf
 #define assem_debug nullf
