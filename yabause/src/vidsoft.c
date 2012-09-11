@@ -55,10 +55,10 @@ static INLINE u32 COLSATSTRIPPRIORITY(u32 pixel) { return (0xFF000000 | pixel); 
 #define COLOR_ADDt(b)		(b>0xFF?0xFF:(b<0?0:b))
 #define COLOR_ADDb(b1,b2)	COLOR_ADDt((signed) (b1) + (b2))
 #ifdef WORDS_BIGENDIAN
-#define COLOR_ADD(l,r,g,b)      (COLOR_ADDb(l & 0xFF, r) << 24) | \
-                                (COLOR_ADDb((l >> 8) & 0xFF, g) << 16) | \
-                                (COLOR_ADDb((l >> 16) & 0xFF, b) << 8) | \
-                                ((l >> 24) & 0xFF)
+#define COLOR_ADD(l,r,g,b)      (l & 0xFF) | \
+                                (COLOR_ADDb((l >> 8) & 0xFF, b) << 8) | \
+                                (COLOR_ADDb((l >> 16) & 0xFF, g) << 16) | \
+                                (COLOR_ADDb((l >> 24), r) << 24)
 #else
 #define COLOR_ADD(l,r,g,b)	COLOR_ADDb((l & 0xFF), r) | \
                                 (COLOR_ADDb((l >> 8) & 0xFF, g) << 8) | \
@@ -782,7 +782,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
             else
                alpha = GetAlpha(info, color);
 
-            TitanPutPixel(info->priority, i, j, COLSAT2YAB32(alpha, info->PostPixelFetchCalc(info, color)), info->linescreen);
+            TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(alpha, color)), info->linescreen);
          }
       }
    }    
@@ -861,7 +861,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                   continue;
                }
 
-               TitanPutPixel(info->priority, i, j, COLSAT2YAB32(GetAlpha(info, color), info->PostPixelFetchCalc(info, color)), info->linescreen);
+               TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color), color)), info->linescreen);
             }
             xmul += p->deltaXst;
             ymul += p->deltaYst;
@@ -957,7 +957,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                continue;
             }
 
-            TitanPutPixel(info->priority, i, j, COLSAT2YAB32(GetAlpha(info, color), info->PostPixelFetchCalc(info, color)), info->linescreen);
+            TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color), color)), info->linescreen);
          }
          xmul += p->deltaXst;
          ymul += p->deltaYst;
