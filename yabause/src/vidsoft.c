@@ -439,20 +439,30 @@ static INLINE int TestWindow(int wctl, int enablemask, int inoutmask, clipping_s
 		 if(clip->yend > vdp2height && (x >= clip->xstart && x <= clip->xend ))
 			 return 0;
       }
+      return 1; // return inactive;
    }
-   return 1;
+   return 3; // return disabled | inactive;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static INLINE int TestBothWindow(int wctl, clipping_struct *clip, int x, int y)
 {
+    int w0 = TestWindow(wctl, 0x2, 0x1, &clip[0], x, y);
+    int w1 = TestWindow(wctl, 0x8, 0x4, &clip[1], x, y);
+
+    /* if window 0 is disabled, return window 1 */
+    if (w0 & 2) return w1 & 1;
+    /* if window 1 is disabled, return window 0 */
+    if (w1 & 2) return w0 & 1;
+
+    /* if both windows are active */
     if ((wctl & 0x80) == 0x80)
         /* AND logic, returns 0 only if both the windows are active */
-        return TestWindow(wctl, 0x2, 0x1, &clip[0], x, y) || TestWindow(wctl, 0x8, 0x4, &clip[1], x, y);
+        return w0 || w1;
     else
         /* OR logic, returns 0 if one of the windows is active */
-        return TestWindow(wctl, 0x2, 0x1, &clip[0], x, y) && TestWindow(wctl, 0x8, 0x4, &clip[1], x, y);
+        return w0 && w1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
