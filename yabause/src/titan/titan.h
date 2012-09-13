@@ -24,6 +24,7 @@
 
 #define TITAN_BLEND_TOP     0
 #define TITAN_BLEND_BOTTOM  1
+#define TITAN_BLEND_ADD     2
 
 int TitanInit();
 int TitanDeInit();

@@ -2948,7 +2948,12 @@ void VIDSoftVdp2DrawEnd(void)
          }
       }
    }
-   TitanRender(dispbuffer, Vdp2Regs->CCCTL & 0x200 ? TITAN_BLEND_BOTTOM : TITAN_BLEND_TOP);
+   {
+      int titanblendmode = TITAN_BLEND_TOP;
+      if (Vdp2Regs->CCCTL & 0x100) titanblendmode = TITAN_BLEND_ADD;
+      else if (Vdp2Regs->CCCTL & 0x200) titanblendmode = TITAN_BLEND_BOTTOM;
+      TitanRender(dispbuffer, titanblendmode);
+   }
 
    VIDSoftVdp1SwapFrameBuffer();
 

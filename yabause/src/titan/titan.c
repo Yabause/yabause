@@ -95,6 +95,22 @@ static u32 TitanBlendPixelsBottom(u32 top, u32 bottom)
    return TitanCreatePixel(TitanGetAlpha(top), tr + br, tg + bg, tb + bb);
 }
 
+static u32 TitanBlendPixelsAdd(u32 top, u32 bottom)
+{
+   u32 r, g, b;
+
+   r = TitanGetRed(top) + TitanGetRed(bottom);
+   if (r > 0xFF) r = 0xFF;
+
+   g = TitanGetGreen(top) + TitanGetGreen(bottom);
+   if (g > 0xFF) g = 0xFF;
+
+   b = TitanGetBlue(top) + TitanGetBlue(bottom);
+   if (b > 0xFF) b = 0xFF;
+
+   return TitanCreatePixel(0x3F, r, g, b);
+}
+
 static u32 TitanDigPixel(int * priority, int pos)
 {
    u32 pixel = 0;
@@ -236,6 +252,8 @@ void TitanRender(u32 * dispbuffer, int blend_mode)
 
    if (blend_mode == TITAN_BLEND_BOTTOM)
       tt_context.blend = TitanBlendPixelsBottom;
+   else if (blend_mode == TITAN_BLEND_ADD)
+      tt_context.blend = TitanBlendPixelsAdd;
    else
       tt_context.blend = TitanBlendPixelsTop;
 
