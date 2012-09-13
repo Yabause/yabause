@@ -29,6 +29,7 @@ int TitanInit();
 int TitanDeInit();
 
 void TitanSetResolution(int width, int height);
+void TitanGetResolution(int * width, int * height);
 
 void TitanPutBackHLine(s32 y, u32 color);
 

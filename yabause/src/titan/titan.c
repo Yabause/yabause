@@ -167,6 +167,12 @@ void TitanSetResolution(int width, int height)
    tt_context.vdp2height = height;
 }
 
+void TitanGetResolution(int * width, int * height)
+{
+   *width = tt_context.vdp2width;
+   *height = tt_context.vdp2height;
+}
+
 void TitanPutBackHLine(s32 y, u32 color)
 {
    u32 * buffer = tt_context.vdp2framebuffer[0] + (y * tt_context.vdp2width);

@@ -1662,7 +1662,7 @@ u32 *Vdp2DebugTexture(u32 screen, int * w, int * h)
    if ((bitmap = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
       return NULL;
 
-   VIDCore->GetGlSize(w, h);
+   TitanGetResolution(w, h);
 
    TitanRender(bitmap, Vdp2Regs->CCCTL & 0x200 ? TITAN_BLEND_BOTTOM : TITAN_BLEND_TOP);
 
