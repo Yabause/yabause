@@ -2976,6 +2976,9 @@ void VIDGCDVdp2DrawEnd(void)
 
    VIDGCDVdp1SwapFrameBuffer();
 
+   if (OSDUseBuffer())
+      OSDDisplayMessages(dispbuffer, vdp2width, vdp2height);
+
 #ifdef USE_OPENGL
    glRasterPos2i(0, 0);
    glPixelZoom((float)outputwidth / (float)vdp2width, 0 - ((float)outputheight / (float)vdp2height));
@@ -2986,8 +2989,9 @@ void VIDGCDVdp2DrawEnd(void)
     glDrawPixels(vdp2width, vdp2height, GL_RGBA, GL_UNSIGNED_BYTE, vdp2framebuffer);
 #endif
 
+   if (! OSDUseBuffer())
+      OSDDisplayMessages(NULL, -1, -1);
 #endif
-   OSDDisplayMessages();
 
    YuiSwapBuffers();
 }

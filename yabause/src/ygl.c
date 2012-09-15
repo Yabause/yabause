@@ -1723,7 +1723,7 @@ void YglRender(void) {
    glDisable(GL_TEXTURE_2D);
    glUseProgram(0);
 
-   OSDDisplayMessages();
+   OSDDisplayMessages(NULL, -1, -1);
 
    YuiSwapBuffers();
 

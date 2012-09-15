@@ -19,6 +19,7 @@
 
 #include "osdcore.h"
 #include "vdp1.h"
+#include "font.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -40,6 +41,7 @@ OSD_struct *OSDCoreList[] = {
 #ifdef HAVE_LIBGLUT
 &OSDGlut,
 #endif
+&OSDSoft,
 NULL
 };
 #else
@@ -105,7 +107,7 @@ void OSDPushMessage(int msgtype, int ttl, const char * format, ...)
    osdmessages[msgtype].timeleft = ttl;
 }
 
-void OSDDisplayMessages(void)
+void OSDDisplayMessages(u32 * buffer, int w, int h)
 {
    int i = 0;
 
@@ -115,7 +117,7 @@ void OSDDisplayMessages(void)
       if (osdmessages[i].timeleft > 0)
       {
          if (osdmessages[i].hidden == 0)
-            OSD->DisplayMessage(osdmessages + i);
+            OSD->DisplayMessage(osdmessages + i, buffer, w, h);
          osdmessages[i].timeleft--;
          if (osdmessages[i].timeleft == 0) free(osdmessages[i].message);
       }
@@ -143,6 +145,13 @@ void OSDSetVisible(int what, int visible)
    osdmessages[what].hidden = 1 - visible;
 }
 
+int OSDUseBuffer(void)
+{
+   if (OSD == NULL) return 0;
+
+   return OSD->UseBuffer();
+}
+
 void ToggleFPS()
 {
    OSDToggle(OSDMSG_FPS);
@@ -166,7 +175,8 @@ void DisplayMessage(const char* str)
 static int OSDDummyInit(void);
 static void OSDDummyDeInit(void);
 static void OSDDummyReset(void);
-static void OSDDummyDisplayMessage(OSDMessage_struct * message);
+static void OSDDummyDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h);
+static int OSDDummyUseBuffer(void);
 
 OSD_struct OSDDummy = {
     OSDCORE_DUMMY,
@@ -174,7 +184,8 @@ OSD_struct OSDDummy = {
     OSDDummyInit,
     OSDDummyDeInit,
     OSDDummyReset,
-    OSDDummyDisplayMessage
+    OSDDummyDisplayMessage,
+    OSDDummyUseBuffer,
 };
 
 int OSDDummyInit(void)
@@ -190,8 +201,13 @@ void OSDDummyReset(void)
 {
 }
 
-void OSDDummyDisplayMessage(OSDMessage_struct * message)
+void OSDDummyDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h)
 {
+}
+
+int OSDDummyUseBuffer(void)
+{
+   return 0;
 }
 
 #ifdef HAVE_LIBGLUT
@@ -204,7 +220,8 @@ void OSDDummyDisplayMessage(OSDMessage_struct * message)
 static int OSDGlutInit(void);
 static void OSDGlutDeInit(void);
 static void OSDGlutReset(void);
-static void OSDGlutDisplayMessage(OSDMessage_struct * message);
+static void OSDGlutDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h);
+static int OSDGlutUseBuffer(void);
 
 OSD_struct OSDGlut = {
     OSDCORE_GLUT,
@@ -212,7 +229,8 @@ OSD_struct OSDGlut = {
     OSDGlutInit,
     OSDGlutDeInit,
     OSDGlutReset,
-    OSDGlutDisplayMessage
+    OSDGlutDisplayMessage,
+    OSDGlutUseBuffer
 };
 
 int OSDGlutInit(void)
@@ -239,7 +257,7 @@ void OSDGlutReset(void)
 {
 }
 
-void OSDGlutDisplayMessage(OSDMessage_struct * message)
+void OSDGlutDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h)
 {
    int LeftX=9;
    int Width=500;
@@ -274,4 +292,76 @@ void OSDGlutDisplayMessage(OSDMessage_struct * message)
    }
    glColor3f(1, 1, 1);
 }
+
+int OSDGlutUseBuffer(void)
+{
+   return 0;
+}
 #endif
+
+static int OSDSoftInit(void);
+static void OSDSoftDeInit(void);
+static void OSDSoftReset(void);
+static void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h);
+static int OSDSoftUseBuffer(void);
+
+OSD_struct OSDSoft = {
+    OSDCORE_SOFT,
+    "Software OSD Interface",
+    OSDSoftInit,
+    OSDSoftDeInit,
+    OSDSoftReset,
+    OSDSoftDisplayMessage,
+    OSDSoftUseBuffer
+};
+
+int OSDSoftInit(void)
+{
+   return 0;
+}
+
+void OSDSoftDeInit(void)
+{
+}
+
+void OSDSoftReset(void)
+{
+}
+
+void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h)
+{
+   int i, j;
+   u32 * dot;
+   char * c;
+
+   if (buffer == NULL) return;
+
+   c = message->message;
+   i = 0;
+   while(*c)
+   {
+      if (*c >= 47)
+      {
+         int first_line, l, p;
+         first_line = *c * 8;
+         for(l = 0;l < 8;l++)
+         {
+            for(p = 0;p < 8;p++)
+            {
+               if (font[first_line + l][p] == '#')
+               {
+                  dot = buffer + 20 + ((l + 20) * w) + (i * 8) + p;
+                  *dot = 0xFFFFFFFF;
+               }
+            }
+         }
+      }
+      c++;
+      i++;
+   }
+}
+
+int OSDSoftUseBuffer(void)
+{
+   return 1;
+}

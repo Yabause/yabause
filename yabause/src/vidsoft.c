@@ -2957,13 +2957,17 @@ void VIDSoftVdp2DrawEnd(void)
 
    VIDSoftVdp1SwapFrameBuffer();
 
+   if (OSDUseBuffer())
+      OSDDisplayMessages(dispbuffer, vdp2width, vdp2height);
+
 #ifdef USE_OPENGL
    glRasterPos2i(0, 0);
    glPixelZoom((float)outputwidth / (float)vdp2width, 0 - ((float)outputheight / (float)vdp2height));
    glDrawPixels(vdp2width, vdp2height, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
-#endif
 
-   OSDDisplayMessages();
+   if (! OSDUseBuffer())
+      OSDDisplayMessages(NULL, -1, -1);
+#endif
 
    YuiSwapBuffers();
 
