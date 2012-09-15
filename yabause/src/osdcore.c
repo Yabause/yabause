@@ -84,8 +84,15 @@ void OSDDeInit() {
 
 int OSDChangeCore(int coreid)
 {
+   int preservefps, fpshidden;
+
+   preservefps = (OSD != NULL);
+   fpshidden = osdmessages[OSDMSG_FPS].hidden;
+
    OSDDeInit();
    OSDInit(coreid);
+
+   if (preservefps) osdmessages[OSDMSG_FPS].hidden = fpshidden;
 
    return 0;
 }

@@ -232,7 +232,7 @@ int YabauseInit(yabauseinit_struct *init)
    if (init->frameskip)
       EnableAutoFrameSkip();
 
-   OSDInit(OSDCORE_DEFAULT);
+   OSDChangeCore(OSDCORE_DEFAULT);
 
    if (init->biospath != NULL && strlen(init->biospath))
    {
