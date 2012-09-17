@@ -537,6 +537,30 @@ int YglGLInit(int width, int height) {
       printf("YglGLInit:Framebuffer status = %08X\n", status );
    }  
 
+   // Message Layer
+   _Ygl->msgwidth =800;
+   _Ygl->msgheight=480;
+   if( _Ygl->messagebuf == NULL )
+   {
+      _Ygl->messagebuf = malloc(sizeof(u32)*_Ygl->msgwidth*_Ygl->msgheight);
+      if( NULL == _Ygl->messagebuf )
+      {
+         printf("YglGLInit:Fail to malloc _Ygl->messagebuf\n");
+      }
+   }
+   memset( _Ygl->messagebuf,0,sizeof(u32)*_Ygl->msgwidth*_Ygl->msgheight);
+
+   if( _Ygl->msgtexture == 0 )
+   {
+      glGenTextures(1, &_Ygl->msgtexture);
+   }
+   glBindTexture(GL_TEXTURE_2D, _Ygl->msgtexture);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->msgwidth,_Ygl->msgheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
    glBindFramebuffer(GL_FRAMEBUFFER, 0 );
    glBindTexture(GL_TEXTURE_2D,_Ygl->texture);
    
@@ -787,6 +811,8 @@ void YglDeInit(void) {
          }
          free(_Ygl->levels);
       }
+
+      free(_Ygl->messagebuf);
 
       free(_Ygl);
    }
@@ -1718,12 +1744,39 @@ void YglRender(void) {
       YglRenderFrameBuffer(from,8);
    }
 
+   if (OSDUseBuffer())
+   {
+      int vertices [] = { 0, 0, 320, 0, 320, 224, 0, 224 };
+      int text [] = { 0, 0, 320, 0, 320, 224, 0, 224 };
 
+      // render
+      text[2] = _Ygl->msgwidth;
+      text[4] = _Ygl->msgwidth;
+      text[5] = _Ygl->msgheight;
+      text[7] = _Ygl->msgheight;
 
-   glDisable(GL_TEXTURE_2D);
-   glUseProgram(0);
+      glUseProgram(0);
 
-   OSDDisplayMessages(NULL, -1, -1);
+      memset( _Ygl->messagebuf,0, sizeof(u32)*_Ygl->msgwidth * _Ygl->msgheight );
+      OSDDisplayMessages(_Ygl->messagebuf, _Ygl->msgwidth,_Ygl->msgheight);
+
+      glBindTexture(GL_TEXTURE_2D, _Ygl->msgtexture);
+      glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, _Ygl->msgwidth,_Ygl->msgheight, GL_RGBA, GL_UNSIGNED_BYTE, _Ygl->messagebuf );
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glVertexPointer(2, GL_INT, 0, vertices);
+      glTexCoordPointer(2, GL_INT, 0, text);
+      glDrawArrays(GL_QUADS, 0, 4);
+
+      glDisable(GL_TEXTURE_2D);
+   }
+   else
+   {
+      glDisable(GL_TEXTURE_2D);
+      glUseProgram(0);
+
+      OSDDisplayMessages(NULL, -1, -1);
+   }
 
    YuiSwapBuffers();
 

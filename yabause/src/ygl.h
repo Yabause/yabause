@@ -146,8 +146,14 @@ typedef struct {
    int drawframe;
    GLuint rboid;
    GLuint vdp1fbo;
-   GLuint vdp1FrameBuff[2];  
-   
+   GLuint vdp1FrameBuff[2];
+
+   // Message Layer
+   int msgwidth;
+   int msgheight;
+   GLuint msgtexture;
+   u32 * messagebuf;
+
    int bUpdateWindow;
    int win0v[512*4];
    int win0_vertexcnt;
