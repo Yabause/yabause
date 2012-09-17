@@ -114,9 +114,10 @@ void OSDPushMessage(int msgtype, int ttl, const char * format, ...)
    osdmessages[msgtype].timeleft = ttl;
 }
 
-void OSDDisplayMessages(u32 * buffer, int w, int h)
+int OSDDisplayMessages(u32 * buffer, int w, int h)
 {
    int i = 0;
+   int somethingnew = 0;
 
    if (OSD == NULL) return;
 
@@ -124,10 +125,15 @@ void OSDDisplayMessages(u32 * buffer, int w, int h)
       if (osdmessages[i].timeleft > 0)
       {
          if (osdmessages[i].hidden == 0)
+         {
+            somethingnew = 1;
             OSD->DisplayMessage(osdmessages + i, buffer, w, h);
+         }
          osdmessages[i].timeleft--;
          if (osdmessages[i].timeleft == 0) free(osdmessages[i].message);
       }
+
+   return somethingnew;
 }
 
 void OSDToggle(int what)

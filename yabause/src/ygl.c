@@ -1758,15 +1758,16 @@ void YglRender(void) {
       glUseProgram(0);
 
       memset( _Ygl->messagebuf,0, sizeof(u32)*_Ygl->msgwidth * _Ygl->msgheight );
-      OSDDisplayMessages(_Ygl->messagebuf, _Ygl->msgwidth,_Ygl->msgheight);
-
-      glBindTexture(GL_TEXTURE_2D, _Ygl->msgtexture);
-      glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, _Ygl->msgwidth,_Ygl->msgheight, GL_RGBA, GL_UNSIGNED_BYTE, _Ygl->messagebuf );
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-      glVertexPointer(2, GL_INT, 0, vertices);
-      glTexCoordPointer(2, GL_INT, 0, text);
-      glDrawArrays(GL_QUADS, 0, 4);
+      if (OSDDisplayMessages(_Ygl->messagebuf, _Ygl->msgwidth,_Ygl->msgheight))
+      {
+         glBindTexture(GL_TEXTURE_2D, _Ygl->msgtexture);
+         glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, _Ygl->msgwidth,_Ygl->msgheight, GL_RGBA, GL_UNSIGNED_BYTE, _Ygl->messagebuf );
+         glMatrixMode(GL_MODELVIEW);
+         glLoadIdentity();
+         glVertexPointer(2, GL_INT, 0, vertices);
+         glTexCoordPointer(2, GL_INT, 0, text);
+         glDrawArrays(GL_QUADS, 0, 4);
+      }
 
       glDisable(GL_TEXTURE_2D);
    }

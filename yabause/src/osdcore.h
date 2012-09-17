@@ -60,7 +60,7 @@ int OSDInit(int coreid);
 int OSDChangeCore(int coreid);
 
 void OSDPushMessage(int msgtype, int ttl, const char * message, ...);
-void OSDDisplayMessages(u32 * buffer, int w, int h);
+int  OSDDisplayMessages(u32 * buffer, int w, int h);
 void OSDToggle(int what);
 int  OSDIsVisible(int what);
 void OSDSetVisible(int what, int visible);
