@@ -807,7 +807,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
    screeninfo_struct sinfo;
    vdp2rotationparameterfp_struct *p=&parameter[info->rotatenum];
 
-   Vdp2ReadRotationTableFP(info->rotatenum, p + info->rotatenum);
+   Vdp2ReadRotationTableFP(info->rotatenum, p);
 
    if (!p->coefenab)
    {
@@ -893,7 +893,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
       if (p2 != NULL)
       {
-         Vdp2ReadRotationTableFP(1 - info->rotatenum, p + (1 - info->rotatenum));
+         Vdp2ReadRotationTableFP(1 - info->rotatenum, p2);
          GenerateRotatedVarFP(p2, &xmul2, &ymul2, &C2, &F2);
          CalculateRotationValuesFP(p2);
          SetupScreenVars(info, &sinfo2, p2->PlaneAddr);
@@ -924,7 +924,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                                   (coefy + touint(rcoefy)) *
                                   p->coefdatasize);
          }
-         if ((p2 != NULL) && (p2->deltaKAx == 0))
+         if ((p2 != NULL) && p2->coefenab && (p2->deltaKAx == 0))
          {
             Vdp2ReadCoefficientFP(p2,
                                   p2->coeftbladdr +
@@ -955,7 +955,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                coefx += toint(p->deltaKAx);
                rcoefx += decipart(p->deltaKAx);
             }
-            if ((p2 != NULL) && (p2->deltaKAx != 0))
+            if ((p2 != NULL) && p2->coefenab && (p2->deltaKAx != 0))
             {
                Vdp2ReadCoefficientFP(p2,
                                      p2->coeftbladdr +
@@ -967,7 +967,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
             if (p->msb)
             {
-               if ((p2 == NULL) || (p2->msb)) continue;
+               if ((p2 == NULL) || (p2->coefenab && p2->msb)) continue;
 
                x = GenerateRotatedXPosFP(p2, i, xmul2, ymul2, C2) & sinfo2.xmask;
                y = GenerateRotatedYPosFP(p2, i, xmul2, ymul2, F2) & sinfo2.ymask;
@@ -1011,10 +1011,13 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          {
             xmul2 += p2->deltaXst;
             ymul2 += p2->deltaYst;
-            coefx2 = 0;
-            rcoefx2 = 0;
-            coefy2 += toint(p2->deltaKAst);
-            rcoefy2 += decipart(p2->deltaKAst);
+            if (p2->coefenab)
+            {
+               coefx2 = 0;
+               rcoefx2 = 0;
+               coefy2 += toint(p2->deltaKAst);
+               rcoefy2 += decipart(p2->deltaKAst);
+            }
          }
       }
       return;
