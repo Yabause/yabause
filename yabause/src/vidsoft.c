@@ -467,13 +467,13 @@ static INLINE int TestBothWindow(int wctl, clipping_struct *clip, int x, int y)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void GeneratePlaneAddrTable(vdp2draw_struct *info, u32 *planetbl)
+static INLINE void GeneratePlaneAddrTable(vdp2draw_struct *info, u32 *planetbl, void FASTCALL (* PlaneAddr)(void *, int))
 {
    int i;
 
    for (i = 0; i < (info->mapwh*info->mapwh); i++)
    {
-      info->PlaneAddr(info, i);
+      PlaneAddr(info, i);
       planetbl[i] = info->addr;
    }
 }
@@ -580,7 +580,7 @@ static INLINE void FASTCALL Vdp2MapCalcXY(vdp2draw_struct *info, int *x, int *y,
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void SetupScreenVars(vdp2draw_struct *info, screeninfo_struct *sinfo)
+static INLINE void SetupScreenVars(vdp2draw_struct *info, screeninfo_struct *sinfo, void FASTCALL (* PlaneAddr)(void *, int))
 {
    if (!info->isbitmap)
    {
@@ -603,7 +603,7 @@ static INLINE void SetupScreenVars(vdp2draw_struct *info, screeninfo_struct *sin
       sinfo->oldcellcheck=-1;
       sinfo->xmask = sinfo->screenwidth-1;
       sinfo->ymask = sinfo->screenheight-1;
-      GeneratePlaneAddrTable(info, sinfo->planetbl);
+      GeneratePlaneAddrTable(info, sinfo->planetbl, PlaneAddr);
    }
    else
    {
@@ -661,7 +661,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
    info->coordincx *= (float)resxratio;
    info->coordincy *= (float)resyratio;
 
-   SetupScreenVars(info, &sinfo);
+   SetupScreenVars(info, &sinfo, info->PlaneAddr);
 
    scrollx = info->x;
    scrolly = info->y;
@@ -800,22 +800,6 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void SetupRotationInfo(vdp2draw_struct *info, vdp2rotationparameterfp_struct *p)
-{
-   if (info->rotatenum == 0)
-   {
-      Vdp2ReadRotationTableFP(0, p);
-      info->PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
-   }
-   else
-   {
-      Vdp2ReadRotationTableFP(1, &p[1]);
-      info->PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparameterfp_struct *parameter)
 {
    int i, j;
@@ -823,7 +807,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
    screeninfo_struct sinfo;
    vdp2rotationparameterfp_struct *p=&parameter[info->rotatenum];
 
-   SetupRotationInfo(info, parameter);
+   Vdp2ReadRotationTableFP(info->rotatenum, p + info->rotatenum);
 
    if (!p->coefenab)
    {
@@ -845,7 +829,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          // Do simple rotation
          CalculateRotationValuesFP(p);
 
-         SetupScreenVars(info, &sinfo);
+         SetupScreenVars(info, &sinfo, info->PlaneAddr);
 
          for (j = 0; j < vdp2height; j++)
          {
@@ -888,15 +872,34 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
       u32 lineAddr, lineColor, lineInc;
       u16 lineColorAddr;
 
+      fixed32 xmul2, ymul2, C2, F2;
+      u32 coefx2, coefy2;
+      u32 rcoefx2, rcoefy2;
+      screeninfo_struct sinfo2;
+      vdp2rotationparameterfp_struct *p2 = NULL;
+
+      if ((Vdp2Regs->RPMD & 3) == 2)
+         p2 = &parameter[1 - info->rotatenum];
+
       GenerateRotatedVarFP(p, &xmul, &ymul, &C, &F);
 
       // Rotation using Coefficient Tables(now this stuff just gets wacky. It
       // has to be done in software, no exceptions)
       CalculateRotationValuesFP(p);
 
-      SetupScreenVars(info, &sinfo);
+      SetupScreenVars(info, &sinfo, p->PlaneAddr);
       coefx = coefy = 0;
       rcoefx = rcoefy = 0;
+
+      if (p2 != NULL)
+      {
+         Vdp2ReadRotationTableFP(1 - info->rotatenum, p + (1 - info->rotatenum));
+         GenerateRotatedVarFP(p2, &xmul2, &ymul2, &C2, &F2);
+         CalculateRotationValuesFP(p2);
+         SetupScreenVars(info, &sinfo2, p2->PlaneAddr);
+         coefx2 = coefy2 = 0;
+         rcoefx2 = rcoefy2 = 0;
+      }
 
       if (info->linescreen)
       {
@@ -920,6 +923,13 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                                   p->coeftbladdr +
                                   (coefy + touint(rcoefy)) *
                                   p->coefdatasize);
+         }
+         if ((p2 != NULL) && (p2->deltaKAx == 0))
+         {
+            Vdp2ReadCoefficientFP(p2,
+                                  p2->coeftbladdr +
+                                  (coefy2 + touint(rcoefy2)) *
+                                  p2->coefdatasize);
          }
 
          if (info->linescreen > 1)
@@ -945,20 +955,41 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                coefx += toint(p->deltaKAx);
                rcoefx += decipart(p->deltaKAx);
             }
+            if ((p2 != NULL) && (p2->deltaKAx != 0))
+            {
+               Vdp2ReadCoefficientFP(p2,
+                                     p2->coeftbladdr +
+                                     (coefy2 + coefx2 + toint(rcoefx2 + rcoefy2)) *
+                                     p2->coefdatasize);
+               coefx2 += toint(p2->deltaKAx);
+               rcoefx2 += decipart(p2->deltaKAx);
+            }
 
             if (p->msb)
             {
-               continue;
+               if ((p2 == NULL) || (p2->msb)) continue;
+
+               x = GenerateRotatedXPosFP(p2, i, xmul2, ymul2, C2) & sinfo2.xmask;
+               y = GenerateRotatedYPosFP(p2, i, xmul2, ymul2, F2) & sinfo2.ymask;
+
+               // Convert coordinates into graphics
+               if (!info->isbitmap)
+               {
+                  // Tile
+                  Vdp2MapCalcXY(info, &x, &y, &sinfo2);
+               }
             }
-
-            x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
-            y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
-
-            // Convert coordinates into graphics
-            if (!info->isbitmap)
+            else
             {
-               // Tile
-               Vdp2MapCalcXY(info, &x, &y, &sinfo);
+               x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
+               y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
+
+               // Convert coordinates into graphics
+               if (!info->isbitmap)
+               {
+                  // Tile
+                  Vdp2MapCalcXY(info, &x, &y, &sinfo);
+               }
             }
 
             // Fetch pixel
@@ -975,6 +1006,16 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          rcoefx = 0;
          coefy += toint(p->deltaKAst);
          rcoefy += decipart(p->deltaKAst);
+
+         if (p2 != NULL)
+         {
+            xmul2 += p2->deltaXst;
+            ymul2 += p2->deltaYst;
+            coefx2 = 0;
+            rcoefx2 = 0;
+            coefy2 += toint(p2->deltaKAst);
+            rcoefy2 += decipart(p2->deltaKAst);
+         }
       }
       return;
    }
@@ -1086,6 +1127,9 @@ static void Vdp2DrawNBG0(void)
 {
    vdp2draw_struct info;
    vdp2rotationparameterfp_struct parameter[2];
+
+   parameter[0].PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+   parameter[1].PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
 
    if (Vdp2Regs->BGON & 0x20)
    {
@@ -1460,6 +1504,9 @@ static void Vdp2DrawRBG0(void)
 {
    vdp2draw_struct info;
    vdp2rotationparameterfp_struct parameter[2];
+
+   parameter[0].PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+   parameter[1].PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
 
    info.enable = Vdp2Regs->BGON & 0x10;
    info.priority = rbg0priority;

@@ -225,6 +225,8 @@ typedef struct
    int screenover;
    int msb;
    int linescreen;
+
+   void FASTCALL (* PlaneAddr)(void *, int);
 } vdp2rotationparameterfp_struct;
 
 typedef struct
