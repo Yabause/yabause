@@ -346,8 +346,16 @@ void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int
    int i, j;
    u32 * dot;
    char * c;
+   int loffset = 0;
 
    if (buffer == NULL) return;
+
+   switch (message->type)
+   {
+      case OSDMSG_STATUS:
+         loffset = h - 48;
+         break;
+   }
 
    c = message->message;
    i = 0;
@@ -363,7 +371,7 @@ void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int
             {
                if (font[first_line + l][p] == '#')
                {
-                  dot = buffer + 20 + ((l + 20) * w) + (i * 8) + p;
+                  dot = buffer + 20 + ((loffset + l + 20) * w) + (i * 8) + p;
                   *dot = 0xFFFFFFFF;
                }
             }
