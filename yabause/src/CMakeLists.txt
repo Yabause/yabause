@@ -303,6 +303,11 @@ if (YAB_PERKEYNAME)
 	add_definitions(-DPERKEYNAME=1)
 endif()
 
+option(YAB_PORT_OSD "Let ports provides their own OSD core list" OFF)
+if (YAB_PORT_OSD)
+	add_definitions(-DYAB_PORT_OSD=1)
+endif()
+
 # Exec from cache
 option(YAB_EXEC_FROM_CACHE "Allow code execution from 0xC0000000" OFF)
 if (YAB_EXEC_FROM_CACHE)

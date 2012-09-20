@@ -232,7 +232,11 @@ int YabauseInit(yabauseinit_struct *init)
    if (init->frameskip)
       EnableAutoFrameSkip();
 
+#ifdef YAB_PORT_OSD
+   OSDChangeCore(init->osdcoretype);
+#else
    OSDChangeCore(OSDCORE_DEFAULT);
+#endif
 
    if (init->biospath != NULL && strlen(init->biospath))
    {
