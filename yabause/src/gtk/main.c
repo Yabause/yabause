@@ -117,6 +117,17 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
+#ifdef YAB_PORT_OSD
+OSD_struct *OSDCoreList[] = {
+&OSDDummy,
+#ifdef HAVE_LIBGLUT
+&OSDGlut,
+#endif
+&OSDSoft,
+NULL
+};
+#endif
+
 GtkWidget * yui;
 GKeyFile * keyfile;
 yabauseinit_struct yinit;
@@ -153,6 +164,7 @@ static void yui_settings_init(void) {
 	yinit.mpegpath = mpegpath;
 	yinit.cartpath = cartpath;
         yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
+	yinit.osdcoretype = OSDCORE_DEFAULT;
 }
 
 gchar * inifile;
@@ -299,6 +311,13 @@ static gboolean yui_settings_load(void) {
 			GTK_WIDGET(YUI_WINDOW(yui)->area)->allocation.width,
 			GTK_WIDGET(YUI_WINDOW(yui)->area)->allocation.height,
 			FALSE);
+	}
+
+	/* osd core */
+	tmp = yinit.osdcoretype;
+	yinit.osdcoretype = g_key_file_get_integer(keyfile, "General", "OSDCore", 0);
+	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.osdcoretype)) {
+		OSDChangeCore(yinit.osdcoretype);
 	}
 
 	/* sound core */

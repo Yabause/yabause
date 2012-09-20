@@ -68,6 +68,7 @@ extern CDInterface *SH2CoreList[];
 extern CDInterface *M68KCoreList[];
 extern CDInterface *CDCoreList[];
 extern CDInterface *VIDCoreList[];
+extern CDInterface *OSDCoreList[];
 extern CDInterface *SNDCoreList[];
 extern CDInterface *PERCoreList[];
 
@@ -75,6 +76,7 @@ YuiRangeItem * sh2interpreters = NULL;
 YuiRangeItem * m68kinterpreters = NULL;
 YuiRangeItem * cdcores = NULL;
 YuiRangeItem * vidcores = NULL;
+YuiRangeItem * osdcores = NULL;
 YuiRangeItem * sndcores = NULL;
 YuiRangeItem * percores = NULL;
 
@@ -289,6 +291,7 @@ GtkWidget* create_dialog1(void) {
   cores_to_range(M68KCoreList, &m68kinterpreters);
   cores_to_range(CDCoreList, &cdcores);
   cores_to_range(VIDCoreList, &vidcores);
+  cores_to_range(OSDCoreList, &osdcores);
   cores_to_range(SNDCoreList, &sndcores);
   cores_to_range(PERCoreList, &percores);
 
@@ -328,6 +331,11 @@ GtkWidget* create_dialog1(void) {
 
   box = yui_page_add(YUI_PAGE(video_sound), _("Video Core"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "VideoCore", vidcores));
+
+#ifdef YAB_PORT_OSD
+  box = yui_page_add(YUI_PAGE(video_sound), _("OSD Core"));
+  gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "OSDCore", osdcores));
+#endif
 
   box = yui_page_add(YUI_PAGE(video_sound), _("Resolution"));
   gtk_container_add(GTK_CONTAINER(box), yui_resolution_new(keyfile, "General"));
