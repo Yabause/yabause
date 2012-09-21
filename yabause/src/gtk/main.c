@@ -327,6 +327,8 @@ static gboolean yui_settings_load(void) {
 		ScspChangeSoundCore(yinit.sndcoretype);
 	}
 
+	ScspSetVolume(g_key_file_get_integer(keyfile, "General", "Volume", NULL));
+
 	/* peripheral core */
 	yinit.percoretype = g_key_file_get_integer(keyfile, "General", "PerCore", 0);
 
