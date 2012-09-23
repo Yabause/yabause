@@ -364,12 +364,17 @@ void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int
       if (*c >= 47)
       {
          int first_line, l, p;
-         first_line = *c * 8;
-         for(l = 0;l < 8;l++)
+         first_line = *c * 10;
+         for(l = 0;l < 10;l++)
          {
-            for(p = 0;p < 8;p++)
+            for(p = 0;p < 9;p++)
             {
-               if (font[first_line + l][p] == '#')
+               if (font[first_line + l][p] == '.')
+               {
+                  dot = buffer + 20 + ((loffset + l + 20) * w) + (i * 8) + p;
+                  *dot = 0xFF000000;
+               }
+               else if (font[first_line + l][p] == '#')
                {
                   dot = buffer + 20 + ((loffset + l + 20) * w) + (i * 8) + p;
                   *dot = 0xFFFFFFFF;
