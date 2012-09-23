@@ -94,6 +94,17 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
+#ifdef YAB_PORT_OSD
+OSD_struct *OSDCoreList[] = {
+&OSDDummy,
+#ifdef HAVE_LIBGLUT
+&OSDGlut,
+#endif
+&OSDSoft,
+NULL
+};
+#endif
+
 }
 
 // main window
@@ -369,6 +380,15 @@ VideoInterface_struct QtYabause::defaultVIDCore()
 	return VIDSoft;
 #else
 	return VIDDummy;
+#endif
+}
+
+OSD_struct QtYabause::defaultOSDCore()
+{
+#if defined HAVE_LIBGLUT
+	return OSDGlut;
+#else
+	return OSDSoft;
 #endif
 }
 

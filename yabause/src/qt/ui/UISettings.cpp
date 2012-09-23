@@ -34,6 +34,7 @@ extern PerInterface_struct* PERCoreList[];
 extern CDInterface* CDCoreList[];
 extern SoundInterface_struct* SNDCoreList[];
 extern VideoInterface_struct* VIDCoreList[];
+extern OSD_struct* OSDCoreList[];
 }
 
 struct Item
@@ -177,6 +178,15 @@ void UISettings::loadCores()
 	// VDI Drivers
 	for ( int i = 0; VIDCoreList[i] != NULL; i++ )
 		cbVideoCore->addItem( QtYabause::translate( VIDCoreList[i]->Name ), VIDCoreList[i]->id );
+
+#if YAB_PORT_OSD
+	// OSD Drivers
+	for ( int i = 0; OSDCoreList[i] != NULL; i++ )
+		cbOSDCore->addItem( QtYabause::translate( OSDCoreList[i]->Name ), OSDCoreList[i]->id );
+#else
+	delete cbOSDCore;
+	delete lOSDCore;
+#endif
 	
 	// Video Formats
 	foreach ( const Item& it, mVideoFromats )
@@ -220,6 +230,9 @@ void UISettings::loadSettings()
 
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
+#if YAB_PORT_OSD
+	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
+#endif
 	leWidth->setText( s->value( "Video/Width" ).toString() );
 	leHeight->setText( s->value( "Video/Height" ).toString() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
@@ -259,6 +272,9 @@ void UISettings::saveSettings()
 
 	// video
 	s->setValue( "Video/VideoCore", cbVideoCore->itemData( cbVideoCore->currentIndex() ).toInt() );
+#if YAB_PORT_OSD
+	s->setValue( "Video/OSDCore", cbOSDCore->itemData( cbOSDCore->currentIndex() ).toInt() );
+#endif
 	s->setValue( "Video/Width", leWidth->text() );
 	s->setValue( "Video/Height", leHeight->text() );
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );

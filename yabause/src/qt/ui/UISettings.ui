@@ -199,6 +199,25 @@
         <widget class="QComboBox" name="cbVideoCore"/>
        </item>
        <item row="2" column="0" colspan="3">
+        <widget class="QLabel" name="lOSDCore">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>OSD Core</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="3">
+        <widget class="QComboBox" name="cbOSDCore"/>
+       </item>
+       <item row="4" column="0" colspan="3">
         <widget class="QLabel" name="lResolution">
          <property name="font">
           <font>
@@ -214,34 +233,34 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="5" column="0">
         <widget class="QLabel" name="lWidth">
          <property name="text">
           <string>Width</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="5" column="1">
         <widget class="QLineEdit" name="leWidth"/>
        </item>
-       <item row="3" column="2">
+       <item row="5" column="2">
         <widget class="QCheckBox" name="cbFullscreen">
          <property name="text">
           <string>Fullscreen</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="6" column="0">
         <widget class="QLabel" name="lHeight">
          <property name="text">
           <string>Height</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="6" column="1">
         <widget class="QLineEdit" name="leHeight"/>
        </item>
-       <item row="5" column="0" colspan="3">
+       <item row="7" column="0" colspan="3">
         <widget class="QLabel" name="lVideoFormat">
          <property name="font">
           <font>
@@ -257,10 +276,10 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="0" colspan="3">
+       <item row="8" column="0" colspan="3">
         <widget class="QComboBox" name="cbVideoFormat"/>
        </item>
-       <item row="7" column="0" colspan="3">
+       <item row="9" column="0" colspan="3">
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>

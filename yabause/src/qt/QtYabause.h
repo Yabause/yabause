@@ -91,6 +91,7 @@ namespace QtYabause
 	CDInterface defaultCDCore();
 	SoundInterface_struct defaultSNDCore();
 	VideoInterface_struct defaultVIDCore();
+	OSD_struct defaultOSDCore();
 	PerInterface_struct defaultPERCore();
 	SH2Interface_struct defaultSH2Core();
 	
