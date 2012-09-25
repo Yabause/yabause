@@ -6,10 +6,6 @@ if (NOT WIN32)
 	return()
 endif(NOT WIN32)
 
-if ( NOT ntddcdrm_INCLUDE_DIR )
-	return()
-endif ( NOT ntddcdrm_INCLUDE_DIR )
-
 add_definitions(-D_WIN32_IE=0x0500 -D_WIN32_WINNT=0x0500 -DUNICODE -D_UNICODE)
 
 # Find DirectX SDK

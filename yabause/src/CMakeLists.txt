@@ -174,16 +174,20 @@ endif (MSVC)
 
 # Windows ddk
 if (WIN32)
-	# Find ntddcdrm.h
-	find_path(ntddcdrm_INCLUDE_DIR ntddcdrm.h
-		PATHS "${DDK_DIR}" "${DDK_DIR}/inc" PATH_SUFFIXES ddk api)
+	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
+	if(YAB_WANT_DDK)
+		# Find ntddcdrm.h
+		find_path(ntddcdrm_INCLUDE_DIR ntddcdrm.h
+			PATHS "${DDK_DIR}" "${DDK_DIR}/inc" PATH_SUFFIXES ddk api)
 
-	if (ntddcdrm_INCLUDE_DIR)
-		include_directories(${ntddcdrm_INCLUDE_DIR})
-		message(STATUS "Found ntddcdrm.h: ${ntddcdrm_INCLUDE_DIR}")
-	else (ntddcdrm_INCLUDE_DIR)
-		message(STATUS "Could not find ntddcdrm.h")
-	endif (ntddcdrm_INCLUDE_DIR)
+		if (ntddcdrm_INCLUDE_DIR)
+			include_directories(${ntddcdrm_INCLUDE_DIR})
+			message(STATUS "Found ntddcdrm.h: ${ntddcdrm_INCLUDE_DIR}")
+			add_definitions(-DHAVE_NTDDCDRM=1)
+		else (ntddcdrm_INCLUDE_DIR)
+			message(STATUS "Could not find ntddcdrm.h")
+		endif (ntddcdrm_INCLUDE_DIR)
+	endif()
 
 	set(yabause_SOURCES ${yabause_SOURCES} cd-windows.c)
 endif (WIN32)
