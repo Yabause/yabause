@@ -274,7 +274,13 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       case 0x2:
          Vdp1Regs->FBCR = val;
          if ((Vdp1Regs->FBCR & 3) == 3)
+         {
             Vdp1External.manualchange = 1;
+            /* I'm not 100% sure about this, but it seems that when using manual change
+            we should swap framebuffers in the "next field" and thus, clear the CEF...
+            now we're lying a little here as we're not swapping the framebuffers. */
+            Vdp1Regs->EDSR >>= 1;
+         }
          else if ((Vdp1Regs->FBCR & 3) == 2)
             Vdp1External.manualerase = 1;
          break;
