@@ -3781,13 +3781,13 @@ static void Vdp2DrawRBG0(void)
       if( paraA.coefenab == 0 && paraB.coefenab == 0 )
       {
          info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode03NoK;
-      }else if( paraA.coefenab == 1 && paraB.coefenab == 0 )
+      }else if( paraA.coefenab && paraB.coefenab == 0 )
       {
          info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode03WithKA;
-      }else if( paraA.coefenab == 0 && paraB.coefenab == 1  )
+      }else if( paraA.coefenab == 0 && paraB.coefenab )
       {
          info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode03WithKB;
-      }else if( paraA.coefenab == 1 && paraB.coefenab == 1  )
+      }else if( paraA.coefenab && paraB.coefenab )
       {
          info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode03WithK;
       }
