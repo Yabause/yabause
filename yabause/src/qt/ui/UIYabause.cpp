@@ -24,6 +24,13 @@
 #include "UISettings.h"
 #include "UIBackupRam.h"
 #include "UICheats.h"
+#include "UIDebugSH2.h"
+#include "UIDebugVDP1.h"
+#include "UIDebugVDP2.h"
+#include "UIDebugM68K.h"
+#include "UIDebugSCUDSP.h"
+#include "UIDebugSCSP.h"
+#include "UIMemoryTransfer.h"
 #include "UIAbout.h"
 #include "../YabauseGL.h"
 #include "../QtYabause.h"
@@ -413,7 +420,10 @@ void UIYabause::on_aToolsCheatsList_triggered()
 }
 
 void UIYabause::on_aToolsTransfer_triggered()
-{}
+{
+	YabauseLocker locker( mYabauseThread );
+	UIMemoryTransfer( mYabauseThread, this ).exec();
+}
 
 void UIYabause::on_aViewFPS_triggered( bool toggled )
 {
@@ -442,6 +452,82 @@ void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
 	fullscreenRequested( b );
 	//ToggleFullScreen();
+}
+
+void UIYabause::breakpointHandlerMSH2()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSH2( true, mYabauseThread, this ).exec();
+}
+
+void UIYabause::breakpointHandlerSSH2()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSH2( false, mYabauseThread, this ).exec();
+}
+
+void UIYabause::breakpointHandlerM68K()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugM68K( mYabauseThread, this ).exec();
+}
+
+void UIYabause::breakpointHandlerSCUDSP()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSCUDSP( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugMSH2_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSH2( true, mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugSSH2_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSH2( false, mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugVDP1_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugVDP1( this ).exec();
+}
+
+void UIYabause::on_aViewDebugVDP2_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugVDP2( this ).exec();
+}
+
+void UIYabause::on_aViewDebugM68K_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugM68K( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugSCUDSP_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSCUDSP( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugSCSP_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSCSP( this ).exec();
+}
+
+void UIYabause::on_aViewDebugMemoryEditor_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	//UIMemoryEditor( this ).exec();
 }
 
 void UIYabause::on_aHelpEmuCompatibility_triggered()

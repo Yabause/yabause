@@ -49,7 +49,14 @@ set( yabause_qt_FORMS
 	ui/UIWaitInput.ui
 	ui/UIBackupRam.ui
 	ui/UIPortManager.ui
-	ui/UIPadSetting.ui )
+	ui/UIPadSetting.ui 
+    ui/UIDebugCPU.ui
+    ui/UIDebugSCSP.ui
+    ui/UIDebugVDP1.ui
+    ui/UIDebugVDP2.ui
+    ui/UIDebugVDP2Viewer.ui
+    ui/UIHexInput.ui
+    ui/UIMemoryTransfer.ui )
 
 # pure C headers
 set( yabause_qt_HEADERS
@@ -70,6 +77,17 @@ set( yabause_qt_MOC_HEADERS
 	ui/UIBackupRam.h
 	ui/UIPortManager.h
 	ui/UIPadSetting.h
+    ui/UIDebugCPU.h
+    ui/UIDebugM68K.h
+    ui/UIDebugSCSP.h
+    ui/UIDebugSCUDSP.h
+    ui/UIDebugSH2.h
+    ui/UIDebugVDP1.h
+    ui/UIDebugVDP2.h
+    ui/UIDebugVDP2Viewer.h
+    ui/UIDisasm.h
+    ui/UIHexInput.h
+    ui/UIMemoryTransfer.h
 	YabauseGL.h
 	VolatileSettings.h
 	Settings.h
@@ -91,6 +109,17 @@ set( yabause_qt_SOURCES
 	ui/UIBackupRam.cpp
 	ui/UIPortManager.cpp
 	ui/UIPadSetting.cpp
+    ui/UIDebugCPU.cpp
+    ui/UIDebugM68K.cpp
+    ui/UIDebugSCSP.cpp
+    ui/UIDebugSCUDSP.cpp
+    ui/UIDebugSH2.cpp
+    ui/UIDebugVDP1.cpp
+    ui/UIDebugVDP2.cpp
+    ui/UIDebugVDP2Viewer.cpp
+    ui/UIDisasm.cpp
+    ui/UIHexInput.cpp
+    ui/UIMemoryTransfer.cpp
 	Settings.cpp
 	VolatileSettings.cpp
 	YabauseThread.cpp

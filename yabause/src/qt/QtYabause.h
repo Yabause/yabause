@@ -32,6 +32,7 @@ extern "C"
 	#include "../cs0.h"
 	#include "../cdbase.h"
 	#include "../scsp.h"
+	#include "../scu.h"
 	#include "../sndal.h"
 	#include "../sndsdl.h"
 	#include "../persdljoy.h"
@@ -47,7 +48,11 @@ extern "C"
 	#include "../cheat.h"
 	#include "../memory.h"
 	#include "../bios.h"
-	
+
+	#include "../m68kd.h"
+	#include "../sh2d.h"
+	#include "../vdp2debug.h"
+
 	#include "PerQt.h"
 #ifdef Q_OS_WIN
 	#include <qt_windows.h>

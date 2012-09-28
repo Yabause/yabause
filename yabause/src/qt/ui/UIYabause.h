@@ -81,6 +81,10 @@ public slots:
 	void pause( bool paused );
 	void reset();
 
+	void breakpointHandlerMSH2();
+	void breakpointHandlerSSH2();
+	void breakpointHandlerM68K();
+	void breakpointHandlerSCUDSP();
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
@@ -114,6 +118,15 @@ protected slots:
 	void on_aViewLayerNBG3_triggered();
 	void on_aViewLayerRBG0_triggered();
 	void on_aViewFullscreen_triggered( bool b );
+	// debug menu
+	void on_aViewDebugMSH2_triggered();
+	void on_aViewDebugSSH2_triggered();
+	void on_aViewDebugVDP1_triggered();
+	void on_aViewDebugVDP2_triggered();
+	void on_aViewDebugM68K_triggered();
+	void on_aViewDebugSCSP_triggered();
+	void on_aViewDebugSCUDSP_triggered();
+	void on_aViewDebugMemoryEditor_triggered();
 	// help menu
 	void on_aHelpEmuCompatibility_triggered();
 	void on_aHelpAbout_triggered();
