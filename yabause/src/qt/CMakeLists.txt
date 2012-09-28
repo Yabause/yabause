@@ -151,6 +151,7 @@ add_executable( yabause-qt WIN32
 include_directories(
 	.
 	${CMAKE_CURRENT_BINARY_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/ui
 	${QT_INCLUDE_DIR}
 	${QT_QTCORE_INCLUDE_DIR}
 	${QT_QTGUI_INCLUDE_DIR}

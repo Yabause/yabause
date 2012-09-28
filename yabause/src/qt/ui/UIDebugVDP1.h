@@ -27,7 +27,7 @@ class UIDebugVDP1 : public QDialog, public Ui::UIDebugVDP1
 	Q_OBJECT
 public:
 	UIDebugVDP1( QWidget* parent = 0 );
-   UIDebugVDP1::~UIDebugVDP1();
+	~UIDebugVDP1();
 
 protected:
    u32 *vdp1texture;
