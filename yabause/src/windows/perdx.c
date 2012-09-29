@@ -31,7 +31,6 @@
 int PERDXInit(void);
 void PERDXDeInit(void);
 int PERDXHandleEvents(void);
-//void YuiCaptureVideo(void);
 int Check_Skip_Key();
 
 PerInterface_struct PERDIRECTX = {
@@ -41,9 +40,6 @@ PERDXInit,
 PERDXDeInit,
 PERDXHandleEvents
 };
-
-HWND YabWin;
-HINSTANCE y_hInstance;
 
 LPDIRECTINPUT8 lpDI8 = NULL;
 LPDIRECTINPUTDEVICE8 lpDIDevice[256]; // I hope that's enough
@@ -76,6 +72,8 @@ NULL
 #define PAD_DIR_POVRIGHT        5
 #define PAD_DIR_POVDOWN         6
 #define PAD_DIR_POVLEFT         7
+
+HWND DXGetWindow ();
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -154,7 +152,7 @@ int PERDXInit(void)
       return -1;
    }
 
-   if (FAILED((ret = IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[0], YabWin,
+   if (FAILED((ret = IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[0], DXGetWindow(),
        DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY)) ))
    {
       sprintf(tempstr, "IDirectInputDevice8_SetCooperativeLevel error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
@@ -358,7 +356,7 @@ void PERDXLoadDevices(char *inifilename)
                coopflags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
             }
 
-            hr = IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[i], YabWin, coopflags);
+            hr = IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[i], DXGetWindow(), coopflags);
             if (FAILED(hr))
                continue;
 
@@ -646,10 +644,6 @@ int PERDXHandleEvents(void)
 
    if (YabauseExec() != 0)
       return -1;
-
-   Update_RAM_Search();
-   Update_RAM_Watch();
-   YuiCaptureVideo();
 
    return 0;
 }
@@ -989,7 +983,7 @@ int PERDXFetchNextPress(HWND hWnd, u32 guidnum, char *buttonname)
       }
    }       
 
-   if (DialogBoxParam(y_hInstance, MAKEINTRESOURCE(IDD_BUTTONCONFIG), hWnd, (DLGPROC)ButtonConfigDlgProc, (LPARAM)lpDIDevicetemp) == TRUE)
+   if (DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_BUTTONCONFIG), hWnd, (DLGPROC)ButtonConfigDlgProc, (LPARAM)lpDIDevicetemp) == TRUE)
    {
       // Figure out what kind of code to generate
       if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_KEYBOARD)
@@ -1128,7 +1122,7 @@ LRESULT CALLBACK ButtonConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam,
              return FALSE;
 
          PostMessage(hDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hDlg, IDC_WAITINPUT), TRUE);
-         hook = SetWindowsHookEx(WH_KEYBOARD, KeyboardHook, y_hInstance, GetCurrentThreadId());
+         hook = SetWindowsHookEx(WH_KEYBOARD, KeyboardHook, GetModuleHandle(NULL), GetCurrentThreadId());
          return TRUE;
       }
       case WM_COMMAND:

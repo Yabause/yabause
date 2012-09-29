@@ -23,19 +23,19 @@
 #include "../scsp.h"
 #include "snddx.h"
 
-int SNDDXInit();
-void SNDDXDeInit();
-int SNDDXReset();
+int SNDDXInit(void);
+void SNDDXDeInit(void);
+int SNDDXReset(void);
 int SNDDXChangeVideoFormat(int vertfreq);
 void SNDDXUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples);
-u32 SNDDXGetAudioSpace();
-void SNDDXMuteAudio();
-void SNDDXUnMuteAudio();
+u32 SNDDXGetAudioSpace(void);
+void SNDDXMuteAudio(void);
+void SNDDXUnMuteAudio(void);
 void SNDDXSetVolume(int volume);
 
 SoundInterface_struct SNDDIRECTX = {
 SNDCORE_DIRECTX,
-"Direct Sound Interface",
+"DirectX Sound Interface",
 SNDDXInit,
 SNDDXDeInit,
 SNDDXReset,
@@ -49,7 +49,6 @@ SNDDXSetVolume
 
 LPDIRECTSOUND8 lpDS8;
 LPDIRECTSOUNDBUFFER lpDSB, lpDSB2;
-extern HWND YabWin;
 
 #define NUMSOUNDBLOCKS  4
 
@@ -60,9 +59,11 @@ static u32 soundbufsize;
 static LONG soundvolume;
 static int issoundmuted;
 
+HWND DXGetWindow ();
+
 //////////////////////////////////////////////////////////////////////////////
 
-int SNDDXInit()
+int SNDDXInit(void)
 {
    DSBUFFERDESC dsbdesc;
    WAVEFORMATEX wfx;
@@ -76,7 +77,7 @@ int SNDDXInit()
       return -1;
    }
 
-   if ((ret = IDirectSound8_SetCooperativeLevel(lpDS8, YabWin, DSSCL_PRIORITY)) != DS_OK)
+   if ((ret = IDirectSound8_SetCooperativeLevel(lpDS8, DXGetWindow(), DSSCL_PRIORITY)) != DS_OK)
    {
       sprintf(tempstr, "IDirectSound8_SetCooperativeLevel error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
       MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
@@ -164,7 +165,7 @@ int SNDDXInit()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SNDDXDeInit()
+void SNDDXDeInit(void)
 {
    DWORD status=0;
 
@@ -194,7 +195,7 @@ void SNDDXDeInit()
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SNDDXReset()
+int SNDDXReset(void)
 {
    return 0;
 }
@@ -245,7 +246,7 @@ void SNDDXUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 SNDDXGetAudioSpace()
+u32 SNDDXGetAudioSpace(void)
 {
    DWORD playcursor, writecursor;
    u32 freespace=0;
@@ -266,7 +267,7 @@ u32 SNDDXGetAudioSpace()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SNDDXMuteAudio()
+void SNDDXMuteAudio(void)
 {
    issoundmuted = 1;
    IDirectSoundBuffer8_SetVolume (lpDSB2, DSBVOLUME_MIN);
@@ -274,7 +275,7 @@ void SNDDXMuteAudio()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SNDDXUnMuteAudio()
+void SNDDXUnMuteAudio(void)
 {
    issoundmuted = 0;
    IDirectSoundBuffer8_SetVolume (lpDSB2, soundvolume);

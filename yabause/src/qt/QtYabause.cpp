@@ -62,6 +62,9 @@ PerInterface_struct *PERCoreList[] = {
 #ifdef __APPLE__
 &PERMacJoy,
 #endif
+#ifdef HAVE_DIRECTINPUT
+&PERDIRECTX,
+#endif
 NULL
 };
 
@@ -81,6 +84,9 @@ SoundInterface_struct *SNDCoreList[] = {
 #endif
 #ifdef HAVE_LIBAL
 &SNDAL,
+#endif
+#ifdef HAVE_DIRECTSOUND
+&SNDDIRECTX,
 #endif
 NULL
 };
@@ -129,6 +135,13 @@ extern "C"
 	
 	void YuiSwapBuffers()
 	{ QtYabause::mainWindow()->swapBuffers(); }
+
+#if defined(HAVE_DIRECTINPUT) || defined(HAVE_DIRECTSOUND)
+   HWND DXGetWindow()
+   {
+      return (HWND)mUIYabause->winId();
+   }
+#endif
 }
 
 UIYabause* QtYabause::mainWindow( bool create )

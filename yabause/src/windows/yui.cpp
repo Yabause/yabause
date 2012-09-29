@@ -81,6 +81,7 @@ int screenwidth;
 int screenheight;
 int AlreadyStarted;
 
+HINSTANCE y_hInstance;
 HWND YabWin=NULL;
 HMENU YabMenu=NULL;
 HDC YabHDC=NULL;
@@ -156,6 +157,16 @@ extern "C" M68K_struct *M68KCoreList[] = {
 #endif
 //&M68KHLE,
 NULL
+};
+
+//////////////////////////////////////////////////////////////////////////////
+
+extern "C" 
+{
+   HWND DXGetWindow()
+   {
+      return YabWin;
+   }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -606,6 +617,10 @@ YabauseSetup:
                DestroyMenu(YabMenu);
             return -1;
          }
+         Update_RAM_Search();
+         Update_RAM_Watch();
+         YuiCaptureVideo();
+
          Sleep(0);
       }
 
