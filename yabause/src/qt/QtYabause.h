@@ -34,9 +34,13 @@ extern "C"
 	#include "../scsp.h"
 	#include "../scu.h"
 	#include "../sndal.h"
+#ifdef HAVE_DIRECTSOUND
 	#include "../windows/snddx.h"
+#endif
 	#include "../sndsdl.h"
+#if HAVE_DIRECTINPUT
 	#include "../windows/perdx.h"
+#endif
 	#include "../persdljoy.h"
 	#include "../permacjoy.h"
 	#include "../debug.h"
