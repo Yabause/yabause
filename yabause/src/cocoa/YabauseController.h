@@ -1,4 +1,4 @@
-/*  Copyright 2010 Lawrence Sebald
+/*  Copyright 2010, 2012 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -37,6 +37,7 @@
     NSLock *_runLock;
     NSThread *_emuThd;
     char *_bramFile;
+    char *_isoFile;
     BOOL _doneExecuting;
 }
 
@@ -52,6 +53,7 @@
 - (IBAction)showPreferences:(id)sender;
 - (IBAction)runBIOS:(id)sender;
 - (IBAction)runCD:(id)sender;
+- (IBAction)runISO:(id)sender;
 - (IBAction)toggleFullscreen:(id)sender;
 - (IBAction)toggle:(id)sender;
 - (IBAction)toggleFrameskip:(id)sender;

@@ -1,4 +1,4 @@
-/*  Copyright 2010 Lawrence Sebald
+/*  Copyright 2010, 2012 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -18,6 +18,7 @@
 */
 
 #import <Cocoa/Cocoa.h>
+#include <dispatch/dispatch.h>
 
 #include "yui.h"
 #include "peripheral.h"
@@ -56,6 +57,7 @@ PerInterface_struct *PERCoreList[] = {
 
 CDInterface *CDCoreList[] = {
     &DummyCD,
+    &ISOCD,
     &ArchCD,
     NULL
 };
@@ -75,8 +77,10 @@ VideoInterface_struct *VIDCoreList[] = {
 };
 
 void YuiErrorMsg(const char *string) {
-    NSRunAlertPanel(@"Yabause Error", [NSString stringWithUTF8String:string], 
-                    @"OK", NULL, NULL);
+    NSString *str = [NSString stringWithUTF8String:string];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSRunAlertPanel(@"Yabause Error", str, @"OK", NULL, NULL);
+    });
 }
 
 void YuiSetVideoAttribute(int type, int val) {

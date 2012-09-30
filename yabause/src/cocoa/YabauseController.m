@@ -1,4 +1,4 @@
-/*  Copyright 2010 Lawrence Sebald
+/*  Copyright 2010, 2012 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -39,7 +39,7 @@
 YabauseController *controller;
 
 @interface YabauseController (InternalFunctions)
-- (void)startEmulationWithCDCore:(int)cdcore;
+- (void)startEmulationWithCDCore:(int)cdcore CDPath:(const char *)fn;
 - (void)emulationThread:(id)ignored;
 - (void)terminateEmulation;
 @end
@@ -115,12 +115,25 @@ static void FlipToggle(NSMenuItem *item) {
 {
     /* This will simply start up the system with the dummy CD core, so there's
        no way it'll actually read that there's a disc to be played. */
-    [self startEmulationWithCDCore:CDCORE_DUMMY];
+    [self startEmulationWithCDCore:CDCORE_DUMMY CDPath:NULL];
 }
 
 - (IBAction)runCD:(id)sender
 {
-    [self startEmulationWithCDCore:CDCORE_ARCH];
+    [self startEmulationWithCDCore:CDCORE_ARCH CDPath:NULL];
+}
+
+- (IBAction)runISO:(id)sender
+{
+    NSOpenPanel *p = [NSOpenPanel openPanel];
+    NSArray *types = [NSArray arrayWithObjects:@"iso", @"cue", nil];
+
+    [p setAllowedFileTypes:types];
+    if([p runModal] == NSFileHandlingPanelOKButton) {
+        NSString *fn = [[[p URLs] objectAtIndex:0] path];
+        [self startEmulationWithCDCore:CDCORE_ISO
+                                CDPath:[fn fileSystemRepresentation]];
+    }
 }
 
 - (IBAction)toggleFullscreen:(id)sender
@@ -225,7 +238,7 @@ static void FlipToggle(NSMenuItem *item) {
 
 @implementation YabauseController (InternalFunctions)
 
-- (void)startEmulationWithCDCore:(int)cdcore
+- (void)startEmulationWithCDCore:(int)cdcore CDPath:(const char *)fn
 {
     if(!_running) {
         yabauseinit_struct yinit;
@@ -244,7 +257,7 @@ static void FlipToggle(NSMenuItem *item) {
         yinit.regionid = [prefs region];
         yinit.biospath = ([bios length] > 0 && ![prefs emulateBios]) ?
             [bios UTF8String] : NULL;
-        yinit.cdpath = NULL;
+        yinit.cdpath = fn;
         yinit.buppath = NULL;
         yinit.mpegpath = ([mpeg length] > 0) ? [mpeg UTF8String] : NULL;
         yinit.videoformattype = ([prefs region] < 10) ? VIDEOFORMATTYPE_NTSC :
@@ -257,11 +270,11 @@ static void FlipToggle(NSMenuItem *item) {
         /* Set up the internal save ram if specified. */
         if([bram length] > 0) {
             const char *tmp = [bram UTF8String];
-
-            _bramFile = (char *)malloc(strlen(tmp) + 1);
-            strcpy(_bramFile, tmp);
-            yinit.buppath = _bramFile;
+            yinit.buppath = _bramFile = strdup(tmp);
         }
+
+        if(fn)
+            _isoFile = strdup(fn);
 
         /* Set up the cartridge stuff based on what was selected. */
         if(yinit.carttype == CART_NETLINK) {
@@ -349,10 +362,10 @@ static void FlipToggle(NSMenuItem *item) {
 
         YabauseDeInit();
 
-        if(_bramFile) {
-            free(_bramFile);
-            _bramFile = NULL;
-        }
+        free(_bramFile);
+        _bramFile = NULL;
+        free(_isoFile);
+        _isoFile = NULL;
 
         _emuThd = nil;
     }
