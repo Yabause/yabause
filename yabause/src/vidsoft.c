@@ -1983,7 +1983,9 @@ static int gouraudAdjust( int color, int tableValue )
 
 static void putpixel8(int x, int y) {
 
-    u8 * iPix = &vdp1backframebuffer[((y / vdp1interlace) * vdp1width) + (x / 2)];
+    int x2 = x / 2;
+    int y2 = y / vdp1interlace;
+    u8 * iPix = &vdp1backframebuffer[(y2 * vdp1width) + x2];
     int mesh = cmd.CMDPMOD & 0x0100;
     int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
     int currentShape = cmd.CMDCTRL & 0x7;
@@ -1991,7 +1993,7 @@ static void putpixel8(int x, int y) {
 
     currentPixel &= 0xFF;
 
-    if(mesh && (((x / 2) ^ (y / vdp1interlace)) & 1)) {
+    if(mesh && ((x2 ^ y2) & 1)) {
         return;
     }
 
@@ -2003,10 +2005,10 @@ static void putpixel8(int x, int y) {
 
         if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
 
-        clipped = ! (x >= vdp1clipxstart &&
-            x < vdp1clipxend &&
-            y >= vdp1clipystart &&
-            y < vdp1clipyend);
+        clipped = ! (x2 >= vdp1clipxstart &&
+            x2 < vdp1clipxend &&
+            y2 >= vdp1clipystart &&
+            y2 < vdp1clipyend);
 
         if (cmd.CMDPMOD & 0x0400) PopUserClipping();
 
