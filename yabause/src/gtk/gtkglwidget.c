@@ -262,8 +262,8 @@ void yui_gl_dump_screen(YuiGl * glxarea) {
 	VIDCore->GetGlSize( &buf_width, &buf_height );
 	size = buf_width * buf_height * 3;
 
-	glxarea->pixels_width = GTK_WIDGET(glxarea)->allocation.width;
-	glxarea->pixels_height = GTK_WIDGET(glxarea)->allocation.height;
+	glxarea->pixels_width = buf_width;
+	glxarea->pixels_height = buf_height;
 	glxarea->pixels_rowstride = glxarea->pixels_width * 3;
 	glxarea->pixels_rowstride += (glxarea->pixels_rowstride % 4)? (4 - (glxarea->pixels_rowstride % 4)): 0;
 
