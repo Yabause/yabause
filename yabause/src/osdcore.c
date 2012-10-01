@@ -119,7 +119,7 @@ int OSDDisplayMessages(u32 * buffer, int w, int h)
    int i = 0;
    int somethingnew = 0;
 
-   if (OSD == NULL) return;
+   if (OSD == NULL) return somethingnew;
 
    for(i = 0;i < OSDMSG_COUNT;i++)
       if (osdmessages[i].timeleft > 0)
