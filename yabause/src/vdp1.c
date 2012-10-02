@@ -359,12 +359,14 @@ void Vdp1Draw(void) {
                VIDCore->Vdp1PolygonDraw();
                break;
             case 5: // polyline draw
+            case 7: // undocumented mirror
                VIDCore->Vdp1PolylineDraw();
                break;
             case 6: // line draw
                VIDCore->Vdp1LineDraw();
                break;
             case 8: // user clipping coordinates
+            case 11: // undocumented mirror
                VIDCore->Vdp1UserClipping();
                break;
             case 9: // system clipping coordinates
@@ -452,8 +454,10 @@ void Vdp1NoDraw(void) {
             case 4: // polygon draw
             case 5: // polyline draw
             case 6: // line draw
+            case 7: // undocumented polyline draw mirror
                break;
             case 8: // user clipping coordinates
+            case 11: // undocumented mirror
                VIDCore->Vdp1UserClipping();
                break;
             case 9: // system clipping coordinates
@@ -644,12 +648,16 @@ char *Vdp1DebugGetCommandNumberName(u32 number)
             return "Polyline";
          case 6:
             return "Line";
+         case 7:
+            return "Polyline *";
          case 8:
             return "User Clipping Coordinates";
          case 9:
             return "System Clipping Coordinates";
          case 10:
             return "Local Coordinates";
+         case 11:
+            return "User Clipping Coordinates *";
          default:
              return "Bad command";
       }
@@ -765,6 +773,11 @@ void Vdp1DebugCommand(u32 number, char *outstring)
       case 6:
          AddString(outstring, "Line\r\n");
          AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
+         break;
+      case 7:
+         AddString(outstring, "Polyline *\r\n");
+         AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
+         AddString(outstring, "x3 = %d, y3 = %d, x4 = %d, y4 = %d\r\n", cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
          break;
       case 8:
          AddString(outstring, "User Clipping\r\n");
@@ -1047,6 +1060,7 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
       case 4: // Polygon
       case 5: // Polyline
       case 6: // Line
+      case 7: // Polyline *
          // Do 1x1 pixel
          w[0] = 1;
          h[0] = 1;
@@ -1062,6 +1076,7 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
       case 8: // User Clipping
       case 9: // System Clipping
       case 10: // Local Coordinates
+      case 11: // User Clipping *
          return NULL;
       default: // Invalid command
          return NULL;

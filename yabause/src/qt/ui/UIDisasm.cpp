@@ -84,7 +84,6 @@ void UIDisasm::adjustSettings()
    QSize areaSize = viewport()->size();
    int fontSize = fontMetrics().height();
 
-   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
    verticalScrollBar()->setRange(0, endAddress);
    verticalScrollBar()->setSingleStep(instructionSize);
 
