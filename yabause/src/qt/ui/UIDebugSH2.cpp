@@ -247,8 +247,11 @@ void UIDebugSH2::stepInto()
 {
    sh2regs_struct sh2regs;
 
-   SH2Step(debugSH2);
-   updateRegList();
-   SH2GetRegisters(debugSH2, &sh2regs);
-   updateCodeList(sh2regs.PC);
+   if (debugSH2)
+   {
+      SH2Step(debugSH2);
+      updateRegList();
+      SH2GetRegisters(debugSH2, &sh2regs);
+      updateCodeList(sh2regs.PC);
+   }
 }

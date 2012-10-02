@@ -46,6 +46,7 @@ set( yabause_qt_FORMS
 	ui/UICheats.ui
 	ui/UICheatAR.ui
 	ui/UICheatRaw.ui
+	ui/UICheatSearch.ui
 	ui/UIWaitInput.ui
 	ui/UIBackupRam.ui
 	ui/UIPortManager.ui
@@ -56,7 +57,8 @@ set( yabause_qt_FORMS
     ui/UIDebugVDP2.ui
     ui/UIDebugVDP2Viewer.ui
     ui/UIHexInput.ui
-    ui/UIMemoryTransfer.ui )
+    ui/UIMemoryTransfer.ui 
+    ui/UIMemoryEditor.ui )
 
 # pure C headers
 set( yabause_qt_HEADERS
@@ -73,6 +75,7 @@ set( yabause_qt_MOC_HEADERS
 	ui/UICheats.h
 	ui/UICheatAR.h
 	ui/UICheatRaw.h
+	ui/UICheatSearch.h
 	ui/UIWaitInput.h
 	ui/UIBackupRam.h
 	ui/UIPortManager.h
@@ -88,6 +91,8 @@ set( yabause_qt_MOC_HEADERS
     ui/UIDisasm.h
     ui/UIHexInput.h
     ui/UIMemoryTransfer.h
+    ui/UIHexEditor.h
+    ui/UIMemoryEditor.h
 	YabauseGL.h
 	VolatileSettings.h
 	Settings.h
@@ -105,6 +110,7 @@ set( yabause_qt_SOURCES
 	ui/UICheats.cpp
 	ui/UICheatAR.cpp
 	ui/UICheatRaw.cpp
+	ui/UICheatSearch.cpp
 	ui/UIWaitInput.cpp
 	ui/UIBackupRam.cpp
 	ui/UIPortManager.cpp
@@ -120,6 +126,8 @@ set( yabause_qt_SOURCES
     ui/UIDisasm.cpp
     ui/UIHexInput.cpp
     ui/UIMemoryTransfer.cpp
+    ui/UIHexEditor.cpp
+    ui/UIMemoryEditor.cpp
 	Settings.cpp
 	VolatileSettings.cpp
 	YabauseThread.cpp

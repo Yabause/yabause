@@ -1,4 +1,4 @@
-/*	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+/*	Copyright 2012 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -16,27 +16,17 @@
 	along with Yabause; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-#include "UICheatRaw.h"
-#include "UIHexInput.h"
-#include "../QtYabause.h"
 
-#include <QButtonGroup>
+#include "UIMemoryEditor.h"
+#include "../CommonDialogs.h"
 
-UICheatRaw::UICheatRaw( QWidget* p )
+UIMemoryEditor::UIMemoryEditor( YabauseThread *mYabauseThread, QWidget* p )
 	: QDialog( p )
 {
-	// setup dialog
+	// set up dialog
 	setupUi( this );
-
-	// fill types
-	mButtonGroup = new QButtonGroup( this );
-	mButtonGroup->addButton( rbEnable, CHEATTYPE_ENABLE );
-	mButtonGroup->addButton( rbByte, CHEATTYPE_BYTEWRITE );
-	mButtonGroup->addButton( rbWord, CHEATTYPE_WORDWRITE );
-	mButtonGroup->addButton( rbLong, CHEATTYPE_LONGWRITE );
-
-	leAddress->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leAddress));
-	leValue->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leValue));
+	if ( p && !p->isFullScreen() )
+		setWindowFlags( Qt::Sheet );
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );

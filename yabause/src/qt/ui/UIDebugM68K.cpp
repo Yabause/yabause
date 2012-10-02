@@ -204,5 +204,6 @@ bool UIDebugM68K::delCodeBreakpoint(u32 addr)
 
 void UIDebugM68K::stepInto()
 {
-   M68KStep();
+   if (M68K)
+      M68KStep();
 }

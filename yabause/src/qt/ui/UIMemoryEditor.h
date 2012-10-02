@@ -1,4 +1,4 @@
-/*	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+/*	Copyright 2012 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -16,28 +16,23 @@
 	along with Yabause; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-#include "UICheatRaw.h"
-#include "UIHexInput.h"
+#ifndef UIMEMORYEDITOR_H
+#define UIMEMORYEDITOR_H
+
+#include "ui_UIMemoryEditor.h"
+#include "../YabauseThread.h"
 #include "../QtYabause.h"
 
-#include <QButtonGroup>
-
-UICheatRaw::UICheatRaw( QWidget* p )
-	: QDialog( p )
+class UIMemoryEditor : public QDialog, public Ui::UIMemoryEditor
 {
-	// setup dialog
-	setupUi( this );
+	Q_OBJECT
 
-	// fill types
-	mButtonGroup = new QButtonGroup( this );
-	mButtonGroup->addButton( rbEnable, CHEATTYPE_ENABLE );
-	mButtonGroup->addButton( rbByte, CHEATTYPE_BYTEWRITE );
-	mButtonGroup->addButton( rbWord, CHEATTYPE_WORDWRITE );
-	mButtonGroup->addButton( rbLong, CHEATTYPE_LONGWRITE );
+public:
+	UIMemoryEditor( YabauseThread *mYabauseThread, QWidget* parent = 0 );
 
-	leAddress->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leAddress));
-	leValue->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leValue));
+protected:
 
-	// retranslate widgets
-	QtYabause::retranslateWidget( this );
-}
+protected slots:
+};
+
+#endif // UIMEMORYEDITOR_H

@@ -133,7 +133,7 @@
     </property>
     <widget class="QMenu" name="mFileSaveState">
      <property name="title">
-      <string>Save State</string>
+      <string>S&amp;ave State</string>
      </property>
      <property name="icon">
       <iconset resource="../resources/resources.qrc">
@@ -154,7 +154,7 @@
     </widget>
     <widget class="QMenu" name="mFileLoadState">
      <property name="title">
-      <string>Load State</string>
+      <string>L&amp;oad State</string>
      </property>
      <property name="icon">
       <iconset resource="../resources/resources.qrc">
@@ -235,15 +235,16 @@
    </widget>
    <widget class="QMenu" name="mTools">
     <property name="title">
-     <string>Tools</string>
+     <string>&amp;Tools</string>
     </property>
     <addaction name="aToolsBackupManager"/>
     <addaction name="aToolsCheatsList"/>
+    <addaction name="aToolsCheatSearch"/>
     <addaction name="aToolsTransfer"/>
    </widget>
    <widget class="QMenu" name="mEmulation">
     <property name="title">
-     <string>Emulation</string>
+     <string>&amp;Emulation</string>
     </property>
     <addaction name="aEmulationRun"/>
     <addaction name="aEmulationPause"/>
@@ -374,7 +375,7 @@
      <normaloff>:/actions/icons/actions/transfert.png</normaloff>:/actions/icons/actions/transfert.png</iconset>
    </property>
    <property name="text">
-    <string>Transfer</string>
+    <string>&amp;Transfer</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -386,7 +387,7 @@
      <normaloff>:/actions/icons/actions/screenshot.png</normaloff>:/actions/icons/actions/screenshot.png</iconset>
    </property>
    <property name="text">
-    <string>Screenshot</string>
+    <string>Sc&amp;reenshot</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Print</string>
@@ -401,7 +402,7 @@
      <normaloff>:/actions/icons/actions/frame_skipping.png</normaloff>:/actions/icons/actions/frame_skipping.png</iconset>
    </property>
    <property name="text">
-    <string>Frame Skip/Limiter</string>
+    <string>&amp;Frame Skip/Limiter</string>
    </property>
    <property name="shortcut">
     <string>ScrollLock</string>
@@ -416,6 +417,9 @@
      <normaloff>:/actions/icons/actions/fps.png</normaloff>:/actions/icons/actions/fps.png</iconset>
    </property>
    <property name="text">
+    <string>F&amp;PS</string>
+   </property>
+   <property name="iconText">
     <string>FPS</string>
    </property>
   </action>
@@ -457,60 +461,88 @@
      <normaloff>:/actions/icons/actions/log.png</normaloff>:/actions/icons/actions/log.png</iconset>
    </property>
    <property name="text">
-    <string>Log</string>
+    <string>&amp;Log</string>
    </property>
   </action>
   <action name="aViewDebugMSH2">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
-    <string>Master SH2</string>
+    <string>&amp;Master SH2</string>
    </property>
   </action>
   <action name="aViewDebugSSH2">
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
-    <string>Slave SH2</string>
+    <string>&amp;Slave SH2</string>
    </property>
   </action>
   <action name="aViewDebugVDP1">
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
-    <string>VDP1</string>
+    <string>VDP&amp;1</string>
    </property>
   </action>
   <action name="aViewDebugVDP2">
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
-    <string>VDP2</string>
+    <string>VDP&amp;2</string>
    </property>
   </action>
   <action name="aViewDebugM68K">
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
-    <string>M68K</string>
+    <string>M&amp;68K</string>
    </property>
   </action>
   <action name="aViewDebugSCUDSP">
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
-    <string>SCU-DSP</string>
+    <string>SCU-&amp;DSP</string>
    </property>
   </action>
   <action name="aViewDebugSCSP">
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
-    <string>SCSP</string>
+    <string>S&amp;CSP</string>
    </property>
   </action>
   <action name="aViewDebugMemoryTransfer">
@@ -766,7 +798,7 @@
      <normaloff>:/actions/icons/actions/cheats.png</normaloff>:/actions/icons/actions/cheats.png</iconset>
    </property>
    <property name="text">
-    <string>Cheats List...</string>
+    <string>&amp;Cheats List...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
@@ -778,7 +810,7 @@
      <normaloff>:/actions/icons/actions/backup_ram.png</normaloff>:/actions/icons/actions/backup_ram.png</iconset>
    </property>
    <property name="text">
-    <string>Backup Manager...</string>
+    <string>&amp;Backup Manager...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+B</string>
@@ -790,7 +822,7 @@
      <normaloff>:/actions/icons/actions/iso.png</normaloff>:/actions/icons/actions/iso.png</iconset>
    </property>
    <property name="text">
-    <string>Open ISO...</string>
+    <string>Open &amp;ISO...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I</string>
@@ -802,7 +834,7 @@
      <normaloff>:/actions/icons/actions/cd.png</normaloff>:/actions/icons/actions/cd.png</iconset>
    </property>
    <property name="text">
-    <string>Open CD Rom...</string>
+    <string>Open &amp;CD Rom...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
@@ -858,8 +890,21 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
-    <string>Memory Editor</string>
+    <string>Memory &amp;Editor</string>
+   </property>
+  </action>
+  <action name="aToolsCheatSearch">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/cheat_search.png</normaloff>:/actions/icons/actions/cheat_search.png</iconset>
+   </property>
+   <property name="text">
+    <string>Cheat &amp;Search...</string>
    </property>
   </action>
  </widget>

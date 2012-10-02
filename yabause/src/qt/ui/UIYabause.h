@@ -70,6 +70,9 @@ protected:
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
 	bool mInit;
+   result_struct *searchResults;
+   u32 numSearchResults;
+   int searchType;
 
 	virtual void showEvent( QShowEvent* event );
 	virtual void closeEvent( QCloseEvent* event );
@@ -108,6 +111,7 @@ protected slots:
 	// tools
 	void on_aToolsBackupManager_triggered();
 	void on_aToolsCheatsList_triggered();
+   void on_aToolsCheatSearch_triggered();
 	void on_aToolsTransfer_triggered();
 	// view menu
 	void on_aViewFPS_triggered( bool toggled );

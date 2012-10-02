@@ -24,6 +24,7 @@
 #include "UISettings.h"
 #include "UIBackupRam.h"
 #include "UICheats.h"
+#include "UICheatSearch.h"
 #include "UIDebugSH2.h"
 #include "UIDebugVDP1.h"
 #include "UIDebugVDP2.h"
@@ -68,6 +69,10 @@ UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )
 {
 	mInit = false;
+	searchResults = NULL;
+	numSearchResults = 0;
+	searchType = 0;
+
 	// setup dialog
 	setupUi( this );
 	toolBar->insertAction( aFileSettings, mFileSaveState->menuAction() );
@@ -417,6 +422,16 @@ void UIYabause::on_aToolsCheatsList_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	UICheats( this ).exec();
+}
+
+void UIYabause::on_aToolsCheatSearch_triggered()
+{
+   YabauseLocker locker( mYabauseThread );
+   UICheatSearch cs(this, searchResults, numSearchResults, searchType);
+      
+   cs.exec();
+
+   searchResults = cs.getSearchVariables(&numSearchResults, &searchType);
 }
 
 void UIYabause::on_aToolsTransfer_triggered()
