@@ -351,6 +351,8 @@ void Vdp1Draw(void) {
                VIDCore->Vdp1ScaledSpriteDraw();
                break;
             case 2: // distorted sprite draw
+            case 3: /* this one should be invalid, but some games
+                    (Hardcore 4x4 for instance) use it instead of 2 */
                VIDCore->Vdp1DistortedSpriteDraw();
                break;
             case 4: // polygon draw
@@ -445,6 +447,8 @@ void Vdp1NoDraw(void) {
             case 0: // normal sprite draw
             case 1: // scaled sprite draw
             case 2: // distorted sprite draw
+            case 3: /* this one should be invalid, but some games
+                    (Hardcore 4x4 for instance) use it instead of 2 */
             case 4: // polygon draw
             case 5: // polyline draw
             case 6: // line draw
@@ -632,6 +636,8 @@ char *Vdp1DebugGetCommandNumberName(u32 number)
             return "Scaled Sprite";
          case 2:
             return "Distorted Sprite";
+         case 3:
+            return "Distorted Sprite *";
          case 4:
             return "Polygon";
          case 5:
@@ -738,6 +744,11 @@ void Vdp1DebugCommand(u32 number, char *outstring)
          break;
       case 2:
          AddString(outstring, "Distorted Sprite\r\n");
+         AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
+         AddString(outstring, "x3 = %d, y3 = %d, x4 = %d, y4 = %d\r\n", cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
+         break;
+      case 3:
+         AddString(outstring, "Distorted Sprite *\r\n");
          AddString(outstring, "x1 = %d, y1 = %d, x2 = %d, y2 = %d\r\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB);
          AddString(outstring, "x3 = %d, y3 = %d, x4 = %d, y4 = %d\r\n", cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
          break;
@@ -1018,6 +1029,7 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
       case 0: // Normal Sprite
       case 1: // Scaled Sprite
       case 2: // Distorted Sprite
+      case 3: // Distorted Sprite *
          w[0] = (cmd.CMDSIZE & 0x3F00) >> 5;
          h[0] = cmd.CMDSIZE & 0xFF;
 
