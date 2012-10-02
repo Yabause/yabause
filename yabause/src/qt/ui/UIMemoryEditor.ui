@@ -96,7 +96,7 @@
   <customwidget>
    <class>UIHexEditor</class>
    <extends>QAbstractScrollArea</extends>
-   <header>UIHexeditor.h</header>
+   <header>UIHexEditor.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
