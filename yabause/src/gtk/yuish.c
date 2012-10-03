@@ -630,12 +630,9 @@ static void yui_sh_editedMbp( GtkCellRendererText *cellrenderertext,
   GtkTreeIter iter;
   gchar *endptr;
   unsigned int addr;
-  memorybreakpoint_struct *cmbp;
   gchar * oldaddr_s, * flags_s;
   unsigned int oldaddr;
   u32 flags;
-
-  cmbp = SH2GetMemoryBreakpointList(sh2->debugsh);
 
   gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( sh2->mbpListStore ), &iter, arg1 );
 
@@ -684,11 +681,8 @@ static void yui_sh_editedMbpFlags( GtkCellRendererText *cellrenderertext,
   GtkTreeIter iter;
   gchar *endptr;
   unsigned int addr;
-  memorybreakpoint_struct *cmbp;
   gchar * addr_s;
   u32 flags = 0;
-
-  cmbp = SH2GetMemoryBreakpointList(sh2->debugsh);
 
   gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( sh2->mbpListStore ), &iter, arg1 );
 
@@ -906,7 +900,6 @@ gint yui_sh_mbp_popup(GtkWidget * widget, GdkEventButton * event, gpointer data)
   GtkTreeIter iter;
   GtkTreeModel * model;
   gchar * flags_s;
-  u32 flags;
   char *endptr;
   int i;
   guint signal_id;
@@ -943,7 +936,6 @@ gint yui_sh_mbp_popup(GtkWidget * widget, GdkEventButton * event, gpointer data)
 
           for(i = 0;i < 6;i++) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(sh2->mbp_menu_item[i]), FALSE);
 
-          flags = 0;
           endptr = flags_s;
           while ( *endptr ) {
               switch (*endptr) {
@@ -1052,12 +1044,10 @@ gint yui_sh_bp_popup(GtkWidget * widget, GdkEventButton * event, gpointer data)
   GtkMenu *menu;
   GdkEventButton *event_button;
   YuiSh * sh2 = data;
-  GtkTreeView * view;
 
   g_return_val_if_fail (data != NULL, FALSE);
   g_return_val_if_fail (event != NULL, FALSE);
 
-  view  = GTK_TREE_VIEW(sh2->bpList);
   menu = GTK_MENU(sh2->bp_menu);
 
   if (event->type == GDK_BUTTON_PRESS) {

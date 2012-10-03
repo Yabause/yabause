@@ -654,7 +654,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
    clipping_struct clip[2];
    u32 linewnd0addr, linewnd1addr;
    screeninfo_struct sinfo;
-   int scrollx, scrolly;
+   int scrolly;
    int *mosaic_y, *mosaic_x;
    clipping_struct colorcalcwindow[2];
 
@@ -663,7 +663,6 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
 
    SetupScreenVars(info, &sinfo, info->PlaneAddr);
 
-   scrollx = info->x;
    scrolly = info->y;
 
    clip[0].xstart = clip[0].ystart = clip[0].xend = clip[0].yend = 0;
@@ -1988,17 +1987,12 @@ static void putpixel8(int x, int y) {
     u8 * iPix = &vdp1backframebuffer[(y2 * vdp1width) + x2];
     int mesh = cmd.CMDPMOD & 0x0100;
     int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
-    int currentShape = cmd.CMDCTRL & 0x7;
-    int isTextured=1;
 
     currentPixel &= 0xFF;
 
     if(mesh && ((x2 ^ y2) & 1)) {
         return;
     }
-
-    if(currentShape == 4 || currentShape == 5 || currentShape == 6)
-        isTextured = 0;
 
     {
         int clipped;
@@ -2033,14 +2027,9 @@ static void putpixel(int x, int y) {
 	u16* iPix = &((u16 *)vdp1backframebuffer)[(y * vdp1width) + x];
 	int mesh = cmd.CMDPMOD & 0x0100;
 	int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
-	int currentShape = cmd.CMDCTRL & 0x7;
-	int isTextured=1;
 
 	if(mesh && (x^y)&1)
 		return;
-
-	if(currentShape == 4 || currentShape == 5 || currentShape == 6)
-		isTextured = 0;
 
 	{
 		int clipped;
@@ -2473,8 +2462,6 @@ void VIDSoftVdp1NormalSpriteDraw() {
 void VIDSoftVdp1ScaledSpriteDraw(){
 
 	s32 topLeftx,topLefty,topRightx,topRighty,bottomRightx,bottomRighty,bottomLeftx,bottomLefty;
-	int spriteWidth;
-	int spriteHeight;
 	int x0,y0,x1,y1;
 	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
@@ -2553,9 +2540,6 @@ void VIDSoftVdp1ScaledSpriteDraw(){
 		y1++;
 		break;
 	}
-
-	spriteWidth = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-	spriteHeight = cmd.CMDSIZE & 0xFF;
 
 	topLeftx = x0;
 	topLefty = y0;
@@ -2792,7 +2776,6 @@ void VIDSoftVdp2DrawEnd(void)
    u32 vdp1coloroffset;
    int colormode = Vdp2Regs->SPCTL & 0x20;
    vdp2draw_struct info;
-   u32 *dst=dispbuffer;
    int islinewindow;
    clipping_struct clip[2];
    u32 linewnd0addr, linewnd1addr;

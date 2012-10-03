@@ -577,6 +577,9 @@ static INLINE void ReadWindowCoordinates(int num, clipping_struct * clip)
 
 static INLINE void ReadWindowData(int wctl, clipping_struct *clip)
 {
+   clip[0].xstart = clip[0].ystart = clip[0].xend = clip[0].yend = 0;
+   clip[1].xstart = clip[1].ystart = clip[1].xend = clip[1].yend = 0;
+
    if (wctl & 0x2)
    {
       ReadWindowCoordinates(0, clip);

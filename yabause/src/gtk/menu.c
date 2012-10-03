@@ -61,12 +61,6 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *frameLimiter;
   GtkWidget *layer1;
   GtkWidget *layer1_menu;
-  GtkWidget *vdp3;
-  GtkWidget *nbg1;
-  GtkWidget *nbg2;
-  GtkWidget *nbg3;
-  GtkWidget *nbg4;
-  GtkWidget *rbg1;
   GtkWidget *log;
   GtkWidget *menuitem3;
   GtkWidget *menuitem3_menu;
@@ -80,12 +74,9 @@ GtkWidget* create_menu(YuiWindow * window1) {
   GtkWidget *menuitem4;
   GtkWidget *menuitem4_menu;
   GtkWidget *about1;
-  GtkAccelGroup *accel_group;
   GtkWidget *transfer;
   GtkWidget *memory;
   GtkWidget *screenshot;
-
-  accel_group = gtk_accel_group_new ();
 
   menubar1 = gtk_menu_bar_new ();
 
