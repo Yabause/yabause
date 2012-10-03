@@ -23,7 +23,7 @@
       <attribute name="title">
        <string>General</string>
       </attribute>
-      <layout class="QGridLayout">
+      <layout class="QGridLayout" name="gridLayout1">
        <item row="13" column="0">
         <spacer>
          <property name="orientation">
@@ -178,7 +178,7 @@
       <attribute name="title">
        <string>Video</string>
       </attribute>
-      <layout class="QGridLayout">
+      <layout class="QGridLayout" name="gridLayout2">
        <item row="0" column="0" colspan="3">
         <widget class="QLabel" name="lVideoCore">
          <property name="font">
@@ -337,7 +337,7 @@
       <attribute name="title">
        <string>Cart/Memory</string>
       </attribute>
-      <layout class="QGridLayout">
+      <layout class="QGridLayout" name="gridLayout3">
        <item row="0" column="0" colspan="2">
         <widget class="QLabel" name="lCartridge">
          <property name="font">
@@ -438,7 +438,7 @@
       <attribute name="title">
        <string>Input</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout">
+      <layout class="QGridLayout" name="gridLayout4">
        <item row="0" column="0" colspan="2">
         <widget class="QLabel" name="lInput">
          <property name="sizePolicy">
