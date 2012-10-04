@@ -1988,6 +1988,9 @@ static void putpixel8(int x, int y) {
     int mesh = cmd.CMDPMOD & 0x0100;
     int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
 
+    if (iPix >= (vdp1backframebuffer + 0x40000))
+        return;
+
     currentPixel &= 0xFF;
 
     if(mesh && ((x2 ^ y2) & 1)) {
@@ -2027,6 +2030,9 @@ static void putpixel(int x, int y) {
 	u16* iPix = &((u16 *)vdp1backframebuffer)[(y * vdp1width) + x];
 	int mesh = cmd.CMDPMOD & 0x0100;
 	int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
+
+	if (iPix >= (u16*) (vdp1backframebuffer + 0x40000))
+		return;
 
 	if(mesh && (x^y)&1)
 		return;
