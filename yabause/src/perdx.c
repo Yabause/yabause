@@ -18,15 +18,40 @@
 */
 
 #include <windows.h>
-#include "../debug.h"
-#include "../peripheral.h"
+#include "debug.h"
+#include "peripheral.h"
 #include "perdx.h"
-#include "../vdp1.h"
-#include "../vdp2.h"
-#include "../yui.h"
-#include "settings/settings.h"
-#include "resource.h"
-#include "../movie.h"
+#include "vdp1.h"
+#include "vdp2.h"
+#include "yui.h"
+#include "movie.h"
+
+#define IDD_BUTTONCONFIG                123
+#define IDC_WAITINPUT                   1001
+#define IDC_DXDEVICECB                  1010
+#define IDC_UPTEXT                      1024
+#define IDC_RIGHTTEXT                   1025
+#define IDC_DOWNTEXT                    1026
+#define IDC_LEFTTEXT                    1027
+#define IDC_RTEXT                       1028
+#define IDC_LTEXT                       1029
+#define IDC_STARTTEXT                   1030
+#define IDC_ATEXT                       1031
+#define IDC_BTEXT                       1032
+#define IDC_CTEXT                       1033
+#define IDC_XTEXT                       1034
+#define IDC_YTEXT                       1035
+#define IDC_ZTEXT                       1036
+#define IDC_CUSTOMCANCEL                1037
+
+enum {
+   EMUTYPE_NONE=0,
+   EMUTYPE_STANDARDPAD,
+   EMUTYPE_ANALOGPAD,
+   EMUTYPE_STUNNER,
+   EMUTYPE_MOUSE,
+   EMUTYPE_KEYBOARD
+};
 
 int PERDXInit(void);
 void PERDXDeInit(void);

@@ -21,7 +21,7 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #undef FASTCALL
-#include "../perdx.h"
+#include "../../perdx.h"
 #include "../resource.h"
 #include "settings.h"
 

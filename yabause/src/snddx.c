@@ -20,7 +20,7 @@
 #include <math.h>
 #include <dsound.h>
 #include "dx.h"
-#include "../scsp.h"
+#include "scsp.h"
 #include "snddx.h"
 
 int SNDDXInit(void);

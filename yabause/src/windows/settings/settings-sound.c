@@ -23,7 +23,7 @@
 #include "../resource.h"
 #include "../../scsp.h"
 #include "settings.h"
-#include "../snddx.h"
+#include "../../snddx.h"
 
 extern SoundInterface_struct *SNDCoreList[];
 
