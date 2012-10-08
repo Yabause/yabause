@@ -118,6 +118,11 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( reset() ), this, SLOT( reset() ) );
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
+
+	QList<QAction *> actionList = menubar->actions();
+	for(int i = 0;i < actionList.size();i++) {
+		addAction(actionList.at(i));
+	}
 }
 
 void UIYabause::showEvent( QShowEvent* e )
@@ -129,6 +134,10 @@ void UIYabause::showEvent( QShowEvent* e )
 		LogStart();
 		LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
 		VolatileSettings* vs = QtYabause::volatileSettings();
+		if ( vs->value( "View/Menubar" ).toInt() == 2 )
+			menubar->hide();
+		if ( vs->value( "View/Toolbar" ).toInt() == 2 )
+			toolBar->hide();
 		if ( vs->value( "autostart" ).toBool() )
 			aEmulationRun->trigger();
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
@@ -191,6 +200,11 @@ void UIYabause::fullscreenRequested( bool f )
 #ifdef USE_UNIFIED_TITLE_TOOLBAR
 		setUnifiedTitleAndToolBarOnMac( true );
 #endif
+		VolatileSettings* vs = QtYabause::volatileSettings();
+		if ( vs->value( "View/Menubar" ).toInt() == 1 )
+			menubar->show();
+		if ( vs->value( "View/Toolbar" ).toInt() == 1 )
+			toolBar->show();
 	}
 	else if ( !isFullScreen() && f )
 	{
@@ -198,6 +212,11 @@ void UIYabause::fullscreenRequested( bool f )
 		setUnifiedTitleAndToolBarOnMac( false );
 #endif
 		showFullScreen();
+		VolatileSettings* vs = QtYabause::volatileSettings();
+		if ( vs->value( "View/Menubar" ).toInt() == 1 )
+			menubar->hide();
+		if ( vs->value( "View/Toolbar" ).toInt() == 1 )
+			toolBar->hide();
 	}
 	if ( aViewFullscreen->isChecked() != f )
 		aViewFullscreen->setChecked( f );
@@ -266,6 +285,16 @@ void UIYabause::on_aFileSettings_triggered()
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
+
+		if ( vs->value( "View/Menubar" ).toInt() == 2 )
+			menubar->hide();
+		else
+			menubar->show();
+
+		if ( vs->value( "View/Toolbar" ).toInt() == 2 )
+			toolBar->hide();
+		else
+			toolBar->show();
 		
 		if ( mYabauseThread->pauseEmulation( true, true ) )
 			refreshStatesActions();

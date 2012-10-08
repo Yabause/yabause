@@ -550,6 +550,112 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="wView">
+      <attribute name="title">
+       <string>View</string>
+      </attribute>
+      <layout class="QGridLayout">
+       <item row="4" column="0">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="0" colspan="3">
+        <widget class="QLabel">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Hide menubar</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QRadioButton" name="rbMenubarNever">
+         <property name="text">
+          <string>Never</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string>bgShowMenubar</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QRadioButton" name="rbMenubarFullscreen">
+         <property name="text">
+          <string>On fullscreen</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string>bgShowMenubar</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QRadioButton" name="rbMenubarAlways">
+         <property name="text">
+          <string>Always</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string>bgShowMenubar</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="3">
+        <widget class="QLabel">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Hide toolbar</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QRadioButton" name="rbToolbarNever">
+         <property name="text">
+          <string>Never</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string>bgShowToolbar</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QRadioButton" name="rbToolbarFullscreen">
+         <property name="text">
+          <string>On fullscreen</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string>bgShowToolbar</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="QRadioButton" name="rbToolbarAlways">
+         <property name="text">
+          <string>Always</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string>bgShowToolbar</string>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>
@@ -607,4 +713,8 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="bgShowMenubar"/>
+  <buttongroup name="bgShowToolbar"/>
+ </buttongroups>
 </ui>

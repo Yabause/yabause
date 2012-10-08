@@ -253,6 +253,17 @@ void UISettings::loadSettings()
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
+
+	// view
+	bgShowMenubar->setId( rbMenubarNever, 0 );
+	bgShowMenubar->setId( rbMenubarFullscreen, 1 );
+	bgShowMenubar->setId( rbMenubarAlways, 2 );
+	bgShowMenubar->button( s->value( "View/Menubar", 0 ).toInt() )->setChecked( true );
+
+	bgShowToolbar->setId( rbToolbarNever, 0 );
+	bgShowToolbar->setId( rbToolbarFullscreen, 1 );
+	bgShowToolbar->setId( rbToolbarAlways, 2 );
+	bgShowToolbar->button( s->value( "View/Toolbar", 1 ).toInt() )->setChecked( true );
 }
 
 void UISettings::saveSettings()
@@ -295,6 +306,10 @@ void UISettings::saveSettings()
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
+
+	// view
+	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );
+	s->setValue( "View/Toolbar", bgShowToolbar->checkedId() );
 }
 
 void UISettings::accept()
