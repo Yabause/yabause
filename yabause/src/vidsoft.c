@@ -877,8 +877,21 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
       screeninfo_struct sinfo2;
       vdp2rotationparameterfp_struct *p2 = NULL;
 
+      clipping_struct rpwindow[2];
+      int userpwindow = 0;
+      int islinewindow = 0;
+      u32 linewnd0addr, linewnd1addr;
+
       if ((Vdp2Regs->RPMD & 3) == 2)
          p2 = &parameter[1 - info->rotatenum];
+      else if ((Vdp2Regs->RPMD & 3) == 3)
+      {
+         ReadWindowData(Vdp2Regs->WCTLD, rpwindow);
+         linewnd0addr = linewnd1addr = 0;
+         ReadLineWindowData(&islinewindow, Vdp2Regs->WCTLD, &linewnd0addr, &linewnd1addr);
+         userpwindow = 1;
+         p2 = &parameter[1 - info->rotatenum];
+      }
 
       GenerateRotatedVarFP(p, &xmul, &ymul, &C, &F);
 
@@ -941,6 +954,9 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
          info->LoadLineParams(info, j);
 
+         if (userpwindow)
+            ReadLineWindowClip(islinewindow, rpwindow, &linewnd0addr, &linewnd1addr);
+
          for (i = 0; i < vdp2width; i++)
          {
             u32 color;
@@ -964,7 +980,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                rcoefx2 += decipart(p2->deltaKAx);
             }
 
-            if (p->msb)
+            if (((! userpwindow) && p->msb) || (userpwindow && (! TestBothWindow(Vdp2Regs->WCTLD, rpwindow, i, j))))
             {
                if ((p2 == NULL) || (p2->coefenab && p2->msb)) continue;
 
@@ -978,6 +994,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                   Vdp2MapCalcXY(info, &x, &y, &sinfo2);
                }
             }
+            else if (p->msb) continue;
             else
             {
                x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
