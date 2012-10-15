@@ -647,7 +647,7 @@ static u8 FASTCALL GetAlpha(vdp2draw_struct * info, u32 color)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height)
+static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
 {
    int i, j;
    int x, y;
@@ -689,7 +689,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
 	   mosaic_y = mosaic_table[info->mosaicymask-1];
    }
 
-   for (j = 0; j < height; j++)
+   for (j = 0; j < vdp2height; j++)
    {
       int Y;
       int linescrollx = 0;
@@ -740,7 +740,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, int width, int height
 
       info->LoadLineParams(info, j);
 
-      for (i = 0; i < width; i++)
+      for (i = 0; i < vdp2width; i++)
       {
          u32 color;
          /* I'm really not sure about this... but I think the way we handle
@@ -1022,7 +1022,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
       return;
    }
 
-   Vdp2DrawScroll(info, vdp2width, vdp2height);
+   Vdp2DrawScroll(info);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1249,7 +1249,7 @@ static void Vdp2DrawNBG0(void)
    if (info.enable == 1)
    {
       // NBG0 draw
-      Vdp2DrawScroll(&info, vdp2width, vdp2height);
+      Vdp2DrawScroll(&info);
    }
    else
    {
@@ -1354,7 +1354,7 @@ static void Vdp2DrawNBG1(void)
 
    info.LoadLineParams = (void (*)(void *, int)) LoadLineParamsNBG1;
 
-   Vdp2DrawScroll(&info, vdp2width, vdp2height);
+   Vdp2DrawScroll(&info);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1419,7 +1419,7 @@ static void Vdp2DrawNBG2(void)
 
    info.LoadLineParams = (void (*)(void *, int)) LoadLineParamsNBG2;
 
-   Vdp2DrawScroll(&info, vdp2width, vdp2height);
+   Vdp2DrawScroll(&info);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1485,7 +1485,7 @@ static void Vdp2DrawNBG3(void)
 
    info.LoadLineParams = (void (*)(void *, int)) LoadLineParamsNBG3;
 
-   Vdp2DrawScroll(&info, vdp2width, vdp2height);
+   Vdp2DrawScroll(&info);
 }
 
 //////////////////////////////////////////////////////////////////////////////
