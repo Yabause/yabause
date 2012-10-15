@@ -618,10 +618,23 @@ static INLINE void ReadLineWindowData(int *islinewindow, int wctl, u32 *linewnd0
 
 static INLINE void ReadOneLineWindowClip(clipping_struct *clip, u32 *linewndaddr)
 {
-   clip->xstart = (T1ReadWord(Vdp2Ram, *linewndaddr) & 0x3FF);
+   clip->xstart = T1ReadWord(Vdp2Ram, *linewndaddr);
    *linewndaddr += 2;
-   clip->xend = (T1ReadWord(Vdp2Ram, *linewndaddr) & 0x3FF);
+   clip->xend = T1ReadWord(Vdp2Ram, *linewndaddr);
    *linewndaddr += 2;
+
+   /* Ok... that looks insane... but there's at least two games (3D Baseball and
+   Panzer Dragoon Saga) that set the line window end to 0xFFFF and expect the line
+   window to be invalid for those lines... */
+   if (clip->xend == 0xFFFF)
+   {
+      clip->xstart = 0;
+      clip->xend = 0;
+      return;
+   }
+
+   clip->xstart &= 0x3FF;
+   clip->xend &= 0x3FF;
 
    switch ((Vdp2Regs->TVMD >> 1) & 0x3)
    {
