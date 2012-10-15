@@ -616,67 +616,45 @@ static INLINE void ReadLineWindowData(int *islinewindow, int wctl, u32 *linewnd0
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void ReadOneLineWindowClip(clipping_struct *clip, u32 *linewndaddr)
+{
+   clip->xstart = (T1ReadWord(Vdp2Ram, *linewndaddr) & 0x3FF);
+   *linewndaddr += 2;
+   clip->xend = (T1ReadWord(Vdp2Ram, *linewndaddr) & 0x3FF);
+   *linewndaddr += 2;
+
+   switch ((Vdp2Regs->TVMD >> 1) & 0x3)
+   {
+      case 0: // Normal
+         clip->xstart = (clip->xstart >> 1) & 0x1FF;
+         clip->xend = (clip->xend >> 1) & 0x1FF;
+         break;
+      case 1: // Hi-Res
+         clip->xstart = clip->xstart & 0x3FF;
+         clip->xend = clip->xend & 0x3FF;
+         break;
+      case 2: // Exclusive Normal
+         clip->xstart = clip->xstart & 0x1FF;
+         clip->xend = clip->xend & 0x1FF;
+         break;
+      case 3: // Exclusive Hi-Res
+         clip->xstart = (clip->xstart & 0x3FF) >> 1;
+         clip->xend = (clip->xend & 0x3FF) >> 1;
+         break;
+   }
+}
+
 static INLINE void ReadLineWindowClip(int islinewindow, clipping_struct *clip, u32 *linewnd0addr, u32 *linewnd1addr)
 {
    if (islinewindow)
    {
       // Fetch new xstart and xend values from table
       if (islinewindow & 0x1)
-      {
          // Window 0
-         clip[0].xstart = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF);
-         linewnd0addr[0]+=2;
-         clip[0].xend = (T1ReadWord(Vdp2Ram, linewnd0addr[0]) & 0x3FF);
-         linewnd0addr[0]+=2;
-
-         switch ((Vdp2Regs->TVMD >> 1) & 0x3)
-         {
-            case 0: // Normal
-               clip[0].xstart = (clip[0].xstart >> 1) & 0x1FF;
-               clip[0].xend = (clip[0].xend >> 1) & 0x1FF;
-               break;
-            case 1: // Hi-Res
-               clip[0].xstart = clip[0].xstart & 0x3FF;
-               clip[0].xend = clip[0].xend & 0x3FF;
-               break;
-            case 2: // Exclusive Normal
-               clip[0].xstart = clip[0].xstart & 0x1FF;
-               clip[0].xend = clip[0].xend & 0x1FF;
-               break;
-            case 3: // Exclusive Hi-Res
-               clip[0].xstart = (clip[0].xstart & 0x3FF) >> 1;
-               clip[0].xend = (clip[0].xend & 0x3FF) >> 1;
-               break;
-         }
-      }
+         ReadOneLineWindowClip(clip, linewnd0addr);
       if (islinewindow & 0x2)
-      {
          // Window 1
-         clip[1].xstart = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF);
-         linewnd1addr[0]+=2;
-         clip[1].xend = (T1ReadWord(Vdp2Ram, linewnd1addr[0]) & 0x3FF);
-         linewnd1addr[0]+=2;
-
-         switch ((Vdp2Regs->TVMD >> 1) & 0x3)
-         {
-            case 0: // Normal
-               clip[1].xstart = (clip[1].xstart >> 1) & 0x1FF;
-               clip[1].xend = (clip[1].xend >> 1) & 0x1FF;
-               break;
-            case 1: // Hi-Res
-               clip[1].xstart = clip[1].xstart & 0x3FF;
-               clip[1].xend = clip[1].xend & 0x3FF;
-               break;
-            case 2: // Exclusive Normal
-               clip[1].xstart = clip[1].xstart & 0x1FF;
-               clip[1].xend = clip[1].xend & 0x1FF;
-               break;
-            case 3: // Exclusive Hi-Res
-               clip[1].xstart = (clip[1].xstart & 0x3FF) >> 1;
-               clip[1].xend = (clip[1].xend & 0x3FF) >> 1;
-               break;
-         }
-      }
+         ReadOneLineWindowClip(clip + 1, linewnd1addr);
    }
 }
 
