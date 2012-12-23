@@ -2415,7 +2415,6 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    s16 x, y;
    u16 CMDPMOD;
    u16 color2;
-   float mesh;
    float col[4*4];
    int i;
 

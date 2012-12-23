@@ -241,9 +241,7 @@ int YglCalcTextureQ(
 {
    float p1[2],p2[2],p3[2],p4[2],o[2];
    float   q1, q3, q4, qw;
-   float   x, y;
    float   dx, w;
-   float   b;
    float   ww;
    
    // fast calculation for triangle
@@ -1549,7 +1547,6 @@ void YglRenderFrameBuffer( int from , int to ) {
    GLint   vertices[12];
    GLfloat texcord[12];
    float offsetcol[4];
-   int i;
    int bwin0,bwin1,logwin0,logwin1,winmode;
    
    // Out of range, do nothing
