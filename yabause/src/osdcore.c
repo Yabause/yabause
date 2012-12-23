@@ -343,7 +343,7 @@ void OSDSoftReset(void)
 
 void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h)
 {
-   int i, j;
+   int i;
    u32 * dot;
    char * c;
    int loffset = 0;

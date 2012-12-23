@@ -285,7 +285,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       {
          // 4 bpp LUT mode
          u16 temp;
-         u16 temp2;
          u32 colorLut = cmd->CMDCOLR * 8;
          u16 i;
          u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
@@ -1318,7 +1317,7 @@ static int FASTCALL Vdp2CheckWindowRange(vdp2draw_struct *info, int x, int y, in
 void Vdp2GenLineinfo( vdp2draw_struct *info )
 {
    int bound = 0;
-   int v,i;
+   int i;
    u16 val1,val2;
    int index = 0;
    if( info->lineinc == 0 || info->islinescroll == 0 ) return;
@@ -1913,9 +1912,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    int pagesize;
    int patternshift;
    u32 LineColorRamAdress;   
-   u32 celladdr;
-   u32 cellc[16*16];
-   
+
    vdp2rotationparameter_struct *parameter;
    if( vdp2height >= 448 ) vres = (vdp2height>>1); else vres = vdp2height;
    if( vdp2width >= 640 ) hres = (vdp2width>>1); else hres = vdp2width;
@@ -2069,7 +2066,6 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 
             if ((x>>patternshift) != oldcellx || (y>>patternshift) != oldcelly)
             {
-               int cv,ch;
                oldcellx = x>>patternshift;
                oldcelly = y>>patternshift;
 
@@ -2086,19 +2082,6 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                                 ((x&511)>>patternshift)) << info->patterndatasize;
 
                     Vdp2PatternAddr(info); // Heh, this could be optimized
-#if 0
-                    if( celladdr != info->charaddr )
-                    {
-                       celladdr = info->charaddr;
-                        for( cv = 0; cv < info->cellh; cv++ )
-                        {
-                           for( ch = 0; ch < info->cellw; ch++ )
-                           {
-                              cellc[cv*16+ch] = Vdp2RotationFetchPixel(info,ch,cv,info->cellw);
-                           }
-                        }
-                    }
-#endif                    
                }
                
                // Figure out which pixel in the tile we want
@@ -2329,7 +2312,6 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    s16 x, y;
    u16 CMDPMOD;
    u16 color2;
-   float mesh;
    float col[4*4];
    int i;
    
@@ -2610,7 +2592,6 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    u32 tmp;
    u16 CMDPMOD;
    u16 color2;
-   float mesh;
    int i;
    float col[4*4];
    
@@ -2716,7 +2697,6 @@ void VIDOGLVdp1PolygonDraw(void)
    YglSprite polygon;
    YglTexture texture;
    u16 color2;
-   float mesh;
    int i;
    float col[4*4];
    int gouraud=0;
@@ -3146,8 +3126,6 @@ static void Vdp2DrawNBG0(void)
    vdp2draw_struct info;
    YglTexture texture;
    YglCache tmpc;
-   int i, i2;
-   u32 linescrolladdr; 
    vdp2rotationparameter_struct parameter;
    info.dst=0;
    info.uclipmode=0;
@@ -3364,7 +3342,6 @@ static void Vdp2DrawNBG1(void)
 {
    vdp2draw_struct info;
    YglTexture texture;
-   float *tmp;
    YglCache tmpc;
    info.dst=0;
    info.uclipmode=0;

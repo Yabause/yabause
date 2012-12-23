@@ -915,7 +915,6 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 
 float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    unsigned int x, y;
-   YglLevel   *level;
    YglProgram *program;
    texturecoordinate_struct *tmp;
    float q[4];
@@ -1041,7 +1040,6 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
 
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c) {
    unsigned int x, y;
-   YglLevel   *level;
    YglProgram *program;
    texturecoordinate_struct *tmp;
    float * vtxa;
@@ -1193,7 +1191,6 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
 //////////////////////////////////////////////////////////////////////////////
 
 void YglCachedQuad(YglSprite * input, YglCache * cache) {
-   YglLevel   * level;
    YglProgram * program;
    unsigned int x,y;
    texturecoordinate_struct *tmp;
@@ -1289,13 +1286,11 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache) {
-   YglLevel   * level;
    YglProgram * program;
    unsigned int x,y;
    texturecoordinate_struct *tmp;
    float q[4];
    int prg = PG_VFP1_GOURAUDSAHDING;
-   int currentpg = 0;
    float * vtxa;
    int *pos;
    

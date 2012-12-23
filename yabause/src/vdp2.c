@@ -40,7 +40,6 @@ static int autoframeskipenab=0;
 static int throttlespeed=0;
 u64 lastticks=0;
 static int fps;
-static int fpstoggle=0;
 
 //////////////////////////////////////////////////////////////////////////////
 
