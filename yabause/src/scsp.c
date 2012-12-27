@@ -94,6 +94,9 @@
 #include "yabause.h"
 #include "scsp.h"
 
+#ifdef WIN32
+#include "windows/aviout.h"
+#endif
 
 #ifdef PSP
 # include "psp/common.h"

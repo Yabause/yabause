@@ -433,6 +433,11 @@ if (CMAKE_COMPILER_IS_GNUCC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wdeclaration-after-statement")
 endif ()
 
+if (MSVC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4018 /wd4244")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244")
+endif ()
+
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
