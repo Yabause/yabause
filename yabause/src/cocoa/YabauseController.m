@@ -242,6 +242,7 @@ static void FlipToggle(NSMenuItem *item) {
 {
     if(!_running) {
         yabauseinit_struct yinit;
+        int initok;
         NSString *bios = [prefs biosPath];
         NSString *mpeg = [prefs mpegPath];
         NSString *bram = [prefs bramPath];
@@ -295,8 +296,12 @@ static void FlipToggle(NSMenuItem *item) {
         }
 
         [[view openGLContext] makeCurrentContext];
-        YabauseInit(&yinit);
+        initok = YabauseInit(&yinit);
         [NSOpenGLContext clearCurrentContext];
+        if (initok != 0) {
+            return;
+        }
+
         YabauseSetDecilineMode(1);
 
         _running = YES;
