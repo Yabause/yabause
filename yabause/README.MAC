@@ -8,12 +8,13 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
            ____________________________________
-           Copyright (c) 2002-2011 Yabause team
+           Copyright (c) 2002-2012 Yabause team
 
 
-1) Introduction.............................................19
-2) Compiling instructions...................................25
-3) How to use Yabause.......................................45
+1) Introduction.............................................20
+2) Compiling instructions...................................26
+3) How to use Yabause.......................................46
+4) Known Issues.............................................92
 
 
 1 Introduction________________________________________________
@@ -83,5 +84,15 @@ the VideoCD/MPEG card), and a cartridge for the cartridge
 port on the Saturn.
 
 Once eveything is set, you can start emulation with the
-"File > Run BIOS" or "File > Run CDROM" entry. Don't use the
-Run BIOS entry if you're using BIOS emulation.
+"File > Run BIOS", "File > Run CDROM" or "File > Run Image"
+menu options. Don't use the Run BIOS entry if you're using
+BIOS emulation.
+
+
+4 Known Issues________________________________________________
+
+When running in GDB, you should not use fullscreen mode. If
+Yabause crashes while running under GDB in fullscreen mode,
+you will probably get stuck with no way to exit. This should
+only affect developers and shouldn't ever be an issue for
+normal users.

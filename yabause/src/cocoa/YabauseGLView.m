@@ -143,8 +143,16 @@
 
 - (void)reshape
 {
+    CGLContextObj cxt = CGLGetCurrentContext();
+
+    /* Make sure that the emulation thread doesn't attempt to do any OpenGL
+       calls during the resize event, otherwise one of the two will crash. */
+    CGLLockContext(cxt);
+
     if(VIDCore)
         VIDCore->Resize([self width], [self height], 0);
+
+    CGLUnlockContext(cxt);
 
     [super reshape];
 }
