@@ -1,5 +1,7 @@
 project(yabause-cocoa)
 
+yab_port_start()
+
 find_library(AUDIO_LIBRARY AudioUnit)
 
 if (NOT AUDIO_LIBRARY)
@@ -25,6 +27,7 @@ add_executable(yabause-cocoa MACOSX_BUNDLE ${yabause_cocoa_SOURCES})
 target_link_libraries(yabause-cocoa yabause ${YABAUSE_LIBRARIES}
 	${AUDIO_LIBRARY})
 
+yab_port_stop()
 set_target_properties(yabause-cocoa PROPERTIES OUTPUT_NAME Yabause)
 
 set_target_properties(yabause-cocoa PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/CMake-Info.plist)

@@ -453,6 +453,10 @@ macro(yab_port_start)
 	endif ()
 endmacro(yab_port_start)
 
+macro(yab_port_stop)
+	set(YAB_PORT_BUILT TRUE PARENT_SCOPE)
+endmacro(yab_port_stop)
+
 macro(yab_port_success YAB_TARGET)
 	if (NOT YAB_MULTIBUILD)
 		set_target_properties(${YAB_TARGET} PROPERTIES OUTPUT_NAME yabause)
