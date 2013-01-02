@@ -64,3 +64,5 @@ add_custom_command(
 add_custom_command(
 	TARGET yabause-cocoa POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/controller.png ${CMAKE_CURRENT_BINARY_DIR}/Yabause.app/Contents/Resources)
+
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Yabause.app/" DESTINATION "Yabause.app" USE_SOURCE_PERMISSIONS)
