@@ -6,7 +6,7 @@
     <x>0</x>
     <y>0</y>
     <width>561</width>
-    <height>323</height>
+    <height>363</height>
    </rect>
   </property>
   <property name="focusPolicy" >
@@ -327,9 +327,29 @@
     <set>Qt::AlignCenter</set>
    </property>
   </widget>
+  <widget class="QDialogButtonBox" name="padButtons">
+   <property name="geometry" >
+    <rect>
+     <x>491</x>
+     <y>323</y>
+     <width>60</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Close</set>
+   </property>
+  </widget>
  </widget>
  <resources>
   <include location="../resources/resources.qrc" />
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>padButtons</sender>
+   <signal>rejected()</signal>
+   <receiver>UIPadSetting</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
 </ui>
