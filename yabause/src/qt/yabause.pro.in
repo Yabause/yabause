@@ -74,7 +74,16 @@ FORMS	+= ui/UIYabause.ui \
 	ui/UIWaitInput.ui \
 	ui/UIBackupRam.ui \
 	ui/UIPortManager.ui \
-	ui/UIPadSetting.ui
+	ui/UIPadSetting.ui \
+	ui/UICheatRaw.ui \
+	ui/UICheatSearch.ui \
+	ui/UIDebugCPU.ui \
+	ui/UIDebugSCSP.ui \
+	ui/UIDebugVDP1.ui \
+	ui/UIDebugVDP2.ui \
+	ui/UIDebugVDP2Viewer.ui \
+	ui/UIHexInput.ui \
+	ui/UIMemoryTransfer.ui
 
 HEADERS	+= ui/UIYabause.h \
 	YabauseGL.h \
@@ -93,7 +102,19 @@ HEADERS	+= ui/UIYabause.h \
 	ui/UIPortManager.h \
 	ui/UIPadSetting.h \
 	VolatileSettings.h \
-	Arguments.h
+	Arguments.h \
+	ui/UICheatSearch.h \
+	ui/UIDebugCPU.h \
+	ui/UIDebugM68K.h \
+	ui/UIDebugVDP1.h \
+	ui/UIDebugVDP2.h \
+	ui/UIDebugVDP2Viewer.h \
+	ui/UIDebugSCSP.h \
+	ui/UIDebugSCUDSP.h \
+	ui/UIDebugSH2.h \
+	ui/UIDisasm.h \
+	ui/UIHexInput.h \
+	ui/UIMemoryTransfer.h
 
 SOURCES	+= main.cpp \
 	ui/UIYabause.cpp \
@@ -113,4 +134,16 @@ SOURCES	+= main.cpp \
 	ui/UIPortManager.cpp \
 	ui/UIPadSetting.cpp \
 	VolatileSettings.cpp \
-	Arguments.cpp
+	Arguments.cpp \
+	ui/UICheatSearch.cpp \
+	ui/UIDebugCPU.cpp \
+	ui/UIDebugM68K.cpp \
+	ui/UIDebugSCSP.cpp \
+	ui/UIDebugSCUDSP.cpp \
+	ui/UIDebugSH2.cpp \
+	ui/UIDebugVDP1.cpp \
+	ui/UIDebugVDP2.cpp \
+	ui/UIDebugVDP2Viewer.cpp \
+	ui/UIDisasm.cpp \
+	ui/UIHexInput.cpp \
+	ui/UIMemoryTransfer.cpp
