@@ -602,6 +602,13 @@ AM_CONDITIONAL([CPU_IS_PSP], [test ${yabause_cpu} = "psp"])
 AC_OUTPUT
 
 echo "=================="
+echo "WARNING"
+echo
+echo "Compiling Yabause with autootols is deprecated"
+echo
+echo "Please use CMake instead"
+echo
+echo "=================="
 echo "configure report"
 echo
 echo "available ports: $yabause_available_yuis"
