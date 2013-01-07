@@ -103,6 +103,8 @@ namespace Arguments
 
 	void autoframeskip(const QString& param)
 	{
+		VolatileSettings * vs = QtYabause::volatileSettings();
+		vs->setValue("General/EnableFrameSkipLimiter", param);
 	}
 
 	void autoload(const QString& param)
@@ -143,6 +145,9 @@ namespace Arguments
 
 	void cdrom(const QString& param)
 	{
+		VolatileSettings * vs = QtYabause::volatileSettings();
+		vs->setValue("General/CdRom", CDCORE_ARCH);
+		vs->setValue("General/CdRomISO", param);
 	}
 
 	void fullscreen(const QString& param)
@@ -190,6 +195,8 @@ namespace Arguments
 
 	void nosound(const QString& param)
 	{
+		VolatileSettings * vs = QtYabause::volatileSettings();
+		vs->setValue("Sound/SoundCore", SNDCORE_DUMMY);
 	}
 
 	void version(const QString& param)
