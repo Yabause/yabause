@@ -42,6 +42,7 @@ public:
 
 protected:
 	yabauseinit_struct mYabauseConf;
+   bool showFPS;
 	QMutex mMutex;
 	bool mPause;
 	int mTimerId;

@@ -51,6 +51,7 @@ void YabauseThread::initEmulation()
 {
 	reloadSettings();
 	mInit = YabauseInit( &mYabauseConf );
+   SetOSDToggle(showFPS);
 }
 
 void YabauseThread::deInitEmulation()
@@ -208,7 +209,8 @@ void YabauseThread::reloadSettings()
 		}
 	}
 	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toAscii().constData() );
-	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toAscii().constData() );
+	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toAscii().constData() );   
+   showFPS = vs->value( "General/ShowFPS", false ).toBool();
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toAscii().constData() );
 	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toAscii().constData() );
 	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toAscii().constData() );
