@@ -20,6 +20,10 @@ if (APPLE)
     set(CPACK_GENERATOR DragNDrop)
 endif ()
 
+if (WIN32)
+    SET(CPACK_NSIS_INSTALLED_ICON_NAME yabause.exe)
+endif ()
+
 include(CPack)
 
 add_subdirectory(doc)
