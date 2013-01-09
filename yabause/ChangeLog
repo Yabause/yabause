@@ -1,6 +1,31 @@
 0.9.11 -> 0.9.12
- gtk
-  - The gtk port now use the core names from the Yabause library
+ general:
+  - Fixes to the dynamic recompiler (ari64)
+  - Added ARMv5 support to the dynarec (ari64)
+  - New OSD system (guillaume)
+  - Added "built-in" DDK to make it easier to compile on Windows (guillaume)
+ sound:
+  - Improvements / Fixes in both SCSP and SCSP2 (cwiiis)
+ video:
+  - Major improvements to the OpenGL renderer (devmiyax)
+  - Major improvements to the software renderer (guillaume)
+  - Some fixes to register emulation (guillaume)
+  - Improvements to line drawing functions in the software renderer (cwiiis)
+  - Fixed endianess bugs (guillaume)
+ cocoa port:
+  - Added "load image" feature (bluecrab)
+  - Fixed the resize bug (bluecrab)
+ qt port:
+  - Added shortcuts to toggle vdp2 layers (siskoo)
+  - Fixed the "mute sound" feature (guillaume)
+  - It's now possible to compile the Qt port in "full software" mode (guillaume)
+  - Added an autostart option, disabled by default (guillaume)
+  - Now using a XDG compliant location for config file (guillaume)
+  - Added a debugger to the Qt port (cwx)
+  - DirectX cores can now be used in Qt port (cwx)
+  - Cheat search function (cwx)
+  - Option to show/hide menu and toolbar (guillaume)
+  - Close button in pad settings (guillaume)
 0.9.10 -> 0.9.11
  general:
   - Now using CMake as the default build system.
