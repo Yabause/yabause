@@ -333,7 +333,7 @@
     <string>R&amp;un</string>
    </property>
    <property name="shortcut">
-    <string>Pause</string>
+    <string>F1</string>
    </property>
   </action>
   <action name="aEmulationPause">
@@ -348,7 +348,7 @@
     <string>&amp;Pause</string>
    </property>
    <property name="shortcut">
-    <string>Pause</string>
+    <string>F2</string>
    </property>
   </action>
   <action name="aEmulationReset">
@@ -363,7 +363,7 @@
     <string>&amp;Reset</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+R</string>
+    <string>F3</string>
    </property>
   </action>
   <action name="aToolsTransfer">
@@ -378,7 +378,7 @@
     <string>&amp;Transfer</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+N</string>
+    <string>Ctrl+T</string>
    </property>
   </action>
   <action name="aFileScreenshot">
@@ -390,7 +390,7 @@
     <string>Sc&amp;reenshot</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Print</string>
+    <string>Ctrl+P</string>
    </property>
   </action>
   <action name="aEmulationFrameSkipLimiter">
@@ -405,7 +405,7 @@
     <string>&amp;Frame Skip/Limiter</string>
    </property>
    <property name="shortcut">
-    <string>ScrollLock</string>
+    <string>F4</string>
    </property>
   </action>
   <action name="aViewFPS">
@@ -421,6 +421,9 @@
    </property>
    <property name="iconText">
     <string>FPS</string>
+   </property>
+   <property name="shortcut">
+    <string>F12</string>
    </property>
   </action>
   <action name="aViewLayerVdp1">
@@ -462,6 +465,9 @@
    </property>
    <property name="text">
     <string>&amp;Log</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="aViewDebugMSH2">
@@ -781,7 +787,7 @@
     <string>To File...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+T</string>
+    <string>F9</string>
    </property>
   </action>
   <action name="aFileLoadStateAs">
@@ -789,7 +795,7 @@
     <string>From File...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+F</string>
+    <string>F5</string>
    </property>
   </action>
   <action name="aToolsCheatsList">
@@ -801,7 +807,7 @@
     <string>&amp;Cheats List...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+L</string>
+    <string>Alt+L</string>
    </property>
   </action>
   <action name="aToolsBackupManager">
@@ -813,7 +819,7 @@
     <string>&amp;Backup Manager...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+B</string>
+    <string>Alt+B</string>
    </property>
   </action>
   <action name="aFileOpenISO">
@@ -905,6 +911,9 @@
    </property>
    <property name="text">
     <string>Cheat &amp;Search...</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+S</string>
    </property>
   </action>
  </widget>
