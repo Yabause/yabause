@@ -169,7 +169,7 @@ int QtYabause::setTranslationFile()
 {
 #ifdef HAVE_LIBMINI18N
 	const QString s = settings()->value( "General/Translation" ).toString();
-	if ( not s.isEmpty() )
+	if ( ! s.isEmpty() )
 	{
 		const char* filePath = qstrdup( s.toLocal8Bit().constData() );
 		if ( mini18n_set_locale( filePath ) == 0 )
