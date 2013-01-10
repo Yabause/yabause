@@ -102,7 +102,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 				vs->value("autostart/binary/address").toUInt());
 		}
 		else if (vs->value("autostart/load").toBool()) {
-			YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), vs->value("autostart/load/slot").toInt() );
+			YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString().toAscii().constData(), vs->value("autostart/load/slot").toInt() );
 		}
 		vs->setValue("autostart", false);
 	}

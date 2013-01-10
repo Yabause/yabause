@@ -24,16 +24,31 @@
 #include <QDir>
 #include <QFile>
 #include <QMainWindow>
+#include <QDesktopServices>
 
 QString Settings::mProgramName;
 QString Settings::mProgramVersion;
+
+QString getDataDirPath()
+{
+#if defined Q_OS_WIN
+	// Use some wizardry so we can get our data in AppData
+	QString oldApplicationName = QCoreApplication::applicationName();   
+	QCoreApplication::setApplicationName("yabause");
+	QString path = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+	QCoreApplication::setApplicationName(oldApplicationName);
+	return path;
+#else
+	return QApplication::applicationDirPath();
+#endif
+}
 
 QString getIniFile( const QString& s )
 {
 #if defined Q_OS_MAC
 	return QString( "%1/../%2.ini" ).arg( QApplication::applicationDirPath() ).arg( s );
 #elif defined Q_OS_WIN
-	return QString( "%1/%2.ini" ).arg( QApplication::applicationDirPath() ).arg( s );
+	return QString( "%1/%2.ini" ).arg( getDataDirPath() ).arg(s);
 #else
 	/*
 	We used to store the ini file in ~/.$SOMETHING/$SOMETHING.ini, were $SOMETHING could

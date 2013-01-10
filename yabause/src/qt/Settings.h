@@ -32,6 +32,8 @@
 
 class QMainWindow;
 
+QString getDataDirPath();
+
 class Settings : public QSettings
 {
 	Q_OBJECT

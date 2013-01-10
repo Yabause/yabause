@@ -251,7 +251,7 @@ void UIYabause::refreshStatesActions()
 	// get states files of this game
 	const QString serial = QtYabause::getCurrentCdSerial();
 	const QString mask = QString( "%1_*.yss" ).arg( serial );
-	const QString statesPath = QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString();
+	const QString statesPath = QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString();
 	QRegExp rx( QString( mask ).replace( '*', "(\\d+)") );
 	QDir d( statesPath );
 	foreach ( const QFileInfo& fi, d.entryInfoList( QStringList( mask ), QDir::Files | QDir::Readable, QDir::Name | QDir::IgnoreCase ) )
@@ -350,7 +350,7 @@ void UIYabause::on_mFileSaveState_triggered( QAction* a )
 	if ( a == aFileSaveStateAs )
 		return;
 	YabauseLocker locker( mYabauseThread );
-	if ( YabSaveStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
+	if ( YabSaveStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
 		CommonDialogs::information( QtYabause::translate( "Couldn't save state file" ) );
 	else
 		refreshStatesActions();
@@ -361,14 +361,14 @@ void UIYabause::on_mFileLoadState_triggered( QAction* a )
 	if ( a == aFileLoadStateAs )
 		return;
 	YabauseLocker locker( mYabauseThread );
-	if ( YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
+	if ( YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString().toAscii().constData(), a->data().toInt() ) != 0 )
 		CommonDialogs::information( QtYabause::translate( "Couldn't load state file" ) );
 }
 
 void UIYabause::on_aFileSaveStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getSaveFileName( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), QtYabause::translate( "Choose a file to save your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
+	const QString fn = CommonDialogs::getSaveFileName( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString(), QtYabause::translate( "Choose a file to save your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabSaveState( fn.toAscii().constData() ) != 0 )
@@ -378,7 +378,7 @@ void UIYabause::on_aFileSaveStateAs_triggered()
 void UIYabause::on_aFileLoadStateAs_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "General/SaveStates", QApplication::applicationDirPath() ).toString(), QtYabause::translate( "Select a file to load your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString(), QtYabause::translate( "Select a file to load your state" ), QtYabause::translate( "Yabause Save State (*.yss)" ) );
 	if ( fn.isNull() )
 		return;
 	if ( YabLoadState( fn.toAscii().constData() ) != 0 )

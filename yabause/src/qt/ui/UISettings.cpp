@@ -222,7 +222,7 @@ void UISettings::loadSettings()
 	leBios->setText( s->value( "General/Bios" ).toString() );
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
-	leSaveStates->setText( s->value( "General/SaveStates", QApplication::applicationDirPath() ).toString() );
+	leSaveStates->setText( s->value( "General/SaveStates", getDataDirPath() ).toString() );
 	leTranslation->setText( s->value( "General/Translation" ).toString() );
 	cbEnableFrameSkipLimiter->setChecked( s->value( "General/EnableFrameSkipLimiter" ).toBool() );
 	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
@@ -244,7 +244,7 @@ void UISettings::loadSettings()
 	// cartridge/memory
 	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
 	leCartridge->setText( s->value( "Cartridge/Path" ).toString() );
-	leMemory->setText( s->value( "Memory/Path", QApplication::applicationDirPath().append( "/bkram.bin" ) ).toString() );
+	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
 	
 	// input
