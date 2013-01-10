@@ -49,6 +49,8 @@ mini18n_t mini18n_create() {
 	if (lang == NULL)
 		return NULL;
 
+	lang->log = NULL;
+
 	for(i = 0;i < 1 + MINI18N_FORMAT_COUNT;i++)
 		lang->hash[i] = NULL;
 

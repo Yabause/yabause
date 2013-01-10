@@ -7,6 +7,11 @@ set(mini18n_SOURCES
     mini18n_pv_hash.c
     mini18n_pv_list.c)
 
+option(MINI18N_LOG "Enable the logging feature of mini18n" OFF)
+if (MINI18N_LOG)
+    add_definitions(-DMINI18N_LOG=1)
+endif ()
+
 if(WIN32)
     set(mini18n_SOURCES ${mini18n_SOURCES} mini18n_pv_conv_windows.c)
     add_definitions(-DHAVE_UTF16=1)
