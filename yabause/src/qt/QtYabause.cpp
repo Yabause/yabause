@@ -168,19 +168,20 @@ VolatileSettings* QtYabause::volatileSettings( bool create )
 int QtYabause::setTranslationFile()
 {
 #ifdef HAVE_LIBMINI18N
-	if ( mini18n_set_domain( YTSDIR ) == 0 )
+	const QString s = settings()->value( "General/Translation" ).toString();
+	if ( not s.isEmpty() )
 	{
-		QtYabause::retranslateApplication();
-		if ( logTranslation() != 0 )
-			qWarning( "Can't log translation !" );
-		return 0;
+		const char* filePath = qstrdup( s.toLocal8Bit().constData() );
+		if ( mini18n_set_locale( filePath ) == 0 )
+		{
+			QtYabause::retranslateApplication();
+			if ( logTranslation() != 0 )
+				qWarning( "Can't log translation !" );
+			return 0;
+		}
 	}
 
-	const QString s = settings()->value( "General/Translation" ).toString();
-	if ( s.isEmpty() )
-		return 0;
-	const char* filePath = qstrdup( s.toLocal8Bit().constData() );
-	if ( mini18n_set_locale( filePath ) == 0 )
+	if ( mini18n_set_domain( YTSDIR ) == 0 )
 	{
 		QtYabause::retranslateApplication();
 		if ( logTranslation() != 0 )
