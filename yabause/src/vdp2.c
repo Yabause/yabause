@@ -292,7 +292,8 @@ static void FPSDisplay(void)
    static int fpsframecount = 0;
    static u64 fpsticks;
 
-   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS %d %d %s %s", fps, yabsys.IsPal ? 50 : 60, framecounter, lagframecounter, MovieStatus, InputDisplayString);
+   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+   OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
    fpsframecount++;
    if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
    {

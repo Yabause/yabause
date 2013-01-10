@@ -72,6 +72,7 @@ int OSDInit(int coreid)
 
    memset(osdmessages, 0, sizeof(osdmessages));
    osdmessages[OSDMSG_FPS].hidden = 1;
+   osdmessages[OSDMSG_DEBUG].hidden = 1;
 
    return 0;
 }
@@ -84,15 +85,20 @@ void OSDDeInit() {
 
 int OSDChangeCore(int coreid)
 {
-   int preservefps, fpshidden;
+   int preservefps, fpshidden, dbghidden;
 
    preservefps = (OSD != NULL);
    fpshidden = osdmessages[OSDMSG_FPS].hidden;
+   dbghidden = osdmessages[OSDMSG_DEBUG].hidden;
 
    OSDDeInit();
    OSDInit(coreid);
 
-   if (preservefps) osdmessages[OSDMSG_FPS].hidden = fpshidden;
+   if (preservefps)
+   {
+      osdmessages[OSDMSG_FPS].hidden = fpshidden;
+      osdmessages[OSDMSG_DEBUG].hidden = dbghidden;
+   }
 
    return 0;
 }

@@ -34,7 +34,8 @@
 
 #define OSDMSG_FPS       0
 #define OSDMSG_STATUS    1
-#define OSDMSG_COUNT     2
+#define OSDMSG_DEBUG     2
+#define OSDMSG_COUNT     3
 
 typedef struct {
    int type;
