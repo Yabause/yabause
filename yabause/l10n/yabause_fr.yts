@@ -18,6 +18,7 @@ Are you sure you want to delete '%1' ?|Etes vous sûr de vouloir supprimer '%1' 
 Are you sure you want to format '%1' ?|Etes vous sûr de vouloir formater '%1' ?
 Auto-detect|Détection Auto
 Backup Manager|Gestion des Sauvegardes
+&Backup Manager...|&Gestion des Sauvegardes...
 Backup Manager...|Gestion des Sauvegardes...
 &Backup Ram Manager|&Gestion des Sauvegardes
 Backup Ram Manager|Gestion des Sauvegardes
@@ -40,7 +41,10 @@ Cheats|Cheats
 Cheats File|Fichier Cheat
 &Cheat List|Liste de &Cheat
 Cheats List|Liste de Cheat
+&Cheats List...|Liste de &Cheat...
 Cheats List...|Liste de Cheat...
+Cheat &Search...|&Rechercher un Cheat...
+Cheat Search|Rechercher un Cheat
 Cheat Type|Type de Cheat
 Choose a cdrom drive/mount point|Choisir un lecteur CD ou un point de montage
 Choose a cheat file to open|Choisir un fichier de Cheat à ouvrir
@@ -67,6 +71,7 @@ Dummy Input Interface|Interface Contrôleur Factice
 Dummy Sound Interface|Interface Son Factice
 Dummy Video Interface|Interface Vidéo Factice
 Emu-Compatibility|Emu-Compatibility
+&Emulation|&Emulation
 Emulation|Emulation
 End Address:|Adresse de Fin :
 Enable|Activer
@@ -82,6 +87,7 @@ File transfer|Transfert de Fichier
 Format|Formater
 FPS|FPS
 Frame Skip/Limiter|Saut d'Image/Limitateur
+&Frame Skip/Limiter|&Saut d'Image/Limitateur
 French|Français
 From|A Partir De
 From File|A Partir d'un Fichier
@@ -113,13 +119,18 @@ Left trigger|Gâchette Gauche
 Load as executable|Charger en tant qu'Executable
 Load|Charger
 &Load From File|&Charger à Partir d'un Fichier
+L&oad State|&Chargeer un Etat
 Load State|Charger l'Etat
 Load State As|Charger l'Etat sous
+&Log|&Journal
 Log|Journal
 Long Write|Ecrire un Long
 M68K|M68K
+&Master SH2|&Master SH2
+Master SH2|Master SH2
 Memory dump|Copier la mémoire
 Memory Dump|Copier la Mémoire
+Memory &Editor|&Editeur de Mémoire
 Memory Editor|Editeur de Mémoire
 &Memory Transfer|&Transfert de Mémoire
 Memory Transfer|Transfert de Mémoire
@@ -136,8 +147,10 @@ North America (NTSC)|Amérique du Nord (NTSC)
 Ok|Ok
 &OK|&OK
 Open CD Rom|Ouvrir un CD ROM
+Open &CD Rom...|Ouvrir un &CD Rom...
 Open CD Rom...|Ouvrir un CD ROM...
 Open ISO|Ouvrir un Fichier ISO
+Open &ISO...|Ouvrir un &ISO...
 Open ISO...|Ouvrir un Fichier ISO...
 OpenGL Video Interface|Interface Vidéo OpenGL
 Pad|Manette
@@ -159,10 +172,12 @@ Run|Lancer
 Save Information|Informations sur la Sauvegarde
 Save List|Liste des Sauvegardes
 Save|Sauvegarder
+S&ave State|S&auvegarder un Etat
 Save State|Sauvegarder l'Etat
 Save State As|Sauvegarder l'Etat sous
 Save States|Sauvegarde d'Etat :
 &Save To File|&Sauvegarder Vers le Fichier
+Sc&reenshot|Copie d'Ec&ran
 Screenshot|Capture d'Ecran
 SCSP|SCSP
 SCU-DSP|SCU-DSP
@@ -174,6 +189,8 @@ Select your iso/cue/bin file|Choisissez votre fichier iso/cue/bin
 Settings|Paramétres
 SH2 Debugger Interpreter|Interpréteur de Débugeur SH2
 SH2 Interpreter|Interpréteur SH2 :
+&Slave SH2|&Slave SH2
+Slave SH2|Slave SH2
 Software Video Interface|Interface Vidéo Logiciel
 Sound Core|Noyau Son :
 Sound|Son
@@ -186,8 +203,10 @@ Store|Stocker
 To File|Vers un Fichier
 To File...|Vers un Fichier...
 toolBar|Barre d'Outils
+&Tools|Ou&tils
 Tools|Outils
 To|Vers
+&Transfer|&Transfer
 Transfer|Transfert
 Translation|Traduction :
 Unable to add code|Ne peut pas ajouter de Code
