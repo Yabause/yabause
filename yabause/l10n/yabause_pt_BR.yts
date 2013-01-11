@@ -12,9 +12,13 @@ Add Codes...|Adicionar Códigos...
 Add Raw Memory Code|Adicionar o Código da Memória Original
 Address :|Endereço :
 Advanced|Avançado
+Asia (NTSC)|Ásia (NTSC)
+Asia (PAL)|Ásia (PAL)
 Are you sure you want to delete '%1' ?|Você tem certeza que você quer apagar '%1' ?
 Are you sure you want to format '%1' ?|Você tem certeza que você quer formatar '%1' ?
+Auto-detect|Auto-detectar
 Backup Manager|Gerenciador de Backups
+&Backup Manager...|&Gerenciador de Backups...
 Backup Manager...|Gerenciador de Backups...
 &Backup Ram Manager|&Gerenciador da Ram de Backup
 Backup Ram Manager|Gerenciador da Ram de Backup
@@ -30,12 +34,17 @@ Cart/Memory|Cartucho/Memória
 Cartridge|Cartucho
 CD Images (*.iso *.cue *.bin)|Imagens de CD (*.iso *.cue *.bin)
 Cd-Rom|Cd-Rom
+Central/South America (NTSC)|América Central/do Sul (NTSC)
+Central/South America (PAL)|América Central/do Sul (PAL)
 &Cheats|&Códigos
 Cheats|Trapaças
 Cheats File|Arquivo das Trapaças
 &Cheat List|Lista de &Trapaças
 Cheats List|Lista de Trapaças
+&Cheats List...|&Lista de Trapaças...
 Cheats List...|Lista de Trapaças...
+Cheat &Search...|Busca de &Trapaças...
+Cheat Search|Busca de Trapaças
 Cheat Type|Tipo de Trapaça
 Choose a cdrom drive/mount point|Escolha um drive de cdrom/ponto de montagem
 Choose a cheat file to open|Escolha um arquivo de códigos para abrir
@@ -62,11 +71,13 @@ Dummy Input Interface|Imitação da Interface de Entrada de Dados
 Dummy Sound Interface|Imitação da Interface de Som
 Dummy Video Interface|Imitação da Interface de Vídeo
 Emu-Compatibility|Compatibilidade com o Emu
+&Emulation|&Emulação
 Emulation|Emulação
 End Address:|Endereço Final:
 Enable|Ativar
 Enabled|Ativado
 English|Inglês
+Europe + others (PAL)|Europa + outros (PAL)
 &File|&Arquivo
 File|Arquivo
 File :|Arquivo :
@@ -76,6 +87,7 @@ File transfer|Transferência de arquivo
 Format|Formato
 FPS|FPS
 Frame Skip/Limiter|Frame Skip/Limitador
+&Frame Skip/Limiter|&Frame Skip/Limitador
 French|Francês
 From|De
 From File|Do Arquivo
@@ -96,7 +108,9 @@ Invalid Address|Endereço Inválido
 Invalid Value|Valor Inválido
 ISO-File Virtual Drive|Drive Virtual do Arquivo-ISO
 Italian|Italiano
+Japan (NTSC)|Japão (NTSC)
 Japanese|Japonês
+Korea (NTSC)|Coréia (NTSC)
 Language :|Idioma :
 &Layer|&Camada
 Layer|Camada
@@ -105,13 +119,18 @@ Left trigger|Gatilho esquerdo
 Load as executable|Carregar como executável
 Load|Carregar
 &Load From File|&Carregar Do Arquivo
+L&oad State|C&arregar o State
 Load State|Carregar State
 Load State As|Carregar State Como
+&Log|&Log
 Log|Log
 Long Write|Gravação Longa
 M68K|M68K
+&Master SH2|&SH2 Mestre
+Master SH2|SH2 Mestre
 Memory dump|Dump da memória
 Memory Dump|Dump da Memória
+Memory &Editor|Editor de &Memória
 Memory Editor|Editor de Memória
 &Memory Transfer|&Transferência de Memória
 Memory Transfer|Transferência de Memória
@@ -124,11 +143,14 @@ NBG1|NBG1
 NBG2|NBG2
 NBG3|NBG3
 None|Nenhum
+North America (NTSC)|América do Norte (NTSC)
 Ok|Ok
 &OK|&OK
 Open CD Rom|Abrir o CD Rom
+Open &CD Rom...|Abrir &CD Rom...
 Open CD Rom...|Abrir o CD Rom...
 Open ISO|Abrir a ISO
+Open &ISO...|Abrir &ISO...
 Open ISO...|Abrir a ISO...
 OpenGL Video Interface|Interface de Vídeo do OpenGL
 Pad|Pad
@@ -150,10 +172,12 @@ Run|Executar
 Save Information|Informações sobre os Saves
 Save List|Lista dos Saves
 Save|Salvar
+S&ave State|S&ave State
 Save State|Salvar o State
 Save State As|Salvar o State Como
 Save States|Salvar os States
 &Save To File|&Salvar para o Arquivo
+Sc&reenshot|Sc&reenshot
 Screenshot|Screenshot
 SCSP|SCSP
 SCU-DSP|SCU-DSP
@@ -165,6 +189,8 @@ Select your iso/cue/bin file|Selecione seu arquivo iso/cue/bin
 Settings|Configurações
 SH2 Debugger Interpreter|Interpretador do Debugger SH2
 SH2 Interpreter|Interpretador SH2
+&Slave SH2|&SH2 Escravo
+Slave SH2|SH2 Escravo
 Software Video Interface|Interface de Vídeo do Software
 Sound Core|Núcleo do Som
 Sound|Som
@@ -177,8 +203,10 @@ Store|Armazenar
 To File|Para o Arquivo
 To File...|Para o Arquivo...
 toolBar|Barra de ferramentas
+&Tools|&Ferramentas
 Tools|Ferramentas
 To|Para
+&Transfer|&Transferência
 Transfer|Transferência
 Translation|Tradução
 Unable to add code|Incapaz de adicionar o código
