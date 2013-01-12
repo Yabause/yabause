@@ -24,6 +24,7 @@ if (WIN32)
     SET(CPACK_NSIS_INSTALLED_ICON_NAME yabause.exe)
 	set(CPACK_NSIS_MENU_LINKS yabause.exe;Yabause)
 	set(CPACK_NSIS_URL_INFO_ABOUT "http://yabause.org")
+	set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
 endif ()
 
 include(CPack)
