@@ -18,6 +18,7 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME "yabause-${YAB_VERSION}")
 
 if (APPLE)
     set(CPACK_GENERATOR DragNDrop)
+    set(CPACK_PACKAGE_FILE_NAME yabause-${YAB_VERSION}-mac)
 endif ()
 
 if (WIN32)
