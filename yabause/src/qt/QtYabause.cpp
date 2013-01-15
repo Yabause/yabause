@@ -388,13 +388,7 @@ SoundInterface_struct QtYabause::defaultSNDCore()
 
 VideoInterface_struct QtYabause::defaultVIDCore()
 {
-#if defined HAVE_LIBGL
-	return VIDOGL;
-#elif defined HAVE_LIBSDL
 	return VIDSoft;
-#else
-	return VIDDummy;
-#endif
 }
 
 OSD_struct QtYabause::defaultOSDCore()
