@@ -76,6 +76,8 @@ UIPadSetting::UIPadSetting( PerInterface_struct* core, PerPad_struct* padbits, u
 	}
 	
 	connect( mTimer, SIGNAL( timeout() ), this, SLOT( timer_timeout() ) );
+
+	QtYabause::retranslateWidget( this );
 }
 
 UIPadSetting::~UIPadSetting()

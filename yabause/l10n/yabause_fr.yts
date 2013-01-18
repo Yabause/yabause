@@ -34,6 +34,7 @@ Byte Write|Ecrire un Byte
 &Cancel|&Annuler
 Cancel|Annuler
 Cannot initialize|Ne peut pas Initialiser
+Cannot initialize Windows SPTI Driver|Ne peut pas initialiser le pilote SPTI
 &Capture Screen|&Capture d'Ecran
 Cart/Memory|Cartouche/Mémoire
 Cartridge|Cartouche :
@@ -95,7 +96,7 @@ Exact|Identique
 &File|&Fichier
 File|Fichier
 File :|Fichier :
-File:|Fichier&#160;:
+File:|Fichier :
 File Name :|Nom du Fichier :
 File transfer|Transfert de Fichier
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVERTISSEMENT :</b> Les Codes Maîtres <b>NE SONT PAS</b> supportés.</font>
@@ -178,6 +179,7 @@ Open ISO...|Ouvrir un Fichier ISO...
 OpenGL Video Interface|Interface Vidéo OpenGL
 OSD Core|Noyau OSD
 Pad|Manette
+Pad Configuration|Configuration de la Manette
 &Pause|&Pause
 Pause|Pause
 Qt Keyboard Input Interface|Interface Qt du Clavier
@@ -209,7 +211,7 @@ SDL Joystick Interface|Interface SDL du Joystick
 SDL Sound Interface|Interface SDL du Son
 Search|Rechercher
 Search/Add Cheats|Rechercher/Ajouter un Cheat
-Search Value:|Rechercher une Valeur&#160;:
+Search Value:|Rechercher une Valeur :
 Select a file to load your state|Choisissez un fichier pour charger l'état
 Select your iso/cue/bin file|Choisissez votre fichier iso/cue/bin
 Set PC to Start Address|Sélection PC vers l'Adresse de Démarrage
