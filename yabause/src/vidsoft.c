@@ -2117,8 +2117,9 @@ static void putpixel(int x, int y) {
 			if (!((currentPixel == 0) && !SPD)) 
 				*(iPix) = currentPixel;
 			break;
-		case 1: // shadow, TODO
-			*(iPix) = currentPixel;
+		case 1: // shadow
+			if (*(iPix) & (1 << 15)) // only if MSB of framebuffer data is set
+				*(iPix) = alphablend16(*(iPix), 0, (1 << 7)) | (1 << 15);
 			break;
 		case 2: // half luminance
 			*(iPix) = ((currentPixel & ~0x8421) >> 1) | (1 << 15);
