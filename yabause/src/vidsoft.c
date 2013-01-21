@@ -984,8 +984,24 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             {
                if ((p2 == NULL) || (p2->coefenab && p2->msb)) continue;
 
-               x = GenerateRotatedXPosFP(p2, i, xmul2, ymul2, C2) & sinfo2.xmask;
-               y = GenerateRotatedYPosFP(p2, i, xmul2, ymul2, F2) & sinfo2.ymask;
+               x = GenerateRotatedXPosFP(p2, i, xmul2, ymul2, C2);
+               y = GenerateRotatedYPosFP(p2, i, xmul2, ymul2, F2);
+
+               switch(p2->screenover) {
+                  case 0:
+                     x &= sinfo2.xmask;
+                     y &= sinfo2.ymask;
+                     break;
+                  case 1:
+                     VDP2LOG("Screen-over mode 1 not implemented");
+                     x &= sinfo2.xmask;
+                     y &= sinfo2.ymask;
+                     break;
+                  case 2:
+                     if ((x > sinfo2.xmask) || (y > sinfo2.ymask)) continue;
+                  case 3:
+                     if ((x > 512) || (y > 512)) continue;
+               }
 
                // Convert coordinates into graphics
                if (!info->isbitmap)
@@ -997,8 +1013,24 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             else if (p->msb) continue;
             else
             {
-               x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
-               y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
+               x = GenerateRotatedXPosFP(p, i, xmul, ymul, C);
+               y = GenerateRotatedYPosFP(p, i, xmul, ymul, F);
+
+               switch(p->screenover) {
+                  case 0:
+                     x &= sinfo.xmask;
+                     y &= sinfo.ymask;
+                     break;
+                  case 1:
+                     VDP2LOG("Screen-over mode 1 not implemented");
+                     x &= sinfo.xmask;
+                     y &= sinfo.ymask;
+                     break;
+                  case 2:
+                     if ((x > sinfo.xmask) || (y > sinfo.ymask)) continue;
+                  case 3:
+                     if ((x > 512) || (y > 512)) continue;
+               }
 
                // Convert coordinates into graphics
                if (!info->isbitmap)
