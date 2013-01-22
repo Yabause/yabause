@@ -19,7 +19,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.9.11</string>
+	<string>${YAB_VERSION}</string>
 	<key>CFBundleVersion</key>
 	<string></string>
 	<key>NSMainNibFile</key>
