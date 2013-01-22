@@ -999,6 +999,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                      break;
                   case 2:
                      if ((x > sinfo2.xmask) || (y > sinfo2.ymask)) continue;
+                     break;
                   case 3:
                      if ((x > 512) || (y > 512)) continue;
                }
@@ -1028,6 +1029,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                      break;
                   case 2:
                      if ((x > sinfo.xmask) || (y > sinfo.ymask)) continue;
+                     break;
                   case 3:
                      if ((x > 512) || (y > 512)) continue;
                }
