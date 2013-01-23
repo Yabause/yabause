@@ -1264,6 +1264,7 @@ static void Vdp2DrawNBG0(void)
    else
       info.alpha = 0x3F;
    if ((Vdp2Regs->CCCTL & 0x201) == 0x201) info.alpha |= 0x80;
+   else if ((Vdp2Regs->CCCTL & 0x101) == 0x101) info.alpha |= 0x80;
    info.specialcolormode = Vdp2Regs->SFCCMD & 0x3;
    if (Vdp2Regs->SFSEL & 0x1)
       info.specialcode = Vdp2Regs->SFCODE >> 8;
@@ -1363,6 +1364,7 @@ static void Vdp2DrawNBG1(void)
    else
       info.alpha = 0x3F;
    if ((Vdp2Regs->CCCTL & 0x202) == 0x202) info.alpha |= 0x80;
+   else if ((Vdp2Regs->CCCTL & 0x102) == 0x102) info.alpha |= 0x80;
    info.specialcolormode = (Vdp2Regs->SFCCMD >> 2) & 0x3;
    if (Vdp2Regs->SFSEL & 0x2)
       info.specialcode = Vdp2Regs->SFCODE >> 8;
@@ -1443,6 +1445,7 @@ static void Vdp2DrawNBG2(void)
    else
       info.alpha = 0x3F;
    if ((Vdp2Regs->CCCTL & 0x204) == 0x204) info.alpha |= 0x80;
+   else if ((Vdp2Regs->CCCTL & 0x104) == 0x104) info.alpha |= 0x80;
    info.specialcolormode = (Vdp2Regs->SFCCMD >> 4) & 0x3;
    if (Vdp2Regs->SFSEL & 0x4)
       info.specialcode = Vdp2Regs->SFCODE >> 8;
@@ -1509,6 +1512,7 @@ static void Vdp2DrawNBG3(void)
    else
       info.alpha = 0x3F;
    if ((Vdp2Regs->CCCTL & 0x208) == 0x208) info.alpha |= 0x80;
+   else if ((Vdp2Regs->CCCTL & 0x108) == 0x108) info.alpha |= 0x80;
    info.specialcolormode = (Vdp2Regs->SFCCMD >> 6) & 0x3;
    if (Vdp2Regs->SFSEL & 0x8)
       info.specialcode = Vdp2Regs->SFCODE >> 8;
@@ -1635,6 +1639,7 @@ static void Vdp2DrawRBG0(void)
    else
       info.alpha = 0x3F;
    if ((Vdp2Regs->CCCTL & 0x210) == 0x210) info.alpha |= 0x80;
+   else if ((Vdp2Regs->CCCTL & 0x110) == 0x110) info.alpha |= 0x80;
    info.specialcolormode = (Vdp2Regs->SFCCMD >> 8) & 0x3;
    if (Vdp2Regs->SFSEL & 0x10)
       info.specialcode = Vdp2Regs->SFCODE >> 8;

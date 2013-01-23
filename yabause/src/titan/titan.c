@@ -23,6 +23,7 @@
 
 /* private */
 typedef u32 (*TitanBlendFunc)(u32 top, u32 bottom);
+typedef int FASTCALL (*TitanTransFunc)(u32 pixel);
 
 static struct TitanContext {
    int inited;
@@ -31,6 +32,7 @@ static struct TitanContext {
    int vdp2width;
    int vdp2height;
    TitanBlendFunc blend;
+   TitanTransFunc trans;
 } tt_context = {
    0,
    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
@@ -111,6 +113,16 @@ static u32 TitanBlendPixelsAdd(u32 top, u32 bottom)
    return TitanCreatePixel(0x3F, r, g, b);
 }
 
+static INLINE int FASTCALL TitanTransAlpha(u32 pixel)
+{
+   return TitanGetAlpha(pixel) < 0x3F;
+}
+
+static INLINE int FASTCALL TitanTransBit(u32 pixel)
+{
+   return pixel & 0x80000000;
+}
+
 static u32 TitanDigPixel(int * priority, int pos)
 {
    u32 pixel = 0;
@@ -123,8 +135,7 @@ static u32 TitanDigPixel(int * priority, int pos)
    tt_context.vdp2framebuffer[*priority + 1][pos] = 0;
    if (*priority == -1) return pixel;
 
-   alpha = TitanGetAlpha(pixel);
-   if (alpha < 0x3F)
+   if (tt_context.trans(pixel))
    {
       u32 bottom = TitanDigPixel(priority, pos);
       pixel = tt_context.blend(pixel, bottom);
@@ -251,11 +262,20 @@ void TitanRender(u32 * dispbuffer, int blend_mode)
    int i, p;
 
    if (blend_mode == TITAN_BLEND_BOTTOM)
+   {
       tt_context.blend = TitanBlendPixelsBottom;
+      tt_context.trans = TitanTransAlpha;
+   }
    else if (blend_mode == TITAN_BLEND_ADD)
+   {
       tt_context.blend = TitanBlendPixelsAdd;
+      tt_context.trans = TitanTransBit;
+   }
    else
+   {
       tt_context.blend = TitanBlendPixelsTop;
+      tt_context.trans = TitanTransAlpha;
+   }
 
    for (i = 0; i < (tt_context.vdp2width * tt_context.vdp2height); i++)
    {
