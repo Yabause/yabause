@@ -393,11 +393,7 @@ VideoInterface_struct QtYabause::defaultVIDCore()
 
 OSD_struct QtYabause::defaultOSDCore()
 {
-#if defined HAVE_LIBGLUT
-	return OSDGlut;
-#else
 	return OSDSoft;
-#endif
 }
 
 PerInterface_struct QtYabause::defaultPERCore()
