@@ -43,7 +43,6 @@
 #include "../m68kcore.h"
 #include "../m68kc68k.h"
 #include "pergtk.h"
-#include "../psp/psp-sh2.h"
 
 #include "settings.h"
 

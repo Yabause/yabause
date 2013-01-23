@@ -12,9 +12,9 @@
 
 
 1) Introduction.............................................20
-2) Staff/Thanks.............................................39
-3) Contact information......................................75
-4) Disclaimer...............................................86
+2) Staff/Thanks.............................................37
+3) Contact information......................................73
+4) Disclaimer...............................................84
 
 
 1 Introduction________________________________________________
@@ -30,9 +30,7 @@ specific README files:
   * README.DC for the dreamcast port
   * README.LIN for the linux port
   * README.MAC for the mac port
-  * README.PSP for the PSP port
   * README.QT for the crossplatform Qt 4 port
-  * README.WII for the WII port
   * README.WIN for the windows port
 
 
