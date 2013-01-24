@@ -2935,7 +2935,7 @@ void VIDSoftVdp2DrawEnd(void)
                {
                   // Color bank
                   spritepixelinfo_struct spi;
-                  u8 alpha = 0xFF;
+                  u8 alpha = 0x3F;
                   u32 dot;
 
                   Vdp1GetSpritePixelInfo(vdp1spritetype, &pixel, &spi);
@@ -3001,7 +3001,7 @@ void VIDSoftVdp2DrawEnd(void)
                {
                   // Color bank(fix me)
                   spritepixelinfo_struct spi;
-                  u8 alpha = 0xFF;
+                  u8 alpha = 0x3F;
                   u32 dot;
 
                   Vdp1GetSpritePixelInfo(vdp1spritetype, &pixel, &spi);
