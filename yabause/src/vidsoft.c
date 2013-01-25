@@ -2987,6 +2987,8 @@ void VIDSoftVdp2DrawEnd(void)
                            }
                            break;
                      }
+
+                     if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                   }
 
                   TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0);
@@ -3038,6 +3040,8 @@ void VIDSoftVdp2DrawEnd(void)
                            }
                            break;
                      }
+
+                     if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                   }
 
                   TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0);
