@@ -151,7 +151,7 @@ void UIMemoryEditor::on_pbSaveSelected_clicked()
 
 void UIMemoryEditor::on_pbSearchMemory_clicked()
 {
-   UIMemorySearch memorySearch = UIMemorySearch( this );
+   UIMemorySearch memorySearch( this );
    
    if (searchStartAddress == 0 && searchEndAddress == 0)
    {
@@ -163,7 +163,7 @@ void UIMemoryEditor::on_pbSearchMemory_clicked()
    memorySearch.setParameters(searchType, searchString, searchStartAddress, searchEndAddress);
    if (memorySearch.exec() == QDialog::Accepted)
    {
-      MemorySearch search = MemorySearch(&memorySearch);
+      MemorySearch search( &memorySearch );
       QProgressDialog progress;
       
       progress.setLabelText("Searching memory...");
