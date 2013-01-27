@@ -117,7 +117,7 @@ void UIMemoryTransfer::accept()
 
    if (rbDownload->isChecked() && startAddress >= endAddress)
    {
-      CommonDialogs::information("Invalid Start/End Address Combination", "Error");
+      CommonDialogs::information(QtYabause::translate("Invalid Start/End Address Combination"), QtYabause::translate("Error"));
       return;
    }
 

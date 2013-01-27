@@ -36,8 +36,8 @@ void M68KBreakpointHandler (u32 addr)
 UIDebugM68K::UIDebugM68K( YabauseThread *mYabauseThread, QWidget* p )
 	: UIDebugCPU(mYabauseThread, p )
 {
-   this->setWindowTitle("Debug M68K");
-   gbRegisters->setTitle("M68K Registers");
+   this->setWindowTitle(QtYabause::translate("Debug M68K"));
+   gbRegisters->setTitle(QtYabause::translate("M68K Registers"));
 	gbMemoryBreakpoints->setVisible( false );
 
    updateRegList();

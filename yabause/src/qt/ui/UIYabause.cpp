@@ -31,6 +31,7 @@
 #include "UIDebugM68K.h"
 #include "UIDebugSCUDSP.h"
 #include "UIDebugSCSP.h"
+#include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
 #include "../YabauseGL.h"
@@ -571,7 +572,7 @@ void UIYabause::on_aViewDebugSCSP_triggered()
 void UIYabause::on_aViewDebugMemoryEditor_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	//UIMemoryEditor( this ).exec();
+	UIMemoryEditor( mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aHelpEmuCompatibility_triggered()

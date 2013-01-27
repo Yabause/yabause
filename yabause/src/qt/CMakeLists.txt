@@ -29,10 +29,6 @@ if ( WIN32 )
 	set( yabause_qt_windows_LIBRARIES
 		vfw32 )
 
-	# Windows port sources
-	set( yabause_qt_windows_SOURCES
-		../windows/aviout.c )
-	
 	# resources
 	set ( yabause_qt_windows_RESOURCES
 		resources/icons/yabause.rc )
@@ -58,7 +54,8 @@ set( yabause_qt_FORMS
     ui/UIDebugVDP2Viewer.ui
     ui/UIHexInput.ui
     ui/UIMemoryTransfer.ui 
-    ui/UIMemoryEditor.ui )
+    ui/UIMemoryEditor.ui 
+    ui/UIMemorySearch.ui )
 
 # pure C headers
 set( yabause_qt_HEADERS
@@ -93,6 +90,7 @@ set( yabause_qt_MOC_HEADERS
     ui/UIMemoryTransfer.h
     ui/UIHexEditor.h
     ui/UIMemoryEditor.h
+    ui/UIMemorySearch.h
 	YabauseGL.h
 	VolatileSettings.h
 	Settings.h
@@ -128,6 +126,7 @@ set( yabause_qt_SOURCES
     ui/UIMemoryTransfer.cpp
     ui/UIHexEditor.cpp
     ui/UIMemoryEditor.cpp
+    ui/UIMemorySearch.cpp
 	Settings.cpp
 	VolatileSettings.cpp
 	YabauseThread.cpp

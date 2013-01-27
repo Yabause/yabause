@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>496</width>
+    <width>518</width>
     <height>363</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Debug CPU</string>
+   <string>Memory Editor</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -34,6 +34,12 @@
        <pointsize>9</pointsize>
       </font>
      </property>
+     <property name="focusPolicy">
+      <enum>Qt::StrongFocus</enum>
+     </property>
+     <property name="acceptDrops">
+      <bool>false</bool>
+     </property>
     </widget>
    </item>
    <item>
@@ -52,6 +58,9 @@
        <property name="text">
         <string>Goto Address</string>
        </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item>
@@ -59,12 +68,18 @@
        <property name="text">
         <string>Save Selected</string>
        </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="pbSearchMemory">
        <property name="text">
         <string>Search Memory</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -95,7 +110,7 @@
  <customwidgets>
   <customwidget>
    <class>UIHexEditor</class>
-   <extends>QAbstractScrollArea</extends>
+   <extends>QWidget</extends>
    <header>UIHexEditor.h</header>
    <container>1</container>
   </customwidget>

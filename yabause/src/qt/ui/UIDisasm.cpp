@@ -80,10 +80,6 @@ void UIDisasm::setMinimumInstructionSize(int instructionSize)
 
 void UIDisasm::adjustSettings()
 {
-   QSize size = this->size();
-   QSize areaSize = viewport()->size();
-   int fontSize = fontMetrics().height();
-
    verticalScrollBar()->setRange(0, endAddress);
    verticalScrollBar()->setSingleStep(instructionSize);
 

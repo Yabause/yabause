@@ -42,15 +42,15 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
 {
    if (master)
    {
-      this->setWindowTitle("Debug Master SH2");
+      this->setWindowTitle(QtYabause::translate("Debug Master SH2"));
       debugSH2 = MSH2;
    }
    else
    {
-      this->setWindowTitle("Debug Slave SH2");
+      this->setWindowTitle(QtYabause::translate("Debug Slave SH2"));
       debugSH2 = SSH2;
    }
-   gbRegisters->setTitle("SH2 Registers");
+   gbRegisters->setTitle(QtYabause::translate("SH2 Registers"));
 
    updateRegList();
    if (debugSH2)

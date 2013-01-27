@@ -36,8 +36,8 @@ void SCUDSPBreakpointHandler (u32 addr)
 UIDebugSCUDSP::UIDebugSCUDSP( YabauseThread *mYabauseThread, QWidget* p )
 	: UIDebugCPU( mYabauseThread, p )
 {
-   this->setWindowTitle("Debug SCU DSP");
-   gbRegisters->setTitle("DSP Registers");
+   this->setWindowTitle(QtYabause::translate("Debug SCU DSP"));
+   gbRegisters->setTitle(QtYabause::translate("DSP Registers"));
 	pbMemoryTransfer->setVisible( false );
 	gbMemoryBreakpoints->setVisible( false );
 
