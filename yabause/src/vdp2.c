@@ -351,8 +351,6 @@ void Vdp2VBlankOUT(void) {
 
    FPSDisplay();
    VIDCore->Vdp2DrawEnd();
-   /* this should be done after a frame change or a plot trigger */
-   Vdp1Regs->COPR = 0;
 
    if (!skipnextframe)
    {

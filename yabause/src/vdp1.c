@@ -281,6 +281,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
             Vdp1External.manualerase = 1;
          break;
       case 0x4:
+         Vdp1Regs->COPR = 0;
          Vdp1Regs->PTMR = val;
          break;
       case 0x6:
@@ -333,6 +334,8 @@ void Vdp1Draw(void) {
    // BEF <- CEF
    // CEF <- 0
    Vdp1Regs->EDSR >>= 1;
+   /* this should be done after a frame change or a plot trigger */
+   Vdp1Regs->COPR = 0;
 
    command = T1ReadWord(Vdp1Ram, Vdp1Regs->addr);
 
@@ -435,6 +438,8 @@ void Vdp1NoDraw(void) {
    // BEF <- CEF
    // CEF <- 0
    Vdp1Regs->EDSR >>= 1;
+   /* this should be done after a frame change or a plot trigger */
+   Vdp1Regs->COPR = 0;
 
    command = T1ReadWord(Vdp1Ram, Vdp1Regs->addr);
 
