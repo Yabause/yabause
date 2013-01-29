@@ -1,4 +1,4 @@
-/*	Copyright 2012 Theo Berkau <cwx@cyberwarriorx.com>
+/*	Copyright 2012-2013 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -31,6 +31,7 @@ public:
 	UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* parent = 0 );
    void updateRegList();
    void updateCodeList(u32 addr);
+   void updateBackTrace();
    u32 getRegister(int index, int *size);
    void setRegister(int index, u32 value);
    bool addCodeBreakpoint(u32 addr);

@@ -1,4 +1,4 @@
-/*	Copyright 2012 Theo Berkau <cwx@cyberwarriorx.com>
+/*	Copyright 2012-2013 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -50,6 +50,7 @@ protected:
 
 protected slots:
    void on_lwRegisters_itemDoubleClicked ( QListWidgetItem * item );
+   void on_lwBackTrace_itemDoubleClicked ( QListWidgetItem * item );
    void on_leCodeBreakpoint_textChanged( const QString & text);
    void on_leMemoryBreakpoint_textChanged( const QString & text);
    void on_lwCodeBreakpoints_itemSelectionChanged ();

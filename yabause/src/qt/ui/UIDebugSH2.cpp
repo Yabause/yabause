@@ -1,4 +1,4 @@
-/*	Copyright 2012 Theo Berkau <cwx@cyberwarriorx.com>
+/*	Copyright 2012-2013 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -84,6 +84,8 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
       lwDisassembledCode->setMinimumInstructionSize(2);
       SH2GetRegisters(debugSH2, &sh2regs);
       updateCodeList(sh2regs.PC);
+      gbBackTrace->setVisible( true );
+      updateBackTrace();
 
       SH2SetBreakpointCallBack(debugSH2, (void (*)(void *, u32))SH2BreakpointHandler);
    }
@@ -140,6 +142,17 @@ void UIDebugSH2::updateCodeList(u32 addr)
 {
    lwDisassembledCode->goToAddress(addr);
    lwDisassembledCode->setPC(addr);
+}
+
+void UIDebugSH2::updateBackTrace()
+{
+   int size;
+   u32 *addr=SH2GetBacktraceList(debugSH2, &size);
+
+   lwBackTrace->clear();
+   for (int i = 0; i < size; i++)
+      lwBackTrace->addItem(QString("0x%1").arg(addr[i], 8, 16, QChar('0')));
+   lwBackTrace->addItem(QString("0x%1").arg(debugSH2->regs.PC, 8, 16, QChar('0')));
 }
 
 u32 UIDebugSH2::getRegister(int index, int *size)
@@ -253,5 +266,6 @@ void UIDebugSH2::stepInto()
       updateRegList();
       SH2GetRegisters(debugSH2, &sh2regs);
       updateCodeList(sh2regs.PC);
+      updateBackTrace();
    }
 }

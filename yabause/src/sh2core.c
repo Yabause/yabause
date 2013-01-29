@@ -1,5 +1,5 @@
 /*  Copyright 2003-2005 Guillaume Duhamel
-    Copyright 2004-2005 Theo Berkau
+    Copyright 2004-2005, 2013 Theo Berkau
 
     This file is part of Yabause.
 
@@ -142,6 +142,9 @@ void SH2Reset(SH2_struct *context)
 
    // Reset Onchip modules
    OnchipReset(context);
+
+   // Reset backtrace
+   context->bt.numbacktrace = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -775,6 +778,36 @@ void SH2ClearMemoryBreakpoints(SH2_struct *context) {
       context->bp.memorybreakpoint[i].oldwritelong = NULL;
    }
    context->bp.nummemorybreakpoints = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH2HandleBackTrace(SH2_struct *context)
+{
+   u16 inst = context->instruction;
+   if ((inst & 0xF000) == 0xB000 || // BSR 
+      (inst & 0xF0FF) == 0x0003 || // BSRF
+      (inst & 0xF0FF) == 0x400B)   // JSRF
+   {
+      if (context->bt.numbacktrace < sizeof(context->bt.addr)/sizeof(u32))
+      {
+         context->bt.addr[context->bt.numbacktrace] = context->regs.PC;
+         context->bt.numbacktrace++;
+      }
+   }
+   else if (inst == 0x000B)
+   {
+      if (context->bt.numbacktrace > 0)
+         context->bt.numbacktrace--;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 *SH2GetBacktraceList(SH2_struct *context, int *size)
+{
+   *size = context->bt.numbacktrace;
+   return context->bt.addr;
 }
 
 //////////////////////////////////////////////////////////////////////////////

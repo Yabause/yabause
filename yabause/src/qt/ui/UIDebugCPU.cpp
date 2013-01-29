@@ -1,4 +1,4 @@
-/*	Copyright 2012 Theo Berkau <cwx@cyberwarriorx.com>
+/*	Copyright 2012-2013 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -31,6 +31,7 @@ UIDebugCPU::UIDebugCPU( YabauseThread *mYabauseThread, QWidget* p )
 		setWindowFlags( Qt::Sheet );
 
 	// Disable unimplemented functions
+   gbBackTrace->setVisible( false );
 	pbStepOver->setVisible( false );
 	pbMemoryEditor->setVisible( false );
    pbReserved1->setVisible( false );
@@ -70,6 +71,11 @@ void UIDebugCPU::on_lwRegisters_itemDoubleClicked ( QListWidgetItem * item )
    }
 
    updateRegList();
+}
+
+void UIDebugCPU::on_lwBackTrace_itemDoubleClicked ( QListWidgetItem * item )
+{
+   updateCodeList(item->text().toUInt(NULL, 16));
 }
 
 void UIDebugCPU::on_leCodeBreakpoint_textChanged( const QString & text )
