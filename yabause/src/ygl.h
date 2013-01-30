@@ -22,7 +22,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <GL/gl.h>
-#include "windows/glext.h"
+#include "glext.h"
 #endif
 
 #ifdef HAVE_LIBSDL
