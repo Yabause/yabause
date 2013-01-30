@@ -24,7 +24,7 @@
        <string>General</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout1">
-       <item row="13" column="0">
+       <item row="14" column="0">
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -131,6 +131,13 @@
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0" colspan="2">
+        <widget class="QCheckBox" name="cbTranslation">
+         <property name="text">
+          <string>Enable translations</string>
          </property>
         </widget>
        </item>

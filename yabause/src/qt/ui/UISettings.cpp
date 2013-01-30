@@ -224,6 +224,7 @@ void UISettings::loadSettings()
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	leSaveStates->setText( s->value( "General/SaveStates", getDataDirPath() ).toString() );
 	leTranslation->setText( s->value( "General/Translation" ).toString() );
+	cbTranslation->setChecked( s->value( "General/EnableTranslation", true ).toBool() );
 	cbEnableFrameSkipLimiter->setChecked( s->value( "General/EnableFrameSkipLimiter" ).toBool() );
 	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
 	cbAutostart->setChecked( s->value( "autostart" ).toBool() );
@@ -276,6 +277,7 @@ void UISettings::saveSettings()
 	s->setValue( "General/CdRom", cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	s->setValue( "General/CdRomISO", leCdRom->text() );
 	s->setValue( "General/SaveStates", leSaveStates->text() );
+	s->setValue( "General/EnableTranslation", cbTranslation->isChecked() );
 	s->setValue( "General/Translation", leTranslation->text() );
 	s->setValue( "General/EnableFrameSkipLimiter", cbEnableFrameSkipLimiter->isChecked() );
 	s->setValue( "General/ShowFPS", cbShowFPS->isChecked() );

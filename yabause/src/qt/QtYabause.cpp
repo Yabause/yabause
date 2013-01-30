@@ -168,6 +168,9 @@ VolatileSettings* QtYabause::volatileSettings( bool create )
 int QtYabause::setTranslationFile()
 {
 #ifdef HAVE_LIBMINI18N
+	if (! settings()->value( "General/EnableTranslation" ).toBool())
+		return 0;
+
 	const QString s = settings()->value( "General/Translation" ).toString();
 	if ( ! s.isEmpty() )
 	{
