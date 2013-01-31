@@ -351,6 +351,9 @@ void Vdp2VBlankOUT(void) {
 
    FPSDisplay();
    VIDCore->Vdp2DrawEnd();
+   /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
+   function that would be called here and during a manual change */
+   Vdp1External.manualchange = 0;
 
    if (!skipnextframe)
    {
