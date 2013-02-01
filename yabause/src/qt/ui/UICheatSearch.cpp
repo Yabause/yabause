@@ -175,9 +175,9 @@ void UICheatSearch::adjustSearchValueQValidator()
       min = -(max >> 1) - 1;
       max >>= 1;
    }
-   if (data == SEARCHLONG)
+   if (rb32Bit->isChecked())
    {
-      if (isSigned)
+      if (rbSigned->isChecked())
          leSearchValue->setValidator(new QRegExpValidator(QRegExp("-?\\d{1,10}"), leSearchValue));
       else
          leSearchValue->setValidator(new QRegExpValidator(QRegExp("\\d{1,10}"), leSearchValue));
