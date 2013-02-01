@@ -24,7 +24,7 @@
 #include <ntddcdrm.h>
 #include <ntddscsi.h>
 #else
-#include "windows/fakeddk.h"
+#include "fakeddk.h"
 #endif
 #include "cdbase.h"
 
