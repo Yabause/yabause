@@ -126,7 +126,6 @@ static INLINE int FASTCALL TitanTransBit(u32 pixel)
 static u32 TitanDigPixel(int * priority, int pos)
 {
    u32 pixel = 0;
-   u8 alpha;
    while((*priority > -1) && (! pixel))
    {
       pixel = tt_context.vdp2framebuffer[*priority][pos];

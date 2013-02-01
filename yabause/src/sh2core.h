@@ -443,6 +443,7 @@ int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags);
 int SH2DelMemoryBreakpoint(SH2_struct *context, u32 addr);
 memorybreakpoint_struct *SH2GetMemoryBreakpointList(SH2_struct *context);
 void SH2ClearMemoryBreakpoints(SH2_struct *context);
+void SH2HandleBackTrace(SH2_struct *context);
 u32 *SH2GetBacktraceList(SH2_struct *context, int *size);
 
 void DMAExec(void);

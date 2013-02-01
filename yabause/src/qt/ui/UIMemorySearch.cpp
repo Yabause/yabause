@@ -51,6 +51,8 @@ UIMemorySearch::UIMemorySearch( QWidget* p )
    for (int i = 0; i < flagList.count(); i++)
       cbType->setItemData(i, flagList[i]);
 
+   adjustSearchValueQValidator();
+
    leStartAddress->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leStartAddress));
    leEndAddress->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leEndAddress));
 
@@ -109,11 +111,19 @@ void UIMemorySearch::adjustSearchValueQValidator()
 
          if (isSigned)
          {
-            min = -(max >> 1) + 1;
+            min = -(max >> 1) - 1;
             max >>= 1;
          }
 
-         leValue->setValidator(new QIntValidator(min, max, leValue));
+         if (data == SEARCHLONG)
+         {
+            if (isSigned)
+               leValue->setValidator(new QRegExpValidator(QRegExp("-?\\d{1,10}"), leValue));
+            else
+               leValue->setValidator(new QRegExpValidator(QRegExp("\\d{1,10}"), leValue));
+         }
+         else
+            leValue->setValidator(new QIntValidator(min, max, leValue));
          leValue->setText("");
          break;
       }

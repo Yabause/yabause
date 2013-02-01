@@ -1769,7 +1769,7 @@ void VIDSoftResize(unsigned int w, unsigned int h, int on)
 
    glMatrixMode(GL_TEXTURE);
    glLoadIdentity();
-   glOrtho(-w, w, -h, h, 1, 0);
+   glOrtho(-(signed)w, w, -(signed)h, h, 1, 0);
 
    glViewport(0, 0, w, h);
    outputwidth = w;

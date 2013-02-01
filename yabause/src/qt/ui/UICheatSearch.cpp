@@ -172,11 +172,18 @@ void UICheatSearch::adjustSearchValueQValidator()
 
    if (rbSigned->isChecked())
    {
-      min = -(max >> 1) + 1;
+      min = -(max >> 1) - 1;
       max >>= 1;
    }
-
-   leSearchValue->setValidator(new QIntValidator(min, max, leSearchValue));
+   if (data == SEARCHLONG)
+   {
+      if (isSigned)
+         leSearchValue->setValidator(new QRegExpValidator(QRegExp("-?\\d{1,10}"), leSearchValue));
+      else
+         leSearchValue->setValidator(new QRegExpValidator(QRegExp("\\d{1,10}"), leSearchValue));
+   }
+   else
+      leSearchValue->setValidator(new QIntValidator(min, max, leSearchValue));
 }
 
 void UICheatSearch::on_twSearchResults_itemSelectionChanged()
