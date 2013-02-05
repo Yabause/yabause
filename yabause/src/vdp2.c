@@ -329,6 +329,7 @@ void Vdp2VBlankOUT(void) {
 
    Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
 
+   if (Vdp1External.manualchange) skipnextframe = 0;
    if (skipnextframe && (! saved))
    {
       saved = VIDCore;
