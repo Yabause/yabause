@@ -302,6 +302,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    char *p, *p2;
    track_info_struct trk[100];
    int file_size;
+   int i;
 
    disc.session_num = 1;
    disc.session = malloc(sizeof(session_info_struct) * disc.session_num);
@@ -334,27 +335,27 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          break;
 
       // Figure out what it is
-      if (strcmp(temp_buffer, "TRACK") == 0)
+      if (strncmp(temp_buffer, "TRACK", 5) == 0)
       {
          // Handle accordingly
          if (fscanf(iso_file, "%d %[^\r\n]\r\n", &track_num, temp_buffer) == EOF)
             break;
 
-         if (strcmp(temp_buffer, "MODE1") == 0 ||
-            strcmp(temp_buffer, "MODE2") == 0)
+         if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
+            strncmp(temp_buffer, "MODE2", 5) == 0)
          {
             // Figure out the track sector size
             trk[track_num-1].sector_size = atoi(temp_buffer + 6);
             trk[track_num-1].ctl_addr = 0x41;
          }
-         else if (strcmp(temp_buffer, "AUDIO") == 0)
+         else if (strncmp(temp_buffer, "AUDIO", 5) == 0)
          {
-            // fix me
             // Update toc entry
+            trk[track_num-1].sector_size = 2352;
             trk[track_num-1].ctl_addr = 0x01;
          }
       }
-      else if (strcmp(temp_buffer, "INDEX") == 0)
+      else if (strncmp(temp_buffer, "INDEX", 5) == 0)
       {
          // Handle accordingly
 
@@ -365,22 +366,22 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          {
             // Update toc entry
             trk[track_num-1].fad_start = (MSF_TO_FAD(min, sec, frame) + pregap + 150);
-            trk[track_num-1].file_offset = pregap + 150;
+            trk[track_num-1].file_offset = pregap;
          }
       }
-      else if (strcmp(temp_buffer, "PREGAP") == 0)
+      else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
       {
          if (fscanf(iso_file, "%d:%d:%d\r\n", &min, &sec, &frame) == EOF)
             break;
 
          pregap += MSF_TO_FAD(min, sec, frame);
       }
-      else if (strcmp(temp_buffer, "POSTGAP") == 0)
+      else if (strncmp(temp_buffer, "POSTGAP", 7) == 0)
       {
          if (fscanf(iso_file, "%d:%d:%d\r\n", &min, &sec, &frame) == EOF)
             break;
       }
-      else if (strcmp(temp_buffer, "FILE") == 0)
+      else if (strncmp(temp_buffer, "FILE", 4) == 0)
       {
          YabSetError(YAB_ERR_OTHER, "Unsupported cue format");
          free(temp_buffer);
@@ -458,9 +459,20 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    file_size = ftell(iso_file);
    fseek(iso_file, 0, SEEK_SET);
 
+   for (i = 0; i < track_num; i++)
+   {
+      trk[i].fad_end = trk[i+1].fad_start-1;
+      trk[i].file_id = 0;
+      trk[i].fp = iso_file;
+      trk[i].file_size = file_size;
+   }
+
+   trk[track_num-1].fad_end = trk[track_num-1].fad_start+(file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
+
    disc.session[0].fad_start = 150;
+   disc.session[0].fad_end = trk[track_num-1].fad_end;
    disc.session[0].track_num = track_num;
-   disc.session = malloc(sizeof(track_info_struct) * disc.session[0].track_num);
+   disc.session[0].track = malloc(sizeof(track_info_struct) * disc.session[0].track_num);
    if (disc.session[0].track == NULL)
    {
       YabSetError(YAB_ERR_MEMORYALLOC, NULL);
@@ -641,7 +653,12 @@ static int LoadMDS(const char *mds_filename, FILE *iso_file)
    else if (memcmp(&header.signature,  "MEDIA DESCRIPTOR", sizeof(header.signature)))
    {
       YabSetError(YAB_ERR_OTHER, "Bad MDS header");
-      return -1;\
+      return -1;
+   }
+   else if (header.version[0] > 1)
+   {
+      YabSetError(YAB_ERR_OTHER, "Unsupported MDS version");
+      return -1;
    }
 
    if (header.medium_type & 0x10)
