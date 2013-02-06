@@ -142,7 +142,7 @@ void UISettings::tbBrowse_clicked()
 			return;
 		}
 		else if ( cbCdRom->currentText().contains( "iso", Qt::CaseInsensitive ) )
-			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin)" ) );
+			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds)" ) );
 		else
 			requestFolder( QtYabause::translate( "Choose a cdrom drive/mount point" ), leCdRom );
 	}
