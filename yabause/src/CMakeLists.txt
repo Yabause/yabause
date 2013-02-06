@@ -66,6 +66,22 @@ if (FLOORF_OK)
 	add_definitions(-DHAVE_FLOORF=1)
 endif ()
 
+# _wfopen
+check_function_exists(_wfopen WFOPEN_OK)
+if (WFOPEN_OK)
+	add_definitions(-DHAVE_WFOPEN=1)
+endif ()
+
+# stricmp/strcasecmp
+check_function_exists(strcasecmp STRCASECMP_OK)
+if (STRCASECMP_OK)
+	add_definitions(-DHAVE_STRCASECMP=1)
+endif ()
+check_function_exists(stricmp STRICMP_OK)
+if (STRICMP_OK)
+	add_definitions(-DHAVE_STRICMP=1)
+endif ()
+
 # sys/time.h
 check_include_file("sys/time.h" SYSTIME_OK)
 if (SYSTIME_OK)

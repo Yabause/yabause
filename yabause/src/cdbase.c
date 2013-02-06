@@ -27,6 +27,45 @@
 #include "error.h"
 #include "debug.h"
 
+#ifndef HAVE_STRICMP
+#ifdef HAVE_STRCASECMP
+#define stricmp strcasecmp
+#endif
+#endif
+
+#ifndef HAVE_WFOPEN
+static char * wcsdupstr(const wchar_t * path)
+{
+   char * mbs;
+   size_t len = wcstombs(NULL, path, 0);
+   if (len == (size_t) -1) return NULL;
+
+   mbs = malloc(len);
+   len = wcstombs(mbs, path, len);
+   if (len == (size_t) -1)
+   {
+      free(mbs);
+      return NULL;
+   }
+
+   return mbs;
+}
+
+static FILE * _wfopen(const wchar_t *wpath, const wchar_t *wmode)
+{
+   FILE * fd;
+   char * path = wcsdupstr(wpath);
+   char * mode = wcsdupstr(wmode);
+
+   if ((path == NULL) || (mode == NULL)) return NULL;
+
+   fd = fopen(path, mode);
+
+   free(path);
+   free(mode);
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 // Contains the Dummy and ISO CD Interfaces
