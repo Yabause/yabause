@@ -1,5 +1,5 @@
 /*  Copyright 2003 Guillaume Duhamel
-    Copyright 2004-2006 Theo Berkau
+    Copyright 2004-2006, 2013 Theo Berkau
 
     This file is part of Yabause.
 
@@ -62,6 +62,8 @@
 
 #define CDB_PLAYTYPE_SECTOR     0x01
 #define CDB_PLAYTYPE_FILE       0x02
+
+#define ToBCD(val) ((val % 10 ) + ((val / 10 ) << 4))
 
 Cs2 * Cs2Area = NULL;
 ip_struct *cdip = NULL;
@@ -244,6 +246,33 @@ u16 FASTCALL Cs2ReadWord(u32 addr) {
                                 Cs2Area->infotranstype = -1;
                              }
 
+                             break;
+                     case 3:
+                             // Get Subcode Q
+                             val = (Cs2Area->transscodeq[Cs2Area->transfercount] << 8) |
+                                    Cs2Area->transscodeq[Cs2Area->transfercount + 1];
+
+                             Cs2Area->transfercount += 2;
+                             Cs2Area->cdwnum += 2;
+
+                             if (Cs2Area->transfercount > (5 * 2))
+                             {
+                                Cs2Area->transfercount = 0;
+                                Cs2Area->infotranstype = -1;
+                             }
+                             break;
+                     case 4:
+                             // Get Subcode RW
+                             val = 0; // fixme
+
+                             Cs2Area->transfercount += 2;
+                             Cs2Area->cdwnum += 2;
+
+                             if (Cs2Area->transfercount > (12 * 2))
+                             {
+                                Cs2Area->transfercount = 0;
+                                Cs2Area->infotranstype = -1;
+                             }
                              break;
                      default: break;
                   }
@@ -1587,6 +1616,9 @@ void Cs2SeekDisc(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2GetSubcodeQRW(void) {
+   u32 rel_fad;
+   u8 rel_m, rel_s, rel_f, m, s, f;
+
   // According to Tyranid's doc, the subcode type is stored in the low byte
   // of CR2. However, Sega's CDC library writes the type to the low byte
   // of CR1. Somehow I'd sooner believe Sega is right.
@@ -1598,16 +1630,33 @@ void Cs2GetSubcodeQRW(void) {
              Cs2Area->reg.CR3 = 0;
              Cs2Area->reg.CR4 = 0;
 
-             // setup transfer here(fix me)
+             rel_fad = Cs2Area->FAD-(Cs2Area->TOC[Cs2Area->track-1] & 0xFFFFFF);
+             Cs2FADToMSF(rel_fad, &rel_m, &rel_s, &rel_f);
+             Cs2FADToMSF(Cs2Area->FAD, &m, &s, &f);
+             
+             Cs2Area->transscodeq[0] = Cs2Area->ctrladdr; // ctl/adr
+             Cs2Area->transscodeq[1] = ToBCD(Cs2Area->track); // track number
+             Cs2Area->transscodeq[2] = ToBCD(Cs2Area->index); // index
+             Cs2Area->transscodeq[3] = ToBCD(rel_m); // relative M
+             Cs2Area->transscodeq[4] = ToBCD(rel_s); // relative S
+             Cs2Area->transscodeq[5] = ToBCD(rel_f); // relative F
+             Cs2Area->transscodeq[6] = 0; 
+             Cs2Area->transscodeq[7] = ToBCD(m); // M
+             Cs2Area->transscodeq[8] = ToBCD(s); // S
+             Cs2Area->transscodeq[9] = ToBCD(f); // F
+
+             Cs2Area->transfercount = 0;
+             Cs2Area->infotranstype = 3;
              break;
      case 1:
              // Get RW Channel
              Cs2Area->reg.CR1 = (Cs2Area->status << 8) | 0;
              Cs2Area->reg.CR2 = 12;
              Cs2Area->reg.CR3 = 0;
-             Cs2Area->reg.CR4 = 0;
+             Cs2Area->reg.CR4 = 0; // Subcode flag
 
-             // setup transfer here(fix me)
+             Cs2Area->transfercount = 0;
+             Cs2Area->infotranstype = 4;
              break;
      default: break;
   }
@@ -2716,6 +2765,17 @@ u32 Cs2TrackToFAD(u16 trackandindex) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Cs2FADToMSF(u32 val, u8 *m, u8 *s, u8 *f)
+{
+   u32 temp;
+   m[0] = val / 4500;
+   temp = val % 4500;
+   s[0] = temp / 75;
+   f[0] = temp % 75;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD) {
   if (track_number != 0xFF)
   {
@@ -2811,7 +2871,7 @@ partition_struct * Cs2FilterData(filter_struct * curfilter, int isaudio)
      if (Cs2Area->workblock.data[0xF] == 0x02 && !isaudio)
      {
         // Mode 2
-        // go through various subheader filter conditions here(fix me)
+        // go through various subheader filter conditions
    
         if (curfilter->mode & 0x01)
         {

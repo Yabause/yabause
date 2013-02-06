@@ -170,6 +170,8 @@ typedef struct {
   int isaudio;
   u8 transfileinfo[12];
   u8 lastbuffer;
+  u8 transscodeq[5 * 2];
+  u8 transscoderw[12 * 2];
 
   filter_struct filter[MAX_SELECTORS];
   filter_struct *outconcddev;
@@ -194,7 +196,16 @@ typedef struct {
 
   u32 blockfreespace;
   block_struct block[MAX_BLOCKS];
-  block_struct workblock;
+  struct 
+  {
+     s32 size;
+     u32 FAD;
+     u8 cn;
+     u8 fn;
+     u8 sm;
+     u8 ci;
+     u8 data[2448];
+  } workblock;
 
   u32 curdirsect;
   u32 curdirsize;
@@ -339,6 +350,7 @@ void Cs2CmdE2(void);                       // 0xE2
 
 u8 Cs2FADToTrack(u32 val);
 u32 Cs2TrackToFAD(u16 trackandindex);
+void Cs2FADToMSF(u32 val, u8 *m, u8 *s, u8 *f);
 void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD);
 block_struct * Cs2AllocateBlock(u8 * blocknum);
 void Cs2FreeBlock(block_struct * blk);

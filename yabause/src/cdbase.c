@@ -857,7 +857,7 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
 
    assert(disc.session);
 
-   memset(buffer, 0, 2352);
+   memset(buffer, 0, 2448);
 
    for (i = 0; i < disc.session_num; i++)
    {
@@ -879,8 +879,13 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    }
 
    fseek(track->fp, track->file_offset + (FAD-150) * track->sector_size, SEEK_SET);
-   if (track->sector_size >= 2352)
+   if (track->sector_size == 2448)
+      fread(buffer, 2448, 1, track->fp);
+   else if (track->sector_size == 2352)
+   {
+      // Generate subcodes here
       fread(buffer, 2352, 1, track->fp);
+   }
    else if (track->sector_size == 2048)
    {
       memcpy(buffer, syncHdr, 12);
