@@ -551,7 +551,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
       fseek(iso_file, mds_session->track_blocks_offset + i * sizeof(mds_track_struct), SEEK_SET);
       if (fread(&track, 1, sizeof(mds_track_struct), iso_file) != sizeof(mds_track_struct))
       {
-         YabSetError(YAB_ERR_FILEREAD, NULL);
+         YabSetError(YAB_ERR_FILEREAD, mds_filename);
          free(session->track);
          return -1;
       }
@@ -587,7 +587,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
             fseek(iso_file, track.footer_offset, SEEK_SET);
             if (fread(&footer, 1, sizeof(mds_footer_struct), iso_file) != sizeof(mds_footer_struct))
             {
-               YabSetError(YAB_ERR_FILEREAD, NULL);
+               YabSetError(YAB_ERR_FILEREAD, mds_filename);
                free(session->track);
                return -1;
             }
@@ -600,7 +600,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
 
                if (fwscanf(iso_file, L"%[^\0]", img_filename) != 1)
                {
-                  YabSetError(YAB_ERR_FILEREAD, NULL);
+                  YabSetError(YAB_ERR_FILEREAD, mds_filename);
                   free(session->track);
                   return -1;
                }
@@ -624,7 +624,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
 
                if (fscanf(iso_file, "%[^\0]", img_filename) != 1)
                {
-                  YabSetError(YAB_ERR_FILEREAD, NULL);
+                  YabSetError(YAB_ERR_FILEREAD, mds_filename);
                   free(session->track);
                   return -1;
                }
@@ -644,7 +644,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
 
             if (fp == NULL)
             {
-               YabSetError(YAB_ERR_FILEREAD, NULL);
+               YabSetError(YAB_ERR_FILEREAD, mds_filename);
                free(session->track);
                return -1;
             }
@@ -686,7 +686,7 @@ static int LoadMDS(const char *mds_filename, FILE *iso_file)
 
    if (fread((void *)&header, 1, sizeof(mds_header_struct), iso_file) != sizeof(mds_header_struct))
    {
-      YabSetError(YAB_ERR_FILEREAD, NULL);
+      YabSetError(YAB_ERR_FILEREAD, mds_filename);
       return -1;
    }
    else if (memcmp(&header.signature,  "MEDIA DESCRIPTOR", sizeof(header.signature)))
@@ -723,7 +723,7 @@ static int LoadMDS(const char *mds_filename, FILE *iso_file)
       if (fread(&session, 1, sizeof(mds_session_struct), iso_file) != sizeof(mds_session_struct))
       {
          free(disc.session);
-         YabSetError(YAB_ERR_FILEREAD, NULL);
+         YabSetError(YAB_ERR_FILEREAD, mds_filename);
          return -1;
       }
 
