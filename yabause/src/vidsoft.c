@@ -3075,12 +3075,6 @@ void VIDSoftVdp2DrawEnd(void)
 #endif
 
    YuiSwapBuffers();
-
-   if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
-   {
-      Vdp1External.manualerase = 1;
-      VIDSoftVdp1EraseFrameBuffer();
-   }
 }
 
 //////////////////////////////////////////////////////////////////////////////

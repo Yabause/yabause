@@ -355,6 +355,8 @@ void Vdp2VBlankOUT(void) {
    /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
    function that would be called here and during a manual change */
    Vdp1External.manualchange = 0;
+   if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
+      Vdp1External.manualerase = 1;
 
    if (!skipnextframe)
    {
