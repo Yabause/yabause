@@ -15,6 +15,7 @@ ExternalProject_Add(iapetus
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
   LOG_BUILD 1
+  INSTALL_COMMAND ""
 )
 
 PROJECT(YabauseUT)
