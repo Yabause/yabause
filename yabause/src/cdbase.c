@@ -752,7 +752,7 @@ static int LoadISO(FILE *iso_file)
 
    disc.session[0].fad_start = 150;
    disc.session[0].track_num = 1;
-   disc.session = malloc(sizeof(track_info_struct) * disc.session[0].track_num);
+   disc.session[0].track = malloc(sizeof(track_info_struct) * disc.session[0].track_num);
    if (disc.session[0].track == NULL)
    {
       YabSetError(YAB_ERR_MEMORYALLOC, NULL);
