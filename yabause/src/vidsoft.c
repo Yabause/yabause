@@ -2291,8 +2291,6 @@ static int DrawLineCallback(int x, int y, int i, void *data)
 		putpixel8(x, y);
     }
 
-	linedata->previousStep = currentPixel;
-
 	if (linedata->endcodesdetected == 2) return -1;
 
 	return 0;
