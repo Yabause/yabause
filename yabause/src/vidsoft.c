@@ -805,6 +805,14 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
    int x, y;
    screeninfo_struct sinfo;
    vdp2rotationparameterfp_struct *p=&parameter[info->rotatenum];
+   clipping_struct clip[2];
+   u32 linewnd0addr, linewnd1addr;
+
+   clip[0].xstart = clip[0].ystart = clip[0].xend = clip[0].yend = 0;
+   clip[1].xstart = clip[1].ystart = clip[1].xend = clip[1].yend = 0;
+   ReadWindowData(info->wctl, clip);
+   linewnd0addr = linewnd1addr = 0;
+   ReadLineWindowData(&info->islinewindow, info->wctl, &linewnd0addr, &linewnd1addr);
 
    Vdp2ReadRotationTableFP(info->rotatenum, p);
 
@@ -833,10 +841,14 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          for (j = 0; j < vdp2height; j++)
          {
             info->LoadLineParams(info, j);
+            ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr);
 
             for (i = 0; i < vdp2width; i++)
             {
                u32 color;
+
+               if (!TestBothWindow(info->wctl, clip, i, j))
+                  continue;
 
                x = GenerateRotatedXPosFP(p, i, xmul, ymul, C) & sinfo.xmask;
                y = GenerateRotatedYPosFP(p, i, xmul, ymul, F) & sinfo.ymask;
@@ -879,16 +891,16 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
       clipping_struct rpwindow[2];
       int userpwindow = 0;
-      int islinewindow = 0;
-      u32 linewnd0addr, linewnd1addr;
+      int isrplinewindow = 0;
+      u32 rplinewnd0addr, rplinewnd1addr;
 
       if ((Vdp2Regs->RPMD & 3) == 2)
          p2 = &parameter[1 - info->rotatenum];
       else if ((Vdp2Regs->RPMD & 3) == 3)
       {
          ReadWindowData(Vdp2Regs->WCTLD, rpwindow);
-         linewnd0addr = linewnd1addr = 0;
-         ReadLineWindowData(&islinewindow, Vdp2Regs->WCTLD, &linewnd0addr, &linewnd1addr);
+         rplinewnd0addr = rplinewnd1addr = 0;
+         ReadLineWindowData(&isrplinewindow, Vdp2Regs->WCTLD, &rplinewnd0addr, &rplinewnd1addr);
          userpwindow = 1;
          p2 = &parameter[1 - info->rotatenum];
       }
@@ -953,9 +965,10 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          }
 
          info->LoadLineParams(info, j);
+         ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr);
 
          if (userpwindow)
-            ReadLineWindowClip(islinewindow, rpwindow, &linewnd0addr, &linewnd1addr);
+            ReadLineWindowClip(isrplinewindow, rpwindow, &rplinewnd0addr, &rplinewnd1addr);
 
          for (i = 0; i < vdp2width; i++)
          {
@@ -979,6 +992,9 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                coefx2 += toint(p2->deltaKAx);
                rcoefx2 += decipart(p2->deltaKAx);
             }
+
+            if (!TestBothWindow(info->wctl, clip, i, j))
+               continue;
 
             if (((! userpwindow) && p->msb) || (userpwindow && (! TestBothWindow(Vdp2Regs->WCTLD, rpwindow, i, j))))
             {
