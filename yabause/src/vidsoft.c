@@ -2986,26 +2986,28 @@ void VIDSoftVdp2DrawEnd(void)
                         case 0:
                            if (prioritytable[spi.priority] <= SPCCN) {
                               alpha = colorcalctable[spi.colorcalc];
+                              if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                            }
                            break;
                         case 1:
                            if (prioritytable[spi.priority] == SPCCN) {
                               alpha = colorcalctable[spi.colorcalc];
+                              if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                            }
                            break;
                         case 2:
                            if (prioritytable[spi.priority] >= SPCCN) {
                               alpha = colorcalctable[spi.colorcalc];
+                              if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                            }
                            break;
                         case 3:
                            if (dot & 0x80000000) {
                               alpha = colorcalctable[spi.colorcalc];
+                              if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                            }
                            break;
                      }
-
-                     if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                   }
 
                   TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0);
@@ -3039,26 +3041,28 @@ void VIDSoftVdp2DrawEnd(void)
                         case 0:
                            if (prioritytable[spi.priority] <= SPCCN) {
                               alpha = colorcalctable[spi.colorcalc];
+                              if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                            }
                            break;
                         case 1:
                            if (prioritytable[spi.priority] == SPCCN) {
                               alpha = colorcalctable[spi.colorcalc];
+                              if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                            }
                            break;
                         case 2:
                            if (prioritytable[spi.priority] >= SPCCN) {
                               alpha = colorcalctable[spi.colorcalc];
+                              if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                            }
                            break;
                         case 3:
                            if (dot & 0x80000000) {
                               alpha = colorcalctable[spi.colorcalc];
+                              if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                            }
                            break;
                      }
-
-                     if (Vdp2Regs->CCCTL & 0x300) alpha |= 0x80;
                   }
 
                   TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0);
