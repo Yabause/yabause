@@ -135,6 +135,7 @@ void UIYabause::showEvent( QShowEvent* e )
 		LogStart();
 		LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
 		VolatileSettings* vs = QtYabause::volatileSettings();
+
 		if ( vs->value( "View/Menubar" ).toInt() == 2 )
 			menubar->hide();
 		if ( vs->value( "View/Toolbar" ).toInt() == 2 )
@@ -280,25 +281,87 @@ void UIYabause::refreshStatesActions()
 
 void UIYabause::on_aFileSettings_triggered()
 {
+	Settings *s = (QtYabause::settings());
+	QHash<QString, QVariant> hash;
+	const QStringList keys = s->allKeys();
+	Q_FOREACH(QString key, keys) {
+		hash[key] = s->value(key);
+	}
+
 	YabauseLocker locker( mYabauseThread );
 	if ( UISettings( window() ).exec() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
-
-		if ( vs->value( "View/Menubar" ).toInt() == 2 )
-			menubar->hide();
-		else
-			menubar->show();
-
-		if ( vs->value( "View/Toolbar" ).toInt() == 2 )
-			toolBar->hide();
-		else
-			toolBar->show();
 		
-		if ( mYabauseThread->pauseEmulation( true, true ) )
-			refreshStatesActions();
+		if(isFullScreen())
+		{
+			if ( vs->value( "View/Menubar" ).toInt() == 1 || vs->value( "View/Menubar" ).toInt() == 2)
+				menubar->hide();
+			else
+				menubar->show();
+
+			if ( vs->value( "View/Toolbar" ).toInt() == 1 || vs->value( "View/Toolbar" ).toInt() == 2 )
+				toolBar->hide();
+			else
+				toolBar->show();
+		}
+		else
+		{
+			if ( vs->value( "View/Menubar" ).toInt() == 2 )
+				menubar->hide();
+			else
+				menubar->show();
+
+			if ( vs->value( "View/Toolbar" ).toInt() == 2 )
+				toolBar->hide();
+			else
+				toolBar->show();
+		}
+
+		
+		//only reset if bios, region, cart,  back up, mpeg, sh2, m68k are changed
+		Settings *ss = (QtYabause::settings());
+		QHash<QString, QVariant> newhash;
+		const QStringList newkeys = ss->allKeys();
+		Q_FOREACH(QString key, newkeys) {
+			newhash[key] = ss->value(key);
+		}
+		if(newhash["General/Bios"]!=hash["General/Bios"] ||
+			newhash["Advanced/Region"]!=hash["Advanced/Region"] ||
+			newhash["Cartridge/Type"]!=hash["Cartridge/Type"] ||
+			newhash["Memory/Path"]!=hash["Memory/Path"] ||
+			newhash["MpegROM/Path" ]!=hash["MpegROM/Path" ] ||
+			newhash["Advanced/SH2Interpreter" ]!=hash["Advanced/SH2Interpreter" ] ||
+			newhash["General/CdRom"]!=hash["General/CdRom"] ||
+			newhash["General/CdRomISO"]!=hash["General/CdRomISO"]
+		)
+		{
+			if ( mYabauseThread->pauseEmulation( true, true ) )
+				refreshStatesActions();
+			return;
+		}
+		if(newhash["Video/VideoCore"] != hash["Video/VideoCore"])
+			on_cbVideoDriver_currentIndexChanged(newhash["Video/VideoCore"].toInt());
+		
+		if(newhash["General/ShowFPS"] != hash["General/ShowFPS"])
+			SetOSDToggle(newhash["General/ShowFPS"].toBool());
+		
+		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
+			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
+		
+		if (newhash["Video/Width"] != hash["Video/Width"] || newhash["Video/Height"] != hash["Video/Height"] )
+			sizeRequested(QSize(newhash["Video/Width"].toInt(),newhash["Video/Height"].toInt()));
+		
+		if (newhash["Video/Fullscreen"] != hash["Video/Fullscreen"])
+			fullscreenRequested( newhash["Video/Fullscreen"].toBool());
+		
+		if (newhash["Video/VideoFormat"] != hash["Video/VideoFormat"])
+			YabauseSetVideoFormat(newhash["Video/VideoFormat"].toInt());
+
+		mYabauseThread->reloadControllers();
+		refreshStatesActions();
 	}
 }
 
