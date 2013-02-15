@@ -97,12 +97,20 @@ typedef struct
 
 typedef struct
 {
+   u8 vidplaymode;
+   u8 dectimingmode;
+   u8 outmode;
+   u8 slmode;
+} mpegmode_struct;
+
+typedef struct
+{
    u8 audcon;
    u8 audlay;
-   u8 audbufdivnum;
+   u8 audbufnum;
    u8 vidcon;
    u8 vidlay;
-   u8 vidbufdivnum;
+   u8 vidbufnum;
 } mpegcon_struct;
 
 typedef struct
@@ -217,6 +225,7 @@ typedef struct {
 
   u32 mpegintmask;
 
+  mpegmode_struct mpegmode;
   mpegcon_struct mpegcon[2];
   mpegstm_struct mpegstm[2];
 

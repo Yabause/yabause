@@ -241,6 +241,7 @@ typedef struct
    FILE *fp;
    int file_size;
    int file_id;
+   int interleaved_sub;
 } track_info_struct;
 
 typedef struct
@@ -664,6 +665,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
       session->track[track_num].fp = fp;
       session->track[track_num].file_size = file_size;
       session->track[track_num].file_id = track.footer_offset;
+      session->track[track_num].interleaved_sub = track.subchannel_mode != 0 ? 1 : 0;
 
       track_num++;
    }
@@ -936,7 +938,34 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
 
    fseek(track->fp, track->file_offset + (FAD-150) * track->sector_size, SEEK_SET);
    if (track->sector_size == 2448)
-      fread(buffer, 2448, 1, track->fp);
+   {
+      if (!track->interleaved_sub)
+         fread(buffer, 2448, 1, track->fp);
+      else
+      {
+         const u16 deint_offsets[] = {
+            0, 66, 125, 191, 100, 50, 150, 175, 8, 33, 58, 83, 
+            108, 133, 158, 183, 16, 41, 25, 91, 116, 141, 166, 75, 
+            24, 90, 149, 215, 124, 74, 174, 199, 32, 57, 82, 107, 
+            132, 157, 182, 207, 40, 65, 49, 115, 140, 165, 190, 99, 
+            48, 114, 173, 239, 148, 98, 198, 223, 56, 81, 106, 131, 
+            156, 181, 206, 231, 64, 89, 73, 139, 164, 189, 214, 123, 
+            72, 138, 197, 263, 172, 122, 222, 247, 80, 105, 130, 155, 
+            180, 205, 230, 255, 88, 113, 97, 163, 188, 213, 238, 147
+         };
+         u8 subcode_buffer[96 * 3];
+
+         fread(buffer, 2352, 1, track->fp);
+
+         fread(subcode_buffer, 96, 1, track->fp);
+         fseek(track->fp, 2352, SEEK_CUR);
+         fread(subcode_buffer+96, 96, 1, track->fp);
+         fseek(track->fp, 2352, SEEK_CUR);
+         fread(subcode_buffer+192, 96, 1, track->fp);
+         for (i = 0; i < 96; i++)
+            ((u8 *)buffer)[2352+i] = subcode_buffer[deint_offsets[i]];
+      }
+   }
    else if (track->sector_size == 2352)
    {
       // Generate subcodes here
