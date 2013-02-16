@@ -83,13 +83,6 @@ void YuiErrorMsg(const char *string) {
     });
 }
 
-void YuiSetVideoAttribute(int type, int val) {
-}
-
-int YuiSetVideoMode(int width, int height, int bpp, int fullscreen) {
-    return 0;
-}
-
 void YuiSwapBuffers(void) {
     [[controller view] setNeedsDisplay:YES];
 }

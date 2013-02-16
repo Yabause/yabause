@@ -558,13 +558,6 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-void YuiSetVideoAttribute(int type, int val) {
-}
-
-int YuiSetVideoMode(int width, int height, int bpp, int fullscreen) {
-	return 0;
-}
-
 void YuiSwapBuffers(void) {
 	yui_window_update(YUI_WINDOW(yui));
 }

@@ -126,12 +126,6 @@ extern "C"
 {
 	void YuiErrorMsg(const char *string)
 	{ QtYabause::mainWindow()->appendLog( string ); }
-
-	int YuiSetVideoMode(int /*width*/, int /*height*/, int /*bpp*/, int /*fullscreen*/)
-	{ return 0; }
-
-	void YuiSetVideoAttribute(int /*type*/, int /*val*/)
-	{}
 	
 	void YuiSwapBuffers()
 	{ QtYabause::mainWindow()->swapBuffers(); }

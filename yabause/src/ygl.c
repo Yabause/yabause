@@ -566,16 +566,6 @@ int YglGLInit(int width, int height) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int YglScreenInit(int r, int g, int b, int d) {
-   YuiSetVideoAttribute(RED_SIZE, r);
-   YuiSetVideoAttribute(GREEN_SIZE, g);
-   YuiSetVideoAttribute(BLUE_SIZE, b);
-   YuiSetVideoAttribute(DEPTH_SIZE, d);
-   return (YuiSetVideoMode(320, 224, 32, 0) == 0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 
 int YglInit(int width, int height, unsigned int depth) {
    unsigned int i,j;
@@ -618,20 +608,6 @@ int YglInit(int width, int height, unsigned int depth) {
        if ((_Ygl->levels[i].prg[j].vertexAttribute = (float *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float)*2)) == NULL)
          return -1;
      }
-   }
-
-   YuiSetVideoAttribute(DOUBLEBUFFER, 1);
-
-   if (!YglScreenInit(8, 8, 8, 24))
-   {
-      if (!YglScreenInit(4, 4, 4, 24))
-      {
-         if (!YglScreenInit(5, 6, 5, 16))
-         {
-       YuiErrorMsg("Couldn't set GL mode\n");
-            return -1;
-         }
-      }
    }
 
    YglGLInit(width, height);

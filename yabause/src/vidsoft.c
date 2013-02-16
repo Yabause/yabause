@@ -1715,20 +1715,6 @@ int VIDSoftInit(void)
    vdp2height = 224;
 
 #ifdef USE_OPENGL
-   YuiSetVideoAttribute(DOUBLEBUFFER, 1);
-
-   if (!YglScreenInit(8, 8, 8, 24))
-   {
-      if (!YglScreenInit(4, 4, 4, 24))
-      {
-         if (!YglScreenInit(5, 6, 5, 16))
-         {
-	    YuiErrorMsg("Couldn't set GL mode\n");
-            return -1;
-         }
-      }
-   }
-
    glClear(GL_COLOR_BUFFER_BIT);
 
    glMatrixMode(GL_PROJECTION);
@@ -1771,11 +1757,6 @@ void VIDSoftResize(unsigned int w, unsigned int h, int on)
 {
 #ifdef USE_OPENGL
    IsFullscreen = on;
-
-   if (on)
-      YuiSetVideoMode(w, h, 32, 1);
-   else
-      YuiSetVideoMode(w, h, 32, 0);
 
    glClear(GL_COLOR_BUFFER_BIT);
 

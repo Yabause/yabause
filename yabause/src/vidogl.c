@@ -2205,11 +2205,6 @@ void VIDOGLResize(unsigned int w, unsigned int h, int on)
 
    _VIDOGLIsFullscreen = on;
 
-   if (on)
-      YuiSetVideoMode(w, h, 32, 1);
-   else
-      YuiSetVideoMode(w, h, 32, 0);
-
    GlHeight=h;
    GlWidth=w;
    
