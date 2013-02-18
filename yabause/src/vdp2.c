@@ -329,7 +329,6 @@ void Vdp2VBlankOUT(void) {
 
    Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
 
-   if (Vdp1External.manualchange) skipnextframe = 0;
    if (skipnextframe && (! saved))
    {
       saved = VIDCore;
@@ -352,9 +351,6 @@ void Vdp2VBlankOUT(void) {
 
    FPSDisplay();
    VIDCore->Vdp2DrawEnd();
-   /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
-   function that would be called here and during a manual change */
-   Vdp1External.manualchange = 0;
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
       Vdp1External.manualerase = 1;
 

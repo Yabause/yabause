@@ -3037,6 +3037,9 @@ void VIDOGLVdp2DrawStart(void)
 void VIDOGLVdp2DrawEnd(void)
 {
    YglRender();
+   /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
+   function that would be called here and during a manual change */
+   Vdp1External.manualchange = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
