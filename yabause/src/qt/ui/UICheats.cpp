@@ -77,7 +77,7 @@ void UICheats::addARCode( const QString& c, const QString& d )
 {
 	// need check in list if already is code
 	// add code
-	if ( CheatAddARCode( c.toAscii().constData() ) != 0 )
+	if ( CheatAddARCode( c.toLatin1().constData() ) != 0 )
 	{
 		CommonDialogs::information( QtYabause::translate( "Unable to add code" ) );
 		return;
@@ -85,7 +85,7 @@ void UICheats::addARCode( const QString& c, const QString& d )
 	// change the description
 	int cheatsCount;
 	mCheats = CheatGetList( &cheatsCount );
-	if ( CheatChangeDescriptionByIndex( cheatsCount -1, d.toAscii().data() ) != 0 )
+	if ( CheatChangeDescriptionByIndex( cheatsCount -1, d.toLatin1().data() ) != 0 )
 		CommonDialogs::information( QtYabause::translate( "Unable to change description" ) );
 	// add code in treewidget
 	addCode( cheatsCount -1 );
@@ -120,7 +120,7 @@ void UICheats::addRawCode( int t, const QString& a, const QString& v, const QStr
 	int cheatsCount;
 	mCheats = CheatGetList( &cheatsCount );
 	// change description
-	if ( CheatChangeDescriptionByIndex( cheatsCount -1, d.toAscii().data() ) != 0 )
+	if ( CheatChangeDescriptionByIndex( cheatsCount -1, d.toLatin1().data() ) != 0 )
 		CommonDialogs::information( QtYabause::translate( "Unable to change description" ) );
 	// add code in treewidget
 	addCode( cheatsCount -1 );
@@ -201,7 +201,7 @@ void UICheats::on_pbSaveFile_clicked()
 {
 	const QString s = CommonDialogs::getSaveFileName( ".", QtYabause::translate( "Choose a cheat file to save to" ), QtYabause::translate( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
 	if ( !s.isEmpty() )
-		if ( CheatSave( s.toAscii().constData() ) != 0 )
+		if ( CheatSave( s.toLatin1().constData() ) != 0 )
 			CommonDialogs::information( QtYabause::translate( "Unable to open file for loading" ) );
 }
 
@@ -210,7 +210,7 @@ void UICheats::on_pbLoadFile_clicked()
 	const QString s = CommonDialogs::getOpenFileName( ".", QtYabause::translate( "Choose a cheat file to open" ), QtYabause::translate( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
 	if ( !s.isEmpty() )
 	{
-		if ( CheatLoad( s.toAscii().constData() ) == 0 )
+		if ( CheatLoad( s.toLatin1().constData() ) == 0 )
 		{
 			// clear tree
 			twCheats->clear();

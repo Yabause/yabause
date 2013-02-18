@@ -136,7 +136,7 @@ void UIBackupRam::on_pbDelete_clicked()
 		u32 id = cbDeviceList->itemData( cbDeviceList->currentIndex() ).toInt();
 		if ( CommonDialogs::question( QtYabause::translate( "Are you sure you want to delete '%1' ?" ).arg( it->text() ) ) )
 		{
-			BupDeleteSave( id, it->text().toAscii().constData() );
+			BupDeleteSave( id, it->text().toLatin1().constData() );
 			refreshSaveList();
 		}
 	}

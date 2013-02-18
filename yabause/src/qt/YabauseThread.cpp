@@ -102,7 +102,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 				vs->value("autostart/binary/address").toUInt());
 		}
 		else if (vs->value("autostart/load").toBool()) {
-			YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString().toAscii().constData(), vs->value("autostart/load/slot").toInt() );
+			YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString().toLatin1().constData(), vs->value("autostart/load/slot").toInt() );
 		}
 		vs->setValue("autostart", false);
 	}
@@ -196,7 +196,7 @@ void YabauseThread::reloadSettings()
 		mYabauseConf.regionid = 0;
 	else
 	{
-		switch ( r[0].toAscii() )
+		switch ( r[0].toLatin1() )
 		{
 			case 'J': mYabauseConf.regionid = 1; break;
 			case 'T': mYabauseConf.regionid = 2; break;
@@ -208,12 +208,12 @@ void YabauseThread::reloadSettings()
 			case 'L': mYabauseConf.regionid = 0xD; break;
 		}
 	}
-	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toAscii().constData() );
-	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toAscii().constData() );   
+	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
+	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );   
    showFPS = vs->value( "General/ShowFPS", false ).toBool();
-	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toAscii().constData() );
-	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toAscii().constData() );
-	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toAscii().constData() );
+	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
+	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
+	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
 	
 	emit requestSize( QSize( vs->value( "Video/Width", 0 ).toInt(), vs->value( "Video/Height", 0 ).toInt() ) );

@@ -394,7 +394,7 @@ void UIHexEditorWnd::keyPressSelect(QKeyEvent *event)
 
 void UIHexEditorWnd::keyPressEdit(QKeyEvent *event, u64 posAddr)
 {
-   int key = int(event->text()[0].toAscii());
+   int key = int(event->text()[0].toLatin1());
    if (textEdit)
    {
       if ((key>='0' && key<='9') || (key>='a' && key <= 'z') || (key>='A' && key <= 'Z'))
