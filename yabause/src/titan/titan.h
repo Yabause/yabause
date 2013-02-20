@@ -43,4 +43,6 @@ void TitanPutShadow(int priority, s32 x, s32 y);
 
 void TitanRender(u32 * dispbuffer, int blend_mode);
 
+void TitanWriteColor(u32 * dispbuffer, s32 x, s32 y, u32 color);
+
 #endif
