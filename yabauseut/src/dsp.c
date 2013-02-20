@@ -165,7 +165,7 @@ void test_mvi_imm_d()
    dspprog[9] = NOP();
    dspprog[0xEE] = NOP();
 
-   if (dsp_load(dspprog, 0, 255) != LAPETUS_ERR_OK)
+   if (dsp_load(dspprog, 0, 255) != IAPETUS_ERR_OK)
    {
       vdp_printf(&test_disp_font, 0 * 8, 20 * 8, 0xF, "dsp_load error");
       stage_status = STAGESTAT_BADDATA;
@@ -242,7 +242,7 @@ void test_dsp_timing()
 
    timer_setup(TIMER_HBLANK, &freq);
 
-   if (dsp_load(dspprog, 0, 255) != LAPETUS_ERR_OK)
+   if (dsp_load(dspprog, 0, 255) != IAPETUS_ERR_OK)
    {
       vdp_printf(&test_disp_font, 0 * 8, 20 * 8, 0xF, "dsp_load error");
       stage_status = STAGESTAT_BADDATA;
@@ -253,7 +253,7 @@ void test_dsp_timing()
    dsp_exec(0);
 
    // Wait about X number of seconds, etc.
-   while (((endtime = timer_counter()) - starttime) < (224 * 60)) {
+   while (((endtime = timer_counter()) - starttime) < freq) {
       if (!dsp_is_exec())
          vdp_printf(&test_disp_font, 0 * 8, 25 * 8, 0xF, "DSP stopped prematurely");
    }

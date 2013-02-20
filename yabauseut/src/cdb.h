@@ -20,10 +20,24 @@
 #ifndef CDBH
 #define CDBH
 
+typedef struct 
+{
+   int delay;
+   u8 play_status;
+   u8 play_status_mask;
+   u8 mpeg_audio_status;
+   u8 mpeg_audio_status_mask;
+   u8 mpeg_video_status;
+   u8 mpeg_video_status_mask;
+   BOOL v_counter_inc;
+} test_mpeg_status_struct;
+
 void cdb_test();
 void cd_cmd_test();
 void mpeg_cmd_test();
+void mpeg_play_test();
 void misc_cd_test();
+void cd_rw_test();
 
 void test_cmd_cd_status();
 void test_cmd_get_hw_info();
@@ -44,4 +58,9 @@ void test_cmd_get_filter_con();
 
 void test_cmd_set_sector_length();
 
+void test_mpegplay_init();
+void test_mpegplay_play();
+void test_mpegplay_pause();
+void test_mpegplay_unpause();
+void test_mpegplay_stop();
 #endif

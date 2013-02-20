@@ -23,5 +23,6 @@
 void all_test();
 void reset_system();
 void ar_menu();
+void cd_player();
 
 #endif

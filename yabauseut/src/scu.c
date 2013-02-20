@@ -136,7 +136,7 @@ void scu_int_test()
    register_test(&test_sprite_draw_end_interrupt, "Sprite Draw End Interrupt");
 //   register_test(&TestCDBlockInterrupt, "CD Block Interrupt");
    // If Netlink is connected, do a test on it too
-//   if (NetlinkInit() == LAPETUS_ERR_OK)
+//   if (NetlinkInit() == IAPETUS_ERR_OK)
 //      register_test(&TestNetlinkInterrupt, "Netlink Interrupt");
    do_tests("SCU Interrupt tests", 0, 0);
 }
@@ -285,7 +285,7 @@ void test_dsp_end_interrupt()
 
    dsp_prog[0] = ENDI();
 
-   if (dsp_load(dsp_prog, 0, 1) != LAPETUS_ERR_OK)
+   if (dsp_load(dsp_prog, 0, 1) != IAPETUS_ERR_OK)
    {
       stage_status = STAGESTAT_BADDATA;
       return;

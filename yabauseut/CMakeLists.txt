@@ -10,18 +10,27 @@ CMAKE_FORCE_C_COMPILER("C:/Program Files (x86)/KPIT Cummins/GNUSHv10.02-ELF/sh-e
 CMAKE_FORCE_CXX_COMPILER("C:/Program Files (x86)/KPIT Cummins/GNUSHv10.02-ELF/sh-elf/bin/sh-elf-g++.exe" GNU)
 SET(CMAKE_FIND_ROOT_PATH "C:/Program Files (x86)/KPIT Cummins/GNUSHv10.02-ELF/sh-elf/bin/" "C:/Program Files (x86)/KPIT Cummins/GNUSHv10.02-ELF/Other Utilities/")
 
-ExternalProject_Add(iapetus
-  GIT_REPOSITORY "https://github.com/cyberwarriorx/iapetus.git"
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  INSTALL_COMMAND ""
-)
+find_path(IAPETUS_INCLUDE_DIR 
+          NAMES iapetus.h
+          PATHS ${IAPETUS_ROOT_PATH}/include
+                $ENV{ProgramFiles}/iapetus/include )
+
+if (IAPETUS_INCLUDE_DIR STREQUAL "IAPETUS_INCLUDE_DIR-NOTFOUND")
+   ExternalProject_Add(iapetus
+      GIT_REPOSITORY "https://github.com/cyberwarriorx/iapetus.git"
+      LOG_DOWNLOAD 1
+      LOG_CONFIGURE 1
+      LOG_BUILD 1
+      INSTALL_COMMAND "" 
+   )
+
+   ExternalProject_Get_Property(iapetus source_dir)
+   set(IAPETUS_INCLUDE_DIR ${source_dir}/src)
+endif(IAPETUS_INCLUDE_DIR STREQUAL "IAPETUS_INCLUDE_DIR-NOTFOUND")
 
 PROJECT(YabauseUT)
 
-ExternalProject_Get_Property(iapetus source_dir)
-include_directories(${source_dir}/src)
+include_directories(${IAPETUS_INCLUDE_DIR})
 
 #CONFIGURE_FILE(config.h.cmake config.h)
 
@@ -41,9 +50,21 @@ include(CPack)
 
 set(CMAKE_CONFIGURATION_TYPES Release)
 
-ExternalProject_Get_Property(iapetus binary_dir)
-set(YabauseUT_LIBRARIES "${binary_dir}/src/${CMAKE_FIND_LIBRARY_PREFIXES}iapetus.a")
+find_library(IAPETUS_LIB
+             NAMES iapetus
+             PATHS ${IAPETUS_ROOT_PATH}/lib
+                   $ENV{ProgramFiles}/iapetus/lib)
+
+if (IAPETUS_LIB STREQUAL "IAPETUS_LIB-NOTFOUND")
+   ExternalProject_Get_Property(iapetus binary_dir)
+   #add_dependencies(${PROJECT_NAME} iapetus)
+   set(IAPETUS_LIB "${binary_dir}/src/${CMAKE_FIND_LIBRARY_PREFIXES}iapetus.a")
+endif(IAPETUS_LIB STREQUAL "IAPETUS_LIB-NOTFOUND")
+
+set(YabauseUT_LIBRARIES ${IAPETUS_LIB})
 
 add_subdirectory(src)
 
-add_dependencies(${PROJECT_NAME} iapetus)
+add_dependencies(${PROJECT_NAME} ${IAPETUS_LIB})
+
+

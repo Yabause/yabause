@@ -42,6 +42,7 @@ menu_item_struct main_menu[] = {
 { "Run all tests" , &all_test, },
 { "Reset System" , &reset_system, },
 { "Goto AR Menu" , &ar_menu, },
+{ "Goto CD Player" , &cd_player },
 { "\0", NULL }
 };
 
@@ -62,6 +63,11 @@ void ar_menu()
    void (*ar)() = (void (*)())0x02000100;
 
    ar();
+}
+
+void cd_player()
+{
+   bios_run_cd_player();
 }
 
 void yabauseut_init()
@@ -131,6 +137,7 @@ int main()
    // Display Main Menu
    for(;;)
    {
+      vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "Build Time: %s %s", __DATE__, __TIME__);
       choice = gui_do_menu(main_menu, &test_disp_font, 0, 0, "YabauseUT v0.1", MTYPE_CENTER, -1);
       gui_clear_scr(&test_disp_font);
    }
