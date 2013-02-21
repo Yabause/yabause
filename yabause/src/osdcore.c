@@ -376,9 +376,9 @@ void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int
             for(p = 0;p < 9;p++)
             {
                if (font[first_line + l][p] == '.')
-                  TitanWriteColor(buffer, (i * 8) + 20 + p, loffset + l + 20, 0xFF000000);
+                  TitanWriteColor(buffer, w, (i * 8) + 20 + p, loffset + l + 20, 0xFF000000);
                else if (font[first_line + l][p] == '#')
-                  TitanWriteColor(buffer, (i * 8) + 20 + p, loffset + l + 20, 0xFFFFFFFF);
+                  TitanWriteColor(buffer, w, (i * 8) + 20 + p, loffset + l + 20, 0xFFFFFFFF);
             }
          }
       }

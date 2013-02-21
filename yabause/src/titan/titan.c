@@ -288,16 +288,16 @@ void TitanRender(u32 * dispbuffer, int blend_mode)
 }
 
 #ifdef WORDS_BIGENDIAN
-void TitanWriteColor(u32 * dispbuffer, s32 x, s32 y, u32 color)
+void TitanWriteColor(u32 * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color)
 {
-   int pos = (y * tt_context.vdp2width) + x;
+   int pos = (y * bufwidth) + x;
    u32 * buffer = dispbuffer + pos;
    *buffer = ((color >> 24) & 0xFF) | ((color >> 8) & 0xFF00) | ((color & 0xFF00) << 8) | ((color & 0xFF) << 24);
 }
 #else
-void TitanWriteColor(u32 * dispbuffer, s32 x, s32 y, u32 color)
+void TitanWriteColor(u32 * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color)
 {
-   int pos = (y * tt_context.vdp2width) + x;
+   int pos = (y * bufwidth) + x;
    u32 * buffer = dispbuffer + pos;
    *buffer = color;
 }
