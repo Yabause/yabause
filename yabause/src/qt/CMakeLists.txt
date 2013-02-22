@@ -2,24 +2,45 @@ project( yabause-qt )
 
 yab_port_start()
 
-find_package(Qt4)
+option(YAB_USE_QT5 "Use Qt 5 if available." off)
 
-if (NOT QT4_FOUND)
-	message(STATUS "NO QT4_FOUND")
-	return()
-endif (NOT QT4_FOUND)
+if(YAB_USE_QT5) 
+	find_package(Qt5Widgets)
 
-set( QT_USE_QTCORE TRUE )
-set( QT_USE_QTGUI TRUE )
-if( YAB_WANT_OPENGL )
-	set( QT_USE_QTOPENGL TRUE )
-endif()
-if (WIN32)
-	set( QT_USE_QTMAIN TRUE )
-endif()
+	add_definitions(-DUSE_QT5=1)
 
-# dunno what it does exactly ... but seem required
-include( ${QT_USE_FILE} )
+	if( YAB_WANT_OPENGL )
+        	find_package(Qt5OpenGL)
+	endif()
+
+	include_directories(${Qt5Widgets_INCLUDE_DIRS})
+	add_definitions(${Qt5Widgets_DEFINITIONS}) 
+
+	if (WIN32)
+        	find_package(Qt5Core)
+	endif()
+else(YAB_USE_QT5) 
+	find_package(Qt4)
+
+	if (NOT QT4_FOUND)
+		message(STATUS "NO QT4_FOUND")
+		return()
+	endif (NOT QT4_FOUND)
+
+	set( QT_USE_QTCORE TRUE )
+	set( QT_USE_QTGUI TRUE )
+
+	# dunno what it does exactly ... but seem required
+	include( ${QT_USE_FILE} )
+
+	if( YAB_WANT_OPENGL )
+		set( QT_USE_QTOPENGL TRUE )
+	endif()
+
+	if (WIN32)
+		set( QT_USE_QTMAIN TRUE )
+	endif()
+endif(YAB_USE_QT5) 
 
 # qt resources file
 set( yabause_qt_RESOURCES resources/resources.qrc )
@@ -138,9 +159,15 @@ else()
 	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseSoftGL.cpp )
 endif()
 
-QT4_ADD_RESOURCES( yabause_qt_RCC_RESOURCES ${yabause_qt_RESOURCES} )
-QT4_WRAP_UI( yabause_qt_UI_FORMS ${yabause_qt_FORMS} )
-QT4_WRAP_CPP( yabause_qt_MOC_SOURCES ${yabause_qt_MOC_HEADERS} )
+if(YAB_USE_QT5) 
+	QT5_ADD_RESOURCES( yabause_qt_RCC_RESOURCES ${yabause_qt_RESOURCES} )
+	QT5_WRAP_UI( yabause_qt_UI_FORMS ${yabause_qt_FORMS} )
+	QT5_WRAP_CPP( yabause_qt_MOC_SOURCES ${yabause_qt_MOC_HEADERS} )
+else(YAB_USE_QT5) 
+	QT4_ADD_RESOURCES( yabause_qt_RCC_RESOURCES ${yabause_qt_RESOURCES} )
+	QT4_WRAP_UI( yabause_qt_UI_FORMS ${yabause_qt_FORMS} )
+	QT4_WRAP_CPP( yabause_qt_MOC_SOURCES ${yabause_qt_MOC_HEADERS} )
+endif(YAB_USE_QT5) 
 
 set( yabause_qt_SOURCES ${yabause_qt_SOURCES} resources/icons/yabause.icns )
 set_source_files_properties( resources/icons/yabause.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
@@ -155,6 +182,14 @@ add_executable( yabause-qt WIN32
 	${yabause_qt_UI_FORMS}
 	${yabause_qt_MOC_SOURCES} )
 
+if (YAB_USE_QT5)
+include_directories(
+	.
+	${CMAKE_CURRENT_BINARY_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/ui
+	${Qt5Widgets_INCLUDE_DIRS}
+	${Qt5OpenGL_INCLUDE_DIRS} )
+else(YAB_USE_QT5)
 include_directories(
 	.
 	${CMAKE_CURRENT_BINARY_DIR}
@@ -163,6 +198,7 @@ include_directories(
 	${QT_QTCORE_INCLUDE_DIR}
 	${QT_QTGUI_INCLUDE_DIR}
 	${QT_QTOPENGL_INCLUDE_DIR} )
+endif(YAB_USE_QT5)
 
 # APPLE // not necessary mac os x, but i don't care ;)
 if (APPLE)
@@ -178,7 +214,11 @@ target_link_libraries( yabause-qt yabause )
 target_link_libraries( yabause-qt ${YABAUSE_LIBRARIES} )
 target_link_libraries( yabause-qt ${PORT_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_windows_LIBRARIES} )
-target_link_libraries( yabause-qt ${QT_LIBRARIES} )
+if (YAB_USE_QT5)
+	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Network_LIBRARIES} )
+else(YAB_USE_QT5)
+	target_link_libraries( yabause-qt ${QT_LIBRARIES} )
+endif(YAB_USE_QT5)
 
 yab_port_success(yabause-qt)
 configure_file(yabause.desktop.in ${YAB_PORT_NAME}.desktop)
@@ -189,11 +229,18 @@ if (WIN32)
 		install(FILES ${GLUT_INCLUDE_DIR}/../freeglut.dll DESTINATION ".")
 	endif ()
 	if (SDL_FOUND)
-		install(FILES ${SDL_INCLUDE_DIR}/../lib/SDL.dll DESTINATION ".")
+                get_filename_component(SDL_BINARY_DIR ${SDL_LIBRARY} PATH)
+		install(FILES ${SDL_BINARY_DIR}/SDL.dll DESTINATION ".")
 	endif ()
-	install(FILES ${QT_BINARY_DIR}/QtCore4.dll DESTINATION ".")
-	install(FILES ${QT_BINARY_DIR}/QtGui4.dll DESTINATION ".")
-	install(FILES ${QT_BINARY_DIR}/QtOpenGL4.dll DESTINATION ".")
+	if(YAB_USE_QT5) 
+		install(FILES ${QT_BINARY_DIR}/Qt5Core.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/Qt5Gui.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/Qt5OpenGL.dll DESTINATION ".")
+	else()
+		install(FILES ${QT_BINARY_DIR}/QtCore4.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/QtGui4.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/QtOpenGL4.dll DESTINATION ".")
+	endif()
 
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../AUTHORS    DESTINATION "." RENAME AUTHORS.txt)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../ChangeLog  DESTINATION "." RENAME ChangeLog.txt)

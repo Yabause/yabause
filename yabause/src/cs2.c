@@ -1092,11 +1092,11 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x40:
-      CDLOG("cs2\t: Command: setFilterRange\n");
+      CDLOG("cs2\t: Command: setFilterRange %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SetFilterRange();
       break;
     case 0x42:
-      CDLOG("cs2\t: Command: setFilterSubheaderConditions\n");
+      CDLOG("cs2\t: Command: setFilterSubheaderConditions %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SetFilterSubheaderConditions();
       break;
     case 0x43:
@@ -1105,7 +1105,7 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x44:
-      CDLOG("cs2\t: Command: setFilterMode\n");
+      CDLOG("cs2\t: Command: setFilterMode %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SetFilterMode();
       break;
     case 0x45:
@@ -1114,7 +1114,7 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x46:
-      CDLOG("cs2\t: Command: setFilterConnection\n");
+      CDLOG("cs2\t: Command: setFilterConnection %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SetFilterConnection();
       break;
     case 0x48:
@@ -1205,6 +1205,7 @@ void Cs2Execute(void) {
     case 0x90:
       CDLOG("cs2\t: Command: mpegGetStatus\n");
       Cs2MpegGetStatus();
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x91:
       CDLOG("cs2\t: Command: mpegGetInterrupt\n");
@@ -1212,76 +1213,79 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x92:
-      CDLOG("cs2\t: Command: mpegSetInterruptMask\n");
+      CDLOG("cs2\t: Command: mpegSetInterruptMask %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2);
       Cs2MpegSetInterruptMask();
       break;
     case 0x93: 
-      CDLOG("cs2\t: Command: mpegInit\n");
+      CDLOG("cs2\t: Command: mpegInit %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2);
       Cs2MpegInit();
       break;
     case 0x94:
-      CDLOG("cs2\t: Command: mpegSetMode\n");
+      CDLOG("cs2\t: Command: mpegSetMode %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3);
       Cs2MpegSetMode();
       break;
     case 0x95:
-      CDLOG("cs2\t: Command: mpegPlay\n");
+      CDLOG("cs2\t: Command: mpegPlay %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR4);
       Cs2MpegPlay();
       break;
     case 0x96:
-      CDLOG("cs2\t: Command: mpegSetDecodingMethod\n");
+      CDLOG("cs2\t: Command: mpegSetDecodingMethod %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR4);
       Cs2MpegSetDecodingMethod();
       break;
     case 0x9A:      
-      CDLOG("cs2\t: Command: mpegSetConnection\n");
+      CDLOG("cs2\t: Command: mpegSetConnection %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2MpegSetConnection();
       break;
     case 0x9B:
       CDLOG("cs2\t: Command: mpegGetConnection\n");
       Cs2MpegGetConnection();
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x9D:
-      CDLOG("cs2\t: Command: mpegSetStream\n");
+      CDLOG("cs2\t: Command: mpegSetStream %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2MpegSetStream();
       break;
     case 0x9E:
       CDLOG("cs2\t: Command: mpegGetStream\n");
       Cs2MpegGetStream();
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0xA0:
-      CDLOG("cs2\t: Command: mpegDisplay\n");
+      CDLOG("cs2\t: Command: mpegDisplay %04x %04x %04x \n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2);
       Cs2MpegDisplay();
       break;
     case 0xA1:
-      CDLOG("cs2\t: Command: mpegSetWindow\n");
+      CDLOG("cs2\t: Command: mpegSetWindow %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2MpegSetWindow();
       break;
     case 0xA2:
-      CDLOG("cs2\t: Command: mpegSetBorderColor\n");
+      CDLOG("cs2\t: Command: mpegSetBorderColor %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2);
       Cs2MpegSetBorderColor();
       break;
     case 0xA3:
-      CDLOG("cs2\t: Command: mpegSetFade\n");
+      CDLOG("cs2\t: Command: mpegSetFade %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2);
       Cs2MpegSetFade();
       break;
     case 0xA4:
-      CDLOG("cs2\t: Command: mpegSetVideoEffects\n");
+      CDLOG("cs2\t: Command: mpegSetVideoEffects %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2MpegSetVideoEffects();
       break;
     case 0xAF:
-      CDLOG("cs2\t: Command: mpegSetLSI\n");
+      CDLOG("cs2\t: Command: mpegSetLSI %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2MpegSetLSI();
       break;
     case 0xE0:
-      CDLOG("cs2\t: Command: cmdE0 %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
-      Cs2CmdE0();
+      CDLOG("cs2\t: Command: authenticateDevice %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      Cs2AuthenticateDevice();
       break;
     case 0xE1:
-      CDLOG("cs2\t: Command: cmdE1 %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
-      Cs2CmdE1();
+      CDLOG("cs2\t: Command: isDeviceAuthenticated %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      Cs2IsDeviceAuthenticated();
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0xE2:
-      CDLOG("cs2\t: Command: cmdE2 %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
-      Cs2CmdE2();
+      CDLOG("cs2\t: Command: getMPEGRom %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      Cs2GetMPEGRom();
       break;
     default:
       CDLOG("cs2\t: Command %02x not implemented\n", instruction);
@@ -2648,7 +2652,7 @@ void Cs2MpegSetLSI(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2CmdE0(void) {
+void Cs2AuthenticateDevice(void) {
   int mpegauth;
 
   mpegauth = Cs2Area->reg.CR2 & 0xFF;
@@ -2699,7 +2703,7 @@ void Cs2CmdE0(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2CmdE1(void) {
+void Cs2IsDeviceAuthenticated(void) {
   Cs2Area->reg.CR1 = (Cs2Area->status << 8);
   if (Cs2Area->reg.CR2)
      Cs2Area->reg.CR2 = Cs2Area->mpgauth;
@@ -2712,7 +2716,7 @@ void Cs2CmdE1(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2CmdE2(void) {
+void Cs2GetMPEGRom(void) {
   u16 i;
   FILE * mpgfp;
   partition_struct * mpgpartition;

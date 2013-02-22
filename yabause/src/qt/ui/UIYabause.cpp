@@ -162,7 +162,10 @@ void UIYabause::keyReleaseEvent( QKeyEvent* e )
 { PerKeyUp( e->key() ); }
 
 void UIYabause::swapBuffers()
-{ mYabauseGL->swapBuffers(); }
+{ 
+   mYabauseGL->swapBuffers(); 
+   mYabauseGL->makeCurrent();
+}
 
 void UIYabause::appendLog( const char* s )
 {

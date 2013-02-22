@@ -23,6 +23,9 @@
 
 extern "C"
 {
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
 	#include "../yabause.h"
 	#include "../peripheral.h"
 	#include "../sh2core.h"
@@ -60,9 +63,6 @@ extern "C"
 	#include "../vdp2debug.h"
 
 	#include "PerQt.h"
-#ifdef Q_OS_WIN
-	#include <qt_windows.h>
-#endif
 }
 
 #include <QString>

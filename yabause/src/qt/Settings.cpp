@@ -33,10 +33,14 @@ QString getDataDirPath()
 {
 #if defined Q_OS_WIN
 	// Use some wizardry so we can get our data in AppData
-	QString oldApplicationName = QCoreApplication::applicationName();   
-	QCoreApplication::setApplicationName("yabause");
+   QString oldApplicationName = QCoreApplication::applicationName();   
+   QCoreApplication::setApplicationName("yabause");
+#ifdef USE_QT5
+   QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#else
 	QString path = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
-	QCoreApplication::setApplicationName(oldApplicationName);
+#endif
+   QCoreApplication::setApplicationName(oldApplicationName);
 	return path;
 #else
 	return QApplication::applicationDirPath();
@@ -83,7 +87,7 @@ QString getIniFile( const QString& s )
 }
 
 Settings::Settings( QObject* o )
-	: QSettings( QDir::convertSeparators( getIniFile( mProgramName ) ), QSettings::IniFormat, o )
+	: QSettings( QDir::toNativeSeparators( getIniFile( mProgramName ) ), QSettings::IniFormat, o )
 {
 	/*
 	This used to be "beginGroup( mProgramVersion );" so users would lose their

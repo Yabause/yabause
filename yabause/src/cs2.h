@@ -353,9 +353,9 @@ void Cs2MpegSetVideoEffects(void);         // 0xA4
 // MPEG Write Sector                       // 0xAA
 // MPEG Get LSI                            // 0xAE
 void Cs2MpegSetLSI(void);                  // 0xAF
-void Cs2CmdE0(void);                       // 0xE0
-void Cs2CmdE1(void);                       // 0xE1
-void Cs2CmdE2(void);                       // 0xE2
+void Cs2AuthenticateDevice(void);          // 0xE0
+void Cs2IsDeviceAuthenticated(void);       // 0xE1
+void Cs2GetMPEGRom(void);                  // 0xE2
 
 u8 Cs2FADToTrack(u32 val);
 u32 Cs2TrackToFAD(u16 trackandindex);
