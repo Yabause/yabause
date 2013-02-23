@@ -29,17 +29,15 @@ else(YAB_USE_QT5)
 
 	set( QT_USE_QTCORE TRUE )
 	set( QT_USE_QTGUI TRUE )
-
-	# dunno what it does exactly ... but seem required
-	include( ${QT_USE_FILE} )
-
 	if( YAB_WANT_OPENGL )
 		set( QT_USE_QTOPENGL TRUE )
 	endif()
-
 	if (WIN32)
 		set( QT_USE_QTMAIN TRUE )
 	endif()
+
+	# dunno what it does exactly ... but seem required
+	include( ${QT_USE_FILE} )
 endif(YAB_USE_QT5) 
 
 # qt resources file
