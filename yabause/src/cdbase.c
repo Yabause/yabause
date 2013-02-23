@@ -406,7 +406,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          {
             // Update toc entry
             trk[track_num-1].fad_start = (MSF_TO_FAD(min, sec, frame) + pregap + 150);
-            trk[track_num-1].file_offset = pregap;
+            trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
          }
       }
       else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
@@ -936,7 +936,7 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
       return 0;
    }
 
-   fseek(track->fp, track->file_offset + (FAD-150) * track->sector_size, SEEK_SET);
+   fseek(track->fp, track->file_offset + (FAD-track->fad_start) * track->sector_size, SEEK_SET);
    if (track->sector_size == 2448)
    {
       if (!track->interleaved_sub)
