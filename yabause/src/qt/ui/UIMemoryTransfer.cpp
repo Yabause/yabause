@@ -60,7 +60,7 @@ bool UIMemoryTransfer::areSettingsValid()
       if (leEndAddress->text().length() == 0)
          return false;
 
-      u32 endAddress = leStartAddress->text().toUInt(&result, 16);
+      u32 endAddress = leEndAddress->text().toUInt(&result, 16);
       if (!result)
          return false;
 
@@ -121,7 +121,7 @@ void UIMemoryTransfer::accept()
       return;
    }
 
-   mYabauseThread->pauseEmulation( false, true );
+   mYabauseThread->pauseEmulation( false, false );
 
    if (rbDownload->isChecked())
    {
