@@ -102,13 +102,16 @@ void UIDisasm::mouseDoubleClickEvent( QMouseEvent * event )
       int line = posy / fontHeight;
 
       int offset=0;
+      int scroll_pos=verticalScrollBar()->value();
+      int currentAddress=scroll_pos/instructionSize*instructionSize;
       for (int i = 0; i != line; i++)
       {
          char text[256];
-         offset += disassembleFunction(address, text);
+         offset += disassembleFunction(currentAddress, text);
       }
 
-      emit toggleCodeBreakpoint(address+offset);
+
+      emit toggleCodeBreakpoint(currentAddress+offset);
    }
 }
 
