@@ -483,7 +483,10 @@ void UIYabause::on_aFileQuit_triggered()
 void UIYabause::on_aEmulationRun_triggered()
 {
 	if ( mYabauseThread->emulationPaused() )
+   {
 		mYabauseThread->pauseEmulation( false, false );
+      refreshStatesActions();
+   }
 }
 
 void UIYabause::on_aEmulationPause_triggered()

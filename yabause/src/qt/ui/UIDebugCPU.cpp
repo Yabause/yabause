@@ -19,6 +19,7 @@
 
 #include "UIDebugCPU.h"
 #include "UIHexInput.h"
+#include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "../CommonDialogs.h"
 
@@ -33,7 +34,6 @@ UIDebugCPU::UIDebugCPU( YabauseThread *mYabauseThread, QWidget* p )
 	// Disable unimplemented functions
    gbBackTrace->setVisible( false );
 	pbStepOver->setVisible( false );
-	pbMemoryEditor->setVisible( false );
    pbReserved1->setVisible( false );
    pbReserved2->setVisible( false );
    pbReserved3->setVisible( false );
@@ -52,6 +52,8 @@ UIDebugCPU::UIDebugCPU( YabauseThread *mYabauseThread, QWidget* p )
    leMemoryBreakpoint->setText("");
       
    connect( lwDisassembledCode, SIGNAL( toggleCodeBreakpoint(u32) ), this, SLOT( toggleCodeBreakpoint(u32) ) );
+
+   this->mYabauseThread = mYabauseThread;
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
@@ -233,7 +235,7 @@ void UIDebugCPU::on_pbMemoryTransfer_clicked()
 
 void UIDebugCPU::on_pbMemoryEditor_clicked()
 {	
-   //UIMemoryEditor( this ).exec();
+   UIMemoryEditor( mYabauseThread, this ).exec();
 }
 
 void UIDebugCPU::on_pbReserved1_clicked()
