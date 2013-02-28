@@ -408,7 +408,7 @@ void UIHexEditorWnd::keyPressEdit(QKeyEvent *event, u64 posAddr)
          }
 
          // Patch byte
-         overwrite((u32)posAddr, (u8)key);
+         overwrite((u32)cursorAddr >> 1, (u8)key);
          setCursorPos(cursorAddr + 2);
          resetSelection(cursorAddr);
       }
@@ -426,7 +426,7 @@ void UIHexEditorWnd::keyPressEdit(QKeyEvent *event, u64 posAddr)
          }
 
          // Patch byte
-         overwrite((s64)posAddr, (char)key);
+         overwrite((s64)cursorAddr, (char)key);
          setCursorPos(cursorAddr + 1);
          resetSelection(cursorAddr);
       }
@@ -905,10 +905,10 @@ s64 UIHexEditorWnd::cursorPos(QPoint pos, bool toggleTextEdit)
       if (toggleTextEdit)
          textEdit = false;
    }
-   else if ((pos.x() >= posText) && (pos.x() < (posText + (bytesPerLine+1) * fontWidth)))
+   else if ((pos.x() >= posText) && (pos.x() < (posText + (bytesPerLine+1) * fontWidth)) && pos.y() >= yPosEdit)
    {
       s64 x = (pos.x() - posText) / fontWidth * 2;
-      s64 y = (s64)(((pos.y() - 3) / fontHeight) + (s64)verticalScrollBar()->value()) * 2 * (s64)bytesPerLine;
+      s64 y = (s64)(((pos.y() - yPosEdit - 3) / fontHeight) + (s64)verticalScrollBar()->value()) * 2 * (s64)bytesPerLine;
       result = x + y;
       if (toggleTextEdit)
          textEdit = true;
