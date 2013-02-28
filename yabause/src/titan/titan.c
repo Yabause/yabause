@@ -199,6 +199,25 @@ void TitanGetResolution(int * width, int * height)
    *height = tt_context.vdp2height;
 }
 
+void TitanSetBlendingMode(int blend_mode)
+{
+   if (blend_mode == TITAN_BLEND_BOTTOM)
+   {
+      tt_context.blend = TitanBlendPixelsBottom;
+      tt_context.trans = TitanTransAlpha;
+   }
+   else if (blend_mode == TITAN_BLEND_ADD)
+   {
+      tt_context.blend = TitanBlendPixelsAdd;
+      tt_context.trans = TitanTransBit;
+   }
+   else
+   {
+      tt_context.blend = TitanBlendPixelsTop;
+      tt_context.trans = TitanTransAlpha;
+   }
+}
+
 void TitanPutBackHLine(s32 y, u32 color)
 {
    u32 * buffer = tt_context.vdp2framebuffer[0] + (y * tt_context.vdp2width);
@@ -227,6 +246,8 @@ void TitanPutPixel(int priority, s32 x, s32 y, u32 color, int linescreen)
       u32 * buffer = tt_context.vdp2framebuffer[priority] + pos;
       if (linescreen)
          color = TitanBlendPixelsTop(color, tt_context.linescreen[linescreen][y]);
+      if (tt_context.trans(color) && *buffer)
+         color = tt_context.blend(color, *buffer);
       *buffer = color;
    }
 }
@@ -255,26 +276,10 @@ void TitanPutShadow(int priority, s32 x, s32 y)
    }
 }
 
-void TitanRender(u32 * dispbuffer, int blend_mode)
+void TitanRender(u32 * dispbuffer)
 {
    u32 dot;
    int i, p;
-
-   if (blend_mode == TITAN_BLEND_BOTTOM)
-   {
-      tt_context.blend = TitanBlendPixelsBottom;
-      tt_context.trans = TitanTransAlpha;
-   }
-   else if (blend_mode == TITAN_BLEND_ADD)
-   {
-      tt_context.blend = TitanBlendPixelsAdd;
-      tt_context.trans = TitanTransBit;
-   }
-   else
-   {
-      tt_context.blend = TitanBlendPixelsTop;
-      tt_context.trans = TitanTransAlpha;
-   }
 
    for (i = 0; i < (tt_context.vdp2width * tt_context.vdp2height); i++)
    {

@@ -1664,7 +1664,7 @@ u32 *Vdp2DebugTexture(u32 screen, int * w, int * h)
 
    TitanGetResolution(w, h);
 
-   TitanRender(bitmap, Vdp2Regs->CCCTL & 0x200 ? TITAN_BLEND_BOTTOM : TITAN_BLEND_TOP);
+   TitanRender(bitmap);
 
    return bitmap;
 }

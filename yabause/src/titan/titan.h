@@ -32,6 +32,8 @@ int TitanDeInit();
 void TitanSetResolution(int width, int height);
 void TitanGetResolution(int * width, int * height);
 
+void TitanSetBlendingMode(int blend_mode);
+
 void TitanPutBackHLine(s32 y, u32 color);
 
 void TitanPutLineHLine(int linescreen, s32 y, u32 color);
@@ -41,7 +43,7 @@ void TitanPutHLine(int priority, s32 x, s32 y, s32 width, u32 color);
 
 void TitanPutShadow(int priority, s32 x, s32 y);
 
-void TitanRender(u32 * dispbuffer, int blend_mode);
+void TitanRender(u32 * dispbuffer);
 
 void TitanWriteColor(u32 * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color);
 
