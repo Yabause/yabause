@@ -167,6 +167,13 @@ void UIDebugCPU::on_pbAddMemoryBreakpoint_clicked()
 
 void UIDebugCPU::on_pbDelMemoryBreakpoint_clicked()
 {
+   QList<QListWidgetItem *> list=lwMemoryBreakpoints->selectedItems ();
+   for (int i = 0; i < list.count(); i++)
+   {
+      QListWidgetItem *item=list.value(i);
+      u32 addr = item->text().toUInt(0, 16);
+      delMemoryBreakpoint(addr);
+   }
    qDeleteAll(lwMemoryBreakpoints->selectedItems ());
 	pbDelMemoryBreakpoint->setEnabled(lwMemoryBreakpoints->count() > 0);
 }
