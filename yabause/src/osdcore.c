@@ -20,6 +20,7 @@
 #include "osdcore.h"
 #include "vdp1.h"
 #include "font.h"
+#include "titan/titan.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
