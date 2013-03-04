@@ -69,3 +69,7 @@ void YabauseGL::paintEvent( QPaintEvent * event )
 	QPainter p(this);
 	p.drawImage(this->rect(), image);
 }
+
+void YabauseGL::makeCurrent()
+{
+}

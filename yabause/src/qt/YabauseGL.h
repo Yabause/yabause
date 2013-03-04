@@ -42,6 +42,7 @@ public:
 	virtual void swapBuffers();
 	QImage grabFrameBuffer(bool withAlpha = false);
 	virtual void paintEvent( QPaintEvent * event );
+	void makeCurrent();
 #endif
 
 protected:
