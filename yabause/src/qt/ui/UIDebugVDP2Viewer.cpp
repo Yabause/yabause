@@ -55,7 +55,13 @@ void UIDebugVDP2Viewer::on_cbScreen_currentIndexChanged ( int index )
 
    // Redraw screen
    QGraphicsScene *scene = gvScreen->scene();
+#ifdef USE_RGB_555
+   QImage img((uchar *)vdp2texture, width, height, QImage::Format_RGB555);
+#elif USE_RGB_565
+   QImage img((uchar *)vdp2texture, width, height, QImage::Format_RGB16);
+#else
    QImage img((uchar *)vdp2texture, width, height, QImage::Format_ARGB32);
+#endif
    QPixmap pixmap = QPixmap::fromImage(img.rgbSwapped());
    scene->clear();
    scene->addPixmap(pixmap);

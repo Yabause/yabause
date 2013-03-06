@@ -64,7 +64,13 @@ void YabauseGL::paintEvent( QPaintEvent * event )
 
 	VIDCore->GetGlSize( &buf_width, &buf_height );
 
+#ifdef USE_RGB_555
+	QImage image = QImage((uchar *) dispbuffer, buf_width, buf_height, QImage::Format_RGB555);
+#elif USE_RGB_565
+	QImage image = QImage((uchar *) dispbuffer, buf_width, buf_height, QImage::Format_RGB16);
+#else
 	QImage image = QImage((uchar *) dispbuffer, buf_width, buf_height, QImage::Format_RGB32);
+#endif
 	image = image.rgbSwapped();
 	QPainter p(this);
 	p.drawImage(this->rect(), image);

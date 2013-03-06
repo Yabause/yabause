@@ -43,8 +43,8 @@ void TitanPutHLine(int priority, s32 x, s32 y, s32 width, u32 color);
 
 void TitanPutShadow(int priority, s32 x, s32 y);
 
-void TitanRender(u32 * dispbuffer);
+void TitanRender(pixel_t * dispbuffer);
 
-void TitanWriteColor(u32 * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color);
+void TitanWriteColor(pixel_t * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color);
 
 #endif

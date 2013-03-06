@@ -42,7 +42,13 @@ static struct TitanContext {
 };
 
 #if defined WORDS_BIGENDIAN
+#ifdef USE_RGB_555
+static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 16) & 0xF800) | ((pixel >> 13) & 0x7C0) | ((pixel >> 10) & 0x3E)); }
+#elif USE_RGB_565
+static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 16) & 0xF800) | ((pixel >> 13) & 0x7E0) | ((pixel >> 11) & 0x1F)); }
+#else
 static INLINE u32 TitanFixAlpha(u32 pixel) { return ((((pixel & 0x3F) << 2) + 0x03) | (pixel & 0xFFFFFF00)); }
+#endif
 
 static INLINE u8 TitanGetAlpha(u32 pixel) { return pixel & 0x3F; }
 static INLINE u8 TitanGetRed(u32 pixel) { return (pixel >> 8) & 0xFF; }
@@ -50,7 +56,13 @@ static INLINE u8 TitanGetGreen(u32 pixel) { return (pixel >> 16) & 0xFF; }
 static INLINE u8 TitanGetBlue(u32 pixel) { return (pixel >> 24) & 0xFF; }
 static INLINE u32 TitanCreatePixel(u8 alpha, u8 red, u8 green, u8 blue) { return alpha | (red << 8) | (green << 16) | (blue << 24); }
 #else
+#ifdef USE_RGB_555
+static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 3) & 0x1F) | ((pixel >> 6) & 0x3E0) | ((pixel >> 9) & 0x7C00)); }
+#elif USE_RGB_565
+static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 3) & 0x1F) | ((pixel >> 5) & 0x7E0) | ((pixel >> 8) & 0xF800)); }
+#else
 static INLINE u32 TitanFixAlpha(u32 pixel) { return ((((pixel & 0x3F000000) << 2) + 0x03000000) | (pixel & 0x00FFFFFF)); }
+#endif
 
 static INLINE u8 TitanGetAlpha(u32 pixel) { return (pixel >> 24) & 0x3F; }
 static INLINE u8 TitanGetRed(u32 pixel) { return (pixel >> 16) & 0xFF; }
@@ -276,7 +288,7 @@ void TitanPutShadow(int priority, s32 x, s32 y)
    }
 }
 
-void TitanRender(u32 * dispbuffer)
+void TitanRender(pixel_t * dispbuffer)
 {
    u32 dot;
    int i, p;
@@ -293,17 +305,17 @@ void TitanRender(u32 * dispbuffer)
 }
 
 #ifdef WORDS_BIGENDIAN
-void TitanWriteColor(u32 * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color)
+void TitanWriteColor(pixel_t * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color)
 {
    int pos = (y * bufwidth) + x;
-   u32 * buffer = dispbuffer + pos;
+   pixel_t * buffer = dispbuffer + pos;
    *buffer = ((color >> 24) & 0xFF) | ((color >> 8) & 0xFF00) | ((color & 0xFF00) << 8) | ((color & 0xFF) << 24);
 }
 #else
-void TitanWriteColor(u32 * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color)
+void TitanWriteColor(pixel_t * dispbuffer, s32 bufwidth, s32 x, s32 y, u32 color)
 {
    int pos = (y * bufwidth) + x;
-   u32 * buffer = dispbuffer + pos;
+   pixel_t * buffer = dispbuffer + pos;
    *buffer = color;
 }
 #endif

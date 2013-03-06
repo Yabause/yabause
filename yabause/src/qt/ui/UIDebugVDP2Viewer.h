@@ -29,7 +29,7 @@ public:
 	UIDebugVDP2Viewer( QWidget* parent = 0 );
 
 protected:
-   u32 *vdp2texture;
+   pixel_t *vdp2texture;
    int width, height;
 protected slots:
    void on_cbScreen_currentIndexChanged ( int index );

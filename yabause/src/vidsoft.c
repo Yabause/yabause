@@ -137,7 +137,7 @@ VIDSoftOnScreenDebugMessage,
 VIDSoftGetGlSize,
 };
 
-u32 *dispbuffer=NULL;
+pixel_t *dispbuffer=NULL;
 u8 *vdp1framebuffer[2]= { NULL, NULL };
 u8 *vdp1frontframebuffer;
 u8 *vdp1backframebuffer;
@@ -1698,7 +1698,7 @@ int VIDSoftInit(void)
    if (TitanInit() == -1)
       return -1;
 
-   if ((dispbuffer = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
+   if ((dispbuffer = (pixel_t *)calloc(sizeof(pixel_t), 704 * 512)) == NULL)
       return -1;
 
    // Initialize VDP1 framebuffer 1

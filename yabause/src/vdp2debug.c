@@ -1652,14 +1652,14 @@ static void ClearTextureToColor(u32 *texture, u32 color, int w, int h)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 *Vdp2DebugTexture(u32 screen, int * w, int * h)
+pixel_t *Vdp2DebugTexture(u32 screen, int * w, int * h)
 {
-   u32 * bitmap;
+   pixel_t * bitmap;
 
    TitanInit();
    VIDSoftVdp2DrawScreen(screen);
 
-   if ((bitmap = (u32 *)calloc(sizeof(u32), 704 * 512)) == NULL)
+   if ((bitmap = (pixel_t *)calloc(sizeof(pixel_t), 704 * 512)) == NULL)
       return NULL;
 
    TitanGetResolution(w, h);

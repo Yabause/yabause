@@ -53,7 +53,7 @@ typedef struct {
 	void (*DeInit)(void);
 	void (*Reset)(void);
 
-    void (*DisplayMessage)(OSDMessage_struct * message, u32 * buffer, int w, int h);
+    void (*DisplayMessage)(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
     int (*UseBuffer)(void);
 } OSD_struct;
 
@@ -61,7 +61,7 @@ int OSDInit(int coreid);
 int OSDChangeCore(int coreid);
 
 void OSDPushMessage(int msgtype, int ttl, const char * message, ...);
-int  OSDDisplayMessages(u32 * buffer, int w, int h);
+int  OSDDisplayMessages(pixel_t * buffer, int w, int h);
 void OSDToggle(int what);
 int  OSDIsVisible(int what);
 void OSDSetVisible(int what, int visible);

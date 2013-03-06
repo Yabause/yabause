@@ -121,7 +121,7 @@ void OSDPushMessage(int msgtype, int ttl, const char * format, ...)
    osdmessages[msgtype].timeleft = ttl;
 }
 
-int OSDDisplayMessages(u32 * buffer, int w, int h)
+int OSDDisplayMessages(pixel_t * buffer, int w, int h)
 {
    int i = 0;
    int somethingnew = 0;
@@ -195,7 +195,7 @@ void DisplayMessage(const char* str)
 static int OSDDummyInit(void);
 static void OSDDummyDeInit(void);
 static void OSDDummyReset(void);
-static void OSDDummyDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h);
+static void OSDDummyDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
 static int OSDDummyUseBuffer(void);
 
 OSD_struct OSDDummy = {
@@ -221,7 +221,7 @@ void OSDDummyReset(void)
 {
 }
 
-void OSDDummyDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h)
+void OSDDummyDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h)
 {
 }
 
@@ -240,7 +240,7 @@ int OSDDummyUseBuffer(void)
 static int OSDGlutInit(void);
 static void OSDGlutDeInit(void);
 static void OSDGlutReset(void);
-static void OSDGlutDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h);
+static void OSDGlutDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
 static int OSDGlutUseBuffer(void);
 
 OSD_struct OSDGlut = {
@@ -277,7 +277,7 @@ void OSDGlutReset(void)
 {
 }
 
-void OSDGlutDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h)
+void OSDGlutDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h)
 {
    int LeftX=9;
    int Width=500;
@@ -322,7 +322,7 @@ int OSDGlutUseBuffer(void)
 static int OSDSoftInit(void);
 static void OSDSoftDeInit(void);
 static void OSDSoftReset(void);
-static void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h);
+static void OSDSoftDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
 static int OSDSoftUseBuffer(void);
 
 OSD_struct OSDSoft = {
@@ -348,10 +348,9 @@ void OSDSoftReset(void)
 {
 }
 
-void OSDSoftDisplayMessage(OSDMessage_struct * message, u32 * buffer, int w, int h)
+void OSDSoftDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h)
 {
    int i;
-   u32 * dot;
    char * c;
    int loffset = 0;
 

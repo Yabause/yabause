@@ -94,9 +94,17 @@ if (STDINT_H_FOUND)
 	add_definitions(-DHAVE_STDINT_H=1)
 endif()
 
+# 16BPP
+set(YAB_RGB "" CACHE STRING "Bit configuration of pixels in the display buffer.")
+if (YAB_RGB STREQUAL "555")
+    add_definitions(-DUSE_16BPP=1 -DUSE_RGB_555=1)
+elseif (YAB_RGB STREQUAL "565")
+    add_definitions(-DUSE_16BPP=1 -DUSE_RGB_565=1)
+endif ()
+
 # OpenGL
 option(YAB_WANT_OPENGL "use OpenGL for video output (most ports require it)" ON)
-if (YAB_WANT_OPENGL)
+if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 	include(FindOpenGL)
 	if (OPENGL_FOUND)
 		add_definitions(-DHAVE_LIBGL=1)
@@ -116,7 +124,7 @@ if (YAB_WANT_OPENGL)
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
 		endif()
 	endif(OPENGL_FOUND)
-endif (YAB_WANT_OPENGL)
+endif ()
 
 # SDL
 option(YAB_WANT_SDL "use SDL cores if available" ON)
