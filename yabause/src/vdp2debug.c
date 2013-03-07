@@ -195,13 +195,13 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
          AddString(outstring, "Vertical end = %d\r\n", vend);
       }
 
-      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x4) ? "outside" : "inside");
+      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x4) ? "inside" : "outside");
    }
 
    if (wctl & 0x20)
    {
       AddString(outstring, "Sprite Window Enabled:\r\n");
-      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x10) ? "outside" : "inside");
+      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x10) ? "inside" : "outside");
    }
 
    if (wctl & 0x2A)
