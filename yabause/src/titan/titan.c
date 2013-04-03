@@ -216,7 +216,7 @@ void TitanSetBlendingMode(int blend_mode)
    if (blend_mode == TITAN_BLEND_BOTTOM)
    {
       tt_context.blend = TitanBlendPixelsBottom;
-      tt_context.trans = TitanTransAlpha;
+      tt_context.trans = TitanTransBit;
    }
    else if (blend_mode == TITAN_BLEND_ADD)
    {
