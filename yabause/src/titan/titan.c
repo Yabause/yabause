@@ -151,6 +151,11 @@ static u32 TitanDigPixel(int priority, int pos)
       u32 bottom = TitanDigPixel(priority, pos);
       pixel = tt_context.blend(pixel, bottom);
    }
+   else while (priority > 0)
+   {
+      tt_context.vdp2framebuffer[priority][pos] = 0;
+      priority--;
+   }
    return pixel;
 }
 
