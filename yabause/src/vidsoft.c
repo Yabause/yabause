@@ -1916,7 +1916,7 @@ static int getpixel(int linenumber, int currentlineindex) {
 	colorbank = cmd.CMDCOLR;
 	colorlut = (u32)colorbank << 3;
 	SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
-	endcodesEnabled = (( cmd.CMDPMOD & 0x1080) == 0 )?1:0;
+	endcodesEnabled = (( cmd.CMDPMOD & 0x80) == 0 )?1:0;
 	flip = (cmd.CMDCTRL & 0x30) >> 4;
 
 	//4 polygon, 5 polyline or 6 line
