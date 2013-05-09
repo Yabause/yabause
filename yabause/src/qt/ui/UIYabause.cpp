@@ -171,8 +171,9 @@ void UIYabause::appendLog( const char* s )
 {
 	teLog->moveCursor( QTextCursor::End );
 	teLog->append( s );
-	
-	if ( !mLogDock->isVisible() ) {
+
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	if (( !mLogDock->isVisible( )) && ( vs->value( "View/LogWindow" ).toInt() == 1 )) {
 		mLogDock->setVisible( true );
 	}
 }

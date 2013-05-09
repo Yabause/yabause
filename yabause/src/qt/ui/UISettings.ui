@@ -562,7 +562,7 @@
        <string>View</string>
       </attribute>
       <layout class="QGridLayout">
-       <item row="4" column="0">
+       <item row="6" column="0">
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -661,6 +661,39 @@
          </attribute>
         </widget>
        </item>
+       <item row="4" column="0" colspan="3">
+        <widget class="QLabel">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Show log window</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QRadioButton" name="rbLogWindowNever">
+         <property name="text">
+          <string>Never</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string>bgShowLogWindow</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QRadioButton" name="rbLogWindowMessage">
+         <property name="text">
+          <string>On message</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string>bgShowLogWindow</string>
+         </attribute>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -723,5 +756,6 @@
  <buttongroups>
   <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowToolbar"/>
+  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>
