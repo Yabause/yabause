@@ -542,6 +542,8 @@ void UIYabause::on_aToolsTransfer_triggered()
 
 void UIYabause::on_aViewFPS_triggered( bool toggled )
 {
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	vs->setValue( "General/ShowFPS", toggled );
 	SetOSDToggle(toggled ? 1 : 0);
 }
 
