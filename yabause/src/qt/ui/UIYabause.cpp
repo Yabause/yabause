@@ -124,6 +124,9 @@ UIYabause::UIYabause( QWidget* parent )
 	for(int i = 0;i < actionList.size();i++) {
 		addAction(actionList.at(i));
 	}
+
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	restoreGeometry( vs->value("General/Geometry" ).toByteArray() );
 }
 
 void UIYabause::showEvent( QShowEvent* e )
@@ -152,6 +155,11 @@ void UIYabause::closeEvent( QCloseEvent* e )
 {
 	aEmulationPause->trigger();
 	LogStop();
+
+	Settings* vs = QtYabause::settings();
+	vs->setValue( "General/Geometry", saveGeometry() );
+	vs->sync();
+
 	QMainWindow::closeEvent( e );
 }
 
