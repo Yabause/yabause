@@ -52,6 +52,12 @@ QString getIniFile( const QString& s )
 #if defined Q_OS_MAC
 	return QString( "%1/../%2.ini" ).arg( QApplication::applicationDirPath() ).arg( s );
 #elif defined Q_OS_WIN
+	/* We used to store the ini file in the application directory, before moving to the
+	correct location, but some users like it better the old way... so if we find a .ini
+	file in the application directory, we're using it */
+	QString oldinifile = QString( "%1/%2.ini" ).arg( QApplication::applicationDirPath() ).arg( s );
+	if ( QFile::exists( oldinifile )) return oldinifile;
+
 	return QString( "%1/%2.ini" ).arg( getDataDirPath() ).arg(s);
 #else
 	/*
