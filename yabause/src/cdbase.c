@@ -63,6 +63,8 @@ static FILE * _wfopen(const wchar_t *wpath, const wchar_t *wmode)
 
    free(path);
    free(mode);
+
+   return fd;
 }
 #endif
 
