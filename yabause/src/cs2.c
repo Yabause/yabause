@@ -1850,7 +1850,13 @@ void Cs2ResetSelector(void) {
      }
 
      if (Cs2Area->blockfreespace > 0) Cs2Area->isbufferfull = 0;
-     if (Cs2Area->blockfreespace == 200) Cs2Area->isonesectorstored = 0;
+     if (Cs2Area->blockfreespace == 200) 
+     {
+        Cs2Area->isonesectorstored = 0;
+        Cs2Area->datatranstype = -1;
+     }
+     else if (Cs2Area->datatranspartitionnum == rsbufno)
+        Cs2Area->datatranstype = -1;
 
      doCDReport(Cs2Area->status);
      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
@@ -1920,6 +1926,7 @@ void Cs2ResetSelector(void) {
      }
 
      Cs2Area->isonesectorstored = 0;
+     Cs2Area->datatranstype = -1;
   }
 
   doCDReport(Cs2Area->status);
