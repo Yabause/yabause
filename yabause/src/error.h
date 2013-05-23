@@ -36,4 +36,5 @@
 #define YAB_ERR_OTHER                   10
 
 void YabSetError(int type, const void *extra);
+void YabErrorMsg(const char * format, ...);
 #endif

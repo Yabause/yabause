@@ -25,6 +25,7 @@
 #include "ygl.h"
 #include "yui.h"
 #include "vidshared.h"
+#include "error.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -740,7 +741,7 @@ int YglInit(int width, int height, unsigned int depth) {
    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
    if( status != GL_FRAMEBUFFER_COMPLETE )
    {
-      printf("YglInit: Framebuffer status = %08X\n", status );
+      YabErrorMsg("YglInit: Framebuffer status = %08X", status );
       return -1;
    }
    
