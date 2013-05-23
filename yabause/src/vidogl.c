@@ -113,7 +113,6 @@ VIDOGLVdp2SetPriorityNBG1,
 VIDOGLVdp2SetPriorityNBG2,
 VIDOGLVdp2SetPriorityNBG3,
 VIDOGLVdp2SetPriorityRBG0,
-YglOnScreenDebugMessage,
 YglGetGlSize
 };
 

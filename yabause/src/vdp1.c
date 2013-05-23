@@ -1332,7 +1332,6 @@ void FASTCALL VIDDummyVdp2SetPriorityNBG1(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityNBG2(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityNBG3(int priority);
 void FASTCALL VIDDummyVdp2SetPriorityRBG0(int priority);
-void VIDDummyOnScreenDebugMessage(char * string, ...);
 void VIDDummyGetGlSize(int *width, int *height);
 
 
@@ -1365,7 +1364,6 @@ VIDDummyVdp2SetPriorityNBG1,
 VIDDummyVdp2SetPriorityNBG2,
 VIDDummyVdp2SetPriorityNBG3,
 VIDDummyVdp2SetPriorityRBG0,
-VIDDummyOnScreenDebugMessage,
 VIDDummyGetGlSize
 };
 
@@ -1526,12 +1524,6 @@ void FASTCALL VIDDummyVdp2SetPriorityNBG3(UNUSED int priority)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL VIDDummyVdp2SetPriorityRBG0(UNUSED int priority)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyOnScreenDebugMessage(UNUSED char * string, ...)
 {
 }
 

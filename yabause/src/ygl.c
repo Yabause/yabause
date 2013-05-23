@@ -748,7 +748,6 @@ int YglInit(int width, int height, unsigned int depth) {
    glBindFramebuffer(GL_FRAMEBUFFER, 0 );   
    
    _Ygl->st = 0;
-   _Ygl->msglength = 0;
 
    // This is probably wrong, but it'll have to do for now
    if ((cachelist = (cache_struct *)malloc(0x100000 / 8 * sizeof(cache_struct))) == NULL)
@@ -1773,7 +1772,6 @@ void YglReset(void) {
       level->prg[j].currentQuad = 0;
      }
    }
-   _Ygl->msglength = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1790,17 +1788,6 @@ void YglChangeResolution(int w, int h) {
    glOrtho(0, w, h, 0, 1, 0);
    _Ygl->rwidth = w;
    _Ygl->rheight = h;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void YglOnScreenDebugMessage(char *string, ...) {
-   va_list arglist;
-
-   va_start(arglist, string);
-   vsprintf(_Ygl->message, string, arglist);
-   va_end(arglist);
-   _Ygl->msglength = (int)strlen(_Ygl->message);
 }
 
 //////////////////////////////////////////////////////////////////////////////

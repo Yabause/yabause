@@ -38,7 +38,6 @@
 #include "yui.h"
 
 #include <stdlib.h>
-#include <stdarg.h>
 #include <limits.h>
 
 #if defined WORDS_BIGENDIAN
@@ -96,7 +95,6 @@ void FASTCALL VIDGCDVdp2SetPriorityNBG1(int priority);
 void FASTCALL VIDGCDVdp2SetPriorityNBG2(int priority);
 void FASTCALL VIDGCDVdp2SetPriorityNBG3(int priority);
 void FASTCALL VIDGCDVdp2SetPriorityRBG0(int priority);
-void VIDGCDOnScreenDebugMessage(char *string, ...);
 void VIDGCDGetGlSize(int *width, int *height);
 void VIDGCDVdp1SwapFrameBuffer(void);
 void VIDGCDVdp1EraseFrameBuffer(void);
@@ -134,7 +132,6 @@ VIDGCDVdp2SetPriorityNBG1,
 VIDGCDVdp2SetPriorityNBG2,
 VIDGCDVdp2SetPriorityNBG3,
 VIDGCDVdp2SetPriorityRBG0,
-VIDGCDOnScreenDebugMessage,
 VIDGCDGetGlSize,
 };
 
@@ -165,9 +162,6 @@ static int outputheight;
 #endif
 static int resxratio;
 static int resyratio;
-
-static char message[512];
-static int msglength;
 
 typedef struct { s16 x; s16 y; } vdp1vertex;
 
@@ -1565,7 +1559,6 @@ int VIDGCDInit(void)
    glOrtho(-320, 320, -224, 224, 1, 0);
    outputwidth = 320;
    outputheight = 224;
-   msglength = 0;
 #endif
 
    return 0;
@@ -3186,18 +3179,6 @@ void FASTCALL VIDGCDVdp2SetPriorityNBG3(int priority)
 void FASTCALL VIDGCDVdp2SetPriorityRBG0(int priority)
 {
    rbg0priority = priority;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDGCDOnScreenDebugMessage(char *string, ...)
-{
-   va_list arglist;
-
-   va_start(arglist, string);
-   vsprintf(message, string, arglist);
-   va_end(arglist);
-   msglength = strlen(message);
 }
 
 //////////////////////////////////////////////////////////////////////////////
