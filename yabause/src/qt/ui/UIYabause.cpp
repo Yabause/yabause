@@ -474,6 +474,8 @@ void UIYabause::on_aFileScreenshot_triggered()
 	for ( int i = 0; i < filters.count(); i++ )
 		filters[i] = QtYabause::translate( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
 	
+   glReadBuffer(GL_FRONT);
+
 	// take screenshot of gl view
 	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
