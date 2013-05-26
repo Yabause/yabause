@@ -42,10 +42,8 @@ PERGTKHandleEvents,
 PERGTKNothing,
 PERGTKScan,
 0,
-PERGTKFlush
-#ifdef PERKEYNAME
-,PERGTKKeyName
-#endif
+PERGTKFlush,
+PERGTKKeyName
 };
 
 //////////////////////////////////////////////////////////////////////////////

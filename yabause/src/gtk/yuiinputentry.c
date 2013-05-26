@@ -118,11 +118,7 @@ GtkWidget* yui_input_entry_new(GKeyFile * keyfile, const gchar * group, const gc
 		keyName = g_key_file_get_integer(keyfile, PERCore->Name, tmp, 0);
 		if (keyName > 0) {
 			char buffer[50];
-#ifdef PERKEYNAME
 			PERCore->KeyName(keyName, buffer, 50);
-#else
-			sprintf(buffer, "%x", keyName);
-#endif
 			gtk_entry_set_text(GTK_ENTRY(entry), buffer);
 		}
 
@@ -149,11 +145,7 @@ gboolean yui_input_entry_keypress(GtkWidget * widget, GdkEventKey * event, gpoin
 
 	if (PERCore->canScan) return FALSE;
 
-#ifdef PERKEYNAME
 	PERCore->KeyName(event->keyval, tmp, 100);
-#else
-	sprintf(tmp, "%x", event->keyval);
-#endif
 	gtk_entry_set_text(GTK_ENTRY(widget), tmp);
 	sprintf(tmp, "%s.%s.1", YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->group, (char *)name);
 	g_key_file_set_integer(YUI_INPUT_ENTRY(gtk_widget_get_parent(widget))->keyfile,
@@ -184,11 +176,7 @@ static gboolean watch_joy(gpointer name) {
 
 		sprintf(tmp, "Pad.%s.1", (char *)name); // should be group.name
 		g_key_file_set_integer(keyfile, PERCore->Name, tmp, i);
-#ifdef PERKEYNAME
 		PERCore->KeyName(i, tmp, 100);
-#else
-		sprintf(tmp, "%x", (int)i);
-#endif
 		gtk_entry_set_text(entry_hack, tmp);
 		is_watching = FALSE;
 		return FALSE;
@@ -229,11 +217,7 @@ void yui_input_entry_update(YuiInputEntry * yie) {
 			sprintf(tmp, "%s.%s.1", yie->group, gtk_label_get_text(wlist->data));
                 	key = g_key_file_get_integer(yie->keyfile, PERCore->Name, tmp, 0);
 			if (key > 0) {
-#ifdef PERKEYNAME
 				PERCore->KeyName(key, tmp, 100);
-#else
-				sprintf(tmp, "%x", (int)key);
-#endif
 				gtk_entry_set_text(entry, tmp);
 			} else {
 				gtk_entry_set_text(entry, "");

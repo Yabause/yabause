@@ -57,13 +57,21 @@ int PERDXInit(void);
 void PERDXDeInit(void);
 int PERDXHandleEvents(void);
 int Check_Skip_Key();
+void PERDXNothing(void);
+u32 PERDXScan(void);
+void PERDXKeyName(u32 key, char * name, int size);
 
 PerInterface_struct PERDIRECTX = {
 PERCORE_DIRECTX,
 "DirectX Input Interface",
 PERDXInit,
 PERDXDeInit,
-PERDXHandleEvents
+PERDXHandleEvents,
+PERDXNothing,
+PERDXScan,
+0,
+PERDXNothing,
+PERDXKeyName
 };
 
 LPDIRECTINPUT8 lpDI8 = NULL;
@@ -1299,3 +1307,13 @@ BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCSTR inifilename)
 
 //////////////////////////////////////////////////////////////////////////////
 
+u32 PERDXScan(void) {
+	return 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PERDXKeyName(u32 key, char * name, int size)
+{
+    snprintf(name, size, "%x", (unsigned int)key);
+}

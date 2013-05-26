@@ -674,10 +674,8 @@ PERDummyHandleEvents,
 PERDummyNothing,
 PERDummyScan,
 0,
-PERDummyFlush
-#ifdef PERKEYNAME
-,PERDummyKeyName
-#endif
+PERDummyFlush,
+PERDummyKeyName
 };
 
 //////////////////////////////////////////////////////////////////////////////

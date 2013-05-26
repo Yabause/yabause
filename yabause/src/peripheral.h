@@ -54,9 +54,7 @@ typedef struct
    u32 (*Scan)(void);
    int canScan;
    void (*Flush)(void);
-#ifdef PERKEYNAME
    void (*KeyName)(u32 key, char * name, int size);
-#endif
 } PerInterface_struct;
 
 /** @brief Pointer to the current peripheral core.

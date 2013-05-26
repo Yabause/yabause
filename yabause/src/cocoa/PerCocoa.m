@@ -32,6 +32,7 @@ static void PERCocoaNothing(void);
 
 static u32 PERCocoaScan(void);
 static void PERCocoaFlush(void);
+static void PERCocoaKeyName(u32 key, char *name, int size);
 
 static PerPad_struct *c1 = NULL, *c2 = NULL;
 
@@ -44,7 +45,8 @@ PerInterface_struct PERCocoa = {
     &PERCocoaNothing,
     &PERCocoaScan,
     0,
-    &PERCocoaFlush
+    &PERCocoaFlush,
+    &PERCocoaKeyName
 };
 
 /* Utility function to check if everything's set up right for a port */
@@ -165,4 +167,8 @@ static u32 PERCocoaScan(void) {
 }
 
 static void PERCocoaFlush(void) {
+}
+
+static void PERCocoaKeyName(u32 key, char *name, int size)    {
+    snprintf(name, size, "%x", (unsigned int)key);
 }

@@ -27,6 +27,7 @@ void PERQTNothing(void);
 
 u32 PERQTScan(void);
 void PERQTFlush(void);
+void PERQTKeyName(u32 key, char *name, int size);
 
 PerInterface_struct PERQT = {
 PERCORE_QT,
@@ -37,7 +38,8 @@ PERQTHandleEvents,
 PERQTNothing,
 PERQTScan,
 0,
-PERQTFlush
+PERQTFlush,
+PERQTKeyName
 };
 
 int PERQTInit(void)
@@ -61,3 +63,7 @@ u32 PERQTScan(void)
 
 void PERQTFlush(void)
 {}
+
+void PERQTKeyName(u32 key, char *name, int size)    {
+    snprintf(name, size, "%x", (unsigned int)key);
+}

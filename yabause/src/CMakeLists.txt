@@ -377,12 +377,6 @@ if (YAB_NETWORK)
 	add_definitions(-DUSESOCKET=1)
 endif()
 
-# Peripheral key name
-option(YAB_PERKEYNAME "Try to display key names instead of cryptic values" OFF)
-if (YAB_PERKEYNAME)
-	add_definitions(-DPERKEYNAME=1)
-endif()
-
 option(YAB_PORT_OSD "Let ports provides their own OSD core list" OFF)
 if (YAB_PORT_OSD)
 	add_definitions(-DYAB_PORT_OSD=1)

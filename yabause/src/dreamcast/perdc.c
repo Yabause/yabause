@@ -42,7 +42,8 @@ PerInterface_struct PERDC = {
     PERDCNothing,
     PERDCScan,
     0,
-    PERDCNothing
+    PERDCNothing,
+    PERDCKeyName
 };
 
 int PERDCInit(void)	{
@@ -142,4 +143,8 @@ void PERDCNothing(void) {
 u32 PERDCScan(void) {
     /* Nothing */
     return 0;
+}
+
+void PERDCKeyName(u32 key, char *name, int size)    {
+    snprintf(name, size, "%x", (unsigned int)key);
 }

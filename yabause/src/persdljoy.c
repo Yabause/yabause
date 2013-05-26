@@ -54,10 +54,8 @@ PERSDLJoyHandleEvents,
 PERSDLJoyNothing,
 PERSDLJoyScan,
 1,
-PERSDLJoyFlush
-#ifdef PERKEYNAME
-,PERSDLKeyName
-#endif
+PERSDLJoyFlush,
+PERSDLKeyName
 };
 
 typedef struct {

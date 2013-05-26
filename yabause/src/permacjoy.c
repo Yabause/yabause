@@ -41,10 +41,8 @@ PerInterface_struct PERMacJoy = {
     PERMacJoyNothing,
     PERMacJoyScan,
     1,
-    PERMacJoyFlush
-#ifdef PERKEYNAME
-    ,PERMacJoyKeyName
-#endif
+    PERMacJoyFlush,
+    PERMacJoyKeyName
 };
 
 static int initted = 0;

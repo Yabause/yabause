@@ -41,10 +41,8 @@ PERLinuxJoyHandleEvents,
 PERLinuxJoyNothing,
 PERLinuxJoyScan,
 1,
-PERLinuxJoyFlush
-#ifdef PERKEYNAME
-,PERLinuxKeyName
-#endif
+PERLinuxJoyFlush,
+PERLinuxKeyName
 };
 
 static int hJOY = -1;
