@@ -23,7 +23,6 @@
 int PERQTInit(void);
 void PERQTDeInit(void);
 int PERQTHandleEvents(void);
-void PERQTNothing(void);
 
 u32 PERQTScan(void);
 void PERQTFlush(void);
@@ -35,7 +34,6 @@ PERCORE_QT,
 PERQTInit,
 PERQTDeInit,
 PERQTHandleEvents,
-PERQTNothing,
 PERQTScan,
 0,
 PERQTFlush,
@@ -46,9 +44,6 @@ int PERQTInit(void)
 { return 0; }
 
 void PERQTDeInit(void)
-{}
-
-void PERQTNothing(void)
 {}
 
 int PERQTHandleEvents(void)

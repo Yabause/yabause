@@ -26,7 +26,6 @@
 int PERMacJoyInit(void);
 void PERMacJoyDeInit(void);
 int PERMacJoyHandleEvents(void);
-void PERMacJoyNothing(void);
 
 u32 PERMacJoyScan(void);
 void PERMacJoyFlush(void);
@@ -38,7 +37,6 @@ PerInterface_struct PERMacJoy = {
     PERMacJoyInit,
     PERMacJoyDeInit,
     PERMacJoyHandleEvents,
-    PERMacJoyNothing,
     PERMacJoyScan,
     1,
     PERMacJoyFlush,
@@ -176,10 +174,6 @@ int PERMacJoyHandleEvents(void) {
     }
 
     return 0;
-}
-
-void PERMacJoyNothing(void) {
-    /* Nothing. */
 }
 
 u32 PERMacJoyScan(void) {

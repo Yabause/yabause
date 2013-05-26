@@ -39,7 +39,6 @@
 int PERSDLJoyInit(void);
 void PERSDLJoyDeInit(void);
 int PERSDLJoyHandleEvents(void);
-void PERSDLJoyNothing(void);
 
 u32 PERSDLJoyScan(void);
 void PERSDLJoyFlush(void);
@@ -51,7 +50,6 @@ PERCORE_SDLJOY,
 PERSDLJoyInit,
 PERSDLJoyDeInit,
 PERSDLJoyHandleEvents,
-PERSDLJoyNothing,
 PERSDLJoyScan,
 1,
 PERSDLJoyFlush,
@@ -145,11 +143,6 @@ void PERSDLJoyDeInit(void) {
 	
 	// close sdl joysticks
 	SDL_QuitSubSystem( SDL_INIT_JOYSTICK );
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void PERSDLJoyNothing(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////

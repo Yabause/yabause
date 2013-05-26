@@ -28,7 +28,6 @@
 static int PERCocoaInit(void);
 static void PERCocoaDeInit(void);
 static int PERCocoaHandleEvents(void);
-static void PERCocoaNothing(void);
 
 static u32 PERCocoaScan(void);
 static void PERCocoaFlush(void);
@@ -42,7 +41,6 @@ PerInterface_struct PERCocoa = {
     &PERCocoaInit,
     &PERCocoaDeInit,
     &PERCocoaHandleEvents,
-    &PERCocoaNothing,
     &PERCocoaScan,
     0,
     &PERCocoaFlush,
@@ -157,9 +155,6 @@ static void PERCocoaDeInit(void) {
 
 static int PERCocoaHandleEvents(void) {
     return YabauseExec();
-}
-
-static void PERCocoaNothing(void) {
 }
 
 static u32 PERCocoaScan(void) {

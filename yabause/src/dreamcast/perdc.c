@@ -39,7 +39,6 @@ PerInterface_struct PERDC = {
     PERDCInit,
     PERDCDeInit,
     PERDCHandleEvents,
-    PERDCNothing,
     PERDCScan,
     0,
     PERDCNothing,

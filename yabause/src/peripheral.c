@@ -532,13 +532,6 @@ int PerGetId(void * peripheral)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void PerRemovePeripheral(UNUSED PortData_struct *port, UNUSED int removeoffset)
-{
-   // stub
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 void PerFlush(PortData_struct * port)
 {
    /* FIXME this function only flush data if there's a mouse connected as
@@ -656,7 +649,6 @@ PerMouse_struct * PerMouseAdd(PortData_struct * port)
 int PERDummyInit(void);
 void PERDummyDeInit(void);
 int PERDummyHandleEvents(void);
-void PERDummyNothing(void);
 
 //static PortData_struct port1;
 //static PortData_struct port2;
@@ -671,7 +663,6 @@ PERCORE_DUMMY,
 PERDummyInit,
 PERDummyDeInit,
 PERDummyHandleEvents,
-PERDummyNothing,
 PERDummyScan,
 0,
 PERDummyFlush,
@@ -688,11 +679,6 @@ int PERDummyInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PERDummyDeInit(void) {
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void PERDummyNothing(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////

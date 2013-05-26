@@ -27,7 +27,6 @@
 int PERGTKInit(void);
 void PERGTKDeInit(void);
 int PERGTKHandleEvents(void);
-void PERGTKNothing(void);
 
 u32 PERGTKScan(void);
 void PERGTKFlush(void);
@@ -39,7 +38,6 @@ PERCORE_GTK,
 PERGTKInit,
 PERGTKDeInit,
 PERGTKHandleEvents,
-PERGTKNothing,
 PERGTKScan,
 0,
 PERGTKFlush,
@@ -55,11 +53,6 @@ int PERGTKInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PERGTKDeInit(void) {
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void PERGTKNothing(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
