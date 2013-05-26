@@ -298,4 +298,8 @@ typedef u16 pixel_t;
 typedef u32 pixel_t;
 #endif
 
+#ifdef _MSC_VER
+#define snprintf sprintf_s
+#endif
+
 #endif
