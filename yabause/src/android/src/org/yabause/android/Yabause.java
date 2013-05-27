@@ -58,7 +58,7 @@ class InputHandler extends Handler {
 
 class YabauseRunnable implements Runnable
 {
-    public static native int init(Yabause yabause, Bitmap bitmap);
+    public static native int init(Yabause yabause);
     public static native void deinit();
     public static native void exec();
     public static native void press(int key);
@@ -72,10 +72,10 @@ class YabauseRunnable implements Runnable
     private boolean paused;
     public InputHandler handler;
 
-    public YabauseRunnable(Yabause yabause, Bitmap bitmap)
+    public YabauseRunnable(Yabause yabause)
     {
         handler = new InputHandler(this);
-        int ok = init(yabause, bitmap);
+        int ok = init(yabause);
         inited = (ok == 0);
     }
 
@@ -143,7 +143,7 @@ public class Yabause extends Activity implements OnTouchListener
 
         YabauseView view = (YabauseView) findViewById(R.id.yabause_view);
         handler = new YabauseHandler(this);
-        yabauseThread = new YabauseRunnable(this,null);
+        yabauseThread = new YabauseRunnable(this);
         view.setYabauseRunnable(yabauseThread);
 
         ImageView pad = (ImageView) findViewById(R.id.yabause_pad);

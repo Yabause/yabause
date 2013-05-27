@@ -51,7 +51,6 @@
 
 JavaVM * yvm;
 static jobject yabause;
-static jobject ybitmap;
 
 static char biospath[256] = "/mnt/sdcard/jap.rom";
 static char cdpath[256] = "\0";
@@ -330,7 +329,7 @@ int Java_org_yabause_android_YabauseRunnable_unlockGL()
 
 
 jint
-Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab, jobject bitmap )
+Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
 {
     yabauseinit_struct yinit;
     int res;
@@ -339,7 +338,6 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     if( initEGLFunc() == -1 ) return -1;
 
     yabause = (*env)->NewGlobalRef(env, yab);
-    ybitmap = (*env)->NewGlobalRef(env, bitmap);
 
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
