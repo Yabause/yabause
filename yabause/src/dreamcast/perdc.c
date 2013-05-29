@@ -29,7 +29,7 @@ int PERDCInit(void);
 void PERDCDeInit(void);
 int PERDCHandleEvents(void);
 void PERDCNothing(void);
-u32 PERDCScan(void);
+u32 PERDCScan(u32 flags);
 
 static PerPad_struct *pad1;
 
@@ -139,7 +139,7 @@ void PERDCNothing(void) {
     /* Nothing */
 }
 
-u32 PERDCScan(void) {
+u32 PERDCScan(u32 flags) {
     /* Nothing */
     return 0;
 }

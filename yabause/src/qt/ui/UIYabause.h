@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006, 2013 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
@@ -70,14 +70,18 @@ protected:
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
 	bool mInit;
-   result_struct *searchResults;
-   u32 numSearchResults;
-   int searchType;
+	result_struct *searchResults;
+	u32 numSearchResults;
+	int searchType;
+	int oldMouseX, oldMouseY;
 
 	virtual void showEvent( QShowEvent* event );
 	virtual void closeEvent( QCloseEvent* event );
 	virtual void keyPressEvent( QKeyEvent* event );
 	virtual void keyReleaseEvent( QKeyEvent* event );
+	virtual void mousePressEvent( QMouseEvent* event );
+	virtual void mouseReleaseEvent( QMouseEvent* event );
+	virtual void mouseMoveEvent( QMouseEvent* event );
 
 public slots:
 	void appendLog( const char* msg );
@@ -111,7 +115,7 @@ protected slots:
 	// tools
 	void on_aToolsBackupManager_triggered();
 	void on_aToolsCheatsList_triggered();
-   void on_aToolsCheatSearch_triggered();
+	void on_aToolsCheatSearch_triggered();
 	void on_aToolsTransfer_triggered();
 	// view menu
 	void on_aViewFPS_triggered( bool toggled );

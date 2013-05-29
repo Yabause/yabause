@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006, 2013 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
@@ -121,6 +121,10 @@ QPointer<VolatileSettings> mVolatileSettings = 0;
 // ports padbits
 QMap<uint, PerPad_struct*> mPort1PadsBits;
 QMap<uint, PerPad_struct*> mPort2PadsBits;
+QMap<uint, PerMouse_struct*> mPort1MouseBits;
+QMap<uint, PerMouse_struct*> mPort2MouseBits;
+QMap<uint, PerAnalog_struct*> mPort1AnalogBits;
+QMap<uint, PerAnalog_struct*> mPort2AnalogBits;
 
 extern "C" 
 {
@@ -423,4 +427,48 @@ void QtYabause::clearPadsBits()
 {
 	mPort1PadsBits.clear();
 	mPort2PadsBits.clear();
+}
+
+QMap<uint, PerAnalog_struct*>* QtYabause::portAnalogBits( uint portNumber )
+{
+   switch ( portNumber )
+   {
+   case 1:
+      return &mPort1AnalogBits;
+      break;
+   case 2:
+      return &mPort2AnalogBits;
+      break;
+   default:
+      return 0;
+      break;
+   }
+}
+
+void QtYabause::clear3DAnalogBits()
+{
+   mPort1AnalogBits.clear();
+   mPort2AnalogBits.clear();
+}
+
+QMap<uint, PerMouse_struct*>* QtYabause::portMouseBits( uint portNumber )
+{
+   switch ( portNumber )
+   {
+   case 1:
+      return &mPort1MouseBits;
+      break;
+   case 2:
+      return &mPort2MouseBits;
+      break;
+   default:
+      return 0;
+      break;
+   }
+}
+
+void QtYabause::clearMouseBits()
+{
+   mPort1MouseBits.clear();
+   mPort2MouseBits.clear();
 }

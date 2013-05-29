@@ -1,4 +1,5 @@
 /*	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+	Copyright 2013 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -20,39 +21,24 @@
 #define UIPADSETTING_H
 
 #include "ui_UIPadSetting.h"
+#include "UIControllerSetting.h"
 #include "QtYabause.h"
 
 #include <QMap>
 
 class QTimer;
 
-class UIPadSetting : public QDialog, public Ui::UIPadSetting
+class UIPadSetting : public UIControllerSetting, public Ui::UIPadSetting
 {
 	Q_OBJECT
 
 public:
-	UIPadSetting( PerInterface_struct* core, PerPad_struct* padbits, uint port, uint pad, QWidget* parent = 0 );
+	UIPadSetting( PerInterface_struct* core, uint port, uint pad, uint perType, QWidget* parent = 0 );
 	virtual ~UIPadSetting();
 
 protected:
-	PerInterface_struct* mCore;
-	PerPad_struct* mPadBits;
-	uint mPort;
-	uint mPad;
-	u8 mPadKey;
-	QTimer* mTimer;
-	QMap<QToolButton*, u8> mPadButtons;
-	QMap<u8, QString> mPadNames;
-
-	void keyPressEvent( QKeyEvent* event );
-	void setPadKey( u32 key );
-	void loadPadSettings();
-
-	virtual bool eventFilter( QObject* object, QEvent* event );
 
 protected slots:
-	void tbButton_clicked();
-	void timer_timeout();
 };
 
 #endif // UIPADSETTING_H

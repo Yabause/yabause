@@ -73,7 +73,7 @@ void UIWaitInput::inputScan_timeout()
 {
 	u32 k = 0;
 	mCore->Flush();
-	k = mCore->Scan();
+	k = mCore->Scan(PERSF_KEY | PERSF_BUTTON | PERSF_HAT);
 	if ( k != 0 )
 	{
 		sender()->deleteLater();

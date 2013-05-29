@@ -18,6 +18,7 @@
 */
 
 #include <windows.h>
+#include <tchar.h>
 #include "debug.h"
 #include "peripheral.h"
 #include "perdx.h"
@@ -25,6 +26,7 @@
 #include "vdp2.h"
 #include "yui.h"
 #include "movie.h"
+#include "error.h"
 
 #define IDD_BUTTONCONFIG                123
 #define IDC_WAITINPUT                   1001
@@ -58,7 +60,7 @@ void PERDXDeInit(void);
 int PERDXHandleEvents(void);
 int Check_Skip_Key();
 void PERDXNothing(void);
-u32 PERDXScan(void);
+u32 PERDXScan(u32 flags);
 void PERDXKeyName(u32 key, char * name, int size);
 
 PerInterface_struct PERDIRECTX = {
@@ -161,8 +163,8 @@ int PERDXInit(void)
    if (FAILED((ret = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION,
        &IID_IDirectInput8, (LPVOID *)&lpDI8, NULL)) ))
    {
-      sprintf(tempstr, "DirectInput8Create error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "Input. DirectInput8Create error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      YabSetError(YAB_ERR_CANNOTINIT, tempstr);
       return -1;
    }
 
@@ -172,23 +174,23 @@ int PERDXInit(void)
    if (FAILED((ret = IDirectInput8_CreateDevice(lpDI8, &GUID_SysKeyboard, &lpDIDevice[0],
        NULL)) ))
    {
-      sprintf(tempstr, "IDirectInput8_CreateDevice error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "Input. IDirectInput8_CreateDevice error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      YabSetError(YAB_ERR_CANNOTINIT, tempstr);
       return -1;
    }
 
    if (FAILED((ret = IDirectInputDevice8_SetDataFormat(lpDIDevice[0], &c_dfDIKeyboard)) ))
    {
-      sprintf(tempstr, "IDirectInputDevice8_SetDataFormat error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "Input. IDirectInputDevice8_SetDataFormat error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      YabSetError(YAB_ERR_CANNOTINIT, tempstr);
       return -1;
    }
 
    if (FAILED((ret = IDirectInputDevice8_SetCooperativeLevel(lpDIDevice[0], DXGetWindow(),
        DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY)) ))
    {
-      sprintf(tempstr, "IDirectInputDevice8_SetCooperativeLevel error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "Input. IDirectInputDevice8_SetCooperativeLevel error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      YabSetError(YAB_ERR_CANNOTINIT, tempstr);
       return -1;
    }
 
@@ -201,8 +203,8 @@ int PERDXInit(void)
    // Setup Buffered input
    if (FAILED((ret = IDirectInputDevice8_SetProperty(lpDIDevice[0], DIPROP_BUFFERSIZE, &dipdw.diph)) ))
    {
-      sprintf(tempstr, "IDirectInputDevice8_SetProperty error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-      MessageBox (NULL, _16(tempstr), _16("Error"),  MB_OK | MB_ICONINFORMATION);
+      sprintf(tempstr, "Input. IDirectInputDevice8_SetProperty error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+      YabSetError(YAB_ERR_CANNOTINIT, tempstr);
       return -1;
    }
 
@@ -737,7 +739,7 @@ void PERDXListDevices(HWND control, int emulatetype)
    numguids = 0;
 
    SendMessage(control, CB_RESETCONTENT, 0, 0);
-   SendMessage(control, CB_ADDSTRING, 0, (LPARAM)_16("None"));
+   SendMessage(control, CB_ADDSTRING, 0, (LPARAM)_T("None"));
 
    switch(emulatetype)
    {
@@ -863,7 +865,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
          for (i = 0; i < 13; i++)
          {
             ConvertKBIDToName(controlmap[i], tempstr);
-            SetDlgItemText(hWnd, idlist[i], _16(tempstr));
+            SetDlgItemTextA(hWnd, idlist[i], tempstr);
          }
       }
       else
@@ -921,7 +923,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
             printf("%2d: %d\n", i, buttonid);
             controlmap[i] = buttonid;
             ConvertKBIDToName(buttonid, tempstr);
-            SetDlgItemText(hWnd, idlist[i], _16(tempstr));
+            SetDlgItemTextA(hWnd, idlist[i], tempstr);
          }
       }       
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_GAMEPAD ||
@@ -934,7 +936,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
             buttonid = GetPrivateProfileIntA(string1, PerPadNames[i], 0, inifilename);
             controlmap[i] = buttonid;
             ConvertJoyIDToName(buttonid, tempstr);
-            SetDlgItemText(hWnd, idlist[i], _16(tempstr));
+            SetDlgItemTextA(hWnd, idlist[i], tempstr);
          }
       }
       else if (GET_DIDEVICE_TYPE(didc.dwDevType) == DI8DEVTYPE_MOUSE)
@@ -944,7 +946,7 @@ int PERDXInitControlConfig(HWND hWnd, u8 padnum, int *controlmap, const char *in
             buttonid = GetPrivateProfileIntA(string1, PerPadNames[i], 0, inifilename);
             controlmap[i] = buttonid;
             ConvertMouseIDToName(buttonid, tempstr);
-            SetDlgItemText(hWnd, idlist[i], _16(tempstr));
+            SetDlgItemTextA(hWnd, idlist[i], tempstr);
          }
       }
 
@@ -1306,8 +1308,19 @@ BOOL PERDXWriteGUID(u32 guidnum, u8 padnum, LPCSTR inifilename)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERDXScan(void) {
-	return 1;
+void PERDXNothing(void)
+{
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 PERDXScan(u32 flags) 
+{
+   //ret = PERDXFetchNextPress(DXGetWindow(), u32 guidnum, char *buttonname)
+
+   //return ret < 0 ? 0 : ret;
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

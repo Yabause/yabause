@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006, 2013 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
@@ -108,6 +108,10 @@ namespace QtYabause
 	// padsbits
 	QMap<uint, PerPad_struct*>* portPadsBits( uint portNumber );
 	void clearPadsBits();
+   QMap<uint, PerAnalog_struct*>* portAnalogBits( uint portNumber );
+   void clear3DAnalogBits();
+   QMap<uint, PerMouse_struct*>* portMouseBits( uint portNumber );
+   void clearMouseBits();
 };
 
 #endif // QTYABAUSE_H

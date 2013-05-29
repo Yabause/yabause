@@ -1,4 +1,5 @@
 /*	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+	Copyright 2013 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -18,6 +19,8 @@
 */
 #include "UIPortManager.h"
 #include "UIPadSetting.h"
+#include "UI3DControlPadSetting.h"
+#include "UIMouseSetting.h"
 #include "../CommonDialogs.h"
 #include "../Settings.h"
 
@@ -43,6 +46,10 @@ UIPortManager::UIPortManager( QWidget* parent )
 	{
 		cb->addItem( QtYabause::translate( "None" ), 0 );
 		cb->addItem( QtYabause::translate( "Pad" ), PERPAD );
+      //cb->addItem( QtYabause::translate( "Wheel" ), PERWHEEL );
+      cb->addItem( QtYabause::translate( "3D Control Pad" ), PER3DPAD );
+      //cb->addItem( QtYabause::translate( "Stunner" ), PERGUN );
+      //cb->addItem( QtYabause::translate( "Keyboard" ), PERKEYBOARD );
 		cb->addItem( QtYabause::translate( "Mouse" ), PERMOUSE );
 
 		connect( cb, SIGNAL( currentIndexChanged( int ) ), this, SLOT( cbTypeController_currentIndexChanged( int ) ) );
@@ -120,10 +127,14 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 	switch ( type )
 	{
 		case PERPAD:
+		case PERWHEEL:
+		case PER3DPAD:
 		case PERMOUSE:
 			buttons.at( 0 )->setEnabled( true );
 			buttons.at( 1 )->setEnabled( true );
 			break;
+		case PERGUN:
+		case PERKEYBOARD:
 		default:
 			buttons.at( 0 )->setEnabled( false );
 			buttons.at( 1 )->setEnabled( false );
@@ -137,26 +148,81 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 void UIPortManager::tbSetJoystick_clicked()
 {
 	uint controllerId = sender()->objectName().remove( "tbSetJoystick" ).toUInt();
-
-	QMap<uint, PerPad_struct*>& padsbits = *QtYabause::portPadsBits( mPort );
-
-	PerPad_struct* padBits = padsbits[ controllerId ];
-
-	if ( !padBits )
+	QComboBox* cb = findChild<QComboBox*>( QString( "cbTypeController%1" ).arg( controllerId ) );
+	uint type = cb->itemData(cb->currentIndex()).toUInt();
+	switch (type)
 	{
-		padBits = PerPadAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
-
-		if ( !padBits )
+		case PERPAD:
 		{
-			CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
-			return;
+			QMap<uint, PerPad_struct*>& padsbits = *QtYabause::portPadsBits( mPort );
+
+			PerPad_struct* padBits = padsbits[ controllerId ];
+
+			if ( !padBits )
+			{
+				padBits = PerPadAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
+
+				if ( !padBits )
+				{
+					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
+					return;
+				}
+
+				padsbits[ controllerId ] = padBits;
+			}
+
+			UIPadSetting ups( mCore, mPort, controllerId, type, this );
+			ups.exec();
+			break;
 		}
+		case PER3DPAD:
+		{
+			QMap<uint, PerAnalog_struct*>& analogbits = *QtYabause::portAnalogBits( mPort );
 
-		padsbits[ controllerId ] = padBits;
+			PerAnalog_struct* analogBits = analogbits[ controllerId ];
+
+			if ( !analogBits )
+			{
+				analogBits = Per3DPadAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
+
+				if ( !analogBits )
+				{
+					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
+					return;
+				}
+
+				analogbits[ controllerId ] = analogBits;
+			}
+
+			UI3DControlPadSetting uas( mCore, mPort, controllerId, type, this );
+			uas.exec();
+			break;
+		}
+		case PERMOUSE:
+		{
+			QMap<uint, PerMouse_struct*>& mousebits = *QtYabause::portMouseBits( mPort );
+
+			PerMouse_struct* mouseBits = mousebits[ controllerId ];
+
+			if ( !mouseBits )
+			{
+				mouseBits = PerMouseAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
+
+				if ( !mouseBits )
+				{
+					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
+					return;
+				}
+
+				mousebits[ controllerId ] = mouseBits;
+			}
+
+			UIMouseSetting ums( mCore, mPort, controllerId, type, this );
+			ums.exec();
+			break;
+		}
+		default: break;
 	}
-
-	UIPadSetting ups( mCore, padBits, mPort, controllerId, this );
-	ups.exec();
 }
 
 void UIPortManager::tbClearJoystick_clicked()

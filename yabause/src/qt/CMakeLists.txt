@@ -66,6 +66,8 @@ set( yabause_qt_FORMS
 	ui/UIBackupRam.ui
 	ui/UIPortManager.ui
 	ui/UIPadSetting.ui 
+	ui/UI3DControlPadSetting.ui 
+	ui/UIMouseSetting.ui 
     ui/UIDebugCPU.ui
     ui/UIDebugSCSP.ui
     ui/UIDebugVDP1.ui
@@ -95,7 +97,10 @@ set( yabause_qt_MOC_HEADERS
 	ui/UIWaitInput.h
 	ui/UIBackupRam.h
 	ui/UIPortManager.h
+	ui/UIControllerSetting.h
 	ui/UIPadSetting.h
+	ui/UI3DControlPadSetting.h
+	ui/UIMouseSetting.h
     ui/UIDebugCPU.h
     ui/UIDebugM68K.h
     ui/UIDebugSCSP.h
@@ -131,7 +136,10 @@ set( yabause_qt_SOURCES
 	ui/UIWaitInput.cpp
 	ui/UIBackupRam.cpp
 	ui/UIPortManager.cpp
+	ui/UIControllerSetting.cpp
 	ui/UIPadSetting.cpp
+	ui/UI3DControlPadSetting.cpp
+	ui/UIMouseSetting.cpp
     ui/UIDebugCPU.cpp
     ui/UIDebugM68K.cpp
     ui/UIDebugSCSP.cpp

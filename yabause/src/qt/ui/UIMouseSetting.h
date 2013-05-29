@@ -1,6 +1,4 @@
-/*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
-	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+/*	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
 
@@ -18,14 +16,28 @@
 	along with Yabause; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-#ifndef PERQT_H
-#define PERQT_H
+#ifndef UIMOUSESETTING_H
+#define UIMOUSESETTING_H
 
-#include "../peripheral.h"
+#include "ui_UIMouseSetting.h"
+#include "UIControllerSetting.h"
+#include "QtYabause.h"
 
-#define PERCORE_QT 100
+#include <QMap>
 
-extern PerInterface_struct PERQT;
-u32 PERQTScan(u32 flags);
+class QTimer;
 
-#endif // PERQT_H
+class UIMouseSetting : public UIControllerSetting, public Ui::UIMouseSetting
+{
+	Q_OBJECT
+
+public:
+	UIMouseSetting( PerInterface_struct* core, uint port, uint pad, uint perType, QWidget* parent = 0 );
+	virtual ~UIMouseSetting();
+
+protected:
+
+protected slots:
+};
+
+#endif // UIMOUSESETTING_H

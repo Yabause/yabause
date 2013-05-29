@@ -24,7 +24,7 @@ int PERQTInit(void);
 void PERQTDeInit(void);
 int PERQTHandleEvents(void);
 
-u32 PERQTScan(void);
+u32 PERQTScan(u32 flags);
 void PERQTFlush(void);
 void PERQTKeyName(u32 key, char *name, int size);
 
@@ -53,7 +53,7 @@ int PERQTHandleEvents(void)
 	return 0;
 }
 
-u32 PERQTScan(void)
+u32 PERQTScan(u32 flags)
 { return 0; }
 
 void PERQTFlush(void)

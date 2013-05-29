@@ -28,7 +28,7 @@ int PERGTKInit(void);
 void PERGTKDeInit(void);
 int PERGTKHandleEvents(void);
 
-u32 PERGTKScan(void);
+u32 PERGTKScan(u32 flags);
 void PERGTKFlush(void);
 void PERGTKKeyName(u32 key, char * name, int size);
 
@@ -65,7 +65,7 @@ int PERGTKHandleEvents(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERGTKScan(void) {
+u32 PERGTKScan(u32 flags) {
 	g_print("this is wrong, the gtk peripheral can't scan\n");
 	return 1;
 }

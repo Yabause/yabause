@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006, 2013 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
@@ -127,6 +127,8 @@ UIYabause::UIYabause( QWidget* parent )
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	restoreGeometry( vs->value("General/Geometry" ).toByteArray() );
+   mYabauseGL->setMouseTracking(true);
+   setMouseTracking(true);
 }
 
 void UIYabause::showEvent( QShowEvent* e )
@@ -168,6 +170,23 @@ void UIYabause::keyPressEvent( QKeyEvent* e )
 
 void UIYabause::keyReleaseEvent( QKeyEvent* e )
 { PerKeyUp( e->key() ); }
+
+void UIYabause::mousePressEvent( QMouseEvent* e )
+{ 
+   PerKeyDown( (1 << 31) | e->button() );
+}
+
+void UIYabause::mouseReleaseEvent( QMouseEvent* e )
+{ 
+   PerKeyUp( (1 << 31) | e->button() );
+}
+
+void UIYabause::mouseMoveEvent( QMouseEvent* e )
+{ 
+   PerAxisMove((1 << 30), e->x()-oldMouseX, oldMouseY-e->y());
+   oldMouseX = e->x();
+   oldMouseY = e->y();
+}
 
 void UIYabause::swapBuffers()
 { 

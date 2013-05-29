@@ -1,6 +1,4 @@
-/*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
-	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+/*	Copyright 2013 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -18,14 +16,27 @@
 	along with Yabause; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-#ifndef PERQT_H
-#define PERQT_H
+#ifndef UI3DCONTROLPADSETTING_H
+#define UI3DCONTROLPADSETTING_H
 
-#include "../peripheral.h"
+#include "ui_UI3DControlPadSetting.h"
+#include "UIControllerSetting.h"
+#include "QtYabause.h"
 
-#define PERCORE_QT 100
+#include <QMap>
 
-extern PerInterface_struct PERQT;
-u32 PERQTScan(u32 flags);
+class QTimer;
 
-#endif // PERQT_H
+class UI3DControlPadSetting : public UIControllerSetting, public Ui::UI3DControlPadSetting
+{
+	Q_OBJECT
+
+public:
+	UI3DControlPadSetting( PerInterface_struct* core, uint port, uint pad, uint perType, QWidget* parent = 0 );
+	virtual ~UI3DControlPadSetting();
+
+protected:
+protected slots:
+};
+
+#endif // UI3DCONTROLPADSETTING_H

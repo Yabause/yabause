@@ -27,7 +27,7 @@
 int  PERLinuxJoyInit(void);
 void PERLinuxJoyDeInit(void);
 int  PERLinuxJoyHandleEvents(void);
-u32  PERLinuxJoyScan(void);
+u32  PERLinuxJoyScan(u32 flags);
 void PERLinuxJoyFlush(void);
 void PERLinuxKeyName(u32 key, char * name, int size);
 
@@ -98,7 +98,7 @@ int PERLinuxJoyHandleEvents(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 PERLinuxJoyScan(void) {
+u32 PERLinuxJoyScan(u32 flags) {
    struct js_event evt;
 
    if (hJOY == -1) return 0;

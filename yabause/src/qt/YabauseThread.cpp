@@ -162,8 +162,51 @@ void YabauseThread::reloadControllers()
 					}
 					break;
 				}
+				case PERWHEEL:
+					QtYabause::mainWindow()->appendLog( "Wheel controller type is not yet supported" );
+					break;
+				case PER3DPAD:
+				{
+					PerAnalog_struct* analogbits = Per3DPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );
+
+					settings->beginGroup( QString( "Input/Port/%1/Id/%2/Controller/%3/Key" ).arg( port ).arg( id ).arg( type ) );
+					QStringList analogKeys = settings->childKeys();
+					settings->endGroup();
+
+					analogKeys.sort();
+					foreach ( const QString& analogKey, analogKeys )
+					{
+						const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( analogKey ) ).toString();
+
+						PerSetKey( key.toUInt(), analogKey.toUInt(), analogbits );
+					}
+					break;
+				}
+				case PERGUN:
+					QtYabause::mainWindow()->appendLog( "Gun controller type is not yet supported" );
+					break;
+				case PERKEYBOARD:
+					QtYabause::mainWindow()->appendLog( "Keyboard controller type is not yet supported" );
+					break;
 				case PERMOUSE:
-					QtYabause::mainWindow()->appendLog( "Mouse controller type is not yet supported" );
+				{
+					PerMouse_struct* mousebits = PerMouseAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );
+
+					settings->beginGroup( QString( "Input/Port/%1/Id/%2/Controller/%3/Key" ).arg( port ).arg( id ).arg( type ) );
+					QStringList mouseKeys = settings->childKeys();
+					settings->endGroup();
+
+					mouseKeys.sort();
+					foreach ( const QString& mouseKey, mouseKeys )
+					{
+						const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( mouseKey ) ).toString();
+
+						PerSetKey( key.toUInt(), mouseKey.toUInt(), mousebits );
+					}
+					break;
+				}
+				case 0:
+					// Unconnected
 					break;
 				default:
 					QtYabause::mainWindow()->appendLog( "Invalid controller type" );
