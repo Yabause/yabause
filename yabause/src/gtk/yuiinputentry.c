@@ -167,7 +167,7 @@ static gboolean watch_joy(gpointer name) {
 		return TRUE;
 	}
 
-	i = PERCore->Scan();
+	i = PERCore->Scan(PERSF_KEY | PERSF_BUTTON | PERSF_HAT);
 
 	if (i == 0) {
 		return TRUE;
