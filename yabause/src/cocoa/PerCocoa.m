@@ -29,7 +29,7 @@ static int PERCocoaInit(void);
 static void PERCocoaDeInit(void);
 static int PERCocoaHandleEvents(void);
 
-static u32 PERCocoaScan(void);
+static u32 PERCocoaScan(u32 flags);
 static void PERCocoaFlush(void);
 static void PERCocoaKeyName(u32 key, char *name, int size);
 
@@ -157,7 +157,7 @@ static int PERCocoaHandleEvents(void) {
     return YabauseExec();
 }
 
-static u32 PERCocoaScan(void) {
+static u32 PERCocoaScan(u32 flags) {
     return 0;
 }
 
