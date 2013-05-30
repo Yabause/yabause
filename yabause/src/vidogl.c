@@ -77,11 +77,6 @@ void VIDOGLVdp2DrawStart(void);
 void VIDOGLVdp2DrawEnd(void);
 void VIDOGLVdp2DrawScreens(void);
 void VIDOGLVdp2SetResolution(u16 TVMD);
-void FASTCALL VIDOGLVdp2SetPriorityNBG0(int priority);
-void FASTCALL VIDOGLVdp2SetPriorityNBG1(int priority);
-void FASTCALL VIDOGLVdp2SetPriorityNBG2(int priority);
-void FASTCALL VIDOGLVdp2SetPriorityNBG3(int priority);
-void FASTCALL VIDOGLVdp2SetPriorityRBG0(int priority);
 void YglGetGlSize(int *width, int *height);
 
 VideoInterface_struct VIDOGL = {
@@ -107,12 +102,6 @@ VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
 VIDOGLVdp2DrawScreens,
-VIDOGLVdp2SetResolution,
-VIDOGLVdp2SetPriorityNBG0,
-VIDOGLVdp2SetPriorityNBG1,
-VIDOGLVdp2SetPriorityNBG2,
-VIDOGLVdp2SetPriorityNBG3,
-VIDOGLVdp2SetPriorityRBG0,
 YglGetGlSize
 };
 
@@ -3250,7 +3239,7 @@ static void Vdp2DrawNBG0(void)
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7) << 8;
    ReadVdp2ColorOffset(&info, 0x1);
-   info.priority = nbg0priority;
+   info.priority = Vdp2Regs->PRINA & 0x7;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
       return;
@@ -3414,7 +3403,7 @@ static void Vdp2DrawNBG1(void)
          info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN1.all & 0x7FF00);
       
       
-   info.priority = nbg1priority;
+   info.priority = (Vdp2Regs->PRINA >> 8) & 0x7;;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG1PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
@@ -3532,7 +3521,7 @@ static void Vdp2DrawNBG2(void)
    ReadVdp2ColorOffset(&info, 0x4);
    info.coordincx = info.coordincy = 1;
 
-   info.priority = nbg2priority;
+   info.priority = Vdp2Regs->PRINB & 0x7;;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG2PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
@@ -3602,7 +3591,7 @@ static void Vdp2DrawNBG3(void)
    ReadVdp2ColorOffset(&info, 0x8);
    info.coordincx = info.coordincy = 1;
 
-   info.priority = nbg3priority;
+   info.priority = (Vdp2Regs->PRINB >> 8) & 0x7;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG3PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
@@ -3641,7 +3630,7 @@ static void Vdp2DrawRBG0(void)
    info.uclipmode=0;
    
    info.enable = Vdp2Regs->BGON & 0x10;
-   info.priority = rbg0priority;
+   info.priority = Vdp2Regs->PRIR & 0x7;
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
       return;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x1000);
@@ -3924,6 +3913,7 @@ static void Vdp2DrawRBG0(void)
 
 void VIDOGLVdp2DrawScreens(void)
 {
+   VIDOGLVdp2SetResolution(Vdp2Regs->TVMD);
    Vdp2GenerateWindowInfo();
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
@@ -4007,41 +3997,6 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
 
    SetSaturnResolution(width, height);
    Vdp1SetTextureRatio(wratio, hratio);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDOGLVdp2SetPriorityNBG0(int priority)
-{
-   nbg0priority = priority;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDOGLVdp2SetPriorityNBG1(int priority)
-{
-   nbg1priority = priority;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDOGLVdp2SetPriorityNBG2(int priority)
-{
-   nbg2priority = priority;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDOGLVdp2SetPriorityNBG3(int priority)
-{
-   nbg3priority = priority;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDOGLVdp2SetPriorityRBG0(int priority)
-{
-   rbg0priority = priority;
 }
 
 //////////////////////////////////////////////////////////////////////////////

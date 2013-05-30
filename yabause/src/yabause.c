@@ -795,12 +795,6 @@ void YabauseSpeedySetup(void)
    Vdp2Regs->COAR = 0x0200;
    Vdp2Regs->COAG = 0x0200;
    Vdp2Regs->COAB = 0x0200;
-   VIDCore->Vdp2SetResolution(Vdp2Regs->TVMD);
-   VIDCore->Vdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
-   VIDCore->Vdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
-   VIDCore->Vdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
-   VIDCore->Vdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
-   VIDCore->Vdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
 }
 
 //////////////////////////////////////////////////////////////////////////////

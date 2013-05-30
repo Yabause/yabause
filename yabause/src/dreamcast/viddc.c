@@ -2667,6 +2667,13 @@ static void Vdp2Draw(int priority)  {
 static void VIDDCVdp2DrawScreens(void)  {
     int i;
 
+    VIDDCVdp2SetResolution(Vdp2Regs->TVMD);
+    VIDDCVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
+    VIDDCVdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
+    VIDDCVdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
+    VIDDCVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
+    VIDDCVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
+
     vdp2_fb = vdp2_fbs[0];
     vdp2_fbnum = 0;
 
@@ -2826,11 +2833,5 @@ VideoInterface_struct VIDDC = {
     VIDDCVdp2Reset,
     VIDDCVdp2DrawStart,
     VIDDCVdp2DrawEnd,
-    VIDDCVdp2DrawScreens,
-    VIDDCVdp2SetResolution,
-    VIDDCVdp2SetPriorityNBG0,
-    VIDDCVdp2SetPriorityNBG1,
-    VIDDCVdp2SetPriorityNBG2,
-    VIDDCVdp2SetPriorityNBG3,
-    VIDDCVdp2SetPriorityRBG0
+    VIDDCVdp2DrawScreens
 };

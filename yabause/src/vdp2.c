@@ -497,7 +497,6 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
    switch (addr)
    {
       case 0x000:
-         VIDCore->Vdp2SetResolution(val);
          Vdp2Regs->TVMD = val;
          yabsys.VBlankLineCount = 224+(val & 0x30);
          return;
@@ -872,17 +871,12 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
          Vdp2Regs->PRISD = val;
          return;
       case 0x0F8:
-         VIDCore->Vdp2SetPriorityNBG0(val & 0x7);
-         VIDCore->Vdp2SetPriorityNBG1((val >> 8) & 0x7);
          Vdp2Regs->PRINA = val;
          return;
       case 0x0FA:
-         VIDCore->Vdp2SetPriorityNBG2(val & 0x7);
-         VIDCore->Vdp2SetPriorityNBG3((val >> 8) & 0x7);
          Vdp2Regs->PRINB = val;
          return;
       case 0x0FC:
-         VIDCore->Vdp2SetPriorityRBG0(val & 0x7);
          Vdp2Regs->PRIR = val;
          return;
       case 0x0FE:
@@ -994,13 +988,6 @@ int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
 
    // Read internal variables
    yread(&check, (void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
-
-   VIDCore->Vdp2SetResolution(Vdp2Regs->TVMD);
-   VIDCore->Vdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
-   VIDCore->Vdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
-   VIDCore->Vdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
-   VIDCore->Vdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
-   VIDCore->Vdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
 
    return size;
 }

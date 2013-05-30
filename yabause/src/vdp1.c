@@ -193,12 +193,6 @@ int VideoChangeCore(int coreid)
    // Reset resolution/priority variables
    if (Vdp2Regs)
    {
-      VIDCore->Vdp2SetResolution(Vdp2Regs->TVMD);
-      VIDCore->Vdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
-      VIDCore->Vdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
-      VIDCore->Vdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
-      VIDCore->Vdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
-      VIDCore->Vdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
       VIDCore->Vdp1Reset();
    }
 
@@ -1326,12 +1320,6 @@ int VIDDummyVdp2Reset(void);
 void VIDDummyVdp2DrawStart(void);
 void VIDDummyVdp2DrawEnd(void);
 void VIDDummyVdp2DrawScreens(void);
-void VIDDummyVdp2SetResolution(u16 TVMD);
-void FASTCALL VIDDummyVdp2SetPriorityNBG0(int priority);
-void FASTCALL VIDDummyVdp2SetPriorityNBG1(int priority);
-void FASTCALL VIDDummyVdp2SetPriorityNBG2(int priority);
-void FASTCALL VIDDummyVdp2SetPriorityNBG3(int priority);
-void FASTCALL VIDDummyVdp2SetPriorityRBG0(int priority);
 void VIDDummyGetGlSize(int *width, int *height);
 
 
@@ -1358,12 +1346,6 @@ VIDDummyVdp2Reset,
 VIDDummyVdp2DrawStart,
 VIDDummyVdp2DrawEnd,
 VIDDummyVdp2DrawScreens,
-VIDDummyVdp2SetResolution,
-VIDDummyVdp2SetPriorityNBG0,
-VIDDummyVdp2SetPriorityNBG1,
-VIDDummyVdp2SetPriorityNBG2,
-VIDDummyVdp2SetPriorityNBG3,
-VIDDummyVdp2SetPriorityRBG0,
 VIDDummyGetGlSize
 };
 
@@ -1488,42 +1470,6 @@ void VIDDummyVdp2DrawEnd(void)
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDDummyVdp2DrawScreens(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp2SetResolution(UNUSED u16 TVMD)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDDummyVdp2SetPriorityNBG0(UNUSED int priority)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDDummyVdp2SetPriorityNBG1(UNUSED int priority)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDDummyVdp2SetPriorityNBG2(UNUSED int priority)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDDummyVdp2SetPriorityNBG3(UNUSED int priority)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL VIDDummyVdp2SetPriorityRBG0(UNUSED int priority)
 {
 }
 

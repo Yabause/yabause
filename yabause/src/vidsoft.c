@@ -125,12 +125,6 @@ VIDSoftVdp2Reset,
 VIDSoftVdp2DrawStart,
 VIDSoftVdp2DrawEnd,
 VIDSoftVdp2DrawScreens,
-VIDSoftVdp2SetResolution,
-VIDSoftVdp2SetPriorityNBG0,
-VIDSoftVdp2SetPriorityNBG1,
-VIDSoftVdp2SetPriorityNBG2,
-VIDSoftVdp2SetPriorityNBG3,
-VIDSoftVdp2SetPriorityRBG0,
 VIDSoftGetGlSize,
 };
 
@@ -3084,6 +3078,13 @@ void VIDSoftVdp2DrawEnd(void)
 void VIDSoftVdp2DrawScreens(void)
 {
    int i;
+
+   VIDSoftVdp2SetResolution(Vdp2Regs->TVMD);
+   VIDSoftVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
+   VIDSoftVdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
+   VIDSoftVdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
+   VIDSoftVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
+   VIDSoftVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
 
    for (i = 7; i > 0; i--)
    {   

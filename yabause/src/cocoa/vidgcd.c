@@ -126,12 +126,6 @@ VIDGCDVdp2Reset,
 VIDGCDVdp2DrawStart,
 VIDGCDVdp2DrawEnd,
 VIDGCDVdp2DrawScreens,
-VIDGCDVdp2SetResolution,
-VIDGCDVdp2SetPriorityNBG0,
-VIDGCDVdp2SetPriorityNBG1,
-VIDGCDVdp2SetPriorityNBG2,
-VIDGCDVdp2SetPriorityNBG3,
-VIDGCDVdp2SetPriorityRBG0,
 VIDGCDGetGlSize,
 };
 
@@ -3052,6 +3046,13 @@ static void Vdp1DrawPriority(int prio) {
 void VIDGCDVdp2DrawScreens(void)
 {
    int i;
+
+   VIDGCDVdp2SetResolution(Vdp2Regs->TVMD);
+   VIDGCDVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
+   VIDGCDVdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
+   VIDGCDVdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
+   VIDGCDVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
+   VIDGCDVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
 
     /* Draw all the screens, from the lowest priority one forward. */
     for(i = 1; i < 8; ++i)
