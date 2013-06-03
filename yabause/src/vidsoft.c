@@ -2889,7 +2889,7 @@ void VIDSoftVdp2DrawEnd(void)
          for (i = 0; i < vdp2width; i++)
          {
             // See if screen position is clipped, if it isn't, continue
-            if (!TestBothWindow(wctl, clip, i, i2))
+            if (!TestBothWindow(wctl, clip, i * resxratio, i2))
             {
                continue;
             }
