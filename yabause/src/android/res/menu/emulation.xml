@@ -6,6 +6,8 @@
     <group android:id="@+id/paused" android:visible="false">
         <item android:id="@+id/resume" android:title="Resume" />
     </group>
+    <item android:id="@+id/settings"
+          android:title="Settings" />
     <item android:id="@+id/quit"
           android:title="Quit" />
 </menu>

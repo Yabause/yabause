@@ -1,4 +1,4 @@
-/*  Copyright 2011 Guillaume Duhamel
+/*  Copyright 2011-2013 Guillaume Duhamel
 
     This file is part of Yabause.
 
@@ -26,7 +26,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.graphics.Bitmap;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
@@ -34,11 +33,10 @@ import android.app.Dialog;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
-import org.yabause.android.YabauseView;
-import android.widget.ImageView;
-import android.view.MotionEvent;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.view.View;
-import android.view.View.OnTouchListener;
 
 class InputHandler extends Handler {
     private YabauseRunnable yr;
@@ -48,9 +46,10 @@ class InputHandler extends Handler {
     }
 
     public void handleMessage(Message msg) {
-        if (msg.arg1 == 1) {
+        Log.v("Yabause", "received message: " + msg.arg1 + " " + msg.arg2);
+        if (msg.arg1 == 0) {
             yr.press(msg.arg2);
-        } else if (msg.arg1 == 2) {
+        } else if (msg.arg1 == 1) {
             yr.release(msg.arg2);
         }
     }
@@ -67,6 +66,9 @@ class YabauseRunnable implements Runnable
     public static native int drawScreen();
     public static native int lockGL();
     public static native int unlockGL();
+    public static native void enableFPS(int enable);
+    public static native void enableFrameskip(int enable);
+    public static native void setVolume(int volume);
     
     private boolean inited;
     private boolean paused;
@@ -127,11 +129,14 @@ class YabauseHandler extends Handler {
     }
 }
 
-public class Yabause extends Activity implements OnTouchListener
+public class Yabause extends Activity implements OnPadListener
 {
     private static final String TAG = "Yabause";
     private YabauseRunnable yabauseThread;
     private YabauseHandler handler;
+    private YabauseAudio audio;
+    private String biospath;
+    private String gamepath;
 
     /** Called when the activity is first created. */
     @Override
@@ -141,13 +146,16 @@ public class Yabause extends Activity implements OnTouchListener
 
         setContentView(R.layout.main);
 
-        YabauseView view = (YabauseView) findViewById(R.id.yabause_view);
+        audio = new YabauseAudio(this);
+
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        readPreferences();
+
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
-        view.setYabauseRunnable(yabauseThread);
 
-        ImageView pad = (ImageView) findViewById(R.id.yabause_pad);
-        pad.setOnTouchListener(this);
+        YabausePad pad = (YabausePad) findViewById(R.id.yabause_pad);
+        pad.setOnPadListener(this);
     }
 
     @Override
@@ -156,6 +164,7 @@ public class Yabause extends Activity implements OnTouchListener
         super.onPause();
         Log.v(TAG, "pause... should pause emulation...");
         yabauseThread.pause();
+        audio.mute(audio.SYSTEM);
     }
 
     @Override
@@ -163,6 +172,10 @@ public class Yabause extends Activity implements OnTouchListener
     {
         super.onResume();
         Log.v(TAG, "resume... should resume emulation...");
+
+        readPreferences();
+        audio.unmute(audio.SYSTEM);
+
         yabauseThread.resume();
     }
 
@@ -192,6 +205,10 @@ public class Yabause extends Activity implements OnTouchListener
             return true;
         case R.id.resume:
             yabauseThread.resume();
+            return true;
+        case R.id.settings:
+            Intent intent = new Intent(this, YabauseSettings.class);
+            startActivity(intent);
             return true;
         default:
             return super.onOptionsItemSelected(item);
@@ -229,23 +246,11 @@ public class Yabause extends Activity implements OnTouchListener
         return alert;
     }
 
-    public boolean onTouch(View v, MotionEvent event) {
-        int action = event.getActionMasked();
-        float x = event.getX();
-        float y = event.getY();
-        int keyx = (int) ((x - 10) / 30);
-        int keyy = (int) ((y - 10) / 30);
-        int key = (keyx << 2) | keyy;
-        int keya = 0;
-        if (action == event.ACTION_DOWN) {
-            keya = 1;
-        } else if (action == event.ACTION_UP) {
-            keya = 2;
-        }
-
+    @Override
+    public boolean onPad(View v, PadEvent event) {
         Message message = handler.obtainMessage();
-        message.arg1 = keya;
-        message.arg2 = key;
+        message.arg1 = event.getAction();
+        message.arg2 = event.getKey();
         yabauseThread.handler.sendMessage(message);
 
         return true;
@@ -257,6 +262,48 @@ public class Yabause extends Activity implements OnTouchListener
         bundle.putString("message", msg);
         message.setData(bundle);
         handler.sendMessage(message);
+    }
+
+    private void readPreferences() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean fps = sharedPref.getBoolean("pref_fps", false);
+        yabauseThread.enableFPS(fps ? 1 : 0);
+
+        boolean frameskip = sharedPref.getBoolean("pref_frameskip", false);
+        yabauseThread.enableFrameskip(frameskip ? 1 : 0);
+
+        boolean audioout = sharedPref.getBoolean("pref_audio", true);
+        if (audioout) {
+            audio.unmute(audio.USER);
+        } else {
+            audio.mute(audio.USER);
+        }
+
+        String bios = sharedPref.getString("pref_bios", "");
+        if (bios.length() > 0) {
+            YabauseStorage storage = YabauseStorage.getStorage();
+            biospath = storage.getBiosPath(bios);
+        } else
+            biospath = "";
+
+        String game = sharedPref.getString("pref_game", "");
+        if (game.length() > 0) {
+            YabauseStorage storage = YabauseStorage.getStorage();
+            gamepath = storage.getGamePath(game);
+        } else
+            gamepath = "";
+    }
+
+    public String getBiosPath() {
+        return biospath;
+    }
+
+    public String getGamePath() {
+        return gamepath;
+    }
+
+    public String getMemoryPath() {
+        return YabauseStorage.getStorage().getMemoryPath("memory.ram");
     }
 
     static {

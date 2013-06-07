@@ -19,14 +19,18 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		jni/sndaudiotrack.c
 		jni/sndaudiotrack.h
 		src/org/yabause/android/Yabause.java
+		src/org/yabause/android/YabauseAudio.java
 		src/org/yabause/android/YabauseView.java
-		res/drawable/pad.png
+		src/org/yabause/android/YabausePad.java
+		src/org/yabause/android/YabauseSettings.java
+		src/org/yabause/android/YabauseStorage.java
 		res/drawable-hdpi/icon.png
 		res/drawable-ldpi/icon.png
 		res/drawable-mdpi/icon.png
 		res/layout/main.xml
 		res/menu/emulation.xml
 		res/values/strings.xml
+		res/xml/preferences.xml
 	)
 
 	foreach(item IN LISTS yabause_android_SHADOW)
@@ -74,17 +78,21 @@ add_custom_command(
 )
 
 set(yabause_android_RES
-	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable/pad.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-hdpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-ldpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-mdpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/main.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/menu/emulation.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/values/strings.xml"
+	"${CMAKE_CURRENT_BINARY_DIR}/res/xml/preferences.xml"
 )
 set(yabause_android_SRC
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Yabause.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseAudio.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseView.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabausePad.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseSettings.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseStorage.java"
 )
 
 add_custom_command(

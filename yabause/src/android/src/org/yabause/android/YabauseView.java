@@ -1,4 +1,4 @@
-/*  Copyright 2011 Guillaume Duhamel
+/*  Copyright 2011-2013 Guillaume Duhamel
 
     This file is part of Yabause.
 
@@ -30,14 +30,12 @@ import javax.microedition.khronos.egl.EGLSurface;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
 
-class YabauseView extends SurfaceView implements Callback, View.OnKeyListener, View.OnTouchListener{
+class YabauseView extends SurfaceView implements Callback {
     private static String TAG = "YabauseView";
     private static final boolean DEBUG = false; 
 
@@ -47,8 +45,6 @@ class YabauseView extends SurfaceView implements Callback, View.OnKeyListener, V
     public boolean[] pointers = new boolean[256];
     public int[] pointerX = new int[256];
     public int[] pointerY = new int[256];
-    
-   private YabauseRunnable _Runnable = null;
    
     private EGLContext mEglContext;
     private EGLDisplay mEglDisplay;
@@ -70,24 +66,11 @@ class YabauseView extends SurfaceView implements Callback, View.OnKeyListener, V
         super(context);
         init(translucent, depth, stencil);
     }    
-          
-    public void setYabauseRunnable( YabauseRunnable runnable )
-    { 
-       _Runnable = runnable;        
-    }   
-             
-    private void init(boolean translucent, int depth, int stencil) {
 
-       setFocusable( true );
-       setFocusableInTouchMode( true );
-       requestFocus();
-       setOnKeyListener( this );
-       setOnTouchListener( this );  
-        
+    private void init(boolean translucent, int depth, int stencil) {
        getHolder().addCallback(this);
        getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
        initGLES();
-
     }
     
     private boolean initGLES(){
@@ -182,15 +165,19 @@ class YabauseView extends SurfaceView implements Callback, View.OnKeyListener, V
         
     }    
 
-    // Key events
-    public boolean onKey( View  v, int keyCode, KeyEvent event )
-    {
-        return false;
-    }
+    @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int specw = MeasureSpec.getSize(widthMeasureSpec);
+        int spech = MeasureSpec.getSize(heightMeasureSpec);
+        float specratio = (float) specw / spech;
+        int saturnw = 320;
+        int saturnh = 224;
+        float saturnratio = (float) saturnw / saturnh;
+        float revratio = (float) saturnh / saturnw;
 
-    public boolean onTouch( View v, MotionEvent event )
-    {
-        return true;
+        if (specratio > saturnratio) {
+            setMeasuredDimension((int) (spech * saturnratio), spech);
+        } else {
+            setMeasuredDimension(specw, (int) (specw * revratio));
+        }
     }
-    
 }

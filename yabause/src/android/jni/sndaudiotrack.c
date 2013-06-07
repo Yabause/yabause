@@ -62,6 +62,7 @@ static u8 soundvolume;
 static u8 soundmaxvolume;
 static u8 soundbufsize;
 static int soundoffset;
+static int muted;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -105,6 +106,7 @@ static int SNDAudioTrackInit(void)
    soundmaxvolume = 100;
    soundbufsize = 85;
    soundoffset = 0;
+   muted = 0;
 
    return 0;
 }
@@ -173,16 +175,18 @@ static void SNDAudioTrackUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, 
    soundoffset += copy1size;
 
    if (soundoffset > mbufferSizeInBytes) {
-      JNIEnv * env;
-      if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-          return;
+      if (! muted) {
+         JNIEnv * env;
+         if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+             return;
 
-      jshortArray array = (*env)->NewShortArray(env, soundoffset);
-      if(array) {
-         (*env)->SetShortArrayRegion(env, array, 0, soundoffset, stereodata16);
+         jshortArray array = (*env)->NewShortArray(env, soundoffset);
+         if(array) {
+            (*env)->SetShortArrayRegion(env, array, 0, soundoffset, stereodata16);
+         }
+
+         (*env)->CallNonvirtualIntMethod(env, gtrack, cAudioTrack, mWrite, array, 0, soundoffset);
       }
-
-      (*env)->CallNonvirtualIntMethod(env, gtrack, cAudioTrack, mWrite, array, 0, soundoffset);
 
       soundoffset = 0;
    }
@@ -206,16 +210,19 @@ static u32 SNDAudioTrackGetAudioSpace(void)
 
 static void SNDAudioTrackMuteAudio(void)
 {
+   muted = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void SNDAudioTrackUnMuteAudio(void)
 {
+   muted = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void SNDAudioTrackSetVolume(int volume)
 {
+   soundvolume = volume;
 }

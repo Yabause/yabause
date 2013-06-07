@@ -32,6 +32,7 @@
 #include "cdbase.h"
 #include "cs2.h"
 #include "debug.h"
+#include "osdcore.h"
 
 #include <stdio.h>
 #include <dlfcn.h>
@@ -52,9 +53,6 @@
 JavaVM * yvm;
 static jobject yabause;
 
-static char biospath[256] = "/mnt/sdcard/jap.rom";
-static char cdpath[256] = "\0";
-static char buppath[256] = "\0";
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
 
@@ -128,6 +126,63 @@ int printf( const char * fmt, ... )
    int result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
    va_end(ap);
    return result;   
+}
+
+const char * GetBiosPath()
+{
+    jclass yclass;
+    jmethodID getBiosPath;
+    jstring message;
+    jboolean dummy;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+        return;
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getBiosPath = (*env)->GetMethodID(env, yclass, "getBiosPath", "()Ljava/lang/String;");
+    message = (*env)->CallObjectMethod(env, yabause, getBiosPath);
+    if ((*env)->GetStringLength(env, message) == 0)
+        return NULL;
+    else
+        return (*env)->GetStringUTFChars(env, message, &dummy);
+}
+
+const char * GetGamePath()
+{
+    jclass yclass;
+    jmethodID getGamePath;
+    jstring message;
+    jboolean dummy;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+        return;
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getGamePath = (*env)->GetMethodID(env, yclass, "getGamePath", "()Ljava/lang/String;");
+    message = (*env)->CallObjectMethod(env, yabause, getGamePath);
+    if ((*env)->GetStringLength(env, message) == 0)
+        return NULL;
+    else
+        return (*env)->GetStringUTFChars(env, message, &dummy);
+}
+
+const char * GetMemoryPath()
+{
+    jclass yclass;
+    jmethodID getMemoryPath;
+    jstring message;
+    jboolean dummy;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+        return;
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getMemoryPath = (*env)->GetMethodID(env, yclass, "getMemoryPath", "()Ljava/lang/String;");
+    message = (*env)->CallObjectMethod(env, yabause, getMemoryPath);
+    if ((*env)->GetStringLength(env, message) == 0)
+        return NULL;
+    else
+        return (*env)->GetStringUTFChars(env, message, &dummy);
 }
 
 void YuiErrorMsg(const char *string)
@@ -348,24 +403,34 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
 #endif
     yinit.vidcoretype = VIDCORE_SOFT;
     yinit.sndcoretype = SNDCORE_AUDIOTRACK;
-    yinit.cdcoretype = CDCORE_DEFAULT;
+    yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = CART_NONE;
     yinit.regionid = 0;
-    yinit.biospath = biospath;
-    yinit.cdpath = cdpath;
-    yinit.buppath = buppath;
+    yinit.biospath = GetBiosPath();
+    yinit.cdpath = GetGamePath();
+    yinit.buppath = GetMemoryPath();
     yinit.mpegpath = mpegpath;
     yinit.cartpath = cartpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
+    yinit.frameskip = 0;
 
     res = YabauseInit(&yinit);
 
+    OSDChangeCore(OSDCORE_SOFT);
+
     PerPortReset();
     padbits = PerPadAdd(&PORTDATA1);
-    PerSetKey(1, PERPAD_LEFT, padbits);
-    PerSetKey(4, PERPAD_UP, padbits);
-    PerSetKey(6, PERPAD_DOWN, padbits);
-    PerSetKey(9, PERPAD_RIGHT, padbits);
+    PerSetKey(PERPAD_UP, PERPAD_UP, padbits);
+    PerSetKey(PERPAD_RIGHT, PERPAD_RIGHT, padbits);
+    PerSetKey(PERPAD_DOWN, PERPAD_DOWN, padbits);
+    PerSetKey(PERPAD_LEFT, PERPAD_LEFT, padbits);
+    PerSetKey(PERPAD_START, PERPAD_START, padbits);
+    PerSetKey(PERPAD_A, PERPAD_A, padbits);
+    PerSetKey(PERPAD_B, PERPAD_B, padbits);
+    PerSetKey(PERPAD_C, PERPAD_C, padbits);
+    PerSetKey(PERPAD_X, PERPAD_X, padbits);
+    PerSetKey(PERPAD_Y, PERPAD_Y, padbits);
+    PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
 
     ScspSetFrameAccurate(1);
 
@@ -394,6 +459,32 @@ void
 Java_org_yabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key )
 {
     PerKeyUp(key);
+}
+
+void
+Java_org_yabause_android_YabauseRunnable_enableFPS( JNIEnv* env, jobject obj, jint enable )
+{
+    SetOSDToggle(enable);
+}
+
+void
+Java_org_yabause_android_YabauseRunnable_enableFrameskip( JNIEnv* env, jobject obj, jint enable )
+{
+    if (enable)
+        EnableAutoFrameSkip();
+    else
+        DisableAutoFrameSkip();
+}
+
+void
+Java_org_yabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, jint volume )
+{
+    if (0 == volume)
+       ScspMuteAudio(SCSP_MUTE_USER);
+    else {
+       ScspUnMuteAudio(SCSP_MUTE_USER);
+       ScspSetVolume(volume);
+    }
 }
 
 void log_callback(char * message)
