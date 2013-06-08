@@ -45,20 +45,25 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         labels.add("built-in bios");
         values.add("");
 
-        for(CharSequence bios : biosfiles) {
-            labels.add(bios);
-            values.add(bios);
+        if ((biosfiles != null) && (biosfiles.length > 0)) {
+            for(CharSequence bios : biosfiles) {
+                labels.add(bios);
+                values.add(bios);
+            }
+
+            CharSequence[] entries = new CharSequence[labels.size()];
+            labels.toArray(entries);
+
+            CharSequence[] entryValues = new CharSequence[values.size()];
+            values.toArray(entryValues);
+
+            p.setEntries(entries);
+            p.setEntryValues(entryValues);
+            p.setSummary(p.getEntry());
+        } else {
+            p.setEnabled(false);
+            p.setSummary("built-in bios");
         }
-
-        CharSequence[] entries = new CharSequence[labels.size()];
-        labels.toArray(entries);
-
-        CharSequence[] entryValues = new CharSequence[values.size()];
-        values.toArray(entryValues);
-
-        p.setEntries(entries);
-        p.setEntryValues(entryValues);
-        p.setSummary(p.getEntry());
 
         /* game */
         ListPreference game = (ListPreference) getPreferenceManager().findPreference("pref_game");
@@ -67,7 +72,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         List<CharSequence> gamevalues = new ArrayList<CharSequence>();
 
         CharSequence[] gamefiles = storage.getGameFiles();
-        if (gamefiles != null) {
+        if ((gamefiles != null) && (gamefiles.length > 0)) {
 
             for(CharSequence gamefile : gamefiles) {
                 gamelabels.add(gamefile);
