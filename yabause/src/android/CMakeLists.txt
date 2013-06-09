@@ -10,6 +10,12 @@ if(NOT SDK_ANDROID)
     message(FATAL_ERROR "sdk android tool not found, bye")
 endif()
 
+find_program(ANT NAMES ant ant.bat)
+
+if(NOT ANT)
+    message(FATAL_ERROR "ant not found, bye")
+endif()
+
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	set(yabause_android_SHADOW
 		AndroidManifest.xml
@@ -97,7 +103,7 @@ set(yabause_android_SRC
 
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-debug.apk"
-	COMMAND "ant" ARGS "debug"
+	COMMAND "${ANT}" ARGS "debug"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
 	DEPENDS ${yabause_android_SRC}
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
@@ -107,7 +113,7 @@ add_custom_command(
 
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-release-unsigned.apk"
-	COMMAND "ant" ARGS "release"
+	COMMAND "${ANT}" ARGS "release"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
 	DEPENDS ${yabause_android_SRC}
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
