@@ -92,6 +92,27 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             game.setEnabled(false);
             game.setSummary("no game found");
         }
+
+        /* cartridge */
+        ListPreference cart = (ListPreference) getPreferenceManager().findPreference("pref_cart");
+
+        List<CharSequence> cartlabels = new ArrayList<CharSequence>();
+        List<CharSequence> cartvalues = new ArrayList<CharSequence>();
+
+        for(int carttype = 0;carttype < Cartridge.getTypeCount();carttype++) {
+            cartlabels.add(Cartridge.getName(carttype));
+            cartvalues.add(Integer.toString(carttype));
+        }
+
+        CharSequence[] cartentries = new CharSequence[cartlabels.size()];
+        cartlabels.toArray(cartentries);
+
+        CharSequence[] cartentryValues = new CharSequence[cartvalues.size()];
+        cartvalues.toArray(cartentryValues);
+
+        cart.setEntries(cartentries);
+        cart.setEntryValues(cartentryValues);
+        cart.setSummary(cart.getEntry());
     }
 
     @Override

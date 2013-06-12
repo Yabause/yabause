@@ -137,6 +137,7 @@ public class Yabause extends Activity implements OnPadListener
     private YabauseAudio audio;
     private String biospath;
     private String gamepath;
+    private int carttype;
 
     /** Called when the activity is first created. */
     @Override
@@ -292,6 +293,13 @@ public class Yabause extends Activity implements OnPadListener
             gamepath = storage.getGamePath(game);
         } else
             gamepath = "";
+
+        String cart = sharedPref.getString("pref_cart", "");
+        if (cart.length() > 0) {
+            Integer i = new Integer(cart);
+            carttype = i.intValue();
+        } else
+            carttype = -1;
     }
 
     public String getBiosPath() {
@@ -304,6 +312,14 @@ public class Yabause extends Activity implements OnPadListener
 
     public String getMemoryPath() {
         return YabauseStorage.getStorage().getMemoryPath("memory.ram");
+    }
+
+    public int getCartridgeType() {
+        return carttype;
+    }
+
+    public String getCartridgePath() {
+        return YabauseStorage.getStorage().getCartridgePath(Cartridge.getDefaultFilename(carttype));
     }
 
     static {

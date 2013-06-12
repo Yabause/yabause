@@ -24,6 +24,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		jni/miniegl.h
 		jni/sndaudiotrack.c
 		jni/sndaudiotrack.h
+		src/org/yabause/android/Cartridge.java
 		src/org/yabause/android/Yabause.java
 		src/org/yabause/android/YabauseAudio.java
 		src/org/yabause/android/YabauseView.java
@@ -93,6 +94,7 @@ set(yabause_android_RES
 	"${CMAKE_CURRENT_BINARY_DIR}/res/xml/preferences.xml"
 )
 set(yabause_android_SRC
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Cartridge.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Yabause.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseAudio.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseView.java"

@@ -10,6 +10,11 @@
             android:title="Bios"
             android:dialogTitle="Choose bios" />
 
+        <ListPreference
+            android:key="pref_cart"
+            android:title="Cartridge"
+            android:dialogTitle="Choose cartridge" />
+
         <CheckBoxPreference
             android:key="pref_audio"
             android:title="Audio output"

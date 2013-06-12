@@ -185,6 +185,38 @@ const char * GetMemoryPath()
         return (*env)->GetStringUTFChars(env, message, &dummy);
 }
 
+int GetCartridgeType()
+{
+    jclass yclass;
+    jmethodID getCartridgeType;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+        return;
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getCartridgeType = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()I");
+    return (*env)->CallIntMethod(env, yabause, getCartridgeType);
+}
+
+const char * GetCartridgePath()
+{
+    jclass yclass;
+    jmethodID getCartridgePath;
+    jstring message;
+    jboolean dummy;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+        return;
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getCartridgePath = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()Ljava/lang/String;");
+    message = (*env)->CallObjectMethod(env, yabause, getCartridgePath);
+    if ((*env)->GetStringLength(env, message) == 0)
+        return NULL;
+    else
+        return (*env)->GetStringUTFChars(env, message, &dummy);
+}
+
 void YuiErrorMsg(const char *string)
 {
     jclass yclass;
@@ -410,7 +442,7 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     yinit.cdpath = GetGamePath();
     yinit.buppath = GetMemoryPath();
     yinit.mpegpath = mpegpath;
-    yinit.cartpath = cartpath;
+    yinit.cartpath = GetCartridgePath();
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
 
