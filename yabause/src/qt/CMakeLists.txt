@@ -53,6 +53,11 @@ if ( WIN32 )
 		resources/icons/yabause.rc )
 endif ( WIN32 )
 
+if(APPLE)
+    find_library(AUDIO_LIBRARY AudioUnit)
+    set(yabause_qt_macosx_LIBRARIES ${AUDIO_LIBRARY})
+endif()
+
 # qt forms
 set( yabause_qt_FORMS
 	ui/UIYabause.ui
@@ -220,6 +225,7 @@ target_link_libraries( yabause-qt yabause )
 target_link_libraries( yabause-qt ${YABAUSE_LIBRARIES} )
 target_link_libraries( yabause-qt ${PORT_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_windows_LIBRARIES} )
+target_link_libraries( yabause-qt ${yabause_qt_macosx_LIBRARIES} )
 if (YAB_USE_QT5)
 	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Network_LIBRARIES} )
 else(YAB_USE_QT5)

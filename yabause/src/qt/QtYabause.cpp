@@ -88,6 +88,9 @@ SoundInterface_struct *SNDCoreList[] = {
 #ifdef HAVE_DIRECTSOUND
 &SNDDIRECTX,
 #endif
+#ifdef ARCH_IS_MACOSX
+&SNDMac,
+#endif
 NULL
 };
 

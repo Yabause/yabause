@@ -63,6 +63,10 @@ extern "C"
 	#include "../vdp2debug.h"
 
 	#include "PerQt.h"
+
+#ifdef ARCH_IS_MACOSX
+    #include "../sndmac.h"
+#endif
 }
 
 #include <QString>
