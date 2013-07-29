@@ -47,7 +47,7 @@ static void yui_sh_editedMbpFlags( GtkCellRendererText *cellrenderertext,
 			     gchar *arg2,
 			      YuiSh *sh2);
 static void yui_sh_step( GtkWidget* widget, YuiSh * sh2 );
-static void SH2BreakpointHandler (SH2_struct *context, u32 addr);
+static void SH2BreakpointHandler (SH2_struct *context, u32 addr, void *userdata);
 static gint yui_sh_popup(GtkWidget * widget, GdkEvent * event, gpointer data);
 static gint yui_sh_bp_popup(GtkWidget * widget, GdkEventButton * event, gpointer data);
 static gint yui_sh_mbp_popup(GtkWidget * widget, GdkEventButton * event, gpointer data);
@@ -346,7 +346,7 @@ static GtkWidget * yui_sh_new(YuiWindow * y, gboolean bMaster) {
   sh2->bMaster = bMaster;
   sh2->debugsh = bMaster ? MSH2 : SSH2; 
 
-  SH2SetBreakpointCallBack(sh2->debugsh, (void (*)(void *, u32))SH2BreakpointHandler);
+  SH2SetBreakpointCallBack(sh2->debugsh, (void (*)(void *, u32, void *))SH2BreakpointHandler, NULL);
 
   gtk_window_set_title(GTK_WINDOW(sh2), bMaster?"Master SH2":"Slave SH2");  
 
@@ -719,7 +719,7 @@ static void debugPauseLoop(void) { /* secondary gtk event loop for the "breakpoi
     if ( gtk_main_iteration() ) return;
 }
 
-static void SH2BreakpointHandler (SH2_struct *context, u32 addr) {
+static void SH2BreakpointHandler (SH2_struct *context, u32 addr, void *userdata) {
 
   yui_window_pause(yui);
   {

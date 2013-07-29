@@ -356,6 +356,13 @@ if (YAB_WANT_Q68)
 		q68/q68-const.h q68/q68.h q68/q68-internal.h q68/q68-jit.h q68/q68-jit-psp.h q68/q68-jit-x86.h)
 endif()
 
+# gdb stub
+option(YAB_WANT_GDBSTUB "enable gdb stub" OFF)
+if (YAB_WANT_GDBSTUB)
+    add_definitions(-DHAVE_GDBSTUB=1)
+    set(yabause_SOURCES ${yabause_SOURCES} gdb/stub.c gdb/client.c gdb/packet.c)
+endif()
+
 # *DEBUG
 set(YAB_DEBUG "" CACHE STRING "List of enabled debug information") 
 foreach(DEBUG IN LISTS YAB_DEBUG)

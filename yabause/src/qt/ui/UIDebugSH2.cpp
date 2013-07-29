@@ -27,7 +27,7 @@ int SH2Dis(u32 addr, char *string)
    return 2;
 }
 
-void SH2BreakpointHandler (SH2_struct *context, u32 addr)
+void SH2BreakpointHandler (SH2_struct *context, u32 addr, void *userdata)
 {
    UIYabause* ui = QtYabause::mainWindow( false );
 
@@ -87,7 +87,7 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
       gbBackTrace->setVisible( true );
       updateBackTrace();
 
-      SH2SetBreakpointCallBack(debugSH2, (void (*)(void *, u32))SH2BreakpointHandler);
+      SH2SetBreakpointCallBack(debugSH2, (void (*)(void *, u32, void *))SH2BreakpointHandler, NULL);
    }
 }
 

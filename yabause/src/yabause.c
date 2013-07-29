@@ -75,6 +75,10 @@
 #include "sh2_dynarec/sh2_dynarec.h"
 #endif
 
+#if HAVE_GDBSTUB
+    #include "gdb/stub.h"
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
@@ -273,6 +277,10 @@ int YabauseInit(yabauseinit_struct *init)
             YabauseResetNoLoad();
       }
    }
+
+#ifdef HAVE_GDBSTUB
+   GdbStubInit(MSH2, 43434);
+#endif
 
    return 0;
 }
