@@ -8,14 +8,21 @@ About|Om
 &Action Replay|&Action Replay
 Action Replay Code :|Action Replay-kod
 Add Action Replay Code|Lägg till en Action Replay-kod
+Add Cheat|Lägg till fusk
 Add Codes...|Lägg till kod...
 Add Raw Memory Code|Lägg till råminneskod
+Address|Adress
 Address :|Adress :
 Advanced|Avancerat
-<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>
+Always|Alltid
+Asia (NTSC)|Asien (NTSC)
+Asia (PAL)|Asien (PAL)
 Are you sure you want to delete '%1' ?|Är du säker på att du vill ta bort '%1' ?
 Are you sure you want to format '%1' ?|Är du säker på att du vill formatera '%1' ?
+Auto-detect|Auto-detect
+Autostart|Autostart
 Backup Manager|Backuphanterare
+&Backup Manager...|&Backup-hantering...
 Backup Manager...|Backuphanterare...
 &Backup Ram Manager|&Backup Ram Manager
 Backup Ram Manager|Backup Ram Manager
@@ -24,19 +31,26 @@ Block Size :|Blockstorlek
 &Browse|&Bläddra
 Browse|Bläddra
 Byte Write|Byteskrivning
+&Cancel|&Avbryt
 Cancel|Avbryt
-Cannot initialize|Kan inte initialisera
+Cannot initialize|Kan inte initiera
+Cannot initialize Windows SPTI Driver|Kan inte initiera Windows SPTI-drivrutin
 &Capture Screen|&Skärmdump
 Cart/Memory|Kassett/Minne
 Cartridge|Kassett
 CD Images (*.iso *.cue *.bin)|CD-avbild (*.iso *.cue *.bin)
 Cd-Rom|CD-ROM
+Central/South America (NTSC)|Central-/Sydamerika (NTSC)
+Central/South America (PAL)|Central-/Sydamerika (PAL)
 &Cheats|&Fusk
 Cheats|Fusk
 Cheats File|Fuskfil
 &Cheat List|&Lista över fusk
 Cheats List|Lista över fusk
+&Cheats List...|&Fusklista...
 Cheats List...|Lista över fusk...
+Cheat &Search...|&Sök fusk...
+Cheat Search|Sök efter fusk
 Cheat Type|Typ av fusk
 Choose a cdrom drive/mount point|Välj en CD-läsare eller en monteringspunkt
 Choose a cheat file to open|Välj fuskfil att öppna
@@ -44,35 +58,52 @@ Choose a cheat file to save to|Välj fuskfil att spara till
 Choose a file to save your state|Välj en fil att spara ditt läge till
 Choose a location for your screenshot|Välj plats att spara skärmdump till
 &Clear|&Rensa
+Clear configuration|Rensa inställningar
+&Close|St&äng
 Close|Stäng
 Code|Kod
 Comment :|Kommentar :
+Compare Type|Jämför typ
+Data Size|Datastorlek
 Data Size :|Datastorlek :
-_Debug|_Debug
-&Debug|%Debug
-&Delete|&Ta bort
+Data Type|Datatyp
+_Debug|_Felsök
+&Debug|%Felsök
+&Delete|Ta bo&rt
 Delete|Ta bort
 Description|Beskrivning
 Description :|Beskrivning :
 Device List|Lista över enheter
-Disabled|Inaktiverad
+Disabled|Avaktiverad
 Down|Ner
-Download|Nerladdning
+Download|Nedladdning
+Dummy CD Drive|Provisorisk CD-enhet
+Dummy Input Interface|Provisoriskt indatagränssnitt
+Dummy OSD Interface|Provisoriskt OSD-gränssnitt
+Dummy Sound Interface|Provisoriskt ljudgränssnitt
+Dummy Video Interface|Provisoriskt videogränssnitt
+Edit configuration|Ändra inställningar
 Emu-Compatibility|Emu-kompatibilitet
+&Emulation|&Emulering
 Emulation|Emulering
 End Address:|Slutadress
 Enable|Aktivera
+Enable Frame Skip/Limiter|Aktivera frameskip/-begränsning
 Enabled|Aktiverad
 English|Engelska
+Europe + others (PAL)|Europa + övriga (PAL)
+Exact|Exakt
 &File|&Fil
 File|Fil
-File :|File :
+File :|Fil :
+File:|Fil:
 File Name :|Filnamn :
 File transfer|Filöverföring
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>VARNING:</b> Master Codes stöds <b>INTE</b></font>
 Format|Formatera
 FPS|FPS
 Frame Skip/Limiter|Frame Skip/Limiter
+&Frame Skip/Limiter|&Frameskip/-begränsning
 French|Franska
 From|Från
 From File|Från fil
@@ -81,50 +112,77 @@ From File...|Från fil...
 Fullscreen|Helskärm
 General|Allmänt
 German|Tyska
-Hard Reset|Hård reset
+Glut OSD Interface|Glut OSD-gränssnitt
+Greater then|Större än
+Hard Reset|Hård omstart
 Height|Höjd
 _Help|_Hjälp
 &Help|&Hjälp
+Hide menubar|Dölj menyrad
+Hide toolbar|Dölj verktygsrad
 http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=uk
 http://www.monkeystudio.org|http://www.monkeystudio.org
+Information...|Information...
 Input|Kontroller
 Invalid Address|Ogiltig adress
 Invalid Value|Ogiltigt värde
+ISO-File Virtual Drive|ISO-fil virtuell enhet
 Italian|Italienska
+Japan (NTSC)|Japan (NTSC)
 Japanese|Japanska
+Korea (NTSC)|Korea (NTSC)
 Language :|Språk :
 &Layer|&Lager
 Layer|Lager
 Left|Vänster
 Left trigger|Vänster avtryckare
+Less than|Mindre än
+Linux CD Drive|Linux CD-enhet
 Load as executable|Ladda som exekverbar
 Load|Ladda
 &Load From File|Ladda från fil
+L&oad State|L&adda tillstånd
 Load State|Ladda läge
 Load State As|Ladda läge som
+&Log|&Logg
 Log|Logg
 Long Write|Lång skrivning
 M68K|M68K
+&Master SH2|&Master SH2
+Master SH2|Master SH2
 Memory dump|Minnesdump
 Memory Dump|Minnesdump
+Memory &Editor|Minnes&editor
 Memory Editor|Minnesredigerare
 &Memory Transfer|&Minnesöverföring
 Memory Transfer|Minnesöverföring
 Memory|Minne
 Mpeg ROM|MPEG ROM
+Mouse|Mus
 MSH2|MSH2
 NBG0|NBG0
 NBG1|NBG1
 NBG2|NBG2
 NBG3|NBG3
+Never|Aldrig
+None|Ingen
+North America (NTSC)|Nordamerika (NTSC)
 Ok|OK
 &OK|&OK
+On fullscreen|Helskärm
 Open CD Rom|Öppna CD-ROM
+Open &CD Rom...|Öppna &CD-ROM...
 Open CD Rom...|Öppna CD-ROM...
 Open ISO|Öppna ISO
+Open &ISO...|Öppna &ISO...
 Open ISO...|Öppna ISO...
+OpenGL Video Interface|OpenGL-videogränssnitt
+OSD Core|OSD-kärna
+Pad|Kontroll
+Pad Configuration|Kontrollinställningar
 &Pause|&Paus
 Pause|Paus
+Qt Keyboard Input Interface|Qt tangentbordsindatagränssnitt
 &Quit|&Avsluta
 Quit|Avsluta
 &Raw Memory Address|&Rå minnesadress
@@ -140,22 +198,38 @@ Run|Kör
 Save Information|Spara information
 Save List|Spara lista
 Save|Spara
+S&ave State|Sp&ara tillstånd
 Save State|Spara läge
 Save State As|Spara läge som
 Save States|Spara lägen
 &Save To File|&Spara till fil
+Sc&reenshot|Skä&rmbild
 Screenshot|Skärmdump
 SCSP|SCSP
 SCU-DSP|SCU-DSP
+SDL Joystick Interface|SDL joystick-gränssnitt
+SDL Sound Interface|SDL ljudgränssnitt
+Search|Sök
+Search/Add Cheats|Sök/Lägg till fusk
+Search Value:|Sök värde:
 Select a file to load your state|Välj fil för att ladda ditt läge
 Select your iso/cue/bin file|Välj din iso/cue/bin-fil
+Set PC to Start Address|Sätt PC till startadress
 &Settings...|&Inställningar...
 Settings|Inställningar
+SH2 Debugger Interpreter|SH2 felsökningstolk
+SH2 Dynamic Recompiler|SH2 dynamisk omkompilering
 SH2 Interpreter|SH2-tolkare
+Show FPS|Visa FPS
+&Slave SH2|&Slav SH2
+Slave SH2|Slav SH2
+Software Video Interface|Mjukvaruvideogränssnitt
 Sound Core|Ljudgränssnitt
 Sound|Ljud
 Spanish|Spanska
 SSH2|SSH2
+Signed|Signerad
+Software OSD Interface|Mjukvaru OSD-gränssnitt
 Start|Start
 Start Address:|Startadress
 Status|Status
@@ -163,8 +237,10 @@ Store|Lagra
 To File|Till fil
 To File...|Till fil...
 toolBar|Verktygsfält
+&Tools|Verk&tyg
 Tools|Verktyg
 To|Till
+&Transfer|Ö&verföring
 Transfer|Överföring
 Translation|Översättning
 Unable to add code|Kan inte lägga till kod
@@ -173,8 +249,10 @@ Unable to open file for loading|Kan inte öppna fil för att ladda
 Unable to open file for saving|Kan inte öppna fil för att spara
 Unable to remove code|Kan inte ta bort kod
 Unknow (%1)|Okänt (%1)
+Unsigned|Osignerad
 Up|Upp
 Upload|Uppladdning
+Value|Värde
 Value :|Värde :
 Vdp1|Vdp1
 VDP1|VDP1
@@ -186,10 +264,13 @@ Video Format|Videoformat
 Video|Video
 _View|_Visa
 &View|&Visa
+View|Visa
 Waiting Input...|Väntar på input...
 Width|Bredd
+Windows SPTI Driver|Windows SPTI-drivrutin
 Word Write|Ordskrivning
 Yabause Cheat Files (*.yct);;All Files (*)|Yabause fuskfil (*.yct);;Alla filer (*)
-Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt GUI<br />Baserat på Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />Yabause-teamet<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Yabause is not initialized, can't manage backup ram.|Yabause är inte initierat, kan inte hantera backup-RAM.
+Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt-gränssnitt<br />Baserat op Yabause %1<br /><a href="<a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a>"><a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a></a><br />Yabause-gruppen<br /><a href="<a href="mailto:pasnox@gmail.com" class="external free" rel="nofollow">mailto:pasnox@gmail.com</a>">Filipe AZEVEDO</a>
 Yabause Qt GUI|Yabause Qt GUI
 Yabause Save State (*.yss)|Yabause Sparat Läge (*.yss)
