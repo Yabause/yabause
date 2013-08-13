@@ -78,7 +78,11 @@ int PERSDLJoyInit(void) {
 	{
 		return 0;
 	}
-	
+
+#if defined (_MSC_VER) && SDL_VERSION_ATLEAST(2,0,0)
+   SDL_SetMainReady();
+#endif
+
 	// init joysticks
 	if ( SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == -1 )
 	{
@@ -128,12 +132,17 @@ void PERSDLJoyDeInit(void) {
 		int i;
 		for ( i = 0; i < SDL_PERCORE_JOYSTICKS_INITIALIZED; i++ )
 		{
+#if SDL_VERSION_ATLEAST(2,0,0)
+         if ( SDL_PERCORE_JOYSTICKS[ i ].mJoystick )
+#else
 			if ( SDL_JoystickOpened( i ) )
-			{
-				SDL_JoystickClose( SDL_PERCORE_JOYSTICKS[ i ].mJoystick );
-				free( SDL_PERCORE_JOYSTICKS[ i ].mScanStatus );
-				free( SDL_PERCORE_JOYSTICKS[ i ].mHatStatus );
-			}
+#endif
+         {
+            SDL_JoystickClose( SDL_PERCORE_JOYSTICKS[ i ].mJoystick );
+
+            free( SDL_PERCORE_JOYSTICKS[ i ].mScanStatus );
+            free( SDL_PERCORE_JOYSTICKS[ i ].mHatStatus );
+         }
 		}
 		free( SDL_PERCORE_JOYSTICKS );
 	}
