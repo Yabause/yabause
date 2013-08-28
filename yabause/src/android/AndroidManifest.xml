@@ -21,4 +21,4 @@
 <uses-library required="false" name="com.sec.android.app.multiwindow"> </uses-library>
 <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
     </application>
-</manifest> 
+</manifest>
