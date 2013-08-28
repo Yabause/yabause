@@ -34,6 +34,7 @@ Byte Write|Gravação do Byte
 &Cancel|&Cancelar
 Cancel|Cancelar
 Cannot initialize|Não consegue inicializar
+Cannot initialize Windows SPTI Driver|Não consegue inicializar o Driver SPTI do Windows
 &Capture Screen|&Capturar Tela
 Cart/Memory|Cartucho/Memória
 Cartridge|Cartucho
@@ -41,7 +42,7 @@ CD Images (*.iso *.cue *.bin)|Imagens de CD (*.iso *.cue *.bin)
 Cd-Rom|Cd-Rom
 Central/South America (NTSC)|América Central/do Sul (NTSC)
 Central/South America (PAL)|América Central/do Sul (PAL)
-&Cheats|&Códigos
+&Cheats|&Trapaças
 Cheats|Trapaças
 Cheats File|Arquivo das Trapaças
 &Cheat List|Lista de &Trapaças
@@ -52,8 +53,8 @@ Cheat &Search...|Busca de &Trapaças...
 Cheat Search|Busca de Trapaças
 Cheat Type|Tipo de Trapaça
 Choose a cdrom drive/mount point|Escolha um drive de cdrom/ponto de montagem
-Choose a cheat file to open|Escolha um arquivo de códigos para abrir
-Choose a cheat file to save to|Escolha um arquivo de códigos para salvar
+Choose a cheat file to open|Escolha um arquivo de trapaça para abrir
+Choose a cheat file to save to|Escolha um arquivo de trapaça para salvar
 Choose a file to save your state|Escolha um arquivo para salvar seu estado
 Choose a location for your screenshot|Escolha um local para seu screenshot
 &Clear|&Limpar
@@ -135,7 +136,7 @@ Language :|Idioma :
 Layer|Camada
 Left|Esquerda
 Left trigger|Gatilho esquerdo
-Less than|Menos do que
+Less than|Menor do que
 Linux CD Drive|Drive de CD do Linux
 Load as executable|Carregar como executável
 Load|Carregar
@@ -178,6 +179,7 @@ Open ISO...|Abrir a ISO...
 OpenGL Video Interface|Interface de Vídeo do OpenGL
 OSD Core|Núcleo do OSD
 Pad|Pad
+Pad Configuration|Configuração do Pad
 &Pause|&Pausar
 Pause|Pausar
 Qt Keyboard Input Interface|Interface da Entrada de Dados do Teclado do Qt
@@ -193,7 +195,7 @@ Right|Direita
 Right trigger|Gatilho direito
 R&un|E&xecutar
 Run|Executar
-Save Information|Informações sobre os Saves
+Save Information|Informação dos Saves
 Save List|Lista dos Saves
 Save|Salvar
 S&ave State|S&ave State
@@ -234,7 +236,7 @@ Status|Status
 Store|Armazenar
 To File|Para o Arquivo
 To File...|Para o Arquivo...
-toolBar|Barra de ferramentas
+toolBar|Barra de Ferramentas
 &Tools|&Ferramentas
 Tools|Ferramentas
 To|Para
@@ -265,10 +267,10 @@ _View|_Visualizar
 View|Visualizar
 Waiting Input...|Esperando a Entrada dos Dados...
 Width|Largura
-Windows SPTI Driver|Drive SPTI do Windows
+Windows SPTI Driver|Driver SPTI do Windows
 Word Write|Gravação das Palavras
 Yabause Cheat Files (*.yct);;All Files (*)|Arquivos das Trapaças do Yabause (*.yct);;Todos os Arquivos (*)
 Yabause is not initialized, can't manage backup ram.|O Yabause não está inicializado, não pode gerenciar a ram do backup.
-Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Gui Qt do Yabause<br />Baseada no Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />O Time Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Gui Qt do Yabause<br />Baseada no Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />O Time do Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Qt GUI|GUI Qt do Yabause
 Yabause Save State (*.yss)|Save State do Yabause (*.yss)
