@@ -3,7 +3,7 @@
 
 void gdb_packet_read(gdb_packet * packet, char * buffer, size_t got)
 {
-   ssize_t i;
+   size_t i;
    char c;
 
    for(i = 0;i < got;i++)
@@ -37,7 +37,7 @@ void gdb_packet_read(gdb_packet * packet, char * buffer, size_t got)
             packet->checksum[packet->cslen++] = c;
             if (2 == packet->cslen)
             {
-               u8 checksum;
+               int checksum;
                sscanf(packet->checksum, "%2x", &checksum);
                packet->buffer[packet->buflen] = '\0';
                if (packet->bufsum == checksum)

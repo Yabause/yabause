@@ -1,5 +1,4 @@
-/*  src/thr-dummy.c: Dummy thread functions for systems without thread support
-    Copyright 2010 Andrew Church
+/*  Copyright 2013 Theo Berkau
 
     This file is part of Yabause.
 
@@ -19,20 +18,9 @@
 */
 
 #include "core.h"
-#include "threads.h"
+#include "sock.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg) { return -1; }
-
-void YabThreadWait(unsigned int id) {}
-
-void YabThreadYield(void) {}
-
-void YabThreadSleep(void) {}
-
-void YabThreadRemoteSleep(unsigned int id) {}
-
-void YabThreadWake(unsigned int id) {}
 
 //////////////////////////////////////////////////////////////////////////////

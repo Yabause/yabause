@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 void gdb_client_unlock(gdb_client * client) {
-   pthread_cond_signal(&client->cond);
+   YabThreadWake(YAB_THREAD_GDBSTUBCLIENT);
 }
 
 void gdb_client_step(gdb_client * client) {
@@ -16,7 +16,7 @@ void gdb_client_received(gdb_client * client, gdb_packet * packet)
 {
    char ack = '+';
    printf("packet received: %s\n", packet->buffer);
-   send(client->sock, &ack, 1, 0);
+   YabSockSend(client->sock, &ack, 1, 0);
 
    if (packet->buffer[0] == '?')
       gdb_client_break(client);
@@ -25,7 +25,7 @@ void gdb_client_received(gdb_client * client, gdb_packet * packet)
    else if (packet->buffer[0] == 'g')
    {
       int i;
-      char buffer[184];
+      char buffer[184+1];
 
       for(i = 0;i < 16;i++)
          sprintf(buffer + 8 * i, "%08x", client->context->regs.R[i]);
@@ -127,11 +127,11 @@ void gdb_client_received(gdb_client * client, gdb_packet * packet)
    }
 }
 
-void gdb_client_send(gdb_client * client, const char * message, size_t msglen)
+void gdb_client_send(gdb_client * client, const char * message, int msglen)
 {
    char * buffer;
    u8 checksum = 0;
-   size_t i;
+   int i;
 
    for(i = 0;i < msglen;i++)
       checksum += message[i];
@@ -142,7 +142,7 @@ void gdb_client_send(gdb_client * client, const char * message, size_t msglen)
    buffer[msglen + 1] = '#';
    sprintf(buffer + msglen + 2, "%02x", checksum);
    buffer[msglen + 4] = '\0';
-   send(client->sock, buffer, msglen + 4);
+   YabSockSend(client->sock, buffer, msglen + 4, 0);
    printf("sent: %s\n", buffer);
    free(buffer);
 }
@@ -153,17 +153,10 @@ void gdb_client_error(gdb_client * client)
 
 void gdb_client_lock(void *context, u32 addr, void * userdata) {
    gdb_client * client = userdata;
-   pthread_mutex_t mutex;
 
    gdb_client_send(client, "S05", 3);
 
-   pthread_mutex_init(&mutex, NULL);
-
-   pthread_mutex_lock(&mutex);
-   pthread_cond_wait(&client->cond, &mutex);
-   pthread_mutex_unlock(&mutex);
-
-   pthread_mutex_destroy(&mutex);
+   YabThreadRemoteSleep(YAB_THREAD_GDBSTUBCLIENT);
 }
 
 void gdb_client_break(gdb_client * client)
