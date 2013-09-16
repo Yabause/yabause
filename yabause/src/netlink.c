@@ -339,16 +339,17 @@ void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
                            // Status Registers
                            int reg;
                            char *str;
+                           char *inbuffer = (char *) NetlinkArea->inbuffer;
 
                            i++;
 
-                           reg = strtoul(NetlinkArea->inbuffer+i, &str, 10);
-                           i = str-NetlinkArea->inbuffer;
+                           reg = strtoul(inbuffer+i, &str, 10);
+                           i = str-inbuffer;
 
-                           if (NetlinkArea->inbuffer[i] == '=')
+                           if (inbuffer[i] == '=')
                            {
-                              NetlinkArea->reg.SREG[reg & 0xFF] = strtoul(NetlinkArea->inbuffer+i+1, &str, 10);
-                              i = str-NetlinkArea->inbuffer;
+                              NetlinkArea->reg.SREG[reg & 0xFF] = strtoul(inbuffer+i+1, &str, 10);
+                              i = str-inbuffer;
                            }
 
                            i-=1;
@@ -387,12 +388,13 @@ void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
                            // Dial Command
                            char *p;
                            int j;
+                           char *inbuffer = (char *) NetlinkArea->inbuffer;
 
                            NetlinkArea->connectstatus = NL_CONNECTSTATUS_CONNECT;
 
                            NetlinkArea->internet_enable = 0;
 
-                           if ((p = strchr((char* )NetlinkArea->inbuffer+i+2, '*')) != NULL)
+                           if ((p = strchr(inbuffer+i+2, '*')) != NULL)
                            {
                               // Fetch IP
                               char ipstring[45];
@@ -417,7 +419,7 @@ void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
                               // If we're using Sega's old network, just assume we're using internet mode
                               char number[45];
 
-                              sscanf(NetlinkArea->inbuffer+i+2, "%[^\r]\r", number);
+                              sscanf(inbuffer+i+2, "%[^\r]\r", number);
                               remove_all_chars(number, '-');
                               if (strcmp(number, "18007798852") == 0 ||
                                   strcmp(number, "8007798852") == 0)
@@ -433,7 +435,7 @@ void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
                               NETLINK_LOG("Starting dial %s\n", NetlinkArea->ipstring);
                            }
 
-                           i = strchr(NetlinkArea->inbuffer+i, '\r')-NetlinkArea->inbuffer-1;
+                           i = strchr(inbuffer+i, '\r')-inbuffer-1;
                            break;
                         }
                         case 'E':
@@ -514,7 +516,7 @@ void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
                      default: break;
                   }
 
-                  memset(NetlinkArea->inbuffer, 0, NetlinkArea->inbuffersize);
+                  memset((void *) NetlinkArea->inbuffer, 0, NetlinkArea->inbuffersize);
                   NetlinkArea->inbufferstart = NetlinkArea->inbufferend = NetlinkArea->inbuffersize = 0;
 
                   if (NetlinkArea->outbuffersize > 0)
@@ -621,8 +623,8 @@ int NetlinkInit(const char *setting)
       return 0;
    }
 
-   memset(NetlinkArea->inbuffer, 0, NETLINK_BUFFER_SIZE);
-   memset(NetlinkArea->outbuffer, 0, NETLINK_BUFFER_SIZE);
+   memset((void *) NetlinkArea->inbuffer, 0, NETLINK_BUFFER_SIZE);
+   memset((void *) NetlinkArea->outbuffer, 0, NETLINK_BUFFER_SIZE);
 
    NetlinkArea->inbufferstart = NetlinkArea->inbufferend = NetlinkArea->inbuffersize = 0;
    NetlinkArea->inbufferupdate = 0;
