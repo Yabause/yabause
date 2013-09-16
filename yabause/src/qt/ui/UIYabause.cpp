@@ -223,7 +223,27 @@ void UIYabause::errorReceived( const QString& error, bool internal )
 }
 
 void UIYabause::sizeRequested( const QSize& s )
-{ resize( s.isNull() ? QSize( 640, 480 ) : s ); }
+{
+	int heightOffset = toolBar->height()+menubar->height();
+	int width, height;
+	if (s.isNull())
+	{
+		width=640;
+		height=480;
+	}
+	else
+	{
+		width=s.width();
+		height=s.height();
+	}
+	// Compensate for menubar and toolbar
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	if (vs->value( "View/Menubar" ).toInt() != 2)
+		height += menubar->height();
+	if (vs->value( "View/Toolbar" ).toInt() != 2)
+		height += toolBar->height();
+	resize( width, height ); 
+}
 
 void UIYabause::fullscreenRequested( bool f )
 {
@@ -382,7 +402,8 @@ void UIYabause::on_aFileSettings_triggered()
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
 		
-		if (newhash["Video/Width"] != hash["Video/Width"] || newhash["Video/Height"] != hash["Video/Height"] )
+		if (newhash["Video/Width"] != hash["Video/Width"] || newhash["Video/Height"] != hash["Video/Height"] ||
+          newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"])
 			sizeRequested(QSize(newhash["Video/Width"].toInt(),newhash["Video/Height"].toInt()));
 		
 		if (newhash["Video/Fullscreen"] != hash["Video/Fullscreen"])
