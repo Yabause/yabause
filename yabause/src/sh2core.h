@@ -407,6 +407,7 @@ typedef struct
 
 extern SH2_struct *MSH2;
 extern SH2_struct *SSH2;
+extern SH2_struct *CurrentSH2;
 extern SH2Interface_struct *SH2Core;
 
 int SH2Init(int coreid);

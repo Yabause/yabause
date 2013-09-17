@@ -140,6 +140,7 @@ void UIDebugSH2::updateRegList()
 
 void UIDebugSH2::updateCodeList(u32 addr)
 {
+   addr &= 0x0FFFFFFF;
    lwDisassembledCode->goToAddress(addr);
    lwDisassembledCode->setPC(addr);
 }
