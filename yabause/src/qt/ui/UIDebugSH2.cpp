@@ -180,7 +180,7 @@ void UIDebugSH2::updateTrackInfLoop()
          twTrackInfLoop->setItem(i, 0, newItem);
 
          newItem = new QTableWidgetItem();
-         newItem->setData(Qt::DisplayRole, match[i].count);
+         newItem->setData(Qt::DisplayRole, (qulonglong) match[i].count);
          twTrackInfLoop->setItem(i, 1, newItem);
       }
       twTrackInfLoop->setSortingEnabled(true);
