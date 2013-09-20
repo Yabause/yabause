@@ -88,8 +88,8 @@ public slots:
 	void pause( bool paused );
 	void reset();
 
-	void breakpointHandlerMSH2();
-	void breakpointHandlerSSH2();
+	void breakpointHandlerMSH2(bool displayMessage);
+	void breakpointHandlerSSH2(bool displayMessage);
 	void breakpointHandlerM68K();
 	void breakpointHandlerSCUDSP();
 protected slots:

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>846</width>
+    <width>927</width>
     <height>483</height>
    </rect>
   </property>
@@ -82,22 +82,87 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string>Back Trace</string>
+          <string>Other Debug</string>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
-           <widget class="QListWidget" name="lwBackTrace">
+           <widget class="QTabWidget" name="tabOtherDebug">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="font">
-             <font>
-              <family>Courier New</family>
-             </font>
+            <property name="tabPosition">
+             <enum>QTabWidget::South</enum>
             </property>
+            <property name="tabShape">
+             <enum>QTabWidget::Rounded</enum>
+            </property>
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
+            <property name="tabsClosable">
+             <bool>false</bool>
+            </property>
+            <widget class="QWidget" name="tab_3">
+             <attribute name="title">
+              <string>Backtrace</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_14">
+              <item>
+               <widget class="QListWidget" name="lwBackTrace">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Courier New</family>
+                 </font>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab_4">
+             <attribute name="title">
+              <string>Track Inf Loop Results</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_15">
+              <item>
+               <widget class="QTableWidget" name="twTrackInfLoop">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="editTriggers">
+                 <set>QAbstractItemView::NoEditTriggers</set>
+                </property>
+                <property name="showDropIndicator" stdset="0">
+                 <bool>false</bool>
+                </property>
+                <property name="dragDropOverwriteMode">
+                 <bool>false</bool>
+                </property>
+                <column>
+                 <property name="text">
+                  <string>Address</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Count</string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </widget>
           </item>
          </layout>
@@ -430,6 +495,13 @@
       <widget class="QPushButton" name="pbStepOver">
        <property name="text">
         <string>Step Over</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pbStepOut">
+       <property name="text">
+        <string>Step Out</string>
        </property>
       </widget>
      </item>

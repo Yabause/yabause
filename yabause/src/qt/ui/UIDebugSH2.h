@@ -32,6 +32,8 @@ public:
    void updateRegList();
    void updateCodeList(u32 addr);
    void updateBackTrace();
+   void updateTrackInfLoop();
+   void updateAll();
    u32 getRegister(int index, int *size);
    void setRegister(int index, u32 value);
    bool addCodeBreakpoint(u32 addr);
@@ -39,6 +41,10 @@ public:
    bool addMemoryBreakpoint(u32 addr, u32 flags);
    bool delMemoryBreakpoint(u32 addr);
    void stepInto();
+   void stepOver();
+   void stepOut();
+   void reserved1();
+   void reserved2();
 protected:
 
 protected slots:

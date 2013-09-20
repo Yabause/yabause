@@ -38,6 +38,8 @@ public:
    virtual bool addMemoryBreakpoint(u32 addr, u32 flags);
    virtual bool delMemoryBreakpoint(u32 addr);
    virtual void stepInto();
+   virtual void stepOver();
+   virtual void stepOut();
    virtual void reserved1();
    virtual void reserved2();
    virtual void reserved3();
@@ -51,6 +53,7 @@ protected:
 protected slots:
    void on_lwRegisters_itemDoubleClicked ( QListWidgetItem * item );
    void on_lwBackTrace_itemDoubleClicked ( QListWidgetItem * item );
+   void on_twTrackInfLoop_itemDoubleClicked ( QTableWidgetItem * item );
    void on_leCodeBreakpoint_textChanged( const QString & text);
    void on_leMemoryBreakpoint_textChanged( const QString & text);
    void on_lwCodeBreakpoints_itemSelectionChanged ();
@@ -68,6 +71,8 @@ protected slots:
    void on_cbWriteWord_toggled(bool enable);
    void on_cbWriteLong_toggled(bool enable);
    void on_pbStepInto_clicked();
+   void on_pbStepOver_clicked();
+   void on_pbStepOut_clicked();
    void on_pbMemoryTransfer_clicked();
    void on_pbMemoryEditor_clicked();
 

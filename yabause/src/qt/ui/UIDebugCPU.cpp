@@ -32,28 +32,29 @@ UIDebugCPU::UIDebugCPU( YabauseThread *mYabauseThread, QWidget* p )
 		setWindowFlags( Qt::Sheet );
 
 	// Disable unimplemented functions
-   gbBackTrace->setVisible( false );
+	gbBackTrace->setVisible( false );
 	pbStepOver->setVisible( false );
-   pbReserved1->setVisible( false );
-   pbReserved2->setVisible( false );
-   pbReserved3->setVisible( false );
-   pbReserved4->setVisible( false );
-   pbReserved5->setVisible( false );
+	pbStepOut->setVisible( false );
+	pbReserved1->setVisible( false );
+	pbReserved2->setVisible( false );
+	pbReserved3->setVisible( false );
+	pbReserved4->setVisible( false );
+	pbReserved5->setVisible( false );
 
 	pbAddCodeBreakpoint->setEnabled( false );
 	pbDelCodeBreakpoint->setEnabled( false );
 	pbAddMemoryBreakpoint->setEnabled( false );
 	pbDelMemoryBreakpoint->setEnabled( false );
 
-   // Clear code/memory breakpoint text fields
-   leCodeBreakpoint->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leCodeBreakpoint));
-   leMemoryBreakpoint->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leMemoryBreakpoint));
-   leCodeBreakpoint->setText("");
-   leMemoryBreakpoint->setText("");
-      
-   connect( lwDisassembledCode, SIGNAL( toggleCodeBreakpoint(u32) ), this, SLOT( toggleCodeBreakpoint(u32) ) );
+	// Clear code/memory breakpoint text fields
+	leCodeBreakpoint->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leCodeBreakpoint));
+	leMemoryBreakpoint->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leMemoryBreakpoint));
+	leCodeBreakpoint->setText("");
+	leMemoryBreakpoint->setText("");
 
-   this->mYabauseThread = mYabauseThread;
+	connect( lwDisassembledCode, SIGNAL( toggleCodeBreakpoint(u32) ), this, SLOT( toggleCodeBreakpoint(u32) ) );
+
+	this->mYabauseThread = mYabauseThread;
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
@@ -61,23 +62,29 @@ UIDebugCPU::UIDebugCPU( YabauseThread *mYabauseThread, QWidget* p )
 
 void UIDebugCPU::on_lwRegisters_itemDoubleClicked ( QListWidgetItem * item )
 {
-   int size;
+	int size;
 
-   u32 value = getRegister(lwRegisters->row(item), &size);
+	u32 value = getRegister(lwRegisters->row(item), &size);
 
-   UIHexInput hex(value, size, this);
-   if (hex.exec() == QDialog::Accepted)
-   {
-      value = hex.getValue();
-      setRegister(lwRegisters->row(item), value);
-   }
+	UIHexInput hex(value, size, this);
+	if (hex.exec() == QDialog::Accepted)
+	{
+		value = hex.getValue();
+		setRegister(lwRegisters->row(item), value);
+	}
 
-   updateRegList();
+	updateRegList();
 }
 
 void UIDebugCPU::on_lwBackTrace_itemDoubleClicked ( QListWidgetItem * item )
 {
-   updateCodeList(item->text().toUInt(NULL, 16));
+	updateCodeList(item->text().toUInt(NULL, 16));
+}
+
+void UIDebugCPU::on_twTrackInfLoop_itemDoubleClicked ( QTableWidgetItem * item )
+{
+	if (item->column() == 0)
+		updateCodeList(item->text().toUInt(NULL, 16));
 }
 
 void UIDebugCPU::on_leCodeBreakpoint_textChanged( const QString & text )
@@ -87,22 +94,22 @@ void UIDebugCPU::on_leCodeBreakpoint_textChanged( const QString & text )
 
 bool UIDebugCPU::isReadWriteButtonAndTextOK()
 {
-   if (leMemoryBreakpoint->text().length() > 0)
-   {
-      if (cbRead->isChecked() &&
-         (cbReadByte->isChecked() || cbReadWord->isChecked() || cbReadLong->isChecked()))
-         return true;
-      else if (cbWrite->isChecked() &&
-         (cbWriteByte->isChecked() || cbWriteWord->isChecked() || cbWriteLong->isChecked()))
-         return true;
-   }
-   return false;
+	if (leMemoryBreakpoint->text().length() > 0)
+	{
+		if (cbRead->isChecked() &&
+		(cbReadByte->isChecked() || cbReadWord->isChecked() || cbReadLong->isChecked()))
+			return true;
+		else if (cbWrite->isChecked() &&
+			(cbWriteByte->isChecked() || cbWriteWord->isChecked() || cbWriteLong->isChecked()))
+			return true;
+	}
+	return false;
 }
 
 void UIDebugCPU::on_leMemoryBreakpoint_textChanged( const QString & text )
 {
-   // Only enable Memory breakpoint add button if address is valid and read/write and size is checked
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	// Only enable Memory breakpoint add button if address is valid and read/write and size is checked
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_lwCodeBreakpoints_itemSelectionChanged ()
@@ -112,21 +119,21 @@ void UIDebugCPU::on_lwCodeBreakpoints_itemSelectionChanged ()
 
 void UIDebugCPU::on_pbAddCodeBreakpoint_clicked()
 {
-   // Only add breakpoint to list if all goes well with emulator
-   if (addCodeBreakpoint(leCodeBreakpoint->text().toInt(0, 16)))
-      lwCodeBreakpoints->addItem(leCodeBreakpoint->text());
+	// Only add breakpoint to list if all goes well with emulator
+	if (addCodeBreakpoint(leCodeBreakpoint->text().toInt(0, 16)))
+		lwCodeBreakpoints->addItem(leCodeBreakpoint->text());
 }
 
 void UIDebugCPU::on_pbDelCodeBreakpoint_clicked()
 {
-   QList<QListWidgetItem *> list=lwCodeBreakpoints->selectedItems ();
-   for (int i = 0; i < list.count(); i++)
-   {
-      QListWidgetItem *item=list.value(i);
-      u32 addr = item->text().toUInt(0, 16);
-      delCodeBreakpoint(addr);
-   }
-   qDeleteAll(lwCodeBreakpoints->selectedItems ());
+	QList<QListWidgetItem *> list=lwCodeBreakpoints->selectedItems ();
+	for (int i = 0; i < list.count(); i++)
+	{
+		QListWidgetItem *item=list.value(i);
+		u32 addr = item->text().toUInt(0, 16);
+		delCodeBreakpoint(addr);
+	}
+	qDeleteAll(lwCodeBreakpoints->selectedItems ());
 	pbDelCodeBreakpoint->setEnabled(lwCodeBreakpoints->count() > 0);
 }
 
@@ -137,137 +144,147 @@ void UIDebugCPU::on_lwMemoryBreakpoints_itemSelectionChanged ()
 
 void UIDebugCPU::on_pbAddMemoryBreakpoint_clicked()
 {
-   u32 flags=0;
+	u32 flags=0;
 
-   // Get RW flags
-   if (cbRead->checkState() == Qt::Checked)
-   {
-      if (cbReadByte->checkState() == Qt::Checked)
-         flags |= BREAK_BYTEREAD;
-      if (cbReadWord->checkState() == Qt::Checked)
-         flags |= BREAK_WORDREAD;
-      if (cbReadLong->checkState() == Qt::Checked)
-         flags |= BREAK_LONGREAD;
-   }
+	// Get RW flags
+	if (cbRead->checkState() == Qt::Checked)
+	{
+		if (cbReadByte->checkState() == Qt::Checked)
+			flags |= BREAK_BYTEREAD;
+		if (cbReadWord->checkState() == Qt::Checked)
+			flags |= BREAK_WORDREAD;
+		if (cbReadLong->checkState() == Qt::Checked)
+			flags |= BREAK_LONGREAD;
+	}
 
-   if (cbWrite->checkState() == Qt::Checked)
-   {
-      if (cbWriteByte->checkState() == Qt::Checked)
-         flags |= BREAK_BYTEWRITE;
-      if (cbWriteWord->checkState() == Qt::Checked)
-         flags |= BREAK_WORDWRITE;
-      if (cbWriteLong->checkState() == Qt::Checked)
-         flags |= BREAK_LONGWRITE;
-   }
+	if (cbWrite->checkState() == Qt::Checked)
+	{
+		if (cbWriteByte->checkState() == Qt::Checked)
+			flags |= BREAK_BYTEWRITE;
+		if (cbWriteWord->checkState() == Qt::Checked)
+			flags |= BREAK_WORDWRITE;
+		if (cbWriteLong->checkState() == Qt::Checked)
+			flags |= BREAK_LONGWRITE;
+	}
 
-   // Only add breakpoint to list if all goes well with emulator
-   if (addMemoryBreakpoint(leMemoryBreakpoint->text().toInt(0, 16), flags))
-      lwMemoryBreakpoints->addItem(leMemoryBreakpoint->text());
+	// Only add breakpoint to list if all goes well with emulator
+	if (addMemoryBreakpoint(leMemoryBreakpoint->text().toInt(0, 16), flags))
+		lwMemoryBreakpoints->addItem(leMemoryBreakpoint->text());
 }
 
 void UIDebugCPU::on_pbDelMemoryBreakpoint_clicked()
 {
-   QList<QListWidgetItem *> list=lwMemoryBreakpoints->selectedItems ();
-   for (int i = 0; i < list.count(); i++)
-   {
-      QListWidgetItem *item=list.value(i);
-      u32 addr = item->text().toUInt(0, 16);
-      delMemoryBreakpoint(addr);
-   }
-   qDeleteAll(lwMemoryBreakpoints->selectedItems ());
+	QList<QListWidgetItem *> list=lwMemoryBreakpoints->selectedItems ();
+	for (int i = 0; i < list.count(); i++)
+	{
+		QListWidgetItem *item=list.value(i);
+		u32 addr = item->text().toUInt(0, 16);
+		delMemoryBreakpoint(addr);
+	}
+	qDeleteAll(lwMemoryBreakpoints->selectedItems ());
 	pbDelMemoryBreakpoint->setEnabled(lwMemoryBreakpoints->count() > 0);
 }
 
 void UIDebugCPU::on_cbRead_toggled(bool enable)
 {
-   // Enable Byte/Word/Long if Read is checked
-   cbReadByte->setEnabled(enable);
-   cbReadWord->setEnabled(enable);
-   cbReadLong->setEnabled(enable);
-   
-   // Enable Add button if address is valid and read/write and size is checked
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	// Enable Byte/Word/Long if Read is checked
+	cbReadByte->setEnabled(enable);
+	cbReadWord->setEnabled(enable);
+	cbReadLong->setEnabled(enable);
+
+	// Enable Add button if address is valid and read/write and size is checked
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_cbWrite_toggled(bool enable)
 {
-   // Enable Byte/Word/Long if Write is checked
-   cbWriteByte->setEnabled(enable);
-   cbWriteWord->setEnabled(enable);
-   cbWriteLong->setEnabled(enable);
+	// Enable Byte/Word/Long if Write is checked
+	cbWriteByte->setEnabled(enable);
+	cbWriteWord->setEnabled(enable);
+	cbWriteLong->setEnabled(enable);
 
-   // Enable Add button if address is valid and read/write and size is checked
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	// Enable Add button if address is valid and read/write and size is checked
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_cbReadByte_toggled(bool enable)
 {
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_cbReadWord_toggled(bool enable)
 {
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_cbReadLong_toggled(bool enable)
 {
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_cbWriteByte_toggled(bool enable)
 {
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_cbWriteWord_toggled(bool enable)
 {
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_cbWriteLong_toggled(bool enable)
 {
-   pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
+	pbAddMemoryBreakpoint->setEnabled(isReadWriteButtonAndTextOK());
 }
 
 void UIDebugCPU::on_pbStepInto_clicked()
 {
-   stepInto();
+	stepInto();
+}
+
+void UIDebugCPU::on_pbStepOver_clicked()
+{
+	stepOver();
+}
+
+void UIDebugCPU::on_pbStepOut_clicked()
+{
+	stepOut();
 }
 
 void UIDebugCPU::on_pbMemoryTransfer_clicked()
 {
-   UIMemoryTransfer( mYabauseThread, this ).exec();
+	UIMemoryTransfer( mYabauseThread, this ).exec();
 }
 
 void UIDebugCPU::on_pbMemoryEditor_clicked()
 {	
-   UIMemoryEditor( mYabauseThread, this ).exec();
+	UIMemoryEditor( mYabauseThread, this ).exec();
 }
 
 void UIDebugCPU::on_pbReserved1_clicked()
 {
-   reserved1();
+	reserved1();
 }
 
 void UIDebugCPU::on_pbReserved2_clicked()
 {
-   reserved2();
+	reserved2();
 }
 
 void UIDebugCPU::on_pbReserved3_clicked()
 {
-   reserved3();
+	reserved3();
 }
 
 void UIDebugCPU::on_pbReserved4_clicked()
 {
-   reserved4();
+	reserved4();
 }
 
 void UIDebugCPU::on_pbReserved5_clicked()
 {
-   reserved5();
+	reserved5();
 }
 
 void UIDebugCPU::updateRegList()
@@ -280,8 +297,8 @@ void UIDebugCPU::updateCodeList(u32 addr)
 
 u32 UIDebugCPU::getRegister(int index, int *size)
 {
-   *size = 4;
-   return 0;
+	*size = 4;
+	return 0;
 }
 
 void UIDebugCPU::setRegister(int index, u32 value)
@@ -290,48 +307,55 @@ void UIDebugCPU::setRegister(int index, u32 value)
 
 bool UIDebugCPU::addCodeBreakpoint(u32 addr)
 {
-   return true;
+	return true;
 }
 
 void UIDebugCPU::toggleCodeBreakpoint(u32 addr)
 {
-   QString text;
-   text.sprintf("%08X", addr);
-   QList<QListWidgetItem *> list = lwCodeBreakpoints->findItems(text, Qt::MatchFixedString);
+	QString text;
+	text.sprintf("%08X", addr);
+	QList<QListWidgetItem *> list = lwCodeBreakpoints->findItems(text, Qt::MatchFixedString);
 
-   if (list.count() >= 1)
-   {
-      // Remove breakpoint
-      QListWidgetItem *item=list.value(0);
-      delete item;
-      delCodeBreakpoint(addr);
-   }
-   else
-   {
-      // Add breakpoint
-      if (addCodeBreakpoint(addr))
-         lwCodeBreakpoints->addItem(text);
-   }
+	if (list.count() >= 1)
+	{
+		// Remove breakpoint
+		QListWidgetItem *item=list.value(0);
+		delete item;
+		delCodeBreakpoint(addr);
+	}
+	else
+	{
+		// Add breakpoint
+		if (addCodeBreakpoint(addr))
+			lwCodeBreakpoints->addItem(text);
+	}
 }
 
 bool UIDebugCPU::delCodeBreakpoint(u32 addr)
 {
-   return true;
+	return true;
 }
 
 bool UIDebugCPU::addMemoryBreakpoint(u32 addr, u32 flags)
 {
-   return true;
+	return true;
 }
 
 bool UIDebugCPU::delMemoryBreakpoint(u32 addr)
 {
-   return true;
+	return true;
 }
 
 void UIDebugCPU::stepInto()
 {
+}
 
+void UIDebugCPU::stepOver()
+{
+}
+
+void UIDebugCPU::stepOut()
+{
 }
 
 void UIDebugCPU::reserved1()

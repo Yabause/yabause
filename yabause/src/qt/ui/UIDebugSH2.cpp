@@ -32,9 +32,9 @@ void SH2BreakpointHandler (SH2_struct *context, u32 addr, void *userdata)
    UIYabause* ui = QtYabause::mainWindow( false );
 
    if (context == MSH2)
-      emit ui->breakpointHandlerMSH2();
+      emit ui->breakpointHandlerMSH2(userdata == NULL ? true : false);
    else
-      emit ui->breakpointHandlerSSH2();
+      emit ui->breakpointHandlerSSH2(userdata == NULL ? true : false);
 }
 
 UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
@@ -52,10 +52,8 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
    }
    gbRegisters->setTitle(QtYabause::translate("SH2 Registers"));
 
-   updateRegList();
    if (debugSH2)
    {
-      sh2regs_struct sh2regs;
       const codebreakpoint_struct *cbp;
       const memorybreakpoint_struct *mbp;
       int i;
@@ -82,13 +80,23 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
       lwDisassembledCode->setDisassembleFunction(SH2Dis);
       lwDisassembledCode->setEndAddress(0x06100000);
       lwDisassembledCode->setMinimumInstructionSize(2);
-      SH2GetRegisters(debugSH2, &sh2regs);
-      updateCodeList(sh2regs.PC);
       gbBackTrace->setVisible( true );
-      updateBackTrace();
 
       SH2SetBreakpointCallBack(debugSH2, (void (*)(void *, u32, void *))SH2BreakpointHandler, NULL);
    }
+
+   updateAll();
+
+   if (debugSH2 && debugSH2->trackInfLoop.enabled)
+      pbReserved1->setText(QtYabause::translate("Loop Track Stop"));
+   else
+      pbReserved1->setText(QtYabause::translate("Loop Track Start"));
+   pbReserved2->setText(QtYabause::translate("Loop Track Clear"));
+
+   pbStepOver->setVisible( true );
+   pbStepOut->setVisible( true );
+   pbReserved1->setVisible( true );
+   pbReserved2->setVisible( true );
 }
 
 void UIDebugSH2::updateRegList()
@@ -152,8 +160,45 @@ void UIDebugSH2::updateBackTrace()
 
    lwBackTrace->clear();
    for (int i = 0; i < size; i++)
-      lwBackTrace->addItem(QString("0x%1").arg(addr[i], 8, 16, QChar('0')));
-   lwBackTrace->addItem(QString("0x%1").arg(debugSH2->regs.PC, 8, 16, QChar('0')));
+      lwBackTrace->addItem(QString("%1").arg(addr[i], 8, 16, QChar('0')).toUpper());
+   lwBackTrace->addItem(QString("%1").arg(debugSH2->regs.PC, 8, 16, QChar('0')).toUpper());
+}
+
+void UIDebugSH2::updateTrackInfLoop()
+{
+   if (debugSH2)
+   {
+      tilInfo_struct *match=debugSH2->trackInfLoop.match;
+
+      twTrackInfLoop->clearContents();
+      twTrackInfLoop->setRowCount(0);
+      twTrackInfLoop->setSortingEnabled(false);
+      for (int i = 0; i < debugSH2->trackInfLoop.num; i++)
+      {
+         twTrackInfLoop->insertRow(i);
+         QTableWidgetItem *newItem = new QTableWidgetItem(QString("%1").arg(match[i].addr, 8, 16, QChar('0')).toUpper());
+         twTrackInfLoop->setItem(i, 0, newItem);
+
+         newItem = new QTableWidgetItem();
+         newItem->setData(Qt::DisplayRole, match[i].count);
+         twTrackInfLoop->setItem(i, 1, newItem);
+      }
+      twTrackInfLoop->setSortingEnabled(true);
+   }
+}
+
+void UIDebugSH2::updateAll()
+{
+   updateRegList();
+   if (debugSH2)
+   {
+      sh2regs_struct sh2regs;
+
+      SH2GetRegisters(debugSH2, &sh2regs);
+      updateCodeList(sh2regs.PC);
+      updateBackTrace();
+      updateTrackInfLoop();
+   }
 }
 
 u32 UIDebugSH2::getRegister(int index, int *size)
@@ -259,14 +304,59 @@ bool UIDebugSH2::delMemoryBreakpoint(u32 addr)
 
 void UIDebugSH2::stepInto()
 {
-   sh2regs_struct sh2regs;
-
    if (debugSH2)
    {
       SH2Step(debugSH2);
-      updateRegList();
-      SH2GetRegisters(debugSH2, &sh2regs);
-      updateCodeList(sh2regs.PC);
-      updateBackTrace();
+      updateAll();
    }
 }
+
+void UIDebugSH2::stepOver()
+{
+   if (debugSH2)
+   {
+      if (SH2StepOver(debugSH2, (void (*)(void *, u32, void *))SH2BreakpointHandler) == 0)
+         updateAll();
+      else
+         // Close dialog and wait
+         this->accept(); 
+   }
+
+}
+
+void UIDebugSH2::stepOut()
+{
+   if (debugSH2)
+   {
+      SH2StepOut(debugSH2, (void (*)(void *, u32, void *))SH2BreakpointHandler);
+
+      // Close dialog and wait
+      this->accept(); 
+   }
+
+}
+
+void UIDebugSH2::reserved1()
+{
+   if (debugSH2)
+   {
+      if (!debugSH2->trackInfLoop.enabled)
+      {
+         SH2TrackInfLoopStart(debugSH2);
+         pbReserved1->setText(QtYabause::translate("Loop Track Stop"));
+      }
+      else
+      {
+         SH2TrackInfLoopStop(debugSH2);
+         pbReserved1->setText(QtYabause::translate("Loop Track Start"));
+      }
+   }
+}
+
+void UIDebugSH2::reserved2()
+{
+   if (debugSH2)
+      SH2TrackInfLoopClear(debugSH2);
+   updateAll();
+}
+

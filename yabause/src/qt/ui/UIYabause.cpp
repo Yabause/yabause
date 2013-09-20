@@ -623,17 +623,19 @@ void UIYabause::on_aViewFullscreen_triggered( bool b )
 	//ToggleFullScreen();
 }
 
-void UIYabause::breakpointHandlerMSH2()
+void UIYabause::breakpointHandlerMSH2(bool displayMessage)
 {
 	YabauseLocker locker( mYabauseThread );
-	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	if (displayMessage)
+		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
 	UIDebugSH2( true, mYabauseThread, this ).exec();
 }
 
-void UIYabause::breakpointHandlerSSH2()
+void UIYabause::breakpointHandlerSSH2(bool displayMessage)
 {
 	YabauseLocker locker( mYabauseThread );
-	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	if (displayMessage)
+		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
 	UIDebugSH2( false, mYabauseThread, this ).exec();
 }
 
