@@ -23,6 +23,7 @@
 
 #include "ui_UIYabause.h"
 #include "../YabauseThread.h"
+#include "UICheatSearch.h"
 
 class YabauseGL;
 class QTextEdit;
@@ -70,8 +71,7 @@ protected:
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
 	bool mInit;
-	result_struct *searchResults;
-	u32 numSearchResults;
+   QList <cheatsearch_struct> search;
 	int searchType;
 	int oldMouseX, oldMouseY;
 

@@ -70,8 +70,7 @@ UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )
 {
 	mInit = false;
-	searchResults = NULL;
-	numSearchResults = 0;
+   search.clear();
 	searchType = 0;
 
 	// setup dialog
@@ -579,11 +578,11 @@ void UIYabause::on_aToolsCheatsList_triggered()
 void UIYabause::on_aToolsCheatSearch_triggered()
 {
    YabauseLocker locker( mYabauseThread );
-   UICheatSearch cs(this, searchResults, numSearchResults, searchType);
+   UICheatSearch cs(this, &search, searchType);
       
    cs.exec();
 
-   searchResults = cs.getSearchVariables(&numSearchResults, &searchType);
+   search = *cs.getSearchVariables( &searchType);
 }
 
 void UIYabause::on_aToolsTransfer_triggered()

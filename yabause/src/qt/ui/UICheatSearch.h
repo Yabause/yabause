@@ -22,16 +22,23 @@
 #include "ui_UICheatSearch.h"
 #include "../QtYabause.h"
 
+typedef struct
+{
+   result_struct *results;
+   u32 numResults;
+   u32 startAddr;
+   u32 endAddr;
+} cheatsearch_struct;
+
 class UICheatSearch : public QDialog, public Ui::UICheatSearch
 {
 	Q_OBJECT
 
 public:
-   UICheatSearch( QWidget* p, result_struct *searchResults, u32 numSearchResults, int searchType);
-   result_struct * getSearchVariables( u32* numSearchResults, int *searchType);
+   UICheatSearch( QWidget* p, QList <cheatsearch_struct> *search, int searchType);
+   QList <cheatsearch_struct> *getSearchVariables(int *searchType);
 protected:
-   result_struct *searchResults;
-   u32 numSearchResults;
+   QList <cheatsearch_struct> search;
 
    int searchType;
 

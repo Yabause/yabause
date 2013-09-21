@@ -20,21 +20,20 @@
 #include "UICheatRaw.h"
 #include "../CommonDialogs.h"
 
-UICheatSearch::UICheatSearch( QWidget* p, result_struct *searchResults, 
-   u32 numSearchResults, int searchType) : QDialog( p )
+UICheatSearch::UICheatSearch( QWidget* p, QList <cheatsearch_struct> *search,
+   int searchType) : QDialog( p )
 {
 	// set up dialog
 	setupUi( this );
 	if ( p && !p->isFullScreen() )
 		setWindowFlags( Qt::Sheet );
 
-   this->searchResults = searchResults;
-   this->numSearchResults = numSearchResults;
+   this->search = *search;
    this->searchType = searchType;
 
    // If cheat search hasn't been started yet, disable search and add
    // cheat
-   if (searchResults == NULL)
+   if (this->search.empty())
    {
       pbRestart->setText(QtYabause::translate("Start"));
       pbSearch->setEnabled( false );
@@ -90,11 +89,10 @@ void UICheatSearch::getSearchTypes()
    }
 }
 
-result_struct * UICheatSearch::getSearchVariables( u32* numSearchResults, int *searchType)
+QList<cheatsearch_struct> * UICheatSearch::getSearchVariables(int *searchType)
 {
-   *numSearchResults = this->numSearchResults;
    *searchType = this->searchType;
-   return searchResults;
+   return &search;
 }
 
 void UICheatSearch::setSearchTypes()
@@ -128,30 +126,33 @@ void UICheatSearch::listResults()
    twSearchResults->clear();
    pbAddCheat->setEnabled(false);
 
-   if (searchResults)
+   for (int j = 0; j < search.count(); j++)
    {
-      // Show results
-      for (i = 0; i < numSearchResults; i++)
+      if (search[j].results)
       {
-         QTreeWidgetItem* it = new QTreeWidgetItem( twSearchResults );
-         QString s;
-         s.sprintf("%08X", searchResults[i].addr);
-         it->setText( 0, s );
-
-         switch(searchType & 0x3)
+         // Show results
+         for (i = 0; i < search[j].numResults; i++)
          {
-         case SEARCHBYTE:
-            s.sprintf("%d", MappedMemoryReadByte(searchResults[i].addr));
-            break;
-         case SEARCHWORD:
-            s.sprintf("%d", MappedMemoryReadWord(searchResults[i].addr));
-            break;
-         case SEARCHLONG:
-            s.sprintf("%d", MappedMemoryReadLong(searchResults[i].addr));
-            break;
-         default: break;
+            QTreeWidgetItem* it = new QTreeWidgetItem( twSearchResults );
+            QString s;
+            s.sprintf("%08X", search[j].results[i].addr);
+            it->setText( 0, s );
+
+            switch(searchType & 0x3)
+            {
+            case SEARCHBYTE:
+               s.sprintf("%d", MappedMemoryReadByte(search[j].results[i].addr));
+               break;
+            case SEARCHWORD:
+               s.sprintf("%d", MappedMemoryReadWord(search[j].results[i].addr));
+               break;
+            case SEARCHLONG:
+               s.sprintf("%d", MappedMemoryReadLong(search[j].results[i].addr));
+               break;
+            default: break;
+            }
+            it->setText( 1, s );
          }
-         it->setText( 1, s );
       }
    }
 }
@@ -223,17 +224,35 @@ void UICheatSearch::on_rb32Bit_toggled(bool checked)
 
 void UICheatSearch::on_pbRestart_clicked()
 {   
-   // If there were search result, clear them, otherwise adjust GUI
-   if (searchResults == NULL)
+   cheatsearch_struct searchTmp;
+
+   // If there were search result, clear them, otherwise adjust GUI   
+   if (search.isEmpty())
    {
       pbRestart->setText(QtYabause::translate("Restart"));
       pbSearch->setEnabled(true);
    }
    else
-      free(searchResults);
+   {
+      for (int j = 0; j < search.count(); j++)
+      {
+         if (search[j].results)
+            free(search[j].results);
+      }
+   }
 
    // Setup initial values
-   numSearchResults = 0x100000;
+   searchTmp.results = NULL;
+
+   searchTmp.startAddr = 0x06000000;
+   searchTmp.endAddr = 0x06100000;
+   searchTmp.numResults = searchTmp.endAddr-searchTmp.startAddr;
+   search.append(searchTmp);
+
+   searchTmp.startAddr = 0x00200000;
+   searchTmp.endAddr = 0x00300000;
+   searchTmp.numResults = searchTmp.endAddr-searchTmp.startAddr;
+   search.append(searchTmp);
    twSearchResults->clear();
 }
 
@@ -242,8 +261,11 @@ void UICheatSearch::on_pbSearch_clicked()
    // Search low wram and high wram areas
    setSearchTypes();
    
-   searchResults = MappedMemorySearch(0x06000000, 0x06100000, searchType,
-      leSearchValue->text().toLatin1(), searchResults, &numSearchResults);
+   for (int i = 0; i < search.count(); i++)
+   {
+      search[i].results = MappedMemorySearch(search[i].startAddr, search[i].endAddr, searchType,
+         leSearchValue->text().toLatin1(), search[i].results, &search[i].numResults);
+   }
 
    listResults();
 }
