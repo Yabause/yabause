@@ -151,7 +151,7 @@ void UISettings::getCdDriveList()
 		if (sscanf(buffer, "drive name:%s", drive_name) == 1) {
 			sprintf(drive_path, "/dev/%s", drive_name);
 
-			cbCdDrive->addItem(drive_path, NULL);
+			cbCdDrive->addItem(drive_path, (qulonglong) NULL);
 		}
 	}
 #elif defined Q_OS_MAC
