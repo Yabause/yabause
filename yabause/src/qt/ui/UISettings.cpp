@@ -69,7 +69,8 @@ const Items mCartridgeTypes = Items()
 	<< Item( "6", "8 Mbit Dram" )
 	<< Item( "7", "32 Mbit Dram" )
 	<< Item( "8", "Netlink" )
-	<< Item( "9", "16 Mbit ROM" );
+	<< Item( "9", "16 Mbit ROM" )
+   << Item( "10", "Japanese Modem" );
 
 const Items mVideoFromats = Items()
 	<< Item( "0", "NTSC" )
@@ -89,6 +90,8 @@ UISettings::UISettings( QWidget* p )
 	{
 		setWindowFlags( Qt::Sheet );
 	}
+
+	getCdDriveList();
 
 	// load cores informations
 	loadCores();
@@ -125,6 +128,34 @@ void UISettings::requestFolder( const QString& c, QLineEdit* e )
 	const QString s = CommonDialogs::getExistingDirectory( e->text(), c );
 	if ( !s.isNull() )
 		e->setText( s );
+}
+
+void UISettings::getCdDriveList()
+{
+#if defined Q_OS_WIN
+	foreach( QFileInfo drive, QDir::drives () )
+	{
+		LPCWSTR driveString = (LPCWSTR)drive.filePath().utf16();
+		if (GetDriveTypeW(driveString) == DRIVE_CDROM)
+			cbCdDrive->addItem(drive.filePath(), NULL);
+	}
+#elif defined Q_OS_LINUX
+	FILE * f = fopen("/proc/sys/dev/cdrom/info", "r");
+	char buffer[1024];
+	char drive_name[10];
+	char drive_path[255];
+
+	Q_ASSERT( f );
+
+	while (fgets(buffer, 1024, f) != NULL) {
+		if (sscanf(buffer, "drive name:%s", drive_name) == 1) {
+			sprintf(drive_path, "/dev/%s", drive_name);
+
+			cbCdDrive->addItem(drive_path, NULL);
+		}
+	}
+#elif defined Q_OS_MAC
+#endif
 }
 
 void UISettings::tbBrowse_clicked()
@@ -167,6 +198,33 @@ void UISettings::on_cbInput_currentIndexChanged( int id )
 	
 	pmPort1->setCore( core );
 	pmPort2->setCore( core );
+}
+
+void UISettings::on_cbCdRom_currentIndexChanged( int id )
+{
+	CDInterface* core = QtYabause::getCDCore( cbCdRom->itemData( id ).toInt() );
+
+	Q_ASSERT( core );
+
+	switch (core->id)
+	{
+		case CDCORE_DUMMY:
+			cbCdDrive->setVisible(false);
+			leCdRom->setVisible(false);
+			tbCdRom->setVisible(false);
+			break;
+		case CDCORE_ISO:
+			cbCdDrive->setVisible(false);
+			leCdRom->setVisible(true);
+			tbCdRom->setVisible(true);
+			break;
+		case CDCORE_ARCH:
+			cbCdDrive->setVisible(true);
+			leCdRom->setVisible(false);
+			tbCdRom->setVisible(false);
+			break;
+		default: break;
+	}
 }
 
 void UISettings::loadCores()
@@ -279,7 +337,11 @@ void UISettings::saveSettings()
 	// general
 	s->setValue( "General/Bios", leBios->text() );
 	s->setValue( "General/CdRom", cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
-	s->setValue( "General/CdRomISO", leCdRom->text() );
+	CDInterface* core = QtYabause::getCDCore( cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
+	if ( core->id == CDCORE_ARCH )
+		s->setValue( "General/CdRomISO", cbCdDrive->currentText() );
+	else
+		s->setValue( "General/CdRomISO", leCdRom->text() );
 	s->setValue( "General/SaveStates", leSaveStates->text() );
 	s->setValue( "General/EnableTranslation", cbTranslation->isChecked() );
 	s->setValue( "General/Translation", leTranslation->text() );
