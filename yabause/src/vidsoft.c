@@ -3061,9 +3061,14 @@ void VIDSoftVdp2DrawEnd(void)
    if (OSDUseBuffer())
       OSDDisplayMessages(dispbuffer, vdp2width, vdp2height);
 
-#ifdef USE_OPENGL
-   glRasterPos2i(0, 0);
-   glPixelZoom((float)outputwidth / (float)vdp2width, 0 - ((float)outputheight / (float)vdp2height));
+#ifdef USE_OPENGL	
+	if (vdp2height == 224)
+		i = 8;
+	else
+		i = 0;
+
+   glRasterPos2i(0, outputheight * i / vdp2height);
+   glPixelZoom((float)outputwidth / (float)vdp2width, 0 - ((float)outputheight / (float)(vdp2height+i+i)));
    glDrawPixels(vdp2width, vdp2height, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
 
    if (! OSDUseBuffer())
