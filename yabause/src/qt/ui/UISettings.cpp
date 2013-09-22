@@ -330,15 +330,16 @@ void UISettings::loadSettings()
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
 
 	// view
-	bgShowMenubar->setId( rbMenubarNever, 0 );
-	bgShowMenubar->setId( rbMenubarFullscreen, 1 );
-	bgShowMenubar->setId( rbMenubarAlways, 2 );
-	bgShowMenubar->button( s->value( "View/Menubar", 0 ).toInt() )->setChecked( true );
+	bgShowMenubar->setId( rbMenubarNever, BD_NEVERHIDE );
+	bgShowMenubar->setId( rbMenubarFullscreen, BD_HIDEFS );
+	bgShowMenubar->setId( rbMenubarAlways, BD_ALWAYSHIDE );
+	bgShowMenubar->setId( rbMenubarFullscreenHover, BD_SHOWONFSHOVER );
+	bgShowMenubar->button( s->value( "View/Menubar", BD_NEVERHIDE ).toInt() )->setChecked( true );
 
-	bgShowToolbar->setId( rbToolbarNever, 0 );
-	bgShowToolbar->setId( rbToolbarFullscreen, 1 );
-	bgShowToolbar->setId( rbToolbarAlways, 2 );
-	bgShowToolbar->button( s->value( "View/Toolbar", 1 ).toInt() )->setChecked( true );
+	bgShowToolbar->setId( rbToolbarNever, BD_NEVERHIDE );
+	bgShowToolbar->setId( rbToolbarFullscreen, BD_HIDEFS );
+	bgShowToolbar->setId( rbToolbarAlways, BD_ALWAYSHIDE );
+	bgShowToolbar->button( s->value( "View/Toolbar", BD_HIDEFS ).toInt() )->setChecked( true );
 
 	bgShowLogWindow->setId( rbLogWindowNever, 0 );
 	bgShowLogWindow->setId( rbLogWindowMessage, 1 );

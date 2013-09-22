@@ -128,8 +128,9 @@ UIYabause::UIYabause( QWidget* parent )
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	restoreGeometry( vs->value("General/Geometry" ).toByteArray() );
-   mYabauseGL->setMouseTracking(true);
-   setMouseTracking(true);
+	mYabauseGL->setMouseTracking(true);
+	setMouseTracking(true);
+	showMenuBarHeight = menubar->height();
 }
 
 void UIYabause::showEvent( QShowEvent* e )
@@ -142,9 +143,9 @@ void UIYabause::showEvent( QShowEvent* e )
 		LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
 		VolatileSettings* vs = QtYabause::volatileSettings();
 
-		if ( vs->value( "View/Menubar" ).toInt() == 2 )
+		if ( vs->value( "View/Menubar" ).toInt() == BD_ALWAYSHIDE )
 			menubar->hide();
-		if ( vs->value( "View/Toolbar" ).toInt() == 2 )
+		if ( vs->value( "View/Toolbar" ).toInt() == BD_ALWAYSHIDE )
 			toolBar->hide();
 		if ( vs->value( "autostart" ).toBool() )
 			aEmulationRun->trigger();
@@ -174,25 +175,33 @@ void UIYabause::keyReleaseEvent( QKeyEvent* e )
 
 void UIYabause::mousePressEvent( QMouseEvent* e )
 { 
-   PerKeyDown( (1 << 31) | e->button() );
+	PerKeyDown( (1 << 31) | e->button() );
 }
 
 void UIYabause::mouseReleaseEvent( QMouseEvent* e )
 { 
-   PerKeyUp( (1 << 31) | e->button() );
+	PerKeyUp( (1 << 31) | e->button() );
 }
 
 void UIYabause::mouseMoveEvent( QMouseEvent* e )
 { 
-   PerAxisMove((1 << 30), e->x()-oldMouseX, oldMouseY-e->y());
-   oldMouseX = e->x();
-   oldMouseY = e->y();
+	PerAxisMove((1 << 30), e->x()-oldMouseX, oldMouseY-e->y());
+	oldMouseX = e->x();
+	oldMouseY = e->y();
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	if (isFullScreen() && vs->value( "View/Menubar" ).toInt() == BD_SHOWONFSHOVER )
+	{
+		if (e->y() < showMenuBarHeight)
+			menubar->show();
+		else
+			menubar->hide();
+}
 }
 
 void UIYabause::swapBuffers()
 { 
-   mYabauseGL->swapBuffers(); 
-   mYabauseGL->makeCurrent();
+	mYabauseGL->swapBuffers(); 
+	mYabauseGL->makeCurrent();
 }
 
 void UIYabause::appendLog( const char* s )
@@ -239,9 +248,9 @@ void UIYabause::sizeRequested( const QSize& s )
 	}
 	// Compensate for menubar and toolbar
 	VolatileSettings* vs = QtYabause::volatileSettings();
-	if (vs->value( "View/Menubar" ).toInt() != 2)
+	if (vs->value( "View/Menubar" ).toInt() != BD_ALWAYSHIDE)
 		height += menubar->height();
-	if (vs->value( "View/Toolbar" ).toInt() != 2)
+	if (vs->value( "View/Toolbar" ).toInt() != BD_ALWAYSHIDE)
 		height += toolBar->height();
 	resize( width, height ); 
 }
@@ -411,9 +420,9 @@ void UIYabause::fullscreenRequested( bool f )
 		toggleFullscreen(0, 0, false, -1 );
 
 		VolatileSettings* vs = QtYabause::volatileSettings();
-		if ( vs->value( "View/Menubar" ).toInt() == 1 )
+		if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS )
 			menubar->show();
-		if ( vs->value( "View/Toolbar" ).toInt() == 1 )
+		if ( vs->value( "View/Toolbar" ).toInt() == BD_HIDEFS )
 			toolBar->show();
 	}
 	else if ( !isFullScreen() && f )
@@ -427,9 +436,9 @@ void UIYabause::fullscreenRequested( bool f )
 						f, vs->value("Video/VideoFormat").toInt());
 		showFullScreen();
 
-		if ( vs->value( "View/Menubar" ).toInt() == 1 )
+		if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS )
 			menubar->hide();
-		if ( vs->value( "View/Toolbar" ).toInt() == 1 )
+		if ( vs->value( "View/Toolbar" ).toInt() == BD_HIDEFS )
 			toolBar->hide();
 	}
 	if ( aViewFullscreen->isChecked() != f )
@@ -509,24 +518,24 @@ void UIYabause::on_aFileSettings_triggered()
 		
 		if(isFullScreen())
 		{
-			if ( vs->value( "View/Menubar" ).toInt() == 1 || vs->value( "View/Menubar" ).toInt() == 2)
+			if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS || vs->value( "View/Menubar" ).toInt() == BD_ALWAYSHIDE )
 				menubar->hide();
 			else
 				menubar->show();
 
-			if ( vs->value( "View/Toolbar" ).toInt() == 1 || vs->value( "View/Toolbar" ).toInt() == 2 )
+			if ( vs->value( "View/Toolbar" ).toInt() == BD_HIDEFS || vs->value( "View/Toolbar" ).toInt() == BD_ALWAYSHIDE )
 				toolBar->hide();
 			else
 				toolBar->show();
 		}
 		else
 		{
-			if ( vs->value( "View/Menubar" ).toInt() == 2 )
+			if ( vs->value( "View/Menubar" ).toInt() == BD_ALWAYSHIDE )
 				menubar->hide();
 			else
 				menubar->show();
 
-			if ( vs->value( "View/Toolbar" ).toInt() == 2 )
+			if ( vs->value( "View/Toolbar" ).toInt() == BD_ALWAYSHIDE )
 				toolBar->hide();
 			else
 				toolBar->show();

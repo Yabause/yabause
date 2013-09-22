@@ -42,6 +42,14 @@ typedef struct
 	int freq;
 } supportedRes_struct;
 
+enum BARDISPLAY
+{
+	BD_NEVERHIDE=0,
+	BD_HIDEFS=1,
+	BD_ALWAYSHIDE=2,
+	BD_SHOWONFSHOVER=3
+};
+
 class YabauseLocker
 {
 public:
@@ -94,7 +102,7 @@ protected:
 	Rotation x11OriginalRotation;
 #endif
 	int oldMouseX, oldMouseY;
-
+	int showMenuBarHeight;
 	virtual void showEvent( QShowEvent* event );
 	virtual void closeEvent( QCloseEvent* event );
 	virtual void keyPressEvent( QKeyEvent* event );

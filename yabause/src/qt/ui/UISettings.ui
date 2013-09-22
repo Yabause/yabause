@@ -723,6 +723,16 @@
          </attribute>
         </widget>
        </item>
+       <item row="1" column="3">
+        <widget class="QRadioButton" name="rbMenubarFullscreenHover">
+         <property name="text">
+          <string>Display on Hover</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">bgShowMenubar</string>
+         </attribute>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
