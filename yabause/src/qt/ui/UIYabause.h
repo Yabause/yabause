@@ -25,9 +25,22 @@
 #include "../YabauseThread.h"
 #include "UICheatSearch.h"
 
+#if defined Q_OS_LINUX || defined Q_OS_MAC
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
+#endif
+
 class YabauseGL;
 class QTextEdit;
 class QDockWidget;
+
+typedef struct  
+{
+	int width;
+	int height;
+	int bpp;
+	int freq;
+} supportedRes_struct;
 
 class YabauseLocker
 {
@@ -71,8 +84,15 @@ protected:
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
 	bool mInit;
-   QList <cheatsearch_struct> search;
+	QList <cheatsearch_struct> search;
 	int searchType;
+	QList <supportedRes_struct> supportedResolutions;
+#if defined Q_OS_LINUX || defined Q_OS_MAC
+	XRRScreenConfiguration *x11Conf;
+	short x11OriginalRate;
+	SizeID x11OriginalSizeId;
+	Rotation x11OriginalRotation;
+#endif
 	int oldMouseX, oldMouseY;
 
 	virtual void showEvent( QShowEvent* event );
@@ -95,6 +115,10 @@ public slots:
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
+	void getSupportedResolutions();
+	int isResolutionValid( int width, int height, int bpp, int freq );
+	int findBestVideoFreq( int width, int height, int bpp, int videoFormat );
+	void toggleFullscreen( int width, int height, bool f, int videoFormat );
 	void fullscreenRequested( bool fullscreen );
 	void refreshStatesActions();
 	// file menu

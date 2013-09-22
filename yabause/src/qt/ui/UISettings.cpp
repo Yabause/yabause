@@ -72,7 +72,7 @@ const Items mCartridgeTypes = Items()
 	<< Item( "9", "16 Mbit ROM" )
    << Item( "10", "Japanese Modem" );
 
-const Items mVideoFromats = Items()
+const Items mVideoFormats = Items()
 	<< Item( "0", "NTSC" )
 	<< Item( "1", "PAL" );
 
@@ -247,7 +247,7 @@ void UISettings::loadCores()
 #endif
 	
 	// Video Formats
-	foreach ( const Item& it, mVideoFromats )
+	foreach ( const Item& it, mVideoFormats )
 		cbVideoFormat->addItem( QtYabause::translate( it.Name ), it.id );
 	
 	// SND Drivers
@@ -295,7 +295,7 @@ void UISettings::loadSettings()
 	leWidth->setText( s->value( "Video/Width" ).toString() );
 	leHeight->setText( s->value( "Video/Height" ).toString() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
-	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFromats.at( 0 ).id ).toInt() ) );
+	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );

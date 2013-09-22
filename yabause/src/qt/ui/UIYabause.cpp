@@ -244,6 +244,162 @@ void UIYabause::sizeRequested( const QSize& s )
 	resize( width, height ); 
 }
 
+void UIYabause::getSupportedResolutions()
+{
+#if defined Q_OS_WIN
+	DEVMODE devMode;
+	BOOL result = TRUE;
+	DWORD currentSettings = 0;
+	devMode.dmSize = sizeof(DEVMODE);
+
+	supportedResolutions.clear();
+
+	while (result)
+	{
+		result = EnumDisplaySettings(NULL, currentSettings, &devMode);
+		if (result && devMode.dmBitsPerPel == 32)
+		{
+			supportedResolutions.append(res);supportedRes_struct res;
+			supportedResolutions.append(res);res.width = devMode.dmPelsWidth;
+			supportedResolutions.append(res);res.height = devMode.dmPelsHeight;
+			supportedResolutions.append(res);res.bpp = devMode.dmBitsPerPel;
+			supportedResolutions.append(res);res.freq = devMode.dmDisplayFrequency;
+
+			supportedResolutions.append(res);
+		}
+		currentSettings++;
+	}
+#elif defined Q_OS_LINUX || defined Q_OS_MAC
+	Display *dpy;
+	XRRScreenSize *xrrs;
+	int num_sizes;
+
+	supportedResolutions.clear();
+
+	// Open X11 connection
+	dpy = XOpenDisplay(NULL);
+
+	xrrs = XRRSizes(dpy, 0, &num_sizes);
+
+	for (int i = 0; i < num_sizes; i++)
+	{
+		short *rates;
+		int num_rates;
+
+		rates = XRRRates(dpy, 0, i, &num_rates);
+
+		for (int j = 0; j < num_rates; j++)
+		{
+			supportedRes_struct res;
+
+			supportedRes_struct res;res.width = xrrs[i].width;
+			supportedRes_struct res;res.height = xrrs[i].height;
+			supportedRes_struct res;res.freq = rates[j];
+			supportedRes_struct res;res.bpp = 0;
+			supportedRes_struct res;supportedResolutions.append(res);
+		}
+	}
+
+	// Close connection
+	XCloseDisplay(dpy);
+#endif
+}
+
+int UIYabause::isResolutionValid( int width, int height, int bpp, int freq )
+{
+	getSupportedResolutions();
+
+	for (int i = 0; i < supportedResolutions.count(); i++)
+	{
+		if (supportedResolutions[i].width == width &&
+			supportedResolutions[i].height == height)
+			return i;
+	}
+
+	return -1;
+}
+
+int UIYabause::findBestVideoFreq( int width, int height, int bpp, int videoFormat )
+{
+	// Try to use a frequency close to 60 hz for NTSC, 75 hz for PAL
+	if (videoFormat == VIDEOFORMATTYPE_PAL && isResolutionValid( width, height, bpp, 75 ) > 0)
+		return 75;
+	else if (videoFormat == VIDEOFORMATTYPE_NTSC && isResolutionValid( width, height, bpp, 60 ) > 0)
+		return 60;
+	else
+	{
+		// Since we can't use the frequency we want, use the first one available
+		int i=isResolutionValid( width, height, bpp, -1 );
+		if (i < 0)
+			return -1;
+		return supportedResolutions[i].freq;
+	}
+}
+
+void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat )
+{
+	// Make sure setting is valid
+	if (f && isResolutionValid( width, height, -1, -1 ) < 0)
+		return;
+
+#if defined Q_OS_WIN
+	if (f)
+	{
+		DEVMODE dmScreenSettings;
+		memset (&dmScreenSettings, 0, sizeof (dmScreenSettings));
+
+		int freq = findBestVideoFreq( width, height, 32, videoFormat );
+
+		if (freq < 0)
+			return;
+
+		dmScreenSettings.dmSize = sizeof (dmScreenSettings);   
+		dmScreenSettings.dmPelsWidth = width;
+		dmScreenSettings.dmPelsHeight = height;    
+		dmScreenSettings.dmBitsPerPel = 32;
+		dmScreenSettings.dmDisplayFrequency = freq;
+		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
+	}
+	else
+		ChangeDisplaySettings(NULL, 0);
+
+#elif defined Q_OS_LINUX || defined Q_OS_MAC
+	Display *dpy;
+	Window root;
+
+	// Open X11 connection
+	dpy = XOpenDisplay(NULL);
+	root = RootWindow(dpy, 0);
+
+	if (f)
+	{
+		short freq; 
+
+		// Save original settings
+		x11Conf = XRRGetScreenInfo(dpy, root);
+		x11OriginalRate = XRRConfigCurrentRate(x11Conf);
+		x11OriginalSizeId = XRRConfigCurrentConfiguration(x11Conf, &x11OriginalRotation);
+
+		int freq = findBestVideoFreq( width, height, 32, videoFormat );
+
+		if (freq < 0)
+			return;
+
+		// Change resolution
+		XRRSetScreenConfigAndRate(dpy, x11Conf, root, 1, RR_Rotate_0, freq, CurrentTime);
+	}
+	else
+	{
+		// Restore original settings
+		XRRSetScreenConfigAndRate(dpy, x11Conf, root, x11OriginalSizeId, x11OriginalRotation, x11OriginalRate, CurrentTime);
+	}
+
+	// Close connection
+	XCloseDisplay(dpy);
+#endif
+}
+
 void UIYabause::fullscreenRequested( bool f )
 {
 	if ( isFullScreen() && !f )
@@ -252,6 +408,8 @@ void UIYabause::fullscreenRequested( bool f )
 #ifdef USE_UNIFIED_TITLE_TOOLBAR
 		setUnifiedTitleAndToolBarOnMac( true );
 #endif
+		toggleFullscreen(0, 0, false, -1 );
+
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		if ( vs->value( "View/Menubar" ).toInt() == 1 )
 			menubar->show();
@@ -263,8 +421,11 @@ void UIYabause::fullscreenRequested( bool f )
 #ifdef USE_UNIFIED_TITLE_TOOLBAR
 		setUnifiedTitleAndToolBarOnMac( false );
 #endif
-		showFullScreen();
 		VolatileSettings* vs = QtYabause::volatileSettings();
+
+		toggleFullscreen(vs->value("Video/Width").toInt(), vs->value("Video/Height").toInt(), f, vs->value("Video/VideoFormat").toInt());
+		showFullScreen();
+
 		if ( vs->value( "View/Menubar" ).toInt() == 1 )
 			menubar->hide();
 		if ( vs->value( "View/Toolbar" ).toInt() == 1 )
