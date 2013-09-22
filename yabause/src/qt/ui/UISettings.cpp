@@ -76,7 +76,7 @@ const Items mVideoFormats = Items()
 	<< Item( "0", "NTSC" )
 	<< Item( "1", "PAL" );
 
-UISettings::UISettings( QWidget* p )
+UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QWidget* p )
 	: QDialog( p )
 {
 	// setup dialog
@@ -95,6 +95,18 @@ UISettings::UISettings( QWidget* p )
 
 	// load cores informations
 	loadCores();
+
+	this->supportedRes = *supportedResolutions;
+
+	// Load supported screen resolutions
+	for (int i = 0; i < this->supportedRes.count(); i++)
+	{
+		QString text = QString("%1x%2").arg(QString::number(this->supportedRes[i].width), 
+						QString::number (this->supportedRes[i].height));
+		if (cbFullscreenResolution->findText(text) != -1)
+			continue;
+		cbFullscreenResolution->addItem(text, i);
+	}
 
 	// load settings
 	loadSettings();
@@ -292,8 +304,12 @@ void UISettings::loadSettings()
 #if YAB_PORT_OSD
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
-	leWidth->setText( s->value( "Video/Width" ).toString() );
-	leHeight->setText( s->value( "Video/Height" ).toString() );
+
+	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width" ) ).toString() );
+	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height" ) ).toString() );
+	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width" ) ).toString(),
+										s->value( "Video/FullscreenHeight", s->value( "Video/Height" ) ).toString());
+	cbFullscreenResolution->setCurrentIndex(cbFullscreenResolution->findText(text));
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
 
@@ -354,8 +370,17 @@ void UISettings::saveSettings()
 #if YAB_PORT_OSD
 	s->setValue( "Video/OSDCore", cbOSDCore->itemData( cbOSDCore->currentIndex() ).toInt() );
 #endif
-	s->setValue( "Video/Width", leWidth->text() );
-	s->setValue( "Video/Height", leHeight->text() );
+	// Move Outdated window/fullscreen keys
+	s->remove("Video/Width");
+	s->remove("Video/Height");
+
+	// Save new version of keys
+	s->setValue( "Video/WindowWidth", leWinWidth->text() );
+	s->setValue( "Video/WindowHeight", leWinHeight->text() );
+	supportedRes_struct res = supportedRes[cbFullscreenResolution->itemData(cbFullscreenResolution->currentIndex()).toInt()];
+	s->setValue( "Video/FullscreenWidth", res.width );
+	s->setValue( "Video/FullscreenHeight", res.height );
+
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/VideoFormat", cbVideoFormat->itemData( cbVideoFormat->currentIndex() ).toInt() );
 

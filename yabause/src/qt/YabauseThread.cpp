@@ -259,7 +259,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
 	
-	emit requestSize( QSize( vs->value( "Video/Width", 0 ).toInt(), vs->value( "Video/Height", 0 ).toInt() ) );
+	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 
 	reloadControllers();

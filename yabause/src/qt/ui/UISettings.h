@@ -23,15 +23,18 @@
 
 #include "ui_UISettings.h"
 #include "../QtYabause.h"
+#include "UIYabause.h"
 
 class UISettings : public QDialog, public Ui::UISettings
 {
 	Q_OBJECT
 	
 public:
-	UISettings( QWidget* parent = 0 );
+	UISettings( QList <supportedRes_struct> *supportedResolutions, QWidget* parent = 0 );
 
 protected:
+	QList <supportedRes_struct> supportedRes;
+
 	void requestFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestNewFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestFolder( const QString& caption, QLineEdit* edit );

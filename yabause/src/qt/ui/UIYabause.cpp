@@ -86,6 +86,8 @@ UIYabause::UIYabause( QWidget* parent )
 	fVideoDriver->setParent( 0, Qt::Popup );
 	fSound->installEventFilter( this );
 	fVideoDriver->installEventFilter( this );
+	// Get Screen res list
+	getSupportedResolutions();
 	// fill combo driver
 	cbVideoDriver->blockSignals( true );
 	for ( int i = 0; VIDCoreList[i] != NULL; i++ )
@@ -259,11 +261,11 @@ void UIYabause::getSupportedResolutions()
 		result = EnumDisplaySettings(NULL, currentSettings, &devMode);
 		if (result && devMode.dmBitsPerPel == 32)
 		{
-			supportedResolutions.append(res);supportedRes_struct res;
-			supportedResolutions.append(res);res.width = devMode.dmPelsWidth;
-			supportedResolutions.append(res);res.height = devMode.dmPelsHeight;
-			supportedResolutions.append(res);res.bpp = devMode.dmBitsPerPel;
-			supportedResolutions.append(res);res.freq = devMode.dmDisplayFrequency;
+			supportedRes_struct res;
+			res.width = devMode.dmPelsWidth;
+			res.height = devMode.dmPelsHeight;
+			res.bpp = devMode.dmBitsPerPel;
+			res.freq = devMode.dmDisplayFrequency;
 
 			supportedResolutions.append(res);
 		}
@@ -292,11 +294,11 @@ void UIYabause::getSupportedResolutions()
 		{
 			supportedRes_struct res;
 
-			supportedRes_struct res;res.width = xrrs[i].width;
-			supportedRes_struct res;res.height = xrrs[i].height;
-			supportedRes_struct res;res.freq = rates[j];
-			supportedRes_struct res;res.bpp = 0;
-			supportedRes_struct res;supportedResolutions.append(res);
+			res.width = xrrs[i].width;
+			res.height = xrrs[i].height;
+			res.freq = rates[j];
+			res.bpp = 0;
+			supportedResolutions.append(res);
 		}
 	}
 
@@ -307,8 +309,6 @@ void UIYabause::getSupportedResolutions()
 
 int UIYabause::isResolutionValid( int width, int height, int bpp, int freq )
 {
-	getSupportedResolutions();
-
 	for (int i = 0; i < supportedResolutions.count(); i++)
 	{
 		if (supportedResolutions[i].width == width &&
@@ -423,7 +423,8 @@ void UIYabause::fullscreenRequested( bool f )
 #endif
 		VolatileSettings* vs = QtYabause::volatileSettings();
 
-		toggleFullscreen(vs->value("Video/Width").toInt(), vs->value("Video/Height").toInt(), f, vs->value("Video/VideoFormat").toInt());
+		toggleFullscreen(vs->value("Video/FullscreenWidth").toInt(), vs->value("Video/FullscreenHeight").toInt(), 
+						f, vs->value("Video/VideoFormat").toInt());
 		showFullScreen();
 
 		if ( vs->value( "View/Menubar" ).toInt() == 1 )
@@ -500,7 +501,7 @@ void UIYabause::on_aFileSettings_triggered()
 	}
 
 	YabauseLocker locker( mYabauseThread );
-	if ( UISettings( window() ).exec() )
+	if ( UISettings( &supportedResolutions, window() ).exec() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
@@ -562,12 +563,18 @@ void UIYabause::on_aFileSettings_triggered()
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
 		
-		if (newhash["Video/Width"] != hash["Video/Width"] || newhash["Video/Height"] != hash["Video/Height"] ||
+		if (newhash["Video/WinWidth"] != hash["Video/WinWidth"] || newhash["Video/WinHeight"] != hash["Video/WinHeight"] ||
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"])
-			sizeRequested(QSize(newhash["Video/Width"].toInt(),newhash["Video/Height"].toInt()));
+			sizeRequested(QSize(newhash["Video/WinWidth"].toInt(),newhash["Video/WinHeight"].toInt()));
 		
-		if (newhash["Video/Fullscreen"] != hash["Video/Fullscreen"])
+		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
+			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||
+			newhash["Video/Fullscreen"] != hash["Video/Fullscreen"])
+		{
+			if (isFullScreen() && newhash["Video/Fullscreen"].toBool())
+				fullscreenRequested( false );
 			fullscreenRequested( newhash["Video/Fullscreen"].toBool());
+		}
 		
 		if (newhash["Video/VideoFormat"] != hash["Video/VideoFormat"])
 			YabauseSetVideoFormat(newhash["Video/VideoFormat"].toInt());

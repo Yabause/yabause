@@ -235,7 +235,7 @@
         <widget class="QComboBox" name="cbOSDCore"/>
        </item>
        <item row="4" column="0" colspan="3">
-        <widget class="QLabel" name="lResolution">
+        <widget class="QLabel" name="lWinResolution">
          <property name="font">
           <font>
            <weight>75</weight>
@@ -243,7 +243,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Resolution</string>
+          <string>Window Resolution</string>
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
@@ -251,33 +251,26 @@
         </widget>
        </item>
        <item row="5" column="0">
-        <widget class="QLabel" name="lWidth">
+        <widget class="QLabel" name="lWinWidth">
          <property name="text">
           <string>Width</string>
          </property>
         </widget>
        </item>
        <item row="5" column="1">
-        <widget class="QLineEdit" name="leWidth"/>
-       </item>
-       <item row="5" column="2">
-        <widget class="QCheckBox" name="cbFullscreen">
-         <property name="text">
-          <string>Fullscreen</string>
-         </property>
-        </widget>
+        <widget class="QLineEdit" name="leWinWidth"/>
        </item>
        <item row="6" column="0">
-        <widget class="QLabel" name="lHeight">
+        <widget class="QLabel" name="lWinHeight">
          <property name="text">
           <string>Height</string>
          </property>
         </widget>
        </item>
        <item row="6" column="1">
-        <widget class="QLineEdit" name="leHeight"/>
+        <widget class="QLineEdit" name="leWinHeight"/>
        </item>
-       <item row="7" column="0" colspan="3">
+       <item row="14" column="0" colspan="3">
         <widget class="QLabel" name="lVideoFormat">
          <property name="font">
           <font>
@@ -293,10 +286,10 @@
          </property>
         </widget>
        </item>
-       <item row="8" column="0" colspan="3">
+       <item row="15" column="0" colspan="3">
         <widget class="QComboBox" name="cbVideoFormat"/>
        </item>
-       <item row="9" column="0" colspan="3">
+       <item row="16" column="0" colspan="3">
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -308,6 +301,32 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="lFullScreenResolution">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Fullscreen Resolution</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QCheckBox" name="cbFullscreen">
+         <property name="text">
+          <string>Enable Fullscreen by default</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0" colspan="3">
+        <widget class="QComboBox" name="cbFullscreenResolution"/>
        </item>
       </layout>
      </widget>
