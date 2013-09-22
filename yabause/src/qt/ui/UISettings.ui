@@ -321,7 +321,7 @@
        <item row="10" column="0">
         <widget class="QCheckBox" name="cbFullscreen">
          <property name="text">
-          <string>Enable Fullscreen by default</string>
+          <string>Start in Fullscreen</string>
          </property>
         </widget>
        </item>

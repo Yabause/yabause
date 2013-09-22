@@ -160,6 +160,9 @@ void UIYabause::closeEvent( QCloseEvent* e )
 	aEmulationPause->trigger();
 	LogStop();
 
+	if (isFullScreen())
+		// Need to switch out of full screen or the geometry settings get saved
+		fullscreenRequested( false );
 	Settings* vs = QtYabause::settings();
 	vs->setValue( "General/Geometry", saveGeometry() );
 	vs->sync();
@@ -413,14 +416,16 @@ void UIYabause::fullscreenRequested( bool f )
 {
 	if ( isFullScreen() && !f )
 	{
-		showNormal();
 #ifdef USE_UNIFIED_TITLE_TOOLBAR
 		setUnifiedTitleAndToolBarOnMac( true );
 #endif
 		toggleFullscreen(0, 0, false, -1 );
+		showNormal();
 
 		VolatileSettings* vs = QtYabause::volatileSettings();
-		if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS )
+		int menubarHide = vs->value( "View/Menubar" ).toInt();
+		if ( menubarHide == BD_HIDEFS ||
+			  menubarHide == BD_SHOWONFSHOVER)
 			menubar->show();
 		if ( vs->value( "View/Toolbar" ).toInt() == BD_HIDEFS )
 			toolBar->show();
@@ -580,9 +585,10 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||
 			newhash["Video/Fullscreen"] != hash["Video/Fullscreen"])
 		{
-			if (isFullScreen() && newhash["Video/Fullscreen"].toBool())
+			bool f = isFullScreen();
+			if (f)
 				fullscreenRequested( false );
-			fullscreenRequested( newhash["Video/Fullscreen"].toBool());
+			fullscreenRequested( f );
 		}
 		
 		if (newhash["Video/VideoFormat"] != hash["Video/VideoFormat"])
@@ -729,6 +735,10 @@ void UIYabause::on_aEmulationReset_triggered()
 
 void UIYabause::on_aEmulationFrameSkipLimiter_toggled( bool toggled )
 {
+	Settings* vs = QtYabause::settings();
+	vs->setValue( "General/EnableFrameSkipLimiter", toggled );
+	vs->sync();
+
 	if ( toggled )
 		EnableAutoFrameSkip();
 	else
@@ -770,8 +780,9 @@ void UIYabause::on_aToolsTransfer_triggered()
 
 void UIYabause::on_aViewFPS_triggered( bool toggled )
 {
-	VolatileSettings* vs = QtYabause::volatileSettings();
+	Settings* vs = QtYabause::settings();
 	vs->setValue( "General/ShowFPS", toggled );
+	vs->sync();
 	SetOSDToggle(toggled ? 1 : 0);
 }
 
