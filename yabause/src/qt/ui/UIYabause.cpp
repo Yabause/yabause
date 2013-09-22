@@ -563,9 +563,9 @@ void UIYabause::on_aFileSettings_triggered()
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
 		
-		if (newhash["Video/WinWidth"] != hash["Video/WinWidth"] || newhash["Video/WinHeight"] != hash["Video/WinHeight"] ||
+		if (newhash["Video/WindowWidth"] != hash["Video/WindowWidth"] || newhash["Video/WindowHeight"] != hash["Video/WindowHeight"] ||
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"])
-			sizeRequested(QSize(newhash["Video/WinWidth"].toInt(),newhash["Video/WinHeight"].toInt()));
+			sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
 		
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||
