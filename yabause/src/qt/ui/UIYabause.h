@@ -25,22 +25,13 @@
 #include "../YabauseThread.h"
 #include "UICheatSearch.h"
 
-#if defined Q_OS_LINUX || defined Q_OS_MAC
-#include <X11/Xlib.h>
-#include <X11/extensions/Xrandr.h>
-#endif
+extern "C" {
+#include "../screen.h"
+}
 
 class YabauseGL;
 class QTextEdit;
 class QDockWidget;
-
-typedef struct  
-{
-	int width;
-	int height;
-	int bpp;
-	int freq;
-} supportedRes_struct;
 
 enum BARDISPLAY
 {
@@ -95,12 +86,6 @@ protected:
 	QList <cheatsearch_struct> search;
 	int searchType;
 	QList <supportedRes_struct> supportedResolutions;
-#if defined Q_OS_LINUX || defined Q_OS_MAC
-	XRRScreenConfiguration *x11Conf;
-	short x11OriginalRate;
-	SizeID x11OriginalSizeId;
-	Rotation x11OriginalRotation;
-#endif
 	int oldMouseX, oldMouseY;
 	int showMenuBarHeight;
 	virtual void showEvent( QShowEvent* event );

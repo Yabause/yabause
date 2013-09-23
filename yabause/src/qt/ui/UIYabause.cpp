@@ -283,39 +283,14 @@ void UIYabause::getSupportedResolutions()
 		}
 		currentSettings++;
 	}
-#elif defined Q_OS_LINUX || defined Q_OS_MAC
-	Display *dpy;
-	XRRScreenSize *xrrs;
-	int num_sizes;
+#elif HAVE_LIBXRANDR
+	ResolutionList list;
+	supportedRes_struct res;
 
-	supportedResolutions.clear();
+	list = ScreenGetResolutions();
 
-	// Open X11 connection
-	dpy = XOpenDisplay(NULL);
-
-	xrrs = XRRSizes(dpy, 0, &num_sizes);
-
-	for (int i = 0; i < num_sizes; i++)
-	{
-		short *rates;
-		int num_rates;
-
-		rates = XRRRates(dpy, 0, i, &num_rates);
-
-		for (int j = 0; j < num_rates; j++)
-		{
-			supportedRes_struct res;
-
-			res.width = xrrs[i].width;
-			res.height = xrrs[i].height;
-			res.freq = rates[j];
-			res.bpp = 0;
-			supportedResolutions.append(res);
-		}
-	}
-
-	// Close connection
-	XCloseDisplay(dpy);
+	while(0 == ScreenNextResolution(list, &res))
+		supportedResolutions.append(res);
 #endif
 }
 
@@ -376,39 +351,16 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
 	else
 		ChangeDisplaySettings(NULL, 0);
 
-#elif defined Q_OS_LINUX || defined Q_OS_MAC
-	Display *dpy;
-	Window root;
-
-	// Open X11 connection
-	dpy = XOpenDisplay(NULL);
-	root = RootWindow(dpy, 0);
-
+#elif HAVE_LIBXRANDR
 	if (f)
 	{
-		short freq; 
-
-		// Save original settings
-		x11Conf = XRRGetScreenInfo(dpy, root);
-		x11OriginalRate = XRRConfigCurrentRate(x11Conf);
-		x11OriginalSizeId = XRRConfigCurrentConfiguration(x11Conf, &x11OriginalRotation);
-
-		int freq = findBestVideoFreq( width, height, 32, videoFormat );
-
-		if (freq < 0)
-			return;
-
-		// Change resolution
-		XRRSetScreenConfigAndRate(dpy, x11Conf, root, 1, RR_Rotate_0, freq, CurrentTime);
+		int i = isResolutionValid(width, height, 32, -1);
+		ScreenChangeResolution(&supportedResolutions[i]);
 	}
 	else
 	{
-		// Restore original settings
-		XRRSetScreenConfigAndRate(dpy, x11Conf, root, x11OriginalSizeId, x11OriginalRotation, x11OriginalRate, CurrentTime);
+		ScreenRestoreResolution();
 	}
-
-	// Close connection
-	XCloseDisplay(dpy);
 #endif
 }
 
