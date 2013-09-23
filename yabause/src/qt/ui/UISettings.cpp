@@ -149,7 +149,7 @@ void UISettings::getCdDriveList()
 	{
 		LPCWSTR driveString = (LPCWSTR)drive.filePath().utf16();
 		if (GetDriveTypeW(driveString) == DRIVE_CDROM)
-			cbCdDrive->addItem(drive.filePath(), NULL);
+			cbCdDrive->addItem(drive.filePath());
 	}
 #elif defined Q_OS_LINUX
 	FILE * f = fopen("/proc/sys/dev/cdrom/info", "r");
