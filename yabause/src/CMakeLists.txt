@@ -82,6 +82,12 @@ if (STRICMP_OK)
 	add_definitions(-DHAVE_STRICMP=1)
 endif ()
 
+# __builtin_bswap16
+check_function_exists(__builtin_bswap16 BSWAP16_OK)
+if (BSWAP16_OK)
+	add_definitions(-DHAVE_BUILTIN_BSWAP16=1)
+endif()
+
 # sys/time.h
 check_include_file("sys/time.h" SYSTIME_OK)
 if (SYSTIME_OK)

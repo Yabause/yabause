@@ -248,8 +248,10 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
 #endif
 
 #ifdef __GNUC__
+#ifdef HAVE_BUILTIN_BSWAP16
 # define BSWAP16(x)  ((__builtin_bswap16((x) >> 16) << 16) | __builtin_bswap16((x)))
 # define BSWAP16L(x) (__builtin_bswap16((x)))
+#endif
 # define BSWAP32(x)  (__builtin_bswap32((x)))
 #endif
 
