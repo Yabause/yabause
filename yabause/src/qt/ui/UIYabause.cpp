@@ -113,6 +113,7 @@ UIYabause::UIYabause( QWidget* parent )
 	// connectionsdd
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
+	connect( mYabauseThread, SIGNAL( requestVolumeChange( int ) ), this, SLOT( on_sVolume_valueChanged( int ) ) );
 	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
 	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
 	connect( mYabauseThread, SIGNAL( error( const QString&, bool ) ), this, SLOT( errorReceived( const QString&, bool ) ) );
@@ -889,7 +890,11 @@ void UIYabause::on_cbSound_toggled( bool toggled )
 }
 
 void UIYabause::on_sVolume_valueChanged( int value )
-{ ScspSetVolume( value ); }
+{ 
+	ScspSetVolume( value ); 
+	Settings* vs = QtYabause::settings();
+	vs->setValue("Sound/Volume", value );
+}
 
 void UIYabause::on_cbVideoDriver_currentIndexChanged( int id )
 {

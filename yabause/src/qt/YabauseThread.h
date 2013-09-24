@@ -62,6 +62,7 @@ public slots:
 signals:
 	void requestSize( const QSize& size );
 	void requestFullscreen( bool fullscreen );
+	void requestVolumeChange( int volume );
 	void error( const QString& error, bool internal = true );
 	void pause( bool paused );
 	void reset();

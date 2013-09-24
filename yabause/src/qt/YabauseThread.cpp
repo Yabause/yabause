@@ -261,6 +261,7 @@ void YabauseThread::reloadSettings()
 	
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
+	emit requestVolumeChange( vs->value( "Sound/Volume", 100 ).toInt() );
 
 	reloadControllers();
 }
