@@ -48,6 +48,7 @@ protected:
    void adjustSearchValueQValidator();
 protected slots:
    void on_twSearchResults_itemSelectionChanged();
+	void on_leSearchValue_textChanged( const QString & text );
    void on_pbRestart_clicked();
    void on_pbSearch_clicked();
    void on_pbAddCheat_clicked();

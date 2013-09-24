@@ -222,6 +222,11 @@ void UICheatSearch::on_rb32Bit_toggled(bool checked)
       adjustSearchValueQValidator();
 }
 
+void UICheatSearch::on_leSearchValue_textChanged( const QString & text )
+{
+	pbSearch->setEnabled(!text.isEmpty());
+}
+
 void UICheatSearch::on_pbRestart_clicked()
 {   
    cheatsearch_struct searchTmp;
@@ -230,7 +235,6 @@ void UICheatSearch::on_pbRestart_clicked()
    if (search.isEmpty())
    {
       pbRestart->setText(QtYabause::translate("Restart"));
-      pbSearch->setEnabled(true);
    }
    else
    {

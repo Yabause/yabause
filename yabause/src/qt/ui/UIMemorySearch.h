@@ -37,6 +37,7 @@ protected:
 protected slots:
    void accept();
    void on_cbType_currentIndexChanged(int index);
+	void on_leValue_textChanged( const QString & text );
 };
 
 #endif // UIMEMORYSEARCH_H

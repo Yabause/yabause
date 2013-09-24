@@ -20,6 +20,7 @@
 #include "UIMemorySearch.h"
 #include "UIHexInput.h"
 #include "../CommonDialogs.h"
+#include <QPushButton>
 
 UIMemorySearch::UIMemorySearch( QWidget* p )
 	: QDialog( p )
@@ -55,6 +56,8 @@ UIMemorySearch::UIMemorySearch( QWidget* p )
 
    leStartAddress->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leStartAddress));
    leEndAddress->setValidator(new HexValidator(0x00000000, 0xFFFFFFFF, leEndAddress));
+
+	(dbbButtons->button(QDialogButtonBox::Ok))->setEnabled(!(leValue->text()).isEmpty());
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
@@ -128,6 +131,11 @@ void UIMemorySearch::adjustSearchValueQValidator()
          break;
       }
    }
+}
+
+void UIMemorySearch::on_leValue_textChanged( const QString & text )
+{
+	(dbbButtons->button(QDialogButtonBox::Ok))->setEnabled(!text.isEmpty());
 }
 
 void UIMemorySearch::accept()
