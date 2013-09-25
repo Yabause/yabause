@@ -88,6 +88,7 @@ protected:
 	QList <supportedRes_struct> supportedResolutions;
 	int oldMouseX, oldMouseY;
 	int showMenuBarHeight;
+	QList <translation_struct> translations;
 	virtual void showEvent( QShowEvent* event );
 	virtual void closeEvent( QCloseEvent* event );
 	virtual void keyPressEvent( QKeyEvent* event );

@@ -30,16 +30,19 @@ class UISettings : public QDialog, public Ui::UISettings
 	Q_OBJECT
 	
 public:
-	UISettings( QList <supportedRes_struct> *supportedResolutions, QWidget* parent = 0 );
+	UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* parent = 0 );
 
 protected:
 	QList <supportedRes_struct> supportedRes;
+	QList <translation_struct> trans;
 
 	void requestFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestNewFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestFolder( const QString& caption, QLineEdit* edit );
    void getCdDriveList();
 	void loadCores();
+	void loadSupportedResolutions();
+	void loadTranslations();
 	void loadSettings();
 	void saveSettings();
 

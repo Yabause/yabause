@@ -76,7 +76,7 @@ const Items mVideoFormats = Items()
 	<< Item( "0", "NTSC" )
 	<< Item( "1", "PAL" );
 
-UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QWidget* p )
+UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
 {
 	// setup dialog
@@ -96,17 +96,16 @@ UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QWidg
 	// load cores informations
 	loadCores();
 
-	this->supportedRes = *supportedResolutions;
+	supportedRes = *supportedResolutions;
+	loadSupportedResolutions();
 
-	// Load supported screen resolutions
-	for (int i = 0; i < this->supportedRes.count(); i++)
-	{
-		QString text = QString("%1x%2").arg(QString::number(this->supportedRes[i].width), 
-						QString::number (this->supportedRes[i].height));
-		if (cbFullscreenResolution->findText(text) != -1)
-			continue;
-		cbFullscreenResolution->addItem(text, i);
-	}
+#ifdef HAVE_LIBMINI18N
+	trans = *translations;
+	loadTranslations();
+#else
+   lTranslation->hide();
+	cbTranslation->hide();
+#endif
 
 	// load settings
 	loadSettings();
@@ -191,8 +190,6 @@ void UISettings::tbBrowse_clicked()
 	}
 	else if ( tb == tbSaveStates )
 		requestFolder( QtYabause::translate( "Choose a folder to store save states" ), leSaveStates );
-	else if ( tb == tbTranslation )
-		requestFile( QtYabause::translate( "Choose the translation file to use" ), leTranslation, QtYabause::translate( "Yabause Translation Files (*.yts)" ) );
 	else if ( tb == tbCartridge )
 		requestNewFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );
 	else if ( tb == tbMemory )
@@ -283,6 +280,27 @@ void UISettings::loadCores()
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
 }
 
+void UISettings::loadSupportedResolutions()
+{
+	// Load supported screen resolutions
+	for (int i = 0; i < this->supportedRes.count(); i++)
+	{
+		QString text = QString("%1x%2").arg(QString::number(this->supportedRes[i].width), 
+			QString::number (this->supportedRes[i].height));
+		if (cbFullscreenResolution->findText(text) != -1)
+			continue;
+		cbFullscreenResolution->addItem(text, i);
+	}
+}
+
+void UISettings::loadTranslations()
+{
+	cbTranslation->addItem("English", "");
+	for (int i = 0; i < this->trans.count(); i++)
+		cbTranslation->addItem(trans[i].name, trans[i].file);
+
+}
+
 void UISettings::loadSettings()
 {
 	// get settings pointer
@@ -293,8 +311,13 @@ void UISettings::loadSettings()
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	leSaveStates->setText( s->value( "General/SaveStates", getDataDirPath() ).toString() );
-	leTranslation->setText( s->value( "General/Translation" ).toString() );
-	cbTranslation->setChecked( s->value( "General/EnableTranslation", true ).toBool() );
+#ifdef HAVE_LIBMINI18N
+	int i;
+	if ((i=cbTranslation->findData(s->value( "General/Translation" ).toString())) != -1)
+		cbTranslation->setCurrentIndex(i);
+	else
+		cbTranslation->setCurrentIndex(0);
+#endif
 	cbEnableFrameSkipLimiter->setChecked( s->value( "General/EnableFrameSkipLimiter" ).toBool() );
 	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
 	cbAutostart->setChecked( s->value( "autostart" ).toBool() );
@@ -360,8 +383,9 @@ void UISettings::saveSettings()
 	else
 		s->setValue( "General/CdRomISO", leCdRom->text() );
 	s->setValue( "General/SaveStates", leSaveStates->text() );
-	s->setValue( "General/EnableTranslation", cbTranslation->isChecked() );
-	s->setValue( "General/Translation", leTranslation->text() );
+#ifdef HAVE_LIBMINI18N
+	s->setValue( "General/Translation", cbTranslation->itemData(cbTranslation->currentIndex()).toString() );
+#endif
 	s->setValue( "General/EnableFrameSkipLimiter", cbEnableFrameSkipLimiter->isChecked() );
 	s->setValue( "General/ShowFPS", cbShowFPS->isChecked() );
 	s->setValue( "autostart", cbAutostart->isChecked() );

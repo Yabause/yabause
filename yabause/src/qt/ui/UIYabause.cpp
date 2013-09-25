@@ -132,6 +132,7 @@ UIYabause::UIYabause( QWidget* parent )
 	mYabauseGL->setMouseTracking(true);
 	setMouseTracking(true);
 	showMenuBarHeight = menubar->height();
+	translations = QtYabause::getTranslationList();
 }
 
 void UIYabause::showEvent( QShowEvent* e )
@@ -468,7 +469,7 @@ void UIYabause::on_aFileSettings_triggered()
 	}
 
 	YabauseLocker locker( mYabauseThread );
-	if ( UISettings( &supportedResolutions, window() ).exec() )
+	if ( UISettings( &supportedResolutions, &translations, window() ).exec() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
@@ -521,6 +522,16 @@ void UIYabause::on_aFileSettings_triggered()
 				refreshStatesActions();
 			return;
 		}
+#ifdef HAVE_LIBMINI18N
+		if(newhash["General/Translation"] != hash["General/Translation"])
+		{
+			mini18n_close();
+			retranslateUi(this);
+			if ( QtYabause::setTranslationFile() == -1 )
+				qWarning( "Can't set translation file" );
+			QtYabause::retranslateApplication();
+		}
+#endif
 		if(newhash["Video/VideoCore"] != hash["Video/VideoCore"])
 			on_cbVideoDriver_currentIndexChanged(newhash["Video/VideoCore"].toInt());
 		

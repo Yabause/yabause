@@ -77,11 +77,18 @@ class Settings;
 class VolatileSettings;
 class QWidget;
 
+typedef struct 
+{
+	QString file;
+	QString name;
+} translation_struct;
+
 namespace QtYabause
 {
 	UIYabause* mainWindow( bool create = true );
 	Settings* settings( bool create = true );
 	VolatileSettings* volatileSettings( bool create = true );
+	QList <translation_struct> getTranslationList();
 	int setTranslationFile();
 	int logTranslation();
 	void closeTranslation();
@@ -112,10 +119,10 @@ namespace QtYabause
 	// padsbits
 	QMap<uint, PerPad_struct*>* portPadsBits( uint portNumber );
 	void clearPadsBits();
-   QMap<uint, PerAnalog_struct*>* portAnalogBits( uint portNumber );
-   void clear3DAnalogBits();
-   QMap<uint, PerMouse_struct*>* portMouseBits( uint portNumber );
-   void clearMouseBits();
+	QMap<uint, PerAnalog_struct*>* portAnalogBits( uint portNumber );
+	void clear3DAnalogBits();
+	QMap<uint, PerMouse_struct*>* portMouseBits( uint portNumber );
+	void clearMouseBits();
 };
 
 #endif // QTYABAUSE_H

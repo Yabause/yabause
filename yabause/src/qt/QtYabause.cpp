@@ -28,6 +28,7 @@
 #include <QGroupBox>
 #include <QTreeWidget>
 #include <QPointer>
+#include <QDir>
 
 // cores
 
@@ -166,12 +167,36 @@ VolatileSettings* QtYabause::volatileSettings( bool create )
 	return mVolatileSettings;
 }
 
+QList <translation_struct> QtYabause::getTranslationList()
+{
+	QList <translation_struct> translations;
+#ifdef HAVE_LIBMINI18N
+	QDir transDir=QDir(YTSDIR, "*.yts");	
+
+	foreach(QString file, transDir.entryList())
+	{
+		if (!file.startsWith("yabause_"))
+			continue;
+		translation_struct trans;
+		trans.file = QString(YTSDIR) + QString("/") + file;
+
+		// Let's get it down just to language code
+		QStringList string = file.remove(".yts").split("_");
+		string.removeFirst();
+		QString localeStr = string.join("_");
+		// Find the locale
+		QLocale locale = QLocale(localeStr);	
+		// Now we should be good for the language name
+		trans.name = locale.nativeLanguageName();
+		translations.append(trans);
+	}
+#endif
+	return translations;
+}
+
 int QtYabause::setTranslationFile()
 {
 #ifdef HAVE_LIBMINI18N
-	if (! settings()->value( "General/EnableTranslation" ).toBool())
-		return 0;
-
 	const QString s = settings()->value( "General/Translation" ).toString();
 	if ( ! s.isEmpty() )
 	{
