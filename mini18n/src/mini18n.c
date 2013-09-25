@@ -48,4 +48,5 @@ const void * mini18n_with_conversion(const char * source, unsigned int format) {
 
 void mini18n_close(void) {
 	mini18n_destroy(currentlang);
+	currentlang = (mini18n_t) 0;
 }
