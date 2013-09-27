@@ -26,6 +26,31 @@ extern "C" {
 
 /** @file */
 
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef BUILDING_DLL
+    #ifdef __GNUC__
+      #define DLL_PUBLIC __attribute__ ((dllexport))
+    #else
+      #define DLL_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #else
+    #ifdef __GNUC__
+      #define DLL_PUBLIC __attribute__ ((dllimport))
+    #else
+      #define DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #endif
+  #define DLL_LOCAL
+#else
+  #if __GNUC__ >= 4
+    #define DLL_PUBLIC __attribute__ ((visibility ("default")))
+    #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
+  #else
+    #define DLL_PUBLIC
+    #define DLL_LOCAL
+  #endif
+#endif
+
 #define MINI18N_UTF16 1
 #define MINI18N_FORMAT_COUNT 1
 
@@ -43,22 +68,22 @@ extern "C" {
  * @param folder the folder to search for translations.
  * @returns 0 on success, -1 otherwise
  */
-int mini18n_set_domain(const char * folder);
+DLL_PUBLIC int mini18n_set_domain(const char * folder);
 /**
  * @brief Load a translation from a file.
  *
  * @param filename of the translation to load.
  * @returns 0 on success, -1 otherwise
  */
-int mini18n_set_locale(const char * locale);
-int mini18n_set_log(const char * filename);
+DLL_PUBLIC int mini18n_set_locale(const char * locale);
+DLL_PUBLIC int mini18n_set_log(const char * filename);
 /**
  * @brief Translates a string.
  *
  * @param source string to translate
  * @returns The translated string on success, the source string otherwise. The returned value should not be freed or modified in any way.
  */
-const char * mini18n(const char * source);
+DLL_PUBLIC const char * mini18n(const char * source);
 /**
  * @brief Translates and convert a string.
  *
@@ -68,8 +93,8 @@ const char * mini18n(const char * source);
  * @param source String to translate.
  * @param format The format to convert the string to.
  */
-const void * mini18n_with_conversion(const char * source, unsigned int format);
-void mini18n_close(void);
+DLL_PUBLIC const void * mini18n_with_conversion(const char * source, unsigned int format);
+DLL_PUBLIC void mini18n_close(void);
 
 /**
  *

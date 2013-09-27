@@ -24,15 +24,17 @@
 extern "C" {
 #endif
 
+#include "mini18n.h"
+
 typedef void * mini18n_t;
 
-mini18n_t mini18n_create(void);
-int mini18n_load_system(mini18n_t lang, const char * folder);
-int mini18n_load(mini18n_t lang, const char * locale);
-int mini18n_set_log_filename(mini18n_t lang, const char * filename);
-const char * mini18n_get(mini18n_t lang, const char * source);
-const void * mini18n_get_with_conversion(mini18n_t lang, const char * source, unsigned int format);
-void mini18n_destroy(mini18n_t lang);
+DLL_PUBLIC mini18n_t mini18n_create(void);
+DLL_PUBLIC int mini18n_load_system(mini18n_t lang, const char * folder);
+DLL_PUBLIC int mini18n_load(mini18n_t lang, const char * locale);
+DLL_PUBLIC int mini18n_set_log_filename(mini18n_t lang, const char * filename);
+DLL_PUBLIC const char * mini18n_get(mini18n_t lang, const char * source);
+DLL_PUBLIC const void * mini18n_get_with_conversion(mini18n_t lang, const char * source, unsigned int format);
+DLL_PUBLIC void mini18n_destroy(mini18n_t lang);
 
 #ifdef __cplusplus
 }
