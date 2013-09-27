@@ -310,6 +310,9 @@ void UISettings::loadSettings()
 	leBios->setText( s->value( "General/Bios" ).toString() );
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
+	if (s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() == CDCORE_ARCH)
+		cbCdDrive->setCurrentIndex(cbCdDrive->findText(leCdRom->text()));
+
 	leSaveStates->setText( s->value( "General/SaveStates", getDataDirPath() ).toString() );
 #ifdef HAVE_LIBMINI18N
 	int i;
