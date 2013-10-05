@@ -3457,7 +3457,7 @@ void
 ScspReceiveCDDA (const u8 *sector)
 {	
    // If buffer is half empty or less, boost timing for a bit until we've buffered a few sectors
-   if (cdda_out_left < (MAX_CD_SECTOR_BUF / 2))
+   if (cdda_out_left < (sizeof(cddabuf.data) / 2))
    {
       Cs2Area->isaudio = 0;
       Cs2SetTiming(1);
