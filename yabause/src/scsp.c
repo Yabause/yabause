@@ -328,13 +328,13 @@ static u32 scsp_buf_pos;
 
 static scsp_t   scsp;                         // SCSP structure
 
-#define MAX_CD_SECTOR_BUF	10
+#define CDDA_NUM_BUFFERS	2*75
 
 static union {
-   u8 data[MAX_CD_SECTOR_BUF*2352];
+   u8 data[CDDA_NUM_BUFFERS*2352];
 } cddabuf;
 static unsigned int cdda_next_in=0;               // Next sector buffer offset to receive into
-static u32 cddaoutleft;                       // Bytes of CDDA left to output
+static u32 cdda_out_left;                       // Bytes of CDDA left to output
 
 ////////////////////////////////////////////////////////////////
 
@@ -2326,10 +2326,10 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
                         [(slot->dislr == 31)  ? 0 : 1](slot);
     }
 
-  if (cddaoutleft > 0)
+  if (cdda_out_left > 0)
     {
-      if (len > cddaoutleft / 4)
-        scsp_buf_len = cddaoutleft / 4;
+      if (len > cdda_out_left / 4)
+        scsp_buf_len = cdda_out_left / 4;
       else
         scsp_buf_len = len;
 
@@ -2338,7 +2338,7 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
       /* May need to wrap around the buffer, so use nested loops */
       while (scsp_buf_pos < scsp_buf_len)
         {
-          s32 temp = cdda_next_in - cddaoutleft;
+          s32 temp = cdda_next_in - cdda_out_left;
           s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
           u8 *buf = &cddabuf.data[outpos];
 
@@ -2363,7 +2363,7 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
                 scsp_bufR[scsp_buf_pos] += out;
             }
 
-          cddaoutleft -= this_len * 4;
+          cdda_out_left -= this_len * 4;
         }
     }
   else if (Cs2Area->isaudio)
@@ -3457,7 +3457,7 @@ void
 ScspReceiveCDDA (const u8 *sector)
 {	
    // If buffer is half empty or less, boost timing for a bit until we've buffered a few sectors
-   if (cddaoutleft < (MAX_CD_SECTOR_BUF / 2))
+   if (cdda_out_left < (MAX_CD_SECTOR_BUF / 2))
    {
       Cs2Area->isaudio = 0;
       Cs2SetTiming(1);
@@ -3474,12 +3474,12 @@ ScspReceiveCDDA (const u8 *sector)
   else
      cdda_next_in += 2352;
 
-  cddaoutleft += 2352;
+  cdda_out_left += 2352;
 
-  if (cddaoutleft > sizeof(cddabuf.data))
+  if (cdda_out_left > sizeof(cddabuf.data))
     {
       SCSPLOG ("WARNING: CDDA buffer overrun\n");
-      cddaoutleft = sizeof(cddabuf.data);
+      cdda_out_left = sizeof(cddabuf.data);
     }
 }
 
