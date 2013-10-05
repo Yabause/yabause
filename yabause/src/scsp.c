@@ -328,11 +328,12 @@ static u32 scsp_buf_pos;
 
 static scsp_t   scsp;                         // SCSP structure
 
+#define MAX_CD_SECTOR_BUF	10
+
 static union {
-   u8 sectors[2][2352];
-   u8 data[2*2352];
+   u8 data[MAX_CD_SECTOR_BUF*2352];
 } cddabuf;
-static unsigned int cddanextin;               // Next sector buffer to receive into (0 or 1)
+static unsigned int cdda_next_in=0;               // Next sector buffer offset to receive into
 static u32 cddaoutleft;                       // Bytes of CDDA left to output
 
 ////////////////////////////////////////////////////////////////
@@ -2337,7 +2338,7 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
       /* May need to wrap around the buffer, so use nested loops */
       while (scsp_buf_pos < scsp_buf_len)
         {
-          s32 temp = cddanextin*2352 - cddaoutleft;
+          s32 temp = cdda_next_in - cddaoutleft;
           s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
           u8 *buf = &cddabuf.data[outpos];
 
@@ -2365,6 +2366,10 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
           cddaoutleft -= this_len * 4;
         }
     }
+  else if (Cs2Area->isaudio)
+  {
+	  SCSPLOG("WARNING: CDDA buffer underrun\n");
+  }
 }
 
 void
@@ -3450,10 +3455,25 @@ ScspConvert32uto16s (s32 *srcL, s32 *srcR, s16 *dst, u32 len)
 
 void
 ScspReceiveCDDA (const u8 *sector)
-{
-  memcpy(cddabuf.sectors[cddanextin], sector, 2352);
-  cddanextin = (cddanextin+1) % (sizeof(cddabuf.sectors) /
-                                 sizeof(cddabuf.sectors[0]));
+{	
+   // If buffer is half empty or less, boost timing for a bit until we've buffered a few sectors
+   if (cddaoutleft < (MAX_CD_SECTOR_BUF / 2))
+   {
+      Cs2Area->isaudio = 0;
+      Cs2SetTiming(1);
+   }
+   else
+   {
+      Cs2Area->isaudio = 1;
+      Cs2SetTiming(1);
+   }
+
+  memcpy(cddabuf.data+cdda_next_in, sector, 2352);
+  if (sizeof(cddabuf.data)-cdda_next_in <= 2352)
+      cdda_next_in = 0;
+  else
+     cdda_next_in += 2352;
+
   cddaoutleft += 2352;
 
   if (cddaoutleft > sizeof(cddabuf.data))
