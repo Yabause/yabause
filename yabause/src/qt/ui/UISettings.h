@@ -35,6 +35,7 @@ public:
 protected:
 	QList <supportedRes_struct> supportedRes;
 	QList <translation_struct> trans;
+	QList <QAction*> actionsList;
 
 	void requestFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestNewFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
@@ -43,6 +44,8 @@ protected:
 	void loadCores();
 	void loadSupportedResolutions();
 	void loadTranslations();
+	void loadShortcuts();
+	void applyShortcuts();
 	void loadSettings();
 	void saveSettings();
 

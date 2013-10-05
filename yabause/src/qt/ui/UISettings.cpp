@@ -107,6 +107,8 @@ UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList
 	cbTranslation->hide();
 #endif
 
+	loadShortcuts();
+
 	// load settings
 	loadSettings();
 	
@@ -301,6 +303,42 @@ void UISettings::loadTranslations()
 
 }
 
+void UISettings::loadShortcuts()
+{	
+	QList<QAction *> actions = parent()->findChildren<QAction *>();
+	foreach ( QAction* action, actions )
+	{
+		if (action->text().isEmpty())
+			continue;
+
+		actionsList.append(action);
+	}
+
+	int row=0;
+	twShortcuts->setRowCount(actionsList.count());
+	foreach ( QAction* action, actionsList )
+	{
+		QTableWidgetItem *tblItem = new QTableWidgetItem(action->text());
+		tblItem->setFlags(tblItem->flags() ^ Qt::ItemIsEditable);
+		twShortcuts->setItem(row, 0, tblItem);
+		tblItem = new QTableWidgetItem(action->shortcut().toString());
+		twShortcuts->setItem(row, 1, tblItem);
+		row++;
+	}
+	QHeaderView *headerView = twShortcuts->horizontalHeader();
+	headerView->setResizeMode(QHeaderView::Stretch);
+	headerView->setResizeMode(1, QHeaderView::Interactive);
+}
+
+void UISettings::applyShortcuts()
+{
+	for (int row = 0; row < (int)actionsList.size(); ++row) 
+	{
+		QAction *action = actionsList[row];
+		action->setShortcut(QKeySequence(twShortcuts->item(row, 1)->text()));
+	}
+}
+
 void UISettings::loadSettings()
 {
 	// get settings pointer
@@ -432,6 +470,20 @@ void UISettings::saveSettings()
 	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );
 	s->setValue( "View/Toolbar", bgShowToolbar->checkedId() );
 	s->setValue( "View/LogWindow", bgShowLogWindow->checkedId() );
+
+	// shortcuts
+	applyShortcuts();
+	s->beginGroup("Shortcuts");
+	QList<QAction *> actions = parent()->findChildren<QAction *>();
+	foreach ( QAction* action, actions )
+	{
+		if (action->text().isEmpty())
+			continue;
+
+		QString accelText = QString(action->shortcut());
+		s->setValue(action->text(), accelText);
+	}
+	s->endGroup();
 }
 
 void UISettings::accept()

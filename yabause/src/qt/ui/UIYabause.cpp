@@ -119,6 +119,21 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( error( const QString&, bool ) ), this, SLOT( errorReceived( const QString&, bool ) ) );
 	connect( mYabauseThread, SIGNAL( pause( bool ) ), this, SLOT( pause( bool ) ) );
 	connect( mYabauseThread, SIGNAL( reset() ), this, SLOT( reset() ) );
+
+	// Load shortcuts
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	QList<QAction *> actions = findChildren<QAction *>();
+	foreach ( QAction* action, actions )
+	{
+		if (action->text().isEmpty())
+			continue;
+
+		QString text = vs->value(QString("Shortcuts/") + action->text(), "").toString();
+		if (text.isEmpty())
+			continue;
+		action->setShortcut(text);
+	}
+
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
 
@@ -127,7 +142,6 @@ UIYabause::UIYabause( QWidget* parent )
 		addAction(actionList.at(i));
 	}
 
-	VolatileSettings* vs = QtYabause::volatileSettings();
 	restoreGeometry( vs->value("General/Geometry" ).toByteArray() );
 	mYabauseGL->setMouseTracking(true);
 	setMouseTracking(true);

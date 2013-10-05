@@ -689,16 +689,6 @@
          </property>
         </widget>
        </item>
-       <item row="5" column="0">
-        <widget class="QRadioButton" name="rbLogWindowNever">
-         <property name="text">
-          <string>Never</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowLogWindow</string>
-         </attribute>
-        </widget>
-       </item>
        <item row="5" column="1">
         <widget class="QRadioButton" name="rbLogWindowMessage">
          <property name="text">
@@ -717,6 +707,58 @@
          <attribute name="buttonGroup">
           <string notr="true">bgShowMenubar</string>
          </attribute>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QRadioButton" name="rbLogWindowNever">
+         <property name="text">
+          <string>Never</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">bgShowLogWindow</string>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Shortcuts</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="UIShortcutManager" name="twShortcuts">
+         <property name="tabKeyNavigation">
+          <bool>false</bool>
+         </property>
+         <property name="dragDropOverwriteMode">
+          <bool>false</bool>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+         <attribute name="horizontalHeaderCascadingSectionResizes">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderStretchLastSection">
+          <bool>false</bool>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>Description</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Shortcut</string>
+          </property>
+         </column>
         </widget>
        </item>
       </layout>
@@ -741,6 +783,11 @@
    <extends>QGroupBox</extends>
    <header>ui/UIPortManager.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>UIShortcutManager</class>
+   <extends>QTableWidget</extends>
+   <header>UIShortcutManager.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

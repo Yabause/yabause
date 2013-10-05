@@ -106,6 +106,7 @@ set( yabause_qt_MOC_HEADERS
 	ui/UIPadSetting.h
 	ui/UI3DControlPadSetting.h
 	ui/UIMouseSetting.h
+	ui/UIShortcutManager.h
     ui/UIDebugCPU.h
     ui/UIDebugM68K.h
     ui/UIDebugSCSP.h
@@ -145,6 +146,7 @@ set( yabause_qt_SOURCES
 	ui/UIPadSetting.cpp
 	ui/UI3DControlPadSetting.cpp
 	ui/UIMouseSetting.cpp
+	ui/UIShortcutManager.cpp
     ui/UIDebugCPU.cpp
     ui/UIDebugM68K.cpp
     ui/UIDebugSCSP.cpp
