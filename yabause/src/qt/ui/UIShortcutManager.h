@@ -19,10 +19,11 @@
 #ifndef UISHORTCUTMANAGER_H
 #define UISHORTCUTMANAGER_H
 
-#include <QTableWidget.h>
-#include <QStyledItemDelegate.h>
-#include <QEvent.h>
-#include <QLineEdit.h>
+#include <QTableWidget>
+#include <QStyledItemDelegate>
+#include <QEvent>
+#include <QKeyEvent>
+#include <QLineEdit>
 #include "../QtYabause.h"
 
 class MyItemDelegate : public QStyledItemDelegate
