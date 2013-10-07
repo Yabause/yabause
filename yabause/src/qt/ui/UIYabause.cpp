@@ -214,7 +214,7 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 			menubar->show();
 		else
 			menubar->hide();
-}
+	}
 }
 
 void UIYabause::swapBuffers()
@@ -529,7 +529,9 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["MpegROM/Path" ]!=hash["MpegROM/Path" ] ||
 			newhash["Advanced/SH2Interpreter" ]!=hash["Advanced/SH2Interpreter" ] ||
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||
-			newhash["General/CdRomISO"]!=hash["General/CdRomISO"]
+			newhash["General/CdRomISO"]!=hash["General/CdRomISO"] ||
+			newhash["General/ClockSync"]!=hash["General/ClockSync"] ||
+			newhash["General/FixedBaseTime"]!=hash["General/FixedBaseTime"]
 		)
 		{
 			if ( mYabauseThread->pauseEmulation( true, true ) )

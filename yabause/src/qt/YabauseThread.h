@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006, 2013 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
@@ -42,7 +42,7 @@ public:
 
 protected:
 	yabauseinit_struct mYabauseConf;
-   bool showFPS;
+	bool showFPS;
 	QMutex mMutex;
 	bool mPause;
 	int mTimerId;
@@ -57,6 +57,7 @@ public slots:
 	bool pauseEmulation( bool pause, bool reset );
 	bool resetEmulation();
 	void reloadControllers();
+	void reloadClock();
 	void reloadSettings();
 
 signals:

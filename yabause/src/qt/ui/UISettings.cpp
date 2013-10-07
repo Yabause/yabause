@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006, 2013 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
@@ -238,6 +238,11 @@ void UISettings::on_cbCdRom_currentIndexChanged( int id )
 	}
 }
 
+void UISettings::on_cbClockSync_stateChanged( int state )
+{
+	dteBaseTime->setVisible( state == Qt::Checked );
+}
+
 void UISettings::loadCores()
 {
 	// CD Drivers
@@ -363,6 +368,16 @@ void UISettings::loadSettings()
 	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
 	cbAutostart->setChecked( s->value( "autostart" ).toBool() );
 
+	bool clocksync = s->value( "General/ClockSync" ).toBool();
+	cbClockSync->setChecked( clocksync );	 
+	dteBaseTime->setVisible( clocksync );
+
+	QString dt = s->value( "General/FixedBaseTime" ).toString();
+	if (!dt.isEmpty())		
+		dteBaseTime->setDateTime( QDateTime::fromString( dt,Qt::ISODate) );
+	else
+		dteBaseTime->setDateTime( QDateTime(QDate(1998, 1, 1), QTime(12, 0, 0)) );
+
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
 #if YAB_PORT_OSD
@@ -449,6 +464,9 @@ void UISettings::saveSettings()
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/VideoFormat", cbVideoFormat->itemData( cbVideoFormat->currentIndex() ).toInt() );
+
+	s->setValue( "General/ClockSync", cbClockSync->isChecked() );
+	s->setValue( "General/FixedBaseTime", dteBaseTime->dateTime().toString(Qt::ISODate));
 
 	// sound
 	s->setValue( "Sound/SoundCore", cbSoundCore->itemData( cbSoundCore->currentIndex() ).toInt() );

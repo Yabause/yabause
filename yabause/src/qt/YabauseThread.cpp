@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006, 2013 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
@@ -26,6 +26,7 @@
 
 #include "../peripheral.h"
 
+#include <QDateTime>
 #include <QStringList>
 #include <QDebug>
 
@@ -51,7 +52,7 @@ void YabauseThread::initEmulation()
 {
 	reloadSettings();
 	mInit = YabauseInit( &mYabauseConf );
-   SetOSDToggle(showFPS);
+	SetOSDToggle(showFPS);
 }
 
 void YabauseThread::deInitEmulation()
@@ -216,6 +217,46 @@ void YabauseThread::reloadControllers()
 	}
 }
 
+static struct tm *localtime_qt(const QDateTime &input, struct tm *result)
+{
+	QDate date(input.date());
+	result->tm_year = date.year() - 1900;
+	result->tm_mon = date.month();
+	result->tm_mday = date.day();
+	result->tm_wday = date.dayOfWeek();
+	result->tm_yday = date.dayOfYear();
+
+	QTime time(input.time());
+	result->tm_sec = time.second();
+	result->tm_min = time.minute();
+	result->tm_hour = time.hour();
+
+	return result;
+}
+
+void YabauseThread::reloadClock()
+{
+	QString tmp;
+	Settings* s = QtYabause::settings();
+
+	if (mYabauseConf.basetime == 0)
+		tmp = "";
+	else
+		tmp = QDateTime::fromTime_t(mYabauseConf.basetime).toString();
+
+	// Clock sync
+	mYabauseConf.clocksync = (int)s->value( "General/ClockSync", mYabauseConf.clocksync ).toBool();
+	tmp = s->value( "General/FixedBaseTime", tmp ).toString();
+	if (!tmp.isEmpty() && mYabauseConf.clocksync) 
+	{
+		QDateTime date = QDateTime::fromString(tmp, Qt::ISODate);
+		mYabauseConf.basetime = (long)date.toTime_t();	
+	}
+	else {
+		mYabauseConf.basetime = 0;
+	}
+}
+
 void YabauseThread::reloadSettings()
 {
 	//QMutexLocker l( &mMutex );
@@ -252,7 +293,7 @@ void YabauseThread::reloadSettings()
 		}
 	}
 	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
-	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );   
+	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() ); 
    showFPS = vs->value( "General/ShowFPS", false ).toBool();
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
 	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
@@ -263,6 +304,7 @@ void YabauseThread::reloadSettings()
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 	emit requestVolumeChange( vs->value( "Sound/Volume", 100 ).toInt() );
 
+	reloadClock();
 	reloadControllers();
 }
 

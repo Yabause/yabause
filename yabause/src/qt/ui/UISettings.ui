@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>507</width>
-    <height>425</height>
+    <height>451</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,14 @@
        <string>General</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout1">
-       <item row="14" column="0">
+       <item row="17" column="0">
+        <widget class="QCheckBox" name="cbClockSync">
+         <property name="text">
+          <string>Synchronize Saturn internal clock with set time</string>
+         </property>
+        </widget>
+       </item>
+       <item row="19" column="0">
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -118,28 +125,28 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0" colspan="2">
+       <item row="12" column="0" colspan="2">
         <widget class="Line" name="line">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
-       <item row="11" column="0" colspan="2">
+       <item row="13" column="0" colspan="2">
         <widget class="QCheckBox" name="cbEnableFrameSkipLimiter">
          <property name="text">
           <string>Enable Frame Skip/Limiter</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="0" colspan="2">
+       <item row="14" column="0" colspan="2">
         <widget class="QCheckBox" name="cbShowFPS">
          <property name="text">
           <string>Show FPS</string>
          </property>
         </widget>
        </item>
-       <item row="13" column="0" colspan="2">
+       <item row="15" column="0" colspan="2">
         <widget class="QCheckBox" name="cbAutostart">
          <property name="text">
           <string>Autostart</string>
@@ -174,6 +181,13 @@
        </item>
        <item row="9" column="0" colspan="2">
         <widget class="QComboBox" name="cbTranslation"/>
+       </item>
+       <item row="18" column="0">
+        <widget class="QDateTimeEdit" name="dteBaseTime">
+         <property name="calendarPopup">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

@@ -1,5 +1,5 @@
 /*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
+	Copyright 2005-2006, 2013 Theo Berkau
 	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
 
 	This file is part of Yabause.
@@ -40,7 +40,7 @@ protected:
 	void requestFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestNewFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestFolder( const QString& caption, QLineEdit* edit );
-   void getCdDriveList();
+	void getCdDriveList();
 	void loadCores();
 	void loadSupportedResolutions();
 	void loadTranslations();
@@ -53,6 +53,7 @@ protected slots:
 	void tbBrowse_clicked();
 	void on_cbInput_currentIndexChanged( int id );
 	void on_cbCdRom_currentIndexChanged( int id );
+	void on_cbClockSync_stateChanged( int state );
 	void accept();
 };
 
