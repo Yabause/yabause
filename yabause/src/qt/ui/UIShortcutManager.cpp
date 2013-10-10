@@ -21,6 +21,44 @@
 #include "../Settings.h"
 
 #include <QDebug>
+#include <QPainter>
+
+MyItemDelegate::MyItemDelegate(QObject *parent) : QStyledItemDelegate(parent)
+{
+	installEventFilter(this);
+}
+
+bool MyItemDelegate::eventFilter ( QObject * editor, QEvent * event )
+{
+	QEvent::Type type = event->type();
+	if (type == QEvent::KeyPress)
+	{
+		QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+		QString text;
+
+		int key = keyEvent->key();
+
+		if(key == Qt::Key_Delete)
+		{
+			((QLineEdit *)editor)->setText("");
+			return true;
+		}
+
+		if(key == Qt::Key_unknown)
+			return true;
+
+		if (keyEvent->key() == Qt::Key_Shift ||
+			keyEvent->key() == Qt::Key_Control ||
+			keyEvent->key() == Qt::Key_Meta ||
+			keyEvent->key() == Qt::Key_Alt)
+			text = QKeySequence((keyEvent->modifiers() & ~Qt::KeypadModifier)).toString();
+		else
+			text = QKeySequence((keyEvent->modifiers() & ~Qt::KeypadModifier) + keyEvent->key()).toString();
+		((QLineEdit *)editor)->setText(text);
+		return true;
+	}
+	return QStyledItemDelegate::eventFilter(editor, event);
+}
 
 UIShortcutManager::UIShortcutManager( QWidget* parent )
 	: QTableWidget(parent)

@@ -24,49 +24,15 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QLineEdit>
+#include <QPushButton>
 #include "../QtYabause.h"
 
 class MyItemDelegate : public QStyledItemDelegate
 {
 	Q_OBJECT
 public:
-	MyItemDelegate(QObject *parent = 0) : QStyledItemDelegate(parent)
-	{
-		installEventFilter(this);
-	}
-	bool eventFilter ( QObject * editor, QEvent * event )
-	{
-		QEvent::Type type = event->type();
-		if (type == QEvent::KeyRelease)
-		{
-			//((QLineEdit *)editor)->text();
-
-		}
-		else if (type == QEvent::KeyPress)
-		{
-			QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-
-			int key = keyEvent->key();
-
-			if(key == Qt::Key_unknown){ 
-				//qDebug() << "Unknown key from a macro probably"; 
-				//return; 
-				return true;
-			} 
-			QString text;
-
-			if (keyEvent->key() == Qt::Key_Shift ||
-				keyEvent->key() == Qt::Key_Control ||
-				keyEvent->key() == Qt::Key_Meta ||
-				keyEvent->key() == Qt::Key_Alt)
-				text = QKeySequence(keyEvent->modifiers()).toString();
-			else
-			   text = QKeySequence(keyEvent->modifiers() + keyEvent->key()).toString();
-			((QLineEdit *)editor)->setText(text);
-			return true;
-		}
-		return QStyledItemDelegate::eventFilter(editor, event);
-	}
+	MyItemDelegate(QObject *parent = 0);
+	bool eventFilter ( QObject * editor, QEvent * event );
 };
 
 class UIShortcutManager : public QTableWidget
