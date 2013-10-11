@@ -91,7 +91,7 @@ UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList
 		setWindowFlags( Qt::Sheet );
 	}
 
-	getCdDriveList();
+	setupCdDrives();
 
 	// load cores informations
 	loadCores();
