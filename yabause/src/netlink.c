@@ -88,7 +88,7 @@ u8 FASTCALL NetlinkReadByte(u32 addr)
 {
    u8 ret;
 
-   switch (addr)
+   switch (addr & 0xFFFFF)
    {
       case 0x95001: // Receiver Buffer/Divisor Latch Low Byte
       {
@@ -225,7 +225,7 @@ void remove_all_chars(char* str, char c)
 
 void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
 {
-   switch (addr)
+   switch (addr & 0xFFFFF)
    {
       case 0x2503D: // ???
       {

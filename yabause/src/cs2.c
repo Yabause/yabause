@@ -23,6 +23,7 @@
 #include "cs2.h"
 #include "debug.h"
 #include "error.h"
+#include "japmodem.h"
 #include "netlink.h"
 #include "scsp.h"
 #include "scu.h"
@@ -94,59 +95,14 @@ static INLINE void doMPEGReport(u8 status)
 
 u8 FASTCALL Cs2ReadByte(u32 addr)
 {
-   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
-
-   if(Cs2Area->carttype == CART_NETLINK)
-      return NetlinkReadByte(addr);
-   else
-   {
-      // only netlink seems to use byte-access
-      switch (addr)
-      {
-         case 0x95001:
-         case 0x95005:
-         case 0x95009:
-         case 0x9500D:
-         case 0x95011:
-         case 0x95015:
-         case 0x95019:
-         case 0x9501D:
-            return 0xFF;
-         default:
-            break;
-      }
-   }
-
-   LOG("Unimplemented cs2 byte read: %08X\n", addr);
-   return 0xFF;
+   return CartridgeArea->Cs2ReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Cs2WriteByte(u32 addr, u8 val)
 {
-   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
-
-   if(Cs2Area->carttype == CART_NETLINK)
-   {
-      NetlinkWriteByte(addr, val);
-      return;
-   }
-   else
-   {
-      // only netlink seems to use byte-access
-      switch (addr)
-      {
-         case 0x2503D:
-         case 0x95011:
-         case 0x9501D:
-            return;
-         default:
-            break;
-      }
-   }
-
-   LOG("Unimplemented cs2 byte write: %08X\n", addr);
+   CartridgeArea->Cs2WriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -614,6 +570,11 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
       if ((ret = NetlinkInit(netlinksetting)) != 0)
          return ret;
    }
+   else if (Cs2Area->carttype == CART_JAPMODEM)
+   {
+      if ((ret = JapModemInit(netlinksetting)) != 0)
+         return ret;
+   }
 
    if ((cdip = (ip_struct *) calloc(sizeof(ip_struct), 1)) == NULL)
       return -1;
@@ -679,6 +640,8 @@ void Cs2DeInit(void) {
 
       if(Cs2Area->carttype == CART_NETLINK)
          NetlinkDeInit();
+      else if (Cs2Area->carttype == CART_JAPMODEM)
+         JapModemDeInit();
 
       free(Cs2Area);
    }
@@ -806,6 +769,8 @@ void Cs2Reset(void) {
   Cs2Area->lastbuffer = 0xFF;
 
   Cs2Area->_command = 0;
+  Cs2Area->_statuscycles = 0;
+  Cs2Area->_statustiming = 1000000;
   Cs2Area->_periodiccycles = 0;
   Cs2Area->_commandtiming = 0;
   Cs2SetTiming(0);
@@ -830,7 +795,8 @@ void Cs2Reset(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2Exec(u32 timing) {
-    Cs2Area->_periodiccycles += timing * 3;
+   Cs2Area->_statuscycles += timing * 3;
+   Cs2Area->_periodiccycles += timing * 3;
 
    if (Cs2Area->_commandtiming > 0)
    {
@@ -843,36 +809,39 @@ void Cs2Exec(u32 timing) {
          Cs2Area->_commandtiming -= timing;
    }
 
+   if (Cs2Area->_statuscycles >= Cs2Area->_statustiming)
+   {
+      Cs2Area->_statuscycles -= Cs2Area->_statustiming;
+      switch(Cs2Area->cdi->GetStatus())
+      {
+         case 0:
+         case 1:
+            if ((Cs2Area->status & 0xF) == CDB_STAT_NODISC ||
+                (Cs2Area->status & 0xF) == CDB_STAT_OPEN)
+            {
+               Cs2Area->status = CDB_STAT_PAUSE;
+               Cs2Area->isdiskchanged = 1;
+            }
+            break;
+         case 2:
+            // may need to change this
+            if ((Cs2Area->status & 0xF) != CDB_STAT_NODISC)
+               Cs2Area->status = CDB_STAT_NODISC;
+            break;
+         case 3:
+            // may need to change this
+            if ((Cs2Area->status & 0xF) != CDB_STAT_OPEN)
+               Cs2Area->status = CDB_STAT_OPEN;
+            break;
+         default: break;
+      }
+   }
+
    if (Cs2Area->_periodiccycles >= Cs2Area->_periodictiming)
    {
       Cs2Area->_periodiccycles -= Cs2Area->_periodictiming; 
 
       // Get Drive's current status and compare with old status
-//      switch(cd->getStatus()) // this shouldn't be called every periodic response
-      switch(0)
-      {
-         case 0:
-         case 1:
-                 if ((Cs2Area->status & 0xF) == CDB_STAT_NODISC ||
-                     (Cs2Area->status & 0xF) == CDB_STAT_OPEN)
-                 {
-                    Cs2Area->status = CDB_STAT_PAUSE;
-                    Cs2Area->isdiskchanged = 1;
-                 }
-                 break;
-         case 2:
-                 // may need to change this
-                 if ((Cs2Area->status & 0xF) != CDB_STAT_NODISC)
-                    Cs2Area->status = CDB_STAT_NODISC;
-                 break;
-         case 3:
-                 // may need to change this
-                 if ((Cs2Area->status & 0xF) != CDB_STAT_OPEN)
-                    Cs2Area->status = CDB_STAT_OPEN;
-                 break;
-         default: break;
-      }
-
       switch (Cs2Area->status & 0xF) {
          case CDB_STAT_PAUSE:
          {
@@ -988,6 +957,8 @@ void Cs2Exec(u32 timing) {
 
    if(Cs2Area->carttype == CART_NETLINK)
       NetlinkExec(timing);
+   else if (Cs2Area->carttype == CART_JAPMODEM)
+      JapModemExec(timing);
 }
 
 //////////////////////////////////////////////////////////////////////////////
