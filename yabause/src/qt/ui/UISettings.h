@@ -25,6 +25,8 @@
 #include "../QtYabause.h"
 #include "UIYabause.h"
 
+QStringList getCdDriveList();
+
 class UISettings : public QDialog, public Ui::UISettings
 {
 	Q_OBJECT
@@ -40,7 +42,7 @@ protected:
 	void requestFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestNewFile( const QString& caption, QLineEdit* edit, const QString& filters = QString() );
 	void requestFolder( const QString& caption, QLineEdit* edit );
-	void getCdDriveList();
+	void setupCdDrives();
 	void loadCores();
 	void loadSupportedResolutions();
 	void loadTranslations();

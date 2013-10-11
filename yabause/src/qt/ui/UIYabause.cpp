@@ -604,21 +604,25 @@ void UIYabause::on_aFileOpenISO_triggered()
 void UIYabause::on_aFileOpenCDRom_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getExistingDirectory( QtYabause::volatileSettings()->value( "Recents/CDs" ).toString(), QtYabause::translate( "Choose a cdrom drive/mount point" ) );
-	if ( !fn.isEmpty() )
+	QStringList list = getCdDriveList();
+	int current = list.indexOf(QtYabause::volatileSettings()->value( "Recents/CDs").toString());
+	QString fn = QInputDialog::getItem(this, QtYabause::translate("Open CD Rom"), 
+													QtYabause::translate("Choose a cdrom drive/mount point") + ":",
+													list, current, false);
+	if (!fn.isEmpty())
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		const int currentCDCore = vs->value( "General/CdRom" ).toInt();
 		const QString currentCdRomISO = vs->value( "General/CdRomISO" ).toString();
-		
+
 		QtYabause::settings()->setValue( "Recents/CDs", fn );
-		
+
 		vs->setValue( "autostart", false );
 		vs->setValue( "General/CdRom", QtYabause::defaultCDCore().id );
 		vs->setValue( "General/CdRomISO", fn );
-		
+
 		mYabauseThread->pauseEmulation( false, true );
-		
+
 		refreshStatesActions();
 	}
 }

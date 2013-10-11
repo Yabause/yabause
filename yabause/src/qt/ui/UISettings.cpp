@@ -143,14 +143,16 @@ void UISettings::requestFolder( const QString& c, QLineEdit* e )
 		e->setText( s );
 }
 
-void UISettings::getCdDriveList()
+QStringList getCdDriveList()
 {
+	QStringList list;
+
 #if defined Q_OS_WIN
 	foreach( QFileInfo drive, QDir::drives () )
 	{
 		LPCWSTR driveString = (LPCWSTR)drive.filePath().utf16();
 		if (GetDriveTypeW(driveString) == DRIVE_CDROM)
-			cbCdDrive->addItem(drive.filePath());
+			list.append(drive.filePath());
 	}
 #elif defined Q_OS_LINUX
 	FILE * f = fopen("/proc/sys/dev/cdrom/info", "r");
@@ -164,11 +166,19 @@ void UISettings::getCdDriveList()
 		if (sscanf(buffer, "drive name:%s", drive_name) == 1) {
 			sprintf(drive_path, "/dev/%s", drive_name);
 
-			cbCdDrive->addItem(drive_path, (qulonglong) NULL);
+			list.append(drive_path);
 		}
 	}
 #elif defined Q_OS_MAC
 #endif
+	return list;
+}
+
+void UISettings::setupCdDrives()
+{
+	QStringList list=getCdDriveList();
+	foreach(QString string, list)
+		cbCdDrive->addItem(string);
 }
 
 void UISettings::tbBrowse_clicked()

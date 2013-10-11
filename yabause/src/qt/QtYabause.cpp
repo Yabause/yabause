@@ -223,16 +223,17 @@ int QtYabause::setTranslationFile()
 
 int QtYabause::logTranslation()
 {
-	return 0;
 #ifdef HAVE_LIBMINI18N
-	const QString s = settings()->value( "General/Translation" ).toString().replace( ".yts", "_log.yts" );
-	if ( s.isEmpty() )
-		return 0;
-	const char* filePath = qstrdup( s.toLocal8Bit().constData() );
-	return mini18n_set_log( filePath );
-#else
-	return 0;
+	if (settings()->value( "General/LogUntranslated", false ).toBool())
+	{
+		const QString s = settings()->value( "General/Translation" ).toString().replace( ".yts", "_log.yts" );
+		if ( s.isEmpty() )
+			return 0;
+		const char* filePath = qstrdup( s.toLocal8Bit().constData() );
+		return mini18n_set_log( filePath );
+	}
 #endif
+	return 0;
 }
 
 void QtYabause::closeTranslation()

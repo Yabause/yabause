@@ -3214,6 +3214,7 @@ ScspInit (int coreid)
   // Reset output pointers
   scspsoundgenpos = 0;
   scspsoundoutleft = 0;
+  scspframeaccurate = 0;
 
   return ScspChangeSoundCore (coreid);
 }
