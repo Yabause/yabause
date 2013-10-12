@@ -3462,7 +3462,10 @@ ScspReceiveCDDA (const u8 *sector)
    {
       Cs2Area->isaudio = 0;
       Cs2SetTiming(1);
+		Cs2Area->isaudio = 1;
    }
+	else if (cdda_out_left > (sizeof(cddabuf.data) * 3 / 4 ))
+		Cs2SetTiming(0);
    else
    {
       Cs2Area->isaudio = 1;
@@ -3471,7 +3474,7 @@ ScspReceiveCDDA (const u8 *sector)
 
   memcpy(cddabuf.data+cdda_next_in, sector, 2352);
   if (sizeof(cddabuf.data)-cdda_next_in <= 2352)
-      cdda_next_in = 0;
+     cdda_next_in = 0;
   else
      cdda_next_in += 2352;
 
@@ -3489,9 +3492,6 @@ ScspReceiveCDDA (const u8 *sector)
 void
 ScspExec ()
 {
-#if 0
-  s16 stereodata16[(44100 / 60) * 16]; //11760
-#endif
   u32 audiosize;
 
   ScspInternalVars->scsptiming2 +=
