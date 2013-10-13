@@ -96,7 +96,7 @@ Exact|Identique
 &File|&Fichier
 File|Fichier
 File :|Fichier :
-File:|Fichier :
+File:|Fichier :
 File Name :|Nom du Fichier :
 File transfer|Transfert de Fichier
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVERTISSEMENT :</b> Les Codes Maîtres <b>NE SONT PAS</b> supportés.</font>
@@ -118,8 +118,8 @@ Hard Reset|Redémarrage Matériel
 Height|Hauteur :
 _Help|_Aide
 &Help|&Aide
-Hide menubar|Cacher la Barre de Menu
-Hide toolbar|Cacher la Barre d'Outils
+Hide Menubar|Cacher la Barre de Menu
+Hide Toolbar|Cacher la Barre d'Outil
 http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=fr
 http://www.monkeystudio.org|http://www.monkeystudio.org
 Information...|Information...
@@ -150,7 +150,7 @@ Long Write|Ecrire un Long
 M68K|M68K
 &Master SH2|&Master SH2
 Master SH2|Master SH2
-Memory dump|Copier la mémoire
+Memory dump|Copier la Mémoire
 Memory Dump|Copier la Mémoire
 Memory &Editor|&Editeur de Mémoire
 Memory Editor|Editeur de Mémoire
@@ -211,12 +211,12 @@ SDL Joystick Interface|Interface SDL du Joystick
 SDL Sound Interface|Interface SDL du Son
 Search|Rechercher
 Search/Add Cheats|Rechercher/Ajouter un Cheat
-Search Value:|Rechercher une Valeur :
+Search Value:|Rechercher une Valeur :
 Select a file to load your state|Choisissez un fichier pour charger l'état
 Select your iso/cue/bin file|Choisissez votre fichier iso/cue/bin
 Set PC to Start Address|Sélection PC vers l'Adresse de Démarrage
-&Settings...|&Paramétres...
-Settings|Paramétres
+&Settings...|&Paramètres...
+Settings|Paramètres
 SH2 Debugger Interpreter|Interpréteur de Débugeur SH2
 SH2 Dynamic Recompiler|Recompileur Dynamique SH2
 SH2 Interpreter|Interpréteur SH2 :
@@ -254,9 +254,9 @@ Up|Haut
 Upload|Upload
 Value|Valeur
 Value :|Valeur :
-Vdp1|Vdp1
+Vdp1|VDP1
 VDP1|VDP1
-Vdp2|Vdp2
+Vdp2|VDP2
 VDP2|VDP2
 Video Core|Noyau Vidéo :
 Video Driver|Pilote Vidéo :
@@ -274,3 +274,108 @@ Yabause is not initialized, can't manage backup ram.|Yabause n'est pas initialis
 Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Basé sur Yabause %1 :<br /><a href="http://yabause.org">http://yabause.org</a><br />L'équipe de Yabause :<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Qt GUI|Interface Graphique Qt pour Yabause
 Yabause Save State (*.yss)|Sauvegarde d'État Yabause (*.yss)
+3D Control Pad|3D Control Pad
+DirectX Sound Interface|Interface DirectX Sound
+Pro Action Replay|Pro Action Replay
+4 Mbit Backup Ram|4 Mbit Backup Ram
+8 Mbit Backup Ram|8 Mbit Backup Ram
+16 Mbit Backup Ram|16 Mbit Backup Ram
+32 Mbit Backup Ram|32 Mbit Backup Ram
+8 Mbit Dram|8 Mbit Dram
+32 Mbit Dram|32 Mbit Dram
+Netlink|Réseau
+16 Mbit ROM|16 Mbit ROM
+Japanese Modem|Modem Japonais
+DirectX Input Interface|Interface DirectX Input
+Shortcuts|Raccourcis
+Hide Menubar|Cacher la Barre de Menu
+Hide Toolbar|Cacher la Barre d'Outil
+Show Log Window|Afficher la Fenêtre Journal
+On message|Sur le Message
+Display on Hover|Affichager en Passant le Curseur
+Window Resolution|Résolution Fenêtré
+Fullscreen Resolution|Résolution en Plein Ecran
+Start in Fullscreen|Lancer en Plein Ecran
+Synchronize Saturn internal clock with set time|Synchroniser l'Horloge Interne de la Saturn avec l'Heure
+8-bit|8-bit
+16-bit|16-bit
+32-bit|32-bit
+Debug CPU|Débug CPU
+Registers|Registres
+Disassembled Code|Code Désassemblé
+Other Debug|Autre Débug
+Backtrace|Backtrace
+Track Inf Loop Results|Résultats In Piste en Boucle
+Code Breakpoints|Interruptions du Code
+Add|Ajouter
+Del|Effacer
+Memory Breakpoints|Interruptions Mémoire
+Read|Ecrire
+Write|Write
+Byte|Byte
+Word|Word
+Long|Long
+Step Into|Entrer Dans
+Step Over|Sauter
+Step Out|Sortir
+Debug Master SH2|Débug Master SH2
+SH2 Registers|Registrers SH2
+Loop Track Start|Démarrer Piste en Boucle
+Loop Track Clear|Vider Piste en Boucle
+Debug Slave SH2|Débug SH2 Esclave
+Normal Sprite|Sprite Normal
+System Clipping Coordinates|Coordonnées Clippind Système
+Local Coordinates|Coordonnées Locals
+Draw End|Fin Dessin
+Debug VDP1|Débug VDP1
+VDP1 Command List|Liste Commande VDP1
+VDP1 Command Info|Info Commande VDP1
+Texture|Texture
+Save Bitmap|Sauvegarder en Bitmap
+Debug VDP2Viewer|Débug VDP2Viewer
+NBG0/RBG1 Info|Info NBG0/RBG1
+Screen Enabled|Ecran Activé
+NBG1 Info|Info NBG1
+NBG2 Info|Info NBG2
+NBG3 Info|Info NBG3
+RBG0 Info|Info RBG0
+General Info|Info Général
+Display Enabled|Affichage Activé
+Viewer|Visualiseur
+Debug M68K|Débug M68K
+M68K Registers|Registres M68K
+Debug SCU DSP|Débug SCU DSP
+DSP Registers|Registres DSP
+Save Program|Sauvegarde Programme
+Save MD0|Sauvegarde MD0
+Save MD1|Sauvegarde MD1
+Save MD2|Sauvegarde MD2
+Save MD3|Sauvegarde MD3
+Slot Info|Info Emplacement
+Slot Number:|Numéro d'Emplacement :
+Save As WAV|Sauvegarder en  WAV
+Save Slot Registers|Sauvegarder Emplacement Registres
+Common Control Registers|Registres de Contrôle Commun
+DSP Control Registers|Registres de Contrôle DSP
+Goto Address|Va sur l'Adresse
+Save Selected|Sauvegarde Sélectionné
+Search Memory|Rechercher dans la Mémoire
+Signed 32-bit value|Valeur Signé 32-bit
+Unsigned 32-bit value|Valeur Non Signé 32-bit
+Signed 16-bit value|Valeur Signé 16-bit
+Unsigned 16-bit value|Valeur Non Signé 16-bit
+Signed 8-bit value|Valeur Signé 8-bit
+Unsigned 8-bit value|Valeur Non Signé 8-bit
+16-bit Relative value(s)|Valeurs Relative 16-bit Relative
+8-bit Relative value(s)|Valeurs Relative 8-bit
+Text|Texte
+Hex value(s)|Valeur(s) Héx
+Memory Search|Rechercher dans la Mémoire
+Search Criteria|Critère de Recherche
+Type:|Type :
+Value:|Valeur :
+Options|Options
+Enter New Value|Entrer une Nouvelle Valeur
+Binary Files (*.bin)|Fichiers Binaire (*.bin)
+Choose a location for binary file|Choisir le Chemin du Fichier Binaire
+Choose a binary file|Choisir un Fichier Binaire

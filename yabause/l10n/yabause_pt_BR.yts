@@ -99,7 +99,7 @@ File :|Arquivo :
 File:|Arquivo:
 File Name :|Nome do Arquivo :
 File transfer|Transferência de arquivo
-<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVISO:</b> Códigos Mestres <b>NÃO</b> são suportados.</font>
+<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVISO:</b> Os Códigos Mestres <b>NÃO</b> são suportados.</font>
 Format|Formato
 FPS|FPS
 Frame Skip/Limiter|Frame Skip/Limitador
@@ -118,8 +118,8 @@ Hard Reset|Reset Rígido
 Height|Altura
 _Help|_Ajuda
 &Help|&Ajuda
-Hide menubar|Esconder a barra do menu
-Hide toolbar|Esconder a barra de ferramentas
+Hide Menubar|Esconder a Barra do Menu
+Hide Toolbar|Esconder a Barra de Ferramentas
 http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=uk
 http://www.monkeystudio.org|http://www.monkeystudio.org
 Information...|Informação...
@@ -150,7 +150,7 @@ Long Write|Gravação Longa
 M68K|M68K
 &Master SH2|&SH2 Mestre
 Master SH2|SH2 Mestre
-Memory dump|Dump da memória
+Memory dump|Dump da Memória
 Memory Dump|Dump da Memória
 Memory &Editor|Editor de &Memória
 Memory Editor|Editor de Memória
@@ -254,9 +254,9 @@ Up|Para cima
 Upload|Upload
 Value|Valor
 Value :|Valor :
-Vdp1|Vdp1
+Vdp1|VDP1
 VDP1|VDP1
-Vdp2|Vdp2
+Vdp2|VDP2
 VDP2|VDP2
 Video Core|Núcleo do Vídeo
 Video Driver|Driver do Vídeo
@@ -274,3 +274,108 @@ Yabause is not initialized, can't manage backup ram.|O Yabause não está inicia
 Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Gui Qt do Yabause<br />Baseada no Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />O Time do Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Qt GUI|GUI Qt do Yabause
 Yabause Save State (*.yss)|Save State do Yabause (*.yss)
+3D Control Pad|Pad de Controle 3D
+DirectX Sound Interface|Interface de Som do DirectX
+Pro Action Replay|Pro Action Replay
+4 Mbit Backup Ram|Ram de Backup de 4 Mbits
+8 Mbit Backup Ram|Ram de Backup de 8 Mbits
+16 Mbit Backup Ram|Ram de Backup de 16 Mbits
+32 Mbit Backup Ram|Ram de Backup de 32 Mbits
+8 Mbit Dram|Dram de 8 Mbits
+32 Mbit Dram|Dram de 32 Mbits
+Netlink|Netlink
+16 Mbit ROM|ROM de 16 Mbits
+Japanese Modem|Modem Japonês
+DirectX Input Interface|Interface dos Controles do DirectX
+Shortcuts|Atalhos
+Hide Menubar|Esconder a Barra do Menu
+Hide Toolbar|Esconder a Barra de Ferramentas
+Show Log Window|Mostrar a Janela do Log
+On message|Na mensagem
+Display on Hover|Exibir ao Pairar Sobre
+Window Resolution|Resolução da Janela
+Fullscreen Resolution|Resolução da Tela Cheia
+Start in Fullscreen|Iniciar em Tela Cheia
+Synchronize Saturn internal clock with set time|Sincronizar o relógio interno do Saturno com o tempo definido
+8-bit|8-bits
+16-bit|16-bits
+32-bit|32-bits
+Debug CPU|Fazer Debug da CPU
+Registers|Registros
+Disassembled Code|Código Convertido pra Assembler
+Other Debug|Outro Debug
+Backtrace|Backtrace
+Track Inf Loop Results|Rastrear Resultados do Loop do Inf
+Code Breakpoints|Breakpoints do Código
+Add|Adicionar
+Del|Apagar
+Memory Breakpoints|Breakpoints da Memória
+Read|Ler
+Write|Gravar
+Byte|Byte
+Word|Palavra
+Long|Comprimento
+Step Into|Entrar
+Step Over|Atravessar
+Step Out|Sair
+Debug Master SH2|Fazer Debug do SH2 Mestre
+SH2 Registers|Registros do SH2
+Loop Track Start|Iniciar o Rastreamento do Loop
+Loop Track Clear|Limpar o Rastreamento do Loop
+Debug Slave SH2|Fazer Debug do SH2 Escravo
+Normal Sprite|Sprite Normal
+System Clipping Coordinates|Coordenadas de Corte do Sistema
+Local Coordinates|Coordenadas Locais
+Draw End|Fim do Desenho
+Debug VDP1|Fazer Debug do VDP1
+VDP1 Command List|Lista de Comandos do VDP1
+VDP1 Command Info|Informação do Comando do VDP1
+Texture|Textura
+Save Bitmap|Salvar Bitmap
+Debug VDP2Viewer|Fazer Debug do VDP2Viewer
+NBG0/RBG1 Info|Informação do NBG0/RBG1
+Screen Enabled|Tela Ativada
+NBG1 Info|Informação do NBG1
+NBG2 Info|Informação do NBG2
+NBG3 Info|Informação do NBG3
+RBG0 Info|Informação do RBG0
+General Info|Informação Geral
+Display Enabled|Exibidor Ativado
+Viewer|Visualizador
+Debug M68K|Fazer Debug do M68K
+M68K Registers|Registros do M68K
+Debug SCU DSP|Fazer Debug do SCU DSP
+DSP Registers|Registros do DSP
+Save Program|Salvar Programa
+Save MD0|Salvar MD0
+Save MD1|Salvar MD1
+Save MD2|Salvar MD2
+Save MD3|Salvar MD3
+Slot Info|Informação do Slot
+Slot Number:|Número do Slot:
+Save As WAV|Salvar Como WAV
+Save Slot Registers|Registros do Slot do Save
+Common Control Registers|Registros de Controle Comum
+DSP Control Registers|Registros do Controle do DSP
+Goto Address|Endereço Goto
+Save Selected|Salvar os Selecionados
+Search Memory|Procurar na Memória
+Signed 32-bit value|Valor de 32-bits assinado
+Unsigned 32-bit value|Valor de 32-bits não assinado
+Signed 16-bit value|Valor de 16-bits assinado
+Unsigned 16-bit value|Valor de 16-bits não assinado
+Signed 8-bit value|Valor de 8-bits assinado
+Unsigned 8-bit value|Valor de 8-bits não assinado
+16-bit Relative value(s)|Valor(es) de 16-bits relativo(s)
+8-bit Relative value(s)|Valor(es) de 8-bits relativo(s)
+Text|Texto
+Hex value(s)|Valor(es) hex
+Memory Search|Busca pela Memória
+Search Criteria|Critério da Busca
+Type:|Tipo:
+Value:|Valor:
+Options|Opções
+Enter New Value|Inserir Novo Valor
+Binary Files (*.bin)|Arquivo Binário (*.bin)
+Choose a location for binary file|Escolha um local pro arquivo binário
+Choose a binary file|Escolha um arquivo binário

@@ -196,3 +196,108 @@ Yabause Cheat Files (*.yct);;All Files (*)|Yabause File Cheat (*.yct);;Tutti i f
 Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Interfaccia Qt Yabause<br />Basata su Yabause 0.9.5<br /><a href="<a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a>"><a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a></a><br />Il Team Yabause<br /><a href="<a href="mailto:pasnox@gmail.com" class="external free" rel="nofollow">mailto:pasnox@gmail.com</a>">Filipe AZEVEDO</a>
 Yabause Qt GUI|Interfaccia Qt Yabause
 Yabause Save State (*.yss)|Yabause Salvataggio Stato (*.yss)
+3D Control Pad|3D Control Pad
+DirectX Sound Interface|DirectX Sound Interface
+Pro Action Replay|Pro Action Replay
+4 Mbit Backup Ram|4 Mbit Backup Ram
+8 Mbit Backup Ram|8 Mbit Backup Ram
+16 Mbit Backup Ram|16 Mbit Backup Ram
+32 Mbit Backup Ram|32 Mbit Backup Ram
+8 Mbit Dram|8 Mbit Dram
+32 Mbit Dram|32 Mbit Dram
+Netlink|Netlink
+16 Mbit ROM|16 Mbit ROM
+Japanese Modem|Japanese Modem
+DirectX Input Interface|DirectX Input Interface
+Shortcuts|Shortcuts
+Hide Menubar|Hide Menubar
+Hide Toolbar|Hide Toolbar
+Show Log Window|Show Log Window
+On message|On message
+Display on Hover|Display on Hover
+Window Resolution|Window Resolution
+Fullscreen Resolution|Fullscreen Resolution
+Start in Fullscreen|Start in Fullscreen
+Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
+8-bit|8-bit
+16-bit|16-bit
+32-bit|32-bit
+Debug CPU|Debug CPU
+Registers|Registers
+Disassembled Code|Disassembled Code
+Other Debug|Other Debug
+Backtrace|Backtrace
+Track Inf Loop Results|Track Inf Loop Results
+Code Breakpoints|Code Breakpoints
+Add|Add
+Del|Del
+Memory Breakpoints|Memory Breakpoints
+Read|Read
+Write|Write
+Byte|Byte
+Word|Word
+Long|Long
+Step Into|Step Into
+Step Over|Step Over
+Step Out|Step Out
+Debug Master SH2|Debug Master SH2
+SH2 Registers|SH2 Registers
+Loop Track Start|Loop Track Start
+Loop Track Clear|Loop Track Clear
+Debug Slave SH2|Debug Slave SH2
+Normal Sprite|Normal Sprite
+System Clipping Coordinates|System Clipping Coordinates
+Local Coordinates|Local Coordinates
+Draw End|Draw End
+Debug VDP1|Debug VDP1
+VDP1 Command List|VDP1 Command List
+VDP1 Command Info|VDP1 Command Info
+Texture|Texture
+Save Bitmap|Save Bitmap
+Debug VDP2Viewer|Debug VDP2Viewer
+NBG0/RBG1 Info|NBG0/RBG1 Info
+Screen Enabled|Screen Enabled
+NBG1 Info|NBG1 Info
+NBG2 Info|NBG2 Info
+NBG3 Info|NBG3 Info
+RBG0 Info|RBG0 Info
+General Info|General Info
+Display Enabled|Display Enabled
+Viewer|Viewer
+Debug M68K|Debug M68K
+M68K Registers|M68K Registers
+Debug SCU DSP|Debug SCU DSP
+DSP Registers|DSP Registers
+Save Program|Save Program
+Save MD0|Save MD0
+Save MD1|Save MD1
+Save MD2|Save MD2
+Save MD3|Save MD3
+Slot Info|Slot Info
+Slot Number:|Slot Number:
+Save As WAV|Save As WAV
+Save Slot Registers|Save Slot Registers
+Common Control Registers|Common Control Registers
+DSP Control Registers|DSP Control Registers
+Goto Address|Goto Address
+Save Selected|Save Selected
+Search Memory|Search Memory
+Signed 32-bit value|Signed 32-bit value
+Unsigned 32-bit value|Unsigned 32-bit value
+Signed 16-bit value|Signed 16-bit value
+Unsigned 16-bit value|Unsigned 16-bit value
+Signed 8-bit value|Signed 8-bit value
+Unsigned 8-bit value|Unsigned 8-bit value
+16-bit Relative value(s)|16-bit Relative value(s)
+8-bit Relative value(s)|8-bit Relative value(s)
+Text|Text
+Hex value(s)|Hex value(s)
+Memory Search|Memory Search
+Search Criteria|Search Criteria
+Type:|Type:
+Value:|Value:
+Options|Options
+Enter New Value|Enter New Value
+Binary Files (*.bin)|Binary Files (*.bin)
+Choose a location for binary file|Choose a location for binary file
+Choose a binary file|Choose a binary file
