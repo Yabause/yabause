@@ -264,8 +264,8 @@ BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 		{
 			dev_list[num_devices].lpDIDevice = NULL;
 			dev_list[num_devices].is_xinput_device = TRUE;
-			dev_list[num_devices].user_index=*((int *)pvRef);
-			*((int *)pvRef)++;
+			dev_list[num_devices].user_index=((int *)pvRef)[0];
+			((int *)pvRef)[0]++;
 			num_devices++;
 		}
 		else
