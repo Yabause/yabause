@@ -277,6 +277,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       case 0x4:
          Vdp1Regs->COPR = 0;
          Vdp1Regs->PTMR = val;
+         if (val == 1) Vdp1Draw();
          break;
       case 0x6:
          Vdp1Regs->EWDR = val;
@@ -310,9 +311,6 @@ void Vdp1Draw(void) {
    u16 command;
 
    VIDCore->Vdp1DrawStart();
-
-   if (!Vdp1Regs->PTMR)
-      return;
 
    if (!Vdp1External.disptoggle)
    {
@@ -419,10 +417,6 @@ void Vdp1NoDraw(void) {
    u32 returnAddr;
    u32 commandCounter;
    u16 command;
-
-   // Only when PTMR's not set do we not parse commands
-   if (!Vdp1Regs->PTMR)
-      return;
 
    Vdp1Regs->addr = 0;
    returnAddr = 0xFFFFFFFF;
