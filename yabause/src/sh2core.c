@@ -100,15 +100,18 @@ void SH2DeInit()
       SH2Core->DeInit();
    SH2Core = NULL;
 
-   SH2TrackInfLoopDeInit(MSH2);
-   SH2TrackInfLoopDeInit(SSH2);
-
    if (MSH2)
+   {
+      SH2TrackInfLoopDeInit(MSH2);
       free(MSH2);
+   }
    MSH2 = NULL;
 
    if (SSH2)
+   {
+      SH2TrackInfLoopDeInit(SSH2);
       free(SSH2);
+   }
    SSH2 = NULL;
 }
 
