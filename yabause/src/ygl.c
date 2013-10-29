@@ -196,7 +196,7 @@ GLAPI void APIENTRY glActiveTexturedmy (GLenum texture){}
 #define IS_ZERO(a) ( (a) < EPS && (a) > -EPS)
 
 // AXB = |A||B|sin
-INLINE float cross2d( float veca[2], float vecb[2] )
+static INLINE float cross2d( float veca[2], float vecb[2] )
 {
    return (veca[0]*vecb[1])-(vecb[0]*veca[1]);
 }
@@ -208,9 +208,9 @@ INLINE float cross2d( float veca[2], float vecb[2] )
   a2+-+-----+b2
       ans
       
-  get intersection point for opssite edge.
+  get intersection point for opposite edge.
 --------------------------------------------*/  
-int FASTCALL YglIntersectionOppsiteEdge(float * a1, float * a2, float * b1, float * b2, float * out ) 
+int FASTCALL YglIntersectionOppositeEdge(float * a1, float * a2, float * b1, float * b2, float * out ) 
 {
   float veca[2];
   float vecb[2];
@@ -283,7 +283,7 @@ int YglCalcTextureQ(
    p4[1]=pnts[7];
 
    // calcurate Q1
-   if( YglIntersectionOppsiteEdge( p3, p1, p2, p4,  o ) == 0 )
+   if( YglIntersectionOppositeEdge( p3, p1, p2, p4,  o ) == 0 )
    {
       dx = o[0]-p1[0];
       if( !IS_ZERO(dx) )
@@ -313,7 +313,7 @@ int YglCalcTextureQ(
    /* q2 = 1.0f; */
 
    // calcurate Q3
-   if( YglIntersectionOppsiteEdge( p1, p3, p2,p4,  o ) == 0 )
+   if( YglIntersectionOppositeEdge( p1, p3, p2,p4,  o ) == 0 )
    {
       dx = o[0]-p3[0];
       if( !IS_ZERO(dx) )
@@ -342,7 +342,7 @@ int YglCalcTextureQ(
 
    
    // calcurate Q4
-   if( YglIntersectionOppsiteEdge( p3, p1, p4, p2,  o ) == 0 )
+   if( YglIntersectionOppositeEdge( p3, p1, p4, p2,  o ) == 0 )
    {
       dx = o[0]-p1[0];
       if( !IS_ZERO(dx) )
