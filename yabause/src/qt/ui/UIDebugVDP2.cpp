@@ -44,7 +44,7 @@ UIDebugVDP2::UIDebugVDP2( QWidget* p )
 void UIDebugVDP2::updateInfoDisplay(void (*debugStats)(char *, int *), QCheckBox *cb, QPlainTextEdit *pte)
 {
    char tempstr[2048];
-   int isScreenEnabled=FALSE;
+   int isScreenEnabled=false;
 
    debugStats(tempstr, &isScreenEnabled);
 
