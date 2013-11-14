@@ -1140,6 +1140,12 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: Command: putSectorData %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2PutSectorData();
       break;
+	 case 0x65:
+		 CDLOG("cs2\t: Command: Unimplemented copySectorData %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+		 break;
+	 case 0x66:
+		 CDLOG("cs2\t: Command: Unimplemented moveSectorData %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+		 break;
     case 0x67:
       CDLOG("cs2\t: Command: getCopyError\n");
       Cs2GetCopyError();
@@ -2873,13 +2879,13 @@ partition_struct * Cs2GetPartition(filter_struct * curfilter)
 
 partition_struct * Cs2FilterData(filter_struct * curfilter, int isaudio)
 {
-  int condresults = 1;
+  int condresults;
   partition_struct * fltpartition = NULL;
-
-  // fix me, this is pretty bad. Though I guess it's a start
 
   for (;;)
   {
+     // reset result
+     condresults = 1;
      // detect which type of sector we're dealing with
      // If it's not mode 2, ignore the subheader conditions
      if (Cs2Area->workblock.data[0xF] == 0x02 && !isaudio)
@@ -2928,7 +2934,7 @@ partition_struct * Cs2FilterData(filter_struct * curfilter, int isaudio)
      {
         // FAD Range Check
         if (Cs2Area->workblock.FAD < curfilter->FAD ||
-            Cs2Area->workblock.FAD > (curfilter->FAD+curfilter->range))
+            Cs2Area->workblock.FAD >= (curfilter->FAD+curfilter->range))
             condresults = 0;
      }
 

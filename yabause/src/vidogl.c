@@ -3406,7 +3406,8 @@ static void Vdp2DrawNBG1(void)
    info.priority = (Vdp2Regs->PRINA >> 8) & 0x7;;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG1PlaneAddr;
 
-   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
+   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
+      (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
       return;
    
    // Window Mode
@@ -3524,7 +3525,8 @@ static void Vdp2DrawNBG2(void)
    info.priority = Vdp2Regs->PRINB & 0x7;;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG2PlaneAddr;
 
-   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
+   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
+      (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
       return;
    
    // Window Mode
@@ -3594,7 +3596,9 @@ static void Vdp2DrawNBG3(void)
    info.priority = (Vdp2Regs->PRINB >> 8) & 0x7;
    info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG3PlaneAddr;
 
-   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
+   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
+      (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 == 4) || // If NBG0 16M mode is enabled, don't draw
+      (Vdp2Regs->BGON & 0x2 && (Vdp2Regs->CHCTLA & 0x3000) >> 12 >= 2)) // If NBG1 2048/32786 is enabled, don't draw
       return;
  
    // Window Mode
