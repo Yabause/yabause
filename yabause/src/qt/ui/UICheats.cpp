@@ -111,7 +111,7 @@ void UICheats::addRawCode( int t, const QString& a, const QString& v, const QStr
 		return;
 	}
 	// add value
-	if ( CheatAddCode( t, a.toUInt(), v.toUInt() ) != 0 )
+	if ( CheatAddCode( t, a.toUInt(NULL, 16), v.toUInt() ) != 0 )
 	{
 		CommonDialogs::information( QtYabause::translate( "Unable to add code" ) );
 		return;

@@ -2829,6 +2829,10 @@ scsp_reset (void)
       slot->ecurp = SCSP_ENV_RELEASE;
       slot->dislr = slot->disll = 31; // direct level sound off
       slot->efslr = slot->efsll = 31; // effect level sound off
+
+		// Make sure lfofmw/lfoemw have sane values
+		slot->lfofmw = scsp_lfo_sawt_f;
+		slot->lfoemw = scsp_lfo_sawt_e;
     }
 }
 
