@@ -2964,35 +2964,40 @@ void VIDSoftVdp2DrawEnd(void)
 
                   if (TestBothWindow(Vdp2Regs->WCTLD >> 8, colorcalcwindow, i, i2) && (Vdp2Regs->CCCTL & 0x40))
                   {
+                     int transparent = 0;
+
                      /* Sprite color calculation */
                      switch(SPCCCS) {
                         case 0:
-                           if (prioritytable[spi.priority] <= SPCCN) {
-                              alpha = colorcalctable[spi.colorcalc];
-                              if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
-                           }
+                           if (prioritytable[spi.priority] <= SPCCN)
+                              transparent = 1;
                            break;
                         case 1:
-                           if (prioritytable[spi.priority] == SPCCN) {
-                              alpha = colorcalctable[spi.colorcalc];
-                              if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
-                           }
+                           if (prioritytable[spi.priority] == SPCCN)
+                              transparent = 1;
                            break;
                         case 2:
-                           if (prioritytable[spi.priority] >= SPCCN) {
-                              alpha = colorcalctable[spi.colorcalc];
-                              if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
-                           }
+                           if (prioritytable[spi.priority] >= SPCCN)
+                              transparent = 1;
                            break;
                         case 3:
-                           if (dot & 0x80000000) {
-                              alpha = colorcalctable[spi.colorcalc];
-                              if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
-                           }
+                           if (dot & 0x80000000)
+                              transparent = 1;
                            break;
                      }
 
-                     if (Vdp2Regs->CCCTL & 0x200) alpha = 0x80 | colorcalctable[spi.colorcalc];
+                     if (Vdp2Regs->CCCTL & 0x200) {
+                        /* "bottom" mode, the alpha channel will be used by another layer,
+                        so we set it regardless of whether sprites are transparent or not.
+                        The highest priority bit is only set if the sprite is transparent
+                        (in this case, it's the alpha channel of the lower priority layer
+                        that will be used. */
+                        alpha = colorcalctable[spi.colorcalc];
+                        if (transparent) alpha |= 0x80;
+                     } else if (transparent) {
+                        alpha = colorcalctable[spi.colorcalc];
+                        if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
+                     }
                   }
 
                   TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0);
@@ -3021,35 +3026,40 @@ void VIDSoftVdp2DrawEnd(void)
 
                   if (TestBothWindow(Vdp2Regs->WCTLD >> 8, colorcalcwindow, i, i2) && (Vdp2Regs->CCCTL & 0x40))
                   {
+                     int transparent = 0;
+
                      /* Sprite color calculation */
                      switch(SPCCCS) {
                         case 0:
-                           if (prioritytable[spi.priority] <= SPCCN) {
-                              alpha = colorcalctable[spi.colorcalc];
-                              if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
-                           }
+                           if (prioritytable[spi.priority] <= SPCCN)
+                              transparent = 1;
                            break;
                         case 1:
-                           if (prioritytable[spi.priority] == SPCCN) {
-                              alpha = colorcalctable[spi.colorcalc];
-                              if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
-                           }
+                           if (prioritytable[spi.priority] == SPCCN)
+                              transparent = 1;
                            break;
                         case 2:
-                           if (prioritytable[spi.priority] >= SPCCN) {
-                              alpha = colorcalctable[spi.colorcalc];
-                              if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
-                           }
+                           if (prioritytable[spi.priority] >= SPCCN)
+                              transparent = 1;
                            break;
                         case 3:
-                           if (dot & 0x80000000) {
-                              alpha = colorcalctable[spi.colorcalc];
-                              if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
-                           }
+                           if (dot & 0x80000000)
+                              transparent = 1;
                            break;
                      }
 
-                     if (Vdp2Regs->CCCTL & 0x200) alpha = 0x80 | colorcalctable[spi.colorcalc];
+                     if (Vdp2Regs->CCCTL & 0x200) {
+                        /* "bottom" mode, the alpha channel will be used by another layer,
+                        so we set it regardless of whether sprites are transparent or not.
+                        The highest priority bit is only set if the sprite is transparent
+                        (in this case, it's the alpha channel of the lower priority layer
+                        that will be used. */
+                        alpha = colorcalctable[spi.colorcalc];
+                        if (transparent) alpha |= 0x80;
+                     } else if (transparent) {
+                        alpha = colorcalctable[spi.colorcalc];
+                        if (Vdp2Regs->CCCTL & 0x100) alpha |= 0x80;
+                     }
                   }
 
                   TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0);
