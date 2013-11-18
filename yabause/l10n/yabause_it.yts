@@ -1,303 +1,381 @@
-%1/%2 blocks free|%1%2 blocchi liberi
 %1 Images (*.%2)|%1 Immagini (*.%2)
+%1/%2 blocks free|%1%2 blocchi liberi
+&About...|&Informazioni...
+&Action Replay|&Action Replay
+&Backup Manager...|&Backup Manager...
+&Backup Ram Manager|&Gestione Backup RAM
+&Browse|&Sfoglia
+&Cancel|&Cancel
+&Capture Screen|&Cattura Schermo
+&Cheat List|Lista &Cheat
+&Cheats|&Cheats
+&Cheats List...|&Cheats List...
+&Clear|&Svuota
+&Close|&Close
+&Debug|&Debug
+&Delete|&Elimina
+&Emulation|&Emulation
+&File|&File
+&Frame Skip/Limiter|&Frame Skip/Limiter
+&Fullscreen|&Schermo Intero
+&Help|&Aiuto
+&Layer|&Layer
+&Load From File|Carica da&l file
+&Log|&Log
+&Master SH2|&Master SH2
+&Memory Transfer|Trasferimento &Memoria
+&OK|&OK
+&Pause|&Pausa
+&Quit|&Esci
+&Raw Memory Address|Indirizzo Grezzo Memoria
+&Reset|&Reset
+&Save To File|$Salva su file
+&Settings...|Impo&stazioni...
+&Slave SH2|&Slave SH2
+&Tools|&Tools
+&Transfer|&Transfer
+&View|&Visualizza
+16 Mbit Backup Ram|16 Mbit Backup Ram
+16 Mbit ROM|16 Mbit ROM
+16-bit|16-bit
+16-bit Relative value(s)|16-bit Relative value(s)
+32 Mbit Backup Ram|32 Mbit Backup Ram
+32 Mbit Dram|32 Mbit Dram
+32-bit|32-bit
+3D Control Pad|3D Control Pad
+4 Mbit Backup Ram|4 Mbit Backup Ram
 503/512 blocks free|503/512 blocchi liberi
 510/512 blocks free|510/512 blocchi liberi
-About...|Informazioni...
-&About...|&Informazioni...
+8 Mbit Backup Ram|8 Mbit Backup Ram
+8 Mbit Dram|8 Mbit Dram
+8-bit|8-bit
+8-bit Relative value(s)|8-bit Relative value(s)
+<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>ATTENZIONE:</b> I Codici Master <b>NON</b> sono supportati.</font>
 About|Informazioni
-&Action Replay|&Action Replay
+About...|Informazioni...
 Action Replay Code :|Codice Action Replay
+Add|Add
 Add Action Replay Code|Aggiungi codice Action Replay
+Add Cheat|Add Cheat
 Add Codes...|Aggiungi codici....
 Add Raw Memory Code|Aggiungi Raw Memory Code
+Address|Address
 Address :|Indirizzo:
 Advanced|Avanzate
-<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|<a href="<a href="http://www.monkeystudio.org" class="external free" rel="nofollow">http://www.monkeystudio.org</a>"><img src=":/icons/icons/made.png"></a>
+Always|Always
 Are you sure you want to delete '%1' ?|Sicuro di voler cancellare '%1'?
 Are you sure you want to format '%1' ?|Sicuro di voler formattare '%1'?
+Asia (NTSC)|Asia (NTSC)
+Asia (PAL)|Asia (PAL)
+Auto-detect|Auto-detect
+Autostart|Autostart
+Backtrace|Backtrace
 Backup Manager|Gestione Backup
 Backup Manager...|Gestione Backup...
-&Backup Ram Manager|&Gestione Backup RAM
 Backup Ram Manager|Gestione Backup RAM
+Binary Files (*.bin)|Binary Files (*.bin)
 Bios|BIOS
 Block Size :|Dimensioni Blocco:
-&Browse|&Sfoglia
 Browse|Sfoglia
+Byte|Byte
 Byte Write|Scrivi Byte
+CD Images (*.iso *.cue *.bin)|Immagine CD (*.iso *.cue *.bin)
 Cancel|Annulla
 Cannot initialize|Impossibile Inizializzare
-&Capture Screen|&Cattura Schermo
+Cannot initialize Windows SPTI Driver|Cannot initialize Windows SPTI Driver
 Cart/Memory|Cart/Memoria
 Cartridge|Cartuccia
-CD Images (*.iso *.cue *.bin)|Immagine CD (*.iso *.cue *.bin)
 Cd-Rom|Cd-Rom
-&Cheats|&Cheats
+Central/South America (NTSC)|Central/South America (NTSC)
+Central/South America (PAL)|Central/South America (PAL)
+Cheat &Search...|Cheat &Search...
+Cheat Search|Cheat Search
+Cheat Type|Tipo di Cheat
 Cheats|Cheats
 Cheats File|File Cheats
-&Cheat List|Lista &Cheat
 Cheats List|Lista Cheat
 Cheats List...|Lista Cheat...
-Cheat Type|Tipo di Cheat
+Choose a binary file|Choose a binary file
 Choose a cdrom drive/mount point|Choose a cdrom drive/mount point
 Choose a cheat file to open|Selezionare un file cheat da aprire
 Choose a cheat file to save to|Selezionare un file cheat per salvare
 Choose a file to save your state|Selezionare un file per salvare lo stato
+Choose a location for binary file|Choose a location for binary file
 Choose a location for your screenshot|Selezionare una directory per gli screenshoot
-&Clear|&Svuota
+Clear configuration|Clear configuration
 Close|Chiudi
 Code|Codice
+Code Breakpoints|Code Breakpoints
 Comment :|Commento:
+Common Control Registers|Common Control Registers
+Compare Type|Compare Type
+DSP Control Registers|DSP Control Registers
+DSP Registers|DSP Registers
+Data Size|Data Size
 Data Size :|Dimensioni Dati:
-_Debug|_Debug
-&Debug|&Debug
-&Delete|&Elimina
+Data Type|Data Type
+Debug CPU|Debug CPU
+Debug M68K|Debug M68K
+Debug Master SH2|Debug Master SH2
+Debug SCU DSP|Debug SCU DSP
+Debug Slave SH2|Debug Slave SH2
+Debug VDP1|Debug VDP1
+Debug VDP2Viewer|Debug VDP2Viewer
+Del|Del
 Delete|Elimina
 Description|Descrizione
 Description :|Descrizione:
 Device List|Lista periferiche
+DirectX Input Interface|DirectX Input Interface
+DirectX Sound Interface|DirectX Sound Interface
 Disabled|Disattivo
+Disassembled Code|Disassembled Code
+Display Enabled|Display Enabled
+Display on Hover|Display on Hover
 Down|Giù
 Download|Download
+Draw End|Draw End
+Dummy CD Drive|Dummy CD Drive
+Dummy Input Interface|Dummy Input Interface
+Dummy OSD Interface|Dummy OSD Interface
+Dummy Sound Interface|Dummy Sound Interface
+Dummy Video Interface|Dummy Video Interface
+Edit configuration|Edit configuration
 Emu-Compatibility|Compatibilità Emulatore
 Emulation|Emulazione
-End Address:|Indirizzo Finale:
 Enable|Abilita
+Enable Frame Skip/Limiter|Enable Frame Skip/Limiter
 Enabled|Abilitato
+End Address:|Indirizzo Finale:
 English|Inglese
-&File|&File
+Enter New Value|Enter New Value
+Europe + others (PAL)|Europe + others (PAL)
+Exact|Exact
+FPS|FPS
 File|File
 File :|File:
 File Name :|Nome file:
 File transfer|Trasferimento file
-<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>ATTENZIONE:</b> I Codici Master <b>NON</b> sono supportati.</font>
+File:|File:
 Format|Formato
-FPS|FPS
 Frame Skip/Limiter|Limitatore frame
 French|Francese
 From|Da
 From File|Dal file
 From File...|Dal file...
-&Fullscreen|&Schermo Intero
 Fullscreen|Schermo Intero
+Fullscreen Resolution|Fullscreen Resolution
 General|Generale
+General Info|General Info
 German|Tedesco
+Glut OSD Interface|Glut OSD Interface
+Goto Address|Goto Address
+Greater then|Greater then
 Hard Reset|Hard Reset
 Height|Altezza
-_Help|_Aiuto
-&Help|&Aiuto
-http://www.emu-compatibility.com/yabause/index.php?lang=uk|<a href="http://www.emu-compatibility.com/yabause/index.php?lang=it" class="external free" rel="nofollow">http://www.emu-compatibility.com/yabause/index.php?lang=it</a>
-http://www.monkeystudio.org|<a href="http://www.monkeystudio.org" class="external free" rel="nofollow">http://www.monkeystudio.org</a>
+Hex value(s)|Hex value(s)
+Hide Menubar|Hide Menubar
+Hide Menubar|Hide Menubar
+Hide Toolbar|Hide Toolbar
+Hide Toolbar|Hide Toolbar
+ISO-File Virtual Drive|ISO-File Virtual Drive
+Information...|Information...
 Input|Input
 Invalid Address|Indirizzo non valido
 Invalid Value|Valore non valido
 Italian|Italiano
+Japan (NTSC)|Japan (NTSC)
 Japanese|Giapponese
+Japanese Modem|Japanese Modem
+Korea (NTSC)|Korea (NTSC)
+L&oad State|L&oad State
 Language :|Lingua:
-&Layer|&Layer
 Layer|Layer
 Left|Sinistra
 Left trigger|Left trigger
-Load as executable|Carica come eseguibile
+Less than|Less than
+Linux CD Drive|Linux CD Drive
 Load|Carica
-&Load From File|Carica da&l file
 Load State|Carica stato
 Load State As|Carica stato come
+Load as executable|Carica come eseguibile
+Local Coordinates|Local Coordinates
 Log|Log
+Long|Long
 Long Write|Scrivi Log
+Loop Track Clear|Loop Track Clear
+Loop Track Start|Loop Track Start
 M68K|M68K
-Memory dump|Dump Memoria
+M68K Registers|M68K Registers
+MSH2|MSH2
+Master SH2|Master SH2
+Memory|Memoria
+Memory &Editor|Memory &Editor
+Memory Breakpoints|Memory Breakpoints
 Memory Dump|Dump Memoria
 Memory Editor|Editor Memoria
-&Memory Transfer|Trasferimento &Memoria
+Memory Search|Memory Search
 Memory Transfer|Trasferimento Memoria
-Memory|Memoria
-Mpeg ROM|Mpeg ROM
+Memory dump|Dump Memoria
 Mouse|Mouse
-MSH2|MSH2
+Mpeg ROM|Mpeg ROM
 NBG0|NBG0
+NBG0/RBG1 Info|NBG0/RBG1 Info
 NBG1|NBG1
+NBG1 Info|NBG1 Info
 NBG2|NBG2
+NBG2 Info|NBG2 Info
 NBG3|NBG3
+NBG3 Info|NBG3 Info
+Netlink|Netlink
+Never|Never
 None|Nessuno
+Normal Sprite|Normal Sprite
+North America (NTSC)|North America (NTSC)
+OSD Core|OSD Core
 Ok|Ok
-&OK|&OK
+On fullscreen|On fullscreen
+On message|On message
+Open &CD Rom...|Open &CD Rom...
+Open &ISO...|Open &ISO...
 Open CD Rom|Apri CD Rom
 Open CD Rom...|Apri CD Rom...
 Open ISO|Apri ISO
 Open ISO...|Apri ISO...
+OpenGL Video Interface|OpenGL Video Interface
+Options|Options
+Other Debug|Other Debug
 Pad|Pad
-&Pause|&Pausa
+Pad Configuration|Pad Configuration
 Pause|Pausa
-&Quit|&Esci
+Pro Action Replay|Pro Action Replay
+Qt Keyboard Input Interface|Qt Keyboard Input Interface
 Quit|Esci
-&Raw Memory Address|Indirizzo Grezzo Memoria
+R&un|Eseg&ui
 RBG0|RBG0
+RBG0 Info|RBG0 Info
+Read|Read
 Region|Regione
-&Reset|&Reset
+Registers|Registers
 Reset|Reset
 Resolution|Risoluzione
 Right|Destra
 Right trigger|Right trigger
-R&un|Eseg&ui
 Run|Esegui
+S&ave State|S&ave State
+SCSP|SCSP
+SCU-DSP|SCU-DSP
+SDL Joystick Interface|SDL Joystick Interface
+SDL Sound Interface|SDL Sound Interface
+SH2 Debugger Interpreter|SH2 Debugger Interpreter
+SH2 Dynamic Recompiler|SH2 Dynamic Recompiler
+SH2 Interpreter|Interprete SH2
+SH2 Registers|SH2 Registers
+SSH2|SSH2
+Save|Salva
+Save As WAV|Save As WAV
+Save Bitmap|Save Bitmap
 Save Information|Salva Informazioni
 Save List|Salva lista
-Save|Salva
+Save MD0|Save MD0
+Save MD1|Save MD1
+Save MD2|Save MD2
+Save MD3|Save MD3
+Save Program|Save Program
+Save Selected|Save Selected
+Save Slot Registers|Save Slot Registers
 Save State|Salva stato
 Save State As|Salva stato come
 Save States|Salva stati
-&Save To File|$Salva su file
+Sc&reenshot|Sc&reenshot
+Screen Enabled|Screen Enabled
 Screenshot|Screenshot
-SCSP|SCSP
-SCU-DSP|SCU-DSP
+Search|Search
+Search Criteria|Search Criteria
+Search Memory|Search Memory
+Search Value:|Search Value:
+Search/Add Cheats|Search/Add Cheats
 Select a file to load your state|Selezionare un file per caricare il tuo stato
 Select your iso/cue/bin file|Selezionare un file iso/cue/bin
-&Settings...|Impo&stazioni...
+Set PC to Start Address|Set PC to Start Address
 Settings|Impostazioni
-SH2 Interpreter|Interprete SH2
-Sound Core|Sistema Audio
+Shortcuts|Shortcuts
+Show FPS|Show FPS
+Show Log Window|Show Log Window
+Signed|Signed
+Signed 16-bit value|Signed 16-bit value
+Signed 32-bit value|Signed 32-bit value
+Signed 8-bit value|Signed 8-bit value
+Slave SH2|Slave SH2
+Slot Info|Slot Info
+Slot Number:|Slot Number:
+Software OSD Interface|Software OSD Interface
+Software Video Interface|Software Video Interface
 Sound|Suono
+Sound Core|Sistema Audio
 Spanish|Spagnolo
-SSH2|SSH2
 Start|Inizia
 Start Address:|Indirizzo Iniziale:
+Start in Fullscreen|Start in Fullscreen
 Status|Stato
+Step Into|Step Into
+Step Out|Step Out
+Step Over|Step Over
 Store|Store
+Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
+System Clipping Coordinates|System Clipping Coordinates
+Text|Text
+Texture|Texture
+To|To
 To File|Nel file
 To File...|Nel file...
-toolBar|Barra degli Strumenti
 Tools|Strumenti
-To|A
+Track Inf Loop Results|Track Inf Loop Results
 Transfer|Trasferimento
 Translation|Traduzione
+Type:|Type:
 Unable to add code|Impossibile aggiungere il codice
 Unable to change description|Impossibile cambiare la descrizione
 Unable to open file for loading|Impossibile aprire il file per il caricamento
 Unable to open file for saving|Impossibile aprire il file per il salvataggio
 Unable to remove code|Impossibile rimuovere il codice
 Unknow (%1)|Sconosciuto (%1)
+Unsigned|Unsigned
+Unsigned 16-bit value|Unsigned 16-bit value
+Unsigned 32-bit value|Unsigned 32-bit value
+Unsigned 8-bit value|Unsigned 8-bit value
 Up|Su
 Upload|Upload
-Value :|Valore:
-Vdp1|Vdp1
 VDP1|VDP1
-Vdp2|Vdp2
+VDP1 Command Info|VDP1 Command Info
+VDP1 Command List|VDP1 Command List
 VDP2|VDP2
+Value|Value
+Value :|Valore:
+Value:|Value:
+Vdp1|Vdp1
+Vdp2|Vdp2
+Video|Video
 Video Core|Sistema Video
 Video Driver|Driver Video
 Video Format|Formato Video
-Video|Video
-_View|_Visualizza
-&View|&Visualizza
+View|View
+Viewer|Viewer
 Waiting Input...|In attesa di input...
 Width|Larghezza
-Word Write|Word Write
-Yabause Cheat Files (*.yct);;All Files (*)|Yabause File Cheat (*.yct);;Tutti i file (*)
-Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Interfaccia Qt Yabause<br />Basata su Yabause 0.9.5<br /><a href="<a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a>"><a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a></a><br />Il Team Yabause<br /><a href="<a href="mailto:pasnox@gmail.com" class="external free" rel="nofollow">mailto:pasnox@gmail.com</a>">Filipe AZEVEDO</a>
-Yabause Qt GUI|Interfaccia Qt Yabause
-Yabause Save State (*.yss)|Yabause Salvataggio Stato (*.yss)
-3D Control Pad|3D Control Pad
-DirectX Sound Interface|DirectX Sound Interface
-Pro Action Replay|Pro Action Replay
-4 Mbit Backup Ram|4 Mbit Backup Ram
-8 Mbit Backup Ram|8 Mbit Backup Ram
-16 Mbit Backup Ram|16 Mbit Backup Ram
-32 Mbit Backup Ram|32 Mbit Backup Ram
-8 Mbit Dram|8 Mbit Dram
-32 Mbit Dram|32 Mbit Dram
-Netlink|Netlink
-16 Mbit ROM|16 Mbit ROM
-Japanese Modem|Japanese Modem
-DirectX Input Interface|DirectX Input Interface
-Shortcuts|Shortcuts
-Hide Menubar|Hide Menubar
-Hide Toolbar|Hide Toolbar
-Show Log Window|Show Log Window
-On message|On message
-Display on Hover|Display on Hover
 Window Resolution|Window Resolution
-Fullscreen Resolution|Fullscreen Resolution
-Start in Fullscreen|Start in Fullscreen
-Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
-8-bit|8-bit
-16-bit|16-bit
-32-bit|32-bit
-Debug CPU|Debug CPU
-Registers|Registers
-Disassembled Code|Disassembled Code
-Other Debug|Other Debug
-Backtrace|Backtrace
-Track Inf Loop Results|Track Inf Loop Results
-Code Breakpoints|Code Breakpoints
-Add|Add
-Del|Del
-Memory Breakpoints|Memory Breakpoints
-Read|Read
-Write|Write
-Byte|Byte
+Windows SPTI Driver|Windows SPTI Driver
 Word|Word
-Long|Long
-Step Into|Step Into
-Step Over|Step Over
-Step Out|Step Out
-Debug Master SH2|Debug Master SH2
-SH2 Registers|SH2 Registers
-Loop Track Start|Loop Track Start
-Loop Track Clear|Loop Track Clear
-Debug Slave SH2|Debug Slave SH2
-Normal Sprite|Normal Sprite
-System Clipping Coordinates|System Clipping Coordinates
-Local Coordinates|Local Coordinates
-Draw End|Draw End
-Debug VDP1|Debug VDP1
-VDP1 Command List|VDP1 Command List
-VDP1 Command Info|VDP1 Command Info
-Texture|Texture
-Save Bitmap|Save Bitmap
-Debug VDP2Viewer|Debug VDP2Viewer
-NBG0/RBG1 Info|NBG0/RBG1 Info
-Screen Enabled|Screen Enabled
-NBG1 Info|NBG1 Info
-NBG2 Info|NBG2 Info
-NBG3 Info|NBG3 Info
-RBG0 Info|RBG0 Info
-General Info|General Info
-Display Enabled|Display Enabled
-Viewer|Viewer
-Debug M68K|Debug M68K
-M68K Registers|M68K Registers
-Debug SCU DSP|Debug SCU DSP
-DSP Registers|DSP Registers
-Save Program|Save Program
-Save MD0|Save MD0
-Save MD1|Save MD1
-Save MD2|Save MD2
-Save MD3|Save MD3
-Slot Info|Slot Info
-Slot Number:|Slot Number:
-Save As WAV|Save As WAV
-Save Slot Registers|Save Slot Registers
-Common Control Registers|Common Control Registers
-DSP Control Registers|DSP Control Registers
-Goto Address|Goto Address
-Save Selected|Save Selected
-Search Memory|Search Memory
-Signed 32-bit value|Signed 32-bit value
-Unsigned 32-bit value|Unsigned 32-bit value
-Signed 16-bit value|Signed 16-bit value
-Unsigned 16-bit value|Unsigned 16-bit value
-Signed 8-bit value|Signed 8-bit value
-Unsigned 8-bit value|Unsigned 8-bit value
-16-bit Relative value(s)|16-bit Relative value(s)
-8-bit Relative value(s)|8-bit Relative value(s)
-Text|Text
-Hex value(s)|Hex value(s)
-Memory Search|Memory Search
-Search Criteria|Search Criteria
-Type:|Type:
-Value:|Value:
-Options|Options
-Enter New Value|Enter New Value
-Binary Files (*.bin)|Binary Files (*.bin)
-Choose a location for binary file|Choose a location for binary file
-Choose a binary file|Choose a binary file
+Word Write|Word Write
+Write|Write
+Yabause Cheat Files (*.yct);;All Files (*)|Yabause File Cheat (*.yct);;Tutti i file (*)
+Yabause Qt GUI|Interfaccia Qt Yabause
+Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Yabause Save State (*.yss)|Yabause Salvataggio Stato (*.yss)
+Yabause is not initialized, can't manage backup ram.|Yabause is not initialized, can't manage backup ram.
+_Debug|_Debug
+_Help|_Aiuto
+_View|_Visualizza
+http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=it
+http://www.monkeystudio.org|http://www.monkeystudio.org
+toolBar|Barra degli Strumenti

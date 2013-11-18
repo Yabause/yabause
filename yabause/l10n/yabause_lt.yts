@@ -1,300 +1,381 @@
-%1/%2 blocks free|%1/%2 blokų laisvų
 %1 Images (*.%2)|%1 Images (*.%2)
+%1/%2 blocks free|%1/%2 blokų laisvų
+&About...|&Apie...
+&Action Replay|&Veiksmo pakartojimas
+&Backup Manager...|&Backup Manager...
+&Backup Ram Manager|&Atsarginės darbinės atminties tvarkyklė
+&Browse|&Naršyti
+&Cancel|&Cancel
+&Capture Screen|&Nufotografuoti ekraną
+&Cheat List|&Kodų sąrašas
+&Cheats|&Kodai
+&Cheats List...|&Cheats List...
+&Clear|&Išvalyti
+&Close|&Close
+&Debug|&Klaidų taisymas
+&Delete|&Trinti
+&Emulation|&Emulation
+&File|&Failas
+&Frame Skip/Limiter|&Frame Skip/Limiter
+&Fullscreen|&Pilnas ekranas
+&Help|&Pagalba
+&Layer|&Sluoksniai
+&Load From File|&Įkelti iš failo
+&Log|&Log
+&Master SH2|&Master SH2
+&Memory Transfer|&Atminties pervedimas
+&OK|&Gerai
+&Pause|&Pauzė
+&Quit|&Išeiti
+&Raw Memory Address|&Priėjimas prie Raw atminties
+&Reset|&Perkrauti
+&Save To File|&Išsaugoti į failą
+&Settings...|&Nuostatos
+&Slave SH2|&Slave SH2
+&Tools|&Tools
+&Transfer|&Transfer
+&View|&Žiūrėti
+16 Mbit Backup Ram|16 Mbit Backup Ram
+16 Mbit ROM|16 Mbit ROM
+16-bit|16-bit
+16-bit Relative value(s)|16-bit Relative value(s)
+32 Mbit Backup Ram|32 Mbit Backup Ram
+32 Mbit Dram|32 Mbit Dram
+32-bit|32-bit
+3D Control Pad|3D Control Pad
+4 Mbit Backup Ram|4 Mbit Backup Ram
 503/512 blocks free|503/512 blokų laisvų
 510/512 blocks free|510/512 blokų laisvų
-About...|Apie...
-&About...|&Apie...
+8 Mbit Backup Ram|8 Mbit Backup Ram
+8 Mbit Dram|8 Mbit Dram
+8-bit|8-bit
+8-bit Relative value(s)|8-bit Relative value(s)
+<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>
 About|Apie
-&Action Replay|&Veiksmo pakartojimas
+About...|Apie...
 Action Replay Code :|Veiksmo pakartojimo kodas:
+Add|Add
 Add Action Replay Code|Pridėti veiksmo pakartojimo kodą:
+Add Cheat|Add Cheat
 Add Codes...|Pridėti kodų...
 Add Raw Memory Code|Pridėti "Raw" atminties kodą
-Address :|Adresas :
+Address|Address
+Address :|Adresas :
 Advanced|Papildoma
-<a href="http://www.monkeystudio.org"><img src=":/icons/icons/made.png"></a>|<a href="<a href="http://www.monkeystudio.org" class="external free" rel="nofollow">http://www.monkeystudio.org</a>"><img src=":/icons/icons/made.png"></a>
-Are you sure you want to delete '%1' ?|Ar tu įsitikinęs,kad nori ištrinti '%1' ?
-Are you sure you want to format '%1' ?|Ar tu įsitikinęs,kad nori suformatuoti '%1' ?
+Always|Always
+Are you sure you want to delete '%1' ?|Ar tu įsitikinęs,kad nori ištrinti '%1' ?
+Are you sure you want to format '%1' ?|Ar tu įsitikinęs,kad nori suformatuoti '%1' ?
+Asia (NTSC)|Asia (NTSC)
+Asia (PAL)|Asia (PAL)
+Auto-detect|Auto-detect
+Autostart|Autostart
+Backtrace|Backtrace
 Backup Manager|Atsarginių failų tvarkyklė
 Backup Manager...|Atsarginių failų tvarkyklė...
-&Backup Ram Manager|&Atsarginės darbinės atminties tvarkyklė
 Backup Ram Manager|Atsarginės darbinės atminties tvarkyklė
+Binary Files (*.bin)|Binary Files (*.bin)
 Bios|Bios'as
 Block Size :|Bloko dydis:
-&Browse|&Naršyti
 Browse|Browse
+Byte|Byte
 Byte Write|Byte Write
+CD Images (*.iso *.cue *.bin)|CD atvaizdai (*.iso *.cue *.bin)
 Cancel|Atšaukti
 Cannot initialize|Negalima pradėti
-&Capture Screen|&Nufotografuoti ekraną
+Cannot initialize Windows SPTI Driver|Cannot initialize Windows SPTI Driver
 Cart/Memory|Darbinė atmintis
 Cartridge|Disketė
-CD Images (*.iso *.cue *.bin)|CD atvaizdai (*.iso *.cue *.bin)
 Cd-Rom|CD-ROM
-&Cheats|&Kodai
+Central/South America (NTSC)|Central/South America (NTSC)
+Central/South America (PAL)|Central/South America (PAL)
+Cheat &Search...|Cheat &Search...
+Cheat Search|Cheat Search
+Cheat Type|Kodų tipas
 Cheats|Kodai
 Cheats File|Kodų failas
-&Cheat List|&Kodų sąrašas
 Cheats List|Kodų sąrašas
 Cheats List...|Kodų sąrašas...
-Cheat Type|Kodų tipas
+Choose a binary file|Choose a binary file
 Choose a cdrom drive/mount point|Pasirink CD-ROM prijungimo tašką
 Choose a cheat file to open|Pasirink kodų failą
 Choose a cheat file to save to|Pasirink kodų failą išsaugojimui į
 Choose a file to save your state|Pasirink failą išsaugoti žaidimui
+Choose a location for binary file|Choose a location for binary file
 Choose a location for your screenshot|Pasirink vietą žaidimo ekranvaizdžiui
-&Clear|&Išvalyti
+Clear configuration|Clear configuration
 Close|Uždaryti
 Code|Kodas
+Code Breakpoints|Code Breakpoints
 Comment :|Komentaras:
+Common Control Registers|Common Control Registers
+Compare Type|Compare Type
+DSP Control Registers|DSP Control Registers
+DSP Registers|DSP Registers
+Data Size|Data Size
 Data Size :|Duomenų dydis:
-_Debug|_Taisyti klaidas
-&Debug|&Klaidų taisymas
-&Delete|&Trinti
+Data Type|Data Type
+Debug CPU|Debug CPU
+Debug M68K|Debug M68K
+Debug Master SH2|Debug Master SH2
+Debug SCU DSP|Debug SCU DSP
+Debug Slave SH2|Debug Slave SH2
+Debug VDP1|Debug VDP1
+Debug VDP2Viewer|Debug VDP2Viewer
+Del|Del
 Delete|Trinti
 Description|Aprašymas
-Description :|Aprašymas :
+Description :|Aprašymas :
 Device List|Įrenginių sąrašas
+DirectX Input Interface|DirectX Input Interface
+DirectX Sound Interface|DirectX Sound Interface
 Disabled|Neįgalinta
+Disassembled Code|Disassembled Code
+Display Enabled|Display Enabled
+Display on Hover|Display on Hover
 Down|Žemyn
 Download|Atsisiųsti
+Draw End|Draw End
+Dummy CD Drive|Dummy CD Drive
+Dummy Input Interface|Dummy Input Interface
+Dummy OSD Interface|Dummy OSD Interface
+Dummy Sound Interface|Dummy Sound Interface
+Dummy Video Interface|Dummy Video Interface
+Edit configuration|Edit configuration
 Emu-Compatibility|Emuliatoriaus suderinamumas
 Emulation|Emuliacija
-End Address:|End Adress:
 Enable|Įgalinti
+Enable Frame Skip/Limiter|Enable Frame Skip/Limiter
 Enabled|Įgalinta
+End Address:|End Adress:
 English|Anglų
-&File|&Failas
+Enter New Value|Enter New Value
+Europe + others (PAL)|Europe + others (PAL)
+Exact|Exact
+FPS|KPS
 File|Failas
 File :|Failas
 File Name :|Failo pavadinimas:
 File transfer|Failo perkėlimas
-<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>
+File:|File:
 Format|Formatuoti
-FPS|KPS
 Frame Skip/Limiter|Kadrų praleidimas
 French|Prancūzų
 From|Iš
 From File|Iš failo
 From File...|Iš failo...
-&Fullscreen|&Pilnas ekranas
 Fullscreen|Pilnas ekranas
+Fullscreen Resolution|Fullscreen Resolution
 General|Pagrindiniai
+General Info|General Info
 German|Vokiečių
+Glut OSD Interface|Glut OSD Interface
+Goto Address|Goto Address
+Greater then|Greater then
 Hard Reset|"Gilus" perkrovimas
 Height|Aukštis
-_Help|_Pagalba
-&Help|&Pagalba
-http://www.emu-compatibility.com/yabause/index.php?lang=uk|<a href="http://www.emu-compatibility.com/yabause/index.php?lang=uk" class="external free" rel="nofollow">http://www.emu-compatibility.com/yabause/index.php?lang=uk</a>
-http://www.monkeystudio.org|<a href="http://www.monkeystudio.org" class="external free" rel="nofollow">http://www.monkeystudio.org</a>
+Hex value(s)|Hex value(s)
+Hide Menubar|Hide Menubar
+Hide Menubar|Hide Menubar
+Hide Toolbar|Hide Toolbar
+Hide Toolbar|Hide Toolbar
+ISO-File Virtual Drive|ISO-File Virtual Drive
+Information...|Information...
 Input|Įvedimas
 Invalid Address|Neteisingas adresas
 Invalid Value|Neteisinga vertė
 Italian|Italų
+Japan (NTSC)|Japan (NTSC)
 Japanese|Japonų
-Language :|Kalba :
-&Layer|&Sluoksniai
+Japanese Modem|Japanese Modem
+Korea (NTSC)|Korea (NTSC)
+L&oad State|L&oad State
+Language :|Kalba :
 Layer|Sluoksniai
 Left|Kairė
 Left trigger|Kairysis mygtukas
-Load as executable|Įkrauti kaip paleidžiamąjį failą
+Less than|Less than
+Linux CD Drive|Linux CD Drive
 Load|Įkrauti
-&Load From File|&Įkelti iš failo
 Load State|Įkelti išsaugotą žaidimą
 Load State As|Išsaugoti žaidimą kaip
+Load as executable|Įkrauti kaip paleidžiamąjį failą
+Local Coordinates|Local Coordinates
 Log|Log'as
+Long|Long
 Long Write|Long Write
+Loop Track Clear|Loop Track Clear
+Loop Track Start|Loop Track Start
 M68K|M68K
-Memory dump|Atminties "išmetimas"
+M68K Registers|M68K Registers
+MSH2|MSH2
+Master SH2|Master SH2
+Memory|Atmintis
+Memory &Editor|Memory &Editor
+Memory Breakpoints|Memory Breakpoints
 Memory Dump|Atminties "išmetimas"
 Memory Editor|Atminties tvarkymas
-&Memory Transfer|&Atminties pervedimas
+Memory Search|Memory Search
 Memory Transfer|Atminties pervedimas
-Memory|Atmintis
+Memory dump|Atminties "išmetimas"
+Mouse|Mouse
 Mpeg ROM|Mpeg ROM'as
-MSH2|MSH2
 NBG0|NBG0
+NBG0/RBG1 Info|NBG0/RBG1 Info
 NBG1|NBG1
+NBG1 Info|NBG1 Info
 NBG2|NBG2
+NBG2 Info|NBG2 Info
 NBG3|NBG3
+NBG3 Info|NBG3 Info
+Netlink|Netlink
+Never|Never
+None|None
+Normal Sprite|Normal Sprite
+North America (NTSC)|North America (NTSC)
+OSD Core|OSD Core
 Ok|Gerai
-&OK|&Gerai
+On fullscreen|On fullscreen
+On message|On message
+Open &CD Rom...|Open &CD Rom...
+Open &ISO...|Open &ISO...
 Open CD Rom|Atverti CD-ROM'ą
 Open CD Rom...|Atverti CD-ROM'ą...
 Open ISO|Atverti ISO
 Open ISO...|Atverti ISO...
-&Pause|&Pauzė
+OpenGL Video Interface|OpenGL Video Interface
+Options|Options
+Other Debug|Other Debug
+Pad|Pad
+Pad Configuration|Pad Configuration
 Pause|Pauzė
-&Quit|&Išeiti
+Pro Action Replay|Pro Action Replay
+Qt Keyboard Input Interface|Qt Keyboard Input Interface
 Quit|Išeiti
-&Raw Memory Address|&Priėjimas prie Raw atminties
+R&un|&Leisti
 RBG0|RBG0
+RBG0 Info|RBG0 Info
+Read|Read
 Region|Regionas
-&Reset|&Perkrauti
+Registers|Registers
 Reset|Perkrauti
 Resolution|Raiška
 Right|Dešinė
 Right trigger|Dešinysis mygtukas
-R&un|&Leisti
 Run|Leisti
+S&ave State|S&ave State
+SCSP|SCSP
+SCU-DSP|SCU-DSP
+SDL Joystick Interface|SDL Joystick Interface
+SDL Sound Interface|SDL Sound Interface
+SH2 Debugger Interpreter|SH2 Debugger Interpreter
+SH2 Dynamic Recompiler|SH2 Dynamic Recompiler
+SH2 Interpreter|SH2 Interpretatorius
+SH2 Registers|SH2 Registers
+SSH2|SSH2
+Save|Išsaugoti
+Save As WAV|Save As WAV
+Save Bitmap|Save Bitmap
 Save Information|Išsaugoti informaciją
 Save List|Išsaugojimų sąrašas
-Save|Išsaugoti
+Save MD0|Save MD0
+Save MD1|Save MD1
+Save MD2|Save MD2
+Save MD3|Save MD3
+Save Program|Save Program
+Save Selected|Save Selected
+Save Slot Registers|Save Slot Registers
 Save State|Išsaugoti žaidimą
 Save State As|Išsaugoti žaidimą kaip
 Save States|Žaidimų išsaugojimo failai
-&Save To File|&Išsaugoti į failą
+Sc&reenshot|Sc&reenshot
+Screen Enabled|Screen Enabled
 Screenshot|Ekrano nuotrauka
-SCSP|SCSP
-SCU-DSP|SCU-DSP
+Search|Search
+Search Criteria|Search Criteria
+Search Memory|Search Memory
+Search Value:|Search Value:
+Search/Add Cheats|Search/Add Cheats
 Select a file to load your state|Pasirink žaidimo išsaugojimo failą įkėlimui
 Select your iso/cue/bin file|Pasirink iso/cue/bin failą
-&Settings...|&Nuostatos
+Set PC to Start Address|Set PC to Start Address
 Settings|Nuostatos
-SH2 Interpreter|SH2 Interpretatorius
-Sound Core|Garso įranga
+Shortcuts|Shortcuts
+Show FPS|Show FPS
+Show Log Window|Show Log Window
+Signed|Signed
+Signed 16-bit value|Signed 16-bit value
+Signed 32-bit value|Signed 32-bit value
+Signed 8-bit value|Signed 8-bit value
+Slave SH2|Slave SH2
+Slot Info|Slot Info
+Slot Number:|Slot Number:
+Software OSD Interface|Software OSD Interface
+Software Video Interface|Software Video Interface
 Sound|Garsas
+Sound Core|Garso įranga
 Spanish|Ispanų
-SSH2|SSH2
 Start|Pradėti
 Start Address:|Pradžios adresas:
+Start in Fullscreen|Start in Fullscreen
 Status|Statusas
+Step Into|Step Into
+Step Out|Step Out
+Step Over|Step Over
 Store|Saugoti
+Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
+System Clipping Coordinates|System Clipping Coordinates
+Text|Text
+Texture|Texture
+To|To
 To File|Į failą
 To File...|Į failą...
-toolBar|Įrankų juosta
 Tools|Įrankiai
-To|Į
+Track Inf Loop Results|Track Inf Loop Results
 Transfer|Pervedimas
 Translation|Vertimas
+Type:|Type:
 Unable to add code|Neįmanoma pridėti kodo
 Unable to change description|Neįmanoma keisti aprašymo
 Unable to open file for loading|Neįmanoma atverti failo įkrovimui
 Unable to open file for saving|Neįmanoma atverti failo saugojimui
 Unable to remove code|Neįmanoma pašalinti kodo
 Unknow (%1)|Nežinoma (%1)
+Unsigned|Unsigned
+Unsigned 16-bit value|Unsigned 16-bit value
+Unsigned 32-bit value|Unsigned 32-bit value
+Unsigned 8-bit value|Unsigned 8-bit value
 Up|Aukštyn
 Upload|Įkrauti
-Value :|Vertė:
-Vdp1|Vdp1
 VDP1|VDP1
-Vdp2|Vdp2
+VDP1 Command Info|VDP1 Command Info
+VDP1 Command List|VDP1 Command List
 VDP2|VDP2
+Value|Value
+Value :|Vertė:
+Value:|Value:
+Vdp1|Vdp1
+Vdp2|Vdp2
+Video|Video
 Video Core|Video įranga
 Video Driver|Video tvarkyklė
 Video Format|Video formatas
-Video|Video
-_View|_Žiūrėti
-&View|&Žiūrėti
+View|View
+Viewer|Viewer
 Waiting Input...|Laukiama įvedimo
 Width|Plotis
-Word Write|Žodžių rašymas
-Yabause Cheat Files (*.yct);;All Files (*)|Yabause kodų failai (*.yct);;Visi failai (*)
-Yabause Qt Gui<br />Based on Yabause 0.9.5<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Paremtas pagal Yabause 0.9.5<br /><a href="<a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a>"><a href="http://yabause.org" class="external free" rel="nofollow">http://yabause.org</a></a><br />Yabause komanda<br /><a href="<a href="mailto:pasnox@gmail.com" class="external free" rel="nofollow">mailto:pasnox@gmail.com</a>">Filipe AZEVEDO</a>
-Yabause Qt GUI|Yabause Qt grafinė sąsaja
-Yabause Save State (*.yss)|Yabause žaidimo išsaugojimo failas (*.yss)
-3D Control Pad|3D Control Pad
-DirectX Sound Interface|DirectX Sound Interface
-Pro Action Replay|Pro Action Replay
-4 Mbit Backup Ram|4 Mbit Backup Ram
-8 Mbit Backup Ram|8 Mbit Backup Ram
-16 Mbit Backup Ram|16 Mbit Backup Ram
-32 Mbit Backup Ram|32 Mbit Backup Ram
-8 Mbit Dram|8 Mbit Dram
-32 Mbit Dram|32 Mbit Dram
-Netlink|Netlink
-16 Mbit ROM|16 Mbit ROM
-Japanese Modem|Japanese Modem
-DirectX Input Interface|DirectX Input Interface
-Shortcuts|Shortcuts
-Hide Menubar|Hide Menubar
-Hide Toolbar|Hide Toolbar
-Show Log Window|Show Log Window
-On message|On message
-Display on Hover|Display on Hover
 Window Resolution|Window Resolution
-Fullscreen Resolution|Fullscreen Resolution
-Start in Fullscreen|Start in Fullscreen
-Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
-8-bit|8-bit
-16-bit|16-bit
-32-bit|32-bit
-Debug CPU|Debug CPU
-Registers|Registers
-Disassembled Code|Disassembled Code
-Other Debug|Other Debug
-Backtrace|Backtrace
-Track Inf Loop Results|Track Inf Loop Results
-Code Breakpoints|Code Breakpoints
-Add|Add
-Del|Del
-Memory Breakpoints|Memory Breakpoints
-Read|Read
-Write|Write
-Byte|Byte
+Windows SPTI Driver|Windows SPTI Driver
 Word|Word
-Long|Long
-Step Into|Step Into
-Step Over|Step Over
-Step Out|Step Out
-Debug Master SH2|Debug Master SH2
-SH2 Registers|SH2 Registers
-Loop Track Start|Loop Track Start
-Loop Track Clear|Loop Track Clear
-Debug Slave SH2|Debug Slave SH2
-Normal Sprite|Normal Sprite
-System Clipping Coordinates|System Clipping Coordinates
-Local Coordinates|Local Coordinates
-Draw End|Draw End
-Debug VDP1|Debug VDP1
-VDP1 Command List|VDP1 Command List
-VDP1 Command Info|VDP1 Command Info
-Texture|Texture
-Save Bitmap|Save Bitmap
-Debug VDP2Viewer|Debug VDP2Viewer
-NBG0/RBG1 Info|NBG0/RBG1 Info
-Screen Enabled|Screen Enabled
-NBG1 Info|NBG1 Info
-NBG2 Info|NBG2 Info
-NBG3 Info|NBG3 Info
-RBG0 Info|RBG0 Info
-General Info|General Info
-Display Enabled|Display Enabled
-Viewer|Viewer
-Debug M68K|Debug M68K
-M68K Registers|M68K Registers
-Debug SCU DSP|Debug SCU DSP
-DSP Registers|DSP Registers
-Save Program|Save Program
-Save MD0|Save MD0
-Save MD1|Save MD1
-Save MD2|Save MD2
-Save MD3|Save MD3
-Slot Info|Slot Info
-Slot Number:|Slot Number:
-Save As WAV|Save As WAV
-Save Slot Registers|Save Slot Registers
-Common Control Registers|Common Control Registers
-DSP Control Registers|DSP Control Registers
-Goto Address|Goto Address
-Save Selected|Save Selected
-Search Memory|Search Memory
-Signed 32-bit value|Signed 32-bit value
-Unsigned 32-bit value|Unsigned 32-bit value
-Signed 16-bit value|Signed 16-bit value
-Unsigned 16-bit value|Unsigned 16-bit value
-Signed 8-bit value|Signed 8-bit value
-Unsigned 8-bit value|Unsigned 8-bit value
-16-bit Relative value(s)|16-bit Relative value(s)
-8-bit Relative value(s)|8-bit Relative value(s)
-Text|Text
-Hex value(s)|Hex value(s)
-Memory Search|Memory Search
-Search Criteria|Search Criteria
-Type:|Type:
-Value:|Value:
-Options|Options
-Enter New Value|Enter New Value
-Binary Files (*.bin)|Binary Files (*.bin)
-Choose a location for binary file|Choose a location for binary file
-Choose a binary file|Choose a binary file
+Word Write|Žodžių rašymas
+Write|Write
+Yabause Cheat Files (*.yct);;All Files (*)|Yabause kodų failai (*.yct);;Visi failai (*)
+Yabause Qt GUI|Yabause Qt grafinė sąsaja
+Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Yabause Save State (*.yss)|Yabause žaidimo išsaugojimo failas (*.yss)
+Yabause is not initialized, can't manage backup ram.|Yabause is not initialized, can't manage backup ram.
+_Debug|_Taisyti klaidas
+_Help|_Pagalba
+_View|_Žiūrėti
+http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=uk
+http://www.monkeystudio.org|http://www.monkeystudio.org
+toolBar|Įrankų juosta
