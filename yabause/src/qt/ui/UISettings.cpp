@@ -299,6 +299,13 @@ void UISettings::loadCores()
 
 void UISettings::loadSupportedResolutions()
 {
+	if (supportedRes.count() == 0)
+	{
+		lFullScreenResolution->setVisible(false);
+		cbFullscreenResolution->setVisible(false);
+		return;
+	}
+
 	// Load supported screen resolutions
 	for (int i = 0; i < this->supportedRes.count(); i++)
 	{
@@ -468,9 +475,13 @@ void UISettings::saveSettings()
 	// Save new version of keys
 	s->setValue( "Video/WindowWidth", leWinWidth->text() );
 	s->setValue( "Video/WindowHeight", leWinHeight->text() );
-	supportedRes_struct res = supportedRes[cbFullscreenResolution->itemData(cbFullscreenResolution->currentIndex()).toInt()];
-	s->setValue( "Video/FullscreenWidth", res.width );
-	s->setValue( "Video/FullscreenHeight", res.height );
+
+	if (supportedRes.count() > 0)
+	{
+		supportedRes_struct res = supportedRes[cbFullscreenResolution->itemData(cbFullscreenResolution->currentIndex()).toInt()];
+		s->setValue( "Video/FullscreenWidth", res.width );
+		s->setValue( "Video/FullscreenHeight", res.height );
+	}
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/VideoFormat", cbVideoFormat->itemData( cbVideoFormat->currentIndex() ).toInt() );
