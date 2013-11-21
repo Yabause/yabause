@@ -175,14 +175,15 @@ QList <translation_struct> QtYabause::getTranslationList()
 
 	foreach(QString file, transDir.entryList())
 	{
-		if (!file.startsWith("yabause_"))
+		if (!file.endsWith(".yts"))
 			continue;
 		translation_struct trans;
 		trans.file = QString(YTSDIR) + QString("/") + file;
 
 		// Let's get it down just to language code
 		QStringList string = file.remove(".yts").split("_");
-		string.removeFirst();
+		if (file.startsWith("yabause_"))
+			string.removeFirst();
 		QString localeStr = string.join("_");
 		// Find the locale
 		QLocale locale = QLocale(localeStr);	
