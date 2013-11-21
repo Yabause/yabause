@@ -172,7 +172,7 @@ find_library(XRANDR_LIBRARY Xrandr)
 if(XRANDR_LIBRARY)
 	add_definitions(-DHAVE_LIBXRANDR=1)
 	set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
-	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "Xrandr")
+	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
 endif()
 
 if (MINI18N_FOUND)
