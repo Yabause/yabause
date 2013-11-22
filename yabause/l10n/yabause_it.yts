@@ -3,7 +3,6 @@
 &About...|&Informazioni...
 &Action Replay|&Action Replay
 &Backup Manager...|&Backup Manager...
-&Backup Ram Manager|&Gestione Backup RAM
 &Browse|&Sfoglia
 &Cancel|&Cancel
 &Capture Screen|&Cattura Schermo
@@ -51,7 +50,6 @@
 8-bit|8-bit
 8-bit Relative value(s)|8-bit Relative value(s)
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>ATTENZIONE:</b> I Codici Master <b>NON</b> sono supportati.</font>
-About|Informazioni
 About...|Informazioni...
 Action Replay Code :|Codice Action Replay
 Add|Add
@@ -70,8 +68,6 @@ Asia (PAL)|Asia (PAL)
 Auto-detect|Auto-detect
 Autostart|Autostart
 Backtrace|Backtrace
-Backup Manager|Gestione Backup
-Backup Manager...|Gestione Backup...
 Backup Ram Manager|Gestione Backup RAM
 Binary Files (*.bin)|Binary Files (*.bin)
 Bios|BIOS
@@ -93,8 +89,6 @@ Cheat Search|Cheat Search
 Cheat Type|Tipo di Cheat
 Cheats|Cheats
 Cheats File|File Cheats
-Cheats List|Lista Cheat
-Cheats List...|Lista Cheat...
 Choose a binary file|Choose a binary file
 Choose a cdrom drive/mount point|Choose a cdrom drive/mount point
 Choose a cheat file to open|Selezionare un file cheat da aprire
@@ -153,7 +147,6 @@ Europe + others (PAL)|Europe + others (PAL)
 Exact|Exact
 FPS|FPS
 File|File
-File :|File:
 File Name :|Nome file:
 File transfer|Trasferimento file
 File:|File:
@@ -175,8 +168,6 @@ Hard Reset|Hard Reset
 Height|Altezza
 Hex value(s)|Hex value(s)
 Hide Menubar|Hide Menubar
-Hide Menubar|Hide Menubar
-Hide Toolbar|Hide Toolbar
 Hide Toolbar|Hide Toolbar
 ISO-File Virtual Drive|ISO-File Virtual Drive
 Information...|Information...
@@ -239,9 +230,6 @@ On message|On message
 Open &CD Rom...|Open &CD Rom...
 Open &ISO...|Open &ISO...
 Open CD Rom|Apri CD Rom
-Open CD Rom...|Apri CD Rom...
-Open ISO|Apri ISO
-Open ISO...|Apri ISO...
 OpenGL Video Interface|OpenGL Video Interface
 Options|Options
 Other Debug|Other Debug
@@ -327,7 +315,6 @@ System Clipping Coordinates|System Clipping Coordinates
 Text|Text
 Texture|Texture
 To|To
-To File|Nel file
 To File...|Nel file...
 Tools|Strumenti
 Track Inf Loop Results|Track Inf Loop Results
@@ -373,9 +360,6 @@ Yabause Qt GUI|Interfaccia Qt Yabause
 Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Save State (*.yss)|Yabause Salvataggio Stato (*.yss)
 Yabause is not initialized, can't manage backup ram.|Yabause is not initialized, can't manage backup ram.
-_Debug|_Debug
-_Help|_Aiuto
-_View|_Visualizza
 http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=it
 http://www.monkeystudio.org|http://www.monkeystudio.org
 toolBar|Barra degli Strumenti

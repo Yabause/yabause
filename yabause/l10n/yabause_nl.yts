@@ -3,7 +3,6 @@
 &About...|&Over...
 &Action Replay|&Action Replay
 &Backup Manager...|&Backup Beheer...
-&Backup Ram Manager|&Backup Ram Beheer
 &Browse|&Bladeren
 &Cancel|&Annuleer
 &Capture Screen|&Neem Schermafbeelding
@@ -51,7 +50,6 @@
 8-bit|8-bit
 8-bit Relative value(s)|8-bit Relatieve waarden
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>WARNING:</b> Master Codes worden <b>NIET</b> ondersteund.</font>
-About|Over
 About...|Over...
 Action Replay Code :|Action Replay Code :
 Add|Voeg Toe
@@ -70,8 +68,6 @@ Asia (PAL)|Azië (PAL)
 Auto-detect|Automatisch Herkennen
 Autostart|Automatisch Starten
 Backtrace|Backtrace
-Backup Manager|Backup Beheer
-Backup Manager...|Backup Beheer...
 Backup Ram Manager|Backup RAM Beheer
 Binary Files (*.bin)|Binaire Bestanden (*.bin)
 Bios|Bios
@@ -93,8 +89,6 @@ Cheat Search|Cheat Zoeken
 Cheat Type|Cheat Type
 Cheats|Cheats
 Cheats File|Cheats Bestand
-Cheats List|Cheats Lijst
-Cheats List...|Cheats Lijst...
 Choose a binary file|Kies een binair bestand
 Choose a cdrom drive/mount point|Kies een cdrom drive/mount point
 Choose a cheat file to open|Kies een cheat bestand om te openen
@@ -153,7 +147,6 @@ Europe + others (PAL)|Europa + andere (PAL)
 Exact|Exact
 FPS|FPS
 File|Bestand
-File :|Bestand :
 File Name :|Bestand Naam :
 File transfer|Bestand overzetten
 File:|Bestand:
@@ -175,8 +168,6 @@ Hard Reset|Koude Reset
 Height|Hoogte
 Hex value(s)|Hex waarde(n)
 Hide Menubar|Verberg Menubalk
-Hide Menubar|Verberg Menubalk
-Hide Toolbar|Verberg Hulpmiddelbalk
 Hide Toolbar|Verberg Hulpmiddelbalk
 ISO-File Virtual Drive|ISO-Bestand Virtuele Drive
 Information...|Informatie...
@@ -239,9 +230,6 @@ On message|Op boodschap
 Open &CD Rom...|Open &CD Rom...
 Open &ISO...|Open &ISO...
 Open CD Rom|Open CD Rom
-Open CD Rom...|Open CD Rom...
-Open ISO|Open ISO
-Open ISO...|Open ISO...
 OpenGL Video Interface|OpenGL Video Interface
 Options|Opties
 Other Debug|Andere Debug
@@ -327,7 +315,6 @@ System Clipping Coordinates|Systeem Clipping Coördinaten
 Text|Tekst
 Texture|Textuur
 To|Naar
-To File|Naar Bestand
 To File...|Naar Bestand...
 Tools|Hulpmiddelen
 Track Inf Loop Results|Traceer Inf Loop Results
@@ -373,9 +360,6 @@ Yabause Qt GUI|Yabause Qt GUI
 Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Gebaseerd op Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />Het Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Save State (*.yss)|Yabause Save Status (*.yss)
 Yabause is not initialized, can't manage backup ram.|Yabause is niet geïnitialiseerd, kan backup ram niet beheren.
-_Debug|_Debug
-_Help|_Help
-_View|_View
 http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=uk
 http://www.monkeystudio.org|http://www.monkeystudio.org
 toolBar|Hulpmiddelbalk

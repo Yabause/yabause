@@ -3,7 +3,6 @@
 &About...|&Apie...
 &Action Replay|&Veiksmo pakartojimas
 &Backup Manager...|&Backup Manager...
-&Backup Ram Manager|&Atsarginės darbinės atminties tvarkyklė
 &Browse|&Naršyti
 &Cancel|&Cancel
 &Capture Screen|&Nufotografuoti ekraną
@@ -51,7 +50,6 @@
 8-bit|8-bit
 8-bit Relative value(s)|8-bit Relative value(s)
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>
-About|Apie
 About...|Apie...
 Action Replay Code :|Veiksmo pakartojimo kodas:
 Add|Add
@@ -70,8 +68,6 @@ Asia (PAL)|Asia (PAL)
 Auto-detect|Auto-detect
 Autostart|Autostart
 Backtrace|Backtrace
-Backup Manager|Atsarginių failų tvarkyklė
-Backup Manager...|Atsarginių failų tvarkyklė...
 Backup Ram Manager|Atsarginės darbinės atminties tvarkyklė
 Binary Files (*.bin)|Binary Files (*.bin)
 Bios|Bios'as
@@ -93,8 +89,6 @@ Cheat Search|Cheat Search
 Cheat Type|Kodų tipas
 Cheats|Kodai
 Cheats File|Kodų failas
-Cheats List|Kodų sąrašas
-Cheats List...|Kodų sąrašas...
 Choose a binary file|Choose a binary file
 Choose a cdrom drive/mount point|Pasirink CD-ROM prijungimo tašką
 Choose a cheat file to open|Pasirink kodų failą
@@ -153,7 +147,6 @@ Europe + others (PAL)|Europe + others (PAL)
 Exact|Exact
 FPS|KPS
 File|Failas
-File :|Failas
 File Name :|Failo pavadinimas:
 File transfer|Failo perkėlimas
 File:|File:
@@ -175,8 +168,6 @@ Hard Reset|"Gilus" perkrovimas
 Height|Aukštis
 Hex value(s)|Hex value(s)
 Hide Menubar|Hide Menubar
-Hide Menubar|Hide Menubar
-Hide Toolbar|Hide Toolbar
 Hide Toolbar|Hide Toolbar
 ISO-File Virtual Drive|ISO-File Virtual Drive
 Information...|Information...
@@ -239,9 +230,6 @@ On message|On message
 Open &CD Rom...|Open &CD Rom...
 Open &ISO...|Open &ISO...
 Open CD Rom|Atverti CD-ROM'ą
-Open CD Rom...|Atverti CD-ROM'ą...
-Open ISO|Atverti ISO
-Open ISO...|Atverti ISO...
 OpenGL Video Interface|OpenGL Video Interface
 Options|Options
 Other Debug|Other Debug
@@ -327,7 +315,6 @@ System Clipping Coordinates|System Clipping Coordinates
 Text|Text
 Texture|Texture
 To|To
-To File|Į failą
 To File...|Į failą...
 Tools|Įrankiai
 Track Inf Loop Results|Track Inf Loop Results
@@ -373,9 +360,6 @@ Yabause Qt GUI|Yabause Qt grafinė sąsaja
 Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
 Yabause Save State (*.yss)|Yabause žaidimo išsaugojimo failas (*.yss)
 Yabause is not initialized, can't manage backup ram.|Yabause is not initialized, can't manage backup ram.
-_Debug|_Taisyti klaidas
-_Help|_Pagalba
-_View|_Žiūrėti
 http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=uk
 http://www.monkeystudio.org|http://www.monkeystudio.org
 toolBar|Įrankų juosta
