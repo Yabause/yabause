@@ -809,7 +809,7 @@ void netlink_client(void *data)
          //NETLINK_LOG("Sending to external source...");
 
          // Send via network connection
-         if ((bytes = YabSockSend(client->sock, &NetlinkArea->inbuffer[NetlinkArea->inbufferstart], NetlinkArea->inbufferend-NetlinkArea->inbufferstart, 0)) >= 0)
+         if ((bytes = YabSockSend(client->sock, (void *) &NetlinkArea->inbuffer[NetlinkArea->inbufferstart], NetlinkArea->inbufferend-NetlinkArea->inbufferstart, 0)) >= 0)
          {
             //NETLINK_LOG("Successfully sent %d byte(s)\n", bytes);
             if (NetlinkArea->inbufferend > bytes)
@@ -830,7 +830,7 @@ void netlink_client(void *data)
       if (YabSockIsReadSet(client->sock))
       {
          //NETLINK_LOG("Data is ready from external source...");
-         if ((bytes = YabSockReceive(client->sock, &NetlinkArea->outbuffer[NetlinkArea->outbufferend], sizeof(NetlinkArea->outbuffer)-1-NetlinkArea->outbufferend, 0)) > 0)
+         if ((bytes = YabSockReceive(client->sock, (void *) &NetlinkArea->outbuffer[NetlinkArea->outbufferend], sizeof(NetlinkArea->outbuffer)-1-NetlinkArea->outbufferend, 0)) > 0)
          {
             //NETLINK_LOG("Successfully received %d byte(s)\n", bytes);
             NetlinkArea->outbufferend += bytes;
@@ -864,7 +864,7 @@ static void NetworkStopClient()
 
 void netlink_listener(void *data)
 {
-   YabSock Listener=(YabSock)data;
+   YabSock Listener=(YabSock)(pointer)data;
    netlink_thread *client;
 
    netlink_listener_thread_running = 1;
@@ -908,7 +908,7 @@ int NetworkRestartListener(int port)
    if ((ret = YabSockListenSocket(port, &NetlinkArea->listensocket)) != 0)
       return ret;
 
-   YabThreadStart(YAB_THREAD_NETLINKLISTENER, netlink_listener, (void *)NetlinkArea->listensocket);
+   YabThreadStart(YAB_THREAD_NETLINKLISTENER, netlink_listener, (void *)(pointer)NetlinkArea->listensocket);
    return ret;
 }
 
