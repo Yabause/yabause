@@ -24,6 +24,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <errno.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 static fd_set read_fds;
 static fd_set write_fds;
