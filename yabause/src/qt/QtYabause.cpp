@@ -201,6 +201,8 @@ int QtYabause::setTranslationFile()
 	const QString s = settings()->value( "General/Translation" ).toString();
 	if ( ! s.isEmpty() )
 	{
+		if (s == "#") return 0; // magic value for "no translation" (aka english)
+
 		const char* filePath = qstrdup( s.toLocal8Bit().constData() );
 		if ( mini18n_set_locale( filePath ) == 0 )
 		{
