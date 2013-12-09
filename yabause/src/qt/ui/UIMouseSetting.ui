@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>213</width>
-    <height>412</height>
+    <width>211</width>
+    <height>409</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -22,7 +22,7 @@
      <x>10</x>
      <y>0</y>
      <width>191</width>
-     <height>321</height>
+     <height>351</height>
     </rect>
    </property>
    <property name="pixmap">
@@ -39,7 +39,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>30</y>
+     <y>70</y>
      <width>54</width>
      <height>58</height>
     </rect>
@@ -61,7 +61,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>30</y>
+     <y>70</y>
      <width>54</width>
      <height>58</height>
     </rect>
@@ -83,9 +83,9 @@
    <property name="geometry">
     <rect>
      <x>80</x>
-     <y>0</y>
+     <y>70</y>
      <width>54</width>
-     <height>58</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="focusPolicy">
@@ -104,10 +104,10 @@
   <widget class="QToolButton" name="tbStart">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>90</x>
      <y>100</y>
      <width>31</width>
-     <height>51</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="focusPolicy">
@@ -127,7 +127,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>330</y>
+     <y>340</y>
      <width>191</width>
      <height>41</height>
     </rect>
@@ -152,9 +152,9 @@
   <widget class="QToolButton" name="tbAxis">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>210</y>
-     <width>31</width>
+     <x>80</x>
+     <y>190</y>
+     <width>51</width>
      <height>51</height>
     </rect>
    </property>

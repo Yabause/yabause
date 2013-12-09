@@ -431,7 +431,13 @@ OSD_struct QtYabause::defaultOSDCore()
 
 PerInterface_struct QtYabause::defaultPERCore()
 {
+#ifdef HAVE_LIBSDL
+	return PERSDLJoy;
+#elif defined (HAVE_DIRECTINPUT)
+	return PERDIRECTX;
+#else
 	return PERQT;
+#endif
 }
 
 SH2Interface_struct QtYabause::defaultSH2Core()

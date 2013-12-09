@@ -26,6 +26,7 @@
 
 #include <QDir>
 #include <QList>
+#include <QDesktopWidget>
 
 extern "C" {
 extern M68K_struct* M68KCoreList[];
@@ -81,6 +82,13 @@ UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList
 {
 	// setup dialog
 	setupUi( this );
+
+	QRect maxWinRect = QApplication::desktop()->availableGeometry();
+	
+	
+	leWinWidth->setValidator(new QIntValidator(0, maxWinRect.width(), leWinWidth));
+	leWinHeight->setValidator(new QIntValidator(0, maxWinRect.height(), leWinHeight));
+
 	pmPort1->setPort( 1 );
 	pmPort1->loadSettings();
 	pmPort2->setPort( 2 );
@@ -372,7 +380,7 @@ void UISettings::loadSettings()
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	if (s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() == CDCORE_ARCH)
-		cbCdDrive->setCurrentIndex(cbCdDrive->findText(leCdRom->text()));
+		cbCdDrive->setCurrentIndex(leCdRom->text().isEmpty() ? 0 : cbCdDrive->findText(leCdRom->text()));
 
 	leSaveStates->setText( s->value( "General/SaveStates", getDataDirPath() ).toString() );
 #ifdef HAVE_LIBMINI18N
@@ -402,10 +410,10 @@ void UISettings::loadSettings()
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
 
-	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width" ) ).toString() );
-	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height" ) ).toString() );
-	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width" ) ).toString(),
-										s->value( "Video/FullscreenHeight", s->value( "Video/Height" ) ).toString());
+	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 640 ) ).toString() );
+	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 480 ) ).toString() );
+	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 640 ) ).toString(),
+										s->value( "Video/FullscreenHeight", s->value( "Video/Height", 480 ) ).toString());	
 	cbFullscreenResolution->setCurrentIndex(cbFullscreenResolution->findText(text));
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
@@ -431,7 +439,7 @@ void UISettings::loadSettings()
 	bgShowMenubar->setId( rbMenubarFullscreen, BD_HIDEFS );
 	bgShowMenubar->setId( rbMenubarAlways, BD_ALWAYSHIDE );
 	bgShowMenubar->setId( rbMenubarFullscreenHover, BD_SHOWONFSHOVER );
-	bgShowMenubar->button( s->value( "View/Menubar", BD_NEVERHIDE ).toInt() )->setChecked( true );
+	bgShowMenubar->button( s->value( "View/Menubar", BD_SHOWONFSHOVER ).toInt() )->setChecked( true );
 
 	bgShowToolbar->setId( rbToolbarNever, BD_NEVERHIDE );
 	bgShowToolbar->setId( rbToolbarFullscreen, BD_HIDEFS );
@@ -440,7 +448,7 @@ void UISettings::loadSettings()
 
 	bgShowLogWindow->setId( rbLogWindowNever, 0 );
 	bgShowLogWindow->setId( rbLogWindowMessage, 1 );
-	bgShowLogWindow->button( s->value( "View/LogWindow", 1 ).toInt() )->setChecked( true );
+	bgShowLogWindow->button( s->value( "View/LogWindow", 0 ).toInt() )->setChecked( true );
 }
 
 void UISettings::saveSettings()

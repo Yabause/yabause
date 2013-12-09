@@ -108,6 +108,12 @@ void UIPortManager::loadSettings()
 	QStringList ids = settings->childGroups();
 	settings->endGroup();
 
+	if (ids.isEmpty() && mPort == 1)
+	{
+		QComboBox* cb = findChild<QComboBox*>( QString( "cbTypeController1" ) );
+		cb->setCurrentIndex(1);
+	}
+
 	ids.sort();
 	foreach ( const QString& id, ids )
 	{
