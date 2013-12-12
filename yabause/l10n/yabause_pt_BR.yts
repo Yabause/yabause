@@ -28,7 +28,7 @@
 &Quit|&Sair
 &Raw Memory Address|&Endereço da Memória Original
 &Reset|&Resetar
-&Save To File|&Salvar para o Arquivo
+&Save To File|&Salvar como Arquivo
 &Settings...|&Configurações...
 &Slave SH2|&SH2 Escravo
 &Tools|&Ferramentas
@@ -69,7 +69,7 @@ Auto-detect|Auto-detectar
 Autostart|Auto-iniciar
 Backtrace|Backtrace
 Backup Ram Manager|Gerenciador da Ram de Backup
-Binary Files (*.bin)|Arquivo Binário (*.bin)
+Binary Files (*.bin)|Arquivos Binário (*.bin)
 Bios|Bios
 Block Size :|Tamanho dos Blocos :
 Browse|Explorar
@@ -315,7 +315,7 @@ System Clipping Coordinates|Coordenadas de Corte do Sistema
 Text|Texto
 Texture|Textura
 To|Para
-To File...|Para o Arquivo...
+To File...|Do Arquivo...
 Tools|Ferramentas
 Track Inf Loop Results|Rastrear Resultados do Loop do Inf
 Transfer|Transferência
@@ -333,6 +333,7 @@ Unsigned 32-bit value|Valor de 32-bits não assinado
 Unsigned 8-bit value|Valor de 8-bits não assinado
 Up|Para cima
 Upload|Upload
+Use System Locale|Usar o Idioma do Sistema
 VDP1|VDP1
 VDP1 Command Info|Informação do Comando do VDP1
 VDP1 Command List|Lista de Comandos do VDP1
