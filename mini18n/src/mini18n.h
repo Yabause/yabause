@@ -34,10 +34,14 @@ extern "C" {
       #define DLL_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
     #endif
   #else
-    #ifdef __GNUC__
-      #define DLL_PUBLIC __attribute__ ((dllimport))
+    #ifdef USE_DLL
+      #ifdef __GNUC__
+        #define DLL_PUBLIC __attribute__ ((dllimport))
+      #else
+        #define DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+      #endif
     #else
-      #define DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+      #define DLL_PUBLIC
     #endif
   #endif
   #define DLL_LOCAL
