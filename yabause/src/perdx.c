@@ -18,6 +18,9 @@
 */
 
 #include <windows.h>
+#ifdef __MINGW32__
+#undef HAVE_XINPUT
+#endif
 #define COBJMACROS
 #include <wbemidl.h>
 #include <wbemcli.h>

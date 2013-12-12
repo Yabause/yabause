@@ -243,9 +243,10 @@ if (WIN32)
 		install(FILES ${GLUT_INCLUDE_DIR}/../freeglut.dll DESTINATION ".")
 	endif ()
 	if (SDL_FOUND)
-        get_filename_component(SDL_BINARY_DIR ${SDL_LIBRARY} PATH)
-        get_filename_component(SDL_BINARY_BASE ${SDL_LIBRARY} NAME_WE)
-		install(FILES ${SDL_BINARY_DIR}/${SDL_BINARY_BASE}.dll DESTINATION ".")
+		get_filename_component(SDL_BINARY_DIR ${SDL_LIBRARY} PATH)
+		install(DIRECTORY ${SDL_BINARY_DIR}/
+			DESTINATION "."
+			FILES_MATCHING PATTERN "SDL*.dll")
 	endif ()
 	if(YAB_USE_QT5) 
 		install(FILES ${QT_BINARY_DIR}/Qt5Core.dll DESTINATION ".")
@@ -265,8 +266,15 @@ if (WIN32)
 	
 	if (MINGW)
 		get_filename_component( Mingw_Path ${CMAKE_CXX_COMPILER} PATH )
-		install(FILES ${Mingw_Path}/libgcc_s_dw2-1.dll DESTINATION ".")
-		install(FILES ${Mingw_Path}/mingwm10.dll DESTINATION ".")
+		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64")
+			install(DIRECTORY ${Mingw_Path}/
+				DESTINATION "."
+				FILES_MATCHING PATTERN "libgcc_s_*.dll" PATTERN "libstdc++-*.dll")
+		else()
+			install(DIRECTORY ${Mingw_Path}/
+				DESTINATION "."
+				FILES_MATCHING PATTERN "libgcc_s_*.dll" PATTERN "mingwm10.dll")
+		endif()
 	endif ()
 else ()
 	install(TARGETS yabause-qt DESTINATION "bin")

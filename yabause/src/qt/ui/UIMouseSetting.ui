@@ -162,7 +162,7 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="toolTip">
-    <string>Start</string>
+    <string>Axis</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
