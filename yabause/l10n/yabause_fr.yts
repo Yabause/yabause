@@ -258,7 +258,7 @@ SDL Sound Interface|Interface SDL du Son
 SH2 Debugger Interpreter|Interpréteur de Débugeur SH2
 SH2 Dynamic Recompiler|Recompileur Dynamique SH2
 SH2 Interpreter|Interpréteur SH2 :
-SH2 Registers|Registrers SH2
+SH2 Registers|Registres SH2
 SSH2|SSH2
 Save|Sauvegarder
 Save As WAV|Sauvegarder en  WAV
@@ -333,7 +333,7 @@ Unsigned 32-bit value|Valeur Non Signé 32-bit
 Unsigned 8-bit value|Valeur Non Signé 8-bit
 Up|Haut
 Upload|Upload
-Use System Locale|Utilisez la locale système
+Use System Locale|Utiliser les paramètres régionaux
 VDP1|VDP1
 VDP1 Command Info|Info Commande VDP1
 VDP1 Command List|Liste Commande VDP1
