@@ -327,7 +327,7 @@ void UISettings::loadSupportedResolutions()
 
 void UISettings::loadTranslations()
 {
-	cbTranslation->addItem(_("Use System Locale"), "");
+	cbTranslation->addItem(QString::fromUtf8(_("Use System Locale")), "");
 	cbTranslation->addItem("English", "#");
 	for (int i = 0; i < this->trans.count(); i++)
 		cbTranslation->addItem(trans[i].name, trans[i].file);
