@@ -349,7 +349,7 @@ void UISettings::loadShortcuts()
 	twShortcuts->setRowCount(actionsList.count());
 	foreach ( QAction* action, actionsList )
 	{
-		QTableWidgetItem *tblItem = new QTableWidgetItem(action->text());
+		QTableWidgetItem *tblItem = new QTableWidgetItem(QString::fromUtf8(_(action->text().toUtf8())));
 		tblItem->setFlags(tblItem->flags() ^ Qt::ItemIsEditable);
 		twShortcuts->setItem(row, 0, tblItem);
 		tblItem = new QTableWidgetItem(action->shortcut().toString());
