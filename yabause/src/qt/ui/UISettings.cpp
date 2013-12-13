@@ -330,7 +330,7 @@ void UISettings::loadTranslations()
 	cbTranslation->addItem(QString::fromUtf8(_("Use System Locale")), "");
 	cbTranslation->addItem("English", "#");
 	for (int i = 0; i < this->trans.count(); i++)
-		cbTranslation->addItem(trans[i].name, trans[i].file);
+		cbTranslation->addItem(trans[i].name.left(1).toUpper()+trans[i].name.mid(1), trans[i].file);
 
 }
 
