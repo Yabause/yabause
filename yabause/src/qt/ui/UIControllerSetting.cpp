@@ -207,7 +207,11 @@ void UIControllerSetting::tbButton_clicked()
 		tb->setChecked( true );
 		mPadKey = mButtons[ tb ];
 	
-		mlInfos->setText( QtYabause::translate( QString( "Waiting input for : %1\nEscape for cancel" ).arg( mNames[ mPadKey ] ) ) );
+		QString text1 = QtYabause::translate(QString("Awaiting input for"));
+		QString text2 = QtYabause::translate(mNames[ mPadKey ]);
+		QString text3 = QtYabause::translate(QString("Press Esc key to cancel"));
+
+		mlInfos->setText( text1 + QString(": %1\n").arg(text2) + text3 );
 		setScanFlags(mScanMasks[mPadKey]);
 		mTimer->start();
 	}
