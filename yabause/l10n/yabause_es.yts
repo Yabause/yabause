@@ -30,7 +30,7 @@
 &Reset|&Resetear
 &Save To File|&Guardar a archivo
 &Settings...|&Configuración...
-&Slave SH2|SH2 E&sclava
+&Slave SH2|SH2 E&sclavo
 &Tools|Herramien&tas
 &Transfer|&Transferir
 &View|&Ver
@@ -67,6 +67,8 @@ Asia (NTSC)|Asia (NTSC)
 Asia (PAL)|Asia (PAL)
 Auto-detect|Auto-detectar
 Autostart|Iniciar automáticamente
+Awaiting input for|Esperando entrada para
+Axis|Eje
 Backtrace|Registro de funciones llamadas
 Backup Ram Manager|Gestor de RAM de backup
 Binary Files (*.bin)|Archivos binarios (*.bin)
@@ -90,12 +92,15 @@ Cheat Type|Tipo de truco
 Cheats|Trucos
 Cheats File|Archivo de trucos
 Choose a binary file|Seleccione un archivo binario
+Choose a cartridge file|Seleccione un archivo de cartucho
 Choose a cdrom drive/mount point|Seleccione una unidad de cdrom/punto de montaje
 Choose a cheat file to open|Seleccione un archivo de trucos para abrir
 Choose a cheat file to save to|Seleccione el archivo de trucos para guardar
 Choose a file to save your state|Seleccione un archivo para guardar tu estado
 Choose a location for binary file|Seleccione ubicación para el archivo binario
 Choose a location for your screenshot|Seleccione ubicación para tu captura
+Choose a memory file|Seleccione un archivo de memoria
+Choose a mpeg rom|Seleccione un rom mpeg
 Clear configuration|Limpiar configuración
 Close|Cerrar
 Code|Código
@@ -144,7 +149,7 @@ End Address:|Dirección final:
 English|Inglés
 Enter New Value|Ingrese el nuevo valor
 Europe + others (PAL)|Europa + otros (PAL)
-Exact|Exactamente
+Exact|Exacto
 FPS|Cuadros por Segundo
 File|Archivo
 File Name :|Nombre de archivo :
@@ -208,7 +213,9 @@ Memory Editor|Editor de memoria
 Memory Search|Búsqueda en memoria
 Memory Transfer|Transferir memoria
 Memory dump|Volcado de memoria
+Middle|Medio
 Mouse|Ratón
+Mouse Configuration|Configuración del Ratón
 Mpeg ROM|ROM Mpeg
 NBG0|NBG0
 NBG0/RBG1 Info|Información de NBG0/RBG1
@@ -236,6 +243,7 @@ Other Debug|Otra depuración
 Pad|Mando
 Pad Configuration|Configuración del mando
 Pause|Pausar
+Press Esc key to cancel|Presione la tecla ESC para cancelar
 Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Interfaz de entrada de teclado Qt
 Quit|Salir
@@ -294,7 +302,7 @@ Signed|Con signo
 Signed 16-bit value|Valor de 16-bit con signo
 Signed 32-bit value|Valor de 32-bit con signo
 Signed 8-bit value|Valor de 8-bit con signo
-Slave SH2|SH2 Esclava
+Slave SH2|SH2 Esclavo
 Slot Info|Información de ranura
 Slot Number:|Número de ranura:
 Software OSD Interface|Interface OSD software
@@ -317,7 +325,7 @@ Texture|Textura
 To|Para
 To File...|A archivo...
 Tools|Herramientas
-Track Inf Loop Results|Track Inf Loop Results
+Track Inf Loop Results|Resultado del Seguimiento de Bucles Infinitos
 Transfer|Transferencia
 Translation|Traducción
 Type:|Tipo:
@@ -333,6 +341,7 @@ Unsigned 32-bit value|Valor de 32-bit sin signo
 Unsigned 8-bit value|Valor de 8-bit sin signo
 Up|Arriba
 Upload|Subir
+Use System Locale|Usar Configuración Regional del Sistema
 VDP1|Vdp1
 VDP1 Command Info|Información de comandos del VDP1
 VDP1 Command List|Listado de comandos del VDP1
