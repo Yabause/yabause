@@ -67,6 +67,8 @@ Asia (NTSC)|Asie (NTSC)
 Asia (PAL)|Asie (PAL)
 Auto-detect|Détection Auto
 Autostart|Démarrage Automatique
+Awaiting input for|Attente de l'entrée pour
+Axis|Axes
 Backtrace|Traceur
 Backup Ram Manager|Gestion des Sauvegardes
 Binary Files (*.bin)|Fichiers Binaire (*.bin)
@@ -90,12 +92,15 @@ Cheat Type|Type de Cheat
 Cheats|Cheats
 Cheats File|Fichier Cheat
 Choose a binary file|Choisir un Fichier Binaire
+Choose a cartridge file|Choisir un Fichier Cartouche
 Choose a cdrom drive/mount point|Choisir un lecteur CD ou un point de montage
 Choose a cheat file to open|Choisir un fichier de Cheat à ouvrir
 Choose a cheat file to save to|Choisir un fichier de Cheat à enregistrer
 Choose a file to save your state|Choisir un fichier où enregistrer l'état
 Choose a location for binary file|Choisir le Chemin du Fichier Binaire
 Choose a location for your screenshot|Choisir un nom de fichier pour votre capture d'écran
+Choose a memory file|Choisir un Fichier Mémoire
+Choose a mpeg rom|Choisir une Rom MPEG
 Clear configuration|Vider la Configuration
 Close|Fermer
 Code|Code
@@ -208,7 +213,9 @@ Memory Editor|Editeur de Mémoire
 Memory Search|Rechercher dans la Mémoire
 Memory Transfer|Transfert de Mémoire
 Memory dump|Copier la Mémoire
+Middle|Moyen
 Mouse|Souris
+Mouse Configuration|Configuration de la Souris
 Mpeg ROM|ROM MPEG :
 NBG0|NBG0
 NBG0/RBG1 Info|Info NBG0/RBG1
@@ -236,6 +243,7 @@ Other Debug|Autre Débug
 Pad|Manette
 Pad Configuration|Configuration de la Manette
 Pause|Pause
+Press Esc key to cancel|Pressez Echap pour Annuler
 Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Interface Qt du Clavier
 Quit|Quitter
@@ -324,7 +332,7 @@ Type:|Type :
 Unable to add code|Ne peut pas ajouter de Code
 Unable to change description|Ne peut pas changer la Description
 Unable to open file for loading|Ne peut pas ouvrir le fichier à Charger
-Unable to open file for saving|Ne peut pas ouvrir le fichier à sauvegarder
+Unable to open file for saving|Ne peut pas ouvrir le fichier à Sauvegarder
 Unable to remove code|Ne peut pas enlever le Code
 Unknow (%1)|Inconnu (%1)
 Unsigned|Non Signé

@@ -67,6 +67,8 @@ Asia (NTSC)|Ásia (NTSC)
 Asia (PAL)|Ásia (PAL)
 Auto-detect|Auto-detectar
 Autostart|Auto-iniciar
+Awaiting input for|Esperando a entrada de dados para
+Axis|Axis
 Backtrace|Backtrace
 Backup Ram Manager|Gerenciador da Ram de Backup
 Binary Files (*.bin)|Arquivos Binário (*.bin)
@@ -90,12 +92,15 @@ Cheat Type|Tipo de Trapaça
 Cheats|Trapaças
 Cheats File|Arquivo das Trapaças
 Choose a binary file|Escolha um arquivo binário
+Choose a cartridge file|Escolha um arquivo de cartucho
 Choose a cdrom drive/mount point|Escolha um drive de cdrom/ponto de montagem
 Choose a cheat file to open|Escolha um arquivo de trapaça para abrir
 Choose a cheat file to save to|Escolha um arquivo de trapaça para salvar
 Choose a file to save your state|Escolha um arquivo para salvar seu estado
 Choose a location for binary file|Escolha um local pro arquivo binário
 Choose a location for your screenshot|Escolha um local para seu screenshot
+Choose a memory file|Escolha um arquivo de memória
+Choose a mpeg rom|Escolha uma rom mpeg
 Clear configuration|Limpar configuração
 Close|Fechar
 Code|Código
@@ -208,7 +213,9 @@ Memory Editor|Editor de Memória
 Memory Search|Busca pela Memória
 Memory Transfer|Transferência de Memória
 Memory dump|Dump da Memória
+Middle|No meio
 Mouse|Mouse
+Mouse Configuration|Configuração do Mouse
 Mpeg ROM|ROM Mpeg
 NBG0|NBG0
 NBG0/RBG1 Info|Informação do NBG0/RBG1
@@ -236,6 +243,7 @@ Other Debug|Outro Debug
 Pad|Pad
 Pad Configuration|Configuração do Pad
 Pause|Pausar
+Press Esc key to cancel|Pressione a tecla Esc pra cancelar
 Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Interface da Entrada de Dados do Teclado do Qt
 Quit|Sair
