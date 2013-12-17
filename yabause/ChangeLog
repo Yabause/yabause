@@ -24,7 +24,7 @@
   - Log window can now be hidden (Guillaume)
   - Save and restore window position (Guillaume)
   - Can use .ini files in the application dir (Guillaume)
-  - Mouse support (CyberWarriorX)
+  - Mouse and 3D control pad support (CyberWarriorX)
   - Made drives and languages settings more user friendly (CyberWarriorX)
   - Changing to fullscreen now updates resolution too (CyberWarriorX)
   - Shortcuts editing (CyberWarriorX)
