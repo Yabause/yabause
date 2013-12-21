@@ -357,8 +357,13 @@ void UISettings::loadShortcuts()
 		row++;
 	}
 	QHeaderView *headerView = twShortcuts->horizontalHeader();
+#if QT_VERSION >= 0x04FF00
+	headerView->setSectionResizeMode(QHeaderView::Stretch);
+	headerView->setSectionResizeMode(1, QHeaderView::Interactive);
+#else
 	headerView->setResizeMode(QHeaderView::Stretch);
 	headerView->setResizeMode(1, QHeaderView::Interactive);
+#endif
 }
 
 void UISettings::applyShortcuts()
@@ -528,7 +533,7 @@ void UISettings::saveSettings()
 		if (action->text().isEmpty())
 			continue;
 
-		QString accelText = QString(action->shortcut());
+		QString accelText = QString(action->shortcut().toString());
 		s->setValue(action->text(), accelText);
 	}
 	s->endGroup();

@@ -35,7 +35,7 @@ QString getDataDirPath()
 	// Use some wizardry so we can get our data in AppData
    QString oldApplicationName = QCoreApplication::applicationName();   
    QCoreApplication::setApplicationName("yabause");
-#ifdef USE_QT5
+#if QT_VERSION >= 0x04FF00
    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
 #else
 	QString path = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
