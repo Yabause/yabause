@@ -1,17 +1,17 @@
 %1 Images (*.%2)|Images %1 (*.%2)
-%1/%2 blocks free|%1/%2 blocs libre
+%1/%2 blocks free|%1/%2 blocs libres
 &About...|&A Propos De...
 &Action Replay|&Action Replay
 &Backup Manager...|&Gestion des Sauvegardes...
 &Browse|&Parcourir
 &Cancel|&Annuler
 &Capture Screen|&Capture d'Ecran
-&Cheat List|Liste de &Cheat
+&Cheat List|Liste de &Cheats
 &Cheats|&Cheats
-&Cheats List...|Liste de &Cheat...
+&Cheats List...|Liste de &Cheats...
 &Clear|&Effacer
 &Close|&Fermer
-&Debug|&Débug
+&Debug|&Debug
 &Delete|&Effacer
 &Emulation|&Emulation
 &File|&Fichier
@@ -34,28 +34,28 @@
 &Tools|Ou&tils
 &Transfer|&Transfert
 &View|&Visualiser
-16 Mbit Backup Ram|16 Mbit Backup Ram
-16 Mbit ROM|16 Mbit ROM
+16 Mbit Backup Ram|Sauvegarde RAM 16 Mbit
+16 Mbit ROM|ROM 16 Mbit
 16-bit|16-bit
-16-bit Relative value(s)|Valeur(s) Relative 16-bit
-32 Mbit Backup Ram|32 Mbit Backup Ram
-32 Mbit Dram|32 Mbit Dram
+16-bit Relative value(s)|Valeur(s) Relatives 16-bit
+32 Mbit Backup Ram|Sauvegarde RAM 32 Mbit
+32 Mbit Dram|Dram 32 Mbit
 32-bit|32-bit
-3D Control Pad|3D Control Pad
-4 Mbit Backup Ram|4 Mbit Backup Ram
-503/512 blocks free|503/512 blocs libre
-510/512 blocks free|510/512 blocs libre
-8 Mbit Backup Ram|8 Mbit Backup Ram
-8 Mbit Dram|8 Mbit Dram
+3D Control Pad|Manette 3D
+4 Mbit Backup Ram|Sauvegarde RAM 4 Mbit
+503/512 blocks free|503/512 blocs libres
+510/512 blocks free|510/512 blocs libres
+8 Mbit Backup Ram|Sauvegarde RAM 8 Mbit
+8 Mbit Dram|Dram 8 Mbit
 8-bit|8-bit
-8-bit Relative value(s)|Valeurs Relative 8-bit
-<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>AVERTISSEMENT :</b> Les Codes Maîtres <b>NE SONT PAS</b> supportés.</font>
-About...|A Propos De...
+8-bit Relative value(s)|Valeurs Relatives 8-bit
+<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>Attention :</b> Les Codes Maîtres <b>NE SONT PAS</b> supportés.</font>
+About...|À Propos De...
 Action Replay Code :|Code Action Replay :
 Add|Ajouter
 Add Action Replay Code|Ajouter un Code Action Replay
 Add Cheat|Ajouter un Cheat
-Add Codes...|Ajouter un Code...
+Add Codes...|Ajouter des Codes...
 Add Raw Memory Code|Ajouter un Code Mémoire Brut
 Address|Adresse
 Address :|Adresse :
@@ -71,7 +71,7 @@ Awaiting input for|Attente de l'entrée pour
 Axis|Axes
 Backtrace|Traceur
 Backup Ram Manager|Gestion des Sauvegardes
-Binary Files (*.bin)|Fichiers Binaire (*.bin)
+Binary Files (*.bin)|Fichiers Binaires (*.bin)
 Bios|Bios :
 Block Size :|Taille du Bloc :
 Browse|Parcourir
@@ -130,7 +130,7 @@ DirectX Sound Interface|Interface DirectX Sound
 Disabled|Désactivé
 Disassembled Code|Code Désassemblé
 Display Enabled|Affichage Activé
-Display on Hover|Affichager en Passant le Curseur
+Display on Hover|Afficher en Passant le Curseur
 Down|Bas
 Download|Télécharger
 Draw End|Fin Dessin
@@ -140,7 +140,7 @@ Dummy OSD Interface|Interface OSD Factice
 Dummy Sound Interface|Interface Son Factice
 Dummy Video Interface|Interface Vidéo Factice
 Edit configuration|Editer la Configuration
-Emu-Compatibility|Emu-Compatibility
+Emu-Compatibility|Emu-Compatibilité
 Emulation|Emulation
 Enable|Activer
 Enable Frame Skip/Limiter|Active le Saut  d'Image/Limitateur
@@ -359,7 +359,7 @@ View|Visualiser
 Viewer|Visualiseur
 Waiting Input...|En Attente du Contrôleur
 Width|Largeur :
-Window Resolution|Résolution Fenêtré
+Window Resolution|Résolution Fenêtrée
 Windows SPTI Driver|Pilote Windows SPTI
 Word|Word
 Word Write|Ecrire un Word

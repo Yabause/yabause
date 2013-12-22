@@ -1,6 +1,6 @@
 project(yabause-l10n)
 
-set(LANGS de es fr it lt nl pt pt_BR sv)
+set(LANGS ar de es fr it lt nl pt pt_BR sv zh_CN)
 
 if (UNIX AND NOT APPLE)
     foreach(LANG ${LANGS})
