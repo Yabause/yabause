@@ -168,13 +168,13 @@ QStringList getCdDriveList()
 	char drive_name[10];
 	char drive_path[255];
 
-	Q_ASSERT( f );
+	if (f != NULL) {
+		while (fgets(buffer, 1024, f) != NULL) {
+			if (sscanf(buffer, "drive name:%s", drive_name) == 1) {
+				sprintf(drive_path, "/dev/%s", drive_name);
 
-	while (fgets(buffer, 1024, f) != NULL) {
-		if (sscanf(buffer, "drive name:%s", drive_name) == 1) {
-			sprintf(drive_path, "/dev/%s", drive_name);
-
-			list.append(drive_path);
+				list.append(drive_path);
+			}
 		}
 	}
 #elif defined Q_OS_MAC
