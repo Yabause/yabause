@@ -18,7 +18,6 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#define _WIN32_WINNT 0x600
 #include <windows.h>
 #include "core.h"
 #include "threads.h"
@@ -29,7 +28,7 @@ struct thd_s {
    void (*func)(void *);
    void *arg;
    CRITICAL_SECTION mutex;
-   CONDITION_VARIABLE cond;
+   HANDLE cond;
 };
 
 static struct thd_s thread_handle[YAB_NUM_THREADS];
@@ -69,7 +68,11 @@ int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
    
    // Create CS and condition variable for thread
    InitializeCriticalSection(&thread_handle[id].mutex);
-   InitializeConditionVariable(&thread_handle[id].cond);
+   if ((thread_handle[id].cond = CreateEvent(NULL, FALSE, FALSE, NULL)) == NULL)
+   {
+      perror("CreateEvent");
+   	  return -1;
+   }
 
    thread_handle[id].func = func;
    thread_handle[id].arg = arg;
@@ -94,6 +97,8 @@ void YabThreadWait(unsigned int id)
    CloseHandle(thread_handle[id].thd);
    thread_handle[id].thd = NULL;
    thread_handle[id].running = 0;
+   if (thread_handle[id].cond)
+   	   CloseHandle(thread_handle[id].cond);
 }
 
 void YabThreadYield(void) 
@@ -104,7 +109,7 @@ void YabThreadYield(void)
 void YabThreadSleep(void) 
 {
    struct thd_s *thd = (struct thd_s *)TlsGetValue(hnd_key);
-   SleepConditionVariableCS(&thd->cond, &thd->mutex, INFINITE);
+   WaitForSingleObject(thd->cond,INFINITE);
 }
 
 void YabThreadRemoteSleep(unsigned int id) 
@@ -112,7 +117,7 @@ void YabThreadRemoteSleep(unsigned int id)
    if (!thread_handle[id].thd)
       return;  // Thread wasn't running in the first place
 
-   SleepConditionVariableCS(&thread_handle[id].cond, &thread_handle[id].mutex, INFINITE);
+   WaitForSingleObject(thread_handle[id].cond,INFINITE);
 }
 
 void YabThreadWake(unsigned int id) 
@@ -120,7 +125,7 @@ void YabThreadWake(unsigned int id)
    if (!thread_handle[id].thd)
       return;  // Thread wasn't running in the first place
 
-   WakeConditionVariable(&thread_handle[id].cond);
+   SetEvent(thread_handle[id].cond);
 }
 
 //////////////////////////////////////////////////////////////////////////////
