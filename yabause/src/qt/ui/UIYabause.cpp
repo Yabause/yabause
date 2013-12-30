@@ -680,7 +680,7 @@ void UIYabause::on_aFileScreenshot_triggered()
 	for ( int i = 0; i < filters.count(); i++ )
 		filters[i] = QtYabause::translate( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
 
-#ifdef HAVE_LIBGL
+#if defined(HAVE_LIBGL) && !defined(QT_OPENGL_ES_1) && !defined(QT_OPENGL_ES_2)
 	glReadBuffer(GL_FRONT);
 #endif
 
