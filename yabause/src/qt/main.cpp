@@ -32,7 +32,7 @@ int main( int argc, char** argv )
 	// create application
 	QApplication app( argc, argv );
 	// init application
-	app.setApplicationName( QString( "Qt Yabause v%1 - A Beautiful And Under-rated Saturn Emulator" ).arg( VERSION ) );
+	app.setApplicationName( QString( "Yabause v%1" ).arg( VERSION ) );
 	// init settings
 	Settings::setIniInformations();
 #ifdef HAVE_LIBMINI18N
