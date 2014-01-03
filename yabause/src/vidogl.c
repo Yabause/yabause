@@ -3205,14 +3205,11 @@ static void Vdp2DrawNBG0(void)
       }
 
       if( (Vdp2Regs->ZMYN0.all & 0x7FF00) == 0 )
-         info.coordincx = 1.0f; 
+         info.coordincy = 1.0f; 
       else
          info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00);
       
-      info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG0PlaneAddr;
-      
-
-      
+      info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG0PlaneAddr;            
    }
    else
       // Not enabled
@@ -3397,10 +3394,10 @@ static void Vdp2DrawNBG1(void)
       break;
    }
 
-      if( (Vdp2Regs->ZMYN1.all & 0x7FF00) == 0 )
-         info.coordincx = 1.0f; 
-      else
-         info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN1.all & 0x7FF00);
+   if( (Vdp2Regs->ZMYN1.all & 0x7FF00) == 0 )
+      info.coordincy = 1.0f; 
+   else
+      info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN1.all & 0x7FF00);
       
       
    info.priority = (Vdp2Regs->PRINA >> 8) & 0x7;;
