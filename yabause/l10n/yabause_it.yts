@@ -1,37 +1,37 @@
 %1 Images (*.%2)|%1 Immagini (*.%2)
-%1/%2 blocks free|%1%2 blocchi liberi
+%1/%2 blocks free|%1/%2 blocchi liberi
 &About...|&Informazioni...
 &Action Replay|&Action Replay
 &Backup Manager...|&Backup Manager...
 &Browse|&Sfoglia
-&Cancel|&Cancel
-&Capture Screen|&Cattura Schermo
-&Cheat List|Lista &Cheat
-&Cheats|&Cheats
-&Cheats List...|&Cheats List...
+&Cancel|&Annulla
+&Capture Screen|&Cattura Schermata
+&Cheat List|&Lista Trucchi
+&Cheats|&Trucchi
+&Cheats List...|&Lista Trucchi...
 &Clear|&Svuota
-&Close|&Close
+&Close|&Chiudi
 &Debug|&Debug
 &Delete|&Elimina
-&Emulation|&Emulation
+&Emulation|&Emulazione
 &File|&File
-&Frame Skip/Limiter|&Frame Skip/Limiter
+&Frame Skip/Limiter|&Limita/Salta Frame
 &Fullscreen|&Schermo Intero
 &Help|&Aiuto
 &Layer|&Layer
-&Load From File|Carica da&l file
+&Load From File|&Carica da File
 &Log|&Log
 &Master SH2|&Master SH2
-&Memory Transfer|Trasferimento &Memoria
+&Memory Transfer|&Trasferimento Memoria
 &OK|&OK
 &Pause|&Pausa
 &Quit|&Esci
-&Raw Memory Address|Indirizzo Grezzo Memoria
-&Reset|&Reset
-&Save To File|$Salva su file
-&Settings...|Impo&stazioni...
+&Raw Memory Address|&Raw Memory Address
+&Reset|&Resetta
+&Save To File|&Salva su File
+&Settings...|&Impostazioni...
 &Slave SH2|&Slave SH2
-&Tools|&Tools
+&Tools|&Strumenti
 &Transfer|&Transfer
 &View|&Visualizza
 16 Mbit Backup Ram|16 Mbit Backup Ram
@@ -52,12 +52,12 @@
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>ATTENZIONE:</b> I Codici Master <b>NON</b> sono supportati.</font>
 About...|Informazioni...
 Action Replay Code :|Codice Action Replay
-Add|Add
+Add|Aggiungi
 Add Action Replay Code|Aggiungi codice Action Replay
-Add Cheat|Add Cheat
-Add Codes...|Aggiungi codici....
+Add Cheat|Aggiungi Trucco
+Add Codes...|Aggiungi Codici....
 Add Raw Memory Code|Aggiungi Raw Memory Code
-Address|Address
+Address|Indirizzo
 Address :|Indirizzo:
 Advanced|Avanzate
 Always|Always
@@ -67,6 +67,8 @@ Asia (NTSC)|Asia (NTSC)
 Asia (PAL)|Asia (PAL)
 Auto-detect|Auto-detect
 Autostart|Autostart
+Awaiting input for|Awaiting input for
+Axis|Axis
 Backtrace|Backtrace
 Backup Ram Manager|Gestione Backup RAM
 Binary Files (*.bin)|Binary Files (*.bin)
@@ -78,7 +80,7 @@ Byte Write|Scrivi Byte
 CD Images (*.iso *.cue *.bin)|Immagine CD (*.iso *.cue *.bin)
 Cancel|Annulla
 Cannot initialize|Impossibile Inizializzare
-Cannot initialize Windows SPTI Driver|Cannot initialize Windows SPTI Driver
+Cannot initialize Windows SPTI Driver|Impossibile inizializzare il Driver Windows SPTI
 Cart/Memory|Cart/Memoria
 Cartridge|Cartuccia
 Cd-Rom|Cd-Rom
@@ -86,16 +88,19 @@ Central/South America (NTSC)|Central/South America (NTSC)
 Central/South America (PAL)|Central/South America (PAL)
 Cheat &Search...|Cheat &Search...
 Cheat Search|Cheat Search
-Cheat Type|Tipo di Cheat
-Cheats|Cheats
+Cheat Type|Tipo di Trucco
+Cheats|Trucchi
 Cheats File|File Cheats
 Choose a binary file|Choose a binary file
+Choose a cartridge file|Choose a cartridge file
 Choose a cdrom drive/mount point|Choose a cdrom drive/mount point
 Choose a cheat file to open|Selezionare un file cheat da aprire
 Choose a cheat file to save to|Selezionare un file cheat per salvare
 Choose a file to save your state|Selezionare un file per salvare lo stato
 Choose a location for binary file|Choose a location for binary file
 Choose a location for your screenshot|Selezionare una directory per gli screenshoot
+Choose a memory file|Choose a memory file
+Choose a mpeg rom|Choose a mpeg rom
 Clear configuration|Clear configuration
 Close|Chiudi
 Code|Codice
@@ -208,7 +213,9 @@ Memory Editor|Editor Memoria
 Memory Search|Memory Search
 Memory Transfer|Trasferimento Memoria
 Memory dump|Dump Memoria
+Middle|Middle
 Mouse|Mouse
+Mouse Configuration|Mouse Configuration
 Mpeg ROM|Mpeg ROM
 NBG0|NBG0
 NBG0/RBG1 Info|NBG0/RBG1 Info
@@ -236,6 +243,7 @@ Other Debug|Other Debug
 Pad|Pad
 Pad Configuration|Pad Configuration
 Pause|Pausa
+Press Esc key to cancel|Press Esc key to cancel
 Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Qt Keyboard Input Interface
 Quit|Esci
@@ -333,6 +341,7 @@ Unsigned 32-bit value|Unsigned 32-bit value
 Unsigned 8-bit value|Unsigned 8-bit value
 Up|Su
 Upload|Upload
+Use System Locale|Use System Locale
 VDP1|VDP1
 VDP1 Command Info|VDP1 Command Info
 VDP1 Command List|VDP1 Command List
