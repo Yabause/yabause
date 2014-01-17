@@ -88,6 +88,7 @@ void UIMemoryTransfer::on_leEndAddress_textChanged( const QString & text )
 
 void UIMemoryTransfer::on_rbUpload_toggled(bool checked)
 {
+	leStartAddress->setEnabled(true);
    leEndAddress->setEnabled(checked != true);
    cbPC->setEnabled(checked == true);
 
@@ -104,9 +105,24 @@ void UIMemoryTransfer::on_tbBrowse_clicked()
    }
    else
    {
-      const QString s = CommonDialogs::getOpenFileName( leFile->text(), QtYabause::translate( "Choose a binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+      const QString s = CommonDialogs::getOpenFileName( leFile->text(), QtYabause::translate( "Choose a binary or program file" ), QtYabause::translate( "Binary Files (*.bin);;COFF Program Files (*.cof *.coff);;ELF Program Files (*.elf);;All Files (*)" ) );
       if ( !s.isNull() )
+		{
          leFile->setText( s );
+			if (s.endsWith(".cof", Qt::CaseInsensitive) ||
+				 s.endsWith(".coff", Qt::CaseInsensitive) ||
+				 s.endsWith(".elf", Qt::CaseInsensitive))
+			{
+				 cbPC->setCheckState(Qt::Checked);
+			    cbPC->setEnabled(false);
+				 leStartAddress->setEnabled(false);
+			}
+			else
+			{
+				cbPC->setEnabled(true);
+				leStartAddress->setEnabled(true);
+			}
+		}
    }
 }
 
