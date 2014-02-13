@@ -35,7 +35,7 @@ typedef struct
    int current_rate;
 } X11ResolutionList;
 
-static XRRScreenConfiguration *x11Conf;
+static XRRScreenConfiguration *x11Conf = NULL;
 static short x11OriginalRate;
 static SizeID x11OriginalSizeId;
 static Rotation x11OriginalRotation;
@@ -92,6 +92,8 @@ void ScreenChangeResolution(supportedRes_struct * res)
    dpy = XOpenDisplay(NULL);
    root = RootWindow(dpy, 0);
 
+   if (x11Conf != NULL) XRRFreeScreenConfigInfo(x11Conf);
+
    // Save original settings
    x11Conf = XRRGetScreenInfo(dpy, root);
    x11OriginalRate = XRRConfigCurrentRate(x11Conf);
@@ -108,6 +110,8 @@ void ScreenRestoreResolution()
 {
    Display *dpy;
    Window root;
+
+   if (x11Conf == NULL) return;
 
    // Open X11 connection
    dpy = XOpenDisplay(NULL);
