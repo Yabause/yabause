@@ -20,6 +20,8 @@
 package org.yabause.android;
 
 import java.lang.Runnable;
+import java.io.File;
+import java.io.FileOutputStream;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -34,9 +36,14 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.view.View;
+import android.graphics.Bitmap;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.net.Uri;
 
 class InputHandler extends Handler {
     private YabauseRunnable yr;
@@ -69,6 +76,7 @@ class YabauseRunnable implements Runnable
     public static native void enableFPS(int enable);
     public static native void enableFrameskip(int enable);
     public static native void setVolume(int volume);
+    public static native void screenshot(Bitmap bitmap);
     
     private boolean inited;
     private boolean paused;
@@ -210,6 +218,26 @@ public class Yabause extends Activity implements OnPadListener
         case R.id.settings:
             Intent intent = new Intent(this, YabauseSettings.class);
             startActivity(intent);
+            return true;
+        case R.id.screenshot:
+            Bitmap bitmap = Bitmap.createBitmap(320, 224, Bitmap.Config.ARGB_8888);
+            yabauseThread.screenshot(bitmap);
+            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            if (! path.isDirectory()) path.mkdir();
+            File file = new File(path, "screenshot.png");
+            try {
+                file.createNewFile();
+                FileOutputStream ostream = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, ostream);
+                ostream.close();
+
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                Uri contentUri = Uri.fromFile(file);
+                mediaScanIntent.setData(contentUri);
+                this.sendBroadcast(mediaScanIntent);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
             return true;
         default:
             return super.onOptionsItemSelected(item);

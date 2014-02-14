@@ -519,6 +519,31 @@ Java_org_yabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, ji
     }
 }
 
+void
+Java_org_yabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj, jobject bitmap )
+{
+    u32 * buffer;
+    AndroidBitmapInfo info;
+    void * pixels;
+    int x, y;
+
+    AndroidBitmap_getInfo(env, bitmap, &info);
+
+    AndroidBitmap_lockPixels(env, bitmap, &pixels);
+
+    buffer = dispbuffer;
+
+    for(y = 0;y < info.height;y++) {
+        for(x = 0;x < info.width;x++) {
+            *((uint32_t *) pixels + x) = *(buffer + x);
+        }
+        pixels += info.stride;
+        buffer += g_buf_width;
+    }
+
+    AndroidBitmap_unlockPixels(env, bitmap);
+}
+
 void log_callback(char * message)
 {
     __android_log_print(ANDROID_LOG_INFO, "yabause", "%s", message);
