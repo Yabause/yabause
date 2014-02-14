@@ -18,7 +18,6 @@ endif()
 
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	set(yabause_android_SHADOW
-		AndroidManifest.xml
 		project.properties
 		jni/yui.c
 		jni/miniegl.h
@@ -54,6 +53,12 @@ set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/jni/Android.mk.in
 	${CMAKE_CURRENT_BINARY_DIR}/jni/Android.mk
+	@ONLY
+)
+
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml.in
+	${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml
 	@ONLY
 )
 
