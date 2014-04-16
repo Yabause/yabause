@@ -208,8 +208,11 @@ static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
    // check me
    LOG("BiosSetScuInterruptMask\n");
 
-   MappedMemoryWriteLong(0x06000348, sh->regs.R[4]);
-   MappedMemoryWriteLong(0x25FE00A0, sh->regs.R[4]); // Interrupt Mask Register
+   if (!sh->isslave)
+   {
+      MappedMemoryWriteLong(0x06000348, sh->regs.R[4]);
+      MappedMemoryWriteLong(0x25FE00A0, sh->regs.R[4]); // Interrupt Mask Register
+   }
 
    if (!(sh->regs.R[4] & 0x8000)) // double check this
       MappedMemoryWriteLong(0x25FE00A8, 1); // A-bus Interrupt Acknowledge
@@ -232,9 +235,12 @@ static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
 
    // Read Stored Scu Interrupt Mask, AND it by R4, OR it by R5, then put it back
    newmask = (MappedMemoryReadLong(0x06000348) & sh->regs.R[4]) | sh->regs.R[5];
-   MappedMemoryWriteLong(0x06000348, newmask);
-   MappedMemoryWriteLong(0x25FE00A0, newmask); // Interrupt Mask Register
-   MappedMemoryWriteLong(0x25FE00A4, (u32)(s16)sh->regs.R[4]); // Interrupt Status Register
+   if (!sh->isslave)
+   {
+      MappedMemoryWriteLong(0x06000348, newmask);
+      MappedMemoryWriteLong(0x25FE00A0, newmask); // Interrupt Mask Register
+      MappedMemoryWriteLong(0x25FE00A4, (u32)(s16)sh->regs.R[4]); // Interrupt Status Register
+   }
 
    if (!(sh->regs.R[4] & 0x8000)) // double check this
       MappedMemoryWriteLong(0x25FE00A8, 1); // A-bus Interrupt Acknowledge
