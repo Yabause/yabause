@@ -110,6 +110,8 @@ UIYabause::UIYabause( QWidget* parent )
 	mLogDock->setVisible( false );
 	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
+	// create hide mouse timer
+	hideMouseTimer = new QTimer();
 	// connectionsdd
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
@@ -119,6 +121,7 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( error( const QString&, bool ) ), this, SLOT( errorReceived( const QString&, bool ) ) );
 	connect( mYabauseThread, SIGNAL( pause( bool ) ), this, SLOT( pause( bool ) ) );
 	connect( mYabauseThread, SIGNAL( reset() ), this, SLOT( reset() ) );
+	connect( hideMouseTimer, SIGNAL( timeout() ), this, SLOT( hideMouse() ));
 
 	// Load shortcuts
 	VolatileSettings* vs = QtYabause::volatileSettings();
@@ -202,18 +205,30 @@ void UIYabause::mouseReleaseEvent( QMouseEvent* e )
 	PerKeyUp( (1 << 31) | e->button() );
 }
 
+void UIYabause::hideMouse()
+{
+	this->setCursor(Qt::BlankCursor);
+	hideMouseTimer->stop();
+}
+
 void UIYabause::mouseMoveEvent( QMouseEvent* e )
 { 
 	PerAxisMove((1 << 30), e->x()-oldMouseX, oldMouseY-e->y());
 	oldMouseX = e->x();
 	oldMouseY = e->y();
 	VolatileSettings* vs = QtYabause::volatileSettings();
-	if (isFullScreen() && vs->value( "View/Menubar" ).toInt() == BD_SHOWONFSHOVER )
+	if (isFullScreen())
 	{
-		if (e->y() < showMenuBarHeight)
-			menubar->show();
-		else
-			menubar->hide();
+		if (vs->value( "View/Menubar" ).toInt() == BD_SHOWONFSHOVER)
+		{
+			if (e->y() < showMenuBarHeight)
+				menubar->show();
+			else
+				menubar->hide();
+		}
+
+		hideMouseTimer->start(3 * 1000);
+		this->setCursor(Qt::ArrowCursor);
 	}
 }
 
@@ -702,10 +717,12 @@ void UIYabause::on_aFileQuit_triggered()
 void UIYabause::on_aEmulationRun_triggered()
 {
 	if ( mYabauseThread->emulationPaused() )
-   {
+	{
 		mYabauseThread->pauseEmulation( false, false );
-      refreshStatesActions();
-   }
+		refreshStatesActions();
+		if (isFullScreen())
+			hideMouseTimer->start(3 * 1000);
+	}
 }
 
 void UIYabause::on_aEmulationPause_triggered()

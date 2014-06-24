@@ -24,6 +24,7 @@
 #include "ui_UIYabause.h"
 #include "../YabauseThread.h"
 #include "UICheatSearch.h"
+#include <QTimer>
 
 extern "C" {
 #include "../screen.h"
@@ -88,6 +89,7 @@ protected:
 	QList <supportedRes_struct> supportedResolutions;
 	int oldMouseX, oldMouseY;
 	int showMenuBarHeight;
+	QTimer* hideMouseTimer;
 	QList <translation_struct> translations;
 	virtual void showEvent( QShowEvent* event );
 	virtual void closeEvent( QCloseEvent* event );
@@ -101,6 +103,7 @@ public slots:
 	void appendLog( const char* msg );
 	void pause( bool paused );
 	void reset();
+	void hideMouse();
 
 	void breakpointHandlerMSH2(bool displayMessage);
 	void breakpointHandlerSSH2(bool displayMessage);
