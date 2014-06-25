@@ -900,7 +900,8 @@ void UIYabause::on_aHelpAbout_triggered()
 
 void UIYabause::on_aSound_triggered()
 {
-	// show volume widget
+	// show volume widget	
+	sVolume->setValue(QtYabause::volatileSettings()->value( "Sound/Volume").toInt());
 	QWidget* ab = toolBar->widgetForAction( aSound );
 	fSound->move( ab->mapToGlobal( ab->rect().bottomLeft() ) );
 	fSound->show();
