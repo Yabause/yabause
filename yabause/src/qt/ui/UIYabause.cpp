@@ -412,6 +412,9 @@ void UIYabause::fullscreenRequested( bool f )
 			menubar->show();
 		if ( vs->value( "View/Toolbar" ).toInt() == BD_HIDEFS )
 			toolBar->show();
+
+		setCursor(Qt::ArrowCursor);
+		hideMouseTimer->stop();
 	}
 	else if ( !isFullScreen() && f )
 	{
@@ -428,6 +431,8 @@ void UIYabause::fullscreenRequested( bool f )
 			menubar->hide();
 		if ( vs->value( "View/Toolbar" ).toInt() == BD_HIDEFS )
 			toolBar->hide();
+
+		hideMouseTimer->start(3 * 1000);
 	}
 	if ( aViewFullscreen->isChecked() != f )
 		aViewFullscreen->setChecked( f );
