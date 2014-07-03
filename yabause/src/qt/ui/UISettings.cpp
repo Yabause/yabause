@@ -40,11 +40,13 @@ extern OSD_struct* OSDCoreList[];
 
 struct Item
 {
-	Item( const QString& k, const QString& s )
-	{ id = k; Name = s; }
+	Item( const QString& i, const QString& n, bool e=true, bool s=true)
+	{ id = i; Name = n; enableFlag = e; saveFlag = s; }
 	
 	QString id;
 	QString Name;
+	bool enableFlag;
+	bool saveFlag;
 };
 
 typedef QList<Item> Items;
@@ -61,17 +63,17 @@ const Items mRegions = Items()
 	<< Item( "L", "Central/South America (PAL)" );
 
 const Items mCartridgeTypes = Items()
-	<< Item( "0", "None" )
-	<< Item( "1", "Pro Action Replay" )
-	<< Item( "2", "4 Mbit Backup Ram" )
-	<< Item( "3", "8 Mbit Backup Ram" )
-	<< Item( "4", "16 Mbit Backup Ram" )
-	<< Item( "5", "32 Mbit Backup Ram" )
-	<< Item( "6", "8 Mbit Dram" )
-	<< Item( "7", "32 Mbit Dram" )
-	<< Item( "8", "Netlink" )
-	<< Item( "9", "16 Mbit ROM" )
-   << Item( "10", "Japanese Modem" );
+	<< Item( "0", "None", false, false )
+	<< Item( "1", "Pro Action Replay", true, false )
+	<< Item( "2", "4 Mbit Backup Ram", true, true )
+	<< Item( "3", "8 Mbit Backup Ram", true, true )
+	<< Item( "4", "16 Mbit Backup Ram", true, true )
+	<< Item( "5", "32 Mbit Backup Ram", true, true )
+	<< Item( "6", "8 Mbit Dram", false, false )
+	<< Item( "7", "32 Mbit Dram", false, false )
+	<< Item( "8", "Netlink", false, false )
+	<< Item( "9", "16 Mbit ROM", true, false )
+	<< Item( "10", "Japanese Modem", false, false );
 
 const Items mVideoFormats = Items()
 	<< Item( "0", "NTSC" )
@@ -211,7 +213,12 @@ void UISettings::tbBrowse_clicked()
 	else if ( tb == tbSaveStates )
 		requestFolder( QtYabause::translate( "Choose a folder to store save states" ), leSaveStates );
 	else if ( tb == tbCartridge )
-		requestNewFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );
+	{
+		if (mCartridgeTypes[cbCartridge->currentIndex()].saveFlag)
+			requestNewFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );
+		else
+			requestFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );		    
+	}
 	else if ( tb == tbMemory )
 		requestNewFile( QtYabause::translate( "Choose a memory file" ), leMemory );
 	else if ( tb == tbMpegROM )
@@ -259,6 +266,12 @@ void UISettings::on_cbCdRom_currentIndexChanged( int id )
 void UISettings::on_cbClockSync_stateChanged( int state )
 {
 	dteBaseTime->setVisible( state == Qt::Checked );
+}
+
+void UISettings::on_cbCartridge_currentIndexChanged( int id )
+{
+	leCartridge->setVisible(mCartridgeTypes[id].enableFlag);
+	tbCartridge->setVisible(mCartridgeTypes[id].enableFlag);
 }
 
 void UISettings::loadCores()
