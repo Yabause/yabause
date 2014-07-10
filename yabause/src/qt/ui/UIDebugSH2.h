@@ -45,6 +45,7 @@ public:
    void stepOut();
    void reserved1();
    void reserved2();
+	void reserved3();
 protected:
 
 protected slots:

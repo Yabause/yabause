@@ -92,11 +92,13 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
    else
       pbReserved1->setText(QtYabause::translate("Loop Track Start"));
    pbReserved2->setText(QtYabause::translate("Loop Track Clear"));
+	pbReserved3->setText(QtYabause::translate("Inline Assembly"));
 
    pbStepOver->setVisible( true );
    pbStepOut->setVisible( true );
    pbReserved1->setVisible( true );
    pbReserved2->setVisible( true );
+	pbReserved3->setVisible( true );
 }
 
 void UIDebugSH2::updateRegList()
@@ -358,5 +360,24 @@ void UIDebugSH2::reserved2()
    if (debugSH2)
       SH2TrackInfLoopClear(debugSH2);
    updateAll();
+}
+
+void UIDebugSH2::reserved3()
+{
+	if (debugSH2)
+	{
+		bool ok;
+		QString text = QInputDialog::getText(this, QtYabause::translate("Assembly code"), 
+			QtYabause::translate("Enter new assembly code") + ":", QLineEdit::Normal,
+			QString(), &ok);
+
+      if (ok && !text.isEmpty())
+		{			
+			int op = sh2iasm(text.toLatin1().data());
+			if (op != 0)
+				MappedMemoryWriteWord(debugSH2->regs.PC, op);
+		}
+	}
+	updateAll();
 }
 

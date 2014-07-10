@@ -60,6 +60,7 @@ extern "C"
 
 	#include "../m68kd.h"
 	#include "../sh2d.h"
+	#include "../sh2iasm.h"
 	#include "../vdp2debug.h"
 
 	#include "PerQt.h"
