@@ -119,7 +119,7 @@ static CDTOC * GetTOCFromCDPath(void)
 	CFMutableDictionaryRef  classesToMatch;
 	io_iterator_t mediaIterator;
 	io_object_t media;
-	CDTOC * TOC;
+	CDTOC * TOC = NULL;
 
 	classesToMatch = IOServiceMatching(kIOCDMediaClass); 
 	CFDictionarySetValue(classesToMatch, CFSTR(kIOMediaEjectableKey),
