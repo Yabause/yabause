@@ -487,13 +487,12 @@ typedef struct
 
 sh_operand_info;  // Operand structure
 
-void asm_bad(const char *str)
+void asm_bad(const char *str, char *err_msg)
 
 // Displays an error message
 
 {
-    printf("ERROR : ");
-    puts(str);
+    sprintf(err_msg, "ERROR : %s", str);
 }
 
 /* try and parse a reg name, returns number of chars consumed */
@@ -638,7 +637,7 @@ int strip_arg(const char *str,char *arg)
     return pos;
 }
 
-int parse_at(const char *arg,sh_operand_info *op)
+int parse_at(const char *arg,sh_operand_info *op, char *err_msg)
 
 // Parse pointer arguement and return a operand info struct
 
@@ -655,12 +654,12 @@ int parse_at(const char *arg,sh_operand_info *op)
        len = parse_reg(arg,&mode,&(op->reg));
        if(len == 0)
        {
-          asm_bad("Cant find arg");
+          asm_bad("Cant find arg", err_msg);
           return 0;
        }
        if(mode != A_REG_N)
        {
-          asm_bad("Invalid reg after @-");
+          asm_bad("Invalid reg after @-", err_msg);
           return 0;
        }
        else
@@ -678,7 +677,7 @@ int parse_at(const char *arg,sh_operand_info *op)
            arg+=len;
            if(op->reg != 0)
            {
-              asm_bad("Must be @(R0,...)");
+              asm_bad("Must be @(R0,...)", err_msg);
               return 0;
            }
            if(arg[0] == ',')
@@ -695,7 +694,7 @@ int parse_at(const char *arg,sh_operand_info *op)
            }
            else
            {
-              asm_bad("Syntax error in @(R0,...)");
+              asm_bad("Syntax error in @(R0,...)", err_msg);
               return 0;
            }
 
@@ -722,19 +721,19 @@ int parse_at(const char *arg,sh_operand_info *op)
              }
              else
              {
-                asm_bad("Bad syntax in @(disp,[Rn,GBR,PC])");
+                asm_bad("Bad syntax in @(disp,[Rn,GBR,PC])", err_msg);
                 return 0;
              }
            }
            else
            {
-              asm_bad("Bad syntax in @(disp,[Rn,GBR,PC])");
+              asm_bad("Bad syntax in @(disp,[Rn,GBR,PC])", err_msg);
               return 0;
            }
         }
         if(*arg != ')')
         {
-          asm_bad("Expected a )");
+          asm_bad("Expected a )", err_msg);
           return 0;
         }
      }
@@ -743,7 +742,7 @@ int parse_at(const char *arg,sh_operand_info *op)
         arg += parse_reg(arg,&mode,&(op->reg));
         if(mode != A_REG_N)
         {
-           asm_bad("Invalid register after @");
+           asm_bad("Invalid register after @", err_msg);
            return 0;
         }
         if(arg[0] == '+')
@@ -759,7 +758,7 @@ int parse_at(const char *arg,sh_operand_info *op)
     return 1;
 }
 
-int parse_arg(const char *arg,sh_operand_info *op)
+int parse_arg(const char *arg,sh_operand_info *op, char *err_msg)
 
 // Parse arg and return a filled operand struct
 
@@ -776,7 +775,7 @@ int parse_arg(const char *arg,sh_operand_info *op)
     if(*arg == '@')
     {
        arg++;
-       return parse_at(arg,op);
+       return parse_at(arg,op, err_msg);
     }
 
     if(*arg == '#')
@@ -1049,7 +1048,7 @@ int rebuild_args(const char *arg1,const char *arg2,sh_operand_info *a1,
    return 0;
 }
 
-int sh2iasm(char *str)
+int sh2iasm(char *str, char *err_msg)
 
 // Function to do all the work
 
@@ -1074,7 +1073,7 @@ int sh2iasm(char *str)
 
    if((oplen = strip_opname(p,name)) == 0)
     {
-       asm_bad("No opcode");
+       asm_bad("No opcode", err_msg);
        return 0;
     }
 
@@ -1103,22 +1102,22 @@ int sh2iasm(char *str)
    for(loop = 0;arg2[loop] != 0;loop++)
       arg2[loop] = tolower(arg2[loop]);
 
-   if(!parse_arg(arg1,&arg1info))
+   if(!parse_arg(arg1,&arg1info,err_msg))
    {
       if(arg1[0] != 0)
-        asm_bad("Arg 1");
+        asm_bad("Arg 1", err_msg);
       return 0;
    }
-   if(!parse_arg(arg2,&arg2info))
+   if(!parse_arg(arg2,&arg2info,err_msg))
    {
       if(arg2[0] != 0)
-        asm_bad("Arg 2");
+        asm_bad("Arg 2", err_msg);
       return 0;
    }
 
    if(!search_op(name,&arg1info,&arg2info,&opcode))
    {
-     printf("Invalid opcode. Likely doesnt exist or format is wrong\n");
+     asm_bad("Invalid opcode. Likely doesn't exist or format is wrong\n", err_msg);
      return 0;
    }
 

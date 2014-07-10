@@ -367,15 +367,27 @@ void UIDebugSH2::reserved3()
 	if (debugSH2)
 	{
 		bool ok;
-		QString text = QInputDialog::getText(this, QtYabause::translate("Assembly code"), 
-			QtYabause::translate("Enter new assembly code") + ":", QLineEdit::Normal,
-			QString(), &ok);
 
-      if (ok && !text.isEmpty())
-		{			
-			int op = sh2iasm(text.toLatin1().data());
-			if (op != 0)
-				MappedMemoryWriteWord(debugSH2->regs.PC, op);
+		for(;;)
+		{
+			QString text = QInputDialog::getText(this, QtYabause::translate("Assembly code"), 
+				QtYabause::translate("Enter new assembly code") + ":", QLineEdit::Normal,
+				QString(), &ok);
+
+			if (ok && !text.isEmpty())
+			{			
+				char errorMsg[512];
+				int op = sh2iasm(text.toLatin1().data(), errorMsg);
+				if (op != 0)
+				{
+					MappedMemoryWriteWord(debugSH2->regs.PC, op);
+					break;
+				}
+				else
+					QMessageBox::critical(QApplication::activeWindow(), "Error", QString(errorMsg));
+			}
+			else if (!ok)
+				break;
 		}
 	}
 	updateAll();

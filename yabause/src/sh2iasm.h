@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-int sh2iasm(char *str);
+int sh2iasm(char *str, char *err_msg);
 
 #ifdef  __cplusplus
 }
