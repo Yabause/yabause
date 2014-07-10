@@ -210,7 +210,10 @@ static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
    fseek(fp, 0, SEEK_SET);
 
    if (filesize > size)
+   {
+      fclose(fp);
       return -1;
+   }
 
    if ((buffer = (u8 *)malloc(filesize)) == NULL)
    {
@@ -221,7 +224,11 @@ static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
    filesizecheck = (u32)fread((void *)buffer, 1, filesize, fp);
    fclose(fp);
 
-   if (filesizecheck != filesize) return -1;
+   if (filesizecheck != filesize)
+   {
+      free(buffer);
+      return -1;
+   }
 
    switch (type)
    {
