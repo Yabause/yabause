@@ -298,7 +298,10 @@ int SaveMovie(const char *filename) {
 		StopMovie();
 
 	if ((Movie.fp = fopen(filename, "w+b")) == NULL)
+	{
+		free(str);
 		return -1;
+	}
 
 	strcpy(str, filename);
 	Movie.filename=str;
@@ -323,7 +326,10 @@ int PlayMovie(const char *filename) {
 
 
 	if ((Movie.fp = fopen(filename, "r+b")) == NULL)
+	{
+		free(str);
 		return -1;
+	}
 
 	strcpy(str, filename);
 	Movie.filename=str;

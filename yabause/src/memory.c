@@ -1106,6 +1106,7 @@ int YabSaveState(const char *filename)
    fseek(fp, 16, SEEK_SET);
    ywrite(&check, (void *)&movieposition, sizeof(movieposition), 1, fp);
 
+   free(buf);
    fclose(fp);
 
    OSDPushMessage(OSDMSG_STATUS, 150, "STATE SAVED");
@@ -1334,6 +1335,7 @@ int YabLoadState(const char *filename)
    glDrawPixels(outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
    #endif
    YuiSwapBuffers();
+   free(buf);
 
    fseek(fp, movieposition, SEEK_SET);
    MovieReadState(fp, filename);

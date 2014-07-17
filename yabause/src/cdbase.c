@@ -551,7 +551,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
    {
       mds_track_struct track;
       FILE *fp=NULL;
-      int file_size;
+      int file_size = 0;
 
       fseek(iso_file, mds_session->track_blocks_offset + i * sizeof(mds_track_struct), SEEK_SET);
       if (fread(&track, 1, sizeof(mds_track_struct), iso_file) != sizeof(mds_track_struct))
