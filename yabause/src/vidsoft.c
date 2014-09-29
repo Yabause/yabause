@@ -351,51 +351,49 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int c
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE int Vdp2FetchPixel(vdp2draw_struct *info, int x, int y, u32 *color)
+static INLINE int Vdp2FetchPixel(vdp2draw_struct *info, int x, int y, u32 *color, u32 *dot)
 {
-   u32 dot;
-
    switch(info->colornumber)
    {
       case 0: // 4 BPP
-         dot = T1ReadByte(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) / 2) & 0x7FFFF));
-         if (!(x & 0x1)) dot >>= 4;
-         if (!(dot & 0xF) && info->transparencyenable) return 0;
+         *dot = T1ReadByte(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) / 2) & 0x7FFFF));
+         if (!(x & 0x1)) *dot >>= 4;
+         if (!(*dot & 0xF) && info->transparencyenable) return 0;
          else
          {
-            *color = Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | (dot & 0xF)));
+            *color = Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | (*dot & 0xF)));
             return 1;
          }
       case 1: // 8 BPP
-         dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (y * info->cellw) + x) & 0x7FFFF));
-         if (!(dot & 0xFF) && info->transparencyenable) return 0;
+         *dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (y * info->cellw) + x) & 0x7FFFF));
+         if (!(*dot & 0xFF) && info->transparencyenable) return 0;
          else
          {
-            *color = Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | (dot & 0xFF)));
+            *color = Vdp2ColorRamGetColor(info->coloroffset + (info->paladdr | (*dot & 0xFF)));
             return 1;
          }
       case 2: // 16 BPP(palette)
-         dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) * 2) & 0x7FFFF));
-         if ((dot == 0) && info->transparencyenable) return 0;
+         *dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) * 2) & 0x7FFFF));
+         if ((*dot == 0) && info->transparencyenable) return 0;
          else
          {
-            *color = Vdp2ColorRamGetColor(info->coloroffset + dot);
+            *color = Vdp2ColorRamGetColor(info->coloroffset + *dot);
             return 1;
          }
       case 3: // 16 BPP(RGB)      
-         dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) * 2) & 0x7FFFF));
-         if (!(dot & 0x8000) && info->transparencyenable) return 0;
+         *dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) * 2) & 0x7FFFF));
+         if (!(*dot & 0x8000) && info->transparencyenable) return 0;
          else
          {
-            *color = COLSAT2YAB16(0, dot);
+            *color = COLSAT2YAB16(0, *dot);
             return 1;
          }
       case 4: // 32 BPP
-         dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) * 4) & 0x7FFFF));
-         if (!(dot & 0x80000000) && info->transparencyenable) return 0;
+         *dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * info->cellw) + x) * 4) & 0x7FFFF));
+         if (!(*dot & 0x80000000) && info->transparencyenable) return 0;
          else
          {
-            *color = COLSAT2YAB32(0, dot);
+            *color = COLSAT2YAB32(0, *dot);
             return 1;
          }
       default:
@@ -616,14 +614,14 @@ static INLINE void SetupScreenVars(vdp2draw_struct *info, screeninfo_struct *sin
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL GetAlpha(vdp2draw_struct * info, u32 color)
+static u8 FASTCALL GetAlpha(vdp2draw_struct * info, u32 color, u32 dot)
 {
    if (((info->specialcolormode == 1) || (info->specialcolormode == 2)) && ((info->specialcolorfunction & 1) == 0)) {
       /* special color calculation mode 1 and 2 enables color calculation only when special color function = 1 */
       return 0x3F;
    } else if (info->specialcolormode == 2) {
-      /* special color calculation 2 enables color calculation according to lower bits of the color */
-      if ((info->specialcode & (1 << ((color & 0xF) >> 1))) == 0) {
+      /* special color calculation 2 enables color calculation according to lower bits of the color code */
+      if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) {
          return 0x3F;
       }
    } else if ((info->specialcolormode == 3) && ((color & 0x80000000) == 0)) {
@@ -730,7 +728,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
 
       for (i = 0; i < vdp2width; i++)
       {
-         u32 color;
+         u32 color, dot;
          /* I'm really not sure about this... but I think the way we handle
          high resolution gets in the way with window process. I may be wrong...
          This was added for Cotton Boomerang */
@@ -759,7 +757,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
             Vdp2MapCalcXY(info, &x, &y, &sinfo);
          }
 
-         if (!Vdp2FetchPixel(info, x, y, &color))
+         if (!Vdp2FetchPixel(info, x, y, &color, &dot))
          {
             continue;
          }
@@ -777,7 +775,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
             if (!TestBothWindow(Vdp2Regs->WCTLD >> 8, colorcalcwindow, i, j))
                alpha = 0x3F;
             else
-               alpha = GetAlpha(info, color);
+               alpha = GetAlpha(info, color, dot);
 
             TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(alpha, color)), info->linescreen);
          }
@@ -833,7 +831,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
             for (i = 0; i < vdp2width; i++)
             {
-               u32 color;
+               u32 color, dot;
 
                if (!TestBothWindow(info->wctl, clip, i, j))
                   continue;
@@ -849,12 +847,12 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                }
  
                // Fetch pixel
-               if (!Vdp2FetchPixel(info, x, y, &color))
+               if (!Vdp2FetchPixel(info, x, y, &color, &dot))
                {
                   continue;
                }
 
-               TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color), color)), info->linescreen);
+               TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen);
             }
             xmul += p->deltaXst;
             ymul += p->deltaYst;
@@ -960,7 +958,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
          for (i = 0; i < vdp2width; i++)
          {
-            u32 color;
+            u32 color, dot;
 
             if (p->deltaKAx != 0)
             {
@@ -1047,12 +1045,12 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             }
 
             // Fetch pixel
-            if (!Vdp2FetchPixel(info, x, y, &color))
+            if (!Vdp2FetchPixel(info, x, y, &color, &dot))
             {
                continue;
             }
 
-            TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color), color)), info->linescreen);
+            TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen);
          }
          xmul += p->deltaXst;
          ymul += p->deltaYst;
