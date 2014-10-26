@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file smpc.c
+    \brief SMPC emulation functions.
+*/
+
 #include <stdlib.h>
 #include <time.h>
 #include "smpc.h"
@@ -689,12 +693,13 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
       case 0x63:
          SmpcRegs->SF &= 0x1;
          return;
-      case 0x75:
+      case 0x75: // PDR1
          // FIX ME (should support other peripherals)
 
          switch (SmpcRegs->DDR[0] & 0x7F) { // Which Control Method do we use?
-            case 0x40:
-               SMPCLOG("smpc\t: Peripheral TH Control Method not implemented\n");
+            case 0x00:
+               if (PORTDATA1.data[1] == PERGUN && (val & 0x7F) == 0x7F)
+                  SmpcRegs->PDR[0] = PORTDATA1.data[2];
                break;
             case 0x60:
                switch (val & 0x60) {
@@ -719,8 +724,54 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                SMPCLOG("smpc\t: Peripheral Unknown Control Method not implemented\n");
                break;
          }
+			break;
+      case 0x79: // DDR1
+         switch (SmpcRegs->DDR[0] & 0x7F) { // Which Control Method do we use?
+            case 0x00: // Low Nibble of Peripheral ID
+            case 0x40: // High Nibble of Peripheral ID
+               switch (PORTDATA1.data[0])
+               {
+                  case 0xA0:
+                  {
+                     if (PORTDATA1.data[1] == PERGUN)
+                        SmpcRegs->PDR[0] = 0x7C;
+                           break;
+                  }
+                  case 0xF0:
+                     SmpcRegs->PDR[0] = 0x7F;
+                     break;
+                  case 0xF1:
+                  {
+                     switch(PORTDATA1.data[1])
+                     {
+                        case PERPAD:
+                           SmpcRegs->PDR[0] = 0x7C;
+                           break;
+                        case PER3DPAD:
+                        case PERKEYBOARD:
+                           SmpcRegs->PDR[0] = 0x71;
+                           break;
+                        case PERMOUSE:
+                           SmpcRegs->PDR[0] = 0x70;
+                           break;
+                        case PERWHEEL:
+                        case PERMISSIONSTICK:
+                        case PERTWINSTICKS:
+                        default: 
+                           SMPCLOG("smpc\t: Peripheral TH Control Method not supported for peripherl id %02X\n", PORTDATA1.data[1]);
+                           break;
+                     }
+                     break;
+                  }
+                  default: 
+                     SmpcRegs->PDR[0] = 0x71;
+                     break;
+               }
 
-         return;
+               break;
+            default: break;
+         }
+         break;
       default:
          return;
    }

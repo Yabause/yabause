@@ -112,6 +112,8 @@ UIYabause::UIYabause( QWidget* parent )
 	mYabauseThread = new YabauseThread( this );
 	// create hide mouse timer
 	hideMouseTimer = new QTimer();
+	// create mouse cursor timer
+	mouseCursorTimer = new QTimer();
 	// connectionsdd
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
@@ -122,6 +124,8 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( pause( bool ) ), this, SLOT( pause( bool ) ) );
 	connect( mYabauseThread, SIGNAL( reset() ), this, SLOT( reset() ) );
 	connect( hideMouseTimer, SIGNAL( timeout() ), this, SLOT( hideMouse() ));
+	connect( mouseCursorTimer, SIGNAL( timeout() ), this, SLOT( restoreCursor() ));
+	connect( mYabauseThread, SIGNAL( toggleEmulateMouse( bool ) ), this, SLOT( toggleEmulateMouse( bool ) ) );
 
 	// Load shortcuts
 	VolatileSettings* vs = QtYabause::volatileSettings();
@@ -148,6 +152,9 @@ UIYabause::UIYabause( QWidget* parent )
 	restoreGeometry( vs->value("General/Geometry" ).toByteArray() );
 	mYabauseGL->setMouseTracking(true);
 	setMouseTracking(true);
+	mouseXRatio = mouseYRatio = 1.0;
+	emulateMouse = false;
+	mouseSensitivity = vs->value( "Input/GunMouseSensitivity", 100 ).toInt();
 	showMenuBarHeight = menubar->height();
 	translations = QtYabause::getTranslationList();
 }
@@ -211,20 +218,63 @@ void UIYabause::hideMouse()
 	hideMouseTimer->stop();
 }
 
+void UIYabause::cursorRestore()
+{
+	this->setCursor(Qt::ArrowCursor);
+	mouseCursorTimer->stop();
+}
+
 void UIYabause::mouseMoveEvent( QMouseEvent* e )
 { 
-	PerAxisMove((1 << 30), e->x()-oldMouseX, oldMouseY-e->y());
-	oldMouseX = e->x();
-	oldMouseY = e->y();
+	int x = (e->x()-oldMouseX)*mouseXRatio;
+	int y = (oldMouseY-e->y())*mouseYRatio;
+	int minAdj = mouseSensitivity/100;
+
+	// If minimum movement is less than x, wait until next pass to apply	
+	if (abs(x) < minAdj) x = 0;
+	if (abs(y) < minAdj) y = 0;
+
+	PerAxisMove((1 << 30), x, y);
+
+	oldMouseX = oldMouseX+(x/mouseXRatio);
+	oldMouseY = oldMouseY-(y/mouseYRatio);	
+
 	VolatileSettings* vs = QtYabause::volatileSettings();
-	if (isFullScreen())
+
+	if (!isFullScreen())
+	{
+		if (emulateMouse)
+		{
+			int menuToolHeight = menubar->height() + toolBar->height();
+			if (oldMouseY > menuToolHeight)
+				this->setCursor(Qt::BlankCursor);
+			else
+				this->setCursor(Qt::ArrowCursor);
+			return;
+		}
+		else
+			this->setCursor(Qt::ArrowCursor);
+	}
+	else
 	{
 		if (vs->value( "View/Menubar" ).toInt() == BD_SHOWONFSHOVER)
 		{
 			if (e->y() < showMenuBarHeight)
 				menubar->show();
 			else
+			{
 				menubar->hide();
+				if (emulateMouse)
+				{
+					this->setCursor(Qt::BlankCursor);
+					return;
+				}
+			}
+		}
+		else if (emulateMouse)
+		{
+			this->setCursor(Qt::BlankCursor);
+			return;
 		}
 
 		hideMouseTimer->start(3 * 1000);
@@ -280,6 +330,10 @@ void UIYabause::sizeRequested( const QSize& s )
 		width=s.width();
 		height=s.height();
 	}
+
+	mouseXRatio = 320.0 / (float)width * 2.0 * (float)mouseSensitivity / 100.0;
+	mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
+
 	// Compensate for menubar and toolbar
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	if (vs->value( "View/Menubar" ).toInt() != BD_ALWAYSHIDE)
@@ -508,6 +562,7 @@ void UIYabause::on_aFileSettings_triggered()
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
+		mouseSensitivity = vs->value( "Input/GunMouseSensitivity" ).toInt();
 		
 		if(isFullScreen())
 		{
@@ -578,7 +633,8 @@ void UIYabause::on_aFileSettings_triggered()
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
 		
 		if (newhash["Video/WindowWidth"] != hash["Video/WindowWidth"] || newhash["Video/WindowHeight"] != hash["Video/WindowHeight"] ||
-          newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"])
+          newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
+			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
 			sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
 		
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
@@ -973,3 +1029,9 @@ void UIYabause::reset()
 {
 	mYabauseGL->updateView();
 }
+
+void UIYabause::toggleEmulateMouse( bool enable )
+{
+	emulateMouse = enable;
+}
+

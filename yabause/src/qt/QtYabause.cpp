@@ -125,6 +125,8 @@ QPointer<VolatileSettings> mVolatileSettings = 0;
 // ports padbits
 QMap<uint, PerPad_struct*> mPort1PadsBits;
 QMap<uint, PerPad_struct*> mPort2PadsBits;
+QMap<uint, PerGun_struct*> mPort1GunBits;
+QMap<uint, PerGun_struct*> mPort2GunBits;
 QMap<uint, PerMouse_struct*> mPort1MouseBits;
 QMap<uint, PerMouse_struct*> mPort2MouseBits;
 QMap<uint, PerAnalog_struct*> mPort1AnalogBits;
@@ -487,6 +489,28 @@ void QtYabause::clear3DAnalogBits()
 {
    mPort1AnalogBits.clear();
    mPort2AnalogBits.clear();
+}
+
+QMap<uint, PerGun_struct*>* QtYabause::portGunBits( uint portNumber )
+{
+	switch ( portNumber )
+	{
+	case 1:
+		return &mPort1GunBits;
+		break;
+	case 2:
+		return &mPort2GunBits;
+		break;
+	default:
+		return 0;
+		break;
+	}
+}
+
+void QtYabause::clearGunBits()
+{
+	mPort1GunBits.clear();
+	mPort2GunBits.clear();
 }
 
 QMap<uint, PerMouse_struct*>* QtYabause::portMouseBits( uint portNumber )

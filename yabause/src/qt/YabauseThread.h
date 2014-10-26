@@ -67,6 +67,7 @@ signals:
 	void error( const QString& error, bool internal = true );
 	void pause( bool paused );
 	void reset();
+	void toggleEmulateMouse( bool enable );
 };
 
 #endif // YABAUSETHREAD_H

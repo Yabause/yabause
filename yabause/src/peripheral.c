@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file peripheral.c
+    \brief Peripheral shared functions.
+*/
+
 #include "debug.h"
 #include "peripheral.h"
 
@@ -104,6 +108,12 @@ PerBaseConfig_struct peranalogbaseconfig[] = {
 	{ PERANALOG_AXIS5, NULL, NULL, PERVALCB(PerAxis5Value), NULL },
 	{ PERANALOG_AXIS6, NULL, NULL, PERVALCB(PerAxis6Value), NULL },
 	{ PERANALOG_AXIS7, NULL, NULL, PERVALCB(PerAxis7Value), NULL },
+};
+
+PerBaseConfig_struct pergunbaseconfig[] = {
+	{ PERGUN_TRIGGER, PERCB(PerGunTriggerPressed), PERCB(PerGunTriggerReleased), NULL, NULL },
+	{ PERGUN_START, PERCB(PerGunStartPressed), PERCB(PerGunStartReleased), NULL, NULL },
+	{ PERGUN_AXIS, NULL, NULL, NULL, PERMOVECB(PerGunMove) },
 };
 
 static u32 perkeyconfigsize = 0;
@@ -326,7 +336,7 @@ void PerMouseLeftPressed(PerMouse_struct * mouse) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PerMouseLeftReleased(PerMouse_struct * mouse) {
-   *(mouse->mousebits) &= 0xFFFE;
+   *(mouse->mousebits) &= 0xFE;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -350,7 +360,7 @@ void PerMouseRightPressed(PerMouse_struct * mouse) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PerMouseRightReleased(PerMouse_struct * mouse) {
-   *(mouse->mousebits) &= 0xFFFD;
+   *(mouse->mousebits) &= 0xFD;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -362,7 +372,7 @@ void PerMouseStartPressed(PerMouse_struct * mouse) {
 //////////////////////////////////////////////////////////////////////////////
 
 void PerMouseStartReleased(PerMouse_struct * mouse) {
-   *(mouse->mousebits) &= 0xFFF7;
+   *(mouse->mousebits) &= 0xF7;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -494,6 +504,59 @@ void PerAxis7Value(PerAnalog_struct * analog, u32 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void PerGunTriggerPressed(PerGun_struct * gun)
+{
+   *(gun->gunbits) &= 0xEF;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerGunTriggerReleased(PerGun_struct * gun)
+{
+   *(gun->gunbits) |= 0x10;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerGunStartPressed(PerGun_struct * gun)
+{
+   *(gun->gunbits) &= 0xDF;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerGunStartReleased(PerGun_struct * gun)
+{
+   *(gun->gunbits) |= 0x20;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy)
+{
+   int x, y;
+   int x2, y2;
+   x = (*(gun->gunbits+1) << 8) +  *(gun->gunbits+2) + (dispx / 4);
+   y = (*(gun->gunbits+3) << 8) +  *(gun->gunbits+4) - (dispy / 4);
+
+   if (x < 0)
+      x = 0;
+   else if (x >= 320) // fix me
+      x = 319;
+
+   if (y < 0)
+      y = 0;
+   else if (y >= 224) // fix me
+      y = 223;
+
+   *(gun->gunbits+1) = x >> 8;
+   *(gun->gunbits+2) = x;
+   *(gun->gunbits+3) = y >> 8;
+   *(gun->gunbits+4) = y;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void * PerAddPeripheral(PortData_struct *port, int perid)
 {
    int pernum = port->data[0] & 0xF;
@@ -505,12 +568,18 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
 
    if (pernum == 0xF)
      return NULL;
+   else if (perid == PERGUN && pernum == 1) // Gun doesn't work with multi-tap
+     return NULL;
 
-   // if only one peripheral is connected use 0xF0, otherwise use 0x00 or 0x10
+   // if only one peripheral is connected use 0xF0(unless Gun), otherwise use 0x00 or 0x10
    if (pernum == 0)
    {
       pernum = 1;
-      port->data[0] = 0xF1;
+
+      if (perid != PERGUN)
+         port->data[0] = 0xF1;
+      else
+         port->data[0] = 0xA0;
    }
    else
    {
@@ -569,6 +638,14 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
          port->data[peroffset+5] = 0x7F;
          port->size = peroffset+(perid&0xF);
          break;
+      case PERGUN:
+         port->data[peroffset] = 0x7C;
+         port->data[peroffset + 1] = 0xFF;
+         port->data[peroffset + 2] = 0xFF;
+         port->data[peroffset + 3] = 0xFF;
+         port->data[peroffset + 4] = 0xFF;
+         port->size = 1;
+         break;
       case PERKEYBOARD:
          port->data[peroffset] = 0xFF;
          port->data[peroffset+1] = 0xF8;
@@ -585,6 +662,7 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
       default: break;
    }
 
+   if (perid != PERGUN)
    {
       u8 tmp = peroffset;
       tmp += (perid & 0xF);
@@ -607,6 +685,9 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
       case PERTWINSTICKS:
          PerUpdateConfig(perpadbaseconfig, sizeof(perpadbaseconfig)/sizeof(PerBaseConfig_struct), controller);
          PerUpdateConfig(peranalogbaseconfig, sizeof(peranalogbaseconfig)/sizeof(PerBaseConfig_struct), controller);
+         break;
+      case PERGUN:
+         PerUpdateConfig(pergunbaseconfig, sizeof(pergunbaseconfig)/sizeof(PerBaseConfig_struct), controller);
          break;
       case PERMOUSE:
          PerUpdateConfig(permousebaseconfig, sizeof(permousebaseconfig)/sizeof(PerBaseConfig_struct), controller);
@@ -798,15 +879,19 @@ PerAnalog_struct * PerTwinSticksAdd(PortData_struct * port)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+PerGun_struct * PerGunAdd(PortData_struct * port)
+{
+   return PerAddPeripheral(port, PERGUN);
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // Dummy Interface
 //////////////////////////////////////////////////////////////////////////////
 
 int PERDummyInit(void);
 void PERDummyDeInit(void);
 int PERDummyHandleEvents(void);
-
-//static PortData_struct port1;
-//static PortData_struct port2;
 
 u32 PERDummyScan(u32 flags);
 void PERDummyFlush(void);

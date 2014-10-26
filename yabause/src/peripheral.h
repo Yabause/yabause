@@ -268,6 +268,39 @@ void PerAxis7Value(PerAnalog_struct * analog, u32 val);
 
 /** @} */
 
+/** @defgroup gun Gun
+ *
+ * @{
+ * */
+
+#define PERGUN_TRIGGER	25
+#define PERGUN_START		27
+#define PERGUN_AXIS		28
+
+typedef struct
+{
+   u8 perid;
+   u8 gunbits[5];
+} PerGun_struct;
+
+/** @brief Adds a Gun to one of the controller ports up to a maximum of one per port.
+ *
+ * @param port can be either &PORTDATA1 or &PORTDATA2
+ * @return pointer to a PerGun_struct or NULL if it fails
+ * */
+
+PerGun_struct * PerGunAdd(PortData_struct * port);
+
+void PerGunTriggerPressed(PerGun_struct * gun);
+void PerGunTriggerReleased(PerGun_struct * gun);
+
+void PerGunStartPressed(PerGun_struct * gun);
+void PerGunStartReleased(PerGun_struct * gun);
+
+void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy);
+
+/** @} */
+
 /** @} */
 
 #endif

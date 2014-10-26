@@ -88,8 +88,12 @@ protected:
 	int searchType;
 	QList <supportedRes_struct> supportedResolutions;
 	int oldMouseX, oldMouseY;
+	float mouseXRatio, mouseYRatio;
+	int mouseSensitivity;
+	bool emulateMouse;
 	int showMenuBarHeight;
 	QTimer* hideMouseTimer;
+	QTimer* mouseCursorTimer;
 	QList <translation_struct> translations;
 	virtual void showEvent( QShowEvent* event );
 	virtual void closeEvent( QCloseEvent* event );
@@ -104,6 +108,8 @@ public slots:
 	void pause( bool paused );
 	void reset();
 	void hideMouse();
+	void cursorRestore();
+	void toggleEmulateMouse( bool enable );
 
 	void breakpointHandlerMSH2(bool displayMessage);
 	void breakpointHandlerSSH2(bool displayMessage);

@@ -66,7 +66,7 @@ void UIControllerSetting::setScanFlags(u32 scanMask)
 			scanFlags = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
 			break;
 		case PERGUN:
-			scanFlags = PERSF_KEY | PERSF_BUTTON;
+			scanFlags = PERSF_KEY | PERSF_BUTTON | PERSF_MOUSEMOVE;
 			break;
 		case PERKEYBOARD:
 			scanFlags = PERSF_KEY;

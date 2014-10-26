@@ -18,11 +18,17 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file vdp2.c
+    \brief VDP2 emulation functions
+*/
+
 #include <stdlib.h>
 #include "vdp2.h"
 #include "debug.h"
+#include "peripheral.h"
 #include "scu.h"
 #include "sh2core.h"
+#include "smpc.h"
 #include "vdp1.h"
 #include "yabause.h"
 #include "movie.h"
@@ -422,6 +428,22 @@ void Vdp2VBlankOUT(void) {
    }
 
    ScuSendVBlankOUT();
+   
+   if (Vdp2Regs->EXTEN & 0x200) // Should be revised for accuracy(should occur only occur on the line it happens at, etc.)
+   {
+      // Only Latch if EXLTEN is enabled
+      if (SmpcRegs->EXLE & 0x1)
+         Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp2SendExternalLatch(int hcnt, int vcnt)
+{
+   Vdp2Regs->HCNT = hcnt << 1;
+   Vdp2Regs->VCNT = vcnt;
+   Vdp2Regs->TVSTAT |= 0x200;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -452,14 +474,18 @@ u16 FASTCALL Vdp2ReadWord(u32 addr) {
 
          return Vdp2Regs->EXTEN;
       case 0x004:
+      {
+         u16 tvstat = Vdp2Regs->TVSTAT;
+
          // Clear External latch and sync flags
          Vdp2Regs->TVSTAT &= 0xFCFF;
 
          // if TVMD's DISP bit is cleared, TVSTAT's VBLANK bit is always set
          if (Vdp2Regs->TVMD & 0x8000)
-            return Vdp2Regs->TVSTAT;
+            return tvstat;
          else
-            return (Vdp2Regs->TVSTAT | 0x8);
+            return (tvstat | 0x8);
+      }
       case 0x006:         
          return Vdp2Regs->VRSIZE;
       case 0x008:

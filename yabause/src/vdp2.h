@@ -376,6 +376,7 @@ void Vdp2VBlankIN(void);
 void Vdp2HBlankIN(void);
 void Vdp2HBlankOUT(void);
 void Vdp2VBlankOUT(void);
+void Vdp2SendExternalLatch(int hcnt, int vcnt);
 void SpeedThrottleEnable(void);
 void SpeedThrottleDisable(void);
 

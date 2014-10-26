@@ -132,7 +132,9 @@ void YabauseThread::reloadControllers()
 	QtYabause::clearPadsBits();
 	
 	Settings* settings = QtYabause::settings();
-	
+
+	emit toggleEmulateMouse( false );
+
 	for ( uint port = 1; port < 3; port++ )
 	{
 		settings->beginGroup( QString( "Input/Port/%1/Id" ).arg( port ) );
@@ -184,8 +186,21 @@ void YabauseThread::reloadControllers()
 					break;
 				}
 				case PERGUN:
-					QtYabause::mainWindow()->appendLog( "Gun controller type is not yet supported" );
+				{
+					PerGun_struct* gunbits = PerGunAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );
+					settings->beginGroup( QString( "Input/Port/%1/Id/%2/Controller/%3/Key" ).arg( port ).arg( id ).arg( type ) );
+					QStringList gunKeys = settings->childKeys();
+					settings->endGroup();
+
+					gunKeys.sort();
+					foreach ( const QString& gunKey, gunKeys )
+					{
+						const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( gunKey ) ).toString();
+
+						PerSetKey( key.toUInt(), gunKey.toUInt(), gunbits );
+					}
 					break;
+				}
 				case PERKEYBOARD:
 					QtYabause::mainWindow()->appendLog( "Keyboard controller type is not yet supported" );
 					break;
@@ -204,6 +219,8 @@ void YabauseThread::reloadControllers()
 
 						PerSetKey( key.toUInt(), mouseKey.toUInt(), mousebits );
 					}
+
+					emit toggleEmulateMouse( true );
 					break;
 				}
 				case 0:

@@ -447,6 +447,7 @@ void UISettings::loadSettings()
 	
 	// input
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore", QtYabause::defaultPERCore().id ).toInt() ) );
+	sGunMouseSensitivity->setValue(s->value( "Input/GunMouseSensitivity", 100).toInt() );
 	
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
@@ -526,7 +527,8 @@ void UISettings::saveSettings()
 	s->setValue( "MpegROM/Path", leMpegROM->text() );
 	
 	// input
-	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );
+	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );	
+	s->setValue( "Input/GunMouseSensitivity", sGunMouseSensitivity->value() );
 	
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );

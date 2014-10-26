@@ -122,6 +122,8 @@ namespace QtYabause
 	void clearPadsBits();
 	QMap<uint, PerAnalog_struct*>* portAnalogBits( uint portNumber );
 	void clear3DAnalogBits();
+	QMap<uint, PerGun_struct*>* portGunBits( uint portNumber );
+	void clearGunBits();
 	QMap<uint, PerMouse_struct*>* portMouseBits( uint portNumber );
 	void clearMouseBits();
 };

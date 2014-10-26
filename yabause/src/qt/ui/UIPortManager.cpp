@@ -20,6 +20,7 @@
 #include "UIPortManager.h"
 #include "UIPadSetting.h"
 #include "UI3DControlPadSetting.h"
+#include "UIGunSetting.h"
 #include "UIMouseSetting.h"
 #include "../CommonDialogs.h"
 #include "../Settings.h"
@@ -48,7 +49,7 @@ UIPortManager::UIPortManager( QWidget* parent )
 		cb->addItem( QtYabause::translate( "Pad" ), PERPAD );
       //cb->addItem( QtYabause::translate( "Wheel" ), PERWHEEL );
       cb->addItem( QtYabause::translate( "3D Control Pad" ), PER3DPAD );
-      //cb->addItem( QtYabause::translate( "Stunner" ), PERGUN );
+      cb->addItem( QtYabause::translate( "Gun" ), PERGUN );
       //cb->addItem( QtYabause::translate( "Keyboard" ), PERKEYBOARD );
 		cb->addItem( QtYabause::translate( "Mouse" ), PERMOUSE );
 
@@ -140,6 +141,9 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 			buttons.at( 1 )->setEnabled( true );
 			break;
 		case PERGUN:
+			buttons.at( 0 )->setEnabled( true );
+			buttons.at( 1 )->setEnabled( true );
+			break;
 		case PERKEYBOARD:
 		default:
 			buttons.at( 0 )->setEnabled( false );
@@ -202,6 +206,29 @@ void UIPortManager::tbSetJoystick_clicked()
 
 			UI3DControlPadSetting uas( mCore, mPort, controllerId, type, this );
 			uas.exec();
+			break;
+		}
+		case PERGUN:
+		{
+			QMap<uint, PerGun_struct*>& gunbits = *QtYabause::portGunBits( mPort );
+
+			PerGun_struct* gunBits = gunbits[ controllerId ];
+
+			if ( !gunBits )
+			{
+				gunBits = PerGunAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
+
+				if ( !gunBits )
+				{
+					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
+					return;
+				}
+
+				gunbits[ controllerId ] = gunBits;
+			}
+
+			UIGunSetting ums( mCore, mPort, controllerId, type, this );
+			ums.exec();
 			break;
 		}
 		case PERMOUSE:
