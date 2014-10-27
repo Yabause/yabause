@@ -1,6 +1,10 @@
 #include "packet.h"
 #include "client.h"
 
+/*! \file packet.c
+    \brief GDB stub packet function.
+*/
+
 void gdb_packet_read(gdb_packet * packet, char * buffer, size_t got)
 {
    size_t i;

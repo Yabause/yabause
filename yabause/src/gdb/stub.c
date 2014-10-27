@@ -8,6 +8,10 @@
 #include <string.h>
 #include <stdio.h>
 
+/*! \file stub.c
+    \brief GDB stub interface.
+*/
+
 typedef struct
 {
    SH2_struct * context;

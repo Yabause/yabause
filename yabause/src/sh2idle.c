@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file sh2idle.c
+    \brief SH2 interpreter interface with idle detection.
+*/
+
 #include "sh2core.h"
 #include "sh2idle.h"
 #include "sh2int.h"

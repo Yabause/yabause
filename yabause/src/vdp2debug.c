@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file vdp2debug.c
+    \brief VDP2 debug functions
+*/
+
 #include "vdp2.h"
 #include "ygl.h"
 #include "vdp2debug.h"

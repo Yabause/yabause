@@ -34,6 +34,7 @@
 #define CART_NETLINK            8
 #define CART_ROM16MBIT          9
 #define CART_JAPMODEM          10
+#define CART_USBDEV            11
 
 typedef struct
 {

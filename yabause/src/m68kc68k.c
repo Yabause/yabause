@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file m68kc68k.c
+    \brief C68K 68000 interface.
+*/
+
 #include "m68kc68k.h"
 #include "c68k/c68k.h"
 #include "memory.h"

@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file cs1.c
+    \brief A-Bus CS1 emulation functions.
+*/
+
 #include <stdlib.h>
 #include "cs1.h"
 #include "cs0.h"

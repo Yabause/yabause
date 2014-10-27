@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file cheat.c
+    \brief Header for cheat engine to apply codes to SH2 addresses
+*/
+
 #ifndef CHEAT_H
 #define CHEAT_H
 

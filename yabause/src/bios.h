@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file bios.h
+    \brief Header for emulated bios functions required for running games and saving backup ram.
+*/
+
 #ifndef BIOS_H
 #define BIOS_H
 

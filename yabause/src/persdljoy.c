@@ -19,6 +19,10 @@
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file persdljoy.c
+    \brief SDL joystick peripheral interface.
+*/
+
 #ifdef HAVE_LIBSDL
 #ifdef __APPLE__
 	#include <SDL/SDL.h>

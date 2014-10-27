@@ -19,7 +19,9 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-// SH2 Interpreter Core
+/*! \file sh2int.c
+    \brief SH2 interpreter interface
+*/
 
 #include "sh2core.h"
 #include "sh2int.h"
@@ -2791,7 +2793,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
    while(context->cycles < cycles)
    {
-#ifdef EMULATEUBC   	   
+#ifdef SH2_UBC   	   
       int ubcinterrupt=0, ubcflag=0;
 #endif
 	
@@ -2801,7 +2803,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       sh2_trace(context, context->regs.PC);
 #endif
 
-#ifdef EMULATEUBC
+#ifdef SH2_UBC
       if (context->onchip.BBRA & (BBR_CPA_CPU | BBR_IDA_INST | BBR_RWA_READ)) // Break on cpu, instruction, read cycles
       {
          if (context->onchip.BARA.all == (context->regs.PC & (~context->onchip.BAMRA.all)))
@@ -2854,7 +2856,14 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       // Execute it
       opcodes[context->instruction](context);
 
-#ifdef EMULATEUBC
+		//if (MappedMemoryReadLong(0x06000930) == 0x00000009)
+		if (context->regs.PC == 0x060273AA)
+		{
+			int test=0;
+			test = 1;
+		}
+
+#ifdef SH2_UBC
 	  if (ubcinterrupt)
 	     SH2UBCInterrupt(context, ubcflag);
 #endif

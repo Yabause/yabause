@@ -15,6 +15,11 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+
+/*! \file movie.c
+    \brief Movie recording functions.
+*/
+
 #include "peripheral.h"
 #include "scsp.h"
 #include "movie.h"
@@ -134,6 +139,8 @@ int framelength=16;
 void DoMovie(void) {
 
 	int x;
+	if (Movie.Status == 0)
+		return;
 
 	IncrementLagAndFrameCounter();
 	LagFrameFlag=1;

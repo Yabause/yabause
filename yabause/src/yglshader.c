@@ -19,6 +19,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file yglshader.c
+    \brief OpenGL Shader code
+*/
+
+
 #ifdef HAVE_LIBGL
 #include <stdlib.h>
 #include <math.h>

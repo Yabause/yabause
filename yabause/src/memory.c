@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file memory.c
+    \brief Memory access functions.
+*/
+
 #ifdef PSP  // see FIXME in T1MemoryInit()
 # include <stdint.h>
 #endif

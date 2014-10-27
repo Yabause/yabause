@@ -19,6 +19,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file cdbase.c
+    \brief Header for Dummy and ISO, BIN/CUE, MDS CD Interfaces
+*/
+
 #ifndef CDBASE_H
 #define CDBASE_H
 

@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file vidshared.c
+    \brief Functions shared between opengl and software video renderers.
+*/
+
 #include "ygl.h"
 #include "vidshared.h"
 #include "vdp2.h"

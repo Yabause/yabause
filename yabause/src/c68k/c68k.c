@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file c68k.c
+    \brief C68K init, interrupt and memory access functions.
+*/
+
 /*********************************************************************************
  *
  * C68K (68000 CPU emulator) version 0.80

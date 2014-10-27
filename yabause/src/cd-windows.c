@@ -18,7 +18,12 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file cd-windows.c
+    \brief Windows port's cd interface using SPTI.
+*/
+
 #include <windows.h>
+#include <winioctl.h>
 #include <stdio.h>
 #ifdef HAVE_NTDDCDRM
 #include <ntddcdrm.h>

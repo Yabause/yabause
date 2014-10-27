@@ -2,6 +2,10 @@
    Released under Public Domain.   
 */
 
+/*! \file sh2iasm.c
+    \brief SH2 inline assembler.
+*/
+
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>

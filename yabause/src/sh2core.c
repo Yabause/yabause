@@ -18,7 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-// SH2 Shared Code
+/*! \file sh2core.c
+    \brief SH2 shared emulation functions.
+*/
+
 #include <stdlib.h>
 #include "sh2core.h"
 #include "debug.h"

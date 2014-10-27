@@ -17,6 +17,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file snddx.c
+    \brief Direct X sound interface.
+*/
+
+
 #include <math.h>
 #include <dsound.h>
 #include "dx.h"

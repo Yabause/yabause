@@ -18,6 +18,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file sh2trace.c
+    \brief SH2 execution tracing.
+*/
+
+
 #include <stdio.h>
 #include "sh2core.h"
 #include "sh2d.h"

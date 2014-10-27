@@ -18,6 +18,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file cs2.c
+    \brief A-bus CS2 emulation functions. Mainly CD-Block code.
+*/
+
+#if 1
 #include <stdlib.h>
 #include <ctype.h>
 #include "cs2.h"
@@ -3798,3 +3803,5 @@ int Cs2LoadState(FILE * fp, int version, int size) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+#endif

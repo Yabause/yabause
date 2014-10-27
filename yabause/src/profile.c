@@ -8,6 +8,11 @@
   You are free to use / modify / re-distribute this code.
 
   */
+
+/*! \file profile.c
+    \brief Lightweight C & C++ profiler.
+*/
+
 #if !defined(SYS_PROFILE_H) && !defined(DONT_PROFILE)
 
 #include "profile.h"

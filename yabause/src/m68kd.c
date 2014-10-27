@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file m68kd.c
+    \brief 68000 disassembler function.
+*/
+
 #include "core.h"
 #include "m68kd.h"
 #include "scsp.h"  // for c68k_word_read()

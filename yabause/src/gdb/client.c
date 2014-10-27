@@ -1,3 +1,7 @@
+/*! \file client.c
+    \brief GDB stub client functions.
+*/
+
 #include "client.h"
 #include "../sh2core.h"
 

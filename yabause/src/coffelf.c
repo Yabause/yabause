@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file coffelf.c
+    \brief Coff/Elf loader function.
+*/
+
 #include "core.h"
 #include "debug.h"
 #include "sh2core.h"

@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file bios.c
+    \brief Emulated bios functions required for running games and saving backup ram.
+*/
+
 #include "memory.h"
 #include "cs0.h"
 #include "debug.h"

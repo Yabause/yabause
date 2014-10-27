@@ -4,6 +4,10 @@
  * Public domain
  */
 
+/*! \file sh2d.c
+    \brief SH2 disassembler.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

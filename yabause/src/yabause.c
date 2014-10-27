@@ -19,6 +19,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file yabause.c
+    \brief Yabause main emulation functions and interface for the ports
+*/
+
+
 #include <sys/types.h>
 #ifdef WIN32
 #include <windows.h>

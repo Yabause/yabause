@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file sock-windows.c
+    \brief Windows port's socket interface
+*/
+
 #include "core.h"
 #include "sock.h"
 #include "debug.h"

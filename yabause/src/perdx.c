@@ -17,15 +17,21 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file perdx.c
+    \brief Direct X peripheral interface.
+*/
+
 #include <windows.h>
 #ifdef __MINGW32__
 #undef HAVE_XINPUT
 #endif
 #define COBJMACROS
+#ifdef HAVE_XINPUT
 #include <wbemidl.h>
 #include <wbemcli.h>
 #include <oleauto.h>
 #include <xinput.h>
+#endif
 #include "debug.h"
 #include "peripheral.h"
 #include "perdx.h"

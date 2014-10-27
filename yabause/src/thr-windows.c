@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file thr-windows.c
+    \brief Windows port's threading functions
+*/
+
 #include <windows.h>
 #include "core.h"
 #include "threads.h"

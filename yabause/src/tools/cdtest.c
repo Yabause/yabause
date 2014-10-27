@@ -1,7 +1,7 @@
 /*******************************************************************************
   CDTEST - Yabause CD interface tester
 
-  (c) Copyright 2004-2005 Theo Berkau(cwx@softhome.net)
+  (c) Copyright 2004-2005 Theo Berkau(cwx@cyberwarriorx.com)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,15 +33,49 @@
 #include <string.h>
 #include "../core.h"
 #include "../cdbase.h"
+#include "../m68kcore.h"
+#include "../peripheral.h"
+#include "../sh2core.h"
+#include "../scsp.h"
+#include "../vdp1.h"
 
 #define PROG_NAME "CDTEST"
 #define VER_NAME "1.01"
-#define COPYRIGHT_YEAR "2004-2005"
+#define COPYRIGHT_YEAR "2004-2005, 2014"
 
 int testspassed=0;
 
 u8 cdbuffer[2352];
 u32 cdTOC[102];
+
+// Unused functions and variables
+SH2Interface_struct *SH2CoreList[] = {
+	NULL
+};
+
+VideoInterface_struct *VIDCoreList[] = {
+	NULL
+};
+
+SoundInterface_struct *SNDCoreList[] = {
+	NULL
+};
+
+M68K_struct * M68KCoreList[] = {
+	NULL
+};
+
+CDInterface *CDCoreList[] = {
+	NULL
+};
+
+PerInterface_struct *PERCoreList[] = {
+	NULL
+};
+
+void YuiErrorMsg(const char *string) { }
+
+void YuiSwapBuffers() { }
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -56,12 +90,8 @@ void ProgramUsage()
 
 void cleanup(void)
 {
-   if (ArchCD.DeInit() != 0)
-   {
-      printf("CDDeInit error: Unable to deinitialize cdrom\n");
-      exit(1);
-   }
-   else testspassed++;
+   ArchCD.DeInit();
+   testspassed++;
 
    printf("Test Score: %d/11 \n", testspassed);
 }
@@ -135,7 +165,6 @@ int main(int argc, char *argv[])
    int status;
    char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                            0xFF, 0xFF, 0xFF, 0x00};
-   FILE *fp;
 
    atexit(cleanup);
 

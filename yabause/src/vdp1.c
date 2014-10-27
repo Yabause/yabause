@@ -19,6 +19,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file vdp1.c
+    \brief VDP1 emulation functions.
+*/
+
+
 #include <stdlib.h>
 #include "vdp1.h"
 #include "debug.h"

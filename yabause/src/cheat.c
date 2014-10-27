@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file cheat.c
+    \brief Cheat engine to apply codes to SH2 addresses
+*/
+
 #include <stdlib.h>
 #include "cheat.h"
 #include "memory.h"

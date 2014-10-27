@@ -19,6 +19,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file cs0.c
+    \brief A-bus CS0 emulation functions. Most of the cartridge related code is here.
+*/
+
 #include <stdlib.h>
 #include "cs0.h"
 #include "error.h"
@@ -165,6 +169,10 @@ typedef enum
 u8 flreg0 = 0;
 u8 flreg1 = 0;
 
+// Default value is for chip AT29C010
+u8 vendorid=0x1F;
+u8 deviceid=0xD5;
+
 flashstate flstate0;
 flashstate flstate1;
 
@@ -194,8 +202,8 @@ static u8 FASTCALL FlashCs0ReadByte(u32 addr)
     case FL_ID:
     case FL_IDSDP:
     case FL_IDCMD:
-      if (addr & 2) return 0xD5;
-      else return 0x1F;
+       if (addr & 2) return deviceid;
+       else return vendorid;
     case FL_WRITEARRAY: *reg ^= 0x02;
     case FL_WRITEBUF: return *reg;  
     case FL_SDP: 
@@ -223,84 +231,84 @@ static u32 FASTCALL FlashCs0ReadLong(u32 addr)
 
 static void FASTCALL FlashCs0WriteByte(u32 addr, u8 val)
 {
-  flashstate* state;
-  u8* reg;
-  u8* buf;
+   flashstate* state;
+   u8* reg;
+   u8* buf;
   
-  if (addr & 1)
-    {
+   if (addr & 1)
+   {
       state = &flstate1;
       reg = &flreg1;
       buf = flbuf1;
-    }
-  else
-    {
+   }
+   else
+   {
       state = &flstate0;
       reg = &flreg0;
       buf = flbuf0;
-    }
+   }
   
-  switch (*state)
-    {
-    case FL_READ:
-    	if (((addr & 0xfffe) == 0xaaaa) && (val == 0xaa))
-		*state = FL_SDP;
-    	return;
-  	case FL_WRITEBUF:
-  		buf[(addr >> 1) & 0x7f] = val;
-  		if (((addr >> 1) & 0x7f) == 0x7f)
-  		{
-  			int i;
-  			int j = addr & 0x1;
-  			addr &= 0xffffff00;
-  			for (i = 0; i <= 127; i++)
-  			{
-  				T2WriteByte(CartridgeArea->rom, (addr + i*2 + j), buf[i]);
-  			}
-  			*state = FL_READ;
-  		}
-  		return;
-    case FL_SDP:
-      if (((addr & 0xfffe) == 0x5554) && (val == 0x55))
-	  *state = FL_CMD;
-      else *state = FL_READ;
-      return;
-    case FL_ID:
-      if (((addr & 0xfffe) == 0xaaaa) && (val == 0xaa))
-	  *state = FL_IDSDP;
-      else *state = FL_ID;
-      return;
-    case FL_IDSDP:
-      if (((addr & 0xfffe) == 0x5554) && (val == 0x55))
-	  *state = FL_READ;
-      else *state=FL_ID;
-      return;
-    case FL_IDCMD:
-      if (((addr & 0xfffe) == 0xaaaa) && (val == 0xf0))
-	  *state = FL_READ;
-      else *state = FL_ID;
-      return;
-    case FL_CMD:
-      if ((addr & 0xfffe) != 0xaaaa)
-	{
-	  *state = FL_READ;
-	  return;
-	}
+   switch (*state)
+   {
+      case FL_READ:
+         if (((addr & 0xfffe) == 0xaaaa) && (val == 0xaa))
+            *state = FL_SDP;
+         return;
+      case FL_WRITEBUF:
+         buf[(addr >> 1) & 0x7f] = val;
+         if (((addr >> 1) & 0x7f) == 0x7f)
+         {
+            int i;
+            int j = addr & 0x1;
+            addr &= 0xffffff00;
+            for (i = 0; i <= 127; i++)
+            {
+               T2WriteByte(CartridgeArea->rom, (addr + i*2 + j), buf[i]);
+            }
+            *state = FL_READ;
+         }
+         return;
+      case FL_SDP:
+         if (((addr & 0xfffe) == 0x5554) && (val == 0x55))
+            *state = FL_CMD;
+         else *state = FL_READ;
+         return;
+      case FL_ID:
+         if (((addr & 0xfffe) == 0xaaaa) && (val == 0xaa))
+            *state = FL_IDSDP;
+         else *state = FL_ID;
+         return;
+      case FL_IDSDP:
+         if (((addr & 0xfffe) == 0x5554) && (val == 0x55))
+            *state = FL_READ;
+         else *state=FL_ID;
+         return;
+      case FL_IDCMD:
+         if (((addr & 0xfffe) == 0xaaaa) && (val == 0xf0))
+            *state = FL_READ;
+         else *state = FL_ID;
+         return;
+      case FL_CMD:
+         if ((addr & 0xfffe) != 0xaaaa)
+         {
+            *state = FL_READ;
+            return;
+         }
 
-      switch (val)
-	{
-	case 0xa0:
-	  *state = FL_WRITEBUF;
-	  return;
-	case 0x90:
-	  *state = FL_ID;
-	  return;
-	default:
-	  *state = FL_READ;
-	  return;	  
-	}
-    default: break;
-    }
+         switch (val)
+         {
+            case 0xa0:
+               *state = FL_WRITEBUF;
+               return;
+            case 0x90:
+               *state = FL_ID;
+               return;
+            default:
+               *state = FL_READ;
+               return;
+         }
+      default: break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1063,6 +1071,8 @@ int CartInit(const char * filename, int type)
          if (T123Load(CartridgeArea->rom, 0x40000, 2, filename) != 0)
             return -1;
 
+         vendorid = 0x1F;
+         deviceid = 0xD5;
          flstate0 = FL_READ;
          flstate1 = FL_READ;
 		 
@@ -1233,6 +1243,38 @@ int CartInit(const char * filename, int type)
          CartridgeArea->Cs2WriteByte = &JapModemCs2WriteByte;
          break;
       }
+      case CART_USBDEV: // USB Dev Cartridge
+      {
+         if ((CartridgeArea->rom = T2MemoryInit(0x40000)) == NULL)
+            return -1;
+
+         if ((CartridgeArea->dram = T1MemoryInit(0x400000)) == NULL)
+            return -1;
+
+         // No extra dram, etc. built-in
+         CartridgeArea->cartid = 0;
+
+         // Load AR firmware to memory
+         if (T123Load(CartridgeArea->rom, 0x40000, 2, filename) != 0)
+            return -1;
+
+         // ID for SST39SF010A
+         vendorid = 0xBF;
+         deviceid = 0xB5;
+
+         flstate0 = FL_READ;
+         flstate1 = FL_READ;
+
+         // Setup Functions
+         CartridgeArea->Cs0ReadByte = &AR4MCs0ReadByte;
+         CartridgeArea->Cs0ReadWord = &AR4MCs0ReadWord;
+         CartridgeArea->Cs0ReadLong = &AR4MCs0ReadLong;
+         CartridgeArea->Cs0WriteByte = &AR4MCs0WriteByte;
+         CartridgeArea->Cs0WriteWord = &AR4MCs0WriteWord;
+         CartridgeArea->Cs0WriteLong = &AR4MCs0WriteLong;
+         break;
+      }
+
       default: // No Cart
       {
          CartridgeArea->cartid = 0xFF;

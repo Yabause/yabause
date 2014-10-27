@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file c68kexec.c
+    \brief C68K emulation execution and instruction functions.
+*/
+
 #include "../core.h"
 #include "c68k.h"
 

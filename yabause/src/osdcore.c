@@ -17,6 +17,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*! \file osdcore.c
+    \brief OSD dummy, glut, and software interfaces. 
+*/
+
 #include "osdcore.h"
 #include "vdp1.h"
 #include "font.h"
