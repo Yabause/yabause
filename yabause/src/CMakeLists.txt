@@ -3,6 +3,8 @@ project(yabause)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
+
 set(yabause_SOURCES
 	bios.c
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
@@ -135,14 +137,24 @@ endif ()
 # SDL
 option(YAB_WANT_SDL "use SDL cores if available" ON)
 if (YAB_WANT_SDL)
-	include(FindSDL)
-	if (SDL_FOUND)
+	include(FindSDL2 OPTIONAL)
+
+	if (SDL2_FOUND)
+		include_directories(${SDL2_INCLUDE_DIR})
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL2_LIBRARY})
+	else()
+		include(FindSDL)
+		if (SDL_FOUND)
+			include_directories(${SDL_INCLUDE_DIR})
+			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL_LIBRARY})
+		endif()
+	endif()
+
+	if (SDL_FOUND OR SDL2_FOUND)
 		add_definitions(-DHAVE_LIBSDL=1)
-		include_directories(${SDL_INCLUDE_DIR})
 		set(yabause_SOURCES ${yabause_SOURCES} persdljoy.c sndsdl.c)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL_LIBRARY})
-	endif (SDL_FOUND)
-endif (YAB_WANT_SDL)
+	endif()
+endif()
 
 # OpenAL
 option(YAB_WANT_OPENAL "use OpenAL sound core if available" ON)
