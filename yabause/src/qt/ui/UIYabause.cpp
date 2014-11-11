@@ -124,7 +124,7 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( pause( bool ) ), this, SLOT( pause( bool ) ) );
 	connect( mYabauseThread, SIGNAL( reset() ), this, SLOT( reset() ) );
 	connect( hideMouseTimer, SIGNAL( timeout() ), this, SLOT( hideMouse() ));
-	connect( mouseCursorTimer, SIGNAL( timeout() ), this, SLOT( restoreCursor() ));
+	connect( mouseCursorTimer, SIGNAL( timeout() ), this, SLOT( cursorRestore() ));
 	connect( mYabauseThread, SIGNAL( toggleEmulateMouse( bool ) ), this, SLOT( toggleEmulateMouse( bool ) ) );
 
 	// Load shortcuts
