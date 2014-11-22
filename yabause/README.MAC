@@ -8,13 +8,13 @@
      Yet Another Buggy And Uncomplete Saturn Emulator
 
            ____________________________________
-           Copyright (c) 2002-2012 Yabause team
+           Copyright (c) 2002-2014 Yabause team
 
 
 1) Introduction.............................................20
 2) Compiling instructions...................................26
 3) How to use Yabause.......................................46
-4) Known Issues.............................................92
+4) Known Issues.............................................86
 
 
 1 Introduction________________________________________________
@@ -28,9 +28,9 @@ information check the README file.
 Yabause is written in C and Objective C using the Cocoa,
 IOKit, OpenGL, and CoreAudio frameworks. All of these
 frameworks should be installed by default on your Mac OS X
-system. You must have the Mac OS X 10.6 SDK installed by the
-Xcode installer in order to build Yabause. In addition, you
-will need at least Xcode 3.2.
+system. The canonical version of the binary is built with
+Xcode 5, but the project files are set to an earlier format,
+so it might work with an earlier version of Xcode -- YMMV.
 
 Once you have Xcode installed, you should be ready to build
 Yabause.
@@ -57,17 +57,11 @@ need it. If you want to use the emulated BIOS, select the
 checkbox for that.
 
 Next, set up the video and sound cores. For the video core,
-you have 4 options:
-1. OpenGL Hardware Video Core - Potentially the fastest video
-   core choice, at least with a discrete video card. However,
-   it is also the least accurate.
-2. Software Video Core - The most accurate video core you can
-   use, but also the slowest.
-3. Grand Central Dispatch Software Core - A multithreaded
-   version of the Software Video Core. On a multi-core system
-   this should be significantly faster than the Software core
-   with a similar accuracy level.
-4. Disable Video - Does exactly what it sounds like.
+you have 2 options:
+1. Software Video Core - The most accurate video core in the
+   Yabause code, but also the slowest. Should perform just
+   fine on most supported machines (see the known issues).
+2. Disable Video - Does exactly what it sounds like.
 
 For the sound core, you only have two options:
 1. Core Audio Sound Core - The default sound core. Select
@@ -96,3 +90,10 @@ Yabause crashes while running under GDB in fullscreen mode,
 you will probably get stuck with no way to exit. This should
 only affect developers and shouldn't ever be an issue for
 normal users.
+
+The OpenGL video core is currently broken and disabled. If
+you are using a relatively new Mac, then this probably won't
+be a problem at all, as the software core should perform
+pretty well for most Macs made in the past 4 years, at least.
+In testing, it performed just fine on a Mid-2010 MacBook Pro
+running Yosemite.
