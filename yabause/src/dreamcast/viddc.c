@@ -138,7 +138,7 @@ static uint16 *vdp2_fb;
 static int vdp2_fbnum = 0;
 static uint16 vdp2_fbs[2][512 * 256] __attribute__((aligned(32)));
 static uint8 vdp2_prio[352][240];
-static semaphore_t *dmadone;
+static semaphore_t dmadone = SEM_INITIALIZER(1);
 
 static pvr_ptr_t vdp2_tex;
 static uint32 cur_vdp2;
@@ -272,7 +272,7 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
             int i, j;
 
             for(i = 0; i < cur_spr.h; ++i)  {
-                store_queue = (uint32 *) (0xE0000000 | 
+                store_queue = (uint32 *) (0xE0000000 |
                                           (cur_addr & 0x03FFFFE0));
 
                 for(j = 0; j < cur_spr.w; j += 2)    {
@@ -282,14 +282,14 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
                     else    {
                         temp = Vdp2ColorRamGetColor(((dot & 0x0F) | colorBank) +
                                                     colorOffset);
-                        dot2 = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);                     
+                        dot2 = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
                     }
 
                     if(((dot >> 4) == 0) && !SPD)  dot = 0;
                     else    {
                         temp = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) +
                                                     colorOffset);
-                        dot = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);  
+                        dot = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
                     }
 
                     ++charAddr;
@@ -321,7 +321,7 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
             int i, j;
 
             for(i = 0; i < cur_spr.h; ++i)  {
-                store_queue = (uint32 *) (0xE0000000 | 
+                store_queue = (uint32 *) (0xE0000000 |
                                           (cur_addr & 0x03FFFFE0));
 
                 for(j = 0; j < cur_spr.w; j += 2)    {
@@ -329,7 +329,7 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
 
                     if(((dot & 0xF) == 0) && !SPD) dot2 = 0;
                     else    {
-                        temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + 
+                        temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 +
                                                     colorLut) & 0x7FFFF);
 
                         if(temp & 0x8000)
@@ -337,7 +337,7 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
                                              vdp1cob);
                         else
                             dot2 = COLOR_ADD(Vdp2ColorRamGetColor(temp),
-                                             vdp1cor, vdp1cog, vdp1cob);                     
+                                             vdp1cor, vdp1cog, vdp1cob);
                     }
 
                     if(((dot >> 4) == 0) && !SPD)  dot = 0;
@@ -380,11 +380,11 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
             u32 colorBank = cmd->CMDCOLR;
             u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
             u16 temp;
-            
+
             for(i = 0; i < cur_spr.h; ++i)  {
-                store_queue = (uint32 *) (0xE0000000 | 
+                store_queue = (uint32 *) (0xE0000000 |
                                           (cur_addr & 0x03FFFFE0));
-                
+
                 for(j = 0; j < cur_spr.w; j += 2)  {
                     dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x3F;
                     dot2 = T1ReadByte(Vdp1Ram, (charAddr + 1) & 0x7FFFF) & 0x3F;
@@ -401,21 +401,21 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
                                                     colorOffset);
                         dot2 = COLOR_ADD(temp, vdp1cor, vdp1cog, vdp1cob);
                     }
-                    
+
                     store_queue[queuepos++] = dot | (dot2 << 16);
-                    
+
                     if(queuepos == 8)   {
                         asm("pref @%0" : : "r"(store_queue));
                         queuepos = 0;
                         store_queue += 8;
                     }
                 }
-                
+
                 if(queuepos)    {
                     asm("pref @%0" : : "r"(store_queue));
                     queuepos = 0;
                 }
-                
+
                 cur_addr += wi * 2;
             }
             break;
@@ -430,7 +430,7 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
             u16 temp;
 
             for(i = 0; i < cur_spr.h; ++i)  {
-                store_queue = (uint32 *) (0xE0000000 | 
+                store_queue = (uint32 *) (0xE0000000 |
                                           (cur_addr & 0x03FFFFE0));
 
                 for(j = 0; j < cur_spr.w; j += 2)  {
@@ -476,9 +476,9 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
             u32 colorBank = cmd->CMDCOLR;
             u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
             u16 temp;
-            
+
             for(i = 0; i < cur_spr.h; ++i)  {
-                store_queue = (uint32 *) (0xE0000000 | 
+                store_queue = (uint32 *) (0xE0000000 |
                                           (cur_addr & 0x03FFFFE0));
 
                 for(j = 0; j < cur_spr.w; j += 2)  {
@@ -523,7 +523,7 @@ static int Vdp1ReadTexture(vdp1cmd_struct *cmd, pvr_sprite_hdr_t *hdr) {
             int i, j;
 
             for(i = 0; i < cur_spr.h; ++i)  {
-                store_queue = (uint32 *) (0xE0000000 | 
+                store_queue = (uint32 *) (0xE0000000 |
                                           (cur_addr & 0x03FFFFE0));
 
                 for(j = 0; j < cur_spr.w; j += 2)  {
@@ -805,7 +805,7 @@ void Vdp2DrawScrollBitmap(vdp2draw_struct *info)
                     if ((color & 0x80000000) == 0 && info->transparencyenable)
                         vdp2putpixel(i2, i, 0, info->priority);
                     else    {
-                        u16 dot = ((color & 0xF80000) >> 19 | 
+                        u16 dot = ((color & 0xF80000) >> 19 |
                                    (color & 0x00F800) >> 6 |
                                    (color & 0x0000F8) << 7 | 0x8000);
                         vdp2putpixel(i2, i, info->PostPixelFetchCalc(info, dot), info->priority);
@@ -928,7 +928,7 @@ static void Vdp2DrawCell(vdp2draw_struct *info)
             }
             break;
         case 1: // 8 BPP
-            newcharaddr = info->charaddr + (info->cellw * info->cellh);   
+            newcharaddr = info->charaddr + (info->cellw * info->cellh);
             info->charaddr += clip.pixeloffset;
 
             for (i = clip.ystart; i < clip.yend; i++)
@@ -961,9 +961,9 @@ static void Vdp2DrawCell(vdp2draw_struct *info)
             printf("vdp2 cell draw 16bpp\n");
             break;
         case 4: // 32 BPP
-            newcharaddr = info->charaddr + (info->cellw * info->cellh);   
+            newcharaddr = info->charaddr + (info->cellw * info->cellh);
             info->charaddr += clip.pixeloffset;
-            
+
             for (i = clip.ystart; i < clip.yend; i++)
             {
                 for (i2 = clip.xstart; i2 < clip.xend; i2++)
@@ -973,19 +973,19 @@ static void Vdp2DrawCell(vdp2draw_struct *info)
                     info->charaddr += 2;
                     dot2 = T1ReadWord(Vdp2Ram, info->charaddr & 0x7FFFF);
                     info->charaddr += 2;
-                    
+
                     if (!(dot1 & 0x8000) && info->transparencyenable)
                         continue;
-                    
+
                     color = SAT2YAB2(dot1, dot2);
                     vdp2putpixel(i2, i, info->PostPixelFetchCalc(info, color), info->priority);
                 }
-                
+
                 info->charaddr += clip.lineincrement;
             }
-                
+
                 info->charaddr = newcharaddr;
-            
+
             break;
     }
 }
@@ -1029,7 +1029,7 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
     {
         case 1:
         {
-            u16 tmp = T1ReadWord(Vdp2Ram, info->addr);         
+            u16 tmp = T1ReadWord(Vdp2Ram, info->addr);
 
             info->addr += 2;
             info->specialfunction = (info->supplementdata >> 9) & 0x1;
@@ -1154,7 +1154,7 @@ static void Vdp2DrawMap(vdp2draw_struct *info)
     int i, j;
     int X, Y;
     u32 lastplane;
-    
+
     X = info->x;
     lastplane=0xFFFFFFFF;
 
@@ -1189,8 +1189,6 @@ static int VIDDCInit(void)  {
         fprintf(stderr, "VIDDCInit() - error initializing PVR\n");
         return -1;
     }
-
-    dmadone = sem_create(1);
 
     pvr_set_vertbuf(PVR_LIST_OP_POLY, vbuf_opaque, 1024 * 256);
     pvr_set_vertbuf(PVR_LIST_TR_POLY, vbuf_translucent, 1024 * 256);
@@ -1249,7 +1247,7 @@ static void VIDDCDeInit(void)   {
     pvr_set_vertbuf(PVR_LIST_PT_POLY, NULL, 0);
 
     pvr_mem_free(tex_space);
-    sem_destroy(dmadone);
+    sem_destroy(&dmadone);
 
     pvr_shutdown();
     vid_set_mode(DM_640x480, PM_RGB565);
@@ -1274,11 +1272,11 @@ static void VIDDCVdp1DrawStart(void)    {
             vdp1cor = Vdp2Regs->COBR & 0xFF;
             if(Vdp2Regs->COBR & 0x100)
                 vdp1cor |= 0xFFFFFF00;
-            
+
             vdp1cog = Vdp2Regs->COBG & 0xFF;
             if(Vdp2Regs->COBG & 0x100)
                 vdp1cog |= 0xFFFFFF00;
-            
+
             vdp1cob = Vdp2Regs->COBB & 0xFF;
             if(Vdp2Regs->COBB & 0x100)
                 vdp1cob |= 0xFFFFFF00;
@@ -1288,11 +1286,11 @@ static void VIDDCVdp1DrawStart(void)    {
             vdp1cor = Vdp2Regs->COAR & 0xFF;
             if(Vdp2Regs->COAR & 0x100)
                 vdp1cor |= 0xFFFFFF00;
-            
+
             vdp1cog = Vdp2Regs->COAG & 0xFF;
             if(Vdp2Regs->COAG & 0x100)
                 vdp1cog |= 0xFFFFFF00;
-            
+
             vdp1cob = Vdp2Regs->COAB & 0xFF;
             if(Vdp2Regs->COAB & 0x100)
                 vdp1cob |= 0xFFFFFF00;
@@ -1341,7 +1339,7 @@ static void VIDDCVdp1NormalSpriteDraw(void) {
     else    {
         num = Vdp1ReadTexture(&cmd, &pt_sprite_hdr);
         list = PVR_LIST_PT_POLY;
-        
+
         if(num == 0)
             return;
         else
@@ -1623,7 +1621,7 @@ static void VIDDCVdp1PolygonDraw(void)  {
                                 vdp1cob);
     }
     else    {
-        hdr->argb = COLOR_ADD32(Vdp2ColorRamGetColor32(color, alpha), vdp1cor, 
+        hdr->argb = COLOR_ADD32(Vdp2ColorRamGetColor32(color, alpha), vdp1cor,
                                 vdp1cog, vdp1cob);
     }
 
@@ -1703,7 +1701,7 @@ static u16 DoColorCalc(void *info, u16 pixel)
 static u16 DoColorCalcWithColorOffset(void *info, u16 pixel)
 {
     // should be doing color calculation here
-    
+
     return COLOR_ADD(pixel, ((vdp2draw_struct *)info)->cor,
                      ((vdp2draw_struct *)info)->cog,
                      ((vdp2draw_struct *)info)->cob);
@@ -2318,7 +2316,7 @@ static int Vdp2DrawNBG2(void)
    info.transparencyenable = !(Vdp2Regs->BGON & 0x400);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 4) & 0x3;
 
-   info.colornumber = (Vdp2Regs->CHCTLB & 0x2) >> 1;	
+   info.colornumber = (Vdp2Regs->CHCTLB & 0x2) >> 1;
    info.mapwh = 2;
 
    switch((Vdp2Regs->PLSZ & 0x30) >> 4)
@@ -2354,7 +2352,7 @@ static int Vdp2DrawNBG2(void)
    info.cellw = info.cellh = 8;
    info.supplementdata = Vdp2Regs->PNCN2 & 0x3FF;
    info.auxmode = (Vdp2Regs->PNCN2 & 0x4000) >> 14;
-    
+
    if (Vdp2Regs->CCCTL & 0x4)
       info.alpha = ((~Vdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
    else
@@ -2492,7 +2490,7 @@ static int Vdp2DrawNBG3(void)
    info.specialprimode = (Vdp2Regs->SFPRMD >> 6) & 0x3;
 
    info.colornumber = (Vdp2Regs->CHCTLB & 0x20) >> 5;
-	
+
    info.mapwh = 2;
 
    switch((Vdp2Regs->PLSZ & 0xC0) >> 6)
@@ -2610,8 +2608,8 @@ static void VIDDCVdp2DrawStart(void)    {
 
 static void VIDDCVdp2DrawEnd(void)  {
     /* Make sure we don't have any texture dma still going on... */
-    sem_wait(dmadone);
-    sem_signal(dmadone);
+    sem_wait(&dmadone);
+    sem_signal(&dmadone);
 
     pvr_scene_finish();
 
@@ -2626,16 +2624,16 @@ static void VIDDCVdp2DrawEnd(void)  {
 }
 
 static void dma_callback(ptr_t data __attribute__((unused)))    {
-    sem_signal(dmadone);
+    sem_signal(&dmadone);
 }
 
 static void Vdp2Draw(int priority)  {
     pvr_sprite_txr_t sprite;
 
     pt_sprite_hdr.mode2 &= (~(PVR_TA_PM2_USIZE_MASK | PVR_TA_PM2_VSIZE_MASK));
-    pt_sprite_hdr.mode2 |= (6 << PVR_TA_PM2_USIZE_SHIFT) | 
+    pt_sprite_hdr.mode2 |= (6 << PVR_TA_PM2_USIZE_SHIFT) |
                            (5 << PVR_TA_PM2_VSIZE_SHIFT);
-    pt_sprite_hdr.mode3 = ((cur_vdp2 & 0x00FFFFF8) >> 3) | 
+    pt_sprite_hdr.mode3 = ((cur_vdp2 & 0x00FFFFF8) >> 3) |
                           (PVR_TXRFMT_NONTWIDDLED);
 
     pvr_list_prim(PVR_LIST_PT_POLY, &pt_sprite_hdr, sizeof(pvr_sprite_hdr_t));
@@ -2664,121 +2662,42 @@ static void Vdp2Draw(int priority)  {
     priority_levels[priority] += 0.000001f;
 }
 
-static void VIDDCVdp2DrawScreens(void)  {
-    int i;
-
-    VIDDCVdp2SetResolution(Vdp2Regs->TVMD);
-    VIDDCVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
-    VIDDCVdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
-    VIDDCVdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
-    VIDDCVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
-    VIDDCVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
-
-    vdp2_fb = vdp2_fbs[0];
-    vdp2_fbnum = 0;
-
-    for(i = 1; i < 8; i++)  {
-        if(nbg3priority == i)   {
-            if(Vdp2DrawNBG3())  {
-                dcache_flush_range((ptr_t)(vdp2_fb), 512 * 256 * 2);
-                sem_wait(dmadone);
-
-                pvr_txr_load_dma(vdp2_fb, (pvr_ptr_t) cur_vdp2, 512 * 256 * 2,
-                                 0, dma_callback, 0);
-
-                Vdp2Draw(i);
-
-                cur_vdp2 += 512 * 256 * 2;
-                vdp2_fbnum ^= 1;
-                vdp2_fb = vdp2_fbs[vdp2_fbnum];
-            }
-        }
-        if(nbg2priority == i)   {
-            if(Vdp2DrawNBG2())  {
-                dcache_flush_range((ptr_t)(vdp2_fb), 512 * 256 * 2);
-                sem_wait(dmadone);
-
-                pvr_txr_load_dma(vdp2_fb, (pvr_ptr_t) cur_vdp2, 512 * 256 * 2,
-                                 0, dma_callback, 0);
-
-                Vdp2Draw(i);
-
-                cur_vdp2 += 512 * 256 * 2;
-                vdp2_fbnum ^= 1;
-                vdp2_fb = vdp2_fbs[vdp2_fbnum];
-            }
-        }
-        if(nbg1priority == i)   {
-            if(Vdp2DrawNBG1())  {
-                dcache_flush_range((ptr_t)(vdp2_fb), 512 * 256 * 2);
-                sem_wait(dmadone);
-
-                pvr_txr_load_dma(vdp2_fb, (pvr_ptr_t) cur_vdp2, 512 * 256 * 2,
-                                 0, dma_callback, 0);
-
-                Vdp2Draw(i);
-
-                cur_vdp2 += 512 * 256 * 2;
-                vdp2_fbnum ^= 1;
-                vdp2_fb = vdp2_fbs[vdp2_fbnum];
-            }
-        }
-        if(nbg0priority == i)   {
-            if(Vdp2DrawNBG0())  {
-                dcache_flush_range((ptr_t)(vdp2_fb), 512 * 256 * 2);
-                sem_wait(dmadone);
-
-                pvr_txr_load_dma(vdp2_fb, (pvr_ptr_t) cur_vdp2, 512 * 256 * 2,
-                                 0, dma_callback, 0);
-
-                Vdp2Draw(i);
-
-                cur_vdp2 += 512 * 256 * 2;
-                vdp2_fbnum ^= 1;
-                vdp2_fb = vdp2_fbs[vdp2_fbnum];
-            }
-        }
-//        if (rbg0priority == i)
-//            Vdp2DrawRBG0();
-    }
-}
-
 static void VIDDCVdp2SetResolution(u16 TVMD)    {
     int w = 0, h = 0;
 
     switch(TVMD & 0x03) {
         case 0:
-            w = 320;
-            break;
+        w = 320;
+        break;
         case 1:
-            w = 352;
-            break;
+        w = 352;
+        break;
         case 2:
-            w = 640;
-            break;
+        w = 640;
+        break;
         case 3:
-            w = 704;
-            break;
+        w = 704;
+        break;
     }
 
     switch((TVMD >> 4) & 0x03)  {
         case 0:
-            h = 224;
-            break;
+        h = 224;
+        break;
         case 1:
-            h = 240;
-            break;
+        h = 240;
+        break;
         case 2:
-            h = 256;
-            break;
+        h = 256;
+        break;
     }
 
     switch((TVMD >> 6) & 0x03)  {
         case 2:
         case 3:
-            h <<= 1;
+        h <<= 1;
         default:
-            break;
+        break;
     }
 
     vdp2width = w;
@@ -2809,6 +2728,85 @@ static void VIDDCVdp2SetPriorityNBG3(int priority)  {
 
 static void VIDDCVdp2SetPriorityRBG0(int priority)  {
     rbg0priority = priority;
+}
+
+static void VIDDCVdp2DrawScreens(void)  {
+    int i;
+
+    VIDDCVdp2SetResolution(Vdp2Regs->TVMD);
+    VIDDCVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
+    VIDDCVdp2SetPriorityNBG1((Vdp2Regs->PRINA >> 8) & 0x7);
+    VIDDCVdp2SetPriorityNBG2(Vdp2Regs->PRINB & 0x7);
+    VIDDCVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
+    VIDDCVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
+
+    vdp2_fb = vdp2_fbs[0];
+    vdp2_fbnum = 0;
+
+    for(i = 1; i < 8; i++)  {
+        if(nbg3priority == i)   {
+            if(Vdp2DrawNBG3())  {
+                dcache_flush_range((ptr_t)(vdp2_fb), 512 * 256 * 2);
+                sem_wait(&dmadone);
+
+                pvr_txr_load_dma(vdp2_fb, (pvr_ptr_t) cur_vdp2, 512 * 256 * 2,
+                                 0, dma_callback, 0);
+
+                Vdp2Draw(i);
+
+                cur_vdp2 += 512 * 256 * 2;
+                vdp2_fbnum ^= 1;
+                vdp2_fb = vdp2_fbs[vdp2_fbnum];
+            }
+        }
+        if(nbg2priority == i)   {
+            if(Vdp2DrawNBG2())  {
+                dcache_flush_range((ptr_t)(vdp2_fb), 512 * 256 * 2);
+                sem_wait(&dmadone);
+
+                pvr_txr_load_dma(vdp2_fb, (pvr_ptr_t) cur_vdp2, 512 * 256 * 2,
+                                 0, dma_callback, 0);
+
+                Vdp2Draw(i);
+
+                cur_vdp2 += 512 * 256 * 2;
+                vdp2_fbnum ^= 1;
+                vdp2_fb = vdp2_fbs[vdp2_fbnum];
+            }
+        }
+        if(nbg1priority == i)   {
+            if(Vdp2DrawNBG1())  {
+                dcache_flush_range((ptr_t)(vdp2_fb), 512 * 256 * 2);
+                sem_wait(&dmadone);
+
+                pvr_txr_load_dma(vdp2_fb, (pvr_ptr_t) cur_vdp2, 512 * 256 * 2,
+                                 0, dma_callback, 0);
+
+                Vdp2Draw(i);
+
+                cur_vdp2 += 512 * 256 * 2;
+                vdp2_fbnum ^= 1;
+                vdp2_fb = vdp2_fbs[vdp2_fbnum];
+            }
+        }
+        if(nbg0priority == i)   {
+            if(Vdp2DrawNBG0())  {
+                dcache_flush_range((ptr_t)(vdp2_fb), 512 * 256 * 2);
+                sem_wait(&dmadone);
+
+                pvr_txr_load_dma(vdp2_fb, (pvr_ptr_t) cur_vdp2, 512 * 256 * 2,
+                                 0, dma_callback, 0);
+
+                Vdp2Draw(i);
+
+                cur_vdp2 += 512 * 256 * 2;
+                vdp2_fbnum ^= 1;
+                vdp2_fb = vdp2_fbs[vdp2_fbnum];
+            }
+        }
+//        if (rbg0priority == i)
+//            Vdp2DrawRBG0();
+    }
 }
 
 VideoInterface_struct VIDDC = {

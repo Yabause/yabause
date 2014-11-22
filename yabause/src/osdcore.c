@@ -18,7 +18,7 @@
 */
 
 /*! \file osdcore.c
-    \brief OSD dummy, glut, and software interfaces. 
+    \brief OSD dummy, glut, and software interfaces.
 */
 
 #include "osdcore.h"
@@ -46,7 +46,9 @@ OSD_struct *OSDCoreList[] = {
 #ifdef HAVE_LIBGLUT
 &OSDGlut,
 #endif
+#ifndef _arch_dreamcast
 &OSDSoft,
+#endif
 NULL
 };
 #else
@@ -323,6 +325,8 @@ int OSDGlutUseBuffer(void)
 }
 #endif
 
+#ifndef _arch_dreamcast
+
 static int OSDSoftInit(void);
 static void OSDSoftDeInit(void);
 static void OSDSoftReset(void);
@@ -395,3 +399,5 @@ int OSDSoftUseBuffer(void)
 {
    return 1;
 }
+
+#endif /* !_arch_dreamcast */

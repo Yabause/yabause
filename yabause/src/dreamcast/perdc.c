@@ -30,6 +30,7 @@ void PERDCDeInit(void);
 int PERDCHandleEvents(void);
 void PERDCNothing(void);
 u32 PERDCScan(u32 flags);
+void PERDCKeyName(u32 key, char *name, int size);
 
 static PerPad_struct *pad1;
 
@@ -144,6 +145,6 @@ u32 PERDCScan(u32 flags) {
     return 0;
 }
 
-void PERDCKeyName(u32 key, char *name, int size)    {
+void PERDCKeyName(u32 key, char *name, int size) {
     snprintf(name, size, "%x", (unsigned int)key);
 }
