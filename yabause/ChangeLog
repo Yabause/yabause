@@ -1,3 +1,33 @@
+0.9.13 -> 0.9.14
+ general:
+  - Fixed crash when bin is not found in a bin/cue.
+  - Added Traditional Chinese translation.
+  - Added Japanese translation.
+  - Added Russian translation.
+  - Updated German translation.
+  - Added inline SH2 assembler function to main emulation code.
+  - Fixed miscellaneous memory leak/uninitialized variables.
+  - Added Stunner/Virtua Gun emulation
+  - Added USB Dev cartridge emulation
+  - Added SDL2 support
+ android port:
+  - Added screenshot feature to Android port
+ emulated bios:
+  - Work around fix for games trying to change scu mask from slave sh2 when using hle bios. Fixes Astal.
+ gtk port:
+  - Added extra checks to resolution setting to avoid potential leaks or crashing.
+ macos port:
+  - A few fixes to the Xcode projects for OS X.
+ qt port:
+  - Fixed an issue where coff/elf files weren't selectable when using memory transfer function.
+  - Fixed a bug where qt volume slider wasn't showing the saved value on startup.
+  - Mouse will now optionally auto-hide with no movement
+  - Added gui for inline assembler.
+  - Revised Mouse emulation handling, added sensitivity setting.
+  - Other fixes
+ video:
+  - Fixed a bug where coordinate y increment wasn't being initialized under a specific set of circumstances. Should fix hang in Radiant Silvergun using OpenGL rendering.
+  - Fixed Special Color Calculation mode 2
 0.9.12 -> 0.9.13
  general:
   - Removed Carbon, PSP, Wii and Windows ports
