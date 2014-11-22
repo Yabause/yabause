@@ -1,4 +1,4 @@
-/*  Copyright 2010, 2012 Lawrence Sebald
+/*  Copyright 2010, 2012, 2014 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -327,6 +327,9 @@ static void FlipToggle(NSMenuItem *item) {
     /* Make the OpenGL context current for this thread, otherwise we will be
        drawing to nothingness. */
     [[view openGLContext] makeCurrentContext];
+
+    /* Make sure the video core knows the size of the display... */
+    [view reshape];
 
     ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 
