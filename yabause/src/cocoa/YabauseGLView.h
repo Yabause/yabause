@@ -1,4 +1,4 @@
-/*  Copyright 2010 Lawrence Sebald
+/*  Copyright 2010, 2014 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -26,8 +26,9 @@
 
 @interface YabauseGLView : NSOpenGLView {
     IBOutlet NSWindow *window;
+    NSRect oldFrame;
+    NSWindow *fsWindow;
     BOOL _isFullscreen;
-    NSPoint _mouseLoc;
 }
 
 - (id)initWithFrame:(NSRect)frameRect;

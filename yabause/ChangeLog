@@ -17,7 +17,8 @@
  gtk port:
   - Added extra checks to resolution setting to avoid potential leaks or crashing.
  macos port:
-  - A few fixes to the Xcode projects for OS X.
+  - A few fixes to the Xcode projects for OS X
+  - Fixed fullscreen mode when compiled with a newer OS X SDK
  qt port:
   - Fixed an issue where coff/elf files weren't selectable when using memory transfer function.
   - Fixed a bug where qt volume slider wasn't showing the saved value on startup.
@@ -25,6 +26,8 @@
   - Added gui for inline assembler.
   - Revised Mouse emulation handling, added sensitivity setting.
   - Other fixes
+ dreamcast port:
+  - Fixed compilation
  video:
   - Fixed a bug where coordinate y increment wasn't being initialized under a specific set of circumstances. Should fix hang in Radiant Silvergun using OpenGL rendering.
   - Fixed Special Color Calculation mode 2

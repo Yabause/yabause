@@ -1,4 +1,4 @@
-/*  Copyright 2010 Lawrence Sebald
+/*  Copyright 2010, 2014 Lawrence Sebald
 
     This file is part of Yabause.
 
@@ -23,9 +23,6 @@
 #include "vdp1.h"
 
 @interface YabauseGLView (InternalFunctions)
-- (NSScreen *)screen;
-- (CGDirectDisplayID)screenID;
-
 /* These are nice to have, but not really necessary to things... */
 - (float)width;
 - (float)height;
@@ -69,40 +66,39 @@
 {
     CGError err;
     CGDisplayFadeReservationToken token;
-    CGDirectDisplayID d = [self screenID];
 
     err = CGAcquireDisplayFadeReservation(kCGMaxDisplayReservationInterval,
                                           &token);
 
-    if(err == kCGErrorSuccess)  {
+    if(err == kCGErrorSuccess) {
         CGDisplayFade(token, 0.5, kCGDisplayBlendNormal,
                       kCGDisplayBlendSolidColor, 0, 0, 0, 1);
     }
 
     if(!_isFullscreen) {
-        [self enterFullScreenMode:[self screen] withOptions:nil];
+        NSScreen *s = [NSScreen mainScreen];
+        NSRect dispRect = [s frame];
 
-        /* Hide the cursor, but store its location so we can restore it later.
-           Also, disassociate the mouse and the cursor position. */
-        CGDisplayHideCursor(d);
-        _mouseLoc = [NSEvent mouseLocation];
-        CGDisplayMoveCursorToPoint(d, CGPointZero);
-        CGAssociateMouseAndMouseCursorPosition(FALSE);
+        fsWindow = [[NSWindow alloc] initWithContentRect:dispRect
+                                               styleMask:NSBorderlessWindowMask
+                                                 backing:NSBackingStoreBuffered
+                                                   defer:YES];
+
+        [fsWindow setLevel:NSMainMenuWindowLevel + 1];
+        [fsWindow setOpaque:YES];
+        [fsWindow setHidesOnDeactivate:YES];
+
+        oldFrame = [self frame];
+        dispRect.origin.x = dispRect.origin.y = 0;
+        [self setFrame:dispRect];
+        [fsWindow setContentView:self];
+        [fsWindow makeKeyAndOrderFront:self];
     }
     else {
-        CGPoint mousePoint;
-        int height = CGDisplayPixelsHigh(d);
-        
-        mousePoint.x = _mouseLoc.x;
-        mousePoint.y = height - _mouseLoc.y;
-
-        /* Show the mouse pointer, and reassociate it with the mouse. */
-        CGAssociateMouseAndMouseCursorPosition(TRUE);
-        CGDisplayMoveCursorToPoint(d, mousePoint);
-        CGDisplayShowCursor(d);
-
-        [self exitFullScreenModeWithOptions:nil];
-        [[self window] makeFirstResponder:self];
+        [self setFrame:oldFrame];
+        [window setContentView:self];
+        [fsWindow release];
+        fsWindow = nil;
     }
 
     if(err == kCGErrorSuccess)  {
@@ -171,38 +167,6 @@
 @end /* @implementation YabauseGLView */
 
 @implementation YabauseGLView (InternalFunctions)
-
-- (NSScreen *)screen
-{
-    NSArray *screens = [NSScreen screens];
-    NSEnumerator *i = [screens objectEnumerator];
-    NSScreen *obj;
-    NSRect f = [window frame];
-    NSRect sf;
-
-    /* Look for the screen that has the main window on it. */
-    while((obj = (NSScreen *)[i nextObject]))   {
-        sf = [obj frame];
-
-        if(f.origin.x >= sf.origin.x && f.origin.y >= sf.origin.y &&
-           f.origin.x <= sf.origin.x + sf.size.width &&
-           f.origin.y <= sf.origin.y + sf.size.height)  {
-            return obj;
-        }
-    }
-
-    /* Punt. */
-    return [NSScreen mainScreen];
-}
-
-- (CGDirectDisplayID)screenID
-{
-    NSScreen *s = [self screen];
-    NSDictionary *d = [s deviceDescription];
-    NSNumber *n = (NSNumber *)[d objectForKey:@"NSScreenNumber"];
-
-    return (CGDirectDisplayID)[n unsignedIntValue];
-}
 
 - (float)width
 {
