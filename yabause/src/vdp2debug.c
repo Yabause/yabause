@@ -836,6 +836,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          // Screen scroll values
          AddString(outstring, "Screen Scroll x = %f, y = %f\r\n", (float)(reg->getLong(0x70) & 0x7FFFF00) / 65536, (float)(reg->getLong(0x74) & 0x7FFFF00) / 65536);
 */
+         AddString(outstring, "Screen Scroll x = %d, y = %d\r\n", - ((Vdp2Regs->SCXIN0 & 0x7FF) % 512), - ((Vdp2Regs->SCYIN0 & 0x7FF) % 512));
       
          // Coordinate Increments
          AddString(outstring, "Coordinate Increments x = %f, y = %f\r\n", (float) 65536 / (Vdp2Regs->ZMXN0.all & 0x7FF00), (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00));
@@ -1052,6 +1053,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
       // Screen scroll values
       AddString(outstring, "Screen Scroll x = %f, y = %f\r\n", (float)(reg->getLong(0x80) & 0x7FFFF00) / 65536, (float)(reg->getLong(0x84) & 0x7FFFF00) / 65536);
 */
+         AddString(outstring, "Screen Scroll x = %d, y = %d\r\n", - ((Vdp2Regs->SCXIN1 & 0x7FF) % 512), - ((Vdp2Regs->SCYIN1 & 0x7FF) % 512));
 
       // Coordinate Increments
       AddString(outstring, "Coordinate Increments x = %f, y = %f\r\n", (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00), (float) 65536 / (Vdp2Regs->ZMXN1.all & 0x7FF00));
