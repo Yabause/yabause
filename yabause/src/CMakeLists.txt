@@ -5,13 +5,29 @@ include(CheckIncludeFile)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
+set(yabause_HEADERS
+	bios.h
+	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
+	debug.h
+	error.h
+	japmodem.h 
+	m68kcore.h m68kd.h memory.h movie.h
+	netlink.h
+	osdcore.h
+	peripheral.h profile.h
+	scsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
+	threads.h titan/titan.h
+	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
+	yabause.h ygl.h yui.h)
+
 set(yabause_SOURCES
 	bios.c
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
 	debug.c
 	error.c
+	japmodem.c
 	m68kcore.c m68kd.c memory.c movie.c
-	japmodem.c netlink.c
+	netlink.c
 	osdcore.c
 	peripheral.c profile.c
 	scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
@@ -24,6 +40,7 @@ option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
 if (YAB_USE_SCSP2)
 	add_definitions(-DUSE_SCSP2=1)
 	set(yabause_SOURCES ${yabause_SOURCES} scsp2.c)
+	set(yabause_HEADERS ${yabause_HEADERS} scsp2.h)
 else()
 	set(yabause_SOURCES ${yabause_SOURCES} scsp.c)
 endif()
@@ -153,6 +170,7 @@ if (YAB_WANT_SDL)
 	if (SDL_FOUND OR SDL2_FOUND)
 		add_definitions(-DHAVE_LIBSDL=1)
 		set(yabause_SOURCES ${yabause_SOURCES} persdljoy.c sndsdl.c)
+		set(yabause_HEADERS ${yabause_HEADERS} persdljoy.h sndsdl.h)
 	endif()
 endif()
 
@@ -165,6 +183,7 @@ if (YAB_WANT_OPENAL)
 		add_definitions(-DHAVE_LIBAL=1)
 		include_directories(${OPENAL_INCLUDE_DIR})
 		set(yabause_SOURCES ${yabause_SOURCES} sndal.c)
+		set(yabause_HEADERS ${yabause_HEADERS} sndal.h)
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENAL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 	endif (OPENAL_FOUND)
 endif (YAB_WANT_OPENAL)
@@ -184,6 +203,7 @@ find_library(XRANDR_LIBRARY Xrandr)
 if(XRANDR_LIBRARY)
 	add_definitions(-DHAVE_LIBXRANDR=1)
 	set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
+	set(yabause_HEADERS ${yabause_HEADERS} screen.h)
 	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
 endif()
 
@@ -200,6 +220,7 @@ if (APPLE)
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY NAMES CoreFoundation )
 	FIND_LIBRARY(IOKIT_LIBRARY NAMES IOKit )
 	set(yabause_SOURCES ${yabause_SOURCES} macjoy.c permacjoy.c cd-macosx.c sndmac.c)
+	set(yabause_HEADERS ${yabause_HEADERS} macjoy.h permacjoy.h sndmac.h)
 	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${COREFOUNDATION_LIBRARY} ${IOKIT_LIBRARY})
 
 	check_function_exists(glBindRenderbuffer HAVE_FBO)
@@ -242,8 +263,8 @@ if (WIN32)
 
 	set(yabause_SOURCES ${yabause_SOURCES} cd-windows.c)
 
-        option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available")
-        option(YAB_WANT_DIRECTINPUT "use DirectX input core if available")
+	option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available")
+	option(YAB_WANT_DIRECTINPUT "use DirectX input core if available")
 
 	# Direct X
 	if (YAB_WANT_DIRECTSOUND OR YAB_WANT_DIRECTINPUT)
@@ -286,6 +307,7 @@ if (WIN32)
 			if (YAB_WANT_DIRECTINPUT AND DirectX_INPUT8_LIBRARY)
 				add_definitions(-DHAVE_DIRECTINPUT)
 				set(yabause_SOURCES ${yabause_SOURCES} perdx.c)
+				set(yabause_HEADERS ${yabause_HEADERS} perdx.h)
 				set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${DirectX_INPUT8_LIBRARY})
 				if (DirectX_XINPUT_LIBRARY)
 					add_definitions(-DHAVE_XINPUT)
@@ -295,12 +317,14 @@ if (WIN32)
         	if (YAB_WANT_DIRECTSOUND AND DirectX_SOUND_LIBRARY)
 				add_definitions(-DHAVE_DIRECTSOUND)
 				set(yabause_SOURCES ${yabause_SOURCES} snddx.c)
+				set(yabause_HEADERS ${yabause_HEADERS} snddx.h)
 				set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${DirectX_SOUND_LIBRARY})
 			endif ()
 
 			if (DXERRH_IS_BROKEN)
 				add_definitions(-DDXERRH_IS_BROKEN)
 				message(STATUS "Using work-around for dxerr.h")
+				set(yabause_HEADERS ${yabause_HEADERS} dx.h)
 			endif(DXERRH_IS_BROKEN)
 		endif (DirectX_INCLUDE_DIR AND DirectX_GUID_LIBRARY AND DirectX_ERR_LIBRARY)
 	endif (YAB_WANT_DIRECTSOUND OR YAB_WANT_DIRECTINPUT)
@@ -331,6 +355,8 @@ if (SH2_DYNAREC)
 			enable_language(ASM-ATT)
 			set(yabause_SOURCES ${yabause_SOURCES}
 				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_x86.s)
+			set(yabause_HEADERS ${yabause_HEADERS}
+				sh2_dynarec/sh2_dynarec.h)
 			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
 			add_definitions(-DSH2_DYNAREC=1)
 		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
@@ -338,6 +364,8 @@ if (SH2_DYNAREC)
 			enable_language(ASM-ATT)
 			set(yabause_SOURCES ${yabause_SOURCES}
 				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_x64.s)
+			set(yabause_HEADERS ${yabause_HEADERS}
+				sh2_dynarec/sh2_dynarec.h)
 			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
 			add_definitions(-DSH2_DYNAREC=1)
 		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
@@ -345,6 +373,8 @@ if (SH2_DYNAREC)
 			enable_language(ASM-ATT)
 			set(yabause_SOURCES ${yabause_SOURCES}
 				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm.s)
+			set(yabause_HEADERS ${yabause_HEADERS}
+				sh2_dynarec/sh2_dynarec.h)
 			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
 			add_definitions(-DSH2_DYNAREC=1)
 		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
@@ -352,6 +382,8 @@ if (SH2_DYNAREC)
 			enable_language(ASM-ATT)
 			set(yabause_SOURCES ${yabause_SOURCES}
 				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm.s)
+			set(yabause_HEADERS ${yabause_HEADERS}
+				sh2_dynarec/sh2_dynarec.h)
 			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
 			add_definitions(-DSH2_DYNAREC=1 -DHAVE_ARMv6=1 -DHAVE_ARMv7=1)
 		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
@@ -359,6 +391,8 @@ if (SH2_DYNAREC)
 			enable_language(ASM-ATT)
 			set(yabause_SOURCES ${yabause_SOURCES}
 				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm.s)
+			set(yabause_HEADERS ${yabause_HEADERS}
+				sh2_dynarec/sh2_dynarec.h)
 			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
 			add_definitions(-DSH2_DYNAREC=1)
 			add_definitions(-DANDROID=1)
@@ -384,6 +418,7 @@ if (YAB_WANT_C68K)
 	add_definitions(-DHAVE_C68K=1)
 	include_directories(${CMAKE_CURRENT_BINARY_DIR}/c68k)
 	set(yabause_SOURCES ${yabause_SOURCES} c68k/c68kexec.c c68k/c68k.c m68kc68k.c)
+	set(yabause_HEADERS ${yabause_HEADERS} c68k/c68k.h m68kc68k.h)
 	if (MSVC)
 		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "/Od /wd4146")
 	else()
@@ -396,7 +431,8 @@ option(YAB_WANT_Q68 "enable q68 compilation" OFF)
 if (YAB_WANT_Q68)
 	add_definitions(-DHAVE_Q68=1)
 	set(yabause_SOURCES ${yabause_SOURCES}
-		m68kq68.c q68/q68.c q68/q68-core.c q68/q68-disasm.c
+		m68kq68.c q68/q68.c q68/q68-core.c q68/q68-disasm.c)
+	set(yabause_HEADERS ${yabause_HEADERS}
 		q68/q68-const.h q68/q68.h q68/q68-internal.h q68/q68-jit.h q68/q68-jit-psp.h q68/q68-jit-x86.h)
 endif()
 
@@ -405,6 +441,7 @@ option(YAB_WANT_GDBSTUB "enable gdb stub" OFF)
 if (YAB_WANT_GDBSTUB)
     add_definitions(-DHAVE_GDBSTUB=1)
     set(yabause_SOURCES ${yabause_SOURCES} gdb/stub.c gdb/client.c gdb/packet.c)
+	set(yabause_HEADERS ${yabause_HEADERS} gdb/stub.h gdb/client.h gdb/packet.h)
 endif()
 
 # *DEBUG
@@ -459,6 +496,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
 	if (LINUX_HAS_JOYSTICK)
 		set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
+		set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
 	endif()
 
 	check_c_source_compiles("
@@ -513,7 +551,7 @@ endif ()
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
-add_library(yabause ${yabause_SOURCES})
+add_library(yabause ${yabause_SOURCES} ${yabause_HEADERS})
 
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)

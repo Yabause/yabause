@@ -2,7 +2,11 @@ project( yabause-qt )
 
 yab_port_start()
 
-find_package(Qt5 COMPONENTS Widgets)
+option(YAB_USE_QT5 "Use Qt 5 if available." ON)
+
+if(YAB_USE_QT5) 
+	find_package(Qt5 COMPONENTS Widgets QUIET)
+endif()
 
 if(Qt5_FOUND) 
 	message(STATUS "Qt5 Found")
@@ -247,7 +251,13 @@ if (WIN32)
 		get_filename_component(SDL_BINARY_DIR ${SDL_LIBRARY} PATH)
 		install(DIRECTORY ${SDL_BINARY_DIR}/
 			DESTINATION "."
-			FILES_MATCHING PATTERN "SDL*.dll")
+			FILES_MATCHING PATTERN "SDL.dll")
+	endif ()
+	if (SDL2_FOUND)
+		get_filename_component(SDL2_BINARY_DIR ${SDL2_LIBRARY} PATH)
+		install(DIRECTORY ${SDL2_BINARY_DIR}/
+			DESTINATION "."
+			FILES_MATCHING PATTERN "SDL2.dll")
 	endif ()
 	if(Qt5_FOUND) 
 		install(FILES ${QT_BINARY_DIR}/Qt5Core.dll DESTINATION ".")
