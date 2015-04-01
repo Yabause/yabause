@@ -29,12 +29,15 @@ import android.graphics.RectF;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
+import java.util.HashMap;
 
 class PadEvent {
     final static int BUTTON_UP = 0;
     final static int BUTTON_RIGHT = 1;
     final static int BUTTON_DOWN = 2;
     final static int BUTTON_LEFT = 3;
+    final static int BUTTON_RIGHT_TRIGGER = 4;
+    final static int BUTTON_LEFT_TRIGGER = 5;
     final static int BUTTON_START = 6;
     final static int BUTTON_A = 7;
     final static int BUTTON_B = 8;
@@ -42,6 +45,7 @@ class PadEvent {
     final static int BUTTON_X = 10;
     final static int BUTTON_Y = 11;
     final static int BUTTON_Z = 12;
+    final static int BUTTON_LAST = 13;
 
     private int action;
     private int key;
@@ -60,23 +64,65 @@ class PadEvent {
     }
 }
 
+class PadButton {
+    protected Rect rect;
+
+    PadButton() {
+        rect = new Rect();
+    }
+
+    public void updateRect(int x1, int y1, int x2, int y2) {
+        rect.set(x1, y1, x2, y2);
+    }
+
+    public boolean contains(int x, int y) {
+        return rect.contains(x, y);
+    }
+
+    public void draw(Canvas canvas, Paint back, Paint front) {
+    }
+}
+
+class DPadButton extends PadButton {
+    public void draw(Canvas canvas, Paint back, Paint front) {
+        canvas.drawRect(rect, back);
+    }
+}
+
+class StartButton extends PadButton {
+    public void draw(Canvas canvas, Paint back, Paint front) {
+        canvas.drawOval(new RectF(rect), back);
+    }
+}
+
+class ActionButton extends PadButton {
+    private int width;
+    private String text;
+    private int textsize;
+
+    ActionButton(int w, String t, int ts) {
+        super();
+        width = w;
+        text = t;
+        textsize = ts;
+    }
+
+    public void draw(Canvas canvas, Paint back, Paint front) {
+        canvas.drawCircle(rect.centerX(), rect.centerY(), width, back);
+        front.setTextSize(textsize);
+        front.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText(text, rect.centerX(), rect.centerY() + (width / 2), front);
+    }
+}
+
 interface OnPadListener {
     public abstract boolean onPad(View v, PadEvent event);
 }
 
 class YabausePad extends View implements OnTouchListener {
-    private Rect up;
-    private Rect right;
-    private Rect down;
-    private Rect left;
-    private Rect start;
-    private Rect a;
-    private Rect b;
-    private Rect c;
-    private Rect x;
-    private Rect y;
-    private Rect z;
+    private PadButton buttons[];
     private OnPadListener listener = null;
+    private HashMap<Integer, Integer> active;
 
     public YabausePad(Context context) {
         super(context);
@@ -95,39 +141,42 @@ class YabausePad extends View implements OnTouchListener {
 
     private void init() {
         setOnTouchListener(this);
+
+        buttons = new PadButton[PadEvent.BUTTON_LAST];
+
+        buttons[PadEvent.BUTTON_UP]    = new DPadButton();
+        buttons[PadEvent.BUTTON_RIGHT] = new DPadButton();
+        buttons[PadEvent.BUTTON_DOWN]  = new DPadButton();
+        buttons[PadEvent.BUTTON_LEFT]  = new DPadButton();
+
+        buttons[PadEvent.BUTTON_RIGHT_TRIGGER] = new PadButton();
+        buttons[PadEvent.BUTTON_LEFT_TRIGGER]  = new PadButton();
+
+        buttons[PadEvent.BUTTON_START] = new StartButton();
+
+        buttons[PadEvent.BUTTON_A] = new ActionButton(30, "A", 40);
+        buttons[PadEvent.BUTTON_B] = new ActionButton(30, "B", 40);
+        buttons[PadEvent.BUTTON_C] = new ActionButton(30, "C", 40);
+
+        buttons[PadEvent.BUTTON_X] = new ActionButton(20, "X", 25);
+        buttons[PadEvent.BUTTON_Y] = new ActionButton(20, "Y", 25);
+        buttons[PadEvent.BUTTON_Z] = new ActionButton(20, "Z", 25);
+
+        active = new HashMap<Integer, Integer>();
     }
 
     @Override public void onDraw(Canvas canvas) {
         Paint paint = new Paint();
         paint.setARGB(0x80, 0x80, 0x80, 0x80);
+        Paint apaint = new Paint();
+        apaint.setARGB(0x80, 0xFF, 0x00, 0x00);
+        Paint tpaint = new Paint();
+        tpaint.setARGB(0x80, 0xFF, 0xFF, 0xFF);
 
-        canvas.drawRect(up, paint);
-        canvas.drawRect(right, paint);
-        canvas.drawRect(down, paint);
-        canvas.drawRect(left, paint);
-
-        canvas.drawOval(new RectF(start), paint);
-
-        canvas.drawCircle(a.centerX(), a.centerY(), 30, paint);
-        canvas.drawCircle(b.centerX(), b.centerY(), 30, paint);
-        canvas.drawCircle(c.centerX(), c.centerY(), 30, paint);
-
-        canvas.drawCircle(x.centerX(), x.centerY(), 20, paint);
-        canvas.drawCircle(y.centerX(), y.centerY(), 20, paint);
-        canvas.drawCircle(z.centerX(), z.centerY(), 20, paint);
-
-        paint.setARGB(0x80, 0xFF, 0xFF, 0xFF);
-        paint.setTextAlign(Paint.Align.CENTER);
-
-        paint.setTextSize(40);
-        canvas.drawText("A", a.centerX(), a.centerY() + 15, paint);
-        canvas.drawText("B", b.centerX(), b.centerY() + 15, paint);
-        canvas.drawText("C", c.centerX(), c.centerY() + 15, paint);
-
-        paint.setTextSize(25);
-        canvas.drawText("X", x.centerX(), x.centerY() + 10, paint);
-        canvas.drawText("Y", y.centerX(), y.centerY() + 10, paint);
-        canvas.drawText("Z", z.centerX(), z.centerY() + 10, paint);
+        for(int i = 0;i < PadEvent.BUTTON_LAST;i++) {
+            Paint p = active.containsValue(i) ? apaint : paint;
+            buttons[i].draw(canvas, p, tpaint);
+        }
     }
 
     public void setOnPadListener(OnPadListener listener) {
@@ -136,50 +185,52 @@ class YabausePad extends View implements OnTouchListener {
 
     public boolean onTouch(View v, MotionEvent event) {
         int action = event.getActionMasked();
-        int posx = (int) event.getX();
-        int posy = (int) event.getY();
+        int index = event.getActionIndex();
+        int posx = (int) event.getX(index);
+        int posy = (int) event.getY(index);
         PadEvent pe = null;
 
-        if ((action != event.ACTION_DOWN) && (action != event.ACTION_UP)) return false;
+        if ((action == event.ACTION_DOWN) || (action == event.ACTION_POINTER_DOWN)) {
+            for(int i = 0;i < PadEvent.BUTTON_LAST;i++) {
+                if (buttons[i].contains(posx, posy)) {
+                    active.put(index, i);
+                    pe = new PadEvent(action, i);
+                }
+            }
+        }
 
-        if (up.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_UP);
-        if (right.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_RIGHT);
-        if (down.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_DOWN);
-        if (left.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_LEFT);
+        if (((action == event.ACTION_UP) || (action == event.ACTION_POINTER_UP)) && active.containsKey(index)) {
+            int i = active.remove(index);
+            pe = new PadEvent(action, i);
+        }
 
-        if (start.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_START);
+        if ((listener != null) && (pe != null)) {
+            invalidate();
+            listener.onPad(v, pe);
+            return true;
+        }
 
-        if (a.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_A);
-        if (b.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_B);
-        if (c.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_C);
-
-        if (x.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_X);
-        if (y.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_Y);
-        if (z.contains(posx, posy)) pe = new PadEvent(action, pe.BUTTON_Z);
-
-        if ((listener != null) && (pe != null)) listener.onPad(v, pe);
-
-        return true;
+        return false;
     }
 
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
 
-        up =    new Rect(100, getHeight() - 210, 140, getHeight() - 150);
-        right = new Rect(150, getHeight() - 140, 210, getHeight() - 100);
-        down =  new Rect(100, getHeight() - 90,  140, getHeight() - 30);
-        left =  new Rect(30,  getHeight() - 140, 90,  getHeight() - 100);
+        buttons[PadEvent.BUTTON_UP].updateRect(100, getHeight() - 210, 140, getHeight() - 150);
+        buttons[PadEvent.BUTTON_RIGHT].updateRect(150, getHeight() - 140, 210, getHeight() - 100);
+        buttons[PadEvent.BUTTON_DOWN].updateRect(100, getHeight() - 90,  140, getHeight() - 30);
+        buttons[PadEvent.BUTTON_LEFT].updateRect(30,  getHeight() - 140, 90,  getHeight() - 100);
 
-        start = new Rect(getWidth() / 2 - 40, getHeight() - 60, getWidth() / 2 + 40, getHeight() - 15);
+        buttons[PadEvent.BUTTON_START].updateRect(getWidth() / 2 - 40, getHeight() - 60, getWidth() / 2 + 40, getHeight() - 15);
 
-        a = new Rect(getWidth() - 235, getHeight() - 75, getWidth() - 185, getHeight() - 25);
-        b = new Rect(getWidth() - 165, getHeight() - 125, getWidth() - 115, getHeight() - 75);
-        c = new Rect(getWidth() - 75, getHeight() - 155, getWidth() - 25, getHeight() - 105);
+        buttons[PadEvent.BUTTON_A].updateRect(getWidth() - 235, getHeight() - 75, getWidth() - 185, getHeight() - 25);
+        buttons[PadEvent.BUTTON_B].updateRect(getWidth() - 165, getHeight() - 125, getWidth() - 115, getHeight() - 75);
+        buttons[PadEvent.BUTTON_C].updateRect(getWidth() - 75, getHeight() - 155, getWidth() - 25, getHeight() - 105);
 
-        x = new Rect(getWidth() - 280, getHeight() - 140, getWidth() - 240, getHeight() - 100);
-        y = new Rect(getWidth() - 210, getHeight() - 190, getWidth() - 170, getHeight() - 150);
-        z = new Rect(getWidth() - 120, getHeight() - 220, getWidth() - 80, getHeight() - 180);
+        buttons[PadEvent.BUTTON_X].updateRect(getWidth() - 280, getHeight() - 140, getWidth() - 240, getHeight() - 100);
+        buttons[PadEvent.BUTTON_Y].updateRect(getWidth() - 210, getHeight() - 190, getWidth() - 170, getHeight() - 150);
+        buttons[PadEvent.BUTTON_Z].updateRect(getWidth() - 120, getHeight() - 220, getWidth() - 80, getHeight() - 180);
 
         setMeasuredDimension(width, height);
     }
