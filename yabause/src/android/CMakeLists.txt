@@ -40,7 +40,6 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		res/layout/game_item.xml
 		res/layout/home.xml
 		res/layout/main.xml
-		res/menu/emulation.xml
 		res/values/strings.xml
 		res/xml/preferences.xml
 	)
@@ -103,7 +102,6 @@ set(yabause_android_RES
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/game_item.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/home.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/main.xml"
-	"${CMAKE_CURRENT_BINARY_DIR}/res/menu/emulation.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/values/strings.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/xml/preferences.xml"
 )

@@ -207,66 +207,6 @@ public class Yabause extends Activity implements OnPadListener
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.emulation, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-        case R.id.pause:
-            yabauseThread.pause();
-            return true;
-        case R.id.quit:
-            this.finish();
-            return true;
-        case R.id.resume:
-            yabauseThread.resume();
-            return true;
-        case R.id.settings:
-            Intent intent = new Intent(this, YabauseSettings.class);
-            startActivity(intent);
-            return true;
-        case R.id.screenshot:
-            Bitmap bitmap = Bitmap.createBitmap(320, 224, Bitmap.Config.ARGB_8888);
-            yabauseThread.screenshot(bitmap);
-            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-            if (! path.isDirectory()) path.mkdir();
-            File file = new File(path, "screenshot.png");
-            try {
-                file.createNewFile();
-                FileOutputStream ostream = new FileOutputStream(file);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, ostream);
-                ostream.close();
-
-                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                Uri contentUri = Uri.fromFile(file);
-                mediaScanIntent.setData(contentUri);
-                this.sendBroadcast(mediaScanIntent);
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-            return true;
-        default:
-            return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        if (yabauseThread.paused()) {
-            menu.setGroupVisible(R.id.paused, true);
-            menu.setGroupVisible(R.id.running, false);
-        } else {
-            menu.setGroupVisible(R.id.paused, false);
-            menu.setGroupVisible(R.id.running, true);
-        }
-        return true;
-    }
-
-    @Override
     public Dialog onCreateDialog(int id, Bundle args) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(args.getString("message"))
