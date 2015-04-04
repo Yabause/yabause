@@ -89,9 +89,9 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("pref_bios")) {
-            ListPreference biosPref = (ListPreference) findPreference(key);
-            biosPref.setSummary(biosPref.getEntry());
+        if (key.equals("pref_bios") || key.equals("pref_cart")) {
+            ListPreference pref = (ListPreference) findPreference(key);
+            pref.setSummary(pref.getEntry());
         }
     }
 
