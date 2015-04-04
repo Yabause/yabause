@@ -86,6 +86,7 @@ class YabauseRunnable implements Runnable
     {
         handler = new InputHandler(this);
         int ok = init(yabause);
+        Log.v("Yabause", "init = " + ok);
         inited = (ok == 0);
     }
 
@@ -159,6 +160,15 @@ public class Yabause extends Activity implements OnPadListener
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         readPreferences();
+
+        Intent intent = getIntent();
+        String game = intent.getStringExtra("org.yabause.android.FileName");
+
+        if (game.length() > 0) {
+            YabauseStorage storage = YabauseStorage.getStorage();
+            gamepath = storage.getGamePath(game);
+        } else
+            gamepath = "";
 
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
@@ -314,13 +324,6 @@ public class Yabause extends Activity implements OnPadListener
             biospath = storage.getBiosPath(bios);
         } else
             biospath = "";
-
-        String game = sharedPref.getString("pref_game", "");
-        if (game.length() > 0) {
-            YabauseStorage storage = YabauseStorage.getStorage();
-            gamepath = storage.getGamePath(game);
-        } else
-            gamepath = "";
 
         String cart = sharedPref.getString("pref_cart", "");
         if (cart.length() > 0) {

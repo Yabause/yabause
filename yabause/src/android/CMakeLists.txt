@@ -18,12 +18,16 @@ endif()
 
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	set(yabause_android_SHADOW
+		build.xml
 		project.properties
 		jni/yui.c
 		jni/miniegl.h
 		jni/sndaudiotrack.c
 		jni/sndaudiotrack.h
 		src/org/yabause/android/Cartridge.java
+		src/org/yabause/android/GameList.java
+		src/org/yabause/android/GameListAdapter.java
+		src/org/yabause/android/Home.java
 		src/org/yabause/android/Yabause.java
 		src/org/yabause/android/YabauseAudio.java
 		src/org/yabause/android/YabauseView.java
@@ -33,6 +37,8 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		res/drawable-hdpi/icon.png
 		res/drawable-ldpi/icon.png
 		res/drawable-mdpi/icon.png
+		res/layout/game_item.xml
+		res/layout/home.xml
 		res/layout/main.xml
 		res/menu/emulation.xml
 		res/values/strings.xml
@@ -67,6 +73,7 @@ add_custom_command(
 	COMMAND ${SDK_ANDROID} update project -p "${CMAKE_CURRENT_BINARY_DIR}"
 	DEPENDS
 		"${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
+		"${CMAKE_CURRENT_BINARY_DIR}/build.xml"
 		"${CMAKE_CURRENT_BINARY_DIR}/project.properties"
 		"${CMAKE_CURRENT_BINARY_DIR}/jni/Android.mk"
 )
@@ -93,6 +100,8 @@ set(yabause_android_RES
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-hdpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-ldpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-mdpi/icon.png"
+	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/game_item.xml"
+	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/home.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/main.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/menu/emulation.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/values/strings.xml"
@@ -100,6 +109,9 @@ set(yabause_android_RES
 )
 set(yabause_android_SRC
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Cartridge.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameList.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameListAdapter.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Home.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Yabause.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseAudio.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseView.java"

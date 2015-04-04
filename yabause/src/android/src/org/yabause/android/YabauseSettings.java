@@ -65,34 +65,6 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             p.setSummary("built-in bios");
         }
 
-        /* game */
-        ListPreference game = (ListPreference) getPreferenceManager().findPreference("pref_game");
-
-        List<CharSequence> gamelabels = new ArrayList<CharSequence>();
-        List<CharSequence> gamevalues = new ArrayList<CharSequence>();
-
-        CharSequence[] gamefiles = storage.getGameFiles();
-        if ((gamefiles != null) && (gamefiles.length > 0)) {
-
-            for(CharSequence gamefile : gamefiles) {
-                gamelabels.add(gamefile);
-                gamevalues.add(gamefile);
-            }
-
-            CharSequence[] gameentries = new CharSequence[gamelabels.size()];
-            gamelabels.toArray(gameentries);
-
-            CharSequence[] gameentryValues = new CharSequence[gamevalues.size()];
-            gamevalues.toArray(gameentryValues);
-
-            game.setEntries(gameentries);
-            game.setEntryValues(gameentryValues);
-            game.setSummary(game.getEntry());
-        } else {
-            game.setEnabled(false);
-            game.setSummary("no game found");
-        }
-
         /* cartridge */
         ListPreference cart = (ListPreference) getPreferenceManager().findPreference("pref_cart");
 
@@ -120,9 +92,6 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         if (key.equals("pref_bios")) {
             ListPreference biosPref = (ListPreference) findPreference(key);
             biosPref.setSummary(biosPref.getEntry());
-        } else if (key.equals("pref_game")) {
-            ListPreference gamePref = (ListPreference) findPreference(key);
-            gamePref.setSummary(gamePref.getEntry());
         }
     }
 
