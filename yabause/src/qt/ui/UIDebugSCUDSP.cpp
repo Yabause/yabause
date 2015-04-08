@@ -61,33 +61,30 @@ UIDebugSCUDSP::UIDebugSCUDSP( YabauseThread *mYabauseThread, QWidget* p )
    size.setWidth(lwRegisters->fontMetrics().averageCharWidth() * 80);
    lwDisassembledCode->setMinimumSize(size);
 
-   updateRegList();
-   if (ScuRegs)
-   {
-      scudspregs_struct regs;
-      const scucodebreakpoint_struct *cbp;
-      int i;
+	if (ScuRegs)
+	{
+		const scucodebreakpoint_struct *cbp;
+		int i;
 
-      cbp = ScuDspGetBreakpointList();
+		cbp = ScuDspGetBreakpointList();
 
-      for (i = 0; i < MAX_BREAKPOINTS; i++)
-      {
-         QString text;
-         if (cbp[i].addr != 0xFFFFFFFF)
-         {
-            text.sprintf("%08X", (int)cbp[i].addr);
-            lwCodeBreakpoints->addItem(text);
-         }
-      }
+		for (i = 0; i < MAX_BREAKPOINTS; i++)
+		{
+			QString text;
+			if (cbp[i].addr != 0xFFFFFFFF)
+			{
+				text.sprintf("%08X", (int)cbp[i].addr);
+				lwCodeBreakpoints->addItem(text);
+			}
+		}
 
-      lwDisassembledCode->setDisassembleFunction(SCUDSPDis);
-      lwDisassembledCode->setEndAddress(0x100);
-      lwDisassembledCode->setMinimumInstructionSize(1);
-      ScuDspGetRegisters(&regs);
-      updateCodeList(regs.PC);
+		lwDisassembledCode->setDisassembleFunction(SCUDSPDis);
+		lwDisassembledCode->setEndAddress(0x100);
+		lwDisassembledCode->setMinimumInstructionSize(1);
+		ScuDspSetBreakpointCallBack(SCUDSPBreakpointHandler);
+	}
 
-      ScuDspSetBreakpointCallBack(SCUDSPBreakpointHandler);
-   }
+	updateAll();
 }
 
 void UIDebugSCUDSP::updateRegList()
@@ -163,6 +160,17 @@ void UIDebugSCUDSP::updateCodeList(u32 addr)
    lwDisassembledCode->setPC(addr);
 }
 
+void UIDebugSCUDSP::updateAll()
+{
+	updateRegList();
+	if (ScuRegs)
+	{
+		scudspregs_struct regs;
+		ScuDspGetRegisters(&regs);
+		updateCodeList(regs.PC);
+	}
+}
+
 u32 UIDebugSCUDSP::getRegister(int index, int *size)
 {
    *size = 0;
@@ -186,6 +194,7 @@ bool UIDebugSCUDSP::delCodeBreakpoint(u32 addr)
 void UIDebugSCUDSP::stepInto()
 {
    ScuDspStep();
+   updateAll();
 }
 
 void UIDebugSCUDSP::reserved1()
