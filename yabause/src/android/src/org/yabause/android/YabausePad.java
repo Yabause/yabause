@@ -20,6 +20,7 @@
 package org.yabause.android;
 
 import android.view.MotionEvent;
+import android.view.KeyEvent;
 import android.view.View.OnTouchListener;
 import android.view.View;
 import android.graphics.Canvas;
@@ -31,38 +32,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import java.util.HashMap;
 
-class PadEvent {
-    final static int BUTTON_UP = 0;
-    final static int BUTTON_RIGHT = 1;
-    final static int BUTTON_DOWN = 2;
-    final static int BUTTON_LEFT = 3;
-    final static int BUTTON_RIGHT_TRIGGER = 4;
-    final static int BUTTON_LEFT_TRIGGER = 5;
-    final static int BUTTON_START = 6;
-    final static int BUTTON_A = 7;
-    final static int BUTTON_B = 8;
-    final static int BUTTON_C = 9;
-    final static int BUTTON_X = 10;
-    final static int BUTTON_Y = 11;
-    final static int BUTTON_Z = 12;
-    final static int BUTTON_LAST = 13;
-
-    private int action;
-    private int key;
-
-    PadEvent(int action, int key) {
-        this.action = action;
-        this.key = key;
-    }
-
-    public int getAction() {
-        return this.action;
-    }
-
-    public int getKey() {
-        return this.key;
-    }
-}
+import org.yabause.android.PadEvent;
 
 class PadButton {
     protected Rect rect;
@@ -116,7 +86,7 @@ class ActionButton extends PadButton {
 }
 
 interface OnPadListener {
-    public abstract boolean onPad(View v, PadEvent event);
+    public abstract boolean onPad(PadEvent event);
 }
 
 class YabausePad extends View implements OnTouchListener {
@@ -206,7 +176,7 @@ class YabausePad extends View implements OnTouchListener {
 
         if ((listener != null) && (pe != null)) {
             invalidate();
-            listener.onPad(v, pe);
+            listener.onPad(pe);
             return true;
         }
 
