@@ -23,7 +23,7 @@
     \brief OpenGL video renderer
 */
 
-#ifdef HAVE_LIBGL
+#if defined(HAVE_LIBGL) || defined(__ANDROID__)
 
 #include "vidogl.h"
 #include "vidshared.h"
@@ -1585,7 +1585,10 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
       }
   
    }
-   
+   tile.cor = info->cor;
+   tile.cog = info->cog;
+   tile.cob = info->cob;
+
    if (1 == YglIsCached(cacheaddr,&c) )
    {
       YglCachedQuad(&tile, &c);
@@ -1797,12 +1800,19 @@ static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
+inline FASTCALL DoColorOffset(void *info, u32 pixel)
+{
+    return pixel;
+}
+
+#if 0
 static u32 FASTCALL DoColorOffset(void *info, u32 pixel)
 {
     return COLOR_ADD(pixel, ((vdp2draw_struct *)info)->cor,
                      ((vdp2draw_struct *)info)->cog,
                      ((vdp2draw_struct *)info)->cob);
 }
+#endif
 
 
 
@@ -1846,8 +1856,14 @@ static INLINE void ReadVdp2ColorOffset(vdp2draw_struct *info, int mask)
 
       info->PostPixelFetchCalc = &DoColorOffset;
    }
-   else // color offset disable
+   else{ // color offset disable
+
       info->PostPixelFetchCalc = &DoNothing;
+    info->cor=0;
+      info->cob=0;
+      info->cog=0;
+
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2193,7 +2209,7 @@ int _VIDOGLIsFullscreen;
 
 void VIDOGLResize(unsigned int w, unsigned int h, int on)
 {
-   glDeleteTextures(1, &_Ygl->texture);
+//   glDeleteTextures(1, &_Ygl->texture);
 
    _VIDOGLIsFullscreen = on;
 
@@ -2657,11 +2673,11 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
-            YglCachedQuad(&sprite, &cash);
+            YglCacheQuadGrowShading(&sprite, NULL,&cash);
             return;
          }
 
-         YglQuad(&sprite, &texture,&cash);
+         YglQuadGrowShading(&sprite, &texture,NULL,&cash);
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -2760,7 +2776,7 @@ void VIDOGLVdp1PolygonDraw(void)
    {
        YglQuadGrowShading(&polygon, &texture,col,NULL);
    }else{
-      YglQuad(&polygon, &texture,NULL);
+      YglQuadGrowShading(&polygon, &texture,NULL,NULL);
    }
    
    if (color == 0)
@@ -3046,7 +3062,9 @@ static void Vdp2DrawBackScreen(void)
    static unsigned char lineColors[512 * 3];
    static int line[512*4];
 
+#if defined(__ANDROID__) || defined(_OGLES3_)
 
+#else
    if (Vdp2Regs->VRSIZE & 0x8000)
       scrAddr = (((Vdp2Regs->BKTAU & 0x7) << 16) | Vdp2Regs->BKTAL) * 2;
    else
@@ -3099,6 +3117,7 @@ static void Vdp2DrawBackScreen(void)
       glColor3ub(0xFF, 0xFF, 0xFF);
       glEnableClientState(GL_TEXTURE_COORD_ARRAY);
    }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

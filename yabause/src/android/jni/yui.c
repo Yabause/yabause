@@ -18,6 +18,8 @@
 */
 
 #include <jni.h>
+#include <android/native_window.h> // requires ndk r5 or newer
+#include <android/native_window_jni.h> // requires ndk r5 or newer
 #include <android/bitmap.h>
 #include <android/log.h>
 
@@ -25,6 +27,7 @@
 #include "yabause.h"
 #include "scsp.h"
 #include "vidsoft.h"
+#include "vidogl.h"
 #include "peripheral.h"
 #include "m68kcore.h"
 #include "sh2core.h"
@@ -37,18 +40,13 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
-#define _ANDROID_2_2_
-#ifdef _ANDROID_2_2_
-#include "miniegl.h"
-#else
 #include <EGL/egl.h>
-#endif
-
-#include <GLES/gl.h>
-#include <GLES/glext.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
 #include <pthread.h>
 
 #include "sndaudiotrack.h"
+#include "sndopensl.h"
 
 JavaVM * yvm;
 static jobject yabause;
@@ -57,20 +55,29 @@ static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
 
 EGLDisplay g_Display = EGL_NO_DISPLAY;
-EGLSurface g_Surface = EGL_NO_SURFACE; 
-EGLContext g_Context = EGL_NO_CONTEXT; 
+EGLSurface g_Surface = EGL_NO_SURFACE;
+EGLContext g_Context = EGL_NO_CONTEXT;
+ANativeWindow *g_window = 0;
 GLuint g_FrameBuffer = 0;
 GLuint g_VertexBuffer = 0;
 int g_buf_width = -1;
 int g_buf_height = -1;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
-float vertices [] = { 
+float vertices [] = {
    0, 0, 0, 0,
-   320, 0, 0, 0, 
-   320, 224, 0, 0, 
+   320, 0, 0, 0,
+   320, 224, 0, 0,
    0, 224, 0, 0
 };
 
+enum RenderThreadMessage {
+        MSG_NONE = 0,
+        MSG_WINDOW_SET,
+        MSG_RENDER_LOOP_EXIT
+};
+
+int g_msg = MSG_NONE;
+pthread_t _threadId;
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
@@ -105,6 +112,7 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
+&SNDOpenSL,
 &SNDAudioTrack,
 NULL
 };
@@ -112,6 +120,7 @@ NULL
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
 &VIDSoft,
+&VIDOGL,
 NULL
 };
 
@@ -125,7 +134,7 @@ int printf( const char * fmt, ... )
    va_start(ap, fmt);
    int result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
    va_end(ap);
-   return result;   
+   return result;
 }
 
 const char * GetBiosPath()
@@ -135,8 +144,9 @@ const char * GetBiosPath()
     jstring message;
     jboolean dummy;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+      return NULL;
+    }
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getBiosPath = (*env)->GetMethodID(env, yclass, "getBiosPath", "()Ljava/lang/String;");
@@ -154,8 +164,9 @@ const char * GetGamePath()
     jstring message;
     jboolean dummy;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return NULL;
+    }
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getGamePath = (*env)->GetMethodID(env, yclass, "getGamePath", "()Ljava/lang/String;");
@@ -173,8 +184,9 @@ const char * GetMemoryPath()
     jstring message;
     jboolean dummy;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return NULL;
+    }
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getMemoryPath = (*env)->GetMethodID(env, yclass, "getMemoryPath", "()Ljava/lang/String;");
@@ -190,8 +202,9 @@ int GetCartridgeType()
     jclass yclass;
     jmethodID getCartridgeType;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return NULL;
+    }
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getCartridgeType = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()I");
@@ -205,8 +218,9 @@ const char * GetCartridgePath()
     jstring message;
     jboolean dummy;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return NULL;
+    }
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getCartridgePath = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()Ljava/lang/String;");
@@ -223,8 +237,9 @@ void YuiErrorMsg(const char *string)
     jmethodID errorMsg;
     jstring message;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK) {
         return;
+    }
 
     yclass = (*env)->GetObjectClass(env, yabause);
     errorMsg = (*env)->GetMethodID(env, yclass, "errorMsg", "(Ljava/lang/String;)V");
@@ -232,127 +247,70 @@ void YuiErrorMsg(const char *string)
     (*env)->CallVoidMethod(env, yabause, errorMsg, message);
 }
 
+void* threadStartCallback(void *myself);
+
 void YuiSwapBuffers(void)
 {
-   int buf_width, buf_height;
-   int error;
-   
-   
-   pthread_mutex_lock(&g_mtxGlLock);
-   if( g_Display == EGL_NO_DISPLAY ) 
-   {
-      pthread_mutex_unlock(&g_mtxGlLock);
+   if( g_Display == EGL_NO_DISPLAY ){
       return;
    }
-
-   if( eglMakeCurrent(g_Display,g_Surface,g_Surface,g_Context) == EGL_FALSE )
-   {
-         printf( "eglMakeCurrent fail %04x",eglGetError());
-         pthread_mutex_unlock(&g_mtxGlLock);
-         return;
-   }   
-      
-   glClearColor( 0.0f,0.0f,0.0f,1.0f);
-   glClear(GL_COLOR_BUFFER_BIT);
-
-   
-   if( g_FrameBuffer == 0 )
-   {
-      glEnable(GL_TEXTURE_2D);
-      glGenTextures(1,&g_FrameBuffer);
-      glBindTexture(GL_TEXTURE_2D, g_FrameBuffer);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);   
-      glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-      glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-      error = glGetError();
-      if( error != GL_NO_ERROR )
-      {
-         printf("gl error %d", error );
-         return;
-      }
-   }else{
-      glBindTexture(GL_TEXTURE_2D, g_FrameBuffer);
-   }
-   
-
-   VIDCore->GetGlSize(&buf_width, &buf_height);
-   glTexSubImage2D(GL_TEXTURE_2D, 0,0,0,buf_width,buf_height,GL_RGBA,GL_UNSIGNED_BYTE,dispbuffer);
-   
-   
-   if( g_VertexBuffer == 0 )
-   {
-      glGenBuffers(1, &g_VertexBuffer);
-      glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),vertices,GL_STATIC_DRAW);
-      error = glGetError();
-      if( error != GL_NO_ERROR )
-      {
-         printf("gl error %d", error );
-         return;
-      }      
-   }else{
-      glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
-   }
-  
-  if( buf_width != g_buf_width ||  buf_height != g_buf_height )
-  {
-     vertices[6]=vertices[10]=(float)buf_width/1024.f;
-     vertices[11]=vertices[15]=(float)buf_height/1024.f;
-     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),vertices,GL_STATIC_DRAW);
-     glVertexPointer(2, GL_FLOAT, sizeof(float)*4, 0);
-     glTexCoordPointer(2, GL_FLOAT, sizeof(float)*4, (void*)(sizeof(float)*2));   
-     glEnableClientState(GL_VERTEX_ARRAY);
-     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-     g_buf_width  = buf_width;
-     g_buf_height = buf_height;
-  }
-    
-   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+   OSDDisplayMessages();
    eglSwapBuffers(g_Display,g_Surface);
-   
-   pthread_mutex_unlock(&g_mtxGlLock);
 }
 
-int Java_org_yabause_android_YabauseRunnable_initViewport( int width, int height)
+JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_initViewport( JNIEnv* jenv, jobject obj, jobject surface, int width, int height)
 {
    int swidth;
    int sheight;
    int error;
    char * buf;
+   EGLContext Context;
+   EGLConfig cfg;
+   int configid;
+   int attrib_list[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
+   int config_attr_list[] = {EGL_CONFIG_ID,0,EGL_NONE} ;
+   EGLint num_config;
 
-   g_Display = eglGetCurrentDisplay();
-   g_Surface = eglGetCurrentSurface(EGL_READ);
-   g_Context = eglGetCurrentContext();
+    if (surface != 0) {
+        g_window = ANativeWindow_fromSurface(jenv, surface);
+        printf("Got window %p", g_window);
+    } else {
+        printf("Releasing window");
+        ANativeWindow_release(g_window);
+    }
 
-   eglQuerySurface(g_Display,g_Surface,EGL_WIDTH,&swidth);
-   eglQuerySurface(g_Display,g_Surface,EGL_HEIGHT,&sheight);
-   
-   glViewport(0,0,swidth,sheight);
-   
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glOrthof(0, 320, 224, 0, 1, 0);
-   
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
+    g_msg = MSG_WINDOW_SET;
 
-   glMatrixMode(GL_TEXTURE);
-   glLoadIdentity();
-   
-   glDisable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   
-   printf(glGetString(GL_VENDOR));
-   printf(glGetString(GL_RENDERER));
-   printf(glGetString(GL_VERSION));
-   printf(glGetString(GL_EXTENSIONS));
-   printf(eglQueryString(g_Display,EGL_EXTENSIONS));
-   eglSwapInterval(g_Display,0);
-   eglMakeCurrent(g_Display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT);
    return 0;
+}
+
+JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_lockGL()
+{
+   pthread_mutex_lock(&g_mtxGlLock);
+}
+
+JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_unlockGL()
+{
+   pthread_mutex_unlock(&g_mtxGlLock);
+}
+
+JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_toggleShowFps( JNIEnv* env )
+{
+    printf("%s","Java_org_yabause_android_YabauseRunnable_toggleShowFps");
+   ToggleFPS();
+}
+
+static int enableautofskip = 0;
+JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_toggleFrameSkip( JNIEnv* env )
+{
+    enableautofskip = 1 - enableautofskip;
+
+     printf("%s:%d","Java_org_yabause_android_YabauseRunnable_toggleFrameSkip",enableautofskip);
+
+    if (enableautofskip)
+       EnableAutoFrameSkip();
+    else
+       DisableAutoFrameSkip();
 }
 
 #ifdef _ANDROID_2_2_
@@ -364,37 +322,37 @@ int initEGLFunc()
    handle = dlopen("libEGL.so",RTLD_LAZY);
    if( handle == NULL )
    {
-      printf(dlerror());
+      printf("%s\n",dlerror());
       return -1;
    }
-   
+
    eglGetCurrentDisplay = dlsym(handle, "eglGetCurrentDisplay");
-   if( eglGetCurrentDisplay == NULL){ printf(dlerror()); return -1; }  
-   
+   if( eglGetCurrentDisplay == NULL){ printf("%s\n",dlerror()); return -1; }
+
    eglGetCurrentSurface = dlsym(handle, "eglGetCurrentSurface");
-   if( eglGetCurrentSurface == NULL){ printf(dlerror()); return -1; }  
-   
+   if( eglGetCurrentSurface == NULL){ printf("%s\n",dlerror()); return -1; }
+
    eglGetCurrentContext = dlsym(handle, "eglGetCurrentContext");
-   if( eglGetCurrentContext == NULL){ printf(dlerror()); return -1; }  
-   
+   if( eglGetCurrentContext == NULL){ printf("%s\n",dlerror()); return -1; }
+
    eglQuerySurface      = dlsym(handle, "eglQuerySurface");
-   if( eglQuerySurface == NULL){ printf(dlerror()); return -1; }  
-   
+   if( eglQuerySurface == NULL){ printf("%s\n",dlerror()); return -1; }
+
    eglSwapInterval      = dlsym(handle, "eglSwapInterval");
-   if( eglSwapInterval == NULL){ printf(dlerror()); return -1; }  
-   
+   if( eglSwapInterval == NULL){ printf("%s\n",dlerror()); return -1; }
+
    eglMakeCurrent       = dlsym(handle, "eglMakeCurrent");
-   if( eglMakeCurrent == NULL){ printf(dlerror()); return -1; }  
-   
+   if( eglMakeCurrent == NULL){ printf("%s\n",dlerror()); return -1; }
+
    eglSwapBuffers       = dlsym(handle, "eglSwapBuffers");
-   if( eglSwapBuffers == NULL){ printf(dlerror()); return -1; }  
-   
+   if( eglSwapBuffers == NULL){ printf("%s\n",dlerror()); return -1; }
+
    eglQueryString       = dlsym(handle, "eglQueryString");
-   if( eglQueryString == NULL){ printf(dlerror()); return -1; }  
-   
+   if( eglQueryString == NULL){ printf("%s\n",dlerror()); return -1; }
+
    eglGetError          = dlsym(handle, "eglGetError");
-   if( eglGetError == NULL){ printf(dlerror()); return -1; }   
-   
+   if( eglGetError == NULL){ printf("%s\n",dlerror()); return -1; }
+
    return 0;
 }
 #else
@@ -404,27 +362,133 @@ int initEGLFunc()
 }
 #endif
 
-int Java_org_yabause_android_YabauseRunnable_lockGL()
-{
-   pthread_mutex_lock(&g_mtxGlLock);  
-}
+char * s_biospath = NULL;
+char * s_cdpath = NULL;
+char * s_buppath = NULL;
+char * s_cartpath = NULL;
 
-int Java_org_yabause_android_YabauseRunnable_unlockGL()
+jint Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
 {
-   pthread_mutex_unlock(&g_mtxGlLock);  
-}
+    int res=0;
 
-
-jint
-Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
-{
-    yabauseinit_struct yinit;
-    int res;
-    void * padbits;
-    
     if( initEGLFunc() == -1 ) return -1;
 
     yabause = (*env)->NewGlobalRef(env, yab);
+
+    s_biospath = GetBiosPath();
+    s_cdpath = GetGamePath();
+    s_buppath = GetMemoryPath();
+    s_cartpath = GetCartridgePath();
+
+    pthread_create(&_threadId, 0, threadStartCallback, NULL );
+
+    return res;
+}
+
+int initEgl( ANativeWindow* window )
+{
+    int res;
+    yabauseinit_struct yinit;
+    void * padbits;
+
+     const EGLint attribs[] = {
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_BLUE_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_RED_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_DEPTH_SIZE,24,
+        EGL_STENCIL_SIZE,8,
+        EGL_NONE
+    };
+    EGLDisplay display;
+    EGLConfig config;
+    EGLint numConfigs;
+    EGLint format;
+    EGLSurface surface;
+    EGLContext context;
+    EGLint width;
+    EGLint height;
+    int tmp;
+    GLfloat ratio;
+    int attrib_list[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
+
+
+    printf("Initializing context");
+
+    if ((display = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY) {
+        printf("eglGetDisplay() returned error %d", eglGetError());
+        return -1;
+    }
+    if (!eglInitialize(display, 0, 0)) {
+        printf("eglInitialize() returned error %d", eglGetError());
+        return -1;
+    }
+
+    if (!eglChooseConfig(display, attribs, &config, 1, &numConfigs)) {
+        printf("eglChooseConfig() returned error %d", eglGetError());
+        destroy();
+        return -1;
+    }
+
+    if (!eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format)) {
+        printf("eglGetConfigAttrib() returned error %d", eglGetError());
+        destroy();
+        return -1;
+    }
+
+    printf("ANativeWindow_setBuffersGeometry");
+    ANativeWindow_setBuffersGeometry(window, 0, 0, format);
+
+    printf("eglCreateWindowSurface");
+    if (!(surface = eglCreateWindowSurface(display, config, window, 0))) {
+        printf("eglCreateWindowSurface() returned error %d", eglGetError());
+        destroy();
+        return -1;
+    }
+
+    printf("eglCreateContext");
+    if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
+        printf("eglCreateContext() returned error %d", eglGetError());
+        destroy();
+        return -1;
+    }
+
+    printf("eglMakeCurrent");
+    if (!eglMakeCurrent(display, surface, surface, context)) {
+        printf("eglMakeCurrent() returned error %d", eglGetError());
+        destroy();
+        return -1;
+    }
+   glClearColor( 0.0f, 0.0f,0.0f,1.0f);
+    if (!eglQuerySurface(display, surface, EGL_WIDTH, &width) ||
+        !eglQuerySurface(display, surface, EGL_HEIGHT, &height)) {
+        printf("eglQuerySurface() returned error %d", eglGetError());
+        destroy();
+        return -1;
+    }
+
+
+    g_Display = display;
+    g_Surface = surface;
+    g_Context = context;
+
+//    g_width = width;
+//    g_height = height;
+
+/*
+   tmp = width / 320;
+   width = 320 * tmp;
+   tmp = height /224;
+   height = 224 * tmp;
+   width = 320 * tmp;
+*/
+   printf("%s",glGetString(GL_VENDOR));
+   printf("%s",glGetString(GL_RENDERER));
+   printf("%s",glGetString(GL_VERSION));
+   printf("%s",glGetString(GL_EXTENSIONS));
+   printf("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
+
 
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
@@ -433,22 +497,28 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
 #else
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
-    yinit.vidcoretype = VIDCORE_SOFT;
-    yinit.sndcoretype = SNDCORE_AUDIOTRACK;
+    //yinit.vidcoretype = VIDCORE_SOFT;
+    yinit.vidcoretype = 1;
+    yinit.sndcoretype = SNDCORE_OPENSL;
+    //yinit.sndcoretype = SNDCORE_DUMMY;
+    //yinit.cdcoretype = CDCORE_DEFAULT;
     yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = CART_NONE;
     yinit.regionid = 0;
-    yinit.biospath = GetBiosPath();
-    yinit.cdpath = GetGamePath();
-    yinit.buppath = GetMemoryPath();
+
+    yinit.biospath = s_biospath;
+    yinit.cdpath = s_cdpath;
+    yinit.buppath = s_buppath;
+    yinit.cartpath = s_cartpath;
+
     yinit.mpegpath = mpegpath;
-    yinit.cartpath = GetCartridgePath();
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
-
     res = YabauseInit(&yinit);
-
-    OSDChangeCore(OSDCORE_SOFT);
+    if (res != 0) {
+      printf("Fail to YabauseInit %d", res);
+      return -1;
+    }
 
     PerPortReset();
     padbits = PerPadAdd(&PORTDATA1);
@@ -465,8 +535,28 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
 
     ScspSetFrameAccurate(1);
+    OSDChangeCore(OSDCORE_NANOVG);
 
-    return res;
+   VIDCore->Resize(width,height,0);
+   glViewport(0,0,width,height);
+
+   glClearColor( 0.0f, 0.0f,0.0f,1.0f);
+   glClear( GL_COLOR_BUFFER_BIT );
+   return 0;
+}
+
+destroy() {
+    printf("Destroying context");
+
+    eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext(g_Display, g_Context);
+    eglDestroySurface(g_Display, g_Surface);
+    eglTerminate(g_Display);
+
+    g_Display = EGL_NO_DISPLAY;
+    g_Surface = EGL_NO_SURFACE;
+    g_Context = EGL_NO_CONTEXT;
+    return;
 }
 
 void
@@ -478,7 +568,7 @@ Java_org_yabause_android_YabauseRunnable_deinit( JNIEnv* env )
 void
 Java_org_yabause_android_YabauseRunnable_exec( JNIEnv* env )
 {
-    YabauseExec();
+ //   YabauseExec();
 }
 
 void
@@ -563,3 +653,47 @@ jint JNI_OnLoad(JavaVM * vm, void * reserved)
     return JNI_VERSION_1_6;
 }
 
+
+void renderLoop()
+{
+    int renderingEnabled = 1;
+
+    printf("enter render loop!");
+
+    while (renderingEnabled != 0) {
+
+        pthread_mutex_lock(&g_mtxGlLock);
+
+        // process incoming messages
+        switch (g_msg) {
+
+            case MSG_WINDOW_SET:
+                if( initEgl( g_window ) != 0 ){
+                  pthread_mutex_unlock(&g_mtxGlLock);
+                  return;
+                }
+                break;
+
+            case MSG_RENDER_LOOP_EXIT:
+                renderingEnabled = 0;
+                destroy();
+                break;
+
+            default:
+                break;
+        }
+        g_msg = MSG_NONE;
+
+        if (g_Display) {
+           YabauseExec();
+        }
+        pthread_mutex_unlock(&g_mtxGlLock);
+    }
+}
+
+void* threadStartCallback(void *myself)
+{
+    renderLoop();
+    pthread_exit(0);
+    return NULL;
+}
