@@ -1,4 +1,4 @@
-/*  Copyright 2005-2006 Theo Berkau
+/*  Copyright 2012 Guillaume Duhamel
 
     This file is part of Yabause.
 
@@ -17,16 +17,12 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef VIDOGL_H
-#define VIDOGL_H
+#ifndef SNDOPENSL_H
+#define SNDOPENSL_H
 
-#if defined(HAVE_LIBGL) || defined(__ANDROID__)
+#define SNDCORE_OPENSL 5
 
-#include "vdp1.h"
+#include "scsp.h"
 
-#define VIDCORE_OGL   1
-
-extern VideoInterface_struct VIDOGL;
-#endif
-
+extern SoundInterface_struct SNDOpenSL;
 #endif

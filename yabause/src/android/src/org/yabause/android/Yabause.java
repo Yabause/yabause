@@ -45,6 +45,7 @@ import android.graphics.Bitmap;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.net.Uri;
+import android.view.Surface;
 
 class InputHandler extends Handler {
     private YabauseRunnable yr;
@@ -70,7 +71,7 @@ class YabauseRunnable implements Runnable
     public static native void exec();
     public static native void press(int key);
     public static native void release(int key);
-    public static native int initViewport( int width, int hieght);
+    public static native int initViewport( Surface sf, int width, int hieght);
     public static native int drawScreen();
     public static native int lockGL();
     public static native int unlockGL();
@@ -78,7 +79,7 @@ class YabauseRunnable implements Runnable
     public static native void enableFrameskip(int enable);
     public static native void setVolume(int volume);
     public static native void screenshot(Bitmap bitmap);
-    
+
     private boolean inited;
     private boolean paused;
     public InputHandler handler;
@@ -116,7 +117,7 @@ class YabauseRunnable implements Runnable
         if (inited && (! paused))
         {
             exec();
-            
+
             handler.post(this);
         }
     }

@@ -5,20 +5,18 @@ include(CheckIncludeFile)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
-set(yabause_HEADERS
-	bios.h
-	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
-	debug.h
-	error.h
-	japmodem.h 
-	m68kcore.h m68kd.h memory.h movie.h
-	netlink.h
-	osdcore.h
-	peripheral.h profile.h
-	scsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
-	threads.h titan/titan.h
-	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
-	yabause.h ygl.h yui.h)
+option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
+set(YAB_PORT_BUILT FALSE)
+set(YAB_PORTS "gtk;qt;dreamcast;cocoa" CACHE STRING "List of ports to build")
+
+if (ANDROID)
+add_definitions(-DYAB_PORT_OSD)
+add_definitions(-D_OGLES3_)
+endif()
+
+if( ${YAB_PORTS} STREQUAL "glfw" )
+    add_definitions(-D_OGLES3_)
+endif()
 
 set(yabause_SOURCES
 	bios.c
@@ -33,7 +31,19 @@ set(yabause_SOURCES
 	scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
-	yabause.c ygl.c yglshader.c)
+	yabause.c )
+if (1)
+set(yabause_SOURCES
+	${yabause_SOURCES}
+        yglcache.cpp
+	ygles.c
+	yglshaderes.c )
+else()
+set(yabause_SOURCES
+        ${yabause_SOURCES}
+        ygl.c
+        yglshader.c )
+endif()
 
 # new SCSP
 option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
@@ -240,7 +250,7 @@ if (MSVC)
 		set(DDK_DIR "$ENV{SYSTEMDRIVE}/WINDDK/7600.16385.0/")
         endif (EXISTS "$ENV{SYSTEMDRIVE}/WINDDK/3790.1830/")
 
-	add_definitions(-DHAVE_C99_VARIADIC_MACROS -D_CRT_SECURE_NO_WARNINGS -DC68K_NO_JUMP_TABLE 
+	add_definitions(-DHAVE_C99_VARIADIC_MACROS -D_CRT_SECURE_NO_WARNINGS -DC68K_NO_JUMP_TABLE
 			-D_UNICODE -DUNICODE)
 endif (MSVC)
 
@@ -331,7 +341,7 @@ if (WIN32)
 	if (YAB_NETWORK OR YAB_WANT_GDBSTUB)
     	# Add Winsock if necessary
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "wsock32")
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "ws2_32")        
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "ws2_32")
 	endif()
 
 endif (WIN32)
@@ -445,7 +455,7 @@ if (YAB_WANT_GDBSTUB)
 endif()
 
 # *DEBUG
-set(YAB_DEBUG "" CACHE STRING "List of enabled debug information") 
+set(YAB_DEBUG "" CACHE STRING "List of enabled debug information")
 foreach(DEBUG IN LISTS YAB_DEBUG)
 	if (${DEBUG} STREQUAL "main")
 		add_definitions(-DDEBUG=1)
@@ -532,10 +542,12 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
+    set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 if(ANDROID)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a9 -mfpu=neon -ffast-math")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -mcpu=cortex-a9 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti  ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC
@@ -582,9 +594,7 @@ if (NOT $ENV{PKGMANDIR} STREQUAL "")
     set(YAB_MAN_DIR $ENV{PKGMANDIR})
 endif ()
 
-option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
-set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "gtk;qt;dreamcast;cocoa" CACHE STRING "List of ports to build")
+
 foreach(PORT IN LISTS YAB_PORTS)
 	add_subdirectory(${PORT})
 endforeach(PORT)

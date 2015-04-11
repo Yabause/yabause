@@ -18,7 +18,18 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifdef HAVE_LIBGL
+#define USEVBO 0
+
+#if defined(HAVE_LIBGL) || defined(__ANDROID__)
+
+#ifdef __ANDROID__
+
+#include <GLES3/gl31.h>
+//#include <GLES3/gl3ext.h>
+#include <EGL/egl.h>
+
+#else // __ANDROID__
+
 #ifdef _WIN32
 #include <windows.h>
 #include <GL/gl.h>
@@ -36,9 +47,16 @@
     #ifdef __APPLE__
         #include <OpenGL/gl.h>
     #else
-        #include <GL/gl.h>
+#define GL_GLEXT_PROTOTYPES 1
+#define GLX_GLXEXT_PROTOTYPES 1
+#include <GLFW/glfw3.h>
     #endif
-#endif
+#endif // _arch_dreamcast
+
+#endif // __ANDROID__
+
+
+#include <stdarg.h>
 #include <string.h>
 
 #ifndef YGL_H
@@ -56,6 +74,10 @@ typedef struct {
 	int dst;
     int uclipmode;
     int blendmode;
+    s32 cor;
+    s32 cog;
+    s32 cob;
+
 } YglSprite;
 
 typedef struct {
@@ -87,7 +109,8 @@ void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, uns
 
 enum
 {
-   PG_NORMAL=0,
+   PG_NORMAL=1,
+   PG_VDP1_NORMAL,
    PG_VFP1_GOURAUDSAHDING,
    PG_VFP1_STARTUSERCLIP,
    PG_VFP1_ENDUSERCLIP,
@@ -96,13 +119,15 @@ enum
    PG_VDP2_ADDBLEND,
    PG_VDP2_DRAWFRAMEBUFF,    
    PG_VDP2_STARTWINDOW,
-   PG_VDP2_ENDWINDOW,    
+   PG_VDP2_ENDWINDOW,
+   PG_WINDOW,
    PG_MAX,
 };
 
 typedef struct {
    int prgid;
    GLuint prg;
+   GLuint vertexBuffer;
    int * quads;
    float * textcoords;
    float * vertexAttribute;
@@ -113,6 +138,12 @@ typedef struct {
    short ux1,uy1,ux2,uy2;
    int blendmode;
    int bwin0,logwin0,bwin1,logwin1,winmode;
+   GLuint vertexp;
+   GLuint texcoordp;
+   GLuint mtxModelView;
+   GLuint mtxTexture;
+   GLuint color_offset;
+   float color_offset_val[4];
    int (*setupUniform)(void *);
    int (*cleanupUniform)(void *);
 } YglProgram;
@@ -126,9 +157,17 @@ typedef struct {
    YglProgram * prg;
 } YglLevel;
 
+typedef struct
+{
+    GLfloat   m[4][4];
+} YglMatrix;
+
 typedef struct {
    GLuint texture;
+   GLuint pixelBufferID;
    int st;
+   char message[512];
+   int msglength;
    unsigned int width;
    unsigned int height;
    unsigned int depth;
@@ -141,7 +180,8 @@ typedef struct {
    int rwidth;
    int rheight;
    int drawframe;
-   GLuint rboid;
+   GLuint rboid_depth;
+   GLuint rboid_stencil;
    GLuint vdp1fbo;
    GLuint vdp1FrameBuff[2];
 
@@ -156,6 +196,12 @@ typedef struct {
    int win0_vertexcnt;
    int win1v[512*4];
    int win1_vertexcnt;
+
+   YglMatrix mtxModelView;
+   YglMatrix mtxTexture;
+
+   YglProgram windowpg;
+   YglProgram renderfb;
 
    YglLevel * levels;
 }  Ygl;
@@ -185,24 +231,41 @@ void YglCacheReset(void);
 // 0.. no belnd, 1.. Alpha, 2.. Add 
 int YglSetLevelBlendmode( int pri, int mode );
 
-int Ygl_uniformVDP2DrawFramebuffer( float from, float to , float * offsetcol );
+int Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol );
 
 void YglNeedToUpdateWindow();
 
-int YglProgramInit();
-int YglProgramChange( YglLevel * level, int prgid );
+void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz);
+void YglTranslatef(YglMatrix *result, GLfloat tx, GLfloat ty, GLfloat tz);
+void YglRotatef(YglMatrix *result, GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
+void YglFrustum(YglMatrix *result, float left, float right, float bottom, float top, float nearZ, float farZ);
+void YglPerspective(YglMatrix *result, float fovy, float aspect, float nearZ, float farZ);
+void YglOrtho(YglMatrix *result, float left, float right, float bottom, float top, float nearZ, float farZ);
+void YglLoadIdentity(YglMatrix *result);
+void YglMatrixMultiply(YglMatrix *result, YglMatrix *srcA, YglMatrix *srcB);
 
-#if 1  // Does anything need this?  It breaks a bunch of prototypes if
+int YglInitVertexBuffer( int initsize );
+void YglDeleteVertexBuffer();
+int YglUnMapVertexBuffer();
+int YglMapVertexBuffer();
+int YglUserDirectVertexBuffer();
+int YglUserVertexBuffer();
+int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
+int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
+intptr_t YglGetOffset( void* address );
+
+#if defined(__APPLE__) || defined(__ANDROID__)
+
+#else // defined(__APPLE__) || defined(__ANDROID__)
+
+#if 0  // Does anything need this?  It breaks a bunch of prototypes if
        // GLchar is typedef'd instead of #define'd  --AC
 #ifndef GLchar
 #define GLchar GLbyte
 #endif
 #endif  // 0
 
-#ifdef __APPLE__
-
-#else
-
+#if 0
 extern GLuint (STDCALL *glCreateProgram)(void);
 extern GLuint (STDCALL *glCreateShader)(GLenum);
 extern void (STDCALL *glShaderSource)(GLuint,GLsizei,const GLchar **,const GLint *);
@@ -248,6 +311,7 @@ extern PFNGLFRAMEBUFFERTEXTURELAYERPROC glFramebufferTextureLayer;
 extern PFNGLUNIFORM4FPROC glUniform4f;
 extern PFNGLUNIFORM1FPROC glUniform1f;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+#endif
 
 #ifdef WIN32
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;
