@@ -524,15 +524,15 @@ int YglGLInit(int width, int height) {
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
    
-   if( _Ygl->rboid != 0 ) glDeleteRenderbuffers(1,&_Ygl->rboid);
-   glGenRenderbuffers(1, &_Ygl->rboid);
-   glBindRenderbuffer(GL_RENDERBUFFER,_Ygl->rboid);
+   if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
+   glGenRenderbuffers(1, &_Ygl->rboid_depth);
+   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
    glRenderbufferStorage(GL_RENDERBUFFER,  GL_DEPTH24_STENCIL8, GlWidth, GlHeight);
    
    
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0], 0);
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid);
+   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
    if( status != GL_FRAMEBUFFER_COMPLETE )
    {
@@ -709,6 +709,8 @@ int YglInit(int width, int height, unsigned int depth) {
    if( glUniform1f == NULL ) glUniform1f = glUniform1fdmy;
 #endif
 
+   
+
 #ifdef WIN32   
    glActiveTexture = (PFNGLACTIVETEXTUREPROC)yglGetProcAddress("glActiveTexture");
    if( glActiveTexture == NULL ) glActiveTexture = glActiveTexturedmy;
@@ -734,14 +736,14 @@ int YglInit(int width, int height, unsigned int depth) {
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
    
-   glGenRenderbuffers(1, &_Ygl->rboid);
-   glBindRenderbuffer(GL_RENDERBUFFER,_Ygl->rboid);
+   glGenRenderbuffers(1, &_Ygl->rboid_depth);
+   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
    glRenderbufferStorage(GL_RENDERBUFFER,  GL_DEPTH24_STENCIL8, GlWidth, GlHeight);
     
    glGenFramebuffers(1,&_Ygl->vdp1fbo);
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0], 0);
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid);
+   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
    if( status != GL_FRAMEBUFFER_COMPLETE )
    {
@@ -1053,35 +1055,40 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    
    // Color
    vtxa = (program->vertexAttribute + (program->currentQuad * 2));
-   vtxa[0] = colors[0];
-   vtxa[1] = colors[1];
-   vtxa[2] = colors[2];
-   vtxa[3] = colors[3];   
-   
-   vtxa[4] = colors[4];
-   vtxa[5] = colors[5];   
-   vtxa[6] = colors[6];
-   vtxa[7] = colors[7];
-   
-   vtxa[8] = colors[8];
-   vtxa[9] = colors[9];
-   vtxa[10] = colors[10];
-   vtxa[11] = colors[11];
-   
-   vtxa[12] = colors[0];
-   vtxa[13] = colors[1];
-   vtxa[14] = colors[2];
-   vtxa[15] = colors[3];
+   if (colors == NULL) {
+     memset(vtxa, 0, sizeof(float) * 24);
+   }
+   else {
+     vtxa[0] = colors[0];
+     vtxa[1] = colors[1];
+     vtxa[2] = colors[2];
+     vtxa[3] = colors[3];
 
-   vtxa[16] = colors[8];
-   vtxa[17] = colors[9];
-   vtxa[18] = colors[10];
-   vtxa[19] = colors[11];
+     vtxa[4] = colors[4];
+     vtxa[5] = colors[5];
+     vtxa[6] = colors[6];
+     vtxa[7] = colors[7];
 
-   vtxa[20] = colors[12];
-   vtxa[21] = colors[13];
-   vtxa[22] = colors[14];
-   vtxa[23] = colors[15];
+     vtxa[8] = colors[8];
+     vtxa[9] = colors[9];
+     vtxa[10] = colors[10];
+     vtxa[11] = colors[11];
+
+     vtxa[12] = colors[0];
+     vtxa[13] = colors[1];
+     vtxa[14] = colors[2];
+     vtxa[15] = colors[3];
+
+     vtxa[16] = colors[8];
+     vtxa[17] = colors[9];
+     vtxa[18] = colors[10];
+     vtxa[19] = colors[11];
+
+     vtxa[20] = colors[12];
+     vtxa[21] = colors[13];
+     vtxa[22] = colors[14];
+     vtxa[23] = colors[15];
+   }
 
    // texture
    tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
@@ -1301,36 +1308,39 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
 
    // Color 
    vtxa = (program->vertexAttribute + (program->currentQuad * 2));
+   if (colors == NULL) {
+     memset(vtxa, 0, sizeof(float) * 24);
+   } else {
+     vtxa[0] = colors[0];
+     vtxa[1] = colors[1];
+     vtxa[2] = colors[2];
+     vtxa[3] = colors[3];
 
-   vtxa[0] = colors[0];
-   vtxa[1] = colors[1];
-   vtxa[2] = colors[2];
-   vtxa[3] = colors[3];   
-   
-   vtxa[4] = colors[4];
-   vtxa[5] = colors[5];   
-   vtxa[6] = colors[6];
-   vtxa[7] = colors[7];
-   
-   vtxa[8] = colors[8];
-   vtxa[9] = colors[9];
-   vtxa[10] = colors[10];
-   vtxa[11] = colors[11];
-   
-   vtxa[12] = colors[0];
-   vtxa[13] = colors[1];
-   vtxa[14] = colors[2];
-   vtxa[15] = colors[3];
+     vtxa[4] = colors[4];
+     vtxa[5] = colors[5];
+     vtxa[6] = colors[6];
+     vtxa[7] = colors[7];
 
-   vtxa[16] = colors[8];
-   vtxa[17] = colors[9];
-   vtxa[18] = colors[10];
-   vtxa[19] = colors[11];
+     vtxa[8] = colors[8];
+     vtxa[9] = colors[9];
+     vtxa[10] = colors[10];
+     vtxa[11] = colors[11];
 
-   vtxa[20] = colors[12];
-   vtxa[21] = colors[13];
-   vtxa[22] = colors[14];
-   vtxa[23] = colors[15];
+     vtxa[12] = colors[0];
+     vtxa[13] = colors[1];
+     vtxa[14] = colors[2];
+     vtxa[15] = colors[3];
+
+     vtxa[16] = colors[8];
+     vtxa[17] = colors[9];
+     vtxa[18] = colors[10];
+     vtxa[19] = colors[11];
+
+     vtxa[20] = colors[12];
+     vtxa[21] = colors[13];
+     vtxa[22] = colors[14];
+     vtxa[23] = colors[15];
+   }
 
    // Texture 
    tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
@@ -1405,7 +1415,7 @@ void YglRenderVDP1(void) {
    
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid);
+   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
    if( status != GL_FRAMEBUFFER_COMPLETE )
    {
@@ -1538,7 +1548,7 @@ void YglRenderFrameBuffer( int from , int to ) {
    offsetcol[2] = vdp1cob / 255.0f;
    offsetcol[3] = 0.0f;
    
-   Ygl_uniformVDP2DrawFramebuffer( (float)(from)/10.0f , (float)(to)/10.0f, offsetcol );
+   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[(_Ygl->drawframe^0x01)&0x01] );
    
    // Window Mode

@@ -1800,7 +1800,7 @@ static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-inline FASTCALL DoColorOffset(void *info, u32 pixel)
+FASTCALL DoColorOffset(void *info, u32 pixel)
 {
     return pixel;
 }

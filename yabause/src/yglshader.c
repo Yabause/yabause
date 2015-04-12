@@ -411,8 +411,11 @@ const GLchar Yglprg_vdp2_drawfb_f[] = \
 
 const GLchar * pYglprg_vdp2_drawfb_f[] = {Yglprg_vdp2_drawfb_f, NULL};
 
-int Ygl_uniformVDP2DrawFramebuffer( float from, float to , float * offsetcol )
+int Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to, float * offsetcol)
 {
+  YglProgram * prg;
+  prg = p;
+
    glUseProgram(_prgid[PG_VDP2_DRAWFRAMEBUFF]);
    glUniform1i(idvdp1FrameBuffer, 0);
    glActiveTexture(GL_TEXTURE0);
@@ -492,9 +495,9 @@ int YglInitShader( int id, const GLchar * vertex[], const GLchar * frag[] )
 
 int YglProgramInit()
 {
-   
    // 
    _prgid[PG_NORMAL] = 0;
+ 
    
    // 
    if( YglInitShader( PG_VFP1_GOURAUDSAHDING, pYglprg_vdp1_gouraudshading_v, pYglprg_vdp1_gouraudshading_f ) != 0 )

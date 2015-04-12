@@ -24,9 +24,13 @@ extern "C" {
 #include "vidshared.h"
 }
 
-
+#ifdef _WINDOWS
+#include <hash_map>
+using std::hash_map;
+#else
 #include <ext/hash_map>
 using __gnu_cxx::hash_map;
+#endif
 
 hash_map< u32 , YglCache > g_TexHash;
 
@@ -183,6 +187,7 @@ CVboPool * g_pool;
 
 int YglInitVertexBuffer( int initsize ) {
     g_pool = new CVboPool(initsize);
+	return 0;
 }
 
 void YglDeleteVertexBuffer()
@@ -193,11 +198,13 @@ void YglDeleteVertexBuffer()
 int YglUnMapVertexBuffer() {
     g_pool->unMap();
     //printf("================= unMap ====================\n");
+	return 0;
 }
 
 int YglMapVertexBuffer() {
     g_pool->reMap();
     //printf("================= reMap ====================\n");
+	return 0;
 }
 
 int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos )
@@ -208,16 +215,19 @@ int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos )
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos )
 {
     g_pool->expand(addsize,vpos,tcpos,vapos);
+	return 0;
 }
 
 int YglUserDirectVertexBuffer()
 {
 	 glBindBuffer(GL_ARRAY_BUFFER, 0);
+	 return 0;
 }
 
 int YglUserVertexBuffer()
 {
 	 glBindBuffer(GL_ARRAY_BUFFER, g_pool->getVboId() );
+	 return 0;
 }
 
 intptr_t YglGetOffset( void* address )
