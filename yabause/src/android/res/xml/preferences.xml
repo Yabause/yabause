@@ -10,6 +10,12 @@
             android:title="Cartridge"
             android:dialogTitle="Choose cartridge" />
 
+        <ListPreference
+              android:key="pref_video"
+              android:title="Video Core"
+              android:dialogTitle="Choose Video Core"
+              android:defaultValue="2" />
+
         <CheckBoxPreference
             android:key="pref_audio"
             android:title="Audio output"

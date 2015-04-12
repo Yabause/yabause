@@ -135,6 +135,7 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message)
 
 OSD_struct *OSDCoreList[] = {
 &OSDNnovg,
+&OSDSoft,
 &OSDDummy,
 NULL
 };

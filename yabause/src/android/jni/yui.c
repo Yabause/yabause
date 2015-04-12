@@ -60,15 +60,26 @@ EGLContext g_Context = EGL_NO_CONTEXT;
 ANativeWindow *g_window = 0;
 GLuint g_FrameBuffer = 0;
 GLuint g_VertexBuffer = 0;
+GLuint programObject  = 0;
+GLuint positionLoc    = 0;
+GLuint texCoordLoc    = 0;
+GLuint samplerLoc     = 0;
 int g_buf_width = -1;
 int g_buf_height = -1;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
 float vertices [] = {
-   0, 0, 0, 0,
-   320, 0, 0, 0,
-   320, 224, 0, 0,
-   0, 224, 0, 0
+   -1.0f, 1.0f, 0, 0,
+   1.0f, 1.0f, 0, 0,
+   1.0f, -1.0f, 0, 0,
+   -1.0f,-1.0f, 0, 0
 };
+
+// Setting Infomation From
+const char * s_biospath = NULL;
+const char * s_cdpath = NULL;
+const char * s_buppath = NULL;
+const char * s_cartpath = NULL;
+int s_vidcoretype = VIDCORE_SOFT;
 
 enum RenderThreadMessage {
         MSG_NONE = 0,
@@ -203,12 +214,26 @@ int GetCartridgeType()
     jmethodID getCartridgeType;
     JNIEnv * env;
     if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
-        return NULL;
+        return -1;
     }
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getCartridgeType = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()I");
     return (*env)->CallIntMethod(env, yabause, getCartridgeType);
+}
+
+int GetVideoInterface()
+{
+    jclass yclass;
+    jmethodID getVideoInterface;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return -1;
+    }
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getVideoInterface = (*env)->GetMethodID(env, yclass, "getVideoInterface", "()I");
+    return (*env)->CallIntMethod(env, yabause, getVideoInterface);
 }
 
 const char * GetCartridgePath()
@@ -254,23 +279,200 @@ void YuiSwapBuffers(void)
    if( g_Display == EGL_NO_DISPLAY ){
       return;
    }
+
    OSDDisplayMessages();
+   if( s_vidcoretype == VIDCORE_SOFT ){
+       YuidrawSoftwareBuffer();
+   }
    eglSwapBuffers(g_Display,g_Surface);
 }
 
+GLuint LoadShader ( GLenum type, const char *shaderSrc )
+{
+   GLuint shader;
+   GLint compiled;
+
+   // Create the shader object
+   shader = glCreateShader ( type );
+
+   if ( shader == 0 )
+    return 0;
+
+   // Load the shader source
+   glShaderSource ( shader, 1, &shaderSrc, NULL );
+
+   // Compile the shader
+   glCompileShader ( shader );
+
+   // Check the compile status
+   glGetShaderiv ( shader, GL_COMPILE_STATUS, &compiled );
+
+   if ( !compiled )
+   {
+      GLint infoLen = 0;
+
+      glGetShaderiv ( shader, GL_INFO_LOG_LENGTH, &infoLen );
+
+      if ( infoLen > 1 )
+      {
+         char* infoLog = malloc (sizeof(char) * infoLen );
+         glGetShaderInfoLog ( shader, infoLen, NULL, infoLog );
+         printf ( "Error compiling shader:\n%s\n", infoLog );
+         free ( infoLog );
+      }
+
+      glDeleteShader ( shader );
+      return 0;
+   }
+
+   return shader;
+
+}
+
+int YuiInitProgramForSoftwareRendering()
+{
+   GLbyte vShaderStr[] =
+      "attribute vec4 a_position;   \n"
+      "attribute vec2 a_texCoord;   \n"
+      "varying vec2 v_texCoord;     \n"
+      "void main()                  \n"
+      "{                            \n"
+      "   gl_Position = a_position; \n"
+      "   v_texCoord = a_texCoord;  \n"
+      "}                            \n";
+
+   GLbyte fShaderStr[] =
+      "precision mediump float;                            \n"
+      "varying vec2 v_texCoord;                            \n"
+      "uniform sampler2D s_texture;                        \n"
+      "void main()                                         \n"
+      "{                                                   \n"
+      "  gl_FragColor = texture2D( s_texture, v_texCoord );\n"
+      "}                                                   \n";
+
+   GLuint vertexShader;
+   GLuint fragmentShader;
+   GLint linked;
+
+   // Load the vertex/fragment shaders
+   vertexShader = LoadShader ( GL_VERTEX_SHADER, vShaderStr );
+   fragmentShader = LoadShader ( GL_FRAGMENT_SHADER, fShaderStr );
+
+   // Create the program object
+   programObject = glCreateProgram ( );
+
+   if ( programObject == 0 )
+      return 0;
+
+   glAttachShader ( programObject, vertexShader );
+   glAttachShader ( programObject, fragmentShader );
+
+   // Link the program
+   glLinkProgram ( programObject );
+
+   // Check the link status
+   glGetProgramiv ( programObject, GL_LINK_STATUS, &linked );
+
+   if ( !linked )
+   {
+      GLint infoLen = 0;
+
+      glGetProgramiv ( programObject, GL_INFO_LOG_LENGTH, &infoLen );
+
+      if ( infoLen > 1 )
+      {
+         char* infoLog = malloc (sizeof(char) * infoLen );
+
+         glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );
+         printf ( "Error linking program:\n%s\n", infoLog );
+
+         free ( infoLog );
+      }
+
+      glDeleteProgram ( programObject );
+      return GL_FALSE;
+   }
+
+
+   // Get the attribute locations
+   positionLoc = glGetAttribLocation ( programObject, "a_position" );
+   texCoordLoc = glGetAttribLocation ( programObject, "a_texCoord" );
+
+   // Get the sampler location
+   samplerLoc = glGetUniformLocation ( programObject, "s_texture" );
+
+   glUseProgram(programObject);
+
+
+   return GL_TRUE;
+}
+
+void YuidrawSoftwareBuffer() {
+
+    int buf_width, buf_height;
+    int error;
+
+    glClearColor( 0.0f,0.0f,0.0f,1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    if( g_FrameBuffer == 0 )
+    {
+       glGenTextures(1,&g_FrameBuffer);
+       glActiveTexture ( GL_TEXTURE0 );
+       glBindTexture(GL_TEXTURE_2D, g_FrameBuffer);
+       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+       glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+       glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+       error = glGetError();
+       if( error != GL_NO_ERROR )
+       {
+          printf("g_FrameBuffer gl error %04X", error );
+          return;
+       }
+    }else{
+       glBindTexture(GL_TEXTURE_2D, g_FrameBuffer);
+    }
+
+    VIDCore->GetGlSize(&buf_width, &buf_height);
+    glTexSubImage2D(GL_TEXTURE_2D, 0,0,0,buf_width,buf_height,GL_RGBA,GL_UNSIGNED_BYTE,dispbuffer);
+
+
+    if( g_VertexBuffer == 0 )
+    {
+       glGenBuffers(1, &g_VertexBuffer);
+       glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
+       glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),vertices,GL_STATIC_DRAW);
+       error = glGetError();
+       if( error != GL_NO_ERROR )
+       {
+          printf("g_VertexBuffer gl error %04X", error );
+          return;
+       }
+    }else{
+       glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
+    }
+
+   if( buf_width != g_buf_width ||  buf_height != g_buf_height )
+   {
+      vertices[6]=vertices[10]=(float)buf_width/1024.f;
+      vertices[11]=vertices[15]=(float)buf_height/1024.f;
+      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),vertices,GL_STATIC_DRAW);
+      glVertexAttribPointer ( positionLoc, 2, GL_FLOAT,  GL_FALSE, 4 * sizeof(GLfloat), 0 );
+      glVertexAttribPointer ( texCoordLoc, 2, GL_FLOAT,  GL_FALSE, 4 * sizeof(GLfloat), (void*)(sizeof(float)*2) );
+      glEnableVertexAttribArray ( positionLoc );
+      glEnableVertexAttribArray ( texCoordLoc );
+      g_buf_width  = buf_width;
+      g_buf_height = buf_height;
+   }
+
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+
 JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_initViewport( JNIEnv* jenv, jobject obj, jobject surface, int width, int height)
 {
-   int swidth;
-   int sheight;
-   int error;
-   char * buf;
-   EGLContext Context;
-   EGLConfig cfg;
-   int configid;
-   int attrib_list[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
-   int config_attr_list[] = {EGL_CONFIG_ID,0,EGL_NONE} ;
-   EGLint num_config;
-
     if (surface != 0) {
         g_window = ANativeWindow_fromSurface(jenv, surface);
         printf("Got window %p", g_window);
@@ -278,9 +480,7 @@ JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_initViewport( JNI
         printf("Releasing window");
         ANativeWindow_release(g_window);
     }
-
     g_msg = MSG_WINDOW_SET;
-
    return 0;
 }
 
@@ -362,10 +562,7 @@ int initEGLFunc()
 }
 #endif
 
-char * s_biospath = NULL;
-char * s_cdpath = NULL;
-char * s_buppath = NULL;
-char * s_cartpath = NULL;
+
 
 jint Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
 {
@@ -379,6 +576,7 @@ jint Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jo
     s_cdpath = GetGamePath();
     s_buppath = GetMemoryPath();
     s_cartpath = GetCartridgePath();
+    s_vidcoretype = GetVideoInterface();
 
     pthread_create(&_threadId, 0, threadStartCallback, NULL );
 
@@ -413,6 +611,10 @@ int initEgl( ANativeWindow* window )
     GLfloat ratio;
     int attrib_list[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
 
+    if( s_vidcoretype == VIDCORE_SOFT ) {
+        attrib_list[1]=2;
+    }
+
 
     printf("Initializing context");
 
@@ -436,7 +638,6 @@ int initEgl( ANativeWindow* window )
         destroy();
         return -1;
     }
-
     printf("ANativeWindow_setBuffersGeometry");
     ANativeWindow_setBuffersGeometry(window, 0, 0, format);
 
@@ -473,21 +674,11 @@ int initEgl( ANativeWindow* window )
     g_Surface = surface;
     g_Context = context;
 
-//    g_width = width;
-//    g_height = height;
-
-/*
-   tmp = width / 320;
-   width = 320 * tmp;
-   tmp = height /224;
-   height = 224 * tmp;
-   width = 320 * tmp;
-*/
-   printf("%s",glGetString(GL_VENDOR));
-   printf("%s",glGetString(GL_RENDERER));
-   printf("%s",glGetString(GL_VERSION));
-   printf("%s",glGetString(GL_EXTENSIONS));
-   printf("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
+    printf("%s",glGetString(GL_VENDOR));
+    printf("%s",glGetString(GL_RENDERER));
+    printf("%s",glGetString(GL_VERSION));
+    printf("%s",glGetString(GL_EXTENSIONS));
+    printf("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
 
 
     yinit.m68kcoretype = M68KCORE_C68K;
@@ -497,11 +688,8 @@ int initEgl( ANativeWindow* window )
 #else
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
-    //yinit.vidcoretype = VIDCORE_SOFT;
-    yinit.vidcoretype = 1;
+    yinit.vidcoretype = s_vidcoretype;
     yinit.sndcoretype = SNDCORE_OPENSL;
-    //yinit.sndcoretype = SNDCORE_DUMMY;
-    //yinit.cdcoretype = CDCORE_DEFAULT;
     yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = CART_NONE;
     yinit.regionid = 0;
@@ -535,14 +723,21 @@ int initEgl( ANativeWindow* window )
     PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
 
     ScspSetFrameAccurate(1);
-    OSDChangeCore(OSDCORE_NANOVG);
 
-   VIDCore->Resize(width,height,0);
-   glViewport(0,0,width,height);
+    if( s_vidcoretype == VIDCORE_OGL ){
+        OSDChangeCore(OSDCORE_NANOVG);
+        VIDCore->Resize(width,height,0);
+    }else{
+        OSDChangeCore(OSDCORE_SOFT);
+        if( YuiInitProgramForSoftwareRendering() != GL_TRUE ){
+            return -1;
+        }
+    }
+    glViewport(0,0,width,height);
 
-   glClearColor( 0.0f, 0.0f,0.0f,1.0f);
-   glClear( GL_COLOR_BUFFER_BIT );
-   return 0;
+    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
+    glClear( GL_COLOR_BUFFER_BIT );
+    return 0;
 }
 
 destroy() {

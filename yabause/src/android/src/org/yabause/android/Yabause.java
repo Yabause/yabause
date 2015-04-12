@@ -150,6 +150,7 @@ public class Yabause extends Activity implements OnPadListener
     private String gamepath;
     private int carttype;
     private PadManager padm;
+    private int video_interface;
 
     /** Called when the activity is first created. */
     @Override
@@ -300,6 +301,15 @@ public class Yabause extends Activity implements OnPadListener
             carttype = i.intValue();
         } else
             carttype = -1;
+
+        String video = sharedPref.getString("pref_video", "1");
+        if (video.length() > 0) {
+            Integer i = new Integer(video);
+            video_interface = i.intValue();
+        } else {
+            video_interface = -1;
+        }
+
     }
 
     public String getBiosPath() {
@@ -316,6 +326,10 @@ public class Yabause extends Activity implements OnPadListener
 
     public int getCartridgeType() {
         return carttype;
+    }
+
+    public int getVideoInterface() {
+      return video_interface;
     }
 
     public String getCartridgePath() {

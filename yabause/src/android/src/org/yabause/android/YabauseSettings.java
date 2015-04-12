@@ -26,8 +26,32 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
 import android.content.SharedPreferences;
+import android.app.ActivityManager;
+import android.content.pm.ConfigurationInfo;
+import android.app.DialogFragment;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.app.Dialog;
 
 public class YabauseSettings extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+  public static class WarningDialogFragment extends DialogFragment {
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+      // Use the Builder class for convenient dialog construction
+      AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+      builder.setMessage("Your device is not support OpenGL ES 3.0 or above.\nYou can not choose OpenGL Video Interface.\n")
+      .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          // FIRE ZE MISSILES!
+        }
+      });
+
+      // Create the AlertDialog object and return it
+      return builder.create();
+    }
+  }
+
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
@@ -85,11 +109,42 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         cart.setEntries(cartentries);
         cart.setEntryValues(cartentryValues);
         cart.setSummary(cart.getEntry());
-    }
+
+        /* Video */
+        ListPreference video_cart = (ListPreference) getPreferenceManager().findPreference("pref_video");
+
+        List<CharSequence> video_labels = new ArrayList<CharSequence>();
+        List<CharSequence> video_values = new ArrayList<CharSequence>();
+
+        final ActivityManager activityManager = (ActivityManager) getSystemService(this.ACTIVITY_SERVICE);
+        final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
+        final boolean supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000;
+
+        if( supportsEs3 ) {
+          video_labels.add("OpenGL Video Interface");
+          video_values.add("1");
+        }else{
+          DialogFragment newFragment = new WarningDialogFragment();
+          newFragment.show(getFragmentManager(), "OGL");
+        }
+
+        video_labels.add("Software Video Interface");
+        video_values.add("2");
+
+        CharSequence[] video_entries = new CharSequence[video_labels.size()];
+        video_labels.toArray(video_entries);
+
+        CharSequence[] video_entryValues = new CharSequence[video_values.size()];
+        video_values.toArray(video_entryValues);
+
+        video_cart.setEntries(video_entries);
+        video_cart.setEntryValues(video_entryValues);
+        video_cart.setSummary(video_cart.getEntry());
+      }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("pref_bios") || key.equals("pref_cart")) {
+        if (key.equals("pref_bios") || key.equals("pref_cart") || key.equals("pref_video")) {
             ListPreference pref = (ListPreference) findPreference(key);
             pref.setSummary(pref.getEntry());
         }
