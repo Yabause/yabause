@@ -1057,7 +1057,11 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    pos[9] = input->vertices[5];   
    pos[10] = input->vertices[6];
    pos[11] = input->vertices[7];   
-   
+
+   program->color_offset_val[0] = (float)(input->cor)/255.0f;
+   program->color_offset_val[1] = (float)(input->cog)/255.0f;
+   program->color_offset_val[2] = (float)(input->cob)/255.0f;
+   program->color_offset_val[3] = 0;
    
    // Color
    vtxa = (program->vertexAttribute + (program->currentQuad * 2));
@@ -1302,6 +1306,11 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
    program = YglGetProgram(input,prg);
    if( program == NULL ) return;
    
+   program->color_offset_val[0] = (float)(input->cor)/255.0f;
+   program->color_offset_val[1] = (float)(input->cog)/255.0f;
+   program->color_offset_val[2] = (float)(input->cob)/255.0f;
+   program->color_offset_val[3] = 0;
+
    x = cache->x;
    y = cache->y;
 
@@ -1686,7 +1695,7 @@ void YglRender(void) {
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       
-      cprg = PG_NORMAL;
+      cprg = -1;
       glUseProgram(0);   
       
       YglSetVdp2Window();
@@ -1703,7 +1712,7 @@ void YglRender(void) {
             from = to;
 
             // clean up
-            cprg = PG_NORMAL;
+            cprg = -1;
             glUseProgram(0);   
             glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
          }

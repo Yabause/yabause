@@ -66,6 +66,49 @@ static void Ygl_printShaderError( GLuint shader )
 static GLuint _prgid[PG_MAX] ={0};
 
 /*------------------------------------------------------------------------------------
+ *  Normal Draw
+ * ----------------------------------------------------------------------------------*/
+const GLchar Yglprg_normal_v[] =
+      "void main()                  \n"
+      "{                            \n"
+      " gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;\n" 
+      " gl_Position = ftransform();\n" 
+      "} ";
+const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
+
+const GLchar Yglprg_normal_f[] =
+      "uniform vec4 u_color_offset;    \n"
+      "uniform sampler2D s_texture;                        \n"
+      "void main()                                         \n"
+      "{                                                   \n"
+      "  vec2 addr = gl_TexCoord[0].st;\n" 
+      "  addr.s = addr.s / (gl_TexCoord[0].q);\n" 
+      "  addr.t = addr.t / (gl_TexCoord[0].q);\n" 
+      "  vec4 texcol = texture2D(s_texture,addr);\n"
+      "  gl_FragColor = clamp(texcol+u_color_offset,vec4(0.0),vec4(1.0));\n                         "
+      "}                                                   \n";
+const GLchar * pYglprg_normal_f[] = {Yglprg_normal_f, NULL};
+static int id_normal_s_texture = -1;
+
+int Ygl_uniformNormal(void * p )
+{
+
+   YglProgram * prg;
+   prg = p;
+   glUniform1i(id_normal_s_texture, 0);
+   glUniform4fv(prg->color_offset,1,prg->color_offset_val);
+   return 0;
+}
+
+int Ygl_cleanupNormal(void * p )
+{
+   YglProgram * prg;
+   prg = p;
+   return 0;
+}
+
+
+/*------------------------------------------------------------------------------------
  *  VDP1 GlowShading Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_v[] = \
@@ -421,7 +464,7 @@ int Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to, float * offs
    glActiveTexture(GL_TEXTURE0);
    glUniform1f(idfrom,from);
    glUniform1f(idto,to);
-   glUniform4f(idcoloroffset,offsetcol[0],offsetcol[1],offsetcol[2],offsetcol[3]);
+   glUniform4fv(idcoloroffset,1,offsetcol);
 
    return 0;
 }
@@ -496,8 +539,14 @@ int YglInitShader( int id, const GLchar * vertex[], const GLchar * frag[] )
 int YglProgramInit()
 {
    // 
-   _prgid[PG_NORMAL] = 0;
- 
+   printf("PG_NORMAL\n");
+   //
+   if( YglInitShader( PG_NORMAL, pYglprg_normal_v, pYglprg_normal_f ) != 0 )
+      return -1;
+
+    id_normal_s_texture = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
+
+
    
    // 
    if( YglInitShader( PG_VFP1_GOURAUDSAHDING, pYglprg_vdp1_gouraudshading_v, pYglprg_vdp1_gouraudshading_f ) != 0 )
@@ -568,7 +617,15 @@ int YglProgramChange( YglLevel * level, int prgid )
    level->prg[level->prgcurrent].prgid=prgid;
    level->prg[level->prgcurrent].prg=_prgid[prgid];
    
-   if( prgid == PG_VFP1_GOURAUDSAHDING )
+   if( prgid == PG_NORMAL )
+   {
+       level->prg[level->prgcurrent].setupUniform    = Ygl_uniformNormal;
+       level->prg[level->prgcurrent].cleanupUniform  = Ygl_cleanupNormal;
+       level->prg[level->prgcurrent].color_offset    = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_color_offset");
+       //id = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
+       //glUniform1i(id, 0);
+
+   }else if( prgid == PG_VFP1_GOURAUDSAHDING )
    {
       GLuint id;
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformGlowShading;

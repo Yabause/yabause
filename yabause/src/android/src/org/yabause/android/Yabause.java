@@ -46,6 +46,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.net.Uri;
 import android.view.Surface;
+import android.app.ActivityManager;
+import android.content.pm.ConfigurationInfo;
 
 class InputHandler extends Handler {
     private YabauseRunnable yr;
@@ -302,7 +304,17 @@ public class Yabause extends Activity implements OnPadListener
         } else
             carttype = -1;
 
-        String video = sharedPref.getString("pref_video", "1");
+        final ActivityManager activityManager = (ActivityManager) getSystemService(this.ACTIVITY_SERVICE);
+        final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
+        final boolean supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000;
+
+        String video;
+
+        if( supportsEs3 ) {
+          video = sharedPref.getString("pref_video", "1");
+        }else{
+          video = sharedPref.getString("pref_video", "2");
+        }
         if (video.length() > 0) {
             Integer i = new Integer(video);
             video_interface = i.intValue();

@@ -2393,11 +2393,11 @@ void VIDOGLVdp1NormalSpriteDraw(void)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
-            YglCachedQuad(&sprite, &cash);
+            YglCacheQuadGrowShading(&sprite, NULL,&cash);
             return;
          }
 
-         YglQuad(&sprite, &texture,&cash);
+         YglQuadGrowShading(&sprite, &texture,NULL,&cash);
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -2569,11 +2569,11 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
-            YglCachedQuad(&sprite, &cash);
+            YglCacheQuadGrowShading(&sprite, NULL,&cash);
             return;
          }
 
-         YglQuad(&sprite, &texture,&cash);
+         YglQuadGrowShading(&sprite, &texture,NULL,&cash);
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
@@ -2660,7 +2660,6 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
          }
 
          YglQuadGrowShading(&sprite, &texture,col,&cash);
-         //YglQuad(&sprite, &texture,&c);
          YglCacheAdd(tmp,&cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
          return;
@@ -2868,7 +2867,7 @@ void VIDOGLVdp1PolylineDraw(void)
    polygon.h = 1;
    polygon.flip = 0;
 
-   YglQuad(&polygon, &texture,&c);
+   YglQuadGrowShading(&polygon, &texture,NULL,&c);
 
    polygon.vertices[0] = polygon.vertices[4];
    polygon.vertices[1] = polygon.vertices[5];
@@ -2878,7 +2877,7 @@ void VIDOGLVdp1PolylineDraw(void)
    polygon.vertices[5] = (int)((float)Y[2] * vdp1hratio);
    polygon.vertices[6] = (int)((float)X[2] * vdp1wratio)+1;
    polygon.vertices[7] = (int)((float)Y[2] * vdp1hratio)+1;
-   YglCachedQuad(&polygon, &c);
+   YglCacheQuadGrowShading(&polygon, NULL, &c);
 
    polygon.vertices[0] = polygon.vertices[4];
    polygon.vertices[1] = polygon.vertices[5];
@@ -2888,13 +2887,13 @@ void VIDOGLVdp1PolylineDraw(void)
    polygon.vertices[5] = (int)((float)Y[3] * vdp1hratio);
    polygon.vertices[6] = (int)((float)X[3] * vdp1wratio)+1;
    polygon.vertices[7] = (int)((float)Y[3] * vdp1hratio)+1;
-   YglCachedQuad(&polygon, &c);
+   YglCacheQuadGrowShading(&polygon, NULL, &c);
 
    polygon.vertices[0] = (int)((float)X[0] * vdp1wratio);
    polygon.vertices[1] = (int)((float)Y[0] * vdp1hratio);
    polygon.vertices[2] = (int)((float)X[0] * vdp1wratio)+1;
    polygon.vertices[3] = (int)((float)Y[0] * vdp1hratio)+1;
-   YglCachedQuad(&polygon, &c);
+   YglCacheQuadGrowShading(&polygon, NULL, &c);
 
    if (color == 0)
    {
@@ -2976,7 +2975,7 @@ void VIDOGLVdp1LineDraw(void)
    polygon.h = 1;
    polygon.flip = 0;
 
-   YglQuad(&polygon, &texture,NULL);
+   YglQuadGrowShading(&polygon, &texture,NULL,NULL);
    
    if (color == 0)
    {

@@ -259,7 +259,7 @@ int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
 intptr_t YglGetOffset( void* address );
 
-#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_)
+#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
 
 extern GLuint (STDCALL *glCreateProgram)(void);
 extern GLuint (STDCALL *glCreateShader)(GLenum);

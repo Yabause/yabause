@@ -79,7 +79,7 @@ const char * s_biospath = NULL;
 const char * s_cdpath = NULL;
 const char * s_buppath = NULL;
 const char * s_cartpath = NULL;
-int s_vidcoretype = VIDCORE_SOFT;
+int s_vidcoretype = VIDCORE_OGL;
 
 enum RenderThreadMessage {
         MSG_NONE = 0,
@@ -650,9 +650,14 @@ int initEgl( ANativeWindow* window )
 
     printf("eglCreateContext");
     if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
-        printf("eglCreateContext() returned error %d", eglGetError());
-        destroy();
-        return -1;
+        printf("eglCreateContext() returned error %d, Fall back to software vidcore mode", eglGetError());
+        s_vidcoretype = VIDCORE_SOFT;
+        attrib_list[1]=2;
+        if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
+            printf("eglCreateContext() returned error %d", eglGetError());
+            destroy();
+            return -1;
+        }
     }
 
     printf("eglMakeCurrent");
