@@ -1,11 +1,11 @@
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#define GLFW_INCLUDE_ES3
-//#include <GL/glew.h>
+#if defined(_USEGLEW_)
+#include <GL/glew.h>
+#endif
 #include <GLFW/glfw3.h>
 #include <map>
-
 #define NANOVG_GLES3_IMPLEMENTATION
 #include "nanovg.h"
 #include "nanovg_gl.h"
@@ -32,8 +32,8 @@ extern "C" {
 #include "debug.h"
 #include "sndal.h"
 
-static char biospath[256] = "/dat2/project/src/bios.bin";
-static char cdpath[256] = "//dat2/iso/Athlete Kings/Athlete Kings.ISO";
+static char biospath[256] = "E:/wkcvs/WorkCvs/ggp/bin/bios.bin";
+static char cdpath[256] = "E:/gameiso/FightersMegaMix.img";
 static char buppath[256] = "\0";
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
@@ -90,7 +90,7 @@ void DrawDebugInfo()
     int winWidth, winHeight;
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(g_window, &winWidth, &winHeight);
-    pxRatio = (float)fbWidth / (float)winWidth;
+	pxRatio = (float)winWidth / (float)winHeight;
     glfwGetFramebufferSize(g_window, &fbWidth, &fbHeight);
     nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
     renderGraph(vg, 5,5, &fps);
@@ -136,7 +136,11 @@ int yabauseinit()
 
 	yinit.m68kcoretype = M68KCORE_C68K;
 	yinit.percoretype = PERCORE_DUMMY;
+#ifdef SH2_DYNAREC
     yinit.sh2coretype = 2;
+#else
+	yinit.sh2coretype = 0;
+#endif
 	//yinit.vidcoretype = VIDCORE_SOFT;
 	yinit.vidcoretype = 1;
 	yinit.sndcoretype = SNDCORE_DUMMY;
@@ -225,7 +229,8 @@ int main( int argc, char * argcv[] )
 	}
 
 	glfwMakeContextCurrent(g_window);
- #if 0
+
+#if defined(_USEGLEW_)
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
@@ -235,10 +240,11 @@ int main( int argc, char * argcv[] )
       exit(EXIT_FAILURE);
     }
  #endif
+
 	printf("context renderer string: \"%s\"\n", glGetString(GL_RENDERER));
 	printf("context vendor string: \"%s\"\n", glGetString(GL_VENDOR));
 	printf("version string: \"%s\"\n", glGetString(GL_VERSION));
-    printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
+  printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
 
 	glfwSetKeyCallback(g_window, key_callback);
 

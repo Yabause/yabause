@@ -14,8 +14,19 @@ add_definitions(-DYAB_PORT_OSD)
 add_definitions(-D_OGLES3_)
 endif()
 
-if( ${YAB_PORTS} STREQUAL "glfw" )
-    add_definitions(-D_OGLES3_)
+string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
+
+if( glfw )
+	add_definitions(-D_OGLES3_)
+	if (WIN32)
+		add_definitions(-D_USEGLEW_)
+		set( GLEW_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/ )
+		set( GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/ )
+	else()
+		find_package(PkgConfig REQUIRED)
+		pkg_search_module(GLFW REQUIRED glfw3)
+	endif()
+		include_directories( ${GLFW_INCLUDE_DIRS}  ${GLEW_INCLUDE_DIRS})
 endif()
 
 set(yabause_SOURCES
@@ -32,17 +43,17 @@ set(yabause_SOURCES
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c )
-if (1)
+if ( ANDROID OR glfw )
 set(yabause_SOURCES
 	${yabause_SOURCES}
-        yglcache.cpp
+	yglcache.cpp
 	ygles.c
 	yglshaderes.c )
 else()
 set(yabause_SOURCES
-        ${yabause_SOURCES}
-        ygl.c
-        yglshader.c )
+	${yabause_SOURCES}
+	ygl.c
+	yglshader.c )
 endif()
 
 # new SCSP

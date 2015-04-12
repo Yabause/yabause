@@ -32,8 +32,14 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#include <GL/gl.h>
-#include "glext.h"
+  #if defined(_USEGLEW_)
+    #include <GL/glew.h>
+    #include <GLFW/glfw3.h>
+  #else
+    #include <GL/gl.h>
+    #include "glext.h"
+    extern PFNGLACTIVETEXTUREPROC glActiveTexture;
+  #endif
 #endif
 
 #ifdef HAVE_LIBSDL
@@ -265,7 +271,8 @@ intptr_t YglGetOffset( void* address );
 #endif
 #endif  // 0
 
-#if 0
+#if defined(_WIN32) && !defined(_USEGLEW_)
+
 extern GLuint (STDCALL *glCreateProgram)(void);
 extern GLuint (STDCALL *glCreateShader)(GLenum);
 extern void (STDCALL *glShaderSource)(GLuint,GLsizei,const GLchar **,const GLint *);
@@ -313,9 +320,7 @@ extern PFNGLUNIFORM1FPROC glUniform1f;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 #endif
 
-#ifdef WIN32
-extern PFNGLACTIVETEXTUREPROC glActiveTexture;
-#endif
+
 
 #endif
 
