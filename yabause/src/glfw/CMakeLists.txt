@@ -27,10 +27,12 @@ set(yabause_glfw_SOURCES
 add_executable(yabause-glfw ${yabause_glfw_SOURCES})
 target_link_libraries(yabause-glfw yabause ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES})
 
+if (WIN32)
 add_custom_command(
 	TARGET yabause-glfw POST_BUILD 
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/bin/glew32.dll $<TARGET_FILE_DIR:yabause-glfw>
 )
+endif()
 
 yab_port_success(yabause-glfw)
 configure_file(yabause.desktop.in ${YAB_PORT_NAME}.desktop)

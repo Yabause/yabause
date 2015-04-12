@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-//#ifdef NANOVG_GLEW
+#if defined(_USEGLEW_)
 #include <GL/glew.h>
-//#endif
+#endif
 #include <GLFW/glfw3.h>
 #include "nanovg.h"
 

@@ -1023,7 +1023,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
       tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w) - ATLAS_BIAS;
       tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ ATLAS_BIAS;
    } else {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x) + 0.5f;
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x) + ATLAS_BIAS;
       tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
    }
    if (input->flip & 0x2) {
@@ -1190,9 +1190,9 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    }
    if (input->flip & 0x2) {
       tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+0.5f;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+0.5f;
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
       tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
    }
 

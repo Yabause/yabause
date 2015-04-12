@@ -61,6 +61,7 @@ extern int vdp1cor;
 extern int vdp1cog;
 extern int vdp1cob;
 
+#define ATLAS_BIAS (0.025f)
 
 
 #ifdef HAVE_GLXGETPROCADDRESS
@@ -909,8 +910,13 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
 
    program = YglGetProgram(input,prg);
    if( program == NULL ) return NULL;
-   
-   
+
+   program->color_offset_val[0] = (float)(input->cor)/255.0f;
+   program->color_offset_val[1] = (float)(input->cog)/255.0f;
+   program->color_offset_val[2] = (float)(input->cob)/255.0f;
+   program->color_offset_val[3] = 0;
+   //info->cor
+
    pos = program->quads + program->currentQuad;
    pos[0] = input->vertices[0];
    pos[1] = input->vertices[1];
@@ -943,18 +949,18 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    */
    
    if (input->flip & 0x1) {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w);
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x);
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w) - ATLAS_BIAS;
+      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ ATLAS_BIAS;
    } else {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x);
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w);
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x) + ATLAS_BIAS;
+      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
    }
    if (input->flip & 0x2) {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h);
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y);
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y);
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h);
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
    }
 
    if( c != NULL )
@@ -1100,18 +1106,18 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
 
    if (input->flip & 0x1) {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w);
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x);
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w)-ATLAS_BIAS;
+      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
    } else {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x);
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w);
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
    }
    if (input->flip & 0x2) {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h);
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y);
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y);
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h);
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
    }
 
    if( c != NULL )
@@ -1179,6 +1185,7 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
    texturecoordinate_struct *tmp;
    float q[4];
    int * pos;
+   float * vtxa;
 
    int prg = PG_NORMAL;
    
@@ -1192,7 +1199,12 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
   
    program = YglGetProgram(input,prg);
    if( program == NULL ) return;
-   
+
+   program->color_offset_val[0] = (float)(input->cor)/255.0f;
+   program->color_offset_val[1] = (float)(input->cog)/255.0f;
+   program->color_offset_val[2] = (float)(input->cob)/255.0f;
+   program->color_offset_val[3] = 0;
+
    x = cache->x;
    y = cache->y;
 
@@ -1213,24 +1225,26 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
    
    // Color
    tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
-      
+   vtxa = (program->vertexAttribute + (program->currentQuad * 2));
+   memset(vtxa,0,sizeof(float)*24);
+
    program->currentQuad += 12;
 
   tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
 
    if (input->flip & 0x1) {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w);
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x);
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w)-ATLAS_BIAS;
+      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
    } else {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x);
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w);
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
    }
    if (input->flip & 0x2) {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h);
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y);
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y);
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h);
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
    }
 
    if( input->dst == 1 )
@@ -1350,18 +1364,18 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
   tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
 
    if (input->flip & 0x1) {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w);
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x);
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w)-ATLAS_BIAS;
+      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
    } else {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x);
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w);
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
    }
    if (input->flip & 0x2) {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h);
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y);
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y);
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h);
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
    }
 
    if( input->dst == 1 )
