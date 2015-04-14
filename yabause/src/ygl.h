@@ -18,19 +18,15 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#define USEVBO 0
-
 #if defined(HAVE_LIBGL) || defined(__ANDROID__)
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__)
+    #include <GLES3/gl31.h>
+    #include <GLES3/gl3ext.h>
+    #include <EGL/egl.h>
 
-#include <GLES3/gl31.h>
-//#include <GLES3/gl3ext.h>
-#include <EGL/egl.h>
+#elif defined(_WIN32)
 
-#else // __ANDROID__
-
-#ifdef _WIN32
 #include <windows.h>
   #if defined(_USEGLEW_)
     #include <GL/glew.h>
@@ -40,26 +36,27 @@
     #include "glext.h"
     extern PFNGLACTIVETEXTUREPROC glActiveTexture;
   #endif
+
+#elif  defined(__APPLE__)
+    #include <OpenGL/gl.h>
+
+#else // LInux?
+    #if defined(_OGLES3_)
+        #define GL_GLEXT_PROTOTYPES 1
+        #define GLX_GLXEXT_PROTOTYPES 1
+        #include <GLFW/glfw3.h>
+    #else
+        #include <GL/gl.h>
+    #endif
 #endif
 
-#ifdef HAVE_LIBSDL
+#if  defined(HAVE_LIBSDL)
  #ifdef __APPLE__
   #include <SDL/SDL.h>
  #else
   #include "SDL.h"
  #endif
 #endif
-#ifndef _arch_dreamcast
-    #ifdef __APPLE__
-        #include <OpenGL/gl.h>
-    #else
-#define GL_GLEXT_PROTOTYPES 1
-#define GLX_GLXEXT_PROTOTYPES 1
-#include <GLFW/glfw3.h>
-    #endif
-#endif // _arch_dreamcast
-
-#endif // __ANDROID__
 
 
 #include <stdarg.h>
@@ -67,6 +64,8 @@
 
 #ifndef YGL_H
 #define YGL_H
+
+#define USEVBO 0
 
 #include "core.h"
 #include "vidshared.h"
@@ -260,18 +259,7 @@ int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
 intptr_t YglGetOffset( void* address );
 
-#if defined(__APPLE__) || defined(__ANDROID__)
-
-#else // defined(__APPLE__) || defined(__ANDROID__)
-
-#if 0  // Does anything need this?  It breaks a bunch of prototypes if
-       // GLchar is typedef'd instead of #define'd  --AC
-#ifndef GLchar
-#define GLchar GLbyte
-#endif
-#endif  // 0
-
-#if defined(_WIN32) && !defined(_USEGLEW_)
+#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
 
 extern GLuint (STDCALL *glCreateProgram)(void);
 extern GLuint (STDCALL *glCreateShader)(GLenum);
@@ -318,11 +306,9 @@ extern PFNGLFRAMEBUFFERTEXTURELAYERPROC glFramebufferTextureLayer;
 extern PFNGLUNIFORM4FPROC glUniform4f;
 extern PFNGLUNIFORM1FPROC glUniform1f;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
-#endif
 
+#endif // !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_)
 
+#endif // YGL_H
 
-#endif
-
-#endif
-#endif
+#endif // defined(HAVE_LIBGL) || defined(__ANDROID__)

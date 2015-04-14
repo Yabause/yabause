@@ -1023,7 +1023,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
       tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w) - ATLAS_BIAS;
       tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ ATLAS_BIAS;
    } else {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x) + 0.5f;
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x) + ATLAS_BIAS;
       tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
    }
    if (input->flip & 0x2) {
@@ -1120,6 +1120,11 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
        int a=0;
    }
 
+   program->color_offset_val[0] = (float)(input->cor)/255.0f;
+   program->color_offset_val[1] = (float)(input->cog)/255.0f;
+   program->color_offset_val[2] = (float)(input->cob)/255.0f;
+   program->color_offset_val[3] = 0;
+
    // Vertex
    pos = program->quads + program->currentQuad;
    pos[0] = input->vertices[0];
@@ -1190,9 +1195,9 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    }
    if (input->flip & 0x2) {
       tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+0.5f;
+      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+0.5f;
+      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
       tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
    }
 
@@ -1386,6 +1391,11 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
 
    program = YglGetProgram(input,prg);
    if( program == NULL ) return;
+
+   program->color_offset_val[0] = (float)(input->cor)/255.0f;
+   program->color_offset_val[1] = (float)(input->cog)/255.0f;
+   program->color_offset_val[2] = (float)(input->cob)/255.0f;
+   program->color_offset_val[3] = 0;
 
    x = cache->x;
    y = cache->y;

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #if defined(_USEGLEW_)
 #include <GL/glew.h>
+#else
+#include <GLES3/gl3.h>
 #endif
 #include <GLFW/glfw3.h>
 #include <map>
@@ -32,8 +34,8 @@ extern "C" {
 #include "debug.h"
 #include "sndal.h"
 
-static char biospath[256] = "E:/wkcvs/WorkCvs/ggp/bin/bios.bin";
-static char cdpath[256] = "E:/gameiso/FightersMegaMix.img";
+static char biospath[256] = "/dat2/project/src/bios.bin";
+static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
 static char buppath[256] = "\0";
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";

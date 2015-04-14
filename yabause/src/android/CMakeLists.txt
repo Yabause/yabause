@@ -24,25 +24,28 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		jni/miniegl.h
 		jni/sndaudiotrack.c
 		jni/sndaudiotrack.h
-		src/org/yabause/android/Cartridge.java
+    jni/osdcore.c
+    jni/osdcore.h
+    jni/nanovg/Roboto-Bold.h
+    jni/nanovg/Roboto-Regular.h
+    jni/nanovg/fontstash.h
+    jni/nanovg/nanovg.c
+    jni/nanovg/nanovg.h
+    jni/nanovg/nanovg_gl.h
+    jni/nanovg/nanovg_gl_utils.h
+    jni/nanovg/stb_image.h
+    jni/nanovg/stb_truetype.h
+    jni/sndaudiotrack.h
+    jni/sndopensl.c
+    jni/sndopensl.h
+    src/org/yabause/android/Cartridge.java
 		src/org/yabause/android/GameList.java
 		src/org/yabause/android/GameListAdapter.java
 		src/org/yabause/android/Home.java
-		jni/osdcore.c
-		jni/osdcore.h
-		jni/nanovg/Roboto-Bold.h
-		jni/nanovg/Roboto-Regular.h
-		jni/nanovg/fontstash.h
-		jni/nanovg/nanovg.c
-		jni/nanovg/nanovg.h
-		jni/nanovg/nanovg_gl.h
-		jni/nanovg/nanovg_gl_utils.h
-		jni/nanovg/stb_image.h
-		jni/nanovg/stb_truetype.h
-		jni/sndaudiotrack.h
-		jni/sndopensl.c
-		jni/sndopensl.h
-		src/org/yabause/android/Yabause.java
+		src/org/yabause/android/PadManager.java
+		src/org/yabause/android/PadManagerV8.java
+		src/org/yabause/android/PadManagerV16.java
+    src/org/yabause/android/Yabause.java
 		src/org/yabause/android/YabauseAudio.java
 		src/org/yabause/android/YabauseView.java
 		src/org/yabause/android/YabausePad.java
@@ -129,6 +132,9 @@ set(yabause_android_SRC
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameList.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameListAdapter.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Home.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManager.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV8.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV16.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Yabause.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseAudio.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseView.java"

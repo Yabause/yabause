@@ -31,6 +31,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
+import android.view.KeyEvent;
 import android.app.Dialog;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -45,6 +46,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.net.Uri;
 import android.view.Surface;
+import android.app.ActivityManager;
+import android.content.pm.ConfigurationInfo;
 
 class InputHandler extends Handler {
     private YabauseRunnable yr;
@@ -148,6 +151,8 @@ public class Yabause extends Activity implements OnPadListener
     private String biospath;
     private String gamepath;
     private int carttype;
+    private PadManager padm;
+    private int video_interface;
 
     /** Called when the activity is first created. */
     @Override
@@ -174,8 +179,13 @@ public class Yabause extends Activity implements OnPadListener
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
 
+        padm = PadManager.getPadManager();
+
         YabausePad pad = (YabausePad) findViewById(R.id.yabause_pad);
         pad.setOnPadListener(this);
+        if (padm.hasPad()) {
+            pad.setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override
@@ -226,14 +236,35 @@ public class Yabause extends Activity implements OnPadListener
         return alert;
     }
 
-    @Override
-    public boolean onPad(View v, PadEvent event) {
+    @Override public boolean onPad(PadEvent event) {
         Message message = handler.obtainMessage();
         message.arg1 = event.getAction();
         message.arg2 = event.getKey();
         yabauseThread.handler.sendMessage(message);
 
         return true;
+    }
+
+    @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
+        PadEvent pe = padm.onKeyDown(keyCode, event);
+
+        if (pe != null) {
+            this.onPad(pe);
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override public boolean onKeyUp(int keyCode, KeyEvent event) {
+        PadEvent pe = padm.onKeyUp(keyCode, event);
+
+        if (pe != null) {
+            this.onPad(pe);
+            return true;
+        }
+
+        return super.onKeyUp(keyCode, event);
     }
 
     private void errorMsg(String msg) {
@@ -272,6 +303,25 @@ public class Yabause extends Activity implements OnPadListener
             carttype = i.intValue();
         } else
             carttype = -1;
+
+        final ActivityManager activityManager = (ActivityManager) getSystemService(this.ACTIVITY_SERVICE);
+        final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
+        final boolean supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000;
+
+        String video;
+
+        if( supportsEs3 ) {
+          video = sharedPref.getString("pref_video", "1");
+        }else{
+          video = sharedPref.getString("pref_video", "2");
+        }
+        if (video.length() > 0) {
+            Integer i = new Integer(video);
+            video_interface = i.intValue();
+        } else {
+            video_interface = -1;
+        }
+
     }
 
     public String getBiosPath() {
@@ -288,6 +338,10 @@ public class Yabause extends Activity implements OnPadListener
 
     public int getCartridgeType() {
         return carttype;
+    }
+
+    public int getVideoInterface() {
+      return video_interface;
     }
 
     public String getCartridgePath() {
