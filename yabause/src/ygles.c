@@ -535,19 +535,37 @@ void YglTMAllocate(YglTexture * output, unsigned int w, unsigned int h, unsigned
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   GLuint error;
+
+  if (_Ygl->smallfbo == 0) {
+    glGenFramebuffers(1, &_Ygl->smallfbo);
+    glGenTextures(1, &_Ygl->smallfbotex);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->smallfbotex, 0);
+
+    glGenBuffers(1, &_Ygl->vdp1pixelBufferID);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
+    glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_DYNAMIC_READ);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+
   if (_Ygl->pFrameBuffer == NULL){
-    //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[ ((_Ygl->drawframe ^ 0x01) & 0x01) ]);
-    //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
 
-      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[((_Ygl->drawframe ^ 0x01) & 0x01)], 0);
-      glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-      glReadPixels(0,0,GlWidth,GlHeight,GL_RGBA,GL_BYTE,0);
-              //glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_BYTE, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[((_Ygl->drawframe ^ 0x01) & 0x01)], 0);
 
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, _Ygl->vdp1fbo);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _Ygl->smallfbo);
+    glBlitFramebuffer(0, 0, GlWidth, GlHeight, 0, 0, _Ygl->rwidth, _Ygl->rheight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
+    glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_BYTE, 0);
     YGLDEBUG("VIDOGLVdp1ReadFrameBuffer %d\n", ((_Ygl->drawframe ^ 0x01) & 0x01) );
 
-    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, GlWidth * GlHeight * 4, GL_MAP_READ_BIT);
+    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
     if (_Ygl->pFrameBuffer==NULL)
     {
       switch (type)
@@ -564,9 +582,9 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glBindFramebuffer(GL_FRAMEBUFFER,0);
   }
 
-  const int Line = (addr >> 10)*   ((float)(GlHeight) / (float)_Ygl->rheight);
-  const int Pix = ((addr & 0x3FF) >> 1)* ((float)(GlWidth) / (float)_Ygl->rwidth);
-  const int index = (GlHeight - 1 - Line)*(GlWidth * 4) + Pix * 4;
+  const int Line = (addr >> 10); // *((float)(GlHeight) / (float)_Ygl->rheight);
+  const int Pix = ((addr & 0x3FF) >> 1); // *((float)(GlWidth) / (float)_Ygl->rwidth);
+  const int index = (_Ygl->rheight - 1 - Line)*(_Ygl->rwidth* 4) + Pix * 4;
 
   switch (type)
   {
@@ -591,8 +609,8 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
       /*  BBBBBGGGGGRRRRR */
       //*(u16*)out = ((val & 0x1f) << 10) | ((val >> 1) & 0x3e0) | ((val >> 11) & 0x1F) | 0x8000;
-      *(u32*)out = (((r2 >> 3) & 0x1f) | (((g2 >> 3) & 0x1f) << 5) | (((b2 >> 3) & 0x1F)<<10) | 0x8000) << 16 |
-                    (((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F)<<10) | 0x8000) ;
+      *(u32*)out = (((r2 >> 3) & 0x1f) | (((g2 >> 3) & 0x1f) << 5) | (((b2 >> 3) & 0x1F)<<10) | 0x8000)  |
+                    (((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F)<<10) | 0x8000) << 16 ;
 
     }
     break;
@@ -681,10 +699,7 @@ int YglGLInit(int width, int height) {
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-   glGenBuffers(1, &_Ygl->vdp1pixelBufferID);
-   glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-   glBufferData(GL_PIXEL_PACK_BUFFER, GlWidth * GlHeight * 4, NULL, GL_DYNAMIC_READ);
-   glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
    _Ygl->pFrameBuffer = NULL;
 
    if( strstr(glGetString(GL_EXTENSIONS),"packed_depth_stencil") != NULL )
@@ -874,6 +889,9 @@ int YglInit(int width, int height, unsigned int depth) {
       YGLDEBUG("YglInit: Framebuffer status = %08X\n", status );
       return -1;
    }
+
+   _Ygl->smallfbo = 0;
+   _Ygl->smallfbotex = 0;
 
    glBindFramebuffer(GL_FRAMEBUFFER, 0 );
 
@@ -1601,8 +1619,6 @@ void YglRenderVDP1(void) {
 
    if (_Ygl->pFrameBuffer != NULL) {
      _Ygl->pFrameBuffer = NULL;
-     glActiveTexture(GL_TEXTURE0);
-     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe] );
      glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
@@ -1636,7 +1652,8 @@ void YglRenderVDP1(void) {
       //YGLDEBUG("Framebuffer status OK = %08X\n", status );
    }
 
-   if(  ((Vdp1Regs->TVMR & 0x08) && (Vdp1Regs->FBCR&0x03)==0x03) || ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase) 
+   // Many regressions to Enable it
+   //if(  ((Vdp1Regs->TVMR & 0x08) && (Vdp1Regs->FBCR&0x03)==0x03) || ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase) 
    {
 #if 0
      h = (Vdp1Regs->EWRR & 0x1FF) + 1;
@@ -2119,6 +2136,17 @@ void YglChangeResolution(int w, int h) {
    YglOrtho(&_Ygl->mtxModelView,0.0f, (float)w, (float)h, 0.0f, 1.0f, 0.0f);
    _Ygl->rwidth = w;
    _Ygl->rheight = h;
+
+   if (_Ygl->smallfbo != 0) {
+     glDeleteFramebuffers(1, &_Ygl->smallfbo);
+     _Ygl->smallfbo = 0;
+     glDeleteTextures(1, &_Ygl->smallfbotex);
+     _Ygl->smallfbotex = 0;
+     glDeleteBuffers(1, &_Ygl->vdp1pixelBufferID);
+     _Ygl->vdp1pixelBufferID = 0;
+     _Ygl->pFrameBuffer = NULL;
+
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
