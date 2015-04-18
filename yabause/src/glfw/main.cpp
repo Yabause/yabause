@@ -1,4 +1,4 @@
-
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #if defined(_USEGLEW_)
@@ -34,9 +34,19 @@ extern "C" {
 #include "debug.h"
 #include "sndal.h"
 
+#ifdef _WINDOWS
+  static char biospath[256] = "E:/wkcvs/Emulation/Saturn/satourne v1.0.2p/roms/saturn_bios.bin";
+  static char cdpath[256] = "E:/gameiso/VF1.img";
+  //static char cdpath[256] = "E:/gameiso/brtrck.bin";
+  //static char cdpath[256] = "E:/gameiso/Sonic 3D Blast (U)(Saturn)/125 Sonic 3D Blast (U).bin";
+  //static char cdpath[256] = "E:/gameiso/sonicjam.iso";
+#else
 static char biospath[256] = "/dat2/project/src/bios.bin";
 static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
-static char buppath[256] = "\0";
+#endif
+
+
+static char buppath[256] = "./back.bin";
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
 
@@ -208,6 +218,8 @@ int main( int argc, char * argcv[] )
 
 	if (!glfwInit())
 		    exit(EXIT_FAILURE);
+
+  ::AllocConsole();
 
 
 

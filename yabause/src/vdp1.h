@@ -47,6 +47,7 @@ typedef struct
    void (*Vdp1UserClipping)(void);
    void (*Vdp1SystemClipping)(void);
    void (*Vdp1LocalCoordinate)(void);
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
    // VDP2 specific
    int (*Vdp2Reset)(void);
    void (*Vdp2DrawStart)(void);
