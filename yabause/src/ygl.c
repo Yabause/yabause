@@ -747,9 +747,7 @@ int YglInit(int width, int height, unsigned int depth) {
    
    _Ygl->st = 0;
 
-   // This is probably wrong, but it'll have to do for now
-   if ((cachelist = (cache_struct *)malloc(0x100000 / 8 * sizeof(cache_struct))) == NULL)
-      return -1;
+   YglCacheInit();
 
    return 0;
 }
@@ -787,8 +785,7 @@ void YglDeInit(void) {
       free(_Ygl);
    }
 
-   if (cachelist)
-      free(cachelist);
+   YglCacheDeInit();
 }
 
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode )

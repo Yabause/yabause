@@ -36,6 +36,16 @@ hash_map< u32 , YglCache > g_TexHash;
 
 extern "C" {
 
+void YglCacheInit() {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YglCacheDeInit() {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int YglIsCached(u32 addr, YglCache * c ) {
 
   hash_map< u32 , YglCache >::iterator pos =  g_TexHash.find(addr);

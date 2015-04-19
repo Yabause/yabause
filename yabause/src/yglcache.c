@@ -30,6 +30,23 @@ typedef struct
 static cache_struct *cachelist;
 static int cachelistsize=0;
 
+//////////////////////////////////////////////////////////////////////////////
+
+void YglCacheInit() {
+   // This is probably wrong, but it'll have to do for now
+   if ((cachelist = (cache_struct *)malloc(0x100000 / 8 * sizeof(cache_struct))) == NULL)
+      return -1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void YglCacheDeInit() {
+   if (cachelist)
+      free(cachelist);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int YglIsCached(u32 addr, YglCache * c ) {
    int i = 0;
 
