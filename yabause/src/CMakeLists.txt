@@ -46,7 +46,6 @@ set(yabause_SOURCES
 if ( ANDROID OR glfw )
 set(yabause_SOURCES
 	${yabause_SOURCES}
-	yglcache.cpp
 	ygles.c
 	yglshaderes.c )
 else()
@@ -54,6 +53,13 @@ set(yabause_SOURCES
 	${yabause_SOURCES}
 	ygl.c
 	yglshader.c )
+endif()
+
+option(YAB_USE_CXX "Allow C++ in the emulation core.")
+if (YAB_USE_CXX)
+	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
+else()
+	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
 endif()
 
 # new SCSP
