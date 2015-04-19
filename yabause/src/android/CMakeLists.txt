@@ -28,6 +28,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		src/org/yabause/android/GameList.java
 		src/org/yabause/android/GameListAdapter.java
 		src/org/yabause/android/Home.java
+		src/org/yabause/android/PadEvent.java
 		src/org/yabause/android/PadManager.java
 		src/org/yabause/android/PadManagerV8.java
 		src/org/yabause/android/PadManagerV16.java
@@ -113,6 +114,7 @@ set(yabause_android_SRC
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameList.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameListAdapter.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Home.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadEvent.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManager.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV8.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV16.java"
