@@ -46,8 +46,8 @@ u8 FASTCALL Vdp1RamReadByte(u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp1RamReadWord(u32 addr) {
-   addr &= 0x7FFFF;
-   return T1ReadWord(Vdp1Ram, addr);
+    addr &= 0x07FFFF;
+    return T1ReadWord(Vdp1Ram, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -82,6 +82,11 @@ void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
 
 u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
    addr &= 0x3FFFF;
+   if (VIDCore->Vdp1ReadFrameBuffer){
+     u8 val;
+     VIDCore->Vdp1ReadFrameBuffer(0, addr, &val);
+     return val;
+   }
    return T1ReadByte(Vdp1FrameBuffer, addr);
 }
 
@@ -89,6 +94,11 @@ u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
 
 u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
    addr &= 0x3FFFF;
+   if (VIDCore->Vdp1ReadFrameBuffer){
+     u16 val;
+     VIDCore->Vdp1ReadFrameBuffer(1, addr, &val);
+     return val;
+   }   
    return T1ReadWord(Vdp1FrameBuffer, addr);
 }
 
@@ -96,6 +106,11 @@ u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
 
 u32 FASTCALL Vdp1FrameBufferReadLong(u32 addr) {
    addr &= 0x3FFFF;
+   if (VIDCore->Vdp1ReadFrameBuffer){
+     u32 val;
+     VIDCore->Vdp1ReadFrameBuffer(2, addr, &val);
+     return val;
+   }
    return T1ReadLong(Vdp1FrameBuffer, addr);
 }
 
@@ -282,7 +297,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       case 0x4:
          Vdp1Regs->COPR = 0;
          Vdp1Regs->PTMR = val;
-         if (val == 1) Vdp1Draw();
+         if (val == 1){ Vdp1Draw();  }
          break;
       case 0x6:
          Vdp1Regs->EWDR = val;

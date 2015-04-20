@@ -83,6 +83,8 @@ void VIDOGLVdp2DrawScreens(void);
 void VIDOGLVdp2SetResolution(u16 TVMD);
 void YglGetGlSize(int *width, int *height);
 
+void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
 "OpenGL Video Interface",
@@ -102,6 +104,7 @@ VIDOGLVdp1LineDraw,
 VIDOGLVdp1UserClipping,
 VIDOGLVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
+VIDOGLVdp1ReadFrameBuffer,
 VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
@@ -173,6 +176,7 @@ u32 FASTCALL Vdp2ColorRamGetColorCM01SC0(vdp2draw_struct * info, u32 colorindex,
 u32 FASTCALL Vdp2ColorRamGetColorCM01SC1(vdp2draw_struct * info, u32 colorindex, int alpha );
 u32 FASTCALL Vdp2ColorRamGetColorCM01SC3(vdp2draw_struct * info, u32 colorindex, int alpha );
 u32 FASTCALL Vdp2ColorRamGetColorCM2(vdp2draw_struct * info, u32 colorindex, int alpha );
+
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1940,6 +1944,8 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    YglQuad((YglSprite *)info, texture,NULL);
    info->cellw = cellw;
    info->cellh = cellh;
+   x = 0;
+   y = 0;
    
    if( Vdp2Regs->RPMD != 0 ) useb = 1;
    
@@ -2245,7 +2251,14 @@ void VIDOGLVdp1DrawStart(void)
    int maxpri;
    int minpri;
    u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
-   
+
+   if (YglTM->texture == NULL) {
+     glActiveTexture(GL_TEXTURE0);
+     glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
+     YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
+   }
+
    YglCacheReset();
    
 
@@ -2301,6 +2314,7 @@ void VIDOGLVdp1DrawStart(void)
 
 void VIDOGLVdp1DrawEnd(void)
 {
+  YglRenderVDP1();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2323,8 +2337,14 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    sprite.dst=0;
    sprite.blendmode=0;
 
-   x = cmd.CMDXA + Vdp1Regs->localX;
-   y = cmd.CMDYA + Vdp1Regs->localY;
+   short CMDXA = cmd.CMDXA;
+   short CMDYA = cmd.CMDYA;
+
+   if ((CMDXA & 0x800)) CMDXA |= 0xF800; else CMDXA &= ~(0xF800);
+   if ((CMDYA & 0x800)) CMDYA |= 0xF800; else CMDYA &= ~(0xF800);
+
+   x = CMDXA + Vdp1Regs->localX;
+   y = CMDYA + Vdp1Regs->localY;
    sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
    sprite.h = cmd.CMDSIZE & 0xFF;
 
@@ -2424,6 +2444,11 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
    sprite.dst=0;
    sprite.blendmode=0;
+
+   if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
+   if ((cmd.CMDYC & 0x800)) cmd.CMDYC |= 0xF800; else cmd.CMDYC &= ~(0xF800);
+   if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
+   if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
    
    x = cmd.CMDXA + Vdp1Regs->localX;
    y = cmd.CMDYA + Vdp1Regs->localY;
@@ -2606,14 +2631,19 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
    sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-   sprite.vertices[0] = (s32)((float)(cmd.CMDXA + Vdp1Regs->localX) * vdp1wratio);
-   sprite.vertices[1] = (s32)((float)(cmd.CMDYA + Vdp1Regs->localY) * vdp1hratio);
-   sprite.vertices[2] = (s32)((float)((cmd.CMDXB) + Vdp1Regs->localX) * vdp1wratio);
-   sprite.vertices[3] = (s32)((float)(cmd.CMDYB + Vdp1Regs->localY) * vdp1hratio);
-   sprite.vertices[4] = (s32)((float)((cmd.CMDXC) + Vdp1Regs->localX) * vdp1wratio);
-   sprite.vertices[5] = (s32)((float)((cmd.CMDYC) + Vdp1Regs->localY) * vdp1hratio);
-   sprite.vertices[6] = (s32)((float)(cmd.CMDXD + Vdp1Regs->localX) * vdp1wratio);
-   sprite.vertices[7] = (s32)((float)((cmd.CMDYD) + Vdp1Regs->localY) * vdp1hratio);
+   if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
+   if ((cmd.CMDYC & 0x800)) cmd.CMDYC |= 0xF800; else cmd.CMDYC &= ~(0xF800);
+   if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
+   if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
+
+   sprite.vertices[0] = (s32)((float)((s32)cmd.CMDXA + Vdp1Regs->localX) * vdp1wratio);
+   sprite.vertices[1] = (s32)((float)((s32)cmd.CMDYA + Vdp1Regs->localY) * vdp1hratio);
+   sprite.vertices[2] = (s32)((float)((s32)(cmd.CMDXB) + Vdp1Regs->localX) * vdp1wratio);
+   sprite.vertices[3] = (s32)((float)((s32)cmd.CMDYB + Vdp1Regs->localY) * vdp1hratio);
+   sprite.vertices[4] = (s32)((float)((s32)(cmd.CMDXC) + Vdp1Regs->localX) * vdp1wratio);
+   sprite.vertices[5] = (s32)((float)((s32)(cmd.CMDYC) + Vdp1Regs->localY) * vdp1hratio);
+   sprite.vertices[6] = (s32)((float)((s32)cmd.CMDXD + Vdp1Regs->localX) * vdp1wratio);
+   sprite.vertices[7] = (s32)((float)((s32)(cmd.CMDYD) + Vdp1Regs->localY) * vdp1hratio);
 
    tmp = cmd.CMDSRCA;
 
@@ -2702,18 +2732,27 @@ void VIDOGLVdp1PolygonDraw(void)
    float col[4*4];
    int gouraud=0;
    int priority;
+
+   short CMDYA = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
+   short CMDYB = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
+   short CMDYC = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+   short CMDYD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A);
    
+   if ((CMDYA & 0x800)) CMDYA |= 0xF800; else CMDYA &= ~(0xF800);
+   if ((CMDYC & 0x800)) CMDYC |= 0xF800; else CMDYC &= ~(0xF800);
+   if ((CMDYB & 0x800)) CMDYB |= 0xF800; else CMDYB &= ~(0xF800);
+   if ((CMDYD & 0x800)) CMDYD |= 0xF800; else CMDYD &= ~(0xF800);
 
    polygon.blendmode=0;
    polygon.dst = 0;
    X[0] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
-   Y[0] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
+   Y[0] = Vdp1Regs->localY + CMDYA;
    X[1] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10);
-   Y[1] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
+   Y[1] = Vdp1Regs->localY + CMDYB;
    X[2] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
-   Y[2] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+   Y[2] = Vdp1Regs->localY + CMDYC;
    X[3] = Vdp1Regs->localX + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x18);
-   Y[3] = Vdp1Regs->localY + T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A);
+   Y[3] = Vdp1Regs->localY + CMDYD;
 
    color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);

@@ -189,6 +189,10 @@ typedef struct {
    GLuint rboid_stencil;
    GLuint vdp1fbo;
    GLuint vdp1FrameBuff[2];
+   GLuint smallfbo;
+   GLuint smallfbotex;
+   GLuint vdp1pixelBufferID;
+   void * pFrameBuffer;
 
    // Message Layer
    int msgwidth;
