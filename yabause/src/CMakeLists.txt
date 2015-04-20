@@ -5,6 +5,21 @@ include(CheckIncludeFile)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
+set(yabause_HEADERS
+	bios.h
+	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
+	debug.h
+	error.h
+	japmodem.h
+	m68kcore.h m68kd.h memory.h movie.h
+	netlink.h
+	osdcore.h
+	peripheral.h profile.h
+	scsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
+	threads.h titan/titan.h
+	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
+	yabause.h ygl.h yui.h)
+
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
 set(YAB_PORTS "gtk;qt;dreamcast;cocoa" CACHE STRING "List of ports to build")
