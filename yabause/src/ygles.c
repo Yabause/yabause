@@ -2038,6 +2038,17 @@ void YglRender(void) {
 #else // USEVBO
 			if( level->prg[j].currentQuad != 0 )
 			{
+        if (level->blendmode == 0){
+          glDisable(GL_BLEND);
+        }
+        else if (level->blendmode == 1){
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        else if (level->blendmode == 2){
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_ONE, GL_ONE);
+        }
         glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
 				glVertexAttribPointer(level->prg[j].vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
 				glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
