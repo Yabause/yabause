@@ -1,4 +1,6 @@
+#ifdef _WINDOWS
 #include <windows.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #if defined(_USEGLEW_)
@@ -219,8 +221,9 @@ int main( int argc, char * argcv[] )
 	if (!glfwInit())
 		    exit(EXIT_FAILURE);
 
+#ifdef _WINDOWS
   ::AllocConsole();
-
+#endif
 
 
   glfwSetErrorCallback(error_callback);
