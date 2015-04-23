@@ -70,6 +70,9 @@ set(yabause_SOURCES
 	yglshader.c )
 endif()
 
+include_directories(nanovg)
+set(yabause_SOURCES ${yabause_SOURCES} nanovg/nanovg.c)
+
 option(YAB_USE_CXX "Allow C++ in the emulation core.")
 if (YAB_USE_CXX)
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
