@@ -119,7 +119,7 @@ NULL
 #define  LOG_TAG    "yabause"
 
 /* Override printf for debug*/
-int printf( const char * fmt, ... )
+int yprintf( const char * fmt, ... )
 {
    va_list ap;
    va_start(ap, fmt);
@@ -247,7 +247,7 @@ void YuiSwapBuffers(void)
 
    if( eglMakeCurrent(g_Display,g_Surface,g_Surface,g_Context) == EGL_FALSE )
    {
-         printf( "eglMakeCurrent fail %04x",eglGetError());
+         yprintf( "eglMakeCurrent fail %04x",eglGetError());
          pthread_mutex_unlock(&g_mtxGlLock);
          return;
    }   
@@ -270,7 +270,7 @@ void YuiSwapBuffers(void)
       error = glGetError();
       if( error != GL_NO_ERROR )
       {
-         printf("gl error %d", error );
+         yprintf("gl error %d", error );
          return;
       }
    }else{
@@ -290,7 +290,7 @@ void YuiSwapBuffers(void)
       error = glGetError();
       if( error != GL_NO_ERROR )
       {
-         printf("gl error %d", error );
+         yprintf("gl error %d", error );
          return;
       }      
    }else{
@@ -345,11 +345,11 @@ int Java_org_yabause_android_YabauseRunnable_initViewport( int width, int height
    glDisable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    
-   printf(glGetString(GL_VENDOR));
-   printf(glGetString(GL_RENDERER));
-   printf(glGetString(GL_VERSION));
-   printf(glGetString(GL_EXTENSIONS));
-   printf(eglQueryString(g_Display,EGL_EXTENSIONS));
+   yprintf(glGetString(GL_VENDOR));
+   yprintf(glGetString(GL_RENDERER));
+   yprintf(glGetString(GL_VERSION));
+   yprintf(glGetString(GL_EXTENSIONS));
+   yprintf(eglQueryString(g_Display,EGL_EXTENSIONS));
    eglSwapInterval(g_Display,0);
    eglMakeCurrent(g_Display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT);
    return 0;
@@ -364,36 +364,36 @@ int initEGLFunc()
    handle = dlopen("libEGL.so",RTLD_LAZY);
    if( handle == NULL )
    {
-      printf(dlerror());
+      yprintf(dlerror());
       return -1;
    }
    
    eglGetCurrentDisplay = dlsym(handle, "eglGetCurrentDisplay");
-   if( eglGetCurrentDisplay == NULL){ printf(dlerror()); return -1; }  
+   if( eglGetCurrentDisplay == NULL){ yprintf(dlerror()); return -1; }
    
    eglGetCurrentSurface = dlsym(handle, "eglGetCurrentSurface");
-   if( eglGetCurrentSurface == NULL){ printf(dlerror()); return -1; }  
+   if( eglGetCurrentSurface == NULL){ yprintf(dlerror()); return -1; }
    
    eglGetCurrentContext = dlsym(handle, "eglGetCurrentContext");
-   if( eglGetCurrentContext == NULL){ printf(dlerror()); return -1; }  
+   if( eglGetCurrentContext == NULL){ yprintf(dlerror()); return -1; }
    
    eglQuerySurface      = dlsym(handle, "eglQuerySurface");
-   if( eglQuerySurface == NULL){ printf(dlerror()); return -1; }  
+   if( eglQuerySurface == NULL){ yprintf(dlerror()); return -1; }
    
    eglSwapInterval      = dlsym(handle, "eglSwapInterval");
-   if( eglSwapInterval == NULL){ printf(dlerror()); return -1; }  
+   if( eglSwapInterval == NULL){ yprintf(dlerror()); return -1; }
    
    eglMakeCurrent       = dlsym(handle, "eglMakeCurrent");
-   if( eglMakeCurrent == NULL){ printf(dlerror()); return -1; }  
+   if( eglMakeCurrent == NULL){ yprintf(dlerror()); return -1; }
    
    eglSwapBuffers       = dlsym(handle, "eglSwapBuffers");
-   if( eglSwapBuffers == NULL){ printf(dlerror()); return -1; }  
+   if( eglSwapBuffers == NULL){ yprintf(dlerror()); return -1; }
    
    eglQueryString       = dlsym(handle, "eglQueryString");
-   if( eglQueryString == NULL){ printf(dlerror()); return -1; }  
+   if( eglQueryString == NULL){ yprintf(dlerror()); return -1; }
    
    eglGetError          = dlsym(handle, "eglGetError");
-   if( eglGetError == NULL){ printf(dlerror()); return -1; }   
+   if( eglGetError == NULL){ yprintf(dlerror()); return -1; }
    
    return 0;
 }
