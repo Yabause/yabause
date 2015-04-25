@@ -97,7 +97,6 @@ add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
 	COMMAND "${NDK_BUILD}" ARGS "NDK_DEBUG=1"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/nanovg/nanovg.c"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/osdcore.c"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/osdcore.h"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/yui.c"
