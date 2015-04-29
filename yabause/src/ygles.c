@@ -1655,6 +1655,9 @@ void YglRenderVDP1(void) {
    // Many regressions to Enable it
    //if(  ((Vdp1Regs->TVMR & 0x08) && (Vdp1Regs->FBCR&0x03)==0x03) || ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase) 
    {
+     u16 color;
+     int priority;
+     u16 alpha;
 #if 0
      h = (Vdp1Regs->EWRR & 0x1FF) + 1;
      if (h > vdp1height) h = vdp1height;
@@ -1678,7 +1681,35 @@ void YglRenderVDP1(void) {
        }
      }
 #endif
-     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+     color = Vdp1Regs->EWDR;
+     priority = 0;
+
+     if (color & 0x8000)
+       priority = Vdp2Regs->PRISA & 0x7;
+     else
+     {
+       int shadow, colorcalc;
+       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+#ifdef WORDS_BIGENDIAN
+       priority = ((u8 *)&Vdp2Regs->PRISA)[priority ^ 1] & 0x7;
+#else
+       priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
+#endif
+     }
+
+     if (color == 0)
+     {
+       alpha = 0;
+       priority = 0;
+     }
+     else{
+       alpha = 0xF8;
+     }
+
+     alpha |= priority;
+
+     glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
      Vdp1External.manualerase = 0;
      YGLDEBUG("YglRenderVDP1: clear\n");
