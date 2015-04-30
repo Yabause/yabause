@@ -233,11 +233,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       }
    }
 
-   if( (cmd->CMDPMOD & 0x7)==0x03 || (cmd->CMDPMOD & 0x100) )
-   {
-      alpha = 0x80;
-   }
-   
    alpha |= priority;
    
    switch((cmd->CMDPMOD >> 3) & 0x7)
@@ -261,6 +256,11 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
+               else if (((dot >> 4) | colorBank) == 0x0000){
+                 u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+                 talpha |= priority;
+                 *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
+               }// not documented...
                else *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, alpha);
                j += 1;
 
@@ -268,6 +268,11 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if (((dot & 0xF) == 0) && !SPD) *texture->textdata++  = 0x00;
                else if( ((dot & 0xF) == 0x0F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
+               else if (((dot & 0x0F) | colorBank) == 0x0000){
+                 u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+                 talpha |= priority;
+                 *texture->textdata++ = Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
+               }// not documented...              
                else *texture->textdata++ = Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, alpha);
                j += 1;
 
@@ -2370,7 +2375,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    sprite.uclipmode=(CMDPMOD>>9)&0x03;
    
    // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
+   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       tmp |= 0x00010000;
       sprite.blendmode = 0x80;
@@ -2549,7 +2554,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    sprite.priority = 8;
    
    // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
+   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       tmp |= 0x00010000;
       sprite.blendmode = 0x80;
@@ -2657,7 +2662,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.uclipmode=(CMDPMOD>>9)&0x03;
    
    // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
+   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       tmp |= 0x00010000;
       sprite.blendmode = 0x80;
@@ -2760,11 +2765,10 @@ void VIDOGLVdp1PolygonDraw(void)
    
   
    // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
+   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       polygon.blendmode = 0x80;
    }   
-
 
    // Check if the Gouraud shading bit is set and the color mode is RGB
    if( (CMDPMOD & 4) )
@@ -2829,7 +2833,6 @@ void VIDOGLVdp1PolygonDraw(void)
    {
       alpha = 0x80;
    }
-
         
    alpha |= priority;
    
@@ -2870,7 +2873,7 @@ void VIDOGLVdp1PolylineDraw(void)
    
 
    // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
+   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       polygon.blendmode = 0x80;
    }     
@@ -2979,7 +2982,7 @@ void VIDOGLVdp1LineDraw(void)
    polygon.uclipmode=(CMDPMOD>>9)&0x03;
 
    // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x7)==0x03 || (CMDPMOD & 0x100) )
+   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       polygon.blendmode = 0x80;
    }  
@@ -3178,6 +3181,10 @@ static void Vdp2DrawNBG0(void)
    
    info.coordincx = 1.0f;
    info.coordincy = 1.0f;
+
+   info.cor = 0;
+   info.cog = 0;
+   info.cob = 0;
 
    if (Vdp2Regs->BGON & 0x20)
    {
@@ -3388,7 +3395,10 @@ static void Vdp2DrawNBG1(void)
    YglCache tmpc;
    info.dst=0;
    info.uclipmode=0;
-   
+   info.cor = 0;
+   info.cog = 0;
+   info.cob = 0;
+
    info.enable = Vdp2Regs->BGON & 0x2;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x200);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 2) & 0x3;
@@ -3547,7 +3557,10 @@ static void Vdp2DrawNBG2(void)
    YglTexture texture;
    info.dst=0;
    info.uclipmode=0;
-   
+   info.cor = 0;
+   info.cog = 0;
+   info.cob = 0;
+
    info.enable = Vdp2Regs->BGON & 0x4;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x400);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 4) & 0x3;
@@ -3617,7 +3630,10 @@ static void Vdp2DrawNBG3(void)
    YglTexture texture;
    info.dst=0;
    info.uclipmode=0;
-   
+   info.cor = 0;
+   info.cog = 0;
+   info.cob = 0;
+
    info.enable = Vdp2Regs->BGON & 0x8;
    info.transparencyenable = !(Vdp2Regs->BGON & 0x800);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 6) & 0x3;
@@ -3690,7 +3706,10 @@ static void Vdp2DrawRBG0(void)
    vdp2rotationparameter_struct parameter;
    info.dst=0;
    info.uclipmode=0;
-   
+   info.cor = 0;
+   info.cog = 0;
+   info.cob = 0;
+
    info.enable = Vdp2Regs->BGON & 0x10;
    info.priority = Vdp2Regs->PRIR & 0x7;
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))

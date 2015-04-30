@@ -594,7 +594,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       u8 g = *((u8*)(_Ygl->pFrameBuffer) + index + 1);
       u8 b = *((u8*)(_Ygl->pFrameBuffer) + index + 2);
       //*(u16*)out = ((val & 0x1f) << 10) | ((val >> 1) & 0x3e0) | ((val >> 11) & 0x1F) | 0x8000;
-      *(u16*)out = ((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F)<<10) | 0x8000;
+      *(u16*)out = ((r >> 2) & 0x1f) | (((g >> 2) & 0x1f) << 5) | (((b >> 2) & 0x1F)<<10) | 0x8000;
     }
     break;
   case 2:
@@ -607,10 +607,15 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       u32 g2 = *((u8*)(_Ygl->pFrameBuffer) + index + 5);
       u32 b2 = *((u8*)(_Ygl->pFrameBuffer) + index + 6);
 
+      if (r != 0)
+      {
+        int a=0;
+      }
+
       /*  BBBBBGGGGGRRRRR */
       //*(u16*)out = ((val & 0x1f) << 10) | ((val >> 1) & 0x3e0) | ((val >> 11) & 0x1F) | 0x8000;
-      *(u32*)out = (((r2 >> 3) & 0x1f) | (((g2 >> 3) & 0x1f) << 5) | (((b2 >> 3) & 0x1F)<<10) | 0x8000)  |
-                    (((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F)<<10) | 0x8000) << 16 ;
+      *(u32*)out = (((r2 >> 2) & 0x1f) | (((g2 >> 2) & 0x1f) << 5) | (((b2 >> 2) & 0x1F)<<10) | 0x8000)  |
+                  ((((r  >> 2) & 0x1f) | (((g  >> 2) & 0x1f) << 5) | (((b  >> 2) & 0x1F)<<10) | 0x8000) << 16) ;
 
     }
     break;
@@ -1080,6 +1085,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
 
    program = YglGetProgram(input,prg);
    if( program == NULL ) return NULL;
+
 
    program->color_offset_val[0] = (float)(input->cor)/255.0f;
    program->color_offset_val[1] = (float)(input->cog)/255.0f;
@@ -2031,6 +2037,10 @@ void YglRender(void) {
          if( level->blendmode != 0 )
          {
             to = i;
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
             YglRenderFrameBuffer(from,to);
             from = to;
 
@@ -2099,6 +2109,9 @@ void YglRender(void) {
          YglTranslatef(&mtx,0.0f,0.0f,0.1f);
 
    }
+
+   glEnable(GL_BLEND);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    YglRenderFrameBuffer(from,8);
 
 #endif
