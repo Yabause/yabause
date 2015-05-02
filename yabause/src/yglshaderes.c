@@ -295,7 +295,7 @@ const GLchar Yglprg_vdp1_gouraudshading_f[] =
       "  vec4 spriteColor = texture(u_sprite,addr);                           \n"
       "  if( spriteColor.a == 0.0 ) discard;                                      \n"
       "  fragColor   = spriteColor;                                          \n"
-      "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n" 
+      "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
       "  fragColor.a = spriteColor.a;                                        \n"
       "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
@@ -332,87 +332,70 @@ static int id_fbowidth;
 static int id_fboheight;
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
-"#version 300 es \n"
-"uniform mat4 u_mvpMatrix;                \n"
-"uniform mat4 u_texMatrix;                \n"
-"layout (location = 0) in vec4 a_position;               \n"
-"layout (location = 1) in vec4 a_texcoord;               \n"
-"layout (location = 2) in vec4 a_grcolor;                \n"
-"out  vec4 v_texcoord;               \n"
-"out  vec4 v_vtxcolor;               \n"
-"void main() {                            \n"
-"   v_vtxcolor  = a_grcolor;              \n"
-"   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
-"   v_texcoord.s  = v_texcoord.s/2048.0; \n"
-"   v_texcoord.t  = v_texcoord.t/1024.0; \n"
-"   gl_Position = a_position*u_mvpMatrix; \n"
-"}\n";
+      "#version 300 es \n"
+      "uniform mat4 u_mvpMatrix;                \n"
+      "uniform mat4 u_texMatrix;                \n"
+      "layout (location = 0) in vec4 a_position;               \n"
+      "layout (location = 1) in vec4 a_texcoord;               \n"
+      "layout (location = 2) in vec4 a_grcolor;                \n"
+      "out  vec4 v_texcoord;               \n"
+      "out  vec4 v_vtxcolor;               \n"
+      "void main() {                            \n"
+      "   v_vtxcolor  = a_grcolor;              \n"
+      "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+      "   v_texcoord.s  = v_texcoord.s/2048.0; \n"
+      "   v_texcoord.t  = v_texcoord.t/1024.0; \n"
+      "   gl_Position = a_position*u_mvpMatrix; \n"
+      "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_hf_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
-"#version 300 es\n"
-"precision highp float;\n"
-"uniform sampler2D u_sprite;\n"
-"in vec4 v_texcoord;\n"
-"in vec4 v_vtxcolor;\n"
-"out vec4 fragColor;\n"
-"void main() {\n"
-"  vec2 addr = v_texcoord.st;\n"
-"  addr.s = addr.s / (v_texcoord.q);\n"
-"  addr.t = addr.t / (v_texcoord.q);\n"
-"  vec4 spriteColor = texture(u_sprite,addr);\n"
-"  if( spriteColor.a == 0.0 ) discard;\n"
-"  fragColor = spriteColor;\n"
-"  fragColor.a = 0.5;\n"
-"}\n";
+      "#version 300 es \n"
+      "precision highp float;                                                                     \n"
+      "uniform sampler2D u_sprite;                                                                  \n"
+      "uniform sampler2D u_fbo;                                                                     \n"
+      "uniform int u_fbowidth;                                                                      \n"
+      "uniform int u_fbohegiht;                                                                     \n"
+      "in vec4 v_texcoord;                                                                     \n"
+      "in vec4 v_vtxcolor;                                                                     \n"
+      "out vec4 fragColor; \n "
+      "void main() {                                                                                \n"
+      "  vec2 addr = v_texcoord.st;                                                                 \n"
+      "  vec2 faddr = vec2( gl_FragCoord.x/float(u_fbowidth), gl_FragCoord.y/float(u_fbohegiht));   \n"
+      "  addr.s = addr.s / (v_texcoord.q);                                                          \n"
+      "  addr.t = addr.t / (v_texcoord.q);                                                          \n"
+      "  vec4 spriteColor = texture(u_sprite,addr);                                               \n"
+      "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+      "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
+      "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
+      "  if( fboColor.a > 0.0 && spriteColor.a > 0.0 )                                              \n"
+      "  {                                                                                          \n"
+      "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
+      "    fragColor.a = fboColor.a;                                                             \n"
+      "  }else{                                                                                     \n"
+      "    fragColor = spriteColor;                                                              \n"
+      "  }                                                                                          \n"
+      "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_hf_f[] = {Yglprg_vdp1_gouraudshading_hf_f, NULL};
 
 int Ygl_uniformGlowShadingHalfTrans(void * p )
 {
    YglProgram * prg;
    prg = p;
-
-   glUseProgram(_prgid[PG_VFP1_GOURAUDSAHDING]);
-   glActiveTexture(GL_TEXTURE0);
-   glUniform1i(id_vdp1_normal_s_sprite, 0);
-   glEnableVertexAttribArray(0);
-   glEnableVertexAttribArray(1);
+   glEnableVertexAttribArray(prg->vertexp);
+   glEnableVertexAttribArray(prg->texcoordp);
    if( prg->vertexAttribute != NULL )
    {
-      glEnableVertexAttribArray(2);
+      glEnableVertexAttribArray(prg->vaid);
    }
 
-   glEnable(GL_BLEND);
-   glBlendColor(1.0f, 1.0f, 1.0f, 0.5f);
-   glBlendFuncSeparate(
-     GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA,
-     GL_ONE, GL_ZERO);
-
-#if 0
-   // path1 Alpha Blend
-   if (prg->currentQuad != 0)
-   {
-     glEnable(GL_BLEND);
-     glBlendColor(1.0f, 1.0f, 1.0f, 0.5f);
-     //glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-     glBlendFuncSeparate(
-       GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA,
-       GL_ONE, GL_ZERO  );
-
-     glUniformMatrix4fv(prg->mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
-     glVertexAttribPointer(prg->vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)prg->quads);
-     glVertexAttribPointer(prg->texcoordp, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->textcoords);
-     if (prg->vaid != 0) {
-       glVertexAttribPointer(prg->vaid, 4, GL_FLOAT, GL_FALSE, 0, prg->vertexAttribute);
-     }
-     glDrawArrays(GL_TRIANGLES, 0, prg->currentQuad / 2);
-   }
-
-   // path2 Only write Alpha
-   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
-   glDisable(GL_BLEND);
-#endif 
-
+   glUniform1i(id_sprite, 0);
+   glUniform1i(id_fbo, 1);
+   glActiveTexture(GL_TEXTURE1);
+   glBindTexture(GL_TEXTURE_2D,_Ygl->vdp1FrameBuff[_Ygl->drawframe]);
+   glUniform1i(id_fbowidth, GlWidth);
+   glUniform1i(id_fboheight, GlHeight);
+   glActiveTexture(GL_TEXTURE0);
    return 0;
 }
 
@@ -420,11 +403,7 @@ int Ygl_cleanupGlowShadingHalfTrans(void * p )
 {
    YglProgram * prg;
    prg = p;
-   glDisableVertexAttribArray(2);
-   glDisable(GL_BLEND);
-   glBlendColor(0.0f, 0.0f, 0.0f, 0.0f);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+   glDisableVertexAttribArray(prg->vaid);
    return 0;
 }
 
@@ -1064,4 +1043,133 @@ int YglProgramChange( YglLevel * level, int prgid )
 
 }
 
+static int blit_prg = -1;
+static int u_w;
+static int u_h;
+
+static const char vblit_img[] =
+"#version 300 es \n"
+"layout (location = 0) in vec2 a_Position; \n"
+"layout (location = 1) in vec2 a_Uv;       \n"
+"uniform float u_w; \n"
+"uniform float u_h; \n"
+"out vec2	v_Uv;                    \n"  
+"void main()                              \n"
+"{                                        \n"
+"   gl_Position = vec4((a_Position.x*u_w)-1.0, (a_Position.y*u_h)-1.0, 0.0, 1.0);  \n" 
+"   v_Uv = a_Uv;                          \n"
+"}";
+
+static const char fblit_img[] =
+"#version 300 es \n"
+"precision mediump float;     \n"
+"uniform sampler2D u_Src; \n"
+"in vec2  v_Uv;          \n"
+"out vec4 fragColor;            \n"
+"void main () \n"
+"{ \n"
+"  vec4 src = texture2D( u_Src, v_Uv ); \n"
+"  fragColor = src; \n"
+"}\n";
+
+
+
+
+int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
+
+  float vb[] = { 0, 0, 
+    2.0, 0.0, 
+    2.0, 2.0, 
+    0, 2.0, };
+
+  float tb[] = { 0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0,
+    0.0, 1.0 };
+
+  glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
+
+  if (blit_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+
+    const GLchar * vblit_img_v[] = { vblit_img, NULL };
+    const GLchar * fblit_img_v[] = { fblit_img, NULL };
+
+    blit_prg = glCreateProgram();
+    if (blit_prg == 0) return -1;
+
+    glUseProgram(blit_prg);
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, vblit_img_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      printf("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      blit_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_img_v, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      printf("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      blit_prg = -1;
+      return -1;
+    }
+
+    glAttachShader(blit_prg, vshader);
+    glAttachShader(blit_prg, fshader);
+    glLinkProgram(blit_prg);
+    glGetProgramiv(blit_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      printf("Link error..\n");
+      Ygl_printShaderError(blit_prg);
+      blit_prg = -1;
+      return -1;
+    }
+
+     glUniform1i(glGetUniformLocation(blit_prg, "u_Src"), 0);
+     u_w = glGetUniformLocation(blit_prg, "u_w");
+     u_h = glGetUniformLocation(blit_prg, "u_h");
+
+  }
+  else{
+    glUseProgram(blit_prg);
+  }
+
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+  glUniform1f(u_w, w);
+  glUniform1f(u_h, h);
+
+  glEnable(GL_TEXTURE_2D);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, srcTexture);
+  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+  // Clean up
+  glActiveTexture(GL_TEXTURE0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+
+  return 0;
+}
+
 //#endif
+

@@ -533,6 +533,8 @@ void YglTMAllocate(YglTexture * output, unsigned int w, unsigned int h, unsigned
    }
 }
 
+
+
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   GLuint error;
 
@@ -553,13 +555,15 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   }
 
   if (_Ygl->pFrameBuffer == NULL){
-
+#if 0
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[((_Ygl->drawframe ^ 0x01) & 0x01)], 0);
-
     glBindFramebuffer(GL_READ_FRAMEBUFFER, _Ygl->vdp1fbo);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _Ygl->smallfbo);
     glBlitFramebuffer(0, 0, GlWidth, GlHeight, 0, 0, _Ygl->rwidth, _Ygl->rheight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+#else
+    YglBlitFramebuffer(_Ygl->vdp1FrameBuff[((_Ygl->drawframe ^ 0x01) & 0x01)], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight );
+#endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_BYTE, 0);
