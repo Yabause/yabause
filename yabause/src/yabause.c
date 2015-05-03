@@ -72,7 +72,7 @@
 #ifdef SYS_PROFILE_H
  #include SYS_PROFILE_H
 #else
- #define DONT_PROFILE
+// #define DONT_PROFILE
  #include "profile.h"
 #endif
 
@@ -601,7 +601,7 @@ int YabauseEmulate(void) {
 
       PROFILE_STOP("Total Emulation");
    }
-
+   ProfilePrint();
 #ifndef USE_SCSP2
    M68KSync();
 #endif
