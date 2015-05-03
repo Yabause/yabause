@@ -148,6 +148,8 @@ typedef struct {
    GLuint mtxModelView;
    GLuint mtxTexture;
    GLuint color_offset;
+   GLuint tex0;
+   GLuint tex1;
    float color_offset_val[4];
    int (*setupUniform)(void *);
    int (*cleanupUniform)(void *);

@@ -192,6 +192,7 @@ int Ygl_uniformWindow(void * p )
    YglProgram * prg;
    prg = p;
    glUseProgram(prg->prgid );
+   glUniform1i(prg->tex0, 0);
    glEnableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
    glDisableVertexAttribArray(2);
@@ -937,37 +938,33 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
       current->setupUniform    = Ygl_uniformNormal;
       current->cleanupUniform  = Ygl_cleanupNormal;
-      current->vertexp         = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_position");
-      current->texcoordp       = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_texcoord");
+      current->vertexp = 0;
+      current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
       current->color_offset    = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_color_offset");
-      id = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
-      glUniform1i(id, 0);
+      current->tex0 = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
 
    }else if( prgid == PG_VDP1_NORMAL )
    {
       current->setupUniform    = Ygl_uniformVdp1Normal;
       current->cleanupUniform  = Ygl_cleanupVdp1Normal;
-      current->vertexp         = glGetAttribLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"a_position");
-      current->texcoordp       = glGetAttribLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"a_texcoord");
+      current->vertexp = 0;
+      current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_texMatrix");
-      id = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
-      glUniform1i(id, 0);
+      current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"s_texture");
 
    }else if( prgid == PG_VFP1_GOURAUDSAHDING )
    {
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformGlowShading;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupGlowShading;
-      id = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"u_sprite");
-      glUniform1i(id, 0);
-      level->prg[level->prgcurrent].vaid = 0;
-      level->prg[level->prgcurrent].vaid = glGetAttribLocation(_prgid[PG_VFP1_GOURAUDSAHDING],(const GLchar *)"a_grcolor");
-      current->vertexp         = glGetAttribLocation(_prgid[PG_VFP1_GOURAUDSAHDING],(const GLchar *)"a_position");
-      current->texcoordp       = glGetAttribLocation(_prgid[PG_VFP1_GOURAUDSAHDING],(const GLchar *)"a_texcoord");
+      current->vertexp = 0; 
+      current->texcoordp = 1; 
+      level->prg[level->prgcurrent].vaid = 2;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING],(const GLchar *)"u_texMatrix");
+      current->tex0 = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"s_texture");
    }
    else if( prgid == PG_VFP1_STARTUSERCLIP )
    {
@@ -977,15 +974,17 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->texcoordp       = -1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = -1; //glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
+      
    }
    else if( prgid == PG_VFP1_ENDUSERCLIP )
    {
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformEndUserClip;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupEndUserClip;
-      current->vertexp         = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_position");
-      current->texcoordp       = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_texcoord");
+      current->vertexp = 0;
+      current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
+      current->tex0 = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
    }
    else if( prgid == PG_VFP1_HALFTRANS )
    {
@@ -993,10 +992,11 @@ int YglProgramChange( YglLevel * level, int prgid )
       GLuint id;
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformHalfTrans;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupHalfTrans;
-      current->vertexp         = glGetAttribLocation(_prgid[PG_VFP1_HALFTRANS],(const GLchar *)"a_position");
-      current->texcoordp       = glGetAttribLocation(_prgid[PG_VFP1_HALFTRANS],(const GLchar *)"a_texcoord");
+      current->vertexp = 0;
+      current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VFP1_HALFTRANS],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_VFP1_HALFTRANS],(const GLchar *)"u_texMatrix");
+
    }
    else if( prgid == PG_VFP1_GOURAUDSAHDING_HALFTRANS )
    {
@@ -1004,9 +1004,9 @@ int YglProgramChange( YglLevel * level, int prgid )
       GLuint id;
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformGlowShadingHalfTrans;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupGlowShadingHalfTrans;
-      level->prg[level->prgcurrent].vaid = glGetAttribLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS],(const GLchar *)"a_grcolor");
-      current->vertexp         = glGetAttribLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS],(const GLchar *)"a_position");
-      current->texcoordp       = glGetAttribLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS],(const GLchar *)"a_texcoord");
+      current->vertexp = 0;
+      current->texcoordp = 1;
+      level->prg[level->prgcurrent].vaid = 2;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS],(const GLchar *)"u_texMatrix");
 
@@ -1015,8 +1015,8 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformAddBlend;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupAddBlend;
-      current->vertexp         = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_position");
-      current->texcoordp       = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_texcoord");
+      current->vertexp = 0;
+      current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
    }else if( prgid == PG_VDP2_STARTWINDOW )
@@ -1031,8 +1031,8 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformEndVDP2Window;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupEndVDP2Window;
-      current->vertexp         = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_position");
-      current->texcoordp       = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_texcoord");
+      current->vertexp = 0;
+      current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
    }else{
