@@ -65,8 +65,6 @@
 #ifndef YGL_H
 #define YGL_H
 
-#define USEVBO 0
-
 #include "core.h"
 #include "vidshared.h"
 

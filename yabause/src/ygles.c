@@ -224,15 +224,6 @@ Ygl * _Ygl;
 
 typedef struct
 {
-   u32 id;
-   YglCache c;
-} cache_struct;
-
-static cache_struct *cachelist;
-static int cachelistsize=0;
-
-typedef struct
-{
    float s, t, r, q;
 } texturecoordinate_struct;
 
@@ -802,9 +793,6 @@ int YglInit(int width, int height, unsigned int depth) {
       return -1;
 
    memset(_Ygl->levels,0,sizeof(YglLevel) * (depth+1) );
-#if USEVBO
-   YglInitVertexBuffer( 1024* 1024 ); // VBO 4MByte
-#endif
    for(i = 0;i < (depth+1) ;i++) {
      _Ygl->levels[i].prgcurrent = 0;
      _Ygl->levels[i].uclipcurrent = 0;
@@ -816,30 +804,16 @@ int YglInit(int width, int height, unsigned int depth) {
      for(j = 0;j < _Ygl->levels[i].prgcount; j++) {
         _Ygl->levels[i].prg[j].prg=0;
         _Ygl->levels[i].prg[j].currentQuad = 0;
-#if USEVBO
-        _Ygl->levels[i].prg[j].maxQuad = 0;
-/*
-        maxsize = _Ygl->levels[i].prg[j].maxQuad;
-        if( YglGetVertexBuffer(maxsize,
-                               (void**)&_Ygl->levels[i].prg[j].quads,
-                               (void**)&_Ygl->levels[i].prg[j].textcoords,
-                               (void**)&_Ygl->levels[i].prg[j].vertexAttribute  ) != 0 ) {
+        _Ygl->levels[i].prg[j].maxQuad = 12 * 2000;
+        if ((_Ygl->levels[i].prg[j].quads = (int *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(int))) == NULL)
             return -1;
-        }
-*/
- #else // USEVBO
-    _Ygl->levels[i].prg[j].maxQuad = 12 * 2000;
-      if ((_Ygl->levels[i].prg[j].quads = (int *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(int))) == NULL)
-         return -1;
 
-      if ((_Ygl->levels[i].prg[j].textcoords = (float *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL)
-         return -1;
+        if ((_Ygl->levels[i].prg[j].textcoords = (float *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL)
+            return -1;
 
-       if ((_Ygl->levels[i].prg[j].vertexAttribute = (float *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float)*2)) == NULL)
-         return -1;
-#endif // USEVBO
-     }
-
+        if ((_Ygl->levels[i].prg[j].vertexAttribute = (float *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float)*2)) == NULL)
+            return -1;
+      }
    }
 
    YglGLInit(width, height);
@@ -907,10 +881,6 @@ int YglInit(int width, int height, unsigned int depth) {
    _Ygl->st = 0;
    _Ygl->msglength = 0;
 
-   // This is probably wrong, but it'll have to do for now
-   if ((cachelist = (cache_struct *)malloc(0x100000 / 8 * sizeof(cache_struct))) == NULL)
-      return -1;
-
    return 0;
 }
 
@@ -922,10 +892,6 @@ void YglDeInit(void) {
 
    YglTMDeInit();
 
-#if USEVBO
-    YglDeleteVertexBuffer();
-#endif
-
    if (_Ygl)
    {
       if (_Ygl->levels)
@@ -934,16 +900,12 @@ void YglDeInit(void) {
          {
          for (j = 0; j < _Ygl->levels[i].prgcount; j++)
          {
-#if USEVBO
-
-#else
             if (_Ygl->levels[i].prg[j].quads)
             free(_Ygl->levels[i].prg[j].quads);
             if (_Ygl->levels[i].prg[j].textcoords)
             free(_Ygl->levels[i].prg[j].textcoords);
             if (_Ygl->levels[i].prg[j].vertexAttribute)
             free(_Ygl->levels[i].prg[j].vertexAttribute);
-#endif
          }
          free(_Ygl->levels[i].prg);
          }
@@ -953,8 +915,6 @@ void YglDeInit(void) {
       free(_Ygl);
    }
 
-   if (cachelist)
-      free(cachelist);
 }
 
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode )
@@ -1035,27 +995,10 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    program = &level->prg[level->prgcurrent];
 
    if (program->currentQuad == program->maxQuad) {
-
-#if USEVBO
-      if( program->maxQuad == 0 )
-      {
-          program->maxQuad = 14692;
-          if( YglGetVertexBuffer(program->maxQuad, &program->quads,&program->textcoords, &program->vertexAttribute  ) != 0 ) {
-              return -1;
-          }
-      }else{
-          program->maxQuad += 12*128;
-          if( YglExpandVertexBuffer( 12*128 ,(void**)&program->quads,(void**)&program->textcoords,(void**)&program->vertexAttribute) != 0 ) {
-              //assert(1);
-          }
-      }
-
-#else // USEVBO
       program->maxQuad += 12*128;
       program->quads = (int *) realloc(program->quads, program->maxQuad * sizeof(int));
       program->textcoords = (float *) realloc(program->textcoords, program->maxQuad * sizeof(float) * 2);
       program->vertexAttribute = (float *) realloc(program->vertexAttribute, program->maxQuad * sizeof(float)*2);
-#endif // USEVBO
       YglCacheReset();
    }
 
@@ -1744,28 +1687,17 @@ void YglRenderVDP1(void) {
          level->prg[j].setupUniform((void*)&level->prg[j]);
       }
         
-#if USEVBO
-		if( level->prg[j].currentQuad != 0 )
-        {
+		  if( level->prg[j].currentQuad != 0 )
+		  {
           glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
-            glVertexAttribPointer(level->prg[j].vertexp,2, GL_INT,GL_FALSE, 0, (GLvoid*)YglGetOffset(level->prg[j].quads));
-            glVertexAttribPointer(level->prg[j].texcoordp,4, GL_FLOAT,GL_FALSE, 0, (GLvoid*)YglGetOffset(level->prg[j].textcoords) );
-            if( level->prg[j].vaid != 0 ) { glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT,GL_FALSE, 0, (GLvoid*)YglGetOffset(level->prg[j].vertexAttribute) );  }
-            glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad/2);
-        }
-#else // USEVBO
-		if( level->prg[j].currentQuad != 0 )
-		{
-        glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
-			  glVertexAttribPointer(level->prg[j].vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
-			  glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
-        if( level->prg[j].vaid != 0 ) {
-           glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
-        }
-			  glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad/2);
-        level->prg[j].currentQuad = 0;
-		}
-#endif // USEVBO
+			    glVertexAttribPointer(level->prg[j].vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
+			    glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
+          if( level->prg[j].vaid != 0 ) {
+             glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
+          }
+			    glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad/2);
+          level->prg[j].currentQuad = 0;
+		  }
 
       if( level->prg[j].cleanupUniform )
       {
@@ -1955,17 +1887,10 @@ void YglRenderFrameBuffer( int from , int to ) {
    texcord[10] = 0.0f;
    texcord[11] = 0.0f;
 
-#if USEVBO
-   YglUserDirectVertexBuffer();
-#endif
    glUniformMatrix4fv( _Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0] );
    glVertexAttribPointer(_Ygl->renderfb.vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)vertices );
    glVertexAttribPointer(_Ygl->renderfb.texcoordp,2,GL_FLOAT,GL_FALSE,0,(GLvoid *)texcord );
    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-#if USEVBO
-	YglUserVertexBuffer();
-#endif
 
    if( bwin0 || bwin1 )
    {
@@ -2004,20 +1929,7 @@ void YglRender(void) {
    }
 
    //glEnable(GL_TEXTURE_2D);
-
-#if USEVBO
-   YglUnMapVertexBuffer();
-#endif
-
-#if 0
-   glUseProgram(0);
-   glGetError();
-   YuiSwapBuffers();
-   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
-   YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
-   return;
-#endif
-
+   
 #if 0 // Test
    ShaderDrawTest();
 #else
@@ -2071,41 +1983,31 @@ void YglRender(void) {
 
             YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
             
-#if USEVBO
-			if( level->prg[j].currentQuad != 0 )
-			{
-          glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
-                glVertexAttribPointer(level->prg[j].vertexp,2, GL_INT,GL_FALSE, 0, (GLvoid*)YglGetOffset( level->prg[j].quads));
-                glVertexAttribPointer(level->prg[j].texcoordp,4, GL_FLOAT,GL_FALSE, 0, (GLvoid*)YglGetOffset(level->prg[j].textcoords) );
-                if( level->prg[j].vaid != 0 ) { glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT,GL_FALSE, 0, (GLvoid*)YglGetOffset(level->prg[j].vertexAttribute) );  }
-                 glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad/2);
-			}
-#else // USEVBO
-			if( level->prg[j].currentQuad != 0 )
-			{
-        if (level->blendmode == 0){
-          glDisable(GL_BLEND);
-        }
-        else if (level->blendmode == 1){
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
-        else if (level->blendmode == 2){
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_ONE, GL_ONE);
-        }
-        glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
-				glVertexAttribPointer(level->prg[j].vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
-				glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
-				if( level->prg[j].vaid != 0 ) { glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute); }
-                glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad/2);
-                level->prg[j].currentQuad = 0;
-			}
-#endif // USEVBO
-            if( level->prg[j].cleanupUniform )
-            {
-               level->prg[j].cleanupUniform((void*)&level->prg[j]);
+  		    if( level->prg[j].currentQuad != 0 )
+			    {
+            if (level->blendmode == 0){
+              glDisable(GL_BLEND);
             }
+            else if (level->blendmode == 1){
+              glEnable(GL_BLEND);
+              glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            }
+            else if (level->blendmode == 2){
+              glEnable(GL_BLEND);
+              glBlendFunc(GL_ONE, GL_ONE);
+            }
+            glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
+				    glVertexAttribPointer(level->prg[j].vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
+				    glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
+				    if( level->prg[j].vaid != 0 ) { glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute); }
+                    glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad/2);
+                    level->prg[j].currentQuad = 0;
+			    }
+
+          if( level->prg[j].cleanupUniform )
+          {
+               level->prg[j].cleanupUniform((void*)&level->prg[j]);
+          }
 
          }
          level->prgcurrent = 0;
@@ -2142,9 +2044,6 @@ void YglReset(void) {
    unsigned int i,j;
 
    YglTMReset();
-#if USEVBO
-   YglMapVertexBuffer();
-#endif
 
    for(i = 0;i < (_Ygl->depth+1) ;i++) {
      level = _Ygl->levels + i;
@@ -2155,29 +2054,10 @@ void YglReset(void) {
      level->uy1 = 0;
      level->ux2 = 0;
      level->uy2 = 0;
-#if USEVBO
-     free(level->prg);
-     level->prgcount = 1;
-     level->prg = (YglProgram*)malloc(sizeof(YglProgram)*level->prgcount);
-     memset( _Ygl->levels[i].prg,0,sizeof(YglProgram)*level->prgcount);
-     level->prg[0].prg=0;
-     level->prg[0].currentQuad = 0;
-     level->prg[0].maxQuad = 0;
-    /*
-     12 * 2000;
-     if( YglGetVertexBuffer(level->prg[0].maxQuad,
-                            (void**)&level->prg[0].quads,
-                            (void**)&level->prg[0].textcoords,
-                            (void**)&level->prg[0].vertexAttribute  ) != 0 ) {
-         return;
-     }
-     */
-#else
      for( j=0; j< level->prgcount; j++ )
      {
          _Ygl->levels[i].prg[j].currentQuad = 0;
      }
-#endif
    }
    _Ygl->msglength = 0;
 }
@@ -2218,43 +2098,5 @@ void YglOnScreenDebugMessage(char *string, ...) {
    va_end(arglist);
    _Ygl->msglength = (int)strlen(_Ygl->message);
 }
-
-//////////////////////////////////////////////////////////////////////////////
-
-#if 0
-int YglIsCached(u32 addr, YglCache * c ) {
-   int i = 0;
-
-   for (i = 0; i < cachelistsize; i++)
-   {
-      if (addr == cachelist[i].id)
-     {
-         c->x=cachelist[i].c.x;
-       c->y=cachelist[i].c.y;
-       return 1;
-      }
-   }
-
-   return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void YglCacheAdd(u32 addr, YglCache * c) {
-   cachelist[cachelistsize].id = addr;
-   cachelist[cachelistsize].c.x = c->x;
-   cachelist[cachelistsize].c.y = c->y;
-   cachelistsize++;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void YglCacheReset(void) {
-   cachelistsize = 0;
-}
-#endif
-//////////////////////////////////////////////////////////////////////////////
-
-
 
 //#endif

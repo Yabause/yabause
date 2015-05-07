@@ -46,7 +46,7 @@ set(yabause_SOURCES
 if ( ANDROID OR glfw )
 set(yabause_SOURCES
 	${yabause_SOURCES}
-	yglcache.cpp
+	yglcache.c
 	ygles.c
 	yglshaderes.c )
 else()
