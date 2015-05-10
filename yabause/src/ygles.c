@@ -816,6 +816,9 @@ int YglInit(int width, int height, unsigned int depth) {
       }
    }
 
+   glewInit();
+
+
    YglGLInit(width, height);
 
    if( YglProgramInit() != 0 )

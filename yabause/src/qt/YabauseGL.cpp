@@ -22,10 +22,14 @@
 #include "QtYabause.h"
 
 YabauseGL::YabauseGL( QWidget* p )
-	: QGLWidget( p )
+  : QGLWidget(p)
 {
 	setFocusPolicy( Qt::StrongFocus );
-	
+
+  QGLFormat fmt;
+  fmt.setProfile(QGLFormat::CompatibilityProfile);
+  setFormat(fmt);
+
 	if ( p ) {
 		p->setFocusPolicy( Qt::StrongFocus );
 		setFocusProxy( p );
