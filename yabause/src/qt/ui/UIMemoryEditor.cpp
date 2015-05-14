@@ -121,6 +121,7 @@ UIMemoryEditor::UIMemoryEditor( YabauseThread *mYabauseThread, QWidget* p )
       saMemoryEditor->setEnabled(false);
       pbGotoAddress->setEnabled(false);
       pbSaveSelected->setEnabled(false);
+	  pbSaveTab->setEnabled(false);
       pbSearchMemory->setEnabled(false);
    }
    else
@@ -147,6 +148,13 @@ void UIMemoryEditor::on_pbSaveSelected_clicked()
    QString fn = CommonDialogs::getSaveFileName( getDataDirPath(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
    if (!fn.isEmpty())
       saMemoryEditor->saveSelected(fn);
+}
+
+void UIMemoryEditor::on_pbSaveTab_clicked()
+{
+	QString fn = CommonDialogs::getSaveFileName(getDataDirPath(), QtYabause::translate("Choose a location for binary file"), QtYabause::translate("Binary Files (*.bin)"));
+	if (!fn.isEmpty())
+		saMemoryEditor->saveTab(fn);
 }
 
 void UIMemoryEditor::on_pbSearchMemory_clicked()
