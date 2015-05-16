@@ -24,7 +24,12 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		jni/miniegl.h
 		jni/sndaudiotrack.c
 		jni/sndaudiotrack.h
-		src/org/yabause/android/Cartridge.java
+    jni/osdcore.c
+    jni/osdcore.h
+    jni/sndaudiotrack.h
+    jni/sndopensl.c
+    jni/sndopensl.h
+    src/org/yabause/android/Cartridge.java
 		src/org/yabause/android/GameList.java
 		src/org/yabause/android/GameListAdapter.java
 		src/org/yabause/android/Home.java
@@ -32,7 +37,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		src/org/yabause/android/PadManager.java
 		src/org/yabause/android/PadManagerV8.java
 		src/org/yabause/android/PadManagerV16.java
-		src/org/yabause/android/Yabause.java
+    src/org/yabause/android/Yabause.java
 		src/org/yabause/android/YabauseAudio.java
 		src/org/yabause/android/YabauseView.java
 		src/org/yabause/android/YabausePad.java
@@ -58,7 +63,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	endforeach()
 endif()
 
-set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../nanovg")
 configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/jni/Android.mk.in
 	${CMAKE_CURRENT_BINARY_DIR}/jni/Android.mk
@@ -90,12 +95,16 @@ add_custom_command(
 
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
-	COMMAND "${NDK_BUILD}"
+	COMMAND "${NDK_BUILD}" ARGS "NDK_DEBUG=1"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/osdcore.c"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/osdcore.h"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/yui.c"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/miniegl.h"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndaudiotrack.c"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndaudiotrack.h"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndopensl.c"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndopensl.h"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -110,7 +119,7 @@ set(yabause_android_RES
 	"${CMAKE_CURRENT_BINARY_DIR}/res/xml/preferences.xml"
 )
 set(yabause_android_SRC
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Cartridge.java"
+	"${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Cartridge.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameList.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameListAdapter.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Home.java"

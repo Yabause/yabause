@@ -45,6 +45,9 @@ import android.graphics.Bitmap;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.net.Uri;
+import android.view.Surface;
+import android.app.ActivityManager;
+import android.content.pm.ConfigurationInfo;
 
 class InputHandler extends Handler {
     private YabauseRunnable yr;
@@ -70,7 +73,7 @@ class YabauseRunnable implements Runnable
     public static native void exec();
     public static native void press(int key);
     public static native void release(int key);
-    public static native int initViewport( int width, int hieght);
+    public static native int initViewport( Surface sf, int width, int hieght);
     public static native int drawScreen();
     public static native int lockGL();
     public static native int unlockGL();
@@ -78,7 +81,7 @@ class YabauseRunnable implements Runnable
     public static native void enableFrameskip(int enable);
     public static native void setVolume(int volume);
     public static native void screenshot(Bitmap bitmap);
-    
+
     private boolean inited;
     private boolean paused;
     public InputHandler handler;
@@ -116,7 +119,7 @@ class YabauseRunnable implements Runnable
         if (inited && (! paused))
         {
             exec();
-            
+
             handler.post(this);
         }
     }
@@ -149,6 +152,7 @@ public class Yabause extends Activity implements OnPadListener
     private String gamepath;
     private int carttype;
     private PadManager padm;
+    private int video_interface;
 
     /** Called when the activity is first created. */
     @Override
@@ -299,6 +303,25 @@ public class Yabause extends Activity implements OnPadListener
             carttype = i.intValue();
         } else
             carttype = -1;
+
+        final ActivityManager activityManager = (ActivityManager) getSystemService(this.ACTIVITY_SERVICE);
+        final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
+        final boolean supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000;
+
+        String video;
+
+        if( supportsEs3 ) {
+          video = sharedPref.getString("pref_video", "1");
+        }else{
+          video = sharedPref.getString("pref_video", "2");
+        }
+        if (video.length() > 0) {
+            Integer i = new Integer(video);
+            video_interface = i.intValue();
+        } else {
+            video_interface = -1;
+        }
+
     }
 
     public String getBiosPath() {
@@ -315,6 +338,10 @@ public class Yabause extends Activity implements OnPadListener
 
     public int getCartridgeType() {
         return carttype;
+    }
+
+    public int getVideoInterface() {
+      return video_interface;
     }
 
     public String getCartridgePath() {

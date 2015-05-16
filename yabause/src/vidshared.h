@@ -111,6 +111,10 @@ typedef struct
    int dst;
    int uclipmode;
    int blendmode;
+   s32 cor;
+   s32 cog;
+   s32 cob;
+
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */
 
@@ -136,10 +140,6 @@ typedef struct
    int coloroffset;
    int transparencyenable;
    int specialprimode;
-
-   s32 cor;
-   s32 cog;
-   s32 cob;
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int);

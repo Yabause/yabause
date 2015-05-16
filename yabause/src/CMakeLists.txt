@@ -10,7 +10,7 @@ set(yabause_HEADERS
 	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
 	debug.h
 	error.h
-	japmodem.h 
+	japmodem.h
 	m68kcore.h m68kd.h memory.h movie.h
 	netlink.h
 	osdcore.h
@@ -20,6 +20,11 @@ set(yabause_HEADERS
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h)
 
+option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
+set(YAB_PORT_BUILT FALSE)
+set(YAB_PORTS "gtk;qt;dreamcast;cocoa" CACHE STRING "List of ports to build")
+
+		
 set(yabause_SOURCES
 	bios.c
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
@@ -33,7 +38,26 @@ set(yabause_SOURCES
 	scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
-	yabause.c ygl.c yglshader.c)
+	yabause.c )
+if (ANDROID)
+	add_definitions(-DYAB_PORT_OSD)
+	add_definitions(-D_OGLES3_)
+	set(yabause_SOURCES
+		${yabause_SOURCES}
+		yglcache.c
+		ygles.c
+		yglshaderes.c )
+endif()
+
+include_directories(nanovg)
+set(yabause_SOURCES ${yabause_SOURCES} nanovg/nanovg.c)
+
+option(YAB_USE_CXX "Allow C++ in the emulation core.")
+if (YAB_USE_CXX)
+	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
+else()
+	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
+endif()
 
 # new SCSP
 option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
@@ -148,6 +172,27 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		if (GLXGETPROCADDRESS_OK)
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
 		endif()
+		string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
+		if( glfw )
+			if (WIN32)
+				set( GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/ )
+			else()
+				find_package(PkgConfig REQUIRED)
+				pkg_search_module(GLFW REQUIRED glfw3)
+			endif()
+				include_directories( ${GLFW_INCLUDE_DIRS} )
+		endif()
+		add_definitions(-D_OGL3_)
+		add_definitions(-D_USEGLEW_)
+		add_definitions(-DGLEW_STATIC)
+		include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+		set(yabause_SOURCES
+			${yabause_SOURCES}
+			gllibs/glew/glew.c
+			yglcache.c
+			ygles.c
+			yglshaderes.c )
+
 	endif(OPENGL_FOUND)
 endif ()
 
@@ -240,7 +285,7 @@ if (MSVC)
 		set(DDK_DIR "$ENV{SYSTEMDRIVE}/WINDDK/7600.16385.0/")
         endif (EXISTS "$ENV{SYSTEMDRIVE}/WINDDK/3790.1830/")
 
-	add_definitions(-DHAVE_C99_VARIADIC_MACROS -D_CRT_SECURE_NO_WARNINGS -DC68K_NO_JUMP_TABLE 
+	add_definitions(-DHAVE_C99_VARIADIC_MACROS -D_CRT_SECURE_NO_WARNINGS -DC68K_NO_JUMP_TABLE
 			-D_UNICODE -DUNICODE)
 endif (MSVC)
 
@@ -331,7 +376,7 @@ if (WIN32)
 	if (YAB_NETWORK OR YAB_WANT_GDBSTUB)
     	# Add Winsock if necessary
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "wsock32")
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "ws2_32")        
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "ws2_32")
 	endif()
 
 endif (WIN32)
@@ -445,7 +490,7 @@ if (YAB_WANT_GDBSTUB)
 endif()
 
 # *DEBUG
-set(YAB_DEBUG "" CACHE STRING "List of enabled debug information") 
+set(YAB_DEBUG "" CACHE STRING "List of enabled debug information")
 foreach(DEBUG IN LISTS YAB_DEBUG)
 	if (${DEBUG} STREQUAL "main")
 		add_definitions(-DDEBUG=1)
@@ -532,10 +577,12 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
+    set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 if(ANDROID)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a9 -mfpu=neon -ffast-math")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -mcpu=cortex-a9 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti  ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC
@@ -582,9 +629,7 @@ if (NOT $ENV{PKGMANDIR} STREQUAL "")
     set(YAB_MAN_DIR $ENV{PKGMANDIR})
 endif ()
 
-option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
-set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "gtk;qt;dreamcast;cocoa" CACHE STRING "List of ports to build")
+
 foreach(PORT IN LISTS YAB_PORTS)
 	add_subdirectory(${PORT})
 endforeach(PORT)
