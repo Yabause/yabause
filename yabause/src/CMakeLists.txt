@@ -9,27 +9,6 @@ option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
 set(YAB_PORTS "gtk;qt;dreamcast;cocoa" CACHE STRING "List of ports to build")
 
-if (ANDROID)
-add_definitions(-DYAB_PORT_OSD)
-add_definitions(-D_OGLES3_)
-endif()
-
-string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
-
-if( glfw )
-	if (WIN32)
-		set( GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/ )
-	else()
-		find_package(PkgConfig REQUIRED)
-		pkg_search_module(GLFW REQUIRED glfw3)
-	endif()
-		include_directories( ${GLFW_INCLUDE_DIRS} )
-endif()
-
-add_definitions(-D_OGLES3_)
-add_definitions(-D_USEGLEW_)
-add_definitions(-DGLEW_STATIC)
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
 		
 set(yabause_SOURCES
 	bios.c
@@ -45,19 +24,15 @@ set(yabause_SOURCES
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c )
-#if ( ANDROID OR glfw )
-set(yabause_SOURCES
-	${yabause_SOURCES}
-	gllibs/glew/glew.c
-	yglcache.c
-	ygles.c
-	yglshaderes.c )
-#else()
-#set(yabause_SOURCES
-	#${yabause_SOURCES}
-	#ygl.c
-	#yglshader.c )
-#endif()
+if (ANDROID)
+	add_definitions(-DYAB_PORT_OSD)
+	add_definitions(-D_OGLES3_)
+	set(yabause_SOURCES
+		${yabause_SOURCES}
+		yglcache.c
+		ygles.c
+		yglshaderes.c )
+endif()
 
 # new SCSP
 option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
@@ -172,6 +147,27 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		if (GLXGETPROCADDRESS_OK)
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
 		endif()
+		string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
+		if( glfw )
+			if (WIN32)
+				set( GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/ )
+			else()
+				find_package(PkgConfig REQUIRED)
+				pkg_search_module(GLFW REQUIRED glfw3)
+			endif()
+				include_directories( ${GLFW_INCLUDE_DIRS} )
+		endif()
+		add_definitions(-D_OGLES3_)
+		add_definitions(-D_USEGLEW_)
+		add_definitions(-DGLEW_STATIC)
+		include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+		set(yabause_SOURCES
+			${yabause_SOURCES}
+			gllibs/glew/glew.c
+			yglcache.c
+			ygles.c
+			yglshaderes.c )
+
 	endif(OPENGL_FOUND)
 endif ()
 

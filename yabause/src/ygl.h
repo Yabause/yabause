@@ -41,7 +41,7 @@
     #include <OpenGL/gl.h>
 
 #else // LInux?
-    #if defined(_OGLES3_)
+    #if defined(_OGLES3_)||defined(_OGL3_)
         #define GL_GLEXT_PROTOTYPES 1
         #define GLX_GLXEXT_PROTOTYPES 1
         #include <GLFW/glfw3.h>

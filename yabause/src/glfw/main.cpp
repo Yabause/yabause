@@ -1,4 +1,6 @@
+#ifdef _WINDOWS
 #include <windows.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #if defined(_USEGLEW_)
@@ -42,7 +44,8 @@ extern "C" {
   //static char cdpath[256] = "E:/gameiso/sonicjam.iso";
 #else
 static char biospath[256] = "/dat2/project/src/bios.bin";
-static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
+static char cdpath[256] = "/dat2/iso/nights.img";
+//static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
 #endif
 
 
@@ -216,10 +219,12 @@ int main( int argc, char * argcv[] )
     int width = 1280;
     int height = 720;
 
-	if (!glfwInit())
-		    exit(EXIT_FAILURE);
+    if (!glfwInit())
+            exit(EXIT_FAILURE);
 
+#ifdef _WINDOWS
   ::AllocConsole();
+#endif
 
 
 

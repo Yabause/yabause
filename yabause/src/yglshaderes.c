@@ -58,7 +58,7 @@ static GLuint _prgid[PG_MAX] ={0};
  *  Normal Draw
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_normal_v[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -78,7 +78,7 @@ const GLchar Yglprg_normal_v[] =
 const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 
 const GLchar Yglprg_normal_f[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -176,7 +176,7 @@ int ShaderDrawTest()
  *  Window Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_window_v[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -190,7 +190,7 @@ const GLchar Yglprg_window_v[] =
 const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 
 const GLchar Yglprg_window_f[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -226,7 +226,7 @@ int Ygl_cleanupWindow(void * p )
  *  VDP1 Normal Draw
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_normal_v[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -245,7 +245,7 @@ const GLchar Yglprg_vdp1_normal_v[] =
 const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 
 const GLchar Yglprg_vpd1_normal_f[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -289,7 +289,7 @@ int Ygl_cleanupVdp1Normal(void * p )
  *  VDP1 GlowShading Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_v[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -311,7 +311,7 @@ const GLchar Yglprg_vdp1_gouraudshading_v[] =
 const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -365,7 +365,7 @@ static int id_fbowidth;
 static int id_fboheight;
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -387,7 +387,7 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
 const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_hf_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -458,7 +458,7 @@ static int id_hf_fbowidth;
 static int id_hf_fboheight;
 
 const GLchar Yglprg_vdp1_halftrans_v[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -480,7 +480,7 @@ const GLchar Yglprg_vdp1_halftrans_v[] =
 const GLchar * pYglprg_vdp1_halftrans_v[] = {Yglprg_vdp1_halftrans_v, NULL};
 
 const GLchar Yglprg_vdp1_halftrans_f[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -692,7 +692,7 @@ static int idto;
 static int idcoloroffset;
 
 const GLchar Yglprg_vdp1_drawfb_v[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -708,7 +708,7 @@ const GLchar Yglprg_vdp1_drawfb_v[] =
 const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
 
 const GLchar Yglprg_vdp2_drawfb_f[] =
-#ifdef __ANDROID__
+#if defined(_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -1104,7 +1104,7 @@ static int u_w;
 static int u_h;
 
 static const char vblit_img[] =
-#ifdef __ANDROID__
+#if defined (_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
@@ -1121,7 +1121,7 @@ static const char vblit_img[] =
 "}";
 
 static const char fblit_img[] =
-#ifdef __ANDROID__
+#if defined (_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"

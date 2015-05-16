@@ -19,7 +19,6 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-//#ifdef __ANDROID__
 #include <stdlib.h>
 #include <math.h>
 #include "ygl.h"
@@ -816,9 +815,9 @@ int YglInit(int width, int height, unsigned int depth) {
       }
    }
 
+#if defined(_USEGLEW_)
    glewInit();
-
-
+#endif
    YglGLInit(width, height);
 
    if( YglProgramInit() != 0 )
