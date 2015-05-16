@@ -31,7 +31,7 @@ typedef struct _YglCacheHash {
   struct _YglCacheHash * next;
 } YglCacheHash;
 
-struct YglCacheHash *HashTable[HASHSIZE] = { 0 };  /* ハッシュテーブル本体 */
+struct YglCacheHash *HashTable[HASHSIZE] = { 0 }; 
 YglCacheHash CashLink[HASHSIZE*2] = { 0 };
 u32 CashLink_index = 0;
 
