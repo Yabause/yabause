@@ -58,7 +58,11 @@ static GLuint _prgid[PG_MAX] ={0};
  *  Normal Draw
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_normal_v[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "uniform mat4 u_mvpMatrix;    \n"
       "uniform mat4 u_texMatrix;    \n"
       "layout (location = 0) in vec4 a_position;   \n"
@@ -74,7 +78,11 @@ const GLchar Yglprg_normal_v[] =
 const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 
 const GLchar Yglprg_normal_f[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "precision highp float;                            \n"
       "in highp vec4 v_texcoord;                            \n"
       "uniform vec4 u_color_offset;    \n"
@@ -168,7 +176,11 @@ int ShaderDrawTest()
  *  Window Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_window_v[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "uniform mat4 u_mvpMatrix;    \n"
       "layout (location = 0) in vec4 a_position;               \n"
       "void main()                  \n"
@@ -178,7 +190,11 @@ const GLchar Yglprg_window_v[] =
 const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 
 const GLchar Yglprg_window_f[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "precision highp float;                            \n"
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
@@ -210,7 +226,11 @@ int Ygl_cleanupWindow(void * p )
  *  VDP1 Normal Draw
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_normal_v[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "uniform mat4 u_mvpMatrix;    \n"
       "layout (location = 0) in vec4 a_position;   \n"
       "layout (location = 1) in vec4 a_texcoord;   \n"
@@ -225,7 +245,11 @@ const GLchar Yglprg_vdp1_normal_v[] =
 const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 
 const GLchar Yglprg_vpd1_normal_f[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "precision highp float;                            \n"
       "in vec4 v_texcoord;                            \n"
       "uniform sampler2D s_texture;                        \n"
@@ -265,7 +289,11 @@ int Ygl_cleanupVdp1Normal(void * p )
  *  VDP1 GlowShading Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_v[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "uniform mat4 u_mvpMatrix;                \n"
       "uniform mat4 u_texMatrix;                \n"
       "layout (location = 0) in vec4 a_position;               \n"
@@ -283,7 +311,11 @@ const GLchar Yglprg_vdp1_gouraudshading_v[] =
 const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "precision highp float;                                                 \n"
       "uniform sampler2D u_sprite;                                              \n"
       "in vec4 v_texcoord;                                                 \n"
@@ -333,7 +365,11 @@ static int id_fbowidth;
 static int id_fboheight;
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "uniform mat4 u_mvpMatrix;                \n"
       "uniform mat4 u_texMatrix;                \n"
       "layout (location = 0) in vec4 a_position;               \n"
@@ -351,7 +387,11 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
 const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_hf_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "precision highp float;                                                                     \n"
       "uniform sampler2D u_sprite;                                                                  \n"
       "uniform sampler2D u_fbo;                                                                     \n"
@@ -418,7 +458,11 @@ static int id_hf_fbowidth;
 static int id_hf_fboheight;
 
 const GLchar Yglprg_vdp1_halftrans_v[] =
-        "#version 300 es \n"
+#ifdef __ANDROID__
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
         "uniform mat4 u_mvpMatrix;                \n"
         "layout (location = 0) in vec4 a_position;               \n"
         "layout (location = 1) in vec4 a_texcoord;               \n"
@@ -436,7 +480,11 @@ const GLchar Yglprg_vdp1_halftrans_v[] =
 const GLchar * pYglprg_vdp1_halftrans_v[] = {Yglprg_vdp1_halftrans_v, NULL};
 
 const GLchar Yglprg_vdp1_halftrans_f[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "precision highp float;                                                                     \n"
       "uniform sampler2D u_sprite;                                                                  \n"
       "uniform sampler2D u_fbo;                                                                     \n"
@@ -644,7 +692,11 @@ static int idto;
 static int idcoloroffset;
 
 const GLchar Yglprg_vdp1_drawfb_v[] =
+#ifdef __ANDROID__
       "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
       "uniform mat4 u_mvpMatrix;                \n"
       "layout (location = 0) in vec4 a_position;               \n"
       "layout (location = 1) in vec2 a_texcoord;               \n"
@@ -656,7 +708,11 @@ const GLchar Yglprg_vdp1_drawfb_v[] =
 const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
 
 const GLchar Yglprg_vdp2_drawfb_f[] =
-"#version 300 es \n"
+#ifdef __ANDROID__
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
 "precision highp float;                             \n"
 "in vec2 v_texcoord;                             \n"
 "uniform sampler2D s_vdp1FrameBuffer;                 \n"
@@ -1048,7 +1104,11 @@ static int u_w;
 static int u_h;
 
 static const char vblit_img[] =
-"#version 300 es \n"
+#ifdef __ANDROID__
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
 "layout (location = 0) in vec2 a_Position; \n"
 "layout (location = 1) in vec2 a_Uv;       \n"
 "uniform float u_w; \n"
@@ -1061,7 +1121,11 @@ static const char vblit_img[] =
 "}";
 
 static const char fblit_img[] =
-"#version 300 es \n"
+#ifdef __ANDROID__
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
 "precision mediump float;     \n"
 "uniform sampler2D u_Src; \n"
 "in vec2  v_Uv;          \n"
