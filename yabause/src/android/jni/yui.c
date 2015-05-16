@@ -135,11 +135,12 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
+void YuidrawSoftwareBuffer() ;
 
 #define  LOG_TAG    "yabause"
 
 /* Override printf for debug*/
-int printf( const char * fmt, ... )
+int yprintf( const char * fmt, ... )
 {
    va_list ap;
    va_start(ap, fmt);
@@ -317,7 +318,7 @@ GLuint LoadShader ( GLenum type, const char *shaderSrc )
       {
          char* infoLog = malloc (sizeof(char) * infoLen );
          glGetShaderInfoLog ( shader, infoLen, NULL, infoLog );
-         printf ( "Error compiling shader:\n%s\n", infoLog );
+         yprintf ( "Error compiling shader:\n%s\n", infoLog );
          free ( infoLog );
       }
 
@@ -381,12 +382,11 @@ int YuiInitProgramForSoftwareRendering()
 
       if ( infoLen > 1 )
       {
-         char* infoLog = malloc (sizeof(char) * infoLen );
-
-         glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );
-         printf ( "Error linking program:\n%s\n", infoLog );
-
-         free ( infoLog );
+        char* infoLog = malloc (sizeof(char) * infoLen );
+        glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );
+        yprintf ( "Error linking program:\n%s\n", infoLog );
+        free ( infoLog );
+         return;
       }
 
       glDeleteProgram ( programObject );
@@ -465,6 +465,14 @@ void YuidrawSoftwareBuffer() {
       glEnableVertexAttribArray ( texCoordLoc );
       g_buf_width  = buf_width;
       g_buf_height = buf_height;
+      error = glGetError();
+      if( error != GL_NO_ERROR )
+      {
+         yprintf("gl error %d", error );
+         return;
+      }
+   }else{
+      glBindBuffer(GL_ARRAY_BUFFER, g_VertexBuffer);
    }
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -522,36 +530,36 @@ int initEGLFunc()
    handle = dlopen("libEGL.so",RTLD_LAZY);
    if( handle == NULL )
    {
-      printf("%s\n",dlerror());
+      yprintf(dlerror());
       return -1;
    }
 
    eglGetCurrentDisplay = dlsym(handle, "eglGetCurrentDisplay");
-   if( eglGetCurrentDisplay == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglGetCurrentDisplay == NULL){ yprintf(dlerror()); return -1; }
 
    eglGetCurrentSurface = dlsym(handle, "eglGetCurrentSurface");
-   if( eglGetCurrentSurface == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglGetCurrentSurface == NULL){ yprintf(dlerror()); return -1; }
 
    eglGetCurrentContext = dlsym(handle, "eglGetCurrentContext");
-   if( eglGetCurrentContext == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglGetCurrentContext == NULL){ yprintf(dlerror()); return -1; }
 
    eglQuerySurface      = dlsym(handle, "eglQuerySurface");
-   if( eglQuerySurface == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglQuerySurface == NULL){ yprintf(dlerror()); return -1; }
 
    eglSwapInterval      = dlsym(handle, "eglSwapInterval");
-   if( eglSwapInterval == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglSwapInterval == NULL){ yprintf(dlerror()); return -1; }
 
    eglMakeCurrent       = dlsym(handle, "eglMakeCurrent");
-   if( eglMakeCurrent == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglMakeCurrent == NULL){ yprintf(dlerror()); return -1; }
 
    eglSwapBuffers       = dlsym(handle, "eglSwapBuffers");
-   if( eglSwapBuffers == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglSwapBuffers == NULL){ yprintf(dlerror()); return -1; }
 
    eglQueryString       = dlsym(handle, "eglQueryString");
-   if( eglQueryString == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglQueryString == NULL){ yprintf(dlerror()); return -1; }
 
    eglGetError          = dlsym(handle, "eglGetError");
-   if( eglGetError == NULL){ printf("%s\n",dlerror()); return -1; }
+   if( eglGetError == NULL){ yprintf(dlerror()); return -1; }
 
    return 0;
 }
