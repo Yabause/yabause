@@ -26,15 +26,6 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		jni/sndaudiotrack.h
     jni/osdcore.c
     jni/osdcore.h
-    jni/nanovg/Roboto-Bold.h
-    jni/nanovg/Roboto-Regular.h
-    jni/nanovg/fontstash.h
-    jni/nanovg/nanovg.c
-    jni/nanovg/nanovg.h
-    jni/nanovg/nanovg_gl.h
-    jni/nanovg/nanovg_gl_utils.h
-    jni/nanovg/stb_image.h
-    jni/nanovg/stb_truetype.h
     jni/sndaudiotrack.h
     jni/sndopensl.c
     jni/sndopensl.h
@@ -72,7 +63,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	endforeach()
 endif()
 
-set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/jni/nanovg")
+set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../nanovg")
 configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/jni/Android.mk.in
 	${CMAKE_CURRENT_BINARY_DIR}/jni/Android.mk
@@ -106,7 +97,6 @@ add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
 	COMMAND "${NDK_BUILD}" ARGS "NDK_DEBUG=1"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/nanovg/nanovg.c"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/osdcore.c"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/osdcore.h"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/yui.c"
