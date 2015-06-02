@@ -279,6 +279,9 @@ int FASTCALL YglIntersectionOppsiteEdge(float * a1, float * a2, float * b1, floa
 }
 
 
+
+
+
 int YglCalcTextureQ(
    int   *pnts,
    float *q
@@ -327,6 +330,15 @@ int YglCalcTextureQ(
    p3[1]=pnts[5];
    p4[0]=pnts[6];
    p4[1]=pnts[7];
+
+   // detects intersection of two diagonal lines
+   float divisor = (p4[1] - p3[1]) * (p2[0] - p1[0])
+	   - (p4[0] - p3[0]) * (p2[1] - p1[1]);
+   if (divisor == 0){
+	   q[0] = q[1] = q[2] = q[3] = 1.0f;
+	   return;
+   }
+
 
    // calcurate Q1
    if( YglIntersectionOppsiteEdge( p3, p1, p2, p4,  o ) == 0 )
@@ -1280,9 +1292,13 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
       }
    }
 
+
+
+
    if( input->dst == 1 )
    {
       YglCalcTextureQ(input->vertices,q);
+
       tmp[0].s *= q[0];
       tmp[0].t *= q[0];
       tmp[1].s *= q[1];

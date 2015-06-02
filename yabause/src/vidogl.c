@@ -2042,7 +2042,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
          parameter = info->GetRParam(info,i,j);
          if( parameter == NULL )
          {
-            *(texture->textdata++) = 0x000000;
+			 *(texture->textdata++) = 0xff00FFFF;
             continue;
          }
          
@@ -2070,11 +2070,11 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                   v &= (parameter->MaxH-1);
                   break;
                case OVERMODE_SELPATNAME:
-                  *(texture->textdata++) = 0x000000;  // ToDO
+				   *(texture->textdata++) = 0x00;  // ToDO
                   continue;
                   break;
                default:
-                  *(texture->textdata++) = 0x000000;
+				   *(texture->textdata++) = 0x00;
                   continue;
                }
             }
@@ -2165,13 +2165,13 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 
             if( parameter->lineaddr != 0xFFFFFFFF && ((Vdp2Regs->CCCTL>>8)&0x01) )
             {
-                  u32 linecolor = Vdp2ColorRamGetColor(LineColorRamAdress|parameter->lineaddr,0xFF);
+                  u32 linecolor = Vdp2ColorRamGetColor( LineColorRamAdress |parameter->lineaddr,0xFF);
                   color = COLOR_ADD(color, (linecolor)&0xFF,
                                            (linecolor>>8)&0xFF,
                                            (linecolor>>16)&0xFF);            
             }
 
-            *(texture->textdata++) = info->PostPixelFetchCalc(info, color);
+			*(texture->textdata++) = info->PostPixelFetchCalc(info, color);
          }
 
          texture->textdata += texture->w;
@@ -2633,6 +2633,9 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.dst = 1;
    sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
    sprite.h = cmd.CMDSIZE & 0xFF;
+   sprite.cor = 0;
+   sprite.cog = 0;
+   sprite.cob = 0;
 
    sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
@@ -3848,11 +3851,13 @@ static void Vdp2DrawRBG0(void)
       case 0:
          // Parameter A
          info.rotatenum = 0;
+		 info.rotatemode = 0;
          info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
          break;
       case 1:
          // Parameter B
          info.rotatenum = 1;
+		 info.rotatemode = 0;
          info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
          break;
       case 2:
@@ -3864,6 +3869,7 @@ static void Vdp2DrawRBG0(void)
          // FIX ME(need to figure out which Parameter is being used)
          VDP2LOG("Rotation Parameter Mode %d not supported!\n", Vdp2Regs->RPMD & 0x3);
          info.rotatenum = 0;
+		 info.rotatemode = 1 + (Vdp2Regs->RPMD & 0x1);
          info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
          break;
    }
@@ -3959,7 +3965,7 @@ static void Vdp2DrawRBG0(void)
       paraB.lineaddr = 0xFFFFFFFF;
    }else{
       info.alpha = 0xFF;
-      info.LineColorBase = (Vdp2Regs->LCTA.all) << 1;
+      info.LineColorBase = ((Vdp2Regs->LCTA.all)&0x7FFFF) << 1;
       if( info.LineColorBase >= 0x80000 ) info.LineColorBase = 0x00;
       paraA.lineaddr = 0xFFFFFFFF;
       paraB.lineaddr = 0xFFFFFFFF;
@@ -4309,31 +4315,49 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
    {
       if( info->pWinInfo[v].WinShowLine == 0 )
       {
-         h = (paraB.KtablV+(paraB.deltaKAx * h));
-         return info->GetKValueB( &paraB, h );
+		  h = (paraB.KtablV + (paraB.deltaKAx * h));
+		  vdp2rotationparameter_struct * p = info->GetKValueB(&paraB, h);
+		  if (p) return p;
+		  h = (paraA.KtablV + (paraA.deltaKAx * h));
+		  return info->GetKValueA(&paraA, h);
       }else{
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
             h = (paraB.KtablV+(paraB.deltaKAx * h));
-            return info->GetKValueB( &paraB, h );
+			vdp2rotationparameter_struct * p = info->GetKValueB(&paraB, h);
+			if (p) return p;
+			h = (paraA.KtablV + (paraA.deltaKAx * h));
+			return info->GetKValueA(&paraA, h);
          }else{
             h = (paraA.KtablV+(paraA.deltaKAx * h));
-            return info->GetKValueA( &paraA, h );
+			vdp2rotationparameter_struct * p =  info->GetKValueA(&paraA, h);
+			if (p) return p;
+			h = (paraB.KtablV + (paraB.deltaKAx * h));
+			return info->GetKValueB(&paraB, h);
          }
       }
    }else{
       if( info->pWinInfo[v].WinShowLine == 0 )
       {
-            h = (paraB.KtablV+(paraB.deltaKAx * h));
-            return info->GetKValueB( &paraB, h );
+		  h = (paraB.KtablV + (paraB.deltaKAx * h));
+		  vdp2rotationparameter_struct * p = info->GetKValueB(&paraB, h);
+		  if (p) return p;
+		  h = (paraA.KtablV + (paraA.deltaKAx * h));
+		  return info->GetKValueA(&paraA, h);
       }else{
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
-            h = (paraB.KtablV+(paraB.deltaKAx * h));
-            return info->GetKValueB( &paraB, h );
+			 h = (paraB.KtablV + (paraB.deltaKAx * h));
+			 vdp2rotationparameter_struct * p = info->GetKValueB(&paraB, h);
+			 if (p) return p;
+			 h = (paraA.KtablV + (paraA.deltaKAx * h));
+			 return info->GetKValueA(&paraA, h);
          }else{
-            h = (paraA.KtablV+(paraA.deltaKAx * h));
-            return info->GetKValueA( &paraA, h );
+			 h = (paraA.KtablV + (paraA.deltaKAx * h));
+			 vdp2rotationparameter_struct * p = info->GetKValueA(&paraA, h);
+			 if (p) return p;
+			 h = (paraB.KtablV + (paraB.deltaKAx * h));
+			 return info->GetKValueB(&paraB, h);
          }
       }
    }
