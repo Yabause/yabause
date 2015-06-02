@@ -2268,6 +2268,9 @@ void VIDOGLVdp1DrawStart(void)
      glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
      YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
+	 if (YglTM->texture == NULL){
+		 abort();
+	 }
    }
 
    YglCacheReset();
@@ -4006,6 +4009,16 @@ static void Vdp2DrawRBG0(void)
 
 void VIDOGLVdp2DrawScreens(void)
 {
+	if (YglTM->texture == NULL) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
+		YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
+		if (YglTM->texture == NULL){
+			abort();
+		}
+	}
+
    VIDOGLVdp2SetResolution(Vdp2Regs->TVMD);
    Vdp2GenerateWindowInfo();
    Vdp2DrawBackScreen();

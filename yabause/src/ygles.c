@@ -1075,6 +1075,9 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
 
    program->currentQuad += 12;
    YglTMAllocate(output, input->w, input->h, &x, &y);
+   if (output->textdata == NULL){
+	   abort();
+   }
 
 
    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
@@ -2052,6 +2055,9 @@ void YglRender(void) {
    YuiSwapBuffers();
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
    YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
+   if (YglTM->texture == NULL){
+	   abort();
+   }
    return;
 }
 
