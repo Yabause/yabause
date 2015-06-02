@@ -42,15 +42,6 @@ Ygl * _Ygl;
 
 typedef struct
 {
-   u32 id;
-   YglCache c;
-} cache_struct;
-
-static cache_struct *cachelist;
-static int cachelistsize=0;
-
-typedef struct
-{
    float s, t, r, q;
 } texturecoordinate_struct;
 
@@ -756,9 +747,7 @@ int YglInit(int width, int height, unsigned int depth) {
    
    _Ygl->st = 0;
 
-   // This is probably wrong, but it'll have to do for now
-   if ((cachelist = (cache_struct *)malloc(0x100000 / 8 * sizeof(cache_struct))) == NULL)
-      return -1;
+   YglCacheInit();
 
    return 0;
 }
@@ -796,8 +785,7 @@ void YglDeInit(void) {
       free(_Ygl);
    }
 
-   if (cachelist)
-      free(cachelist);
+   YglCacheDeInit();
 }
 
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode )
@@ -1827,44 +1815,4 @@ void YglChangeResolution(int w, int h) {
    _Ygl->rheight = h;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-int YglIsCached(u32 addr, YglCache * c ) {
-   int i = 0;
-
-   for (i = 0; i < cachelistsize; i++)
-   {
-      if (addr == cachelist[i].id)
-     {
-         c->x=cachelist[i].c.x;
-       c->y=cachelist[i].c.y;
-       return 1;
-      }
-   }
-
-   return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void YglCacheAdd(u32 addr, YglCache * c) {
-   cachelist[cachelistsize].id = addr;
-   cachelist[cachelistsize].c.x = c->x;
-   cachelist[cachelistsize].c.y = c->y;
-   cachelistsize++;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void YglCacheReset(void) {
-   cachelistsize = 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-
-
 #endif
-
-
-

@@ -226,8 +226,6 @@ int main( int argc, char * argcv[] )
   ::AllocConsole();
 #endif
 
-
-
   glfwSetErrorCallback(error_callback);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
