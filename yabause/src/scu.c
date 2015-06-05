@@ -633,7 +633,7 @@ static void writeloadimdest(u8 num, u32 val)
           ScuDsp->LOP = (u16)val;
           return;
       case 0xC: // PC->TOP, PC
-          ScuDsp->TOP = ScuDsp->PC;
+          ScuDsp->TOP = ScuDsp->PC+1;
           ScuDsp->jmpaddr = val;
           ScuDsp->delayed = 0;
           return;
@@ -1372,7 +1372,7 @@ static char *disloadimdest(u8 num)
       case 0xA:
          return "LOP";
       case 0xC:
-         return "TOP";
+         return "PC";
       default: break;
    }
 
