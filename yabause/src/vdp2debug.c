@@ -1663,6 +1663,7 @@ pixel_t *Vdp2DebugTexture(u32 screen, int * w, int * h)
    pixel_t * bitmap;
 
    TitanInit();
+   TitanSetBlendingMode(TITAN_BLEND_TOP);
    VIDSoftVdp2DrawScreen(screen);
 
    if ((bitmap = (pixel_t *)calloc(sizeof(pixel_t), 704 * 512)) == NULL)
