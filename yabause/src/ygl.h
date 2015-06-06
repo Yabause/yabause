@@ -176,6 +176,10 @@ typedef struct {
    unsigned int width;
    unsigned int height;
    unsigned int depth;
+
+   float clear_r;
+   float clear_g;
+   float clear_b;
    
    // VDP1 Info
    int vdp1_maxpri;
@@ -229,7 +233,7 @@ void YglShowTexture(void);
 void YglChangeResolution(int, int);
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache);
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c);
-
+void YglSetClearColor(float r, float g, float b);
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode );
 void YglEndWindow( vdp2draw_struct * info );
 

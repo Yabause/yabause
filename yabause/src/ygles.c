@@ -1019,8 +1019,102 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    return program;
 }
 
+float * YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy ) {
+	unsigned int x, y;
+	YglLevel   *level;
+	YglProgram *program;
+	texturecoordinate_struct *tmp;
+	float q[4];
+	int prg = PG_NORMAL;
+	int * pos;
+	float * vtxa;
 
-//////////////////////////////////////////////////////////////////////////////
+	int vHeight;
+
+	if ((input->blendmode & 0x03) == 2)
+	{
+		prg = PG_VDP2_ADDBLEND;
+	}
+
+	program = YglGetProgram(input, prg);
+	if (program == NULL) return NULL;
+
+
+	program->color_offset_val[0] = (float)(input->cor) / 255.0f;
+	program->color_offset_val[1] = (float)(input->cog) / 255.0f;
+	program->color_offset_val[2] = (float)(input->cob) / 255.0f;
+	program->color_offset_val[3] = 0;
+	//info->cor
+
+	vHeight = input->vertices[5] - input->vertices[1];
+
+	pos = program->quads + program->currentQuad;
+	pos[0] = input->vertices[0] - cx;
+	pos[1] = input->vertices[1];
+	pos[2] = input->vertices[2] - cx;
+	pos[3] = input->vertices[3];
+	pos[4] = input->vertices[4] - cx;
+	pos[5] = input->vertices[5];
+	pos[6] = input->vertices[0] - cx;
+	pos[7] = input->vertices[1];
+	pos[8] = input->vertices[4] - cx;
+	pos[9] = input->vertices[5];
+	pos[10] = input->vertices[6] - cx;
+	pos[11] = input->vertices[7];
+
+	// vtxa = (program->vertexAttribute + (program->currentQuad * 2));
+	// memset(vtxa,0,sizeof(float)*24);
+
+	tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+
+	program->currentQuad += 12;
+	YglTMAllocate(output, input->w, input->h, &x, &y);
+	if (output->textdata == NULL){
+		abort();
+	}
+
+
+	tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
+
+	/*
+	0 +---+ 1
+	  |   |
+	  +---+ 2
+	3 +---+
+	  |   |
+	5 +---+ 4
+	*/
+
+	if (input->flip & 0x1) {
+		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w) - ATLAS_BIAS;
+		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
+	}
+	else {
+		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w) - ATLAS_BIAS;
+	}
+	if (input->flip & 0x2) {
+		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h - cy) - ATLAS_BIAS;
+		tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h - (cy+vHeight) ) + ATLAS_BIAS;
+	}
+	else {
+		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + cy ) + ATLAS_BIAS;
+		tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + (cy + vHeight)) - ATLAS_BIAS;
+	}
+
+	c->x = x; 
+	c->y = y; 
+
+	tmp[0].q = 1.0f;
+	tmp[1].q = 1.0f;
+	tmp[2].q = 1.0f;
+	tmp[3].q = 1.0f;
+	tmp[4].q = 1.0f;
+	tmp[5].q = 1.0f;
+
+	return 0;
+}
+
 
 
 float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
@@ -1032,6 +1126,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    int prg = PG_NORMAL;
    int * pos;
    float * vtxa;
+
 
    if( (input->blendmode&0x03) == 2 )
    {
@@ -1102,7 +1197,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
       tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
       tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+	   tmp[0].t = tmp[1].t = tmp[3].t = (float)(y) + ATLAS_BIAS;
       tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
    }
 
@@ -1110,20 +1205,20 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    {
       switch(input->flip) {
         case 0:
-          c->x = *(program->textcoords + ((program->currentQuad - 12) * 2));   // upper left coordinates(0)
-          c->y = *(program->textcoords + ((program->currentQuad - 12) * 2)+1); // upper left coordinates(0)
+			c->x = *(program->textcoords + ((program->currentQuad - 12) * 2));   // upper left coordinates(0)
+			c->y = *(program->textcoords + ((program->currentQuad - 12) * 2) + 1); // upper left coordinates(0)
           break;
         case 1:
-          c->x = *(program->textcoords + ((program->currentQuad - 10) * 2));   // upper left coordinates(0)
-          c->y = *(program->textcoords + ((program->currentQuad - 10) * 2)+1); // upper left coordinates(0)
+			c->x = *(program->textcoords + ((program->currentQuad - 10) * 2));   // upper left coordinates(0)
+			c->y = *(program->textcoords + ((program->currentQuad - 10) * 2) + 1); // upper left coordinates(0)
           break;
        case 2:
-          c->x = *(program->textcoords + ((program->currentQuad - 2) * 2));   // upper left coordinates(0)
-          c->y = *(program->textcoords + ((program->currentQuad - 2) * 2)+1); // upper left coordinates(0)
+		   c->x = *(program->textcoords + ((program->currentQuad - 2) * 2));   // upper left coordinates(0)
+		   c->y = *(program->textcoords + ((program->currentQuad - 2) * 2) + 1); // upper left coordinates(0)
           break;
        case 3:
-          c->x = *(program->textcoords + ((program->currentQuad - 4) * 2));   // upper left coordinates(0)
-          c->y = *(program->textcoords + ((program->currentQuad - 4) * 2)+1); // upper left coordinates(0)
+		   c->x = *(program->textcoords + ((program->currentQuad - 4) * 2));   // upper left coordinates(0)
+		   c->y = *(program->textcoords + ((program->currentQuad - 4) * 2) + 1); // upper left coordinates(0)
           break;
       }
    }
@@ -1334,6 +1429,84 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
 }
 
 //////////////////////////////////////////////////////////////////////////////
+void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy ) {
+	YglLevel   * level;
+	YglProgram * program;
+	unsigned int x, y;
+	texturecoordinate_struct *tmp;
+	float q[4];
+	int * pos;
+	float * vtxa;
+	int vHeight;
+
+	int prg = PG_NORMAL;
+
+	if ((input->blendmode & 0x03) == 2)
+	{
+		prg = PG_VDP2_ADDBLEND;
+	}
+
+	program = YglGetProgram(input, prg);
+	if (program == NULL) return;
+
+	program->color_offset_val[0] = (float)(input->cor) / 255.0f;
+	program->color_offset_val[1] = (float)(input->cog) / 255.0f;
+	program->color_offset_val[2] = (float)(input->cob) / 255.0f;
+	program->color_offset_val[3] = 0;
+
+	x = cache->x;
+	y = cache->y;
+
+	// Vertex
+	vHeight = input->vertices[5] - input->vertices[1];
+	pos = program->quads + program->currentQuad;
+	pos[0] = input->vertices[0] - cx;
+	pos[1] = input->vertices[1];
+	pos[2] = input->vertices[2] - cx;
+	pos[3] = input->vertices[3];
+	pos[4] = input->vertices[4] - cx;
+	pos[5] = input->vertices[5];
+	pos[6] = input->vertices[0] - cx;
+	pos[7] = input->vertices[1];
+	pos[8] = input->vertices[4] - cx;
+	pos[9] = input->vertices[5];
+	pos[10] = input->vertices[6] - cx;
+	pos[11] = input->vertices[7];
+
+	// Color
+	tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+	vtxa = (program->vertexAttribute + (program->currentQuad * 2));
+	memset(vtxa, 0, sizeof(float) * 24);
+
+	program->currentQuad += 12;
+
+	tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
+
+	if (input->flip & 0x1) {
+		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w) - ATLAS_BIAS;
+		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
+	}
+	else {
+		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w) - ATLAS_BIAS;
+	}
+	if (input->flip & 0x2) {
+		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h - cy) - ATLAS_BIAS;
+		tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h - (cy + vHeight)) + ATLAS_BIAS;
+	}
+	else {
+		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + cy) + ATLAS_BIAS;
+		tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + (cy + vHeight)) - ATLAS_BIAS;
+	}
+
+	tmp[0].q = 1.0f;
+	tmp[1].q = 1.0f;
+	tmp[2].q = 1.0f;
+	tmp[3].q = 1.0f;
+	tmp[4].q = 1.0f;
+	tmp[5].q = 1.0f;
+
+}
 
 void YglCachedQuad(YglSprite * input, YglCache * cache) {
    YglLevel   * level;
@@ -1589,6 +1762,7 @@ void YglRenderVDP1(void) {
    GLuint cprg=0;
    int j;
    int status;
+
 
 
    if (_Ygl->pFrameBuffer != NULL) {
@@ -1920,6 +2094,12 @@ void YglRenderFrameBuffer( int from , int to ) {
    }
 }
 
+void YglSetClearColor(float r, float g, float b){
+	_Ygl->clear_r = r;
+	_Ygl->clear_g = g;
+	_Ygl->clear_b = b;
+}
+
 
 void YglRender(void) {
    YglLevel * level;
@@ -1934,7 +2114,7 @@ void YglRender(void) {
 
    glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-   glClearColor( 0.0f,0.0f,0.0f,1.0f);
+   glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
    glClearDepthf(0.0f);
    glDepthMask(GL_TRUE);
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);

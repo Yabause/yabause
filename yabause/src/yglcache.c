@@ -39,7 +39,7 @@ u32 CashLink_index = 0;
 
 static int YglgetHash(u32 addr)
 {
-  return (addr & HASHSIZE);
+  return ((addr>>4) & HASHSIZE);
 }
 
 static YglCacheHash * YglgetNewCash() {
