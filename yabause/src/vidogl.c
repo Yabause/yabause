@@ -1799,9 +1799,14 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
 }
 
 
-static void Vdp2PatternAddrPos(vdp2draw_struct *info, int x, int y )
+static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y )
 {
-	u32 addr = info->addr + ((x + info->pagewh * y) * info->patterndatasize * 2);
+	u32 addr = info->addr +
+		(info->pagewh*info->pagewh*info->planew*planey +
+		info->pagewh*info->pagewh*planex +
+		info->pagewh*y +
+		x)*info->patterndatasize*2;
+
 	switch (info->patterndatasize)
 	{
 	case 1:
@@ -1946,11 +1951,16 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 	int pagex, pagey;
 	int charx, chary;
 
-	FILE * pfp;
-
-	info->patternpixelwh = 8 * info->patternwh;
+	info->patternpixelwh = 8*info->patternwh;
 	info->draww = (int)((float)vdp2width / info->coordincx);
 	info->drawh = (int)((float)vdp2height / info->coordincy);
+
+	int planeh_shift = 9 + (info->planeh-1);
+	int planew_shift = 9 + (info->planew-1);
+	const int plane_shift = 9;
+	const int plane_mask = 0x1FF;
+	int page_shift = 9 - 7 + (64/info->pagewh);
+	int page_mask = 0x0f >> ((info->pagewh/32)-1);
 
 	i = 0;
 	for (int v = 0; v < vdp2height; v += info->lineinc){
@@ -1967,22 +1977,42 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 		info->coordincx = info->lineinfo[lineindex].CoordinateIncH / 256.0f;
 
-		// determine which chara shoud be used.( Todo: change to Bit shift and mask opearation )
-		mapy   = (v+sy) / (512 * info->planeh);
+		// determine which chara shoud be used.
+		//mapy   = (v+sy) / (512 * info->planeh);
+		mapy = (v + sy) >> planeh_shift;
+		//int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+		int dot_on_planey = (v + sy) - (mapy << planeh_shift);
 		mapy = mapy & 0x01;
-		planey = ((v + sy) % (512 * info->planeh)) / info->pagewh;
-		pagey = (((v + sy) % (512 * info->planeh)) % info->pagewh) / info->patternpixelwh;
-		chary = (((v + sy) % (512 * info->planeh)) % info->pagewh) % info->patternpixelwh;
+		//planey = dot_on_planey / 512;
+		planey = dot_on_planey >> plane_shift;
+		//int dot_on_pagey = dot_on_planey - planey * 512;
+		int dot_on_pagey = dot_on_planey & plane_mask;
+		planey = planey & (info->planeh - 1);
+		//pagey = dot_on_pagey / (512 / info->pagewh);
+		pagey = dot_on_pagey >> page_shift;
+		//chary = dot_on_pagey - pagey*(512 / info->pagewh);
+		chary = dot_on_pagey & page_mask;
+		if (pagey < 0) pagey = info->pagewh - 1 + pagey;
 
-		for (int h = 0; h < vdp2width + info->patternpixelwh; h += info->cellw * info->coordincx){
-			mapx = (h + sx) / (512 * info->planew);
+		for (int h = -info->patternpixelwh; h < vdp2width + info->patternpixelwh; h += info->patternpixelwh * info->coordincx){
+			//mapx = (h + sx) / (512 * info->planew);
+			mapx = (h + sx) >> planew_shift;
+			//int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
+			int dot_on_planex = (h + sx) - (mapx << planew_shift);
 			mapx = mapx & 0x01;
-			planex = ((h + sx) % (512 * info->planew)) / info->pagewh;
-			pagex = (((h + sx) % (512 * info->planew)) % info->pagewh) / info->patternpixelwh;
-			charx = (((h + sx) % (512 * info->planew)) % info->pagewh) % info->patternpixelwh;
+			//planex = dot_on_planex / 512;
+			planex = dot_on_planex >> plane_shift;
+			//int dot_on_pagex = dot_on_planex - planex * 512;
+			int dot_on_pagex = dot_on_planex & plane_mask;
+			planex = planex & (info->planew - 1);
+			//pagex = dot_on_pagex / (512 / info->pagewh);
+			pagex = dot_on_pagex >> page_shift;
+			//charx = dot_on_pagex - pagex*(512 / info->pagewh);
+			charx = dot_on_pagex & page_mask;
+			if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
 			info->PlaneAddr(info, info->mapwh * mapy + mapx);
-			Vdp2PatternAddrPos(info, planex * info->patternpixelwh + pagex, planey * info->patternpixelwh + pagey);
+			Vdp2PatternAddrPos(info, planex,pagex, planey,pagey);
 			Vdp2DrawPatternPos(info, texture, h, v, charx, chary);
 		}
 
@@ -3626,8 +3656,8 @@ static void Vdp2DrawNBG0(void)
       else
       {
 		  if (info.islinescroll){
-			  info.x = Vdp2Regs->SCXIN1;
-			  info.y = Vdp2Regs->SCYIN1;
+			  info.x = Vdp2Regs->SCXIN0 & 0x7FF;
+			  info.y = Vdp2Regs->SCYIN0 & 0x7FF;
 			  Vdp2DrawMapPerLine(&info, &texture);
 		  }
 		  else{
@@ -3814,8 +3844,8 @@ static void Vdp2DrawNBG1(void)
    }
    else{
 	   if (info.islinescroll){
-		   info.x = Vdp2Regs->SCXIN1;
-		   info.y = Vdp2Regs->SCYIN1;
+		   info.x = (Vdp2Regs->SCXIN1 & 0x7FF);
+		   info.y = (Vdp2Regs->SCYIN1 & 0x7FF);
 		   Vdp2DrawMapPerLine(&info, &texture);
 	   }
 	   else{
