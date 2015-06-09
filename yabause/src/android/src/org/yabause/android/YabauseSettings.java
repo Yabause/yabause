@@ -25,6 +25,12 @@ import java.util.List;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
+import android.view.Gravity;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
 import android.content.SharedPreferences;
 import android.app.ActivityManager;
 import android.content.pm.ConfigurationInfo;
@@ -33,7 +39,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.app.Dialog;
 
-public class YabauseSettings extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class YabauseSettings extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener{
 
   public static class WarningDialogFragment extends DialogFragment {
     @Override
@@ -51,11 +57,17 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
       return builder.create();
     }
   }
-
+  
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        addPreferencesFromResource(R.xml.preferences);
-
+        
+        try{
+        	addPreferencesFromResource(R.xml.preferences);
+        }catch( Exception e ){
+        	e.printStackTrace();
+        }
+      
+       
         YabauseStorage storage = YabauseStorage.getStorage();
 
         /* bios */
@@ -163,4 +175,5 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         getPreferenceScreen().getSharedPreferences()
                 .unregisterOnSharedPreferenceChangeListener(this);
     }
+
 }

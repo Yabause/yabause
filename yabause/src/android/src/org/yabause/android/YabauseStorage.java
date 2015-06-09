@@ -20,6 +20,10 @@ class GameFilter implements FilenameFilter {
         if (filename.endsWith(".cue")) return true;
         if (filename.endsWith(".iso")) return true;
         if (filename.endsWith(".mds")) return true;
+        if (filename.endsWith(".BIN")) return true;
+        if (filename.endsWith(".CUE")) return true;
+        if (filename.endsWith(".ISO")) return true;
+        if (filename.endsWith(".MDS")) return true;        
         return false;
     }
 }

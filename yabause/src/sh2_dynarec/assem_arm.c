@@ -1831,24 +1831,24 @@ void emit_cmpstr(int s1, int s2, int sr, int temp)
 }
 void emit_negc(int rs, int rt, int sr)
 {
-assert(0);
-/*
-  assert(rs>=0&&rs<8);
+//assert(0);
+
+//  assert(rs>=0&&rs<8);
   if(rt<0) {
     emit_shrimm(sr,1,sr); // Get C flag
     emit_jc((int)out+10); // 6
     emit_neg(rs,rs); // 2
     emit_neg(rs,rs); // 2
-    emit_adc(sr,sr); // Save C flag
+    emit_adc(sr,sr,sr); // Save C flag
   }else{
     if(rs!=rt) emit_mov(rs,rt);
     emit_shrimm(sr,1,sr); // Get C flag
     emit_jc((int)out+9); // 6
     emit_addimm(rt,-1,rt); // 3
-    emit_adc(sr,sr); // Save C flag
+    emit_adc(sr,sr,sr); // Save C flag
     emit_not(rt,rt);
   }
-*/
+
 }
 
 void emit_readword_indexed(int offset, int rs, int rt)
