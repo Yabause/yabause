@@ -970,46 +970,49 @@ static void Vdp2GenerateWindowInfo(void)
                         m_vWindinfo0[v].WinHStart = HStart;
                         m_vWindinfo0[v].WinHEnd   = HEnd;
                         m_vWindinfo0[v].WinShowLine = 1;
-                        
-                        if( v == Vdp2Regs->WPSY0 )
-                        {
-                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= HStart;
-                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v;                    
-                           _Ygl->win0_vertexcnt++;
-                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= HEnd;
-                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v; 
-                           _Ygl->win0_vertexcnt++;
-                           
-                        }else if( ( HStart != preHStart || HEnd != preHEnd) || v == (Vdp2Regs->WPEY0-1) )
-                        {
-                           if( (v-1) != _Ygl->win0v[(_Ygl->win0_vertexcnt-1)*2+1] )
-                           {
-                              _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= preHStart;
-                              _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v-1;                    
-                              _Ygl->win0_vertexcnt++;
-                              _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= preHEnd;
-                              _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v-1; 
-                              _Ygl->win0_vertexcnt++;                           
-                           }
-                           
-                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= HStart;
-                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v;                    
-                           _Ygl->win0_vertexcnt++;
-                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+0]= HEnd;
-                           _Ygl->win0v[_Ygl->win0_vertexcnt*2+1]= v; 
-                           _Ygl->win0_vertexcnt++;                           
-                        }
-                        
-                        preHStart = HStart;
-                        preHEnd = HEnd;
 
                     }else{
                         if( m_vWindinfo0[v].WinShowLine ) m_b0WindowChg = 1;
                         m_vWindinfo0[v].WinHStart = 0;
                         m_vWindinfo0[v].WinHEnd   = 0;
                         m_vWindinfo0[v].WinShowLine = 0;
-                        
+                    
                     }
+
+					if (v == Vdp2Regs->WPSY0)
+					{
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+						_Ygl->win0_vertexcnt++;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+						_Ygl->win0_vertexcnt++;
+
+					}
+					else if ((HStart != preHStart || HEnd != preHEnd) || v == (Vdp2Regs->WPEY0 - 1))
+					{
+						if ((v - 1) != _Ygl->win0v[(_Ygl->win0_vertexcnt - 1) * 2 + 1])
+						{
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHStart;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v - 1;
+							_Ygl->win0_vertexcnt++;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v - 1;
+							_Ygl->win0_vertexcnt++;
+						}
+
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+						_Ygl->win0_vertexcnt++;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+						_Ygl->win0_vertexcnt++;
+					}
+
+					preHStart = HStart;
+					preHEnd = HEnd;
+
+
                 }
             }
 
@@ -1668,7 +1671,7 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
       info->y += tile.h;      
       return;
    }
-   
+
    if( (info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincy == 1.0f )
    {                                                 // coordinate inc is not supported yet.
       winmode=Vdp2CheckWindowRange( info,info->x,info->y,tile.w,tile.h);
@@ -1678,8 +1681,8 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
          info->y += tile.h;
          return;
       }
-  
    }
+
    tile.cor = info->cor;
    tile.cog = info->cog;
    tile.cob = info->cob;
