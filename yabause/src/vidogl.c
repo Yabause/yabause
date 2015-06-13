@@ -184,7 +184,6 @@ u32 FASTCALL Vdp2ColorRamGetColorCM01SC3(vdp2draw_struct * info, u32 colorindex,
 u32 FASTCALL Vdp2ColorRamGetColorCM2(vdp2draw_struct * info, u32 colorindex, int alpha );
 
 
-
 //////////////////////////////////////////////////////////////////////////////
 
 
@@ -1953,20 +1952,25 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 	int planex, planey;
 	int pagex, pagey;
 	int charx, chary;
+    int dot_on_planey;
+    int dot_on_pagey;
+    int dot_on_planex;
+    int dot_on_pagex;
+    int h,v;
+    const int planeh_shift = 9 + (info->planeh-1);
+    const int planew_shift = 9 + (info->planew-1);
+    const int plane_shift = 9;
+    const int plane_mask = 0x1FF;
+    const int page_shift = 9 - 7 + (64/info->pagewh);
+    const int page_mask = 0x0f >> ((info->pagewh/32)-1);
 
 	info->patternpixelwh = 8*info->patternwh;
 	info->draww = (int)((float)vdp2width / info->coordincx);
 	info->drawh = (int)((float)vdp2height / info->coordincy);
 
-	int planeh_shift = 9 + (info->planeh-1);
-	int planew_shift = 9 + (info->planew-1);
-	const int plane_shift = 9;
-	const int plane_mask = 0x1FF;
-	int page_shift = 9 - 7 + (64/info->pagewh);
-	int page_mask = 0x0f >> ((info->pagewh/32)-1);
 
 	i = 0;
-	for (int v = 0; v < vdp2height; v += info->lineinc){
+    for (v = 0; v < vdp2height; v += info->lineinc){
 		sx = info->x + info->lineinfo[lineindex].LineScrollValH;
 		sy = info->y + info->lineinfo[lineindex].LineScrollValV;
 		if (info->isverticalscroll)
@@ -1984,12 +1988,12 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		//mapy   = (v+sy) / (512 * info->planeh);
 		mapy = (v + sy) >> planeh_shift;
 		//int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
-		int dot_on_planey = (v + sy) - (mapy << planeh_shift);
+        dot_on_planey = (v + sy) - (mapy << planeh_shift);
 		mapy = mapy & 0x01;
 		//planey = dot_on_planey / 512;
 		planey = dot_on_planey >> plane_shift;
 		//int dot_on_pagey = dot_on_planey - planey * 512;
-		int dot_on_pagey = dot_on_planey & plane_mask;
+        dot_on_pagey = dot_on_planey & plane_mask;
 		planey = planey & (info->planeh - 1);
 		//pagey = dot_on_pagey / (512 / info->pagewh);
 		pagey = dot_on_pagey >> page_shift;
@@ -1997,16 +2001,16 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		chary = dot_on_pagey & page_mask;
 		if (pagey < 0) pagey = info->pagewh - 1 + pagey;
 
-		for (int h = -info->patternpixelwh; h < vdp2width + info->patternpixelwh; h += info->patternpixelwh * info->coordincx){
+        for (h = -info->patternpixelwh; h < vdp2width + info->patternpixelwh; h += info->patternpixelwh * info->coordincx){
 			//mapx = (h + sx) / (512 * info->planew);
 			mapx = (h + sx) >> planew_shift;
 			//int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
-			int dot_on_planex = (h + sx) - (mapx << planew_shift);
+            dot_on_planex = (h + sx) - (mapx << planew_shift);
 			mapx = mapx & 0x01;
 			//planex = dot_on_planex / 512;
 			planex = dot_on_planex >> plane_shift;
 			//int dot_on_pagex = dot_on_planex - planex * 512;
-			int dot_on_pagex = dot_on_planex & plane_mask;
+            dot_on_pagex = dot_on_planex & plane_mask;
 			planex = planex & (info->planew - 1);
 			//pagex = dot_on_pagex / (512 / info->pagewh);
 			pagex = dot_on_pagex >> page_shift;
