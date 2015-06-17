@@ -1,5 +1,6 @@
 /*  Copyright 2003-2006 Guillaume Duhamel
     Copyright 2005-2006 Theo Berkau
+    Copyright 2015 Shinya Miyamoto(devmiyax)
 
     This file is part of Yabause.
 
@@ -365,18 +366,18 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             ReadAddress += 2;
             counter += 2;
          }
-			if (TransferSize >= 3)
-			{
-				while (counter < TransferSize-2) {
-					u32 tmp = MappedMemoryReadLong(ReadAddress);
-					MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
-					WriteAddress += WriteAdd;
-					MappedMemoryWriteWord(WriteAddress, (u16)tmp);
-					WriteAddress += WriteAdd;
-					ReadAddress += 4;
-					counter += 4;
-				}
-			}
+            if (TransferSize >= 3)
+            {
+                while (counter < TransferSize-2) {
+                    u32 tmp = MappedMemoryReadLong(ReadAddress);
+                    MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
+                    WriteAddress += WriteAdd;
+                    MappedMemoryWriteWord(WriteAddress, (u16)tmp);
+                    WriteAddress += WriteAdd;
+                    ReadAddress += 4;
+                    counter += 4;
+                }
+            }
          if (counter < TransferSize) {
             u16 tmp = MappedMemoryReadWord(ReadAddress);
             MappedMemoryWriteWord(WriteAddress, tmp);
@@ -517,24 +518,30 @@ static u32 readgensrc(u8 num)
          return ScuDsp->MD[3][ScuDsp->CT[3]];
       case 0x4: // MC0
          val = ScuDsp->MD[0][ScuDsp->CT[0]];
+         //ScuDsp->incFlg[0] = 1;
          ScuDsp->CT[0]++;
          return val;
       case 0x5: // MC1
          val = ScuDsp->MD[1][ScuDsp->CT[1]];
+         //ScuDsp->incFlg[1] = 1;
          ScuDsp->CT[1]++;
          return val;
       case 0x6: // MC2
          val = ScuDsp->MD[2][ScuDsp->CT[2]];
+         //ScuDsp->incFlg[2] = 1;
          ScuDsp->CT[2]++;
          return val;
       case 0x7: // MC3
          val = ScuDsp->MD[3][ScuDsp->CT[3]];
+         //ScuDsp->incFlg[3] = 1;
          ScuDsp->CT[3]++;
          return val;
       case 0x9: // ALL
          return (u32)ScuDsp->ALU.part.L;
       case 0xA: // ALH
-         return (u32)ScuDsp->ALU.part.H;
+         //return (u32)ScuDsp->ALU.part.H;
+          //return ((u32)(ScuDsp->ALU.part.L) >> 16) | (((int)ScuDsp->ALU.part.H)>>16);
+          return (ScuDsp->ALU.all >> 16);
       default: break;
    }
 
@@ -548,18 +555,22 @@ static void writed1busdest(u8 num, u32 val)
    switch(num) { 
       case 0x0:
           ScuDsp->MD[0][ScuDsp->CT[0]] = val;
+          //ScuDsp->incFlg[0] = 1;
           ScuDsp->CT[0]++;
           return;
       case 0x1:
           ScuDsp->MD[1][ScuDsp->CT[1]] = val;
+          //ScuDsp->incFlg[1] = 1;
           ScuDsp->CT[1]++;
           return;
       case 0x2:
           ScuDsp->MD[2][ScuDsp->CT[2]] = val;
+          //ScuDsp->incFlg[2] = 1;
           ScuDsp->CT[2]++;
           return;
       case 0x3:
           ScuDsp->MD[3][ScuDsp->CT[3]] = val;
+          //ScuDsp->incFlg[3] = 1;
           ScuDsp->CT[3]++;
           return;
       case 0x4:
@@ -668,6 +679,218 @@ static u32 readdmasrc(u8 num, u8 add)
    }
 
    return 0;
+}
+
+
+
+void dsp_dma01(scudspregs_struct *sc, u32 inst)
+{
+    u32 imm = ((inst & 0xFF));
+    u8  sel = ((inst >> 8) & 0x03);
+    u8  add;
+    u8  addr = sc->CT[sel];
+    u32 i;
+
+    switch (((inst >> 15) & 0x07))
+    {
+    case 0: add = 0; break;
+    case 1: add = 1; break;
+    case 2: add = 2; break;
+    case 3: add = 4; break;
+    case 4: add = 8; break;
+    case 5: add = 16; break;
+    case 6: add = 32; break;
+    case 7: add = 64; break;
+    }
+
+    if (add != 1)
+    {
+        for (i = 0; i < imm; i++)
+        {
+            sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+            sc->CT[sel]++;
+            sc->CT[sel] &= 0x3F;
+            sc->RA0 += 1; // add?
+        }
+    }
+    else{
+        for (i = 0; i < imm; i++)
+        {
+            sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+            sc->CT[sel]++;
+            sc->CT[sel] &= 0x3F;
+            sc->RA0 += 1;
+        }
+    }
+
+    sc->ProgControlPort.part.T0 = 0;
+}
+
+void dsp_dma02(scudspregs_struct *sc, u32 inst)
+{
+    u32 imm = ((inst & 0xFF));      
+    u8  sel = ((inst >> 8) & 0x03); 
+    u8  addr = sc->CT[sel];             
+    u8  add;
+    u32 i;
+
+    switch (((inst >> 15) & 0x07))
+    {
+    case 0: add = 0; break;
+    case 1: add = 1; break;
+    case 2: add = 2; break;
+    case 3: add = 4; break;
+    case 4: add = 8; break;
+    case 5: add = 16; break;
+    case 6: add = 32; break;
+    case 7: add = 64; break;
+    }
+
+    if (add != 1)
+    {
+        for ( i = 0; i < imm; i++)
+        {
+            u32 Val = sc->MD[sel][sc->CT[sel]];
+            u32 Adr = (sc->WA0 << 2);
+            MappedMemoryWriteLong(Adr, Val);
+            sc->CT[sel]++;
+            sc->WA0 += add >> 1;
+            sc->CT[sel] &= 0x3F;
+        }
+    }
+    else{
+
+        for ( i = 0; i < imm; i++)
+        {
+            u32 Val = sc->MD[sel][sc->CT[sel]];
+            u32 Adr = (sc->WA0 << 2);
+
+            MappedMemoryWriteLong(Adr, Val);
+            sc->CT[sel]++;
+            sc->CT[sel] &= 0x3F;
+            sc->WA0 += 1;
+        }
+
+    }
+    sc->ProgControlPort.part.T0 = 0;
+}
+
+void dsp_dma03(scudspregs_struct *sc, u32 inst)
+{
+    u32 Counter = 0;
+    u32 i;
+
+    switch ((inst & 0x7))
+    {
+    case 0x00: Counter = sc->MD[0][sc->CT[0]]; break;
+    case 0x01: Counter = sc->MD[1][sc->CT[1]]; break;
+    case 0x02: Counter = sc->MD[2][sc->CT[2]]; break;
+    case 0x03: Counter = sc->MD[3][sc->CT[3]]; break;
+    case 0x04: Counter = sc->MD[0][sc->CT[0]]; ScuDsp->CT[0]++; break;
+    case 0x05: Counter = sc->MD[1][sc->CT[1]]; ScuDsp->CT[1]++; break;
+    case 0x06: Counter = sc->MD[2][sc->CT[2]]; ScuDsp->CT[2]++; break;
+    case 0x07: Counter = sc->MD[3][sc->CT[3]]; ScuDsp->CT[3]++; break;
+    }
+
+    int DestinationId = (inst >> 8) & 0x7;
+
+    if (DestinationId > 3)
+    {
+        int incl = 1; //((sc->inst >> 15) & 0x01);
+        for (i = 0; i < Counter; i++)
+        {
+            u32 Adr = (sc->RA0 << 2);
+            sc->ProgramRam[i] = MappedMemoryReadLong(Adr);
+            sc->RA0 += incl;
+        }
+    }
+    else{
+
+        int incl = 1; //((sc->inst >> 15) & 0x01);
+        for (i = 0; i < Counter; i++)
+        {
+            u32 Adr = (sc->RA0 << 2);
+
+            sc->MD[DestinationId][sc->CT[DestinationId]] = MappedMemoryReadLong(Adr);
+            sc->CT[DestinationId]++;
+            sc->CT[DestinationId] &= 0x3F;
+            sc->RA0 += incl;
+        }
+    }
+    sc->ProgControlPort.part.T0 = 0;
+}
+
+void dsp_dma04(scudspregs_struct *sc, u32 inst)
+{
+    u32 Counter = 0;
+    u32 add = 0;
+    u32 sel = ((inst >> 8) & 0x03);
+    u32 i;
+
+    switch ((inst & 0x7))
+    {
+    case 0x00: Counter = sc->MD[0][sc->CT[0]]; break;
+    case 0x01: Counter = sc->MD[1][sc->CT[1]]; break;
+    case 0x02: Counter = sc->MD[2][sc->CT[2]]; break;
+    case 0x03: Counter = sc->MD[3][sc->CT[3]]; break;
+    case 0x04: Counter = sc->MD[0][sc->CT[0]]; ScuDsp->CT[0]++; break;
+    case 0x05: Counter = sc->MD[1][sc->CT[1]]; ScuDsp->CT[1]++; break;
+    case 0x06: Counter = sc->MD[2][sc->CT[2]]; ScuDsp->CT[2]++; break;
+    case 0x07: Counter = sc->MD[3][sc->CT[3]]; ScuDsp->CT[3]++; break;
+    }
+    
+    switch (((inst >> 15) & 0x07))
+    {
+    case 0: add = 0; break;
+    case 1: add = 1; break;
+    case 2: add = 2; break;
+    case 3: add = 4; break;
+    case 4: add = 8; break;
+    case 5: add = 16; break;
+    case 6: add = 32; break;
+    case 7: add = 64; break;
+    }
+
+    for (i = 0; i < Counter; i++)
+    {
+        u32 Val = sc->MD[sel][sc->CT[sel]];
+        u32 Adr = (sc->WA0 << 2);
+        MappedMemoryWriteLong(Adr, Val);
+        sc->CT[sel]++;
+        sc->CT[sel] &= 0x3F;
+        sc->WA0 += 1;
+
+    }
+    sc->ProgControlPort.part.T0 = 0;
+}
+
+void dsp_dma05(scudspregs_struct *sc, u32 inst)
+{
+    u32 saveRa0 = sc->RA0;
+    dsp_dma01(sc, inst);
+    sc->RA0 = saveRa0;
+}
+
+void dsp_dma06(scudspregs_struct *sc, u32 inst)
+{
+    u32 saveWa0 = sc->WA0;
+    dsp_dma02(sc, inst);
+    sc->WA0 = saveWa0;
+}
+
+void dsp_dma07(scudspregs_struct *sc, u32 inst)
+{
+    u32 saveRa0 = sc->RA0;
+    dsp_dma03(sc, inst);
+    sc->RA0 = saveRa0;
+
+}
+
+void dsp_dma08(scudspregs_struct *sc, u32 inst)
+{
+    u32 saveWa0 = sc->WA0;
+    dsp_dma04(sc, inst);
+    sc->WA0 = saveWa0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1012,115 +1235,44 @@ void ScuExec(u32 timing) {
             {
                u32 i;
 
-               switch((instruction >> 28) & 0x3) {
-                  case 0x00: // DMA Commands
-                  {
-                     int addressAdd;
-                     u32 transferNumber;
-                     unsigned char hold=(instruction >> 14) & 0x1;
-                     unsigned char direction=(instruction >> 12) & 0x1;
-
-                     if (instruction & 0x2000)
-                     {
-                        // DMA(H) D0,[RAM],[s]/DMA(H) [RAM],D0,[s]
-                        // command format 2
-
-                        transferNumber = readgensrc(instruction & 0x7);
-
-                        switch((instruction >> 15) & 0x7)
-                        {
-                           case 0: // Add 0
-                              addressAdd = 0;
-                              break;
-                           case 1: // Add 1
-                              addressAdd = 4;
-                              break;
-                           default:
-                              // Undocumented mode
-                              addressAdd = 4;
-                              break;
-                        }
-                     }
-                     else
-                     {
-                        // DMA(H) D0,[RAM],SImm/DMA(H) [RAM],D0,SImm
-                        // command format 1
-
-                        transferNumber = instruction & 0xFF;
-
-                        switch((instruction >> 15) & 0x7)
-                        {
-                           case 0: // Add 0
-                              addressAdd = 0;
-                              break;
-                           case 1: // Add 1
-                              addressAdd = 4;
-                              break;
-                           case 2: // Add 2
-                              addressAdd = 8;
-                              break;
-                           case 3: // Add 4
-                              addressAdd = 16;
-                              break;
-                           case 4: // Add 8
-                              addressAdd = 32;
-                              break;
-                           case 5: // Add 16
-                              addressAdd = 64;
-                              break;
-                           case 6: // Add 32
-                              addressAdd = 128;
-                              break;
-                           case 7: // Add 64
-                              addressAdd = 256;
-                              break;
-                           default:
-                              addressAdd = 0;
-                              break;
-                        }
-
-//                        LOG("DMA command format 1: addressAdd = %d transferNumber = %d hold = %d dir = %d\n", addressAdd, transferNumber, hold, direction);
-                     }
-
-                     if (direction)
-                     {
-                        u32 WA0temp=ScuDsp->WA0;
-                        u32 start;
-
-                        // Looks like some bits are ignored on a real saturn(Grandia takes advantage of this)
-                        ScuDsp->WA0 &= 0x01FFFFFF;
-
-                        // DMA(H) [RAM], D0, ??
-                        start = ScuDsp->WA0 << 2;
-                        for (i = 0; i < transferNumber; i++)
-                        {                        
-                           MappedMemoryWriteLong(ScuDsp->WA0 << 2, readdmasrc((instruction >> 8) & 0x3, 1));
-                           ScuDsp->WA0 += (addressAdd >> 2); 
-                        }
-                        SH2WriteNotify(start, (ScuDsp->WA0 << 2) - start);
-
-                        if (hold) ScuDsp->WA0 = WA0temp;
-                     }
-                     else
-                     {
-                        u32 RA0temp=ScuDsp->RA0;
-
-                        // Looks like some bits are ignored on a real saturn(Grandia takes advantage of this)
-                        ScuDsp->RA0 &= 0x01FFFFFF;
-
-                        // DMA(H) D0,[RAM], ??
-                        for (i = 0; i < transferNumber; i++)
-                        {                        
-                           writedmadest((instruction >> 8) & 0x7, MappedMemoryReadLong(ScuDsp->RA0 << 2), 1);
-                           ScuDsp->RA0 += (addressAdd >> 2); 
-                        }
-
-                        if (hold) ScuDsp->RA0 = RA0temp;                                        
-                     }
-
+               switch((instruction >> 28) & 0xF) {
+                 case 0x0C: // DMA Commands
+                 {
+                   if (((instruction >> 10) & 0x1F) == 0x00/*0x08*/)
+                   {
+                       dsp_dma01(ScuDsp, instruction);
+                   }
+                   else if (((instruction >> 10) & 0x1F) == 0x04)
+                   {
+                       dsp_dma02(ScuDsp, instruction);
+                   }
+                   else if (((instruction >> 11) & 0x0F) == 0x04)
+                   {
+                       dsp_dma03(ScuDsp, instruction);
+                   }
+                   else if (((instruction >> 10) & 0x1F) == 0x0C)
+                   {
+                       dsp_dma04(ScuDsp, instruction);
+                   }
+                   else if (((instruction >> 11) & 0x0F) == 0x08)
+                   {
+                       dsp_dma05(ScuDsp, instruction);
+                   }
+                   else if (((instruction >> 10) & 0x1F) == 0x14)
+                   {
+                       dsp_dma06(ScuDsp, instruction);
+                   }
+                   else if (((instruction >> 11) & 0x0F) == 0x0C)
+                   {
+                       dsp_dma07(ScuDsp, instruction);
+                   }
+                   else if (((instruction >> 10) & 0x1F) == 0x1C)
+                   {
+                       dsp_dma08(ScuDsp, instruction);
+                   }
                      break;
                   }
-                  case 0x01: // Jump Commands
+                  case 0x0D: // Jump Commands
                      switch ((instruction >> 19) & 0x7F) {
                         case 0x00: // JMP Imm
                            ScuDsp->jmpaddr = instruction & 0xFF;
@@ -1211,7 +1363,7 @@ void ScuExec(u32 timing) {
                            break;
                      }
                      break;
-                  case 0x02: // Loop bottom Commands
+                  case 0x0E: // Loop bottom Commands
                      if (instruction & 0x8000000)
                      {
                         // LPS
@@ -1234,7 +1386,7 @@ void ScuExec(u32 timing) {
                      }
 
                      break;
-                  case 0x03: // End Commands
+                  case 0x0F: // End Commands
                      ScuDsp->ProgControlPort.part.EX = 0;
 
                      if (instruction & 0x8000000) {
@@ -1256,8 +1408,7 @@ void ScuExec(u32 timing) {
                break;
          }
 
-         // Do RX*RY multiplication
-         ScuDsp->MUL.all = (signed)ScuDsp->RX * (signed)ScuDsp->RY;
+         ScuDsp->MUL.all = ScuDsp->RX * ScuDsp->RY;
 
          ScuDsp->PC++;
 
@@ -2328,7 +2479,7 @@ void ScuSendVBlankIN(void) {
 
 void ScuSendVBlankOUT(void) {
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
-	ScuRegs->timer0 = 0;
+    ScuRegs->timer0 = 0;
    if (ScuRegs->T1MD & 0x1)
    {
       if (ScuRegs->timer0 == ScuRegs->T0C)
@@ -2341,7 +2492,7 @@ void ScuSendVBlankOUT(void) {
 void ScuSendHBlankIN(void) {
    SendInterrupt(0x42, 0xD, 0x0004, 0x0004);
 
-	ScuRegs->timer0++;
+    ScuRegs->timer0++;
    if (ScuRegs->T1MD & 0x1)
    {
       // if timer0 equals timer 0 compare register, do an interrupt
