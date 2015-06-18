@@ -1363,6 +1363,9 @@ void Vdp2GenLineinfo( vdp2draw_struct *info )
          val2=T1ReadWord(Vdp2Ram, info->linescrolltbl+(i/info->lineinc)*bound+index+2);
          //info->lineinfo[i].CoordinateIncH = (float)( (int)((val1) & 0x07) + (float)( (val2) >> 8) / 255.0f );
 		 info->lineinfo[lineindex].CoordinateIncH = (((int)((val1)& 0x07) << 8) | (int)((val2) >> 8));
+		 if (info->lineinfo[lineindex].CoordinateIncH == 0){
+			 info->lineinfo[lineindex].CoordinateIncH = 0x0100;
+		 }
          index += 4;
       }else{
 		  info->lineinfo[lineindex].CoordinateIncH = 0x0100;
@@ -1957,6 +1960,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
     int dot_on_planex;
     int dot_on_pagex;
     int h,v;
+	float fh;
     const int planeh_shift = 9 + (info->planeh-1);
     const int planew_shift = 9 + (info->planew-1);
     const int plane_shift = 9;
@@ -1969,26 +1973,33 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 	info->drawh = (int)((float)vdp2height / info->coordincy);
 
 
+
+
 	i = 0;
-    for (v = 0; v < vdp2height; v += info->lineinc){
+    for (v = 0; v < vdp2height; v++ ){  // ToDo: info->coordincy
+		int targetv = 0;
 		sx = info->x + info->lineinfo[lineindex].LineScrollValH;
-		sy = info->y + info->lineinfo[lineindex].LineScrollValV;
-		if (info->isverticalscroll)
-		{
+		if (VDPLINE_SY(info->islinescroll)) {
+			targetv = info->y + info->lineinfo[lineindex].LineScrollValV;
+		}else{
+			targetv = info->y + v;
+		}
+
+		if (info->isverticalscroll)	{
 			// this is *wrong*, vertical scroll use a different value per cell
 			// info->verticalscrolltbl should be incremented by info->verticalscrollinc
 			// each time there's a cell change and reseted at the end of the line...
 			// or something like that :)
-			sy += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
+			targetv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
 		}
 
 		info->coordincx = info->lineinfo[lineindex].CoordinateIncH / 256.0f;
 
 		// determine which chara shoud be used.
 		//mapy   = (v+sy) / (512 * info->planeh);
-		mapy = (v + sy) >> planeh_shift;
+		mapy = (targetv) >> planeh_shift;
 		//int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
-        dot_on_planey = (v + sy) - (mapy << planeh_shift);
+		dot_on_planey = (targetv)-(mapy << planeh_shift);
 		mapy = mapy & 0x01;
 		//planey = dot_on_planey / 512;
 		planey = dot_on_planey >> plane_shift;
@@ -2001,7 +2012,10 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		chary = dot_on_pagey & page_mask;
 		if (pagey < 0) pagey = info->pagewh - 1 + pagey;
 
-        for (h = -info->patternpixelwh; h < vdp2width + info->patternpixelwh; h += info->patternpixelwh * info->coordincx){
+        for (fh = -info->patternpixelwh; fh < vdp2width + info->patternpixelwh; fh += info->patternpixelwh * info->coordincx){
+
+			h = (int)fh;
+
 			//mapx = (h + sx) / (512 * info->planew);
 			mapx = (h + sx) >> planew_shift;
 			//int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
@@ -2021,8 +2035,8 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 			info->PlaneAddr(info, info->mapwh * mapy + mapx);
 			Vdp2PatternAddrPos(info, planex,pagex, planey,pagey);
 			Vdp2DrawPatternPos(info, texture, h, v, charx, chary);
-		}
 
+		}
 
 		lineindex++;
 	}
@@ -4326,6 +4340,7 @@ void VIDOGLVdp2DrawScreens(void)
    Vdp2GenerateWindowInfo();
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
+
    Vdp2DrawNBG3();
    Vdp2DrawNBG2();
    Vdp2DrawNBG1();

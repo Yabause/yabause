@@ -90,8 +90,8 @@ typedef struct {
    u32 addr;
    int disptoggle_dont_use_me; // not used anymore, see Vdp1External_struct
 
-   u16 localX;
-   u16 localY;
+   s16 localX;
+   s16 localY;
 
    u16 systemclipX1;
    u16 systemclipY1;
