@@ -57,6 +57,7 @@ import android.widget.LinearLayout;
 	}
 	
 	void InitObjects( Context context){
+		index = 0;
 		context_m = context;
 		Keymap = new HashMap<Integer,Integer>();
 		map = new ArrayList<Integer>();
@@ -87,6 +88,7 @@ import android.widget.LinearLayout;
 		super.showDialog(state);
 		Dialog dlg = this.getDialog();
     	dlg.setOnKeyListener(this);		
+    	index = 0;
     	
 		pad_m = PadManager.getPadManager();
     	if( pad_m.hasPad() == false ){
