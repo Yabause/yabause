@@ -43,6 +43,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		src/org/yabause/android/YabausePad.java
 		src/org/yabause/android/YabauseSettings.java
 		src/org/yabause/android/YabauseStorage.java
+		res/drawable-hdpi/banner.png
 		res/drawable-hdpi/icon.png
 		res/drawable-ldpi/icon.png
 		res/drawable-mdpi/icon.png
@@ -109,6 +110,7 @@ add_custom_command(
 )
 
 set(yabause_android_RES
+	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-hdpi/banner.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-hdpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-ldpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-mdpi/icon.png"

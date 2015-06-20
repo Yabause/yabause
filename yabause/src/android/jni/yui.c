@@ -734,6 +734,8 @@ int initEgl( ANativeWindow* window )
     PerSetKey(PERPAD_X, PERPAD_X, padbits);
     PerSetKey(PERPAD_Y, PERPAD_Y, padbits);
     PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
+    PerSetKey(PERPAD_RIGHT_TRIGGER,PERPAD_RIGHT_TRIGGER,padbits);
+    PerSetKey(PERPAD_LEFT_TRIGGER,PERPAD_LEFT_TRIGGER,padbits);
 
     ScspSetFrameAccurate(1);
 

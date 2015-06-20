@@ -21,11 +21,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnGenericMotionListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.EditText;
@@ -33,7 +36,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.LinearLayout;
 
-@SuppressLint("NewApi") public class InputSettingPrefernce extends DialogPreference implements OnKeyListener{
+@SuppressLint("NewApi") public class InputSettingPrefernce extends DialogPreference implements OnKeyListener, OnGenericMotionListener{
 
 	private TextView key_message;
 	private HashMap<Integer,Integer> Keymap;
@@ -88,7 +91,9 @@ import android.widget.LinearLayout;
 		super.showDialog(state);
 		Dialog dlg = this.getDialog();
     	dlg.setOnKeyListener(this);		
+
     	index = 0;
+    	Keymap.clear();
     	
 		pad_m = PadManager.getPadManager();
     	if( pad_m.hasPad() == false ){
@@ -98,7 +103,7 @@ import android.widget.LinearLayout;
     	}    	
 	}
 
-	
+	 
 	@Override
 	protected View onCreateDialogView() {
 		this.key_message = new TextView(this.getContext());
@@ -109,7 +114,17 @@ import android.widget.LinearLayout;
 				LinearLayout.LayoutParams.MATCH_PARENT,
 				LinearLayout.LayoutParams.MATCH_PARENT));
 		this.key_message.setGravity(Gravity.CENTER);
+		
+		key_message.setOnGenericMotionListener(this);
+		key_message.setFocusableInTouchMode(true);
+		key_message.requestFocus();
+	        
 		return this.key_message;
+	}
+	
+	@Override
+	protected void onBindDialogView(View view){
+		view.setOnGenericMotionListener(this);	
 	}
 	
 	@Override
@@ -165,6 +180,38 @@ import android.widget.LinearLayout;
         }
 
     }	
+    
+    boolean setKeymap(Integer padkey){
+    	Keymap.put(padkey,map.get(index));
+    	index++;
+    	
+    	if( index >= map.size() ){
+    		saveSettings();
+    		Dialog dlg = this.getDialog();
+    		dlg.dismiss();
+    		return true;
+    	}
+    	
+		switch(map.get(index)){
+		case PadEvent.BUTTON_UP: setMessage("Up"); break;
+		case PadEvent.BUTTON_DOWN: setMessage("Down"); break;
+		case PadEvent.BUTTON_LEFT:setMessage("Left"); break;
+		case PadEvent.BUTTON_RIGHT: setMessage("Right"); break;
+		case PadEvent.BUTTON_LEFT_TRIGGER: setMessage("L Trigger"); break;
+		case PadEvent.BUTTON_RIGHT_TRIGGER: setMessage("R Trigger"); break;
+		case PadEvent.BUTTON_START:setMessage("Start"); break;
+		case PadEvent.BUTTON_A: setMessage("A"); break;
+		case PadEvent.BUTTON_B: setMessage("B"); break;
+		case PadEvent.BUTTON_C: setMessage("C"); break;
+		case PadEvent.BUTTON_X:setMessage("X"); break;
+		case PadEvent.BUTTON_Y: setMessage("Y"); break;
+		case PadEvent.BUTTON_Z: setMessage("Z"); break;
+		}	
+		
+		return true;
+		
+    }
+
 
 	@Override
 	public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
@@ -172,34 +219,61 @@ import android.widget.LinearLayout;
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
                 if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                 	                	
-                	Keymap.put(keyCode,map.get(index));
-                	index++;
-                	
-                	if( index >= map.size() ){
-                		saveSettings();
-                		dialog.dismiss();
+                	Integer PadKey = Keymap.get(keyCode);
+                	if( PadKey != null ) {
+                		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
                 		return true;
                 	}
-                	
-    	    		switch(map.get(index)){
-    	    		case PadEvent.BUTTON_UP: setMessage("Up"); break;
-    	    		case PadEvent.BUTTON_DOWN: setMessage("Down"); break;
-    	    		case PadEvent.BUTTON_LEFT:setMessage("Left"); break;
-    	    		case PadEvent.BUTTON_RIGHT: setMessage("Right"); break;
-    	    		case PadEvent.BUTTON_LEFT_TRIGGER: setMessage("L Trigger"); break;
-    	    		case PadEvent.BUTTON_RIGHT_TRIGGER: setMessage("R Trigger"); break;
-    	    		case PadEvent.BUTTON_START:setMessage("Start"); break;
-    	    		case PadEvent.BUTTON_A: setMessage("A"); break;
-    	    		case PadEvent.BUTTON_B: setMessage("B"); break;
-    	    		case PadEvent.BUTTON_C: setMessage("C"); break;
-    	    		case PadEvent.BUTTON_X:setMessage("X"); break;
-    	    		case PadEvent.BUTTON_Y: setMessage("Y"); break;
-    	    		case PadEvent.BUTTON_Z: setMessage("Z"); break;
-    	    		}		                	
-    	    		return true;        	
+    	    		return setKeymap(keyCode);        	
                 }
             }
         	return false;
+	}
+	
+	protected float _oldLeftTrigger = 0.0f;
+	protected float _oldRightTrigger = 0.0f;
+	
+	@Override
+	public boolean onGenericMotion(View v, MotionEvent event) {
+        if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
+        	
+      	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );
+      	  if( newLeftTrigger != _oldLeftTrigger ){
+     		  
+      		  // On
+      		  if( _oldLeftTrigger < newLeftTrigger && _oldLeftTrigger < 0.001 ){
+      			
+      			    _oldLeftTrigger = newLeftTrigger;
+      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
+                	if( PadKey != null ) {
+                		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
+                		return true;
+                	}
+                	return setKeymap(MotionEvent.AXIS_LTRIGGER); 
+                	
+      		  }
+      		  _oldLeftTrigger = newLeftTrigger;
+      	  }
+      	  
+      	  float newRightTrigger = event.getAxisValue( MotionEvent.AXIS_RTRIGGER );
+      	  if( newRightTrigger != _oldRightTrigger ){
+
+      		  // On
+      		  if( _oldRightTrigger < newRightTrigger && _oldRightTrigger < 0.001 ){
+      			
+          		  	_oldRightTrigger = newRightTrigger;
+      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
+                	if( PadKey != null ) {
+                		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
+                		return true;
+                	}	
+                	return setKeymap(MotionEvent.AXIS_RTRIGGER); 
+      		  }
+      		  _oldRightTrigger = newRightTrigger;
+      	  }
+      }
+
+		return false;
 	}
 
 }

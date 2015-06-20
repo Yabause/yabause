@@ -16,6 +16,8 @@ class BiosFilter implements FilenameFilter {
 
 class GameFilter implements FilenameFilter {
     public boolean accept(File dir, String filename) {
+    	if (filename.endsWith(".img")) return true;
+    	if (filename.endsWith(".IMG")) return true;
         if (filename.endsWith(".bin")) return true;
         if (filename.endsWith(".cue")) return true;
         if (filename.endsWith(".iso")) return true;

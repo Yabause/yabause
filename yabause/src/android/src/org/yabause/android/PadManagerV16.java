@@ -7,6 +7,7 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -32,6 +33,8 @@ class PadManagerV16 extends PadManager {
     private ArrayList deviceIds;
     HashMap<Integer,Integer> Keymap;
     final String TAG = "PadManagerV16";
+    float _oldRightTrigger = 0.0f;
+    float _oldLeftTrigger = 0.0f;
 
     PadManagerV16() {
         deviceIds = new ArrayList();
@@ -58,15 +61,78 @@ class PadManagerV16 extends PadManager {
     public boolean hasPad() {
         return deviceIds.size() > 0;
     }
+    
+    public PadEvent onGenericMotionEvent(MotionEvent event){
+    	PadEvent pe = null;
+        if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
+        	
+        	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );
+        	  if( newLeftTrigger != _oldLeftTrigger ){
+        		  Log.d(TAG,"AXIS_LTRIGGER = " + newLeftTrigger);
+        		  
+        		  // On
+        		  if( _oldLeftTrigger < newLeftTrigger && _oldLeftTrigger < 0.001 ){
+        			
+        	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
+                    	if( PadKey != null ) {
+                    	   	pe = new PadEvent(0, PadKey);
+                    	}			  
+        		  }
+        		  
+        		  // Off
+        		  else if( _oldLeftTrigger > newLeftTrigger && newLeftTrigger < 0.001 ){
+	      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
+	                  	if( PadKey != null ) {
+	                  	   	pe = new PadEvent(1, PadKey);
+	                  	}   			  
+        		  }
+        		  
+        		  _oldLeftTrigger = newLeftTrigger;
+        	  }
+        	  
+        	  float newRightTrigger = event.getAxisValue( MotionEvent.AXIS_RTRIGGER );
+        	  if( newRightTrigger != _oldRightTrigger ){
+        		  //Log.d(TAG,"AXIS_LTRIGGER = " + newRightTrigger);
+
+        		  // On
+        		  if( _oldRightTrigger < newRightTrigger && _oldRightTrigger < 0.001 ){
+        			
+        	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
+                    	if( PadKey != null ) {
+                    	   	pe = new PadEvent(0, PadKey);
+                    	}			  
+        		  }
+        		  
+        		  // Off
+        		  else if( _oldRightTrigger > newRightTrigger && newRightTrigger < 0.001 ){
+	      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
+	                  	if( PadKey != null ) {
+	                  	   	pe = new PadEvent(1, PadKey);
+	                  	}   			  
+        		  }
+        		  _oldRightTrigger = newRightTrigger;
+        	  }
+        }
+    	return pe;
+    }
 
     public PadEvent onKeyDown(int keyCode, KeyEvent event) {
         PadEvent pe = null;
+        
+        if( keyCode == KeyEvent.KEYCODE_BACK ){
+        	return null;
+        }
 
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
             if (event.getRepeatCount() == 0) {
             	
-            	pe = new PadEvent(0, Keymap.get(keyCode));
+            	Integer PadKey = Keymap.get(keyCode);
+            	if( PadKey != null ) {
+            	   	pe = new PadEvent(0, Keymap.get(keyCode));
+            	}else{
+            		return null;
+            	}
             }
         }
 
@@ -75,11 +141,21 @@ class PadManagerV16 extends PadManager {
 
     public PadEvent onKeyUp(int keyCode, KeyEvent event) {
         PadEvent pe = null;
+        
+        if( keyCode == KeyEvent.KEYCODE_BACK ){
+        	return null;
+        }        
 
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
             if (event.getRepeatCount() == 0) {
-            	pe = new PadEvent(1, Keymap.get(keyCode));
+            	
+            	Integer PadKey = Keymap.get(keyCode);
+            	if( PadKey != null ) {
+            	   	pe = new PadEvent(1, Keymap.get(keyCode));
+            	}else{
+            		return null;
+            	}            	
             }
         }
 
@@ -92,8 +168,8 @@ class PadManagerV16 extends PadManager {
         Keymap.put(KeyEvent.KEYCODE_DPAD_DOWN, PadEvent.BUTTON_DOWN);
         Keymap.put(KeyEvent.KEYCODE_DPAD_LEFT, PadEvent.BUTTON_LEFT);
         Keymap.put(KeyEvent.KEYCODE_DPAD_RIGHT, PadEvent.BUTTON_RIGHT);
-        Keymap.put(KeyEvent.KEYCODE_BUTTON_L2,PadEvent.BUTTON_LEFT_TRIGGER);
-        Keymap.put(KeyEvent.KEYCODE_BUTTON_R2, PadEvent.BUTTON_RIGHT_TRIGGER);
+        Keymap.put(MotionEvent.AXIS_LTRIGGER,PadEvent.BUTTON_LEFT_TRIGGER);
+        Keymap.put(MotionEvent.AXIS_RTRIGGER, PadEvent.BUTTON_RIGHT_TRIGGER);
         Keymap.put(KeyEvent.KEYCODE_BUTTON_START, PadEvent.BUTTON_START);
         Keymap.put(KeyEvent.KEYCODE_BUTTON_A, PadEvent.BUTTON_A);
         Keymap.put(KeyEvent.KEYCODE_BUTTON_B, PadEvent.BUTTON_B);

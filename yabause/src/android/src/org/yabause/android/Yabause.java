@@ -28,10 +28,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.InputDevice;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.app.Dialog;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -171,7 +173,7 @@ public class Yabause extends Activity implements OnPadListener
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         readPreferences();
-
+ 
         Intent intent = getIntent();
         String game = intent.getStringExtra("org.yabause.android.FileName");
 
@@ -250,6 +252,16 @@ public class Yabause extends Activity implements OnPadListener
         return true;
     }
 
+    @Override public boolean onGenericMotionEvent(MotionEvent event) {
+
+        PadEvent pe = padm.onGenericMotionEvent(event);
+        if (pe != null) {
+            this.onPad(pe);
+            return true;
+        }
+        return super.onGenericMotionEvent(event);
+    }
+    
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
         PadEvent pe = padm.onKeyDown(keyCode, event);
 
