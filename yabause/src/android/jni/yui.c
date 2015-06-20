@@ -479,7 +479,7 @@ void YuidrawSoftwareBuffer() {
 }
 
 
-JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_initViewport( JNIEnv* jenv, jobject obj, jobject surface, int width, int height)
+JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport( JNIEnv* jenv, jobject obj, jobject surface, int width, int height)
 {
     if (surface != 0) {
         g_window = ANativeWindow_fromSurface(jenv, surface);
@@ -492,28 +492,28 @@ JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_initViewport( JNI
    return 0;
 }
 
-JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_lockGL()
+JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
 {
    pthread_mutex_lock(&g_mtxGlLock);
 }
 
-JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_unlockGL()
+JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_unlockGL()
 {
    pthread_mutex_unlock(&g_mtxGlLock);
 }
 
-JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_toggleShowFps( JNIEnv* env )
+JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( JNIEnv* env )
 {
-    printf("%s","Java_org_yabause_android_YabauseRunnable_toggleShowFps");
+    printf("%s","Java_org_uoyabause_android_YabauseRunnable_toggleShowFps");
    ToggleFPS();
 }
 
 static int enableautofskip = 0;
-JNIEXPORT int JNICALL Java_org_yabause_android_YabauseRunnable_toggleFrameSkip( JNIEnv* env )
+JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip( JNIEnv* env )
 {
     enableautofskip = 1 - enableautofskip;
 
-     printf("%s:%d","Java_org_yabause_android_YabauseRunnable_toggleFrameSkip",enableautofskip);
+     printf("%s:%d","Java_org_uoyabause_android_YabauseRunnable_toggleFrameSkip",enableautofskip);
 
     if (enableautofskip)
        EnableAutoFrameSkip();
@@ -572,7 +572,7 @@ int initEGLFunc()
 
 
 
-jint Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
+jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
 {
     int res=0;
 
@@ -770,37 +770,37 @@ destroy() {
 }
 
 void
-Java_org_yabause_android_YabauseRunnable_deinit( JNIEnv* env )
+Java_org_uoyabause_android_YabauseRunnable_deinit( JNIEnv* env )
 {
     YabauseDeInit();
 }
 
 void
-Java_org_yabause_android_YabauseRunnable_exec( JNIEnv* env )
+Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 {
  //   YabauseExec();
 }
 
 void
-Java_org_yabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key )
+Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key )
 {
     PerKeyDown(key);
 }
 
 void
-Java_org_yabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key )
+Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key )
 {
     PerKeyUp(key);
 }
 
 void
-Java_org_yabause_android_YabauseRunnable_enableFPS( JNIEnv* env, jobject obj, jint enable )
+Java_org_uoyabause_android_YabauseRunnable_enableFPS( JNIEnv* env, jobject obj, jint enable )
 {
     SetOSDToggle(enable);
 }
 
 void
-Java_org_yabause_android_YabauseRunnable_enableFrameskip( JNIEnv* env, jobject obj, jint enable )
+Java_org_uoyabause_android_YabauseRunnable_enableFrameskip( JNIEnv* env, jobject obj, jint enable )
 {
     if (enable)
         EnableAutoFrameSkip();
@@ -809,7 +809,7 @@ Java_org_yabause_android_YabauseRunnable_enableFrameskip( JNIEnv* env, jobject o
 }
 
 void
-Java_org_yabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, jint volume )
+Java_org_uoyabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, jint volume )
 {
     if (0 == volume)
        ScspMuteAudio(SCSP_MUTE_USER);
@@ -820,7 +820,7 @@ Java_org_yabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, ji
 }
 
 void
-Java_org_yabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj, jobject bitmap )
+Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj, jobject bitmap )
 {
     u32 * buffer;
     AndroidBitmapInfo info;

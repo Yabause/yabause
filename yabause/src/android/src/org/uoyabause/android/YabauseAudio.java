@@ -17,7 +17,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-package org.yabause.android;
+package org.uoyabause.android;
 
 import android.app.Activity;
 import android.media.AudioManager;

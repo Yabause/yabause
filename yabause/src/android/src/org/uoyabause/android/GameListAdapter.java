@@ -17,7 +17,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-package org.yabause.android;
+package org.uoyabause.android;
 
 import android.content.Context;
 import android.database.DataSetObserver;
@@ -26,7 +26,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.TextView;
-import org.yabause.android.YabauseStorage;
+
+import org.uoyabause.android.YabauseStorage;
 
 class GameListAdapter implements ListAdapter {
     private YabauseStorage storage;

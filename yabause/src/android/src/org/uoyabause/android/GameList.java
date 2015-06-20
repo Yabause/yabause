@@ -17,7 +17,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-package org.yabause.android;
+package org.uoyabause.android;
 
 import android.app.ListActivity;
 import android.content.Intent;
@@ -26,8 +26,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
-import org.yabause.android.GameListAdapter;
-import org.yabause.android.Yabause;
+import org.uoyabause.android.GameListAdapter;
+import org.uoyabause.android.Yabause;
 
 public class GameList extends ListActivity
 {

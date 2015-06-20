@@ -1,13 +1,13 @@
-package org.yabause.android;
+package org.uoyabause.android;
 
 import android.content.Context;
 import android.os.Build;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
-import org.yabause.android.PadEvent;
-import org.yabause.android.PadManagerV8;
-import org.yabause.android.PadManagerV16;
+import org.uoyabause.android.PadEvent;
+import org.uoyabause.android.PadManagerV16;
+import org.uoyabause.android.PadManagerV8;
 
 abstract class PadManager {
 

@@ -1,4 +1,4 @@
-package org.yabause.android;
+package org.uoyabause.android;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -26,8 +26,8 @@ import java.util.HashMap;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.yabause.android.PadEvent;
-import org.yabause.android.PadManager;
+import org.uoyabause.android.PadEvent;
+import org.uoyabause.android.PadManager;
 
 class PadManagerV16 extends PadManager {
     private ArrayList deviceIds;

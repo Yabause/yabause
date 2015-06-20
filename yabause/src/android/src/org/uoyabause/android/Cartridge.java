@@ -1,4 +1,4 @@
-package org.yabause.android;
+package org.uoyabause.android;
 
 public class Cartridge {
     final static int CART_NONE            =  0;

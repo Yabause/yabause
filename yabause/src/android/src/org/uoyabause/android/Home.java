@@ -17,14 +17,14 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-package org.yabause.android;
+package org.uoyabause.android;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.view.View;
 import android.os.Bundle;
 
-import org.yabause.android.GameList;
+import org.uoyabause.android.GameList;
 
 public class Home extends Activity
 {
@@ -48,5 +48,6 @@ public class Home extends Activity
     {
         Intent intent = new Intent(this, YabauseSettings.class);
         startActivity(intent);
+
     }
 }

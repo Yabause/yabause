@@ -17,7 +17,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-package org.yabause.android;
+package org.uoyabause.android;
 
 import android.view.MotionEvent;
 import android.view.KeyEvent;
@@ -33,7 +33,7 @@ import android.util.Log;
 import java.util.HashMap;
 import android.util.DisplayMetrics;
 
-import org.yabause.android.PadEvent;
+import org.uoyabause.android.PadEvent;
 
 class PadButton {
     protected Rect rect;
