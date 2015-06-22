@@ -2321,7 +2321,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
          parameter = info->GetRParam(info,i,j);
          if( parameter == NULL )
          {
-			 *(texture->textdata++) = 0xff00FFFF;
+             *(texture->textdata++) = 0x00000000;
             continue;
          }
          
