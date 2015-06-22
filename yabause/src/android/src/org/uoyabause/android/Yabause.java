@@ -175,14 +175,19 @@ public class Yabause extends Activity implements OnPadListener
         readPreferences();
  
         Intent intent = getIntent();
-        String game = intent.getStringExtra("org.yabause.android.FileName");
+        String game = intent.getStringExtra("org.uoyabause.android.FileName");
 
-        if (game.length() > 0) {
+        if (game != null && game.length() > 0) {
             YabauseStorage storage = YabauseStorage.getStorage();
             gamepath = storage.getGamePath(game);
         } else
             gamepath = "";
 
+        String exgame = intent.getStringExtra("org.uoyabause.android.FileNameEx");
+        if( exgame != null ){
+        	gamepath = exgame;
+        }
+        
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
 

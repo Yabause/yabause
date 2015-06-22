@@ -48,7 +48,7 @@ public class GameList extends ListActivity
         String string = (String) l.getItemAtPosition(position);
 
         Intent intent = new Intent(this, Yabause.class);
-        intent.putExtra("org.yabause.android.FileName", string);
+        intent.putExtra("org.uoyabause.android.FileName", string);
         startActivity(intent);
     }
 }
