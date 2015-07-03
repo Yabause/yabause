@@ -82,10 +82,7 @@ void VIDOGLVdp2DrawEnd(void);
 void VIDOGLVdp2DrawScreens(void);
 void VIDOGLVdp2SetResolution(u16 TVMD);
 void YglGetGlSize(int *width, int *height);
-
-#ifdef _OGLES3_
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
-#endif
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -106,11 +103,7 @@ VIDOGLVdp1LineDraw,
 VIDOGLVdp1UserClipping,
 VIDOGLVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
-#ifdef _OGLES3_
 VIDOGLVdp1ReadFrameBuffer,
-#else
-NULL,
-#endif
 VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
@@ -2321,7 +2314,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
          parameter = info->GetRParam(info,i,j);
          if( parameter == NULL )
          {
-			 *(texture->textdata++) = 0xff00FFFF;
+			 *(texture->textdata++) = 0x0;
             continue;
          }
          
