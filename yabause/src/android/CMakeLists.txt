@@ -24,25 +24,26 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		jni/miniegl.h
 		jni/sndaudiotrack.c
 		jni/sndaudiotrack.h
-    jni/osdcore.c
-    jni/osdcore.h
-    jni/sndaudiotrack.h
-    jni/sndopensl.c
-    jni/sndopensl.h
-    src/org/yabause/android/Cartridge.java
-		src/org/yabause/android/GameList.java
-		src/org/yabause/android/GameListAdapter.java
-		src/org/yabause/android/Home.java
-		src/org/yabause/android/PadEvent.java
-		src/org/yabause/android/PadManager.java
-		src/org/yabause/android/PadManagerV8.java
-		src/org/yabause/android/PadManagerV16.java
-    src/org/yabause/android/Yabause.java
-		src/org/yabause/android/YabauseAudio.java
-		src/org/yabause/android/YabauseView.java
-		src/org/yabause/android/YabausePad.java
-		src/org/yabause/android/YabauseSettings.java
-		src/org/yabause/android/YabauseStorage.java
+		jni/osdcore.c
+		jni/osdcore.h
+		jni/sndaudiotrack.h
+		jni/sndopensl.c
+		jni/sndopensl.h
+		src/org/uoyabause/android/Cartridge.java
+		src/org/uoyabause/android/GameList.java
+		src/org/uoyabause/android/GameListAdapter.java
+		src/org/uoyabause/android/Home.java
+		src/org/uoyabause/android/PadEvent.java
+		src/org/uoyabause/android/PadManager.java
+		src/org/uoyabause/android/PadManagerV8.java
+		src/org/uoyabause/android/PadManagerV16.java
+		src/org/uoyabause/android/Yabause.java
+		src/org/uoyabause/android/YabauseAudio.java
+		src/org/uoyabause/android/YabauseView.java
+		src/org/uoyabause/android/YabausePad.java
+		src/org/uoyabause/android/YabauseSettings.java
+		src/org/uoyabause/android/YabauseStorage.java
+		src/org/uoyabause/android/InputSettingPrefernce.java
 		res/drawable-hdpi/banner.png
 		res/drawable-hdpi/icon.png
 		res/drawable-ldpi/icon.png
@@ -121,20 +122,20 @@ set(yabause_android_RES
 	"${CMAKE_CURRENT_BINARY_DIR}/res/xml/preferences.xml"
 )
 set(yabause_android_SRC
-	"${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Cartridge.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameList.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameListAdapter.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Home.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadEvent.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManager.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV8.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV16.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Yabause.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseAudio.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseView.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabausePad.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseSettings.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseStorage.java"
+	"${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/Cartridge.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/GameList.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/GameListAdapter.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/Home.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/PadEvent.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/PadManager.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/PadManagerV8.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/PadManagerV16.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/Yabause.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/YabauseAudio.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/YabauseView.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/YabausePad.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/YabauseSettings.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/uoyabause/android/YabauseStorage.java"
 )
 
 add_custom_command(

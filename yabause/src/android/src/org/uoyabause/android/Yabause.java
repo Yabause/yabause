@@ -83,6 +83,8 @@ class YabauseRunnable implements Runnable
     public static native void enableFrameskip(int enable);
     public static native void setVolume(int volume);
     public static native void screenshot(Bitmap bitmap);
+    public static native void savestate( String path );
+    public static native void loadstate( String path );
 
     private boolean inited;
     private boolean paused;
@@ -262,25 +264,63 @@ public class Yabause extends Activity implements OnPadListener
         PadEvent pe = padm.onGenericMotionEvent(event);
         if (pe != null) {
             this.onPad(pe);
-            return true;
+            return false;
         }
         return super.onGenericMotionEvent(event);
     }
     
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.game_menu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.exit:
+            	onBackPressed();
+                return true;
+            case R.id.save_state:   
+            {
+            	String save_path = YabauseStorage.getStorage().getStateSavePath();
+            	YabauseRunnable.savestate(save_path);
+            	return true;
+            }
+            case R.id.load_state:
+            {
+            	String save_path = YabauseStorage.getStorage().getStateSavePath();
+            	YabauseRunnable.loadstate(save_path);
+            	return true;
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+        
+        
+    }    
+    
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
+       
         PadEvent pe = padm.onKeyDown(keyCode, event);
-
         if (pe != null) {
             this.onPad(pe);
             return true;
         }
-
+       
+        if ( keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            Log.d("CDA", "onKeyDown Called");
+            openOptionsMenu();
+            return true;
+        } 
+        
         return super.onKeyDown(keyCode, event);
     }
 
     @Override public boolean onKeyUp(int keyCode, KeyEvent event) {
         PadEvent pe = padm.onKeyUp(keyCode, event);
-
         if (pe != null) {
             this.onPad(pe);
             return true;

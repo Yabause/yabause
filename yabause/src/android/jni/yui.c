@@ -81,12 +81,18 @@ const char * s_biospath = NULL;
 const char * s_cdpath = NULL;
 const char * s_buppath = NULL;
 const char * s_cartpath = NULL;
+char s_savepath[256] ="\0";
 int s_vidcoretype = VIDCORE_OGL;
 
 enum RenderThreadMessage {
         MSG_NONE = 0,
         MSG_WINDOW_SET,
-        MSG_RENDER_LOOP_EXIT
+        MSG_RENDER_LOOP_EXIT,
+        MSG_SAVE_STATE,
+        MSG_LOAD_STATE,
+        MSG_PAUSE,
+        MSG_RESUME,
+
 };
 
 int g_msg = MSG_NONE;
@@ -572,6 +578,30 @@ int initEGLFunc()
 }
 #endif
 
+jint Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject thiz, jstring  path ){
+
+    jboolean dummy;
+    const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
+
+    strcpy(s_savepath,cpath);
+    g_msg =MSG_SAVE_STATE;
+    //YabSaveStateSlot(path, 1);
+    (*env)->ReleaseStringUTFChars(env,path, cpath);
+    return 0;
+}
+
+jint Java_org_uoyabause_android_YabauseRunnable_loadstate( JNIEnv* env, jobject thiz, jstring  path ){
+
+    jboolean dummy;
+    const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
+
+    strcpy(s_savepath,cpath);
+    g_msg =MSG_LOAD_STATE;
+    //YabLoadStateSlot(path, 1);
+
+    (*env)->ReleaseStringUTFChars(env,path, cpath);
+    return 0;
+}
 
 
 jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject yab )
@@ -940,6 +970,14 @@ void renderLoop()
             case MSG_RENDER_LOOP_EXIT:
                 renderingEnabled = 0;
                 destroy();
+                break;
+
+            case MSG_SAVE_STATE:
+                YabSaveStateSlot(s_savepath, 1);
+                break;
+
+            case MSG_LOAD_STATE:
+                YabLoadStateSlot(s_savepath, 1);
                 break;
 
             default:

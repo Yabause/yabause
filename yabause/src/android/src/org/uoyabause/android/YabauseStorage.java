@@ -44,6 +44,7 @@ public class YabauseStorage {
     private File games;
     private File memory;
     private File cartridge;
+    private File state;
 
     private YabauseStorage() {
         File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
@@ -60,6 +61,9 @@ public class YabauseStorage {
 
         cartridge = new File(yabroot, "cartridge");
         if (! cartridge.exists()) cartridge.mkdir();
+        
+        state = new File(yabroot, "state");
+        if (! state.exists()) state.mkdir();
     }
 
     static public YabauseStorage getStorage() {
@@ -100,4 +104,8 @@ public class YabauseStorage {
     public String getCartridgePath(String cartridgefile) {
         return cartridge + File.separator + cartridgefile;
     }
+    
+    public String getStateSavePath() {
+        return state + File.separator;
+    }    
 }
