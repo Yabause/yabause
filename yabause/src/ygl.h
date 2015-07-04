@@ -66,6 +66,7 @@
 #define YGL_H
 
 #include "core.h"
+#include "threads.h"
 #include "vidshared.h"
 
 typedef struct {
@@ -217,6 +218,9 @@ typedef struct {
    YglProgram renderfb;
 
    YglLevel * levels;
+
+   // Thread
+   YabMutex * mutex;
 }  Ygl;
 
 extern Ygl * _Ygl;

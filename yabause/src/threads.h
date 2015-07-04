@@ -28,6 +28,7 @@
 // Thread IDs
 enum {
    YAB_THREAD_SCSP = 0,
+   YAB_THREAD_VDP,
    YAB_THREAD_GDBSTUBCLIENT,
    YAB_THREAD_GDBSTUBLISTENER,
    YAB_THREAD_NETLINKLISTENER,
@@ -64,6 +65,29 @@ void YabThreadRemoteSleep(unsigned int id);
 
 // YabThreadWake:  Wake up the given thread if it is asleep.
 void YabThreadWake(unsigned int id);
+
+// Event Queue
+typedef void * YabEventQueue;
+
+// YabThreadCreateQueue:
+YabEventQueue * YabThreadCreateQueue( int qsize );
+
+// YabThreadDestoryQueue:
+void YabThreadDestoryQueue( YabEventQueue * queue_t );
+
+// YabAddEventQueue: send event
+void YabAddEventQueue( YabEventQueue * queue_t, int evcode );
+
+// YabWaitEventQueue: recive event
+int YabWaitEventQueue( YabEventQueue * queue_t );
+
+typedef void * YabMutex;
+
+void YabThreadLock( YabMutex * mtx );
+void YabThreadUnLock( YabMutex * mtx );
+YabMutex * YabThreadCreateMutex();
+
+
 
 ///////////////////////////////////////////////////////////////////////////
 

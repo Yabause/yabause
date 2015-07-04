@@ -541,22 +541,36 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   GLuint error;
 
   if (_Ygl->smallfbo == 0) {
+
+    YabThreadLock( _Ygl->mutex );
+
     glGenFramebuffers(1, &_Ygl->smallfbo);
+    YGLDEBUG("glGenFramebuffers %d\n", _Ygl->smallfbo );
     glGenTextures(1, &_Ygl->smallfbotex);
+    YGLDEBUG("glGenTextures %d\n",_Ygl->smallfbotex );
     glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    YGLDEBUG("glTexImage2D %d\n",_Ygl->smallfbotex );
 
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->smallfbotex, 0);
 
     glGenBuffers(1, &_Ygl->vdp1pixelBufferID);
+     YGLDEBUG("glGenBuffers %d\n",_Ygl->vdp1pixelBufferID);
+     if( _Ygl->vdp1pixelBufferID == 0 ){
+        YGLDEBUG("Fail to glGenBuffers %X",glGetError());
+     }
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_DYNAMIC_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    YabThreadUnLock( _Ygl->mutex );
   }
 
   if (_Ygl->pFrameBuffer == NULL){
+    YabThreadLock( _Ygl->mutex );
+
 #if 0
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[((_Ygl->drawframe ^ 0x01) & 0x01)], 0);
@@ -568,10 +582,14 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 #endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_BYTE, 0);
+    YGLDEBUG("glReadPixels %d\n",_Ygl->vdp1pixelBufferID);
+    glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     YGLDEBUG("VIDOGLVdp1ReadFrameBuffer %d\n", ((_Ygl->drawframe ^ 0x01) & 0x01) );
-
     _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+    YabThreadUnLock( _Ygl->mutex );
+
     if (_Ygl->pFrameBuffer==NULL)
     {
       switch (type)
@@ -585,7 +603,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       }
       return;
     }
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
+
   }
 
   const int Line = (addr >> 10); // *((float)(GlHeight) / (float)_Ygl->rheight);
@@ -600,7 +618,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       u8 g = *((u8*)(_Ygl->pFrameBuffer) + index + 1);
       u8 b = *((u8*)(_Ygl->pFrameBuffer) + index + 2);
       //*(u16*)out = ((val & 0x1f) << 10) | ((val >> 1) & 0x3e0) | ((val >> 11) & 0x1F) | 0x8000;
-      *(u16*)out = ((r >> 2) & 0x1f) | (((g >> 2) & 0x1f) << 5) | (((b >> 2) & 0x1F)<<10) | 0x8000;
+      *(u16*)out = ((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F)<<10) | 0x8000;
     }
     break;
   case 2:
@@ -620,8 +638,8 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
       /*  BBBBBGGGGGRRRRR */
       //*(u16*)out = ((val & 0x1f) << 10) | ((val >> 1) & 0x3e0) | ((val >> 11) & 0x1F) | 0x8000;
-      *(u32*)out = (((r2 >> 2) & 0x1f) | (((g2 >> 2) & 0x1f) << 5) | (((b2 >> 2) & 0x1F)<<10) | 0x8000)  |
-                  ((((r  >> 2) & 0x1f) | (((g  >> 2) & 0x1f) << 5) | (((b  >> 2) & 0x1F)<<10) | 0x8000) << 16) ;
+      *(u32*)out = (((r2 >> 3) & 0x1f) | (((g2 >> 3) & 0x1f) << 5) | (((b2 >> 3) & 0x1F)<<10) | 0x8000)  |
+                  ((((r  >> 3) & 0x1f) | (((g  >> 3) & 0x1f) << 5) | (((b  >> 3) & 0x1F)<<10) | 0x8000) << 16) ;
 
     }
     break;
@@ -636,6 +654,8 @@ int YglGLInit(int width, int height) {
    int status;
    YglMatrix pers;
    GLuint error;
+
+   _Ygl->mutex = YabThreadCreateMutex();
 
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -1764,6 +1784,7 @@ void YglRenderVDP1(void) {
    int status;
 
 
+   YabThreadLock( _Ygl->mutex );
 
    if (_Ygl->pFrameBuffer != NULL) {
      _Ygl->pFrameBuffer = NULL;
@@ -1795,13 +1816,14 @@ void YglRenderVDP1(void) {
    if( status != GL_FRAMEBUFFER_COMPLETE )
    {
       YGLDEBUG("YglRenderVDP1: Framebuffer status = %08X\n", status );
+      YabThreadUnLock( _Ygl->mutex );
       return;
    }else{
       //YGLDEBUG("Framebuffer status OK = %08X\n", status );
    }
 
    // Many regressions to Enable it
-   //if(  ((Vdp1Regs->TVMR & 0x08) && (Vdp1Regs->FBCR&0x03)==0x03) || ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase) 
+   //if(  ((Vdp1Regs->TVMR & 0x08) && (Vdp1Regs->FBCR&0x03)==0x03) || ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase)
    {
      u16 color;
      int priority;
@@ -1916,8 +1938,22 @@ void YglRenderVDP1(void) {
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_BLEND);
+   YabThreadUnLock( _Ygl->mutex );
 
+}
 
+void YglDmyRenderVDP1(void) {
+
+    Vdp1External.manualerase = 0;
+
+    if ( (((Vdp1Regs->TVMR & 0x08)==0) && ((Vdp1Regs->FBCR & 0x03)==0x03) ) ||
+          ((Vdp1Regs->FBCR & 2) == 0) ||
+          Vdp1External.manualchange )
+    {
+      _Ygl->drawframe = (_Ygl->drawframe ^ 0x01) & 0x01;
+      Vdp1External.manualchange = 0;
+      YGLDEBUG("YglRenderVDP1: swap\n");
+    }
 }
 
 void YglNeedToUpdateWindow()
@@ -2277,19 +2313,22 @@ void YglShowTexture(void) {
 void YglChangeResolution(int w, int h) {
    YglLoadIdentity(&_Ygl->mtxModelView);
    YglOrtho(&_Ygl->mtxModelView,0.0f, (float)w, (float)h, 0.0f, 1.0f, 0.0f);
+
+   if( _Ygl->rwidth != w || _Ygl->rheight != h ) {
+       if (_Ygl->smallfbo != 0) {
+         glDeleteFramebuffers(1, &_Ygl->smallfbo);
+         _Ygl->smallfbo = 0;
+         glDeleteTextures(1, &_Ygl->smallfbotex);
+         _Ygl->smallfbotex = 0;
+         glDeleteBuffers(1, &_Ygl->vdp1pixelBufferID);
+         _Ygl->vdp1pixelBufferID = 0;
+         _Ygl->pFrameBuffer = NULL;
+       }
+   }
+
    _Ygl->rwidth = w;
    _Ygl->rheight = h;
 
-   if (_Ygl->smallfbo != 0) {
-     glDeleteFramebuffers(1, &_Ygl->smallfbo);
-     _Ygl->smallfbo = 0;
-     glDeleteTextures(1, &_Ygl->smallfbotex);
-     _Ygl->smallfbotex = 0;
-     glDeleteBuffers(1, &_Ygl->vdp1pixelBufferID);
-     _Ygl->vdp1pixelBufferID = 0;
-     _Ygl->pFrameBuffer = NULL;
-
-   }
 }
 
 //////////////////////////////////////////////////////////////////////////////

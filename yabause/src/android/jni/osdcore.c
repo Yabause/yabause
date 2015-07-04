@@ -96,6 +96,8 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message)
    int i, msglength;
    int vidwidth, vidheight;
 
+   if( message->type != OSDMSG_FPS ) return;
+
    VIDCore->GetGlSize(&vidwidth, &vidheight);
    Width = vidwidth - 2 * LeftX;
 
@@ -111,9 +113,9 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message)
 
    nvgBeginFrame(vg, vidwidth, vidheight, 1.0f);
 
-   nvgFontSize(vg, 18.0f);
+   nvgFontSize(vg, 64.0f);
    nvgFontFace(vg, "sans");
-   nvgFillColor(vg, nvgRGBA(255,255,255,160));
+   nvgFillColor(vg, nvgRGBA(255,255,255,255));
 
    nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
    nvgText(vg, 10,TxtY+11,message->message, NULL);

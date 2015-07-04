@@ -44,8 +44,9 @@ extern "C" {
   //static char cdpath[256] = "E:/gameiso/sonicjam.iso";
 #else
 static char biospath[256] = "/dat2/project/src/bios.bin";
-static char cdpath[256] = "/dat2/iso/nights.img";
+//static char cdpath[256] = "/dat2/iso/nights.img";
 //static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
+static char cdpath[256] = "/media/shinya/d-main/gameiso/brtrck.bin";
 #endif
 
 
@@ -119,6 +120,13 @@ void YuiErrorMsg(const char *string)
 
 void YuiSwapBuffers(void)
 {
+    double t, dt;
+    static double prevt = 0;
+    t = glfwGetTime();
+    dt = t - prevt;
+    prevt = t;
+
+    updateGraph(&fps, dt);
     DrawDebugInfo();
 	glfwSwapBuffers(g_window);
 }
@@ -211,6 +219,7 @@ int YuiSetVideoMode(int width, int height, int bpp, int fullscreen) {
 	return 0;
 }
 
+GLFWwindow* g_offscreen_context;
 
 int main( int argc, char * argcv[] )
 {
@@ -245,7 +254,11 @@ int main( int argc, char * argcv[] )
 			exit(EXIT_FAILURE);
 	}
 
+    glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+    g_offscreen_context = glfwCreateWindow(width,height, "", NULL, g_window);
+
 	glfwMakeContextCurrent(g_window);
+    glfwSwapInterval(0);
 
 #if defined(_USEGLEW_)
     GLenum err = glewInit();
@@ -295,17 +308,8 @@ int main( int argc, char * argcv[] )
 
 	while (!glfwWindowShouldClose(g_window))
 	{
-        double t, dt;
-
-
-        t = glfwGetTime();
-        dt = t - prevt;
-        prevt = t;
-
 
         YabauseExec();
-
-        updateGraph(&fps, dt);
 
         glfwPollEvents();
 	}
@@ -315,6 +319,16 @@ int main( int argc, char * argcv[] )
 	glfwDestroyWindow(g_window);
 	glfwTerminate();
 	return 0;
+}
+
+int YuiRevokeOGLOnThisThread(){
+    glfwMakeContextCurrent(g_offscreen_context);
+    return 0;
+}
+
+int YuiUseOGLOnThisThread(){
+    glfwMakeContextCurrent(g_window);
+    return 0;
 }
 
 int xprintf( const char * fmt, ... )

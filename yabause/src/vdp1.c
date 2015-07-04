@@ -277,6 +277,8 @@ void FASTCALL Vdp1WriteByte(u32 addr, UNUSED u8 val) {
    LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
 }
 
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
@@ -297,7 +299,11 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       case 0x4:
          Vdp1Regs->COPR = 0;
          Vdp1Regs->PTMR = val;
-         if (val == 1){ Vdp1Draw();  }
+#if YAB_ASYNC_RENDERING
+         if (val == 1){ YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW);  }
+#else
+        if (val == 1){ Vdp1Draw();  }
+#endif
          break;
       case 0x6:
          Vdp1Regs->EWDR = val;
@@ -429,6 +435,8 @@ void Vdp1Draw(void) {
    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
    ScuSendDrawEnd();
    VIDCore->Vdp1DrawEnd();
+
+
 }
 
 //////////////////////////////////////////////////////////////////////////////

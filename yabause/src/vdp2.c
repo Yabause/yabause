@@ -1,5 +1,6 @@
 /*  Copyright 2003-2005 Guillaume Duhamel
     Copyright 2004-2007 Theo Berkau
+    Copyright 2015 Shinya Miyamoto(devmiyax)
 
     This file is part of Yabause.
 
@@ -46,6 +47,15 @@ static int autoframeskipenab=0;
 static int throttlespeed=0;
 u64 lastticks=0;
 static int fps;
+
+// Asyn rendering
+YabEventQueue * evqueue = NULL; // Event Queue for async rendring
+static u64 syncticks = 0;       // CPU time sync for real time.
+static int running = 0;         // rendring thread runing flag.
+void VdpProc( void *arg );      // rendering thread.
+static void vdp2VBlankIN(void); // VBLANK-IN handler
+static void vdp2VBlankOUT(void);// VBLANK-OUT handler
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -146,6 +156,8 @@ int Vdp2Init(void) {
       return -1;
 
    Vdp2Reset();
+
+
    return 0;
 }
 
@@ -163,6 +175,11 @@ void Vdp2DeInit(void) {
    if (Vdp2ColorRam)
       T2MemoryDeInit(Vdp2ColorRam);
    Vdp2ColorRam = NULL;
+#if defined(YAB_ASYNC_RENDERING)
+   YabAddEventQueue(evqueue,VDPEV_FINSH);
+   YabThreadWait(YAB_THREAD_VDP);
+#endif
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -251,9 +268,41 @@ void Vdp2Reset(void) {
    Vdp2External.disptoggle = 0xFF;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+//#define LOG yprintf
 
-void Vdp2VBlankIN(void) {
+///////////////////////////////////////////////////////////////////////////////
+void VdpProc( void *arg ){
+
+    int evcode;
+
+    if( YuiUseOGLOnThisThread() < 0 ){
+        LOG("VDP2 Fail to USE GL");
+        return;
+    }
+
+    running = 1;
+    while( running ){
+        evcode = YabWaitEventQueue(evqueue);
+        switch(evcode){
+        case VDPEV_VBLANK_IN:
+            vdp2VBlankIN();
+            break;
+        case VDPEV_VBLANK_OUT:
+            vdp2VBlankOUT();
+            break;
+        case VDPEV_DIRECT_DRAW:
+            LOG("VDP2:VDPEV_DIRECT_DRAW\n");
+            Vdp1Draw();
+            break;
+        case VDPEV_FINSH:
+            running = 0;
+            break;
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void vdp2VBlankIN(void) {
    VIDCore->Vdp2DrawEnd();
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
@@ -263,10 +312,46 @@ void Vdp2VBlankIN(void) {
    if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    Vdp2Regs->TVSTAT |= 0x0008;
+
    ScuSendVBlankIN();
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void Vdp2VBlankIN(void) {
+    LOG("VDP2:VDPEV_VBLANK_IN\n");
+#if defined(YAB_ASYNC_RENDERING)
+    if( running == 0 ){
+        YuiRevokeOGLOnThisThread();
+        evqueue = YabThreadCreateQueue(32);
+        YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+    }
+   YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
+
+   // sync
+   while( (Vdp2Regs->TVSTAT & 0x0008) == 0x00 ){
+       YabThreadYield();
+   }
+
+#else
+   VIDCore->Vdp2DrawEnd();
+   /* this should be done after a frame change or a plot trigger */
+   Vdp1Regs->COPR = 0;
+   /* I'm not 100% sure about this, but it seems that when using manual change
+   we should swap framebuffers in the "next field" and thus, clear the CEF...
+   now we're lying a little here as we're not swapping the framebuffers. */
+   if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
+
+   Vdp2Regs->TVSTAT |= 0x0008;
+
+   ScuSendVBlankIN();
+
+   if (yabsys.IsSSH2Running)
+      SH2SendInterrupt(SSH2, 0x43, 0x6);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -325,8 +410,122 @@ void SpeedThrottleDisable(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+void vdp2VBlankOUT(void) {
+   static int framestoskip = 0;
+   static int framesskipped = 0;
+   static int skipnextframe = 0;
+   static u64 curticks = 0;
+   static u64 diffticks = 0;
+   static u32 framecount = 0;
+   static u64 onesecondticks = 0;
+   static VideoInterface_struct * saved = NULL;
 
+   if (skipnextframe && (! saved))
+   {
+      saved = VIDCore;
+      VIDCore = &VIDDummy;
+   }
+   else if (saved && (! skipnextframe))
+   {
+      VIDCore = saved;
+      saved = NULL;
+   }
+
+   VIDCore->Vdp2DrawStart();
+
+   if (Vdp2Regs->TVMD & 0x8000) {
+      VIDCore->Vdp2DrawScreens();
+      if (Vdp1Regs->PTMR == 2) Vdp1Draw();
+   }
+   else
+      if (Vdp1Regs->PTMR == 2) Vdp1NoDraw();
+
+   FPSDisplay();
+   if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
+      Vdp1External.manualerase = 1;
+
+   if (!skipnextframe)
+   {
+      framesskipped = 0;
+
+      if (framestoskip > 0)
+         skipnextframe = 1;
+   }
+   else
+   {
+      framestoskip--;
+
+      if (framestoskip < 1)
+         skipnextframe = 0;
+      else
+         skipnextframe = 1;
+
+      framesskipped++;
+   }
+
+   // Do Frame Skip/Frame Limiting/Speed Throttling here
+   if (throttlespeed)
+   {
+      // Should really depend on how fast we're rendering the frames
+      if (framestoskip < 1)
+         framestoskip = 6;
+   }
+   //when in frame advance, disable frame skipping
+   else if (autoframeskipenab && FrameAdvanceVariable == 0)
+   {
+      framecount++;
+
+      if (framecount > (yabsys.IsPal ? 50 : 60))
+      {
+         framecount = 1;
+         onesecondticks = 0;
+      }
+
+      curticks = YabauseGetTicks();
+      diffticks = curticks-lastticks;
+
+      if ((onesecondticks+diffticks) > ((yabsys.OneFrameTime * (u64)framecount) + (yabsys.OneFrameTime / 2)) &&
+          framesskipped < 9)
+      {
+         // Skip the next frame
+         skipnextframe = 1;
+
+         // How many frames should we skip?
+         framestoskip = 1;
+      }
+
+      onesecondticks += diffticks;
+      lastticks = curticks;
+   }
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
+    LOG("VDP2:VDPEV_VBLANK_OUT\n");
+#if defined(YAB_ASYNC_RENDERING)
+
+   if( running == 0 ){
+       YuiRevokeOGLOnThisThread();
+       evqueue = YabThreadCreateQueue(32);
+       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+   }
+
+
+   Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
+
+   ScuSendVBlankOUT();
+
+   if (Vdp2Regs->EXTEN & 0x200) // Should be revised for accuracy(should occur only occur on the line it happens at, etc.)
+   {
+      // Only Latch if EXLTEN is enabled
+      if (SmpcRegs->EXLE & 0x1)
+         Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
+    }
+
+   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
+
+#else
    static int framestoskip = 0;
    static int framesskipped = 0;
    static int skipnextframe = 0;
@@ -435,6 +634,7 @@ void Vdp2VBlankOUT(void) {
       if (SmpcRegs->EXLE & 0x1)
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
 	}
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

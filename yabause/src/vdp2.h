@@ -401,4 +401,15 @@ void DisableAutoFrameSkip(void);
 
 Vdp2 * Vdp2RestoreRegs(int line);
 
+#include "threads.h"
+void VdpProc( void *arg );
+
+// Ansyc VDP
+#define VDPEV_VBLANK_IN 0
+#define VDPEV_VBLANK_OUT 1
+#define VDPEV_DIRECT_DRAW 2
+#define VDPEV_FINSH 0xFF
+
+extern YabEventQueue * evqueue;
+
 #endif

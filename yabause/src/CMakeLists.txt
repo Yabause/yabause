@@ -42,6 +42,7 @@ set(yabause_SOURCES
 if (ANDROID)
 	add_definitions(-DYAB_PORT_OSD)
 	add_definitions(-D_OGLES3_)
+	add_definitions(-DYAB_ASYNC_RENDERING)
 	set(yabause_SOURCES
 		${yabause_SOURCES}
 		yglcache.c
@@ -181,6 +182,8 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				pkg_search_module(GLFW REQUIRED glfw3)
 			endif()
 				include_directories( ${GLFW_INCLUDE_DIRS} )
+
+			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
 		add_definitions(-D_OGL3_)
 		add_definitions(-D_USEGLEW_)

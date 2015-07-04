@@ -57,6 +57,8 @@ static char cartpath[256] = "\0";
 EGLDisplay g_Display = EGL_NO_DISPLAY;
 EGLSurface g_Surface = EGL_NO_SURFACE;
 EGLContext g_Context = EGL_NO_CONTEXT;
+EGLContext g_Context_Sub = EGL_NO_CONTEXT;
+EGLSurface g_Pbuffer = EGL_NO_SURFACE;
 ANativeWindow *g_window = 0;
 GLuint g_FrameBuffer = 0;
 GLuint g_VertexBuffer = 0;
@@ -428,7 +430,7 @@ void YuidrawSoftwareBuffer() {
        error = glGetError();
        if( error != GL_NO_ERROR )
        {
-          printf("g_FrameBuffer gl error %04X", error );
+          yprintf("g_FrameBuffer gl error %04X", error );
           return;
        }
     }else{
@@ -447,7 +449,7 @@ void YuidrawSoftwareBuffer() {
        error = glGetError();
        if( error != GL_NO_ERROR )
        {
-          printf("g_VertexBuffer gl error %04X", error );
+          yprintf("g_VertexBuffer gl error %04X", error );
           return;
        }
     }else{
@@ -483,9 +485,9 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport( J
 {
     if (surface != 0) {
         g_window = ANativeWindow_fromSurface(jenv, surface);
-        printf("Got window %p", g_window);
+        yprintf("Got window %p", g_window);
     } else {
-        printf("Releasing window");
+        yprintf("Releasing window");
         ANativeWindow_release(g_window);
     }
     g_msg = MSG_WINDOW_SET;
@@ -591,6 +593,23 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     return res;
 }
 
+int YuiRevokeOGLOnThisThread(){
+    if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+        yprintf("eglMakeCurrent() returned error %X", eglGetError());
+        return -1;
+    }
+    return 0;
+}
+
+int YuiUseOGLOnThisThread(){
+    if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
+        yprintf("eglMakeCurrent() returned error %X", eglGetError());
+        return -1;
+    }
+    return 0;
+}
+
+
 int initEgl( ANativeWindow* window )
 {
     int res;
@@ -598,7 +617,7 @@ int initEgl( ANativeWindow* window )
     void * padbits;
 
      const EGLint attribs[] = {
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
         EGL_BLUE_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_RED_SIZE, 8,
@@ -607,6 +626,16 @@ int initEgl( ANativeWindow* window )
         EGL_STENCIL_SIZE,8,
         EGL_NONE
     };
+
+     EGLint pbuffer_attribs[] = {
+        EGL_WIDTH, 8,
+        EGL_HEIGHT, 8,
+        //EGL_TEXTURE_FORMAT, EGL_TEXTURE_RGBA,
+        //EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
+        //EGL_LARGEST_PBUFFER, EGL_TRUE,
+        EGL_NONE
+    };
+
     EGLDisplay display;
     EGLConfig config;
     EGLint numConfigs;
@@ -624,60 +653,82 @@ int initEgl( ANativeWindow* window )
     }
 
 
-    printf("Initializing context");
+    yprintf("Initializing context");
 
     if ((display = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY) {
-        printf("eglGetDisplay() returned error %d", eglGetError());
+        yprintf("eglGetDisplay() returned error %X", eglGetError());
         return -1;
     }
     if (!eglInitialize(display, 0, 0)) {
-        printf("eglInitialize() returned error %d", eglGetError());
+        yprintf("eglInitialize() returned error %X", eglGetError());
         return -1;
     }
 
     if (!eglChooseConfig(display, attribs, &config, 1, &numConfigs)) {
-        printf("eglChooseConfig() returned error %d", eglGetError());
+        yprintf("eglChooseConfig() returned error %X", eglGetError());
         destroy();
         return -1;
     }
 
     if (!eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format)) {
-        printf("eglGetConfigAttrib() returned error %d", eglGetError());
+        yprintf("eglGetConfigAttrib() returned error %X", eglGetError());
         destroy();
         return -1;
     }
-    printf("ANativeWindow_setBuffersGeometry");
+    yprintf("ANativeWindow_setBuffersGeometry");
     ANativeWindow_setBuffersGeometry(window, 0, 0, format);
 
-    printf("eglCreateWindowSurface");
+    yprintf("eglCreateWindowSurface");
     if (!(surface = eglCreateWindowSurface(display, config, window, 0))) {
-        printf("eglCreateWindowSurface() returned error %d", eglGetError());
+        yprintf("eglCreateWindowSurface() returned error %X", eglGetError());
         destroy();
         return -1;
     }
 
-    printf("eglCreateContext");
+    pbuffer_attribs[1] = ANativeWindow_getWidth(window);
+    pbuffer_attribs[3] = ANativeWindow_getHeight(window);
+
+    if (!(g_Pbuffer = eglCreatePbufferSurface(display, config, pbuffer_attribs ))) {
+        yprintf("eglCreatePbufferSurface() returned error %X", eglGetError());
+        destroy();
+        return -1;
+    }
+
+
+
+    yprintf("eglCreateContext");
     if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
-        printf("eglCreateContext() returned error %d, Fall back to software vidcore mode", eglGetError());
+        yprintf("eglCreateContext() returned error %d, Fall back to software vidcore mode", eglGetError());
         s_vidcoretype = VIDCORE_SOFT;
         attrib_list[1]=2;
         if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
-            printf("eglCreateContext() returned error %d", eglGetError());
+            yprintf("eglCreateContext() returned error %d", eglGetError());
             destroy();
             return -1;
         }
     }
 
-    printf("eglMakeCurrent");
+    if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list))) {
+        yprintf("eglCreateContext() returned error %d, Fall back to software vidcore mode", eglGetError());
+        s_vidcoretype = VIDCORE_SOFT;
+        attrib_list[1]=2;
+        if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list))) {
+            yprintf("eglCreateContext() returned error %d", eglGetError());
+            destroy();
+            return -1;
+        }
+    }
+
+    yprintf("eglMakeCurrent");
     if (!eglMakeCurrent(display, surface, surface, context)) {
-        printf("eglMakeCurrent() returned error %d", eglGetError());
+        yprintf("eglMakeCurrent() returned error %X", eglGetError());
         destroy();
         return -1;
     }
    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
     if (!eglQuerySurface(display, surface, EGL_WIDTH, &width) ||
         !eglQuerySurface(display, surface, EGL_HEIGHT, &height)) {
-        printf("eglQuerySurface() returned error %d", eglGetError());
+        yprintf("eglQuerySurface() returned error %X", eglGetError());
         destroy();
         return -1;
     }
@@ -687,12 +738,17 @@ int initEgl( ANativeWindow* window )
     g_Surface = surface;
     g_Context = context;
 
-    printf("%s",glGetString(GL_VENDOR));
-    printf("%s",glGetString(GL_RENDERER));
-    printf("%s",glGetString(GL_VERSION));
-    printf("%s",glGetString(GL_EXTENSIONS));
-    printf("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
+    yprintf("%s",glGetString(GL_VENDOR));
+    yprintf("%s",glGetString(GL_RENDERER));
+    yprintf("%s",glGetString(GL_VERSION));
+    yprintf("%s",glGetString(GL_EXTENSIONS));
+    yprintf("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
 
+
+    glViewport(0,0,width,height);
+
+    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
+    glClear( GL_COLOR_BUFFER_BIT );
 
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
@@ -748,10 +804,7 @@ int initEgl( ANativeWindow* window )
             return -1;
         }
     }
-    glViewport(0,0,width,height);
 
-    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
-    glClear( GL_COLOR_BUFFER_BIT );
     return 0;
 }
 
