@@ -10,7 +10,7 @@
 #    1) edit ANDROID_NDK PATH on "yabause/src/android/CMakeLists.txt"
 #    2) cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=yabause/src/android/androidtoolchain.cmake
 #    3) edit settings listed below
-#         ANDROID_ABI               armeabi-v7 with NEON
+#         ANDROID_ABI               armeabi-v7a with NEON
 #         ANDROID_NATIVE_API_LEVEL  21 
 #         YAB_PORTS                 android
 #         YAB_WANT_ARM7             checked  
