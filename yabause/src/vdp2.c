@@ -492,6 +492,16 @@ void vdp2VBlankOUT(void) {
 
          // How many frames should we skip?
          framestoskip = 1;
+      }else if ((onesecondticks+diffticks) < ((yabsys.OneFrameTime * (u64)framecount) - (yabsys.OneFrameTime / 2)))
+      {
+         // Check to see if we need to limit speed at all
+         for (;;)
+         {
+            curticks = YabauseGetTicks();
+            diffticks = curticks-lastticks;
+            if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * (u64)framecount))
+               break;
+         }
       }
 
       onesecondticks += diffticks;
@@ -510,7 +520,6 @@ void Vdp2VBlankOUT(void) {
        evqueue = YabThreadCreateQueue(32);
        YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
    }
-
 
    Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
 
