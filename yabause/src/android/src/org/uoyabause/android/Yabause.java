@@ -411,7 +411,7 @@ public class Yabause extends Activity implements OnPadListener
     }
 
     static {
-        System.loadLibrary("yabause");
+        System.loadLibrary("yabause_native");
     }
     
     @Override
