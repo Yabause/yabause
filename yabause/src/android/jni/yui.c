@@ -23,7 +23,7 @@
 #include <android/bitmap.h>
 #include <android/log.h>
 
-#include "../../config.h"
+#include "config.h"
 #include "yabause.h"
 #include "scsp.h"
 #include "vidsoft.h"

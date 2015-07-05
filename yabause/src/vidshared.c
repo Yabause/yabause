@@ -260,7 +260,12 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter)
 
       i = T1ReadLong(Vdp2Ram, addr);
       parameter->deltaKAx = (float) (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
-      addr += 4;
+	  
+	  // SonicR fail safe ( I don't know it's right or not )
+	  if (parameter->deltaKAx <= -100.0f){
+		  parameter->deltaKAx = 0.0f;
+	  }
+	  addr += 4;
 
       if (which == 0)
       {
