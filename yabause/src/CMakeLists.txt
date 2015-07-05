@@ -289,6 +289,10 @@ if (MSVC)
 			-D_UNICODE -DUNICODE)
 endif (MSVC)
 
+if ( ${ANDROID_NDK_HOST_SYSTEM_NAME2} STREQUAL "windows" )
+ add_definitions(-DC68K_NO_JUMP_TABLE)
+endif ( ${ANDROID_NDK_HOST_SYSTEM_NAME2} STREQUAL "windows" )
+
 if (WIN32)
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
@@ -395,7 +399,7 @@ message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
 option(SH2_DYNAREC "SH2 dynamic recompiler" ON)
 if (SH2_DYNAREC)
-	if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+	if( ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") )
 		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 			enable_language(ASM-ATT)
 			set(yabause_SOURCES ${yabause_SOURCES}
@@ -445,7 +449,7 @@ if (SH2_DYNAREC)
 				add_definitions(-DHAVE_ARMv6=1 -DHAVE_ARMv7=1)
 			endif()
 		endif ()
-	endif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+	endif( ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") )
 endif (SH2_DYNAREC)
 
 # c68k
@@ -456,6 +460,7 @@ if (YAB_WANT_C68K)
 		DOWNLOAD_COMMAND ""
 		SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/c68k
 		CMAKE_GENERATOR "${CMAKE_GENERATOR}"
+		#CMAKE_GENERATOR "Visual Studio 12 2013"
 		INSTALL_COMMAND ""
 		BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/c68k
 	)
