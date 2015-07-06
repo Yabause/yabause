@@ -617,6 +617,8 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     s_buppath = GetMemoryPath();
     s_cartpath = GetCartridgePath();
     s_vidcoretype = GetVideoInterface();
+	
+	OSDInit(0);
 
     pthread_create(&_threadId, 0, threadStartCallback, NULL );
 
