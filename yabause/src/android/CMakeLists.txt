@@ -46,11 +46,12 @@ add_library(${LIBRARY_NAME} SHARED ${SOURCES}  )
 include_directories( ${YABAUSE_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/../ ${PROJECT_SOURCE_DIR}/../ )
 target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES})
 
-# After build copy library file to APK build dir
+# copy library to the android java directoy
 add_custom_command(
  TARGET 
  ${LIBRARY_NAME} 
- POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory 
- ${PROJECT_BINARY_DIR}/libs ${PROJECT_SOURCE_DIR}/libs
+ POST_BUILD 
+ COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}
+ COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:${LIBRARY_NAME}> ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}
 )
 
