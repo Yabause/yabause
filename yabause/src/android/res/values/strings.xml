@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Yabause</string>
+    <string name="app_name">uoYabause</string>
     <string name="menu_exit">Exit</string>
     <string name="menu_save_state">Save State</string>
     <string name="menu_load_state">Load State</string>
