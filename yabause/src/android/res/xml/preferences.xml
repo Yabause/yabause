@@ -28,7 +28,7 @@
         <CheckBoxPreference
             android:key="pref_frameskip"
             android:title="Frameskip"
-            android:defaultValue="false" />
+            android:defaultValue="true" />
       
         <org.uoyabause.android.InputSettingPrefernce
             android:key="pref_inputdef_file"

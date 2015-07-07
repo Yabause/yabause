@@ -42,16 +42,25 @@ set (PORT_LIBRARIES
  android
 )
 
+
+set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME} )
+#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+#include(AndroidNdkGdb)
+#android_ndk_gdb_enable()
+
 add_library(${LIBRARY_NAME} SHARED ${SOURCES}  )
+#android_ndk_gdb_debuggable(${LIBRARY_NAME})
+
 include_directories( ${YABAUSE_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/../ ${PROJECT_SOURCE_DIR}/../ )
 target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES})
 
+
 # copy library to the android java directoy
-add_custom_command(
- TARGET 
- ${LIBRARY_NAME} 
- POST_BUILD 
- COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}
- COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:${LIBRARY_NAME}> ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}
-)
+#add_custom_command(
+# TARGET 
+# ${LIBRARY_NAME} 
+# POST_BUILD 
+# COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}
+# COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:${LIBRARY_NAME}> ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}
+#)
 
