@@ -57,7 +57,7 @@ void test_dsp()
    // the pause flag is getting set
 
    // Clear out program control port
-   u32 testval = SCUREG_PPAF;
+   u32 testval = SCU_REG_PPAF;
    // Make sure program is stopped, etc.
    dsp_stop();
 
@@ -69,17 +69,17 @@ void test_dsp()
    }
 
    // Setup DSP so we can send a program to it
-   SCUREG_PPAF = 0x8000;
+   SCU_REG_PPAF = 0x8000;
 
    // Upload our program(END instruction)
-   SCUREG_PPD = END();
-   SCUREG_PPD = 0x00000000;
-   SCUREG_PPD = END();
-   SCUREG_PPD = END();
-   SCUREG_PPD = END();
-   SCUREG_PPD = END();
+   SCU_REG_PPD = END();
+   SCU_REG_PPD = 0x00000000;
+   SCU_REG_PPD = END();
+   SCU_REG_PPD = END();
+   SCU_REG_PPD = END();
+   SCU_REG_PPD = END();
 
-   if ((SCUREG_PPAF & 0xFF) != 0x06)
+   if ((SCU_REG_PPAF & 0xFF) != 0x06)
    {
       stage_status = STAGESTAT_BADDATA;
       return;
@@ -91,7 +91,7 @@ void test_dsp()
    // Check the flags
    while (dsp_is_exec()) {}
 
-   testval = SCUREG_PPAF;
+   testval = SCU_REG_PPAF;
 
    if (testval != 0x02)
    {
@@ -108,22 +108,22 @@ void test_dsp()
 void exec_dsp_command(u32 command)
 {
    // Clear out program control port
-   u32 testval = SCUREG_PPAF;
+   u32 testval = SCU_REG_PPAF;
    testval = 0; // fix warning
 
    // Make sure program is stopped, etc.
-   SCUREG_PPAF = 0; 
+   SCU_REG_PPAF = 0; 
 
    // Setup DSP so we can send a program to it
-   SCUREG_PPAF = 0x8000;
+   SCU_REG_PPAF = 0x8000;
 
    // Upload our program
-   SCUREG_PPD = command;
+   SCU_REG_PPD = command;
 
    // Execute program step
-   SCUREG_PPAF = 0x20000;
+   SCU_REG_PPAF = 0x20000;
 
-   while (SCUREG_PPAF == 0x20000) {}
+   while (SCU_REG_PPAF == 0x20000) {}
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -175,45 +175,45 @@ void test_mvi_imm_d()
    dsp_exec(0);
 
    // Wait until we're done
-   while (SCUREG_PPAF & 0x10000) {}
+   while (SCU_REG_PPAF & 0x10000) {}
 
    // Let's see what the data ports hold
-   SCUREG_PDA = (0 << 6) | 0;
-   if (SCUREG_PDD != 0xFF0DEAD0)
+   SCU_REG_PDA = (0 << 6) | 0;
+   if (SCU_REG_PDD != 0xFF0DEAD0)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 21 * 8, 0xF, "SCUREG_PDD != 0xFF0DEAD0(%08X)", SCUREG_PDD);
+      vdp_printf(&test_disp_font, 0 * 8, 21 * 8, 0xF, "SCU_REG_PDD != 0xFF0DEAD0(%08X)", SCU_REG_PDD);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
 
-   SCUREG_PDA = (1 << 6) | 0;
-   if (SCUREG_PDD != 0xFF1DEAD0)
+   SCU_REG_PDA = (1 << 6) | 0;
+   if (SCU_REG_PDD != 0xFF1DEAD0)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCUREG_PDD != 0xFF1DEAD0(%08X)", SCUREG_PDD);
+      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCU_REG_PDD != 0xFF1DEAD0(%08X)", SCU_REG_PDD);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
 
-   SCUREG_PDA = (2 << 6) | 0;
-   if (SCUREG_PDD != 0xFF2DEAD0)
+   SCU_REG_PDA = (2 << 6) | 0;
+   if (SCU_REG_PDD != 0xFF2DEAD0)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCUREG_PDD != 0xFF2DEAD0(%08X)", SCUREG_PDD);
+      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCU_REG_PDD != 0xFF2DEAD0(%08X)", SCU_REG_PDD);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
 
-   SCUREG_PDA = (3 << 6) | 0;
-   if (SCUREG_PDD != 0xFF3DEAD0)
+   SCU_REG_PDA = (3 << 6) | 0;
+   if (SCU_REG_PDD != 0xFF3DEAD0)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCUREG_PDD != 0xFF3DEAD0(%08X)", SCUREG_PDD);
+      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCU_REG_PDD != 0xFF3DEAD0(%08X)", SCU_REG_PDD);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
 
    // Ok, that looks good. Now check the PC, and we're done!
-   if ((SCUREG_PPAF & 0xFF) != 0xEF)
+   if ((SCU_REG_PPAF & 0xFF) != 0xEF)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "(SCUREG_PPAF & 0xFF) != 0xEF(%08X)", SCUREG_PPAF);
+      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "(SCU_REG_PPAF & 0xFF) != 0xEF(%08X)", SCU_REG_PPAF);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
@@ -262,12 +262,12 @@ void test_dsp_timing()
    dsp_stop();
 
    // Now we can figure out how much time it took
-   SCUREG_PDA = (0 << 6) | 0;
-   test_val = SCUREG_PDD;
+   SCU_REG_PDA = (0 << 6) | 0;
+   test_val = SCU_REG_PDD;
 
    if (test_val != 0xB40F)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 23 * 8, 0xF, "SCUREG_PDD != 0xB40F(%08X)", test_val);
+      vdp_printf(&test_disp_font, 0 * 8, 23 * 8, 0xF, "SCU_REG_PDD != 0xB40F(%08X)", test_val);
       stage_status = STAGESTAT_BADTIMING;
       return;
    }
