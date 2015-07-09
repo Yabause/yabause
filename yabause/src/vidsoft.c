@@ -2096,6 +2096,19 @@ static void putpixel(int x, int y) {
 			y >= vdp1clipystart &&
 			y < vdp1clipyend);
 
+      //vdp1_clip_test in yabauseut
+      if ((cmd.CMDPMOD >> 9) & 0x3 == 0x3)//outside clipping mode
+      {
+         //don't display inside the box
+         if (Vdp1Regs->userclipX1 <= x && 
+            x <= Vdp1Regs->userclipX2 && 
+            Vdp1Regs->userclipY1 <= y && 
+            y <= Vdp1Regs->userclipY2) 
+         {
+            clipped = 1;
+         }
+      }
+
 		if (cmd.CMDPMOD & 0x0400) PopUserClipping();
 
 		if (clipped) return;
