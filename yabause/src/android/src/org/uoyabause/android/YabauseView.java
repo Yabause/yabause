@@ -46,7 +46,7 @@ class YabauseView extends SurfaceView implements Callback {
     public int[] pointerX = new int[256];
     public int[] pointerY = new int[256];
 
-
+    
     public YabauseView(Context context, AttributeSet attrs) {
         super(context,attrs);
         init(false, 0, 0);
