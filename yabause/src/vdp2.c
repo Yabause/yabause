@@ -294,6 +294,9 @@ void VdpProc( void *arg ){
             LOG("VDP2:VDPEV_DIRECT_DRAW\n");
             Vdp1Draw();
             break;
+       case VDPEV_MAKECURRENT:
+            YuiUseOGLOnThisThread();
+            break;
         case VDPEV_FINSH:
             running = 0;
             break;
@@ -1291,6 +1294,12 @@ void EnableAutoFrameSkip(void)
 void DisableAutoFrameSkip(void)
 {
    autoframeskipenab = 0;
+}
+
+void VdpResume( void ){
+#if defined(YAB_ASYNC_RENDERING)
+	YabAddEventQueue(evqueue,VDPEV_MAKECURRENT);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

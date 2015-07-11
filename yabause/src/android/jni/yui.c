@@ -59,6 +59,7 @@ EGLSurface g_Surface = EGL_NO_SURFACE;
 EGLContext g_Context = EGL_NO_CONTEXT;
 EGLContext g_Context_Sub = EGL_NO_CONTEXT;
 EGLSurface g_Pbuffer = EGL_NO_SURFACE;
+EGLConfig  g_Config = 0;
 ANativeWindow *g_window = 0;
 GLuint g_FrameBuffer = 0;
 GLuint g_VertexBuffer = 0;
@@ -87,6 +88,7 @@ int s_vidcoretype = VIDCORE_OGL;
 enum RenderThreadMessage {
         MSG_NONE = 0,
         MSG_WINDOW_SET,
+        MSG_WINDOW_CHG,
         MSG_RENDER_LOOP_EXIT,
         MSG_SAVE_STATE,
         MSG_LOAD_STATE,
@@ -490,13 +492,21 @@ void YuidrawSoftwareBuffer() {
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_initViewport( JNIEnv* jenv, jobject obj, jobject surface, int width, int height)
 {
     if (surface != 0) {
-        g_window = ANativeWindow_fromSurface(jenv, surface);
-        yprintf("Got window %p", g_window);
+        
+        if( g_window == 0 ){
+            g_window = ANativeWindow_fromSurface(jenv, surface);
+            yprintf("Got window %p ", g_window, g_msg);
+            g_msg = MSG_WINDOW_SET;         
+        }else{
+            g_window = ANativeWindow_fromSurface(jenv, surface);
+            yprintf("Chg window %p ", g_window, g_msg);
+            g_msg = MSG_WINDOW_CHG;
+        }
     } else {
         yprintf("Releasing window");
         ANativeWindow_release(g_window);
     }
-    g_msg = MSG_WINDOW_SET;
+    
    return 0;
 }
 
@@ -514,6 +524,21 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( 
 {
     printf("%s","Java_org_uoyabause_android_YabauseRunnable_toggleShowFps");
    ToggleFPS();
+}
+
+
+JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
+{
+    pthread_mutex_lock(&g_mtxGlLock);
+    g_msg = MSG_PAUSE;
+    pthread_mutex_unlock(&g_mtxGlLock);
+}
+
+JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv* env )
+{
+    pthread_mutex_lock(&g_mtxGlLock);
+    g_msg = MSG_RESUME;
+    pthread_mutex_unlock(&g_mtxGlLock);
 }
 
 static int enableautofskip = 0;
@@ -617,8 +642,8 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     s_buppath = GetMemoryPath();
     s_cartpath = GetCartridgePath();
     s_vidcoretype = GetVideoInterface();
-	
-	OSDInit(0);
+    
+    OSDInit(0);
 
     pthread_create(&_threadId, 0, threadStartCallback, NULL );
 
@@ -769,6 +794,7 @@ int initEgl( ANativeWindow* window )
     g_Display = display;
     g_Surface = surface;
     g_Context = context;
+    g_Config  = config;
 
     yprintf("%s",glGetString(GL_VENDOR));
     yprintf("%s",glGetString(GL_RENDERER));
@@ -805,7 +831,7 @@ int initEgl( ANativeWindow* window )
     yinit.frameskip = 0;
     res = YabauseInit(&yinit);
     if (res != 0) {
-      printf("Fail to YabauseInit %d", res);
+      yprintf("Fail to YabauseInit %d", res);
       return -1;
     }
 
@@ -833,6 +859,7 @@ int initEgl( ANativeWindow* window )
     }else{
         OSDChangeCore(OSDCORE_SOFT);
         if( YuiInitProgramForSoftwareRendering() != GL_TRUE ){
+			yprintf("Fail to YuiInitProgramForSoftwareRendering");
             return -1;
         }
     }
@@ -840,24 +867,54 @@ int initEgl( ANativeWindow* window )
     return 0;
 }
 
+int switchWindow( ANativeWindow* window ){
+
+    EGLint format;
+    EGLSurface surface;
+    EGLint width;
+    EGLint height;
+    
+    if( g_Display == NULL ||  g_Config == NULL ) return -1;
+    
+   yprintf("ANativeWindow_setBuffersGeometry");
+    ANativeWindow_setBuffersGeometry(window, 0, 0, format);
+
+    yprintf("eglCreateWindowSurface");
+    if (!(surface = eglCreateWindowSurface(g_Display, g_Config, window, 0))) {
+        yprintf("eglCreateWindowSurface() returned error %X", eglGetError());
+        destroy();
+        return -1;
+    }
+    g_Surface = surface;
+    VdpResume();
+    return 0;
+}
+
 destroy() {
-    printf("Destroying context");
+    YabauseDeInit();
 
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroyContext(g_Display, g_Context);
+    eglDestroyContext(g_Display, g_Context_Sub);
+	eglDestroyContext(g_Display, g_Context);
     eglDestroySurface(g_Display, g_Surface);
+	eglDestroySurface(g_Display, g_Pbuffer);
     eglTerminate(g_Display);
 
-    g_Display = EGL_NO_DISPLAY;
-    g_Surface = EGL_NO_SURFACE;
-    g_Context = EGL_NO_CONTEXT;
+	g_window = 0;
+	g_Display = EGL_NO_DISPLAY;
+	g_Context_Sub = EGL_NO_CONTEXT;
+	g_Context = EGL_NO_CONTEXT;
+	g_Surface = EGL_NO_SURFACE;
+	g_Pbuffer = EGL_NO_SURFACE;
+	
     return;
 }
 
 void
 Java_org_uoyabause_android_YabauseRunnable_deinit( JNIEnv* env )
 {
-    YabauseDeInit();
+    //YabauseDeInit();
+    g_msg = MSG_RENDER_LOOP_EXIT;
 }
 
 void
@@ -952,23 +1009,36 @@ jint JNI_OnLoad(JavaVM * vm, void * reserved)
 void renderLoop()
 {
     int renderingEnabled = 1;
+    int pause = 0;
 
     printf("enter render loop!");
 
     while (renderingEnabled != 0) {
 
         pthread_mutex_lock(&g_mtxGlLock);
-
+        
+        if (g_Display && pause == 0) {
+           YabauseExec();
+        }
+        
         // process incoming messages
         switch (g_msg) {
 
             case MSG_WINDOW_SET:
                 if( initEgl( g_window ) != 0 ){
+                  destroy();
                   pthread_mutex_unlock(&g_mtxGlLock);
                   return;
                 }
                 break;
-
+            case MSG_WINDOW_CHG:
+                if( switchWindow(g_window) != 0 ){
+                  destroy();
+                  pthread_mutex_unlock(&g_mtxGlLock);
+                  return;
+                }
+                VdpResume();
+                break;
             case MSG_RENDER_LOOP_EXIT:
                 renderingEnabled = 0;
                 destroy();
@@ -981,17 +1051,23 @@ void renderLoop()
             case MSG_LOAD_STATE:
                 YabLoadStateSlot(s_savepath, 1);
                 break;
-
+            case MSG_PAUSE:
+                ScspMuteAudio(SCSP_MUTE_SYSTEM);
+                pause = 1;
+                break;
+            case MSG_RESUME:
+                ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+                pause = 0;
+                break;
             default:
                 break;
         }
         g_msg = MSG_NONE;
-
-        if (g_Display) {
-           YabauseExec();
-        }
         pthread_mutex_unlock(&g_mtxGlLock);
     }
+	
+	yprintf("byebye");
+
 }
 
 void* threadStartCallback(void *myself)

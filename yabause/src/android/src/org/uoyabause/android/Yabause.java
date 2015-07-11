@@ -59,17 +59,17 @@ class InputHandler extends Handler {
     }
 
     public void handleMessage(Message msg) {
-        Log.v("Yabause", "received message: " + msg.arg1 + " " + msg.arg2);
+        //Log.v("Yabause", "received message: " + msg.arg1 + " " + msg.arg2);
         if (msg.arg1 == 0) {
-            yr.press(msg.arg2);
+        	YabauseRunnable.press(msg.arg2);
         } else if (msg.arg1 == 1) {
-            yr.release(msg.arg2);
+        	YabauseRunnable.release(msg.arg2);
         }
     }
-}
+}  
 
 class YabauseRunnable implements Runnable
-{
+{  
     public static native int init(Yabause yabause);
     public static native void deinit();
     public static native void exec();
@@ -85,6 +85,8 @@ class YabauseRunnable implements Runnable
     public static native void screenshot(Bitmap bitmap);
     public static native void savestate( String path );
     public static native void loadstate( String path );
+    public static native void pause();
+    public static native void resume();
 
     private boolean inited;
     private boolean paused;
@@ -96,8 +98,8 @@ class YabauseRunnable implements Runnable
         int ok = init(yabause);
         Log.v("Yabause", "init = " + ok);
         inited = (ok == 0);
-    }
-
+    }  
+/*
     public void pause()
     {
         Log.v("Yabause", "pause... should really pause emulation now...");
@@ -109,9 +111,9 @@ class YabauseRunnable implements Runnable
         Log.v("Yabause", "resuming emulation...");
         paused = false;
         handler.post(this);
-    }
-
-    public void destroy()
+    } 
+*/
+    public void destroy() 
     {
         Log.v("Yabause", "destroying yabause...");
         inited = false;
@@ -127,11 +129,12 @@ class YabauseRunnable implements Runnable
             handler.post(this);
         }
     }
-
+/*
     public boolean paused()
     {
         return paused;
     }
+*/
 }
 
 class YabauseHandler extends Handler {
@@ -166,7 +169,7 @@ public class Yabause extends Activity implements OnPadListener
 
         setContentView(R.layout.main);
         
-        // Immersive mode
+        // Immersive mode 
         View decor = this.getWindow().getDecorView();
         decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION  | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE);
         
@@ -187,7 +190,7 @@ public class Yabause extends Activity implements OnPadListener
 
         String exgame = intent.getStringExtra("org.uoyabause.android.FileNameEx");
         if( exgame != null ){
-        	gamepath = exgame;
+        	gamepath = exgame; 
         }
         
         handler = new YabauseHandler(this);
@@ -205,31 +208,28 @@ public class Yabause extends Activity implements OnPadListener
     @Override
     public void onPause()
     {
-        super.onPause();
-        Log.v(TAG, "pause... should pause emulation...");
-        yabauseThread.pause();
+        YabauseRunnable.pause();
         audio.mute(audio.SYSTEM);
+        super.onPause();
     }
 
     @Override
     public void onResume()
     {
         super.onResume();
-        Log.v(TAG, "resume... should resume emulation...");
 
         readPreferences();
         audio.unmute(audio.SYSTEM);
-
-        yabauseThread.resume();
+        YabauseRunnable.resume();
     }
 
     @Override
     public void onDestroy()
     {
-        super.onDestroy();
-        Log.v(TAG, "this is the end...");
+    	Log.v(TAG, "this is the end...");
         yabauseThread.destroy();
-    }
+        super.onDestroy();
+    } 
 
     @Override
     public Dialog onCreateDialog(int id, Bundle args) {
@@ -246,8 +246,8 @@ public class Yabause extends Activity implements OnPadListener
                     dialog.cancel();
                 }
             });
-        AlertDialog alert = builder.create();
-        return alert;
+        AlertDialog alert = builder.create(); 
+        return alert; 
     }
 
     @Override public boolean onPad(PadEvent event) {
@@ -281,8 +281,12 @@ public class Yabause extends Activity implements OnPadListener
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.exit:
-            	onBackPressed();
+            {
+            	//moveTaskToBack(true);
+            	//finish();
+            	android.os.Process.killProcess(android.os.Process.myPid());
                 return true;
+            }
             case R.id.save_state:   
             {
             	String save_path = YabauseStorage.getStorage().getStateSavePath();
@@ -309,13 +313,10 @@ public class Yabause extends Activity implements OnPadListener
             this.onPad(pe);
             return true;
         }
-       
-        if ( keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-            Log.d("CDA", "onKeyDown Called");
+        if ( keyCode == KeyEvent.KEYCODE_BACK) {
             openOptionsMenu();
-            return true;
+            return false;
         } 
-        
         return super.onKeyDown(keyCode, event);
     }
 
@@ -340,10 +341,10 @@ public class Yabause extends Activity implements OnPadListener
     private void readPreferences() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         boolean fps = sharedPref.getBoolean("pref_fps", false);
-        yabauseThread.enableFPS(fps ? 1 : 0);
+        YabauseRunnable.enableFPS(fps ? 1 : 0);
 
         boolean frameskip = sharedPref.getBoolean("pref_frameskip", false);
-        yabauseThread.enableFrameskip(frameskip ? 1 : 0);
+        YabauseRunnable.enableFrameskip(frameskip ? 1 : 0);
 
         boolean audioout = sharedPref.getBoolean("pref_audio", true);
         if (audioout) {
