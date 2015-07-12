@@ -395,6 +395,9 @@ typedef struct
       int maxNum;
    } trackInfLoop;
 
+   u32 pchistory[0xFF];
+   u32 pchistory_index;
+
 } SH2_struct;
 
 typedef struct
