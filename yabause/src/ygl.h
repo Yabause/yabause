@@ -21,7 +21,7 @@
 #if defined(HAVE_LIBGL) || defined(__ANDROID__)
 
 #if defined(__ANDROID__)
-    #include <GLES3/gl31.h>
+    #include <GLES3/gl3.h>
     #include <GLES3/gl3ext.h>
     #include <EGL/egl.h>
 

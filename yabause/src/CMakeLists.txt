@@ -292,9 +292,9 @@ if (MSVC)
 			-D_UNICODE -DUNICODE)
 endif (MSVC)
 
-if ( ${ANDROID_NDK_HOST_SYSTEM_NAME2} STREQUAL "windows" )
+if ( ANDROID_NDK_HOST_SYSTEM_NAME2 MATCHES  "windows" )
  add_definitions(-DC68K_NO_JUMP_TABLE)
-endif ( ${ANDROID_NDK_HOST_SYSTEM_NAME2} STREQUAL "windows" )
+endif (  )
 
 if (WIN32)
 	# Windows ddk
@@ -546,19 +546,21 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "An
 	add_definitions(-DARCH_IS_LINUX=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.c cd-linux.c)
 
-	check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
-	if (LINUX_HAS_JOYSTICK)
-		set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
-		set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
-	endif()
+	if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
+		check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
+		if (LINUX_HAS_JOYSTICK)
+			set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
+			set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
+		endif()
 
-	check_c_source_compiles("
-		#include <linux/cdrom.h>
-		int main(int argc, char ** argv) { int i = CDSL_CURRENT; }
-	" LINUX_CDROM_H_OK)
-	if (NOT LINUX_CDROM_H_OK)
-       		add_definitions(-DLINUX_CDROM_H_IS_BROKEN)
-	endif (NOT LINUX_CDROM_H_OK)
+		check_c_source_compiles("
+			#include <linux/cdrom.h>
+			int main(int argc, char ** argv) { int i = CDSL_CURRENT; }
+		" LINUX_CDROM_H_OK)
+		if (NOT LINUX_CDROM_H_OK)
+				add_definitions(-DLINUX_CDROM_H_IS_BROKEN)
+		endif (NOT LINUX_CDROM_H_OK)
+	endif()
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
 	add_definitions(-DARCH_IS_NETBSD=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)

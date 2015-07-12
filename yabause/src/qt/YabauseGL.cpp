@@ -55,3 +55,16 @@ void YabauseGL::updateView( const QSize& s )
 	if ( VIDCore )
 		VIDCore->Resize( size.width(), size.height(), 0 );
 }
+
+
+extern "C"{
+	int YuiRevokeOGLOnThisThread(){
+		// Todo: needs to imp for async rendering
+		return 0;
+	}
+
+	int YuiUseOGLOnThisThread(){
+		// Todo: needs to imp for async rendering
+		return 0;
+	}
+}
