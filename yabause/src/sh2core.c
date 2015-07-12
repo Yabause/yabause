@@ -160,6 +160,8 @@ void SH2Reset(SH2_struct *context)
 
    // Reset backtrace
    context->bt.numbacktrace = 0;
+   memset(context->pchistory, 0, sizeof(context->pchistory));
+   context->pchistory_index = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

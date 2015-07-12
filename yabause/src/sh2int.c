@@ -2855,6 +2855,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
       // Execute it
       opcodes[context->instruction](context);
+      context->pchistory[(context->pchistory_index++) & 0xFF] = context->regs.PC;
 
 		//if (MappedMemoryReadLong(0x06000930) == 0x00000009)
 		if (context->regs.PC == 0x060273AA)
