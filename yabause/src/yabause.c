@@ -635,7 +635,7 @@ void YabauseStartSlave(void) {
       CurrentSH2 = MSH2;
 
       SH2GetRegisters(SSH2, &SSH2->regs);
-      SSH2->regs.R[15] = 0x06001000;
+	  SSH2->regs.R[15] = Cs2GetSlaveStackAdress();
       SSH2->regs.VBR = 0x06000400;
       SSH2->regs.PC = MappedMemoryReadLong(0x06000250);
       if (MappedMemoryReadLong(0x060002AC) != 0)
@@ -985,6 +985,7 @@ int YabauseQuickLoadGame(void)
       // Now setup SH2 registers to start executing at ip code
       SH2GetRegisters(MSH2, &MSH2->regs);
       MSH2->regs.PC = 0x06002E00;
+	  MSH2->regs.R[15] = Cs2GetMasterStackAdress();
       SH2SetRegisters(MSH2, &MSH2->regs);
    }
    else
