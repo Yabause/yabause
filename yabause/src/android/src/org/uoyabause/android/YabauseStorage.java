@@ -85,13 +85,21 @@ public class YabauseStorage {
 
     public String[] getGameFiles() {
         String[] gamefiles = games.list(new GameFilter());
-        return gamefiles;
+        String[] selfiles  = new String[]{"Select from other directory."}; 
+        String[] allLists = new String[selfiles.length + gamefiles.length];
+        System.arraycopy(selfiles, 0, allLists, 0, selfiles.length);
+        System.arraycopy(gamefiles, 0, allLists, selfiles.length, gamefiles.length);        
+        return allLists;
     }
 
     public String getGamePath(String gamefile) {
         return games + File.separator + gamefile;
     }
 
+    public String getGamePath() {
+        return games + File.separator;
+    }
+    
     public String[] getMemoryFiles() {
         String[] memoryfiles = memory.list(new MemoryFilter());
         return memoryfiles;
