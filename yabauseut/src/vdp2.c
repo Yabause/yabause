@@ -18,6 +18,8 @@
 */
 
 #include "tests.h"
+#include <stdio.h>
+#include <string.h>
 
 extern vdp2_settings_struct vdp2_settings;
 
@@ -188,16 +190,14 @@ void vdp2_scroll_test_set_map(screen_settings_struct* settings, int which)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void vdp2_all_scroll_test()
+void vdp2_basic_tile_scroll_setup(const u32 tile_address)
 {
    int i;
-   
+
    vdp_rbg0_deinit();
 
    VDP2_REG_CYCA0U = 0x0123; // NBG0, NBG1, NBG2, NBG3 Pattern name data read 
    VDP2_REG_CYCB0U = 0x4567; // NBG0, NBG1, NBG2, NBG3 Character pattern read
-
-   const u32 tile_address = 0x40000;
 
    load_font_8x8_to_vdp2_vram_1bpp_to_4bpp(tile_address);
 
@@ -226,9 +226,58 @@ void vdp2_all_scroll_test()
 
    //set pattern name data to the empty font tile
    for (i = 0; i < 256; i++)
-   {                                     
+   {
       write_str_as_pattern_name_data(0, i, "                                                                ", 0, 0x000000, tile_address);
    }
+
+   vdp_disp_on();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+
+void vdp2_basic_tile_scroll_deinit()
+{
+   int i;
+   //restore settings so the menus don't break
+
+   vdp_nbg0_deinit();
+   vdp_nbg1_deinit();
+   vdp_nbg2_deinit();
+   vdp_nbg3_deinit();
+
+   vdp_rbg0_init(&test_disp_settings);
+
+   //clear the vram we used
+   for (i = 0; i < 0x11000; i++)
+   {
+      vdp2_ram[i] = 0;
+   }
+
+   VDP2_REG_CYCA0U = 0xffff;
+   VDP2_REG_CYCB0U = 0xffff;
+
+   VDP2_REG_MPABN1 = 0x0000;
+   VDP2_REG_MPCDN1 = 0x0000;
+   VDP2_REG_MPABN2 = 0x0000;
+   VDP2_REG_MPCDN2 = 0x0000;
+   VDP2_REG_MPABN3 = 0x0000;
+   VDP2_REG_MPCDN3 = 0x0000;
+
+   VDP2_REG_PRIR  = 0x0002;
+   VDP2_REG_PRISA = 0x0101;
+   VDP2_REG_PRISB = 0x0101;
+   VDP2_REG_PRISC = 0x0101;
+   VDP2_REG_PRISD = 0x0101;
+}
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp2_all_scroll_test()
+{
+   int i;
+   const u32 tile_address = 0x40000;
+   
+   vdp2_basic_tile_scroll_setup(tile_address);
 
    for (i = 0; i < 64; i += 4)
    {
@@ -237,8 +286,6 @@ void vdp2_all_scroll_test()
       write_str_as_pattern_name_data(0, i + 2, "C button: Reset.           NBG2. Testing NBG2. This is NBG2.... ", 5, 0x008000, tile_address);
       write_str_as_pattern_name_data(0, i + 3, "Start:    Exit.            NBG3. Testing NBG3. This is NBG3.... ", 6, 0x00C000, tile_address);
    }
-
-   vdp_disp_on();
 
    int do_scroll = 0;
    int scroll_pos = 0;
@@ -274,20 +321,269 @@ void vdp2_all_scroll_test()
          break;
    }
 
-   //restore settings so the menus don't break
+   vdp2_basic_tile_scroll_deinit();
+}
 
-   vdp_nbg0_deinit();
-   vdp_nbg1_deinit();
-   vdp_nbg2_deinit();
-   vdp_nbg3_deinit();
+//////////////////////////////////////////////////////////////////////////////
 
-   vdp_rbg0_init(&test_disp_settings);
+void vdp2_line_color_screen_test_set_up_line_screen(const u32 table_address)
+{
+   int i;
 
-   //clear the vram we used
-   for (i = 0; i < 0x11000; i++)
+   //create palette entries used by line screen
+   //and write them to color ram
+
+   int r = 0, g = 0, b = 31;
+
+   const int line_palette_start = 256;//starting entry in color ram
+
+   volatile u16 * color_ram_ptr = (volatile u16 *)(VDP2_CRAM + line_palette_start * 2);
+
+   for (i = 0; i < 224; i++)
    {
-      vdp2_ram[i] = 0;
+      if ((i % 8) == 0)
+      {
+         r++;
+         b--;
+      }
+      color_ram_ptr[i] = RGB555(r, g, b);
    }
+
+   //write line screen table to vram
+   volatile u16 *color_table_ptr = (volatile u16 *)(VDP2_RAM + table_address);
+
+   for (i = 0; i < 224; i++)
+   {
+      color_table_ptr[i] = i + line_palette_start;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp2_line_color_screen_test()
+{
+   const u32 tile_address = 0x40000;
+   const u32 table_address = 0x10000;
+   int i;
+
+   vdp2_basic_tile_scroll_setup(tile_address);
+
+   vdp2_line_color_screen_test_set_up_line_screen(table_address);
+
+   //set up instructions
+   char * instructions[] = {
+      "Controls:     (START to exit)          ",
+      "A:     ccmd   (as is/ratio)    on/off  ",
+      "B:     ccrtmd (2nd/top)        on/off  ",
+      "C:     lnclen (insert line)    on/off  ",
+      "X:     exccen (extended calc)  on/off  ",
+      "Y:     NBG0-4 ratio update     on/off  ",
+      "Z:     line color per line     on/off  ",
+      "UP:    set bugged emu settings #1      ",
+      "LEFT:  set bugged emu settings #2      ",
+      "RIGHT: set bugged emu settings #3      "
+   };
+
+   for (i = 0; i < 10; i++)
+   {
+      write_str_as_pattern_name_data(0, 8 + i, instructions[i], 3, 0x000000, tile_address);
+   }
+
+   //test pattern at bottom of screen
+   for (i = 20; i < 28; i += 4)
+   {
+      
+      write_str_as_pattern_name_data(0, i, "\n\n\n\nNBG0\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNBG0\n\n\n\n", 3, 0x000000, tile_address);
+      write_str_as_pattern_name_data(0, i + 1, "\n\n\n\nNBG1\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNBG1\n\n\n\n", 3, 0x004000, tile_address);
+      write_str_as_pattern_name_data(0, i + 2, "\n\n\n\nNBG2\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNBG2\n\n\n\n", 3, 0x008000, tile_address);
+      write_str_as_pattern_name_data(0, i + 3, "\n\n\n\nNBG3\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNBG3\n\n\n\n", 3, 0x00C000, tile_address);
+   }
+
+   //overlapping tiles, so that they will be colored differently from the rest of the screen depending on settings
+   write_str_as_pattern_name_data(0, 19, "NBG0 and NBG1 overlap on this line.      ", 3, 0x000000, tile_address);
+   write_str_as_pattern_name_data(0, 19, "NBG0 and NBG1 overlap on this line.      ", 4, 0x004000, tile_address);
+
+   struct {
+      int exccen, ccrtmd, ccmd, lcccen;
+   }ccctl;
+
+   ccctl.exccen = 0;
+   ccctl.ccrtmd = 1;
+   ccctl.ccmd = 0;
+   ccctl.lcccen = 1;
+
+   int lnclen = 0x3f;
+   int lcclmd = 1;
+
+   int framecount = 0;
+   int ratio = 0;
+   int ratio_dir = 1;
+   int update_nbg_ratios = 1;
+   int nbg_ratio[4] = {0};
+   char ratio_status_str[64];
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      VDP2_REG_CCCTL = (ccctl.exccen << 10) | (ccctl.ccrtmd << 9) | (ccctl.ccmd << 8) | (ccctl.lcccen << 5) | 0xf;
+      VDP2_REG_LNCLEN = lnclen;
+      *(volatile u32 *)0x25F800A8 = (lcclmd << 31) | (table_address / 2);
+
+      //update color calculation ratios
+      framecount++;
+
+      if ((framecount%3) == 0)
+         ratio += ratio_dir;
+
+      if (ratio > 30)
+         ratio_dir = -1;
+      if (ratio < 2)
+         ratio_dir = 1;
+
+      if (update_nbg_ratios)
+      {
+         nbg_ratio[2] = nbg_ratio[0] = ((-ratio) & 0x1f);
+         nbg_ratio[3] = nbg_ratio[1] = ratio;
+
+         VDP2_REG_CCRNA = nbg_ratio[0] | nbg_ratio[1] << 8;
+         VDP2_REG_CCRNB = nbg_ratio[2] | nbg_ratio[3] << 8;
+      }
+
+      VDP2_REG_CCRLB = ratio;
+
+      //update register status
+      if (ccctl.ccmd)
+      {
+         write_str_as_pattern_name_data(0, 0, "CCMD  =   1  Add as is                   ", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(0, 0, "CCMD  =   0  Add according to reg value  ", 3, 0x000000, tile_address);
+      }
+
+      if (ccctl.ccrtmd)
+      {
+         write_str_as_pattern_name_data(0, 1, "CCRTMD=   1  Select per 2nd screen       ", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(0, 1, "CCRTMD=   0  Select per top screen       ", 3, 0x000000, tile_address);
+      }
+
+      if (lnclen)
+      {
+         write_str_as_pattern_name_data(0, 2, "LNCLEN=0x3f  Line screen inserts on all  ", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(0, 2, "LNCLEN=0x00  Line screen disabled on all ", 3, 0x000000, tile_address);
+      }
+
+      if (ccctl.exccen)
+      {
+         write_str_as_pattern_name_data(0, 3, "EXCCEN=   1  Extended color calc on      ", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(0, 3, "EXCCEN=   0  Extended color calc off     ", 3, 0x000000, tile_address);
+      }
+      if (lcclmd)
+      {
+         write_str_as_pattern_name_data(0, 4, "LCCLMD=   1  Line color per line         ", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(0, 4, "LCCLMD=   0  Single color                ", 3, 0x000000, tile_address);
+      }
+
+      sprintf(ratio_status_str, "Ratios    NBG0=%04x NBG1=%04x           ", nbg_ratio[0], nbg_ratio[1]);
+      write_str_as_pattern_name_data(0, 5, ratio_status_str, 3, 0x000000, tile_address);
+
+      sprintf(ratio_status_str, "          NBG2=%04x NBG3=%04x LINE=%04x ", nbg_ratio[2], nbg_ratio[3], ratio);
+      write_str_as_pattern_name_data(0, 6, ratio_status_str, 3, 0x000000, tile_address);
+
+      //handle user inputs
+      if (per[0].but_push_once & PAD_A)
+      {
+         ccctl.ccmd = !ccctl.ccmd;
+      }
+
+      if (per[0].but_push_once & PAD_B)
+      {
+         ccctl.ccrtmd = !ccctl.ccrtmd;
+      }
+
+      if (per[0].but_push_once & PAD_C)
+      {
+         if (lnclen == 0)
+         {
+            lnclen = 0x3f;//enable all
+         }
+         else
+         {
+            lnclen = 0;//disable all
+         }
+      }
+
+      if (per[0].but_push_once & PAD_X)
+      {
+         ccctl.exccen = !ccctl.exccen;
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         update_nbg_ratios = !update_nbg_ratios;
+      }
+
+      if (per[0].but_push_once & PAD_Z)
+      {
+         lcclmd = !lcclmd;
+      }
+
+      if (per[0].but_push_once & PAD_UP)
+      {
+         ccctl.ccrtmd = 1;
+         ccctl.ccmd = 0;
+         ccctl.exccen = 0;
+         update_nbg_ratios = 0;
+         lcclmd = 0;
+         lnclen = 0x3f;
+      }
+
+      if (per[0].but_push_once & PAD_LEFT)
+      {
+         ccctl.ccrtmd = 1;
+         ccctl.ccmd = 0;
+         ccctl.exccen = 0;
+         update_nbg_ratios = 0;
+         lcclmd = 1;
+         lnclen = 0x3f;
+      }
+
+      if (per[0].but_push_once & PAD_RIGHT)
+      {
+         ccctl.ccrtmd = 0;
+         ccctl.ccmd = 1;
+         ccctl.exccen = 0;
+         update_nbg_ratios = 1;
+         lcclmd = 1;
+         lnclen = 0x3f;
+      }
+
+      if (per[0].but_push_once & PAD_START)
+         break;
+   }
+
+   vdp2_basic_tile_scroll_deinit();
+   vdp_set_default_palette();
+
+   VDP2_REG_CCCTL = 0;
+   VDP2_REG_LNCLEN = 0;
+   VDP2_REG_RAMCTL = 0x1000;
+   VDP2_REG_CCRNA = 0;
+   VDP2_REG_CCRNB = 0;
+   VDP2_REG_CCRLB = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
