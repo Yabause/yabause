@@ -82,6 +82,7 @@ const char * s_biospath = NULL;
 const char * s_cdpath = NULL;
 const char * s_buppath = NULL;
 const char * s_cartpath = NULL;
+int s_carttype;
 char s_savepath[256] ="\0";
 int s_vidcoretype = VIDCORE_OGL;
 
@@ -229,7 +230,7 @@ int GetCartridgeType()
     }
 
     yclass = (*env)->GetObjectClass(env, yabause);
-    getCartridgeType = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()I");
+    getCartridgeType = (*env)->GetMethodID(env, yclass, "getCartridgeType", "()I");
     return (*env)->CallIntMethod(env, yabause, getCartridgeType);
 }
 
@@ -642,6 +643,7 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     s_buppath = GetMemoryPath();
     s_cartpath = GetCartridgePath();
     s_vidcoretype = GetVideoInterface();
+	s_carttype =  GetCartridgeType();
     
     OSDInit(0);
 
@@ -824,6 +826,7 @@ int initEgl( ANativeWindow* window )
     yinit.biospath = s_biospath;
     yinit.cdpath = s_cdpath;
     yinit.buppath = s_buppath;
+	yinit.carttype = s_carttype;
     yinit.cartpath = s_cartpath;
 
     yinit.mpegpath = mpegpath;
