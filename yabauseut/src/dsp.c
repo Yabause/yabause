@@ -13,7 +13,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lapetus; if not, write to the Free Software
+    along with YabauseUT; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
@@ -44,6 +44,7 @@ void scu_dsp_test()
    // Time DSP instructions
    register_test(&test_dsp_timing, "DSP Timing");
    do_tests("SCU DSP tests", 0, 0);
+   gui_clear_scr(&test_disp_font);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -181,7 +182,7 @@ void test_mvi_imm_d()
    SCU_REG_PDA = (0 << 6) | 0;
    if (SCU_REG_PDD != 0xFF0DEAD0)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 21 * 8, 0xF, "SCU_REG_PDD != 0xFF0DEAD0(%08X)", SCU_REG_PDD);
+      vdp_printf(&test_disp_font, 0 * 8, 21 * 8, 0xF, "SCUREG_PDD != 0xFF0DEAD0(%08X)", SCU_REG_PDD);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
@@ -189,7 +190,7 @@ void test_mvi_imm_d()
    SCU_REG_PDA = (1 << 6) | 0;
    if (SCU_REG_PDD != 0xFF1DEAD0)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCU_REG_PDD != 0xFF1DEAD0(%08X)", SCU_REG_PDD);
+      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCUREG_PDD != 0xFF1DEAD0(%08X)", SCU_REG_PDD);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
@@ -197,7 +198,7 @@ void test_mvi_imm_d()
    SCU_REG_PDA = (2 << 6) | 0;
    if (SCU_REG_PDD != 0xFF2DEAD0)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCU_REG_PDD != 0xFF2DEAD0(%08X)", SCU_REG_PDD);
+      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCUREG_PDD != 0xFF2DEAD0(%08X)", SCU_REG_PDD);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
@@ -205,7 +206,7 @@ void test_mvi_imm_d()
    SCU_REG_PDA = (3 << 6) | 0;
    if (SCU_REG_PDD != 0xFF3DEAD0)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCU_REG_PDD != 0xFF3DEAD0(%08X)", SCU_REG_PDD);
+      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "SCUREG_PDD != 0xFF3DEAD0(%08X)", SCU_REG_PDD);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
@@ -213,7 +214,7 @@ void test_mvi_imm_d()
    // Ok, that looks good. Now check the PC, and we're done!
    if ((SCU_REG_PPAF & 0xFF) != 0xEF)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "(SCU_REG_PPAF & 0xFF) != 0xEF(%08X)", SCU_REG_PPAF);
+      vdp_printf(&test_disp_font, 0 * 8, 22 * 8, 0xF, "(SCUREG_PPAF & 0xFF) != 0xEF(%08X)", SCU_REG_PPAF);
       stage_status = STAGESTAT_BADDATA;
       return;
    }
@@ -267,7 +268,7 @@ void test_dsp_timing()
 
    if (test_val != 0xB40F)
    {
-      vdp_printf(&test_disp_font, 0 * 8, 23 * 8, 0xF, "SCU_REG_PDD != 0xB40F(%08X)", test_val);
+      vdp_printf(&test_disp_font, 0 * 8, 23 * 8, 0xF, "SCUREG_PDD != 0xB40F(%08X)", test_val);
       stage_status = STAGESTAT_BADTIMING;
       return;
    }

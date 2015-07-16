@@ -13,11 +13,10 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lapetus; if not, write to the Free Software
+    along with YabauseUT; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-//#include <lapetus.h>
 #include <stdio.h>
 #include <string.h>
 #include "tests.h"
@@ -50,6 +49,15 @@ void smpc_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void disable_iapetus_handler()
+{
+   bios_change_scu_interrupt_mask(0xFFFFFFF, MASK_VBLANKOUT | MASK_SYSTEMMANAGER);
+   bios_set_scu_interrupt(0x41, NULL);
+   bios_set_scu_interrupt(0x47, NULL);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void smpc_cmd_test()
 {
 	// Intback IREG test
@@ -71,7 +79,7 @@ void smpc_cmd_test()
    int i, j, k;
 
    // Disable Peripheral handler
-   bios_change_scu_interrupt_mask(0xFFFFFFF, MASK_VBLANKOUT | MASK_SYSTEMMANAGER);
+   disable_iapetus_handler();
    test_disp_font.transparent = 0;
    
    vdp_printf(&test_disp_font, 2 * 8, 2 * 16, 15, "Starting test in X second(s)");
@@ -111,8 +119,10 @@ void smpc_cmd_test()
    }
 
    // Re-enable Peripheral Handler
-   bios_change_scu_interrupt_mask(~(MASK_VBLANKOUT | MASK_SYSTEMMANAGER), 0);
+   per_init();
+
    test_disp_font.transparent = 1;
+   gui_clear_scr(&test_disp_font);
 }
 
 //////////////////////////////////////////////////////////////////////////////
