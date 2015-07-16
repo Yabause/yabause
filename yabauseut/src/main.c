@@ -21,8 +21,10 @@
 #include "cdb.h"
 #include "cart.h"
 #include "m68k.h"
+#include "mpeg.h"
 #include "scsp.h"
 #include "scu.h"
+#include "slavesh.h"
 #include "sh2.h"
 #include "smpc.h"
 #include "vdp1.h"
@@ -31,8 +33,10 @@
 
 menu_item_struct main_menu[] = {
 { "SH2 Test" , &sh2_test, },
+{ "Slave SH2 Test" , &slavesh2_test, },
 { "SCU Test", &scu_test, },
 { "CD Block Test" , &cdb_test, },
+{ "MPEG Card Test" , &mpeg_test, },
 { "Cartridge Test" , &cart_test, }, // Could almost autodetect the cart type
 { "68k Test" , &m68k_test, },
 { "SCSP Test" , &scsp_test, },
