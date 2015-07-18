@@ -113,11 +113,11 @@ void vdp2_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void load_font_8x8_to_vdp2_vram_1bpp_to_4bpp(u32 tile_start_address)
+void load_font_8x8_to_vram_1bpp_to_4bpp(u32 tile_start_address, u32 ram_pointer)
 {
    int x, y;
    int chr;
-   volatile u8 *dest = (volatile u8 *)(VDP2_RAM + tile_start_address);
+   volatile u8 *dest = (volatile u8 *)(ram_pointer + tile_start_address);
 
    for (chr = 0; chr < 128; chr++)//128 ascii chars total
    {
@@ -197,10 +197,12 @@ void vdp2_basic_tile_scroll_setup(const u32 tile_address)
 
    vdp_rbg0_deinit();
 
-   VDP2_REG_CYCA0U = 0x0123; // NBG0, NBG1, NBG2, NBG3 Pattern name data read 
-   VDP2_REG_CYCB0U = 0x4567; // NBG0, NBG1, NBG2, NBG3 Character pattern read
+   VDP2_REG_CYCA0L = 0x0123;
+   VDP2_REG_CYCA0U = 0xFFFF;
+   VDP2_REG_CYCB0L = 0xF4F5;
+   VDP2_REG_CYCB0U = 0xFF76;
 
-   load_font_8x8_to_vdp2_vram_1bpp_to_4bpp(tile_address);
+   load_font_8x8_to_vram_1bpp_to_4bpp(tile_address, VDP2_RAM);
 
    screen_settings_struct settings;
 
@@ -277,12 +279,12 @@ void vdp2_all_scroll_test()
 {
    int i;
    const u32 tile_address = 0x40000;
-   
+
    vdp2_basic_tile_scroll_setup(tile_address);
 
    for (i = 0; i < 64; i += 4)
    {
-      write_str_as_pattern_name_data(0, i,     "A button: Start scrolling. NBG0. Testing NBG0. This is NBG0.... ", 3, 0x000000, tile_address);
+      write_str_as_pattern_name_data(0, i, "A button: Start scrolling. NBG0. Testing NBG0. This is NBG0.... ", 3, 0x000000, tile_address);
       write_str_as_pattern_name_data(0, i + 1, "B button: Stop scrolling.  NBG1. Testing NBG1. This is NBG1.... ", 4, 0x004000, tile_address);
       write_str_as_pattern_name_data(0, i + 2, "C button: Reset.           NBG2. Testing NBG2. This is NBG2.... ", 5, 0x008000, tile_address);
       write_str_as_pattern_name_data(0, i + 3, "Start:    Exit.            NBG3. Testing NBG3. This is NBG3.... ", 6, 0x00C000, tile_address);
@@ -290,14 +292,19 @@ void vdp2_all_scroll_test()
 
    int do_scroll = 0;
    int scroll_pos = 0;
+   int framecount = 0;
 
    for (;;)
    {
       vdp_vsync();
 
+      framecount++;
+
       if (do_scroll)
       {
-         scroll_pos++;
+         if ((framecount % 3) == 0)
+            scroll_pos++;
+
          vdp2_scroll_test_set_scroll(scroll_pos);
       }
 
