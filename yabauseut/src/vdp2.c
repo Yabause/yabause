@@ -13,11 +13,12 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lapetus; if not, write to the Free Software
+    along with YabauseUT; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "tests.h"
+#include "main.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -814,13 +815,14 @@ void vdp2_window_test ()
 
       vdp_printf(&test_disp_font, 0 * 8, 26 * 8, 0xC, "%03d %03d", counter, counter2);
 
-      if (per[0].but_push_once & PAD_START)
+      if (per[0].but_push_once & PAD_START || per[0].but_push_once & PAD_B)
          break;
    }
 
    // Disable NBG0/NBG1
    vdp_nbg0_deinit();
    vdp_nbg1_deinit();
+   yabauseut_init();
 }
 
 //////////////////////////////////////////////////////////////////////////////

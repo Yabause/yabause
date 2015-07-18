@@ -13,7 +13,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lapetus; if not, write to the Free Software
+    along with YabauseUT; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
@@ -49,9 +49,6 @@
 #define SCUREG_T0C   (*(volatile u32 *)0x25FE0090)
 #define SCUREG_T1S   (*(volatile u32 *)0x25FE0094)
 #define SCUREG_T1MD  (*(volatile u32 *)0x25FE0098)
-
-#define SCUREG_IMS   (*(volatile u32 *)0x25FE00A0)
-#define SCUREG_IMS   (*(volatile u32 *)0x25FE00A0)
 
 #define SCUREG_IMS   (*(volatile u32 *)0x25FE00A0)
 #define SCUREG_IST   (*(volatile u32 *)0x25FE00A4)
