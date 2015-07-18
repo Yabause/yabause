@@ -854,6 +854,249 @@ void vdp2_extended_color_calculation_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void vpd2_priority_shadow_draw_sprites(int start_x, int start_y, u32 vdp1_tile_address, int operation)
+{
+   int i, j;
+   sprite_struct quad = { 0 };
+
+   const int size = 8;
+
+   quad.x = start_x * size;
+   quad.y = start_y * size;
+
+   int vdp2_priority = 0;
+   int vdp2_color_calc = 0;
+   int palette = 4;
+
+   for (j = 0; j < 4; j++)
+   {
+      quad.x = start_x * size;
+
+      for (i = 0; i < 4; i++)
+      {
+         quad.bank = (vdp2_priority << 12) | (vdp2_color_calc << 9) | (palette << 4);
+
+         //use the "\n" tile
+         quad.addr = vdp1_tile_address + (10 * 32);
+
+         //msb on
+         if (operation == 2)
+         {
+            quad.attr = (1 << 15);
+         }
+
+         quad.height = size;
+         quad.width = size;
+
+         vdp_draw_normal_sprite(&quad);
+
+         quad.x += size;
+
+         if (operation == 0 || operation == 1)
+         {
+            vdp2_priority++;
+            vdp2_priority &= 7;
+         }
+         if (operation == 1)
+         {
+            vdp2_color_calc++;
+            vdp2_color_calc &= 7;
+         }
+
+      }
+      quad.y += size;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void write_tiles_4x(int x, int y, char * str, u32 vdp2_tile_address, u32 base)
+{
+   int i;
+   for (i = 0; i < 4; i++)
+   {
+      write_str_as_pattern_name_data(x, y + i, str, 3, base, vdp2_tile_address);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void draw_normal_shadow_sprite(int x, int y, const char * str)
+{
+   sprite_struct quad = { 0 };
+
+   int size = 32;
+
+   int top_right_x = x * 8;
+   int top_right_y = y * 8;
+   quad.x = top_right_x + size;
+   quad.y = top_right_y;
+   quad.x2 = top_right_x + size;
+   quad.y2 = top_right_y + size;
+   quad.x3 = top_right_x;
+   quad.y3 = top_right_y + size;
+   quad.x4 = top_right_x;
+   quad.y4 = top_right_y;
+   quad.bank = 0x0ffe;
+
+   vdp_draw_polygon(&quad);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp2_sprite_priority_shadow_test()
+{
+   const u32 vdp2_tile_address = 0x40000;
+   const u32 vdp1_tile_address = 0x10000;
+   vdp2_basic_tile_scroll_setup(vdp2_tile_address);
+
+   load_font_8x8_to_vram_1bpp_to_4bpp(vdp1_tile_address, VDP1_RAM);
+
+   VDP1_REG_PTMR = 0x02;//draw automatically with frame change
+
+   int s0prin = 7;
+   int s1prin = 6;
+
+   VDP2_REG_PRISA = s0prin | (s1prin << 8);
+   VDP2_REG_PRISB = 5 | (4 << 8);
+   VDP2_REG_PRISC = 3 | (2 << 8);
+   VDP2_REG_PRISD = 1 | (0 << 8);
+
+   int nbg_priority[4] = { 0 };
+
+   nbg_priority[0] = 7;
+   nbg_priority[1] = 6;
+   nbg_priority[2] = 5;
+   nbg_priority[3] = 4;
+
+   VDP2_REG_PRINA = nbg_priority[0] | (nbg_priority[1] << 8);
+   VDP2_REG_PRINB = nbg_priority[2] | (nbg_priority[3] << 8);
+
+   VDP2_REG_SDCTL = 0x9 | (1 << 8);
+
+   int nbg_ratio[4] = { 0 };
+   int framecount = 0;
+   int ratio = 0;
+   int ratio_dir = 1;
+
+   int spccs = 2;
+   int spccn = 5;
+
+   write_str_as_pattern_name_data(0, 0, "Normal Shadow    ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 5, "MSB Transparent ", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 6, "          Shadow ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 10, "Sprite priority  ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 15, "MSB Sprite     ", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 16, "          Shadow ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 20, "Special Color    ", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 21, "     Calculation ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(20, 25, "NBG0 NBG1 NBG2 NBG3", 3, 0x000000, vdp2_tile_address);
+
+   int x;
+
+   u32 addresses[4] = { 0x000000, 0x004000, 0x008000, 0x00c000 };
+
+   char* str = "\n\n\n\n";
+
+   for (x = 0; x < 4; x++)
+   {
+      int x_pos = 20 + (5 * x);
+      write_tiles_4x(x_pos, 0, str, vdp2_tile_address, addresses[x]);//normal shadow tiles
+      write_tiles_4x(x_pos, 5, str, vdp2_tile_address, addresses[x]);//msb shadow tiles
+      write_tiles_4x(x_pos, 10, str, vdp2_tile_address, addresses[x]);//sprite priority tiles
+      write_tiles_4x(x_pos, 15, str, vdp2_tile_address, addresses[x]);//msb shadow and cc tiles
+      write_tiles_4x(x_pos, 20, str, vdp2_tile_address, addresses[x]);//special color calc tiles
+   }
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      VDP2_REG_SPCTL = (spccs << 12) | (spccn << 8) | (0 << 5) | 7;
+
+      VDP2_REG_CCCTL = (1 << 6) | (1 << 0) | (1 << 3);
+
+      VDP2_REG_CCRSA = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
+      VDP2_REG_CCRSB = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
+      VDP2_REG_CCRSC = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
+      VDP2_REG_CCRSD = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
+
+      vdp_start_draw_list();
+      sprite_struct quad = { 0 };
+
+      //system clipping
+      quad.x = 320;
+      quad.y = 224;
+
+      vdp_system_clipping(&quad);
+
+      //user clipping
+      quad.x = 0;
+      quad.y = 0;
+      quad.x2 = 320;
+      quad.y2 = 224;
+
+      vdp_user_clipping(&quad);
+
+      quad.x = 0;
+      quad.y = 0;
+
+      vdp_local_coordinate(&quad);
+
+      for (x = 0; x < 4; x++)
+      {
+         int x_pos = 20 + (5 * x);
+         //normal shadow
+         draw_normal_shadow_sprite(x_pos, 0, str);
+         //msb shadow
+         vpd2_priority_shadow_draw_sprites(x_pos, 5, vdp1_tile_address, 2);
+         //sprite priority
+         vpd2_priority_shadow_draw_sprites(x_pos, 10, vdp1_tile_address, 0);
+         //msb shadow and color calculation
+         vpd2_priority_shadow_draw_sprites(x_pos, 15, vdp1_tile_address, 0);
+         vpd2_priority_shadow_draw_sprites(x_pos, 15, vdp1_tile_address, 2);
+         //special color calc
+         vpd2_priority_shadow_draw_sprites(x_pos, 20, vdp1_tile_address, 1);
+      }
+
+      vdp_end_draw_list();
+
+      char status[64] = "";
+
+      sprintf(status, "S0PRIN=%02x S1PRIN=%02x", s0prin, s1prin);
+      write_str_as_pattern_name_data(0, 25, status, 3, 0x000000, vdp2_tile_address);
+      sprintf(status, "SOCCRT=%02x S1CCRT=%02x", nbg_ratio[0], nbg_ratio[1]);
+      write_str_as_pattern_name_data(0, 26, status, 3, 0x000000, vdp2_tile_address);
+      sprintf(status, "SPCCS =%02x SPCCN =%02x (Press A,B) ", spccs, spccn);
+      write_str_as_pattern_name_data(0, 27, status, 3, 0x000000, vdp2_tile_address);
+
+      do_color_ratios(&framecount, &ratio, &ratio_dir);
+
+      nbg_ratio[0] = ((-ratio) & 0x1f);
+      nbg_ratio[2] = nbg_ratio[0];
+      nbg_ratio[3] = nbg_ratio[1] = ratio;
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         spccs++;
+         spccs &= 3;
+      }
+
+      if (per[0].but_push_once & PAD_B)
+      {
+         spccn++;
+         spccn &= 7;
+      }
+
+      if (per[0].but_push_once & PAD_START)
+         break;
+   }
+
+   vdp2_basic_tile_scroll_deinit();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_nbg0_test ()
 {
    screen_settings_struct settings;
