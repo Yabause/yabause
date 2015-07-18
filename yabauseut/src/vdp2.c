@@ -368,6 +368,26 @@ void vdp2_line_color_screen_test_set_up_line_screen(const u32 table_address)
 
 //////////////////////////////////////////////////////////////////////////////
 
+struct Ccctl {
+   int exccen, ccrtmd, ccmd, spccen, lcccen, r0ccen;
+   int nccen[4];
+};
+
+void do_color_ratios(int *framecount, int * ratio, int *ratio_dir)
+{
+   *framecount = *framecount + 1;
+
+   if ((*framecount % 3) == 0)
+      *ratio = *ratio_dir + *ratio;
+
+   if (*ratio > 30)
+      *ratio_dir = -1;
+   if (*ratio < 2)
+      *ratio_dir = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_line_color_screen_test()
 {
    const u32 tile_address = 0x40000;
@@ -411,9 +431,7 @@ void vdp2_line_color_screen_test()
    write_str_as_pattern_name_data(0, 19, "NBG0 and NBG1 overlap on this line.      ", 3, 0x000000, tile_address);
    write_str_as_pattern_name_data(0, 19, "NBG0 and NBG1 overlap on this line.      ", 4, 0x004000, tile_address);
 
-   struct {
-      int exccen, ccrtmd, ccmd, lcccen;
-   }ccctl;
+   struct Ccctl ccctl;
 
    ccctl.exccen = 0;
    ccctl.ccrtmd = 1;
@@ -439,15 +457,7 @@ void vdp2_line_color_screen_test()
       *(volatile u32 *)0x25F800A8 = (lcclmd << 31) | (table_address / 2);
 
       //update color calculation ratios
-      framecount++;
-
-      if ((framecount%3) == 0)
-         ratio += ratio_dir;
-
-      if (ratio > 30)
-         ratio_dir = -1;
-      if (ratio < 2)
-         ratio_dir = 1;
+      do_color_ratios(&framecount, &ratio, &ratio_dir);
 
       if (update_nbg_ratios)
       {
@@ -592,6 +602,254 @@ void vdp2_line_color_screen_test()
    VDP2_REG_CCRNA = 0;
    VDP2_REG_CCRNB = 0;
    VDP2_REG_CCRLB = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void write_large_font(int x_pos, int y_pos, int* number, int palette, u32 base, const u32 tile_address)
+{
+   int y, x, j = 0;
+   for (y = 0; y < 5; y++)
+   {
+      for (x = 0; x < 3; x++)
+      {
+         if (number[j])
+         {
+            write_str_as_pattern_name_data(x + x_pos, y + y_pos, "\n", palette, base, tile_address);
+         }
+         j++;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp2_extended_color_calculation_test()
+{
+   const u32 tile_address = 0x40000;
+   int zero[] = { 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1 };
+   int one[] = { 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 };
+   int two[] = { 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1 };
+   int three[] = { 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1 };
+   const char* fill = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+
+   int i;
+
+   vdp2_basic_tile_scroll_setup(tile_address);
+
+   int palette = 9;
+
+   for (i = 0; i < 32; i++)
+   {
+      write_str_as_pattern_name_data(0, i, fill, palette, 0x000000, tile_address);
+   }
+
+   palette++;
+   for (i = 7; i < 32; i++)
+   {
+      write_str_as_pattern_name_data(0, i, fill, palette, 0x004000, tile_address);
+   }
+
+   palette++;
+   for (i = 14; i < 32; i++)
+   {
+      write_str_as_pattern_name_data(0, i, fill, palette, 0x008000, tile_address);
+   }
+
+   palette++;
+   for (i = 21; i < 32; i++)
+   {
+      write_str_as_pattern_name_data(0, i, fill, palette, 0x00c000, tile_address);
+   }
+
+   for (i = 1; i < 24; i += 7)
+   {
+      write_large_font(1, i, zero, 0, 0x000000, tile_address);
+      write_large_font(5, i, one, 0, 0x004000, tile_address);
+      write_large_font(9, i, two, 0, 0x008000, tile_address);
+      write_large_font(13, i, three, 0, 0x00C000, tile_address);
+   }
+
+   //set up instructions
+   char * instructions[] = {
+      "Controls:             ",
+      "A:     EXCCEN  on/off ",
+      "B:     CCMD    on/off ",
+      "C:     NBG0    on/off ",
+      "X:     NBG1    on/off ",
+      "Y:     NBG2    on/off ",
+      "Z:     NBG3    on/off ",
+      "UP:    N0CCEN  on/off ",
+      "DOWN:  N1CCEN  on/off ",
+      "LEFT:  N2CCEN  on/off ",
+      "RIGHT: N3CCEN  on/off ",
+      "START: Exit           "
+   };
+
+   int j = 0;
+   for (i = 12; i < 12 + 12; i++)
+   {
+      write_str_as_pattern_name_data(18, i, instructions[j++], 3, 0x000000, tile_address);
+   }
+
+   int disp_nbg[4] = { 1, 1, 1, 1 };
+   int nbg_ratio[4] = { 0 };
+
+   struct Ccctl ccctl = { 0 };
+
+   ccctl.exccen = 1;
+   ccctl.ccmd = 0;
+   ccctl.nccen[3] = 1;
+   ccctl.nccen[2] = 1;
+   ccctl.nccen[1] = 1;
+   ccctl.nccen[0] = 1;
+
+   int framecount = 0;
+   int ratio = 0;
+   int ratio_dir = 1;
+
+   int update_nbg_ratios = 1;
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      do_color_ratios(&framecount, &ratio, &ratio_dir);
+
+      if (update_nbg_ratios)
+      {
+         nbg_ratio[0] = ((-ratio) & 0x1f);
+         nbg_ratio[2] = nbg_ratio[0];
+         nbg_ratio[3] = nbg_ratio[1] = ratio;
+
+         VDP2_REG_CCRNA = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
+         VDP2_REG_CCRNB = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
+      }
+
+      char ratio_status_str[64] = "";
+
+      sprintf(ratio_status_str, "NBG0=%04x NBG1=%04x ", nbg_ratio[0], nbg_ratio[1]);
+      write_str_as_pattern_name_data(18, 7, ratio_status_str, 3, 0x000000, tile_address);
+
+      sprintf(ratio_status_str, "NBG2=%04x NBG3=%04x ", nbg_ratio[2], nbg_ratio[3]);
+      write_str_as_pattern_name_data(18, 8, ratio_status_str, 3, 0x000000, tile_address);
+
+      sprintf(ratio_status_str, "Color ram mode %d ", (VDP2_REG_RAMCTL >> 12) & 3);
+      write_str_as_pattern_name_data(18, 9, ratio_status_str, 3, 0x000000, tile_address);
+
+      VDP2_REG_CCCTL =
+         (ccctl.exccen << 10) |
+         (ccctl.ccrtmd << 9) |
+         (ccctl.ccmd << 8) |
+         (ccctl.spccen << 6) |
+         (ccctl.lcccen << 5) |
+         (ccctl.r0ccen << 4) |
+         (ccctl.nccen[3] << 3) |
+         (ccctl.nccen[2] << 2) |
+         (ccctl.nccen[1] << 1) |
+         (ccctl.nccen[0]);
+
+      VDP2_REG_PRINA = disp_nbg[0] | (disp_nbg[1] << 8);
+      VDP2_REG_PRINB = disp_nbg[2] | (disp_nbg[3] << 8);
+
+      for (i = 0; i < 4; i++)
+      {
+         char out[64];
+         sprintf(out, "NBG%d ", i);
+         if (disp_nbg[i])
+         {
+            strcat(out, "On ");
+         }
+         else
+         {
+            strcat(out, "Off");
+         }
+
+         char out2[64];
+         sprintf(out2, " N%dCCEN ", i);
+         strcat(out, out2);
+
+         if (ccctl.nccen[i])
+         {
+            strcat(out, "On ");
+         }
+         else
+         {
+            strcat(out, "Off");
+         }
+         write_str_as_pattern_name_data(18, i, out, 3, 0x000000, tile_address);
+      }
+
+      if (ccctl.exccen)
+      {
+         write_str_as_pattern_name_data(18, 5, "EXCCEN=1 (Extended)", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(18, 5, "EXCCEN=0 (Off)     ", 3, 0x000000, tile_address);
+      }
+      if (ccctl.ccmd)
+      {
+         write_str_as_pattern_name_data(18, 6, "CCMD=1   (As is)  ", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(18, 6, "CCMD=0   (Reg val)", 3, 0x000000, tile_address);
+      }
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         ccctl.exccen = !ccctl.exccen;
+      }
+
+      if (per[0].but_push_once & PAD_B)
+      {
+         ccctl.ccmd = !ccctl.ccmd;
+      }
+
+      if (per[0].but_push_once & PAD_C)
+      {
+         disp_nbg[0] = !disp_nbg[0];
+      }
+
+      if (per[0].but_push_once & PAD_X)
+      {
+         disp_nbg[1] = !disp_nbg[1];
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         disp_nbg[2] = !disp_nbg[2];
+      }
+
+      if (per[0].but_push_once & PAD_Z)
+      {
+         disp_nbg[3] = !disp_nbg[3];
+      }
+
+      if (per[0].but_push_once & PAD_UP)
+      {
+         ccctl.nccen[0] = !ccctl.nccen[0];
+      }
+
+      if (per[0].but_push_once & PAD_DOWN)
+      {
+         ccctl.nccen[1] = !ccctl.nccen[1];
+      }
+
+      if (per[0].but_push_once & PAD_LEFT)
+      {
+         ccctl.nccen[2] = !ccctl.nccen[2];
+      }
+
+      if (per[0].but_push_once & PAD_RIGHT)
+      {
+         ccctl.nccen[3] = !ccctl.nccen[3];
+      }
+
+      if (per[0].but_push_once & PAD_START)
+         break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
