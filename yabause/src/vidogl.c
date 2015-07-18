@@ -1969,7 +1969,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 
 	i = 0;
-    for (v = 0; v < vdp2height; v++ ){  // ToDo: info->coordincy
+    for (v = 0; v < vdp2height; v += info->lineinc ){  // ToDo: info->coordincy
 		int targetv = 0;
 		sx = info->x + info->lineinfo[lineindex].LineScrollValH;
 		if (VDPLINE_SY(info->islinescroll)) {
@@ -2035,6 +2035,102 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 	}
 
 }
+
+static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
+
+	int lineindex = 0;
+	int i, j;
+	int X, Y;
+	int xx, yy;
+
+	int sx, sy;
+	int mapx, mapy;
+	int planex, planey;
+	int pagex, pagey;
+	int charx, chary;
+	int dot_on_planey;
+	int dot_on_pagey;
+	int dot_on_planex;
+	int dot_on_pagex;
+	int h, v;
+	float fh,fv;
+	const int planeh_shift = 9 + (info->planeh - 1);
+	const int planew_shift = 9 + (info->planew - 1);
+	const int plane_shift = 9;
+	const int plane_mask = 0x1FF;
+	const int page_shift = 9 - 7 + (64 / info->pagewh);
+	const int page_mask = 0x0f >> ((info->pagewh / 32) - 1);
+
+	info->patternpixelwh = 8 * info->patternwh;
+	info->draww = (int)((float)vdp2width / info->coordincx);
+	info->drawh = (int)((float)vdp2height / info->coordincy);
+	info->lineinc = info->patternpixelwh;
+
+
+
+	i = 0;
+	for (fv = -info->patternpixelwh; fv < vdp2height + info->patternpixelwh; fv += info->patternpixelwh * info->coordincy){
+		int targetv = 0;
+		sx = info->x;
+		v = (int)fv;
+		targetv = info->y + v;
+
+		if (info->isverticalscroll)	{
+			// this is *wrong*, vertical scroll use a different value per cell
+			// info->verticalscrolltbl should be incremented by info->verticalscrollinc
+			// each time there's a cell change and reseted at the end of the line...
+			// or something like that :)
+			targetv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
+		}
+
+		// determine which chara shoud be used.
+		//mapy   = (v+sy) / (512 * info->planeh);
+		mapy = (targetv) >> planeh_shift;
+		//int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+		dot_on_planey = (targetv)-(mapy << planeh_shift);
+		mapy = mapy & 0x01;
+		//planey = dot_on_planey / 512;
+		planey = dot_on_planey >> plane_shift;
+		//int dot_on_pagey = dot_on_planey - planey * 512;
+		dot_on_pagey = dot_on_planey & plane_mask;
+		planey = planey & (info->planeh - 1);
+		//pagey = dot_on_pagey / (512 / info->pagewh);
+		pagey = dot_on_pagey >> page_shift;
+		//chary = dot_on_pagey - pagey*(512 / info->pagewh);
+		chary = dot_on_pagey & page_mask;
+		if (pagey < 0) pagey = info->pagewh - 1 + pagey;
+
+		for (fh = -info->patternpixelwh; fh < vdp2width + info->patternpixelwh; fh += info->patternpixelwh * info->coordincx){
+
+			h = (int)fh;
+
+			//mapx = (h + sx) / (512 * info->planew);
+			mapx = (h + sx) >> planew_shift;
+			//int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
+			dot_on_planex = (h + sx) - (mapx << planew_shift);
+			mapx = mapx & 0x01;
+			//planex = dot_on_planex / 512;
+			planex = dot_on_planex >> plane_shift;
+			//int dot_on_pagex = dot_on_planex - planex * 512;
+			dot_on_pagex = dot_on_planex & plane_mask;
+			planex = planex & (info->planew - 1);
+			//pagex = dot_on_pagex / (512 / info->pagewh);
+			pagex = dot_on_pagex >> page_shift;
+			//charx = dot_on_pagex - pagex*(512 / info->pagewh);
+			charx = dot_on_pagex & page_mask;
+			if (pagex < 0) pagex = info->pagewh - 1 + pagex;
+
+			info->PlaneAddr(info, info->mapwh * mapy + mapx);
+			Vdp2PatternAddrPos(info, planex, pagex, planey, pagey);
+			Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0);
+
+		}
+
+		lineindex++;
+	}
+
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3675,7 +3771,9 @@ static void Vdp2DrawNBG0(void)
 			  Vdp2DrawMapPerLine(&info, &texture);
 		  }
 		  else{
-			  Vdp2DrawMap(&info, &texture);
+			  info.x = Vdp2Regs->SCXIN0 & 0x7FF;
+			  info.y = Vdp2Regs->SCYIN0 & 0x7FF;
+			  Vdp2DrawMapTest(&info, &texture);
 		  }
       }
    }
@@ -3863,7 +3961,10 @@ static void Vdp2DrawNBG1(void)
 		   Vdp2DrawMapPerLine(&info, &texture);
 	   }
 	   else{
-		   Vdp2DrawMap(&info, &texture);
+		   //Vdp2DrawMap(&info, &texture);
+		   info.x = Vdp2Regs->SCXIN1 & 0x7FF;
+		   info.y = Vdp2Regs->SCYIN1 & 0x7FF;
+		   Vdp2DrawMapTest(&info, &texture);
 	   }
    }
    
@@ -3937,8 +4038,10 @@ static void Vdp2DrawNBG2(void)
    info.islinescroll = 0;
    info.linescrolltbl = 0;
    info.lineinc = 0;   
-
-   Vdp2DrawMap(&info, &texture);
+   info.isverticalscroll = 0;
+   info.x = Vdp2Regs->SCXN2 & 0x7FF;
+   info.y = Vdp2Regs->SCYN2 & 0x7FF;
+   Vdp2DrawMapTest(&info, &texture);
    
    if( info.bEnWin0 || info.bEnWin1 )
       YglEndWindow(&info);   
@@ -4012,8 +4115,10 @@ static void Vdp2DrawNBG3(void)
    info.islinescroll = 0;
    info.linescrolltbl = 0;
    info.lineinc = 0;   
-   
-   Vdp2DrawMap(&info, &texture);
+   info.isverticalscroll = 0;
+   info.x = Vdp2Regs->SCXN3 & 0x7FF;
+   info.y = Vdp2Regs->SCYN3 & 0x7FF;
+   Vdp2DrawMapTest(&info, &texture);
    
    if( info.bEnWin0 || info.bEnWin1 )
       YglEndWindow(&info);   
