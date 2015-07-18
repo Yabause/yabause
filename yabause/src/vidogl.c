@@ -1568,14 +1568,14 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 		tile.priority = info->priority;
 
 
-	tile.vertices[0] = x;
-	tile.vertices[1] = y;
-	tile.vertices[2] = x + tile.w;
-	tile.vertices[3] = y;
-	tile.vertices[4] = x  + tile.w;
-	tile.vertices[5] = y + info->lineinc;
-	tile.vertices[6] = x;
-	tile.vertices[7] = y + info->lineinc;
+	tile.vertices[0] = x * info->coordincx;
+	tile.vertices[1] = y * info->coordincy;
+	tile.vertices[2] = (x + tile.w) * info->coordincx;
+	tile.vertices[3] = y * info->coordincy;
+	tile.vertices[4] = (x + tile.w) * info->coordincx;
+	tile.vertices[5] = (y + tile.h) * info->coordincy;
+	tile.vertices[6] = x * info->coordincx;
+	tile.vertices[7] = (y + tile.h) * info->coordincy;
 
 
 	// Screen culling
@@ -1953,7 +1953,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
     int dot_on_planex;
     int dot_on_pagex;
     int h,v;
-	float fh;
     const int planeh_shift = 9 + (info->planeh-1);
     const int planew_shift = 9 + (info->planew-1);
     const int plane_shift = 9;
@@ -1969,7 +1968,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 
 	i = 0;
-    for (v = 0; v < vdp2height; v += info->lineinc ){  // ToDo: info->coordincy
+	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
 		int targetv = 0;
 		sx = info->x + info->lineinfo[lineindex].LineScrollValH;
 		if (VDPLINE_SY(info->islinescroll)) {
@@ -2005,9 +2004,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		chary = dot_on_pagey & page_mask;
 		if (pagey < 0) pagey = info->pagewh - 1 + pagey;
 
-        for (fh = -info->patternpixelwh; fh < vdp2width + info->patternpixelwh; fh += info->patternpixelwh * info->coordincx){
-
-			h = (int)fh;
+		for (h = -info->patternpixelwh; h < info->draww + info->patternpixelwh; h += info->patternpixelwh){
 
 			//mapx = (h + sx) / (512 * info->planew);
 			mapx = (h + sx) >> planew_shift;
@@ -2053,7 +2050,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 	int dot_on_planex;
 	int dot_on_pagex;
 	int h, v;
-	float fh,fv;
 	const int planeh_shift = 9 + (info->planeh - 1);
 	const int planew_shift = 9 + (info->planew - 1);
 	const int plane_shift = 9;
@@ -2066,13 +2062,12 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 	info->drawh = (int)((float)vdp2height / info->coordincy);
 	info->lineinc = info->patternpixelwh;
 
-
+	//info->coordincx = 1.0f;
 
 	i = 0;
-	for (fv = -info->patternpixelwh; fv < vdp2height + info->patternpixelwh; fv += info->patternpixelwh * info->coordincy){
+	for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh; v += info->patternpixelwh){
 		int targetv = 0;
 		sx = info->x;
-		v = (int)fv;
 		targetv = info->y + v;
 
 		if (info->isverticalscroll)	{
@@ -2100,9 +2095,7 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 		chary = dot_on_pagey & page_mask;
 		if (pagey < 0) pagey = info->pagewh - 1 + pagey;
 
-		for (fh = -info->patternpixelwh; fh < vdp2width + info->patternpixelwh; fh += info->patternpixelwh * info->coordincx){
-
-			h = (int)fh;
+		for (h = -info->patternpixelwh; h < info->draww + info->patternpixelwh; h += info->patternpixelwh){
 
 			//mapx = (h + sx) / (512 * info->planew);
 			mapx = (h + sx) >> planew_shift;
