@@ -30,8 +30,9 @@
 #include <windows.h>
   #if defined(_USEGLEW_)
     #include <GL/glew.h>
-    #include <GLFW/glfw3.h>
-  #else
+    #include <GL/gl.h>
+    #include "glext.h"
+#else
     #include <GL/gl.h>
     #include "glext.h"
     extern PFNGLACTIVETEXTUREPROC glActiveTexture;
@@ -81,6 +82,7 @@ typedef struct {
     s32 cor;
     s32 cog;
     s32 cob;
+    int linescreen;
 
 } YglSprite;
 
@@ -125,6 +127,8 @@ enum
    PG_VDP2_STARTWINDOW,
    PG_VDP2_ENDWINDOW,
    PG_WINDOW,
+   PG_LINECOLOR_INSERT,
+   PG_VDP2_DRAWFRAMEBUFF_LINECOLOR,
    PG_MAX,
 };
 
@@ -221,6 +225,11 @@ typedef struct {
 
    // Thread
    YabMutex * mutex;
+   
+   u32 lincolor_tex;
+   u32 linecolor_pbo;
+   u32 * lincolor_buf;
+
 }  Ygl;
 
 extern Ygl * _Ygl;

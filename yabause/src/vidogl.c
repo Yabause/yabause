@@ -1558,6 +1558,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	tile.dst = 0;
 	tile.uclipmode = 0;
 	tile.blendmode = info->blendmode;
+  tile.linescreen = info->linescreen;
 
 	tile.w = tile.h = info->patternpixelwh;
 	tile.flip = info->flipfunction;
@@ -1635,9 +1636,9 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    tile.dst = 0;
    tile.uclipmode = 0;
    tile.blendmode = info->blendmode;
-    
-   tile.w = tile.h = info->patternpixelwh;
-   tile.flip = info->flipfunction;
+    tile.linescreen = info->linescreen;
+  tile.w = tile.h = info->patternpixelwh;
+  tile.flip = info->flipfunction;
 
    if (info->islinescroll){
 	   tile.h = info->lineinc;
@@ -2705,6 +2706,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
    sprite.dst=0;
    sprite.blendmode=0;
+   sprite.linescreen = 0;
 
    short CMDXA = cmd.CMDXA;
    short CMDYA = cmd.CMDYA;
@@ -2813,6 +2815,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
    sprite.dst=0;
    sprite.blendmode=0;
+   sprite.linescreen = 0;
 
    if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
    if ((cmd.CMDYC & 0x800)) cmd.CMDYC |= 0xF800; else cmd.CMDYC &= ~(0xF800);
@@ -2994,6 +2997,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
    sprite.blendmode=0;
+   sprite.linescreen = 0; 
    sprite.dst = 1;
    sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
    sprite.h = cmd.CMDSIZE & 0xFF;
@@ -3104,6 +3108,8 @@ void VIDOGLVdp1PolygonDraw(void)
    float col[4*4];
    int gouraud=0;
    int priority;
+
+   polygon.linescreen = 0;
 
    short CMDYA = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
    short CMDYB = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
@@ -3224,6 +3230,7 @@ void VIDOGLVdp1PolylineDraw(void)
    int priority;
 
    polygon.blendmode=0;   
+   polygon.linescreen = 0;
    polygon.dst = 0;
    X[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C) );
    Y[0] = Vdp1Regs->localY + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E) );
@@ -3338,6 +3345,7 @@ void VIDOGLVdp1LineDraw(void)
    int priority;
    
    polygon.blendmode=0;
+   polygon.linescreen = 0;
    polygon.dst = 0;
    X[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
    Y[0] = Vdp1Regs->localY + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
@@ -3538,6 +3546,31 @@ static void Vdp2DrawBackScreen(void)
 
 static void Vdp2DrawLineColorScreen(void)
 {
+  u32 cacheaddr = 0xFFFFFFFF;
+  int inc = 0;
+  int line_cnt = vdp2height;
+
+  if ( Vdp2Regs->LNCLEN == 0) return;
+
+  u32 * line_pixel_data = YglGetLineColorPointer();
+
+  if ((Vdp2Regs->LCTA.part.U & 0x8000)){
+    inc = 0; // single color
+  } else{
+    inc = 0x02; // color per line
+  }
+
+  u32 addr = (Vdp2Regs->LCTA.all & 0x7FFFF) * 0x2;
+  for (int i = 0; i < line_cnt; i++){
+
+    WORD LineColorRamAdress = T1ReadWord(Vdp2Ram, addr);
+    *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, 0xFF);
+    line_pixel_data++;
+    addr += inc;
+  }
+
+  YglSetLineColor( line_pixel_data, line_cnt );
+
 }
 
  
@@ -3675,6 +3708,10 @@ static void Vdp2DrawNBG0(void)
       info.alpha = 0xFF;
       info.blendmode=0;
    }
+
+   info.linescreen = 0;
+   if (Vdp2Regs->LNCLEN & 0x1)
+     info.linescreen = 1;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7) << 8;
    ReadVdp2ColorOffset(&info, 0x1);
@@ -3838,6 +3875,10 @@ static void Vdp2DrawNBG1(void)
       info.alpha = 0xFF;
       info.blendmode=0;
    }
+
+   info.linescreen = 0;
+   if (Vdp2Regs->LNCLEN & 0x2)
+     info.linescreen = 1;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x70) << 4;
    ReadVdp2ColorOffset(&info, 0x2);
@@ -4005,6 +4046,10 @@ static void Vdp2DrawNBG2(void)
       info.blendmode=0;
    }
 
+   info.linescreen = 0;
+   if (Vdp2Regs->LNCLEN & 0x4)
+     info.linescreen = 1;
+
    info.coloroffset = Vdp2Regs->CRAOFA & 0x700;
    ReadVdp2ColorOffset(&info, 0x4);
    info.coordincx = info.coordincy = 1;
@@ -4081,6 +4126,10 @@ static void Vdp2DrawNBG3(void)
       info.blendmode=0;
    }
    
+   info.linescreen = 0;
+   if (Vdp2Regs->LNCLEN & 0x8)
+     info.linescreen = 1;
+
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7000) >> 4;
    ReadVdp2ColorOffset(&info, 0x8);
    info.coordincx = info.coordincy = 1;
