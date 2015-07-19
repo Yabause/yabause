@@ -1056,6 +1056,11 @@ float * YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int 
 		prg = PG_VDP2_ADDBLEND;
 	}
 
+  if (input->linescreen){
+    prg = PG_LINECOLOR_INSERT;
+  }
+
+  
 	program = YglGetProgram(input, prg);
 	if (program == NULL) return NULL;
 
@@ -1157,6 +1162,10 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    }else if( input->priority == 8 )
    {
       prg = PG_VDP1_NORMAL;
+   }
+
+   if (input->linescreen){
+     prg = PG_LINECOLOR_INSERT;
    }
 
    program = YglGetProgram(input,prg);
@@ -1297,6 +1306,10 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    }else if( input->blendmode == 0x80 )
    {
       prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
+   }
+
+   if (input->linescreen){
+     prg = PG_LINECOLOR_INSERT;
    }
 
 
@@ -1466,6 +1479,10 @@ void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy ) {
 		prg = PG_VDP2_ADDBLEND;
 	}
 
+  if (input->linescreen){
+    prg = PG_LINECOLOR_INSERT;
+  }
+
 	program = YglGetProgram(input, prg);
 	if (program == NULL) return;
 
@@ -1550,6 +1567,9 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
       prg = PG_VDP1_NORMAL;
    }
 
+   if (input->linescreen){
+     prg = PG_LINECOLOR_INSERT;
+   }
 
    program = YglGetProgram(input,prg);
    if( program == NULL ) return;
@@ -1656,6 +1676,10 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
    }else if( input->blendmode == 0x80 )
    {
       prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
+   }
+
+   if (input->linescreen){
+     prg = PG_LINECOLOR_INSERT;
    }
 
    program = YglGetProgram(input,prg);
@@ -2039,7 +2063,12 @@ void YglRenderFrameBuffer( int from , int to ) {
    offsetcol[2] = vdp1cob / 255.0f;
    offsetcol[3] = 0.0f;
 
-   Ygl_uniformVDP2DrawFramebuffer( &_Ygl->renderfb, (float)(from)/10.0f , (float)(to)/10.0f, offsetcol );
+   if (Vdp2Regs->LNCLEN & 0x20){
+     Ygl_uniformVDP2DrawFramebuffer_linecolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+   }
+   else{
+     Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+   }
    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[(_Ygl->drawframe^0x01)&0x01] );
    //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
 
@@ -2222,6 +2251,7 @@ void YglRender(void) {
             
   		    if( level->prg[j].currentQuad != 0 )
 			    {
+#if 0
             if (level->blendmode == 0){
               glDisable(GL_BLEND);
             }
@@ -2233,6 +2263,7 @@ void YglRender(void) {
               glEnable(GL_BLEND);
               glBlendFunc(GL_ONE, GL_ONE);
             }
+#endif
             glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
 				    glVertexAttribPointer(level->prg[j].vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
 				    glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
@@ -2306,6 +2337,58 @@ void YglReset(void) {
 
 void YglShowTexture(void) {
    _Ygl->st = !_Ygl->st;
+}
+
+u32 * YglGetLineColorPointer(){
+  int error;
+  if (_Ygl->lincolor_tex == 0){
+    glGetError();
+    glGenTextures(1, &_Ygl->lincolor_tex);
+
+    glGenBuffers(1, &_Ygl->linecolor_pbo);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_STREAM_DRAW);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+    glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    if ((error = glGetError()) != GL_NO_ERROR)
+    {
+      YGLDEBUG("Fail to init lincolor_tex %04X", error);
+      return -1;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  }
+
+  glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
+  _Ygl->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+  if ((error = glGetError()) != GL_NO_ERROR)
+  {
+    YGLDEBUG("Fail to init YglTM->texture %04X", error);
+    return -1;
+  }
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+  return _Ygl->lincolor_buf;
+}
+
+void YglSetLineColor(u32 * pbuf, int size){
+
+  glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+  //if (_Ygl->lincolor_buf == pbuf) {
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    _Ygl->lincolor_buf = NULL;
+  //}
+  glBindTexture(GL_TEXTURE_2D, 0 );
+  return;
 }
 
 //////////////////////////////////////////////////////////////////////////////

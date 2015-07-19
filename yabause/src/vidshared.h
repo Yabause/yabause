@@ -114,6 +114,7 @@ typedef struct
    s32 cor;
    s32 cog;
    s32 cob;
+   int linescreen;
 
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */
@@ -161,7 +162,6 @@ typedef struct
    int isverticalscroll;
    u32 verticalscrolltbl;
    int verticalscrollinc;
-   int linescreen;
    
    // WindowMode
    u8  LogicWin;    // Window Logic AND OR
