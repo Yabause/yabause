@@ -113,11 +113,11 @@ void vdp2_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void load_font_8x8_to_vdp2_vram_1bpp_to_4bpp(u32 tile_start_address)
+void load_font_8x8_to_vram_1bpp_to_4bpp(u32 tile_start_address, u32 ram_pointer)
 {
    int x, y;
    int chr;
-   volatile u8 *dest = (volatile u8 *)(VDP2_RAM + tile_start_address);
+   volatile u8 *dest = (volatile u8 *)(ram_pointer + tile_start_address);
 
    for (chr = 0; chr < 128; chr++)//128 ascii chars total
    {
@@ -197,10 +197,12 @@ void vdp2_basic_tile_scroll_setup(const u32 tile_address)
 
    vdp_rbg0_deinit();
 
-   VDP2_REG_CYCA0U = 0x0123; // NBG0, NBG1, NBG2, NBG3 Pattern name data read 
-   VDP2_REG_CYCB0U = 0x4567; // NBG0, NBG1, NBG2, NBG3 Character pattern read
+   VDP2_REG_CYCA0L = 0x0123;
+   VDP2_REG_CYCA0U = 0xFFFF;
+   VDP2_REG_CYCB0L = 0xF4F5;
+   VDP2_REG_CYCB0U = 0xFF76;
 
-   load_font_8x8_to_vdp2_vram_1bpp_to_4bpp(tile_address);
+   load_font_8x8_to_vram_1bpp_to_4bpp(tile_address, VDP2_RAM);
 
    screen_settings_struct settings;
 
@@ -277,12 +279,12 @@ void vdp2_all_scroll_test()
 {
    int i;
    const u32 tile_address = 0x40000;
-   
+
    vdp2_basic_tile_scroll_setup(tile_address);
 
    for (i = 0; i < 64; i += 4)
    {
-      write_str_as_pattern_name_data(0, i,     "A button: Start scrolling. NBG0. Testing NBG0. This is NBG0.... ", 3, 0x000000, tile_address);
+      write_str_as_pattern_name_data(0, i, "A button: Start scrolling. NBG0. Testing NBG0. This is NBG0.... ", 3, 0x000000, tile_address);
       write_str_as_pattern_name_data(0, i + 1, "B button: Stop scrolling.  NBG1. Testing NBG1. This is NBG1.... ", 4, 0x004000, tile_address);
       write_str_as_pattern_name_data(0, i + 2, "C button: Reset.           NBG2. Testing NBG2. This is NBG2.... ", 5, 0x008000, tile_address);
       write_str_as_pattern_name_data(0, i + 3, "Start:    Exit.            NBG3. Testing NBG3. This is NBG3.... ", 6, 0x00C000, tile_address);
@@ -290,14 +292,19 @@ void vdp2_all_scroll_test()
 
    int do_scroll = 0;
    int scroll_pos = 0;
+   int framecount = 0;
 
    for (;;)
    {
       vdp_vsync();
 
+      framecount++;
+
       if (do_scroll)
       {
-         scroll_pos++;
+         if ((framecount % 3) == 0)
+            scroll_pos++;
+
          vdp2_scroll_test_set_scroll(scroll_pos);
       }
 
@@ -361,6 +368,26 @@ void vdp2_line_color_screen_test_set_up_line_screen(const u32 table_address)
 
 //////////////////////////////////////////////////////////////////////////////
 
+struct Ccctl {
+   int exccen, ccrtmd, ccmd, spccen, lcccen, r0ccen;
+   int nccen[4];
+};
+
+void do_color_ratios(int *framecount, int * ratio, int *ratio_dir)
+{
+   *framecount = *framecount + 1;
+
+   if ((*framecount % 3) == 0)
+      *ratio = *ratio_dir + *ratio;
+
+   if (*ratio > 30)
+      *ratio_dir = -1;
+   if (*ratio < 2)
+      *ratio_dir = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_line_color_screen_test()
 {
    const u32 tile_address = 0x40000;
@@ -404,9 +431,7 @@ void vdp2_line_color_screen_test()
    write_str_as_pattern_name_data(0, 19, "NBG0 and NBG1 overlap on this line.      ", 3, 0x000000, tile_address);
    write_str_as_pattern_name_data(0, 19, "NBG0 and NBG1 overlap on this line.      ", 4, 0x004000, tile_address);
 
-   struct {
-      int exccen, ccrtmd, ccmd, lcccen;
-   }ccctl;
+   struct Ccctl ccctl;
 
    ccctl.exccen = 0;
    ccctl.ccrtmd = 1;
@@ -432,15 +457,7 @@ void vdp2_line_color_screen_test()
       *(volatile u32 *)0x25F800A8 = (lcclmd << 31) | (table_address / 2);
 
       //update color calculation ratios
-      framecount++;
-
-      if ((framecount%3) == 0)
-         ratio += ratio_dir;
-
-      if (ratio > 30)
-         ratio_dir = -1;
-      if (ratio < 2)
-         ratio_dir = 1;
+      do_color_ratios(&framecount, &ratio, &ratio_dir);
 
       if (update_nbg_ratios)
       {
@@ -585,6 +602,497 @@ void vdp2_line_color_screen_test()
    VDP2_REG_CCRNA = 0;
    VDP2_REG_CCRNB = 0;
    VDP2_REG_CCRLB = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void write_large_font(int x_pos, int y_pos, int* number, int palette, u32 base, const u32 tile_address)
+{
+   int y, x, j = 0;
+   for (y = 0; y < 5; y++)
+   {
+      for (x = 0; x < 3; x++)
+      {
+         if (number[j])
+         {
+            write_str_as_pattern_name_data(x + x_pos, y + y_pos, "\n", palette, base, tile_address);
+         }
+         j++;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp2_extended_color_calculation_test()
+{
+   const u32 tile_address = 0x40000;
+   int zero[] = { 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1 };
+   int one[] = { 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 };
+   int two[] = { 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1 };
+   int three[] = { 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1 };
+   const char* fill = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+
+   int i;
+
+   vdp2_basic_tile_scroll_setup(tile_address);
+
+   int palette = 9;
+
+   for (i = 0; i < 32; i++)
+   {
+      write_str_as_pattern_name_data(0, i, fill, palette, 0x000000, tile_address);
+   }
+
+   palette++;
+   for (i = 7; i < 32; i++)
+   {
+      write_str_as_pattern_name_data(0, i, fill, palette, 0x004000, tile_address);
+   }
+
+   palette++;
+   for (i = 14; i < 32; i++)
+   {
+      write_str_as_pattern_name_data(0, i, fill, palette, 0x008000, tile_address);
+   }
+
+   palette++;
+   for (i = 21; i < 32; i++)
+   {
+      write_str_as_pattern_name_data(0, i, fill, palette, 0x00c000, tile_address);
+   }
+
+   for (i = 1; i < 24; i += 7)
+   {
+      write_large_font(1, i, zero, 0, 0x000000, tile_address);
+      write_large_font(5, i, one, 0, 0x004000, tile_address);
+      write_large_font(9, i, two, 0, 0x008000, tile_address);
+      write_large_font(13, i, three, 0, 0x00C000, tile_address);
+   }
+
+   //set up instructions
+   char * instructions[] = {
+      "Controls:             ",
+      "A:     EXCCEN  on/off ",
+      "B:     CCMD    on/off ",
+      "C:     NBG0    on/off ",
+      "X:     NBG1    on/off ",
+      "Y:     NBG2    on/off ",
+      "Z:     NBG3    on/off ",
+      "UP:    N0CCEN  on/off ",
+      "DOWN:  N1CCEN  on/off ",
+      "LEFT:  N2CCEN  on/off ",
+      "RIGHT: N3CCEN  on/off ",
+      "START: Exit           "
+   };
+
+   int j = 0;
+   for (i = 12; i < 12 + 12; i++)
+   {
+      write_str_as_pattern_name_data(18, i, instructions[j++], 3, 0x000000, tile_address);
+   }
+
+   int disp_nbg[4] = { 1, 1, 1, 1 };
+   int nbg_ratio[4] = { 0 };
+
+   struct Ccctl ccctl = { 0 };
+
+   ccctl.exccen = 1;
+   ccctl.ccmd = 0;
+   ccctl.nccen[3] = 1;
+   ccctl.nccen[2] = 1;
+   ccctl.nccen[1] = 1;
+   ccctl.nccen[0] = 1;
+
+   int framecount = 0;
+   int ratio = 0;
+   int ratio_dir = 1;
+
+   int update_nbg_ratios = 1;
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      do_color_ratios(&framecount, &ratio, &ratio_dir);
+
+      if (update_nbg_ratios)
+      {
+         nbg_ratio[0] = ((-ratio) & 0x1f);
+         nbg_ratio[2] = nbg_ratio[0];
+         nbg_ratio[3] = nbg_ratio[1] = ratio;
+
+         VDP2_REG_CCRNA = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
+         VDP2_REG_CCRNB = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
+      }
+
+      char ratio_status_str[64] = "";
+
+      sprintf(ratio_status_str, "NBG0=%04x NBG1=%04x ", nbg_ratio[0], nbg_ratio[1]);
+      write_str_as_pattern_name_data(18, 7, ratio_status_str, 3, 0x000000, tile_address);
+
+      sprintf(ratio_status_str, "NBG2=%04x NBG3=%04x ", nbg_ratio[2], nbg_ratio[3]);
+      write_str_as_pattern_name_data(18, 8, ratio_status_str, 3, 0x000000, tile_address);
+
+      sprintf(ratio_status_str, "Color ram mode %d ", (VDP2_REG_RAMCTL >> 12) & 3);
+      write_str_as_pattern_name_data(18, 9, ratio_status_str, 3, 0x000000, tile_address);
+
+      VDP2_REG_CCCTL =
+         (ccctl.exccen << 10) |
+         (ccctl.ccrtmd << 9) |
+         (ccctl.ccmd << 8) |
+         (ccctl.spccen << 6) |
+         (ccctl.lcccen << 5) |
+         (ccctl.r0ccen << 4) |
+         (ccctl.nccen[3] << 3) |
+         (ccctl.nccen[2] << 2) |
+         (ccctl.nccen[1] << 1) |
+         (ccctl.nccen[0]);
+
+      VDP2_REG_PRINA = disp_nbg[0] | (disp_nbg[1] << 8);
+      VDP2_REG_PRINB = disp_nbg[2] | (disp_nbg[3] << 8);
+
+      for (i = 0; i < 4; i++)
+      {
+         char out[64];
+         sprintf(out, "NBG%d ", i);
+         if (disp_nbg[i])
+         {
+            strcat(out, "On ");
+         }
+         else
+         {
+            strcat(out, "Off");
+         }
+
+         char out2[64];
+         sprintf(out2, " N%dCCEN ", i);
+         strcat(out, out2);
+
+         if (ccctl.nccen[i])
+         {
+            strcat(out, "On ");
+         }
+         else
+         {
+            strcat(out, "Off");
+         }
+         write_str_as_pattern_name_data(18, i, out, 3, 0x000000, tile_address);
+      }
+
+      if (ccctl.exccen)
+      {
+         write_str_as_pattern_name_data(18, 5, "EXCCEN=1 (Extended)", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(18, 5, "EXCCEN=0 (Off)     ", 3, 0x000000, tile_address);
+      }
+      if (ccctl.ccmd)
+      {
+         write_str_as_pattern_name_data(18, 6, "CCMD=1   (As is)  ", 3, 0x000000, tile_address);
+      }
+      else
+      {
+         write_str_as_pattern_name_data(18, 6, "CCMD=0   (Reg val)", 3, 0x000000, tile_address);
+      }
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         ccctl.exccen = !ccctl.exccen;
+      }
+
+      if (per[0].but_push_once & PAD_B)
+      {
+         ccctl.ccmd = !ccctl.ccmd;
+      }
+
+      if (per[0].but_push_once & PAD_C)
+      {
+         disp_nbg[0] = !disp_nbg[0];
+      }
+
+      if (per[0].but_push_once & PAD_X)
+      {
+         disp_nbg[1] = !disp_nbg[1];
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         disp_nbg[2] = !disp_nbg[2];
+      }
+
+      if (per[0].but_push_once & PAD_Z)
+      {
+         disp_nbg[3] = !disp_nbg[3];
+      }
+
+      if (per[0].but_push_once & PAD_UP)
+      {
+         ccctl.nccen[0] = !ccctl.nccen[0];
+      }
+
+      if (per[0].but_push_once & PAD_DOWN)
+      {
+         ccctl.nccen[1] = !ccctl.nccen[1];
+      }
+
+      if (per[0].but_push_once & PAD_LEFT)
+      {
+         ccctl.nccen[2] = !ccctl.nccen[2];
+      }
+
+      if (per[0].but_push_once & PAD_RIGHT)
+      {
+         ccctl.nccen[3] = !ccctl.nccen[3];
+      }
+
+      if (per[0].but_push_once & PAD_START)
+         break;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vpd2_priority_shadow_draw_sprites(int start_x, int start_y, u32 vdp1_tile_address, int operation)
+{
+   int i, j;
+   sprite_struct quad = { 0 };
+
+   const int size = 8;
+
+   quad.x = start_x * size;
+   quad.y = start_y * size;
+
+   int vdp2_priority = 0;
+   int vdp2_color_calc = 0;
+   int palette = 4;
+
+   for (j = 0; j < 4; j++)
+   {
+      quad.x = start_x * size;
+
+      for (i = 0; i < 4; i++)
+      {
+         quad.bank = (vdp2_priority << 12) | (vdp2_color_calc << 9) | (palette << 4);
+
+         //use the "\n" tile
+         quad.addr = vdp1_tile_address + (10 * 32);
+
+         //msb on
+         if (operation == 2)
+         {
+            quad.attr = (1 << 15);
+         }
+
+         quad.height = size;
+         quad.width = size;
+
+         vdp_draw_normal_sprite(&quad);
+
+         quad.x += size;
+
+         if (operation == 0 || operation == 1)
+         {
+            vdp2_priority++;
+            vdp2_priority &= 7;
+         }
+         if (operation == 1)
+         {
+            vdp2_color_calc++;
+            vdp2_color_calc &= 7;
+         }
+
+      }
+      quad.y += size;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void write_tiles_4x(int x, int y, char * str, u32 vdp2_tile_address, u32 base)
+{
+   int i;
+   for (i = 0; i < 4; i++)
+   {
+      write_str_as_pattern_name_data(x, y + i, str, 3, base, vdp2_tile_address);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void draw_normal_shadow_sprite(int x, int y, const char * str)
+{
+   sprite_struct quad = { 0 };
+
+   int size = 32;
+
+   int top_right_x = x * 8;
+   int top_right_y = y * 8;
+   quad.x = top_right_x + size;
+   quad.y = top_right_y;
+   quad.x2 = top_right_x + size;
+   quad.y2 = top_right_y + size;
+   quad.x3 = top_right_x;
+   quad.y3 = top_right_y + size;
+   quad.x4 = top_right_x;
+   quad.y4 = top_right_y;
+   quad.bank = 0x0ffe;
+
+   vdp_draw_polygon(&quad);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp2_sprite_priority_shadow_test()
+{
+   const u32 vdp2_tile_address = 0x40000;
+   const u32 vdp1_tile_address = 0x10000;
+   vdp2_basic_tile_scroll_setup(vdp2_tile_address);
+
+   load_font_8x8_to_vram_1bpp_to_4bpp(vdp1_tile_address, VDP1_RAM);
+
+   VDP1_REG_PTMR = 0x02;//draw automatically with frame change
+
+   int s0prin = 7;
+   int s1prin = 6;
+
+   VDP2_REG_PRISA = s0prin | (s1prin << 8);
+   VDP2_REG_PRISB = 5 | (4 << 8);
+   VDP2_REG_PRISC = 3 | (2 << 8);
+   VDP2_REG_PRISD = 1 | (0 << 8);
+
+   int nbg_priority[4] = { 0 };
+
+   nbg_priority[0] = 7;
+   nbg_priority[1] = 6;
+   nbg_priority[2] = 5;
+   nbg_priority[3] = 4;
+
+   VDP2_REG_PRINA = nbg_priority[0] | (nbg_priority[1] << 8);
+   VDP2_REG_PRINB = nbg_priority[2] | (nbg_priority[3] << 8);
+
+   VDP2_REG_SDCTL = 0x9 | (1 << 8);
+
+   int nbg_ratio[4] = { 0 };
+   int framecount = 0;
+   int ratio = 0;
+   int ratio_dir = 1;
+
+   int spccs = 2;
+   int spccn = 5;
+
+   write_str_as_pattern_name_data(0, 0, "Normal Shadow    ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 5, "MSB Transparent ", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 6, "          Shadow ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 10, "Sprite priority  ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 15, "MSB Sprite     ", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 16, "          Shadow ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 20, "Special Color    ", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(0, 21, "     Calculation ->", 3, 0x000000, vdp2_tile_address);
+   write_str_as_pattern_name_data(20, 25, "NBG0 NBG1 NBG2 NBG3", 3, 0x000000, vdp2_tile_address);
+
+   int x;
+
+   u32 addresses[4] = { 0x000000, 0x004000, 0x008000, 0x00c000 };
+
+   char* str = "\n\n\n\n";
+
+   for (x = 0; x < 4; x++)
+   {
+      int x_pos = 20 + (5 * x);
+      write_tiles_4x(x_pos, 0, str, vdp2_tile_address, addresses[x]);//normal shadow tiles
+      write_tiles_4x(x_pos, 5, str, vdp2_tile_address, addresses[x]);//msb shadow tiles
+      write_tiles_4x(x_pos, 10, str, vdp2_tile_address, addresses[x]);//sprite priority tiles
+      write_tiles_4x(x_pos, 15, str, vdp2_tile_address, addresses[x]);//msb shadow and cc tiles
+      write_tiles_4x(x_pos, 20, str, vdp2_tile_address, addresses[x]);//special color calc tiles
+   }
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      VDP2_REG_SPCTL = (spccs << 12) | (spccn << 8) | (0 << 5) | 7;
+
+      VDP2_REG_CCCTL = (1 << 6) | (1 << 0) | (1 << 3);
+
+      VDP2_REG_CCRSA = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
+      VDP2_REG_CCRSB = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
+      VDP2_REG_CCRSC = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
+      VDP2_REG_CCRSD = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
+
+      vdp_start_draw_list();
+      sprite_struct quad = { 0 };
+
+      //system clipping
+      quad.x = 320;
+      quad.y = 224;
+
+      vdp_system_clipping(&quad);
+
+      //user clipping
+      quad.x = 0;
+      quad.y = 0;
+      quad.x2 = 320;
+      quad.y2 = 224;
+
+      vdp_user_clipping(&quad);
+
+      quad.x = 0;
+      quad.y = 0;
+
+      vdp_local_coordinate(&quad);
+
+      for (x = 0; x < 4; x++)
+      {
+         int x_pos = 20 + (5 * x);
+         //normal shadow
+         draw_normal_shadow_sprite(x_pos, 0, str);
+         //msb shadow
+         vpd2_priority_shadow_draw_sprites(x_pos, 5, vdp1_tile_address, 2);
+         //sprite priority
+         vpd2_priority_shadow_draw_sprites(x_pos, 10, vdp1_tile_address, 0);
+         //msb shadow and color calculation
+         vpd2_priority_shadow_draw_sprites(x_pos, 15, vdp1_tile_address, 0);
+         vpd2_priority_shadow_draw_sprites(x_pos, 15, vdp1_tile_address, 2);
+         //special color calc
+         vpd2_priority_shadow_draw_sprites(x_pos, 20, vdp1_tile_address, 1);
+      }
+
+      vdp_end_draw_list();
+
+      char status[64] = "";
+
+      sprintf(status, "S0PRIN=%02x S1PRIN=%02x", s0prin, s1prin);
+      write_str_as_pattern_name_data(0, 25, status, 3, 0x000000, vdp2_tile_address);
+      sprintf(status, "SOCCRT=%02x S1CCRT=%02x", nbg_ratio[0], nbg_ratio[1]);
+      write_str_as_pattern_name_data(0, 26, status, 3, 0x000000, vdp2_tile_address);
+      sprintf(status, "SPCCS =%02x SPCCN =%02x (Press A,B) ", spccs, spccn);
+      write_str_as_pattern_name_data(0, 27, status, 3, 0x000000, vdp2_tile_address);
+
+      do_color_ratios(&framecount, &ratio, &ratio_dir);
+
+      nbg_ratio[0] = ((-ratio) & 0x1f);
+      nbg_ratio[2] = nbg_ratio[0];
+      nbg_ratio[3] = nbg_ratio[1] = ratio;
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         spccs++;
+         spccs &= 3;
+      }
+
+      if (per[0].but_push_once & PAD_B)
+      {
+         spccn++;
+         spccn &= 7;
+      }
+
+      if (per[0].but_push_once & PAD_START)
+         break;
+   }
+
+   vdp2_basic_tile_scroll_deinit();
 }
 
 //////////////////////////////////////////////////////////////////////////////
