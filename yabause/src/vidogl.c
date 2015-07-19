@@ -1551,7 +1551,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy  )
 {
-	u32 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr;
+	u32 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable;
 	YglCache c;
 	YglSprite tile;
 	int winmode = 0;
@@ -1628,7 +1628,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
 static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
 {
-   u32 cacheaddr = ((u32) (info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr;
+	u32 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable;
    YglCache c;
    YglSprite tile;
    int winmode=0;
