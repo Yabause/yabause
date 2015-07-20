@@ -1569,27 +1569,14 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	else
 		tile.priority = info->priority;
 
-	if (info->coordincx != 1.0f || info->coordincy != 1.0f) {
-
-		tile.vertices[0] = x * info->coordincx;
-		tile.vertices[1] = y * info->coordincy;
-		tile.vertices[2] = (x + tile.w) * info->coordincx;
-		tile.vertices[3] = y * info->coordincy;
-		tile.vertices[4] = (x + tile.w) * info->coordincx;
-		tile.vertices[5] = (y + info->lineinc) * info->coordincy;
-		tile.vertices[6] = x * info->coordincx;
-		tile.vertices[7] = (y + info->lineinc) * info->coordincy;
-	}
-	else{
-		tile.vertices[0] = x;
-		tile.vertices[1] = y;
-		tile.vertices[2] = (x + tile.w);
-		tile.vertices[3] = y;
-		tile.vertices[4] = (x + tile.w);
-		tile.vertices[5] = (y + info->lineinc);
-		tile.vertices[6] = x;
-		tile.vertices[7] = (y + info->lineinc);
-	}
+	tile.vertices[0] = x;
+	tile.vertices[1] = y;
+	tile.vertices[2] = (x + tile.w);
+	tile.vertices[3] = y;
+	tile.vertices[4] = (x + tile.w);
+	tile.vertices[5] = (y + info->lineinc);
+	tile.vertices[6] = x;
+	tile.vertices[7] = (y + info->lineinc);
 
 	// Screen culling
 	//if (tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height || tile.vertices[2] < 0 || tile.vertices[5] < 0)
@@ -1613,11 +1600,11 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
 	if (1 == YglIsCached(cacheaddr, &c))
 	{
-		YglCachedQuadOffset(&tile, &c, cx, cy);
+		YglCachedQuadOffset(&tile, &c, cx, cy, info->coordincx, info->coordincy);
 		return;
 	}
 
-	YglQuadOffset(&tile, texture, &c, cx, cy);
+	YglQuadOffset(&tile, texture, &c, cx, cy, info->coordincx, info->coordincy);
 	YglCacheAdd(cacheaddr, &c);
 
 	switch (info->patternwh)

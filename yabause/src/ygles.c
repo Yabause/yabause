@@ -1039,7 +1039,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    return program;
 }
 
-float * YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy ) {
+int YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy ) {
 	unsigned int x, y;
 	YglLevel   *level;
 	YglProgram *program;
@@ -1074,18 +1074,18 @@ float * YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int 
 	vHeight = input->vertices[5] - input->vertices[1];
 
 	pos = program->quads + program->currentQuad;
-	pos[0] = input->vertices[0] - cx;
-	pos[1] = input->vertices[1];
-	pos[2] = input->vertices[2] - cx;
-	pos[3] = input->vertices[3];
-	pos[4] = input->vertices[4] - cx;
-	pos[5] = input->vertices[5];
-	pos[6] = input->vertices[0] - cx;
-	pos[7] = input->vertices[1];
-	pos[8] = input->vertices[4] - cx;
-	pos[9] = input->vertices[5];
-	pos[10] = input->vertices[6] - cx;
-	pos[11] = input->vertices[7];
+	pos[0] = (input->vertices[0] - cx) * sx;
+	pos[1] = input->vertices[1] * sy;
+	pos[2] = (input->vertices[2] - cx) * sx;
+	pos[3] = input->vertices[3] * sy;
+	pos[4] = (input->vertices[4] - cx) * sx;
+	pos[5] = input->vertices[5] * sy;
+	pos[6] = (input->vertices[0] - cx) * sx;
+	pos[7] = (input->vertices[1]) * sy;
+	pos[8] = (input->vertices[4] - cx)*sx;
+	pos[9] = input->vertices[5] * sy;
+	pos[10] = (input->vertices[6] - cx) * sx;
+	pos[11] = input->vertices[7] * sy;
 
 	// vtxa = (program->vertexAttribute + (program->currentQuad * 2));
 	// memset(vtxa,0,sizeof(float)*24);
@@ -1462,7 +1462,7 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy ) {
+void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, float sx, float sy ) {
 	YglLevel   * level;
 	YglProgram * program;
 	unsigned int x, y;
@@ -1497,18 +1497,18 @@ void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy ) {
 	// Vertex
 	vHeight = input->vertices[5] - input->vertices[1];
 	pos = program->quads + program->currentQuad;
-	pos[0] = input->vertices[0] - cx;
-	pos[1] = input->vertices[1];
-	pos[2] = input->vertices[2] - cx;
-	pos[3] = input->vertices[3];
-	pos[4] = input->vertices[4] - cx;
-	pos[5] = input->vertices[5];
-	pos[6] = input->vertices[0] - cx;
-	pos[7] = input->vertices[1];
-	pos[8] = input->vertices[4] - cx;
-	pos[9] = input->vertices[5];
-	pos[10] = input->vertices[6] - cx;
-	pos[11] = input->vertices[7];
+	pos[0] = (input->vertices[0] - cx) * sx;
+	pos[1] = input->vertices[1] * sy;
+	pos[2] = (input->vertices[2] - cx) * sx;
+	pos[3] = input->vertices[3] * sy;
+	pos[4] = (input->vertices[4] - cx) * sx;
+	pos[5] = input->vertices[5] * sy;
+	pos[6] = (input->vertices[0] - cx) * sx;
+	pos[7] = (input->vertices[1]) * sy;
+	pos[8] = (input->vertices[4] - cx)*sx;
+	pos[9] = input->vertices[5] * sy;
+	pos[10] = (input->vertices[6] - cx) * sx;
+	pos[11] = input->vertices[7] * sy;
 
 	// Color
 	tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
