@@ -2588,6 +2588,10 @@ void VIDOGLResize(unsigned int w, unsigned int h, int on)
 
    GlHeight=h;
    GlWidth=w;
+
+   _Ygl->width = w;
+   _Ygl->height = h;
+
    
    YglGLInit(2048, 1024);
    glViewport(0, 0, w, h);
@@ -3543,27 +3547,30 @@ static void Vdp2DrawBackScreen(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+// 11.3 Line Color insertion
+//  7.1 Line Color Screen
 static void Vdp2DrawLineColorScreen(void)
 {
+
   u32 cacheaddr = 0xFFFFFFFF;
   int inc = 0;
   int line_cnt = vdp2height;
+  int i;
 
   if ( Vdp2Regs->LNCLEN == 0) return;
 
   u32 * line_pixel_data = YglGetLineColorPointer();
 
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
-    inc = 0; // single color
+    inc = 0x02; // single color
   } else{
-    inc = 0x02; // color per line
+    inc = 0x00; // color per line
   }
 
   u32 addr = (Vdp2Regs->LCTA.all & 0x7FFFF) * 0x2;
-  for (int i = 0; i < line_cnt; i++){
+  for (i = 0; i < line_cnt; i++){
 
-    WORD LineColorRamAdress = T1ReadWord(Vdp2Ram, addr);
+    u16 LineColorRamAdress = T1ReadWord(Vdp2Ram, addr);
     *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, 0xFF);
     line_pixel_data++;
     addr += inc;

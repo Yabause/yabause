@@ -753,6 +753,7 @@ int Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to , float * off
    glUniform4fv(idcoloroffset,1,offsetcol);
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
+   _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_mvpMatrix");
 }
 
 /*------------------------------------------------------------------------------------
@@ -763,7 +764,7 @@ static int idfrom_linecolor;
 static int idto_linecolor;
 static int idcoloroffset_linecolor;
 static int id_fblinecol_s_line;
-static int id_fblinecol_emu_hegiht;
+static int id_fblinecol_emu_height;
 
 const GLchar * pYglprg_vdp2_drawfb_linecolor_v[] = { Yglprg_vdp1_drawfb_v, NULL };
 
@@ -779,9 +780,10 @@ const GLchar Yglprg_vdp2_drawfb_linecolor_f[] =
 "uniform float u_from;                                  \n"
 "uniform float u_to;                                    \n"
 "uniform vec4 u_coloroffset;                            \n"
-"uniform int u_emu_hegiht;    \n"
+"uniform float u_emu_height;    \n"
 "uniform sampler2D s_line;                        \n"
 "out vec4 fragColor;            \n"
+"layout(origin_upper_left) in vec4 gl_FragCoord; \n"
 "void main()                                          \n"
 "{                                                    \n"
 "  vec2 addr = v_texcoord;                         \n"
@@ -792,7 +794,7 @@ const GLchar Yglprg_vdp2_drawfb_linecolor_f[] =
 "  if( depth < u_from || depth > u_to ){ discard;return;} \n"
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int(gl_FragCoord.y) / u_emu_hegiht;\n"
+"  linepos.x = int(gl_FragCoord.y * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
 "  if( alpha > 0.0){ \n"
 "     fragColor = fbColor;                            \n"
@@ -822,11 +824,12 @@ int Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, flo
   glEnableVertexAttribArray(1);
 
   glUniform1i(id_fblinecol_s_line, 1);
-  glUniform1i(id_fblinecol_emu_hegiht, _Ygl->rheight);
+  glUniform1f(id_fblinecol_emu_height, (float)_Ygl->rheight/(float)_Ygl->height);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
   glActiveTexture(GL_TEXTURE0);
   glDisable(GL_BLEND);
+  _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"u_mvpMatrix");
 
 }
 
@@ -862,10 +865,11 @@ const GLchar Yglprg_linecol_f[] =
 "precision highp float;                            \n"
 "in highp vec4 v_texcoord;                            \n"
 "uniform vec4 u_color_offset;    \n"
-"uniform int u_emu_hegiht;    \n"
+"uniform float u_emu_height;    \n"
 "uniform sampler2D s_texture;                        \n"
 "uniform sampler2D s_line;                        \n"
 "out vec4 fragColor;            \n"
+"layout(origin_upper_left) in vec4 gl_FragCoord; \n"
 "void main()                                         \n"
 "{                                                   \n"
 "  ivec2 addr; \n"
@@ -873,7 +877,7 @@ const GLchar Yglprg_linecol_f[] =
 "  addr.y = int(v_texcoord.y);                        \n"
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int(gl_FragCoord.y) / u_emu_hegiht;\n"
+"  linepos.x = int(gl_FragCoord.y * u_emu_height);\n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );      \n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
 "  if(txcol.a > 0.0){\n                                 "
@@ -887,19 +891,19 @@ const GLchar * pYglprg_linecol_f[] = { Yglprg_linecol_f, NULL };
 static int id_linecol_s_texture = -1;
 static int id_linecol_s_line = -1;
 static int id_linecol_color_offset = -1;
-static int id_linecol_emu_hegiht = -1;
+static int id_linecol_emu_height = -1;
 
 int Ygl_uniformLinecolorInsert(void * p)
 {
 
   YglProgram * prg;
   prg = p;
-  glEnableVertexAttribArray(prg->vertexp);
-  glEnableVertexAttribArray(prg->texcoordp);
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
   glUniform1i(id_linecol_s_texture, 0);
   glUniform1i(id_linecol_s_line, 1);
   glUniform4fv(id_linecol_color_offset, 1, prg->color_offset_val);
-  glUniform1i(id_linecol_emu_hegiht, _Ygl->rheight);
+  glUniform1f(id_linecol_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
 
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
@@ -915,7 +919,12 @@ int Ygl_cleanupLinecolorInsert(void * p)
 {
   YglProgram * prg;
   prg = p;
+  
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glActiveTexture(GL_TEXTURE0);
   glEnable(GL_BLEND);
+
   return 0;
 }
 
@@ -1066,7 +1075,7 @@ int YglProgramInit()
    id_linecol_s_texture = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"s_texture");
    id_linecol_s_line = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"s_line");
    id_linecol_color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_color_offset");
-   id_linecol_emu_hegiht =   glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_emu_hegiht");
+   id_linecol_emu_height =   glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_emu_height");
 
    //
    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LINECOLOR, pYglprg_vdp2_drawfb_linecolor_v, pYglprg_vdp2_drawfb_linecolor_f) != 0)
@@ -1077,7 +1086,7 @@ int YglProgramInit()
    idto_linecolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"u_to");
    idcoloroffset_linecolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"u_coloroffset");
    id_fblinecol_s_line = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"s_line");
-   id_fblinecol_emu_hegiht = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"u_emu_hegiht");
+   id_fblinecol_emu_height = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"u_emu_height");
 
    return 0;
 }
@@ -1089,9 +1098,10 @@ int YglProgramChange( YglLevel * level, int prgid )
    GLuint id;
    YglProgram* tmp;
    YglProgram* current;
-   level->prgcurrent++;
    int maxsize;
    void * dataPointer;
+
+   level->prgcurrent++;
 
    if( level->prgcurrent >= level->prgcount)
    {
