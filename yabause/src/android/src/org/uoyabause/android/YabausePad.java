@@ -271,6 +271,9 @@ class YabausePad extends View implements OnTouchListener {
         buttons[PadEvent.BUTTON_Y].updateRect((int)(getWidth() - 210*density), (int)(getHeight() - 190*density), (int)(getWidth() - 170*density), (int)(getHeight() - 150*density));
         buttons[PadEvent.BUTTON_Z].updateRect((int)(getWidth() - 120*density), (int)(getHeight() - 220*density), (int)(getWidth() - 80*density), (int)(getHeight() - 180*density));
 
+        buttons[PadEvent.BUTTON_LEFT_TRIGGER].updateRect((int)(30*density), (int)(getHeight() - 270*density), (int)(90*density), (int)(getHeight() - 230*density));;
+        buttons[PadEvent.BUTTON_RIGHT_TRIGGER].updateRect((int)(getWidth() - 90*density), (int)(getHeight() - 270*density), (int)(getWidth() - 30*density), (int)(getHeight() - 150*density));;
+
         setMeasuredDimension(width, height);
     }
 }
