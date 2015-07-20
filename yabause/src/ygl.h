@@ -259,6 +259,7 @@ void YglCacheReset(void);
 // 0.. no belnd, 1.. Alpha, 2.. Add 
 int YglSetLevelBlendmode( int pri, int mode );
 
+int Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol);
 int Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol );
 
 void YglNeedToUpdateWindow();
