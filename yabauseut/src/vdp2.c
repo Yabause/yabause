@@ -173,6 +173,138 @@ void write_str_as_pattern_name_data(int x_pos, int y_pos, const char* str,
 
 //////////////////////////////////////////////////////////////////////////////
 
+//simple menu and reg writing system for tests that need a lot of reg changes
+#define REG_ADJUSTER_MAX_VARS 28
+#define REG_ADJUSTER_STRING_LEN 32
+
+struct RegAdjusterVarInfo
+{
+   char name[REG_ADJUSTER_STRING_LEN];
+   int num_values;
+   int value;
+   int *dest;
+};
+
+struct RegAdjusterState
+{
+   int repeat_timer;
+   int menu_selection;
+   int num_menu_items;
+   struct RegAdjusterVarInfo vars[REG_ADJUSTER_MAX_VARS];
+};
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ra_add_var(struct RegAdjusterState* s, int * dest, char* name, int num_vals)
+{
+   strcpy(s->vars[s->num_menu_items].name, name);
+   s->vars[s->num_menu_items].num_values = num_vals;
+   s->vars[s->num_menu_items].dest = dest;
+   s->num_menu_items++;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ra_update_vars(struct RegAdjusterState* s)
+{
+   int i;
+   for (i = 0; i < s->num_menu_items; i++)
+   {
+      *s->vars[i].dest = s->vars[i].value;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ra_add_array(struct RegAdjusterState* s, int(*vars)[], int length, char* name, int num_vals)
+{
+   int i;
+   for (i = 0; i < length; i++)
+   {
+      char str[REG_ADJUSTER_STRING_LEN] = { 0 };
+      strcpy(str, name);
+
+      char str2[REG_ADJUSTER_STRING_LEN] = { 0 };
+      sprintf(str2, "%d", i);
+      strcat(str, str2);
+      ra_add_var(s, &(*vars)[i], str, num_vals);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ra_do_menu(struct RegAdjusterState* s, int x_pos)
+{
+   int i;
+   for (i = 0; i < s->num_menu_items; i++)
+   {
+      char current_line[REG_ADJUSTER_STRING_LEN] = { 0 };
+
+      if (s->menu_selection == i)
+      {
+         strcat(current_line, ">");
+      }
+      else
+      {
+         strcat(current_line, " ");
+      }
+      char value[REG_ADJUSTER_STRING_LEN] = { 0 };
+      sprintf(value, "=%d", s->vars[i].value);
+      strcat(current_line, s->vars[i].name);
+      strcat(current_line, value);
+      write_str_as_pattern_name_data(x_pos, i, current_line, 3, 0x000000, 0x40000);
+   }
+
+   if (per[0].but_push_once & PAD_UP)
+   {
+      s->menu_selection--;
+      if (s->menu_selection < 0)
+      {
+         s->menu_selection = s->num_menu_items - 1;
+      }
+   }
+
+   if (per[0].but_push_once & PAD_DOWN)
+   {
+      s->menu_selection++;
+      if (s->menu_selection >(s->num_menu_items - 1))
+      {
+         s->menu_selection = 0;
+      }
+   }
+
+   if (per[0].but_push_once & PAD_LEFT)
+   {
+      s->vars[s->menu_selection].value--;
+      if (s->vars[s->menu_selection].value < 0)
+      {
+         s->vars[s->menu_selection].value = s->vars[s->menu_selection].num_values;
+      }
+   }
+
+   if (per[0].but_push_once & PAD_RIGHT)
+   {
+      s->vars[s->menu_selection].value++;
+      if (s->vars[s->menu_selection].value > s->vars[s->menu_selection].num_values)
+      {
+         s->vars[s->menu_selection].value = 0;
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ra_do_preset(struct RegAdjusterState* s, int * vars)
+{
+   int i;
+   for (i = 0; i < s->num_menu_items; i++)
+   {
+      s->vars[i].value = vars[i];
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_scroll_test_set_scroll(int pos)
 {
    //scroll the first two layers a little slower
@@ -1110,138 +1242,6 @@ void vdp2_sprite_priority_shadow_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
-//simple menu and reg writing system for tests that need a lot of reg changes
-#define REG_ADJUSTER_MAX_VARS 28
-#define REG_ADJUSTER_STRING_LEN 32
-
-struct RegAdjusterVarInfo
-{
-   char name[REG_ADJUSTER_STRING_LEN];
-   int num_values;
-   int value;
-   int *dest;
-};
-
-struct RegAdjusterState
-{
-   int repeat_timer;
-   int menu_selection;
-   int num_menu_items;
-   struct RegAdjusterVarInfo vars[REG_ADJUSTER_MAX_VARS];
-};
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ra_add_var(struct RegAdjusterState* s, int * dest, char* name, int num_vals)
-{
-   strcpy(s->vars[s->num_menu_items].name, name);
-   s->vars[s->num_menu_items].num_values = num_vals;
-   s->vars[s->num_menu_items].dest = dest;
-   s->num_menu_items++;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ra_update_vars(struct RegAdjusterState* s)
-{
-   int i;
-   for (i = 0; i < s->num_menu_items; i++)
-   {
-      *s->vars[i].dest = s->vars[i].value;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ra_add_array(struct RegAdjusterState* s, int(*vars)[], int length, char* name, int num_vals)
-{
-   int i;
-   for (i = 0; i < length; i++)
-   {
-      char str[REG_ADJUSTER_STRING_LEN] = { 0 };
-      strcpy(str, name);
-
-      char str2[REG_ADJUSTER_STRING_LEN] = { 0 };
-      sprintf(str2, "%d", i);
-      strcat(str, str2);
-      ra_add_var(s, &(*vars)[i], str, num_vals);
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ra_do_menu(struct RegAdjusterState* s, int x_pos)
-{
-   int i;
-   for (i = 0; i < s->num_menu_items; i++)
-   {
-      char current_line[REG_ADJUSTER_STRING_LEN] = { 0 };
-
-      if (s->menu_selection == i)
-      {
-         strcat(current_line, ">");
-      }
-      else
-      {
-         strcat(current_line, " ");
-      }
-      char value[REG_ADJUSTER_STRING_LEN] = { 0 };
-      sprintf(value, "=%d", s->vars[i].value);
-      strcat(current_line, s->vars[i].name);
-      strcat(current_line, value);
-      write_str_as_pattern_name_data(x_pos, i, current_line, 3, 0x000000, 0x40000);
-   }
-
-   if (per[0].but_push_once & PAD_UP)
-   {
-      s->menu_selection--;
-      if (s->menu_selection < 0)
-      {
-         s->menu_selection = s->num_menu_items - 1;
-      }
-   }
-
-   if (per[0].but_push_once & PAD_DOWN)
-   {
-      s->menu_selection++;
-      if (s->menu_selection > (s->num_menu_items - 1))
-      {
-         s->menu_selection = 0;
-      }
-   }
-
-   if (per[0].but_push_once & PAD_LEFT)
-   {
-      s->vars[s->menu_selection].value--;
-      if (s->vars[s->menu_selection].value < 0)
-      {
-         s->vars[s->menu_selection].value = s->vars[s->menu_selection].num_values;
-      }
-   }
-
-   if (per[0].but_push_once & PAD_RIGHT)
-   {
-      s->vars[s->menu_selection].value++;
-      if (s->vars[s->menu_selection].value > s->vars[s->menu_selection].num_values)
-      {
-         s->vars[s->menu_selection].value = 0;
-      }
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ra_do_preset(struct RegAdjusterState* s, int * vars)
-{
-   int i;
-   for (i = 0; i < s->num_menu_items; i++)
-   {
-      s->vars[i].value = vars[i];
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 void vdp2_change_4bbp_tile_color(u32 address, int amount)
 {
    int i;
@@ -1328,16 +1328,6 @@ void vdp2_special_priority_test()
    write_str_as_pattern_name_data_special(12, 10, "NBG2", 5, addresses[2], vdp2_tile_address_alt, 0, 0);
    write_str_as_pattern_name_data_special(12, 11, "NBG3", 6, addresses[3], vdp2_tile_address_alt, 0, 0);
 
-   int nbg_priority[4] = { 0 };
-
-   nbg_priority[0] = 6;
-   nbg_priority[1] = 6;
-   nbg_priority[2] = 7;
-   nbg_priority[3] = 7;
-
-   VDP2_REG_PRINA = nbg_priority[0] | (nbg_priority[1] << 8);
-   VDP2_REG_PRINB = nbg_priority[2] | (nbg_priority[3] << 8);
-
    int preset = 0;
 
    int framecount = 0;
@@ -1345,6 +1335,7 @@ void vdp2_special_priority_test()
    int ratio_dir = 1;
 
    int nbg_ratio[4] = { 0 };
+   
 
    //vars for reg adjuster
    struct {
@@ -1355,25 +1346,27 @@ void vdp2_special_priority_test()
       int special_function_code_select[4];
       int special_function_code_bit[8];
       int color_calculation_mode_bit;
+      int nbg_priority[4];
    }v = { { 0 } };
 
    struct RegAdjusterState s = { 0 };
 
    ra_add_array(&s, (int(*)[])v.special_color_calc_mode, 4, "Spcl clr clc md NBG", 3);
    ra_add_array(&s, (int(*)[])v.nbg_color_calc_enable, 4, "Color calc enbl NBG", 1);
-   ra_add_array(&s, (int(*)[])v.special_function_code_bit, 8, "Specl functn code #", 1);
+   ra_add_array(&s, (int(*)[])v.special_function_code_bit, 4, "Specl functn code #", 1);
    ra_add_array(&s, (int(*)[])v.special_priority_mode_bit, 4, "Special priorty NBG", 3);
    ra_add_array(&s, (int(*)[])v.special_function_code_select, 4, "Specl func code NBG", 1);
    ra_add_var(&s, &v.color_calculation_ratio_mode, "Color cal rati mode ", 1);
    ra_add_var(&s, &v.color_calculation_mode_bit, "Color calcultn mode ", 1);
+   ra_add_array(&s, (int(*)[])v.nbg_priority, 4, "Priority        NBG", 7);
 
-   int init_state[26] =
+   int init_state[] =
    {//special color calc mode
       0, 0, 0, 0,
       //nbg color calc enable
       0, 0, 0, 0,
       //special function code bit
-      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0,
       //special priority mode bit
       0, 1, 1, 0,
       //special function code select
@@ -1381,14 +1374,17 @@ void vdp2_special_priority_test()
       //color calculation ratio mode
       0,
       //color calculation mode bit
-      0
+      0,
+      //nbg priority
+      6,6,7,7
    };
 
-   char* preset_strings[4] = {
-      "Preset 0 : per-tile priority          ",
-      "Preset 1 : per-pixel priority         ",
-      "Preset 2 : Color calc per tile        ",
-      "Preset 3 : Color calc per pixel       "
+   char* preset_strings[] = {
+      "Preset 0 : Per-tile priority            ",
+      "Preset 1 : Per-pixel priority           ",
+      "Preset 2 : Color calc per tile          ",
+      "Preset 3 : Color calc per pixel         ",
+      "Preset 4 : Per-tile priority 0 to 1     "
    };
 
    //set up instructions
@@ -1401,13 +1397,26 @@ void vdp2_special_priority_test()
       "Start: Exit       "
    };
 
-   int i;
+   int i; 
    for (i = 0; i < 6; i++)
    {
       write_str_as_pattern_name_data(0, 17 + i, instructions[i], 3, 0x000000, vdp2_tile_address);
    }
 
    ra_do_preset(&s, init_state);
+
+   //display the dot data bits
+   volatile u32 *vram_ptr = (volatile u32 *)(VDP2_RAM + vdp2_tile_address);
+   int pos = 8;
+   int unchanged_data = vram_ptr[pos];
+
+   vram_ptr = (volatile u32 *)(VDP2_RAM + vdp2_tile_address_alt);
+   int changed_data = vram_ptr[pos];
+   char output[64] = { 0 };
+   sprintf(output, "0x%08x", unchanged_data);
+   write_str_as_pattern_name_data(0, 24, output, 3, 0x000000, vdp2_tile_address);
+   sprintf(output, "0x%08x", changed_data);
+   write_str_as_pattern_name_data(0, 25, output, 3, 0x000000, vdp2_tile_address);
 
    for (;;)
    {
@@ -1427,6 +1436,9 @@ void vdp2_special_priority_test()
          (v.special_priority_mode_bit[1] << 2) |
          (v.special_priority_mode_bit[2] << 4) |
          (v.special_priority_mode_bit[3] << 6);
+
+      VDP2_REG_PRINA = v.nbg_priority[0] | (v.nbg_priority[1] << 8);
+      VDP2_REG_PRINB = v.nbg_priority[2] | (v.nbg_priority[3] << 8);
 
       VDP2_REG_SFSEL = v.special_function_code_select[0] |
          (v.special_function_code_select[1] << 1) |
@@ -1499,7 +1511,7 @@ void vdp2_special_priority_test()
       {
          preset++;
 
-         if (preset > 3)
+         if (preset > 4)
             preset = 0;
 
          if (preset == 0)
@@ -1508,34 +1520,36 @@ void vdp2_special_priority_test()
          }
          else if (preset == 1)
          {
-            int vars[26] =
+            int vars[] =
             {//special color calc mode
                0, 0, 0, 0,
                //nbg color calc enable
                0, 0, 0, 0,
                //special function code bit
-               1, 0, 0, 0, 0, 0, 0, 0,
+               1, 0, 0, 0, 
                //special priority mode bit
-               3, 2, 1, 0,
+               3, 2, 2, 0,
                //special function code select
                0, 0, 0, 0,
                //color calculation ratio mode
                0,
                //color calculation mode bit
-               0
+               0,
+               //nbg priority
+               6, 6, 7, 7
             };
 
             ra_do_preset(&s, vars);
          }
          else if (preset == 2)
          {
-            int vars[26] =
+            int vars[] =
             {//special color calc mode
                1, 1, 1, 1,
                //nbg color calc enable
                1, 1, 1, 1,
                //special function code bit
-               0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0,
                //special priority mode bit
                0, 1, 1, 0,
                //special function code select
@@ -1543,20 +1557,22 @@ void vdp2_special_priority_test()
                //color calculation ratio mode
                0,
                //color calculation mode bit
-               0
+               0,
+               //nbg priority
+               6, 6, 7, 7
             };
 
             ra_do_preset(&s, vars);
          }
          else if (preset == 3)
          {
-            int vars[26] =
+            int vars[] =
             {//special color calc mode
                2, 2, 2, 2,
                //nbg color calc enable
                1, 1, 1, 1,
                //special function code bit
-               1, 0, 0, 0, 0, 0, 0, 0,
+               1, 0, 0, 0,
                //special priority mode bit
                0, 1, 1, 0,
                //special function code select
@@ -1564,10 +1580,34 @@ void vdp2_special_priority_test()
                //color calculation ratio mode
                0,
                //color calculation mode bit
-               0
+               0,
+               //nbg priority
+               6, 6, 7, 7
             };
 
             ra_do_preset(&s, vars);
+         }
+         else if (preset == 4)
+         {
+            int init_state[] =
+            {//special color calc mode
+               0, 0, 0, 0,
+               //nbg color calc enable
+               0, 0, 0, 0,
+               //special function code bit
+               0, 0, 0, 0,
+               //special priority mode bit
+               0, 1, 1, 0,
+               //special function code select
+               0, 0, 0, 0,
+               //color calculation ratio mode
+               0,
+               //color calculation mode bit
+               0,
+               //nbg priority
+               1, 1, 0, 0
+            };
+            ra_do_preset(&s, init_state);
          }
       }
 
