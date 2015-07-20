@@ -130,7 +130,8 @@ static int nbg3priority=0;
 static int rbg0priority=0;
 
 static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
-
+static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y);
+static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy);
 
 // Window Parameter
 static vdp2WindowInfo * m_vWindinfo0 = NULL;
@@ -1568,16 +1569,27 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	else
 		tile.priority = info->priority;
 
+	if (info->coordincx != 1.0f || info->coordincy != 1.0f) {
 
-	tile.vertices[0] = x * info->coordincx;
-	tile.vertices[1] = y * info->coordincy;
-	tile.vertices[2] = (x + tile.w) * info->coordincx;
-	tile.vertices[3] = y * info->coordincy;
-	tile.vertices[4] = (x + tile.w) * info->coordincx;
-	tile.vertices[5] = (y + tile.h) * info->coordincy;
-	tile.vertices[6] = x * info->coordincx;
-	tile.vertices[7] = (y + tile.h) * info->coordincy;
-
+		tile.vertices[0] = x * info->coordincx;
+		tile.vertices[1] = y * info->coordincy;
+		tile.vertices[2] = (x + tile.w) * info->coordincx;
+		tile.vertices[3] = y * info->coordincy;
+		tile.vertices[4] = (x + tile.w) * info->coordincx;
+		tile.vertices[5] = (y + info->lineinc) * info->coordincy;
+		tile.vertices[6] = x * info->coordincx;
+		tile.vertices[7] = (y + info->lineinc) * info->coordincy;
+	}
+	else{
+		tile.vertices[0] = x;
+		tile.vertices[1] = y;
+		tile.vertices[2] = (x + tile.w);
+		tile.vertices[3] = y;
+		tile.vertices[4] = (x + tile.w);
+		tile.vertices[5] = (y + info->lineinc);
+		tile.vertices[6] = x;
+		tile.vertices[7] = (y + info->lineinc);
+	}
 
 	// Screen culling
 	//if (tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height || tile.vertices[2] < 0 || tile.vertices[5] < 0)

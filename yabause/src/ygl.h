@@ -239,6 +239,8 @@ int YglGLInit(int, int);
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 float * YglQuad(YglSprite *, YglTexture *,YglCache * c);
+float * YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy);
+void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy);
 void YglCachedQuad(YglSprite *, YglCache *);
 void YglRender(void);
 void YglReset(void);
