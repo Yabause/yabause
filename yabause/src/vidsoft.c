@@ -737,6 +737,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          high resolution gets in the way with window process. I may be wrong...
          This was added for Cotton Boomerang */
          int resxi = i * resxratio;
+			int priority;
 
          // See if screen position is clipped, if it isn't, continue
          if (!TestBothWindow(info->wctl, clip, resxi, j))
@@ -767,7 +768,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          }
 
 
-         int priority = info->priority;
+         priority = info->priority;
 
          //per-pixel priority is on
          if (info->specialprimode == 2)
@@ -1155,6 +1156,7 @@ static void Vdp2DrawLineScreen(void)
    u16 color;
    u32 dot;
    int i;
+	int alpha;
 
    /* no need to go further if no screen is using the line screen */
    if (Vdp2Regs->LNCLEN == 0)
@@ -1165,7 +1167,7 @@ static void Vdp2DrawLineScreen(void)
    else
       scrAddr = (Vdp2Regs->LCTA.all & 0x3FFFF) << 1;
 
-   int alpha = (Vdp2Regs->CCRLB & 0x1f) << 1;
+   alpha = (Vdp2Regs->CCRLB & 0x1f) << 1;
 
    if (Vdp2Regs->LCTA.part.U & 0x8000)
    {
@@ -2118,7 +2120,7 @@ static void putpixel(int x, int y) {
 			y < vdp1clipyend);
 
       //vdp1_clip_test in yabauseut
-      if ((cmd.CMDPMOD >> 9) & 0x3 == 0x3)//outside clipping mode
+      if (((cmd.CMDPMOD >> 9) & 0x3) == 0x3)//outside clipping mode
       {
          //don't display inside the box
          if (Vdp1Regs->userclipX1 <= x && 
@@ -3133,6 +3135,7 @@ void VIDSoftVdp2DrawEnd(void)
 void VIDSoftVdp2DrawScreens(void)
 {
    int i;
+	int last_priority;
 
    VIDSoftVdp2SetResolution(Vdp2Regs->TVMD);
    VIDSoftVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
@@ -3141,7 +3144,7 @@ void VIDSoftVdp2DrawScreens(void)
    VIDSoftVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
    VIDSoftVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
 
-   int last_priority = 0;
+   last_priority = 0;
 
    //if special priority is enabled
    //backgrounds with priority 0 can be
