@@ -766,7 +766,26 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
             continue;
          }
 
-         // check special priority somewhere here
+
+         int priority = info->priority;
+
+         //per-pixel priority is on
+         if (info->specialprimode == 2)
+         {
+            //the special function in the pattern name
+            //data must be on as well
+            if (info->specialfunction & 1)
+            {
+               priority = info->priority & 0xE;
+
+               //everything but the specified dot
+               //makes the priority lsb 0
+               if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0)
+               {
+                  priority |= 1;
+               }
+            }
+         }
 
          // Apply color offset and color calculation/special color calculation
          // and then continue.
@@ -781,7 +800,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
             else
                alpha = GetAlpha(info, color, dot);
 
-            TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(alpha, color)), info->linescreen);
+            TitanPutPixel(priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(alpha, color)), info->linescreen);
          }
       }
    }    
@@ -3122,7 +3141,17 @@ void VIDSoftVdp2DrawScreens(void)
    VIDSoftVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
    VIDSoftVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
 
-   for (i = 7; i > 0; i--)
+   int last_priority = 0;
+
+   //if special priority is enabled
+   //backgrounds with priority 0 can be
+   //visible
+   if (Vdp2Regs->SFPRMD & 0x3FF)
+   {
+      last_priority = -1;
+   }
+
+   for (i = 7; i > last_priority; i--)
    {   
       if (nbg3priority == i)
          Vdp2DrawNBG3();
