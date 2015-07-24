@@ -807,13 +807,15 @@ static void FASTCALL BiosBUPStatus(SH2_struct * sh)
    }
 
    freeblocks = GetFreeSpace(sh->regs.R[4], size, addr, blocksize);
-
+   u32 needsize = sh->regs.R[5];
+   int aftersize = (((blocksize - 6) * freeblocks) - 30) - needsize;
+   if (aftersize < 0) aftersize = 0;
    MappedMemoryWriteLong(sh->regs.R[6], size); // Size of Backup Ram (in bytes)
    MappedMemoryWriteLong(sh->regs.R[6]+0x4, size / blocksize); // Size of Backup Ram (in blocks)
    MappedMemoryWriteLong(sh->regs.R[6]+0x8, blocksize); // Size of block
-   MappedMemoryWriteLong(sh->regs.R[6]+0xC, ((blocksize - 6) * freeblocks) - 30); // Free space(in bytes)
+   MappedMemoryWriteLong(sh->regs.R[6] + 0xC, (((blocksize - 6) * freeblocks) - 30)); // Free space(in bytes)
    MappedMemoryWriteLong(sh->regs.R[6]+0x10, freeblocks); // Free space(in blocks)
-   MappedMemoryWriteLong(sh->regs.R[6]+0x14, freeblocks); // Not sure, but seems to be the same as Free Space(in blocks)
+   MappedMemoryWriteLong(sh->regs.R[6] + 0x14, aftersize / blocksize); // writable block size
 
    // cycles need to be incremented
 
