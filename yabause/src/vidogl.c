@@ -1584,14 +1584,14 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	//	return;
 	//}
 
-	//if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincy == 1.0f)
-	//{                                                 // coordinate inc is not supported yet.
-	//	winmode = Vdp2CheckWindowRange(info, info->x, info->y, tile.w, tile.h);
-	//	if (winmode == 0) // all outside, no need to draw 
-	//	{
-	//		return;
-	//	}
-	//}
+	if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincy == 1.0f)
+	{                                                 // coordinate inc is not supported yet.
+		winmode = Vdp2CheckWindowRange(info, x, y, tile.w, info->lineinc);
+		if (winmode == 0) // all outside, no need to draw 
+		{
+			return;
+		}
+	}
 
 	tile.cor = info->cor;
 	tile.cog = info->cog;
