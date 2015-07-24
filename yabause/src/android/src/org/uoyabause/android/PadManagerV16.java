@@ -1,8 +1,11 @@
 package org.uoyabause.android;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.InputDevice;
@@ -35,9 +38,11 @@ class PadManagerV16 extends PadManager {
     final String TAG = "PadManagerV16";
     float _oldRightTrigger = 0.0f;
     float _oldLeftTrigger = 0.0f;
+    String DebugMesage = new String();
 
     PadManagerV16() {
         deviceIds = new ArrayList();
+        
 
         int[] ids = InputDevice.getDeviceIds();
         for (int deviceId : ids) {
@@ -45,14 +50,29 @@ class PadManagerV16 extends PadManager {
             int sources = dev.getSources();
 
             if (((sources & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD)
-                    || ((sources & InputDevice.SOURCE_JOYSTICK)
-                    == InputDevice.SOURCE_JOYSTICK)) {
+                    || ((sources & InputDevice.SOURCE_JOYSTICK)== InputDevice.SOURCE_JOYSTICK)) {
                 if (!deviceIds.contains(deviceId)) {
+                	
+                	// Avoid crazy devices
+                	if( dev.getName().equals("msm8974-taiko-mtp-snd-card Button Jack") ){
+                		continue;
+                	}
+                	
+
                     deviceIds.add(deviceId);
                 }
             }
+            
+            boolean isGamePad = ((sources & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD);
+            boolean isGameJoyStick = ((sources & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK);
+            
+            DebugMesage += "Inputdevice:" + dev.getName() +" ID:" + deviceId + 
+            		" isGamePad?:" + isGamePad +
+            		" isJoyStick?:" + isGameJoyStick + "\n";
+            
         }
         
+      
         Keymap = new HashMap<Integer,Integer>();
         loadSettings();
         
@@ -60,6 +80,10 @@ class PadManagerV16 extends PadManager {
 
     public boolean hasPad() {
         return deviceIds.size() > 0;
+    }
+    
+    public String getDeviceList(){
+    	return DebugMesage;
     }
     
     public PadEvent onGenericMotionEvent(MotionEvent event){
@@ -191,7 +215,6 @@ class PadManagerV16 extends PadManager {
             inputStream.read(buffer);
             inputStream.close();
              
-            // Json読み込み
             String json = new String(buffer);
             JSONObject jsonObject = new JSONObject(json);
             
