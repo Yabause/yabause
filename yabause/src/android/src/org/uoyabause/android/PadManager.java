@@ -15,6 +15,7 @@ abstract class PadManager {
     public abstract PadEvent onKeyDown(int keyCode, KeyEvent event);
     public abstract PadEvent onKeyUp(int keyCode, KeyEvent event);
     public abstract PadEvent onGenericMotionEvent(MotionEvent event);
+    public abstract String getDeviceList();
     
     static PadManager getPadManager() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {

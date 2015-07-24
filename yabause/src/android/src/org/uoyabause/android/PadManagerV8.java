@@ -24,5 +24,9 @@ class PadManagerV8 extends PadManager {
     
     public PadEvent onGenericMotionEvent(MotionEvent event){
     	return null;
-    }    
+    }
+    
+    public String getDeviceList(){
+    	return new String("Nothing");
+    }
  }

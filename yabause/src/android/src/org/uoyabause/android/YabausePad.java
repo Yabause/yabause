@@ -158,8 +158,8 @@ class YabausePad extends View implements OnTouchListener {
         buttons[PadEvent.BUTTON_DOWN]  = new DPadButton();
         buttons[PadEvent.BUTTON_LEFT]  = new DPadButton();
 
-        buttons[PadEvent.BUTTON_RIGHT_TRIGGER] = new PadButton();
-        buttons[PadEvent.BUTTON_LEFT_TRIGGER]  = new PadButton();
+        buttons[PadEvent.BUTTON_RIGHT_TRIGGER] = new DPadButton();
+        buttons[PadEvent.BUTTON_LEFT_TRIGGER]  = new DPadButton();
 
         buttons[PadEvent.BUTTON_START] = new StartButton();
 
@@ -201,7 +201,7 @@ class YabausePad extends View implements OnTouchListener {
 
         Log.d("YabausePad","action:" + action);
 
-        int hitsize = 30;
+        int hitsize = 30; 
 
         Rect hittest = new Rect( (int)(posx - hitsize*metrics.density), (int)(posy - hitsize*metrics.density), (int)(posx+hitsize*metrics.density), (int)(posy+hitsize*metrics.density) );
 
@@ -271,8 +271,8 @@ class YabausePad extends View implements OnTouchListener {
         buttons[PadEvent.BUTTON_Y].updateRect((int)(getWidth() - 210*density), (int)(getHeight() - 190*density), (int)(getWidth() - 170*density), (int)(getHeight() - 150*density));
         buttons[PadEvent.BUTTON_Z].updateRect((int)(getWidth() - 120*density), (int)(getHeight() - 220*density), (int)(getWidth() - 80*density), (int)(getHeight() - 180*density));
 
-        buttons[PadEvent.BUTTON_LEFT_TRIGGER].updateRect((int)(30*density), (int)(getHeight() - 270*density), (int)(90*density), (int)(getHeight() - 230*density));;
-        buttons[PadEvent.BUTTON_RIGHT_TRIGGER].updateRect((int)(getWidth() - 90*density), (int)(getHeight() - 270*density), (int)(getWidth() - 30*density), (int)(getHeight() - 150*density));;
+        buttons[PadEvent.BUTTON_LEFT_TRIGGER].updateRect((int)(30*density), (int)(getHeight() - 270*density), (int)(90*density), (int)(getHeight() - 230*density));
+        buttons[PadEvent.BUTTON_RIGHT_TRIGGER].updateRect((int)(getWidth() - 90*density), (int)(getHeight() - 270*density), (int)(getWidth() - 30*density), (int)(getHeight() - 230*density));
 
         setMeasuredDimension(width, height);
     }
