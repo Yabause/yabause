@@ -1,4 +1,5 @@
 /*  Copyright 2011-2013 Guillaume Duhamel
+	Copyright 2015 devMiyax(Shinya Miyamoto)
 
     This file is part of Yabause.
 
@@ -203,6 +204,8 @@ public class Yabause extends Activity implements OnPadListener
         if (padm.hasPad()) {
             pad.setVisibility(View.INVISIBLE);
         }
+        
+      
     }
 
     @Override
@@ -282,6 +285,12 @@ public class Yabause extends Activity implements OnPadListener
         switch (item.getItemId()) {
             case R.id.exit:
             {
+            	YabauseRunnable.deinit();
+            	try{
+            		Thread.sleep(1000);
+            	}catch(InterruptedException e){
+            		
+            	}
             	//moveTaskToBack(true);
             	//finish();
             	android.os.Process.killProcess(android.os.Process.myPid());
