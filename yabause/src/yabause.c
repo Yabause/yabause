@@ -290,6 +290,17 @@ int YabauseInit(yabauseinit_struct *init)
    return 0;
 }
 
+void YabFlushBackups(void){
+
+	if (BupRam)
+	{
+		if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
+			YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+	}
+
+	CartFlush();
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseDeInit(void) {

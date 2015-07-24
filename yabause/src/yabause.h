@@ -60,6 +60,7 @@ void print_usage(const char *program_name);
 
 void YabauseChangeTiming(int freqtype);
 int YabauseInit(yabauseinit_struct *init);
+void YabFlushBackups(void);
 void YabauseDeInit(void);
 void YabauseSetDecilineMode(int on);
 void YabauseResetNoLoad(void);
