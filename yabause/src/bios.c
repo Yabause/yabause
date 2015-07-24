@@ -981,6 +981,8 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
    free(blocktbl);
 
+   YabFlushBackups();
+
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -1137,6 +1139,27 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
       SH2SetRegisters(sh, &sh->regs);
       return;
    }
+
+   // Count Max size
+   for (i = 0; i < 256; i++){
+		u32 block = FindSave(sh->regs.R[4], sh->regs.R[5], blockoffset, size, addr, blocksize);
+
+		if (block == 0)
+		   break;
+
+		blockoffset = block + 1;
+		block = addr + (blocksize * block * 2);
+	}
+
+	if (sh->regs.R[6] < i){
+		sh->regs.R[0] = -i; // returns the number of successfully read dir entries
+		sh->regs.PC = sh->regs.PR;
+		SH2SetRegisters(sh, &sh->regs);
+		return;
+	}
+   
+	// reset offet
+	blockoffset = 2;
 
    for (i = 0; i < sh->regs.R[6]; i++)
    {
