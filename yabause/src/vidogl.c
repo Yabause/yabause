@@ -132,6 +132,7 @@ static int rbg0priority=0;
 static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y);
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy);
+static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
 
 // Window Parameter
 static vdp2WindowInfo * m_vWindinfo0 = NULL;
@@ -1593,6 +1594,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 		}
 	}
 
+
 	tile.cor = info->cor;
 	tile.cog = info->cog;
 	tile.cob = info->cob;
@@ -1986,6 +1988,12 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		}
 
 		info->coordincx = info->lineinfo[lineindex].CoordinateIncH / 256.0f;
+		info->coordincx = 1.0f / info->coordincx;
+		if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
+		info->draww = (int)((float)vdp2width / info->coordincx);
+
+		Vdp2 * regs = Vdp2RestoreRegs(v);
+		if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
 		// determine which chara shoud be used.
 		//mapy   = (v+sy) / (512 * info->planeh);
@@ -2188,39 +2196,39 @@ static u32 FASTCALL DoColorOffset(void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void ReadVdp2ColorOffset(vdp2draw_struct *info, int mask)
+static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask)
 {
-   if (Vdp2Regs->CLOFEN & mask)
+	if (regs->CLOFEN & mask)
    {
       // color offset enable
-      if (Vdp2Regs->CLOFSL & mask)
+	   if (regs->CLOFSL & mask)
       {
          // color offset B
-         info->cor = Vdp2Regs->COBR & 0xFF;
-         if (Vdp2Regs->COBR & 0x100)
+		  info->cor = regs->COBR & 0xFF;
+		  if (regs->COBR & 0x100)
             info->cor |= 0xFFFFFF00;
 
-         info->cog = Vdp2Regs->COBG & 0xFF;
-         if (Vdp2Regs->COBG & 0x100)
+		  info->cog = regs->COBG & 0xFF;
+		  if (regs->COBG & 0x100)
             info->cog |= 0xFFFFFF00;
 
-         info->cob = Vdp2Regs->COBB & 0xFF;
-         if (Vdp2Regs->COBB & 0x100)
+		  info->cob = regs->COBB & 0xFF;
+		  if (regs->COBB & 0x100)
             info->cob |= 0xFFFFFF00;
       }
       else
       {
          // color offset A
-         info->cor = Vdp2Regs->COAR & 0xFF;
-         if (Vdp2Regs->COAR & 0x100)
+		  info->cor = regs->COAR & 0xFF;
+		  if (regs->COAR & 0x100)
             info->cor |= 0xFFFFFF00;
 
-         info->cog = Vdp2Regs->COAG & 0xFF;
-         if (Vdp2Regs->COAG & 0x100)
+		  info->cog = regs->COAG & 0xFF;
+		  if (regs->COAG & 0x100)
             info->cog |= 0xFFFFFF00;
 
-         info->cob = Vdp2Regs->COAB & 0xFF;
-         if (Vdp2Regs->COAB & 0x100)
+		  info->cob = regs->COAB & 0xFF;
+		  if (regs->COAB & 0x100)
             info->cob |= 0xFFFFFF00;
       }
 
@@ -2307,6 +2315,10 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    info->cellw = hres;
    info->cellh = vres;
    info->flipfunction = 0;
+   info->linescreen = 0;
+   info->cor = 0x00;
+   info->cog = 0x00;
+   info->cob = 0x00;
    YglQuad((YglSprite *)info, texture,NULL);
    info->cellw = cellw;
    info->cellh = cellh;
@@ -2397,6 +2409,9 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       {
          LineColorRamAdress = (T1ReadWord(Vdp2Ram,info->LineColorBase+(y<<1))&0x780) + info->coloroffset;
       }      
+
+	  Vdp2 * regs = Vdp2RestoreRegs(j);
+	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
       for( i = 0; i < hres; i++ )
       {
@@ -2532,11 +2547,15 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                                            (linecolor>>16)&0xFF);            
             }
 
-			*(texture->textdata++) = info->PostPixelFetchCalc(info, color);
+			
+
+			*(texture->textdata++) = COLOR_ADD(color, info->cor, info->cog, info->cob);
          }
 
          texture->textdata += texture->w;
    }
+
+ 
 }
 
    
@@ -3675,12 +3694,15 @@ static void Vdp2DrawNBG0(void)
       switch(Vdp2Regs->ZMCTL&0x03)
       {
       case 0:
+		  info.maxzoom = 1.0f;
          break;
       case 1:
+		  info.maxzoom = 0.5f;
          if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
          break;
       case 2:
       case 3:
+		  info.maxzoom = 0.25f;
          if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
          break;
       }
@@ -3720,7 +3742,8 @@ static void Vdp2DrawNBG0(void)
      info.linescreen = 1;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7) << 8;
-   ReadVdp2ColorOffset(&info, 0x1);
+   ReadVdp2ColorOffset(Vdp2Regs,&info, 0x1);
+   info.linecheck_mask = 0x01;
    info.priority = Vdp2Regs->PRINA & 0x7;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
@@ -3887,7 +3910,8 @@ static void Vdp2DrawNBG1(void)
      info.linescreen = 1;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x70) << 4;
-   ReadVdp2ColorOffset(&info, 0x2);
+   ReadVdp2ColorOffset(Vdp2Regs,&info, 0x2);
+   info.linecheck_mask = 0x02;
 
    if( (Vdp2Regs->ZMXN1.all & 0x7FF00) == 0 )
       info.coordincx = 1.0f; 
@@ -3897,12 +3921,15 @@ static void Vdp2DrawNBG1(void)
    switch((Vdp2Regs->ZMCTL>>8)&0x03)
    {
    case 0:
+		info.maxzoom = 1.0f;
       break;
    case 1:
+	   info.maxzoom = 0.5f;
       if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
       break;
    case 2:
    case 3:
+	   info.maxzoom = 0.25f;
       if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
       break;
    }
@@ -4057,7 +4084,8 @@ static void Vdp2DrawNBG2(void)
      info.linescreen = 1;
 
    info.coloroffset = Vdp2Regs->CRAOFA & 0x700;
-   ReadVdp2ColorOffset(&info, 0x4);
+   ReadVdp2ColorOffset(Vdp2Regs,&info, 0x4);
+   info.linecheck_mask = 0x04;
    info.coordincx = info.coordincy = 1;
 
    info.priority = Vdp2Regs->PRINB & 0x7;;
@@ -4137,7 +4165,8 @@ static void Vdp2DrawNBG3(void)
      info.linescreen = 1;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7000) >> 4;
-   ReadVdp2ColorOffset(&info, 0x8);
+   ReadVdp2ColorOffset(Vdp2Regs,&info, 0x8);
+   info.linecheck_mask = 0x08;
    info.coordincx = info.coordincy = 1;
 
    info.priority = (Vdp2Regs->PRINB >> 8) & 0x7;
@@ -4447,7 +4476,8 @@ static void Vdp2DrawRBG0(void)
 
    info.coloroffset = (Vdp2Regs->CRAOFB & 0x7) << 8;
 
-   ReadVdp2ColorOffset(&info, 0x10);
+   ReadVdp2ColorOffset(Vdp2Regs,&info, 0x10);
+   info.linecheck_mask = 0x10;
    info.coordincx = info.coordincy = 1;
    
    // Window Mode

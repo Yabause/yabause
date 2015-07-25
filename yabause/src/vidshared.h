@@ -141,6 +141,8 @@ typedef struct
    int coloroffset;
    int transparencyenable;
    int specialprimode;
+   float maxzoom;
+   int linecheck_mask;
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int);

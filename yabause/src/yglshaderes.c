@@ -654,13 +654,26 @@ int Ygl_uniformStartVDP2Window(void * p )
        // and
       if( prg->winmode == 0x0 )
       {
-         glStencilFunc(GL_EQUAL,0x03,0x03);
-
+		  if (prg->logwin0 == 1 && prg->logwin0 == 1){
+			  glStencilFunc(GL_EQUAL, 0x03, 0x03);
+		  }
+		  else if (prg->logwin0 == 0 && prg->logwin0 == 0){ 
+			  glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
+		  }else{
+			  glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		  }
       // OR
       }else if( prg->winmode == 0x01 )
       {
-          glStencilFunc(GL_LEQUAL,0x01,0x03);
-
+		  if (prg->logwin0 == 1 && prg->logwin0 == 1){
+			  glStencilFunc(GL_LEQUAL, 0x01, 0x03);
+		  }
+		  else if (prg->logwin0 == 0 && prg->logwin0 == 0){
+			  glStencilFunc(GL_GREATER, 0x01, 0x03);
+		  }
+		  else{
+			  glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		  }
       }
    }
 

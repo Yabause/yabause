@@ -1023,7 +1023,11 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 
    }
 
-   if( level->prg[level->prgcurrent].prgid != prg ) {
+   float checkval = (float)(input->cor) / 255.0f;
+   if (checkval != level->prg[level->prgcurrent].color_offset_val[0])
+   {
+	   YglProgramChange(level, prg);
+   } else if( level->prg[level->prgcurrent].prgid != prg ) {
       YglProgramChange(level,prg);
    }
    program = &level->prg[level->prgcurrent];
@@ -2106,13 +2110,29 @@ void YglRenderFrameBuffer( int from , int to ) {
          // and
          if( winmode == 0x0 )
          {
-            glStencilFunc(GL_EQUAL,0x03,0x03);
+			 if (logwin0 == 1 && logwin1 == 1){ // show inside
+				glStencilFunc(GL_EQUAL, 0x03, 0x03);
+			}
+			 else if(logwin0 == 0 && logwin1 == 0) {
+				glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
+			 }
+			 else{
+				glStencilFunc(GL_ALWAYS, 0x00, 0x00);
+			 }
 
          // OR
          }else if( winmode == 0x01 )
          {
-            glStencilFunc(GL_LEQUAL,0x01,0x03);
-
+			 // OR
+			 if (logwin0 == 1 && logwin1 == 1){ // show inside
+				 glStencilFunc(GL_LEQUAL, 0x01, 0x03);
+			 }
+			 else if (logwin0 == 0 && logwin1 == 0) {
+				 glStencilFunc(GL_GREATER, 0x01, 0x03);
+			 }
+			 else{
+				 glStencilFunc(GL_ALWAYS, 0x00, 0x00);
+			 }
          }
       }
    }

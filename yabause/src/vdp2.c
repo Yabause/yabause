@@ -291,7 +291,7 @@ void VdpProc( void *arg ){
             vdp2VBlankOUT();
             break;
         case VDPEV_DIRECT_DRAW:
-            LOG("VDP2:VDPEV_DIRECT_DRAW\n");
+            //LOG("VDP2:VDPEV_DIRECT_DRAW\n");
             Vdp1Draw();
             break;
        case VDPEV_MAKECURRENT:
@@ -325,7 +325,7 @@ void vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankIN(void) {
-    LOG("VDP2:VDPEV_VBLANK_IN\n");
+    //LOG("VDP2:VDPEV_VBLANK_IN\n");
 #if defined(YAB_ASYNC_RENDERING)
     if( running == 0 ){
         YuiRevokeOGLOnThisThread();
@@ -515,7 +515,7 @@ void vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-    LOG("VDP2:VDPEV_VBLANK_OUT\n");
+    //LOG("VDP2:VDPEV_VBLANK_OUT\n");
 #if defined(YAB_ASYNC_RENDERING)
 
    if( running == 0 ){
