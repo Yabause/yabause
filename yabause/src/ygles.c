@@ -660,7 +660,7 @@ int YglGLInit(int width, int height) {
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
    YglLoadIdentity(&_Ygl->mtxModelView);
-   YglOrtho(&_Ygl->mtxModelView,0.0f, 320.0f, 224.0f, 0.0f, 1.0f, 0.0f);
+   YglOrtho(&_Ygl->mtxModelView,0.0f, 320.0f, 224.0f, 0.0f, 10.0f, 0.0f);
 
    YglLoadIdentity(&_Ygl->mtxTexture);
    YglOrtho(&_Ygl->mtxTexture,-width, width, -height, height, 1.0f, 0.0f );
@@ -1918,7 +1918,7 @@ void YglRenderVDP1(void) {
 
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_BLEND);
-
+   glDisable(GL_CULL_FACE);
 
    for( j=0;j<(level->prgcurrent+1); j++ )
    {
@@ -1948,6 +1948,7 @@ void YglRenderVDP1(void) {
       {
          level->prg[j].cleanupUniform((void*)&level->prg[j]);
       }
+
    }
    level->prgcurrent = 0;
    
@@ -2202,6 +2203,7 @@ void YglRender(void) {
    glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
    glClearDepthf(0.0f);
    glDepthMask(GL_TRUE);
+   glEnable(GL_DEPTH_TEST);
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
    glActiveTexture(GL_TEXTURE0);
@@ -2415,7 +2417,7 @@ void YglSetLineColor(u32 * pbuf, int size){
 
 void YglChangeResolution(int w, int h) {
    YglLoadIdentity(&_Ygl->mtxModelView);
-   YglOrtho(&_Ygl->mtxModelView,0.0f, (float)w, (float)h, 0.0f, 1.0f, 0.0f);
+   YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)w, (float)h, 0.0f, 10.0f, 0.0f);
 
    if( _Ygl->rwidth != w || _Ygl->rheight != h ) {
        if (_Ygl->smallfbo != 0) {
