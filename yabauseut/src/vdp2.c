@@ -32,7 +32,10 @@ void vdp2_rbg0_test ();
 void vdp2_rbg1_test ();
 void vdp2_window_test ();
 void vdp2_all_scroll_test();
-
+void vdp2_line_color_screen_test();
+void vdp2_extended_color_calculation_test();
+void vdp2_sprite_priority_shadow_test();
+void vdp2_special_priority_test();
 //////////////////////////////////////////////////////////////////////////////
 
 void hline(int x1, int y1, int x2, u8 color)
@@ -108,6 +111,12 @@ void vdp2_test()
 //   register_test(&Vdp2InterruptTest, "Sound Request Interrupt");
 //   register_test(&Vdp2RBG0Test, "RBG0 bitmap");
    register_test(&vdp2_window_test, "Window test");
+   //register_test(&vdp2_all_scroll_test, "NBG0-4 scroll test");
+   //register_test(&vdp2_line_color_screen_test, "Line color screen test");
+   //register_test(&vdp2_extended_color_calculation_test, "Extended color calc test");
+   //register_test(&vdp2_sprite_priority_shadow_test, "Sprite priority shadow test");
+   //register_test(&vdp2_special_priority_test, "Special priority test");
+
    do_tests("VDP2 Screen tests", 0, 0);
 }
 
@@ -249,7 +258,7 @@ void ra_do_menu(struct RegAdjusterState* s, int x_pos)
          strcat(current_line, " ");
       }
       char value[REG_ADJUSTER_STRING_LEN] = { 0 };
-      sprintf(value, "=%d", s->vars[i].value);
+      sprintf(value, "=%02d", s->vars[i].value);
       strcat(current_line, s->vars[i].name);
       strcat(current_line, value);
       write_str_as_pattern_name_data(x_pos, i, current_line, 3, 0x000000, 0x40000);
@@ -417,6 +426,15 @@ void vdp2_basic_tile_scroll_deinit()
    VDP2_REG_PRISB = 0x0101;
    VDP2_REG_PRISC = 0x0101;
    VDP2_REG_PRISD = 0x0101;
+
+   VDP2_REG_CCCTL = 0;
+   VDP2_REG_LNCLEN = 0;
+   VDP2_REG_RAMCTL = 0x1000;
+   VDP2_REG_CCRNA = 0;
+   VDP2_REG_CCRNB = 0;
+   VDP2_REG_CCRLB = 0;
+
+   yabauseut_init();
 }
 //////////////////////////////////////////////////////////////////////////////
 
@@ -740,13 +758,6 @@ void vdp2_line_color_screen_test()
 
    vdp2_basic_tile_scroll_deinit();
    vdp_set_default_palette();
-
-   VDP2_REG_CCCTL = 0;
-   VDP2_REG_LNCLEN = 0;
-   VDP2_REG_RAMCTL = 0x1000;
-   VDP2_REG_CCRNA = 0;
-   VDP2_REG_CCRNB = 0;
-   VDP2_REG_CCRLB = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -772,6 +783,7 @@ void write_large_font(int x_pos, int y_pos, int* number, int palette, u32 base, 
 void vdp2_extended_color_calculation_test()
 {
    const u32 tile_address = 0x40000;
+   const u32 line_table_address = 0x10000;
    int zero[] = { 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1 };
    int one[] = { 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 };
    int two[] = { 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1 };
@@ -781,6 +793,7 @@ void vdp2_extended_color_calculation_test()
    int i;
 
    vdp2_basic_tile_scroll_setup(tile_address);
+   vdp2_line_color_screen_test_set_up_line_screen(line_table_address);
 
    int palette = 9;
 
@@ -815,186 +828,264 @@ void vdp2_extended_color_calculation_test()
       write_large_font(13, i, three, 0, 0x00C000, tile_address);
    }
 
+
    //set up instructions
    char * instructions[] = {
-      "Controls:             ",
-      "A:     EXCCEN  on/off ",
-      "B:     CCMD    on/off ",
-      "C:     NBG0    on/off ",
-      "X:     NBG1    on/off ",
-      "Y:     NBG2    on/off ",
-      "Z:     NBG3    on/off ",
-      "UP:    N0CCEN  on/off ",
-      "DOWN:  N1CCEN  on/off ",
-      "LEFT:  N2CCEN  on/off ",
-      "RIGHT: N3CCEN  on/off ",
-      "START: Exit           "
+      "U/D/L/R: Reg menu     ",
+      "A: Change Preset      ",
+      "Start: Exit           "
    };
 
    int j = 0;
-   for (i = 12; i < 12 + 12; i++)
+   for (i = 24; i < 24 + 7; i++)
    {
       write_str_as_pattern_name_data(18, i, instructions[j++], 3, 0x000000, tile_address);
    }
 
-   int disp_nbg[4] = { 1, 1, 1, 1 };
-   int nbg_ratio[4] = { 0 };
+   //vars for reg adjuster
+   struct {
+      int nbg_priority[4];
+      int nbg_color_calc_enable[4];
+      int nbg_color_calc_ratio[4];
+      int color_calculation_ratio_mode;
+      int extended_color_calculation;
+      int color_calculation_mode_bit;
+      int color_ram_mode;
+      int line_color_screen_inserts[4];
+      int line_color_mode_bit;
+      int line_color_screen_color_calc_enable;
+      int line_color_screen_ratio;
+   }v = { { 0 } };
 
-   struct Ccctl ccctl = { 0 };
+   struct RegAdjusterState s = { 0 };
 
-   ccctl.exccen = 1;
-   ccctl.ccmd = 0;
-   ccctl.nccen[3] = 1;
-   ccctl.nccen[2] = 1;
-   ccctl.nccen[1] = 1;
-   ccctl.nccen[0] = 1;
+   ra_add_array(&s, (int(*)[])v.nbg_priority, 4,          "NBG Priority   NBG", 7);
+   ra_add_array(&s, (int(*)[])v.nbg_color_calc_enable, 4, "Color cl enabl NBG", 1);
+   ra_add_array(&s, (int(*)[])v.nbg_color_calc_ratio, 4,  "Color cl ratio NBG", 31);
+   ra_add_var(&s, &v.extended_color_calculation,          "Extended color cal ", 1);
+   ra_add_var(&s, &v.color_calculation_ratio_mode,        "Color cal ratio md ", 1);
+   ra_add_var(&s, &v.color_calculation_mode_bit,          "Color cal mode bit ", 1);
+   ra_add_var(&s, &v.color_ram_mode,                      "Color ram mode     ", 3);
+   ra_add_array(&s, &v.line_color_screen_inserts, 4, "Line screen in NBG", 1);
+   ra_add_var(&s, &v.line_color_mode_bit,                 "Line color mode bt ", 1);
+   ra_add_var(&s, &v.line_color_screen_color_calc_enable, "Line col cal enabl ", 1);
+   ra_add_var(&s, &v.line_color_screen_ratio,             "Line color cal rat ", 31);
+   
+   int presets[][24] =
+   {
+      //preset 0
+      {
+         //nbg priority
+         1, 1, 1, 1,
+         //nbg color calc enable
+         1, 1, 1, 1,
+         //nbg color calc ratio
+         15, 0, 0, 0,
+         //extended color calc
+         1,
+         //color calc ratio mode
+         0,
+         //color calc mode bit
+         0,
+         //color ram mode
+         0,
+         //Line screen inserts
+         0, 0, 0, 0,
+         //Line color mode bit
+         0,
+         //Line color calc enable
+         0,
+         //Line color ratio
+         0
+      },
 
-   int framecount = 0;
-   int ratio = 0;
-   int ratio_dir = 1;
+      //preset 1
+      {
+         //nbg priority
+         3, 2, 4, 0,
+         //nbg color calc enable
+         1, 1, 1, 1,
+         //nbg color calc ratio
+         15, 0, 0, 0,
+         //extended color calc
+         1,
+         //color calc ratio mode
+         0,
+         //color calc mode bit
+         1,
+         //color ram mode
+         0,
+         //Line screen inserts
+         0, 0, 0, 0,
+         //Line color mode bit
+         0,
+         //Line color calc enable
+         0,
+         //Line color ratio
+         0
+      },
 
-   int update_nbg_ratios = 1;
+      //preset 2
+      {
+         //nbg priority
+         3, 2, 7, 7,
+         //nbg color calc enable
+         1, 1, 1, 1,
+         //nbg color calc ratio
+         15, 0, 0, 0,
+         //extended color calc
+         1,
+         //color calc ratio mode
+         0,
+         //color calc mode bit
+         1,
+         //color ram mode
+         0,
+         //Line screen inserts
+         0, 0, 0, 0,
+         //Line color mode bit
+         0,
+         //Line color calc enable
+         0,
+         //Line color ratio
+         0
+      },
+
+      //preset 3
+      {
+         //nbg priority
+         5, 7, 6, 0,
+         //nbg color calc enable
+         1, 0, 1, 1,
+         //nbg color calc ratio
+         15, 0, 0, 0,
+         //extended color calc
+         1,
+         //color calc ratio mode
+         0,
+         //color calc mode bit
+         1,
+         //color ram mode
+         0,
+         //Line screen inserts
+         0, 0, 0, 0,
+         //Line color mode bit
+         0,
+         //Line color calc enable
+         0,
+         //Line color ratio
+         0
+      },
+
+      //preset 4
+      {
+         //nbg priority
+         7, 7, 0, 4,
+         //nbg color calc enable
+         1, 0, 1, 1,
+         //nbg color calc ratio
+         15, 0, 0, 0,
+         //extended color calc
+         1,
+         //color calc ratio mode
+         0,
+         //color calc mode bit
+         1,
+         //color ram mode
+         0,
+         //Line screen inserts
+         0, 0, 0, 0,
+         //Line color mode bit
+         0,
+         //Line color calc enable
+         0,
+         //Line color ratio
+         0
+      },
+
+      //preset 5
+      {
+         //nbg priority
+         1, 1, 1, 1,
+         //nbg color calc enable
+         1, 1, 1, 1,
+         //nbg color calc ratio
+         0, 20, 31, 2,
+         //extended color calc
+         1,
+         //color calc ratio mode
+         1,
+         //color calc mode bit
+         0,
+         //color ram mode
+         0,
+         //Line screen inserts
+         0,0,0,0,
+         //Line color mode bit
+         0,
+         //Line color calc enable
+         0,
+         //Line color ratio
+         0
+      }
+   };
+
+   int preset = 1;
+
+   ra_do_preset(&s, presets[preset]);
 
    for (;;)
    {
       vdp_vsync();
 
-      do_color_ratios(&framecount, &ratio, &ratio_dir);
+      ra_update_vars(&s);
 
-      if (update_nbg_ratios)
-      {
-         nbg_ratio[0] = ((-ratio) & 0x1f);
-         nbg_ratio[2] = nbg_ratio[0];
-         nbg_ratio[3] = nbg_ratio[1] = ratio;
-
-         VDP2_REG_CCRNA = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
-         VDP2_REG_CCRNB = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
-      }
-
-      char ratio_status_str[64] = "";
-
-      sprintf(ratio_status_str, "NBG0=%04x NBG1=%04x ", nbg_ratio[0], nbg_ratio[1]);
-      write_str_as_pattern_name_data(18, 7, ratio_status_str, 3, 0x000000, tile_address);
-
-      sprintf(ratio_status_str, "NBG2=%04x NBG3=%04x ", nbg_ratio[2], nbg_ratio[3]);
-      write_str_as_pattern_name_data(18, 8, ratio_status_str, 3, 0x000000, tile_address);
-
-      sprintf(ratio_status_str, "Color ram mode %d ", (VDP2_REG_RAMCTL >> 12) & 3);
-      write_str_as_pattern_name_data(18, 9, ratio_status_str, 3, 0x000000, tile_address);
+      ra_do_menu(&s, 17);
 
       VDP2_REG_CCCTL =
-         (ccctl.exccen << 10) |
-         (ccctl.ccrtmd << 9) |
-         (ccctl.ccmd << 8) |
-         (ccctl.spccen << 6) |
-         (ccctl.lcccen << 5) |
-         (ccctl.r0ccen << 4) |
-         (ccctl.nccen[3] << 3) |
-         (ccctl.nccen[2] << 2) |
-         (ccctl.nccen[1] << 1) |
-         (ccctl.nccen[0]);
+         (v.extended_color_calculation << 10) |
+         (v.color_calculation_ratio_mode << 9) |
+         (v.color_calculation_mode_bit << 8) |
+         (v.nbg_color_calc_enable[0]) |
+         (v.nbg_color_calc_enable[1] << 1) |
+         (v.nbg_color_calc_enable[2] << 2) |
+         (v.nbg_color_calc_enable[3] << 3) |
+         (v.line_color_screen_color_calc_enable << 5);
 
-      VDP2_REG_PRINA = disp_nbg[0] | (disp_nbg[1] << 8);
-      VDP2_REG_PRINB = disp_nbg[2] | (disp_nbg[3] << 8);
+      VDP2_REG_CCRNA = v.nbg_color_calc_ratio[0] | (v.nbg_color_calc_ratio[1] << 8);
+      VDP2_REG_CCRNB = v.nbg_color_calc_ratio[2] | (v.nbg_color_calc_ratio[3] << 8);
+      VDP2_REG_CCRLB = v.line_color_screen_ratio;
 
-      for (i = 0; i < 4; i++)
-      {
-         char out[64];
-         sprintf(out, "NBG%d ", i);
-         if (disp_nbg[i])
-         {
-            strcat(out, "On ");
-         }
-         else
-         {
-            strcat(out, "Off");
-         }
+      VDP2_REG_LNCLEN = (v.line_color_screen_inserts[0]) |
+         (v.line_color_screen_inserts[1] << 1) |
+         (v.line_color_screen_inserts[2] << 2) |
+         (v.line_color_screen_inserts[3] << 3);
 
-         char out2[64];
-         sprintf(out2, " N%dCCEN ", i);
-         strcat(out, out2);
+      VDP2_REG_PRINA = v.nbg_priority[0] | (v.nbg_priority[1] << 8);
+      VDP2_REG_PRINB = v.nbg_priority[2] | (v.nbg_priority[3] << 8);
 
-         if (ccctl.nccen[i])
-         {
-            strcat(out, "On ");
-         }
-         else
-         {
-            strcat(out, "Off");
-         }
-         write_str_as_pattern_name_data(18, i, out, 3, 0x000000, tile_address);
-      }
+      VDP2_REG_RAMCTL = v.color_ram_mode << 12;
 
-      if (ccctl.exccen)
-      {
-         write_str_as_pattern_name_data(18, 5, "EXCCEN=1 (Extended)", 3, 0x000000, tile_address);
-      }
-      else
-      {
-         write_str_as_pattern_name_data(18, 5, "EXCCEN=0 (Off)     ", 3, 0x000000, tile_address);
-      }
-      if (ccctl.ccmd)
-      {
-         write_str_as_pattern_name_data(18, 6, "CCMD=1   (As is)  ", 3, 0x000000, tile_address);
-      }
-      else
-      {
-         write_str_as_pattern_name_data(18, 6, "CCMD=0   (Reg val)", 3, 0x000000, tile_address);
-      }
+      *(volatile u32 *)0x25F800A8 = (v.line_color_mode_bit << 31) | (line_table_address / 2);
+
+      char preset_status[64] = { 0 };
+      sprintf(preset_status, "Preset %d", preset);
+      write_str_as_pattern_name_data(18, 27, preset_status, 3, 0x000000, tile_address);
 
       if (per[0].but_push_once & PAD_A)
       {
-         ccctl.exccen = !ccctl.exccen;
-      }
+         preset++;
 
-      if (per[0].but_push_once & PAD_B)
-      {
-         ccctl.ccmd = !ccctl.ccmd;
-      }
+         if (preset > 5)
+            preset = 0;
 
-      if (per[0].but_push_once & PAD_C)
-      {
-         disp_nbg[0] = !disp_nbg[0];
-      }
-
-      if (per[0].but_push_once & PAD_X)
-      {
-         disp_nbg[1] = !disp_nbg[1];
-      }
-
-      if (per[0].but_push_once & PAD_Y)
-      {
-         disp_nbg[2] = !disp_nbg[2];
-      }
-
-      if (per[0].but_push_once & PAD_Z)
-      {
-         disp_nbg[3] = !disp_nbg[3];
-      }
-
-      if (per[0].but_push_once & PAD_UP)
-      {
-         ccctl.nccen[0] = !ccctl.nccen[0];
-      }
-
-      if (per[0].but_push_once & PAD_DOWN)
-      {
-         ccctl.nccen[1] = !ccctl.nccen[1];
-      }
-
-      if (per[0].but_push_once & PAD_LEFT)
-      {
-         ccctl.nccen[2] = !ccctl.nccen[2];
-      }
-
-      if (per[0].but_push_once & PAD_RIGHT)
-      {
-         ccctl.nccen[3] = !ccctl.nccen[3];
+         ra_do_preset(&s, presets[preset]);
       }
 
       if (per[0].but_push_once & PAD_START)
          break;
    }
+   vdp2_basic_tile_scroll_deinit();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1351,14 +1442,14 @@ void vdp2_special_priority_test()
 
    struct RegAdjusterState s = { 0 };
 
-   ra_add_array(&s, (int(*)[])v.special_color_calc_mode, 4, "Spcl clr clc md NBG", 3);
-   ra_add_array(&s, (int(*)[])v.nbg_color_calc_enable, 4, "Color calc enbl NBG", 1);
-   ra_add_array(&s, (int(*)[])v.special_function_code_bit, 4, "Specl functn code #", 1);
-   ra_add_array(&s, (int(*)[])v.special_priority_mode_bit, 4, "Special priorty NBG", 3);
-   ra_add_array(&s, (int(*)[])v.special_function_code_select, 4, "Specl func code NBG", 1);
-   ra_add_var(&s, &v.color_calculation_ratio_mode, "Color cal rati mode ", 1);
-   ra_add_var(&s, &v.color_calculation_mode_bit, "Color calcultn mode ", 1);
-   ra_add_array(&s, (int(*)[])v.nbg_priority, 4, "Priority        NBG", 7);
+   ra_add_array(&s, (int(*)[])v.special_color_calc_mode, 4, "Spcl clr cl md NBG", 3);
+   ra_add_array(&s, (int(*)[])v.nbg_color_calc_enable, 4, "Color calc enb NBG", 1);
+   ra_add_array(&s, (int(*)[])v.special_function_code_bit, 4, "Specl functn cde #", 1);
+   ra_add_array(&s, (int(*)[])v.special_priority_mode_bit, 4, "Special priort NBG", 3);
+   ra_add_array(&s, (int(*)[])v.special_function_code_select, 4, "Specl func cod NBG", 1);
+   ra_add_var(&s, &v.color_calculation_ratio_mode, "Color cal rati mode", 1);
+   ra_add_var(&s, &v.color_calculation_mode_bit, "Color calcultn mode", 1);
+   ra_add_array(&s, (int(*)[])v.nbg_priority, 4, "Priority       NBG", 7);
 
    int init_state[] =
    {//special color calc mode
