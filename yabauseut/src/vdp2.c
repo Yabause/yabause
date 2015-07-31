@@ -1776,7 +1776,6 @@ void vdp2_line_window_test()
 {
    const u32 vdp2_tile_address = 0x40000;
    vdp2_basic_tile_scroll_setup(vdp2_tile_address);
-   u32 addresses[4] = { 0x000000, 0x004000, 0x008000, 0x00c000 };
 
    int i;
    for (i = 0; i < 32; i += 4)
@@ -1916,9 +1915,10 @@ void vdp2_line_window_test()
 
       if (per[0].but_push_once & PAD_START)
       {
-         reset_system();
+         break;
       }
    }
+   vdp2_basic_tile_scroll_deinit();
 }
 
 //////////////////////////////////////////////////////////////////////////////
