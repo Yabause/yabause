@@ -242,7 +242,7 @@ void ra_add_array(struct RegAdjusterState* s, int(*vars)[], int length, char* na
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ra_do_menu(struct RegAdjusterState* s, int x_pos)
+void ra_do_menu(struct RegAdjusterState* s, int x_pos, int y_pos)
 {
    int i;
    for (i = 0; i < s->num_menu_items; i++)
@@ -261,7 +261,7 @@ void ra_do_menu(struct RegAdjusterState* s, int x_pos)
       sprintf(value, "=%02d", s->vars[i].value);
       strcat(current_line, s->vars[i].name);
       strcat(current_line, value);
-      write_str_as_pattern_name_data(x_pos, i, current_line, 3, 0x000000, 0x40000);
+      write_str_as_pattern_name_data(x_pos, i+y_pos, current_line, 3, 0x000000, 0x40000);
    }
 
    if (per[0].but_push_once & PAD_UP)
@@ -1040,7 +1040,7 @@ void vdp2_extended_color_calculation_test()
 
       ra_update_vars(&s);
 
-      ra_do_menu(&s, 17);
+      ra_do_menu(&s, 17,0);
 
       VDP2_REG_CCCTL =
          (v.extended_color_calculation << 10) |
@@ -1515,7 +1515,7 @@ void vdp2_special_priority_test()
 
       ra_update_vars(&s);
 
-      ra_do_menu(&s, 17);
+      ra_do_menu(&s, 17,0);
 
       do_color_ratios(&framecount, &ratio, &ratio_dir);
 
@@ -1706,6 +1706,218 @@ void vdp2_special_priority_test()
          break;
    }
 
+   vdp2_basic_tile_scroll_deinit();
+}
+
+void vdp2_set_line_window_tables(u32 * line_window_table_address)
+{
+   u16 ellipse[] = {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 290, 348, 268, 370, 253, 385,
+      242, 396, 231, 407, 222, 416, 214, 424, 207, 431, 200, 438, 193, 445, 187, 451, 181, 457, 175, 463,
+      170, 468, 165, 473, 160, 478, 156, 482, 151, 487, 147, 491, 143, 495, 139, 499, 135, 503, 131, 507,
+      128, 510, 124, 514, 121, 517, 117, 521, 114, 524, 111, 527, 108, 530, 105, 533, 102, 536, 99, 539,
+      97, 541, 94, 544, 92, 546, 89, 549, 87, 551, 84, 554, 82, 556, 80, 558, 77, 561, 75, 563,
+      73, 565, 71, 567, 69, 569, 67, 571, 65, 573, 63, 575, 61, 577, 60, 578, 58, 580, 56, 582,
+      55, 583, 53, 585, 51, 587, 50, 588, 48, 590, 47, 591, 46, 592, 44, 594, 43, 595, 42, 596,
+      40, 598, 39, 599, 38, 600, 37, 601, 36, 602, 35, 603, 34, 604, 33, 605, 32, 606, 31, 607,
+      30, 608, 29, 609, 28, 610, 27, 611, 26, 612, 26, 612, 25, 613, 24, 614, 24, 614, 23, 615,
+      22, 616, 22, 616, 21, 617, 21, 617, 20, 618, 20, 618, 19, 619, 19, 619, 18, 620, 18, 620,
+      18, 620, 17, 621, 17, 621, 17, 621, 17, 621, 17, 621, 16, 622, 16, 622, 16, 622, 16, 622,
+      16, 622, 16, 622, 16, 622, 16, 622, 16, 622, 16, 622, 16, 622, 17, 621, 17, 621, 17, 621,
+      17, 621, 17, 621, 18, 620, 18, 620, 18, 620, 19, 619, 19, 619, 20, 618, 20, 618, 21, 617,
+      21, 617, 22, 616, 22, 616, 23, 615, 24, 614, 24, 614, 25, 613, 26, 612, 26, 612, 27, 611,
+      28, 610, 29, 609, 30, 608, 31, 607, 32, 606, 33, 605, 34, 604, 35, 603, 36, 602, 37, 601,
+      38, 600, 39, 599, 40, 598, 42, 596, 43, 595, 44, 594, 46, 592, 47, 591, 48, 590, 50, 588,
+      51, 587, 53, 585, 55, 583, 56, 582, 58, 580, 60, 578, 61, 577, 63, 575, 65, 573, 67, 571,
+      69, 569, 71, 567, 73, 565, 75, 563, 77, 561, 80, 558, 82, 556, 84, 554, 87, 551, 89, 549,
+      92, 546, 94, 544, 97, 541, 99, 539, 102, 536, 105, 533, 108, 530, 111, 527, 114, 524, 117, 521,
+      121, 517, 124, 514, 128, 510, 131, 507, 135, 503, 139, 499, 143, 495, 147, 491, 151, 487, 156, 482,
+      160, 478, 165, 473, 170, 468, 175, 463, 181, 457, 187, 451, 193, 445, 200, 438, 207, 431, 214, 424,
+      222, 416, 231, 407, 242, 396, 253, 385, 268, 370, 290, 348, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+   };
+
+   u16 ellipse2[] = {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 290, 348, 269, 369, 254, 384, 243, 395, 233, 405,
+      224, 414, 216, 422, 208, 430, 201, 437, 195, 443, 189, 449, 183, 455, 178, 460, 173, 465, 168, 470,
+      163, 475, 159, 479, 154, 484, 150, 488, 146, 492, 142, 496, 139, 499, 135, 503, 131, 507, 128, 510,
+      125, 513, 122, 516, 118, 520, 115, 523, 113, 525, 110, 528, 107, 531, 104, 534, 102, 536, 99, 539,
+      97, 541, 94, 544, 92, 546, 90, 548, 87, 551, 85, 553, 83, 555, 81, 557, 79, 559, 77, 561,
+      75, 563, 74, 564, 72, 566, 70, 568, 68, 570, 67, 571, 65, 573, 64, 574, 62, 576, 61, 577,
+      59, 579, 58, 580, 57, 581, 55, 583, 54, 584, 53, 585, 52, 586, 51, 587, 49, 589, 48, 590,
+      47, 591, 46, 592, 45, 593, 44, 594, 44, 594, 43, 595, 42, 596, 41, 597, 40, 598, 40, 598,
+      39, 599, 38, 600, 38, 600, 37, 601, 37, 601, 36, 602, 36, 602, 35, 603, 35, 603, 34, 604,
+      34, 604, 34, 604, 33, 605, 33, 605, 33, 605, 33, 605, 32, 606, 32, 606, 32, 606, 32, 606,
+      32, 606, 32, 606, 32, 606, 32, 606, 32, 606, 32, 606, 32, 606, 33, 605, 33, 605, 33, 605,
+      33, 605, 34, 604, 34, 604, 34, 604, 35, 603, 35, 603, 36, 602, 36, 602, 37, 601, 37, 601,
+      38, 600, 38, 600, 39, 599, 40, 598, 40, 598, 41, 597, 42, 596, 43, 595, 44, 594, 44, 594,
+      45, 593, 46, 592, 47, 591, 48, 590, 49, 589, 51, 587, 52, 586, 53, 585, 54, 584, 55, 583,
+      57, 581, 58, 580, 59, 579, 61, 577, 62, 576, 64, 574, 65, 573, 67, 571, 68, 570, 70, 568,
+      72, 566, 74, 564, 75, 563, 77, 561, 79, 559, 81, 557, 83, 555, 85, 553, 87, 551, 90, 548,
+      92, 546, 94, 544, 97, 541, 99, 539, 102, 536, 104, 534, 107, 531, 110, 528, 113, 525, 115, 523,
+      118, 520, 122, 516, 125, 513, 128, 510, 131, 507, 135, 503, 139, 499, 142, 496, 146, 492, 150, 488,
+      154, 484, 159, 479, 163, 475, 168, 470, 173, 465, 178, 460, 183, 455, 189, 449, 195, 443, 201, 437,
+      208, 430, 216, 422, 224, 414, 233, 405, 243, 395, 254, 384, 269, 369, 290, 348, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+   };
+
+   volatile u16 *line_window_table_table_ptr = (volatile u16 *)(VDP2_RAM + line_window_table_address[0]);
+   volatile u16 *line_window_table_table_ptr2 = (volatile u16 *)(VDP2_RAM + line_window_table_address[1]);
+
+   int i;
+   for (i = 0; i < 224 * 2; i++)
+   {
+      line_window_table_table_ptr[i] = ellipse[i];
+      line_window_table_table_ptr2[i] = ellipse2[i];
+   }
+}
+
+void vdp2_line_window_test()
+{
+   const u32 vdp2_tile_address = 0x40000;
+   vdp2_basic_tile_scroll_setup(vdp2_tile_address);
+
+   int i;
+   for (i = 0; i < 32; i += 4)
+   {
+      write_str_as_pattern_name_data_special(0, 0 + i, "\n\n\n\nNBG0                        NBG0\n\n\n\n", 3, 0, vdp2_tile_address, 0, 0);
+      write_str_as_pattern_name_data_special(0, 1 + i, "\n\n\n\nNBG1                        NBG1\n\n\n\n", 4, 0x004000, vdp2_tile_address, 0, 0);
+      write_str_as_pattern_name_data_special(0, 2 + i, "\n\n\n\nNBG2                        NBG2\n\n\n\n", 5, 0x008000, vdp2_tile_address, 0, 0);
+      write_str_as_pattern_name_data_special(0, 3 + i, "\n\n\n\nNBG3                        NBG3\n\n\n\n", 6, 0x00C000, vdp2_tile_address, 0, 0);
+   }
+
+   write_str_as_pattern_name_data_special(0, 0,  "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", 3, 0x000000, vdp2_tile_address, 0, 0);
+   write_str_as_pattern_name_data_special(0, 1, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", 4, 0x004000, vdp2_tile_address, 0, 0);
+   write_str_as_pattern_name_data_special(0, 2, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", 5, 0x008000, vdp2_tile_address, 0, 0);
+
+   write_str_as_pattern_name_data_special(0, 25, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", 4, 0x004000, vdp2_tile_address, 0, 0);
+   write_str_as_pattern_name_data_special(0, 26, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", 5, 0x008000, vdp2_tile_address, 0, 0);
+   write_str_as_pattern_name_data_special(0, 27, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", 6, 0x00C000, vdp2_tile_address, 0, 0);
+
+   //vars for reg adjuster
+   struct {
+      int line_window_enable[2];
+      struct {
+         int window_logic;
+         int window_enable[2];
+         int window_area[2];
+      }nbg[4];
+   }v = { { 0 } };
+
+   struct RegAdjusterState s = { 0 };
+
+   ra_add_array(&s, (int(*)[])v.line_window_enable, 2, "Line window enab #", 1);
+
+   for (i = 0; i < 4; i++)
+   { 
+      char str[64] = { 0 };
+      sprintf(str, "NBG%d window logic  ", i);
+      ra_add_var(&s, &v.nbg[i].window_logic,              str, 1);
+      sprintf(str, "NBG%d window enabl ", i);
+      ra_add_array(&s, (int(*)[])v.nbg[i].window_enable, 2, str, 1);
+      sprintf(str, "NBG%d window area  ", i);
+      ra_add_array(&s, (int(*)[])v.nbg[i].window_area, 2, str, 1);
+   }
+
+   int presets[][22] =
+   {
+      //preset 0
+      {
+         //line window enable
+         1, 1,
+         //nbg0
+         0, 0, 0, 0, 0,
+         //nbg1
+         0, 0, 1, 1, 1,
+         //nbg2
+         0, 1, 1, 1, 0,
+         //nbg3
+         1, 1, 1, 0, 1
+      },
+      //preset 1
+      {
+         //line window enable
+         0,0,
+         //nbg0
+         0, 0, 0, 0, 0,
+         //nbg1
+         0, 0, 1, 1, 1,
+         //nbg2
+         0, 1, 1, 1, 0,
+         //nbg3
+         1, 1, 1, 0, 1
+      },
+      //preset 1
+      {
+         //line window enable
+         0, 0,
+         //nbg0
+         0, 0, 0, 0, 0,
+         //nbg1
+         0, 0, 0, 0, 0,
+         //nbg2
+         0, 0, 0, 0, 0,
+         //nbg3
+         0, 0, 0, 0, 0
+      }
+   };
+
+   int preset = 0;
+
+   ra_do_preset(&s, presets[preset]);
+
+   u32 line_window_table_address[2] = { 0x50000, 0x52000};
+
+   vdp2_set_line_window_tables(line_window_table_address);
+   
+   for (;;)
+   {
+      vdp_vsync();
+
+      *(volatile u32 *)0x25F800D8 = (v.line_window_enable[0] << 31) | (line_window_table_address[0] / 2);
+      *(volatile u32 *)0x25F800DC = (v.line_window_enable[1] << 31) | (line_window_table_address[1] / 2);
+
+      VDP2_REG_WCTLA = (v.nbg[0].window_enable[0] << 1) | (v.nbg[1].window_enable[0] << 9) |
+         (v.nbg[0].window_logic << 7) | (v.nbg[1].window_logic << 15) |
+         (v.nbg[0].window_area[0] << 0) | (v.nbg[1].window_area[0] << 8) |
+         (v.nbg[0].window_enable[1] << 3) | (v.nbg[1].window_enable[1] << 11) |
+         (v.nbg[0].window_area[1] << 2) | (v.nbg[1].window_area[1] << 10);
+
+      VDP2_REG_WCTLB = (v.nbg[2].window_enable[0] << 1) | (v.nbg[3].window_enable[0] << 9) |
+         (v.nbg[2].window_logic << 7) | (v.nbg[3].window_logic << 15) |
+         (v.nbg[2].window_area[0] << 0) | (v.nbg[3].window_area[0] << 8) |
+         (v.nbg[2].window_enable[1] << 3) | (v.nbg[3].window_enable[1] << 11) |
+         (v.nbg[2].window_area[1] << 2) | (v.nbg[3].window_area[1] << 10);
+
+      VDP2_REG_WPSX0 = (1 * 8) * 2;
+      VDP2_REG_WPSY0 = 1 * 8;
+      VDP2_REG_WPEX0 = ((39 * 8) * 2) - 2;
+      VDP2_REG_WPEY0 = (27 * 8) - 1;
+
+      VDP2_REG_WPSX1 = (2 * 8) * 2;
+      VDP2_REG_WPSY1 = 2 * 8;
+      VDP2_REG_WPEX1 = ((38 * 8) * 2) - 2;
+      VDP2_REG_WPEY1 = (26 * 8) - 1;
+
+      ra_update_vars(&s);
+
+      ra_do_menu(&s, 8,3);
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         preset++;
+
+         if (preset > 2)
+            preset = 0;
+
+         ra_do_preset(&s, presets[preset]);
+      }
+
+      if (per[0].but_push_once & PAD_START)
+      {
+         break;
+      }
+   }
    vdp2_basic_tile_scroll_deinit();
 }
 
