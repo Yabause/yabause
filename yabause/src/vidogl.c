@@ -184,9 +184,9 @@ u32 FASTCALL Vdp2ColorRamGetColorCM2(vdp2draw_struct * info, u32 colorindex, int
 
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture)
 {
-   int shadow;
-   int priority;
-   int colorcl;
+   int shadow = 0;
+   int priority = 0;
+   int colorcl = 0;
    
    int ednmode;
    int endcnt = 0;
@@ -200,7 +200,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    VDP1LOG("Making new sprite %08X\n", charAddr);
    
    
-
    if( (cmd->CMDPMOD & 0x20) == 0)
       ednmode = 1;
    else 
@@ -2298,6 +2297,13 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    int pagesize;
    int patternshift;
    u32 LineColorRamAdress;   
+   vdp2draw_struct line_info;
+   YglTexture line_texture;
+   int lineInc = Vdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
+   int linecl = 0xFF;
+   if ((Vdp2Regs->CCCTL >> 5) & 0x01){
+	   linecl = ((~Vdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
+   }
 
    vdp2rotationparameter_struct *parameter;
    if( vdp2height >= 448 ) vres = (vdp2height>>1); else vres = vdp2height;
@@ -2319,11 +2325,6 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    info->cor = 0x00;
    info->cog = 0x00;
    info->cob = 0x00;
-   YglQuad((YglSprite *)info, texture,NULL);
-   info->cellw = cellw;
-   info->cellh = cellh;
-   x = 0;
-   y = 0;
    
    if( Vdp2Regs->RPMD != 0 ) useb = 1;
    
@@ -2352,13 +2353,25 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       patternshift = 0;      
    }
    
+   Vdp2 * regs = Vdp2RestoreRegs(3);
+   if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
+
+   line_texture.textdata = NULL;
    if( info->LineColorBase !=0 )
    {
-      LineColorRamAdress = (T1ReadWord(Vdp2Ram,info->LineColorBase)&0x780) + info->coloroffset;
+	   memcpy(&line_info, info, sizeof(vdp2draw_struct));
+	   line_info.blendmode = 0;
+	   YglQuad((YglSprite *)&line_info, &line_texture, NULL);
+	   LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
    }else{
       LineColorRamAdress = 0x00;
    }
-            
+
+   YglQuad((YglSprite *)info, texture, NULL);
+   info->cellw = cellw;
+   info->cellh = cellh;
+   x = 0;
+   y = 0;
 
     paraA.dx = paraA.A * paraA.deltaX + paraA.B * paraA.deltaY;
     paraA.dy = paraA.D * paraA.deltaX + paraA.E * paraA.deltaY;      
@@ -2407,152 +2420,160 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 
       if( (Vdp2Regs->LCTA.part.U & 0x8000) != 0 && info->LineColorBase !=0 )
       {
-         LineColorRamAdress = (T1ReadWord(Vdp2Ram,info->LineColorBase+(y<<1))&0x780) + info->coloroffset;
+		  LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);
+		 info->LineColorBase += lineInc;
       }      
 
-	  Vdp2 * regs = Vdp2RestoreRegs(j);
-	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
+//	  Vdp2 * regs = Vdp2RestoreRegs(j);
+//	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
-      for( i = 0; i < hres; i++ )
-      {
-         parameter = info->GetRParam(info,i,j);
-         if( parameter == NULL )
-         {
-             *(texture->textdata++) = 0x00000000;
-            continue;
-         }
-         
-         h = (parameter->ky * ( parameter->Xsp + parameter->dx * i ) + parameter->Xp);
-         v = (parameter->ky * ( parameter->Ysp + parameter->dy * i ) + parameter->Yp);
+	  for (i = 0; i < hres; i++)
+	  {
+		  parameter = info->GetRParam(info, i, j);
+		  if (parameter == NULL)
+		  {
+			  *(texture->textdata++) = 0x00000000;
+			  if (line_texture.textdata) *(line_texture.textdata++) = 0x00000000;
+			  continue;
+		  }
 
-         if (info->isbitmap)
-         {
-            h &= cellw-1;
-            v &= cellh-1;
+		  h = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
+		  v = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
 
-            // Fetch Pixel
-            color = Vdp2RotationFetchPixel(info, h, v, cellw);
-         }
-         else
-         {
-             // Tile
-            int planenum;
-            if( (h < 0 || h >= parameter->MaxH) || (v < 0 || v >= parameter->MaxV) )
-            {
-               switch( parameter->screenover )
-               {
-               case OVERMODE_REPEAT:
-                  h &= (parameter->MaxH-1);
-                  v &= (parameter->MaxH-1);
-                  break;
-               case OVERMODE_SELPATNAME:
-				   *(texture->textdata++) = 0x00;  // ToDO
-                  continue;
-                  break;
-               default:
-				   *(texture->textdata++) = 0x00;
-                  continue;
-               }
-            }
+		  if (info->isbitmap)
+		  {
+			  h &= cellw - 1;
+			  v &= cellh - 1;
 
-            x = h;
-            y = v;
-            
+			  // Fetch Pixel
+			  color = Vdp2RotationFetchPixel(info, h, v, cellw);
+		  }
+		  else
+		  {
+			  // Tile
+			  int planenum;
+			  if ((h < 0 || h >= parameter->MaxH) || (v < 0 || v >= parameter->MaxV))
+			  {
+				  switch (parameter->screenover)
+				  {
+				  case OVERMODE_REPEAT:
+					  h &= (parameter->MaxH - 1);
+					  v &= (parameter->MaxH - 1);
+					  break;
+				  case OVERMODE_SELPATNAME:
+					  *(texture->textdata++) = 0x00;  // ToDO
+					  if (line_texture.textdata) *(line_texture.textdata++) = 0x00000000;
+					  continue;
+					  break;
+				  default:
+					  *(texture->textdata++) = 0x00;
+					  if (line_texture.textdata) *(line_texture.textdata++) = 0x00000000;
+					  continue;
+				  }
+			  }
 
-            if ((x>>patternshift) != oldcellx || (y>>patternshift) != oldcelly)
-            {
-               oldcellx = x>>patternshift;
-               oldcelly = y>>patternshift;
+			  x = h;
+			  y = v;
 
-               // Calculate which plane we're dealing with
-               planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
-               x &= parameter->MskH;
-               y &= parameter->MskV;                  
-               info->addr = parameter->PlaneAddrv[planenum];
-                    
-                  // Figure out which page it's on(if plane size is not 1x1)
-                   info->addr += (((y>>9) * pagesize * info->planew) +
-                                ((x>>9) * pagesize) +
-                                (((y&511)>>patternshift) * info->pagewh) +
-                                ((x&511)>>patternshift)) << info->patterndatasize;
 
-                    Vdp2PatternAddr(info); // Heh, this could be optimized
-               }
-               
-               // Figure out which pixel in the tile we want
-               if (info->patternwh == 1)
-               {
-                  x &= 8-1;
-                  y &= 8-1;
+			  if ((x >> patternshift) != oldcellx || (y >> patternshift) != oldcelly)
+			  {
+				  oldcellx = x >> patternshift;
+				  oldcelly = y >> patternshift;
 
-                  // vertical flip
-                  if (info->flipfunction & 0x2)
-                     y = 8 - 1 - y;
+				  // Calculate which plane we're dealing with
+				  planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
+				  x &= parameter->MskH;
+				  y &= parameter->MskV;
+				  info->addr = parameter->PlaneAddrv[planenum];
 
-                  // horizontal flip
-                  if (info->flipfunction & 0x1)
-                     x = 8 - 1 - x;
-               }
-               else
-               {
-                  if (info->flipfunction)
-                  {
-                     y &= 16 - 1;
-                     if (info->flipfunction & 0x2)
-                     {
-                        if (!(y & 8))
-                           y = 8 - 1 - y + 16;
-                        else
-                           y = 16 - 1 - y;
-                     }
-                     else if (y & 8)
-                        y += 8;
+				  // Figure out which page it's on(if plane size is not 1x1)
+				  info->addr += (((y >> 9) * pagesize * info->planew) +
+					  ((x >> 9) * pagesize) +
+					  (((y & 511) >> patternshift) * info->pagewh) +
+					  ((x & 511) >> patternshift)) << info->patterndatasize;
 
-                     if (info->flipfunction & 0x1)
-                     {
-                        if (!(x & 8))
-                           y += 8;
+				  Vdp2PatternAddr(info); // Heh, this could be optimized
+			  }
 
-                        x &= 8-1;
-                        x = 8 - 1 - x;
-                     }
-                     else if (x & 8)
-                     {
-                        y += 8;
-                        x &= 8-1;
-                     }
-                     else
-                        x &= 8-1;
-                  }
-                  else
-                  {
-                     y &= 16 - 1;
-                     if (y & 8)
-                        y += 8;
-                     if (x & 8)
-                        y += 8;
-                     x &= 8-1;
-                  }
-               }
+			  // Figure out which pixel in the tile we want
+			  if (info->patternwh == 1)
+			  {
+				  x &= 8 - 1;
+				  y &= 8 - 1;
 
-               // Fetch pixel
-               color = Vdp2RotationFetchPixel(info, x, y, 8);
-            }
+				  // vertical flip
+				  if (info->flipfunction & 0x2)
+					  y = 8 - 1 - y;
 
-            if( parameter->lineaddr != 0xFFFFFFFF && ((Vdp2Regs->CCCTL>>8)&0x01) )
-            {
-                  u32 linecolor = Vdp2ColorRamGetColor( LineColorRamAdress |parameter->lineaddr,0xFF);
-                  color = COLOR_ADD(color, (linecolor)&0xFF,
-                                           (linecolor>>8)&0xFF,
-                                           (linecolor>>16)&0xFF);            
-            }
+				  // horizontal flip
+				  if (info->flipfunction & 0x1)
+					  x = 8 - 1 - x;
+			  }
+			  else
+			  {
+				  if (info->flipfunction)
+				  {
+					  y &= 16 - 1;
+					  if (info->flipfunction & 0x2)
+					  {
+						  if (!(y & 8))
+							  y = 8 - 1 - y + 16;
+						  else
+							  y = 16 - 1 - y;
+					  }
+					  else if (y & 8)
+						  y += 8;
 
-			
+					  if (info->flipfunction & 0x1)
+					  {
+						  if (!(x & 8))
+							  y += 8;
 
-			*(texture->textdata++) = COLOR_ADD(color, info->cor, info->cog, info->cob);
-         }
+						  x &= 8 - 1;
+						  x = 8 - 1 - x;
+					  }
+					  else if (x & 8)
+					  {
+						  y += 8;
+						  x &= 8 - 1;
+					  }
+					  else
+						  x &= 8 - 1;
+				  }
+				  else
+				  {
+					  y &= 16 - 1;
+					  if (y & 8)
+						  y += 8;
+					  if (x & 8)
+						  y += 8;
+					  x &= 8 - 1;
+				  }
+			  }
 
-         texture->textdata += texture->w;
+			  // Fetch pixel
+			  color = Vdp2RotationFetchPixel(info, x, y, 8);
+		  }
+
+		  if (line_texture.textdata) {
+			  if ((color & 0xFF000000) == 0) {
+				  *(line_texture.textdata++) = 0x00000000;
+			  }else{
+				  if (parameter->lineaddr != 0xFFFFFFFF)
+				  {
+					  u32 linecolor = Vdp2ColorRamGetColor(LineColorRamAdress | parameter->lineaddr, linecl);
+					  *(line_texture.textdata++) = linecolor;
+				  } else{
+					  *(line_texture.textdata++) = 0x0 | (linecl << 24);
+				  }
+			  }
+		  }
+
+		  *(texture->textdata++) = color;
+		}
+		if (line_texture.textdata) line_texture.textdata += line_texture.w;
+        texture->textdata += texture->w;
    }
 
  
@@ -3208,6 +3229,9 @@ void VIDOGLVdp1PolygonDraw(void)
    polygon.w = 1;
    polygon.h = 1;
    polygon.flip = 0;
+   polygon.cor = 0x00;
+   polygon.cog = 0x00;
+   polygon.cob = 0x00;
 
    if( gouraud == 1 )
    {
@@ -4449,29 +4473,31 @@ static void Vdp2DrawRBG0(void)
    info.blendmode=0;         
    if( (Vdp2Regs->LNCLEN & 0x10) == 0x00 )
    {
-      if (Vdp2Regs->CCCTL & 0x10)
-      {
-         info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
-         if(Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0 )
-         {
-            info.blendmode=2;
-         }else{
-            info.blendmode=1;         
-         }
-      }else{
-         info.alpha = 0xFF;
-      }
       info.LineColorBase = 0x00;
       paraA.lineaddr = 0xFFFFFFFF;
       paraB.lineaddr = 0xFFFFFFFF;
    }else{
-      info.alpha = 0xFF;
+//      info.alpha = 0xFF;
       info.LineColorBase = ((Vdp2Regs->LCTA.all)&0x7FFFF) << 1;
       if( info.LineColorBase >= 0x80000 ) info.LineColorBase = 0x00;
       paraA.lineaddr = 0xFFFFFFFF;
       paraB.lineaddr = 0xFFFFFFFF;
    }
 
+   if (Vdp2Regs->CCCTL & 0x10)
+   {
+	   info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+	   if (Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
+	   {
+		   info.blendmode = 2;
+	   }
+	   else{
+		   info.blendmode = 1;
+	   }
+   }
+   else{
+	   info.alpha = 0xFF;
+   }
 
 
    info.coloroffset = (Vdp2Regs->CRAOFB & 0x7) << 8;
