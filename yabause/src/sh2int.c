@@ -181,6 +181,8 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 #endif
    sh->instruction = fetchlist[(addr >> 20) & 0x0FF](addr);
 
+   sh->pchistory[(++sh->pchistory_index) & 0xFF] = addr;
+
    // Execute it
    opcodes[sh->instruction](sh);
    sh->regs.PC -= 2;
@@ -2855,7 +2857,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
       // Execute it
       opcodes[context->instruction](context);
-      context->pchistory[(context->pchistory_index++) & 0xFF] = context->regs.PC;
+      context->pchistory[(++context->pchistory_index) & 0xFF] = context->regs.PC;
 
 		//if (MappedMemoryReadLong(0x06000930) == 0x00000009)
 		if (context->regs.PC == 0x060273AA)
