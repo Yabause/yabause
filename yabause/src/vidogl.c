@@ -439,7 +439,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       case 2:
       {
          // 8 bpp(64 color) Bank mode
-         u32 colorBank = cmd->CMDCOLR;
+        u32 colorBank = cmd->CMDCOLR & 0xFFC0;
          u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
 
          u16 i, j;
@@ -452,7 +452,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x00;
+               else if( (dot == 0x3F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
@@ -463,7 +463,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       case 3:
       {
          // 8 bpp(128 color) Bank mode
-         u32 colorBank = cmd->CMDCOLR;
+        u32 colorBank = cmd->CMDCOLR & 0xFF80;
          u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
          u16 i, j;
          
@@ -471,13 +471,13 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x7F;
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) &0x7F;
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x00;
+               else if( (dot == 0x7F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
-               else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
+               else *texture->textdata++ =  Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
             texture->textdata += texture->w;
          }
@@ -486,7 +486,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       case 4:
       {
          // 8 bpp(256 color) Bank mode
-         u32 colorBank = cmd->CMDCOLR;
+        u32 colorBank = cmd->CMDCOLR & 0xFF00;
          u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
          u16 i, j;
 
