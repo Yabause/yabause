@@ -242,7 +242,7 @@ void ra_add_array(struct RegAdjusterState* s, int(*vars)[], int length, char* na
 
 //////////////////////////////////////////////////////////////////////////////
 
-void ra_do_menu(struct RegAdjusterState* s, int x_pos, int y_pos)
+void ra_do_menu(struct RegAdjusterState* s, int x_pos, int y_pos, int base)
 {
    int i;
    for (i = 0; i < s->num_menu_items; i++)
@@ -261,7 +261,7 @@ void ra_do_menu(struct RegAdjusterState* s, int x_pos, int y_pos)
       sprintf(value, "=%02d", s->vars[i].value);
       strcat(current_line, s->vars[i].name);
       strcat(current_line, value);
-      write_str_as_pattern_name_data(x_pos, i+y_pos, current_line, 3, 0x000000, 0x40000);
+      write_str_as_pattern_name_data(x_pos, i+y_pos, current_line, 3, base, 0x40000);
    }
 
    if (per[0].but_push_once & PAD_UP)
@@ -1040,7 +1040,7 @@ void vdp2_extended_color_calculation_test()
 
       ra_update_vars(&s);
 
-      ra_do_menu(&s, 17,0);
+      ra_do_menu(&s, 17,0,0);
 
       VDP2_REG_CCCTL =
          (v.extended_color_calculation << 10) |
@@ -1515,7 +1515,7 @@ void vdp2_special_priority_test()
 
       ra_update_vars(&s);
 
-      ra_do_menu(&s, 17,0);
+      ra_do_menu(&s, 17,0,0);
 
       do_color_ratios(&framecount, &ratio, &ratio_dir);
 
@@ -1709,6 +1709,8 @@ void vdp2_special_priority_test()
    vdp2_basic_tile_scroll_deinit();
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_set_line_window_tables(u32 * line_window_table_address)
 {
    u16 ellipse[] = {
@@ -1771,6 +1773,8 @@ void vdp2_set_line_window_tables(u32 * line_window_table_address)
       line_window_table_table_ptr2[i] = ellipse2[i];
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 void vdp2_line_window_test()
 {
@@ -1901,7 +1905,7 @@ void vdp2_line_window_test()
 
       ra_update_vars(&s);
 
-      ra_do_menu(&s, 8,3);
+      ra_do_menu(&s, 8,3,0);
 
       if (per[0].but_push_once & PAD_A)
       {
@@ -1918,6 +1922,191 @@ void vdp2_line_window_test()
          break;
       }
    }
+   vdp2_basic_tile_scroll_deinit();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 sine_tbl[] = {
+   0x80, 0x83, 0x86, 0x89, 0x8c, 0x8f, 0x92, 0x95,
+   0x98, 0x9b, 0x9e, 0xa2, 0xa5, 0xa7, 0xaa, 0xad,
+   0xb0, 0xb3, 0xb6, 0xb9, 0xbc, 0xbe, 0xc1, 0xc4,
+   0xc6, 0xc9, 0xcb, 0xce, 0xd0, 0xd3, 0xd5, 0xd7,
+   0xda, 0xdc, 0xde, 0xe0, 0xe2, 0xe4, 0xe6, 0xe8,
+   0xea, 0xeb, 0xed, 0xee, 0xf0, 0xf1, 0xf3, 0xf4,
+   0xf5, 0xf6, 0xf8, 0xf9, 0xfa, 0xfa, 0xfb, 0xfc,
+   0xfd, 0xfd, 0xfe, 0xfe, 0xfe, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xfe, 0xfe, 0xfe, 0xfd,
+   0xfd, 0xfc, 0xfb, 0xfa, 0xfa, 0xf9, 0xf8, 0xf6,
+   0xf5, 0xf4, 0xf3, 0xf1, 0xf0, 0xee, 0xed, 0xeb,
+   0xea, 0xe8, 0xe6, 0xe4, 0xe2, 0xe0, 0xde, 0xdc,
+   0xda, 0xd7, 0xd5, 0xd3, 0xd0, 0xce, 0xcb, 0xc9,
+   0xc6, 0xc4, 0xc1, 0xbe, 0xbc, 0xb9, 0xb6, 0xb3,
+   0xb0, 0xad, 0xaa, 0xa7, 0xa5, 0xa2, 0x9e, 0x9b,
+   0x98, 0x95, 0x92, 0x8f, 0x8c, 0x89, 0x86, 0x83,
+   0x80, 0x7c, 0x79, 0x76, 0x73, 0x70, 0x6d, 0x6a,
+   0x67, 0x64, 0x61, 0x5d, 0x5a, 0x58, 0x55, 0x52,
+   0x4f, 0x4c, 0x49, 0x46, 0x43, 0x41, 0x3e, 0x3b,
+   0x39, 0x36, 0x34, 0x31, 0x2f, 0x2c, 0x2a, 0x28,
+   0x25, 0x23, 0x21, 0x1f, 0x1d, 0x1b, 0x19, 0x17,
+   0x15, 0x14, 0x12, 0x11, 0xf, 0xe, 0xc, 0xb,
+   0xa, 0x9, 0x7, 0x6, 0x5, 0x5, 0x4, 0x3,
+   0x2, 0x2, 0x1, 0x1, 0x1, 0x0, 0x0, 0x0,
+   0x0, 0x0, 0x0, 0x0, 0x1, 0x1, 0x1, 0x2,
+   0x2, 0x3, 0x4, 0x5, 0x5, 0x6, 0x7, 0x9,
+   0xa, 0xb, 0xc, 0xe, 0xf, 0x11, 0x12, 0x14,
+   0x15, 0x17, 0x19, 0x1b, 0x1d, 0x1f, 0x21, 0x23,
+   0x25, 0x28, 0x2a, 0x2c, 0x2f, 0x31, 0x34, 0x36,
+   0x39, 0x3b, 0x3e, 0x41, 0x43, 0x46, 0x49, 0x4c,
+   0x4f, 0x52, 0x55, 0x58, 0x5a, 0x5d, 0x61, 0x64,
+   0x67, 0x6a, 0x6d, 0x70, 0x73, 0x76, 0x79, 0x7c
+};
+
+void write_line_scroll_table(u32 address, int counter, int h_scroll, int v_scroll, int h_coord)
+{
+   int i = 0;
+
+   if (!h_scroll && !v_scroll && !h_coord)
+      return;
+
+   volatile u32 *ptr = (volatile u32 *)(VDP2_RAM + address);
+
+   for (;;)
+   {
+      if (h_scroll)
+      {
+         ptr[i] = sine_tbl[(counter + i) & 0xff] << 15;
+         i++;
+      }
+      if (v_scroll)
+      {
+         ptr[i] = sine_tbl[(counter + i) & 0xff] << 14;
+         i++;
+      }
+      if (h_coord)
+      {
+         ptr[i] = (sine_tbl[(counter + i) & 0x7f]) << 8;
+         i++;
+      }
+      if (i > 224*3)
+         break;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void write_vertical_cell_scroll_table(u32 address, int counter)
+{
+   volatile u32 *ptr = (volatile u32 *)(VDP2_RAM + address);
+
+   int i;
+   for (i = 0; i < 224; i++)
+   {
+      ptr[i] = sine_tbl[(counter + i) & 0xff] << 14;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp2_line_scroll_test()
+{
+   const u32 vdp2_tile_address = 0x40000;
+   const u32 line_scroll_table_address =  0x42000;
+   const u32 vertical_cell_scroll_table_address =  0x43000;
+
+   vdp2_basic_tile_scroll_setup(vdp2_tile_address);
+
+   VDP2_REG_CYCA0L = 0x01FF;
+   VDP2_REG_CYCA0U = 0xFFFF;
+   VDP2_REG_CYCB0L = 0xC4C5;
+   VDP2_REG_CYCB0U = 0xCCCC;
+
+   int i;
+   for (i = 0; i < 32; i += 2)
+   {
+      write_str_as_pattern_name_data_special(0, 0 + i, "\n\n\n\nNBG0\n\n\n\n\n\n\n\n", 4, 0x000000, vdp2_tile_address, 0, 0);
+   }
+
+   VDP2_REG_PRINA = 1 | 7 << 8;
+
+   //vars for reg adjuster
+   struct {
+      int line_scroll_interval;
+      int line_zoom_enable;
+      int vertical_line_scroll_enable;
+      int horizontal_line_scroll_enable;
+      int vertical_cell_scroll_enable;
+   }v = { 0 } ;
+
+   struct RegAdjusterState s = { 0 };
+
+   ra_add_var(&s, &v.line_scroll_interval,           "Line scrll intrvl ", 3);
+   ra_add_var(&s, &v.line_zoom_enable,  "Line zoom enable  ", 1);
+   ra_add_var(&s, &v.vertical_line_scroll_enable,  "Vert lin scrl enab", 1);
+   ra_add_var(&s, &v.horizontal_line_scroll_enable,  "Horiz ln scrl enab", 1);
+   ra_add_var(&s, &v.vertical_cell_scroll_enable,  "Vert cll scrl enab", 1);
+
+   *(volatile u32 *)0x25F800A0 =  (line_scroll_table_address / 2);
+   *(volatile u32 *)0x25F8009C = (vertical_cell_scroll_table_address / 2);
+
+   int presets[][5] =
+   {
+      { 0, 0, 0, 1, 0 },
+      { 0, 0, 0, 0, 1 },
+      { 0, 1, 0, 0, 0 },
+      { 3, 0, 1, 0, 0 },
+      { 3, 0, 0, 1, 1 },
+      { 0, 0, 1, 0, 1 },
+      { 1, 0, 1, 0, 1 },
+      { 3, 1, 0, 1, 1 },
+      { 3, 1, 0, 1, 0 }
+   };
+
+   int preset = 0;
+
+   int counter = 0;
+
+   ra_do_preset(&s, presets[preset]);
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      counter++;
+
+      VDP2_REG_SCRCTL = v.vertical_cell_scroll_enable |
+         (v.horizontal_line_scroll_enable << 1) |
+         (v.vertical_line_scroll_enable << 2) |
+         (v.line_zoom_enable << 3) |
+         (v.line_scroll_interval << 4);
+
+      write_line_scroll_table(line_scroll_table_address, counter, 
+         v.horizontal_line_scroll_enable,
+         v.vertical_line_scroll_enable,
+         v.line_zoom_enable);
+
+      write_vertical_cell_scroll_table(vertical_cell_scroll_table_address, counter);
+
+      ra_update_vars(&s);
+
+      ra_do_menu(&s, 17, 0, 0x004000);
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         preset++;
+
+         if (preset > 8)
+            preset = 0;
+
+         ra_do_preset(&s, presets[preset]);
+      }
+
+      if (per[0].but_push_once & PAD_START)
+      {
+         break;
+      }
+   }
+
    vdp2_basic_tile_scroll_deinit();
 }
 
