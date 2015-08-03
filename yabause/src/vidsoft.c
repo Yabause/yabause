@@ -702,7 +702,8 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          if (info->islinescroll & 0x2)
          {
             info->y = ((T1ReadWord(Vdp2Ram, info->linescrolltbl) & 0x7FF) * resyratio) + scrolly;
-            info->linescrolltbl += 4;
+            if (need_increment)
+               info->linescrolltbl += 4;
             y = info->y;
          }
          else
