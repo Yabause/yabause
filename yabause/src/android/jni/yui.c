@@ -49,6 +49,9 @@
 #include <pthread.h>
 
 #include "sndaudiotrack.h"
+#ifdef HAVE_OPENSL
+#include "sndopensl.h"
+#endif
 
 JavaVM * yvm;
 static jobject yabause;
@@ -106,6 +109,9 @@ NULL
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
 &SNDAudioTrack,
+#ifdef HAVE_OPENSL
+&SNDOpenSL,
+#endif
 NULL
 };
 
@@ -434,7 +440,11 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
     yinit.vidcoretype = VIDCORE_SOFT;
+#ifdef HAVE_OPENSL
+    yinit.sndcoretype = SNDCORE_OPENSL;
+#else
     yinit.sndcoretype = SNDCORE_AUDIOTRACK;
+#endif
     yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = CART_NONE;
     yinit.regionid = 0;

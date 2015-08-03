@@ -24,6 +24,8 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		jni/miniegl.h
 		jni/sndaudiotrack.c
 		jni/sndaudiotrack.h
+		jni/sndopensl.c
+		jni/sndopensl.h
 		src/org/yabause/android/Cartridge.java
 		src/org/yabause/android/GameList.java
 		src/org/yabause/android/GameListAdapter.java
@@ -56,6 +58,12 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 			DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${item}"
 		)
 	endforeach()
+endif()
+
+set(YABAUSE_JNI_SRC "sndaudiotrack.c")
+if (YAB_WANT_OPENSL)
+    set(YABAUSE_JNI_SRC "${YABAUSE_JNI_SRC} sndopensl.c")
+    set(YABAUSE_JNI_LIB "-lOpenSLES")
 endif()
 
 set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
@@ -96,6 +104,8 @@ add_custom_command(
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/miniegl.h"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndaudiotrack.c"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndaudiotrack.h"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndopensl.c"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndopensl.h"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 

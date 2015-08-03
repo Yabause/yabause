@@ -188,6 +188,9 @@ if (YAB_WANT_OPENAL)
 	endif (OPENAL_FOUND)
 endif (YAB_WANT_OPENAL)
 
+# OpenSL (Android)
+option(YAB_WANT_OPENSL "use OpenSL sound core (for Android port)" ON)
+
 # mini18n
 find_path(MINI18N_INCLUDE_DIR mini18n.h)
 find_library(MINI18N_LIBRARY mini18n)
@@ -595,6 +598,9 @@ if (YAB_WANT_C68K)
 endif()
 if (YAB_WANT_Q68)
 	set(HAVE_Q68 ON)
+endif()
+if (YAB_WANT_OPENSL)
+    set(HAVE_OPENSL ON)
 endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
