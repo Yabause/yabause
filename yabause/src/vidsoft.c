@@ -687,11 +687,18 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
       // scroll
       if (info->islinescroll)
       {
+         //line scroll interval bit
+         int need_increment = ((j != 0) && (((j + 1) % info->lineinc) == 0));
+
+         //horizontal line scroll
          if (info->islinescroll & 0x1)
          {
             linescrollx = (T1ReadLong(Vdp2Ram, info->linescrolltbl) >> 16) & 0x7FF;
-            info->linescrolltbl += 4;
+            if (need_increment)
+               info->linescrolltbl += 4;
          }
+
+         //vertical line scroll
          if (info->islinescroll & 0x2)
          {
             info->y = ((T1ReadWord(Vdp2Ram, info->linescrolltbl) & 0x7FF) * resyratio) + scrolly;
@@ -701,11 +708,14 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          else
             //y = info->y+((int)(info->coordincy *(float)(info->mosaicymask > 1 ? (j / info->mosaicymask * info->mosaicymask) : j)));
 			y = info->y + info->coordincy*mosaic_y[j];
+
+         //line zoom
          if (info->islinescroll & 0x4)
          {
             info->coordincx = (T1ReadLong(Vdp2Ram, info->linescrolltbl) & 0x7FF00) / (float)65536.0;
             info->coordincx *= resxratio;
-            info->linescrolltbl += 4;
+            if (need_increment)
+               info->linescrolltbl += 4;
          }
       }
       else
