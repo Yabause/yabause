@@ -43,6 +43,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		res/drawable-hdpi/icon.png
 		res/drawable-ldpi/icon.png
 		res/drawable-mdpi/icon.png
+		res/drawable-xhdpi/banner.png
 		res/layout/game_item.xml
 		res/layout/home.xml
 		res/layout/main.xml
@@ -113,6 +114,7 @@ set(yabause_android_RES
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-hdpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-ldpi/icon.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-mdpi/icon.png"
+	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-xhdpi/banner.png"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/game_item.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/home.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/main.xml"
