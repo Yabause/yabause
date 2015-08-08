@@ -40,7 +40,6 @@ class PadManagerV16 extends PadManager {
     float _oldRightTrigger = 0.0f;
     float _oldLeftTrigger = 0.0f;
     String DebugMesage = new String();
-    public static final int invalid_device_id = 65535; 
     int _selected_device_id = invalid_device_id;
 
     PadManagerV16() {
@@ -111,9 +110,6 @@ class PadManagerV16 extends PadManager {
     }
     
     public void setPlayer1InputDevice( int deviceid ){
-    	if( deviceid == invalid_device_id ){
-    		deviceid = deviceIds.get(0);
-    	}
     	_selected_device_id = deviceid;
     }
     
