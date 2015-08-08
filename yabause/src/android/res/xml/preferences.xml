@@ -2,43 +2,43 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
         <ListPreference
             android:key="pref_bios"
-            android:title="Bios"
-            android:dialogTitle="Choose bios" />
+            android:title="@string/bios"
+            android:dialogTitle="@string/choose_bios" />
 
         <ListPreference
             android:key="pref_cart"
-            android:title="Cartridge"
-            android:dialogTitle="Choose cartridge" />
+            android:title="@string/cartridge"
+            android:dialogTitle="@string/choose_cartridge" />
 
         <ListPreference
               android:key="pref_video"
-              android:title="Video Core"
-              android:dialogTitle="Choose Video Core"
+              android:title="@string/video_core"
+              android:dialogTitle="@string/choose_video_core"
               android:defaultValue="1" />
  
         <CheckBoxPreference
             android:key="pref_audio"
-            android:title="Audio output"
+            android:title="@string/audio_output"
             android:defaultValue="true" />
 
         <CheckBoxPreference
             android:key="pref_fps"
-            android:title="FPS"
+            android:title="@string/fps"
             android:defaultValue="false" />
         <CheckBoxPreference
             android:key="pref_frameskip"
-            android:title="Frameskip"
+            android:title="@string/frameskip"
             android:defaultValue="true" />
         
         <ListPreference
               android:key="pref_player1_inputdevice"
-              android:title="Input Device"
-              android:dialogTitle="Choose input deivce"
+              android:title="@string/input_device"
+              android:dialogTitle="@string/choose_input_device"
               android:defaultValue="65535" />        
       
         <org.uoyabause.android.InputSettingPrefernce
             android:key="pref_inputdef_file"
-            android:title="Input Device Setting"
+            android:title="@string/input_device_setting"
             android:summary="Edit Key map" />
 
 </PreferenceScreen>
