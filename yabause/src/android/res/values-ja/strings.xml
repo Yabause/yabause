@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">uoYabause</string>
+    <string name="menu_exit">終了</string>
+    <string name="menu_save_state">状態保存</string>
+    <string name="menu_load_state">状態読込</string>
+    <string name="load_game">ゲームを選択</string>
+    <string name="setting">設定</string>
+    <string name="choose_bios">BIOSの選択</string>
+    <string name="choose_cartridge">カートリッジの選択</string>
+    <string name="choose_video_core">描画エンジンの選択</string>
+    <string name="audio_output">音声出力</string>
+    <string name="fps">FPS表示</string>
+    <string name="frameskip">フレームスキップ</string>
+    <string name="choose_input_device">入力デバイスの選択</string>
+    <string name="input_device">入力デバイス</string>
+    <string name="input_device_setting">入力デバイスの設定</string>  
+    <string name="bios">Bios</string>
+    <string name="cartridge">カートリッジ</string>
+    <string name="video_core">描画エンジン</string>      
+     <string name="msg_opengl_not_supported">このデバイスではOpenGL ES 3.0がサポートされていないので、ソフトウェアレンダリングしか選択できません</string>
+</resources>

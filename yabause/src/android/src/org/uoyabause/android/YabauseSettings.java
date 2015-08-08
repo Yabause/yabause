@@ -35,6 +35,7 @@ import android.widget.Toast;
 import android.content.SharedPreferences;
 import android.app.ActivityManager;
 import android.content.pm.ConfigurationInfo;
+import android.content.res.Resources;
 import android.app.DialogFragment;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -47,7 +48,8 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
     public Dialog onCreateDialog(Bundle savedInstanceState) {
       // Use the Builder class for convenient dialog construction
       AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-      builder.setMessage("Your device is not support OpenGL ES 3.0 or above.\nYou can not choose OpenGL Video Interface.\n")
+      Resources res = getResources();
+      builder.setMessage(res.getString(R.string.msg_opengl_not_supported))
       .setPositiveButton("OK", new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           // FIRE ZE MISSILES!
