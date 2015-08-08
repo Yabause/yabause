@@ -46,7 +46,9 @@
 #include <pthread.h>
 
 #include "sndaudiotrack.h"
+#ifdef HAVE_OPENSL
 #include "sndopensl.h"
+#endif
 
 JavaVM * yvm;
 static jobject yabause;
@@ -134,8 +136,10 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
-&SNDOpenSL,
 &SNDAudioTrack,
+#ifdef HAVE_OPENSL
+&SNDOpenSL,
+#endif
 NULL
 };
 
@@ -818,7 +822,11 @@ int initEgl( ANativeWindow* window )
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
     yinit.vidcoretype = s_vidcoretype;
+#ifdef HAVE_OPENSL
     yinit.sndcoretype = SNDCORE_OPENSL;
+#else
+    yinit.sndcoretype = SNDCORE_AUDIOTRACK;
+#endif
     yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = CART_NONE;
     yinit.regionid = 0;
