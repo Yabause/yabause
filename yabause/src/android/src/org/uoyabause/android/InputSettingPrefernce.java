@@ -44,6 +44,7 @@ import android.widget.LinearLayout;
 	private int index = 0;
     private PadManager pad_m;
     Context context_m;
+    private int _selected_device_id = 0;
 
 	public InputSettingPrefernce(Context context) {
 		super(context);
@@ -100,7 +101,9 @@ import android.widget.LinearLayout;
     		Toast.makeText(context_m, "Joy Stick is not connected", Toast.LENGTH_LONG).show();
     		dlg.dismiss();
     		return;
-    	}    	
+    	}    
+    	
+    	_selected_device_id = pad_m.getPlayer1InputDevice();
 	}
 
 	 
@@ -215,6 +218,9 @@ import android.widget.LinearLayout;
 
 	@Override
 	public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+		
+		if( event.getDeviceId() != _selected_device_id ) return false;
+		
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
                 if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -235,6 +241,9 @@ import android.widget.LinearLayout;
 	
 	@Override
 	public boolean onGenericMotion(View v, MotionEvent event) {
+		
+		if( event.getDeviceId() != _selected_device_id ) return false;
+		
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
         	
       	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );

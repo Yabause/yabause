@@ -25,6 +25,7 @@ import java.util.List;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -152,13 +153,80 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         video_cart.setEntries(video_entries);
         video_cart.setEntryValues(video_entryValues);
         video_cart.setSummary(video_cart.getEntry());
+        
+        
+        /* Plyaer1 input device */
+        ListPreference plyaer1_input_device = (ListPreference) getPreferenceManager().findPreference("pref_player1_inputdevice");
+
+        List<CharSequence> Inputlabels = new ArrayList<CharSequence>();
+        List<CharSequence> Inputvalues = new ArrayList<CharSequence>();
+        
+        Inputlabels.add("On Screen Pad");
+        Inputvalues.add("-1");
+        
+        PadManager padm = PadManager.getPadManager();
+
+        for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
+        	Inputlabels.add(padm.getName(inputType));
+        	Inputvalues.add(Integer.toString(padm.getId(inputType)));
+        }
+
+        CharSequence[] input_entries = new CharSequence[Inputlabels.size()];
+        Inputlabels.toArray(input_entries);
+
+        CharSequence[] input_entryValues = new CharSequence[Inputvalues.size()];
+        Inputvalues.toArray(input_entryValues);
+
+        plyaer1_input_device.setEntries(input_entries);
+        plyaer1_input_device.setEntryValues(input_entryValues);
+        plyaer1_input_device.setSummary(plyaer1_input_device.getEntry());
+        
+        SyncInputDevice();
+        
+        
       }
+    
+    private void SyncInputDevice(){
+        InputSettingPrefernce inputsetting= (InputSettingPrefernce)findPreference("pref_inputdef_file");
+        if( inputsetting != null ){
+        	PadManager padm = PadManager.getPadManager();
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+             try {
+            	String selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
+                if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
+                	inputsetting.setEnabled(true);
+                }else{
+                	inputsetting.setEnabled(false);
+                }            	
+                
+                padm.setPlayer1InputDevice(Integer.parseInt(selInputdevice));
+                
+            }catch( Exception e ){
+            	e.printStackTrace();
+            }
+        }
+    	
+    }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals("pref_bios") || key.equals("pref_cart") || key.equals("pref_video")) {
             ListPreference pref = (ListPreference) findPreference(key);
             pref.setSummary(pref.getEntry());
+        }
+        
+        else if (key.equals("pref_player1_inputdevice") ) {
+        	ListPreference pref = (ListPreference) findPreference(key);
+        	pref.setSummary(pref.getEntry());
+        	SyncInputDevice();
+/*        	
+        	PadManager padm = PadManager.getPadManager();
+        	String selInputdevice = sharedPreferences.getString(key, "0");
+        	if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
+        		InputSettingPrefernce InputSetting = new InputSettingPrefernce(this);
+        		InputSetting.showDialog(null);
+        	}
+*/        	
         }
     }
 

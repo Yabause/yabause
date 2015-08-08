@@ -32,16 +32,19 @@ import org.json.JSONObject;
 import org.uoyabause.android.PadEvent;
 import org.uoyabause.android.PadManager;
 
+
 class PadManagerV16 extends PadManager {
-    private ArrayList deviceIds;
+    private ArrayList<Integer> deviceIds;
     HashMap<Integer,Integer> Keymap;
     final String TAG = "PadManagerV16";
     float _oldRightTrigger = 0.0f;
     float _oldLeftTrigger = 0.0f;
     String DebugMesage = new String();
+    public static final int invalid_device_id = 65535; 
+    int _selected_device_id = invalid_device_id;
 
     PadManagerV16() {
-        deviceIds = new ArrayList();
+        deviceIds = new ArrayList<Integer>();
         
 
         int[] ids = InputDevice.getDeviceIds();
@@ -57,8 +60,6 @@ class PadManagerV16 extends PadManager {
                 	if( dev.getName().equals("msm8974-taiko-mtp-snd-card Button Jack") ){
                 		continue;
                 	}
-                	
-
                     deviceIds.add(deviceId);
                 }
             }
@@ -86,8 +87,44 @@ class PadManagerV16 extends PadManager {
     	return DebugMesage;
     }
     
+    public int getDeviceCount(){
+    	return deviceIds.size();
+    }
+    public String getName( int index ){
+    	
+    	if( index < 0 && index >= deviceIds.size()) {
+    		return null;
+    	}
+    	
+    	InputDevice dev = InputDevice.getDevice(deviceIds.get(index));
+    	return dev.getName();
+    }
+    
+    public int getId( int index ){
+
+    	if( index < 0 && index >= deviceIds.size()) {
+    		return -1;
+    	}
+    	
+    	InputDevice dev = InputDevice.getDevice(deviceIds.get(index));
+    	return dev.getId();
+    }
+    
+    public void setPlayer1InputDevice( int deviceid ){
+    	if( deviceid == invalid_device_id ){
+    		deviceid = deviceIds.get(0);
+    	}
+    	_selected_device_id = deviceid;
+    }
+    
+    public int getPlayer1InputDevice(){ 
+    	return _selected_device_id; 
+    }
+    
     public PadEvent onGenericMotionEvent(MotionEvent event){
     	PadEvent pe = null;
+    	if( event.getDeviceId() != _selected_device_id ) return null;
+    	
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
         	
         	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );
@@ -146,6 +183,8 @@ class PadManagerV16 extends PadManager {
         if( keyCode == KeyEvent.KEYCODE_BACK ){
         	return null;
         }
+        
+        if( event.getDeviceId() != _selected_device_id ) return null;
 
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
@@ -166,9 +205,12 @@ class PadManagerV16 extends PadManager {
     public PadEvent onKeyUp(int keyCode, KeyEvent event) {
         PadEvent pe = null;
         
+       
         if( keyCode == KeyEvent.KEYCODE_BACK ){
         	return null;
-        }        
+        }
+        
+        if( event.getDeviceId() != _selected_device_id ) return null;
 
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
