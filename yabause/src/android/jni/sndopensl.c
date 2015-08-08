@@ -98,6 +98,8 @@ static int queue_head = 0;
 static int queue_tail = 0;
 static int index_queue[MAX_QUEUE]={0};
 
+static int muted;
+
 void push_index( int index )
 {
    index_queue[queue_tail] = index;
@@ -216,6 +218,8 @@ static int SNDOpenSLInit(void)
    result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
    assert(SL_RESULT_SUCCESS == result);
 
+   muted = 0;
+
    return 0;
 }
 
@@ -315,14 +319,16 @@ static void SNDOpenSLUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 
    
    if (soundoffset[currentpos] >= mbufferSizeInBytes) {
 
-      // here we only enqueue one buffer because it is a long clip,
-      // but for streaming playback we would typically enqueue at least 2 buffers to start
-      SLresult result;
-      push_index(currentpos);
-      result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, stereodata16[currentpos], soundoffset[currentpos]);
-      if (SL_RESULT_SUCCESS != result) {
-         printf("Fail to Add queue");
-            return;
+      if (!muted) {
+         // here we only enqueue one buffer because it is a long clip,
+         // but for streaming playback we would typically enqueue at least 2 buffers to start
+         SLresult result;
+         push_index(currentpos);
+         result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, stereodata16[currentpos], soundoffset[currentpos]);
+         if (SL_RESULT_SUCCESS != result) {
+            printf("Fail to Add queue");
+               return;
+         }
       }
       nextpos = currentpos+1;
       if( nextpos >= MAX_BUFFER_CNT ) { nextpos = 0; }
@@ -348,12 +354,14 @@ static u32 SNDOpenSLGetAudioSpace(void)
 
 static void SNDOpenSLMuteAudio(void)
 {
+   muted = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void SNDOpenSLUnMuteAudio(void)
 {
+   muted = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

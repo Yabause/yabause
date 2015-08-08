@@ -5,12 +5,14 @@ set(YabauseUT_SOURCES
 	shared/crt0.s
 	cart.c
 	cdb.c
+	mpeg.c
 	dsp.c
 	m68k.c
 	main.c
 	scsp.c
 	scu.c
 	sh2.c
+	slavesh.c
 	smpc.c
 	tests.c
 	vdp1.c
