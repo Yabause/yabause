@@ -29,4 +29,12 @@ class PadManagerV8 extends PadManager {
     public String getDeviceList(){
     	return new String("Nothing");
     }
+    
+    public int getId( int index ){ return -1; }    
+    
+    public int getDeviceCount(){ return 0; }
+    public String getName( int index ){ return "Nothing"; }
+    public void setPlayer1InputDevice( int index ){}
+    public int getPlayer1InputDevice(){ return -1; }
+    
  }

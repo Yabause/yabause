@@ -29,6 +29,12 @@
             android:key="pref_frameskip"
             android:title="Frameskip"
             android:defaultValue="true" />
+        
+        <ListPreference
+              android:key="pref_player1_inputdevice"
+              android:title="Input Device"
+              android:dialogTitle="Choose input deivce"
+              android:defaultValue="65535" />        
       
         <org.uoyabause.android.InputSettingPrefernce
             android:key="pref_inputdef_file"
