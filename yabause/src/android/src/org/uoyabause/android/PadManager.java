@@ -12,6 +12,8 @@ import org.uoyabause.android.PadManagerV8;
 abstract class PadManager {
 
 	private static PadManager _instance = null; 
+    public static final int invalid_device_id = 65535; 
+    
     public abstract boolean hasPad();
     public abstract PadEvent onKeyDown(int keyCode, KeyEvent event);
     public abstract PadEvent onKeyUp(int keyCode, KeyEvent event);

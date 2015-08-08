@@ -408,15 +408,17 @@ public class Yabause extends Activity implements OnPadListener
     		// if no game pad is detected use on-screen game pad. 
     		}else{
    			 	Editor editor = sharedPref.edit();
-   			 	editor.putString("pref_player1_inputdevice", Integer.toString(padm.getId(-1)) );
+   			 	editor.putString("pref_player1_inputdevice", Integer.toString(-1) );
    			 	editor.commit();
     		}
     	}
     	
         if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
             pad.setVisibility(View.INVISIBLE);
+            padm.setPlayer1InputDevice( PadManager.invalid_device_id );
+        }else{
+        	padm.setPlayer1InputDevice( Integer.parseInt(selInputdevice));
         }
-        padm.setPlayer1InputDevice( Integer.parseInt(selInputdevice));        
     }
 
     public String getBiosPath() {
