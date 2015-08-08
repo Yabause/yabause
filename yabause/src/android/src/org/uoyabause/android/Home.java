@@ -20,7 +20,11 @@
 package org.uoyabause.android;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.View;
 import android.os.Bundle;
 
@@ -34,8 +38,9 @@ public class Home extends Activity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.home);
+        String vname = getVersionName(this);
+        this.setTitle("uoYabause "+vname);
     }
 
     public void onLoadGame(View view)
@@ -49,5 +54,23 @@ public class Home extends Activity
         Intent intent = new Intent(this, YabauseSettings.class);
         startActivity(intent);
 
+    }
+    
+    /**
+     * 
+     *
+     * @param context
+     * @return
+     */
+    public static String getVersionName(Context context){
+        PackageManager pm = context.getPackageManager();
+        String versionName = "";
+        try{
+            PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
+            versionName = packageInfo.versionName;
+        }catch(NameNotFoundException e){
+            e.printStackTrace();
+        }
+        return versionName;    
     }
 }
