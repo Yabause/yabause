@@ -8,7 +8,14 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true">
         <TableRow>
-
+<!-- 
+    <Button
+        android:onClick="onPadTest"
+        android:text="Padtest" />
+        </TableRow>
+        <TableRow>
+ -->            
+            
     <Button
         android:onClick="onLoadGame"
         android:text="@string/load_game" />
@@ -19,7 +26,8 @@
     <Button
         android:onClick="onSettings"
         android:text="@string/setting" />
-
-        </TableRow>
+           
+    </TableRow>
     </TableLayout>
+        
 </RelativeLayout>

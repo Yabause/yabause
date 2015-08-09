@@ -117,9 +117,9 @@ class PadManagerV16 extends PadManager {
     	return _selected_device_id; 
     }
     
-    public PadEvent onGenericMotionEvent(MotionEvent event){
-    	PadEvent pe = null;
-    	if( event.getDeviceId() != _selected_device_id ) return null;
+    public int onGenericMotionEvent(MotionEvent event){
+    	int rtn = 0;
+    	if( event.getDeviceId() != _selected_device_id ) return 0;
     	
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
         	
@@ -132,15 +132,19 @@ class PadManagerV16 extends PadManager {
         			
         	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
                     	if( PadKey != null ) {
-                    	   	pe = new PadEvent(0, PadKey);
+                    	   	//pe = new PadEvent(0, PadKey);
+                    		YabauseRunnable.press(PadKey);
+                    		rtn = 1;
                     	}			  
         		  }
         		  
         		  // Off
-        		  else if( _oldLeftTrigger > newLeftTrigger && newLeftTrigger < 0.001 ){
+        		  else if( _oldLeftTrigger > newLeftTrigger && newLeftTrigger > 0.5 ){
 	      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
 	                  	if( PadKey != null ) {
-	                  	   	pe = new PadEvent(1, PadKey);
+	                  	   	//pe = new PadEvent(1, PadKey);
+	                  		YabauseRunnable.release(PadKey);
+	                  		rtn = 1;
 	                  	}   			  
         		  }
         		  
@@ -156,31 +160,35 @@ class PadManagerV16 extends PadManager {
         			
         	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
                     	if( PadKey != null ) {
-                    	   	pe = new PadEvent(0, PadKey);
+                    	   	//pe = new PadEvent(0, PadKey);
+                    		YabauseRunnable.press(PadKey);
+                    		rtn = 1;
                     	}			  
         		  }
         		  
         		  // Off
-        		  else if( _oldRightTrigger > newRightTrigger && newRightTrigger < 0.001 ){
+        		  else if( _oldRightTrigger > newRightTrigger && newRightTrigger > 0.5 ){
 	      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
 	                  	if( PadKey != null ) {
-	                  	   	pe = new PadEvent(1, PadKey);
+	                  	   	//pe = new PadEvent(1, PadKey);
+	                  	  YabauseRunnable.release(PadKey);
+	                  	  rtn = 1;
 	                  	}   			  
         		  }
         		  _oldRightTrigger = newRightTrigger;
         	  }
         }
-    	return pe;
+    	return rtn;
     }
 
-    public PadEvent onKeyDown(int keyCode, KeyEvent event) {
+    public int onKeyDown(int keyCode, KeyEvent event) {
         PadEvent pe = null;
         
         if( keyCode == KeyEvent.KEYCODE_BACK ){
-        	return null;
+        	return 0;
         }
         
-        if( event.getDeviceId() != _selected_device_id ) return null;
+        if( event.getDeviceId() != _selected_device_id ) return 0;
 
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
@@ -188,25 +196,26 @@ class PadManagerV16 extends PadManager {
             	
             	Integer PadKey = Keymap.get(keyCode);
             	if( PadKey != null ) {
-            	   	pe = new PadEvent(0, Keymap.get(keyCode));
+            	   	//pe = new PadEvent(0, Keymap.get(keyCode));
+            		YabauseRunnable.press(PadKey);
+            		return 1;
             	}else{
-            		return null;
+            		return 0;
             	}
             }
         }
 
-        return pe;
+        return 0;
     }
 
-    public PadEvent onKeyUp(int keyCode, KeyEvent event) {
+    public int onKeyUp(int keyCode, KeyEvent event) {
         PadEvent pe = null;
-        
        
         if( keyCode == KeyEvent.KEYCODE_BACK ){
-        	return null;
+        	return 0;
         }
         
-        if( event.getDeviceId() != _selected_device_id ) return null;
+        if( event.getDeviceId() != _selected_device_id ) return 0;
 
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
@@ -214,14 +223,16 @@ class PadManagerV16 extends PadManager {
             	
             	Integer PadKey = Keymap.get(keyCode);
             	if( PadKey != null ) {
-            	   	pe = new PadEvent(1, Keymap.get(keyCode));
+            	   	//pe = new PadEvent(1, Keymap.get(keyCode));
+            		YabauseRunnable.release(PadKey);
+            		return 1;
             	}else{
-            		return null;
+            		return 0;
             	}            	
             }
         }
 
-        return pe;
+        return 0;
     }
     
     void loadDefault(){

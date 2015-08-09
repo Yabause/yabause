@@ -34,6 +34,11 @@
 
         <activity android:name="YabauseSettings"
                   android:screenOrientation="landscape" />
+        
+        
+        <activity android:name="PadTestActivity"
+            		android:configChanges="orientation|keyboardHidden"
+                  	android:screenOrientation="landscape" />
 
         <uses-library android:required="false" android:name="com.sec.android.app.multiwindow"> </uses-library>
         <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
