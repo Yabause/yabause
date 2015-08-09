@@ -828,7 +828,7 @@ int initEgl( ANativeWindow* window )
     yinit.sndcoretype = SNDCORE_AUDIOTRACK;
 #endif
     yinit.cdcoretype = CDCORE_ISO;
-    yinit.carttype = CART_NONE;
+    yinit.carttype = GetCartridgeType();
     yinit.regionid = 0;
 
     yinit.biospath = s_biospath;
