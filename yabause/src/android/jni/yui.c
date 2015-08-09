@@ -142,7 +142,7 @@ const char * GetBiosPath()
     jboolean dummy;
     JNIEnv * env;
     if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+        return NULL;
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getBiosPath = (*env)->GetMethodID(env, yclass, "getBiosPath", "()Ljava/lang/String;");
@@ -161,7 +161,7 @@ const char * GetGamePath()
     jboolean dummy;
     JNIEnv * env;
     if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+        return NULL;
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getGamePath = (*env)->GetMethodID(env, yclass, "getGamePath", "()Ljava/lang/String;");
@@ -180,7 +180,7 @@ const char * GetMemoryPath()
     jboolean dummy;
     JNIEnv * env;
     if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+        return NULL;
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getMemoryPath = (*env)->GetMethodID(env, yclass, "getMemoryPath", "()Ljava/lang/String;");
@@ -197,10 +197,10 @@ int GetCartridgeType()
     jmethodID getCartridgeType;
     JNIEnv * env;
     if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+        return -1;
 
     yclass = (*env)->GetObjectClass(env, yabause);
-    getCartridgeType = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()I");
+    getCartridgeType = (*env)->GetMethodID(env, yclass, "getCartridgeType", "()I");
     return (*env)->CallIntMethod(env, yabause, getCartridgeType);
 }
 
@@ -212,7 +212,7 @@ const char * GetCartridgePath()
     jboolean dummy;
     JNIEnv * env;
     if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        return;
+        return NULL;
 
     yclass = (*env)->GetObjectClass(env, yabause);
     getCartridgePath = (*env)->GetMethodID(env, yclass, "getCartridgePath", "()Ljava/lang/String;");
@@ -446,7 +446,7 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     yinit.sndcoretype = SNDCORE_AUDIOTRACK;
 #endif
     yinit.cdcoretype = CDCORE_ISO;
-    yinit.carttype = CART_NONE;
+    yinit.carttype = GetCartridgeType();
     yinit.regionid = 0;
     yinit.biospath = GetBiosPath();
     yinit.cdpath = GetGamePath();
