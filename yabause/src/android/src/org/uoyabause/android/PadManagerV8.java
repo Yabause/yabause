@@ -14,16 +14,16 @@ class PadManagerV8 extends PadManager {
         return false;
     }
 
-    public PadEvent onKeyDown(int keyCode, KeyEvent event) {
-        return null;
+    public int onKeyDown(int keyCode, KeyEvent event) {
+        return 0;
     }
 
-    public PadEvent onKeyUp(int keyCode, KeyEvent event) {
-        return null;
+    public int onKeyUp(int keyCode, KeyEvent event) {
+        return 0;
     }
     
-    public PadEvent onGenericMotionEvent(MotionEvent event){
-    	return null;
+    public int onGenericMotionEvent(MotionEvent event){
+    	return 0;
     }
     
     public String getDeviceList(){

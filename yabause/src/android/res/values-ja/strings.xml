@@ -13,10 +13,15 @@
     <string name="fps">FPS表示</string>
     <string name="frameskip">フレームスキップ</string>
     <string name="choose_input_device">入力デバイスの選択</string>
-    <string name="input_device">入力デバイス</string>
-    <string name="input_device_setting">入力デバイスの設定</string>  
+    <string name="input_device_title">入力デバイス</string>
+    <string name="input_device">選択</string>
+    <string name="input_device_setting">キーマップの編集</string>
+    <string name="onscrenn_pad_setting">オンスクリーンパッドのテスト</string>    
     <string name="bios">Bios</string>
     <string name="cartridge">カートリッジ</string>
     <string name="video_core">描画エンジン</string>      
-     <string name="msg_opengl_not_supported">このデバイスではOpenGL ES 3.0がサポートされていないので、ソフトウェアレンダリングしか選択できません</string>
+    <string name="setting_sound">サウンド</string>
+    <string name="setting_graphics">グラフィックス</string>
+    <string name="setting_general">一般</string>
+    <string name="msg_opengl_not_supported">このデバイスではOpenGL ES 3.0がサポートされていないので、ソフトウェアレンダリングしか選択できません</string>
 </resources>

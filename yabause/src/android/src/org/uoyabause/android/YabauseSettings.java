@@ -24,14 +24,18 @@ import java.util.List;
 
 import android.os.Bundle;
 import android.preference.ListPreference;
+import android.preference.Preference;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.preference.PreferenceScreen;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.app.ActivityManager;
 import android.content.pm.ConfigurationInfo;
@@ -185,11 +189,27 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         
         SyncInputDevice();
         
+        // PreferenceScreen‚©‚ç‚ÌIntent
+        PreferenceScreen onscreen_pad = (PreferenceScreen) findPreference("on_screen_pad");
+        onscreen_pad.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+     
+                // Activity‚Ì‘JˆÚ
+                Intent nextActivity = new Intent(
+                		YabauseSettings.this,
+                        PadTestActivity.class);
+     
+                startActivity(nextActivity);
+                return true;
+            }
+        });
         
       }
     
     private void SyncInputDevice(){
         InputSettingPrefernce inputsetting= (InputSettingPrefernce)findPreference("pref_inputdef_file");
+        PreferenceScreen onscreen_pad = (PreferenceScreen) findPreference("on_screen_pad");
         if( inputsetting != null ){
         	PadManager padm = PadManager.getPadManager();
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -197,8 +217,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             	String selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
                 if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
                 	inputsetting.setEnabled(true);
+                	onscreen_pad.setEnabled(false);
                 }else{
                 	inputsetting.setEnabled(false);
+                	onscreen_pad.setEnabled(true);
                 }            	
                 
                 padm.setPlayer1InputDevice(Integer.parseInt(selInputdevice));

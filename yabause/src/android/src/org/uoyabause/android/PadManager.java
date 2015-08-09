@@ -15,9 +15,9 @@ abstract class PadManager {
     public static final int invalid_device_id = 65535; 
     
     public abstract boolean hasPad();
-    public abstract PadEvent onKeyDown(int keyCode, KeyEvent event);
-    public abstract PadEvent onKeyUp(int keyCode, KeyEvent event);
-    public abstract PadEvent onGenericMotionEvent(MotionEvent event);
+    public abstract int onKeyDown(int keyCode, KeyEvent event);
+    public abstract int onKeyUp(int keyCode, KeyEvent event);
+    public abstract int onGenericMotionEvent(MotionEvent event);
     public abstract String getDeviceList();
     
     public abstract int getDeviceCount();

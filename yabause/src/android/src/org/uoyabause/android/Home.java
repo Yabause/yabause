@@ -43,6 +43,12 @@ public class Home extends Activity
         this.setTitle("uoYabause "+vname);
     }
 
+    public void onPadTest(View view)
+    {
+        Intent intent = new Intent(this, PadTestActivity.class);
+        startActivity(intent);
+    }
+    
     public void onLoadGame(View view)
     {
         Intent intent = new Intent(this, GameList.class);
@@ -53,9 +59,8 @@ public class Home extends Activity
     {
         Intent intent = new Intent(this, YabauseSettings.class);
         startActivity(intent);
-
     }
-    
+
     /**
      * 
      *

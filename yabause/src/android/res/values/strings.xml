@@ -13,10 +13,15 @@
     <string name="fps">FPS</string>
     <string name="frameskip">Frameskip</string>
     <string name="choose_input_device">Choose input deivce</string>
-    <string name="input_device">Input Device</string>
-    <string name="input_device_setting">Input Device Setting</string>
+    <string name="input_device_title">Input Device</string>
+    <string name="input_device">Choose</string>
+    <string name="input_device_setting">Edit Key Map</string>
+    <string name="onscrenn_pad_setting">Edit OnScreen Pad</string>    
     <string name="bios">Bios</string>
     <string name="cartridge">Cartridge</string>
     <string name="video_core">Video Core</string>
+    <string name="setting_sound">Sound</string>
+    <string name="setting_graphics">Graphics</string>
+    <string name="setting_general">General</string>
     <string name="msg_opengl_not_supported">Your device is not support OpenGL ES 3.0 or above.\nYou can not choose OpenGL Video Interface.\n</string>
 </resources>

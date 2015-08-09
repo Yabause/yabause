@@ -101,20 +101,7 @@ class YabauseRunnable implements Runnable
         Log.v("Yabause", "init = " + ok);
         inited = (ok == 0);
     }  
-/*
-    public void pause()
-    {
-        Log.v("Yabause", "pause... should really pause emulation now...");
-        paused = true;
-    }
 
-    public void resume()
-    {
-        Log.v("Yabause", "resuming emulation...");
-        paused = false;
-        handler.post(this);
-    } 
-*/
     public void destroy() 
     {
         Log.v("Yabause", "destroying yabause...");
@@ -131,12 +118,7 @@ class YabauseRunnable implements Runnable
             handler.post(this);
         }
     }
-/*
-    public boolean paused()
-    {
-        return paused;
-    }
-*/
+
 }
 
 class YabauseHandler extends Handler {
@@ -200,9 +182,6 @@ public class Yabause extends Activity implements OnPadListener
 
         padm = PadManager.getPadManager();
 
-
-        
-      
     }
 
     @Override
@@ -251,19 +230,17 @@ public class Yabause extends Activity implements OnPadListener
     }
 
     @Override public boolean onPad(PadEvent event) {
-        Message message = handler.obtainMessage();
-        message.arg1 = event.getAction();
-        message.arg2 = event.getKey();
-        yabauseThread.handler.sendMessage(message);
-
+        //Message message = handler.obtainMessage();
+        //message.arg1 = event.getAction();
+        //message.arg2 = event.getKey();
+        //yabauseThread.handler.sendMessage(message);
         return true;
     }
 
     @Override public boolean onGenericMotionEvent(MotionEvent event) {
 
-        PadEvent pe = padm.onGenericMotionEvent(event);
-        if (pe != null) {
-            this.onPad(pe);
+    	int rtn = padm.onGenericMotionEvent(event);
+        if (rtn != 0) {
             return false;
         }
         return super.onGenericMotionEvent(event);
@@ -314,9 +291,8 @@ public class Yabause extends Activity implements OnPadListener
     
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
        
-        PadEvent pe = padm.onKeyDown(keyCode, event);
-        if (pe != null) {
-            this.onPad(pe);
+        int rtn =  padm.onKeyDown(keyCode, event);
+        if (rtn != 0) {
             return true;
         }
         if ( keyCode == KeyEvent.KEYCODE_BACK) {
@@ -327,9 +303,8 @@ public class Yabause extends Activity implements OnPadListener
     }
 
     @Override public boolean onKeyUp(int keyCode, KeyEvent event) {
-        PadEvent pe = padm.onKeyUp(keyCode, event);
-        if (pe != null) {
-            this.onPad(pe);
+        int rtn = padm.onKeyUp(keyCode, event);
+        if (rtn != 0) {
             return true;
         }
 
@@ -415,9 +390,9 @@ public class Yabause extends Activity implements OnPadListener
     	
         if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
             pad.setVisibility(View.INVISIBLE);
-            padm.setPlayer1InputDevice( PadManager.invalid_device_id );
-        }else{
         	padm.setPlayer1InputDevice( Integer.parseInt(selInputdevice));
+        }else{
+            padm.setPlayer1InputDevice( PadManager.invalid_device_id );
         }
     }
 
