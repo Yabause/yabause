@@ -93,9 +93,9 @@ public class DonateActivity extends Activity {
 
     // SKUS
     static final String SKU_DONATE_SMALL = "donate_small";
-    static final String SKU_DONATE_MEDIUM = "donate_medium";
-    static final String SKU_DONATE_LARGE = "donate_large";
-    static final String SKU_DONATE_EXTRA_LARGE = "donate_extra_large";
+    static final String SKU_DONATE_MEDIUM = "donation_medium";
+    static final String SKU_DONATE_LARGE = "donation_large";
+    static final String SKU_DONATE_EXTRA_LARGE = "donation_extra_large";
     final int MAX_SKU_COUNT = 4;
     final String skus[] = { SKU_DONATE_SMALL, SKU_DONATE_MEDIUM, SKU_DONATE_LARGE, SKU_DONATE_EXTRA_LARGE};
 
@@ -186,13 +186,14 @@ public class DonateActivity extends Activity {
                 if (mHelper == null) return;
 
                 // IAB is fully set up. Now, let's get an inventory of stuff we own.
-                Log.d(TAG, "Setup successful. Querying inventory.");
+                //Log.d(TAG, "Setup successful. Querying inventory.");
                 mHelper.queryInventoryAsync(mGotInventoryListener);
             }
         });
     }
 
     // Listener that's called when we finish querying the items and subscriptions we own
+    
     IabHelper.QueryInventoryFinishedListener mGotInventoryListener = new IabHelper.QueryInventoryFinishedListener() {
         public void onQueryInventoryFinished(IabResult result, Inventory inventory) {
             Log.d(TAG, "Query inventory finished.");
@@ -208,15 +209,10 @@ public class DonateActivity extends Activity {
 
             Log.d(TAG, "Query inventory was successful.");
 
-            /*
-             * Check for items we own. Notice that for each purchase, we check
-             * the developer payload to see if it's correct! See
-             * verifyDeveloperPayload().
-             */
             for( int i=0; i<MAX_SKU_COUNT; i++ ) {
             	Purchase gasPurchase = inventory.getPurchase(skus[i]);
             	if( gasPurchase != null && verifyDeveloperPayload(gasPurchase) ){
-            		
+            		mHelper.consumeAsync(gasPurchase, mConsumeFinishedListener);
             	}
             }
 
@@ -225,6 +221,7 @@ public class DonateActivity extends Activity {
             Log.d(TAG, "Initial inventory query finished; enabling main UI.");
         }
     };
+
     
     public void onDonate(View view)
     {
@@ -309,6 +306,22 @@ public class DonateActivity extends Activity {
                 setWaitScreen(false);
                 return;
             }
+            
+            if (purchase.getSku().equals(SKU_DONATE_SMALL)
+
+            		|| purchase.getSku().equals(SKU_DONATE_MEDIUM)
+
+            		|| purchase.getSku().equals(SKU_DONATE_LARGE)
+
+            		|| purchase.getSku().equals(SKU_DONATE_EXTRA_LARGE))
+
+            		{
+
+            		//check if any item is consumed 
+
+            		mHelper.consumeAsync(purchase, mConsumeFinishedListener);
+
+            		}
 
             Log.d(TAG, "Purchase successful.");
 
@@ -333,6 +346,7 @@ public class DonateActivity extends Activity {
             }
 
             Log.d(TAG, "End consumption flow.");
+            finish();
             		
         }
 
