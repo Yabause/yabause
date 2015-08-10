@@ -24,4 +24,18 @@
     <string name="setting_graphics">Graphics</string>
     <string name="setting_general">General</string>
     <string name="msg_opengl_not_supported">Your device is not support OpenGL ES 3.0 or above.\nYou can not choose OpenGL Video Interface.\n</string>
+    <string name="donation">Support</string>
+    <string name="donate_message">
+        Support our development!\n\n
+		You can support the upstream project of uoYabause by makeing a doantion at http://www.yabause.org .
+		And You can also send a donation to uoYabause directly with this button for developing more aculate emulation, more input devices and more platforms.\n
+    </string>
+    <string name="thank_you">Thank you for your donation!</string>
+    <string name="error_consume">Faild to consume.</string>
+    <string name="do_donation">Donate</string>
+    <string name="no_thank_you">No, Thank you.</string>
+    <string name="donate_3doller">$3</string>
+    <string name="donate_5doller">$5</string>
+    <string name="donate_10doller">$10</string>
+    <string name="donate_30doller">$30</string>
 </resources>

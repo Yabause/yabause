@@ -24,4 +24,18 @@
     <string name="setting_graphics">グラフィックス</string>
     <string name="setting_general">一般</string>
     <string name="msg_opengl_not_supported">このデバイスではOpenGL ES 3.0がサポートされていないので、ソフトウェアレンダリングしか選択できません</string>
+    <string name="donation">サポート</string>
+    <string name="donate_message">
+                  私たちの開発を支援してください！\n\n
+		uoYabauseの上流プロジェクトYabauseの寄付は http://www.yabause.org/ で承っています。
+		また、下のボタンで直接uoYabauseに寄付を送ることができます。より正確なエミュレーション,より多くの入力デバイス,より多くのプラットフォームのサポートに役立てます。\n
+    </string>
+    <string name="thank_you">寄付をありがとうございました!</string>
+    <string name="error_consume">送金に失敗しました。</string>
+    <string name="do_donation">寄付する</string>
+    <string name="no_thank_you">寄付しない</string>
+    <string name="donate_3doller">300円</string>
+    <string name="donate_5doller">500円</string>
+    <string name="donate_10doller">1,000円</string>
+    <string name="donate_30doller">3,000円</string>    
 </resources>
