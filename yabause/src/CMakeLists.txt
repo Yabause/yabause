@@ -33,7 +33,14 @@ set(yabause_SOURCES
 	scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
-	yabause.c ygl.c yglshader.c)
+	yabause.c ygles.c yglshaderes.c)
+
+option(YAB_USE_CXX "Allow C++ in the emulation core.")
+if (YAB_USE_CXX)
+	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
+else()
+	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
+endif()
 
 # new SCSP
 option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
@@ -148,6 +155,11 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		if (GLXGETPROCADDRESS_OK)
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
 		endif()
+		add_definitions(-D_OGL3_)
+		add_definitions(-D_USEGLEW_)
+		add_definitions(-DGLEW_STATIC)
+		include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+		set(yabause_SOURCES ${yabause_SOURCES} gllibs/glew/glew.c)
 	endif(OPENGL_FOUND)
 endif ()
 

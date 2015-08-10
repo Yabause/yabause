@@ -111,6 +111,11 @@ typedef struct
    int dst;
    int uclipmode;
    int blendmode;
+   s32 cor;
+   s32 cog;
+   s32 cob;
+   int linescreen;
+
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */
 
@@ -136,10 +141,8 @@ typedef struct
    int coloroffset;
    int transparencyenable;
    int specialprimode;
-
-   s32 cor;
-   s32 cog;
-   s32 cob;
+   float maxzoom;
+   int linecheck_mask;
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int);
@@ -161,7 +164,6 @@ typedef struct
    int isverticalscroll;
    u32 verticalscrolltbl;
    int verticalscrollinc;
-   int linescreen;
    
    // WindowMode
    u8  LogicWin;    // Window Logic AND OR
