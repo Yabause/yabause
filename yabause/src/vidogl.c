@@ -3058,14 +3058,23 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
    if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
 
+   // expand proygon when it is square( just for gurdian heros )
+   // ToDo: expand lower-right vertex using vector
+   if (cmd.CMDYA == cmd.CMDYB && cmd.CMDXB == cmd.CMDXC && cmd.CMDYC == cmd.CMDYD){
+	   cmd.CMDXB++;
+	   cmd.CMDXC++;
+	   cmd.CMDYC++;
+	   cmd.CMDYD++;
+   }
+
    sprite.vertices[0] = (s32)((float)((s32)cmd.CMDXA + Vdp1Regs->localX) * vdp1wratio);
    sprite.vertices[1] = (s32)((float)((s32)cmd.CMDYA + Vdp1Regs->localY) * vdp1hratio);
-   sprite.vertices[2] = (s32)((float)((s32)(cmd.CMDXB) + Vdp1Regs->localX) * vdp1wratio);
+   sprite.vertices[2] = (s32)((float)((s32)cmd.CMDXB + Vdp1Regs->localX) * vdp1wratio);
    sprite.vertices[3] = (s32)((float)((s32)cmd.CMDYB + Vdp1Regs->localY) * vdp1hratio);
-   sprite.vertices[4] = (s32)((float)((s32)(cmd.CMDXC) + Vdp1Regs->localX) * vdp1wratio);
-   sprite.vertices[5] = (s32)((float)((s32)(cmd.CMDYC) + Vdp1Regs->localY) * vdp1hratio);
+   sprite.vertices[4] = (s32)((float)((s32)cmd.CMDXC + Vdp1Regs->localX) * vdp1wratio);
+   sprite.vertices[5] = (s32)((float)((s32)cmd.CMDYC + Vdp1Regs->localY) * vdp1hratio);
    sprite.vertices[6] = (s32)((float)((s32)cmd.CMDXD + Vdp1Regs->localX) * vdp1wratio);
-   sprite.vertices[7] = (s32)((float)((s32)(cmd.CMDYD) + Vdp1Regs->localY) * vdp1hratio);
+   sprite.vertices[7] = (s32)((float)((s32)cmd.CMDYD + Vdp1Regs->localY) * vdp1hratio);
 
    tmp = cmd.CMDSRCA;
 
