@@ -24,7 +24,6 @@
 #include "ygl.h"
 #include "yui.h"
 #include "vidshared.h"
-#include "malloc.h"
 
 #define HASHSIZE  (0xFFFF)
 typedef struct _YglCacheHash {

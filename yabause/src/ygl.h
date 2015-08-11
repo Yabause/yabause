@@ -39,7 +39,7 @@
   #endif
 
 #elif  defined(__APPLE__)
-    #include <OpenGL/gl.h>
+    #include <OpenGL/gl3.h>
 
 #else // LInux?
     #if defined(_OGLES3_)||defined(_OGL3_)
