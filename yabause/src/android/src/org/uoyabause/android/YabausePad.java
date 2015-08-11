@@ -216,8 +216,8 @@ class YabausePad extends View implements OnTouchListener {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(current);
         base_scale= sharedPref.getFloat("pref_pad_scale", 0.5f);
         
-	    paint.setARGB(0x00, 0x00, 0x00, 0x00);
-	    apaint.setARGB(0x00, 0x00, 0x00, 0x00);
+	    paint.setARGB(0x00, 0x0, 0x0, 0x0);
+	    apaint.setARGB(0x00, 0x0, 0x00, 0x00);
 	    tpaint.setARGB(0x80, 0xFF, 0xFF, 0xFF);
 	
         setOnTouchListener(this);
@@ -257,11 +257,14 @@ class YabausePad extends View implements OnTouchListener {
 
     @Override public void onDraw(Canvas canvas) {
 
+    	
        
         canvas.drawBitmap(bitmap_pad_left, matrix_left, mPaint);
         canvas.drawBitmap(bitmap_pad_right, matrix_right, mPaint);
         
-        //canvas.save();
+        canvas.setMatrix(null);
+        
+         //canvas.save();
     	//canvas.concat(matrix_left);
         buttons[PadEvent.BUTTON_UP].draw(canvas, paint, apaint, tpaint);
         buttons[PadEvent.BUTTON_DOWN].draw(canvas, paint, apaint, tpaint);
@@ -373,19 +376,23 @@ class YabausePad extends View implements OnTouchListener {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
         
-        wscale = (float)width / basewidth; 
-        hscale = (float)height / baseheight;  
-      
+        float dens = getResources().getDisplayMetrics().density;
+        dens /= 2.0;
+        
+        wscale = (float)width / basewidth ; 
+        hscale = (float)height / baseheight;    
+        
+        int bitmap_height = bitmap_pad_right.getHeight();
     	
         matrix_right.reset();
-        matrix_right.postTranslate(-bitmap_pad_right.getWidth(), -bitmap_pad_right.getHeight());
+        matrix_right.postTranslate(-780, -baseheight);
         matrix_right.postScale(base_scale*wscale, base_scale*hscale);
         matrix_right.postTranslate(width, height);
         
         matrix_left.reset();
-        matrix_left.postTranslate(0, -bitmap_pad_left.getHeight() );
+        matrix_left.postTranslate(0, -baseheight);
         matrix_left.postScale(base_scale*wscale, base_scale*hscale);
-        matrix_left.postTranslate(0, height );
+        matrix_left.postTranslate(0, height);
 
         // Left Part
         //buttons[PadEvent.BUTTON_UP].updateRect(matrix_left, 303, 497, 303+ 89,497+180);
@@ -413,6 +420,16 @@ class YabausePad extends View implements OnTouchListener {
         buttons[PadEvent.BUTTON_Z].updateRect(matrix_right,397,409,397+151,409+152);
         buttons[PadEvent.BUTTON_Z].updateScale(base_scale*wscale);
         buttons[PadEvent.BUTTON_RIGHT_TRIGGER].updateRect(matrix_right,350,59,350+379,59+91);
+        
+        matrix_right.reset();
+        matrix_right.postTranslate(- bitmap_pad_right.getWidth(), - bitmap_pad_right.getHeight());
+        matrix_right.postScale(base_scale*wscale/dens, base_scale*hscale/dens);
+        matrix_right.postTranslate(width, height);
+        
+        matrix_left.reset();
+        matrix_left.postTranslate(0, - bitmap_pad_right.getHeight());
+        matrix_left.postScale(base_scale*wscale/dens, base_scale*hscale/dens);
+        matrix_left.postTranslate(0, height);        
         
         setMeasuredDimension(width, height);
     }
