@@ -18,6 +18,8 @@ Copyright 2011-2015 Shinya Miyamoto(devmiyax)
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#ifdef HAVE_LIBGL
+
 extern "C" {
 #include "ygl.h"
 #include "yui.h"
@@ -75,3 +77,5 @@ void YglCacheReset(void) {
 
 
 }
+
+#endif

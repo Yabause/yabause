@@ -1,4 +1,3 @@
-/*
 /*  Copyright 2005-2006 Guillaume Duhamel
  *  Copyright 2005-2006 Theo Berkau
  *  Copyright 2011-2015 Shinya Miyamoto(devmiyax)
@@ -20,10 +19,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#ifdef HAVE_LIBGL
+
 #include "ygl.h"
 #include "yui.h"
 #include "vidshared.h"
-#include "malloc.h"
 
 #define HASHSIZE  (0xFFFF)
 typedef struct _YglCacheHash {
@@ -126,3 +126,4 @@ void YglCacheReset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+#endif
