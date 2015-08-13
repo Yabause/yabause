@@ -1,0 +1,104 @@
+environment:
+  MINGW: C:\Qt\Tools\mingw492_32
+  CMAKE_BUILD_TYPE: Release
+  # set to d if debug build
+  qt_dll_suffix: ""
+
+  matrix:
+    # Visual Studio build
+    - generator: "Visual Studio 12 Win64"
+      CMAKE_PREFIX_PATH: C:\Qt\5.4\msvc2013_64_opengl
+      compiler_type: "vs12-x64"
+      sdl_filename: SDL2-devel-2.0.3-VC.zip
+      sdl_arch: x64
+      dx_args: "-DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DIRECTINPUT=ON"
+
+    # MingGW x86 build
+    - generator: "MinGW Makefiles"
+      CMAKE_PREFIX_PATH: C:\Qt\5.5\mingw492_32
+      CMAKE_C_COMPILER: gcc
+      CMAKE_CXX_COMPILER: g++ 
+      CMAKE_MAKE_PROGRAM: mingw32-make.exe
+      compiler_type: "mingw32"
+
+    # filename on the sdl website
+      sdl_filename: SDL2-devel-2.0.3-mingw.tar.gz
+      sdl_arch: x86
+
+    # included directx headers incompatible with mingw
+      dx_args: ""
+
+shallow_clone: true
+
+init:
+  # cmake errors if sh on the path
+  - rm "C:\Program Files (x86)\Git\bin\sh.exe"
+  - set Path=%MINGW%\bin;%Path%
+
+before_build:
+  # fetch appropriate sdl lib for visual studio or mingw
+  - cd c:\
+  - appveyor DownloadFile https://www.libsdl.org/release/%sdl_filename%
+
+  # decompress it, shorten 7z output with FIND
+  - 7z x %sdl_filename%  | FIND /V "ing  "
+
+  # mingw version is a tar.gz, decompress again
+  - if [%sdl_filename%]==[SDL2-devel-2.0.3-mingw.tar.gz] 7z x SDL2-devel-2.0.3-mingw.tar | FIND /V "ing  "
+
+  # generate project files or makefiles
+  - cd C:\projects\yabause\yabause
+  - mkdir build
+  - cd build
+  - cmake -G "%generator%" %dx_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
+
+build_script:
+  - if ["%compiler_type%"]==["mingw32"] cmake --build .
+
+  # force a release build and only show errors to shorten output
+  - if ["%compiler_type%"]==["vs12-x64"] msbuild yabause.sln /p:configuration=Release /clp:ErrorsOnly /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
+# make a distributable package of the build output
+after_build:
+  - mkdir output
+  - cd output
+
+  # qt dlls
+  - copy "%CMAKE_PREFIX_PATH%\bin\Qt5Core%qt_dll_suffix%.dll"
+  - copy "%CMAKE_PREFIX_PATH%\bin\Qt5Gui%qt_dll_suffix%.dll"
+  - copy "%CMAKE_PREFIX_PATH%\bin\Qt5OpenGL%qt_dll_suffix%.dll"
+  - copy "%CMAKE_PREFIX_PATH%\bin\Qt5Widgets%qt_dll_suffix%.dll"
+  - mkdir platforms
+  - copy "%CMAKE_PREFIX_PATH%\plugins\platforms\qwindows%qt_dll_suffix%.dll" platforms\qwindows%qt_dll_suffix%.dll
+
+  # the visual studio build needs the unicode dlls apparently
+  - if ["%compiler_type%"]==["vs12-x64"] copy "%CMAKE_PREFIX_PATH%\bin\icuin53.dll"
+  - if ["%compiler_type%"]==["vs12-x64"] copy "%CMAKE_PREFIX_PATH%\bin\icudt53.dll"
+  - if ["%compiler_type%"]==["vs12-x64"] copy "%CMAKE_PREFIX_PATH%\bin\icuuc53.dll"
+
+  # gcc dlls
+  - if ["%compiler_type%"]==["mingw32"] copy "%CMAKE_PREFIX_PATH%\bin\libwinpthread-1.dll"
+  - if ["%compiler_type%"]==["mingw32"] copy "%CMAKE_PREFIX_PATH%\bin\libstdc++-6.dll"
+  - if ["%compiler_type%"]==["mingw32"] copy "%CMAKE_PREFIX_PATH%\bin\libgcc_s_dw2-1.dll"
+
+  # sdl lib
+  - copy C:\SDL2-2.0.3\lib\%sdl_arch%\SDL2.dll
+
+  # yabause executable
+  - if ["%compiler_type%"]==["mingw32"] copy C:\projects\yabause\yabause\build\src\qt\yabause.exe
+  - if ["%compiler_type%"]==["vs12-x64"] copy C:\projects\yabause\yabause\build\src\qt\Release\yabause.exe
+
+  # text files
+  - copy C:\projects\yabause\yabause\AUTHORS AUTHORS.txt
+  - copy C:\projects\yabause\yabause\COPYING COPYING.txt
+  - copy C:\projects\yabause\yabause\README README.txt
+  - copy C:\projects\yabause\yabause\README.WIN README.WIN.txt
+  - copy C:\projects\yabause\yabause\ChangeLog ChangeLog.txt
+
+  # zip all output files and push the artifact, name it with the commit, date and compiler type
+  - ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
+  - ps: $git_hash_date += "-"
+  - ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
+  - ps: $name = "yabause-${git_hash_date}-${env:compiler_type}.zip"
+  - ps: 7z a $name *
+  - ps: appveyor PushArtifact $name
