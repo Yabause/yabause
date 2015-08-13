@@ -1,0 +1,53 @@
+matrix:
+  include:
+
+    # linux gcc
+    - compiler: gcc
+
+    # linux clang
+    - compiler: clang
+
+    # os x cocoa port
+    - language: objective-c
+      os: osx
+      compiler: clang
+      before_script:
+        - cd ../src
+
+        # enable cmake to find x11 and xrandr
+        - echo 'INCLUDE_DIRECTORIES("/opt/X11/include")' > temp.txt
+        - echo 'LINK_DIRECTORIES("/opt/X11/lib")' >> temp.txt
+        - cat temp.txt CMakeLists.txt > temp2.txt
+        - rm CMakeLists.txt
+        - mv temp2.txt CMakeLists.txt
+        - cd ../build
+
+    # mingw-w64 windows cross compile, libyabause only
+    # needs qt and other deps built
+    - compiler: gcc
+      addons:
+        apt:
+          packages:
+            - gcc-mingw-w64-x86-64
+            - g++-mingw-w64-x86-64
+            - binutils-mingw-w64-x86-64
+            - mingw-w64-dev
+      script:
+        # create toolchain file so we can cross compile
+        - echo 'SET(CMAKE_SYSTEM_NAME Windows)' > toolchain.cmake
+        - echo 'SET(CMAKE_C_COMPILER   x86_64-w64-mingw32-gcc)' >> toolchain.cmake
+        - echo 'SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)' >> toolchain.cmake
+        - echo 'SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)' >> toolchain.cmake
+        - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake ..
+        - make
+
+language: cpp
+
+before_install:
+  - cd yabause
+  - mkdir build
+  - cd build
+
+script:
+  - cmake ..
+  - make

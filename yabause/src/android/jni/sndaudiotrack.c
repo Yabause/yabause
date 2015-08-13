@@ -81,6 +81,7 @@ static int SNDAudioTrackInit(void)
        return -1;
 
    cAudioTrack = (*env)->FindClass(env, "android/media/AudioTrack");
+   cAudioTrack = (jclass) (*env)->NewGlobalRef(env, cAudioTrack);
 
    mAudioTrack = (*env)->GetMethodID(env, cAudioTrack, "<init>", "(IIIIII)V");
 

@@ -47,6 +47,7 @@ typedef struct
    void (*Vdp1UserClipping)(void);
    void (*Vdp1SystemClipping)(void);
    void (*Vdp1LocalCoordinate)(void);
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
    // VDP2 specific
    int (*Vdp2Reset)(void);
    void (*Vdp2DrawStart)(void);
@@ -89,8 +90,8 @@ typedef struct {
    u32 addr;
    int disptoggle_dont_use_me; // not used anymore, see Vdp1External_struct
 
-   u16 localX;
-   u16 localY;
+   s16 localX;
+   s16 localY;
 
    u16 systemclipX1;
    u16 systemclipY1;
