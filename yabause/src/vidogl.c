@@ -25,6 +25,10 @@
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__)
 
+#include <math.h>
+#define EPSILON (1e-10 )
+
+
 #include "vidogl.h"
 #include "vidshared.h"
 #include "debug.h"
@@ -32,7 +36,6 @@
 #include "yabause.h"
 #include "ygl.h"
 #include "yui.h"
-
 
 #if defined WORDS_BIGENDIAN
 #define SAT2YAB1(alpha,temp)      (alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
@@ -3058,25 +3061,76 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
    if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
 
-   // expand proygon when it is square( just for gurdian heros )
-   // ToDo: expand lower-right vertex using vector
-   if (cmd.CMDYA == cmd.CMDYB && cmd.CMDXB == cmd.CMDXC && cmd.CMDYC == cmd.CMDYD){
-	   cmd.CMDXB++;
-	   cmd.CMDXC++;
-	   cmd.CMDYC++;
-	   cmd.CMDYD++;
+
+   sprite.vertices[0] = (s16)cmd.CMDXA;
+   sprite.vertices[1] = (s16)cmd.CMDYA;
+   sprite.vertices[2] = (s16)cmd.CMDXB;
+   sprite.vertices[3] = (s16)cmd.CMDYB;
+   sprite.vertices[4] = (s16)cmd.CMDXC;
+   sprite.vertices[5] = (s16)cmd.CMDYC;
+   sprite.vertices[6] = (s16)cmd.CMDXD;
+   sprite.vertices[7] = (s16)cmd.CMDYD;
+
+
+   int isSquare = 1;
+   for (i = 0; i < 3; i++){
+	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
+	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
+	   float d2x = sprite.vertices[(((i + 2)&0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
+	   float d2y = sprite.vertices[(((i + 2)&0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
+	   float dot = dx*d2x + dy*d2y;
+	   if (dot >= EPSILON || dot <= -EPSILON){
+		   isSquare = 0;
+		   break;
+	   }
    }
 
+   if (isSquare){
 
+	   // find upper left opsition
+	   float minx = 65535.0f;
+	   float miny = 65535.0f;
+	   int lt_index = -1;
+	   for( i = 0; i < 4; i++){
+		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
+			   minx = sprite.vertices[(i << 1) + 0];
+			   miny = sprite.vertices[(i << 1) + 1];
+			   lt_index = i;
+		   }
+	   }
 
-   sprite.vertices[0] = (float)((s32)cmd.CMDXA + Vdp1Regs->localX) * vdp1wratio;
-   sprite.vertices[1] = (float)((s32)cmd.CMDYA + Vdp1Regs->localY) * vdp1hratio;
-   sprite.vertices[2] = (float)((s32)cmd.CMDXB + Vdp1Regs->localX) * vdp1wratio;
-   sprite.vertices[3] = (float)((s32)cmd.CMDYB + Vdp1Regs->localY) * vdp1hratio;
-   sprite.vertices[4] = (float)((s32)cmd.CMDXC + Vdp1Regs->localX) * vdp1wratio;
-   sprite.vertices[5] = (float)((s32)cmd.CMDYC + Vdp1Regs->localY) * vdp1hratio;
-   sprite.vertices[6] = (float)((s32)cmd.CMDXD + Vdp1Regs->localX) * vdp1wratio;
-   sprite.vertices[7] = (float)((s32)cmd.CMDYD + Vdp1Regs->localY) * vdp1hratio;
+	   for (i = 0; i < 4; i++){
+		   if (i != lt_index){
+			   // vectorize
+			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
+			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+
+			   // normalize
+			   float len = fabsf(sqrtf(dx*dx + dy*dy));
+			   if (len <= EPSILON){
+				   continue;
+			   }
+			   float nx = dx / len;
+			   float ny = dy / len;
+			   if (nx >= EPSILON) nx = 1.0f;
+			   if (ny >= EPSILON) ny = 1.0f;
+
+			   // expand vertex
+			   sprite.vertices[(i << 1) + 0] += nx;
+			   sprite.vertices[(i << 1) + 1] += ny;
+		   }
+	   }
+   }
+
+   sprite.vertices[0] = sprite.vertices[0] + Vdp1Regs->localX * vdp1wratio;
+   sprite.vertices[1] = sprite.vertices[1] + Vdp1Regs->localY * vdp1hratio;
+   sprite.vertices[2] = sprite.vertices[2] + Vdp1Regs->localX * vdp1wratio;
+   sprite.vertices[3] = sprite.vertices[3] + Vdp1Regs->localY * vdp1hratio;
+   sprite.vertices[4] = sprite.vertices[4] + Vdp1Regs->localX * vdp1wratio;
+   sprite.vertices[5] = sprite.vertices[5] + Vdp1Regs->localY * vdp1hratio;
+   sprite.vertices[6] = sprite.vertices[6] + Vdp1Regs->localX * vdp1wratio;
+   sprite.vertices[7] = sprite.vertices[7] + Vdp1Regs->localY * vdp1hratio;
+
 
    tmp = cmd.CMDSRCA;
 
@@ -3313,8 +3367,7 @@ void VIDOGLVdp1PolygonDraw(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#include <math.h>
-#define EPSILON (1e-10 )
+
 
 static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 
