@@ -19,7 +19,6 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifdef HAVE_LIBGL
 
 #include <stdlib.h>
 #include <math.h>
@@ -807,7 +806,6 @@ void YuiSetVideoAttribute(int type, int val){return;}
 
 
 //////////////////////////////////////////////////////////////////////////////
-
 
 int YglInit(int width, int height, unsigned int depth) {
    unsigned int i,j;
@@ -1832,7 +1830,7 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
       tmp[4].q = 1.0f;
       tmp[5].q = 1.0f;
    }
-}
+}  
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2480,4 +2478,4 @@ void YglOnScreenDebugMessage(char *string, ...) {
    _Ygl->msglength = (int)strlen(_Ygl->message);
 }
 
-#endif
+
