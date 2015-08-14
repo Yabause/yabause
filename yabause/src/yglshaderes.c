@@ -19,6 +19,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#ifdef HAVE_LIBGL
+
 //#ifdef __ANDROID__
 #include <stdlib.h>
 #include <math.h>
@@ -1420,5 +1422,4 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   return 0;
 }
 
-//#endif
-
+#endif

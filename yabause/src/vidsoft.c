@@ -688,25 +688,36 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
       // scroll
       if (info->islinescroll)
       {
+         //line scroll interval bit
+         int need_increment = ((j != 0) && (((j + 1) % info->lineinc) == 0));
+
+         //horizontal line scroll
          if (info->islinescroll & 0x1)
          {
             linescrollx = (T1ReadLong(Vdp2Ram, info->linescrolltbl) >> 16) & 0x7FF;
-            info->linescrolltbl += 4;
+            if (need_increment)
+               info->linescrolltbl += 4;
          }
+
+         //vertical line scroll
          if (info->islinescroll & 0x2)
          {
             info->y = ((T1ReadWord(Vdp2Ram, info->linescrolltbl) & 0x7FF) * resyratio) + scrolly;
-            info->linescrolltbl += 4;
+            if (need_increment)
+               info->linescrolltbl += 4;
             y = info->y;
          }
          else
             //y = info->y+((int)(info->coordincy *(float)(info->mosaicymask > 1 ? (j / info->mosaicymask * info->mosaicymask) : j)));
 			y = info->y + info->coordincy*mosaic_y[j];
+
+         //line zoom
          if (info->islinescroll & 0x4)
          {
             info->coordincx = (T1ReadLong(Vdp2Ram, info->linescrolltbl) & 0x7FF00) / (float)65536.0;
             info->coordincx *= resxratio;
-            info->linescrolltbl += 4;
+            if (need_increment)
+               info->linescrolltbl += 4;
          }
       }
       else
@@ -738,6 +749,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          high resolution gets in the way with window process. I may be wrong...
          This was added for Cotton Boomerang */
          int resxi = i * resxratio;
+			int priority;
 
          // See if screen position is clipped, if it isn't, continue
          if (!TestBothWindow(info->wctl, clip, resxi, j))
@@ -767,7 +779,26 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
             continue;
          }
 
-         // check special priority somewhere here
+
+         priority = info->priority;
+
+         //per-pixel priority is on
+         if (info->specialprimode == 2)
+         {
+            //the special function in the pattern name
+            //data must be on as well
+            if (info->specialfunction & 1)
+            {
+               priority = info->priority & 0xE;
+
+               //everything but the specified dot
+               //makes the priority lsb 0
+               if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0)
+               {
+                  priority |= 1;
+               }
+            }
+         }
 
          // Apply color offset and color calculation/special color calculation
          // and then continue.
@@ -782,7 +813,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
             else
                alpha = GetAlpha(info, color, dot);
 
-            TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(alpha, color)), info->linescreen);
+            TitanPutPixel(priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(alpha, color)), info->linescreen);
          }
       }
    }    
@@ -1137,6 +1168,7 @@ static void Vdp2DrawLineScreen(void)
    u16 color;
    u32 dot;
    int i;
+	int alpha;
 
    /* no need to go further if no screen is using the line screen */
    if (Vdp2Regs->LNCLEN == 0)
@@ -1147,6 +1179,8 @@ static void Vdp2DrawLineScreen(void)
    else
       scrAddr = (Vdp2Regs->LCTA.all & 0x3FFFF) << 1;
 
+   alpha = (Vdp2Regs->CCRLB & 0x1f) << 1;
+
    if (Vdp2Regs->LCTA.part.U & 0x8000)
    {
       /* per line */
@@ -1156,7 +1190,7 @@ static void Vdp2DrawLineScreen(void)
          dot = Vdp2ColorRamGetColor(color);
          scrAddr += 2;
 
-         TitanPutLineHLine(1, i, COLSAT2YAB32(0x3F, dot));
+         TitanPutLineHLine(1, i, COLSAT2YAB32(alpha, dot));
       }
    }
    else
@@ -1165,7 +1199,7 @@ static void Vdp2DrawLineScreen(void)
       color = T1ReadWord(Vdp2Ram, scrAddr) & 0x7FF;
       dot = Vdp2ColorRamGetColor(color);
       for (i = 0; i < vdp2height; i++)
-         TitanPutLineHLine(1, i, COLSAT2YAB32(0x3F, dot));
+         TitanPutLineHLine(1, i, COLSAT2YAB32(alpha, dot));
    }
 }
 
@@ -2096,6 +2130,19 @@ static void putpixel(int x, int y) {
 			x < vdp1clipxend &&
 			y >= vdp1clipystart &&
 			y < vdp1clipyend);
+
+      //vdp1_clip_test in yabauseut
+      if (((cmd.CMDPMOD >> 9) & 0x3) == 0x3)//outside clipping mode
+      {
+         //don't display inside the box
+         if (Vdp1Regs->userclipX1 <= x && 
+            x <= Vdp1Regs->userclipX2 && 
+            Vdp1Regs->userclipY1 <= y && 
+            y <= Vdp1Regs->userclipY2) 
+         {
+            clipped = 1;
+         }
+      }
 
 		if (cmd.CMDPMOD & 0x0400) PopUserClipping();
 
@@ -3100,6 +3147,7 @@ void VIDSoftVdp2DrawEnd(void)
 void VIDSoftVdp2DrawScreens(void)
 {
    int i;
+	int last_priority;
 
    VIDSoftVdp2SetResolution(Vdp2Regs->TVMD);
    VIDSoftVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
@@ -3108,7 +3156,17 @@ void VIDSoftVdp2DrawScreens(void)
    VIDSoftVdp2SetPriorityNBG3((Vdp2Regs->PRINB >> 8) & 0x7);
    VIDSoftVdp2SetPriorityRBG0(Vdp2Regs->PRIR & 0x7);
 
-   for (i = 7; i > 0; i--)
+   last_priority = 0;
+
+   //if special priority is enabled
+   //backgrounds with priority 0 can be
+   //visible
+   if (Vdp2Regs->SFPRMD & 0x3FF)
+   {
+      last_priority = -1;
+   }
+
+   for (i = 7; i > last_priority; i--)
    {   
       if (nbg3priority == i)
          Vdp2DrawNBG3();

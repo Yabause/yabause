@@ -2027,6 +2027,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 	i = 0;
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
 		int targetv = 0;
+		Vdp2 * regs;
 		sx = info->x + info->lineinfo[lineindex].LineScrollValH;
 		if (VDPLINE_SY(info->islinescroll)) {
 			targetv = info->y + info->lineinfo[lineindex].LineScrollValV;
@@ -2047,7 +2048,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
 		info->draww = (int)((float)vdp2width / info->coordincx);
 
-		Vdp2 * regs = Vdp2RestoreRegs(v);
+		regs = Vdp2RestoreRegs(v);
 		if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
 		// determine which chara shoud be used.
@@ -2357,11 +2358,12 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    YglTexture line_texture;
    int lineInc = Vdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
    int linecl = 0xFF;
+   vdp2rotationparameter_struct *parameter;
+   Vdp2 * regs;
    if ((Vdp2Regs->CCCTL >> 5) & 0x01){
 	   linecl = ((~Vdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
    }
 
-   vdp2rotationparameter_struct *parameter;
    if( vdp2height >= 448 ) vres = (vdp2height>>1); else vres = vdp2height;
    if( vdp2width >= 640 ) hres = (vdp2width>>1); else hres = vdp2width;
    info->vertices[0] = 0;
@@ -2409,7 +2411,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       patternshift = 0;      
    }
    
-   Vdp2 * regs = Vdp2RestoreRegs(3);
+   regs = Vdp2RestoreRegs(3);
    if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
    line_texture.textdata = NULL;
@@ -2800,6 +2802,8 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    u16 color2;
    float col[4*4];
    int i;
+   short CMDXA;
+   short CMDYA;
    
    
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
@@ -2807,8 +2811,8 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    sprite.blendmode=0;
    sprite.linescreen = 0;
 
-   short CMDXA = cmd.CMDXA;
-   short CMDYA = cmd.CMDYA;
+   CMDXA = cmd.CMDXA;
+   CMDYA = cmd.CMDYA;
 
    if ((CMDXA & 0x800)) CMDXA |= 0xF800; else CMDXA &= ~(0xF800);
    if ((CMDYA & 0x800)) CMDYA |= 0xF800; else CMDYA &= ~(0xF800);
@@ -3279,15 +3283,19 @@ void VIDOGLVdp1PolygonDraw(void)
    float col[4*4];
    int gouraud=0;
    int priority;
+   short CMDYA;
+   short CMDYB;
+   short CMDYC;
+   short CMDYD;
 
    vdp1cmd_struct cmd;
 
    polygon.linescreen = 0;
 
-   short CMDYA = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
-   short CMDYB = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
-   short CMDYC = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
-   short CMDYD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A);
+   CMDYA = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
+   CMDYB = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
+   CMDYC = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+   CMDYD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A);
    
    if ((CMDYA & 0x800)) CMDYA |= 0xF800; else CMDYA &= ~(0xF800);
    if ((CMDYC & 0x800)) CMDYC |= 0xF800; else CMDYC &= ~(0xF800);
@@ -3966,10 +3974,12 @@ static void Vdp2DrawLineColorScreen(void)
   int inc = 0;
   int line_cnt = vdp2height;
   int i;
+  u32 * line_pixel_data;
+  u32 addr;
 
   if ( Vdp2Regs->LNCLEN == 0) return;
 
-  u32 * line_pixel_data = YglGetLineColorPointer();
+  line_pixel_data = YglGetLineColorPointer();
 
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
@@ -3977,7 +3987,7 @@ static void Vdp2DrawLineColorScreen(void)
     inc = 0x00; // color per line
   }
 
-  u32 addr = (Vdp2Regs->LCTA.all & 0x7FFFF) * 0x2;
+  addr = (Vdp2Regs->LCTA.all & 0x7FFFF) * 0x2;
   for (i = 0; i < line_cnt; i++){
 
     u16 LineColorRamAdress = T1ReadWord(Vdp2Ram, addr);
@@ -5217,13 +5227,14 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB( vdp2draw_stru
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struct * info,int h, int v )
 {
+   vdp2rotationparameter_struct * p;
 
    if( info->WindwAreaMode == 0 )
    {
       if( info->pWinInfo[v].WinShowLine == 0 )
       {
 		  h = (paraB.KtablV + (paraB.deltaKAx * h));
-		  vdp2rotationparameter_struct * p = info->GetKValueB(&paraB, h);
+		  p = info->GetKValueB(&paraB, h);
 		  if (p) return p;
 		  h = (paraA.KtablV + (paraA.deltaKAx * h));
 		  return info->GetKValueA(&paraA, h);
@@ -5231,13 +5242,13 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
             h = (paraB.KtablV+(paraB.deltaKAx * h));
-			vdp2rotationparameter_struct * p = info->GetKValueB(&paraB, h);
+			p = info->GetKValueB(&paraB, h);
 			if (p) return p;
 			h = (paraA.KtablV + (paraA.deltaKAx * h));
 			return info->GetKValueA(&paraA, h);
          }else{
             h = (paraA.KtablV+(paraA.deltaKAx * h));
-			vdp2rotationparameter_struct * p =  info->GetKValueA(&paraA, h);
+			p =  info->GetKValueA(&paraA, h);
 			if (p) return p;
 			h = (paraB.KtablV + (paraB.deltaKAx * h));
 			return info->GetKValueB(&paraB, h);
@@ -5247,7 +5258,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
       if( info->pWinInfo[v].WinShowLine == 0 )
       {
 		  h = (paraB.KtablV + (paraB.deltaKAx * h));
-		  vdp2rotationparameter_struct * p = info->GetKValueB(&paraB, h);
+		  p = info->GetKValueB(&paraB, h);
 		  if (p) return p;
 		  h = (paraA.KtablV + (paraA.deltaKAx * h));
 		  return info->GetKValueA(&paraA, h);
@@ -5255,13 +5266,13 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
 			 h = (paraB.KtablV + (paraB.deltaKAx * h));
-			 vdp2rotationparameter_struct * p = info->GetKValueB(&paraB, h);
+			 p = info->GetKValueB(&paraB, h);
 			 if (p) return p;
 			 h = (paraA.KtablV + (paraA.deltaKAx * h));
 			 return info->GetKValueA(&paraA, h);
          }else{
 			 h = (paraA.KtablV + (paraA.deltaKAx * h));
-			 vdp2rotationparameter_struct * p = info->GetKValueA(&paraA, h);
+			 p = info->GetKValueA(&paraA, h);
 			 if (p) return p;
 			 h = (paraB.KtablV + (paraB.deltaKAx * h));
 			 return info->GetKValueB(&paraB, h);

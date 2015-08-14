@@ -262,7 +262,7 @@ void TitanPutPixel(int priority, s32 x, s32 y, u32 color, int linescreen)
       int pos = (y * tt_context.vdp2width) + x;
       u32 * buffer = tt_context.vdp2framebuffer[priority] + pos;
       if (linescreen)
-         color = TitanBlendPixelsTop(color, tt_context.linescreen[linescreen][y]);
+         color = tt_context.blend(color, tt_context.linescreen[linescreen][y]);
       if (tt_context.trans(color) && *buffer)
          color = tt_context.blend(color, *buffer);
       *buffer = color;

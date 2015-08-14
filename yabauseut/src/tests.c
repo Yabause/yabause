@@ -13,14 +13,16 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lapetus; if not, write to the Free Software
+    along with YabauseUT; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <stdio.h>
+#include <string.h>
 #include <iapetus.h>
 #include "tests.h"
 
-int stage_status=STAGESTAT_START;
+volatile int stage_status=STAGESTAT_START;
 int waitcounter;
 u32 errordata=0;
 
@@ -66,6 +68,41 @@ void init_test(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void tests_wait_press()
+{
+   per_init();
+
+   if (interrupt_get_level_mask() > 0x7)
+      interrupt_set_level_mask(0x7);
+
+   vdp_vsync();
+
+   // Wait until no buttons are pressed
+   while (per[0].but_push_once || per[0].but_push)
+      vdp_vsync();
+
+   for (;;)
+   {
+      vdp_vsync(); 
+
+      // return whenever a button pressed
+      if (per[0].but_push_once & PAD_A ||
+         per[0].but_push_once & PAD_B ||
+         per[0].but_push_once & PAD_C ||
+         per[0].but_push_once & PAD_X ||
+         per[0].but_push_once & PAD_Y ||
+         per[0].but_push_once & PAD_Z ||
+         per[0].but_push_once & PAD_L ||
+         per[0].but_push_once & PAD_R ||
+         per[0].but_push_once & PAD_START)
+         break;
+   }
+
+   vdp_vsync();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void do_tests(const char *testname, int x, int y)
 {
    int i;
@@ -94,8 +131,14 @@ void do_tests(const char *testname, int x, int y)
                case STAGESTAT_BADDATA:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BD");
                   break;
+               case STAGESTAT_BADSIZE:
+                  vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BS");
+                  break;
                case STAGESTAT_BADINTERRUPT:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BI");
+                  break;
+               case STAGESTAT_NOTEST:
+                  vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xF, "NT");
                   break;
                default:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "failed");
@@ -136,6 +179,8 @@ void do_tests(const char *testname, int x, int y)
       }
    }
 
+   interrupt_set_level_mask(0xF);
+
    // Reset all interrupts
    for (i = 0; i < 0x80; i++)
       bios_set_sh2_interrupt(i, 0);
@@ -143,33 +188,11 @@ void do_tests(const char *testname, int x, int y)
    for (i = 0x40; i < 0x60; i++)
       bios_set_scu_interrupt(i, 0);
 
-   per_init();
-   interrupt_set_level_mask(0x6);
+   // Make sure all interrupts have been called
+   bios_change_scu_interrupt_mask(0, 0);
+   bios_change_scu_interrupt_mask(0xFFFFFFFF, 0xFFFFFFFF);
 
-   vdp_vsync();
-
-   // Wait until no buttons are pressed
-   while (per[0].but_push_once || per[0].but_push)
-   {
-      vdp_vsync();
-   }
-
-   for (;;)
-   {
-      vdp_vsync(); 
-
-      // return whenever a button pressed
-      if (per[0].but_push_once & PAD_A ||
-          per[0].but_push_once & PAD_B ||
-          per[0].but_push_once & PAD_C ||
-          per[0].but_push_once & PAD_X ||
-          per[0].but_push_once & PAD_Y ||
-          per[0].but_push_once & PAD_Z ||
-          per[0].but_push_once & PAD_L ||
-          per[0].but_push_once & PAD_R ||
-          per[0].but_push_once & PAD_START)
-         break;
-   }
+   tests_wait_press();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -199,3 +222,67 @@ void unregister_all_tests()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line)
+{
+   char err_msg[512];
+   char *filename = strrchr(file, '/');
+
+   if (filename == NULL)
+      filename = file;
+   else
+      filename++;
+
+   sprintf(err_msg, "%s:%d ", filename, line);
+   switch(err)
+   {
+      case IAPETUS_ERR_OK:
+         strcat(err_msg, "No error");
+         break;
+      case IAPETUS_ERR_COMM:
+         strcat(err_msg, "Communication error");
+         break;
+      case IAPETUS_ERR_HWNOTFOUND:
+         strcat(err_msg, "Hardware not found");
+         break;
+      case IAPETUS_ERR_SIZE:
+         strcat(err_msg, "Invalid size");
+         break;
+      case IAPETUS_ERR_INVALIDPOINTER:
+         strcat(err_msg, "Invalid pointer");
+         break;
+      case IAPETUS_ERR_INVALIDARG:
+         strcat(err_msg, "Invalid argument");
+         break;
+      case IAPETUS_ERR_BUSY:
+         strcat(err_msg, "Hardware is busy");
+         break;
+      case IAPETUS_ERR_AUTH:
+         strcat(err_msg, "Disc/MPEG authentication error");
+         break;
+      case IAPETUS_ERR_FILENOTFOUND:
+         strcat(err_msg, "File not found");
+         break;
+      case IAPETUS_ERR_UNSUPPORTED:
+         strcat(err_msg, "Unsupported feature");
+         break;
+      case IAPETUS_ERR_TIMEOUT:
+         strcat(err_msg, "Operation timeout");
+         break;
+      case IAPETUS_ERR_MPEGCMD:
+         strcat(err_msg, "MPEGCMD hirq bit not set");
+         break;
+      case IAPETUS_ERR_CMOK:
+         strcat(err_msg, "CMOK hirq bit not set");
+         break;
+      case IAPETUS_ERR_CDNOTFOUND:
+         strcat(err_msg, "CD not found");
+         break;
+      case IAPETUS_ERR_UNKNOWN:
+      default:
+         strcat(err_msg, "Unknown error");
+         break;
+   }
+   int old_transparent = test_disp_font.transparent;
+   vdp_print_text(&test_disp_font, 0 * 8, 0 * 8, 0xF, err_msg);
+   test_disp_font.transparent = old_transparent;
+}
