@@ -19,6 +19,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#ifdef HAVE_LIBGL
+
 #include <stdlib.h>
 #include <math.h>
 #include "ygl.h"
@@ -295,6 +297,7 @@ int YglCalcTextureQ(
    float   dx, w;
    float   b;
    float   ww;
+   float   divisor;
 
    // fast calculation for triangle
    if (( pnts[2*0+0] == pnts[2*1+0] ) && ( pnts[2*0+1] == pnts[2*1+1] )) {
@@ -334,11 +337,11 @@ int YglCalcTextureQ(
    p4[1]=pnts[7];
 
    // detects intersection of two diagonal lines
-   float divisor = (p4[1] - p3[1]) * (p2[0] - p1[0])
+   divisor = (p4[1] - p3[1]) * (p2[0] - p1[0])
 	   - (p4[0] - p3[0]) * (p2[1] - p1[1]);
    if (divisor == 0){
 	   q[0] = q[1] = q[2] = q[3] = 1.0f;
-	   return;
+	   return -1;
    }
 
 
@@ -608,6 +611,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
   }
 
+  {
   const int Line = (addr >> 10); // *((float)(GlHeight) / (float)_Ygl->rheight);
   const int Pix = ((addr & 0x3FF) >> 1); // *((float)(GlWidth) / (float)_Ygl->rwidth);
   const int index = (_Ygl->rheight - 1 - Line)*(_Ygl->rwidth* 4) + Pix * 4;
@@ -645,6 +649,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
     }
     break;
+  }
   }
 
 }
@@ -983,6 +988,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 {
    YglLevel   *level;
    YglProgram *program;
+   float checkval;
 
    if (input->priority > 8) {
       VDP1LOG("sprite with priority %d\n", input->priority);
@@ -1026,7 +1032,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 
    }
 
-   float checkval = (float)(input->cor) / 255.0f;
+   checkval = (float)(input->cor) / 255.0f;
    if (checkval != level->prg[level->prgcurrent].color_offset_val[0])
    {
 	   YglProgramChange(level, prg);
@@ -2474,4 +2480,4 @@ void YglOnScreenDebugMessage(char *string, ...) {
    _Ygl->msglength = (int)strlen(_Ygl->message);
 }
 
-//#endif
+#endif

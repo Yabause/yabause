@@ -40,12 +40,13 @@
 
 #elif  defined(__APPLE__)
     #include <OpenGL/gl.h>
+    #include <OpenGL/gl3.h>
 
 #else // LInux?
     #if defined(_OGLES3_)||defined(_OGL3_)
         #define GL_GLEXT_PROTOTYPES 1
         #define GLX_GLXEXT_PROTOTYPES 1
-        #include <GLFW/glfw3.h>
+        #include <GL/gl.h>
     #else
         #include <GL/gl.h>
     #endif
