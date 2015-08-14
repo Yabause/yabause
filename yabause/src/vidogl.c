@@ -173,7 +173,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB( vdp2draw_stru
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struct * info,int h, int v );
 
 
-static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int * colorcl );
+static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int * colorcl, int * normal_shadow );
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture);
 
 u32 FASTCALL Vdp2ColorRamGetColorCM01SC0(vdp2draw_struct * info, u32 colorindex, int alpha );
@@ -193,6 +193,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    
    int ednmode;
    int endcnt = 0;
+   int nromal_shadow = 0;
 
    u32 charAddr = cmd->CMDSRCA * 8;
    u32 dot;
@@ -208,7 +209,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    else 
       ednmode = 0;
    
-   Vdp1ReadPriority(cmd, &priority, &colorcl );
+   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow );
 
    
    alpha = 0xF8;
@@ -258,12 +259,19 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
-               else if (((dot >> 4) | colorBank) == 0x0000){
-                 u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-                 talpha |= priority;
-                 *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
-               }// not documented...
-               else *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, alpha);
+			   else if (((dot >> 4) | colorBank) == 0x0000){
+				   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+				   talpha |= priority;
+				   *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
+			   }
+			   else if (((dot >> 4) | colorBank) == nromal_shadow){
+				   u32 talpha = (u8)0xF8 - (u8)0x80;
+				   talpha |= priority;
+				   *texture->textdata++ = (talpha << 24);
+			   }
+			   else{
+				   *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, alpha);
+			   }
                j += 1;
 
                // Pixel 2
@@ -274,8 +282,15 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                  u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
                  talpha |= priority;
                  *texture->textdata++ = Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
-               }// not documented...              
-               else *texture->textdata++ = Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, alpha);
+			   }
+			   else if (((dot & 0xF) | colorBank) == nromal_shadow){
+				   u32 talpha = (u8)0xF8 - (u8)0x80;
+				   talpha |= priority;
+				   *texture->textdata++ = (talpha << 24);
+			   }
+			   else{
+				   *texture->textdata++ = Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, alpha);
+			   }
                j += 1;
 
                charAddr += 1;
@@ -323,7 +338,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &priority, &colorcl);
                      if( shadow != 0 ) 
                      {
-                        *texture->textdata++ = 0x00;
+						 u32 talpha = (u8)0xF8 - (u8)0x80;
+						 talpha |= priority;
+						 *texture->textdata++ = (talpha << 24);
                      }else{
 #ifdef WORDS_BIGENDIAN
                         priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1]&0x7;
@@ -391,7 +408,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &priority, &colorcl);
                      if( shadow != 0 ) 
                      {
-                        *texture->textdata++ = 0x00;
+						 u32 talpha = (u8)0xF8 - (u8)0x80;
+						 talpha |= priority;
+						 *texture->textdata++ = (talpha << 24);
                      }else{                     
 #ifdef WORDS_BIGENDIAN
                         priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1]&0x7;
@@ -457,6 +476,11 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( (dot == 0x3F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
+			   else if ((dot | colorBank) == nromal_shadow){
+				   u32 talpha = (u8)0xF8 - (u8)0x80;
+				   talpha |= priority;
+				   *texture->textdata++ = (talpha << 24);
+			   }
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
             texture->textdata += texture->w;
@@ -480,6 +504,11 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( (dot == 0x7F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
+			   else if ((dot | colorBank) == nromal_shadow){
+				   u32 talpha = (u8)0xF8 - (u8)0x80;
+				   talpha |= priority;
+				   *texture->textdata++ = (talpha << 24);
+			   }
                else *texture->textdata++ =  Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
             texture->textdata += texture->w;
@@ -503,6 +532,11 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x0;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
+			   else if ((dot | colorBank) == nromal_shadow){
+				   u32 talpha = (u8)0xF8 - (u8)0x80;
+				   talpha |= priority;
+				   *texture->textdata++ = (talpha << 24);
+			   }
                else *texture->textdata++ = Vdp2ColorRamGetColor((dot | colorBank) + colorOffset, alpha);
             }
             texture->textdata += texture->w;
@@ -524,7 +558,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if (!(dot & 0x8000) && !SPD) *texture->textdata++ = 0x00;
                else if( (dot == 0x7FFF) && !END ) *texture->textdata++ = 0x0;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
-               else *texture->textdata++ = SAT2YAB1(alpha, dot);
+			   else if (dot == nromal_shadow){
+				   u32 talpha = (u8)0xF8 - (u8)0x80;
+				   talpha |= priority;
+				   *texture->textdata++ = (talpha << 24);
+			   }
+			   else *texture->textdata++ = SAT2YAB1(alpha, dot);
             }
             texture->textdata += texture->w;
          }
@@ -538,7 +577,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int * colorcl )
+static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int * colorcl, int * normal_shadow )
 {
    u8 SPCLMD = Vdp2Regs->SPCTL;
    u8 sprite_register;
@@ -585,6 +624,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[(cmd->CMDCOLR>>11)&0x07]&0x1F;
 #endif
+			*normal_shadow = 0x7FE;
             if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 1:
@@ -596,6 +636,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[(cmd->CMDCOLR>>11)&0x03]&0x1F;
 #endif
+			*normal_shadow = 0x7FE;
             if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 2:
@@ -607,6 +648,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[(cmd->CMDCOLR>>11)&0x07]&0x1F;
 #endif
+			*normal_shadow = 0x7FE;
             if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 3:
@@ -618,6 +660,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>11)&0x03)]&0x1F;
 #endif
+			*normal_shadow = 0x7FE;
             if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 4:
@@ -629,6 +672,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>10)&0x07)]&0x1F;
 #endif
+			*normal_shadow = 0x3FE;
             if (not_lut) cmd->CMDCOLR &= 0x3FF;
             break;
          case 5:
@@ -640,6 +684,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>11)&0x01)]&0x1F;
 #endif
+			*normal_shadow = 0x7FE;
             if (not_lut) cmd->CMDCOLR &= 0x7FF;
             break;
          case 6:
@@ -651,6 +696,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>10)&0x03)]&0x1F;
 #endif
+			*normal_shadow = 0x3FE;
             if (not_lut) cmd->CMDCOLR &= 0x3FF;
             break;
          case 7:
@@ -662,6 +708,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>9)&0x07)]&0x1F;
 #endif
+			*normal_shadow = 0x1FE;
             if (not_lut) cmd->CMDCOLR &= 0x1FF;
             break;
          case 8:
@@ -671,6 +718,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
 #else
             *priority = sprprilist[sprite_register] & 0x7;
 #endif
+			*normal_shadow = 0x7E;
             *colorcl =  cclist[0]&0x1F;
             if (not_lut) cmd->CMDCOLR &= 0x7F;
             break;
@@ -683,6 +731,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>6)&0x01)]&0x1F;
 #endif
+			*normal_shadow = 0x3E;
             if (not_lut) cmd->CMDCOLR &= 0x3F;
             break;
          case 10:
@@ -704,6 +753,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>6)&0x03)]&0x1F;
 #endif
+			*normal_shadow = 0x3E;
             if (not_lut) cmd->CMDCOLR &= 0x3F;
             break;
          case 12:
@@ -714,6 +764,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
 #endif
             *colorcl =  cclist[0]&0x1F;
+			*normal_shadow = 0x3E;
             if (not_lut) cmd->CMDCOLR &= 0xFF;
             break;
          case 13:
@@ -725,6 +776,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>6)&0x01)]&0x1F;
 #endif
+			*normal_shadow = 0xFE;
             if (not_lut) cmd->CMDCOLR &= 0xFF;
             break;
          case 14:
@@ -736,6 +788,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[0]&0x1F;
 #endif
+			*normal_shadow = 0xFE;
             if (not_lut) cmd->CMDCOLR &= 0xFF;
             break;
          case 15:
@@ -747,6 +800,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
             *colorcl =  cclist[((cmd->CMDCOLR>>6)&0x03)]&0x1F;
 #endif
+			*normal_shadow = 0xFE;
             if (not_lut) cmd->CMDCOLR &= 0xFF;
             break;
          default:
@@ -3082,6 +3136,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    }
 
    if (isSquare){
+	   
+	   sprite.dst = 0;
 
 	   // find upper left opsition
 	   float minx = 65535.0f;
@@ -3355,6 +3411,9 @@ void VIDOGLVdp1PolygonDraw(void)
    else{
 	   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 	   Vdp1ReadTexture(&cmd, &polygon, &texture);
+	   //if (((cmd.CMDPMOD >> 3) & 0x7) == 0 || ((cmd.CMDPMOD >> 3) & 0x7) == 1){
+	   //	 *(texture.textdata - 2 - texture.w) = *(texture.textdata - 1 - texture.w);
+	   //}
    }
 }
 
