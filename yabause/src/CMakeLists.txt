@@ -214,12 +214,14 @@ if (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI
 endif (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI18N_LIBRARY STREQUAL "MINI18N_LIBRARY-NOTFOUND")
 
 # xrandr
-find_library(XRANDR_LIBRARY Xrandr)
-if(XRANDR_LIBRARY)
-	add_definitions(-DHAVE_LIBXRANDR=1)
-	set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
-	set(yabause_HEADERS ${yabause_HEADERS} screen.h)
-	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
+if (NOT APPLE)
+	find_library(XRANDR_LIBRARY Xrandr)
+	if(XRANDR_LIBRARY)
+		add_definitions(-DHAVE_LIBXRANDR=1)
+		set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
+		set(yabause_HEADERS ${yabause_HEADERS} screen.h)
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
+	endif()
 endif()
 
 if (MINI18N_FOUND)
