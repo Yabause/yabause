@@ -186,6 +186,7 @@ import android.widget.LinearLayout;
     
     boolean setKeymap(Integer padkey){
     	Keymap.put(padkey,map.get(index));
+    	Log.d("setKeymap","index =" + index +": pad = " + padkey );
     	index++;
     	
     	if( index >= map.size() ){
@@ -215,6 +216,8 @@ import android.widget.LinearLayout;
 		
     }
 
+    private final int KEYCODE_L2 = 104;
+    private final int KEYCODE_R2 = 105;
 
 	@Override
 	public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
@@ -224,6 +227,13 @@ import android.widget.LinearLayout;
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
                 if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                	
+                	
+                	// for PS3 Controller needs to ignore L2,R2. this event is duped at onGenericMotion.
+                	InputDevice dev = InputDevice.getDevice(event.getDeviceId());
+                	if( dev.getProductId() == 616 & (keyCode == KEYCODE_L2 || keyCode == KEYCODE_R2) ){
+                		return false;
+                	}
                 	                	
                 	Integer PadKey = Keymap.get(keyCode);
                 	if( PadKey != null ) {
@@ -256,8 +266,10 @@ import android.widget.LinearLayout;
       	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
                 	if( PadKey != null ) {
                 		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
+                		_oldLeftTrigger = newLeftTrigger;
                 		return true;
                 	}
+                	_oldLeftTrigger = newLeftTrigger;
                 	return setKeymap(MotionEvent.AXIS_LTRIGGER); 
                 	
       		  }
@@ -274,8 +286,10 @@ import android.widget.LinearLayout;
       	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
                 	if( PadKey != null ) {
                 		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
+                		_oldRightTrigger = newRightTrigger;
                 		return true;
                 	}	
+                	_oldRightTrigger = newRightTrigger;
                 	return setKeymap(MotionEvent.AXIS_RTRIGGER); 
       		  }
       		  _oldRightTrigger = newRightTrigger;
