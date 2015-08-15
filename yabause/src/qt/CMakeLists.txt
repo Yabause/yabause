@@ -31,6 +31,7 @@ else()
 
 	set( QT_USE_QTCORE TRUE )
 	set( QT_USE_QTGUI TRUE )
+    set ( QT_USE_QTMULTIMEDIA TRUE )
 	if( YAB_WANT_OPENGL )
 		set( QT_USE_QTOPENGL TRUE )
 	endif()
