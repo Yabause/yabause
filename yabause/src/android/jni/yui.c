@@ -455,6 +455,7 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     yinit.cartpath = GetCartridgePath();
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
+    yinit.skip_load = 0;
 
     res = YabauseInit(&yinit);
 
