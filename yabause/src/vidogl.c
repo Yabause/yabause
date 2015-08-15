@@ -3096,6 +3096,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    u16 color2;
    int i;
    float col[4*4];
+   int isSquare;
    
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
@@ -3126,7 +3127,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
 
-   int isSquare = 1;
+   isSquare = 1;
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
 	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
@@ -3139,13 +3140,16 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 	   }
    }
    if (isSquare){
+	   float minx;
+	   float miny;
+	   int lt_index;
 	   
 	   sprite.dst = 0;
 
 	   // find upper left opsition
-	   float minx = 65535.0f;
-	   float miny = 65535.0f;
-	   int lt_index = -1;
+	   minx = 65535.0f;
+	   miny = 65535.0f;
+	   lt_index = -1;
 	   for( i = 0; i < 4; i++){
 		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
 			   minx = sprite.vertices[(i << 1) + 0];
@@ -3156,6 +3160,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
 	   for (i = 0; i < 4; i++){
 		   if (i != lt_index){
+			   float nx;
+			   float ny;
 			   // vectorize
 			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
 			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
@@ -3165,8 +3171,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 			   if (len <= EPSILON){
 				   continue;
 			   }
-			   float nx = dx / len;
-			   float ny = dy / len;
+			   nx = dx / len;
+			   ny = dy / len;
 			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
 			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
@@ -3434,6 +3440,14 @@ void VIDOGLVdp1PolygonDraw(void)
 
 
 static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
+	float dx;
+	float dy;
+	float len;
+	float nx;
+	float ny;
+	float ex;
+	float ey;
+	float offset;
 
 	if (v1[0] == v2[0] && v1[1] == v2[1]){
 		outv[0] = v1[0];
@@ -3448,11 +3462,11 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 	}
 
 	// vectorize;
-	float dx = v2[0] - v1[0];
-	float dy = v2[1] - v1[1];
+	dx = v2[0] - v1[0];
+	dy = v2[1] - v1[1];
 
 	// normalize
-	float len = fabs( sqrtf((dx*dx) + (dy*dy)) );
+	len = fabs( sqrtf((dx*dx) + (dy*dy)) );
 	if (len < EPSILON ){
 		// fail;
 		outv[0] = v1[0];
@@ -3466,19 +3480,19 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 		return;
 	}
 
-	float nx = dx / len;
-	float ny = dy / len;
+	nx = dx / len;
+	ny = dy / len;
 
 	// turn
 	dx = ny  * 0.5f;
 	dy = -nx * 0.5f;
 
 	// extend
-	float ex = nx * 0.5f;
-	float ey = ny * 0.5f;
+	ex = nx * 0.5f;
+	ey = ny * 0.5f;
 
 	// offset
-	float offset = 0.5f;
+	offset = 0.5f;
 
 	// triangle
 	outv[0] = v1[0] - ex - dx + offset;
