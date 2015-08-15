@@ -52,15 +52,6 @@
     #endif
 #endif
 
-#if  defined(HAVE_LIBSDL)
- #ifdef __APPLE__
-  #include <SDL/SDL.h>
- #else
-  #include "SDL.h"
- #endif
-#endif
-
-
 #include <stdarg.h>
 #include <string.h>
 
