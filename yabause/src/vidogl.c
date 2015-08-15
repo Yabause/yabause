@@ -3138,7 +3138,6 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 		   break;
 	   }
    }
-
    if (isSquare){
 	   
 	   sprite.dst = 0;
@@ -3168,8 +3167,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 			   }
 			   float nx = dx / len;
 			   float ny = dy / len;
-			   if (nx >= EPSILON) nx = 1.0f;
-			   if (ny >= EPSILON) ny = 1.0f;
+			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
+			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
 			   // expand vertex
 			   sprite.vertices[(i << 1) + 0] += nx;
@@ -3402,6 +3401,12 @@ void VIDOGLVdp1PolygonDraw(void)
    else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
 	   alpha = 0x80;
    }
+   
+   if (IS_MESH(CMDPMOD)){
+	   alpha = 0x80;
+   }
+
+
 
    if (Vdp2Regs->SDCTL & 0x100 ){
    }
