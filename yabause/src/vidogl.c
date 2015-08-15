@@ -3177,14 +3177,14 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 	   }
    }
 
-   sprite.vertices[0] = sprite.vertices[0] + Vdp1Regs->localX * vdp1wratio;
-   sprite.vertices[1] = sprite.vertices[1] + Vdp1Regs->localY * vdp1hratio;
-   sprite.vertices[2] = sprite.vertices[2] + Vdp1Regs->localX * vdp1wratio;
-   sprite.vertices[3] = sprite.vertices[3] + Vdp1Regs->localY * vdp1hratio;
-   sprite.vertices[4] = sprite.vertices[4] + Vdp1Regs->localX * vdp1wratio;
-   sprite.vertices[5] = sprite.vertices[5] + Vdp1Regs->localY * vdp1hratio;
-   sprite.vertices[6] = sprite.vertices[6] + Vdp1Regs->localX * vdp1wratio;
-   sprite.vertices[7] = sprite.vertices[7] + Vdp1Regs->localY * vdp1hratio;
+   sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
+   sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
+   sprite.vertices[2] = (sprite.vertices[2] + Vdp1Regs->localX) * vdp1wratio;
+   sprite.vertices[3] = (sprite.vertices[3] + Vdp1Regs->localY) * vdp1hratio;
+   sprite.vertices[4] = (sprite.vertices[4] + Vdp1Regs->localX) * vdp1wratio;
+   sprite.vertices[5] = (sprite.vertices[5] + Vdp1Regs->localY) * vdp1hratio;
+   sprite.vertices[6] = (sprite.vertices[6] + Vdp1Regs->localX) * vdp1wratio;
+   sprite.vertices[7] = (sprite.vertices[7] + Vdp1Regs->localY) * vdp1hratio;
 
 
    tmp = cmd.CMDSRCA;
