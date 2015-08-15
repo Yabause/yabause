@@ -5,6 +5,12 @@ include(ExternalProject)
 
 SET(CMAKE_SYSTEM_NAME SegaSaturn)
 
+set(WANT_AUTOMATED_TESTING OFF CACHE BOOL "Build a version for automated testing")
+
+if(WANT_AUTOMATED_TESTING)
+  add_definitions(-DBUILD_AUTOMATED_TESTING)
+endif()
+
 # Specify the cross compiler.
 CMAKE_FORCE_C_COMPILER("C:/Program Files (x86)/KPIT Cummins/GNUSHv10.02-ELF/sh-elf/bin/sh-elf-gcc.exe" GNU)
 CMAKE_FORCE_CXX_COMPILER("C:/Program Files (x86)/KPIT Cummins/GNUSHv10.02-ELF/sh-elf/bin/sh-elf-g++.exe" GNU)
