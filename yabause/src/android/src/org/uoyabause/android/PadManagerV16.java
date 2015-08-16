@@ -66,7 +66,9 @@ class PadManagerV16 extends PadManager {
             boolean isGamePad = ((sources & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD);
             boolean isGameJoyStick = ((sources & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK);
             
-            DebugMesage += "Inputdevice:" + dev.getName() +" ID:" + deviceId + 
+            
+            
+            DebugMesage += "Inputdevice:" + dev.getName() +" ID:" + deviceId + " Product ID:" +  dev.getProductId() + 
             		" isGamePad?:" + isGamePad +
             		" isJoyStick?:" + isGameJoyStick + "\n";
             
@@ -125,10 +127,10 @@ class PadManagerV16 extends PadManager {
         	
         	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );
         	  if( newLeftTrigger != _oldLeftTrigger ){
-        		  Log.d(TAG,"AXIS_LTRIGGER = " + newLeftTrigger);
+        		  //Log.d(TAG,"AXIS_LTRIGGER = " + newLeftTrigger);
         		  
         		  // On
-        		  if( _oldLeftTrigger < newLeftTrigger && _oldLeftTrigger < 0.001 ){
+        		  if( _oldLeftTrigger < newLeftTrigger /*&& _oldLeftTrigger < 0.001*/ ){
         			
         	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
                     	if( PadKey != null ) {
@@ -139,7 +141,7 @@ class PadManagerV16 extends PadManager {
         		  }
         		  
         		  // Off
-        		  else if( _oldLeftTrigger > newLeftTrigger && newLeftTrigger > 0.5 ){
+        		  else if( _oldLeftTrigger > newLeftTrigger /*&& newLeftTrigger > 0.5*/ ){
 	      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
 	                  	if( PadKey != null ) {
 	                  	   	//pe = new PadEvent(1, PadKey);
@@ -156,7 +158,7 @@ class PadManagerV16 extends PadManager {
         		  //Log.d(TAG,"AXIS_LTRIGGER = " + newRightTrigger);
 
         		  // On
-        		  if( _oldRightTrigger < newRightTrigger && _oldRightTrigger < 0.001 ){
+        		  if( _oldRightTrigger < newRightTrigger /*&& _oldRightTrigger < 0.001*/ ){
         			
         	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
                     	if( PadKey != null ) {
@@ -167,7 +169,7 @@ class PadManagerV16 extends PadManager {
         		  }
         		  
         		  // Off
-        		  else if( _oldRightTrigger > newRightTrigger && newRightTrigger > 0.5 ){
+        		  else if( _oldRightTrigger > newRightTrigger /*&& newRightTrigger > 0.5*/ ){
 	      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
 	                  	if( PadKey != null ) {
 	                  	   	//pe = new PadEvent(1, PadKey);

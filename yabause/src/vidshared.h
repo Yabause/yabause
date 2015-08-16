@@ -104,7 +104,7 @@ typedef vdp2rotationparameter_struct * FASTCALL (*Vdp2GetRParam_func)(void *, in
 
 typedef struct 
 {
-   int vertices[8];
+   float vertices[8];
    int cellw, cellh;
    int flipfunction;
    int priority;

@@ -19,6 +19,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+
 //#ifdef __ANDROID__
 #include <stdlib.h>
 #include <math.h>
@@ -1147,7 +1148,7 @@ int YglProgramChange( YglLevel * level, int prgid )
       }
 #else
       level->prg[level->prgcurrent].maxQuad = 12*64;
-      if ((level->prg[level->prgcurrent].quads = (int *) malloc(level->prg[level->prgcurrent].maxQuad * sizeof(int))) == NULL)
+      if ((level->prg[level->prgcurrent].quads = (float *) malloc(level->prg[level->prgcurrent].maxQuad * sizeof(float))) == NULL)
          return -1;
 
       if ((level->prg[level->prgcurrent].textcoords = (float *) malloc(level->prg[level->prgcurrent].maxQuad * sizeof(float) * 2)) == NULL)
@@ -1419,6 +1420,4 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   return 0;
 }
-
-//#endif
 

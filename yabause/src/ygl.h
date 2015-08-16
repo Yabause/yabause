@@ -40,12 +40,13 @@
 
 #elif  defined(__APPLE__)
     #include <OpenGL/gl.h>
+    #include <OpenGL/gl3.h>
 
 #else // LInux?
     #if defined(_OGLES3_)||defined(_OGL3_)
         #define GL_GLEXT_PROTOTYPES 1
         #define GLX_GLXEXT_PROTOTYPES 1
-        #include <GLFW/glfw3.h>
+        #include <GL/gl.h>
     #else
         #include <GL/gl.h>
     #endif
@@ -71,9 +72,9 @@
 #include "vidshared.h"
 
 typedef struct {
-	int vertices[8];
-	unsigned int w;
-	unsigned int h;
+	float vertices[8];
+	int w;
+	int h;
 	int flip;
 	int priority;
 	int dst;
@@ -136,7 +137,7 @@ typedef struct {
    int prgid;
    GLuint prg;
    GLuint vertexBuffer;
-   int * quads;
+   float * quads;
    float * textcoords;
    float * vertexAttribute;
    int currentQuad;
