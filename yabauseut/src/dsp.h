@@ -22,6 +22,7 @@
 void scu_dsp_test();
 void test_dsp();
 void test_mvi_imm_d();
+void dsp_test_alu();
 void test_dsp_timing();
 
 #define NOP()           0x00000000
