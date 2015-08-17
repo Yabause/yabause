@@ -70,7 +70,6 @@ set( yabause_qt_FORMS
 	ui/UICheatAR.ui
 	ui/UICheatRaw.ui
 	ui/UICheatSearch.ui
-	ui/UIWaitInput.ui
 	ui/UIBackupRam.ui
 	ui/UIPortManager.ui
 	ui/UIPadSetting.ui 
@@ -103,7 +102,6 @@ set( yabause_qt_MOC_HEADERS
 	ui/UICheatAR.h
 	ui/UICheatRaw.h
 	ui/UICheatSearch.h
-	ui/UIWaitInput.h
 	ui/UIBackupRam.h
 	ui/UIPortManager.h
 	ui/UIControllerSetting.h
@@ -144,7 +142,6 @@ set( yabause_qt_SOURCES
 	ui/UICheatAR.cpp
 	ui/UICheatRaw.cpp
 	ui/UICheatSearch.cpp
-	ui/UIWaitInput.cpp
 	ui/UIBackupRam.cpp
 	ui/UIPortManager.cpp
 	ui/UIControllerSetting.cpp

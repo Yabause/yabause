@@ -52,15 +52,6 @@
     #endif
 #endif
 
-#if  defined(HAVE_LIBSDL)
- #ifdef __APPLE__
-  #include <SDL/SDL.h>
- #else
-  #include "SDL.h"
- #endif
-#endif
-
-
 #include <stdarg.h>
 #include <string.h>
 
@@ -72,9 +63,9 @@
 #include "vidshared.h"
 
 typedef struct {
-	int vertices[8];
-	unsigned int w;
-	unsigned int h;
+	float vertices[8];
+	int w;
+	int h;
 	int flip;
 	int priority;
 	int dst;
@@ -137,7 +128,7 @@ typedef struct {
    int prgid;
    GLuint prg;
    GLuint vertexBuffer;
-   int * quads;
+   float * quads;
    float * textcoords;
    float * vertexAttribute;
    int currentQuad;

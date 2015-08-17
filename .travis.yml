@@ -41,6 +41,16 @@ matrix:
         - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake ..
         - make
 
+    # compile runner and run yabauseut tests
+    - compiler: gcc
+      script:
+        - cmake -DYAB_PORTS=runner -DSH2_DYNAREC=OFF -DYAB_WANT_C68K=OFF -DYAB_WANT_Q68=OFF -DYAB_WANT_OPENGL=OFF ..
+        - make
+        - cd src/runner
+        #todo compile this instead
+        - git clone git://github.com/d356/yabauseut-bin.git
+        - ./yabause yabauseut-bin/YabauseUT.elf
+
 language: cpp
 
 before_install:

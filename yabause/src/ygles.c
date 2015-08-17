@@ -30,6 +30,8 @@
 #define YGLDEBUG
 //#define YGLDEBUG printf
 
+static int YglCalcTextureQ( float   *pnts,float *q);
+
 #define PI 3.1415926535897932384626433832795f
 
 #define ATLAS_BIAS (0.025f)
@@ -285,7 +287,7 @@ int FASTCALL YglIntersectionOppsiteEdge(float * a1, float * a2, float * b1, floa
 
 
 int YglCalcTextureQ(
-   int   *pnts,
+   float   *pnts,
    float *q
 )
 {
@@ -667,7 +669,8 @@ int YglGLInit(int width, int height) {
    glDisable(GL_DEPTH_TEST);
    glDepthFunc(GL_GEQUAL);
    glClearDepthf(0.0f);
-
+   
+   glCullFace(GL_FRONT_AND_BACK);
    glDisable(GL_CULL_FACE);
    glDisable(GL_DITHER);
 
@@ -1030,7 +1033,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 
    if (program->currentQuad == program->maxQuad) {
       program->maxQuad += 12*128;
-      program->quads = (int *) realloc(program->quads, program->maxQuad * sizeof(int));
+	  program->quads = (float *)realloc(program->quads, program->maxQuad * sizeof(float));
       program->textcoords = (float *) realloc(program->textcoords, program->maxQuad * sizeof(float) * 2);
       program->vertexAttribute = (float *) realloc(program->vertexAttribute, program->maxQuad * sizeof(float)*2);
       YglCacheReset();
@@ -1046,7 +1049,7 @@ int YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, 
 	texturecoordinate_struct *tmp;
 	float q[4];
 	int prg = PG_NORMAL;
-	int * pos;
+	float * pos;
 	float * vtxa;
 
 	int vHeight;
@@ -1149,7 +1152,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    texturecoordinate_struct *tmp;
    float q[4];
    int prg = PG_NORMAL;
-   int * pos;
+   float * pos;
    float * vtxa;
 
 
@@ -1297,7 +1300,7 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    float * vtxa;
    float q[4];
    int prg = PG_VFP1_GOURAUDSAHDING;
-   int * pos;
+   float * pos;
 
 
    if( (input->blendmode&0x03) == 2 )
@@ -1327,18 +1330,41 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
 
    // Vertex
    pos = program->quads + program->currentQuad;
-   pos[0] = input->vertices[0];
-   pos[1] = input->vertices[1];
-   pos[2] = input->vertices[2];
-   pos[3] = input->vertices[3];
-   pos[4] = input->vertices[4];
-   pos[5] = input->vertices[5];
-   pos[6] = input->vertices[0];
-   pos[7] = input->vertices[1];
-   pos[8] = input->vertices[4];
-   pos[9] = input->vertices[5];
-   pos[10] = input->vertices[6];
-   pos[11] = input->vertices[7];
+
+/*
+   float dx = input->vertices[4] - input->vertices[0];
+   float dy = input->vertices[5] - input->vertices[1];
+ 
+   if (dx < 0.0 && dy < 0.0 ){
+	   pos[0] = input->vertices[2*1 + 0]; // 1
+	   pos[1] = input->vertices[2*1 + 1];
+	   pos[2] = input->vertices[2 * 0 + 0]; // 0
+	   pos[3] = input->vertices[2 * 0 + 1];
+	   pos[4] = input->vertices[2 * 2 + 0]; // 2
+	   pos[5] = input->vertices[2 * 2 + 1];
+	   pos[6] = input->vertices[2 * 1 + 0]; // 1
+	   pos[7] = input->vertices[2 * 1 + 1];
+	   pos[8] = input->vertices[2 * 2 + 0]; // 2
+	   pos[9] = input->vertices[2 * 2 + 1];
+	   pos[10] = input->vertices[2 * 3 + 0]; //3
+	   pos[11] = input->vertices[2 * 3 + 1];
+   }
+   else
+*/  
+   {
+	   pos[0] = input->vertices[0];
+	   pos[1] = input->vertices[1];
+	   pos[2] = input->vertices[2];
+	   pos[3] = input->vertices[3];
+	   pos[4] = input->vertices[4];
+	   pos[5] = input->vertices[5];
+	   pos[6] = input->vertices[0];
+	   pos[7] = input->vertices[1];
+	   pos[8] = input->vertices[4];
+	   pos[9] = input->vertices[5];
+	   pos[10] = input->vertices[6];
+	   pos[11] = input->vertices[7];
+   }
 
 
    // Color
@@ -1468,7 +1494,7 @@ void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, fl
 	unsigned int x, y;
 	texturecoordinate_struct *tmp;
 	float q[4];
-	int * pos;
+	float * pos;
 	float * vtxa;
 	int vHeight;
 
@@ -1551,7 +1577,7 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
    unsigned int x,y;
    texturecoordinate_struct *tmp;
    float q[4];
-   int * pos;
+   float * pos;
    float * vtxa;
 
    int prg = PG_NORMAL;
@@ -1667,7 +1693,7 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
    int prg = PG_VFP1_GOURAUDSAHDING;
    int currentpg = 0;
    float * vtxa;
-   int *pos;
+   float *pos;
 
 
   if( (input->blendmode&0x03) == 2 )
@@ -1910,6 +1936,7 @@ void YglRenderVDP1(void) {
 
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_BLEND);
+   glCullFace(GL_FRONT_AND_BACK);
    glDisable(GL_CULL_FACE);
 
    for( j=0;j<(level->prgcurrent+1); j++ )
@@ -1926,8 +1953,8 @@ void YglRenderVDP1(void) {
         
 		  if( level->prg[j].currentQuad != 0 )
 		  {
-          glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
-			    glVertexAttribPointer(level->prg[j].vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
+				glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
+				glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
 			    glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
           if( level->prg[j].vaid != 0 ) {
              glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
@@ -2277,8 +2304,8 @@ void YglRender(void) {
               glBlendFunc(GL_ONE, GL_ONE);
             }
 #endif
-            glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
-				    glVertexAttribPointer(level->prg[j].vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
+					glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
+				    glVertexAttribPointer(level->prg[j].vertexp,2,GL_FLOAT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
 				    glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
 				    if( level->prg[j].vaid != 0 ) { glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute); }
                     glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad/2);

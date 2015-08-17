@@ -269,6 +269,11 @@ int YabauseInit(yabauseinit_struct *init)
 
    YabauseResetNoLoad();
 
+   if (init->skip_load)
+   {
+	   return 0;
+   }
+
    if (yabsys.usequickload || yabsys.emulatebios)
    {
       if (YabauseQuickLoadGame() != 0)

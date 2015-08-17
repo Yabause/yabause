@@ -46,6 +46,7 @@ typedef struct
    u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)
    int usethreads;
    int osdcoretype;
+   int skip_load;//skip loading in YabauseInit so tests can be run without a bios
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0

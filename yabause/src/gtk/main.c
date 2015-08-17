@@ -164,6 +164,7 @@ static void yui_settings_init(void) {
 	yinit.cartpath = cartpath;
         yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	yinit.osdcoretype = OSDCORE_DEFAULT;
+	yinit.skip_load = 0;
 }
 
 gchar * inifile;

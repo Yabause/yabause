@@ -38,6 +38,67 @@ u8 numtests=0;
 
 //////////////////////////////////////////////////////////////////////////////
 
+//the automated testing interface uses the last 4096 bytes of vdp2 ram
+//to relay messages to yabause
+
+int auto_test_write_offset = 0;
+
+void auto_test_write(char* str)
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   char* dest = (char *)VDP2_RAM + auto_test_write_offset + AUTO_TEST_OUTPUT_ADDRESS;
+   strcpy(dest, str);
+   auto_test_write_offset += strlen(str);
+   dest[auto_test_write_offset] = '\0';
+   auto_test_write_offset++;
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_set_status(int is_busy)
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   char* dest = (char *)VDP2_RAM + AUTO_TEST_STATUS_ADDRESS;
+   dest[0] = is_busy;
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_section_start(char*section_name)
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_write(section_name);
+   auto_test_write("MESSAGE");
+   auto_test_set_status(AUTO_TEST_BUSY);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_section_end()
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_write(" ");
+   auto_test_write("NEXT");
+   auto_test_set_status(AUTO_TEST_FINISHED);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_all_finished()
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_write(" ");
+   auto_test_write("QUIT");
+   auto_test_set_status(AUTO_TEST_FINISHED);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void init_test(void)
 {
    // Put saturn in a minimalized state
@@ -111,6 +172,8 @@ void do_tests(const char *testname, int x, int y)
    // Print messages and cursor
    vdp_printf(&test_disp_font, x * 8, y * 8, 0xF, (char *)testname);
 
+   auto_test_section_start((char *)testname);
+
    for(;;)
    {
       vdp_vsync();
@@ -118,7 +181,10 @@ void do_tests(const char *testname, int x, int y)
       if (stage_status != STAGESTAT_BUSY && stage_status != STAGESTAT_WAITINGFORINT)
       {
          if (stage_status == STAGESTAT_DONE)
-            vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xA, "OK");
+         {
+            vdp_printf(&test_disp_font, (x + 38) * 8, (y + stage + 2) * 8, 0xA, "OK");
+            auto_test_write("PASS");
+         }
 
          else if (stage_status < 0)
          {
@@ -127,21 +193,27 @@ void do_tests(const char *testname, int x, int y)
             {
                case STAGESTAT_BADTIMING:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xE, "BT");
+                  auto_test_write("FAIL (Bad Timing)");
                   break;
                case STAGESTAT_BADDATA:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BD");
+                  auto_test_write("FAIL (Bad Data)");
                   break;
                case STAGESTAT_BADSIZE:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BS");
+                  auto_test_write("FAIL (Bad Size)");
                   break;
                case STAGESTAT_BADINTERRUPT:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BI");
+                  auto_test_write("FAIL (Bad Interrupt)");
                   break;
                case STAGESTAT_NOTEST:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xF, "NT");
+                  auto_test_write("FAIL (No Test)");
                   break;
                default:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "failed");
+                  auto_test_write("FAIL");
                   break;
             }
          }
@@ -155,7 +227,10 @@ void do_tests(const char *testname, int x, int y)
          stage_status = STAGESTAT_BUSY;
 
          if (tests[stage].name)
+         {
             vdp_printf(&test_disp_font, x * 8, (y + stage + 3) * 8, 0xF, (char *)tests[stage].name);
+            auto_test_write((char *)tests[stage].name);
+         }
 
          if (tests[stage].testfunc)
             tests[stage].testfunc();
@@ -191,6 +266,8 @@ void do_tests(const char *testname, int x, int y)
    // Make sure all interrupts have been called
    bios_change_scu_interrupt_mask(0, 0);
    bios_change_scu_interrupt_mask(0xFFFFFFFF, 0xFFFFFFFF);
+
+   auto_test_section_end();
 
    tests_wait_press();
 }
