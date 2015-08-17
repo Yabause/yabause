@@ -21,7 +21,6 @@
 #include "UISettings.h"
 #include "../Settings.h"
 #include "../CommonDialogs.h"
-#include "UIWaitInput.h"
 #include "UIPortManager.h"
 
 #include <QDir>
