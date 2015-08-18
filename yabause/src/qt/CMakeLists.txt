@@ -21,24 +21,27 @@ if(Qt5_FOUND)
 	if (WIN32)
         	find_package(Qt5Core)
 	endif()
-	find_package(Qt5Multimedia)
+	find_package(Qt5Multimedia REQUIRED)
 else() 
-	find_package(Qt4)
-
-	if (NOT QT4_FOUND)
-		message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
-		return()
-	endif (NOT QT4_FOUND)
-
 	set( QT_USE_QTCORE TRUE )
 	set( QT_USE_QTGUI TRUE )
-    set ( QT_USE_QTMULTIMEDIA TRUE )
+	set ( QT_USE_QTMULTIMEDIA TRUE )
 	if( YAB_WANT_OPENGL )
 		set( QT_USE_QTOPENGL TRUE )
 	endif()
 	if (WIN32)
 		set( QT_USE_QTMAIN TRUE )
 	endif()
+	
+	find_package(Qt4)
+
+	if (NOT QT4_FOUND)
+		message(FATAL_ERROR "NO QT4_FOUND OR Qt5_FOUND")
+	endif ()
+
+	if (NOT QT_QTMULTIMEDIA_FOUND)
+		message(FATAL_ERROR "QtMultimedia not found")
+	endif ()
 
 	# dunno what it does exactly ... but seem required
 	include( ${QT_USE_FILE} )
@@ -205,7 +208,8 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/ui
 	${Qt5Widgets_INCLUDE_DIRS}
-	${Qt5OpenGL_INCLUDE_DIRS} )
+	${Qt5OpenGL_INCLUDE_DIRS} 
+	${Qt5Multimedia_INCLUDE_DIRS} )
 else()
 include_directories(
 	.
@@ -233,7 +237,7 @@ target_link_libraries( yabause-qt ${PORT_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_windows_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_macosx_LIBRARIES} )
 if (Qt5_FOUND)
-	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Network_LIBRARIES} )
+	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Multimedia_LIBRARIES})
 else()
 	target_link_libraries( yabause-qt ${QT_LIBRARIES} )
 endif()
