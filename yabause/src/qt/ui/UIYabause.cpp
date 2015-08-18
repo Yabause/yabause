@@ -950,6 +950,12 @@ void UIYabause::on_aViewDebugMemoryEditor_triggered()
 	UIMemoryEditor( mYabauseThread, this ).exec();
 }
 
+void UIYabause::on_aTraceLogging_triggered( bool toggled )
+{
+	SetInsTracingToggle(toggled? 1 : 0);
+	return;
+}
+
 void UIYabause::on_aHelpCompatibilityList_triggered()
 { QDesktopServices::openUrl( QUrl( aHelpCompatibilityList->statusTip() ) ); }
 

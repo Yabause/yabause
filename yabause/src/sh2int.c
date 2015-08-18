@@ -33,10 +33,10 @@
 #include "bios.h"
 #include "yabause.h"
 
-// #define SH2_TRACE  // Uncomment to enable tracing
+#define SH2_TRACE  // Uncomment to enable tracing
 
 #ifdef SH2_TRACE
-# include "sh2trace.h"
+#include "sh2trace.h"
 # define MappedMemoryWriteByte(a,v)  do { \
     uint32_t __a = (a), __v = (v);        \
     sh2_trace_writeb(__a, __v);           \
@@ -53,6 +53,11 @@
     MappedMemoryWriteLong(__a, __v);      \
 } while (0)
 #endif
+
+void SetInsTracingToggle(int toggle)
+{
+	SetInsTracing(toggle ? 1 : 0);
+}
 
 
 opcodefunc opcodes[0x10000];

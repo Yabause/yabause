@@ -225,6 +225,8 @@
     <addaction name="aViewDebugSCSP"/>
     <addaction name="separator"/>
     <addaction name="aViewDebugMemoryEditor"/>
+    <addaction name="separator"/>
+    <addaction name="aTraceLogging"/>
    </widget>
    <widget class="QMenu" name="mHelp">
     <property name="title">
@@ -920,6 +922,18 @@
    </property>
    <property name="shortcut">
     <string>Alt+S</string>
+   </property>
+  </action>
+  <action name="aTraceLogging">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>Trace Logging</string>
    </property>
   </action>
  </widget>
