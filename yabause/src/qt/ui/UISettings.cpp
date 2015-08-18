@@ -21,7 +21,6 @@
 #include "UISettings.h"
 #include "../Settings.h"
 #include "../CommonDialogs.h"
-#include "UIWaitInput.h"
 #include "UIPortManager.h"
 
 #include <QDir>
@@ -206,7 +205,7 @@ void UISettings::tbBrowse_clicked()
 			return;
 		}
 		else if ( cbCdRom->currentText().contains( "iso", Qt::CaseInsensitive ) )
-			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds)" ) );
+			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd)" ) );
 		else
 			requestFolder( QtYabause::translate( "Choose a cdrom drive/mount point" ), leCdRom );
 	}

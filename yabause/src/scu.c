@@ -1016,10 +1016,11 @@ void ScuExec(u32 timing) {
                else
                   ScuDsp->ProgControlPort.part.S = 0;
 
-               if (ScuDsp->ALU.all & (u64)(0x100000000)) // set carry flag
-                    ScuDsp->ProgControlPort.part.C = 1;
+               //0x00000001 + 0xFFFFFFFF will set the carry bit, needs to be unsigned math
+               if (((u64)(u32)ScuDsp->P.part.L + (u64)(u32)ScuDsp->AC.part.L) & 0x100000000)
+                  ScuDsp->ProgControlPort.part.C = 1;
                else
-                   ScuDsp->ProgControlPort.part.C = 0;
+                  ScuDsp->ProgControlPort.part.C = 0;
 
                //if (ScuDsp->ALU.part.L ??) // set overflow flag
                //    ScuDsp->ProgControlPort.part.V = 1;
@@ -1039,7 +1040,8 @@ void ScuExec(u32 timing) {
                else
                   ScuDsp->ProgControlPort.part.S = 0;
 
-               if (ScuDsp->ALU.all & (s64)(0x100000000))
+               //0x00000001 - 0xFFFFFFFF will set the carry bit, needs to be unsigned math
+               if ((((u64)(u32)ScuDsp->AC.part.L - (u64)(u32)ScuDsp->P.part.L)) & 0x100000000)
                   ScuDsp->ProgControlPort.part.C = 1;
                else
                   ScuDsp->ProgControlPort.part.C = 0;
@@ -1089,7 +1091,8 @@ void ScuExec(u32 timing) {
                else
                   ScuDsp->ProgControlPort.part.S = 0;
 
-               ScuDsp->ProgControlPort.part.C = ScuDsp->ALU.part.L >> 31;
+               //0x00000001 >> 1 will set the carry bit
+               //ScuDsp->ProgControlPort.part.C = ScuDsp->ALU.part.L >> 31; would not handle this case
 
                break;
             case 0x9: // RR
@@ -1102,7 +1105,9 @@ void ScuExec(u32 timing) {
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
 
-               if ((s64)ScuDsp->ALU.all < 0)
+               //rotating 0x00000001 right will produce 0x80000000 and set 
+               //the sign bit.
+               if (ScuDsp->ALU.part.L < 0)
                   ScuDsp->ProgControlPort.part.S = 1;
                else
                   ScuDsp->ProgControlPort.part.S = 0;
@@ -1142,18 +1147,25 @@ void ScuExec(u32 timing) {
                
                break;
             case 0xF: // RL8
+
                ScuDsp->ALU.all = (s64)((ScuDsp->AC.part.L << 8) | ((ScuDsp->AC.part.L >> 24) & 0xFF));
-               
+
                if (ScuDsp->ALU.all == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
-               
-               if ((s64)ScuDsp->ALU.all < 0)
+
+               //rotating 0x00ffffff left 8 will produce 0xffffff00 and
+               //set the sign bit
+               if ((s64)ScuDsp->ALU.part.L < 0)
                   ScuDsp->ProgControlPort.part.S = 1;
                else
                   ScuDsp->ProgControlPort.part.S = 0;
-               ScuDsp->ProgControlPort.part.C = (ScuDsp->AC.part.L & 0x01000000);
+
+               //rotating 0xff000000 left 8 will produce 0x000000ff and set the
+               //carry bit
+               ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L >> 31;
+
                break;
             default: break;
          }
