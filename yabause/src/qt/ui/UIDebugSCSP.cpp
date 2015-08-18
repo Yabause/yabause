@@ -45,12 +45,14 @@ UIDebugSCSP::UIDebugSCSP( QWidget* p )
       pteCommonControlRegisters->moveCursor(QTextCursor::Start);
    }
 
+#ifdef HAVE_QT_MULTIMEDIA
 	audioBufferTimer = new QTimer(this);
 	audioDeviceInfo = QAudioDeviceInfo::defaultOutputDevice();
 	audioOutput = 0;
 	slot_workbuf = 0;
 	slot_buf = 0;
 	initAudio();
+#endif
 
    // Disable DSP Register display
    gbDSPControlRegisters->setVisible( false );
@@ -61,10 +63,13 @@ UIDebugSCSP::UIDebugSCSP( QWidget* p )
 
 UIDebugSCSP::~UIDebugSCSP()
 {
+#ifdef HAVE_QT_MULTIMEDIA
 	delete slot_workbuf;
 	delete slot_buf;
+#endif
 }
 
+#ifdef HAVE_QT_MULTIMEDIA
 void UIDebugSCSP::initAudio()
 {
 	connect(audioBufferTimer, SIGNAL(timeout()), SLOT(audioBufferRefill()));
@@ -132,6 +137,7 @@ void UIDebugSCSP::stateChanged(QAudio::State state)
 		slot_buf = new s16[audioOutput->periodSize()];
 	}
 }
+#endif
 
 void UIDebugSCSP::on_sbSlotNumber_valueChanged ( int i )
 {
@@ -153,6 +159,7 @@ void UIDebugSCSP::on_sbSlotNumber_valueChanged ( int i )
    }
 }
 
+#ifdef HAVE_QT_MULTIMEDIA
 void UIDebugSCSP::on_pbPlaySlot_clicked ()
 {
 	audioBufferTimer->stop();
@@ -172,6 +179,7 @@ void UIDebugSCSP::on_pbPlaySlot_clicked ()
 		isPlaying = true;
 	}
 }
+#endif
 
 void UIDebugSCSP::on_pbSaveAsWav_clicked ()
 {
