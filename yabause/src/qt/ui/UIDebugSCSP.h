@@ -22,18 +22,38 @@
 #include "ui_UIDebugSCSP.h"
 #include "../QtYabause.h"
 
+#include <QAudioOutput>
+
 class UIDebugSCSP : public QDialog, public Ui::UIDebugSCSP
 {
 	Q_OBJECT
+private:
+	QTimer *audioBufferTimer;
+
+	QAudioDeviceInfo audioDeviceInfo;
+	QAudioOutput *audioOutput;
+	QIODevice *outputDevice;
+	QAudioFormat audioFormat;
+	bool isPlaying;
+
+	u32 *slot_workbuf;
+	s16 *slot_buf;
+
 public:
 	UIDebugSCSP( QWidget* parent = 0 );
+	~UIDebugSCSP();
 
 protected:
+	void initAudio();
 
 protected slots:
    void on_sbSlotNumber_valueChanged ( int i );
+	void on_pbPlaySlot_clicked ();
    void on_pbSaveAsWav_clicked ();
    void on_pbSaveSlotRegisters_clicked ();
+	void notified();
+	void audioBufferRefill();
+	void stateChanged(QAudio::State state);
 };
 
-#endif // UIDEBUGVDP1_H
+#endif // UIDEBUGSCSP_H
