@@ -163,7 +163,6 @@ protected slots:
 	void on_aViewDebugSCUDSP_triggered();
 	void on_aViewDebugMemoryEditor_triggered();
 	// help menu
-	void on_aHelpEmuCompatibility_triggered();
 	void on_aHelpAbout_triggered();
 	// toolbar
 	void on_aSound_triggered();

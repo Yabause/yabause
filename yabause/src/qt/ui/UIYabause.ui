@@ -230,7 +230,6 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
-    <addaction name="aHelpEmuCompatibility"/>
     <addaction name="aHelpAbout"/>
    </widget>
    <widget class="QMenu" name="mTools">
@@ -850,18 +849,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
-   </property>
-  </action>
-  <action name="aHelpEmuCompatibility">
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/emu-compatibility.png</normaloff>:/actions/icons/actions/emu-compatibility.png</iconset>
-   </property>
-   <property name="text">
-    <string>Emu-Compatibility</string>
-   </property>
-   <property name="statusTip">
-    <string>http://www.emu-compatibility.com/yabause/index.php?lang=uk</string>
    </property>
   </action>
   <action name="aSound">

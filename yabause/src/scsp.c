@@ -4324,8 +4324,10 @@ ScspSlotDebugSaveRegisters (u8 slotnum, const char *filename)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32
-ScspSlotDebugAudio (slot_t *slot, u32 *workbuf, s16 *buf, u32 len)
+static slot_t debugslot;
+
+u32
+ScspSlotDebugAudio (u32 *workbuf, s16 *buf, u32 len)
 {
   u32 *bufL, *bufR;
 
@@ -4334,14 +4336,14 @@ ScspSlotDebugAudio (slot_t *slot, u32 *workbuf, s16 *buf, u32 len)
   scsp_bufL = (s32 *)bufL;
   scsp_bufR = (s32 *)bufR;
 
-  if (slot->ecnt >= SCSP_ENV_DE)
+  if (debugslot.ecnt >= SCSP_ENV_DE)
     {
       // envelope null...
       memset (buf, 0, sizeof(s16) * 2 * len);
       return 0;
     }
 
-  if (slot->ssctl)
+  if (debugslot.ssctl)
     {
       memset (buf, 0, sizeof(s16) * 2 * len);
       return 0; // not yet supported!
@@ -4351,19 +4353,19 @@ ScspSlotDebugAudio (slot_t *slot, u32 *workbuf, s16 *buf, u32 len)
   scsp_buf_pos = 0;
 
   // take effect sound volume if no direct sound volume...
-  if ((slot->disll == 31) && (slot->dislr == 31))
+  if ((debugslot.disll == 31) && (debugslot.dislr == 31))
     {
-      slot->disll = slot->efsll;
-      slot->dislr = slot->efslr;
+      debugslot.disll = debugslot.efsll;
+      debugslot.dislr = debugslot.efslr;
     }
 
   memset (bufL, 0, sizeof(u32) * len);
   memset (bufR, 0, sizeof(u32) * len);
-  scsp_slot_update_p[(slot->lfofms == 31)?0:1]
-                    [(slot->lfoems == 31)?0:1]
-                    [(slot->pcm8b == 0)?1:0]
-                    [(slot->disll == 31)?0:1]
-                    [(slot->dislr == 31)?0:1](slot);
+  scsp_slot_update_p[(debugslot.lfofms == 31)?0:1]
+                    [(debugslot.lfoems == 31)?0:1]
+                    [(debugslot.pcm8b == 0)?1:0]
+                    [(debugslot.disll == 31)?0:1]
+                    [(debugslot.dislr == 31)?0:1](&debugslot);
   ScspConvert32uto16s ((s32 *)bufL, (s32 *)bufR, (s16 *)buf, len);
 
   return len;
@@ -4396,12 +4398,27 @@ typedef struct
 
 //////////////////////////////////////////////////////////////////////////////
 
+void 
+ScspSlotResetDebug(u8 slotnum)
+{
+  memcpy (&debugslot, &scsp.slot[slotnum], sizeof(slot_t));
+
+  // Clear out the phase counter, etc.
+  debugslot.fcnt = 0;
+  debugslot.ecnt = SCSP_ENV_AS;
+  debugslot.einc = &debugslot.einca;
+  debugslot.ecmp = SCSP_ENV_AE;
+  debugslot.ecurp = SCSP_ENV_ATTACK;
+  debugslot.enxt = scsp_attack_next;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int
 ScspSlotDebugAudioSaveWav (u8 slotnum, const char *filename)
 {
   u32 workbuf[512*2*2];
   s16 buf[512*2];
-  slot_t slot;
   FILE *fp;
   u32 counter = 0;
   waveheader_struct waveheader;
@@ -4438,25 +4455,17 @@ ScspSlotDebugAudioSaveWav (u8 slotnum, const char *filename)
   data.size = 0; // we'll fix this at the end
   ywrite (&check, (void *)&data, 1, sizeof(chunk_struct), fp);
 
-  memcpy (&slot, &scsp.slot[slotnum], sizeof(slot_t));
-
-  // Clear out the phase counter, etc.
-  slot.fcnt = 0;
-  slot.ecnt = SCSP_ENV_AS;
-  slot.einc = &slot.einca;
-  slot.ecmp = SCSP_ENV_AE;
-  slot.ecurp = SCSP_ENV_ATTACK;
-  slot.enxt = scsp_attack_next;
+  ScspSlotResetDebug(slotnum);
 
   // Mix the audio, and then write it to the file
   for (;;)
     {
-      if (ScspSlotDebugAudio (&slot, workbuf, buf, 512) == 0)
+      if (ScspSlotDebugAudio (workbuf, buf, 512) == 0)
         break;
 
       counter += 512;
       ywrite (&check, (void *)buf, 2, 512 * 2, fp);
-      if (slot.lpctl != 0 && counter >= (44100 * 2 * 5))
+      if (debugslot.lpctl != 0 && counter >= (44100 * 2 * 5))
         break;
     }
 

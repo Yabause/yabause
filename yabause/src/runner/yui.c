@@ -166,6 +166,7 @@ char* tests_expected_to_fail[] =
    //scu dsp
    "DSP Execution",
    "MVI Imm, [d]",
+   "DSP ALU Test",
    "DSP Timing",
    NULL
 };
@@ -217,8 +218,7 @@ int main(int argc, char *argv[])
 
       status = MappedMemoryReadByte(VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS);
 
-      if (status != AUTO_TEST_NOT_RUNNING &&
-         status != AUTO_TEST_BUSY)
+      if (status == AUTO_TEST_FINISHED)
       {
          int i = 0;
 
