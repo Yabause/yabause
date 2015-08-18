@@ -950,6 +950,9 @@ void UIYabause::on_aViewDebugMemoryEditor_triggered()
 	UIMemoryEditor( mYabauseThread, this ).exec();
 }
 
+void UIYabause::on_aHelpCompatibilityList_triggered()
+{ QDesktopServices::openUrl( QUrl( aHelpCompatibilityList->statusTip() ) ); }
+
 void UIYabause::on_aHelpAbout_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
