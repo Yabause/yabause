@@ -22,6 +22,7 @@ if(Qt5_FOUND)
         	find_package(Qt5Core)
 	endif()
 	find_package(Qt5Multimedia REQUIRED)
+	add_definitions(-DHAVE_QT_MULTIMEDIA=1)
 else() 
 	set( QT_USE_QTCORE TRUE )
 	set( QT_USE_QTGUI TRUE )
@@ -40,8 +41,8 @@ else()
 		return ()
 	endif ()
 
-	if (NOT QT_QTMULTIMEDIA_FOUND)
-		message(FATAL_ERROR "QtMultimedia not found")
+	if (QT_QTMULTIMEDIA_FOUND)
+		add_definitions(-DHAVE_QT_MULTIMEDIA=1)
 	endif ()
 
 	# dunno what it does exactly ... but seem required
