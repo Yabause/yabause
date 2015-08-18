@@ -21,6 +21,7 @@ if(Qt5_FOUND)
 	if (WIN32)
         	find_package(Qt5Core)
 	endif()
+	find_package(Qt5Multimedia)
 else() 
 	find_package(Qt4)
 
