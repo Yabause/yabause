@@ -36,7 +36,8 @@ else()
 	find_package(Qt4)
 
 	if (NOT QT4_FOUND)
-		message(FATAL_ERROR "NO QT4_FOUND OR Qt5_FOUND")
+		message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
+		return ()
 	endif ()
 
 	if (NOT QT_QTMULTIMEDIA_FOUND)
