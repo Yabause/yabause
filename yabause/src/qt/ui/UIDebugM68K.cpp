@@ -194,6 +194,8 @@ void UIDebugM68K::setRegister(int index, u32 value)
 
 bool UIDebugM68K::addCodeBreakpoint(u32 addr)
 {
+	if (!SoundRam)
+		return false;
    return M68KAddCodeBreakpoint(addr) == 0;     
 }
 
