@@ -33,13 +33,9 @@
 
 #define AUTO_TEST_SELECT_ADDRESS 0x7F000
 #define AUTO_TEST_STATUS_ADDRESS 0x7F004
-#define AUTO_TEST_OUTPUT_ADDRESS 0x7F008
-#define AUTO_TEST_NOT_RUNNING 0
-#define AUTO_TEST_BUSY 1
-#define AUTO_TEST_FINISHED 2
-#define TEST_PASSED 1
-#define TEST_FAILED 2
-#define TEST_FAILED_EXPECTED 3
+#define AUTO_TEST_MESSAGE_ADDRESS 0x7F008
+#define AUTO_TEST_MESSAGE_SENT 1
+#define AUTO_TEST_MESSAGE_RECEIVED 2
 
 #define VDP2_VRAM 0x25E00000
 
@@ -88,7 +84,6 @@ struct ConsoleColor
 struct ConsoleColor text_red = { "\033[22;31m",4 };
 struct ConsoleColor text_green = { "\033[22;32m", 2 };
 struct ConsoleColor text_white = { "\033[01;37m", 7 };
-struct ConsoleColor text_light_red = { "\033[01;31m", 0xc };
 
 void set_color(struct ConsoleColor color)
 {
@@ -104,50 +99,11 @@ static const char *bios = "";
 static int emulate_bios = 0;
 
 void YuiErrorMsg(const char *error_text) {
-   fprintf(stderr, "Error: %s\n", error_text);
+   printf("\n\nError: %s\n", error_text);
+   printf("                                 ");
 }
 
 void YuiSwapBuffers(void) {
-}
-
-void get_test_strings(int *i, char *full_str, char *command)
-{
-   sprintf(full_str, "%s", Vdp2Ram + AUTO_TEST_OUTPUT_ADDRESS + *i);
-
-   *i = *i + (int)strlen(full_str) + 1;// + 1 because of null char
-
-   sprintf(command, "%s", Vdp2Ram + AUTO_TEST_OUTPUT_ADDRESS + *i);
-
-   *i = *i + (int)strlen(command) + 1;
-}
-
-void print_result(char* test_info, char* command, int status)
-{
-   set_color(text_white);
-
-   printf("%-32s ", test_info, command);
-
-   if (status == TEST_PASSED)
-   {
-      set_color(text_green);
-   }
-   else if (status == TEST_FAILED)
-   {
-      set_color(text_red);
-   }
-   else if (status == TEST_FAILED_EXPECTED)
-   {
-      set_color(text_light_red);
-      printf("%-20s", command);
-      set_color(text_green);
-      printf("%s", " (Not a regression)\n");
-      set_color(text_white);
-      return;
-   }
-
-   printf("%s\n", command);
-
-   set_color(text_white);
 }
 
 //add tests that currently don't work in yabause here
@@ -166,21 +122,56 @@ char* tests_expected_to_fail[] =
    //scu dsp
    "DSP Execution",
    "MVI Imm, [d]",
-   "DSP ALU Test",
    "DSP Timing",
    NULL
 };
+
+void read_second_part(char*source, char*dest)
+{
+   int pos = (int)strlen(source) + 1;
+   sprintf(dest, "%s", Vdp2Ram + AUTO_TEST_MESSAGE_ADDRESS + pos);
+}
+
+void print_basic(char*message)
+{
+   read_second_part(message,message);
+   printf("%s\n", message);
+}
+
+int find_test_expected_to_fail(char* test_name)
+{
+   int j = 0;
+   for (j = 0; tests_expected_to_fail[j] != NULL; j++)
+   {
+      if (!strcmp(test_name, tests_expected_to_fail[j]))
+      {
+         return 1;
+      }
+   }
+
+   return 0;
+}
 
 int main(int argc, char *argv[])
 {
    yabauseinit_struct yinit = { 0 };
    int current_test = 0;
-   int regressions = 0;
-   int tests_total = 0;
-   int tests_passed = 0;
-   int finished = 0;
-   int expected_failure_count = 0;
-   int tests_expected_to_fail_count = 0;
+   char stored_test_name[256] = { 0 };
+   char * filename = argv[1];
+
+   struct Stats
+   {
+      int regressions;
+      int total_tests;
+      int tests_passed;
+      int expected_failures;
+   }stats = { 0 };
+
+   if (!filename)
+   {
+      printf("No file specified.\n");
+      return 0;
+   }
 
    printf("Running tests...\n\n");
 
@@ -206,8 +197,7 @@ int main(int argc, char *argv[])
    if (YabauseInit(&yinit) != 0)
       return -1;
 
-   MappedMemoryLoadExec(argv[1], 0);
-
+   MappedMemoryLoadExec(filename, 0);
    MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
 
    for (;;)
@@ -218,105 +208,113 @@ int main(int argc, char *argv[])
 
       status = MappedMemoryReadByte(VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS);
 
-      if (status == AUTO_TEST_FINISHED)
+      if (status == AUTO_TEST_MESSAGE_SENT)
       {
-         int i = 0;
+         char message[256] = { 0 };
 
-         for (;;)
+         sprintf(message, "%s", Vdp2Ram + AUTO_TEST_MESSAGE_ADDRESS);
+
+         if (!strcmp(message, "DEBUG_MESSAGE"))
          {
-            char test_info[256] = { 0 };
-            char command[64] = { 0 };
-            char fail_command[64] = { 0 };
+            //print a debug message
+            print_basic(message);
+         }
+         else if (!strcmp(message, "SECTION_START"))
+         {
+            //print the name of the test section
+            print_basic(message);
+         }
+         else if (!strcmp(message, "SECTION_END"))
+         {
+            //all sub-tests finished, proceed to next main test
+            printf("\n");
+            current_test++;
 
-            get_test_strings(&i, &test_info[0], &command[0]);
-            strncpy(fail_command, command, 4);
+            YabauseDeInit();
 
-            if (!strcmp(command, "MESSAGE"))
+            if (YabauseInit(&yinit) != 0)
+               return -1;
+
+            MappedMemoryLoadExec(filename, 0);
+            MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
+         }
+         else if (!strcmp(message, "SUB_TEST_START"))
+         {
+            //keep the test name for checking if it is a regression or not
+            read_second_part(message, stored_test_name);
+            printf("%-32s ", stored_test_name);
+         }
+         else if (!strcmp(message, "RESULT"))
+         {
+            char result_prefix[64] = { 0 };
+
+            read_second_part(message,message);
+
+            strncpy(result_prefix, message, 4);
+
+            if (!strcmp(result_prefix, "PASS"))
             {
-               //write a message without doing anything else
-               printf("%-32s\n", test_info);
+               //test was passed
+               set_color(text_green);
+               printf("PASS\n");
+               set_color(text_white);
+               stats.tests_passed++;
             }
-            else if (!strcmp(command, "PASS"))
+            else if (!strcmp(result_prefix, "FAIL"))
             {
-               //sub-test passed, continue to next
-               print_result(&test_info[0], &command[0], TEST_PASSED);
-               tests_total++;
-               tests_passed++;
-               continue;
-            }
-            else if (!strcmp(fail_command, "FAIL"))
-            {
-               //sub-test failure, due to pre-existing
-               //emulation issues, not a regression
-               int found = 0;
-               int j = 0;
-               for (j = 0; tests_expected_to_fail[j] != NULL; j++)
+               //test failed
+               set_color(text_red);
+
+               if (find_test_expected_to_fail(stored_test_name))
                {
-                  if (!strcmp(test_info, tests_expected_to_fail[j]))
-                  {
-                     print_result(&test_info[0], &command[0], TEST_FAILED_EXPECTED);
-                     tests_total++;
-                     expected_failure_count++;
-                     found = 1;
-                     break;
-                  }
-               }
-
-               if (found)
-               {
-                  continue;
-               }
-
-               //sub-test failure, regression
-               print_result(&test_info[0], &command[0], TEST_FAILED);
-               tests_total++;
-               regressions++;
-               continue;
-            }
-            else if (!strcmp(command, "NEXT"))
-            {
-               //all sub-tests finished, proceed to next main test
-               printf("\n");
-               current_test++;
-
-               YabauseDeInit();
-
-               if (YabauseInit(&yinit) != 0)
-                  return -1;
-
-               MappedMemoryLoadExec(argv[1], 0);
-               MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
-               break;
-
-            }
-            else if (!strcmp(command, "QUIT"))
-            {
-               //all tests completed, exit
-
-               if (regressions > 0)
-               {
-                  set_color(text_red);
+                  //test is not a regression
+                  printf("FAIL");
+                  set_color(text_green);
+                  printf(" (Not a regression)\n");
+                  stats.expected_failures++;
                }
                else
                {
-                  set_color(text_green);
+                  //test is a regression
+                  printf("FAIL\n");
+                  stats.regressions++;
                }
-
-               printf("%d of %d tests passed. %d regressions. %d failures that are not regressions. \n", tests_passed, tests_total, regressions, expected_failure_count);
-
+               
                set_color(text_white);
-
-               finished = 1;
-               break;
             }
-         }
+            else
+            {
+               printf("Unrecognized result prefix: %s\n",result_prefix);
+            }
 
-         if (finished)
+            stats.total_tests++;
+         }
+         else if (!strcmp(message, "ALL_FINISHED"))
          {
+            //print stats and exit
+            if (stats.regressions > 0)
+            {
+               set_color(text_red);
+            }
+            else
+            {
+               set_color(text_green);
+            }
+
+            printf("%d of %d tests passed. %d regressions. %d failures that are not regressions. \n", stats.tests_passed, stats.total_tests, stats.regressions, stats.expected_failures);
+
+            set_color(text_white);
+
             break;
          }
+         else
+         {
+            printf("Unrecognized message type: %s\n", message);
+         }
+
+         MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS, AUTO_TEST_MESSAGE_RECEIVED);
       }
    }
 
-   return regressions;
+   return stats.regressions;
 }

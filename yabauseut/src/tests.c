@@ -41,17 +41,16 @@ u8 numtests=0;
 //the automated testing interface uses the last 4096 bytes of vdp2 ram
 //to relay messages to yabause
 
-int auto_test_write_offset = 0;
-
-void auto_test_write(char* str)
+int auto_test_write_string(char* str, u32 base_address, int offset)
 {
 #ifdef BUILD_AUTOMATED_TESTING
-   char* dest = (char *)VDP2_RAM + auto_test_write_offset + AUTO_TEST_OUTPUT_ADDRESS;
+   char* dest = (char *)VDP2_RAM + offset + base_address;
    strcpy(dest, str);
-   auto_test_write_offset += strlen(str);
-   dest[auto_test_write_offset] = '\0';
-   auto_test_write_offset++;
+   offset += strlen(str);
+   dest[offset++] = '\0';
+   return offset;
 #endif
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -66,23 +65,23 @@ void auto_test_set_status(int is_busy)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void auto_test_section_start(char*section_name)
+void auto_test_wait()
 {
 #ifdef BUILD_AUTOMATED_TESTING
-   auto_test_write(section_name);
-   auto_test_write("MESSAGE");
-   auto_test_set_status(AUTO_TEST_BUSY);
+   volatile u8* ptr = (volatile u8 *)VDP2_RAM;
+   while (ptr[AUTO_TEST_STATUS_ADDRESS] != AUTO_TEST_MESSAGE_RECEIVED) {}
 #endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void auto_test_section_end()
+void auto_test_send_message(char* tag, char* message)
 {
 #ifdef BUILD_AUTOMATED_TESTING
-   auto_test_write(" ");
-   auto_test_write("NEXT");
-   auto_test_set_status(AUTO_TEST_FINISHED);
+   int offset = auto_test_write_string(tag, AUTO_TEST_MESSAGE_ADDRESS, 0);
+   auto_test_write_string(message, AUTO_TEST_MESSAGE_ADDRESS, offset);
+   auto_test_set_status(AUTO_TEST_MESSAGE_SENT);
+   auto_test_wait();
 #endif
 }
 
@@ -91,9 +90,52 @@ void auto_test_section_end()
 void auto_test_all_finished()
 {
 #ifdef BUILD_AUTOMATED_TESTING
-   auto_test_write(" ");
-   auto_test_write("QUIT");
-   auto_test_set_status(AUTO_TEST_FINISHED);
+   auto_test_send_message("ALL_FINISHED", "");
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_debug_message(char* debug_message)
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_send_message("DEBUG_MESSAGE", debug_message);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_section_start(char* test_section_name)
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_send_message("SECTION_START", test_section_name);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_sub_test_start(char* sub_test_name)
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_send_message("SUB_TEST_START", sub_test_name);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_send_result(char* result)
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_send_message("RESULT", result);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void auto_test_section_end()
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_send_message("SECTION_END", "");
 #endif
 }
 
@@ -183,7 +225,7 @@ void do_tests(const char *testname, int x, int y)
          if (stage_status == STAGESTAT_DONE)
          {
             vdp_printf(&test_disp_font, (x + 38) * 8, (y + stage + 2) * 8, 0xA, "OK");
-            auto_test_write("PASS");
+            auto_test_send_result("PASS");
          }
 
          else if (stage_status < 0)
@@ -193,27 +235,27 @@ void do_tests(const char *testname, int x, int y)
             {
                case STAGESTAT_BADTIMING:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xE, "BT");
-                  auto_test_write("FAIL (Bad Timing)");
+                  auto_test_send_result("FAIL (Bad Timing)");
                   break;
                case STAGESTAT_BADDATA:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BD");
-                  auto_test_write("FAIL (Bad Data)");
+                  auto_test_send_result("FAIL (Bad Data)");
                   break;
                case STAGESTAT_BADSIZE:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BS");
-                  auto_test_write("FAIL (Bad Size)");
+                  auto_test_send_result("FAIL (Bad Size)");
                   break;
                case STAGESTAT_BADINTERRUPT:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BI");
-                  auto_test_write("FAIL (Bad Interrupt)");
+                  auto_test_send_result("FAIL (Bad Interrupt)");
                   break;
                case STAGESTAT_NOTEST:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xF, "NT");
-                  auto_test_write("FAIL (No Test)");
+                  auto_test_send_result("FAIL (No Test)");
                   break;
                default:
                   vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "failed");
-                  auto_test_write("FAIL");
+                  auto_test_send_result("FAIL");
                   break;
             }
          }
@@ -229,7 +271,7 @@ void do_tests(const char *testname, int x, int y)
          if (tests[stage].name)
          {
             vdp_printf(&test_disp_font, x * 8, (y + stage + 3) * 8, 0xF, (char *)tests[stage].name);
-            auto_test_write((char *)tests[stage].name);
+            auto_test_sub_test_start((char *)tests[stage].name);
          }
 
          if (tests[stage].testfunc)
