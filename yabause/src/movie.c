@@ -425,7 +425,7 @@ const char *MakeMovieStateName(const char *filename) {
 
 	static char *retbuf = NULL;  // Save the pointer to avoid memory leaks
 	if(Movie.Status == Recording || Movie.Status == Playback) {
-		const unsigned long newsize = strlen(filename) + 5 + 1;
+		const size_t newsize = strlen(filename) + 5 + 1;
 		free(retbuf);
 		retbuf = malloc(newsize);
 		if (!retbuf) {
