@@ -46,6 +46,7 @@ extern "C"
 #endif
 	#include "../persdljoy.h"
 	#include "../permacjoy.h"
+	#include "../perlinuxjoy.h"
 	#include "../debug.h"
 	#include "../m68kcore.h"
 	#include "../m68kc68k.h"
