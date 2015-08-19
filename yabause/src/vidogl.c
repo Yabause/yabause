@@ -1996,11 +1996,8 @@ static void Vdp2DrawPlane(vdp2draw_struct *info, YglTexture *texture)
 static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 	int lineindex = 0;
-	int i, j;
-	int X, Y;
-	int xx, yy;
 
-	int sx, sy;
+	int sx; //, sy;
 	int mapx, mapy;
 	int planex, planey;
 	int pagex, pagey;
@@ -2024,7 +2021,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 
 
-	i = 0;
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
 		int targetv = 0;
 		Vdp2 * regs;
@@ -2100,11 +2096,8 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 	int lineindex = 0;
-	int i, j;
-	int X, Y;
-	int xx, yy;
 
-	int sx, sy;
+	int sx; //, sy;
 	int mapx, mapy;
 	int planex, planey;
 	int pagex, pagey;
@@ -2128,7 +2121,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 	//info->coordincx = 1.0f;
 
-	i = 0;
 	for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh; v += info->patternpixelwh){
 		int targetv = 0;
 		sx = info->x;
@@ -3914,7 +3906,7 @@ void VIDOGLVdp2DrawEnd(void)
 static void Vdp2DrawBackScreen(void)
 {
    u32 scrAddr;
-   int dot, y;
+   int dot;
   
    static unsigned char lineColors[512 * 3];
    static int line[512*4];
@@ -3923,7 +3915,6 @@ static void Vdp2DrawBackScreen(void)
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x7) << 16) | Vdp2Regs->BKTAL) * 2;
    else
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x3) << 16) | Vdp2Regs->BKTAL) * 2;
-
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
    dot = T1ReadWord(Vdp2Ram, scrAddr);
@@ -3935,6 +3926,8 @@ static void Vdp2DrawBackScreen(void)
 #else
    if (Vdp2Regs->BKTAU & 0x8000)
    {
+		int y;
+
       for(y = 0; y < vdp2height; y++)
       {
          dot = T1ReadWord(Vdp2Ram, scrAddr);
@@ -3999,6 +3992,9 @@ static void Vdp2DrawLineColorScreen(void)
   if ( Vdp2Regs->LNCLEN == 0) return;
 
   line_pixel_data = YglGetLineColorPointer();
+
+  if (!line_pixel_data)
+	  return;
 
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
