@@ -230,6 +230,7 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="aHelpCompatibilityList"/>
     <addaction name="aHelpAbout"/>
    </widget>
    <widget class="QMenu" name="mTools">
@@ -849,6 +850,18 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="aHelpCompatibilityList">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/compatibility.png</normaloff>:/actions/icons/actions/compatibility.png</iconset>
+   </property>
+   <property name="text">
+    <string>Compatibility List</string>
+   </property>
+   <property name="statusTip">
+    <string>http://wiki.yabause.org/index.php5?title=Compatibility_list</string>
    </property>
   </action>
   <action name="aSound">

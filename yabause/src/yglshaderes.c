@@ -754,7 +754,7 @@ const GLchar Yglprg_vdp2_drawfb_f[] =
 
 const GLchar * pYglprg_vdp2_drawfb_f[] = {Yglprg_vdp2_drawfb_f, NULL};
 
-int Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to , float * offsetcol )
+void Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to , float * offsetcol )
 {
    YglProgram * prg;
    prg = p;
@@ -824,7 +824,7 @@ const GLchar Yglprg_vdp2_drawfb_linecolor_f[] =
 
 const GLchar * pYglprg_vdp2_drawfb_linecolor_f[] = { Yglprg_vdp2_drawfb_linecolor_f, NULL };
 
-int Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol)
+void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol)
 {
   YglProgram * prg;
   prg = p;
@@ -999,9 +999,6 @@ int YglInitShader( int id, const GLchar * vertex[], const GLchar * frag[] )
 
 int YglProgramInit()
 {
-
-   GLint compiled,linked;
-
    printf("PG_NORMAL\n");
    //
    if( YglInitShader( PG_NORMAL, pYglprg_normal_v, pYglprg_normal_f ) != 0 )
@@ -1115,11 +1112,11 @@ int YglProgramInit()
 
 int YglProgramChange( YglLevel * level, int prgid )
 {
-   GLuint id;
    YglProgram* tmp;
    YglProgram* current;
+#if  USEVBO
    int maxsize;
-   void * dataPointer;
+#endif
 
    level->prgcurrent++;
 
@@ -1218,8 +1215,6 @@ int YglProgramChange( YglLevel * level, int prgid )
    }
    else if( prgid == PG_VFP1_HALFTRANS )
    {
-
-      GLuint id;
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformHalfTrans;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupHalfTrans;
       current->vertexp = 0;
@@ -1230,8 +1225,6 @@ int YglProgramChange( YglLevel * level, int prgid )
    }
    else if( prgid == PG_VFP1_GOURAUDSAHDING_HALFTRANS )
    {
-
-      GLuint id;
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformGlowShadingHalfTrans;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupGlowShadingHalfTrans;
       current->vertexp = 0;

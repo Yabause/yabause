@@ -1292,8 +1292,6 @@ void ScuExec(u32 timing) {
                break;
             case 0x03: // Other
             {
-               u32 i;
-
                switch((instruction >> 28) & 0xF) {
                  case 0x0C: // DMA Commands
                  {
@@ -1639,58 +1637,58 @@ void ScuDspDisasm(u8 addr, char *outstring) {
          break;
       case 0x1: // AND
          sprintf(outstring, "AND");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0x2: // OR
          sprintf(outstring, "OR");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0x3: // XOR
          sprintf(outstring, "XOR");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0x4: // ADD
          sprintf(outstring, "ADD");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0x5: // SUB
          sprintf(outstring, "SUB");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0x6: // AD2
          sprintf(outstring, "AD2");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0x8: // SR
          sprintf(outstring, "SR");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0x9: // RR
          sprintf(outstring, "RR");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0xA: // SL
          sprintf(outstring, "SL");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0xB: // RL
          sprintf(outstring, "RL");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       case 0xF: // RL8
          sprintf(outstring, "RL8");
-         counter = strlen(outstring);
-         outstring+=strlen(outstring);
+         counter = (u8)strlen(outstring);
+         outstring+=(u8)strlen(outstring);
          break;
       default: break;
    }
@@ -1705,8 +1703,8 @@ void ScuDspDisasm(u8 addr, char *outstring) {
          if ((instruction >> 23) & 0x4)
          {
             sprintf(outstring, "MOV %s, X", disd1bussrc((instruction >> 20) & 0x7));
-            counter+=strlen(outstring);
-            outstring+=strlen(outstring);
+            counter+=(u8)strlen(outstring);
+            outstring+=(u8)strlen(outstring);
          }
 
          filllength = 16 - counter;
@@ -1718,13 +1716,13 @@ void ScuDspDisasm(u8 addr, char *outstring) {
          {
             case 2:
                sprintf(outstring, "MOV MUL, P");
-               counter+=strlen(outstring);
-               outstring+=strlen(outstring);
+               counter+=(u8)strlen(outstring);
+               outstring+=(u8)strlen(outstring);
                break;
             case 3:
                sprintf(outstring, "MOV %s, P", disd1bussrc((instruction >> 20) & 0x7));
-               counter+=strlen(outstring);
-               outstring+=strlen(outstring);
+               counter+=(u8)strlen(outstring);
+               outstring+=(u8)strlen(outstring);
                break;
             default: break;
          }
@@ -1738,8 +1736,8 @@ void ScuDspDisasm(u8 addr, char *outstring) {
          if ((instruction >> 17) & 0x4)
          {
             sprintf(outstring, "MOV %s, Y", disd1bussrc((instruction >> 14) & 0x7));
-            counter+=strlen(outstring);
-            outstring+=strlen(outstring);
+            counter+=(u8)strlen(outstring);
+            outstring+=(u8)strlen(outstring);
          }
 
          filllength = 38 - counter;
@@ -1751,18 +1749,18 @@ void ScuDspDisasm(u8 addr, char *outstring) {
          {
             case 1:
                sprintf(outstring, "CLR A");
-               counter+=strlen(outstring);
-               outstring+=strlen(outstring);
+               counter+=(u8)strlen(outstring);
+               outstring+=(u8)strlen(outstring);
                break;
             case 2:
                sprintf(outstring, "MOV ALU, A");
-               counter+=strlen(outstring);
-               outstring+=strlen(outstring);
+               counter+=(u8)strlen(outstring);
+               outstring+=(u8)strlen(outstring);
                break;
             case 3:
                sprintf(outstring, "MOV %s, A", disd1bussrc((instruction >> 14) & 0x7));
-               counter+=strlen(outstring);
-               outstring+=strlen(outstring);
+               counter+=(u8)strlen(outstring);
+               outstring+=(u8)strlen(outstring);
                break;
             default: break;
          }
@@ -1777,11 +1775,11 @@ void ScuDspDisasm(u8 addr, char *outstring) {
          {
             case 1:
                sprintf(outstring, "MOV #$%02X, %s", (unsigned int)instruction & 0xFF, disd1busdest((instruction >> 8) & 0xF));
-               outstring+=strlen(outstring);
+               outstring+=(u8)strlen(outstring);
                break;
             case 3:
                sprintf(outstring, "MOV %s, %s", disd1bussrc(instruction & 0xF), disd1busdest((instruction >> 8) & 0xF));
-               outstring+=strlen(outstring);
+               outstring+=(u8)strlen(outstring);
                break;
             default:
                outstring[0] = 0x00;
@@ -1879,7 +1877,7 @@ void ScuDspDisasm(u8 addr, char *outstring) {
 
                // Write Command name
                sprintf(outstring, "DMA");
-               outstring+=strlen(outstring);
+               outstring+=(u8)strlen(outstring);
 
                // Is h bit set?
                if (instruction & 0x4000)
@@ -1889,7 +1887,7 @@ void ScuDspDisasm(u8 addr, char *outstring) {
                }
 
                sprintf(outstring, "%d ", addressAdd);
-               outstring+=strlen(outstring);
+               outstring+=(u8)strlen(outstring);
 
                if (instruction & 0x2000)
                {

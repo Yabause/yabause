@@ -231,7 +231,7 @@ int YglGLInit(int, int);
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 float * YglQuad(YglSprite *, YglTexture *,YglCache * c);
-int YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy);
+void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy);
 void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, float sx, float sy);
 void YglCachedQuad(YglSprite *, YglCache *);
 void YglRender(void);
@@ -253,8 +253,8 @@ void YglCacheReset(void);
 // 0.. no belnd, 1.. Alpha, 2.. Add 
 int YglSetLevelBlendmode( int pri, int mode );
 
-int Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol);
-int Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol );
+void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol);
+void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol );
 
 void YglNeedToUpdateWindow();
 
@@ -277,6 +277,14 @@ int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
 intptr_t YglGetOffset( void* address );
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
+
+void YglRenderVDP1(void);
+u32 * YglGetLineColorPointer();
+void YglSetLineColor(u32 * pbuf, int size);
+
+int Ygl_uniformWindow(void * p );
+int YglProgramInit();
+int YglProgramChange( YglLevel * level, int prgid );
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
 

@@ -66,6 +66,9 @@ PerInterface_struct *PERCoreList[] = {
 #ifdef HAVE_DIRECTINPUT
 &PERDIRECTX,
 #endif
+#ifdef ARCH_IS_LINUX
+&PERLinuxJoy,
+#endif
 NULL
 };
 
