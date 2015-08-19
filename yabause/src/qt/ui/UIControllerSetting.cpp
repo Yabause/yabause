@@ -213,6 +213,7 @@ void UIControllerSetting::tbButton_clicked()
 
 		mlInfos->setText( text1 + QString(": %1\n").arg(text2) + text3 );
 		setScanFlags(mScanMasks[mPadKey]);
+		mCore->Flush();
 		mTimer->start();
 	}
 	else
@@ -224,7 +225,6 @@ void UIControllerSetting::tbButton_clicked()
 void UIControllerSetting::timer_timeout()
 {
 	u32 key = 0;
-	mCore->Flush();
 	key = mCore->Scan(scanFlags);
 	
 	if ( key != 0 )
