@@ -286,21 +286,29 @@ void UIDebugSH2::setRegister(int index, u32 value)
 
 bool UIDebugSH2::addCodeBreakpoint(u32 addr)
 {
+	if (!debugSH2)
+		return false;
    return SH2AddCodeBreakpoint(debugSH2, addr) == 0;     
 }
 
 bool UIDebugSH2::delCodeBreakpoint(u32 addr)
 {
+	if (!debugSH2)
+		return false;
     return SH2DelCodeBreakpoint(debugSH2, addr) == 0;
 }
 
 bool UIDebugSH2::addMemoryBreakpoint(u32 addr, u32 flags)
 {
+	if (!debugSH2)
+		return false;
    return SH2AddMemoryBreakpoint(debugSH2, addr, flags) == 0;     
 }
 
 bool UIDebugSH2::delMemoryBreakpoint(u32 addr)
 {
+	if (!debugSH2)
+		return false;
     return SH2DelMemoryBreakpoint(debugSH2, addr) == 0;
 }
 
@@ -384,7 +392,7 @@ void UIDebugSH2::reserved3()
 					break;
 				}
 				else
-					QMessageBox::critical(QApplication::activeWindow(), "Error", QString(errorMsg));
+					QMessageBox::critical(QApplication::activeWindow(), QtYabause::translate("Error"), QString(errorMsg));
 			}
 			else if (!ok)
 				break;
