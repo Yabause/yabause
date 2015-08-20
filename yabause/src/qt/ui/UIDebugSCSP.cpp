@@ -168,14 +168,14 @@ void UIDebugSCSP::on_pbPlaySlot_clicked ()
 	if (isPlaying) 
 	{
 		ScspSlotResetDebug(sbSlotNumber->value());
-		pbPlaySlot->setText("Stop Slot");
+		pbPlaySlot->setText(QtYabause::translate("Stop Slot"));
 		outputDevice = audioOutput->start();
 		isPlaying = false;
 		audioBufferTimer->start(20);
 	} 
 	else 
 	{
-		pbPlaySlot->setText("Play Slot");
+		pbPlaySlot->setText(QtYabause::translate("Play Slot"));
 		isPlaying = true;
 	}
 }
