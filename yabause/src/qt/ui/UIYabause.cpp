@@ -108,13 +108,18 @@ UIYabause::UIYabause( QWidget* parent )
 	mLogDock->setWidget( teLog );
 	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
 	mLogDock->setVisible( false );
+
+#ifndef SH2_TRACE
+	aTraceLogging->setVisible(false);
+#endif
+
 	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
 	// create hide mouse timer
 	hideMouseTimer = new QTimer();
 	// create mouse cursor timer
 	mouseCursorTimer = new QTimer();
-	// connectionsdd
+	// connections
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	connect( mYabauseThread, SIGNAL( requestVolumeChange( int ) ), this, SLOT( on_sVolume_valueChanged( int ) ) );
@@ -948,6 +953,12 @@ void UIYabause::on_aViewDebugMemoryEditor_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	UIMemoryEditor( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aTraceLogging_triggered( bool toggled )
+{
+	SetInsTracingToggle(toggled? 1 : 0);
+	return;
 }
 
 void UIYabause::on_aHelpCompatibilityList_triggered()
