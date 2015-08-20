@@ -499,6 +499,12 @@ if (YAB_OPTIMIZED_DMA)
 	add_definitions(-DOPTIMIZED_DMA=1)
 endif()
 
+# SH2 Trace
+option(SH2_TRACE "Enable SH2 tracing" ON)
+if (SH2_TRACE)
+	add_definitions(-DSH2_TRACE=1)
+endif()
+
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)

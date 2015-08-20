@@ -33,8 +33,6 @@
 #include "bios.h"
 #include "yabause.h"
 
-#define SH2_TRACE  // Uncomment to enable tracing
-
 #ifdef SH2_TRACE
 #include "sh2trace.h"
 # define MappedMemoryWriteByte(a,v)  do { \
