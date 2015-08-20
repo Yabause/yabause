@@ -1791,8 +1791,7 @@ int VIDSoftInit(void)
    outputwidth = vdp2width;
    outputheight = vdp2height;
 
-   if (glewInit() != GLEW_OK)
-      fprintf(stderr, "Failed to initialize GLEW\n");
+   glewInit();
 
    glGenVertexArrays(1, &vao);
    glBindVertexArray(vao);
