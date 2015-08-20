@@ -633,3 +633,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 if (YAB_NETWORK AND UNIX)
     set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "socket")
 endif()
+
+option(YAB_TESTS "Build test programs for cores" OFF)
+if (YAB_TESTS)
+	add_subdirectory("tools")
+endif()
