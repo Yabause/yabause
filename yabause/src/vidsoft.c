@@ -158,6 +158,12 @@ static int rbg0priority=0;
 #ifdef USE_OPENGL
 static int outputwidth;
 static int outputheight;
+GLuint vao = 0;
+GLuint vbo = 0;
+GLuint vshader = 0;
+GLuint fshader = 0;
+GLuint gl_shader_prog = 0;
+GLuint gl_texture_id = 0;
 #endif
 static int resxratio;
 static int resyratio;
@@ -1726,12 +1732,6 @@ static void LoadLineParamsSprite(vdp2draw_struct * info, int line)
 int VIDSoftInit(void)
 {
 #ifdef USE_OPENGL
-   GLuint vao;
-   GLuint vbo;
-   GLuint vshader;
-   GLuint fshader;
-   GLuint gl_shader_prog = 0;
-   GLuint gl_texture_id = 0;
    GLint status;
    GLint texAttrib;
    GLint posAttrib;
@@ -1790,6 +1790,9 @@ int VIDSoftInit(void)
 #ifdef USE_OPENGL
    outputwidth = vdp2width;
    outputheight = vdp2height;
+
+   if (glewInit() != GLEW_OK)
+      fprintf(stderr, "Failed to initialize GLEW\n");
 
    glGenVertexArrays(1, &vao);
    glBindVertexArray(vao);
@@ -1862,6 +1865,14 @@ void VIDSoftDeInit(void)
 
    if (vdp1framebuffer[1])
       free(vdp1framebuffer[1]);
+#ifdef USE_OPENGL
+   if (gl_texture_id) { glDeleteTextures(1, &gl_texture_id); }
+   if (gl_shader_prog) { glDeleteProgram(gl_shader_prog); }
+   if (vshader) { glDeleteShader(vshader); }
+   if (fshader) { glDeleteShader(fshader); }
+   if (vao) { glDeleteVertexArrays(1, &vao); }
+   if (vbo) { glDeleteBuffers(1, &vbo); }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
