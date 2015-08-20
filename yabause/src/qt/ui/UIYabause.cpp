@@ -31,6 +31,7 @@
 #include "UIDebugM68K.h"
 #include "UIDebugSCUDSP.h"
 #include "UIDebugSCSP.h"
+#include "UIDebugSCSPDSP.h"
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
@@ -907,6 +908,13 @@ void UIYabause::breakpointHandlerSCUDSP()
 	UIDebugSCUDSP( mYabauseThread, this ).exec();
 }
 
+void UIYabause::breakpointHandlerSCSPDSP()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSCSPDSP( mYabauseThread, this ).exec();
+}
+
 void UIYabause::on_aViewDebugMSH2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
@@ -947,6 +955,12 @@ void UIYabause::on_aViewDebugSCSP_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	UIDebugSCSP( this ).exec();
+}
+
+void UIYabause::on_aViewDebugSCSPDSP_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSCSPDSP( mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugMemoryEditor_triggered()

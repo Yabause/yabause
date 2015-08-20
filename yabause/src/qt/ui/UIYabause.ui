@@ -223,6 +223,7 @@
     <addaction name="aViewDebugM68K"/>
     <addaction name="aViewDebugSCUDSP"/>
     <addaction name="aViewDebugSCSP"/>
+    <addaction name="aViewDebugSCSPDSP"/>
     <addaction name="separator"/>
     <addaction name="aViewDebugMemoryEditor"/>
     <addaction name="separator"/>
@@ -922,6 +923,15 @@
    </property>
    <property name="shortcut">
     <string>Alt+S</string>
+   </property>
+  </action>
+  <action name="aViewDebugSCSPDSP">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>SCSP DSP</string>
    </property>
   </action>
   <action name="aTraceLogging">

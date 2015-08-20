@@ -84,6 +84,7 @@ set( yabause_qt_FORMS
 	ui/UIMouseSetting.ui 
     ui/UIDebugCPU.ui
     ui/UIDebugSCSP.ui
+    ui/UIDebugSCSPDSP.ui
     ui/UIDebugVDP1.ui
     ui/UIDebugVDP2.ui
     ui/UIDebugVDP2Viewer.ui
@@ -119,6 +120,7 @@ set( yabause_qt_MOC_HEADERS
     ui/UIDebugCPU.h
     ui/UIDebugM68K.h
     ui/UIDebugSCSP.h
+    ui/UIDebugSCSPDSP.h
     ui/UIDebugSCUDSP.h
     ui/UIDebugSH2.h
     ui/UIDebugVDP1.h
@@ -159,6 +161,7 @@ set( yabause_qt_SOURCES
     ui/UIDebugCPU.cpp
     ui/UIDebugM68K.cpp
     ui/UIDebugSCSP.cpp
+    ui/UIDebugSCSPDSP.cpp
     ui/UIDebugSCUDSP.cpp
     ui/UIDebugSH2.cpp
     ui/UIDebugVDP1.cpp
