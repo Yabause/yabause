@@ -175,8 +175,8 @@ static INLINE void HEXIT(char * const ptr, u32 val, int ndigits)
 
 FASTCALL void sh2_trace(SH2_struct *state, u32 address)
 {
-	if (!is_ins_enabled)
-		return;
+    if (!is_ins_enabled)
+        return;
 
     current_cycles = cycle_accum + state->cycles;
 
@@ -247,7 +247,7 @@ FASTCALL void sh2_trace(SH2_struct *state, u32 address)
 
         SH2GetRegisters(state, &state->regs);
 
-		SH2Disasm(address, opcode, 0, &state->regs, buf);
+        SH2Disasm(address, opcode, 0, &state->regs, buf);
         fprintf(logfile, "[%c] %08X: %04X  %-44s [%12llu]\n",
                 state==SSH2 ? 'S' : 'M', (int)address, (int)opcode, buf+12,
                 (unsigned long long)current_cycles);
