@@ -505,6 +505,12 @@ if (SH2_TRACE)
 	add_definitions(-DSH2_TRACE=1)
 endif()
 
+# SH2 UBC
+option(SH2_UBC "Enable SH2 User Break Controller" OFF)
+if (SH2_UBC)
+	add_definitions(-DSH2_UBC=1)
+endif()
+
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)
