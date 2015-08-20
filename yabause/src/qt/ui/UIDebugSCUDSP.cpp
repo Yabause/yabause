@@ -183,11 +183,15 @@ void UIDebugSCUDSP::setRegister(int index, u32 value)
 
 bool UIDebugSCUDSP::addCodeBreakpoint(u32 addr)
 {
+	if (!ScuRegs)
+		return false;
    return ScuDspAddCodeBreakpoint(addr) == 0;     
 }
 
 bool UIDebugSCUDSP::delCodeBreakpoint(u32 addr)
 {
+	if (!ScuRegs)
+		return false;
    return ScuDspDelCodeBreakpoint(addr) == 0;
 }
 
@@ -200,6 +204,8 @@ void UIDebugSCUDSP::stepInto()
 void UIDebugSCUDSP::reserved1()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveProgram(s.toLatin1());
 }
@@ -207,6 +213,8 @@ void UIDebugSCUDSP::reserved1()
 void UIDebugSCUDSP::reserved2()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveMD(s.toLatin1(), 0);
 }
@@ -214,6 +222,8 @@ void UIDebugSCUDSP::reserved2()
 void UIDebugSCUDSP::reserved3()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveMD(s.toLatin1(), 1);
 }
@@ -221,6 +231,8 @@ void UIDebugSCUDSP::reserved3()
 void UIDebugSCUDSP::reserved4()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveMD(s.toLatin1(), 2);
 }
@@ -228,6 +240,8 @@ void UIDebugSCUDSP::reserved4()
 void UIDebugSCUDSP::reserved5()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveMD(s.toLatin1(), 3);
 }
