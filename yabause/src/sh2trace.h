@@ -23,7 +23,7 @@
 
 #include "core.h"
 
-void SetInsTracing(int toggle);
+FASTCALL void SetInsTracing(int toggle);
 
 extern FASTCALL u64 sh2_cycle_count(void);
 extern FASTCALL void sh2_trace_add_cycles(s32 cycles);
