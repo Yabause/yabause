@@ -15,7 +15,7 @@ set(yabause_HEADERS
 	netlink.h
 	osdcore.h
 	peripheral.h profile.h
-	scsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
+	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h)
@@ -35,7 +35,7 @@ set(yabause_SOURCES
 	netlink.c
 	osdcore.c
 	peripheral.c profile.c
-	scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
+	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c )
@@ -540,6 +540,18 @@ if (YAB_OPTIMIZED_DMA)
 	add_definitions(-DOPTIMIZED_DMA=1)
 endif()
 
+# SH2 Trace
+option(SH2_TRACE "Enable SH2 tracing" ON)
+if (SH2_TRACE)
+	add_definitions(-DSH2_TRACE=1)
+endif()
+
+# SH2 UBC
+option(SH2_UBC "Enable SH2 User Break Controller" OFF)
+if (SH2_UBC)
+	add_definitions(-DSH2_UBC=1)
+endif()
+
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)
@@ -663,4 +675,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 
 if (YAB_NETWORK AND UNIX)
     set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "socket")
+endif()
+
+option(YAB_TESTS "Build test programs for cores" OFF)
+if (YAB_TESTS)
+	add_subdirectory("tools")
 endif()

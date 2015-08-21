@@ -84,6 +84,7 @@ set( yabause_qt_FORMS
 	ui/UIMouseSetting.ui 
     ui/UIDebugCPU.ui
     ui/UIDebugSCSP.ui
+    ui/UIDebugSCSPDSP.ui
     ui/UIDebugVDP1.ui
     ui/UIDebugVDP2.ui
     ui/UIDebugVDP2Viewer.ui
@@ -119,6 +120,7 @@ set( yabause_qt_MOC_HEADERS
     ui/UIDebugCPU.h
     ui/UIDebugM68K.h
     ui/UIDebugSCSP.h
+    ui/UIDebugSCSPDSP.h
     ui/UIDebugSCUDSP.h
     ui/UIDebugSH2.h
     ui/UIDebugVDP1.h
@@ -159,6 +161,7 @@ set( yabause_qt_SOURCES
     ui/UIDebugCPU.cpp
     ui/UIDebugM68K.cpp
     ui/UIDebugSCSP.cpp
+    ui/UIDebugSCSPDSP.cpp
     ui/UIDebugSCUDSP.cpp
     ui/UIDebugSH2.cpp
     ui/UIDebugVDP1.cpp
@@ -269,6 +272,7 @@ if (WIN32)
 		install(FILES ${QT_BINARY_DIR}/Qt5Gui.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/Qt5OpenGL.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/Qt5Widgets.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/Qt5Multimedia.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/icudt51.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/icuin51.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/icuuc51.dll DESTINATION ".")
@@ -277,6 +281,7 @@ if (WIN32)
 		install(FILES ${QT_BINARY_DIR}/QtCore4.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/QtGui4.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/QtOpenGL4.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/QtMultimedia4.dll DESTINATION ".")        
 	endif()
 
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../AUTHORS    DESTINATION "." RENAME AUTHORS.txt)

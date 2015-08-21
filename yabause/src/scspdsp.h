@@ -1,4 +1,4 @@
-/*  Copyright 2004 Guillaume Duhamel
+/*  Copyright 2015 Theo Berkau
 
     This file is part of Yabause.
 
@@ -17,11 +17,9 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef SH2D_H
-#define SH2D_H
+#ifndef SCSPDSP_H
+#define SCSPDSP_H
 
 #include "core.h"
-
-void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct *r, char *string);
 
 #endif
