@@ -2166,7 +2166,7 @@ void SH2DumpHistory(SH2_struct *context){
 	int i;
     for (i = 0; i < 0xFF; i++){
       char lineBuf[128];
-      SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, lineBuf);
+      SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, &context->regs, lineBuf);
       fprintf(history,lineBuf);
       fprintf(history, "\n");
       index--;
