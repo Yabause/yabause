@@ -3,12 +3,16 @@ matrix:
 
     # linux gcc
     - compiler: gcc
+      env: testenv="linux gcc"
+      
 
     # linux clang
     - compiler: clang
+      env: testenv="linux clang"
 
     # os x cocoa port
     - language: objective-c
+      env: testenv="os x cocoa port"
       os: osx
       compiler: clang
       before_script:
@@ -25,6 +29,7 @@ matrix:
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
     - compiler: gcc
+      env: testenv="mingw-w64 windows cross compile, libyabause only"
       addons:
         apt:
           packages:
@@ -43,6 +48,7 @@ matrix:
 
     # compile runner and run yabauseut tests
     - compiler: gcc
+      env: testenv="compile runner and run yabauseut tests"
       script:
         - cmake -DYAB_PORTS=runner -DSH2_DYNAREC=OFF -DYAB_WANT_C68K=OFF -DYAB_WANT_Q68=OFF -DYAB_WANT_OPENGL=OFF ..
         - make

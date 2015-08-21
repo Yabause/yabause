@@ -73,6 +73,12 @@ void LogChangeOutput(DebugOutType t, char * s);
 #define SCSPLOG(...)
 #endif
 
+#ifdef SCSPDSP_DEBUG
+#define SCSPDSPLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
+#else
+#define SCSPDSPLOG(...)
+#endif
+
 #ifdef VDP1_DEBUG
 #define VDP1LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
