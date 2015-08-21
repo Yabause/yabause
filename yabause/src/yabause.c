@@ -48,11 +48,15 @@
 #include "movie.h"
 #include "osdcore.h"
 #ifdef HAVE_LIBSDL
- #if defined(__APPLE__) || defined(GEKKO)
-  #include <SDL/SDL.h>
+#if defined(__APPLE__) || defined(GEKKO)
+ #ifdef HAVE_LIBSDL2
+  #include <SDL2/SDL.h>
  #else
-  #include "SDL.h"
+  #include <SDL/SDL.h>
  #endif
+#else
+ #include "SDL.h"
+#endif
 #endif
 #if defined(_MSC_VER) || !defined(HAVE_SYS_TIME_H)
 #include <time.h>

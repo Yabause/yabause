@@ -169,6 +169,7 @@ if (YAB_WANT_SDL)
 	include(FindSDL2 OPTIONAL)
 
 	if (SDL2_FOUND)
+		add_definitions(-DHAVE_LIBSDL2=1)
 		include_directories(${SDL2_INCLUDE_DIR})
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL2_LIBRARY})
 	else()
