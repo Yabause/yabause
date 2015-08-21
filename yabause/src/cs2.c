@@ -3516,6 +3516,27 @@ u8 Cs2GetIP(int autoregion) {
                                (buf[0xF2] << 8) | buf[0xF3];
          cdip->firstprogsize = (buf[0xF4] << 24) | (buf[0xF5] << 16) |
                                (buf[0xF6] << 8) | buf[0xF7];
+
+         if (cdip->msh2stack == 0 )
+         {
+            cdip->msh2stack = 0x6002000;
+         }
+
+         // for Panzer Dragoon Zwei. This operation is not written in the document. 
+         if (cdip->msh2stack & 0x80000000)
+         {
+            cdip->msh2stack = 0x06000000 + (cdip->msh2stack & 0x0000FFFF );
+         }
+
+         if (cdip->ssh2stack == 0 )
+         {
+            cdip->ssh2stack = 0x6001000;
+         }
+
+         if (cdip->ssh2stack & 0x80000000)
+         {
+            cdip->ssh2stack = 0x06000000 + (cdip->ssh2stack & 0x0000FFFF);
+         }
 #endif
 
          if (autoregion)
@@ -3801,6 +3822,9 @@ int Cs2LoadState(FILE * fp, int version, int size) {
 
    return size;
 }
+
+u32 Cs2GetMasterStackAdress(){ if (cdip) return cdip->msh2stack; else return 0x6002000; }
+u32 Cs2GetSlaveStackAdress(){ if (cdip) return cdip->ssh2stack; else return 0x6001000; }
 
 //////////////////////////////////////////////////////////////////////////////
 
