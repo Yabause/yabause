@@ -432,6 +432,7 @@ void UISettings::loadSettings()
 	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 640 ) ).toString(),
 										s->value( "Video/FullscreenHeight", s->value( "Video/Height", 480 ) ).toString());	
 	cbFullscreenResolution->setCurrentIndex(cbFullscreenResolution->findText(text));
+	cbBilinear->setChecked( s->value( "Video/Bilinear", false ).toBool() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
 
@@ -511,6 +512,7 @@ void UISettings::saveSettings()
 	}
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
+	s->setValue( "Video/Bilinear", cbBilinear->isChecked() );
 	s->setValue( "Video/VideoFormat", cbVideoFormat->itemData( cbVideoFormat->currentIndex() ).toInt() );
 
 	s->setValue( "General/ClockSync", cbClockSync->isChecked() );
