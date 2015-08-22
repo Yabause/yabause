@@ -142,6 +142,9 @@ extern "C"
 	
 	void YuiSwapBuffers()
 	{ QtYabause::mainWindow()->swapBuffers(); }
+	
+	int YuiGetBilinear()
+	{ return QtYabause::settings()->value( "Video/Bilinear", false ).toBool(); }
 
 #if defined(HAVE_DIRECTINPUT) || defined(HAVE_DIRECTSOUND)
    HWND DXGetWindow()

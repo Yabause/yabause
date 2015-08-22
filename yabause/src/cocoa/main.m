@@ -87,6 +87,10 @@ void YuiSwapBuffers(void) {
     [[controller view] setNeedsDisplay:YES];
 }
 
+int YuiGetBilinear(void) {
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     return NSApplicationMain(argc,  (const char **) argv);
 }
