@@ -563,6 +563,10 @@ void YuiSwapBuffers(void) {
 	yui_window_update(YUI_WINDOW(yui));
 }
 
+int YuiGetBilinear(void) {
+	return g_key_file_get_integer(keyfile, "General", "Bilinear", 0);
+}
+
 void yui_conf(void) {
 	gint result;
 	GtkWidget * dialog;

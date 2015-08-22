@@ -322,6 +322,11 @@ void YuiSwapBuffers(void)
    pthread_mutex_unlock(&g_mtxGlLock);
 }
 
+int YuiGetBilinear(void)
+{
+   return 0;
+}
+
 int Java_org_yabause_android_YabauseRunnable_initViewport( int width, int height)
 {
    int swidth;
