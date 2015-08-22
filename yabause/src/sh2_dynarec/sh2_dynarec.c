@@ -868,6 +868,7 @@ void invalidate_page(u32 page)
 {
   struct ll_entry *head;
   struct ll_entry *next;
+  if( page >= 2048 ) return;
   head=jump_in[page];
   jump_in[page]=0;
   while(head!=NULL) {
