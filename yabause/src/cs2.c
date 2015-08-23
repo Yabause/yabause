@@ -3517,22 +3517,26 @@ u8 Cs2GetIP(int autoregion) {
          cdip->firstprogsize = (buf[0xF4] << 24) | (buf[0xF5] << 16) |
                                (buf[0xF6] << 8) | buf[0xF7];
 
-		 if (cdip->msh2stack == 0 ){
-			 cdip->msh2stack = 0x6002000;
-		 }
+         if (cdip->msh2stack == 0 )
+         {
+            cdip->msh2stack = 0x6002000;
+         }
 
-		 // for Panzer Dragoon Zwei. This operation is not written in the document. 
-		 if (cdip->msh2stack & 0x80000000){
-			 cdip->msh2stack = 0x06000000 + (cdip->msh2stack & 0x0000FFFF );
-		 }
-		   
-		 if (cdip->ssh2stack == 0 ) {
-			 cdip->ssh2stack = 0x6001000;
-		 }
+         // for Panzer Dragoon Zwei. This operation is not written in the document. 
+         if (cdip->msh2stack & 0x80000000)
+         {
+            cdip->msh2stack = 0x06000000 + (cdip->msh2stack & 0x0000FFFF );
+         }
 
-		 if (cdip->ssh2stack & 0x80000000){
-			 cdip->ssh2stack = 0x06000000 + (cdip->ssh2stack & 0x0000FFFF);
-		 }
+         if (cdip->ssh2stack == 0 )
+         {
+            cdip->ssh2stack = 0x6001000;
+         }
+
+         if (cdip->ssh2stack & 0x80000000)
+         {
+            cdip->ssh2stack = 0x06000000 + (cdip->ssh2stack & 0x0000FFFF);
+         }
 #endif
 
          if (autoregion)
