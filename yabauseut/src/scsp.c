@@ -20,6 +20,7 @@
 #include <iapetus.h>
 #include "tests.h"
 #include "scsp.h"
+#include <stdio.h>
 
 #define SCSPREG_TIMERA  (*(volatile u16 *)0x25B00418)
 #define SCSPREG_TIMERB  (*(volatile u16 *)0x25B0041A)
@@ -713,6 +714,112 @@ void scsp_int_dup_test()
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+u16 scsp_dsp_reg_test_pattern[8] = { 0xdead ,0xbeef,0xcafe ,0xbabe,0xba5e ,0xba11,0xf01d,0xab1e };
+
+void scsp_dsp_do_reg_write(volatile u16* ptr, int length)
+{
+   int i;
+   for (i = 0; i < length; i++)
+   {
+      ptr[i] = scsp_dsp_reg_test_pattern[i&7];
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int scsp_dsp_check_reg(volatile u16* ptr, int length, int mask, char* name, int pos)
+{
+   int i;
+   for (i = 0; i < length; i++)
+   {
+      u16 ptr_val = ptr[i];
+      u16 correct_val = scsp_dsp_reg_test_pattern[i & 7] & mask;
+      if (ptr_val != correct_val)
+      {
+         char str[64] = { 0 };
+         sprintf(str, "%d %s %04X != %04X", i, name, ptr_val, correct_val);
+         vdp_printf(&test_disp_font, 0 * 8, pos * 8, 40, str);
+         return 1;
+      }
+   }
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scsp_dsp_register_write_test()
+{
+   volatile u16* coef_ptr = (volatile u16 *)0x25B00700;
+   volatile u16* madrs_ptr = (volatile u16 *)0x25B00780;
+   volatile u16* mpro_ptr = (volatile u16 *)0x25B00800;
+   int failure = 0;
+   int coef_length = 64;
+   int madrs_length = 32;
+   int mpro_length = 128;
+
+   scsp_dsp_do_reg_write(coef_ptr, coef_length);
+   scsp_dsp_do_reg_write(madrs_ptr, madrs_length);
+   scsp_dsp_do_reg_write(mpro_ptr, mpro_length);
+
+   int i;
+   for (i = 0; i < 28; i++)
+   {
+      vdp_printf(&test_disp_font, 0 * 8, i * 8, 0xF, "coef: %04X", coef_ptr[i]);
+      vdp_printf(&test_disp_font, 12 * 8, i * 8, 0xF, "madrs: %04X", madrs_ptr[i]);
+      vdp_printf(&test_disp_font, 24 * 8, i * 8, 0xF, "mpro: %04X", mpro_ptr[i]);
+   }
+
+   if (scsp_dsp_check_reg(coef_ptr, coef_length, 0xfff8, "COEF", 0))
+      failure = 1;
+   if (scsp_dsp_check_reg(madrs_ptr, madrs_length, 0xffff, "MADRS", 1))
+      failure = 1;
+   if (scsp_dsp_check_reg(mpro_ptr, mpro_length, 0xffff, "MPRO", 2))
+      failure = 1;
+
+#ifndef BUILD_AUTOMATED_TESTING
+   for (;;)
+   {
+      vdp_vsync();
+
+      //start to advance to the next test
+      if (per[0].but_push_once & PAD_START)
+      {
+         int q;
+         u32* dest = (u32 *)VDP2_RAM;
+
+         //clear framebuffer
+         for (q = 0; q < 0x10000; q++)
+         {
+            dest[q] = 0;
+         }
+         break;
+      }
+   }
+#endif
+
+   if (!failure)
+   {
+      stage_status = STAGESTAT_DONE;
+   }
+   else
+   {
+      stage_status = STAGESTAT_BADDATA;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scsp_dsp_test()
+{
+   scsp_minimal_init();
+   unregister_all_tests();
+   register_test(&scsp_dsp_register_write_test, "Register Read/Write Test");
+   do_tests("SCSP DSP tests", 0, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 /*
 void mcipd_test_func()
 {

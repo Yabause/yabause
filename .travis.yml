@@ -55,6 +55,9 @@ matrix:
         - cd src/runner
         #todo compile this instead
         - git clone git://github.com/d356/yabauseut-bin.git
+        - cd yabauseut-bin
+        - git reset --hard 784c45eed5b48442089a99f01a6fee0650764c76
+        - cd ..
         - ./yabause yabauseut-bin/YabauseUT.elf
 
 language: cpp

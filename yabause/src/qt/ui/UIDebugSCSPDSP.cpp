@@ -20,6 +20,12 @@
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
 
+int SCSPDSPDis(u32 addr, char *string)
+{
+   ScspDspDisasm((u8)addr, string);
+   return 1;
+}
+
 void SCSPDSPBreakpointHandler (u32 addr)
 {
    UIYabause* ui = QtYabause::mainWindow( false );
@@ -40,6 +46,8 @@ UIDebugSCSPDSP::UIDebugSCSPDSP( YabauseThread *mYabauseThread, QWidget* p )
    size = lwDisassembledCode->minimumSize();
    size.setWidth(lwRegisters->fontMetrics().averageCharWidth() * 80);
    lwDisassembledCode->setMinimumSize(size);
+   lwDisassembledCode->setDisassembleFunction(SCSPDSPDis);
+   lwDisassembledCode->setEndAddress(128);
 }
 
 void UIDebugSCSPDSP::updateRegList()
