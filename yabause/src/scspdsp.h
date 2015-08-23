@@ -22,4 +22,103 @@
 
 #include "core.h"
 
+struct ScspDsp
+{
+   u64 mpro[128];
+   u16 coef[64];
+   u16 madrs[32];
+};
+
+//dsp instruction format
+
+//bits 63-48
+//|nofl |                coef               |     ?     |            masa             |adreb|nxadr|
+//|  F  |  E  |  D  |  C  |  B  |  A  |  9  |  8  |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
+
+//bits 47-32
+//|table| mwt | mrd | ewt |          ewa          |adrl |frcl |   shift   | yrl |negb |zero |bsel |
+//|  F  |  E  |  D  |  C  |  B  |  A  |  9  |  8  |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
+
+//bits 31-16
+//|xsel |    ysel   |  ?  |                ira                | iwt |             iwa             |
+//|  F  |  E  |  D  |  C  |  B  |  A  |  9  |  8  |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
+
+//bits 15-0
+//|  ?  |                   tra                   | twt |                   twa                   |
+//|  F  |  E  |  D  |  C  |  B  |  A  |  9  |  8  |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
+
+#ifdef WORDS_BIGENDIAN
+union ScspDspInstruction {
+   struct {
+      u64 nofl : 1;
+      u64 coef : 6;
+      u64 unknown3 : 2;
+      u64 masa : 5;
+      u64 adreb : 1;
+      u64 nxadr : 1;
+      u64 table : 1;
+      u64 mwt : 1;
+      u64 mrd : 1;
+      u64 ewt : 1;
+      u64 ewa : 4;
+      u64 adrl : 1;
+      u64 frcl : 1;
+      u64 shift : 2;
+      u64 yrl : 1;
+      u64 negb : 1;
+      u64 zero : 1;
+      u64 bsel : 1;
+      u64 xsel : 1;
+      u64 ysel : 2;
+      u64 unknown2 : 1;
+      u64 ira : 6;
+      u64 iwt : 1;
+      u64 iwa : 5;
+      u64 unknown : 1;
+      u64 tra : 7;
+      u64 twt : 1;
+      u64 twa : 7;
+   } part;
+   u32 all;
+};
+#else
+union ScspDspInstruction {
+   struct {
+      u64 twa : 7;
+      u64 twt : 1;
+      u64 tra : 7;
+      u64 unknown : 1;
+      u64 iwa : 5;
+      u64 iwt : 1;
+      u64 ira : 6;
+      u64 unknown2 : 1;
+      u64 ysel : 2;
+      u64 xsel : 1;
+      u64 bsel : 1;
+      u64 zero : 1;
+      u64 negb : 1;
+      u64 yrl : 1;
+      u64 shift : 2;
+      u64 frcl : 1;
+      u64 adrl : 1;
+      u64 ewa : 4;
+      u64 ewt : 1;
+      u64 mrd : 1;
+      u64 mwt : 1;
+      u64 table : 1;
+      u64 nxadr : 1;
+      u64 adreb : 1;
+      u64 masa : 5;
+      u64 unknown3 : 2;
+      u64 coef : 6;
+      u64 nofl : 1;
+   } part;
+   u64 all;
+};
+#endif
+
+void ScspDspDisasm(u8 addr, char *outstring);
+
+extern struct ScspDsp scsp_dsp;
+
 #endif

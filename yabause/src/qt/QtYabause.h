@@ -35,6 +35,7 @@ extern "C"
 	#include "../cs0.h"
 	#include "../cdbase.h"
 	#include "../scsp.h"
+	#include "../scspdsp.h"
 	#include "../scu.h"
 	#include "../sndal.h"
 #ifdef HAVE_DIRECTSOUND

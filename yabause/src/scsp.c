@@ -97,6 +97,7 @@
 #include "scu.h"
 #include "yabause.h"
 #include "scsp.h"
+#include "scspdsp.h"
 
 #if 0
 #include "windows/aviout.h"
@@ -2628,6 +2629,49 @@ scsp_w_w (u32 a, u16 d)
     {
 
     }
+  else if (a >= 0x700 && a < 0x780)
+  {
+     u32 address = (a - 0x700) / 2;
+     scsp_dsp.coef[address] = d & 0xfff8;//lower 3 bits seem to be discarded
+  }
+  else if (a >= 0x780 && a < 0x7A0)
+  {
+     u32 address = (a - 0x780) / 2;
+     scsp_dsp.madrs[address] = d;
+  }
+  else if (a >= 0x7A0 && a < 0x7C0)
+  {
+     //madrs mirror
+     u32 address = (a - 0x7A0) / 2;
+     scsp_dsp.madrs[address] = d;
+  }
+  else if (a >= 0x800 && a < 0xC00)
+  {
+     u32 address = (a - 0x800) / 8;
+     u64 current_val = scsp_dsp.mpro[address];
+
+     switch (a & 0xf)
+     {
+     case 0:
+     case 8:
+        scsp_dsp.mpro[address] = (current_val & 0x0000ffffffffffff) | (u64)d << (u64)48;
+        break;
+     case 2:
+     case 0xa:
+        scsp_dsp.mpro[address] = (current_val & 0xffff0000ffffffff) | (u64)d << (u64)32;
+        break;
+     case 4:
+     case 0xc:
+        scsp_dsp.mpro[address] = (current_val  & 0xffffffff0000ffff) | (u64)d << (u64)16;
+        break;
+     case 6:
+     case 0xe:
+        scsp_dsp.mpro[address] = (current_val & 0xffffffffffff0000) | d;
+        break;
+     default:
+        break;
+     }
+  }
   else if (a < 0xee4)
     {
       a &= 0x3ff;
@@ -2734,6 +2778,48 @@ scsp_r_w (u32 a)
     {
 
     }
+  else if (a >= 0x700 && a < 0x780)
+  {
+     u32 address = (a - 0x700) / 2;
+     return scsp_dsp.coef[address];
+  }
+  else if (a >= 0x780 && a < 0x7A0)
+  {
+     u32 address = (a - 0x780) / 2;
+     return scsp_dsp.madrs[address];
+  }
+  else if (a >= 0x7A0 && a < 0x7C0)
+  {
+     //madrs mirror
+     u32 address = (a - 0x7A0) / 2;
+     return scsp_dsp.madrs[address];
+  }
+  else if (a >= 0x800 && a < 0xC00)
+  {
+     u32 address = (a - 0x800) / 8;
+
+     switch (a & 0xf)
+     {
+     case 0:
+     case 8:
+        return (scsp_dsp.mpro[address] >> (u64)48) & 0xffff;
+        break;
+     case 2:
+     case 0xa:
+        return (scsp_dsp.mpro[address] >> (u64)32) & 0xffff;
+        break;
+     case 4:
+     case 0xc:
+        return (scsp_dsp.mpro[address] >> (u64)16) & 0xffff;
+        break;
+     case 6:
+     case 0xe:
+        return scsp_dsp.mpro[address] & 0xffff;
+        break;
+     default:
+        break;
+     }
+  }
   else if (a < 0xee4)
     {
 
