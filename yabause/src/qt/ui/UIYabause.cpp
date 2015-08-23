@@ -109,6 +109,7 @@ UIYabause::UIYabause( QWidget* parent )
 	mLogDock->setWidget( teLog );
 	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
 	mLogDock->setVisible( false );
+	mCanLog = true;
 
 #ifndef SH2_TRACE
 	aTraceLogging->setVisible(false);
@@ -165,6 +166,11 @@ UIYabause::UIYabause( QWidget* parent )
 	translations = QtYabause::getTranslationList();
 	
 	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
+}
+
+UIYabause::~UIYabause()
+{
+	mCanLog = false;
 }
 
 void UIYabause::showEvent( QShowEvent* e )
@@ -298,6 +304,12 @@ void UIYabause::swapBuffers()
 
 void UIYabause::appendLog( const char* s )
 {
+	if (! mCanLog)
+	{
+		qWarning( s );
+		return;
+	}
+
 	teLog->moveCursor( QTextCursor::End );
 	teLog->append( s );
 
