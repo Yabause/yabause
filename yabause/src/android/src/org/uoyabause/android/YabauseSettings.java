@@ -174,7 +174,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
 
         for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
         	Inputlabels.add(padm.getName(inputType));
-        	Inputvalues.add(Integer.toString(padm.getId(inputType)));
+        	Inputvalues.add(padm.getId(inputType));
         }
 
         CharSequence[] input_entries = new CharSequence[Inputlabels.size()];
@@ -189,13 +189,13 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         
         SyncInputDevice();
         
-        // PreferenceScreen‚©‚ç‚ÌIntent
+        // PreferenceScreenï¿½ï¿½ï¿½ï¿½ï¿½Intent
         PreferenceScreen onscreen_pad = (PreferenceScreen) findPreference("on_screen_pad");
         onscreen_pad.setOnPreferenceClickListener(new OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
      
-                // Activity‚Ì‘JˆÚ
+                // Activityï¿½Ì‘Jï¿½ï¿½
                 Intent nextActivity = new Intent(
                 		YabauseSettings.this,
                         PadTestActivity.class);
@@ -223,7 +223,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
                 	onscreen_pad.setEnabled(true);
                 }            	
                 
-                padm.setPlayer1InputDevice(Integer.parseInt(selInputdevice));
+                padm.setPlayer1InputDevice(selInputdevice);
                 
             }catch( Exception e ){
             	e.printStackTrace();
