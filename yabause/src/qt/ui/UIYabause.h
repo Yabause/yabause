@@ -74,6 +74,7 @@ class UIYabause : public QMainWindow, public Ui::UIYabause
 	
 public:
 	UIYabause( QWidget* parent = 0 );
+	~UIYabause();
 
 	void swapBuffers();
 	virtual bool eventFilter( QObject* o, QEvent* e );
@@ -83,6 +84,7 @@ protected:
 	YabauseThread* mYabauseThread;
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
+	bool mCanLog;
 	bool mInit;
 	QList <cheatsearch_struct> search;
 	int searchType;
