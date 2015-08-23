@@ -24,4 +24,5 @@
     <string name="setting_graphics">Graphics</string>
     <string name="setting_general">General</string>
     <string name="msg_opengl_not_supported">Your device is not support OpenGL ES 3.0 or above.\nYou can not choose OpenGL Video Interface.\n</string>
+    <string name="skip">Skip</string>
 </resources>
