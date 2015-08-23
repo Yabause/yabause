@@ -12,7 +12,7 @@ class PadManagerV8 extends PadManager {
 
     public boolean hasPad() {
         return false;
-    }
+    } 
 
     public int onKeyDown(int keyCode, KeyEvent event) {
         return 0;
@@ -30,11 +30,15 @@ class PadManagerV8 extends PadManager {
     	return new String("Nothing");
     }
     
-    public int getId( int index ){ return -1; }    
+    public String getId( int index ){ return null; }    
     
     public int getDeviceCount(){ return 0; }
     public String getName( int index ){ return "Nothing"; }
-    public void setPlayer1InputDevice( int index ){}
     public int getPlayer1InputDevice(){ return -1; }
+
+	@Override
+	public void setPlayer1InputDevice(String id) {
+		
+	}
     
  }
