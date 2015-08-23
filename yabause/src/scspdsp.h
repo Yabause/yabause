@@ -22,12 +22,12 @@
 
 #include "core.h"
 
-struct ScspDsp
+typedef struct
 {
    u64 mpro[128];
    u16 coef[64];
    u16 madrs[32];
-};
+}ScspDsp;
 
 //dsp instruction format
 
@@ -119,6 +119,6 @@ union ScspDspInstruction {
 
 void ScspDspDisasm(u8 addr, char *outstring);
 
-extern struct ScspDsp scsp_dsp;
+extern ScspDsp scsp_dsp;
 
 #endif

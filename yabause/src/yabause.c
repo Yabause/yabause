@@ -39,6 +39,7 @@
 #include "m68kcore.h"
 #include "peripheral.h"
 #include "scsp.h"
+#include "scspdsp.h"
 #include "scu.h"
 #include "sh2core.h"
 #include "smpc.h"
@@ -93,6 +94,8 @@
 yabsys_struct yabsys;
 const char *bupfilename = NULL;
 u64 tickfreq;
+//todo this ought to be in scspdsp.c
+ScspDsp scsp_dsp;
 
 //////////////////////////////////////////////////////////////////////////////
 

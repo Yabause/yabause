@@ -20,8 +20,6 @@
 #include "scsp.h"
 #include "scspdsp.h"
 
-struct ScspDsp scsp_dsp;
-
 void ScspDspDisasm(u8 addr, char *outstring)
 {
    union ScspDspInstruction instruction;
@@ -33,7 +31,7 @@ void ScspDspDisasm(u8 addr, char *outstring)
 
    if (instruction.all == 0)
    {
-      sprintf(outstring, "nop ", addr);
+      sprintf(outstring, "nop ");
       outstring += strlen(outstring);
       return;
    }
@@ -46,13 +44,13 @@ void ScspDspDisasm(u8 addr, char *outstring)
 
    if (instruction.part.coef)
    {
-      sprintf(outstring, "coef %02X ", instruction.part.coef & 0x3F);
+      sprintf(outstring, "coef %02X ", (unsigned int)(instruction.part.coef & 0x3F));
       outstring += strlen(outstring);
    }
 
    if (instruction.part.masa)
    {
-      sprintf(outstring, "masa %02X ", instruction.part.masa & 0x1F);
+      sprintf(outstring, "masa %02X ", (unsigned int)(instruction.part.masa & 0x1F));
       outstring += strlen(outstring);
    }
 
@@ -94,7 +92,7 @@ void ScspDspDisasm(u8 addr, char *outstring)
 
    if (instruction.part.ewa)
    {
-      sprintf(outstring, "ewa %01X ", instruction.part.ewa & 0xf);
+      sprintf(outstring, "ewa %01X ", (unsigned int)(instruction.part.ewa & 0xf));
       outstring += strlen(outstring);
    }
 
@@ -112,7 +110,7 @@ void ScspDspDisasm(u8 addr, char *outstring)
 
    if (instruction.part.shift)
    {
-      sprintf(outstring, "shift %d ", instruction.part.shift & 3);
+      sprintf(outstring, "shift %d ", (int)(instruction.part.shift & 3));
       outstring += strlen(outstring);
    }
 
@@ -148,13 +146,13 @@ void ScspDspDisasm(u8 addr, char *outstring)
 
    if (instruction.part.ysel)
    {
-      sprintf(outstring, "ysel %d ", instruction.part.ysel & 3);
+      sprintf(outstring, "ysel %d ", (int)(instruction.part.ysel & 3));
       outstring += strlen(outstring);
    }
 
    if (instruction.part.ira)
    {
-      sprintf(outstring, "ira %02X ", instruction.part.ira & 0x3F);
+      sprintf(outstring, "ira %02X ", (int)(instruction.part.ira & 0x3F));
       outstring += strlen(outstring);
    }
 
@@ -166,13 +164,13 @@ void ScspDspDisasm(u8 addr, char *outstring)
 
    if (instruction.part.iwa)
    {
-      sprintf(outstring, "iwa %02X ", instruction.part.iwa & 0x1F);
+      sprintf(outstring, "iwa %02X ", (unsigned int)(instruction.part.iwa & 0x1F));
       outstring += strlen(outstring);
    }
 
    if (instruction.part.tra)
    {
-      sprintf(outstring, "tra %02X ", instruction.part.tra & 0x7F);
+      sprintf(outstring, "tra %02X ", (unsigned int)(instruction.part.tra & 0x7F));
       outstring += strlen(outstring);
    }
 
@@ -184,25 +182,25 @@ void ScspDspDisasm(u8 addr, char *outstring)
 
    if (instruction.part.twa)
    {
-      sprintf(outstring, "twa %02X ", instruction.part.twa & 0x7F);
+      sprintf(outstring, "twa %02X ", (unsigned int)(instruction.part.twa & 0x7F));
       outstring += strlen(outstring);
    }
 
    if (instruction.part.unknown)
    {
-      sprintf(outstring, "unknown ", addr);
+      sprintf(outstring, "unknown ");
       outstring += strlen(outstring);
    }
 
    if (instruction.part.unknown2)
    {
-      sprintf(outstring, "unknown2 ", addr);
+      sprintf(outstring, "unknown2 ");
       outstring += strlen(outstring);
    }
 
    if (instruction.part.unknown3)
    {
-      sprintf(outstring, "unknown3 %d", instruction.part.unknown3 & 3);
+      sprintf(outstring, "unknown3 %d", (int)(instruction.part.unknown3 & 3));
       outstring += strlen(outstring);
    }
 }
