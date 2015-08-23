@@ -144,6 +144,9 @@ if (STDINT_H_FOUND)
 	add_definitions(-DHAVE_STDINT_H=1)
 endif()
 
+find_package(Threads)
+set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 # 16BPP
 set(YAB_RGB "" CACHE STRING "Bit configuration of pixels in the display buffer.")
 if (YAB_RGB STREQUAL "555")
@@ -228,12 +231,11 @@ option(YAB_WANT_OPENAL "use OpenAL sound core if available" ON)
 if (YAB_WANT_OPENAL)
 	include(FindOpenAL)
 	if (OPENAL_FOUND)
-		find_package(Threads)
 		add_definitions(-DHAVE_LIBAL=1)
 		include_directories(${OPENAL_INCLUDE_DIR})
 		set(yabause_SOURCES ${yabause_SOURCES} sndal.c)
 		set(yabause_HEADERS ${yabause_HEADERS} sndal.h)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENAL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENAL_LIBRARY})
 	endif (OPENAL_FOUND)
 endif (YAB_WANT_OPENAL)
 
