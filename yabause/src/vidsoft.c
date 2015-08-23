@@ -74,6 +74,7 @@ static void PushUserClipping(int mode);
 static void PopUserClipping(void);
 
 int VIDSoftInit(void);
+void VIDSoftSetupGL(void);
 void VIDSoftDeInit(void);
 void VIDSoftResize(unsigned int, unsigned int, int);
 int VIDSoftIsFullscreen(void);
@@ -167,6 +168,7 @@ GLuint gl_texture_id = 0;
 #endif
 static int resxratio;
 static int resyratio;
+int bilinear = 0;
 
 typedef struct { s16 x; s16 y; } vdp1vertex;
 
@@ -1731,6 +1733,43 @@ static void LoadLineParamsSprite(vdp2draw_struct * info, int line)
 
 int VIDSoftInit(void)
 {
+   if (TitanInit() == -1)
+      return -1;
+
+   if ((dispbuffer = (pixel_t *)calloc(sizeof(pixel_t), 704 * 512)) == NULL)
+      return -1;
+
+   // Initialize VDP1 framebuffer 1
+   if ((vdp1framebuffer[0] = (u8 *)calloc(sizeof(u8), 0x40000)) == NULL)
+      return -1;
+
+   // Initialize VDP1 framebuffer 2
+   if ((vdp1framebuffer[1] = (u8 *)calloc(sizeof(u8), 0x40000)) == NULL)
+      return -1;
+
+   vdp1backframebuffer = vdp1framebuffer[0];
+   vdp1frontframebuffer = vdp1framebuffer[1];
+   vdp2width = 320;
+   vdp2height = 224;
+
+#ifdef USE_OPENGL
+   VIDSoftSetupGL();
+#endif
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftSetBilinear(int b)
+{
+   bilinear = b;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftSetupGL(void)
+{
 #ifdef USE_OPENGL
    GLint status;
    GLint texAttrib;
@@ -1766,28 +1805,7 @@ int VIDSoftInit(void)
       1.0, 1.0,     // Texture 3 (X, Y)
       1.0, 0.0      // Texture 4 (X, Y)
    };
-#endif
 
-   if (TitanInit() == -1)
-      return -1;
-
-   if ((dispbuffer = (pixel_t *)calloc(sizeof(pixel_t), 704 * 512)) == NULL)
-      return -1;
-
-   // Initialize VDP1 framebuffer 1
-   if ((vdp1framebuffer[0] = (u8 *)calloc(sizeof(u8), 0x40000)) == NULL)
-      return -1;
-
-   // Initialize VDP1 framebuffer 2
-   if ((vdp1framebuffer[1] = (u8 *)calloc(sizeof(u8), 0x40000)) == NULL)
-      return -1;
-
-   vdp1backframebuffer = vdp1framebuffer[0];
-   vdp1frontframebuffer = vdp1framebuffer[1];
-   vdp2width = 320;
-   vdp2height = 224;
-
-#ifdef USE_OPENGL
    outputwidth = vdp2width;
    outputheight = vdp2height;
 
@@ -1838,15 +1856,14 @@ int VIDSoftInit(void)
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, gl_texture_id);
 
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   if (bilinear) { glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); }
+   else { glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); }
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
    glViewport(0, 0, outputwidth, outputheight);
 
    glUniform1i(glGetUniformLocation(gl_shader_prog, "sattex"), 0);
 #endif
-
-   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2464,7 +2481,6 @@ typedef union _COLOR { // xbgr x555
 	};
 	u16 value;
 } COLOR;
-
 
 COLOR gouraudA;
 COLOR gouraudB;

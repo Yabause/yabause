@@ -411,6 +411,8 @@ static gboolean yui_settings_load(void) {
         yinit.videoformattype = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 
 	yui_window_set_frameskip(YUI_WINDOW(yui), g_key_file_get_integer(keyfile, "General", "Frameskip", NULL));
+	
+	VIDSoftSetBilinear(g_key_file_get_integer(keyfile, "General", "Bilinear", 0));
 
 	return mustRestart;
 }
