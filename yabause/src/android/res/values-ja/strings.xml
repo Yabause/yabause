@@ -24,4 +24,5 @@
     <string name="setting_graphics">グラフィックス</string>
     <string name="setting_general">一般</string>
     <string name="msg_opengl_not_supported">このデバイスではOpenGL ES 3.0がサポートされていないので、ソフトウェアレンダリングしか選択できません</string>
+    <string name="skip">スキップ</string>
 </resources>
