@@ -153,6 +153,7 @@ void (*auto_tests[])() =
    //scsp
    scsp_timing_test,
    scsp_misc_test,
+   scsp_dsp_test,
    //smpc
    //vdp1
    //vdp2
