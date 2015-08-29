@@ -28,8 +28,8 @@
     <string name="donation">Support</string>
     <string name="donate_message">
         Support our development!\n\n
-		You can support the upstream project of uoYabause by makeing a doantion at http://www.yabause.org .
-		And You can also send a donation to uoYabause directly with this button for developing more aculate emulation, more input devices and more platforms.\n
+		You can support the upstream project of uoYabause by making a donation directly on their website http://yabause.org . 
+		You can also support this project uoYabause by clicking the donate button below, this will help towards development of more accurate emulation, input devices and a wider range of devices.﻿    </string>
     </string>
     <string name="thank_you">Thank you for your donation!</string>
     <string name="error_consume">Faild to consume.</string>
