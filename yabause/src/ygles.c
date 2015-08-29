@@ -2069,7 +2069,7 @@ void YglRenderFrameBuffer( int from , int to ) {
    offsetcol[2] = vdp1cob / 255.0f;
    offsetcol[3] = 0.0f;
 
-   if ( (Vdp2Regs->CCCTL & 0x140) == 0x140 ){
+   if ( (Vdp2Regs->CCCTL & 0x540) == 0x140 ){
 		// Sprite Add Color
 	   Ygl_uniformVDP2DrawFramebuffer_addcolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
    }else if (Vdp2Regs->LNCLEN & 0x20){
