@@ -130,6 +130,7 @@ enum
    PG_WINDOW,
    PG_LINECOLOR_INSERT,
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR,
+   PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR,
    PG_MAX,
 };
 
@@ -263,6 +264,7 @@ void YglCacheReset(void);
 int YglSetLevelBlendmode( int pri, int mode );
 
 int Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol);
+int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, float * offsetcol);
 int Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol );
 
 void YglNeedToUpdateWindow();

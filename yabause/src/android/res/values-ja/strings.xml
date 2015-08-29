@@ -25,6 +25,7 @@
     <string name="setting_general">一般</string>
     <string name="msg_opengl_not_supported">このデバイスではOpenGL ES 3.0がサポートされていないので、ソフトウェアレンダリングしか選択できません</string>
     <string name="donation">サポート</string>
+    <string name="skip">スキップ</string>
     <string name="donate_message">
                   私たちの開発を支援してください！\n\n
 		uoYabauseの上流プロジェクトYabauseの寄付は http://www.yabause.org/ で承っています。
@@ -38,4 +39,5 @@
     <string name="donate_5doller">500円</string>
     <string name="donate_10doller">1,000円</string>
     <string name="donate_30doller">3,000円</string>    
+    <string name="donate_30doller">3,000円</string>   	
 </resources>

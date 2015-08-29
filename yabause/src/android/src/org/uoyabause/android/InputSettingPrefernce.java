@@ -28,17 +28,21 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnGenericMotionListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.LinearLayout;
+import android.view.LayoutInflater;
 
-@SuppressLint("NewApi") public class InputSettingPrefernce extends DialogPreference implements OnKeyListener, OnGenericMotionListener{
+@SuppressLint("NewApi") public class InputSettingPrefernce extends DialogPreference implements OnKeyListener, OnGenericMotionListener, OnClickListener{
 
 	private TextView key_message;
+	private Button skip;
 	private HashMap<Integer,Integer> Keymap;
     private ArrayList<Integer> map;
 	private int index = 0;
@@ -79,7 +83,9 @@ import android.widget.LinearLayout;
     	map.add(PadEvent.BUTTON_Y);
     	map.add(PadEvent.BUTTON_Z);
 		setDialogTitle("Input the Key");
-    	setPositiveButtonText(null);  // OKボタンを非表示にする		
+    	setPositiveButtonText(null);  // OKボタンを非表示にする	
+    	
+    	setDialogLayoutResource(R.layout.keymap);
     	
 	}
 	
@@ -109,6 +115,8 @@ import android.widget.LinearLayout;
 	 
 	@Override
 	protected View onCreateDialogView() {
+		
+/*		
 		this.key_message = new TextView(this.getContext());
 		this.key_message.setText("UP"); 
 		this.key_message.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 32);
@@ -123,11 +131,23 @@ import android.widget.LinearLayout;
 		key_message.requestFocus();
 	        
 		return this.key_message;
+*/
+		return super.onCreateDialogView();
 	}
 	
 	@Override
 	protected void onBindDialogView(View view){
 		view.setOnGenericMotionListener(this);	
+		key_message = (TextView) view.findViewById(R.id.text_key);
+		key_message.setText("UP"); 
+		key_message.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 32);
+		key_message.setClickable(false);
+		key_message.setOnGenericMotionListener(this);
+		key_message.setFocusableInTouchMode(true);
+		key_message.requestFocus();
+		
+		View button = (Button) view.findViewById(R.id.button_skip);
+		button.setOnClickListener(this);
 	}
 	
 	@Override
@@ -136,6 +156,21 @@ import android.widget.LinearLayout;
 			persistString("yabause/keymap.json");
 		}
 		super.onDialogClosed(positiveResult);
+	}
+	
+	@Override
+	public void onClick(DialogInterface dialog, int which){
+		
+	    if(which == DialogInterface.BUTTON_POSITIVE) {
+	        setKeymap(-1);
+	        return;
+
+	    }else if(which == DialogInterface.BUTTON_NEGATIVE){
+	        // do your stuff to handle negative button
+	    }
+	    
+		super.onClick(dialog, which);
+		
 	}
 
 	
@@ -181,8 +216,15 @@ import android.widget.LinearLayout;
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+  
     }	
+    
+	@Override
+	public void onClick(View v) {
+		if( v.getId() == R.id.button_skip ){
+			setKeymap(-1);
+		}
+	}    
     
     boolean setKeymap(Integer padkey){
     	Keymap.put(padkey,map.get(index));
@@ -243,7 +285,7 @@ import android.widget.LinearLayout;
     	    		return setKeymap(keyCode);        	
                 }
             }
-        	return false;
+        	return false; 
 	}
 	
 	protected float _oldLeftTrigger = 0.0f;
@@ -268,11 +310,11 @@ import android.widget.LinearLayout;
                 		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
                 		_oldLeftTrigger = newLeftTrigger;
                 		return true;
-                	}
+                	} 
                 	_oldLeftTrigger = newLeftTrigger;
                 	return setKeymap(MotionEvent.AXIS_LTRIGGER); 
                 	
-      		  }
+      		  } 
       		  _oldLeftTrigger = newLeftTrigger;
       	  }
       	  
@@ -298,5 +340,6 @@ import android.widget.LinearLayout;
 
 		return false;
 	}
+
 
 }
