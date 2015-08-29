@@ -34,7 +34,7 @@ u64 ScspDspAssembleLine(char* line)
 
    char* temp = NULL;
 
-   if (temp = strstr(line, "tra"))
+   if ((temp = strstr(line, "tra")))
    {
       instruction.part.tra = ScspDspAssembleGetValue(temp);
    }
@@ -44,7 +44,7 @@ u64 ScspDspAssembleLine(char* line)
       instruction.part.twt = 1;
    }
 
-   if (temp = strstr(line, "twa"))
+   if ((temp = strstr(line, "twa")))
    {
       instruction.part.twa = ScspDspAssembleGetValue(temp);
    }
@@ -54,12 +54,12 @@ u64 ScspDspAssembleLine(char* line)
       instruction.part.xsel = 1;
    }
 
-   if (temp = strstr(line, "ysel"))
+   if ((temp = strstr(line, "ysel")))
    {
       instruction.part.ysel = ScspDspAssembleGetValue(temp);
    }
 
-   if (temp = strstr(line, "ira"))
+   if ((temp = strstr(line, "ira")))
    {
       instruction.part.ira = ScspDspAssembleGetValue(temp);
    }
@@ -69,7 +69,7 @@ u64 ScspDspAssembleLine(char* line)
       instruction.part.iwt = 1;
    }
 
-   if (temp = strstr(line, "iwa"))
+   if ((temp = strstr(line, "iwa")))
    {
       instruction.part.iwa = ScspDspAssembleGetValue(temp);
    }
@@ -94,7 +94,7 @@ u64 ScspDspAssembleLine(char* line)
       instruction.part.ewt = 1;
    }
 
-   if (temp = strstr(line, "ewa"))
+   if ((temp = strstr(line, "ewa")))
    {
       instruction.part.ewa = ScspDspAssembleGetValue(temp);
    }
@@ -108,8 +108,8 @@ u64 ScspDspAssembleLine(char* line)
    {
       instruction.part.frcl = 1;
    }
-
-   if (temp = strstr(line, "shift"))
+   
+   if ((temp = strstr(line, "shift")))
    {
       instruction.part.shift = ScspDspAssembleGetValue(temp);
    }
@@ -139,12 +139,12 @@ u64 ScspDspAssembleLine(char* line)
       instruction.part.nofl = 1;
    }
 
-   if (temp = strstr(line, "coef"))
+   if ((temp = strstr(line, "coef")))
    {
       instruction.part.coef = ScspDspAssembleGetValue(temp);
    }
 
-   if (temp = strstr(line, "masa"))
+   if ((temp = strstr(line, "masa")))
    {
       instruction.part.masa = ScspDspAssembleGetValue(temp);
    }
@@ -181,7 +181,7 @@ void ScspDspAssembleFromFile(char * filename, u64* output)
 
    for (i = 0; i < 128; i++)
    {
-      fgets(line, sizeof(line), fp);
+      int result = fgets(line, sizeof(line), fp);
       output[i] = ScspDspAssembleLine(line);
    }
 }
