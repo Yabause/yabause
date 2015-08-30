@@ -215,12 +215,12 @@ public class Yabause extends Activity implements OnPadListener
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(args.getString("message"))
             .setCancelable(false)
-            .setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+            .setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     Yabause.this.finish();
                 }
             })
-            .setPositiveButton("Ignore", new DialogInterface.OnClickListener() {
+            .setPositiveButton(R.string.ignore, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     dialog.cancel();
                 }
