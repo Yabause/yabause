@@ -427,6 +427,7 @@ void YuiErrorMsg(const char * string) {
 int main(int argc, char *argv[]) {
 #ifndef NO_CLI
 	int i;
+	int autostart = 0;
 #endif
 	LogStart();
 	LogChangeOutput( DEBUG_STDERR, NULL );
@@ -517,11 +518,11 @@ int main(int argc, char *argv[]) {
 	 else if (strcmp(argv[i], "--autoload") == 0) {
             yui_window_start(YUI_WINDOW(yui));
             YuiLoadState();
-            yui_window_run(YUI_WINDOW(yui));
+            autostart = 1;
 	 }
 	 // Autostart
 	 else if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "--autostart") == 0) {
-            yui_window_run(YUI_WINDOW(yui));
+            autostart = 1;
 	 }
 	 // Fullscreen
 	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
@@ -551,6 +552,8 @@ int main(int argc, char *argv[]) {
 	 }
       }
    }
+
+   if (autostart) yui_window_run(YUI_WINDOW(yui));
 #endif
 
 	gtk_main ();

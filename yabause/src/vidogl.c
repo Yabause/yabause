@@ -198,9 +198,9 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	u8 END = ((cmd->CMDPMOD & 0x80) != 0);
 	u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
 	u32 alpha = 0xFF;
-	VDP1LOG("Making new sprite %08X\n", charAddr);
-
 	u32 color = 0x00;
+
+	VDP1LOG("Making new sprite %08X\n", charAddr);
 
 	Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 	alpha = 0xF8;
