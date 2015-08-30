@@ -17,6 +17,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnKeyListener;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.DialogPreference;
@@ -28,17 +29,21 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnGenericMotionListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.LinearLayout;
+import android.view.LayoutInflater;
 
-@SuppressLint("NewApi") public class InputSettingPrefernce extends DialogPreference implements OnKeyListener, OnGenericMotionListener{
+@SuppressLint("NewApi") public class InputSettingPrefernce extends DialogPreference implements OnKeyListener, OnGenericMotionListener, OnClickListener{
 
 	private TextView key_message;
+	private Button skip;
 	private HashMap<Integer,Integer> Keymap;
     private ArrayList<Integer> map;
 	private int index = 0;
@@ -78,8 +83,10 @@ import android.widget.LinearLayout;
     	map.add(PadEvent.BUTTON_X);
     	map.add(PadEvent.BUTTON_Y);
     	map.add(PadEvent.BUTTON_Z);
-		setDialogTitle("Input the Key");
-    	setPositiveButtonText(null);  // OKボタンを非表示にする		
+		setDialogTitle(R.string.input_the_key);
+    	setPositiveButtonText(null);  // OKボタンを非表示にする	
+    	
+    	setDialogLayoutResource(R.layout.keymap);
     	
 	}
 	
@@ -98,7 +105,7 @@ import android.widget.LinearLayout;
     	
 		pad_m = PadManager.getPadManager();
     	if( pad_m.hasPad() == false ){
-    		Toast.makeText(context_m, "Joy Stick is not connected", Toast.LENGTH_LONG).show();
+    		Toast.makeText(context_m, R.string.joystick_is_not_connected, Toast.LENGTH_LONG).show();
     		dlg.dismiss();
     		return;
     	}    
@@ -109,6 +116,8 @@ import android.widget.LinearLayout;
 	 
 	@Override
 	protected View onCreateDialogView() {
+		
+/*		
 		this.key_message = new TextView(this.getContext());
 		this.key_message.setText("UP"); 
 		this.key_message.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 32);
@@ -123,11 +132,26 @@ import android.widget.LinearLayout;
 		key_message.requestFocus();
 	        
 		return this.key_message;
+*/
+		return super.onCreateDialogView();
 	}
 	
 	@Override
 	protected void onBindDialogView(View view){
+		
+		Resources res = context_m.getResources();
+		
 		view.setOnGenericMotionListener(this);	
+		key_message = (TextView) view.findViewById(R.id.text_key);
+		key_message.setText(res.getString(R.string.up)); 
+		key_message.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 32);
+		key_message.setClickable(false);
+		key_message.setOnGenericMotionListener(this);
+		key_message.setFocusableInTouchMode(true);
+		key_message.requestFocus();
+		
+		View button = (Button) view.findViewById(R.id.button_skip);
+		button.setOnClickListener(this);
 	}
 	
 	@Override
@@ -136,6 +160,21 @@ import android.widget.LinearLayout;
 			persistString("yabause/keymap.json");
 		}
 		super.onDialogClosed(positiveResult);
+	}
+	
+	@Override
+	public void onClick(DialogInterface dialog, int which){
+		
+	    if(which == DialogInterface.BUTTON_POSITIVE) {
+	        setKeymap(-1);
+	        return;
+
+	    }else if(which == DialogInterface.BUTTON_NEGATIVE){
+	        // do your stuff to handle negative button
+	    }
+	    
+		super.onClick(dialog, which);
+		
 	}
 
 	
@@ -181,8 +220,15 @@ import android.widget.LinearLayout;
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+  
     }	
+    
+	@Override
+	public void onClick(View v) {
+		if( v.getId() == R.id.button_skip ){
+			setKeymap(-1);
+		}
+	}    
     
     boolean setKeymap(Integer padkey){
     	Keymap.put(padkey,map.get(index));
@@ -196,21 +242,23 @@ import android.widget.LinearLayout;
     		return true;
     	}
     	
+    	Resources res = context_m.getResources();
+    	
 		switch(map.get(index)){
-		case PadEvent.BUTTON_UP: setMessage("Up"); break;
-		case PadEvent.BUTTON_DOWN: setMessage("Down"); break;
-		case PadEvent.BUTTON_LEFT:setMessage("Left"); break;
-		case PadEvent.BUTTON_RIGHT: setMessage("Right"); break;
-		case PadEvent.BUTTON_LEFT_TRIGGER: setMessage("L Trigger"); break;
-		case PadEvent.BUTTON_RIGHT_TRIGGER: setMessage("R Trigger"); break;
-		case PadEvent.BUTTON_START:setMessage("Start"); break;
-		case PadEvent.BUTTON_A: setMessage("A"); break;
-		case PadEvent.BUTTON_B: setMessage("B"); break;
-		case PadEvent.BUTTON_C: setMessage("C"); break;
-		case PadEvent.BUTTON_X:setMessage("X"); break;
-		case PadEvent.BUTTON_Y: setMessage("Y"); break;
-		case PadEvent.BUTTON_Z: setMessage("Z"); break;
-		}	
+		case PadEvent.BUTTON_UP: setMessage(res.getString(R.string.up)); break;
+		case PadEvent.BUTTON_DOWN: setMessage(res.getString(R.string.down)); break;
+		case PadEvent.BUTTON_LEFT:setMessage(res.getString(R.string.left)); break;
+		case PadEvent.BUTTON_RIGHT: setMessage(res.getString(R.string.right)); break;
+		case PadEvent.BUTTON_LEFT_TRIGGER: setMessage(res.getString(R.string.l_trigger)); break;
+		case PadEvent.BUTTON_RIGHT_TRIGGER: setMessage(res.getString(R.string.r_trigger)); break;
+		case PadEvent.BUTTON_START:setMessage(res.getString(R.string.start)); break;
+		case PadEvent.BUTTON_A: setMessage(res.getString(R.string.a_button)); break;
+		case PadEvent.BUTTON_B: setMessage(res.getString(R.string.b_button)); break;
+		case PadEvent.BUTTON_C: setMessage(res.getString(R.string.c_button)); break;
+		case PadEvent.BUTTON_X:setMessage(res.getString(R.string.x_button)); break;
+		case PadEvent.BUTTON_Y: setMessage(res.getString(R.string.y_button)); break;
+		case PadEvent.BUTTON_Z: setMessage(res.getString(R.string.z_button)); break;
+		}	 
 		
 		return true;
 		
@@ -237,13 +285,13 @@ import android.widget.LinearLayout;
                 	                	
                 	Integer PadKey = Keymap.get(keyCode);
                 	if( PadKey != null ) {
-                		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
+                		Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
                 		return true;
                 	}
     	    		return setKeymap(keyCode);        	
                 }
             }
-        	return false;
+        	return false; 
 	}
 	
 	protected float _oldLeftTrigger = 0.0f;
@@ -265,14 +313,14 @@ import android.widget.LinearLayout;
       			    _oldLeftTrigger = newLeftTrigger;
       	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
                 	if( PadKey != null ) {
-                		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
+                		Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
                 		_oldLeftTrigger = newLeftTrigger;
                 		return true;
-                	}
+                	} 
                 	_oldLeftTrigger = newLeftTrigger;
                 	return setKeymap(MotionEvent.AXIS_LTRIGGER); 
                 	
-      		  }
+      		  } 
       		  _oldLeftTrigger = newLeftTrigger;
       	  }
       	  
@@ -285,7 +333,7 @@ import android.widget.LinearLayout;
           		  	_oldRightTrigger = newRightTrigger;
       	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
                 	if( PadKey != null ) {
-                		Toast.makeText(context_m, "This Key has already been set.", Toast.LENGTH_SHORT).show();
+                		Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
                 		_oldRightTrigger = newRightTrigger;
                 		return true;
                 	}	
@@ -298,5 +346,6 @@ import android.widget.LinearLayout;
 
 		return false;
 	}
+
 
 }

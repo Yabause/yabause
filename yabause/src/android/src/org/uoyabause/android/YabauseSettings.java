@@ -74,7 +74,8 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         	e.printStackTrace();
         }
       
-       
+        Resources res = getResources();
+        
         YabauseStorage storage = YabauseStorage.getStorage();
 
         /* bios */
@@ -140,14 +141,14 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         final boolean supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000;
 
         if( supportsEs3 ) {
-          video_labels.add("OpenGL Video Interface");
+          video_labels.add(res.getString(R.string.opengl_video_interface));
           video_values.add("1");
         }else{
           DialogFragment newFragment = new WarningDialogFragment();
           newFragment.show(getFragmentManager(), "OGL");
         }
 
-        video_labels.add("Software Video Interface");
+        video_labels.add(res.getString(R.string.software_video_interface));
         video_values.add("2");
 
         CharSequence[] video_entries = new CharSequence[video_labels.size()];
@@ -167,14 +168,14 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         List<CharSequence> Inputlabels = new ArrayList<CharSequence>();
         List<CharSequence> Inputvalues = new ArrayList<CharSequence>();
         
-        Inputlabels.add("On Screen Pad");
+        Inputlabels.add(res.getString(R.string.onscreen_pad));
         Inputvalues.add("-1");
         
         PadManager padm = PadManager.getPadManager();
 
         for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
         	Inputlabels.add(padm.getName(inputType));
-        	Inputvalues.add(Integer.toString(padm.getId(inputType)));
+        	Inputvalues.add(padm.getId(inputType));
         }
 
         CharSequence[] input_entries = new CharSequence[Inputlabels.size()];
@@ -189,13 +190,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         
         SyncInputDevice();
         
-        // PreferenceScreen‚©‚ç‚ÌIntent
         PreferenceScreen onscreen_pad = (PreferenceScreen) findPreference("on_screen_pad");
         onscreen_pad.setOnPreferenceClickListener(new OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-     
-                // Activity‚Ì‘JˆÚ
                 Intent nextActivity = new Intent(
                 		YabauseSettings.this,
                         PadTestActivity.class);
@@ -223,7 +221,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
                 	onscreen_pad.setEnabled(true);
                 }            	
                 
-                padm.setPlayer1InputDevice(Integer.parseInt(selInputdevice));
+                padm.setPlayer1InputDevice(selInputdevice);
                 
             }catch( Exception e ){
             	e.printStackTrace();

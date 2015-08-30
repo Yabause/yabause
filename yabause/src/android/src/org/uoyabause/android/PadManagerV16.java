@@ -34,7 +34,7 @@ import org.uoyabause.android.PadManager;
 
 
 class PadManagerV16 extends PadManager {
-    private ArrayList<Integer> deviceIds;
+    private HashMap<String,Integer> deviceIds;
     HashMap<Integer,Integer> Keymap;
     final String TAG = "PadManagerV16";
     float _oldRightTrigger = 0.0f;
@@ -43,7 +43,7 @@ class PadManagerV16 extends PadManager {
     int _selected_device_id = invalid_device_id;
 
     PadManagerV16() {
-        deviceIds = new ArrayList<Integer>();
+        deviceIds = new HashMap<String,Integer>();
         
 
         int[] ids = InputDevice.getDeviceIds();
@@ -53,22 +53,21 @@ class PadManagerV16 extends PadManager {
 
             if (((sources & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD)
                     || ((sources & InputDevice.SOURCE_JOYSTICK)== InputDevice.SOURCE_JOYSTICK)) {
-                if (!deviceIds.contains(deviceId)) {
+                if (deviceIds.get(dev.getDescriptor()) == null ) {
                 	
                 	// Avoid crazy devices
                 	if( dev.getName().equals("msm8974-taiko-mtp-snd-card Button Jack") ){
                 		continue;
                 	}
-                    deviceIds.add(deviceId);
+                    deviceIds.put(dev.getDescriptor(),deviceId);
                 }
             }
             
             boolean isGamePad = ((sources & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD);
             boolean isGameJoyStick = ((sources & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK);
             
-            
-            
-            DebugMesage += "Inputdevice:" + dev.getName() +" ID:" + deviceId + " Product ID:" +  dev.getProductId() + 
+           
+            DebugMesage += "Inputdevice:" + dev.getName() +" ID:" + dev.getDescriptor() + " Product ID:" +  dev.getProductId() + 
             		" isGamePad?:" + isGamePad +
             		" isJoyStick?:" + isGameJoyStick + "\n";
             
@@ -97,22 +96,49 @@ class PadManagerV16 extends PadManager {
     		return null;
     	}
     	
-    	InputDevice dev = InputDevice.getDevice(deviceIds.get(index));
-    	return dev.getName();
-    }
-    
-    public int getId( int index ){
-
-    	if( index < 0 && index >= deviceIds.size()) {
-    		return -1;
+    	int counter = 0;
+    	for (Integer val : deviceIds.values()) {
+    	    if( counter == index){
+    	    	InputDevice dev = InputDevice.getDevice(val);
+    	    	return dev.getName();
+    	    }
+    	    counter++;
     	}
     	
-    	InputDevice dev = InputDevice.getDevice(deviceIds.get(index));
-    	return dev.getId();
+    	return null;
     }
     
-    public void setPlayer1InputDevice( int deviceid ){
-    	_selected_device_id = deviceid;
+    public String getId( int index ){
+
+    	if( index < 0 && index >= deviceIds.size()) {
+    		return null;
+    	}
+    	
+    	int counter = 0;
+    	for (String key : deviceIds.keySet()) {
+    	    if( counter == index){
+    	    	return key;
+    	    }
+    	    counter++;
+    	}
+    	return null;
+    }
+    
+    public void setPlayer1InputDevice( String deviceid ){
+    	 
+    	if( deviceid == null ){
+    		_selected_device_id = -1;
+    		return;
+    	} 
+ 
+    	Integer id = deviceIds.get(deviceid);
+    	if( id == null ){
+    		_selected_device_id = -1;
+    	}else{
+    		_selected_device_id = id;
+    	}  
+ 
+    	return;
     }
     
     public int getPlayer1InputDevice(){ 
