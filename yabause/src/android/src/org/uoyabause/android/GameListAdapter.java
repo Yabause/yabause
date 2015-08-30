@@ -20,6 +20,7 @@
 package org.uoyabause.android;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.DataSetObserver;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,7 +37,8 @@ class GameListAdapter implements ListAdapter {
 
     GameListAdapter(Context ctx) {
         storage = YabauseStorage.getStorage();
-        gamefiles = storage.getGameFiles();
+        Resources res = ctx.getResources();
+        gamefiles = storage.getGameFiles( res.getString(R.string.select_from_other_directory) );
         context = ctx;
     }
 

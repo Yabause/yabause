@@ -215,12 +215,12 @@ public class Yabause extends Activity implements OnPadListener
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(args.getString("message"))
             .setCancelable(false)
-            .setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+            .setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     Yabause.this.finish();
                 }
             })
-            .setPositiveButton("Ignore", new DialogInterface.OnClickListener() {
+            .setPositiveButton(R.string.ignore, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     dialog.cancel();
                 }
@@ -339,7 +339,7 @@ public class Yabause extends Activity implements OnPadListener
             YabauseStorage storage = YabauseStorage.getStorage();
             biospath = storage.getBiosPath(bios);
         } else
-            biospath = "";
+            biospath = ""; 
 
         String cart = sharedPref.getString("pref_cart", "");
         if (cart.length() > 0) {
@@ -376,9 +376,9 @@ public class Yabause extends Activity implements OnPadListener
     	if( selInputdevice.equals("65535") ){
     		// if game pad is connected use it.
     		if( padm.getDeviceCount() > 0 ){
-    			 padm.setPlayer1InputDevice(padm.getId(0));  
+    			 padm.setPlayer1InputDevice(null);  
     			 Editor editor = sharedPref.edit();
-    			 editor.putString("pref_player1_inputdevice", Integer.toString(padm.getId(0)) );
+    			 editor.putString("pref_player1_inputdevice", padm.getId(0) );
     			 editor.commit();
     		// if no game pad is detected use on-screen game pad. 
     		}else{
@@ -390,9 +390,9 @@ public class Yabause extends Activity implements OnPadListener
     	
         if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
             pad.setVisibility(View.INVISIBLE);
-        	padm.setPlayer1InputDevice( Integer.parseInt(selInputdevice));
+        	padm.setPlayer1InputDevice( selInputdevice );
         }else{
-            padm.setPlayer1InputDevice( PadManager.invalid_device_id );
+            padm.setPlayer1InputDevice( null );
         }
     }
 

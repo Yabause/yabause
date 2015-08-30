@@ -23,9 +23,9 @@ abstract class PadManager {
     public abstract int getDeviceCount();
     
     public abstract String getName( int index );
-    public abstract int getId( int index );
+    public abstract String getId( int index );
     
-    public abstract void setPlayer1InputDevice( int id );
+    public abstract void setPlayer1InputDevice( String id );
     public abstract int getPlayer1InputDevice();
     
     static PadManager getPadManager() {

@@ -15,7 +15,7 @@
         android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="status" >
+        android:text="" >
     </TextView>
 
 <LinearLayout
@@ -27,7 +27,7 @@
         android:id="@+id/editText1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Scale" >
+        android:text="@string/scale" >
     </TextView>
     
 

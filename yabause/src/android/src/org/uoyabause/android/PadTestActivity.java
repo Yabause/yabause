@@ -66,8 +66,8 @@ public class PadTestActivity extends Activity implements OnPadListener {
 		
         AlertDialog.Builder alert = new AlertDialog.Builder(this);  
         alert.setTitle("");  
-        alert.setMessage("Do you want to save this setting?");  
-        alert.setPositiveButton("Yes", new DialogInterface.OnClickListener(){  
+        alert.setMessage(R.string.do_you_want_to_save_this_setting);  
+        alert.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener(){  
             public void onClick(DialogInterface dialog, int which) {  
             	SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(PadTestActivity.this);
    			 	Editor editor = sharedPref.edit();
@@ -76,7 +76,7 @@ public class PadTestActivity extends Activity implements OnPadListener {
    			 	editor.commit();
    			 	PadTestActivity.super.onBackPressed();
             }});  
-        alert.setNegativeButton("No", new DialogInterface.OnClickListener(){  
+        alert.setNegativeButton(R.string.no, new DialogInterface.OnClickListener(){  
             public void onClick(DialogInterface dialog, int which) {  
             	PadTestActivity.super.onBackPressed();
             }});  
