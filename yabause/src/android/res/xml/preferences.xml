@@ -41,7 +41,7 @@
         <org.uoyabause.android.InputSettingPrefernce
             android:key="pref_inputdef_file"
             android:title="@string/input_device_setting"
-            android:summary="Edit Key map" />
+            android:summary="" />
         
         <PreferenceScreen 
             android:summary=""
