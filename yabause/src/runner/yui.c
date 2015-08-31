@@ -98,12 +98,15 @@ void set_color(struct ConsoleColor color)
 static const char *bios = "";
 static int emulate_bios = 0;
 
-void YuiErrorMsg(const char *error_text) {
+void YuiErrorMsg(const char *error_text) 
+{
    printf("\n\nError: %s\n", error_text);
    printf("                                 ");
 }
 
-void YuiSwapBuffers(void) {
+void YuiSwapBuffers(void) 
+{
+
 }
 
 //add tests that currently don't work in yabause here
@@ -152,12 +155,159 @@ int find_test_expected_to_fail(char* test_name)
    return 0;
 }
 
+std::string make_screenshot_filename(std::string test_name, std::string path, int preset)
+{
+   return path + test_name + " " + std::to_string(preset) + ".png";
+}
+
+bool handle_screenshot(bool write_images, std::string test_name, std::string path, int preset)
+{
+   std::string screenshot_filename = make_screenshot_filename(test_name, path, preset);
+
+   if (write_images)
+   {
+      int width = 0, height = 0;
+
+      TitanGetResolution(&width, &height);
+      TitanRender(runner_dispbuffer);
+
+      unsigned error = lodepng::encode(screenshot_filename, (unsigned char*)runner_dispbuffer, width, height);
+
+      if (error)
+      {
+         printf("error %u: %s\n", error, lodepng_error_text(error));
+         return false;
+      }
+      else
+      {
+         printf("%s written.\n", screenshot_filename.c_str());
+      }
+   }
+   else
+   {
+      std::vector<unsigned char> correct_image;
+      std::vector<u32> correct_image_u32;
+
+      unsigned correct_width, correct_height;
+
+      unsigned error = lodepng::decode(correct_image, correct_width, correct_height, screenshot_filename);
+
+      int test_width = 0, test_height = 0;
+
+      TitanGetResolution(&test_width, &test_height);
+      TitanRender(runner_dispbuffer);
+
+      bool check_failed = false;
+
+      if (test_width != correct_width)
+      {
+         printf("Vdp2 width was %d. %d was expected.\n", test_width, correct_width);
+      }
+
+      if (test_height != correct_height)
+      {
+         printf("Vdp2 height was %d. %d was expected.\n", test_height, correct_height);
+      }
+
+      correct_image_u32.resize(correct_width*correct_height);
+
+      int j = 0;
+
+      for (unsigned int i = 0; i < correct_width*correct_height * 4; i += 4)
+      {
+         correct_image_u32[j] = (correct_image[i + 3] << 24) | (correct_image[i + 2] << 16) | (correct_image[i + 1] << 8) | correct_image[i + 0];
+         j++;
+      }
+
+      for (unsigned int y = 0; y < correct_height; y++)
+      {
+         for (unsigned int x = 0; x < correct_width; x++)
+         {
+            u32 correct_color = correct_image_u32[(y * correct_width) + x];
+            u32 test_color = runner_dispbuffer[(y * correct_width) + x];
+
+            if (test_color != correct_color)
+            {
+               printf("Test color was 0x%08x at x=%d y=%d. 0x%08x was expected.\n", test_color, x, y, correct_color);
+               return false;
+            }
+         }
+      }
+
+      if (!check_failed)
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+int go_to_next_test(int &current_test, char* filename, yabauseinit_struct yinit)
+{
+   current_test++;
+
+   YabauseDeInit();
+
+   if (YabauseInit(&yinit) != 0)
+      return -1;
+
+   MappedMemoryLoadExec(filename, 0);
+   MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
+
+   return 1;
+}
+
+struct Stats
+{
+   int regressions;
+   int total_tests;
+   int tests_passed;
+   int expected_failures;
+   int screenshot_matches;
+   int screenshot_regressions;
+   int screenshot_total;
+};
+
+void do_test_pass(struct Stats & stats, char * message)
+{
+   //test was passed
+   set_color(text_green);
+   printf("%s\n", message);
+   set_color(text_white);
+}
+
+void do_test_fail(struct Stats & stats, char* stored_test_name)
+{
+   //test failed
+   set_color(text_red);
+
+   if (find_test_expected_to_fail(stored_test_name))
+   {
+      //test is not a regression
+      printf("FAIL");
+      set_color(text_green);
+      printf(" (Not a regression)\n");
+      stats.expected_failures++;
+   }
+   else
+   {
+      //test is a regression
+      printf("FAIL\n");
+      stats.regressions++;
+   }
+
+   set_color(text_white);
+}
+
+
 int main(int argc, char *argv[])
 {
    yabauseinit_struct yinit = { 0 };
    int current_test = 0;
    char stored_test_name[256] = { 0 };
    char * filename = argv[1];
+   char * screenshot_path = argv[2];
 
    struct Stats
    {
@@ -170,6 +320,12 @@ int main(int argc, char *argv[])
    if (!filename)
    {
       printf("No file specified.\n");
+      return 0;
+   }
+
+   if (!screenshot_path)
+   {
+      printf("No screenshot path specified.\n");
       return 0;
    }
 
@@ -200,6 +356,13 @@ int main(int argc, char *argv[])
    MappedMemoryLoadExec(filename, 0);
    MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
 
+   bool write_images = false;
+
+   std::string screenshot_filename = "";
+
+   int screenshot_preset = 0;
+   bool is_screenshot = false;
+
    for (;;)
    {
       int status = 0;
@@ -219,15 +382,47 @@ int main(int argc, char *argv[])
             //print a debug message
             print_basic(message);
          }
+         else if (!strcmp(message, "SCREENSHOT"))
+         {
+            stats.screenshot_total++;
+
+            if (handle_screenshot(write_images, stored_test_name, screenshot_path, screenshot_preset))
+            {
+               //test passed
+               if (!write_images)
+               {
+                  printf("Preset %-25d ", screenshot_preset);
+                  do_test_pass(stats, "No regression");
+                  stats.screenshot_matches++;
+               }
+            }
+            else
+            {
+               //failed
+               if (!write_images)
+               {
+                  do_test_fail(stats, stored_test_name);
+                  stats.screenshot_regressions++;
+               }
+            }
+            
+            screenshot_preset++;
+         }
          else if (!strcmp(message, "SECTION_START"))
          {
             //print the name of the test section
             print_basic(message);
+
+            if (std::string(message) == "Vdp2 screenshot tests")
+            {
+               is_screenshot = true;
+            }
          }
          else if (!strcmp(message, "SECTION_END"))
          {
             //all sub-tests finished, proceed to next main test
             printf("\n");
+
             current_test++;
 
             YabauseDeInit();
@@ -237,12 +432,30 @@ int main(int argc, char *argv[])
 
             MappedMemoryLoadExec(filename, 0);
             MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
+
+            go_to_next_test(current_test, filename, yinit);
+
+            is_screenshot = false;
          }
          else if (!strcmp(message, "SUB_TEST_START"))
          {
             //keep the test name for checking if it is a regression or not
             read_second_part(message, stored_test_name);
             printf("%-32s ", stored_test_name);
+
+            if (!write_images)
+            {
+               if (is_screenshot)
+               {
+                  printf("%-32s \n", stored_test_name);
+               }
+               else
+               {
+                  printf("%-32s ", stored_test_name);
+               }
+            }
+
+            screenshot_filename = make_screenshot_filename(stored_test_name, screenshot_path, screenshot_preset);
          }
          else if (!strcmp(message, "RESULT"))
          {
@@ -254,10 +467,12 @@ int main(int argc, char *argv[])
 
             if (!strcmp(result_prefix, "PASS"))
             {
+
                //test was passed
                set_color(text_green);
                printf("PASS\n");
                set_color(text_white);
+               do_test_pass(stats, "PASS");
                stats.tests_passed++;
             }
             else if (!strcmp(result_prefix, "FAIL"))
@@ -302,6 +517,7 @@ int main(int argc, char *argv[])
             }
 
             printf("%d of %d tests passed. %d regressions. %d failures that are not regressions. \n", stats.tests_passed, stats.total_tests, stats.regressions, stats.expected_failures);
+            printf("%d of %d screenshots matched. %d regressions. \n", stats.screenshot_matches, stats.screenshot_total, stats.screenshot_regressions);
 
             set_color(text_white);
 
