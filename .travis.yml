@@ -43,22 +43,26 @@ matrix:
         - echo 'SET(CMAKE_C_COMPILER   x86_64-w64-mingw32-gcc)' >> toolchain.cmake
         - echo 'SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)' >> toolchain.cmake
         - echo 'SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)' >> toolchain.cmake
-        - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake ..
+        - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
         - make
 
     # compile runner and run yabauseut tests
     - compiler: gcc
       env: testenv="compile runner and run yabauseut tests"
       script:
+        - cd ../src/runner
+        - git clone git://github.com/lvandeve/lodepng.git
+        - cd lodepng
+        - cd ../../../build
         - cmake -DYAB_PORTS=runner -DSH2_DYNAREC=OFF -DYAB_WANT_C68K=OFF -DYAB_WANT_Q68=OFF -DYAB_WANT_OPENGL=OFF ..
         - make
         - cd src/runner
-        #todo compile this instead
+        # todo compile this instead
         - git clone git://github.com/d356/yabauseut-bin.git
         - cd yabauseut-bin
-        - git reset --hard 784c45eed5b48442089a99f01a6fee0650764c76
+        - git reset --hard 9875a6f113bc796b68bd484245e709a04548d7cc
         - cd ..
-        - ./yabause yabauseut-bin/YabauseUT.elf
+        - ./yabause yabauseut-bin/YabauseUT.elf yabauseut-bin/vdp2_screenshots/
 
 language: cpp
 
