@@ -157,6 +157,7 @@ void (*auto_tests[])() =
    //smpc
    //vdp1
    //vdp2
+   vdp2_auto_tests,
    auto_test_all_finished
 };
 

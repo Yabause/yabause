@@ -19,7 +19,8 @@
 */
 
 #include <stdio.h>
-
+extern "C"
+{
 #include "../yui.h"
 #include "../peripheral.h"
 #include "../cs0.h"
@@ -27,9 +28,16 @@
 #include "../m68kc68k.h"
 #include "../vidsoft.h"
 #include "../vdp2.h"
+#include "../titan/titan.h"
 #ifdef _MSC_VER
 #include <Windows.h>
 #endif
+}
+
+#include "lodepng/lodepng.h"
+#include "lodepng/lodepng.cpp"
+
+#include <string>
 
 #define AUTO_TEST_SELECT_ADDRESS 0x7F000
 #define AUTO_TEST_STATUS_ADDRESS 0x7F004
@@ -39,41 +47,45 @@
 
 #define VDP2_VRAM 0x25E00000
 
-SH2Interface_struct *SH2CoreList[] = {
-    &SH2Interpreter,
-    NULL
-};
+extern "C"
+{
+   SH2Interface_struct *SH2CoreList[] = {
+      &SH2Interpreter,
+      NULL
+   };
 
-PerInterface_struct *PERCoreList[] = {
-    &PERDummy,
-    NULL
-};
+   PerInterface_struct *PERCoreList[] = {
+      &PERDummy,
+      NULL
+   };
 
-CDInterface *CDCoreList[] = {
-    &DummyCD,
-    NULL
-};
+   CDInterface *CDCoreList[] = {
+      &DummyCD,
+      NULL
+   };
 
-SoundInterface_struct *SNDCoreList[] = {
-    &SNDDummy,
-    NULL
-};
+   SoundInterface_struct *SNDCoreList[] = {
+      &SNDDummy,
+      NULL
+   };
 
-VideoInterface_struct *VIDCoreList[] = {
-    &VIDDummy,
-    NULL
-};
+   VideoInterface_struct *VIDCoreList[] = {
+      &VIDSoft,
+      &VIDDummy,
+      NULL
+   };
 
-M68K_struct * M68KCoreList[] = {
-    &M68KDummy,
-#ifdef HAVE_C68K
-    &M68KC68K,
-#endif
-#ifdef HAVE_Q68
-    &M68KQ68,
-#endif
-    NULL
-};
+   M68K_struct * M68KCoreList[] = {
+      &M68KDummy,
+   #ifdef HAVE_C68K
+      &M68KC68K,
+   #endif
+   #ifdef HAVE_Q68
+      &M68KQ68,
+   #endif
+      NULL
+   };
+}
 
 struct ConsoleColor
 {
@@ -98,19 +110,19 @@ void set_color(struct ConsoleColor color)
 static const char *bios = "";
 static int emulate_bios = 0;
 
-void YuiErrorMsg(const char *error_text) 
+void YuiErrorMsg(const char *error_text)
 {
    printf("\n\nError: %s\n", error_text);
    printf("                                 ");
 }
 
-void YuiSwapBuffers(void) 
+void YuiSwapBuffers(void)
 {
 
 }
 
 //add tests that currently don't work in yabause here
-char* tests_expected_to_fail[] =
+const char* tests_expected_to_fail[] =
 {
    //slave sh2
    "SCU Mask Cache Quirk",
@@ -129,6 +141,8 @@ char* tests_expected_to_fail[] =
    NULL
 };
 
+pixel_t runner_dispbuffer[704 * 512];
+
 void read_second_part(char*source, char*dest)
 {
    int pos = (int)strlen(source) + 1;
@@ -137,7 +151,7 @@ void read_second_part(char*source, char*dest)
 
 void print_basic(char*message)
 {
-   read_second_part(message,message);
+   read_second_part(message, message);
    printf("%s\n", message);
 }
 
@@ -157,7 +171,9 @@ int find_test_expected_to_fail(char* test_name)
 
 std::string make_screenshot_filename(std::string test_name, std::string path, int preset)
 {
-   return path + test_name + " " + std::to_string(preset) + ".png";
+   char preset_str[64] = { 0 };
+   sprintf(preset_str, "%d", preset);
+   return path + test_name + " " + preset_str + ".png";
 }
 
 bool handle_screenshot(bool write_images, std::string test_name, std::string path, int preset)
@@ -191,6 +207,12 @@ bool handle_screenshot(bool write_images, std::string test_name, std::string pat
       unsigned correct_width, correct_height;
 
       unsigned error = lodepng::decode(correct_image, correct_width, correct_height, screenshot_filename);
+
+      if (error)
+      {
+         printf("error %u: %s\n", error, lodepng_error_text(error));
+         return false;
+      }
 
       int test_width = 0, test_height = 0;
 
@@ -228,7 +250,9 @@ bool handle_screenshot(bool write_images, std::string test_name, std::string pat
 
             if (test_color != correct_color)
             {
+               set_color(text_red);
                printf("Test color was 0x%08x at x=%d y=%d. 0x%08x was expected.\n", test_color, x, y, correct_color);
+               set_color(text_white);
                return false;
             }
          }
@@ -265,7 +289,7 @@ struct Stats
    int tests_passed;
    int expected_failures;
    int screenshot_matches;
-   int screenshot_regressions;
+   int screenshot_diffs;
    int screenshot_total;
 };
 
@@ -300,6 +324,14 @@ void do_test_fail(struct Stats & stats, char* stored_test_name)
    set_color(text_white);
 }
 
+void do_regression_color(int regressions)
+{
+   if (regressions > 0)
+      set_color(text_red);
+   else
+      set_color(text_green);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -309,13 +341,7 @@ int main(int argc, char *argv[])
    char * filename = argv[1];
    char * screenshot_path = argv[2];
 
-   struct Stats
-   {
-      int regressions;
-      int total_tests;
-      int tests_passed;
-      int expected_failures;
-   }stats = { 0 };
+   struct Stats stats = { 0 };
 
    if (!filename)
    {
@@ -333,7 +359,7 @@ int main(int argc, char *argv[])
 
    yinit.percoretype = PERCORE_DUMMY;
    yinit.sh2coretype = SH2CORE_INTERPRETER;
-   yinit.vidcoretype = VIDCORE_DUMMY;
+   yinit.vidcoretype = VIDCORE_SOFT;
    yinit.m68kcoretype = M68KCORE_DUMMY;
    yinit.sndcoretype = SNDCORE_DUMMY;
    yinit.cdcoretype = CDCORE_DUMMY;
@@ -367,6 +393,7 @@ int main(int argc, char *argv[])
    {
       int status = 0;
 
+      //emulate a frame
       PERCore->HandleEvents();
 
       status = MappedMemoryReadByte(VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS);
@@ -388,24 +415,23 @@ int main(int argc, char *argv[])
 
             if (handle_screenshot(write_images, stored_test_name, screenshot_path, screenshot_preset))
             {
-               //test passed
+               //screenshot matches
                if (!write_images)
                {
                   printf("Preset %-25d ", screenshot_preset);
-                  do_test_pass(stats, "No regression");
+                  do_test_pass(stats, "Match");
                   stats.screenshot_matches++;
                }
             }
             else
             {
-               //failed
+               //doesn't match
                if (!write_images)
                {
-                  do_test_fail(stats, stored_test_name);
-                  stats.screenshot_regressions++;
+                  stats.screenshot_diffs++;
                }
             }
-            
+
             screenshot_preset++;
          }
          else if (!strcmp(message, "SECTION_START"))
@@ -423,8 +449,6 @@ int main(int argc, char *argv[])
             //all sub-tests finished, proceed to next main test
             printf("\n");
 
-            current_test++;
-
             YabauseDeInit();
 
             if (YabauseInit(&yinit) != 0)
@@ -441,7 +465,11 @@ int main(int argc, char *argv[])
          {
             //keep the test name for checking if it is a regression or not
             read_second_part(message, stored_test_name);
-            printf("%-32s ", stored_test_name);
+
+            screenshot_preset = 0;
+
+            if(is_screenshot)
+               printf("\n");
 
             if (!write_images)
             {
@@ -455,51 +483,31 @@ int main(int argc, char *argv[])
                }
             }
 
-            screenshot_filename = make_screenshot_filename(stored_test_name, screenshot_path, screenshot_preset);
+            if (is_screenshot)
+            {
+               screenshot_filename = make_screenshot_filename(stored_test_name, screenshot_path, screenshot_preset);
+            }
          }
          else if (!strcmp(message, "RESULT"))
          {
             char result_prefix[64] = { 0 };
 
-            read_second_part(message,message);
+            read_second_part(message, message);
 
             strncpy(result_prefix, message, 4);
 
             if (!strcmp(result_prefix, "PASS"))
             {
-
-               //test was passed
-               set_color(text_green);
-               printf("PASS\n");
-               set_color(text_white);
-               do_test_pass(stats, "PASS");
+               do_test_pass(stats,"PASS");
                stats.tests_passed++;
             }
             else if (!strcmp(result_prefix, "FAIL"))
             {
-               //test failed
-               set_color(text_red);
-
-               if (find_test_expected_to_fail(stored_test_name))
-               {
-                  //test is not a regression
-                  printf("FAIL");
-                  set_color(text_green);
-                  printf(" (Not a regression)\n");
-                  stats.expected_failures++;
-               }
-               else
-               {
-                  //test is a regression
-                  printf("FAIL\n");
-                  stats.regressions++;
-               }
-               
-               set_color(text_white);
+               do_test_fail(stats, stored_test_name);
             }
             else
             {
-               printf("Unrecognized result prefix: %s\n",result_prefix);
+               printf("Unrecognized result prefix: %s\n", result_prefix);
             }
 
             stats.total_tests++;
@@ -507,17 +515,12 @@ int main(int argc, char *argv[])
          else if (!strcmp(message, "ALL_FINISHED"))
          {
             //print stats and exit
-            if (stats.regressions > 0)
-            {
-               set_color(text_red);
-            }
-            else
-            {
-               set_color(text_green);
-            }
 
+            do_regression_color(stats.regressions);
             printf("%d of %d tests passed. %d regressions. %d failures that are not regressions. \n", stats.tests_passed, stats.total_tests, stats.regressions, stats.expected_failures);
-            printf("%d of %d screenshots matched. %d regressions. \n", stats.screenshot_matches, stats.screenshot_total, stats.screenshot_regressions);
+            
+            do_regression_color(stats.screenshot_diffs);
+            printf("%d of %d screenshots matched. %d did not match. \n", stats.screenshot_matches, stats.screenshot_total, stats.screenshot_diffs);
 
             set_color(text_white);
 
@@ -532,5 +535,5 @@ int main(int argc, char *argv[])
       }
    }
 
-   return stats.regressions;
+   return stats.regressions || stats.screenshot_diffs;
 }
