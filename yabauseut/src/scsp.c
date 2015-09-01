@@ -20,6 +20,7 @@
 #include <iapetus.h>
 #include "tests.h"
 #include "scsp.h"
+#include "main.h"
 #include <stdio.h>
 
 #define SCSPREG_TIMERA  (*(volatile u16 *)0x25B00418)
@@ -810,12 +811,261 @@ void scsp_dsp_register_write_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void scsp_dsp_write_mpro(u16 instr0, u16 instr1, u16 instr2, u16 instr3, u32 addr)
+{
+   volatile u16* mpro_ptr = (u16 *)0x25b00800;
+   addr *= 4;
+   mpro_ptr[addr+0] = instr0;
+   mpro_ptr[addr+1] = instr1;
+   mpro_ptr[addr+2] = instr2;
+   mpro_ptr[addr+3] = instr3;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scsp_dsp_clear_instr(u16 *instr0, u16 *instr1, u16 *instr2, u16 *instr3)
+{
+   *instr0 = 0;
+   *instr1 = 0;
+   *instr2 = 0;
+   *instr3 = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scsp_dsp_erase_mpro()
+{
+   volatile u16* mpro_ptr = (u16 *)0x25b00800;
+   int i;
+
+   for (i = 0; i < 128 * 4; i++)
+   {
+      mpro_ptr[i] = 0;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scsp_dsp_clear()
+{
+   volatile u16* sound_ram_ptr = (u16 *)0x25a00000;
+   volatile u16* coef_ptr = (u16 *)0x25b00700;
+   volatile u16* mems_ptr = (u16 *)0x25b00C00;
+   volatile u16* temp_ptr = (u16 *)0x25b00E00;
+   int i;
+
+   scsp_dsp_erase_mpro();
+
+   for (i = 0; i < 27; i++)
+   {
+      sound_ram_ptr[i] = 0;
+      mems_ptr[i] = 0;
+      temp_ptr[i] = 0;
+      coef_ptr[i] = 0;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scsp_dsp_start_test(u16 a_val, u16 b_val, int*yval)
+{
+
+   volatile u16* sound_ram_ptr = (u16 *)0x25a00000;
+   volatile u16* coef_ptr = (u16 *)0x25b00700;
+   volatile u16* start_dsp = (u16 *)0x25b00BF0;
+
+   u16 instr0 = 0;
+   u16 instr1 = 0;
+   u16 instr2 = 0;
+   u16 instr3 = 0;
+
+   scsp_dsp_clear();
+
+   coef_ptr[0] = a_val;
+
+   sound_ram_ptr[0] = b_val;
+
+   //nop
+   scsp_dsp_write_mpro(0, 0, 0, 0, 0);
+
+   //set memval
+   instr2 = 1 << 13;//set mrd
+   instr2 |= 1 << 15;// set table
+   instr3 = 1 << 15; //set nofl
+
+   scsp_dsp_write_mpro(0, 0, instr2, instr3, 1);
+
+   scsp_dsp_clear_instr(&instr0, &instr1, &instr2, &instr3);
+
+   //load memval to inputs
+   instr1 = 1 << 5;//set iwt
+   //ira and iwa will be 0 and equal to each other
+
+   scsp_dsp_write_mpro(0, instr1, 0, 0, 2);
+
+   scsp_dsp_clear_instr(&instr0, &instr1, &instr2, &instr3);
+
+   scsp_dsp_write_mpro(0, 0, 0, 0, 3);//nop
+
+   //load inputs to x, load coef to y, set B to zero
+   instr1 = 1 << 15;//set xsel
+   instr1 |= 1 << 13;//set ysel to 1
+   //coef == 0
+   instr2 = 1 << 1;//zero
+
+   scsp_dsp_write_mpro(0, instr1, instr2, 0, 4);
+
+   scsp_dsp_clear_instr(&instr0, &instr1, &instr2, &instr3);
+
+   //needs to be on an odd instruction
+   instr2 |= 1 << 14;//set mwt
+   instr3 |= 1;//set nxadr
+   instr2 |= 1 << 15; //set table
+   instr3 |= 1 << 15; //set nofl
+
+   scsp_dsp_write_mpro(instr0, instr1, instr2, instr3, 5);
+
+   //start the dsp
+   start_dsp[0] = 1;
+
+   //wait a frame
+   vdp_vsync();
+
+   vdp_printf(&test_disp_font, 0 * 8, *yval * 8, 0xF, "a: 0x%04x * b: 0x%04x = 0x%04x", a_val,b_val, sound_ram_ptr[1]);
+   *yval = *yval + 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scsp_dsp_multiply_test()
+{
+   int i, j;
+   int yval = 0;
+   u16 test_vals[] = { 0x0100,0x0200,0x0400,0x0800,0x1000};
+
+   for (i = 0; i < 5; i++)
+   {
+      for (j = 0; j < 5; j++)
+      {
+         scsp_dsp_start_test(test_vals[i], test_vals[j], &yval);
+      }
+   }
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      if (per[0].but_push_once & PAD_START)
+      {
+         reset_system();
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void scsp_dsp_test()
 {
    scsp_minimal_init();
    unregister_all_tests();
    register_test(&scsp_dsp_register_write_test, "Register Read/Write Test");
    do_tests("SCSP DSP tests", 0, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 square_table[] =
+{
+   0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xc000,
+   0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000
+};
+
+#define KEYONEX 0x10000000
+#define KEYONB 0x08000000
+
+u16 fns_table[] = {
+   0x0,0x3d,0x7d,0xc2,0x10a,0x157,0x1a8,0x1fe,0x25a,0x2ba,0x321,0x38d
+};
+
+//////////////////////////////////////////////////////////////////////////////
+
+void write_note(u8 which_slot, u32 sa, u16 lsa, u16 lea, u8 oct, u16 fns, u8 pcm8b, u8 loop)
+{
+   volatile u16* slot_ptr = (u16 *)0x25b00000;
+   volatile u32* slot_ptr_l = (u32 *)0x25b00000;
+
+   int offset = which_slot * 0x10;
+
+   //force a note off
+   slot_ptr_l[which_slot * 0x8] = KEYONEX;
+
+   slot_ptr_l[which_slot*0x8] = KEYONEX | KEYONB | sa | (pcm8b << 20) | (loop << 21);
+   slot_ptr[offset + 2] = lsa;//lsa
+   slot_ptr[offset + 3] = lea;//lea
+   slot_ptr[offset + 4] = 0x001f;//d2r,d1r,ho,ar
+   slot_ptr[offset + 5] = 0x001f;//ls,krs,dl,rr
+   slot_ptr[offset + 6] = 0x0000;//si,sd,tl
+   slot_ptr[offset + 7] = 0x0000;//mdl,mdxsl,mdysl
+   slot_ptr[offset + 8] = (oct << 11) | fns;//oct,fns
+   slot_ptr[offset + 9] = 0x0000;//re,lfof,plfows,plfos,alfows,alfos
+   slot_ptr[offset + 10] = 0x0000;//isel,imxl
+   slot_ptr[offset + 11] = 0xE000;//disdl,dipan,efsdl,efpan
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scsp_test_note_on()
+{
+   volatile u32* slot_ptr_l = (u32 *)0x25b00000;
+   volatile u16* sound_ram_ptr = (u16 *)0x25a00000;
+   volatile u16* control = (u16 *)0x25b00400;
+   int oct = 0xd;
+   int which_note = 0;
+   int major_scale[] = { 0,2,4,5,7,9,11 };
+   int i;
+
+   for (i = 0; i < 16; i++)
+   {
+      sound_ram_ptr[i] = square_table[i];
+   }
+
+   control[0] = 7;//master vol
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      int scale_note = major_scale[which_note];
+      int fns = fns_table[scale_note];
+
+      //key on
+      if (per[0].but_push_once & PAD_A)
+      {
+         write_note(0, 0, 0, 0x10 - 1, oct, fns, 0, 1);
+         which_note++;
+         if (which_note > 6)
+            which_note = 0;
+      }
+
+      if (per[0].but_push_once & PAD_X)
+      {
+         write_note(1, 0, 0, 0x10 - 1, oct, fns, 0, 1);
+         which_note++;
+         if (which_note > 6)
+            which_note = 0;
+      }
+
+      //key off
+      if (per[0].but_push_once & PAD_B)
+      {
+         slot_ptr_l[0] = KEYONB;
+      }
+
+      if (per[0].but_push_once & PAD_START)
+      {
+         reset_system();
+      }
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
