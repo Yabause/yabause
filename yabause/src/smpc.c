@@ -581,7 +581,6 @@ void SmpcExec(s32 t) {
 
 u8 FASTCALL SmpcReadByte(u32 addr) {
    addr &= 0x7F;
-
    return SmpcRegsT[addr >> 1];
 }
 
@@ -695,7 +694,6 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
          return;
       case 0x75: // PDR1
          // FIX ME (should support other peripherals)
-
          switch (SmpcRegs->DDR[0] & 0x7F) { // Which Control Method do we use?
             case 0x00:
                if (PORTDATA1.data[1] == PERGUN && (val & 0x7F) == 0x7F)
@@ -704,7 +702,7 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
             case 0x60:
                switch (val & 0x60) {
                   case 0x60: // 1st Data
-                     val = (val & 0x80) | 0x14 | (PORTDATA1.data[1] & 0x8);
+                     val = (val & 0x80) | 0x14 | (PORTDATA1.data[3] & 0x8);
                      break;
                   case 0x20: // 2nd Data
                      val = (val & 0x80) | 0x10 | ((PORTDATA1.data[2] >> 4) & 0xF);
@@ -713,7 +711,7 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                      val = (val & 0x80) | 0x10 | (PORTDATA1.data[2] & 0xF);
                      break;
                   case 0x00: // 4th Data
-                     val = (val & 0x80) | 0x10 | ((PORTDATA1.data[1] >> 4) & 0xF);
+                     val = (val & 0x80) | 0x10 | ((PORTDATA1.data[3] >> 4) & 0xF);
                      break;
                   default: break;
                }
@@ -725,7 +723,38 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                break;
          }
 			break;
-      case 0x79: // DDR1
+	  case 0x77: // PDR1
+		  // FIX ME (should support other peripherals)
+		  switch (SmpcRegs->DDR[1] & 0x7F) { // Which Control Method do we use?
+		  case 0x00:
+			  if (PORTDATA2.data[1] == PERGUN && (val & 0x7F) == 0x7F)
+				  SmpcRegs->PDR[1] = PORTDATA2.data[2];
+			  break;
+		  case 0x60:
+			  switch (val & 0x60) {
+			  case 0x60: // 1st Data
+				  val = (val & 0x80) | 0x14 | (PORTDATA2.data[3] & 0x8);
+				  break;
+			  case 0x20: // 2nd Data
+				  val = (val & 0x80) | 0x10 | ((PORTDATA2.data[2] >> 4) & 0xF);
+				  break;
+			  case 0x40: // 3rd Data
+				  val = (val & 0x80) | 0x10 | (PORTDATA2.data[2] & 0xF);
+				  break;
+			  case 0x00: // 4th Data
+				  val = (val & 0x80) | 0x10 | ((PORTDATA2.data[3] >> 4) & 0xF);
+				  break;
+			  default: break;
+			  }
+
+			  SmpcRegs->PDR[1] = val;
+			  break;
+		  default:
+			  SMPCLOG("smpc\t: Peripheral Unknown Control Method not implemented\n");
+			  break;
+		  }
+		  break;
+	  case 0x79: // DDR1
          switch (SmpcRegs->DDR[0] & 0x7F) { // Which Control Method do we use?
             case 0x00: // Low Nibble of Peripheral ID
             case 0x40: // High Nibble of Peripheral ID
@@ -772,6 +801,12 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
             default: break;
          }
          break;
+	  case 0x7D: // IOSEL
+		  SmpcRegs->IOSEL = val;
+		  break;
+	  case 0x7F: // EXLE
+		  SmpcRegs->EXLE = val;
+		  break;
       default:
          return;
    }
