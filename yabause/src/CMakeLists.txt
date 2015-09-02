@@ -1,5 +1,6 @@
 project(yabause)
 
+include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
@@ -127,9 +128,27 @@ if (STRICMP_OK)
 endif ()
 
 # __builtin_bswap16
-check_function_exists(__builtin_bswap16 BSWAP16_OK)
+check_c_source_compiles (
+	"
+	int main(void) {
+		return !__builtin_bswap16(0xabcd) == 0xcdab;
+	}
+	"
+	BSWAP16_OK)
 if (BSWAP16_OK)
 	add_definitions(-DHAVE_BUILTIN_BSWAP16=1)
+endif()
+
+# __builtin_bswap32
+check_c_source_compiles (
+	"
+	int main(void) {
+		return !__builtin_bswap32(0xdeadbeef) == 0xefbeadde;
+	}
+	"
+	BSWAP32_OK)
+if (BSWAP32_OK)
+	add_definitions(-DHAVE_BUILTIN_BSWAP32=1)
 endif()
 
 # sys/time.h

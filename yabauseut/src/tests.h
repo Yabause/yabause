@@ -55,6 +55,10 @@ void unregister_all_tests();
 void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line);
 
 void auto_test_all_finished();
+void auto_test_take_screenshot();
+void auto_test_section_start(char* test_section_name);
+void auto_test_sub_test_start(char* sub_test_name);
+void auto_test_section_end();
 
 extern screen_settings_struct test_disp_settings;
 extern font_struct test_disp_font;

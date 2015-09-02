@@ -296,6 +296,14 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 	}
 }
 
+void UIYabause::resizeEvent( QResizeEvent* event )
+{
+	if (event->oldSize().width() != event->size().width())
+		fixAspectRatio(event->size().width());
+
+	QMainWindow::resizeEvent( event );
+}
+
 void UIYabause::swapBuffers()
 { 
 	mYabauseGL->swapBuffers(); 
@@ -342,8 +350,7 @@ void UIYabause::sizeRequested( const QSize& s )
 	int width, height;
 	if (s.isNull())
 	{
-		width=640;
-		height=480;
+		return;
 	}
 	else
 	{
@@ -360,7 +367,44 @@ void UIYabause::sizeRequested( const QSize& s )
 		height += menubar->height();
 	if (vs->value( "View/Toolbar" ).toInt() != BD_ALWAYSHIDE)
 		height += toolBar->height();
+
 	resize( width, height ); 
+}
+
+void UIYabause::fixAspectRatio( int width )
+{
+	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio").toInt();
+
+	switch( aspectRatio )
+	{
+		case 0:
+			setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
+			setMinimumSize( 0,0 );
+			break;
+		case 1:
+		case 2:
+		{
+			int heightOffset = toolBar->height()+menubar->height();
+			int height;
+
+			if ( aspectRatio == 1 )
+				height = 3 * ((float) width / 4);
+			else
+				height = 9 * ((float) width / 16);
+
+			mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
+
+			// Compensate for menubar and toolbar
+			VolatileSettings* vs = QtYabause::volatileSettings();
+			if (vs->value( "View/Menubar" ).toInt() != BD_ALWAYSHIDE)
+				height += menubar->height();
+			if (vs->value( "View/Toolbar" ).toInt() != BD_ALWAYSHIDE)
+				height += toolBar->height();
+
+			setFixedHeight( height );
+			break;
+		}
+	}
 }
 
 void UIYabause::getSupportedResolutions()
@@ -497,8 +541,12 @@ void UIYabause::fullscreenRequested( bool f )
 #endif
 		VolatileSettings* vs = QtYabause::volatileSettings();
 
+		setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
+		setMinimumSize( 0,0 );
+
 		toggleFullscreen(vs->value("Video/FullscreenWidth").toInt(), vs->value("Video/FullscreenHeight").toInt(), 
 						f, vs->value("Video/VideoFormat").toInt());
+
 		showFullScreen();
 
 		if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS )
@@ -656,6 +704,7 @@ void UIYabause::on_aFileSettings_triggered()
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
 			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
 			sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
+		fixAspectRatio( rect().width() );
 		
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||
@@ -1073,4 +1122,3 @@ void UIYabause::toggleEmulateMouse( bool enable )
 {
 	emulateMouse = enable;
 }
-

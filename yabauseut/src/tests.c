@@ -141,6 +141,22 @@ void auto_test_section_end()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void auto_test_take_screenshot(int frames_to_wait)
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   int i;
+
+   for (i = 0; i < frames_to_wait; i++)
+   {
+      vdp_vsync();
+   }
+
+   auto_test_send_message("SCREENSHOT", "");
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void init_test(void)
 {
    // Put saturn in a minimalized state
