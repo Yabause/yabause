@@ -315,6 +315,10 @@ void UISettings::loadCores()
 	// SH2 Interpreters
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
+
+	cbAspectRatio->addItem( QtYabause::translate( "Fit to window" ), 0 );
+	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 4:3" ), 1 );
+	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 16:9" ), 2 );
 }
 
 void UISettings::loadSupportedResolutions()
@@ -427,6 +431,7 @@ void UISettings::loadSettings()
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
 
+	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );
 	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 640 ) ).toString() );
 	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 480 ) ).toString() );
 	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 640 ) ).toString(),
@@ -503,6 +508,7 @@ void UISettings::saveSettings()
 	// Save new version of keys
 	s->setValue( "Video/WindowWidth", leWinWidth->text() );
 	s->setValue( "Video/WindowHeight", leWinHeight->text() );
+	s->setValue( "Video/AspectRatio", cbAspectRatio->currentIndex() );
 
 	if (supportedRes.count() > 0)
 	{
