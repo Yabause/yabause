@@ -1,6 +1,6 @@
 project(yabause)
 
-include (CheckCSourceRuns)
+include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
@@ -110,7 +110,7 @@ if (STRICMP_OK)
 endif ()
 
 # __builtin_bswap16
-check_c_source_runs (
+check_c_source_compiles (
 	"
 	int main(void) {
 		return !__builtin_bswap16(0xabcd) == 0xcdab;
@@ -122,7 +122,7 @@ if (BSWAP16_OK)
 endif()
 
 # __builtin_bswap32
-check_c_source_runs (
+check_c_source_compiles (
 	"
 	int main(void) {
 		return !__builtin_bswap32(0xdeadbeef) == 0xefbeadde;
