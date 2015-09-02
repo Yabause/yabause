@@ -252,7 +252,9 @@ static INLINE int StateCheckRetrieveHeader(FILE *fp, const char *name, int *vers
 # define BSWAP16(x)  ((__builtin_bswap16((x) >> 16) << 16) | __builtin_bswap16((x)))
 # define BSWAP16L(x) (__builtin_bswap16((x)))
 #endif
+#ifdef HAVE_BUILTIN_BSWAP32
 # define BSWAP32(x)  (__builtin_bswap32((x)))
+#endif
 #endif
 
 #ifdef _MSC_VER
