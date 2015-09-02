@@ -436,12 +436,15 @@ void vdp2_basic_tile_scroll_deinit()
 
    yabauseut_init();
 }
+
 //////////////////////////////////////////////////////////////////////////////
 
 void vdp2_all_scroll_test()
 {
    int i;
    const u32 tile_address = 0x40000;
+
+   auto_test_sub_test_start("All scroll screen test");
 
    vdp2_basic_tile_scroll_setup(tile_address);
 
@@ -457,8 +460,12 @@ void vdp2_all_scroll_test()
    int scroll_pos = 0;
    int framecount = 0;
 
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_take_screenshot(1);
+#else
    for (;;)
    {
+
       vdp_vsync();
 
       framecount++;
@@ -491,6 +498,7 @@ void vdp2_all_scroll_test()
       if (per[0].but_push_once & PAD_START)
          break;
    }
+#endif
 
    vdp2_basic_tile_scroll_deinit();
 }
@@ -551,11 +559,20 @@ void do_color_ratios(int *framecount, int * ratio, int *ratio_dir)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void vdp2_line_color_write_regs(struct Ccctl ccctl, int lnclen, int lcclmd, u32 table_address)
+{
+   VDP2_REG_CCCTL = (ccctl.exccen << 10) | (ccctl.ccrtmd << 9) | (ccctl.ccmd << 8) | (ccctl.lcccen << 5) | 0xf;
+   VDP2_REG_LNCLEN = lnclen;
+   *(volatile u32 *)0x25F800A8 = (lcclmd << 31) | (table_address / 2);
+}
+
 void vdp2_line_color_screen_test()
 {
    const u32 tile_address = 0x40000;
    const u32 table_address = 0x10000;
    int i;
+
+   auto_test_sub_test_start("Line color screen test");
 
    vdp2_basic_tile_scroll_setup(tile_address);
 
@@ -611,13 +628,15 @@ void vdp2_line_color_screen_test()
    int nbg_ratio[4] = {0};
    char ratio_status_str[64];
 
+#ifdef BUILD_AUTOMATED_TESTING
+   vdp2_line_color_write_regs(ccctl, lnclen, lcclmd, table_address);
+   auto_test_take_screenshot(1);
+#else
    for (;;)
    {
       vdp_vsync();
 
-      VDP2_REG_CCCTL = (ccctl.exccen << 10) | (ccctl.ccrtmd << 9) | (ccctl.ccmd << 8) | (ccctl.lcccen << 5) | 0xf;
-      VDP2_REG_LNCLEN = lnclen;
-      *(volatile u32 *)0x25F800A8 = (lcclmd << 31) | (table_address / 2);
+      vdp2_line_color_write_regs(ccctl, lnclen, lcclmd, table_address);
 
       //update color calculation ratios
       do_color_ratios(&framecount, &ratio, &ratio_dir);
@@ -755,6 +774,7 @@ void vdp2_line_color_screen_test()
       if (per[0].but_push_once & PAD_START)
          break;
    }
+#endif
 
    vdp2_basic_tile_scroll_deinit();
    vdp_set_default_palette();
@@ -780,6 +800,52 @@ void write_large_font(int x_pos, int y_pos, int* number, int palette, u32 base, 
 
 //////////////////////////////////////////////////////////////////////////////
 
+//vars for reg adjuster
+struct ExtendedColorRegs{
+   int nbg_priority[4];
+   int nbg_color_calc_enable[4];
+   int nbg_color_calc_ratio[4];
+   int color_calculation_ratio_mode;
+   int extended_color_calculation;
+   int color_calculation_mode_bit;
+   int color_ram_mode;
+   int line_color_screen_inserts[4];
+   int line_color_mode_bit;
+   int line_color_screen_color_calc_enable;
+   int line_color_screen_ratio;
+};
+
+void vdp2_extended_color_write_regs(struct ExtendedColorRegs v, u32 line_table_address)
+{
+   VDP2_REG_CCCTL =
+      (v.extended_color_calculation << 10) |
+      (v.color_calculation_ratio_mode << 9) |
+      (v.color_calculation_mode_bit << 8) |
+      (v.nbg_color_calc_enable[0]) |
+      (v.nbg_color_calc_enable[1] << 1) |
+      (v.nbg_color_calc_enable[2] << 2) |
+      (v.nbg_color_calc_enable[3] << 3) |
+      (v.line_color_screen_color_calc_enable << 5);
+
+   VDP2_REG_CCRNA = v.nbg_color_calc_ratio[0] | (v.nbg_color_calc_ratio[1] << 8);
+   VDP2_REG_CCRNB = v.nbg_color_calc_ratio[2] | (v.nbg_color_calc_ratio[3] << 8);
+   VDP2_REG_CCRLB = v.line_color_screen_ratio;
+
+   VDP2_REG_LNCLEN = (v.line_color_screen_inserts[0]) |
+      (v.line_color_screen_inserts[1] << 1) |
+      (v.line_color_screen_inserts[2] << 2) |
+      (v.line_color_screen_inserts[3] << 3);
+
+   VDP2_REG_PRINA = v.nbg_priority[0] | (v.nbg_priority[1] << 8);
+   VDP2_REG_PRINB = v.nbg_priority[2] | (v.nbg_priority[3] << 8);
+
+   VDP2_REG_RAMCTL = v.color_ram_mode << 12;
+
+   *(volatile u32 *)0x25F800A8 = (v.line_color_mode_bit << 31) | (line_table_address / 2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_extended_color_calculation_test()
 {
    const u32 tile_address = 0x40000;
@@ -791,6 +857,8 @@ void vdp2_extended_color_calculation_test()
    const char* fill = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 
    int i;
+
+   auto_test_sub_test_start("Extended color calculation test");
 
    vdp2_basic_tile_scroll_setup(tile_address);
    vdp2_line_color_screen_test_set_up_line_screen(line_table_address);
@@ -843,19 +911,7 @@ void vdp2_extended_color_calculation_test()
    }
 
    //vars for reg adjuster
-   struct {
-      int nbg_priority[4];
-      int nbg_color_calc_enable[4];
-      int nbg_color_calc_ratio[4];
-      int color_calculation_ratio_mode;
-      int extended_color_calculation;
-      int color_calculation_mode_bit;
-      int color_ram_mode;
-      int line_color_screen_inserts[4];
-      int line_color_mode_bit;
-      int line_color_screen_color_calc_enable;
-      int line_color_screen_ratio;
-   }v = { { 0 } };
+   struct ExtendedColorRegs v = { { 0 } };
 
    struct RegAdjusterState s = { 0 };
 
@@ -1030,6 +1086,17 @@ void vdp2_extended_color_calculation_test()
       }
    };
 
+#ifdef BUILD_AUTOMATED_TESTING
+   for (i = 0; i < 5; i++)
+   {
+      ra_do_preset(&s, presets[i]);
+      ra_update_vars(&s);
+      ra_do_menu(&s, 17, 0, 0);
+      vdp2_extended_color_write_regs(v, line_table_address);
+      auto_test_take_screenshot(1);
+   }
+#else
+
    int preset = 1;
 
    ra_do_preset(&s, presets[preset]);
@@ -1042,31 +1109,7 @@ void vdp2_extended_color_calculation_test()
 
       ra_do_menu(&s, 17,0,0);
 
-      VDP2_REG_CCCTL =
-         (v.extended_color_calculation << 10) |
-         (v.color_calculation_ratio_mode << 9) |
-         (v.color_calculation_mode_bit << 8) |
-         (v.nbg_color_calc_enable[0]) |
-         (v.nbg_color_calc_enable[1] << 1) |
-         (v.nbg_color_calc_enable[2] << 2) |
-         (v.nbg_color_calc_enable[3] << 3) |
-         (v.line_color_screen_color_calc_enable << 5);
-
-      VDP2_REG_CCRNA = v.nbg_color_calc_ratio[0] | (v.nbg_color_calc_ratio[1] << 8);
-      VDP2_REG_CCRNB = v.nbg_color_calc_ratio[2] | (v.nbg_color_calc_ratio[3] << 8);
-      VDP2_REG_CCRLB = v.line_color_screen_ratio;
-
-      VDP2_REG_LNCLEN = (v.line_color_screen_inserts[0]) |
-         (v.line_color_screen_inserts[1] << 1) |
-         (v.line_color_screen_inserts[2] << 2) |
-         (v.line_color_screen_inserts[3] << 3);
-
-      VDP2_REG_PRINA = v.nbg_priority[0] | (v.nbg_priority[1] << 8);
-      VDP2_REG_PRINB = v.nbg_priority[2] | (v.nbg_priority[3] << 8);
-
-      VDP2_REG_RAMCTL = v.color_ram_mode << 12;
-
-      *(volatile u32 *)0x25F800A8 = (v.line_color_mode_bit << 31) | (line_table_address / 2);
+      vdp2_extended_color_write_regs(v,line_table_address);
 
       char preset_status[64] = { 0 };
       sprintf(preset_status, "Preset %d", preset);
@@ -1085,6 +1128,8 @@ void vdp2_extended_color_calculation_test()
       if (per[0].but_push_once & PAD_START)
          break;
    }
+#endif
+
    vdp2_basic_tile_scroll_deinit();
 }
 
@@ -1356,10 +1401,70 @@ void vdp2_change_4bbp_tile_color(u32 address, int amount)
 
 //////////////////////////////////////////////////////////////////////////////
 
+struct SpecialPriorityRegs {
+   int special_color_calc_mode[4];
+   int nbg_color_calc_enable[4];
+   int color_calculation_ratio_mode;//select per top
+   int special_priority_mode_bit[4];
+   int special_function_code_select[4];
+   int special_function_code_bit[8];
+   int color_calculation_mode_bit;
+   int nbg_priority[4];
+};
+
+
+void vdp2_special_priority_write_regs(struct SpecialPriorityRegs v, int* nbg_ratio)
+{
+   VDP2_REG_SFPRMD = v.special_priority_mode_bit[0] |
+      (v.special_priority_mode_bit[1] << 2) |
+      (v.special_priority_mode_bit[2] << 4) |
+      (v.special_priority_mode_bit[3] << 6);
+
+   VDP2_REG_PRINA = v.nbg_priority[0] | (v.nbg_priority[1] << 8);
+   VDP2_REG_PRINB = v.nbg_priority[2] | (v.nbg_priority[3] << 8);
+
+   VDP2_REG_SFSEL = v.special_function_code_select[0] |
+      (v.special_function_code_select[1] << 1) |
+      (v.special_function_code_select[2] << 2) |
+      (v.special_function_code_select[3] << 3);
+
+   VDP2_REG_SFCODE =
+      (v.special_function_code_bit[0] << 0) |
+      (v.special_function_code_bit[1] << 1) |
+      (v.special_function_code_bit[2] << 2) |
+      (v.special_function_code_bit[3] << 3) |
+      (v.special_function_code_bit[4] << 4) |
+      (v.special_function_code_bit[5] << 5) |
+      (v.special_function_code_bit[6] << 6) |
+      (v.special_function_code_bit[7] << 7);
+
+   VDP2_REG_CCRNA = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
+   VDP2_REG_CCRNB = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
+
+   VDP2_REG_CCCTL =
+      (v.color_calculation_ratio_mode << 9) |
+      (v.color_calculation_mode_bit << 8) |
+      (v.nbg_color_calc_enable[0]) |
+      (v.nbg_color_calc_enable[1] << 1) |
+      (v.nbg_color_calc_enable[2] << 2) |
+      (v.nbg_color_calc_enable[3] << 3);
+
+   VDP2_REG_SFCCMD =
+      v.special_color_calc_mode[0] |
+      (v.special_color_calc_mode[1] << 2) |
+      (v.special_color_calc_mode[2] << 4) |
+      (v.special_color_calc_mode[3] << 6);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_special_priority_test()
 {
    const u32 vdp2_tile_address = 0x40000;
    const u32 vdp2_tile_address_alt = 0x42000;
+
+   auto_test_sub_test_start("Special priority test");
+
    vdp2_basic_tile_scroll_setup(vdp2_tile_address);
 
    load_font_8x8_to_vram_1bpp_to_4bpp(vdp2_tile_address_alt, VDP2_RAM);
@@ -1427,18 +1532,8 @@ void vdp2_special_priority_test()
 
    int nbg_ratio[4] = { 0 };
    
-
    //vars for reg adjuster
-   struct {
-      int special_color_calc_mode[4];
-      int nbg_color_calc_enable[4];
-      int color_calculation_ratio_mode;//select per top
-      int special_priority_mode_bit[4];
-      int special_function_code_select[4];
-      int special_function_code_bit[8];
-      int color_calculation_mode_bit;
-      int nbg_priority[4];
-   }v = { { 0 } };
+   struct SpecialPriorityRegs v = { { 0 } };
 
    struct RegAdjusterState s = { 0 };
 
@@ -1451,23 +1546,100 @@ void vdp2_special_priority_test()
    ra_add_var(&s, &v.color_calculation_mode_bit, "Color calcultn mode", 1);
    ra_add_array(&s, (int(*)[])v.nbg_priority, 4, "Priority       NBG", 7);
 
-   int init_state[] =
-   {//special color calc mode
-      0, 0, 0, 0,
-      //nbg color calc enable
-      0, 0, 0, 0,
-      //special function code bit
-      0, 0, 0, 0,
-      //special priority mode bit
-      0, 1, 1, 0,
-      //special function code select
-      0, 0, 0, 0,
-      //color calculation ratio mode
-      0,
-      //color calculation mode bit
-      0,
-      //nbg priority
-      6,6,7,7
+   int presets[][26] =
+   {
+      //init state
+      {
+         //special color calc mode
+         0, 0, 0, 0,
+         //nbg color calc enable
+         0, 0, 0, 0,
+         //special function code bit
+         0, 0, 0, 0,
+         //special priority mode bit
+         0, 1, 1, 0,
+         //special function code select
+         0, 0, 0, 0,
+         //color calculation ratio mode
+         0,
+         //color calculation mode bit
+         0,
+         //nbg priority
+         6,6,7,7
+      },
+      //preset 1
+      {
+         0, 0, 0, 0,
+         //nbg color calc enable
+         0, 0, 0, 0,
+         //special function code bit
+         1, 0, 0, 0,
+         //special priority mode bit
+         3, 2, 2, 0,
+         //special function code select
+         0, 0, 0, 0,
+         //color calculation ratio mode
+         0,
+         //color calculation mode bit
+         0,
+         //nbg priority
+         6, 6, 7, 7
+      },
+      //preset 2
+      {
+         //special color calc mode
+         1, 1, 1, 1,
+         //nbg color calc enable
+         1, 1, 1, 1,
+         //special function code bit
+         0, 0, 0, 0,
+         //special priority mode bit
+         0, 1, 1, 0,
+         //special function code select
+         0, 0, 0, 0,
+         //color calculation ratio mode
+         0,
+         //color calculation mode bit
+         0,
+         //nbg priority
+         6, 6, 7, 7 
+      },
+      {
+         //special color calc mode
+         2, 2, 2, 2,
+         //nbg color calc enable
+         1, 1, 1, 1,
+         //special function code bit
+         1, 0, 0, 0,
+         //special priority mode bit
+         0, 1, 1, 0,
+         //special function code select
+         0, 0, 0, 0,
+         //color calculation ratio mode
+         0,
+         //color calculation mode bit
+         0,
+         //nbg priority
+         6, 6, 7, 7
+      },
+      {
+         //special color calc mode
+         0, 0, 0, 0,
+         //nbg color calc enable
+         0, 0, 0, 0,
+         //special function code bit
+         0, 0, 0, 0,
+         //special priority mode bit
+         0, 1, 1, 0,
+         //special function code select
+         0, 0, 0, 0,
+         //color calculation ratio mode
+         0,
+         //color calculation mode bit
+         0,
+         //nbg priority
+         1, 1, 0, 0
+      },
    };
 
    char* preset_strings[] = {
@@ -1488,13 +1660,13 @@ void vdp2_special_priority_test()
       "Start: Exit       "
    };
 
-   int i; 
+   int i;
    for (i = 0; i < 6; i++)
    {
       write_str_as_pattern_name_data(0, 17 + i, instructions[i], 3, 0x000000, vdp2_tile_address);
    }
 
-   ra_do_preset(&s, init_state);
+   ra_do_preset(&s, presets[preset]);
 
    //display the dot data bits
    volatile u32 *vram_ptr = (volatile u32 *)(VDP2_RAM + vdp2_tile_address);
@@ -1508,6 +1680,17 @@ void vdp2_special_priority_test()
    write_str_as_pattern_name_data(0, 24, output, 3, 0x000000, vdp2_tile_address);
    sprintf(output, "0x%08x", changed_data);
    write_str_as_pattern_name_data(0, 25, output, 3, 0x000000, vdp2_tile_address);
+
+#ifdef BUILD_AUTOMATED_TESTING
+   for (i = 0; i < 5; i++)
+   {
+      ra_do_preset(&s, presets[i]);
+      ra_update_vars(&s);
+      ra_do_menu(&s, 17, 0, 0);
+      vdp2_special_priority_write_regs(v, nbg_ratio);
+      auto_test_take_screenshot(2);
+   }
+#else
 
    for (;;)
    {
@@ -1523,45 +1706,7 @@ void vdp2_special_priority_test()
       nbg_ratio[2] = nbg_ratio[0];
       nbg_ratio[3] = nbg_ratio[1] = ratio;
 
-      VDP2_REG_SFPRMD = v.special_priority_mode_bit[0] |
-         (v.special_priority_mode_bit[1] << 2) |
-         (v.special_priority_mode_bit[2] << 4) |
-         (v.special_priority_mode_bit[3] << 6);
-
-      VDP2_REG_PRINA = v.nbg_priority[0] | (v.nbg_priority[1] << 8);
-      VDP2_REG_PRINB = v.nbg_priority[2] | (v.nbg_priority[3] << 8);
-
-      VDP2_REG_SFSEL = v.special_function_code_select[0] |
-         (v.special_function_code_select[1] << 1) |
-         (v.special_function_code_select[2] << 2) |
-         (v.special_function_code_select[3] << 3);
-
-      VDP2_REG_SFCODE =
-         (v.special_function_code_bit[0] << 0) |
-         (v.special_function_code_bit[1] << 1) |
-         (v.special_function_code_bit[2] << 2) |
-         (v.special_function_code_bit[3] << 3) |
-         (v.special_function_code_bit[4] << 4) |
-         (v.special_function_code_bit[5] << 5) |
-         (v.special_function_code_bit[6] << 6) |
-         (v.special_function_code_bit[7] << 7);
-
-      VDP2_REG_CCRNA = (u16)(nbg_ratio[0] | (nbg_ratio[1] << 8));
-      VDP2_REG_CCRNB = (u16)(nbg_ratio[2] | (nbg_ratio[3] << 8));
-
-      VDP2_REG_CCCTL =
-         (v.color_calculation_ratio_mode << 9) |
-         (v.color_calculation_mode_bit << 8) |
-         (v.nbg_color_calc_enable[0]) |
-         (v.nbg_color_calc_enable[1] << 1) |
-         (v.nbg_color_calc_enable[2] << 2) |
-         (v.nbg_color_calc_enable[3] << 3);
-
-      VDP2_REG_SFCCMD =
-         v.special_color_calc_mode[0] |
-         (v.special_color_calc_mode[1] << 2) |
-         (v.special_color_calc_mode[2] << 4) |
-         (v.special_color_calc_mode[3] << 6);
+      vdp2_special_priority_write_regs(v,nbg_ratio);
 
       char ratio_status[64] = { 0 };
 
@@ -1605,106 +1750,15 @@ void vdp2_special_priority_test()
          if (preset > 4)
             preset = 0;
 
-         if (preset == 0)
-         {
-            ra_do_preset(&s, init_state);
-         }
-         else if (preset == 1)
-         {
-            int vars[] =
-            {//special color calc mode
-               0, 0, 0, 0,
-               //nbg color calc enable
-               0, 0, 0, 0,
-               //special function code bit
-               1, 0, 0, 0, 
-               //special priority mode bit
-               3, 2, 2, 0,
-               //special function code select
-               0, 0, 0, 0,
-               //color calculation ratio mode
-               0,
-               //color calculation mode bit
-               0,
-               //nbg priority
-               6, 6, 7, 7
-            };
+         ra_do_preset(&s, presets[preset]);
 
-            ra_do_preset(&s, vars);
-         }
-         else if (preset == 2)
-         {
-            int vars[] =
-            {//special color calc mode
-               1, 1, 1, 1,
-               //nbg color calc enable
-               1, 1, 1, 1,
-               //special function code bit
-               0, 0, 0, 0,
-               //special priority mode bit
-               0, 1, 1, 0,
-               //special function code select
-               0, 0, 0, 0,
-               //color calculation ratio mode
-               0,
-               //color calculation mode bit
-               0,
-               //nbg priority
-               6, 6, 7, 7
-            };
-
-            ra_do_preset(&s, vars);
-         }
-         else if (preset == 3)
-         {
-            int vars[] =
-            {//special color calc mode
-               2, 2, 2, 2,
-               //nbg color calc enable
-               1, 1, 1, 1,
-               //special function code bit
-               1, 0, 0, 0,
-               //special priority mode bit
-               0, 1, 1, 0,
-               //special function code select
-               0, 0, 0, 0,
-               //color calculation ratio mode
-               0,
-               //color calculation mode bit
-               0,
-               //nbg priority
-               6, 6, 7, 7
-            };
-
-            ra_do_preset(&s, vars);
-         }
-         else if (preset == 4)
-         {
-            int init_state[] =
-            {//special color calc mode
-               0, 0, 0, 0,
-               //nbg color calc enable
-               0, 0, 0, 0,
-               //special function code bit
-               0, 0, 0, 0,
-               //special priority mode bit
-               0, 1, 1, 0,
-               //special function code select
-               0, 0, 0, 0,
-               //color calculation ratio mode
-               0,
-               //color calculation mode bit
-               0,
-               //nbg priority
-               1, 1, 0, 0
-            };
-            ra_do_preset(&s, init_state);
-         }
       }
 
       if (per[0].but_push_once & PAD_START)
          break;
    }
+
+#endif
 
    vdp2_basic_tile_scroll_deinit();
 }
@@ -1776,9 +1830,53 @@ void vdp2_set_line_window_tables(u32 * line_window_table_address)
 
 //////////////////////////////////////////////////////////////////////////////
 
+
+//vars for reg adjuster
+struct LineWindowRegs {
+   int line_window_enable[2];
+   struct {
+      int window_logic;
+      int window_enable[2];
+      int window_area[2];
+   }nbg[4];
+};
+
+void vdp2_line_window_write_regs(struct LineWindowRegs v, u32 *line_window_table_address)
+{
+   *(volatile u32 *)0x25F800D8 = (v.line_window_enable[0] << 31) | (line_window_table_address[0] / 2);
+   *(volatile u32 *)0x25F800DC = (v.line_window_enable[1] << 31) | (line_window_table_address[1] / 2);
+
+   VDP2_REG_WCTLA = (v.nbg[0].window_enable[0] << 1) | (v.nbg[1].window_enable[0] << 9) |
+      (v.nbg[0].window_logic << 7) | (v.nbg[1].window_logic << 15) |
+      (v.nbg[0].window_area[0] << 0) | (v.nbg[1].window_area[0] << 8) |
+      (v.nbg[0].window_enable[1] << 3) | (v.nbg[1].window_enable[1] << 11) |
+      (v.nbg[0].window_area[1] << 2) | (v.nbg[1].window_area[1] << 10);
+
+   VDP2_REG_WCTLB = (v.nbg[2].window_enable[0] << 1) | (v.nbg[3].window_enable[0] << 9) |
+      (v.nbg[2].window_logic << 7) | (v.nbg[3].window_logic << 15) |
+      (v.nbg[2].window_area[0] << 0) | (v.nbg[3].window_area[0] << 8) |
+      (v.nbg[2].window_enable[1] << 3) | (v.nbg[3].window_enable[1] << 11) |
+      (v.nbg[2].window_area[1] << 2) | (v.nbg[3].window_area[1] << 10);
+
+   VDP2_REG_WPSX0 = (1 * 8) * 2;
+   VDP2_REG_WPSY0 = 1 * 8;
+   VDP2_REG_WPEX0 = ((39 * 8) * 2) - 2;
+   VDP2_REG_WPEY0 = (27 * 8) - 1;
+
+   VDP2_REG_WPSX1 = (2 * 8) * 2;
+   VDP2_REG_WPSY1 = 2 * 8;
+   VDP2_REG_WPEX1 = ((38 * 8) * 2) - 2;
+   VDP2_REG_WPEY1 = (26 * 8) - 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_line_window_test()
 {
    const u32 vdp2_tile_address = 0x40000;
+
+   auto_test_sub_test_start("Line window test");
+
    vdp2_basic_tile_scroll_setup(vdp2_tile_address);
 
    int i;
@@ -1798,15 +1896,7 @@ void vdp2_line_window_test()
    write_str_as_pattern_name_data_special(0, 26, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", 5, 0x008000, vdp2_tile_address, 0, 0);
    write_str_as_pattern_name_data_special(0, 27, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", 6, 0x00C000, vdp2_tile_address, 0, 0);
 
-   //vars for reg adjuster
-   struct {
-      int line_window_enable[2];
-      struct {
-         int window_logic;
-         int window_enable[2];
-         int window_area[2];
-      }nbg[4];
-   }v = { { 0 } };
+   struct LineWindowRegs v = { { 0 } };
 
    struct RegAdjusterState s = { 0 };
 
@@ -1873,35 +1963,24 @@ void vdp2_line_window_test()
    u32 line_window_table_address[2] = { 0x50000, 0x52000};
 
    vdp2_set_line_window_tables(line_window_table_address);
+
+#ifdef BUILD_AUTOMATED_TESTING
+   for (i = 0; i < 3; i++)
+   {
+      ra_do_preset(&s, presets[i]);
+      ra_update_vars(&s);
+      ra_do_menu(&s, 8, 3, 0);
+      vdp2_line_window_write_regs(v, line_window_table_address);
+      auto_test_take_screenshot(3);
+   }
+#else
+
    
    for (;;)
    {
       vdp_vsync();
 
-      *(volatile u32 *)0x25F800D8 = (v.line_window_enable[0] << 31) | (line_window_table_address[0] / 2);
-      *(volatile u32 *)0x25F800DC = (v.line_window_enable[1] << 31) | (line_window_table_address[1] / 2);
-
-      VDP2_REG_WCTLA = (v.nbg[0].window_enable[0] << 1) | (v.nbg[1].window_enable[0] << 9) |
-         (v.nbg[0].window_logic << 7) | (v.nbg[1].window_logic << 15) |
-         (v.nbg[0].window_area[0] << 0) | (v.nbg[1].window_area[0] << 8) |
-         (v.nbg[0].window_enable[1] << 3) | (v.nbg[1].window_enable[1] << 11) |
-         (v.nbg[0].window_area[1] << 2) | (v.nbg[1].window_area[1] << 10);
-
-      VDP2_REG_WCTLB = (v.nbg[2].window_enable[0] << 1) | (v.nbg[3].window_enable[0] << 9) |
-         (v.nbg[2].window_logic << 7) | (v.nbg[3].window_logic << 15) |
-         (v.nbg[2].window_area[0] << 0) | (v.nbg[3].window_area[0] << 8) |
-         (v.nbg[2].window_enable[1] << 3) | (v.nbg[3].window_enable[1] << 11) |
-         (v.nbg[2].window_area[1] << 2) | (v.nbg[3].window_area[1] << 10);
-
-      VDP2_REG_WPSX0 = (1 * 8) * 2;
-      VDP2_REG_WPSY0 = 1 * 8;
-      VDP2_REG_WPEX0 = ((39 * 8) * 2) - 2;
-      VDP2_REG_WPEY0 = (27 * 8) - 1;
-
-      VDP2_REG_WPSX1 = (2 * 8) * 2;
-      VDP2_REG_WPSY1 = 2 * 8;
-      VDP2_REG_WPEX1 = ((38 * 8) * 2) - 2;
-      VDP2_REG_WPEY1 = (26 * 8) - 1;
+      vdp2_line_window_write_regs(v, line_window_table_address);
 
       ra_update_vars(&s);
 
@@ -1922,6 +2001,9 @@ void vdp2_line_window_test()
          break;
       }
    }
+
+#endif
+
    vdp2_basic_tile_scroll_deinit();
 }
 
@@ -2008,11 +2090,38 @@ void write_vertical_cell_scroll_table(u32 address, int counter)
 
 //////////////////////////////////////////////////////////////////////////////
 
+   //vars for reg adjuster
+   struct LineScrollRegs {
+      int line_scroll_interval;
+      int line_zoom_enable;
+      int vertical_line_scroll_enable;
+      int horizontal_line_scroll_enable;
+      int vertical_cell_scroll_enable;
+   };
+
+   void vdp2_line_scroll_write_regs(struct LineScrollRegs v, int counter, u32 line_scroll_table_address, u32 vertical_cell_scroll_table_address)
+   {
+      VDP2_REG_SCRCTL = v.vertical_cell_scroll_enable |
+         (v.horizontal_line_scroll_enable << 1) |
+         (v.vertical_line_scroll_enable << 2) |
+         (v.line_zoom_enable << 3) |
+         (v.line_scroll_interval << 4);
+
+      write_line_scroll_table(line_scroll_table_address, counter,
+         v.horizontal_line_scroll_enable,
+         v.vertical_line_scroll_enable,
+         v.line_zoom_enable);
+
+      write_vertical_cell_scroll_table(vertical_cell_scroll_table_address, counter);
+   }
+
 void vdp2_line_scroll_test()
 {
    const u32 vdp2_tile_address = 0x40000;
    const u32 line_scroll_table_address =  0x42000;
    const u32 vertical_cell_scroll_table_address =  0x43000;
+
+   auto_test_sub_test_start("Line scroll test");
 
    vdp2_basic_tile_scroll_setup(vdp2_tile_address);
 
@@ -2029,14 +2138,7 @@ void vdp2_line_scroll_test()
 
    VDP2_REG_PRINA = 1 | 7 << 8;
 
-   //vars for reg adjuster
-   struct {
-      int line_scroll_interval;
-      int line_zoom_enable;
-      int vertical_line_scroll_enable;
-      int horizontal_line_scroll_enable;
-      int vertical_cell_scroll_enable;
-   }v = { 0 } ;
+   struct LineScrollRegs v = { 0 };
 
    struct RegAdjusterState s = { 0 };
 
@@ -2068,24 +2170,24 @@ void vdp2_line_scroll_test()
 
    ra_do_preset(&s, presets[preset]);
 
+#ifdef BUILD_AUTOMATED_TESTING
+   for (i = 0; i < 9; i++)
+   {
+      ra_do_preset(&s, presets[i]);
+      ra_update_vars(&s);
+      ra_do_menu(&s, 17, 0, 0x004000);
+      vdp2_line_scroll_write_regs(v, counter, line_scroll_table_address, vertical_cell_scroll_table_address);
+      auto_test_take_screenshot(3);
+   }
+#else
+
    for (;;)
    {
       vdp_vsync();
 
       counter++;
 
-      VDP2_REG_SCRCTL = v.vertical_cell_scroll_enable |
-         (v.horizontal_line_scroll_enable << 1) |
-         (v.vertical_line_scroll_enable << 2) |
-         (v.line_zoom_enable << 3) |
-         (v.line_scroll_interval << 4);
-
-      write_line_scroll_table(line_scroll_table_address, counter, 
-         v.horizontal_line_scroll_enable,
-         v.vertical_line_scroll_enable,
-         v.line_zoom_enable);
-
-      write_vertical_cell_scroll_table(vertical_cell_scroll_table_address, counter);
+      vdp2_line_scroll_write_regs(v, counter, line_scroll_table_address, vertical_cell_scroll_table_address);
 
       ra_update_vars(&s);
 
@@ -2106,6 +2208,7 @@ void vdp2_line_scroll_test()
          break;
       }
    }
+#endif
 
    vdp2_basic_tile_scroll_deinit();
 }
@@ -2350,3 +2453,16 @@ void vdp2_window_test ()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void vdp2_auto_tests()
+{
+   auto_test_section_start("Vdp2 screenshot tests");
+
+   vdp2_all_scroll_test();
+   vdp2_line_color_screen_test();
+   vdp2_extended_color_calculation_test();
+   vdp2_special_priority_test();
+   vdp2_line_window_test();
+   vdp2_line_scroll_test();
+
+   auto_test_section_end();
+}

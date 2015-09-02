@@ -104,6 +104,7 @@ protected:
 	virtual void mousePressEvent( QMouseEvent* event );
 	virtual void mouseReleaseEvent( QMouseEvent* event );
 	virtual void mouseMoveEvent( QMouseEvent* event );
+	virtual void resizeEvent( QResizeEvent* event );
 
 public slots:
 	void appendLog( const char* msg );
@@ -121,6 +122,7 @@ public slots:
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
+	void fixAspectRatio( int width );
 	void getSupportedResolutions();
 	int isResolutionValid( int width, int height, int bpp, int freq );
 	int findBestVideoFreq( int width, int height, int bpp, int videoFormat );

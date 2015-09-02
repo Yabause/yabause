@@ -21,5 +21,6 @@
 #define VDP2H
 
 void vdp2_test();
+void vdp2_auto_tests();
 
 #endif
