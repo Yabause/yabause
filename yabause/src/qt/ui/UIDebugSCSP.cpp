@@ -76,8 +76,13 @@ void UIDebugSCSP::initAudio()
 
 	isPlaying = true;
 
+#if QT_VERSION < 0x040700
+	audioFormat.setFrequency(44100);
+	audioFormat.setChannels(2);
+#else
 	audioFormat.setSampleRate(44100);
 	audioFormat.setChannelCount(2);
+#endif
 	audioFormat.setSampleSize(16);
 	audioFormat.setCodec("audio/pcm");
 	audioFormat.setByteOrder(QAudioFormat::LittleEndian);
