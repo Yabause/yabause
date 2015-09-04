@@ -136,7 +136,7 @@ void yabauseut_init()
 #ifdef BUILD_AUTOMATED_TESTING
 
 void (*auto_tests[])() =
-{ 
+{
    //sh2
    sh2_test,
    //sh2 slave
@@ -156,6 +156,7 @@ void (*auto_tests[])() =
    scsp_dsp_test,
    //smpc
    //vdp1
+   vdp1_framebuffer_tests,
    //vdp2
    vdp2_auto_tests,
    auto_test_all_finished
