@@ -4178,6 +4178,9 @@ static void Vdp2DrawLineColorScreen(void)
   if ( Vdp2Regs->LNCLEN == 0) return;
 
   line_pixel_data = YglGetLineColorPointer();
+  if( line_pixel_data == NULL ){
+      return;
+  }
 
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
