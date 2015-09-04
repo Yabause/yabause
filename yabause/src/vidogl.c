@@ -1500,12 +1500,15 @@ static int FASTCALL Vdp2CheckWindowDot(vdp2draw_struct *info, int x, int y )
 {
     if( info->bEnWin0 != 0 &&  info->bEnWin1 == 0 )
     {
+		if (m_vWindinfo0==NULL) Vdp2GenerateWindowInfo();
         return Vdp2CheckWindow(info, x, y, info->WindowArea0, m_vWindinfo0 );
     }else if( info->bEnWin0 == 0 &&  info->bEnWin1 != 0 )
     {
+		if (m_vWindinfo1 == NULL) Vdp2GenerateWindowInfo();
         return Vdp2CheckWindow(info, x, y, info->WindowArea1, m_vWindinfo1 );
     }else if( info->bEnWin0 != 0 &&  info->bEnWin1 != 0 )
     {
+		if (m_vWindinfo0 == NULL || m_vWindinfo1 == NULL) Vdp2GenerateWindowInfo();
         if( info->LogicWin == 0 )
         {
             return (Vdp2CheckWindow(info, x, y, info->WindowArea0, m_vWindinfo0 )&
