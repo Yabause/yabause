@@ -58,7 +58,7 @@ matrix:
         # todo compile this instead
         - git clone git://github.com/d356/yabauseut-bin.git
         - cd yabauseut-bin
-        - git reset --hard c3af00208ccf9554ddd91054629bcfd45f3a479a
+        - git reset --hard ac1bedadc51285f55a0caa9e6af6ab0d9d0118c8
         - cd ..
         - ./yabause yabauseut-bin/YabauseUT.elf yabauseut-bin/vdp2_screenshots/ yabauseut-bin/vdp1_framebuffers/
 
