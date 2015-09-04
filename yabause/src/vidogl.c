@@ -4182,6 +4182,9 @@ static void Vdp2DrawLineColorScreen(void)
   if ( Vdp2Regs->LNCLEN == 0) return;
 
   line_pixel_data = YglGetLineColorPointer();
+  if( line_pixel_data == NULL ){
+      return;
+  }
 
   if (!line_pixel_data)
 	  return;
