@@ -43,9 +43,9 @@ static struct TitanContext {
 
 #if defined WORDS_BIGENDIAN
 #ifdef USE_RGB_555
-static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 16) & 0xF800) | ((pixel >> 13) & 0x7C0) | ((pixel >> 10) & 0x3E)); }
+static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 27) & 0x1F) | ((pixel >> 14) & 0x7C0) | (pixel >> 1) & 0xF8); }
 #elif USE_RGB_565
-static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 16) & 0xF800) | ((pixel >> 13) & 0x7E0) | ((pixel >> 11) & 0x1F)); }
+static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 27) & 0x1F) | ((pixel >> 13) & 0x7E0) | (pixel & 0xF8)); }
 #else
 static INLINE u32 TitanFixAlpha(u32 pixel) { return ((((pixel & 0x3F) << 2) + 0x03) | (pixel & 0xFFFFFF00)); }
 #endif
@@ -57,9 +57,9 @@ static INLINE u8 TitanGetBlue(u32 pixel) { return (pixel >> 24) & 0xFF; }
 static INLINE u32 TitanCreatePixel(u8 alpha, u8 red, u8 green, u8 blue) { return alpha | (red << 8) | (green << 16) | (blue << 24); }
 #else
 #ifdef USE_RGB_555
-static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 3) & 0x1F) | ((pixel >> 6) & 0x3E0) | ((pixel >> 9) & 0x7C00)); }
+static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel << 7) & 0x7C00) | ((pixel >> 6) & 0x3C0) | ((pixel >> 19) & 0x1F)); }
 #elif USE_RGB_565
-static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel >> 3) & 0x1F) | ((pixel >> 5) & 0x7E0) | ((pixel >> 8) & 0xF800)); }
+static INLINE u32 TitanFixAlpha(u32 pixel) { return (((pixel << 8) & 0xF800) | ((pixel >> 5) & 0x7C0) | ((pixel >> 19) & 0x1F)); }
 #else
 static INLINE u32 TitanFixAlpha(u32 pixel) { return ((((pixel & 0x3F000000) << 2) + 0x03000000) | (pixel & 0x00FFFFFF)); }
 #endif
