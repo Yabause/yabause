@@ -70,8 +70,8 @@ void YabauseGL::paintEvent( QPaintEvent * event )
 	QImage image = QImage((uchar *) dispbuffer, buf_width, buf_height, QImage::Format_RGB16);
 #else
 	QImage image = QImage((uchar *) dispbuffer, buf_width, buf_height, QImage::Format_RGB32);
-#endif
 	image = image.rgbSwapped();
+#endif
 	QPainter p(this);
 	p.drawImage(this->rect(), image);
 }

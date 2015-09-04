@@ -178,6 +178,7 @@ QStringList getCdDriveList()
 			}
 		}
 	}
+	fclose(f);
 #elif defined Q_OS_MAC
 #endif
 	return list;
