@@ -2402,7 +2402,7 @@ u32 * YglGetLineColorPointer(){
     if ((error = glGetError()) != GL_NO_ERROR)
     {
       YGLDEBUG("Fail to init lincolor_tex %04X", error);
-      return -1;
+      return NULL;
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -2417,7 +2417,7 @@ u32 * YglGetLineColorPointer(){
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLDEBUG("Fail to init YglTM->texture %04X", error);
-    return -1;
+    return NULL;
   }
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
