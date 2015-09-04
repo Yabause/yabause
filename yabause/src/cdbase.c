@@ -561,7 +561,6 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    free(temp_buffer);
 
    fclose(iso_file);
-   fclose(bin_file);
    return 0;
 }
 
@@ -1088,7 +1087,6 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 	}
 
 	fclose(iso_file);
-	fclose(fp);
 
 	return 0;
 }
