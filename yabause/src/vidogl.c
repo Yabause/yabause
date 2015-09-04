@@ -5073,7 +5073,7 @@ static void Vdp2DrawRBG0(void)
       paraB.lineaddr = 0xFFFFFFFF;
    }
 
-   if (Vdp2Regs->CCCTL & 0x10)
+   if ( (Vdp2Regs->CCCTL & 0x410) == 0x10 )
    {
 	   info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
 	   if (Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
@@ -5087,7 +5087,6 @@ static void Vdp2DrawRBG0(void)
    else{
 	   info.alpha = 0xFF;
    }
-
 
    info.coloroffset = (Vdp2Regs->CRAOFB & 0x7) << 8;
 
