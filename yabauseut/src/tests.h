@@ -22,6 +22,12 @@
 
 #include <iapetus.h>
 
+#define AUTO_TEST_SELECT_ADDRESS 0x7F000
+#define AUTO_TEST_STATUS_ADDRESS 0x7F004
+#define AUTO_TEST_MESSAGE_ADDRESS 0x7F008
+#define AUTO_TEST_MESSAGE_SENT 1
+#define AUTO_TEST_MESSAGE_RECEIVED 2
+
 enum STAGESTAT
 {
    STAGESTAT_USERCUSTOM=-8,
@@ -47,6 +53,12 @@ void do_tests(const char *testname, int x, int y);
 void register_test(void (*func)(void), const char *name);
 void unregister_all_tests();
 void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line);
+
+void auto_test_all_finished();
+void auto_test_take_screenshot();
+void auto_test_section_start(char* test_section_name);
+void auto_test_sub_test_start(char* sub_test_name);
+void auto_test_section_end();
 
 extern screen_settings_struct test_disp_settings;
 extern font_struct test_disp_font;

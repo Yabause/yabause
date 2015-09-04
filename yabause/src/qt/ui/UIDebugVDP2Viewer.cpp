@@ -47,6 +47,9 @@ UIDebugVDP2Viewer::UIDebugVDP2Viewer( QWidget* p )
 
 void UIDebugVDP2Viewer::on_cbScreen_currentIndexChanged ( int index )
 {   
+	if (!Vdp2Regs)
+		return;
+
    if (vdp2texture)
       free(vdp2texture);
 
@@ -78,6 +81,9 @@ void UIDebugVDP2Viewer::on_pbSaveAsBitmap_clicked ()
 			filters << QString( ba ).toLower();
 	for ( int i = 0; i < filters.count(); i++ )
 		filters[i] = QtYabause::translate( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
+
+	if (!vdp2texture)
+		return;
 	
 	// take screenshot of gl view
    QImage img((uchar *)vdp2texture, width, width, QImage::Format_ARGB32);

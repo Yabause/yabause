@@ -39,6 +39,7 @@
 #include "m68kcore.h"
 #include "peripheral.h"
 #include "scsp.h"
+#include "scspdsp.h"
 #include "scu.h"
 #include "sh2core.h"
 #include "smpc.h"
@@ -48,11 +49,15 @@
 #include "movie.h"
 #include "osdcore.h"
 #ifdef HAVE_LIBSDL
- #if defined(__APPLE__) || defined(GEKKO)
-  #include <SDL/SDL.h>
+#if defined(__APPLE__) || defined(GEKKO)
+ #ifdef HAVE_LIBSDL2
+  #include <SDL2/SDL.h>
  #else
-  #include "SDL.h"
+  #include <SDL/SDL.h>
  #endif
+#else
+ #include "SDL.h"
+#endif
 #endif
 #if defined(_MSC_VER) || !defined(HAVE_SYS_TIME_H)
 #include <time.h>
@@ -89,6 +94,8 @@
 yabsys_struct yabsys;
 const char *bupfilename = NULL;
 u64 tickfreq;
+//todo this ought to be in scspdsp.c
+ScspDsp scsp_dsp;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -269,6 +276,11 @@ int YabauseInit(yabauseinit_struct *init)
 
    YabauseResetNoLoad();
 
+   if (init->skip_load)
+   {
+	   return 0;
+   }
+
    if (yabsys.usequickload || yabsys.emulatebios)
    {
       if (YabauseQuickLoadGame() != 0)
@@ -290,15 +302,17 @@ int YabauseInit(yabauseinit_struct *init)
    return 0;
 }
 
-void YabFlushBackups(void){
+//////////////////////////////////////////////////////////////////////////////
 
-	if (BupRam)
-	{
-		if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
-			YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-	}
+void YabFlushBackups(void)
+{
+   if (BupRam)
+   {
+      if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
+         YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+   }
 
-	CartFlush();
+   CartFlush();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -646,7 +660,7 @@ void YabauseStartSlave(void) {
       CurrentSH2 = MSH2;
 
       SH2GetRegisters(SSH2, &SSH2->regs);
-	  SSH2->regs.R[15] = Cs2GetSlaveStackAdress();
+      SSH2->regs.R[15] = Cs2GetSlaveStackAdress();
       SSH2->regs.VBR = 0x06000400;
       SSH2->regs.PC = MappedMemoryReadLong(0x06000250);
       if (MappedMemoryReadLong(0x060002AC) != 0)
@@ -996,7 +1010,7 @@ int YabauseQuickLoadGame(void)
       // Now setup SH2 registers to start executing at ip code
       SH2GetRegisters(MSH2, &MSH2->regs);
       MSH2->regs.PC = 0x06002E00;
-	  MSH2->regs.R[15] = Cs2GetMasterStackAdress();
+      MSH2->regs.R[15] = Cs2GetMasterStackAdress();
       SH2SetRegisters(MSH2, &MSH2->regs);
    }
    else

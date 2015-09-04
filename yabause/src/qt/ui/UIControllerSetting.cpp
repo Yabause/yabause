@@ -40,6 +40,7 @@ UIControllerSetting::UIControllerSetting( PerInterface_struct* core, uint port, 
 	mPerType = perType;
 	mTimer = new QTimer( this );
 	mTimer->setInterval( 25 );
+	curTb = NULL;
 	QtYabause::retranslateWidget( this );
 }
 
@@ -97,6 +98,7 @@ void UIControllerSetting::keyPressEvent( QKeyEvent* e )
 			mButtons.key( mPadKey )->setChecked( false );
 			mlInfos->clear();
 			mTimer->stop();
+			curTb->setAttribute(Qt::WA_TransparentForMouseEvents, false);
 		}
 	}
 	else if ( e->key() == Qt::Key_Escape )
@@ -146,6 +148,8 @@ void UIControllerSetting::setPadKey( u32 key )
 	mButtons.key( mPadKey )->setChecked( false );
 	mlInfos->clear();
 	mTimer->stop();
+	if (curTb)
+	   curTb->setAttribute(Qt::WA_TransparentForMouseEvents, false);
 }
 
 void UIControllerSetting::loadPadSettings()
@@ -213,6 +217,9 @@ void UIControllerSetting::tbButton_clicked()
 
 		mlInfos->setText( text1 + QString(": %1\n").arg(text2) + text3 );
 		setScanFlags(mScanMasks[mPadKey]);
+		mCore->Flush();
+		curTb=tb;
+		tb->setAttribute(Qt::WA_TransparentForMouseEvents);
 		mTimer->start();
 	}
 	else
@@ -224,7 +231,6 @@ void UIControllerSetting::tbButton_clicked()
 void UIControllerSetting::timer_timeout()
 {
 	u32 key = 0;
-	mCore->Flush();
 	key = mCore->Scan(scanFlags);
 	
 	if ( key != 0 )

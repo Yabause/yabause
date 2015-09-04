@@ -292,9 +292,7 @@ int YglCalcTextureQ(
 {
    float p1[2],p2[2],p3[2],p4[2],o[2];
    float   q1, q3, q4, qw;
-   float   x, y;
    float   dx, w;
-   float   b;
    float   ww;
    float   divisor;
 
@@ -533,8 +531,6 @@ void YglTMAllocate(YglTexture * output, unsigned int w, unsigned int h, unsigned
 
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
-  GLuint error;
-
   if (_Ygl->smallfbo == 0) {
 
     YabThreadLock( _Ygl->mutex );
@@ -649,7 +645,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
 int YglGLInit(int width, int height) {
    int status;
-   YglMatrix pers;
    GLuint error;
 
    _Ygl->mutex = YabThreadCreateMutex();
@@ -802,7 +797,6 @@ int YglInit(int width, int height, unsigned int depth) {
    unsigned int i,j;
    GLuint status;
    void * dataPointer=NULL;
-    int maxsize;
 
    YGLDEBUG("YglInit(%d,%d,%d);",width,height,depth );
 
@@ -833,7 +827,7 @@ int YglInit(int width, int height, unsigned int depth) {
         _Ygl->levels[i].prg[j].prg=0;
         _Ygl->levels[i].prg[j].currentQuad = 0;
         _Ygl->levels[i].prg[j].maxQuad = 12 * 2000;
-        if ((_Ygl->levels[i].prg[j].quads = (int *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(int))) == NULL)
+        if ((_Ygl->levels[i].prg[j].quads = (float *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float))) == NULL)
             return -1;
 
         if ((_Ygl->levels[i].prg[j].textcoords = (float *) malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL)
@@ -1041,15 +1035,13 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    return program;
 }
 
-int YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy ) {
+void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy ) {
 	unsigned int x, y;
-	YglLevel   *level;
 	YglProgram *program;
 	texturecoordinate_struct *tmp;
-	float q[4];
 	int prg = PG_NORMAL;
 	float * pos;
-	float * vtxa;
+	//float * vtxa;
 
 	int vHeight;
 
@@ -1064,7 +1056,7 @@ int YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, 
 
   
 	program = YglGetProgram(input, prg);
-	if (program == NULL) return NULL;
+	if (program == NULL) return;
 
 
 	program->color_offset_val[0] = (float)(input->cor) / 255.0f;
@@ -1138,21 +1130,18 @@ int YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, 
 	tmp[3].q = 1.0f;
 	tmp[4].q = 1.0f;
 	tmp[5].q = 1.0f;
-
-	return 0;
 }
 
 
 
 float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    unsigned int x, y;
-   YglLevel   *level;
    YglProgram *program;
    texturecoordinate_struct *tmp;
    float q[4];
    int prg = PG_NORMAL;
    float * pos;
-   float * vtxa;
+   //float * vtxa;
 
 
    if( (input->blendmode&0x03) == 2 )
@@ -1293,7 +1282,6 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
 
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c) {
    unsigned int x, y;
-   YglLevel   *level;
    YglProgram *program;
    texturecoordinate_struct *tmp;
    float * vtxa;
@@ -1488,11 +1476,9 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
 
 //////////////////////////////////////////////////////////////////////////////
 void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, float sx, float sy ) {
-	YglLevel   * level;
 	YglProgram * program;
 	unsigned int x, y;
 	texturecoordinate_struct *tmp;
-	float q[4];
 	float * pos;
 	float * vtxa;
 	int vHeight;
@@ -1571,7 +1557,6 @@ void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, fl
 }
 
 void YglCachedQuad(YglSprite * input, YglCache * cache) {
-   YglLevel   * level;
    YglProgram * program;
    unsigned int x,y;
    texturecoordinate_struct *tmp;
@@ -1684,7 +1669,6 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache) {
-   YglLevel   * level;
    YglProgram * program;
    unsigned int x,y;
    texturecoordinate_struct *tmp;
@@ -2014,7 +1998,7 @@ void YglNeedToUpdateWindow()
 
 void YglSetVdp2Window()
 {
-    int bwin0,bwin1,logwin0,logwin1,winmode;
+    int bwin0,bwin1;
    //if( _Ygl->bUpdateWindow && (_Ygl->win0_vertexcnt != 0 || _Ygl->win1_vertexcnt != 0 ) )
 
     bwin0 = (Vdp2Regs->WCTLC >> 9) &0x01;
@@ -2074,7 +2058,6 @@ void YglRenderFrameBuffer( int from , int to ) {
    GLint   vertices[12];
    GLfloat texcord[12];
    float offsetcol[4];
-   int i;
    int bwin0,bwin1,logwin0,logwin1,winmode;
 
    // Out of range, do nothing

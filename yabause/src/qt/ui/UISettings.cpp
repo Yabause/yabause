@@ -21,7 +21,6 @@
 #include "UISettings.h"
 #include "../Settings.h"
 #include "../CommonDialogs.h"
-#include "UIWaitInput.h"
 #include "UIPortManager.h"
 
 #include <QDir>
@@ -206,7 +205,7 @@ void UISettings::tbBrowse_clicked()
 			return;
 		}
 		else if ( cbCdRom->currentText().contains( "iso", Qt::CaseInsensitive ) )
-			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds)" ) );
+			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd)" ) );
 		else
 			requestFolder( QtYabause::translate( "Choose a cdrom drive/mount point" ), leCdRom );
 	}
@@ -316,6 +315,10 @@ void UISettings::loadCores()
 	// SH2 Interpreters
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
+
+	cbAspectRatio->addItem( QtYabause::translate( "Fit to window" ), 0 );
+	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 4:3" ), 1 );
+	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 16:9" ), 2 );
 }
 
 void UISettings::loadSupportedResolutions()
@@ -428,11 +431,13 @@ void UISettings::loadSettings()
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
 
+	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );
 	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 640 ) ).toString() );
 	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 480 ) ).toString() );
 	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 640 ) ).toString(),
 										s->value( "Video/FullscreenHeight", s->value( "Video/Height", 480 ) ).toString());	
 	cbFullscreenResolution->setCurrentIndex(cbFullscreenResolution->findText(text));
+	cbBilinear->setChecked( s->value( "Video/Bilinear", false ).toBool() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
 
@@ -503,6 +508,7 @@ void UISettings::saveSettings()
 	// Save new version of keys
 	s->setValue( "Video/WindowWidth", leWinWidth->text() );
 	s->setValue( "Video/WindowHeight", leWinHeight->text() );
+	s->setValue( "Video/AspectRatio", cbAspectRatio->currentIndex() );
 
 	if (supportedRes.count() > 0)
 	{
@@ -512,6 +518,7 @@ void UISettings::saveSettings()
 	}
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
+	s->setValue( "Video/Bilinear", cbBilinear->isChecked() );
 	s->setValue( "Video/VideoFormat", cbVideoFormat->itemData( cbVideoFormat->currentIndex() ).toInt() );
 
 	s->setValue( "General/ClockSync", cbClockSync->isChecked() );

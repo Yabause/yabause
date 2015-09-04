@@ -840,6 +840,8 @@ int initEgl( ANativeWindow* window )
     yinit.mpegpath = mpegpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
+    yinit.skip_load = 0;
+
     res = YabauseInit(&yinit);
     if (res != 0) {
       yprintf("Fail to YabauseInit %d", res);
