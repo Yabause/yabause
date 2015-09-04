@@ -59,6 +59,7 @@ void auto_test_take_screenshot();
 void auto_test_section_start(char* test_section_name);
 void auto_test_sub_test_start(char* sub_test_name);
 void auto_test_section_end();
+void auto_test_get_framebuffer();
 
 extern screen_settings_struct test_disp_settings;
 extern font_struct test_disp_font;
