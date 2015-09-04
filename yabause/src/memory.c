@@ -122,7 +122,10 @@ T3Memory * T3MemoryInit(u32 size)
       return NULL;
 
    if ((mem->base_mem = (u8 *) calloc(size, sizeof(u8))) == NULL)
+   {
+      free(mem);
       return NULL;
+   }
 
    mem->mem = mem->base_mem + size;
 

@@ -71,6 +71,7 @@ void MemorySearch::process()
 
       // We're done
       emit searchResult(true, false, results[0].addr);
+      free(results);
       return;
    }
 
