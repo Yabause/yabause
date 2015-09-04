@@ -32,6 +32,8 @@ extern "C"
 #ifdef _MSC_VER
 #include <Windows.h>
 #endif
+
+extern u8 *vdp1backframebuffer;
 }
 
 #include "lodepng/lodepng.h"
@@ -138,6 +140,7 @@ const char* tests_expected_to_fail[] =
    "DSP Execution",
    "MVI Imm, [d]",
    "DSP Timing",
+   "Clipping test",
    NULL
 };
 
@@ -174,6 +177,19 @@ std::string make_screenshot_filename(std::string test_name, std::string path, in
    char preset_str[64] = { 0 };
    sprintf(preset_str, "%d", preset);
    return path + test_name + " " + preset_str + ".png";
+}
+
+bool do_pixel_test(int x, int y, u32 test_color, u32 correct_color)
+{
+   if (test_color != correct_color)
+   {
+      set_color(text_red);
+      printf("\nTest color was 0x%08x at x=%d y=%d. 0x%08x was expected.\n", test_color, x, y, correct_color);
+      set_color(text_white);
+      return false;
+   }
+
+   return true;
 }
 
 bool handle_screenshot(bool write_images, std::string test_name, std::string path, int preset)
@@ -248,13 +264,10 @@ bool handle_screenshot(bool write_images, std::string test_name, std::string pat
             u32 correct_color = correct_image_u32[(y * correct_width) + x];
             u32 test_color = runner_dispbuffer[(y * correct_width) + x];
 
-            if (test_color != correct_color)
-            {
-               set_color(text_red);
-               printf("Test color was 0x%08x at x=%d y=%d. 0x%08x was expected.\n", test_color, x, y, correct_color);
-               set_color(text_white);
+            bool result = do_pixel_test(x, y, test_color, correct_color);
+
+            if (!result)
                return false;
-            }
          }
       }
 
@@ -265,6 +278,44 @@ bool handle_screenshot(bool write_images, std::string test_name, std::string pat
    }
 
    return false;
+}
+
+bool handle_framebuffer(char * stored_test_name, std::string framebuffer_path)
+{
+   std::string filename = framebuffer_path + stored_test_name + ".bin";
+   u16 correct_framebuffer[0x20000];
+   u16 correct_framebuffer_swapped[0x20000];
+
+   unsigned int width = 320;
+   unsigned int height = 224;
+
+   FILE * fp = fopen(filename.c_str(), "rb");
+
+   fread(correct_framebuffer, sizeof(u16), 0x20000, fp);
+
+   fclose(fp);
+
+   for (int i = 0; i < 0x20000; i++)
+   {
+      correct_framebuffer_swapped[i] = ((correct_framebuffer[i] & 0xff) << 8) | ((correct_framebuffer[i] >> 8) & 0xff);
+   }
+
+   for (int y = 0; y < height; y++)
+   {
+      for (int x = 0; x < height; x++)
+      {
+         int pos = ((y * 320) + x) * 2;
+         u16 correct_pixel = correct_framebuffer_swapped[((y * 320) + x)];
+         u16 yabause_pixel = (vdp1backframebuffer[pos+1] << 8) | (vdp1backframebuffer[pos] & 0xff);
+
+         bool result = do_pixel_test(x, y, yabause_pixel, correct_pixel);
+
+         if (!result)
+            return false;
+      }
+   }
+
+   return true;
 }
 
 int go_to_next_test(int &current_test, char* filename, yabauseinit_struct yinit)
@@ -288,9 +339,11 @@ struct Stats
    int total_tests;
    int tests_passed;
    int expected_failures;
-   int screenshot_matches;
-   int screenshot_diffs;
-   int screenshot_total;
+   struct {
+      int matches;
+      int diffs;
+      int total;
+   }screenshot;
 };
 
 void do_test_pass(struct Stats & stats, char * message)
@@ -332,7 +385,6 @@ void do_regression_color(int regressions)
       set_color(text_green);
 }
 
-
 int main(int argc, char *argv[])
 {
    yabauseinit_struct yinit = { 0 };
@@ -340,6 +392,7 @@ int main(int argc, char *argv[])
    char stored_test_name[256] = { 0 };
    char * filename = argv[1];
    char * screenshot_path = argv[2];
+   char * framebuffer_path = argv[3];
 
    struct Stats stats = { 0 };
 
@@ -352,6 +405,12 @@ int main(int argc, char *argv[])
    if (!screenshot_path)
    {
       printf("No screenshot path specified.\n");
+      return 0;
+   }
+
+   if (!framebuffer_path)
+   {
+      printf("No framebuffer path specified.\n");
       return 0;
    }
 
@@ -411,7 +470,7 @@ int main(int argc, char *argv[])
          }
          else if (!strcmp(message, "SCREENSHOT"))
          {
-            stats.screenshot_total++;
+            stats.screenshot.total++;
 
             if (handle_screenshot(write_images, stored_test_name, screenshot_path, screenshot_preset))
             {
@@ -420,7 +479,7 @@ int main(int argc, char *argv[])
                {
                   printf("Preset %-25d ", screenshot_preset);
                   do_test_pass(stats, "Match");
-                  stats.screenshot_matches++;
+                  stats.screenshot.matches++;
                }
             }
             else
@@ -428,11 +487,21 @@ int main(int argc, char *argv[])
                //doesn't match
                if (!write_images)
                {
-                  stats.screenshot_diffs++;
+                  stats.screenshot.diffs++;
                }
             }
 
             screenshot_preset++;
+         }
+         else if (std::string(message) == "FRAMEBUFFER")
+         {
+            
+            bool result = handle_framebuffer(stored_test_name,framebuffer_path);
+
+            if(!result)
+               do_test_fail(stats, stored_test_name);
+
+            stats.total_tests++;
          }
          else if (!strcmp(message, "SECTION_START"))
          {
@@ -519,8 +588,8 @@ int main(int argc, char *argv[])
             do_regression_color(stats.regressions);
             printf("%d of %d tests passed. %d regressions. %d failures that are not regressions. \n", stats.tests_passed, stats.total_tests, stats.regressions, stats.expected_failures);
             
-            do_regression_color(stats.screenshot_diffs);
-            printf("%d of %d screenshots matched. %d did not match. \n", stats.screenshot_matches, stats.screenshot_total, stats.screenshot_diffs);
+            do_regression_color(stats.screenshot.diffs);
+            printf("%d of %d screenshots matched. %d did not match. \n", stats.screenshot.matches, stats.screenshot.total, stats.screenshot.diffs);
 
             set_color(text_white);
 
@@ -535,5 +604,5 @@ int main(int argc, char *argv[])
       }
    }
 
-   return stats.regressions || stats.screenshot_diffs;
+   return stats.regressions || stats.screenshot.diffs;
 }
