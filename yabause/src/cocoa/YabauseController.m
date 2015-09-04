@@ -267,6 +267,7 @@ static void FlipToggle(NSMenuItem *item) {
         yinit.clocksync = 0;
         yinit.basetime = 0;
         yinit.usethreads = 0;
+        yinit.skip_load = 0;
 
         /* Set up the internal save ram if specified. */
         if([bram length] > 0) {

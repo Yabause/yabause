@@ -21,22 +21,29 @@ if(Qt5_FOUND)
 	if (WIN32)
         	find_package(Qt5Core)
 	endif()
+	find_package(Qt5Multimedia REQUIRED)
+	add_definitions(-DHAVE_QT_MULTIMEDIA=1)
 else() 
-	find_package(Qt4)
-
-	if (NOT QT4_FOUND)
-		message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
-		return()
-	endif (NOT QT4_FOUND)
-
 	set( QT_USE_QTCORE TRUE )
 	set( QT_USE_QTGUI TRUE )
+	set ( QT_USE_QTMULTIMEDIA TRUE )
 	if( YAB_WANT_OPENGL )
 		set( QT_USE_QTOPENGL TRUE )
 	endif()
 	if (WIN32)
 		set( QT_USE_QTMAIN TRUE )
 	endif()
+	
+	find_package(Qt4)
+
+	if (NOT QT4_FOUND)
+		message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
+		return ()
+	endif ()
+
+	if (QT_QTMULTIMEDIA_FOUND)
+		add_definitions(-DHAVE_QT_MULTIMEDIA=1)
+	endif ()
 
 	# dunno what it does exactly ... but seem required
 	include( ${QT_USE_FILE} )
@@ -69,7 +76,6 @@ set( yabause_qt_FORMS
 	ui/UICheatAR.ui
 	ui/UICheatRaw.ui
 	ui/UICheatSearch.ui
-	ui/UIWaitInput.ui
 	ui/UIBackupRam.ui
 	ui/UIPortManager.ui
 	ui/UIPadSetting.ui 
@@ -78,6 +84,7 @@ set( yabause_qt_FORMS
 	ui/UIMouseSetting.ui 
     ui/UIDebugCPU.ui
     ui/UIDebugSCSP.ui
+    ui/UIDebugSCSPDSP.ui
     ui/UIDebugVDP1.ui
     ui/UIDebugVDP2.ui
     ui/UIDebugVDP2Viewer.ui
@@ -102,7 +109,6 @@ set( yabause_qt_MOC_HEADERS
 	ui/UICheatAR.h
 	ui/UICheatRaw.h
 	ui/UICheatSearch.h
-	ui/UIWaitInput.h
 	ui/UIBackupRam.h
 	ui/UIPortManager.h
 	ui/UIControllerSetting.h
@@ -114,6 +120,7 @@ set( yabause_qt_MOC_HEADERS
     ui/UIDebugCPU.h
     ui/UIDebugM68K.h
     ui/UIDebugSCSP.h
+    ui/UIDebugSCSPDSP.h
     ui/UIDebugSCUDSP.h
     ui/UIDebugSH2.h
     ui/UIDebugVDP1.h
@@ -143,7 +150,6 @@ set( yabause_qt_SOURCES
 	ui/UICheatAR.cpp
 	ui/UICheatRaw.cpp
 	ui/UICheatSearch.cpp
-	ui/UIWaitInput.cpp
 	ui/UIBackupRam.cpp
 	ui/UIPortManager.cpp
 	ui/UIControllerSetting.cpp
@@ -155,6 +161,7 @@ set( yabause_qt_SOURCES
     ui/UIDebugCPU.cpp
     ui/UIDebugM68K.cpp
     ui/UIDebugSCSP.cpp
+    ui/UIDebugSCSPDSP.cpp
     ui/UIDebugSCUDSP.cpp
     ui/UIDebugSH2.cpp
     ui/UIDebugVDP1.cpp
@@ -206,7 +213,8 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/ui
 	${Qt5Widgets_INCLUDE_DIRS}
-	${Qt5OpenGL_INCLUDE_DIRS} )
+	${Qt5OpenGL_INCLUDE_DIRS} 
+	${Qt5Multimedia_INCLUDE_DIRS} )
 else()
 include_directories(
 	.
@@ -234,7 +242,7 @@ target_link_libraries( yabause-qt ${PORT_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_windows_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_macosx_LIBRARIES} )
 if (Qt5_FOUND)
-	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Network_LIBRARIES} )
+	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Multimedia_LIBRARIES})
 else()
 	target_link_libraries( yabause-qt ${QT_LIBRARIES} )
 endif()
@@ -264,6 +272,7 @@ if (WIN32)
 		install(FILES ${QT_BINARY_DIR}/Qt5Gui.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/Qt5OpenGL.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/Qt5Widgets.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/Qt5Multimedia.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/icudt51.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/icuin51.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/icuuc51.dll DESTINATION ".")
@@ -272,6 +281,7 @@ if (WIN32)
 		install(FILES ${QT_BINARY_DIR}/QtCore4.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/QtGui4.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/QtOpenGL4.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/QtMultimedia4.dll DESTINATION ".")        
 	endif()
 
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../AUTHORS    DESTINATION "." RENAME AUTHORS.txt)

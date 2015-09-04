@@ -1,5 +1,6 @@
 project(yabause)
 
+include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
@@ -15,14 +16,14 @@ set(yabause_HEADERS
 	netlink.h
 	osdcore.h
 	peripheral.h profile.h
-	scsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
+	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h)
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "gtk;qt;dreamcast;cocoa" CACHE STRING "List of ports to build")
+set(YAB_PORTS "gtk;qt;dreamcast;cocoa;runner" CACHE STRING "List of ports to build")
 
 		
 set(yabause_SOURCES
@@ -35,7 +36,7 @@ set(yabause_SOURCES
 	netlink.c
 	osdcore.c
 	peripheral.c profile.c
-	scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
+	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c )
@@ -127,9 +128,27 @@ if (STRICMP_OK)
 endif ()
 
 # __builtin_bswap16
-check_function_exists(__builtin_bswap16 BSWAP16_OK)
+check_c_source_compiles (
+	"
+	int main(void) {
+		return !__builtin_bswap16(0xabcd) == 0xcdab;
+	}
+	"
+	BSWAP16_OK)
 if (BSWAP16_OK)
 	add_definitions(-DHAVE_BUILTIN_BSWAP16=1)
+endif()
+
+# __builtin_bswap32
+check_c_source_compiles (
+	"
+	int main(void) {
+		return !__builtin_bswap32(0xdeadbeef) == 0xefbeadde;
+	}
+	"
+	BSWAP32_OK)
+if (BSWAP32_OK)
+	add_definitions(-DHAVE_BUILTIN_BSWAP32=1)
 endif()
 
 # sys/time.h
@@ -143,6 +162,9 @@ check_include_file("stdint.h" STDINT_H_FOUND)
 if (STDINT_H_FOUND)
 	add_definitions(-DHAVE_STDINT_H=1)
 endif()
+
+find_package(Threads)
+set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 # 16BPP
 set(YAB_RGB "" CACHE STRING "Bit configuration of pixels in the display buffer.")
@@ -205,6 +227,7 @@ if (YAB_WANT_SDL)
 	include(FindSDL2 OPTIONAL)
 
 	if (SDL2_FOUND)
+		add_definitions(-DHAVE_LIBSDL2=1)
 		include_directories(${SDL2_INCLUDE_DIR})
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL2_LIBRARY})
 	else()
@@ -227,12 +250,11 @@ option(YAB_WANT_OPENAL "use OpenAL sound core if available" ON)
 if (YAB_WANT_OPENAL)
 	include(FindOpenAL)
 	if (OPENAL_FOUND)
-		find_package(Threads)
 		add_definitions(-DHAVE_LIBAL=1)
 		include_directories(${OPENAL_INCLUDE_DIR})
 		set(yabause_SOURCES ${yabause_SOURCES} sndal.c)
 		set(yabause_HEADERS ${yabause_HEADERS} sndal.h)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENAL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENAL_LIBRARY})
 	endif (OPENAL_FOUND)
 endif (YAB_WANT_OPENAL)
 
@@ -250,12 +272,14 @@ if (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI
 endif (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI18N_LIBRARY STREQUAL "MINI18N_LIBRARY-NOTFOUND")
 
 # xrandr
-find_library(XRANDR_LIBRARY Xrandr)
-if(XRANDR_LIBRARY)
-	add_definitions(-DHAVE_LIBXRANDR=1)
-	set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
-	set(yabause_HEADERS ${yabause_HEADERS} screen.h)
-	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
+if (NOT APPLE)
+	find_library(XRANDR_LIBRARY Xrandr)
+	if(XRANDR_LIBRARY)
+		add_definitions(-DHAVE_LIBXRANDR=1)
+		set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
+		set(yabause_HEADERS ${yabause_HEADERS} screen.h)
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
+	endif()
 endif()
 
 if (MINI18N_FOUND)
@@ -538,6 +562,18 @@ if (YAB_OPTIMIZED_DMA)
 	add_definitions(-DOPTIMIZED_DMA=1)
 endif()
 
+# SH2 Trace
+option(SH2_TRACE "Enable SH2 tracing" ON)
+if (SH2_TRACE)
+	add_definitions(-DSH2_TRACE=1)
+endif()
+
+# SH2 UBC
+option(SH2_UBC "Enable SH2 User Break Controller" OFF)
+if (SH2_UBC)
+	add_definitions(-DSH2_UBC=1)
+endif()
+
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)
@@ -661,4 +697,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 
 if (YAB_NETWORK AND UNIX)
     set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "socket")
+endif()
+
+option(YAB_TESTS "Build test programs for cores" OFF)
+if (YAB_TESTS)
+	add_subdirectory("tools")
 endif()
