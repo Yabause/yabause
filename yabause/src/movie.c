@@ -192,7 +192,7 @@ void DoMovie(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MovieLoadState(const char * filename) {
+void MovieLoadState(void) {
 
 
 	if (Movie.ReadOnly == 1 && Movie.Status == Playback)  {
@@ -369,10 +369,10 @@ void SaveMovieInState(FILE* fp, IOCheck_struct check) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MovieReadState(FILE* fp, const char * filename) {
+void MovieReadState(FILE* fp) {
 
 	ReadMovieInState(fp);
-	MovieLoadState(filename);//file pointer and truncation
+	MovieLoadState();//file pointer and truncation
 
 }
 
