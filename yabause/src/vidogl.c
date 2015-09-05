@@ -3242,7 +3242,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
          col[(i << 2) + 3] = 1.0f;
       }
      
-      if (sprite.w > 0 && sprite.h > 1)
+      if (sprite.w > 0 && sprite.h > 0)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
@@ -3259,7 +3259,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    }
    else // No Gouraud shading, use same color for all 4 vertices
    {
-      if (sprite.w > 0 && sprite.h > 1)
+      if (sprite.w > 0 && sprite.h > 0)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
@@ -3277,7 +3277,6 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
 
 void VIDOGLVdp1DistortedSpriteDraw(void)
 {
@@ -3318,7 +3317,6 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.vertices[5] = (s16)cmd.CMDYC;
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
-
 
    int isSquare = 1;
    for (i = 0; i < 3; i++){
@@ -3417,36 +3415,27 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
          col[(i << 2) + 3] = 1.0f;
       }
      
-      if (sprite.w > 0 && sprite.h > 1)
+      if (1 == YglIsCached(tmp,&cash) )
       {
-         if (1 == YglIsCached(tmp,&cash) )
-         {
-            YglCacheQuadGrowShading(&sprite, col,&cash);
-            return;
-         }
-
-         YglQuadGrowShading(&sprite, &texture,col,&cash);
-         YglCacheAdd(tmp,&cash);
-         Vdp1ReadTexture(&cmd, &sprite, &texture);
-         return;
+	      YglCacheQuadGrowShading(&sprite, col,&cash);
+          return;
       }
-   
+
+		YglQuadGrowShading(&sprite, &texture,col,&cash);
+		YglCacheAdd(tmp,&cash);
+		Vdp1ReadTexture(&cmd, &sprite, &texture);
+		return;
    }
    else // No Gouraud shading, use same color for all 4 vertices
    {
-      if (sprite.w > 0 && sprite.h > 1)
-      {
-         if (1 == YglIsCached(tmp,&cash) )
-         {
-            YglCacheQuadGrowShading(&sprite, NULL,&cash);
-            return;
-         }
-
-         YglQuadGrowShading(&sprite, &texture,NULL,&cash);
-         YglCacheAdd(tmp,&cash);
-
-         Vdp1ReadTexture(&cmd, &sprite, &texture);
-      }
+		if (1 == YglIsCached(tmp,&cash) )
+        {
+			YglCacheQuadGrowShading(&sprite, NULL,&cash);
+			return;
+		}
+		YglQuadGrowShading(&sprite, &texture,NULL,&cash);
+		YglCacheAdd(tmp,&cash);
+		Vdp1ReadTexture(&cmd, &sprite, &texture);
    }
    
    return ;
