@@ -12,6 +12,7 @@
     <string name="audio_output">Audio output</string>
     <string name="fps">FPS</string>
     <string name="frameskip">Frameskip</string>
+    <string name="keepaspectrate">Keep original aspect rate</string>
     <string name="choose_input_device">Choose input deivce</string>
     <string name="input_device_title">Input Device</string>
     <string name="input_device">Choose</string>

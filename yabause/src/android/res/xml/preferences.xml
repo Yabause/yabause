@@ -25,11 +25,18 @@
             android:key="pref_fps"
             android:title="@string/fps"
             android:defaultValue="false" />
+        
         <CheckBoxPreference
             android:key="pref_frameskip"
             android:title="@string/frameskip"
             android:defaultValue="true" />
-	</PreferenceCategory>        
+        
+        <CheckBoxPreference
+            android:key="pref_keepaspectrate"
+            android:title="@string/keepaspectrate"
+            android:defaultValue="true" />
+        
+     </PreferenceCategory>        
     
     <PreferenceCategory android:title="@string/input_device_title">
         <ListPreference

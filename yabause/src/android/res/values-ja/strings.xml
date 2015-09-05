@@ -12,6 +12,7 @@
     <string name="audio_output">音声出力</string>
     <string name="fps">FPS表示</string>
     <string name="frameskip">フレームスキップ</string>
+    <string name="keepaspectrate">オリジナルの画面サイズ</string>
     <string name="choose_input_device">入力デバイスの選択</string>
     <string name="input_device_title">入力デバイス</string>
     <string name="input_device">選択</string>
