@@ -256,6 +256,7 @@ typedef struct {
    u32 ssh2stack;
    u32 firstprogaddr;
    u32 firstprogsize;
+   u64 gameid;
 } ip_struct;
 
 extern Cs2 * Cs2Area;
@@ -378,5 +379,7 @@ u8 Cs2GetIP(int autoregion);
 u8 Cs2GetRegionID(void);
 int Cs2SaveState(FILE *);
 int Cs2LoadState(FILE *, int, int);
-
+u32 Cs2GetMasterStackAdress();
+u32 Cs2GetSlaveStackAdress();
+u64 Cs2GetGameId();
 #endif

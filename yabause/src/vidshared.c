@@ -26,6 +26,7 @@
 #include "vidshared.h"
 #include "vdp2.h"
 #include "debug.h"
+#include "cs2.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -260,12 +261,25 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter)
 
       i = T1ReadLong(Vdp2Ram, addr);
       parameter->deltaKAx = (float) (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
-	  
-	  // SonicR fail safe ( I don't know it's right or not )
-	  if (parameter->deltaKAx <= -100.0f){
-		  parameter->deltaKAx = 0.0f;
-	  }
 	  addr += 4;
+
+	  // <workaround>
+	  // I hate this code. but this special operation is needed for Sonic R to avoid show stopper.
+	  // I hope this issue will be solved in a proper way. 
+	  // My investigation result is here https://github.com/devmiyax/yabause/issues/18
+	  // devMiyax.
+		#define YGAMEID_SONICR_J (0x00303731392d5347)
+		#define YGAMEID_SONICR_EU (0x30303831382d4b4d)
+		#define YGAMEID_SONICR_BR (0x0000363033313931)
+		#define YGAMEID_SONICR_US (0x0000003030383138)
+	  u64 gameid = Cs2GetGameId();
+	  if (gameid == YGAMEID_SONICR_J || 
+		  gameid == YGAMEID_SONICR_BR ||
+		  gameid == YGAMEID_SONICR_EU ||
+		  gameid == YGAMEID_SONICR_US ){
+	  	parameter->deltaKAx = 0.0f;
+	  }
+	  // </workaround>
 
       if (which == 0)
       {
@@ -628,3 +642,4 @@ fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, 
 }
 
 //////////////////////////////////////////////////////////////////////////////
+

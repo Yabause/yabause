@@ -3474,7 +3474,6 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
 u8 Cs2GetIP(int autoregion) {
    partition_struct * gripartition;
    u8 ret = 0;
@@ -3485,6 +3484,7 @@ u8 Cs2GetIP(int autoregion) {
    // read in lba 0/FAD 150
    if ((gripartition = Cs2ReadUnFilteredSector(150)) != NULL)
    {
+	   int i;
       char *buf=(char*)gripartition->block[gripartition->numblocks - 1]->data;
 
       // Make sure we're dealing with a saturn game
@@ -3495,6 +3495,12 @@ u8 Cs2GetIP(int autoregion) {
          memcpy(cdip->company, buf+0x10, 16);
          cdip->company[16]='\0';
          sscanf(buf+0x20, "%s", cdip->itemnum);
+		 
+		 // make gameid as u64
+		 cdip->gameid = 0;
+		 for (i = 0; i < 8; i++){
+			 cdip->gameid |= ((u64)cdip->itemnum[i]) << (i * 8);
+		 }
          memcpy(cdip->version, buf+0x2A, 6);
          cdip->version[6]='\0';
          sprintf(cdip->date, "%c%c/%c%c/%c%c%c%c", buf[0x34], buf[0x35], buf[0x36], buf[0x37], buf[0x30], buf[0x31], buf[0x32], buf[0x33]);
@@ -3825,6 +3831,7 @@ int Cs2LoadState(FILE * fp, int version, int size) {
 
 u32 Cs2GetMasterStackAdress(){ if (cdip) return cdip->msh2stack; else return 0x6002000; }
 u32 Cs2GetSlaveStackAdress(){ if (cdip) return cdip->ssh2stack; else return 0x6001000; }
+u64 Cs2GetGameId(){ if (cdip) return cdip->gameid; else return 0x00; }
 
 //////////////////////////////////////////////////////////////////////////////
 
