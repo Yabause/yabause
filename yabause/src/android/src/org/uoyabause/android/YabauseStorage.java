@@ -6,6 +6,8 @@ import android.app.Activity;
 import android.content.Context;
 
 import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import android.os.Environment;
 import android.util.Log;
@@ -89,6 +91,14 @@ public class YabauseStorage {
 
     public String[] getGameFiles( String other_dir_string ) {
         String[] gamefiles = games.list(new GameFilter());
+        
+        Arrays.sort(gamefiles, new Comparator<String>() {
+        	  @Override
+        	    public int compare(String obj0, String obj1) {
+        	        return obj0.compareTo(obj1);
+        	    }
+        	});
+        
         String[] selfiles  = new String[]{other_dir_string}; 
         String[] allLists = new String[selfiles.length + gamefiles.length];
         System.arraycopy(selfiles, 0, allLists, 0, selfiles.length);
