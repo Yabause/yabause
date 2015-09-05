@@ -110,6 +110,8 @@ class YabauseView extends SurfaceView implements Callback {
 	        } else {
 	            setMeasuredDimension(specw, (int) (specw * revratio));
 	        }
+        }else{
+        	super.onMeasure(widthMeasureSpec,heightMeasureSpec);
         }
     }
 }
