@@ -3242,7 +3242,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
          col[(i << 2) + 3] = 1.0f;
       }
      
-      if (sprite.w > 0 && sprite.h > 0)
+      if (sprite.w > 0 && sprite.h > 1)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
@@ -3254,12 +3254,13 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
          YglCacheAdd(tmp,&cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
          return;
-      }
+	  }
+
    
    }
    else // No Gouraud shading, use same color for all 4 vertices
    {
-      if (sprite.w > 0 && sprite.h > 0)
+      if (sprite.w > 0 && sprite.h > 1)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
@@ -3271,7 +3272,8 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
-      }
+	  }
+
    }
   
 }
