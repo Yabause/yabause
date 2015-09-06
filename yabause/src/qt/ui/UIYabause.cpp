@@ -833,12 +833,22 @@ void UIYabause::on_aFileScreenshot_triggered()
 	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
 	// request a file to save to to user
-	const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
+	QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
+
+	// if the user didn't provide a filename extension, we force it to png
+	QFileInfo qfi( s );
+	if ( qfi.suffix().isEmpty() )
+		s += ".png";
 	
 	// write image if ok
 	if ( !s.isEmpty() )
-		if ( !screenshot.save( s ) )
-			CommonDialogs::information( QtYabause::translate( "An error occur while writing the screenshot." ) );
+	{
+		QImageWriter iw( s );
+		if ( !iw.write( screenshot ))
+		{
+			CommonDialogs::information( QtYabause::translate( "An error occur while writing the screenshot: " + iw.errorString()) );
+		}
+	}
 }
 
 void UIYabause::on_aFileQuit_triggered()
