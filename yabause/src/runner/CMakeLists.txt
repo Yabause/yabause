@@ -1,5 +1,7 @@
 project(yabause-runner)
 
+cmake_minimum_required(VERSION 2.8)
+
 yab_port_start()
 
 if ((NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.h") OR (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lodepng/lodepng.cpp"))
