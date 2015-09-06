@@ -26,6 +26,7 @@
 #include "ygl.h"
 #include "yui.h"
 #include "vidshared.h"
+#include "debug.h"
 
 static int YglCalcTextureQ( float   *pnts,float *q);
 
@@ -561,13 +562,18 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _Ygl->smallfbo);
     glBlitFramebuffer(0, 0, GlWidth, GlHeight, 0, 0, _Ygl->rwidth, _Ygl->rheight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 #else
-    YglBlitFramebuffer(_Ygl->vdp1FrameBuff[((_Ygl->drawframe ^ 0x01) & 0x01)], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight );
+
+#if YAB_ASYNC_RENDERING
+	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->readframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
+#else
+	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
+#endif
 #endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     YGLLOG("glReadPixels %d\n",_Ygl->vdp1pixelBufferID);
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    YGLLOG("VIDOGLVdp1ReadFrameBuffer %d\n", ((_Ygl->drawframe ^ 0x01) & 0x01) );
+    YGLLOG("VIDOGLVdp1ReadFrameBuffer %d\n", _Ygl->drawframe);
     _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
 
@@ -839,6 +845,7 @@ int YglInit(int width, int height, unsigned int depth) {
    }
 
    _Ygl->drawframe = 0;
+   _Ygl->readframe = 1;
 
    glGenTextures(2,_Ygl->vdp1FrameBuff);
    glBindTexture(GL_TEXTURE_2D,_Ygl->vdp1FrameBuff[0]);
@@ -1011,6 +1018,10 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    } else if( level->prg[level->prgcurrent].prgid != prg ) {
       YglProgramChange(level,prg);
    }
+// for polygon debug
+//   else if (prg == PG_VFP1_GOURAUDSAHDING ){
+//	   YglProgramChange(level, prg);
+//   }
    program = &level->prg[level->prgcurrent];
 
    if (program->currentQuad == program->maxQuad) {
@@ -1900,7 +1911,7 @@ void YglRenderVDP1(void) {
      glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
      Vdp1External.manualerase = 0;
-     YGLLOG("YglRenderVDP1: clear\n");
+     YGLLOG("YglRenderVDP1: clear %d\n", _Ygl->drawframe);
 
    }
 
@@ -1943,16 +1954,17 @@ void YglRenderVDP1(void) {
    }
    level->prgcurrent = 0;
    
-
-   if ( (((Vdp1Regs->TVMR & 0x08)==0) && ((Vdp1Regs->FBCR & 0x03)==0x03) ) || 
-         ((Vdp1Regs->FBCR & 2) == 0) || 
-         Vdp1External.manualchange )
+   if ( (((Vdp1Regs->TVMR & 0x08)==0) && ((Vdp1Regs->FBCR & 0x03)==0x03) )
+	)
    {
-     _Ygl->drawframe = (_Ygl->drawframe ^ 0x01) & 0x01;
+	   u32 current_drawframe = 0;
+	   current_drawframe = _Ygl->drawframe;
+	   _Ygl->drawframe = _Ygl->readframe;
+	   _Ygl->readframe = current_drawframe;
      Vdp1External.manualchange = 0;
-     YGLLOG("YglRenderVDP1: swap\n");
+     YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
    }
-  
+ 
 
    // glFlush(); need??
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1969,9 +1981,13 @@ void YglDmyRenderVDP1(void) {
           ((Vdp1Regs->FBCR & 2) == 0) ||
           Vdp1External.manualchange )
     {
-      _Ygl->drawframe = (_Ygl->drawframe ^ 0x01) & 0x01;
+		u32 current_drawframe = 0;
+		current_drawframe = _Ygl->drawframe;
+		_Ygl->drawframe = _Ygl->readframe;
+		_Ygl->readframe = current_drawframe;
+
       Vdp1External.manualchange = 0;
-      YGLLOG("YglRenderVDP1: swap\n");
+      YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
     }
 }
 
@@ -2066,10 +2082,10 @@ void YglRenderFrameBuffer( int from , int to ) {
    else{
      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
    }
-   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[(_Ygl->drawframe^0x01)&0x01] );
+   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
    //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
 
-   YGLLOG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, (_Ygl->drawframe ^ 0x01) & 0x01);
+   YGLLOG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, _Ygl->readframe);
 
    // Window Mode
    bwin0 = (Vdp2Regs->WCTLC >> 9) &0x01;
@@ -2319,6 +2335,17 @@ void YglRender(void) {
    if (YglTM->texture == NULL){
 	   abort();
    }
+
+   if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
+   {
+	   u32 current_drawframe = 0;
+	   current_drawframe = _Ygl->drawframe;
+	   _Ygl->drawframe = _Ygl->readframe;
+	   _Ygl->readframe = current_drawframe;
+	   Vdp1External.manualchange = 0;
+	   YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+   }
+
    return;
 }
 
