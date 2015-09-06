@@ -12,6 +12,7 @@
     <string name="audio_output">音声出力</string>
     <string name="fps">FPS表示</string>
     <string name="frameskip">フレームスキップ</string>
+    <string name="keepaspectrate">オリジナルの画面サイズ</string>
     <string name="choose_input_device">入力デバイスの選択</string>
     <string name="input_device_title">入力デバイス</string>
     <string name="input_device">選択</string>
@@ -39,4 +40,34 @@
     <string name="donate_5doller">500円</string>
     <string name="donate_10doller">1,000円</string>
     <string name="donate_30doller">3,000円</string>   	
+    
+    <string name="input_the_key">キーを入力してください</string>
+    <string name="joystick_is_not_connected">ゲームパッドが接続されていません</string>
+    <string name="this_key_has_already_been_set">このキーはすでに設定されています</string>
+	<string name="up">Up</string>
+	<string name="down">Down</string>
+	<string name="left">Left</string>
+	<string name="right">Right</string>
+	<string name="l_trigger">L Triger</string>
+	<string name="r_trigger">R Triger</string>
+	<string name="start">Start</string>
+	<string name="a_button">A</string>
+	<string name="b_button">B</string>
+	<string name="c_button">C</string>
+	<string name="x_button">X</string>
+	<string name="y_button">Y</string>
+	<string name="z_button">Z</string>
+	
+	<string name="scale">大きさ</string>
+	<string name="do_you_want_to_save_this_setting">この状態で保存しますか？</string>
+	<string name="yes">はい</string>
+	<string name="no">いいえ</string>
+	<string name="exit">終了</string>
+	<string name="ignore">無視</string>
+	
+	<string name="opengl_video_interface">OpenGL Video Interface</string>
+	<string name="software_video_interface">Software Video Interface</string>
+	<string name="onscreen_pad">オンスクリーンパッド</string>
+	<string name="select_from_other_directory">他のディレクトリから選択</string>
+	    
 </resources>

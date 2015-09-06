@@ -1500,12 +1500,15 @@ static int FASTCALL Vdp2CheckWindowDot(vdp2draw_struct *info, int x, int y )
 {
     if( info->bEnWin0 != 0 &&  info->bEnWin1 == 0 )
     {
+		if (m_vWindinfo0==NULL) Vdp2GenerateWindowInfo();
         return Vdp2CheckWindow(info, x, y, info->WindowArea0, m_vWindinfo0 );
     }else if( info->bEnWin0 == 0 &&  info->bEnWin1 != 0 )
     {
+		if (m_vWindinfo1 == NULL) Vdp2GenerateWindowInfo();
         return Vdp2CheckWindow(info, x, y, info->WindowArea1, m_vWindinfo1 );
     }else if( info->bEnWin0 != 0 &&  info->bEnWin1 != 0 )
     {
+		if (m_vWindinfo0 == NULL || m_vWindinfo1 == NULL) Vdp2GenerateWindowInfo();
         if( info->LogicWin == 0 )
         {
             return (Vdp2CheckWindow(info, x, y, info->WindowArea0, m_vWindinfo0 )&
@@ -3251,7 +3254,8 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
          YglCacheAdd(tmp,&cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
          return;
-      }
+	  }
+
    
    }
    else // No Gouraud shading, use same color for all 4 vertices
@@ -3268,13 +3272,13 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
-      }
+	  }
+
    }
   
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
 
 void VIDOGLVdp1DistortedSpriteDraw(void)
 {
@@ -3315,7 +3319,6 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.vertices[5] = (s16)cmd.CMDYC;
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
-
 
    int isSquare = 1;
    for (i = 0; i < 3; i++){
@@ -3414,36 +3417,27 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
          col[(i << 2) + 3] = 1.0f;
       }
      
-      if (sprite.w > 0 && sprite.h > 1)
+      if (1 == YglIsCached(tmp,&cash) )
       {
-         if (1 == YglIsCached(tmp,&cash) )
-         {
-            YglCacheQuadGrowShading(&sprite, col,&cash);
-            return;
-         }
-
-         YglQuadGrowShading(&sprite, &texture,col,&cash);
-         YglCacheAdd(tmp,&cash);
-         Vdp1ReadTexture(&cmd, &sprite, &texture);
-         return;
+	      YglCacheQuadGrowShading(&sprite, col,&cash);
+          return;
       }
-   
+
+		YglQuadGrowShading(&sprite, &texture,col,&cash);
+		YglCacheAdd(tmp,&cash);
+		Vdp1ReadTexture(&cmd, &sprite, &texture);
+		return;
    }
    else // No Gouraud shading, use same color for all 4 vertices
    {
-      if (sprite.w > 0 && sprite.h > 1)
-      {
-         if (1 == YglIsCached(tmp,&cash) )
-         {
-            YglCacheQuadGrowShading(&sprite, NULL,&cash);
-            return;
-         }
-
-         YglQuadGrowShading(&sprite, &texture,NULL,&cash);
-         YglCacheAdd(tmp,&cash);
-
-         Vdp1ReadTexture(&cmd, &sprite, &texture);
-      }
+		if (1 == YglIsCached(tmp,&cash) )
+        {
+			YglCacheQuadGrowShading(&sprite, NULL,&cash);
+			return;
+		}
+		YglQuadGrowShading(&sprite, &texture,NULL,&cash);
+		YglCacheAdd(tmp,&cash);
+		Vdp1ReadTexture(&cmd, &sprite, &texture);
    }
    
    return ;
@@ -4175,6 +4169,9 @@ static void Vdp2DrawLineColorScreen(void)
   if ( Vdp2Regs->LNCLEN == 0) return;
 
   line_pixel_data = YglGetLineColorPointer();
+  if( line_pixel_data == NULL ){
+      return;
+  }
 
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
@@ -5057,7 +5054,7 @@ static void Vdp2DrawRBG0(void)
       paraB.lineaddr = 0xFFFFFFFF;
    }
 
-   if (Vdp2Regs->CCCTL & 0x10)
+   if ( (Vdp2Regs->CCCTL & 0x410) == 0x10 )
    {
 	   info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
 	   if (Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
@@ -5071,7 +5068,6 @@ static void Vdp2DrawRBG0(void)
    else{
 	   info.alpha = 0xFF;
    }
-
 
    info.coloroffset = (Vdp2Regs->CRAOFB & 0x7) << 8;
 
