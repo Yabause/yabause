@@ -177,6 +177,7 @@ public class Yabause extends Activity implements OnPadListener
         	gamepath = exgame; 
         }
         
+        System.gc(); // Clear Memory Before run
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
 
