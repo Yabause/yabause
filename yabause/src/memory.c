@@ -1222,6 +1222,8 @@ int YabLoadStateStream(FILE *fp)
    u32 temp32;
 
    headersize = 0xC;
+   check.done = 0;
+   check.size = 0;
 
    // Read signature
    yread(&check, (void *)id, 1, 3, fp);

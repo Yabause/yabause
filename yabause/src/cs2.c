@@ -2728,7 +2728,7 @@ void Cs2GetMPEGRom(void) {
      fseek(mpgfp, readoffset * Cs2Area->getsectsize, SEEK_SET);
      if ((mpgpartition = Cs2GetPartition(Cs2Area->outconmpegrom)) != NULL && !Cs2Area->isbufferfull)
      {
-        IOCheck_struct check;
+        IOCheck_struct check = { 0, 0 };
         mpgpartition->size = 0;
 
         for (i = 0; i < readsize; i++)
@@ -3601,7 +3601,7 @@ u8 Cs2GetRegionID(void)
 
 int Cs2SaveState(FILE * fp) {
    int offset, i;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
 
@@ -3699,7 +3699,7 @@ int Cs2SaveState(FILE * fp) {
 
 int Cs2LoadState(FILE * fp, int version, int size) {
    int i, i2;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
 
