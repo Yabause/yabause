@@ -27,6 +27,7 @@
 #include "sh2core.h"
 #include "bios.h"
 #include "smpc.h"
+#include "yabause.h"
 
 static u8 sh2masklist[0x20] = {
 0xF0, 0xE0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80,

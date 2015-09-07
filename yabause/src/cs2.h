@@ -378,5 +378,7 @@ u8 Cs2GetIP(int autoregion);
 u8 Cs2GetRegionID(void);
 int Cs2SaveState(FILE *);
 int Cs2LoadState(FILE *, int, int);
+u32 Cs2GetMasterStackAdress(void);
+u32 Cs2GetSlaveStackAdress(void);
 
 #endif
