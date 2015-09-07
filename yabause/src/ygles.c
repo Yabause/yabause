@@ -27,9 +27,6 @@
 #include "yui.h"
 #include "vidshared.h"
 
-#define YGLDEBUG
-//#define YGLDEBUG printf
-
 static int YglCalcTextureQ( float   *pnts,float *q);
 
 #define PI 3.1415926535897932384626433832795f
@@ -535,20 +532,20 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   if (_Ygl->smallfbo == 0) {
 
     glGenFramebuffers(1, &_Ygl->smallfbo);
-    YGLDEBUG("glGenFramebuffers %d\n", _Ygl->smallfbo );
+    YGLLOG("glGenFramebuffers %d\n", _Ygl->smallfbo );
     glGenTextures(1, &_Ygl->smallfbotex);
-    YGLDEBUG("glGenTextures %d\n",_Ygl->smallfbotex );
+    YGLLOG("glGenTextures %d\n",_Ygl->smallfbotex );
     glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    YGLDEBUG("glTexImage2D %d\n",_Ygl->smallfbotex );
+    YGLLOG("glTexImage2D %d\n",_Ygl->smallfbotex );
 
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->smallfbotex, 0);
 
     glGenBuffers(1, &_Ygl->vdp1pixelBufferID);
-     YGLDEBUG("glGenBuffers %d\n",_Ygl->vdp1pixelBufferID);
+     YGLLOG("glGenBuffers %d\n",_Ygl->vdp1pixelBufferID);
      if( _Ygl->vdp1pixelBufferID == 0 ){
-        YGLDEBUG("Fail to glGenBuffers %X",glGetError());
+        YGLLOG("Fail to glGenBuffers %X",glGetError());
      }
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_DYNAMIC_READ);
@@ -568,9 +565,9 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 #endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    YGLDEBUG("glReadPixels %d\n",_Ygl->vdp1pixelBufferID);
+    YGLLOG("glReadPixels %d\n",_Ygl->vdp1pixelBufferID);
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    YGLDEBUG("VIDOGLVdp1ReadFrameBuffer %d\n", ((_Ygl->drawframe ^ 0x01) & 0x01) );
+    YGLLOG("VIDOGLVdp1ReadFrameBuffer %d\n", ((_Ygl->drawframe ^ 0x01) & 0x01) );
     _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
 
@@ -665,7 +662,7 @@ int YglGLInit(int width, int height) {
    glPixelStorei(GL_PACK_ALIGNMENT, 1);
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-   YGLDEBUG("YglGLInit(%d,%d)\n",GlWidth,GlHeight );
+   YGLLOG("YglGLInit(%d,%d)\n",GlWidth,GlHeight );
 
    if( _Ygl->texture == 0 )
       glGenTextures(1, &_Ygl->texture);
@@ -679,7 +676,7 @@ int YglGLInit(int width, int height) {
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
    if( (error = glGetError()) != GL_NO_ERROR )
    {
-      YGLDEBUG("Fail to init YglTM->texture %04X", error);
+      YGLLOG("Fail to init YglTM->texture %04X", error);
       return -1;
    }
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
@@ -693,7 +690,7 @@ int YglGLInit(int width, int height) {
    YglTM->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
    if( (error = glGetError()) != GL_NO_ERROR )
    {
-      YGLDEBUG("Fail to init YglTM->texture %04X", error);
+      YGLLOG("Fail to init YglTM->texture %04X", error);
       return -1;
    }
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -745,7 +742,7 @@ int YglGLInit(int width, int height) {
    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
    if( status != GL_FRAMEBUFFER_COMPLETE )
    {
-      YGLDEBUG("YglGLInit:Framebuffer status = %08X\n", status );
+      YGLLOG("YglGLInit:Framebuffer status = %08X\n", status );
    }
    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -790,7 +787,7 @@ int YglInit(int width, int height, unsigned int depth) {
    GLuint status;
    void * dataPointer=NULL;
 
-   YGLDEBUG("YglInit(%d,%d,%d);",width,height,depth );
+   YGLLOG("YglInit(%d,%d,%d);",width,height,depth );
 
    YglTMInit(width, height);
 
@@ -886,7 +883,7 @@ int YglInit(int width, int height, unsigned int depth) {
    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
    if( status != GL_FRAMEBUFFER_COMPLETE )
    {
-      YGLDEBUG("YglInit: Framebuffer status = %08X\n", status );
+      YGLLOG("YglInit: Framebuffer status = %08X\n", status );
       return -1;
    }
 
@@ -1297,7 +1294,7 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
 
    program = YglGetProgram(input,prg);
    if( program == NULL ) return -1;
-   //YGLDEBUG( "program->quads = %X,%X,%d/%d\n",program->quads,program->vertexBuffer,program->currentQuad,program->maxQuad );
+   //YGLLOG( "program->quads = %X,%X,%d/%d\n",program->quads,program->vertexBuffer,program->currentQuad,program->maxQuad );
    if( program->quads == NULL ) {
        int a=0;
    }
@@ -1814,7 +1811,7 @@ void YglRenderVDP1(void) {
      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
    }
-   YGLDEBUG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
+   YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
 
    level = &(_Ygl->levels[_Ygl->depth]);
    glDisable(GL_STENCIL_TEST);
@@ -1837,10 +1834,10 @@ void YglRenderVDP1(void) {
    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
    if( status != GL_FRAMEBUFFER_COMPLETE )
    {
-      YGLDEBUG("YglRenderVDP1: Framebuffer status = %08X\n", status );
+      YGLLOG("YglRenderVDP1: Framebuffer status = %08X\n", status );
       return;
    }else{
-      //YGLDEBUG("Framebuffer status OK = %08X\n", status );
+      //YGLLOG("Framebuffer status OK = %08X\n", status );
    }
 
    // Many regressions to Enable it
@@ -1903,7 +1900,7 @@ void YglRenderVDP1(void) {
      glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
      Vdp1External.manualerase = 0;
-     YGLDEBUG("YglRenderVDP1: clear\n");
+     YGLLOG("YglRenderVDP1: clear\n");
 
    }
 
@@ -1953,7 +1950,7 @@ void YglRenderVDP1(void) {
    {
      _Ygl->drawframe = (_Ygl->drawframe ^ 0x01) & 0x01;
      Vdp1External.manualchange = 0;
-     YGLDEBUG("YglRenderVDP1: swap\n");
+     YGLLOG("YglRenderVDP1: swap\n");
    }
   
 
@@ -1974,7 +1971,7 @@ void YglDmyRenderVDP1(void) {
     {
       _Ygl->drawframe = (_Ygl->drawframe ^ 0x01) & 0x01;
       Vdp1External.manualchange = 0;
-      YGLDEBUG("YglRenderVDP1: swap\n");
+      YGLLOG("YglRenderVDP1: swap\n");
     }
 }
 
@@ -2053,7 +2050,7 @@ void YglRenderFrameBuffer( int from , int to ) {
 
    glEnable(GL_TEXTURE_2D);
 
-   //YGLDEBUG("YglRenderFrameBuffer: %d to %d\n", from , to );
+   //YGLLOG("YglRenderFrameBuffer: %d to %d\n", from , to );
 
    offsetcol[0] = vdp1cor / 255.0f;
    offsetcol[1] = vdp1cog / 255.0f;
@@ -2072,7 +2069,7 @@ void YglRenderFrameBuffer( int from , int to ) {
    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[(_Ygl->drawframe^0x01)&0x01] );
    //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
 
-   YGLDEBUG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, (_Ygl->drawframe ^ 0x01) & 0x01);
+   YGLLOG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, (_Ygl->drawframe ^ 0x01) & 0x01);
 
    // Window Mode
    bwin0 = (Vdp2Regs->WCTLC >> 9) &0x01;
@@ -2191,7 +2188,7 @@ void YglRender(void) {
    YglMatrix dmtx;
    unsigned int i,j;
 
-   YGLDEBUG("YglRender\n");
+   YGLLOG("YglRender\n");
 
    glBindFramebuffer(GL_FRAMEBUFFER,0);
 
@@ -2371,7 +2368,7 @@ u32 * YglGetLineColorPointer(){
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     if ((error = glGetError()) != GL_NO_ERROR)
     {
-      YGLDEBUG("Fail to init lincolor_tex %04X", error);
+      YGLLOG("Fail to init lincolor_tex %04X", error);
       return NULL;
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -2386,7 +2383,7 @@ u32 * YglGetLineColorPointer(){
   _Ygl->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
   if ((error = glGetError()) != GL_NO_ERROR)
   {
-    YGLDEBUG("Fail to init YglTM->texture %04X", error);
+    YGLLOG("Fail to init YglTM->texture %04X", error);
     return NULL;
   }
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);

@@ -28,8 +28,6 @@
 #include "yui.h"
 #include "vidshared.h"
 
-//#define printf xprintf
-
 extern float vdp1wratio;
 extern float vdp1hratio;
 extern int GlHeight;
@@ -48,7 +46,7 @@ static void Ygl_printShaderError( GLuint shader )
     if (infoLog != NULL) {
       GLsizei length;
       glGetShaderInfoLog(shader, bufSize, &length, infoLog);
-      printf("Shaderlog:\n%s\n", infoLog);
+      YGLLOG("Shaderlog:\n%s\n", infoLog);
       free(infoLog);
     }
   }
@@ -1035,7 +1033,7 @@ int YglInitShader( int id, const GLchar * vertex[], const GLchar * frag[] )
     glCompileShader(vshader);
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
-       printf( "Compile error in vertex shader.\n");
+       YGLLOG( "Compile error in vertex shader.\n");
        Ygl_printShaderError(vshader);
        _prgid[id] = 0;
        return -1;
@@ -1045,7 +1043,7 @@ int YglInitShader( int id, const GLchar * vertex[], const GLchar * frag[] )
     glCompileShader(fshader);
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
-       printf( "Compile error in fragment shader.\n");
+       YGLLOG( "Compile error in fragment shader.\n");
        Ygl_printShaderError(fshader);
        _prgid[id] = 0;
        return -1;
@@ -1056,7 +1054,7 @@ int YglInitShader( int id, const GLchar * vertex[], const GLchar * frag[] )
     glLinkProgram(_prgid[id]);
     glGetProgramiv(_prgid[id], GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
-       printf("Link error..\n");
+       YGLLOG("Link error..\n");
        Ygl_printShaderError(_prgid[id]);
        _prgid[id] = 0;
        return -1;
@@ -1066,7 +1064,7 @@ int YglInitShader( int id, const GLchar * vertex[], const GLchar * frag[] )
 
 int YglProgramInit()
 {
-   printf("PG_NORMAL\n");
+   YGLLOG("PG_NORMAL\n");
    //
    if( YglInitShader( PG_NORMAL, pYglprg_normal_v, pYglprg_normal_f ) != 0 )
       return -1;
@@ -1077,7 +1075,7 @@ int YglProgramInit()
    _prgid[PG_VFP1_ENDUSERCLIP] = _prgid[PG_NORMAL];
    _prgid[PG_VDP2_ADDBLEND] = _prgid[PG_NORMAL];
 
-   printf("PG_VDP1_NORMAL\n");
+   YGLLOG("PG_VDP1_NORMAL\n");
    //
    if( YglInitShader( PG_VDP1_NORMAL, pYglprg_vdp1_normal_v, pYglprg_vdp1_normal_f ) != 0 )
       return -1;
@@ -1085,7 +1083,7 @@ int YglProgramInit()
    id_vdp1_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"s_texture");
 
 
-   printf("PG_VFP1_GOURAUDSAHDING\n");
+   YGLLOG("PG_VFP1_GOURAUDSAHDING\n");
 
    //
    if( YglInitShader( PG_VFP1_GOURAUDSAHDING, pYglprg_vdp1_gouraudshading_v, pYglprg_vdp1_gouraudshading_f ) != 0 )
@@ -1093,13 +1091,13 @@ int YglProgramInit()
 
    id_vdp1_normal_s_sprite = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"u_sprite");
 
-   printf("PG_VDP2_DRAWFRAMEBUFF --START--\n");
+   YGLLOG("PG_VDP2_DRAWFRAMEBUFF --START--\n");
 
    //
    if( YglInitShader( PG_VDP2_DRAWFRAMEBUFF, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_f ) != 0 )
       return -1;
 
-   printf("PG_VDP2_DRAWFRAMEBUFF --END--\n");
+   YGLLOG("PG_VDP2_DRAWFRAMEBUFF --END--\n");
 
    idvdp1FrameBuffer = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"s_vdp1FrameBuffer");
    idfrom = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_from");
@@ -1115,7 +1113,7 @@ int YglProgramInit()
    _Ygl->renderfb.texcoordp       = glGetAttribLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF],(const GLchar *)"a_texcoord");
    _Ygl->renderfb.mtxModelView    = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF],(const GLchar *)"u_mvpMatrix");
 
-   printf("PG_VFP1_HALFTRANS\n");
+   YGLLOG("PG_VFP1_HALFTRANS\n");
 
    //
    if( YglInitShader( PG_VFP1_HALFTRANS, pYglprg_vdp1_halftrans_v, pYglprg_vdp1_halftrans_f ) != 0 )
@@ -1126,7 +1124,7 @@ int YglProgramInit()
    id_hf_fbowidth = glGetUniformLocation(_prgid[PG_VFP1_HALFTRANS], (const GLchar *)"u_fbowidth");
    id_hf_fboheight = glGetUniformLocation(_prgid[PG_VFP1_HALFTRANS], (const GLchar *)"u_fbohegiht");
 
-   printf("PG_VFP1_GOURAUDSAHDING_HALFTRANS\n");
+   YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS\n");
 
    if( YglInitShader( PG_VFP1_GOURAUDSAHDING_HALFTRANS, pYglprg_vdp1_gouraudshading_hf_v, pYglprg_vdp1_gouraudshading_hf_f ) != 0 )
       return -1;
@@ -1136,7 +1134,7 @@ int YglProgramInit()
    id_fbowidth = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS], (const GLchar *)"u_fbowidth");
    id_fboheight = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS], (const GLchar *)"u_fbohegiht");
 
-   printf("PG_WINDOW\n");
+   YGLLOG("PG_WINDOW\n");
    //
    if( YglInitShader( PG_WINDOW, pYglprg_window_v, pYglprg_window_f ) != 0 )
       return -1;
@@ -1149,7 +1147,7 @@ int YglProgramInit()
 
    _prgid[PG_VFP1_STARTUSERCLIP] = _prgid[PG_WINDOW];
 
-   printf("PG_LINECOLOR_INSERT\n");
+   YGLLOG("PG_LINECOLOR_INSERT\n");
    //
    if (YglInitShader(PG_LINECOLOR_INSERT, pYglprg_linecol_v, pYglprg_linecol_f) != 0)
      return -1;
@@ -1428,7 +1426,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glCompileShader(vshader);
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
-      printf("Compile error in vertex shader.\n");
+      YGLLOG("Compile error in vertex shader.\n");
       Ygl_printShaderError(vshader);
       blit_prg = -1;
       return -1;
@@ -1438,7 +1436,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glCompileShader(fshader);
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
-      printf("Compile error in fragment shader.\n");
+      YGLLOG("Compile error in fragment shader.\n");
       Ygl_printShaderError(fshader);
       blit_prg = -1;
       return -1;
@@ -1449,7 +1447,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glLinkProgram(blit_prg);
     glGetProgramiv(blit_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
-      printf("Link error..\n");
+      YGLLOG("Link error..\n");
       Ygl_printShaderError(blit_prg);
       blit_prg = -1;
       return -1;

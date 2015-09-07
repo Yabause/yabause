@@ -1823,14 +1823,14 @@ void VIDSoftSetupGL(void)
    glCompileShader(vshader);
 
    glGetShaderiv(vshader, GL_COMPILE_STATUS, &status);
-   if (status == GL_FALSE) { fprintf(stderr, "Failed to compile vertex shader\n"); }
+   if (status == GL_FALSE) { YGLLOG("Failed to compile vertex shader\n"); }
 
    fshader = glCreateShader(GL_FRAGMENT_SHADER);
    glShaderSource(fshader, 1, &fshader_src, NULL);
    glCompileShader(fshader);
 
    glGetShaderiv(fshader, GL_COMPILE_STATUS, &status);
-   if (status == GL_FALSE) { fprintf(stderr, "Failed to compile fragment shader\n"); }
+   if (status == GL_FALSE) { YGLLOG("Failed to compile fragment shader\n"); }
 	
    gl_shader_prog = glCreateProgram();
    glAttachShader(gl_shader_prog, vshader);
@@ -1840,7 +1840,7 @@ void VIDSoftSetupGL(void)
 
    glValidateProgram(gl_shader_prog);
    glGetProgramiv(gl_shader_prog, GL_LINK_STATUS, &status);
-   if (status == GL_FALSE) { fprintf(stderr, "Failed to link shader program\n"); }
+   if (status == GL_FALSE) { YGLLOG("Failed to link shader program\n"); }
 
    glUseProgram(gl_shader_prog);
 	
