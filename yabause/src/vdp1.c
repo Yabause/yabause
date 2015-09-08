@@ -249,6 +249,7 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
+		  LOG("Read EDSR %X\n", Vdp1Regs->EDSR );
          return Vdp1Regs->EDSR;
       case 0x12:
          return Vdp1Regs->LOPR;
@@ -518,6 +519,7 @@ void Vdp1NoDraw(void) {
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
    ScuSendDrawEnd();
+   Vdp1External.manualchange = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

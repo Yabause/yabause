@@ -257,6 +257,7 @@ void Vdp2VBlankIN(void) {
    VIDCore->Vdp2DrawEnd();
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
+
    /* I'm not 100% sure about this, but it seems that when using manual change
    we should swap framebuffers in the "next field" and thus, clear the CEF...
    now we're lying a little here as we're not swapping the framebuffers. */
@@ -356,7 +357,7 @@ void Vdp2VBlankOUT(void) {
       if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    }
    else
-      if (Vdp1Regs->PTMR == 2) Vdp1NoDraw();
+	   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))

@@ -562,12 +562,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _Ygl->smallfbo);
     glBlitFramebuffer(0, 0, GlWidth, GlHeight, 0, 0, _Ygl->rwidth, _Ygl->rheight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 #else
-
-#if YAB_ASYNC_RENDERING
 	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->readframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
-#else
-	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
-#endif
 #endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
@@ -1954,6 +1949,7 @@ void YglRenderVDP1(void) {
    }
    level->prgcurrent = 0;
    
+#if 0
    if ( (((Vdp1Regs->TVMR & 0x08)==0) && ((Vdp1Regs->FBCR & 0x03)==0x03) )
 	)
    {
@@ -1964,7 +1960,18 @@ void YglRenderVDP1(void) {
      Vdp1External.manualchange = 0;
      YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
    }
- 
+#endif
+   if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
+	   ((Vdp1Regs->FBCR & 2) == 0) || 
+	   Vdp1External.manualchange)
+   {
+	   u32 current_drawframe = 0;
+	   current_drawframe = _Ygl->drawframe;
+	   _Ygl->drawframe = _Ygl->readframe;
+	   _Ygl->readframe = current_drawframe;
+	   Vdp1External.manualchange = 0;
+	   YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+   }
 
    // glFlush(); need??
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -2335,17 +2342,19 @@ void YglRender(void) {
    if (YglTM->texture == NULL){
 	   abort();
    }
-
-   if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
+#if 0
+   if ( ((Vdp1Regs->FBCR & 2) == 0) )
    {
+	   YabThreadLock(_Ygl->mutex);
 	   u32 current_drawframe = 0;
 	   current_drawframe = _Ygl->drawframe;
 	   _Ygl->drawframe = _Ygl->readframe;
 	   _Ygl->readframe = current_drawframe;
 	   Vdp1External.manualchange = 0;
 	   YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+	   YabThreadUnLock(_Ygl->mutex);
    }
-
+#endif
    return;
 }
 
