@@ -326,7 +326,7 @@ void vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankIN(void) {
-    //LOG("VDP2:VDPEV_VBLANK_IN\n");
+    LOG("VDP2:VDPEV_VBLANK_IN\n");
 #if defined(YAB_ASYNC_RENDERING)
     if( running == 0 ){
         YuiRevokeOGLOnThisThread();
@@ -343,6 +343,7 @@ void Vdp2VBlankIN(void) {
 #else
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
+
    /* I'm not 100% sure about this, but it seems that when using manual change
    we should swap framebuffers in the "next field" and thus, clear the CEF...
    now we're lying a little here as we're not swapping the framebuffers. */
@@ -569,7 +570,7 @@ void Vdp2VBlankOUT(void) {
       if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    }
    else
-      if (Vdp1Regs->PTMR == 2) Vdp1NoDraw();
+	   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
