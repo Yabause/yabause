@@ -97,6 +97,7 @@ enum RenderThreadMessage {
         MSG_LOAD_STATE,
         MSG_PAUSE,
         MSG_RESUME,
+		MSG_SCREENSHOT,
 
 };
 
@@ -657,18 +658,22 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
 }
 
 int YuiRevokeOGLOnThisThread(){
+#if defined(YAB_ASYNC_RENDERING)
     if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
         yprintf("eglMakeCurrent() returned error %X", eglGetError());
         return -1;
     }
+#endif
     return 0;
 }
 
 int YuiUseOGLOnThisThread(){
+#if defined(YAB_ASYNC_RENDERING)
     if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
         yprintf("eglMakeCurrent() returned error %X", eglGetError());
         return -1;
     }
+#endif
     return 0;
 }
 
@@ -1070,6 +1075,8 @@ void renderLoop()
                 ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 0;
                 break;
+			case MSG_SCREENSHOT:
+				break;
             default:
                 break;
         }
@@ -1086,4 +1093,30 @@ void* threadStartCallback(void *myself)
     renderLoop();
     pthread_exit(0);
     return NULL;
+}
+
+// from only renderLoop thread
+void saveScreenshot(){
+	
+	int width;
+	int height;
+	
+	VdpRevoke(); 
+	if( YuiUseOGLOnThisThread() == -1 ){
+		VdpResume();
+		return;
+	}
+	
+	eglQuerySurface(g_Display, g_Surface, EGL_WIDTH, &width);
+    eglQuerySurface(g_Display, g_Surface, EGL_HEIGHT, &height);
+	
+	unsigned char * buf = (unsigned char *)malloc(width*height*4);
+	
+	glReadBuffer(GL_FRONT);
+	glReadPixels(0, 0, outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+
+	
+	free(buf);
+	YuiRevokeOGLOnThisThread();
+	VdpResume(); 
 }

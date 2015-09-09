@@ -294,8 +294,11 @@ void VdpProc( void *arg ){
             //LOG("VDP2:VDPEV_DIRECT_DRAW\n");
             Vdp1Draw();
             break;
-       case VDPEV_MAKECURRENT:
+        case VDPEV_MAKECURRENT:
             YuiUseOGLOnThisThread();
+            break;
+        case VDPEV_REVOKE:
+            YuiRevokeOGLOnThisThread();
             break;
         case VDPEV_FINSH:
             running = 0;
@@ -1302,6 +1305,12 @@ void DisableAutoFrameSkip(void)
 void VdpResume( void ){
 #if defined(YAB_ASYNC_RENDERING)
 	YabAddEventQueue(evqueue,VDPEV_MAKECURRENT);
+#endif
+}
+
+void VdpRevoke( void ){
+#if defined(YAB_ASYNC_RENDERING)
+	YabAddEventQueue(evqueue,VDPEV_REVOKE);
 #endif
 }
 

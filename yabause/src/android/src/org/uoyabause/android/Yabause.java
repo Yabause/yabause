@@ -157,11 +157,11 @@ public class Yabause extends Activity implements OnPadListener
         View decor = this.getWindow().getDecorView();
         decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION  | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE);
         
-
-        audio = new YabauseAudio(this);
+ 
+        audio = new YabauseAudio(this);         
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        readPreferences();
+        readPreferences(); 
  
         Intent intent = getIntent();
         String game = intent.getStringExtra("org.uoyabause.android.FileName");
@@ -251,7 +251,13 @@ public class Yabause extends Activity implements OnPadListener
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.game_menu, menu);
+        YabauseRunnable.pause();
         return true;
+    }
+    
+    @Override
+    public void onOptionsMenuClosed (Menu menu){
+    	YabauseRunnable.resume();
     }
     
     @Override
@@ -281,6 +287,15 @@ public class Yabause extends Activity implements OnPadListener
             {
             	String save_path = YabauseStorage.getStorage().getStateSavePath();
             	YabauseRunnable.loadstate(save_path);
+            	return true;
+            }
+            case R.id.save_screen:
+            {
+            	Intent shareIntent = new Intent();
+            	shareIntent.setAction(Intent.ACTION_SEND);
+            	shareIntent.putExtra(Intent.EXTRA_STREAM, "test.jpg");
+            	shareIntent.setType("image/jpeg");
+            	startActivity(Intent.createChooser(shareIntent, "share screenshot to"));            	
             	return true;
             }
             default:
