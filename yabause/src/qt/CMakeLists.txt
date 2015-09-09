@@ -41,7 +41,7 @@ else()
 		return ()
 	endif ()
 
-    message (WARNING "Qt4 is deprecated. Support will be removed in the future.")
+	message (WARNING "Qt4 is deprecated. Support will be removed in the future.")
 
 	if (QT_QTMULTIMEDIA_FOUND)
 		add_definitions(-DHAVE_QT_MULTIMEDIA=1)
