@@ -165,7 +165,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 
 		include(FindGLUT)
 		if (GLUT_FOUND)
-            message (WARNING "Deprecated Glut found. Support will be removed in the future. ")
+			message (WARNING "Deprecated Glut found. Support will be removed in the future. ")
 			include_directories(${GLUT_INCLUDE_DIR})
 			add_definitions(-DHAVE_LIBGLUT=1)
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLUT_LIBRARIES})
@@ -197,7 +197,7 @@ if (YAB_WANT_SDL)
 	else()
 		include(FindSDL)
 		if (SDL_FOUND)
-            message (WARNING "Deprecated version of SDL found. Support will be removed in the future. ")
+			message (WARNING "Deprecated version of SDL found. Support will be removed in the future. ")
 			include_directories(${SDL_INCLUDE_DIR})
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL_LIBRARY})
 		endif()
@@ -289,7 +289,7 @@ if (WIN32)
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
 	if(YAB_WANT_DDK)
-        message (WARNING "Windows DDK/WDK use is deprecated. Support will be removed in the future. ")
+		message (WARNING "Windows DDK/WDK use is deprecated. Support will be removed in the future. ")
 
 		# Find ntddcdrm.h
 		find_path(ntddcdrm_INCLUDE_DIR ntddcdrm.h
