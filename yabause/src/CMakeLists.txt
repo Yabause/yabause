@@ -165,6 +165,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 
 		include(FindGLUT)
 		if (GLUT_FOUND)
+            message (WARNING "Deprecated Glut found. Support will be removed in the future. ")
 			include_directories(${GLUT_INCLUDE_DIR})
 			add_definitions(-DHAVE_LIBGLUT=1)
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLUT_LIBRARIES})
@@ -196,6 +197,7 @@ if (YAB_WANT_SDL)
 	else()
 		include(FindSDL)
 		if (SDL_FOUND)
+            message (WARNING "Deprecated version of SDL found. Support will be removed in the future. ")
 			include_directories(${SDL_INCLUDE_DIR})
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL_LIBRARY})
 		endif()
@@ -287,6 +289,8 @@ if (WIN32)
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
 	if(YAB_WANT_DDK)
+        message (WARNING "DDK use is deprecated. Support will be removed in the future. ")
+
 		# Find ntddcdrm.h
 		find_path(ntddcdrm_INCLUDE_DIR ntddcdrm.h
 			PATHS "${DDK_DIR}" "${DDK_DIR}/inc" PATH_SUFFIXES ddk api)
@@ -374,13 +378,6 @@ if (WIN32)
 	endif()
 
 endif (WIN32)
-
-if (WII)
-	set(CMAKE_C_FLAGS "-mrvl -mcpu=750 -meabi -mhard-float")
-	add_definitions(-DGEKKO=1)
-	# that shouldn't be hardcoded, either use an ENV variable or try to detect it...
-	include_directories(/opt/devkitpro/libogc/include/)
-endif()
 
 option(YAB_WANT_ARM7 "Build a binary with arm7 support")
 
