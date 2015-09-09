@@ -289,7 +289,7 @@ if (WIN32)
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
 	if(YAB_WANT_DDK)
-        message (WARNING "DDK use is deprecated. Support will be removed in the future. ")
+        message (WARNING "Windows DDK/WDK use is deprecated. Support will be removed in the future. ")
 
 		# Find ntddcdrm.h
 		find_path(ntddcdrm_INCLUDE_DIR ntddcdrm.h
