@@ -377,6 +377,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    int file_size;
    int i;
    FILE * bin_file;
+   int matched = 0;
 
 	memset(trk, 0, sizeof(trk));
    disc.session_num = 1;
@@ -469,7 +470,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 
    // Go back, retrieve image filename
    fseek(iso_file, 0, SEEK_SET);
-   fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
+   matched = fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
 
    // Now go and open up the image file, figure out its size, etc.
    if ((bin_file = fopen(temp_buffer, "rb")) == NULL)
@@ -1116,6 +1117,7 @@ static int ISOCDInit(const char * iso) {
    char *ext;
    int ret;
    FILE *iso_file;
+   size_t num_read = 0;
 
    memset(isoTOC, 0xFF, 0xCC * 2);
    memset(&disc, 0, sizeof(disc));
@@ -1129,7 +1131,7 @@ static int ISOCDInit(const char * iso) {
       return -1;
    }
 
-   fread((void *)header, 1, 6, iso_file);
+   num_read = fread((void *)header, 1, 6, iso_file);
    ext = strrchr(iso, '.');
 
    // Figure out what kind of image format we're dealing with
