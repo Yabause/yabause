@@ -346,7 +346,7 @@ struct Stats
    }screenshot;
 };
 
-void do_test_pass(struct Stats & stats, char * message)
+void do_test_pass(struct Stats & stats, const char * message)
 {
    //test was passed
    set_color(text_green);

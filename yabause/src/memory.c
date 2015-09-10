@@ -846,6 +846,7 @@ int MappedMemoryLoad(const char *filename, u32 addr)
    u32 filesize;
    u8 *buffer;
    u32 i;
+   size_t num_read = 0;
 
    if (!filename)
       return -1;
@@ -864,7 +865,7 @@ int MappedMemoryLoad(const char *filename, u32 addr)
       return -2;
    }
 
-   fread((void *)buffer, 1, filesize, fp);
+   num_read = fread((void *)buffer, 1, filesize, fp);
    fclose(fp);
 
    for (i = 0; i < filesize; i++)
@@ -990,6 +991,7 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
 {
    FILE * fp;
    int status;
+   size_t num_read = 0;
 
    if (buffer != NULL) *buffer = NULL;
    *size = 0;
@@ -1010,7 +1012,7 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
    if (buffer != NULL)
    {
       *buffer = malloc(*size);
-      fread(*buffer, 1, *size, fp);
+      num_read = fread(*buffer, 1, *size, fp);
    }
 
    fclose(fp);
