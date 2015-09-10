@@ -1221,6 +1221,7 @@ static s32 ISOCDReadTOC(u32 * TOC) {
 
 static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    int i,j;
+   size_t num_read = 0;
    track_info_struct *track=NULL;
 
    assert(disc.session);
@@ -1255,11 +1256,11 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
 		{
 			if (track->sub_fp)
 			{
-				fread(buffer, 2352, 1, track->fp);
-				fread((char *)buffer+2352, 96, 1, track->sub_fp);
+            num_read = fread(buffer, 2352, 1, track->fp);
+            num_read = fread((char *)buffer + 2352, 96, 1, track->sub_fp);
 			}
 			else
-            fread(buffer, 2448, 1, track->fp);
+            num_read = fread(buffer, 2448, 1, track->fp);
 		}
       else
       {
@@ -1275,13 +1276,13 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
          };
          u8 subcode_buffer[96 * 3];
 
-         fread(buffer, 2352, 1, track->fp);
+         num_read = fread(buffer, 2352, 1, track->fp);
 
-         fread(subcode_buffer, 96, 1, track->fp);
+         num_read = fread(subcode_buffer, 96, 1, track->fp);
          fseek(track->fp, 2352, SEEK_CUR);
-         fread(subcode_buffer+96, 96, 1, track->fp);
+         num_read = fread(subcode_buffer + 96, 96, 1, track->fp);
          fseek(track->fp, 2352, SEEK_CUR);
-         fread(subcode_buffer+192, 96, 1, track->fp);
+         num_read = fread(subcode_buffer + 192, 96, 1, track->fp);
          for (i = 0; i < 96; i++)
             ((u8 *)buffer)[2352+i] = subcode_buffer[deint_offsets[i]];
       }
@@ -1289,12 +1290,12 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    else if (track->sector_size == 2352)
    {
       // Generate subcodes here
-      fread(buffer, 2352, 1, track->fp);
+      num_read = fread(buffer, 2352, 1, track->fp);
    }
    else if (track->sector_size == 2048)
    {
       memcpy(buffer, syncHdr, 12);
-      fread((char *)buffer + 0x10, 2048, 1, track->fp);
+      num_read = fread((char *)buffer + 0x10, 2048, 1, track->fp);
    }
 	return 1;
 }
