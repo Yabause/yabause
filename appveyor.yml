@@ -11,7 +11,7 @@ environment:
       compiler_type: "vs12-x64"
       sdl_filename: SDL2-devel-2.0.3-VC.zip
       sdl_arch: x64
-      dx_args: "-DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DIRECTINPUT=ON"
+      cmake_args: "-DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DIRECTINPUT=ON -DYAB_NETWORK=ON -DGDB_STUB=ON"
 
     # MingGW x86 build
     - generator: "MinGW Makefiles"
@@ -26,7 +26,7 @@ environment:
       sdl_arch: x86
 
     # included directx headers incompatible with mingw
-      dx_args: ""
+      cmake_args: "-DYAB_NETWORK=ON -DGDB_STUB=ON"
 
 shallow_clone: true
 
@@ -52,7 +52,7 @@ before_build:
   - cd C:\projects\yabause\yabause
   - mkdir build
   - cd build
-  - cmake -G "%generator%" %dx_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
+  - cmake -G "%generator%" %cmake_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
 
 build_script:
   - if ["%compiler_type%"]==["mingw32"] cmake --build .
