@@ -58,7 +58,7 @@ build_script:
   - if ["%compiler_type%"]==["mingw32"] cmake --build .
 
   # force a release build and only show errors to shorten output
-  - if ["%compiler_type%"]==["vs12-x64"] msbuild yabause.sln /p:configuration=Release /clp:ErrorsOnly /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - if ["%compiler_type%"]==["vs12-x64"] msbuild yabause.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 # make a distributable package of the build output
 after_build:
