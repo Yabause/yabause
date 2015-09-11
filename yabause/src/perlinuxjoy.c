@@ -56,6 +56,7 @@ static int joycount = 0;
 
 #define PACKEVENT(evt) ((evt.value < 0 ? 0x10000 : 0) | (evt.type << 8) | (evt.number))
 #define THRESHOLD 1000
+#define MAXAXIS 1024
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -63,7 +64,7 @@ static void LinuxJoyInit(perlinuxjoy_struct * joystick, const char * path)
 {
    int i;
    int fd;
-   int axisinit[1024];
+   int axisinit[MAXAXIS];
    struct js_event evt;
 
    joystick->fd = open(path, O_RDONLY | O_NONBLOCK);
@@ -74,7 +75,7 @@ static void LinuxJoyInit(perlinuxjoy_struct * joystick, const char * path)
 
    while (read(joystick->fd, &evt, sizeof(struct js_event)) > 0)
    {
-      if (evt.type == JS_EVENT_AXIS | JS_EVENT_INIT)
+      if ((evt.type == (JS_EVENT_AXIS | JS_EVENT_INIT)) && (evt.number < MAXAXIS))
       {
          axisinit[evt.number] = evt.value;
          if (evt.number + 1 > joystick->axiscount)

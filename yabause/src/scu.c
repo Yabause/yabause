@@ -2735,7 +2735,7 @@ void ScuSendExternalInterrupt15(void) {
 int ScuSaveState(FILE *fp)
 {
    int offset;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    offset = StateWriteHeader(fp, "SCU ", 1);
 
@@ -2752,7 +2752,7 @@ int ScuSaveState(FILE *fp)
 
 int ScuLoadState(FILE *fp, UNUSED int version, int size)
 {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // Read registers and internal variables
    yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);

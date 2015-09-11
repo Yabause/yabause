@@ -1,0 +1,11 @@
+machine:
+  services:
+    - docker
+
+checkout:
+  post:
+    - cd .. && git clone https://github.com/d356/yabauseut-docker.git
+
+test:
+  override:
+    - cd .. && cp -r yabause yabauseut-docker && cd yabauseut-docker && docker build .

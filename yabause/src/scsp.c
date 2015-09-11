@@ -3868,7 +3868,7 @@ SoundSaveState (FILE *fp)
   u32 temp;
   int offset;
   u8 nextphase;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   offset = StateWriteHeader (fp, "SCSP", 2);
 
@@ -3987,7 +3987,7 @@ SoundLoadState (FILE *fp, int version, int size)
   int i, i2;
   u32 temp;
   u8 nextphase;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   // Read 68k registers first
   yread (&check, (void *)&IsM68KRunning, 1, 1, fp);
@@ -4389,7 +4389,7 @@ ScspSlotDebugSaveRegisters (u8 slotnum, const char *filename)
 {
   FILE *fp;
   int i;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   if ((fp = fopen (filename, "wb")) == NULL)
     return -1;
@@ -4511,7 +4511,7 @@ ScspSlotDebugAudioSaveWav (u8 slotnum, const char *filename)
   fmt_struct fmt;
   chunk_struct data;
   long length;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   if (scsp.slot[slotnum].lea == 0)
     return 0;

@@ -45,23 +45,6 @@ matrix:
         - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
         - make
 
-    # compile runner and run yabauseut tests
-    - compiler: gcc
-      env: testenv="compile runner and run yabauseut tests"
-      script:
-        - cd ../src/runner
-        - git clone git://github.com/lvandeve/lodepng.git
-        - cd ../../build
-        - cmake -DYAB_PORTS=runner -DSH2_DYNAREC=OFF -DYAB_WANT_C68K=OFF -DYAB_WANT_Q68=OFF -DYAB_WANT_OPENGL=OFF ..
-        - make
-        - cd src/runner
-        # todo compile this instead
-        - git clone git://github.com/d356/yabauseut-bin.git
-        - cd yabauseut-bin
-        - git reset --hard ac1bedadc51285f55a0caa9e6af6ab0d9d0118c8
-        - cd ..
-        - ./yabause yabauseut-bin/YabauseUT.elf yabauseut-bin/vdp2_screenshots/ yabauseut-bin/vdp1_framebuffers/
-
 addons:
   coverity_scan:
     project:
