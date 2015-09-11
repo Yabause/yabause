@@ -551,7 +551,7 @@ void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr) {
 int Vdp1SaveState(FILE *fp)
 {
    int offset;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    offset = StateWriteHeader(fp, "VDP1", 1);
 
@@ -568,7 +568,7 @@ int Vdp1SaveState(FILE *fp)
 
 int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // Read registers
    yread(&check, (void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
