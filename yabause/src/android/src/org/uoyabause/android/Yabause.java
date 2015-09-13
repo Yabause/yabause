@@ -21,6 +21,9 @@
 package org.uoyabause.android;
 
 import java.lang.Runnable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -35,9 +38,11 @@ import android.view.MenuItem;
 import android.view.MenuInflater;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.app.ActionBar.OnMenuVisibilityListener;
 import android.app.Dialog;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ContentValues;
@@ -84,11 +89,12 @@ class YabauseRunnable implements Runnable
     public static native void enableFPS(int enable);
     public static native void enableFrameskip(int enable);
     public static native void setVolume(int volume);
-    public static native void screenshot(Bitmap bitmap);
+    public static native int screenshot( String filename );
+    public static native String getCurrentGameCode();
     public static native void savestate( String path );
     public static native void loadstate( String path );
     public static native void pause();
-    public static native void resume();
+    public static native void resume();  
 
     private boolean inited;
     private boolean paused;
@@ -144,6 +150,7 @@ public class Yabause extends Activity implements OnPadListener
     private int carttype;
     private PadManager padm;
     private int video_interface;
+    private boolean waiting_reault = false;
 
     /** Called when the activity is first created. */
     @Override
@@ -159,11 +166,11 @@ public class Yabause extends Activity implements OnPadListener
         
  
         audio = new YabauseAudio(this);         
-
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        readPreferences(); 
  
-        Intent intent = getIntent();
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        readPreferences();  
+ 
+        Intent intent = getIntent(); 
         String game = intent.getStringExtra("org.uoyabause.android.FileName");
 
         if (game != null && game.length() > 0) {
@@ -174,7 +181,7 @@ public class Yabause extends Activity implements OnPadListener
 
         String exgame = intent.getStringExtra("org.uoyabause.android.FileNameEx");
         if( exgame != null ){
-        	gamepath = exgame; 
+        	gamepath = exgame;  
         }
         
         System.gc(); // Clear Memory Before run
@@ -182,8 +189,28 @@ public class Yabause extends Activity implements OnPadListener
         yabauseThread = new YabauseRunnable(this);
 
         padm = PadManager.getPadManager();
+        
+        waiting_reault = false;
+        getActionBar().addOnMenuVisibilityListener(new OnMenuVisibilityListener() {
+            @Override
+                public void onMenuVisibilityChanged(boolean isVisible) {
+            		if( isVisible == false ){
+            			if( waiting_reault == false ){
+            				YabauseRunnable.resume();
+            				audio.unmute(audio.SYSTEM);
+            			}
+            		}else{
+            			YabauseRunnable.pause();
+            			audio.mute(audio.SYSTEM);
+            		}
+
+                }
+            });            
 
     }
+    
+
+
 
     @Override
     public void onPause()
@@ -197,8 +224,6 @@ public class Yabause extends Activity implements OnPadListener
     public void onResume()
     {
         super.onResume();
-
-        readPreferences();
         audio.unmute(audio.SYSTEM);
         YabauseRunnable.resume();
     }
@@ -251,13 +276,23 @@ public class Yabause extends Activity implements OnPadListener
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.game_menu, menu);
-        YabauseRunnable.pause();
+        super.onCreateOptionsMenu(menu);
         return true;
+    }
+    @Override
+    public boolean onPrepareOptionsMenu (Menu menu){
+    	//YabauseRunnable.pause();
+    	return super.onPrepareOptionsMenu(menu);
     }
     
     @Override
     public void onOptionsMenuClosed (Menu menu){
-    	YabauseRunnable.resume();
+    	if( waiting_reault == false){
+    		YabauseRunnable.resume();
+    		audio.unmute(audio.SYSTEM);
+    	}
+    	super.onOptionsMenuClosed(menu);
+    	return;
     }
     
     @Override
@@ -291,19 +326,50 @@ public class Yabause extends Activity implements OnPadListener
             }
             case R.id.save_screen:
             {
+            	DateFormat dateFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
+            	Date date = new Date();
+            	
+            	String screen_shot_save_path = YabauseStorage.getStorage().getScreenshotPath() 
+            			+ YabauseRunnable.getCurrentGameCode() + 
+            			dateFormat.format(date) + ".png";
+            	
+            	if( YabauseRunnable.screenshot(screen_shot_save_path) != 0 ){ 
+            		return true;  
+            	}   
+            	
+            	waiting_reault = true;
             	Intent shareIntent = new Intent();
-            	shareIntent.setAction(Intent.ACTION_SEND);
-            	shareIntent.putExtra(Intent.EXTRA_STREAM, "test.jpg");
-            	shareIntent.setType("image/jpeg");
-            	startActivity(Intent.createChooser(shareIntent, "share screenshot to"));            	
+            	shareIntent.setAction(Intent.ACTION_SEND); 
+            	ContentResolver cr = getContentResolver();
+            	ContentValues cv = new ContentValues();
+            	  cv.put(MediaStore.Images.Media.TITLE, YabauseRunnable.getCurrentGameCode());
+            	  cv.put(MediaStore.Images.Media.DISPLAY_NAME, YabauseRunnable.getCurrentGameCode());
+            	  cv.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
+            	  cv.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            	  cv.put(MediaStore.Images.Media.DATA, screen_shot_save_path);
+            	  Uri uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+            	  shareIntent.putExtra(Intent.EXTRA_STREAM,uri);
+            	  shareIntent.setType("image/png");
+            	  startActivityForResult (Intent.createChooser(shareIntent, "share screenshot to"),R.id.save_screen);
             	return true;
             }
-            default:
+            default:  
                 return super.onOptionsItemSelected(item);
         }
         
         
-    }    
+    }     
+    
+    @Override
+    protected void onActivityResult( int requestCode, int resultCode, Intent data) {
+    	switch(requestCode){
+    	case R.id.save_screen:
+    		YabauseRunnable.resume();
+    		audio.unmute(audio.SYSTEM);
+    		waiting_reault = false;
+    		break; 
+    	}
+    }
     
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
        
@@ -326,7 +392,7 @@ public class Yabause extends Activity implements OnPadListener
 
         return super.onKeyUp(keyCode, event);
     }
-
+ 
     private void errorMsg(String msg) {
         Message message = handler.obtainMessage();
         Bundle bundle = new Bundle();
@@ -435,11 +501,11 @@ public class Yabause extends Activity implements OnPadListener
     public String getCartridgePath() {
         return YabauseStorage.getStorage().getCartridgePath(Cartridge.getDefaultFilename(carttype));
     }
-
+ 
     static {
-        System.loadLibrary("yabause_native");
-    }
-    
+        System.loadLibrary("yabause_native");   
+    }  
+     
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
             super.onWindowFocusChanged(hasFocus);

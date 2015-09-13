@@ -3473,6 +3473,11 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
   return -1;
 }
 
+char * Cs2GetCurrentGmaecode(){
+	if(cdip==NULL) return NULL; 
+	return cdip->itemnum;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 u8 Cs2GetIP(int autoregion) {
    partition_struct * gripartition;

@@ -382,4 +382,5 @@ int Cs2LoadState(FILE *, int, int);
 u32 Cs2GetMasterStackAdress();
 u32 Cs2GetSlaveStackAdress();
 u64 Cs2GetGameId();
+char * Cs2GetCurrentGmaecode();
 #endif
