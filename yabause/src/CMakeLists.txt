@@ -647,6 +647,24 @@ endif()
 if (YAB_WANT_OPENSL)
     set(HAVE_OPENSL ON)
 endif()
+
+if (YAB_WANT_VIDSOFT_RENDER_THREADING OR YAB_WANT_VIDSOFT_LAYER_THREADING)
+
+    find_package(OpenMP)
+
+    if (OPENMP_FOUND)
+        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        if (YAB_WANT_VIDSOFT_RENDER_THREADING)
+            add_definitions(-DWANT_VIDSOFT_RENDER_THREADING)
+            message(STATUS "Using vidsoft render threading")
+        endif()
+        if (YAB_WANT_VIDSOFT_LAYER_THREADING)
+            add_definitions(-DWANT_VIDSOFT_LAYER_THREADING)
+            message(STATUS "Using vidsoft layer threading")
+        endif()
+    endif()
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 if (YAB_NETWORK AND UNIX)
