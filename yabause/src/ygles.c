@@ -1900,7 +1900,6 @@ void YglRenderVDP1(void) {
      else{
        alpha = 0xF8;
      }
-
      alpha |= priority;
 
      glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
@@ -2047,7 +2046,6 @@ void YglSetVdp2Window()
 
       glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
       glDepthMask(GL_TRUE);
-      glEnable(GL_TEXTURE_2D);
       glEnable(GL_DEPTH_TEST);
       glDisable(GL_STENCIL_TEST);
       glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
@@ -2070,8 +2068,6 @@ void YglRenderFrameBuffer( int from , int to ) {
    // Out of range, do nothing
    if( _Ygl->vdp1_maxpri < from ) return;
    if( _Ygl->vdp1_minpri > to ) return;
-
-   glEnable(GL_TEXTURE_2D);
 
    //YGLLOG("YglRenderFrameBuffer: %d to %d\n", from , to );
 
@@ -2230,8 +2226,6 @@ void YglRender(void) {
      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
      YglTM->texture = NULL;
    }
-
-   //glEnable(GL_TEXTURE_2D);
    
 #if 0 // Test
    ShaderDrawTest();
@@ -2260,7 +2254,7 @@ void YglRender(void) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            YglRenderFrameBuffer(from,to);
+			if(Vdp1External.disptoggle&0x01) YglRenderFrameBuffer(from, to);
             from = to;
 
             // clean up
@@ -2323,7 +2317,7 @@ void YglRender(void) {
 
    glEnable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   YglRenderFrameBuffer(from,8);
+   if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
 
 #endif
    glDisable(GL_TEXTURE_2D);

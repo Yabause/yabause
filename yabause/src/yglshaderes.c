@@ -260,7 +260,7 @@ const GLchar Yglprg_vpd1_normal_f[] =
       "  addr.s = addr.s / (v_texcoord.q);                 \n"
       "  addr.t = addr.t / (v_texcoord.q);                 \n"
       "  vec4 FragColor = texture( s_texture, addr );      \n"
-      "  if( FragColor.a == 0.0 ) discard;                \n"
+      "  /*if( FragColor.a == 0.0 ) discard;*/                \n"
       "  fragColor = FragColor;\n "
       "}                                                   \n";
 const GLchar * pYglprg_vdp1_normal_f[] = {Yglprg_vpd1_normal_f, NULL};
@@ -589,7 +589,6 @@ int Ygl_uniformStartUserClip(void * p )
       glStencilFunc(GL_ALWAYS,0,0x0);
       glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
       glDisable(GL_STENCIL_TEST);
-      glEnable(GL_TEXTURE_2D);
    }
 
    glEnable(GL_STENCIL_TEST);
@@ -1479,7 +1478,6 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   glUniform1f(u_w, w);
   glUniform1f(u_h, h);
 
-  glEnable(GL_TEXTURE_2D);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, srcTexture);
   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
