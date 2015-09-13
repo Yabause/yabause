@@ -3152,7 +3152,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    int i;
    short CMDXA;
    short CMDYA;
-   
+
    
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
    sprite.dst=0;
@@ -3214,7 +3214,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
          col[(i << 2) + 3] = 1.0f;
       }
      
-      if (sprite.w > 0 && sprite.h > 1)
+      if (sprite.w > 0 && sprite.h > 0)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
@@ -3231,7 +3231,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    }
    else // No Gouraud shading, use same color for all 4 vertices
    {
-      if (sprite.w > 0 && sprite.h > 1)
+      if (sprite.w > 0 && sprite.h > 0)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
@@ -3243,7 +3243,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
          YglCacheAdd(tmp,&cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
-      }
+	  }
    }
 }
 
@@ -3655,6 +3655,57 @@ void VIDOGLVdp1PolygonDraw(void)
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
+   int isSquare = 1;
+   for (i = 0; i < 3; i++){
+	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
+	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
+	   float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
+	   float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
+	   float dot = dx*d2x + dy*d2y;
+	   if (dot >= EPSILON || dot <= -EPSILON){
+		   isSquare = 0;
+		   break;
+	   }
+   }
+   if (isSquare){
+
+	   sprite.dst = 0;
+
+	   // find upper left opsition
+	   float minx = 65535.0f;
+	   float miny = 65535.0f;
+	   int lt_index = -1;
+	   for (i = 0; i < 4; i++){
+		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
+			   minx = sprite.vertices[(i << 1) + 0];
+			   miny = sprite.vertices[(i << 1) + 1];
+			   lt_index = i;
+		   }
+	   }
+
+	   for (i = 0; i < 4; i++){
+		   if (i != lt_index){
+			   // vectorize
+			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
+			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+
+			   // normalize
+			   float len = fabsf(sqrtf(dx*dx + dy*dy));
+			   if (len <= EPSILON){
+				   continue;
+			   }
+			   float nx = dx / len;
+			   float ny = dy / len;
+			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
+			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
+
+			   // expand vertex
+			   sprite.vertices[(i << 1) + 0] += nx;
+			   sprite.vertices[(i << 1) + 1] += ny;
+		   }
+	   }
+   }
+
    // Line Polygon
    if ( (sprite.vertices[1] == sprite.vertices[3]) &&
 	   (sprite.vertices[3]  == sprite.vertices[5]) &&
@@ -3710,6 +3761,7 @@ void VIDOGLVdp1PolygonDraw(void)
       priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
 #endif
    }
+
   
    sprite.priority = 8;
    sprite.w = 1;
@@ -3719,22 +3771,25 @@ void VIDOGLVdp1PolygonDraw(void)
    sprite.cog = 0x00;
    sprite.cob = 0x00;
 
-   if( gouraud == 1 )
-   {
-	   YglQuadGrowShading(&sprite, &texture, col, NULL);
-   }else{
-	   YglQuadGrowShading(&sprite, &texture, NULL, NULL);
-   }
+
    
    if (color == 0)
    {
+	  YglQuad(&sprite, &texture, NULL, NULL);
       alpha = 0;   
       priority = 0;
 	  *texture.textdata = 0;
 	  return;
+   }
 
-   }else{
-      alpha = 0xF8;
+
+   alpha = 0xF8;
+   if (gouraud == 1)
+   {
+	   YglQuadGrowShading(&sprite, &texture, col, NULL);
+   }
+   else{
+	   YglQuadGrowShading(&sprite, &texture, NULL, NULL);
    }
 
    if (IS_REPLACE(CMDPMOD)){
