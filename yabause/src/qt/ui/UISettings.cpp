@@ -177,8 +177,8 @@ QStringList getCdDriveList()
 				list.append(drive_path);
 			}
 		}
+		fclose(f);
 	}
-	fclose(f);
 #elif defined Q_OS_MAC
 #endif
 	return list;
