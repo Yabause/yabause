@@ -315,6 +315,8 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
 	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
 	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
+	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
+	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
 	
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
