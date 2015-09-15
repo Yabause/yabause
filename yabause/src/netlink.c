@@ -666,7 +666,7 @@ int NetlinkInit(const char *ip, const char *port)
 		// Default port
       sprintf(NetlinkArea->portstring, "1337");
 	else
-		sprintf(NetlinkArea->portstring, port);
+		strcpy(NetlinkArea->portstring, port);
 
 #ifdef USESOCKET
    return NetworkInit(NetlinkArea->portstring);
