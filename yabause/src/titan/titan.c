@@ -268,7 +268,7 @@ void TitanErase()
    int i = 0;
 
    for (i = 0; i < 6; i++)
-      memset(tt_context.vdp2framebuffer[i], 0, sizeof(struct PixelData) * 704 * 512);
+      memset(tt_context.vdp2framebuffer[i], 0, sizeof(struct PixelData) * tt_context.vdp2width * tt_context.vdp2height);
 }
 
 int TitanDeInit()
