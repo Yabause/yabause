@@ -431,6 +431,29 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 		}
 	}
+	case 5:
+	{
+		// 16 bpp Bank mode
+		u32 charAddr = cmd->CMDSRCA * 8;
+		u16 dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
+		//if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
+		if (!(dot & 0x8000) && !SPD) color = 0x00;
+		else if ((dot == 0x7FFF) && !END) color = 0x0;
+		else if (MSB) color = (alpha << 24);
+		else if (dot == nromal_shadow){
+			u32 talpha = (u8)0xF8 - (u8)0x80;
+			talpha |= priority;
+			color = (talpha << 24);
+		}else if (SPCCCS == 0x03 && (dot & 0x8000)){
+			u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			talpha |= priority;
+			color = SAT2YAB1(talpha, dot);
+		}
+		else{
+			color = SAT2YAB1(alpha, dot);
+		}
+	}
+		break;
 	default:
 		VDP1LOG("Unimplemented sprite color mode: %X\n", (cmd->CMDPMOD >> 3) & 0x7);
 		break;
@@ -3396,7 +3419,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
          col[(i << 2) + 3] = 1.0f;
       }
      
-      if (sprite.w > 0 && sprite.h > 1)
+      if (sprite.w > 0 && sprite.h > 0)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
@@ -3414,7 +3437,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    }
    else // No Gouraud shading, use same color for all 4 vertices
    {
-      if (sprite.w > 0 && sprite.h > 1)
+      if (sprite.w > 0 && sprite.h > 0)
       {
          if (1 == YglIsCached(tmp,&cash) )
          {
@@ -3773,7 +3796,7 @@ void VIDOGLVdp1PolygonDraw(void)
 
 
    
-   if (color == 0)
+   if (color == 0 || color == 0x8000 )
    {
 	  YglQuad(&sprite, &texture, NULL, NULL);
       alpha = 0;   
@@ -3823,11 +3846,10 @@ void VIDOGLVdp1PolygonDraw(void)
    */
 
    
-        
    alpha |= priority;
-   if (color & 0x8000)
+   if (color & 0x8000){
 	   *texture.textdata = SAT2YAB1(alpha, color);
-   else{
+   }else{
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
 }
