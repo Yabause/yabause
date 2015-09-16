@@ -37,7 +37,7 @@ struct PixelData
 
 static struct TitanContext {
    int inited;
-   struct PixelData * vdp2framebuffer[8];
+   struct PixelData * vdp2framebuffer[6];
    u32 * linescreen[4];
    int vdp2width;
    int vdp2height;
@@ -46,7 +46,7 @@ static struct TitanContext {
    struct PixelData * backscreen;
 } tt_context = {
    0,
-   { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+   { NULL, NULL, NULL, NULL, NULL, NULL },
    { NULL, NULL, NULL, NULL },
    320,
    224,
@@ -235,7 +235,7 @@ int TitanInit()
 
    if (! tt_context.inited)
    {
-      for(i = 0;i < 8;i++)
+      for(i = 0;i < 6;i++)
       {
          if ((tt_context.vdp2framebuffer[i] = (struct PixelData *)calloc(sizeof(struct PixelData), 704 * 512)) == NULL)
             return -1;
@@ -254,7 +254,7 @@ int TitanInit()
       tt_context.inited = 1;
    }
 
-   for(i = 0;i < 8;i++)
+   for(i = 0;i < 6;i++)
       memset(tt_context.vdp2framebuffer[i], 0, sizeof(u32) * 704 * 512);
 
    for(i = 1;i < 4;i++)
@@ -267,7 +267,7 @@ void TitanErase()
 {
    int i = 0;
 
-   for (i = 0; i < 8; i++)
+   for (i = 0; i < 6; i++)
       memset(tt_context.vdp2framebuffer[i], 0, sizeof(struct PixelData) * 704 * 512);
 }
 
@@ -275,7 +275,7 @@ int TitanDeInit()
 {
    int i;
 
-   for(i = 0;i < 8;i++)
+   for(i = 0;i < 6;i++)
       free(tt_context.vdp2framebuffer[i]);
 
    for(i = 1;i < 4;i++)
