@@ -33,6 +33,8 @@ UIDebugVDP2Viewer::UIDebugVDP2Viewer( QWidget* p )
    gvScreen->setScene(scene);
 
    vdp2texture = NULL;
+	width = 0;
+	height = 0;
 
    cbScreen->addItem("NBG0/RBG1");
    cbScreen->addItem("NBG1");
