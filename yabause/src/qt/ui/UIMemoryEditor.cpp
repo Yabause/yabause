@@ -33,6 +33,7 @@ MemorySearch::MemorySearch(UIMemorySearch *memorySearch, QObject *parent)
    startAddress = memorySearch->leStartAddress->text().toUInt(&ok, 16);
    endAddress = memorySearch->leEndAddress->text().toUInt(&ok, 16);
    searchSize = 0x10000;
+	steps = 0;
 
    timer = new QTimer(this);
    connect(timer, SIGNAL(timeout()), this, SLOT(process()));

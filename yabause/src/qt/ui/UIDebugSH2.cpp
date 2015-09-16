@@ -237,6 +237,9 @@ u32 UIDebugSH2::getRegister(int index, int *size)
          case 22:
             value = sh2regs.PC;
             break;
+			default:
+				value = 0;
+				break;
       }
    }
 

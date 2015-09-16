@@ -36,6 +36,8 @@ YabauseThread::YabauseThread( QObject* o )
 	mPause = true;
 	mTimerId = -1;
 	mInit = -1;
+	memset(&mYabauseConf, 0, sizeof(mYabauseConf));
+	showFPS = false;
 }
 
 YabauseThread::~YabauseThread()
