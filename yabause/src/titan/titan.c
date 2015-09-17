@@ -149,7 +149,7 @@ static INLINE int FASTCALL TitanTransBit(u32 pixel)
 
 static u32 TitanDigPixel(int pos, int y)
 {
-   struct PixelData pixel_stack[8] = { 0 };
+   struct PixelData pixel_stack[2] = { 0 };
 
    int pixel_stack_pos = 0;
 
@@ -166,16 +166,16 @@ static u32 TitanDigPixel(int pos, int y)
          {
             pixel_stack[pixel_stack_pos] = tt_context.vdp2framebuffer[which_layer][pos];
             pixel_stack_pos++;
+
+            if (pixel_stack_pos == 2)
+               goto finished;//backscreen is unnecessary in this case
          }
       }
    }
 
    pixel_stack[pixel_stack_pos] = tt_context.backscreen[pos];
 
-   if (!tt_context.trans)
-   {
-      return 0;
-   }
+finished:
 
    if (pixel_stack[0].linescreen)
    {
@@ -366,7 +366,7 @@ void TitanRender(pixel_t * dispbuffer)
    u32 dot;
    int x, y;
 
-   if (!tt_context.inited)
+   if (!tt_context.inited || (!tt_context.trans))
    {
       return;
    }
