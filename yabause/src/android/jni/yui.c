@@ -979,8 +979,10 @@ int switchWindow( ANativeWindow* window ){
 }
 
 destroy() {
-    YabauseDeInit();
 
+	eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+	VdpRevoke(); 
+	YuiUseOGLOnThisThread();
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroyContext(g_Display, g_Context_Sub);
     eglDestroyContext(g_Display, g_Context);
@@ -994,6 +996,8 @@ destroy() {
     g_Context = EGL_NO_CONTEXT;
     g_Surface = EGL_NO_SURFACE;
     g_Pbuffer = EGL_NO_SURFACE;
+	
+    YabauseDeInit();	
     
     return;
 }

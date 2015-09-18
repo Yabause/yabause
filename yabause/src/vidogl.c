@@ -3798,7 +3798,7 @@ void VIDOGLVdp1PolygonDraw(void)
    
    if (color == 0 || color == 0x8000 )
    {
-	  YglQuad(&sprite, &texture, NULL, NULL);
+	  YglQuad(&sprite, &texture, NULL);
       alpha = 0;   
       priority = 0;
 	  *texture.textdata = 0;
