@@ -27,8 +27,8 @@
 #include "vidshared.h"
 #include "debug.h"
 
-#define YGLDEBUG
-//#define YGLDEBUG printf
+//#define YGLDEBUG
+#define YGLDEBUG LOG
 
 static int YglCalcTextureQ( float   *pnts,float *q);
 
@@ -574,12 +574,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _Ygl->smallfbo);
     glBlitFramebuffer(0, 0, GlWidth, GlHeight, 0, 0, _Ygl->rwidth, _Ygl->rheight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 #else
-
-#if YAB_ASYNC_RENDERING
 	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->readframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
-#else
-	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
-#endif
 #endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
@@ -1936,7 +1931,6 @@ void YglRenderVDP1(void) {
      else{
        alpha = 0xF8;
      }
-
      alpha |= priority;
 
      glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
@@ -1985,6 +1979,7 @@ void YglRenderVDP1(void) {
    }
    level->prgcurrent = 0;
    
+#if 0
    if ( (((Vdp1Regs->TVMR & 0x08)==0) && ((Vdp1Regs->FBCR & 0x03)==0x03) )
 	)
    {
@@ -1995,7 +1990,18 @@ void YglRenderVDP1(void) {
      Vdp1External.manualchange = 0;
 	 YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
    }
- 
+#endif
+   if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
+	   ((Vdp1Regs->FBCR & 2) == 0) || 
+	   Vdp1External.manualchange)
+   {
+	   u32 current_drawframe = 0;
+	   current_drawframe = _Ygl->drawframe;
+	   _Ygl->drawframe = _Ygl->readframe;
+	   _Ygl->readframe = current_drawframe;
+	   Vdp1External.manualchange = 0;
+	   YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+   }
 
    // glFlush(); need??
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -2072,7 +2078,6 @@ void YglSetVdp2Window()
 
       glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
       glDepthMask(GL_TRUE);
-      glEnable(GL_TEXTURE_2D);
       glEnable(GL_DEPTH_TEST);
       glDisable(GL_STENCIL_TEST);
       glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
@@ -2096,8 +2101,6 @@ void YglRenderFrameBuffer( int from , int to ) {
    // Out of range, do nothing
    if( _Ygl->vdp1_maxpri < from ) return;
    if( _Ygl->vdp1_minpri > to ) return;
-
-   glEnable(GL_TEXTURE_2D);
 
    //YGLDEBUG("YglRenderFrameBuffer: %d to %d\n", from , to );
 
@@ -2256,8 +2259,6 @@ void YglRender(void) {
      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
      YglTM->texture = NULL;
    }
-
-   //glEnable(GL_TEXTURE_2D);
    
 #if 0 // Test
    ShaderDrawTest();
@@ -2286,7 +2287,7 @@ void YglRender(void) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            YglRenderFrameBuffer(from,to);
+			if(Vdp1External.disptoggle&0x01) YglRenderFrameBuffer(from, to);
             from = to;
 
             // clean up
@@ -2349,7 +2350,7 @@ void YglRender(void) {
 
    glEnable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   YglRenderFrameBuffer(from,8);
+   if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
 
 #endif
    glDisable(GL_TEXTURE_2D);
@@ -2368,17 +2369,19 @@ void YglRender(void) {
    if (YglTM->texture == NULL){
 	   abort();
    }
-
-   if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
+#if 0
+   if ( ((Vdp1Regs->FBCR & 2) == 0) )
    {
+	   YabThreadLock(_Ygl->mutex);
 	   u32 current_drawframe = 0;
 	   current_drawframe = _Ygl->drawframe;
 	   _Ygl->drawframe = _Ygl->readframe;
 	   _Ygl->readframe = current_drawframe;
 	   Vdp1External.manualchange = 0;
 	   YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+	   YabThreadUnLock(_Ygl->mutex);
    }
-
+#endif
    return;
 }
 

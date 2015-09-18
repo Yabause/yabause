@@ -22,11 +22,13 @@
 
         <activity android:name="GameList"
                   android:screenOrientation="landscape" />
-
+<!-- 
+                  android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+        -->
+        
         <activity android:name="Yabause"
                   android:configChanges="orientation|keyboardHidden"
                   android:screenOrientation="landscape"
-                  android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
                   android:label="@string/app_name">
        		<intent-filter>
                	<action android:name="android.intent.action.MAIN" />
