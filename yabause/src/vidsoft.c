@@ -24,6 +24,12 @@
     \brief Software video renderer interface.
 */
 
+//#define WANT_VIDSOFT_NBG0_THREADING
+//#define WANT_VIDSOFT_RBG0_THREADING
+//#undef WANT_VIDSOFT_NBG0_THREADING
+//#undef WANT_VIDSOFT_RBG0_THREADING
+//#define WANT_SLEEP
+
 #include "vidsoft.h"
 #include "ygl.h"
 #include "vidshared.h"
@@ -1811,7 +1817,11 @@ void VidsoftNbg0Thread(void* data)
          vidsoft_thread_context.draw_finished[TITAN_NBG0] = 1;
       }
 
+#ifdef WANT_SLEEP
+      YabThreadSleep();
+#else
       YabThreadYield();
+#endif
    }
 }
 #endif
@@ -1829,8 +1839,11 @@ void VidsoftRbg0Thread(void * data)
          Vdp2DrawRBG0();
          vidsoft_thread_context.draw_finished[TITAN_RBG0] = 1;
       }
-
+#ifdef WANT_SLEEP
+      YabThreadSleep();
+#else
       YabThreadYield();
+#endif
    }
 }
 
@@ -3446,6 +3459,9 @@ void VIDSoftVdp2DrawScreens(void)
    {
 #ifdef WANT_VIDSOFT_NBG0_THREADING
       vidsoft_thread_context.need_draw[TITAN_NBG0] = 1;
+#ifdef WANT_SLEEP
+      YabThreadWake(YAB_THREAD_TITAN_RENDER_0);
+#endif
 #else
       Vdp2DrawNBG0();
 #endif
@@ -3454,6 +3470,9 @@ void VIDSoftVdp2DrawScreens(void)
    {
 #ifdef WANT_VIDSOFT_RBG0_THREADING
       vidsoft_thread_context.need_draw[TITAN_RBG0] = 1;
+#ifdef WANT_SLEEP
+      YabThreadWake(YAB_THREAD_TITAN_RENDER_1);
+#endif
 #else
       Vdp2DrawRBG0();
 #endif
