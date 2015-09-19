@@ -540,9 +540,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
 			   else if (((dot >> 4) | colorBank) == 0x0000){
-				   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-				   talpha |= priority;
-				   *texture->textdata++ = Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
+				   //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+				   //talpha |= priority;
+				   *texture->textdata++ = 0; //Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
 			   }
 			   else if (((dot >> 4) | colorBank) == nromal_shadow){
 				   u32 talpha = (u8)0xF8 - (u8)0x80;
@@ -573,9 +573,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                else if( ((dot & 0xF) == 0x0F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
                else if (((dot & 0x0F) | colorBank) == 0x0000){
-                 u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-                 talpha |= priority;
-                 *texture->textdata++ = Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
+                 //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+                 //talpha |= priority;
+				   *texture->textdata++ = 0; // Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
 			   }
 			   else if (((dot & 0xF) | colorBank) == nromal_shadow){
 				   u32 talpha = (u8)0xF8 - (u8)0x80;
