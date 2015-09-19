@@ -78,6 +78,8 @@ int g_major_version=0;
 int g_minor_version=0;
 int g_minorminor_version=0;
 
+int g_EnagleFPS = 0;
+
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t g_mtxFuncSync = PTHREAD_MUTEX_INITIALIZER;
@@ -312,8 +314,8 @@ void YuiSwapBuffers(void)
    if( g_Display == EGL_NO_DISPLAY ){
       return;
    }
-
-   OSDDisplayMessages();
+   SetOSDToggle(g_EnagleFPS);
+   OSDDisplayMessages(NULL,0,0);
    if( s_vidcoretype == VIDCORE_SOFT ){
        YuidrawSoftwareBuffer();
    }
@@ -979,10 +981,8 @@ int switchWindow( ANativeWindow* window ){
 }
 
 destroy() {
+    YabauseDeInit();
 
-	eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-	VdpRevoke(); 
-	YuiUseOGLOnThisThread();
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroyContext(g_Display, g_Context_Sub);
     eglDestroyContext(g_Display, g_Context);
@@ -996,8 +996,6 @@ destroy() {
     g_Context = EGL_NO_CONTEXT;
     g_Surface = EGL_NO_SURFACE;
     g_Pbuffer = EGL_NO_SURFACE;
-	
-    YabauseDeInit();	
     
     return;
 }
@@ -1030,7 +1028,7 @@ Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, ji
 void
 Java_org_uoyabause_android_YabauseRunnable_enableFPS( JNIEnv* env, jobject obj, jint enable )
 {
-    SetOSDToggle(enable);
+    g_EnagleFPS = enable;
 }
 
 void
