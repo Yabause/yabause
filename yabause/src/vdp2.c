@@ -447,7 +447,7 @@ void vdp2VBlankOUT(void) {
       if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    }
    else
-      if (Vdp1Regs->PTMR == 2) Vdp1NoDraw();
+      if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
