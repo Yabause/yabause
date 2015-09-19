@@ -24,12 +24,19 @@
     \brief Software video renderer interface.
 */
 
+//#define WANT_VIDSOFT_NBG0_THREADING
+//#define WANT_VIDSOFT_RBG0_THREADING
+//#undef WANT_VIDSOFT_NBG0_THREADING
+//#undef WANT_VIDSOFT_RBG0_THREADING
+//#define WANT_SLEEP
+
 #include "vidsoft.h"
 #include "ygl.h"
 #include "vidshared.h"
 #include "debug.h"
 #include "vdp2.h"
 #include "titan/titan.h"
+#include "threads.h"
 
 #ifdef HAVE_LIBGL
 #define USE_OPENGL
@@ -1791,8 +1798,63 @@ static void LoadLineParamsSprite(vdp2draw_struct * info, int line)
 
 //////////////////////////////////////////////////////////////////////////////
 
+struct {
+   volatile int need_draw[6];
+   volatile int draw_finished[6];
+}vidsoft_thread_context;
+
+#ifdef WANT_VIDSOFT_NBG0_THREADING
+
+void VidsoftNbg0Thread(void* data)
+{
+   for (;;)
+   {
+      if (vidsoft_thread_context.need_draw[TITAN_NBG0])
+      {
+         vidsoft_thread_context.need_draw[TITAN_NBG0] = 0;
+         vidsoft_thread_context.draw_finished[TITAN_NBG0] = 0;
+         Vdp2DrawNBG0();
+         vidsoft_thread_context.draw_finished[TITAN_NBG0] = 1;
+      }
+
+#ifdef WANT_SLEEP
+      YabThreadSleep();
+#else
+      YabThreadYield();
+#endif
+   }
+}
+#endif
+
+#ifdef WANT_VIDSOFT_RBG0_THREADING
+
+void VidsoftRbg0Thread(void * data)
+{
+   for (;;)
+   {
+      if (vidsoft_thread_context.need_draw[TITAN_RBG0])
+      {
+         vidsoft_thread_context.need_draw[TITAN_RBG0] = 0;
+         vidsoft_thread_context.draw_finished[TITAN_RBG0] = 0;
+         Vdp2DrawRBG0();
+         vidsoft_thread_context.draw_finished[TITAN_RBG0] = 1;
+      }
+#ifdef WANT_SLEEP
+      YabThreadSleep();
+#else
+      YabThreadYield();
+#endif
+   }
+}
+
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
 int VIDSoftInit(void)
 {
+   int i;
+
    if (TitanInit() == -1)
       return -1;
 
@@ -1814,6 +1876,19 @@ int VIDSoftInit(void)
 
 #ifdef USE_OPENGL
    VIDSoftSetupGL();
+#endif
+
+   for (i = 0; i < 6; i++)
+   {
+      vidsoft_thread_context.draw_finished[i] = 1;
+      vidsoft_thread_context.need_draw[i] = 0;
+   }
+
+#ifdef WANT_VIDSOFT_NBG0_THREADING
+   YabThreadStart(YAB_THREAD_TITAN_RENDER_0, VidsoftNbg0Thread, 0);
+#endif
+#ifdef WANT_VIDSOFT_RBG0_THREADING
+   YabThreadStart(YAB_THREAD_TITAN_RENDER_1, VidsoftRbg0Thread, 0);
 #endif
 
    return 0;
@@ -3282,6 +3357,15 @@ void VIDSoftVdp2DrawEnd(void)
          }
       }
    }
+
+#ifdef WANT_VIDSOFT_NBG0_THREADING
+   while (!vidsoft_thread_context.draw_finished[TITAN_NBG0]){}
+#endif
+
+#ifdef WANT_VIDSOFT_RBG0_THREADING
+   while (!vidsoft_thread_context.draw_finished[TITAN_RBG0]){}
+#endif
+
    TitanRender(dispbuffer);
 
    VIDSoftVdp1SwapFrameBuffer();
@@ -3371,26 +3455,41 @@ void VIDSoftVdp2DrawScreens(void)
       }
    }
 #else
-   if (nbg3priority > 0 || draw_priority_0[TITAN_NBG3])
+   if (nbg0priority > 0 || draw_priority_0[TITAN_NBG0])
    {
+#ifdef WANT_VIDSOFT_NBG0_THREADING
+      vidsoft_thread_context.need_draw[TITAN_NBG0] = 1;
+#ifdef WANT_SLEEP
+      YabThreadWake(YAB_THREAD_TITAN_RENDER_0);
+#endif
+#else
+      Vdp2DrawNBG0();
+#endif
+   }
+   if (rbg0priority > 0 || draw_priority_0[TITAN_RBG0])
+   {
+#ifdef WANT_VIDSOFT_RBG0_THREADING
+      vidsoft_thread_context.need_draw[TITAN_RBG0] = 1;
+#ifdef WANT_SLEEP
+      YabThreadWake(YAB_THREAD_TITAN_RENDER_1);
+#endif
+#else
+      Vdp2DrawRBG0();
+#endif
+   }
+   if (nbg1priority > 0 || draw_priority_0[TITAN_NBG1])
+   {
+      Vdp2DrawNBG1();
+   }
+   if (nbg3priority > 0 || draw_priority_0[TITAN_NBG3])
+   { 
       Vdp2DrawNBG3();
    }
    if (nbg2priority > 0 || draw_priority_0[TITAN_NBG2])
    {
       Vdp2DrawNBG2();
    }
-   if (nbg1priority > 0 || draw_priority_0[TITAN_NBG1])
-   {
-      Vdp2DrawNBG1();
-   }
-   if (nbg0priority > 0 || draw_priority_0[TITAN_NBG0])
-   {
-      Vdp2DrawNBG0();
-   }
-   if (rbg0priority > 0 || draw_priority_0[TITAN_RBG0])
-   {
-      Vdp2DrawRBG0();
-   }
+  
 #endif
 }
 
