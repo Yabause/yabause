@@ -38,6 +38,7 @@ import android.view.MenuItem;
 import android.view.MenuInflater;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 import android.app.ActionBar.OnMenuVisibilityListener;
 import android.app.Dialog;
 import android.app.AlertDialog;
@@ -154,17 +155,18 @@ public class Yabause extends Activity implements OnPadListener
 
     /** Called when the activity is first created. */
     @Override
-    public void onCreate(Bundle savedInstanceState)
+    public void onCreate(Bundle savedInstanceState)    
     {
-        super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.main);
+        super.onCreate(savedInstanceState);     
         
         // Immersive mode 
         View decor = this.getWindow().getDecorView();
         decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION  | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        setContentView(R.layout.main);  
         
- 
+        
         audio = new YabauseAudio(this);         
  
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);

@@ -692,6 +692,8 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     s_cartpath = GetCartridgePath();
     s_vidcoretype = GetVideoInterface();
     s_carttype =  GetCartridgeType();
+	
+	 YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
     
     OSDInit(0);
 
@@ -718,11 +720,19 @@ int YuiUseOGLOnThisThread(){
         // retry three times
         usleep(10000);
          if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
+			 YUI_LOG("eglMakeCurrent() returned error %X 2", eglGetError());
              usleep(10000);
              if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
+				 YUI_LOG("eglMakeCurrent() returned error %X 3", eglGetError());
                  usleep(10000);
                  if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
-                    return -1;
+					 YUI_LOG("eglMakeCurrent() returned error %X 4", eglGetError());
+						usleep(10000);
+						if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
+							YUI_LOG("eglMakeCurrent() returned error %X 5", eglGetError());
+							return -1;
+						}
+
                  }
              }
              
@@ -735,6 +745,7 @@ int YuiUseOGLOnThisThread(){
 
 int initEgl( ANativeWindow* window )
 {
+	int i;
     int res;
     yabauseinit_struct yinit;
     void * padbits;
@@ -930,7 +941,14 @@ int initEgl( ANativeWindow* window )
 
     if( s_vidcoretype == VIDCORE_OGL ){
         OSDChangeCore(OSDCORE_NANOVG);
-        VIDCore->Resize(width,height,0);
+	   for (i = 0; VIDCoreList[i] != NULL; i++)
+	   {
+		  if (VIDCoreList[i]->id == s_vidcoretype)
+		  {
+			 VIDCoreList[i]->Resize(width,height,0);
+			 break;
+		  }
+	   }
     }else{
         OSDChangeCore(OSDCORE_SOFT);
         if( YuiInitProgramForSoftwareRendering() != GL_TRUE ){
@@ -948,8 +966,9 @@ int switchWindow( ANativeWindow* window ){
     EGLSurface surface;
     EGLint width;
     EGLint height;
+	int i;
     
-    if( g_Display == NULL ||  g_Config == NULL ) return -1;
+    if( g_Display == EGL_NO_DISPLAY ||  g_Config == NULL ) return -1;
     
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     VdpRevoke(); 
@@ -972,8 +991,20 @@ int switchWindow( ANativeWindow* window ){
     eglQuerySurface(g_Display,surface,EGL_WIDTH,&width);
     eglQuerySurface(g_Display,surface,EGL_HEIGHT,&height);
     YUI_LOG("eglCreateWindowSurface() ok size = %d,%d", width,height);
-    eglMakeCurrent(g_Display, surface, surface, g_Context);
-    VIDCore->Resize(width,height,0);
+    if( eglMakeCurrent(g_Display, surface, surface, g_Context) != EGL_TRUE ){
+		YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
+	}
+
+
+   for (i = 0; VIDCoreList[i] != NULL; i++)
+   {
+	  if (VIDCoreList[i]->id == s_vidcoretype)
+	  {
+		YUI_LOG("Resize %d,%s %d,%d",s_vidcoretype,VIDCoreList[i]->Name,width,height);
+		 VIDCoreList[i]->Resize(width,height,0);
+		 break;
+	  }
+   }
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     g_Surface = surface;
     VdpResume();
