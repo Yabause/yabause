@@ -1301,11 +1301,21 @@ void vdp2_sprite_priority_shadow_test()
       write_tiles_4x(x_pos, 20, str, vdp2_tile_address, addresses[x]);//special color calc tiles
    }
 
+   int tvm = 0;
+   int hreso = 0;
+
    for (;;)
    {
       vdp_vsync();
 
-      VDP2_REG_SPCTL = (spccs << 12) | (spccn << 8) | (0 << 5) | 7;
+      VDP1_REG_TVMR = tvm;
+
+      VDP2_REG_TVMD = (1 << 15) | hreso;
+
+      if (tvm == 0)
+         VDP2_REG_SPCTL = (spccs << 12) | (spccn << 8) | (0 << 5) | 7;
+      else
+         VDP2_REG_SPCTL = (spccs << 12) | (spccn << 8) | (0 << 5) | 8;
 
       VDP2_REG_CCCTL = (1 << 6) | (1 << 0) | (1 << 3);
 
@@ -1379,6 +1389,24 @@ void vdp2_sprite_priority_shadow_test()
       {
          spccn++;
          spccn &= 7;
+      }
+
+      if (per[0].but_push_once & PAD_C)
+      {
+         tvm = !tvm;
+      }
+
+      if (per[0].but_push_once & PAD_X)
+      {
+         if (hreso == 2)
+            hreso = 0;
+         else
+            hreso = 2;
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
       }
 
       if (per[0].but_push_once & PAD_START)
@@ -1946,10 +1974,13 @@ void vdp2_line_window_test()
    }
 #else
 
+   int hreso = 0;
    
    for (;;)
    {
       vdp_vsync();
+
+      VDP2_REG_TVMD = (1 << 15) | hreso;
 
       vdp2_line_window_write_regs(v, line_window_table_address);
 
@@ -1970,6 +2001,19 @@ void vdp2_line_window_test()
       if (per[0].but_push_once & PAD_START)
       {
          break;
+      }
+
+      if (per[0].but_push_once & PAD_X)
+      {
+         if (hreso == 2)
+            hreso = 0;
+         else
+            hreso = 2;
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
       }
    }
 
@@ -2152,9 +2196,13 @@ void vdp2_line_scroll_test()
    }
 #else
 
+   int hreso = 0;
+
    for (;;)
    {
       vdp_vsync();
+
+      VDP2_REG_TVMD = (1 << 15) | hreso;
 
       counter++;
 
@@ -2177,6 +2225,19 @@ void vdp2_line_scroll_test()
       if (per[0].but_push_once & PAD_START)
       {
          break;
+      }
+
+      if (per[0].but_push_once & PAD_X)
+      {
+         if (hreso == 2)
+            hreso = 0;
+         else
+            hreso = 2;
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
       }
    }
 #endif
