@@ -283,7 +283,8 @@ public class Yabause extends Activity implements OnPadListener
     }
     @Override
     public boolean onPrepareOptionsMenu (Menu menu){
-    	//YabauseRunnable.pause();
+		YabauseRunnable.pause();
+		audio.mute(audio.SYSTEM);
     	return super.onPrepareOptionsMenu(menu);
     }
     
