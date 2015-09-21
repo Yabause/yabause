@@ -3594,7 +3594,12 @@ void VIDSoftVdp1EraseFrameBuffer(void)
          for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
          {
             for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
-               vdp1backframebuffer[(i2 * vdp1width) + i] = Vdp1Regs->EWDR & 0xFF;
+            {
+               int pos = (i2 * vdp1width) + i;
+
+               if (pos < 0x3FFFF)
+                  vdp1backframebuffer[pos] = Vdp1Regs->EWDR & 0xFF;
+            }
          }
       }
       Vdp1External.manualerase = 0;
