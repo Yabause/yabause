@@ -150,6 +150,7 @@ static int vdp1clipyend;
 static int vdp1pixelsize;
 static int vdp1spritetype;
 int vdp2width;
+int rbg0width = 0;
 int vdp2height;
 static int nbg0priority=0;
 static int nbg1priority=0;
@@ -872,6 +873,16 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Rbg0PutHiresPixel(vdp2draw_struct *info, u32 color, u32 dot, int i, int j)
+{
+   u32 pixel = info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color));
+   int x_pos = i * 2;
+   TitanPutPixel(info->priority, x_pos, j, pixel, info->linescreen, info);
+   TitanPutPixel(info->priority, x_pos + 1, j, pixel, info->linescreen, info);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparameterfp_struct *parameter)
 {
    int i, j;
@@ -916,7 +927,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             info->LoadLineParams(info, j);
             ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr);
 
-            for (i = 0; i < vdp2width; i++)
+            for (i = 0; i < rbg0width; i++)
             {
                u32 color, dot;
 
@@ -939,7 +950,12 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                   continue;
                }
 
-               TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+               if (vdp2_x_hires)
+               {
+                  Rbg0PutHiresPixel(info, color, dot, i, j);
+               }
+               else
+                  TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
             }
             xmul += p->deltaXst;
             ymul += p->deltaYst;
@@ -1043,7 +1059,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          if (userpwindow)
             ReadLineWindowClip(isrplinewindow, rpwindow, &rplinewnd0addr, &rplinewnd1addr);
 
-         for (i = 0; i < vdp2width; i++)
+         for (i = 0; i < rbg0width; i++)
          {
             u32 color, dot;
 
@@ -1137,7 +1153,12 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                continue;
             }
 
-            TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+            if (vdp2_x_hires)
+            {
+               Rbg0PutHiresPixel(info, color, dot, i, j);
+            }
+            else
+               TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
          }
          xmul += p->deltaXst;
          ymul += p->deltaYst;
@@ -1806,7 +1827,7 @@ int VIDSoftInit(void)
 
    vdp1backframebuffer = vdp1framebuffer[0];
    vdp1frontframebuffer = vdp1framebuffer[1];
-   vdp2width = 320;
+   rbg0width = vdp2width = 320;
    vdp2height = 224;
 
 #ifdef USE_OPENGL
@@ -3455,28 +3476,32 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
    switch (TVMD & 0x7)
    {
       case 0:
-         vdp2width = 320;
+         rbg0width = vdp2width = 320;
          break;
       case 1:
-         vdp2width = 352;
+         rbg0width = vdp2width = 352;
          break;
       case 2:
          vdp2width = 640;
+         rbg0width = 320;
          break;
       case 3:
          vdp2width = 704;
+         rbg0width = 352;
          break;
       case 4:
-         vdp2width = 320;
+         rbg0width = vdp2width = 320;
          break;
       case 5:
-         vdp2width = 352;
+         rbg0width = vdp2width = 352;
          break;
       case 6:
          vdp2width = 640;
+         rbg0width = 320;
          break;
       case 7:
          vdp2width = 704;
+         rbg0width = 352;
          break;
    }
 
