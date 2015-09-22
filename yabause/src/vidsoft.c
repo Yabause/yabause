@@ -24,12 +24,6 @@
     \brief Software video renderer interface.
 */
 
-//#define WANT_VIDSOFT_NBG0_THREADING
-//#define WANT_VIDSOFT_RBG0_THREADING
-//#undef WANT_VIDSOFT_NBG0_THREADING
-//#undef WANT_VIDSOFT_RBG0_THREADING
-//#define WANT_SLEEP
-
 #include "vidsoft.h"
 #include "ygl.h"
 #include "vidshared.h"
@@ -157,6 +151,7 @@ static int vdp1clipyend;
 static int vdp1pixelsize;
 static int vdp1spritetype;
 int vdp2width;
+int rbg0width = 0;
 int vdp2height;
 static int nbg0priority=0;
 static int nbg1priority=0;
@@ -173,7 +168,7 @@ GLuint fshader = 0;
 GLuint gl_shader_prog = 0;
 GLuint gl_texture_id = 0;
 #endif
-static int resxratio;
+static int vdp2_x_hires = 0;
 static int resyratio;
 int bilinear = 0;
 
@@ -715,7 +710,6 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
    int *mosaic_y, *mosaic_x;
    clipping_struct colorcalcwindow[2];
 
-   info->coordincx *= (float)resxratio;
    info->coordincy *= (float)resyratio;
 
    SetupScreenVars(info, &sinfo, info->PlaneAddr);
@@ -781,7 +775,6 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          if (info->islinescroll & 0x4)
          {
             info->coordincx = (T1ReadLong(Vdp2Ram, info->linescrolltbl) & 0x7FF00) / (float)65536.0;
-            info->coordincx *= resxratio;
             if (need_increment)
                info->linescrolltbl += 4;
          }
@@ -794,7 +787,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
       ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr);
       y &= sinfo.ymask;
 
-      if (info->isverticalscroll)
+      if (info->isverticalscroll && (!vdp2_x_hires))//seems to be ignored in hi res
       {
          // this is *wrong*, vertical scroll use a different value per cell
          // info->verticalscrolltbl should be incremented by info->verticalscrollinc
@@ -814,11 +807,10 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          /* I'm really not sure about this... but I think the way we handle
          high resolution gets in the way with window process. I may be wrong...
          This was added for Cotton Boomerang */
-         int resxi = i * resxratio;
 			int priority;
 
          // See if screen position is clipped, if it isn't, continue
-         if (!TestBothWindow(info->wctl, clip, resxi, j))
+         if (!TestBothWindow(info->wctl, clip, i, j))
          {
             continue;
          }
@@ -882,6 +874,16 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Rbg0PutHiresPixel(vdp2draw_struct *info, u32 color, u32 dot, int i, int j)
+{
+   u32 pixel = info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color));
+   int x_pos = i * 2;
+   TitanPutPixel(info->priority, x_pos, j, pixel, info->linescreen, info);
+   TitanPutPixel(info->priority, x_pos + 1, j, pixel, info->linescreen, info);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparameterfp_struct *parameter)
 {
    int i, j;
@@ -926,7 +928,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             info->LoadLineParams(info, j);
             ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr);
 
-            for (i = 0; i < vdp2width; i++)
+            for (i = 0; i < rbg0width; i++)
             {
                u32 color, dot;
 
@@ -949,7 +951,12 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                   continue;
                }
 
-               TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+               if (vdp2_x_hires)
+               {
+                  Rbg0PutHiresPixel(info, color, dot, i, j);
+               }
+               else
+                  TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
             }
             xmul += p->deltaXst;
             ymul += p->deltaYst;
@@ -1053,7 +1060,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          if (userpwindow)
             ReadLineWindowClip(isrplinewindow, rpwindow, &rplinewnd0addr, &rplinewnd1addr);
 
-         for (i = 0; i < vdp2width; i++)
+         for (i = 0; i < rbg0width; i++)
          {
             u32 color, dot;
 
@@ -1147,7 +1154,12 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                continue;
             }
 
-            TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+            if (vdp2_x_hires)
+            {
+               Rbg0PutHiresPixel(info, color, dot, i, j);
+            }
+            else
+               TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
          }
          xmul += p->deltaXst;
          ymul += p->deltaYst;
@@ -1817,11 +1829,7 @@ void VidsoftNbg0Thread(void* data)
          vidsoft_thread_context.draw_finished[TITAN_NBG0] = 1;
       }
 
-#ifdef WANT_SLEEP
       YabThreadSleep();
-#else
-      YabThreadYield();
-#endif
    }
 }
 #endif
@@ -1839,11 +1847,8 @@ void VidsoftRbg0Thread(void * data)
          Vdp2DrawRBG0();
          vidsoft_thread_context.draw_finished[TITAN_RBG0] = 1;
       }
-#ifdef WANT_SLEEP
+
       YabThreadSleep();
-#else
-      YabThreadYield();
-#endif
    }
 }
 
@@ -1871,7 +1876,7 @@ int VIDSoftInit(void)
 
    vdp1backframebuffer = vdp1framebuffer[0];
    vdp1frontframebuffer = vdp1framebuffer[1];
-   vdp2width = 320;
+   rbg0width = vdp2width = 320;
    vdp2height = 224;
 
 #ifdef USE_OPENGL
@@ -2302,9 +2307,8 @@ static int gouraudAdjust( int color, int tableValue )
 
 static void putpixel8(int x, int y) {
 
-    int x2 = x / 2;
     int y2 = y / vdp1interlace;
-    u8 * iPix = &vdp1backframebuffer[(y2 * vdp1width) + x2];
+    u8 * iPix = &vdp1backframebuffer[(y2 * vdp1width) + x];
     int mesh = cmd.CMDPMOD & 0x0100;
     int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
 
@@ -2313,7 +2317,7 @@ static void putpixel8(int x, int y) {
 
     currentPixel &= 0xFF;
 
-    if(mesh && ((x2 ^ y2) & 1)) {
+    if(mesh && ((x ^ y2) & 1)) {
         return;
     }
 
@@ -2322,8 +2326,8 @@ static void putpixel8(int x, int y) {
 
         if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
 
-        clipped = ! (x2 >= vdp1clipxstart &&
-            x2 < vdp1clipxend &&
+        clipped = ! (x >= vdp1clipxstart &&
+            x < vdp1clipxend &&
             y2 >= vdp1clipystart &&
             y2 < vdp1clipyend);
 
@@ -3176,6 +3180,8 @@ void VIDSoftVdp2DrawEnd(void)
 
       for (i2 = 0; i2 < vdp2height; i2++)
       {
+         float framebuffer_readout_pos = 0;
+
          ReadLineWindowClip(islinewindow, clip, &linewnd0addr, &linewnd1addr);
 
          LoadLineParamsSprite(&info, i2);
@@ -3186,7 +3192,7 @@ void VIDSoftVdp2DrawEnd(void)
             info.titan_shadow_type = 0;
 
             // See if screen position is clipped, if it isn't, continue
-            if (!TestBothWindow(wctl, clip, i * resxratio, i2))
+            if (!TestBothWindow(wctl, clip, i, i2))
             {
                continue;
             }
@@ -3197,7 +3203,30 @@ void VIDSoftVdp2DrawEnd(void)
             }
             else
             {
-               x = i;
+               if (vdp1width == 1024 && vdp2_x_hires)
+               {
+                  //hi res vdp1 and hi res vdp2
+                  //pixels 1:1
+                  x = (int)framebuffer_readout_pos;
+                  framebuffer_readout_pos += 1;
+               }
+               else if (vdp1width == 512 && vdp2_x_hires)
+               {
+                  //low res vdp1,hi res vdp2
+                  //vdp1 pixel doubling
+                  x = (int)framebuffer_readout_pos;
+                  framebuffer_readout_pos += .5;
+               }
+               else if (vdp1width == 1024 && (!vdp2_x_hires))
+               {
+                  //hi res vdp1, low res vdp2
+                  //the vdp1 framebuffer is read out at half-res
+                  x = (int)framebuffer_readout_pos;
+                  framebuffer_readout_pos += 2;
+               }
+               else
+                  x = i;
+
                y = i2;
             }
 
@@ -3459,9 +3488,7 @@ void VIDSoftVdp2DrawScreens(void)
    {
 #ifdef WANT_VIDSOFT_NBG0_THREADING
       vidsoft_thread_context.need_draw[TITAN_NBG0] = 1;
-#ifdef WANT_SLEEP
       YabThreadWake(YAB_THREAD_TITAN_RENDER_0);
-#endif
 #else
       Vdp2DrawNBG0();
 #endif
@@ -3470,9 +3497,7 @@ void VIDSoftVdp2DrawScreens(void)
    {
 #ifdef WANT_VIDSOFT_RBG0_THREADING
       vidsoft_thread_context.need_draw[TITAN_RBG0] = 1;
-#ifdef WANT_SLEEP
       YabThreadWake(YAB_THREAD_TITAN_RENDER_1);
-#endif
 #else
       Vdp2DrawRBG0();
 #endif
@@ -3533,38 +3558,39 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
    switch (TVMD & 0x7)
    {
       case 0:
-         vdp2width = 320;
-         resxratio=1;
+         rbg0width = vdp2width = 320;
          break;
       case 1:
-         vdp2width = 352;
-         resxratio=1;
+         rbg0width = vdp2width = 352;
          break;
-      case 2: // 640
-         vdp2width = 320;
-         resxratio=2;
+      case 2:
+         vdp2width = 640;
+         rbg0width = 320;
          break;
-      case 3: // 704
-         vdp2width = 352;
-         resxratio=2;
+      case 3:
+         vdp2width = 704;
+         rbg0width = 352;
          break;
       case 4:
-         vdp2width = 320;
-         resxratio=1;
+         rbg0width = vdp2width = 320;
          break;
       case 5:
-         vdp2width = 352;
-         resxratio=1;
+         rbg0width = vdp2width = 352;
          break;
-      case 6: // 640
-         vdp2width = 320;
-         resxratio=2;
+      case 6:
+         vdp2width = 640;
+         rbg0width = 320;
          break;
-      case 7: // 704
-         vdp2width = 352;
-         resxratio=2;
+      case 7:
+         vdp2width = 704;
+         rbg0width = 352;
          break;
    }
+
+   if ((vdp2width == 704) || (vdp2width == 640))
+      vdp2_x_hires = 1;
+   else
+      vdp2_x_hires = 0;
 
    // Vertical Resolution
    switch ((TVMD >> 4) & 0x3)
@@ -3669,10 +3695,18 @@ void VIDSoftVdp1EraseFrameBuffer(void)
       }
       else
       {
+         w = Vdp1Regs->EWRR >> 9;
+         w *= 16;
+         if (w > vdp1width) w = vdp1width;
+
          for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
          {
             for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
-               vdp1backframebuffer[(i2 * vdp1width) + i] = Vdp1Regs->EWDR & 0xFF;
+            {
+               int pos = (i2 * vdp1width) + i;
+
+               vdp1backframebuffer[pos] = Vdp1Regs->EWDR & 0xFF;
+            }
          }
       }
       Vdp1External.manualerase = 0;
