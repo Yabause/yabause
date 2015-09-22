@@ -157,7 +157,7 @@ public class Yabause extends Activity implements OnPadListener
     @Override
     public void onCreate(Bundle savedInstanceState)    
     {
-        super.onCreate(savedInstanceState);     
+        super.onCreate(savedInstanceState);  
         
         // Immersive mode 
         View decor = this.getWindow().getDecorView();
@@ -172,7 +172,7 @@ public class Yabause extends Activity implements OnPadListener
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         readPreferences();  
  
-        Intent intent = getIntent(); 
+        Intent intent = getIntent();  
         String game = intent.getStringExtra("org.uoyabause.android.FileName");
 
         if (game != null && game.length() > 0) {
@@ -193,6 +193,7 @@ public class Yabause extends Activity implements OnPadListener
         padm = PadManager.getPadManager();
         
         waiting_reault = false;
+/*        
         getActionBar().addOnMenuVisibilityListener(new OnMenuVisibilityListener() {
             @Override
                 public void onMenuVisibilityChanged(boolean isVisible) {
@@ -208,7 +209,7 @@ public class Yabause extends Activity implements OnPadListener
 
                 }
             });            
-
+*/
     }
     
 
