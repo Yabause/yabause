@@ -639,6 +639,7 @@ void vdp2_line_color_screen_test()
    int update_nbg_ratios = 1;
    int nbg_ratio[4] = {0};
    char ratio_status_str[64];
+   int lsmd = 0;
 
 #ifdef BUILD_AUTOMATED_TESTING
    vdp2_line_color_write_regs(ccctl, lnclen, lcclmd, table_address);
@@ -647,6 +648,8 @@ void vdp2_line_color_screen_test()
    for (;;)
    {
       vdp_vsync();
+
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | 0;
 
       vdp2_line_color_write_regs(ccctl, lnclen, lcclmd, table_address);
 
@@ -781,6 +784,14 @@ void vdp2_line_color_screen_test()
          update_nbg_ratios = 1;
          lcclmd = 1;
          lnclen = 0x3f;
+      }
+
+      if (per[0].but_push_once & PAD_DOWN)
+      {
+         if (lsmd == 3)
+            lsmd = 0;
+         else
+            lsmd = 3;
       }
 
       if (per[0].but_push_once & PAD_START)
@@ -1303,6 +1314,9 @@ void vdp2_sprite_priority_shadow_test()
 
    int tvm = 0;
    int hreso = 0;
+   int lsmd = 0;
+   int die = 0;
+   int dil = 0;
 
    for (;;)
    {
@@ -1310,7 +1324,9 @@ void vdp2_sprite_priority_shadow_test()
 
       VDP1_REG_TVMR = tvm;
 
-      VDP2_REG_TVMD = (1 << 15) | hreso;
+      VDP1_REG_FBCR = ((die&1) << 3) | ((dil&1) << 2);
+
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | hreso;
 
       if (tvm == 0)
          VDP2_REG_SPCTL = (spccs << 12) | (spccn << 8) | (0 << 5) | 7;
@@ -1407,6 +1423,24 @@ void vdp2_sprite_priority_shadow_test()
       if (per[0].but_push_once & PAD_Y)
       {
          reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_Z)
+      {
+         if (lsmd == 3)
+            lsmd = 0;
+         else
+            lsmd = 3;
+      }
+
+      if (per[0].but_push_once & PAD_UP)
+      {
+         die = !die;
+      }
+
+      if (per[0].but_push_once & PAD_DOWN)
+      {
+         dil = !dil;
       }
 
       if (per[0].but_push_once & PAD_START)
@@ -1956,6 +1990,7 @@ void vdp2_line_window_test()
    };
 
    int preset = 0;
+   int lsmd = 0;
 
    ra_do_preset(&s, presets[preset]);
 
@@ -1980,7 +2015,7 @@ void vdp2_line_window_test()
    {
       vdp_vsync();
 
-      VDP2_REG_TVMD = (1 << 15) | hreso;
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | hreso;
 
       vdp2_line_window_write_regs(v, line_window_table_address);
 
@@ -2014,6 +2049,14 @@ void vdp2_line_window_test()
       if (per[0].but_push_once & PAD_Y)
       {
          reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_DOWN)
+      {
+         if (lsmd == 3)
+            lsmd = 0;
+         else
+            lsmd = 3;
       }
    }
 
@@ -2197,12 +2240,13 @@ void vdp2_line_scroll_test()
 #else
 
    int hreso = 0;
+   int lsmd = 0;
 
    for (;;)
    {
       vdp_vsync();
 
-      VDP2_REG_TVMD = (1 << 15) | hreso;
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | hreso;
 
       counter++;
 
@@ -2238,6 +2282,14 @@ void vdp2_line_scroll_test()
       if (per[0].but_push_once & PAD_Y)
       {
          reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_C)
+      {
+         if (lsmd == 3)
+            lsmd = 0;
+         else
+            lsmd = 3;
       }
    }
 #endif
