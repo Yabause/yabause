@@ -569,13 +569,6 @@ static INLINE void ReadWindowCoordinates(int num, clipping_struct * clip)
          clip->xend = (clip->xend & 0x3FF) >> 1;
          break;
    }
-
-   if ((Vdp2Regs->TVMD & 0xC0) == 0xC0)
-   {
-      // Double-density interlace
-      clip->ystart >>= 1;
-      clip->yend >>= 1;
-   }
 }
 
 //////////////////////////////////////////////////////////////////////////////

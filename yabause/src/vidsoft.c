@@ -167,8 +167,9 @@ GLuint fshader = 0;
 GLuint gl_shader_prog = 0;
 GLuint gl_texture_id = 0;
 #endif
-static int vdp2_x_hires = 0;
-static int resyratio;
+int vdp2_x_hires = 0;
+int vdp2_interlace = 0;
+static int rbg0height = 0;
 int bilinear = 0;
 
 typedef struct { s16 x; s16 y; } vdp1vertex;
@@ -698,18 +699,43 @@ int PixelIsSpecialPriority(int specialcode, int dot)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Vdp2GetInterlaceInfo(int * start_line, int * line_increment)
+{
+   if (vdp2_interlace)
+   {
+      if (vdp2_is_odd_frame)
+      {
+         *start_line = 1;
+      }
+      else
+      {
+         *start_line = 0;
+      }
+
+      *line_increment = 2;
+   }
+   else
+   {
+      *start_line = 0;
+      *line_increment = 1;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
 {
    int i, j;
    int x, y;
    clipping_struct clip[2];
    u32 linewnd0addr, linewnd1addr;
+   u32 line_window_base[2] = { 0 };
    screeninfo_struct sinfo;
    int scrolly;
    int *mosaic_y, *mosaic_x;
    clipping_struct colorcalcwindow[2];
+   int start_line = 0, line_increment = 0;
 
-   info->coordincy *= (float)resyratio;
 
    SetupScreenVars(info, &sinfo, info->PlaneAddr);
 
@@ -720,6 +746,8 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
    ReadWindowData(info->wctl, clip);
    linewnd0addr = linewnd1addr = 0;
    ReadLineWindowData(&info->islinewindow, info->wctl, &linewnd0addr, &linewnd1addr);
+   line_window_base[0] = linewnd0addr;
+   line_window_base[1] = linewnd1addr;
    /* color calculation window: in => no color calc, out => color calc */
    ReadWindowData(Vdp2Regs->WCTLD >> 8, colorcalcwindow);
    {
@@ -739,7 +767,9 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
 	   mosaic_y = mosaic_table[info->mosaicymask-1];
    }
 
-   for (j = 0; j < vdp2height; j++)
+   Vdp2GetInterlaceInfo(&start_line, &line_increment);
+
+   for (j = start_line; j < vdp2height; j+=1)
    {
       int Y;
       int linescrollx = 0;
@@ -761,7 +791,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          //vertical line scroll
          if (info->islinescroll & 0x2)
          {
-            info->y = ((T1ReadWord(Vdp2Ram, info->linescrolltbl) & 0x7FF) * resyratio) + scrolly;
+            info->y = ((T1ReadWord(Vdp2Ram, info->linescrolltbl) & 0x7FF)) + scrolly;
             if (need_increment)
                info->linescrolltbl += 4;
             y = info->y;
@@ -782,6 +812,22 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
          //y = info->y+((int)(info->coordincy *(float)(info->mosaicymask > 1 ? (j / info->mosaicymask * info->mosaicymask) : j)));
 		 y = info->y + info->coordincy*mosaic_y[j];
 
+      //we have to increment line scroll every line,
+      //but skip drawing the line if the field doesn't match
+      if (vdp2_interlace)
+      {
+         if (start_line == 0 && (j % 1) == 1)
+         {
+            continue;
+         }
+      }
+
+      if (vdp2_interlace)
+      {
+         linewnd0addr = line_window_base[0] + (j * 4);
+         linewnd1addr = line_window_base[1] + (j * 4);
+      }
+
       // if line window is enabled, adjust clipping values
       ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr);
       y &= sinfo.ymask;
@@ -798,7 +844,10 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info)
 
       Y=y;
 
-      info->LoadLineParams(info, j);
+      if (vdp2_interlace)
+         info->LoadLineParams(info, j / 2);
+      else
+         info->LoadLineParams(info, j);
 
       for (i = 0; i < vdp2width; i++)
       {
@@ -883,6 +932,35 @@ void Rbg0PutHiresPixel(vdp2draw_struct *info, u32 color, u32 dot, int i, int j)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Rbg0PutPixel(vdp2draw_struct *info, u32 color, u32 dot, int i, int j)
+{
+   if (vdp2_interlace)
+   {
+      int y_val = j * 2;
+
+      if (vdp2_is_odd_frame)
+         y_val += 1;
+
+      if (vdp2_x_hires)
+      {
+         Rbg0PutHiresPixel(info, color, dot, i, y_val);
+      }
+      else
+         TitanPutPixel(info->priority, i, y_val, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+   }
+   else
+   {
+      if (vdp2_x_hires)
+      {
+         Rbg0PutHiresPixel(info, color, dot, i, j);
+      }
+      else
+         TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparameterfp_struct *parameter)
 {
    int i, j;
@@ -950,12 +1028,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                   continue;
                }
 
-               if (vdp2_x_hires)
-               {
-                  Rbg0PutHiresPixel(info, color, dot, i, j);
-               }
-               else
-                  TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+               Rbg0PutPixel(info, color, dot, i, j);
             }
             xmul += p->deltaXst;
             ymul += p->deltaYst;
@@ -1028,7 +1101,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          lineInc = Vdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
       }
 
-      for (j = 0; j < vdp2height; j++)
+      for (j = 0; j < rbg0height; j++)
       {
          if (p->deltaKAx == 0)
          {
@@ -1153,12 +1226,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
                continue;
             }
 
-            if (vdp2_x_hires)
-            {
-               Rbg0PutHiresPixel(info, color, dot, i, j);
-            }
-            else
-               TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+            Rbg0PutPixel(info, color, dot, i, j);
          }
          xmul += p->deltaXst;
          ymul += p->deltaYst;
@@ -2304,6 +2372,27 @@ static int gouraudAdjust( int color, int tableValue )
 	return color;
 }
 
+static int CheckDil(int y)
+{
+   int dil = (Vdp1Regs->FBCR >> 2) & 1;
+
+   if (vdp1interlace == 2)
+   {
+      if (dil)
+      {
+         if ((y & 1) == 0)
+            return 1;
+      }
+      else
+      {
+         if ((y & 1))
+            return 1;
+      }
+   }
+
+   return 0;
+}
+
 static void putpixel8(int x, int y) {
 
     int y2 = y / vdp1interlace;
@@ -2313,6 +2402,9 @@ static void putpixel8(int x, int y) {
 
     if (iPix >= (vdp1backframebuffer + 0x40000))
         return;
+
+    if (CheckDil(y))
+       return;
 
     currentPixel &= 0xFF;
 
@@ -2353,6 +2445,9 @@ static void putpixel(int x, int y) {
 	u16* iPix;
 	int mesh = cmd.CMDPMOD & 0x0100;
 	int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
+
+   if (CheckDil(y))
+      return;
 
 	y /= vdp1interlace;
 	iPix = &((u16 *)vdp1backframebuffer)[(y * vdp1width) + x];
@@ -3129,6 +3224,8 @@ void VIDSoftVdp2DrawEnd(void)
    u32 linewnd0addr, linewnd1addr;
    int wctl;
    clipping_struct colorcalcwindow[2];
+   int framebuffer_readout_y = 0;
+   int start_line = 0, line_increment = 0;
 
    // Figure out whether to draw vdp1 framebuffer or vdp2 framebuffer pixels
    // based on priority
@@ -3177,13 +3274,28 @@ void VIDSoftVdp2DrawEnd(void)
 
       info.titan_which_layer = TITAN_SPRITE;
 
-      for (i2 = 0; i2 < vdp2height; i2++)
+      Vdp2GetInterlaceInfo(&start_line, &line_increment);
+
+      for (i2 = start_line; i2 < vdp2height; i2 += line_increment)
       {
          float framebuffer_readout_pos = 0;
 
          ReadLineWindowClip(islinewindow, clip, &linewnd0addr, &linewnd1addr);
 
-         LoadLineParamsSprite(&info, i2);
+         if (vdp2_interlace)
+            LoadLineParamsSprite(&info, i2 / 2);
+         else
+            LoadLineParamsSprite(&info, i2);
+
+         if (vdp2_interlace)
+         {
+            y = framebuffer_readout_y;
+            framebuffer_readout_y += 1;
+         }
+         else
+         {
+            y = i2;
+         }
 
          for (i = 0; i < vdp2width; i++)
          {
@@ -3225,8 +3337,6 @@ void VIDSoftVdp2DrawEnd(void)
                }
                else
                   x = i;
-
-               y = i2;
             }
 
             if (vdp1pixelsize == 2)
@@ -3594,28 +3704,29 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
    switch ((TVMD >> 4) & 0x3)
    {
       case 0:
-         vdp2height = 224;
+         rbg0height = vdp2height = 224;
          break;
       case 1:
-         vdp2height = 240;
+         rbg0height = vdp2height = 240;
          break;
       case 2:
-         vdp2height = 256;
+         rbg0height = vdp2height = 256;
          break;
       default: break;
    }
-   resyratio=1;
 
    // Check for interlace
    switch ((TVMD >> 6) & 0x3)
    {
       case 3: // Double-density Interlace
-//         vdp2height *= 2;
-         resyratio=2;
+         vdp2height *= 2;
+         vdp2_interlace=1;
          break;
       case 2: // Single-density Interlace
       case 0: // Non-interlace
-      default: break;
+      default: 
+         vdp2_interlace = 0;
+         break;
    }
 
    TitanSetResolution(vdp2width, vdp2height);

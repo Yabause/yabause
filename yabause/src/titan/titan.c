@@ -19,6 +19,7 @@
 
 #include "titan.h"
 #include "../vidshared.h"
+#include "../vidsoft.h"
 
 #include <stdlib.h>
 
@@ -365,16 +366,19 @@ void TitanRender(pixel_t * dispbuffer)
 {
    u32 dot;
    int x, y;
+   int start_line, line_increment;
 
    if (!tt_context.inited || (!tt_context.trans))
    {
       return;
    }
+
+   Vdp2GetInterlaceInfo(&start_line, &line_increment);
    
 #ifdef WANT_VIDSOFT_RENDER_THREADING
 #pragma omp parallel for private(x,y,dot)
 #endif
-   for (y = 0; y < tt_context.vdp2height; y++)
+   for (y = start_line; y < tt_context.vdp2height; y += line_increment)
    {
       for (x = 0; x < tt_context.vdp2width; x++)
       {

@@ -46,6 +46,7 @@ static int autoframeskipenab=0;
 static int throttlespeed=0;
 u64 lastticks=0;
 static int fps;
+int vdp2_is_odd_frame = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -336,7 +337,12 @@ void Vdp2VBlankOUT(void) {
    static u64 onesecondticks = 0;
    static VideoInterface_struct * saved = NULL;
 
-   Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
+   if (vdp2_is_odd_frame)
+      vdp2_is_odd_frame = 0;
+   else
+      vdp2_is_odd_frame = 1;
+
+   Vdp2Regs->TVSTAT = ((Vdp2Regs->TVSTAT & ~0x0008) & ~0x0002) | (vdp2_is_odd_frame << 1);
 
    if (skipnextframe && (! saved))
    {
