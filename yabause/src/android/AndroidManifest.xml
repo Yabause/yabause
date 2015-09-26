@@ -19,17 +19,17 @@
                 <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
             </intent-filter>
         </activity>
-
+ 
         <activity android:name="GameList"
                   android:screenOrientation="landscape" />
 <!-- 
                   android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+                  android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen"
         -->
         
         <activity android:name="Yabause"
                   android:configChanges="orientation|keyboardHidden"
                   android:screenOrientation="landscape"
-                  android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen"
                   android:label="@string/app_name">
        		<intent-filter>
                	<action android:name="android.intent.action.MAIN" />

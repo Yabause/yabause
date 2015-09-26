@@ -546,16 +546,29 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glGenTextures(1, &_Ygl->smallfbotex);
     YGLDEBUG("glGenTextures %d\n",_Ygl->smallfbotex );
     glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
+
+	glGetError();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X %d %d", __LINE__, error, _Ygl->rwidth, _Ygl->rheight);
+		abort();
+	}
     YGLDEBUG("glTexImage2D %d\n",_Ygl->smallfbotex );
 
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->smallfbotex, 0);
 
     glGenBuffers(1, &_Ygl->vdp1pixelBufferID);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X", __LINE__, error);
+		abort();
+	}
      YGLDEBUG("glGenBuffers %d\n",_Ygl->vdp1pixelBufferID);
      if( _Ygl->vdp1pixelBufferID == 0 ){
         YGLDEBUG("Fail to glGenBuffers %X",glGetError());
+		abort();
      }
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_DYNAMIC_READ);
@@ -646,132 +659,135 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
 }
 
+static int rebuild_frame_buffer = 0;
+
+int YglGenFrameBuffer() {
+
+	int status;
+	YglMatrix pers;
+	GLuint error;
+
+	if (rebuild_frame_buffer == 0){
+		return 0;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glFinish();
+	glGetError();
+
+	if (_Ygl->vdp1FrameBuff[0] == 0) {
+		glGenTextures(2, _Ygl->vdp1FrameBuff);
+	}
+	glGetError();
+	glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail to YglGLInit at %d %04X %d %d", __LINE__, error, GlWidth, GlHeight);
+		abort();
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GlWidth, GlHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail to YglGLInit at %d %04X %d %d", __LINE__, error, GlWidth, GlHeight);
+		abort();
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GlWidth, GlHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__, error);
+		abort();
+	}
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
+	_Ygl->pFrameBuffer = NULL;
+
+	if (strstr(glGetString(GL_EXTENSIONS), "packed_depth_stencil") != NULL)
+	{
+		if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
+		glGenRenderbuffers(1, &_Ygl->rboid_depth);
+		glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, GlWidth, GlHeight);
+		_Ygl->rboid_stencil = _Ygl->rboid_depth;
+		if ((error = glGetError()) != GL_NO_ERROR)
+		{
+			YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__, error);
+			abort();
+		}
+
+
+	}
+	else{
+		if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
+		glGenRenderbuffers(1, &_Ygl->rboid_depth);
+		glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, GlWidth, GlHeight);
+
+		if (_Ygl->rboid_stencil != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_stencil);
+		glGenRenderbuffers(1, &_Ygl->rboid_stencil);
+		glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_stencil);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, GlWidth, GlHeight);
+		if ((error = glGetError()) != GL_NO_ERROR)
+		{
+			YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__, error);
+			abort();
+		}
+
+	}
+
+	if (_Ygl->vdp1fbo != 0)
+		glDeleteFramebuffers(1, &_Ygl->vdp1fbo);
+
+	glGenFramebuffers(1, &_Ygl->vdp1fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0], 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		YGLDEBUG("YglGLInit:Framebuffer status = %08X\n", status);
+		abort();
+	}
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1], 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		YGLDEBUG("YglGLInit:Framebuffer status = %08X\n", status);
+		abort();
+	}
+
+	YGLDEBUG("YglGLInit OK");
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+	rebuild_frame_buffer = 0;
+	return 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
 int YglGLInit(int width, int height) {
-   int status;
-   YglMatrix pers;
-   GLuint error;
-
-   glEnable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-   glDisable(GL_DEPTH_TEST);
-   glDepthFunc(GL_GEQUAL);
-   glClearDepthf(0.0f);
-   
-   glCullFace(GL_FRONT_AND_BACK);
-   glDisable(GL_CULL_FACE);
-   glDisable(GL_DITHER);
-	
-   glGetError();
-
-   glPixelStorei(GL_PACK_ALIGNMENT, 1);
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
    YGLDEBUG("YglGLInit(%d,%d)\n",GlWidth,GlHeight );
-   
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-   glFinish();
-   
-   if( _Ygl->vdp1FrameBuff[0] == 0 ) {
-	   glGenTextures(2,_Ygl->vdp1FrameBuff);
-   }
-   glBindTexture(GL_TEXTURE_2D,_Ygl->vdp1FrameBuff[0]);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GlWidth, GlHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,NULL);
-   if( (error = glGetError()) != GL_NO_ERROR )
-   {
-      YGLDEBUG("Fail to YglGLInit at %d %04X %d %d", __LINE__,error,GlWidth,GlHeight);
-      abort();
-   }   
-   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-   
-   glBindTexture(GL_TEXTURE_2D,_Ygl->vdp1FrameBuff[1]);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GlWidth, GlHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,NULL);
-   if( (error = glGetError()) != GL_NO_ERROR )
-   {
-      YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__,error);
-      abort();
-   }
-   
-   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-
-   _Ygl->pFrameBuffer = NULL;
-
-   if( strstr(glGetString(GL_EXTENSIONS),"packed_depth_stencil") != NULL )
-   {
-      if( _Ygl->rboid_depth != 0 ) glDeleteRenderbuffers(1,&_Ygl->rboid_depth);
-      glGenRenderbuffers(1, &_Ygl->rboid_depth);
-      glBindRenderbuffer(GL_RENDERBUFFER,_Ygl->rboid_depth);
-      glRenderbufferStorage(GL_RENDERBUFFER,  GL_DEPTH24_STENCIL8, GlWidth, GlHeight);
-      _Ygl->rboid_stencil = _Ygl->rboid_depth;
-	   if( (error = glGetError()) != GL_NO_ERROR )
-	   {
-		  YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__,error);
-		  abort();
-	   }
-	  
-
-   }else{
-      if( _Ygl->rboid_depth != 0 ) glDeleteRenderbuffers(1,&_Ygl->rboid_depth);
-      glGenRenderbuffers(1, &_Ygl->rboid_depth);
-      glBindRenderbuffer(GL_RENDERBUFFER,_Ygl->rboid_depth);
-      glRenderbufferStorage(GL_RENDERBUFFER,  GL_DEPTH_COMPONENT16, GlWidth, GlHeight);
-
-      if( _Ygl->rboid_stencil != 0 ) glDeleteRenderbuffers(1,&_Ygl->rboid_stencil);
-      glGenRenderbuffers(1, &_Ygl->rboid_stencil);
-      glBindRenderbuffer(GL_RENDERBUFFER,_Ygl->rboid_stencil);
-      glRenderbufferStorage(GL_RENDERBUFFER,  GL_STENCIL_INDEX8, GlWidth, GlHeight);
-	   if( (error = glGetError()) != GL_NO_ERROR )
-	   {
-		  YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__,error);
-		  abort();
-	   }
-  
-   }
-
-   if (_Ygl->vdp1fbo != 0)
-		glDeleteFramebuffers(1,&_Ygl->vdp1fbo);
-
-	glGenFramebuffers(1, &_Ygl->vdp1fbo);
-   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0], 0);
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
-   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-   if( status != GL_FRAMEBUFFER_COMPLETE )
-   {
-      YGLDEBUG("YglGLInit:Framebuffer status = %08X\n", status );
-	  abort();
-   }
-   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1], 0);
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
-   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-   if( status != GL_FRAMEBUFFER_COMPLETE )
-   {
-      YGLDEBUG("YglGLInit:Framebuffer status = %08X\n", status );
-	  abort();
-   }
-   
-   
-   YGLDEBUG("YglGLInit OK");
-   
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-   glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+   rebuild_frame_buffer = 1;
 
    return 0;
 }
@@ -859,6 +875,22 @@ int YglInit(int width, int height, unsigned int depth) {
 
    YglLoadIdentity(&_Ygl->mtxTexture);
    YglOrtho(&_Ygl->mtxTexture, -width, width, -height, height, 1.0f, 0.0f);
+
+   glEnable(GL_BLEND);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+   glDisable(GL_DEPTH_TEST);
+   glDepthFunc(GL_GEQUAL);
+   glClearDepthf(0.0f);
+
+   glCullFace(GL_FRONT_AND_BACK);
+   glDisable(GL_CULL_FACE);
+   glDisable(GL_DITHER);
+
+   glGetError();
+
+   glPixelStorei(GL_PACK_ALIGNMENT, 1);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
    
    if( _Ygl->pixelBufferID == 0 )
@@ -1859,6 +1891,7 @@ void YglRenderVDP1(void) {
 
    cprg = -1;
 
+   YglGenFrameBuffer();
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
@@ -2093,6 +2126,8 @@ void YglRenderFrameBuffer( int from , int to ) {
    float offsetcol[4];
    int i;
    int bwin0,bwin1,logwin0,logwin1,winmode;
+
+   YglGenFrameBuffer();
 
    // Out of range, do nothing
    if( _Ygl->vdp1_maxpri < from ) return;

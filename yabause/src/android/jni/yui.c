@@ -1,4 +1,5 @@
 /*  Copyright 2011 Guillaume Duhamel
+    Copyright 2015 devMiyax
 
     This file is part of Yabause.
 
@@ -706,8 +707,28 @@ int YuiRevokeOGLOnThisThread(){
 #if defined(YAB_ASYNC_RENDERING)
     if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
         YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
-        return -1;
-    }
+        
+        // retry three times
+        usleep(10000);
+         if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+			 YUI_LOG("eglMakeCurrent() returned error %X 2", eglGetError());
+             usleep(10000);
+             if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+				 YUI_LOG("eglMakeCurrent() returned error %X 3", eglGetError());
+                 usleep(10000);
+                 if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+					 YUI_LOG("eglMakeCurrent() returned error %X 4", eglGetError());
+						usleep(10000);
+						if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+							YUI_LOG("eglMakeCurrent() returned error %X 5", eglGetError());
+							return -1;
+						}
+
+                 }
+             }
+             
+         }
+    }	
 #endif
     return 0;
 }
@@ -995,7 +1016,6 @@ int switchWindow( ANativeWindow* window ){
 		YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
 	}
 
-
    for (i = 0; VIDCoreList[i] != NULL; i++)
    {
 	  if (VIDCoreList[i]->id == s_vidcoretype)
@@ -1005,9 +1025,11 @@ int switchWindow( ANativeWindow* window ){
 		 break;
 	  }
    }
-    eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
     g_Surface = surface;
+    eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     VdpResume();
+	YuiRevokeOGLOnThisThread();
     return 0;
 }
 
