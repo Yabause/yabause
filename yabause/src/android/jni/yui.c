@@ -1056,14 +1056,13 @@ destroy() {
 void
 Java_org_uoyabause_android_YabauseRunnable_deinit( JNIEnv* env )
 {
-    //YabauseDeInit();
     g_msg = MSG_RENDER_LOOP_EXIT;
+	pthread_join(_threadId,NULL);
 }
 
 void
 Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 {
- //   YabauseExec();
 }
 
 void
@@ -1434,6 +1433,7 @@ FINISH:
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     VdpResume(); 
     YUI_LOG("write screenshot as  %s\n", filename);
+	YuiRevokeOGLOnThisThread();
     
     return rtn;
 }
