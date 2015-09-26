@@ -934,9 +934,21 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 			   else if (SPCCCS == 0x03 && (dot&0x8000) ){
 				   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 				   talpha |= priority;
-				   *texture->textdata++ = SAT2YAB1(talpha, dot);
+				   if (dot & 0x8000){
+					   *texture->textdata++ = SAT2YAB1(talpha, dot);
+				   }
+				   else{
+					   *texture->textdata++ = Vdp2ColorRamGetColor(dot, talpha);
+				   }
 			   }
-			   else *texture->textdata++ = SAT2YAB1(alpha, dot);
+			   else{
+				   if (dot & 0x8000){
+					   *texture->textdata++ = SAT2YAB1(alpha, dot);
+				   }
+				   else{
+					   *texture->textdata++ = Vdp2ColorRamGetColor(dot, alpha); 
+				   }
+			   }
             }
             texture->textdata += texture->w;
          }
