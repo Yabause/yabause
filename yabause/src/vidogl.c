@@ -3799,8 +3799,8 @@ void VIDOGLVdp1PolygonDraw(void)
    sprite.cob = 0x00;
 
 
-   
-   if (color == 0 || color == 0x8000 )
+                     // VDP2 Pallet Only
+   if (color == 0 || ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20)==0x00) )
    {
 	  YglQuad(&sprite, &texture, NULL);
       alpha = 0;   
