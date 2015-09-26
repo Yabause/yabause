@@ -191,9 +191,9 @@ public class Yabause extends Activity implements OnPadListener
         yabauseThread = new YabauseRunnable(this);
 
         padm = PadManager.getPadManager();
-        
-        waiting_reault = false;
-/*        
+         
+        waiting_reault = false;   
+ 
         getActionBar().addOnMenuVisibilityListener(new OnMenuVisibilityListener() {
             @Override
                 public void onMenuVisibilityChanged(boolean isVisible) {
@@ -209,7 +209,7 @@ public class Yabause extends Activity implements OnPadListener
 
                 }
             });            
-*/
+
     }
     
 
@@ -284,8 +284,8 @@ public class Yabause extends Activity implements OnPadListener
     }
     @Override
     public boolean onPrepareOptionsMenu (Menu menu){
-		YabauseRunnable.pause();
-		audio.mute(audio.SYSTEM);
+		//YabauseRunnable.pause();
+		//audio.mute(audio.SYSTEM);
     	return super.onPrepareOptionsMenu(menu);
     }
     
