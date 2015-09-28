@@ -553,7 +553,7 @@ void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *netlinksetting) {
+int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *modemip, const char *modemport) {
    int ret;
 
    if ((Cs2Area = (Cs2 *) malloc(sizeof(Cs2))) == NULL)
@@ -572,12 +572,12 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
    // If Modem is connected, set the registers
    if(Cs2Area->carttype == CART_NETLINK)
    {
-      if ((ret = NetlinkInit(netlinksetting)) != 0)
+      if ((ret = NetlinkInit(modemip, modemport)) != 0)
          return ret;
    }
    else if (Cs2Area->carttype == CART_JAPMODEM)
    {
-      if ((ret = JapModemInit(netlinksetting)) != 0)
+      if ((ret = JapModemInit(modemip, modemport)) != 0)
          return ret;
    }
 
@@ -1581,7 +1581,7 @@ void Cs2SeekDisc(void) {
      if (Cs2Area->reg.CR2 >> 8)
      {
         // Seek by index
-		 Cs2Area->status = CDB_STAT_PAUSE;
+        Cs2Area->status = CDB_STAT_PAUSE;
         Cs2SetupDefaultPlayStats((Cs2Area->reg.CR2 >> 8), 1);
         Cs2Area->index = Cs2Area->reg.CR2 & 0xFF;
      }

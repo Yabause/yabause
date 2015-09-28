@@ -41,6 +41,9 @@ UIControllerSetting::UIControllerSetting( PerInterface_struct* core, uint port, 
 	mTimer = new QTimer( this );
 	mTimer->setInterval( 25 );
 	curTb = NULL;
+	mPadKey = 0;
+	mlInfos = NULL;
+	scanFlags = PERSF_ALL;
 	QtYabause::retranslateWidget( this );
 }
 

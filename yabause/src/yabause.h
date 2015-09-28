@@ -39,7 +39,8 @@ typedef struct
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
-   const char *netlinksetting;
+   const char *modemip;
+	const char *modemport;
    int videoformattype;
    int frameskip;
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
