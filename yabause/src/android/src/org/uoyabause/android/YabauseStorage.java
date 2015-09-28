@@ -6,6 +6,8 @@ import android.app.Activity;
 import android.content.Context;
 
 import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import android.os.Environment;
 import android.util.Log;
@@ -49,6 +51,7 @@ public class YabauseStorage {
     private File memory;
     private File cartridge;
     private File state;
+    private File screenshots;
 
     private YabauseStorage() {
         File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
@@ -68,6 +71,9 @@ public class YabauseStorage {
         
         state = new File(yabroot, "state");
         if (! state.exists()) state.mkdir();
+        
+        screenshots = new File(yabroot, "screenshots");
+        if (! screenshots.exists()) screenshots.mkdir();        
     }
 
     static public YabauseStorage getStorage() {
@@ -89,6 +95,14 @@ public class YabauseStorage {
 
     public String[] getGameFiles( String other_dir_string ) {
         String[] gamefiles = games.list(new GameFilter());
+        
+        Arrays.sort(gamefiles, new Comparator<String>() {
+        	  @Override
+        	    public int compare(String obj0, String obj1) {
+        	        return obj0.compareTo(obj1);
+        	    }
+        	});
+        
         String[] selfiles  = new String[]{other_dir_string}; 
         String[] allLists = new String[selfiles.length + gamefiles.length];
         System.arraycopy(selfiles, 0, allLists, 0, selfiles.length);
@@ -119,5 +133,9 @@ public class YabauseStorage {
     
     public String getStateSavePath() {
         return state + File.separator;
-    }    
+    }   
+    
+    public String getScreenshotPath() {
+        return screenshots + File.separator;
+    }        
 }

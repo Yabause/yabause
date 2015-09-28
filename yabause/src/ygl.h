@@ -188,6 +188,7 @@ typedef struct {
    int rwidth;
    int rheight;
    int drawframe;
+   int readframe;
    GLuint rboid_depth;
    GLuint rboid_stencil;
    GLuint vdp1fbo;
