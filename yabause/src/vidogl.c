@@ -3651,6 +3651,7 @@ void VIDOGLVdp1PolygonDraw(void)
    short CMDYB;
    short CMDYC;
    short CMDYD;
+   int isSquare;
 
    vdp1cmd_struct cmd;
 
@@ -3681,7 +3682,7 @@ void VIDOGLVdp1PolygonDraw(void)
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
-   int isSquare = 1;
+   isSquare = 1;
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
 	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
@@ -3694,13 +3695,13 @@ void VIDOGLVdp1PolygonDraw(void)
 	   }
    }
    if (isSquare){
-
-	   sprite.dst = 0;
-
 	   // find upper left opsition
 	   float minx = 65535.0f;
 	   float miny = 65535.0f;
 	   int lt_index = -1;
+
+	   sprite.dst = 0;
+
 	   for (i = 0; i < 4; i++){
 		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
 			   minx = sprite.vertices[(i << 1) + 0];
@@ -3714,14 +3715,16 @@ void VIDOGLVdp1PolygonDraw(void)
 			   // vectorize
 			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
 			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+			   float nx;
+			   float ny;
 
 			   // normalize
 			   float len = fabsf(sqrtf(dx*dx + dy*dy));
 			   if (len <= EPSILON){
 				   continue;
 			   }
-			   float nx = dx / len;
-			   float ny = dy / len;
+			   nx = dx / len;
+			   ny = dy / len;
 			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
 			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
@@ -3801,7 +3804,7 @@ void VIDOGLVdp1PolygonDraw(void)
    
    if (color == 0 || color == 0x8000 )
    {
-	  YglQuad(&sprite, &texture, NULL, NULL);
+	  YglQuad(&sprite, &texture, NULL);
       alpha = 0;   
       priority = 0;
 	  *texture.textdata = 0;
