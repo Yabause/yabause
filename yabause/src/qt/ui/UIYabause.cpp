@@ -110,6 +110,7 @@ UIYabause::UIYabause( QWidget* parent )
 	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
 	mLogDock->setVisible( false );
 	mCanLog = true;
+	oldMouseX = oldMouseY = 0;
 
 #ifndef SH2_TRACE
 	aTraceLogging->setVisible(false);

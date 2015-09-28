@@ -39,13 +39,14 @@ extern OSD_struct* OSDCoreList[];
 
 struct Item
 {
-	Item( const QString& i, const QString& n, bool e=true, bool s=true)
-	{ id = i; Name = n; enableFlag = e; saveFlag = s; }
+	Item( const QString& i, const QString& n, bool e=true, bool s=true, bool z=false)
+	{ id = i; Name = n; enableFlag = e; saveFlag = s; ipFlag = z; }
 	
 	QString id;
 	QString Name;
 	bool enableFlag;
 	bool saveFlag;
+	bool ipFlag;
 };
 
 typedef QList<Item> Items;
@@ -70,9 +71,9 @@ const Items mCartridgeTypes = Items()
 	<< Item( "5", "32 Mbit Backup Ram", true, true )
 	<< Item( "6", "8 Mbit Dram", false, false )
 	<< Item( "7", "32 Mbit Dram", false, false )
-	<< Item( "8", "Netlink", false, false )
+	<< Item( "8", "Netlink", false, false, true )
 	<< Item( "9", "16 Mbit ROM", true, false )
-	<< Item( "10", "Japanese Modem", false, false );
+	<< Item( "10", "Japanese Modem", false, false, true );
 
 const Items mVideoFormats = Items()
 	<< Item( "0", "NTSC" )
@@ -89,6 +90,10 @@ UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList
 	
 	leWinWidth->setValidator(new QIntValidator(0, maxWinRect.width(), leWinWidth));
 	leWinHeight->setValidator(new QIntValidator(0, maxWinRect.height(), leWinHeight));
+	
+	QString ipNum("(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])");
+	leCartridgeModemIP->setValidator(new QRegExpValidator(QRegExp("^" + ipNum + "\\." + ipNum + "\\." + ipNum + "\\." + ipNum + "$"), leCartridgeModemIP));
+	leCartridgeModemPort->setValidator(new QIntValidator(1, 65535, leCartridgeModemPort));
 
 	pmPort1->setPort( 1 );
 	pmPort1->loadSettings();
@@ -177,8 +182,8 @@ QStringList getCdDriveList()
 				list.append(drive_path);
 			}
 		}
+		fclose(f);
 	}
-	fclose(f);
 #elif defined Q_OS_MAC
 #endif
 	return list;
@@ -272,6 +277,10 @@ void UISettings::on_cbCartridge_currentIndexChanged( int id )
 {
 	leCartridge->setVisible(mCartridgeTypes[id].enableFlag);
 	tbCartridge->setVisible(mCartridgeTypes[id].enableFlag);
+	lCartridgeModemIP->setVisible(mCartridgeTypes[id].ipFlag);
+	leCartridgeModemIP->setVisible(mCartridgeTypes[id].ipFlag);
+	lCartridgeModemPort->setVisible(mCartridgeTypes[id].ipFlag);
+	leCartridgeModemPort->setVisible(mCartridgeTypes[id].ipFlag);
 }
 
 void UISettings::loadCores()
@@ -448,6 +457,8 @@ void UISettings::loadSettings()
 	// cartridge/memory
 	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
 	leCartridge->setText( s->value( "Cartridge/Path" ).toString() );
+	leCartridgeModemIP->setText( s->value( "Cartridge/ModemIP", QString("127.0.0.1") ).toString() );
+	leCartridgeModemPort->setText( s->value( "Cartridge/ModemPort", QString("1337") ).toString() );
 	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
 	
