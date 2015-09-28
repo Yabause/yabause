@@ -40,6 +40,7 @@
 #endif
 
 #include "yui.h"
+#include "threads.h"
 
 #include <stdlib.h>
 #include <limits.h>
