@@ -1981,7 +1981,7 @@ void YglRenderVDP1(void) {
 	   _Ygl->drawframe = _Ygl->readframe;
 	   _Ygl->readframe = current_drawframe;
 	   Vdp1External.manualchange = 0;
-	   YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+	   YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
    }
 
    // glFlush(); need??
@@ -2358,7 +2358,7 @@ void YglRender(void) {
 	   _Ygl->drawframe = _Ygl->readframe;
 	   _Ygl->readframe = current_drawframe;
 	   Vdp1External.manualchange = 0;
-	   YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+	   YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 	   YabThreadUnLock(_Ygl->mutex);
    }
 #endif
