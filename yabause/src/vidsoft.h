@@ -34,4 +34,6 @@ void VIDSoftSetBilinear(int b);
 
 void Vdp2GetInterlaceInfo(int * start_line, int * line_increment);
 
+void VIDSoftSetNumLayerThreads(int num);
+
 #endif
