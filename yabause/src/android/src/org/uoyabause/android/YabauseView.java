@@ -28,6 +28,8 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -46,19 +48,23 @@ class YabauseView extends SurfaceView implements Callback {
     public int[] pointerX = new int[256];
     public int[] pointerY = new int[256];
 
+    Context _context;
     
     public YabauseView(Context context, AttributeSet attrs) {
         super(context,attrs);
+        _context = context;
         init(false, 0, 0);
     }
 
     public YabauseView(Context context) {
         super(context);
+        _context = context;
         init(false, 0, 0);
     }
 
     public YabauseView(Context context, boolean translucent, int depth, int stencil) {
         super(context);
+        _context = context;
         init(translucent, depth, stencil);
     }
 
@@ -86,18 +92,26 @@ class YabauseView extends SurfaceView implements Callback {
     }
 
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int specw = MeasureSpec.getSize(widthMeasureSpec);
-        int spech = MeasureSpec.getSize(heightMeasureSpec);
-        float specratio = (float) specw / spech;
-        int saturnw = 320;
-        int saturnh = 224;
-        float saturnratio = (float) saturnw / saturnh;
-        float revratio = (float) saturnh / saturnw;
+    	
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(_context);
+        boolean keep_aspectrate = sharedPref.getBoolean("pref_keepaspectrate", false);
 
-        if (specratio > saturnratio) {
-            setMeasuredDimension((int) (spech * saturnratio), spech);
-        } else {
-            setMeasuredDimension(specw, (int) (specw * revratio));
+        if( keep_aspectrate ) {
+	        int specw = MeasureSpec.getSize(widthMeasureSpec);
+	        int spech = MeasureSpec.getSize(heightMeasureSpec);
+	        float specratio = (float) specw / spech;
+	        int saturnw = 320;
+	        int saturnh = 224;
+	        float saturnratio = (float) saturnw / saturnh;
+	        float revratio = (float) saturnh / saturnw;
+	
+	        if (specratio > saturnratio) {
+	            setMeasuredDimension((int) (spech * saturnratio), spech);
+	        } else {
+	            setMeasuredDimension(specw, (int) (specw * revratio));
+	        }
+        }else{
+        	super.onMeasure(widthMeasureSpec,heightMeasureSpec);
         }
     }
 }

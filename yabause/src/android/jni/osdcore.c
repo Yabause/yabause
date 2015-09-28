@@ -45,7 +45,7 @@
 static int OSDNanovgInit(void);
 static void OSDNanovgDeInit(void);
 static void OSDNanovgReset(void);
-static void OSDNanovgDisplayMessage(OSDMessage_struct * message);
+static void OSDNanovgDisplayMessage(OSDMessage_struct * message,pixel_t * buffer, int w, int h);
 
 OSD_struct OSDNnovg = {
     OSDCORE_NANOVG,
@@ -87,7 +87,7 @@ void OSDNanovgReset(void)
 {
 }
 
-void OSDNanovgDisplayMessage(OSDMessage_struct * message)
+void OSDNanovgDisplayMessage(OSDMessage_struct * message,pixel_t * buffer, int w, int h)
 {
    int LeftX=9;
    int Width=500;
