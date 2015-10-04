@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   Yabause - sh2_dynarec.c                                               *
  *   Copyright (C) 2009-2011 Ari64                                         *
  *                                                                         *
@@ -140,6 +140,7 @@ struct ll_entry
   extern int slave_pc; // Virtual PC
   extern void * slave_ip; // Translated PC
   extern u8 restore_candidate[512];
+  extern u8 * Vdp1Ram;
 
   /* registers that may be allocated */
   /* 0-15 gpr */
@@ -5360,6 +5361,10 @@ int sh2_recompile_block(int addr)
   else if (cached_addr >= 0x00200000 && cached_addr < 0x00300000) {
     source = (u16 *)((char *)LowWram+(start & 0xFFFFF));
     pagelimit = (addr|0xFFFFF) + 1;
+  }
+  else if (cached_addr >= 0x05c00000 && cached_addr < 0x05cc0000) {
+    source = (u16 *)((char *)Vdp1Ram+(start & 0x07FFFF));
+    pagelimit = (addr|0x07FFFF) + 1;
   }
   else if (cached_addr >= 0x06000000 && cached_addr < 0x08000000) {
     source = (u16 *)((char *)HighWram+(start & 0xFFFFF));
