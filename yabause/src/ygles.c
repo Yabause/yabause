@@ -32,6 +32,7 @@
 //#define YGLDEBUG yprintf
 
 static int YglCalcTextureQ( float   *pnts,float *q);
+static void YglRenderDestinationAlpha(void);;
 
 #define PI 3.1415926535897932384626433832795f
 
@@ -1017,7 +1018,6 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    level = &_Ygl->levels[input->priority];
 
    level->blendmode |= (input->blendmode&0x03);
-
    if( input->uclipmode != level->uclipcurrent )
    {
       if( input->uclipmode == 0x02 || input->uclipmode == 0x03 )
@@ -1058,6 +1058,10 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    } else if( level->prg[level->prgcurrent].prgid != prg ) {
       YglProgramChange(level,prg);
    }
+   else if (level->prg[level->prgcurrent].blendmode != input->blendmode){
+	   YglProgramChange(level, prg);
+	   level->prg[level->prgcurrent].blendmode = input->blendmode;
+  }
 // for polygon debug
 //   else if (prg == PG_VFP1_GOURAUDSAHDING ){
 //	   YglProgramChange(level, prg);
@@ -2261,7 +2265,6 @@ void YglSetClearColor(float r, float g, float b){
 	_Ygl->clear_b = b;
 }
 
-
 void YglRender(void) {
    YglLevel * level;
    GLuint cprg=0;
@@ -2291,99 +2294,92 @@ void YglRender(void) {
      YglTM->texture = NULL;
    }
    
-#if 0 // Test
-   ShaderDrawTest();
-#else
-   glEnable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-   //YglRenderVDP1();
-
-   YglLoadIdentity(&mtx);
-
-   cprg = -1;
-
    YglSetVdp2Window();
 
-   YglTranslatef(&mtx,0.0f,0.0f,-1.0f);
+	// 12.14 CCRTMD                               // MSB perpxel transparent is not suported yet
+   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 && ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03) ){
+		YglRenderDestinationAlpha();
+	}
+	else{
+		glEnable(GL_BLEND);
+		int blendfunc_src = GL_SRC_ALPHA;
+		int blendfunc_dst = GL_ONE_MINUS_SRC_ALPHA;
 
-   for(i = 0;i < _Ygl->depth;i++)
-   {
-      level = _Ygl->levels + i;
+		YglLoadIdentity(&mtx);
+		cprg = -1;
+		YglTranslatef(&mtx, 0.0f, 0.0f, -1.0f);
+		for (i = 0; i < _Ygl->depth; i++)
+		{
+			level = _Ygl->levels + i;
+			if (level->blendmode != 0)
+			{
+				to = i;
 
-         if( level->blendmode != 0 )
-         {
-            to = i;
+				glEnable(GL_BLEND);
+				glBlendFunc(blendfunc_src, blendfunc_dst);
 
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to);
+				from = to;
 
-			if(Vdp1External.disptoggle&0x01) YglRenderFrameBuffer(from, to);
-            from = to;
+				// clean up
+				cprg = -1;
+				glUseProgram(0);
+				glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
 
-            // clean up
-            cprg = -1;
-            glUseProgram(0);
-            glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
-         }
+			}
 
-         glDisable(GL_STENCIL_TEST);
-         for( j=0;j<(level->prgcurrent+1); j++ )
-         {
-            if( level->prg[j].prgid != cprg )
-            {
-               cprg = level->prg[j].prgid;
-               glUseProgram(level->prg[j].prg);
+			glDisable(GL_STENCIL_TEST);
+			for (j = 0; j < (level->prgcurrent + 1); j++)
+			{
+				if (level->prg[j].prgid != cprg)
+				{
+					cprg = level->prg[j].prgid;
+					glUseProgram(level->prg[j].prg);
 
 
-            }
-            if(level->prg[j].setupUniform)
-            {
-               level->prg[j].setupUniform((void*)&level->prg[j]);
-            }
+				}
+				if (level->prg[j].setupUniform)
+				{
+					level->prg[j].setupUniform((void*)&level->prg[j]);
+				}
 
-            YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
-            
-  		    if( level->prg[j].currentQuad != 0 )
-			    {
-#if 0
-            if (level->blendmode == 0){
-              glDisable(GL_BLEND);
-            }
-            else if (level->blendmode == 1){
-              glEnable(GL_BLEND);
-              glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            }
-            else if (level->blendmode == 2){
-              glEnable(GL_BLEND);
-              glBlendFunc(GL_ONE, GL_ONE);
-            }
-#endif
+				YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
+
+				if (level->prg[j].currentQuad != 0)
+				{
+					if (level->prg[j].blendmode == 0){
+						glDisable(GL_BLEND);
+					}
+					else if (level->prg[j].blendmode == 1){
+						glEnable(GL_BLEND);
+						glBlendFunc(blendfunc_src, blendfunc_dst);
+					}
+					else if (level->prg[j].blendmode == 2){
+						glEnable(GL_BLEND);
+						glBlendFunc(GL_ONE, GL_ONE);
+					}
 					glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
-				    glVertexAttribPointer(level->prg[j].vertexp,2,GL_FLOAT, GL_FALSE,0,(GLvoid *)level->prg[j].quads );
-				    glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
-				    if( level->prg[j].vaid != 0 ) { glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute); }
-                    glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad/2);
-                    level->prg[j].currentQuad = 0;
-			    }
+					glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
+					glVertexAttribPointer(level->prg[j].texcoordp, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].textcoords);
+					if (level->prg[j].vaid != 0) { glVertexAttribPointer(level->prg[j].vaid, 4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute); }
+					glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
+					level->prg[j].currentQuad = 0;
+				}
 
-          if( level->prg[j].cleanupUniform )
-          {
-               level->prg[j].cleanupUniform((void*)&level->prg[j]);
-          }
+				if (level->prg[j].cleanupUniform)
+				{
+					level->prg[j].cleanupUniform((void*)&level->prg[j]);
+				}
 
-         }
-         level->prgcurrent = 0;
+			}
+			level->prgcurrent = 0;
+			YglTranslatef(&mtx, 0.0f, 0.0f, 0.1f);
+		}
+		glEnable(GL_BLEND);
+		glBlendFunc(blendfunc_src, blendfunc_dst);
+		if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+	}
 
-         YglTranslatef(&mtx,0.0f,0.0f,0.1f);
-
-   }
-
-   glEnable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
-
-#endif
    glDisable(GL_TEXTURE_2D);
    glUseProgram(0);
    glGetError();
@@ -2394,27 +2390,129 @@ void YglRender(void) {
    glDisableVertexAttribArray(2);
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_SCISSOR_TEST);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    YuiSwapBuffers();
+
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
    YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
    if (YglTM->texture == NULL){
 	   abort();
    }
-#if 0
-   if ( ((Vdp1Regs->FBCR & 2) == 0) )
-   {
-	   YabThreadLock(_Ygl->mutex);
-	   u32 current_drawframe = 0;
-	   current_drawframe = _Ygl->drawframe;
-	   _Ygl->drawframe = _Ygl->readframe;
-	   _Ygl->readframe = current_drawframe;
-	   Vdp1External.manualchange = 0;
-	   YGLDEBUG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
-	   YabThreadUnLock(_Ygl->mutex);
-   }
-#endif
    return;
 }
+
+
+void YglRenderDestinationAlpha(void) {
+	YglLevel * level;
+	GLuint cprg = 0;
+	int from = 0;
+	int to = 0;
+	YglMatrix mtx;
+	YglMatrix dmtx;
+	unsigned int i, j;
+	int highpri = 8;
+
+	glEnable(GL_BLEND);
+
+	YglLoadIdentity(&mtx);
+
+	cprg = -1;
+
+	int blendfunc_src = GL_DST_ALPHA;
+	int blendfunc_dst = GL_ONE_MINUS_DST_ALPHA;
+
+	// Find out top prooriy
+	// ToDo: this operation need to be per pixel!
+	for (i = 0; i < _Ygl->depth; i++)
+	{
+		level = _Ygl->levels + i;
+		if (level->prgcurrent != 0){
+			highpri = i;
+		}
+	}
+
+	YglTranslatef(&mtx, 0.0f, 0.0f, -1.0f);
+	for (i = 0; i < _Ygl->depth; i++)
+	{
+		level = _Ygl->levels + i;
+		if (level->blendmode != 0)
+		{
+			to = i;
+
+			if (highpri == i){
+				glEnable(GL_BLEND);
+				glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+			}else{
+				glDisable(GL_BLEND);
+			}
+			if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to);
+			from = to;
+
+			// clean up
+			cprg = -1;
+			glUseProgram(0);
+			glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+		}
+		glDisable(GL_STENCIL_TEST);
+		for (j = 0; j<(level->prgcurrent + 1); j++)
+		{
+			if (level->prg[j].prgid != cprg)
+			{
+				cprg = level->prg[j].prgid;
+				glUseProgram(level->prg[j].prg);
+			}
+
+			if (level->prg[j].setupUniform)
+			{
+				level->prg[j].setupUniform((void*)&level->prg[j]);
+			}
+
+			YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
+
+			if (level->prg[j].currentQuad != 0)
+			{
+				if (level->prg[j].blendmode == 0){
+					glDisable(GL_BLEND);
+				}
+				else if (level->prg[j].blendmode == 1){
+					glEnable(GL_BLEND);
+					glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				}
+				else if (level->prg[j].blendmode == 2){
+					glEnable(GL_BLEND);
+					glBlendFunc(GL_ONE, GL_ONE);
+				}
+
+				if (i != highpri){
+					glDisable(GL_BLEND);
+				}
+				glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
+				glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
+				glVertexAttribPointer(level->prg[j].texcoordp, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].textcoords);
+				if (level->prg[j].vaid != 0) { glVertexAttribPointer(level->prg[j].vaid, 4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute); }
+				glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
+				level->prg[j].currentQuad = 0;
+			}
+
+			if (level->prg[j].cleanupUniform)
+			{
+				level->prg[j].cleanupUniform((void*)&level->prg[j]);
+			}
+
+		}
+		level->prgcurrent = 0;
+
+		YglTranslatef(&mtx, 0.0f, 0.0f, 0.1f);
+
+	}
+
+	glEnable(GL_BLEND);
+	glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+	if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+
+	return;
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
