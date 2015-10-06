@@ -172,6 +172,7 @@ int vdp2_x_hires = 0;
 int vdp2_interlace = 0;
 static int rbg0height = 0;
 int bilinear = 0;
+int vidsoft_num_layer_threads = 0;
 
 typedef struct { s16 x; s16 y; } vdp1vertex;
 
@@ -1883,44 +1884,48 @@ struct {
    volatile int draw_finished[6];
 }vidsoft_thread_context;
 
-#ifdef WANT_VIDSOFT_NBG0_THREADING
-
-void VidsoftNbg0Thread(void* data)
-{
-   for (;;)
-   {
-      if (vidsoft_thread_context.need_draw[TITAN_NBG0])
-      {
-         vidsoft_thread_context.need_draw[TITAN_NBG0] = 0;
-         vidsoft_thread_context.draw_finished[TITAN_NBG0] = 0;
-         Vdp2DrawNBG0();
-         vidsoft_thread_context.draw_finished[TITAN_NBG0] = 1;
-      }
-
-      YabThreadSleep();
-   }
+#define DECLARE_THREAD(NAME, LAYER, FUNC) \
+void NAME(void * data) \
+{ \
+   for (;;) \
+      { \
+      if (vidsoft_thread_context.need_draw[LAYER]) \
+      { \
+         vidsoft_thread_context.need_draw[LAYER] = 0; \
+         vidsoft_thread_context.draw_finished[LAYER] = 0; \
+         FUNC(); \
+         vidsoft_thread_context.draw_finished[LAYER] = 1; \
+      } \
+      YabThreadSleep(); \
+   } \
 }
-#endif
 
 #ifdef WANT_VIDSOFT_RBG0_THREADING
-
-void VidsoftRbg0Thread(void * data)
-{
-   for (;;)
-   {
-      if (vidsoft_thread_context.need_draw[TITAN_RBG0])
-      {
-         vidsoft_thread_context.need_draw[TITAN_RBG0] = 0;
-         vidsoft_thread_context.draw_finished[TITAN_RBG0] = 0;
-         Vdp2DrawRBG0();
-         vidsoft_thread_context.draw_finished[TITAN_RBG0] = 1;
-      }
-
-      YabThreadSleep();
-   }
-}
-
+DECLARE_THREAD(VidsoftRbg0Thread, TITAN_RBG0, Vdp2DrawRBG0)
 #endif
+
+#ifdef WANT_VIDSOFT_NBG0_THREADING
+DECLARE_THREAD(VidsoftNbg0Thread, TITAN_NBG0, Vdp2DrawNBG0)
+#endif
+
+#ifdef WANT_VIDSOFT_NBG1_THREADING
+DECLARE_THREAD(VidsoftNbg1Thread, TITAN_NBG1, Vdp2DrawNBG1)
+#endif
+
+#ifdef WANT_VIDSOFT_NBG2_THREADING
+DECLARE_THREAD(VidsoftNbg2Thread, TITAN_NBG2, Vdp2DrawNBG2)
+#endif
+
+#ifdef WANT_VIDSOFT_NBG3_THREADING
+DECLARE_THREAD(VidsoftNbg3Thread, TITAN_NBG3, Vdp2DrawNBG3)
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftSetNumLayerThreads(int num)
+{
+   vidsoft_num_layer_threads = num;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1957,11 +1962,24 @@ int VIDSoftInit(void)
       vidsoft_thread_context.need_draw[i] = 0;
    }
 
-#ifdef WANT_VIDSOFT_NBG0_THREADING
-   YabThreadStart(YAB_THREAD_TITAN_RENDER_0, VidsoftNbg0Thread, 0);
-#endif
 #ifdef WANT_VIDSOFT_RBG0_THREADING
-   YabThreadStart(YAB_THREAD_TITAN_RENDER_1, VidsoftRbg0Thread, 0);
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, VidsoftRbg0Thread, 0);
+#endif
+
+#ifdef WANT_VIDSOFT_NBG0_THREADING
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG0, VidsoftNbg0Thread, 0);
+#endif
+
+#ifdef WANT_VIDSOFT_NBG1_THREADING
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG1, VidsoftNbg1Thread, 0);
+#endif
+
+#ifdef WANT_VIDSOFT_NBG2_THREADING
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG2, VidsoftNbg2Thread, 0);
+#endif
+
+#ifdef WANT_VIDSOFT_NBG3_THREADING
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG3, VidsoftNbg3Thread, 0);
 #endif
 
    return 0;
@@ -3501,6 +3519,18 @@ void VIDSoftVdp2DrawEnd(void)
    while (!vidsoft_thread_context.draw_finished[TITAN_NBG0]){}
 #endif
 
+#ifdef WANT_VIDSOFT_NBG1_THREADING
+   while (!vidsoft_thread_context.draw_finished[TITAN_NBG1]){}
+#endif
+
+#ifdef WANT_VIDSOFT_NBG2_THREADING
+   while (!vidsoft_thread_context.draw_finished[TITAN_NBG2]){}
+#endif
+
+#ifdef WANT_VIDSOFT_NBG3_THREADING
+   while (!vidsoft_thread_context.draw_finished[TITAN_NBG3]){}
+#endif
+
 #ifdef WANT_VIDSOFT_RBG0_THREADING
    while (!vidsoft_thread_context.draw_finished[TITAN_RBG0]){}
 #endif
@@ -3530,6 +3560,7 @@ void VIDSoftVdp2DrawEnd(void)
 void VIDSoftVdp2DrawScreens(void)
 {
    int draw_priority_0[6] = { 0 };
+   int num_threads_dispatched = 0;
 
    VIDSoftVdp2SetResolution(Vdp2Regs->TVMD);
    VIDSoftVdp2SetPriorityNBG0(Vdp2Regs->PRINA & 0x7);
@@ -3594,35 +3625,95 @@ void VIDSoftVdp2DrawScreens(void)
       }
    }
 #else
+
    if (nbg0priority > 0 || draw_priority_0[TITAN_NBG0])
    {
 #ifdef WANT_VIDSOFT_NBG0_THREADING
-      vidsoft_thread_context.need_draw[TITAN_NBG0] = 1;
-      YabThreadWake(YAB_THREAD_TITAN_RENDER_0);
+      if (num_threads_dispatched < vidsoft_num_layer_threads)
+      {
+         vidsoft_thread_context.need_draw[TITAN_NBG0] = 1;
+         YabThreadWake(YAB_THREAD_VIDSOFT_LAYER_NBG0);
+         num_threads_dispatched++;
+      }
+      else
+      {
+         Vdp2DrawNBG0();
+      }
 #else
       Vdp2DrawNBG0();
 #endif
    }
+
    if (rbg0priority > 0 || draw_priority_0[TITAN_RBG0])
    {
 #ifdef WANT_VIDSOFT_RBG0_THREADING
-      vidsoft_thread_context.need_draw[TITAN_RBG0] = 1;
-      YabThreadWake(YAB_THREAD_TITAN_RENDER_1);
+      if (num_threads_dispatched < vidsoft_num_layer_threads)
+      {
+         vidsoft_thread_context.need_draw[TITAN_RBG0] = 1;
+         YabThreadWake(YAB_THREAD_VIDSOFT_LAYER_RBG0);
+         num_threads_dispatched++;
+      }
+      else
+      {
+         Vdp2DrawRBG0();
+      }
 #else
       Vdp2DrawRBG0();
 #endif
    }
+
    if (nbg1priority > 0 || draw_priority_0[TITAN_NBG1])
    {
+#ifdef WANT_VIDSOFT_NBG1_THREADING
+      if (num_threads_dispatched < vidsoft_num_layer_threads)
+      {
+         vidsoft_thread_context.need_draw[TITAN_NBG1] = 1;
+         YabThreadWake(YAB_THREAD_VIDSOFT_LAYER_NBG1);
+         num_threads_dispatched++;
+      }
+      else
+      {
+         Vdp2DrawNBG1();
+      }
+#else
       Vdp2DrawNBG1();
+#endif
    }
-   if (nbg3priority > 0 || draw_priority_0[TITAN_NBG3])
-   {
-      Vdp2DrawNBG3();
-   }
+
    if (nbg2priority > 0 || draw_priority_0[TITAN_NBG2])
    {
+#ifdef WANT_VIDSOFT_NBG2_THREADING
+      if (num_threads_dispatched < vidsoft_num_layer_threads)
+      {
+         vidsoft_thread_context.need_draw[TITAN_NBG2] = 1;
+         YabThreadWake(YAB_THREAD_VIDSOFT_LAYER_NBG2);
+         num_threads_dispatched++;
+      }
+      else
+      {
+         Vdp2DrawNBG2();
+      }
+#else
       Vdp2DrawNBG2();
+#endif
+   }
+
+   if (nbg3priority > 0 || draw_priority_0[TITAN_NBG3])
+   {
+#ifdef WANT_VIDSOFT_NBG3_THREADING
+      if (num_threads_dispatched < vidsoft_num_layer_threads)
+      {
+         vidsoft_thread_context.need_draw[TITAN_NBG3] = 1;
+         YabThreadWake(YAB_THREAD_VIDSOFT_LAYER_NBG3);
+         num_threads_dispatched++;
+      }
+      else
+      {
+         Vdp2DrawNBG3();
+      }
+#else
+      Vdp2DrawNBG3();
+#endif
    }
 #endif
 }
