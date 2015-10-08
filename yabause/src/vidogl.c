@@ -2013,6 +2013,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	tile.w = tile.h = info->patternpixelwh;
 	tile.flip = info->flipfunction;
 
+
 	if (info->specialprimode == 1)
 		tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
 	else
@@ -3519,6 +3520,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
    int isSquare = 1;
+
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
 	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
@@ -3530,6 +3532,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 		   break;
 	   }
    }
+
    if (isSquare){
 	   
 	   sprite.dst = 0;
@@ -3567,6 +3570,23 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 			   sprite.vertices[(i << 1) + 1] += ny;
 		   }
 	   }
+   }
+
+   // Line Polygon
+   if ((sprite.vertices[1] == sprite.vertices[3]) &&
+	   (sprite.vertices[3] == sprite.vertices[5]) &&
+	   (sprite.vertices[5] == sprite.vertices[7])) {
+	   sprite.vertices[5] += 1;
+	   sprite.vertices[7] += 1;
+	   isSquare = 1;
+   }
+   // Line Polygon
+   if ((sprite.vertices[0] == sprite.vertices[2]) &&
+	   (sprite.vertices[2] == sprite.vertices[4]) &&
+	   (sprite.vertices[4] == sprite.vertices[6])) {
+	   sprite.vertices[4] += 1;
+	   sprite.vertices[6] += 1;
+	   isSquare = 1;
    }
 
    sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
@@ -3757,7 +3777,13 @@ void VIDOGLVdp1PolygonDraw(void)
 	   sprite.vertices[5] += 1;
 	   sprite.vertices[7] += 1;
    }
-
+   // Line Polygon
+   if ((sprite.vertices[0] == sprite.vertices[2]) &&
+	   (sprite.vertices[2] == sprite.vertices[4]) &&
+	   (sprite.vertices[4] == sprite.vertices[6])) {
+	   sprite.vertices[4] += 1;
+	   sprite.vertices[6] += 1;
+   }
    sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
    sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
    sprite.vertices[2] = (sprite.vertices[2] + Vdp1Regs->localX) * vdp1wratio;
