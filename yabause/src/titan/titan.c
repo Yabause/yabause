@@ -20,12 +20,16 @@
 #include "titan.h"
 #include "../vidshared.h"
 #include "../vidsoft.h"
+#include "../threads.h"
 
 #include <stdlib.h>
 
 /* private */
 typedef u32 (*TitanBlendFunc)(u32 top, u32 bottom);
 typedef int FASTCALL (*TitanTransFunc)(u32 pixel);
+void TitanRenderLines(pixel_t * dispbuffer, int start_line, int end_line);
+
+int vidsoft_num_priority_threads = 0;
 
 struct PixelData
 {
@@ -53,6 +57,23 @@ static struct TitanContext {
    224,
    NULL,NULL,NULL
 };
+
+#ifdef WANT_VIDSOFT_PRIORITY_THREADING
+
+struct
+{
+   volatile int need_draw[4];
+   volatile int draw_finished[4];
+   struct
+   {
+      volatile int start;
+      volatile int end;
+   }lines[4];
+
+   pixel_t * dispbuffer;
+}priority_thread_context;
+
+#endif
 
 #if defined WORDS_BIGENDIAN
 #ifdef USE_RGB_555
@@ -82,6 +103,30 @@ static INLINE u8 TitanGetRed(u32 pixel) { return (pixel >> 16) & 0xFF; }
 static INLINE u8 TitanGetGreen(u32 pixel) { return (pixel >> 8) & 0xFF; }
 static INLINE u8 TitanGetBlue(u32 pixel) { return pixel & 0xFF; }
 static INLINE u32 TitanCreatePixel(u8 alpha, u8 red, u8 green, u8 blue) { return (alpha << 24) | (red << 16) | (green << 8) | blue; }
+#endif
+
+#ifdef WANT_VIDSOFT_PRIORITY_THREADING
+
+#define DECLARE_PRIORITY_THREAD(FUNC_NAME, THREAD_NUMBER) \
+void FUNC_NAME(void* data) \
+{ \
+   for (;;) \
+   { \
+      if (priority_thread_context.need_draw[THREAD_NUMBER]) \
+      { \
+         priority_thread_context.need_draw[THREAD_NUMBER] = 0; \
+         TitanRenderLines(priority_thread_context.dispbuffer, priority_thread_context.lines[THREAD_NUMBER].start, priority_thread_context.lines[THREAD_NUMBER].end); \
+         priority_thread_context.draw_finished[THREAD_NUMBER] = 1; \
+      } \
+      YabThreadSleep(); \
+   } \
+}
+
+DECLARE_PRIORITY_THREAD(VidsoftPriorityThread0, 0);
+DECLARE_PRIORITY_THREAD(VidsoftPriorityThread1, 1);
+DECLARE_PRIORITY_THREAD(VidsoftPriorityThread2, 2);
+DECLARE_PRIORITY_THREAD(VidsoftPriorityThread3, 3);
+
 #endif
 
 static u32 TitanBlendPixelsTop(u32 top, u32 bottom)
@@ -252,6 +297,20 @@ int TitanInit()
       if ((tt_context.backscreen = (struct PixelData  *)calloc(sizeof(struct PixelData), 704 * 512)) == NULL)
          return -1;
 
+#ifdef WANT_VIDSOFT_PRIORITY_THREADING
+
+      for (i = 0; i < 4; i++)
+      {
+         priority_thread_context.draw_finished[i] = 1;
+         priority_thread_context.need_draw[i] = 0;
+      }
+
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_0, VidsoftPriorityThread0, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_1, VidsoftPriorityThread1, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_2, VidsoftPriorityThread2, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_3, VidsoftPriorityThread3, NULL);
+#endif
+
       tt_context.inited = 1;
    }
 
@@ -362,23 +421,20 @@ void TitanPutHLine(int priority, s32 x, s32 y, s32 width, u32 color)
    }
 }
 
-void TitanRender(pixel_t * dispbuffer)
+void TitanRenderLines(pixel_t * dispbuffer, int start_line, int end_line)
 {
-   u32 dot;
    int x, y;
-   int start_line, line_increment;
+   u32 dot;
+   int line_increment, interlace_line;
 
    if (!tt_context.inited || (!tt_context.trans))
    {
       return;
    }
 
-   Vdp2GetInterlaceInfo(&start_line, &line_increment);
+   Vdp2GetInterlaceInfo(&interlace_line, &line_increment);
    
-#ifdef WANT_VIDSOFT_RENDER_THREADING
-#pragma omp parallel for private(x,y,dot)
-#endif
-   for (y = start_line; y < tt_context.vdp2height; y += line_increment)
+   for (y = start_line + interlace_line; y < end_line; y += line_increment)
    {
       for (x = 0; x < tt_context.vdp2width; x++)
       {
@@ -394,6 +450,90 @@ void TitanRender(pixel_t * dispbuffer)
          }
       }
    }
+}
+
+void VIDSoftSetNumPriorityThreads(int num)
+{
+   vidsoft_num_priority_threads = num;
+}
+
+#ifdef WANT_VIDSOFT_PRIORITY_THREADING
+
+void TitanStartPriorityThread(int which)
+{
+   priority_thread_context.need_draw[which] = 1;
+   priority_thread_context.draw_finished[which] = 0;
+   YabThreadWake(YAB_THREAD_VIDSOFT_PRIORITY_0 + which);
+}
+
+void TitanWaitForPriorityThread(int which)
+{
+   while (!priority_thread_context.draw_finished[which]){}
+}
+
+void TitanRenderThreads(pixel_t * dispbuffer)
+{
+   int i;
+   int total_jobs = vidsoft_num_priority_threads + 1;//main thread runs a job
+   int num_lines_per_job = tt_context.vdp2height / total_jobs;
+   int remainder = tt_context.vdp2height % total_jobs;
+   int starts[5] = { 0 }; 
+   int ends[5] = { 0 };
+
+   priority_thread_context.dispbuffer = dispbuffer;
+
+   for (i = 0; i < total_jobs; i++)
+   {
+      starts[i] = num_lines_per_job * i;
+      ends[i] = ((i + 1) * num_lines_per_job);
+   }
+
+   for (i = 0; i < vidsoft_num_priority_threads; i++)
+   {
+      priority_thread_context.lines[i].start = starts[i+1];
+      priority_thread_context.lines[i].end = ends[i+1];
+   }
+
+   //put any remaining lines on the last thread
+   priority_thread_context.lines[vidsoft_num_priority_threads - 1].end += remainder;
+
+   for (i = 0; i < vidsoft_num_priority_threads; i++)
+   {
+      TitanStartPriorityThread(i);
+   }
+
+   TitanRenderLines(dispbuffer, starts[0], ends[0]);
+
+   for (i = 0; i < vidsoft_num_priority_threads; i++)
+   {
+      TitanWaitForPriorityThread(i);
+   }
+}
+
+#endif
+
+void TitanRender(pixel_t * dispbuffer)
+{
+   if (!tt_context.inited || (!tt_context.trans))
+   {
+      return;
+   }
+
+#ifdef WANT_VIDSOFT_PRIORITY_THREADING
+
+   if (vidsoft_num_priority_threads > 0)
+   {
+
+      TitanRenderThreads(dispbuffer);
+   }
+   else
+   {
+      TitanRenderLines(dispbuffer, 0, tt_context.vdp2height);
+   }
+
+#else
+   TitanRenderLines(dispbuffer, 0, tt_context.vdp2height);
+#endif
 }
 
 #ifdef WORDS_BIGENDIAN
