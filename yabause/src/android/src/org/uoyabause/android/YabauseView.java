@@ -32,10 +32,12 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.View.OnKeyListener;
 
 class YabauseView extends SurfaceView implements Callback {
     private static String TAG = "YabauseView";
@@ -71,6 +73,7 @@ class YabauseView extends SurfaceView implements Callback {
     private void init(boolean translucent, int depth, int stencil) {
        getHolder().addCallback(this);
        getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
+     
     }
 
     @Override
@@ -114,4 +117,5 @@ class YabauseView extends SurfaceView implements Callback {
         	super.onMeasure(widthMeasureSpec,heightMeasureSpec);
         }
     }
+
 }
