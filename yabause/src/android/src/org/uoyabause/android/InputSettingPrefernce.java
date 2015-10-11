@@ -50,7 +50,13 @@ import android.view.LayoutInflater;
     private PadManager pad_m;
     Context context_m;
     private int _selected_device_id = 0;
+    private String save_filename = "keymap";
+    private int playerid = 0;
 
+    public void setPlayerAndFileame( int playerid, String fname ){
+    	this.playerid = playerid;
+    	this.save_filename = fname;
+    }
 	public InputSettingPrefernce(Context context) {
 		super(context);
 		InitObjects(context);
@@ -88,6 +94,7 @@ import android.view.LayoutInflater;
     	
     	setDialogLayoutResource(R.layout.keymap);
     	
+   	
 	}
 	
 	void setMessage( String str ){
@@ -110,7 +117,11 @@ import android.view.LayoutInflater;
     		return;
     	}    
     	
-    	_selected_device_id = pad_m.getPlayer1InputDevice();
+    	if( this.playerid ==1 ){
+    		_selected_device_id = pad_m.getPlayer2InputDevice();
+    	}else{
+    		_selected_device_id = pad_m.getPlayer1InputDevice();    		
+    	}
 	}
 
 	 
@@ -157,7 +168,7 @@ import android.view.LayoutInflater;
 	@Override
 	protected void onDialogClosed(boolean positiveResult) {
 		if(positiveResult){
-			persistString("yabause/keymap.json");
+			persistString("yabause/"+save_filename+".json");
 		}
 		super.onDialogClosed(positiveResult);
 	}
@@ -206,7 +217,7 @@ import android.view.LayoutInflater;
 	    	}
 	    	
 	        // jsonファイル出力
-	        File file = new File(Environment.getExternalStorageDirectory() + "/" +  "yabause/keymap.json");
+	        File file = new File(Environment.getExternalStorageDirectory() + "/" +  "yabause/"+save_filename+".json");
 	        FileWriter filewriter;
 	     
 	        filewriter = new FileWriter(file);
@@ -272,7 +283,7 @@ import android.view.LayoutInflater;
 		
 		if( event.getDeviceId() != _selected_device_id ) return false;
 		
-        if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
+    if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
                 if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                 	

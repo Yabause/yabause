@@ -68,14 +68,21 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        
         try{
         	addPreferencesFromResource(R.xml.preferences);
         }catch( Exception e ){
         	e.printStackTrace();
         }
       
-        Resources res = getResources();
+    	InputSettingPrefernce inputsetting1 = (InputSettingPrefernce)findPreference("pref_inputdef_file");
+        inputsetting1.setPlayerAndFileame(0,"keymap");
+    	InputSettingPrefernce inputsetting2 = (InputSettingPrefernce)findPreference("pref_player2_inputdef_file");
+        inputsetting2.setPlayerAndFileame(1,"keymap_payer2");
+
         
+        Resources res = getResources();
         YabauseStorage storage = YabauseStorage.getStorage();
 
         /* bios */
@@ -163,32 +170,11 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         
         
         /* Plyaer1 input device */
-        ListPreference plyaer1_input_device = (ListPreference) getPreferenceManager().findPreference("pref_player1_inputdevice");
-
-        List<CharSequence> Inputlabels = new ArrayList<CharSequence>();
-        List<CharSequence> Inputvalues = new ArrayList<CharSequence>();
-        
-        Inputlabels.add(res.getString(R.string.onscreen_pad));
-        Inputvalues.add("-1");
-        
-        PadManager padm = PadManager.getPadManager();
-
-        for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
-        	Inputlabels.add(padm.getName(inputType));
-        	Inputvalues.add(padm.getId(inputType));
-        }
-
-        CharSequence[] input_entries = new CharSequence[Inputlabels.size()];
-        Inputlabels.toArray(input_entries);
-
-        CharSequence[] input_entryValues = new CharSequence[Inputvalues.size()];
-        Inputvalues.toArray(input_entryValues);
-
-        plyaer1_input_device.setEntries(input_entries);
-        plyaer1_input_device.setEntryValues(input_entryValues);
-        plyaer1_input_device.setSummary(plyaer1_input_device.getEntry());
-        
         SyncInputDevice();
+
+        /* Plyaer2 input device */
+        SyncInputDeviceForPlayer2();
+
         
         PreferenceScreen onscreen_pad = (PreferenceScreen) findPreference("on_screen_pad");
         onscreen_pad.setOnPreferenceClickListener(new OnPreferenceClickListener() {
@@ -206,13 +192,47 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
       }
     
     private void SyncInputDevice(){
+        
+    	SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    	Resources res = getResources();
+    	PadManager padm = PadManager.getPadManager();
+    	
+        ListPreference plyaer1_input_device = (ListPreference) getPreferenceManager().findPreference("pref_player1_inputdevice");
+
+        List<CharSequence> Inputlabels = new ArrayList<CharSequence>();
+        List<CharSequence> Inputvalues = new ArrayList<CharSequence>();
+        
+        Inputlabels.add(res.getString(R.string.onscreen_pad));
+        Inputvalues.add("-1");
+        
+        
+        
+        String selInputdevice = sharedPref.getString("pref_player2_inputdevice", "65535");
+
+        for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
+        	if( !selInputdevice.equals( padm.getId(inputType) ) ){
+        		Inputlabels.add(padm.getName(inputType));
+        		Inputvalues.add(padm.getId(inputType)); 
+        	}
+        }
+
+        CharSequence[] input_entries = new CharSequence[Inputlabels.size()];
+        Inputlabels.toArray(input_entries);
+
+        CharSequence[] input_entryValues = new CharSequence[Inputvalues.size()];
+        Inputvalues.toArray(input_entryValues);
+
+        plyaer1_input_device.setEntries(input_entries);
+        plyaer1_input_device.setEntryValues(input_entryValues);
+        plyaer1_input_device.setSummary(plyaer1_input_device.getEntry());
+        
+        
+        
         InputSettingPrefernce inputsetting= (InputSettingPrefernce)findPreference("pref_inputdef_file");
         PreferenceScreen onscreen_pad = (PreferenceScreen) findPreference("on_screen_pad");
         if( inputsetting != null ){
-        	PadManager padm = PadManager.getPadManager();
-            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
              try {
-            	String selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
+            	selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
                 if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
                 	inputsetting.setEnabled(true);
                 	onscreen_pad.setEnabled(false);
@@ -227,9 +247,57 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             	e.printStackTrace();
             }
         }
-    	
     }
 
+    private void SyncInputDeviceForPlayer2(){
+    	
+    	SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    	Resources res = getResources();
+    	PadManager padm = PadManager.getPadManager();
+    	
+        ListPreference plyaer2_input_device = (ListPreference) getPreferenceManager().findPreference("pref_player2_inputdevice");
+
+        List<CharSequence> Inputlabels_p2 = new ArrayList<CharSequence>();
+        List<CharSequence> Inputvalues_p2 = new ArrayList<CharSequence>();
+      
+        String selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
+
+        for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
+        	
+        	if( !selInputdevice.equals( padm.getId(inputType) ) ){
+        		Inputlabels_p2.add(padm.getName(inputType));
+        		Inputvalues_p2.add(padm.getId(inputType));
+        	}
+        }
+
+        CharSequence[] input_entries_p2 = new CharSequence[Inputlabels_p2.size()];
+        Inputlabels_p2.toArray(input_entries_p2);
+
+        CharSequence[] input_entryValues_p2 = new CharSequence[Inputvalues_p2.size()];
+        Inputvalues_p2.toArray(input_entryValues_p2);
+
+        plyaer2_input_device.setEntries(input_entries_p2);
+        plyaer2_input_device.setEntryValues(input_entryValues_p2);
+        plyaer2_input_device.setSummary(plyaer2_input_device.getEntry());
+
+        
+        InputSettingPrefernce inputsetting= (InputSettingPrefernce)findPreference("pref_player2_inputdef_file");
+        if( inputsetting != null ){
+             try {
+            	selInputdevice = sharedPref.getString("pref_player2_inputdevice", "65535");
+                if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
+                	inputsetting.setEnabled(true);
+                }else{
+                	inputsetting.setEnabled(false);
+                }            	
+                padm.setPlayer2InputDevice(selInputdevice);
+                
+            }catch( Exception e ){
+            	e.printStackTrace();
+            }
+        }
+    }
+    
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals("pref_bios") || key.equals("pref_cart") || key.equals("pref_video")) {
@@ -241,14 +309,14 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         	ListPreference pref = (ListPreference) findPreference(key);
         	pref.setSummary(pref.getEntry());
         	SyncInputDevice();
-/*        	
-        	PadManager padm = PadManager.getPadManager();
-        	String selInputdevice = sharedPreferences.getString(key, "0");
-        	if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
-        		InputSettingPrefernce InputSetting = new InputSettingPrefernce(this);
-        		InputSetting.showDialog(null);
-        	}
-*/        	
+        	SyncInputDeviceForPlayer2();
+        }
+        
+        else if (key.equals("pref_player2_inputdevice") ) {
+        	ListPreference pref = (ListPreference) findPreference(key);
+        	pref.setSummary(pref.getEntry());
+        	SyncInputDevice();
+        	SyncInputDeviceForPlayer2();
         }
     }
 

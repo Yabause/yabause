@@ -65,7 +65,7 @@ class InputHandler extends Handler {
     public InputHandler(YabauseRunnable yr) {
         this.yr = yr;
     }
-
+/*
     public void handleMessage(Message msg) {
         //Log.v("Yabause", "received message: " + msg.arg1 + " " + msg.arg2);
         if (msg.arg1 == 0) {
@@ -74,6 +74,7 @@ class InputHandler extends Handler {
         	YabauseRunnable.release(msg.arg2);
         }
     }
+*/    
 }  
 
 class YabauseRunnable implements Runnable
@@ -81,8 +82,8 @@ class YabauseRunnable implements Runnable
     public static native int init(Yabause yabause);
     public static native void deinit();
     public static native void exec();
-    public static native void press(int key);
-    public static native void release(int key);
+    public static native void press(int key, int player);
+    public static native void release(int key, int player);
     public static native int initViewport( Surface sf, int width, int hieght);
     public static native int drawScreen();
     public static native int lockGL();
@@ -375,6 +376,34 @@ public class Yabause extends Activity implements OnPadListener
     	}
     }
     
+    @Override
+    public boolean dispatchKeyEvent (KeyEvent event){
+    	
+    	
+    	int action =event.getAction(); 
+    	int keyCode = event.getKeyCode();
+    	Log.d("dispatchKeyEvent","device:" + event.getDeviceId() + ",action:" + action +",keyCoe:" + keyCode );
+    	if( action == KeyEvent.ACTION_UP){
+            int rtn = padm.onKeyUp(keyCode, event);
+            if (rtn != 0) {
+                return true;
+            }   		
+    	}else if( action == KeyEvent.ACTION_MULTIPLE ){
+    		
+    	}else if( action == KeyEvent.ACTION_DOWN ){
+            int rtn =  padm.onKeyDown(keyCode, event);
+            if (rtn != 0) {
+                return true;
+            }  
+            if ( keyCode == KeyEvent.KEYCODE_BACK) {
+                openOptionsMenu();
+            }             
+    	}
+    
+    	return super.dispatchKeyEvent(event);
+    }
+
+    /*
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
        
         int rtn =  padm.onKeyDown(keyCode, event);
@@ -396,6 +425,7 @@ public class Yabause extends Activity implements OnPadListener
 
         return super.onKeyUp(keyCode, event);
     }
+    */
  
     private void errorMsg(String msg) {
         Message message = handler.obtainMessage();
@@ -480,13 +510,20 @@ public class Yabause extends Activity implements OnPadListener
         }else{
             padm.setPlayer1InputDevice( null );
         }
+        
+        String selInputdevice2 = sharedPref.getString("pref_player2_inputdevice", "65535");
+        if( !selInputdevice.equals("65535") ){
+        	padm.setPlayer2InputDevice( selInputdevice2 );
+        }else{
+        	padm.setPlayer2InputDevice( null );
+        }
     }
 
     public String getBiosPath() {
         return biospath;
     }
 
-    public String getGamePath() {
+    public String getGamePath() {  
         return gamepath;
     }
 
@@ -500,6 +537,10 @@ public class Yabause extends Activity implements OnPadListener
 
     public int getVideoInterface() {
       return video_interface;
+    }
+    
+    public int getPlayer2InputDevice(){
+    	return padm.getPlayer2InputDevice();
     }
 
     public String getCartridgePath() {
