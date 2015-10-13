@@ -71,8 +71,8 @@ static INLINE u32 COLSATSTRIPPRIORITY(u32 pixel) { return (0xFF000000 | pixel); 
 				(l & 0xFF000000)
 #endif
 
-static void PushUserClipping(int mode);
-static void PopUserClipping(void);
+static void PushUserClipping(int mode, Vdp1* regs);
+static void PopUserClipping(Vdp1* regs);
 
 int VIDSoftInit(void);
 void VIDSoftSetupGL(void);
@@ -82,15 +82,15 @@ int VIDSoftIsFullscreen(void);
 int VIDSoftVdp1Reset(void);
 void VIDSoftVdp1DrawStart(void);
 void VIDSoftVdp1DrawEnd(void);
-void VIDSoftVdp1NormalSpriteDraw(void);
-void VIDSoftVdp1ScaledSpriteDraw(void);
-void VIDSoftVdp1DistortedSpriteDraw(void);
-void VIDSoftVdp1PolygonDraw(void);
-void VIDSoftVdp1PolylineDraw(void);
-void VIDSoftVdp1LineDraw(void);
-void VIDSoftVdp1UserClipping(void);
-void VIDSoftVdp1SystemClipping(void);
-void VIDSoftVdp1LocalCoordinate(void);
+void VIDSoftVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDSoftVdp1UserClipping(u8 * ram, Vdp1 * regs);
+void VIDSoftVdp1SystemClipping(u8 * ram, Vdp1 * regs);
+void VIDSoftVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 int VIDSoftVdp2Reset(void);
 void VIDSoftVdp2DrawStart(void);
 void VIDSoftVdp2DrawEnd(void);
@@ -103,7 +103,7 @@ void FASTCALL VIDSoftVdp2SetPriorityNBG3(int priority);
 void FASTCALL VIDSoftVdp2SetPriorityRBG0(int priority);
 void VIDSoftGetGlSize(int *width, int *height);
 void VIDSoftVdp1SwapFrameBuffer(void);
-void VIDSoftVdp1EraseFrameBuffer(void);
+void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer);
 
 VideoInterface_struct VIDSoft = {
 VIDCORE_SOFT,
@@ -173,6 +173,17 @@ int vdp2_interlace = 0;
 static int rbg0height = 0;
 int bilinear = 0;
 int vidsoft_num_layer_threads = 0;
+
+struct VidsoftVdp1ThreadContext
+{
+   volatile int draw_finished;
+   volatile int need_draw;
+   Vdp1 regs;
+   u8 ram[0x80000];
+   u8 back_framebuffer[0x40000];
+}vidsoft_vdp1_thread_context;
+
+int vidsoft_vdp1_thread_enabled = 0;
 
 typedef struct { s16 x; s16 y; } vdp1vertex;
 
@@ -1929,6 +1940,41 @@ void VIDSoftSetNumLayerThreads(int num)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void VidsoftVdp1Thread(void* data)
+{
+   for (;;)
+   {
+      if (vidsoft_vdp1_thread_context.need_draw)
+      {
+         vidsoft_vdp1_thread_context.need_draw = 0;
+         Vdp1DrawCommands(vidsoft_vdp1_thread_context.ram, &vidsoft_vdp1_thread_context.regs, vidsoft_vdp1_thread_context.back_framebuffer);
+         vidsoft_vdp1_thread_context.draw_finished = 1;
+      }
+
+      YabThreadSleep();
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VidsoftWaitForVdp1Thread()
+{
+   if (vidsoft_vdp1_thread_enabled)
+   {
+      while (!vidsoft_vdp1_thread_context.draw_finished){}
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftSetVdp1ThreadEnable(int b)
+{
+   vidsoft_vdp1_thread_enabled = b;
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int VIDSoftInit(void)
 {
    int i;
@@ -1961,6 +2007,10 @@ int VIDSoftInit(void)
       vidsoft_thread_context.draw_finished[i] = 1;
       vidsoft_thread_context.need_draw[i] = 0;
    }
+
+   vidsoft_vdp1_thread_context.need_draw = 0;
+   vidsoft_vdp1_thread_context.draw_finished = 1;
+   YabThreadStart(YAB_THREAD_VIDSOFT_VDP1, VidsoftVdp1Thread, 0);
 
 #ifdef WANT_VIDSOFT_RBG0_THREADING
    YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, VidsoftRbg0Thread, 0);
@@ -2152,15 +2202,15 @@ int VIDSoftVdp1Reset(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1DrawStart(void)
+void VIDSoftVdp1DrawStartBody(Vdp1* regs, u8 * back_framebuffer)
 {
-   if (Vdp1Regs->FBCR & 8)
+   if (regs->FBCR & 8)
       vdp1interlace = 2;
    else
       vdp1interlace = 1;
-   if (Vdp1Regs->TVMR & 0x1)
+   if (regs->TVMR & 0x1)
    {
-      if (Vdp1Regs->TVMR & 0x2)
+      if (regs->TVMR & 0x2)
       {
          // Rotation 8-bit
          vdp1width = 512;
@@ -2183,12 +2233,38 @@ void VIDSoftVdp1DrawStart(void)
       vdp1pixelsize = 2;
    }
 
-   VIDSoftVdp1EraseFrameBuffer();
+   VIDSoftVdp1EraseFrameBuffer(regs, back_framebuffer);
 
-   vdp1clipxstart = Vdp1Regs->userclipX1 = Vdp1Regs->systemclipX1 = 0;
-   vdp1clipystart = Vdp1Regs->userclipY1 = Vdp1Regs->systemclipY1 = 0;
-   vdp1clipxend = Vdp1Regs->userclipX2 = Vdp1Regs->systemclipX2 = vdp1width;
-   vdp1clipyend = Vdp1Regs->userclipY2 = Vdp1Regs->systemclipY2 = vdp1height;
+   vdp1clipxstart = regs->userclipX1 = regs->systemclipX1 = 0;
+   vdp1clipystart = regs->userclipY1 = regs->systemclipY1 = 0;
+   vdp1clipxend = regs->userclipX2 = regs->systemclipX2 = vdp1width;
+   vdp1clipyend = regs->userclipY2 = regs->systemclipY2 = vdp1height;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftVdp1DrawStart()
+{
+   if (vidsoft_vdp1_thread_enabled)
+   {
+      //take a snapshot of the vdp1 state, to be used by the thread
+      memcpy(vidsoft_vdp1_thread_context.ram, Vdp1Ram, 0x80000);
+      memcpy(&vidsoft_vdp1_thread_context.regs, Vdp1Regs, sizeof(Vdp1));
+
+      VIDSoftVdp1DrawStartBody(&vidsoft_vdp1_thread_context.regs, vidsoft_vdp1_thread_context.back_framebuffer);
+
+      //start thread
+      vidsoft_vdp1_thread_context.draw_finished = 0;
+      vidsoft_vdp1_thread_context.need_draw = 1;
+      YabThreadWake(YAB_THREAD_VIDSOFT_VDP1);
+
+      Vdp1FakeDrawCommands(Vdp1Ram, Vdp1Regs);
+   }
+   else
+   {
+      VIDSoftVdp1DrawStartBody(Vdp1Regs, vdp1backframebuffer);
+      Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, vdp1backframebuffer);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2199,32 +2275,32 @@ void VIDSoftVdp1DrawEnd(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE u16  Vdp1ReadPattern16( u32 base, u32 offset ) {
+static INLINE u16  Vdp1ReadPattern16( u32 base, u32 offset , u8 * ram) {
 
-  u16 dot = T1ReadByte(Vdp1Ram, ( base + (offset>>1)) & 0x7FFFF);
+   u16 dot = T1ReadByte(ram, (base + (offset >> 1)) & 0x7FFFF);
   if ((offset & 0x1) == 0) dot >>= 4; // Even pixel
   else dot &= 0xF; // Odd pixel
   return dot;
 }
 
-static INLINE u16  Vdp1ReadPattern64( u32 base, u32 offset ) {
+static INLINE u16  Vdp1ReadPattern64(u32 base, u32 offset, u8 * ram) {
 
-  return T1ReadByte(Vdp1Ram, ( base + offset ) & 0x7FFFF) & 0x3F;
+   return T1ReadByte(ram, (base + offset) & 0x7FFFF) & 0x3F;
 }
 
-static INLINE u16  Vdp1ReadPattern128( u32 base, u32 offset ) {
+static INLINE u16  Vdp1ReadPattern128(u32 base, u32 offset, u8 * ram) {
 
-  return T1ReadByte(Vdp1Ram, ( base + offset ) & 0x7FFFF) & 0x7F;
+   return T1ReadByte(ram, (base + offset) & 0x7FFFF) & 0x7F;
 }
 
-static INLINE u16  Vdp1ReadPattern256( u32 base, u32 offset ) {
+static INLINE u16  Vdp1ReadPattern256(u32 base, u32 offset, u8 * ram) {
 
-  return T1ReadByte(Vdp1Ram, ( base + offset ) & 0x7FFFF) & 0xFF;
+   return T1ReadByte(ram, (base + offset) & 0x7FFFF) & 0xFF;
 }
 
-static INLINE u16  Vdp1ReadPattern64k( u32 base, u32 offset ) {
+static INLINE u16  Vdp1ReadPattern64k(u32 base, u32 offset, u8 * ram) {
 
-  return T1ReadWord(Vdp1Ram, ( base + 2*offset) & 0x7FFFF);
+  return T1ReadWord(ram, ( base + 2*offset) & 0x7FFFF);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2250,14 +2326,14 @@ typedef struct _COLOR_PARAMS
 
 COLOR_PARAMS leftColumnColor;
 
-vdp1cmd_struct cmd;
+
 
 int currentPixel;
 int currentPixelIsVisible;
 int characterWidth;
 int characterHeight;
 
-static int getpixel(int linenumber, int currentlineindex) {
+static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u8 * ram) {
 	
 	u32 characterAddress;
 	u32 colorlut;
@@ -2267,20 +2343,20 @@ static int getpixel(int linenumber, int currentlineindex) {
 	int endcodesEnabled;
 	int untexturedColor = 0;
 	int isTextured = 1;
-	int currentShape = cmd.CMDCTRL & 0x7;
+	int currentShape = cmd->CMDCTRL & 0x7;
 	int flip;
 
-	characterAddress = cmd.CMDSRCA << 3;
-	colorbank = cmd.CMDCOLR;
+   characterAddress = cmd->CMDSRCA << 3;
+   colorbank = cmd->CMDCOLR;
 	colorlut = (u32)colorbank << 3;
-	SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
-	endcodesEnabled = (( cmd.CMDPMOD & 0x80) == 0 )?1:0;
-	flip = (cmd.CMDCTRL & 0x30) >> 4;
+   SPD = ((cmd->CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
+   endcodesEnabled = ((cmd->CMDPMOD & 0x80) == 0) ? 1 : 0;
+   flip = (cmd->CMDCTRL & 0x30) >> 4;
 
 	//4 polygon, 5 polyline or 6 line
 	if(currentShape == 4 || currentShape == 5 || currentShape == 6) {
 		isTextured = 0;
-		untexturedColor = cmd.CMDCOLR;
+      untexturedColor = cmd->CMDCOLR;
 	}
 
 	switch( flip ) {
@@ -2300,11 +2376,11 @@ static int getpixel(int linenumber, int currentlineindex) {
 			break;
 	}
 
-	switch ((cmd.CMDPMOD >> 3) & 0x7)
+   switch ((cmd->CMDPMOD >> 3) & 0x7)
 	{
 		case 0x0: //4bpp bank
 			endcode = 0xf;
-			currentPixel = Vdp1ReadPattern16( characterAddress + (linenumber*(characterWidth>>1)), currentlineindex );
+			currentPixel = Vdp1ReadPattern16( characterAddress + (linenumber*(characterWidth>>1)), currentlineindex , ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
 			if (!((currentPixel == 0) && !SPD)) 
@@ -2314,11 +2390,11 @@ static int getpixel(int linenumber, int currentlineindex) {
 
 		case 0x1://4bpp lut
 			endcode = 0xf;
-			currentPixel = Vdp1ReadPattern16( characterAddress + (linenumber*(characterWidth>>1)), currentlineindex );
+         currentPixel = Vdp1ReadPattern16(characterAddress + (linenumber*(characterWidth >> 1)), currentlineindex, ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
 			if (!(currentPixel == 0 && !SPD))
-				currentPixel = T1ReadWord(Vdp1Ram, (currentPixel * 2 + colorlut) & 0x7FFFF);
+				currentPixel = T1ReadWord(ram, (currentPixel * 2 + colorlut) & 0x7FFFF);
 			currentPixelIsVisible = 0xffff;
 			break;
 		case 0x2://8pp bank (64 color)
@@ -2330,7 +2406,7 @@ static int getpixel(int linenumber, int currentlineindex) {
 			//this needs more hardware testing
 
 			endcode = 63;
-			currentPixel = Vdp1ReadPattern64( characterAddress + (linenumber*(characterWidth)), currentlineindex );
+         currentPixel = Vdp1ReadPattern64(characterAddress + (linenumber*(characterWidth)), currentlineindex, ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				currentPixel = 0;
 		//		return 1;
@@ -2340,7 +2416,7 @@ static int getpixel(int linenumber, int currentlineindex) {
 			break;
 		case 0x3://128 color
 			endcode = 0xff;
-			currentPixel = Vdp1ReadPattern128( characterAddress + (linenumber*characterWidth), currentlineindex );
+         currentPixel = Vdp1ReadPattern128(characterAddress + (linenumber*characterWidth), currentlineindex, ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
 			if (!((currentPixel == 0) && !SPD)) 
@@ -2349,7 +2425,7 @@ static int getpixel(int linenumber, int currentlineindex) {
 			break;
 		case 0x4://256 color
 			endcode = 0xff;
-			currentPixel = Vdp1ReadPattern256( characterAddress + (linenumber*characterWidth), currentlineindex );
+         currentPixel = Vdp1ReadPattern256(characterAddress + (linenumber*characterWidth), currentlineindex, ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
 			currentPixelIsVisible = 0xff;
@@ -2358,7 +2434,7 @@ static int getpixel(int linenumber, int currentlineindex) {
 			break;
 		case 0x5://16bpp bank
 			endcode = 0x7fff;
-			currentPixel = Vdp1ReadPattern64k( characterAddress + (linenumber*characterWidth*2), currentlineindex );
+         currentPixel = Vdp1ReadPattern64k(characterAddress + (linenumber*characterWidth * 2), currentlineindex, ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
 
@@ -2391,9 +2467,10 @@ static int gouraudAdjust( int color, int tableValue )
 	return color;
 }
 
-static int CheckDil(int y)
+
+static int CheckDil(int y, Vdp1 * regs)
 {
-   int dil = (Vdp1Regs->FBCR >> 2) & 1;
+   int dil = (regs->FBCR >> 2) & 1;
 
    if (vdp1interlace == 2)
    {
@@ -2412,17 +2489,17 @@ static int CheckDil(int y)
    return 0;
 }
 
-static void putpixel8(int x, int y) {
+static void putpixel8(int x, int y, Vdp1 * regs, vdp1cmd_struct *cmd, u8 * back_framebuffer) {
 
     int y2 = y / vdp1interlace;
-    u8 * iPix = &vdp1backframebuffer[(y2 * vdp1width) + x];
-    int mesh = cmd.CMDPMOD & 0x0100;
-    int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
+    u8 * iPix = &back_framebuffer[(y2 * vdp1width) + x];
+    int mesh = cmd->CMDPMOD & 0x0100;
+    int SPD = ((cmd->CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
 
-    if (iPix >= (vdp1backframebuffer + 0x40000))
+    if (iPix >= (back_framebuffer + 0x40000))
         return;
 
-    if (CheckDil(y))
+    if (CheckDil(y, regs))
        return;
 
     currentPixel &= 0xFF;
@@ -2434,21 +2511,21 @@ static void putpixel8(int x, int y) {
     {
         int clipped;
 
-        if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
+        if (cmd->CMDPMOD & 0x0400) PushUserClipping((cmd->CMDPMOD >> 9) & 0x1, regs);
 
         clipped = ! (x >= vdp1clipxstart &&
             x < vdp1clipxend &&
             y2 >= vdp1clipystart &&
             y2 < vdp1clipyend);
 
-        if (cmd.CMDPMOD & 0x0400) PopUserClipping();
+        if (cmd->CMDPMOD & 0x0400) PopUserClipping(regs);
 
         if (clipped) return;
     }
 
     if ( SPD || (currentPixel & currentPixelIsVisible))
     {
-        switch( cmd.CMDPMOD & 0x7 )//we want bits 0,1,2
+        switch( cmd->CMDPMOD & 0x7 )//we want bits 0,1,2
         {
         default:
         case 0:	// replace
@@ -2459,19 +2536,19 @@ static void putpixel8(int x, int y) {
     }
 }
 
-static void putpixel(int x, int y) {
+static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_framebuffer) {
 
 	u16* iPix;
-	int mesh = cmd.CMDPMOD & 0x0100;
-	int SPD = ((cmd.CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
+	int mesh = cmd->CMDPMOD & 0x0100;
+	int SPD = ((cmd->CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
 
-   if (CheckDil(y))
+   if (CheckDil(y, regs))
       return;
 
 	y /= vdp1interlace;
-	iPix = &((u16 *)vdp1backframebuffer)[(y * vdp1width) + x];
+   iPix = &((u16 *)back_framebuffer)[(y * vdp1width) + x];
 
-	if (iPix >= (u16*) (vdp1backframebuffer + 0x40000))
+   if (iPix >= (u16*)(back_framebuffer + 0x40000))
 		return;
 
 	if(mesh && (x^y)&1)
@@ -2480,7 +2557,7 @@ static void putpixel(int x, int y) {
 	{
 		int clipped;
 
-		if (cmd.CMDPMOD & 0x0400) PushUserClipping((cmd.CMDPMOD >> 9) & 0x1);
+		if (cmd->CMDPMOD & 0x0400) PushUserClipping((cmd->CMDPMOD >> 9) & 0x1, regs);
 
 		clipped = ! (x >= vdp1clipxstart &&
 			x < vdp1clipxend &&
@@ -2488,24 +2565,24 @@ static void putpixel(int x, int y) {
 			y < vdp1clipyend);
 
       //vdp1_clip_test in yabauseut
-      if (((cmd.CMDPMOD >> 9) & 0x3) == 0x3)//outside clipping mode
+      if (((cmd->CMDPMOD >> 9) & 0x3) == 0x3)//outside clipping mode
       {
          //don't display inside the box
-         if (Vdp1Regs->userclipX1 <= x && 
-            x <= Vdp1Regs->userclipX2 && 
-            Vdp1Regs->userclipY1 <= y && 
-            y <= Vdp1Regs->userclipY2) 
+         if (regs->userclipX1 <= x &&
+            x <= regs->userclipX2 &&
+            regs->userclipY1 <= y &&
+            y <= regs->userclipY2)
          {
             clipped = 1;
          }
       }
 
-		if (cmd.CMDPMOD & 0x0400) PopUserClipping();
+		if (cmd->CMDPMOD & 0x0400) PopUserClipping(regs);
 
 		if (clipped) return;
 	}
 
-	if ((cmd.CMDPMOD & (1 << 15)) && ((Vdp2Regs->SPCTL & 0x10) == 0))
+	if ((cmd->CMDPMOD & (1 << 15)) && ((Vdp2Regs->SPCTL & 0x10) == 0))
 	{
 		if (currentPixel) {
 			*iPix |= 0x8000;
@@ -2515,7 +2592,7 @@ static void putpixel(int x, int y) {
 
 	if ( SPD || (currentPixel & currentPixelIsVisible))
 	{
-		switch( cmd.CMDPMOD & 0x7 )//we want bits 0,1,2
+		switch( cmd->CMDPMOD & 0x7 )//we want bits 0,1,2
 		{
 		case 0:	// replace
 			if (!((currentPixel == 0) && !SPD)) 
@@ -2540,8 +2617,8 @@ static void putpixel(int x, int y) {
 			//handle the special case demonstrated in the sgl chrome demo
 			//if we are in a paletted bank mode and the other two colors are unused, adjust the index value instead of rgb
 			if(
-				(((cmd.CMDPMOD >> 3) & 0x7) != 5) &&
-				(((cmd.CMDPMOD >> 3) & 0x7) != 1) && 
+				(((cmd->CMDPMOD >> 3) & 0x7) != 5) &&
+				(((cmd->CMDPMOD >> 3) & 0x7) != 1) && 
 				(int)leftColumnColor.g == 16 && 
 				(int)leftColumnColor.b == 16) 
 			{
@@ -2573,7 +2650,7 @@ static void putpixel(int x, int y) {
 }
 
 static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *data,
-			   int (*line_callback)(int x, int y, int i, void *data)) {
+   int(*line_callback)(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer), Vdp1* regs, vdp1cmd_struct * cmd, u8 * ram, u8* back_framebuffer) {
 	int i, a, ax, ay, dx, dy;
 
 	a = i = 0;
@@ -2591,7 +2668,7 @@ static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *dat
 		if (ax != ay) dx = -dx;
 
 		for (; x1 != x2; x1 += ax, i++) {
-			if (line_callback && line_callback(x1, y1, i, data) != 0) return i + 1;
+         if (line_callback && line_callback(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0) return i + 1;
 
 			a += dy;
 			if (abs(a) >= abs(dx)) {
@@ -2603,11 +2680,11 @@ static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *dat
 					i ++;
 					if (ax == ay) {
 						if (line_callback &&
-						    line_callback(x1 + ax, y1 - ay, i, data) != 0)
+                     line_callback(x1 + ax, y1 - ay, i, data, regs, cmd, ram, back_framebuffer) != 0)
 							return i + 1;
 					} else {
 						if (line_callback &&
-						    line_callback(x1, y1, i, data) != 0)
+                     line_callback(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0)
 							return i + 1;
 					}
 				}
@@ -2616,14 +2693,14 @@ static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *dat
 
 		// If the line isn't greedy here, we end up with gaps that don't occur on the Saturn
 		if (/*(i == 0) || (y1 != y2)*/1) {
-			if (line_callback) line_callback(x2, y2, i, data);
+         if (line_callback) line_callback(x2, y2, i, data, regs, cmd, ram, back_framebuffer);
 			i ++;
 		}
 	} else {
 		if (ax != ay) dy = -dy;
 
 		for (; y1 != y2; y1 += ay, i++) {
-			if (line_callback && line_callback(x1, y1, i, data) != 0) return i + 1;
+         if (line_callback && line_callback(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0) return i + 1;
 
 			a += dx;
 			if (abs(a) >= abs(dy)) {
@@ -2634,11 +2711,11 @@ static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *dat
 					i ++;
 					if (ay == ax) {
 						if (line_callback &&
-						    line_callback(x1, y1, i, data) != 0)
+                     line_callback(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0)
 							return i + 1;
 					} else {
 						if (line_callback &&
-						    line_callback(x1 - ax, y1 + ay, i, data) != 0)
+                     line_callback(x1 - ax, y1 + ay, i, data, regs, cmd, ram, back_framebuffer) != 0)
 							return i + 1;
 					}
 				}
@@ -2646,7 +2723,7 @@ static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *dat
 		}
 
 		if (/*(i == 0) || (y1 != y2)*/1) {
-			if (line_callback) line_callback(x2, y2, i, data);
+         if (line_callback) line_callback(x2, y2, i, data, regs, cmd, ram, back_framebuffer);
 			i ++;
 		}
 	}
@@ -2664,7 +2741,7 @@ typedef struct {
 	int previousStep;
 } DrawLineData;
 
-static int DrawLineCallback(int x, int y, int i, void *data)
+static int DrawLineCallback(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
 	int currentStep;
 	DrawLineData *linedata = data;
@@ -2674,15 +2751,15 @@ static int DrawLineCallback(int x, int y, int i, void *data)
 	leftColumnColor.b += linedata->xbluestep;
 
 	currentStep = (int)i * linedata->texturestep;
-	if (getpixel(linedata->linenumber, currentStep)) {
+	if (getpixel(linedata->linenumber, currentStep, cmd, ram)) {
 		if (currentStep != linedata->previousStep) {
 			linedata->previousStep = currentStep;
 			linedata->endcodesdetected ++;
 		}
 	} else if (vdp1pixelsize == 2) {
-		putpixel(x, y);
+		putpixel(x, y, regs, cmd, back_framebuffer);
 	} else {
-		putpixel8(x, y);
+      putpixel8(x, y, regs, cmd, back_framebuffer);
     }
 
 	if (linedata->endcodesdetected == 2) return -1;
@@ -2690,7 +2767,7 @@ static int DrawLineCallback(int x, int y, int i, void *data)
 	return 0;
 }
 
-static int DrawLine( int x1, int y1, int x2, int y2, int greedy, double linenumber, double texturestep, double xredstep, double xgreenstep, double xbluestep)
+static int DrawLine(int x1, int y1, int x2, int y2, int greedy, double linenumber, double texturestep, double xredstep, double xgreenstep, double xbluestep, Vdp1* regs, vdp1cmd_struct *cmd, u8 * ram, u8* back_framebuffer)
 {
 	DrawLineData data;
 
@@ -2702,7 +2779,7 @@ static int DrawLine( int x1, int y1, int x2, int y2, int greedy, double linenumb
 	data.endcodesdetected = 0;
 	data.previousStep = 123456789;
 
-	return iterateOverLine(x1, y1, x2, y2, greedy, &data, DrawLineCallback);
+   return iterateOverLine(x1, y1, x2, y2, greedy, &data, DrawLineCallback, regs, cmd, ram, back_framebuffer);
 }
 
 static INLINE double interpolate(double start, double end, int numberofsteps) {
@@ -2739,18 +2816,18 @@ COLOR gouraudB;
 COLOR gouraudC;
 COLOR gouraudD;
 
-static void gouraudTable(void)
+static void gouraudTable(u8* ram, Vdp1* regs, vdp1cmd_struct * cmd)
 {
 	int gouraudTableAddress;
 
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
-	gouraudTableAddress = (((unsigned int)cmd.CMDGRDA) << 3);
 
-	gouraudA.value = T1ReadWord(Vdp1Ram,gouraudTableAddress);
-	gouraudB.value = T1ReadWord(Vdp1Ram,gouraudTableAddress+2);
-	gouraudC.value = T1ReadWord(Vdp1Ram,gouraudTableAddress+4);
-	gouraudD.value = T1ReadWord(Vdp1Ram,gouraudTableAddress+6);
+	gouraudTableAddress = (((unsigned int)cmd->CMDGRDA) << 3);
+
+   gouraudA.value = T1ReadWord(ram, gouraudTableAddress);
+   gouraudB.value = T1ReadWord(ram, gouraudTableAddress + 2);
+   gouraudC.value = T1ReadWord(ram, gouraudTableAddress + 4);
+   gouraudD.value = T1ReadWord(ram, gouraudTableAddress + 6);
 }
 
 int xleft[1000];
@@ -2759,7 +2836,7 @@ int xright[1000];
 int yright[1000];
 
 static int
-storeLineCoords(int x, int y, int i, void *arrays) {
+storeLineCoords(int x, int y, int i, void *arrays, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
 	int **intArrays = arrays;
 
 	intArrays[0][i] = x;
@@ -2772,7 +2849,7 @@ storeLineCoords(int x, int y, int i, void *arrays) {
 //this is why endcodes are possible
 //this is also the reason why half-transparent shading causes moire patterns
 //and the reason why gouraud shading can be applied to a single line draw command
-static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y, s16 br_x, s16 br_y){
+static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y, s16 br_x, s16 br_y, u8 * ram, Vdp1* regs, vdp1cmd_struct * cmd, u8* back_framebuffer){
 
 	int totalleft;
 	int totalright;
@@ -2789,14 +2866,13 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 	//a lookup table for the gouraud colors
 	COLOR colors[4];
 
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
-	characterWidth = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
-	characterHeight = cmd.CMDSIZE & 0xFF;
+	characterWidth = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
+   characterHeight = cmd->CMDSIZE & 0xFF;
 
 	intarrays[0] = xleft; intarrays[1] = yleft;
-	totalleft  = iterateOverLine(tl_x, tl_y, bl_x, bl_y, 0, intarrays, storeLineCoords);
+   totalleft = iterateOverLine(tl_x, tl_y, bl_x, bl_y, 0, intarrays, storeLineCoords, regs, cmd, ram, back_framebuffer);
 	intarrays[0] = xright; intarrays[1] = yright;
-	totalright  = iterateOverLine(tr_x, tr_y, br_x, br_y, 0, intarrays, storeLineCoords);
+   totalright = iterateOverLine(tr_x, tr_y, br_x, br_y, 0, intarrays, storeLineCoords, regs, cmd, ram, back_framebuffer);
 
 	//just for now since burning rangers will freeze up trying to draw huge shapes
 	if(totalleft == INT_MAX || totalright == INT_MAX)
@@ -2805,9 +2881,9 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 	total = totalleft > totalright ? totalleft : totalright;
 
 
-	if(cmd.CMDPMOD & (1 << 2)) {
+   if (cmd->CMDPMOD & (1 << 2)) {
 
-		gouraudTable();
+		gouraudTable(ram, regs, cmd);
 
 		{ colors[0] = gouraudA; colors[1] = gouraudD; colors[2] = gouraudB; colors[3] = gouraudC; }
 
@@ -2850,7 +2926,7 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 			yleft[(int)(i*leftLineStep)],
 			xright[(int)(i*rightLineStep)],
 			yright[(int)(i*rightLineStep)],
-			1, NULL, NULL);
+         1, NULL, NULL, regs, cmd, ram, back_framebuffer);
 
 		//so from 0 to the width of the texture / the length of the line is how far we need to step
 		xtexturestep=interpolate(0,characterWidth,xlinelength);
@@ -2859,7 +2935,7 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 		ytexturestep=interpolate(0,characterHeight,total);
 
 		//gouraud interpolation
-		if(cmd.CMDPMOD & (1 << 2)) {
+		if(cmd->CMDPMOD & (1 << 2)) {
 
 			//for each new line we need to step once more through each column
 			//and add the orignal color + the number of steps taken times the step value to the bottom of the shape
@@ -2889,20 +2965,24 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 			xtexturestep,
 			leftToRightStep.r,
 			leftToRightStep.g,
-			leftToRightStep.b
+			leftToRightStep.b,
+         regs,
+         cmd,
+         ram, back_framebuffer
 			);
 	}
 }
 
-void VIDSoftVdp1NormalSpriteDraw() {
+void VIDSoftVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8 * back_framebuffer) {
 
 	s16 topLeftx,topLefty,topRightx,topRighty,bottomRightx,bottomRighty,bottomLeftx,bottomLefty;
 	int spriteWidth;
 	int spriteHeight;
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   vdp1cmd_struct cmd;
+	Vdp1ReadCommand(&cmd, regs->addr, ram);
 
-	topLeftx = cmd.CMDXA + Vdp1Regs->localX;
-	topLefty = cmd.CMDYA + Vdp1Regs->localY;
+	topLeftx = cmd.CMDXA + regs->localX;
+	topLefty = cmd.CMDYA + regs->localY;
 	spriteWidth = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
 	spriteHeight = cmd.CMDSIZE & 0xFF;
 
@@ -2913,24 +2993,25 @@ void VIDSoftVdp1NormalSpriteDraw() {
 	bottomLeftx = topLeftx;
 	bottomLefty = topLefty + (spriteHeight - 1);
 
-	drawQuad(topLeftx,topLefty,bottomLeftx,bottomLefty,topRightx,topRighty,bottomRightx,bottomRighty);
+   drawQuad(topLeftx, topLefty, bottomLeftx, bottomLefty, topRightx, topRighty, bottomRightx, bottomRighty, ram, regs, &cmd, back_framebuffer);
 }
 
-void VIDSoftVdp1ScaledSpriteDraw(){
+void VIDSoftVdp1ScaledSpriteDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer){
 
 	s32 topLeftx,topLefty,topRightx,topRighty,bottomRightx,bottomRighty,bottomLeftx,bottomLefty;
 	int x0,y0,x1,y1;
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   vdp1cmd_struct cmd;
+   Vdp1ReadCommand(&cmd, regs->addr, ram);
 
-	x0 = cmd.CMDXA + Vdp1Regs->localX;
-	y0 = cmd.CMDYA + Vdp1Regs->localY;
+	x0 = cmd.CMDXA + regs->localX;
+	y0 = cmd.CMDYA + regs->localY;
 
 	switch ((cmd.CMDCTRL >> 8) & 0xF)
 	{
 	case 0x0: // Only two coordinates
 	default:
-		x1 = ((int)cmd.CMDXC) - x0 + Vdp1Regs->localX + 1;
-		y1 = ((int)cmd.CMDYC) - y0 + Vdp1Regs->localY + 1;
+		x1 = ((int)cmd.CMDXC) - x0 + regs->localX + 1;
+		y1 = ((int)cmd.CMDYC) - y0 + regs->localY + 1;
 		break;
 	case 0x5: // Upper-left
 		x1 = ((int)cmd.CMDXB) + 1;
@@ -3010,33 +3091,34 @@ void VIDSoftVdp1ScaledSpriteDraw(){
 	bottomLeftx = topLeftx;
 	bottomLefty = y1+y0 - 1;
 
-	drawQuad(topLeftx,topLefty,bottomLeftx,bottomLefty,topRightx,topRighty,bottomRightx,bottomRighty);
+   drawQuad(topLeftx, topLefty, bottomLeftx, bottomLefty, topRightx, topRighty, bottomRightx, bottomRighty, ram, regs, &cmd, back_framebuffer);
 }
 
-void VIDSoftVdp1DistortedSpriteDraw() {
+void VIDSoftVdp1DistortedSpriteDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer) {
 
 	s32 xa,ya,xb,yb,xc,yc,xd,yd;
+   vdp1cmd_struct cmd;
 
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, regs->addr, ram);
 
-    xa = (s32)(cmd.CMDXA + Vdp1Regs->localX);
-    ya = (s32)(cmd.CMDYA + Vdp1Regs->localY);
+    xa = (s32)(cmd.CMDXA + regs->localX);
+    ya = (s32)(cmd.CMDYA + regs->localY);
 
-    xb = (s32)(cmd.CMDXB + Vdp1Regs->localX);
-    yb = (s32)(cmd.CMDYB + Vdp1Regs->localY);
+    xb = (s32)(cmd.CMDXB + regs->localX);
+    yb = (s32)(cmd.CMDYB + regs->localY);
 
-    xc = (s32)(cmd.CMDXC + Vdp1Regs->localX);
-    yc = (s32)(cmd.CMDYC + Vdp1Regs->localY);
+    xc = (s32)(cmd.CMDXC + regs->localX);
+    yc = (s32)(cmd.CMDYC + regs->localY);
 
-    xd = (s32)(cmd.CMDXD + Vdp1Regs->localX);
-    yd = (s32)(cmd.CMDYD + Vdp1Regs->localY);
+    xd = (s32)(cmd.CMDXD + regs->localX);
+    yd = (s32)(cmd.CMDYD + regs->localY);
 
-	drawQuad(xa,ya,xd,yd,xb,yb,xc,yc);
+    drawQuad(xa, ya, xd, yd, xb, yb, xc, yc, ram, regs, &cmd, back_framebuffer);
 }
 
-static void gouraudLineSetup(double * redstep, double * greenstep, double * bluestep, int length, COLOR table1, COLOR table2) {
+static void gouraudLineSetup(double * redstep, double * greenstep, double * bluestep, int length, COLOR table1, COLOR table2, u8* ram, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_framebuffer) {
 
-	gouraudTable();
+	gouraudTable(ram ,regs, cmd);
 
 	*redstep =interpolate(table1.r,table2.r,length);
 	*greenstep =interpolate(table1.g,table2.g,length);
@@ -3047,100 +3129,102 @@ static void gouraudLineSetup(double * redstep, double * greenstep, double * blue
 	leftColumnColor.b = table1.b;
 }
 
-void VIDSoftVdp1PolylineDraw(void)
+void VIDSoftVdp1PolylineDraw(u8* ram, Vdp1*regs, u8 * back_framebuffer)
 {
 	int X[4];
 	int Y[4];
 	double redstep = 0, greenstep = 0, bluestep = 0;
 	int length;
+   vdp1cmd_struct cmd;
 
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, regs->addr, ram);
 
-	X[0] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
-	Y[0] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
-	X[1] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10));
-	Y[1] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12));
-	X[2] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14));
-	Y[2] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16));
-	X[3] = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x18));
-	Y[3] = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A));
+	X[0] = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x0C));
+	Y[0] = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x0E));
+	X[1] = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x10));
+	Y[1] = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x12));
+	X[2] = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x14));
+	Y[2] = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x16));
+	X[3] = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x18));
+	Y[3] = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x1A));
 
-	length = iterateOverLine(X[0], Y[0], X[1], Y[1], 1, NULL, NULL);
-	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudA, gouraudB);
-	DrawLine(X[0], Y[0], X[1], Y[1], 0, 0,0,redstep,greenstep,bluestep);
+   length = iterateOverLine(X[0], Y[0], X[1], Y[1], 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudA, gouraudB, ram, regs, &cmd, back_framebuffer);
+   DrawLine(X[0], Y[0], X[1], Y[1], 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
 
-	length = iterateOverLine(X[1], Y[1], X[2], Y[2], 1, NULL, NULL);
-	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudB, gouraudC);
-	DrawLine(X[1], Y[1], X[2], Y[2], 0, 0,0,redstep,greenstep,bluestep);
+   length = iterateOverLine(X[1], Y[1], X[2], Y[2], 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudB, gouraudC, ram, regs, &cmd, back_framebuffer);
+   DrawLine(X[1], Y[1], X[2], Y[2], 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
 
-	length = iterateOverLine(X[2], Y[2], X[3], Y[3], 1, NULL, NULL);
-	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudD, gouraudC);
-	DrawLine(X[3], Y[3], X[2], Y[2], 0, 0,0,redstep,greenstep,bluestep);
+   length = iterateOverLine(X[2], Y[2], X[3], Y[3], 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudD, gouraudC, ram, regs, &cmd, back_framebuffer);
+   DrawLine(X[3], Y[3], X[2], Y[2], 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
 
-	length = iterateOverLine(X[3], Y[3], X[0], Y[0], 1, NULL, NULL);
-	gouraudLineSetup(&redstep,&greenstep,&bluestep,length, gouraudA,gouraudD);
-	DrawLine(X[0], Y[0], X[3], Y[3], 0, 0,0,redstep,greenstep,bluestep);
+   length = iterateOverLine(X[3], Y[3], X[0], Y[0], 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &greenstep, &bluestep, length, gouraudA, gouraudD, ram, regs, &cmd, back_framebuffer);
+   DrawLine(X[0], Y[0], X[3], Y[3], 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
 }
 
-void VIDSoftVdp1LineDraw(void)
+void VIDSoftVdp1LineDraw(u8* ram, Vdp1*regs, u8* back_framebuffer)
 {
 	int x1, y1, x2, y2;
 	double redstep = 0, greenstep = 0, bluestep = 0;
 	int length;
+   vdp1cmd_struct cmd;
 
-	Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, regs->addr, ram);
 
-	x1 = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
-	y1 = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
-	x2 = (int)Vdp1Regs->localX + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x10));
-	y2 = (int)Vdp1Regs->localY + (int)((s16)T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12));
+	x1 = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x0C));
+	y1 = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x0E));
+	x2 = (int)regs->localX + (int)((s16)T1ReadWord(ram, regs->addr + 0x10));
+	y2 = (int)regs->localY + (int)((s16)T1ReadWord(ram, regs->addr + 0x12));
 
-	length = iterateOverLine(x1, y1, x2, y2, 1, NULL, NULL);
-	gouraudLineSetup(&redstep,&bluestep,&greenstep,length, gouraudA, gouraudB);
-	DrawLine(x1, y1, x2, y2, 0, 0,0,redstep,greenstep,bluestep);
+   length = iterateOverLine(x1, y1, x2, y2, 1, NULL, NULL, regs, &cmd, ram, back_framebuffer);
+   gouraudLineSetup(&redstep, &bluestep, &greenstep, length, gouraudA, gouraudB, ram, regs, &cmd, back_framebuffer);
+   DrawLine(x1, y1, x2, y2, 0, 0, 0, redstep, greenstep, bluestep, regs, &cmd, ram, back_framebuffer);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1UserClipping(void)
+void VIDSoftVdp1UserClipping(u8* ram, Vdp1*regs)
 {
-   Vdp1Regs->userclipX1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
-   Vdp1Regs->userclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
-   Vdp1Regs->userclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
-   Vdp1Regs->userclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+   regs->userclipX1 = T1ReadWord(ram, regs->addr + 0xC);
+   regs->userclipY1 = T1ReadWord(ram, regs->addr + 0xE);
+   regs->userclipX2 = T1ReadWord(ram, regs->addr + 0x14);
+   regs->userclipY2 = T1ReadWord(ram, regs->addr + 0x16);
 
 #if 0
-   vdp1clipxstart = Vdp1Regs->userclipX1;
-   vdp1clipxend = Vdp1Regs->userclipX2;
-   vdp1clipystart = Vdp1Regs->userclipY1;
-   vdp1clipyend = Vdp1Regs->userclipY2;
+   vdp1clipxstart = regs->userclipX1;
+   vdp1clipxend = regs->userclipX2;
+   vdp1clipystart = regs->userclipY1;
+   vdp1clipyend = regs->userclipY2;
 
    // This needs work
-   if (vdp1clipxstart > Vdp1Regs->systemclipX1)
-      vdp1clipxstart = Vdp1Regs->userclipX1;
+   if (vdp1clipxstart > regs->systemclipX1)
+      vdp1clipxstart = regs->userclipX1;
    else
-      vdp1clipxstart = Vdp1Regs->systemclipX1;
+      vdp1clipxstart = regs->systemclipX1;
 
-   if (vdp1clipxend < Vdp1Regs->systemclipX2)
-      vdp1clipxend = Vdp1Regs->userclipX2;
+   if (vdp1clipxend < regs->systemclipX2)
+      vdp1clipxend = regs->userclipX2;
    else
-      vdp1clipxend = Vdp1Regs->systemclipX2;
+      vdp1clipxend = regs->systemclipX2;
 
-   if (vdp1clipystart > Vdp1Regs->systemclipY1)
-      vdp1clipystart = Vdp1Regs->userclipY1;
+   if (vdp1clipystart > regs->systemclipY1)
+      vdp1clipystart = regs->userclipY1;
    else
-      vdp1clipystart = Vdp1Regs->systemclipY1;
+      vdp1clipystart = regs->systemclipY1;
 
-   if (vdp1clipyend < Vdp1Regs->systemclipY2)
-      vdp1clipyend = Vdp1Regs->userclipY2;
+   if (vdp1clipyend < regs->systemclipY2)
+      vdp1clipyend = regs->userclipY2;
    else
-      vdp1clipyend = Vdp1Regs->systemclipY2;
+      vdp1clipyend = regs->systemclipY2;
 #endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void PushUserClipping(int mode)
+static void PushUserClipping(int mode, Vdp1 * regs)
 {
    if (mode == 1)
    {
@@ -3148,64 +3232,64 @@ static void PushUserClipping(int mode)
       return;
    }
 
-   vdp1clipxstart = Vdp1Regs->userclipX1;
-   vdp1clipxend = Vdp1Regs->userclipX2;
-   vdp1clipystart = Vdp1Regs->userclipY1;
-   vdp1clipyend = Vdp1Regs->userclipY2;
+   vdp1clipxstart = regs->userclipX1;
+   vdp1clipxend = regs->userclipX2;
+   vdp1clipystart = regs->userclipY1;
+   vdp1clipyend = regs->userclipY2;
 
    // This needs work
-   if (vdp1clipxstart > Vdp1Regs->systemclipX1)
-      vdp1clipxstart = Vdp1Regs->userclipX1;
+   if (vdp1clipxstart > regs->systemclipX1)
+      vdp1clipxstart = regs->userclipX1;
    else
-      vdp1clipxstart = Vdp1Regs->systemclipX1;
+      vdp1clipxstart = regs->systemclipX1;
 
-   if (vdp1clipxend < Vdp1Regs->systemclipX2)
-      vdp1clipxend = Vdp1Regs->userclipX2;
+   if (vdp1clipxend < regs->systemclipX2)
+      vdp1clipxend = regs->userclipX2;
    else
-      vdp1clipxend = Vdp1Regs->systemclipX2;
+      vdp1clipxend = regs->systemclipX2;
 
-   if (vdp1clipystart > Vdp1Regs->systemclipY1)
-      vdp1clipystart = Vdp1Regs->userclipY1;
+   if (vdp1clipystart > regs->systemclipY1)
+      vdp1clipystart = regs->userclipY1;
    else
-      vdp1clipystart = Vdp1Regs->systemclipY1;
+      vdp1clipystart = regs->systemclipY1;
 
-   if (vdp1clipyend < Vdp1Regs->systemclipY2)
-      vdp1clipyend = Vdp1Regs->userclipY2;
+   if (vdp1clipyend < regs->systemclipY2)
+      vdp1clipyend = regs->userclipY2;
    else
-      vdp1clipyend = Vdp1Regs->systemclipY2;
+      vdp1clipyend = regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void PopUserClipping(void)
+static void PopUserClipping(Vdp1* regs)
 {
-   vdp1clipxstart = Vdp1Regs->systemclipX1;
-   vdp1clipxend = Vdp1Regs->systemclipX2;
-   vdp1clipystart = Vdp1Regs->systemclipY1;
-   vdp1clipyend = Vdp1Regs->systemclipY2;
+   vdp1clipxstart = regs->systemclipX1;
+   vdp1clipxend = regs->systemclipX2;
+   vdp1clipystart = regs->systemclipY1;
+   vdp1clipyend = regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1SystemClipping(void)
+void VIDSoftVdp1SystemClipping(u8* ram, Vdp1*regs)
 {
-   Vdp1Regs->systemclipX1 = 0;
-   Vdp1Regs->systemclipY1 = 0;
-   Vdp1Regs->systemclipX2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x14);
-   Vdp1Regs->systemclipY2 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
+   regs->systemclipX1 = 0;
+   regs->systemclipY1 = 0;
+   regs->systemclipX2 = T1ReadWord(ram, regs->addr + 0x14);
+   regs->systemclipY2 = T1ReadWord(ram, regs->addr + 0x16);
 
-   vdp1clipxstart = Vdp1Regs->systemclipX1;
-   vdp1clipxend = Vdp1Regs->systemclipX2;
-   vdp1clipystart = Vdp1Regs->systemclipY1;
-   vdp1clipyend = Vdp1Regs->systemclipY2;
+   vdp1clipxstart = regs->systemclipX1;
+   vdp1clipxend = regs->systemclipX2;
+   vdp1clipystart = regs->systemclipY1;
+   vdp1clipyend = regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1LocalCoordinate(void)
+void VIDSoftVdp1LocalCoordinate(u8* ram, Vdp1*regs)
 {
-   Vdp1Regs->localX = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
-   Vdp1Regs->localY = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
+   regs->localX = T1ReadWord(ram, regs->addr + 0xC);
+   regs->localY = T1ReadWord(ram, regs->addr + 0xE);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3536,6 +3620,12 @@ void VIDSoftVdp2DrawEnd(void)
 #endif
 
    TitanRender(dispbuffer);
+
+   if (vidsoft_vdp1_thread_enabled)
+   {
+      VidsoftWaitForVdp1Thread();
+      memcpy(vdp1backframebuffer, vidsoft_vdp1_thread_context.back_framebuffer, 0x40000);
+   }
 
    VIDSoftVdp1SwapFrameBuffer();
 
@@ -3874,39 +3964,39 @@ void VIDSoftVdp1SwapFrameBuffer(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1EraseFrameBuffer(void)
+void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer)
 {   
    int i,i2;
    int w,h;
 
-   if (((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase)
+   if (((regs->FBCR & 2) == 0) || Vdp1External.manualerase)
    {
-      h = (Vdp1Regs->EWRR & 0x1FF) + 1;
+      h = (regs->EWRR & 0x1FF) + 1;
       if (h > vdp1height) h = vdp1height;
-      w = ((Vdp1Regs->EWRR >> 6) & 0x3F8) + 8;
+      w = ((regs->EWRR >> 6) & 0x3F8) + 8;
       if (w > vdp1width) w = vdp1width;
 
       if (vdp1pixelsize == 2)
       {
-         for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
+         for (i2 = (regs->EWLR & 0x1FF); i2 < h; i2++)
          {
-            for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
-               ((u16 *)vdp1backframebuffer)[(i2 * vdp1width) + i] = Vdp1Regs->EWDR;
+            for (i = ((regs->EWLR >> 6) & 0x1F8); i < w; i++)
+               ((u16 *)back_framebuffer)[(i2 * vdp1width) + i] = regs->EWDR;
          }
       }
       else
       {
-         w = Vdp1Regs->EWRR >> 9;
+         w = regs->EWRR >> 9;
          w *= 16;
 
-         for (i2 = (Vdp1Regs->EWLR & 0x1FF); i2 < h; i2++)
+         for (i2 = (regs->EWLR & 0x1FF); i2 < h; i2++)
          {
-            for (i = ((Vdp1Regs->EWLR >> 6) & 0x1F8); i < w; i++)
+            for (i = ((regs->EWLR >> 6) & 0x1F8); i < w; i++)
             {
                int pos = (i2 * vdp1width) + i;
 
                if (pos < 0x3FFFF)
-                  vdp1backframebuffer[pos] = Vdp1Regs->EWDR & 0xFF;
+                  back_framebuffer[pos] = regs->EWDR & 0xFF;
             }
          }
       }
