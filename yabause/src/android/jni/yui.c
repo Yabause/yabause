@@ -1104,14 +1104,14 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
-	yprintf("press: %d,%d",player,key);
+//	yprintf("press: %d,%d",player,key);
     PerKeyDown(MAKE_PAD(player,key));
 }
 
 void
 Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
 {
-	yprintf("release: %d,%d",player,key);
+//	yprintf("release: %d,%d",player,key);
     PerKeyUp(MAKE_PAD(player,key));
 }
 

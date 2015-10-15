@@ -290,9 +290,20 @@ import android.view.LayoutInflater;
                 	
                 	// for PS3 Controller needs to ignore L2,R2. this event is duped at onGenericMotion.
                 	InputDevice dev = InputDevice.getDevice(event.getDeviceId());
-                	if( dev.getProductId() == 616 & (keyCode == KEYCODE_L2 || keyCode == KEYCODE_R2) ){
+                	if( dev.getProductId() == 616 ){
+                		if (keyCode == KEYCODE_L2 || keyCode == KEYCODE_R2){
+                			return false;
+                		}
+                		
+                	// Don't use DPAD which has problems for multi player	
+                	}
+                	else if( keyCode == KeyEvent.KEYCODE_DPAD_UP || 
+                		keyCode == KeyEvent.KEYCODE_DPAD_DOWN || 
+                		keyCode == KeyEvent.KEYCODE_DPAD_LEFT || 
+                		keyCode ==  KeyEvent.KEYCODE_DPAD_RIGHT ){
                 		return false;
                 	}
+
                 	                	
                 	Integer PadKey = Keymap.get(keyCode);
                 	if( PadKey != null ) {
@@ -311,10 +322,31 @@ import android.view.LayoutInflater;
 	@Override
 	public boolean onGenericMotion(View v, MotionEvent event) {
 		
+		
 		if( event.getDeviceId() != _selected_device_id ) return false;
 		
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
-        	
+       	
+            // Use the hat axis value to find the D-pad direction
+            MotionEvent motionEvent = (MotionEvent) event;
+            float xaxis = motionEvent.getAxisValue(MotionEvent.AXIS_HAT_X);
+            float yaxis = motionEvent.getAxisValue(MotionEvent.AXIS_HAT_Y);
+
+            // Check if the AXIS_HAT_X value is -1 or 1, and set the D-pad
+            // LEFT and RIGHT direction accordingly.
+            if (Float.compare(xaxis, -1.0f) == 0) {
+            	return setKeymap(MotionEvent.AXIS_HAT_X | 0x8000 );
+            } else if (Float.compare(xaxis, 1.0f) == 0) {
+            	return setKeymap(MotionEvent.AXIS_HAT_X);
+            }
+            // Check if the AXIS_HAT_Y value is -1 or 1, and set the D-pad
+            // UP and DOWN direction accordingly.
+            else if (Float.compare(yaxis, -1.0f) == 0) {
+            	return setKeymap(MotionEvent.AXIS_HAT_Y | 0x8000  );
+            } else if (Float.compare(yaxis, 1.0f) == 0) {
+            	return setKeymap(MotionEvent.AXIS_HAT_Y);
+            }        	
+       	
       	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );
       	  if( newLeftTrigger != _oldLeftTrigger ){
      		  

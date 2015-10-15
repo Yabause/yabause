@@ -24,6 +24,7 @@ import java.lang.Runnable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -57,7 +58,9 @@ import android.provider.MediaStore;
 import android.net.Uri;
 import android.view.Surface;
 import android.app.ActivityManager;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
+import android.content.pm.PackageManager;
 
 class InputHandler extends Handler {
     private YabauseRunnable yr;
@@ -186,7 +189,14 @@ public class Yabause extends Activity implements OnPadListener
         if( exgame != null ){
         	gamepath = exgame;  
         }
-        
+/*        
+        ActivityManager activityManager = ((ActivityManager) getSystemService(ACTIVITY_SERVICE));
+        PackageManager pm = getPackageManager();
+        List<ApplicationInfo> appList = pm.getInstalledApplications(0);
+        for (int i = 0; i < appList.size(); i++){
+            activityManager.killBackgroundProcesses(appList.get(i).packageName);
+        }
+*/              
         System.gc(); // Clear Memory Before run
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
@@ -267,14 +277,7 @@ public class Yabause extends Activity implements OnPadListener
         return true;
     }
 
-    @Override public boolean onGenericMotionEvent(MotionEvent event) {
 
-    	int rtn = padm.onGenericMotionEvent(event);
-        if (rtn != 0) {
-            return false;
-        }
-        return super.onGenericMotionEvent(event);
-    }
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -375,6 +378,15 @@ public class Yabause extends Activity implements OnPadListener
     		break; 
     	}
     }
+     
+    @Override public boolean onGenericMotionEvent(MotionEvent event) {
+
+    	int rtn = padm.onGenericMotionEvent(event);
+        if (rtn != 0) {
+            return true;
+        }
+        return super.onGenericMotionEvent(event);
+    }
     
     @Override
     public boolean dispatchKeyEvent (KeyEvent event){
@@ -382,7 +394,7 @@ public class Yabause extends Activity implements OnPadListener
     	
     	int action =event.getAction(); 
     	int keyCode = event.getKeyCode();
-    	Log.d("dispatchKeyEvent","device:" + event.getDeviceId() + ",action:" + action +",keyCoe:" + keyCode );
+    	//Log.d("dispatchKeyEvent","device:" + event.getDeviceId() + ",action:" + action +",keyCoe:" + keyCode );
     	if( action == KeyEvent.ACTION_UP){
             int rtn = padm.onKeyUp(keyCode, event);
             if (rtn != 0) {
@@ -391,13 +403,17 @@ public class Yabause extends Activity implements OnPadListener
     	}else if( action == KeyEvent.ACTION_MULTIPLE ){
     		
     	}else if( action == KeyEvent.ACTION_DOWN ){
+            
+    		if ( keyCode == KeyEvent.KEYCODE_BACK) {
+                openOptionsMenu();
+                return true;
+            }  
+            
             int rtn =  padm.onKeyDown(keyCode, event);
             if (rtn != 0) {
                 return true;
             }  
-            if ( keyCode == KeyEvent.KEYCODE_BACK) {
-                openOptionsMenu();
-            }             
+          
     	}
     
     	return super.dispatchKeyEvent(event);
