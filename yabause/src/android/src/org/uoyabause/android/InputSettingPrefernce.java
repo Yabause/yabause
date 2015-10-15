@@ -50,7 +50,13 @@ import android.view.LayoutInflater;
     private PadManager pad_m;
     Context context_m;
     private int _selected_device_id = 0;
+    private String save_filename = "keymap";
+    private int playerid = 0;
 
+    public void setPlayerAndFileame( int playerid, String fname ){
+    	this.playerid = playerid;
+    	this.save_filename = fname;
+    }
 	public InputSettingPrefernce(Context context) {
 		super(context);
 		InitObjects(context);
@@ -88,6 +94,7 @@ import android.view.LayoutInflater;
     	
     	setDialogLayoutResource(R.layout.keymap);
     	
+   	
 	}
 	
 	void setMessage( String str ){
@@ -110,7 +117,11 @@ import android.view.LayoutInflater;
     		return;
     	}    
     	
-    	_selected_device_id = pad_m.getPlayer1InputDevice();
+    	if( this.playerid ==1 ){
+    		_selected_device_id = pad_m.getPlayer2InputDevice();
+    	}else{
+    		_selected_device_id = pad_m.getPlayer1InputDevice();    		
+    	}
 	}
 
 	 
@@ -157,7 +168,7 @@ import android.view.LayoutInflater;
 	@Override
 	protected void onDialogClosed(boolean positiveResult) {
 		if(positiveResult){
-			persistString("yabause/keymap.json");
+			persistString("yabause/"+save_filename+".json");
 		}
 		super.onDialogClosed(positiveResult);
 	}
@@ -206,7 +217,7 @@ import android.view.LayoutInflater;
 	    	}
 	    	
 	        // jsonファイル出力
-	        File file = new File(Environment.getExternalStorageDirectory() + "/" +  "yabause/keymap.json");
+	        File file = new File(Environment.getExternalStorageDirectory() + "/" +  "yabause/"+save_filename+".json");
 	        FileWriter filewriter;
 	     
 	        filewriter = new FileWriter(file);
@@ -272,16 +283,27 @@ import android.view.LayoutInflater;
 		
 		if( event.getDeviceId() != _selected_device_id ) return false;
 		
-        if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
+    if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
                 if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                 	
                 	
                 	// for PS3 Controller needs to ignore L2,R2. this event is duped at onGenericMotion.
                 	InputDevice dev = InputDevice.getDevice(event.getDeviceId());
-                	if( dev.getProductId() == 616 & (keyCode == KEYCODE_L2 || keyCode == KEYCODE_R2) ){
+                	if( dev.getProductId() == 616 ){
+                		if (keyCode == KEYCODE_L2 || keyCode == KEYCODE_R2){
+                			return false;
+                		}
+                		
+                	// Don't use DPAD which has problems for multi player	
+                	}
+                	else if( keyCode == KeyEvent.KEYCODE_DPAD_UP || 
+                		keyCode == KeyEvent.KEYCODE_DPAD_DOWN || 
+                		keyCode == KeyEvent.KEYCODE_DPAD_LEFT || 
+                		keyCode ==  KeyEvent.KEYCODE_DPAD_RIGHT ){
                 		return false;
                 	}
+
                 	                	
                 	Integer PadKey = Keymap.get(keyCode);
                 	if( PadKey != null ) {
@@ -300,10 +322,31 @@ import android.view.LayoutInflater;
 	@Override
 	public boolean onGenericMotion(View v, MotionEvent event) {
 		
+		
 		if( event.getDeviceId() != _selected_device_id ) return false;
 		
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
-        	
+       	
+            // Use the hat axis value to find the D-pad direction
+            MotionEvent motionEvent = (MotionEvent) event;
+            float xaxis = motionEvent.getAxisValue(MotionEvent.AXIS_HAT_X);
+            float yaxis = motionEvent.getAxisValue(MotionEvent.AXIS_HAT_Y);
+
+            // Check if the AXIS_HAT_X value is -1 or 1, and set the D-pad
+            // LEFT and RIGHT direction accordingly.
+            if (Float.compare(xaxis, -1.0f) == 0) {
+            	return setKeymap(MotionEvent.AXIS_HAT_X | 0x8000 );
+            } else if (Float.compare(xaxis, 1.0f) == 0) {
+            	return setKeymap(MotionEvent.AXIS_HAT_X);
+            }
+            // Check if the AXIS_HAT_Y value is -1 or 1, and set the D-pad
+            // UP and DOWN direction accordingly.
+            else if (Float.compare(yaxis, -1.0f) == 0) {
+            	return setKeymap(MotionEvent.AXIS_HAT_Y | 0x8000  );
+            } else if (Float.compare(yaxis, 1.0f) == 0) {
+            	return setKeymap(MotionEvent.AXIS_HAT_Y);
+            }        	
+       	
       	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );
       	  if( newLeftTrigger != _oldLeftTrigger ){
      		  

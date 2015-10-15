@@ -101,6 +101,9 @@ const char * s_cartpath = NULL;
 int s_carttype;
 char s_savepath[256] ="\0";
 int s_vidcoretype = VIDCORE_OGL;
+int s_player2Enable = -1;
+
+#define MAKE_PAD(a,b) ((a<<24)|(b))
 
 enum RenderThreadMessage {
         MSG_NONE = 0,
@@ -290,6 +293,20 @@ const char * GetCartridgePath()
         return NULL;
     else
         return (*env)->GetStringUTFChars(env, message, &dummy);
+}
+
+int GetPlayer2Device(){
+	
+    jclass yclass;
+    jmethodID getPlayer2InputDevice;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return -1;
+    }
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getPlayer2InputDevice = (*env)->GetMethodID(env, yclass, "getPlayer2InputDevice", "()I");
+    return (*env)->CallIntMethod(env, yabause, getPlayer2InputDevice);
 }
 
 void YuiErrorMsg(const char *string)
@@ -693,6 +710,7 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     s_cartpath = GetCartridgePath();
     s_vidcoretype = GetVideoInterface();
     s_carttype =  GetCartridgeType();
+	s_player2Enable = GetPlayer2Device();
 	
 	 YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
     
@@ -944,19 +962,36 @@ int initEgl( ANativeWindow* window )
 
     PerPortReset();
     padbits = PerPadAdd(&PORTDATA1);
-    PerSetKey(PERPAD_UP, PERPAD_UP, padbits);
-    PerSetKey(PERPAD_RIGHT, PERPAD_RIGHT, padbits);
-    PerSetKey(PERPAD_DOWN, PERPAD_DOWN, padbits);
-    PerSetKey(PERPAD_LEFT, PERPAD_LEFT, padbits);
-    PerSetKey(PERPAD_START, PERPAD_START, padbits);
-    PerSetKey(PERPAD_A, PERPAD_A, padbits);
-    PerSetKey(PERPAD_B, PERPAD_B, padbits);
-    PerSetKey(PERPAD_C, PERPAD_C, padbits);
-    PerSetKey(PERPAD_X, PERPAD_X, padbits);
-    PerSetKey(PERPAD_Y, PERPAD_Y, padbits);
-    PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
-    PerSetKey(PERPAD_RIGHT_TRIGGER,PERPAD_RIGHT_TRIGGER,padbits);
-    PerSetKey(PERPAD_LEFT_TRIGGER,PERPAD_LEFT_TRIGGER,padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+	
+	if( s_player2Enable != -1 ) {
+		padbits = PerPadAdd(&PORTDATA2);
+		PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+	}
 
     ScspSetFrameAccurate(1);
 
@@ -1066,15 +1101,17 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 }
 
 void
-Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key )
+Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
-    PerKeyDown(key);
+//	yprintf("press: %d,%d",player,key);
+    PerKeyDown(MAKE_PAD(player,key));
 }
 
 void
-Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key )
+Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
 {
-    PerKeyUp(key);
+//	yprintf("release: %d,%d",player,key);
+    PerKeyUp(MAKE_PAD(player,key));
 }
 
 void
