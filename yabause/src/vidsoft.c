@@ -91,6 +91,8 @@ void VIDSoftVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1UserClipping(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1SystemClipping(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
+void VIDSoftVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+void VIDSoftVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 int VIDSoftVdp2Reset(void);
 void VIDSoftVdp2DrawStart(void);
 void VIDSoftVdp2DrawEnd(void);
@@ -128,7 +130,8 @@ VIDSoftVdp1LineDraw,
 VIDSoftVdp1UserClipping,
 VIDSoftVdp1SystemClipping,
 VIDSoftVdp1LocalCoordinate,
-NULL,
+VIDSoftVdp1ReadFrameBuffer,
+VIDSoftVdp1WriteFrameBuffer,
 VIDSoftVdp2Reset,
 VIDSoftVdp2DrawStart,
 VIDSoftVdp2DrawEnd,
@@ -3266,6 +3269,57 @@ void VIDSoftVdp1LocalCoordinate(u8* ram, Vdp1*regs)
 {
    regs->localX = T1ReadWord(ram, regs->addr + 0xC);
    regs->localY = T1ReadWord(ram, regs->addr + 0xE);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftVdp1ReadFrameBuffer(u32 type, u32 addr, void * out)
+{
+   u32 val;
+
+   VidsoftWaitForVdp1Thread();
+
+   switch (type)
+   {
+   case 0:
+      *(u8*)out = 0;
+      break;
+   case 1:
+      val = T1ReadWord(vdp1frontframebuffer, addr);
+#ifndef WORDS_BIGENDIAN
+      val = BSWAP16L(val);
+#endif
+      *(u16*)out = val;
+      break;
+   case 2:
+      *(u32*)out = 0;
+      break;
+   default:
+      break;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDSoftVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val)
+{
+   VidsoftWaitForVdp1Thread();
+
+   switch (type)
+   {
+   case 0:
+      break;
+   case 1:
+#ifndef WORDS_BIGENDIAN
+      val = BSWAP16L(val);
+#endif
+      T1WriteWord(vdp1frontframebuffer, addr, val);
+      break;
+   case 2:
+      break;
+   default:
+      break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
