@@ -79,7 +79,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
     	InputSettingPrefernce inputsetting1 = (InputSettingPrefernce)findPreference("pref_inputdef_file");
         inputsetting1.setPlayerAndFileame(0,"keymap");
     	InputSettingPrefernce inputsetting2 = (InputSettingPrefernce)findPreference("pref_player2_inputdef_file");
-        inputsetting2.setPlayerAndFileame(1,"keymap_payer2");
+        inputsetting2.setPlayerAndFileame(1,"keymap_player2");
 
         
         Resources res = getResources();
