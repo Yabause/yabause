@@ -107,6 +107,7 @@ VIDOGLVdp1UserClipping,
 VIDOGLVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
 VIDOGLVdp1ReadFrameBuffer,
+NULL,
 VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
@@ -3147,6 +3148,8 @@ void VIDOGLVdp1DrawStart(void)
    }
    else // color offset disable
       vdp1cor = vdp1cog = vdp1cob = 0;
+
+   Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
 }
 
 //////////////////////////////////////////////////////////////////////////////
