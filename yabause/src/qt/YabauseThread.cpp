@@ -314,6 +314,8 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
 	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() ); 
    showFPS = vs->value( "General/ShowFPS", false ).toBool();
+	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
+	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
 	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
 	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
@@ -361,6 +363,9 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.cartpath = 0;
 	mYabauseConf.videoformattype = VIDEOFORMATTYPE_NTSC;
 	mYabauseConf.skip_load = 0;
+	int numThreads = QThread::idealThreadCount();	
+	mYabauseConf.usethreads = numThreads <= 1 ? FALSE : TRUE;
+	mYabauseConf.numthreads = numThreads < 0 ? 1 : numThreads;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

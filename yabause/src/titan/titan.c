@@ -454,7 +454,7 @@ void TitanRenderLines(pixel_t * dispbuffer, int start_line, int end_line)
 
 void VIDSoftSetNumPriorityThreads(int num)
 {
-   vidsoft_num_priority_threads = num;
+   vidsoft_num_priority_threads = num > 4 ? 4 : num;
 }
 
 #ifdef WANT_VIDSOFT_PRIORITY_THREADING
