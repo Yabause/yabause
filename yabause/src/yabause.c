@@ -304,7 +304,7 @@ int YabauseInit(yabauseinit_struct *init)
    if (yabsys.UseThreads)
    {
       int num = yabsys.NumThreads < 1 ? 1 : yabsys.NumThreads;
-      VIDSoftSetVdp1ThreadEnable(num == 1 ? 1 : 0);
+      VIDSoftSetVdp1ThreadEnable(num == 1 ? 0 : 1);
       VIDSoftSetNumLayerThreads(num);
       VIDSoftSetNumPriorityThreads(num);
    }
