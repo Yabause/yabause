@@ -310,7 +310,7 @@ int YabauseInit(yabauseinit_struct *init)
    }
    else
    {
-      VIDSoftSetVdp1ThreadEnable(FALSE);
+      VIDSoftSetVdp1ThreadEnable(0);
       VIDSoftSetNumLayerThreads(1);
       VIDSoftSetNumPriorityThreads(1);
    }
