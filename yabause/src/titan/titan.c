@@ -62,13 +62,13 @@ static struct TitanContext {
 
 struct
 {
-   volatile int need_draw[4];
-   volatile int draw_finished[4];
+   volatile int need_draw[5];
+   volatile int draw_finished[5];
    struct
    {
       volatile int start;
       volatile int end;
-   }lines[4];
+   }lines[5];
 
    pixel_t * dispbuffer;
 }priority_thread_context;
@@ -126,7 +126,7 @@ DECLARE_PRIORITY_THREAD(VidsoftPriorityThread0, 0);
 DECLARE_PRIORITY_THREAD(VidsoftPriorityThread1, 1);
 DECLARE_PRIORITY_THREAD(VidsoftPriorityThread2, 2);
 DECLARE_PRIORITY_THREAD(VidsoftPriorityThread3, 3);
-
+DECLARE_PRIORITY_THREAD(VidsoftPriorityThread4, 4);
 #endif
 
 static u32 TitanBlendPixelsTop(u32 top, u32 bottom)
@@ -299,7 +299,7 @@ int TitanInit()
 
 #ifdef WANT_VIDSOFT_PRIORITY_THREADING
 
-      for (i = 0; i < 4; i++)
+      for (i = 0; i < 5; i++)
       {
          priority_thread_context.draw_finished[i] = 1;
          priority_thread_context.need_draw[i] = 0;
@@ -309,6 +309,7 @@ int TitanInit()
       YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_1, VidsoftPriorityThread1, NULL);
       YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_2, VidsoftPriorityThread2, NULL);
       YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_3, VidsoftPriorityThread3, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_4, VidsoftPriorityThread4, NULL);
 #endif
 
       tt_context.inited = 1;
@@ -452,9 +453,16 @@ void TitanRenderLines(pixel_t * dispbuffer, int start_line, int end_line)
    }
 }
 
+//num + 1 needs to be an even number to avoid issues with interlace modes
 void VIDSoftSetNumPriorityThreads(int num)
 {
-   vidsoft_num_priority_threads = num > 4 ? 4 : num;
+   vidsoft_num_priority_threads = num > 5 ? 5 : num;
+
+   if (num == 2)
+      vidsoft_num_priority_threads = 1;
+
+   if (num == 4)
+      vidsoft_num_priority_threads = 3;
 }
 
 #ifdef WANT_VIDSOFT_PRIORITY_THREADING
@@ -477,8 +485,8 @@ void TitanRenderThreads(pixel_t * dispbuffer)
    int total_jobs = vidsoft_num_priority_threads + 1;//main thread runs a job
    int num_lines_per_job = tt_context.vdp2height / total_jobs;
    int remainder = tt_context.vdp2height % total_jobs;
-   int starts[5] = { 0 }; 
-   int ends[5] = { 0 };
+   int starts[6] = { 0 }; 
+   int ends[6] = { 0 };
 
    priority_thread_context.dispbuffer = dispbuffer;
 
