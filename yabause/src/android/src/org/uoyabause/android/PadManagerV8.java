@@ -41,4 +41,7 @@ class PadManagerV8 extends PadManager {
 		
 	}
     
+    public void setPlayer2InputDevice( String id ){}
+    public int getPlayer2InputDevice(){ return 0; }
+	
  }

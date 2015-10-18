@@ -303,11 +303,11 @@ class YabausePad extends View implements OnTouchListener {
         if ((action == event.ACTION_DOWN) || (action == event.ACTION_POINTER_DOWN) || (action == event.ACTION_MOVE) ) {
             for(int i = 0;i < PadEvent.BUTTON_LAST;i++) {
                 if (buttons[i].intersects(hittest)) {
-                    if(!testmode) YabauseRunnable.press(i);
+                    if(!testmode) YabauseRunnable.press(i,0);
                     buttons[i].On(index);
                     //invalidate();
                 }else if( buttons[i].isOn(index) ){
-                	if(!testmode) YabauseRunnable.release(i);
+                	if(!testmode) YabauseRunnable.release(i,0);
                   buttons[i].Off();
                   //invalidate();
                 }
@@ -318,7 +318,7 @@ class YabausePad extends View implements OnTouchListener {
           for(int i = 0;i < PadEvent.BUTTON_LAST;i++) {
               if( buttons[i].isOn(index) ){
                 buttons[i].Off();
-                if(!testmode) YabauseRunnable.release(i);
+                if(!testmode) YabauseRunnable.release(i,0);
                 //invalidate();
               }
           }

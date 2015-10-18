@@ -291,7 +291,6 @@ void VdpProc( void *arg ){
             vdp2VBlankOUT();
             break;
         case VDPEV_DIRECT_DRAW:
-            //LOG("VDP2:VDPEV_DIRECT_DRAW\n");
             Vdp1Draw();
             break;
         case VDPEV_MAKECURRENT:
