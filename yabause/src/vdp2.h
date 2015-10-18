@@ -362,6 +362,7 @@ typedef struct {
 extern Vdp2Internal_struct Vdp2Internal;
 extern u64 lastticks;
 extern int vdp2_is_odd_frame;
+extern Vdp2 Vdp2Lines[270];
 
 // struct for Vdp2 part that shouldn't be saved
 typedef struct {
@@ -400,6 +401,6 @@ void ToggleFullScreen(void);
 void EnableAutoFrameSkip(void);
 void DisableAutoFrameSkip(void);
 
-Vdp2 * Vdp2RestoreRegs(int line);
+Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
 
 #endif
