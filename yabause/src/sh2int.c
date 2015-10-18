@@ -159,6 +159,14 @@ static u32 FASTCALL FetchHWram(u32 addr)
    return T2ReadWord(HighWram, addr & 0xFFFFF);
 }
 
+extern u8 * Vdp1Ram;
+static u32 FASTCALL FetchVram(u32 addr)
+{
+  addr &= 0x07FFFF;
+  return T1ReadWord(Vdp1Ram, addr);
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchInvalid(UNUSED u32 addr)
@@ -2677,6 +2685,9 @@ int SH2InterpreterInit()
             break;
          case 0x020: // CS0
             fetchlist[i] = FetchCs0;
+            break;
+         case 0x05c: // Fighting Viper
+            fetchlist[i] = FetchVram;
             break;
          case 0x060: // High Work Ram
          case 0x061: 

@@ -1,4 +1,5 @@
 /*  Copyright 2011 Guillaume Duhamel
+    Copyright 2015 devMiyax
 
     This file is part of Yabause.
 
@@ -100,6 +101,9 @@ const char * s_cartpath = NULL;
 int s_carttype;
 char s_savepath[256] ="\0";
 int s_vidcoretype = VIDCORE_OGL;
+int s_player2Enable = -1;
+
+#define MAKE_PAD(a,b) ((a<<24)|(b))
 
 enum RenderThreadMessage {
         MSG_NONE = 0,
@@ -289,6 +293,20 @@ const char * GetCartridgePath()
         return NULL;
     else
         return (*env)->GetStringUTFChars(env, message, &dummy);
+}
+
+int GetPlayer2Device(){
+	
+    jclass yclass;
+    jmethodID getPlayer2InputDevice;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+        return -1;
+    }
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getPlayer2InputDevice = (*env)->GetMethodID(env, yclass, "getPlayer2InputDevice", "()I");
+    return (*env)->CallIntMethod(env, yabause, getPlayer2InputDevice);
 }
 
 void YuiErrorMsg(const char *string)
@@ -692,6 +710,9 @@ jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, 
     s_cartpath = GetCartridgePath();
     s_vidcoretype = GetVideoInterface();
     s_carttype =  GetCartridgeType();
+	s_player2Enable = GetPlayer2Device();
+	
+	 YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
     
     OSDInit(0);
 
@@ -704,8 +725,28 @@ int YuiRevokeOGLOnThisThread(){
 #if defined(YAB_ASYNC_RENDERING)
     if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
         YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
-        return -1;
-    }
+        
+        // retry three times
+        usleep(10000);
+         if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+			 YUI_LOG("eglMakeCurrent() returned error %X 2", eglGetError());
+             usleep(10000);
+             if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+				 YUI_LOG("eglMakeCurrent() returned error %X 3", eglGetError());
+                 usleep(10000);
+                 if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+					 YUI_LOG("eglMakeCurrent() returned error %X 4", eglGetError());
+						usleep(10000);
+						if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
+							YUI_LOG("eglMakeCurrent() returned error %X 5", eglGetError());
+							return -1;
+						}
+
+                 }
+             }
+             
+         }
+    }	
 #endif
     return 0;
 }
@@ -718,11 +759,19 @@ int YuiUseOGLOnThisThread(){
         // retry three times
         usleep(10000);
          if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
+			 YUI_LOG("eglMakeCurrent() returned error %X 2", eglGetError());
              usleep(10000);
              if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
+				 YUI_LOG("eglMakeCurrent() returned error %X 3", eglGetError());
                  usleep(10000);
                  if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
-                    return -1;
+					 YUI_LOG("eglMakeCurrent() returned error %X 4", eglGetError());
+						usleep(10000);
+						if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
+							YUI_LOG("eglMakeCurrent() returned error %X 5", eglGetError());
+							return -1;
+						}
+
                  }
              }
              
@@ -735,6 +784,7 @@ int YuiUseOGLOnThisThread(){
 
 int initEgl( ANativeWindow* window )
 {
+	int i;
     int res;
     yabauseinit_struct yinit;
     void * padbits;
@@ -912,25 +962,49 @@ int initEgl( ANativeWindow* window )
 
     PerPortReset();
     padbits = PerPadAdd(&PORTDATA1);
-    PerSetKey(PERPAD_UP, PERPAD_UP, padbits);
-    PerSetKey(PERPAD_RIGHT, PERPAD_RIGHT, padbits);
-    PerSetKey(PERPAD_DOWN, PERPAD_DOWN, padbits);
-    PerSetKey(PERPAD_LEFT, PERPAD_LEFT, padbits);
-    PerSetKey(PERPAD_START, PERPAD_START, padbits);
-    PerSetKey(PERPAD_A, PERPAD_A, padbits);
-    PerSetKey(PERPAD_B, PERPAD_B, padbits);
-    PerSetKey(PERPAD_C, PERPAD_C, padbits);
-    PerSetKey(PERPAD_X, PERPAD_X, padbits);
-    PerSetKey(PERPAD_Y, PERPAD_Y, padbits);
-    PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
-    PerSetKey(PERPAD_RIGHT_TRIGGER,PERPAD_RIGHT_TRIGGER,padbits);
-    PerSetKey(PERPAD_LEFT_TRIGGER,PERPAD_LEFT_TRIGGER,padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+    PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+	
+	if( s_player2Enable != -1 ) {
+		padbits = PerPadAdd(&PORTDATA2);
+		PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+	}
 
     ScspSetFrameAccurate(1);
 
     if( s_vidcoretype == VIDCORE_OGL ){
         OSDChangeCore(OSDCORE_NANOVG);
-        VIDCore->Resize(width,height,0);
+	   for (i = 0; VIDCoreList[i] != NULL; i++)
+	   {
+		  if (VIDCoreList[i]->id == s_vidcoretype)
+		  {
+			 VIDCoreList[i]->Resize(width,height,0);
+			 break;
+		  }
+	   }
     }else{
         OSDChangeCore(OSDCORE_SOFT);
         if( YuiInitProgramForSoftwareRendering() != GL_TRUE ){
@@ -948,8 +1022,9 @@ int switchWindow( ANativeWindow* window ){
     EGLSurface surface;
     EGLint width;
     EGLint height;
+	int i;
     
-    if( g_Display == NULL ||  g_Config == NULL ) return -1;
+    if( g_Display == EGL_NO_DISPLAY ||  g_Config == NULL ) return -1;
     
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     VdpRevoke(); 
@@ -972,11 +1047,24 @@ int switchWindow( ANativeWindow* window ){
     eglQuerySurface(g_Display,surface,EGL_WIDTH,&width);
     eglQuerySurface(g_Display,surface,EGL_HEIGHT,&height);
     YUI_LOG("eglCreateWindowSurface() ok size = %d,%d", width,height);
-    eglMakeCurrent(g_Display, surface, surface, g_Context);
-    VIDCore->Resize(width,height,0);
-    eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    if( eglMakeCurrent(g_Display, surface, surface, g_Context) != EGL_TRUE ){
+		YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
+	}
+
+   for (i = 0; VIDCoreList[i] != NULL; i++)
+   {
+	  if (VIDCoreList[i]->id == s_vidcoretype)
+	  {
+		YUI_LOG("Resize %d,%s %d,%d",s_vidcoretype,VIDCoreList[i]->Name,width,height);
+		 VIDCoreList[i]->Resize(width,height,0);
+		 break;
+	  }
+   }
+
     g_Surface = surface;
+    eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     VdpResume();
+	YuiRevokeOGLOnThisThread();
     return 0;
 }
 
@@ -1013,15 +1101,17 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 }
 
 void
-Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key )
+Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
-    PerKeyDown(key);
+//	yprintf("press: %d,%d",player,key);
+    PerKeyDown(MAKE_PAD(player,key));
 }
 
 void
-Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key )
+Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
 {
-    PerKeyUp(key);
+//	yprintf("release: %d,%d",player,key);
+    PerKeyUp(MAKE_PAD(player,key));
 }
 
 void
