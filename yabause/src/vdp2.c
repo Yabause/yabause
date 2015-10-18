@@ -40,7 +40,7 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
-static Vdp2 Vdp2Lines[270];
+Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
 static int throttlespeed=0;
@@ -292,8 +292,8 @@ void Vdp2HBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-Vdp2 * Vdp2RestoreRegs(int line) {
-   return line > 270 ? NULL : Vdp2Lines + line;
+Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
+   return line > 270 ? NULL : lines + line;
 }
 
 //////////////////////////////////////////////////////////////////////////////

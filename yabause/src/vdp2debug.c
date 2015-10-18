@@ -141,7 +141,7 @@ static INLINE char *AddBitmapInfoString(char *outstring, int wh, int palnum, int
 static void CalcWindowCoordinates(int num, int *hstart, int *vstart, int *hend, int *vend)
 {
    clipping_struct clip;
-   ReadWindowCoordinates(num, &clip);
+   ReadWindowCoordinates(num, &clip, Vdp2Regs);
    *hstart = clip.xstart;
    *vstart = clip.ystart;
    *hend = clip.xend;
