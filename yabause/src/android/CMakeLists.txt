@@ -66,7 +66,7 @@ set (PORT_LIBRARIES
 )
 
 
-set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME} )
+set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/app/src/main/jniLibs/${ANDROID_NDK_ABI_NAME} )
 #set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 #include(AndroidNdkGdb)
 #android_ndk_gdb_enable()

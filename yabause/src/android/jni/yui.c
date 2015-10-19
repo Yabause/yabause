@@ -1135,6 +1135,25 @@ Java_org_uoyabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, 
     ScspSetVolume(volume);
 }
 
+jstring Java_org_uoyabause_android_YabauseRunnable_getGameinfo(JNIEnv *env) {
+	
+	char * buf;
+	
+	jstring rtn;
+	if( cdip == NULL ) return NULL;
+	buf = (char*)malloc(1024);
+	if( buf == NULL ) return NULL;
+	sprintf(buf,
+		"{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","
+		"release_date:\"%s\",\"device_infomation\":\"%s\","
+		"area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
+			cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
+			
+	rtn = (*env)->NewStringUTF(env,buf);
+	free(buf);
+	return rtn;
+}
+
 #if 0
 void
 Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj, jobject bitmap )
