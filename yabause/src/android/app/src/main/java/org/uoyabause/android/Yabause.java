@@ -72,6 +72,7 @@ import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -234,7 +235,8 @@ class AsyncReport extends AsyncTask<String, Integer, Integer> {
     protected Integer doInBackground(String... params) {
         String uri = params[0];
         String json = params[1];
-        return sendReport(uri, json);
+        String product_id = params[2];
+        return sendReport(uri, json, product_id);
     }
 
     // バックグラウンド処理が終了した後にメインスレッドに渡す処理
@@ -243,17 +245,70 @@ class AsyncReport extends AsyncTask<String, Integer, Integer> {
         mainActivity.dismissDialog();
     }
 
-    // 画像をダウンロード
-    private Integer sendReport(String uri,String json) {
-        Log.d("sendReport", "uri=" + uri);
+    private Integer sendReport(String uri,String json, String product_id) {
+
+        Log.d("sendReport", "================ sendReport start ================");
         try {
-            HttpPost httpPost = new HttpPost(new URI(uri));
             DefaultHttpClient client = new DefaultHttpClient();
-            StringEntity se = new StringEntity(json);
-            httpPost.setEntity(se);
-            httpPost.setHeader("Accept", "application/json");
-            httpPost.setHeader("Content-Type", "application/json");
-            HttpResponse response = client.execute(httpPost);
+            long id = -1;
+
+            Log.d("sendReport", "uri=" + uri+ product_id);
+            HttpGet httpGet = new HttpGet(new URI(uri + product_id));
+            HttpResponse resp = client.execute(httpGet);
+
+            int status = resp.getStatusLine().getStatusCode();
+            Log.d("sendReport", "get status=" + status);
+            if (HttpStatus.SC_OK == status) {
+                try {
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    resp.getEntity().writeTo(outputStream);
+                    String data;
+                    data = outputStream.toString(); // JSONデータ
+                    JSONObject rootObject = new JSONObject(data);
+                    Log.d("sendReport", "get id respose=" + data);
+                    if( rootObject.getBoolean("result") == true ){
+                        id = rootObject.getLong("id");
+                    }
+                } catch (Exception e) {
+                    Log.d("sendReport","error");
+                    e.printStackTrace();
+                }
+            } else {
+            }
+
+            if(  id == -1 ) {
+                HttpPost httpPost = new HttpPost(new URI(uri));
+                StringEntity se = new StringEntity(json);
+                httpPost.setEntity(se);
+                httpPost.setHeader("Accept", "application/json");
+                httpPost.setHeader("Content-Type", "application/json");
+                resp = client.execute(httpPost);
+                status = resp.getStatusLine().getStatusCode();
+                Log.d("sendReport", "post stats=" + status);
+                if (HttpStatus.SC_CREATED == status || HttpStatus.SC_OK == status) {
+                    try {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        resp.getEntity().writeTo(outputStream);
+                        String data;
+                        data = outputStream.toString(); // JSONデータ
+                        Log.d("sendReport", "post respose=" + data);
+                        JSONObject rootObject = new JSONObject(data);
+                        if (rootObject.getBoolean("result") == true) {
+                            id = rootObject.getLong("id");
+                        }
+                    } catch (Exception e) {
+                        Log.d("sendReport","error");
+                        e.printStackTrace();
+                    }
+                } else {
+                }
+            }
+
+            Log.d("sendReport", "ID=" + id );
+            if( id == -1 ){
+                return -1;
+            }
+
             return 0;
 /*
             hGetMethod.setURI(new URI(uri));
@@ -557,7 +612,7 @@ public class Yabause extends Activity implements OnPadListener
                         jsonObjgame.put("title_image", jsonObjimg);
 
 
-                        asyncTask.execute("http://192.168.0.5:3000/api/games/", jsonObj.toString());
+                        asyncTask.execute("http://192.168.0.5:3000/api/games/", jsonObj.toString(), YabauseRunnable.getCurrentGameCode() );
 
                         //final ProgressDialog ringProgressDialog = ProgressDialog.show(this, "Please wait ...", "Sending Report ...", true);
                         //ringProgressDialog.setCancelable(true);
