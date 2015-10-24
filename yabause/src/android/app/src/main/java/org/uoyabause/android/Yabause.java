@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -71,6 +72,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -78,6 +80,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
 class InputHandler extends Handler {
@@ -234,9 +237,8 @@ class AsyncReport extends AsyncTask<String, Integer, Integer> {
     @Override
     protected Integer doInBackground(String... params) {
         String uri = params[0];
-        String json = params[1];
-        String product_id = params[2];
-        return sendReport(uri, json, product_id);
+        String product_id = params[1];
+        return sendReport(uri, product_id);
     }
 
     // バックグラウンド処理が終了した後にメインスレッドに渡す処理
@@ -245,17 +247,16 @@ class AsyncReport extends AsyncTask<String, Integer, Integer> {
         mainActivity.dismissDialog();
     }
 
-    private Integer sendReport(String uri,String json, String product_id) {
+    private Integer sendReport(String uri, String product_id) {
 
         Log.d("sendReport", "================ sendReport start ================");
+        DefaultHttpClient client = new DefaultHttpClient();
+
         try {
-            DefaultHttpClient client = new DefaultHttpClient();
             long id = -1;
-
-            Log.d("sendReport", "uri=" + uri+ product_id);
-            HttpGet httpGet = new HttpGet(new URI(uri + product_id));
+            Log.d("sendReport", "uri=" + uri+ "games/" + product_id);
+            HttpGet httpGet = new HttpGet(new URI(uri + "games/" + product_id));
             HttpResponse resp = client.execute(httpGet);
-
             int status = resp.getStatusLine().getStatusCode();
             Log.d("sendReport", "get status=" + status);
             if (HttpStatus.SC_OK == status) {
@@ -273,12 +274,12 @@ class AsyncReport extends AsyncTask<String, Integer, Integer> {
                     Log.d("sendReport","error");
                     e.printStackTrace();
                 }
-            } else {
+            } else {  
             }
+              if(  id == -1 ) {
 
-            if(  id == -1 ) {
-                HttpPost httpPost = new HttpPost(new URI(uri));
-                StringEntity se = new StringEntity(json);
+                HttpPost httpPost = new HttpPost(new URI(uri + "games/"));
+                StringEntity se = new StringEntity(mainActivity.current_game_info.toString());
                 httpPost.setEntity(se);
                 httpPost.setHeader("Accept", "application/json");
                 httpPost.setHeader("Content-Type", "application/json");
@@ -302,14 +303,48 @@ class AsyncReport extends AsyncTask<String, Integer, Integer> {
                     }
                 } else {
                 }
+
             }
 
-            Log.d("sendReport", "ID=" + id );
+            Log.d("sendReport", "ID=" + id);
             if( id == -1 ){
+                client.getConnectionManager().shutdown();
                 return -1;
             }
-
-            return 0;
+            JSONObject reportJson = new JSONObject();
+            reportJson.put("rating",mainActivity.current_report._rating);
+            if( mainActivity.current_report._message != null )
+                reportJson.put("message",mainActivity.current_report._message);
+            reportJson.put("emulator_version",Home.getVersionName(mainActivity));
+            reportJson.put("device",android.os.Build.MODEL);
+            reportJson.put("user_id",1);
+            reportJson.put("game_id",id);
+            JSONObject sendJson = new JSONObject();
+            sendJson.put("report",reportJson);
+            if( mainActivity.current_report._screenshot ){
+                JSONObject jsonObjimg = new JSONObject();
+                jsonObjimg.put("data", mainActivity.current_report._screenshot_base64);
+                jsonObjimg.put("filename", mainActivity.current_report._screenshot_save_path);
+                jsonObjimg.put("content_type", "image/png");
+                JSONObject jsonObjgame = sendJson.getJSONObject("report");
+                jsonObjgame.put("screenshot", jsonObjimg);
+                File file = new File( mainActivity.current_report._screenshot_save_path );
+                file.delete();
+            }
+            Log.d("sendReport", reportJson.toString());
+            HttpPost httpPost = new HttpPost(new URI(uri + "reports/"));
+            StringEntity se = new StringEntity(sendJson.toString());
+            httpPost.setEntity(se);
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-Type", "application/json");
+            resp = client.execute(httpPost);
+            status = resp.getStatusLine().getStatusCode();
+            if (HttpStatus.SC_CREATED == status || HttpStatus.SC_OK == status) {
+                client.getConnectionManager().shutdown();
+                return 0;
+            }
+            client.getConnectionManager().shutdown();
+            return -1;
 /*
             hGetMethod.setURI(new URI(uri));
             HttpResponse resp = hClient.execute(hGetMethod);
@@ -322,8 +357,10 @@ class AsyncReport extends AsyncTask<String, Integer, Integer> {
             }
 */
         } catch (Exception e) {
-            Log.d("sendReport","error");
+            Log.d("sendReport","error:" + e.getMessage() );
             e.printStackTrace();
+        }finally {
+            client.getConnectionManager().shutdown();
         }
         return -1;
     }
@@ -566,79 +603,97 @@ public class Yabause extends Activity implements OnPadListener
             }
 
             case R.id.report:
-                String gameinfo = YabauseRunnable.getGameinfo();
-                if (gameinfo != null){
-                    try {
-
-                        showDialog();
-                        AsyncReport asyncTask = new AsyncReport(this);
-                        JSONObject jsonObj = new JSONObject(gameinfo);
-
-                        DateFormat dateFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
-                        Date date = new Date();
-
-                        String screen_shot_save_path = YabauseStorage.getStorage().getScreenshotPath()
-                                + YabauseRunnable.getCurrentGameCode() +
-                                dateFormat.format(date) + ".png";
-
-                        if (YabauseRunnable.screenshot(screen_shot_save_path) != 0) {
-                            dismissDialog();
-                            return true;
-                        }
-
-                        InputStream inputStream = new FileInputStream(screen_shot_save_path);//You can get an inputStream using any IO API
-                        byte[] bytes;
-                        byte[] buffer = new byte[8192];
-                        int bytesRead;
-                        ByteArrayOutputStream output = new ByteArrayOutputStream();
-                        try {
-                            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                                output.write(buffer, 0, bytesRead);
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            dismissDialog();
-                            return true;
-                        }
-                        bytes = output.toByteArray();
-                        String encodedString = Base64.encodeToString(bytes, Base64.DEFAULT);
-
-
-                        JSONObject jsonObjimg = new JSONObject();
-                        jsonObjimg.put("data", encodedString);
-                        jsonObjimg.put("filename", screen_shot_save_path);
-                        jsonObjimg.put("content_type", "image/png");
-                        JSONObject jsonObjgame = jsonObj.getJSONObject("game");
-                        jsonObjgame.put("title_image", jsonObjimg);
-
-
-                        asyncTask.execute("http://192.168.0.5:3000/api/games/", jsonObj.toString(), YabauseRunnable.getCurrentGameCode() );
-
-                        //final ProgressDialog ringProgressDialog = ProgressDialog.show(this, "Please wait ...", "Sending Report ...", true);
-                        //ringProgressDialog.setCancelable(true);
-                        return true;
-/*
-                        HttpPost httpPost = new HttpPost("http://192.168.0.5:3000/games/");
-                        DefaultHttpClient client = new DefaultHttpClient();
-                        JSONObject jsonObj = new JSONObject(gameinfo);
-                        StringEntity se = new StringEntity(jsonObj.toString());
-                        httpPost.setEntity(se);
-                        httpPost.setHeader("Accept", "application/json");
-                        httpPost.setHeader("Content-Type", "application/json");
-                        HttpResponse response = client.execute(httpPost);
-*/
-                    }catch( Exception e){
-                        e.printStackTrace();
-                    }
-                }
+                waiting_reault = true;
+                DialogFragment newFragment = new ReportDialog();
+                newFragment.show(getFragmentManager(), "Report");
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-        
-        
-    }     
-    
+    }
+
+    class ReportContents{
+        public int _rating;
+        public String _message;
+        public boolean _screenshot;
+        public String _screenshot_base64;
+        public String _screenshot_save_path;
+    }
+
+    public ReportContents current_report;
+    public JSONObject current_game_info;
+
+    void doReportCurrentGame( int rating, String message, boolean screenshot ){
+        current_report = new ReportContents();
+        current_report._rating = rating;
+        current_report._message = message;
+        current_report._screenshot = screenshot;
+        String gameinfo = YabauseRunnable.getGameinfo();
+        if (gameinfo != null){
+
+            try {
+
+                showDialog();
+                AsyncReport asyncTask = new AsyncReport(this);
+                current_game_info = new JSONObject(gameinfo);
+
+                DateFormat dateFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
+                Date date = new Date();
+
+                String screen_shot_save_path = YabauseStorage.getStorage().getScreenshotPath()
+                        + YabauseRunnable.getCurrentGameCode() +
+                        dateFormat.format(date) + ".png";
+
+                if (YabauseRunnable.screenshot(screen_shot_save_path) != 0) {
+                    dismissDialog();
+                    return;
+                }
+
+                InputStream inputStream = new FileInputStream(screen_shot_save_path);//You can get an inputStream using any IO API
+                byte[] bytes;
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
+                try {
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        output.write(buffer, 0, bytesRead);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    dismissDialog();
+                    return;
+                }
+                bytes = output.toByteArray();
+                String encodedString = Base64.encodeToString(bytes, Base64.DEFAULT);
+
+
+                JSONObject jsonObjimg = new JSONObject();
+                jsonObjimg.put("data", encodedString);
+                jsonObjimg.put("filename", screen_shot_save_path);
+                jsonObjimg.put("content_type", "image/png");
+                JSONObject jsonObjgame = current_game_info.getJSONObject("game");
+                jsonObjgame.put("title_image", jsonObjimg);
+
+                if( screenshot ){
+                    current_report._screenshot_base64 = encodedString;
+                    current_report._screenshot_save_path = screen_shot_save_path;
+                }
+                asyncTask.execute("http://192.168.0.7:3000/api/", YabauseRunnable.getCurrentGameCode());
+                //asyncTask.execute("http://www.uoyabause.org/api/", jsonObj.toString(), YabauseRunnable.getCurrentGameCode() );
+
+                return;
+
+            }catch( Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+    void cancelReportCurrentGame(){
+        waiting_reault = false;
+        YabauseRunnable.resume();
+        audio.unmute(audio.SYSTEM);
+    }
+
     @Override
     protected void onActivityResult( int requestCode, int resultCode, Intent data) {
     	switch(requestCode){

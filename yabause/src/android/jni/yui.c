@@ -1330,15 +1330,12 @@ int saveScreenshot( const char * filename ){
     glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
     if( (glerror = glGetError()) != GL_NO_ERROR ){
         YUI_LOG("glReadPixels %04X\n",glerror);
-        
-        pmode = GL_RGB;
-        glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
-        if( (glerror = glGetError()) != GL_NO_ERROR ){
-            YUI_LOG("glReadPixels %04X exit\n",glerror);
-            goto FINISH;
-        }
+         goto FINISH;
     }
-    
+	
+	for( u = 3; u <width*height*4; u+=4 ){
+		buf[u]=0xFF;
+	}
     row_pointers = malloc(sizeof(png_bytep) * height);
     for (v=0; v<height; v++)
         row_pointers[v] = (png_byte*)&buf[ (height-1-v) * width * 4];
