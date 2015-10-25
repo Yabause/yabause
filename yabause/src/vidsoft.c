@@ -3623,6 +3623,12 @@ void VidsoftDrawSprite()
                      {
                         info.titan_shadow_type = TITAN_MSB_SHADOW;
                      }
+
+                     if (pixel == 0)
+                     {
+                        TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, 0)), 0, &info);
+                        continue;
+                     }
                   }
 
                   if ((Vdp2Regs->SPCTL & 0x10))
