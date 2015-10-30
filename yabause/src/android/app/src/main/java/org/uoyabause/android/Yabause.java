@@ -33,6 +33,8 @@ import java.util.List;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
@@ -71,6 +73,7 @@ import android.app.ActivityManager;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
+import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -166,205 +169,6 @@ class YabauseHandler extends Handler {
     }
 }
 
-class AsyncDownload extends AsyncTask<String, Integer, Bitmap> {
-
-    private HttpClient hClient;
-    private HttpGet hGetMethod;
-    private Yabause mainActivity;
-
-    // コンストラクター
-    public AsyncDownload(Yabause activity){
-        mainActivity = activity;
-        hClient = new DefaultHttpClient();
-        hGetMethod = new HttpGet();
-    }
-
-    // バックグラウンドで処理する（重い処理）
-    @Override
-    protected Bitmap doInBackground(String... params) {
-        String uri = params[0];
-        return downloadImage(uri);
-    }
-
-    // バックグラウンド処理が終了した後にメインスレッドに渡す処理
-    @Override
-    protected void onPostExecute(Bitmap result) {
-
-    }
-
-    // 画像をダウンロード
-    private Bitmap downloadImage(String uri) {
-        Log.d("downloadImage", "uri=" + uri);
-        try {
-            hGetMethod.setURI(new URI(uri));
-            HttpResponse resp = hClient.execute(hGetMethod);
-            if (resp.getStatusLine().getStatusCode() < 400) {
-                Log.d("downloadImage","try");
-
-                InputStream is = resp.getEntity().getContent();
-                Bitmap bit = BitmapFactory.decodeStream(is);
-                return bit;
-            }
-        } catch (Exception e) {
-            Log.d("downloadImage","error");
-            e.printStackTrace();
-        }
-        return null;
-    }
-}
-
-
-class AsyncReport extends AsyncTask<String, Integer, Integer> {
-
-    private HttpClient hClient;
-    private HttpGet hGetMethod;
-    private Yabause mainActivity;
-
-    // コンストラクター
-    public AsyncReport(Yabause activity){
-        mainActivity = activity;
-        hClient = new DefaultHttpClient();
-        hGetMethod = new HttpGet();
-    }
-
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-
-    }
-
-    // バックグラウンドで処理する（重い処理）
-    @Override
-    protected Integer doInBackground(String... params) {
-        String uri = params[0];
-        String product_id = params[1];
-        return sendReport(uri, product_id);
-    }
-
-    // バックグラウンド処理が終了した後にメインスレッドに渡す処理
-    @Override
-    protected void onPostExecute(Integer result) {
-        mainActivity.dismissDialog();
-    }
-
-    private Integer sendReport(String uri, String product_id) {
-
-        Log.d("sendReport", "================ sendReport start ================");
-        DefaultHttpClient client = new DefaultHttpClient();
-
-        try {
-            long id = -1;
-            Log.d("sendReport", "uri=" + uri+ "games/" + product_id);
-            HttpGet httpGet = new HttpGet(new URI(uri + "games/" + product_id));
-            HttpResponse resp = client.execute(httpGet);
-            int status = resp.getStatusLine().getStatusCode();
-            Log.d("sendReport", "get status=" + status);
-            if (HttpStatus.SC_OK == status) {
-                try {
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    resp.getEntity().writeTo(outputStream);
-                    String data;
-                    data = outputStream.toString(); // JSONデータ
-                    JSONObject rootObject = new JSONObject(data);
-                    Log.d("sendReport", "get id respose=" + data);
-                    if( rootObject.getBoolean("result") == true ){
-                        id = rootObject.getLong("id");
-                    }
-                } catch (Exception e) {
-                    Log.d("sendReport","error");
-                    e.printStackTrace();
-                }
-            } else {  
-            }
-              if(  id == -1 ) {
-
-                HttpPost httpPost = new HttpPost(new URI(uri + "games/"));
-                StringEntity se = new StringEntity(mainActivity.current_game_info.toString());
-                httpPost.setEntity(se);
-                httpPost.setHeader("Accept", "application/json");
-                httpPost.setHeader("Content-Type", "application/json");
-                resp = client.execute(httpPost);
-                status = resp.getStatusLine().getStatusCode();
-                Log.d("sendReport", "post stats=" + status);
-                if (HttpStatus.SC_CREATED == status || HttpStatus.SC_OK == status) {
-                    try {
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        resp.getEntity().writeTo(outputStream);
-                        String data;
-                        data = outputStream.toString(); // JSONデータ
-                        Log.d("sendReport", "post respose=" + data);
-                        JSONObject rootObject = new JSONObject(data);
-                        if (rootObject.getBoolean("result") == true) {
-                            id = rootObject.getLong("id");
-                        }
-                    } catch (Exception e) {
-                        Log.d("sendReport","error");
-                        e.printStackTrace();
-                    }
-                } else {
-                }
-
-            }
-
-            Log.d("sendReport", "ID=" + id);
-            if( id == -1 ){
-                client.getConnectionManager().shutdown();
-                return -1;
-            }
-            JSONObject reportJson = new JSONObject();
-            reportJson.put("rating",mainActivity.current_report._rating);
-            if( mainActivity.current_report._message != null )
-                reportJson.put("message",mainActivity.current_report._message);
-            reportJson.put("emulator_version",Home.getVersionName(mainActivity));
-            reportJson.put("device",android.os.Build.MODEL);
-            reportJson.put("user_id",1);
-            reportJson.put("game_id",id);
-            JSONObject sendJson = new JSONObject();
-            sendJson.put("report",reportJson);
-            if( mainActivity.current_report._screenshot ){
-                JSONObject jsonObjimg = new JSONObject();
-                jsonObjimg.put("data", mainActivity.current_report._screenshot_base64);
-                jsonObjimg.put("filename", mainActivity.current_report._screenshot_save_path);
-                jsonObjimg.put("content_type", "image/png");
-                JSONObject jsonObjgame = sendJson.getJSONObject("report");
-                jsonObjgame.put("screenshot", jsonObjimg);
-                File file = new File( mainActivity.current_report._screenshot_save_path );
-                file.delete();
-            }
-            Log.d("sendReport", reportJson.toString());
-            HttpPost httpPost = new HttpPost(new URI(uri + "reports/"));
-            StringEntity se = new StringEntity(sendJson.toString());
-            httpPost.setEntity(se);
-            httpPost.setHeader("Accept", "application/json");
-            httpPost.setHeader("Content-Type", "application/json");
-            resp = client.execute(httpPost);
-            status = resp.getStatusLine().getStatusCode();
-            if (HttpStatus.SC_CREATED == status || HttpStatus.SC_OK == status) {
-                client.getConnectionManager().shutdown();
-                return 0;
-            }
-            client.getConnectionManager().shutdown();
-            return -1;
-/*
-            hGetMethod.setURI(new URI(uri));
-            HttpResponse resp = hClient.execute(hGetMethod);
-            if (resp.getStatusLine().getStatusCode() < 400) {
-                Log.d("downloadImage","try");
-
-                InputStream is = resp.getEntity().getContent();
-                Bitmap bit = BitmapFactory.decodeStream(is);
-                return true;
-            }
-*/
-        } catch (Exception e) {
-            Log.d("sendReport","error:" + e.getMessage() );
-            e.printStackTrace();
-        }finally {
-            client.getConnectionManager().shutdown();
-        }
-        return -1;
-    }
-}
 
 public class Yabause extends Activity implements OnPadListener
 {
@@ -378,6 +182,8 @@ public class Yabause extends Activity implements OnPadListener
     private PadManager padm;
     private int video_interface;
     private boolean waiting_reault = false;
+
+    AuthManager _auth;
 
     private ProgressDialog mProgressDialog;
     private Boolean isShowProgress;
@@ -393,6 +199,25 @@ public class Yabause extends Activity implements OnPadListener
         mProgressDialog = null;
         isShowProgress = false;
         waiting_reault = false;
+
+        switch( _report_status){
+            case   REPORT_STATE_INIT:
+                Toast.makeText(this, "Fail to send your report. internal error", Toast.LENGTH_SHORT).show();
+                break;
+            case   REPORT_STATE_SUCCESS:
+                Toast.makeText(this, "Success to send your report. Thank you for your collaboration.", Toast.LENGTH_SHORT).show();
+                break;
+            case   REPORT_STATE_FAIL_DUPE:
+                Toast.makeText(this, "Fail to send your report. You've sent a report for same game, same device and same vesion.", Toast.LENGTH_SHORT).show();
+                break;
+            case   REPORT_STATE_FAIL_CONNECTION:
+                Toast.makeText(this, "Fail to send your report. Server is down.", Toast.LENGTH_SHORT).show();
+                break;
+            case   REPORT_STATE_FAIL_AUTH:
+                Toast.makeText(this, "Fail to send your report. Authorizing is failed.", Toast.LENGTH_SHORT).show();
+                break;
+
+        }
         YabauseRunnable.resume();
         audio.unmute(audio.SYSTEM);
     }
@@ -408,9 +233,9 @@ public class Yabause extends Activity implements OnPadListener
         decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION  | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        setContentView(R.layout.main);  
-        
-        
+        setContentView(R.layout.main);
+
+        _auth = new AuthManager(this);
         audio = new YabauseAudio(this);         
  
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
@@ -459,7 +284,8 @@ public class Yabause extends Activity implements OnPadListener
             		}
 
                 }
-            });            
+            });
+
 
     }
     
@@ -603,13 +429,22 @@ public class Yabause extends Activity implements OnPadListener
             }
 
             case R.id.report:
-                waiting_reault = true;
-                DialogFragment newFragment = new ReportDialog();
-                newFragment.show(getFragmentManager(), "Report");
+                if( _auth.getToken() == null ) {
+                    _auth.afterAuth(R.id.report);
+                    _auth.startAuth();
+                    return true;
+                }
+                startReport();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    void startReport(){
+        waiting_reault = true;
+        DialogFragment newFragment = new ReportDialog();
+        newFragment.show(getFragmentManager(), "Report");
     }
 
     class ReportContents{
@@ -623,11 +458,19 @@ public class Yabause extends Activity implements OnPadListener
     public ReportContents current_report;
     public JSONObject current_game_info;
 
+    static final int REPORT_STATE_INIT= 0;
+    static final int REPORT_STATE_SUCCESS = 1;
+    static final int REPORT_STATE_FAIL_DUPE = -1;
+    static final int REPORT_STATE_FAIL_CONNECTION = -2;
+    static final int REPORT_STATE_FAIL_AUTH = -3;
+    public int _report_status = REPORT_STATE_INIT;
+
     void doReportCurrentGame( int rating, String message, boolean screenshot ){
         current_report = new ReportContents();
         current_report._rating = rating;
         current_report._message = message;
         current_report._screenshot = screenshot;
+        _report_status = REPORT_STATE_INIT;
         String gameinfo = YabauseRunnable.getGameinfo();
         if (gameinfo != null){
 
@@ -678,8 +521,8 @@ public class Yabause extends Activity implements OnPadListener
                     current_report._screenshot_base64 = encodedString;
                     current_report._screenshot_save_path = screen_shot_save_path;
                 }
-                asyncTask.execute("http://192.168.0.7:3000/api/", YabauseRunnable.getCurrentGameCode());
-                //asyncTask.execute("http://www.uoyabause.org/api/", jsonObj.toString(), YabauseRunnable.getCurrentGameCode() );
+                //asyncTask.execute("http://192.168.0.7:3000/api/", YabauseRunnable.getCurrentGameCode());
+                asyncTask.execute("http://www.uoyabause.org/api/", YabauseRunnable.getCurrentGameCode() );
 
                 return;
 
@@ -694,14 +537,27 @@ public class Yabause extends Activity implements OnPadListener
         audio.unmute(audio.SYSTEM);
     }
 
+
+
     @Override
     protected void onActivityResult( int requestCode, int resultCode, Intent data) {
     	switch(requestCode){
-    	case R.id.save_screen:
-    		YabauseRunnable.resume();
-    		audio.unmute(audio.SYSTEM);
-    		waiting_reault = false;
-    		break; 
+    	    case R.id.save_screen:
+                YabauseRunnable.resume();
+                audio.unmute(audio.SYSTEM);
+                waiting_reault = false;
+                break;
+            case AuthManager.AUTHORIZATION_CODE:
+                if( resultCode == RESULT_OK ){
+                    _auth.onAuthorizationCode();
+                }
+                break;
+            case AuthManager.ACCOUNT_CODE:
+                if( resultCode == RESULT_OK ){
+                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                    _auth.onAccountCode(accountName);
+                }
+                break;
     	}
     }
      
