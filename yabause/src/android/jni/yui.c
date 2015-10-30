@@ -1135,6 +1135,25 @@ Java_org_uoyabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, 
     ScspSetVolume(volume);
 }
 
+jstring Java_org_uoyabause_android_YabauseRunnable_getGameinfo(JNIEnv *env) {
+	
+	char * buf;
+	
+	jstring rtn;
+	if( cdip == NULL ) return NULL;
+	buf = (char*)malloc(1024);
+	if( buf == NULL ) return NULL;
+	sprintf(buf,
+		"{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","
+		"release_date:\"%s\",\"device_infomation\":\"%s\","
+		"area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
+			cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
+			
+	rtn = (*env)->NewStringUTF(env,buf);
+	free(buf);
+	return rtn;
+}
+
 #if 0
 void
 Java_org_uoyabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj, jobject bitmap )
@@ -1311,15 +1330,12 @@ int saveScreenshot( const char * filename ){
     glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
     if( (glerror = glGetError()) != GL_NO_ERROR ){
         YUI_LOG("glReadPixels %04X\n",glerror);
-        
-        pmode = GL_RGB;
-        glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
-        if( (glerror = glGetError()) != GL_NO_ERROR ){
-            YUI_LOG("glReadPixels %04X exit\n",glerror);
-            goto FINISH;
-        }
+         goto FINISH;
     }
-    
+	
+	for( u = 3; u <width*height*4; u+=4 ){
+		buf[u]=0xFF;
+	}
     row_pointers = malloc(sizeof(png_bytep) * height);
     for (v=0; v<height; v++)
         row_pointers[v] = (png_byte*)&buf[ (height-1-v) * width * 4];
