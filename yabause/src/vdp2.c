@@ -246,7 +246,7 @@ void Vdp2Reset(void) {
    Vdp2Regs->COBG = 0x0000;
    Vdp2Regs->COBB = 0x0000;
 
-   yabsys.VBlankLineCount = 224;
+   yabsys.VBlankLineCount = 225;
    Vdp2Internal.ColorMode = 0;
 
    Vdp2External.disptoggle = 0xFF;
@@ -533,7 +533,7 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
    {
       case 0x000:
          Vdp2Regs->TVMD = val;
-         yabsys.VBlankLineCount = 224+(val & 0x30);
+         yabsys.VBlankLineCount = 225+(val & 0x30);
          return;
       case 0x002:
          Vdp2Regs->EXTEN = val;

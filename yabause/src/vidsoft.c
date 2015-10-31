@@ -138,6 +138,7 @@ pixel_t *dispbuffer=NULL;
 u8 *vdp1framebuffer[2]= { NULL, NULL };
 u8 *vdp1frontframebuffer;
 u8 *vdp1backframebuffer;
+u8 sprite_window_mask[512 * 256];
 
 static int vdp1width;
 static int vdp1height;
@@ -455,23 +456,88 @@ static INLINE int TestWindow(int wctl, int enablemask, int inoutmask, clipping_s
 
 //////////////////////////////////////////////////////////////////////////////
 
+int TestSpriteWindow(int wctl, int x, int y)
+{
+   int mask = sprite_window_mask[(y*vdp1width) + x];
+
+   if (wctl & 0x20)//sprite window enabled on layer
+   {
+      if (wctl & 0x10)//inside or outside
+      {
+         if (mask == 0)
+            return 0;
+      }
+      else
+      {
+         if (mask)
+            return 0;
+      }
+
+      return 1;
+   }
+   return 3;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int WindowLogic(int wctl, int w0, int w1)
+{
+   if (((wctl & 0x80) == 0x80))
+      /* AND logic, returns 0 only if both the windows are active */
+      return w0 || w1;
+   else
+      /* OR logic, returns 0 if one of the windows is active */
+      return w0 && w1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static INLINE int TestBothWindow(int wctl, clipping_struct *clip, int x, int y)
 {
     int w0 = TestWindow(wctl, 0x2, 0x1, &clip[0], x, y);
     int w1 = TestWindow(wctl, 0x8, 0x4, &clip[1], x, y);
+    int spr = TestSpriteWindow(wctl, x,y);
 
-    /* if window 0 is disabled, return window 1 */
-    if (w0 & 2) return w1 & 1;
-    /* if window 1 is disabled, return window 0 */
-    if (w1 & 2) return w0 & 1;
+    //all windows disabled
+    if ((wctl & 0x2a) == 0)
+    {
+       if ((wctl & 0x80) == 0x80)
+          return 0;
+       else
+          return 1;
+    }
 
-    /* if both windows are active */
-    if ((wctl & 0x80) == 0x80)
-        /* AND logic, returns 0 only if both the windows are active */
-        return w0 || w1;
-    else
-        /* OR logic, returns 0 if one of the windows is active */
-        return w0 && w1;
+    //if only window 0 is enabled
+    if ((w1 & 2) && (spr & 2)) return w0 & 1;
+    //if only window 1 is enabled
+    if ((w0 & 2) && (spr & 2)) return w1 & 1;
+
+    //window 0 and 1, sprite disabled
+    if ((spr & 2))
+       return WindowLogic(wctl, w0, w1);
+
+    //if only sprite window is enabled
+    if ((w1 & 2) && (w0 & 2)) return spr & 1;
+
+    //window 0 and sprite enabled
+    if ((wctl & 0x2a) == 0x22)
+       return WindowLogic(wctl, w0, spr);
+
+    //window 1 and sprite enabled
+    if ((wctl & 0x2a) == 0x28)
+       return WindowLogic(wctl, w1, spr);
+
+    //all three windows enabled
+    if ((wctl & 0x2a) == 0x2a)
+    {
+       if ((wctl & 0x80) == 0x80)
+          return w0 || w1 || spr;//and logic
+       else
+          return w0 && w1 && spr;//or logic
+    }
+
+    return 1;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2554,7 +2620,7 @@ static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_f
 		if (clipped) return;
 	}
 
-	if ((cmd->CMDPMOD & (1 << 15)) && ((Vdp2Regs->SPCTL & 0x10) == 0))
+	if (cmd->CMDPMOD & (1 << 15))
 	{
 		if (currentPixel) {
 			*iPix |= 0x8000;
@@ -3337,7 +3403,7 @@ void VIDSoftVdp2DrawStart(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp2DrawEnd(void)
+void VidsoftDrawSprite()
 {
    int i, i2;
    u16 pixel;
@@ -3352,6 +3418,8 @@ void VIDSoftVdp2DrawEnd(void)
    clipping_struct colorcalcwindow[2];
    int framebuffer_readout_y = 0;
    int start_line = 0, line_increment = 0;
+
+   memset(sprite_window_mask, 0, 512 * 256);
 
    // Figure out whether to draw vdp1 framebuffer or vdp2 framebuffer pixels
    // based on priority
@@ -3429,9 +3497,12 @@ void VIDSoftVdp2DrawEnd(void)
             info.titan_shadow_type = 0;
 
             // See if screen position is clipped, if it isn't, continue
-            if (!TestBothWindow(wctl, clip, i, i2))
+            if (!(Vdp2Regs->SPCTL & 0x10))
             {
-               continue;
+               if (!TestBothWindow(wctl, clip, i, i2))
+               {
+                  continue;
+               }
             }
 
             if (Vdp1Regs->TVMR & 2) {
@@ -3545,13 +3616,29 @@ void VIDSoftVdp2DrawEnd(void)
                   if (spi.msbshadow)
                   {
                      if (Vdp2Regs->SPCTL & 0x10) {
-                        /* sprite window, not handled yet... we avoid displaying garbage */
+                        sprite_window_mask[(y*vdp1width) + x] = 1;
+                        info.titan_shadow_type = TITAN_MSB_SHADOW;
                      }
-                     else 
+                     else
                      {
                         info.titan_shadow_type = TITAN_MSB_SHADOW;
                      }
+
+                     if (pixel == 0)
+                     {
+                        TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, 0)), 0, &info);
+                        continue;
+                     }
                   }
+
+                  if ((Vdp2Regs->SPCTL & 0x10))
+                  {
+                     if (!TestBothWindow(wctl, clip, i, i2))
+                     {
+                        continue;
+                     }
+                  }
+
                   TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0, &info);
                }
             }
@@ -3621,7 +3708,10 @@ void VIDSoftVdp2DrawEnd(void)
          }
       }
    }
+}
 
+void VIDSoftVdp2DrawEnd(void)
+{
 #ifdef WANT_VIDSOFT_LAYER_THREADING
    while (!vidsoft_thread_context.draw_finished[TITAN_NBG0]){}
    while (!vidsoft_thread_context.draw_finished[TITAN_NBG1]){}
@@ -3695,6 +3785,8 @@ void VIDSoftVdp2DrawScreens(void)
       draw_priority_0[TITAN_NBG3] = (Vdp2Regs->SFPRMD >> 6) & 0x3;
       draw_priority_0[TITAN_RBG0] = (Vdp2Regs->SFPRMD >> 8) & 0x3;
    }
+
+   VidsoftDrawSprite();
 
    if (vidsoft_num_layer_threads > 0)
    {

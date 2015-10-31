@@ -248,8 +248,9 @@ finished:
          pixel_stack[0].pixel = tt_context.blend(pixel_stack[0].pixel, bottom);
       }
 
-      //sprite self-shadowing
-      pixel_stack[0].pixel = TitanBlendPixelsTop(0x20000000, pixel_stack[0].pixel);
+      //sprite self-shadowing, only if sprite window is not enabled
+      if (!(Vdp2Regs->SPCTL & 0x10))
+         pixel_stack[0].pixel = TitanBlendPixelsTop(0x20000000, pixel_stack[0].pixel);
    }
    else if (pixel_stack[0].shadow_type == TITAN_NORMAL_SHADOW)
    {
