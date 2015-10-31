@@ -3922,13 +3922,14 @@ void VIDSoftVdp1SwapFrameBuffer(void)
 {
    if (((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
    {
+		u8 *temp;
       if (vidsoft_vdp1_thread_enabled)
       {
          VidsoftWaitForVdp1Thread();
          memcpy(vdp1backframebuffer, vidsoft_vdp1_thread_context.back_framebuffer, 0x40000);
       }
 
-      u8 *temp = vdp1frontframebuffer;
+      temp = vdp1frontframebuffer;
       vdp1frontframebuffer = vdp1backframebuffer;
       vdp1backframebuffer = temp;
       Vdp1External.manualchange = 0;

@@ -704,7 +704,7 @@ void UIYabause::on_aFileSettings_triggered()
 			if (newhash["General/EnableMultiThreading"].toBool())
 			{
 				int num = newhash["General/NumThreads"].toInt() < 1 ? 1 : newhash["General/NumThreads"].toInt();
-				VIDSoftSetVdp1ThreadEnable(num == 1 ? FALSE : TRUE);
+				VIDSoftSetVdp1ThreadEnable(num == 1 ? 0 : 1);
 				VIDSoftSetNumLayerThreads(num);
 				VIDSoftSetNumPriorityThreads(num);
 			}
