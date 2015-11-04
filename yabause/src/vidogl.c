@@ -166,6 +166,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01NoK( vdp2draw_struct 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01WithK( vdp2draw_struct * info,int h, int v );
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02NoK( vdp2draw_struct * info,int h, int v );
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA( vdp2draw_struct * info,int h, int v );
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct * info, int h, int v);
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB( vdp2draw_struct * info,int h, int v );
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK( vdp2draw_struct * info,int h, int v );
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA( vdp2draw_struct * info,int h, int v );
@@ -5212,7 +5213,10 @@ static void Vdp2DrawRBG0(void)
       {
          info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode02NoK;
       }else{
-         info.GetRParam = (Vdp2GetRParam_func) vdp2RGetParamMode02WithKA;
+		  if( paraB.coefenab )
+			  info.GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02WithKAWithKB;
+		  else
+			info.GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02WithKA;
       }
 
    }else if( Vdp2Regs->RPMD == 0x03 )
@@ -5618,12 +5622,19 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA( vdp2draw_stru
 {
 	if (info->GetKValueA(&paraA, (paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
 	{
-		if (paraB.coefenab){
-			info->GetKValueB(&paraB, (paraB.KtablV + (paraB.deltaKAx * h)));
-		}
         return &paraB;
     }
     return &paraA;
+}
+
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct * info, int h, int v)
+{
+	if (info->GetKValueA(&paraA, (paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
+	{
+		info->GetKValueB(&paraB, (paraB.KtablV + (paraB.deltaKAx * h)));
+		return &paraB;
+	}
+	return &paraA;
 }
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB( vdp2draw_struct * info,int h, int v )
