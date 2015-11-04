@@ -5616,9 +5616,11 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02NoK( vdp2draw_struct 
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA( vdp2draw_struct * info,int h, int v )
 {
-    h = (paraA.KtablV+(paraA.deltaKAx * h));
-    if( info->GetKValueA( &paraA, h ) == NULL )
-    {
+	if (info->GetKValueA(&paraA, (paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
+	{
+		if (paraB.coefenab){
+			info->GetKValueB(&paraB, (paraB.KtablV + (paraB.deltaKAx * h)));
+		}
         return &paraB;
     }
     return &paraA;
