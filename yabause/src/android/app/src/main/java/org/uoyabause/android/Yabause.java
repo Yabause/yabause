@@ -183,8 +183,6 @@ public class Yabause extends Activity implements OnPadListener
     private int video_interface;
     private boolean waiting_reault = false;
 
-    AuthManager _auth;
-
     private ProgressDialog mProgressDialog;
     private Boolean isShowProgress;
     public void showDialog() {
@@ -235,8 +233,7 @@ public class Yabause extends Activity implements OnPadListener
 
         setContentView(R.layout.main);
 
-        _auth = new AuthManager(this);
-        audio = new YabauseAudio(this);         
+        audio = new YabauseAudio(this);
  
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         readPreferences();  
@@ -429,11 +426,6 @@ public class Yabause extends Activity implements OnPadListener
             }
 
             case R.id.report:
-                if( _auth.getToken() == null ) {
-                    _auth.afterAuth(R.id.report);
-                    _auth.startAuth();
-                    return true;
-                }
                 startReport();
                 return true;
             default:
@@ -546,17 +538,6 @@ public class Yabause extends Activity implements OnPadListener
                 YabauseRunnable.resume();
                 audio.unmute(audio.SYSTEM);
                 waiting_reault = false;
-                break;
-            case AuthManager.AUTHORIZATION_CODE:
-                if( resultCode == RESULT_OK ){
-                    _auth.onAuthorizationCode();
-                }
-                break;
-            case AuthManager.ACCOUNT_CODE:
-                if( resultCode == RESULT_OK ){
-                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                    _auth.onAccountCode(accountName);
-                }
                 break;
     	}
     }
