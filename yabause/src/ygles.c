@@ -1050,8 +1050,11 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    if (checkval != level->prg[level->prgcurrent].color_offset_val[0])
    {
 	   YglProgramChange(level, prg);
+	   level->prg[level->prgcurrent].blendmode = input->blendmode;
+
    } else if( level->prg[level->prgcurrent].prgid != prg ) {
       YglProgramChange(level,prg);
+	  level->prg[level->prgcurrent].blendmode = input->blendmode;
    }
    else if (level->prg[level->prgcurrent].blendmode != input->blendmode){
 	   YglProgramChange(level, prg);
