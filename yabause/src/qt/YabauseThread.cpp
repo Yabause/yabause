@@ -364,7 +364,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.videoformattype = VIDEOFORMATTYPE_NTSC;
 	mYabauseConf.skip_load = 0;
 	int numThreads = QThread::idealThreadCount();	
-	mYabauseConf.usethreads = numThreads <= 1 ? FALSE : TRUE;
+	mYabauseConf.usethreads = numThreads <= 1 ? 0 : 1;
 	mYabauseConf.numthreads = numThreads < 0 ? 1 : numThreads;
 }
 
