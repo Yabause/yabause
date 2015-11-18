@@ -596,6 +596,12 @@ if (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244")
 endif ()
 
+# Turn string format security warnings into errors. Some Linux distros enable this by default and travis-ci, etc. needs a way to catch them
+option(YAB_FORCE_SECURE_STRINGS "Turns all string format warnings into errors." OFF)
+if (CMAKE_COMPILER_IS_GNUCC AND YAB_FORCE_SECURE_STRINGS)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat -Werror=format-security")
+endif()
+
 if (NOT ANDROID)
     option(YAB_WANT_VIDSOFT_PRIORITY_THREADING "Use threads for vidsoft priority" OFF)
     option(YAB_WANT_VIDSOFT_LAYER_THREADING "Use threads for vidsoft layers" OFF)
