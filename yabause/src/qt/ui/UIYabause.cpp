@@ -710,7 +710,7 @@ void UIYabause::on_aFileSettings_triggered()
 			}
 			else
 			{
-				VIDSoftSetVdp1ThreadEnable(FALSE);
+				VIDSoftSetVdp1ThreadEnable(0);
 				VIDSoftSetNumLayerThreads(1);
 				VIDSoftSetNumPriorityThreads(1);
 			}
