@@ -8,6 +8,7 @@
     <string name="setting">Settings</string>
     <string name="choose_bios">Choose bios</string>
     <string name="choose_cartridge">Choose cartridge</string>
+    <string name="choose_cpu_core">Choose Cpu Core</string>
     <string name="choose_video_core">Choose Video Core</string>
     <string name="audio_output">Audio output</string>
     <string name="fps">FPS</string>
@@ -21,6 +22,7 @@
     <string name="onscrenn_pad_setting">Edit OnScreen Pad</string>    
     <string name="bios">Bios</string>
     <string name="cartridge">Cartridge</string>
+    <string name="cpu_core">Cpu Core</string>
     <string name="video_core">Video Core</string>
     <string name="setting_sound">Sound</string>
     <string name="setting_graphics">Graphics</string>
@@ -65,9 +67,12 @@
 	<string name="no">No</string>
 	<string name="exit">Exit</string>
 	<string name="ignore">Ignore</string>
-	
+
+    <string name="dynrec_cpu_interface">Dynamic Recompiler( fast but less accurate )</string>
+    <string name="software_cpu_interface">Interpreter( slow but more accurate )</string>
+
 	<string name="opengl_video_interface">OpenGL Video Interface</string>
-	<string name="software_video_interface">Software Video Interface</string>
+    <string name="software_video_interface">Software Video Interface</string>
 	<string name="onscreen_pad">On-Screen Pad</string>
 	<string name="select_from_other_directory">Select from other directory.</string>
 	
