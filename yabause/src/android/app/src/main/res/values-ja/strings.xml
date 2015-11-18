@@ -8,6 +8,7 @@
     <string name="setting">設定</string>
     <string name="choose_bios">BIOSの選択</string>
     <string name="choose_cartridge">カートリッジの選択</string>
+    <string name="choose_cpu_core">CPUエンジンの選択</string>
     <string name="choose_video_core">描画エンジンの選択</string>
     <string name="audio_output">音声出力</string>
     <string name="fps">FPS表示</string>

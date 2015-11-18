@@ -1,8 +1,10 @@
 package org.uoyabause.android;
 
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -177,6 +179,10 @@ public class AsyncReport extends AsyncTask<String, Integer, Integer> {
                 client.getConnectionManager().shutdown();
                 return -1;
             }
+
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mainActivity);
+            String cputype = sharedPref.getString("pref_cpu", "2");
+            String gputype = sharedPref.getString("pref_video", "1");
             JSONObject reportJson = new JSONObject();
             reportJson.put("rating",mainActivity.current_report._rating);
             if( mainActivity.current_report._message != null ) {
@@ -187,6 +193,8 @@ public class AsyncReport extends AsyncTask<String, Integer, Integer> {
             reportJson.put("user_id",1);
             reportJson.put("device_id",device_id);
             reportJson.put("game_id",id);
+            reportJson.put("cpu_type",cputype);
+            reportJson.put("video_type",gputype);
             JSONObject sendJson = new JSONObject();
             sendJson.put("report",reportJson);
             if( mainActivity.current_report._screenshot ){

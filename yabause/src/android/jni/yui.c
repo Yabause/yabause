@@ -80,6 +80,7 @@ int g_minor_version=0;
 int g_minorminor_version=0;
 
 int g_EnagleFPS = 0;
+int g_CpuType = 2;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -931,7 +932,7 @@ int initEgl( ANativeWindow* window )
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
 #ifdef SH2_DYNAREC
-    yinit.sh2coretype = 2;
+    yinit.sh2coretype = g_CpuType;
 #else
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
@@ -1118,6 +1119,12 @@ void
 Java_org_uoyabause_android_YabauseRunnable_enableFPS( JNIEnv* env, jobject obj, jint enable )
 {
     g_EnagleFPS = enable;
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setCpu( JNIEnv* env, jobject obj, jint cpu )
+{
+    g_CpuType = cpu;
 }
 
 void
