@@ -117,6 +117,7 @@ class YabauseRunnable implements Runnable
     public static native int unlockGL();
     public static native void enableFPS(int enable);
     public static native void enableFrameskip(int enable);
+    public static native void setCpu( int cpu );
     public static native void setVolume(int volume);
     public static native int screenshot( String filename );
     public static native String getCurrentGameCode();
@@ -463,6 +464,9 @@ public class Yabause extends Activity implements OnPadListener
         current_report._message = message;
         current_report._screenshot = screenshot;
         _report_status = REPORT_STATE_INIT;
+
+
+
         String gameinfo = YabauseRunnable.getGameinfo();
         if (gameinfo != null){
 
@@ -554,7 +558,7 @@ public class Yabause extends Activity implements OnPadListener
     @Override
     public boolean dispatchKeyEvent (KeyEvent event){
     	
-    	
+
     	int action =event.getAction(); 
     	int keyCode = event.getKeyCode();
     	//Log.d("dispatchKeyEvent","device:" + event.getDeviceId() + ",action:" + action +",keyCoe:" + keyCode );
@@ -621,6 +625,10 @@ public class Yabause extends Activity implements OnPadListener
 
         boolean frameskip = sharedPref.getBoolean("pref_frameskip", false);
         YabauseRunnable.enableFrameskip(frameskip ? 1 : 0);
+
+        String cpu = sharedPref.getString("pref_cpu", "2");
+        Integer icpu = new Integer(cpu);
+        YabauseRunnable.setCpu(icpu.intValue());
 
         boolean audioout = sharedPref.getBoolean("pref_audio", true);
         if (audioout) {
