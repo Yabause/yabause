@@ -315,7 +315,7 @@ void UIYabause::appendLog( const char* s )
 {
 	if (! mCanLog)
 	{
-		qWarning( s );
+		qWarning( "%s", s );
 		return;
 	}
 
