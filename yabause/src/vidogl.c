@@ -4987,6 +4987,7 @@ static void Vdp2DrawNBG1(void)
 
             if( isCached == 0 )
             {
+				YglQuad((YglSprite *)&info, &texture, &tmpc);
 				if (info.islinescroll){
 					Vdp2DrawBitmapLineScroll(&info, &texture);
 				}
