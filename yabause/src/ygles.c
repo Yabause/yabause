@@ -2345,17 +2345,22 @@ void YglRender(void) {
 
 				if (level->prg[j].currentQuad != 0)
 				{
-					if (level->prg[j].blendmode == 0){
+					if (level->prg[j].prgid == PG_LINECOLOR_INSERT){
 						glDisable(GL_BLEND);
+					}else{
+						if (level->prg[j].blendmode == 0){
+							glDisable(GL_BLEND);
+						}
+						else if (level->prg[j].blendmode == 1){
+							glEnable(GL_BLEND);
+							glBlendFunc(blendfunc_src, blendfunc_dst);
+						}
+						else if (level->prg[j].blendmode == 2){
+							glEnable(GL_BLEND);
+							glBlendFunc(GL_ONE, GL_ONE);
+						}
 					}
-					else if (level->prg[j].blendmode == 1){
-						glEnable(GL_BLEND);
-						glBlendFunc(blendfunc_src, blendfunc_dst);
-					}
-					else if (level->prg[j].blendmode == 2){
-						glEnable(GL_BLEND);
-						glBlendFunc(GL_ONE, GL_ONE);
-					}
+
 					glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
 					glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
 					glVertexAttribPointer(level->prg[j].texcoordp, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].textcoords);
@@ -2469,16 +2474,21 @@ void YglRenderDestinationAlpha(void) {
 
 			if (level->prg[j].currentQuad != 0)
 			{
-				if (level->prg[j].blendmode == 0){
+				if (level->prg[j].prgid == PG_LINECOLOR_INSERT){
 					glDisable(GL_BLEND);
 				}
-				else if (level->prg[j].blendmode == 1){
-					glEnable(GL_BLEND);
-					glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-				}
-				else if (level->prg[j].blendmode == 2){
-					glEnable(GL_BLEND);
-					glBlendFunc(GL_ONE, GL_ONE);
+				else{
+					if (level->prg[j].blendmode == 0){
+						glDisable(GL_BLEND);
+					}
+					else if (level->prg[j].blendmode == 1){
+						glEnable(GL_BLEND);
+						glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+					}
+					else if (level->prg[j].blendmode == 2){
+						glEnable(GL_BLEND);
+						glBlendFunc(GL_ONE, GL_ONE);
+					}
 				}
 
 				if (i != highpri){
