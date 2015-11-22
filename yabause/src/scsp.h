@@ -65,11 +65,14 @@ typedef struct
 
 #define MAX_BREAKPOINTS 10
 
+#if defined(ARCH_IS_LINUX)
+#define ASYNC_SCSP
+#endif
+
 typedef struct
 {
   u32 scsptiming1;
   u32 scsptiming2;  // 16.16 fixed point
-
   m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
   int numcodebreakpoints;
   void (*BreakpointCallBack)(u32);
@@ -108,7 +111,8 @@ int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename);
 void ScspMuteAudio(int flags);
 void ScspUnMuteAudio(int flags);
 void ScspSetVolume(int volume);
-
+void ScspAsynMain(void * p);
+void ScspExecAsync();
 void FASTCALL scsp_w_b(u32, u8);
 void FASTCALL scsp_w_w(u32, u16);
 void FASTCALL scsp_w_d(u32, u32);
