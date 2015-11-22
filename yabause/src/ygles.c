@@ -1018,30 +1018,25 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    level = &_Ygl->levels[input->priority];
 
    level->blendmode |= (input->blendmode&0x03);
-   if( input->uclipmode != level->uclipcurrent )
+   if( input->uclipmode != level->uclipcurrent ||
+	   (input->uclipmode !=0 && 
+		(level->ux1 != Vdp1Regs->userclipX1 || level->uy1 != Vdp1Regs->userclipY1 ||
+		level->ux2 != Vdp1Regs->userclipX2 || level->uy2 != Vdp1Regs->userclipY2) )
+	   )
    {
       if( input->uclipmode == 0x02 || input->uclipmode == 0x03 )
       {
          YglProgramChange(level,PG_VFP1_STARTUSERCLIP);
          program = &level->prg[level->prgcurrent];
          program->uClipMode = input->uclipmode;
-         if( level->ux1 != Vdp1Regs->userclipX1 || level->uy1 != Vdp1Regs->userclipY1 ||
-            level->ux2 != Vdp1Regs->userclipX2 || level->uy2 != Vdp1Regs->userclipY2 )
-         {
-            program->ux1=Vdp1Regs->userclipX1;
-            program->uy1=Vdp1Regs->userclipY1;
-            program->ux2=Vdp1Regs->userclipX2;
-            program->uy2=Vdp1Regs->userclipY2;
-            level->ux1=Vdp1Regs->userclipX1;
-            level->uy1=Vdp1Regs->userclipY1;
-            level->ux2=Vdp1Regs->userclipX2;
-            level->uy2=Vdp1Regs->userclipY2;
-         }else{
-            program->ux1=-1;
-            program->uy1=-1;
-            program->ux2=-1;
-            program->uy2=-1;
-         }
+         program->ux1=Vdp1Regs->userclipX1;
+         program->uy1=Vdp1Regs->userclipY1;
+         program->ux2=Vdp1Regs->userclipX2;
+         program->uy2=Vdp1Regs->userclipY2;
+         level->ux1=Vdp1Regs->userclipX1;
+         level->uy1=Vdp1Regs->userclipY1;
+         level->ux2=Vdp1Regs->userclipX2;
+         level->uy2=Vdp1Regs->userclipY2;
       }else{
          YglProgramChange(level,PG_VFP1_ENDUSERCLIP);
          program = &level->prg[level->prgcurrent];
@@ -1055,8 +1050,11 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    if (checkval != level->prg[level->prgcurrent].color_offset_val[0])
    {
 	   YglProgramChange(level, prg);
+	   level->prg[level->prgcurrent].blendmode = input->blendmode;
+
    } else if( level->prg[level->prgcurrent].prgid != prg ) {
       YglProgramChange(level,prg);
+	  level->prg[level->prgcurrent].blendmode = input->blendmode;
    }
    else if (level->prg[level->prgcurrent].blendmode != input->blendmode){
 	   YglProgramChange(level, prg);

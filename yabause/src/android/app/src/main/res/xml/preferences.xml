@@ -11,7 +11,16 @@
             android:key="pref_cart"
             android:title="@string/cartridge"
             android:dialogTitle="@string/choose_cartridge" />
+
+        <ListPreference
+            android:key="pref_cpu"
+            android:title="@string/cpu_core"
+            android:dialogTitle="@string/choose_cpu_core"
+            android:entries="@array/entries_cpu_list_preference"
+            android:entryValues="@array/entryvalues_cpu_list_preference"
+            android:defaultValue="2" />
 	</PreferenceCategory>
+
 
 	<PreferenceCategory android:title="@string/setting_graphics">        
 
