@@ -955,6 +955,7 @@ int initEgl( ANativeWindow* window )
     yinit.mpegpath = mpegpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
+	yinit.usethreads = 1;
     res = YabauseInit(&yinit);
     if (res != 0) {
       YUI_LOG("Fail to YabauseInit %d", res);
@@ -1093,7 +1094,7 @@ void
 Java_org_uoyabause_android_YabauseRunnable_deinit( JNIEnv* env )
 {
     g_msg = MSG_RENDER_LOOP_EXIT;
-	pthread_join(_threadId,NULL);
+	//pthread_join(_threadId,NULL);
 }
 
 void
@@ -1257,12 +1258,12 @@ void renderLoop()
                 break;
             case MSG_PAUSE:
                 YUI_LOG("MSG_PAUSE");
-                //ScspMuteAudio(SCSP_MUTE_SYSTEM);
+                ScspMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 1;
                 break;
             case MSG_RESUME:
                 YUI_LOG("MSG_RESUME");
-                //ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+                ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 0;
                 break;
             case MSG_SCREENSHOT:
