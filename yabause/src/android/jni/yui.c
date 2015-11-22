@@ -80,6 +80,7 @@ int g_minor_version=0;
 int g_minorminor_version=0;
 
 int g_EnagleFPS = 0;
+int g_CpuType = 2;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -931,7 +932,7 @@ int initEgl( ANativeWindow* window )
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
 #ifdef SH2_DYNAREC
-    yinit.sh2coretype = 2;
+    yinit.sh2coretype = g_CpuType;
 #else
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
@@ -954,6 +955,7 @@ int initEgl( ANativeWindow* window )
     yinit.mpegpath = mpegpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
+	yinit.usethreads = 1;
     res = YabauseInit(&yinit);
     if (res != 0) {
       YUI_LOG("Fail to YabauseInit %d", res);
@@ -1092,7 +1094,7 @@ void
 Java_org_uoyabause_android_YabauseRunnable_deinit( JNIEnv* env )
 {
     g_msg = MSG_RENDER_LOOP_EXIT;
-	pthread_join(_threadId,NULL);
+	//pthread_join(_threadId,NULL);
 }
 
 void
@@ -1118,6 +1120,12 @@ void
 Java_org_uoyabause_android_YabauseRunnable_enableFPS( JNIEnv* env, jobject obj, jint enable )
 {
     g_EnagleFPS = enable;
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setCpu( JNIEnv* env, jobject obj, jint cpu )
+{
+    g_CpuType = cpu;
 }
 
 void
@@ -1250,12 +1258,12 @@ void renderLoop()
                 break;
             case MSG_PAUSE:
                 YUI_LOG("MSG_PAUSE");
-                //ScspMuteAudio(SCSP_MUTE_SYSTEM);
+                ScspMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 1;
                 break;
             case MSG_RESUME:
                 YUI_LOG("MSG_RESUME");
-                //ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+                ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 0;
                 break;
             case MSG_SCREENSHOT:
