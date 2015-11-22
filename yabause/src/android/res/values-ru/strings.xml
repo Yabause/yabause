@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">uoYabause</string>
+    <string name="menu_exit">Выход</string>
+    <string name="menu_save_state">Сохранение</string>
+    <string name="menu_load_state">Загрузка</string>
+    <string name="load_game">Загрузить игру</string>
+    <string name="setting">Настройки</string>
+    <string name="choose_bios">Выбор BIOS</string>
+    <string name="choose_cartridge">Выбор расширения</string>
+    <string name="choose_video_core">Выбор рендерера</string>
+    <string name="audio_output">Вывод звука</string>
+    <string name="fps">Счётчик FPS</string>
+    <string name="frameskip">Пропуск кадров</string>
+    <string name="keepaspectrate">Оригинальные пропорции</string>
+    <string name="choose_input_device">Выбор устройства ввода</string>
+    <string name="input_device_title">Устройсто ввода</string>
+    <string name="input_device">Выбрать</string>
+    <string name="input_device_setting">Настроить кнопки геймпада</string>
+    <string name="onscrenn_pad_setting">Настроить экранный геймпад</string>    
+    <string name="bios">BIOS</string>
+    <string name="cartridge">Расширение</string>
+    <string name="video_core">Видео рендерер</string>
+    <string name="setting_sound">Звук</string>
+    <string name="setting_graphics">Графика</string>
+    <string name="setting_general">Общие</string>
+    <string name="msg_opengl_not_supported">Устройство не поддерживает OpenGL ES 3.0 или выше.\nВы не можете выбрать OpenGL рендерер.\n</string>
+    <string name="skip">Пропуск</string>
+    <string name="donation">Поддержать проект</string>
+    <string name="donate_message">
+        Поддержите разработку!\n\n
+		Вы можете помочь развитию uoYabause, сделав пожертвование на официальном сайте http://yabause.org. 
+		Вы также можете поддержать uoYabause, перечислив указанную сумму нажатием кнопки внизу. Это ускорит работу по улучшению точности эмуляции и поддержке новых устройств ввода.﻿
+    </string>
+    <string name="thank_you">Благодарим за Вашу поддержку!</string>
+    <string name="error_consume">Ошибка перечисления</string>
+    <string name="do_donation">Перечислить</string>
+    <string name="no_thank_you">Нет, спасибо</string>
+    <string name="donate_3doller">$3</string>
+    <string name="donate_5doller">$5</string>
+    <string name="donate_10doller">$10</string>
+    <string name="donate_30doller">$30</string>
+    
+    <string name="input_the_key">Нажмите кнопку</string>
+    <string name="joystick_is_not_connected">Геймпад не подключен!</string>
+    <string name="this_key_has_already_been_set">Кнопка уже используется!</string>
+	<string name="up">Вверх</string>
+	<string name="down">Вниз</string>
+	<string name="left">Влево</string>
+	<string name="right">Вправо</string>
+	<string name="l_trigger">L Триггер</string>
+	<string name="r_trigger">R Триггер</string>
+	<string name="start">Start</string>
+	<string name="a_button">A</string>
+	<string name="b_button">B</string>
+	<string name="c_button">C</string>
+	<string name="x_button">X</string>
+	<string name="y_button">Y</string>
+	<string name="z_button">Z</string>
+	
+	<string name="scale">Масштаб</string>
+	<string name="do_you_want_to_save_this_setting">Сохранить изменения?</string>
+	<string name="yes">Да</string>
+	<string name="no">Нет</string>
+	<string name="exit">Выход</string>
+	<string name="ignore">Пропустить</string>
+	
+	<string name="opengl_video_interface">OpenGL</string>
+	<string name="software_video_interface">Программный</string>
+	<string name="onscreen_pad">Экранный геймпад</string>
+	<string name="select_from_other_directory">Загрузить из другой папки</string>
+	
+	<string name="menu_save_screenshot">Скриншот</string>
+		
+</resources>
