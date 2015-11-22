@@ -1874,10 +1874,6 @@ void Vdp2GenLineinfo( vdp2draw_struct *info )
    }
 }
 
-#ifdef WIN32
-#else
-#define INLINE static inline
-#endif
 
 INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture ){
 
